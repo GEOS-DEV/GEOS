@@ -97,9 +97,9 @@ private:
   GEOSX_HOST_DEVICE
   virtual void SmallStrainUpdate( localIndex const k,
                                   localIndex const q,
-                                  arraySlice1d< real64 const > const & strainIncrement,
-                                  arraySlice1d< real64 > const & stress,
-                                  arraySlice2d< real64 > const & stiffness )
+                                  real64 const ( & strainIncrement )[6],
+                                  real64 ( & stress )[6],
+                                  real64 ( & stiffness )[6][6] )
   {
     GEOSX_UNUSED_VAR(k);
     GEOSX_UNUSED_VAR(q);

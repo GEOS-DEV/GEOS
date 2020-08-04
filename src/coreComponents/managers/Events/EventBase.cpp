@@ -163,16 +163,16 @@ void EventBase::CheckEvents( real64 const time,
   {
     if( dt <= 0 )
     {
-      m_eventForecast = std::numeric_limits< integer >::max();
+      this->setIdle();
     }
     else
     {
-      m_eventForecast = int((m_beginTime - time) / dt);
+      this->setForecast( int( ( m_beginTime - time ) / dt ) );
     }
   }
   else if( time >= m_endTime )
   {
-    m_eventForecast = std::numeric_limits< integer >::max();
+    this->setIdle();
   }
   else
   {
@@ -199,7 +199,7 @@ void EventBase::SignalToPrepareForExecution( real64 const time,
 
   this->forSubGroups< EventBase >( [&]( EventBase & subEvent )
   {
-    if( subEvent.GetForecast() == 1 )
+    if( subEvent.hasToPrepareForExec() )
     {
       subEvent.SignalToPrepareForExecution( time, dt, cycle, domain );
     }
@@ -227,14 +227,13 @@ void EventBase::Execute( real64 const time_n,
   for(; m_currentSubEvent < this->numSubGroups(); ++m_currentSubEvent )
   {
     EventBase * subEvent = static_cast< EventBase * >( this->GetSubGroups()[m_currentSubEvent] );
-    integer subEventForecast = subEvent->GetForecast();
 
     // Print debug information for logLevel >= 1
     GEOSX_LOG_LEVEL_RANK_0( 1,
                             "          SubEvent: " << m_currentSubEvent << " (" << subEvent->getName() << "), dt_request=" << subEvent->GetCurrentEventDtRequest() << ", forecast=" <<
-                            subEventForecast );
+                            subEvent->getForecast() );
 
-    if( subEventForecast <= 0 )
+    if( subEvent->isReadyForExec() )
     {
       subEvent->Execute( time_n, dt, cycleNumber, m_eventCount, m_eventProgress, domain );
     }
@@ -253,7 +252,7 @@ real64 EventBase::GetTimestepRequest( real64 const time )
   m_currentEventDtRequest = std::numeric_limits< real64 >::max() / 2.0;
 
   // Events and their targets may request a max dt when active
-  if((time >= m_beginTime) && (time < m_endTime))
+  if( isActive( time ) )
   {
     if( m_forceDt > 0 )
     {
@@ -272,7 +271,7 @@ real64 EventBase::GetTimestepRequest( real64 const time )
       m_currentEventDtRequest = std::min( m_currentEventDtRequest, GetEventTypeDtRequest( time ));
 
       // Get the target's dt request if the event has the potential to execute this cycle
-      if((m_eventForecast <= 1) && (m_target != nullptr))
+      if( ( !this->isIdle() ) && ( m_target != nullptr ) )
       {
         m_currentEventDtRequest = std::min( m_currentEventDtRequest, m_target->GetTimestepRequest( time ));
       }
@@ -361,6 +360,5 @@ void EventBase::SetProgressIndicator( array1d< integer > & eventCounters )
     subEvent.SetProgressIndicator( eventCounters );
   } );
 }
-
 
 } /* namespace geosx */

@@ -84,9 +84,9 @@ public:
   GEOSX_HOST_DEVICE
   virtual void SmallStrainUpdate( localIndex const k,
                                   localIndex const q,
-                                  arraySlice1d< real64 const > const & strainIncrement,
-                                  arraySlice1d< real64 > const & stress,
-                                  arraySlice2d< real64 > const & stiffness ) override final;
+                                  real64 const ( & strainIncrement )[6],
+                                  real64 ( & stress )[6],
+                                  real64 ( & stiffness )[6][6] ) override final;
   
   GEOSX_HOST_DEVICE
   virtual void SaveConvergedState( localIndex const k,
@@ -127,9 +127,9 @@ GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void DruckerPragerUpdates::SmallStrainUpdate( localIndex const k,
                                               localIndex const q,
-                                              arraySlice1d< real64 const > const & strainIncrement,
-                                              arraySlice1d< real64 > const & stress,
-                                              arraySlice2d< real64 > const & stiffness )
+                                              real64 const ( & strainIncrement )[6],
+                                              real64 ( & stress )[6],
+                                              real64 ( & stiffness )[6][6] )
 {
   real64 const shear = m_shearModulus[k];
   real64 const bulk  = m_bulkModulus[k];
@@ -233,7 +233,7 @@ void DruckerPragerUpdates::SmallStrainUpdate( localIndex const k,
     solution[2] = 0;      // initial guess for plastic multiplier
     
     real64 norm,normZero = 1e30;
-    jacobian = 0;
+    jacobian.setValues< serialPolicy >( 0 );
     
     for(localIndex iter=0; iter<10; ++iter) // could be fixed at one iter
     {

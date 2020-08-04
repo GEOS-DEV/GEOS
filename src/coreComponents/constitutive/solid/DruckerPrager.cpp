@@ -167,13 +167,13 @@ void DruckerPrager::AllocateConstitutiveData( dataRepository::Group * const pare
   m_oldStress.resize( parent->size(), numConstitutivePointsPerParentIndex, 6 ); // TODO: figure out how to set initial stress
   
   // set arrays to default values
-  m_bulkModulus = m_defaultBulkModulus;
-  m_shearModulus = m_defaultShearModulus;
-  m_tanFrictionAngle = m_defaultTanFrictionAngle;
-  m_tanDilationAngle = m_defaultTanDilationAngle;
-  m_hardeningRate = m_defaultHardeningRate;
-  m_newCohesion = m_defaultCohesion;
-  m_oldCohesion = m_defaultCohesion;
+  m_bulkModulus.setValues< serialPolicy >( m_defaultBulkModulus );
+  m_shearModulus.setValues< serialPolicy >( m_defaultShearModulus );
+  m_tanFrictionAngle.setValues< serialPolicy >( m_defaultTanFrictionAngle );
+  m_tanDilationAngle.setValues< serialPolicy >( m_defaultTanDilationAngle );
+  m_hardeningRate.setValues< serialPolicy >( m_defaultHardeningRate );
+  m_newCohesion.setValues< serialPolicy >( m_defaultCohesion );
+  m_oldCohesion.setValues< serialPolicy >( m_defaultCohesion );
 }
 
 void DruckerPrager::PostProcessInput()
