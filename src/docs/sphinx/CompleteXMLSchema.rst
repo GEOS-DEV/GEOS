@@ -659,6 +659,13 @@ Element: TwoPointFluxApproximation
 .. include:: ../../coreComponents/fileIO/schema/docs/TwoPointFluxApproximation.rst
 
 
+.. _XML_VTK:
+
+Element: VTK
+============
+.. include:: ../../coreComponents/fileIO/schema/docs/VTK.rst
+
+
 .. _XML_VanGenuchtenBakerRelativePermeability:
 
 Element: VanGenuchtenBakerRelativePermeability
@@ -1384,6 +1391,13 @@ Datastructure: TwoPointFluxApproximation
 .. include:: ../../coreComponents/fileIO/schema/docs/TwoPointFluxApproximation_other.rst
 
 
+.. _DATASTRUCTURE_VTK:
+
+Datastructure: VTK
+==================
+.. include:: ../../coreComponents/fileIO/schema/docs/VTK_other.rst
+
+
 .. _DATASTRUCTURE_VanGenuchtenBakerRelativePermeability:
 
 Datastructure: VanGenuchtenBakerRelativePermeability
@@ -1475,19 +1489,18 @@ Datastructure: elementSubRegions
 .. include:: ../../coreComponents/fileIO/schema/docs/elementSubRegions_other.rst
 
 
-<<<<<<< HEAD
 .. _DATASTRUCTURE_embeddedSurfacesEdgeManager:
 
 Datastructure: embeddedSurfacesEdgeManager
 ==========================================
 .. include:: ../../coreComponents/fileIO/schema/docs/embeddedSurfacesEdgeManager_other.rst
-=======
+
+
 .. _DATASTRUCTURE_finiteVolumeStencils:
 
 Datastructure: finiteVolumeStencils
 ===================================
 .. include:: ../../coreComponents/fileIO/schema/docs/finiteVolumeStencils_other.rst
->>>>>>> origin/develop
 
 
 .. _DATASTRUCTURE_lassen:

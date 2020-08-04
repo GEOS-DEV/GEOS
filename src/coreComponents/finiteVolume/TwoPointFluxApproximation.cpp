@@ -612,13 +612,13 @@ void TwoPointFluxApproximation::addEDFracToFractureStencil( MeshLevel & mesh,
 
   EmbeddedSurfaceSubRegion * const fractureSubRegion = fractureRegion->GetSubRegion< EmbeddedSurfaceSubRegion >( "default" );
 
-  arrayView1d< real64 const > const & fractureElemArea   = fractureSubRegion->getElementArea();
+  // arrayView1d< real64 const > const & fractureElemArea   = fractureSubRegion->getElementArea();
   arrayView2d< real64 const > const & fractureElemCenter = fractureSubRegion->getElementCenter();
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X = nodeManager->embSurfNodesPosition();
 
   EdgeManager::FaceMapType & edgeToEmbSurfacesMap = embSurfEdgeManager->faceList();
 
-  arrayView1d< integer const > const & ghostRank = fractureSubRegion->ghostRank();
+  // arrayView1d< integer const > const & ghostRank = fractureSubRegion->ghostRank();
 
   localIndex constexpr maxElems = FaceElementStencil::MAX_STENCIL_SIZE;
 
@@ -691,11 +691,13 @@ void TwoPointFluxApproximation::addEDFracToFractureStencil( MeshLevel & mesh,
   arrayView1d< real64 const >     const & ConnectivityIndex = fractureSubRegion->getConnectivityIndex();
 
   ElementRegionManager::ElementViewAccessor< arrayView1d< R1Tensor const > > const permeabilityTensor =
-      elemManager.ConstructArrayViewAccessor< R1Tensor, 1 >( m_coeffName );
+      elemManager->ConstructArrayViewAccessor< R1Tensor, 1 >( m_coeffName );
 
-  localIndex connectorIndex = cellStencil.size();
+  // start from last connectorIndex from cell-To-cell connections
+  connectorIndex = cellStencil.size();
 
-  for( localIndex kes; kes  < fractureSubRegion->size(); kes++ )
+  // loop over the embedded surfaces and add connections to cellStencil
+  for( localIndex kes=0; kes  < fractureSubRegion->size(); kes++ )
   {
     //if( ghostRank[kes] < 0 )
     {
@@ -713,7 +715,7 @@ void TwoPointFluxApproximation::addEDFracToFractureStencil( MeshLevel & mesh,
       localIndex const ei  = elemList[kes];
 
       // Here goes EDFM transmissibility computation.
-      real64 avPerm = LvArray::tensorOps::normalize< 3 >( permeabilityTensor[er][esr][ei] );
+      real64 avPerm = LvArray::tensorOps::l2Norm< 3 >( permeabilityTensor[er][esr][ei] );
 
       real64 const ht = ConnectivityIndex[kes] * avPerm;   // Using matrix perm coz assuming fracture is highly permeable for now.
 

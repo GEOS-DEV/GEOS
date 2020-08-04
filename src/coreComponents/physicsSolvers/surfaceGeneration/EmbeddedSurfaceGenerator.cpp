@@ -132,6 +132,7 @@ void EmbeddedSurfaceGenerator::InitializePostSubGroups( Group * const problemMan
         } // end loop over nodes
         if( isPositive * isNegative == 1 )
         {
+
           bool added = embeddedSurfaceSubRegion->AddNewEmbeddedSurface( cellIndex,
                                                                         er,
                                                                         esr,
@@ -164,6 +165,8 @@ void EmbeddedSurfaceGenerator::InitializePostSubGroups( Group * const problemMan
   embSurfToEdgeMap.resize( embeddedSurfaceSubRegion->size() );
 
   EmbeddedSurfaceSubRegion::NodeMapType & embSurfToNodeMap = embeddedSurfaceSubRegion->nodeList();
+
+  std::cout << "face to nodes size: " << embSurfToNodeMap.size() << std::endl;
 
   embSurfEdgeManager->BuildEdges( embeddedSurfaceSubRegion->totalNumberOfNodes(), embSurfToNodeMap.toViewConst(), embSurfToEdgeMap );
 

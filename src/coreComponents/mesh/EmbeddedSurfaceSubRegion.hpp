@@ -181,6 +181,11 @@ public:
     /// Embedded surface element normal vector string
     static constexpr auto normalVectorString           = "normalVector";
 
+    static constexpr auto t1VectorString           = "tangentVector1";
+
+    static constexpr auto t2VectorString           = "tangentVector2";
+
+
     static constexpr auto numNodesString               = "numNodes";
 
     static constexpr auto connectivityIndexString     = "connectivityIndex";

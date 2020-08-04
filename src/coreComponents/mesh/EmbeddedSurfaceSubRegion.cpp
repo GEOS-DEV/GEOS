@@ -62,6 +62,12 @@ EmbeddedSurfaceSubRegion::EmbeddedSurfaceSubRegion( string const & name,
   registerWrapper( viewKeyStruct::normalVectorString, &m_normalVector )->
     setDescription( "Unit normal vector to the embedded surface." );
 
+  registerWrapper( viewKeyStruct::t1VectorString, &m_tangentVector1 )->
+      setDescription( "Unit vector in the first tangent direction to the embedded surface." );
+
+  registerWrapper( viewKeyStruct::t2VectorString, &m_tangentVector2 )->
+      setDescription( "Unit vector in the second tangent direction to the embedded surface." );
+
   registerWrapper( viewKeyStruct::elementApertureString, &m_elementAperture )->
     setApplyDefaultValue( 1.0e-5 )->
     setPlotLevel( dataRepository::PlotLevel::LEVEL_0 )->
@@ -190,6 +196,7 @@ bool EmbeddedSurfaceSubRegion::AddNewEmbeddedSurface ( localIndex const cellInde
 
   if( addEmbeddedElem )
   {
+
     // resize
     localIndex surfaceIndex = this->size();
     this->resize( surfaceIndex + 1 );
@@ -201,16 +208,15 @@ bool EmbeddedSurfaceSubRegion::AddNewEmbeddedSurface ( localIndex const cellInde
 
     bool isNew;
     localIndex NodeIndex;
-    array1d< localIndex > elemNodes;
-    elemNodes.size( m_numNodesPerSurface[surfaceIndex] );
+    array1d< localIndex > elemNodes(m_numNodesPerSurface[surfaceIndex]);
 
     for( localIndex j=0; j < m_numNodesPerSurface[surfaceIndex]; j++ )
     {
       isNew = true;
-      for( localIndex h=0; h < embSurfNodesPos.size(); h++ )
+      for( localIndex h=0; h < embSurfNodesPos.size(0); h++ )
       {
-        distance  = intersectionPoints[j];
-        distance -= embSurfNodesPos.toViewConst()[h];
+        LvArray::tensorOps::copy< 3 >( distance, intersectionPoints[j] );
+        LvArray::tensorOps::subtract< 3 >( distance, embSurfNodesPos.toViewConst()[h] );
         if( distance.L2_Norm() < 1e-9 )
         {
           isNew = false;
@@ -228,14 +234,17 @@ bool EmbeddedSurfaceSubRegion::AddNewEmbeddedSurface ( localIndex const cellInde
       elemNodes.emplace_back( NodeIndex );
     }
 
-    m_toNodesRelation.appendArray( elemNodes.begin(), elemNodes.end() );
+    for (localIndex inode = 0; inode < m_numNodesPerSurface[surfaceIndex]; inode++ )
+    {
+    	m_toNodesRelation( surfaceIndex, inode ) = elemNodes[inode];
+    }
 
     m_embeddedSurfaceToCell[ surfaceIndex ]      = cellIndex;
     m_embeddedSurfaceToRegion[ surfaceIndex ]    =  regionIndex;
     m_embeddedSurfaceToSubRegion[ surfaceIndex ] =  subRegionIndex;
-    m_normalVector[ surfaceIndex ]   =  normalVector;
-    m_tangentVector1[ surfaceIndex ] = fracture->getWidthVector();
-    m_tangentVector2[ surfaceIndex ] =  fracture->getLengthVector();
+    LvArray::tensorOps::copy<3>( m_normalVector[ surfaceIndex ], normalVector);
+    LvArray::tensorOps::copy<3>( m_tangentVector1[ surfaceIndex ],  fracture->getWidthVector());
+    LvArray::tensorOps::copy<3>( m_tangentVector2[ surfaceIndex ],  fracture->getLengthVector());
     this->CalculateElementGeometricQuantities( intersectionPoints, this->size()-1 );
   }
   return addEmbeddedElem;
