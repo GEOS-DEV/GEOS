@@ -699,14 +699,16 @@ map< std::pair< string, string >, localIndex > ProblemManager::calculateRegionQu
               {
                 string const elementTypeString = subRegion.GetElementTypeString();
 
-                std::unique_ptr< finiteElement::FiniteElementBase > newFE = feDiscretization->factory( elementTypeString );
+                finiteElement::FiniteElementBase * const newFE = feDiscretization->factory( elementTypeString ).release();
                 finiteElement::dispatch3D( *newFE,
-                                           [ &, newFE=std::move( newFE )  ] ( auto finiteElement ) mutable
+                                           [ & ] ( auto & finiteElement )
                 {
-                  using FE_TYPE = TYPEOFREF( finiteElement );
+                  using FE_TYPE = std::remove_const_t<TYPEOFREF( finiteElement )>;
+
+                  std::unique_ptr< finiteElement::FiniteElementBase > finiteElementBase(newFE);
 
                   subRegion.template registerWrapper< finiteElement::FiniteElementBase >( discretizationName,
-                                                                                          std::move( newFE ) )->
+                                                                                          std::move(finiteElementBase) )->
                     setRestartFlags( dataRepository::RestartFlags::NO_WRITE );
 
                   FE_TYPE &
