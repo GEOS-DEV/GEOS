@@ -777,7 +777,7 @@ void ProblemManager::setRegionQuadrature( Group & meshBodies,
         {
           GEOSX_LOG_RANK_0( "  "<<regionName<<"/"<<subRegionName<<") does not have a discretization associated with it." );
         }
-      });
+      } );
     }
   }
 }
