@@ -699,24 +699,21 @@ map< std::pair< string, string >, localIndex > ProblemManager::calculateRegionQu
               {
                 string const elementTypeString = subRegion.GetElementTypeString();
 
-                finiteElement::FiniteElementBase * const newFE = feDiscretization->factory( elementTypeString ).release();
-                finiteElement::dispatch3D( *newFE,
-                                           [ & ] ( auto & finiteElement )
+                std::unique_ptr< finiteElement::FiniteElementBase > newFE = feDiscretization->factory( elementTypeString );
+
+                finiteElement::FiniteElementBase &
+                fe = subRegion.template registerWrapper< finiteElement::FiniteElementBase >( discretizationName,
+                                                                                             std::move( newFE ) )->
+                       setRestartFlags( dataRepository::RestartFlags::NO_WRITE )->reference();
+
+                finiteElement::dispatch3D( fe,
+                                           [&] ( auto & finiteElement )
                 {
-                  using FE_TYPE = std::remove_const_t<TYPEOFREF( finiteElement )>;
-
-                  std::unique_ptr< finiteElement::FiniteElementBase > finiteElementBase(newFE);
-
-                  subRegion.template registerWrapper< finiteElement::FiniteElementBase >( discretizationName,
-                                                                                          std::move(finiteElementBase) )->
-                    setRestartFlags( dataRepository::RestartFlags::NO_WRITE );
-
-                  FE_TYPE &
-                  fe = dynamic_cast< FE_TYPE & >(subRegion.template getReference< finiteElement::FiniteElementBase >( discretizationName ));
+                  using FE_TYPE = std::remove_const_t< TYPEOFREF( finiteElement ) >;
 
                   localIndex const numQuadraturePoints = FE_TYPE::numQuadraturePoints;
 
-                  feDiscretization->CalculateShapeFunctionGradients( X, &subRegion, fe );
+                  feDiscretization->CalculateShapeFunctionGradients( X, &subRegion, finiteElement );
 
                   localIndex & numQuadraturePointsInList = regionQuadrature[ std::make_pair( regionName,
                                                                                              subRegion.getName() ) ];
