@@ -39,6 +39,7 @@ set( physicsSolvers_headers
      multiphysics/CompositionalMultiphaseReservoir.hpp
      simplePDE/LaplaceFEM.hpp
      simplePDE/LaplaceFEMKernels.hpp
+     solidMechanics/SolidMechanicsEmbeddedFractures.hpp
      solidMechanics/SolidMechanicsLagrangianFEM.hpp
      solidMechanics/SolidMechanicsLagrangianSSLE.hpp
      solidMechanics/SolidMechanicsLagrangianFEMKernels.hpp
@@ -84,12 +85,12 @@ set( physicsSolvers_sources
      multiphysics/SinglePhaseReservoir.cpp
      multiphysics/CompositionalMultiphaseReservoir.cpp
      simplePDE/LaplaceFEM.cpp
+     solidMechanics/SolidMechanicsEmbeddedFractures.cpp
      solidMechanics/SolidMechanicsLagrangianFEM.cpp
      solidMechanics/SolidMechanicsLagrangianSSLE.cpp
      surfaceGeneration/SurfaceGenerator.cpp
      surfaceGeneration/EmbeddedSurfaceGenerator.cpp
      )
-     #solidMechanics/SolidMechanicsEmbeddedFractures.cpp
 
 if( BUILD_OBJ_LIBS)
   set( dependencyList common constitutive dataRepository linearAlgebra )

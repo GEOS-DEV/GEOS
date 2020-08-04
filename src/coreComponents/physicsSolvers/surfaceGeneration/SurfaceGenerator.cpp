@@ -2933,7 +2933,7 @@ void SurfaceGenerator::CalculateNodeAndFaceSIF( DomainPartition & domain,
             realT youngsModulus = 9 * K * G / ( 3 * K + G );
             realT poissonRatio = ( 3 * K - 2 * G ) / ( 2 * ( 3 * K + G ) );
 
-            localIndex const numQuadraturePoints = detJ[er][esr].size(1);
+            localIndex const numQuadraturePoints = detJ[er][esr].size( 1 );
 
             for( localIndex n=0; n<elementsToNodes.size( 1 ); ++n )
             {
@@ -3719,7 +3719,7 @@ int SurfaceGenerator::CalculateElementForcesOnEdge( DomainPartition & domain,
       x0_xEle -= X[edgeToNodeMap[edgeID][1]];
       udist = Dot( x0_x1, x0_xEle );
 
-      localIndex const numQuadraturePoints = detJ[er][esr].size(1);
+      localIndex const numQuadraturePoints = detJ[er][esr].size( 1 );
 
 
       if(( udist <= edgeLength && udist > 0.0 ) || threeNodesPinched )

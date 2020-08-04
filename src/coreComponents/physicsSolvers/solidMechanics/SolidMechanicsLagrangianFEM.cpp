@@ -324,7 +324,7 @@ void SolidMechanicsLagrangianFEM::updateIntrinsicNodalData( DomainPartition * co
       finiteElement::dispatch3D( fe,
                                  [&] ( auto const finiteElement )
       {
-        using FE_TYPE = TYPEOFREF(finiteElement);
+        using FE_TYPE = TYPEOFREF( finiteElement );
 
         constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
         constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
@@ -406,7 +406,7 @@ void SolidMechanicsLagrangianFEM::InitializePostInitialConditions_PreSubGroups( 
       finiteElement::dispatch3D( fe,
                                  [&] ( auto const finiteElement )
       {
-        using FE_TYPE = TYPEOFREF(finiteElement);
+        using FE_TYPE = TYPEOFREF( finiteElement );
 
         constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
         constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
