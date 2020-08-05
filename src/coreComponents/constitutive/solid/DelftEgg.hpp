@@ -64,8 +64,8 @@ public:
     m_virginCompressionIndex( virginCompressionIndex ),
     m_cslSlope( cslSlope ),
     m_shapeParameter( shapeParameter ),
-    m_newPreConsolidationPressure( newPreConsolidationPressure ),
     m_oldPreConsolidationPressure( oldPreConsolidationPressure ),
+    m_newPreConsolidationPressure( newPreConsolidationPressure ),
     m_newStress( newStress ),
     m_oldStress( oldStress )
   {}
@@ -118,7 +118,7 @@ private:
   arrayView1d< real64 const > const m_cslSlope;
   
   /// A reference to the ArrayView holding the shape parameter for each integration point
-  arrayView2d< real64 const > const m_shapeParameter;
+  arrayView1d< real64 const > const m_shapeParameter;
 
   /// A reference to the ArrayView holding the old preconsolidation pressure for each integration point
   arrayView2d< real64 > const m_oldPreConsolidationPressure;
@@ -163,7 +163,7 @@ void DelftEggUpdates::SmallStrainUpdate( localIndex const k,
     strainIncrementVol += strainIncrement[i];
   }
 
-  real64 temp = strainIncrementVol/3
+  real64 temp = strainIncrementVol/3;
   array1d< real64 > deviator(6);  // array allocation
   for(localIndex i=0; i<3; ++i)
   {
@@ -266,7 +266,7 @@ void DelftEggUpdates::SmallStrainUpdate( localIndex const k,
 
    // set stiffness to elastic predictor
   
-  real64 bulkModulus = -trialP/Cr ; 
+   bulkModulus = -trialP/Cr ; 
   real64 lame = bulkModulus - 2/3 * mu;
 
   for(localIndex i=0; i<6; ++i)
@@ -277,26 +277,26 @@ void DelftEggUpdates::SmallStrainUpdate( localIndex const k,
     }
   }
   
-  stiffness[0][0] = lame + 2*shear;
+  stiffness[0][0] = lame + 2*mu;
   stiffness[0][1] = lame;
   stiffness[0][2] = lame;
 
   stiffness[1][0] = lame;
-  stiffness[1][1] = lame + 2*shear;
+  stiffness[1][1] = lame + 2*mu;
   stiffness[1][2] = lame;
 
   stiffness[2][0] = lame;
   stiffness[2][1] = lame;
-  stiffness[2][2] = lame + 2*shear;
+  stiffness[2][2] = lame + 2*mu;
 
-  stiffness[3][3] = shear;
-  stiffness[4][4] = shear;
-  stiffness[5][5] = shear;
+  stiffness[3][3] = mu;
+  stiffness[4][4] = mu;
+  stiffness[5][5] = mu;
 
   // Calculate the normalized deviatoric direction, "nhat"
 
   
-  array1d< real64 > deviator(6);  // array allocation
+  //array1d< real64 > deviator(6);  // array allocation
   for(localIndex i=0; i<3; ++i)
   {
     deviator[i] = strainElasticTrial[i]- strainElasticTrialVol/3;
@@ -348,10 +348,10 @@ void DelftEggUpdates::SmallStrainUpdate( localIndex const k,
     for(localIndex iter=0; iter<10; ++iter) // could be fixed at one iter
     {
 
-      trialP = p0 * std::exp(-1/Cr* (solution[0] - refStrainVol));
+      trialP = p0 * std::exp(-1/Cr* (solution[0] - eps_v0));
       trialQ = 3 * mu * solution[1];
       bulkModulus = -trialP/Cr;
-      pc = oldPc * std::exp(-1/(Cc-Cr)*(eps_v_trial-solution[0]))
+      pc = oldPc * std::exp(-1/(Cc-Cr)*(eps_v_trial-solution[0]));
 
       yield = trialQ*trialQ/(M*M)- alpha*alpha*trialP *(2*alpha/(alpha+1)*pc-trialP)+alpha*alpha*(alpha-1)/(alpha+1)* pc*pc;
       
@@ -360,11 +360,11 @@ void DelftEggUpdates::SmallStrainUpdate( localIndex const k,
       real64 df_dp = -alphaTerm * pc + 2 * alpha * trialP;
       real64 df_dq = 2*trialQ /(M*M); 
       real64 df_dpc = 2*alpha*alpha*(alpha-1) /(alpha+1) * pc - alphaTerm * trialP ;
-      real64 dpc_dve = -1/(Cc-Cr) * pc
+      real64 dpc_dve = -1/(Cc-Cr) * pc;
 
       real64 df_dp_dve = 2* alpha * alpha * bulkModulus - alphaTerm * dpc_dve;
       real64 df_dq_dse = 2/(M*M) * 3 * mu; 
-      real64 df_dpc_dve = -alphaTerm * bulkModulus + 2*alpha*alpha*(alpha-1) /(alpha+1) * dpc_dve;
+      //real64 df_dpc_dve = -alphaTerm * bulkModulus + 2*alpha*alpha*(alpha-1) /(alpha+1) * dpc_dve;
 
       // assemble residual system
       
@@ -376,7 +376,7 @@ void DelftEggUpdates::SmallStrainUpdate( localIndex const k,
       
       norm = LvArray::tensorOps::l2Norm<3>(residual);
       
-      residual.L2_Norm();  //std::cout << iter << " " << norm << std::endl;
+      //residual.L2_Norm();  //std::cout << iter << " " << norm << std::endl;
       
       if(iter==0)
       {
@@ -438,9 +438,9 @@ void DelftEggUpdates::SmallStrainUpdate( localIndex const k,
 
     bulkModulus = -trialP/Cr; 
 
-    BB[0][0] = bulkModulus*(a1*jacobianInv[0][0]]+a2*jacobianInv[0][2]);
+    BB[0][0] = bulkModulus*(a1*jacobianInv[0][0]+a2*jacobianInv[0][2]);
     BB[0][1] =bulkModulus*jacobianInv[0][1];
-    BB[1][0] =3*mu*(a1*jacobianInv[1][0]+a2*jacobianInv[1][2]
+    BB[1][0] =3*mu*(a1*jacobianInv[1][0]+a2*jacobianInv[1][2]);
     BB[1][1] = 3*mu*jacobianInv[1][1];
 
     real64 c1 = 2*trialQ/(3*eps_s_trial); 
@@ -626,7 +626,7 @@ public:
                                  m_cslSlope,
                                  m_shapeParameter,
                                  m_newPreConsolidationPressure,
-                                 m_oldPreConsolidationPresure,
+                                 m_oldPreConsolidationPressure,
                                  m_newStress,
                                  m_oldStress,
                                  m_stress ); // TODO: m_stress is redundant with m_newStress

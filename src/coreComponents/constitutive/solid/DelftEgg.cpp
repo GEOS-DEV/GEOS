@@ -39,7 +39,7 @@ DelftEgg::DelftEgg( std::string const & name, Group * const parent ):
   m_cslSlope(),
   m_shapeParameter(),
   m_newPreConsolidationPressure(),
-  m_oldPreConsolidationPresure(),
+  m_oldPreConsolidationPressure(),
   m_newStress(),
   m_oldStress()
 {
@@ -192,11 +192,11 @@ void DelftEgg::AllocateConstitutiveData( dataRepository::Group * const parent,
   m_oldStress.resize( parent->size(), numConstitutivePointsPerParentIndex, 6 ); // TODO: figure out how to set initial stress
   
   // set arrays to default values
-  m_shearModulus.setValues< serialPolicy >( m_defaultShearModulus )
+  m_shearModulus.setValues< serialPolicy >( m_defaultShearModulus );
   m_refPressure.setValues< serialPolicy >( m_defaultRefPressure );
   m_refStrainVol.setValues< serialPolicy >( m_defaultRefStrainVol );
   m_recompressionIndex.setValues< serialPolicy >( m_defaultRecompressionIndex );
-  m_virginCompressionIndex.setValues< serialPolicy >( = m_defaultVirginCompressionIndex;
+  m_virginCompressionIndex.setValues< serialPolicy >( m_defaultVirginCompressionIndex);
   m_cslSlope.setValues< serialPolicy >( m_defaultCslSlope );
   m_shapeParameter.setValues< serialPolicy >( m_defaultShapeParameter );
   m_newPreConsolidationPressure.setValues< serialPolicy >( m_defaultPreConsolidationPressure );
