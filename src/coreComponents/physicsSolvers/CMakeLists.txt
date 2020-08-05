@@ -40,11 +40,11 @@ set( physicsSolvers_headers
      multiphysics/CompositionalMultiphaseReservoir.hpp
      simplePDE/LaplaceFEM.hpp
      simplePDE/LaplaceFEMKernels.hpp
+     solidMechanics/SolidMechanicsEmbeddedFractures.hpp
      solidMechanics/SolidMechanicsLagrangianFEM.hpp
      solidMechanics/SolidMechanicsLagrangianSSLE.hpp
      solidMechanics/SolidMechanicsLagrangianFEMKernels.hpp
      solidMechanics/SolidMechanicsLagrangianSSLEKernels.hpp
-     solidMechanics/SolidMechanicsEmbeddedFractures.hpp
      solidMechanics/SolidMechanicsPoroElasticKernel.hpp
      solidMechanics/SolidMechanicsSmallStrainQuasiStaticKernel.hpp
      solidMechanics/SolidMechanicsSmallStrainImplicitNewmarkKernel.hpp
@@ -87,9 +87,9 @@ set( physicsSolvers_sources
      multiphysics/SinglePhaseReservoir.cpp
      multiphysics/CompositionalMultiphaseReservoir.cpp
      simplePDE/LaplaceFEM.cpp
+     solidMechanics/SolidMechanicsEmbeddedFractures.cpp
      solidMechanics/SolidMechanicsLagrangianFEM.cpp
      solidMechanics/SolidMechanicsLagrangianSSLE.cpp
-     solidMechanics/SolidMechanicsEmbeddedFractures.cpp
      surfaceGeneration/SurfaceGenerator.cpp
      surfaceGeneration/EmbeddedSurfaceGenerator.cpp
      )

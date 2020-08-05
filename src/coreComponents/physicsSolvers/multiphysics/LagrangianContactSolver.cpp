@@ -1114,10 +1114,6 @@ void LagrangianContactSolver::
 
   ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager.nodeList().toViewConst();
 
-  arrayView2d< real64 > const &
-  fext = nodeManager.getReference< array2d< real64 > >( SolidMechanicsLagrangianFEM::viewKeyStruct::forceExternal );
-  fext.setValues< serialPolicy >( 0 );
-
   string const & tracDofKey = dofManager.getKey( viewKeyStruct::tractionString );
   string const & dispDofKey = dofManager.getKey( keys::TotalDisplacement );
 
@@ -1166,7 +1162,6 @@ void LagrangianContactSolver::
               rowDOF[3*a+i] = dispDofNumber[faceToNodeMap( faceIndex, a )] + i;
               // Opposite sign w.r.t. theory because of minus sign in stiffness matrix definition (K < 0)
               nodeRHS[3*a+i] = +globalNodalForce[i] * pow( -1, kf );
-              fext[faceToNodeMap( faceIndex, a )][i] += +globalNodalForce[i] * pow( -1, kf );
 
               // Opposite sign w.r.t. theory because of minus sign in stiffness matrix definition (K < 0)
               dRdT( 3*a+i, 0 ) = +nodalArea * rotationMatrix( kfe, i, 0 ) * pow( -1, kf );

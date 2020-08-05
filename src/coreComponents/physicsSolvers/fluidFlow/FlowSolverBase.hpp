@@ -29,7 +29,6 @@ namespace dataRepository
 class Group;
 }
 class FieldSpecificationBase;
-class FiniteElementBase;
 class DomainPartition;
 
 /**
@@ -79,6 +78,9 @@ public:
   arrayView1d< string const > const & fluidModelNames() const { return m_fluidModelNames; }
 
   arrayView1d< string const > const & solidModelNames() const { return m_solidModelNames; }
+
+  virtual std::vector< string > getConstitutiveRelations( string const & regionName ) const override;
+
 
   localIndex numDofPerCell() const { return m_numDofPerCell; }
 
