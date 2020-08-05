@@ -1,22 +1,21 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Produced at the Lawrence Livermore National Laboratory
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
  *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
-#include "finiteElement/FiniteElementShapeFunctionKernel.hpp"
+/**
+ * @file testH1_Hexahedron_Lagrange1_GaussLegendre2
+ */
+
 #include "managers/initialization.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
 
@@ -24,33 +23,10 @@
 
 #include <chrono>
 
+#include "finiteElement/elementFormulations/H1_Hexahedron_Lagrange1_GaussLegendre2.hpp"
+
 using namespace geosx;
-
-static real64 inverse( real64 (& J)[3][3] )
-{
-  real64 scratch[3][3];
-  scratch[0][0] = J[1][1]*J[2][2] - J[1][2]*J[2][1];
-  scratch[1][0] = J[0][2]*J[2][1] - J[0][1]*J[2][2];
-  scratch[2][0] = J[0][1]*J[1][2] - J[0][2]*J[1][1];
-  scratch[0][1] = J[1][2]*J[2][0] - J[1][0]*J[2][2];
-  scratch[1][1] = J[0][0]*J[2][2] - J[0][2]*J[2][0];
-  scratch[2][1] = J[0][2]*J[1][0] - J[0][0]*J[1][2];
-  scratch[0][2] = J[1][0]*J[2][1] - J[1][1]*J[2][0];
-  scratch[1][2] = J[0][1]*J[2][0] - J[0][0]*J[2][1];
-  scratch[2][2] = J[0][0]*J[1][1] - J[0][1]*J[1][0];
-  real64 invDet = 1 / ( J[0][0] * scratch[0][0] + J[1][0] * scratch[1][0] + J[2][0] * scratch[2][0] );
-
-  for( int i=0; i<3; ++i )
-  {
-    for( int j=0; j<3; ++j )
-    {
-      J[i][j] = scratch[j][i] * invDet;
-    }
-  }
-
-  return invDet;
-}
-
+using namespace finiteElement;
 
 template< typename POLICY >
 void testKernelDriver()
@@ -84,7 +60,7 @@ void testKernelDriver()
     for( localIndex q=0; q<numQuadraturePoints; ++q )
     {
       real64 N[numNodes] = {0};
-      FiniteElementShapeKernel::shapeFunctionValues( q, N );
+      H1_Hexahedron_Lagrange1_GaussLegendre2::shapeFunctionValues( q, N );
       for( localIndex a=0; a<numNodes; ++a )
       {
         viewN( q, a ) = N[a];
@@ -99,9 +75,9 @@ void testKernelDriver()
     for( localIndex q=0; q<numQuadraturePoints; ++q )
     {
       real64 dNdX[numNodes][3] = {{0}};
-      viewDetJ[q] = FiniteElementShapeKernel::shapeFunctionDerivatives( q,
-                                                                        xCoords,
-                                                                        dNdX );
+      viewDetJ[q] = H1_Hexahedron_Lagrange1_GaussLegendre2::shapeFunctionDerivatives( q,
+                                                                                      xCoords,
+                                                                                      dNdX );
 
 
       for( localIndex a=0; a<numNodes; ++a )
@@ -160,7 +136,8 @@ void testKernelDriver()
           }
         }
       }
-      real64 const detJ = 1/inverse( J );
+
+      real64 const detJ = FiniteElementBase::inverse( J );
       EXPECT_FLOAT_EQ( detJ, viewDetJ[q] );
 
       for( localIndex a=0; a<numNodes; ++a )
@@ -211,6 +188,7 @@ TEST( FiniteElementShapeFunctions, testKernelHost )
 using namespace geosx;
 int main( int argc, char * argv[] )
 {
+  testing::InitGoogleTest();
 
   basicSetup( argc, argv, false );
 

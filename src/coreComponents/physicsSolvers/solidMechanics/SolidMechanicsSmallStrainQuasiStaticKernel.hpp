@@ -53,13 +53,11 @@ namespace SolidMechanicsLagrangianFEMKernels
  */
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
-          int NUM_NODES_PER_ELEM,
-          int UNUSED >
+          typename FE_TYPE >
 class QuasiStatic :
   public finiteElement::ImplicitKernelBase< SUBREGION_TYPE,
                                             CONSTITUTIVE_TYPE,
-                                            NUM_NODES_PER_ELEM,
-                                            NUM_NODES_PER_ELEM,
+                                            FE_TYPE,
                                             3,
                                             3 >
 {
@@ -67,14 +65,13 @@ public:
   /// Alias for the base class;
   using Base = finiteElement::ImplicitKernelBase< SUBREGION_TYPE,
                                                   CONSTITUTIVE_TYPE,
-                                                  NUM_NODES_PER_ELEM,
-                                                  NUM_NODES_PER_ELEM,
+                                                  FE_TYPE,
                                                   3,
                                                   3 >;
 
   /// Number of nodes per element...which is equal to the
   /// numTestSupportPointPerElem and numTrialSupportPointPerElem by definition.
-  static constexpr int numNodesPerElem = NUM_NODES_PER_ELEM;
+  static constexpr int numNodesPerElem = Base::numTestSupportPointsPerElem;
   using Base::numDofPerTestSupportPoint;
   using Base::numDofPerTrialSupportPoint;
   using Base::m_dofNumber;
@@ -94,7 +91,7 @@ public:
                EdgeManager const & edgeManager,
                FaceManager const & faceManager,
                SUBREGION_TYPE const & elementSubRegion,
-               FiniteElementBase const * const finiteElementSpace,
+               FE_TYPE const & finiteElementSpace,
                CONSTITUTIVE_TYPE * const inputConstitutiveType,
                arrayView1d< globalIndex const > const & inputDofNumber,
                globalIndex const rankOffset,
@@ -165,7 +162,7 @@ public:
   void setup( localIndex const k,
               StackVariables & stack ) const
   {
-    for( localIndex a=0; a<NUM_NODES_PER_ELEM; ++a )
+    for( localIndex a=0; a<numNodesPerElem; ++a )
     {
       localIndex const localNodeIndex = m_elemsToNodes( k, a );
 
@@ -194,7 +191,7 @@ public:
                                    StackVariables & stack ) const
   {
     real64 strainInc[6] = {0};
-    for( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )
+    for( localIndex a = 0; a < numNodesPerElem; ++a )
     {
       strainInc[0] = strainInc[0] + m_dNdX( k, q, a, 0 ) * stack.uhat_local[a][0];
       strainInc[1] = strainInc[1] + m_dNdX( k, q, a, 1 ) * stack.uhat_local[a][1];
@@ -264,9 +261,9 @@ public:
                                             StackVariables & stack,
                                             DYNAMICS_LAMBDA && dynamicsTerms = NoOpFunctors{} ) const
   {
-    for( localIndex a=0; a<NUM_NODES_PER_ELEM; ++a )
+    for( localIndex a=0; a<numNodesPerElem; ++a )
     {
-      for( localIndex b=0; b<NUM_NODES_PER_ELEM; ++b )
+      for( localIndex b=0; b<numNodesPerElem; ++b )
       {
         real64 const (&c)[6][6] = stack.constitutiveStiffness;
         stack.localJacobian[ a*3+0 ][ b*3+0 ] -= ( c[0][0]*m_dNdX( k, q, a, 0 )*m_dNdX( k, q, b, 0 ) +
@@ -334,9 +331,9 @@ public:
                                      m_gravityVector[1] * m_density( k, q ),
                                      m_gravityVector[2] * m_density( k, q ) };
 
-    real64 N[NUM_NODES_PER_ELEM];
-    FiniteElementShapeKernel::shapeFunctionValues( q, N );
-    for( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )
+    real64 N[numNodesPerElem];
+    FE_TYPE::shapeFunctionValues( q, N );
+    for( localIndex a = 0; a < numNodesPerElem; ++a )
     {
       stack.localResidual[ a * 3 + 0 ] -= ( stress[ 0 ] * m_dNdX( k, q, a, 0 ) +
                                             stress[ 5 ] * m_dNdX( k, q, a, 1 ) +
@@ -364,7 +361,7 @@ public:
     GEOSX_UNUSED_VAR( k );
     real64 maxForce = 0;
 
-    for( int localNode = 0; localNode < NUM_NODES_PER_ELEM; ++localNode )
+    for( int localNode = 0; localNode < numNodesPerElem; ++localNode )
     {
       for( int dim = 0; dim < numDofPerTestSupportPoint; ++dim )
       {
@@ -373,7 +370,7 @@ public:
         m_matrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( dof,
                                                                                 stack.localRowDofIndex,
                                                                                 stack.localJacobian[ numDofPerTestSupportPoint * localNode + dim ],
-                                                                                NUM_NODES_PER_ELEM * numDofPerTrialSupportPoint );
+                                                                                numNodesPerElem * numDofPerTrialSupportPoint );
 
         RAJA::atomicAdd< parallelDeviceAtomic >( &m_rhs[ dof ], stack.localResidual[ numDofPerTestSupportPoint * localNode + dim ] );
         maxForce = fmax( maxForce, fabs( stack.localResidual[ numDofPerTestSupportPoint * localNode + dim ] ) );

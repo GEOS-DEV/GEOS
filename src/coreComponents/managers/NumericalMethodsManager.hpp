@@ -20,8 +20,6 @@
 #define GEOSX_MANAGERS_NUMERICALMETHODSMANAGER_HPP_
 
 #include "dataRepository/Group.hpp"
-#include "finiteElement/basis/BasisFunctionManager.hpp"
-#include "finiteElement/quadrature/QuadratureRuleManager.hpp"
 #include "finiteElement/FiniteElementDiscretizationManager.hpp"
 #include "finiteVolume/FiniteVolumeManager.hpp"
 
@@ -74,26 +72,6 @@ public:
   };
 
   /**
-   * @brief @return Returns reference to const BasisFunctionManager m_basisFunctions.
-   */
-  BasisFunctionManager const & getBasisFunctions() const { return m_basisFunctions; }
-
-  /**
-   * @brief @return Returns reference to BasisFunctionManager m_basisFunctions.
-   */
-  BasisFunctionManager & getBasisFunctions()       { return m_basisFunctions; }
-
-  /**
-   * @brief @return Returns reference to const QuadratureRuleManager m_quadratureRules.
-   */
-  QuadratureRuleManager const & getQuadratureRules() const { return m_quadratureRules; }
-
-  /**
-   * @brief @return Returns reference to QuadratureRuleManager m_quadratureRules.
-   */
-  QuadratureRuleManager & getQuadratureRules()       { return m_quadratureRules; }
-
-  /**
    * @brief @return Returns reference to const FiniteElementDiscretizationManager m_finiteElementDiscretizationManager.
    */
   FiniteElementDiscretizationManager const & getFiniteElementDiscretizationManager() const { return m_finiteElementDiscretizationManager; }
@@ -114,11 +92,6 @@ public:
   FiniteVolumeManager const & getFiniteVolumeManager() const { return m_finiteVolumeManager; }
 
 private:
-  /// Contains basis functions available for use in the various discretization packages.
-  BasisFunctionManager m_basisFunctions;
-
-  /// Contains quadrature rules available for use in the various discretization packages.
-  QuadratureRuleManager m_quadratureRules;
 
   /// Contains the finite element discretizations
   FiniteElementDiscretizationManager m_finiteElementDiscretizationManager;

@@ -156,20 +156,18 @@ void EventManager::Run( dataRepository::Group * domain )
 
       // Calculate the event and sub-event forecasts
       subEvent->CheckEvents( m_time, m_dt, m_cycle, domain );
-      integer eventForecast = subEvent->GetForecast();
 
       // Print debug information for logLevel >= 1
       GEOSX_LOG_LEVEL_RANK_0( 1,
                               "     Event: " << m_currentSubEvent << " (" << subEvent->getName() << "), dt_request=" << subEvent->GetCurrentEventDtRequest() << ", forecast=" <<
-                              eventForecast );
+                              subEvent->getForecast() );
 
       // Execute, signal events
-      if( eventForecast == 1 )
+      if( subEvent->hasToPrepareForExec() )
       {
         subEvent->SignalToPrepareForExecution( m_time, m_dt, m_cycle, domain );
       }
-
-      if( eventForecast <= 0 )
+      else if( subEvent->isReadyForExec() )
       {
         subEvent->Execute( m_time, m_dt, m_cycle, 0, 0, domain );
       }
