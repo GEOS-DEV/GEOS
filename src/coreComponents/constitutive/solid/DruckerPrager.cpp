@@ -39,8 +39,8 @@ DruckerPrager::DruckerPrager( std::string const & name, Group * const parent ):
   m_hardeningRate(),
   m_newCohesion(),
   m_oldCohesion(),
-  m_newStress(),
-  m_oldStress()
+  m_newElasticStrain(),
+  m_oldElasticStrain()
 {
   // register default values
   
@@ -104,13 +104,13 @@ DruckerPrager::DruckerPrager( std::string const & name, Group * const parent ):
     setApplyDefaultValue( -1 )->
     setDescription( "Old cohesion field" );
   
-  registerWrapper( viewKeyStruct::newStressString, &m_newStress )->
+  registerWrapper( viewKeyStruct::newElasticStrainString, &m_newElasticStrain )->
     setApplyDefaultValue( -1 )->
-    setDescription( "New stress field" );
+    setDescription( "New elastic strain field" );
   
-  registerWrapper( viewKeyStruct::oldStressString, &m_oldStress )->
+  registerWrapper( viewKeyStruct::oldElasticStrainString, &m_oldElasticStrain )->
     setApplyDefaultValue( -1 )->
-    setDescription( "Old stress field" );
+    setDescription( "Old elastic strain field" );
 }
 
 
@@ -137,36 +137,43 @@ DruckerPrager::DeliverClone( string const & name,
   newConstitutiveRelation->m_defaultCohesion         = m_defaultCohesion;
   newConstitutiveRelation->m_defaultHardeningRate    = m_defaultHardeningRate;
   
-  newConstitutiveRelation->m_bulkModulus = m_bulkModulus;
-  newConstitutiveRelation->m_shearModulus = m_shearModulus;
+  newConstitutiveRelation->m_bulkModulus      = m_bulkModulus;
+  newConstitutiveRelation->m_shearModulus     = m_shearModulus;
   newConstitutiveRelation->m_tanFrictionAngle = m_tanFrictionAngle;
   newConstitutiveRelation->m_tanDilationAngle = m_tanDilationAngle;
-  newConstitutiveRelation->m_hardeningRate = m_hardeningRate;
-  newConstitutiveRelation->m_newCohesion = m_newCohesion;
-  newConstitutiveRelation->m_oldCohesion = m_oldCohesion;
-  newConstitutiveRelation->m_newStress = m_newStress;
-  newConstitutiveRelation->m_oldStress = m_oldStress;
+  newConstitutiveRelation->m_hardeningRate    = m_hardeningRate;
+  newConstitutiveRelation->m_newCohesion      = m_newCohesion;
+  newConstitutiveRelation->m_oldCohesion      = m_oldCohesion;
+  newConstitutiveRelation->m_newElasticStrain = m_newElasticStrain;
+  newConstitutiveRelation->m_oldElasticStrain = m_oldElasticStrain;
 }
 
 void DruckerPrager::AllocateConstitutiveData( dataRepository::Group * const parent,
-                                                       localIndex const numConstitutivePointsPerParentIndex )
+                                              localIndex const numConstitutivePointsPerParentIndex )
 {
   SolidBase::AllocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
-  this->resize( parent->size() );
   
-  m_bulkModulus.resize( parent->size() );
-  m_shearModulus.resize( parent->size() );
-  m_tanFrictionAngle.resize( parent->size() );
-  m_tanDilationAngle.resize( parent->size() );
-  m_hardeningRate.resize( parent->size() );
+  localIndex const numElems = parent->size();
+  localIndex const numComponents = 6;
   
-  m_newCohesion.resize( parent->size(), numConstitutivePointsPerParentIndex );
-  m_oldCohesion.resize( parent->size(), numConstitutivePointsPerParentIndex );
+  this->resize( numElems ); // TODO: resize handled by base?
   
-  m_newStress.resize( parent->size(), numConstitutivePointsPerParentIndex, 6 );
-  m_oldStress.resize( parent->size(), numConstitutivePointsPerParentIndex, 6 ); // TODO: figure out how to set initial stress
+  // 1d arrays
+  m_bulkModulus.resize( numElems );
+  m_shearModulus.resize( numElems );
+  m_tanFrictionAngle.resize( numElems );
+  m_tanDilationAngle.resize( numElems );
+  m_hardeningRate.resize( numElems );
   
-  // set arrays to default values
+  // 2d arrays
+  m_newCohesion.resize( numElems, numConstitutivePointsPerParentIndex );
+  m_oldCohesion.resize( numElems, numConstitutivePointsPerParentIndex );
+  
+  // 3d arrays
+  m_newElasticStrain.resize( numElems, numConstitutivePointsPerParentIndex, numComponents );
+  m_oldElasticStrain.resize( numElems, numConstitutivePointsPerParentIndex, numComponents ); // TODO: figure out how to set initial stress
+  
+  // set default values
   m_bulkModulus.setValues< serialPolicy >( m_defaultBulkModulus );
   m_shearModulus.setValues< serialPolicy >( m_defaultShearModulus );
   m_tanFrictionAngle.setValues< serialPolicy >( m_defaultTanFrictionAngle );

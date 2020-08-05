@@ -72,22 +72,20 @@ TEST( DruckerPragerTests, testModel )
   real64 inc = 1e-4; // tension
   real64 total = 0;
   
-  array2d< real64 > strainIncrement(1,6);
-                    strainIncrement = 0;
-                    strainIncrement[0][0] = inc;
+  real64 strainIncrement[6] = {inc,0,0,0,0,0};
+  real64 stress[6];
+  real64 stiffness[6][6];
   
-  array2d< real64 > stress(1,6);
-  array3d< real64 > stiffness(1,6,6);
-  
-  for(localIndex loadstep=0; loadstep < 40; ++loadstep)
+
+  for(localIndex loadstep=0; loadstep < 100; ++loadstep)
   {
-    cmw.SmallStrainUpdate(0,0,strainIncrement[0],stress[0],stiffness[0]);
+    cmw.SmallStrainUpdate(0,0,strainIncrement,stress,stiffness);
     cmw.SaveConvergedState(0,0);
     
     total += inc;
     
-    real64 mean = (stress[0][0]+stress[0][1]+stress[0][2])/3;
-    real64 deviator = stress[0][0]-stress[0][1];
+    real64 mean = (stress[0]+stress[1]+stress[2])/3;
+    real64 deviator = stress[0]-stress[1];
     
     std::cout << mean << " " << deviator << " " << total << std::endl;
   }
@@ -96,35 +94,35 @@ TEST( DruckerPragerTests, testModel )
   {
     for(localIndex j=0; j<6; ++j)
     {
-      std::cout << stiffness[0][i][j] << " ";
+      std::cout << stiffness[i][j] << " ";
     }
     std::cout << "\n";
   }
-  
+    
   // finite-difference check of tangent stiffness
   
-  array2d< real64 > fd_stiffness(6,6);
-  array2d< real64 > pstress(1,6);
-  array3d< real64 > pstiffness(1,6,6);
+  real64 fd_stiffness[6][6];
+  real64 pstress[6];
+  real64 pstiffness[6][6];
   
   real64 eps = 1e-12;
   
-  cmw.SmallStrainUpdate(0,0,strainIncrement[0],stress[0],stiffness[0]);
+  cmw.SmallStrainUpdate(0,0,strainIncrement,stress,stiffness);
   
   for(localIndex i=0; i<6; ++i)
   {
-    strainIncrement[0][i] += eps;
+    strainIncrement[i] += eps;
     
     if(i>0)
     {
-      strainIncrement[0][i-1] -= eps;
+      strainIncrement[i-1] -= eps;
     }
     
-    cmw.SmallStrainUpdate(0,0,strainIncrement[0],pstress[0],pstiffness[0]);
+    cmw.SmallStrainUpdate(0,0,strainIncrement,pstress,pstiffness);
     
     for(localIndex j=0; j<6; ++j)
     {
-      fd_stiffness[j][i] = (pstress[0][j]-stress[0][j])/eps;
+      fd_stiffness[j][i] = (pstress[j]-stress[j])/eps;
     }
   }
   

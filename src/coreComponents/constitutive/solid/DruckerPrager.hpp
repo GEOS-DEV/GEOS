@@ -20,7 +20,7 @@
 #define GEOSX_CONSTITUTIVE_SOLID_DRUCKERPRAGER_HPP
 
 #include "SolidBase.hpp"
-#include "linearAlgebra/interfaces/BlasLapackLA.hpp"
+#include "SolidUtilities.hpp"
 #include "LvArray/src/tensorOps.hpp"
 
 namespace geosx
@@ -51,8 +51,8 @@ public:
                         arrayView1d< real64 const > const & hardeningRate,
                         arrayView2d< real64 > const & newCohesion,
                         arrayView2d< real64 > const & oldCohesion,
-                        arrayView3d< real64, solid::STRESS_USD > const & newStress,
-                        arrayView3d< real64, solid::STRESS_USD > const & oldStress,
+                        arrayView3d< real64, solid::STRESS_USD > const & newElasticStrain,
+                        arrayView3d< real64, solid::STRESS_USD > const & oldElasticStrain,
                         arrayView3d< real64, solid::STRESS_USD > const & stress ):
     SolidBaseUpdates( stress ),
     m_bulkModulus( bulkModulus ),
@@ -62,8 +62,8 @@ public:
     m_hardeningRate( hardeningRate ),
     m_newCohesion( newCohesion ),
     m_oldCohesion( oldCohesion ),
-    m_newStress( newStress ),
-    m_oldStress( oldStress )
+    m_newElasticStrain( newElasticStrain ),
+    m_oldElasticStrain( oldElasticStrain )
   {}
 
   /// Default copy constructor
@@ -114,11 +114,11 @@ private:
   /// A reference to the ArrayView holding the old cohesion for each integration point
   arrayView2d< real64 > const m_oldCohesion;
   
-  /// A reference to the ArrayView holding the new stress for each integration point
-  arrayView3d< real64, solid::STRESS_USD > const m_newStress;
+  /// A reference to the ArrayView holding the new elastic strain for each integration point
+  arrayView3d< real64, solid::STRESS_USD > const m_newElasticStrain;
   
-  /// A reference to the ArrayView holding the old stress for each integration point
-  arrayView3d< real64, solid::STRESS_USD > const m_oldStress;
+  /// A reference to the ArrayView holding the old elastic strain for each integration point
+  arrayView3d< real64, solid::STRESS_USD > const m_oldElasticStrain;
 };
 
 ///////////////////////// new proposal /////////////////////////////////////////
@@ -142,74 +142,29 @@ void DruckerPragerUpdates::SmallStrainUpdate( localIndex const k,
   
   real64 cohesion = oldCohesion;
   
-  // set stiffness to elastic predictor
+  // elastic predictor (assume strainIncrement is all elastic)
   
+  real64 newElasticStrain[6];
   for(localIndex i=0; i<6; ++i)
   {
-    for(localIndex j=0; j<6; ++j)
-    {
-      stiffness[i][j] = 0;
-    }
+    newElasticStrain[i] = m_oldElasticStrain[k][q][i] + strainIncrement[i];
   }
   
-  stiffness[0][0] = lame + 2*shear;
-  stiffness[0][1] = lame;
-  stiffness[0][2] = lame;
+  // elastic strain invariants (scalar)
+  
+  real64 volStrain;
+  real64 devStrain;
+  real64 deviator[6];
+  
+  twoInvariant::strainDecomposition(newElasticStrain,
+                                    volStrain,
+                                    devStrain,
+                                    deviator);
 
-  stiffness[1][0] = lame;
-  stiffness[1][1] = lame + 2*shear;
-  stiffness[1][2] = lame;
-
-  stiffness[2][0] = lame;
-  stiffness[2][1] = lame;
-  stiffness[2][2] = lame + 2*shear;
-
-  stiffness[3][3] = shear;
-  stiffness[4][4] = shear;
-  stiffness[5][5] = shear;
-
-  // elastic predictor
-  // newStress = oldStress + stiffness*strainIncrement
+  // trial stress invariants
   
-  for(localIndex i=0; i<6; ++i)
-  {
-    stress[i] = m_oldStress[k][q][i];
-    
-    for(localIndex j=0; j<6; ++j)
-    {
-      stress[i] += stiffness[i][j]*strainIncrement[j];
-    }
-  }
-
-  // two-invariant decomposition in P-Q space (mean & deviatoric stress)
-  
-  real64 trialP = 0;
-  for(localIndex i=0; i<3; ++i)
-  {
-    trialP += stress[i];
-  }
-  trialP /= 3;
-  
-  array1d< real64 > deviator(6);  // array allocation
-  for(localIndex i=0; i<3; ++i)
-  {
-    deviator[i] = stress[i]-trialP;
-    deviator[i+3] = stress[i+3];
-  }
-  
-  real64 trialQ = 0;
-  for(localIndex i=0; i<3; ++i)
-  {
-    trialQ += deviator[i]*deviator[i];
-    trialQ += deviator[i+3]*deviator[i+3];
-  }
-  trialQ = std::sqrt(trialQ) + 1e-15; // perturbed to avoid divide by zero when Q=0;
-  
-  for(localIndex i=0; i<6; ++i)
-  {
-    deviator[i] /= trialQ; // normalized deviatoric direction, "nhat"
-  }
-  trialQ *= std::sqrt(3./2.);
+  real64 trialP = bulk * volStrain;
+  real64 trialQ = 3 * shear * devStrain;
   
   // check yield function F <= 0
   
@@ -292,15 +247,11 @@ void DruckerPragerUpdates::SmallStrainUpdate( localIndex const k,
     
     // construct stress = P*eye + sqrt(2/3)*Q*nhat
     
-    for(localIndex i=0; i<6; ++i)
-    {
-      stress[i] = sqrt(2./3.)*solution[1]*deviator[i];
-    }
-    for(localIndex i=0; i<3; ++i)
-    {
-      stress[i] += solution[0];
-    }
-    
+    twoInvariant::stressRecomposition(solution[0],
+                                      solution[1],
+                                      deviator,
+                                      stress);
+                                          
     // construct consistent tangent operator
     
     for(localIndex i=0; i<6; ++i)
@@ -338,7 +289,38 @@ void DruckerPragerUpdates::SmallStrainUpdate( localIndex const k,
       }
     }
     
-  } // end plastic branch
+  }
+  else // elasticity branch
+  {
+    twoInvariant::stressRecomposition(trialP,
+                                      trialQ,
+                                      deviator,
+                                      stress);
+                                      
+    for(localIndex i=0; i<6; ++i)
+    {
+      for(localIndex j=0; j<6; ++j)
+      {
+        stiffness[i][j] = 0;
+      }
+    }
+    
+    stiffness[0][0] = lame + 2*shear;
+    stiffness[0][1] = lame;
+    stiffness[0][2] = lame;
+
+    stiffness[1][0] = lame;
+    stiffness[1][1] = lame + 2*shear;
+    stiffness[1][2] = lame;
+
+    stiffness[2][0] = lame;
+    stiffness[2][1] = lame;
+    stiffness[2][2] = lame + 2*shear;
+
+    stiffness[3][3] = shear;
+    stiffness[4][4] = shear;
+    stiffness[5][5] = shear;
+  }
   
   // remember history variables before returning
   
@@ -346,8 +328,10 @@ void DruckerPragerUpdates::SmallStrainUpdate( localIndex const k,
   
   for(localIndex i=0; i<6; ++i)
   {
-    m_newStress[k][q][i] = stress[i];
+    m_newElasticStrain[k][q][i] = newElasticStrain[i];
   }
+  
+  return;
 }
 
 
@@ -360,7 +344,7 @@ void DruckerPragerUpdates::SaveConvergedState( localIndex const k,
   
   for(localIndex i=0; i<6; ++i)
   {
-    m_oldStress[k][q][i] = m_newStress[k][q][i];
+    m_oldElasticStrain[k][q][i] = m_newElasticStrain[k][q][i];
   }
 }
 
@@ -459,10 +443,10 @@ public:
     static constexpr auto oldCohesionString  = "OldCohesion";
     
         /// string/key for cohesion
-    static constexpr auto newStressString  = "NewStress";
+    static constexpr auto newElasticStrainString  = "NewElasticStrain";
     
         /// string/key for cohesion
-    static constexpr auto oldStressString  = "OldStress";
+    static constexpr auto oldElasticStrainString  = "OldElasticStrain";
   };
 
   /**
@@ -478,9 +462,9 @@ public:
                                  m_hardeningRate,
                                  m_newCohesion,
                                  m_oldCohesion,
-                                 m_newStress,
-                                 m_oldStress,
-                                 m_stress ); // TODO: m_stress is redundant with m_newStress
+                                 m_newElasticStrain,
+                                 m_oldElasticStrain,
+                                 m_stress );
   }
 
 protected:
@@ -528,11 +512,11 @@ private:
   /// History variable: The previous cohesion value for each quadrature point
   array2d< real64 > m_oldCohesion;
   
-  /// History variable: The current stress for each quadrature point
-  array3d< real64, solid::STRESS_PERMUTATION > m_newStress; //TODO: redundant storage with base m_stress
+  /// History variable: The current elastic strain for each quadrature point
+  array3d< real64, solid::STRESS_PERMUTATION > m_newElasticStrain;
   
-  /// History variable: The previous stress for each quadrature point.
-  array3d< real64, solid::STRESS_PERMUTATION > m_oldStress;
+  /// History variable: The previous elastic strain for each quadrature point.
+  array3d< real64, solid::STRESS_PERMUTATION > m_oldElasticStrain;
 };
 
 } /* namespace constitutive */
