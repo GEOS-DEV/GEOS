@@ -71,9 +71,9 @@ void HaltEvent::EstimateEventTiming( real64 const GEOSX_UNUSED_PARAM( time ),
   forecast = forecast_global;
 #endif
 
-  SetForecast( forecast );
+  setForecast( forecast );
 
-  if( this->GetForecast() <= 0 )
+  if( this->isReadyForExec() )
   {
     this->SetExitFlag( 1 );
   }
