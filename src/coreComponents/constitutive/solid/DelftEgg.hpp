@@ -45,17 +45,17 @@ public:
    * @param[in] stress The ArrayView holding the stress data for each quadrature point.
    */
   DelftEggUpdates( arrayView1d< real64 const > const & shearModulus,
-                        arrayView2d< real64 const > const & refPressure,
-                        arrayView2d< real64 const > const & refStrainVol,
-                        arrayView1d< real64 const > const & recompressionIndex,
-                        arrayView1d< real64 const > const & virginCompressionIndex,
-                        arrayView1d< real64 const > const & cslSlope,
-                        arrayView1d< real64 const > const & shapeParameter,
-                        arrayView2d< real64 > const & newPreConsolidationPressure,
-                        arrayView2d< real64 > const & oldPreConsolidationPressure,
-                        arrayView3d< real64, solid::STRESS_USD > const & newStress,
-                        arrayView3d< real64, solid::STRESS_USD > const & oldStress,
-                        arrayView3d< real64, solid::STRESS_USD > const & stress):
+                   arrayView2d< real64 const > const & refPressure,
+                   arrayView2d< real64 const > const & refStrainVol,
+                   arrayView1d< real64 const > const & recompressionIndex,
+                   arrayView1d< real64 const > const & virginCompressionIndex,
+                   arrayView1d< real64 const > const & cslSlope,
+                   arrayView1d< real64 const > const & shapeParameter,
+                   arrayView2d< real64 > const & newPreConsolidationPressure,
+                   arrayView2d< real64 > const & oldPreConsolidationPressure,
+                   arrayView3d< real64, solid::STRESS_USD > const & newStress,
+                   arrayView3d< real64, solid::STRESS_USD > const & oldStress,
+                   arrayView3d< real64, solid::STRESS_USD > const & stress):
     SolidBaseUpdates( stress ),
     m_shearModulus( shearModulus ),
     m_refPressure( refPressure ),
@@ -65,7 +65,7 @@ public:
     m_cslSlope( cslSlope ),
     m_shapeParameter( shapeParameter ),
     m_newPreConsolidationPressure( newPreConsolidationPressure ),
-    m_oldPreConsolidationPresure( oldPreConsolidationPressure ),
+    m_oldPreConsolidationPressure( oldPreConsolidationPressure ),
     m_newStress( newStress ),
     m_oldStress( oldStress )
   {}
@@ -88,9 +88,10 @@ public:
   GEOSX_HOST_DEVICE
   virtual void SmallStrainUpdate( localIndex const k,
                                   localIndex const q,
-                                  arraySlice1d< real64 const > const & strainIncrement,
-                                  arraySlice1d< real64 > const & stress,
-                                  arraySlice2d< real64 > const & stiffness ) override final;
+                                  real64 const ( & strainIncrement )[6],
+                                  real64 ( & stress )[6],
+                                  real64 ( & stiffness )[6][6] ) override final;
+  
   
   GEOSX_HOST_DEVICE
   virtual void SaveConvergedState( localIndex const k,
@@ -137,10 +138,10 @@ private:
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void DelftEggUpdates::SmallStrainUpdate( localIndex const k,
-                                              localIndex const q,
-                                              arraySlice1d< real64 const > const & strainIncrement,
-                                              arraySlice1d< real64 > const & stress,
-                                              arraySlice2d< real64 > const & stiffness )
+                                         localIndex const q,
+                                         real64 const ( & strainIncrement )[6],
+                                         real64 ( & stress )[6],
+                                         real64 ( & stiffness )[6][6] )
 {
   real64 const oldPc  = m_oldPreConsolidationPressure[k][q]; //pre-consolidation pressure
   real64 const mu     = m_shearModulus[k];

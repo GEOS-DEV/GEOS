@@ -15,7 +15,7 @@
 #include "gtest/gtest.h"
 
 #include "constitutive/ConstitutiveManager.hpp"
-#include "constitutive/solid/DruckerPrager.hpp"
+#include "constitutive/solid/DelftEgg.hpp"
 
 #include "dataRepository/xmlWrapper.hpp"
 
@@ -25,21 +25,23 @@ using namespace ::geosx::constitutive;
 
 // NOTE: using this for debugging, will set up proper unit tests later
 
-TEST( DruckerPragerTests, testModel )
+TEST( DelftEggTests, testModel )
 {
   ConstitutiveManager constitutiveManager( "constitutive", nullptr );
 
   string const inputStream =
     "<Constitutive>"
-    "   <DruckerPrager"
+    "   <DelftEgg"
     "      name=\"granite\" "
     "      defaultDensity=\"2700\" "
-    "      defaultBulkModulus=\"1.0\" "
-    "      defaultShearModulus=\"1.0\" "
-    "      defaultTanFrictionAngle=\"1.0\" "
-    "      defaultTanDilationAngle=\"0.5\" "
-    "      defaultHardeningRate=\"0.0\" "
-    "      defaultCohesion=\"1.0\"/>"
+    "      defaultRefPressure=\"-1000.0\" "
+    "      defaultRefStrainVol=\"-1e-4\" "
+    "      defaultShearModulus=\"1000.0\" "
+    "      defaultPreConsolidationPressure =\"10.0\" "
+    "      defaultShapeParameter=\"1.0\" "
+    "      defaultCslSlope=\"1.0\" "
+    "      defaultVirginCompressionIndex=\"0.01\" "
+    "      defaultRecompressionIndex=\"0.1\"/>"
     "</Constitutive>";
 
   xmlWrapper::xmlDocument xmlDocument;
@@ -61,13 +63,13 @@ TEST( DruckerPragerTests, testModel )
   dataRepository::Group disc( "discretization", nullptr );
   disc.resize( numElem );
   
-  DruckerPrager & cm = *(constitutiveManager.GetConstitutiveRelation<DruckerPrager>("granite"));
+  DelftEgg & cm = *(constitutiveManager.GetConstitutiveRelation<DelftEgg>("granite"));
   cm.AllocateConstitutiveData( &disc, numQuad );
   
   EXPECT_EQ( cm.size(), numElem );
   EXPECT_EQ( cm.numQuadraturePoints(), numQuad );
   
-  DruckerPrager::KernelWrapper cmw = cm.createKernelWrapper();
+  DelftEgg::KernelWrapper cmw = cm.createKernelWrapper();
   
   real64 inc = 1e-4; // tension
   real64 total = 0;
