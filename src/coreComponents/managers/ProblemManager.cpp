@@ -309,7 +309,7 @@ void ProblemManager::GenerateDocumentation()
   Group * commandLine = GetGroup< Group >( groupKeys.commandLine );
   std::string const & schemaName = commandLine->getReference< std::string >( viewKeys.schemaFileName );
 
-  if( not schemaName.empty() )
+  if( !schemaName.empty() )
   {
     // Generate an extensive data structure
     GenerateDataStructureSkeleton( 0 );
