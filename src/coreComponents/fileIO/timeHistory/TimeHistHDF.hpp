@@ -13,7 +13,7 @@
  */
 
 /**
- * @file HDFFile.hpp
+ * @file TimeHistHDF.hpp
  */
 
 #ifndef GEOSX_HDFFILE_HPP_
