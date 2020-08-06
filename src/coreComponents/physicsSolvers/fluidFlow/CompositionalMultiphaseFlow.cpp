@@ -41,6 +41,8 @@ using namespace dataRepository;
 using namespace constitutive;
 using namespace CompositionalMultiphaseFlowKernels;
 
+static constexpr real64 minDensForDivision = 1e-10;
+
 CompositionalMultiphaseFlow::CompositionalMultiphaseFlow( const string & name,
                                                           Group * const parent )
   :
@@ -1232,7 +1234,7 @@ real64 CompositionalMultiphaseFlow::ScalingForSystemSolution( DomainPartition co
     return 1.0;
   }
 
-  real64 constexpr eps = 1e-10;
+  real64 constexpr eps = minDensForDivision;
   real64 const maxCompFracChange = m_maxCompFracChange;
 
   localIndex const NC = m_numComponents;
@@ -1301,6 +1303,8 @@ bool CompositionalMultiphaseFlow::CheckSystemSolution( DomainPartition const & d
                                                        arrayView1d< real64 const > const & localSolution,
                                                        real64 const scalingFactor )
 {
+  real64 constexpr eps = minDensForDivision;
+
   localIndex const NC = m_numComponents;
   integer const allowCompDensChopping = m_allowCompDensChopping;
 
@@ -1351,7 +1355,7 @@ bool CompositionalMultiphaseFlow::CheckSystemSolution( DomainPartition const & d
             real64 const newDens = compDens[ei][ic] + dCompDens[ei][ic] + scalingFactor * localSolution[localRow + ic + 1];
             totalDens += (newDens > 0.0) ? newDens : 0.0;
           }
-          check.min( totalDens >= 1e-6 );
+          check.min( totalDens >= eps );
         }
       }
     } );

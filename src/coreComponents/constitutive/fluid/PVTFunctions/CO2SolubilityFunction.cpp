@@ -28,17 +28,13 @@ using namespace stringutilities;
 namespace PVTProps
 {
 
+constexpr real64 minForDivision = 1e-10;
+
 constexpr real64 T_K_f = 273.15;
 constexpr real64 P_Pa_f = 1e+5;
-
 constexpr real64 P_c = 73.773 * P_Pa_f;
 constexpr real64 T_c = 304.1282;
-//constexpr real64 rho_c = 467.6;
-
-//constexpr real64 R = 188.9241;
-
 constexpr real64 Rgas = 8.314467;
-
 constexpr real64 V_c = Rgas*T_c/P_c;
 
 constexpr real64 acoef[] =
@@ -345,9 +341,9 @@ void CO2SolubilityFunction::Partition( EvalVarArgs const & pressure, EvalVarArgs
 
   //Y = C/W = z/(1-z)
 
-  if( compFraction[m_CO2Index].m_var > 1.0 - 1e-10 )
+  if( compFraction[m_CO2Index].m_var > 1.0 - minForDivision )
   {
-    Y = compFraction[m_CO2Index] * 1e10;
+    Y = compFraction[m_CO2Index] / minForDivision;
   }
   else
   {
