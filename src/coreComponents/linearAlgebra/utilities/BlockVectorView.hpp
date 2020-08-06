@@ -141,16 +141,19 @@ public:
 
   /**
    * @brief Get block size.
+   * @return The block size.
    */
   localIndex blockSize() const;
 
   /**
    * @brief Get global size.
+   * @return The global size.
    */
   globalIndex globalSize() const;
 
   /**
-   * @brief Get global size.
+   * @brief Get local size.
+   * @return The local size.
    */
   localIndex localSize() const;
 

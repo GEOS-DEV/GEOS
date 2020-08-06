@@ -42,14 +42,12 @@ namespace finiteElement
  */
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
-          int NUM_TEST_SUPPORT_POINTS_PER_ELEM,
-          int NUM_TRIAL_SUPPORT_POINTS_PER_ELEM,
+          typename FE_TYPE,
           int NUM_DOF_PER_TEST_SP,
           int NUM_DOF_PER_TRIAL_SP >
 class SparsityKernelBase : public ImplicitKernelBase< SUBREGION_TYPE,
                                                       CONSTITUTIVE_TYPE,
-                                                      NUM_TEST_SUPPORT_POINTS_PER_ELEM,
-                                                      NUM_TRIAL_SUPPORT_POINTS_PER_ELEM,
+                                                      FE_TYPE,
                                                       NUM_DOF_PER_TEST_SP,
                                                       NUM_DOF_PER_TRIAL_SP >
 {
@@ -57,8 +55,7 @@ public:
   /// Alias for the base class. (i.e. #geosx::finiteElement::ImplicitKernelBase)
   using Base = ImplicitKernelBase< SUBREGION_TYPE,
                                    CONSTITUTIVE_TYPE,
-                                   NUM_TEST_SUPPORT_POINTS_PER_ELEM,
-                                   NUM_TRIAL_SUPPORT_POINTS_PER_ELEM,
+                                   FE_TYPE,
                                    NUM_DOF_PER_TEST_SP,
                                    NUM_DOF_PER_TRIAL_SP >;
 
@@ -83,7 +80,7 @@ public:
                       EdgeManager const & edgeManager,
                       FaceManager const & faceManager,
                       SUBREGION_TYPE const & elementSubRegion,
-                      FiniteElementBase const * const finiteElementSpace,
+                      FE_TYPE const & finiteElementSpace,
                       CONSTITUTIVE_TYPE * const inputConstitutiveType,
                       arrayView1d< globalIndex const > const & inputDofNumber,
                       globalIndex const rankOffset,
@@ -146,8 +143,7 @@ private:
  */
 template< template< typename,
                     typename,
-                    int,
-                    int > class KERNEL_TEMPLATE >
+                    typename > class KERNEL_TEMPLATE >
 struct SparsityHelper
 {
 
@@ -160,20 +156,16 @@ struct SparsityHelper
    */
   template< typename SUBREGION_TYPE,
             typename CONSTITUTIVE_TYPE,
-            int NUM_TEST_SUPPORT_POINTS_PER_ELEM,
-            int NUM_TRIAL_SUPPORT_POINTS_PER_ELEM >
+            typename FE_TYPE >
   using Kernel = SparsityKernelBase< SUBREGION_TYPE,
                                      CONSTITUTIVE_TYPE,
-                                     NUM_TEST_SUPPORT_POINTS_PER_ELEM,
-                                     NUM_TRIAL_SUPPORT_POINTS_PER_ELEM,
+                                     FE_TYPE,
                                      KERNEL_TEMPLATE< SUBREGION_TYPE,
                                                       CONSTITUTIVE_TYPE,
-                                                      NUM_TEST_SUPPORT_POINTS_PER_ELEM,
-                                                      NUM_TRIAL_SUPPORT_POINTS_PER_ELEM >::numDofPerTestSupportPoint,
+                                                      FE_TYPE >::numDofPerTestSupportPoint,
                                      KERNEL_TEMPLATE< SUBREGION_TYPE,
                                                       CONSTITUTIVE_TYPE,
-                                                      NUM_TEST_SUPPORT_POINTS_PER_ELEM,
-                                                      NUM_TRIAL_SUPPORT_POINTS_PER_ELEM >::numDofPerTrialSupportPoint
+                                                      FE_TYPE >::numDofPerTrialSupportPoint
                                      >;
 };
 
@@ -191,8 +183,7 @@ struct SparsityHelper
  * @param mesh The MeshLevel object.
  * @param targetRegions The names of the target regions(of type @p REGION_TYPE)
  *                      to apply the @p KERNEL_TEMPLATE.
- * @param feDiscretization A pointer to the finite element discretization/space
- *                         object.
+ * @param discretizationName The name of the finite element discretization.
  * @param inputDofNumber The global degree of freedom numbers.
  * @param rankOffset Offset of dof indices on curren rank.
  * @param inputSparsityPattern The local sparsity pattern to fill.
@@ -209,12 +200,11 @@ template< typename POLICY,
           typename REGION_TYPE,
           template< typename SUBREGION_TYPE,
                     typename CONSTITUTIVE_TYPE,
-                    int NUM_TEST_SUPPORT_POINTS_PER_ELEM,
-                    int NUM_TRIAL_SUPPORT_POINTS_PER_ELEM > class KERNEL_TEMPLATE >
+                    typename FE_TYPE > class KERNEL_TEMPLATE >
 static
 real64 fillSparsity( MeshLevel & mesh,
                      arrayView1d< string const > const & targetRegions,
-                     FiniteElementDiscretization const * const feDiscretization,
+                     string const & discretizationName,
                      arrayView1d< globalIndex const > const & inputDofNumber,
                      globalIndex const rankOffset,
                      SparsityPattern< globalIndex > & inputSparsityPattern,
@@ -226,8 +216,8 @@ real64 fillSparsity( MeshLevel & mesh,
                                 SparsityHelper< KERNEL_TEMPLATE >::template Kernel
                                 >( mesh,
                                    targetRegions,
+                                   discretizationName,
                                    array1d< string >(),
-                                   feDiscretization,
                                    inputDofNumber,
                                    rankOffset,
                                    inputSparsityPattern,

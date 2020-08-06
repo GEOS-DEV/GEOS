@@ -551,36 +551,9 @@
 	</xsd:complexType>
 	<xsd:complexType name="NumericalMethodsType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
-			<xsd:element name="BasisFunctions" type="BasisFunctionsType" maxOccurs="1" />
 			<xsd:element name="FiniteElements" type="FiniteElementsType" maxOccurs="1" />
 			<xsd:element name="FiniteVolume" type="FiniteVolumeType" maxOccurs="1" />
-			<xsd:element name="QuadratureRules" type="QuadratureRulesType" maxOccurs="1" />
 		</xsd:choice>
-	</xsd:complexType>
-	<xsd:complexType name="BasisFunctionsType">
-		<xsd:choice minOccurs="0" maxOccurs="unbounded">
-			<xsd:element name="LagrangeBasis1" type="LagrangeBasis1Type" />
-			<xsd:element name="LagrangeBasis2" type="LagrangeBasis2Type" />
-			<xsd:element name="LagrangeBasis3" type="LagrangeBasis3Type" />
-		</xsd:choice>
-	</xsd:complexType>
-	<xsd:complexType name="LagrangeBasis1Type">
-		<!--degree => Basis degree-->
-		<xsd:attribute name="degree" type="integer" use="required" />
-		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
-	</xsd:complexType>
-	<xsd:complexType name="LagrangeBasis2Type">
-		<!--degree => Basis degree-->
-		<xsd:attribute name="degree" type="integer" use="required" />
-		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
-	</xsd:complexType>
-	<xsd:complexType name="LagrangeBasis3Type">
-		<!--degree => Basis degree-->
-		<xsd:attribute name="degree" type="integer" use="required" />
-		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="FiniteElementsType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -590,12 +563,10 @@
 		</xsd:choice>
 	</xsd:complexType>
 	<xsd:complexType name="FiniteElementSpaceType">
-		<!--basis => (no description available)-->
-		<xsd:attribute name="basis" type="string" use="required" />
-		<!--parentSpace => (no description available)-->
-		<xsd:attribute name="parentSpace" type="string" use="required" />
-		<!--quadrature => (no description available)-->
-		<xsd:attribute name="quadrature" type="string" use="required" />
+		<!--formulation => Specifier to indicate any specialized formuations. For instance, one of the many enhanced assumed strain methods of the Hexahedron parent shape would be indicated here-->
+		<xsd:attribute name="formulation" type="string" default="default" />
+		<!--order => The order of the finite element basis.-->
+		<xsd:attribute name="order" type="integer" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
@@ -675,31 +646,6 @@
 		<xsd:attribute name="fieldName" type="string" use="required" />
 		<!--targetRegions => List of regions to build the stencil for-->
 		<xsd:attribute name="targetRegions" type="string_array" default="{}" />
-		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
-	</xsd:complexType>
-	<xsd:complexType name="QuadratureRulesType">
-		<xsd:choice minOccurs="0" maxOccurs="unbounded">
-			<xsd:element name="GaussQuadrature1" type="GaussQuadrature1Type" />
-			<xsd:element name="GaussQuadrature2" type="GaussQuadrature2Type" />
-			<xsd:element name="GaussQuadrature3" type="GaussQuadrature3Type" />
-		</xsd:choice>
-	</xsd:complexType>
-	<xsd:complexType name="GaussQuadrature1Type">
-		<!--degree => Quadrature degree-->
-		<xsd:attribute name="degree" type="integer" use="required" />
-		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
-	</xsd:complexType>
-	<xsd:complexType name="GaussQuadrature2Type">
-		<!--degree => Quadrature degree-->
-		<xsd:attribute name="degree" type="integer" use="required" />
-		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
-	</xsd:complexType>
-	<xsd:complexType name="GaussQuadrature3Type">
-		<!--degree => Quadrature degree-->
-		<xsd:attribute name="degree" type="integer" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
