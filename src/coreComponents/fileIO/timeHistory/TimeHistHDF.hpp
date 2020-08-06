@@ -116,6 +116,7 @@ public:
    * @param typeId The std::type_index(typeid(T)) of the underlying data type.
    * @param writeHead How many time history states have been written to the file (used on restart and to compress data on exit).
    * @param initAlloc How many states to preallocate the internal buffer to hold.
+   * @param overallocMultiple Integer to scale the internal buffer when we fill the existing space.
    * @param comm A communicator where every rank will participate in writting to the output file.
    */
   HDFHistIO( string const & filename,
@@ -134,6 +135,7 @@ public:
    * @param spec HistoryMetadata to use to call the other constructor.
    * @param writeHead How many time states have been written to the file (used on restart and to compress data on exit).
    * @param initAlloc How many states to preallocate the internal buffer to hold.
+   * @param overallocMultiple Integer to scale the internal buffer when we fill the existing space.
    * @param comm A communicator where every rank will participate in writing to the output file.
    */
   HDFHistIO( string const & filename,
@@ -225,6 +227,7 @@ public:
    * @param typeId The std::type_index(typeid(T)) of the underlying data type.
    * @param writeHead How many time history states have been written to the file (used on restart and to compress data on exit).
    * @param initAlloc How many states to preallocate the internal buffer to hold.
+   * @param overallocMultiple Integer to scale the internal buffer when we fill the existing space.
    * @param comm A communicator where every rank will participate in writting to the output file.
    */
   HDFSerialHistIO( string const & filename,
@@ -243,6 +246,7 @@ public:
    * @param spec HistoryMetadata to use to call the other constructor.
    * @param writeHead How many time states have been written to the file (used on restart and to compress data on exit).
    * @param initAlloc How many states to preallocate the internal buffer to hold.
+   * @param overallocMultiple Integer to scale the internal buffer when we fill the existing space.
    * @param comm A communicator where every rank will participate in writing to the output file.
    */
   HDFSerialHistIO( string const & filename,
