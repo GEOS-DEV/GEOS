@@ -11,10 +11,7 @@ TEST( testHDFIO, HDFFile )
 {
   GEOSX_MARK_FUNCTION;
   HDFFile file( "empty", true, false, MPI_COMM_GEOSX );
-  //hid_t fapl_id = H5Pcreate( H5P_FILE_ACCESS );
-  //H5Pset_fapl_mpio( fapl_id, MPI_COMM_GEOSX, MPI_INFO_NULL );
   hid_t file_id = H5Fcreate( "empty", H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT );
-  //H5Pclose( fapl_id );
   H5Fclose( file_id );
 }
 
