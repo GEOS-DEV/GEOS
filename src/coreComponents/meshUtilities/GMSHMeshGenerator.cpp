@@ -95,13 +95,12 @@ void GMSHMeshGenerator::GetLine(std::ifstream & fileStream, std::string& line)
   } while (line.empty() );
 }
 
-void GMSHMeshGenerator::GenerateMesh( DomainPartition * const domain )
+void GMSHMeshGenerator::GenerateMesh( DomainPartition * const GEOSX_UNUSED_PARAM(domain) )
 { 
   int const mpiRank = MpiWrapper::Comm_rank( MPI_COMM_GEOSX );
   int const mpiSize = MpiWrapper::Comm_size( MPI_COMM_GEOSX );
 
   std::unordered_map< localIndex, std::string > cellElementRegionsIndexToName;
-  std::cout << domain << std::endl;
 
   // Two following arrays contains temporary informations which 
   // will be stored on the first m_initNbProcs ranks
@@ -119,7 +118,7 @@ void GMSHMeshGenerator::GenerateMesh( DomainPartition * const domain )
   if( mpiRank < m_initNbOfProc )
   {
     // Opening file
-    GEOSX_LOG_RANK_0("Begin import of " << m_filePath );
+    //GEOSX_LOG_RANK_0("Begin import of " << m_filePath );
     std::ifstream inputStream( m_filePath);
     GEOSX_ERROR_IF( !inputStream, "Could not read input file: " << m_filePath );
 
@@ -325,6 +324,7 @@ void GMSHMeshGenerator::GenerateMesh( DomainPartition * const domain )
   {
     elmdist[r+1] = elmdist[r+1] + elmdist[r];
   }
+  //GEOSX_LOG_RANK( "elmdist " <<elmdist );
 
   idx_t wgtflag = 0;
   idx_t numflag = 0;
@@ -347,10 +347,10 @@ void GMSHMeshGenerator::GenerateMesh( DomainPartition * const domain )
     elementConnectivity.emplace_back(-1);// will never be read
     part.emplace_back( -1 ); // will never be read or overwritten
   }
-  GEOSX_LOG_RANK( "part " << part );
-  GEOSX_LOG_RANK( "elmdist " << elmdist );
-  GEOSX_LOG_RANK( "elementPtr " << elementPtr );
-  GEOSX_LOG_RANK( "elementConnectivity " << elementConnectivity );
+  //GEOSX_LOG_RANK( "part " << part );
+  //GEOSX_LOG_RANK( "elmdist " << elmdist );
+  //GEOSX_LOG_RANK( "elementPtr " << elementPtr );
+  //GEOSX_LOG_RANK( "elementConnectivity " << elementConnectivity );
   MPI_Comm parmetisComm;
   MPI_Group geosxGroup;
   MPI_Group parmetisGroup;
@@ -371,18 +371,18 @@ void GMSHMeshGenerator::GenerateMesh( DomainPartition * const domain )
     MPI_Comm_free(&parmetisComm);
     MPI_Group_free(&parmetisGroup);
   }
-  GEOSX_LOG_RANK( "part are : " << part );
+  //GEOSX_LOG_RANK( "part are : " << part );
 
   // Ordering of elements to be sent to other ranks
   //TODO : it's a little bit overkill. Maybe it's possible to do something better
   array1d< localIndex > nbElementOwnByRank( mpiSize );
   array1d< localIndex > connectivitySizeOwnByRank( mpiSize );
+  std::vector< array1d< localIndex > > orderedElementPhysicalIds( mpiSize );
+  std::vector< array1d< globalIndex > > orderedElementGlobalIndex( mpiSize );
+  std::vector< array1d< globalIndex > > orderedElementConnectivity( mpiSize );
+  std::vector< array1d< globalIndex > > orderedElementPtr( mpiSize );
   if(mpiRank < m_initNbOfProc)
   {
-    std::vector< array1d< localIndex > > orderedElementPhysicalIds( mpiSize );
-    std::vector< array1d< globalIndex > > orderedElementGlobalIndex( mpiSize );
-    std::vector< array1d< globalIndex > > orderedElementConnectivity( mpiSize );
-    std::vector< array1d< globalIndex > > orderedElementPtr( mpiSize );
     for(int r = 0; r < mpiSize; r++)
     {
       orderedElementPhysicalIds[r].reserve( elementPhysicalIds.size() / mpiSize);
@@ -405,27 +405,27 @@ void GMSHMeshGenerator::GenerateMesh( DomainPartition * const domain )
     {
       nbElementOwnByRank[r] = orderedElementGlobalIndex[r].size();
       connectivitySizeOwnByRank[r] = orderedElementConnectivity[r].size();
-      GEOSX_LOG_RANK( "to " << r << " phys id " << orderedElementPhysicalIds[r] );
-      GEOSX_LOG_RANK( "to " << r << " g id " << orderedElementGlobalIndex[r] );
-      GEOSX_LOG_RANK( "to " << r << " conn  " << orderedElementConnectivity[r] );
-      GEOSX_LOG_RANK( "to " << r << "  ptr " << orderedElementPtr[r] );
+      //GEOSX_LOG_RANK( "to " << r << " phys id " << orderedElementPhysicalIds[r] );
+      //GEOSX_LOG_RANK( "to " << r << " g id " << orderedElementGlobalIndex[r] );
+      //GEOSX_LOG_RANK( "to " << r << " conn  " << orderedElementConnectivity[r] );
+      //GEOSX_LOG_RANK( "to " << r << "  ptr " << orderedElementPtr[r] );
       //localIndex nbElements = orderedElementGlobalIndex[r].size();
       //localIndex connectivitySize = orderedElementConnectivity[r].size();
       // Sending everything !!
       //MpiWrapper::Send( orderedElementPtr[r].data(), orderedElementPtr.size(), r, 0, MPI_COMM_GEOSX );
     }
   }
-  GEOSX_LOG_RANK( "nb elements own by ranl " << nbElementOwnByRank);
+  //GEOSX_LOG_RANK( "nb elements own by ranl " << nbElementOwnByRank);
   // Receive number of element
   array1d< globalIndex > gatheredNbOfElements( m_initNbOfProc );
   array1d< globalIndex > gatheredConnectivitySize( m_initNbOfProc );
-  GEOSX_LOG_RANK_0("begin gather");
+  //GEOSX_LOG_RANK_0("begin gather");
   for(int r = 0; r < mpiSize; r ++)
   {
     MpiWrapper::gather( &nbElementOwnByRank[r], 1, gatheredNbOfElements.data(), 1, r, MPI_COMM_GEOSX );
     MpiWrapper::gather( &connectivitySizeOwnByRank[r], 1, gatheredConnectivitySize.data(), 1, r, MPI_COMM_GEOSX );
   }
-  GEOSX_LOG_RANK("end gather " << gatheredNbOfElements);
+  //GEOSX_LOG_RANK("end gather " << gatheredNbOfElements);
   // Compute final number of element for EVERY rank
   localIndex finalNumberOfElements = 0;
   localIndex finalConnectivitySize = 0;
@@ -434,20 +434,50 @@ void GMSHMeshGenerator::GenerateMesh( DomainPartition * const domain )
     finalNumberOfElements += gatheredNbOfElements[r];
     finalConnectivitySize += gatheredConnectivitySize[r];
   }
-  GEOSX_LOG_RANK( "final number of elements " << finalNumberOfElements);
-  GEOSX_LOG_RANK( "final connectivty size " << finalConnectivitySize);
-  MpiWrapper::Barrier();
+  //GEOSX_LOG_RANK( "final number of elements " << finalNumberOfElements);
+  //GEOSX_LOG_RANK( "final connectivty size " << finalConnectivitySize);
 
   // Receiving everything
-  array1d< globalIndex > finalElementGlobalIndex;
-  array1d< localIndex >  finalElementPhysicalIds;
-  array1d< globalIndex > finalElementPtr;         
-  array1d< globalIndex > finalElementConnectivity; 
+  array1d< globalIndex > finalElementGlobalIndex( finalNumberOfElements );
+  array1d< localIndex >  finalElementPhysicalIds( finalNumberOfElements );
+  array1d< globalIndex > finalElementPtr( finalNumberOfElements + 1);         
+  array1d< globalIndex > finalElementConnectivity( finalConnectivitySize ); 
 
+  // Send global index
+  if ( mpiRank < m_initNbOfProc )
+  {
+    for( int r = 0; r < mpiSize; r++ )
+    {
+      MpiWrapper::Send( orderedElementGlobalIndex[r].data(),orderedElementGlobalIndex[r].size(),r,0,MPI_COMM_GEOSX);
+    }
+  }
+  globalIndex offset = 0;
   for( int r = 0; r < m_initNbOfProc; r++ )
   {
-    //MpiWrapper::Recv( orderedElementPtr[r].data(), orderedElementPtr.size(), r, 0, MPI_COMM_GEOSX );
+    MpiWrapper::Recv(finalElementGlobalIndex.data() + offset,gatheredNbOfElements[r],r,0,MPI_COMM_GEOSX,MPI_STATUS_IGNORE );
+    offset += gatheredNbOfElements[r];
   }
+
+  // Send physicalId
+  /*
+  if ( mpiRank < m_initNbOfProc )
+  {
+    for( int r = 0; r < mpiSize; r++ )
+    {
+      MpiWrapper::Send( orderedElementPhysicalIds[r].data(),orderedElementPhysicalIds[r].size(),r,0,MPI_COMM_GEOSX);
+    }
+  }
+  offset = 0;
+  for( int r = 0; r < m_initNbOfProc; r++ )
+  {
+    MpiWrapper::Recv(finalElementPhysicalIds.data() + offset,gatheredNbOfElements[r],r,0,MPI_COMM_GEOSX,MPI_STATUS_IGNORE );
+    offset += gatheredNbOfElements[r];
+  }
+  */
+  GEOSX_LOG_RANK( "final global Index " << finalElementGlobalIndex );
+  GEOSX_LOG_RANK( "final physical id " << finalElementPhysicalIds );
+  GEOSX_LOG_RANK( "FINIIIIIIISH");
+  MpiWrapper::Barrier();
 
                     
 }
