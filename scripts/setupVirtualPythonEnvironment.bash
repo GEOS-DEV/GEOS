@@ -67,7 +67,7 @@ then
     PYTHON_ROOT=$MINICONDA_BUILD/miniconda
 
     # Install virtualenv
-    $PYTHON_ROOT/bin/pip install virtualenv
+    $PYTHON_ROOT/bin/pip install numpy lxml h5py virtualenv
 else
     echo "Using an existing python installation..."
 
@@ -96,8 +96,8 @@ echo "Installing packages..."
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
 source $STARTUP_SCRIPT
-pip install h5py lxml
 pip install $DIR/../src/coreComponents/python/modules/geosx_xml_tools_package
+pip install $DIR/../src/coreComponents/python/modules/hdf5_wrapper_package
 
 
 # Print user-info
