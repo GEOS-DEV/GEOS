@@ -5,6 +5,7 @@ from lxml.etree import XMLSyntaxError
 import re
 import os
 from geosx_xml_tools import regex_tools, unit_manager
+from geosx_xml_tools import xml_formatter
 
 
 # Create an instance of the unit, parameter regex handlers
@@ -226,6 +227,9 @@ def process(inputFile, outputFile='', schema='', verbose=0, keep_parameters=True
     for line in ofile:
       if any([sc in line for sc in ['$', '[', ']', '`']]):
         raise Exception('Found un-matched special characters in the pre-processed input file on line:\n%s\n Check your input xml for errors!' % (line))
+
+  # Apply formatting to the file
+  xml_formatter.format_file(outputFile)
 
   if verbose:
     print('Preprocessed xml file stored in %s' % (outputFile))
