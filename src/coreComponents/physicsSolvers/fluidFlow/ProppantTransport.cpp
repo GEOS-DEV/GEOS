@@ -461,7 +461,7 @@ void ProppantTransport::PostStepUpdate( real64 const & time_n,
 
     forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
     {
-      if( proppantConc[ei] >= m_maxProppantConcentration || packVf[ei] >= 1.0  )
+      if( proppantConc[ei] >= m_maxProppantConcentration || packVf[ei] >= 1.0 )
       {
         packVf[ei] = 1.0;
         proppantConc[ei] = m_maxProppantConcentration;
