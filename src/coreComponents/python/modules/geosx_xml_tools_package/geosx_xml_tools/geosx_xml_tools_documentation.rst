@@ -68,7 +68,7 @@ The geosx_xml_tools module can also be called from within a python script.  For 
 
 .. code-block:: python
 
-  import geosx_xml_tools
+  from geosx_xml_tools import xml_processor
 
   initial_filename = 'input.xml'
   new_filename = output_name = xml_processor.process(initial_filename)
