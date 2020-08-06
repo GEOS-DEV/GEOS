@@ -1643,7 +1643,8 @@ void LagrangianContactSolver::AssembleStabilization( DomainPartition const & dom
         edge.resize( realNodes );
 
         // Compute nodal area factor
-        localIndex node0index0, node1index0;
+        localIndex node0index0 = -1;
+        localIndex node1index0 = -1;
         for( localIndex i = 0; i < numNodesPerFace0; ++i )
         {
           if( edge[0] == faceToNodeMap( faceMap[sei[iconn][0]][0], i ) )
@@ -1655,7 +1656,8 @@ void LagrangianContactSolver::AssembleStabilization( DomainPartition const & dom
             node1index0 = i;
           }
         }
-        localIndex node0index1, node1index1;
+        localIndex node0index1 = -1;
+        localIndex node1index1 = -1;
         for( localIndex i = 0; i < numNodesPerFace1; ++i )
         {
           if( edge[0] == faceToNodeMap( faceMap[sei[iconn][1]][id1], i ) )
