@@ -205,13 +205,15 @@ private:
   integer m_activeSetIter = 0;
 
   real64 const m_slidingCheckTolerance = 0.05;
-  //real64 m_normalDisplacementTolerance = 1.e-7;
-  //real64 m_normalTractionTolerance = 1.e-4;
-  //real64 m_slidingTolerance = 1.e-7;
 
   string const m_tractionKey = viewKeyStruct::tractionString;
 
   real64 m_initialResidual[3] = {0.0, 0.0, 0.0};
+
+  void ComputeFaceNodalArea( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition,
+                             ArrayOfArraysView< localIndex const > const & faceToNodeMap,
+                             localIndex const kf0,
+                             array1d< real64 > & nodalArea ) const;
 
   /**
    * @struct FractureState
