@@ -80,6 +80,19 @@ public:
   ///@}
 
   /**
+   * @name Getters / Setters
+   */
+  ///@{
+
+  /**
+   * @brief Get default aperture value.
+   * @return default aperture value
+   */
+  real64 getDefaultAperture() const { return m_defaultAperture; }
+
+  ///@}
+
+  /**
    * @brief A struct to serve as a container for variable strings and keys.
    * @struct viewKeyStruct
    */
@@ -91,6 +104,8 @@ public:
     static constexpr auto defaultApertureString = "defaultAperture";
   };
 
+protected:
+  virtual void InitializePreSubGroups( Group * const ) override;
 
 private:
 

@@ -63,10 +63,10 @@ EmbeddedSurfaceSubRegion::EmbeddedSurfaceSubRegion( string const & name,
     setDescription( "Unit normal vector to the embedded surface." );
 
   registerWrapper( viewKeyStruct::t1VectorString, &m_tangentVector1 )->
-      setDescription( "Unit vector in the first tangent direction to the embedded surface." );
+    setDescription( "Unit vector in the first tangent direction to the embedded surface." );
 
   registerWrapper( viewKeyStruct::t2VectorString, &m_tangentVector2 )->
-      setDescription( "Unit vector in the second tangent direction to the embedded surface." );
+    setDescription( "Unit vector in the second tangent direction to the embedded surface." );
 
   registerWrapper( viewKeyStruct::elementApertureString, &m_elementAperture )->
     setApplyDefaultValue( 1.0e-5 )->
@@ -90,8 +90,8 @@ EmbeddedSurfaceSubRegion::EmbeddedSurfaceSubRegion( string const & name,
     setDescription( "Number of nodes of each EmbeddedSurface." );
 
   registerWrapper( viewKeyStruct::connectivityIndexString, &m_connectivityIndex )->
-      setApplyDefaultValue( 1 )->
-      setDescription( "Connectivity index of each EmbeddedSurface." );
+    setApplyDefaultValue( 1 )->
+    setDescription( "Connectivity index of each EmbeddedSurface." );
 }
 
 
@@ -208,12 +208,12 @@ bool EmbeddedSurfaceSubRegion::AddNewEmbeddedSurface ( localIndex const cellInde
 
     bool isNew;
     localIndex NodeIndex;
-    array1d< localIndex > elemNodes(m_numNodesPerSurface[surfaceIndex]);
+    array1d< localIndex > elemNodes( m_numNodesPerSurface[surfaceIndex] );
 
     for( localIndex j=0; j < m_numNodesPerSurface[surfaceIndex]; j++ )
     {
       isNew = true;
-      for( localIndex h=0; h < embSurfNodesPos.size(0); h++ )
+      for( localIndex h=0; h < embSurfNodesPos.size( 0 ); h++ )
       {
         LvArray::tensorOps::copy< 3 >( distance, intersectionPoints[j] );
         LvArray::tensorOps::subtract< 3 >( distance, embSurfNodesPos.toViewConst()[h] );
@@ -227,25 +227,25 @@ bool EmbeddedSurfaceSubRegion::AddNewEmbeddedSurface ( localIndex const cellInde
       if( isNew )
       {
         // Add the point to the
-        NodeIndex = embSurfNodesPos.size(0);
+        NodeIndex = embSurfNodesPos.size( 0 );
         embSurfNodesPos.resize( NodeIndex + 1 );
         LvArray::tensorOps::copy< 3 >( embSurfNodesPos[NodeIndex], intersectionPoints[j] );
       }
       elemNodes[j] =  NodeIndex;
     }
 
-    m_toNodesRelation.resizeArray(surfaceIndex, m_numNodesPerSurface[surfaceIndex]);
-    for (localIndex inode = 0; inode < m_numNodesPerSurface[surfaceIndex]; inode++ )
+    m_toNodesRelation.resizeArray( surfaceIndex, m_numNodesPerSurface[surfaceIndex] );
+    for( localIndex inode = 0; inode < m_numNodesPerSurface[surfaceIndex]; inode++ )
     {
-    	m_toNodesRelation( surfaceIndex, inode ) = elemNodes[inode];
+      m_toNodesRelation( surfaceIndex, inode ) = elemNodes[inode];
     }
 
     m_embeddedSurfaceToCell[ surfaceIndex ]      = cellIndex;
     m_embeddedSurfaceToRegion[ surfaceIndex ]    =  regionIndex;
     m_embeddedSurfaceToSubRegion[ surfaceIndex ] =  subRegionIndex;
-    LvArray::tensorOps::copy<3>( m_normalVector[ surfaceIndex ], normalVector);
-    LvArray::tensorOps::copy<3>( m_tangentVector1[ surfaceIndex ],  fracture->getWidthVector());
-    LvArray::tensorOps::copy<3>( m_tangentVector2[ surfaceIndex ],  fracture->getLengthVector());
+    LvArray::tensorOps::copy< 3 >( m_normalVector[ surfaceIndex ], normalVector );
+    LvArray::tensorOps::copy< 3 >( m_tangentVector1[ surfaceIndex ], fracture->getWidthVector());
+    LvArray::tensorOps::copy< 3 >( m_tangentVector2[ surfaceIndex ], fracture->getLengthVector());
     this->CalculateElementGeometricQuantities( intersectionPoints, this->size()-1 );
   }
   return addEmbeddedElem;
@@ -279,7 +279,7 @@ void EmbeddedSurfaceSubRegion::setupRelatedObjectsInRelations( MeshLevel const *
   this->m_toNodesRelation.SetRelatedObject( mesh->getNodeManager() );
 }
 
-int EmbeddedSurfaceSubRegion::totalNumberOfNodes()
+int EmbeddedSurfaceSubRegion::totalNumberOfNodes() const
 {
   int totalNumNodes = 0;
   for( localIndex esi=0; esi<size(); esi++ )

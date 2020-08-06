@@ -691,7 +691,7 @@ void TwoPointFluxApproximation::addEDFracToFractureStencil( MeshLevel & mesh,
   arrayView1d< real64 const >     const & ConnectivityIndex = fractureSubRegion->getConnectivityIndex();
 
   ElementRegionManager::ElementViewAccessor< arrayView1d< R1Tensor const > > const permeabilityTensor =
-      elemManager->ConstructArrayViewAccessor< R1Tensor, 1 >( m_coeffName );
+    elemManager->ConstructArrayViewAccessor< R1Tensor, 1 >( m_coeffName );
 
   // start from last connectorIndex from cell-To-cell connections
   connectorIndex = cellStencil.size();

@@ -169,32 +169,33 @@ void EmbeddedSurfaceGenerator::InitializePostSubGroups( Group * const problemMan
   embSurfEdgeManager->BuildEdges( embeddedSurfaceSubRegion->totalNumberOfNodes(), embSurfToNodeMap.toViewConst(), embSurfToEdgeMap );
 
   /*
-  //Usefull for debugging
-  EdgeManager::FaceMapType const & edgeToEmbSurfacesMap = embSurfEdgeManager->faceList();
-  EdgeManager::NodeMapType const & edgeToNodesMap       = embSurfEdgeManager->nodeList();
+     //Usefull for debugging
+     EdgeManager::FaceMapType const & edgeToEmbSurfacesMap = embSurfEdgeManager->faceList();
+     EdgeManager::NodeMapType const & edgeToNodesMap       = embSurfEdgeManager->nodeList();
 
-  for( localIndex a=0; a < embeddedSurfaceSubRegion->size(); a++ )
-  {
-    std::cout << "embSurface " << a << std::endl;
-    for( localIndex akn = 0; akn < embSurfToNodeMap.sizeOfArray( a ); akn++ )
-    {
+     for( localIndex a=0; a < embeddedSurfaceSubRegion->size(); a++ )
+     {
+     std::cout << "embSurface " << a << std::endl;
+     for( localIndex akn = 0; akn < embSurfToNodeMap.sizeOfArray( a ); akn++ )
+     {
       std::cout << "node " << embSurfToNodeMap[a][akn] << std::endl;
-    }
-  }
+     }
+     }
 
-  for( localIndex ke=0; ke < embSurfEdgeManager->size(); ++ke )
-  {
-    std::cout << "edge: " << ke << " which is connected to " << edgeToEmbSurfacesMap.sizeOfSet( ke ) <<  " embedded surfaces " << std::endl;
-    for( localIndex kes=0; kes < edgeToEmbSurfacesMap.sizeOfSet( ke ); ++kes )
-    {
+     for( localIndex ke=0; ke < embSurfEdgeManager->size(); ++ke )
+     {
+     std::cout << "edge: " << ke << " which is connected to " << edgeToEmbSurfacesMap.sizeOfSet( ke ) <<  " embedded surfaces " <<
+        std::endl;
+     for( localIndex kes=0; kes < edgeToEmbSurfacesMap.sizeOfSet( ke ); ++kes )
+     {
       std::cout << "emb. surf. " << edgeToEmbSurfacesMap[ke][kes] <<  std::endl;
-    }
-    for( localIndex kn=0; kn < 2; kn++ )
-    {
+     }
+     for( localIndex kn=0; kn < 2; kn++ )
+     {
       std::cout << "node " << edgeToNodesMap[ke][kn] <<  std::endl;
-    }
-  }
-  */
+     }
+     }
+   */
 
 }
 
@@ -214,7 +215,7 @@ void EmbeddedSurfaceGenerator::postRestartInitialization( Group * const GEOSX_UN
 real64 EmbeddedSurfaceGenerator::SolverStep( real64 const & GEOSX_UNUSED_PARAM( time_n ),
                                              real64 const & GEOSX_UNUSED_PARAM( dt ),
                                              const int GEOSX_UNUSED_PARAM( cycleNumber ),
-                                             DomainPartition &  domain  )
+                                             DomainPartition & domain )
 {
   real64 rval = 0;
   /*

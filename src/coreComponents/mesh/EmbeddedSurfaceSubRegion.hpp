@@ -393,7 +393,7 @@ public:
 
   array1d< int > const & numNodesPerSurface() const {return m_numNodesPerSurface;}
 
-  int totalNumberOfNodes();
+  int totalNumberOfNodes() const;
 
 private:
 

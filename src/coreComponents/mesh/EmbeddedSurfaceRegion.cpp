@@ -37,6 +37,18 @@ EmbeddedSurfaceRegion::EmbeddedSurfaceRegion( string const & name, Group * const
 EmbeddedSurfaceRegion::~EmbeddedSurfaceRegion()
 {}
 
+
+void EmbeddedSurfaceRegion::InitializePreSubGroups( Group * const )
+{
+  this->forElementSubRegions< EmbeddedSurfaceSubRegion >( [&] ( EmbeddedSurfaceSubRegion & subRegion )
+  {
+    subRegion.getWrapper< array1d< real64 > >( EmbeddedSurfaceSubRegion::viewKeyStruct::elementApertureString )->
+      setApplyDefaultValue( m_defaultAperture );
+  } );
+}
+
+
+
 REGISTER_CATALOG_ENTRY( ObjectManagerBase, EmbeddedSurfaceRegion, std::string const &, Group * const )
 
 } /* namespace geosx */

@@ -75,16 +75,12 @@
   <Events
     maxTime="50000">
     <SoloEvent
-      name="output0"
-      target="/Outputs/siloOutput"/>
-
-    <SoloEvent
       name="preFracture"
       target="/Solvers/SurfaceGenerator"/>
 
     <SoloEvent
       name="output1"
-      target="/Outputs/siloOutput"/>
+      target="/Outputs/vtkOutput"/>
 
     <PeriodicEvent
       name="solverApplications"
@@ -95,7 +91,7 @@
       name="outputs"
       cycleFrequency="1"
       targetExactTimestep="1"
-      target="/Outputs/siloOutput"/>
+      target="/Outputs/vtkOutput"/>
 
     <PeriodicEvent
       name="restarts"
@@ -197,11 +193,11 @@
   <Functions/>
 
   <Outputs>
-    <Silo
-      name="siloOutput"
+     <VTK
+      name="vtkOutput"
       plotFileRoot="fractureMatrixFlow"
-      plotLevel="1"/>
-
+      plotLevel="2"
+      writeBinaryData="0"/>
     <Restart
       name="sidreRestart"/>
   </Outputs>

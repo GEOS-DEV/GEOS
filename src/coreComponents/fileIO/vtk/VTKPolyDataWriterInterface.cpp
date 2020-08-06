@@ -182,13 +182,12 @@ const
 
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & intersectionPoints = nodeManager.embSurfNodesPosition();;
 
-  points->SetNumberOfPoints( intersectionPoints.size() );
-  for( localIndex pointIndex = 0; pointIndex < intersectionPoints.size(); pointIndex++ )
+  points->SetNumberOfPoints( esr.totalNumberOfNodes() );
+  for( localIndex pointIndex = 0; pointIndex < intersectionPoints.size( 0 ); pointIndex++ )
   {
     points->SetPoint( pointIndex, intersectionPoints[pointIndex][0], intersectionPoints[pointIndex][1], intersectionPoints[pointIndex][2] );
   }
 
-  std::vector< int > vtkOrdering = esr.getVTKNodeOrdering();
   array1d< int > const & numNodesPerElem = esr.numNodesPerSurface();
   for( localIndex cellIndex = 0; cellIndex < esr.size(); cellIndex++ )
   {
