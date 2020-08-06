@@ -94,18 +94,11 @@ void PackCollection::collect( Group * domain_group,
   WrapperBase const * target = target_object->getWrapperBase( m_fieldName );
   if( m_setNames.size( ) > 0 )
   {
-    Group const * set_group = target_object->GetGroup( ObjectManagerBase::groupKeyStruct::setsString );
-    dataRepository::Wrapper< SortedArray< localIndex > > const * const set_wrapper = set_group->getWrapper< SortedArray< localIndex > >( m_setNames[collectionIdx] );
-    if( set_wrapper != nullptr )
+    localIndex sz = m_setsIndices.size( );
+    if( sz > 0 )
     {
-      SortedArrayView< localIndex const > const & set = set_wrapper->reference();
-      localIndex sz = set.size( );
-      if( sz > 0 )
-      {
-        // if we could directly transfer a sorted array to an array1d including on device this wouldn't require storing a copy of the
-        // indices internally
-        target->PackByIndex( buffer, m_setsIndices[ collectionIdx ], false, true );
-      }
+      // if we could directly transfer a sorted array to an array1d including on device this wouldn't require storing a copy of the indices
+      target->PackByIndex( buffer, m_setsIndices[ collectionIdx ], false, true );
     }
   }
   else

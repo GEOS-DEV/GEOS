@@ -258,6 +258,7 @@ void HDFHistIO::write( )
   // don't need to write if nothing is buffered, this should only happen if the output event occurs before the collection event
   if( m_subcomm != MPI_COMM_NULL )
   {
+    // practically these should all be the same unless something has gone wrong, in which case the file might still become malformed
     localIndex maxBuffered = 0;
     MpiWrapper::allReduce( &m_bufferedCount, &maxBuffered, 1, MPI_MAX, m_subcomm );
     if( maxBuffered > 0 )
@@ -296,9 +297,9 @@ void HDFHistIO::write( )
       H5Dclose( dataset );
 
       m_writeHead += maxBuffered;
-      emptyBuffer( );
     }
   }
+  emptyBuffer( );
 }
 
 void HDFHistIO::compressInFile( )
