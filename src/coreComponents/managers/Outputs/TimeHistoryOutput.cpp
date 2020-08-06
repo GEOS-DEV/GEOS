@@ -75,44 +75,6 @@ void TimeHistoryOutput::initCollectorParallel( ProblemManager & pm, HistoryColle
       }
     }
   }
-  /*
-     HistoryMetadata metadata = collector->getMetadata( pm );
-     int rnk = MpiWrapper::Comm_rank( MPI_COMM_GEOSX );
-     if( rnk == 0 )
-     {
-     HistoryMetadata time_metadata = collector->getTimeMetadata( );
-     time_metadata.setName( metadata.getName( ) + " " + time_metadata.getName( ) );
-     m_io.emplace_back( std::make_pair( std::make_unique< HDFHistIO >( m_filename, metadata, m_recordCount ),
-                                       std::make_unique< HDFHistIO >( m_filename, time_metadata, m_recordCount, 4, MPI_COMM_SELF ) ) );
-     collector->registerTimeBufferCall( [this]() { return this->m_io.back().second->getBufferHead( ); } );
-     m_io.back().second->init( ( m_recordCount > 0 ) );
-     }
-     else
-     {
-     m_io.emplace_back( std::make_pair( std::make_unique< HDFHistIO >( m_filename, metadata, m_recordCount ),
-                                       std::unique_ptr< HDFHistIO >( nullptr ) ) );
-     }
-     collector->registerBufferCall( [this]() { return this->m_io.back().first->getBufferHead( ); } );
-     m_io.back().first->init( ( m_recordCount > 0 ) );
-     if( m_recordCount == 0 )
-     {
-     // do any 1-time metadata output
-     globalIndex global_rank_offset = m_io.back().first->getRankOffset( );
-     localIndex meta_collector_count = collector->getNumMetaCollectors( );
-     Group * domain_group = dynamicCast< Group * >( pm.getDomainPartition( ) );
-     for( localIndex meta_idx = 0; meta_idx < meta_collector_count; ++meta_idx )
-     {
-      std::unique_ptr< HistoryCollection > meta_collector = collector->getMetaCollector( pm, meta_idx, global_rank_offset );
-      HistoryMetadata meta_metadata = meta_collector->getMetadata( pm );
-      meta_metadata.setName( metadata.getName() + " " + meta_metadata.getName());
-      std::unique_ptr< HDFHistIO > meta_io = std::make_unique< HDFHistIO >( m_filename, meta_metadata, 0, 1 );
-      meta_collector->registerBufferCall( [&meta_io] () { return meta_io->getBufferHead( ); } );
-      meta_io->init( false );
-      meta_collector->Execute( 0.0, 0.0, 0, 0, 0, domain_group );
-      meta_io->write( );
-     }
-     }
-   */
   MpiWrapper::Barrier( MPI_COMM_GEOSX );
 }
 

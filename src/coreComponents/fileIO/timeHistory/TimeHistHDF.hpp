@@ -22,6 +22,7 @@
 #include "LvArray/src/Array.hpp"
 #include "codingUtilities/traits.hpp"
 #include "common/DataTypes.hpp"
+#include "mpiCommunications/MpiWrapper.hpp"
 
 #include "managers/TimeHistory/HistoryDataSpec.hpp"
 #include "managers/TimeHistory/HistoryIO.hpp"
