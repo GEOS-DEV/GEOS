@@ -47,7 +47,7 @@ void TimeHistoryOutput::initCollectorParallel( ProblemManager & pm, HistoryColle
   if( rnk == 0 )
   {
     HistoryMetadata timeMetadata = collector->getTimeMetadata( );
-    m_io.emplace_back( std::make_unique< HDFHistIO >( m_filename, timeMetadata, m_recordCount, 4, MPI_COMM_SELF ) );
+    m_io.emplace_back( std::make_unique< HDFHistIO >( m_filename, timeMetadata, m_recordCount, 2, 2, MPI_COMM_SELF ) );
     collector->registerTimeBufferCall( [this]() { return m_io.back()->getBufferHead( ); } );
     m_io.back()->init( !freshInit );
   }

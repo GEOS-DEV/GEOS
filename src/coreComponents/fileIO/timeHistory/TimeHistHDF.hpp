@@ -124,7 +124,8 @@ public:
              string const & name,
              std::type_index typeId,
              localIndex writeHead = 0,
-             localIndex initAlloc = 4,
+             localIndex initAlloc = 2,
+             localIndex overallocMultiple = 2,
              MPI_Comm comm = MPI_COMM_GEOSX );
 
   /**
@@ -135,8 +136,21 @@ public:
    * @param initAlloc How many states to preallocate the internal buffer to hold.
    * @param comm A communicator where every rank will participate in writing to the output file.
    */
-  HDFHistIO( string const & filename, const HistoryMetadata & spec, localIndex writeHead = 0, localIndex initAlloc = 4, MPI_Comm comm = MPI_COMM_GEOSX ):
-    HDFHistIO( filename, spec.getRank(), spec.getDims(), spec.getName(), spec.getType(), writeHead, initAlloc, comm )
+  HDFHistIO( string const & filename,
+             const HistoryMetadata & spec,
+             localIndex writeHead = 0,
+             localIndex initAlloc = 2,
+             localIndex overallocMultiple = 2,
+             MPI_Comm comm = MPI_COMM_GEOSX ):
+    HDFHistIO( filename,
+               spec.getRank(),
+               spec.getDims(),
+               spec.getName(),
+               spec.getType(),
+               writeHead,
+               initAlloc,
+               overallocMultiple,
+               comm )
   { }
 
   /// Destructor
@@ -219,7 +233,8 @@ public:
                    string const & name,
                    std::type_index typeId,
                    localIndex writeHead = 0,
-                   localIndex initAlloc = 4,
+                   localIndex initAlloc = 2,
+                   localIndex overallocMultiple = 2,
                    MPI_Comm comm = MPI_COMM_GEOSX );
 
   /**
@@ -230,8 +245,21 @@ public:
    * @param initAlloc How many states to preallocate the internal buffer to hold.
    * @param comm A communicator where every rank will participate in writing to the output file.
    */
-  HDFSerialHistIO( string const & filename, const HistoryMetadata & spec, localIndex writeHead = 0, localIndex initAlloc = 4, MPI_Comm comm = MPI_COMM_GEOSX ):
-    HDFSerialHistIO( filename, spec.getRank(), spec.getDims(), spec.getName(), spec.getType(), writeHead, initAlloc, comm )
+  HDFSerialHistIO( string const & filename,
+                   const HistoryMetadata & spec,
+                   localIndex writeHead = 0,
+                   localIndex initAlloc = 2,
+                   localIndex overallocMultiple = 2,
+                   MPI_Comm comm = MPI_COMM_GEOSX ):
+    HDFSerialHistIO( filename,
+                     spec.getRank(),
+                     spec.getDims(),
+                     spec.getName(),
+                     spec.getType(),
+                     writeHead,
+                     initAlloc,
+                     overallocMultiple,
+                     comm )
   { }
 
   /// Destructor
