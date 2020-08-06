@@ -851,6 +851,9 @@ void LagrangianContactFlowSolver::
   dispDofNumber = nodeManager.getReference< globalIndex_array >( dispDofKey );
   globalIndex const rankOffset = dofManager.rankOffset();
 
+  // Get the coordinates for all nodes
+  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition = nodeManager.referencePosition();
+
   elemManager.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion const & subRegion )
   {
     if( subRegion.hasWrapper( m_pressureKey ) )
@@ -859,7 +862,6 @@ void LagrangianContactFlowSolver::
       presDofNumber = subRegion.getReference< globalIndex_array >( presDofKey );
       arrayView1d< real64 const > const & pressure = subRegion.getReference< array1d< real64 > >( m_pressureKey );
       arrayView1d< real64 const > const & deltaPressure = subRegion.getReference< array1d< real64 > >( m_deltaPressureKey );
-      arrayView1d< real64 const > const & area = subRegion.getElementArea();
       arrayView2d< localIndex const > const & elemsToFaces = subRegion.faceList();
 
       forAll< serialPolicy >( subRegion.size(), [=]( localIndex const kfe )
@@ -879,18 +881,20 @@ void LagrangianContactFlowSolver::
         globalIndex colDOF[1];
         colDOF[0] = presDofNumber[kfe];
 
-        real64 const Ja = area[kfe];
-        real64 const nodalArea = Ja / static_cast< real64 >( numNodesPerFace );
-        real64 nodalForceMag = ( pressure[kfe] + deltaPressure[kfe] ) * nodalArea;
-        array1d< real64 > globalNodalForce( 3 );
-        LvArray::tensorOps::scaledCopy< 3 >( globalNodalForce, Nbar, nodalForceMag );
-
         for( localIndex kf=0; kf<2; ++kf )
         {
           localIndex const faceIndex = elemsToFaces[kfe][kf];
 
           for( localIndex a=0; a<numNodesPerFace; ++a )
           {
+            // Compute local area contribution for each node
+            array1d< real64 > nodalArea;
+            m_contactSolver->ComputeFaceNodalArea( nodePosition, faceToNodeMap, elemsToFaces[kfe][kf], nodalArea );
+
+            real64 const nodalForceMag = ( pressure[kfe] + deltaPressure[kfe] ) * nodalArea[a];
+            array1d< real64 > globalNodalForce( 3 );
+            LvArray::tensorOps::scaledCopy< 3 >( globalNodalForce, Nbar, nodalForceMag );
+
             for( localIndex i=0; i<3; ++i )
             {
               rowDOF[3*a+i] = dispDofNumber[faceToNodeMap( faceIndex, a )] + LvArray::integerConversion< globalIndex >( i );
@@ -899,7 +903,7 @@ void LagrangianContactFlowSolver::
               fext[faceToNodeMap( faceIndex, a )][i] += +globalNodalForce[i] * pow( -1, kf );
 
               // Opposite sign w.r.t. theory because of minus sign in stiffness matrix definition (K < 0)
-              dRdP( 3*a+i ) = -nodalArea * Nbar[i] * pow( -1, kf );
+              dRdP( 3*a+i ) = -nodalArea[a] * Nbar[i] * pow( -1, kf );
             }
           }
 
@@ -947,6 +951,9 @@ void LagrangianContactFlowSolver::
   dispDofNumber = nodeManager.getReference< globalIndex_array >( dispDofKey );
   globalIndex const rankOffset = dofManager.rankOffset();
 
+  // Get the coordinates for all nodes
+  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition = nodeManager.referencePosition();
+
   forTargetSubRegionsComplete< FaceElementSubRegion >( mesh,
                                                        [&]( localIndex const,
                                                             localIndex const,
@@ -963,7 +970,6 @@ void LagrangianContactFlowSolver::
 
       arrayView1d< globalIndex const > const &
       presDofNumber = subRegion.getReference< array1d< globalIndex > >( presDofKey );
-      arrayView1d< real64 const > const & area = subRegion.getElementArea();
       arrayView2d< localIndex const > const & elemsToFaces = subRegion.faceList();
 
       forAll< serialPolicy >( subRegion.size(), [&]( localIndex const kfe )
@@ -973,14 +979,11 @@ void LagrangianContactFlowSolver::
         globalIndex elemDOF[1];
         elemDOF[0] = presDofNumber[kfe];
 
-        real64 const Ja = area[kfe];
         array1d< real64 > Nbar( 3 );
         Nbar[ 0 ] = faceNormal[elemsToFaces[kfe][0]][0] - faceNormal[elemsToFaces[kfe][1]][0];
         Nbar[ 1 ] = faceNormal[elemsToFaces[kfe][0]][1] - faceNormal[elemsToFaces[kfe][1]][1];
         Nbar[ 2 ] = faceNormal[elemsToFaces[kfe][0]][2] - faceNormal[elemsToFaces[kfe][1]][2];
         LvArray::tensorOps::normalize< 3 >( Nbar );
-
-        real64 const dAccumulationResidualdAperture = density[kfe][0] * Ja;
 
         stackArray1d< real64, 2*3*4 > dRdU( 2*3*numNodesPerFace );
 
@@ -989,8 +992,13 @@ void LagrangianContactFlowSolver::
         {
           for( localIndex kf=0; kf<2; ++kf )
           {
+            // Compute local area contribution for each node
+            array1d< real64 > nodalArea;
+            m_contactSolver->ComputeFaceNodalArea( nodePosition, faceToNodeMap, elemsToFaces[kfe][kf], nodalArea );
+
             for( localIndex a=0; a<numNodesPerFace; ++a )
             {
+              real64 const dAccumulationResidualdAperture = density[kfe][0] * nodalArea[a];
               for( int i=0; i<3; ++i )
               {
                 nodeDOF[ kf*3*numNodesPerFace + 3*a+i] = dispDofNumber[faceToNodeMap( elemsToFaces[kfe][kf], a )]
@@ -1066,15 +1074,16 @@ void LagrangianContactFlowSolver::AssembleStabilization( DomainPartition const &
   NodeManager const & nodeManager = *mesh.getNodeManager();
   ElementRegionManager const & elemManager = *mesh.getElemManager();
 
-  string const & presDofKey = dofManager.getKey( m_pressureKey );
+  // Get the "face to element" map (valid for the entire mesh)
+  FaceManager::ElemMapType const & faceToElem = faceManager.toElementRelation();
+  arrayView2d< localIndex const > const & faceToElemRegion = faceToElem.m_toElementRegion.toViewConst();
+  arrayView2d< localIndex const > const & faceToElemSubRegion = faceToElem.m_toElementSubRegion.toViewConst();
+  arrayView2d< localIndex const > const & faceToElemIndex = faceToElem.m_toElementIndex.toViewConst();
 
   // Get the finite volume method used to compute the stabilization
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
   FluxApproximationBase const & stabilizationMethod = fvManager.getFluxApproximation( m_stabilizationName );
-
-  // Get the "face to element" map (valid for the entire mesh)
-  FaceManager::ElemMapType const & faceToElem = faceManager.toElementRelation();
 
   // Form the SurfaceGenerator, get the fracture name and use it to retrieve the faceMap (from fracture element to face)
   SurfaceGenerator const * const
@@ -1104,6 +1113,7 @@ void LagrangianContactFlowSolver::AssembleStabilization( DomainPartition const &
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition = nodeManager.referencePosition();
 
   // Get area and rotation matrix for all faces
+  ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager.nodeList().toViewConst();
   arrayView1d< real64 const > const & faceArea = faceManager.faceArea();
   arrayView2d< real64 const > const & faceNormal = faceManager.faceNormal();
 
@@ -1117,54 +1127,128 @@ void LagrangianContactFlowSolver::AssembleStabilization( DomainPartition const &
     elemManager.ConstructMaterialViewAccessor< array1d< real64 >, arrayView1d< real64 const > >( LinearElasticIsotropic::viewKeyStruct::shearModulusString,
                                                                                                  m_contactSolver->getSolidSolver()->targetRegionNames(),
                                                                                                  m_contactSolver->getSolidSolver()->solidMaterialNames() );
+
+  using NodeMapViewType = arrayView2d< localIndex const, cells::NODE_MAP_USD >;
+  ElementRegionManager::ElementViewAccessor< NodeMapViewType > const elemToNode =
+    elemManager.ConstructViewAccessor< CellBlock::NodeMapType, NodeMapViewType >( ElementSubRegionBase::viewKeyStruct::nodeListString );
+  ElementRegionManager::ElementViewAccessor< NodeMapViewType >::ViewTypeConst const & elemToNodeView = elemToNode.toViewConst();
+
+  string const & presDofKey = dofManager.getKey( m_pressureKey );
   arrayView1d< globalIndex const > const &
   presDofNumber = fractureSubRegion->getReference< globalIndex_array >( presDofKey );
   globalIndex const rankOffset = dofManager.rankOffset();
 
   stabilizationMethod.forStencils< FaceElementStencil >( mesh, [&]( FaceElementStencil const & stencil )
   {
-    for( localIndex iconn=0; iconn<stencil.size(); ++iconn )
+    typename FaceElementStencil::IndexContainerViewConstType const & sei = stencil.getElementIndices();
+
+    forAll< serialPolicy >( stencil.size(), [=] ( localIndex const iconn )
     {
-      localIndex const numFluxElems = stencil.stencilSize( iconn );
+      localIndex const numFluxElems = sei.sizeOfArray( iconn );
 
       // A fracture connector has to be an edge shared by two faces
       if( numFluxElems == 2 )
       {
-        typename FaceElementStencil::IndexContainerViewConstType const & sei = stencil.getElementIndices();
+        // Find shared edge (pair of nodes)
+        array1d< real64 > Nbar0( 3 ), Nbar1( 3 );
+        Nbar0[ 0 ] = faceNormal[ faceMap[sei[iconn][0]][0] ][0] - faceNormal[ faceMap[sei[iconn][0]][1] ][0];
+        Nbar0[ 1 ] = faceNormal[ faceMap[sei[iconn][0]][0] ][0] - faceNormal[ faceMap[sei[iconn][0]][1] ][0];
+        Nbar0[ 2 ] = faceNormal[ faceMap[sei[iconn][0]][0] ][0] - faceNormal[ faceMap[sei[iconn][0]][1] ][0];
+        LvArray::tensorOps::normalize< 3 >( Nbar0 );
+        Nbar1[ 0 ] = faceNormal[ faceMap[sei[iconn][1]][0] ][0] - faceNormal[ faceMap[sei[iconn][1]][1] ][0];
+        Nbar1[ 1 ] = faceNormal[ faceMap[sei[iconn][1]][0] ][0] - faceNormal[ faceMap[sei[iconn][1]][1] ][0];
+        Nbar1[ 2 ] = faceNormal[ faceMap[sei[iconn][1]][0] ][0] - faceNormal[ faceMap[sei[iconn][1]][1] ][0];
+        LvArray::tensorOps::normalize< 3 >( Nbar1 );
 
-        // First index: face element. Second index: node
-        real64 nodalArea[ 2 ][ 2 ];
+        real64 normalProduct = LvArray::tensorOps::AiBi< 3 >( Nbar0, Nbar1 );
+
+        localIndex const id1 = ( normalProduct > 0.0 ) ? 0 : 1;
+
+        localIndex const numNodesPerFace0 = faceToNodeMap.sizeOfArray( faceMap[sei[iconn][0]][0] );
+        array1d< localIndex > nodes0( numNodesPerFace0 );
+        for( localIndex i = 0; i < numNodesPerFace0; ++i )
+        {
+          nodes0[i] = faceToNodeMap( faceMap[sei[iconn][0]][0], i );
+        }
+        localIndex const numNodesPerFace1 = faceToNodeMap.sizeOfArray( faceMap[sei[iconn][1]][0] );
+        array1d< localIndex > nodes1( numNodesPerFace1 );
+        for( localIndex i = 0; i < numNodesPerFace1; ++i )
+        {
+          nodes1[i] = faceToNodeMap( faceMap[sei[iconn][1]][id1], i );
+        }
+        std::sort( nodes0.begin(), nodes0.end() );
+        std::sort( nodes1.begin(), nodes1.end() );
+        array1d< localIndex > edge( std::max( numNodesPerFace0, numNodesPerFace1 ) );
+        edge.setValues< serialPolicy >( -1 );
+        std::set_intersection( nodes0.begin(), nodes0.end(), nodes1.begin(), nodes1.end(), edge.begin() );
+        localIndex realNodes = 0;
+        for( localIndex i = 0; i < edge.size(); ++i )
+        {
+          if( edge[i] > -1 )
+          {
+            realNodes++;
+          }
+        }
+        GEOSX_ERROR_IF( realNodes != 2, "An edge shared by two fracture elements must have 2 nodes." );
+        edge.resize( realNodes );
+
+        // Compute nodal area factor
+        localIndex node0index0 = -1;
+        localIndex node1index0 = -1;
+        for( localIndex i = 0; i < numNodesPerFace0; ++i )
+        {
+          if( edge[0] == faceToNodeMap( faceMap[sei[iconn][0]][0], i ) )
+          {
+            node0index0 = i;
+          }
+          if( edge[1] == faceToNodeMap( faceMap[sei[iconn][0]][0], i ) )
+          {
+            node1index0 = i;
+          }
+        }
+        localIndex node0index1 = -1;
+        localIndex node1index1 = -1;
+        for( localIndex i = 0; i < numNodesPerFace1; ++i )
+        {
+          if( edge[0] == faceToNodeMap( faceMap[sei[iconn][1]][id1], i ) )
+          {
+            node0index1 = i;
+          }
+          if( edge[1] == faceToNodeMap( faceMap[sei[iconn][1]][id1], i ) )
+          {
+            node1index1 = i;
+          }
+        }
+        array1d< real64 > nodalArea0, nodalArea1;
+        m_contactSolver->ComputeFaceNodalArea( nodePosition, faceToNodeMap, faceMap[sei[iconn][0]][0], nodalArea0 );
+        m_contactSolver->ComputeFaceNodalArea( nodePosition, faceToNodeMap, faceMap[sei[iconn][1]][id1], nodalArea1 );
+        real64 const areafac = nodalArea0[node0index0] * nodalArea1[node0index1] + nodalArea0[node1index0] * nodalArea1[node1index1];
 
         // first index: face, second index: element (T/B), third index: dof (x, y, z)
         real64 stiffApprox[ 2 ][ 2 ][ 3 ];
+        stiffApprox[1][1][0] = 0;
         for( localIndex kf = 0; kf < 2; ++kf )
         {
           // Get fracture, face and region/subregion/element indices (for elements on both sides)
           localIndex fractureIndex = sei[iconn][kf];
 
-          localIndex faceIndexRef = faceMap[fractureIndex][0];
-          real64 const area = faceArea[faceIndexRef];
-          // TODO: use higher order integration scheme
-          nodalArea[kf][0] = area / 4.0;
-          nodalArea[kf][1] = area / 4.0;
-
           for( localIndex i = 0; i < 2; ++i )
           {
-            localIndex faceIndex = faceMap[fractureIndex][i];
-            localIndex er = faceToElem.m_toElementRegion[faceIndex][0];
-            localIndex esr = faceToElem.m_toElementSubRegion[faceIndex][0];
-            localIndex ei = faceToElem.m_toElementIndex[faceIndex][0];
+            localIndex const faceIndex = ( kf == 0 || id1 == 0 ) ? faceMap[fractureIndex][i] : faceMap[fractureIndex][1-i];
+            localIndex const ke = faceToElemIndex[faceIndex][0] >= 0 ? 0 : 1;
+            localIndex const er  = faceToElemRegion[faceIndex][ke];
+            localIndex const esr = faceToElemSubRegion[faceIndex][ke];
+            localIndex const ei  = faceToElemIndex[faceIndex][ke];
 
             real64 const volume = elemVolume[er][esr][ei];
 
             // Get the "element to node" map for the specific region/subregion
-            CellElementSubRegion const * const
-            cellElementSubRegion = elemManager.GetRegion( er )->GetSubRegion< CellElementSubRegion >( esr );
-            arrayView2d< localIndex const, cells::NODE_MAP_USD > const & cellElemsToNodes = cellElementSubRegion->nodeList();
-            localIndex numNodesPerElem = cellElementSubRegion->numNodesPerElement();
+            NodeMapViewType const & cellElemsToNodes = elemToNodeView[er][esr];
+            localIndex const numNodesPerElem = cellElemsToNodes.size( 1 );
 
             // Compute the box size
-            real64_array maxSize( 3 ), minSize( 3 );
+            real64 maxSize[3];
+            real64 minSize[3];
             for( localIndex j = 0; j < 3; ++j )
             {
               maxSize[j] = nodePosition[cellElemsToNodes[ei][0]][j];
@@ -1210,19 +1294,7 @@ void LagrangianContactFlowSolver::AssembleStabilization( DomainPartition const &
 
         array1d< real64 > avgNbar( 3 );
 
-        array1d< real64 > Nbar0( 3 ), Nbar1( 3 );
-        Nbar0[ 0 ] = faceNormal[ faceMap[sei[iconn][0]][0] ][0] - faceNormal[ faceMap[sei[iconn][0]][1] ][0];
-        Nbar0[ 1 ] = faceNormal[ faceMap[sei[iconn][0]][0] ][0] - faceNormal[ faceMap[sei[iconn][0]][1] ][0];
-        Nbar0[ 2 ] = faceNormal[ faceMap[sei[iconn][0]][0] ][0] - faceNormal[ faceMap[sei[iconn][0]][1] ][0];
-        LvArray::tensorOps::normalize< 3 >( Nbar0 );
-        Nbar1[ 0 ] = faceNormal[ faceMap[sei[iconn][1]][0] ][0] - faceNormal[ faceMap[sei[iconn][1]][1] ][0];
-        Nbar1[ 1 ] = faceNormal[ faceMap[sei[iconn][1]][0] ][0] - faceNormal[ faceMap[sei[iconn][1]][1] ][0];
-        Nbar1[ 2 ] = faceNormal[ faceMap[sei[iconn][1]][0] ][0] - faceNormal[ faceMap[sei[iconn][1]][1] ][0];
-        LvArray::tensorOps::normalize< 3 >( Nbar1 );
-
-        real64 normalProduct = LvArray::tensorOps::AiBi< 3 >( Nbar0, Nbar1 );
         // To be able to compute an average rotation matrix, normal has to point in the same direction.
-        // TODO: not sure this is the proper way ...
         if( normalProduct < 0.0 )
         {
           LvArray::tensorOps::scale< 3 >( Nbar1, -1.0 );
@@ -1249,7 +1321,7 @@ void LagrangianContactFlowSolver::AssembleStabilization( DomainPartition const &
 
         // Add nodal area contribution
         stackArray1d< real64, 1 > totalInvStiffApproxDiag( 1 );
-        totalInvStiffApproxDiag( 0 ) = -rotatedInvStiffApprox * ( nodalArea[0][0]*nodalArea[1][0] + nodalArea[0][1]*nodalArea[1][1] );
+        totalInvStiffApproxDiag( 0 ) = -rotatedInvStiffApprox * areafac;
 
         // Get DOF numbering
         localIndex fractureIndex[2];
@@ -1310,7 +1382,7 @@ void LagrangianContactFlowSolver::AssembleStabilization( DomainPartition const &
           }
         }
       }
-    }
+    } );
   } );
 }
 
