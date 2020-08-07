@@ -155,47 +155,43 @@ void DelftEggUpdates::SmallStrainUpdate( localIndex const k,
 
   real64        pc    = oldPc; 
   real64 bulkModulus  = -p0/Cr;
-  // two-invariant decomposition of strain increment
 
-  real64 strainIncrementVol = 0; //volumetric part of strain increment 
+  real64 sqrt23 = std::sqrt(2./3.);
+  array1d< real64 > identity(6);
+    
   for(localIndex i=0; i<3; ++i)
   {
-    strainIncrementVol += strainIncrement[i];
+    identity[i] = 1.0;
+    identity[i+3] = 0.0;
   }
 
-  real64 temp = strainIncrementVol/3;
-  array1d< real64 > deviator(6);  // array allocation
-  for(localIndex i=0; i<3; ++i)
-  {
-    deviator[i] = strainIncrement[i]-temp;
-    deviator[i+3] = strainIncrement[i+3];
-  }
-
-  real64 strainIncrementDev = 0; //deviatoric part of strain increment
-  for(localIndex i=0; i<3; ++i)
-  {
-    strainIncrementDev += deviator[i]*deviator[i];
-    strainIncrementDev += deviator[i+3]*deviator[i+3]/2; //because of Voigt form of strain increment vector
-  }
-  strainIncrementDev = strainIncrementDev + 1e-15; // (NOT needed for now?) perturbed to avoid divide by zero when strainIncrementDev=0;
-
-  strainIncrementDev *= std::sqrt(2./3.);
+  std::cout << "pc = " <<  oldPc << " "<< "p0= " <<p0<< "\n " << std::endl;
 
   // two-invariant decomposition of old stress in P-Q space (mean & deviatoric stress)
 
-  real64 oldP = 0;
-  real64 oldQ = 0;
+  real64 oldP = 0.0;
+  real64 oldQ = 0.0;
   for(localIndex i=0; i<6; ++i)
   {
     stress[i] = m_oldStress[k][q][i];
+    //std::cout << "old_stress[ " <<  i << " ]"<<stress[i] << "\n " << std::endl;
   }
 
   for(localIndex i=0; i<3; ++i)
   {
     oldP += stress[i];
   }
-  oldP /= 3;
-  
+  oldP /= 3.0;
+
+  //std::cout << "old P = " << oldP<<"\n " << std::endl;
+
+  if (std::abs(oldP) < 1e-15)
+  {
+    oldP=p0;
+    stress[0] = p0; stress[1] = p0; stress[2] = p0;
+  //  std::cout << "first step" << "\n " << std::endl;
+  }
+
   array1d< real64 > oldDeviator(6);  // array allocation
   for(localIndex i=0; i<3; ++i)
   {
@@ -209,65 +205,109 @@ void DelftEggUpdates::SmallStrainUpdate( localIndex const k,
     oldQ += 2*oldDeviator[i+3]*oldDeviator[i+3];
   }
 
-
-  oldQ = std::sqrt(oldQ) + 1e-15; // perturbed to avoid divide by zero when Q=0;
+  oldQ = std::sqrt(oldQ); //+ 1e-15; // ;
 
     for(localIndex i=0; i<6; ++i)
   {
-    oldDeviator[i] /= oldQ; // normalized deviatoric direction, "nhat" from previous step
+    oldDeviator[i] /= (oldQ+ 1e-15); // normalized deviatoric direction, "nhat" from previous step
+                                    // also perturbed to avoid divide by zero when Q=0
   }
-
+  
   oldQ *= std::sqrt(3./2.);
 
   // Recover elastic strains from the previous step, based on stress from the previous step
   // [Note: in order to minimize data transfer, we are not storing and passing elastic strains] 
 
-  real64 oldElasticStrainVol = std::log(oldP/p0) * Cr * (-1) + eps_v0 ;
-  real64 oldElasticStrainDev = oldQ/3/mu;  
+  real64 oldElasticStrainVol = std::log(oldP/p0) * Cr * (-1.0) + eps_v0 ;
+  real64 oldElasticStrainDev = oldQ/3./mu;  
+
+  //std::cout << " old elastc strain vol = " << oldElasticStrainVol <<"\n " << std::endl;
 
   // Now recover the old strain tensor from the strain invariants. 
   // Note that we need the deviatoric direction (n-hat) from the previous step.
 
-    array1d< real64 > identity(6);
-    
-    for(localIndex i=0; i<3; ++i)
-    {
-      identity[i] = 1.0;
-      identity[i+3] = 0.0;
-    }
-
   array1d< real64 > strainElasticTrial(6);
   array1d< real64 > oldStrainElastic(6);
-  real64 strainElasticTrialVol=0;
-  real64 sqrt23 = std::sqrt(2/3);
+  real64 strainElasticTrialVol = 0.0 ;
+
   
    for(localIndex i=0; i<6; ++i)
   {
-    oldStrainElastic[i] = oldDeviator[i] * sqrt23 * oldElasticStrainDev + 1/3 * oldElasticStrainVol * identity[i];
+    oldStrainElastic[i] = oldDeviator[i] * sqrt23 * oldElasticStrainDev + 1./3. * oldElasticStrainVol * identity[i];
     strainElasticTrial[i] = oldStrainElastic[i] + strainIncrement[i];
+  //   std::cout << " old elastc strain [" << i << "] =" << oldStrainElastic[i]<<"\n " << std::endl;
+  //    std::cout << " old elastc strain  vol = " <<  oldElasticStrainVol<<"\n " << std::endl;
+  //   std::cout << " identity [" << i << "] =" << identity[i]<<"\n " << std::endl;
+  //   std::cout << " oldDeviator [" << i << "] =" << oldDeviator[i]<<"\n " << std::endl;
+  //  std::cout << " old elastc strain  dev  = " <<  oldElasticStrainDev<<"\n " << std::endl;
+  //  std::cout << " strainIncrement [" << i << "] =" << strainIncrement[i]<<"\n " << std::endl;
   }
 
      for(localIndex i=0; i<3; ++i)
   {
-    oldStrainElastic[i+3] *= 2; // Voigt form
+    oldStrainElastic[i+3] *= 2.0; // Voigt form
     strainElasticTrialVol += strainElasticTrial[i];
   }
 
-  
   // elastic predictor
   // newP= oldP * exp(-1/Cr* strainIncrementVol)
   // newQ = oldQ + 3 * mu * strainIncrementDev
+  //real64 eps_v_trial = oldElasticStrainVol + strainIncrementVol; 
+  //real64 eps_s_trial = oldElasticStrainDev + strainIncrementDev;
 
-  real64 eps_v_trial = oldElasticStrainVol + strainIncrementVol; 
-  real64 eps_s_trial = oldElasticStrainDev + strainIncrementDev;
+  real64 eps_v_trial = strainElasticTrialVol; 
+  std::cout << " eps_v_trial = " << eps_v_trial<<"\n " << std::endl;
+  real64 temp = eps_v_trial/3.;
+  array1d< real64 > deviator(6);  // array allocation
+  for(localIndex i=0; i<3; ++i)
+  {
+     deviator[i] = strainElasticTrial[i]-temp;
+     deviator[i+3] = strainElasticTrial[i+3];
+   }
 
-  real64 trialP = oldP * std::exp(-1/Cr* strainIncrementVol);
-  real64 trialQ = oldQ + 3 * mu * strainIncrementDev;
+   real64 eps_s_trial = 0.0; //deviatoric part of strain increment
+   for(localIndex i=0; i<3; ++i)
+   {
+     eps_s_trial += deviator[i]*deviator[i];
+     eps_s_trial += deviator[i+3]*deviator[i+3]/2. ; //because of Voigt form of strain increment vector
+   }
 
-   // set stiffness to elastic predictor
+     eps_s_trial  = std::sqrt(eps_s_trial);// + 1e-15; // 
+
+    for(localIndex i=0; i<6; ++i)
+  {
+    deviator[i] /= (eps_s_trial + 1e-15); // normalized deviatoric direction, "nhat" from previous step
+                                            // also perturbed to avoid divide by zero when Q=0;
+  }
+  // Calculate the normalized deviatoric direction, "nhat"
+  
+    for(localIndex i=0; i<3; ++i)
+  {
+    deviator[i+3] /= 2. ; // because of Voigt form 
+  }
+   eps_s_trial *= std::sqrt(2./3.);
+
+  real64 trialP = p0 * std::exp(-1./Cr* (eps_v_trial-eps_v0));
+  real64 trialQ = 3. * mu * eps_s_trial;
+
+  //std::cout << "trialP= " <<  trialP << " , trial Q="<< trialQ << "\n " << std::endl; 
+
+
+  for(localIndex i=0; i<6; ++i)
+  {
+    stress[i] = trialP * identity[i] + trialQ * sqrt23 *deviator[i];
+  }
+
+    for(localIndex i=0; i<6; ++i)
+  {
+      std::cout << stress[i]<< " ";
+  }
+    std::cout << "\n";
+
+       // set stiffness to elastic predictor
   
    bulkModulus = -trialP/Cr ; 
-  real64 lame = bulkModulus - 2/3 * mu;
+  real64 lame = bulkModulus - 2./3. * mu;
 
   for(localIndex i=0; i<6; ++i)
   {
@@ -277,49 +317,21 @@ void DelftEggUpdates::SmallStrainUpdate( localIndex const k,
     }
   }
   
-  stiffness[0][0] = lame + 2*mu;
+  stiffness[0][0] = lame + 2.*mu;
   stiffness[0][1] = lame;
   stiffness[0][2] = lame;
 
   stiffness[1][0] = lame;
-  stiffness[1][1] = lame + 2*mu;
+  stiffness[1][1] = lame + 2.*mu;
   stiffness[1][2] = lame;
 
   stiffness[2][0] = lame;
   stiffness[2][1] = lame;
-  stiffness[2][2] = lame + 2*mu;
+  stiffness[2][2] = lame + 2.*mu;
 
   stiffness[3][3] = mu;
   stiffness[4][4] = mu;
   stiffness[5][5] = mu;
-
-  // Calculate the normalized deviatoric direction, "nhat"
-
-  
-  //array1d< real64 > deviator(6);  // array allocation
-  for(localIndex i=0; i<3; ++i)
-  {
-    deviator[i] = strainElasticTrial[i]- strainElasticTrialVol/3;
-    deviator[i+3] = strainElasticTrial[i+3];
-  }
-  
-  real64 deviator_norm = 0;
-  for(localIndex i=0; i<3; ++i)
-  {
-    deviator_norm  += deviator[i]*deviator[i];
-    deviator_norm  += deviator[i+3]*deviator[i+3]/2; //because of Voigt form
-  }
-  deviator_norm  = std::sqrt(deviator_norm ) + 1e-15; // perturbed to avoid divide by zero when Q=0;
-  
-  for(localIndex i=0; i<6; ++i)
-  {
-    deviator[i] /= deviator_norm; // normalized deviatoric direction, "nhat"
-  }
-  
-    for(localIndex i=0; i<3; ++i)
-  {
-    deviator[i+3] /= 2; // because of Voigt form 
-  }
 
   // check yield function F <= 0
   
@@ -327,6 +339,7 @@ void DelftEggUpdates::SmallStrainUpdate( localIndex const k,
   
   if(yield > 1e-9) // plasticity branch
   {
+    std::cout << "plastic " <<  "\n " << std::endl;
     // the return mapping can in general be written as a newton iteration.
     // here we have a linear problem, so the algorithm will converge in one
     // iteration, but this is a template for more general models with either
@@ -376,7 +389,7 @@ void DelftEggUpdates::SmallStrainUpdate( localIndex const k,
       
       norm = LvArray::tensorOps::l2Norm<3>(residual);
       
-      //residual.L2_Norm();  //std::cout << iter << " " << norm << std::endl;
+     std::cout << "iter= " << iter << ", norm =  " << norm << std::endl;
       
       if(iter==0)
       {
@@ -414,12 +427,6 @@ void DelftEggUpdates::SmallStrainUpdate( localIndex const k,
     {
       stress[i] = trialP * identity[i] + trialQ * sqrt23 *deviator[i];
     }
-
-
-    for(localIndex i=0; i<3; ++i)
-    {
-      stress[i] += solution[0];
-    }
     
     // construct consistent tangent operator
     
@@ -430,11 +437,13 @@ void DelftEggUpdates::SmallStrainUpdate( localIndex const k,
         stiffness[i][j] = 0;
       }
     }
+
     array2d< real64 > BB(2,2);
     BB.setValues< serialPolicy >( 0 );
 
-    real64 a1= 1; //check
-    real64 a2 = trialP;  //check
+    real64 dpc_dve = -1/(Cc-Cr) * pc;
+    real64 a1= 1+solution[2]*dpc_dve; //check
+    real64 a2 = trialP * dpc_dve;  //check
 
     bulkModulus = -trialP/Cr; 
 
@@ -443,11 +452,13 @@ void DelftEggUpdates::SmallStrainUpdate( localIndex const k,
     BB[1][0] =3*mu*(a1*jacobianInv[1][0]+a2*jacobianInv[1][2]);
     BB[1][1] = 3*mu*jacobianInv[1][1];
 
-    real64 c1 = 2*trialQ/(3*eps_s_trial); 
+    real64 c1; 
     
     if(eps_s_trial<1e-10) // confirm eps_s_trial != 0
     {
       c1 = 2*mu;
+    }else{
+      c1 = 2*trialQ/(3*eps_s_trial);
     }
 
     real64 c2 = BB[0][0] - c1/3;

@@ -34,12 +34,12 @@ TEST( DelftEggTests, testModel )
     "   <DelftEgg"
     "      name=\"granite\" "
     "      defaultDensity=\"2700\" "
-    "      defaultRefPressure=\"-1000.0\" "
+    "      defaultRefPressure=\"-3.0\" "
     "      defaultRefStrainVol=\"-1e-4\" "
-    "      defaultShearModulus=\"1000.0\" "
-    "      defaultPreConsolidationPressure =\"10.0\" "
+    "      defaultShearModulus=\"100.0\" "
+    "      defaultPreConsolidationPressure =\"-4.0\" "
     "      defaultShapeParameter=\"1.0\" "
-    "      defaultCslSlope=\"1.0\" "
+    "      defaultCslSlope=\"1.2\" "
     "      defaultVirginCompressionIndex=\"0.01\" "
     "      defaultRecompressionIndex=\"0.1\"/>"
     "</Constitutive>";
@@ -71,14 +71,14 @@ TEST( DelftEggTests, testModel )
   
   DelftEgg::KernelWrapper cmw = cm.createKernelWrapper();
   
-  real64 inc = 1e-4; // tension
+  real64 inc = -1e-4; // compression
   real64 total = 0;
   
   //array2d< real64 > strainIncrement(1,6);
   //                  strainIncrement.setValues< serialPolicy >( 0 );
   //                  strainIncrement[0][0] = inc;
 
-  real64 strainIncrement[6] = {inc, 0, 0, 0, 0, 0};
+  real64 strainIncrement[6] = {inc, inc, inc, 0, 0, 0};
   real64 stress[6] = {0, 0, 0, 0, 0, 0};
   real64 stiffness[6][6];
 
@@ -116,7 +116,7 @@ TEST( DelftEggTests, testModel )
 
   //array3d< real64 > pstiffness(1,6,6);
   
-  real64 eps = 1e-12;
+  real64 eps = 1e-8;
   
   cmw.SmallStrainUpdate(0,0,strainIncrement,stress,stiffness);
   
