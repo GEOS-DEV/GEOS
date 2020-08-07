@@ -22,11 +22,22 @@
 #include "FiniteElementBase.hpp"
 #include "LagrangeBasis1.hpp"
 
+#include <utility>
+
+
 
 namespace geosx
 {
 namespace finiteElement
 {
+
+//constexpr static real64 linearBasisAtQuadrature[2] = { 0.5 + 0.5 * 0.5773502691896257645092,
+//                                                       0.5 - 0.5 * 0.5773502691896257645092 };
+//__constant__ real64 psiProduct[3] = { 0.5 * linearBasisAtQuadrature[0]*linearBasisAtQuadrature[0],
+//                                          0.5 * linearBasisAtQuadrature[0]*linearBasisAtQuadrature[1],
+//                                          0.5 * linearBasisAtQuadrature[1]*linearBasisAtQuadrature[1] };
+////__constant__ int dpsi[2] = { -1, 1 };
+//__constant__ real64 dpsi[2] = { -0.5, 0.5 };
 
 /**
  * This class contains the kernel accessible functions specific to the standard
@@ -125,6 +136,148 @@ public:
   static real64 transformedQuadratureWeight( localIndex const q,
                                              real64 const (&X)[numNodes][3] );
 
+  /**
+   * @brief Calculates the isoparametric "Jacobian" transformation
+   *   matrix/mapping from the parent space to the physical space.
+   * @param qa The 1d quadrature point index in xi0 direction (0,1)
+   * @param qb The 1d quadrature point index in xi1 direction (0,1)
+   * @param qc The 1d quadrature point index in xi2 direction (0,1)
+   * @param X Array containing the coordinates of the support points.
+   * @param J Array to store the Jacobian transformation.
+   */
+  GEOSX_HOST_DEVICE
+  static real64 inverseJacobianTransformation( int const q,
+                                               real64 const (&X)[numNodes][3],
+                                               real64 ( & J )[3][3] )
+  {
+    int qa, qb, qc;
+    LagrangeBasis1::TensorProduct3D::multiIndex( q, qa, qb, qc );
+    jacobianTransformation( qa, qb, qc, X, J );
+    return inverse( J );
+  }
+
+
+  /**
+   * @brief Calculate the symmetric gradient of a vector valued support field
+   *   at a quadrature point using the stored inverse of the Jacobian
+   *   transformation matrix.
+   * @param q The linear index of the quadrature point.
+   * @param invJ The inverse of the Jacobian transformation matrix.
+   * @param var The vector valued support field to apply the gradient
+   *   operator on.
+   * @param grad The symmetric gradient in Voigt notation.
+   */
+  GEOSX_HOST_DEVICE
+  static void symmetricGradient( int const q,
+                                 real64 const (&invJ)[3][3],
+                                 real64 const (&var)[numNodes][3],
+                                 real64 ( &grad )[6] );
+
+
+  /**
+   * @brief Calculate the symmetric gradient of a vector valued support field
+   *   at a point using the stored basis function gradients for all support
+   *   points.
+   * @param dNdX The basis function gradients at a point in the element.
+   * @param var The vector valued support field that the gradient operator will
+   *  be applied to.
+   * @param grad The symmetric gradient in Voigt notation.
+   *
+   * More precisely, the operator is defined as:
+   * \f[
+   * grad^s_{ij}  = \frac{1}{2} \sum_a^{nSupport} \left ( \frac{\partial N_a}{\partial X_j} var_{ai} + \frac{\partial N_a}{\partial X_i}
+   * var_{aj}\right ),
+   * \f]
+   *
+   */
+  template< typename BASIS_GRAD_TYPE >
+  GEOSX_HOST_DEVICE
+  static void symmetricGradient( BASIS_GRAD_TYPE const & dNdX,
+                                 real64 const (&var)[numNodes][3],
+                                 real64 ( &grad )[6] );
+
+  /**
+   * @brief Calculate the gradient of a vector valued support field at a point
+   *   using the stored basis function gradients for all support points.
+   * @param q The linear index of the quadrature point.
+   * @param invJ The inverse of the Jacobian transformation matrix.
+   * @param var The vector valued support field to apply the gradient
+   *   operator on.
+   * @param grad The gradient.
+   *
+   * More precisely, the operator is defined as:
+   * \f[
+   * grad_{ij}  = \sum_a^{nSupport} \left ( \frac{\partial N_a}{\partial X_j} var_{ai}\right ),
+   * \f]
+   *
+   */
+  GEOSX_HOST_DEVICE
+  static void gradient( int const q,
+                        real64 const (&invJ)[3][3],
+                        real64 const (&var)[numNodes][3],
+                        real64 ( &grad )[3][3] );
+
+
+  /**
+   * @brief Calculate the gradient of a vector valued support field at a point
+   *   using the stored basis function gradients for all support points.
+   * @param dNdX The basis function gradients at a point in the element.
+   * @param var The vector valued support field that the gradient operator will
+   *  be applied to.
+   * @param grad The  gradient.
+   *
+   * More precisely, the operator is defined as:
+   * \f[
+   * grad_{ij}  = \sum_a^{nSupport} \left ( \frac{\partial N_a}{\partial X_j} var_{ai}\right ),
+   * \f]
+   */
+  GEOSX_HOST_DEVICE
+  static void gradient( real64 const (&dNdX)[numNodes][3],
+                        real64 const (&var)[numNodes][3],
+                        real64 ( &F )[3][3] );
+
+  /**
+   * @brief Inner product of all basis function gradients and a rank-2
+   *   symmetric tensor evaluated at a quadrature point.
+   * @param q The linear index of the quadrature point.
+   * @param invJ The inverse of the Jacobian transformation matrix.
+   * @param var The rank-2 symmetric tensor at @p q.
+   * @param R The vector resulting from the tensor contraction.
+   *
+   * More precisely, the operator is defined as:
+   * \f[
+   * R_i = \sum_a^{nSupport} \left ( \frac{\partial N_a}{\partial X_j} var_{ij}\right ),
+   * \f]
+   * where $\frac{\partial N_a}{\partial X_j}$ is the basis function gradient,
+   *   $var_{ij}$ is the rank-2 symmetric tensor.
+   */
+  GEOSX_HOST_DEVICE
+  static void basisGradientInnerProduct( int const q,
+                                         real64 const (&invJ)[3][3],
+                                         real64 const (&s)[6],
+                                         real64 ( &R )[numNodes][3] );
+
+
+  /**
+   * @brief Inner product of all basis function gradients and a rank-2
+   *   symmetric tensor.
+   * @param dNdX The basis function gradients at a point in the element.
+   * @param var The rank-2 symmetric tensor at @p q.
+   * @param R The vector resulting from the tensor contraction.
+   *
+   * More precisely, the operator is defined as:
+   * \f[
+   * R_i = \sum_a^{nSupport} \left ( \frac{\partial N_a}{\partial X_j} var_{ij}\right ),
+   * \f]
+   * where $\frac{\partial N_a}{\partial X_j}$ is the basis function gradient,
+   *   $var_{ij}$ is the rank-2 symmetric tensor.
+   */
+  template< typename BASIS_GRAD_TYPE >
+  GEOSX_HOST_DEVICE
+  static void basisGradientInnerProduct( BASIS_GRAD_TYPE const & dNdX,
+                                         real64 const (&var)[6],
+                                         real64 ( &R )[numNodes][3] );
+
 
 private:
   /// The length of one dimension of the parent element.
@@ -178,6 +331,41 @@ private:
                                                             real64 const ( &invJ )[3][3],
                                                             real64 ( &dNdX )[numNodes][3] );
 
+  template< typename FUNC, typename ... PARAMS >
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  static void supportLoop( int const qa,
+                           int const qb,
+                           int const qc,
+                           FUNC && func,
+                           PARAMS &&... params )
+  {
+    constexpr static real64 linearBasisAtQuadrature[2] = { 0.5 + 0.5 * quadratureFactor,
+                                                           0.5 - 0.5 * quadratureFactor };
+    constexpr static real64 psiProduct[3] = { 0.5 * linearBasisAtQuadrature[0]*linearBasisAtQuadrature[0],
+                                              0.5 * linearBasisAtQuadrature[0]*linearBasisAtQuadrature[1],
+                                              0.5 * linearBasisAtQuadrature[1]*linearBasisAtQuadrature[1] };
+    constexpr static int dpsi[2] = { -1, 1 };
+
+    for( int a=0; a<2; ++a )
+    {
+      int const qaa = ( a^qa );
+      for( int b=0; b<2; ++b )
+      {
+        int const qbb = ( b^qb );
+        for( int c=0; c<2; ++c )
+        {
+          const int qcc = ( c ^ qc );
+          const real64 dNdXi[3] = { dpsi[a] * psiProduct[qbb + qcc],
+                                    dpsi[b] * psiProduct[ qaa + qcc ],
+                                    dpsi[c] * psiProduct[ qaa + qbb ] };
+          const localIndex nodeIndex = LagrangeBasis1::TensorProduct3D::linearIndex( a, b, c );
+
+          func( dNdXi, nodeIndex, std::forward< PARAMS >( params )... );
+        }
+      }
+    }
+  }
 
 };
 
@@ -225,7 +413,6 @@ real64 H1_Hexahedron_Lagrange1_GaussLegendre2::shapeFunctionDerivatives( localIn
                            0.5 + 0.5 * quadratureCoords[1] };
   real64 const psi2[2] = { 0.5 - 0.5 * quadratureCoords[2],
                            0.5 + 0.5 * quadratureCoords[2] };
-  constexpr real64 dpsi[2] = { -0.5, 0.5 };
 
 
 
@@ -390,6 +577,162 @@ H1_Hexahedron_Lagrange1_GaussLegendre2::
   jacobianTransformation( qa, qb, qc, X, J );
 
   return detJ( J );
+}
+
+
+
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void H1_Hexahedron_Lagrange1_GaussLegendre2::symmetricGradient( int const q,
+                                                                real64 const (&invJ)[3][3],
+                                                                real64 const (&var)[numNodes][3],
+                                                                real64 (& grad)[6] )
+{
+  int qa, qb, qc;
+  LagrangeBasis1::TensorProduct3D::multiIndex( q, qa, qb, qc );
+
+  supportLoop( qa, qb, qc, [] GEOSX_HOST_DEVICE ( real64 const (&dNdXi)[3],
+                                                  int const nodeIndex,
+                                                  real64 const (&invJ)[3][3],
+                                                  real64 const (&var)[numNodes][3],
+                                                  real64 (& grad)[6] )
+  {
+
+    real64 dNdX[3] = {0, 0, 0};
+    for( int i = 0; i < 3; ++i )
+    {
+      for( int j = 0; j < 3; ++j )
+      {
+        dNdX[i] = dNdX[i] + dNdXi[ j ] * invJ[j][i];
+      }
+    }
+
+    grad[0] = grad[0] + dNdX[0] * var[ nodeIndex ][0];
+    grad[1] = grad[1] + dNdX[1] * var[ nodeIndex ][1];
+    grad[2] = grad[2] + dNdX[2] * var[ nodeIndex ][2];
+    grad[3] = grad[3] + dNdX[2] * var[ nodeIndex ][1] + dNdX[1] * var[ nodeIndex ][2];
+    grad[4] = grad[4] + dNdX[2] * var[ nodeIndex ][0] + dNdX[0] * var[ nodeIndex ][2];
+    grad[5] = grad[5] + dNdX[1] * var[ nodeIndex ][0] + dNdX[0] * var[ nodeIndex ][1];
+  },
+               invJ, var, grad );
+}
+
+
+template< typename BASIS_GRAD_TYPE >
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void H1_Hexahedron_Lagrange1_GaussLegendre2::symmetricGradient( BASIS_GRAD_TYPE const & dNdX,
+                                                                real64 const (&var)[numNodes][3],
+                                                                real64 (& grad)[6] )
+{
+  for( int a=0; a<numNodes; ++a )
+  {
+    grad[0] = grad[0] + dNdX[a][0] * var[ a ][0];
+    grad[1] = grad[1] + dNdX[a][1] * var[ a ][1];
+    grad[2] = grad[2] + dNdX[a][2] * var[ a ][2];
+    grad[3] = grad[3] + dNdX[a][2] * var[ a ][1] + dNdX[a][1] * var[ a ][2];
+    grad[4] = grad[4] + dNdX[a][2] * var[ a ][0] + dNdX[a][0] * var[ a ][2];
+    grad[5] = grad[5] + dNdX[a][1] * var[ a ][0] + dNdX[a][0] * var[ a ][1];
+  }
+}
+
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void H1_Hexahedron_Lagrange1_GaussLegendre2::basisGradientInnerProduct( int const q,
+                                                                        real64 const (&invJ)[3][3],
+                                                                        real64 const (&var)[6],
+                                                                        real64 (& R)[numNodes][3] )
+{
+  int qa, qb, qc;
+  LagrangeBasis1::TensorProduct3D::multiIndex( q, qa, qb, qc );
+
+  supportLoop( qa, qb, qc,
+               [] GEOSX_HOST_DEVICE ( real64 const (&dNdXi)[3],
+                                      int const nodeIndex,
+                                      real64 const (&invJ)[3][3],
+                                      real64 const (&var)[6],
+                                      real64 (& R)[numNodes][3] )
+  {
+
+    real64 dNdX[3] = {0, 0, 0};
+    for( int i = 0; i < 3; ++i )
+    {
+      for( int j = 0; j < 3; ++j )
+      {
+        dNdX[i] = dNdX[i] + dNdXi[ j ] * invJ[j][i];
+      }
+    }
+    R[ nodeIndex ][ 0 ] = R[ nodeIndex ][ 0 ] + var[ 0 ] * dNdX[ 0 ] + var[ 5 ] * dNdX[ 1 ] + var[ 4 ] * dNdX[ 2 ];
+    R[ nodeIndex ][ 1 ] = R[ nodeIndex ][ 1 ] + var[ 5 ] * dNdX[ 0 ] + var[ 1 ] * dNdX[ 1 ] + var[ 3 ] * dNdX[ 2 ];
+    R[ nodeIndex ][ 2 ] = R[ nodeIndex ][ 2 ] + var[ 4 ] * dNdX[ 0 ] + var[ 3 ] * dNdX[ 1 ] + var[ 2 ] * dNdX[ 2 ];
+  },
+               invJ, var, R );
+}
+
+
+template< typename BASIS_GRAD_TYPE >
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void H1_Hexahedron_Lagrange1_GaussLegendre2::basisGradientInnerProduct( BASIS_GRAD_TYPE const & dNdX,
+                                                                        real64 const (&var)[6],
+                                                                        real64 (& R)[numNodes][3] )
+{
+  for( int a=0; a<numNodes; ++a )
+  {
+    R[ a ][ 0 ] = R[ a ][ 0 ] + var[ 0 ] * dNdX[ a ][ 0 ] + var[ 5 ] * dNdX[ a ][ 1 ] + var[ 4 ] * dNdX[ a ][ 2 ];
+    R[ a ][ 1 ] = R[ a ][ 1 ] + var[ 5 ] * dNdX[ a ][ 0 ] + var[ 1 ] * dNdX[ a ][ 1 ] + var[ 3 ] * dNdX[ a ][ 2 ];
+    R[ a ][ 2 ] = R[ a ][ 2 ] + var[ 4 ] * dNdX[ a ][ 0 ] + var[ 3 ] * dNdX[ a ][ 1 ] + var[ 2 ] * dNdX[ a ][ 2 ];
+  }
+}
+
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void H1_Hexahedron_Lagrange1_GaussLegendre2::gradient( int const q,
+                                                       real64 const (&invJ)[3][3],
+                                                       real64 const (&var)[numNodes][3],
+                                                       real64 (& grad)[3][3] )
+{
+  int qa, qb, qc;
+  LagrangeBasis1::TensorProduct3D::multiIndex( q, qa, qb, qc );
+
+  supportLoop( qa, qb, qc, [] GEOSX_HOST_DEVICE ( real64 const (&dNdXi)[3],
+                                                  int const nodeIndex,
+                                                  real64 const (&invJ)[3][3],
+                                                  real64 const (&var)[numNodes][3],
+                                                  real64 (& grad)[3][3] )
+  {
+    for( int i = 0; i < 3; ++i )
+    {
+      real64 dNdX=0.0;;
+      for( int j = 0; j < 3; ++j )
+      {
+        dNdX = dNdX + dNdXi[ j ] * invJ[j][i];
+      }
+      for( int k = 0; k < 3; ++k )
+      {
+        grad[k][i] = grad[k][i] + dNdX * var[ nodeIndex ][k];
+      }
+    }
+  },
+               invJ, var, grad );
+}
+
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void H1_Hexahedron_Lagrange1_GaussLegendre2::gradient( real64 const (&dNdX)[numNodes][3],
+                                                       real64 const (&var)[numNodes][3],
+                                                       real64 (& F)[3][3] )
+{
+  for( int a=0; a<numNodes; ++a )
+  {
+    for( int i = 0; i < 3; ++i )
+    {
+      for( int j = 0; j < 3; ++j )
+      {
+        F[i][j] = F[i][j] + var[ a ][i] * dNdX[a][j];
+      }
+    }
+  }
 }
 
 }

@@ -212,11 +212,17 @@ public:
   {
 
 #if defined(CALCFEMSHAPE)
+//#define USE_JACOBIAN
+
+#if !defined( USE_JACOBIAN )
     real64 dNdX[ numNodesPerElem ][ 3 ];
     real64 const detJ = FE_TYPE::shapeFunctionDerivatives( q, stack.xLocal, dNdX );
-
     /// Macro to substitute in the shape function derivatives.
     #define DNDX dNdX
+#else
+    real64 invJ[3][3];
+    real64 const detJ = FE_TYPE::inverseJacobianTransformation( q, stack.xLocal, invJ );
+#endif
 
     /// Macro to substitute the determinant of the jacobian transformation to the parent space.
     #define DETJ detJ
@@ -227,18 +233,14 @@ public:
     /// @endcond DOXYGEN_SKIP
 #endif //defined(CALCFEMSHAPE)
 
-    real64 stressLocal[ 6 ] = {0};
     real64 strain[6] = {0};
-    for( localIndex a = 0; a < numNodesPerElem; ++a )
-    {
-      strain[0] = strain[0] + DNDX[ a ][0] * stack.varLocal[ a ][0];
-      strain[1] = strain[1] + DNDX[ a ][1] * stack.varLocal[ a ][1];
-      strain[2] = strain[2] + DNDX[ a ][2] * stack.varLocal[ a ][2];
-      strain[3] = strain[3] + DNDX[ a ][2] * stack.varLocal[ a ][1] + DNDX[ a ][1] * stack.varLocal[ a ][2];
-      strain[4] = strain[4] + DNDX[ a ][2] * stack.varLocal[ a ][0] + DNDX[ a ][0] * stack.varLocal[ a ][2];
-      strain[5] = strain[5] + DNDX[ a ][1] * stack.varLocal[ a ][0] + DNDX[ a ][0] * stack.varLocal[ a ][1];
-    }
+#if !defined( USE_JACOBIAN )
+    FE_TYPE::symmetricGradient( DNDX, stack.varLocal, strain );
+#else
+    FE_TYPE::symmetricGradient( q, invJ, stack.varLocal, strain );
+#endif
 
+    real64 stressLocal[ 6 ] = {0};
 #if UPDATE_STRESS == 2
     m_constitutiveUpdate.SmallStrain( k, q, strain );
 #else
@@ -256,12 +258,11 @@ public:
 #endif
     }
 
-    for( localIndex a=0; a< numNodesPerElem; ++a )
-    {
-      stack.fLocal[ a ][ 0 ] = stack.fLocal[ a ][ 0 ] + stressLocal[ 0 ] * DNDX[ a ][ 0 ] + stressLocal[ 5 ] * DNDX[ a ][ 1 ] + stressLocal[ 4 ] * DNDX[ a ][ 2 ];
-      stack.fLocal[ a ][ 1 ] = stack.fLocal[ a ][ 1 ] + stressLocal[ 5 ] * DNDX[ a ][ 0 ] + stressLocal[ 1 ] * DNDX[ a ][ 1 ] + stressLocal[ 3 ] * DNDX[ a ][ 2 ];
-      stack.fLocal[ a ][ 2 ] = stack.fLocal[ a ][ 2 ] + stressLocal[ 4 ] * DNDX[ a ][ 0 ] + stressLocal[ 3 ] * DNDX[ a ][ 1 ] + stressLocal[ 2 ] * DNDX[ a ][ 2 ];
-    }
+#if !defined( USE_JACOBIAN )
+    FE_TYPE::basisGradientInnerProduct( DNDX, stressLocal, stack.fLocal );
+#else
+    FE_TYPE::basisGradientInnerProduct( q, invJ, stressLocal, stack.fLocal );
+#endif
   }
 
   /**

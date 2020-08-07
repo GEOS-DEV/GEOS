@@ -55,18 +55,18 @@ dispatch3D( FiniteElementBase const & input,
   {
     lambda( *ptr1 );
   }
-  else if( auto const * const ptr2 = dynamic_cast< H1_Wedge_Lagrange1_Gauss6 const * >(&input) )
-  {
-    lambda( *ptr2 );
-  }
-  else if( auto const * const ptr3 = dynamic_cast< H1_Tetrahedron_Lagrange1_Gauss1 const * >(&input) )
-  {
-    lambda( *ptr3 );
-  }
-  else if( auto const * const ptr4 = dynamic_cast< H1_Pyramid_Lagrange1_Gauss5 const * >(&input) )
-  {
-    lambda( *ptr4 );
-  }
+//  else if( auto const * const ptr2 = dynamic_cast< H1_Wedge_Lagrange1_Gauss6 const * >(&input) )
+//  {
+//    lambda( *ptr2 );
+//  }
+//  else if( auto const * const ptr3 = dynamic_cast< H1_Tetrahedron_Lagrange1_Gauss1 const * >(&input) )
+//  {
+//    lambda( *ptr3 );
+//  }
+//  else if( auto const * const ptr4 = dynamic_cast< H1_Pyramid_Lagrange1_Gauss5 const * >(&input) )
+//  {
+//    lambda( *ptr4 );
+//  }
   else
   {
     GEOSX_ERROR( "finiteElement::dispatch3D() is not implemented for input of "<<typeid(input).name() );
