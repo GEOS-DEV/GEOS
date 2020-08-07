@@ -25,8 +25,8 @@ using namespace geosx;
 
 
 void evaluate1DFunction( FunctionBase * function,
-                         real64_array inputs,
-                         real64_array outputs )
+                         arrayView1d< real64 const > const & inputs,
+                         arrayView1d< real64 const > const & outputs )
 {
   for( localIndex ii=0; ii<inputs.size(); ++ii )
   {
@@ -86,7 +86,7 @@ TEST( FunctionTests, 1DTable )
   testExpected[4] = 3.0;
   testExpected[5] = 7.0;
   table_a->setInterpolationMethod( "linear" );
-  evaluate1DFunction( table_a, testCoordinates, testExpected );
+  evaluate1DFunction( table_a, testCoordinates.toView(), testExpected.toView() );
 
   // Upper
   testExpected[0] = 1.0;
@@ -96,7 +96,7 @@ TEST( FunctionTests, 1DTable )
   testExpected[4] = 7.0;
   testExpected[5] = 7.0;
   table_a->setInterpolationMethod( "upper" );
-  evaluate1DFunction( table_a, testCoordinates, testExpected );
+  evaluate1DFunction( table_a, testCoordinates.toView(), testExpected.toView() );
 
   // Lower
   testExpected[0] = 1.0;
@@ -106,7 +106,7 @@ TEST( FunctionTests, 1DTable )
   testExpected[4] = -5.0;
   testExpected[5] = 7.0;
   table_a->setInterpolationMethod( "lower" );
-  evaluate1DFunction( table_a, testCoordinates, testExpected );
+  evaluate1DFunction( table_a, testCoordinates.toView(), testExpected.toView() );
 
   // Nearest
   testExpected[0] = 1.0;
@@ -116,7 +116,7 @@ TEST( FunctionTests, 1DTable )
   testExpected[4] = 7.0;
   testExpected[5] = 7.0;
   table_a->setInterpolationMethod( "nearest" );
-  evaluate1DFunction( table_a, testCoordinates, testExpected );
+  evaluate1DFunction( table_a, testCoordinates.toView(), testExpected.toView() );
 
 }
 
