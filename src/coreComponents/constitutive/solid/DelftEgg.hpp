@@ -165,8 +165,6 @@ void DelftEggUpdates::SmallStrainUpdate( localIndex const k,
     identity[i+3] = 0.0;
   }
 
-  std::cout << "pc = " <<  oldPc << " "<< "p0= " <<p0<< "\n " << std::endl;
-
   // two-invariant decomposition of old stress in P-Q space (mean & deviatoric stress)
 
   real64 oldP = 0.0;
@@ -174,7 +172,6 @@ void DelftEggUpdates::SmallStrainUpdate( localIndex const k,
   for(localIndex i=0; i<6; ++i)
   {
     stress[i] = m_oldStress[k][q][i];
-    //std::cout << "old_stress[ " <<  i << " ]"<<stress[i] << "\n " << std::endl;
   }
 
   for(localIndex i=0; i<3; ++i)
@@ -183,13 +180,10 @@ void DelftEggUpdates::SmallStrainUpdate( localIndex const k,
   }
   oldP /= 3.0;
 
-  //std::cout << "old P = " << oldP<<"\n " << std::endl;
-
   if (std::abs(oldP) < 1e-15)
   {
     oldP=p0;
     stress[0] = p0; stress[1] = p0; stress[2] = p0;
-  //  std::cout << "first step" << "\n " << std::endl;
   }
 
   array1d< real64 > oldDeviator(6);  // array allocation
@@ -202,7 +196,7 @@ void DelftEggUpdates::SmallStrainUpdate( localIndex const k,
   for(localIndex i=0; i<3; ++i)
   {
     oldQ += oldDeviator[i]*oldDeviator[i];
-    oldQ += 2*oldDeviator[i+3]*oldDeviator[i+3];
+    oldQ += 2. * oldDeviator[i+3]*oldDeviator[i+3];
   }
 
   oldQ = std::sqrt(oldQ); //+ 1e-15; // ;
@@ -221,26 +215,17 @@ void DelftEggUpdates::SmallStrainUpdate( localIndex const k,
   real64 oldElasticStrainVol = std::log(oldP/p0) * Cr * (-1.0) + eps_v0 ;
   real64 oldElasticStrainDev = oldQ/3./mu;  
 
-  //std::cout << " old elastc strain vol = " << oldElasticStrainVol <<"\n " << std::endl;
-
   // Now recover the old strain tensor from the strain invariants. 
   // Note that we need the deviatoric direction (n-hat) from the previous step.
 
   array1d< real64 > strainElasticTrial(6);
   array1d< real64 > oldStrainElastic(6);
   real64 strainElasticTrialVol = 0.0 ;
-
   
    for(localIndex i=0; i<6; ++i)
   {
     oldStrainElastic[i] = oldDeviator[i] * sqrt23 * oldElasticStrainDev + 1./3. * oldElasticStrainVol * identity[i];
     strainElasticTrial[i] = oldStrainElastic[i] + strainIncrement[i];
-  //   std::cout << " old elastc strain [" << i << "] =" << oldStrainElastic[i]<<"\n " << std::endl;
-  //    std::cout << " old elastc strain  vol = " <<  oldElasticStrainVol<<"\n " << std::endl;
-  //   std::cout << " identity [" << i << "] =" << identity[i]<<"\n " << std::endl;
-  //   std::cout << " oldDeviator [" << i << "] =" << oldDeviator[i]<<"\n " << std::endl;
-  //  std::cout << " old elastc strain  dev  = " <<  oldElasticStrainDev<<"\n " << std::endl;
-  //  std::cout << " strainIncrement [" << i << "] =" << strainIncrement[i]<<"\n " << std::endl;
   }
 
      for(localIndex i=0; i<3; ++i)
@@ -252,11 +237,8 @@ void DelftEggUpdates::SmallStrainUpdate( localIndex const k,
   // elastic predictor
   // newP= oldP * exp(-1/Cr* strainIncrementVol)
   // newQ = oldQ + 3 * mu * strainIncrementDev
-  //real64 eps_v_trial = oldElasticStrainVol + strainIncrementVol; 
-  //real64 eps_s_trial = oldElasticStrainDev + strainIncrementDev;
 
   real64 eps_v_trial = strainElasticTrialVol; 
-  std::cout << " eps_v_trial = " << eps_v_trial<<"\n " << std::endl;
   real64 temp = eps_v_trial/3.;
   array1d< real64 > deviator(6);  // array allocation
   for(localIndex i=0; i<3; ++i)
@@ -290,21 +272,12 @@ void DelftEggUpdates::SmallStrainUpdate( localIndex const k,
   real64 trialP = p0 * std::exp(-1./Cr* (eps_v_trial-eps_v0));
   real64 trialQ = 3. * mu * eps_s_trial;
 
-  //std::cout << "trialP= " <<  trialP << " , trial Q="<< trialQ << "\n " << std::endl; 
-
-
   for(localIndex i=0; i<6; ++i)
   {
     stress[i] = trialP * identity[i] + trialQ * sqrt23 *deviator[i];
   }
 
-    for(localIndex i=0; i<6; ++i)
-  {
-      std::cout << stress[i]<< " ";
-  }
-    std::cout << "\n";
-
-       // set stiffness to elastic predictor
+  // set stiffness to elastic predictor
   
    bulkModulus = -trialP/Cr ; 
   real64 lame = bulkModulus - 2./3. * mu;
@@ -361,22 +334,22 @@ void DelftEggUpdates::SmallStrainUpdate( localIndex const k,
     for(localIndex iter=0; iter<10; ++iter) // could be fixed at one iter
     {
 
-      trialP = p0 * std::exp(-1/Cr* (solution[0] - eps_v0));
-      trialQ = 3 * mu * solution[1];
+      trialP = p0 * std::exp(-1./Cr* (solution[0] - eps_v0));
+      trialQ = 3. * mu * solution[1];
       bulkModulus = -trialP/Cr;
-      pc = oldPc * std::exp(-1/(Cc-Cr)*(eps_v_trial-solution[0]));
+      pc = oldPc * std::exp(-1./(Cc-Cr)*(eps_v_trial-solution[0]));
 
-      yield = trialQ*trialQ/(M*M)- alpha*alpha*trialP *(2*alpha/(alpha+1)*pc-trialP)+alpha*alpha*(alpha-1)/(alpha+1)* pc*pc;
+      yield = trialQ*trialQ/(M*M)- alpha*alpha*trialP *(2.*alpha/(alpha+1.)*pc-trialP)+alpha*alpha*(alpha-1.)/(alpha+1.)* pc*pc;
       
       // derivatives of yield surface
-      real64 alphaTerm = 2*alpha*alpha*alpha / (alpha+1); 
-      real64 df_dp = -alphaTerm * pc + 2 * alpha * trialP;
-      real64 df_dq = 2*trialQ /(M*M); 
-      real64 df_dpc = 2*alpha*alpha*(alpha-1) /(alpha+1) * pc - alphaTerm * trialP ;
-      real64 dpc_dve = -1/(Cc-Cr) * pc;
+      real64 alphaTerm = 2. * alpha*alpha*alpha / (alpha+1.); 
+      real64 df_dp = -alphaTerm * pc + 2. * alpha * trialP;
+      real64 df_dq = 2. * trialQ /(M*M); 
+      real64 df_dpc = 2. * alpha*alpha*(alpha-1.) /(alpha+1.) * pc - alphaTerm * trialP ;
+      real64 dpc_dve = -1./(Cc-Cr) * pc;
 
-      real64 df_dp_dve = 2* alpha * alpha * bulkModulus - alphaTerm * dpc_dve;
-      real64 df_dq_dse = 2/(M*M) * 3 * mu; 
+      real64 df_dp_dve = 2. * alpha * alpha * bulkModulus - alphaTerm * dpc_dve;
+      real64 df_dq_dse = 2. /(M*M) * 3. * mu; 
       //real64 df_dpc_dve = -alphaTerm * bulkModulus + 2*alpha*alpha*(alpha-1) /(alpha+1) * dpc_dve;
 
       // assemble residual system
@@ -403,13 +376,13 @@ void DelftEggUpdates::SmallStrainUpdate( localIndex const k,
       
       // solve Newton system
       
-      jacobian(0,0) = 1+solution[2]*df_dp_dve;
+      jacobian(0,0) = 1. + solution[2] * df_dp_dve;
       jacobian(0,2) = df_dp;
-      jacobian(1,1) = 1+solution[2]*df_dq_dse;
+      jacobian(1,1) = 1. + solution[2]*df_dq_dse;
       jacobian(1,2) = df_dq;
       jacobian(2,0) = bulkModulus * df_dp - dpc_dve * df_dpc;
-      jacobian(2,1) = 3*mu*df_dq;
-      jacobian(2,2) = 0;
+      jacobian(2,1) = 3.0 * mu * df_dq;
+      jacobian(2,2) = 0.0;
       
       LvArray::tensorOps::invert<3>(jacobianInv,jacobian);
       LvArray::tensorOps::AijBj<3,3>(delta,jacobianInv,residual);
@@ -441,30 +414,30 @@ void DelftEggUpdates::SmallStrainUpdate( localIndex const k,
     array2d< real64 > BB(2,2);
     BB.setValues< serialPolicy >( 0 );
 
-    real64 dpc_dve = -1/(Cc-Cr) * pc;
-    real64 a1= 1+solution[2]*dpc_dve; //check
-    real64 a2 = trialP * dpc_dve;  //check
+    real64 dpc_dve = -1./(Cc-Cr) * pc;
+    real64 a1= 1. + solution[2]*dpc_dve; 
+    real64 a2 = trialP * dpc_dve;  
 
     bulkModulus = -trialP/Cr; 
 
     BB[0][0] = bulkModulus*(a1*jacobianInv[0][0]+a2*jacobianInv[0][2]);
     BB[0][1] =bulkModulus*jacobianInv[0][1];
-    BB[1][0] =3*mu*(a1*jacobianInv[1][0]+a2*jacobianInv[1][2]);
-    BB[1][1] = 3*mu*jacobianInv[1][1];
+    BB[1][0] =3. * mu*(a1*jacobianInv[1][0]+a2*jacobianInv[1][2]);
+    BB[1][1] = 3. * mu*jacobianInv[1][1];
 
     real64 c1; 
     
     if(eps_s_trial<1e-10) // confirm eps_s_trial != 0
     {
-      c1 = 2*mu;
+      c1 = 2. * mu;
     }else{
-      c1 = 2*trialQ/(3*eps_s_trial);
+      c1 = 2. * trialQ/(3. * eps_s_trial);
     }
 
-    real64 c2 = BB[0][0] - c1/3;
+    real64 c2 = BB[0][0] - c1/3.;
     real64 c3 = sqrt23 * BB[0][1];
     real64 c4 = sqrt23 * BB[1][0];
-    real64 c5 = 2/3 * BB[1][1] - c1;
+    real64 c5 = 2./3. * BB[1][1] - c1;
     
     for(localIndex i=0; i<3; ++i)
     {

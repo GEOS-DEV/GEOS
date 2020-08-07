@@ -78,14 +78,14 @@ TEST( DelftEggTests, testModel )
   //                  strainIncrement.setValues< serialPolicy >( 0 );
   //                  strainIncrement[0][0] = inc;
 
-  real64 strainIncrement[6] = {inc, inc, inc, 0, 0, 0};
+  real64 strainIncrement[6] = {inc, 0, 0, 0, 0, 0};
   real64 stress[6] = {0, 0, 0, 0, 0, 0};
   real64 stiffness[6][6];
 
   //array2d< real64 > stress(1,6);
   //array3d< real64 > stiffness(1,6,6);
   
-  for(localIndex loadstep=0; loadstep < 40; ++loadstep)
+  for(localIndex loadstep=0; loadstep < 100; ++loadstep)
   {
     cmw.SmallStrainUpdate(0,0,strainIncrement,stress,stiffness);
     cmw.SaveConvergedState(0,0);
@@ -116,7 +116,7 @@ TEST( DelftEggTests, testModel )
 
   //array3d< real64 > pstiffness(1,6,6);
   
-  real64 eps = 1e-8;
+  real64 eps = 1e-12;
   
   cmw.SmallStrainUpdate(0,0,strainIncrement,stress,stiffness);
   
