@@ -1074,16 +1074,19 @@ void LagrangianContactFlowSolver::AssembleStabilization( DomainPartition const &
   NodeManager const & nodeManager = *mesh.getNodeManager();
   ElementRegionManager const & elemManager = *mesh.getElemManager();
 
-  // Get the "face to element" map (valid for the entire mesh)
-  FaceManager::ElemMapType const & faceToElem = faceManager.toElementRelation();
-  arrayView2d< localIndex const > const & faceToElemRegion = faceToElem.m_toElementRegion.toViewConst();
-  arrayView2d< localIndex const > const & faceToElemSubRegion = faceToElem.m_toElementSubRegion.toViewConst();
-  arrayView2d< localIndex const > const & faceToElemIndex = faceToElem.m_toElementIndex.toViewConst();
+  string const & presDofKey = dofManager.getKey( m_pressureKey );
+  globalIndex const rankOffset = dofManager.rankOffset();
 
   // Get the finite volume method used to compute the stabilization
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
   FluxApproximationBase const & stabilizationMethod = fvManager.getFluxApproximation( m_stabilizationName );
+
+  // Get the "face to element" map (valid for the entire mesh)
+  FaceManager::ElemMapType const & faceToElem = faceManager.toElementRelation();
+  arrayView2d< localIndex const > const & faceToElemRegion = faceToElem.m_toElementRegion.toViewConst();
+  arrayView2d< localIndex const > const & faceToElemSubRegion = faceToElem.m_toElementSubRegion.toViewConst();
+  arrayView2d< localIndex const > const & faceToElemIndex = faceToElem.m_toElementIndex.toViewConst();
 
   // Form the SurfaceGenerator, get the fracture name and use it to retrieve the faceMap (from fracture element to face)
   SurfaceGenerator const * const
@@ -1091,7 +1094,7 @@ void LagrangianContactFlowSolver::AssembleStabilization( DomainPartition const &
   FaceElementRegion const * const fractureRegion = elemManager.GetRegion< FaceElementRegion >( surfaceGenerator->getFractureRegionName() );
   FaceElementSubRegion const * const fractureSubRegion = fractureRegion->GetSubRegion< FaceElementSubRegion >( "default" );
   GEOSX_ERROR_IF( !fractureSubRegion->hasWrapper( m_pressureKey ), "The fracture subregion must contain pressure field." );
-  FaceElementSubRegion::FaceMapType const & faceMap = fractureSubRegion->faceList();
+  FaceElementSubRegion::FaceMapType::ViewTypeConst const & faceMap = fractureSubRegion->faceList().toViewConst();
   GEOSX_ERROR_IF( faceMap.size( 1 ) != 2, "A fracture face has to be shared by two cells." );
 
   // Get the pressures
@@ -1133,10 +1136,7 @@ void LagrangianContactFlowSolver::AssembleStabilization( DomainPartition const &
     elemManager.ConstructViewAccessor< CellBlock::NodeMapType, NodeMapViewType >( ElementSubRegionBase::viewKeyStruct::nodeListString );
   ElementRegionManager::ElementViewAccessor< NodeMapViewType >::ViewTypeConst const & elemToNodeView = elemToNode.toViewConst();
 
-  string const & presDofKey = dofManager.getKey( m_pressureKey );
-  arrayView1d< globalIndex const > const &
-  presDofNumber = fractureSubRegion->getReference< globalIndex_array >( presDofKey );
-  globalIndex const rankOffset = dofManager.rankOffset();
+  arrayView1d< globalIndex const > const & presDofNumber = fractureSubRegion->getReference< globalIndex_array >( presDofKey );
 
   stabilizationMethod.forStencils< FaceElementStencil >( mesh, [&]( FaceElementStencil const & stencil )
   {
@@ -1226,16 +1226,16 @@ void LagrangianContactFlowSolver::AssembleStabilization( DomainPartition const &
 
         // first index: face, second index: element (T/B), third index: dof (x, y, z)
         real64 stiffApprox[ 2 ][ 2 ][ 3 ];
-        stiffApprox[1][1][0] = 0;
         for( localIndex kf = 0; kf < 2; ++kf )
         {
           // Get fracture, face and region/subregion/element indices (for elements on both sides)
-          localIndex fractureIndex = sei[iconn][kf];
+          localIndex const fractureIndex = sei[iconn][kf];
 
           for( localIndex i = 0; i < 2; ++i )
           {
             localIndex const faceIndex = ( kf == 0 || id1 == 0 ) ? faceMap[fractureIndex][i] : faceMap[fractureIndex][1-i];
             localIndex const ke = faceToElemIndex[faceIndex][0] >= 0 ? 0 : 1;
+
             localIndex const er  = faceToElemRegion[faceIndex][ke];
             localIndex const esr = faceToElemSubRegion[faceIndex][ke];
             localIndex const ei  = faceToElemIndex[faceIndex][ke];
@@ -1254,15 +1254,15 @@ void LagrangianContactFlowSolver::AssembleStabilization( DomainPartition const &
               maxSize[j] = nodePosition[cellElemsToNodes[ei][0]][j];
               minSize[j] = nodePosition[cellElemsToNodes[ei][0]][j];
             }
-            for( localIndex a=1; a<numNodesPerElem; ++a )
+            for( localIndex a = 1; a < numNodesPerElem; ++a )
             {
               for( localIndex j = 0; j < 3; ++j )
               {
-                maxSize[j] = std::max( maxSize[j], nodePosition[cellElemsToNodes[ei][a]][j] );
-                minSize[j] = std::min( minSize[j], nodePosition[cellElemsToNodes[ei][a]][j] );
+                maxSize[j] = fmax( maxSize[j], nodePosition[cellElemsToNodes[ei][a]][j] );
+                minSize[j] = fmin( minSize[j], nodePosition[cellElemsToNodes[ei][a]][j] );
               }
             }
-            real64_array boxSize( 3 );
+            real64 boxSize[3];
             for( localIndex j = 0; j < 3; ++j )
             {
               boxSize[j] = maxSize[j] - minSize[j];
@@ -1280,7 +1280,6 @@ void LagrangianContactFlowSolver::AssembleStabilization( DomainPartition const &
             }
           }
         }
-
         real64 invTotStiffApprox[ 3 ][ 3 ] = { { 0 } };
         for( localIndex i = 0; i < 3; ++i )
         {
@@ -1326,11 +1325,11 @@ void LagrangianContactFlowSolver::AssembleStabilization( DomainPartition const &
         // Get DOF numbering
         localIndex fractureIndex[2];
         localIndex nDof[2];
-        globalIndex elemDOF[2][1];
+        globalIndex elemDOF[2];
         for( localIndex kf = 0; kf < 2; ++kf )
         {
           fractureIndex[kf] = sei[iconn][kf];
-          elemDOF[kf][0] = presDofNumber[fractureIndex[kf]];
+          elemDOF[kf] = presDofNumber[fractureIndex[kf]];
           nDof[kf] = 1;
         }
 
@@ -1355,7 +1354,7 @@ void LagrangianContactFlowSolver::AssembleStabilization( DomainPartition const &
         // Global matrix and rhs assembly
         for( localIndex kf = 0; kf < 2; ++kf )
         {
-          localIndex const localRow = LvArray::integerConversion< localIndex >( elemDOF[kf][0] - rankOffset );
+          localIndex const localRow = LvArray::integerConversion< localIndex >( elemDOF[kf] - rankOffset );
 
           real64 const & rhs = ( kf == 0 ) ? rhs0 : rhs1;
 
@@ -1365,14 +1364,14 @@ void LagrangianContactFlowSolver::AssembleStabilization( DomainPartition const &
           {
             // (i,i)-block
             localMatrix.addToRowBinarySearchUnsorted< parallelHostAtomic >( localRow,
-                                                                            elemDOF[kf],
+                                                                            &elemDOF[kf],
                                                                             totalInvStiffApproxDiag.data(),
                                                                             nDof[kf] );
             // (i,j)-block
             if( nDof[1-kf] > 0 )
             {
               localMatrix.addToRowBinarySearchUnsorted< parallelHostAtomic >( localRow,
-                                                                              elemDOF[1 - kf],
+                                                                              &elemDOF[1 - kf],
                                                                               totalInvStiffApproxOffDiag.data(),
                                                                               nDof[1 - kf] );
             }
