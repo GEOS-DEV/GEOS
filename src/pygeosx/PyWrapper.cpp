@@ -33,6 +33,8 @@ namespace python
 
 struct PyWrapper
 {
+  PyObject_HEAD
+
   static constexpr char const * docString =
   "A Python interface to geosx::dataRepository::WrapperBase.";
 

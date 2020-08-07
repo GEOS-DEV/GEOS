@@ -330,11 +330,8 @@ static bool addConstants( PyObject * module )
 
   for ( std::pair< long, char const * > const & pair : constants )
   {
-    if ( PyModule_AddIntConstant( module, pair.second, pair.first ) )
-    {
-      PyErr_SetString( PyExc_RuntimeError, "couldn't add constant" );
-      return false;
-    }
+    PYTHON_ERROR_IF( PyModule_AddIntConstant( module, pair.second, pair.first ), PyExc_RuntimeError,
+                     "couldn't add constant", false );
   }
 
   return true;
@@ -345,37 +342,28 @@ static bool addConstants( PyObject * module )
  * which should take no arguments, with the `atexit` standard library module.
  */
 static bool addExitHandler( PyObject * module ){
-  geosx::PyObjectRef atexit_module { PyImport_ImportModule( "atexit" ) };
+  LvArray::python::PyObjectRef<> atexit_module { PyImport_ImportModule( "atexit" ) };
   
   if ( atexit_module == nullptr )
-  { return 0; }
+  { return false; }
 
-  geosx::PyObjectRef atexit_register_pyfunc { PyObject_GetAttrString( atexit_module, "register" ) };
+  LvArray::python::PyObjectRef<> atexit_register_pyfunc { PyObject_GetAttrString( atexit_module, "register" ) };
   if ( atexit_register_pyfunc == nullptr )
-  { return 0; }
+  { return false; }
 
-  geosx::PyObjectRef finalize_pyfunc { PyObject_GetAttrString( module, "finalize" ) };
+  LvArray::python::PyObjectRef<> finalize_pyfunc { PyObject_GetAttrString( module, "finalize" ) };
   if ( finalize_pyfunc == nullptr )
-  { return 0; }
+  { return false; }
 
   if ( !PyCallable_Check( atexit_register_pyfunc ) || !PyCallable_Check( finalize_pyfunc ) )
-  { return 0; }
+  { return false; }
 
-  geosx::PyObjectRef returnval { PyObject_CallFunctionObjArgs( atexit_register_pyfunc, finalize_pyfunc.get(), nullptr ) };
+  LvArray::python::PyObjectRef<> returnval { PyObject_CallFunctionObjArgs( atexit_register_pyfunc, finalize_pyfunc.get(), nullptr ) };
   
   return returnval != nullptr;
 }
 
-// Allow mixing designated and non-designated initializers in the same initializer list.
-// I don't like the pragmas but the designated initializers is the only sane way to do this stuff.
-// The other option is to put this in a `.c` file and compile with the C compiler, but that seems like more work.
-#pragma GCC diagnostic push
-#if defined( __clang_version__ )
-  #pragma GCC diagnostic ignored "-Wc99-designator"
-#else
-  #pragma GCC diagnostic ignored "-Wpedantic"
-  #pragma GCC diagnostic ignored "-Wmissing-field-initializers"
-#endif
+BEGIN_ALLOW_DESIGNATED_INITIALIZERS
 
 /**
  *
