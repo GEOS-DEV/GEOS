@@ -30,6 +30,9 @@
 
 namespace geosx
 {
+
+CommandLineOptions g_commandLineOptions;
+
 namespace dataRepository
 {
 namespace testing
@@ -40,21 +43,18 @@ class SingleWrapperTest : public ::testing::Test
 {
 public:
 
-  virtual void SetUp() override
+  SingleWrapperTest():
+    m_state( std::make_unique< CommandLineOptions >( g_commandLineOptions ) ),
+    m_node( std::make_unique< conduit::Node >() ),
+    m_group( std::make_unique< Group >( m_groupName, *m_node ) ),
+    m_groupSize( rand( 0, 100 ) )
   {
-    m_node = std::make_unique< conduit::Node >();
-    m_group = std::make_unique< Group >( m_groupName, *m_node );
-    m_groupSize = rand( 0, 100 );
     m_group->resize( m_groupSize );
-
     m_wrapper = m_group->registerWrapper< T >( m_wrapperName );
     m_wrapperSizedFromParent = rand( 0, 100 );
     m_wrapper->setSizedFromParent( m_wrapperSizedFromParent );
   }
-
-  virtual void TearDown() override
-  {}
-
+  
   void test()
   {
     T value;
@@ -91,6 +91,7 @@ private:
   std::string const m_wrapperName = "wrapper";
   std::string const m_fileName = "testRestartBasic_SingleWrapperTest";
 
+  GeosxState m_state;
   std::unique_ptr< conduit::Node > m_node;
   std::unique_ptr< Group > m_group;
   int m_groupSize;
@@ -141,7 +142,7 @@ int main( int argc, char * argv[] )
 {
   testing::InitGoogleTest( &argc, argv );
 
-  geosx::basicSetup( argc, argv );
+  geosx::g_commandLineOptions = *geosx::basicSetup( argc, argv );
 
   int const result = RUN_ALL_TESTS();
 

@@ -20,19 +20,11 @@
 #include "PyWrapper.hpp"
 #include "pygeosx.hpp"
 
-#define VERIFY_NON_NULL_AND_RETURN( obj ) \
-  if ( obj == nullptr ) \
-  { \
-    PyErr_SetString( PyExc_RuntimeError, "Passed a nullptr as an argument" ); \
-    return nullptr; \
-  } \
+#define VERIFY_NON_NULL_SELF( self ) \
+  PYTHON_ERROR_IF( self == nullptr, PyExc_RuntimeError, "Passed a nullptr as self.", nullptr )
 
-#define VERIFY_NON_NULL_WRAPPER_AND_RETURN( pywrapper ) \
-  if ( pywrapper->wrapper == nullptr ) \
-  { \
-    PyErr_SetString( PyExc_AttributeError, "Wrapper has not been initialized" ); \
-    return nullptr; \
-  } \
+#define VERIFY_INITIALIZED( self ) \
+  PYTHON_ERROR_IF( self->wrapper == nullptr, PyExc_RuntimeError, "The PyWrapper is not initialized.", nullptr )
 
 namespace geosx
 {
@@ -41,47 +33,27 @@ namespace python
 
 struct PyWrapper
 {
+  PyObject_HEAD
+
   static constexpr char const * docString =
   "A Python interface to geosx::dataRepository::WrapperBase.";
 
-  PyObject_HEAD
   dataRepository::WrapperBase * wrapper;
 };
 
 /**
  *
  */
-static dataRepository::WrapperBase * getWrapperBase( PyObject * const obj )
-{
-  VERIFY_NON_NULL_AND_RETURN( obj );
-
-  int isInstanceOfPyWrapper = PyObject_IsInstance( obj, reinterpret_cast< PyObject * >( getPyWrapperType() ) );
-  if ( isInstanceOfPyWrapper < 0 )
-  { return nullptr; }
-
-  if ( isInstanceOfPyWrapper == 0 )
-  {
-    PyErr_SetString( PyExc_AttributeError, "Expect an argument of type Wrapper." );
-    return nullptr;
-  }
-
-  PyWrapper * wrapper = reinterpret_cast< PyWrapper * >( obj );
-  VERIFY_NON_NULL_WRAPPER_AND_RETURN( wrapper );
-
-  return wrapper->wrapper;
-}
-
-/**
- *
- */
 static PyObject * PyWrapper_repr( PyObject * const obj )
 {
-  dataRepository::WrapperBase const * const wrapper = getWrapperBase( obj );
-  if ( wrapper == nullptr )
+  PyWrapper const * const self = LvArray::python::convert< PyWrapper >( obj, getPyWrapperType() );
+  if ( self == nullptr )
   { return nullptr; }
 
-  std::string const path = wrapper->getPath();
-  std::string const type = LvArray::system::demangle( typeid( *wrapper ).name() );
+  VERIFY_INITIALIZED( self );
+
+  std::string const path = self->wrapper->getPath();
+  std::string const type = LvArray::system::demangle( typeid( *(self->wrapper) ).name() );
   std::string const repr = path + " ( " + type + " )";
   return PyUnicode_FromString( repr.c_str() );
 }
@@ -116,7 +88,8 @@ static constexpr char const * PyWrapper_valueDocString =
 "    If the wrapped type is not covered by any of the above.";
 static PyObject * PyWrapper_value( PyWrapper * const self, PyObject * const args )
 {
-  VERIFY_NON_NULL_WRAPPER_AND_RETURN( self );
+  VERIFY_NON_NULL_SELF( self );
+  VERIFY_INITIALIZED( self );
 
   int modify;
   if ( !PyArg_ParseTuple( args, "p", &modify ) )
@@ -133,17 +106,7 @@ static PyObject * PyWrapper_value( PyWrapper * const self, PyObject * const args
   return ret;
 }
 
-
-// Allow mixing designated and non-designated initializers in the same initializer list.
-// I don't like the pragmas but the designated initializers is the only sane way to do this stuff.
-// The other option is to put this in a `.c` file and compile with the C compiler, but that seems like more work.
-#pragma GCC diagnostic push
-#if defined( __clang_version__ )
-  #pragma GCC diagnostic ignored "-Wc99-designator"
-#else
-  #pragma GCC diagnostic ignored "-Wpedantic"
-  #pragma GCC diagnostic ignored "-Wmissing-field-initializers"
-#endif
+BEGIN_ALLOW_DESIGNATED_INITIALIZERS
 
 static PyMethodDef PyWrapperMethods[] = {
   { "value", (PyCFunction) PyWrapper_value, METH_VARARGS, PyWrapper_valueDocString },
@@ -162,7 +125,7 @@ static PyTypeObject PyWrapperType = {
   .tp_new = PyType_GenericNew,
 };
 
-#pragma GCC diagnostic pop
+END_ALLOW_DESIGNATED_INITIALIZERS
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 PyObject * createNewPyWrapper( dataRepository::WrapperBase & wrapper )

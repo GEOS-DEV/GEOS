@@ -15,6 +15,7 @@
 // Source includes
 #include "common/DataTypes.hpp"
 #include "managers/initialization.hpp"
+#include "managers/GeosxState.hpp"
 #include "dataRepository/Group.hpp"
 #include "dataRepository/ConduitRestart.hpp"
 #include "dataRepository/Wrapper.hpp"
@@ -479,7 +480,7 @@ int main( int argc, char * argv[] )
 {
   testing::InitGoogleTest( &argc, argv );
 
-  geosx::basicSetup( argc, argv );
+  geosx::GeosxState state( geosx::basicSetup( argc, argv ) );
 
   int const result = RUN_ALL_TESTS();
 
