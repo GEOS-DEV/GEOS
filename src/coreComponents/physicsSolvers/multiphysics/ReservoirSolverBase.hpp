@@ -118,6 +118,11 @@ public:
                ParallelVector & rhs,
                ParallelVector & solution ) override;
 
+  virtual real64
+  ScalingForSystemSolution( DomainPartition const & domain,
+                            DofManager const & dofManager,
+                            arrayView1d< real64 const > const & localSolution ) override;
+
   virtual bool
   CheckSystemSolution( DomainPartition const & domain,
                        DofManager const & dofManager,

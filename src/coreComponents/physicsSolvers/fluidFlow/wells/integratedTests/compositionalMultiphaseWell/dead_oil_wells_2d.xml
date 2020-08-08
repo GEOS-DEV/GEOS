@@ -51,8 +51,8 @@
         type="injector"
         control="liquidRate"
         targetBHP="1e8"
-        targetRate="1e-4"
-        injectionStream="{ 0.1, 0.1, 0.8 }"/>
+        targetRate="1e-1"
+        injectionStream="{ 0.0, 0.0, 1.0 }"/>
     </CompositionalMultiphaseWell>
   </Solvers>
 
@@ -134,21 +134,21 @@
   </Mesh>
 
   <Events
-    maxTime="1e5">
+    maxTime="1e6">
     <PeriodicEvent
       name="solverApplications"
-      forceDt="1e3"
+      forceDt="1e4"
       target="/Solvers/reservoirSystem"/>
 
     <PeriodicEvent
       name="outputs"
-      timeFrequency="1e4"
+      timeFrequency="1e5"
       targetExactTimestep="1"
       target="/Outputs/siloOutput"/>
 
     <PeriodicEvent
       name="restarts"
-      timeFrequency="5e4"
+      timeFrequency="5e5"
       targetExactTimestep="0"
       target="/Outputs/restartOutput"/>
   </Events>
