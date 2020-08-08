@@ -452,6 +452,24 @@ void ProppantTransport::PostStepUpdate( real64 const & time_n,
     UpdateProppantMobility( subRegion );
   } );
 
+  forTargetSubRegions( mesh, [&]( localIndex const, ElementSubRegionBase & subRegion )
+  {
+
+    arrayView1d< real64 > const & packVf = subRegion.getReference< array1d< real64 > >( viewKeyStruct::proppantPackVolumeFractionString );
+    arrayView1d< real64 > const & proppantConc =
+      subRegion.getReference< array1d< real64 > >( viewKeyStruct::proppantConcentrationString );
+
+    forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
+    {
+      if( proppantConc[ei] >= m_maxProppantConcentration || packVf[ei] >= 1.0 )
+      {
+        packVf[ei] = 1.0;
+        proppantConc[ei] = m_maxProppantConcentration;
+      }
+
+    } );
+  } );
+
   if( m_updateProppantPacking == 1 )
   {
     UpdateProppantPackVolume( time_n, dt_return, domain );
@@ -738,7 +756,7 @@ void ProppantTransport::ApplyBoundaryConditions( real64 const time_n,
                    [&]( FieldSpecificationBase const * const fs,
                         string const &,
                         SortedArrayView< localIndex const > const & lset,
-                        Group * subRegion,
+                        Group * const subRegion,
                         string const & )
   {
     arrayView1d< globalIndex const > const &
@@ -779,7 +797,7 @@ void ProppantTransport::ApplyBoundaryConditions( real64 const time_n,
                      [&]( FieldSpecificationBase const * const GEOSX_UNUSED_PARAM( fs ),
                           string const & setName,
                           SortedArrayView< localIndex const > const & GEOSX_UNUSED_PARAM( targetSet ),
-                          Group * subRegion,
+                          Group * const subRegion,
                           string const & )
     {
 
@@ -797,7 +815,7 @@ void ProppantTransport::ApplyBoundaryConditions( real64 const time_n,
                      [&] ( FieldSpecificationBase const * const fs,
                            string const & setName,
                            SortedArrayView< localIndex const > const & targetSet,
-                           Group * subRegion,
+                           Group * const subRegion,
                            string const & )
     {
 
@@ -839,7 +857,7 @@ void ProppantTransport::ApplyBoundaryConditions( real64 const time_n,
                      [&] ( FieldSpecificationBase const * const GEOSX_UNUSED_PARAM( bc ),
                            string const & GEOSX_UNUSED_PARAM( setName ),
                            SortedArrayView< localIndex const > const & targetSet,
-                           Group * subRegion,
+                           Group * const subRegion,
                            string const & )
     {
       arrayView1d< integer const > const ghostRank =
@@ -869,8 +887,8 @@ void ProppantTransport::ApplyBoundaryConditions( real64 const time_n,
                                                       rankOffset,
                                                       localMatrix,
                                                       rhsValue,
-                                                      bcCompConc[a][ic],
-                                                      compConc[a][ic] + deltaCompConc[a][ic] );
+                                                      bcCompConc[ei][ic],
+                                                      compConc[ei][ic] + deltaCompConc[ei][ic] );
           localRhs[localRow + ic + 1] = rhsValue;
         }
       } );
