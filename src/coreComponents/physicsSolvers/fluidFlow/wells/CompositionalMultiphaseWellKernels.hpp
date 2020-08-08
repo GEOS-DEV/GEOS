@@ -31,6 +31,8 @@ namespace geosx
 namespace CompositionalMultiphaseWellKernels
 {
 
+static constexpr real64 minDensForDivision = 1e-10;
+
 /******************************** ControlEquationHelper ********************************/
 
 struct ControlEquationHelper
@@ -1209,6 +1211,63 @@ struct ResidualNormKernel
 
 };
 
+/******************************** SolutionScalingKernel ********************************/
+
+struct SolutionScalingKernel
+{
+  template< typename POLICY, typename REDUCE_POLICY, typename LOCAL_VECTOR >
+  static real64
+  Launch( LOCAL_VECTOR const localSolution,
+          globalIndex const rankOffset,
+          localIndex const numComponents,
+          arrayView1d< globalIndex const > const & wellElemDofNumber,
+          arrayView1d< integer const > const & wellElemGhostRank,
+          arrayView2d< real64 const > const & wellElemCompDens,
+          arrayView2d< real64 const > const & dWellElemCompDens,
+          real64 const maxCompFracChange )
+  {
+    real64 constexpr eps = minDensForDivision;
+
+    RAJA::ReduceMin< REDUCE_POLICY, real64 > minVal( 1.0 );
+
+    forAll< POLICY >( wellElemDofNumber.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iwelem )
+    {
+      if( wellElemGhostRank[iwelem] < 0 )
+      {
+
+        real64 prevTotalDens = 0;
+        for( localIndex ic = 0; ic < numComponents; ++ic )
+        {
+          prevTotalDens += wellElemCompDens[iwelem][ic] + dWellElemCompDens[iwelem][ic];
+        }
+
+        for( localIndex ic = 0; ic < numComponents; ++ic )
+        {
+          localIndex const lid = wellElemDofNumber[iwelem] + ic + 1 - rankOffset;
+
+          // compute scaling factor based on relative change in component densities
+          real64 const absCompDensChange = fabs( localSolution[lid] );
+          real64 const maxAbsCompDensChange = maxCompFracChange * prevTotalDens;
+
+          // This actually checks the change in component fraction, using a lagged total density
+          // Indeed we can rewrite the following check as:
+          //    | prevCompDens / prevTotalDens - newCompDens / prevTotalDens | > maxCompFracChange
+          // Note that the total density in the second term is lagged (i.e, we use prevTotalDens)
+          // because I found it more robust than using directly newTotalDens (which can vary also
+          // wildly when the compDens change is large)
+          if( absCompDensChange > maxAbsCompDensChange && absCompDensChange > eps )
+          {
+            minVal.min( maxAbsCompDensChange / absCompDensChange );
+          }
+        }
+      }
+    } );
+    return minVal.get();
+  }
+
+};
+
+
 /******************************** SolutionCheckKernel ********************************/
 
 struct SolutionCheckKernel
@@ -1224,8 +1283,11 @@ struct SolutionCheckKernel
           arrayView1d< real64 const > const & dWellElemPressure,
           arrayView2d< real64 const > const & wellElemCompDens,
           arrayView2d< real64 const > const & dWellElemCompDens,
+          integer const allowCompDensChopping,
           real64 const scalingFactor )
   {
+    real64 constexpr eps = minDensForDivision;
+
     RAJA::ReduceMin< REDUCE_POLICY, localIndex > minVal( 1 );
 
     forAll< POLICY >( wellElemDofNumber.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iwelem )
@@ -1236,18 +1298,41 @@ struct SolutionCheckKernel
         localIndex lid = wellElemDofNumber[iwelem] + CompositionalMultiphaseWell::ColOffset::DPRES - rankOffset;
         real64 const newPres = wellElemPressure[iwelem] + dWellElemPressure[iwelem]
                                + scalingFactor * localSolution[lid];
+
+        // the pressure must be positive
         if( newPres < 0.0 )
         {
           minVal.min( 0 );
         }
 
-        // comp densities
-        for( localIndex ic = 0; ic < numComponents; ++ic )
+        // if component density is not allowed, the time step fails if a component density is negative
+        // otherwise, we just check that the total density is positive, and negative component densities
+        // will be chopped (i.e., set to zero) in ApplySystemSolution
+        if( !allowCompDensChopping )
         {
-          lid = wellElemDofNumber[iwelem] + ic + 1 - rankOffset;
-          real64 const newDens = wellElemCompDens[iwelem][ic] + dWellElemCompDens[iwelem][ic]
-                                 + scalingFactor * localSolution[lid];
-          if( newDens < 0.0 )
+          for( localIndex ic = 0; ic < numComponents; ++ic )
+          {
+            lid = wellElemDofNumber[iwelem] + ic + 1 - rankOffset;
+            real64 const newDens = wellElemCompDens[iwelem][ic] + dWellElemCompDens[iwelem][ic]
+                                   + scalingFactor * localSolution[lid];
+
+            if( newDens < 0 )
+            {
+              minVal.min( 0 );
+            }
+          }
+        }
+        else
+        {
+          real64 totalDens = 0.0;
+          for( localIndex ic = 0; ic < numComponents; ++ic )
+          {
+            lid = wellElemDofNumber[iwelem] + ic + 1 - rankOffset;
+            real64 const newDens = wellElemCompDens[iwelem][ic] + dWellElemCompDens[iwelem][ic]
+                                   + scalingFactor * localSolution[lid];
+            totalDens += (newDens > 0.0) ? newDens : 0.0;
+          }
+          if( totalDens < eps )
           {
             minVal.min( 0 );
           }
