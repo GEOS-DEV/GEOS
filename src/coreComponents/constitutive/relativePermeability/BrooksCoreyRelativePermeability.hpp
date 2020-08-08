@@ -173,7 +173,7 @@ BrooksCoreyRelativePermeabilityUpdate::
     }
     else
     {
-      phaseRelPerm[ip] = (satScaled < 0.0) ? 0.0 : scale;
+      phaseRelPerm[ip] = (satScaled <= 0.0) ? 0.0 : scale;
     }
   }
 }
