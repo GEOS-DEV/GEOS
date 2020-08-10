@@ -691,13 +691,13 @@ void EdgeManager::ConnectivityFromGlobalToLocal( const SortedArray< localIndex >
 {
 
 
-  for( SortedArray< localIndex >::const_iterator ke=indices.begin(); ke!=indices.end(); ++ke )
+  for( localIndex const ke : indices )
   {
     for( localIndex a=0; a<m_toNodesRelation.size( 1 ); ++a )
     {
-      const globalIndex gnode = m_toNodesRelation( *ke, a );
+      const globalIndex gnode = m_toNodesRelation( ke, a );
       const localIndex lnode = stlMapLookup( nodeGlobalToLocal, gnode );
-      m_toNodesRelation( *ke, a ) = lnode;
+      m_toNodesRelation( ke, a ) = lnode;
     }
   }
 

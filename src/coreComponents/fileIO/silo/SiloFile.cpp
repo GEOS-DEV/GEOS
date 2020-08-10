@@ -1297,7 +1297,7 @@ void SiloFile::WriteElementRegionSilo( ElementRegionBase const & elemRegion,
           newWrapper = fakeGroup.registerWrapper< arrayType >( fieldName );
           newWrapper->setPlotLevel( PlotLevel::LEVEL_0 );
           arrayType & newarray = newWrapper->reference();
-          newarray.resize( arrayType::ndim, sourceArray.dims() );
+          newarray.resize( arrayType::NDIM, sourceArray.dims() );
         } );
       }
     }
@@ -2073,7 +2073,7 @@ void SiloFile::WriteWrappersToSilo( string const & meshname,
       {
         auto const & wrapperT = dynamic_cast< dataRepository::Wrapper< array2d< real64, RAJA::PERM_JI > > const & >( *wrapper );
 
-        arrayView2d< real64 const, LvArray::getStrideOneDimension( RAJA::PERM_JI {} ) > const &
+        arrayView2d< real64 const, LvArray::typeManipulation::getStrideOneDimension( RAJA::PERM_JI {} ) > const &
         array = wrapperT.reference();
         this->WriteDataField< real64 >( meshname.c_str(),
                                         fieldName,

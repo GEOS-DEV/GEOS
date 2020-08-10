@@ -146,13 +146,13 @@ void TwoPointFluxApproximation::computeCellStencil( MeshLevel & mesh ) const
 
       real64 const c2fDistance = LvArray::tensorOps::normalize< 3 >( cellToFaceVec );
 
-      LvArray::tensorOps::elementWiseMultiplication< 3 >( faceConormal, coefficient[er][esr][ei], faceNormal );
+      LvArray::tensorOps::hadamardProduct< 3 >( faceConormal, coefficient[er][esr][ei], faceNormal );
       real64 halfWeight = LvArray::tensorOps::AiBi< 3 >( cellToFaceVec, faceConormal );
 
       // correct negative weight issue arising from non-K-orthogonal grids
       if( halfWeight < 0.0 )
       {
-        LvArray::tensorOps::elementWiseMultiplication< 3 >( faceConormal, coefficient[er][esr][ei], cellToFaceVec );
+        LvArray::tensorOps::hadamardProduct< 3 >( faceConormal, coefficient[er][esr][ei], cellToFaceVec );
         halfWeight = LvArray::tensorOps::AiBi< 3 >( cellToFaceVec, faceConormal );
       }
 
@@ -567,7 +567,7 @@ void TwoPointFluxApproximation::addToFractureStencil( MeshLevel & mesh,
 
             real64 const c2fDistance = LvArray::tensorOps::normalize< 3 >( cellToFaceVec );
 
-            LvArray::tensorOps::elementWiseMultiplication< 3 >( faceConormal, coefficient[er][esr][ei], faceNormal[faceIndex] );
+            LvArray::tensorOps::hadamardProduct< 3 >( faceConormal, coefficient[er][esr][ei], faceNormal[faceIndex] );
             real64 const ht = LvArray::tensorOps::AiBi< 3 >( cellToFaceVec, faceConormal ) * faceArea[faceIndex] / c2fDistance;
 
             // assume the h for the faceElement to the connector (Face) is zero. thus the weights are trivial.
@@ -833,13 +833,13 @@ void TwoPointFluxApproximation::computeBoundaryStencil( MeshLevel & mesh,
 
       real64 const c2fDistance = LvArray::tensorOps::normalize< 3 >( cellToFaceVec );
 
-      LvArray::tensorOps::elementWiseMultiplication< 3 >( faceConormal, coefficient[er][esr][ei], faceNormal );
+      LvArray::tensorOps::hadamardProduct< 3 >( faceConormal, coefficient[er][esr][ei], faceNormal );
       real64 faceWeight = LvArray::tensorOps::AiBi< 3 >( cellToFaceVec, faceConormal );
 
       // correct negative weight issue arising from non-K-orthogonal grids
       if( faceWeight < 0.0 )
       {
-        LvArray::tensorOps::elementWiseMultiplication< 3 >( faceConormal, coefficient[er][esr][ei], cellToFaceVec );
+        LvArray::tensorOps::hadamardProduct< 3 >( faceConormal, coefficient[er][esr][ei], cellToFaceVec );
         faceWeight = LvArray::tensorOps::AiBi< 3 >( cellToFaceVec, faceConormal );
       }
 

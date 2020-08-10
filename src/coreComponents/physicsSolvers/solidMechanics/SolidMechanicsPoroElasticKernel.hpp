@@ -45,23 +45,19 @@ namespace SolidMechanicsLagrangianFEMKernels
  */
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
-          int NUM_NODES_PER_ELEM,
-          int UNUSED,
+          typename FE_TYPE,
           template< typename,
                     typename,
-                    int,
-                    int > class BASE >
+                    typename > class BASE >
 class PoroElastic : public BASE< SUBREGION_TYPE,
                                  CONSTITUTIVE_TYPE,
-                                 NUM_NODES_PER_ELEM,
-                                 NUM_NODES_PER_ELEM >
+                                 FE_TYPE >
 {
 public:
   /// Alias for the base class.
   using Base = BASE< SUBREGION_TYPE,
                      CONSTITUTIVE_TYPE,
-                     NUM_NODES_PER_ELEM,
-                     NUM_NODES_PER_ELEM >;
+                     FE_TYPE >;
 
   using Base::m_constitutiveUpdate;
   using typename Base::StackVariables;
@@ -75,7 +71,7 @@ public:
                EdgeManager const & edgeManager,
                FaceManager const & faceManager,
                SUBREGION_TYPE const & elementSubRegion,
-               FiniteElementBase const * const finiteElementSpace,
+               FE_TYPE const & finiteElementSpace,
                CONSTITUTIVE_TYPE * const inputConstitutiveType,
                arrayView1d< globalIndex const > const & inputDofNumber,
                globalIndex const rankOffset,
@@ -135,12 +131,10 @@ protected:
  */
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
-          int NUM_NODES_PER_ELEM,
-          int UNUSED >
+          typename FE_TYPE >
 using QuasiStaticPoroElastic = PoroElastic< SUBREGION_TYPE,
                                             CONSTITUTIVE_TYPE,
-                                            NUM_NODES_PER_ELEM,
-                                            NUM_NODES_PER_ELEM,
+                                            FE_TYPE,
                                             QuasiStatic >;
 
 } // namespace SolidMechanicsLagrangianFEMKernels

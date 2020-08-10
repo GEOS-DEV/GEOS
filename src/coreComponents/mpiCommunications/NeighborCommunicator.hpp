@@ -23,7 +23,7 @@
 
 #include "common/DataTypes.hpp"
 #include "dataRepository/ReferenceWrapper.hpp"
-#include "LvArray/src/IntegerConversion.hpp"
+#include "LvArray/src/limits.hpp"
 
 namespace geosx
 {
