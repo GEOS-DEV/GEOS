@@ -459,7 +459,6 @@ void GMSHMeshGenerator::GenerateMesh( DomainPartition * const GEOSX_UNUSED_PARAM
   }
 
   // Send physicalId
-  /*
   if ( mpiRank < m_initNbOfProc )
   {
     for( int r = 0; r < mpiSize; r++ )
@@ -473,7 +472,6 @@ void GMSHMeshGenerator::GenerateMesh( DomainPartition * const GEOSX_UNUSED_PARAM
     MpiWrapper::Recv(finalElementPhysicalIds.data() + offset,gatheredNbOfElements[r],r,0,MPI_COMM_GEOSX,MPI_STATUS_IGNORE );
     offset += gatheredNbOfElements[r];
   }
-  */
   GEOSX_LOG_RANK( "final global Index " << finalElementGlobalIndex );
   GEOSX_LOG_RANK( "final physical id " << finalElementPhysicalIds );
   GEOSX_LOG_RANK( "FINIIIIIIISH");
