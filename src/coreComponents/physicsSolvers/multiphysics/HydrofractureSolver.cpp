@@ -266,7 +266,7 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
 
     //TJ: This if-else condition makes it always use the two-level iterations
     //    except for when the KGD problem only has one fractured element
-    if (m_convergedTipLoc <= meshSize)
+    if (m_convergedTipLoc <= 7.0*meshSize)
       globalSolverIterFlag = 0;
     else
       globalSolverIterFlag = 1;
@@ -626,13 +626,13 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
 	  real64 refDisp = std::abs( disp(refNodeIndex,0) - disp(myChildIndex[refNodeIndex],0) );
 	  GEOSX_ASSERT_MSG( disp(refNodeIndex,0) < 0.0,
 			    "Node crosses the symmetric plane." );
-/*
+
 	  std::cout << "Rank " << rank << ": refNodeIndex = " << refNodeIndex << ", childIndex = "
 					 << myChildIndex[refNodeIndex] << std::endl;
 	  std::cout << "Rank " << rank << ": disp " << refNodeIndex               << " = " << disp(refNodeIndex,0)
 				       << ", disp " << myChildIndex[refNodeIndex] << " = " << disp(myChildIndex[refNodeIndex],0)
 				       << std::endl;
-*/
+
 	  real64 tipX = 0.0;
 	  if (viscosity < 2.0e-3) // Toughness-dominated case
 	  {
@@ -684,11 +684,11 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
 			       MPI_MAX,
 			       MPI_COMM_GEOSX );
 	m_convergedTipLoc = globalConvergedTipLoc;
-/*
+
 	std::cout << "Rank " << rank
 		  << ": converged tip loc = " << m_convergedTipLoc
 		  << std::endl;
-*/
+
       }  // if (globalSolverIterFlag == 0)
       else  // solve with tip iteration (globalSolverIterFlag == 1)
       {
@@ -917,7 +917,7 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
 
 	    std::cout << "Rank " << rank << ": the face element on the boundary of the channel is "
 		      << m_channelElement << std::endl;
-	    real64 const refAper = subRegion->getElementAperture()[m_channelElement];
+	    real64 const refAper = subRegion->getElementAperture()[m_channelElement-1];
 	    std::cout << "Rank " << rank << ": the aperture of the face element at the channel boundary is "
 		      << refAper << std::endl;
 
@@ -943,13 +943,14 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
 	    //TJ: use the displacement gap at the node pair other than the newly split one
 	    //    on the face element at the channel boundary for the tip asymptotic relation
 	    real64 refDisp = std::abs( disp(refNodeIndex,0) - disp(myChildIndex[refNodeIndex],0) );
+	    refDisp = std::abs( disp(refNodeIndex-12,0) - disp(myChildIndex[refNodeIndex-12],0) );
 	    real64 tipX = 0.0;
+//            refDisp = refAper;
 
-
-	    std::cout << "Rank " << rank << ": refNodeIndex = " << refNodeIndex
-		      << ", disp "         << disp(refNodeIndex,0)
-		      << ", childIndex = " << myChildIndex[refNodeIndex]
-		      << ", disp "         << disp(myChildIndex[refNodeIndex],0)
+	    std::cout << "Rank " << rank << ": refNodeIndex = " << refNodeIndex-12
+		      << ", disp "         << disp(refNodeIndex-12,0)
+		      << ", childIndex = " << myChildIndex[refNodeIndex-12]
+		      << ", disp "         << disp(myChildIndex[refNodeIndex-12],0)
 		      << std::endl;
 
 
@@ -990,6 +991,8 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
 		tipX = sqrt( Eprime/(mup*velocity) * pow( refDisp/Betam ,3.0) );
 	      }
 	      m_newTipLocation = tipX + channelElmtCenter[1] - 0.5 * channelElmtSize;
+	      m_newTipLocation = tipX + channelElmtCenter[1] - 6.5 * channelElmtSize;
+
 
 	      if (tipIterCount == 0)   // initialize the upper bound
 	      {
@@ -1018,7 +1021,7 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
   //               "maxTipLocation < minTipLocation" );
 
 
-	    if (tipX > 2.0*meshSize)
+	    if (tipX > 800.0*meshSize)
 	    {
 	      std::cout << "Rank " << rank << ": during the middle of tip level iteration"
 		                           << ", tip enters into new element."
@@ -1041,7 +1044,7 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
 
 	    //TJ: compare old tip location with the new one
 	    if ( std::abs(m_newTipLocation - m_oldTipLocation) < tipTol && tipIterCount > 0
-		&& tipX <= 2.0*meshSize)
+		&& tipX <= 800.0*meshSize)
 	    {
 	      //TJ: change the flag to false to switch to the initial guess based method
 	      //TJ: since we have the globalSolverIterFlag now, we don't need m_tipIterationFlag anymore.
@@ -1505,7 +1508,8 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
 	    //    the tip location through fixed-point iteration
             //TJ: since we have globalSolverIterFlag now, we don't need m_tipIterationFlag anymore.
 //	    m_tipIterationFlag = true;
-	    localSolverIterFlag = 1;
+	    if (m_convergedTipLoc > 7.0*meshSize)
+	      localSolverIterFlag = 1;
 /*
 	    std::cout << "Rank " << rank << ": End of disp manipulation" << std::endl;
 */
