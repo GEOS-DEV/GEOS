@@ -164,7 +164,7 @@
       compressibility="1.6155088853e-18"
       referencePressure="2.125e6"/>
 
-    <MohrCoulomb
+    <Coulomb
       name="fractureMaterial"
       cohesion="0.0"
       frictionCoefficient="0.577350269189626"/>
