@@ -54,8 +54,8 @@ Coulomb::~Coulomb()
 
 void
 Coulomb::DeliverClone( string const & name,
-                           Group * const parent,
-                           std::unique_ptr< ConstitutiveBase > & clone ) const
+                       Group * const parent,
+                       std::unique_ptr< ConstitutiveBase > & clone ) const
 {
   if( !clone )
   {
