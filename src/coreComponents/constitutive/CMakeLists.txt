@@ -12,7 +12,7 @@ set( constitutive_headers
      capillaryPressure/BrooksCoreyCapillaryPressure.hpp
      capillaryPressure/VanGenuchtenCapillaryPressure.hpp
      contact/ContactRelationBase.hpp
-     contact/MohrCoulomb.hpp
+     contact/Coulomb.hpp
      fluid/MultiPhaseMultiComponentFluid.hpp     
      fluid/PVTFunctions/BrineCO2DensityFunction.hpp
      fluid/PVTFunctions/BrineViscosityFunction.hpp
@@ -60,7 +60,7 @@ set( constitutive_sources
      capillaryPressure/BrooksCoreyCapillaryPressure.cpp
      capillaryPressure/VanGenuchtenCapillaryPressure.cpp
      contact/ContactRelationBase.cpp
-     contact/MohrCoulomb.cpp
+     contact/Coulomb.cpp
      fluid/CompressibleSinglePhaseFluid.cpp
      fluid/MultiPhaseMultiComponentFluid.cpp     
      fluid/PVTFunctions/BrineCO2DensityFunction.cpp
