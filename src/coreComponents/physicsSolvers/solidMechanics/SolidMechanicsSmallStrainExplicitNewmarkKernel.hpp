@@ -228,7 +228,7 @@ public:
     #define DETJ detJ
 #else //defined(CALCFEMSHAPE)
     /// @cond DOXYGEN_SKIP
-    #define DNDX m_dNdX[k][q]
+    #define DNDX m_dNdX[k][q].toSliceConst()
     #define DETJ m_detJ( k, q )
     /// @endcond DOXYGEN_SKIP
 #endif //defined(CALCFEMSHAPE)
@@ -250,11 +250,11 @@ public:
     for( localIndex c = 0; c < 6; ++c )
     {
 #if UPDATE_STRESS == 2
-      stressLocal[ c ] =  m_constitutiveUpdate.m_stress( k, q, c ) * (-DETJ);
+      stressLocal[ c ] =  m_constitutiveUpdate.m_stress( k, q, c ) * DETJ;
 #elif UPDATE_STRESS == 1
-      stressLocal[ c ] = ( stressLocal[ c ] + m_constitutiveUpdate.m_stress( k, q, c ) ) *(-DETJ);
+      stressLocal[ c ] = ( stressLocal[ c ] + m_constitutiveUpdate.m_stress( k, q, c ) ) * DETJ;
 #else
-      stressLocal[ c ] *= -DETJ;
+      stressLocal[ c ] *= DETJ;
 #endif
     }
 

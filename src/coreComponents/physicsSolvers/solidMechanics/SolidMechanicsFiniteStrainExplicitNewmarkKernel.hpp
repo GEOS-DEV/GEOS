@@ -216,15 +216,21 @@ public:
     #define DETJ detJ
 #else
     /// @cond DOXYGEN_SKIP
-    #define DNDX m_dNdX[k][q]
+    #define DNDX m_dNdX[k][q].toSliceConst()
     #define DETJ m_detJ( k, q )
     /// @endcond DOXYGEN_SKIP
 #endif
-    real64 dUhatdX[ 3 ][ 3 ], dUdX[ 3 ][ 3 ];
-    CalculateGradients< numNodesPerElem >( dUhatdX, dUdX, stack.varLocal, stack.uLocal, DNDX );
-    LvArray::tensorOps::scale< 3, 3 >( dUhatdX, m_dt );
+    real64 dUhatdX[3][3] = { {0, 0, 0}, {0, 0, 0}, {0, 0, 0} };
+    real64 dUdX[3][3] = { {0, 0, 0}, {0, 0, 0}, {0, 0, 0} };
+    real64 F[3][3] = { {0, 0, 0}, {0, 0, 0}, {0, 0, 0} };
+    real64 Ldt[3][3] = { {0, 0, 0}, {0, 0, 0}, {0, 0, 0} };
+    real64 fInv[3][3] = { {0, 0, 0}, {0, 0, 0}, {0, 0, 0} };
 
-    real64 F[ 3 ][ 3 ], Ldt[ 3 ][ 3 ], fInv[ 3 ][ 3 ];
+
+    FE_TYPE::gradient( DNDX, stack.varLocal, dUhatdX );
+    FE_TYPE::gradient( DNDX, stack.uLocal, dUdX );
+
+    LvArray::tensorOps::scale< 3, 3 >( dUhatdX, m_dt );
 
     // calculate du/dX
     LvArray::tensorOps::scaledCopy< 3, 3 >( F, dUhatdX, 0.5 );
@@ -232,7 +238,7 @@ public:
     LvArray::tensorOps::addIdentity< 3 >( F, 1.0 );
     LvArray::tensorOps::invert< 3 >( fInv, F );
 
-    // chain rule: calculate dv/du = dv/dX * dX/du
+    // chain rule: calculate dv/dx^(n+1/2) = dv/dX * dX/dx^(n+1/2)
     LvArray::tensorOps::AikBkj< 3, 3, 3 >( Ldt, dUhatdX, fInv );
 
     // calculate gradient (end of step)
@@ -247,12 +253,18 @@ public:
 
     m_constitutiveUpdate.HypoElastic( k, q, Dadt, Rot );
 
-    Integrate< numNodesPerElem >( m_constitutiveUpdate.m_stress[k][q].toSliceConst(),
-                                  DNDX,
-                                  DETJ,
-                                  detF,
-                                  fInv,
-                                  stack.fLocal );
+    real64 P[ 3 ][ 3 ];
+    LvArray::tensorOps::symAikBjk< 3 >( P, m_constitutiveUpdate.m_stress[k][q].toSliceConst(), fInv );
+    LvArray::tensorOps::scale< 3, 3 >( P, DETJ * detF );
+
+    FE_TYPE::basisGradientInnerProduct( DNDX, P, stack.fLocal );
+
+//    Integrate< numNodesPerElem >( ,
+//                                  DNDX,
+//                                  DETJ,
+//                                  detF,
+//                                  fInv,
+//                                  stack.fLocal );
   }
 
 

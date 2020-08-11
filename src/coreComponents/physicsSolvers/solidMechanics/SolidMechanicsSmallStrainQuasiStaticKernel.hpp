@@ -191,20 +191,7 @@ public:
                                    StackVariables & stack ) const
   {
     real64 strainInc[6] = {0};
-    for( localIndex a = 0; a < numNodesPerElem; ++a )
-    {
-      strainInc[0] = strainInc[0] + m_dNdX( k, q, a, 0 ) * stack.uhat_local[a][0];
-      strainInc[1] = strainInc[1] + m_dNdX( k, q, a, 1 ) * stack.uhat_local[a][1];
-      strainInc[2] = strainInc[2] + m_dNdX( k, q, a, 2 ) * stack.uhat_local[a][2];
-      strainInc[3] = strainInc[3] + m_dNdX( k, q, a, 2 ) * stack.uhat_local[a][1] +
-                     m_dNdX( k, q, a, 1 ) * stack.uhat_local[a][2];
-
-      strainInc[4] = strainInc[4] + m_dNdX( k, q, a, 2 ) * stack.uhat_local[a][0] +
-                     m_dNdX( k, q, a, 0 ) * stack.uhat_local[a][2];
-
-      strainInc[5] = strainInc[5] + m_dNdX( k, q, a, 1 ) * stack.uhat_local[a][0] +
-                     m_dNdX( k, q, a, 0 ) * stack.uhat_local[a][1];
-    }
+    FE_TYPE::symmetricGradient( m_dNdX[k][q], stack.uhat_local, strainInc );
 
     m_constitutiveUpdate.SmallStrain( k, q, strainInc );
 
@@ -327,27 +314,23 @@ public:
 
     stressModifier( stress );
 
-    real64 const gravityForce[3] = { m_gravityVector[0] * m_density( k, q ),
-                                     m_gravityVector[1] * m_density( k, q ),
-                                     m_gravityVector[2] * m_density( k, q ) };
+    real64 const gravityForce[3] = { m_gravityVector[0] * m_density( k, q )* m_detJ( k, q ),
+                                     m_gravityVector[1] * m_density( k, q )* m_detJ( k, q ),
+                                     m_gravityVector[2] * m_density( k, q )* m_detJ( k, q ) };
+
+    for( localIndex i=0; i<6; ++i )
+    {
+      stress[i] *= m_detJ( k, q );
+    }
 
     real64 N[numNodesPerElem];
     FE_TYPE::shapeFunctionValues( q, N );
-    for( localIndex a = 0; a < numNodesPerElem; ++a )
-    {
-      stack.localResidual[ a * 3 + 0 ] -= ( stress[ 0 ] * m_dNdX( k, q, a, 0 ) +
-                                            stress[ 5 ] * m_dNdX( k, q, a, 1 ) +
-                                            stress[ 4 ] * m_dNdX( k, q, a, 2 ) -
-                                            gravityForce[0] * N[a] ) * m_detJ( k, q );
-      stack.localResidual[ a * 3 + 1 ] -= ( stress[ 5 ] * m_dNdX( k, q, a, 0 ) +
-                                            stress[ 1 ] * m_dNdX( k, q, a, 1 ) +
-                                            stress[ 3 ] * m_dNdX( k, q, a, 2 ) -
-                                            gravityForce[1] * N[a] ) * m_detJ( k, q );
-      stack.localResidual[ a * 3 + 2 ] -= ( stress[ 4 ] * m_dNdX( k, q, a, 0 ) +
-                                            stress[ 3 ] * m_dNdX( k, q, a, 1 ) +
-                                            stress[ 2 ] * m_dNdX( k, q, a, 2 ) -
-                                            gravityForce[2] * N[a] ) * m_detJ( k, q );
-    }
+    FE_TYPE::basisGradientInnerProductPlusBody( m_dNdX[k][q],
+                                                stress,
+                                                N,
+                                                gravityForce,
+                                                reinterpret_cast< real64 (&)[numNodesPerElem][3] >(stack.localResidual) );
+
   }
 
   /**
