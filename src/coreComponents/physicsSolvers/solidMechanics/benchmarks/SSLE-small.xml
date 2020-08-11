@@ -104,7 +104,7 @@
   </ElementRegions>
 
   <Constitutive>
-    <LinearElasticIsotropic
+    <ElasticIsotropic
       name="shale"
       defaultDensity="2700"
       defaultBulkModulus="5.5556e9"

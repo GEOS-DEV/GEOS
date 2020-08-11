@@ -118,7 +118,7 @@
   </ElementRegions>
 
   <Constitutive>
-    <LinearElasticIsotropic
+    <ElasticIsotropic
       name="granite"
       defaultDensity="2700"
       defaultBulkModulus="2.0e10"

@@ -321,12 +321,12 @@ public:
                                             StackVariables & stack,
                                             STRESS_MODIFIER && stressModifier = NoOpFunctors{} ) const
   {
-    real64 stress[6] = { m_constitutiveUpdate.m_stress( k, q, 0 ),
-                         m_constitutiveUpdate.m_stress( k, q, 1 ),
-                         m_constitutiveUpdate.m_stress( k, q, 2 ),
-                         m_constitutiveUpdate.m_stress( k, q, 3 ),
-                         m_constitutiveUpdate.m_stress( k, q, 4 ),
-                         m_constitutiveUpdate.m_stress( k, q, 5 ) };
+    real64 stress[6] = { m_constitutiveUpdate.m_newStress( k, q, 0 ),
+                         m_constitutiveUpdate.m_newStress( k, q, 1 ),
+                         m_constitutiveUpdate.m_newStress( k, q, 2 ),
+                         m_constitutiveUpdate.m_newStress( k, q, 3 ),
+                         m_constitutiveUpdate.m_newStress( k, q, 4 ),
+                         m_constitutiveUpdate.m_newStress( k, q, 5 ) };
 
     stressModifier( stress );
 

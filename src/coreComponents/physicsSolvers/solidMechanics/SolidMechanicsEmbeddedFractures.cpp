@@ -21,7 +21,7 @@
 #include "common/TimingMacros.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/contact/ContactRelationBase.hpp"
-#include "constitutive/solid/LinearElasticIsotropic.hpp"
+#include "constitutive/solid/ElasticIsotropic.hpp"
 #include "managers/DomainPartition.hpp"
 #include "managers/NumericalMethodsManager.hpp"
 #include "mesh/NodeManager.hpp"
@@ -372,8 +372,8 @@ void SolidMechanicsEmbeddedFractures::AssembleSystem( real64 const time,
           du_local.resize( numNodesPerElement );
 
           // Get mechanical moduli tensor
-          LinearElasticIsotropic const * constitutiveRelation = elementSubRegion->getConstitutiveModel< LinearElasticIsotropic >( m_solidSolver->solidMaterialNames()[0] );
-          LinearElasticIsotropic::KernelWrapper const & solidConstitutive = constitutiveRelation->createKernelUpdates();
+          ElasticIsotropic const * constitutiveRelation = elementSubRegion->getConstitutiveModel< ElasticIsotropic >( m_solidSolver->solidMaterialNames()[0] );
+          ElasticIsotropic::KernelWrapper const & solidConstitutive = constitutiveRelation->createKernelUpdates();
           solidConstitutive.GetStiffness( embeddedSurfaceToCell[k], dMatrix );
 
           // Basis functions derivatives

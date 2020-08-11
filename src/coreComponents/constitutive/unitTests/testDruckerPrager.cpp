@@ -79,8 +79,8 @@ TEST( DruckerPragerTests, testModel )
 
   for(localIndex loadstep=0; loadstep < 100; ++loadstep)
   {
-    cmw.SmallStrainUpdate(0,0,strainIncrement,stress,stiffness);
-    cmw.SaveConvergedState(0,0);
+    cmw.smallStrainUpdate(0,0,strainIncrement,stress,stiffness);
+    cmw.saveConvergedState();
     
     total += inc;
     
@@ -107,7 +107,7 @@ TEST( DruckerPragerTests, testModel )
   
   real64 eps = 1e-12;
   
-  cmw.SmallStrainUpdate(0,0,strainIncrement,stress,stiffness);
+  cmw.smallStrainUpdate(0,0,strainIncrement,stress,stiffness);
   
   for(localIndex i=0; i<6; ++i)
   {
@@ -118,7 +118,7 @@ TEST( DruckerPragerTests, testModel )
       strainIncrement[i-1] -= eps;
     }
     
-    cmw.SmallStrainUpdate(0,0,strainIncrement,pstress,pstiffness);
+    cmw.smallStrainUpdate(0,0,strainIncrement,pstress,pstiffness);
     
     for(localIndex j=0; j<6; ++j)
     {

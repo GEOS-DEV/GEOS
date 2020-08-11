@@ -72,19 +72,19 @@
   </ElementRegions>
 
   <Constitutive>
-    <LinearElasticIsotropic
+    <ElasticIsotropic
       name="granite"
       defaultDensity="2700"
       defaultBulkModulus="5.5556e9"
       defaultShearModulus="4.16667e9"/>
 
-    <LinearElasticIsotropic
+    <ElasticIsotropic
       name="shale"
       defaultDensity="2700"
       defaultBulkModulus="5.5556e9"
       defaultShearModulus="4.16667e9"/>
 
-    <LinearElasticIsotropic
+    <ElasticIsotropic
       name="water"
       defaultDensity="1000"
       defaultBulkModulus="2.0e9"

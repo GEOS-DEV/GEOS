@@ -13,11 +13,12 @@
  */
 
 /**
- *  @file LinearElasticTransverseIsotropic.hpp
+ *  @file ElasticTransverseIsotropic.hpp
  */
 
-#ifndef GEOSX_CONSTITUTIVE_SOLID_LINEARELASTICTRANSVERSEISOTROPIC_HPP_
-#define GEOSX_CONSTITUTIVE_SOLID_LINEARELASTICTRANSVERSEISOTROPIC_HPP_
+#ifndef GEOSX_CONSTITUTIVE_SOLID_ELASTICTRANSVERSEISOTROPIC_HPP_
+#define GEOSX_CONSTITUTIVE_SOLID_ELASTICTRANSVERSEISOTROPIC_HPP_
+
 #include "SolidBase.hpp"
 #include "constitutive/ExponentialRelation.hpp"
 #include "LvArray/src/tensorOps.hpp"
@@ -29,14 +30,14 @@ namespace constitutive
 {
 
 /**
- * @class LinearElasticTransverseIsotropicUpdates
+ * @class ElasticTransverseIsotropicUpdates
  *
- * Class to provide linear elastic transverse isotropic material updates that
+ * Class to provide elastic transverse isotropic material updates that
  * may be called from a kernel function.
  *
  * @note The "transverse" directions are 1 and 2 (or 0 and 1 in C-index)
  */
-class LinearElasticTransverseIsotropicUpdates : public SolidBaseUpdates
+class ElasticTransverseIsotropicUpdates : public SolidBaseUpdates
 {
 public:
 
@@ -50,13 +51,14 @@ public:
    * @param[in] stress The ArrayView holding the stress data for each quadrature
    *                   point.
    */
-  LinearElasticTransverseIsotropicUpdates( arrayView1d< real64 const > const & c11,
-                                           arrayView1d< real64 const > const & c13,
-                                           arrayView1d< real64 const > const & c33,
-                                           arrayView1d< real64 const > const & c44,
-                                           arrayView1d< real64 const > const & c66,
-                                           arrayView3d< real64, solid::STRESS_USD > const & stress ):
-    SolidBaseUpdates( stress ),
+  ElasticTransverseIsotropicUpdates( arrayView1d< real64 const > const & c11,
+                                     arrayView1d< real64 const > const & c13,
+                                     arrayView1d< real64 const > const & c33,
+                                     arrayView1d< real64 const > const & c44,
+                                     arrayView1d< real64 const > const & c66,
+                                     arrayView3d< real64, solid::STRESS_USD > const & newStress,
+                                     arrayView3d< real64, solid::STRESS_USD > const & oldStress ):
+    SolidBaseUpdates( newStress, oldStress ),
     m_c11( c11 ),
     m_c13( c13 ),
     m_c33( c33 ),
@@ -65,19 +67,19 @@ public:
   {}
 
   /// Deleted default constructor
-  LinearElasticTransverseIsotropicUpdates() = delete;
+  ElasticTransverseIsotropicUpdates() = delete;
 
   /// Default copy constructor
-  LinearElasticTransverseIsotropicUpdates( LinearElasticTransverseIsotropicUpdates const & ) = default;
+  ElasticTransverseIsotropicUpdates( ElasticTransverseIsotropicUpdates const & ) = default;
 
   /// Default move constructor
-  LinearElasticTransverseIsotropicUpdates( LinearElasticTransverseIsotropicUpdates && ) = default;
+  ElasticTransverseIsotropicUpdates( ElasticTransverseIsotropicUpdates && ) = default;
 
   /// Deleted copy assignment operator
-  LinearElasticTransverseIsotropicUpdates & operator=( LinearElasticTransverseIsotropicUpdates const & ) = delete;
+  ElasticTransverseIsotropicUpdates & operator=( ElasticTransverseIsotropicUpdates const & ) = delete;
 
   /// Deleted move assignment operator
-  LinearElasticTransverseIsotropicUpdates & operator=( LinearElasticTransverseIsotropicUpdates && ) =  delete;
+  ElasticTransverseIsotropicUpdates & operator=( ElasticTransverseIsotropicUpdates && ) =  delete;
   
   GEOSX_HOST_DEVICE
   virtual void SmallStrainNoState( localIndex const k,
@@ -144,7 +146,7 @@ private:
 GEOSX_FORCE_INLINE
 GEOSX_HOST_DEVICE
 void
-LinearElasticTransverseIsotropicUpdates::
+ElasticTransverseIsotropicUpdates::
   SmallStrainNoState( localIndex const k,
                       real64 const ( &voigtStrain )[ 6 ],
                       real64 ( & stress )[ 6 ] ) const
@@ -163,24 +165,24 @@ LinearElasticTransverseIsotropicUpdates::
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void
-LinearElasticTransverseIsotropicUpdates::
+ElasticTransverseIsotropicUpdates::
   SmallStrain( localIndex const k,
                localIndex const q,
                real64 const ( &voigtStrainInc )[ 6 ] ) const
 {
   real64 const temp = m_c11[ k ] * ( voigtStrainInc[ 0 ] + voigtStrainInc[ 1 ] ) + m_c13[ k ] * voigtStrainInc[ 2 ];
-  m_stress( k, q, 0 ) += -2.0 * m_c66[ k ] * voigtStrainInc[ 1 ] + temp;
-  m_stress( k, q, 1 ) += -2.0 * m_c66[ k ] * voigtStrainInc[ 0 ] + temp;
-  m_stress( k, q, 2 ) = m_stress( k, q, 2 ) + m_c13[ k ] * ( voigtStrainInc[ 0 ] + voigtStrainInc[ 1 ] ) + m_c33[ k ] * voigtStrainInc[ 2 ];
-  m_stress( k, q, 3 ) = m_stress( k, q, 3 ) + m_c44[ k ] * voigtStrainInc[ 3 ];
-  m_stress( k, q, 4 ) = m_stress( k, q, 4 ) + m_c44[ k ] * voigtStrainInc[ 4 ];
-  m_stress( k, q, 5 ) = m_stress( k, q, 5 ) + m_c66[ k ] * voigtStrainInc[ 5 ];
+  m_newStress( k, q, 0 ) += -2.0 * m_c66[ k ] * voigtStrainInc[ 1 ] + temp;
+  m_newStress( k, q, 1 ) += -2.0 * m_c66[ k ] * voigtStrainInc[ 0 ] + temp;
+  m_newStress( k, q, 2 ) = m_newStress( k, q, 2 ) + m_c13[ k ] * ( voigtStrainInc[ 0 ] + voigtStrainInc[ 1 ] ) + m_c33[ k ] * voigtStrainInc[ 2 ];
+  m_newStress( k, q, 3 ) = m_newStress( k, q, 3 ) + m_c44[ k ] * voigtStrainInc[ 3 ];
+  m_newStress( k, q, 4 ) = m_newStress( k, q, 4 ) + m_c44[ k ] * voigtStrainInc[ 4 ];
+  m_newStress( k, q, 5 ) = m_newStress( k, q, 5 ) + m_c66[ k ] * voigtStrainInc[ 5 ];
 }
 
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void
-LinearElasticTransverseIsotropicUpdates::
+ElasticTransverseIsotropicUpdates::
   HypoElastic( localIndex const k,
                localIndex const q,
                real64 const ( &Ddt )[ 6 ],
@@ -188,55 +190,55 @@ LinearElasticTransverseIsotropicUpdates::
 {
   SmallStrain( k, q, Ddt );
   real64 temp[ 6 ];
-  LvArray::tensorOps::AikSymBklAjl< 3 >( temp, Rot, m_stress[ k ][ q ] );
-  LvArray::tensorOps::copy< 6 >( m_stress[ k ][ q ], temp );
+  LvArray::tensorOps::AikSymBklAjl< 3 >( temp, Rot, m_newStress[ k ][ q ] );
+  LvArray::tensorOps::copy< 6 >( m_newStress[ k ][ q ], temp );
 }
 
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void
-LinearElasticTransverseIsotropicUpdates::
+ElasticTransverseIsotropicUpdates::
   HyperElastic( localIndex const GEOSX_UNUSED_PARAM( k ),
                 real64 const (&GEOSX_UNUSED_PARAM( FmI ))[3][3],
                 real64 ( & )[ 6 ] ) const
 {
-  GEOSX_ERROR( "LinearElasticTransverseIsotropicKernelWrapper::HyperElastic() is not implemented!" );
+  GEOSX_ERROR( "ElasticTransverseIsotropicKernelWrapper::HyperElastic() is not implemented!" );
 }
 
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void
-LinearElasticTransverseIsotropicUpdates::
+ElasticTransverseIsotropicUpdates::
   HyperElastic( localIndex const GEOSX_UNUSED_PARAM( k ),
                 localIndex const GEOSX_UNUSED_PARAM( q ),
                 real64 const (&GEOSX_UNUSED_PARAM( FmI ))[3][3] ) const
 {
-  GEOSX_ERROR( "LinearElasticTransverseIsotropicKernelWrapper::HyperElastic() is not implemented!" );
+  GEOSX_ERROR( "ElasticTransverseIsotropicKernelWrapper::HyperElastic() is not implemented!" );
 }
 
 /**
- * @class LinearElasticTransverseIsotropic
+ * @class ElasticTransverseIsotropic
  *
- * Class to provide a linear elastic transverse isotropic material response.
+ * Class to provide a  elastic transverse isotropic material response.
  */
-class LinearElasticTransverseIsotropic : public SolidBase
+class ElasticTransverseIsotropic : public SolidBase
 {
 public:
 
-  /// @typedef Alias for LinearElasticTransverseIsotropicUpdates
-  using KernelWrapper = LinearElasticTransverseIsotropicUpdates;
+  /// @typedef Alias for ElasticTransverseIsotropicUpdates
+  using KernelWrapper = ElasticTransverseIsotropicUpdates;
 
   /**
    * @brief constructor
    * @param[in]name name of the instance in the catalog
    * @param[in]parent the group which contains this instance
    */
-  LinearElasticTransverseIsotropic( string const & name, Group * const parent );
+  ElasticTransverseIsotropic( string const & name, Group * const parent );
 
   /**
    * Destructor
    */
-  virtual ~LinearElasticTransverseIsotropic() override;
+  virtual ~ElasticTransverseIsotropic() override;
 
   virtual void
   DeliverClone( string const & name,
@@ -252,7 +254,7 @@ public:
   ///@{
 
   /// string name to use for this class in the catalog
-  static constexpr auto m_catalogNameString = "LinearElasticTransverseIsotropic";
+  static constexpr auto m_catalogNameString = "ElasticTransverseIsotropic";
 
   /**
    * @return A string that is used to register/lookup this class in the registry
@@ -455,18 +457,19 @@ public:
 
   /**
    * @brief Create a instantiation of the
-   *        LinearElasticTransverseIsotropicUpdates class that refers to the
+   *        ElasticTransverseIsotropicUpdates class that refers to the
    *        data in this.
-   * @return An instantiation of LinearElasticTransverseIsotropicUpdates.
+   * @return An instantiation of ElasticTransverseIsotropicUpdates.
    */
-  LinearElasticTransverseIsotropicUpdates createKernelUpdates()
+  ElasticTransverseIsotropicUpdates createKernelUpdates()
   {
-    return LinearElasticTransverseIsotropicUpdates( m_c11,
-                                                    m_c13,
-                                                    m_c33,
-                                                    m_c44,
-                                                    m_c66,
-                                                    m_stress );
+    return ElasticTransverseIsotropicUpdates( m_c11,
+                                              m_c13,
+                                              m_c33,
+                                              m_c44,
+                                              m_c66,
+                                              m_newStress,
+                                              m_oldStress );
   }
 
   /**
@@ -486,7 +489,8 @@ public:
                           m_c33,
                           m_c44,
                           m_c66,
-                          m_stress );
+                          m_newStress,
+                          m_oldStress );
   }
 
 
@@ -531,8 +535,9 @@ private:
   array1d< real64 > m_c66;
 
 };
-}
+
+} /* namespace constitutive */
 
 } /* namespace geosx */
 
-#endif /* GEOSX_CONSTITUTIVE_SOLID_LINEARELASTICTRANSVERSEISOTROPIC_HPP_ */
+#endif /* GEOSX_CONSTITUTIVE_SOLID_ELASTICTRANSVERSEISOTROPIC_HPP_ */

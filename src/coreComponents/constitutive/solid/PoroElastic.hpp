@@ -67,7 +67,7 @@ class PoroElastic : public BASE
 {
 public:
 
-  /// @typedef Alias for LinearElasticIsotropicUpdates
+  /// @typedef Alias for PoroElasticUpdates
   using KernelWrapper = PoroElasticUpdates< typename BASE::KernelWrapper >;
 
   PoroElastic( string const & name, dataRepository::Group * const parent );

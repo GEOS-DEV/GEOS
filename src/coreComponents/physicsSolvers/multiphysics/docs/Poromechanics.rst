@@ -46,7 +46,7 @@ The following attributes are supported:
 
 * ``couplingTypeOption``: defines the coupling scheme. 
 
-The solid constitutive model used here is PoroLinearElasticIsotropic, which derives from LinearElasticIsotropic and includes an additional parameter: Biot's coefficient. The fluid constitutive model is the same as SinglePhaseFlow solver. For the parameter setup of each individual solver, please refer to the guideline of the specific solver.
+The solid constitutive model used here is PoroLinearElasticIsotropic, which derives from ElasticIsotropic and includes an additional parameter: Biot's coefficient. The fluid constitutive model is the same as SinglePhaseFlow solver. For the parameter setup of each individual solver, please refer to the guideline of the specific solver.
 
 An example of a valid XML block for the constitutive model is given here:
 

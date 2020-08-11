@@ -19,9 +19,8 @@
 
 #include "PoroElastic.hpp"
 
-#include "LinearElasticAnisotropic.hpp"
-#include "LinearElasticIsotropic.hpp"
-#include "LinearElasticTransverseIsotropic.hpp"
+#include "ElasticIsotropic.hpp"
+#include "ElasticTransverseIsotropic.hpp"
 
 namespace geosx
 {
@@ -140,13 +139,11 @@ void PoroElastic< BASE >::StateUpdateBatchPressure( arrayView1d< real64 const > 
   } );
 }
 
-typedef PoroElastic< LinearElasticIsotropic > PoroLinearElasticIsotropic;
-typedef PoroElastic< LinearElasticAnisotropic > PoroLinearElasticAnisotropic;
-typedef PoroElastic< LinearElasticTransverseIsotropic > PoroLinearElasticTransverseIsotropic;
+typedef PoroElastic< ElasticIsotropic > PoroElasticIsotropic;
+typedef PoroElastic< ElasticTransverseIsotropic > PoroElasticTransverseIsotropic;
 
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, PoroLinearElasticIsotropic, string const &, Group * const )
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, PoroLinearElasticAnisotropic, string const &, Group * const )
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, PoroLinearElasticTransverseIsotropic, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, PoroElasticIsotropic, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, PoroElasticTransverseIsotropic, string const &, Group * const )
 
 }
 } /* namespace geosx */

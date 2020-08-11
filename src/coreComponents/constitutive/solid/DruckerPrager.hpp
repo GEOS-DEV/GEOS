@@ -53,8 +53,9 @@ public:
                         arrayView2d< real64 > const & oldCohesion,
                         arrayView3d< real64, solid::STRESS_USD > const & newElasticStrain,
                         arrayView3d< real64, solid::STRESS_USD > const & oldElasticStrain,
-                        arrayView3d< real64, solid::STRESS_USD > const & stress ):
-    SolidBaseUpdates( stress ),
+                        arrayView3d< real64, solid::STRESS_USD > const & newStress,
+                        arrayView3d< real64, solid::STRESS_USD > const & oldStress ):
+    SolidBaseUpdates( newStress,oldStress ),
     m_bulkModulus( bulkModulus ),
     m_shearModulus( shearModulus ),
     m_tanFrictionAngle( tanFrictionAngle ),
@@ -82,15 +83,14 @@ public:
   DruckerPragerUpdates & operator=( DruckerPragerUpdates && ) =  delete;
 
   GEOSX_HOST_DEVICE
-  virtual void SmallStrainUpdate( localIndex const k,
+  virtual void smallStrainUpdate( localIndex const k,
                                   localIndex const q,
                                   real64 const ( & strainIncrement )[6],
                                   real64 ( & stress )[6],
                                   real64 ( & stiffness )[6][6] ) override final;
   
   GEOSX_HOST_DEVICE
-  virtual void SaveConvergedState( localIndex const k,
-                                   localIndex const q ) override final;
+  virtual void saveConvergedState() override final;
     
 private:
   /// A reference to the ArrayView holding the bulk modulus for each element.
@@ -124,8 +124,7 @@ private:
 ///////////////////////// new proposal /////////////////////////////////////////
 
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
-void DruckerPragerUpdates::SmallStrainUpdate( localIndex const k,
+void DruckerPragerUpdates::smallStrainUpdate( localIndex const k,
                                               localIndex const q,
                                               real64 const ( & strainIncrement )[6],
                                               real64 ( & stress )[6],
@@ -180,6 +179,7 @@ void DruckerPragerUpdates::SmallStrainUpdate( localIndex const k,
     // for GPU we can simplify the DP model to avoid Newton, but Cam-Clay and
     // others will need it.
     
+    // .... change to c-arrays ...
     array1d< real64 > solution(3), residual(3), delta(3);
     array2d< real64 > jacobian(3,3), jacobianInv(3,3);
     
@@ -304,7 +304,7 @@ void DruckerPragerUpdates::SmallStrainUpdate( localIndex const k,
         stiffness[i][j] = 0;
       }
     }
-    
+        
     stiffness[0][0] = lame + 2*shear;
     stiffness[0][1] = lame;
     stiffness[0][2] = lame;
@@ -337,15 +337,10 @@ void DruckerPragerUpdates::SmallStrainUpdate( localIndex const k,
 
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-void DruckerPragerUpdates::SaveConvergedState( localIndex const k,
-                                               localIndex const q )
+void DruckerPragerUpdates::saveConvergedState()
 {
-  m_oldCohesion[k][q] = m_newCohesion[k][q];
-  
-  for(localIndex i=0; i<6; ++i)
-  {
-    m_oldElasticStrain[k][q][i] = m_newElasticStrain[k][q][i];
-  }
+  SolidBaseUpdates::saveConvergedState();
+  m_oldCohesion.setValues< serialPolicy >( m_newCohesion );
 }
 
 
@@ -453,7 +448,7 @@ public:
    * @brief Create a instantiation of the DruckerPragerUpdate class that refers to the data in this.
    * @return An instantiation of DruckerPragerUpdate.
    */
-  DruckerPragerUpdates createKernelWrapper()
+  DruckerPragerUpdates createKernelWrapper() const
   {
     return DruckerPragerUpdates( m_bulkModulus,
                                  m_shearModulus,
@@ -464,7 +459,8 @@ public:
                                  m_oldCohesion,
                                  m_newElasticStrain,
                                  m_oldElasticStrain,
-                                 m_stress );
+                                 m_newStress,
+                                 m_oldStress );
   }
 
 protected:

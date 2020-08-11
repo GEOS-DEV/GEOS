@@ -21,9 +21,8 @@
 #define GEOSX_CONSTITUTIVE_CONSTITUTIVEPASSTHRU_HPP_
 
 #include "NullModel.hpp"
-#include "solid/LinearElasticIsotropic.hpp"
-#include "solid/LinearElasticAnisotropic.hpp"
-#include "solid/LinearElasticTransverseIsotropic.hpp"
+#include "solid/ElasticIsotropic.hpp"
+#include "solid/ElasticTransverseIsotropic.hpp"
 #include "solid/PoroElastic.hpp"
 
 namespace geosx
@@ -57,17 +56,13 @@ struct ConstitutivePassThru< SolidBase >
   {
     GEOSX_ERROR_IF( constitutiveRelation == nullptr, "ConstitutiveBase* == nullptr" );
 
-    if( dynamic_cast< LinearElasticIsotropic * >( constitutiveRelation ) )
+    if( dynamic_cast< ElasticIsotropic * >( constitutiveRelation ) )
     {
-      lambda( static_cast< LinearElasticIsotropic * >( constitutiveRelation) );
+      lambda( static_cast< ElasticIsotropic * >( constitutiveRelation) );
     }
-    else if( dynamic_cast< LinearElasticTransverseIsotropic * >( constitutiveRelation ) )
+    else if( dynamic_cast< ElasticTransverseIsotropic * >( constitutiveRelation ) )
     {
-      lambda( static_cast< LinearElasticTransverseIsotropic * >( constitutiveRelation) );
-    }
-    else if( dynamic_cast< LinearElasticAnisotropic * >( constitutiveRelation ) )
-    {
-      lambda( static_cast< LinearElasticAnisotropic * >( constitutiveRelation) );
+      lambda( static_cast< ElasticTransverseIsotropic * >( constitutiveRelation) );
     }
     else
     {
@@ -130,17 +125,13 @@ struct ConstitutivePassThru< PoroElasticBase >
   {
     GEOSX_ERROR_IF( constitutiveRelation == nullptr, "ConstitutiveBase* == nullptr" );
 
-    if( dynamic_cast< PoroElastic< LinearElasticIsotropic > * >( constitutiveRelation ) )
+    if( dynamic_cast< PoroElastic< ElasticIsotropic > * >( constitutiveRelation ) )
     {
-      lambda( static_cast< PoroElastic< LinearElasticIsotropic > * >( constitutiveRelation) );
+      lambda( static_cast< PoroElastic< ElasticIsotropic > * >( constitutiveRelation) );
     }
-    else if( dynamic_cast< PoroElastic< LinearElasticTransverseIsotropic > * >( constitutiveRelation ) )
+    else if( dynamic_cast< PoroElastic< ElasticTransverseIsotropic > * >( constitutiveRelation ) )
     {
-      lambda( static_cast< PoroElastic< LinearElasticTransverseIsotropic > * >( constitutiveRelation) );
-    }
-    else if( dynamic_cast< PoroElastic< LinearElasticAnisotropic > * >( constitutiveRelation ) )
-    {
-      lambda( static_cast< PoroElastic< LinearElasticAnisotropic > * >( constitutiveRelation) );
+      lambda( static_cast< PoroElastic< ElasticTransverseIsotropic > * >( constitutiveRelation) );
     }
     else
     {

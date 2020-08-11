@@ -13,20 +13,19 @@
  */
 
 /**
- *  @file LinearElasticTransverseIsotropic.cpp
+ *  @file ElasticTransverseIsotropic.cpp
  */
 
-#include "LinearElasticTransverseIsotropic.hpp"
+#include "ElasticTransverseIsotropic.hpp"
 
 namespace geosx
 {
 using namespace dataRepository;
+
 namespace constitutive
 {
 
-
-
-LinearElasticTransverseIsotropic::LinearElasticTransverseIsotropic( std::string const & name, Group * const parent ):
+ElasticTransverseIsotropic::ElasticTransverseIsotropic( std::string const & name, Group * const parent ):
   SolidBase( name, parent ),
   m_defaultYoungsModulusTransverse(),
   m_defaultYoungsModulusAxial(),
@@ -88,21 +87,21 @@ LinearElasticTransverseIsotropic::LinearElasticTransverseIsotropic( std::string 
 }
 
 
-LinearElasticTransverseIsotropic::~LinearElasticTransverseIsotropic()
+ElasticTransverseIsotropic::~ElasticTransverseIsotropic()
 {}
 
 
 void
-LinearElasticTransverseIsotropic::DeliverClone( string const & name,
-                                                Group * const parent,
-                                                std::unique_ptr< ConstitutiveBase > & clone ) const
+ElasticTransverseIsotropic::DeliverClone( string const & name,
+                                          Group * const parent,
+                                          std::unique_ptr< ConstitutiveBase > & clone ) const
 {
   if( !clone )
   {
-    clone = std::make_unique< LinearElasticTransverseIsotropic >( name, parent );
+    clone = std::make_unique< ElasticTransverseIsotropic >( name, parent );
   }
   SolidBase::DeliverClone( name, parent, clone );
-  LinearElasticTransverseIsotropic * const newConstitutiveRelation = dynamic_cast< LinearElasticTransverseIsotropic * >(clone.get());
+  ElasticTransverseIsotropic * const newConstitutiveRelation = dynamic_cast< ElasticTransverseIsotropic * >(clone.get());
 
   newConstitutiveRelation->m_defaultYoungsModulusTransverse = m_defaultYoungsModulusTransverse;
   newConstitutiveRelation->m_defaultYoungsModulusAxial = m_defaultYoungsModulusAxial;
@@ -115,17 +114,25 @@ LinearElasticTransverseIsotropic::DeliverClone( string const & name,
   newConstitutiveRelation->m_c33 = m_c33;
   newConstitutiveRelation->m_c44 = m_c44;
   newConstitutiveRelation->m_c66 = m_c66;
-  newConstitutiveRelation->m_stress = m_stress;
 }
 
-void LinearElasticTransverseIsotropic::AllocateConstitutiveData( dataRepository::Group * const parent,
-                                                                 localIndex const numConstitutivePointsPerParentIndex )
+void ElasticTransverseIsotropic::AllocateConstitutiveData( dataRepository::Group * const parent,
+                                                           localIndex const numConstitutivePointsPerParentIndex )
 {
   SolidBase::AllocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
-  this->resize( parent->size() );
+  
+  localIndex const numElems = parent->size();
+  
+  this->resize( numElems );
+  
+  m_c11.resize( numElems );
+  m_c13.resize( numElems );
+  m_c33.resize( numElems );
+  m_c44.resize( numElems );
+  m_c66.resize( numElems );
 }
 
-void LinearElasticTransverseIsotropic::PostProcessInput()
+void ElasticTransverseIsotropic::PostProcessInput()
 {
 
   if( !m_postProcessed )
@@ -164,6 +171,6 @@ void LinearElasticTransverseIsotropic::PostProcessInput()
 }
 
 
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, LinearElasticTransverseIsotropic, std::string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, ElasticTransverseIsotropic, std::string const &, Group * const )
 }
 } /* namespace geosx */

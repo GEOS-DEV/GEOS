@@ -17,7 +17,7 @@
 #include "gtest/gtest.h"
 
 #include "constitutive/ConstitutiveManager.hpp"
-#include "constitutive/solid/LinearElasticIsotropic.hpp"
+#include "constitutive/solid/ElasticIsotropic.hpp"
 
 #include "dataRepository/xmlWrapper.hpp"
 using namespace geosx;
@@ -25,7 +25,7 @@ using namespace ::geosx::constitutive;
 
 TEST( LinearElasticIsotropicTests, testAllocation )
 {
-  LinearElasticIsotropic cm( "model", nullptr );
+  ElasticIsotropic cm( "model", nullptr );
 
   localIndex constexpr numElems = 2;
   localIndex constexpr numQuadraturePoints = 3;
@@ -50,7 +50,7 @@ TEST( LinearElasticIsotropicTests, testAllocation )
 
 TEST( LinearElasticIsotropicTests, testStateUpdatePoint )
 {
-  LinearElasticIsotropic cm( "model", nullptr );
+  ElasticIsotropic cm( "model", nullptr );
   real64 constexpr K = 2e10;
   real64 constexpr G = 1e10;
   cm.setDefaultBulkModulus( K );
@@ -59,7 +59,7 @@ TEST( LinearElasticIsotropicTests, testStateUpdatePoint )
   dataRepository::Group disc( "discretization", nullptr );
   disc.resize( 2 );
   cm.AllocateConstitutiveData( &disc, 2 );
-  LinearElasticIsotropic::KernelWrapper cmw = cm.createKernelUpdates();
+  ElasticIsotropic::KernelWrapper cmw = cm.createKernelUpdates();
 
   arrayView3d< real64, solid::STRESS_USD > const & stress = cm.getStress();
 
@@ -187,11 +187,11 @@ TEST( LinearElasticIsotropicTests, testStateUpdatePoint )
 TEST( LinearElasticIsotropicTests, testXML )
 {
   ConstitutiveManager constitutiveManager( "constitutive", nullptr );
-  LinearElasticIsotropic cm( "model", &constitutiveManager );
+  ElasticIsotropic cm( "model", &constitutiveManager );
 
   string const inputStream =
     "<Constitutive>"
-    "  <LinearElasticIsotropic name=\"granite\" "
+    "  <ElasticIsotropic name=\"granite\" "
     "  defaultDensity=\"2700\" "
     "  defaultBulkModulus=\"5.5556e9\" "
     "  defaultShearModulus=\"4.16667e9\"/>"

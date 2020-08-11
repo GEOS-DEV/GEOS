@@ -250,7 +250,7 @@ public:
 
     m_constitutiveUpdate.HypoElastic( k, q, Dadt, Rot );
 
-    Integrate< NUM_NODES_PER_ELEM >( m_constitutiveUpdate.m_stress[k][q].toSliceConst(),
+    Integrate< NUM_NODES_PER_ELEM >( m_constitutiveUpdate.m_newStress[k][q].toSliceConst(),
                                      DNDX,
                                      DETJ,
                                      detF,
