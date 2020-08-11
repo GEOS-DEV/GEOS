@@ -31,10 +31,12 @@ class Vertice
 {
 public:
 
-    Vertice( const int index);
+  Vertice( const int);
 
   /// Destructor
   virtual ~Vertice();
+
+  int getIndice() const { return ind; }
 
   
 private:

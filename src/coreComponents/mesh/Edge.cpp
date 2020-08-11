@@ -16,17 +16,20 @@
  * @file Edge.cpp
  */
 #include <string>
+#include <iostream>
 #include "common/Path.hpp"
-#include "Edge.hpp"
+#include "mesh/Edge.hpp"
+#include "mesh/Vertice.hpp"
 
 namespace geosx
 {
 
 
 
-Edge::Edge( const int index, Vertice  neighbour1, Vertice neighbour2):
+Edge::Edge( const int index, Vertice* neighbour1, Vertice* neighbour2):
   ind(index),n1(neighbour1),n2(neighbour2)
   {    
+    std::cout<<"Constructing edge "<<ind<<" between vertices "<<n1->getIndice()<<" and "<<n2->getIndice()<<"\n";
   }
 
 

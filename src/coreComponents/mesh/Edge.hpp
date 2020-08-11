@@ -18,9 +18,7 @@
 
 #ifndef GEOSX_MESH_EDGE_HPP_
 #define GEOSX_MESH_EDGE_HPP_
-
-#include "common/Path.hpp"
-#include "mesh/GraphBase.hpp"
+#include "mesh/Vertice.hpp"
 
 namespace geosx
 {
@@ -30,36 +28,23 @@ namespace geosx
  *
  * An event type for periodic events (using either time or cycle as a basis).
  */
-class Edge : public GraphBase
+class Edge
 {
 public:
 
-  /// @copydoc geosx::dataRepository::Group::Group( std::string const & name, Group * const parent )
-  Edge( const std::string & name,
-                 Group * const parent );
+  Edge( const int, Vertice*, Vertice*);
 
   /// Destructor
-  virtual ~Edge() override;
+  virtual ~Edge();
 
-  /**
-   * @brief Catalog name interface.
-   * @return This type's catalog name.
-   **/
-  static string CatalogName() { return "Edge"; }
+  int getIndice() const { return ind; }
 
-  virtual void GenerateGraph() override;
 
- 
-  /// @cond DO_NOT_DOCUMENT
-  struct viewKeyStruct
-  {
-    static constexpr auto fileString = "file";
-
-     } viewKeys;
-  /// @endcond
-
+  
 private:
-  Path m_file;
+  int ind;
+  Vertice* n1;
+  Vertice* n2;
 };
 
 } /* namespace geosx */

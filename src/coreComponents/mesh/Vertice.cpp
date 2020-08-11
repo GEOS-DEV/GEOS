@@ -16,6 +16,7 @@
  * @file Vertice.cpp
  */
 #include <string>
+#include <iostream>
 #include "common/Path.hpp"
 #include "Vertice.hpp"
 
@@ -27,6 +28,7 @@ namespace geosx
 Vertice::Vertice( const int index):
   ind(index)
   {    
+    std::cout<<"Constructing vertice "<<ind<<"\n";
   }
 
 

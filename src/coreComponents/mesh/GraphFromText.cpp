@@ -19,9 +19,12 @@
 #include <fstream>
 #include <sstream>
 #include <string>
+#include <vector>
 #include "common/Path.hpp"
 #include "GraphFromText.hpp"
 #include "managers/Functions/FunctionManager.hpp"
+#include "mesh/Edge.hpp"
+#include "mesh/Vertice.hpp"
 #include "common/Logger.hpp"
 
 namespace geosx
@@ -53,13 +56,50 @@ void GraphFromText::GenerateGraph()
 {
   std::ifstream infile(m_file);
   std::string line;
+  std::vector<Vertice*> vertices;
+  std::vector<Edge> edges;
   while (std::getline(infile, line))
   {
     std::istringstream iss(line);
     int a, b, c;
-    std::cout<<"test";
     if (!(iss >> a >> b >> c)) { break; } // error
-    std::cout<<a<<" "<<b<<" "<<c<<"\n" ;   
+    std::cout<<a<<" "<<b<<" "<<c<<"\n" ;
+    int place_b=-1;
+    int place_c=-1;
+    long unsigned int i=0;
+    while (i<vertices.size() && (place_b==-1 || place_c==-1))
+    {
+      if (vertices[i]->getIndice()==b)
+      {
+        place_b=i;
+      }
+      if (vertices[i]->getIndice()==c)
+      {
+        place_c=i;
+      }
+      ++i;
+    }
+    Vertice* v1;
+    Vertice* v2;
+    if(place_b==-1)
+    {
+      v1=new Vertice(b);
+      vertices.push_back(v1);
+    }
+    else
+    {
+      v1=vertices[place_b];
+    }
+    if(place_c==-1)
+    {
+      v2=new Vertice(c);
+      vertices.push_back(v2);
+    }
+    else
+    {
+      v2=vertices[place_c];
+    }
+    Edge e1(a, v1, v2);
   }
 }
 
