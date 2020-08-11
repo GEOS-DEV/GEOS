@@ -36,13 +36,13 @@ int n_ranks = 1;
 
 std::ostream * rankStream = nullptr;
 
-#ifdef USE_MPI
+#ifdef GEOSX_USE_MPI
 MPI_Comm comm;
 #endif
 
 } // namespace internal
 
-#ifdef USE_MPI
+#ifdef GEOSX_USE_MPI
 
 void InitializeLogger( MPI_Comm mpi_comm, const std::string & rankOutputDir )
 {
