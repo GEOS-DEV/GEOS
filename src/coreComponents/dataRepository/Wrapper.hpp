@@ -514,6 +514,10 @@ public:
   virtual void move( LvArray::MemorySpace const space, bool const touch ) const override
   { return wrapperHelpers::move( reference(), space, touch ); }
 
+  ///////////////////////////////////////////////////////////////////////////////////////////////////
+  virtual string typeRegex() const override
+  { return TypeRegex< T >::get(); }
+
   ///@}
 
   /**

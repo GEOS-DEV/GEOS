@@ -144,6 +144,13 @@ public:
    */
   virtual void move( LvArray::MemorySpace const space, bool const touch ) const = 0;
 
+  /**
+   * @brief Calls T::typeRegex()
+   * @return regex used to validate inputs of wrapped type. If empty, the type does not
+   *         define a custom regex and will use one of the default type regexes.
+   */
+  virtual string typeRegex() const = 0;
+
   ///@}
 
   /**

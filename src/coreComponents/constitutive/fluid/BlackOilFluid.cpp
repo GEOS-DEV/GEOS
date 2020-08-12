@@ -36,23 +36,6 @@ using namespace dataRepository;
 namespace constitutive
 {
 
-namespace
-{
-
-BlackOilFluid::FluidType getBlackOilFluidType( string const & name )
-{
-  static std::map< string, BlackOilFluid::FluidType > const fluidTypes =
-  {
-    { "LiveOil", BlackOilFluid::FluidType::LiveOil },
-    { "DeadOil", BlackOilFluid::FluidType::DeadOil },
-  };
-  auto const it = fluidTypes.find( name );
-  GEOSX_ERROR_IF( it == fluidTypes.end(), "Black-oil fluid type not supported by PVTPackage: " << name );
-  return it->second;
-}
-
-}
-
 BlackOilFluid::BlackOilFluid( std::string const & name, Group * const parent )
   : MultiFluidPVTPackageWrapper( name, parent )
 {
@@ -68,9 +51,9 @@ BlackOilFluid::BlackOilFluid( std::string const & name, Group * const parent )
     setRestartFlags( RestartFlags::NO_WRITE )->
     setDescription( "List of filenames with input PVT tables" );
 
-  registerWrapper( viewKeyStruct::fluidTypeString, &m_fluidTypeString )->
+  registerWrapper( viewKeyStruct::fluidTypeString, &m_fluidType )->
     setInputFlag( InputFlags::REQUIRED )->
-    setDescription( "Type of black-oil fluid (LiveOil/DeadOil)" );
+    setDescription( "Type of black-oil fluid. Valid options:\n* " + EnumStrings< FluidType >::concat( "\n* " ) );
 }
 
 BlackOilFluid::~BlackOilFluid()
@@ -84,7 +67,6 @@ BlackOilFluid::deliverClone( string const & name,
   clone = MultiFluidPVTPackageWrapper::deliverClone( name, parent );
   BlackOilFluid & fluid = dynamicCast< BlackOilFluid & >( *clone );
 
-  fluid.m_fluidType        = m_fluidType;
   fluid.createFluid();
   return clone;
 }
@@ -110,9 +92,7 @@ void BlackOilFluid::PostProcessInput()
   BOFLUID_CHECK_INPUT_LENGTH( m_surfaceDensities, NP, viewKeyStruct::surfaceDensitiesString )
   BOFLUID_CHECK_INPUT_LENGTH( m_tableFiles, NP, viewKeyStruct::surfaceDensitiesString )
 
-#undef BOFLUID_CHECK_INPUT_LENGTH
-
-  m_fluidType = getBlackOilFluidType( m_fluidTypeString );
+  #undef BOFLUID_CHECK_INPUT_LENGTH
 }
 
 void BlackOilFluid::createFluid()
