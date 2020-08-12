@@ -107,31 +107,6 @@ void MultiPhaseMultiComponentFluid::InitializePostSubGroups( Group * const group
 
 void MultiPhaseMultiComponentFluid::CreatePVTModels()
 {
-  string flashModelParaFile;
-
-  ProblemManager const * const problemManager = this->GetGroupByPath< ProblemManager >( "/" );
-  if( problemManager != nullptr )
-  {
-    string inputFileName = problemManager->getInputFileName();
-    if( inputFileName.empty())
-    {
-      inputFileName = problemManager->getRestartFileName();
-    }
-    string inputFileDir;
-    splitPath( inputFileName, inputFileDir, inputFileName );
-
-    for( std::string & filename : m_phasePVTParaFiles )
-    {
-      if( !isAbsolutePath( filename ))
-      {
-        getAbsolutePath( inputFileDir + '/' + filename, filename );
-      }
-    }
-
-    flashModelParaFile = inputFileDir + '/' + m_flashModelParaFile;
-
-  }
-
   for( std::string & filename : m_phasePVTParaFiles )
   {
     std::ifstream is( filename );
@@ -141,40 +116,45 @@ void MultiPhaseMultiComponentFluid::CreatePVTModels()
 
     while( is.getline( buf, buf_size ))
     {
-      std::string str( buf );
-      string_array strs = Tokenize( str, " " );
+      std::string const str( buf );
+      string_array const strs = Tokenize( str, " " );
 
-      if( streq( strs[0], "DensityFun" ))
+      if( strs[0] == "DensityFun" )
       {
-        m_phaseDensityFuns.emplace_back( PVTFunction::CatalogInterface::Factory( strs[ 1 ], strs, m_componentNames, m_componentMolarWeight ) );
+        m_phaseDensityFuns.emplace_back( PVTFunction::CatalogInterface::Factory( strs[ 1 ],
+                                                                                 strs,
+                                                                                 m_componentNames,
+                                                                                 m_componentMolarWeight ) );
       }
-      else if( streq( strs[0], "ViscosityFun" ))
+      else if( strs[0] == "ViscosityFun" )
       {
-        m_phaseViscosityFuns.emplace_back( PVTFunction::CatalogInterface::Factory( strs[ 1 ], strs, m_componentNames, m_componentMolarWeight ) );
+        m_phaseViscosityFuns.emplace_back( PVTFunction::CatalogInterface::Factory( strs[ 1 ],
+                                                                                   strs,
+                                                                                   m_componentNames,
+                                                                                   m_componentMolarWeight ) );
       }
       else
+      {
         GEOSX_ERROR( "Error: Invalid PVT function: " << strs[0] << "." );
+      }
     }
 
     is.close();
-
   }
 
   {
-
-    std::ifstream is( flashModelParaFile );
+    std::ifstream is( m_flashModelParaFile );
 
     constexpr std::streamsize buf_size = 256;
     char buf[buf_size];
 
     while( is.getline( buf, buf_size ))
     {
-      std::string str( buf );
-      string_array strs = Tokenize( str, " " );
+      std::string const str( buf );
+      string_array const strs = Tokenize( str, " " );
 
-      if( streq( strs[0], "FlashModel" ))
+      if( strs[0] == "FlashModel" )
       {
-
         m_flashModel = FlashModel::CatalogInterface::Factory( strs[1],
                                                               strs,
                                                               m_phaseNames,
@@ -188,7 +168,6 @@ void MultiPhaseMultiComponentFluid::CreatePVTModels()
     }
 
     is.close();
-
   }
 }
 

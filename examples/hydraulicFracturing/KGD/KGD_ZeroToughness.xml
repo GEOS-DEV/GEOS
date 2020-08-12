@@ -22,7 +22,7 @@
       <NonlinearSolverParameters
         newtonTol="1.0e-5"
         newtonMaxIter="20"
-        lineSearchAction="1"
+        lineSearchAction="Attempt"
         lineSearchMaxCuts="3"/>
       <LinearSolverParameters
         solverType="gmres"

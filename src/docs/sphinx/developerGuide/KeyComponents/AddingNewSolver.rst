@@ -31,22 +31,10 @@ Declaration file (reference)
 ----------------------------
 The four included headers are:
 
+ - ``common/EnumStrings.hpp`` which includes facilities for enum-string conversion (useful for reading enum values from input);
  - ``physicsSolver/SolverBase.hpp`` which declares the abstraction class shared by all physics solvers;
  - ``managers/FieldSpecification/FieldSpecificationManager.hpp`` which declares a manager used to access and to set field on the discretized domain;
  - ``linearAlgebra/interfaces/InterfaceTypes.hpp`` which declares an interface to linear solvers and linear algebra libraries.
-
-Right after that, a struct is designed to store the maximal stable timestep.
-
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/simplePDE/LaplaceFEM.hpp
-      :language: c++
-      :start-after: //START_SPHINX_INCLUDE_00
-      :end-before: //END_SPHINX_INCLUDE_00
-
-Some forward declarations are following :
-
- - ``FieldSpecificationBase`` is forward declared as we will use it to set the field on the boundary;
- - ``FiniteElementBase`` is forward declared as we will use finite element dicretization;
- - ``DomainPartition`` is forward declared as we will use MPI parallelism and its associated domain decomposition.
 
 Let us jump forward to the class enum and variable as they contain the data used
 specifically in the implementation of *LaplaceFEM*.
@@ -58,7 +46,7 @@ The class exhibits three member variables:
  - ``m_fieldName`` which stores the name of the diffused variable (*e.g.* the temperature) as a `string`;
  - ``m_timeIntegrationOption`` an `enum` value allowing to dispatch with respect to the transient treatment.
 
-``timeIntegrationOption`` is an `enum` specifying the transient treatment which can be chosen respectively
+``TimeIntegrationOption`` is an `enum` specifying the transient treatment which can be chosen respectively
 between *SteadyState*, *ImplicitTransient* and *ExplicitTransient* depending on whether we are interested
 in the transient state and whether we want it to be discretized as a backward or a forward Euler scheme.
 
@@ -66,6 +54,16 @@ in the transient state and whether we want it to be discretized as a backward or
    :language: c++
    :start-after: //START_SPHINX_INCLUDE_01
    :end-before: //END_SPHINX_INCLUDE_01
+
+To order to register an enumeration type with the Data Repository and have its value read from input,
+we must define stream insertion/extraction operators. As this is a common routine task, GEOSX provides
+a facility for automating it. Upon including ``common/EnumStrings.hpp``, we can call the following macro
+at the namespace scope (in this case, right after the ``LaplaceFEM`` class definition is complete):
+
+.. literalinclude:: ../../../../coreComponents/physicsSolvers/simplePDE/LaplaceFEM.hpp
+   :language: c++
+   :start-after: //START_SPHINX_INCLUDE_05
+   :end-before: //END_SPHINX_INCLUDE_05
 
 Once explained the main variables and enum, let us start reading through the different member functions:
 
@@ -167,16 +165,6 @@ for all nodes in the sub group:
  - apply a default value;
  - set the output verbosity level (here ``PlotLevel::LEVEL_0``);
  - set the field associated description for auto generated docs.
-
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/simplePDE/LaplaceFEM.cpp
-   :language: c++
-   :start-after: //START_SPHINX_INCLUDE_03
-   :end-before: //END_SPHINX_INCLUDE_03
-
-``PostProcessInput()`` will ensure all dispatches and assignments of all read values from the base class defined
-to the deepest derived class. In the base class *BaseSolver*, it will set the gravity vector value and the linear solver parameters.
-In *LaplaceFEM* implementation, it will assign the ``m_timeIntegrationOption``
-to the read value and throw a runtime error if it not among the `enum` values.
 
 .. literalinclude:: ../../../../coreComponents/physicsSolvers/simplePDE/LaplaceFEM.cpp
    :language: c++
