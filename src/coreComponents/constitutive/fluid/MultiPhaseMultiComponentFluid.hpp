@@ -261,7 +261,7 @@ private:
   // phase PVT parameter filenames
   path_array m_phasePVTParaFiles;
 
-  string m_flashModelParaFile;
+  Path m_flashModelParaFile;
 
   // number of entries corrosponds to number of phases
   std::vector< std::shared_ptr< PVTProps::PVTFunction const > > m_phaseDensityFuns;

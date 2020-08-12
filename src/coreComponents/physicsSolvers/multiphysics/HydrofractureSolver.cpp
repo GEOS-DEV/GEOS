@@ -50,8 +50,7 @@ HydrofractureSolver::HydrofractureSolver( const std::string & name,
   SolverBase( name, parent ),
   m_solidSolverName(),
   m_flowSolverName(),
-  m_couplingTypeOptionString( "FIM" ),
-  m_couplingTypeOption(),
+  m_couplingTypeOption( CouplingTypeOption::FIM ),
   m_solidSolver( nullptr ),
   m_flowSolver( nullptr ),
   m_maxNumResolves( 10 )
@@ -64,9 +63,9 @@ HydrofractureSolver::HydrofractureSolver( const std::string & name,
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "Name of the fluid mechanics solver to use in the poroelastic solver" );
 
-  registerWrapper( viewKeyStruct::couplingTypeOptionStringString, &m_couplingTypeOptionString )->
+  registerWrapper( viewKeyStruct::couplingTypeOptionStringString, &m_couplingTypeOption )->
     setInputFlag( InputFlags::REQUIRED )->
-    setDescription( "Coupling option: (FIM, SIM_FixedStress)" );
+    setDescription( "Coupling method. Valid options:\n* " + EnumStrings< CouplingTypeOption >::concat( "\n* " ) );
 
   registerWrapper( viewKeyStruct::contactRelationNameString, &m_contactRelationName )->
     setInputFlag( InputFlags::REQUIRED )->
@@ -145,21 +144,6 @@ void HydrofractureSolver::ImplicitStepComplete( real64 const & time_n,
 
 void HydrofractureSolver::PostProcessInput()
 {
-  string ctOption = this->getReference< string >( viewKeyStruct::couplingTypeOptionStringString );
-
-  if( ctOption == "SIM_FixedStress" )
-  {
-    this->m_couplingTypeOption = couplingTypeOption::SIM_FixedStress;
-  }
-  else if( ctOption == "FIM" )
-  {
-    this->m_couplingTypeOption = couplingTypeOption::FIM;
-  }
-  else
-  {
-    GEOSX_ERROR( "invalid coupling type option: " + ctOption );
-  }
-
   m_solidSolver = this->getParent()->GetGroup< SolidMechanicsLagrangianFEM >( m_solidSolverName );
   GEOSX_ERROR_IF( m_solidSolver == nullptr, this->getName() << ": invalid solid solver name: " << m_solidSolverName );
 
@@ -190,11 +174,11 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
 
   SolverBase * const surfaceGenerator = this->getParent()->GetGroup< SolverBase >( "SurfaceGen" );
 
-  if( m_couplingTypeOption == couplingTypeOption::SIM_FixedStress )
+  if( m_couplingTypeOption == CouplingTypeOption::SIM_FixedStress )
   {
     dtReturn = SplitOperatorStep( time_n, dt, cycleNumber, domain );
   }
-  else if( m_couplingTypeOption == couplingTypeOption::FIM )
+  else if( m_couplingTypeOption == CouplingTypeOption::FIM )
   {
 
     ImplicitStepSetup( time_n, dt, domain );
@@ -1347,7 +1331,7 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_PARAM( do
   LinearSolverParameters const & linParams = m_linearSolverParameters.get();
 
   const bool use_diagonal_prec = true;
-  const bool use_bicgstab      = (linParams.solverType == "bicgstab");
+  const bool use_bicgstab      = (linParams.solverType == LinearSolverParameters::SolverType::bicgstab);
 
   // set initial guess to zero
 
@@ -1486,7 +1470,7 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_PARAM( do
   {
     RCP< Teuchos::ParameterList > list = rcp( new Teuchos::ParameterList( "precond_list" ), true );
 
-    if( linParams.preconditionerType == "amg" )
+    if( linParams.preconditionerType == LinearSolverParameters::PreconditionerType::amg )
     {
       list->set( "Preconditioner Type", "ML" );
       list->sublist( "Preconditioner Types" ).sublist( "ML" ).set( "Base Method Defaults", "SA" );

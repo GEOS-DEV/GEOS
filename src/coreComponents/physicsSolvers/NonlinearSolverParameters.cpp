@@ -29,12 +29,12 @@ NonlinearSolverParameters::NonlinearSolverParameters( std::string const & name,
   enableLogLevelInput();
 
   registerWrapper( viewKeysStruct::lineSearchActionString, &m_lineSearchAction )->
-    setApplyDefaultValue( 1 )->
+    setApplyDefaultValue( LineSearchAction::Attempt )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "How the line search is to be used. Options are: \n "
-                    "0 - Do not use line search.\n"
-                    "1 - Use line search. Allow exit from line search without achieving smaller residual than starting residual.\n"
-                    "2 - Use line search. If smaller residual than starting resdual is not achieved, cut time step.\n" );
+                    "* None    - Do not use line search.\n"
+                    "* Attempt - Use line search. Allow exit from line search without achieving smaller residual than starting residual.\n"
+                    "* Require - Use line search. If smaller residual than starting resdual is not achieved, cut time step." );
 
   registerWrapper( viewKeysStruct::lineSearchMaxCutsString, &m_lineSearchMaxCuts )->
     setApplyDefaultValue( 4 )->
