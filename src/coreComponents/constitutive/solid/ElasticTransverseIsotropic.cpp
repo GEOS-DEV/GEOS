@@ -116,6 +116,7 @@ ElasticTransverseIsotropic::DeliverClone( string const & name,
   newConstitutiveRelation->m_c66 = m_c66;
 }
 
+
 void ElasticTransverseIsotropic::AllocateConstitutiveData( dataRepository::Group * const parent,
                                                            localIndex const numConstitutivePointsPerParentIndex )
 {
@@ -124,7 +125,6 @@ void ElasticTransverseIsotropic::AllocateConstitutiveData( dataRepository::Group
   localIndex const numElems = parent->size();
   
   this->resize( numElems );
-  
   m_c11.resize( numElems );
   m_c13.resize( numElems );
   m_c33.resize( numElems );
@@ -132,9 +132,9 @@ void ElasticTransverseIsotropic::AllocateConstitutiveData( dataRepository::Group
   m_c66.resize( numElems );
 }
 
+
 void ElasticTransverseIsotropic::PostProcessInput()
 {
-
   if( !m_postProcessed )
   {
     real64 const Et = m_defaultYoungsModulusTransverse;

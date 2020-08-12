@@ -72,6 +72,22 @@ public:
   /// Deleted move assignment operator
   ElasticIsotropicUpdates & operator=( ElasticIsotropicUpdates && ) =  delete;
 
+
+  GEOSX_HOST_DEVICE
+  virtual void getStiffness( localIndex const k,
+                             real64 ( & stiffness )[6][6] ) const override final;
+
+  
+  /*
+  GEOSX_HOST_DEVICE
+  virtual void smallStrainNoStateUpdate( localIndex const k,
+                                         localIndex const q,
+                                         real64 const ( & totalStrain )[6],
+                                         real64 ( & stress )[6]) override final;
+  */
+  
+  ///////////////////// LEGACY INTERFACE /////////////////////////////////
+  
   /**
    * accessor to return the stiffness at a given element
    * @param[in] k the element number
@@ -163,6 +179,56 @@ private:
   arrayView1d< real64 const > const m_shearModulus;
 
 };
+
+
+GEOSX_HOST_DEVICE inline
+void ElasticIsotropicUpdates::getStiffness( localIndex const k,
+                                            real64 ( & stiffness )[6][6] ) const
+{
+   real64 const G = m_shearModulus[k];
+   real64 const L = m_bulkModulus[k] - 2.0/3.0 * G;
+
+   LvArray::tensorOps::fill< 6, 6 >( stiffness, 0 );
+
+   stiffness[0][0] = L + 2*G;
+   stiffness[0][1] = L;
+   stiffness[0][2] = L;
+   
+   stiffness[1][0] = L;
+   stiffness[1][1] = L + 2*G;
+   stiffness[1][2] = L;
+   
+   stiffness[2][0] = L;
+   stiffness[2][1] = L;
+   stiffness[2][2] = L + 2*G;
+   
+   stiffness[3][3] = G;
+   stiffness[4][4] = G;
+   stiffness[5][5] = G;
+ }
+ 
+/*
+GEOSX_HOST_DEVICE
+void ElasticIsotropicUpdates::smallStrainNoStateUpdate( localIndex const k,
+                                                        localIndex const q,
+                                                        real64 const ( & totalStrain )[6],
+                                                        real64 ( & stress )[6])
+{
+  GEOSX_UNUSED_VAR(q);
+  real64 const lambda = m_bulkModulus[k] - 2.0/3.0 * m_shearModulus[k];
+  real64 const diag = lambda * ( totalStrain[0] + totalStrain[1] + totalStrain[2] );
+  real64 const TwoG = 2.0 * m_shearModulus[k];
+
+  stress[0] = diag + TwoG * totalStrain[0];
+  stress[1] = diag + TwoG * totalStrain[1];
+  stress[2] = diag + TwoG * totalStrain[2];
+  stress[3] = m_shearModulus[k] * totalStrain[3];
+  stress[4] = m_shearModulus[k] * totalStrain[4];
+  stress[5] = m_shearModulus[k] * totalStrain[5];
+}
+*/
+
+//////////////// LEGACY INTERFACE
 
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE

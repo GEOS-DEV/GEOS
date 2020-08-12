@@ -77,11 +77,12 @@ ElasticIsotropic::DeliverClone( string const & name,
   SolidBase::DeliverClone( name, parent, clone );
   ElasticIsotropic * const newConstitutiveRelation = dynamic_cast< ElasticIsotropic * >(clone.get());
 
-  newConstitutiveRelation->m_defaultBulkModulus = m_defaultBulkModulus;
-  newConstitutiveRelation->m_bulkModulus = m_bulkModulus;
+  newConstitutiveRelation->m_defaultBulkModulus  = m_defaultBulkModulus;
   newConstitutiveRelation->m_defaultShearModulus = m_defaultShearModulus;
+  newConstitutiveRelation->m_bulkModulus  = m_bulkModulus;
   newConstitutiveRelation->m_shearModulus = m_shearModulus;
 }
+
 
 void ElasticIsotropic::AllocateConstitutiveData( dataRepository::Group * const parent,
                                                  localIndex const numConstitutivePointsPerParentIndex )
@@ -89,14 +90,12 @@ void ElasticIsotropic::AllocateConstitutiveData( dataRepository::Group * const p
   SolidBase::AllocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 
   localIndex const numElems = parent->size();
-  this->resize( numElems );
   
-  // TODO: use setApplyDefaultValues logic
-  //m_bulkModulus.resize( numElems );
-  //m_shearModulus.resize( numElems );
-  //m_bulkModulus.setValues< serialPolicy >( m_defaultBulkModulus );
-  //m_shearModulus.setValues< serialPolicy >( m_defaultShearModulus );
+  this->resize( numElems );
+  m_bulkModulus.resize( numElems );
+  m_shearModulus.resize( numElems );
 }
+
 
 void ElasticIsotropic::PostProcessInput()
 {
@@ -169,9 +168,16 @@ void ElasticIsotropic::PostProcessInput()
     {
       GEOSX_ERROR( "invalid specification for default elastic constants. "<<errorCheck<<" has been specified." );
     }
+    
+    this->getWrapper< array1d< real64 > >( viewKeyStruct::bulkModulusString )->
+      setApplyDefaultValue( K );
+    this->getWrapper< array1d< real64 > >( viewKeyStruct::shearModulusString )->
+      setApplyDefaultValue( G );
+        
   }
   m_postProcessed = true;
 }
+
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, ElasticIsotropic, std::string const &, Group * const )
 }

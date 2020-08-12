@@ -125,8 +125,6 @@ public:
   
   /// A reference the previous material stress at quadrature points.
   arrayView3d< real64, solid::STRESS_USD > const m_oldStress;
-
-private:
     
   /**
    * @name Update Interfaces: Stress and Stiffness
@@ -161,7 +159,7 @@ private:
     GEOSX_UNUSED_VAR(strainIncrement);
     GEOSX_UNUSED_VAR(stress);
     GEOSX_UNUSED_VAR(stiffness);
-    GEOSX_ERROR("SolidBase::smallStrainUpdate() not implemented");
+    GEOSX_ERROR("smallStrainUpdate() not implemented for this model");
   }
   
   /**
@@ -185,7 +183,7 @@ private:
     GEOSX_UNUSED_VAR(totalStrain);
     GEOSX_UNUSED_VAR(stress);
     GEOSX_UNUSED_VAR(stiffness);
-    GEOSX_ERROR("SolidBase::smallStrainNoStateUpdate() not implemented");
+    GEOSX_ERROR("smallStrainNoStateUpdate() not implemented for this model");
   }
   
   /**
@@ -223,7 +221,7 @@ private:
                            real64 const ( &Ddt )[6],
                            real64 const ( &Rot )[3][3],
                            real64 ( & stress )[6],
-                           real64 ( & stiffness )[6][6] ) final // for the moment
+                           real64 ( & stiffness )[6][6] ) final // marked final for the moment
   {
     smallStrainUpdate( k, q, Ddt, stress, stiffness );
     
@@ -259,7 +257,30 @@ private:
     GEOSX_UNUSED_VAR(FminusI);
     GEOSX_UNUSED_VAR(stress);
     GEOSX_UNUSED_VAR(stiffness);
-    GEOSX_ERROR("SolidBase::hyperUpdate() not implemented");
+    GEOSX_ERROR("hyperUpdate() not implemented for this model");
+  }
+  
+  /**
+   * @brief Return the stiffness at a given element.
+   *
+   * @note If the material model has a strain-dependent material stiffness (e.g.
+   * any plasticity, damage, or nonlinear elastic model) then this interface will
+   * not work.  Users should instead use one of the interfaces where a strain
+   * tensor is provided as input.
+   *
+   * @note Given the limitations above, this function may be removed from the
+   * public interface and made protected in the future.  Direct use in physics
+   * solvers is discouraged.
+   *
+   * @param k the element number
+   * @param stiffness the stiffness array
+   */
+  GEOSX_HOST_DEVICE
+  virtual void getStiffness( localIndex const k, real64 ( & stiffness )[6][6] ) const
+  {
+    GEOSX_UNUSED_VAR(k);
+    GEOSX_UNUSED_VAR(stiffness);
+    GEOSX_ERROR("getStiffness() not implemented for this model");
   }
   
   ///@}
@@ -313,7 +334,7 @@ private:
   virtual void smallStrainNoStateUpdate( localIndex const k,
                                          localIndex const q,
                                          real64 const ( & totalStrain )[6],
-                                        real64 ( & stress )[6])
+                                         real64 ( & stress )[6])
   {
     real64 discard[6][6];
     smallStrainNoStateUpdate( k, q, totalStrain, stress, discard );
