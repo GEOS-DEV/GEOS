@@ -237,7 +237,11 @@ public:
    * This version provides an interface for fully-general, large-deformation
    * models.  The input strain measure is the deformation gradient minus the identity.
    * The output is the Cauchy stress (true stress in the deformed configuration) to be
-   * consistent with the previous interfaces.  The stiffness is XXXXXXX
+   * consistent with the previous interfaces.  The stiffness is similarly the
+   * stiffness in the deformed configuration.
+   *
+   * @note: This interface is currently a placeholder and has not been extensively
+   * tested.
    *
    * @param[in] k The element index.
    * @param[in] q The quadrature point index.
@@ -245,6 +249,7 @@ public:
    * @param[out] stress New stress value (Cauchy stress)
    * @param[out] stiffness New stiffness value
    */
+   // TODO: confirm stress and strain measures we want to use
   GEOSX_HOST_DEVICE
   virtual void hyperUpdate( localIndex const k,
                             localIndex const q,

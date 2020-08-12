@@ -92,6 +92,8 @@ void ElasticIsotropic::AllocateConstitutiveData( dataRepository::Group * const p
   localIndex const numElems = parent->size();
   
   this->resize( numElems );
+  
+  // TODO: should not be required?
   m_bulkModulus.resize( numElems );
   m_shearModulus.resize( numElems );
 }
@@ -99,6 +101,8 @@ void ElasticIsotropic::AllocateConstitutiveData( dataRepository::Group * const p
 
 void ElasticIsotropic::PostProcessInput()
 {
+  // check what constants the user actually input, and do conversions as needed
+  
   if( !m_postProcessed )
   {
     real64 & nu = getReference< real64 >( viewKeyStruct::defaultPoissonRatioString );
@@ -106,6 +110,7 @@ void ElasticIsotropic::PostProcessInput()
     real64 & K  = m_defaultBulkModulus;
     real64 & G  = m_defaultShearModulus;
 
+    
     string errorCheck( "( " );
     int numConstantsSpecified = 0;
     if( nu >= 0.0 )
@@ -169,6 +174,7 @@ void ElasticIsotropic::PostProcessInput()
       GEOSX_ERROR( "invalid specification for default elastic constants. "<<errorCheck<<" has been specified." );
     }
     
+    // set results as array default values
     this->getWrapper< array1d< real64 > >( viewKeyStruct::bulkModulusString )->
       setApplyDefaultValue( K );
     this->getWrapper< array1d< real64 > >( viewKeyStruct::shearModulusString )->
