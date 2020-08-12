@@ -186,28 +186,32 @@ public:
                                             StackVariables & stack ) const
   {
 
+    Base::quadraturePointJacobianContribution( k, q, stack );
+
     real64 N[numNodesPerElem];
     FE_TYPE::shapeFunctionValues( q, N );
 
-    Base::quadraturePointJacobianContribution( k, q, stack, [&] GEOSX_DEVICE ( localIndex const a,
-                                                                               localIndex const b ) mutable
+    for( int a=0; a<numNodesPerElem; ++a )
     {
-      real64 const integrationFactor = m_density( k, q ) * N[a] * N[b] * m_detJ( k, q );
-      real64 const temp1 = ( m_massDamping * m_newmarkGamma/( m_newmarkBeta * m_dt )
-                             + 1.0 / ( m_newmarkBeta * m_dt * m_dt ) )* integrationFactor;
-
-      constexpr int nsdof = numDofPerTestSupportPoint;
-      for( int i=0; i<nsdof; ++i )
+      for( int b=a; b<numNodesPerElem; ++b )
       {
-        realT const acc = 1.0 / ( m_newmarkBeta * m_dt * m_dt ) * ( stack.uhat_local[b][i] - stack.uhattilde_local[b][i] );
-        realT const vel = stack.vtilde_local[b][i] +
-                          m_newmarkGamma/( m_newmarkBeta * m_dt ) *( stack.uhat_local[b][i]
-                                                                     - stack.uhattilde_local[b][i] );
+        real64 const integrationFactor = m_density( k, q ) * N[a] * N[b] * m_detJ( k, q );
+        real64 const temp1 = ( m_massDamping * m_newmarkGamma/( m_newmarkBeta * m_dt )
+                               + 1.0 / ( m_newmarkBeta * m_dt * m_dt ) )* integrationFactor;
 
-        stack.dRdU_InertiaMassDamping[ a*nsdof+i][ b*nsdof+i ] -= temp1;
-        stack.localResidual[ a*nsdof+i ] -= ( m_massDamping * vel + acc ) * integrationFactor;
+        constexpr int nsdof = numDofPerTestSupportPoint;
+        for( int i=0; i<nsdof; ++i )
+        {
+          realT const acc = 1.0 / ( m_newmarkBeta * m_dt * m_dt ) * ( stack.uhat_local[b][i] - stack.uhattilde_local[b][i] );
+          realT const vel = stack.vtilde_local[b][i] +
+                            m_newmarkGamma/( m_newmarkBeta * m_dt ) *( stack.uhat_local[b][i]
+                                                                       - stack.uhattilde_local[b][i] );
+
+          stack.dRdU_InertiaMassDamping[ a*nsdof+i][ b*nsdof+i ] -= temp1;
+          stack.localResidual[ a*nsdof+i ] -= ( m_massDamping * vel + acc ) * integrationFactor;
+        }
       }
-    } );
+    }
   }
 
   /**

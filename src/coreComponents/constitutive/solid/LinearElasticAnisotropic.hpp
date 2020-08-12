@@ -19,6 +19,7 @@
 #ifndef GEOSX_CONSTITUTIVE_SOLID_LINEARELASTICANISOTROPIC_HPP_
 #define GEOSX_CONSTITUTIVE_SOLID_LINEARELASTICANISOTROPIC_HPP_
 #include "SolidBase.hpp"
+#include "FullStiffnessHelper.hpp"
 #include "constitutive/ExponentialRelation.hpp"
 #include "LvArray/src/tensorOps.hpp"
 
@@ -40,6 +41,7 @@ namespace constitutive
 class LinearElasticAnisotropicUpdates : public SolidBaseUpdates
 {
 public:
+  using StiffnessHelper = FullStiffnessHelper;
 
   /**
    * @brief Constructor
