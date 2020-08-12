@@ -39,8 +39,7 @@ PhaseFieldFractureSolver::PhaseFieldFractureSolver( const std::string & name,
   SolverBase( name, parent ),
   m_solidSolverName(),
   m_damageSolverName(),
-  m_couplingTypeOptionString( "FixedStress" ),
-  m_couplingTypeOption()
+  m_couplingTypeOption( CouplingTypeOption::FixedStress )
 
 {
   registerWrapper( viewKeyStruct::solidSolverNameString, &m_solidSolverName )->
@@ -53,9 +52,9 @@ PhaseFieldFractureSolver::PhaseFieldFractureSolver( const std::string & name,
     setDescription(
     "Name of the damage mechanics solver to use in the PhaseFieldFracture solver" );
 
-  registerWrapper( viewKeyStruct::couplingTypeOptionStringString, &m_couplingTypeOptionString )->
+  registerWrapper( viewKeyStruct::couplingTypeOptionString, &m_couplingTypeOption )->
     setInputFlag( InputFlags::REQUIRED )->
-    setDescription( "Coupling option: (FixedStress, TightlyCoupled)" );
+    setDescription( "Coupling option. Valid options:\n* " + EnumStrings< CouplingTypeOption >::concat( "\n* " ) );
 
   registerWrapper( viewKeyStruct::subcyclingOptionString, &m_subcyclingOption )->
     setInputFlag( InputFlags::REQUIRED )->
@@ -109,12 +108,8 @@ void PhaseFieldFractureSolver::ImplicitStepComplete( real64 const & GEOSX_UNUSED
 
 void PhaseFieldFractureSolver::PostProcessInput()
 {
-  string ctOption = this->getReference< string >( viewKeyStruct::couplingTypeOptionStringString );
-
-  if( ctOption == "FixedStress" )
+  if( m_couplingTypeOption == CouplingTypeOption::FixedStress )
   {
-    this->m_couplingTypeOption = couplingTypeOption::FixedStress;
-
     // For this coupled solver the minimum number of Newton Iter should be 0 for both flow and solid solver otherwise it
     // will never converge.
     SolidMechanicsLagrangianFEM &
@@ -128,15 +123,6 @@ void PhaseFieldFractureSolver::PostProcessInput()
     minNewtonIterSolid = 0;
     minNewtonIterFluid = 0;
   }
-  else if( ctOption == "TightlyCoupled" )
-  {
-    this->m_couplingTypeOption = couplingTypeOption::TightlyCoupled;
-  }
-  else
-  {
-    GEOSX_ERROR( "invalid coupling type option" );
-  }
-
 }
 
 void PhaseFieldFractureSolver::InitializePostInitialConditions_PreSubGroups( Group * const )
@@ -173,13 +159,13 @@ real64 PhaseFieldFractureSolver::SolverStep( real64 const & time_n,
                                              DomainPartition & domain )
 {
   real64 dtReturn = dt;
-  if( m_couplingTypeOption == couplingTypeOption::FixedStress )
+  if( m_couplingTypeOption == CouplingTypeOption::FixedStress )
   {
     dtReturn = SplitOperatorStep( time_n, dt, cycleNumber, domain );
   }
-  else if( m_couplingTypeOption == couplingTypeOption::TightlyCoupled )
+  else if( m_couplingTypeOption == CouplingTypeOption::TightlyCoupled )
   {
-    GEOSX_ERROR( "couplingTypeOption::FullyImplicit not yet implemented" );
+    GEOSX_ERROR( "CouplingTypeOption::FullyImplicit not yet implemented" );
   }
   return dtReturn;
 }

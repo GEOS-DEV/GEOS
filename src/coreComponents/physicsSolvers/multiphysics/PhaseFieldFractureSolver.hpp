@@ -20,6 +20,7 @@
 #ifndef GEOSX_PHYSICSSOLVERS_COUPLEDSOLVERS_PhaseFieldFractureSOLVER_HPP_
 #define GEOSX_PHYSICSSOLVERS_COUPLEDSOLVERS_PhaseFieldFractureSOLVER_HPP_
 
+#include "common/EnumStrings.hpp"
 #include "physicsSolvers/SolverBase.hpp"
 
 namespace geosx
@@ -69,7 +70,7 @@ public:
 
   void mapDamageToQuadrature( DomainPartition & domain );
 
-  enum class couplingTypeOption : int
+  enum class CouplingTypeOption : integer
   {
     FixedStress,
     TightlyCoupled
@@ -77,8 +78,7 @@ public:
 
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
-    constexpr static auto couplingTypeOptionString = "couplingTypeOptionEnum";
-    constexpr static auto couplingTypeOptionStringString = "couplingTypeOption";
+    constexpr static auto couplingTypeOptionString = "couplingTypeOption";
 
     constexpr static auto totalMeanStressString = "totalMeanStress";
     constexpr static auto oldTotalMeanStressString = "oldTotalMeanStress";
@@ -98,11 +98,12 @@ private:
 
   string m_solidSolverName;
   string m_damageSolverName;
-  string m_couplingTypeOptionString;
-  couplingTypeOption m_couplingTypeOption;
-  int m_subcyclingOption;
+  CouplingTypeOption m_couplingTypeOption;
+  integer m_subcyclingOption;
 
 };
+
+ENUM_STRINGS( PhaseFieldFractureSolver::CouplingTypeOption, "FixedStress", "TightlyCoupled" )
 
 } /* namespace geosx */
 
