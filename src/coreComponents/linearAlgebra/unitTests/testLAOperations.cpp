@@ -507,7 +507,7 @@ INSTANTIATE_TYPED_TEST_SUITE_P( Petsc, LAOperationsTest, PetscInterface, );
 LinearSolverParameters params_Direct()
 {
   LinearSolverParameters parameters;
-  parameters.solverType = "direct";
+  parameters.solverType = geosx::LinearSolverParameters::SolverType::direct;
   parameters.krylov.relTolerance = machinePrecision;
   return parameters;
 }
@@ -517,8 +517,8 @@ LinearSolverParameters params_GMRES_ILU()
   LinearSolverParameters parameters;
   parameters.krylov.relTolerance = 1e-8;
   parameters.krylov.maxIterations = 300;
-  parameters.solverType = "gmres";
-  parameters.preconditionerType = "iluk";
+  parameters.solverType = geosx::LinearSolverParameters::SolverType::gmres;
+  parameters.preconditionerType = geosx::LinearSolverParameters::PreconditionerType::iluk;
   parameters.ilu.fill = 1;
   return parameters;
 }
@@ -528,8 +528,8 @@ LinearSolverParameters params_GMRES_AMG()
   LinearSolverParameters parameters;
   parameters.krylov.relTolerance = 1e-8;
   parameters.krylov.maxIterations = 300;
-  parameters.solverType = "gmres";
-  parameters.preconditionerType = "amg";
+  parameters.solverType = geosx::LinearSolverParameters::SolverType::gmres;
+  parameters.preconditionerType = geosx::LinearSolverParameters::PreconditionerType::amg;
   parameters.amg.smootherType = "gaussSeidel";
   parameters.amg.coarseType = "direct";
   return parameters;
@@ -540,9 +540,9 @@ LinearSolverParameters params_CG_AMG()
   LinearSolverParameters parameters;
   parameters.krylov.relTolerance = 1e-8;
   parameters.krylov.maxIterations = 300;
-  parameters.solverType = "cg";
+  parameters.solverType = geosx::LinearSolverParameters::SolverType::cg;
   parameters.isSymmetric = true;
-  parameters.preconditionerType = "amg";
+  parameters.preconditionerType = geosx::LinearSolverParameters::PreconditionerType::amg;
   parameters.amg.smootherType = "gaussSeidel";
   parameters.amg.coarseType = "direct";
   return parameters;

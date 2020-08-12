@@ -50,7 +50,7 @@ void PetscSolver::solve( PetscMatrix & mat,
 
   GEOSX_UNUSED_VAR( dofManager );
 
-  if( m_parameters.solverType == "direct" )
+  if( m_parameters.solverType == LinearSolverParameters::SolverType::direct )
   {
     solve_direct( mat, sol, rhs );
   }
@@ -110,22 +110,28 @@ void CreatePetscKrylovSolver( LinearSolverParameters const & params,
                                            PETSC_DEFAULT, params.krylov.maxIterations ) );
 
   // pick the solver type
-  if( params.solverType == "gmres" )
+  switch( params.solverType )
   {
-    GEOSX_LAI_CHECK_ERROR( KSPSetType( ksp, KSPGMRES ) );
-    GEOSX_LAI_CHECK_ERROR( KSPGMRESSetRestart( ksp, params.krylov.maxRestart ) );
-  }
-  else if( params.solverType == "bicgstab" )
-  {
-    GEOSX_LAI_CHECK_ERROR( KSPSetType( ksp, KSPBCGS ) );
-  }
-  else if( params.solverType == "cg" )
-  {
-    GEOSX_LAI_CHECK_ERROR( KSPSetType( ksp, KSPCG ) );
-  }
-  else
-  {
-    GEOSX_ERROR( "Unsupported Petsc solver type: " << params.solverType );
+    case LinearSolverParameters::SolverType::gmres:
+    {
+      GEOSX_LAI_CHECK_ERROR( KSPSetType( ksp, KSPGMRES ) );
+      GEOSX_LAI_CHECK_ERROR( KSPGMRESSetRestart( ksp, params.krylov.maxRestart ) );
+      break;
+    }
+    case LinearSolverParameters::SolverType::bicgstab:
+    {
+      GEOSX_LAI_CHECK_ERROR( KSPSetType( ksp, KSPBCGS ) );
+      break;
+    }
+    case LinearSolverParameters::SolverType::cg:
+    {
+      GEOSX_LAI_CHECK_ERROR( KSPSetType( ksp, KSPCG ) );
+      break;
+    }
+    default:
+    {
+      GEOSX_ERROR( "Solver type not supported in PETSc interface: " << params.solverType );
+    }
   }
 }
 

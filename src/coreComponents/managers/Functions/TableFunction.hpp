@@ -19,7 +19,8 @@
 #ifndef GEOSX_MANAGERS_FUNCTIONS_TABLEFUNCTION_HPP_
 #define GEOSX_MANAGERS_FUNCTIONS_TABLEFUNCTION_HPP_
 
-#include "FunctionBase.hpp"
+#include "common/EnumStrings.hpp"
+#include "managers/Functions/FunctionBase.hpp"
 
 namespace geosx
 {
@@ -116,11 +117,20 @@ public:
    */
   array1d< real64 > & getValues()       { return m_values; }
 
+  /// Enumerator of available interpolation types
+  enum class InterpolationType : integer
+  {
+    Linear,
+    Nearest,
+    Upper,
+    Lower
+  };
+
   /**
    * @brief Set the interpolation method
-   * @param interpolationMethodString The interpolation method string
+   * @param method The interpolation method
    */
-  void setInterpolationMethod( string interpolationMethodString );
+  void setInterpolationMethod( InterpolationType const method ) { m_interpolationMethod = method; }
 
   /**
    * @brief Set the table coordinates
@@ -134,15 +144,6 @@ public:
    */
   void setTableValues( real64_array values ) { m_values = values; }
 
-  /// Enumerator of available interpolation types
-  enum class InterpolationType
-  {
-    Linear,
-    Nearest,
-    Upper,
-    Lower
-  };
-
 private:
   /// Coordinates for 1D table
   real64_array m_tableCoordinates1D;
@@ -152,9 +153,6 @@ private:
 
   /// Table voxel file names
   Path m_voxelFile;
-
-  /// Table interpolation method input string
-  string m_interpolationMethodString;
 
   /// Table interpolation method
   InterpolationType m_interpolationMethod;
@@ -186,6 +184,8 @@ private:
   /// The number of active table corners
   localIndex m_numCorners;
 };
+
+ENUM_STRINGS( TableFunction::InterpolationType, "linear", "nearest", "upper", "lower" )
 
 
 } /* namespace geosx */
