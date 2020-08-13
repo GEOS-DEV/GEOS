@@ -212,7 +212,7 @@ public:
     m_constitutiveUpdate.SmallStrain( k, q, strainInc );
 
     GEOSX_UNUSED_VAR( q )
-    m_constitutiveUpdate.GetStiffness( k, stack.constitutiveStiffness );
+    m_constitutiveUpdate.getStiffness( k, stack.constitutiveStiffness );
   }
 
 

@@ -374,7 +374,16 @@ void SolidMechanicsEmbeddedFractures::AssembleSystem( real64 const time,
           // Get mechanical moduli tensor
           ElasticIsotropic const * constitutiveRelation = elementSubRegion->getConstitutiveModel< ElasticIsotropic >( m_solidSolver->solidMaterialNames()[0] );
           ElasticIsotropic::KernelWrapper const & solidConstitutive = constitutiveRelation->createKernelUpdates();
-          solidConstitutive.GetStiffness( embeddedSurfaceToCell[k], dMatrix );
+          
+          // TODO: asking for the stiffness here will only work for elastic models.  most other models
+          //       need to know the strain increment to compute the current stiffness value.
+
+          // TODO: avoid tmp copy due to c-array input
+          {
+            real64 tmp[6][6];
+            solidConstitutive.getStiffness( embeddedSurfaceToCell[k], tmp );
+            LvArray::tensorOps::copy< 6, 6 >( dMatrix, tmp );
+          }
 
           // Basis functions derivatives
           arrayView4d< real64 const > const & dNdX = elementSubRegion->dNdX();

@@ -221,14 +221,14 @@ public:
                            real64 const ( &Ddt )[6],
                            real64 const ( &Rot )[3][3],
                            real64 ( & stress )[6],
-                           real64 ( & stiffness )[6][6] ) final // marked final for the moment
+                           real64 ( & stiffness )[6][6] )
   {
     smallStrainUpdate( k, q, Ddt, stress, stiffness );
     
     real64 temp[6];
     LvArray::tensorOps::AikSymBklAjl< 3 >( temp, Rot, m_newStress[ k ][ q ] );
-    LvArray::tensorOps::copy< 6 >( m_newStress[ k ][ q ], temp );
     LvArray::tensorOps::copy< 6 >( stress, temp );
+    saveStress( k, q, stress);
   }
   
   /**

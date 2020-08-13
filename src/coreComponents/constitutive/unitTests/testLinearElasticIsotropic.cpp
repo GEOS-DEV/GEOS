@@ -164,8 +164,8 @@ TEST( LinearElasticIsotropicTests, testStateUpdatePoint )
     Rot[ 1 ][ 1 ] = 1;
     Rot[ 2 ][ 2 ] = 1;
 
-    cmw.HypoElastic( 0, 0, Ddt, Rot );
-    //cmw.hypoUpdate(0, 0, Ddt, Rot, pointStress);
+    //cmw.HypoElastic( 0, 0, Ddt, Rot );
+    cmw.hypoUpdate(0, 0, Ddt, Rot, pointStress);
 
 
     EXPECT_DOUBLE_EQ( stress( 0, 0, 0 ), 0 );
@@ -173,7 +173,7 @@ TEST( LinearElasticIsotropicTests, testStateUpdatePoint )
     EXPECT_DOUBLE_EQ( stress( 0, 0, 2 ), 0 );
     EXPECT_DOUBLE_EQ( stress( 0, 0, 3 ), 0 );
     EXPECT_DOUBLE_EQ( stress( 0, 0, 4 ), 0 );
-    EXPECT_DOUBLE_EQ( stress( 0, 0, 5 ), strain*2*G );
+    EXPECT_DOUBLE_EQ( stress( 0, 0, 5 ), strain*G );
   }
 
   {
@@ -185,14 +185,14 @@ TEST( LinearElasticIsotropicTests, testStateUpdatePoint )
     Rot[ 1 ][ 1 ] = 1;
     Rot[ 2 ][ 2 ] = 1;
 
-    cmw.HypoElastic( 0, 0, Ddt, Rot );
-    //cmw.hypoUpdate(0, 0, Ddt, Rot, pointStress);
+    //cmw.HypoElastic( 0, 0, Ddt, Rot );
+    cmw.hypoUpdate(0, 0, Ddt, Rot, pointStress);
 
     EXPECT_DOUBLE_EQ( stress( 0, 0, 0 ), 0 );
     EXPECT_DOUBLE_EQ( stress( 0, 0, 1 ), 0 );
     EXPECT_DOUBLE_EQ( stress( 0, 0, 2 ), 0 );
     EXPECT_DOUBLE_EQ( stress( 0, 0, 3 ), 0 );
-    EXPECT_DOUBLE_EQ( stress( 0, 0, 4 ), strain*2*G );
+    EXPECT_DOUBLE_EQ( stress( 0, 0, 4 ), strain*G );
     EXPECT_DOUBLE_EQ( stress( 0, 0, 5 ), 0 );
   }
 
@@ -205,12 +205,13 @@ TEST( LinearElasticIsotropicTests, testStateUpdatePoint )
     Rot[ 1 ][ 1 ] = 1;
     Rot[ 2 ][ 2 ] = 1;
 
-    cmw.HypoElastic( 0, 0, Ddt, Rot );
+    //cmw.HypoElastic( 0, 0, Ddt, Rot );
+    cmw.hypoUpdate(0, 0, Ddt, Rot, pointStress);
 
     EXPECT_DOUBLE_EQ( stress( 0, 0, 0 ), 0 );
     EXPECT_DOUBLE_EQ( stress( 0, 0, 1 ), 0 );
     EXPECT_DOUBLE_EQ( stress( 0, 0, 2 ), 0 );
-    EXPECT_DOUBLE_EQ( stress( 0, 0, 3 ), strain*2*G );
+    EXPECT_DOUBLE_EQ( stress( 0, 0, 3 ), strain*G );
     EXPECT_DOUBLE_EQ( stress( 0, 0, 4 ), 0 );
     EXPECT_DOUBLE_EQ( stress( 0, 0, 5 ), 0 );
   }

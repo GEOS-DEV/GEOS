@@ -123,63 +123,6 @@ public:
   
   ///////////////////// LEGACY INTERFACE /////////////////////////////////
   
-  /**
-   * accessor to return the stiffness at a given element
-   * @param[in] k the element number
-   * @param[in] c the stiffness array
-   */
-  GEOSX_HOST_DEVICE inline
-  virtual void GetStiffness( localIndex const k, real64 (& c)[6][6] ) const override final
-  {
-    real64 const G = m_shearModulus[k];
-    real64 const Lame = m_bulkModulus[k] - 2.0/3.0 * G;
-
-    LvArray::tensorOps::fill< 6, 6 >( c, 0 );
-
-    c[0][0] = Lame + 2 * G;
-    c[0][1] = Lame;
-    c[0][2] = Lame;
-
-    c[1][0] = Lame;
-    c[1][1] = Lame + 2 * G;
-    c[1][2] = Lame;
-
-    c[2][0] = Lame;
-    c[2][1] = Lame;
-    c[2][2] = Lame + 2 * G;
-
-    c[3][3] = G;
-
-    c[4][4] = G;
-
-    c[5][5] = G;
-  }
-
-  // TODO: should remove "duplicate" version:
-  void GetStiffness( localIndex const k, array2d< real64 > & c ) const
-  {
-    real64 const G = m_shearModulus[k];
-    real64 const Lame = m_bulkModulus[k] - 2.0/3.0 * G;
-
-    c[0][0] = Lame + 2 * G;
-    c[0][1] = Lame;
-    c[0][2] = Lame;
-
-    c[1][0] = Lame;
-    c[1][1] = Lame + 2 * G;
-    c[1][2] = Lame;
-
-    c[2][0] = Lame;
-    c[2][1] = Lame;
-    c[2][2] = Lame + 2 * G;
-
-    c[3][3] = G;
-
-    c[4][4] = G;
-
-    c[5][5] = G;
-  }
-
   GEOSX_HOST_DEVICE
   virtual void SmallStrainNoState( localIndex const k,
                                    real64 const ( &voigtStrain )[ 6 ],
@@ -241,7 +184,7 @@ void ElasticIsotropicUpdates::getStiffness( localIndex const k,
    stiffness[3][3] = mu;
    stiffness[4][4] = mu;
    stiffness[5][5] = mu;
- }
+}
  
 
 GEOSX_HOST_DEVICE
@@ -398,14 +341,15 @@ void ElasticIsotropicUpdates::HypoElastic( localIndex const k,
 {
   real64 const lambda = m_bulkModulus[ k ] - 2.0 / 3.0 * m_shearModulus[ k ];
   real64 const volStrain = ( Ddt[ 0 ] + Ddt[ 1 ] + Ddt[ 2 ] );
-  real64 const TwoG = 2.0 * m_shearModulus[ k ];
+  real64 const G = m_shearModulus[ k ];
+  
 
-  m_newStress( k, q, 0 ) =  m_newStress( k, q, 0 ) + TwoG * Ddt[ 0 ] + lambda * volStrain;
-  m_newStress( k, q, 1 ) =  m_newStress( k, q, 1 ) + TwoG * Ddt[ 1 ] + lambda * volStrain;
-  m_newStress( k, q, 2 ) =  m_newStress( k, q, 2 ) + TwoG * Ddt[ 2 ] + lambda * volStrain;
-  m_newStress( k, q, 3 ) =  m_newStress( k, q, 3 ) + TwoG * Ddt[ 3 ];
-  m_newStress( k, q, 4 ) =  m_newStress( k, q, 4 ) + TwoG * Ddt[ 4 ];
-  m_newStress( k, q, 5 ) =  m_newStress( k, q, 5 ) + TwoG * Ddt[ 5 ];
+  m_newStress( k, q, 0 ) =  m_newStress( k, q, 0 ) + 2 * G * Ddt[ 0 ] + lambda * volStrain;
+  m_newStress( k, q, 1 ) =  m_newStress( k, q, 1 ) + 2 * G * Ddt[ 1 ] + lambda * volStrain;
+  m_newStress( k, q, 2 ) =  m_newStress( k, q, 2 ) + 2 * G * Ddt[ 2 ] + lambda * volStrain;
+  m_newStress( k, q, 3 ) =  m_newStress( k, q, 3 ) + G * Ddt[ 3 ];
+  m_newStress( k, q, 4 ) =  m_newStress( k, q, 4 ) + G * Ddt[ 4 ];
+  m_newStress( k, q, 5 ) =  m_newStress( k, q, 5 ) + G * Ddt[ 5 ];
 
   real64 temp[ 6 ] = { 0 };
   LvArray::tensorOps::AikSymBklAjl< 3 >( temp, Rot, m_newStress[ k ][ q ] );
