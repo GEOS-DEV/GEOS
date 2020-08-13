@@ -85,6 +85,14 @@ LinearElasticTransverseIsotropic::LinearElasticTransverseIsotropic( std::string 
     setApplyDefaultValue( -1 )->
     setDescription( "Elastic Bulk Modulus Field" );
 
+  registerWrapper( viewKeyStruct::bulkModulusString, &m_bulkModulus )->
+    setApplyDefaultValue( -1 )->
+    setDescription( "Elastic Bulk Modulus Field" );
+
+  registerWrapper( viewKeyStruct::shearModulusString, &m_shearModulus )->
+    setApplyDefaultValue( -1 )->
+    setDescription( "Elastic Shear Modulus" );
+
 }
 
 
@@ -110,6 +118,15 @@ LinearElasticTransverseIsotropic::DeliverClone( string const & name,
   newConstitutiveRelation->m_defaultPoissonAxialTransverse = m_defaultPoissonAxialTransverse;
   newConstitutiveRelation->m_defaultShearModulusAxialTransverse = m_defaultShearModulusAxialTransverse;
 
+  newConstitutiveRelation->m_bulkModulus = m_bulkModulus;
+  newConstitutiveRelation->m_shearModulus = m_shearModulus;
+
+  newConstitutiveRelation->m_c11Default = m_c11Default;
+  newConstitutiveRelation->m_c13Default = m_c13Default;
+  newConstitutiveRelation->m_c33Default = m_c33Default;
+  newConstitutiveRelation->m_c44Default = m_c44Default;
+  newConstitutiveRelation->m_c66Default = m_c66Default;
+
   newConstitutiveRelation->m_c11 = m_c11;
   newConstitutiveRelation->m_c13 = m_c13;
   newConstitutiveRelation->m_c33 = m_c33;
@@ -123,6 +140,29 @@ void LinearElasticTransverseIsotropic::AllocateConstitutiveData( dataRepository:
 {
   SolidBase::AllocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
   this->resize( parent->size() );
+
+  this->getWrapper< array1d< real64 > >( viewKeyStruct::c11 )->
+    setApplyDefaultValue( m_c11Default );
+
+  this->getWrapper< array1d< real64 > >( viewKeyStruct::c13 )->
+    setApplyDefaultValue( m_c13Default );
+
+  this->getWrapper< array1d< real64 > >( viewKeyStruct::c33 )->
+    setApplyDefaultValue( m_c33Default );
+
+  this->getWrapper< array1d< real64 > >( viewKeyStruct::c44 )->
+    setApplyDefaultValue( m_c44Default );
+
+  this->getWrapper< array1d< real64 > >( viewKeyStruct::c66 )->
+    setApplyDefaultValue( m_c66Default );
+
+  //wu40: Use arithmetic average for bulk and shear moduli, which are further used in surface generator for nodal force calculation.
+  real64 arithmeticPoissonRatio = (m_defaultPoissonTransverse + m_defaultPoissonAxialTransverse) / 2;
+  real64 arithmeticYoungsModulus = (m_defaultYoungsModulusTransverse + m_defaultYoungsModulusAxial + 2 * m_defaultShearModulusAxialTransverse * (1 + arithmeticPoissonRatio)) / 3;
+
+  m_bulkModulus = arithmeticYoungsModulus / 3 / (1 - 2 * arithmeticPoissonRatio);
+  m_shearModulus = arithmeticYoungsModulus / 2 / (1 + arithmeticPoissonRatio);
+
 }
 
 void LinearElasticTransverseIsotropic::PostProcessInput()
@@ -138,27 +178,14 @@ void LinearElasticTransverseIsotropic::PostProcessInput()
     real64 const Nuta = Nuat * ( Et/Ea );
 
     real64 const delta = ( 1 + Nut ) * ( 1 - Nut - 2 * Nuta * Nuat ) / ( Et * Et * Ea );
-    real64 const c11Default = ( 1.0 - Nuta * Nuat ) / ( Ea * Et * delta );
-    real64 const c13Default = Nuat * ( 1.0 + Nut ) / ( Ea * Et * delta );
-    real64 const c33Default = ( 1 - Nut * Nut ) / ( Ea * Ea * delta );
-    real64 const c44Default = Gat;
-    real64 const c66Default = 0.5 * Ea / ( 1 + Nut );
+    m_c11Default = ( 1.0 - Nuta * Nuat ) / ( Ea * Et * delta );
+    m_c13Default = Nuat * ( 1.0 + Nut ) / ( Ea * Et * delta );
+    m_c33Default = ( 1 - Nut * Nut ) / ( Et * Et * delta );
+    m_c44Default = Gat;
+    m_c66Default = 0.5 * Et / ( 1 + Nut );
 
 
-    this->getWrapper< array1d< real64 > >( viewKeyStruct::c11 )->
-      setApplyDefaultValue( c11Default );
 
-    this->getWrapper< array1d< real64 > >( viewKeyStruct::c13 )->
-      setApplyDefaultValue( c13Default );
-
-    this->getWrapper< array1d< real64 > >( viewKeyStruct::c33 )->
-      setApplyDefaultValue( c33Default );
-
-    this->getWrapper< array1d< real64 > >( viewKeyStruct::c44 )->
-      setApplyDefaultValue( c44Default );
-
-    this->getWrapper< array1d< real64 > >( viewKeyStruct::c66 )->
-      setApplyDefaultValue( c66Default );
   }
   m_postProcessed = true;
 }

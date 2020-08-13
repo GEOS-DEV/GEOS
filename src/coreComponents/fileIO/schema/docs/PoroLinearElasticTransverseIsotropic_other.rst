@@ -3,6 +3,8 @@
 ==================== ============== ========================== 
 Name                 Type           Description                
 ==================== ============== ========================== 
+BulkModulus          real64_array   Elastic Bulk Modulus Field 
+ShearModulus         real64_array   Elastic Shear Modulus      
 c11                  real64_array   Elastic Bulk Modulus Field 
 c13                  real64_array   Elastic Bulk Modulus Field 
 c33                  real64_array   Elastic Bulk Modulus Field 

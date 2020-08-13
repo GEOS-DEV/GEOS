@@ -791,6 +791,10 @@
 		<xsd:attribute name="stress" type="real64_array3d" />
 	</xsd:complexType>
 	<xsd:complexType name="LinearElasticTransverseIsotropicType">
+		<!--BulkModulus => Elastic Bulk Modulus Field-->
+		<xsd:attribute name="BulkModulus" type="real64_array" />
+		<!--ShearModulus => Elastic Shear Modulus-->
+		<xsd:attribute name="ShearModulus" type="real64_array" />
 		<!--c11 => Elastic Bulk Modulus Field-->
 		<xsd:attribute name="c11" type="real64_array" />
 		<!--c13 => Elastic Bulk Modulus Field-->
@@ -903,6 +907,10 @@
 		<xsd:attribute name="stress" type="real64_array3d" />
 	</xsd:complexType>
 	<xsd:complexType name="PoroLinearElasticTransverseIsotropicType">
+		<!--BulkModulus => Elastic Bulk Modulus Field-->
+		<xsd:attribute name="BulkModulus" type="real64_array" />
+		<!--ShearModulus => Elastic Shear Modulus-->
+		<xsd:attribute name="ShearModulus" type="real64_array" />
 		<!--c11 => Elastic Bulk Modulus Field-->
 		<xsd:attribute name="c11" type="real64_array" />
 		<!--c13 => Elastic Bulk Modulus Field-->

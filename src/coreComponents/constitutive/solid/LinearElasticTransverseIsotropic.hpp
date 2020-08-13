@@ -300,6 +300,11 @@ public:
 
     /// string/key for c66 component of Voigt stiffness tensor
     static constexpr auto c66 = "c66";
+
+    /// string/key for bulk modulus
+    static constexpr auto bulkModulusString  = "BulkModulus";
+    /// string/key for shear modulus
+    static constexpr auto shearModulusString = "ShearModulus";
   };
 
   /**
@@ -519,6 +524,12 @@ private:
   /// allocations.
   real64 m_defaultShearModulusAxialTransverse;
 
+  /// The bulk modulus (used in surface generator for nodal force calculation)
+  array1d< real64 > m_bulkModulus;
+
+  /// The shear modulus (used in surface generator for nodal force calculation)
+  array1d< real64 > m_shearModulus;
+
   /// The 11 component of the Voigt stiffness tensor.
   array1d< real64 > m_c11;
 
@@ -533,6 +544,13 @@ private:
 
   /// The 66 component of the Voigt stiffness tensor.
   array1d< real64 > m_c66;
+
+  real64 m_c11Default;
+  real64 m_c13Default;
+  real64 m_c33Default;
+  real64 m_c44Default;
+  real64 m_c66Default;
+
 
 };
 }

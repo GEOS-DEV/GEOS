@@ -3092,8 +3092,17 @@ void SurfaceGenerator::CalculateNodeAndFaceSIF( DomainPartition * domain,
             tipArea *= 2.0;
           }
 
-          tipNodeSIF = pow( (fabs( tipNodeForce[0] * trailingNodeDisp[0] / 2.0 / tipArea ) + fabs( tipNodeForce[1] * trailingNodeDisp[1] / 2.0 / tipArea )
-                             + fabs( tipNodeForce[2] * trailingNodeDisp[2] / 2.0 / tipArea )), 0.5 );
+          R1Tensor absTrailingNodeDisp(fabs(trailingNodeDisp[0]), fabs(trailingNodeDisp[1]), fabs(trailingNodeDisp[2]));
+
+          if (trailingNodeDisp[std::distance(absTrailingNodeDisp.begin(),std::max_element(absTrailingNodeDisp.begin(), absTrailingNodeDisp.end()))] < 0)
+          {
+            tipNodeSIF = -1;
+          }
+          else
+          {
+            tipNodeSIF = pow( (fabs( tipNodeForce[0] * trailingNodeDisp[0] / 2.0 / tipArea ) + fabs( tipNodeForce[1] * trailingNodeDisp[1] / 2.0 / tipArea )
+                               + fabs( tipNodeForce[2] * trailingNodeDisp[2] / 2.0 / tipArea )), 0.5 );
+          }
 
           SIFNode_All[nodeIndex].emplace_back( tipNodeSIF );
 
@@ -3930,7 +3939,9 @@ void SurfaceGenerator::MarkRuptureFaceFromNode ( const localIndex nodeIndex,
           R1Tensor const edgeCenter = edgeManager.calculateCenter( edgeIndex, X );
           direction -= edgeCenter;
           direction.Normalize();
-          faceToughness = std::fabs( Dot( direction, KIC[faceIndex] ));
+          R1Tensor temp(direction[0]*KIC[faceIndex][0], direction[1]*KIC[faceIndex][1], direction[2]*KIC[faceIndex][2]);
+          faceToughness = std::fabs(temp.L2_Norm());
+//          faceToughness = std::fabs( Dot( direction, KIC[faceIndex] ));
 
           faceSIFToToughnessRatio.emplace_back( SIFonFace[faceIndex]/faceToughness );
           highestSIF = std::max( highestSIF, SIFonFace[faceIndex]/faceToughness );
@@ -4091,7 +4102,9 @@ void SurfaceGenerator::MarkRuptureFaceFromEdge ( localIndex const edgeID,
         R1Tensor direction( fc );
         direction -= edgeCenter;
         direction.Normalize();
-        realT faceToughness = std::fabs( Dot( direction, KIC[iface] ));
+        R1Tensor temp(direction[0]*KIC[iface][0], direction[1]*KIC[iface][1], direction[2]*KIC[iface][2]);
+        realT faceToughness = std::fabs(temp.L2_Norm());
+//        realT faceToughness = std::fabs( Dot( direction, KIC[iface] ));
 
         highestSIF = std::max( highestSIF, SIFonFace[iface]/faceToughness );
         lowestSIF = std::min( lowestSIF, SIFonFace[iface]/faceToughness );
@@ -4110,7 +4123,9 @@ void SurfaceGenerator::MarkRuptureFaceFromEdge ( localIndex const edgeID,
       fc = faceCenter[iface];
       direction -= fc;
       direction.Normalize();
-      realT faceToughness = std::fabs( Dot( direction, KIC[iface] ));
+      R1Tensor temp(direction[0]*KIC[iface][0], direction[1]*KIC[iface][1], direction[2]*KIC[iface][2]);
+      realT faceToughness = std::fabs(temp.L2_Norm());
+//      realT faceToughness = std::fabs( Dot( direction, KIC[iface] ));
 
       realT splitabilityScore = SIFonFace[iface] - lowestSIF * faceToughness;
       lowestScore = std::min( lowestScore, splitabilityScore );
