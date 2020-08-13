@@ -44,7 +44,7 @@ BraceWrapping:
 ConstructorInitializerAllOnOneLineOrOnePerLine: true
 ConstructorInitializerIndentWidth: 2
 ContinuationIndentWidth: 2
-ColumnLimit: 200
+ColumnLimit: 0
 
 DerivePointerAlignment: false
 
