@@ -117,10 +117,6 @@ public:
 
   virtual ~CompressibleSinglePhaseFluid() override;
 
-  virtual std::unique_ptr< ConstitutiveBase >
-  DeliverClone( string const & name,
-                Group * const parent ) const override;
-
   static std::string CatalogName() { return "CompressibleSinglePhaseFluid"; }
 
   virtual string GetCatalogName() const override { return CatalogName(); }
@@ -139,13 +135,15 @@ public:
 
   struct viewKeyStruct : public SingleFluidBase::viewKeyStruct
   {
-    static constexpr auto compressibilityString    = "compressibility";
-    static constexpr auto viscosibilityString      = "viscosibility";
-    static constexpr auto referencePressureString  = "referencePressure";
-    static constexpr auto referenceDensityString   = "referenceDensity";
-    static constexpr auto referenceViscosityString = "referenceViscosity";
-    static constexpr auto densityModelString       = "densityModel";
-    static constexpr auto viscosityModelString     = "viscosityModel";
+    static constexpr auto compressibilityString      = "compressibility";
+    static constexpr auto viscosibilityString        = "viscosibility";
+    static constexpr auto referencePressureString    = "referencePressure";
+    static constexpr auto referenceDensityString     = "referenceDensity";
+    static constexpr auto referenceViscosityString   = "referenceViscosity";
+    static constexpr auto densityModelStringString   = "densityModelString";
+    static constexpr auto viscosityModelStringString = "viscosityModelString";
+    static constexpr auto densityModelTypeString     = "densityModelType";
+    static constexpr auto viscosityModelTypeString   = "viscosityModelType";
   };
 
 protected:

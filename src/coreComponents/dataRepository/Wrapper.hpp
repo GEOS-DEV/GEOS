@@ -476,9 +476,7 @@ public:
 
     template< typename U=T >
     static
-    typename std::enable_if< std::is_arithmetic< U >::value ||
-                             traits::is_tensorT< U > ||
-                             traits ::is_array< U >, void >::type
+    typename std::enable_if< traits::hasCopyAssignmentOp< U >, void >::type
     copyData( U & destinationData, U const & sourceData )
     {
       destinationData = sourceData;
@@ -486,9 +484,7 @@ public:
 
     template< typename U=T >
     static
-    typename std::enable_if< !(std::is_arithmetic< U >::value ||
-                               traits::is_tensorT< U > ||
-                               traits ::is_array< U >), void >::type
+    typename std::enable_if< !traits::hasCopyAssignmentOp< U >, void >::type
     copyData( U &, U const & )
     {}
 

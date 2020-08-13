@@ -154,6 +154,26 @@ constexpr bool is_array = LvArray::isArray< T >;
 template< typename T >
 constexpr bool is_tensorT = std::is_same< std::remove_const_t< T >, R1Tensor >::value;
 
+/// True of T has operator=() defined.
+template< typename _T >
+struct hasCopyAssignmentOperatorImpl
+{
+private:
+  template< typename T > static constexpr auto test( int )->decltype( T()=T(), bool () )
+  { return true; }
+
+  template< typename T > static constexpr auto test( ... )->bool
+  { return false; }
+public:
+  static constexpr bool value = test< _T >( 0 );
+};
+/// True if T has operator= defined, or it is arithmetic or an enum.
+template< typename T >
+static constexpr bool hasCopyAssignmentOp = hasCopyAssignmentOperatorImpl< T >::value ||
+                                            std::is_arithmetic< T >::value ||
+                                            std::is_enum< T >::value;
+
+
 } /* namespace traits */
 
 template< typename T, bool COND >

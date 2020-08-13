@@ -54,14 +54,22 @@ CompressibleSinglePhaseFluid::CompressibleSinglePhaseFluid( std::string const & 
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Reference fluid viscosity" );
 
-  registerWrapper( viewKeyStruct::densityModelString, &m_densityModelString )->
+  registerWrapper( viewKeyStruct::densityModelStringString, &m_densityModelString )->
     setApplyDefaultValue( "linear" )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Type of density model (linear, quadratic, exponential)" );
 
-  registerWrapper( viewKeyStruct::viscosityModelString, &m_viscosityModelString )->
+  registerWrapper( viewKeyStruct::viscosityModelStringString, &m_viscosityModelString )->
     setApplyDefaultValue( "linear" )->
     setInputFlag( InputFlags::OPTIONAL )->
+    setDescription( "Type of viscosity model (linear, quadratic, exponential)" );
+
+  registerWrapper( viewKeyStruct::densityModelTypeString, &m_densityModelType )->
+    setRestartFlags( dataRepository::RestartFlags::NO_WRITE )->
+    setDescription( "Type of density model (linear, quadratic, exponential)" );
+
+  registerWrapper( viewKeyStruct::viscosityModelTypeString, &m_viscosityModelType )->
+    setRestartFlags( dataRepository::RestartFlags::NO_WRITE )->
     setDescription( "Type of viscosity model (linear, quadratic, exponential)" );
 }
 
@@ -74,20 +82,6 @@ void CompressibleSinglePhaseFluid::AllocateConstitutiveData( dataRepository::Gro
 
   m_density.setValues< serialPolicy >( m_referenceDensity );
   m_viscosity.setValues< serialPolicy >( m_referenceViscosity );
-}
-
-std::unique_ptr< ConstitutiveBase >
-CompressibleSinglePhaseFluid::DeliverClone( string const & name,
-                                            Group * const parent ) const
-{
-  std::unique_ptr< ConstitutiveBase > clone = SingleFluidBase::DeliverClone( name, parent );
-
-  CompressibleSinglePhaseFluid & fluid = dynamicCast< CompressibleSinglePhaseFluid & >( *clone );
-
-  fluid.m_densityModelType     = m_densityModelType;
-  fluid.m_viscosityModelType   = m_viscosityModelType;
-
-  return clone;
 }
 
 void CompressibleSinglePhaseFluid::PostProcessInput()

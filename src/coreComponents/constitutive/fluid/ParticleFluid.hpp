@@ -196,9 +196,6 @@ public:
   DeliverClone( string const & name,
                 Group * const parent ) const override;
 
-  virtual void AllocateConstitutiveData( dataRepository::Group * const parent,
-                                         localIndex const numConstitutivePointsPerParentIndex ) override;
-
   /// Type of kernel wrapper for in-kernel update
   using KernelWrapper = ParticleFluidUpdate;
 

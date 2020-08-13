@@ -117,13 +117,6 @@ ParticleFluid::DeliverClone( string const & name,
   return clone;
 }
 
-void ParticleFluid::AllocateConstitutiveData( dataRepository::Group * const parent,
-                                              localIndex const numConstitutivePointsPerParentIndex )
-{
-  ParticleFluidBase::AllocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
-
-}
-
 void ParticleFluid::PostProcessInput()
 {
   ParticleFluidBase::PostProcessInput();
