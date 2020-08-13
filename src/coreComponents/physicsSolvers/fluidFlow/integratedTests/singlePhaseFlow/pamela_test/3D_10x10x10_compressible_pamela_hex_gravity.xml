@@ -65,15 +65,17 @@
   <Graphs>
     <GraphFromText
       name="graph"
-      file="cube_10x10x10_hex_graph.txt"/>
+      file="cube_10x10x10_hex_graph.txt"
+      mesh="/Mesh/CubeHex"/>
   </Graphs>
   <!-- SPHINX_TUT_EXT_HEX_EVENTS_END -->
   <!-- SPHINX_TUT_EXT_HEX_NUM_METHODS -->
   <NumericalMethods>
     <FiniteVolume>
-      <TwoPointFluxApproximation
+      <TwoPointFluxApproximationWithGraph
         name="singlePhaseTPFA"
         fieldName="pressure"
+        graph="/Graphs/graph"
         coefficientName="permeability"/>
     </FiniteVolume>
   </NumericalMethods>
@@ -164,7 +166,7 @@
   <Functions/>
 
   <Outputs>
-    <Silo
+    <VTK
       name="siloWellPump"/>
 
     <Restart

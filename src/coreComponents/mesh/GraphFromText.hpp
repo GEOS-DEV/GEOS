@@ -19,8 +19,10 @@
 #ifndef GEOSX_MESH_GRAPHFROMTEXT_HPP_
 #define GEOSX_MESH_GRAPHFROMTEXT_HPP_
 
+#include "dataRepository/Group.hpp"
 #include "common/Path.hpp"
 #include "mesh/GraphBase.hpp"
+#include "mesh/Edge.hpp"
 
 namespace geosx
 {
@@ -46,7 +48,9 @@ public:
    * @return This type's catalog name.
    **/
   static string CatalogName() { return "GraphFromText"; }
-
+  
+  void GetTargetReferences();
+  
   virtual void GenerateGraph() override;
 
  
@@ -54,12 +58,22 @@ public:
   struct viewKeyStruct
   {
     static constexpr auto fileString = "file";
+    static constexpr auto meshString = "mesh";
 
      } viewKeys;
   /// @endcond
 
+  Path getFile() const { return m_file; }
+
+  std::vector<Edge*> getEdges() const { return m_edges; }
+
+
+
 private:
   Path m_file;
+  string m_meshString;
+  Group * m_mesh;
+  std::vector<Edge*> m_edges;
 };
 
 } /* namespace geosx */

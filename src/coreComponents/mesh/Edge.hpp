@@ -39,6 +39,9 @@ public:
 
   int getIndice() const { return ind; }
 
+  Vertice* getN1() const { return n1; }
+
+  Vertice* getN2() const { return n2; }
 
   
 private:

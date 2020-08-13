@@ -45,6 +45,10 @@ GraphFromText::GraphFromText( const std::string & name,
     registerWrapper( viewKeyStruct::fileString, &m_file )->
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "Name of the graph file." );
+    registerWrapper( viewKeyStruct::meshString, &m_meshString )->
+    setInputFlag( InputFlags::OPTIONAL )->
+    setDescription( "Name of the mesh to link to the graph." );
+
     
   }
 
@@ -52,12 +56,24 @@ GraphFromText::GraphFromText( const std::string & name,
 GraphFromText::~GraphFromText()
 {}
 
+void GraphFromText::GetTargetReferences()
+{
+  if( !m_meshString.empty())
+  {
+    Group * tmp = this->GetGroupByPath( m_meshString );
+    m_mesh = tmp;
+    GEOSX_ERROR_IF( m_mesh == nullptr, "The event " << m_meshString << " does not exist or it is not executable." );
+  }
+}
+
+
 void GraphFromText::GenerateGraph()
 {
+  GetTargetReferences();
   std::ifstream infile(m_file);
   std::string line;
   std::vector<Vertice*> vertices;
-  std::vector<Edge> edges;
+  //std::vector<Edge*> edges;
   while (std::getline(infile, line))
   {
     std::istringstream iss(line);
@@ -99,7 +115,9 @@ void GraphFromText::GenerateGraph()
     {
       v2=vertices[place_c];
     }
-    Edge e1(a, v1, v2);
+    Edge* e1= new Edge(a, v1, v2);
+    m_edges.push_back(e1);
+
   }
 }
 
