@@ -43,7 +43,7 @@ public:
   using NodeMapType = InterObjectRelation< ArrayOfArrays< localIndex > >;
 
   /// Embedded surface element to edges map type
-  using EdgeMapType = InterObjectRelation< ArrayOfArrays< localIndex > >;
+  using EdgeMapType = InterObjectRelation< array1d< array1d< localIndex > > >;
 
   /// Embedded surface element to faces map type
   using FaceMapType = FixedOneToManyRelation;

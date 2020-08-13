@@ -59,7 +59,7 @@
   </Geometry>
 
   <Events
-    maxTime="1e3">
+    maxTime="2e3">
     <SoloEvent
       name="preFracture"
       target="/Solvers/SurfaceGenerator"/>
