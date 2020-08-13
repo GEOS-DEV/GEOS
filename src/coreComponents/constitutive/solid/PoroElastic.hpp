@@ -27,14 +27,15 @@ namespace geosx
 {
 namespace constitutive
 {
-template <typename UPDATE_BASE> class PoroElasticUpdates : public UPDATE_BASE
+template< typename UPDATE_BASE >
+class PoroElasticUpdates : public UPDATE_BASE
 {
 public:
-  template <typename... PARAMS>
-  PoroElasticUpdates(real64 const& inputBiotCoefficient, PARAMS&&... baseParams)
-    : UPDATE_BASE(std::forward<PARAMS>(baseParams)...)
-    , m_biotCoefficient(inputBiotCoefficient)
-  { }
+  template< typename... PARAMS >
+  PoroElasticUpdates( real64 const & inputBiotCoefficient, PARAMS &&... baseParams ) :
+    UPDATE_BASE( std::forward< PARAMS >( baseParams )... ),
+    m_biotCoefficient( inputBiotCoefficient )
+  {}
 
   using UPDATE_BASE::GetStiffness;
   using UPDATE_BASE::HyperElastic;
@@ -43,57 +44,73 @@ public:
   using UPDATE_BASE::SmallStrainNoState;
 
   GEOSX_HOST_DEVICE
-  real64 getBiotCoefficient() const { return m_biotCoefficient; }
+  real64
+  getBiotCoefficient() const
+  {
+    return m_biotCoefficient;
+  }
 
 private:
   real64 m_biotCoefficient;
 };
 
 class PoroElasticBase : public SolidBase
-{ };
+{};
 
-template <typename BASE> class PoroElastic : public BASE
+template< typename BASE >
+class PoroElastic : public BASE
 {
 public:
   /// @typedef Alias for LinearElasticIsotropicUpdates
-  using KernelWrapper = PoroElasticUpdates<typename BASE::KernelWrapper>;
+  using KernelWrapper = PoroElasticUpdates< typename BASE::KernelWrapper >;
 
-  PoroElastic(string const& name, dataRepository::Group* const parent);
+  PoroElastic( string const & name, dataRepository::Group * const parent );
   virtual ~PoroElastic() override;
 
-  static std::string CatalogName()
+  static std::string
+  CatalogName()
   {
-    return string("Poro") + BASE::m_catalogNameString;
+    return string( "Poro" ) + BASE::m_catalogNameString;
   }
-  virtual string GetCatalogName() override { return CatalogName(); }
-
-  virtual void PostProcessInput() override;
-
-  virtual void DeliverClone(string const& name,
-                            dataRepository::Group* const parent,
-                            std::unique_ptr<ConstitutiveBase>& clone) const override;
-
-  virtual void AllocateConstitutiveData(
-    dataRepository::Group* const parent,
-    localIndex const numConstitutivePointsPerParentIndex) override;
-
-  inline virtual void StateUpdatePointPressure(real64 const& pres,
-                                               localIndex const k,
-                                               localIndex const q) override
+  virtual string
+  GetCatalogName() override
   {
-    m_poreVolumeRelation.Compute(pres,
-                                 m_poreVolumeMultiplier[k][q],
-                                 m_dPVMult_dPressure[k][q]);
+    return CatalogName();
   }
 
-  virtual void StateUpdateBatchPressure(
-    arrayView1d<real64 const> const& pres,
-    arrayView1d<real64 const> const& dPres) override final;
+  virtual void
+  PostProcessInput() override;
 
-  KernelWrapper createKernelUpdates()
+  virtual void
+  DeliverClone( string const & name,
+                dataRepository::Group * const parent,
+                std::unique_ptr< ConstitutiveBase > & clone ) const override;
+
+  virtual void
+  AllocateConstitutiveData(
+    dataRepository::Group * const parent,
+    localIndex const numConstitutivePointsPerParentIndex ) override;
+
+  inline virtual void
+  StateUpdatePointPressure( real64 const & pres,
+                            localIndex const k,
+                            localIndex const q ) override
   {
-    return BASE::template createDerivedKernelUpdates<KernelWrapper>(
-      m_biotCoefficient);
+    m_poreVolumeRelation.Compute( pres,
+                                  m_poreVolumeMultiplier[k][q],
+                                  m_dPVMult_dPressure[k][q] );
+  }
+
+  virtual void
+  StateUpdateBatchPressure(
+    arrayView1d< real64 const > const & pres,
+    arrayView1d< real64 const > const & dPres ) override final;
+
+  KernelWrapper
+  createKernelUpdates()
+  {
+    return BASE::template createDerivedKernelUpdates< KernelWrapper >(
+      m_biotCoefficient );
   }
 
   struct viewKeyStruct : public ConstitutiveBase::viewKeyStruct
@@ -113,10 +130,10 @@ protected:
   /// scalar Biot's coefficient
   real64 m_biotCoefficient;
 
-  array2d<real64> m_poreVolumeMultiplier;
-  array2d<real64> m_dPVMult_dPressure;
+  array2d< real64 > m_poreVolumeMultiplier;
+  array2d< real64 > m_dPVMult_dPressure;
 
-  ExponentialRelation<real64, ExponentApproximationType::Linear> m_poreVolumeRelation;
+  ExponentialRelation< real64, ExponentApproximationType::Linear > m_poreVolumeRelation;
 };
 
 }  // namespace constitutive

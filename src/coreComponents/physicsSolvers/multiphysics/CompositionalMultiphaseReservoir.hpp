@@ -36,7 +36,7 @@ public:
    * @param name the name of this instantiation of ManagedGroup in the repository
    * @param parent the parent group of this instantiation of ManagedGroup
    */
-  CompositionalMultiphaseReservoir(const std::string& name, Group* const parent);
+  CompositionalMultiphaseReservoir( const std::string & name, Group * const parent );
 
   /**
    * @brief default destructor
@@ -44,24 +44,30 @@ public:
   virtual ~CompositionalMultiphaseReservoir() override;
 
   /// deleted copy constructor
-  CompositionalMultiphaseReservoir(CompositionalMultiphaseReservoir const&) = delete;
+  CompositionalMultiphaseReservoir( CompositionalMultiphaseReservoir const & ) = delete;
 
   /// default move constructor
-  CompositionalMultiphaseReservoir(CompositionalMultiphaseReservoir&&) = default;
+  CompositionalMultiphaseReservoir( CompositionalMultiphaseReservoir && ) = default;
 
   /// deleted assignment operator
-  CompositionalMultiphaseReservoir& operator=(
-    CompositionalMultiphaseReservoir const&) = delete;
+  CompositionalMultiphaseReservoir &
+  operator=(
+    CompositionalMultiphaseReservoir const & ) = delete;
 
   /// deleted move operator
-  CompositionalMultiphaseReservoir& operator=(
-    CompositionalMultiphaseReservoir&&) = delete;
+  CompositionalMultiphaseReservoir &
+  operator=(
+    CompositionalMultiphaseReservoir && ) = delete;
 
   /**
    * @brief name of the node manager in the object catalog
    * @return string that contains the catalog name to generate a new NodeManager object through the object catalog.
    */
-  static string CatalogName() { return "CompositionalMultiphaseReservoir"; }
+  static string
+  CatalogName()
+  {
+    return "CompositionalMultiphaseReservoir";
+  }
 
   /**
    * @defgroup Solver Interface Functions
@@ -72,18 +78,20 @@ public:
 
   /**@}*/
 
-  virtual void AddCouplingSparsityPattern(
-    DomainPartition const& domain,
-    DofManager const& dofManager,
-    SparsityPatternView<globalIndex> const& pattern) const override;
+  virtual void
+  AddCouplingSparsityPattern(
+    DomainPartition const & domain,
+    DofManager const & dofManager,
+    SparsityPatternView< globalIndex > const & pattern ) const override;
 
-  virtual void AssembleCouplingTerms(
+  virtual void
+  AssembleCouplingTerms(
     real64 const time_n,
     real64 const dt,
-    DomainPartition const& domain,
-    DofManager const& dofManager,
-    CRSMatrixView<real64, globalIndex const> const& localMatrix,
-    arrayView1d<real64> const& localRhs) override;
+    DomainPartition const & domain,
+    DofManager const & dofManager,
+    CRSMatrixView< real64, globalIndex const > const & localMatrix,
+    arrayView1d< real64 > const & localRhs ) override;
 };
 
 } /* namespace geosx */

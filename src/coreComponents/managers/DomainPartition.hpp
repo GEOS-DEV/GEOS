@@ -34,7 +34,7 @@ namespace dataRepository
 namespace keys
 {
 /// @return PartitionManager string key
-string const partitionManager("partitionManager");
+string const partitionManager( "partitionManager" );
 }  // namespace keys
 }  // namespace dataRepository
 
@@ -55,7 +55,7 @@ public:
    * @param[in] name Name of this object manager
    * @param[in] parent Parent Group
    */
-  DomainPartition(std::string const& name, Group* const parent);
+  DomainPartition( std::string const & name, Group * const parent );
 
   /**
    * @brief Destructor.
@@ -69,22 +69,26 @@ public:
   /// @cond DO_NOT_DOCUMENT
   DomainPartition() = delete;
 
-  DomainPartition(DomainPartition const&) = delete;
+  DomainPartition( DomainPartition const & ) = delete;
 
-  DomainPartition(DomainPartition&&) = delete;
+  DomainPartition( DomainPartition && ) = delete;
 
-  DomainPartition& operator=(DomainPartition const&) = delete;
+  DomainPartition &
+  operator=( DomainPartition const & ) = delete;
 
-  DomainPartition& operator=(DomainPartition&&) = delete;
+  DomainPartition &
+  operator=( DomainPartition && ) = delete;
   /// @endcond
   ///@}
 
   /**
    * @copydoc dataRepository::Group::RegisterDataOnMeshRecursive( Group * const )
    */
-  virtual void RegisterDataOnMeshRecursive(Group* const meshBodies) override final;
+  virtual void
+  RegisterDataOnMeshRecursive( Group * const meshBodies ) override final;
 
-  void InitializationOrder(string_array& order) override final;
+  void
+  InitializationOrder( string_array & order ) override final;
 
   /**
    * @brief Build all the sets of the DomainPartition.
@@ -92,7 +96,8 @@ public:
    * A domain contain sets of nodes or elements (that can be used to defined boundary conditions, etc.).
    * This member functions build those sets.
    */
-  void GenerateSets();
+  void
+  GenerateSets();
 
   /**
    * @name MPI functionality
@@ -102,7 +107,8 @@ public:
    * @brief Constructs the communications between this DomainPartition and its neighbors.
    * @param use_nonblocking If true complete the communications of each phase in the order they are received.
    */
-  void SetupCommunications(bool use_nonblocking);
+  void
+  SetupCommunications( bool use_nonblocking );
 
   /**
    * @brief Recursively builds neighbors if an MPI cartesian topology is used (i.e. not metis).
@@ -118,7 +124,8 @@ public:
    * This functions should have been implemented `private`
    * and an additional functions to initiate the recursion could have been implemented.
    */
-  void AddNeighbors(const unsigned int idim, MPI_Comm& cartcomm, int* ncoords);
+  void
+  AddNeighbors( const unsigned int idim, MPI_Comm & cartcomm, int * ncoords );
   ///@}
 
   /**
@@ -133,11 +140,11 @@ public:
     static constexpr auto constitutiveManagerString = "Constitutive";
 
     /// View key to the Group holding the MeshBodies
-    dataRepository::GroupKey meshBodies = {meshBodiesString};
+    dataRepository::GroupKey meshBodies = { meshBodiesString };
     /// View key to the Group holding the ConstitutiveManager
-    dataRepository::GroupKey constitutiveManager = {constitutiveManagerString};
+    dataRepository::GroupKey constitutiveManager = { constitutiveManagerString };
     /// View key to the Group holding the CommunicationManager
-    dataRepository::GroupKey communicationManager = {"communicationManager"};
+    dataRepository::GroupKey communicationManager = { "communicationManager" };
   }
   /// groupKey struct for the DomainPartition class
   groupKeys;
@@ -146,63 +153,73 @@ public:
    * @brief Get the constitutive manager, const version.
    * @return Pointer to a const instance of a ConstitutiveManager.
    */
-  constitutive::ConstitutiveManager const* getConstitutiveManager() const
+  constitutive::ConstitutiveManager const *
+  getConstitutiveManager() const
   {
-    return this->GetGroup<constitutive::ConstitutiveManager>(
-      groupKeys.constitutiveManager);
+    return this->GetGroup< constitutive::ConstitutiveManager >(
+      groupKeys.constitutiveManager );
   }
 
   /**
    * @brief Get the constitutive manager.
    * @return Pointer to an instance of a ConstitutiveManager.
    */
-  constitutive::ConstitutiveManager* getConstitutiveManager()
+  constitutive::ConstitutiveManager *
+  getConstitutiveManager()
   {
-    return this->GetGroup<constitutive::ConstitutiveManager>(
-      groupKeys.constitutiveManager);
+    return this->GetGroup< constitutive::ConstitutiveManager >(
+      groupKeys.constitutiveManager );
   }
 
   /**
    * @brief @return Return a reference to const NumericalMethodsManager from ProblemManager
    */
-  NumericalMethodsManager const& getNumericalMethodManager() const
+  NumericalMethodsManager const &
+  getNumericalMethodManager() const
   {
     return *(
-      this->getParent()->GetGroup<NumericalMethodsManager>("NumericalMethods"));
+      this->getParent()->GetGroup< NumericalMethodsManager >( "NumericalMethods" ) );
   }
 
   /**
    * @brief @return Return a reference to NumericalMethodsManager from ProblemManager
    */
-  NumericalMethodsManager& getNumericalMethodManager()
+  NumericalMethodsManager &
+  getNumericalMethodManager()
   {
     return *(
-      this->getParent()->GetGroup<NumericalMethodsManager>("NumericalMethods"));
+      this->getParent()->GetGroup< NumericalMethodsManager >( "NumericalMethods" ) );
   }
 
   /**
    * @brief Get the mesh bodies, const version.
    * @return Pointer to a const instance of a Group that contains MeshBody instances.
    */
-  Group const* getMeshBodies() const
+  Group const *
+  getMeshBodies() const
   {
-    return this->GetGroup(groupKeys.meshBodies);
+    return this->GetGroup( groupKeys.meshBodies );
   }
 
   /**
    * @brief Get the mesh bodies.
    * @return Pointer to a instance of a Group that contains MeshBody instances.
    */
-  Group* getMeshBodies() { return this->GetGroup(groupKeys.meshBodies); }
+  Group *
+  getMeshBodies()
+  {
+    return this->GetGroup( groupKeys.meshBodies );
+  }
 
   /**
    * @brief Get a MeshBody by name, const version.
    * @param meshName The name of the MeshBody.
    * @return Pointer to a const MeshBody instance matching @p meshName.
    */
-  MeshBody const* getMeshBody(string const& meshName) const
+  MeshBody const *
+  getMeshBody( string const & meshName ) const
   {
-    return this->GetGroup(groupKeys.meshBodies)->GetGroup<MeshBody>(meshName);
+    return this->GetGroup( groupKeys.meshBodies )->GetGroup< MeshBody >( meshName );
   }
 
   /**
@@ -210,9 +227,10 @@ public:
    * @param meshName The name of the MeshBody.
    * @return Pointer to a const MeshBody instance matching @p meshName.
    */
-  MeshBody* getMeshBody(string const& meshName)
+  MeshBody *
+  getMeshBody( string const & meshName )
   {
-    return this->GetGroup(groupKeys.meshBodies)->GetGroup<MeshBody>(meshName);
+    return this->GetGroup( groupKeys.meshBodies )->GetGroup< MeshBody >( meshName );
   }
 
   /**
@@ -220,9 +238,10 @@ public:
    * @param index The index of the MeshBody.
    * @return Pointer to a const MeshBody instance at @p index position.
    */
-  MeshBody const* getMeshBody(localIndex const index) const
+  MeshBody const *
+  getMeshBody( localIndex const index ) const
   {
-    return this->GetGroup(groupKeys.meshBodies)->GetGroup<MeshBody>(index);
+    return this->GetGroup( groupKeys.meshBodies )->GetGroup< MeshBody >( index );
   }
 
   /**
@@ -230,22 +249,28 @@ public:
    * @param index The index of the MeshBody.
    * @return Pointer to a MeshBody instance at @p index position.
    */
-  MeshBody* getMeshBody(localIndex const index)
+  MeshBody *
+  getMeshBody( localIndex const index )
   {
-    return this->GetGroup(groupKeys.meshBodies)->GetGroup<MeshBody>(index);
+    return this->GetGroup( groupKeys.meshBodies )->GetGroup< MeshBody >( index );
   }
 
   /**
    * @brief Get the metis neighbors indices.  @see DomainPartition#m_metisNeighborList
    * @return Container of global indices.
    */
-  std::set<int>& getMetisNeighborList() { return m_metisNeighborList; }
+  std::set< int > &
+  getMetisNeighborList()
+  {
+    return m_metisNeighborList;
+  }
 
   /**
    * @brief Get the metis neighbors indices, const version. @see DomainPartition#m_metisNeighborList
    * @return Container of global indices.
    */
-  std::set<int> const& getMetisNeighborList() const
+  std::set< int > const &
+  getMetisNeighborList() const
   {
     return m_metisNeighborList;
   }
@@ -254,13 +279,18 @@ public:
    * @brief Get the neighbor communicators. @see DomainPartition#m_neighbors.
    * @return Container of communicators.
    */
-  std::vector<NeighborCommunicator>& getNeighbors() { return m_neighbors; }
+  std::vector< NeighborCommunicator > &
+  getNeighbors()
+  {
+    return m_neighbors;
+  }
 
   /**
    * @brief Get the neighbor communicators, const version. @see DomainPartition#m_neighbors.
    * @return Container of communicators.
    */
-  std::vector<NeighborCommunicator> const& getNeighbors() const
+  std::vector< NeighborCommunicator > const &
+  getNeighbors() const
   {
     return m_neighbors;
   };
@@ -269,11 +299,11 @@ private:
   /**
    * @brief Contains the global indices of the metis neighbors in case `metis` is used. Empty otherwise.
    */
-  std::set<int> m_metisNeighborList;
+  std::set< int > m_metisNeighborList;
   /**
    * @brief Contains all the communicators from this DomainPartition to its neighbors.
    */
-  std::vector<NeighborCommunicator> m_neighbors;
+  std::vector< NeighborCommunicator > m_neighbors;
 };
 
 } /* namespace geosx */

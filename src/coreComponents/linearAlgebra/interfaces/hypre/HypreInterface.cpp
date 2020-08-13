@@ -21,16 +21,19 @@
 
 namespace geosx
 {
-void HypreInterface::initialize(int& GEOSX_UNUSED_PARAM(argc),
-                                char**& GEOSX_UNUSED_PARAM(argv))
-{ }
+void
+HypreInterface::initialize( int & GEOSX_UNUSED_PARAM( argc ),
+                            char **& GEOSX_UNUSED_PARAM( argv ) )
+{}
 
-void HypreInterface::finalize() { }
+void
+HypreInterface::finalize()
+{}
 
-std::unique_ptr<PreconditionerBase<HypreInterface>>
-geosx::HypreInterface::createPreconditioner(LinearSolverParameters params)
+std::unique_ptr< PreconditionerBase< HypreInterface > >
+geosx::HypreInterface::createPreconditioner( LinearSolverParameters params )
 {
-  return std::make_unique<HyprePreconditioner>(params);
+  return std::make_unique< HyprePreconditioner >( params );
 }
 
 }  // namespace geosx

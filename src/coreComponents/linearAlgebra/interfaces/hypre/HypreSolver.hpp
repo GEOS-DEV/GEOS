@@ -38,7 +38,7 @@ public:
    * @brief Solver constructor, with parameter list reference
    * @param[in] parameters structure containing linear solver parameters
    */
-  HypreSolver(LinearSolverParameters parameters);
+  HypreSolver( LinearSolverParameters parameters );
 
   /**
    * @brief Virtual destructor.
@@ -54,27 +54,34 @@ public:
    *
    * Solve Ax=b with A an HypreMatrix, x and b HypreVector.
    */
-  void solve(HypreMatrix& mat,
-             HypreVector& sol,
-             HypreVector& rhs,
-             DofManager const* const dofManager = nullptr);
+  void
+  solve( HypreMatrix & mat,
+         HypreVector & sol,
+         HypreVector & rhs,
+         DofManager const * const dofManager = nullptr );
 
   /**
    * @brief Get the result of previous solve.
    * @return struct with last solve stats
    */
-  LinearSolverResult const& result() { return m_result; }
+  LinearSolverResult const &
+  result()
+  {
+    return m_result;
+  }
 
 private:
   LinearSolverParameters m_parameters;
   LinearSolverResult m_result;
 
-  void solve_direct(HypreMatrix& mat, HypreVector& sol, HypreVector& rhs);
+  void
+  solve_direct( HypreMatrix & mat, HypreVector & sol, HypreVector & rhs );
 
-  void solve_krylov(HypreMatrix& mat,
-                    HypreVector& sol,
-                    HypreVector& rhs,
-                    DofManager const* const dofManager);
+  void
+  solve_krylov( HypreMatrix & mat,
+                HypreVector & sol,
+                HypreVector & rhs,
+                DofManager const * const dofManager );
 };
 
 }  // namespace geosx

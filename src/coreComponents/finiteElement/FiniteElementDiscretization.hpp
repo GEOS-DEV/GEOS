@@ -47,8 +47,8 @@ class FiniteElementDiscretization : public dataRepository::Group
 public:
   FiniteElementDiscretization() = delete;
 
-  explicit FiniteElementDiscretization(std::string const& name,
-                                       Group* const parent);
+  explicit FiniteElementDiscretization( std::string const & name,
+                                        Group * const parent );
 
   ~FiniteElementDiscretization() override;
 
@@ -56,15 +56,20 @@ public:
    * @name Static Factory Catalog Functions
    */
   ///@{
-  static string CatalogName() { return "FiniteElementSpace"; }
+  static string
+  CatalogName()
+  {
+    return "FiniteElementSpace";
+  }
 
   ///@}
 
-  template <typename SUBREGION_TYPE, typename FE_TYPE>
-  void CalculateShapeFunctionGradients(
-    arrayView2d<real64 const, nodes::REFERENCE_POSITION_USD> const& X,
-    SUBREGION_TYPE* const elementSubRegion,
-    FE_TYPE& fe) const;
+  template< typename SUBREGION_TYPE, typename FE_TYPE >
+  void
+  CalculateShapeFunctionGradients(
+    arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X,
+    SUBREGION_TYPE * const elementSubRegion,
+    FE_TYPE & fe ) const;
 
   /**
    * @brief Factory method to instantiate a type of finite element formulation.
@@ -73,8 +78,9 @@ public:
    * @return A unique_ptr< FinteElementBase > which contains the new
    *   instantiation.
    */
-  std::unique_ptr<finiteElement::FiniteElementBase> factory(
-    string const& parentElementShape) const;
+  std::unique_ptr< finiteElement::FiniteElementBase >
+  factory(
+    string const & parentElementShape ) const;
 
 private:
   struct viewKeyStruct
@@ -89,51 +95,53 @@ private:
   /// Optional string indicating any specialized formulation type.
   string m_formulation;
 
-  void PostProcessInput() override final;
+  void
+  PostProcessInput() override final;
 };
 
-template <typename SUBREGION_TYPE, typename FE_TYPE>
-void FiniteElementDiscretization::CalculateShapeFunctionGradients(
-  arrayView2d<real64 const, nodes::REFERENCE_POSITION_USD> const& X,
-  SUBREGION_TYPE* const elementSubRegion,
-  FE_TYPE& finiteElement) const
+template< typename SUBREGION_TYPE, typename FE_TYPE >
+void
+FiniteElementDiscretization::CalculateShapeFunctionGradients(
+  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X,
+  SUBREGION_TYPE * const elementSubRegion,
+  FE_TYPE & finiteElement ) const
 {
   GEOSX_MARK_FUNCTION;
 
-  array4d<real64>& dNdX = elementSubRegion->dNdX();
-  array2d<real64>& detJ = elementSubRegion->detJ();
-  auto const& elemsToNodes = elementSubRegion->nodeList().toViewConst();
+  array4d< real64 > & dNdX = elementSubRegion->dNdX();
+  array2d< real64 > & detJ = elementSubRegion->detJ();
+  auto const & elemsToNodes = elementSubRegion->nodeList().toViewConst();
 
   string const elementTypeString = elementSubRegion->GetElementTypeString();
 
   constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
   constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
-  dNdX.resizeWithoutInitializationOrDestruction(elementSubRegion->size(),
-                                                numQuadraturePointsPerElem,
-                                                numNodesPerElem,
-                                                3);
-  detJ.resize(elementSubRegion->size(), numQuadraturePointsPerElem);
+  dNdX.resizeWithoutInitializationOrDestruction( elementSubRegion->size(),
+                                                 numQuadraturePointsPerElem,
+                                                 numNodesPerElem,
+                                                 3 );
+  detJ.resize( elementSubRegion->size(), numQuadraturePointsPerElem );
 
-  for(localIndex k = 0; k < elementSubRegion->size(); ++k)
+  for( localIndex k = 0; k < elementSubRegion->size(); ++k )
   {
     real64 xLocal[numNodesPerElem][3];
-    for(localIndex a = 0; a < numNodesPerElem; ++a)
+    for( localIndex a = 0; a < numNodesPerElem; ++a )
     {
       localIndex const nodeIndex = elemsToNodes[k][a];
-      for(int i = 0; i < 3; ++i)
+      for( int i = 0; i < 3; ++i )
       {
         xLocal[a][i] = X[nodeIndex][i];
       }
     }
 
-    for(localIndex q = 0; q < numQuadraturePointsPerElem; ++q)
+    for( localIndex q = 0; q < numQuadraturePointsPerElem; ++q )
     {
       real64 dNdXLocal[numNodesPerElem][3];
-      detJ(k, q) = finiteElement.shapeFunctionDerivatives(q, xLocal, dNdXLocal);
+      detJ( k, q ) = finiteElement.shapeFunctionDerivatives( q, xLocal, dNdXLocal );
 
-      for(localIndex b = 0; b < numNodesPerElem; ++b)
+      for( localIndex b = 0; b < numNodesPerElem; ++b )
       {
-        LvArray::tensorOps::copy<3>(dNdX[k][q][b], dNdXLocal[b]);
+        LvArray::tensorOps::copy< 3 >( dNdX[k][q][b], dNdXLocal[b] );
       }
     }
   }

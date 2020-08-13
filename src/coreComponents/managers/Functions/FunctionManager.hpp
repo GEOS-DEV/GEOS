@@ -33,7 +33,7 @@ class FunctionManager : public dataRepository::Group
 {
 public:
   /// @copydoc geosx::dataRepository::Group::Group( std::string const & name, Group * const parent )
-  FunctionManager(const std::string& name, dataRepository::Group* const parent);
+  FunctionManager( const std::string & name, dataRepository::Group * const parent );
 
   /**
    * @brief destructor
@@ -44,9 +44,10 @@ public:
    * @brief Return the function manager instance
    * @return the function manager instance
    */
-  static FunctionManager& Instance()
+  static FunctionManager &
+  Instance()
   {
-    static FunctionManager theFunctionManager("Functions", nullptr);
+    static FunctionManager theFunctionManager( "Functions", nullptr );
     return theFunctionManager;
   }
 
@@ -54,7 +55,11 @@ public:
    * @brief Static Factory Catalog Functions
    * @return the catalog name
    */
-  static string CatalogName() { return "FunctionManager"; }
+  static string
+  CatalogName()
+  {
+    return "FunctionManager";
+  }
 
   /**
    * @brief Create a new FunctionManager object as a child of this group.
@@ -62,13 +67,15 @@ public:
    * @param functionName the name of the new FunctionManager object in the repository
    * @return the group child
    */
-  virtual Group* CreateChild(string const& functionCatalogKey,
-                             string const& functionName) override;
+  virtual Group *
+  CreateChild( string const & functionCatalogKey,
+               string const & functionName ) override;
 
   /**
    * @brief This function is used to expand any catalogs in the data structure
    */
-  virtual void ExpandObjectCatalogs() override;
+  virtual void
+  ExpandObjectCatalogs() override;
 };
 
 } /* namespace geosx */

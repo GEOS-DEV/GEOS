@@ -35,7 +35,7 @@ public:
    * @param[in] name The name of the new instantiation of this Group.
    * @param[in] parent A pointer to the parent of this Group.
    */
-  NonlinearSolverParameters(std::string const& name, Group* const parent);
+  NonlinearSolverParameters( std::string const & name, Group * const parent );
 
   /**
    * @brief Default destructor
@@ -46,7 +46,7 @@ public:
    * @brief Default Move Constructor
    * @param The source object of the move.
    */
-  NonlinearSolverParameters(NonlinearSolverParameters&&) = default;
+  NonlinearSolverParameters( NonlinearSolverParameters && ) = default;
 
   /**
    * @brief The name of this object in the catalog.
@@ -55,9 +55,14 @@ public:
    * NonlinearSolverParameters object when calling
    * Group::GetCatalog()::Allocate().
    */
-  static string CatalogName() { return "NonlinearSolverParameters"; }
+  static string
+  CatalogName()
+  {
+    return "NonlinearSolverParameters";
+  }
 
-  virtual void PostProcessInput() override;
+  virtual void
+  PostProcessInput() override;
 
   struct viewKeysStruct
   {
@@ -89,9 +94,10 @@ public:
    * cut to the next timestep.
    * @return The scaled value of the limit (m_dtCutIterLimit * m_maxIterNewton)
    */
-  integer dtCutIterLimit() const
+  integer
+  dtCutIterLimit() const
   {
-    return std::ceil(m_dtCutIterLimit * m_maxIterNewton);
+    return std::ceil( m_dtCutIterLimit * m_maxIterNewton );
   }
 
   /**
@@ -99,9 +105,10 @@ public:
    * increase to the next timestep.
    * @return The scaled value of the limit (m_dtIncIterLimit * m_maxIterNewton)
    */
-  integer dtIncIterLimit() const
+  integer
+  dtIncIterLimit() const
   {
-    return std::ceil(m_dtIncIterLimit * m_maxIterNewton);
+    return std::ceil( m_dtIncIterLimit * m_maxIterNewton );
   }
 
   /// Flag to apply a line search.

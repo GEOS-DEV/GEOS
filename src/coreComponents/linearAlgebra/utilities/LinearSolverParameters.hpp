@@ -50,7 +50,7 @@ public:
     integer maxIterations =
       200;  ///< Max iterations before declaring convergence failure
     integer maxRestart =
-      200;  ///< Max number of vectors in Krylov basis before restarting
+      200;                           ///< Max number of vectors in Krylov basis before restarting
     integer useAdaptiveTol = false;  ///< Use Eisenstat-Walker adaptive tolerance
     real64 weakestTol =
       1e-3;  ///< Weakest allowed tolerance when using adaptive method
@@ -67,8 +67,8 @@ public:
   /// Algebraic multigrid parameters
   struct AMG
   {
-    integer maxLevels = 20;  ///< Maximum number of coarsening levels
-    string cycleType = "V";  ///< AMG cycle type
+    integer maxLevels = 20;               ///< Maximum number of coarsening levels
+    string cycleType = "V";               ///< AMG cycle type
     string smootherType = "gaussSeidel";  ///< Smoother type
     string coarseType = "direct";         ///< Coarse-level solver/smoother
     integer numSweeps = 2;                ///< Number of smoother sweeps
@@ -88,7 +88,7 @@ public:
   {
     string strategy;  ///< Predefined MGR solution strategy (solver specific)
     integer separateComponents =
-      false;  ///< Apply a separate displacement component (SDC) filter before AMG construction
+      false;                       ///< Apply a separate displacement component (SDC) filter before AMG construction
     string displacementFieldName;  ///< Displacement field name need for SDC filter
   } mgr;                           ///< Multigrid reduction (MGR) parameters
 

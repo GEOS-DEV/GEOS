@@ -63,7 +63,11 @@ struct LinearSolverResult
    * @brief Check whether the last solve was successful.
    * @return @p true if last solve was successful, @p false otherwise
    */
-  bool success() const { return status == Status::Success; }
+  bool
+  success() const
+  {
+    return status == Status::Success;
+  }
 };
 
 }  // namespace geosx

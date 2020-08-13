@@ -30,7 +30,8 @@ using namespace geosx;
 class LaplaceFEMTest : public ::testing::Test
 {
 protected:
-  static void SetUpTestCase()
+  static void
+  SetUpTestCase()
   {
     string const inputStream =
       "<Problem>"
@@ -121,88 +122,90 @@ protected:
 
     xmlWrapper::xmlDocument xmlDocument;
     xmlWrapper::xmlResult xmlResult =
-      xmlDocument.load_buffer(inputStream.c_str(), inputStream.size());
-    if(!xmlResult)
+      xmlDocument.load_buffer( inputStream.c_str(), inputStream.size() );
+    if( !xmlResult )
     {
-      GEOSX_LOG_RANK_0("XML parsed with errors!");
-      GEOSX_LOG_RANK_0("Error description: " << xmlResult.description());
-      GEOSX_LOG_RANK_0("Error offset: " << xmlResult.offset);
+      GEOSX_LOG_RANK_0( "XML parsed with errors!" );
+      GEOSX_LOG_RANK_0( "Error description: " << xmlResult.description() );
+      GEOSX_LOG_RANK_0( "Error offset: " << xmlResult.offset );
     }
 
-    dataRepository::Group* commandLine =
-      problemManager.GetGroup<dataRepository::Group>(
-        problemManager.groupKeys.commandLine);
+    dataRepository::Group * commandLine =
+      problemManager.GetGroup< dataRepository::Group >(
+        problemManager.groupKeys.commandLine );
     commandLine
-      ->registerWrapper<integer>(problemManager.viewKeys.zPartitionsOverride.Key())
-      ->setApplyDefaultValue(mpiSize);
+      ->registerWrapper< integer >( problemManager.viewKeys.zPartitionsOverride.Key() )
+      ->setApplyDefaultValue( mpiSize );
 
-    xmlWrapper::xmlNode xmlProblemNode = xmlDocument.child("Problem");
+    xmlWrapper::xmlNode xmlProblemNode = xmlDocument.child( "Problem" );
     problemManager.InitializePythonInterpreter();
-    problemManager.ProcessInputFileRecursive(xmlProblemNode);
+    problemManager.ProcessInputFileRecursive( xmlProblemNode );
 
     // The objects in domain are handled separately for now
-    DomainPartition* domain = problemManager.getDomainPartition();
-    constitutive::ConstitutiveManager* constitutiveManager =
-      domain->GetGroup<constitutive::ConstitutiveManager>(
-        problemManager.groupKeys.constitutiveManager);
+    DomainPartition * domain = problemManager.getDomainPartition();
+    constitutive::ConstitutiveManager * constitutiveManager =
+      domain->GetGroup< constitutive::ConstitutiveManager >(
+        problemManager.groupKeys.constitutiveManager );
     xmlWrapper::xmlNode topLevelNode =
-      xmlProblemNode.child(constitutiveManager->getName().c_str());
-    constitutiveManager->ProcessInputFileRecursive(topLevelNode);
+      xmlProblemNode.child( constitutiveManager->getName().c_str() );
+    constitutiveManager->ProcessInputFileRecursive( topLevelNode );
     constitutiveManager->PostProcessInputRecursive();
 
     // Open mesh levels
-    MeshManager* meshManager =
-      problemManager.GetGroup<MeshManager>(problemManager.groupKeys.meshManager);
-    meshManager->GenerateMeshLevels(domain);
+    MeshManager * meshManager =
+      problemManager.GetGroup< MeshManager >( problemManager.groupKeys.meshManager );
+    meshManager->GenerateMeshLevels( domain );
 
-    ElementRegionManager* elementManager =
-      domain->getMeshBody(0)->getMeshLevel(0)->getElemManager();
-    topLevelNode = xmlProblemNode.child(elementManager->getName().c_str());
-    elementManager->ProcessInputFileRecursive(topLevelNode);
+    ElementRegionManager * elementManager =
+      domain->getMeshBody( 0 )->getMeshLevel( 0 )->getElemManager();
+    topLevelNode = xmlProblemNode.child( elementManager->getName().c_str() );
+    elementManager->ProcessInputFileRecursive( topLevelNode );
     elementManager->PostProcessInputRecursive();
 
     problemManager.ProblemSetup();
     solver =
-      problemManager.GetPhysicsSolverManager().GetGroup<LaplaceFEM>("laplace");
+      problemManager.GetPhysicsSolverManager().GetGroup< LaplaceFEM >( "laplace" );
   }
 
-  static void TearDownTestCase() { }
+  static void
+  TearDownTestCase()
+  {}
 
   static ProblemManager problemManager;
-  static LaplaceFEM* solver;
+  static LaplaceFEM * solver;
 };
 
-ProblemManager LaplaceFEMTest::problemManager("Problem", nullptr);
-LaplaceFEM* LaplaceFEMTest::solver = nullptr;
+ProblemManager LaplaceFEMTest::problemManager( "Problem", nullptr );
+LaplaceFEM * LaplaceFEMTest::solver = nullptr;
 
-TEST_F(LaplaceFEMTest, laplaceSolverCheckSolution)
+TEST_F( LaplaceFEMTest, laplaceSolverCheckSolution )
 {
-  real64 const eps = sqrt(std::numeric_limits<real64>::epsilon());
+  real64 const eps = sqrt( std::numeric_limits< real64 >::epsilon() );
 
   string const fieldName = "Temperature";
   real64 const time = 0.0;
   real64 const dt = 1.0;
   int const cycleNumber = 0;
 
-  DomainPartition* domain = problemManager.getDomainPartition();
+  DomainPartition * domain = problemManager.getDomainPartition();
 
   // Create and solve the problem
-  LaplaceFEM laplaceFEM(fieldName, domain);
-  solver->SolverStep(time, dt, cycleNumber, domain);
+  LaplaceFEM laplaceFEM( fieldName, domain );
+  solver->SolverStep( time, dt, cycleNumber, domain );
 
   // Get nodeManager
-  MeshLevel* const mesh =
-    domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
-  NodeManager* const nodeManager = mesh->getNodeManager();
+  MeshLevel * const mesh =
+    domain->getMeshBodies()->GetGroup< MeshBody >( 0 )->getMeshLevel( 0 );
+  NodeManager * const nodeManager = mesh->getNodeManager();
   localIndex const numNodes = nodeManager->size();
 
   // Get matrix size
   globalIndex const matrixSize = 11 * 11 * 11;
-  real64 const matrixSize3 = std::pow(static_cast<real64>(matrixSize), 1.0 / 3.0);
-  real64 const tol = 4.0 * std::pow(matrixSize3, 2) * eps;
+  real64 const matrixSize3 = std::pow( static_cast< real64 >( matrixSize ), 1.0 / 3.0 );
+  real64 const tol = 4.0 * std::pow( matrixSize3, 2 ) * eps;
 
   // Get solution
-  real64_array& fieldVar = nodeManager->getReference<real64_array>(fieldName);
+  real64_array & fieldVar = nodeManager->getReference< real64_array >( fieldName );
 
   // Compute relative error
   real64 xMin = 0.0;
@@ -212,17 +215,17 @@ TEST_F(LaplaceFEMTest, laplaceSolverCheckSolution)
   real64 const vMax = 0.0;
 
   // Compute domain bounds (x direction)
-  arrayView2d<real64 const, nodes::REFERENCE_POSITION_USD> const& referencePosition =
+  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & referencePosition =
     nodeManager->referencePosition();
-  for(localIndex a = 0; a < numNodes; ++a)
+  for( localIndex a = 0; a < numNodes; ++a )
   {
     R1Tensor nodePosition;
     nodePosition = referencePosition[a];
-    if(xMin > nodePosition[0])
+    if( xMin > nodePosition[0] )
     {
       xMin = nodePosition[0];
     }
-    if(xMax < nodePosition[0])
+    if( xMax < nodePosition[0] )
     {
       xMax = nodePosition[0];
     }
@@ -230,56 +233,57 @@ TEST_F(LaplaceFEMTest, laplaceSolverCheckSolution)
 
   // Compute xMax and xMin across ranks
   real64_array gather;
-  CommunicationTools::allGather(xMax, gather);
-  xMax = *std::max_element(gather.begin(), gather.end());
-  CommunicationTools::allGather(xMin, gather);
-  xMin = *std::min_element(gather.begin(), gather.end());
+  CommunicationTools::allGather( xMax, gather );
+  xMax = *std::max_element( gather.begin(), gather.end() );
+  CommunicationTools::allGather( xMin, gather );
+  xMin = *std::min_element( gather.begin(), gather.end() );
 
   // Compute true solution and error
-  real64 const slope = (vMax - vMin) / (xMax - xMin);
+  real64 const slope = ( vMax - vMin ) / ( xMax - xMin );
   real64 error = 0.0;
   real64 normSol = 0.0;
-  for(localIndex a = 0; a < numNodes; ++a)
+  for( localIndex a = 0; a < numNodes; ++a )
   {
     R1Tensor nodePosition;
     nodePosition = referencePosition[a];
-    real64 refVal = slope * (nodePosition[0] - xMin) + vMin;
-    error += std::pow(fieldVar[a] - refVal, 2);
-    normSol += std::pow(refVal, 2);
+    real64 refVal = slope * ( nodePosition[0] - xMin ) + vMin;
+    error += std::pow( fieldVar[a] - refVal, 2 );
+    normSol += std::pow( refVal, 2 );
   }
 
   // Gather errors across ranks
-  CommunicationTools::allGather(error, gather);
+  CommunicationTools::allGather( error, gather );
   error = 0.0;
-  for(localIndex p = 0; p < mpiSize; ++p)
+  for( localIndex p = 0; p < mpiSize; ++p )
   {
     error += gather[p];
   }
-  error = std::sqrt(error);
+  error = std::sqrt( error );
 
   // Gather solution norms across ranks
-  CommunicationTools::allGather(normSol, gather);
+  CommunicationTools::allGather( normSol, gather );
   normSol = 0.0;
-  for(localIndex p = 0; p < mpiSize; ++p)
+  for( localIndex p = 0; p < mpiSize; ++p )
   {
     normSol += gather[p];
   }
-  normSol = std::sqrt(normSol);
+  normSol = std::sqrt( normSol );
 
   // Compute and check relative error
   error /= normSol;
-  if(mpiRank == 0)
+  if( mpiRank == 0 )
   {
     std::cout << "Relative error: " << error << std::endl;
   }
-  EXPECT_NEAR(error, 0.0, tol);
+  EXPECT_NEAR( error, 0.0, tol );
 }
 
-int main(int argc, char** argv)
+int
+main( int argc, char ** argv )
 {
-  ::testing::InitGoogleTest(&argc, argv);
+  ::testing::InitGoogleTest( &argc, argv );
 
-  geosx::basicSetup(argc, argv);
+  geosx::basicSetup( argc, argv );
 
   int const result = RUN_ALL_TESTS();
 

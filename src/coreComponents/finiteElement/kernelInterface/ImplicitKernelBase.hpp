@@ -38,18 +38,18 @@ namespace finiteElement
  * equations. The types required to assemble the system, such as DOF
  * information, the Matrix and Vector object, etc., are declared and set here.
  */
-template <typename SUBREGION_TYPE,
+template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE,
           int NUM_DOF_PER_TEST_SP,
-          int NUM_DOF_PER_TRIAL_SP>
+          int NUM_DOF_PER_TRIAL_SP >
 class ImplicitKernelBase
-  : public KernelBase<SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE, NUM_DOF_PER_TEST_SP, NUM_DOF_PER_TRIAL_SP>
+  : public KernelBase< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE, NUM_DOF_PER_TEST_SP, NUM_DOF_PER_TRIAL_SP >
 {
 public:
   /// Alias for the base class. (i.e. #geosx::finiteElement::KernelBase)
   using Base =
-    KernelBase<SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE, NUM_DOF_PER_TEST_SP, NUM_DOF_PER_TRIAL_SP>;
+    KernelBase< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE, NUM_DOF_PER_TEST_SP, NUM_DOF_PER_TRIAL_SP >;
 
   using Base::m_elemsToNodes;
   using Base::numDofPerTestSupportPoint;
@@ -68,25 +68,25 @@ public:
    * @param inputRhs Reference to the RHS vector.
    * @copydoc geosx::finiteElement::KernelBase::KernelBase
    */
-  ImplicitKernelBase(NodeManager const& nodeManager,
-                     EdgeManager const& edgeManager,
-                     FaceManager const& faceManager,
-                     SUBREGION_TYPE const& elementSubRegion,
-                     FE_TYPE const& finiteElementSpace,
-                     CONSTITUTIVE_TYPE* const inputConstitutiveType,
-                     arrayView1d<globalIndex const> const& inputDofNumber,
-                     globalIndex const rankOffset,
-                     CRSMatrixView<real64, globalIndex const> const& inputMatrix,
-                     arrayView1d<real64> const& inputRhs)
-    : Base(elementSubRegion, finiteElementSpace, inputConstitutiveType)
-    , m_dofNumber(inputDofNumber)
-    , m_dofRankOffset(rankOffset)
-    , m_matrix(inputMatrix)
-    , m_rhs(inputRhs)
+  ImplicitKernelBase( NodeManager const & nodeManager,
+                      EdgeManager const & edgeManager,
+                      FaceManager const & faceManager,
+                      SUBREGION_TYPE const & elementSubRegion,
+                      FE_TYPE const & finiteElementSpace,
+                      CONSTITUTIVE_TYPE * const inputConstitutiveType,
+                      arrayView1d< globalIndex const > const & inputDofNumber,
+                      globalIndex const rankOffset,
+                      CRSMatrixView< real64, globalIndex const > const & inputMatrix,
+                      arrayView1d< real64 > const & inputRhs ) :
+    Base( elementSubRegion, finiteElementSpace, inputConstitutiveType ),
+    m_dofNumber( inputDofNumber ),
+    m_dofRankOffset( rankOffset ),
+    m_matrix( inputMatrix ),
+    m_rhs( inputRhs )
   {
-    GEOSX_UNUSED_VAR(nodeManager);
-    GEOSX_UNUSED_VAR(edgeManager);
-    GEOSX_UNUSED_VAR(faceManager);
+    GEOSX_UNUSED_VAR( nodeManager );
+    GEOSX_UNUSED_VAR( edgeManager );
+    GEOSX_UNUSED_VAR( faceManager );
   }
 
   //***************************************************************************
@@ -107,12 +107,12 @@ public:
      * Default constructor
      */
     GEOSX_HOST_DEVICE
-    StackVariables()
-      : localRowDofIndex {0}
-      , localColDofIndex {0}
-      , localResidual {0.0}
-      , localJacobian {{0.0}}
-    { }
+    StackVariables() :
+      localRowDofIndex { 0 },
+      localColDofIndex { 0 },
+      localResidual { 0.0 },
+      localJacobian { { 0.0 } }
+    {}
 
     /// C-array storage for the element local row degrees of freedom.
     globalIndex localRowDofIndex[numRows];
@@ -141,22 +141,23 @@ public:
    */
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  void setup(localIndex const k, StackVariables& stack) const
+  void
+  setup( localIndex const k, StackVariables & stack ) const
   {
-    for(localIndex a = 0; a < numTestSupportPointsPerElem; ++a)
+    for( localIndex a = 0; a < numTestSupportPointsPerElem; ++a )
     {
       localIndex const localNodeIndex = m_elemsToNodes[k][a];
-      for(int i = 0; i < numDofPerTestSupportPoint; ++i)
+      for( int i = 0; i < numDofPerTestSupportPoint; ++i )
       {
         stack.localRowDofIndex[a * numDofPerTestSupportPoint + i] =
           m_dofNumber[localNodeIndex] + i;
       }
     }
 
-    for(localIndex a = 0; a < numTrialSupportPointsPerElem; ++a)
+    for( localIndex a = 0; a < numTrialSupportPointsPerElem; ++a )
     {
       localIndex const localNodeIndex = m_elemsToNodes[k][a];
-      for(int i = 0; i < numDofPerTrialSupportPoint; ++i)
+      for( int i = 0; i < numDofPerTrialSupportPoint; ++i )
       {
         stack.localColDofIndex[a * numDofPerTrialSupportPoint + i] =
           m_dofNumber[localNodeIndex] + i;
@@ -166,16 +167,16 @@ public:
 
 protected:
   /// The global degree of freedom number
-  arrayView1d<globalIndex const> const m_dofNumber;
+  arrayView1d< globalIndex const > const m_dofNumber;
 
   /// The global rank offset
   globalIndex const m_dofRankOffset;
 
   /// The global Jacobian matrix.
-  CRSMatrixView<real64, globalIndex const> const m_matrix;
+  CRSMatrixView< real64, globalIndex const > const m_matrix;
 
   /// The global residaul vector.
-  arrayView1d<real64> const m_rhs;
+  arrayView1d< real64 > const m_rhs;
 };
 
 }  // namespace finiteElement

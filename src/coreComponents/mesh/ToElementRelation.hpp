@@ -30,7 +30,8 @@ class ElementRegionManager;
  * @tparam BASETYPE The underlying relation type to use to
  *                  store the relationsip information.
  */
-template <typename BASETYPE> class ToElementRelation
+template< typename BASETYPE >
+class ToElementRelation
 {
 public:
   /// The type of the underlying relationship storage object.
@@ -47,26 +48,37 @@ public:
    * @param newdims A parameter pack of appropriate size to resize each
    *                dimension of the relationship storage.
    */
-  template <typename... DIMS> void resize(DIMS... newdims);
+  template< typename... DIMS >
+  void
+  resize( DIMS... newdims );
 
   /**
    * @brief Get the current size of the relationship storage.
    * @return The current size of the relationship storage.
    */
-  localIndex size() const { return m_toElementRegion.size(); }
+  localIndex
+  size() const
+  {
+    return m_toElementRegion.size();
+  }
 
   /**
    * @brief Get the size of a specific dimension of the relationship storage.
    * @param dim The dimension to get the storage size of.
    * @return The dimension size
    */
-  localIndex size(int const dim) const { return m_toElementRegion.size(dim); }
+  localIndex
+  size( int const dim ) const
+  {
+    return m_toElementRegion.size( dim );
+  }
 
   /**
    * @brief Set the ElementRegionManager.
    * @param input The ElementRegionManager to set.
    */
-  void setElementRegionManager(ElementRegionManager const* const input)
+  void
+  setElementRegionManager( ElementRegionManager const * const input )
   {
     m_elemRegionManager = input;
   }
@@ -75,7 +87,8 @@ public:
    * @brief Get the ElementRegionManager.
    * @return The current ElementRegionManager.
    */
-  ElementRegionManager const* getElementRegionManager() const
+  ElementRegionManager const *
+  getElementRegionManager() const
   {
     return m_elemRegionManager;
   }
@@ -88,36 +101,38 @@ public:
   BASETYPE m_toElementIndex;
 
   /// The current ElementRegionManager
-  ElementRegionManager const* m_elemRegionManager;
+  ElementRegionManager const * m_elemRegionManager;
 };
 
 /// @cond DO_NOT_DOCUMENT
-template <typename BASETYPE>
-ToElementRelation<BASETYPE>::ToElementRelation()
-  : m_toElementRegion()
-  , m_toElementSubRegion()
-  , m_toElementIndex()
-  , m_elemRegionManager(nullptr)
-{ }
+template< typename BASETYPE >
+ToElementRelation< BASETYPE >::ToElementRelation() :
+  m_toElementRegion(),
+  m_toElementSubRegion(),
+  m_toElementIndex(),
+  m_elemRegionManager( nullptr )
+{}
 
-template <typename BASETYPE> ToElementRelation<BASETYPE>::~ToElementRelation()
-{ }
+template< typename BASETYPE >
+ToElementRelation< BASETYPE >::~ToElementRelation()
+{}
 
-template <typename BASETYPE>
-template <typename... DIMS>
-void ToElementRelation<BASETYPE>::resize(DIMS... newdims)
+template< typename BASETYPE >
+template< typename... DIMS >
+void
+ToElementRelation< BASETYPE >::resize( DIMS... newdims )
 {
-  m_toElementRegion.resize(newdims...);
-  m_toElementSubRegion.resize(newdims...);
-  m_toElementIndex.resize(newdims...);
+  m_toElementRegion.resize( newdims... );
+  m_toElementSubRegion.resize( newdims... );
+  m_toElementIndex.resize( newdims... );
 }
 /// @endcond
 
 /// @brief A ToElementRelation where each object is related to the same number of elements.
-typedef ToElementRelation<array2d<localIndex>> FixedToManyElementRelation;
+typedef ToElementRelation< array2d< localIndex > > FixedToManyElementRelation;
 
 /// @brief A ToElementRelation where each object is related to an arbitrary number of elements.
-typedef ToElementRelation<ArrayOfArrays<localIndex>> OrderedVariableToManyElementRelation;
+typedef ToElementRelation< ArrayOfArrays< localIndex > > OrderedVariableToManyElementRelation;
 
 /**
  * @brief Remove an element relation from an object in the relation.
@@ -128,11 +143,12 @@ typedef ToElementRelation<ArrayOfArrays<localIndex>> OrderedVariableToManyElemen
  * @param esr The element subregion to remove.
  * @param ei The element index to remove.
  */
-void erase(OrderedVariableToManyElementRelation& relation,
-           localIndex const firstIndex,
-           localIndex const er,
-           localIndex const esr,
-           localIndex const ei);
+void
+erase( OrderedVariableToManyElementRelation & relation,
+       localIndex const firstIndex,
+       localIndex const er,
+       localIndex const esr,
+       localIndex const ei );
 
 /**
  * @brief Insert an element relation for an object in the relation.
@@ -143,11 +159,12 @@ void erase(OrderedVariableToManyElementRelation& relation,
  * @param esr The element subregion to insert.
  * @param ei The element index to insert.
  */
-void insert(OrderedVariableToManyElementRelation& relation,
-            localIndex const firstIndex,
-            localIndex const er,
-            localIndex const esr,
-            localIndex const ei);
+void
+insert( OrderedVariableToManyElementRelation & relation,
+        localIndex const firstIndex,
+        localIndex const er,
+        localIndex const esr,
+        localIndex const ei );
 
 } /* namespace geosx */
 

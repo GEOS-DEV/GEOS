@@ -21,16 +21,19 @@
 
 namespace geosx
 {
-void TrilinosInterface::initialize(int& GEOSX_UNUSED_PARAM(argc),
-                                   char**& GEOSX_UNUSED_PARAM(argv))
-{ }
+void
+TrilinosInterface::initialize( int & GEOSX_UNUSED_PARAM( argc ),
+                               char **& GEOSX_UNUSED_PARAM( argv ) )
+{}
 
-void TrilinosInterface::finalize() { }
+void
+TrilinosInterface::finalize()
+{}
 
-std::unique_ptr<PreconditionerBase<TrilinosInterface>>
-TrilinosInterface::createPreconditioner(LinearSolverParameters params)
+std::unique_ptr< PreconditionerBase< TrilinosInterface > >
+TrilinosInterface::createPreconditioner( LinearSolverParameters params )
 {
-  return std::make_unique<TrilinosPreconditioner>(params);
+  return std::make_unique< TrilinosPreconditioner >( params );
 }
 
 }  // namespace geosx

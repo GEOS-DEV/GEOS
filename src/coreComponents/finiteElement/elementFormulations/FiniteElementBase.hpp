@@ -21,13 +21,15 @@ public:
    * @brief Virtual getter for the number of quadrature points per element.
    * @return The number of quadrature points per element.
    */
-  virtual localIndex getNumQuadraturePoints() const = 0;
+  virtual localIndex
+  getNumQuadraturePoints() const = 0;
 
   /**
    * @brief Virtual getter for the number of support points per element.
    * @return The number of support points per element.
    */
-  virtual localIndex getNumSupportPoints() const = 0;
+  virtual localIndex
+  getNumSupportPoints() const = 0;
 
   /**
    * @brief Destructor
@@ -41,25 +43,25 @@ public:
    */
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  static real64 inverse(real64 (&J)[3][3])
+  static real64 inverse( real64 ( &J )[3][3] )
   {
-    real64 const temp[3][3] = {{J[1][1] * J[2][2] - J[1][2] * J[2][1],
-                                J[0][2] * J[2][1] - J[0][1] * J[2][2],
-                                J[0][1] * J[1][2] - J[0][2] * J[1][1]},
-                               {J[1][2] * J[2][0] - J[1][0] * J[2][2],
-                                J[0][0] * J[2][2] - J[0][2] * J[2][0],
-                                J[0][2] * J[1][0] - J[0][0] * J[1][2]},
-                               {J[1][0] * J[2][1] - J[1][1] * J[2][0],
-                                J[0][1] * J[2][0] - J[0][0] * J[2][1],
-                                J[0][0] * J[1][1] - J[0][1] * J[1][0]}};
+    real64 const temp[3][3] = { { J[1][1] * J[2][2] - J[1][2] * J[2][1],
+                                  J[0][2] * J[2][1] - J[0][1] * J[2][2],
+                                  J[0][1] * J[1][2] - J[0][2] * J[1][1] },
+                                { J[1][2] * J[2][0] - J[1][0] * J[2][2],
+                                  J[0][0] * J[2][2] - J[0][2] * J[2][0],
+                                  J[0][2] * J[1][0] - J[0][0] * J[1][2] },
+                                { J[1][0] * J[2][1] - J[1][1] * J[2][0],
+                                  J[0][1] * J[2][0] - J[0][0] * J[2][1],
+                                  J[0][0] * J[1][1] - J[0][1] * J[1][0] } };
 
     real64 const det =
       J[0][0] * temp[0][0] + J[1][0] * temp[0][1] + J[2][0] * temp[0][2];
     real64 const invDet = 1.0 / det;
 
-    for(int i = 0; i < 3; ++i)
+    for( int i = 0; i < 3; ++i )
     {
-      for(int j = 0; j < 3; ++j)
+      for( int j = 0; j < 3; ++j )
       {
         J[i][j] = temp[i][j] * invDet;
       }
@@ -74,11 +76,12 @@ public:
    */
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  static real64 detJ(real64 const (&J)[3][3])
+  static real64
+  detJ( real64 const ( &J )[3][3] )
   {
-    return J[0][0] * (J[1][1] * J[2][2] - J[1][2] * J[2][1]) +
-      J[1][0] * (J[0][2] * J[2][1] - J[0][1] * J[2][2]) +
-      J[2][0] * (J[0][1] * J[1][2] - J[0][2] * J[1][1]);
+    return J[0][0] * ( J[1][1] * J[2][2] - J[1][2] * J[2][1] ) +
+      J[1][0] * ( J[0][2] * J[2][1] - J[0][1] * J[2][2] ) +
+      J[2][0] * ( J[0][1] * J[1][2] - J[0][2] * J[1][1] );
   }
 
   //TODO we want to keep views and provide interfaces to this data here for cases

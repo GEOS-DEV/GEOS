@@ -40,7 +40,7 @@ public:
    *
    * @param[in] parameters structure containing linear solver parameters
    */
-  TrilinosSolver(LinearSolverParameters parameters);
+  TrilinosSolver( LinearSolverParameters parameters );
 
   /**
    * @brief Virtual destructor.
@@ -57,24 +57,31 @@ public:
    *
    * Solve Ax=b with A an EpetraMatrix, x and b EpetraVector.
    */
-  void solve(EpetraMatrix& mat,
-             EpetraVector& sol,
-             EpetraVector& rhs,
-             DofManager const* const dofManager = nullptr);
+  void
+  solve( EpetraMatrix & mat,
+         EpetraVector & sol,
+         EpetraVector & rhs,
+         DofManager const * const dofManager = nullptr );
 
   /**
    * @brief Get the result of previous solve.
    * @return struct with last solve stats
    */
-  LinearSolverResult const& result() { return m_result; }
+  LinearSolverResult const &
+  result()
+  {
+    return m_result;
+  }
 
 private:
   LinearSolverParameters m_parameters;
   LinearSolverResult m_result;
 
-  void solve_direct(EpetraMatrix& mat, EpetraVector& sol, EpetraVector& rhs);
+  void
+  solve_direct( EpetraMatrix & mat, EpetraVector & sol, EpetraVector & rhs );
 
-  void solve_krylov(EpetraMatrix& mat, EpetraVector& sol, EpetraVector& rhs);
+  void
+  solve_krylov( EpetraMatrix & mat, EpetraVector & sol, EpetraVector & rhs );
 };
 
 }  // namespace geosx

@@ -46,7 +46,7 @@ public:
    * @param name the name of the object in the data hierarchy.
    * @param parent a pointer to the parent group in the data hierarchy.
    */
-  EmbeddedSurfaceRegion(string const& name, Group* const parent);
+  EmbeddedSurfaceRegion( string const & name, Group * const parent );
 
   /**
    * @brief Deleted default constructor.
@@ -69,9 +69,14 @@ public:
    * @brief Get the key name for the EmbeddedSurfaceRegion in the object catalog.
    * @return A string containing the key name.
    */
-  static const string CatalogName() { return "EmbeddedSurfaceElementRegion"; }
+  static const string
+  CatalogName()
+  {
+    return "EmbeddedSurfaceElementRegion";
+  }
 
-  virtual const string getCatalogName() const override final
+  virtual const string
+  getCatalogName() const override final
   {
     return EmbeddedSurfaceRegion::CatalogName();
   }

@@ -52,14 +52,20 @@ public:
   /// The number of quadrature points per element.
   constexpr static localIndex numQuadraturePoints = 1;
 
-  virtual ~H1_TriangleFace_Lagrange1_Gauss1() override { }
+  virtual ~H1_TriangleFace_Lagrange1_Gauss1() override
+  {}
 
-  virtual localIndex getNumQuadraturePoints() const override
+  virtual localIndex
+  getNumQuadraturePoints() const override
   {
     return numQuadraturePoints;
   }
 
-  virtual localIndex getNumSupportPoints() const override { return numNodes; }
+  virtual localIndex
+  getNumSupportPoints() const override
+  {
+    return numNodes;
+  }
 
   /**
    * @brief Calculate shape functions values for each support point at a
@@ -69,7 +75,8 @@ public:
    *          point.
    */
   GEOSX_HOST_DEVICE
-  static void shapeFunctionValues(localIndex const q, real64 (&N)[numNodes]);
+  static void
+  shapeFunctionValues( localIndex const q, real64 ( &N )[numNodes] );
 
   /**
    * @brief Calculate the integration weights for a quadrature point.
@@ -79,8 +86,9 @@ public:
    *   the parent/physical transformation matrix.
    */
   GEOSX_HOST_DEVICE
-  static real64 transformedQuadratureWeight(localIndex const q,
-                                            real64 const (&X)[numNodes][3]);
+  static real64
+  transformedQuadratureWeight( localIndex const q,
+                               real64 const ( &X )[numNodes][3] );
 
 private:
   /// The area of the element in the parent configuration.
@@ -92,10 +100,11 @@ private:
 
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-void H1_TriangleFace_Lagrange1_Gauss1::shapeFunctionValues(localIndex const q,
-                                                           real64 (&N)[numNodes])
+void
+H1_TriangleFace_Lagrange1_Gauss1::shapeFunctionValues( localIndex const q,
+                                                       real64 ( &N )[numNodes] )
 {
-  GEOSX_UNUSED_VAR(q);
+  GEOSX_UNUSED_VAR( q );
 
   // single quadrature point (centroid), i.e.  r = s = 1/3
   N[0] = 1.0 / 3.0;  // N0 = 1 - r - s
@@ -107,18 +116,19 @@ void H1_TriangleFace_Lagrange1_Gauss1::shapeFunctionValues(localIndex const q,
 
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-real64 H1_TriangleFace_Lagrange1_Gauss1::transformedQuadratureWeight(
+real64
+H1_TriangleFace_Lagrange1_Gauss1::transformedQuadratureWeight(
   localIndex const q,
-  real64 const (&X)[numNodes][3])
+  real64 const ( &X )[numNodes][3] )
 {
-  GEOSX_UNUSED_VAR(q);
-  real64 n[3] = {(X[1][1] - X[0][1]) * (X[2][2] - X[0][2]) -
-                   (X[2][1] - X[0][1]) * (X[1][2] - X[0][2]),
-                 (X[2][0] - X[0][0]) * (X[1][2] - X[0][2]) -
-                   (X[1][0] - X[0][0]) * (X[2][2] - X[0][2]),
-                 (X[1][0] - X[0][0]) * (X[2][1] - X[0][1]) -
-                   (X[2][0] - X[0][0]) * (X[1][1] - X[0][1])};
-  return sqrt(n[0] * n[0] + n[1] * n[1] + n[2] * n[2]) * weight;
+  GEOSX_UNUSED_VAR( q );
+  real64 n[3] = { ( X[1][1] - X[0][1] ) * ( X[2][2] - X[0][2] ) -
+                    ( X[2][1] - X[0][1] ) * ( X[1][2] - X[0][2] ),
+                  ( X[2][0] - X[0][0] ) * ( X[1][2] - X[0][2] ) -
+                    ( X[1][0] - X[0][0] ) * ( X[2][2] - X[0][2] ),
+                  ( X[1][0] - X[0][0] ) * ( X[2][1] - X[0][1] ) -
+                    ( X[2][0] - X[0][0] ) * ( X[1][1] - X[0][1] ) };
+  return sqrt( n[0] * n[0] + n[1] * n[1] + n[2] * n[2] ) * weight;
 }
 
 }  // namespace finiteElement

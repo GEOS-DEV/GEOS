@@ -31,22 +31,22 @@ namespace geosx
 struct CellElementStencilTPFA_Traits
 {
   /// The array type that will be used to store the indices of the stencil contributors
-  using IndexContainerType = array2d<localIndex>;
+  using IndexContainerType = array2d< localIndex >;
 
   /// The array view type for the stencil indices
-  using IndexContainerViewType = arrayView2d<localIndex>;
+  using IndexContainerViewType = arrayView2d< localIndex >;
 
   /// The array view to const type for the stencil indices
-  using IndexContainerViewConstType = arrayView2d<localIndex const>;
+  using IndexContainerViewConstType = arrayView2d< localIndex const >;
 
   /// The array type that is used to store the weights of the stencil contributors
-  using WeightContainerType = array2d<real64>;
+  using WeightContainerType = array2d< real64 >;
 
   /// The array view type for the stencil weights
-  using WeightContainerViewType = arrayView2d<real64>;
+  using WeightContainerViewType = arrayView2d< real64 >;
 
   /// The array view to const type for the stencil weights
-  using WeightContainerViewConstType = arrayView2d<real64 const>;
+  using WeightContainerViewConstType = arrayView2d< real64 const >;
 
   /// Number of points the flux is between (always 2 for TPFA)
   static constexpr localIndex NUM_POINT_IN_FLUX = 2;
@@ -61,7 +61,7 @@ struct CellElementStencilTPFA_Traits
  * Provides management of the interior stencil points when using Two-Point flux approximation.
  */
 class CellElementStencilTPFA
-  : public StencilBase<CellElementStencilTPFA_Traits, CellElementStencilTPFA>,
+  : public StencilBase< CellElementStencilTPFA_Traits, CellElementStencilTPFA >,
     public CellElementStencilTPFA_Traits
 {
 public:
@@ -70,20 +70,22 @@ public:
    */
   CellElementStencilTPFA();
 
-  virtual void add(localIndex const numPts,
-                   localIndex const* const elementRegionIndices,
-                   localIndex const* const elementSubRegionIndices,
-                   localIndex const* const elementIndices,
-                   real64 const* const weights,
-                   localIndex const connectorIndex) override final;
+  virtual void
+  add( localIndex const numPts,
+       localIndex const * const elementRegionIndices,
+       localIndex const * const elementSubRegionIndices,
+       localIndex const * const elementIndices,
+       real64 const * const weights,
+       localIndex const connectorIndex ) override final;
 
   /**
    * @brief Return the stencil size.
    * @return the stencil size
    */
-  virtual localIndex size() const override final
+  virtual localIndex
+  size() const override final
   {
-    return m_elementRegionIndices.size(0);
+    return m_elementRegionIndices.size( 0 );
   }
 
   /**
@@ -91,9 +93,10 @@ public:
    * @param[in] index of the stencil entry for which to query the size
    * @return the size of a stencil entry
    */
-  constexpr localIndex stencilSize(localIndex index) const
+  constexpr localIndex
+  stencilSize( localIndex index ) const
   {
-    GEOSX_UNUSED_VAR(index);
+    GEOSX_UNUSED_VAR( index );
     return MAX_STENCIL_SIZE;
   }
 };

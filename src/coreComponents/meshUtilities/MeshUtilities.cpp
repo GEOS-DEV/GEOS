@@ -38,28 +38,29 @@ MeshUtilities::~MeshUtilities()
   // TODO Auto-generated destructor stub
 }
 
-void MeshUtilities::GenerateNodesets(dataRepository::Group const* geometries,
-                                     NodeManager* const nodeManager)
+void
+MeshUtilities::GenerateNodesets( dataRepository::Group const * geometries,
+                                 NodeManager * const nodeManager )
 {
-  arrayView2d<real64 const, nodes::REFERENCE_POSITION_USD> const& X =
+  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X =
     nodeManager->referencePosition();
   localIndex const numNodes = nodeManager->size();
-  Group& sets = nodeManager->sets();
+  Group & sets = nodeManager->sets();
 
-  for(int i = 0; i < geometries->GetSubGroups().size(); ++i)
+  for( int i = 0; i < geometries->GetSubGroups().size(); ++i )
   {
-    SimpleGeometricObjectBase const* const object =
-      geometries->GetGroup<SimpleGeometricObjectBase>(i);
-    if(object != nullptr)
+    SimpleGeometricObjectBase const * const object =
+      geometries->GetGroup< SimpleGeometricObjectBase >( i );
+    if( object != nullptr )
     {
       string name = object->getName();
-      SortedArray<localIndex>& targetSet =
-        sets.registerWrapper<SortedArray<localIndex>>(name)->reference();
-      for(localIndex a = 0; a < numNodes; ++a)
+      SortedArray< localIndex > & targetSet =
+        sets.registerWrapper< SortedArray< localIndex > >( name )->reference();
+      for( localIndex a = 0; a < numNodes; ++a )
       {
-        if(object->IsCoordInObject(X[a]))
+        if( object->IsCoordInObject( X[a] ) )
         {
-          targetSet.insert(a);
+          targetSet.insert( a );
         }
       }
     }

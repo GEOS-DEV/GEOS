@@ -40,13 +40,18 @@ public:
    * @brief Return the name of the aggregate element sub-region in the object catalog.
    * @return string that contains the AggregateElementSubRegion catalog name
    */
-  static const string CatalogName() { return "AggregateCell"; }
+  static const string
+  CatalogName()
+  {
+    return "AggregateCell";
+  }
 
   /**
    * @brief Provide a virtual access to CatalogName().
    * @return string that contains the AggregateElementSubRegion catalog name
    */
-  virtual const string getCatalogName() const override
+  virtual const string
+  getCatalogName() const override
   {
     return AggregateElementSubRegion::CatalogName();
   }
@@ -58,14 +63,15 @@ public:
    * @param[in] aggregateIndex index of the aggregate
    * @param[in,out] lambda all the fine cells in the aggregate
    */
-  template <typename LAMBDA>
-  void forFineCellsInAggregate(localIndex aggregateIndex, LAMBDA lambda)
+  template< typename LAMBDA >
+  void
+  forFineCellsInAggregate( localIndex aggregateIndex, LAMBDA lambda )
   {
-    for(localIndex fineCell = m_nbFineCellsPerCoarseCell[aggregateIndex];
-        fineCell < m_nbFineCellsPerCoarseCell[aggregateIndex + 1];
-        fineCell++)
+    for( localIndex fineCell = m_nbFineCellsPerCoarseCell[aggregateIndex];
+         fineCell < m_nbFineCellsPerCoarseCell[aggregateIndex + 1];
+         fineCell++ )
     {
-      lambda(m_fineToCoarse[fineCell]);
+      lambda( m_fineToCoarse[fineCell] );
     }
   }
 
@@ -74,7 +80,8 @@ public:
    * @param[in] aggregateIndex index of the aggregate coarse cell
    * @return the number of fine cell in the aggregate
    */
-  localIndex GetNbCellsPerAggregate(localIndex aggregateIndex) const
+  localIndex
+  GetNbCellsPerAggregate( localIndex aggregateIndex ) const
   {
     return m_nbFineCellsPerCoarseCell[aggregateIndex + 1] -
       m_nbFineCellsPerCoarseCell[aggregateIndex];
@@ -90,8 +97,8 @@ public:
    * @param[in] name the name of this object manager
    * @param[in] parent the parent Group
    */
-  AggregateElementSubRegion(string const& name,
-                            dataRepository::Group* const parent);
+  AggregateElementSubRegion( string const & name,
+                             dataRepository::Group * const parent );
   /**
    * @brief Destructor.
    */
@@ -104,28 +111,35 @@ public:
    * @param[in] fineToCoarse index array of fine cells to be aggregated to form coarse cells
    * @param[in] barycenters coordinates of the elements center
    */
-  void CreateFromFineToCoarseMap(localIndex nbAggregates,
-                                 array1d<localIndex> const& fineToCoarse,
-                                 array1d<R1Tensor> const& barycenters);
+  void
+  CreateFromFineToCoarseMap( localIndex nbAggregates,
+                             array1d< localIndex > const & fineToCoarse,
+                             array1d< R1Tensor > const & barycenters );
 
   /**
    * @brief Accessor to the relation array between fine and coarse elements.
    * @return the relation array between fine and coarse elements ordered by aggregates
    */
-  const array1d<localIndex>& GetFineToCoarseMap() { return m_fineToCoarse; }
-
-  virtual void CalculateElementGeometricQuantities(
-    NodeManager const& nodeManager,
-    FaceManager const& faceManager) override
+  const array1d< localIndex > &
+  GetFineToCoarseMap()
   {
-    GEOSX_UNUSED_VAR(nodeManager);
-    GEOSX_UNUSED_VAR(faceManager);
+    return m_fineToCoarse;
+  }
+
+  virtual void
+  CalculateElementGeometricQuantities(
+    NodeManager const & nodeManager,
+    FaceManager const & faceManager ) override
+  {
+    GEOSX_UNUSED_VAR( nodeManager );
+    GEOSX_UNUSED_VAR( faceManager );
     //TODO ?
   }
 
-  virtual void setupRelatedObjectsInRelations(MeshLevel const* const mesh) override
+  virtual void
+  setupRelatedObjectsInRelations( MeshLevel const * const mesh ) override
   {
-    GEOSX_UNUSED_VAR(mesh);
+    GEOSX_UNUSED_VAR( mesh );
     //TODO ?
   }
 
@@ -152,10 +166,10 @@ private:
   NodeMapType m_toNodesRelation;
 
   /// Relation between fine and coarse elements ordered by aggregates
-  array1d<localIndex> m_fineToCoarse;
+  array1d< localIndex > m_fineToCoarse;
 
   /// Number of fine cells per aggregate
-  array1d<localIndex> m_nbFineCellsPerCoarseCell;
+  array1d< localIndex > m_nbFineCellsPerCoarseCell;
 };
 }  // namespace geosx
 

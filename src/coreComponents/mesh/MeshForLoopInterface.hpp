@@ -36,18 +36,19 @@ namespace geosx
  * @param mesh The geosx::MeshLevel that will have all of its elements processed by this function.
  * @param lambda The type of lambda function to execute for each element.
  */
-template <class POLICY = serialPolicy, typename LAMBDA = void>
-void forAllElemsInMesh(MeshLevel const *const mesh, LAMBDA &&lambda)
+template< class POLICY = serialPolicy, typename LAMBDA = void >
+void
+forAllElemsInMesh( MeshLevel const * const mesh, LAMBDA && lambda )
 {
-  ElementRegionManager const *const elemManager = mesh->getElemManager();
-  elemManager->forElementSubRegionsComplete<ElementSubRegionBase>(
-    [&](localIndex const er,
-        localIndex const esr,
-        ElementRegionBase const &,
-        ElementSubRegionBase const &subRegion) {
-      forAll<POLICY>(subRegion.size(),
-                     [&](localIndex const k) { lambda(er, esr, k); });
-    });
+  ElementRegionManager const * const elemManager = mesh->getElemManager();
+  elemManager->forElementSubRegionsComplete< ElementSubRegionBase >(
+    [&]( localIndex const er,
+         localIndex const esr,
+         ElementRegionBase const &,
+         ElementSubRegionBase const & subRegion ) {
+      forAll< POLICY >( subRegion.size(),
+                        [&]( localIndex const k ) { lambda( er, esr, k ); } );
+    } );
 }
 
 /**
@@ -56,27 +57,28 @@ void forAllElemsInMesh(MeshLevel const *const mesh, LAMBDA &&lambda)
  * @param mesh The geosx::MeshLevel that will have all of its elements processed by this function.
  * @param lambda  A lambda function that returns as value that will be used in the minimum comparison.
  */
-template <typename LAMBDA>
-auto minLocOverElemsInMesh(MeshLevel const *const mesh, LAMBDA &&lambda)
+template< typename LAMBDA >
+auto
+minLocOverElemsInMesh( MeshLevel const * const mesh, LAMBDA && lambda )
 {
-  using NUMBER = decltype(lambda(0, 0, 0));
+  using NUMBER = decltype( lambda( 0, 0, 0 ) );
 
-  NUMBER minVal = std::numeric_limits<NUMBER>::max();
+  NUMBER minVal = std::numeric_limits< NUMBER >::max();
   localIndex minReg = -1, minSubreg = -1, minIndex = -1;
 
-  ElementRegionManager const *const elemManager = mesh->getElemManager();
+  ElementRegionManager const * const elemManager = mesh->getElemManager();
 
-  for(localIndex er = 0; er < elemManager->numRegions(); ++er)
+  for( localIndex er = 0; er < elemManager->numRegions(); ++er )
   {
-    ElementRegionBase const *const elemRegion = elemManager->GetRegion(er);
+    ElementRegionBase const * const elemRegion = elemManager->GetRegion( er );
 
-    elemRegion->forElementSubRegionsIndex<CellElementSubRegion>(
-      [&](localIndex const esr, CellElementSubRegion const &subRegion) {
+    elemRegion->forElementSubRegionsIndex< CellElementSubRegion >(
+      [&]( localIndex const esr, CellElementSubRegion const & subRegion ) {
         localIndex const size = subRegion.size();
-        for(localIndex k = 0; k < size; ++k)
+        for( localIndex k = 0; k < size; ++k )
         {
-          NUMBER const val = lambda(er, esr, k);
-          if(val < minVal)
+          NUMBER const val = lambda( er, esr, k );
+          if( val < minVal )
           {
             minVal = val;
             minReg = er;
@@ -84,10 +86,10 @@ auto minLocOverElemsInMesh(MeshLevel const *const mesh, LAMBDA &&lambda)
             minIndex = k;
           }
         }
-      });
+      } );
   }
 
-  return std::make_pair(minVal, std::make_tuple(minReg, minSubreg, minIndex));
+  return std::make_pair( minVal, std::make_tuple( minReg, minSubreg, minIndex ) );
 }
 
 }  // namespace geosx

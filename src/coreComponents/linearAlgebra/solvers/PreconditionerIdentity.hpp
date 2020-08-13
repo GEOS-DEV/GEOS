@@ -24,12 +24,12 @@ namespace geosx
  * @brief Common interface for identity preconditioning operator
  * @tparam LAI linear algebra interface providing vectors, matrices and solvers
  */
-template <typename LAI>
-class PreconditionerIdentity : public PreconditionerBase<LAI>
+template< typename LAI >
+class PreconditionerIdentity : public PreconditionerBase< LAI >
 {
 public:
   /// Alias for base type
-  using Base = PreconditionerBase<LAI>;
+  using Base = PreconditionerBase< LAI >;
 
   /// Alias for vector type
   using Vector = typename Base::Vector;
@@ -45,11 +45,12 @@ public:
    * @param src Input vector (src).
    * @param dst Output vector (dst).
    */
-  virtual void apply(Vector const& src, Vector& dst) const override
+  virtual void
+  apply( Vector const & src, Vector & dst ) const override
   {
-    GEOSX_LAI_ASSERT_EQ(this->numGlobalRows(), dst.globalSize());
-    GEOSX_LAI_ASSERT_EQ(this->numGlobalCols(), src.globalSize());
-    dst.copy(src);
+    GEOSX_LAI_ASSERT_EQ( this->numGlobalRows(), dst.globalSize() );
+    GEOSX_LAI_ASSERT_EQ( this->numGlobalCols(), src.globalSize() );
+    dst.copy( src );
   }
 };
 

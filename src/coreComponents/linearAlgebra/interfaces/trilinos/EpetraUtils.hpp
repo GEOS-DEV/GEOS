@@ -27,9 +27,10 @@ namespace geosx
  * @param[in] index the input array
  * @return the converted array
  */
-inline long long* toEpetraLongLong(globalIndex* const index)
+inline long long *
+toEpetraLongLong( globalIndex * const index )
 {
-  return reinterpret_cast<long long*>(index);
+  return reinterpret_cast< long long * >( index );
 }
 
 /**
@@ -37,9 +38,10 @@ inline long long* toEpetraLongLong(globalIndex* const index)
  * @param[in] index the input array
  * @return the converted array
  */
-inline long long const* toEpetraLongLong(globalIndex const* const index)
+inline long long const *
+toEpetraLongLong( globalIndex const * const index )
 {
-  return reinterpret_cast<long long const*>(index);
+  return reinterpret_cast< long long const * >( index );
 }
 
 }  // namespace geosx

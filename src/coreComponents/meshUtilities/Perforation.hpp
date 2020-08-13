@@ -49,7 +49,7 @@ public:
    * @param[in] name the name of this instantiation of Perforation in the repository
    * @param[in] parent the parent group of this instantiation of Perforation
    */
-  explicit Perforation(string const& name, dataRepository::Group* const parent);
+  explicit Perforation( string const & name, dataRepository::Group * const parent );
 
   /**
    * @brief Default destructor.
@@ -64,24 +64,26 @@ public:
   /**
    * @brief Deleted copy constructor.
    */
-  Perforation(Perforation const&) = delete;
+  Perforation( Perforation const & ) = delete;
 
   /**
    * @brief Deleted move constructor.
    */
-  Perforation(Perforation&&) = delete;
+  Perforation( Perforation && ) = delete;
 
   /**
    * @brief Deleted assignment operator.
    * @return a reference to a perforation object
    */
-  Perforation& operator=(Perforation const&) = delete;
+  Perforation &
+  operator=( Perforation const & ) = delete;
 
   /**
    * @brief Deleted move operator.
    * @return a reference to a perforation object
    */
-  Perforation& operator=(Perforation&&) = delete;
+  Perforation &
+  operator=( Perforation && ) = delete;
 
   ///@}
 
@@ -94,13 +96,21 @@ public:
    * @brief Get the linear distance between the well head and the perforation.
    * @return the distance between the well head and the perforation
    */
-  real64 const& GetDistanceFromWellHead() const { return m_distanceFromHead; }
+  real64 const &
+  GetDistanceFromWellHead() const
+  {
+    return m_distanceFromHead;
+  }
 
   /**
    * @brief Get the well Peaceman index at the perforation.
    * @return the well transmissibility
    */
-  real64 GetWellTransmissibility() const { return m_wellTransmissibility; }
+  real64
+  GetWellTransmissibility() const
+  {
+    return m_wellTransmissibility;
+  }
 
   ///@}
 
@@ -115,15 +125,16 @@ public:
     /// String key for the well transmissibility at this perforation
     static constexpr auto wellTransmissibilityString = "transmissibility";
     /// ViewKey for the linear distance from well head
-    dataRepository::ViewKey distanceFromHead = {distanceFromHeadString};
+    dataRepository::ViewKey distanceFromHead = { distanceFromHeadString };
     /// ViewKey for the well transmissibility at this perforation
-    dataRepository::ViewKey wellTransmissibility = {wellTransmissibilityString};
+    dataRepository::ViewKey wellTransmissibility = { wellTransmissibilityString };
   }
   /// ViewKey struct for the Perforation class
   viewKeysPerforation;
 
 protected:
-  void PostProcessInput() override;
+  void
+  PostProcessInput() override;
 
 private:
   /// Linear distance from well head

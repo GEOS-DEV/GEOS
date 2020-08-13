@@ -30,24 +30,31 @@ class FlowSolverBase;
 class FlowProppantTransportSolver : public SolverBase
 {
 public:
-  FlowProppantTransportSolver(const std::string& name, Group* const parent);
+  FlowProppantTransportSolver( const std::string & name, Group * const parent );
   ~FlowProppantTransportSolver() override;
 
   /**
    * @brief name of the node manager in the object catalog
    * @return string that contains the catalog name to generate a new NodeManager object through the object catalog.
    */
-  static string CatalogName() { return "FlowProppantTransport"; }
+  static string
+  CatalogName()
+  {
+    return "FlowProppantTransport";
+  }
 
-  virtual void RegisterDataOnMesh(
-    dataRepository::Group* const MeshBodies) override final;
+  virtual void
+  RegisterDataOnMesh(
+    dataRepository::Group * const MeshBodies ) override final;
 
-  virtual real64 SolverStep(real64 const& time_n,
-                            real64 const& dt,
-                            int const cycleNumber,
-                            DomainPartition& domain) override;
+  virtual real64
+  SolverStep( real64 const & time_n,
+              real64 const & dt,
+              int const cycleNumber,
+              DomainPartition & domain ) override;
 
-  virtual void ResetStateToBeginningOfStep(DomainPartition& domain) override;
+  virtual void
+  ResetStateToBeginningOfStep( DomainPartition & domain ) override;
 
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
@@ -56,23 +63,26 @@ public:
 
   } flowProppantTransportSolverViewKeys;
 
-  void PreStepUpdate(real64 const& time_n,
-                     real64 const& dt,
-                     DomainPartition& domain);
+  void
+  PreStepUpdate( real64 const & time_n,
+                 real64 const & dt,
+                 DomainPartition & domain );
 
-  void PostStepUpdate(real64 const& time_n,
-                      real64 const& dt,
-                      DomainPartition& domain);
+  void
+  PostStepUpdate( real64 const & time_n,
+                  real64 const & dt,
+                  DomainPartition & domain );
 
 protected:
-  virtual void PostProcessInput() override final;
+  virtual void
+  PostProcessInput() override final;
 
 private:
   string m_proppantSolverName;
   string m_flowSolverName;
 
-  FlowSolverBase* m_flowSolver;
-  ProppantTransport* m_proppantSolver;
+  FlowSolverBase * m_flowSolver;
+  ProppantTransport * m_proppantSolver;
 };
 
 } /* namespace geosx */

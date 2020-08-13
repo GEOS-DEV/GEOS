@@ -32,32 +32,32 @@ namespace geosx
  * The sub-blocks themselves must be stored elsewhere.
  * Therefore, it's an easy way to assemble a block vector representation from pre-existing blocks.
  */
-template <typename VECTOR>
-class BlockVectorWrapper : public BlockVectorView<VECTOR>
+template< typename VECTOR >
+class BlockVectorWrapper : public BlockVectorView< VECTOR >
 {
 public:
   /// Alias for base type
-  using Base = BlockVectorView<VECTOR>;
+  using Base = BlockVectorView< VECTOR >;
 
   /**
    * @brief Create a vector wrapper of @p nBlocks blocks.
    * @param nBlocks number of blocks
    */
-  explicit BlockVectorWrapper(localIndex const nBlocks)
-    : BlockVectorView<VECTOR>(nBlocks)
-  { }
+  explicit BlockVectorWrapper( localIndex const nBlocks ) :
+    BlockVectorView< VECTOR >( nBlocks )
+  {}
 
   /**
    * @brief Deleted copy constructor.
    * @param rhs the block vector to copy
    */
-  BlockVectorWrapper(BlockVectorWrapper<VECTOR> const& rhs) = default;
+  BlockVectorWrapper( BlockVectorWrapper< VECTOR > const & rhs ) = default;
 
   /**
    * @brief Deleted move constructor.
    * @param rhs the block vector to move from
    */
-  BlockVectorWrapper(BlockVectorWrapper<VECTOR>&& rhs) = default;
+  BlockVectorWrapper( BlockVectorWrapper< VECTOR > && rhs ) = default;
 
   /**
    * @brief Destructor.
@@ -69,11 +69,12 @@ public:
    * @param blockIndex index of the block
    * @param vec        target vector (must not go out of scope before the wrapper object)
    */
-  void set(localIndex const blockIndex, VECTOR& vec)
+  void
+  set( localIndex const blockIndex, VECTOR & vec )
   {
-    GEOSX_LAI_ASSERT_GE(blockIndex, 0);
-    GEOSX_LAI_ASSERT_GT(this->blockSize(), blockIndex);
-    this->setPointer(blockIndex, &vec);
+    GEOSX_LAI_ASSERT_GE( blockIndex, 0 );
+    GEOSX_LAI_ASSERT_GT( this->blockSize(), blockIndex );
+    this->setPointer( blockIndex, &vec );
   }
 };
 

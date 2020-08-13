@@ -43,23 +43,36 @@ public:
   LinearSolverParametersInput() = delete;
 
   /// Constructor
-  LinearSolverParametersInput(std::string const& name, Group* const parent);
+  LinearSolverParametersInput( std::string const & name, Group * const parent );
 
   /// Copy constructor
-  LinearSolverParametersInput(LinearSolverParametersInput&&) = default;
+  LinearSolverParametersInput( LinearSolverParametersInput && ) = default;
 
   /// Destructor
   virtual ~LinearSolverParametersInput() override = default;
 
   /// Catalog name
-  static string CatalogName() { return "LinearSolverParameters"; }
+  static string
+  CatalogName()
+  {
+    return "LinearSolverParameters";
+  }
 
   /// Postprocessing of input
-  virtual void PostProcessInput() override;
+  virtual void
+  PostProcessInput() override;
 
-  LinearSolverParameters const& get() const { return m_parameters; }
+  LinearSolverParameters const &
+  get() const
+  {
+    return m_parameters;
+  }
 
-  LinearSolverParameters& get() { return m_parameters; }
+  LinearSolverParameters &
+  get()
+  {
+    return m_parameters;
+  }
 
   /// Keys appearing in XML
   struct viewKeyStruct
@@ -71,7 +84,7 @@ public:
     static constexpr auto krylovMaxIterString =
       "krylovMaxIter";  ///< Krylov max iterations key
     static constexpr auto krylovMaxRestartString =
-      "krylovMaxRestart";  ///< Krylov max iterations key
+      "krylovMaxRestart";                                 ///< Krylov max iterations key
     static constexpr auto krylovTolString = "krylovTol";  ///< Krylov tolerance key
     static constexpr auto krylovAdaptiveTolString =
       "krylovAdaptiveTol";  ///< Krylov adaptive tolerance key

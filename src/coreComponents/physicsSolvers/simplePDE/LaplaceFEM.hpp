@@ -37,13 +37,18 @@ class LaplaceFEM : public SolverBase
 public:
   LaplaceFEM() = delete;
 
-  LaplaceFEM(const std::string& name, Group* const parent);
+  LaplaceFEM( const std::string & name, Group * const parent );
 
   virtual ~LaplaceFEM() override;
 
-  static string CatalogName() { return "LaplaceFEM"; }
+  static string
+  CatalogName()
+  {
+    return "LaplaceFEM";
+  }
 
-  virtual void RegisterDataOnMesh(Group* const MeshBodies) override final;
+  virtual void
+  RegisterDataOnMesh( Group * const MeshBodies ) override final;
 
   //END_SPHINX_INCLUDE_02
   /**
@@ -54,67 +59,78 @@ public:
   /**@{*/
 
   //START_SPHINX_INCLUDE_03
-  virtual real64 SolverStep(real64 const& time_n,
-                            real64 const& dt,
-                            integer const cycleNumber,
-                            DomainPartition& domain) override;
+  virtual real64
+  SolverStep( real64 const & time_n,
+              real64 const & dt,
+              integer const cycleNumber,
+              DomainPartition & domain ) override;
 
-  virtual void ImplicitStepSetup(real64 const& time_n,
-                                 real64 const& dt,
-                                 DomainPartition& domain) override;
+  virtual void
+  ImplicitStepSetup( real64 const & time_n,
+                     real64 const & dt,
+                     DomainPartition & domain ) override;
 
-  virtual void SetupDofs(DomainPartition const& domain,
-                         DofManager& dofManager) const override;
+  virtual void
+  SetupDofs( DomainPartition const & domain,
+             DofManager & dofManager ) const override;
 
-  virtual void SetupSystem(DomainPartition& domain,
-                           DofManager& dofManager,
-                           CRSMatrix<real64, globalIndex>& localMatrix,
-                           array1d<real64>& localRhs,
-                           array1d<real64>& localSolution,
-                           bool const setSparsity = false) override;
+  virtual void
+  SetupSystem( DomainPartition & domain,
+               DofManager & dofManager,
+               CRSMatrix< real64, globalIndex > & localMatrix,
+               array1d< real64 > & localRhs,
+               array1d< real64 > & localSolution,
+               bool const setSparsity = false ) override;
 
-  virtual void AssembleSystem(
+  virtual void
+  AssembleSystem(
     real64 const time,
     real64 const dt,
-    DomainPartition& domain,
-    DofManager const& dofManager,
-    CRSMatrixView<real64, globalIndex const> const& localMatrix,
-    arrayView1d<real64> const& localRhs) override;
+    DomainPartition & domain,
+    DofManager const & dofManager,
+    CRSMatrixView< real64, globalIndex const > const & localMatrix,
+    arrayView1d< real64 > const & localRhs ) override;
 
-  virtual void ApplyBoundaryConditions(
+  virtual void
+  ApplyBoundaryConditions(
     real64 const time,
     real64 const dt,
-    DomainPartition& domain,
-    DofManager const& dofManager,
-    CRSMatrixView<real64, globalIndex const> const& localMatrix,
-    arrayView1d<real64> const& localRhs) override;
+    DomainPartition & domain,
+    DofManager const & dofManager,
+    CRSMatrixView< real64, globalIndex const > const & localMatrix,
+    arrayView1d< real64 > const & localRhs ) override;
 
-  virtual void SolveSystem(DofManager const& dofManager,
-                           ParallelMatrix& matrix,
-                           ParallelVector& rhs,
-                           ParallelVector& solution) override;
+  virtual void
+  SolveSystem( DofManager const & dofManager,
+               ParallelMatrix & matrix,
+               ParallelVector & rhs,
+               ParallelVector & solution ) override;
 
-  virtual void ApplySystemSolution(DofManager const& dofManager,
-                                   arrayView1d<real64 const> const& localSolution,
-                                   real64 const scalingFactor,
-                                   DomainPartition& domain) override;
+  virtual void
+  ApplySystemSolution( DofManager const & dofManager,
+                       arrayView1d< real64 const > const & localSolution,
+                       real64 const scalingFactor,
+                       DomainPartition & domain ) override;
 
-  virtual void ResetStateToBeginningOfStep(
-    DomainPartition& GEOSX_UNUSED_PARAM(domain)) override;
+  virtual void
+  ResetStateToBeginningOfStep(
+    DomainPartition & GEOSX_UNUSED_PARAM( domain ) ) override;
 
-  virtual void ImplicitStepComplete(real64 const& time,
-                                    real64 const& dt,
-                                    DomainPartition& domain) override;
+  virtual void
+  ImplicitStepComplete( real64 const & time,
+                        real64 const & dt,
+                        DomainPartition & domain ) override;
 
   //END_SPHINX_INCLUDE_03
   /**@}*/
 
-  void ApplyDirichletBC_implicit(
+  void
+  ApplyDirichletBC_implicit(
     real64 const time,
-    DofManager const& dofManager,
-    DomainPartition& domain,
-    CRSMatrixView<real64, globalIndex const> const& localMatrix,
-    arrayView1d<real64> const& localRhs);
+    DofManager const & dofManager,
+    DomainPartition & domain,
+    CRSMatrixView< real64, globalIndex const > const & localMatrix,
+    arrayView1d< real64 > const & localRhs );
 
   //START_SPHINX_INCLUDE_01
   enum class timeIntegrationOption
@@ -128,14 +144,15 @@ public:
   //START_SPHINX_INCLUDE_04
   struct viewKeyStruct : public SolverBase::viewKeyStruct
   {
-    dataRepository::ViewKey timeIntegrationOption = {"timeIntegrationOption"};
-    dataRepository::ViewKey fieldVarName = {"fieldName"};
+    dataRepository::ViewKey timeIntegrationOption = { "timeIntegrationOption" };
+    dataRepository::ViewKey fieldVarName = { "fieldName" };
 
   } laplaceFEMViewKeys;
   //END_SPHINX_INCLUDE_04
 
 protected:
-  virtual void PostProcessInput() override final;
+  virtual void
+  PostProcessInput() override final;
 
 private:
   string m_fieldName;

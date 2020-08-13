@@ -36,24 +36,28 @@ namespace stringutilities
 {
 /// Overloaded function to check equality between strings and char arrays
 /// Mainly used to avoid char*==char* mistakes
-inline bool streq(std::string const& strA, std::string const& strB)
+inline bool
+streq( std::string const & strA, std::string const & strB )
 {
   return strA == strB;
 }
 
-inline bool streq(std::string const& strA, char const* const strB)
+inline bool
+streq( std::string const & strA, char const * const strB )
 {
   return strA == strB;
 }
 
-inline bool streq(char const* const strA, std::string const& strB)
+inline bool
+streq( char const * const strA, std::string const & strB )
 {
   return strA == strB;
 }
 
-inline bool streq(char const* const strA, char const* const strB)
+inline bool
+streq( char const * const strA, char const * const strB )
 {
-  return !strcmp(strA, strB);
+  return !strcmp( strA, strB );
 }
 
 /**
@@ -65,15 +69,16 @@ inline bool streq(char const* const strA, char const* const strB)
  * @param last  iterator past-the-end of the range
  * @return a new string containing input strings concatenated with a delimiter
  */
-template <typename IT, typename S = char>
-std::string strjoin(IT first, IT last, S const& delim = S())
+template< typename IT, typename S = char >
+std::string
+strjoin( IT first, IT last, S const & delim = S() )
 {
   std::ostringstream oss;
-  if(first != last)
+  if( first != last )
   {
     oss << *first;
   }
-  while(++first != last)
+  while( ++first != last )
   {
     oss << delim << *first;
   }
@@ -81,17 +86,20 @@ std::string strjoin(IT first, IT last, S const& delim = S())
 }
 
 /// Subdivide string by delimiters
-string_array Tokenize(std::string const& str, std::string const& delimiters);
+string_array
+Tokenize( std::string const & str, std::string const & delimiters );
 
 /**
  * @brief Retuns a string containing a padded value
  * @param[in] value to be padded
  * @param[in] size size of the padding
  */
-template <typename T> string PadValue(T value, int size)
+template< typename T >
+string
+PadValue( T value, int size )
 {
   std::stringstream paddedStringStream;
-  paddedStringStream << std::setfill('0') << std::setw(size) << value;
+  paddedStringStream << std::setfill( '0' ) << std::setw( size ) << value;
   return paddedStringStream.str();
 }
 }  // namespace stringutilities

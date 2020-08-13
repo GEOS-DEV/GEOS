@@ -49,27 +49,33 @@ public:
    * alias to define the catalog type for this base type
    */
   using CatalogInterface =
-    dataRepository::CatalogInterface<FieldSpecificationBase,
-                                     string const &,
-                                     dataRepository::Group *const>;
+    dataRepository::CatalogInterface< FieldSpecificationBase,
+                                      string const &,
+                                      dataRepository::Group * const >;
 
   /**
    * @brief static function to return static catalog.
    * @return the static catalog to create derived types through the static factory methods.
    */
-  static CatalogInterface::CatalogType &GetCatalog();
+  static CatalogInterface::CatalogType &
+  GetCatalog();
 
   /**
    * @brief Static Factory Catalog Functions
    * @return the catalog name
    */
-  static string CatalogName() { return "FieldSpecification"; }
+  static string
+  CatalogName()
+  {
+    return "FieldSpecification";
+  }
 
   /**
    * @brief return the catalog name
    * @return the catalog name
    */
-  virtual const string getCatalogName() const
+  virtual const string
+  getCatalogName() const
   {
     return FieldSpecificationBase::CatalogName();
   }
@@ -83,7 +89,7 @@ public:
    * @param name the name of the FieldSpecificationBase in the data repository
    * @param parent the parent group of this group.
    */
-  FieldSpecificationBase(string const &name, dataRepository::Group *parent);
+  FieldSpecificationBase( string const & name, dataRepository::Group * parent );
 
   /**
    * destructor
@@ -100,11 +106,12 @@ public:
    *
    * This function applies the value to a field variable.
    */
-  template <typename FIELD_OP, typename POLICY, typename T, int N, int USD>
-  void ApplyFieldValueKernel(ArrayView<T, N, USD> const &field,
-                             SortedArrayView<localIndex const> const &targetSet,
-                             real64 const time,
-                             Group *dataGroup) const;
+  template< typename FIELD_OP, typename POLICY, typename T, int N, int USD >
+  void
+  ApplyFieldValueKernel( ArrayView< T, N, USD > const & field,
+                         SortedArrayView< localIndex const > const & targetSet,
+                         real64 const time,
+                         Group * dataGroup ) const;
 
   /**
    * @tparam FIELD_OP type that contains static functions to apply the value to the field
@@ -117,11 +124,12 @@ public:
    * This function applies the value to a field variable. This function is typically
    * called from within the lambda to a call to FieldSpecificationManager::ApplyFieldValue().
    */
-  template <typename FIELD_OP, typename POLICY = parallelHostPolicy>
-  void ApplyFieldValue(SortedArrayView<localIndex const> const &targetSet,
-                       real64 const time,
-                       dataRepository::Group *dataGroup,
-                       string const &fieldname) const;
+  template< typename FIELD_OP, typename POLICY = parallelHostPolicy >
+  void
+  ApplyFieldValue( SortedArrayView< localIndex const > const & targetSet,
+                   real64 const time,
+                   dataRepository::Group * dataGroup,
+                   string const & fieldname ) const;
 
   /**
    * @brief Function to apply a boundary condition to a system of equations
@@ -142,16 +150,17 @@ public:
    * typically called from within the lambda to a call to
    * BoundaryConditionManager::ApplyBoundaryCondition().
    */
-  template <typename FIELD_OP, typename LAI>
-  void ApplyBoundaryConditionToSystem(
-    SortedArrayView<localIndex const> const &targetSet,
+  template< typename FIELD_OP, typename LAI >
+  void
+  ApplyBoundaryConditionToSystem(
+    SortedArrayView< localIndex const > const & targetSet,
     real64 const time,
-    dataRepository::Group const *const dataGroup,
-    string const &fieldName,
-    string const &dofMapName,
-    integer const &dofDim,
-    typename LAI::ParallelMatrix &matrix,
-    typename LAI::ParallelVector &rhs) const;
+    dataRepository::Group const * const dataGroup,
+    string const & fieldName,
+    string const & dofMapName,
+    integer const & dofDim,
+    typename LAI::ParallelMatrix & matrix,
+    typename LAI::ParallelVector & rhs ) const;
 
   /**
    * @brief Function to apply a boundary condition to a system of equations
@@ -176,16 +185,17 @@ public:
    * typically called from within the lambda to a call to
    * BoundaryConditionManager::ApplyBoundaryCondition().
    */
-  template <typename FIELD_OP, typename LAI, typename LAMBDA>
-  void ApplyBoundaryConditionToSystem(
-    SortedArrayView<localIndex const> const &targetSet,
+  template< typename FIELD_OP, typename LAI, typename LAMBDA >
+  void
+  ApplyBoundaryConditionToSystem(
+    SortedArrayView< localIndex const > const & targetSet,
     real64 const time,
-    dataRepository::Group const *const dataGroup,
-    arrayView1d<globalIndex const> const &dofMap,
-    integer const &dofDim,
-    typename LAI::ParallelMatrix &matrix,
-    typename LAI::ParallelVector &rhs,
-    LAMBDA &&lambda) const;
+    dataRepository::Group const * const dataGroup,
+    arrayView1d< globalIndex const > const & dofMap,
+    integer const & dofDim,
+    typename LAI::ParallelMatrix & matrix,
+    typename LAI::ParallelVector & rhs,
+    LAMBDA && lambda ) const;
 
   /**
    * @brief Function to apply a boundary condition to a system of equations
@@ -211,17 +221,18 @@ public:
    * typically called from within the lambda to a call to
    * BoundaryConditionManager::ApplyBoundaryCondition().
    */
-  template <typename FIELD_OP, typename LAI, typename LAMBDA>
-  void ApplyBoundaryConditionToSystem(
-    SortedArrayView<localIndex const> const &targetSet,
+  template< typename FIELD_OP, typename LAI, typename LAMBDA >
+  void
+  ApplyBoundaryConditionToSystem(
+    SortedArrayView< localIndex const > const & targetSet,
     real64 const time,
     real64 const dt,
-    dataRepository::Group const *const dataGroup,
-    arrayView1d<globalIndex const> const &dofMap,
-    integer const &dofDim,
-    typename LAI::ParallelMatrix &matrix,
-    typename LAI::ParallelVector &rhs,
-    LAMBDA &&lambda) const;
+    dataRepository::Group const * const dataGroup,
+    arrayView1d< globalIndex const > const & dofMap,
+    integer const & dofDim,
+    typename LAI::ParallelMatrix & matrix,
+    typename LAI::ParallelVector & rhs,
+    LAMBDA && lambda ) const;
 
   /**
    * @brief Zero matrix rows to apply boundary conditions.
@@ -233,11 +244,12 @@ public:
    *
    * This function zeroes the rows of the matrix that correspond to boundary conditions.
    */
-  template <typename LAI>
-  void ZeroSystemRowsForBoundaryCondition(
-    SortedArrayView<localIndex const> const &targetSet,
-    arrayView1d<globalIndex const> const &dofMap,
-    typename LAI::ParallelMatrix &matrix) const;
+  template< typename LAI >
+  void
+  ZeroSystemRowsForBoundaryCondition(
+    SortedArrayView< localIndex const > const & targetSet,
+    arrayView1d< globalIndex const > const & dofMap,
+    typename LAI::ParallelMatrix & matrix ) const;
 
   /**
    * @brief Apply a boundary condition to a system of equations.
@@ -259,16 +271,17 @@ public:
    *
    * @note This function is rarely used directly. More often it is called by other ApplyBoundaryCondition functions.
    */
-  template <typename FIELD_OP, typename POLICY, typename T, int NDIM, int USD>
-  void ApplyBoundaryConditionToSystemKernel(
-    SortedArrayView<localIndex const> const &targetSet,
+  template< typename FIELD_OP, typename POLICY, typename T, int NDIM, int USD >
+  void
+  ApplyBoundaryConditionToSystemKernel(
+    SortedArrayView< localIndex const > const & targetSet,
     real64 const time,
-    dataRepository::Group const *const dataGroup,
-    arrayView1d<globalIndex const> const &dofMap,
+    dataRepository::Group const * const dataGroup,
+    arrayView1d< globalIndex const > const & dofMap,
     globalIndex const dofRankOffset,
-    CRSMatrixView<real64, globalIndex const> const &matrix,
-    arrayView1d<real64> const &rhs,
-    ArrayView<T const, NDIM, USD> const &fieldView) const;
+    CRSMatrixView< real64, globalIndex const > const & matrix,
+    arrayView1d< real64 > const & rhs,
+    ArrayView< T const, NDIM, USD > const & fieldView ) const;
 
   /**
    * @brief Apply a boundary condition to a system of equations.
@@ -289,16 +302,17 @@ public:
    * This function applies the boundary condition to a linear system of equations. This function is
    * typically called from within the lambda to a call to BoundaryConditionManager::ApplyBoundaryCondition().
    */
-  template <typename FIELD_OP, typename POLICY>
-  void ApplyBoundaryConditionToSystem(
-    SortedArrayView<localIndex const> const &targetSet,
+  template< typename FIELD_OP, typename POLICY >
+  void
+  ApplyBoundaryConditionToSystem(
+    SortedArrayView< localIndex const > const & targetSet,
     real64 const time,
-    dataRepository::Group const *const dataGroup,
-    string const &fieldName,
-    string const &dofMapName,
+    dataRepository::Group const * const dataGroup,
+    string const & fieldName,
+    string const & dofMapName,
     globalIndex const dofRankOffset,
-    CRSMatrixView<real64, globalIndex const> const &matrix,
-    arrayView1d<real64> const &rhs) const;
+    CRSMatrixView< real64, globalIndex const > const & matrix,
+    arrayView1d< real64 > const & rhs ) const;
 
   /**
    * @brief Apply a boundary condition to a system of equations.
@@ -322,16 +336,17 @@ public:
    * typically called from within the lambda to a call to
    * BoundaryConditionManager::ApplyBoundaryCondition().
    */
-  template <typename FIELD_OP, typename POLICY, typename LAMBDA>
-  void ApplyBoundaryConditionToSystem(
-    SortedArrayView<localIndex const> const &targetSet,
+  template< typename FIELD_OP, typename POLICY, typename LAMBDA >
+  void
+  ApplyBoundaryConditionToSystem(
+    SortedArrayView< localIndex const > const & targetSet,
     real64 const time,
-    dataRepository::Group const *const dataGroup,
-    arrayView1d<globalIndex const> const &dofMap,
+    dataRepository::Group const * const dataGroup,
+    arrayView1d< globalIndex const > const & dofMap,
     globalIndex const dofRankOffset,
-    CRSMatrixView<real64, globalIndex const> const &matrix,
-    arrayView1d<real64> const &rhs,
-    LAMBDA &&lambda) const;
+    CRSMatrixView< real64, globalIndex const > const & matrix,
+    arrayView1d< real64 > const & rhs,
+    LAMBDA && lambda ) const;
 
   /**
    * @brief Apply a boundary condition to a system of equations.
@@ -356,17 +371,18 @@ public:
    * typically called from within the lambda to a call to
    * BoundaryConditionManager::ApplyBoundaryCondition().
    */
-  template <typename FIELD_OP, typename POLICY, typename LAMBDA>
-  void ApplyBoundaryConditionToSystem(
-    SortedArrayView<localIndex const> const &targetSet,
+  template< typename FIELD_OP, typename POLICY, typename LAMBDA >
+  void
+  ApplyBoundaryConditionToSystem(
+    SortedArrayView< localIndex const > const & targetSet,
     real64 const time,
     real64 const dt,
-    dataRepository::Group const *const dataGroup,
-    arrayView1d<globalIndex const> const &dofMap,
+    dataRepository::Group const * const dataGroup,
+    arrayView1d< globalIndex const > const & dofMap,
     globalIndex const dofRankOffset,
-    CRSMatrixView<real64, globalIndex const> const &matrix,
-    arrayView1d<real64> const &rhs,
-    LAMBDA &&lambda) const;
+    CRSMatrixView< real64, globalIndex const > const & matrix,
+    arrayView1d< real64 > const & rhs,
+    LAMBDA && lambda ) const;
 
   /**
    * @brief Function to zero matrix rows to apply boundary conditions
@@ -378,11 +394,12 @@ public:
    *
    * This function zeroes the rows of the matrix that correspond to boundary conditions.
    */
-  template <typename POLICY>
-  void ZeroSystemRowsForBoundaryCondition(
-    SortedArrayView<localIndex const> const &targetSet,
-    arrayView1d<globalIndex const> const &dofMap,
-    CRSMatrixView<real64, globalIndex const> const &matrix) const;
+  template< typename POLICY >
+  void
+  ZeroSystemRowsForBoundaryCondition(
+    SortedArrayView< localIndex const > const & targetSet,
+    arrayView1d< globalIndex const > const & dofMap,
+    CRSMatrixView< real64, globalIndex const > const & matrix ) const;
 
   /**
    * @brief View keys
@@ -431,34 +448,51 @@ public:
    * Accessor
    * @return const reference to m_function
    */
-  string const &GetFunctionName() const { return m_functionName; }
+  string const &
+  GetFunctionName() const
+  {
+    return m_functionName;
+  }
 
   /**
    * Accessor
    * @return const reference to m_objectPath
    */
-  virtual const string &GetObjectPath() const { return m_objectPath; }
+  virtual const string &
+  GetObjectPath() const
+  {
+    return m_objectPath;
+  }
 
   /**
    * Accessor
    * @return const reference to m_fieldName
    */
-  virtual const string &GetFieldName() const { return m_fieldName; }
+  virtual const string &
+  GetFieldName() const
+  {
+    return m_fieldName;
+  }
 
   /**
    * Accessor
    * @return const m_component
    */
-  virtual int GetComponent() const { return m_component; }
+  virtual int
+  GetComponent() const
+  {
+    return m_component;
+  }
 
   /**
    * Accessor
    * @param[in] time Time
    * @return const reference to m_direction
    */
-  virtual const R1Tensor &GetDirection(realT time)
+  virtual const R1Tensor &
+  GetDirection( realT time )
   {
-    GEOSX_UNUSED_VAR(time);
+    GEOSX_UNUSED_VAR( time );
     return m_direction;
   }
 
@@ -466,55 +500,88 @@ public:
    * Accessor
    * @return const m_beginTime
    */
-  real64 GetStartTime() const { return m_beginTime; }
+  real64
+  GetStartTime() const
+  {
+    return m_beginTime;
+  }
 
   /**
    * Accessor
    * @return const m_endTime
    */
-  real64 GetEndTime() const { return m_endTime; }
+  real64
+  GetEndTime() const
+  {
+    return m_endTime;
+  }
 
   /**
    * Accessor
    * @return const reference to m_setNames
    */
-  string_array const &GetSetNames() const { return m_setNames; }
+  string_array const &
+  GetSetNames() const
+  {
+    return m_setNames;
+  }
 
   /**
    * Accessor
    * @return const m_initialCondition
    */
-  int initialCondition() const { return m_initialCondition; }
+  int
+  initialCondition() const
+  {
+    return m_initialCondition;
+  }
 
   /**
    * Accessor
    * @return const m_scale
    */
-  real64 GetScale() const { return m_scale; }
+  real64
+  GetScale() const
+  {
+    return m_scale;
+  }
 
   /**
    * Mutator
    * @param[in] fieldName The name of the field
    */
-  void SetFieldName(string const &fieldName) { m_fieldName = fieldName; }
+  void
+  SetFieldName( string const & fieldName )
+  {
+    m_fieldName = fieldName;
+  }
 
   /**
    * Mutator
    * @param[in] objectPath The path for the object
    */
-  void SetObjectPath(string const &objectPath) { m_objectPath = objectPath; }
+  void
+  SetObjectPath( string const & objectPath )
+  {
+    m_objectPath = objectPath;
+  }
 
   /**
    * Mutator
    * @param[in] scale Scaling factor
    */
-  void SetScale(real64 const &scale) { m_scale = scale; }
+  void
+  SetScale( real64 const & scale )
+  {
+    m_scale = scale;
+  }
 
   /**
    * Mutator
    * @param[in] isInitialCondition Logical value to indicate if it is an initial condition
    */
-  void InitialCondition(bool isInitialCondition)
+  void
+  InitialCondition( bool isInitialCondition )
   {
     m_initialCondition = isInitialCondition;
   }
@@ -523,10 +590,15 @@ public:
    * Mutator
    * @param[in] setName The name of the set
    */
-  void AddSetName(string const &setName) { m_setNames.emplace_back(setName); }
+  void
+  AddSetName( string const & setName )
+  {
+    m_setNames.emplace_back( setName );
+  }
 
 protected:
-  void PostProcessInput() override final;
+  void
+  PostProcessInput() override final;
 
   /// The flag used to decide if the BC value is normalized by the size of the set on which it is applied
   bool m_normalizeBySetSize;
@@ -572,102 +644,105 @@ private:
   //real64 m_setSizeScalingFactor;
 };
 
-template <typename FIELD_OP, typename POLICY, typename T, int N, int USD>
-void FieldSpecificationBase::ApplyFieldValueKernel(
-  ArrayView<T, N, USD> const &field,
-  SortedArrayView<localIndex const> const &targetSet,
+template< typename FIELD_OP, typename POLICY, typename T, int N, int USD >
+void
+FieldSpecificationBase::ApplyFieldValueKernel(
+  ArrayView< T, N, USD > const & field,
+  SortedArrayView< localIndex const > const & targetSet,
   real64 const time,
-  Group *dataGroup) const
+  Group * dataGroup ) const
 {
   integer const component = GetComponent();
-  FunctionManager &functionManager = FunctionManager::Instance();
+  FunctionManager & functionManager = FunctionManager::Instance();
 
-  if(m_functionName.empty())
+  if( m_functionName.empty() )
   {
     real64 const value = m_scale;
-    forAll<POLICY>(targetSet.size(), [=] GEOSX_HOST_DEVICE(localIndex const i) {
+    forAll< POLICY >( targetSet.size(), [=] GEOSX_HOST_DEVICE( localIndex const i ) {
       localIndex const a = targetSet[i];
-      FIELD_OP::SpecifyFieldValue(field, a, component, value);
-    });
+      FIELD_OP::SpecifyFieldValue( field, a, component, value );
+    } );
   }
   else
   {
-    FunctionBase const *const function =
-      functionManager.GetGroup<FunctionBase>(m_functionName);
+    FunctionBase const * const function =
+      functionManager.GetGroup< FunctionBase >( m_functionName );
 
-    GEOSX_ERROR_IF(function == nullptr,
-                   "Function '" << m_functionName << "' not found");
+    GEOSX_ERROR_IF( function == nullptr,
+                    "Function '" << m_functionName << "' not found" );
 
-    if(function->isFunctionOfTime() == 2)
+    if( function->isFunctionOfTime() == 2 )
     {
-      real64 const value = m_scale * function->Evaluate(&time);
-      forAll<POLICY>(targetSet.size(), [=] GEOSX_HOST_DEVICE(localIndex const i) {
+      real64 const value = m_scale * function->Evaluate( &time );
+      forAll< POLICY >( targetSet.size(), [=] GEOSX_HOST_DEVICE( localIndex const i ) {
         localIndex const a = targetSet[i];
-        FIELD_OP::SpecifyFieldValue(field, a, component, value);
-      });
+        FIELD_OP::SpecifyFieldValue( field, a, component, value );
+      } );
     }
     else
     {
-      real64_array result(static_cast<localIndex>(targetSet.size()));
-      function->Evaluate(dataGroup, time, targetSet, result);
-      arrayView1d<real64 const> const &resultView = result.toViewConst();
+      real64_array result( static_cast< localIndex >( targetSet.size() ) );
+      function->Evaluate( dataGroup, time, targetSet, result );
+      arrayView1d< real64 const > const & resultView = result.toViewConst();
       real64 const scale = m_scale;
-      forAll<POLICY>(targetSet.size(), [=] GEOSX_HOST_DEVICE(localIndex const i) {
+      forAll< POLICY >( targetSet.size(), [=] GEOSX_HOST_DEVICE( localIndex const i ) {
         localIndex const a = targetSet[i];
-        FIELD_OP::SpecifyFieldValue(field, a, component, scale * resultView[i]);
-      });
+        FIELD_OP::SpecifyFieldValue( field, a, component, scale * resultView[i] );
+      } );
     }
   }
 }
 
-template <typename FIELD_OP, typename POLICY>
-void FieldSpecificationBase::ApplyFieldValue(
-  SortedArrayView<localIndex const> const &targetSet,
+template< typename FIELD_OP, typename POLICY >
+void
+FieldSpecificationBase::ApplyFieldValue(
+  SortedArrayView< localIndex const > const & targetSet,
   real64 const time,
-  dataRepository::Group *dataGroup,
-  string const &fieldName) const
+  dataRepository::Group * dataGroup,
+  string const & fieldName ) const
 {
-  dataRepository::WrapperBase *wrapper = dataGroup->getWrapperBase(fieldName);
-  std::type_index typeIndex = std::type_index(wrapper->get_typeid());
+  dataRepository::WrapperBase * wrapper = dataGroup->getWrapperBase( fieldName );
+  std::type_index typeIndex = std::type_index( wrapper->get_typeid() );
 
   rtTypes::ApplyArrayTypeLambda2(
-    rtTypes::typeID(typeIndex),
+    rtTypes::typeID( typeIndex ),
     true,
-    [&](auto arrayInstance, auto GEOSX_UNUSED_PARAM(dataTypeInstance)) {
-      using ArrayType = decltype(arrayInstance);
-      dataRepository::Wrapper<ArrayType> &view =
-        dataRepository::Wrapper<ArrayType>::cast(*wrapper);
+    [&]( auto arrayInstance, auto GEOSX_UNUSED_PARAM( dataTypeInstance ) ) {
+      using ArrayType = decltype( arrayInstance );
+      dataRepository::Wrapper< ArrayType > & view =
+        dataRepository::Wrapper< ArrayType >::cast( *wrapper );
 
-      auto const &field = view.reference().toView();
-      ApplyFieldValueKernel<FIELD_OP, POLICY>(field, targetSet, time, dataGroup);
-    });
+      auto const & field = view.reference().toView();
+      ApplyFieldValueKernel< FIELD_OP, POLICY >( field, targetSet, time, dataGroup );
+    } );
 }
 
-template <typename FIELD_OP, typename LAI>
-void FieldSpecificationBase::ApplyBoundaryConditionToSystem(
-  SortedArrayView<localIndex const> const &targetSet,
+template< typename FIELD_OP, typename LAI >
+void
+FieldSpecificationBase::ApplyBoundaryConditionToSystem(
+  SortedArrayView< localIndex const > const & targetSet,
   real64 const time,
-  dataRepository::Group const *const dataGroup,
-  string const &fieldName,
-  string const &dofMapName,
-  integer const &dofDim,
-  typename LAI::ParallelMatrix &matrix,
-  typename LAI::ParallelVector &rhs) const
+  dataRepository::Group const * const dataGroup,
+  string const & fieldName,
+  string const & dofMapName,
+  integer const & dofDim,
+  typename LAI::ParallelMatrix & matrix,
+  typename LAI::ParallelVector & rhs ) const
 {
-  dataRepository::WrapperBase const &wrapperBase =
-    *dataGroup->getWrapperBase(fieldName);
-  std::type_index typeIndex = std::type_index(wrapperBase.get_typeid());
-  arrayView1d<globalIndex const> const &dofMap =
-    dataGroup->getReference<array1d<globalIndex>>(dofMapName);
+  dataRepository::WrapperBase const & wrapperBase =
+    *dataGroup->getWrapperBase( fieldName );
+  std::type_index typeIndex = std::type_index( wrapperBase.get_typeid() );
+  arrayView1d< globalIndex const > const & dofMap =
+    dataGroup->getReference< array1d< globalIndex > >( dofMapName );
   integer const component = GetComponent();
 
-  rtTypes::ApplyArrayTypeLambda1(rtTypes::typeID(typeIndex), [&](auto type) {
-    using FieldType = decltype(type);
-    dataRepository::Wrapper<FieldType> const &wrapper =
-      dataRepository::Wrapper<FieldType>::cast(wrapperBase);
-    traits::ViewTypeConst<FieldType> fieldView = wrapper.reference();
+  rtTypes::ApplyArrayTypeLambda1( rtTypes::typeID( typeIndex ), [&]( auto type ) {
+    using FieldType = decltype( type );
+    dataRepository::Wrapper< FieldType > const & wrapper =
+      dataRepository::Wrapper< FieldType >::cast( wrapperBase );
+    traits::ViewTypeConst< FieldType > fieldView = wrapper.reference();
 
-    this->ApplyBoundaryConditionToSystem<FIELD_OP, LAI>(
+    this->ApplyBoundaryConditionToSystem< FIELD_OP, LAI >(
       targetSet,
       time,
       dataGroup,
@@ -675,35 +750,36 @@ void FieldSpecificationBase::ApplyBoundaryConditionToSystem(
       dofDim,
       matrix,
       rhs,
-      [&](localIndex const a) {
+      [&]( localIndex const a ) {
         real64 value = 0.0;
-        FieldSpecificationEqual::ReadFieldValue(fieldView, a, component, value);
+        FieldSpecificationEqual::ReadFieldValue( fieldView, a, component, value );
         return value;
-      });
-  });
+      } );
+  } );
 }
 
-template <typename FIELD_OP, typename LAI, typename LAMBDA>
-void FieldSpecificationBase::ApplyBoundaryConditionToSystem(
-  SortedArrayView<localIndex const> const &targetSet,
+template< typename FIELD_OP, typename LAI, typename LAMBDA >
+void
+FieldSpecificationBase::ApplyBoundaryConditionToSystem(
+  SortedArrayView< localIndex const > const & targetSet,
   real64 const time,
-  dataRepository::Group const *const dataGroup,
-  arrayView1d<globalIndex const> const &dofMap,
-  integer const &dofDim,
-  typename LAI::ParallelMatrix &matrix,
-  typename LAI::ParallelVector &rhs,
-  LAMBDA &&lambda) const
+  dataRepository::Group const * const dataGroup,
+  arrayView1d< globalIndex const > const & dofMap,
+  integer const & dofDim,
+  typename LAI::ParallelMatrix & matrix,
+  typename LAI::ParallelVector & rhs,
+  LAMBDA && lambda ) const
 {
-  GEOSX_UNUSED_VAR(dofDim);
+  GEOSX_UNUSED_VAR( dofDim );
 
   integer const component = GetComponent();
-  FunctionManager &functionManager = FunctionManager::Instance();
+  FunctionManager & functionManager = FunctionManager::Instance();
 
-  globalIndex_array dof(targetSet.size());
-  real64_array rhsContribution(targetSet.size());
+  globalIndex_array dof( targetSet.size() );
+  real64_array rhsContribution( targetSet.size() );
 
   real64 sizeScalingFactor = 0;
-  if(m_normalizeBySetSize)
+  if( m_normalizeBySetSize )
   {
     // note: this assumes that the ghost elements have been filtered out
 
@@ -712,7 +788,7 @@ void FieldSpecificationBase::ApplyBoundaryConditionToSystem(
     integer globalSetSize = 0;
 
     // synchronize
-    MpiWrapper::allReduce(&localSetSize, &globalSetSize, 1, MPI_SUM, MPI_COMM_GEOSX);
+    MpiWrapper::allReduce( &localSetSize, &globalSetSize, 1, MPI_SUM, MPI_COMM_GEOSX );
 
     // set the scaling factor
     sizeScalingFactor = globalSetSize >= 1 ? 1.0 / globalSetSize : 1;
@@ -722,98 +798,99 @@ void FieldSpecificationBase::ApplyBoundaryConditionToSystem(
     sizeScalingFactor = 1;
   }
 
-  if(m_functionName.empty())
+  if( m_functionName.empty() )
   {
     integer counter = 0;
-    for(auto a : targetSet)
+    for( auto a : targetSet )
     {
-      dof(counter) = dofMap[a] + component;
-      FIELD_OP::template SpecifyFieldValue<LAI>(dof(counter),
-                                                matrix,
-                                                rhsContribution(counter),
-                                                m_scale * sizeScalingFactor,
-                                                lambda(a));
+      dof( counter ) = dofMap[a] + component;
+      FIELD_OP::template SpecifyFieldValue< LAI >( dof( counter ),
+                                                   matrix,
+                                                   rhsContribution( counter ),
+                                                   m_scale * sizeScalingFactor,
+                                                   lambda( a ) );
       ++counter;
     }
-    FIELD_OP::template PrescribeRhsValues<LAI>(rhs,
-                                               counter,
-                                               dof.data(),
-                                               rhsContribution.data());
+    FIELD_OP::template PrescribeRhsValues< LAI >( rhs,
+                                                  counter,
+                                                  dof.data(),
+                                                  rhsContribution.data() );
   }
   else
   {
-    FunctionBase const *const function =
-      functionManager.GetGroup<FunctionBase>(m_functionName);
+    FunctionBase const * const function =
+      functionManager.GetGroup< FunctionBase >( m_functionName );
 
-    GEOSX_ERROR_IF(function == nullptr,
-                   "Function '" << m_functionName << "' not found");
+    GEOSX_ERROR_IF( function == nullptr,
+                    "Function '" << m_functionName << "' not found" );
 
-    if(function->isFunctionOfTime() == 2)
+    if( function->isFunctionOfTime() == 2 )
     {
-      real64 value = m_scale * function->Evaluate(&time) * sizeScalingFactor;
+      real64 value = m_scale * function->Evaluate( &time ) * sizeScalingFactor;
       integer counter = 0;
-      for(auto a : targetSet)
+      for( auto a : targetSet )
       {
-        dof(counter) = dofMap[a] + component;
-        FIELD_OP::template SpecifyFieldValue<LAI>(dof(counter),
-                                                  matrix,
-                                                  rhsContribution(counter),
-                                                  value,
-                                                  lambda(a));
+        dof( counter ) = dofMap[a] + component;
+        FIELD_OP::template SpecifyFieldValue< LAI >( dof( counter ),
+                                                     matrix,
+                                                     rhsContribution( counter ),
+                                                     value,
+                                                     lambda( a ) );
         ++counter;
       }
-      FIELD_OP::template PrescribeRhsValues<LAI>(rhs,
-                                                 counter,
-                                                 dof.data(),
-                                                 rhsContribution.data());
+      FIELD_OP::template PrescribeRhsValues< LAI >( rhs,
+                                                    counter,
+                                                    dof.data(),
+                                                    rhsContribution.data() );
     }
     else
     {
       real64_array result;
-      result.resize(LvArray::integerConversion<localIndex>(targetSet.size()));
-      function->Evaluate(dataGroup, time, targetSet, result);
+      result.resize( LvArray::integerConversion< localIndex >( targetSet.size() ) );
+      function->Evaluate( dataGroup, time, targetSet, result );
       integer counter = 0;
-      for(auto a : targetSet)
+      for( auto a : targetSet )
       {
-        dof(counter) = dofMap[a] + component;
-        FIELD_OP::template SpecifyFieldValue<LAI>(
-          dof(counter),
+        dof( counter ) = dofMap[a] + component;
+        FIELD_OP::template SpecifyFieldValue< LAI >(
+          dof( counter ),
           matrix,
-          rhsContribution(counter),
+          rhsContribution( counter ),
           m_scale * result[counter] * sizeScalingFactor,
-          lambda(a));
+          lambda( a ) );
         ++counter;
       }
-      FIELD_OP::template PrescribeRhsValues<LAI>(rhs,
-                                                 counter,
-                                                 dof.data(),
-                                                 rhsContribution.data());
+      FIELD_OP::template PrescribeRhsValues< LAI >( rhs,
+                                                    counter,
+                                                    dof.data(),
+                                                    rhsContribution.data() );
     }
   }
 }
 
-template <typename FIELD_OP, typename LAI, typename LAMBDA>
-void FieldSpecificationBase::ApplyBoundaryConditionToSystem(
-  SortedArrayView<localIndex const> const &targetSet,
+template< typename FIELD_OP, typename LAI, typename LAMBDA >
+void
+FieldSpecificationBase::ApplyBoundaryConditionToSystem(
+  SortedArrayView< localIndex const > const & targetSet,
   real64 const time,
   real64 const dt,
-  dataRepository::Group const *const dataGroup,
-  arrayView1d<globalIndex const> const &dofMap,
-  integer const &dofDim,
-  typename LAI::ParallelMatrix &matrix,
-  typename LAI::ParallelVector &rhs,
-  LAMBDA &&lambda) const
+  dataRepository::Group const * const dataGroup,
+  arrayView1d< globalIndex const > const & dofMap,
+  integer const & dofDim,
+  typename LAI::ParallelMatrix & matrix,
+  typename LAI::ParallelVector & rhs,
+  LAMBDA && lambda ) const
 {
-  GEOSX_UNUSED_VAR(dofDim);
+  GEOSX_UNUSED_VAR( dofDim );
 
   integer const component = GetComponent();
-  FunctionManager &functionManager = FunctionManager::Instance();
+  FunctionManager & functionManager = FunctionManager::Instance();
 
-  globalIndex_array dof(targetSet.size());
-  real64_array rhsContribution(targetSet.size());
+  globalIndex_array dof( targetSet.size() );
+  real64_array rhsContribution( targetSet.size() );
 
   real64 sizeScalingFactor = 0.0;
-  if(m_normalizeBySetSize)
+  if( m_normalizeBySetSize )
   {
     // note: this assumes that the ghost elements have been filtered out
 
@@ -822,7 +899,7 @@ void FieldSpecificationBase::ApplyBoundaryConditionToSystem(
     integer globalSetSize = 0;
 
     // synchronize
-    MpiWrapper::allReduce(&localSetSize, &globalSetSize, 1, MPI_SUM, MPI_COMM_GEOSX);
+    MpiWrapper::allReduce( &localSetSize, &globalSetSize, 1, MPI_SUM, MPI_COMM_GEOSX );
 
     // set the scaling factor
     sizeScalingFactor = globalSetSize >= 1 ? 1.0 / globalSetSize : 1;
@@ -832,104 +909,106 @@ void FieldSpecificationBase::ApplyBoundaryConditionToSystem(
     sizeScalingFactor = 1;
   }
 
-  if(m_functionName.empty())
+  if( m_functionName.empty() )
   {
     integer counter = 0;
-    for(auto a : targetSet)
+    for( auto a : targetSet )
     {
-      dof(counter) = dofMap[a] + component;
-      FIELD_OP::template SpecifyFieldValue<LAI>(dof(counter),
-                                                matrix,
-                                                rhsContribution(counter),
-                                                m_scale * dt * sizeScalingFactor,
-                                                lambda(a));
+      dof( counter ) = dofMap[a] + component;
+      FIELD_OP::template SpecifyFieldValue< LAI >( dof( counter ),
+                                                   matrix,
+                                                   rhsContribution( counter ),
+                                                   m_scale * dt * sizeScalingFactor,
+                                                   lambda( a ) );
       ++counter;
     }
-    FIELD_OP::template PrescribeRhsValues<LAI>(rhs,
-                                               counter,
-                                               dof.data(),
-                                               rhsContribution.data());
+    FIELD_OP::template PrescribeRhsValues< LAI >( rhs,
+                                                  counter,
+                                                  dof.data(),
+                                                  rhsContribution.data() );
   }
   else
   {
-    FunctionBase const *const function =
-      functionManager.GetGroup<FunctionBase>(m_functionName);
+    FunctionBase const * const function =
+      functionManager.GetGroup< FunctionBase >( m_functionName );
 
-    GEOSX_ERROR_IF(function == nullptr,
-                   "Function '" << m_functionName << "' not found");
+    GEOSX_ERROR_IF( function == nullptr,
+                    "Function '" << m_functionName << "' not found" );
 
-    if(function->isFunctionOfTime() == 2)
+    if( function->isFunctionOfTime() == 2 )
     {
-      real64 value = m_scale * dt * function->Evaluate(&time) * sizeScalingFactor;
+      real64 value = m_scale * dt * function->Evaluate( &time ) * sizeScalingFactor;
       integer counter = 0;
-      for(auto a : targetSet)
+      for( auto a : targetSet )
       {
-        dof(counter) = dofMap[a] + component;
-        FIELD_OP::template SpecifyFieldValue<LAI>(dof(counter),
-                                                  matrix,
-                                                  rhsContribution(counter),
-                                                  value,
-                                                  lambda(a));
+        dof( counter ) = dofMap[a] + component;
+        FIELD_OP::template SpecifyFieldValue< LAI >( dof( counter ),
+                                                     matrix,
+                                                     rhsContribution( counter ),
+                                                     value,
+                                                     lambda( a ) );
         ++counter;
       }
-      FIELD_OP::template PrescribeRhsValues<LAI>(rhs,
-                                                 counter,
-                                                 dof.data(),
-                                                 rhsContribution.data());
+      FIELD_OP::template PrescribeRhsValues< LAI >( rhs,
+                                                    counter,
+                                                    dof.data(),
+                                                    rhsContribution.data() );
     }
     else
     {
       real64_array result;
-      result.resize(LvArray::integerConversion<localIndex>(targetSet.size()));
-      function->Evaluate(dataGroup, time, targetSet, result);
+      result.resize( LvArray::integerConversion< localIndex >( targetSet.size() ) );
+      function->Evaluate( dataGroup, time, targetSet, result );
       integer counter = 0;
-      for(auto a : targetSet)
+      for( auto a : targetSet )
       {
-        dof(counter) = dofMap[a] + component;
-        FIELD_OP::template SpecifyFieldValue<LAI>(
-          dof(counter),
+        dof( counter ) = dofMap[a] + component;
+        FIELD_OP::template SpecifyFieldValue< LAI >(
+          dof( counter ),
           matrix,
-          rhsContribution(counter),
+          rhsContribution( counter ),
           m_scale * dt * result[counter] * sizeScalingFactor,
-          lambda(a));
+          lambda( a ) );
         ++counter;
       }
-      FIELD_OP::template PrescribeRhsValues<LAI>(rhs,
-                                                 counter,
-                                                 dof.data(),
-                                                 rhsContribution.data());
+      FIELD_OP::template PrescribeRhsValues< LAI >( rhs,
+                                                    counter,
+                                                    dof.data(),
+                                                    rhsContribution.data() );
     }
   }
 }
 
-template <typename LAI>
-void FieldSpecificationBase::ZeroSystemRowsForBoundaryCondition(
-  SortedArrayView<localIndex const> const &targetSet,
-  arrayView1d<globalIndex const> const &dofMap,
-  typename LAI::ParallelMatrix &matrix) const
+template< typename LAI >
+void
+FieldSpecificationBase::ZeroSystemRowsForBoundaryCondition(
+  SortedArrayView< localIndex const > const & targetSet,
+  arrayView1d< globalIndex const > const & dofMap,
+  typename LAI::ParallelMatrix & matrix ) const
 
 {
   integer const component = GetComponent();
-  for(auto a : targetSet)
+  for( auto a : targetSet )
   {
     globalIndex const dof = dofMap[a] + component;
-    matrix.clearRow(dof);
+    matrix.clearRow( dof );
   }
 }
 
-template <typename FIELD_OP, typename POLICY, typename T, int NDIM, int USD>
-void FieldSpecificationBase::ApplyBoundaryConditionToSystemKernel(
-  SortedArrayView<localIndex const> const &targetSet,
+template< typename FIELD_OP, typename POLICY, typename T, int NDIM, int USD >
+void
+FieldSpecificationBase::ApplyBoundaryConditionToSystemKernel(
+  SortedArrayView< localIndex const > const & targetSet,
   real64 const time,
-  dataRepository::Group const *const dataGroup,
-  arrayView1d<globalIndex const> const &dofMap,
+  dataRepository::Group const * const dataGroup,
+  arrayView1d< globalIndex const > const & dofMap,
   globalIndex const dofRankOffset,
-  CRSMatrixView<real64, globalIndex const> const &matrix,
-  arrayView1d<real64> const &rhs,
-  ArrayView<T const, NDIM, USD> const &fieldView) const
+  CRSMatrixView< real64, globalIndex const > const & matrix,
+  arrayView1d< real64 > const & rhs,
+  ArrayView< T const, NDIM, USD > const & fieldView ) const
 {
   integer const component = GetComponent();
-  this->ApplyBoundaryConditionToSystem<FIELD_OP, POLICY>(
+  this->ApplyBoundaryConditionToSystem< FIELD_OP, POLICY >(
     targetSet,
     time,
     dataGroup,
@@ -937,57 +1016,59 @@ void FieldSpecificationBase::ApplyBoundaryConditionToSystemKernel(
     dofRankOffset,
     matrix,
     rhs,
-    [fieldView, component] GEOSX_HOST_DEVICE(localIndex const a) {
+    [fieldView, component] GEOSX_HOST_DEVICE( localIndex const a ) {
       real64 value = 0.0;
-      FieldSpecificationEqual::ReadFieldValue(fieldView, a, component, value);
+      FieldSpecificationEqual::ReadFieldValue( fieldView, a, component, value );
       return value;
-    });
+    } );
 }
 
-template <typename FIELD_OP, typename POLICY>
-void FieldSpecificationBase::ApplyBoundaryConditionToSystem(
-  SortedArrayView<localIndex const> const &targetSet,
+template< typename FIELD_OP, typename POLICY >
+void
+FieldSpecificationBase::ApplyBoundaryConditionToSystem(
+  SortedArrayView< localIndex const > const & targetSet,
   real64 const time,
-  dataRepository::Group const *const dataGroup,
-  string const &fieldName,
-  string const &dofMapName,
+  dataRepository::Group const * const dataGroup,
+  string const & fieldName,
+  string const & dofMapName,
   globalIndex const dofRankOffset,
-  CRSMatrixView<real64, globalIndex const> const &matrix,
-  arrayView1d<real64> const &rhs) const
+  CRSMatrixView< real64, globalIndex const > const & matrix,
+  arrayView1d< real64 > const & rhs ) const
 {
-  dataRepository::WrapperBase const &wrapperBase =
-    *dataGroup->getWrapperBase(fieldName);
-  std::type_index typeIndex = std::type_index(wrapperBase.get_typeid());
-  arrayView1d<globalIndex const> const &dofMap =
-    dataGroup->getReference<array1d<globalIndex>>(dofMapName);
+  dataRepository::WrapperBase const & wrapperBase =
+    *dataGroup->getWrapperBase( fieldName );
+  std::type_index typeIndex = std::type_index( wrapperBase.get_typeid() );
+  arrayView1d< globalIndex const > const & dofMap =
+    dataGroup->getReference< array1d< globalIndex > >( dofMapName );
 
-  rtTypes::ApplyArrayTypeLambda1(rtTypes::typeID(typeIndex), [&](auto type) {
-    using FieldType = decltype(type);
-    dataRepository::Wrapper<FieldType> const &wrapper =
-      dataRepository::Wrapper<FieldType>::cast(wrapperBase);
-    ApplyBoundaryConditionToSystemKernel<FIELD_OP, POLICY>(targetSet,
-                                                           time,
-                                                           dataGroup,
-                                                           dofMap,
-                                                           dofRankOffset,
-                                                           matrix,
-                                                           rhs,
-                                                           wrapper.reference());
-  });
+  rtTypes::ApplyArrayTypeLambda1( rtTypes::typeID( typeIndex ), [&]( auto type ) {
+    using FieldType = decltype( type );
+    dataRepository::Wrapper< FieldType > const & wrapper =
+      dataRepository::Wrapper< FieldType >::cast( wrapperBase );
+    ApplyBoundaryConditionToSystemKernel< FIELD_OP, POLICY >( targetSet,
+                                                              time,
+                                                              dataGroup,
+                                                              dofMap,
+                                                              dofRankOffset,
+                                                              matrix,
+                                                              rhs,
+                                                              wrapper.reference() );
+  } );
 }
 
-template <typename FIELD_OP, typename POLICY, typename LAMBDA>
-void FieldSpecificationBase::ApplyBoundaryConditionToSystem(
-  SortedArrayView<localIndex const> const &targetSet,
+template< typename FIELD_OP, typename POLICY, typename LAMBDA >
+void
+FieldSpecificationBase::ApplyBoundaryConditionToSystem(
+  SortedArrayView< localIndex const > const & targetSet,
   real64 const time,
-  dataRepository::Group const *const dataGroup,
-  arrayView1d<globalIndex const> const &dofMap,
+  dataRepository::Group const * const dataGroup,
+  arrayView1d< globalIndex const > const & dofMap,
   globalIndex const dofRankOffset,
-  CRSMatrixView<real64, globalIndex const> const &matrix,
-  arrayView1d<real64> const &rhs,
-  LAMBDA &&lambda) const
+  CRSMatrixView< real64, globalIndex const > const & matrix,
+  arrayView1d< real64 > const & rhs,
+  LAMBDA && lambda ) const
 {
-  return ApplyBoundaryConditionToSystem<FIELD_OP, POLICY>(
+  return ApplyBoundaryConditionToSystem< FIELD_OP, POLICY >(
     targetSet,
     time,
     1.0,
@@ -996,34 +1077,35 @@ void FieldSpecificationBase::ApplyBoundaryConditionToSystem(
     dofRankOffset,
     matrix,
     rhs,
-    std::forward<LAMBDA>(lambda));
+    std::forward< LAMBDA >( lambda ) );
 }
 
-template <typename FIELD_OP, typename POLICY, typename LAMBDA>
-void FieldSpecificationBase::ApplyBoundaryConditionToSystem(
-  SortedArrayView<localIndex const> const &targetSet,
+template< typename FIELD_OP, typename POLICY, typename LAMBDA >
+void
+FieldSpecificationBase::ApplyBoundaryConditionToSystem(
+  SortedArrayView< localIndex const > const & targetSet,
   real64 const time,
   real64 const dt,
-  dataRepository::Group const *const dataGroup,
-  arrayView1d<globalIndex const> const &dofMap,
+  dataRepository::Group const * const dataGroup,
+  arrayView1d< globalIndex const > const & dofMap,
   globalIndex const dofRankOffset,
-  CRSMatrixView<real64, globalIndex const> const &matrix,
-  arrayView1d<real64> const &rhs,
-  LAMBDA &&lambda) const
+  CRSMatrixView< real64, globalIndex const > const & matrix,
+  arrayView1d< real64 > const & rhs,
+  LAMBDA && lambda ) const
 {
   integer const component = GetComponent();
-  string const &functionName =
-    getReference<string>(viewKeyStruct::functionNameString);
-  FunctionManager &functionManager = FunctionManager::Instance();
+  string const & functionName =
+    getReference< string >( viewKeyStruct::functionNameString );
+  FunctionManager & functionManager = FunctionManager::Instance();
 
-  array1d<globalIndex> dofArray(targetSet.size());
-  arrayView1d<globalIndex> const &dof = dofArray.toView();
+  array1d< globalIndex > dofArray( targetSet.size() );
+  arrayView1d< globalIndex > const & dof = dofArray.toView();
 
-  array1d<real64> rhsContributionArray(targetSet.size());
-  arrayView1d<real64> const &rhsContribution = rhsContributionArray.toView();
+  array1d< real64 > rhsContributionArray( targetSet.size() );
+  arrayView1d< real64 > const & rhsContribution = rhsContributionArray.toView();
 
   real64 sizeScalingFactor = 0.0;
-  if(m_normalizeBySetSize)
+  if( m_normalizeBySetSize )
   {
     // note: this assumes that the ghost elements have been filtered out
 
@@ -1032,7 +1114,7 @@ void FieldSpecificationBase::ApplyBoundaryConditionToSystem(
     integer globalSetSize = 0;
 
     // synchronize
-    MpiWrapper::allReduce(&localSetSize, &globalSetSize, 1, MPI_SUM, MPI_COMM_GEOSX);
+    MpiWrapper::allReduce( &localSetSize, &globalSetSize, 1, MPI_SUM, MPI_COMM_GEOSX );
 
     // set the scaling factor
     sizeScalingFactor = globalSetSize >= 1 ? 1.0 / globalSetSize : 1;
@@ -1042,98 +1124,99 @@ void FieldSpecificationBase::ApplyBoundaryConditionToSystem(
     sizeScalingFactor = 1;
   }
 
-  if(functionName.empty() ||
-     functionManager.getGroupReference<FunctionBase>(functionName)
-         .isFunctionOfTime() == 2)
+  if( functionName.empty() ||
+      functionManager.getGroupReference< FunctionBase >( functionName )
+          .isFunctionOfTime() == 2 )
   {
     real64 value = m_scale * dt * sizeScalingFactor;
-    if(!functionName.empty())
+    if( !functionName.empty() )
     {
-      FunctionBase const &function =
-        functionManager.getGroupReference<FunctionBase>(functionName);
-      value *= function.Evaluate(&time);
+      FunctionBase const & function =
+        functionManager.getGroupReference< FunctionBase >( functionName );
+      value *= function.Evaluate( &time );
     }
 
-    forAll<POLICY>(targetSet.size(),
-                   [targetSet,
-                    dof,
-                    dofMap,
-                    dofRankOffset,
-                    component,
-                    matrix,
-                    rhsContribution,
-                    value,
-                    lambda] GEOSX_HOST_DEVICE(localIndex const i) {
-                     localIndex const a = targetSet[i];
-                     dof[i] = dofMap[a] + component;
-                     FIELD_OP::SpecifyFieldValue(dof[i],
-                                                 dofRankOffset,
-                                                 matrix,
-                                                 rhsContribution[i],
-                                                 value,
-                                                 lambda(a));
-                   });
+    forAll< POLICY >( targetSet.size(),
+                      [targetSet,
+                       dof,
+                       dofMap,
+                       dofRankOffset,
+                       component,
+                       matrix,
+                       rhsContribution,
+                       value,
+                       lambda] GEOSX_HOST_DEVICE( localIndex const i ) {
+                        localIndex const a = targetSet[i];
+                        dof[i] = dofMap[a] + component;
+                        FIELD_OP::SpecifyFieldValue( dof[i],
+                                                     dofRankOffset,
+                                                     matrix,
+                                                     rhsContribution[i],
+                                                     value,
+                                                     lambda( a ) );
+                      } );
   }
   else
   {
-    FunctionBase const &function =
-      functionManager.getGroupReference<FunctionBase>(functionName);
+    FunctionBase const & function =
+      functionManager.getGroupReference< FunctionBase >( functionName );
 
-    real64_array resultsArray(targetSet.size());
-    function.Evaluate(dataGroup, time, targetSet, resultsArray);
-    arrayView1d<real64 const> const &results = resultsArray.toViewConst();
+    real64_array resultsArray( targetSet.size() );
+    function.Evaluate( dataGroup, time, targetSet, resultsArray );
+    arrayView1d< real64 const > const & results = resultsArray.toViewConst();
     real64 const value = m_scale * dt * sizeScalingFactor;
 
-    forAll<POLICY>(targetSet.size(),
-                   [targetSet,
-                    dof,
-                    dofMap,
-                    dofRankOffset,
-                    component,
-                    matrix,
-                    rhsContribution,
-                    results,
-                    value,
-                    lambda] GEOSX_HOST_DEVICE(localIndex const i) {
-                     localIndex const a = targetSet[i];
-                     dof[i] = dofMap[a] + component;
-                     FIELD_OP::SpecifyFieldValue(dof[i],
-                                                 dofRankOffset,
-                                                 matrix,
-                                                 rhsContribution[i],
-                                                 value * results[i],
-                                                 lambda(a));
-                   });
+    forAll< POLICY >( targetSet.size(),
+                      [targetSet,
+                       dof,
+                       dofMap,
+                       dofRankOffset,
+                       component,
+                       matrix,
+                       rhsContribution,
+                       results,
+                       value,
+                       lambda] GEOSX_HOST_DEVICE( localIndex const i ) {
+                        localIndex const a = targetSet[i];
+                        dof[i] = dofMap[a] + component;
+                        FIELD_OP::SpecifyFieldValue( dof[i],
+                                                     dofRankOffset,
+                                                     matrix,
+                                                     rhsContribution[i],
+                                                     value * results[i],
+                                                     lambda( a ) );
+                      } );
   }
 
-  FIELD_OP::template PrescribeRhsValues<POLICY>(rhs,
-                                                dof,
-                                                dofRankOffset,
-                                                rhsContribution);
+  FIELD_OP::template PrescribeRhsValues< POLICY >( rhs,
+                                                   dof,
+                                                   dofRankOffset,
+                                                   rhsContribution );
 }
 
-template <typename POLICY>
-void FieldSpecificationBase::ZeroSystemRowsForBoundaryCondition(
-  SortedArrayView<localIndex const> const &targetSet,
-  arrayView1d<globalIndex const> const &dofMap,
-  CRSMatrixView<real64, globalIndex const> const &matrix) const
+template< typename POLICY >
+void
+FieldSpecificationBase::ZeroSystemRowsForBoundaryCondition(
+  SortedArrayView< localIndex const > const & targetSet,
+  arrayView1d< globalIndex const > const & dofMap,
+  CRSMatrixView< real64, globalIndex const > const & matrix ) const
 
 {
   integer const component = GetComponent();
-  forAll<POLICY>(
+  forAll< POLICY >(
     targetSet.size(),
-    [targetSet, dofMap, matrix, component] GEOSX_HOST_DEVICE(localIndex const i) {
+    [targetSet, dofMap, matrix, component] GEOSX_HOST_DEVICE( localIndex const i ) {
       localIndex const a = targetSet[i];
       globalIndex const dof = dofMap[a] + component;
 
-      arraySlice1d<real64> const entries = matrix.getEntries(dof);
-      localIndex const numEntries = matrix.numNonZeros(dof);
+      arraySlice1d< real64 > const entries = matrix.getEntries( dof );
+      localIndex const numEntries = matrix.numNonZeros( dof );
 
-      for(localIndex j = 0; j < numEntries; ++j)
+      for( localIndex j = 0; j < numEntries; ++j )
       {
         entries[j] = 0;
       }
-    });
+    } );
 }
 
 }  // namespace geosx

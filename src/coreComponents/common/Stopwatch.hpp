@@ -33,22 +33,30 @@ public:
   /**
    * @brief Constructor.
    */
-  Stopwatch() { zero(); }
+  Stopwatch()
+  {
+    zero();
+  }
 
   /**
    * @brief Zero out the timer.
    */
-  void zero() { m_start = std::chrono::steady_clock::now(); }
+  void
+  zero()
+  {
+    m_start = std::chrono::steady_clock::now();
+  }
 
   /**
    * @brief Return elapsed time in seconds since zero() was last called.
    * @return elapsed time
    */
-  real64 elapsedTime()
+  real64
+  elapsedTime()
   {
     std::chrono::steady_clock::time_point const end =
       std::chrono::steady_clock::now();
-    std::chrono::duration<real64> const diff = end - m_start;
+    std::chrono::duration< real64 > const diff = end - m_start;
     return diff.count();
   }
 

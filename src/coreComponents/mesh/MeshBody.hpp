@@ -37,7 +37,7 @@ public:
    * @param [in] name the name of this instantiation of MeshBody
    * @param [in] parent the parent group of this instantiation of MeshBody
    */
-  MeshBody(string const& name, Group* const parent);
+  MeshBody( string const & name, Group * const parent );
 
   /**
    * @brief Destructor
@@ -49,16 +49,18 @@ public:
    * @param [in] newLevel index of the new mesh level
    * @return pointer to the created MeshLevel
    */
-  MeshLevel* CreateMeshLevel(localIndex const newLevel);
+  MeshLevel *
+  CreateMeshLevel( localIndex const newLevel );
 
   /**
    * @brief Get mesh level
    * @param [in] level index of the mesh level
    * @return pointer to MeshLevel
    */
-  MeshLevel* getMeshLevel(localIndex const level)
+  MeshLevel *
+  getMeshLevel( localIndex const level )
   {
-    return this->GetGroup<MeshLevel>(level);
+    return this->GetGroup< MeshLevel >( level );
   }
 
   /**
@@ -66,22 +68,28 @@ public:
    * @param [in] level index of the mesh level
    * @return pointer to const MeshLevel
    */
-  MeshLevel const* getMeshLevel(localIndex const level) const
+  MeshLevel const *
+  getMeshLevel( localIndex const level ) const
   {
-    return this->GetGroup<MeshLevel>(level);
+    return this->GetGroup< MeshLevel >( level );
   }
 
   /**
    * @brief Set mesh length scale used to define an absolute length tolerance
    * @param [in] scale length scale
    */
-  void setGlobalLengthScale(real64 scale);
+  void
+  setGlobalLengthScale( real64 scale );
 
   /**
    * @brief Get mesh length scale
    * @return value of mesh length scale
    */
-  real64 getGlobalLengthScale() const { return m_globalLengthScale; }
+  real64
+  getGlobalLengthScale() const
+  {
+    return m_globalLengthScale;
+  }
 
   /**
    * @brief Data repository keys
@@ -89,7 +97,7 @@ public:
   struct viewKeysStruct
   {
     /// The key for MeshLevel
-    dataRepository::ViewKey meshLevels = {"meshLevels"};
+    dataRepository::ViewKey meshLevels = { "meshLevels" };
   } viewKeys;  ///< viewKeys
 
   /**
@@ -102,7 +110,7 @@ public:
 private:
   /// Mesh length scale used to define an absolute length tolerance
   /// The default value can be set to another value
-  real64 m_globalLengthScale {0.};
+  real64 m_globalLengthScale { 0. };
 };
 
 } /* namespace geosx */

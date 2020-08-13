@@ -46,7 +46,7 @@ public:
    * @param name name of the object in the data hierarchy.
    * @param parent pointer to the parent group in the data hierarchy.
    */
-  WellElementRegion(string const& name, Group* const parent);
+  WellElementRegion( string const & name, Group * const parent );
 
   /**
    * @brief Default destructor.
@@ -69,12 +69,17 @@ public:
    * @brief Get the catalog name.
    * @return the name of this class in the catalog
    */
-  static const string CatalogName() { return "WellElementRegion"; }
+  static const string
+  CatalogName()
+  {
+    return "WellElementRegion";
+  }
 
   /**
    * @copydoc CatalogName()
    */
-  virtual const string getCatalogName() const override final
+  virtual const string
+  getCatalogName() const override final
   {
     return WellElementRegion::CatalogName();
   }
@@ -90,25 +95,41 @@ public:
    * @brief Set the name of the InternalWellGenerator object of this well.
    * @param[in] name the name of the InternalWellGenerator object
    */
-  void SetWellGeneratorName(string const& name) { m_wellGeneratorName = name; }
+  void
+  SetWellGeneratorName( string const & name )
+  {
+    m_wellGeneratorName = name;
+  }
 
   /**
    * @brief Get the name of the InternalWellGenerator object of this well.
    * @return the name of the InternalWellGenerator object
    */
-  string const& GetWellGeneratorName() const { return m_wellGeneratorName; }
+  string const &
+  GetWellGeneratorName() const
+  {
+    return m_wellGeneratorName;
+  }
 
   /**
    * @brief Set the name of the WellControls object of this well.
    * @param name the name of the WellControls object
    */
-  void SetWellControlsName(string const& name) { m_wellControlsName = name; }
+  void
+  SetWellControlsName( string const & name )
+  {
+    m_wellControlsName = name;
+  }
 
   /**
    * @brief Get the name of the subRegion.
    * @return the name of the subRegion object
    */
-  string const& GetSubRegionName() const { return m_subRegionName; }
+  string const &
+  GetSubRegionName() const
+  {
+    return m_subRegionName;
+  }
 
   ///@}
 
@@ -120,7 +141,9 @@ public:
   /**
    * @brief Not implemented, this task is performed in GenerateWell.
    */
-  virtual void GenerateMesh(Group*) override { }
+  virtual void
+  GenerateMesh( Group * ) override
+  {}
 
   /**
    * @brief Build the local well elements and perforations from global well geometry.
@@ -129,10 +152,11 @@ public:
    * @param[in] nodeOffsetGlobal the offset of the first global well node ( = offset of last global mesh node + 1 )
    * @param[in] elemOffsetGlobal the offset of the first global well element ( = offset of last global mesh elem + 1 )
    */
-  void GenerateWell(MeshLevel& mesh,
-                    InternalWellGenerator const& wellGeometry,
-                    globalIndex nodeOffsetGlobal,
-                    globalIndex elemOffsetGlobal);
+  void
+  GenerateWell( MeshLevel & mesh,
+                InternalWellGenerator const & wellGeometry,
+                globalIndex nodeOffsetGlobal,
+                globalIndex elemOffsetGlobal );
 
   ///@}
 
@@ -148,9 +172,9 @@ public:
     static constexpr auto wellGeneratorString = "wellGeneratorName";
 
     /// ViewKey for the well control name
-    dataRepository::ViewKey wellControlsName = {wellControlsString};
+    dataRepository::ViewKey wellControlsName = { wellControlsString };
     /// ViewKey for the well generator name
-    dataRepository::ViewKey wellGeneratorName = {wellGeneratorString};
+    dataRepository::ViewKey wellGeneratorName = { wellGeneratorString };
 
   }
   /// ViewKey struct for the WellElementRegion class

@@ -53,14 +53,20 @@ public:
   /// The number of quadrature points per element.
   constexpr static localIndex numQuadraturePoints = 4;
 
-  virtual ~H1_QuadrilateralFace_Lagrange1_GaussLegendre2() override { }
+  virtual ~H1_QuadrilateralFace_Lagrange1_GaussLegendre2() override
+  {}
 
-  virtual localIndex getNumQuadraturePoints() const override
+  virtual localIndex
+  getNumQuadraturePoints() const override
   {
     return numQuadraturePoints;
   }
 
-  virtual localIndex getNumSupportPoints() const override { return numNodes; }
+  virtual localIndex
+  getNumSupportPoints() const override
+  {
+    return numNodes;
+  }
 
   /**
    * @brief Calculate shape functions values for each support point at a
@@ -70,7 +76,8 @@ public:
    *
    */
   GEOSX_HOST_DEVICE
-  static void shapeFunctionValues(localIndex const q, real64 (&N)[numNodes]);
+  static void
+  shapeFunctionValues( localIndex const q, real64 ( &N )[numNodes] );
 
   /**
    * @brief Calculate the integration weights for a quadrature point.
@@ -80,8 +87,9 @@ public:
    *   the parent/physical transformation matrix.
    */
   GEOSX_HOST_DEVICE
-  static real64 transformedQuadratureWeight(localIndex const q,
-                                            real64 const (&X)[numNodes][3]);
+  static real64
+  transformedQuadratureWeight( localIndex const q,
+                               real64 const ( &X )[numNodes][3] );
 
 private:
   /// The area of the element in the parent configuration.
@@ -102,9 +110,10 @@ private:
    * @param j The index in the xi1 direction (0,1)
    * @return The linear index of the support/quadrature point (0-3)
    */
-  template <typename T>
-  GEOSX_HOST_DEVICE GEOSX_FORCE_INLINE constexpr static T linearMap(T const i,
-                                                                    T const j)
+  template< typename T >
+  GEOSX_HOST_DEVICE GEOSX_FORCE_INLINE constexpr static T
+  linearMap( T const i,
+             T const j )
   {
     return i + 2 * j;
   }
@@ -117,9 +126,10 @@ private:
    */
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  constexpr static real64 parentCoords0(localIndex const a)
+  constexpr static real64
+  parentCoords0( localIndex const a )
   {
-    return -1.0 + 2.0 * (a & 1);
+    return -1.0 + 2.0 * ( a & 1 );
   }
 
   /**
@@ -130,22 +140,24 @@ private:
    */
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  constexpr static real64 parentCoords1(localIndex const a)
+  constexpr static real64
+  parentCoords1( localIndex const a )
   {
-    return -1.0 + (a & 2);
+    return -1.0 + ( a & 2 );
   }
 };
 
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-void H1_QuadrilateralFace_Lagrange1_GaussLegendre2::shapeFunctionValues(
+void
+H1_QuadrilateralFace_Lagrange1_GaussLegendre2::shapeFunctionValues(
   localIndex const q,
-  real64 (&N)[numNodes])
+  real64 ( &N )[numNodes] )
 {
-  for(localIndex a = 0; a < numNodes; ++a)
+  for( localIndex a = 0; a < numNodes; ++a )
   {
-    N[a] = 0.25 * (1 + quadratureFactor * parentCoords0(q) * parentCoords0(a)) *
-      (1 + quadratureFactor * parentCoords1(q) * parentCoords1(a));
+    N[a] = 0.25 * ( 1 + quadratureFactor * parentCoords0( q ) * parentCoords0( a ) ) *
+      ( 1 + quadratureFactor * parentCoords1( q ) * parentCoords1( a ) );
   }
 }
 
@@ -153,32 +165,33 @@ void H1_QuadrilateralFace_Lagrange1_GaussLegendre2::shapeFunctionValues(
 
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-real64 H1_QuadrilateralFace_Lagrange1_GaussLegendre2::transformedQuadratureWeight(
+real64
+H1_QuadrilateralFace_Lagrange1_GaussLegendre2::transformedQuadratureWeight(
   localIndex const q,
-  real64 const (&X)[numNodes][3])
+  real64 const ( &X )[numNodes][3] )
 {
-  real64 dXdXi[3][2] = {{0}};
+  real64 dXdXi[3][2] = { { 0 } };
 
-  real64 const quadratureCoords[2] = {quadratureFactor * parentCoords0(q),
-                                      quadratureFactor * parentCoords1(q)};
+  real64 const quadratureCoords[2] = { quadratureFactor * parentCoords0( q ),
+                                       quadratureFactor * parentCoords1( q ) };
 
-  real64 const psi0[2] = {0.5 * (1.0 - quadratureCoords[0]),
-                          0.5 * (1.0 + quadratureCoords[0])};
-  real64 const psi1[2] = {0.5 * (1.0 - quadratureCoords[1]),
-                          0.5 * (1.0 + quadratureCoords[1])};
-  constexpr real64 dpsi[2] = {-0.5, 0.5};
+  real64 const psi0[2] = { 0.5 * ( 1.0 - quadratureCoords[0] ),
+                           0.5 * ( 1.0 + quadratureCoords[0] ) };
+  real64 const psi1[2] = { 0.5 * ( 1.0 - quadratureCoords[1] ),
+                           0.5 * ( 1.0 + quadratureCoords[1] ) };
+  constexpr real64 dpsi[2] = { -0.5, 0.5 };
 
-  for(int a = 0; a < 2; ++a)
+  for( int a = 0; a < 2; ++a )
   {
-    for(int b = 0; b < 2; ++b)
+    for( int b = 0; b < 2; ++b )
     {
-      real64 const dNdXi[2] = {dpsi[a] * psi1[b], psi0[a] * dpsi[b]};
+      real64 const dNdXi[2] = { dpsi[a] * psi1[b], psi0[a] * dpsi[b] };
 
-      localIndex const nodeIndex = linearMap(a, b);
+      localIndex const nodeIndex = linearMap( a, b );
 
-      for(int i = 0; i < 3; ++i)
+      for( int i = 0; i < 3; ++i )
       {
-        for(int j = 0; j < 2; ++j)
+        for( int j = 0; j < 2; ++j )
         {
           dXdXi[i][j] = dXdXi[i][j] + dNdXi[j] * X[nodeIndex][i];
         }
@@ -187,11 +200,11 @@ real64 H1_QuadrilateralFace_Lagrange1_GaussLegendre2::transformedQuadratureWeigh
   }
 
   real64 const detJ =
-    pow(dXdXi[1][0] * dXdXi[2][1] - dXdXi[2][0] * dXdXi[1][1], 2.0) +
-    pow(dXdXi[2][0] * dXdXi[0][1] - dXdXi[0][0] * dXdXi[2][1], 2.0) +
-    pow(dXdXi[0][0] * dXdXi[1][1] - dXdXi[1][0] * dXdXi[0][1], 2.0);
+    pow( dXdXi[1][0] * dXdXi[2][1] - dXdXi[2][0] * dXdXi[1][1], 2.0 ) +
+    pow( dXdXi[2][0] * dXdXi[0][1] - dXdXi[0][0] * dXdXi[2][1], 2.0 ) +
+    pow( dXdXi[0][0] * dXdXi[1][1] - dXdXi[1][0] * dXdXi[0][1], 2.0 );
 
-  return sqrt(detJ) * weight;
+  return sqrt( detJ ) * weight;
 }
 
 }  // namespace finiteElement

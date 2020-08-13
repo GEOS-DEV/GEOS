@@ -27,7 +27,7 @@
 //------------------------------------------------------------------------------
 // getName()
 //------------------------------------------------------------------------------
-TEST(testNewComponent, feature)
+TEST( testNewComponent, feature )
 {
   //	signal(SIGSEGV, stacktrace::handler);   // install our handler
   //	stacktrace::foo(); // this will call foo, bar, and baz.  baz segfaults.

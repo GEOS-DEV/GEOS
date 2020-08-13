@@ -35,7 +35,11 @@ public:
    * @brief Static Factory Catalog Functions.
    * @return the catalog name
    */
-  static std::string CatalogName() { return "TwoPointFluxApproximation"; }
+  static std::string
+  CatalogName()
+  {
+    return "TwoPointFluxApproximation";
+  }
 
   TwoPointFluxApproximation() = delete;
 
@@ -44,27 +48,33 @@ public:
    * @param name the name of the TwoPointFluxApproximation in the data repository
    * @param parent the parent group of this group.
    */
-  TwoPointFluxApproximation(std::string const& name,
-                            dataRepository::Group* const parent);
+  TwoPointFluxApproximation( std::string const & name,
+                             dataRepository::Group * const parent );
 
 protected:
-  virtual void registerCellStencil(Group& stencilGroup) const override;
+  virtual void
+  registerCellStencil( Group & stencilGroup ) const override;
 
-  virtual void computeCellStencil(MeshLevel& mesh) const override;
+  virtual void
+  computeCellStencil( MeshLevel & mesh ) const override;
 
-  virtual void registerFractureStencil(Group& stencilGroup) const override;
+  virtual void
+  registerFractureStencil( Group & stencilGroup ) const override;
 
-  virtual void addToFractureStencil(MeshLevel& mesh,
-                                    string const& faceElementRegionName,
-                                    bool const initFlag) const override;
+  virtual void
+  addToFractureStencil( MeshLevel & mesh,
+                        string const & faceElementRegionName,
+                        bool const initFlag ) const override;
 
-  virtual void registerBoundaryStencil(Group& stencilGroup,
-                                       string const& setName) const override;
+  virtual void
+  registerBoundaryStencil( Group & stencilGroup,
+                           string const & setName ) const override;
 
-  virtual void computeBoundaryStencil(
-    MeshLevel& mesh,
-    string const& setName,
-    SortedArrayView<localIndex const> const& faceSet) const override;
+  virtual void
+  computeBoundaryStencil(
+    MeshLevel & mesh,
+    string const & setName,
+    SortedArrayView< localIndex const > const & faceSet ) const override;
 };
 
 }  // namespace geosx

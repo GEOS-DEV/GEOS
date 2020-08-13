@@ -35,22 +35,29 @@ class DomainPartition;
 class NewComponent : public SolverBase
 {
 public:
-  NewComponent(std::string const& name, Group* const parent);
+  NewComponent( std::string const & name, Group * const parent );
   virtual ~NewComponent() override;
 
-  static std::string CatalogName() { return "NewComponent"; }
+  static std::string
+  CatalogName()
+  {
+    return "NewComponent";
+  }
 
-  virtual real64 SolverStep(real64 const& time_n,
-                            real64 const& dt,
-                            integer const cycleNumber,
-                            DomainPartition* domain) override;
+  virtual real64
+  SolverStep( real64 const & time_n,
+              real64 const & dt,
+              integer const cycleNumber,
+              DomainPartition * domain ) override;
 
 private:
   NewComponent() = delete;
-  NewComponent(const NewComponent&) = delete;
-  NewComponent(const NewComponent&&) = delete;
-  NewComponent& operator=(const NewComponent&) = delete;
-  NewComponent& operator=(const NewComponent&&) = delete;
+  NewComponent( const NewComponent & ) = delete;
+  NewComponent( const NewComponent && ) = delete;
+  NewComponent &
+  operator=( const NewComponent & ) = delete;
+  NewComponent &
+  operator=( const NewComponent && ) = delete;
 };
 
 } /* namespace geosx */

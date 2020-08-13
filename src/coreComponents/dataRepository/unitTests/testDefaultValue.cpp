@@ -27,22 +27,22 @@
 using namespace geosx;
 using namespace dataRepository;
 
-TEST(testDefaultValue, testScalar)
+TEST( testDefaultValue, testScalar )
 {
   // The comparison with true is to avoid a linker error because has_default_value is constexpr.
-  EXPECT_TRUE(DefaultValue<int>::has_default_value == true);
-  EXPECT_TRUE(DefaultValue<long int>::has_default_value == true);
-  EXPECT_TRUE(DefaultValue<long long int>::has_default_value == true);
-  EXPECT_TRUE(DefaultValue<double>::has_default_value == true);
+  EXPECT_TRUE( DefaultValue< int >::has_default_value == true );
+  EXPECT_TRUE( DefaultValue< long int >::has_default_value == true );
+  EXPECT_TRUE( DefaultValue< long long int >::has_default_value == true );
+  EXPECT_TRUE( DefaultValue< double >::has_default_value == true );
 }
 
-TEST(testDefaultValue, testArray)
+TEST( testDefaultValue, testArray )
 {
   // The comparison with true is to avoid a linker error because has_default_value is constexpr.
-  EXPECT_TRUE(DefaultValue<array1d<double>>::has_default_value == true);
-  EXPECT_TRUE(DefaultValue<array2d<double>>::has_default_value == true);
-  EXPECT_TRUE(DefaultValue<array3d<double>>::has_default_value == true);
-  EXPECT_TRUE(DefaultValue<array1d<int>>::has_default_value == true);
-  EXPECT_TRUE(DefaultValue<array1d<long int>>::has_default_value == true);
-  EXPECT_TRUE(DefaultValue<array1d<long long int>>::has_default_value == true);
+  EXPECT_TRUE( DefaultValue< array1d< double > >::has_default_value == true );
+  EXPECT_TRUE( DefaultValue< array2d< double > >::has_default_value == true );
+  EXPECT_TRUE( DefaultValue< array3d< double > >::has_default_value == true );
+  EXPECT_TRUE( DefaultValue< array1d< int > >::has_default_value == true );
+  EXPECT_TRUE( DefaultValue< array1d< long int > >::has_default_value == true );
+  EXPECT_TRUE( DefaultValue< array1d< long long int > >::has_default_value == true );
 }

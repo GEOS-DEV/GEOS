@@ -26,27 +26,28 @@ namespace ProppantTransportKernels
 {
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-void AccumulationKernel::Compute(
+void
+AccumulationKernel::Compute(
   localIndex const NC,
   real64 const proppantConcOld,
   real64 const proppantConcNew,
-  arraySlice1d<real64 const> const &componentDensOld,
-  arraySlice1d<real64 const> const &componentDensNew,
-  arraySlice1d<real64 const> const &GEOSX_UNUSED_PARAM(dCompDens_dPres),
-  arraySlice2d<real64 const> const &dCompDens_dCompConc,
+  arraySlice1d< real64 const > const & componentDensOld,
+  arraySlice1d< real64 const > const & componentDensNew,
+  arraySlice1d< real64 const > const & GEOSX_UNUSED_PARAM( dCompDens_dPres ),
+  arraySlice2d< real64 const > const & dCompDens_dCompConc,
   real64 const volume,
   real64 const packPoreVolume,
   real64 const proppantLiftVolume,
-  arraySlice1d<real64> const &localAccum,
-  arraySlice2d<real64> const &localAccumJacobian)
+  arraySlice1d< real64 > const & localAccum,
+  arraySlice2d< real64 > const & localAccumJacobian )
 {
   // proppant mass conservation
   localAccum[0] =
-    (proppantConcNew - proppantConcOld) * volume - proppantLiftVolume;
+    ( proppantConcNew - proppantConcOld ) * volume - proppantLiftVolume;
 
-  for(localIndex c1 = 0; c1 < NC; ++c1)
+  for( localIndex c1 = 0; c1 < NC; ++c1 )
   {
-    for(localIndex c2 = 0; c2 < NC; ++c2)
+    for( localIndex c2 = 0; c2 < NC; ++c2 )
     {
       localAccumJacobian[c1][c2] = 0.0;
     }
@@ -55,17 +56,17 @@ void AccumulationKernel::Compute(
   localAccumJacobian[0][0] = volume;
 
   // component mass conservation
-  for(localIndex c1 = 0; c1 < NC; ++c1)
+  for( localIndex c1 = 0; c1 < NC; ++c1 )
   {
-    localAccum[c1 + 1] = (componentDensNew[c1] * (1.0 - proppantConcNew) -
-                          componentDensOld[c1] * (1.0 - proppantConcOld)) *
+    localAccum[c1 + 1] = ( componentDensNew[c1] * ( 1.0 - proppantConcNew ) -
+                           componentDensOld[c1] * ( 1.0 - proppantConcOld ) ) *
         volume +
-      (componentDensNew[c1] - componentDensOld[c1]) * packPoreVolume;
+      ( componentDensNew[c1] - componentDensOld[c1] ) * packPoreVolume;
 
-    for(localIndex c2 = 0; c2 < NC; ++c2)
+    for( localIndex c2 = 0; c2 < NC; ++c2 )
     {
       localAccumJacobian[c1 + 1][c2 + 1] =
-        dCompDens_dCompConc[c1][c2] * (1.0 - proppantConcNew) * volume +
+        dCompDens_dCompConc[c1][c2] * ( 1.0 - proppantConcNew ) * volume +
         dCompDens_dCompConc[c1][c2] * packPoreVolume;
     }
 
@@ -73,123 +74,125 @@ void AccumulationKernel::Compute(
   }
 }
 
-void AccumulationKernel::Launch(
+void
+AccumulationKernel::Launch(
   localIndex const size,
   localIndex const NC,
   localIndex const NDOF,
   globalIndex const rankOffset,
-  arrayView1d<globalIndex const> const &dofNumber,
-  arrayView1d<integer const> const &elemGhostRank,
-  arrayView1d<real64 const> const &proppantConc,
-  arrayView1d<real64 const> const &dProppantConc,
-  arrayView2d<real64 const> const &componentDensOld,
-  arrayView3d<real64 const> const &componentDens,
-  arrayView3d<real64 const> const &dCompDens_dPres,
-  arrayView4d<real64 const> const &dCompDens_dCompConc,
-  arrayView1d<real64 const> const &volume,
-  arrayView1d<real64 const> const &proppantPackVf,
-  arrayView1d<real64 const> const &proppantLiftFlux,
+  arrayView1d< globalIndex const > const & dofNumber,
+  arrayView1d< integer const > const & elemGhostRank,
+  arrayView1d< real64 const > const & proppantConc,
+  arrayView1d< real64 const > const & dProppantConc,
+  arrayView2d< real64 const > const & componentDensOld,
+  arrayView3d< real64 const > const & componentDens,
+  arrayView3d< real64 const > const & dCompDens_dPres,
+  arrayView4d< real64 const > const & dCompDens_dCompConc,
+  arrayView1d< real64 const > const & volume,
+  arrayView1d< real64 const > const & proppantPackVf,
+  arrayView1d< real64 const > const & proppantLiftFlux,
   real64 const dt,
   real64 const maxProppantConcentration,
-  CRSMatrixView<real64, globalIndex const> const &localMatrix,
-  arrayView1d<real64> const &localRhs)
+  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+  arrayView1d< real64 > const & localRhs )
 {
-  forAll<parallelDevicePolicy<>>(size, [=] GEOSX_HOST_DEVICE(localIndex const ei) {
-    if(elemGhostRank[ei] < 0)
+  forAll< parallelDevicePolicy<> >( size, [=] GEOSX_HOST_DEVICE( localIndex const ei ) {
+    if( elemGhostRank[ei] < 0 )
     {
       localIndex constexpr MAX_NC = ProppantTransport::MAX_NUM_COMPONENTS;
-      stackArray1d<globalIndex, MAX_NC> localAccumDOF(NDOF);
-      stackArray1d<real64, MAX_NC> localAccum(NDOF);
-      stackArray2d<real64, MAX_NC * MAX_NC> localAccumJacobian(NDOF, NDOF);
+      stackArray1d< globalIndex, MAX_NC > localAccumDOF( NDOF );
+      stackArray1d< real64, MAX_NC > localAccum( NDOF );
+      stackArray2d< real64, MAX_NC * MAX_NC > localAccumJacobian( NDOF, NDOF );
 
       real64 effectiveVolume = volume[ei];
       real64 packPoreVolume = 0.0;
 
-      if(proppantPackVf[ei] < 1.0)
+      if( proppantPackVf[ei] < 1.0 )
       {
-        effectiveVolume = volume[ei] * (1.0 - proppantPackVf[ei]);
+        effectiveVolume = volume[ei] * ( 1.0 - proppantPackVf[ei] );
         packPoreVolume =
-          volume[ei] * proppantPackVf[ei] * (1.0 - maxProppantConcentration);
+          volume[ei] * proppantPackVf[ei] * ( 1.0 - maxProppantConcentration );
       }
 
       real64 const proppantLiftVolume = proppantLiftFlux[ei] * dt;
 
-      Compute(NC,
-              proppantConc[ei],
-              proppantConc[ei] + dProppantConc[ei],
-              componentDensOld[ei],
-              componentDens[ei][0],
-              dCompDens_dPres[ei][0],
-              dCompDens_dCompConc[ei][0],
-              effectiveVolume,
-              packPoreVolume,
-              proppantLiftVolume,
-              localAccum,
-              localAccumJacobian);
+      Compute( NC,
+               proppantConc[ei],
+               proppantConc[ei] + dProppantConc[ei],
+               componentDensOld[ei],
+               componentDens[ei][0],
+               dCompDens_dPres[ei][0],
+               dCompDens_dCompConc[ei][0],
+               effectiveVolume,
+               packPoreVolume,
+               proppantLiftVolume,
+               localAccum,
+               localAccumJacobian );
 
       globalIndex const elemDOF = dofNumber[ei];
 
-      for(localIndex idof = 0; idof < NDOF; ++idof)
+      for( localIndex idof = 0; idof < NDOF; ++idof )
       {
         localAccumDOF[idof] = elemDOF + idof;
       }
       // add contribution to global residual and dRdP
 
       localIndex const localRow = dofNumber[ei] - rankOffset;
-      for(localIndex idof = 0; idof < NDOF; ++idof)
+      for( localIndex idof = 0; idof < NDOF; ++idof )
       {
         localRhs[localRow + idof] += localAccum[idof];
-        localMatrix.addToRow<serialAtomic>(
+        localMatrix.addToRow< serialAtomic >(
           localRow + idof,
           localAccumDOF.data(),
           localAccumJacobian[idof].dataIfContiguous(),
-          NDOF);
+          NDOF );
       }
     }
-  });
+  } );
 }
 
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-void FluxKernel::ComputeJunction(
+void
+FluxKernel::ComputeJunction(
   localIndex const numElems,
   localIndex const numDofPerCell,
-  arraySlice1d<localIndex const> const &stencilElementIndices,
-  arraySlice1d<real64 const> const &stencilWeights,
-  arraySlice1d<R1Tensor const> const &stencilCellCenterToEdgeCenters,
-  arrayView1d<real64 const> const &pres,
-  arrayView1d<real64 const> const &dPres,
-  arrayView1d<real64 const> const &proppantConc,
-  arrayView1d<real64 const> const &dProppantConc,
-  arrayView3d<real64 const> const &componentDens,
-  arrayView3d<real64 const> const &dComponentDens_dPres,
-  arrayView4d<real64 const> const &dComponentDens_dComponentConc,
-  arrayView1d<real64 const> const &gravDepth,
-  arrayView2d<real64 const> const &dens,
-  arrayView2d<real64 const> const &dDens_dPres,
-  arrayView2d<real64 const> const &dDens_dProppantConc,
-  arrayView3d<real64 const> const &dDens_dComponentConc,
-  arrayView2d<real64 const> const &visc,
-  arrayView2d<real64 const> const &dVisc_dPres,
-  arrayView2d<real64 const> const &dVisc_dProppantConc,
-  arrayView3d<real64 const> const &dVisc_dComponentConc,
-  arrayView2d<real64 const> const &fluidDensity,
-  arrayView2d<real64 const> const &GEOSX_UNUSED_PARAM(dFluidDens_dPres),
-  arrayView3d<real64 const> const &GEOSX_UNUSED_PARAM(dFluidDens_dComponentConc),
-  arrayView1d<real64 const> const &settlingFactor,
-  arrayView1d<real64 const> const &GEOSX_UNUSED_PARAM(dSettlingFactor_dPres),
-  arrayView1d<real64 const> const &dSettlingFactor_dProppantConc,
-  arrayView2d<real64 const> const &GEOSX_UNUSED_PARAM(dSettlingFactor_dComponentConc),
-  arrayView1d<real64 const> const &collisionFactor,
-  arrayView1d<real64 const> const &dCollisionFactor_dProppantConc,
-  arrayView1d<integer const> const &isProppantMobile,
-  arrayView1d<real64 const> const &GEOSX_UNUSED_PARAM(proppantPackVf),
-  arrayView1d<real64 const> const &aperture,
-  R1Tensor const &unitGravityVector,
-  arrayView1d<R1Tensor const> const &transTMultiplier,
+  arraySlice1d< localIndex const > const & stencilElementIndices,
+  arraySlice1d< real64 const > const & stencilWeights,
+  arraySlice1d< R1Tensor const > const & stencilCellCenterToEdgeCenters,
+  arrayView1d< real64 const > const & pres,
+  arrayView1d< real64 const > const & dPres,
+  arrayView1d< real64 const > const & proppantConc,
+  arrayView1d< real64 const > const & dProppantConc,
+  arrayView3d< real64 const > const & componentDens,
+  arrayView3d< real64 const > const & dComponentDens_dPres,
+  arrayView4d< real64 const > const & dComponentDens_dComponentConc,
+  arrayView1d< real64 const > const & gravDepth,
+  arrayView2d< real64 const > const & dens,
+  arrayView2d< real64 const > const & dDens_dPres,
+  arrayView2d< real64 const > const & dDens_dProppantConc,
+  arrayView3d< real64 const > const & dDens_dComponentConc,
+  arrayView2d< real64 const > const & visc,
+  arrayView2d< real64 const > const & dVisc_dPres,
+  arrayView2d< real64 const > const & dVisc_dProppantConc,
+  arrayView3d< real64 const > const & dVisc_dComponentConc,
+  arrayView2d< real64 const > const & fluidDensity,
+  arrayView2d< real64 const > const & GEOSX_UNUSED_PARAM( dFluidDens_dPres ),
+  arrayView3d< real64 const > const & GEOSX_UNUSED_PARAM( dFluidDens_dComponentConc ),
+  arrayView1d< real64 const > const & settlingFactor,
+  arrayView1d< real64 const > const & GEOSX_UNUSED_PARAM( dSettlingFactor_dPres ),
+  arrayView1d< real64 const > const & dSettlingFactor_dProppantConc,
+  arrayView2d< real64 const > const & GEOSX_UNUSED_PARAM( dSettlingFactor_dComponentConc ),
+  arrayView1d< real64 const > const & collisionFactor,
+  arrayView1d< real64 const > const & dCollisionFactor_dProppantConc,
+  arrayView1d< integer const > const & isProppantMobile,
+  arrayView1d< real64 const > const & GEOSX_UNUSED_PARAM( proppantPackVf ),
+  arrayView1d< real64 const > const & aperture,
+  R1Tensor const & unitGravityVector,
+  arrayView1d< R1Tensor const > const & transTMultiplier,
   real64 const dt,
-  arraySlice1d<real64> const &localFlux,
-  arraySlice2d<real64> const &localFluxJacobian)
+  arraySlice1d< real64 > const & localFlux,
+  arraySlice2d< real64 > const & localFluxJacobian )
 {
   // We assume numElems == stencilSize;
 
@@ -201,69 +204,69 @@ void FluxKernel::ComputeJunction(
 
   localIndex const NC = numDofPerCell - 1;
 
-  stackArray1d<real64, maxNumFluxElems> weight(numElems);
+  stackArray1d< real64, maxNumFluxElems > weight( numElems );
 
   // mixture density and fluid density in each face
-  stackArray1d<real64, maxNumFluxElems> mixDens(numElems);
-  stackArray1d<real64, maxNumFluxElems> fluidDens(numElems);
+  stackArray1d< real64, maxNumFluxElems > mixDens( numElems );
+  stackArray1d< real64, maxNumFluxElems > fluidDens( numElems );
 
   // realted to slip velocity calculation
-  stackArray1d<real64, maxNumFluxElems> transT(numElems);
-  stackArray1d<real64, maxNumFluxElems> coefs(numElems);
+  stackArray1d< real64, maxNumFluxElems > transT( numElems );
+  stackArray1d< real64, maxNumFluxElems > coefs( numElems );
 
   real64 edgeDensity = 0.0;
-  stackArray1d<real64, maxNumFluxElems> dEdgeDens_dP(numElems);
-  stackArray1d<real64, maxNumFluxElems> dEdgeDens_dProppantC(numElems);
-  stackArray2d<real64, maxNumFluxElems * maxNumComponents> dEdgeDens_dComponentC(
+  stackArray1d< real64, maxNumFluxElems > dEdgeDens_dP( numElems );
+  stackArray1d< real64, maxNumFluxElems > dEdgeDens_dProppantC( numElems );
+  stackArray2d< real64, maxNumFluxElems * maxNumComponents > dEdgeDens_dComponentC(
     numElems,
-    NC);
+    NC );
 
   real64 edgeViscosity = 0.0;
-  stackArray1d<real64, maxNumFluxElems> dEdgeVisc_dP(numElems);
-  stackArray1d<real64, maxNumFluxElems> dEdgeVisc_dProppantC(numElems);
-  stackArray2d<real64, maxNumFluxElems * maxNumComponents> dEdgeVisc_dComponentC(
+  stackArray1d< real64, maxNumFluxElems > dEdgeVisc_dP( numElems );
+  stackArray1d< real64, maxNumFluxElems > dEdgeVisc_dProppantC( numElems );
+  stackArray2d< real64, maxNumFluxElems * maxNumComponents > dEdgeVisc_dComponentC(
     numElems,
-    NC);
+    NC );
 
-  stackArray1d<real64, maxNumFluxElems> dPe_dP(numElems);
-  stackArray1d<real64, maxNumFluxElems> dPe_dProppantC(numElems);
-  stackArray2d<real64, maxNumFluxElems * maxNumComponents> dPe_dComponentC(
+  stackArray1d< real64, maxNumFluxElems > dPe_dP( numElems );
+  stackArray1d< real64, maxNumFluxElems > dPe_dProppantC( numElems );
+  stackArray2d< real64, maxNumFluxElems * maxNumComponents > dPe_dComponentC(
     numElems,
-    NC);
+    NC );
 
-  stackArray1d<real64, maxNumFluxElems> edgeToFaceFlux(numElems);
-  stackArray2d<real64, maxNumFluxElems * maxNumFluxElems> dEdgeToFaceFlux_dP(
+  stackArray1d< real64, maxNumFluxElems > edgeToFaceFlux( numElems );
+  stackArray2d< real64, maxNumFluxElems * maxNumFluxElems > dEdgeToFaceFlux_dP(
     numElems,
-    numElems);
-  stackArray2d<real64, maxNumFluxElems * maxNumFluxElems> dEdgeToFaceFlux_dProppantC(
+    numElems );
+  stackArray2d< real64, maxNumFluxElems * maxNumFluxElems > dEdgeToFaceFlux_dProppantC(
     numElems,
-    numElems);
-  stackArray3d<real64, maxNumFluxElems * maxNumFluxElems * maxNumComponents>
-    dEdgeToFaceFlux_dComponentC(numElems, numElems, NC);
+    numElems );
+  stackArray3d< real64, maxNumFluxElems * maxNumFluxElems * maxNumComponents >
+    dEdgeToFaceFlux_dComponentC( numElems, numElems, NC );
 
-  stackArray1d<real64, maxNumFluxElems> edgeToFaceProppantFlux(numElems);
-  stackArray2d<real64, maxNumFluxElems * maxNumFluxElems> dEdgeToFaceProppantFlux_dP(
+  stackArray1d< real64, maxNumFluxElems > edgeToFaceProppantFlux( numElems );
+  stackArray2d< real64, maxNumFluxElems * maxNumFluxElems > dEdgeToFaceProppantFlux_dP(
     numElems,
-    numElems);
-  stackArray2d<real64, maxNumFluxElems * maxNumFluxElems>
-    dEdgeToFaceProppantFlux_dProppantC(numElems, numElems);
-  stackArray3d<real64, maxNumFluxElems * maxNumFluxElems * maxNumComponents>
-    dEdgeToFaceProppantFlux_dComponentC(numElems, numElems, NC);
+    numElems );
+  stackArray2d< real64, maxNumFluxElems * maxNumFluxElems >
+    dEdgeToFaceProppantFlux_dProppantC( numElems, numElems );
+  stackArray3d< real64, maxNumFluxElems * maxNumFluxElems * maxNumComponents >
+    dEdgeToFaceProppantFlux_dComponentC( numElems, numElems, NC );
 
-  stackArray1d<real64, maxNumFluxElems> edgeToFaceFluidFlux(numElems);
-  stackArray2d<real64, maxNumFluxElems * maxNumFluxElems> dEdgeToFaceFluidFlux_dP(
+  stackArray1d< real64, maxNumFluxElems > edgeToFaceFluidFlux( numElems );
+  stackArray2d< real64, maxNumFluxElems * maxNumFluxElems > dEdgeToFaceFluidFlux_dP(
     numElems,
-    numElems);
-  stackArray2d<real64, maxNumFluxElems * maxNumFluxElems>
-    dEdgeToFaceFluidFlux_dProppantC(numElems, numElems);
-  stackArray3d<real64, maxNumFluxElems * maxNumFluxElems * maxNumComponents>
-    dEdgeToFaceFluidFlux_dComponentC(numElems, numElems, NC);
+    numElems );
+  stackArray2d< real64, maxNumFluxElems * maxNumFluxElems >
+    dEdgeToFaceFluidFlux_dProppantC( numElems, numElems );
+  stackArray3d< real64, maxNumFluxElems * maxNumFluxElems * maxNumComponents >
+    dEdgeToFaceFluidFlux_dComponentC( numElems, numElems, NC );
 
-  stackArray1d<real64, maxNumFluxElems> proppantC(numElems);
+  stackArray1d< real64, maxNumFluxElems > proppantC( numElems );
 
   real64 sumOfWeights = 0.0;
 
-  for(localIndex i = 0; i < numElems; ++i)
+  for( localIndex i = 0; i < numElems; ++i )
   {
     localIndex const ei = stencilElementIndices[i];
 
@@ -278,12 +281,12 @@ void FluxKernel::ComputeJunction(
       12.0 * stencilWeights[i] * stencilCellCenterToEdgeCenters[i].L2_Norm();
 
     real64 const stencilEdgeToFaceDownDistance =
-      -Dot(stencilCellCenterToEdgeCenters[i], unitGravityVector) * edgeLength /
+      -Dot( stencilCellCenterToEdgeCenters[i], unitGravityVector ) * edgeLength /
       stencilCellCenterToEdgeCenters[i].L2_Norm();
 
     coefs[i] = stencilEdgeToFaceDownDistance * aperture[ei];
 
-    if(fabs(stencilEdgeToFaceDownDistance) > TINY)
+    if( fabs( stencilEdgeToFaceDownDistance ) > TINY )
     {
       // vertical flow component
       transT[i] *= transTMultiplier[ei][1];
@@ -295,7 +298,7 @@ void FluxKernel::ComputeJunction(
     }
   }
 
-  for(localIndex i = 0; i < numElems; ++i)
+  for( localIndex i = 0; i < numElems; ++i )
   {
     weight[i] /= sumOfWeights;
   }
@@ -303,7 +306,7 @@ void FluxKernel::ComputeJunction(
   localIndex numberOfMobileProppantElems = 0;
 
   //get averaged edgeDensity and edgeViscosity
-  for(localIndex i = 0; i < numElems; ++i)
+  for( localIndex i = 0; i < numElems; ++i )
   {
     localIndex const ei = stencilElementIndices[i];
 
@@ -320,52 +323,52 @@ void FluxKernel::ComputeJunction(
     mixDens[i] = dens[ei][0];
     fluidDens[i] = fluidDensity[ei][0];
 
-    if(isProppantMobile[ei] == 1)
+    if( isProppantMobile[ei] == 1 )
     {
       numberOfMobileProppantElems++;
     }
 
-    for(localIndex c = 0; c < NC; ++c)
+    for( localIndex c = 0; c < NC; ++c )
     {
       dEdgeDens_dComponentC[i][c] = weight[i] * dDens_dComponentConc[ei][0][c];
       dEdgeVisc_dComponentC[i][c] = weight[i] * dVisc_dComponentConc[ei][0][c];
     }
   }
 
-  real64 const proppantFluxCoef = (numberOfMobileProppantElems > 1) ? 1.0 : 0.0;
+  real64 const proppantFluxCoef = ( numberOfMobileProppantElems > 1 ) ? 1.0 : 0.0;
 
   real64 transTSum = 0.0;
   real64 Pe = 0.0;
 
-  for(localIndex i = 0; i < numElems; ++i)
+  for( localIndex i = 0; i < numElems; ++i )
   {
     localIndex const ei = stencilElementIndices[i];
 
     real64 const gravD = gravDepth[ei];
     real64 const gravTerm = edgeDensity * gravD;
 
-    Pe += transT[i] * (pres[ei] + dPres[ei] - gravTerm);
+    Pe += transT[i] * ( pres[ei] + dPres[ei] - gravTerm );
     transTSum += transT[i];
     dPe_dP[i] += transT[i];
 
-    for(localIndex j = 0; j < numElems; ++j)
+    for( localIndex j = 0; j < numElems; ++j )
     {
       dPe_dP[j] += -transT[i] * gravD * dEdgeDens_dP[j];
       dPe_dProppantC[j] += -transT[i] * gravD * dEdgeDens_dProppantC[j];
 
-      for(localIndex c = 0; c < NC; ++c)
+      for( localIndex c = 0; c < NC; ++c )
       {
         dPe_dComponentC[j][c] += -transT[i] * gravD * dEdgeDens_dComponentC[j][c];
       }
     }
   }
 
-  for(localIndex i = 0; i < numElems; ++i)
+  for( localIndex i = 0; i < numElems; ++i )
   {
     dPe_dP[i] /= transTSum;
     dPe_dProppantC[i] /= transTSum;
 
-    for(localIndex c = 0; c < NC; ++c)
+    for( localIndex c = 0; c < NC; ++c )
     {
       dPe_dComponentC[i][c] /= transTSum;
     }
@@ -373,67 +376,67 @@ void FluxKernel::ComputeJunction(
 
   Pe /= transTSum;
 
-  for(localIndex i = 0; i < numElems; ++i)
+  for( localIndex i = 0; i < numElems; ++i )
   {
     localIndex const ei = stencilElementIndices[i];
 
     real64 const gravD = gravDepth[ei];
     real64 const gravTerm = edgeDensity * gravD;
 
-    real64 const fluxTerm = Pe - (pres[ei] + dPres[ei] - gravTerm);
+    real64 const fluxTerm = Pe - ( pres[ei] + dPres[ei] - gravTerm );
 
     edgeToFaceFlux[i] = transT[i] * fluxTerm / edgeViscosity;
     dEdgeToFaceFlux_dP[i][i] += -transT[i] / edgeViscosity;
 
-    for(localIndex j = 0; j < numElems; ++j)
+    for( localIndex j = 0; j < numElems; ++j )
     {
       dEdgeToFaceFlux_dP[i][j] += -transT[i] * fluxTerm * dEdgeVisc_dP[j] /
-          (edgeViscosity * edgeViscosity) +
-        transT[i] * (dPe_dP[j] + dEdgeDens_dP[j] * gravD) / edgeViscosity;
+          ( edgeViscosity * edgeViscosity ) +
+        transT[i] * ( dPe_dP[j] + dEdgeDens_dP[j] * gravD ) / edgeViscosity;
 
       dEdgeToFaceFlux_dProppantC[i][j] += -transT[i] * fluxTerm *
-          dEdgeVisc_dProppantC[j] / (edgeViscosity * edgeViscosity) +
-        transT[i] * (dPe_dProppantC[j] + dEdgeDens_dProppantC[j] * gravD) /
+          dEdgeVisc_dProppantC[j] / ( edgeViscosity * edgeViscosity ) +
+        transT[i] * ( dPe_dProppantC[j] + dEdgeDens_dProppantC[j] * gravD ) /
           edgeViscosity;
 
-      for(localIndex c = 0; c < NC; ++c)
+      for( localIndex c = 0; c < NC; ++c )
       {
         dEdgeToFaceFlux_dComponentC[i][j][c] += -transT[i] * fluxTerm *
-            dEdgeVisc_dComponentC[j][c] / (edgeViscosity * edgeViscosity) +
+            dEdgeVisc_dComponentC[j][c] / ( edgeViscosity * edgeViscosity ) +
           transT[i] *
-            (dPe_dComponentC[j][c] + dEdgeDens_dComponentC[j][c] * gravD) /
+            ( dPe_dComponentC[j][c] + dEdgeDens_dComponentC[j][c] * gravD ) /
             edgeViscosity;
       }
     }
 
-    for(localIndex j = 0; j < numElems; ++j)
+    for( localIndex j = 0; j < numElems; ++j )
     {
       dEdgeToFaceProppantFlux_dProppantC[i][j] = 0.0;
-      for(localIndex c = 0; c < NC; ++c)
+      for( localIndex c = 0; c < NC; ++c )
       {
         dEdgeToFaceProppantFlux_dComponentC[i][j][c] = 0.0;
       }
     }
 
-    if(fabs(coefs[i]) > TINY)
+    if( fabs( coefs[i] ) > TINY )
     {
       // vertical
-      edgeToFaceProppantFlux[i] = (1.0 - proppantC[i]) * settlingFactor[ei] *
+      edgeToFaceProppantFlux[i] = ( 1.0 - proppantC[i] ) * settlingFactor[ei] *
         coefs[i] * fluidDens[i] / mixDens[i];
 
       dEdgeToFaceProppantFlux_dProppantC[i][i] =
-        (-settlingFactor[ei] +
-         (1 - proppantC[i]) * dSettlingFactor_dProppantConc[ei]) *
+        ( -settlingFactor[ei] +
+          ( 1 - proppantC[i] ) * dSettlingFactor_dProppantConc[ei] ) *
         coefs[i] * fluidDens[i] / mixDens[i];
 
       edgeToFaceProppantFlux[i] += proppantFluxCoef * edgeToFaceFlux[i];
 
-      for(localIndex j = 0; j < numElems; ++j)
+      for( localIndex j = 0; j < numElems; ++j )
       {
         dEdgeToFaceProppantFlux_dProppantC[i][j] +=
           proppantFluxCoef * dEdgeToFaceFlux_dProppantC[i][j];
 
-        for(localIndex c = 0; c < NC; ++c)
+        for( localIndex c = 0; c < NC; ++c )
         {
           dEdgeToFaceProppantFlux_dComponentC[i][j][c] +=
             proppantFluxCoef * dEdgeToFaceFlux_dComponentC[i][j][c];
@@ -444,29 +447,29 @@ void FluxKernel::ComputeJunction(
     {
       // horizontal
       edgeToFaceProppantFlux[i] =
-        (1.0 +
-         fluidDens[i] / mixDens[i] * (1.0 - proppantC[i]) * collisionFactor[ei]) *
+        ( 1.0 +
+          fluidDens[i] / mixDens[i] * ( 1.0 - proppantC[i] ) * collisionFactor[ei] ) *
         proppantFluxCoef * edgeToFaceFlux[i];
 
       dEdgeToFaceProppantFlux_dProppantC[i][i] = -fluidDens[i] / mixDens[i] *
-        (collisionFactor[ei] -
-         (1.0 - proppantC[i]) * dCollisionFactor_dProppantConc[ei]) *
+        ( collisionFactor[ei] -
+          ( 1.0 - proppantC[i] ) * dCollisionFactor_dProppantConc[ei] ) *
         proppantFluxCoef * edgeToFaceFlux[i];
 
-      for(localIndex j = 0; j < numElems; ++j)
+      for( localIndex j = 0; j < numElems; ++j )
       {
         dEdgeToFaceProppantFlux_dProppantC[i][j] +=
-          (1.0 +
-           fluidDens[i] / mixDens[i] * (1.0 - proppantC[i]) *
-             collisionFactor[ei]) *
+          ( 1.0 +
+            fluidDens[i] / mixDens[i] * ( 1.0 - proppantC[i] ) *
+              collisionFactor[ei] ) *
           proppantFluxCoef * dEdgeToFaceFlux_dProppantC[i][j];
 
-        for(localIndex c = 0; c < NC; ++c)
+        for( localIndex c = 0; c < NC; ++c )
         {
           dEdgeToFaceProppantFlux_dComponentC[i][j][c] +=
-            (1.0 +
-             fluidDens[i] / mixDens[i] * (1.0 - proppantC[i]) *
-               collisionFactor[ei]) *
+            ( 1.0 +
+              fluidDens[i] / mixDens[i] * ( 1.0 - proppantC[i] ) *
+                collisionFactor[ei] ) *
             proppantFluxCoef * dEdgeToFaceFlux_dComponentC[i][j][c];
         }
       }
@@ -474,12 +477,12 @@ void FluxKernel::ComputeJunction(
 
     // fluid flux for component transport
 
-    for(localIndex j = 0; j < numElems; ++j)
+    for( localIndex j = 0; j < numElems; ++j )
     {
       dEdgeToFaceFluidFlux_dP[i][j] = 0.0;
       dEdgeToFaceFluidFlux_dProppantC[i][j] = 0.0;
 
-      for(localIndex c = 0; c < NC; ++c)
+      for( localIndex c = 0; c < NC; ++c )
       {
         dEdgeToFaceFluidFlux_dComponentC[i][j][c] = 0.0;
       }
@@ -488,34 +491,34 @@ void FluxKernel::ComputeJunction(
     // note that all the fluid properties are from previous time step
 
     real64 const fluidFluxCoef =
-      (isProppantMobile[ei] == 0 || numElems == 1) ? 0.0 : 1.0;
+      ( isProppantMobile[ei] == 0 || numElems == 1 ) ? 0.0 : 1.0;
 
     edgeToFaceFluidFlux[i] = mixDens[i] / fluidDens[i] * edgeToFaceFlux[i] -
-      fluidFluxCoef * (mixDens[i] - fluidDens[i] * (1.0 - proppantC[i])) /
+      fluidFluxCoef * ( mixDens[i] - fluidDens[i] * ( 1.0 - proppantC[i] ) ) /
         fluidDens[i] * edgeToFaceProppantFlux[i];
 
     dEdgeToFaceFluidFlux_dProppantC[i][i] =
       -fluidFluxCoef * edgeToFaceProppantFlux[i];
 
-    for(localIndex j = 0; j < numElems; ++j)
+    for( localIndex j = 0; j < numElems; ++j )
     {
       dEdgeToFaceFluidFlux_dProppantC[i][j] +=
         mixDens[i] / fluidDens[i] * dEdgeToFaceFlux_dProppantC[i][j] -
-        fluidFluxCoef * (mixDens[i] - fluidDens[i] * (1.0 - proppantC[i])) /
+        fluidFluxCoef * ( mixDens[i] - fluidDens[i] * ( 1.0 - proppantC[i] ) ) /
           fluidDens[i] * dEdgeToFaceProppantFlux_dProppantC[i][j];
-      for(localIndex c = 0; c < NC; ++c)
+      for( localIndex c = 0; c < NC; ++c )
       {
         dEdgeToFaceFluidFlux_dComponentC[i][j][c] +=
           mixDens[i] / fluidDens[i] * dEdgeToFaceFlux_dComponentC[i][j][c] -
-          fluidFluxCoef * (mixDens[i] - fluidDens[i] * (1.0 - proppantC[i])) /
+          fluidFluxCoef * ( mixDens[i] - fluidDens[i] * ( 1.0 - proppantC[i] ) ) /
             fluidDens[i] * dEdgeToFaceProppantFlux_dComponentC[i][j][c];
       }
     }
 
-    for(localIndex j = 0; j < numElems; ++j)
+    for( localIndex j = 0; j < numElems; ++j )
     {
       dEdgeToFaceFluidFlux_dProppantC[i][j] = 0.0;
-      for(localIndex c = 0; c < NC; ++c)
+      for( localIndex c = 0; c < NC; ++c )
       {
         dEdgeToFaceFluidFlux_dComponentC[i][j][c] = 0.0;
       }
@@ -525,35 +528,35 @@ void FluxKernel::ComputeJunction(
   // get proppantCe
 
   real64 proppantCe = 0.0;
-  stackArray1d<real64, maxNumFluxElems> dProppantCe_dP(numElems);
-  stackArray1d<real64, maxNumFluxElems> dProppantCe_dProppantC(numElems);
-  stackArray2d<real64, maxNumFluxElems * maxNumComponents> dProppantCe_dComponentC(
+  stackArray1d< real64, maxNumFluxElems > dProppantCe_dP( numElems );
+  stackArray1d< real64, maxNumFluxElems > dProppantCe_dProppantC( numElems );
+  stackArray2d< real64, maxNumFluxElems * maxNumComponents > dProppantCe_dComponentC(
     numElems,
-    NC);
+    NC );
 
   real64 downStreamFlux = 0.0;
-  stackArray1d<real64, maxNumFluxElems> dDownStreamFlux_dP(numElems);
-  stackArray1d<real64, maxNumFluxElems> dDownStreamFlux_dProppantC(numElems);
-  stackArray2d<real64, maxNumFluxElems * maxNumComponents>
-    dDownStreamFlux_dComponentC(numElems, NC);
+  stackArray1d< real64, maxNumFluxElems > dDownStreamFlux_dP( numElems );
+  stackArray1d< real64, maxNumFluxElems > dDownStreamFlux_dProppantC( numElems );
+  stackArray2d< real64, maxNumFluxElems * maxNumComponents >
+    dDownStreamFlux_dComponentC( numElems, NC );
 
-  for(localIndex i = 0; i < numElems; ++i)
+  for( localIndex i = 0; i < numElems; ++i )
   {
     localIndex const ei = stencilElementIndices[i];
 
-    if(isProppantMobile[ei] == 0) continue;
+    if( isProppantMobile[ei] == 0 ) continue;
 
-    if(edgeToFaceProppantFlux[i] >= 0.0)
+    if( edgeToFaceProppantFlux[i] >= 0.0 )
     {
       // downstream
       downStreamFlux += edgeToFaceProppantFlux[i];
 
-      for(localIndex j = 0; j < numElems; ++j)
+      for( localIndex j = 0; j < numElems; ++j )
       {
         dDownStreamFlux_dP[j] += dEdgeToFaceProppantFlux_dP[i][j];
         dDownStreamFlux_dProppantC[j] += dEdgeToFaceProppantFlux_dProppantC[i][j];
 
-        for(localIndex c = 0; c < NC; ++c)
+        for( localIndex c = 0; c < NC; ++c )
         {
           dDownStreamFlux_dComponentC[j][c] +=
             dEdgeToFaceProppantFlux_dComponentC[i][j][c];
@@ -566,13 +569,13 @@ void FluxKernel::ComputeJunction(
       proppantCe += -edgeToFaceProppantFlux[i] * proppantC[i];
       dProppantCe_dProppantC[i] += -edgeToFaceProppantFlux[i];
 
-      for(localIndex j = 0; j < numElems; ++j)
+      for( localIndex j = 0; j < numElems; ++j )
       {
         dProppantCe_dP[j] += -dEdgeToFaceProppantFlux_dP[i][j] * proppantC[i];
         dProppantCe_dProppantC[j] +=
           -dEdgeToFaceProppantFlux_dProppantC[i][j] * proppantC[i];
 
-        for(localIndex c = 0; c < NC; ++c)
+        for( localIndex c = 0; c < NC; ++c )
         {
           dProppantCe_dComponentC[j][c] +=
             -dEdgeToFaceProppantFlux_dComponentC[i][j][c] * proppantC[i];
@@ -581,27 +584,27 @@ void FluxKernel::ComputeJunction(
     }
   }
 
-  if(downStreamFlux > 0.0)
+  if( downStreamFlux > 0.0 )
   {
-    for(localIndex i = 0; i < numElems; ++i)
+    for( localIndex i = 0; i < numElems; ++i )
     {
       localIndex const ei = stencilElementIndices[i];
 
-      if(isProppantMobile[ei] == 0) continue;
+      if( isProppantMobile[ei] == 0 ) continue;
 
       dProppantCe_dP[i] = dProppantCe_dP[i] / downStreamFlux -
-        proppantCe * dDownStreamFlux_dP[i] / (downStreamFlux * downStreamFlux);
+        proppantCe * dDownStreamFlux_dP[i] / ( downStreamFlux * downStreamFlux );
       dProppantCe_dProppantC[i] = dProppantCe_dProppantC[i] / downStreamFlux -
         proppantCe * dDownStreamFlux_dProppantC[i] /
-          (downStreamFlux * downStreamFlux);
+          ( downStreamFlux * downStreamFlux );
       ;
 
-      for(localIndex c = 0; c < NC; ++c)
+      for( localIndex c = 0; c < NC; ++c )
       {
         dProppantCe_dComponentC[i][c] =
           dProppantCe_dComponentC[i][c] / downStreamFlux -
           proppantCe * dDownStreamFlux_dComponentC[i][c] /
-            (downStreamFlux * downStreamFlux);
+            ( downStreamFlux * downStreamFlux );
       }
     }
 
@@ -610,11 +613,11 @@ void FluxKernel::ComputeJunction(
   else
   {
     proppantCe = 0.0;
-    for(localIndex i = 0; i < numElems; ++i)
+    for( localIndex i = 0; i < numElems; ++i )
     {
       localIndex const ei = stencilElementIndices[i];
 
-      if(isProppantMobile[ei] == 0) continue;
+      if( isProppantMobile[ei] == 0 ) continue;
 
       dProppantCe_dP[i] = 0.0;
       dProppantCe_dProppantC[i] = weight[i];
@@ -624,42 +627,42 @@ void FluxKernel::ComputeJunction(
 
   // get componentCe
 
-  stackArray1d<real64, maxNumComponents> componentCe(NC);
-  stackArray2d<real64, maxNumFluxElems * maxNumComponents> dComponentCe_dP(
+  stackArray1d< real64, maxNumComponents > componentCe( NC );
+  stackArray2d< real64, maxNumFluxElems * maxNumComponents > dComponentCe_dP(
     numElems,
-    NC);
-  stackArray2d<real64, maxNumFluxElems * maxNumComponents> dComponentCe_dProppantC(
+    NC );
+  stackArray2d< real64, maxNumFluxElems * maxNumComponents > dComponentCe_dProppantC(
     numElems,
-    NC);
-  stackArray3d<real64, maxNumFluxElems * maxNumComponents * maxNumComponents>
-    dComponentCe_dComponentC(numElems, NC, NC);
+    NC );
+  stackArray3d< real64, maxNumFluxElems * maxNumComponents * maxNumComponents >
+    dComponentCe_dComponentC( numElems, NC, NC );
 
   downStreamFlux = 0.0;
-  for(localIndex i = 0; i < numElems; ++i)
+  for( localIndex i = 0; i < numElems; ++i )
   {
     dDownStreamFlux_dP[i] = 0.0;
     dDownStreamFlux_dProppantC[i] = 0.0;
-    for(localIndex c = 0; c < NC; ++c)
+    for( localIndex c = 0; c < NC; ++c )
     {
       dDownStreamFlux_dComponentC[i][c] = 0.0;
     }
   }
 
-  for(localIndex i = 0; i < numElems; ++i)
+  for( localIndex i = 0; i < numElems; ++i )
   {
     localIndex const ei = stencilElementIndices[i];
 
-    if(edgeToFaceFluidFlux[i] >= 0.0)
+    if( edgeToFaceFluidFlux[i] >= 0.0 )
     {
       // downstream
       downStreamFlux += edgeToFaceFluidFlux[i];
 
-      for(localIndex j = 0; j < numElems; ++j)
+      for( localIndex j = 0; j < numElems; ++j )
       {
         dDownStreamFlux_dP[j] += dEdgeToFaceFluidFlux_dP[i][j];
         dDownStreamFlux_dProppantC[j] += dEdgeToFaceFluidFlux_dProppantC[i][j];
 
-        for(localIndex c = 0; c < NC; ++c)
+        for( localIndex c = 0; c < NC; ++c )
         {
           dDownStreamFlux_dComponentC[j][c] +=
             dEdgeToFaceFluidFlux_dComponentC[i][j][c];
@@ -669,26 +672,26 @@ void FluxKernel::ComputeJunction(
     else
     {
       // upstream
-      for(localIndex c1 = 0; c1 < NC; ++c1)
+      for( localIndex c1 = 0; c1 < NC; ++c1 )
       {
         componentCe[c1] += -edgeToFaceFluidFlux[i] * componentDens[ei][0][c1];
         dComponentCe_dP[i][c1] +=
           -edgeToFaceFluidFlux[i] * dComponentDens_dPres[ei][0][c1];
 
-        for(localIndex c2 = 0; c2 < NC; ++c2)
+        for( localIndex c2 = 0; c2 < NC; ++c2 )
         {
           dComponentCe_dComponentC[i][c1][c2] += -edgeToFaceFluidFlux[i] *
             dComponentDens_dComponentConc[ei][0][c1][c2];
         }
 
-        for(localIndex j = 0; j < numElems; ++j)
+        for( localIndex j = 0; j < numElems; ++j )
         {
           dComponentCe_dP[j][c1] +=
             -dEdgeToFaceFluidFlux_dP[i][j] * componentDens[ei][0][c1];
           dComponentCe_dProppantC[j][c1] +=
             -dEdgeToFaceFluidFlux_dProppantC[i][j] * componentDens[ei][0][c1];
 
-          for(localIndex c2 = 0; c2 < NC; ++c2)
+          for( localIndex c2 = 0; c2 < NC; ++c2 )
           {
             dComponentCe_dComponentC[j][c1][c2] +=
               -dEdgeToFaceFluidFlux_dComponentC[i][j][c2] *
@@ -699,26 +702,26 @@ void FluxKernel::ComputeJunction(
     }
   }
 
-  if(downStreamFlux > 0.0)
+  if( downStreamFlux > 0.0 )
   {
-    for(localIndex c1 = 0; c1 < NC; ++c1)
+    for( localIndex c1 = 0; c1 < NC; ++c1 )
     {
-      for(localIndex i = 0; i < numElems; ++i)
+      for( localIndex i = 0; i < numElems; ++i )
       {
         dComponentCe_dP[i][c1] = dComponentCe_dP[i][c1] / downStreamFlux -
           componentCe[c1] * dDownStreamFlux_dP[i] /
-            (downStreamFlux * downStreamFlux);
+            ( downStreamFlux * downStreamFlux );
         dComponentCe_dProppantC[i][c1] =
           dComponentCe_dProppantC[i][c1] / downStreamFlux -
           componentCe[c1] * dDownStreamFlux_dProppantC[i] /
-            (downStreamFlux * downStreamFlux);
+            ( downStreamFlux * downStreamFlux );
 
-        for(localIndex c2 = 0; c2 < NC; ++c2)
+        for( localIndex c2 = 0; c2 < NC; ++c2 )
         {
           dComponentCe_dComponentC[i][c1][c2] =
             dComponentCe_dComponentC[i][c1][c2] / downStreamFlux -
             componentCe[c1] * dDownStreamFlux_dComponentC[i][c2] /
-              (downStreamFlux * downStreamFlux);
+              ( downStreamFlux * downStreamFlux );
         }
       }
 
@@ -727,18 +730,18 @@ void FluxKernel::ComputeJunction(
   }
   else
   {
-    for(localIndex c = 0; c < NC; ++c)
+    for( localIndex c = 0; c < NC; ++c )
     {
       componentCe[c] = 0.0;
 
-      for(localIndex i = 0; i < numElems; ++i)
+      for( localIndex i = 0; i < numElems; ++i )
       {
         localIndex const ei = stencilElementIndices[i];
 
         componentCe[c] += componentDens[ei][0][c] * weight[i];
         dComponentCe_dP[i][c] = dComponentDens_dPres[ei][0][c] * weight[i];
 
-        for(localIndex c2 = 0; c2 < NC; ++c2)
+        for( localIndex c2 = 0; c2 < NC; ++c2 )
         {
           dComponentCe_dComponentC[i][c][c2] =
             dComponentDens_dComponentConc[ei][0][c][c2] * weight[i];
@@ -747,15 +750,15 @@ void FluxKernel::ComputeJunction(
     }
   }
 
-  for(localIndex i = 0; i < numElems; ++i)
+  for( localIndex i = 0; i < numElems; ++i )
   {
     localIndex const ei = stencilElementIndices[i];
 
     localIndex idx1 = i * numDofPerCell;  // proppant
 
-    if(isProppantMobile[ei] == 1 && !(numElems == 1 && coefs[i] > TINY))
+    if( isProppantMobile[ei] == 1 && !( numElems == 1 && coefs[i] > TINY ) )
     {
-      if(edgeToFaceProppantFlux[i] >= 0.0)
+      if( edgeToFaceProppantFlux[i] >= 0.0 )
       {
         localFlux[idx1] = -proppantCe * edgeToFaceProppantFlux[i] * dt;
       }
@@ -764,15 +767,15 @@ void FluxKernel::ComputeJunction(
         localFlux[idx1] = -proppantC[i] * edgeToFaceProppantFlux[i] * dt;
       }
 
-      for(localIndex j = 0; j < numElems; ++j)
+      for( localIndex j = 0; j < numElems; ++j )
       {
         localIndex idx2 = j * numDofPerCell;
 
-        if(edgeToFaceProppantFlux[i] >= 0.0)
+        if( edgeToFaceProppantFlux[i] >= 0.0 )
         {
           localFluxJacobian[idx1][idx2] =
-            -(dProppantCe_dProppantC[j] * edgeToFaceProppantFlux[i] +
-              proppantCe * dEdgeToFaceProppantFlux_dProppantC[i][j]) *
+            -( dProppantCe_dProppantC[j] * edgeToFaceProppantFlux[i] +
+               proppantCe * dEdgeToFaceProppantFlux_dProppantC[i][j] ) *
             dt;
         }
         else
@@ -780,7 +783,7 @@ void FluxKernel::ComputeJunction(
           localFluxJacobian[idx1][idx2] =
             -proppantC[i] * dEdgeToFaceProppantFlux_dProppantC[i][j] * dt;
 
-          if(i == j)
+          if( i == j )
           {
             localFluxJacobian[idx1][idx2] += -edgeToFaceProppantFlux[i] * dt;
           }
@@ -791,9 +794,9 @@ void FluxKernel::ComputeJunction(
     {
       localFlux[idx1] = 0.0;
 
-      for(localIndex j = 0; j < numElems; ++j)
+      for( localIndex j = 0; j < numElems; ++j )
       {
-        for(localIndex c = 0; c < numDofPerCell; ++c)
+        for( localIndex c = 0; c < numDofPerCell; ++c )
         {
           localIndex idx2 = j * numDofPerCell + c;
           localFluxJacobian[idx1][idx2] = 0.0;
@@ -803,13 +806,13 @@ void FluxKernel::ComputeJunction(
 
     // component
 
-    if(numElems > 1)
+    if( numElems > 1 )
     {
-      for(localIndex c1 = 0; c1 < NC; ++c1)
+      for( localIndex c1 = 0; c1 < NC; ++c1 )
       {
         idx1 = i * numDofPerCell + 1 + c1;
 
-        if(edgeToFaceFluidFlux[i] >= 0.0)
+        if( edgeToFaceFluidFlux[i] >= 0.0 )
         {
           localFlux[idx1] = -componentCe[c1] * edgeToFaceFluidFlux[i] * dt;
         }
@@ -819,26 +822,26 @@ void FluxKernel::ComputeJunction(
             -componentDens[ei][0][c1] * edgeToFaceFluidFlux[i] * dt;
         }
 
-        for(localIndex j = 0; j < numElems; ++j)
+        for( localIndex j = 0; j < numElems; ++j )
         {
           localIndex idx2 = j * numDofPerCell;
 
-          if(edgeToFaceFluidFlux[i] >= 0.0)
+          if( edgeToFaceFluidFlux[i] >= 0.0 )
           {
-            for(localIndex c2 = 0; c2 < NC; ++c2)
+            for( localIndex c2 = 0; c2 < NC; ++c2 )
             {
               localFluxJacobian[idx1][idx2 + 1 + c2] =
-                -(dComponentCe_dComponentC[j][c1][c2] * edgeToFaceFluidFlux[i] +
-                  0 * componentCe[c1] *
-                    dEdgeToFaceFluidFlux_dComponentC[i][j][c2]) *
+                -( dComponentCe_dComponentC[j][c1][c2] * edgeToFaceFluidFlux[i] +
+                   0 * componentCe[c1] *
+                     dEdgeToFaceFluidFlux_dComponentC[i][j][c2] ) *
                 dt;
             }
           }
           else
           {
-            if(i == j)
+            if( i == j )
             {
-              for(localIndex c2 = 0; c2 < NC; ++c2)
+              for( localIndex c2 = 0; c2 < NC; ++c2 )
               {
                 localFluxJacobian[idx1][idx2 + 1 + c2] +=
                   -dComponentDens_dComponentConc[ei][0][c1][c2] *
@@ -852,126 +855,128 @@ void FluxKernel::ComputeJunction(
   }
 }
 
-template <>
-void FluxKernel::Launch<CellElementStencilTPFA>(
-  CellElementStencilTPFA const &GEOSX_UNUSED_PARAM(stencil),
-  localIndex const GEOSX_UNUSED_PARAM(numDofPerCell),
-  real64 const GEOSX_UNUSED_PARAM(dt),
-  globalIndex const GEOSX_UNUSED_PARAM(rankOffset),
-  ElementViewConst<arrayView1d<R1Tensor const>> const &GEOSX_UNUSED_PARAM(
-    transTMultiplier),
-  integer const GEOSX_UNUSED_PARAM(updateProppantPacking),
-  R1Tensor const &GEOSX_UNUSED_PARAM(unitGravityVector),
-  ElementViewConst<arrayView1d<globalIndex const>> const &GEOSX_UNUSED_PARAM(
-    dofNumber),
-  ElementViewConst<arrayView1d<integer const>> const &GEOSX_UNUSED_PARAM(ghostRank),
-  ElementViewConst<arrayView1d<real64 const>> const &GEOSX_UNUSED_PARAM(pres),
-  ElementViewConst<arrayView1d<real64 const>> const &GEOSX_UNUSED_PARAM(dPres),
-  ElementViewConst<arrayView1d<real64 const>> const &GEOSX_UNUSED_PARAM(proppantConc),
-  ElementViewConst<arrayView1d<real64 const>> const &GEOSX_UNUSED_PARAM(
-    dProppantConc),
-  ElementViewConst<arrayView3d<real64 const>> const &GEOSX_UNUSED_PARAM(
-    componentDens),
-  ElementViewConst<arrayView3d<real64 const>> const &GEOSX_UNUSED_PARAM(
-    dComponentDens_dPres),
-  ElementViewConst<arrayView4d<real64 const>> const &GEOSX_UNUSED_PARAM(
-    dComponentDens_dComponentConc),
-  ElementViewConst<arrayView1d<real64 const>> const &GEOSX_UNUSED_PARAM(gravDepth),
-  ElementViewConst<arrayView2d<real64 const>> const &GEOSX_UNUSED_PARAM(dens),
-  ElementViewConst<arrayView2d<real64 const>> const &GEOSX_UNUSED_PARAM(dDens_dPres),
-  ElementViewConst<arrayView2d<real64 const>> const &GEOSX_UNUSED_PARAM(
-    dDens_dProppantConc),
-  ElementViewConst<arrayView3d<real64 const>> const &GEOSX_UNUSED_PARAM(
-    dDens_dComponentConc),
-  ElementViewConst<arrayView2d<real64 const>> const &GEOSX_UNUSED_PARAM(visc),
-  ElementViewConst<arrayView2d<real64 const>> const &GEOSX_UNUSED_PARAM(dVisc_dPres),
-  ElementViewConst<arrayView2d<real64 const>> const &GEOSX_UNUSED_PARAM(
-    dVisc_dProppantConc),
-  ElementViewConst<arrayView3d<real64 const>> const &GEOSX_UNUSED_PARAM(
-    dVisc_dComponentConc),
-  ElementViewConst<arrayView2d<real64 const>> const &GEOSX_UNUSED_PARAM(fluidDensity),
-  ElementViewConst<arrayView2d<real64 const>> const &GEOSX_UNUSED_PARAM(
-    dFluidDens_dPres),
-  ElementViewConst<arrayView3d<real64 const>> const &GEOSX_UNUSED_PARAM(
-    dFluidDens_dComponentConc),
-  ElementViewConst<arrayView1d<real64 const>> const &GEOSX_UNUSED_PARAM(
-    settlingFactor),
-  ElementViewConst<arrayView1d<real64 const>> const &GEOSX_UNUSED_PARAM(
-    dSettlingFactor_dPres),
-  ElementViewConst<arrayView1d<real64 const>> const &GEOSX_UNUSED_PARAM(
-    dSettlingFactor_dProppantConc),
-  ElementViewConst<arrayView2d<real64 const>> const &GEOSX_UNUSED_PARAM(
-    dSettlingFactor_dComponentConc),
-  ElementViewConst<arrayView1d<real64 const>> const &GEOSX_UNUSED_PARAM(
-    collisionFactor),
-  ElementViewConst<arrayView1d<real64 const>> const &GEOSX_UNUSED_PARAM(
-    dCollisionFactor_dProppantConc),
-  ElementViewConst<arrayView1d<integer const>> const &GEOSX_UNUSED_PARAM(
-    isProppantMobile),
-  ElementViewConst<arrayView1d<real64 const>> const &GEOSX_UNUSED_PARAM(
-    proppantPackVf),
-  ElementViewConst<arrayView1d<real64 const>> const &GEOSX_UNUSED_PARAM(aperture),
-  CRSMatrixView<real64, globalIndex const> const &GEOSX_UNUSED_PARAM(localMatrix),
-  arrayView1d<real64> const &GEOSX_UNUSED_PARAM(localRhs))
+template<>
+void
+FluxKernel::Launch< CellElementStencilTPFA >(
+  CellElementStencilTPFA const & GEOSX_UNUSED_PARAM( stencil ),
+  localIndex const GEOSX_UNUSED_PARAM( numDofPerCell ),
+  real64 const GEOSX_UNUSED_PARAM( dt ),
+  globalIndex const GEOSX_UNUSED_PARAM( rankOffset ),
+  ElementViewConst< arrayView1d< R1Tensor const > > const & GEOSX_UNUSED_PARAM(
+    transTMultiplier ),
+  integer const GEOSX_UNUSED_PARAM( updateProppantPacking ),
+  R1Tensor const & GEOSX_UNUSED_PARAM( unitGravityVector ),
+  ElementViewConst< arrayView1d< globalIndex const > > const & GEOSX_UNUSED_PARAM(
+    dofNumber ),
+  ElementViewConst< arrayView1d< integer const > > const & GEOSX_UNUSED_PARAM( ghostRank ),
+  ElementViewConst< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM( pres ),
+  ElementViewConst< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM( dPres ),
+  ElementViewConst< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM( proppantConc ),
+  ElementViewConst< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM(
+    dProppantConc ),
+  ElementViewConst< arrayView3d< real64 const > > const & GEOSX_UNUSED_PARAM(
+    componentDens ),
+  ElementViewConst< arrayView3d< real64 const > > const & GEOSX_UNUSED_PARAM(
+    dComponentDens_dPres ),
+  ElementViewConst< arrayView4d< real64 const > > const & GEOSX_UNUSED_PARAM(
+    dComponentDens_dComponentConc ),
+  ElementViewConst< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM( gravDepth ),
+  ElementViewConst< arrayView2d< real64 const > > const & GEOSX_UNUSED_PARAM( dens ),
+  ElementViewConst< arrayView2d< real64 const > > const & GEOSX_UNUSED_PARAM( dDens_dPres ),
+  ElementViewConst< arrayView2d< real64 const > > const & GEOSX_UNUSED_PARAM(
+    dDens_dProppantConc ),
+  ElementViewConst< arrayView3d< real64 const > > const & GEOSX_UNUSED_PARAM(
+    dDens_dComponentConc ),
+  ElementViewConst< arrayView2d< real64 const > > const & GEOSX_UNUSED_PARAM( visc ),
+  ElementViewConst< arrayView2d< real64 const > > const & GEOSX_UNUSED_PARAM( dVisc_dPres ),
+  ElementViewConst< arrayView2d< real64 const > > const & GEOSX_UNUSED_PARAM(
+    dVisc_dProppantConc ),
+  ElementViewConst< arrayView3d< real64 const > > const & GEOSX_UNUSED_PARAM(
+    dVisc_dComponentConc ),
+  ElementViewConst< arrayView2d< real64 const > > const & GEOSX_UNUSED_PARAM( fluidDensity ),
+  ElementViewConst< arrayView2d< real64 const > > const & GEOSX_UNUSED_PARAM(
+    dFluidDens_dPres ),
+  ElementViewConst< arrayView3d< real64 const > > const & GEOSX_UNUSED_PARAM(
+    dFluidDens_dComponentConc ),
+  ElementViewConst< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM(
+    settlingFactor ),
+  ElementViewConst< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM(
+    dSettlingFactor_dPres ),
+  ElementViewConst< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM(
+    dSettlingFactor_dProppantConc ),
+  ElementViewConst< arrayView2d< real64 const > > const & GEOSX_UNUSED_PARAM(
+    dSettlingFactor_dComponentConc ),
+  ElementViewConst< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM(
+    collisionFactor ),
+  ElementViewConst< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM(
+    dCollisionFactor_dProppantConc ),
+  ElementViewConst< arrayView1d< integer const > > const & GEOSX_UNUSED_PARAM(
+    isProppantMobile ),
+  ElementViewConst< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM(
+    proppantPackVf ),
+  ElementViewConst< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM( aperture ),
+  CRSMatrixView< real64, globalIndex const > const & GEOSX_UNUSED_PARAM( localMatrix ),
+  arrayView1d< real64 > const & GEOSX_UNUSED_PARAM( localRhs ) )
 {
-  GEOSX_ERROR("Not implemented");
+  GEOSX_ERROR( "Not implemented" );
 }
 
-template <>
-void FluxKernel::Launch<FaceElementStencil>(
-  FaceElementStencil const &stencil,
+template<>
+void
+FluxKernel::Launch< FaceElementStencil >(
+  FaceElementStencil const & stencil,
   localIndex const numDofPerCell,
   real64 const dt,
   globalIndex const rankOffset,
-  ElementViewConst<arrayView1d<R1Tensor const>> const &transTMultiplier,
+  ElementViewConst< arrayView1d< R1Tensor const > > const & transTMultiplier,
   integer const updateProppantPacking,
-  R1Tensor const &unitGravityVector,
-  ElementViewConst<arrayView1d<globalIndex const>> const &dofNumber,
-  ElementViewConst<arrayView1d<integer const>> const &ghostRank,
-  ElementViewConst<arrayView1d<real64 const>> const &pres,
-  ElementViewConst<arrayView1d<real64 const>> const &dPres,
-  ElementViewConst<arrayView1d<real64 const>> const &proppantConc,
-  ElementViewConst<arrayView1d<real64 const>> const &dProppantConc,
-  ElementViewConst<arrayView3d<real64 const>> const &componentDens,
-  ElementViewConst<arrayView3d<real64 const>> const &dComponentDens_dPres,
-  ElementViewConst<arrayView4d<real64 const>> const &dComponentDens_dComponentConc,
-  ElementViewConst<arrayView1d<real64 const>> const &gravDepth,
-  ElementViewConst<arrayView2d<real64 const>> const &dens,
-  ElementViewConst<arrayView2d<real64 const>> const &dDens_dPres,
-  ElementViewConst<arrayView2d<real64 const>> const &dDens_dProppantConc,
-  ElementViewConst<arrayView3d<real64 const>> const &dDens_dComponentConc,
-  ElementViewConst<arrayView2d<real64 const>> const &visc,
-  ElementViewConst<arrayView2d<real64 const>> const &dVisc_dPres,
-  ElementViewConst<arrayView2d<real64 const>> const &dVisc_dProppantConc,
-  ElementViewConst<arrayView3d<real64 const>> const &dVisc_dComponentConc,
-  ElementViewConst<arrayView2d<real64 const>> const &fluidDensity,
-  ElementViewConst<arrayView2d<real64 const>> const &dFluidDens_dPres,
-  ElementViewConst<arrayView3d<real64 const>> const &dFluidDens_dComponentConc,
-  ElementViewConst<arrayView1d<real64 const>> const &settlingFactor,
-  ElementViewConst<arrayView1d<real64 const>> const &dSettlingFactor_dPres,
-  ElementViewConst<arrayView1d<real64 const>> const &dSettlingFactor_dProppantConc,
-  ElementViewConst<arrayView2d<real64 const>> const &dSettlingFactor_dComponentConc,
-  ElementViewConst<arrayView1d<real64 const>> const &collisionFactor,
-  ElementViewConst<arrayView1d<real64 const>> const &dCollisionFactor_dProppantConc,
-  ElementViewConst<arrayView1d<integer const>> const &isProppantMobile,
-  ElementViewConst<arrayView1d<real64 const>> const &proppantPackVf,
-  ElementViewConst<arrayView1d<real64 const>> const &aperture,
-  CRSMatrixView<real64, globalIndex const> const &localMatrix,
-  arrayView1d<real64> const &localRhs)
+  R1Tensor const & unitGravityVector,
+  ElementViewConst< arrayView1d< globalIndex const > > const & dofNumber,
+  ElementViewConst< arrayView1d< integer const > > const & ghostRank,
+  ElementViewConst< arrayView1d< real64 const > > const & pres,
+  ElementViewConst< arrayView1d< real64 const > > const & dPres,
+  ElementViewConst< arrayView1d< real64 const > > const & proppantConc,
+  ElementViewConst< arrayView1d< real64 const > > const & dProppantConc,
+  ElementViewConst< arrayView3d< real64 const > > const & componentDens,
+  ElementViewConst< arrayView3d< real64 const > > const & dComponentDens_dPres,
+  ElementViewConst< arrayView4d< real64 const > > const & dComponentDens_dComponentConc,
+  ElementViewConst< arrayView1d< real64 const > > const & gravDepth,
+  ElementViewConst< arrayView2d< real64 const > > const & dens,
+  ElementViewConst< arrayView2d< real64 const > > const & dDens_dPres,
+  ElementViewConst< arrayView2d< real64 const > > const & dDens_dProppantConc,
+  ElementViewConst< arrayView3d< real64 const > > const & dDens_dComponentConc,
+  ElementViewConst< arrayView2d< real64 const > > const & visc,
+  ElementViewConst< arrayView2d< real64 const > > const & dVisc_dPres,
+  ElementViewConst< arrayView2d< real64 const > > const & dVisc_dProppantConc,
+  ElementViewConst< arrayView3d< real64 const > > const & dVisc_dComponentConc,
+  ElementViewConst< arrayView2d< real64 const > > const & fluidDensity,
+  ElementViewConst< arrayView2d< real64 const > > const & dFluidDens_dPres,
+  ElementViewConst< arrayView3d< real64 const > > const & dFluidDens_dComponentConc,
+  ElementViewConst< arrayView1d< real64 const > > const & settlingFactor,
+  ElementViewConst< arrayView1d< real64 const > > const & dSettlingFactor_dPres,
+  ElementViewConst< arrayView1d< real64 const > > const & dSettlingFactor_dProppantConc,
+  ElementViewConst< arrayView2d< real64 const > > const & dSettlingFactor_dComponentConc,
+  ElementViewConst< arrayView1d< real64 const > > const & collisionFactor,
+  ElementViewConst< arrayView1d< real64 const > > const & dCollisionFactor_dProppantConc,
+  ElementViewConst< arrayView1d< integer const > > const & isProppantMobile,
+  ElementViewConst< arrayView1d< real64 const > > const & proppantPackVf,
+  ElementViewConst< arrayView1d< real64 const > > const & aperture,
+  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+  arrayView1d< real64 > const & localRhs )
 {
   constexpr localIndex maxNumFluxElems = FaceElementStencil::NUM_POINT_IN_FLUX;
   constexpr localIndex maxStencilSize = FaceElementStencil::MAX_STENCIL_SIZE;
 
-  typename FaceElementStencil::IndexContainerViewConstType const &seri =
+  typename FaceElementStencil::IndexContainerViewConstType const & seri =
     stencil.getElementRegionIndices();
-  typename FaceElementStencil::IndexContainerViewConstType const &sesri =
+  typename FaceElementStencil::IndexContainerViewConstType const & sesri =
     stencil.getElementSubRegionIndices();
-  typename FaceElementStencil::IndexContainerViewConstType const &sei =
+  typename FaceElementStencil::IndexContainerViewConstType const & sei =
     stencil.getElementIndices();
-  typename FaceElementStencil::WeightContainerViewConstType const &weights =
+  typename FaceElementStencil::WeightContainerViewConstType const & weights =
     stencil.getWeights();
 
-  ArrayOfArraysView<R1Tensor const> const &cellCenterToEdgeCenters =
+  ArrayOfArraysView< R1Tensor const > const & cellCenterToEdgeCenters =
     stencil.getCellCenterToEdgeCenters();
 
   constexpr localIndex DOF1 =
@@ -979,132 +984,133 @@ void FluxKernel::Launch<FaceElementStencil>(
   constexpr localIndex DOF2 =
     maxStencilSize * constitutive::ParticleFluidBase::MAX_NUM_COMPONENTS;
 
-  forAll<parallelDevicePolicy<>>(
+  forAll< parallelDevicePolicy<> >(
     stencil.size(),
-    [=] GEOSX_HOST_DEVICE(localIndex const iconn) {
-      localIndex const numFluxElems = seri.sizeOfArray(iconn);
+    [=] GEOSX_HOST_DEVICE( localIndex const iconn ) {
+      localIndex const numFluxElems = seri.sizeOfArray( iconn );
 
-      if((numFluxElems > 1 ||
-          updateProppantPacking != 0))  //isGhostConnectors[iconn][0] < 0 )
+      if( ( numFluxElems > 1 ||
+            updateProppantPacking != 0 ) )  //isGhostConnectors[iconn][0] < 0 )
       {
         localIndex const stencilSize = numFluxElems;
         localIndex const DOF = numFluxElems * numDofPerCell;
 
         // working arrays
-        stackArray1d<globalIndex, DOF2> dofColIndices(DOF);
+        stackArray1d< globalIndex, DOF2 > dofColIndices( DOF );
 
-        stackArray1d<real64, DOF1> localFlux(DOF);
-        stackArray2d<real64, DOF1 * DOF2> localFluxJacobian(DOF, DOF);
+        stackArray1d< real64, DOF1 > localFlux( DOF );
+        stackArray2d< real64, DOF1 * DOF2 > localFluxJacobian( DOF, DOF );
 
         localIndex const er = seri[iconn][0];
         localIndex const esr = sesri[iconn][0];
 
-        ComputeJunction(numFluxElems,
-                        numDofPerCell,
-                        sei[iconn],
-                        weights[iconn],
-                        cellCenterToEdgeCenters[iconn],
-                        pres[er][esr],
-                        dPres[er][esr],
-                        proppantConc[er][esr],
-                        dProppantConc[er][esr],
-                        componentDens[er][esr],
-                        dComponentDens_dPres[er][esr],
-                        dComponentDens_dComponentConc[er][esr],
-                        gravDepth[er][esr],
-                        dens[er][esr],
-                        dDens_dPres[er][esr],
-                        dDens_dProppantConc[er][esr],
-                        dDens_dComponentConc[er][esr],
-                        visc[er][esr],
-                        dVisc_dPres[er][esr],
-                        dVisc_dProppantConc[er][esr],
-                        dVisc_dComponentConc[er][esr],
-                        fluidDensity[er][esr],
-                        dFluidDens_dPres[er][esr],
-                        dFluidDens_dComponentConc[er][esr],
-                        settlingFactor[er][esr],
-                        dSettlingFactor_dPres[er][esr],
-                        dSettlingFactor_dProppantConc[er][esr],
-                        dSettlingFactor_dComponentConc[er][esr],
-                        collisionFactor[er][esr],
-                        dCollisionFactor_dProppantConc[er][esr],
-                        isProppantMobile[er][esr],
-                        proppantPackVf[er][esr],
-                        aperture[er][esr],
-                        unitGravityVector,
-                        transTMultiplier[er][esr],
-                        dt,
-                        localFlux,
-                        localFluxJacobian);
+        ComputeJunction( numFluxElems,
+                         numDofPerCell,
+                         sei[iconn],
+                         weights[iconn],
+                         cellCenterToEdgeCenters[iconn],
+                         pres[er][esr],
+                         dPres[er][esr],
+                         proppantConc[er][esr],
+                         dProppantConc[er][esr],
+                         componentDens[er][esr],
+                         dComponentDens_dPres[er][esr],
+                         dComponentDens_dComponentConc[er][esr],
+                         gravDepth[er][esr],
+                         dens[er][esr],
+                         dDens_dPres[er][esr],
+                         dDens_dProppantConc[er][esr],
+                         dDens_dComponentConc[er][esr],
+                         visc[er][esr],
+                         dVisc_dPres[er][esr],
+                         dVisc_dProppantConc[er][esr],
+                         dVisc_dComponentConc[er][esr],
+                         fluidDensity[er][esr],
+                         dFluidDens_dPres[er][esr],
+                         dFluidDens_dComponentConc[er][esr],
+                         settlingFactor[er][esr],
+                         dSettlingFactor_dPres[er][esr],
+                         dSettlingFactor_dProppantConc[er][esr],
+                         dSettlingFactor_dComponentConc[er][esr],
+                         collisionFactor[er][esr],
+                         dCollisionFactor_dProppantConc[er][esr],
+                         isProppantMobile[er][esr],
+                         proppantPackVf[er][esr],
+                         aperture[er][esr],
+                         unitGravityVector,
+                         transTMultiplier[er][esr],
+                         dt,
+                         localFlux,
+                         localFluxJacobian );
 
-        for(localIndex i = 0; i < stencilSize; ++i)
+        for( localIndex i = 0; i < stencilSize; ++i )
         {
-          for(localIndex j = 0; j < numDofPerCell; ++j)
+          for( localIndex j = 0; j < numDofPerCell; ++j )
           {
             dofColIndices[i * numDofPerCell + j] =
-              dofNumber[seri(iconn, i)][sesri(iconn, i)][sei(iconn, i)] + j;
+              dofNumber[seri( iconn, i )][sesri( iconn, i )][sei( iconn, i )] + j;
           }
         }
 
-        for(localIndex i = 0; i < numFluxElems; ++i)
+        for( localIndex i = 0; i < numFluxElems; ++i )
         {
-          if(ghostRank[seri(iconn, i)][sesri(iconn, i)][sei(iconn, i)] < 0)
+          if( ghostRank[seri( iconn, i )][sesri( iconn, i )][sei( iconn, i )] < 0 )
           {
             globalIndex const globalRow =
-              dofNumber[seri(iconn, i)][sesri(iconn, i)][sei(iconn, i)];
+              dofNumber[seri( iconn, i )][sesri( iconn, i )][sei( iconn, i )];
             localIndex const localRow =
-              LvArray::integerConversion<localIndex>(globalRow - rankOffset);
-            GEOSX_ASSERT_GE(localRow, 0);
-            GEOSX_ASSERT_GE(localMatrix.numRows(), localRow + numDofPerCell);
+              LvArray::integerConversion< localIndex >( globalRow - rankOffset );
+            GEOSX_ASSERT_GE( localRow, 0 );
+            GEOSX_ASSERT_GE( localMatrix.numRows(), localRow + numDofPerCell );
 
-            for(localIndex idof = 0; idof < numDofPerCell; ++idof)
+            for( localIndex idof = 0; idof < numDofPerCell; ++idof )
             {
-              RAJA::atomicAdd(parallelDeviceAtomic {},
-                              &localRhs[localRow + idof],
-                              localFlux[i * numDofPerCell + idof]);
-              localMatrix.addToRowBinarySearchUnsorted<parallelDeviceAtomic>(
+              RAJA::atomicAdd( parallelDeviceAtomic {},
+                               &localRhs[localRow + idof],
+                               localFlux[i * numDofPerCell + idof] );
+              localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >(
                 localRow + idof,
                 dofColIndices.data(),
                 localFluxJacobian[i * numDofPerCell + idof].dataIfContiguous(),
-                stencilSize * numDofPerCell);
+                stencilSize * numDofPerCell );
             }
           }
         }
       }
-    });
+    } );
 }
 
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-void FluxKernel::ComputeCellBasedFlux(
+void
+FluxKernel::ComputeCellBasedFlux(
   localIndex const numElems,
-  arraySlice1d<localIndex const> const &stencilElementIndices,
-  arraySlice1d<real64 const> const &stencilWeights,
-  arraySlice1d<R1Tensor const> const &stencilCellCenterToEdgeCenters,
-  arrayView1d<R1Tensor const> const &transMultiplier,
+  arraySlice1d< localIndex const > const & stencilElementIndices,
+  arraySlice1d< real64 const > const & stencilWeights,
+  arraySlice1d< R1Tensor const > const & stencilCellCenterToEdgeCenters,
+  arrayView1d< R1Tensor const > const & transMultiplier,
   R1Tensor const unitGravityVector,
-  arrayView1d<real64 const> const &pres,
-  arrayView1d<real64 const> const &gravDepth,
-  arrayView2d<real64 const> const &dens,
-  arrayView2d<real64 const> const &visc,
-  arrayView1d<real64 const> const &aperture,
-  arrayView1d<real64 const> const &GEOSX_UNUSED_PARAM(proppantPackVf),
-  arrayView1d<R1Tensor> const &cellBasedFlux)
+  arrayView1d< real64 const > const & pres,
+  arrayView1d< real64 const > const & gravDepth,
+  arrayView2d< real64 const > const & dens,
+  arrayView2d< real64 const > const & visc,
+  arrayView1d< real64 const > const & aperture,
+  arrayView1d< real64 const > const & GEOSX_UNUSED_PARAM( proppantPackVf ),
+  arrayView1d< R1Tensor > const & cellBasedFlux )
 {
   real64 constexpr TINY = 1e-10;
 
   localIndex constexpr maxNumFluxElems = FaceElementStencil::NUM_POINT_IN_FLUX;
 
-  stackArray1d<real64, maxNumFluxElems> weight(numElems);
-  stackArray1d<real64, maxNumFluxElems> transT(numElems);
+  stackArray1d< real64, maxNumFluxElems > weight( numElems );
+  stackArray1d< real64, maxNumFluxElems > transT( numElems );
 
   // clear working arrays
 
   real64 aperTerm;
   real64 sumOfWeights = 0;
 
-  for(localIndex i = 0; i < numElems; ++i)
+  for( localIndex i = 0; i < numElems; ++i )
   {
     localIndex const ei = stencilElementIndices[i];
 
@@ -1118,10 +1124,10 @@ void FluxKernel::ComputeCellBasedFlux(
     real64 const edgeLength =
       12.0 * stencilWeights[i] * stencilCellCenterToEdgeCenters[i].L2_Norm();
     real64 const stencilEdgeToFaceDownDistance =
-      -Dot(stencilCellCenterToEdgeCenters[i], unitGravityVector) * edgeLength /
+      -Dot( stencilCellCenterToEdgeCenters[i], unitGravityVector ) * edgeLength /
       stencilCellCenterToEdgeCenters[i].L2_Norm();
 
-    if(fabs(stencilEdgeToFaceDownDistance) > TINY)
+    if( fabs( stencilEdgeToFaceDownDistance ) > TINY )
     {
       // vertical flow component
       transT[i] *= transMultiplier[ei][1];
@@ -1133,7 +1139,7 @@ void FluxKernel::ComputeCellBasedFlux(
     }
   }
 
-  for(localIndex i = 0; i < numElems; ++i)
+  for( localIndex i = 0; i < numElems; ++i )
   {
     weight[i] /= sumOfWeights;
   }
@@ -1142,7 +1148,7 @@ void FluxKernel::ComputeCellBasedFlux(
   real64 edgeDensity = 0.0;
   real64 edgeViscosity = 0.0;
 
-  for(localIndex i = 0; i < numElems; ++i)
+  for( localIndex i = 0; i < numElems; ++i )
   {
     localIndex const ei = stencilElementIndices[i];
     edgeDensity += weight[i] * dens[ei][0];
@@ -1152,133 +1158,137 @@ void FluxKernel::ComputeCellBasedFlux(
   real64 transTSum = 0.0;
   real64 Pe = 0.0;
 
-  for(localIndex i = 0; i < numElems; ++i)
+  for( localIndex i = 0; i < numElems; ++i )
   {
     localIndex const ei = stencilElementIndices[i];
 
     real64 const gravD = gravDepth[ei];
     real64 const gravTerm = edgeDensity * gravD;
 
-    Pe += transT[i] * (pres[ei] - gravTerm);
+    Pe += transT[i] * ( pres[ei] - gravTerm );
     transTSum += transT[i];
   }
 
   Pe /= transTSum;
 
-  for(localIndex i = 0; i < numElems; ++i)
+  for( localIndex i = 0; i < numElems; ++i )
   {
     localIndex const ei = stencilElementIndices[i];
 
     real64 const gravD = gravDepth[ei];
     real64 const gravTerm = edgeDensity * gravD;
 
-    real64 const fluxTerm = Pe - (pres[ei] - gravTerm);
+    real64 const fluxTerm = Pe - ( pres[ei] - gravTerm );
     real64 const edgeToFaceFlux = transT[i] * fluxTerm / edgeViscosity;
 
-    for(localIndex k = 0; k < 3; ++k)
+    for( localIndex k = 0; k < 3; ++k )
     {
-      RAJA::atomicAdd(parallelDeviceAtomic {},
-                      &cellBasedFlux[ei][k],
-                      -edgeToFaceFlux * stencilCellCenterToEdgeCenters[i][k]);
+      RAJA::atomicAdd( parallelDeviceAtomic {},
+                       &cellBasedFlux[ei][k],
+                       -edgeToFaceFlux * stencilCellCenterToEdgeCenters[i][k] );
     }
   }
 }
 
-template <>
-void FluxKernel::LaunchCellBasedFluxCalculation<CellElementStencilTPFA>(
-  CellElementStencilTPFA const &GEOSX_UNUSED_PARAM(stencil),
-  ElementViewConst<arrayView1d<R1Tensor const>> const &GEOSX_UNUSED_PARAM(
-    transTMultiplier),
-  R1Tensor const GEOSX_UNUSED_PARAM(unitGravityVector),
-  ElementViewConst<arrayView1d<real64 const>> const &GEOSX_UNUSED_PARAM(pres),
-  ElementViewConst<arrayView1d<real64 const>> const &GEOSX_UNUSED_PARAM(gravDepth),
-  ElementViewConst<arrayView2d<real64 const>> const &GEOSX_UNUSED_PARAM(dens),
-  ElementViewConst<arrayView2d<real64 const>> const &GEOSX_UNUSED_PARAM(visc),
-  ElementViewConst<arrayView1d<real64 const>> const &GEOSX_UNUSED_PARAM(aperture),
-  ElementViewConst<arrayView1d<real64 const>> const &GEOSX_UNUSED_PARAM(
-    proppantPackVf),
-  ElementView<arrayView1d<R1Tensor>> const &GEOSX_UNUSED_PARAM(cellBasedFlux))
-{ }
+template<>
+void
+FluxKernel::LaunchCellBasedFluxCalculation< CellElementStencilTPFA >(
+  CellElementStencilTPFA const & GEOSX_UNUSED_PARAM( stencil ),
+  ElementViewConst< arrayView1d< R1Tensor const > > const & GEOSX_UNUSED_PARAM(
+    transTMultiplier ),
+  R1Tensor const GEOSX_UNUSED_PARAM( unitGravityVector ),
+  ElementViewConst< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM( pres ),
+  ElementViewConst< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM( gravDepth ),
+  ElementViewConst< arrayView2d< real64 const > > const & GEOSX_UNUSED_PARAM( dens ),
+  ElementViewConst< arrayView2d< real64 const > > const & GEOSX_UNUSED_PARAM( visc ),
+  ElementViewConst< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM( aperture ),
+  ElementViewConst< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM(
+    proppantPackVf ),
+  ElementView< arrayView1d< R1Tensor > > const & GEOSX_UNUSED_PARAM( cellBasedFlux ) )
+{}
 
-template <>
-void FluxKernel::LaunchCellBasedFluxCalculation<FaceElementStencil>(
-  FaceElementStencil const &stencil,
-  FluxKernel::ElementViewConst<arrayView1d<R1Tensor const>> const &transTMultiplier,
+template<>
+void
+FluxKernel::LaunchCellBasedFluxCalculation< FaceElementStencil >(
+  FaceElementStencil const & stencil,
+  FluxKernel::ElementViewConst< arrayView1d< R1Tensor const > > const & transTMultiplier,
   R1Tensor const unitGravityVector,
-  FluxKernel::ElementViewConst<arrayView1d<real64 const>> const &pres,
-  FluxKernel::ElementViewConst<arrayView1d<real64 const>> const &gravDepth,
-  FluxKernel::ElementViewConst<arrayView2d<real64 const>> const &dens,
-  FluxKernel::ElementViewConst<arrayView2d<real64 const>> const &visc,
-  FluxKernel::ElementViewConst<arrayView1d<real64 const>> const &aperture,
-  FluxKernel::ElementViewConst<arrayView1d<real64 const>> const &proppantPackVf,
-  FluxKernel::ElementView<arrayView1d<R1Tensor>> const &cellBasedFlux)
+  FluxKernel::ElementViewConst< arrayView1d< real64 const > > const & pres,
+  FluxKernel::ElementViewConst< arrayView1d< real64 const > > const & gravDepth,
+  FluxKernel::ElementViewConst< arrayView2d< real64 const > > const & dens,
+  FluxKernel::ElementViewConst< arrayView2d< real64 const > > const & visc,
+  FluxKernel::ElementViewConst< arrayView1d< real64 const > > const & aperture,
+  FluxKernel::ElementViewConst< arrayView1d< real64 const > > const & proppantPackVf,
+  FluxKernel::ElementView< arrayView1d< R1Tensor > > const & cellBasedFlux )
 {
-  typename FaceElementStencil::IndexContainerViewConstType const &seri =
+  typename FaceElementStencil::IndexContainerViewConstType const & seri =
     stencil.getElementRegionIndices();
-  typename FaceElementStencil::IndexContainerViewConstType const &sesri =
+  typename FaceElementStencil::IndexContainerViewConstType const & sesri =
     stencil.getElementSubRegionIndices();
-  typename FaceElementStencil::IndexContainerViewConstType const &sei =
+  typename FaceElementStencil::IndexContainerViewConstType const & sei =
     stencil.getElementIndices();
-  typename FaceElementStencil::WeightContainerViewConstType const &weights =
+  typename FaceElementStencil::WeightContainerViewConstType const & weights =
     stencil.getWeights();
 
-  ArrayOfArraysView<R1Tensor const> const &cellCenterToEdgeCenters =
+  ArrayOfArraysView< R1Tensor const > const & cellCenterToEdgeCenters =
     stencil.getCellCenterToEdgeCenters();
 
-  forAll<parallelDevicePolicy<>>(
+  forAll< parallelDevicePolicy<> >(
     stencil.size(),
-    [=] GEOSX_HOST_DEVICE(localIndex const iconn) {
-      localIndex const numFluxElems = seri.sizeOfArray(iconn);
+    [=] GEOSX_HOST_DEVICE( localIndex const iconn ) {
+      localIndex const numFluxElems = seri.sizeOfArray( iconn );
 
       localIndex const er = seri[iconn][0];
       localIndex const esr = sesri[iconn][0];
 
-      ComputeCellBasedFlux(numFluxElems,
-                           sei[iconn],
-                           weights[iconn],
-                           cellCenterToEdgeCenters[iconn],
-                           transTMultiplier[er][esr],
-                           unitGravityVector,
-                           pres[er][esr],
-                           gravDepth[er][esr],
-                           dens[er][esr],
-                           visc[er][esr],
-                           aperture[er][esr],
-                           proppantPackVf[er][esr],
-                           cellBasedFlux[er][esr]);
-    });
+      ComputeCellBasedFlux( numFluxElems,
+                            sei[iconn],
+                            weights[iconn],
+                            cellCenterToEdgeCenters[iconn],
+                            transTMultiplier[er][esr],
+                            unitGravityVector,
+                            pres[er][esr],
+                            gravDepth[er][esr],
+                            dens[er][esr],
+                            visc[er][esr],
+                            aperture[er][esr],
+                            proppantPackVf[er][esr],
+                            cellBasedFlux[er][esr] );
+    } );
 }
 
-template <>
-void ProppantPackVolumeKernel::LaunchProppantPackVolumeCalculation<CellElementStencilTPFA>(
-  CellElementStencilTPFA const &GEOSX_UNUSED_PARAM(stencil),
-  real64 const GEOSX_UNUSED_PARAM(dt),
-  real64 const GEOSX_UNUSED_PARAM(proppantDensity),
-  real64 const GEOSX_UNUSED_PARAM(proppantDiameter),
-  real64 const GEOSX_UNUSED_PARAM(maxProppantConcentration),
-  R1Tensor const GEOSX_UNUSED_PARAM(unitGravityVector),
-  real64 const GEOSX_UNUSED_PARAM(criticalShieldsNumber),
-  real64 const GEOSX_UNUSED_PARAM(frictionCoefficient),
-  ElementView<arrayView1d<real64 const>> const &GEOSX_UNUSED_PARAM(settlingFactor),
-  ElementView<arrayView2d<real64 const>> const &GEOSX_UNUSED_PARAM(density),
-  ElementView<arrayView2d<real64 const>> const &GEOSX_UNUSED_PARAM(fluidDensity),
-  ElementView<arrayView2d<real64 const>> const &GEOSX_UNUSED_PARAM(fluidViscosity),
-  ElementView<arrayView1d<integer const>> const &GEOSX_UNUSED_PARAM(isProppantMobile),
-  ElementViewConst<arrayView1d<integer const>> const &GEOSX_UNUSED_PARAM(
-    isProppantBoundaryElement),
-  ElementView<arrayView1d<real64 const>> const &GEOSX_UNUSED_PARAM(aperture),
-  ElementView<arrayView1d<real64 const>> const &GEOSX_UNUSED_PARAM(volume),
-  ElementView<arrayView1d<integer const>> const &GEOSX_UNUSED_PARAM(elemGhostRank),
-  ElementView<arrayView1d<R1Tensor const>> const &GEOSX_UNUSED_PARAM(cellBasedFlux),
-  ElementView<arrayView1d<real64>> const &GEOSX_UNUSED_PARAM(conc),
-  ElementView<arrayView1d<real64>> const &GEOSX_UNUSED_PARAM(proppantPackVf),
-  ElementView<arrayView1d<real64>> const &GEOSX_UNUSED_PARAM(proppantExcessPackV),
-  ElementView<arrayView1d<real64>> const &GEOSX_UNUSED_PARAM(proppantLiftFlux))
-{ }
+template<>
+void
+ProppantPackVolumeKernel::LaunchProppantPackVolumeCalculation< CellElementStencilTPFA >(
+  CellElementStencilTPFA const & GEOSX_UNUSED_PARAM( stencil ),
+  real64 const GEOSX_UNUSED_PARAM( dt ),
+  real64 const GEOSX_UNUSED_PARAM( proppantDensity ),
+  real64 const GEOSX_UNUSED_PARAM( proppantDiameter ),
+  real64 const GEOSX_UNUSED_PARAM( maxProppantConcentration ),
+  R1Tensor const GEOSX_UNUSED_PARAM( unitGravityVector ),
+  real64 const GEOSX_UNUSED_PARAM( criticalShieldsNumber ),
+  real64 const GEOSX_UNUSED_PARAM( frictionCoefficient ),
+  ElementView< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM( settlingFactor ),
+  ElementView< arrayView2d< real64 const > > const & GEOSX_UNUSED_PARAM( density ),
+  ElementView< arrayView2d< real64 const > > const & GEOSX_UNUSED_PARAM( fluidDensity ),
+  ElementView< arrayView2d< real64 const > > const & GEOSX_UNUSED_PARAM( fluidViscosity ),
+  ElementView< arrayView1d< integer const > > const & GEOSX_UNUSED_PARAM( isProppantMobile ),
+  ElementViewConst< arrayView1d< integer const > > const & GEOSX_UNUSED_PARAM(
+    isProppantBoundaryElement ),
+  ElementView< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM( aperture ),
+  ElementView< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM( volume ),
+  ElementView< arrayView1d< integer const > > const & GEOSX_UNUSED_PARAM( elemGhostRank ),
+  ElementView< arrayView1d< R1Tensor const > > const & GEOSX_UNUSED_PARAM( cellBasedFlux ),
+  ElementView< arrayView1d< real64 > > const & GEOSX_UNUSED_PARAM( conc ),
+  ElementView< arrayView1d< real64 > > const & GEOSX_UNUSED_PARAM( proppantPackVf ),
+  ElementView< arrayView1d< real64 > > const & GEOSX_UNUSED_PARAM( proppantExcessPackV ),
+  ElementView< arrayView1d< real64 > > const & GEOSX_UNUSED_PARAM( proppantLiftFlux ) )
+{}
 
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-void ProppantPackVolumeKernel::ComputeProppantPackVolume(
+void
+ProppantPackVolumeKernel::ComputeProppantPackVolume(
   localIndex const numElems,
   real64 const dt,
   real64 const proppantDensity,
@@ -1287,23 +1297,23 @@ void ProppantPackVolumeKernel::ComputeProppantPackVolume(
   R1Tensor const unitGravityVector,
   real64 const criticalShieldsNumber,
   real64 const frictionCoefficient,
-  arraySlice1d<localIndex const> const &stencilElementIndices,
-  arraySlice1d<real64 const> const &stencilWeights,
-  arraySlice1d<R1Tensor const> const &stencilCellCenterToEdgeCenters,
-  arrayView1d<real64 const> const &settlingFactor,
-  arrayView2d<real64 const> const &density,
-  arrayView2d<real64 const> const &fluidDensity,
-  arrayView2d<real64 const> const &,
-  arrayView1d<real64 const> const &volume,
-  arrayView1d<real64 const> const &aperture,
-  arrayView1d<integer const> const &elemGhostRank,
-  arrayView1d<integer const> const &isProppantBoundaryElement,
-  arrayView1d<integer const> const &isProppantMobile,
-  arrayView1d<R1Tensor const> const &cellBasedFlux,
-  arrayView1d<real64> const &conc,
-  arrayView1d<real64> const &proppantPackVf,
-  arrayView1d<real64> const &proppantExcessPackV,
-  arrayView1d<real64> const &proppantLiftFlux)
+  arraySlice1d< localIndex const > const & stencilElementIndices,
+  arraySlice1d< real64 const > const & stencilWeights,
+  arraySlice1d< R1Tensor const > const & stencilCellCenterToEdgeCenters,
+  arrayView1d< real64 const > const & settlingFactor,
+  arrayView2d< real64 const > const & density,
+  arrayView2d< real64 const > const & fluidDensity,
+  arrayView2d< real64 const > const &,
+  arrayView1d< real64 const > const & volume,
+  arrayView1d< real64 const > const & aperture,
+  arrayView1d< integer const > const & elemGhostRank,
+  arrayView1d< integer const > const & isProppantBoundaryElement,
+  arrayView1d< integer const > const & isProppantMobile,
+  arrayView1d< R1Tensor const > const & cellBasedFlux,
+  arrayView1d< real64 > const & conc,
+  arrayView1d< real64 > const & proppantPackVf,
+  arrayView1d< real64 > const & proppantExcessPackV,
+  arrayView1d< real64 > const & proppantLiftFlux )
 {
   integer faceIndex = -1;
 
@@ -1312,92 +1322,92 @@ void ProppantPackVolumeKernel::ComputeProppantPackVolume(
   real64 edgeLength =
     12.0 * stencilWeights[0] * stencilCellCenterToEdgeCenters[0].L2_Norm();
 
-  if(numElems == 1)
+  if( numElems == 1 )
   {
     localIndex const ei = stencilElementIndices[0];
 
     real64 const stencilEdgeToFaceDownDistance =
-      -Dot(stencilCellCenterToEdgeCenters[0], unitGravityVector) * edgeLength /
+      -Dot( stencilCellCenterToEdgeCenters[0], unitGravityVector ) * edgeLength /
       stencilCellCenterToEdgeCenters[0].L2_Norm();
 
-    if(stencilEdgeToFaceDownDistance < -TINY && isProppantMobile[ei] == 1)
+    if( stencilEdgeToFaceDownDistance < -TINY && isProppantMobile[ei] == 1 )
     {
       faceIndex = 0;
     }
   }
-  else if(numElems == 2)
+  else if( numElems == 2 )
   {
     localIndex const ei0 = stencilElementIndices[0];
     localIndex const ei1 = stencilElementIndices[1];
 
     real64 const stencilEdgeToFaceDownDistance0 =
-      -Dot(stencilCellCenterToEdgeCenters[0], unitGravityVector) * edgeLength /
+      -Dot( stencilCellCenterToEdgeCenters[0], unitGravityVector ) * edgeLength /
       stencilCellCenterToEdgeCenters[0].L2_Norm();
 
     real64 const stencilEdgeToFaceDownDistance1 =
-      -Dot(stencilCellCenterToEdgeCenters[1], unitGravityVector) * edgeLength /
+      -Dot( stencilCellCenterToEdgeCenters[1], unitGravityVector ) * edgeLength /
       stencilCellCenterToEdgeCenters[1].L2_Norm();
 
     //0: top  1: bottom
 
-    if(stencilEdgeToFaceDownDistance0 < -TINY &&
-       stencilEdgeToFaceDownDistance1 > TINY && isProppantMobile[ei0] == 1 &&
-       isProppantMobile[ei1] == 0)
+    if( stencilEdgeToFaceDownDistance0 < -TINY &&
+        stencilEdgeToFaceDownDistance1 > TINY && isProppantMobile[ei0] == 1 &&
+        isProppantMobile[ei1] == 0 )
     {
       faceIndex = 0;
     }
 
     //0: bottom  1: top
 
-    if(stencilEdgeToFaceDownDistance0 > TINY &&
-       stencilEdgeToFaceDownDistance1 < -TINY && isProppantMobile[ei1] == 1 &&
-       isProppantMobile[ei0] == 0)
+    if( stencilEdgeToFaceDownDistance0 > TINY &&
+        stencilEdgeToFaceDownDistance1 < -TINY && isProppantMobile[ei1] == 1 &&
+        isProppantMobile[ei0] == 0 )
     {
       faceIndex = 1;
     }
   }
 
-  if(faceIndex >= 0)
+  if( faceIndex >= 0 )
   {
     localIndex const ei = stencilElementIndices[faceIndex];
 
-    if(elemGhostRank[ei] < 0 && isProppantBoundaryElement[ei] == 0)
+    if( elemGhostRank[ei] < 0 && isProppantBoundaryElement[ei] == 0 )
     {
       real64 const L = stencilCellCenterToEdgeCenters[faceIndex].L2_Norm() * 2.0;
 
       R1Tensor velocity = cellBasedFlux[ei];
 
-      real64 downVelocity = Dot(cellBasedFlux[ei], unitGravityVector);
+      real64 downVelocity = Dot( cellBasedFlux[ei], unitGravityVector );
 
-      for(localIndex idx = 0; idx < 3; ++idx)
+      for( localIndex idx = 0; idx < 3; ++idx )
       {
         velocity[idx] -= downVelocity * unitGravityVector[idx];
       }
 
       real64 const velocityMag = velocity.L2_Norm() / volume[ei];
 
-      real64 dH = fluidDensity[ei][0] / density[ei][0] * (1.0 - conc[ei]) *
+      real64 dH = fluidDensity[ei][0] / density[ei][0] * ( 1.0 - conc[ei] ) *
         settlingFactor[ei] * conc[ei] / maxProppantConcentration * dt;
 
       real64 const tau = 1.0 / 8.0 * frictionCoefficient * fluidDensity[ei][0] *
         velocityMag * velocityMag;
 
       real64 const ShieldsNumber =
-        tau / (proppantDensity - fluidDensity[ei][0]) / 9.81 / proppantDiameter;
+        tau / ( proppantDensity - fluidDensity[ei][0] ) / 9.81 / proppantDiameter;
 
       proppantLiftFlux[ei] = 0.0;
 
-      if(ShieldsNumber > criticalShieldsNumber)
+      if( ShieldsNumber > criticalShieldsNumber )
       {
         proppantLiftFlux[ei] = aperture[ei] *
-          (proppantDiameter *
-           sqrt(9.81 * proppantDiameter *
-                (proppantDensity - fluidDensity[ei][0]) / fluidDensity[ei][0])) *
-          (9.64 * pow(ShieldsNumber, 0.166)) *
-          pow(ShieldsNumber - criticalShieldsNumber, 1.5);
+          ( proppantDiameter *
+            sqrt( 9.81 * proppantDiameter *
+                  ( proppantDensity - fluidDensity[ei][0] ) / fluidDensity[ei][0] ) ) *
+          ( 9.64 * pow( ShieldsNumber, 0.166 ) ) *
+          pow( ShieldsNumber - criticalShieldsNumber, 1.5 );
       }
 
-      if(proppantLiftFlux[ei] < 0.0)
+      if( proppantLiftFlux[ei] < 0.0 )
       {
         proppantLiftFlux[ei] = 0.0;
       }
@@ -1405,9 +1415,9 @@ void ProppantPackVolumeKernel::ComputeProppantPackVolume(
       real64 liftH = proppantLiftFlux[ei] / edgeLength / aperture[ei] /
         maxProppantConcentration * dt;
 
-      real64 Vf = proppantPackVf[ei] + (dH - liftH) / L;
+      real64 Vf = proppantPackVf[ei] + ( dH - liftH ) / L;
 
-      if(Vf < 0.0)
+      if( Vf < 0.0 )
       {
         Vf = 0.0;
         liftH = dH + proppantPackVf[ei] * L;
@@ -1415,9 +1425,9 @@ void ProppantPackVolumeKernel::ComputeProppantPackVolume(
           liftH * edgeLength * aperture[ei] * maxProppantConcentration / dt;
       }
 
-      if(Vf >= 1.0)
+      if( Vf >= 1.0 )
       {
-        proppantExcessPackV[ei] = (Vf - 1.0) * L;
+        proppantExcessPackV[ei] = ( Vf - 1.0 ) * L;
         proppantPackVf[ei] = 1.0;
         conc[ei] = maxProppantConcentration;
       }
@@ -1429,9 +1439,10 @@ void ProppantPackVolumeKernel::ComputeProppantPackVolume(
   }
 }
 
-template <>
-void ProppantPackVolumeKernel::LaunchProppantPackVolumeCalculation<FaceElementStencil>(
-  FaceElementStencil const &stencil,
+template<>
+void
+ProppantPackVolumeKernel::LaunchProppantPackVolumeCalculation< FaceElementStencil >(
+  FaceElementStencil const & stencil,
   real64 const dt,
   real64 const proppantDensity,
   real64 const proppantDiameter,
@@ -1439,82 +1450,83 @@ void ProppantPackVolumeKernel::LaunchProppantPackVolumeCalculation<FaceElementSt
   R1Tensor const unitGravityVector,
   real64 const criticalShieldsNumber,
   real64 const frictionCoefficient,
-  ElementView<arrayView1d<real64 const>> const &settlingFactor,
-  ElementView<arrayView2d<real64 const>> const &density,
-  ElementView<arrayView2d<real64 const>> const &fluidDensity,
-  ElementView<arrayView2d<real64 const>> const &fluidViscosity,
-  ElementView<arrayView1d<integer const>> const &isProppantMobile,
-  ElementView<arrayView1d<integer const>> const &isProppantBoundaryElement,
-  ElementView<arrayView1d<real64 const>> const &aperture,
-  ElementView<arrayView1d<real64 const>> const &volume,
-  ElementView<arrayView1d<integer const>> const &elemGhostRank,
-  ElementView<arrayView1d<R1Tensor const>> const &cellBasedFlux,
-  ElementView<arrayView1d<real64>> const &conc,
-  ElementView<arrayView1d<real64>> const &proppantPackVf,
-  ElementView<arrayView1d<real64>> const &proppantExcessPackV,
-  ElementView<arrayView1d<real64>> const &proppantLiftFlux)
+  ElementView< arrayView1d< real64 const > > const & settlingFactor,
+  ElementView< arrayView2d< real64 const > > const & density,
+  ElementView< arrayView2d< real64 const > > const & fluidDensity,
+  ElementView< arrayView2d< real64 const > > const & fluidViscosity,
+  ElementView< arrayView1d< integer const > > const & isProppantMobile,
+  ElementView< arrayView1d< integer const > > const & isProppantBoundaryElement,
+  ElementView< arrayView1d< real64 const > > const & aperture,
+  ElementView< arrayView1d< real64 const > > const & volume,
+  ElementView< arrayView1d< integer const > > const & elemGhostRank,
+  ElementView< arrayView1d< R1Tensor const > > const & cellBasedFlux,
+  ElementView< arrayView1d< real64 > > const & conc,
+  ElementView< arrayView1d< real64 > > const & proppantPackVf,
+  ElementView< arrayView1d< real64 > > const & proppantExcessPackV,
+  ElementView< arrayView1d< real64 > > const & proppantLiftFlux )
 {
-  typename FaceElementStencil::IndexContainerViewConstType const &seri =
+  typename FaceElementStencil::IndexContainerViewConstType const & seri =
     stencil.getElementRegionIndices();
-  typename FaceElementStencil::IndexContainerViewConstType const &sesri =
+  typename FaceElementStencil::IndexContainerViewConstType const & sesri =
     stencil.getElementSubRegionIndices();
-  typename FaceElementStencil::IndexContainerViewConstType const &sei =
+  typename FaceElementStencil::IndexContainerViewConstType const & sei =
     stencil.getElementIndices();
-  typename FaceElementStencil::WeightContainerViewConstType const &weights =
+  typename FaceElementStencil::WeightContainerViewConstType const & weights =
     stencil.getWeights();
 
-  ArrayOfArraysView<R1Tensor const> const &cellCenterToEdgeCenters =
+  ArrayOfArraysView< R1Tensor const > const & cellCenterToEdgeCenters =
     stencil.getCellCenterToEdgeCenters();
 
-  forAll<parallelDevicePolicy<>>(
+  forAll< parallelDevicePolicy<> >(
     stencil.size(),
-    [=] GEOSX_HOST_DEVICE(localIndex const iconn) {
-      localIndex const numFluxElems = seri.sizeOfArray(iconn);
+    [=] GEOSX_HOST_DEVICE( localIndex const iconn ) {
+      localIndex const numFluxElems = seri.sizeOfArray( iconn );
 
       localIndex const er = seri[iconn][0];
       localIndex const esr = sesri[iconn][0];
 
-      ComputeProppantPackVolume(numFluxElems,
-                                dt,
-                                proppantDensity,
-                                proppantDiameter,
-                                maxProppantConcentration,
-                                unitGravityVector,
-                                criticalShieldsNumber,
-                                frictionCoefficient,
-                                sei[iconn],
-                                weights[iconn],
-                                cellCenterToEdgeCenters[iconn],
-                                settlingFactor[er][esr],
-                                density[er][esr],
-                                fluidDensity[er][esr],
-                                fluidViscosity[er][esr],
-                                volume[er][esr],
-                                aperture[er][esr],
-                                elemGhostRank[er][esr],
-                                isProppantBoundaryElement[er][esr],
-                                isProppantMobile[er][esr],
-                                cellBasedFlux[er][esr],
-                                conc[er][esr],
-                                proppantPackVf[er][esr],
-                                proppantExcessPackV[er][esr],
-                                proppantLiftFlux[er][esr]);
-    });
+      ComputeProppantPackVolume( numFluxElems,
+                                 dt,
+                                 proppantDensity,
+                                 proppantDiameter,
+                                 maxProppantConcentration,
+                                 unitGravityVector,
+                                 criticalShieldsNumber,
+                                 frictionCoefficient,
+                                 sei[iconn],
+                                 weights[iconn],
+                                 cellCenterToEdgeCenters[iconn],
+                                 settlingFactor[er][esr],
+                                 density[er][esr],
+                                 fluidDensity[er][esr],
+                                 fluidViscosity[er][esr],
+                                 volume[er][esr],
+                                 aperture[er][esr],
+                                 elemGhostRank[er][esr],
+                                 isProppantBoundaryElement[er][esr],
+                                 isProppantMobile[er][esr],
+                                 cellBasedFlux[er][esr],
+                                 conc[er][esr],
+                                 proppantPackVf[er][esr],
+                                 proppantExcessPackV[er][esr],
+                                 proppantLiftFlux[er][esr] );
+    } );
 }
 
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-void ProppantPackVolumeKernel::UpdateProppantPackVolume(
+void
+ProppantPackVolumeKernel::UpdateProppantPackVolume(
   localIndex const numElems,
-  arraySlice1d<localIndex const> const &stencilElementIndices,
-  arraySlice1d<real64 const> const &stencilWeights,
-  arraySlice1d<R1Tensor const> const &stencilCellCenterToEdgeCenters,
+  arraySlice1d< localIndex const > const & stencilElementIndices,
+  arraySlice1d< real64 const > const & stencilWeights,
+  arraySlice1d< R1Tensor const > const & stencilCellCenterToEdgeCenters,
   R1Tensor const unitGravityVector,
   real64 const maxProppantConcentration,
-  arrayView1d<integer const> const &isProppantMobile,
-  arrayView1d<real64 const> const &proppantExcessPackV,
-  arrayView1d<real64> const &conc,
-  arrayView1d<real64> const &proppantPackVf)
+  arrayView1d< integer const > const & isProppantMobile,
+  arrayView1d< real64 const > const & proppantExcessPackV,
+  arrayView1d< real64 > const & conc,
+  arrayView1d< real64 > const & proppantPackVf )
 {
   integer faceIndex = -1;
   real64 excessV = 0.0;
@@ -1524,24 +1536,24 @@ void ProppantPackVolumeKernel::UpdateProppantPackVolume(
   real64 edgeLength =
     12.0 * stencilWeights[0] * stencilCellCenterToEdgeCenters[0].L2_Norm();
 
-  if(numElems == 2)
+  if( numElems == 2 )
   {
     localIndex const ei0 = stencilElementIndices[0];
     localIndex const ei1 = stencilElementIndices[1];
 
     real64 const stencilEdgeToFaceDownDistance0 =
-      -Dot(stencilCellCenterToEdgeCenters[0], unitGravityVector) * edgeLength /
+      -Dot( stencilCellCenterToEdgeCenters[0], unitGravityVector ) * edgeLength /
       stencilCellCenterToEdgeCenters[0].L2_Norm();
 
     real64 const stencilEdgeToFaceDownDistance1 =
-      -Dot(stencilCellCenterToEdgeCenters[1], unitGravityVector) * edgeLength /
+      -Dot( stencilCellCenterToEdgeCenters[1], unitGravityVector ) * edgeLength /
       stencilCellCenterToEdgeCenters[1].L2_Norm();
 
     //0: top  1: bottom
 
-    if(stencilEdgeToFaceDownDistance0 < -TINY &&
-       stencilEdgeToFaceDownDistance1 > TINY && isProppantMobile[ei0] == 1 &&
-       isProppantMobile[ei1] == 0 && proppantExcessPackV[ei1] > 0.0)
+    if( stencilEdgeToFaceDownDistance0 < -TINY &&
+        stencilEdgeToFaceDownDistance1 > TINY && isProppantMobile[ei0] == 1 &&
+        isProppantMobile[ei1] == 0 && proppantExcessPackV[ei1] > 0.0 )
     {
       faceIndex = 0;
       excessV = proppantExcessPackV[ei1];
@@ -1549,22 +1561,22 @@ void ProppantPackVolumeKernel::UpdateProppantPackVolume(
 
     //0: bottom  1: top
 
-    if(stencilEdgeToFaceDownDistance0 > TINY &&
-       stencilEdgeToFaceDownDistance1 < -TINY && isProppantMobile[ei1] == 1 &&
-       isProppantMobile[ei0] == 0 && proppantExcessPackV[ei0] > 0.0)
+    if( stencilEdgeToFaceDownDistance0 > TINY &&
+        stencilEdgeToFaceDownDistance1 < -TINY && isProppantMobile[ei1] == 1 &&
+        isProppantMobile[ei0] == 0 && proppantExcessPackV[ei0] > 0.0 )
     {
       faceIndex = 1;
       excessV = proppantExcessPackV[ei0];
     }
   }
 
-  if(faceIndex >= 0)
+  if( faceIndex >= 0 )
   {
     localIndex const ei = stencilElementIndices[faceIndex];
     real64 const L = stencilCellCenterToEdgeCenters[faceIndex].L2_Norm() * 2.0;
     real64 const Vf = proppantPackVf[ei] + excessV / L;
 
-    if(Vf >= 1.0)
+    if( Vf >= 1.0 )
     {
       proppantPackVf[ei] = 1.0;
       conc[ei] = maxProppantConcentration;
@@ -1576,59 +1588,61 @@ void ProppantPackVolumeKernel::UpdateProppantPackVolume(
   }
 }
 
-template <>
-void ProppantPackVolumeKernel::LaunchProppantPackVolumeUpdate<CellElementStencilTPFA>(
-  CellElementStencilTPFA const &GEOSX_UNUSED_PARAM(stencil),
-  R1Tensor const GEOSX_UNUSED_PARAM(unitGravityVector),
-  real64 const GEOSX_UNUSED_PARAM(maxProppantConcentration),
-  ElementView<arrayView1d<integer const>> const &GEOSX_UNUSED_PARAM(isProppantMobile),
-  ElementView<arrayView1d<real64 const>> const &GEOSX_UNUSED_PARAM(
-    proppantExcessPackV),
-  ElementView<arrayView1d<real64>> const &GEOSX_UNUSED_PARAM(conc),
-  ElementView<arrayView1d<real64>> const &GEOSX_UNUSED_PARAM(proppantPackVf))
-{ }
+template<>
+void
+ProppantPackVolumeKernel::LaunchProppantPackVolumeUpdate< CellElementStencilTPFA >(
+  CellElementStencilTPFA const & GEOSX_UNUSED_PARAM( stencil ),
+  R1Tensor const GEOSX_UNUSED_PARAM( unitGravityVector ),
+  real64 const GEOSX_UNUSED_PARAM( maxProppantConcentration ),
+  ElementView< arrayView1d< integer const > > const & GEOSX_UNUSED_PARAM( isProppantMobile ),
+  ElementView< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM(
+    proppantExcessPackV ),
+  ElementView< arrayView1d< real64 > > const & GEOSX_UNUSED_PARAM( conc ),
+  ElementView< arrayView1d< real64 > > const & GEOSX_UNUSED_PARAM( proppantPackVf ) )
+{}
 
-template <>
-void ProppantPackVolumeKernel::LaunchProppantPackVolumeUpdate<FaceElementStencil>(
-  FaceElementStencil const &stencil,
+template<>
+void
+ProppantPackVolumeKernel::LaunchProppantPackVolumeUpdate< FaceElementStencil >(
+  FaceElementStencil const & stencil,
   R1Tensor const unitGravityVector,
   real64 const maxProppantConcentration,
-  ElementView<arrayView1d<integer const>> const &isProppantMobile,
-  ElementView<arrayView1d<real64 const>> const &proppantExcessPackV,
-  ElementView<arrayView1d<real64>> const &conc,
-  ElementView<arrayView1d<real64>> const &proppantPackVf)
+  ElementView< arrayView1d< integer const > > const & isProppantMobile,
+  ElementView< arrayView1d< real64 const > > const & proppantExcessPackV,
+  ElementView< arrayView1d< real64 > > const & conc,
+  ElementView< arrayView1d< real64 > > const & proppantPackVf )
 {
-  typename FaceElementStencil::IndexContainerViewConstType const &seri =
+  typename FaceElementStencil::IndexContainerViewConstType const & seri =
     stencil.getElementRegionIndices();
-  typename FaceElementStencil::IndexContainerViewConstType const &sesri =
+  typename FaceElementStencil::IndexContainerViewConstType const & sesri =
     stencil.getElementSubRegionIndices();
-  typename FaceElementStencil::IndexContainerViewConstType const &sei =
+  typename FaceElementStencil::IndexContainerViewConstType const & sei =
     stencil.getElementIndices();
-  typename FaceElementStencil::WeightContainerViewConstType const &weights =
+  typename FaceElementStencil::WeightContainerViewConstType const & weights =
     stencil.getWeights();
 
-  ArrayOfArraysView<R1Tensor const> const &cellCenterToEdgeCenters =
+  ArrayOfArraysView< R1Tensor const > const & cellCenterToEdgeCenters =
     stencil.getCellCenterToEdgeCenters();
 
-  forAll<parallelDevicePolicy<>>(
+  forAll< parallelDevicePolicy<> >(
     stencil.size(),
-    [=] GEOSX_HOST_DEVICE(localIndex const iconn) {
-      localIndex const numFluxElems = seri.sizeOfArray(iconn);
+    [=] GEOSX_HOST_DEVICE( localIndex const iconn ) {
+      localIndex const numFluxElems = seri.sizeOfArray( iconn );
 
       localIndex const er = seri[iconn][0];
       localIndex const esr = sesri[iconn][0];
 
-      UpdateProppantPackVolume(numFluxElems,
-                               sei[iconn],
-                               weights[iconn],
-                               cellCenterToEdgeCenters[iconn],
-                               unitGravityVector,
-                               maxProppantConcentration,
-                               isProppantMobile[er][esr],
-                               proppantExcessPackV[er][esr],
-                               conc[er][esr],
-                               proppantPackVf[er][esr]);
-    });
+      UpdateProppantPackVolume( numFluxElems,
+                                sei[iconn],
+                                weights[iconn],
+                                cellCenterToEdgeCenters[iconn],
+                                unitGravityVector,
+                                maxProppantConcentration,
+                                isProppantMobile[er][esr],
+                                proppantExcessPackV[er][esr],
+                                conc[er][esr],
+                                proppantPackVf[er][esr] );
+    } );
 }
 
 }  // namespace ProppantTransportKernels

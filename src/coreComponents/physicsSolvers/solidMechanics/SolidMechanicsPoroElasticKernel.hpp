@@ -41,16 +41,16 @@ namespace SolidMechanicsLagrangianFEMKernels
  * templated on one of the existing solid mechanics kernel implementations
  * such as QuasiStatic.
  */
-template <typename SUBREGION_TYPE,
+template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE,
-          template <typename, typename, typename>
-          class BASE>
-class PoroElastic : public BASE<SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE>
+          template< typename, typename, typename >
+          class BASE >
+class PoroElastic : public BASE< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >
 {
 public:
   /// Alias for the base class.
-  using Base = BASE<SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE>;
+  using Base = BASE< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >;
 
   using Base::m_constitutiveUpdate;
   using typename Base::StackVariables;
@@ -60,33 +60,33 @@ public:
    * @copydoc geosx::finiteElement::ImplicitKernelBase::ImplicitKernelBase
    * @param inputGravityVector The gravity vector.
    */
-  PoroElastic(NodeManager const& nodeManager,
-              EdgeManager const& edgeManager,
-              FaceManager const& faceManager,
-              SUBREGION_TYPE const& elementSubRegion,
-              FE_TYPE const& finiteElementSpace,
-              CONSTITUTIVE_TYPE* const inputConstitutiveType,
-              arrayView1d<globalIndex const> const& inputDofNumber,
-              globalIndex const rankOffset,
-              CRSMatrixView<real64, globalIndex const> const& inputMatrix,
-              arrayView1d<real64> const& inputRhs,
-              real64 const (&inputGravityVector)[3])
-    : Base(nodeManager,
-           edgeManager,
-           faceManager,
-           elementSubRegion,
-           finiteElementSpace,
-           inputConstitutiveType,
-           inputDofNumber,
-           rankOffset,
-           inputMatrix,
-           inputRhs,
-           inputGravityVector)
-    , m_fluidPressure(
-        elementSubRegion.template getReference<array1d<real64>>("pressure"))
-    , m_deltaFluidPressure(elementSubRegion.template getReference<array1d<real64>>(
-        "deltaPressure"))
-  { }
+  PoroElastic( NodeManager const & nodeManager,
+               EdgeManager const & edgeManager,
+               FaceManager const & faceManager,
+               SUBREGION_TYPE const & elementSubRegion,
+               FE_TYPE const & finiteElementSpace,
+               CONSTITUTIVE_TYPE * const inputConstitutiveType,
+               arrayView1d< globalIndex const > const & inputDofNumber,
+               globalIndex const rankOffset,
+               CRSMatrixView< real64, globalIndex const > const & inputMatrix,
+               arrayView1d< real64 > const & inputRhs,
+               real64 const ( &inputGravityVector )[3] ) :
+    Base( nodeManager,
+          edgeManager,
+          faceManager,
+          elementSubRegion,
+          finiteElementSpace,
+          inputConstitutiveType,
+          inputDofNumber,
+          rankOffset,
+          inputMatrix,
+          inputRhs,
+          inputGravityVector ),
+    m_fluidPressure(
+      elementSubRegion.template getReference< array1d< real64 > >( "pressure" ) ),
+    m_deltaFluidPressure( elementSubRegion.template getReference< array1d< real64 > >(
+      "deltaPressure" ) )
+  {}
 
   /**
    * @copydoc geosx::finiteElement::KernelBase::quadraturePointResidualContribution
@@ -96,38 +96,39 @@ public:
    */
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  void quadraturePointResidualContribution(localIndex const k,
-                                           localIndex const q,
-                                           StackVariables& stack) const
+  void
+  quadraturePointResidualContribution( localIndex const k,
+                                       localIndex const q,
+                                       StackVariables & stack ) const
   {
     real64 const biotCoefficient = m_constitutiveUpdate.getBiotCoefficient();
     Base::quadraturePointResidualContribution(
       k,
       q,
       stack,
-      [=] GEOSX_HOST_DEVICE(real64(&stress)[6]) {
+      [=] GEOSX_HOST_DEVICE( real64( &stress )[6] ) {
         real64 const pressure =
-          biotCoefficient * (m_fluidPressure[k] + m_deltaFluidPressure[k]);
+          biotCoefficient * ( m_fluidPressure[k] + m_deltaFluidPressure[k] );
         stress[0] -= pressure;
         stress[1] -= pressure;
         stress[2] -= pressure;
-      });
+      } );
   }
 
 protected:
   /// The rank-global fluid pressure array.
-  arrayView1d<real64 const> const m_fluidPressure;
+  arrayView1d< real64 const > const m_fluidPressure;
 
   /// The rank-global delta-fluid pressure array.
-  arrayView1d<real64 const> const m_deltaFluidPressure;
+  arrayView1d< real64 const > const m_deltaFluidPressure;
 };
 
 /**
  * Alias for the PoroElastic kernel with the QuasiStatic base class.
  */
-template <typename SUBREGION_TYPE, typename CONSTITUTIVE_TYPE, typename FE_TYPE>
+template< typename SUBREGION_TYPE, typename CONSTITUTIVE_TYPE, typename FE_TYPE >
 using QuasiStaticPoroElastic =
-  PoroElastic<SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE, QuasiStatic>;
+  PoroElastic< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE, QuasiStatic >;
 
 }  // namespace SolidMechanicsLagrangianFEMKernels
 

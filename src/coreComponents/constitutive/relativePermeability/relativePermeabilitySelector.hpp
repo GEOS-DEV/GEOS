@@ -29,32 +29,34 @@ namespace geosx
 namespace constitutive
 {
 #ifndef PASSTHROUGH_HANDLE_CASE
-  #define PASSTHROUGH_HANDLE_CASE(MODEL)    \
-    if(dynamicCast<MODEL*>(&relPerm))       \
-    {                                       \
-      lambda(static_cast<MODEL&>(relPerm)); \
-      return true;                          \
+  #define PASSTHROUGH_HANDLE_CASE( MODEL )         \
+    if( dynamicCast< MODEL * >( &relPerm ) )       \
+    {                                              \
+      lambda( static_cast< MODEL & >( relPerm ) ); \
+      return true;                                 \
     }
 
-template <typename LAMBDA>
-void constitutiveUpdatePassThru(RelativePermeabilityBase const& relPerm,
-                                LAMBDA&& lambda)
+template< typename LAMBDA >
+void
+constitutiveUpdatePassThru( RelativePermeabilityBase const & relPerm,
+                            LAMBDA && lambda )
 {
   ConstitutivePassThruHandler<
     BrooksCoreyRelativePermeability,
     BrooksCoreyBakerRelativePermeability,
-    VanGenuchtenBakerRelativePermeability>::Execute(relPerm,
-                                                    std::forward<LAMBDA>(lambda));
+    VanGenuchtenBakerRelativePermeability >::Execute( relPerm,
+                                                      std::forward< LAMBDA >( lambda ) );
 }
 
-template <typename LAMBDA>
-void constitutiveUpdatePassThru(RelativePermeabilityBase& relPerm, LAMBDA&& lambda)
+template< typename LAMBDA >
+void
+constitutiveUpdatePassThru( RelativePermeabilityBase & relPerm, LAMBDA && lambda )
 {
   ConstitutivePassThruHandler<
     BrooksCoreyRelativePermeability,
     BrooksCoreyBakerRelativePermeability,
-    VanGenuchtenBakerRelativePermeability>::Execute(relPerm,
-                                                    std::forward<LAMBDA>(lambda));
+    VanGenuchtenBakerRelativePermeability >::Execute( relPerm,
+                                                      std::forward< LAMBDA >( lambda ) );
 }
 
   #undef PASSTHROUGH_HANDLE_CASE

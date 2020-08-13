@@ -18,13 +18,14 @@ namespace geosx
 {
 namespace vtk
 {
-template <>
-void VTKGEOSXData::CustomInsertValue<R1Tensor>(localIndex index,
-                                               R1Tensor const& val)
+template<>
+void
+VTKGEOSXData::CustomInsertValue< R1Tensor >( localIndex index,
+                                             R1Tensor const & val )
 {
-  for(localIndex j = 0; j < 3; j++)
+  for( localIndex j = 0; j < 3; j++ )
   {
-    this->InsertValue(3 * index + j, val[j]);
+    this->InsertValue( 3 * index + j, val[j] );
   }
 }
 }  // namespace vtk

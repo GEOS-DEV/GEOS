@@ -34,19 +34,21 @@ public:
    * @brief Writer for PVD file
    * @param[in] fileName the file name with the extension
    */
-  VTKPVDWriter(string const& fileName);
+  VTKPVDWriter( string const & fileName );
 
   /*!
    * @brief Triggers the file output
    */
-  void Save() const;
+  void
+  Save() const;
 
   /*!
    * @brief Add a dataset associated to a time-step
    * @param[in] time the time step
    * @param[in] filePath path to the file associated with the time-step
    */
-  void AddData(real64 time, string const& filePath) const;
+  void
+  AddData( real64 time, string const & filePath ) const;
 
 private:
   /// PVD XML file

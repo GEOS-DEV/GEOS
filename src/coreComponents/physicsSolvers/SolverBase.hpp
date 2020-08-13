@@ -36,65 +36,109 @@ class DomainPartition;
 class SolverBase : public ExecutableGroup
 {
 public:
-  explicit SolverBase(std::string const &name, Group *const parent);
+  explicit SolverBase( std::string const & name, Group * const parent );
 
-  SolverBase(SolverBase &&) = default;
+  SolverBase( SolverBase && ) = default;
 
   virtual ~SolverBase() override;
 
   SolverBase() = delete;
-  SolverBase(SolverBase const &) = delete;
-  SolverBase &operator=(SolverBase const &) = delete;
-  SolverBase &operator=(SolverBase &&) = delete;
+  SolverBase( SolverBase const & ) = delete;
+  SolverBase &
+  operator=( SolverBase const & ) = delete;
+  SolverBase &
+  operator=( SolverBase && ) = delete;
 
-  static string CatalogName() { return "SolverBase"; }
+  static string
+  CatalogName()
+  {
+    return "SolverBase";
+  }
 
   //  virtual void Registration( dataRepository::WrapperCollection& domain );
 
   /**
    * This method is called when it's host event is triggered
    */
-  virtual void Execute(real64 const time_n,
-                       real64 const dt,
-                       integer const cycleNumber,
-                       integer const eventCounter,
-                       real64 const eventProgress,
-                       dataRepository::Group *const domain) override;
+  virtual void
+  Execute( real64 const time_n,
+           real64 const dt,
+           integer const cycleNumber,
+           integer const eventCounter,
+           real64 const eventProgress,
+           dataRepository::Group * const domain ) override;
 
   /**
    * @brief Getter for system matrix
    * @return a reference to linear system matrix of this solver
    */
-  ParallelMatrix &getSystemMatrix() { return m_matrix; }
-  ParallelMatrix const &getSystemMatrix() const { return m_matrix; }
+  ParallelMatrix &
+  getSystemMatrix()
+  {
+    return m_matrix;
+  }
+  ParallelMatrix const &
+  getSystemMatrix() const
+  {
+    return m_matrix;
+  }
 
   /**
    * @brief Getter for system rhs vector
    * @return a reference to linear system right-hand side of this solver
    */
-  ParallelVector &getSystemRhs() { return m_rhs; }
-  ParallelVector const &getSystemRhs() const { return m_rhs; }
+  ParallelVector &
+  getSystemRhs()
+  {
+    return m_rhs;
+  }
+  ParallelVector const &
+  getSystemRhs() const
+  {
+    return m_rhs;
+  }
 
   /**
    * @brief Getter for system solution vector
    * @return a reference to solution vector of this solver
    */
-  ParallelVector &getSystemSolution() { return m_solution; }
-  ParallelVector const &getSystemSolution() const { return m_solution; }
+  ParallelVector &
+  getSystemSolution()
+  {
+    return m_solution;
+  }
+  ParallelVector const &
+  getSystemSolution() const
+  {
+    return m_solution;
+  }
 
   /**
    * @brief Getter for degree-of-freedom manager
    * @return a reference to degree-of-freedom manager of this solver
    */
-  DofManager &getDofManager() { return m_dofManager; }
-  DofManager const &getDofManager() const { return m_dofManager; }
+  DofManager &
+  getDofManager()
+  {
+    return m_dofManager;
+  }
+  DofManager const &
+  getDofManager() const
+  {
+    return m_dofManager;
+  }
 
   /**
    * @brief Getter for local matrix
    * @return a reference to linear system matrix of this solver
    */
-  CRSMatrix<real64, globalIndex> &getLocalMatrix() { return m_localMatrix; }
-  CRSMatrixView<real64 const, globalIndex const> const &getLocalMatrix() const
+  CRSMatrix< real64, globalIndex > &
+  getLocalMatrix()
+  {
+    return m_localMatrix;
+  }
+  CRSMatrixView< real64 const, globalIndex const > const &
+  getLocalMatrix() const
   {
     return m_localMatrix.toViewConst();
   }
@@ -103,8 +147,13 @@ public:
    * @brief Getter for local rhs vector
    * @return a reference to linear system right-hand side of this solver
    */
-  array1d<real64> &getLocalRhs() { return m_localRhs; }
-  arrayView1d<real64 const> const &getLocalRhs() const
+  array1d< real64 > &
+  getLocalRhs()
+  {
+    return m_localRhs;
+  }
+  arrayView1d< real64 const > const &
+  getLocalRhs() const
   {
     return m_localRhs.toViewConst();
   }
@@ -113,8 +162,13 @@ public:
    * @brief Getter for local solution vector
    * @return a reference to solution vector of this solver
    */
-  array1d<real64> &getLocalSolution() { return m_localSolution; }
-  arrayView1d<real64 const> const &getLocalSolution() const
+  array1d< real64 > &
+  getLocalSolution()
+  {
+    return m_localSolution;
+  }
+  arrayView1d< real64 const > const &
+  getLocalSolution() const
   {
     return m_localSolution.toViewConst();
   }
@@ -137,10 +191,11 @@ public:
    * This function is the entry point to perform a solver step. The choice of time integration
    * method is determined in this function, and the appropriate step function is called.
    */
-  virtual real64 SolverStep(real64 const &time_n,
-                            real64 const &dt,
-                            integer const cycleNumber,
-                            DomainPartition &domain);
+  virtual real64
+  SolverStep( real64 const & time_n,
+              real64 const & dt,
+              integer const cycleNumber,
+              DomainPartition & domain );
 
   /**
    * @brief entry function to perform a solver step
@@ -150,7 +205,8 @@ public:
    *
    * T
    */
-  virtual void SetNextDt(real64 const &currentDt, real64 &nextDt);
+  virtual void
+  SetNextDt( real64 const & currentDt, real64 & nextDt );
 
   /**
    * @brief entry function to perform a solver step
@@ -160,7 +216,8 @@ public:
    *
    * T
    */
-  void SetNextDtBasedOnNewtonIter(real64 const &currentDt, real64 &nextDt);
+  void
+  SetNextDtBasedOnNewtonIter( real64 const & currentDt, real64 & nextDt );
 
   /**
    * @brief Entry function for an explicit time integration step
@@ -170,10 +227,11 @@ public:
    * @param domain the domain object
    * @return return the timestep that was achieved during the step.
    */
-  virtual real64 ExplicitStep(real64 const &time_n,
-                              real64 const &dt,
-                              integer const cycleNumber,
-                              DomainPartition &domain);
+  virtual real64
+  ExplicitStep( real64 const & time_n,
+                real64 const & dt,
+                integer const cycleNumber,
+                DomainPartition & domain );
 
   /**
    * @brief Function for a nonlinear implicit integration step
@@ -192,10 +250,11 @@ public:
    * nonlinear loop includes a simple line search algorithm, and will cut the timestep if
    * convergence is not achieved according to the parameters in linearSolverParameters member.
    */
-  virtual real64 NonlinearImplicitStep(real64 const &time_n,
-                                       real64 const &dt,
-                                       integer const cycleNumber,
-                                       DomainPartition &domain);
+  virtual real64
+  NonlinearImplicitStep( real64 const & time_n,
+                         real64 const & dt,
+                         integer const cycleNumber,
+                         DomainPartition & domain );
 
   /**
    * @brief Function to perform line search
@@ -215,16 +274,17 @@ public:
    * nonlinear loop includes a simple line search algorithm, and will cut the timestep if
    * convergence is not achieved according to the parameters in linearSolverParameters member.
    */
-  virtual bool LineSearch(real64 const &time_n,
-                          real64 const &dt,
-                          integer const cycleNumber,
-                          DomainPartition &domain,
-                          DofManager const &dofManager,
-                          CRSMatrixView<real64, globalIndex const> const &localMatrix,
-                          arrayView1d<real64> const &localRhs,
-                          arrayView1d<real64 const> const &localSolution,
-                          real64 const scaleFactor,
-                          real64 &lastResidual);
+  virtual bool
+  LineSearch( real64 const & time_n,
+              real64 const & dt,
+              integer const cycleNumber,
+              DomainPartition & domain,
+              DofManager const & dofManager,
+              CRSMatrixView< real64, globalIndex const > const & localMatrix,
+              arrayView1d< real64 > const & localRhs,
+              arrayView1d< real64 const > const & localSolution,
+              real64 const scaleFactor,
+              real64 & lastResidual );
 
   /**
    * @brief Function for a linear implicit integration step
@@ -244,10 +304,11 @@ public:
    * nonlinear loop includes a simple line search algorithm, and will cut the timestep if
    * convergence is not achieved according to the parameters in linearSolverParameters member.
    */
-  virtual real64 LinearImplicitStep(real64 const &time_n,
-                                    real64 const &dt,
-                                    integer const cycleNumber,
-                                    DomainPartition &domain);
+  virtual real64
+  LinearImplicitStep( real64 const & time_n,
+                      real64 const & dt,
+                      integer const cycleNumber,
+                      DomainPartition & domain );
 
   /**
    * @brief function to perform setup for implicit timestep
@@ -265,16 +326,18 @@ public:
    * @note This function must be overridden in the derived physics solver in order to use an implict
    * solution method such as LinearImplicitStep() or NonlinearImplicitStep().
    */
-  virtual void ImplicitStepSetup(real64 const &time_n,
-                                 real64 const &dt,
-                                 DomainPartition &domain);
+  virtual void
+  ImplicitStepSetup( real64 const & time_n,
+                     real64 const & dt,
+                     DomainPartition & domain );
 
   /**
    * @brief Populate degree-of-freedom manager with fields relevant to this solver
    * @param dofManager degree-of-freedom manager associated with the linear system
    */
-  virtual void SetupDofs(DomainPartition const &domain,
-                         DofManager &dofManager) const;
+  virtual void
+  SetupDofs( DomainPartition const & domain,
+             DofManager & dofManager ) const;
 
   /**
    * @brief Set up the linear system (DOF indices and sparsity patterns)
@@ -287,12 +350,13 @@ public:
    * @note While the function is virtual, the base class implementation should be
    *       sufficient for most single-physics solvers.
    */
-  virtual void SetupSystem(DomainPartition &domain,
-                           DofManager &dofManager,
-                           CRSMatrix<real64, globalIndex> &localMatrix,
-                           array1d<real64> &localRhs,
-                           array1d<real64> &localSolution,
-                           bool const setSparsity = true);
+  virtual void
+  SetupSystem( DomainPartition & domain,
+               DofManager & dofManager,
+               CRSMatrix< real64, globalIndex > & localMatrix,
+               array1d< real64 > & localRhs,
+               array1d< real64 > & localSolution,
+               bool const setSparsity = true );
 
   /**
    * @brief function to assemble the linear system matrix and rhs
@@ -313,13 +377,14 @@ public:
    * @note This function must be overridden in the derived physics solver in order to use an implict
    * solution method such as LinearImplicitStep() or NonlinearImplicitStep().
    */
-  virtual void AssembleSystem(
+  virtual void
+  AssembleSystem(
     real64 const time,
     real64 const dt,
-    DomainPartition &domain,
-    DofManager const &dofManager,
-    CRSMatrixView<real64, globalIndex const> const &localMatrix,
-    arrayView1d<real64> const &localRhs);
+    DomainPartition & domain,
+    DofManager const & dofManager,
+    CRSMatrixView< real64, globalIndex const > const & localMatrix,
+    arrayView1d< real64 > const & localRhs );
 
   /**
    * @brief apply boundary condition to system
@@ -333,13 +398,14 @@ public:
    * This function applies all boundary conditions to the linear system. This is essentially a
    * completion of the system assembly, but is separated for use in coupled solvers.
    */
-  virtual void ApplyBoundaryConditions(
+  virtual void
+  ApplyBoundaryConditions(
     real64 const time,
     real64 const dt,
-    DomainPartition &domain,
-    DofManager const &dofManager,
-    CRSMatrixView<real64, globalIndex const> const &localMatrix,
-    arrayView1d<real64> const &localRhs);
+    DomainPartition & domain,
+    DofManager const & dofManager,
+    CRSMatrixView< real64, globalIndex const > const & localMatrix,
+    arrayView1d< real64 > const & localRhs );
 
   /**
    * @brief Output the assembled linear system for debug purposes.
@@ -349,11 +415,12 @@ public:
    * @param matrix system matrix
    * @param rhs system right-hand side vector
    */
-  void DebugOutputSystem(real64 const &time,
-                         integer const cycleNumber,
-                         integer const nonlinearIteration,
-                         ParallelMatrix const &matrix,
-                         ParallelVector const &rhs) const;
+  void
+  DebugOutputSystem( real64 const & time,
+                     integer const cycleNumber,
+                     integer const nonlinearIteration,
+                     ParallelMatrix const & matrix,
+                     ParallelVector const & rhs ) const;
 
   /**
    * @brief Output the linear system solution for debug purposes.
@@ -362,10 +429,11 @@ public:
    * @param nonlinearIteration current nonlinear iteration number
    * @param solution system solution vector
    */
-  void DebugOutputSolution(real64 const &time,
-                           integer const cycleNumber,
-                           integer const nonlinearIteration,
-                           ParallelVector const &solution) const;
+  void
+  DebugOutputSolution( real64 const & time,
+                       integer const cycleNumber,
+                       integer const nonlinearIteration,
+                       ParallelVector const & solution ) const;
 
   /**
    * @brief calculate the norm of the global system residual
@@ -377,9 +445,10 @@ public:
    * This function returns the norm of global residual vector, which is suitable for comparison with
    * a tolerance.
    */
-  virtual real64 CalculateResidualNorm(DomainPartition const &domain,
-                                       DofManager const &dofManager,
-                                       arrayView1d<real64 const> const &localRhs);
+  virtual real64
+  CalculateResidualNorm( DomainPartition const & domain,
+                         DofManager const & dofManager,
+                         arrayView1d< real64 const > const & localRhs );
 
   /**
    * @brief function to apply a linear system solver to the assembled system.
@@ -395,10 +464,11 @@ public:
    * @note This function must be overridden in the derived physics solver in order to use an implict
    * solution method such as LinearImplicitStep() or NonlinearImplicitStep().
    */
-  virtual void SolveSystem(DofManager const &dofManager,
-                           ParallelMatrix &matrix,
-                           ParallelVector &rhs,
-                           ParallelVector &solution);
+  virtual void
+  SolveSystem( DofManager const & dofManager,
+               ParallelMatrix & matrix,
+               ParallelVector & rhs,
+               ParallelVector & solution );
 
   /**
    * @brief Function to check system solution for physical consistency and constraint violation
@@ -414,10 +484,11 @@ public:
    * solution method such as LinearImplicitStep() or NonlinearImplicitStep().
    *
    */
-  virtual bool CheckSystemSolution(DomainPartition const &domain,
-                                   DofManager const &dofManager,
-                                   arrayView1d<real64 const> const &localSolution,
-                                   real64 const scalingFactor);
+  virtual bool
+  CheckSystemSolution( DomainPartition const & domain,
+                       DofManager const & dofManager,
+                       arrayView1d< real64 const > const & localSolution,
+                       real64 const scalingFactor );
 
   /**
    * @brief Function to determine if the solution vector should be scaled back in order to maintain a known constraint.
@@ -426,10 +497,11 @@ public:
    * @param[in] solution the solution vector
    * @return The factor that should be used to scale the solution vector values when they are being applied.
    */
-  virtual real64 ScalingForSystemSolution(
-    DomainPartition const &domain,
-    DofManager const &dofManager,
-    arrayView1d<real64 const> const &localSolution);
+  virtual real64
+  ScalingForSystemSolution(
+    DomainPartition const & domain,
+    DofManager const & dofManager,
+    arrayView1d< real64 const > const & localSolution );
 
   /**
    * @brief Function to apply the solution vector to the state
@@ -454,10 +526,11 @@ public:
    * solution method such as LinearImplicitStep() or NonlinearImplicitStep().
    *
    */
-  virtual void ApplySystemSolution(DofManager const &dofManager,
-                                   arrayView1d<real64 const> const &localSolution,
-                                   real64 const scalingFactor,
-                                   DomainPartition &domain);
+  virtual void
+  ApplySystemSolution( DofManager const & dofManager,
+                       arrayView1d< real64 const > const & localSolution,
+                       real64 const scalingFactor,
+                       DomainPartition & domain );
 
   /**
    * @brief reset state of physics back to the beginning of the step.
@@ -470,7 +543,8 @@ public:
    * @note This function must be overridden in the derived physics solver in order to use an implict
    * solution method such as LinearImplicitStep() or NonlinearImplicitStep().
    */
-  virtual void ResetStateToBeginningOfStep(DomainPartition &domain);
+  virtual void
+  ResetStateToBeginningOfStep( DomainPartition & domain );
 
   /**
    * @brief perform cleanup for implicit timestep
@@ -485,27 +559,35 @@ public:
    * @note This function must be overridden in the derived physics solver in order to use an implict
    * solution method such as LinearImplicitStep() or NonlinearImplicitStep().
    */
-  virtual void ImplicitStepComplete(real64 const &time,
-                                    real64 const &dt,
-                                    DomainPartition &domain);
+  virtual void
+  ImplicitStepComplete( real64 const & time,
+                        real64 const & dt,
+                        DomainPartition & domain );
 
   /*
    * Returns the requirement for the next time-step to the event executing the solver.
    */
-  virtual real64 GetTimestepRequest(real64 const GEOSX_UNUSED_PARAM(time)) override
+  virtual real64
+  GetTimestepRequest( real64 const GEOSX_UNUSED_PARAM( time ) ) override
   {
     return m_nextDt;
   };
   /**@}*/
 
-  real64 GetTimestepRequest() { return m_nextDt; };
+  real64
+  GetTimestepRequest()
+  {
+    return m_nextDt;
+  };
 
-  virtual Group *CreateChild(string const &childKey,
-                             string const &childName) override;
+  virtual Group *
+  CreateChild( string const & childKey,
+               string const & childName ) override;
 
   using CatalogInterface =
-    dataRepository::CatalogInterface<SolverBase, std::string const &, Group *const>;
-  static CatalogInterface::CatalogType &GetCatalog();
+    dataRepository::CatalogInterface< SolverBase, std::string const &, Group * const >;
+  static CatalogInterface::CatalogType &
+  GetCatalog();
 
   struct viewKeyStruct
   {
@@ -533,13 +615,15 @@ public:
    *       and therefore does not have a parent of type PhysicsSolverManager, this function returns
    *       {0.0,0.0,-9.81}
    */
-  R1Tensor const gravityVector() const;
+  R1Tensor const
+  gravityVector() const;
 
   /**
    * @brief accessor for the linear solver parameters.
    * @return the linear solver parameter list
    */
-  LinearSolverParameters &getLinearSolverParameters()
+  LinearSolverParameters &
+  getLinearSolverParameters()
   {
     return m_linearSolverParameters.get();
   }
@@ -548,7 +632,8 @@ public:
    * @brief const accessor for the linear solver parameters.
    * @return the linear solver parameter list
    */
-  LinearSolverParameters const &getLinearSolverParameters() const
+  LinearSolverParameters const &
+  getLinearSolverParameters() const
   {
     return m_linearSolverParameters.get();
   }
@@ -557,7 +642,8 @@ public:
    * @brief accessor for the nonlinear solver parameters.
    * @return the nonlinear solver parameter list
    */
-  NonlinearSolverParameters &getNonlinearSolverParameters()
+  NonlinearSolverParameters &
+  getNonlinearSolverParameters()
   {
     return m_nonlinearSolverParameters;
   }
@@ -566,25 +652,32 @@ public:
    * @brief const accessor for the nonlinear solver parameters.
    * @return the nonlinear solver parameter list
    */
-  NonlinearSolverParameters const &getNonlinearSolverParameters() const
+  NonlinearSolverParameters const &
+  getNonlinearSolverParameters() const
   {
     return m_nonlinearSolverParameters;
   }
 
-  string getDiscretization() const { return m_discretizationName; }
+  string
+  getDiscretization() const
+  {
+    return m_discretizationName;
+  }
 
-  arrayView1d<string const> const &targetRegionNames() const
+  arrayView1d< string const > const &
+  targetRegionNames() const
   {
     return m_targetRegionNames;
   }
 
-  virtual std::vector<string> getConstitutiveRelations(string const &regionName) const
+  virtual std::vector< string >
+  getConstitutiveRelations( string const & regionName ) const
   {
-    GEOSX_UNUSED_VAR(regionName);
+    GEOSX_UNUSED_VAR( regionName );
     GEOSX_ERROR(
       "SolverBase::getConstitutiveRelations( string const &) should "
-      "be overridden the solver contains a discretization specification.");
-    return std::vector<string>();
+      "be overridden the solver contains a discretization specification." );
+    return std::vector< string >();
   }
 
   /**
@@ -592,100 +685,116 @@ public:
    * @param regionName the region name to find
    * @return index within target regions list
    */
-  localIndex targetRegionIndex(string const &regionName) const;
+  localIndex
+  targetRegionIndex( string const & regionName ) const;
 
-  template <typename REGIONTYPE = ElementRegionBase, typename... REGIONTYPES, typename LAMBDA>
-  void forTargetRegions(MeshLevel const &mesh, LAMBDA &&lambda) const
+  template< typename REGIONTYPE = ElementRegionBase, typename... REGIONTYPES, typename LAMBDA >
+  void
+  forTargetRegions( MeshLevel const & mesh, LAMBDA && lambda ) const
   {
-    mesh.getElemManager()->template forElementRegions<REGIONTYPE, REGIONTYPES...>(
+    mesh.getElemManager()->template forElementRegions< REGIONTYPE, REGIONTYPES... >(
       targetRegionNames(),
-      std::forward<LAMBDA>(lambda));
+      std::forward< LAMBDA >( lambda ) );
   }
 
-  template <typename REGIONTYPE = ElementRegionBase, typename... REGIONTYPES, typename LAMBDA>
-  void forTargetRegions(MeshLevel &mesh, LAMBDA &&lambda) const
+  template< typename REGIONTYPE = ElementRegionBase, typename... REGIONTYPES, typename LAMBDA >
+  void
+  forTargetRegions( MeshLevel & mesh, LAMBDA && lambda ) const
   {
-    mesh.getElemManager()->template forElementRegions<REGIONTYPE, REGIONTYPES...>(
+    mesh.getElemManager()->template forElementRegions< REGIONTYPE, REGIONTYPES... >(
       targetRegionNames(),
-      std::forward<LAMBDA>(lambda));
+      std::forward< LAMBDA >( lambda ) );
   }
 
-  template <typename REGIONTYPE = ElementRegionBase, typename... REGIONTYPES, typename LAMBDA>
-  void forTargetRegionsComplete(MeshLevel const &mesh, LAMBDA &&lambda) const
+  template< typename REGIONTYPE = ElementRegionBase, typename... REGIONTYPES, typename LAMBDA >
+  void
+  forTargetRegionsComplete( MeshLevel const & mesh, LAMBDA && lambda ) const
   {
     mesh.getElemManager()
-      ->template forElementRegionsComplete<REGIONTYPE, REGIONTYPES...>(
+      ->template forElementRegionsComplete< REGIONTYPE, REGIONTYPES... >(
         targetRegionNames(),
-        std::forward<LAMBDA>(lambda));
+        std::forward< LAMBDA >( lambda ) );
   }
 
-  template <typename REGIONTYPE = ElementRegionBase, typename... REGIONTYPES, typename LAMBDA>
-  void forTargetRegionsComplete(MeshLevel &mesh, LAMBDA &&lambda) const
+  template< typename REGIONTYPE = ElementRegionBase, typename... REGIONTYPES, typename LAMBDA >
+  void
+  forTargetRegionsComplete( MeshLevel & mesh, LAMBDA && lambda ) const
   {
     mesh.getElemManager()
-      ->template forElementRegionsComplete<REGIONTYPE, REGIONTYPES...>(
+      ->template forElementRegionsComplete< REGIONTYPE, REGIONTYPES... >(
         targetRegionNames(),
-        std::forward<LAMBDA>(lambda));
+        std::forward< LAMBDA >( lambda ) );
   }
 
-  template <typename SUBREGIONTYPE = ElementSubRegionBase,
+  template< typename SUBREGIONTYPE = ElementSubRegionBase,
             typename... SUBREGIONTYPES,
-            typename LAMBDA>
-  void forTargetSubRegions(MeshLevel const &mesh, LAMBDA &&lambda) const
+            typename LAMBDA >
+  void
+  forTargetSubRegions( MeshLevel const & mesh, LAMBDA && lambda ) const
   {
     mesh.getElemManager()
-      ->template forElementSubRegions<SUBREGIONTYPE, SUBREGIONTYPES...>(
+      ->template forElementSubRegions< SUBREGIONTYPE, SUBREGIONTYPES... >(
         targetRegionNames(),
-        std::forward<LAMBDA>(lambda));
+        std::forward< LAMBDA >( lambda ) );
   }
 
-  template <typename SUBREGIONTYPE = ElementSubRegionBase,
+  template< typename SUBREGIONTYPE = ElementSubRegionBase,
             typename... SUBREGIONTYPES,
-            typename LAMBDA>
-  void forTargetSubRegions(MeshLevel &mesh, LAMBDA &&lambda) const
+            typename LAMBDA >
+  void
+  forTargetSubRegions( MeshLevel & mesh, LAMBDA && lambda ) const
   {
     mesh.getElemManager()
-      ->template forElementSubRegions<SUBREGIONTYPE, SUBREGIONTYPES...>(
+      ->template forElementSubRegions< SUBREGIONTYPE, SUBREGIONTYPES... >(
         targetRegionNames(),
-        std::forward<LAMBDA>(lambda));
+        std::forward< LAMBDA >( lambda ) );
   }
 
-  template <typename SUBREGIONTYPE = ElementSubRegionBase,
+  template< typename SUBREGIONTYPE = ElementSubRegionBase,
             typename... SUBREGIONTYPES,
-            typename LAMBDA>
-  void forTargetSubRegionsComplete(MeshLevel const &mesh, LAMBDA &&lambda) const
+            typename LAMBDA >
+  void
+  forTargetSubRegionsComplete( MeshLevel const & mesh, LAMBDA && lambda ) const
   {
     mesh.getElemManager()
-      ->template forElementSubRegionsComplete<SUBREGIONTYPE, SUBREGIONTYPES...>(
+      ->template forElementSubRegionsComplete< SUBREGIONTYPE, SUBREGIONTYPES... >(
         targetRegionNames(),
-        std::forward<LAMBDA>(lambda));
+        std::forward< LAMBDA >( lambda ) );
   }
 
-  template <typename SUBREGIONTYPE = ElementSubRegionBase,
+  template< typename SUBREGIONTYPE = ElementSubRegionBase,
             typename... SUBREGIONTYPES,
-            typename LAMBDA>
-  void forTargetSubRegionsComplete(MeshLevel &mesh, LAMBDA &&lambda) const
+            typename LAMBDA >
+  void
+  forTargetSubRegionsComplete( MeshLevel & mesh, LAMBDA && lambda ) const
   {
     mesh.getElemManager()
-      ->template forElementSubRegionsComplete<SUBREGIONTYPE, SUBREGIONTYPES...>(
+      ->template forElementSubRegionsComplete< SUBREGIONTYPE, SUBREGIONTYPES... >(
         targetRegionNames(),
-        std::forward<LAMBDA>(lambda));
+        std::forward< LAMBDA >( lambda ) );
   }
 
-  string getDiscretizationName() const { return m_discretizationName; }
+  string
+  getDiscretizationName() const
+  {
+    return m_discretizationName;
+  }
 
 protected:
-  static real64 EisenstatWalker(real64 const newNewtonNorm,
-                                real64 const oldNewtonNorm,
-                                real64 const weakestTol);
+  static real64
+  EisenstatWalker( real64 const newNewtonNorm,
+                   real64 const oldNewtonNorm,
+                   real64 const weakestTol );
 
-  template <typename BASETYPE = constitutive::ConstitutiveBase, typename LOOKUP_TYPE>
-  static BASETYPE const &GetConstitutiveModel(dataRepository::Group const &dataGroup,
-                                              LOOKUP_TYPE const &key);
+  template< typename BASETYPE = constitutive::ConstitutiveBase, typename LOOKUP_TYPE >
+  static BASETYPE const &
+  GetConstitutiveModel( dataRepository::Group const & dataGroup,
+                        LOOKUP_TYPE const & key );
 
-  template <typename BASETYPE = constitutive::ConstitutiveBase, typename LOOKUP_TYPE>
-  static BASETYPE &GetConstitutiveModel(dataRepository::Group &dataGroup,
-                                        LOOKUP_TYPE const &key);
+  template< typename BASETYPE = constitutive::ConstitutiveBase, typename LOOKUP_TYPE >
+  static BASETYPE &
+  GetConstitutiveModel( dataRepository::Group & dataGroup,
+                        LOOKUP_TYPE const & key );
 
   /**
    * @brief Partially validates constitutive model names input.
@@ -699,9 +808,10 @@ protected:
    * If @p allowEmpty is true and the input is empty, returns false, which the solver can
    * interpret as a signal this type of model is disabled for the run (for optional models).
    */
-  bool CheckModelNames(array1d<string> &modelNames,
-                       string const &attribute,
-                       bool const allowEmpty = false) const;
+  bool
+  CheckModelNames( array1d< string > & modelNames,
+                   string const & attribute,
+                   bool const allowEmpty = false ) const;
 
   /**
    * @brief Populate array of constitutive model indices from list of model names.
@@ -713,9 +823,10 @@ protected:
    * after constitutive models have been set up but before they are used.
    * Looks up each model by name and type in each subregion of target regions.
    */
-  template <typename MODEL_TYPE = constitutive::ConstitutiveBase>
-  void ValidateModelMapping(ElementRegionManager const &elemRegionManager,
-                            arrayView1d<string const> const &modelNames) const;
+  template< typename MODEL_TYPE = constitutive::ConstitutiveBase >
+  void
+  ValidateModelMapping( ElementRegionManager const & elemRegionManager,
+                        arrayView1d< string const > const & modelNames ) const;
 
   real64 m_cflFactor;
   real64 m_maxStableDt;
@@ -733,12 +844,12 @@ protected:
   ParallelVector m_solution;
 
   /// Local system matrix and rhs
-  CRSMatrix<real64, globalIndex> m_localMatrix;
-  array1d<real64> m_localRhs;
-  array1d<real64> m_localSolution;
+  CRSMatrix< real64, globalIndex > m_localMatrix;
+  array1d< real64 > m_localRhs;
+  array1d< real64 > m_localSolution;
 
   /// Custom preconditioner for the "native" iterative solver
-  std::unique_ptr<PreconditionerBase<LAInterface>> m_precond;
+  std::unique_ptr< PreconditionerBase< LAInterface > > m_precond;
 
   /// Linear solver parameters
   LinearSolverParametersInput m_linearSolverParameters;
@@ -751,58 +862,61 @@ protected:
 
 private:
   /// List of names of regions the solver will be applied to
-  array1d<string> m_targetRegionNames;
+  array1d< string > m_targetRegionNames;
 };
 
-template <typename BASETYPE, typename LOOKUP_TYPE>
-BASETYPE const &SolverBase::GetConstitutiveModel(dataRepository::Group const &dataGroup,
-                                                 LOOKUP_TYPE const &key)
+template< typename BASETYPE, typename LOOKUP_TYPE >
+BASETYPE const &
+SolverBase::GetConstitutiveModel( dataRepository::Group const & dataGroup,
+                                  LOOKUP_TYPE const & key )
 {
-  Group const *const constitutiveModels = dataGroup.GetGroup(
-    constitutive::ConstitutiveManager::groupKeyStruct::constitutiveModelsString);
-  GEOSX_ERROR_IF(constitutiveModels == nullptr,
-                 "Target group does not contain constitutive models");
+  Group const * const constitutiveModels = dataGroup.GetGroup(
+    constitutive::ConstitutiveManager::groupKeyStruct::constitutiveModelsString );
+  GEOSX_ERROR_IF( constitutiveModels == nullptr,
+                  "Target group does not contain constitutive models" );
 
-  BASETYPE const *const model = constitutiveModels->GetGroup<BASETYPE>(key);
-  GEOSX_ERROR_IF(model == nullptr, "Target group does not contain model " << key);
+  BASETYPE const * const model = constitutiveModels->GetGroup< BASETYPE >( key );
+  GEOSX_ERROR_IF( model == nullptr, "Target group does not contain model " << key );
 
   return *model;
 }
 
-template <typename BASETYPE, typename LOOKUP_TYPE>
-BASETYPE &SolverBase::GetConstitutiveModel(dataRepository::Group &dataGroup,
-                                           LOOKUP_TYPE const &key)
+template< typename BASETYPE, typename LOOKUP_TYPE >
+BASETYPE &
+SolverBase::GetConstitutiveModel( dataRepository::Group & dataGroup,
+                                  LOOKUP_TYPE const & key )
 {
-  Group *const constitutiveModels = dataGroup.GetGroup(
-    constitutive::ConstitutiveManager::groupKeyStruct::constitutiveModelsString);
-  GEOSX_ERROR_IF(constitutiveModels == nullptr,
-                 "Target group does not contain constitutive models");
+  Group * const constitutiveModels = dataGroup.GetGroup(
+    constitutive::ConstitutiveManager::groupKeyStruct::constitutiveModelsString );
+  GEOSX_ERROR_IF( constitutiveModels == nullptr,
+                  "Target group does not contain constitutive models" );
 
-  BASETYPE *const model = constitutiveModels->GetGroup<BASETYPE>(key);
-  GEOSX_ERROR_IF(model == nullptr, "Target group does not contain model " << key);
+  BASETYPE * const model = constitutiveModels->GetGroup< BASETYPE >( key );
+  GEOSX_ERROR_IF( model == nullptr, "Target group does not contain model " << key );
 
   return *model;
 }
 
-template <typename MODEL_TYPE>
-void SolverBase::ValidateModelMapping(
-  ElementRegionManager const &elemRegionManager,
-  arrayView1d<string const> const &modelNames) const
+template< typename MODEL_TYPE >
+void
+SolverBase::ValidateModelMapping(
+  ElementRegionManager const & elemRegionManager,
+  arrayView1d< string const > const & modelNames ) const
 {
-  GEOSX_ERROR_IF_NE(modelNames.size(), m_targetRegionNames.size());
-  for(localIndex k = 0; k < modelNames.size(); ++k)
+  GEOSX_ERROR_IF_NE( modelNames.size(), m_targetRegionNames.size() );
+  for( localIndex k = 0; k < modelNames.size(); ++k )
   {
-    ElementRegionBase const &region =
-      *elemRegionManager.GetRegion(m_targetRegionNames[k]);
-    for(localIndex esr = 0; esr < region.numSubRegions(); ++esr)
+    ElementRegionBase const & region =
+      *elemRegionManager.GetRegion( m_targetRegionNames[k] );
+    for( localIndex esr = 0; esr < region.numSubRegions(); ++esr )
     {
-      ElementSubRegionBase const &subRegion = *region.GetSubRegion(esr);
-      MODEL_TYPE const *const model =
-        subRegion.GetConstitutiveModels()->GetGroup<MODEL_TYPE>(modelNames[k]);
-      GEOSX_ERROR_IF(model == nullptr,
-                     getName() << ": constitutive model " << modelNames[k]
-                               << " not found in " << region.getName() << '/'
-                               << subRegion.getName());
+      ElementSubRegionBase const & subRegion = *region.GetSubRegion( esr );
+      MODEL_TYPE const * const model =
+        subRegion.GetConstitutiveModels()->GetGroup< MODEL_TYPE >( modelNames[k] );
+      GEOSX_ERROR_IF( model == nullptr,
+                      getName() << ": constitutive model " << modelNames[k]
+                                << " not found in " << region.getName() << '/'
+                                << subRegion.getName() );
     }
   }
 }

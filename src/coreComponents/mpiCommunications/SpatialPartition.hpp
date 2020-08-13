@@ -38,17 +38,22 @@ public:
  *
  * @note Unused
  */
-  virtual void InitializeMetis();
+  virtual void
+  InitializeMetis();
 
   /**
    * @brief Adds some neighbors to the neighbor communicators.
    * @param neighborList The neighbors to add.
    */
-  void AddNeighborsMetis(SortedArray<globalIndex>& neighborList);
-  virtual bool IsCoordInPartition(const realT& coord, const int dir);
-  virtual bool IsCoordInPartition(const R1Tensor& elemCenter);
-  virtual bool IsCoordInPartition(const R1Tensor& elemCenter,
-                                  const int numDistPartition);
+  void
+  AddNeighborsMetis( SortedArray< globalIndex > & neighborList );
+  virtual bool
+  IsCoordInPartition( const realT & coord, const int dir );
+  virtual bool
+  IsCoordInPartition( const R1Tensor & elemCenter );
+  virtual bool
+  IsCoordInPartition( const R1Tensor & elemCenter,
+                      const int numDistPartition );
   /**
    * @brief Variant of IsCoordInPartition with intervals closed at both ends
    * @param elemCenter The point coordinates.
@@ -56,7 +61,8 @@ public:
    *
    * @note Unused.
    */
-  virtual bool IsCoordInPartitionClosed(const R1Tensor& elemCenter);
+  virtual bool
+  IsCoordInPartitionClosed( const R1Tensor & elemCenter );
 
   /**
    * @brief Checks if the point located inside the current partition bouding box.
@@ -65,11 +71,14 @@ public:
    *
    * @note Unused.
    */
-  virtual bool IsCoordInPartitionBoundingBox(const R1Tensor& elemCenter);
+  virtual bool
+  IsCoordInPartitionBoundingBox( const R1Tensor & elemCenter );
 
-  virtual bool IsCoordInContactGhostRange(const R1Tensor& elemCenter);
+  virtual bool
+  IsCoordInContactGhostRange( const R1Tensor & elemCenter );
 
-  void setSizes(const R1Tensor& min, const R1Tensor& max);
+  void
+  setSizes( const R1Tensor & min, const R1Tensor & max );
   //  void setGlobalDomainSizes( const R1Tensor & min, const R1Tensor & max );
   //  void getSizes( R1Tensor & min, R1Tensor & max ) const;
   //  void getPartitionSizes( R1Tensor & min, R1Tensor & max ) const;
@@ -81,19 +90,21 @@ public:
    * @param min The minimum.
    * @param max The maximum.
    */
-  void SetPartitionGeometricalBoundary(R1Tensor& min, R1Tensor& max);
+  void
+  SetPartitionGeometricalBoundary( R1Tensor & min, R1Tensor & max );
 
-  void setPartitions(unsigned int xPartitions,
-                     unsigned int yPartitions,
-                     unsigned int zPartitions)
+  void
+  setPartitions( unsigned int xPartitions,
+                 unsigned int yPartitions,
+                 unsigned int zPartitions )
   {
-    m_Partitions.resize(3);
-    m_Partitions(0) = xPartitions;
-    m_Partitions(1) = yPartitions;
-    m_Partitions(2) = zPartitions;
+    m_Partitions.resize( 3 );
+    m_Partitions( 0 ) = xPartitions;
+    m_Partitions( 1 ) = yPartitions;
+    m_Partitions( 2 ) = zPartitions;
     m_size = 1;
-    for(int i = 0; i < nsdof; i++) m_size *= m_Partitions(i);
-    SetContactGhostRange(0.0);
+    for( int i = 0; i < nsdof; i++ ) m_size *= m_Partitions( i );
+    SetContactGhostRange( 0.0 );
   }
 
   /**
@@ -102,13 +113,14 @@ public:
    * @param yPeriodic Periodicity in y.
    * @param zPeriodic Periodicity in z.
    */
-  void setPeriodic(unsigned int xPeriodic,
-                   unsigned int yPeriodic,
-                   unsigned int zPeriodic)
+  void
+  setPeriodic( unsigned int xPeriodic,
+               unsigned int yPeriodic,
+               unsigned int zPeriodic )
   {
-    m_Periodic(0) = xPeriodic;
-    m_Periodic(1) = yPeriodic;
-    m_Periodic(2) = zPeriodic;
+    m_Periodic( 0 ) = xPeriodic;
+    m_Periodic( 1 ) = yPeriodic;
+    m_Periodic( 2 ) = zPeriodic;
   }
 
   //  void setRadialPeriodic( unsigned int rPeriodic )
@@ -118,7 +130,8 @@ public:
 
   //  virtual void ReadXMLInput(TICPP::HierarchicalDataNsode& hdn);
 
-  virtual void SetContactGhostRange(const realT bufferSize);
+  virtual void
+  SetContactGhostRange( const realT bufferSize );
 
   //  virtual void ResetSinglePartitionGlobalToLocalMap(PhysicalDomainT& domain);
 
@@ -130,7 +143,8 @@ public:
   //      const bool contactActive, const int elementGhostingDepth);
   //  void SetSinglePartitionGhostArrays(PhysicalDomainT& domain);
 
-  int GetColor();
+  int
+  GetColor();
 
   //  const array1d< integer > & GetPartitions() const
   //  {
@@ -161,19 +175,20 @@ public:
   //  }
 
 protected:
-  void InitializePostSubGroups(dataRepository::Group* const);
+  void
+  InitializePostSubGroups( dataRepository::Group * const );
 
 public:
   /// number of partitions
-  array1d<int> m_Partitions;
+  array1d< int > m_Partitions;
   /**
    * @brief Boolean like array of length 3 (space dimensions).
    *
    * 1 means periodic.
    */
-  array1d<int> m_Periodic;
+  array1d< int > m_Periodic;
   /// ijk partition indexes
-  array1d<int> m_coords;
+  array1d< int > m_coords;
 
   /// Minimum extent of partition dimensions (excluding ghost objects)
   R1Tensor m_min;
@@ -192,7 +207,7 @@ public:
   R1Tensor m_xBoundingBoxMax;
 
   /// Locations of partition boundaries
-  array1d<real64> m_PartitionLocations[3];
+  array1d< real64 > m_PartitionLocations[3];
 
   /// Length of partition dimensions (excluding ghost objects).
   R1Tensor m_blockSize;
@@ -212,7 +227,8 @@ public:
    *
    * @note Rough copy/paste of DomainPartition::AddNeighbors
    */
-  void AddNeighbors(const unsigned int idim, MPI_Comm& cartcomm, int* ncoords);
+  void
+  AddNeighbors( const unsigned int idim, MPI_Comm & cartcomm, int * ncoords );
 };
 }  // namespace geosx
 #endif /* GEOSX_MPICOMMUNICATIONS_SPATIALPARTITION_HPP_ */

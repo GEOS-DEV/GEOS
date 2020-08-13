@@ -25,20 +25,22 @@ namespace geosx
 {
 namespace constitutive
 {
-template <typename LAMBDA>
-void constitutiveUpdatePassThru(ParticleFluidBase const& fluid, LAMBDA&& lambda)
+template< typename LAMBDA >
+void
+constitutiveUpdatePassThru( ParticleFluidBase const & fluid, LAMBDA && lambda )
 {
-  ConstitutivePassThruHandler<ParticleFluid>::Execute(
+  ConstitutivePassThruHandler< ParticleFluid >::Execute(
     fluid,
-    std::forward<LAMBDA>(lambda));
+    std::forward< LAMBDA >( lambda ) );
 }
 
-template <typename LAMBDA>
-void constitutiveUpdatePassThru(ParticleFluidBase& fluid, LAMBDA&& lambda)
+template< typename LAMBDA >
+void
+constitutiveUpdatePassThru( ParticleFluidBase & fluid, LAMBDA && lambda )
 {
-  ConstitutivePassThruHandler<ParticleFluid>::Execute(
+  ConstitutivePassThruHandler< ParticleFluid >::Execute(
     fluid,
-    std::forward<LAMBDA>(lambda));
+    std::forward< LAMBDA >( lambda ) );
 }
 
 }  // namespace constitutive

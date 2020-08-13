@@ -24,7 +24,7 @@ namespace dataRepository
 {
 namespace keys
 {
-string const Events("Events");
+string const Events( "Events" );
 }
 }  // namespace dataRepository
 
@@ -41,7 +41,7 @@ public:
    * @param[in] name the name of the EventManager
    * @param[in] parent group this EventManager
    */
-  EventManager(std::string const &name, Group *const parent);
+  EventManager( std::string const & name, Group * const parent );
 
   /**
    * @brief Default destructor for the EventManager
@@ -54,13 +54,15 @@ public:
    * @param[in] childName the name of the child to be added
    * @return the Event
    */
-  virtual Group *CreateChild(string const &childKey,
-                             string const &childName) override;
+  virtual Group *
+  CreateChild( string const & childKey,
+               string const & childName ) override;
 
   /**
    * @brief This method is used to expand any catalogs in the data structure
    */
-  virtual void ExpandObjectCatalogs() override;
+  virtual void
+  ExpandObjectCatalogs() override;
 
   /**
    * @brief The main execution loop for the code.
@@ -72,7 +74,8 @@ public:
    *   - Advance time, cycle, etc.
    * @param[in] domain the current DomainPartition on which the Event will be ran
    */
-  void Run(dataRepository::Group *domain);
+  void
+  Run( dataRepository::Group * domain );
 
   /**
    * @name viewKeyStruct/groupKeyStruct
@@ -89,22 +92,23 @@ public:
     static constexpr auto cycleString = "cycle";
     static constexpr auto currentSubEventString = "currentSubEvent";
 
-    dataRepository::ViewKey time = {"time"};
-    dataRepository::ViewKey dt = {"dt"};
-    dataRepository::ViewKey cycle = {"cycle"};
-    dataRepository::ViewKey maxTime = {"maxTime"};
-    dataRepository::ViewKey maxCycle = {"maxCycle"};
-    dataRepository::ViewKey currentSubEvent = {"currentSubEvent"};
+    dataRepository::ViewKey time = { "time" };
+    dataRepository::ViewKey dt = { "dt" };
+    dataRepository::ViewKey cycle = { "cycle" };
+    dataRepository::ViewKey maxTime = { "maxTime" };
+    dataRepository::ViewKey maxCycle = { "maxCycle" };
+    dataRepository::ViewKey currentSubEvent = { "currentSubEvent" };
   } viewKeys;
   /// @endcond
   ///@}
 
   /// Alias to access the object catalog for EventBase derived types.
   using CatalogInterface =
-    dataRepository::CatalogInterface<EventBase, std::string const &, Group *const>;
+    dataRepository::CatalogInterface< EventBase, std::string const &, Group * const >;
 
   /// @copydoc dataRepository::Group::GetCatalog()
-  static CatalogInterface::CatalogType &GetCatalog();
+  static CatalogInterface::CatalogType &
+  GetCatalog();
 
 private:
   /// Max time for a simulation

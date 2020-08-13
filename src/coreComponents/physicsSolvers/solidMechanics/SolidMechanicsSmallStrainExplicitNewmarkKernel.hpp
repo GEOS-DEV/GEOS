@@ -26,7 +26,7 @@ namespace geosx
 /// Namespace to contain the solid mechanics kernels.
 namespace SolidMechanicsLagrangianFEMKernels
 {
-#if defined(GEOSX_USE_CUDA)
+#if defined( GEOSX_USE_CUDA )
   /// Macro variable to indicate whether or not to calculate the shape function
   /// derivatives in the kernel instead of using a pre-calculated value.
   #define CALCFEMSHAPE
@@ -56,14 +56,14 @@ namespace SolidMechanicsLagrangianFEMKernels
  * The number of degrees of freedom per support point for both
  * the test and trial spaces are specified as `3`.
  */
-template <typename SUBREGION_TYPE, typename CONSTITUTIVE_TYPE, typename FE_TYPE>
+template< typename SUBREGION_TYPE, typename CONSTITUTIVE_TYPE, typename FE_TYPE >
 class ExplicitSmallStrain
-  : public finiteElement::KernelBase<SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE, 3, 3>
+  : public finiteElement::KernelBase< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE, 3, 3 >
 {
 public:
   /// Alias for the base class;
   using Base =
-    finiteElement::KernelBase<SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE, 3, 3>;
+    finiteElement::KernelBase< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE, 3, 3 >;
 
   /// Number of nodes per element...which is equal to the
   /// numTestSupportPointPerElem and numTrialSupportPointPerElem by definition.
@@ -87,33 +87,31 @@ public:
    * @param elementListName The name of the entry that holds the list of
    *   elements to be processed during this kernel launch.
    */
-  ExplicitSmallStrain(NodeManager& nodeManager,
-                      EdgeManager const& edgeManager,
-                      FaceManager const& faceManager,
-                      SUBREGION_TYPE const& elementSubRegion,
-                      FE_TYPE const& finiteElementSpace,
-                      CONSTITUTIVE_TYPE* const inputConstitutiveType,
-                      real64 const dt,
-                      string const& elementListName)
-    : Base(elementSubRegion, finiteElementSpace, inputConstitutiveType)
-    ,
-#if !defined(CALCFEMSHAPE)
-    m_dNdX(elementSubRegion.dNdX())
-    , m_detJ(elementSubRegion.detJ())
-    ,
+  ExplicitSmallStrain( NodeManager & nodeManager,
+                       EdgeManager const & edgeManager,
+                       FaceManager const & faceManager,
+                       SUBREGION_TYPE const & elementSubRegion,
+                       FE_TYPE const & finiteElementSpace,
+                       CONSTITUTIVE_TYPE * const inputConstitutiveType,
+                       real64 const dt,
+                       string const & elementListName ) :
+    Base( elementSubRegion, finiteElementSpace, inputConstitutiveType ),
+#if !defined( CALCFEMSHAPE )
+    m_dNdX( elementSubRegion.dNdX() ),
+    m_detJ( elementSubRegion.detJ() ),
 #endif
-    m_X(nodeManager.referencePosition())
-    , m_u(nodeManager.totalDisplacement())
-    , m_vel(nodeManager.velocity())
-    , m_acc(nodeManager.acceleration())
-    , m_dt(dt)
-    , m_elementList(
-        elementSubRegion
-          .template getReference<SortedArray<localIndex>>(elementListName)
-          .toViewConst())
+    m_X( nodeManager.referencePosition() ),
+    m_u( nodeManager.totalDisplacement() ),
+    m_vel( nodeManager.velocity() ),
+    m_acc( nodeManager.acceleration() ),
+    m_dt( dt ),
+    m_elementList(
+      elementSubRegion
+        .template getReference< SortedArray< localIndex > >( elementListName )
+        .toViewConst() )
   {
-    GEOSX_UNUSED_VAR(edgeManager);
-    GEOSX_UNUSED_VAR(faceManager);
+    GEOSX_UNUSED_VAR( edgeManager );
+    GEOSX_UNUSED_VAR( faceManager );
   }
 
   //*****************************************************************************
@@ -127,22 +125,22 @@ public:
   {
   public:
     GEOSX_HOST_DEVICE
-    StackVariables()
-      :  // clang-format off
+    StackVariables() :
+      // clang-format off
       fLocal{ { 0.0} },
       varLocal{ {0.0} }
-         // clang-format on
-#if defined(CALCFEMSHAPE)
+    // clang-format on
+#if defined( CALCFEMSHAPE )
     , xLocal(), dNdX(), detJ()
 #endif
-    { }
+    {}
 
     /// C-array stack storage for the element local force
     real64 fLocal[numNodesPerElem][numDofPerTrialSupportPoint];
 
     /// C-array stack storage for element local primary variable values.
     real64 varLocal[numNodesPerElem][numDofPerTestSupportPoint];
-#if defined(CALCFEMSHAPE)
+#if defined( CALCFEMSHAPE )
     /// C-array stack storage for element local the nodal positions.
     real64 xLocal[numNodesPerElem][numDofPerTestSupportPoint];
 
@@ -162,14 +160,15 @@ public:
    */
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  void setup(localIndex const k, StackVariables& stack) const
+  void
+  setup( localIndex const k, StackVariables & stack ) const
   {
-    for(localIndex a = 0; a < numNodesPerElem; ++a)
+    for( localIndex a = 0; a < numNodesPerElem; ++a )
     {
-      localIndex const nodeIndex = m_elemsToNodes(k, a);
-      for(int i = 0; i < numDofPerTrialSupportPoint; ++i)
+      localIndex const nodeIndex = m_elemsToNodes( k, a );
+      for( int i = 0; i < numDofPerTrialSupportPoint; ++i )
       {
-#if defined(CALCFEMSHAPE)
+#if defined( CALCFEMSHAPE )
         stack.xLocal[a][i] = m_X[nodeIndex][i];
 #endif
 
@@ -193,13 +192,14 @@ public:
    */
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  void quadraturePointStateUpdate(localIndex const k,
-                                  localIndex const q,
-                                  StackVariables& stack) const
+  void
+  quadraturePointStateUpdate( localIndex const k,
+                              localIndex const q,
+                              StackVariables & stack ) const
   {
-#if defined(CALCFEMSHAPE)
+#if defined( CALCFEMSHAPE )
     real64 dNdX[numNodesPerElem][3];
-    real64 const detJ = FE_TYPE::shapeFunctionDerivatives(q, stack.xLocal, dNdX);
+    real64 const detJ = FE_TYPE::shapeFunctionDerivatives( q, stack.xLocal, dNdX );
 
   /// Macro to substitute in the shape function derivatives.
   #define DNDX dNdX
@@ -209,13 +209,13 @@ public:
 #else  //defined(CALCFEMSHAPE)
   /// @cond DOXYGEN_SKIP
   #define DNDX m_dNdX[k][q]
-  #define DETJ m_detJ(k, q)
+  #define DETJ m_detJ( k, q )
       /// @endcond DOXYGEN_SKIP
 #endif  //defined(CALCFEMSHAPE)
 
-    real64 stressLocal[6] = {0};
-    real64 strain[6] = {0};
-    for(localIndex a = 0; a < numNodesPerElem; ++a)
+    real64 stressLocal[6] = { 0 };
+    real64 strain[6] = { 0 };
+    for( localIndex a = 0; a < numNodesPerElem; ++a )
     {
       strain[0] = strain[0] + DNDX[a][0] * stack.varLocal[a][0];
       strain[1] = strain[1] + DNDX[a][1] * stack.varLocal[a][1];
@@ -229,24 +229,24 @@ public:
     }
 
 #if UPDATE_STRESS == 2
-    m_constitutiveUpdate.SmallStrain(k, q, strain);
+    m_constitutiveUpdate.SmallStrain( k, q, strain );
 #else
-    m_constitutiveUpdate.SmallStrainNoState(k, strain, stressLocal);
+    m_constitutiveUpdate.SmallStrainNoState( k, strain, stressLocal );
 #endif
 
-    for(localIndex c = 0; c < 6; ++c)
+    for( localIndex c = 0; c < 6; ++c )
     {
 #if UPDATE_STRESS == 2
-      stressLocal[c] = m_constitutiveUpdate.m_stress(k, q, c) * (-DETJ);
+      stressLocal[c] = m_constitutiveUpdate.m_stress( k, q, c ) * ( -DETJ );
 #elif UPDATE_STRESS == 1
       stressLocal[c] =
-        (stressLocal[c] + m_constitutiveUpdate.m_stress(k, q, c)) * (-DETJ);
+        ( stressLocal[c] + m_constitutiveUpdate.m_stress( k, q, c ) ) * ( -DETJ );
 #else
       stressLocal[c] *= -DETJ;
 #endif
     }
 
-    for(localIndex a = 0; a < numNodesPerElem; ++a)
+    for( localIndex a = 0; a < numNodesPerElem; ++a )
     {
       stack.fLocal[a][0] = stack.fLocal[a][0] + stressLocal[0] * DNDX[a][0] +
         stressLocal[5] * DNDX[a][1] + stressLocal[4] * DNDX[a][2];
@@ -265,15 +265,16 @@ public:
    */
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  real64 complete(localIndex const k, StackVariables const& stack) const
+  real64
+  complete( localIndex const k, StackVariables const & stack ) const
   {
-    for(localIndex a = 0; a < numNodesPerElem; ++a)
+    for( localIndex a = 0; a < numNodesPerElem; ++a )
     {
-      localIndex const nodeIndex = m_elemsToNodes(k, a);
-      for(int b = 0; b < numDofPerTestSupportPoint; ++b)
+      localIndex const nodeIndex = m_elemsToNodes( k, a );
+      for( int b = 0; b < numDofPerTestSupportPoint; ++b )
       {
-        RAJA::atomicAdd<parallelDeviceAtomic>(&m_acc(nodeIndex, b),
-                                              stack.fLocal[a][b]);
+        RAJA::atomicAdd< parallelDeviceAtomic >( &m_acc( nodeIndex, b ),
+                                                 stack.fLocal[a][b] );
       }
     }
     return 0;
@@ -286,59 +287,60 @@ public:
    * Copy of the KernelBase::kernelLaunch function without the exclusion of ghost
    * elements.
    */
-  template <typename POLICY, typename KERNEL_TYPE>
-  static real64 kernelLaunch(localIndex const numElems,
-                             KERNEL_TYPE const& kernelComponent)
+  template< typename POLICY, typename KERNEL_TYPE >
+  static real64
+  kernelLaunch( localIndex const numElems,
+                KERNEL_TYPE const & kernelComponent )
   {
     GEOSX_MARK_FUNCTION;
 
-    GEOSX_UNUSED_VAR(numElems);
+    GEOSX_UNUSED_VAR( numElems );
 
     localIndex const numProcElems = kernelComponent.m_elementList.size();
-    forAll<POLICY>(numProcElems, [=] GEOSX_DEVICE(localIndex const index) {
+    forAll< POLICY >( numProcElems, [=] GEOSX_DEVICE( localIndex const index ) {
       localIndex const k = kernelComponent.m_elementList[index];
 
       typename KERNEL_TYPE::StackVariables stack;
 
-      kernelComponent.setup(k, stack);
-      for(integer q = 0; q < KERNEL_TYPE::numQuadraturePointsPerElem; ++q)
+      kernelComponent.setup( k, stack );
+      for( integer q = 0; q < KERNEL_TYPE::numQuadraturePointsPerElem; ++q )
       {
-        kernelComponent.quadraturePointStateUpdate(k, q, stack);
+        kernelComponent.quadraturePointStateUpdate( k, q, stack );
 
-        kernelComponent.quadraturePointJacobianContribution(k, q, stack);
+        kernelComponent.quadraturePointJacobianContribution( k, q, stack );
 
-        kernelComponent.quadraturePointResidualContribution(k, q, stack);
+        kernelComponent.quadraturePointResidualContribution( k, q, stack );
       }
-      kernelComponent.complete(k, stack);
-    });
+      kernelComponent.complete( k, stack );
+    } );
     return 0;
   }
 
 protected:
-#if !defined(CALCFEMSHAPE)
+#if !defined( CALCFEMSHAPE )
   /// The shape function derivative for each quadrature point.
-  arrayView4d<real64 const> const m_dNdX;
+  arrayView4d< real64 const > const m_dNdX;
   /// The parent->physical jacobian determinant for each quadrature point.
-  arrayView2d<real64 const> const m_detJ;
+  arrayView2d< real64 const > const m_detJ;
 #endif
   /// The array containing the nodal position array.
-  arrayView2d<real64 const, nodes::REFERENCE_POSITION_USD> const m_X;
+  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const m_X;
 
   /// The array containing the nodal displacement array.
-  arrayView2d<real64 const, nodes::TOTAL_DISPLACEMENT_USD> const m_u;
+  arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const m_u;
 
   /// The array containing the nodal velocity array.
-  arrayView2d<real64 const, nodes::VELOCITY_USD> const m_vel;
+  arrayView2d< real64 const, nodes::VELOCITY_USD > const m_vel;
 
   /// The array containing the nodal acceleration array, which is used to store
   /// the force.
-  arrayView2d<real64, nodes::ACCELERATION_USD> const m_acc;
+  arrayView2d< real64, nodes::ACCELERATION_USD > const m_acc;
 
   /// The time increment for this time integration step.
   real64 const m_dt;
 
   /// The list of elements to process for the kernel launch.
-  SortedArrayView<localIndex const> const m_elementList;
+  SortedArrayView< localIndex const > const m_elementList;
 };
 #undef CALCFEMSHAPE
 #undef DNDX

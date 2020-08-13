@@ -27,21 +27,22 @@
 using namespace geosx;
 
 static real64 constexpr machinePrecision =
-  20.0 * std::numeric_limits<real64>::epsilon();
+  20.0 * std::numeric_limits< real64 >::epsilon();
 
-template <typename LAI> class LAOperationsTest : public ::testing::Test
-{ };
+template< typename LAI >
+class LAOperationsTest : public ::testing::Test
+{};
 
-TYPED_TEST_SUITE_P(LAOperationsTest);
+TYPED_TEST_SUITE_P( LAOperationsTest );
 
-TYPED_TEST_P(LAOperationsTest, VectorFunctions)
+TYPED_TEST_P( LAOperationsTest, VectorFunctions )
 {
   // Define alias
   using Vector = typename TypeParam::ParallelVector;
 
   // Get the MPI rank
-  int const rank = MpiWrapper::Comm_rank(MPI_COMM_GEOSX);
-  int const numRanks = MpiWrapper::Comm_size(MPI_COMM_GEOSX);
+  int const rank = MpiWrapper::Comm_rank( MPI_COMM_GEOSX );
+  int const numRanks = MpiWrapper::Comm_size( MPI_COMM_GEOSX );
 
   Vector x;
   localIndex const localSize = 3;
@@ -49,190 +50,190 @@ TYPED_TEST_P(LAOperationsTest, VectorFunctions)
   globalIndex const offset = rank * localSize;
 
   // Testing createWithLocalSize
-  x.createWithLocalSize(localSize, MPI_COMM_GEOSX);
-  EXPECT_EQ(x.localSize(), localSize);
-  EXPECT_EQ(x.globalSize(), globalSize);
+  x.createWithLocalSize( localSize, MPI_COMM_GEOSX );
+  EXPECT_EQ( x.localSize(), localSize );
+  EXPECT_EQ( x.globalSize(), globalSize );
 
   // Testing iupper/ilower
-  EXPECT_EQ(x.ilower(), offset);
-  EXPECT_EQ(x.iupper(), offset + localSize);
+  EXPECT_EQ( x.ilower(), offset );
+  EXPECT_EQ( x.iupper(), offset + localSize );
 
   // Testing setting/getting values locally
   x.open();
-  for(globalIndex i = x.ilower(); i < x.iupper(); ++i)
+  for( globalIndex i = x.ilower(); i < x.iupper(); ++i )
   {
-    x.set(i, 2 * i);
+    x.set( i, 2 * i );
   }
   x.close();
-  for(globalIndex i = x.ilower(); i < x.iupper(); ++i)
+  for( globalIndex i = x.ilower(); i < x.iupper(); ++i )
   {
-    EXPECT_DOUBLE_EQ(x.get(i), 2 * i);
+    EXPECT_DOUBLE_EQ( x.get( i ), 2 * i );
   }
 
   // Testing createWithGlobalSize
-  x.createWithGlobalSize(globalSize, MPI_COMM_GEOSX);
-  EXPECT_EQ(x.localSize(), localSize);
-  EXPECT_EQ(x.globalSize(), globalSize);
+  x.createWithGlobalSize( globalSize, MPI_COMM_GEOSX );
+  EXPECT_EQ( x.localSize(), localSize );
+  EXPECT_EQ( x.globalSize(), globalSize );
 
   // Testing adding global values on rank 0 and getting locally
   x.open();
-  if(rank == 0)
+  if( rank == 0 )
   {
-    for(globalIndex i = 0; i < x.globalSize(); ++i)
+    for( globalIndex i = 0; i < x.globalSize(); ++i )
     {
-      x.add(i, 2 * i);
+      x.add( i, 2 * i );
     }
   }
   x.close();
-  for(globalIndex i = x.ilower(); i < x.iupper(); ++i)
+  for( globalIndex i = x.ilower(); i < x.iupper(); ++i )
   {
-    EXPECT_EQ(x.get(i), 2 * i);
+    EXPECT_EQ( x.get( i ), 2 * i );
   }
 
   // Testing getLocalRowID
-  for(globalIndex i = x.ilower(); i < x.iupper(); ++i)
+  for( globalIndex i = x.ilower(); i < x.iupper(); ++i )
   {
-    EXPECT_EQ(x.getLocalRowID(i), i % localSize);
+    EXPECT_EQ( x.getLocalRowID( i ), i % localSize );
   }
 
   // Testing create with array1d
-  array1d<real64> localVals(localSize);
-  for(localIndex i = 0; i < localSize; ++i)
+  array1d< real64 > localVals( localSize );
+  for( localIndex i = 0; i < localSize; ++i )
   {
-    localVals[i] = real64(i + rank * localSize);
+    localVals[i] = real64( i + rank * localSize );
   }
 
   Vector v;
-  v.create(localVals, MPI_COMM_GEOSX);
-  for(globalIndex i = v.ilower(); i < v.iupper(); ++i)
+  v.create( localVals, MPI_COMM_GEOSX );
+  for( globalIndex i = v.ilower(); i < v.iupper(); ++i )
   {
-    EXPECT_EQ(v.get(i), localVals[v.getLocalRowID(i)]);
+    EXPECT_EQ( v.get( i ), localVals[v.getLocalRowID( i )] );
   }
 
   // Testing copy constructor, assignment, get element
-  Vector y(x);
+  Vector y( x );
   Vector z;
   z = x;
-  for(globalIndex i = x.ilower(); i < x.iupper(); ++i)
+  for( globalIndex i = x.ilower(); i < x.iupper(); ++i )
   {
-    EXPECT_EQ(x.get(i), y.get(i));
-    EXPECT_EQ(x.get(i), z.get(i));
+    EXPECT_EQ( x.get( i ), y.get( i ) );
+    EXPECT_EQ( x.get( i ), z.get( i ) );
   }
 
   // Testing zero
   z.zero();
-  for(globalIndex i = y.ilower(); i < y.iupper(); ++i)
+  for( globalIndex i = y.ilower(); i < y.iupper(); ++i )
   {
-    EXPECT_EQ(z.get(i), 0);
+    EXPECT_EQ( z.get( i ), 0 );
   }
 
   // Testing copy
-  z.copy(x);
-  for(globalIndex i = y.ilower(); i < y.iupper(); ++i)
+  z.copy( x );
+  for( globalIndex i = y.ilower(); i < y.iupper(); ++i )
   {
-    EXPECT_EQ(x.get(i), z.get(i));
+    EXPECT_EQ( x.get( i ), z.get( i ) );
   }
 
   // Testing scale, z = x
-  z.scale(4.0);
-  for(globalIndex i = y.ilower(); i < y.iupper(); ++i)
+  z.scale( 4.0 );
+  for( globalIndex i = y.ilower(); i < y.iupper(); ++i )
   {
-    EXPECT_EQ(4.0 * x.get(i), z.get(i));
+    EXPECT_EQ( 4.0 * x.get( i ), z.get( i ) );
   }
 
   // Testing add/set single element
   x.open();
-  x.set(offset, -1);
+  x.set( offset, -1 );
   x.close();  // set/add can't be interchanged
   x.open();
-  x.add(offset + 1, 10);
+  x.add( offset + 1, 10 );
   x.close();
-  EXPECT_DOUBLE_EQ(x.get(offset), -1);
-  EXPECT_DOUBLE_EQ(x.get(offset + 1), offset * 2 + 12);
+  EXPECT_DOUBLE_EQ( x.get( offset ), -1 );
+  EXPECT_DOUBLE_EQ( x.get( offset + 1 ), offset * 2 + 12 );
 
   // Testing add/set c-style
   {
-    globalIndex const inds[3] = {offset, offset + 1, offset + 2};
-    real64 const vals[3] = {-5.0, -6.0, 0.0};
+    globalIndex const inds[3] = { offset, offset + 1, offset + 2 };
+    real64 const vals[3] = { -5.0, -6.0, 0.0 };
     y.zero();
     y.open();
-    y.set(inds, vals, 2);
+    y.set( inds, vals, 2 );
     y.close();
-    z.set(1.0);
+    z.set( 1.0 );
     z.open();
-    z.add(inds, vals, 2);
+    z.add( inds, vals, 2 );
     z.close();
-    for(localIndex i = 0; i < 3; ++i)
+    for( localIndex i = 0; i < 3; ++i )
     {
-      EXPECT_DOUBLE_EQ(y.get(inds[i]), vals[i]);
-      EXPECT_DOUBLE_EQ(z.get(inds[i]), vals[i] + 1.0);
+      EXPECT_DOUBLE_EQ( y.get( inds[i] ), vals[i] );
+      EXPECT_DOUBLE_EQ( z.get( inds[i] ), vals[i] + 1.0 );
     }
   }
 
   // Testing add/set array1d-style
   {
-    array1d<globalIndex> inds(3);
+    array1d< globalIndex > inds( 3 );
     inds[0] = offset;
     inds[1] = offset + 1;
     inds[2] = offset + 2;
-    array1d<real64> vals(3);
+    array1d< real64 > vals( 3 );
     vals[0] = -5.0;
     vals[1] = -6.0;
     vals[2] = 0.0;
     y.zero();
     y.open();
-    y.set(inds, vals);
+    y.set( inds, vals );
     y.close();
-    z.set(1.0);
+    z.set( 1.0 );
     z.open();
-    z.add(inds, vals);
+    z.add( inds, vals );
     z.close();
-    for(localIndex i = 0; i < 3; ++i)
+    for( localIndex i = 0; i < 3; ++i )
     {
-      EXPECT_DOUBLE_EQ(y.get(inds[i]), vals[i]);
-      EXPECT_DOUBLE_EQ(z.get(inds[i]), vals[i] + 1.0);
+      EXPECT_DOUBLE_EQ( y.get( inds[i] ), vals[i] );
+      EXPECT_DOUBLE_EQ( z.get( inds[i] ), vals[i] + 1.0 );
     }
   }
 
   // Testing dot, axpy, axpby
-  x.set(1.0);
-  y.set(2.0);
-  z.set(3.0);
+  x.set( 1.0 );
+  y.set( 2.0 );
+  z.set( 3.0 );
 
-  real64 const dotprod = x.dot(y);
-  EXPECT_EQ(dotprod, 2 * y.globalSize());  // sum_size 2
+  real64 const dotprod = x.dot( y );
+  EXPECT_EQ( dotprod, 2 * y.globalSize() );  // sum_size 2
 
-  y.axpy(2.0, x);
-  for(globalIndex i = y.ilower(); i < y.iupper(); ++i)
+  y.axpy( 2.0, x );
+  for( globalIndex i = y.ilower(); i < y.iupper(); ++i )
   {
-    EXPECT_EQ(y.get(i), 4.0);  // 2*1 + 2
+    EXPECT_EQ( y.get( i ), 4.0 );  // 2*1 + 2
   }
 
-  z.axpby(2.0, x, 3.0);
-  for(globalIndex i = z.ilower(); i < z.iupper(); ++i)
+  z.axpby( 2.0, x, 3.0 );
+  for( globalIndex i = z.ilower(); i < z.iupper(); ++i )
   {
-    EXPECT_EQ(z.get(i), 11.0);  // 2*1 + 3*3
+    EXPECT_EQ( z.get( i ), 11.0 );  // 2*1 + 3*3
   }
 
   // Testing norms
   x.zero();
   x.open();
-  if(rank == 0)
+  if( rank == 0 )
   {
-    globalIndex const inds2[2] = {0, 1};
-    real64 const vals2[2] = {3.0, -4.0};
-    x.set(inds2, vals2, 2);  // 3, -4, 0
+    globalIndex const inds2[2] = { 0, 1 };
+    real64 const vals2[2] = { 3.0, -4.0 };
+    x.set( inds2, vals2, 2 );  // 3, -4, 0
   }
   x.close();
-  EXPECT_EQ(x.norm1(), 7.0);
-  EXPECT_EQ(x.norm2(), 5.0);
-  EXPECT_EQ(x.normInf(), 4.0);
+  EXPECT_EQ( x.norm1(), 7.0 );
+  EXPECT_EQ( x.norm2(), 5.0 );
+  EXPECT_EQ( x.normInf(), 4.0 );
 
   // Testing extractLocalVector
-  real64 const* localVec = x.extractLocalVector();
-  for(globalIndex i = x.ilower(); i < x.iupper(); ++i)
+  real64 const * localVec = x.extractLocalVector();
+  for( globalIndex i = x.ilower(); i < x.iupper(); ++i )
   {
-    EXPECT_EQ(localVec[x.getLocalRowID(i)], x.get(i));
+    EXPECT_EQ( localVec[x.getLocalRowID( i )], x.get( i ) );
   }
 }
 
@@ -431,82 +432,83 @@ TYPED_TEST_P( LAOperationsTest, MatrixFunctions )
 }
 #endif
 
-TYPED_TEST_P(LAOperationsTest, MatrixMatrixOperations)
+TYPED_TEST_P( LAOperationsTest, MatrixMatrixOperations )
 {
   using Matrix = typename TypeParam::ParallelMatrix;
 
   globalIndex const n = 100;
   Matrix A;
-  compute2DLaplaceOperator(MPI_COMM_GEOSX, n, A);
+  compute2DLaplaceOperator( MPI_COMM_GEOSX, n, A );
 
   Matrix A_squared;
-  A.multiply(A, A_squared);
+  A.multiply( A, A_squared );
 
   real64 const a = A.normInf();
   real64 const b = A_squared.normInf();
 
-  EXPECT_DOUBLE_EQ(a, 8.0);
-  EXPECT_DOUBLE_EQ(b, 64.0);
+  EXPECT_DOUBLE_EQ( a, 8.0 );
+  EXPECT_DOUBLE_EQ( b, 64.0 );
 }
 
-TYPED_TEST_P(LAOperationsTest, RectangularMatrixOperations)
+TYPED_TEST_P( LAOperationsTest, RectangularMatrixOperations )
 {
   using Matrix = typename TypeParam::ParallelMatrix;
 
-  int mpiSize = MpiWrapper::Comm_size(MPI_COMM_GEOSX);
+  int mpiSize = MpiWrapper::Comm_size( MPI_COMM_GEOSX );
 
   // Set a size that allows to run with arbitrary number of processes
-  globalIndex const nRows = std::max(100, mpiSize);
+  globalIndex const nRows = std::max( 100, mpiSize );
   globalIndex const nCols = 2 * nRows;
 
   Matrix A;
-  A.createWithGlobalSize(nRows, nCols, 2, MPI_COMM_GEOSX);
+  A.createWithGlobalSize( nRows, nCols, 2, MPI_COMM_GEOSX );
 
   A.open();
-  for(globalIndex i = A.ilower(); i < A.iupper(); ++i)
+  for( globalIndex i = A.ilower(); i < A.iupper(); ++i )
   {
-    real64 const entry = static_cast<real64>(i + 1);
-    A.insert(i, 2 * i, entry);
-    A.insert(i, 2 * i + 1, -entry);
+    real64 const entry = static_cast< real64 >( i + 1 );
+    A.insert( i, 2 * i, entry );
+    A.insert( i, 2 * i + 1, -entry );
   }
   A.close();
 
   // Check on sizes
-  EXPECT_EQ(A.numGlobalRows(), nRows);
-  EXPECT_EQ(A.numGlobalCols(), nCols);
+  EXPECT_EQ( A.numGlobalRows(), nRows );
+  EXPECT_EQ( A.numGlobalCols(), nCols );
 
   // Check on norms
   real64 const a = A.norm1();
   real64 const b = A.normInf();
   real64 const c = A.normFrobenius();
 
-  EXPECT_DOUBLE_EQ(a, static_cast<real64>(nRows));
-  EXPECT_DOUBLE_EQ(b, static_cast<real64>(nCols));
+  EXPECT_DOUBLE_EQ( a, static_cast< real64 >( nRows ) );
+  EXPECT_DOUBLE_EQ( b, static_cast< real64 >( nCols ) );
   EXPECT_DOUBLE_EQ(
     c,
-    std::sqrt(static_cast<real64>(nRows * (nRows + 1) * (2 * nRows + 1)) / 3.0));
+    std::sqrt( static_cast< real64 >( nRows * ( nRows + 1 ) * ( 2 * nRows + 1 ) ) / 3.0 ) );
 }
 
-REGISTER_TYPED_TEST_SUITE_P(LAOperationsTest,
-                            VectorFunctions,
-                            MatrixMatrixOperations,
-                            RectangularMatrixOperations);
+REGISTER_TYPED_TEST_SUITE_P( LAOperationsTest,
+                             VectorFunctions,
+                             MatrixMatrixOperations,
+                             RectangularMatrixOperations );
 
 #ifdef GEOSX_USE_TRILINOS
-INSTANTIATE_TYPED_TEST_SUITE_P(Trilinos, LAOperationsTest, TrilinosInterface, );
+INSTANTIATE_TYPED_TEST_SUITE_P( Trilinos, LAOperationsTest, TrilinosInterface, );
 #endif
 
 #ifdef GEOSX_USE_HYPRE
-INSTANTIATE_TYPED_TEST_SUITE_P(Hypre, LAOperationsTest, HypreInterface, );
+INSTANTIATE_TYPED_TEST_SUITE_P( Hypre, LAOperationsTest, HypreInterface, );
 #endif
 
 #ifdef GEOSX_USE_PETSC
-INSTANTIATE_TYPED_TEST_SUITE_P(Petsc, LAOperationsTest, PetscInterface, );
+INSTANTIATE_TYPED_TEST_SUITE_P( Petsc, LAOperationsTest, PetscInterface, );
 #endif
 
 ///////////////////////////////////////////////////////////////////////////////////////
 
-LinearSolverParameters params_Direct()
+LinearSolverParameters
+params_Direct()
 {
   LinearSolverParameters parameters;
   parameters.solverType = "direct";
@@ -514,7 +516,8 @@ LinearSolverParameters params_Direct()
   return parameters;
 }
 
-LinearSolverParameters params_GMRES_ILU()
+LinearSolverParameters
+params_GMRES_ILU()
 {
   LinearSolverParameters parameters;
   parameters.krylov.relTolerance = 1e-8;
@@ -525,7 +528,8 @@ LinearSolverParameters params_GMRES_ILU()
   return parameters;
 }
 
-LinearSolverParameters params_GMRES_AMG()
+LinearSolverParameters
+params_GMRES_AMG()
 {
   LinearSolverParameters parameters;
   parameters.krylov.relTolerance = 1e-8;
@@ -537,7 +541,8 @@ LinearSolverParameters params_GMRES_AMG()
   return parameters;
 }
 
-LinearSolverParameters params_CG_AMG()
+LinearSolverParameters
+params_CG_AMG()
 {
   LinearSolverParameters parameters;
   parameters.krylov.relTolerance = 1e-8;
@@ -550,7 +555,8 @@ LinearSolverParameters params_CG_AMG()
   return parameters;
 }
 
-template <typename LAI> class SolverTestBase : public ::testing::Test
+template< typename LAI >
+class SolverTestBase : public ::testing::Test
 {
 public:
   using Matrix = typename LAI::ParallelMatrix;
@@ -561,107 +567,120 @@ protected:
   Matrix matrix;
   real64 cond_est = 1.0;
 
-  void test(LinearSolverParameters const& params)
+  void
+  test( LinearSolverParameters const & params )
   {
     // Create a random "true" solution vector
     Vector sol_true;
-    sol_true.createWithGlobalSize(matrix.numGlobalCols(), matrix.getComm());
+    sol_true.createWithGlobalSize( matrix.numGlobalCols(), matrix.getComm() );
     sol_true.rand();
 
     // Create and compute the right-hand side vector
     Vector rhs;
-    rhs.createWithGlobalSize(matrix.numGlobalRows(), matrix.getComm());
-    matrix.apply(sol_true, rhs);
+    rhs.createWithGlobalSize( matrix.numGlobalRows(), matrix.getComm() );
+    matrix.apply( sol_true, rhs );
 
     // Create and zero out the computed solution vector
     Vector sol_comp;
-    sol_comp.createWithGlobalSize(sol_true.globalSize(), sol_true.getComm());
+    sol_comp.createWithGlobalSize( sol_true.globalSize(), sol_true.getComm() );
     sol_comp.zero();
 
     // Create the solver and solve the system
-    Solver solver(params);
-    solver.solve(matrix, sol_comp, rhs);
-    EXPECT_TRUE(solver.result().success());
+    Solver solver( params );
+    solver.solve( matrix, sol_comp, rhs );
+    EXPECT_TRUE( solver.result().success() );
 
     // Check that solution is within epsilon of true
-    sol_comp.axpy(-1.0, sol_true);
+    sol_comp.axpy( -1.0, sol_true );
     real64 const relTol = cond_est * params.krylov.relTolerance;
-    EXPECT_LT(sol_comp.norm2() / sol_true.norm2(), relTol);
+    EXPECT_LT( sol_comp.norm2() / sol_true.norm2(), relTol );
   }
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////
 
-template <typename LAI> class SolverTestLaplace2D : public SolverTestBase<LAI>
+template< typename LAI >
+class SolverTestLaplace2D : public SolverTestBase< LAI >
 {
 public:
-  using Base = SolverTestBase<LAI>;
+  using Base = SolverTestBase< LAI >;
   using Matrix = typename Base::Matrix;
   using Vector = typename Base::Vector;
 
 protected:
-  void SetUp() override
+  void
+  SetUp() override
   {
     globalIndex constexpr n = 100;
-    compute2DLaplaceOperator(MPI_COMM_GEOSX, n, this->matrix);
+    compute2DLaplaceOperator( MPI_COMM_GEOSX, n, this->matrix );
 
     // Condition number for the Laplacian matrix estimate: 4 * n^2 / pi^2
-    this->cond_est = 4.0 * n * n / std::pow(M_PI, 2);
+    this->cond_est = 4.0 * n * n / std::pow( M_PI, 2 );
   }
 };
 
-TYPED_TEST_SUITE_P(SolverTestLaplace2D);
+TYPED_TEST_SUITE_P( SolverTestLaplace2D );
 
-TYPED_TEST_P(SolverTestLaplace2D, Direct) { this->test(params_Direct()); }
+TYPED_TEST_P( SolverTestLaplace2D, Direct )
+{
+  this->test( params_Direct() );
+}
 
-TYPED_TEST_P(SolverTestLaplace2D, GMRES_ILU) { this->test(params_GMRES_ILU()); }
+TYPED_TEST_P( SolverTestLaplace2D, GMRES_ILU )
+{
+  this->test( params_GMRES_ILU() );
+}
 
-TYPED_TEST_P(SolverTestLaplace2D, CG_AMG) { this->test(params_CG_AMG()); }
+TYPED_TEST_P( SolverTestLaplace2D, CG_AMG )
+{
+  this->test( params_CG_AMG() );
+}
 
-REGISTER_TYPED_TEST_SUITE_P(SolverTestLaplace2D, Direct, GMRES_ILU, CG_AMG);
+REGISTER_TYPED_TEST_SUITE_P( SolverTestLaplace2D, Direct, GMRES_ILU, CG_AMG );
 
 #ifdef GEOSX_USE_TRILINOS
-INSTANTIATE_TYPED_TEST_SUITE_P(Trilinos, SolverTestLaplace2D, TrilinosInterface, );
+INSTANTIATE_TYPED_TEST_SUITE_P( Trilinos, SolverTestLaplace2D, TrilinosInterface, );
 #endif
 
 #ifdef GEOSX_USE_HYPRE
-INSTANTIATE_TYPED_TEST_SUITE_P(Hypre, SolverTestLaplace2D, HypreInterface, );
+INSTANTIATE_TYPED_TEST_SUITE_P( Hypre, SolverTestLaplace2D, HypreInterface, );
 #endif
 
 #ifdef GEOSX_USE_PETSC
-INSTANTIATE_TYPED_TEST_SUITE_P(Petsc, SolverTestLaplace2D, PetscInterface, );
+INSTANTIATE_TYPED_TEST_SUITE_P( Petsc, SolverTestLaplace2D, PetscInterface, );
 #endif
 
 ///////////////////////////////////////////////////////////////////////////////////////
 
-template <typename LAI>
-class SolverTestElasticity2D : public SolverTestBase<LAI>
+template< typename LAI >
+class SolverTestElasticity2D : public SolverTestBase< LAI >
 {
 public:
-  using Base = SolverTestBase<LAI>;
+  using Base = SolverTestBase< LAI >;
   using Matrix = typename Base::Matrix;
   using Vector = typename Base::Vector;
 
 protected:
-  void SetUp() override
+  void
+  SetUp() override
   {
     globalIndex constexpr n = 100;
-    compute2DElasticityOperator(MPI_COMM_GEOSX,
-                                1.0,
-                                1.0,
-                                n,
-                                n,
-                                10000.,
-                                0.2,
-                                this->matrix);
+    compute2DElasticityOperator( MPI_COMM_GEOSX,
+                                 1.0,
+                                 1.0,
+                                 n,
+                                 n,
+                                 10000.,
+                                 0.2,
+                                 this->matrix );
 
     // Impose Dirichlet boundary conditions: fix domain bottom (first 2*(nCellsX + 1) rows of matrix)
     this->matrix.open();
-    for(globalIndex iRow = 0; iRow < 2 * (n + 1); ++iRow)
+    for( globalIndex iRow = 0; iRow < 2 * ( n + 1 ); ++iRow )
     {
-      if(this->matrix.getLocalRowID(iRow) >= 0)
+      if( this->matrix.getLocalRowID( iRow ) >= 0 )
       {
-        this->matrix.clearRow(iRow, true);
+        this->matrix.clearRow( iRow, true );
       }
     }
     this->matrix.close();
@@ -670,32 +689,35 @@ protected:
   }
 };
 
-TYPED_TEST_SUITE_P(SolverTestElasticity2D);
+TYPED_TEST_SUITE_P( SolverTestElasticity2D );
 
-TYPED_TEST_P(SolverTestElasticity2D, Direct) { this->test(params_Direct()); }
+TYPED_TEST_P( SolverTestElasticity2D, Direct )
+{
+  this->test( params_Direct() );
+}
 
-TYPED_TEST_P(SolverTestElasticity2D, GMRES_AMG)
+TYPED_TEST_P( SolverTestElasticity2D, GMRES_AMG )
 {
   LinearSolverParameters params = params_GMRES_AMG();
   params.amg.separateComponents = true;
   params.dofsPerNode = 2;
-  this->test(params);
+  this->test( params );
 }
 
-REGISTER_TYPED_TEST_SUITE_P(SolverTestElasticity2D, Direct, GMRES_AMG);
+REGISTER_TYPED_TEST_SUITE_P( SolverTestElasticity2D, Direct, GMRES_AMG );
 
 #ifdef GEOSX_USE_TRILINOS
-INSTANTIATE_TYPED_TEST_SUITE_P(Trilinos,
-                               SolverTestElasticity2D,
-                               TrilinosInterface, );
+INSTANTIATE_TYPED_TEST_SUITE_P( Trilinos,
+                                SolverTestElasticity2D,
+                                TrilinosInterface, );
 #endif
 
 #ifdef GEOSX_USE_HYPRE
-INSTANTIATE_TYPED_TEST_SUITE_P(Hypre, SolverTestElasticity2D, HypreInterface, );
+INSTANTIATE_TYPED_TEST_SUITE_P( Hypre, SolverTestElasticity2D, HypreInterface, );
 #endif
 
 #ifdef GEOSX_USE_PETSC
-INSTANTIATE_TYPED_TEST_SUITE_P(Petsc, SolverTestElasticity2D, PetscInterface, );
+INSTANTIATE_TYPED_TEST_SUITE_P( Petsc, SolverTestElasticity2D, PetscInterface, );
 #endif
 
 ///////////////////////////////////////////////////////////////////////////////////////
@@ -774,18 +796,19 @@ INSTANTIATE_TYPED_TEST_SUITE_P(Petsc, SolverTestElasticity2D, PetscInterface, );
 //#endif
 ///////////////////////////////////////////////////////////////////////////////////////
 
-int main(int argc, char** argv)
+int
+main( int argc, char ** argv )
 {
-  ::testing::InitGoogleTest(&argc, argv);
+  ::testing::InitGoogleTest( &argc, argv );
 
   // Avoid setting up signal handlers, due to mysterious ML FPE crashes on Mac
   //geosx::basicSetup( argc, argv );
-  setupMPI(argc, argv);
+  setupMPI( argc, argv );
   setupLogger();
   setupOpenMP();
   setupMKL();
   setupLogger();
-  setupLAI(argc, argv);
+  setupLAI( argc, argv );
 
   int const result = RUN_ALL_TESTS();
   geosx::basicCleanup();

@@ -40,20 +40,23 @@ struct HypreInterface
    * @param[in] argc standard argc as in any C main
    * @param[in] argv standard argv as in any C main
    */
-  static void initialize(int& argc, char**& argv);
+  static void
+  initialize( int & argc, char **& argv );
 
   /**
    * @brief Finalizes the MPI environment for the Hypre library
    */
-  static void finalize();
+  static void
+  finalize();
 
   /**
    * @brief Create a hypre-based preconditioner object.
    * @param params the preconditioner parameters
    * @return owning pointer to the newly created preconditioner
    */
-  static std::unique_ptr<PreconditionerBase<HypreInterface>> createPreconditioner(
-    LinearSolverParameters params);
+  static std::unique_ptr< PreconditionerBase< HypreInterface > >
+  createPreconditioner(
+    LinearSolverParameters params );
 
   /// Alias for HypreMatrix
   using ParallelMatrix = HypreMatrix;

@@ -30,7 +30,7 @@ namespace geosx
 struct BoundaryStencil_Traits
 {
   /// The array type that will be used to store the indices of the stencil contributors
-  using IndexContainerType = array2d<localIndex>;
+  using IndexContainerType = array2d< localIndex >;
 
   /// The array view type for the stencil indices
   using IndexContainerViewType = IndexContainerType::ViewType;
@@ -39,7 +39,7 @@ struct BoundaryStencil_Traits
   using IndexContainerViewConstType = IndexContainerType::ViewTypeConst;
 
   /// The array type that is used to store the weights of the stencil contributors
-  using WeightContainerType = array2d<real64>;
+  using WeightContainerType = array2d< real64 >;
 
   /// The array view type for the stencil weights
   using WeightContainerViewType = WeightContainerType::ViewType;
@@ -61,7 +61,7 @@ struct BoundaryStencil_Traits
  * (stencils used to prescribe boundary conditions on domain boundaries, i.e. faces)
  */
 class BoundaryStencil
-  : public StencilBase<BoundaryStencil_Traits, BoundaryStencil>,
+  : public StencilBase< BoundaryStencil_Traits, BoundaryStencil >,
     public BoundaryStencil_Traits
 {
 public:
@@ -77,16 +77,18 @@ public:
   /// default constructor
   BoundaryStencil();
 
-  virtual void add(localIndex const numPts,
-                   localIndex const* const elementRegionIndices,
-                   localIndex const* const elementSubRegionIndices,
-                   localIndex const* const elementIndices,
-                   real64 const* const weights,
-                   localIndex const connectorIndex) override final;
+  virtual void
+  add( localIndex const numPts,
+       localIndex const * const elementRegionIndices,
+       localIndex const * const elementSubRegionIndices,
+       localIndex const * const elementIndices,
+       real64 const * const weights,
+       localIndex const connectorIndex ) override final;
 
-  virtual localIndex size() const override final
+  virtual localIndex
+  size() const override final
   {
-    return m_elementRegionIndices.size(0);
+    return m_elementRegionIndices.size( 0 );
   }
 
   /**
@@ -94,9 +96,10 @@ public:
    * @param[in] index of the stencil entry for which to query the size
    * @return the size of a stencil entry
    */
-  constexpr localIndex stencilSize(localIndex const index) const
+  constexpr localIndex
+  stencilSize( localIndex const index ) const
   {
-    GEOSX_UNUSED_VAR(index)
+    GEOSX_UNUSED_VAR( index )
     return MAX_STENCIL_SIZE;
   }
 };

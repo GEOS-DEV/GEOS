@@ -32,70 +32,75 @@ namespace constitutive
  * @tparam DENS_EAT type of density exponent approximation
  * @tparam VISC_EAT type of viscosity exponent approximation
  */
-template <ExponentApproximationType DENS_EAT, ExponentApproximationType VISC_EAT>
+template< ExponentApproximationType DENS_EAT, ExponentApproximationType VISC_EAT >
 class CompressibleSinglePhaseUpdate final : public SingleFluidBaseUpdate
 {
 public:
-  using DensRelationType = ExponentialRelation<real64, DENS_EAT>;
-  using ViscRelationType = ExponentialRelation<real64, VISC_EAT>;
+  using DensRelationType = ExponentialRelation< real64, DENS_EAT >;
+  using ViscRelationType = ExponentialRelation< real64, VISC_EAT >;
 
-  CompressibleSinglePhaseUpdate(DensRelationType const& densRelation,
-                                ViscRelationType const& viscRelation,
-                                arrayView2d<real64> const& density,
-                                arrayView2d<real64> const& dDens_dPres,
-                                arrayView2d<real64> const& viscosity,
-                                arrayView2d<real64> const& dVisc_dPres)
-    : SingleFluidBaseUpdate(density, dDens_dPres, viscosity, dVisc_dPres)
-    , m_densRelation(densRelation)
-    , m_viscRelation(viscRelation)
-  { }
+  CompressibleSinglePhaseUpdate( DensRelationType const & densRelation,
+                                 ViscRelationType const & viscRelation,
+                                 arrayView2d< real64 > const & density,
+                                 arrayView2d< real64 > const & dDens_dPres,
+                                 arrayView2d< real64 > const & viscosity,
+                                 arrayView2d< real64 > const & dVisc_dPres ) :
+    SingleFluidBaseUpdate( density, dDens_dPres, viscosity, dVisc_dPres ),
+    m_densRelation( densRelation ),
+    m_viscRelation( viscRelation )
+  {}
 
   /// Default copy constructor
-  CompressibleSinglePhaseUpdate(CompressibleSinglePhaseUpdate const&) = default;
+  CompressibleSinglePhaseUpdate( CompressibleSinglePhaseUpdate const & ) = default;
 
   /// Default move constructor
-  CompressibleSinglePhaseUpdate(CompressibleSinglePhaseUpdate&&) = default;
+  CompressibleSinglePhaseUpdate( CompressibleSinglePhaseUpdate && ) = default;
 
   /// Deleted copy assignment operator
-  CompressibleSinglePhaseUpdate& operator=(
-    CompressibleSinglePhaseUpdate const&) = delete;
+  CompressibleSinglePhaseUpdate &
+  operator=(
+    CompressibleSinglePhaseUpdate const & ) = delete;
 
   /// Deleted move assignment operator
-  CompressibleSinglePhaseUpdate& operator=(CompressibleSinglePhaseUpdate&&) = delete;
+  CompressibleSinglePhaseUpdate &
+  operator=( CompressibleSinglePhaseUpdate && ) = delete;
 
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  virtual void Compute(real64 const pressure,
-                       real64& density,
-                       real64& viscosity) const override
+  virtual void
+  Compute( real64 const pressure,
+           real64 & density,
+           real64 & viscosity ) const override
   {
-    m_densRelation.Compute(pressure, density);
-    m_viscRelation.Compute(pressure, viscosity);
+    m_densRelation.Compute( pressure, density );
+    m_viscRelation.Compute( pressure, viscosity );
   }
 
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  virtual void Compute(real64 const pressure,
-                       real64& density,
-                       real64& dDensity_dPressure,
-                       real64& viscosity,
-                       real64& dViscosity_dPressure) const override
+  virtual void
+  Compute( real64 const pressure,
+           real64 & density,
+           real64 & dDensity_dPressure,
+           real64 & viscosity,
+           real64 & dViscosity_dPressure ) const override
   {
-    m_densRelation.Compute(pressure, density, dDensity_dPressure);
-    m_viscRelation.Compute(pressure, viscosity, dViscosity_dPressure);
+    m_densRelation.Compute( pressure, density, dDensity_dPressure );
+    m_viscRelation.Compute( pressure, viscosity, dViscosity_dPressure );
   }
 
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  virtual void Update(localIndex const k,
-                      localIndex const q,
-                      real64 const pressure) const override
+  virtual void
+  Update( localIndex const k,
+          localIndex const q,
+          real64 const pressure ) const override
   {
-    Compute(pressure,
-            m_density[k][q],
-            m_dDens_dPres[k][q],
-            m_viscosity[k][q],
-            m_dVisc_dPres[k][q]);
+    Compute( pressure,
+             m_density[k][q],
+             m_dDens_dPres[k][q],
+             m_viscosity[k][q],
+             m_dVisc_dPres[k][q] );
   }
 
 private:
@@ -106,32 +111,43 @@ private:
 class CompressibleSinglePhaseFluid : public SingleFluidBase
 {
 public:
-  CompressibleSinglePhaseFluid(std::string const& name, Group* const parent);
+  CompressibleSinglePhaseFluid( std::string const & name, Group * const parent );
 
   virtual ~CompressibleSinglePhaseFluid() override;
 
-  virtual void DeliverClone(string const& name,
-                            Group* const parent,
-                            std::unique_ptr<ConstitutiveBase>& clone) const override;
+  virtual void
+  DeliverClone( string const & name,
+                Group * const parent,
+                std::unique_ptr< ConstitutiveBase > & clone ) const override;
 
-  static std::string CatalogName() { return "CompressibleSinglePhaseFluid"; }
+  static std::string
+  CatalogName()
+  {
+    return "CompressibleSinglePhaseFluid";
+  }
 
-  virtual string GetCatalogName() override { return CatalogName(); }
+  virtual string
+  GetCatalogName() override
+  {
+    return CatalogName();
+  }
 
-  virtual void AllocateConstitutiveData(
-    dataRepository::Group* const parent,
-    localIndex const numConstitutivePointsPerParentIndex) override;
+  virtual void
+  AllocateConstitutiveData(
+    dataRepository::Group * const parent,
+    localIndex const numConstitutivePointsPerParentIndex ) override;
 
   /// Type of kernel wrapper for in-kernel update (TODO: support multiple EAT, not just linear)
   using KernelWrapper =
-    CompressibleSinglePhaseUpdate<ExponentApproximationType::Linear,
-                                  ExponentApproximationType::Linear>;
+    CompressibleSinglePhaseUpdate< ExponentApproximationType::Linear,
+                                   ExponentApproximationType::Linear >;
 
   /**
    * @brief Create an update kernel wrapper.
    * @return the wrapper
    */
-  KernelWrapper createKernelWrapper();
+  KernelWrapper
+  createKernelWrapper();
 
   struct viewKeyStruct : public SingleFluidBase::viewKeyStruct
   {
@@ -145,7 +161,8 @@ public:
   };
 
 protected:
-  virtual void PostProcessInput() override;
+  virtual void
+  PostProcessInput() override;
 
 private:
   /// scalar fluid bulk modulus parameter

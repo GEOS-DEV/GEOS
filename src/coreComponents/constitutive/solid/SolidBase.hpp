@@ -50,9 +50,9 @@ protected:
    * @brief constructor
    * @param[in] stress The stress data from the constitutive model class.
    */
-  SolidBaseUpdates(arrayView3d<real64, solid::STRESS_USD> const& stress)
-    : m_stress(stress)
-  { }
+  SolidBaseUpdates( arrayView3d< real64, solid::STRESS_USD > const & stress ) :
+    m_stress( stress )
+  {}
 
   /// Deleted default constructor
   SolidBaseUpdates() = delete;
@@ -61,23 +61,25 @@ protected:
    * @brief Copy Constructor
    * @param source Object to copy
    */
-  SolidBaseUpdates(SolidBaseUpdates const& source) = default;
+  SolidBaseUpdates( SolidBaseUpdates const & source ) = default;
 
   /**
    * @brief Move Constructor
    * @param source Object to move resources from
    */
-  SolidBaseUpdates(SolidBaseUpdates&& source) = default;
+  SolidBaseUpdates( SolidBaseUpdates && source ) = default;
 
   /// Deleted copy assignment operator
-  SolidBaseUpdates& operator=(SolidBaseUpdates const&) = delete;
+  SolidBaseUpdates &
+  operator=( SolidBaseUpdates const & ) = delete;
 
   /// Deleted move assignment operator
-  SolidBaseUpdates& operator=(SolidBaseUpdates&&) = delete;
+  SolidBaseUpdates &
+  operator=( SolidBaseUpdates && ) = delete;
 
 public:
   /// A reference the material stress at quadrature points.
-  arrayView3d<real64, solid::STRESS_USD> const m_stress;
+  arrayView3d< real64, solid::STRESS_USD > const m_stress;
 
 private:
   /**
@@ -86,7 +88,8 @@ private:
    * @param c the stiffness array
    */
   GEOSX_HOST_DEVICE
-  virtual void GetStiffness(localIndex const k, real64 (&c)[6][6]) const = 0;
+  virtual void
+  GetStiffness( localIndex const k, real64 ( &c )[6][6] ) const = 0;
 
   /**
    * @brief Calculate stress using input generated under small strain
@@ -96,9 +99,10 @@ private:
    * @param[out] stress Pointer to the stress data in Voigt notation.
    */
   GEOSX_HOST_DEVICE
-  virtual void SmallStrainNoState(localIndex const k,
-                                  real64 const (&voigtStrain)[6],
-                                  real64 (&stress)[6]) const = 0;
+  virtual void
+  SmallStrainNoState( localIndex const k,
+                      real64 const ( &voigtStrain )[6],
+                      real64 ( &stress )[6] ) const = 0;
 
   /**
    * @brief Update the constitutive state using input generated under small
@@ -109,9 +113,10 @@ private:
    *                                 notation.
    */
   GEOSX_HOST_DEVICE
-  virtual void SmallStrain(localIndex const k,
-                           localIndex const q,
-                           real64 const (&voigtStrainInc)[6]) const = 0;
+  virtual void
+  SmallStrain( localIndex const k,
+               localIndex const q,
+               real64 const ( &voigtStrainInc )[6] ) const = 0;
 
   /**
    * @brief Hypoelastic update to the constitutive state using input generated
@@ -123,10 +128,11 @@ private:
    * @param[in] Rot The incremental rotation tensor
    */
   GEOSX_HOST_DEVICE
-  virtual void HypoElastic(localIndex const k,
-                           localIndex const q,
-                           real64 const (&Ddt)[6],
-                           real64 const (&Rot)[3][3]) const = 0;
+  virtual void
+  HypoElastic( localIndex const k,
+               localIndex const q,
+               real64 const ( &Ddt )[6],
+               real64 const ( &Rot )[3][3] ) const = 0;
 
   /**
    * @brief Hyper-elastic stress update
@@ -135,9 +141,10 @@ private:
    * @param[out] stress Pointer to the stress data in Voigt notation.
    */
   GEOSX_HOST_DEVICE
-  virtual void HyperElastic(localIndex const k,
-                            real64 const (&FmI)[3][3],
-                            real64 (&stress)[6]) const = 0;
+  virtual void
+  HyperElastic( localIndex const k,
+                real64 const ( &FmI )[3][3],
+                real64 ( &stress )[6] ) const = 0;
 
   /**
    * @brief Hyper-elastic state update
@@ -146,9 +153,10 @@ private:
    * @param[in] FmI The deformation gradient minus Identity
    */
   GEOSX_HOST_DEVICE
-  virtual void HyperElastic(localIndex const k,
-                            localIndex const q,
-                            real64 const (&FmI)[3][3]) const = 0;
+  virtual void
+  HyperElastic( localIndex const k,
+                localIndex const q,
+                real64 const ( &FmI )[3][3] ) const = 0;
 };
 
 /**
@@ -163,20 +171,22 @@ public:
    * @param name Name of the SolidBase object in the repository.
    * @param parent The parent group of the SolidBase object.
    */
-  SolidBase(string const& name, Group* const parent);
+  SolidBase( string const & name, Group * const parent );
 
   /**
    * Destructor
    */
   virtual ~SolidBase() override;
 
-  virtual void DeliverClone(string const& name,
-                            Group* const parent,
-                            std::unique_ptr<ConstitutiveBase>& clone) const override;
+  virtual void
+  DeliverClone( string const & name,
+                Group * const parent,
+                std::unique_ptr< ConstitutiveBase > & clone ) const override;
 
-  virtual void AllocateConstitutiveData(
-    dataRepository::Group* const parent,
-    localIndex const numConstitutivePointsPerParentIndex) override;
+  virtual void
+  AllocateConstitutiveData(
+    dataRepository::Group * const parent,
+    localIndex const numConstitutivePointsPerParentIndex ) override;
 
   struct viewKeyStruct : public ConstitutiveBase::viewKeyStruct
   {
@@ -194,25 +204,46 @@ public:
    * Getter for default density
    * @return The default density
    */
-  real64 getDefaultDensity() const { return m_defaultDensity; }
+  real64
+  getDefaultDensity() const
+  {
+    return m_defaultDensity;
+  }
 
   /**
    * Setter for default density
    * @param density The value to set m_defaultDensity equal to.
    */
-  void setDefaultDensity(real64 const density) { m_defaultDensity = density; }
+  void
+  setDefaultDensity( real64 const density )
+  {
+    m_defaultDensity = density;
+  }
 
   /// Non-const/Mutable accessor for density.
-  arrayView2d<real64> const& getDensity() { return m_density; }
+  arrayView2d< real64 > const &
+  getDensity()
+  {
+    return m_density;
+  }
 
   /// Const/non-mutable accessor for density
-  arrayView2d<real64 const> const& getDensity() const { return m_density; }
+  arrayView2d< real64 const > const &
+  getDensity() const
+  {
+    return m_density;
+  }
 
   /// Non-const/mutable accessor for stress
-  arrayView3d<real64, solid::STRESS_USD> const& getStress() { return m_stress; }
+  arrayView3d< real64, solid::STRESS_USD > const &
+  getStress()
+  {
+    return m_stress;
+  }
 
   /// Const/non-mutable accessor for stress
-  arrayView3d<real64 const, solid::STRESS_USD> const& getStress() const
+  arrayView3d< real64 const, solid::STRESS_USD > const &
+  getStress() const
   {
     return m_stress;
   }
@@ -224,11 +255,11 @@ protected:
   real64 m_defaultDensity = 0;
 
   /// The material density at a quadrature point.
-  array2d<real64> m_density;
+  array2d< real64 > m_density;
 
   /// The material stress at a quadrature point.
 
-  array3d<real64, solid::STRESS_PERMUTATION> m_stress;
+  array3d< real64, solid::STRESS_PERMUTATION > m_stress;
   /// band-aid fix...going to have to remove this after we clean up
   /// initialization for constitutive models.
   bool m_postProcessed = false;

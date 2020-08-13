@@ -26,17 +26,18 @@ namespace geosx
 {
 using namespace constitutive;
 
-SolidMechanicsLagrangianSSLE::SolidMechanicsLagrangianSSLE(string const &name,
-                                                           Group *const parent)
-  : SolidMechanicsLagrangianFEM(name, parent)
+SolidMechanicsLagrangianSSLE::SolidMechanicsLagrangianSSLE( string const & name,
+                                                            Group * const parent ) :
+  SolidMechanicsLagrangianFEM( name, parent )
 {
   this->m_strainTheory = 0;
 }
 
-SolidMechanicsLagrangianSSLE::~SolidMechanicsLagrangianSSLE() { }
+SolidMechanicsLagrangianSSLE::~SolidMechanicsLagrangianSSLE()
+{}
 
-REGISTER_CATALOG_ENTRY(SolverBase,
-                       SolidMechanicsLagrangianSSLE,
-                       string const &,
-                       dataRepository::Group *const)
+REGISTER_CATALOG_ENTRY( SolverBase,
+                        SolidMechanicsLagrangianSSLE,
+                        string const &,
+                        dataRepository::Group * const )
 } /* namespace geosx */

@@ -40,20 +40,22 @@ struct TrilinosInterface
    * @param[in] argc standard argc as in any C main
    * @param[in] argv standard argv as in any C main
    */
-  static void initialize(int& argc, char**& argv);
+  static void
+  initialize( int & argc, char **& argv );
 
   /**
    * @brief Finalizes the MPI environment for the Trilinos library
    */
-  static void finalize();
+  static void
+  finalize();
 
   /**
    * @brief Create a Trilinos-based preconditioner object.
    * @param params the preconditioner parameters
    * @return an owning pointer to the newly created preconditioner
    */
-  static std::unique_ptr<PreconditionerBase<TrilinosInterface>>
-  createPreconditioner(LinearSolverParameters params);
+  static std::unique_ptr< PreconditionerBase< TrilinosInterface > >
+  createPreconditioner( LinearSolverParameters params );
 
   /// Alias for EpetraMatrix
   using ParallelMatrix = EpetraMatrix;

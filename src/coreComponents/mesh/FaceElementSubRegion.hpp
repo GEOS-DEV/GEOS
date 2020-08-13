@@ -37,13 +37,13 @@ class FaceElementSubRegion : public ElementSubRegionBase
 {
 public:
   /// Face element to nodes map type
-  using NodeMapType = InterObjectRelation<array1d<array1d<localIndex>>>;
+  using NodeMapType = InterObjectRelation< array1d< array1d< localIndex > > >;
 
   /// Face element to edges map type
-  using EdgeMapType = InterObjectRelation<array1d<array1d<localIndex>>>;
+  using EdgeMapType = InterObjectRelation< array1d< array1d< localIndex > > >;
 
   /// Face element to faces map type
-  using FaceMapType = InterObjectRelation<array2d<localIndex>>;
+  using FaceMapType = InterObjectRelation< array2d< localIndex > >;
 
   /**
    * @name Static factory catalog functions
@@ -54,13 +54,18 @@ public:
    * @brief Get catalog name.
    * @return the catalog name
    */
-  static const string CatalogName() { return "FaceElementSubRegion"; }
+  static const string
+  CatalogName()
+  {
+    return "FaceElementSubRegion";
+  }
 
   /**
    * @brief Get catalog name.
    * @return the catalog name
    */
-  virtual const string getCatalogName() const override
+  virtual const string
+  getCatalogName() const override
   {
     return FaceElementSubRegion::CatalogName();
   }
@@ -77,7 +82,7 @@ public:
    * @param name the group name
    * @param parent the parent group
    */
-  FaceElementSubRegion(string const& name, dataRepository::Group* const parent);
+  FaceElementSubRegion( string const & name, dataRepository::Group * const parent );
 
   /// @brief Destructor
   virtual ~FaceElementSubRegion() override;
@@ -89,16 +94,18 @@ public:
    */
   ///@{
 
-  virtual void CalculateElementGeometricQuantities(
-    NodeManager const& nodeManager,
-    FaceManager const& faceManager) override;
+  virtual void
+  CalculateElementGeometricQuantities(
+    NodeManager const & nodeManager,
+    FaceManager const & faceManager ) override;
   /**
    * @brief Function to compute the geometric quantities of a specific face element.
    * @param index index of the face element
    * @param faceArea surface area of the face
    */
-  void CalculateElementGeometricQuantities(localIndex const index,
-                                           arrayView1d<real64 const> const& faceArea);
+  void
+  CalculateElementGeometricQuantities( localIndex const index,
+                                       arrayView1d< real64 const > const & faceArea );
 
   /**
    * @brief Function to compute the geometric quantities of a specific face element.
@@ -106,27 +113,33 @@ public:
    * @param faceArea array of all surface areas
    * @param faceRotationMatrix array of all rotation matrix
    */
-  void CalculateElementGeometricQuantities(
+  void
+  CalculateElementGeometricQuantities(
     localIndex const k,
-    arrayView1d<real64 const> const& faceArea,
-    arrayView3d<real64 const> const& faceRotationMatrix);
+    arrayView1d< real64 const > const & faceArea,
+    arrayView3d< real64 const > const & faceRotationMatrix );
 
-  virtual localIndex PackUpDownMapsSize(
-    arrayView1d<localIndex const> const& packList) const override;
+  virtual localIndex
+  PackUpDownMapsSize(
+    arrayView1d< localIndex const > const & packList ) const override;
 
-  virtual localIndex PackUpDownMaps(
-    buffer_unit_type*& buffer,
-    arrayView1d<localIndex const> const& packList) const override;
+  virtual localIndex
+  PackUpDownMaps(
+    buffer_unit_type *& buffer,
+    arrayView1d< localIndex const > const & packList ) const override;
 
-  virtual localIndex UnpackUpDownMaps(buffer_unit_type const*& buffer,
-                                      array1d<localIndex>& packList,
-                                      bool const overwriteUpMaps,
-                                      bool const overwriteDownMaps) override;
+  virtual localIndex
+  UnpackUpDownMaps( buffer_unit_type const *& buffer,
+                    array1d< localIndex > & packList,
+                    bool const overwriteUpMaps,
+                    bool const overwriteDownMaps ) override;
 
-  virtual void FixUpDownMaps(bool const clearIfUnmapped) override;
+  virtual void
+  FixUpDownMaps( bool const clearIfUnmapped ) override;
 
-  virtual void ViewPackingExclusionList(
-    SortedArray<localIndex>& exclusionList) const override;
+  virtual void
+  ViewPackingExclusionList(
+    SortedArray< localIndex > & exclusionList ) const override;
 
   ///@}
 
@@ -135,8 +148,9 @@ public:
    * @param faceManager The face manager group
    * @param indices The list of indices to set value of ghostRank
    */
-  void inheritGhostRankFromParentFace(FaceManager const* const faceManager,
-                                      std::set<localIndex> const& indices);
+  void
+  inheritGhostRankFromParentFace( FaceManager const * const faceManager,
+                                  std::set< localIndex > const & indices );
 
   /**
    * @brief Struct containing the keys to all face element views.
@@ -184,7 +198,8 @@ public:
 #endif
   };
 
-  virtual void setupRelatedObjectsInRelations(MeshLevel const* const mesh) override;
+  virtual void
+  setupRelatedObjectsInRelations( MeshLevel const * const mesh ) override;
 
   /**
    * @name Relation getters
@@ -196,34 +211,58 @@ public:
    * @brief Get the face element to nodes map.
    * @return the face element to node map
    */
-  NodeMapType const& nodeList() const { return m_toNodesRelation; }
+  NodeMapType const &
+  nodeList() const
+  {
+    return m_toNodesRelation;
+  }
 
   /**
    * @copydoc nodeList() const
    */
-  NodeMapType& nodeList() { return m_toNodesRelation; }
+  NodeMapType &
+  nodeList()
+  {
+    return m_toNodesRelation;
+  }
 
   /**
    * @brief Get the face element to edges map.
    * @return The face element to edge map
    */
-  EdgeMapType const& edgeList() const { return m_toEdgesRelation; }
+  EdgeMapType const &
+  edgeList() const
+  {
+    return m_toEdgesRelation;
+  }
 
   /**
    * @copydoc edgeList() const
    */
-  EdgeMapType& edgeList() { return m_toEdgesRelation; }
+  EdgeMapType &
+  edgeList()
+  {
+    return m_toEdgesRelation;
+  }
 
   /**
    * @brief Get the face element to faces map.
    * @return the face element to edges map
    */
-  FaceMapType const& faceList() const { return m_toFacesRelation; }
+  FaceMapType const &
+  faceList() const
+  {
+    return m_toFacesRelation;
+  }
 
   /**
    * @copydoc faceList() const
    */
-  FaceMapType& faceList() { return m_toFacesRelation; }
+  FaceMapType &
+  faceList()
+  {
+    return m_toFacesRelation;
+  }
   ///@}
 
   /**
@@ -242,12 +281,17 @@ public:
    * @brief Get face element aperture.
    * @return the aperture of the face elements
    */
-  arrayView1d<real64> const& getElementAperture() { return m_elementAperture; }
+  arrayView1d< real64 > const &
+  getElementAperture()
+  {
+    return m_elementAperture;
+  }
 
   /**
    * @copydoc getElementAperture()
    */
-  arrayView1d<real64 const> const& getElementAperture() const
+  arrayView1d< real64 const > const &
+  getElementAperture() const
   {
     return m_elementAperture;
   }
@@ -256,12 +300,17 @@ public:
    * @brief Get face element surface area.
    * @return the surface area of the face element
    */
-  arrayView1d<real64> const& getElementArea() { return m_elementArea; }
+  arrayView1d< real64 > const &
+  getElementArea()
+  {
+    return m_elementArea;
+  }
 
   /**
    * @copydoc getElementArea()
    */
-  arrayView1d<real64 const> const& getElementArea() const
+  arrayView1d< real64 const > const &
+  getElementArea() const
   {
     return m_elementArea;
   }
@@ -270,7 +319,8 @@ public:
    * @brief Get face element rotation matrix.
    * @return a list of all face element rotation matrixces.
    */
-  arrayView3d<real64> const& getElementRotationMatrix()
+  arrayView3d< real64 > const &
+  getElementRotationMatrix()
   {
     return m_elementRotationMatrix;
   }
@@ -278,7 +328,8 @@ public:
   /**
    * @copydoc getElementRotationMatrix()
    */
-  arrayView3d<real64 const> const& getElementRotationMatrix() const
+  arrayView3d< real64 const > const &
+  getElementRotationMatrix() const
   {
     return m_elementRotationMatrix;
   }
@@ -288,14 +339,16 @@ public:
    * @brief Get separation coefficient.
    * @return the separation coefficient
    */
-  arrayView1d<real64> const& getSeparationCoefficient()
+  arrayView1d< real64 > const &
+  getSeparationCoefficient()
   {
     return m_separationCoefficient;
   }
   /**
    * @copydoc getSeparationCoefficient()
    */
-  arrayView1d<real64 const> const& getSeparationCoefficient() const
+  arrayView1d< real64 const > const &
+  getSeparationCoefficient() const
   {
     return m_separationCoefficient;
   }
@@ -304,39 +357,55 @@ public:
   ///@}
 
   /// Unmapped face elements to nodes map
-  map<localIndex, array1d<globalIndex>> m_unmappedGlobalIndicesInToNodes;
+  map< localIndex, array1d< globalIndex > > m_unmappedGlobalIndicesInToNodes;
 
   /// Unmapped face elements to edges map
-  map<localIndex, array1d<globalIndex>> m_unmappedGlobalIndicesInToEdges;
+  map< localIndex, array1d< globalIndex > > m_unmappedGlobalIndicesInToEdges;
 
   /// Unmapped face elements to faces map
-  map<localIndex, array1d<globalIndex>> m_unmappedGlobalIndicesInToFaces;
+  map< localIndex, array1d< globalIndex > > m_unmappedGlobalIndicesInToFaces;
 
   /// Map between the face elements and the cells
   FixedToManyElementRelation m_faceElementsToCells;
 
   /// List of the new face elements that have been generated
-  SortedArray<localIndex> m_newFaceElements;
+  SortedArray< localIndex > m_newFaceElements;
 
   /**
    * @brief @return The array of shape function derivatives.
    */
-  array4d<real64>& dNdX() { return m_dNdX; }
+  array4d< real64 > &
+  dNdX()
+  {
+    return m_dNdX;
+  }
 
   /**
    * @brief @return The array of shape function derivatives.
    */
-  arrayView4d<real64 const> const& dNdX() const { return m_dNdX.toViewConst(); }
+  arrayView4d< real64 const > const &
+  dNdX() const
+  {
+    return m_dNdX.toViewConst();
+  }
 
   /**
    * @brief @return The array of jacobian determinantes.
    */
-  array2d<real64>& detJ() { return m_detJ; }
+  array2d< real64 > &
+  detJ()
+  {
+    return m_detJ;
+  }
 
   /**
    * @brief @return The array of jacobian determinantes.
    */
-  arrayView2d<real64 const> const& detJ() const { return m_detJ.toViewConst(); }
+  arrayView2d< real64 const > const &
+  detJ() const
+  {
+    return m_detJ.toViewConst();
+  }
 
 private:
   /**
@@ -346,16 +415,17 @@ private:
    * @param packList the packList used in the bufferOps::Pack function
    * @return the pack size
    */
-  template <bool DOPACK>
-  localIndex PackUpDownMapsPrivate(
-    buffer_unit_type*& buffer,
-    arrayView1d<localIndex const> const& packList) const;
+  template< bool DOPACK >
+  localIndex
+  PackUpDownMapsPrivate(
+    buffer_unit_type *& buffer,
+    arrayView1d< localIndex const > const & packList ) const;
 
   /// The array of shape function derivaties.
-  array4d<real64> m_dNdX;
+  array4d< real64 > m_dNdX;
 
   /// The array of jacobian determinantes.
-  array2d<real64> m_detJ;
+  array2d< real64 > m_detJ;
 
   /// Element-to-node relation
   NodeMapType m_toNodesRelation;
@@ -367,17 +437,17 @@ private:
   FaceMapType m_toFacesRelation;
 
   /// Member level field for the element center
-  array1d<real64> m_elementAperture;
+  array1d< real64 > m_elementAperture;
 
   /// Member level field for the element center
-  array1d<real64> m_elementArea;
+  array1d< real64 > m_elementArea;
 
   /// The member level field for the element rotation matrix
-  array3d<real64> m_elementRotationMatrix;
+  array3d< real64 > m_elementRotationMatrix;
 
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
   /// Separation coefficient
-  array1d<real64> m_separationCoefficient;
+  array1d< real64 > m_separationCoefficient;
 #endif
 };
 

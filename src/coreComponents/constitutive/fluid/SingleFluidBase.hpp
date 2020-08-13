@@ -36,14 +36,22 @@ public:
    * @return number of elements
    */
   GEOSX_HOST_DEVICE
-  localIndex numElems() const { return m_density.size(0); }
+  localIndex
+  numElems() const
+  {
+    return m_density.size( 0 );
+  }
 
   /**
    * @brief Get number of gauss points per element.
    * @return number of gauss points per element
    */
   GEOSX_HOST_DEVICE
-  localIndex numGauss() const { return m_density.size(1); };
+  localIndex
+  numGauss() const
+  {
+    return m_density.size( 1 );
+  };
 
 protected:
   /**
@@ -53,49 +61,51 @@ protected:
    * @param viscosity   fluid viscosity
    * @param dVisc_dPres derivative of viscosity w.r.t. pressure
    */
-  SingleFluidBaseUpdate(arrayView2d<real64> const& density,
-                        arrayView2d<real64> const& dDens_dPres,
-                        arrayView2d<real64> const& viscosity,
-                        arrayView2d<real64> const& dVisc_dPres)
-    : m_density(density)
-    , m_dDens_dPres(dDens_dPres)
-    , m_viscosity(viscosity)
-    , m_dVisc_dPres(dVisc_dPres)
-  { }
+  SingleFluidBaseUpdate( arrayView2d< real64 > const & density,
+                         arrayView2d< real64 > const & dDens_dPres,
+                         arrayView2d< real64 > const & viscosity,
+                         arrayView2d< real64 > const & dVisc_dPres ) :
+    m_density( density ),
+    m_dDens_dPres( dDens_dPres ),
+    m_viscosity( viscosity ),
+    m_dVisc_dPres( dVisc_dPres )
+  {}
 
   /**
    * @brief Copy constructor.
    */
-  SingleFluidBaseUpdate(SingleFluidBaseUpdate const&) = default;
+  SingleFluidBaseUpdate( SingleFluidBaseUpdate const & ) = default;
 
   /**
    * @brief Move constructor.
    */
-  SingleFluidBaseUpdate(SingleFluidBaseUpdate&&) = default;
+  SingleFluidBaseUpdate( SingleFluidBaseUpdate && ) = default;
 
   /**
    * @brief Deleted copy assignment operator
    * @return reference to this object
    */
-  SingleFluidBaseUpdate& operator=(SingleFluidBaseUpdate const&) = delete;
+  SingleFluidBaseUpdate &
+  operator=( SingleFluidBaseUpdate const & ) = delete;
 
   /**
    * @brief Deleted move assignment operator
    * @return reference to this object
    */
-  SingleFluidBaseUpdate& operator=(SingleFluidBaseUpdate&&) = delete;
+  SingleFluidBaseUpdate &
+  operator=( SingleFluidBaseUpdate && ) = delete;
 
   /// Fluid density
-  arrayView2d<real64> m_density;
+  arrayView2d< real64 > m_density;
 
   /// Derivative of density w.r.t. pressure
-  arrayView2d<real64> m_dDens_dPres;
+  arrayView2d< real64 > m_dDens_dPres;
 
   /// Fluid viscosity
-  arrayView2d<real64> m_viscosity;
+  arrayView2d< real64 > m_viscosity;
 
   /// Derivative of viscosity w.r.t. pressure
-  arrayView2d<real64> m_dVisc_dPres;
+  arrayView2d< real64 > m_dVisc_dPres;
 
 private:
   /**
@@ -105,9 +115,10 @@ private:
    * @param[out] viscosity fluid viscosity
    */
   GEOSX_HOST_DEVICE
-  virtual void Compute(real64 const pressure,
-                       real64& density,
-                       real64& viscosity) const = 0;
+  virtual void
+  Compute( real64 const pressure,
+           real64 & density,
+           real64 & viscosity ) const = 0;
 
   /**
    * @brief Compute fluid properties and derivatives at a single point.
@@ -118,11 +129,12 @@ private:
    * @param[out] dViscosity_dPressure fluid viscosity derivative w.r.t. pressure
    */
   GEOSX_HOST_DEVICE
-  virtual void Compute(real64 const pressure,
-                       real64& density,
-                       real64& dDensity_dPressure,
-                       real64& viscosity,
-                       real64& dViscosity_dPressure) const = 0;
+  virtual void
+  Compute( real64 const pressure,
+           real64 & density,
+           real64 & dDensity_dPressure,
+           real64 & viscosity,
+           real64 & dViscosity_dPressure ) const = 0;
 
   /**
    * @brief Update fluid state at a single point.
@@ -131,9 +143,10 @@ private:
    * @param[in] pressure the target pressure value
    */
   GEOSX_HOST_DEVICE
-  virtual void Update(localIndex const k,
-                      localIndex const q,
-                      real64 const pressure) const = 0;
+  virtual void
+  Update( localIndex const k,
+          localIndex const q,
+          real64 const pressure ) const = 0;
 };
 
 /**
@@ -147,7 +160,7 @@ public:
    * @param name name of the group
    * @param parent pointer to parent group
    */
-  SingleFluidBase(std::string const& name, Group* const parent);
+  SingleFluidBase( std::string const & name, Group * const parent );
 
   /**
    * @brief Destructor.
@@ -156,43 +169,73 @@ public:
 
   // *** ConstitutiveBase interface
 
-  virtual void DeliverClone(
-    string const& name,
-    Group* const parent,
-    std::unique_ptr<ConstitutiveBase>& clone) const override = 0;
+  virtual void
+  DeliverClone(
+    string const & name,
+    Group * const parent,
+    std::unique_ptr< ConstitutiveBase > & clone ) const override = 0;
 
-  virtual void AllocateConstitutiveData(
-    dataRepository::Group* const parent,
-    localIndex const numConstitutivePointsPerParentIndex) override;
+  virtual void
+  AllocateConstitutiveData(
+    dataRepository::Group * const parent,
+    localIndex const numConstitutivePointsPerParentIndex ) override;
 
   // *** SingleFluid-specific interface
 
-  arrayView2d<real64 const> const& density() const { return m_density; }
-  arrayView2d<real64> const& density() { return m_density; }
+  arrayView2d< real64 const > const &
+  density() const
+  {
+    return m_density;
+  }
+  arrayView2d< real64 > const &
+  density()
+  {
+    return m_density;
+  }
 
-  arrayView2d<real64 const> const& dDensity_dPressure() const
+  arrayView2d< real64 const > const &
+  dDensity_dPressure() const
   {
     return m_dDensity_dPressure;
   }
-  arrayView2d<real64> const& dDensity_dPressure()
+  arrayView2d< real64 > const &
+  dDensity_dPressure()
   {
     return m_dDensity_dPressure;
   }
 
-  arrayView2d<real64 const> const& viscosity() const { return m_viscosity; }
-  arrayView2d<real64> const& viscosity() { return m_viscosity; }
+  arrayView2d< real64 const > const &
+  viscosity() const
+  {
+    return m_viscosity;
+  }
+  arrayView2d< real64 > const &
+  viscosity()
+  {
+    return m_viscosity;
+  }
 
-  arrayView2d<real64 const> const& dViscosity_dPressure() const
+  arrayView2d< real64 const > const &
+  dViscosity_dPressure() const
   {
     return m_dViscosity_dPressure;
   }
-  arrayView2d<real64> const& dViscosity_dPressure()
+  arrayView2d< real64 > const &
+  dViscosity_dPressure()
   {
     return m_dViscosity_dPressure;
   }
 
-  real64 defaultDensity() const { return m_defaultDensity; }
-  real64 defaultViscosity() const { return m_defaultViscosity; }
+  real64
+  defaultDensity() const
+  {
+    return m_defaultDensity;
+  }
+  real64
+  defaultViscosity() const
+  {
+    return m_defaultViscosity;
+  }
 
   // *** Data repository keys
 
@@ -208,16 +251,17 @@ public:
   } viewKeysSingleFluidBase;
 
 protected:
-  virtual void PostProcessInput() override;
+  virtual void
+  PostProcessInput() override;
 
   real64 m_defaultDensity;
   real64 m_defaultViscosity;
 
-  array2d<real64> m_density;
-  array2d<real64> m_dDensity_dPressure;
+  array2d< real64 > m_density;
+  array2d< real64 > m_dDensity_dPressure;
 
-  array2d<real64> m_viscosity;
-  array2d<real64> m_dViscosity_dPressure;
+  array2d< real64 > m_viscosity;
+  array2d< real64 > m_dViscosity_dPressure;
 };
 
 }  //namespace constitutive

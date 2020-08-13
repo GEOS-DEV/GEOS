@@ -61,11 +61,11 @@ public:
    */
   enum class Connector
   {
-    Elem,  //!< connectivity is element (like in finite elements)
-    Face,  //!< connectivity is face (like in finite volumes TPFA)
-    Edge,  //!< connectivity is edge (like fracture element connectors)
-    Node,  //!< connectivity is node (like in finite volumes MPFA)
-    None,  //!< there is no connectivity (self connected field, like a lumped mass matrix)
+    Elem,    //!< connectivity is element (like in finite elements)
+    Face,    //!< connectivity is face (like in finite volumes TPFA)
+    Edge,    //!< connectivity is edge (like fracture element connectors)
+    Node,    //!< connectivity is node (like in finite volumes MPFA)
+    None,    //!< there is no connectivity (self connected field, like a lumped mass matrix)
     Stencil  //!< connectivity is through a (set of) user-provided stencil(s)
   };
 
@@ -79,17 +79,17 @@ public:
    */
   struct FieldDescription
   {
-    string name;                  //!< field name
-    Location location;            //!< support location
-    std::vector<string> regions;  //!< list of support region names
-    localIndex numComponents;     //!< number of vector components
-    string key;                   //!< string key for index array
-    string docstring;             //!< documentation string
-    localIndex numLocalDof;       //!< number of local rows
-    globalIndex numGlobalDof;     //!< number of global rows
-    globalIndex blockOffset;  //!< offset of this field's block in a block-wise ordered system
-    globalIndex rankOffset;  //!< field's first DoF on current processor (within its block, ignoring other fields)
-    globalIndex globalOffset;  //!< global offset of field's DOFs on current processor for multi-field problems
+    string name;                    //!< field name
+    Location location;              //!< support location
+    std::vector< string > regions;  //!< list of support region names
+    localIndex numComponents;       //!< number of vector components
+    string key;                     //!< string key for index array
+    string docstring;               //!< documentation string
+    localIndex numLocalDof;         //!< number of local rows
+    globalIndex numGlobalDof;       //!< number of global rows
+    globalIndex blockOffset;        //!< offset of this field's block in a block-wise ordered system
+    globalIndex rankOffset;         //!< field's first DoF on current processor (within its block, ignoring other fields)
+    globalIndex globalOffset;       //!< global offset of field's DOFs on current processor for multi-field problems
   };
 
   /**
@@ -98,9 +98,9 @@ public:
   struct CouplingDescription
   {
     Connector connector =
-      Connector::None;  //!< geometric object defining dof connections
-    std::vector<std::string> regions;  //!< list of region names
-    FluxApproximationBase const* stencils =
+      Connector::None;                   //!< geometric object defining dof connections
+    std::vector< std::string > regions;  //!< list of region names
+    FluxApproximationBase const * stencils =
       nullptr;  //!< pointer to flux stencils for stencil based connections
   };
 
@@ -109,29 +109,31 @@ public:
    *
    * @param [in] name a unique name for this DoF manager
    */
-  explicit DofManager(string name);
+  explicit DofManager( string name );
 
   /**
    * @brief Deleted copy constructor.
    */
-  DofManager(DofManager const&) = delete;
+  DofManager( DofManager const & ) = delete;
 
   /**
    * @brief Move constructor.
    */
-  DofManager(DofManager&&) = default;
+  DofManager( DofManager && ) = default;
 
   /**
    * @brief Deleted copy assignment.
    * @return
    */
-  DofManager& operator=(DofManager const&) = delete;
+  DofManager &
+  operator=( DofManager const & ) = delete;
 
   /**
    * @brief Deleted move assignment.
    * @return
    */
-  DofManager& operator=(DofManager&&) = delete;
+  DofManager &
+  operator=( DofManager && ) = delete;
 
   /**
    * @brief Destructor.
@@ -141,7 +143,8 @@ public:
   /**
    * Remove all fields
    */
-  void clear();
+  void
+  clear();
 
   /**
    * @brief Assign a mesh.
@@ -150,9 +153,10 @@ public:
    * @param [in] meshLevelIndex Optional localIndex the mesh level.
    * @param [in] meshBodyIndex Optional localIndex the body level.
    */
-  void setMesh(DomainPartition& domain,
-               localIndex const meshLevelIndex = 0,
-               localIndex const meshBodyIndex = 0);
+  void
+  setMesh( DomainPartition & domain,
+           localIndex const meshLevelIndex = 0,
+           localIndex const meshBodyIndex = 0 );
 
   /**
    * @brief Just an interface to allow only three parameters.
@@ -160,7 +164,8 @@ public:
    * @param [in] fieldName string the name of the field.
    * @param [in] location Location where it is defined.
    */
-  void addField(string const& fieldName, Location const location);
+  void
+  addField( string const & fieldName, Location const location );
 
   /**
    * @brief Just another interface to allow four parameters (no regions, default is everywhere).
@@ -169,9 +174,10 @@ public:
    * @param [in] location Location where it is defined.
    * @param [in] components localIndex number of components (for vector fields).
    */
-  void addField(string const& fieldName,
-                Location const location,
-                localIndex const components);
+  void
+  addField( string const & fieldName,
+            Location const location,
+            localIndex const components );
 
   /**
    * @brief Just another interface to allow four parameters (no components, default is 1).
@@ -180,9 +186,10 @@ public:
    * @param [in] location Location where it is defined.
    * @param [in] regions names of regions where this field is defined.
    */
-  void addField(string const& fieldName,
-                Location const location,
-                arrayView1d<string const> const& regions);
+  void
+  addField( string const & fieldName,
+            Location const location,
+            arrayView1d< string const > const & regions );
 
   /**
    * @brief The user can add a field with a support location, connectivity type, string key, number of scalar
@@ -209,10 +216,11 @@ public:
    * @param [in] components localIndex number of components (for vector fields).
    * @param [in] regions names of regions where this field is defined.
    */
-  void addField(string const& fieldName,
-                Location const location,
-                localIndex const components,
-                arrayView1d<string const> const& regions);
+  void
+  addField( string const & fieldName,
+            Location const location,
+            localIndex const components,
+            arrayView1d< string const > const & regions );
 
   /**
    * @brief Just an interface to allow only three parameters.
@@ -221,9 +229,10 @@ public:
    * @param [in] colFieldName string the name of the col field.
    * @param [in] connectivity Connectivity through what they are connected.
    */
-  void addCoupling(string const& rowFieldName,
-                   string const& colFieldName,
-                   Connector const connectivity);
+  void
+  addCoupling( string const & rowFieldName,
+               string const & colFieldName,
+               Connector const connectivity );
 
   /**
    * @brief Just another interface to allow four parameters (no symmetry, default is true).
@@ -233,10 +242,11 @@ public:
    * @param [in] connectivity Connectivity through what they are connected.
    * @param [in] regions names of regions where this coupling is defined.
    */
-  void addCoupling(string const& rowFieldName,
-                   string const& colFieldName,
-                   Connector const connectivity,
-                   arrayView1d<string const> const& regions);
+  void
+  addCoupling( string const & rowFieldName,
+               string const & colFieldName,
+               Connector const connectivity,
+               arrayView1d< string const > const & regions );
 
   /**
    * @brief Just another interface to allow four parameters (no regions, default is everywhere).
@@ -246,10 +256,11 @@ public:
    * @param [in] connectivity Connectivity through what they are connected.
    * @param [in] symmetric bool is it symmetric, i.e., both row-col and col-row?
    */
-  void addCoupling(string const& rowFieldName,
-                   string const& colFieldName,
-                   Connector const connectivity,
-                   bool const symmetric);
+  void
+  addCoupling( string const & rowFieldName,
+               string const & colFieldName,
+               Connector const connectivity,
+               bool const symmetric );
 
   /**
    * @brief Add coupling between two fields.
@@ -269,11 +280,12 @@ public:
    * @param [in] regions names of regions where this coupling is defined.
    * @param [in] symmetric bool is it symmetric, i.e., both row-col and col-row?
    */
-  void addCoupling(string const& rowFieldName,
-                   string const& colFieldName,
-                   Connector const connectivity,
-                   arrayView1d<string const> const& regions,
-                   bool const symmetric);
+  void
+  addCoupling( string const & rowFieldName,
+               string const & colFieldName,
+               Connector const connectivity,
+               arrayView1d< string const > const & regions,
+               bool const symmetric );
 
   /**
    * @brief Special interface for self-connectivity through a stencil.
@@ -283,8 +295,9 @@ public:
    * The field must be defined on element support. The set of regions is taken
    * automatically from the field definition.
    */
-  void addCoupling(string const& fieldName,
-                   FluxApproximationBase const& stencils);
+  void
+  addCoupling( string const & fieldName,
+               FluxApproximationBase const & stencils );
 
   /**
    * @brief Finish populating fields and apply appropriate dof renumbering
@@ -301,7 +314,8 @@ public:
    *       This meaning is consistent with its use throughout. For example, this is the row/col
    *       global offset used to insert the field's sparsity block into a global coupled system.
    */
-  void reorderByRank();
+  void
+  reorderByRank();
 
   /**
    * @brief Check if string key is already being used
@@ -309,7 +323,8 @@ public:
    * @param name field key to check
    * @return flag true if exists
    */
-  bool fieldExists(string const& name) const;
+  bool
+  fieldExists( string const & name ) const;
 
   /**
    * @brief Return the key used to record the field in the DofManager.
@@ -317,7 +332,8 @@ public:
    * @param [in] fieldName string the name of the field.
    * @return string indicating name of the field.
    */
-  string const& getKey(string const& fieldName) const;
+  string const &
+  getKey( string const & fieldName ) const;
 
   /**
    * @brief Return global number of dofs across all processors. If field argument is empty, return
@@ -326,7 +342,8 @@ public:
    * @param [in] fieldName Optional string the name of the field.
    * @return     number of global dofs
    */
-  globalIndex numGlobalDofs(string const& fieldName = "") const;
+  globalIndex
+  numGlobalDofs( string const & fieldName = "" ) const;
 
   /**
    * @brief Return local number of dofs on this processor. If field argument is empty, return
@@ -335,7 +352,8 @@ public:
    * @param [in] fieldName Optional string the name of the field.
    * @return     number of local dofs
    */
-  localIndex numLocalDofs(string const& fieldName = "") const;
+  localIndex
+  numLocalDofs( string const & fieldName = "" ) const;
 
   /**
    * @brief Return an array of local number of dofs on this processor
@@ -343,7 +361,8 @@ public:
    *
    * @return     array of number of local dofs
    */
-  array1d<localIndex> numLocalDofsPerField() const;
+  array1d< localIndex >
+  numLocalDofsPerField() const;
 
   /**
    * @brief Computes an array of size equal to sum of all field local number of dofs containing
@@ -351,7 +370,8 @@ public:
    *
    * @return array1d of localIndex labels
    */
-  array1d<localIndex> getLocalDofComponentLabels() const;
+  array1d< localIndex >
+  getLocalDofComponentLabels() const;
 
   /**
    * @brief Return the sum of local dofs across all previous processors w.r.t. to the calling one for
@@ -360,7 +380,8 @@ public:
    * @param [in] fieldName Optional string the name of the field.
    * @return     the rank offset
    */
-  globalIndex rankOffset(string const& fieldName = "") const;
+  globalIndex
+  rankOffset( string const & fieldName = "" ) const;
 
   /**
    * @brief Get the number of components in a field. If field argument is empty, return
@@ -369,7 +390,8 @@ public:
    * @param [in] fieldName Optional string the name of the field.
    * @return     the number of dof components
    */
-  localIndex numComponents(string const& fieldName = "") const;
+  localIndex
+  numComponents( string const & fieldName = "" ) const;
 
   /**
    * @brief Return an array of number of components per field, sorted by field
@@ -377,35 +399,40 @@ public:
    *
    * @return     array of number of components
    */
-  array1d<localIndex> numComponentsPerField() const;
+  array1d< localIndex >
+  numComponentsPerField() const;
 
   /**
    * @brief Get the local number of support points on this processor.
    * @param [in] fieldName the name of the field
    * @return number of local support points
    */
-  localIndex numLocalSupport(string const& fieldName) const;
+  localIndex
+  numLocalSupport( string const & fieldName ) const;
 
   /**
    * @brief Get the local number of support points across all processors.
    * @param [in] fieldName name of the field
    * @return number of global support points
    */
-  globalIndex numGlobalSupport(string const& fieldName) const;
+  globalIndex
+  numGlobalSupport( string const & fieldName ) const;
 
   /**
    * @brief Get the support location type of the field.
    * @param [in] fieldName name of the field
    * @return support location type
    */
-  Location getLocation(string const& fieldName) const;
+  Location
+  getLocation( string const & fieldName ) const;
 
   /**
    * @brief Get global offset of field's block on current processor in the system matrix.
    * @param [in] fieldName name of the field.
    * @return global offset of the field
    */
-  globalIndex globalOffset(string const& fieldName) const;
+  globalIndex
+  globalOffset( string const & fieldName ) const;
 
   /**
    * @brief Populate sparsity pattern of the entire system matrix.
@@ -413,8 +440,9 @@ public:
    * @param [out] matrix the target parallel matrix
    * @param [in]  closePattern whether to reorderByRank the matrix upon pattern assembly
    */
-  template <typename MATRIX>
-  void setSparsityPattern(MATRIX& matrix, bool closePattern = true) const;
+  template< typename MATRIX >
+  void
+  setSparsityPattern( MATRIX & matrix, bool closePattern = true ) const;
 
   /**
    * @brief Populate sparsity pattern for one block of the system matrix.
@@ -424,17 +452,19 @@ public:
    * @param [in]  colFieldName the name of the col field.
    * @param [in]  closePattern whether to reorderByRank the matrix upon pattern assembly
    */
-  template <typename MATRIX>
-  void setSparsityPattern(MATRIX& matrix,
-                          string const& rowFieldName,
-                          string const& colFieldName,
-                          bool closePattern = true) const;
+  template< typename MATRIX >
+  void
+  setSparsityPattern( MATRIX & matrix,
+                      string const & rowFieldName,
+                      string const & colFieldName,
+                      bool closePattern = true ) const;
 
   /**
    * @brief Populate sparsity pattern of the entire system matrix.
    * @param [out] pattern the target sparsity pattern
    */
-  void setSparsityPattern(SparsityPattern<globalIndex>& pattern) const;
+  void
+  setSparsityPattern( SparsityPattern< globalIndex > & pattern ) const;
 
   /**
    * @brief Populate sparsity pattern for one block of the system matrix.
@@ -442,9 +472,10 @@ public:
    * @param [in]  rowFieldName name of the row field
    * @param [in]  colFieldName name of the col field
    */
-  void setSparsityPattern(SparsityPattern<globalIndex>& pattern,
-                          string const& rowFieldName,
-                          string const& colFieldName) const;
+  void
+  setSparsityPattern( SparsityPattern< globalIndex > & pattern,
+                      string const & rowFieldName,
+                      string const & colFieldName ) const;
 
   /**
    * @brief Copy values from LA vectors to simulation data arrays.
@@ -460,13 +491,14 @@ public:
    * @note [@p loCompIndex , @p hiCompIndex) form a half-open interval.
    *       Negative value of @p hiCompIndex means use full number of field components
    */
-  template <typename VECTOR>
-  void copyVectorToField(VECTOR const& vector,
-                         string const& srcFieldName,
-                         string const& dstFieldName,
-                         real64 const scalingFactor,
-                         localIndex const loCompIndex = 0,
-                         localIndex const hiCompIndex = -1) const;
+  template< typename VECTOR >
+  void
+  copyVectorToField( VECTOR const & vector,
+                     string const & srcFieldName,
+                     string const & dstFieldName,
+                     real64 const scalingFactor,
+                     localIndex const loCompIndex = 0,
+                     localIndex const hiCompIndex = -1 ) const;
 
   /**
    * @brief Copy values from LA vectors to simulation data arrays.
@@ -481,12 +513,13 @@ public:
    * @note [@p loCompIndex , @p hiCompIndex) form a half-open interval.
    *       Negative value of @p hiCompIndex means use full number of field components
    */
-  void copyVectorToField(arrayView1d<real64 const> const& localVector,
-                         string const& srcFieldName,
-                         string const& dstFieldName,
-                         real64 const scalingFactor,
-                         localIndex const loCompIndex = 0,
-                         localIndex const hiCompIndex = -1) const;
+  void
+  copyVectorToField( arrayView1d< real64 const > const & localVector,
+                     string const & srcFieldName,
+                     string const & dstFieldName,
+                     real64 const scalingFactor,
+                     localIndex const loCompIndex = 0,
+                     localIndex const hiCompIndex = -1 ) const;
 
   /**
    * @brief Add values from LA vectors to simulation data arrays.
@@ -502,13 +535,14 @@ public:
    * @note [@p loCompIndex , @p hiCompIndex) form a half-open interval.
    *       Negative value of @p hiCompIndex means use full number of field components
    */
-  template <typename VECTOR>
-  void addVectorToField(VECTOR const& vector,
-                        string const& srcFieldName,
-                        string const& dstFieldName,
-                        real64 const scalingFactor,
-                        localIndex const loCompIndex = 0,
-                        localIndex const hiCompIndex = -1) const;
+  template< typename VECTOR >
+  void
+  addVectorToField( VECTOR const & vector,
+                    string const & srcFieldName,
+                    string const & dstFieldName,
+                    real64 const scalingFactor,
+                    localIndex const loCompIndex = 0,
+                    localIndex const hiCompIndex = -1 ) const;
 
   /**
    * @brief Add values from LA vectors to simulation data arrays.
@@ -523,12 +557,13 @@ public:
    * @note [@p loCompIndex , @p hiCompIndex) form a half-open interval.
    *       Negative value of @p hiCompIndex means use full number of field components
    */
-  void addVectorToField(arrayView1d<real64 const> const& localVector,
-                        string const& srcFieldName,
-                        string const& dstFieldName,
-                        real64 const scalingFactor,
-                        localIndex const loCompIndex = 0,
-                        localIndex const hiCompIndex = -1) const;
+  void
+  addVectorToField( arrayView1d< real64 const > const & localVector,
+                    string const & srcFieldName,
+                    string const & dstFieldName,
+                    real64 const scalingFactor,
+                    localIndex const loCompIndex = 0,
+                    localIndex const hiCompIndex = -1 ) const;
 
   /**
    * @brief Copy values from nodes to DOFs.
@@ -544,13 +579,14 @@ public:
    * @note [@p loCompIndex , @p hiCompIndex) form a half-open interval.
    *       Negative value of @p hiCompIndex means use full number of field components
    */
-  template <typename VECTOR>
-  void copyFieldToVector(VECTOR& vector,
-                         string const& srcFieldName,
-                         string const& dstFieldName,
-                         real64 const scalingFactor,
-                         localIndex const loCompIndex = 0,
-                         localIndex const hiCompIndex = -1) const;
+  template< typename VECTOR >
+  void
+  copyFieldToVector( VECTOR & vector,
+                     string const & srcFieldName,
+                     string const & dstFieldName,
+                     real64 const scalingFactor,
+                     localIndex const loCompIndex = 0,
+                     localIndex const hiCompIndex = -1 ) const;
 
   /**
    * @brief Copy values from simulation data arrays to vectors.
@@ -566,12 +602,13 @@ public:
    * @note [@p loCompIndex , @p hiCompIndex) form a half-open interval.
    *       Negative value of @p hiCompIndex means use full number of field components
    */
-  void copyFieldToVector(arrayView1d<real64> const& localVector,
-                         string const& srcFieldName,
-                         string const& dstFieldName,
-                         real64 const scalingFactor,
-                         localIndex const loCompIndex = 0,
-                         localIndex const hiCompIndex = -1) const;
+  void
+  copyFieldToVector( arrayView1d< real64 > const & localVector,
+                     string const & srcFieldName,
+                     string const & dstFieldName,
+                     real64 const scalingFactor,
+                     localIndex const loCompIndex = 0,
+                     localIndex const hiCompIndex = -1 ) const;
 
   /**
    * @brief Add values from a simulation data array to a DOF vector.
@@ -587,13 +624,14 @@ public:
    * @note [@p loCompIndex , @p hiCompIndex) form a half-open interval.
    *       Negative value of @p hiCompIndex means use full number of field components
    */
-  template <typename VECTOR>
-  void addFieldToVector(VECTOR& vector,
-                        string const& srcFieldName,
-                        string const& dstFieldName,
-                        real64 const scalingFactor,
-                        localIndex const loCompIndex = 0,
-                        localIndex const hiCompIndex = -1) const;
+  template< typename VECTOR >
+  void
+  addFieldToVector( VECTOR & vector,
+                    string const & srcFieldName,
+                    string const & dstFieldName,
+                    real64 const scalingFactor,
+                    localIndex const loCompIndex = 0,
+                    localIndex const hiCompIndex = -1 ) const;
 
   /**
    * @brief Add values from a simulation data array to a DOF vector.
@@ -609,12 +647,13 @@ public:
    * @note [@p loCompIndex , @p hiCompIndex) form a half-open interval.
    *       Negative value of @p hiCompIndex means use full number of field components
    */
-  void addFieldToVector(arrayView1d<real64> const& localVector,
-                        string const& srcFieldName,
-                        string const& dstFieldName,
-                        real64 const scalingFactor,
-                        localIndex const loCompIndex = 0,
-                        localIndex const hiCompIndex = -1) const;
+  void
+  addFieldToVector( arrayView1d< real64 > const & localVector,
+                    string const & srcFieldName,
+                    string const & dstFieldName,
+                    real64 const scalingFactor,
+                    localIndex const loCompIndex = 0,
+                    localIndex const hiCompIndex = -1 ) const;
 
   /**
    * @brief Describes a selection of components from a DoF field.
@@ -637,8 +676,9 @@ public:
    *       loComp = 0 or hiComp = numComponents(fieldName) (or both). In other words,
    *       filtered out components must not leave "holes" in DOFs.
    */
-  std::vector<SubComponent> filterDofs(
-    std::vector<SubComponent> const& excluded) const;
+  std::vector< SubComponent >
+  filterDofs(
+    std::vector< SubComponent > const & excluded ) const;
 
   /**
    * @brief Create a matrix that restricts vectors and matrices to a subset of DOFs
@@ -652,39 +692,45 @@ public:
    * @note Can only be called after reorderByRank(), since global DOF indexing is required
    *       for the restrictor to make sense.
    */
-  template <typename MATRIX>
-  void makeRestrictor(std::vector<SubComponent> const& selection,
-                      MPI_Comm const& comm,
-                      bool transpose,
-                      MATRIX& restrictor) const;
+  template< typename MATRIX >
+  void
+  makeRestrictor( std::vector< SubComponent > const & selection,
+                  MPI_Comm const & comm,
+                  bool transpose,
+                  MATRIX & restrictor ) const;
 
   /**
    * @brief Print the summary of declared fields and coupling.
    *
    * @param os output stream
    */
-  void printFieldInfo(std::ostream& os = std::cout) const;
+  void
+  printFieldInfo( std::ostream & os = std::cout ) const;
 
 private:
   /**
    * @brief Initialize data structure for connectivity and sparsity pattern
    */
-  void initializeDataStructure();
+  void
+  initializeDataStructure();
 
   /**
    * @brief Get field index from string key
    */
-  localIndex getFieldIndex(string const& name) const;
+  localIndex
+  getFieldIndex( string const & name ) const;
 
   /**
    * @brief Create index array for the field
    */
-  void createIndexArray(FieldDescription& field);
+  void
+  createIndexArray( FieldDescription & field );
 
   /**
    * @brief Remove an index array for the field
    */
-  void removeIndexArray(FieldDescription const& field);
+  void
+  removeIndexArray( FieldDescription const & field );
 
   /**
    * @brief Populate the sparsity pattern for a coupling block between given fields.
@@ -694,14 +740,16 @@ private:
    *
    * This private function is used as a building block by higher-level SetSparsityPattern()
    */
-  template <typename MATRIX>
-  void setSparsityPatternOneBlock(MATRIX& pattern,
-                                  localIndex const rowFieldIndex,
-                                  localIndex const colFieldIndex) const;
+  template< typename MATRIX >
+  void
+  setSparsityPatternOneBlock( MATRIX & pattern,
+                              localIndex const rowFieldIndex,
+                              localIndex const colFieldIndex ) const;
 
-  template <typename MATRIX>
-  void setSparsityPatternFromStencil(MATRIX& pattern,
-                                     localIndex const fieldIndex) const;
+  template< typename MATRIX >
+  void
+  setSparsityPatternFromStencil( MATRIX & pattern,
+                                 localIndex const fieldIndex ) const;
 
   /**
    * @brief Calculate or estimate the number of nonzero entries in each local row
@@ -709,12 +757,14 @@ private:
    * @param rowFieldIndex index of row field (must be non-negative)
    * @param colFieldIndex index of col field (must be non-negative)
    */
-  void countRowLengthsOneBlock(arrayView1d<localIndex> const& rowLengths,
-                               localIndex const rowFieldIndex,
-                               localIndex const colFieldIndex) const;
+  void
+  countRowLengthsOneBlock( arrayView1d< localIndex > const & rowLengths,
+                           localIndex const rowFieldIndex,
+                           localIndex const colFieldIndex ) const;
 
-  void countRowLengthsFromStencil(arrayView1d<localIndex> const& rowLengths,
-                                  localIndex const fieldIndex) const;
+  void
+  countRowLengthsFromStencil( arrayView1d< localIndex > const & rowLengths,
+                              localIndex const fieldIndex ) const;
 
   /**
    * @brief Populate the sparsity pattern for a coupling block between given fields.
@@ -724,16 +774,19 @@ private:
    *
    * This private function is used as a building block by higher-level SetSparsityPattern()
    */
-  void setSparsityPatternOneBlock(SparsityPattern<globalIndex>& pattern,
-                                  localIndex const rowFieldIndex,
-                                  localIndex const colFieldIndex) const;
+  void
+  setSparsityPatternOneBlock( SparsityPattern< globalIndex > & pattern,
+                              localIndex const rowFieldIndex,
+                              localIndex const colFieldIndex ) const;
 
-  void setSparsityPatternFromStencil(SparsityPattern<globalIndex>& pattern,
-                                     localIndex const fieldIndex) const;
+  void
+  setSparsityPatternFromStencil( SparsityPattern< globalIndex > & pattern,
+                                 localIndex const fieldIndex ) const;
 
-  template <int DIMS_PER_DOF>
-  void setFiniteElementSparsityPattern(SparsityPattern<globalIndex>& pattern,
-                                       localIndex const fieldIndex) const;
+  template< int DIMS_PER_DOF >
+  void
+  setFiniteElementSparsityPattern( SparsityPattern< globalIndex > & pattern,
+                                   localIndex const fieldIndex ) const;
 
   /**
    * @brief Generic implementation for @ref copyVectorToField and @ref addVectorToField
@@ -750,13 +803,14 @@ private:
    * @note [@p loCompIndex , @p hiCompIndex) form a half-open interval.
    *       Negative value of @p hiCompIndex means use full number of field components
    */
-  template <typename FIELD_OP, typename POLICY, typename LOCAL_VECTOR>
-  void vectorToField(LOCAL_VECTOR const localVector,
-                     string const& srcFieldName,
-                     string const& dstFieldName,
-                     real64 const scalingFactor,
-                     localIndex const loCompIndex,
-                     localIndex const hiCompIndex) const;
+  template< typename FIELD_OP, typename POLICY, typename LOCAL_VECTOR >
+  void
+  vectorToField( LOCAL_VECTOR const localVector,
+                 string const & srcFieldName,
+                 string const & dstFieldName,
+                 real64 const scalingFactor,
+                 localIndex const loCompIndex,
+                 localIndex const hiCompIndex ) const;
 
   /**
    * @brief Generic implementation for @ref copyFieldToVector and @ref addFieldToVector
@@ -773,28 +827,29 @@ private:
    * @note [@p loCompIndex , @p hiCompIndex) form a half-open interval.
    *       Negative value of @p hiCompIndex means use full number of field components
    */
-  template <typename FIELD_OP, typename POLICY, typename LOCAL_VECTOR>
-  void fieldToVector(LOCAL_VECTOR localVector,
-                     string const& srcFieldName,
-                     string const& dstFieldName,
-                     real64 const scalingFactor,
-                     localIndex const loCompIndex,
-                     localIndex const hiCompIndex) const;
+  template< typename FIELD_OP, typename POLICY, typename LOCAL_VECTOR >
+  void
+  fieldToVector( LOCAL_VECTOR localVector,
+                 string const & srcFieldName,
+                 string const & dstFieldName,
+                 real64 const scalingFactor,
+                 localIndex const loCompIndex,
+                 localIndex const hiCompIndex ) const;
 
   /// Name of the manager (unique, for unique identification of index array keys)
   string m_name;
 
   /// Pointer to domain manager
-  DomainPartition* m_domain = nullptr;
+  DomainPartition * m_domain = nullptr;
 
   /// Pointer to corresponding MeshLevel
-  MeshLevel* m_mesh = nullptr;
+  MeshLevel * m_mesh = nullptr;
 
   /// Array of field descriptions
-  std::vector<FieldDescription> m_fields;
+  std::vector< FieldDescription > m_fields;
 
   /// Table of connector types within and between fields
-  std::vector<std::vector<CouplingDescription>> m_coupling;
+  std::vector< std::vector< CouplingDescription > > m_coupling;
 
   /// Flag indicating that DOFs have been reordered rank-wise.
   bool m_reordered;

@@ -28,22 +28,28 @@ namespace vtk
  * @details This class let us to deal with special types such
  * as R1Tensor to be output.
  */
-class VTKGEOSXData : public vtkAOSDataArrayTemplate<real64>
+class VTKGEOSXData : public vtkAOSDataArrayTemplate< real64 >
 {
 public:
   /*!
    * @brief Factory function
    * @return VTK GEOSX data class
    */
-  static VTKGEOSXData *New() { VTK_STANDARD_NEW_BODY(VTKGEOSXData); }
+  static VTKGEOSXData *
+  New()
+  {
+    VTK_STANDARD_NEW_BODY( VTKGEOSXData );
+  }
   /*!
    * @brief insert Value in a custom way for R1Tensors
    * @param[in] index index where the value \p val will be inserted
    * @param[in] val value to be inserted
    */
-  template <typename T> void CustomInsertValue(localIndex index, T const &val)
+  template< typename T >
+  void
+  CustomInsertValue( localIndex index, T const & val )
   {
-    this->InsertValue(index, val);
+    this->InsertValue( index, val );
   }
 };
 
@@ -52,9 +58,10 @@ public:
  * @param[in] index position index where the value \p val will be inserted
  * @param[in] val R1Tensor to be inserted
  */
-template <>
-void VTKGEOSXData::CustomInsertValue<R1Tensor>(localIndex index,
-                                               R1Tensor const &val);
+template<>
+void
+VTKGEOSXData::CustomInsertValue< R1Tensor >( localIndex index,
+                                             R1Tensor const & val );
 
 }  // namespace vtk
 }  // namespace geosx

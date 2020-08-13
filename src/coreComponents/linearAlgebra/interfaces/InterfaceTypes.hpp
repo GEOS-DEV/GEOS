@@ -34,15 +34,15 @@
 #endif
 
 /// Macro to concatenate two strings (low level)
-#define CONCAT_(A, B) A##B
+#define CONCAT_( A, B ) A##B
 
 /// Macro to concatenate two strings (user level)
-#define CONCAT(A, B) CONCAT_(A, B)
+#define CONCAT( A, B ) CONCAT_( A, B )
 
 namespace geosx
 {
 /// Alias for current interface
-using LAInterface = CONCAT(GEOSX_LA_INTERFACE, Interface);
+using LAInterface = CONCAT( GEOSX_LA_INTERFACE, Interface );
 
 /// Alias for ParallelMatrix
 using ParallelMatrix = LAInterface::ParallelMatrix;
@@ -57,23 +57,25 @@ using LinearSolver = LAInterface::LinearSolver;
  * @param[in] argc standard argc as in any C main
  * @param[in] argv standard argv as in any C main
  */
-inline void setupLAI(int& argc, char**& argv)
+inline void
+setupLAI( int & argc, char **& argv )
 {
 #ifdef GEOSX_USE_TRILINOS
-  TrilinosInterface::initialize(argc, argv);
+  TrilinosInterface::initialize( argc, argv );
 #endif
 #ifdef GEOSX_USE_HYPRE
-  HypreInterface::initialize(argc, argv);
+  HypreInterface::initialize( argc, argv );
 #endif
 #ifdef GEOSX_USE_PETSC
-  PetscInterface::initialize(argc, argv);
+  PetscInterface::initialize( argc, argv );
 #endif
 }
 
 /**
  * @brief High level interface to call the proper LAI finalize function.
  */
-inline void finalizeLAI()
+inline void
+finalizeLAI()
 {
 #ifdef GEOSX_USE_TRILINOS
   TrilinosInterface::finalize();

@@ -23,56 +23,58 @@ namespace geosx
 {
 using namespace dataRepository;
 
-HaltEvent::HaltEvent(const std::string &name, Group *const parent)
-  : EventBase(name, parent)
-  , m_externalStartTime(0.0)
-  , m_externalLastTime(0.0)
-  , m_externalDt(0.0)
-  , m_maxRuntime(0.0)
+HaltEvent::HaltEvent( const std::string & name, Group * const parent ) :
+  EventBase( name, parent ),
+  m_externalStartTime( 0.0 ),
+  m_externalLastTime( 0.0 ),
+  m_externalDt( 0.0 ),
+  m_maxRuntime( 0.0 )
 {
   timeval tim;
-  gettimeofday(&tim, nullptr);
-  m_externalStartTime = tim.tv_sec + (tim.tv_usec / 1000000.0);
+  gettimeofday( &tim, nullptr );
+  m_externalStartTime = tim.tv_sec + ( tim.tv_usec / 1000000.0 );
   m_externalLastTime = m_externalStartTime;
 
-  registerWrapper(viewKeyStruct::maxRuntimeString, &m_maxRuntime)
-    ->setInputFlag(InputFlags::REQUIRED)
-    ->setDescription("The maximum allowable runtime for the job.");
+  registerWrapper( viewKeyStruct::maxRuntimeString, &m_maxRuntime )
+    ->setInputFlag( InputFlags::REQUIRED )
+    ->setDescription( "The maximum allowable runtime for the job." );
 }
 
-HaltEvent::~HaltEvent() { }
+HaltEvent::~HaltEvent()
+{}
 
-void HaltEvent::EstimateEventTiming(real64 const GEOSX_UNUSED_PARAM(time),
-                                    real64 const GEOSX_UNUSED_PARAM(dt),
-                                    integer const GEOSX_UNUSED_PARAM(cycle),
-                                    Group *GEOSX_UNUSED_PARAM(domain))
+void
+HaltEvent::EstimateEventTiming( real64 const GEOSX_UNUSED_PARAM( time ),
+                                real64 const GEOSX_UNUSED_PARAM( dt ),
+                                integer const GEOSX_UNUSED_PARAM( cycle ),
+                                Group * GEOSX_UNUSED_PARAM( domain ) )
 {
   // Check run time
   timeval tim;
-  gettimeofday(&tim, nullptr);
-  real64 currentTime = tim.tv_sec + (tim.tv_usec / 1000000.0);
+  gettimeofday( &tim, nullptr );
+  real64 currentTime = tim.tv_sec + ( tim.tv_usec / 1000000.0 );
 
   // Update values
   m_externalDt = currentTime - m_externalLastTime;
   m_externalLastTime = currentTime;
-  integer forecast = static_cast<integer>(
-    (m_maxRuntime - (currentTime - m_externalStartTime)) / m_externalDt);
+  integer forecast = static_cast< integer >(
+    ( m_maxRuntime - ( currentTime - m_externalStartTime ) ) / m_externalDt );
 
   // The timing for the ranks may differ slightly, so synchronize
   // TODO: Only do the communication when you are close to the end?
 #ifdef GEOSX_USE_MPI
   integer forecast_global;
-  MPI_Allreduce(&forecast, &forecast_global, 1, MPI_INT, MPI_MIN, MPI_COMM_WORLD);
+  MPI_Allreduce( &forecast, &forecast_global, 1, MPI_INT, MPI_MIN, MPI_COMM_WORLD );
   forecast = forecast_global;
 #endif
 
-  setForecast(forecast);
+  setForecast( forecast );
 
-  if(this->isReadyForExec())
+  if( this->isReadyForExec() )
   {
-    this->SetExitFlag(1);
+    this->SetExitFlag( 1 );
   }
 }
 
-REGISTER_CATALOG_ENTRY(EventBase, HaltEvent, std::string const &, Group *const)
+REGISTER_CATALOG_ENTRY( EventBase, HaltEvent, std::string const &, Group * const )
 } /* namespace geosx */

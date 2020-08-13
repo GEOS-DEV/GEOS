@@ -41,7 +41,7 @@ public:
    * @param name name of the object in the data hierarchy.
    * @param parent pointer to the parent group in the data hierarchy.
    */
-  Cylinder(const std::string& name, Group* const parent);
+  Cylinder( const std::string & name, Group * const parent );
 
   /**
    * @brief Default destructor.
@@ -59,11 +59,16 @@ public:
    * @brief Get the catalog name.
    * @return the name of this class in the catalog
    */
-  static string CatalogName() { return "Cylinder"; }
+  static string
+  CatalogName()
+  {
+    return "Cylinder";
+  }
 
   ///@}
 
-  bool IsCoordInObject(const R1Tensor& coord) const override final;
+  bool
+  IsCoordInObject( const R1Tensor & coord ) const override final;
 
 private:
   /// Center point of one (upper or lower) face of the cylinder

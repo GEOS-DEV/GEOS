@@ -26,7 +26,7 @@ namespace geosx
 {
 namespace SolidMechanicsLagrangianFEMKernels
 {
-#if defined(GEOSX_USE_CUDA)
+#if defined( GEOSX_USE_CUDA )
   /// Macro variable to indicate whether or not to calculate the shape function
   /// derivatives in the kernel instead of using a pre-calculated value.
   #define CALCFEMSHAPE
@@ -49,30 +49,31 @@ namespace SolidMechanicsLagrangianFEMKernels
  * @param fInv The inverse of the deformation gradient.
  * @param result The resulting vector.
  */
-template <int N, int USD>
-GEOSX_HOST_DEVICE GEOSX_FORCE_INLINE static void Integrate(
-  arraySlice1d<real64 const, USD> const& fieldVar,
-#if defined(CALCFEMSHAPE)
-  real64 const (&dNdX)[N][3],
+template< int N, int USD >
+GEOSX_HOST_DEVICE GEOSX_FORCE_INLINE static void
+Integrate(
+  arraySlice1d< real64 const, USD > const & fieldVar,
+#if defined( CALCFEMSHAPE )
+  real64 const ( &dNdX )[N][3],
 #else
-  arraySlice2d<real64 const> const& dNdX,
+  arraySlice2d< real64 const > const & dNdX,
 #endif
   real64 const detJ,
   real64 const detF,
-  real64 const (&fInv)[3][3],
-  real64 (&result)[N][3])
+  real64 const ( &fInv )[3][3],
+  real64 ( &result )[N][3] )
 {
-  GEOSX_ASSERT_EQ(fieldVar.size(), 6);
+  GEOSX_ASSERT_EQ( fieldVar.size(), 6 );
 
   real64 const integrationFactor = -detJ * detF;
 
   real64 P[3][3];
-  LvArray::tensorOps::symAikBjk<3>(P, fieldVar, fInv);
-  LvArray::tensorOps::scale<3, 3>(P, integrationFactor);
+  LvArray::tensorOps::symAikBjk< 3 >( P, fieldVar, fInv );
+  LvArray::tensorOps::scale< 3, 3 >( P, integrationFactor );
 
-  for(int a = 0; a < N; ++a)  // loop through all shape functions in element
+  for( int a = 0; a < N; ++a )  // loop through all shape functions in element
   {
-    LvArray::tensorOps::plusAijBj<3, 3>(result[a], P, dNdX[a]);
+    LvArray::tensorOps::plusAijBj< 3, 3 >( result[a], P, dNdX[a] );
   }
 }
 
@@ -84,13 +85,13 @@ GEOSX_HOST_DEVICE GEOSX_FORCE_INLINE static void Integrate(
  * ### Explicit Small Strain Description
  * Finite strain implementation.
  */
-template <typename SUBREGION_TYPE, typename CONSTITUTIVE_TYPE, typename FE_TYPE>
+template< typename SUBREGION_TYPE, typename CONSTITUTIVE_TYPE, typename FE_TYPE >
 class ExplicitFiniteStrain
-  : public ExplicitSmallStrain<SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE>
+  : public ExplicitSmallStrain< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >
 {
 public:
   /// Alias for the base class;
-  using Base = ExplicitSmallStrain<SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE>;
+  using Base = ExplicitSmallStrain< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >;
 
   using Base::m_constitutiveUpdate;
   using Base::m_elemGhostRank;
@@ -104,7 +105,7 @@ public:
   using Base::m_dt;
   using Base::m_u;
   using Base::m_vel;
-#if !defined(CALCFEMSHAPE)
+#if !defined( CALCFEMSHAPE )
   using Base::m_detJ;
   using Base::m_dNdX;
 #else
@@ -114,23 +115,23 @@ public:
   /**
    * @copydoc ExplicitSmallStrain
    */
-  ExplicitFiniteStrain(NodeManager& nodeManager,
-                       EdgeManager const& edgeManager,
-                       FaceManager const& faceManager,
-                       SUBREGION_TYPE const& elementSubRegion,
-                       FE_TYPE const& finiteElementSpace,
-                       CONSTITUTIVE_TYPE* const inputConstitutiveType,
-                       real64 const dt,
-                       string const& elementListName)
-    : Base(nodeManager,
-           edgeManager,
-           faceManager,
-           elementSubRegion,
-           finiteElementSpace,
-           inputConstitutiveType,
-           dt,
-           elementListName)
-  { }
+  ExplicitFiniteStrain( NodeManager & nodeManager,
+                        EdgeManager const & edgeManager,
+                        FaceManager const & faceManager,
+                        SUBREGION_TYPE const & elementSubRegion,
+                        FE_TYPE const & finiteElementSpace,
+                        CONSTITUTIVE_TYPE * const inputConstitutiveType,
+                        real64 const dt,
+                        string const & elementListName ) :
+    Base( nodeManager,
+          edgeManager,
+          faceManager,
+          elementSubRegion,
+          finiteElementSpace,
+          inputConstitutiveType,
+          dt,
+          elementListName )
+  {}
 
   //*****************************************************************************
   /**
@@ -141,7 +142,7 @@ public:
     using Base::StackVariables::fLocal;
     using Base::StackVariables::varLocal;
 
-#if defined(CALCFEMSHAPE)
+#if defined( CALCFEMSHAPE )
     using Base::StackVariables::detJ;
     using Base::StackVariables::dNdX;
     using Base::StackVariables::xLocal;
@@ -151,7 +152,10 @@ public:
      * @brief constructor
      */
     GEOSX_HOST_DEVICE
-    StackVariables() : Base::StackVariables(), uLocal {{0.0}} { }
+    StackVariables() :
+      Base::StackVariables(),
+      uLocal { { 0.0 } }
+    {}
 
     /// Local stack storage for nodal displacements.
     real64 uLocal[numNodesPerElem][numDofPerTrialSupportPoint];
@@ -163,14 +167,15 @@ public:
    */
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  void setup(localIndex const k, StackVariables& stack) const
+  void
+  setup( localIndex const k, StackVariables & stack ) const
   {
-    for(localIndex a = 0; a < numNodesPerElem; ++a)
+    for( localIndex a = 0; a < numNodesPerElem; ++a )
     {
-      localIndex const nodeIndex = m_elemsToNodes(k, a);
-      for(int i = 0; i < numDofPerTrialSupportPoint; ++i)
+      localIndex const nodeIndex = m_elemsToNodes( k, a );
+      for( int i = 0; i < numDofPerTrialSupportPoint; ++i )
       {
-#if defined(CALCFEMSHAPE)
+#if defined( CALCFEMSHAPE )
         stack.xLocal[a][i] = m_X[nodeIndex][i];
 #endif
         stack.uLocal[a][i] = m_u[nodeIndex][i];
@@ -184,13 +189,14 @@ public:
    */
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  void quadraturePointStateUpdate(localIndex const k,
-                                  localIndex const q,
-                                  StackVariables& stack) const
+  void
+  quadraturePointStateUpdate( localIndex const k,
+                              localIndex const q,
+                              StackVariables & stack ) const
   {
-#if defined(CALCFEMSHAPE)
+#if defined( CALCFEMSHAPE )
     real64 dNdX[numNodesPerElem][3];
-    real64 const detJ = FE_TYPE::shapeFunctionDerivatives(q, stack.xLocal, dNdX);
+    real64 const detJ = FE_TYPE::shapeFunctionDerivatives( q, stack.xLocal, dNdX );
 
   /// Macro to substitute in the shape function derivatives.
   #define DNDX dNdX
@@ -200,46 +206,46 @@ public:
 #else
   /// @cond DOXYGEN_SKIP
   #define DNDX m_dNdX[k][q]
-  #define DETJ m_detJ(k, q)
+  #define DETJ m_detJ( k, q )
       /// @endcond DOXYGEN_SKIP
 #endif
     real64 dUhatdX[3][3], dUdX[3][3];
-    CalculateGradients<numNodesPerElem>(dUhatdX,
-                                        dUdX,
-                                        stack.varLocal,
-                                        stack.uLocal,
-                                        DNDX);
-    LvArray::tensorOps::scale<3, 3>(dUhatdX, m_dt);
+    CalculateGradients< numNodesPerElem >( dUhatdX,
+                                           dUdX,
+                                           stack.varLocal,
+                                           stack.uLocal,
+                                           DNDX );
+    LvArray::tensorOps::scale< 3, 3 >( dUhatdX, m_dt );
 
     real64 F[3][3], Ldt[3][3], fInv[3][3];
 
     // calculate du/dX
-    LvArray::tensorOps::scaledCopy<3, 3>(F, dUhatdX, 0.5);
-    LvArray::tensorOps::add<3, 3>(F, dUdX);
-    LvArray::tensorOps::addIdentity<3>(F, 1.0);
-    LvArray::tensorOps::invert<3>(fInv, F);
+    LvArray::tensorOps::scaledCopy< 3, 3 >( F, dUhatdX, 0.5 );
+    LvArray::tensorOps::add< 3, 3 >( F, dUdX );
+    LvArray::tensorOps::addIdentity< 3 >( F, 1.0 );
+    LvArray::tensorOps::invert< 3 >( fInv, F );
 
     // chain rule: calculate dv/du = dv/dX * dX/du
-    LvArray::tensorOps::AikBkj<3, 3, 3>(Ldt, dUhatdX, fInv);
+    LvArray::tensorOps::AikBkj< 3, 3, 3 >( Ldt, dUhatdX, fInv );
 
     // calculate gradient (end of step)
-    LvArray::tensorOps::copy<3, 3>(F, dUhatdX);
-    LvArray::tensorOps::add<3, 3>(F, dUdX);
-    LvArray::tensorOps::addIdentity<3>(F, 1.0);
-    real64 const detF = LvArray::tensorOps::invert<3>(fInv, F);
+    LvArray::tensorOps::copy< 3, 3 >( F, dUhatdX );
+    LvArray::tensorOps::add< 3, 3 >( F, dUdX );
+    LvArray::tensorOps::addIdentity< 3 >( F, 1.0 );
+    real64 const detF = LvArray::tensorOps::invert< 3 >( fInv, F );
 
     real64 Rot[3][3];
     real64 Dadt[6];
-    HughesWinget(Rot, Dadt, Ldt);
+    HughesWinget( Rot, Dadt, Ldt );
 
-    m_constitutiveUpdate.HypoElastic(k, q, Dadt, Rot);
+    m_constitutiveUpdate.HypoElastic( k, q, Dadt, Rot );
 
-    Integrate<numNodesPerElem>(m_constitutiveUpdate.m_stress[k][q].toSliceConst(),
-                               DNDX,
-                               DETJ,
-                               detF,
-                               fInv,
-                               stack.fLocal);
+    Integrate< numNodesPerElem >( m_constitutiveUpdate.m_stress[k][q].toSliceConst(),
+                                  DNDX,
+                                  DETJ,
+                                  detF,
+                                  fInv,
+                                  stack.fLocal );
   }
 };
 #undef CALCFEMSHAPE

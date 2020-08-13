@@ -42,22 +42,25 @@ struct PetscInterface
    *
    * Essentially, it is a wrapper for PetscInitialize
    */
-  static void initialize(int& argc, char**& argv);
+  static void
+  initialize( int & argc, char **& argv );
 
   /**
    * @brief Finalizes the MPI environment for the Petsc library
    *
    * Essentially, it is a wrapper for PetscFinalize
    */
-  static void finalize();
+  static void
+  finalize();
 
   /**
    * @brief Create a PETSc-based preconditioner object.
    * @param params the parameters for preconditioner
    * @return owning pointer to the newly created preconditioner
    */
-  static std::unique_ptr<PreconditionerBase<PetscInterface>> createPreconditioner(
-    LinearSolverParameters params);
+  static std::unique_ptr< PreconditionerBase< PetscInterface > >
+  createPreconditioner(
+    LinearSolverParameters params );
 
   /// Alias for PetscMatrix
   using ParallelMatrix = PetscMatrix;
