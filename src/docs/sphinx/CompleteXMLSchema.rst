@@ -617,6 +617,13 @@ Element: TwoPointFluxApproximation
 .. include:: ../../coreComponents/fileIO/schema/docs/TwoPointFluxApproximation.rst
 
 
+.. _XML_TwoPointFluxApproximationWithGraph:
+
+Element: TwoPointFluxApproximationWithGraph
+===========================================
+.. include:: ../../coreComponents/fileIO/schema/docs/TwoPointFluxApproximationWithGraph.rst
+
+
 .. _XML_VTK:
 
 Element: VTK
@@ -1305,6 +1312,13 @@ Datastructure: ThickPlane
 Datastructure: TwoPointFluxApproximation
 ========================================
 .. include:: ../../coreComponents/fileIO/schema/docs/TwoPointFluxApproximation_other.rst
+
+
+.. _DATASTRUCTURE_TwoPointFluxApproximationWithGraph:
+
+Datastructure: TwoPointFluxApproximationWithGraph
+=================================================
+.. include:: ../../coreComponents/fileIO/schema/docs/TwoPointFluxApproximationWithGraph_other.rst
 
 
 .. _DATASTRUCTURE_VTK:
