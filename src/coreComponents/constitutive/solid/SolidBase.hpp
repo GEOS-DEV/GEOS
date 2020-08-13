@@ -180,10 +180,6 @@ public:
    */
   virtual ~SolidBase() override;
 
-  virtual void DeliverClone( string const & name,
-                             Group * const parent,
-                             std::unique_ptr< ConstitutiveBase > & clone ) const override;
-
   virtual void AllocateConstitutiveData( dataRepository::Group * const parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
@@ -232,6 +228,8 @@ public:
   ///@}
 
 protected:
+  virtual void PostProcessInput() override;
+
   /// The default density for new allocations.
   real64 m_defaultDensity = 0;
 

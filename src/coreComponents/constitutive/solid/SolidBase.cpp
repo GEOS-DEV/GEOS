@@ -52,30 +52,22 @@ SolidBase::SolidBase( string const & name,
 SolidBase::~SolidBase()
 {}
 
-void
-SolidBase::DeliverClone( string const & GEOSX_UNUSED_PARAM( name ),
-                         Group * const GEOSX_UNUSED_PARAM( parent ),
-                         std::unique_ptr< ConstitutiveBase > & clone ) const
+void SolidBase::PostProcessInput()
 {
-  SolidBase * const newConstitutiveRelation = dynamic_cast< SolidBase * >(clone.get());
-
-  newConstitutiveRelation->m_defaultDensity = m_defaultDensity;
-  newConstitutiveRelation->m_density = m_density;
-
-  newConstitutiveRelation->m_stress = m_stress;
+  this->getWrapper< array2d< real64 > >( viewKeyStruct::densityString )->
+    setApplyDefaultValue( m_defaultDensity );
 }
 
 
 void SolidBase::AllocateConstitutiveData( dataRepository::Group * const parent,
                                           localIndex const numConstitutivePointsPerParentIndex )
 {
+  m_density.resize( 0, numConstitutivePointsPerParentIndex );
+  m_stress.resize( 0, numConstitutivePointsPerParentIndex, 6 );
+
   ConstitutiveBase::AllocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 
   this->resize( parent->size() );
-  m_density.resize( parent->size(), numConstitutivePointsPerParentIndex );
-  m_density.setValues< serialPolicy >( m_defaultDensity );
-
-  m_stress.resize( parent->size(), numConstitutivePointsPerParentIndex, 6 );
 }
 
 }

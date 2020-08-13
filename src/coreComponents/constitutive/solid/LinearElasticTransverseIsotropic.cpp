@@ -102,32 +102,10 @@ LinearElasticTransverseIsotropic::DeliverClone( string const & name,
     clone = std::make_unique< LinearElasticTransverseIsotropic >( name, parent );
   }
   SolidBase::DeliverClone( name, parent, clone );
-  LinearElasticTransverseIsotropic * const newConstitutiveRelation = dynamic_cast< LinearElasticTransverseIsotropic * >(clone.get());
-
-  newConstitutiveRelation->m_defaultYoungsModulusTransverse = m_defaultYoungsModulusTransverse;
-  newConstitutiveRelation->m_defaultYoungsModulusAxial = m_defaultYoungsModulusAxial;
-  newConstitutiveRelation->m_defaultPoissonTransverse = m_defaultPoissonTransverse;
-  newConstitutiveRelation->m_defaultPoissonAxialTransverse = m_defaultPoissonAxialTransverse;
-  newConstitutiveRelation->m_defaultShearModulusAxialTransverse = m_defaultShearModulusAxialTransverse;
-
-  newConstitutiveRelation->m_c11 = m_c11;
-  newConstitutiveRelation->m_c13 = m_c13;
-  newConstitutiveRelation->m_c33 = m_c33;
-  newConstitutiveRelation->m_c44 = m_c44;
-  newConstitutiveRelation->m_c66 = m_c66;
-  newConstitutiveRelation->m_stress = m_stress;
-}
-
-void LinearElasticTransverseIsotropic::AllocateConstitutiveData( dataRepository::Group * const parent,
-                                                                 localIndex const numConstitutivePointsPerParentIndex )
-{
-  SolidBase::AllocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
-  this->resize( parent->size() );
 }
 
 void LinearElasticTransverseIsotropic::PostProcessInput()
 {
-
   if( !m_postProcessed )
   {
     real64 const Et = m_defaultYoungsModulusTransverse;

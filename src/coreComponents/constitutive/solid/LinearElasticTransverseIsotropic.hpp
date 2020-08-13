@@ -247,9 +247,6 @@ public:
                 Group * const parent,
                 std::unique_ptr< ConstitutiveBase > & clone ) const override;
 
-  virtual void AllocateConstitutiveData( dataRepository::Group * const parent,
-                                         localIndex const numConstitutivePointsPerParentIndex ) override;
-
   /**
    * @name Static Factory Catalog members and functions
    */

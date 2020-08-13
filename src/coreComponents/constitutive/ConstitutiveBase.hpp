@@ -72,12 +72,6 @@ public:
   }
 
   /**
-   * @brief function to resize the fields in this constitutive model
-   * @param[in] newSize the new size of the fields
-   */
-  virtual void resize( localIndex newSize ) override;
-
-  /**
    * @name Static Factory Catalog members and functions
    */
   ///@{

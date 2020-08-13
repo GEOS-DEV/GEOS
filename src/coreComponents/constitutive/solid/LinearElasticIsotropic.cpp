@@ -75,30 +75,6 @@ LinearElasticIsotropic::DeliverClone( string const & name,
     clone = std::make_unique< LinearElasticIsotropic >( name, parent );
   }
   SolidBase::DeliverClone( name, parent, clone );
-  LinearElasticIsotropic * const newConstitutiveRelation = dynamic_cast< LinearElasticIsotropic * >(clone.get());
-
-
-  newConstitutiveRelation->m_defaultBulkModulus = m_defaultBulkModulus;
-  newConstitutiveRelation->m_bulkModulus = m_bulkModulus;
-  newConstitutiveRelation->m_defaultDensity = m_defaultDensity;
-  newConstitutiveRelation->m_density = m_density;
-  newConstitutiveRelation->m_defaultShearModulus = m_defaultShearModulus;
-  newConstitutiveRelation->m_shearModulus = m_shearModulus;
-  newConstitutiveRelation->m_stress = m_stress;
-}
-
-void LinearElasticIsotropic::AllocateConstitutiveData( dataRepository::Group * const parent,
-                                                       localIndex const numConstitutivePointsPerParentIndex )
-{
-  SolidBase::AllocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
-
-  this->resize( parent->size() );
-  m_bulkModulus.resize( parent->size() );
-  m_shearModulus.resize( parent->size() );
-
-  m_bulkModulus.setValues< serialPolicy >( m_defaultBulkModulus );
-  m_shearModulus.setValues< serialPolicy >( m_defaultShearModulus );
-
 }
 
 void LinearElasticIsotropic::PostProcessInput()
@@ -106,6 +82,8 @@ void LinearElasticIsotropic::PostProcessInput()
 
   if( !m_postProcessed )
   {
+    SolidBase::PostProcessInput();
+
     real64 & nu = getReference< real64 >( viewKeyStruct::defaultPoissonRatioString );
     real64 & E  = getReference< real64 >( viewKeyStruct::defaultYoungsModulusString );
     real64 & K  = m_defaultBulkModulus;
@@ -174,6 +152,13 @@ void LinearElasticIsotropic::PostProcessInput()
       GEOSX_ERROR( "invalid specification for default elastic constants. "<<errorCheck<<" has been specified." );
     }
   }
+
+  this->getWrapper< array1d< real64 > >( viewKeyStruct::bulkModulusString )->
+    setApplyDefaultValue( m_defaultBulkModulus );
+
+  this->getWrapper< array1d< real64 > >( viewKeyStruct::shearModulusString )->
+    setApplyDefaultValue( m_defaultShearModulus );
+
   m_postProcessed = true;
 }
 

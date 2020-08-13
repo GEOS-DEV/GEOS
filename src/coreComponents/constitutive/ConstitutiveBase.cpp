@@ -94,11 +94,6 @@ void ConstitutiveBase::AllocateConstitutiveData( dataRepository::Group * const p
 
 }
 
-void ConstitutiveBase::resize( localIndex newsize )
-{
-  Group::resize( newsize );
-}
-
 void ConstitutiveBase::DeliverClone( string const & GEOSX_UNUSED_PARAM( name ),
                                      Group * const GEOSX_UNUSED_PARAM( parent ),
                                      std::unique_ptr< ConstitutiveBase > & clone ) const
@@ -106,7 +101,7 @@ void ConstitutiveBase::DeliverClone( string const & GEOSX_UNUSED_PARAM( name ),
   GEOSX_ASSERT( clone );
   clone->forWrappers( [&]( WrapperBase & wrapper )
   {
-    wrapper.CopyWrapperAttributes( *(this->getWrapperBase( wrapper.getName() ) ) );
+    wrapper.copyWrapper( *(this->getWrapperBase( wrapper.getName() ) ) );
   } );
 }
 

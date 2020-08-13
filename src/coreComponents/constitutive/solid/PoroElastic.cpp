@@ -57,7 +57,7 @@ PoroElastic< BASE >::PoroElastic( string const & name, Group * const parent ):
 
 
   this->registerWrapper( viewKeyStruct::poreVolumeMultiplierString, &m_poreVolumeMultiplier )->
-    setApplyDefaultValue( -1 )->
+    setApplyDefaultValue( 1.0 )->
     setDescription( "" );
 
   this->registerWrapper( viewKeyStruct::dPVMult_dPresString, &m_dPVMult_dPressure )->
@@ -72,7 +72,7 @@ PoroElastic< BASE >::~PoroElastic()
 template< typename BASE >
 void PoroElastic< BASE >::PostProcessInput()
 {
-  //    m_compressibility = 1 / K;
+  BASE::PostProcessInput();
 
   if( m_compressibility <= 0 )
   {
@@ -94,26 +94,15 @@ void PoroElastic< BASE >::DeliverClone( string const & name,
     clone = std::make_unique< PoroElastic< BASE > >( name, parent );
   }
   BASE::DeliverClone( name, parent, clone );
-  PoroElastic< BASE > * const newConstitutiveRelation = dynamic_cast< PoroElastic< BASE > * >(clone.get());
-
-  newConstitutiveRelation->m_compressibility      = m_compressibility;
-  newConstitutiveRelation->m_referencePressure    = m_referencePressure;
-  newConstitutiveRelation->m_biotCoefficient      = m_biotCoefficient;
-  newConstitutiveRelation->m_poreVolumeMultiplier = m_poreVolumeMultiplier;
-  newConstitutiveRelation->m_dPVMult_dPressure    = m_dPVMult_dPressure;
-  newConstitutiveRelation->m_poreVolumeRelation   = m_poreVolumeRelation;
 }
 
 template< typename BASE >
 void PoroElastic< BASE >::AllocateConstitutiveData( dataRepository::Group * const parent,
                                                     localIndex const numConstitutivePointsPerParentIndex )
 {
+  m_poreVolumeMultiplier.resize( 0, numConstitutivePointsPerParentIndex );
+  m_dPVMult_dPressure.resize( 0, numConstitutivePointsPerParentIndex );
   BASE::AllocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
-
-  m_poreVolumeMultiplier.resize( parent->size(), numConstitutivePointsPerParentIndex );
-  m_dPVMult_dPressure.resize( parent->size(), numConstitutivePointsPerParentIndex );
-  m_poreVolumeMultiplier.setValues< serialPolicy >( 1.0 );
-
 }
 
 template< typename BASE >

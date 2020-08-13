@@ -449,7 +449,7 @@ public:
    * @brief Copy attributes from another wrapper
    * @param[in] source the source wrapper, must wrap the same type @p T
    */
-  virtual void CopyWrapperAttributes( WrapperBase const & source );
+  virtual void copyWrapperAttributes( WrapperBase const & source );
 
   /**
    * @brief Creates a clone of @p *this WrapperBase
@@ -462,6 +462,19 @@ public:
    */
   virtual std::unique_ptr< WrapperBase > clone( string const & name,
                                                 Group * const parent ) = 0;
+
+  /**
+   * @brief Copy the the data contained in another wrapper into this wrapper.
+   * @param source The wrapper that holds the data to copy.
+   */
+  virtual void copyData( WrapperBase const & source ) = 0;
+
+  /**
+   * @brief Copies the contents of a Wrapper into *this.
+   * @param[in] source The wrapper to copy
+   * @return
+   */
+  virtual void copyWrapper( WrapperBase const & source ) = 0;
 
   /**
    * @brief Get the typeid of T.
