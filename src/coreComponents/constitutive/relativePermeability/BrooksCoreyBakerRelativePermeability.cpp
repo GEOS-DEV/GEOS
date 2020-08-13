@@ -60,32 +60,14 @@ BrooksCoreyBakerRelativePermeability::BrooksCoreyBakerRelativePermeability( std:
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Maximum rel perm value for the pair (gas phase, oil phase) at residual water saturation" );
 
+  registerWrapper( viewKeyStruct::volFracScaleString, &m_volFracScale )->
+    setApplyDefaultValue( 1.0 )->
+    setDescription( "???Volume Fraction Scale???" );
+
 }
 
 BrooksCoreyBakerRelativePermeability::~BrooksCoreyBakerRelativePermeability()
 {}
-
-void
-BrooksCoreyBakerRelativePermeability::DeliverClone( string const & name,
-                                                    Group * const parent,
-                                                    std::unique_ptr< ConstitutiveBase > & clone ) const
-{
-  if( !clone )
-  {
-    clone = std::make_unique< BrooksCoreyBakerRelativePermeability >( name, parent );
-  }
-
-  RelativePermeabilityBase::DeliverClone( name, parent, clone );
-  BrooksCoreyBakerRelativePermeability & relPerm = dynamicCast< BrooksCoreyBakerRelativePermeability & >( *clone );
-
-  relPerm.m_phaseMinVolumeFraction  = m_phaseMinVolumeFraction;
-  relPerm.m_waterOilRelPermExponent = m_waterOilRelPermExponent;
-  relPerm.m_waterOilRelPermMaxValue = m_waterOilRelPermMaxValue;
-  relPerm.m_gasOilRelPermExponent   = m_gasOilRelPermExponent;
-  relPerm.m_gasOilRelPermMaxValue   = m_gasOilRelPermMaxValue;
-  relPerm.m_volFracScale            = m_volFracScale;
-}
-
 
 void BrooksCoreyBakerRelativePermeability::PostProcessInput()
 {

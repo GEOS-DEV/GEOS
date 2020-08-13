@@ -110,17 +110,6 @@ void CapillaryPressureBase::ResizeFields( localIndex const size,
   m_dPhaseCapPressure_dPhaseVolFrac.resize( size, numPts, NP, NP );
 }
 
-void CapillaryPressureBase::DeliverClone( string const & name,
-                                          dataRepository::Group * const parent,
-                                          std::unique_ptr< ConstitutiveBase > & clone ) const
-{
-  ConstitutiveBase::DeliverClone( name, parent, clone );
-  CapillaryPressureBase & relPerm = dynamicCast< CapillaryPressureBase & >( *clone );
-
-  relPerm.m_phaseNames = m_phaseNames;
-  relPerm.m_phaseTypes = m_phaseTypes;
-  relPerm.m_phaseOrder = m_phaseOrder;
-}
 
 void CapillaryPressureBase::AllocateConstitutiveData( dataRepository::Group * const parent,
                                                       localIndex const numConstitutivePointsPerParentIndex )

@@ -51,7 +51,7 @@ public:
     static CatalogInterface::CatalogType catalog;
     return catalog;
   }
-  virtual string GetCatalogName() = 0;
+  virtual string GetCatalogName() const = 0;
 
 
   string const & FunctionName() const

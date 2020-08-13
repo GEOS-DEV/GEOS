@@ -85,27 +85,15 @@ CompositionalMultiphaseFluid::CompositionalMultiphaseFluid( std::string const & 
 CompositionalMultiphaseFluid::~CompositionalMultiphaseFluid()
 {}
 
-void
+std::unique_ptr< ConstitutiveBase >
 CompositionalMultiphaseFluid::DeliverClone( string const & name,
-                                            Group * const parent,
-                                            std::unique_ptr< ConstitutiveBase > & clone ) const
+                                            Group * const parent ) const
 {
-  if( !clone )
-  {
-    clone = std::make_unique< CompositionalMultiphaseFluid >( name, parent );
-  }
-
-  MultiFluidPVTPackageWrapper::DeliverClone( name, parent, clone );
+  std::unique_ptr< ConstitutiveBase > clone = MultiFluidPVTPackageWrapper::DeliverClone( name, parent );
   CompositionalMultiphaseFluid & fluid = dynamicCast< CompositionalMultiphaseFluid & >( *clone );
 
-  fluid.m_equationsOfState             = m_equationsOfState;
-  fluid.m_componentCriticalPressure    = m_componentCriticalPressure;
-  fluid.m_componentCriticalTemperature = m_componentCriticalTemperature;
-  fluid.m_componentAcentricFactor      = m_componentAcentricFactor;
-  fluid.m_componentVolumeShift         = m_componentVolumeShift;
-  fluid.m_componentBinaryCoeff         = m_componentBinaryCoeff;
-
   fluid.createFluid();
+  return clone;
 }
 
 void CompositionalMultiphaseFluid::PostProcessInput()

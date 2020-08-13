@@ -299,11 +299,6 @@ public:
    */
   virtual ~LinearElasticIsotropic() override;
 
-  virtual void
-  DeliverClone( string const & name,
-                Group * const parent,
-                std::unique_ptr< ConstitutiveBase > & clone ) const override;
-
   /**
    * @name Static Factory Catalog members and functions
    */
@@ -317,7 +312,7 @@ public:
    */
   static std::string CatalogName() { return m_catalogNameString; }
 
-  virtual string GetCatalogName() override { return CatalogName(); }
+  virtual string GetCatalogName() const override { return CatalogName(); }
 
   ///@}
 

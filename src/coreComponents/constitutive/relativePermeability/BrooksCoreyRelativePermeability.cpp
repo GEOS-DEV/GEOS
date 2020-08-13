@@ -50,29 +50,14 @@ BrooksCoreyRelativePermeability::BrooksCoreyRelativePermeability( std::string co
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Maximum rel perm value for each phase" );
 
+  registerWrapper( viewKeyStruct::volFracScaleString, &m_volFracScale )->
+    setApplyDefaultValue( 1.0 )->
+    setDescription( "???Volume Fraction Scale???" );
+
 }
 
 BrooksCoreyRelativePermeability::~BrooksCoreyRelativePermeability()
 {}
-
-void
-BrooksCoreyRelativePermeability::DeliverClone( string const & name,
-                                               Group * const parent,
-                                               std::unique_ptr< ConstitutiveBase > & clone ) const
-{
-  if( !clone )
-  {
-    clone = std::make_unique< BrooksCoreyRelativePermeability >( name, parent );
-  }
-
-  RelativePermeabilityBase::DeliverClone( name, parent, clone );
-  BrooksCoreyRelativePermeability & relPerm = dynamicCast< BrooksCoreyRelativePermeability & >( *clone );
-
-  relPerm.m_phaseMinVolumeFraction = m_phaseMinVolumeFraction;
-  relPerm.m_phaseRelPermExponent   = m_phaseRelPermExponent;
-  relPerm.m_phaseRelPermMaxValue   = m_phaseRelPermMaxValue;
-  relPerm.m_volFracScale           = m_volFracScale;
-}
 
 
 void BrooksCoreyRelativePermeability::PostProcessInput()

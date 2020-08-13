@@ -85,15 +85,15 @@ void PoroElastic< BASE >::PostProcessInput()
 }
 
 template< typename BASE >
-void PoroElastic< BASE >::DeliverClone( string const & name,
-                                        Group * const parent,
-                                        std::unique_ptr< ConstitutiveBase > & clone ) const
+std::unique_ptr< ConstitutiveBase >
+PoroElastic< BASE >::DeliverClone( string const & name,
+                                   dataRepository::Group * const parent ) const
 {
-  if( !clone )
-  {
-    clone = std::make_unique< PoroElastic< BASE > >( name, parent );
-  }
-  BASE::DeliverClone( name, parent, clone );
+  std::unique_ptr< ConstitutiveBase > clone = BASE::DeliverClone( name, parent );
+  PoroElastic< BASE > & castedClone = dynamic_cast< PoroElastic< BASE > & >( *clone );
+  castedClone.m_poreVolumeRelation = m_poreVolumeRelation;
+
+  return clone;
 }
 
 template< typename BASE >

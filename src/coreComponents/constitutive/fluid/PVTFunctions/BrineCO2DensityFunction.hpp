@@ -39,7 +39,7 @@ public:
 
   static constexpr auto m_catalogName = "BrineCO2Density";
   static string CatalogName()                    { return m_catalogName; }
-  virtual string GetCatalogName() override final { return CatalogName(); }
+  virtual string GetCatalogName() const override final { return CatalogName(); }
 
 
   virtual PVTFuncType FunctionType() const override

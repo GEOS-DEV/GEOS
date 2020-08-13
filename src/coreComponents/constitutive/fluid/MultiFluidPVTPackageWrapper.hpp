@@ -186,9 +186,9 @@ public:
 
   virtual ~MultiFluidPVTPackageWrapper() override;
 
-  virtual void DeliverClone( string const & name,
-                             Group * const parent,
-                             std::unique_ptr< ConstitutiveBase > & clone ) const override;
+  virtual std::unique_ptr< ConstitutiveBase >
+  DeliverClone( string const & name,
+                Group * const parent ) const override;
 
   /// Type of kernel wrapper for in-kernel update
   using KernelWrapper = MultiFluidPVTPackageWrapperUpdate;

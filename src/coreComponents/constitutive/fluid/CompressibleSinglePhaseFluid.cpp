@@ -76,28 +76,18 @@ void CompressibleSinglePhaseFluid::AllocateConstitutiveData( dataRepository::Gro
   m_viscosity.setValues< serialPolicy >( m_referenceViscosity );
 }
 
-void
+std::unique_ptr< ConstitutiveBase >
 CompressibleSinglePhaseFluid::DeliverClone( string const & name,
-                                            Group * const parent,
-                                            std::unique_ptr< ConstitutiveBase > & clone ) const
+                                            Group * const parent ) const
 {
-  if( !clone )
-  {
-    clone = std::make_unique< CompressibleSinglePhaseFluid >( name, parent );
-  }
-  SingleFluidBase::DeliverClone( name, parent, clone );
+  std::unique_ptr< ConstitutiveBase > clone = SingleFluidBase::DeliverClone( name, parent );
+
   CompressibleSinglePhaseFluid & fluid = dynamicCast< CompressibleSinglePhaseFluid & >( *clone );
 
-  fluid.m_compressibility      = m_compressibility;
-  fluid.m_viscosibility        = m_viscosibility;
-  fluid.m_referencePressure    = m_referencePressure;
-  fluid.m_referenceDensity     = m_referenceDensity;
-  fluid.m_referenceViscosity   = m_referenceViscosity;
-  fluid.m_densityModelString   = m_densityModelString;
-  fluid.m_viscosityModelString = m_viscosityModelString;
   fluid.m_densityModelType     = m_densityModelType;
   fluid.m_viscosityModelType   = m_viscosityModelType;
 
+  return clone;
 }
 
 void CompressibleSinglePhaseFluid::PostProcessInput()

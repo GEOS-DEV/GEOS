@@ -64,19 +64,6 @@ LinearElasticIsotropic::LinearElasticIsotropic( std::string const & name, Group 
 LinearElasticIsotropic::~LinearElasticIsotropic()
 {}
 
-
-void
-LinearElasticIsotropic::DeliverClone( string const & name,
-                                      Group * const parent,
-                                      std::unique_ptr< ConstitutiveBase > & clone ) const
-{
-  if( !clone )
-  {
-    clone = std::make_unique< LinearElasticIsotropic >( name, parent );
-  }
-  SolidBase::DeliverClone( name, parent, clone );
-}
-
 void LinearElasticIsotropic::PostProcessInput()
 {
 

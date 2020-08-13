@@ -55,9 +55,8 @@ public:
    * @param[in]  parent A pointer to the group that contains the instance of the new clone
    * @param[out] clone  A reference to a unique_ptr  that will hold the clone.
    */
-  virtual void DeliverClone( string const & name,
-                             Group * const parent,
-                             std::unique_ptr< ConstitutiveBase > & clone ) const = 0;
+  virtual std::unique_ptr< ConstitutiveBase > DeliverClone( string const & name,
+                                                            Group * const parent ) const;
 
 
   virtual void StateUpdatePointPressure( real64 const & GEOSX_UNUSED_PARAM( pres ),
@@ -89,7 +88,7 @@ public:
    * @brief function to return the catalog name of the derived class
    * @return a string that contains the catalog name of the derived class
    */
-  virtual string GetCatalogName() = 0;
+  virtual string GetCatalogName() const = 0;
 
   ///@}
 

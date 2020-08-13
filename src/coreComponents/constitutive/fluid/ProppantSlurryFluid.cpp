@@ -72,25 +72,6 @@ void ProppantSlurryFluid::AllocateConstitutiveData( dataRepository::Group * cons
   m_viscosity.setValues< serialPolicy >( m_referenceViscosity );
 }
 
-void
-ProppantSlurryFluid::DeliverClone( string const & name,
-                                   Group * const parent,
-                                   std::unique_ptr< ConstitutiveBase > & clone ) const
-{
-  if( !clone )
-  {
-    clone = std::make_unique< ProppantSlurryFluid >( name, parent );
-  }
-  SlurryFluidBase::DeliverClone( name, parent, clone );
-  ProppantSlurryFluid & fluid = dynamicCast< ProppantSlurryFluid & >( *clone );
-
-  fluid.m_compressibility          = m_compressibility;
-  fluid.m_referenceProppantDensity = m_referenceProppantDensity;
-  fluid.m_referencePressure        = m_referencePressure;
-  fluid.m_referenceDensity         = m_referenceDensity;
-  fluid.m_referenceViscosity       = m_referenceViscosity;
-  fluid.m_maxProppantConcentration = m_maxProppantConcentration;
-}
 
 void ProppantSlurryFluid::PostProcessInput()
 {

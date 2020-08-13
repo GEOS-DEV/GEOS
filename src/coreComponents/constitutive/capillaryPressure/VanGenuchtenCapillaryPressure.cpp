@@ -52,31 +52,15 @@ VanGenuchtenCapillaryPressure::VanGenuchtenCapillaryPressure( std::string const 
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription(
     "Saturation at which the extremum capillary pressure is attained; used to avoid infinite capillary pressure values for saturations close to 0 and 1" );
+
+  registerWrapper( viewKeyStruct::volFracScaleString, &m_volFracScale )->
+    setApplyDefaultValue( 1.0 )->
+    setDescription( "???Volume Fraction Scale???" );
+
 }
 
 VanGenuchtenCapillaryPressure::~VanGenuchtenCapillaryPressure()
 {}
-
-void
-VanGenuchtenCapillaryPressure::DeliverClone( string const & name,
-                                             Group * const parent,
-                                             std::unique_ptr< ConstitutiveBase > & clone ) const
-{
-  if( !clone )
-  {
-    clone = std::make_unique< VanGenuchtenCapillaryPressure >( name, parent );
-  }
-
-  CapillaryPressureBase::DeliverClone( name, parent, clone );
-  VanGenuchtenCapillaryPressure & relPerm = dynamicCast< VanGenuchtenCapillaryPressure & >( *clone );
-
-  relPerm.m_phaseMinVolumeFraction      = m_phaseMinVolumeFraction;
-  relPerm.m_phaseCapPressureExponentInv = m_phaseCapPressureExponentInv;
-  relPerm.m_phaseCapPressureMultiplier  = m_phaseCapPressureMultiplier;
-  relPerm.m_capPressureEpsilon          = m_capPressureEpsilon;
-  relPerm.m_volFracScale                = m_volFracScale;
-}
-
 
 void VanGenuchtenCapillaryPressure::PostProcessInput()
 {

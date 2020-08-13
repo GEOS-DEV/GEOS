@@ -74,14 +74,16 @@ void MultiFluidPVTPackageWrapper::InitializePostSubGroups( Group * const group )
   createFluid();
 }
 
-void MultiFluidPVTPackageWrapper::DeliverClone( string const & name,
-                                                Group * const parent,
-                                                std::unique_ptr< ConstitutiveBase > & clone ) const
+std::unique_ptr< ConstitutiveBase >
+MultiFluidPVTPackageWrapper::DeliverClone( string const & name,
+                                           Group * const parent ) const
 {
-  MultiFluidBase::DeliverClone( name, parent, clone );
+  std::unique_ptr< ConstitutiveBase > clone = MultiFluidBase::DeliverClone( name, parent );
 
   MultiFluidPVTPackageWrapper & model = dynamicCast< MultiFluidPVTPackageWrapper & >( *clone );
   model.m_phaseTypes = m_phaseTypes;
+
+  return clone;
 }
 
 void MultiFluidPVTPackageWrapperUpdate::Compute( real64 pressure,

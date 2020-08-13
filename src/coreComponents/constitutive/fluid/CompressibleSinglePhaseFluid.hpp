@@ -117,13 +117,13 @@ public:
 
   virtual ~CompressibleSinglePhaseFluid() override;
 
-  virtual void DeliverClone( string const & name,
-                             Group * const parent,
-                             std::unique_ptr< ConstitutiveBase > & clone ) const override;
+  virtual std::unique_ptr< ConstitutiveBase >
+  DeliverClone( string const & name,
+                Group * const parent ) const override;
 
   static std::string CatalogName() { return "CompressibleSinglePhaseFluid"; }
 
-  virtual string GetCatalogName() override { return CatalogName(); }
+  virtual string GetCatalogName() const override { return CatalogName(); }
 
   virtual void AllocateConstitutiveData( dataRepository::Group * const parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;

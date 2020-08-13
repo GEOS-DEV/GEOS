@@ -154,13 +154,9 @@ public:
 
   virtual ~VanGenuchtenBakerRelativePermeability() override;
 
-  void DeliverClone( string const & name,
-                     Group * const parent,
-                     std::unique_ptr< ConstitutiveBase > & clone ) const override;
-
   static std::string CatalogName() { return "VanGenuchtenBakerRelativePermeability"; }
 
-  virtual string GetCatalogName() override { return CatalogName(); }
+  virtual string GetCatalogName() const override { return CatalogName(); }
 
   /// Type of kernel wrapper for in-kernel update
   using KernelWrapper = VanGenuchtenBakerRelativePermeabilityUpdate;
@@ -178,6 +174,7 @@ public:
     static constexpr auto waterOilRelPermMaxValueString    = "waterOilRelPermMaxValue";
     static constexpr auto gasOilRelPermExponentInvString   = "gasOilRelPermExponentInv";
     static constexpr auto gasOilRelPermMaxValueString      = "gasOilRelPermMaxValue";
+    static constexpr auto volFracScaleString                = "volFracScale";
   } viewKeysVanGenuchtenBakerRelativePermeability;
 
 protected:

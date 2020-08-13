@@ -61,11 +61,7 @@ public:
    */
   static string CatalogName() { return "Contact"; }
 
-  virtual string GetCatalogName() override { return CatalogName(); }
-
-  virtual void DeliverClone( string const & GEOSX_UNUSED_PARAM( name ),
-                             Group * const GEOSX_UNUSED_PARAM( parent ),
-                             std::unique_ptr< ConstitutiveBase > & GEOSX_UNUSED_PARAM( clone ) ) const override {}
+  virtual string GetCatalogName() const override { return CatalogName(); }
 
   virtual Group * CreateChild( string const & catalogKey,
                                string const & name ) override;

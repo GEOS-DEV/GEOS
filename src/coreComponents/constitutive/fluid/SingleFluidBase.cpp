@@ -70,24 +70,6 @@ void SingleFluidBase::AllocateConstitutiveData( Group * const parent,
   m_dViscosity_dPressure.resize( parent->size(), numConstitutivePointsPerParentIndex );
 }
 
-
-void
-SingleFluidBase::DeliverClone( string const & name,
-                               Group * const parent,
-                               std::unique_ptr< ConstitutiveBase > & clone ) const
-{
-  GEOSX_ERROR_IF( !clone, "clone not allocated" );
-
-  ConstitutiveBase::DeliverClone( name, parent, clone );
-  SingleFluidBase & newConstitutiveRelation = dynamicCast< SingleFluidBase & >( *clone );
-
-  newConstitutiveRelation.m_defaultDensity = m_defaultDensity;
-  newConstitutiveRelation.m_defaultViscosity = m_defaultViscosity;
-  newConstitutiveRelation.m_density = m_density;
-  newConstitutiveRelation.m_viscosity = m_viscosity;
-  newConstitutiveRelation.m_dDensity_dPressure = m_dDensity_dPressure;
-  newConstitutiveRelation.m_dViscosity_dPressure = m_dViscosity_dPressure;
-}
 } //namespace constitutive
 
 } //namespace geosx

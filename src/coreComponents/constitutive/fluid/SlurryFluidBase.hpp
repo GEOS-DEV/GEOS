@@ -247,11 +247,6 @@ public:
   virtual ~SlurryFluidBase() override;
 
   // *** ConstitutiveBase interface
-
-  virtual void DeliverClone( string const & name,
-                             Group * const parent,
-                             std::unique_ptr< ConstitutiveBase > & clone ) const override = 0;
-
   virtual void AllocateConstitutiveData( dataRepository::Group * const parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 

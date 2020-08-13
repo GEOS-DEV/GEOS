@@ -47,11 +47,6 @@ public:
    */
   virtual ~MohrCoulomb() override;
 
-  virtual void
-  DeliverClone( string const & name,
-                Group * const parent,
-                std::unique_ptr< ConstitutiveBase > & clone ) const override;
-
   virtual real64 limitTangentialTractionNorm( real64 const normalTraction ) const override final;
 
   virtual real64 dLimitTangentialTractionNorm_dNormalTraction( real64 const normalTraction ) const override final;
@@ -69,7 +64,7 @@ public:
    */
   static std::string CatalogName() { return m_catalogNameString; }
 
-  virtual string GetCatalogName() override { return CatalogName(); }
+  virtual string GetCatalogName() const override { return CatalogName(); }
 
   ///@}
 

@@ -153,13 +153,9 @@ public:
 
   virtual ~BrooksCoreyBakerRelativePermeability() override;
 
-  void DeliverClone( string const & name,
-                     Group * const parent,
-                     std::unique_ptr< ConstitutiveBase > & clone ) const override;
-
   static std::string CatalogName() { return "BrooksCoreyBakerRelativePermeability"; }
 
-  virtual string GetCatalogName() override { return CatalogName(); }
+  virtual string GetCatalogName() const override { return CatalogName(); }
 
   /// Type of kernel wrapper for in-kernel update
   using KernelWrapper = BrooksCoreyBakerRelativePermeabilityUpdate;
@@ -177,6 +173,7 @@ public:
     static constexpr auto waterOilRelPermMaxValueString = "waterOilRelPermMaxValue";
     static constexpr auto gasOilRelPermExponentString   = "gasOilRelPermExponent";
     static constexpr auto gasOilRelPermMaxValueString   = "gasOilRelPermMaxValue";
+    static constexpr auto volFracScaleString            = "volFracScale";
   } viewKeysBrooksCoreyBakerRelativePermeability;
 
 protected:

@@ -105,38 +105,22 @@ ParticleFluid::ParticleFluid( std::string const & name, Group * const parent ):
 
 ParticleFluid::~ParticleFluid() = default;
 
+std::unique_ptr< ConstitutiveBase >
+ParticleFluid::DeliverClone( string const & name,
+                             Group * const parent ) const
+{
+  std::unique_ptr< ConstitutiveBase > clone = ParticleFluidBase::DeliverClone( name, parent );
+
+  ParticleFluid & model = dynamicCast< ParticleFluid & >( *clone );
+  model.m_particleSettlingModel = m_particleSettlingModel;
+
+  return clone;
+}
+
 void ParticleFluid::AllocateConstitutiveData( dataRepository::Group * const parent,
                                               localIndex const numConstitutivePointsPerParentIndex )
 {
   ParticleFluidBase::AllocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
-
-}
-
-void
-ParticleFluid::DeliverClone( string const & name,
-                             Group * const parent,
-                             std::unique_ptr< ConstitutiveBase > & clone ) const
-{
-  if( !clone )
-  {
-    clone = std::make_unique< ParticleFluid >( name, parent );
-  }
-  ParticleFluidBase::DeliverClone( name, parent, clone );
-  ParticleFluid & fluid = dynamicCast< ParticleFluid & >( *clone );
-
-  fluid.m_proppantDensity  = m_proppantDensity;
-  fluid.m_fluidViscosity   = m_fluidViscosity;
-  fluid.m_proppantDiameter = m_proppantDiameter;
-
-  fluid.m_hinderedSettlingCoefficient = m_hinderedSettlingCoefficient;
-  fluid.m_collisionAlpha = m_collisionAlpha;
-  fluid.m_slipConcentration = m_slipConcentration;
-  fluid.m_collisionBeta = m_collisionBeta;
-
-  fluid.m_sphericity = m_sphericity;
-
-  fluid.m_particleSettlingModelString = m_particleSettlingModelString;
-  fluid.m_particleSettlingModel = m_particleSettlingModel;
 
 }
 

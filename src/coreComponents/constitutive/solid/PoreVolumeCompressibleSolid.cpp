@@ -46,19 +46,18 @@ PoreVolumeCompressibleSolid::PoreVolumeCompressibleSolid( std::string const & na
 
 PoreVolumeCompressibleSolid::~PoreVolumeCompressibleSolid() = default;
 
-void
+std::unique_ptr< ConstitutiveBase >
 PoreVolumeCompressibleSolid::DeliverClone( string const & name,
-                                           Group * const parent,
-                                           std::unique_ptr< ConstitutiveBase > & clone ) const
+                                           Group * const parent ) const
 {
-  std::unique_ptr< PoreVolumeCompressibleSolid > newConstitutiveRelation =
-    std::make_unique< PoreVolumeCompressibleSolid >( name, parent );
+  std::unique_ptr< ConstitutiveBase > clone = ConstitutiveBase::DeliverClone( name, parent );
 
-  newConstitutiveRelation->m_compressibility    = this->m_compressibility;
-  newConstitutiveRelation->m_referencePressure  = this->m_referencePressure;
+  PoreVolumeCompressibleSolid * const
+  newConstitutiveRelation = dynamic_cast< PoreVolumeCompressibleSolid * >(clone.get());
+
   newConstitutiveRelation->m_poreVolumeRelation = this->m_poreVolumeRelation;
 
-  clone = std::move( newConstitutiveRelation );
+  return clone;
 }
 
 void PoreVolumeCompressibleSolid::AllocateConstitutiveData( dataRepository::Group * const parent,

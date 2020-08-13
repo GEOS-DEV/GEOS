@@ -36,8 +36,7 @@ void testNumericalDerivatives( RelativePermeabilityBase & relPerm,
   auto const & phases = relPerm.phaseNames();
 
   // create a clone of the rel perm to run updates on
-  std::unique_ptr< ConstitutiveBase > relPermCopyPtr;
-  relPerm.DeliverClone( "fluidCopy", nullptr, relPermCopyPtr );
+  std::unique_ptr< ConstitutiveBase > relPermCopyPtr = relPerm.DeliverClone( "fluidCopy", nullptr );
   RelativePermeabilityBase & relPermCopy = *relPermCopyPtr->group_cast< RelativePermeabilityBase * >();
 
   relPerm.AllocateConstitutiveData( relPerm.getParent(), 1 );

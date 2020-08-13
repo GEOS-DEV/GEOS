@@ -94,15 +94,19 @@ void ConstitutiveBase::AllocateConstitutiveData( dataRepository::Group * const p
 
 }
 
-void ConstitutiveBase::DeliverClone( string const & GEOSX_UNUSED_PARAM( name ),
-                                     Group * const GEOSX_UNUSED_PARAM( parent ),
-                                     std::unique_ptr< ConstitutiveBase > & clone ) const
+std::unique_ptr< ConstitutiveBase >
+ConstitutiveBase::DeliverClone( string const & name,
+                                Group * const parent ) const
 {
-  GEOSX_ASSERT( clone );
-  clone->forWrappers( [&]( WrapperBase & wrapper )
+  std::unique_ptr< ConstitutiveBase >
+  newModel = ConstitutiveBase::CatalogInterface::Factory( this->GetCatalogName(), name, parent );
+
+  newModel->forWrappers( [&]( WrapperBase & wrapper )
   {
     wrapper.copyWrapper( *(this->getWrapperBase( wrapper.getName() ) ) );
   } );
+
+  return newModel;
 }
 
 

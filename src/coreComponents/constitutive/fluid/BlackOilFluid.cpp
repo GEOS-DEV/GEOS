@@ -76,25 +76,17 @@ BlackOilFluid::BlackOilFluid( std::string const & name, Group * const parent )
 BlackOilFluid::~BlackOilFluid()
 {}
 
-void
+std::unique_ptr< ConstitutiveBase >
 BlackOilFluid::DeliverClone( string const & name,
-                             Group * const parent,
-                             std::unique_ptr< ConstitutiveBase > & clone ) const
+                             Group * const parent ) const
 {
-  if( !clone )
-  {
-    clone = std::make_unique< BlackOilFluid >( name, parent );
-  }
-
-  MultiFluidPVTPackageWrapper::DeliverClone( name, parent, clone );
+  std::unique_ptr< ConstitutiveBase >
+  clone = MultiFluidPVTPackageWrapper::DeliverClone( name, parent );
   BlackOilFluid & fluid = dynamicCast< BlackOilFluid & >( *clone );
 
-  fluid.m_surfaceDensities = m_surfaceDensities;
-  fluid.m_tableFiles       = m_tableFiles;
-  fluid.m_fluidTypeString  = m_fluidTypeString;
   fluid.m_fluidType        = m_fluidType;
-
   fluid.createFluid();
+  return clone;
 }
 
 void BlackOilFluid::PostProcessInput()

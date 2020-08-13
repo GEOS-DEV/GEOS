@@ -92,17 +92,6 @@ LinearElasticTransverseIsotropic::~LinearElasticTransverseIsotropic()
 {}
 
 
-void
-LinearElasticTransverseIsotropic::DeliverClone( string const & name,
-                                                Group * const parent,
-                                                std::unique_ptr< ConstitutiveBase > & clone ) const
-{
-  if( !clone )
-  {
-    clone = std::make_unique< LinearElasticTransverseIsotropic >( name, parent );
-  }
-  SolidBase::DeliverClone( name, parent, clone );
-}
 
 void LinearElasticTransverseIsotropic::PostProcessInput()
 {

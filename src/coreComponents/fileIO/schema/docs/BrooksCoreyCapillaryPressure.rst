@@ -9,6 +9,7 @@ phaseCapPressureExponentInv real64_array {2}      Inverse of capillary power law
 phaseEntryPressure          real64_array {1}      Entry pressure value for each phase                                                                                                            
 phaseMinVolumeFraction      real64_array {0}      Minimum volume fraction value for each phase                                                                                                   
 phaseNames                  string_array required List of fluid phases                                                                                                                           
+volFracScale                real64       1        ???Volume Fraction Scale???                                                                                                                    
 =========================== ============ ======== ============================================================================================================================================== 
 
 
