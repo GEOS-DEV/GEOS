@@ -239,9 +239,6 @@ protected:
   /// The material stress at a quadrature point.
 
   array3d< real64, solid::STRESS_PERMUTATION > m_stress;
-  /// band-aid fix...going to have to remove this after we clean up
-  /// initialization for constitutive models.
-  bool m_postProcessed = false;
 };
 
 } // namespace constitutive

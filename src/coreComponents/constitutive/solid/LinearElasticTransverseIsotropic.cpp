@@ -95,39 +95,35 @@ LinearElasticTransverseIsotropic::~LinearElasticTransverseIsotropic()
 
 void LinearElasticTransverseIsotropic::PostProcessInput()
 {
-  if( !m_postProcessed )
-  {
-    real64 const Et = m_defaultYoungsModulusTransverse;
-    real64 const Ea = m_defaultYoungsModulusAxial;
-    real64 const Nut = m_defaultPoissonTransverse;
-    real64 const Nuat = m_defaultPoissonAxialTransverse;
-    real64 const Gat = m_defaultShearModulusAxialTransverse;
-    real64 const Nuta = Nuat * ( Et/Ea );
+  real64 const Et = m_defaultYoungsModulusTransverse;
+  real64 const Ea = m_defaultYoungsModulusAxial;
+  real64 const Nut = m_defaultPoissonTransverse;
+  real64 const Nuat = m_defaultPoissonAxialTransverse;
+  real64 const Gat = m_defaultShearModulusAxialTransverse;
+  real64 const Nuta = Nuat * ( Et/Ea );
 
-    real64 const delta = ( 1 + Nut ) * ( 1 - Nut - 2 * Nuta * Nuat ) / ( Et * Et * Ea );
-    real64 const c11Default = ( 1.0 - Nuta * Nuat ) / ( Ea * Et * delta );
-    real64 const c13Default = Nuat * ( 1.0 + Nut ) / ( Ea * Et * delta );
-    real64 const c33Default = ( 1 - Nut * Nut ) / ( Ea * Ea * delta );
-    real64 const c44Default = Gat;
-    real64 const c66Default = 0.5 * Ea / ( 1 + Nut );
+  real64 const delta = ( 1 + Nut ) * ( 1 - Nut - 2 * Nuta * Nuat ) / ( Et * Et * Ea );
+  real64 const c11Default = ( 1.0 - Nuta * Nuat ) / ( Ea * Et * delta );
+  real64 const c13Default = Nuat * ( 1.0 + Nut ) / ( Ea * Et * delta );
+  real64 const c33Default = ( 1 - Nut * Nut ) / ( Et * Et * delta );
+  real64 const c44Default = Gat;
+  real64 const c66Default = 0.5 * Et / ( 1 + Nut );
 
 
-    this->getWrapper< array1d< real64 > >( viewKeyStruct::c11 )->
-      setApplyDefaultValue( c11Default );
+  this->getWrapper< array1d< real64 > >( viewKeyStruct::c11 )->
+    setApplyDefaultValue( c11Default );
 
-    this->getWrapper< array1d< real64 > >( viewKeyStruct::c13 )->
-      setApplyDefaultValue( c13Default );
+  this->getWrapper< array1d< real64 > >( viewKeyStruct::c13 )->
+    setApplyDefaultValue( c13Default );
 
-    this->getWrapper< array1d< real64 > >( viewKeyStruct::c33 )->
-      setApplyDefaultValue( c33Default );
+  this->getWrapper< array1d< real64 > >( viewKeyStruct::c33 )->
+    setApplyDefaultValue( c33Default );
 
-    this->getWrapper< array1d< real64 > >( viewKeyStruct::c44 )->
-      setApplyDefaultValue( c44Default );
+  this->getWrapper< array1d< real64 > >( viewKeyStruct::c44 )->
+    setApplyDefaultValue( c44Default );
 
-    this->getWrapper< array1d< real64 > >( viewKeyStruct::c66 )->
-      setApplyDefaultValue( c66Default );
-  }
-  m_postProcessed = true;
+  this->getWrapper< array1d< real64 > >( viewKeyStruct::c66 )->
+    setApplyDefaultValue( c66Default );
 }
 
 

@@ -64,80 +64,93 @@ LinearElasticIsotropic::LinearElasticIsotropic( std::string const & name, Group 
 LinearElasticIsotropic::~LinearElasticIsotropic()
 {}
 
+
+void LinearElasticIsotropic::setDefaultBulkModulus( real64 const bulkModulus )
+{
+  m_defaultBulkModulus = bulkModulus;
+  this->getWrapper< decltype(m_bulkModulus) >( viewKeyStruct::bulkModulusString )->
+    setApplyDefaultValue( m_defaultBulkModulus );
+}
+
+void LinearElasticIsotropic::setDefaultShearModulus( real64 const shearModulus )
+{
+  m_defaultShearModulus = shearModulus;
+  this->getWrapper< decltype(m_shearModulus) >( viewKeyStruct::shearModulusString )->
+    setApplyDefaultValue( m_defaultShearModulus );
+}
+
+
 void LinearElasticIsotropic::PostProcessInput()
 {
 
-  if( !m_postProcessed )
+  SolidBase::PostProcessInput();
+
+  real64 & nu = getReference< real64 >( viewKeyStruct::defaultPoissonRatioString );
+  real64 & E  = getReference< real64 >( viewKeyStruct::defaultYoungsModulusString );
+  real64 & K  = m_defaultBulkModulus;
+  real64 & G  = m_defaultShearModulus;
+
+  string errorCheck( "( " );
+  int numConstantsSpecified = 0;
+  if( nu >= 0.0 )
   {
-    SolidBase::PostProcessInput();
+    ++numConstantsSpecified;
+    errorCheck += "nu, ";
+  }
+  if( E >= 0.0 )
+  {
+    ++numConstantsSpecified;
+    errorCheck += "E, ";
+  }
+  if( K >= 0.0 )
+  {
+    ++numConstantsSpecified;
+    errorCheck += "K, ";
+  }
+  if( G >= 0.0 )
+  {
+    ++numConstantsSpecified;
+    errorCheck += "G, ";
+  }
+  errorCheck += ")";
 
-    real64 & nu = getReference< real64 >( viewKeyStruct::defaultPoissonRatioString );
-    real64 & E  = getReference< real64 >( viewKeyStruct::defaultYoungsModulusString );
-    real64 & K  = m_defaultBulkModulus;
-    real64 & G  = m_defaultShearModulus;
+  GEOSX_ERROR_IF( numConstantsSpecified != 2,
+                  "A specific pair of elastic constants is required. Either (K,G) or (E,nu). "<<
+                  "You have specified "<<errorCheck );
 
-    string errorCheck( "( " );
-    int numConstantsSpecified = 0;
-    if( nu >= 0.0 )
-    {
-      ++numConstantsSpecified;
-      errorCheck += "nu, ";
-    }
-    if( E >= 0.0 )
-    {
-      ++numConstantsSpecified;
-      errorCheck += "E, ";
-    }
-    if( K >= 0.0 )
-    {
-      ++numConstantsSpecified;
-      errorCheck += "K, ";
-    }
-    if( G >= 0.0 )
-    {
-      ++numConstantsSpecified;
-      errorCheck += "G, ";
-    }
-    errorCheck += ")";
-
-    GEOSX_ERROR_IF( numConstantsSpecified != 2,
-                    "A specific pair of elastic constants is required. Either (K,G) or (E,nu). "<<
-                    "You have specified "<<errorCheck );
-
-    if( nu >= 0.0 && E >= 0.0 )
-    {
-      K = E / (3 * ( 1 - 2*nu ) );
-      G = E / (2 * ( 1 + nu ) );
-    }
-    else if( nu >= 0.0 && G >= 0.0 )
-    {
-      E = 2 * G * ( 1 + nu );
-      K = E / (3 * ( 1 - 2*nu ) );
-    }
-    else if( nu >= 0 && K >= 0.0 )
-    {
-      E = 3 * K * ( 1 - 2 * nu );
-      G = E / ( 2 * ( 1 + nu ) );
-    }
-    else if( E >= 0.0 && K >=0 )
-    {
-      nu = 0.5 * ( 1 - E /  ( 3 * K ) );
-      G = E / ( 2 * ( 1 + nu ) );
-    }
-    else if( E >= 0.0 && G >= 0 )
-    {
-      nu = 0.5 * E / G - 1.0;
-      K = E / (3 * ( 1 - 2*nu ) );
-    }
-    else if( K >= 0.0 && G >= 0.0 )
-    {
-      E = 9 * K * G / ( 3 * K + G );
-      nu = ( 3 * K - 2 * G ) / ( 2 * ( 3 * K + G ) );
-    }
-    else
-    {
-      GEOSX_ERROR( "invalid specification for default elastic constants. "<<errorCheck<<" has been specified." );
-    }
+  if( nu >= 0.0 && E >= 0.0 )
+  {
+    K = E / (3 * ( 1 - 2*nu ) );
+    G = E / (2 * ( 1 + nu ) );
+  }
+  else if( nu >= 0.0 && G >= 0.0 )
+  {
+    E = 2 * G * ( 1 + nu );
+    K = E / (3 * ( 1 - 2*nu ) );
+  }
+  else if( nu >= 0 && K >= 0.0 )
+  {
+    E = 3 * K * ( 1 - 2 * nu );
+    G = E / ( 2 * ( 1 + nu ) );
+  }
+  else if( E >= 0.0 && K >=0 )
+  {
+    nu = 0.5 * ( 1 - E /  ( 3 * K ) );
+    G = E / ( 2 * ( 1 + nu ) );
+  }
+  else if( E >= 0.0 && G >= 0 )
+  {
+    nu = 0.5 * E / G - 1.0;
+    K = E / (3 * ( 1 - 2*nu ) );
+  }
+  else if( K >= 0.0 && G >= 0.0 )
+  {
+    E = 9 * K * G / ( 3 * K + G );
+    nu = ( 3 * K - 2 * G ) / ( 2 * ( 3 * K + G ) );
+  }
+  else
+  {
+    GEOSX_ERROR( "invalid specification for default elastic constants. "<<errorCheck<<" has been specified." );
   }
 
   this->getWrapper< array1d< real64 > >( viewKeyStruct::bulkModulusString )->
@@ -145,8 +158,6 @@ void LinearElasticIsotropic::PostProcessInput()
 
   this->getWrapper< array1d< real64 > >( viewKeyStruct::shearModulusString )->
     setApplyDefaultValue( m_defaultShearModulus );
-
-  m_postProcessed = true;
 }
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, LinearElasticIsotropic, std::string const &, Group * const )

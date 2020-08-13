@@ -92,6 +92,7 @@ void ConstitutiveBase::AllocateConstitutiveData( dataRepository::Group * const p
     }
   }
 
+  this->resize( parent->size() );
 }
 
 std::unique_ptr< ConstitutiveBase >

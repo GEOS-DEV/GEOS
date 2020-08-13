@@ -33,8 +33,7 @@ SolidBase::SolidBase( string const & name,
   ConstitutiveBase( name, parent ),
   m_defaultDensity( 0 ),
   m_density(),
-  m_stress( 0, 0, 6 ),
-  m_postProcessed( false )
+  m_stress( 0, 0, 6 )
 {
   registerWrapper( viewKeyStruct::defaultDensityString, &m_defaultDensity )->
     setInputFlag( InputFlags::REQUIRED )->
@@ -66,8 +65,6 @@ void SolidBase::AllocateConstitutiveData( dataRepository::Group * const parent,
   m_stress.resize( 0, numConstitutivePointsPerParentIndex, 6 );
 
   ConstitutiveBase::AllocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
-
-  this->resize( parent->size() );
 }
 
 }

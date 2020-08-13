@@ -56,9 +56,7 @@ BrooksCoreyCapillaryPressure::BrooksCoreyCapillaryPressure( std::string const & 
 
   registerWrapper( viewKeyStruct::volFracScaleString, &m_volFracScale )->
     setApplyDefaultValue( 1.0 )->
-    setInputFlag( InputFlags::OPTIONAL )->
-    setDescription( "???Volume Fraction Scale???" );
-
+    setDescription( "Factor used to scale the phase capillary pressure, defined as: one minus the sum of the phase minimum volume fractions." );
 }
 
 BrooksCoreyCapillaryPressure::~BrooksCoreyCapillaryPressure()

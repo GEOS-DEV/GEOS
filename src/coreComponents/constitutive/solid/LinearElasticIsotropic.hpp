@@ -343,13 +343,13 @@ public:
    * @brief Setter for the default bulk modulus.
    * @param[in] bulkModulus The value that m_defaultBulkModulus will be set to.
    */
-  void setDefaultBulkModulus( real64 const bulkModulus )   { m_defaultBulkModulus = bulkModulus; }
+  void setDefaultBulkModulus( real64 const bulkModulus );
 
   /**
    * @brief Setter for the default shear modulus.
    * @param[in] bulkModulus The value that m_defaultShearModulus will be set to.
    */
-  void setDefaultShearModulus( real64 const shearModulus ) { m_defaultShearModulus = shearModulus; }
+  void setDefaultShearModulus( real64 const shearModulus );
 
   /**
    * @brief Accessor for bulk modulus
