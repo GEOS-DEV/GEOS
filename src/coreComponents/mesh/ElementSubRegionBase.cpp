@@ -22,57 +22,53 @@ namespace geosx
 {
 using namespace dataRepository;
 
-ElementSubRegionBase::ElementSubRegionBase( string const & name, Group * const parent ):
-  ObjectManagerBase( name, parent ),
-  m_constitutiveModels( groupKeyStruct::constitutiveModelsString, this ),
-  m_numNodesPerElement(),
-  m_numEdgesPerElement(),
-  m_numFacesPerElement(),
-  m_elementCenter(),
-  m_elementVolume()
+ElementSubRegionBase::ElementSubRegionBase(string const& name, Group* const parent)
+  : ObjectManagerBase(name, parent)
+  , m_constitutiveModels(groupKeyStruct::constitutiveModelsString, this)
+  , m_numNodesPerElement()
+  , m_numEdgesPerElement()
+  , m_numFacesPerElement()
+  , m_elementCenter()
+  , m_elementVolume()
 {
-  RegisterGroup( groupKeyStruct::constitutiveModelsString, &m_constitutiveModels )->
-    setSizedFromParent( 1 );
+  RegisterGroup(groupKeyStruct::constitutiveModelsString, &m_constitutiveModels)
+    ->setSizedFromParent(1);
 
-  registerWrapper( viewKeyStruct::numNodesPerElementString, &m_numNodesPerElement );
+  registerWrapper(viewKeyStruct::numNodesPerElementString, &m_numNodesPerElement);
 
-  registerWrapper( viewKeyStruct::numEdgesPerElementString, &m_numEdgesPerElement );
+  registerWrapper(viewKeyStruct::numEdgesPerElementString, &m_numEdgesPerElement);
 
-  registerWrapper( viewKeyStruct::numFacesPerElementString, &m_numFacesPerElement );
+  registerWrapper(viewKeyStruct::numFacesPerElementString, &m_numFacesPerElement);
 
-  registerWrapper( viewKeyStruct::elementCenterString, &m_elementCenter )->
-    setPlotLevel( PlotLevel::LEVEL_1 )->
-    reference().resizeDimension< 1 >( 3 );
+  registerWrapper(viewKeyStruct::elementCenterString, &m_elementCenter)
+    ->setPlotLevel(PlotLevel::LEVEL_1)
+    ->reference()
+    .resizeDimension<1>(3);
 
-  registerWrapper( viewKeyStruct::elementVolumeString, &m_elementVolume )->
-    setPlotLevel( PlotLevel::LEVEL_1 );
+  registerWrapper(viewKeyStruct::elementVolumeString, &m_elementVolume)
+    ->setPlotLevel(PlotLevel::LEVEL_1);
 }
 
-ElementSubRegionBase::~ElementSubRegionBase()
-{}
+ElementSubRegionBase::~ElementSubRegionBase() { }
 
-void ElementSubRegionBase::SetElementType( string const & elementType )
+void ElementSubRegionBase::SetElementType(string const& elementType)
 {
   m_elementTypeString = elementType;
 }
 
-std::vector< int > ElementSubRegionBase::getVTKNodeOrdering() const
+std::vector<int> ElementSubRegionBase::getVTKNodeOrdering() const
 {
-  if( !m_elementTypeString.compare( 0, 4, "C3D4" ))
-    return { 1, 0, 2, 3 };
-  if( !m_elementTypeString.compare( 0, 4, "C3D8" ))
-    return { 0, 1, 3, 2, 4, 5, 7, 6 };
-  if( !m_elementTypeString.compare( 0, 4, "C3D6" ))
-    return { 0, 3, 4, 1, 2, 5, 0, 0 };
-  if( !m_elementTypeString.compare( 0, 4, "C3D5" ))
-    return { 0, 3, 2, 1, 4, 0, 0, 0 };
-  if( !m_elementTypeString.compare( 0, 4, "BEAM" ))
-    return { 0, 1 };
+  if(!m_elementTypeString.compare(0, 4, "C3D4")) return {1, 0, 2, 3};
+  if(!m_elementTypeString.compare(0, 4, "C3D8"))
+    return {0, 1, 3, 2, 4, 5, 7, 6};
+  if(!m_elementTypeString.compare(0, 4, "C3D6"))
+    return {0, 3, 4, 1, 2, 5, 0, 0};
+  if(!m_elementTypeString.compare(0, 4, "C3D5"))
+    return {0, 3, 2, 1, 4, 0, 0, 0};
+  if(!m_elementTypeString.compare(0, 4, "BEAM")) return {0, 1};
 
-  GEOSX_ERROR( "Unrecognized elementType: " << m_elementTypeString );
+  GEOSX_ERROR("Unrecognized elementType: " << m_elementTypeString);
   return {};
 }
-
-
 
 } /* namespace geosx */

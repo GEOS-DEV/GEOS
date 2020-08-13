@@ -24,11 +24,8 @@
 
 namespace geosx
 {
-
-
 namespace constitutive
 {
-
 /**
  * @class ContactRelationBase
  *
@@ -47,8 +44,7 @@ public:
    * @param name The name of the relation in the data repository
    * @param parent The name of the parent Group that holds this relation object.
    */
-  ContactRelationBase( string const & name,
-                       Group * const parent );
+  ContactRelationBase(string const& name, Group* const parent);
 
   /**
    * @brief default destructor
@@ -63,27 +59,29 @@ public:
 
   virtual string GetCatalogName() override { return CatalogName(); }
 
-  virtual void DeliverClone( string const & GEOSX_UNUSED_PARAM( name ),
-                             Group * const GEOSX_UNUSED_PARAM( parent ),
-                             std::unique_ptr< ConstitutiveBase > & GEOSX_UNUSED_PARAM( clone ) ) const override {}
+  virtual void DeliverClone(
+    string const& GEOSX_UNUSED_PARAM(name),
+    Group* const GEOSX_UNUSED_PARAM(parent),
+    std::unique_ptr<ConstitutiveBase>& GEOSX_UNUSED_PARAM(clone)) const override
+  { }
 
-  virtual Group * CreateChild( string const & catalogKey,
-                               string const & name ) override;
-
+  virtual Group* CreateChild(string const& catalogKey,
+                             string const& name) override;
 
   /**
    * This function is used to inform the schema generator
    * that table functions are allowed as children.
    */
-  virtual void SetSchemaDeviations( xmlWrapper::xmlNode schemaRoot,
-                                    xmlWrapper::xmlNode schemaParent,
-                                    integer documentationType ) override;
+  virtual void SetSchemaDeviations(xmlWrapper::xmlNode schemaRoot,
+                                   xmlWrapper::xmlNode schemaParent,
+                                   integer documentationType) override;
 
-  virtual void InitializePreSubGroups( Group * const ) override;
+  virtual void InitializePreSubGroups(Group* const) override;
 
-  virtual real64 limitTangentialTractionNorm( real64 const normalTraction ) const;
+  virtual real64 limitTangentialTractionNorm(real64 const normalTraction) const;
 
-  virtual real64 dLimitTangentialTractionNorm_dNormalTraction( real64 const normalTraction ) const;
+  virtual real64 dLimitTangentialTractionNorm_dNormalTraction(
+    real64 const normalTraction) const;
 
   /// accessor for penalty stiffness
   inline real64 stiffness() const { return m_penaltyStiffness; }
@@ -93,18 +91,23 @@ public:
    * @param[in] aperture the model aperture/gap
    * @return And effective physical aperture that is always > 0
    */
-  inline real64 effectiveAperture( real64 const aperture ) const { return m_apertureFunction->Evaluate( &aperture ); }
+  inline real64 effectiveAperture(real64 const aperture) const
+  {
+    return m_apertureFunction->Evaluate(&aperture);
+  }
 
   /**
    * @brief evaluation of the derivative of the effective physical aperture
    * @param[in] aperture the model aperture/gap
    * @return
    */
-  inline real64 dEffectiveAperture_dAperture( real64 const aperture ) const
+  inline real64 dEffectiveAperture_dAperture(real64 const aperture) const
   {
     real64 aperPlus = aperture;
     real64 aperMinus = aperture - 1.0e-6;
-    real64 slope = (m_apertureFunction->Evaluate( &aperPlus ) - m_apertureFunction->Evaluate( &aperMinus ) ) / 1.0e-6;
+    real64 slope = (m_apertureFunction->Evaluate(&aperPlus) -
+                    m_apertureFunction->Evaluate(&aperMinus)) /
+      1.0e-6;
     return slope;
   }
 
@@ -115,23 +118,21 @@ public:
    */
   struct viewKeyStruct : public ConstitutiveBase::viewKeyStruct
   {
-    static constexpr auto penaltyStiffnessString  = "penaltyStiffness";
-    static constexpr auto apertureToleranceString  = "apertureTolerance";
+    static constexpr auto penaltyStiffnessString = "penaltyStiffness";
+    static constexpr auto apertureToleranceString = "apertureTolerance";
   };
 
 private:
-
   /// the value of penalty to penetration
   real64 m_penaltyStiffness;
 
   /// pointer to the function that limits the model aperture to a physically admissible value.
-  FunctionBase * m_apertureFunction;
+  FunctionBase* m_apertureFunction;
 
   real64 m_apertureTolerance;
-
 };
 
-}
+}  // namespace constitutive
 } /* namespace geosx */
 
 #endif /* GEOSX_CONSTITUTIVE_CONTACTRELATIONS_CONTACTRELATIONBASE_HPP_ */

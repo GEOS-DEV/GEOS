@@ -12,13 +12,11 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-
 #ifndef GEOSX_MANAGERS_EVENTMANAGER_HPP_
 #define GEOSX_MANAGERS_EVENTMANAGER_HPP_
 
 #include "dataRepository/Group.hpp"
 #include "managers/Events/EventBase.hpp"
-
 
 namespace geosx
 {
@@ -26,9 +24,9 @@ namespace dataRepository
 {
 namespace keys
 {
-string const Events( "Events" );
+string const Events("Events");
 }
-}
+}  // namespace dataRepository
 
 /**
  * @class EventManager
@@ -43,8 +41,7 @@ public:
    * @param[in] name the name of the EventManager
    * @param[in] parent group this EventManager
    */
-  EventManager( std::string const & name,
-                Group * const parent );
+  EventManager(std::string const &name, Group *const parent);
 
   /**
    * @brief Default destructor for the EventManager
@@ -57,7 +54,8 @@ public:
    * @param[in] childName the name of the child to be added
    * @return the Event
    */
-  virtual Group * CreateChild( string const & childKey, string const & childName ) override;
+  virtual Group *CreateChild(string const &childKey,
+                             string const &childName) override;
 
   /**
    * @brief This method is used to expand any catalogs in the data structure
@@ -74,7 +72,7 @@ public:
    *   - Advance time, cycle, etc.
    * @param[in] domain the current DomainPartition on which the Event will be ran
    */
-  void Run( dataRepository::Group * domain );
+  void Run(dataRepository::Group *domain);
 
   /**
    * @name viewKeyStruct/groupKeyStruct
@@ -91,21 +89,22 @@ public:
     static constexpr auto cycleString = "cycle";
     static constexpr auto currentSubEventString = "currentSubEvent";
 
-    dataRepository::ViewKey time = { "time" };
-    dataRepository::ViewKey dt = { "dt" };
-    dataRepository::ViewKey cycle = { "cycle" };
-    dataRepository::ViewKey maxTime = { "maxTime" };
-    dataRepository::ViewKey maxCycle = { "maxCycle" };
-    dataRepository::ViewKey currentSubEvent = { "currentSubEvent" };
+    dataRepository::ViewKey time = {"time"};
+    dataRepository::ViewKey dt = {"dt"};
+    dataRepository::ViewKey cycle = {"cycle"};
+    dataRepository::ViewKey maxTime = {"maxTime"};
+    dataRepository::ViewKey maxCycle = {"maxCycle"};
+    dataRepository::ViewKey currentSubEvent = {"currentSubEvent"};
   } viewKeys;
   /// @endcond
   ///@}
 
   /// Alias to access the object catalog for EventBase derived types.
-  using CatalogInterface = dataRepository::CatalogInterface< EventBase, std::string const &, Group * const >;
+  using CatalogInterface =
+    dataRepository::CatalogInterface<EventBase, std::string const &, Group *const>;
 
   /// @copydoc dataRepository::Group::GetCatalog()
-  static CatalogInterface::CatalogType & GetCatalog();
+  static CatalogInterface::CatalogType &GetCatalog();
 
 private:
   /// Max time for a simulation
@@ -126,7 +125,6 @@ private:
   /// Current subevent index
   integer m_currentSubEvent;
 };
-
 
 } /* namespace geosx */
 

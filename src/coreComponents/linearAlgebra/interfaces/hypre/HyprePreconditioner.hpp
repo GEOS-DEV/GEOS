@@ -43,7 +43,6 @@ using HYPRE_Solver = hypre_Solver_struct *;
 
 namespace geosx
 {
-
 /// Forward-declared struct that hosts preconditioner auxiliary data
 struct HyprePrecAuxData;
 
@@ -53,12 +52,11 @@ struct HyprePrecFuncs;
 /**
  * @brief Wrapper around hypre-based preconditioners.
  */
-class HyprePreconditioner final : public PreconditionerBase< HypreInterface >
+class HyprePreconditioner final : public PreconditionerBase<HypreInterface>
 {
 public:
-
   /// Alias for base type
-  using Base = PreconditionerBase< HypreInterface >;
+  using Base = PreconditionerBase<HypreInterface>;
 
   /// Alias for vector type
   using Vector = typename Base::Vector;
@@ -74,8 +72,8 @@ public:
    * @param params preconditioner parameters
    * @param dofManager the Degree-of-Freedom manager associated with matrix
    */
-  explicit HyprePreconditioner( LinearSolverParameters params,
-                                DofManager const * const dofManager = nullptr );
+  explicit HyprePreconditioner(LinearSolverParameters params,
+                               DofManager const *const dofManager = nullptr);
 
   /**
    * @brief Destructor.
@@ -86,7 +84,7 @@ public:
    * @brief Compute the preconditioner from a matrix.
    * @param mat the matrix to precondition.
    */
-  virtual void compute( Matrix const & mat ) override;
+  virtual void compute(Matrix const &mat) override;
 
   /**
    * @brief Apply operator to a vector
@@ -95,7 +93,7 @@ public:
    *
    * @warning @p src and @p dst cannot alias the same vector.
    */
-  virtual void apply( Vector const & src, Vector & dst ) const override;
+  virtual void apply(Vector const &src, Vector &dst) const override;
 
   virtual void clear() override;
 
@@ -103,7 +101,7 @@ public:
    * @brief Access the underlying implementation.
    * @return reference to hypre preconditioner
    */
-  HYPRE_Solver const & unwrapped() const;
+  HYPRE_Solver const &unwrapped() const;
 
   /**
    * @brief Access the underlying implementation.
@@ -111,13 +109,12 @@ public:
    *
    * Intended for use by HypreSolver.
    */
-  HyprePrecFuncs const & unwrappedFuncs() const;
+  HyprePrecFuncs const &unwrappedFuncs() const;
 
 private:
-
   void createAMG();
 
-  void createMGR( DofManager const * const dofManager );
+  void createMGR(DofManager const *const dofManager);
 
   void createILU();
 
@@ -133,12 +130,12 @@ private:
   HYPRE_Solver aux_precond;
 
   /// Pointers to hypre functions to setup/solve/destroy preconditioner
-  std::unique_ptr< HyprePrecFuncs > m_functions;
+  std::unique_ptr<HyprePrecFuncs> m_functions;
 
   // Pointer to preconditioner auxiliary data
-  std::unique_ptr< HyprePrecAuxData > m_auxData;
+  std::unique_ptr<HyprePrecAuxData> m_auxData;
 };
 
-}
+}  // namespace geosx
 
-#endif //GEOSX_HYPREPRECONDITIONER_HPP
+#endif  //GEOSX_HYPREPRECONDITIONER_HPP

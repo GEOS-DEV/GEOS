@@ -23,7 +23,6 @@
 
 namespace geosx
 {
-
 /// @cond DO_NOT_DOCUMENT
 // TODO remove! This option allows for the creation of new mass inside a newly
 // created FaceElement. The new mass will be equal to:
@@ -31,7 +30,6 @@ namespace geosx
 // If 0, then the beginning of step density is artificially set to zero...which
 // may cause some newton convergence problems.
 #define ALLOW_CREATION_MASS 1
-
 
 // TODO remove! This option sets the pressure in a newly created FaceElement to
 // be the lowest value of all attached non-new FaceElements.
@@ -51,22 +49,22 @@ namespace geosx
 struct FaceElementStencil_Traits
 {
   /// The array type that will be used to store the indices of the stencil contributors
-  using IndexContainerType = ArrayOfArrays< localIndex >;
+  using IndexContainerType = ArrayOfArrays<localIndex>;
 
   /// The array view type for the stencil indices
-  using IndexContainerViewType = ArrayOfArraysView< localIndex >;
+  using IndexContainerViewType = ArrayOfArraysView<localIndex>;
 
   /// The array view to const type for the stencil indices
-  using IndexContainerViewConstType = ArrayOfArraysView< localIndex const >;
+  using IndexContainerViewConstType = ArrayOfArraysView<localIndex const>;
 
   /// The array type that is used to store the weights of the stencil contributors
-  using WeightContainerType = ArrayOfArrays< real64 >;
+  using WeightContainerType = ArrayOfArrays<real64>;
 
   /// The array view type for the stencil weights
-  using WeightContainerViewType = ArrayOfArraysView< real64 >;
+  using WeightContainerViewType = ArrayOfArraysView<real64>;
 
   /// The array view to const type for the stencil weights
-  using WeightContainerViewConstType = ArrayOfArraysView< real64 const >;
+  using WeightContainerViewConstType = ArrayOfArraysView<real64 const>;
 
   /// Number of points the flux is between (normally 2)
   static localIndex constexpr NUM_POINT_IN_FLUX = 6;
@@ -80,24 +78,24 @@ struct FaceElementStencil_Traits
  *
  * Provides management of the interior stencil points for a face elements when using Two-Point flux approximation.
  */
-class FaceElementStencil : public StencilBase< FaceElementStencil_Traits, FaceElementStencil >,
-  public FaceElementStencil_Traits
+class FaceElementStencil
+  : public StencilBase<FaceElementStencil_Traits, FaceElementStencil>,
+    public FaceElementStencil_Traits
 {
 public:
-
   /**
    * @brief Default constructor.
    */
   FaceElementStencil();
 
-  virtual void move( LvArray::MemorySpace const space ) override final;
+  virtual void move(LvArray::MemorySpace const space) override final;
 
-  virtual void add( localIndex const numPts,
-                    localIndex const * const elementRegionIndices,
-                    localIndex const * const elementSubRegionIndices,
-                    localIndex const * const elementIndices,
-                    real64 const * const weights,
-                    localIndex const connectorIndex ) override final;
+  virtual void add(localIndex const numPts,
+                   localIndex const* const elementRegionIndices,
+                   localIndex const* const elementSubRegionIndices,
+                   localIndex const* const elementIndices,
+                   real64 const* const weights,
+                   localIndex const connectorIndex) override final;
 
   /**
    * @brief Add an entry to the stencil.
@@ -105,36 +103,40 @@ public:
    * @param[in] cellCenterToEdgeCenter vectors pointing from the cell center to the edge center
    * @param[in] connectorIndex The index of the connector element that the stencil acts across
    */
-  void add( localIndex const numPts,
-            R1Tensor const * const cellCenterToEdgeCenter,
-            localIndex const connectorIndex );
+  void add(localIndex const numPts,
+           R1Tensor const* const cellCenterToEdgeCenter,
+           localIndex const connectorIndex);
 
   /**
    * @brief Return the stencil size.
    * @return the stencil size
    */
   virtual localIndex size() const override final
-  { return m_elementRegionIndices.size(); }
+  {
+    return m_elementRegionIndices.size();
+  }
 
   /**
    * @brief Give the number of stencil entries for the provided index.
    * @param[in] index the index of which the stencil size is request
    * @return The number of stencil entries for the provided index
    */
-  localIndex stencilSize( localIndex index ) const
-  { return m_elementRegionIndices.sizeOfArray( index ); }
+  localIndex stencilSize(localIndex index) const
+  {
+    return m_elementRegionIndices.sizeOfArray(index);
+  }
 
   /**
    * @brief Give the array of vectors pointing from the cell center to the edge center.
    * @return The array of vectors pointing from the cell center to the edge center
    */
-  ArrayOfArraysView< R1Tensor const > const & getCellCenterToEdgeCenters() const
-  { return m_cellCenterToEdgeCenters.toViewConst(); }
+  ArrayOfArraysView<R1Tensor const> const& getCellCenterToEdgeCenters() const
+  {
+    return m_cellCenterToEdgeCenters.toViewConst();
+  }
 
 private:
-
-  ArrayOfArrays< R1Tensor > m_cellCenterToEdgeCenters;
-
+  ArrayOfArrays<R1Tensor> m_cellCenterToEdgeCenters;
 };
 
 } /* namespace geosx */

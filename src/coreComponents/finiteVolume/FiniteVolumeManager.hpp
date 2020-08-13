@@ -24,7 +24,6 @@
 
 namespace geosx
 {
-
 class DomainPartition;
 class FluxApproximationBase;
 
@@ -36,7 +35,6 @@ class FluxApproximationBase;
 class FiniteVolumeManager : public dataRepository::Group
 {
 public:
-
   /**
    * @brief Deleted default constructor.
    */
@@ -47,14 +45,15 @@ public:
    * @param name the name of the FiniteVolumeManager in the data repository
    * @param parent the parent group of this group.
    */
-  FiniteVolumeManager( string const & name, Group * const parent );
+  FiniteVolumeManager(string const& name, Group* const parent);
 
   /**
    * @brief Destructor.
    */
   virtual ~FiniteVolumeManager() override;
 
-  virtual Group * CreateChild( string const & childKey, string const & childName ) override;
+  virtual Group* CreateChild(string const& childKey,
+                             string const& childName) override;
 
   virtual void ExpandObjectCatalogs() override;
 
@@ -63,18 +62,16 @@ public:
    * @param[in] name the provided name
    * @return the FluxApproximation associated with the provided name
    */
-  FluxApproximationBase const & getFluxApproximation( string const & name ) const;
+  FluxApproximationBase const& getFluxApproximation(string const& name) const;
 
   /**
    * @copydoc getFluxApproximation( string const & ) const
    */
-  FluxApproximationBase & getFluxApproximation( string const & name );
+  FluxApproximationBase& getFluxApproximation(string const& name);
 
 private:
-
 };
 
-} // namespace geosx
+}  // namespace geosx
 
-
-#endif //GEOSX_FINITEVOLUME_FINITEVOLUMEMANAGER_HPP_
+#endif  //GEOSX_FINITEVOLUME_FINITEVOLUMEMANAGER_HPP_

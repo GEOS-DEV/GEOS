@@ -40,21 +40,19 @@ using namespace geosx;
  * This function computes the identity matrix. It can be used to generate a dummy
  * preconditioner.
  */
-template< typename MATRIX >
-void computeIdentity( MPI_Comm comm,
-                      globalIndex N,
-                      MATRIX & I )
+template <typename MATRIX>
+void computeIdentity(MPI_Comm comm, globalIndex N, MATRIX& I)
 {
   // Create a matrix of size N with 1 non-zero per row
-  I.createWithGlobalSize( N, 1, comm );
+  I.createWithGlobalSize(N, 1, comm);
 
   I.open();
 
   // Loop over rows to fill the matrix
-  for( globalIndex i = I.ilower(); i < I.iupper(); i++ )
+  for(globalIndex i = I.ilower(); i < I.iupper(); i++)
   {
     // Set the value for element (i,i) to 1
-    I.insert( i, i, 1.0 );
+    I.insert(i, i, 1.0);
   }
 
   // Close the matrix (make data contiguous in memory)
@@ -68,12 +66,10 @@ void computeIdentity( MPI_Comm comm,
  * @param N global size of the natrix
  * @param Z the output matrix
  */
-template< typename MATRIX >
-void computeZero( MPI_Comm comm,
-                  globalIndex N,
-                  MATRIX & Z )
+template <typename MATRIX>
+void computeZero(MPI_Comm comm, globalIndex N, MATRIX& Z)
 {
-  Z.createWithGlobalSize( N, 0, comm );
+  Z.createWithGlobalSize(N, 0, comm);
   Z.open();
   Z.close();
 }
@@ -89,16 +85,14 @@ void computeZero( MPI_Comm comm,
  * matrices arise from a classical finite volume formulation on a cartesian mesh
  * (5-point stencil).
  */
-template< typename MATRIX >
-void compute2DLaplaceOperator( MPI_Comm comm,
-                               globalIndex n,
-                               MATRIX & laplace2D )
+template <typename MATRIX>
+void compute2DLaplaceOperator(MPI_Comm comm, globalIndex n, MATRIX& laplace2D)
 {
   // total dofs = n^2
   globalIndex N = n * n;
 
   // Create a matrix of global size N with 5 non-zeros per row
-  laplace2D.createWithGlobalSize( N, 5, comm );
+  laplace2D.createWithGlobalSize(N, 5, comm);
 
   // Allocate arrays to fill the matrix (values and columns)
   real64 values[5];
@@ -108,13 +102,13 @@ void compute2DLaplaceOperator( MPI_Comm comm,
   laplace2D.open();
 
   // Loop over rows to fill the matrix
-  for( globalIndex i = laplace2D.ilower(); i < laplace2D.iupper(); i++ )
+  for(globalIndex i = laplace2D.ilower(); i < laplace2D.iupper(); i++)
   {
     // Re-set the number of non-zeros for row i to 0.
     localIndex nnz = 0;
 
     // The left -n: position i-n
-    if( i - n >= 0 )
+    if(i - n >= 0)
     {
       cols[nnz] = i - n;
       values[nnz] = -1.0;
@@ -122,7 +116,7 @@ void compute2DLaplaceOperator( MPI_Comm comm,
     }
 
     // The left -1: position i-1
-    if( i - 1 >= 0 )
+    if(i - 1 >= 0)
     {
       cols[nnz] = i - 1;
       values[nnz] = -1.0;
@@ -135,7 +129,7 @@ void compute2DLaplaceOperator( MPI_Comm comm,
     nnz++;
 
     // The right +1: position i+1
-    if( i + 1 < N )
+    if(i + 1 < N)
     {
       cols[nnz] = i + 1;
       values[nnz] = -1.0;
@@ -143,7 +137,7 @@ void compute2DLaplaceOperator( MPI_Comm comm,
     }
 
     // The right +n: position i+n
-    if( i + n < N )
+    if(i + n < N)
     {
       cols[nnz] = i + n;
       values[nnz] = -1.0;
@@ -151,12 +145,11 @@ void compute2DLaplaceOperator( MPI_Comm comm,
     }
 
     // Set the values for row i
-    laplace2D.insert( i, cols, values, nnz );
+    laplace2D.insert(i, cols, values, nnz);
   }
 
   // Close the matrix (make data contiguous in memory)
   laplace2D.close();
-
 }
 
 /**
@@ -167,80 +160,83 @@ void compute2DLaplaceOperator( MPI_Comm comm,
  * @param nu Poisson ratio
  * @param Ke the output stiffness matrix
  */
-inline void Q12d_local( real64 const & hx,
-                        real64 const & hy,
-                        real64 const & E,
-                        real64 const & nu,
-                        arraySlice2d< real64 > const & Ke )
+inline void Q12d_local(real64 const& hx,
+                       real64 const& hy,
+                       real64 const& E,
+                       real64 const& nu,
+                       arraySlice2d<real64> const& Ke)
 {
-  real64 fac = E / ( 1. - 2. * nu ) / (1. + nu );
+  real64 fac = E / (1. - 2. * nu) / (1. + nu);
 
   // Populate stiffness matrix
 
   // --- Fill diagonal entries
-  real64 Dxx = ( fac * hx * ( 1. - 2. * nu ) ) / ( 6. * hy )
-               - ( fac * hy * ( -1. + nu ) ) / ( 3. * hx );
-  real64 Dyy = ( fac * hy * ( 1. - 2. * nu ) ) / ( 6. * hx )
-               - ( fac * hx * ( -1. + nu ) ) / ( 3. * hy );
-  for( localIndex i = 0; i < 8; i += 2 )
+  real64 Dxx = (fac * hx * (1. - 2. * nu)) / (6. * hy) -
+    (fac * hy * (-1. + nu)) / (3. * hx);
+  real64 Dyy = (fac * hy * (1. - 2. * nu)) / (6. * hx) -
+    (fac * hx * (-1. + nu)) / (3. * hy);
+  for(localIndex i = 0; i < 8; i += 2)
   {
-    Ke( i, i ) = Dxx;
-    Ke( i + 1, i + 1 ) = Dyy;
+    Ke(i, i) = Dxx;
+    Ke(i + 1, i + 1) = Dyy;
   }
 
   // --- Fill upper triangular part
   // --- --- Ke( 0, 1:7 )
-  Ke( 0, 1 ) = fac / 8.;
-  Ke( 0, 2 ) = ( fac * hx * ( 1. - 2. * nu ) ) / ( 12. * hy )
-               + ( fac * hy * ( -1. + nu ) ) / ( 3. * hx );
-  Ke( 0, 3 ) = ( fac * ( -1 + 4. * nu ) ) / 8.;
-  Ke( 0, 4 ) = ( fac * hy * ( -1. + nu ) ) / ( 6. * hx )
-               + ( fac * hx * (-1. + 2. * nu ) ) / ( 12. * hy );
-  Ke( 0, 5 ) = -Ke( 0, 1 );
-  Ke( 0, 6 ) = -( fac * hy * ( -1. + nu ) ) / ( 6. * hx )
-               + ( fac * hx * ( -1. + 2. * nu ) ) / ( 6. * hy );
-  Ke( 0, 7 ) = -( fac * ( -1. + 4. * nu ) ) / 8.;
+  Ke(0, 1) = fac / 8.;
+  Ke(0, 2) = (fac * hx * (1. - 2. * nu)) / (12. * hy) +
+    (fac * hy * (-1. + nu)) / (3. * hx);
+  Ke(0, 3) = (fac * (-1 + 4. * nu)) / 8.;
+  Ke(0, 4) = (fac * hy * (-1. + nu)) / (6. * hx) +
+    (fac * hx * (-1. + 2. * nu)) / (12. * hy);
+  Ke(0, 5) = -Ke(0, 1);
+  Ke(0, 6) = -(fac * hy * (-1. + nu)) / (6. * hx) +
+    (fac * hx * (-1. + 2. * nu)) / (6. * hy);
+  Ke(0, 7) = -(fac * (-1. + 4. * nu)) / 8.;
 
   // --- --- Ke( 1, 2:7 )
-  Ke( 1, 2 ) = Ke( 0, 7 );
-  Ke( 1, 3 ) = -( fac * ( hy * hy * ( 1. - 2. * nu ) + hx * hx *( -1. + nu ) ) ) / ( 6. * hx * hy );
-  Ke( 1, 4 ) = Ke( 0, 5 );
-  Ke( 1, 5 ) = ( fac * hx * ( -1. + nu ) ) / ( 6. * hy ) + ( fac * hy * ( -1. + 2. * nu ) ) / ( 12. * hx );
-  Ke( 1, 6 ) = Ke( 0, 3 );
-  Ke( 1, 7 ) = ( fac * hy * ( 1. - 2. * nu ) ) / ( 12. * hx )
-               + ( fac * hx * ( -1. + nu ) ) / ( 3. * hy );
+  Ke(1, 2) = Ke(0, 7);
+  Ke(1, 3) =
+    -(fac * (hy * hy * (1. - 2. * nu) + hx * hx * (-1. + nu))) / (6. * hx * hy);
+  Ke(1, 4) = Ke(0, 5);
+  Ke(1, 5) = (fac * hx * (-1. + nu)) / (6. * hy) +
+    (fac * hy * (-1. + 2. * nu)) / (12. * hx);
+  Ke(1, 6) = Ke(0, 3);
+  Ke(1, 7) = (fac * hy * (1. - 2. * nu)) / (12. * hx) +
+    (fac * hx * (-1. + nu)) / (3. * hy);
 
   // --- --- Ke( 2, 3:7 )
-  Ke( 2, 3 ) =  Ke( 0, 5 );
-  Ke( 2, 4 ) =  Ke( 0, 6 );
-  Ke( 2, 5 ) =  Ke( 1, 6 );
-  Ke( 2, 6 ) = ( fac * hy * ( -1 + nu ) ) / ( 6. * hx ) + ( fac * hx * ( -1. + 2. * nu ) ) / ( 12. * hy );
-  Ke( 2, 7 ) =  Ke( 0, 1 );
+  Ke(2, 3) = Ke(0, 5);
+  Ke(2, 4) = Ke(0, 6);
+  Ke(2, 5) = Ke(1, 6);
+  Ke(2, 6) = (fac * hy * (-1 + nu)) / (6. * hx) +
+    (fac * hx * (-1. + 2. * nu)) / (12. * hy);
+  Ke(2, 7) = Ke(0, 1);
 
   // --- --- Ke( 3, 4:7 )
-  Ke( 3, 4 ) = Ke( 1, 2 );
-  Ke( 3, 5 ) = Ke( 1, 7 );
-  Ke( 3, 6 ) = Ke( 0, 1 );
-  Ke( 3, 7 ) = Ke( 1, 5 );
+  Ke(3, 4) = Ke(1, 2);
+  Ke(3, 5) = Ke(1, 7);
+  Ke(3, 6) = Ke(0, 1);
+  Ke(3, 7) = Ke(1, 5);
 
   // --- --- Ke( 4, 5:7 )
-  Ke( 4, 5 ) = Ke( 0, 1 );
-  Ke( 4, 6 ) = Ke( 0, 2 );
-  Ke( 4, 7 ) = Ke( 0, 3 );
+  Ke(4, 5) = Ke(0, 1);
+  Ke(4, 6) = Ke(0, 2);
+  Ke(4, 7) = Ke(0, 3);
 
   // --- --- Ke( 5, 6:7 )
-  Ke( 5, 6 ) = Ke( 0, 7 );
-  Ke( 5, 7 ) = Ke( 1, 3 );
+  Ke(5, 6) = Ke(0, 7);
+  Ke(5, 7) = Ke(1, 3);
 
   // --- --- Ke( 6, 7 )
-  Ke( 6, 7 ) = Ke( 0, 5 );
+  Ke(6, 7) = Ke(0, 5);
 
   // --- Fill lower triangular part
-  for( localIndex i = 1; i < 8; ++i )
+  for(localIndex i = 1; i < 8; ++i)
   {
-    for( localIndex j = 0; j < i; ++j )
+    for(localIndex j = 0; j < i; ++j)
     {
-      Ke( i, j ) = Ke( j, i );
+      Ke(i, j) = Ke(j, i);
     }
   }
 }
@@ -264,62 +260,67 @@ inline void Q12d_local( real64 const & hx,
  * homogeneous Young's modulus and Poisson's ratio. The assembled matrix is
  * singular, meaning that Dirichlet boundary conditions have not been enforced.
  */
-template< typename MATRIX >
-void compute2DElasticityOperator( MPI_Comm const comm,
-                                  real64 const domainSizeX,
-                                  real64 const domainSizeY,
-                                  globalIndex const nCellsX,
-                                  globalIndex const nCellsY,
-                                  real64 const youngModulus,
-                                  real64 const poissonRatio,
-                                  MATRIX & elasticity2D )
+template <typename MATRIX>
+void compute2DElasticityOperator(MPI_Comm const comm,
+                                 real64 const domainSizeX,
+                                 real64 const domainSizeY,
+                                 globalIndex const nCellsX,
+                                 globalIndex const nCellsY,
+                                 real64 const youngModulus,
+                                 real64 const poissonRatio,
+                                 MATRIX& elasticity2D)
 {
-  localIndex const rank  = LvArray::integerConversion< localIndex >( MpiWrapper::Comm_rank( comm ) );
-  localIndex const nproc = LvArray::integerConversion< localIndex >( MpiWrapper::Comm_size( comm ) );
+  localIndex const rank =
+    LvArray::integerConversion<localIndex>(MpiWrapper::Comm_rank(comm));
+  localIndex const nproc =
+    LvArray::integerConversion<localIndex>(MpiWrapper::Comm_size(comm));
 
   // Compute total number of grid nodes (nNodes) and elements (nCells)
   globalIndex const nCells = nCellsX * nCellsY;
-  GEOSX_ERROR_IF( nCells < nproc, "less than one cell per processor" );
-  globalIndex const nNodes = ( nCellsX + 1 ) * ( nCellsY + 1);
+  GEOSX_ERROR_IF(nCells < nproc, "less than one cell per processor");
+  globalIndex const nNodes = (nCellsX + 1) * (nCellsY + 1);
   real64 const hx = domainSizeX / nCellsX;
   real64 const hy = domainSizeY / nCellsY;
 
   // Compute cell partitioning
-  localIndex const nLocalCells = LvArray::integerConversion< localIndex >( nCells / nproc );
-  localIndex const nExtraCells = LvArray::integerConversion< localIndex >( nCells ) - nLocalCells * nproc;
-  globalIndex const iCellLower = rank * nLocalCells + ( rank == 0 ? 0 : nExtraCells );
-  globalIndex const iCellUpper = iCellLower + nLocalCells + ( rank == 0 ? 0 : nExtraCells ) - 1;
+  localIndex const nLocalCells =
+    LvArray::integerConversion<localIndex>(nCells / nproc);
+  localIndex const nExtraCells =
+    LvArray::integerConversion<localIndex>(nCells) - nLocalCells * nproc;
+  globalIndex const iCellLower =
+    rank * nLocalCells + (rank == 0 ? 0 : nExtraCells);
+  globalIndex const iCellUpper =
+    iCellLower + nLocalCells + (rank == 0 ? 0 : nExtraCells) - 1;
 
   // Construct local stiffness matrix (same for all cells)
-  stackArray2d< real64, 8*8 > Ke( 8, 8 );
-  Q12d_local( hx, hy, youngModulus, poissonRatio, Ke );
+  stackArray2d<real64, 8 * 8> Ke(8, 8);
+  Q12d_local(hx, hy, youngModulus, poissonRatio, Ke);
 
   // Create a matrix of global size N with at most 18 non-zeros per row
-  elasticity2D.createWithGlobalSize( nNodes*2, 18, comm );
+  elasticity2D.createWithGlobalSize(nNodes * 2, 18, comm);
 
   // Open the matrix
   elasticity2D.open();
 
   // Loop over grid cells
-  stackArray1d< globalIndex, 4 > cellNodes( 4 );
-  stackArray1d< globalIndex, 8 > localDofIndex( 8 );
+  stackArray1d<globalIndex, 4> cellNodes(4);
+  stackArray1d<globalIndex, 8> localDofIndex(8);
 
-  for( localIndex iCell = iCellLower; iCell <= iCellUpper; ++iCell )
+  for(localIndex iCell = iCellLower; iCell <= iCellUpper; ++iCell)
   {
-
     // Compute local DOF global indeces
-    cellNodes( 0 ) = (iCell / nCellsX) + iCell;
-    cellNodes( 1 ) = cellNodes( 0 ) + 1;
-    cellNodes( 3 ) = cellNodes( 1 ) + nCellsX;
-    cellNodes( 2 ) = cellNodes( 3 ) + 1;
-    for( localIndex i = 0; i < 4; ++i )
+    cellNodes(0) = (iCell / nCellsX) + iCell;
+    cellNodes(1) = cellNodes(0) + 1;
+    cellNodes(3) = cellNodes(1) + nCellsX;
+    cellNodes(2) = cellNodes(3) + 1;
+    for(localIndex i = 0; i < 4; ++i)
     {
-      localDofIndex( 2 * i )     = cellNodes( i ) * 2;
-      localDofIndex( 2 * i + 1 ) = localDofIndex( 2 * i ) + 1;
+      localDofIndex(2 * i) = cellNodes(i) * 2;
+      localDofIndex(2 * i + 1) = localDofIndex(2 * i) + 1;
     }
 
     // Assemble local stiffness matrix and right-hand side
-    elasticity2D.insert( localDofIndex.data(), localDofIndex.data(), Ke.data(), 8, 8 );
+    elasticity2D.insert(localDofIndex.data(), localDofIndex.data(), Ke.data(), 8, 8);
   }
 
   // Close the matrix
@@ -328,4 +329,4 @@ void compute2DElasticityOperator( MPI_Comm const comm,
 
 ///@}
 
-#endif //GEOSX_LINEARALGEBRA_UNITTESTS_TESTLINEARALGEBRAUTILS_HPP
+#endif  //GEOSX_LINEARALGEBRA_UNITTESTS_TESTLINEARALGEBRAUTILS_HPP

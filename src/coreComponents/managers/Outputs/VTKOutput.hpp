@@ -22,10 +22,8 @@
 #include "OutputBase.hpp"
 #include "fileIO/vtk/VTKPolyDataWriterInterface.hpp"
 
-
 namespace geosx
 {
-
 /**
  * @class VTKOutput
  *
@@ -36,7 +34,7 @@ class VTKOutput : public OutputBase
 public:
   /// @copydoc geosx::dataRepository::Group::Group(std::string const & name, Group * const parent)
 
-  VTKOutput( std::string const & name, Group * const parent );
+  VTKOutput(std::string const& name, Group* const parent);
 
   /// Destructor
   virtual ~VTKOutput() override;
@@ -51,24 +49,24 @@ public:
    * @brief Writes out a set of vtk files.
    * @copydoc EventBase::Execute()
    */
-  virtual void Execute( real64 const time_n,
-                        real64 const dt,
-                        integer const cycleNumber,
-                        integer const eventCounter,
-                        real64 const eventProgress,
-                        dataRepository::Group * domain ) override;
+  virtual void Execute(real64 const time_n,
+                       real64 const dt,
+                       integer const cycleNumber,
+                       integer const eventCounter,
+                       real64 const eventProgress,
+                       dataRepository::Group* domain) override;
 
   /**
    * @brief Write one final set of vtk files as the code exits
    * @copydoc ExecutableGroup::Cleanup()
    */
-  virtual void Cleanup( real64 const time_n,
-                        integer const cycleNumber,
-                        integer const eventCounter,
-                        real64 const eventProgress,
-                        dataRepository::Group * domain ) override
+  virtual void Cleanup(real64 const time_n,
+                       integer const cycleNumber,
+                       integer const eventCounter,
+                       real64 const eventProgress,
+                       dataRepository::Group* domain) override
   {
-    Execute( time_n, 0, cycleNumber, eventCounter, eventProgress, domain );
+    Execute(time_n, 0, cycleNumber, eventCounter, eventProgress, domain);
   }
 
   /// @cond DO_NOT_DOCUMENT
@@ -90,9 +88,7 @@ private:
   integer m_writeBinaryData;
 
   vtk::VTKPolyDataWriterInterface m_writer;
-
 };
-
 
 } /* namespace geosx */
 

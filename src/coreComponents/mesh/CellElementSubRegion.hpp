@@ -12,7 +12,6 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-
 #ifndef GEOSX_MESH_CELLELEMENTSUBREGION_HPP_
 #define GEOSX_MESH_CELLELEMENTSUBREGION_HPP_
 
@@ -20,7 +19,6 @@
 
 namespace geosx
 {
-
 /**
  * @class CellElementSubRegion
  * Class deriving from CellBlock further specializing the element subregion
@@ -30,7 +28,6 @@ namespace geosx
 class CellElementSubRegion : public CellBlock
 {
 public:
-
   /**
    * @name Constructor / Destructor
    */
@@ -41,7 +38,7 @@ public:
    * @param[in] name the name of this object manager
    * @param[in] parent the parent Group
    */
-  CellElementSubRegion( string const & name, Group * const parent );
+  CellElementSubRegion(string const& name, Group* const parent);
 
   /**
    * @brief Destructor.
@@ -59,15 +56,15 @@ public:
    * @brief Fill the CellElementSubRegion by copying those of the source CellBlock
    * @param source the CellBlock whose properties (connectivity info) will be copied
    */
-  void CopyFromCellBlock( CellBlock * source );
+  void CopyFromCellBlock(CellBlock* source);
 
   /**
    * @brief Fill the CellElementSubRegion by querying a target set into the faceManager
    * @param[in] faceManager a pointer to the faceManager
    * @param[in] setName a reference to string containing the name of the set
    */
-  void ConstructSubRegionFromFaceSet( FaceManager const * const faceManager,
-                                      string const & setName );
+  void ConstructSubRegionFromFaceSet(FaceManager const* const faceManager,
+                                     string const& setName);
 
   ///@}
 
@@ -76,19 +73,22 @@ public:
    */
   ///@{
 
-  virtual void ViewPackingExclusionList( SortedArray< localIndex > & exclusionList ) const override;
+  virtual void ViewPackingExclusionList(
+    SortedArray<localIndex>& exclusionList) const override;
 
-  virtual localIndex PackUpDownMapsSize( arrayView1d< localIndex const > const & packList ) const override;
+  virtual localIndex PackUpDownMapsSize(
+    arrayView1d<localIndex const> const& packList) const override;
 
-  virtual localIndex PackUpDownMaps( buffer_unit_type * & buffer,
-                                     arrayView1d< localIndex const > const & packList ) const override;
+  virtual localIndex PackUpDownMaps(
+    buffer_unit_type*& buffer,
+    arrayView1d<localIndex const> const& packList) const override;
 
-  virtual localIndex UnpackUpDownMaps( buffer_unit_type const * & buffer,
-                                       array1d< localIndex > & packList,
-                                       bool const overwriteUpMaps,
-                                       bool const overwriteDownMaps ) override;
+  virtual localIndex UnpackUpDownMaps(buffer_unit_type const*& buffer,
+                                      array1d<localIndex>& packList,
+                                      bool const overwriteUpMaps,
+                                      bool const overwriteDownMaps) override;
 
-  virtual void FixUpDownMaps( bool const clearIfUnmapped ) final override;
+  virtual void FixUpDownMaps(bool const clearIfUnmapped) final override;
 
   ///@}
 
@@ -102,13 +102,11 @@ public:
    * @tparam LAMBDA the type of the lambda function
    * @param lambda the lambda function
    */
-  template< typename LAMBDA >
-  void forMaterials( LAMBDA lambda )
+  template <typename LAMBDA> void forMaterials(LAMBDA lambda)
   {
-
-    for( auto & constitutiveGroup : m_constitutiveGrouping )
+    for(auto& constitutiveGroup : m_constitutiveGrouping)
     {
-      lambda( constitutiveGroup );
+      lambda(constitutiveGroup);
     }
   }
 
@@ -121,7 +119,8 @@ public:
   struct viewKeyStruct : public CellBlock::viewKeyStruct
   {
     /// String key for the constitutive point volume fraction
-    static constexpr auto constitutivePointVolumeFraction = "ConstitutivePointVolumeFraction";
+    static constexpr auto constitutivePointVolumeFraction =
+      "ConstitutivePointVolumeFraction";
     /// String key for the derivatives of the shape functions with respect to the reference configuration
     static constexpr auto dNdXString = "dNdX";
     /// String key for the derivative of the jacobian.
@@ -132,59 +131,60 @@ public:
     static constexpr auto constitutiveMapString = "ConstitutiveMap";
 
     /// ViewKey for the constitutive grouping
-    dataRepository::ViewKey constitutiveGrouping  = { constitutiveGroupingString };
+    dataRepository::ViewKey constitutiveGrouping = {constitutiveGroupingString};
     /// ViewKey for the constitutive map
-    dataRepository::ViewKey constitutiveMap       = { constitutiveMapString };
+    dataRepository::ViewKey constitutiveMap = {constitutiveMapString};
   }
   /// viewKey struct for the CellElementSubRegion class
   m_CellBlockSubRegionViewKeys;
 
-  virtual viewKeyStruct & viewKeys() override { return m_CellBlockSubRegionViewKeys; }
-  virtual viewKeyStruct const & viewKeys() const override { return m_CellBlockSubRegionViewKeys; }
+  virtual viewKeyStruct& viewKeys() override
+  {
+    return m_CellBlockSubRegionViewKeys;
+  }
+  virtual viewKeyStruct const& viewKeys() const override
+  {
+    return m_CellBlockSubRegionViewKeys;
+  }
 
   /**
    * @brief @return The array of shape function derivatives.
    */
-  array4d< real64 > & dNdX()
-  { return m_dNdX; }
+  array4d<real64>& dNdX() { return m_dNdX; }
 
   /**
    * @brief @return The array of shape function derivatives.
    */
-  arrayView4d< real64 const > const & dNdX() const
-  { return m_dNdX.toViewConst(); }
+  arrayView4d<real64 const> const& dNdX() const { return m_dNdX.toViewConst(); }
 
   /**
    * @brief @return The array of jacobian determinantes.
    */
-  array2d< real64 > & detJ()
-  { return m_detJ; }
+  array2d<real64>& detJ() { return m_detJ; }
 
   /**
    * @brief @return The array of jacobian determinantes.
    */
-  arrayView2d< real64 const > const & detJ() const
-  { return m_detJ.toViewConst(); }
+  arrayView2d<real64 const> const& detJ() const { return m_detJ.toViewConst(); }
 
   /// Map used for constitutive grouping
-  map< string, localIndex_array > m_constitutiveGrouping;
+  map<string, localIndex_array> m_constitutiveGrouping;
 
   /// Array of constitutive point volume fraction
-  array3d< real64 > m_constitutivePointVolumeFraction;
+  array3d<real64> m_constitutivePointVolumeFraction;
 
 private:
-
   /// The array of shape function derivaties.
-  array4d< real64 > m_dNdX;
+  array4d<real64> m_dNdX;
 
   /// The array of jacobian determinantes.
-  array2d< real64 > m_detJ;
+  array2d<real64> m_detJ;
 
   /// Map of unmapped global indices in the element-to-node map
-  map< localIndex, array1d< globalIndex > > m_unmappedGlobalIndicesInNodelist;
+  map<localIndex, array1d<globalIndex>> m_unmappedGlobalIndicesInNodelist;
 
   /// Map of unmapped global indices in the element-to-face map
-  map< localIndex, array1d< globalIndex > > m_unmappedGlobalIndicesInFacelist;
+  map<localIndex, array1d<globalIndex>> m_unmappedGlobalIndicesInFacelist;
 
   /**
    * @brief Pack element-to-node and element-to-face maps
@@ -193,10 +193,10 @@ private:
    * @param packList the packList used in the bufferOps::Pack function
    * @return the pack size
    */
-  template< bool DOPACK >
-  localIndex PackUpDownMapsPrivate( buffer_unit_type * & buffer,
-                                    arrayView1d< localIndex const > const & packList ) const;
-
+  template <bool DOPACK>
+  localIndex PackUpDownMapsPrivate(
+    buffer_unit_type*& buffer,
+    arrayView1d<localIndex const> const& packList) const;
 };
 
 } /* namespace geosx */

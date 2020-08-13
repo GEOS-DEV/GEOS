@@ -24,7 +24,6 @@
 
 namespace geosx
 {
-
 /**
  * @class Box
  * @brief Class to represent a geometric box in GEOSX.
@@ -32,7 +31,6 @@ namespace geosx
 class Box : public SimpleGeometricObjectBase
 {
 public:
-
   /**
    * @name Constructor / Destructor
    */
@@ -43,8 +41,7 @@ public:
    * @param name name of the object in the data hierarchy.
    * @param parent pointer to the parent group in the data hierarchy.
    */
-  Box( const std::string & name,
-       Group * const parent );
+  Box(const std::string& name, Group* const parent);
 
   /**
    * @brief Default destructor.
@@ -66,10 +63,9 @@ public:
 
   ///@}
 
-  bool IsCoordInObject( const R1Tensor & coord ) const override final;
+  bool IsCoordInObject(const R1Tensor& coord) const override final;
 
 protected:
-
   /**
    * @brief This function provides capability to post process input values prior to
    * any other initialization operations.
@@ -77,19 +73,18 @@ protected:
   virtual void PostProcessInput() override final;
 
 private:
-
   /// Mininum (x,y,z) coordinates of the box
   R1Tensor m_min;
   /// Maximum (x,y,z) coordinates of the box
   R1Tensor m_max;
   /// Strike angle of the box
-  realT m_strikeAngle=0.0;
+  realT m_strikeAngle = 0.0;
   /// Coordinates of the center of the box
-  R1Tensor m_boxCenter={0.0, 0.0, 0.0};
+  R1Tensor m_boxCenter = {0.0, 0.0, 0.0};
   /// Cosine of the strike angle of the box
-  realT m_cosStrike=0.0;
+  realT m_cosStrike = 0.0;
   /// Sine of the strike angle of the box
-  real64 m_sinStrike=0.0;
+  real64 m_sinStrike = 0.0;
 
   /// @cond DO_NOT_DOCUMENT
 
@@ -102,12 +97,11 @@ private:
     static constexpr auto cosStrikeString = "cosStrike";
     static constexpr auto sinStrikeString = "sinStrike";
 
-    dataRepository::ViewKey xmin = { "xMin" };
-    dataRepository::ViewKey xmax = { "xMax" };
+    dataRepository::ViewKey xmin = {"xMin"};
+    dataRepository::ViewKey xmax = {"xMax"};
   } viewKeys;
 
   /// @endcond
-
 };
 } /* namespace geosx */
 

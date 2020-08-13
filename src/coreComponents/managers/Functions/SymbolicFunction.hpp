@@ -22,12 +22,11 @@
 #include "FunctionBase.hpp"
 
 #ifdef GEOSX_USE_MATHPRESSO
-#include <mathpresso/mathpresso.h>
+  #include <mathpresso/mathpresso.h>
 #endif
 
 namespace geosx
 {
-
 /**
  * @class SymbolicFunction
  *
@@ -37,8 +36,7 @@ class SymbolicFunction : public FunctionBase
 {
 public:
   /// @copydoc geosx::dataRepository::Group::Group( std::string const & name, Group * const parent )
-  SymbolicFunction( const std::string & name,
-                    dataRepository::Group * const parent );
+  SymbolicFunction(const std::string& name, dataRepository::Group* const parent);
 
   /**
    * @brief The destructor
@@ -63,12 +61,12 @@ public:
    * @param set the subset of nodes to apply the function to
    * @param result an array to hold the results of the function
    */
-  inline void Evaluate( dataRepository::Group const * const group,
-                        real64 const time,
-                        SortedArrayView< localIndex const > const & set,
-                        real64_array & result ) const override final
+  inline void Evaluate(dataRepository::Group const* const group,
+                       real64 const time,
+                       SortedArrayView<localIndex const> const& set,
+                       real64_array& result) const override final
   {
-    FunctionBase::EvaluateT< SymbolicFunction >( group, time, set, result );
+    FunctionBase::EvaluateT<SymbolicFunction>(group, time, set, result);
   }
 
   /**
@@ -76,12 +74,13 @@ public:
    * @param input a scalar input
    * @return the function result
    */
-  inline real64 Evaluate( real64 const * const input ) const override final
+  inline real64 Evaluate(real64 const* const input) const override final
   {
 #ifdef GEOSX_USE_MATHPRESSO
-    return parserExpression.evaluate( reinterpret_cast< void * >( const_cast< real64 * >(input) ) );
+    return parserExpression.evaluate(
+      reinterpret_cast<void*>(const_cast<real64*>(input)));
 #else
-    GEOSX_ERROR( "GEOSX was not built with mathpresso!" );
+    GEOSX_ERROR("GEOSX was not built with mathpresso!");
     return 0;
 #endif
   }
@@ -93,7 +92,6 @@ private:
   mathpresso::Expression parserExpression;
 #endif
 };
-
 
 } /* namespace geosx */
 

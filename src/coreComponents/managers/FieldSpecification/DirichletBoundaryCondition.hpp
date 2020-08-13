@@ -23,7 +23,6 @@
 
 namespace geosx
 {
-
 /**
  * @class DirichletBoundaryCondition
  * A class to manage Dirichlet boundary conditions
@@ -32,7 +31,8 @@ class DirichletBoundaryCondition : public FieldSpecificationBase
 {
 public:
   /// @copydoc geosx::dataRepository::Group::Group( std::string const & name, Group * const parent )
-  DirichletBoundaryCondition( string const & name, dataRepository::Group * const parent );
+  DirichletBoundaryCondition(string const& name,
+                             dataRepository::Group* const parent);
 
   /**
    * @brief destructor
@@ -54,7 +54,6 @@ public:
   {
     return DirichletBoundaryCondition::CatalogName();
   }
-
 };
 
 } /* namespace geosx */

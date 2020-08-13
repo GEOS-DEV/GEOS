@@ -25,7 +25,6 @@
 
 namespace geosx
 {
-
 /**
  * @brief Common base template for all vector wrapper types.
  * @tparam VECTOR derived vector type
@@ -43,11 +42,9 @@ namespace geosx
  * behavior deviates from expectations or has unexpected performance impacts.
  * In that case, @c \@copydoc tag can be used to copy over the documentation.
  */
-template< typename VECTOR >
-class VectorBase
+template <typename VECTOR> class VectorBase
 {
 protected:
-
   /// Alias for VECTOR
   using Vector = VECTOR;
 
@@ -59,31 +56,29 @@ protected:
   /**
    * @brief Constructs a vector in default state
    */
-  VectorBase()
-    : m_closed( true )
-  {}
+  VectorBase() : m_closed(true) { }
 
   /**
    * @brief Copy constructor.
    */
-  VectorBase( VectorBase const & ) = default;
+  VectorBase(VectorBase const&) = default;
 
   /**
    * @brief Move constructor.
    */
-  VectorBase( VectorBase && ) = default;
+  VectorBase(VectorBase&&) = default;
 
   /**
    * @brief Copy assignment.
    * @return reference to this object
    */
-  VectorBase & operator=( VectorBase const & ) = default;
+  VectorBase& operator=(VectorBase const&) = default;
 
   /**
    * @brief Move assignment.
    * @return reference to this object
    */
-  VectorBase & operator=( VectorBase && ) = default;
+  VectorBase& operator=(VectorBase&&) = default;
 
   /**
    * @brief Destructor.
@@ -131,7 +126,8 @@ protected:
    * the sum across processors.  For specifying a global size and having
    * automatic partitioning, see createWithGlobalSize().
    */
-  virtual void createWithLocalSize( localIndex const localSize, MPI_Comm const & comm ) = 0;
+  virtual void createWithLocalSize(localIndex const localSize,
+                                   MPI_Comm const& comm) = 0;
 
   /**
    * @brief Create a vector based on global number of elements.
@@ -142,14 +138,16 @@ protected:
    * gets the same number of local elements except proc 0, which gets any
    * remainder elements as well if the split can't be done evenly.
    */
-  virtual void createWithGlobalSize( globalIndex const globalSize, MPI_Comm const & comm ) = 0;
+  virtual void createWithGlobalSize(globalIndex const globalSize,
+                                    MPI_Comm const& comm) = 0;
 
   /**
    * @brief Construct parallel vector from a local array.
    * @param localValues local data to put into vector
    * @param comm MPI communicator to use
    */
-  virtual void create( arrayView1d< real64 const > const & localValues, MPI_Comm const & comm ) = 0;
+  virtual void create(arrayView1d<real64 const> const& localValues,
+                      MPI_Comm const& comm) = 0;
 
   ///@}
 
@@ -173,10 +171,7 @@ protected:
   /**
    * @brief Reset the matrix to default state
    */
-  virtual void reset()
-  {
-    m_closed = true;
-  };
+  virtual void reset() { m_closed = true; };
 
   ///@}
 
@@ -192,8 +187,7 @@ protected:
    *
    * Set vector value at given element.
    */
-  virtual void set( globalIndex const globalRow,
-                    real64 const value ) = 0;
+  virtual void set(globalIndex const globalRow, real64 const value) = 0;
 
   /**
    * @brief Add into vector value.
@@ -202,8 +196,7 @@ protected:
    *
    * Add into vector value at given row.
    */
-  virtual void add( globalIndex const globalRow,
-                    real64 const value ) = 0;
+  virtual void add(globalIndex const globalRow, real64 const value) = 0;
 
   /**
    * @brief Set vector values.
@@ -213,9 +206,9 @@ protected:
    *
    * Set vector values at given elements.
    */
-  virtual void set( globalIndex const * globalIndices,
-                    real64 const * values,
-                    localIndex const size ) = 0;
+  virtual void set(globalIndex const* globalIndices,
+                   real64 const* values,
+                   localIndex const size) = 0;
 
   /**
    * @brief Add vector values.
@@ -225,9 +218,9 @@ protected:
    *
    * Add vector values at given elements.
    */
-  virtual void add( globalIndex const * globalIndices,
-                    real64 const * values,
-                    localIndex const size ) = 0;
+  virtual void add(globalIndex const* globalIndices,
+                   real64 const* values,
+                   localIndex const size) = 0;
 
   /**
    * @brief Set vector values using array1d
@@ -236,9 +229,8 @@ protected:
    *
    * Set vector values at given elements.
    */
-  virtual void set( arraySlice1d< globalIndex const > const & globalIndices,
-                    arraySlice1d< real64 const > const & values ) = 0;
-
+  virtual void set(arraySlice1d<globalIndex const> const& globalIndices,
+                   arraySlice1d<real64 const> const& values) = 0;
 
   /**
    * @brief Add into vector values using array1d
@@ -247,14 +239,14 @@ protected:
    *
    * Add into vector values at given rows.
    */
-  virtual void add( arraySlice1d< globalIndex const > const & globalIndices,
-                    arraySlice1d< real64 const > const & values ) = 0;
+  virtual void add(arraySlice1d<globalIndex const> const& globalIndices,
+                   arraySlice1d<real64 const> const& values) = 0;
 
   /**
    * @brief Set all elements to a constant value.
    * @param value value to set vector elements to
    */
-  virtual void set( real64 const value ) = 0;
+  virtual void set(real64 const value) = 0;
 
   /**
    * @brief Set vector elements to zero.
@@ -265,7 +257,7 @@ protected:
    * @brief Set vector elements to random entries.
    * @param seed the random number seed to use
    */
-  virtual void rand( unsigned const seed = 1984 ) = 0;
+  virtual void rand(unsigned const seed = 1984) = 0;
 
   ///@}
 
@@ -278,7 +270,7 @@ protected:
    * @brief Multiply all elements by scalingFactor.
    * @param scalingFactor scaling Factor
    */
-  virtual void scale( real64 const scalingFactor ) = 0;
+  virtual void scale(real64 const scalingFactor) = 0;
 
   /**
    * @brief Replace vector elements by their reciprocals
@@ -291,21 +283,20 @@ protected:
    * @param vec vector to dot-product with
    * @return dot product
    */
-  virtual real64 dot( Vector const & vec ) const = 0;
+  virtual real64 dot(Vector const& vec) const = 0;
 
   /**
    * @brief Update vector <tt>y</tt> as <tt>y</tt> = <tt>x</tt>.
    * @param x vector to copy
    */
-  virtual void copy( Vector const & x ) = 0;
+  virtual void copy(Vector const& x) = 0;
 
   /**
    * @brief Update vector <tt>y</tt> as <tt>y</tt> = <tt>alpha*x + y</tt>.
    * @param alpha scaling factor for added vector
    * @param x vector to add
    */
-  virtual void axpy( real64 const alpha,
-                     Vector const & x ) = 0;
+  virtual void axpy(real64 const alpha, Vector const& x) = 0;
 
   /**
    * @brief Update vector <tt>y</tt> as <tt>y</tt> = <tt>alpha*x + beta*y</tt>.
@@ -313,9 +304,7 @@ protected:
    * @param x vector to add
    * @param beta scaling factor for self vector
    */
-  virtual void axpby( real64 const alpha,
-                      Vector const & x,
-                      real64 const beta ) = 0;
+  virtual void axpby(real64 const alpha, Vector const& x, real64 const beta) = 0;
 
   /**
    * @brief 1-norm of the vector.
@@ -372,53 +361,52 @@ protected:
    * @param globalRow global row index
    * @return value at global index @p globalRow
    */
-  virtual real64 get( globalIndex globalRow ) const = 0;
+  virtual real64 get(globalIndex globalRow) const = 0;
 
   /**
    * @brief Get a sequence of values by index.
    * @param[in] globalIndices array of global row indices
    * @param[out] values array of vector values
    */
-  virtual void get( arraySlice1d< globalIndex const > const & globalIndices,
-                    arraySlice1d< real64 > const & values ) const = 0;
+  virtual void get(arraySlice1d<globalIndex const> const& globalIndices,
+                   arraySlice1d<real64> const& values) const = 0;
 
   /**
    * @brief Map a global row index to local row index.
    * @param[in] globalRow the global row index
    * @return global row index corresponding to @p globalRow
    */
-  virtual localIndex getLocalRowID( globalIndex const globalRow ) const = 0;
+  virtual localIndex getLocalRowID(globalIndex const globalRow) const = 0;
 
   /**
    * @brief Map a local row index to global row index.
    * @param[in] localRow the local row index
    * @return global row index corresponding to @p localRow
    */
-  virtual globalIndex getGlobalRowID( localIndex const localRow ) const = 0;
+  virtual globalIndex getGlobalRowID(localIndex const localRow) const = 0;
 
   /**
    * @brief Extract a view of the local portion of the array.
    * @return pointer to local vector data
    */
-  virtual real64 const * extractLocalVector() const = 0;
+  virtual real64 const* extractLocalVector() const = 0;
 
   /**
    * @brief Extract a view of the local portion of the array.
    * @return pointer to local vector data
    */
-  virtual real64 * extractLocalVector() = 0;
+  virtual real64* extractLocalVector() = 0;
 
   /**
    * @brief Extract local solution by copying into a user-provided array
    * @param localVector the array view to write to (must be properly sized)
    */
-  virtual void extract( arrayView1d< real64 > const & localVector ) const
+  virtual void extract(arrayView1d<real64> const& localVector) const
   {
-    real64 const * const data = extractLocalVector();
-    forAll< parallelHostPolicy >( localSize(), [=] ( localIndex const k )
-    {
+    real64 const* const data = extractLocalVector();
+    forAll<parallelHostPolicy>(localSize(), [=](localIndex const k) {
       localVector[k] = data[k];
-    } );
+    });
   }
 
   /**
@@ -438,15 +426,16 @@ protected:
    * @brief Print the vector in Trilinos format to the terminal.
    * @param os the output stream to print to
    */
-  virtual void print( std::ostream & os = std::cout ) const = 0;
+  virtual void print(std::ostream& os = std::cout) const = 0;
 
   /**
    * @brief Write the vector to a file.
    * @param filename name of the output file
    * @param[in] format output format
    */
-  virtual void write( string const & filename,
-                      LAIOutputFormat const format = LAIOutputFormat::MATRIX_MARKET ) const = 0;
+  virtual void write(
+    string const& filename,
+    LAIOutputFormat const format = LAIOutputFormat::MATRIX_MARKET) const = 0;
 
   ///@}
 
@@ -456,9 +445,9 @@ protected:
    * @param vec the vector to print
    * @return reference to @p os
    */
-  friend std::ostream & operator<<( std::ostream & os, Vector const & vec )
+  friend std::ostream& operator<<(std::ostream& os, Vector const& vec)
   {
-    vec.print( os );
+    vec.print(os);
     return os;
   }
 
@@ -466,6 +455,6 @@ protected:
   bool m_closed;
 };
 
-} // namespace geosx
+}  // namespace geosx
 
-#endif //GEOSX_LINEARALGEBRA_INTERFACES_VECTORBASE_HPP_
+#endif  //GEOSX_LINEARALGEBRA_INTERFACES_VECTORBASE_HPP_

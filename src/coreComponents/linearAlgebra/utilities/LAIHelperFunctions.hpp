@@ -16,7 +16,6 @@
  * LAIHelperFunctions.hpp
  */
 
-
 #ifndef GEOSX_LINEARALGEBRA_UTILITIES_LAIHELPERFUNCTIONS_HPP_
 #define GEOSX_LINEARALGEBRA_UTILITIES_LAIHELPERFUNCTIONS_HPP_
 
@@ -29,7 +28,6 @@ namespace geosx
 {
 namespace LAIHelperFunctions
 {
-
 /**
  * @brief Create a permutation matrix for a given nodal variable.
  * @param[in]  nodeManager       the node manager
@@ -39,12 +37,12 @@ namespace LAIHelperFunctions
  * @param[in]  dofKey            DofManager key used to access dof index array
  * @param[out] permutationMatrix the target matrix
  */
-void CreatePermutationMatrix( NodeManager const * const nodeManager,
-                              localIndex const nRows,
-                              localIndex const nCols,
-                              int const nDofPerNode,
-                              string const dofKey,
-                              ParallelMatrix & permutationMatrix );
+void CreatePermutationMatrix(NodeManager const* const nodeManager,
+                             localIndex const nRows,
+                             localIndex const nCols,
+                             int const nDofPerNode,
+                             string const dofKey,
+                             ParallelMatrix& permutationMatrix);
 
 /**
  * @brief Create a permutation matrix for a given nodal variable.
@@ -55,12 +53,12 @@ void CreatePermutationMatrix( NodeManager const * const nodeManager,
  * @param[in]  dofKey            DofManager key used to access dof index array
  * @param[out] permutationMatrix the target matrix
  */
-void CreatePermutationMatrix( ElementRegionManager const * const elemManager,
-                              localIndex const nRows,
-                              localIndex const nCols,
-                              int const nDofPerNode,
-                              string const DofKey,
-                              ParallelMatrix & permutationMatrix );
+void CreatePermutationMatrix(ElementRegionManager const* const elemManager,
+                             localIndex const nRows,
+                             localIndex const nCols,
+                             int const nDofPerNode,
+                             string const DofKey,
+                             ParallelMatrix& permutationMatrix);
 
 /**
  * @brief Permute a vector.
@@ -68,8 +66,8 @@ void CreatePermutationMatrix( ElementRegionManager const * const elemManager,
  * @param[in] permutationMatrix the permutation matrix
  * @return the permuted vector
  */
-ParallelVector PermuteVector( ParallelVector const & vector,
-                              ParallelMatrix const & permutationMatrix );
+ParallelVector PermuteVector(ParallelVector const& vector,
+                             ParallelMatrix const& permutationMatrix);
 
 /**
  * @brief Permute rows and columns of a square matrix.
@@ -77,8 +75,8 @@ ParallelVector PermuteVector( ParallelVector const & vector,
  * @param[in] permutationMatrix permutation matrix
  * @return the permuted matrix
  */
-ParallelMatrix PermuteMatrix( ParallelMatrix const & matrix,
-                              ParallelMatrix const & permutationMatrix );
+ParallelMatrix PermuteMatrix(ParallelMatrix const& matrix,
+                             ParallelMatrix const& permutationMatrix);
 
 /**
  * Permute rows and columns of a rectangular matrix
@@ -87,23 +85,22 @@ ParallelMatrix PermuteMatrix( ParallelMatrix const & matrix,
  * @param[in] permutationMatrixRight right permutation matrix
  * @return the permuted matrix
  */
-ParallelMatrix PermuteMatrix( ParallelMatrix const & matrix,
-                              ParallelMatrix const & permutationMatrixLeft,
-                              ParallelMatrix const & permutationMatrixRight );
+ParallelMatrix PermuteMatrix(ParallelMatrix const& matrix,
+                             ParallelMatrix const& permutationMatrixLeft,
+                             ParallelMatrix const& permutationMatrixRight);
 
-void PrintPermutedVector( ParallelVector const & vector,
-                          ParallelMatrix const & permuationMatrix,
-                          std::ostream & os );
+void PrintPermutedVector(ParallelVector const& vector,
+                         ParallelMatrix const& permuationMatrix,
+                         std::ostream& os);
 
+void PrintPermutedMatrix(ParallelMatrix const& matrix,
+                         ParallelMatrix const& permutationMatrix,
+                         std::ostream& os);
 
-void PrintPermutedMatrix( ParallelMatrix const & matrix,
-                          ParallelMatrix const & permutationMatrix,
-                          std::ostream & os );
-
-void PrintPermutedMatrix( ParallelMatrix const & matrix,
-                          ParallelMatrix const & permutationMatrixLeft,
-                          ParallelMatrix const & permutationMatrixRight,
-                          std::ostream & os );
+void PrintPermutedMatrix(ParallelMatrix const& matrix,
+                         ParallelMatrix const& permutationMatrixLeft,
+                         ParallelMatrix const& permutationMatrixRight,
+                         std::ostream& os);
 
 /**
  * @brief Apply a separate component approximation (filter) to a matrix.
@@ -112,53 +109,53 @@ void PrintPermutedMatrix( ParallelMatrix const & matrix,
  * @param dst         the target (filtered) matrix
  * @param dofsPerNode number of degrees-of-freedom per node
  */
-template< typename MATRIX >
-void SeparateComponentFilter( MATRIX const & src,
-                              MATRIX & dst,
-                              const localIndex dofsPerNode )
+template <typename MATRIX>
+void SeparateComponentFilter(MATRIX const& src,
+                             MATRIX& dst,
+                             const localIndex dofsPerNode)
 {
-  GEOSX_ERROR_IF( dofsPerNode < 2, "Function requires dofsPerNode > 1" );
+  GEOSX_ERROR_IF(dofsPerNode < 2, "Function requires dofsPerNode > 1");
 
-  const localIndex localRows  = src.numLocalRows();
+  const localIndex localRows = src.numLocalRows();
   const localIndex maxEntries = src.maxRowLength();
   const localIndex maxDstEntries = maxEntries / dofsPerNode;
 
-  dst.createWithLocalSize( localRows, maxEntries, MPI_COMM_WORLD );
+  dst.createWithLocalSize(localRows, maxEntries, MPI_COMM_WORLD);
   dst.open();
 
-  array1d< real64 > srcValues;
-  array1d< real64 > dstValues( maxDstEntries );
+  array1d<real64> srcValues;
+  array1d<real64> dstValues(maxDstEntries);
 
-  array1d< globalIndex > srcIndices;
-  array1d< globalIndex > dstIndices( maxDstEntries );
+  array1d<globalIndex> srcIndices;
+  array1d<globalIndex> dstIndices(maxDstEntries);
 
-  for( globalIndex row=src.ilower(); row<src.iupper(); ++row )
+  for(globalIndex row = src.ilower(); row < src.iupper(); ++row)
   {
     const globalIndex rowComponent = row % dofsPerNode;
-    const localIndex rowLength = src.globalRowLength( row );
-    srcIndices.resize( rowLength );
-    srcValues.resize( rowLength );
+    const localIndex rowLength = src.globalRowLength(row);
+    srcIndices.resize(rowLength);
+    srcValues.resize(rowLength);
 
-    src.getRowCopy( row, srcIndices, srcValues );
+    src.getRowCopy(row, srcIndices, srcValues);
 
-    localIndex k=0;
-    for( localIndex col=0; col<rowLength; ++col )
+    localIndex k = 0;
+    for(localIndex col = 0; col < rowLength; ++col)
     {
       const globalIndex colComponent = srcIndices[col] % dofsPerNode;
-      if( rowComponent == colComponent )
+      if(rowComponent == colComponent)
       {
         dstValues[k] = srcValues[col];
         dstIndices[k] = srcIndices[col];
         k++;
       }
     }
-    dst.insert( row, dstIndices.data(), dstValues.data(), k );
+    dst.insert(row, dstIndices.data(), dstValues.data(), k);
   }
   dst.close();
 }
 
-} // LAIHelperFunctions namespace
+}  // namespace LAIHelperFunctions
 
-} // geosx namespace
+}  // namespace geosx
 
 #endif /*GEOSX_LINEARALGEBRA_UTILITIES_LAIHELPERFUNCTIONS_HPP_*/

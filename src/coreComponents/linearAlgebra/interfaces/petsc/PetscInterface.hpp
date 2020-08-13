@@ -28,7 +28,6 @@
 
 namespace geosx
 {
-
 /**
  * @class PetscInterface
  * @brief This class holds aliases based on the Petsc library.
@@ -43,7 +42,7 @@ struct PetscInterface
    *
    * Essentially, it is a wrapper for PetscInitialize
    */
-  static void initialize( int & argc, char * * & argv );
+  static void initialize(int& argc, char**& argv);
 
   /**
    * @brief Finalizes the MPI environment for the Petsc library
@@ -57,15 +56,15 @@ struct PetscInterface
    * @param params the parameters for preconditioner
    * @return owning pointer to the newly created preconditioner
    */
-  static std::unique_ptr< PreconditionerBase< PetscInterface > >
-  createPreconditioner( LinearSolverParameters params );
+  static std::unique_ptr<PreconditionerBase<PetscInterface>> createPreconditioner(
+    LinearSolverParameters params);
 
   /// Alias for PetscMatrix
   using ParallelMatrix = PetscMatrix;
   /// Alias for PetscVector
   using ParallelVector = PetscVector;
   /// Alias for PetscSolver
-  using LinearSolver   = PetscSolver;
+  using LinearSolver = PetscSolver;
 };
 
 } /* namespace geosx */

@@ -21,10 +21,8 @@
 #include "dataRepository/Group.hpp"
 #include "dataRepository/ExecutableGroup.hpp"
 
-
 namespace geosx
 {
-
 /**
  * @class OutputBase
  *
@@ -34,7 +32,7 @@ class OutputBase : public ExecutableGroup
 {
 public:
   /// @copydoc geosx::dataRepository::Group::Group( std::string const & name, Group * const parent )
-  explicit OutputBase( std::string const & name, Group * const parent );
+  explicit OutputBase(std::string const &name, Group *const parent);
 
   /// Destructor
   virtual ~OutputBase() override;
@@ -50,8 +48,9 @@ public:
 
   // Catalog interface
   /// @cond DO_NOT_DOCUMENT
-  using CatalogInterface = dataRepository::CatalogInterface< OutputBase, std::string const &, Group * const >;
-  static CatalogInterface::CatalogType & GetCatalog();
+  using CatalogInterface =
+    dataRepository::CatalogInterface<OutputBase, std::string const &, Group *const>;
+  static CatalogInterface::CatalogType &GetCatalog();
 
   // Catalog view keys
   struct viewKeysStruct
@@ -79,14 +78,12 @@ protected:
    *        on the subgroups.
    * @param group The root group
    **/
-  virtual void InitializePreSubGroups( Group * const group ) override;
+  virtual void InitializePreSubGroups(Group *const group) override;
 
 private:
   string m_childDirectory;
   integer m_parallelThreads;
-
 };
-
 
 } /* namespace geosx */
 

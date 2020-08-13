@@ -23,10 +23,8 @@
 #include "physicsSolvers/SolverBase.hpp"
 #include "managers/DomainPartition.hpp"
 
-
 namespace geosx
 {
-
 //struct ModifiedObjectLists
 //{
 //  std::set<localIndex> newNodes;
@@ -35,7 +33,6 @@ namespace geosx
 //  map< std::pair<localIndex,localIndex>, std::set<localIndex> > newElements;
 //  map< std::pair<localIndex,localIndex>, std::set<localIndex> > modifiedElements;
 //};
-
 
 class SpatialPartition;
 
@@ -55,23 +52,21 @@ class ElementRegionBase;
 class EmbeddedSurfaceGenerator : public SolverBase
 {
 public:
-  EmbeddedSurfaceGenerator( const std::string & name,
-                            Group * const parent );
+  EmbeddedSurfaceGenerator(const std::string& name, Group* const parent);
   ~EmbeddedSurfaceGenerator() override;
-
 
   static string CatalogName() { return "EmbeddedSurfaceGenerator"; }
 
-  virtual void RegisterDataOnMesh( Group * const MeshBody ) override final;
+  virtual void RegisterDataOnMesh(Group* const MeshBody) override final;
 
-  virtual void Execute( real64 const time_n,
-                        real64 const dt,
-                        integer const cycleNumber,
-                        integer const GEOSX_UNUSED_PARAM( eventCounter ),
-                        real64 const GEOSX_UNUSED_PARAM( eventProgress ),
-                        dataRepository::Group * domain ) override
+  virtual void Execute(real64 const time_n,
+                       real64 const dt,
+                       integer const cycleNumber,
+                       integer const GEOSX_UNUSED_PARAM(eventCounter),
+                       real64 const GEOSX_UNUSED_PARAM(eventProgress),
+                       dataRepository::Group* domain) override
   {
-    SolverStep( time_n, dt, cycleNumber, *domain->group_cast< DomainPartition * >());
+    SolverStep(time_n, dt, cycleNumber, *domain->group_cast<DomainPartition*>());
   }
 
   /**
@@ -82,15 +77,14 @@ public:
    * @return ...
    *
    */
-  virtual real64 SolverStep( real64 const & time_n,
-                             real64 const & dt,
-                             integer const cycleNumber,
-                             DomainPartition & domain ) override;
+  virtual real64 SolverStep(real64 const& time_n,
+                            real64 const& dt,
+                            integer const cycleNumber,
+                            DomainPartition& domain) override;
 
   /**@}*/
 
 protected:
-
   /**
    * @brief xxx
    * @param[in] ...
@@ -99,7 +93,7 @@ protected:
    * @return ...
    *
    */
-  virtual void InitializePostSubGroups( Group * const problemManager ) override final;
+  virtual void InitializePostSubGroups(Group* const problemManager) override final;
   /**
    * @brief xxx
    * @param[in] ...
@@ -108,11 +102,11 @@ protected:
    * @return ...
    *
    */
-  virtual void InitializePostInitialConditions_PreSubGroups( Group * const problemManager ) override final;
-  virtual void postRestartInitialization( Group * const domain ) override final;
+  virtual void InitializePostInitialConditions_PreSubGroups(
+    Group* const problemManager) override final;
+  virtual void postRestartInitialization(Group* const domain) override final;
 
 private:
-
   /**
    * @struct viewKeyStruct holds char strings and viewKeys for fast lookup
    */
@@ -123,11 +117,11 @@ private:
     //TODO: rock toughness should be a material parameter, and we need to make rock toughness to KIC a constitutive
     // relation.
     constexpr static auto rockToughnessString = "rockToughness";
-  }; //SurfaceGenViewKeys;
+  };  //SurfaceGenViewKeys;
 
 private:
   // solid solver name
-  array1d< string > m_solidMaterialNames;
+  array1d<string> m_solidMaterialNames;
   // fracture region name
   string m_fractureRegionName;
 };

@@ -20,26 +20,22 @@
 
 namespace geosx
 {
-
 class DofManager;
 
 /**
  * @brief Common interface for preconditioning operators
  * @tparam LAI linear algebra interface providing vectors, matrices and solvers
  */
-template< typename LAI >
-class PreconditionerBase : public LinearOperator< typename LAI::ParallelVector >
+template <typename LAI>
+class PreconditionerBase : public LinearOperator<typename LAI::ParallelVector>
 {
 public:
-
-  PreconditionerBase()
-    : m_mat{}
-  {}
+  PreconditionerBase() : m_mat {} { }
 
   virtual ~PreconditionerBase() = default;
 
   /// Alias for base type
-  using Base = LinearOperator< typename LAI::ParallelVector >;
+  using Base = LinearOperator<typename LAI::ParallelVector>;
 
   /// Alias for vector type
   using Vector = typename Base::Vector;
@@ -51,9 +47,9 @@ public:
    * @brief Compute the preconditioner from a matrix.
    * @param mat the matrix to precondition.
    */
-  virtual void compute( Matrix const & mat )
+  virtual void compute(Matrix const& mat)
   {
-    GEOSX_LAI_ASSERT( mat.ready() );
+    GEOSX_LAI_ASSERT(mat.ready());
     m_mat = &mat;
   }
 
@@ -62,11 +58,10 @@ public:
    * @param mat the matrix to precondition
    * @param dofManager the Degree-of-Freedom manager associated with matrix
    */
-  virtual void compute( Matrix const & mat,
-                        DofManager const & dofManager )
+  virtual void compute(Matrix const& mat, DofManager const& dofManager)
   {
-    GEOSX_UNUSED_VAR( dofManager );
-    compute( mat );
+    GEOSX_UNUSED_VAR(dofManager);
+    compute(mat);
   }
 
   /**
@@ -80,10 +75,7 @@ public:
    *
    * @note Should be properly overridden in derived classes, which may call this method.
    */
-  virtual void clear()
-  {
-    m_mat = nullptr;
-  }
+  virtual void clear() { m_mat = nullptr; }
 
   /**
    * @brief Get the number of global rows.
@@ -107,27 +99,23 @@ public:
    * @brief Chech if preconditioner is ready to use
    * @return @p true if compute() has been called but not clear().
    */
-  bool ready() const
-  {
-    return m_mat != nullptr;
-  }
+  bool ready() const { return m_mat != nullptr; }
 
   /**
    * @brief Access the matrix the preconditioner was computed from
    * @return reference to the matrix (user's repsonsibility to ensure it's still valid)
    */
-  Matrix const & matrix() const
+  Matrix const& matrix() const
   {
-    GEOSX_LAI_ASSERT( ready() );
+    GEOSX_LAI_ASSERT(ready());
     return *m_mat;
   }
 
 private:
-
   /// Pointer to the matrix
-  Matrix const * m_mat;
+  Matrix const* m_mat;
 };
 
-}
+}  // namespace geosx
 
-#endif //GEOSX_LINEARALGEBRA_SOLVERS_PRECONDITIONERBASE_HPP_
+#endif  //GEOSX_LINEARALGEBRA_SOLVERS_PRECONDITIONERBASE_HPP_

@@ -16,40 +16,39 @@
  * @file CellElementStencilMPFA.cpp
  */
 
-
 #include "CellElementStencilMPFA.hpp"
 
 namespace geosx
 {
+CellElementStencilMPFA::CellElementStencilMPFA()
+  : StencilBase<CellElementStencilMPFA_Traits, CellElementStencilMPFA>()
+{ }
 
-CellElementStencilMPFA::CellElementStencilMPFA():
-  StencilBase< CellElementStencilMPFA_Traits, CellElementStencilMPFA >()
-{}
-
-
-void CellElementStencilMPFA::reserve( localIndex const size )
+void CellElementStencilMPFA::reserve(localIndex const size)
 {
-  m_elementRegionIndices.reserve( size * 9 );
-  m_elementSubRegionIndices.reserve( size * 9 );
-  m_elementIndices.reserve( size * 9 );
-  m_weights.reserve( size * 9 );
+  m_elementRegionIndices.reserve(size * 9);
+  m_elementSubRegionIndices.reserve(size * 9);
+  m_elementIndices.reserve(size * 9);
+  m_weights.reserve(size * 9);
 }
 
-void CellElementStencilMPFA::add( localIndex const numPts,
-                                  localIndex const * const elementRegionIndices,
-                                  localIndex const * const elementSubRegionIndices,
-                                  localIndex const * const elementIndices,
-                                  real64 const * const weights,
-                                  localIndex const connectorIndex )
+void CellElementStencilMPFA::add(localIndex const numPts,
+                                 localIndex const* const elementRegionIndices,
+                                 localIndex const* const elementSubRegionIndices,
+                                 localIndex const* const elementIndices,
+                                 real64 const* const weights,
+                                 localIndex const connectorIndex)
 {
-  GEOSX_ERROR_IF( numPts >= MAX_STENCIL_SIZE, "Maximum stencil size exceeded" );
+  GEOSX_ERROR_IF(numPts >= MAX_STENCIL_SIZE, "Maximum stencil size exceeded");
 
-  m_elementRegionIndices.appendArray( elementRegionIndices, elementRegionIndices + numPts );
-  m_elementSubRegionIndices.appendArray( elementSubRegionIndices, elementSubRegionIndices + numPts );
-  m_elementIndices.appendArray( elementIndices, elementIndices + numPts );
-  m_weights.appendArray( weights, weights + numPts );
+  m_elementRegionIndices.appendArray(elementRegionIndices,
+                                     elementRegionIndices + numPts);
+  m_elementSubRegionIndices.appendArray(elementSubRegionIndices,
+                                        elementSubRegionIndices + numPts);
+  m_elementIndices.appendArray(elementIndices, elementIndices + numPts);
+  m_weights.appendArray(weights, weights + numPts);
 
-  m_connectorIndices[connectorIndex] = m_elementRegionIndices.size()-1;
+  m_connectorIndices[connectorIndex] = m_elementRegionIndices.size() - 1;
 }
 
 } /* namespace geosx */

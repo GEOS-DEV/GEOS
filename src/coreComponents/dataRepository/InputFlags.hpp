@@ -23,10 +23,8 @@
 
 namespace geosx
 {
-
 namespace dataRepository
 {
-
 /**
  * @enum InputFlags
  *
@@ -34,13 +32,13 @@ namespace dataRepository
  */
 enum class InputFlags : int
 {
-  INVALID,            ///< Invalid value
-  FALSE,              ///< Not read from input
-  OPTIONAL,           ///< Optional in input
-  OPTIONAL_NONUNIQUE, ///< Optional in input, may be repeated
-  REQUIRED,           ///< Required in input
-  REQUIRED_NONUNIQUE, ///< Required in input, may be repeated
-  PROBLEM_ROOT,       ///< Root of the hierarchy
+  INVALID,             ///< Invalid value
+  FALSE,               ///< Not read from input
+  OPTIONAL,            ///< Optional in input
+  OPTIONAL_NONUNIQUE,  ///< Optional in input, may be repeated
+  REQUIRED,            ///< Required in input
+  REQUIRED_NONUNIQUE,  ///< Required in input, may be repeated
+  PROBLEM_ROOT,        ///< Root of the hierarchy
 };
 
 /**
@@ -48,30 +46,30 @@ enum class InputFlags : int
  * @param[in] val value to convert
  * @return converted enumeration
  */
-inline InputFlags IntToInputFlag( int const val )
+inline InputFlags IntToInputFlag(int const val)
 {
   InputFlags rval = InputFlags::INVALID;
-  switch( val )
+  switch(val)
   {
-    case 0:
-    {
-      rval = InputFlags::FALSE;
-      break;
-    }
-    case 1:
-    {
-      rval = InputFlags::OPTIONAL;
-      break;
-    }
-    case 2:
-    {
-      rval = InputFlags::REQUIRED;
-      break;
-    }
-    default:
-    {
-      GEOSX_ERROR( "Invalid integer conversion to InputFlag" );
-    }
+  case 0:
+  {
+    rval = InputFlags::FALSE;
+    break;
+  }
+  case 1:
+  {
+    rval = InputFlags::OPTIONAL;
+    break;
+  }
+  case 2:
+  {
+    rval = InputFlags::REQUIRED;
+    break;
+  }
+  default:
+  {
+    GEOSX_ERROR("Invalid integer conversion to InputFlag");
+  }
   }
   return rval;
 }
@@ -81,57 +79,56 @@ inline InputFlags IntToInputFlag( int const val )
  * @param[in] val value to convert
  * @return converted integer
  */
-inline int InputFlagToInt( InputFlags const val )
+inline int InputFlagToInt(InputFlags const val)
 {
-  return static_cast< int >(val);
+  return static_cast<int>(val);
 }
-
 
 /**
  * @brief Convert an InputFlags value to a string.
  * @param[in] val The value of the input flag that will be converted to a string
  * @return The string equivalent of the input @p val.
  */
-inline std::string InputFlagToString( InputFlags const val )
+inline std::string InputFlagToString(InputFlags const val)
 {
   std::string rval;
-  switch( val )
+  switch(val)
   {
-    case InputFlags::INVALID:
-    {
-      rval = "INVALID";
-      break;
-    }
-    case InputFlags::FALSE:
-    {
-      rval = "FALSE";
-      break;
-    }
-    case InputFlags::OPTIONAL:
-    {
-      rval = "OPTIONAL";
-      break;
-    }
-    case InputFlags::OPTIONAL_NONUNIQUE:
-    {
-      rval = "OPTIONAL_NONUNIQUE";
-      break;
-    }
-    case InputFlags::REQUIRED:
-    {
-      rval = "REQUIRED";
-      break;
-    }
-    case InputFlags::REQUIRED_NONUNIQUE:
-    {
-      rval = "REQUIRED_NONUNIQUE";
-      break;
-    }
-    case InputFlags::PROBLEM_ROOT:
-    {
-      rval = "PROBLEM_ROOT";
-      break;
-    }
+  case InputFlags::INVALID:
+  {
+    rval = "INVALID";
+    break;
+  }
+  case InputFlags::FALSE:
+  {
+    rval = "FALSE";
+    break;
+  }
+  case InputFlags::OPTIONAL:
+  {
+    rval = "OPTIONAL";
+    break;
+  }
+  case InputFlags::OPTIONAL_NONUNIQUE:
+  {
+    rval = "OPTIONAL_NONUNIQUE";
+    break;
+  }
+  case InputFlags::REQUIRED:
+  {
+    rval = "REQUIRED";
+    break;
+  }
+  case InputFlags::REQUIRED_NONUNIQUE:
+  {
+    rval = "REQUIRED_NONUNIQUE";
+    break;
+  }
+  case InputFlags::PROBLEM_ROOT:
+  {
+    rval = "PROBLEM_ROOT";
+    break;
+  }
   }
   return rval;
 }
@@ -142,55 +139,52 @@ inline std::string InputFlagToString( InputFlags const val )
  * @param right rhs value
  * @return comparison result
  */
-inline bool operator==( InputFlags const left, InputFlags const right )
+inline bool operator==(InputFlags const left, InputFlags const right)
 {
-  return static_cast< int >(left) == static_cast< int >(right);
+  return static_cast<int>(left) == static_cast<int>(right);
 }
 
 /**
  * @copydoc operator==(InputFlags const, InputFlags const)
  */
-inline bool operator!=( InputFlags const left, InputFlags const right )
+inline bool operator!=(InputFlags const left, InputFlags const right)
 {
-  return static_cast< int >(left) != static_cast< int >(right);
+  return static_cast<int>(left) != static_cast<int>(right);
 }
 
 /**
  * @copydoc operator==(InputFlags const, InputFlags const)
  */
-inline bool operator<( InputFlags const left, InputFlags const right )
+inline bool operator<(InputFlags const left, InputFlags const right)
 {
-  return static_cast< int >(left) < static_cast< int >(right);
+  return static_cast<int>(left) < static_cast<int>(right);
 }
 
 /**
  * @copydoc operator==(InputFlags const, InputFlags const)
  */
-inline bool operator>( InputFlags const left, InputFlags const right )
+inline bool operator>(InputFlags const left, InputFlags const right)
 {
-  return static_cast< int >(left) > static_cast< int >(right);
+  return static_cast<int>(left) > static_cast<int>(right);
 }
 
 /**
  * @copydoc operator==(InputFlags const, InputFlags const)
  */
-inline bool operator<=( InputFlags const left, InputFlags const right )
+inline bool operator<=(InputFlags const left, InputFlags const right)
 {
-  return static_cast< int >(left) <= static_cast< int >(right);
+  return static_cast<int>(left) <= static_cast<int>(right);
 }
 
 /**
  * @copydoc operator==(InputFlags const, InputFlags const)
  */
-inline bool operator>=( InputFlags const left, InputFlags const right )
+inline bool operator>=(InputFlags const left, InputFlags const right)
 {
-  return static_cast< int >(left) >= static_cast< int >(right);
+  return static_cast<int>(left) >= static_cast<int>(right);
 }
-}
-
+}  // namespace dataRepository
 
 } /* namespace geosx */
-
-
 
 #endif /* GEOSX_DATAREPOSITORY_INPUTFLAGS_HPP_ */

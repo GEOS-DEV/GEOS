@@ -25,7 +25,7 @@
 
 // TPL includes
 #ifdef GEOSX_USE_CALIPER
-#include <caliper/cali-manager.h>
+  #include <caliper/cali-manager.h>
 #endif
 
 // System includes
@@ -35,34 +35,33 @@
 
 using namespace geosx;
 
-
-int main( int argc, char *argv[] )
+int main(int argc, char *argv[])
 {
-  basicSetup( argc, argv, true );
+  basicSetup(argc, argv, true);
 
   GEOSX_MARK_FUNCTION_BEGIN;
 
   printTypeSummary();
 
   timeval tim;
-  gettimeofday( &tim, nullptr );
+  gettimeofday(&tim, nullptr);
   real64 t_start = tim.tv_sec + (tim.tv_usec / 1000000.0);
 
   std::string restartFileName;
-  bool restart = ProblemManager::ParseRestart( restartFileName );
-  if( restart )
+  bool restart = ProblemManager::ParseRestart(restartFileName);
+  if(restart)
   {
-    GEOSX_LOG_RANK_0( "Loading restart file " << restartFileName );
-    dataRepository::loadTree( restartFileName );
+    GEOSX_LOG_RANK_0("Loading restart file " << restartFileName);
+    dataRepository::loadTree(restartFileName);
   }
 
   {
-    ProblemManager problemManager( "Problem", nullptr );
+    ProblemManager problemManager("Problem", nullptr);
 
     problemManager.InitializePythonInterpreter();
     problemManager.ParseCommandLineInput();
 
-    if( !problemManager.getSchemaFileName().empty() )
+    if(!problemManager.getSchemaFileName().empty())
     {
       problemManager.GenerateDocumentation();
     }
@@ -72,24 +71,25 @@ int main( int argc, char *argv[] )
 
       problemManager.ProblemSetup();
 
-      if( restart )
+      if(restart)
       {
         problemManager.ReadRestartOverwrite();
       }
 
-      MpiWrapper::Barrier( MPI_COMM_GEOSX );
-      GEOSX_LOG_RANK_0( "Running simulation" );
+      MpiWrapper::Barrier(MPI_COMM_GEOSX);
+      GEOSX_LOG_RANK_0("Running simulation");
 
-      gettimeofday( &tim, nullptr );
-      const real64 t_initialize = tim.tv_sec + ( tim.tv_usec / 1000000.0 );
+      gettimeofday(&tim, nullptr);
+      const real64 t_initialize = tim.tv_sec + (tim.tv_usec / 1000000.0);
 
       problemManager.RunSimulation();
 
-      gettimeofday( &tim, nullptr );
-      const real64 t_run = tim.tv_sec + ( tim.tv_usec / 1000000.0 );
+      gettimeofday(&tim, nullptr);
+      const real64 t_run = tim.tv_sec + (tim.tv_usec / 1000000.0);
 
-      GEOSX_LOG_RANK_0( "\ninit time = " << std::setprecision( 5 ) << t_initialize - t_start <<
-                        "s, run time = " << t_run - t_initialize << "s" );
+      GEOSX_LOG_RANK_0("\ninit time = "
+                       << std::setprecision(5) << t_initialize - t_start
+                       << "s, run time = " << t_run - t_initialize << "s");
     }
 
     problemManager.ClosePythonInterpreter();

@@ -27,33 +27,32 @@ namespace geosx
 {
 namespace constitutive
 {
-
-
 class PoreVolumeCompressibleSolid : public ConstitutiveBase
 {
 public:
-  PoreVolumeCompressibleSolid( std::string const & name, Group * const parent );
+  PoreVolumeCompressibleSolid(std::string const& name, Group* const parent);
 
   virtual ~PoreVolumeCompressibleSolid() override;
 
-  void DeliverClone( string const & name,
-                     Group * const parent,
-                     std::unique_ptr< ConstitutiveBase > & clone ) const override;
+  void DeliverClone(string const& name,
+                    Group* const parent,
+                    std::unique_ptr<ConstitutiveBase>& clone) const override;
 
-  virtual void AllocateConstitutiveData( dataRepository::Group * const parent,
-                                         localIndex const numConstitutivePointsPerParentIndex ) override;
-
+  virtual void AllocateConstitutiveData(
+    dataRepository::Group* const parent,
+    localIndex const numConstitutivePointsPerParentIndex) override;
 
   static std::string CatalogName() { return "PoreVolumeCompressibleSolid"; }
 
   virtual string GetCatalogName() override { return CatalogName(); }
 
-  virtual void StateUpdatePointPressure( real64 const & pres,
-                                         localIndex const k,
-                                         localIndex const q ) override final;
+  virtual void StateUpdatePointPressure(real64 const& pres,
+                                        localIndex const k,
+                                        localIndex const q) override final;
 
-  virtual void StateUpdateBatchPressure( arrayView1d< real64 const > const & pres,
-                                         arrayView1d< real64 const > const & dPres ) override final;
+  virtual void StateUpdateBatchPressure(
+    arrayView1d<real64 const> const& pres,
+    arrayView1d<real64 const> const& dPres) override final;
 
   struct viewKeyStruct : public ConstitutiveBase::viewKeyStruct
   {
@@ -65,22 +64,20 @@ protected:
   virtual void PostProcessInput() override;
 
 private:
-
   /// scalar compressibility parameter
   real64 m_compressibility;
 
   /// reference pressure parameter
   real64 m_referencePressure;
 
-  array2d< real64 > m_poreVolumeMultiplier;
-  array2d< real64 > m_dPVMult_dPressure;
+  array2d<real64> m_poreVolumeMultiplier;
+  array2d<real64> m_dPVMult_dPressure;
 
-  ExponentialRelation< real64, ExponentApproximationType::Linear > m_poreVolumeRelation;
+  ExponentialRelation<real64, ExponentApproximationType::Linear> m_poreVolumeRelation;
 };
 
-}/* namespace constitutive */
+} /* namespace constitutive */
 
 } /* namespace geosx */
 
-
-#endif //GEOSX_CONSTITUTIVE_SOLID_POREVOLUMECOMPRESSIBLESOLID_HPP_
+#endif  //GEOSX_CONSTITUTIVE_SOLID_POREVOLUMECOMPRESSIBLESOLID_HPP_

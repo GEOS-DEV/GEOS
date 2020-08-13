@@ -33,7 +33,7 @@ public:
    * @brief Build the VTM Writer
    * @param[in] filePath path to the file
    */
-  VTKVTMWriter( string const & filePath );
+  VTKVTMWriter(string const& filePath);
 
   /*!
    * @brief Triggers the file output
@@ -46,7 +46,7 @@ public:
    * be CellElementRegion, FaceElementRegion or WellElementREgion)
    * @param[in] blockName Name of the block
    */
-  void AddBlock( string const & blockName ) const;
+  void AddBlock(string const& blockName) const;
 
   /*!
    * @brief Add a subblock to the VTM file
@@ -54,7 +54,7 @@ public:
    * @param[in] blockName Name of the parent block
    * @param[in] subBlockName Name of the subBlock (usually the name of the Region)
    */
-  void AddSubBlock( string const & blockName, string const & subBlockName ) const;
+  void AddSubBlock(string const& blockName, string const& subBlockName) const;
 
   /*!
    * @brief Add data to the subblock \p subBlockName
@@ -64,17 +64,19 @@ public:
    * @param[in] filePath path to the vtu file containing the unstructured mesh
    * @param[in] mpiRank the mpi rank.
    */
-  void AddDataToSubBlock( string const & blockName, string const & subBlockName, string const & filePath, int mpiRank ) const;
+  void AddDataToSubBlock(string const& blockName,
+                         string const& subBlockName,
+                         string const& filePath,
+                         int mpiRank) const;
 
 private:
-
   /// VTM XML file
   xmlWrapper::xmlDocument m_vtmFile;
 
   /// Path to the XML File
   string const m_filePath;
 };
-}
-}
+}  // namespace vtk
+}  // namespace geosx
 
 #endif

@@ -28,7 +28,6 @@
 
 namespace geosx
 {
-
 namespace dataRepository
 {
 /*
@@ -39,9 +38,9 @@ namespace keys
 {
 ///key for file path access
 string const filePath = "file";
-}
+}  // namespace keys
 ///@}
-}
+}  // namespace dataRepository
 
 class NodeManager;
 class DomainPartition;
@@ -53,14 +52,12 @@ class DomainPartition;
 class VTMMeshGenerator : public MeshGeneratorBase
 {
 public:
-
   /**
    * @brief Main constructor for MeshGenerator base class.
    * @param[in] name of the VTMMeshGenerator object
    * @param[in] parent the parent Group pointer for the MeshGenerator object
    */
-  VTMMeshGenerator( const std::string & name,
-                    Group * const parent );
+  VTMMeshGenerator(const std::string& name, Group* const parent);
 
   virtual ~VTMMeshGenerator() override;
 
@@ -70,7 +67,7 @@ public:
    */
   static string CatalogName() { return "MeshFile"; }
 
-  virtual void GenerateElementRegions( DomainPartition & domain ) override;
+  virtual void GenerateElementRegions(DomainPartition& domain) override;
 
   /**
    * @brief Create a new geometric object (box, plane, etc) as a child of this group.
@@ -78,25 +75,25 @@ public:
    * @param childName the name of the new geometric object in the repository
    * @return the group child
    */
-  virtual Group * CreateChild( string const & childKey, string const & childName ) override;
+  virtual Group* CreateChild(string const& childKey,
+                             string const& childName) override;
 
-  virtual void GenerateMesh( DomainPartition * const domain ) override;
+  virtual void GenerateMesh(DomainPartition* const domain) override;
 
   // virtual void GenerateNodesets( xmlWrapper::xmlNode const & targetNode,
   //                                NodeManager * nodeManager ) override;
 
-  virtual void GetElemToNodesRelationInBox ( const std::string & elementType,
-                                             const int index[],
-                                             const int & iEle,
-                                             int nodeIDInBox[],
-                                             const int size ) override;
+  virtual void GetElemToNodesRelationInBox(const std::string& elementType,
+                                           const int index[],
+                                           const int& iEle,
+                                           int nodeIDInBox[],
+                                           const int size) override;
 
-  virtual void RemapMesh ( dataRepository::Group * const domain ) override;
+  virtual void RemapMesh(dataRepository::Group* const domain) override;
 
-//  int m_delayMeshDeformation;
+  //  int m_delayMeshDeformation;
 
 protected:
-
   /**
    * @brief This function provides capability to post process input values prior to
    * any other initialization operations.
@@ -104,7 +101,6 @@ protected:
   void PostProcessInput() override final;
 
 private:
-
   /// Contains the path to the VTM file
   string m_fileName;
 
@@ -115,7 +111,7 @@ private:
    * @brief Convert ndim node spatialized index to node global index.
    * @param[in] node ndim spatialized array index
    */
-  inline globalIndex NodeGlobalIndex( const int GEOSX_UNUSED_PARAM( index )[3] )
+  inline globalIndex NodeGlobalIndex(const int GEOSX_UNUSED_PARAM(index)[3])
   {
     globalIndex rval = 0;
     /*
@@ -129,7 +125,7 @@ private:
    * @brief Convert ndim element spatialized index to element global index.
    * @param[in] element ndim spatialized array index
    */
-  inline globalIndex ElemGlobalIndex( const int GEOSX_UNUSED_PARAM( index )[3] )
+  inline globalIndex ElemGlobalIndex(const int GEOSX_UNUSED_PARAM(index)[3])
   {
     globalIndex rval = 0;
     /*
@@ -146,7 +142,8 @@ private:
    *
    * @note In pattern 0, half nodes have 4 edges and the other half have 8; for Pattern 1, every node has 6.
    */
-  inline R1Tensor NodePosition( const int GEOSX_UNUSED_PARAM( a )[3], int GEOSX_UNUSED_PARAM( trianglePattern ) )
+  inline R1Tensor NodePosition(const int GEOSX_UNUSED_PARAM(a)[3],
+                               int GEOSX_UNUSED_PARAM(trianglePattern))
   {
     R1Tensor X;
     /*
@@ -217,7 +214,7 @@ private:
    * @param[in]
    * @return an array of the element center coordinates
    */
-  inline R1Tensor ElemCenterPosition( const int GEOSX_UNUSED_PARAM( k )[3] )
+  inline R1Tensor ElemCenterPosition(const int GEOSX_UNUSED_PARAM(k)[3])
   {
     R1Tensor X;
 
@@ -232,7 +229,6 @@ private:
   }
 
 public:
-
   /**
    * @brief Check if the mesh is a radial mesh.
    * @return true if the Internal mesh is radial, false else
@@ -245,8 +241,7 @@ public:
      */
     return false;
   }
-
 };
-}
+}  // namespace geosx
 
 #endif /* GEOSX_MESHUTILITIES_VTMMESHGENERATOR_HPP */

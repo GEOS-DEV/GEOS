@@ -25,7 +25,6 @@
 
 namespace geosx
 {
-
 /**
  * @brief Common base template for all matrix wrapper types.
  * @tparam MATRIX derived matrix type
@@ -45,11 +44,10 @@ namespace geosx
  * behavior deviates from expectations or has unexpected performance impacts.
  * In that case, @c \@copydoc tag can be used to copy over the documentation.
  */
-template< typename MATRIX, typename VECTOR >
-class MatrixBase : public virtual LinearOperator< VECTOR >
+template <typename MATRIX, typename VECTOR>
+class MatrixBase : public virtual LinearOperator<VECTOR>
 {
 public:
-
   /// Type alias for actual derived matrix class
   using Matrix = MATRIX;
 
@@ -57,7 +55,6 @@ public:
   using Vector = VECTOR;
 
 protected:
-
   /**
    * @name Constructors/destructor/assignment
    */
@@ -66,32 +63,29 @@ protected:
   /**
    * @brief Constructs a matrix in default state
    */
-  MatrixBase()
-    : m_closed( true ),
-    m_assembled( false )
-  {}
+  MatrixBase() : m_closed(true), m_assembled(false) { }
 
   /**
    * @brief Copy constructor.
    */
-  MatrixBase( MatrixBase const & ) = default;
+  MatrixBase(MatrixBase const&) = default;
 
   /**
    * @brief Move constructor.
    */
-  MatrixBase( MatrixBase && ) = default;
+  MatrixBase(MatrixBase&&) = default;
 
   /**
    * @brief Copy assignment.
    * @return reference to this object
    */
-  MatrixBase & operator=( MatrixBase const & ) = default;
+  MatrixBase& operator=(MatrixBase const&) = default;
 
   /**
    * @brief Move assignment.
    * @return reference to this object
    */
-  MatrixBase & operator=( MatrixBase && ) = default;
+  MatrixBase& operator=(MatrixBase&&) = default;
 
   /**
    * @brief Destructor.
@@ -160,12 +154,11 @@ protected:
    * @param comm MPI communicator.
    *
    */
-  virtual void
-  createWithLocalSize( localIndex const localSize,
-                       localIndex const maxEntriesPerRow,
-                       MPI_Comm const & comm )
+  virtual void createWithLocalSize(localIndex const localSize,
+                                   localIndex const maxEntriesPerRow,
+                                   MPI_Comm const& comm)
   {
-    createWithLocalSize( localSize, localSize, maxEntriesPerRow, comm );
+    createWithLocalSize(localSize, localSize, maxEntriesPerRow, comm);
   }
 
   /**
@@ -178,12 +171,11 @@ protected:
    * @param comm MPI communicator.
    *
    */
-  virtual void
-  createWithGlobalSize( globalIndex const globalSize,
-                        localIndex const maxEntriesPerRow,
-                        MPI_Comm const & comm )
+  virtual void createWithGlobalSize(globalIndex const globalSize,
+                                    localIndex const maxEntriesPerRow,
+                                    MPI_Comm const& comm)
   {
-    createWithGlobalSize( globalSize, globalSize, maxEntriesPerRow, comm );
+    createWithGlobalSize(globalSize, globalSize, maxEntriesPerRow, comm);
   }
 
   /**
@@ -194,11 +186,10 @@ protected:
    * @param localCols Local number of columns.
    * @param maxEntriesPerRow Maximum number of entries per row (hint).
    */
-  virtual void
-  createWithLocalSize( localIndex const localRows,
-                       localIndex const localCols,
-                       localIndex const maxEntriesPerRow,
-                       MPI_Comm const & comm ) = 0;
+  virtual void createWithLocalSize(localIndex const localRows,
+                                   localIndex const localCols,
+                                   localIndex const maxEntriesPerRow,
+                                   MPI_Comm const& comm) = 0;
 
   /**
    * @brief Create a rectangular matrix from number of rows/columns.
@@ -208,11 +199,10 @@ protected:
    * @param globalCols Global number of columns.
    * @param maxEntriesPerRow Maximum number of entries per row (hint).
    */
-  virtual void
-  createWithGlobalSize( globalIndex const globalRows,
-                        globalIndex const globalCols,
-                        localIndex const maxEntriesPerRow,
-                        MPI_Comm const & comm ) = 0;
+  virtual void createWithGlobalSize(globalIndex const globalRows,
+                                    globalIndex const globalCols,
+                                    localIndex const maxEntriesPerRow,
+                                    MPI_Comm const& comm) = 0;
 
   /**
    * @brief Create parallel matrix from a local CRS matrix.
@@ -222,28 +212,30 @@ protected:
    * @note Copies values, so that @p localMatrix does not need to retain its values after the call.
    * @todo Replace generic implementation with more efficient ones in each package.
    */
-  virtual void create( CRSMatrixView< real64 const, globalIndex const > const & localMatrix,
-                       MPI_Comm const & comm )
+  virtual void create(CRSMatrixView<real64 const, globalIndex const> const& localMatrix,
+                      MPI_Comm const& comm)
   {
-    localMatrix.move( LvArray::MemorySpace::CPU, false );
+    localMatrix.move(LvArray::MemorySpace::CPU, false);
 
     localIndex maxEntriesPerRow = 0;
-    for( localIndex i = 0; i < localMatrix.numRows(); ++i )
+    for(localIndex i = 0; i < localMatrix.numRows(); ++i)
     {
-      maxEntriesPerRow = std::max( maxEntriesPerRow, localMatrix.numNonZeros( i ) );
+      maxEntriesPerRow = std::max(maxEntriesPerRow, localMatrix.numNonZeros(i));
     }
 
-    createWithLocalSize( localMatrix.numRows(),
-                         localMatrix.numRows(),
-                         maxEntriesPerRow,
-                         comm );
+    createWithLocalSize(localMatrix.numRows(),
+                        localMatrix.numRows(),
+                        maxEntriesPerRow,
+                        comm);
 
     globalIndex const rankOffset = ilower();
 
     open();
-    for( localIndex localRow = 0; localRow < localMatrix.numRows(); ++localRow )
+    for(localIndex localRow = 0; localRow < localMatrix.numRows(); ++localRow)
     {
-      insert( localRow + rankOffset, localMatrix.getColumns( localRow ), localMatrix.getEntries( localRow ) );
+      insert(localRow + rankOffset,
+             localMatrix.getColumns(localRow),
+             localMatrix.getEntries(localRow));
     }
     close();
   }
@@ -291,7 +283,7 @@ protected:
    * @brief Set all non-zero elements to a value.
    * @param value the value to set all elements to
    */
-  virtual void set( real64 const value ) = 0;
+  virtual void set(real64 const value) = 0;
 
   /**
    * @brief Set all elements to zero.
@@ -318,9 +310,9 @@ protected:
    * @param colIndex Global column index
    * @param value Value to add to prescribed location
    */
-  virtual void add( globalIndex const rowIndex,
-                    globalIndex const colIndex,
-                    real64 const value ) = 0;
+  virtual void add(globalIndex const rowIndex,
+                   globalIndex const colIndex,
+                   real64 const value) = 0;
 
   /**
    * @brief Set one element.
@@ -328,9 +320,9 @@ protected:
    * @param colIndex Global column index
    * @param value Value to set at prescribed location
    */
-  virtual void set( globalIndex const rowIndex,
-                    globalIndex const colIndex,
-                    real64 const value ) = 0;
+  virtual void set(globalIndex const rowIndex,
+                   globalIndex const colIndex,
+                   real64 const value) = 0;
 
   /**
    * @brief Insert one element.
@@ -338,9 +330,9 @@ protected:
    * @param colIndex Global column index
    * @param value Value to insert at prescribed location
    */
-  virtual void insert( globalIndex const rowIndex,
-                       globalIndex const colIndex,
-                       real64 const value ) = 0;
+  virtual void insert(globalIndex const rowIndex,
+                      globalIndex const colIndex,
+                      real64 const value) = 0;
 
   /**
    * @brief Add elements to one row using c-style arrays
@@ -349,10 +341,10 @@ protected:
    * @param values Values to add to prescribed locations
    * @param size Number of elements
    */
-  virtual void add( globalIndex const rowIndex,
-                    globalIndex const * colIndices,
-                    real64 const * values,
-                    localIndex const size ) = 0;
+  virtual void add(globalIndex const rowIndex,
+                   globalIndex const* colIndices,
+                   real64 const* values,
+                   localIndex const size) = 0;
 
   /**
    * @brief Set elements to one row using c-style arrays
@@ -361,10 +353,10 @@ protected:
    * @param values Values to add to prescribed locations
    * @param size Number of elements
    */
-  virtual void set( globalIndex const rowIndex,
-                    globalIndex const * colIndices,
-                    real64 const * values,
-                    localIndex const size ) = 0;
+  virtual void set(globalIndex const rowIndex,
+                   globalIndex const* colIndices,
+                   real64 const* values,
+                   localIndex const size) = 0;
 
   /**
    * @brief Insert elements to one row using c-style arrays
@@ -373,10 +365,10 @@ protected:
    * @param values Values to add to prescribed locations
    * @param size Number of elements
    */
-  virtual void insert( globalIndex const rowIndex,
-                       globalIndex const * colIndices,
-                       real64 const * values,
-                       localIndex const size ) = 0;
+  virtual void insert(globalIndex const rowIndex,
+                      globalIndex const* colIndices,
+                      real64 const* values,
+                      localIndex const size) = 0;
 
   /**
    * @brief Add elements to one row using array1d
@@ -384,9 +376,9 @@ protected:
    * @param colIndices Global column indices
    * @param values Values to add to prescribed locations
    */
-  virtual void add( globalIndex const rowIndex,
-                    arraySlice1d< globalIndex const > const & colIndices,
-                    arraySlice1d< real64 const > const & values ) = 0;
+  virtual void add(globalIndex const rowIndex,
+                   arraySlice1d<globalIndex const> const& colIndices,
+                   arraySlice1d<real64 const> const& values) = 0;
 
   /**
    * @brief Set elements of one row using array1d
@@ -394,9 +386,9 @@ protected:
    * @param colIndices Global column indices
    * @param values Values to add to prescribed locations
    */
-  virtual void set( globalIndex const rowIndex,
-                    arraySlice1d< globalIndex const > const & colIndices,
-                    arraySlice1d< real64 const > const & values ) = 0;
+  virtual void set(globalIndex const rowIndex,
+                   arraySlice1d<globalIndex const> const& colIndices,
+                   arraySlice1d<real64 const> const& values) = 0;
 
   /**
    * @brief Insert elements of one row using array1d
@@ -404,9 +396,9 @@ protected:
    * @param colIndices Global column indices
    * @param values Values to add to prescribed locations
    */
-  virtual void insert( globalIndex const rowIndex,
-                       arraySlice1d< globalIndex const > const & colIndices,
-                       arraySlice1d< real64 const > const & values ) = 0;
+  virtual void insert(globalIndex const rowIndex,
+                      arraySlice1d<globalIndex const> const& colIndices,
+                      arraySlice1d<real64 const> const& values) = 0;
 
   /**
    * @brief Add a dense block of values.
@@ -414,9 +406,10 @@ protected:
    * @param colIndices Global col indices
    * @param values Dense local matrix of values
    */
-  virtual void add( arraySlice1d< globalIndex const > const & rowIndices,
-                    arraySlice1d< globalIndex const > const & colIndices,
-                    arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & values ) = 0;
+  virtual void add(
+    arraySlice1d<globalIndex const> const& rowIndices,
+    arraySlice1d<globalIndex const> const& colIndices,
+    arraySlice2d<real64 const, MatrixLayout::ROW_MAJOR> const& values) = 0;
 
   /**
    * @brief Set a dense block of values.
@@ -424,9 +417,10 @@ protected:
    * @param colIndices Global col indices
    * @param values Dense local matrix of values
    */
-  virtual void set( arraySlice1d< globalIndex const > const & rowIndices,
-                    arraySlice1d< globalIndex const > const & colIndices,
-                    arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & values ) = 0;
+  virtual void set(
+    arraySlice1d<globalIndex const> const& rowIndices,
+    arraySlice1d<globalIndex const> const& colIndices,
+    arraySlice2d<real64 const, MatrixLayout::ROW_MAJOR> const& values) = 0;
 
   /**
    * @brief Insert a dense block of values.
@@ -434,9 +428,10 @@ protected:
    * @param colIndices Global col indices
    * @param values Dense local matrix of values
    */
-  virtual void insert( arraySlice1d< globalIndex const > const & rowIndices,
-                       arraySlice1d< globalIndex const > const & colIndices,
-                       arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & values ) = 0;
+  virtual void insert(
+    arraySlice1d<globalIndex const> const& rowIndices,
+    arraySlice1d<globalIndex const> const& colIndices,
+    arraySlice2d<real64 const, MatrixLayout::ROW_MAJOR> const& values) = 0;
 
   /**
    * @brief Add a dense block of values.
@@ -444,9 +439,10 @@ protected:
    * @param colIndices Global col indices
    * @param values Dense local matrix of values
    */
-  virtual void add( arraySlice1d< globalIndex const > const & rowIndices,
-                    arraySlice1d< globalIndex const > const & colIndices,
-                    arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & values ) = 0;
+  virtual void add(
+    arraySlice1d<globalIndex const> const& rowIndices,
+    arraySlice1d<globalIndex const> const& colIndices,
+    arraySlice2d<real64 const, MatrixLayout::COL_MAJOR> const& values) = 0;
 
   /**
    * @brief Set a dense block of values.
@@ -454,9 +450,10 @@ protected:
    * @param colIndices Global col indices
    * @param values Dense local matrix of values
    */
-  virtual void set( arraySlice1d< globalIndex const > const & rowIndices,
-                    arraySlice1d< globalIndex const > const & colIndices,
-                    arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & values ) = 0;
+  virtual void set(
+    arraySlice1d<globalIndex const> const& rowIndices,
+    arraySlice1d<globalIndex const> const& colIndices,
+    arraySlice2d<real64 const, MatrixLayout::COL_MAJOR> const& values) = 0;
 
   /**
    * @brief Insert a dense block of values.
@@ -464,9 +461,10 @@ protected:
    * @param colIndices Global col indices
    * @param values Dense local matrix of values
    */
-  virtual void insert( arraySlice1d< globalIndex const > const & rowIndices,
-                       arraySlice1d< globalIndex const > const & colIndices,
-                       arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & values ) = 0;
+  virtual void insert(
+    arraySlice1d<globalIndex const> const& rowIndices,
+    arraySlice1d<globalIndex const> const& colIndices,
+    arraySlice2d<real64 const, MatrixLayout::COL_MAJOR> const& values) = 0;
 
   /**
    * @brief Add a dense block of values.
@@ -478,11 +476,11 @@ protected:
    *
    * @note Row major layout assumed in values
    */
-  virtual void add( globalIndex const * rowIndices,
-                    globalIndex const * colIndices,
-                    real64 const * values,
-                    localIndex const numRows,
-                    localIndex const numCols ) = 0;
+  virtual void add(globalIndex const* rowIndices,
+                   globalIndex const* colIndices,
+                   real64 const* values,
+                   localIndex const numRows,
+                   localIndex const numCols) = 0;
 
   /**
    * @brief Set a dense block of values.
@@ -494,11 +492,11 @@ protected:
    *
    * @note Row major layout assumed in values
    */
-  virtual void set( globalIndex const * rowIndices,
-                    globalIndex const * colIndices,
-                    real64 const * values,
-                    localIndex const numRows,
-                    localIndex const numCols ) = 0;
+  virtual void set(globalIndex const* rowIndices,
+                   globalIndex const* colIndices,
+                   real64 const* values,
+                   localIndex const numRows,
+                   localIndex const numCols) = 0;
 
   /**
    * @brief Insert dense matrix.
@@ -510,11 +508,11 @@ protected:
    * @param numCols Number of column indices
    * @note Row major layout assumed in values
    */
-  virtual void insert( globalIndex const * rowIndices,
-                       globalIndex const * colIndices,
-                       real64 const * values,
-                       localIndex const numRows,
-                       localIndex const numCols ) = 0;
+  virtual void insert(globalIndex const* rowIndices,
+                      globalIndex const* colIndices,
+                      real64 const* values,
+                      localIndex const numRows,
+                      localIndex const numCols) = 0;
 
   ///@}
 
@@ -523,14 +521,14 @@ protected:
    */
   ///@{
 
-  virtual void apply( Vector const & src, Vector & dst ) const override = 0;
+  virtual void apply(Vector const& src, Vector& dst) const override = 0;
 
   /**
    * @brief Apply transpose of the matrix to a vector
    * @param src Input vector (x).
    * @param dst Output vector (b).
    */
-  virtual void applyTranspose( Vector const & src, Vector & dst ) const = 0;
+  virtual void applyTranspose(Vector const& src, Vector& dst) const = 0;
 
   /**
    * @brief Compute residual <tt>r = Ax - b</tt>.
@@ -543,13 +541,13 @@ protected:
    *
    * @note @p x and @p r cannot alias the same vector.
    */
-  virtual void residual( Vector const & x, Vector const & b, Vector & r ) const override
+  virtual void residual(Vector const& x, Vector const& b, Vector& r) const override
   {
-    if( &b != &r )
+    if(&b != &r)
     {
-      r.copy( b );
+      r.copy(b);
     }
-    gemv( -1.0, x, 1.0, r );
+    gemv(-1.0, x, 1.0, r);
   }
 
   /**
@@ -565,8 +563,7 @@ protected:
    * on C, then C's sparsity pattern must already contain
    * the nonzero entries produced by the product this*B.
    */
-  virtual void multiply( Matrix const & src,
-                         Matrix & dst ) const = 0;
+  virtual void multiply(Matrix const& src, Matrix& dst) const = 0;
 
   /**
    * @brief Matrix/Matrix transpose multiplication.
@@ -581,8 +578,7 @@ protected:
    * on C, then C's sparsity pattern must already contain
    * the nonzero entries produced by the product this*B.
    */
-  virtual void leftMultiplyTranspose( Matrix const & src,
-                                      Matrix & dst ) const = 0;
+  virtual void leftMultiplyTranspose(Matrix const& src, Matrix& dst) const = 0;
 
   /**
    * @brief Matrix/Matrix transpose multiplication.
@@ -597,8 +593,7 @@ protected:
    * on C, then C's sparsity pattern must already contain
    * the nonzero entries produced by the product this*B.
    */
-  virtual void rightMultiplyTranspose( Matrix const & src,
-                                       Matrix & dst ) const = 0;
+  virtual void rightMultiplyTranspose(Matrix const& src, Matrix& dst) const = 0;
 
   /**
    * @brief Compute the triple product <tt>dst = R * this * P</tt>
@@ -606,19 +601,17 @@ protected:
    * @param P the "prolongation" matrix
    * @param dst the resulting product matrix (will be re-created as needed)
    */
-  virtual void multiplyRAP( Matrix const & R,
-                            Matrix const & P,
-                            Matrix & dst ) const
+  virtual void multiplyRAP(Matrix const& R, Matrix const& P, Matrix& dst) const
   {
-    GEOSX_LAI_ASSERT( ready() );
-    GEOSX_LAI_ASSERT( R.ready() );
-    GEOSX_LAI_ASSERT( P.ready() );
-    GEOSX_LAI_ASSERT_EQ( numGlobalRows(), R.numGlobalCols() );
-    GEOSX_LAI_ASSERT_EQ( numGlobalCols(), P.numGlobalRows() );
+    GEOSX_LAI_ASSERT(ready());
+    GEOSX_LAI_ASSERT(R.ready());
+    GEOSX_LAI_ASSERT(P.ready());
+    GEOSX_LAI_ASSERT_EQ(numGlobalRows(), R.numGlobalCols());
+    GEOSX_LAI_ASSERT_EQ(numGlobalCols(), P.numGlobalRows());
 
     Matrix AP;
-    multiply( P, AP );
-    R.multiply( AP, dst );
+    multiply(P, AP);
+    R.multiply(AP, dst);
   }
 
   /**
@@ -626,17 +619,16 @@ protected:
    * @param P the "prolongation" matrix
    * @param dst the resulting product matrix (will be re-created as needed)
    */
-  virtual void multiplyPtAP( Matrix const & P,
-                             Matrix & dst ) const
+  virtual void multiplyPtAP(Matrix const& P, Matrix& dst) const
   {
-    GEOSX_LAI_ASSERT( ready() );
-    GEOSX_LAI_ASSERT( P.ready() );
-    GEOSX_LAI_ASSERT_EQ( numGlobalRows(), P.numGlobalRows() );
-    GEOSX_LAI_ASSERT_EQ( numGlobalCols(), P.numGlobalRows() );
+    GEOSX_LAI_ASSERT(ready());
+    GEOSX_LAI_ASSERT(P.ready());
+    GEOSX_LAI_ASSERT_EQ(numGlobalRows(), P.numGlobalRows());
+    GEOSX_LAI_ASSERT_EQ(numGlobalCols(), P.numGlobalRows());
 
     Matrix AP;
-    multiply( P, AP );
-    P.leftMultiplyTranspose( AP, dst );
+    multiply(P, AP);
+    P.leftMultiplyTranspose(AP, dst);
   }
 
   /**
@@ -652,29 +644,29 @@ protected:
    *
    * @warning @p x and @p y cannot alias the same vector.
    */
-  virtual void gemv( real64 const alpha,
-                     Vector const & x,
-                     real64 const beta,
-                     Vector & y,
-                     bool useTranspose = false ) const = 0;
+  virtual void gemv(real64 const alpha,
+                    Vector const& x,
+                    real64 const beta,
+                    Vector& y,
+                    bool useTranspose = false) const = 0;
 
   /**
    * @brief Multiply all elements by scalingFactor.
    * @param scalingFactor Scaling factor.
    */
-  virtual void scale( real64 const scalingFactor ) = 0;
+  virtual void scale(real64 const scalingFactor) = 0;
 
   /**
    * @brief Pre-multiplies (left) with diagonal matrix consisting of the values in vec.
    * @param vec Vector to pre-multiply with.
    */
-  virtual void leftScale( Vector const & vec ) = 0;
+  virtual void leftScale(Vector const& vec) = 0;
 
   /**
    * @brief Post-multiplies (right) with diagonal matrix consisting of the values in vec.
    * @param vec Vector to post-multiply with.
    */
-  virtual void rightScale( Vector const & vec ) = 0;
+  virtual void rightScale(Vector const& vec) = 0;
 
   /**
    * @brief Post-multiplies (right) with diagonal matrix consisting of the values in vecRight
@@ -682,8 +674,7 @@ protected:
    * @param vecLeft vec to pre-multiply with.
    * @param vecRight vec to post-multiply with.
    */
-  virtual void leftRightScale( Vector const & vecLeft,
-                               Vector const & vecRight ) = 0;
+  virtual void leftRightScale(Vector const& vecLeft, Vector const& vecRight) = 0;
 
   /**
    * @brief Matrix transposition.
@@ -693,7 +684,7 @@ protected:
    * @param dst Output matrix (B).
    *
    */
-  virtual void transpose( Matrix & dst ) const = 0;
+  virtual void transpose(Matrix& dst) const = 0;
 
   /**
    * @brief Clear a row, and optionally set diagonal element to <tt>diagValue</tt>.
@@ -704,9 +695,9 @@ protected:
    *
    * @note @p diagValue and @p keepDiag are ignored if the matrix is not square
    */
-  virtual real64 clearRow( globalIndex const row,
-                           bool const keepDiag = false,
-                           real64 const diagValue = 0.0 ) = 0;
+  virtual real64 clearRow(globalIndex const row,
+                          bool const keepDiag = false,
+                          real64 const diagValue = 0.0) = 0;
 
   /**
    * @brief Add entries of another matrix to this.
@@ -716,7 +707,7 @@ protected:
    * @note Sparsity pattern of @p this must be a superset of sparsity of @p src.
    *       @p this and @p src must have the same parallel row distribution.
    */
-  virtual void addEntries( Matrix const & src, real64 const scale = 1.0 ) = 0;
+  virtual void addEntries(Matrix const& src, real64 const scale = 1.0) = 0;
 
   /**
    * @brief Add entries of a vector to the diagonal of this matrix.
@@ -725,7 +716,7 @@ protected:
    * @note @p this must be square and have a (possibly zero) diagonal entry in every row.
    *       @p this and @p src must have the same parallel row distribution.
    */
-  virtual void addDiagonal( Vector const & src ) = 0;
+  virtual void addDiagonal(Vector const& src) = 0;
 
   ///@}
 
@@ -750,14 +741,14 @@ protected:
    * TODO: Breaks the goal of hiding local row indexing from user.
    *       Revise use cases to use ilower() and iupper().
    */
-  virtual localIndex localRowLength( localIndex localRowIndex ) const = 0;
+  virtual localIndex localRowLength(localIndex localRowIndex) const = 0;
 
   /**
    * @brief Get row length via global row index.
    * @param[in] globalRowIndex the global row index
    * @return the number of nonzero entries in the row
    */
-  virtual localIndex globalRowLength( globalIndex const globalRowIndex ) const = 0;
+  virtual localIndex globalRowLength(globalIndex const globalRowIndex) const = 0;
 
   /**
    * @brief Returns a copy of the data in row @p globalRow.
@@ -765,22 +756,22 @@ protected:
    * @param[out] colIndices the output array of global column indices (must have a large enough size)
    * @param[out] values     the output array of values (must have a large enough size)
    */
-  virtual void getRowCopy( globalIndex const globalRow,
-                           arraySlice1d< globalIndex > const & colIndices,
-                           arraySlice1d< real64 > const & values ) const = 0;
+  virtual void getRowCopy(globalIndex const globalRow,
+                          arraySlice1d<globalIndex> const& colIndices,
+                          arraySlice1d<real64> const& values) const = 0;
 
   /**
    * @brief get diagonal element value on a given row
    * @param globalRow global row index
    * @return value of diagonal element on the row
    */
-  virtual real64 getDiagValue( globalIndex globalRow ) const = 0;
+  virtual real64 getDiagValue(globalIndex globalRow) const = 0;
 
   /**
    * @brief Extract diagonal values into a vector.
    * @param dst the target vector, must have the same row partitioning as @p this
    */
-  virtual void extractDiagonal( Vector & dst ) const = 0;
+  virtual void extractDiagonal(Vector& dst) const = 0;
 
   /**
    * @brief Returns the number of global rows.
@@ -880,14 +871,14 @@ protected:
    * @param index the global row index
    * @return the local row index corresponding to @p index, or -1 if not a local row
    */
-  virtual localIndex getLocalRowID( globalIndex const index ) const = 0;
+  virtual localIndex getLocalRowID(globalIndex const index) const = 0;
 
   /**
    * @brief Map a local row index to global row index
    * @param index the local row index (between 0 and number of local rows)
    * @return the global row index corresponding to @p index
    */
-  virtual globalIndex getGlobalRowID( localIndex const index ) const = 0;
+  virtual globalIndex getGlobalRowID(localIndex const index) const = 0;
 
   /**
    * @brief Get the MPI communicator the matrix was created with
@@ -909,7 +900,7 @@ protected:
    * @brief Print the matrix in Trilinos format to a stream.
    * @param os the output stream
    */
-  virtual void print( std::ostream & os = std::cout ) const = 0;
+  virtual void print(std::ostream& os = std::cout) const = 0;
 
   /**
    * @brief Write the matrix to filename in a matlab-compatible format.
@@ -920,8 +911,9 @@ protected:
    * >> load filename
    * >> M = spconvert(filename_root)
    */
-  virtual void write( string const & filename,
-                      LAIOutputFormat const format = LAIOutputFormat::MATRIX_MARKET ) const = 0;
+  virtual void write(
+    string const& filename,
+    LAIOutputFormat const format = LAIOutputFormat::MATRIX_MARKET) const = 0;
 
   ///@}
 
@@ -931,9 +923,9 @@ protected:
    * @param matrix the matrix to be printed
    * @return reference to the output stream
    */
-  friend std::ostream & operator<<( std::ostream & os, Matrix const & matrix )
+  friend std::ostream& operator<<(std::ostream& os, Matrix const& matrix)
   {
-    matrix.print( os );
+    matrix.print(os);
     return os;
   }
 
@@ -942,9 +934,8 @@ protected:
 
   /// Flag indicating whether the matrix (sparsity pattern) has been assembled
   bool m_assembled;
-
 };
 
-} // namespace geosx
+}  // namespace geosx
 
-#endif //GEOSX_LINEARALGEBRA_INTERFACES_MATRIXBASE_HPP_
+#endif  //GEOSX_LINEARALGEBRA_INTERFACES_MATRIXBASE_HPP_

@@ -16,16 +16,15 @@
  * @file ProblemManager.hpp
  */
 
-
 #ifndef GEOSX_MANAGERS_PROBLEMMANAGER_HPP_
 #define GEOSX_MANAGERS_PROBLEMMANAGER_HPP_
 
 #ifdef GEOSX_USE_PYTHON
-// Note: the python header must be included first to avoid conflicting
-// definitions of _posix_c_source
-#define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
-#include <Python.h>
-#include <numpy/arrayobject.h>
+  // Note: the python header must be included first to avoid conflicting
+  // definitions of _posix_c_source
+  #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
+  #include <Python.h>
+  #include <numpy/arrayobject.h>
 #endif
 
 #include "EventManager.hpp"
@@ -34,7 +33,6 @@
 
 namespace geosx
 {
-
 class PhysicsSolverManager;
 class DomainPartition;
 namespace constitutive
@@ -48,13 +46,11 @@ class ConstitutiveManager;
 class ProblemManager : public dataRepository::Group
 {
 public:
-
   /**
    * @param name the name of this object manager
    * @param parent the parent Group
    */
-  explicit ProblemManager( const std::string & name,
-                           Group * const parent );
+  explicit ProblemManager(const std::string& name, Group* const parent);
 
   /**
    * @brief Destructor, deletes all Groups and Wrappers owned by this Group
@@ -71,9 +67,9 @@ public:
    * add entries to the schema, which are not used during normal code execution
    * (e.g.: Benchmark)
    */
-  virtual void SetSchemaDeviations( xmlWrapper::xmlNode schemaRoot,
-                                    xmlWrapper::xmlNode schemaParent,
-                                    integer documentationType ) override;
+  virtual void SetSchemaDeviations(xmlWrapper::xmlNode schemaRoot,
+                                   xmlWrapper::xmlNode schemaParent,
+                                   integer documentationType) override;
 
   /**
    * @brief Creates a new sub-Group using the ObjectCatalog functionality.
@@ -83,7 +79,8 @@ public:
    *                  sub-Groups.
    * @return A pointer to the new Group created by this function.
    */
-  virtual Group * CreateChild( string const & childKey, string const & childName ) override;
+  virtual Group* CreateChild(string const& childKey,
+                             string const& childName) override;
 
   /**
    * @brief Parses command line input
@@ -95,7 +92,7 @@ public:
    * @param restartFileName the name of the restart file
    * @return flag indicating beginFromRestart status
    */
-  static bool ParseRestart( std::string & restartFileName );
+  static bool ParseRestart(std::string& restartFileName);
 
   /**
    * @brief Initializes a python interpreter within GEOSX
@@ -142,7 +139,7 @@ public:
    * @brief Defines the order in which objects should be initialized
    * @param order list defining ordering sequence
    */
-  void InitializationOrder( string_array & order ) override final;
+  void InitializationOrder(string_array& order) override final;
 
   /**
    * @brief Sets up the problem after the input has been read in
@@ -168,41 +165,53 @@ public:
    * @brief Returns a pointer to the DomainPartition
    * @return Pointer to the DomainPartition
    */
-  DomainPartition * getDomainPartition();
+  DomainPartition* getDomainPartition();
 
   /**
    * @brief Returns a pointer to the DomainPartition
    * @return Const pointer to the DomainPartition
    */
-  DomainPartition const * getDomainPartition() const;
+  DomainPartition const* getDomainPartition() const;
 
   /**
    * @brief Returns the problem name
    * @return The problem name
    */
-  const string & getProblemName() const
-  { return GetGroup< Group >( groupKeys.commandLine )->getReference< string >( viewKeys.problemName ); }
+  const string& getProblemName() const
+  {
+    return GetGroup<Group>(groupKeys.commandLine)
+      ->getReference<string>(viewKeys.problemName);
+  }
 
   /**
    * @brief Returns the input file name
    * @return The input file name
    */
-  const string & getInputFileName() const
-  { return GetGroup< Group >( groupKeys.commandLine )->getReference< string >( viewKeys.inputFileName ); }
+  const string& getInputFileName() const
+  {
+    return GetGroup<Group>(groupKeys.commandLine)
+      ->getReference<string>(viewKeys.inputFileName);
+  }
 
   /**
    * @brief Returns the restart file name
    * @return The restart file name
    */
-  const string & getRestartFileName() const
-  { return GetGroup< Group >( groupKeys.commandLine )->getReference< string >( viewKeys.restartFileName ); }
+  const string& getRestartFileName() const
+  {
+    return GetGroup<Group>(groupKeys.commandLine)
+      ->getReference<string>(viewKeys.restartFileName);
+  }
 
   /**
    * @brief Returns the schema file name
    * @return The schema file name
    */
-  const string & getSchemaFileName() const
-  { return GetGroup< Group >( groupKeys.commandLine )->getReference< string >( viewKeys.schemaFileName ); }
+  const string& getSchemaFileName() const
+  {
+    return GetGroup<Group>(groupKeys.commandLine)
+      ->getReference<string>(viewKeys.schemaFileName);
+  }
 
   /// Input file xml document handle
   xmlWrapper::xmlDocument xmlDocument;
@@ -216,47 +225,62 @@ public:
   /// Command line input viewKeys
   struct viewKeysStruct
   {
-    dataRepository::ViewKey inputFileName            = {"inputFileName"};            ///< Input file name key
-    dataRepository::ViewKey restartFileName          = {"restartFileName"};          ///< Restart file name key
-    dataRepository::ViewKey beginFromRestart         = {"beginFromRestart"};         ///< Flag to begin from restart key
-    dataRepository::ViewKey xPartitionsOverride      = {"xPartitionsOverride"};      ///< Override of number of
-                                                                                     ///< subdivisions in x key
-    dataRepository::ViewKey yPartitionsOverride      = {"yPartitionsOverride"};      ///< Override of number of
-                                                                                     ///< subdivisions in y key
-    dataRepository::ViewKey zPartitionsOverride      = {"zPartitionsOverride"};      ///< Override of number of
-                                                                                     ///< subdivisions in z key
-    dataRepository::ViewKey overridePartitionNumbers = {"overridePartitionNumbers"}; ///< Flag to override partitioning
-                                                                                     ///< key
-    dataRepository::ViewKey schemaFileName           = {"schemaFileName"};           ///< Schema file name key
-    dataRepository::ViewKey problemName              = {"problemName"};              ///< Problem name key
-    dataRepository::ViewKey outputDirectory          = {"outputDirectory"};          ///< Output directory key
-    dataRepository::ViewKey useNonblockingMPI        = {"useNonblockingMPI"};        ///< Flag to use non-block MPI key
-    dataRepository::ViewKey suppressPinned           = {"suppressPinned"};           ///< Flag to suppress use of pinned
-                                                                                     ///< memory key
-  } viewKeys; ///< Command line input viewKeys
+    dataRepository::ViewKey inputFileName = {
+      "inputFileName"};  ///< Input file name key
+    dataRepository::ViewKey restartFileName = {
+      "restartFileName"};  ///< Restart file name key
+    dataRepository::ViewKey beginFromRestart = {
+      "beginFromRestart"};  ///< Flag to begin from restart key
+    dataRepository::ViewKey xPartitionsOverride =
+      {"xPartitionsOverride"};  ///< Override of number of
+                                ///< subdivisions in x key
+    dataRepository::ViewKey yPartitionsOverride =
+      {"yPartitionsOverride"};  ///< Override of number of
+                                ///< subdivisions in y key
+    dataRepository::ViewKey zPartitionsOverride =
+      {"zPartitionsOverride"};  ///< Override of number of
+                                ///< subdivisions in z key
+    dataRepository::ViewKey overridePartitionNumbers =
+      {"overridePartitionNumbers"};  ///< Flag to override partitioning
+                                     ///< key
+    dataRepository::ViewKey schemaFileName = {
+      "schemaFileName"};  ///< Schema file name key
+    dataRepository::ViewKey problemName = {"problemName"};  ///< Problem name key
+    dataRepository::ViewKey outputDirectory = {
+      "outputDirectory"};  ///< Output directory key
+    dataRepository::ViewKey useNonblockingMPI = {
+      "useNonblockingMPI"};  ///< Flag to use non-block MPI key
+    dataRepository::ViewKey suppressPinned =
+      {"suppressPinned"};  ///< Flag to suppress use of pinned
+                           ///< memory key
+  } viewKeys;              ///< Command line input viewKeys
 
   /// Child group viewKeys
   struct groupKeysStruct
   {
-    static constexpr auto numericalMethodsManagerString = "NumericalMethods";             ///< Numerical methods string
-    dataRepository::GroupKey commandLine    = { "commandLine" };                          ///< Command line key
-    dataRepository::GroupKey constitutiveManager = { "Constitutive" };                    ///< Constitutive key
-    dataRepository::GroupKey domain    = { "domain" };                                    ///< Domain key
-    dataRepository::GroupKey eventManager = { "Events" };                                 ///< Events key
-    dataRepository::GroupKey fieldSpecificationManager = { "FieldSpecifications" };       ///< Field specification key
-    dataRepository::GroupKey functionManager = { "Functions" };                           ///< Functions key
-    dataRepository::GroupKey geometricObjectManager = { "Geometry" };                     ///< Geometry key
-    dataRepository::GroupKey meshManager = { "Mesh" };                                    ///< Mesh key
-    dataRepository::GroupKey numericalMethodsManager = { numericalMethodsManagerString }; ///< Numerical methods key
-    dataRepository::GroupKey outputManager = { "Outputs" };                               ///< Outputs key
-    dataRepository::GroupKey physicsSolverManager = { "Solvers" };                        ///< Solvers key
-  } groupKeys; ///< Child group viewKeys
+    static constexpr auto numericalMethodsManagerString =
+      "NumericalMethods";  ///< Numerical methods string
+    dataRepository::GroupKey commandLine = {"commandLine"};  ///< Command line key
+    dataRepository::GroupKey constitutiveManager = {
+      "Constitutive"};                                   ///< Constitutive key
+    dataRepository::GroupKey domain = {"domain"};        ///< Domain key
+    dataRepository::GroupKey eventManager = {"Events"};  ///< Events key
+    dataRepository::GroupKey fieldSpecificationManager = {
+      "FieldSpecifications"};  ///< Field specification key
+    dataRepository::GroupKey functionManager = {"Functions"};  ///< Functions key
+    dataRepository::GroupKey geometricObjectManager = {"Geometry"};  ///< Geometry key
+    dataRepository::GroupKey meshManager = {"Mesh"};  ///< Mesh key
+    dataRepository::GroupKey numericalMethodsManager = {
+      numericalMethodsManagerString};  ///< Numerical methods key
+    dataRepository::GroupKey outputManager = {"Outputs"};  ///< Outputs key
+    dataRepository::GroupKey physicsSolverManager = {"Solvers"};  ///< Solvers key
+  } groupKeys;  ///< Child group viewKeys
 
   /**
    * @brief Returns the PhysicsSolverManager
    * @return Reference to the PhysicsSolverManager
    */
-  PhysicsSolverManager & GetPhysicsSolverManager()
+  PhysicsSolverManager& GetPhysicsSolverManager()
   {
     return *m_physicsSolverManager;
   }
@@ -265,7 +289,7 @@ public:
    * @brief Returns the PhysicsSolverManager
    * @return Const reference to the PhysicsSolverManager
    */
-  PhysicsSolverManager const & GetPhysicsSolverManager() const
+  PhysicsSolverManager const& GetPhysicsSolverManager() const
   {
     return *m_physicsSolverManager;
   }
@@ -277,7 +301,6 @@ protected:
   virtual void PostProcessInput() override final;
 
 private:
-
   /**
    * @brief Determine the number of quadrature points required for each
    *   subregion.
@@ -288,7 +311,8 @@ private:
    * Checks all physics solvers for targetRegions and constitutive models to
    * determine the minimum number of quadrature points for each subregion.
    */
-  map< std::pair< string, string >, localIndex > calculateRegionQuadrature( Group & meshBodies );
+  map<std::pair<string, string>, localIndex> calculateRegionQuadrature(
+    Group& meshBodies);
 
   /**
    * @brief Allocate constitutive relations on each subregion with appropriate
@@ -297,18 +321,19 @@ private:
    * @param constitutiveManager The constitutive manager object.
    * @param regionQuadrature The map containing the number of quadrature points for every subregion.
    */
-  void setRegionQuadrature( Group & meshBodies,
-                            constitutive::ConstitutiveManager const & constitutiveManager,
-                            map< std::pair< string, string >, localIndex > const & regionQuadrature );
+  void setRegionQuadrature(
+    Group& meshBodies,
+    constitutive::ConstitutiveManager const& constitutiveManager,
+    map<std::pair<string, string>, localIndex> const& regionQuadrature);
 
   /// The PhysicsSolverManager
-  PhysicsSolverManager * m_physicsSolverManager;
+  PhysicsSolverManager* m_physicsSolverManager;
 
   /// The EventManager
-  EventManager * m_eventManager;
+  EventManager* m_eventManager;
 
   /// The FunctionManager
-  FunctionManager * m_functionManager;
+  FunctionManager* m_functionManager;
 };
 
 } /* namespace geosx */

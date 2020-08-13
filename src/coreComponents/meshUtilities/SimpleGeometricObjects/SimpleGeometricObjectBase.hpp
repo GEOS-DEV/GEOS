@@ -32,9 +32,9 @@ namespace dataRepository
 {
 namespace keys
 {
-string const geometricObjects( "GeometricObjects" );
+string const geometricObjects("GeometricObjects");
 }
-}
+}  // namespace dataRepository
 
 /**
  * @class SimpleGeometricObjectBase
@@ -43,7 +43,6 @@ string const geometricObjects( "GeometricObjects" );
 class SimpleGeometricObjectBase : public dataRepository::Group
 {
 public:
-
   /**
    * @name Constructor / Destructor
    */
@@ -54,8 +53,8 @@ public:
    * @param name name of the object in the data hierarchy.
    * @param parent pointer to the parent group in the data hierarchy.
    */
-  explicit SimpleGeometricObjectBase( std::string const & name,
-                                      Group * const parent );
+  explicit SimpleGeometricObjectBase(std::string const &name,
+                                     Group *const parent);
 
   /**
    * @brief Default destructor.
@@ -78,12 +77,15 @@ public:
   /**
    * @brief Type alias for catalog interface used by this class.
    */
-  using CatalogInterface = dataRepository::CatalogInterface< SimpleGeometricObjectBase, std::string const &, Group * const >;
+  using CatalogInterface =
+    dataRepository::CatalogInterface<SimpleGeometricObjectBase,
+                                     std::string const &,
+                                     Group *const>;
 
   /**
    * @copydoc CatalogName()
    */
-  static CatalogInterface::CatalogType & GetCatalog();
+  static CatalogInterface::CatalogType &GetCatalog();
 
   ///@}
 
@@ -92,10 +94,8 @@ public:
    * @param[in] coord the coordinates to test
    * @return true if the coordinates are in the object, false otherwise
    */
-  virtual bool IsCoordInObject( const R1Tensor & coord ) const = 0;
-
+  virtual bool IsCoordInObject(const R1Tensor &coord) const = 0;
 };
 
-
-}
+}  // namespace geosx
 #endif /* SIMPLEGEOMETRICOBJECTS_H_ */

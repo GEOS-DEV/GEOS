@@ -23,15 +23,14 @@
 
 namespace geosx
 {
-
 namespace dataRepository
 {
 namespace keys
 {
 /// String for cellBlocks
 string const cellBlocks = "cellBlocks";
-}
-}
+}  // namespace keys
+}  // namespace dataRepository
 
 /**
  * @class CellBlockManager
@@ -40,33 +39,31 @@ string const cellBlocks = "cellBlocks";
 class CellBlockManager : public ObjectManagerBase
 {
 public:
-
   /**
    * @brief The function is to return the name of the CellBlockManager in the object catalog
    * @return string that contains the catalog name used to register/lookup this class in the object catalog
    */
-  static string CatalogName()
-  {
-    return "CellBlockManager";
-  }
+  static string CatalogName() { return "CellBlockManager"; }
 
   virtual const string getCatalogName() const override final
-  { return CellBlockManager::CatalogName(); }
-
+  {
+    return CellBlockManager::CatalogName();
+  }
 
   /**
    * @brief Constructor for CellBlockManager object.
    * @param name name of this instantiation of CellBlockManager
    * @param parent pointer to the parent Group of this instantiation of CellBlockManager
    */
-  CellBlockManager( string const & name, Group * const parent );
+  CellBlockManager(string const& name, Group* const parent);
 
   /**
    * @brief Destructor
    */
   virtual ~CellBlockManager() override;
 
-  virtual Group * CreateChild( string const & childKey, string const & childName ) override;
+  virtual Group* CreateChild(string const& childKey,
+                             string const& childName) override;
 
   using Group::resize;
 
@@ -76,50 +73,47 @@ public:
    * @param regionNames list of the element region names
    * @param elementTypes list of the element types
    */
-  void resize( integer_array const & numElements,
-               string_array const & regionNames,
-               string_array const & elementTypes );
+  void resize(integer_array const& numElements,
+              string_array const& regionNames,
+              string_array const& elementTypes);
 
-//  CellBlock & CreateRegion( string const & regionName,
-//                               string const & elementType,
-//                               integer const & numElements );
+  //  CellBlock & CreateRegion( string const & regionName,
+  //                               string const & elementType,
+  //                               integer const & numElements );
 
   /**
    * @brief Get element sub-region.
    * @param regionName name of the element sub-region
    * @return pointer to the element sub-region
    */
-  CellBlock * GetRegion( string const & regionName )
+  CellBlock* GetRegion(string const& regionName)
   {
-    return this->GetGroup( dataRepository::keys::cellBlocks )->GetGroup< CellBlock >( regionName );
+    return this->GetGroup(dataRepository::keys::cellBlocks)
+      ->GetGroup<CellBlock>(regionName);
   }
-
 
   /**
    * @brief Launch kernel function over all the sub-regions
    * @tparam LAMBDA type of the user-provided function
    * @param lambda kernel function
    */
-  template< typename LAMBDA >
-  void forElementSubRegions( LAMBDA lambda )
+  template <typename LAMBDA> void forElementSubRegions(LAMBDA lambda)
   {
-    Group * elementRegions = this->GetGroup( dataRepository::keys::cellBlocks );
-    elementRegions->forSubGroups< CellBlock >( lambda );
+    Group* elementRegions = this->GetGroup(dataRepository::keys::cellBlocks);
+    elementRegions->forSubGroups<CellBlock>(lambda);
   }
-private:
 
+private:
   /**
    * @brief Copy constructor.
    */
-  CellBlockManager( const CellBlockManager & );
+  CellBlockManager(const CellBlockManager&);
 
   /**
    * @brief Copy assignment operator.
    * @return reference to this object
    */
-  CellBlockManager & operator=( const CellBlockManager & );
-
-
+  CellBlockManager& operator=(const CellBlockManager&);
 };
-}
+}  // namespace geosx
 #endif /* GEOSX_MESH_CELLBLOCKMANAGER_H_ */

@@ -23,42 +23,40 @@
 
 namespace geosx
 {
-
-template< typename LAI >
-SeparateComponentPreconditioner< LAI >::
-SeparateComponentPreconditioner( localIndex const numComp,
-                                 std::unique_ptr< PreconditionerBase< LAI > > precond )
-  : Base(),
-  m_numComp( numComp ),
-  m_precond( std::move( precond ) )
+template <typename LAI>
+SeparateComponentPreconditioner<LAI>::SeparateComponentPreconditioner(
+  localIndex const numComp,
+  std::unique_ptr<PreconditionerBase<LAI>> precond)
+  : Base()
+  , m_numComp(numComp)
+  , m_precond(std::move(precond))
 {
-  GEOSX_LAI_ASSERT_GT( m_numComp, 0 );
-  GEOSX_LAI_ASSERT( m_precond );
+  GEOSX_LAI_ASSERT_GT(m_numComp, 0);
+  GEOSX_LAI_ASSERT(m_precond);
 }
 
-template< typename LAI >
-SeparateComponentPreconditioner< LAI >::~SeparateComponentPreconditioner() = default;
+template <typename LAI>
+SeparateComponentPreconditioner<LAI>::~SeparateComponentPreconditioner() = default;
 
-template< typename LAI >
-void SeparateComponentPreconditioner< LAI >::compute( Matrix const & mat,
-                                                      DofManager const & dofManager )
+template <typename LAI>
+void SeparateComponentPreconditioner<LAI>::compute(Matrix const& mat,
+                                                   DofManager const& dofManager)
 {
-  Base::compute( mat, dofManager );
+  Base::compute(mat, dofManager);
 
   // TODO: if matrix structure hasn't changed, can just copy entries into existing m_matSC
-  LAIHelperFunctions::SeparateComponentFilter( mat, m_matSC, m_numComp );
-  m_precond->compute( m_matSC, dofManager );
+  LAIHelperFunctions::SeparateComponentFilter(mat, m_matSC, m_numComp);
+  m_precond->compute(m_matSC, dofManager);
 }
 
-template< typename LAI >
-void SeparateComponentPreconditioner< LAI >::apply( Vector const & src,
-                                                    Vector & dst ) const
+template <typename LAI>
+void SeparateComponentPreconditioner<LAI>::apply(Vector const& src,
+                                                 Vector& dst) const
 {
-  m_precond->apply( src, dst );
+  m_precond->apply(src, dst);
 }
 
-template< typename LAI >
-void SeparateComponentPreconditioner< LAI >::clear()
+template <typename LAI> void SeparateComponentPreconditioner<LAI>::clear()
 {
   Base::clear();
   m_precond->clear();
@@ -69,15 +67,15 @@ void SeparateComponentPreconditioner< LAI >::clear()
 // Explicit Instantiations
 // -----------------------
 #ifdef GEOSX_USE_TRILINOS
-template class SeparateComponentPreconditioner< TrilinosInterface >;
+template class SeparateComponentPreconditioner<TrilinosInterface>;
 #endif
 
 #ifdef GEOSX_USE_HYPRE
-template class SeparateComponentPreconditioner< HypreInterface >;
+template class SeparateComponentPreconditioner<HypreInterface>;
 #endif
 
 #ifdef GEOSX_USE_PETSC
-template class SeparateComponentPreconditioner< PetscInterface >;
+template class SeparateComponentPreconditioner<PetscInterface>;
 #endif
 
-}
+}  // namespace geosx

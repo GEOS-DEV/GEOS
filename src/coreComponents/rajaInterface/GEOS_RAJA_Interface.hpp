@@ -23,8 +23,6 @@
 
 namespace geosx
 {
-
-
 using serialPolicy = RAJA::loop_exec;
 using serialReduce = RAJA::seq_reduce;
 using serialAtomic = RAJA::seq_atomic;
@@ -45,14 +43,14 @@ using parallelHostAtomic = serialAtomic;
 
 #if defined(GEOSX_USE_CUDA)
 
-template< unsigned long BLOCK_SIZE = 256 >
-using parallelDevicePolicy = RAJA::cuda_exec< BLOCK_SIZE >;
+template <unsigned long BLOCK_SIZE = 256>
+using parallelDevicePolicy = RAJA::cuda_exec<BLOCK_SIZE>;
 using parallelDeviceReduce = RAJA::cuda_reduce;
 using parallelDeviceAtomic = RAJA::cuda_atomic;
 
 #else
 
-template< unsigned long BLOCK_SIZE = 0 >
+template <unsigned long BLOCK_SIZE = 0>
 using parallelDevicePolicy = parallelHostPolicy;
 using parallelDeviceReduce = parallelHostReduce;
 using parallelDeviceAtomic = parallelHostAtomic;
@@ -61,19 +59,16 @@ using parallelDeviceAtomic = parallelHostAtomic;
 
 namespace internalRajaInterface
 {
-template< typename >
-struct PolicyMap;
+template <typename> struct PolicyMap;
 
-template<>
-struct PolicyMap< serialPolicy >
+template <> struct PolicyMap<serialPolicy>
 {
   using atomic = serialAtomic;
   using reduce = serialReduce;
 };
 
 #if defined(GEOSX_USE_OPENMP)
-template<>
-struct PolicyMap< RAJA::omp_parallel_for_exec >
+template <> struct PolicyMap<RAJA::omp_parallel_for_exec>
 {
   using atomic = RAJA::builtin_atomic;
   using reduce = RAJA::omp_reduce;
@@ -81,30 +76,28 @@ struct PolicyMap< RAJA::omp_parallel_for_exec >
 #endif
 
 #if defined(GEOSX_USE_CUDA)
-template< unsigned long BLOCK_SIZE >
-struct PolicyMap< RAJA::cuda_exec< BLOCK_SIZE > >
+template <unsigned long BLOCK_SIZE>
+struct PolicyMap<RAJA::cuda_exec<BLOCK_SIZE>>
 {
   using atomic = RAJA::cuda_atomic;
   using reduce = RAJA::cuda_reduce;
 };
 #endif
-}
+}  // namespace internalRajaInterface
 
+template <typename POLICY>
+using ReducePolicy = typename internalRajaInterface::PolicyMap<POLICY>::reduce;
 
-template< typename POLICY >
-using ReducePolicy = typename internalRajaInterface::PolicyMap< POLICY >::reduce;
+template <typename POLICY>
+using AtomicPolicy = typename internalRajaInterface::PolicyMap<POLICY>::atomic;
 
-template< typename POLICY >
-using AtomicPolicy = typename internalRajaInterface::PolicyMap< POLICY >::atomic;
-
-
-
-template< typename POLICY, typename LAMBDA >
-RAJA_INLINE void forAll( const localIndex end, LAMBDA && body )
+template <typename POLICY, typename LAMBDA>
+RAJA_INLINE void forAll(const localIndex end, LAMBDA&& body)
 {
-  RAJA::forall< POLICY >( RAJA::TypedRangeSegment< localIndex >( 0, end ), std::forward< LAMBDA >( body ) );
+  RAJA::forall<POLICY>(RAJA::TypedRangeSegment<localIndex>(0, end),
+                       std::forward<LAMBDA>(body));
 }
 
-} // namespace geosx
+}  // namespace geosx
 
-#endif // GEOSX_RAJAINTERFACE_RAJAINTERFACE_HPP
+#endif  // GEOSX_RAJAINTERFACE_RAJAINTERFACE_HPP

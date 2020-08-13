@@ -21,5 +21,5 @@
 namespace geosx
 {
 namespace dataRepository
-{}
+{ }
 } /* namespace geosx */

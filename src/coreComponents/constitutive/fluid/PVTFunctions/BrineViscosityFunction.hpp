@@ -23,46 +23,39 @@
 
 namespace geosx
 {
-
 namespace PVTProps
 {
-
 class BrineViscosityFunction : public PVTFunction
 {
 public:
-
-
-  BrineViscosityFunction( string_array const & inputPara,
-                          string_array const & componentNames,
-                          real64_array const & componentMolarWeight );
-  ~BrineViscosityFunction() override
-  {}
+  BrineViscosityFunction(string_array const& inputPara,
+                         string_array const& componentNames,
+                         real64_array const& componentMolarWeight);
+  ~BrineViscosityFunction() override { }
 
   static constexpr auto m_catalogName = "BrineViscosity";
-  static string CatalogName()                    { return m_catalogName; }
+  static string CatalogName() { return m_catalogName; }
   virtual string GetCatalogName() override final { return CatalogName(); }
 
   virtual PVTFuncType FunctionType() const override
   {
     return PVTFuncType::VISCOSITY;
-
   }
 
-  virtual void Evaluation( EvalVarArgs const & pressure,
-                           EvalVarArgs const & temperature,
-                           arraySlice1d< EvalVarArgs const > const & phaseComposition,
-                           EvalVarArgs & value, bool useMass = 0 ) const override;
+  virtual void Evaluation(EvalVarArgs const& pressure,
+                          EvalVarArgs const& temperature,
+                          arraySlice1d<EvalVarArgs const> const& phaseComposition,
+                          EvalVarArgs& value,
+                          bool useMass = 0) const override;
 
 private:
-
-  void MakeCoef( string_array const & inputPara );
+  void MakeCoef(string_array const& inputPara);
 
   real64 m_coef0;
   real64 m_coef1;
-
 };
 
-}
+}  // namespace PVTProps
 
-}
-#endif //GEOSX_CONSTITUTIVE_FLUID_PVTFUNCTIONS_BRINEVISCOSITYFUNCTION_HPP_
+}  // namespace geosx
+#endif  //GEOSX_CONSTITUTIVE_FLUID_PVTFUNCTIONS_BRINEVISCOSITYFUNCTION_HPP_
