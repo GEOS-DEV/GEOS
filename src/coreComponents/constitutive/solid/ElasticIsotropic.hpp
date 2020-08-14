@@ -101,7 +101,7 @@ public:
                                   localIndex const q,
                                   real64 const ( & strainIncrement )[6],
                                   real64 ( & stress )[6],
-                                  real64 ( & stiffness )[6][6] ) override final;
+                                  real64 ( & stiffness )[6][6] ) override; // not final (see druckerPrager)
   
   // hypoUpdate() automatically handled by base implementation
   
@@ -149,7 +149,8 @@ public:
                              localIndex const q,
                              real64 const (&FmI)[3][3] ) const override final;
 
-private:
+protected:
+
   /// A reference to the ArrayView holding the bulk modulus for each element.
   arrayView1d< real64 const > const m_bulkModulus;
 
@@ -550,8 +551,6 @@ public:
 
 protected:
   virtual void PostProcessInput() override;
-
-private:
 
   /// The default value of the bulk modulus for any new allocations.
   real64 m_defaultBulkModulus;

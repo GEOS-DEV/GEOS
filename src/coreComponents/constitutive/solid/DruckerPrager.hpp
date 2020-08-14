@@ -19,9 +19,9 @@
 #ifndef GEOSX_CONSTITUTIVE_SOLID_DRUCKERPRAGER_HPP
 #define GEOSX_CONSTITUTIVE_SOLID_DRUCKERPRAGER_HPP
 
-#include "SolidBase.hpp"
+#include "ElasticIsotropic.hpp"
 #include "SolidUtilities.hpp"
-#include "LvArray/src/tensorOps.hpp"
+#include "LvArray/src/tensorOps.hpp" // TODO: cleanup includes
 
 namespace geosx
 {
@@ -35,7 +35,7 @@ namespace constitutive
  * Class to provide material updates that may be
  * called from a kernel function.
  */
-class DruckerPragerUpdates : public SolidBaseUpdates
+class DruckerPragerUpdates : public ElasticIsotropicUpdates
 {
 public:
   /**
@@ -44,27 +44,21 @@ public:
    * @param[in] shearModulus The ArrayView holding the shear modulus data for each element.
    * @param[in] stress The ArrayView holding the stress data for each quadrature point.
    */
-  DruckerPragerUpdates( arrayView1d< real64 const > const & bulkModulus,
-                        arrayView1d< real64 const > const & shearModulus,
-                        arrayView1d< real64 const > const & tanFrictionAngle,
+  DruckerPragerUpdates( arrayView1d< real64 const > const & tanFrictionAngle,
                         arrayView1d< real64 const > const & tanDilationAngle,
                         arrayView1d< real64 const > const & hardeningRate,
                         arrayView2d< real64 > const & newCohesion,
                         arrayView2d< real64 > const & oldCohesion,
-                        arrayView3d< real64, solid::STRESS_USD > const & newElasticStrain,
-                        arrayView3d< real64, solid::STRESS_USD > const & oldElasticStrain,
+                        arrayView1d< real64 const > const & bulkModulus,
+                        arrayView1d< real64 const > const & shearModulus,
                         arrayView3d< real64, solid::STRESS_USD > const & newStress,
                         arrayView3d< real64, solid::STRESS_USD > const & oldStress ):
-    SolidBaseUpdates( newStress,oldStress ),
-    m_bulkModulus( bulkModulus ),
-    m_shearModulus( shearModulus ),
+    ElasticIsotropicUpdates( bulkModulus, shearModulus, newStress,oldStress ),
     m_tanFrictionAngle( tanFrictionAngle ),
     m_tanDilationAngle( tanDilationAngle ),
     m_hardeningRate( hardeningRate ),
     m_newCohesion( newCohesion ),
-    m_oldCohesion( oldCohesion ),
-    m_newElasticStrain( newElasticStrain ),
-    m_oldElasticStrain( oldElasticStrain )
+    m_oldCohesion( oldCohesion )
   {}
 
   /// Default copy constructor
@@ -93,12 +87,6 @@ public:
   virtual void saveConvergedState() override final;
     
 private:
-  /// A reference to the ArrayView holding the bulk modulus for each element.
-  arrayView1d< real64 const > const m_bulkModulus;
-
-  /// A reference to the ArrayView holding the shear modulus for each element.
-  arrayView1d< real64 const > const m_shearModulus;
-  
   /// A reference to the ArrayView holding the friction angle for each element.
   arrayView1d< real64 const > const m_tanFrictionAngle;
   
@@ -114,11 +102,6 @@ private:
   /// A reference to the ArrayView holding the old cohesion for each integration point
   arrayView2d< real64 > const m_oldCohesion;
   
-  /// A reference to the ArrayView holding the new elastic strain for each integration point
-  arrayView3d< real64, solid::STRESS_USD > const m_newElasticStrain;
-  
-  /// A reference to the ArrayView holding the old elastic strain for each integration point
-  arrayView3d< real64, solid::STRESS_USD > const m_oldElasticStrain;
 };
 
 ///////////////////////// new proposal /////////////////////////////////////////
@@ -126,7 +109,7 @@ private:
 GEOSX_HOST_DEVICE
 void DruckerPragerUpdates::smallStrainUpdate( localIndex const k,
                                               localIndex const q,
-                                              real64 const ( & strainIncrement )[6],
+                                              real64 const ( & /*strainIncrement*/ )[6],
                                               real64 ( & stress )[6],
                                               real64 ( & stiffness )[6][6] )
 {
@@ -143,23 +126,25 @@ void DruckerPragerUpdates::smallStrainUpdate( localIndex const k,
   
   // elastic predictor (assume strainIncrement is all elastic)
   
+  /*
   real64 newElasticStrain[6];
   for(localIndex i=0; i<6; ++i)
   {
     newElasticStrain[i] = m_oldElasticStrain[k][q][i] + strainIncrement[i];
   }
-  
+  */
   // elastic strain invariants (scalar)
   
-  real64 volStrain;
-  real64 devStrain;
-  real64 deviator[6];
+  real64 volStrain = 0;
+  real64 devStrain = 0;
+  real64 deviator[6] = {};
   
+  /*
   twoInvariant::strainDecomposition(newElasticStrain,
                                     volStrain,
                                     devStrain,
                                     deviator);
-
+  */
   // trial stress invariants
   
   real64 trialP = bulk * volStrain;
@@ -326,10 +311,7 @@ void DruckerPragerUpdates::smallStrainUpdate( localIndex const k,
   
   m_newCohesion[k][q] = cohesion;
   
-  for(localIndex i=0; i<6; ++i)
-  {
-    m_newElasticStrain[k][q][i] = newElasticStrain[i];
-  }
+  saveStress( k, q, stress );
   
   return;
 }
@@ -349,7 +331,7 @@ void DruckerPragerUpdates::saveConvergedState()
  *
  * Drucker-Prager material model.
  */
-class DruckerPrager : public SolidBase
+class DruckerPrager : public ElasticIsotropic
 {
 public:
 
@@ -398,12 +380,6 @@ public:
    */
   struct viewKeyStruct : public SolidBase::viewKeyStruct
   {
-    /// string/key for default bulk modulus
-    static constexpr auto defaultBulkModulusString  = "defaultBulkModulus";
-
-    /// string/key for default shear modulus
-    static constexpr auto defaultShearModulusString = "defaultShearModulus";
-
     /// string/key for default friction angle
     static constexpr auto defaultTanFrictionAngleString = "defaultTanFrictionAngle";
     
@@ -415,13 +391,7 @@ public:
     
     /// string/key for default cohesion
     static constexpr auto defaultCohesionString = "defaultCohesion";
-    
-    /// string/key for bulk modulus
-    static constexpr auto bulkModulusString  = "BulkModulus";
-    
-    /// string/key for poisson ratio
-    static constexpr auto shearModulusString = "ShearModulus";
-    
+        
     /// string/key for friction angle
     static constexpr auto tanFrictionAngleString  = "TanFrictionAngle";
     
@@ -436,12 +406,6 @@ public:
     
         /// string/key for cohesion
     static constexpr auto oldCohesionString  = "OldCohesion";
-    
-        /// string/key for cohesion
-    static constexpr auto newElasticStrainString  = "NewElasticStrain";
-    
-        /// string/key for cohesion
-    static constexpr auto oldElasticStrainString  = "OldElasticStrain";
   };
 
   /**
@@ -450,15 +414,13 @@ public:
    */
   DruckerPragerUpdates createKernelWrapper() const
   {
-    return DruckerPragerUpdates( m_bulkModulus,
-                                 m_shearModulus,
-                                 m_tanFrictionAngle,
+    return DruckerPragerUpdates( m_tanFrictionAngle,
                                  m_tanDilationAngle,
                                  m_hardeningRate,
                                  m_newCohesion,
                                  m_oldCohesion,
-                                 m_newElasticStrain,
-                                 m_oldElasticStrain,
+                                 m_bulkModulus,
+                                 m_shearModulus,
                                  m_newStress,
                                  m_oldStress );
   }
@@ -466,15 +428,8 @@ public:
 protected:
   virtual void PostProcessInput() override;
 
-private:
   //TODO: maybe define some helper structs for defaults, arrays, arrayViews, etc.
-  
-  /// Material parameter: The default value of the bulk modulus
-  real64 m_defaultBulkModulus;
-
-  /// Material parameter: The default value of the shear modulus
-  real64 m_defaultShearModulus;
-  
+    
   /// Material parameter: The default value of yield surface slope
   real64 m_defaultTanFrictionAngle;
   
@@ -486,13 +441,7 @@ private:
   
   /// Material parameter: The default value of the hardening rate
   real64 m_defaultHardeningRate;
-  
-  /// Material parameter: The bulk modulus for each element
-  array1d< real64 > m_bulkModulus;
-
-  /// Material parameter: The shear modulus for each element
-  array1d< real64 > m_shearModulus;
-  
+    
   /// Material parameter: The yield surface slope for each element
   array1d< real64 > m_tanFrictionAngle;
   
@@ -507,12 +456,6 @@ private:
   
   /// History variable: The previous cohesion value for each quadrature point
   array2d< real64 > m_oldCohesion;
-  
-  /// History variable: The current elastic strain for each quadrature point
-  array3d< real64, solid::STRESS_PERMUTATION > m_newElasticStrain;
-  
-  /// History variable: The previous elastic strain for each quadrature point.
-  array3d< real64, solid::STRESS_PERMUTATION > m_oldElasticStrain;
 };
 
 } /* namespace constitutive */

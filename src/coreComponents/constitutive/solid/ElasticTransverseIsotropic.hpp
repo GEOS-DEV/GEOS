@@ -136,7 +136,8 @@ public:
                             real64 const ( &Ddt )[ 6 ],
                             real64 const ( &Rot )[ 3 ][ 3 ] ) const override final;
 
-private:
+protected:
+
   /// A reference to the ArrayView holding c11 for each element.
   arrayView1d< real64 const > const m_c11;
 
@@ -588,8 +589,6 @@ public:
 
 protected:
   virtual void PostProcessInput() override;
-
-private:
 
   /// The default value of the transverse Young's modulus for any new
   /// allocations.

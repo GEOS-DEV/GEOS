@@ -93,7 +93,7 @@ void ElasticIsotropic::AllocateConstitutiveData( dataRepository::Group * const p
   
   this->resize( numElems );
   
-  // TODO: should not be required?
+  // TODO: should not be required after recent PR
   m_bulkModulus.resize( numElems );
   m_shearModulus.resize( numElems );
 }

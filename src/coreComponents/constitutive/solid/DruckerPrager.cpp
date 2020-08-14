@@ -25,35 +25,19 @@ namespace constitutive
 {
 
 DruckerPrager::DruckerPrager( std::string const & name, Group * const parent ):
-  SolidBase( name, parent ),
-  m_defaultBulkModulus(),
-  m_defaultShearModulus(),
+  ElasticIsotropic( name, parent ),
   m_defaultTanFrictionAngle(),
   m_defaultTanDilationAngle(),
   m_defaultCohesion(),
   m_defaultHardeningRate(),
-  m_bulkModulus(),
-  m_shearModulus(),
   m_tanFrictionAngle(),
   m_tanDilationAngle(),
   m_hardeningRate(),
   m_newCohesion(),
-  m_oldCohesion(),
-  m_newElasticStrain(),
-  m_oldElasticStrain()
+  m_oldCohesion()
 {
   // register default values
-  
-  registerWrapper( viewKeyStruct::defaultBulkModulusString, &m_defaultBulkModulus )->
-    setApplyDefaultValue( 1e9 )->
-    setInputFlag( InputFlags::OPTIONAL )->
-    setDescription( "Elastic bulk modulus parameter" );
 
-  registerWrapper( viewKeyStruct::defaultShearModulusString, &m_defaultShearModulus )->
-    setApplyDefaultValue( 0.6e9 )->
-    setInputFlag( InputFlags::OPTIONAL )->
-    setDescription( "Elastic shear modulus parameter" );
-  
   registerWrapper( viewKeyStruct::defaultTanFrictionAngleString, &m_defaultTanFrictionAngle )->
     setApplyDefaultValue( 1.0 )->
     setInputFlag( InputFlags::OPTIONAL )->
@@ -76,14 +60,6 @@ DruckerPrager::DruckerPrager( std::string const & name, Group * const parent ):
 
   // register fields
   
-  registerWrapper( viewKeyStruct::bulkModulusString, &m_bulkModulus )->
-    setApplyDefaultValue( -1 )->
-    setDescription( "Elastic bulk modulus field" );
-
-  registerWrapper( viewKeyStruct::shearModulusString, &m_shearModulus )->
-    setApplyDefaultValue( -1 )->
-    setDescription( "Elastic shear modulus field" );
-  
   registerWrapper( viewKeyStruct::tanFrictionAngleString, &m_tanFrictionAngle )->
     setApplyDefaultValue( -1 )->
     setDescription( "Yield surface slope tan(phi) field" );
@@ -103,14 +79,6 @@ DruckerPrager::DruckerPrager( std::string const & name, Group * const parent ):
   registerWrapper( viewKeyStruct::oldCohesionString, &m_newCohesion )->
     setApplyDefaultValue( -1 )->
     setDescription( "Old cohesion field" );
-  
-  registerWrapper( viewKeyStruct::newElasticStrainString, &m_newElasticStrain )->
-    setApplyDefaultValue( -1 )->
-    setDescription( "New elastic strain field" );
-  
-  registerWrapper( viewKeyStruct::oldElasticStrainString, &m_oldElasticStrain )->
-    setApplyDefaultValue( -1 )->
-    setDescription( "Old elastic strain field" );
 }
 
 
@@ -127,40 +95,31 @@ DruckerPrager::DeliverClone( string const & name,
   {
     clone = std::make_unique< DruckerPrager >( name, parent );
   }
-  SolidBase::DeliverClone( name, parent, clone );
+  ElasticIsotropic::DeliverClone( name, parent, clone );
+  
   DruckerPrager * const newConstitutiveRelation = dynamic_cast< DruckerPrager * >(clone.get());
 
-  newConstitutiveRelation->m_defaultBulkModulus      = m_defaultBulkModulus;
-  newConstitutiveRelation->m_defaultShearModulus     = m_defaultShearModulus;
   newConstitutiveRelation->m_defaultTanFrictionAngle = m_defaultTanFrictionAngle;
   newConstitutiveRelation->m_defaultTanDilationAngle = m_defaultTanDilationAngle;
   newConstitutiveRelation->m_defaultCohesion         = m_defaultCohesion;
   newConstitutiveRelation->m_defaultHardeningRate    = m_defaultHardeningRate;
   
-  newConstitutiveRelation->m_bulkModulus      = m_bulkModulus;
-  newConstitutiveRelation->m_shearModulus     = m_shearModulus;
   newConstitutiveRelation->m_tanFrictionAngle = m_tanFrictionAngle;
   newConstitutiveRelation->m_tanDilationAngle = m_tanDilationAngle;
   newConstitutiveRelation->m_hardeningRate    = m_hardeningRate;
   newConstitutiveRelation->m_newCohesion      = m_newCohesion;
   newConstitutiveRelation->m_oldCohesion      = m_oldCohesion;
-  newConstitutiveRelation->m_newElasticStrain = m_newElasticStrain;
-  newConstitutiveRelation->m_oldElasticStrain = m_oldElasticStrain;
 }
 
 void DruckerPrager::AllocateConstitutiveData( dataRepository::Group * const parent,
                                               localIndex const numConstitutivePointsPerParentIndex )
 {
-  SolidBase::AllocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+  ElasticIsotropic::AllocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
   
   localIndex const numElems = parent->size();
-  localIndex const numComponents = 6;
-  
-  this->resize( numElems ); // TODO: resize handled by base?
+  this->resize( numElems );
   
   // 1d arrays
-  m_bulkModulus.resize( numElems );
-  m_shearModulus.resize( numElems );
   m_tanFrictionAngle.resize( numElems );
   m_tanDilationAngle.resize( numElems );
   m_hardeningRate.resize( numElems );
@@ -168,19 +127,6 @@ void DruckerPrager::AllocateConstitutiveData( dataRepository::Group * const pare
   // 2d arrays
   m_newCohesion.resize( numElems, numConstitutivePointsPerParentIndex );
   m_oldCohesion.resize( numElems, numConstitutivePointsPerParentIndex );
-  
-  // 3d arrays
-  m_newElasticStrain.resize( numElems, numConstitutivePointsPerParentIndex, numComponents );
-  m_oldElasticStrain.resize( numElems, numConstitutivePointsPerParentIndex, numComponents ); // TODO: figure out how to set initial stress
-  
-  // set default values
-  m_bulkModulus.setValues< serialPolicy >( m_defaultBulkModulus );
-  m_shearModulus.setValues< serialPolicy >( m_defaultShearModulus );
-  m_tanFrictionAngle.setValues< serialPolicy >( m_defaultTanFrictionAngle );
-  m_tanDilationAngle.setValues< serialPolicy >( m_defaultTanDilationAngle );
-  m_hardeningRate.setValues< serialPolicy >( m_defaultHardeningRate );
-  m_newCohesion.setValues< serialPolicy >( m_defaultCohesion );
-  m_oldCohesion.setValues< serialPolicy >( m_defaultCohesion );
 }
 
 void DruckerPrager::PostProcessInput()
@@ -189,6 +135,18 @@ void DruckerPrager::PostProcessInput()
   GEOSX_ASSERT_MSG(m_defaultTanFrictionAngle >= 0, "Negative friction angle detected");
   GEOSX_ASSERT_MSG(m_defaultTanDilationAngle >= 0, "Negative dilation angle detected");
   GEOSX_ASSERT_MSG(m_defaultTanFrictionAngle >= m_defaultTanDilationAngle, "Friction angle should exceed dilation angle");
+  
+  // set results as array default values
+  this->getWrapper< array1d< real64 > >( viewKeyStruct::oldCohesionString )->
+    setApplyDefaultValue( m_defaultCohesion );
+  this->getWrapper< array1d< real64 > >( viewKeyStruct::newCohesionString )->
+    setApplyDefaultValue( m_defaultCohesion );
+  this->getWrapper< array1d< real64 > >( viewKeyStruct::tanDilationAngleString )->
+    setApplyDefaultValue( m_defaultTanDilationAngle );
+  this->getWrapper< array1d< real64 > >( viewKeyStruct::tanFrictionAngleString )->
+    setApplyDefaultValue( m_defaultTanFrictionAngle );
+  this->getWrapper< array1d< real64 > >( viewKeyStruct::hardeningRateString )->
+    setApplyDefaultValue( m_defaultHardeningRate );
   
   m_postProcessed = true; // TODO: add parameter conversion helper class for more flexible input
 }
