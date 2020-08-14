@@ -7,12 +7,12 @@ Compositional Multiphase Well Solver
 Introduction
 =============
 
-Here, we present a description of the well solvers. 
+Here, we present a description of the well solvers.
 These solvers are designed to be coupled with the flow solvers.
 Their specific task is to implement the multi-segment well discretization using the fluid model used in the corresponding flow solver -- i.e., either single-phase flow or compositional multiphase flow.
 In particular, the perforation terms computed by the well solvers are a source/sink term for the discrete reservoir equations assembled by the flow solvers.
 
-In the present description, we focus on the compositional multiphase well solver. 
+In the present description, we focus on the compositional multiphase well solver.
 The structure of the single-phase well solver is analogous and will not be described here for brevity.
 
 .. _well_theory:
@@ -20,7 +20,7 @@ The structure of the single-phase well solver is analogous and will not be descr
 Theory
 =========================
 
-Here, we give an overview of the well formulation implemented in GEOSX. 
+Here, we give an overview of the well formulation implemented in GEOSX.
 We review the set of :ref:`well_equations`, and then we describe the :ref:`well_primary_variables` used the well solvers.
 
 .. _well_equations:
@@ -122,8 +122,8 @@ Number of primary variables Variable type
 
 .. _well_usage:
 
-Usage
-=====
+Parameters
+================
 
 The following attributes are supported:
 
@@ -131,7 +131,7 @@ The following attributes are supported:
 
 .. _well_input_example:
 
-Input example
+Example
 =========================
 
 .. literalinclude:: ../integratedTests/compositionalMultiphaseWell/compositional_multiphase_wells_2d.xml

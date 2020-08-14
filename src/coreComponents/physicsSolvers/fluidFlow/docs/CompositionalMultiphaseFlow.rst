@@ -7,12 +7,12 @@ Compositional Multiphase Flow Solver
 Introduction
 =============
 
-This flow solver is in charge of implementing the finite-volume discretization (mainly, accumulation and flux terms, boundary conditions) of the equations governing compositional multiphase flow in porous media. 
+This flow solver is in charge of implementing the finite-volume discretization (mainly, accumulation and flux terms, boundary conditions) of the equations governing compositional multiphase flow in porous media.
 The present solver can be combined with the :ref:`CompositionalMultiphaseWell` which handles the discrete multi-segment well model and provides source/sink terms for the fluid flow solver.
 
 Below, we first review the set of :ref:`equations`, followed by a discussion of the
-choice of :ref:`primary_variables` used in the global variable formulation. 
-Then we give an overview of the :ref:`discretization` and we conclude with a brief description of the nonlinear :ref:`solution_strategy`. 
+choice of :ref:`primary_variables` used in the global variable formulation.
+Then we give an overview of the :ref:`discretization` and we conclude with a brief description of the nonlinear :ref:`solution_strategy`.
 
 .. _theory:
 
@@ -193,8 +193,8 @@ This procedure is repeated until convergence.
 
 .. _usage:
 
-Usage
-=====
+Parameters
+===========
 
 The following attributes are supported:
 
@@ -202,7 +202,7 @@ The following attributes are supported:
 
 .. _input_example:
 
-Input example
+Example
 =========================
 
 .. literalinclude:: ../integratedTests/compositionalMultiphaseFlow/deadoil_3ph_staircase_3d.xml
