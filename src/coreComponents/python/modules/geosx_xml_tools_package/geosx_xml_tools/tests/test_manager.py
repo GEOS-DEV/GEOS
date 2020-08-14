@@ -2,8 +2,8 @@ import unittest
 import re
 import os
 import filecmp
-from pygeos import regex_tools, unit_manager, xml_processor
-from pygeos.tests import generate_test_xml
+from geosx_xml_tools import regex_tools, unit_manager, xml_processor
+from geosx_xml_tools.tests import generate_test_xml
 
 
 # Create an instance of the unit manager
@@ -235,8 +235,9 @@ class TestXMLProcessor(unittest.TestCase):
     # Create a directory to hold tests
     cls.pwd = os.getcwd()
     rand_name = xml_processor.generate_random_name(suffix='')[:10]
-    os.makedirs('./pygeos_tests_%s/included' % (rand_name), exist_ok=True)
-    os.chdir('./pygeos_tests_%s' % (rand_name))
+    # os.makedirs('./geosx_xml_tools_tests_%s/included' % (rand_name), exist_ok=True)
+    os.makedirs('./geosx_xml_tools_tests_%s/included' % (rand_name))
+    os.chdir('./geosx_xml_tools_tests_%s' % (rand_name))
 
     # Generate test xml files to process
     generate_test_xml.generate_test_xml_files('.')

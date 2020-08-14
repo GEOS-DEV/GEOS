@@ -1,4 +1,4 @@
-"""Tools for managing regular expressions in pygeos"""
+"""Tools for managing regular expressions in geosx_xml_tools"""
 
 import re
 
