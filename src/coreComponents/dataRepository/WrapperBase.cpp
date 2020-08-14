@@ -45,26 +45,22 @@ WrapperBase::WrapperBase( std::string const & name,
 WrapperBase::~WrapperBase()
 {}
 
-
-// WrapperBase::WrapperBase( WrapperBase && source ):
-//   m_name( std::move( source.m_name ) ),
-//   m_parent( source.m_parent ),
-//   m_sizedFromParent( source.m_sizedFromParent ),
-//   m_restart_flags( source.m_restart_flags )
-//   m_conduitNode( source.m_conduitNode )
-// {}
-
 void WrapperBase::resize()
 {
   resize( m_parent->size());
 }
 
-void WrapperBase::CopyWrapperAttributes( WrapperBase const & source )
+void WrapperBase::copyWrapperAttributes( WrapperBase const & source )
 {
-  m_name = source.m_name;
+  GEOSX_ERROR_IF( source.m_name != this->m_name,
+                  "Tried to clone wrapper attributes from a wrapper with a different name" );
   m_sizedFromParent = source.m_sizedFromParent;
   m_restart_flags = source.m_restart_flags;
+  m_plotLevel  = source.m_plotLevel;
+  m_inputFlag = source.m_inputFlag;
+  m_description = source.m_description;
 }
+
 
 string WrapperBase::dumpInputOptions( bool const outputHeader ) const
 {

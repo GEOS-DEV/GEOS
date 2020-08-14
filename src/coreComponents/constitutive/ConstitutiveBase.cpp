@@ -63,7 +63,7 @@ ConstitutiveBase::CatalogInterface::CatalogType & ConstitutiveBase::GetCatalog()
   return catalog;
 }
 
-void ConstitutiveBase::AllocateConstitutiveData( dataRepository::Group * const parent,
+void ConstitutiveBase::allocateConstitutiveData( dataRepository::Group * const parent,
                                                  localIndex const numConstitutivePointsPerParentIndex )
 {
   m_numQuadraturePoints = numConstitutivePointsPerParentIndex;
@@ -92,22 +92,22 @@ void ConstitutiveBase::AllocateConstitutiveData( dataRepository::Group * const p
     }
   }
 
+  this->resize( parent->size() );
 }
 
-void ConstitutiveBase::resize( localIndex newsize )
+std::unique_ptr< ConstitutiveBase >
+ConstitutiveBase::deliverClone( string const & name,
+                                Group * const parent ) const
 {
-  Group::resize( newsize );
-}
+  std::unique_ptr< ConstitutiveBase >
+  newModel = ConstitutiveBase::CatalogInterface::Factory( this->getCatalogName(), name, parent );
 
-void ConstitutiveBase::DeliverClone( string const & GEOSX_UNUSED_PARAM( name ),
-                                     Group * const GEOSX_UNUSED_PARAM( parent ),
-                                     std::unique_ptr< ConstitutiveBase > & clone ) const
-{
-  GEOSX_ASSERT( clone );
-  clone->forWrappers( [&]( WrapperBase & wrapper )
+  newModel->forWrappers( [&]( WrapperBase & wrapper )
   {
-    wrapper.CopyWrapperAttributes( *(this->getWrapperBase( wrapper.getName() ) ) );
+    wrapper.copyWrapper( *(this->getWrapperBase( wrapper.getName() ) ) );
   } );
+
+  return newModel;
 }
 
 

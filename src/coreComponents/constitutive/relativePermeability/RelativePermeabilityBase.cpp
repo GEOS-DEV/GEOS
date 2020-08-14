@@ -102,23 +102,11 @@ void RelativePermeabilityBase::ResizeFields( localIndex const size, localIndex c
   m_dPhaseRelPerm_dPhaseVolFrac.resize( size, numPts, NP, NP );
 }
 
-void RelativePermeabilityBase::AllocateConstitutiveData( dataRepository::Group * const parent,
+void RelativePermeabilityBase::allocateConstitutiveData( dataRepository::Group * const parent,
                                                          localIndex const numConstitutivePointsPerParentIndex )
 {
-  ConstitutiveBase::AllocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+  ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
   ResizeFields( parent->size(), numConstitutivePointsPerParentIndex );
-}
-
-void RelativePermeabilityBase::DeliverClone( string const & name,
-                                             Group * const parent,
-                                             std::unique_ptr< ConstitutiveBase > & clone ) const
-{
-  ConstitutiveBase::DeliverClone( name, parent, clone );
-  RelativePermeabilityBase & relPerm = dynamicCast< RelativePermeabilityBase & >( *clone );
-
-  relPerm.m_phaseNames = m_phaseNames;
-  relPerm.m_phaseTypes = m_phaseTypes;
-  relPerm.m_phaseOrder = m_phaseOrder;
 }
 
 } // namespace constitutive

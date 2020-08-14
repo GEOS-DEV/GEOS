@@ -59,37 +59,13 @@ void ParticleFluidBase::PostProcessInput()
   ConstitutiveBase::PostProcessInput();
 }
 
-void ParticleFluidBase::AllocateConstitutiveData( Group * const parent,
+void ParticleFluidBase::allocateConstitutiveData( Group * const parent,
                                                   localIndex const numConstitutivePointsPerParentIndex )
 {
-  ConstitutiveBase::AllocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+  ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 
   this->resize( parent->size() );
   m_dSettlingFactor_dComponentConcentration.resize( parent->size(), MAX_NUM_COMPONENTS );
-}
-
-
-void
-ParticleFluidBase::DeliverClone( string const & name,
-                                 Group * const parent,
-                                 std::unique_ptr< ConstitutiveBase > & clone ) const
-{
-  GEOSX_ERROR_IF( !clone, "clone not allocated" );
-
-  ConstitutiveBase::DeliverClone( name, parent, clone );
-  ParticleFluidBase & fluid = dynamicCast< ParticleFluidBase & >( *clone );
-
-  fluid.m_settlingFactor = m_settlingFactor;
-  fluid.m_dSettlingFactor_dPressure = m_dSettlingFactor_dPressure;
-  fluid.m_dSettlingFactor_dProppantConcentration = m_dSettlingFactor_dProppantConcentration;
-  fluid.m_dSettlingFactor_dComponentConcentration = m_dSettlingFactor_dComponentConcentration;
-
-  fluid.m_collisionFactor = m_collisionFactor;
-  fluid.m_dCollisionFactor_dProppantConcentration = m_dCollisionFactor_dProppantConcentration;
-
-  fluid.m_maxProppantConcentration = m_maxProppantConcentration;
-  fluid.m_isCollisionalSlip = m_isCollisionalSlip;
-  fluid.m_proppantPackPermeability = m_proppantPackPermeability;
 }
 
 } //namespace constitutive

@@ -1263,6 +1263,7 @@ void SiloFile::WriteElementRegionSilo( ElementRegionBase const & elemRegion,
 
   localIndex numElems = 0;
   dataRepository::Group fakeGroup( elemRegion.getName(), nullptr );
+  fakeGroup.setRestartFlags( dataRepository::RestartFlags::NO_WRITE );
   std::vector< std::map< string, WrapperBase const * > > viewPointers;
 
   viewPointers.resize( elemRegion.numSubRegions() );
@@ -1356,6 +1357,8 @@ void SiloFile::WriteElementRegionSilo( ElementRegionBase const & elemRegion,
                   problemTime,
                   isRestart,
                   localIndex_array() );
+
+  fakeGroup.getConduitNode().parent()->remove( fakeGroup.getName() );
 }
 
 

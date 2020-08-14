@@ -123,12 +123,11 @@ void testNumericalDerivatives( MultiFluidBase & fluid,
   auto const & phases     = fluid.getReference< string_array >( MultiFluidBase::viewKeyStruct::phaseNamesString );
 
   // create a clone of the fluid to run updates on
-  std::unique_ptr< ConstitutiveBase > fluidCopyPtr;
-  fluid.DeliverClone( "fluidCopy", nullptr, fluidCopyPtr );
+  std::unique_ptr< ConstitutiveBase > fluidCopyPtr = fluid.deliverClone( "fluidCopy", nullptr );
   MultiFluidBase & fluidCopy = *fluidCopyPtr->group_cast< MultiFluidBase * >();
 
-  fluid.AllocateConstitutiveData( fluid.getParent(), 1 );
-  fluidCopy.AllocateConstitutiveData( fluid.getParent(), 1 );
+  fluid.allocateConstitutiveData( fluid.getParent(), 1 );
+  fluidCopy.allocateConstitutiveData( fluid.getParent(), 1 );
 
   // extract data views from both fluids
   #define GET_FLUID_DATA( FLUID, DIM, KEY ) \

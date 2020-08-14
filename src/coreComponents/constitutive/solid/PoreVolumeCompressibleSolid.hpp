@@ -36,17 +36,16 @@ public:
 
   virtual ~PoreVolumeCompressibleSolid() override;
 
-  void DeliverClone( string const & name,
-                     Group * const parent,
-                     std::unique_ptr< ConstitutiveBase > & clone ) const override;
+  std::unique_ptr< ConstitutiveBase > deliverClone( string const & name,
+                                                    Group * const parent ) const override;
 
-  virtual void AllocateConstitutiveData( dataRepository::Group * const parent,
+  virtual void allocateConstitutiveData( dataRepository::Group * const parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
 
   static std::string CatalogName() { return "PoreVolumeCompressibleSolid"; }
 
-  virtual string GetCatalogName() override { return CatalogName(); }
+  virtual string getCatalogName() const override { return CatalogName(); }
 
   virtual void StateUpdatePointPressure( real64 const & pres,
                                          localIndex const k,

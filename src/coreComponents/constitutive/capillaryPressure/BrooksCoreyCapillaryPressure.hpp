@@ -110,13 +110,9 @@ public:
 
   virtual ~BrooksCoreyCapillaryPressure() override;
 
-  void DeliverClone( string const & name,
-                     Group * const parent,
-                     std::unique_ptr< ConstitutiveBase > & clone ) const override;
-
   static std::string CatalogName() { return "BrooksCoreyCapillaryPressure"; }
 
-  virtual string GetCatalogName() override { return CatalogName(); }
+  virtual string getCatalogName() const override { return CatalogName(); }
 
   /// Type of kernel wrapper for in-kernel update
   using KernelWrapper = BrooksCoreyCapillaryPressureUpdate;
@@ -133,6 +129,7 @@ public:
     static constexpr auto phaseCapPressureExponentInvString = "phaseCapPressureExponentInv";
     static constexpr auto phaseEntryPressureString          = "phaseEntryPressure";
     static constexpr auto capPressureEpsilonString          = "capPressureEpsilon";
+    static constexpr auto volFracScaleString                = "volFracScale";
   } viewKeysBrooksCoreyCapillaryPressure;
 
 protected:

@@ -212,3 +212,38 @@ TEST( testGeosxTraits, is_array )
   static_assert( !is_array< double >, "Should be false." );
   static_assert( !is_array< void >, "Should be false." );
 }
+
+
+struct Foo
+{
+  Foo & operator=( Foo const & ) = default;
+  int m_value;
+};
+
+struct Bar
+{
+  Bar & operator=( Bar const & ) = delete;
+  int m_value;
+};
+
+enum enumFoo
+{
+  blah,
+  yada
+};
+
+enum class enumClassFoo
+{
+  blah,
+  yada
+};
+
+TEST( testGeosxTraits, hasCopyAssignment )
+{
+  static_assert( hasCopyAssignmentOp< enumFoo >, "Should be true." );
+  static_assert( hasCopyAssignmentOp< enumClassFoo >, "Should be true." );
+  static_assert( hasCopyAssignmentOp< int >, "Should be true." );
+  static_assert( hasCopyAssignmentOp< real64 >, "Should be true." );
+  static_assert( hasCopyAssignmentOp< Foo >, "Should be true." );
+  static_assert( !hasCopyAssignmentOp< Bar >, "Should be false." );
+}

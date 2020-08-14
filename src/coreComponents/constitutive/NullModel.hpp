@@ -36,11 +36,6 @@ public:
   /// Destrutor
   virtual ~NullModel();
 
-
-  virtual void DeliverClone( string const & GEOSX_UNUSED_PARAM( name ),
-                             Group * const GEOSX_UNUSED_PARAM( parent ),
-                             std::unique_ptr< ConstitutiveBase > & GEOSX_UNUSED_PARAM( clone ) ) const override final;
-
   /// string name to use for this class in the catalog
   static constexpr auto m_catalogNameString = "NullModel";
 
@@ -49,7 +44,7 @@ public:
    */
   static std::string CatalogName() { return m_catalogNameString; }
 
-  virtual string GetCatalogName() override { return CatalogName(); }
+  virtual string getCatalogName() const override { return CatalogName(); }
 
   /**
    * Empty struct to serve as a KernelWrapper for the constitutive model.

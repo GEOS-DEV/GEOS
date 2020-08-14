@@ -27,16 +27,6 @@ NullModel::NullModel( string const & name,
 NullModel::~NullModel()
 {}
 
-void NullModel::DeliverClone( string const & name,
-                              Group * const parent,
-                              std::unique_ptr< ConstitutiveBase > & clone ) const
-{
-  if( !clone )
-  {
-    clone = std::make_unique< NullModel >( name, parent );
-  }
-}
-
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, NullModel, std::string const &, dataRepository::Group * const )
 
 } // constitutive
