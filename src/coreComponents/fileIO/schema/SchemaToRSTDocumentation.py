@@ -33,8 +33,8 @@ def writeTableRST(file_name, values):
 
   # The final column is allowed to span multiple lines
   description_index = sum(M[:-1]) + len(M) - 1
-  multiple_row_format_a = ('{:<%is} ' * (len(M) - 1) + '| {:<%is} \n') % M
-  multiple_row_format_b = ' ' * description_index + '| {:<%is} \n' % (M[-1])
+  multiple_row_format_a = ('{:<%is} ' * (len(M) - 1) + '{:<%is} \n') % M
+  multiple_row_format_b = ' ' * description_index + '{:<%is} \n' % (M[-1])
 
   # Build headers
   boundary = single_row_format.format(*['=' * x for x in M])
