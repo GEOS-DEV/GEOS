@@ -862,25 +862,15 @@ void HypreMatrix::addEntries( HypreMatrix const & src, real64 const scale )
   GEOSX_LAI_ASSERT( numGlobalRows() == src.numGlobalRows() );
   GEOSX_LAI_ASSERT( numGlobalCols() == src.numGlobalCols() );
 
-  array1d< globalIndex > colIndices;
-  array1d< real64 > values;
-  open();
-  for( globalIndex rowIndex = src.ilower(); rowIndex < src.iupper(); ++rowIndex )
-  {
-    localIndex const numEntries = src.globalRowLength( rowIndex );
-    colIndices.resize( numEntries );
-    values.resize( numEntries );
-    src.getRowCopy( rowIndex, colIndices, values );
-    if( !isEqual( scale, 1.0 ) )
-    {
-      for( localIndex i = 0; i < numEntries; ++i )
-      {
-        values[i] *= scale;
-      }
-    }
-    add( rowIndex, colIndices, values );
-  }
-  close();
+  HYPRE_ParCSRMatrix parCSRMatrix;
+  GEOSX_LAI_CHECK_ERROR( hypre_ParcsrAdd( 1.0,
+                                          unwrapped(),
+                                          scale,
+                                          src.unwrapped(),
+                                          &parCSRMatrix ) );
+
+  reset();
+  parCSRtoIJ( parCSRMatrix );
 }
 
 void HypreMatrix::addDiagonal( HypreVector const & src )

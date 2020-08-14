@@ -56,6 +56,14 @@ public:
              DofManager & dofManager ) const override;
 
   virtual void
+  SetupSystem( DomainPartition & domain,
+               DofManager & dofManager,
+               CRSMatrix< real64, globalIndex > & localMatrix,
+               array1d< real64 > & localRhs,
+               array1d< real64 > & localSolution,
+               bool const setSparsity = true ) override;
+
+  virtual void
   ImplicitStepSetup( real64 const & time_n,
                      real64 const & dt,
                      DomainPartition & domain ) override final;
@@ -246,6 +254,8 @@ private:
     }
     return stringState;
   }
+
+  void CreatePreconditioner();
 
 public:
 

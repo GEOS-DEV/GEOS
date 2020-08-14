@@ -115,6 +115,8 @@ public:
 
 private:
 
+  void createHyprePreconditioner( DofManager const * const dofManager );
+
   void createAMG();
 
   void createMGR( DofManager const * const dofManager );
@@ -127,16 +129,22 @@ private:
   LinearSolverParameters m_parameters;
 
   /// Pointer to the Hypre implementation
-  HYPRE_Solver m_precond;
+  HYPRE_Solver m_precond = nullptr;
 
   /// Pointer to the auxillary preconditioner used in MGR
-  HYPRE_Solver aux_precond;
+  HYPRE_Solver aux_precond = nullptr;
 
   /// Pointers to hypre functions to setup/solve/destroy preconditioner
   std::unique_ptr< HyprePrecFuncs > m_functions;
 
-  // Pointer to preconditioner auxiliary data
+  /// Pointer to preconditioner auxiliary data
   std::unique_ptr< HyprePrecAuxData > m_auxData;
+
+  /// Pointer to Degrees of Freedom manager
+  DofManager const * const m_dofManager;
+
+  /// Bool to check if the preconditioner is ready to be computed
+  bool m_ready;
 };
 
 }

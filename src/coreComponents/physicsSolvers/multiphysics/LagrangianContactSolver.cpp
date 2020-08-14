@@ -34,6 +34,9 @@
 #include "physicsSolvers/surfaceGeneration/SurfaceGenerator.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
 #include "linearAlgebra/utilities/LAIHelperFunctions.hpp"
+#include "linearAlgebra/solvers/PreconditionerJacobi.hpp"
+#include "linearAlgebra/solvers/BlockPreconditioner.hpp"
+#include "linearAlgebra/solvers/SeparateComponentPreconditioner.hpp"
 #include "math/interpolation/Interpolation.hpp"
 #include "finiteElement/elementFormulations/H1_TriangleFace_Lagrange1_Gauss1.hpp"
 #include "finiteElement/elementFormulations/H1_QuadrilateralFace_Lagrange1_GaussLegendre2.hpp"
@@ -170,6 +173,27 @@ void LagrangianContactSolver::InitializePreSubGroups( Group * const rootGroup )
   ConstitutiveBase const * const contactRelation  = cm->GetConstitutiveRelation< ConstitutiveBase >( m_contactRelationName );
   GEOSX_ERROR_IF( contactRelation == nullptr, "fracture constitutive model " + m_contactRelationName + " not found" );
   m_contactRelationFullIndex = contactRelation->getIndexInParent();
+}
+
+void LagrangianContactSolver::SetupSystem( DomainPartition & domain,
+                                           DofManager & dofManager,
+                                           CRSMatrix< real64, globalIndex > & localMatrix,
+                                           array1d< real64 > & localRhs,
+                                           array1d< real64 > & localSolution,
+                                           bool const setSparsity )
+{
+  if( m_precond )
+  {
+    m_precond->clear();
+  }
+
+  // setup monolithic coupled system
+  SolverBase::SetupSystem( domain, dofManager, localMatrix, localRhs, localSolution, setSparsity );
+
+  if( !m_precond && m_linearSolverParameters.get().solverType != "direct" )
+  {
+    CreatePreconditioner();
+  }
 }
 
 void LagrangianContactSolver::ImplicitStepSetup( real64 const & time_n,
@@ -1077,6 +1101,35 @@ real64 LagrangianContactSolver::CalculateResidualNorm( DomainPartition const & d
   GEOSX_LOG_LEVEL_RANK_0( 1, output );
 
   return globalResidualNorm[2];
+}
+
+void LagrangianContactSolver::CreatePreconditioner()
+{
+  if( m_linearSolverParameters.get().preconditionerType == "block" )
+  {
+    auto precond = std::make_unique< BlockPreconditioner< LAInterface > >( BlockShapeOption::LowerUpperTriangular,
+                                                                           SchurComplementOption::FirstBlockDiagonal,
+                                                                           BlockScalingOption::UserProvided );
+
+    auto tracPrecond = std::make_unique< PreconditionerJacobi< LAInterface > >( PreconditionerJacobi< LAInterface >() );
+    precond->setupBlock( 0,
+                         { { viewKeyStruct::tractionString, 0, 3 } },
+                         std::move( tracPrecond ) );
+
+    LinearSolverParameters mechParams = m_solidSolver->getLinearSolverParameters();
+    mechParams.dofsPerNode = 3;
+    auto mechPrecond = LAInterface::createPreconditioner( mechParams );
+    precond->setupBlock( 1,
+                         { { keys::TotalDisplacement, 0, 3 } },
+                         std::move( mechPrecond ) );
+
+    m_precond = std::move( precond );
+  }
+  else
+  {
+    //TODO: Revisit this part such that is coherent across physics solver
+    //m_precond = LAInterface::createPreconditioner( m_linearSolverParameters.get() );
+  }
 }
 
 void LagrangianContactSolver::ComputeRotationMatrices( DomainPartition & domain ) const
