@@ -28,8 +28,8 @@ This tutorial uses a set of input files and table files located at:
 
   examples/hydraulicFracturing/heterogeneousInSituProperties
 
-Note: because these files use the advanced xml features, they must be preprocessed using pygeos.
-To install pygeos, see :ref:`advanced_xml_features`
+Note: because these files use the advanced xml features, they must be preprocessed using the geosx_xml_tools package.
+To install geosx_xml_tools, see :ref:`advanced_xml_features`
 
 ------------------------------------------------------------------
 Description of the case
@@ -81,7 +81,7 @@ Parameters can be used throughout the input file (or an included input file) by 
 Barring any circular-definition errors, parameters can be used within other parameters.
 For example, see the parameter ``mu_upscaled``
 This value of this parameter is a symbolic expression, which is denoted by the surrounding back-ticks, and is dependent upon two other parameters.
-During pre-processing, pygeos will subsititue in the parameter definitions, and evaluate the symbolic expression using a python-derived syntax.
+During pre-processing, geosx_xml_tools will subsititue in the parameter definitions, and evaluate the symbolic expression using a python-derived syntax.
 
 A number of the input parameters include optional unit definitions, which are denoted by the square brackets follwing a value.
 For example, the parameter ``t_max`` is used to set the maximum time for the simulation to 20 minutes.
@@ -242,10 +242,10 @@ Running the case and inspecting the results
 Preprocessing the input file
 ---------------------------------
 
-Because we are using advanced xml features in this example, the input file must be pre-processed using pygeos.
+Because we are using advanced xml features in this example, the input file must be pre-processed using geosx_xml_tools.
 To build the final input file ``hydrofracture_processed.xml``, run the following:
 
-``geosx_bin_dir/pygeos examples/hydraulicFracturing/heterogeneousInSituProperties/heterogeneousInSitu_singleFracture.xml -o hydrofracture_processed.xml``
+``geosx_bin_dir/format_xml examples/hydraulicFracturing/heterogeneousInSituProperties/heterogeneousInSitu_singleFracture.xml -o hydrofracture_processed.xml``
 
 
 Running the case
