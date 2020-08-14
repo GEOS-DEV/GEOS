@@ -36,12 +36,11 @@ void testNumericalDerivatives( CapillaryPressureBase & capPressure,
   auto const & phases = capPressure.phaseNames();
 
   // create a clone of the capillary pressure to run updates on
-  std::unique_ptr< ConstitutiveBase > capPressureCopyPtr;
-  capPressure.DeliverClone( "fluidCopy", nullptr, capPressureCopyPtr );
+  std::unique_ptr< ConstitutiveBase > capPressureCopyPtr = capPressure.deliverClone( "fluidCopy", nullptr );
   CapillaryPressureBase & capPressureCopy = *capPressureCopyPtr->group_cast< CapillaryPressureBase * >();
 
-  capPressure.AllocateConstitutiveData( capPressure.getParent(), 1 );
-  capPressureCopy.AllocateConstitutiveData( capPressure.getParent(), 1 );
+  capPressure.allocateConstitutiveData( capPressure.getParent(), 1 );
+  capPressureCopy.allocateConstitutiveData( capPressure.getParent(), 1 );
 
   arraySlice1d< real64 const > phaseCapPressure = capPressure.phaseCapPressure()[0][0];
   arraySlice2d< real64 const > dPhaseCapPressure_dSat = capPressure.dPhaseCapPressure_dPhaseVolFraction()[0][0];

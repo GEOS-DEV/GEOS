@@ -54,50 +54,34 @@ CompressibleSinglePhaseFluid::CompressibleSinglePhaseFluid( std::string const & 
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Reference fluid viscosity" );
 
-  registerWrapper( viewKeyStruct::densityModelString, &m_densityModelString )->
+  registerWrapper( viewKeyStruct::densityModelStringString, &m_densityModelString )->
     setApplyDefaultValue( "linear" )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Type of density model (linear, quadratic, exponential)" );
 
-  registerWrapper( viewKeyStruct::viscosityModelString, &m_viscosityModelString )->
+  registerWrapper( viewKeyStruct::viscosityModelStringString, &m_viscosityModelString )->
     setApplyDefaultValue( "linear" )->
     setInputFlag( InputFlags::OPTIONAL )->
+    setDescription( "Type of viscosity model (linear, quadratic, exponential)" );
+
+  registerWrapper( viewKeyStruct::densityModelTypeString, &m_densityModelType )->
+    setRestartFlags( dataRepository::RestartFlags::NO_WRITE )->
+    setDescription( "Type of density model (linear, quadratic, exponential)" );
+
+  registerWrapper( viewKeyStruct::viscosityModelTypeString, &m_viscosityModelType )->
+    setRestartFlags( dataRepository::RestartFlags::NO_WRITE )->
     setDescription( "Type of viscosity model (linear, quadratic, exponential)" );
 }
 
 CompressibleSinglePhaseFluid::~CompressibleSinglePhaseFluid() = default;
 
-void CompressibleSinglePhaseFluid::AllocateConstitutiveData( dataRepository::Group * const parent,
+void CompressibleSinglePhaseFluid::allocateConstitutiveData( dataRepository::Group * const parent,
                                                              localIndex const numConstitutivePointsPerParentIndex )
 {
-  SingleFluidBase::AllocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+  SingleFluidBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 
   m_density.setValues< serialPolicy >( m_referenceDensity );
   m_viscosity.setValues< serialPolicy >( m_referenceViscosity );
-}
-
-void
-CompressibleSinglePhaseFluid::DeliverClone( string const & name,
-                                            Group * const parent,
-                                            std::unique_ptr< ConstitutiveBase > & clone ) const
-{
-  if( !clone )
-  {
-    clone = std::make_unique< CompressibleSinglePhaseFluid >( name, parent );
-  }
-  SingleFluidBase::DeliverClone( name, parent, clone );
-  CompressibleSinglePhaseFluid & fluid = dynamicCast< CompressibleSinglePhaseFluid & >( *clone );
-
-  fluid.m_compressibility      = m_compressibility;
-  fluid.m_viscosibility        = m_viscosibility;
-  fluid.m_referencePressure    = m_referencePressure;
-  fluid.m_referenceDensity     = m_referenceDensity;
-  fluid.m_referenceViscosity   = m_referenceViscosity;
-  fluid.m_densityModelString   = m_densityModelString;
-  fluid.m_viscosityModelString = m_viscosityModelString;
-  fluid.m_densityModelType     = m_densityModelType;
-  fluid.m_viscosityModelType   = m_viscosityModelType;
-
 }
 
 void CompressibleSinglePhaseFluid::PostProcessInput()
