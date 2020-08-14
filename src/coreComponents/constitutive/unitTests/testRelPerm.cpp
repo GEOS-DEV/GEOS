@@ -36,12 +36,11 @@ void testNumericalDerivatives( RelativePermeabilityBase & relPerm,
   auto const & phases = relPerm.phaseNames();
 
   // create a clone of the rel perm to run updates on
-  std::unique_ptr< ConstitutiveBase > relPermCopyPtr;
-  relPerm.DeliverClone( "fluidCopy", nullptr, relPermCopyPtr );
+  std::unique_ptr< ConstitutiveBase > relPermCopyPtr = relPerm.deliverClone( "fluidCopy", nullptr );
   RelativePermeabilityBase & relPermCopy = *relPermCopyPtr->group_cast< RelativePermeabilityBase * >();
 
-  relPerm.AllocateConstitutiveData( relPerm.getParent(), 1 );
-  relPermCopy.AllocateConstitutiveData( relPerm.getParent(), 1 );
+  relPerm.allocateConstitutiveData( relPerm.getParent(), 1 );
+  relPermCopy.allocateConstitutiveData( relPerm.getParent(), 1 );
 
   arraySlice1d< real64 const > phaseRelPerm = relPerm.phaseRelPerm()[0][0];
   arraySlice2d< real64 const > dPhaseRelPerm_dSat = relPerm.dPhaseRelPerm_dPhaseVolFraction()[0][0];

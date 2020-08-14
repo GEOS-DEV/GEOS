@@ -50,26 +50,10 @@ LinearElasticAnisotropic::~LinearElasticAnisotropic()
 {}
 
 
-void
-LinearElasticAnisotropic::DeliverClone( string const & name,
-                                        Group * const parent,
-                                        std::unique_ptr< ConstitutiveBase > & clone ) const
-{
-  if( !clone )
-  {
-    clone = std::make_unique< LinearElasticAnisotropic >( name, parent );
-  }
-  SolidBase::DeliverClone( name, parent, clone );
-  LinearElasticAnisotropic * const newConstitutiveRelation = dynamic_cast< LinearElasticAnisotropic * >(clone.get());
-
-  newConstitutiveRelation->m_defaultStiffness = m_defaultStiffness;
-  //newConstitutiveRelation->m_stiffness = m_stiffness;
-}
-
-void LinearElasticAnisotropic::AllocateConstitutiveData( dataRepository::Group * const parent,
+void LinearElasticAnisotropic::allocateConstitutiveData( dataRepository::Group * const parent,
                                                          localIndex const numConstitutivePointsPerParentIndex )
 {
-  SolidBase::AllocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+  SolidBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 
   this->resize( parent->size() );
 //  m_stiffness.resize( parent->size() );

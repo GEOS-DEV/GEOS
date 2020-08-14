@@ -312,6 +312,26 @@ inline ExponentApproximationType stringToExponentType( string const & model )
   return it->second;
 }
 
+inline string exponentTypeToString( ExponentApproximationType const & model )
+{
+  static std::map< ExponentApproximationType, string > const approxTypes =
+  {
+    { ExponentApproximationType::Linear, "linear"      },
+    { ExponentApproximationType::Quadratic, "quadratic"   },
+    { ExponentApproximationType::Full, "exponential" },
+  };
+  auto const it = approxTypes.find( model );
+  GEOSX_ERROR_IF( it == approxTypes.end(), "Model type not supported" );
+  return it->second;
+}
+
+inline std::ostream &
+operator<<( std::ostream & stream, ExponentApproximationType const & value )
+{
+  return stream << exponentTypeToString( value );
+}
+
+
 template< ExponentApproximationType EAT >
 struct ExponentApproximationTypeWrapper
 {

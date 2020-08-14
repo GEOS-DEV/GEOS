@@ -46,13 +46,13 @@ public:
 
   virtual ~BlackOilFluid() override;
 
-  void DeliverClone( string const & name,
-                     Group * const parent,
-                     std::unique_ptr< ConstitutiveBase > & clone ) const override;
+  std::unique_ptr< ConstitutiveBase >
+  deliverClone( string const & name,
+                Group * const parent ) const override;
 
   static std::string CatalogName() { return "BlackOilFluid"; }
 
-  virtual string GetCatalogName() override { return CatalogName(); }
+  virtual string getCatalogName() const override { return CatalogName(); }
 
 
   struct viewKeyStruct : MultiFluidPVTPackageWrapper::viewKeyStruct
