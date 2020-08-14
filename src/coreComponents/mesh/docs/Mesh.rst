@@ -55,6 +55,8 @@ The following is an example XML ``<mesh>`` block, which will generate a vertical
 .. image:: ../../../coreComponents/mesh/docs/beam.png
 
 
+.. _Mesh_bias:
+
 Mesh Bias
 ===========
 

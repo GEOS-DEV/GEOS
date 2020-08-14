@@ -188,6 +188,7 @@ public:
     static constexpr auto maxEventDtString = "maxEventDt";
     static constexpr auto lastTimeString = "lastTime";
     static constexpr auto lastCycleString = "lastCycle";
+    static constexpr auto eventForecastString = "eventForecast";
     static constexpr auto targetExactStartStopString = "targetExactStartStop";
     static constexpr auto currentSubEventString = "currentSubEvent";
     static constexpr auto isTargetExecutingString = "isTargetExecuting";
@@ -200,6 +201,7 @@ public:
     dataRepository::ViewKey maxEventDt = { "maxEventDt" };
     dataRepository::ViewKey lastTime = { "lastTime" };
     dataRepository::ViewKey lastCycle = { "lastCycle" };
+    dataRepository::ViewKey eventForecast = { "eventForecast" };
     dataRepository::ViewKey targetExactStartStop = { "targetExactStartStop" };
     dataRepository::ViewKey currentSubEvent = { "currentSubEvent" };
     dataRepository::ViewKey isTargetExecuting = { "isTargetExecuting" };
