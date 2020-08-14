@@ -35,17 +35,19 @@ LinearSolverParametersInput::LinearSolverParametersInput( std::string const & na
   registerWrapper( viewKeyStruct::solverTypeString, &m_parameters.solverType )->
     setApplyDefaultValue( m_parameters.solverType )->
     setInputFlag( InputFlags::OPTIONAL )->
-    setDescription( "Linear solver type" );
+    setDescription( "Linear solver type\n"
+                    "Available options are: direct, cg, gmres, fgmres, bicgstab, preconditioner" );
 
   registerWrapper( viewKeyStruct::preconditionerTypeString, &m_parameters.preconditionerType )->
     setApplyDefaultValue( m_parameters.preconditionerType )->
     setInputFlag( InputFlags::OPTIONAL )->
-    setDescription( "Preconditioner type" );
+    setDescription( "Preconditioner type\n"
+                    "Available options are: none, jacobi, iluk, ilut, icc, amg, mgr, block" );
 
   registerWrapper( viewKeyStruct::krylovMaxIterString, &m_parameters.krylov.maxIterations )->
     setApplyDefaultValue( m_parameters.krylov.maxIterations )->
     setInputFlag( InputFlags::OPTIONAL )->
-    setDescription( "Maximum iterations allowed" );
+    setDescription( "Maximum iterations allowed for an iterative solver" );
 
   registerWrapper( viewKeyStruct::krylovMaxRestartString, &m_parameters.krylov.maxRestart )->
     setApplyDefaultValue( m_parameters.krylov.maxRestart )->
@@ -55,13 +57,15 @@ LinearSolverParametersInput::LinearSolverParametersInput( std::string const & na
   registerWrapper( viewKeyStruct::krylovTolString, &m_parameters.krylov.relTolerance )->
     setApplyDefaultValue( m_parameters.krylov.relTolerance )->
     setInputFlag( InputFlags::OPTIONAL )->
-    setDescription( "Relative convergence tolerance" );
+    setDescription( "Relative convergence tolerance of the iterative method\n"
+                    "If the method converges, the iterative solution :math:`\\mathsf{x}_k` is such that\n"
+                    "the relative residual norm satisfies:\n"
+                    ":math:`|| \\mathsf{b} - `\\mathsf{A} \\mathsf{x}_k ||_2` < ``tolerance`` * :math:`|| \\mathsf{b} ||_2`|" );
 
   registerWrapper( viewKeyStruct::krylovAdaptiveTolString, &m_parameters.krylov.useAdaptiveTol )->
     setApplyDefaultValue( m_parameters.krylov.useAdaptiveTol )->
     setInputFlag( InputFlags::OPTIONAL )->
-    setDescription(
-    "Use Eisenstat-Walker adaptive linear tolerance" );
+    setDescription( "Use Eisenstat-Walker adaptive linear tolerance" );
 
   registerWrapper( viewKeyStruct::krylovWeakTolString, &m_parameters.krylov.weakestTol )->
     setApplyDefaultValue( m_parameters.krylov.weakestTol )->
@@ -76,12 +80,14 @@ LinearSolverParametersInput::LinearSolverParametersInput( std::string const & na
   registerWrapper( viewKeyStruct::amgSmootherString, &m_parameters.amg.smootherType )->
     setApplyDefaultValue( m_parameters.amg.smootherType )->
     setInputFlag( InputFlags::OPTIONAL )->
-    setDescription( "AMG smoother type" );
+    setDescription( "AMG smoother type\n"
+                    "Available options are: jacobi, blockJacobi, gaussSeidel, blockGaussSeidel, chebyshev, icc, ilu, ilut" );
 
   registerWrapper( viewKeyStruct::amgCoarseString, &m_parameters.amg.coarseType )->
     setApplyDefaultValue( m_parameters.amg.coarseType )->
     setInputFlag( InputFlags::OPTIONAL )->
-    setDescription( "AMG coarsest level solver/smoother type" );
+    setDescription( "AMG coarsest level solver/smoother type\n"
+                    "Available options are: jacobi, gaussSeidel, blockGaussSeidel, chebyshev, direct" );
 
   registerWrapper( viewKeyStruct::amgThresholdString, &m_parameters.amg.threshold )->
     setApplyDefaultValue( m_parameters.amg.threshold )->
