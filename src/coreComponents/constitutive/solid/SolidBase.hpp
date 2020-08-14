@@ -180,7 +180,7 @@ public:
    */
   virtual ~SolidBase() override;
 
-  virtual void AllocateConstitutiveData( dataRepository::Group * const parent,
+  virtual void allocateConstitutiveData( dataRepository::Group * const parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
   struct viewKeyStruct : public ConstitutiveBase::viewKeyStruct

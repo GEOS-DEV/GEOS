@@ -190,10 +190,10 @@ public:
 
   static std::string CatalogName() { return "ParticleFluid"; }
 
-  virtual string GetCatalogName() const override { return CatalogName(); }
+  virtual string getCatalogName() const override { return CatalogName(); }
 
   std::unique_ptr< ConstitutiveBase >
-  DeliverClone( string const & name,
+  deliverClone( string const & name,
                 Group * const parent ) const override;
 
   /// Type of kernel wrapper for in-kernel update

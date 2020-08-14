@@ -116,7 +116,7 @@ public:
 
   virtual ~CapillaryPressureBase() override;
 
-  virtual void AllocateConstitutiveData( dataRepository::Group * const parent,
+  virtual void allocateConstitutiveData( dataRepository::Group * const parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
   localIndex numFluidPhases() const { return m_phaseNames.size(); }

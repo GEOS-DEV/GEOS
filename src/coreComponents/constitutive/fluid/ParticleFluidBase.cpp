@@ -59,10 +59,10 @@ void ParticleFluidBase::PostProcessInput()
   ConstitutiveBase::PostProcessInput();
 }
 
-void ParticleFluidBase::AllocateConstitutiveData( Group * const parent,
+void ParticleFluidBase::allocateConstitutiveData( Group * const parent,
                                                   localIndex const numConstitutivePointsPerParentIndex )
 {
-  ConstitutiveBase::AllocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+  ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 
   this->resize( parent->size() );
   m_dSettlingFactor_dComponentConcentration.resize( parent->size(), MAX_NUM_COMPONENTS );

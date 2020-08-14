@@ -75,10 +75,10 @@ CompressibleSinglePhaseFluid::CompressibleSinglePhaseFluid( std::string const & 
 
 CompressibleSinglePhaseFluid::~CompressibleSinglePhaseFluid() = default;
 
-void CompressibleSinglePhaseFluid::AllocateConstitutiveData( dataRepository::Group * const parent,
+void CompressibleSinglePhaseFluid::allocateConstitutiveData( dataRepository::Group * const parent,
                                                              localIndex const numConstitutivePointsPerParentIndex )
 {
-  SingleFluidBase::AllocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+  SingleFluidBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 
   m_density.setValues< serialPolicy >( m_referenceDensity );
   m_viscosity.setValues< serialPolicy >( m_referenceViscosity );

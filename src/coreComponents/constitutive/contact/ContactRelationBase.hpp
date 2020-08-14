@@ -61,7 +61,7 @@ public:
    */
   static string CatalogName() { return "Contact"; }
 
-  virtual string GetCatalogName() const override { return CatalogName(); }
+  virtual string getCatalogName() const override { return CatalogName(); }
 
   virtual Group * CreateChild( string const & catalogKey,
                                string const & name ) override;

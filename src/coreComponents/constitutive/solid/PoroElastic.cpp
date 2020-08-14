@@ -86,10 +86,10 @@ void PoroElastic< BASE >::PostProcessInput()
 
 template< typename BASE >
 std::unique_ptr< ConstitutiveBase >
-PoroElastic< BASE >::DeliverClone( string const & name,
+PoroElastic< BASE >::deliverClone( string const & name,
                                    dataRepository::Group * const parent ) const
 {
-  std::unique_ptr< ConstitutiveBase > clone = BASE::DeliverClone( name, parent );
+  std::unique_ptr< ConstitutiveBase > clone = BASE::deliverClone( name, parent );
   PoroElastic< BASE > & castedClone = dynamic_cast< PoroElastic< BASE > & >( *clone );
   castedClone.m_poreVolumeRelation = m_poreVolumeRelation;
 
@@ -97,12 +97,12 @@ PoroElastic< BASE >::DeliverClone( string const & name,
 }
 
 template< typename BASE >
-void PoroElastic< BASE >::AllocateConstitutiveData( dataRepository::Group * const parent,
+void PoroElastic< BASE >::allocateConstitutiveData( dataRepository::Group * const parent,
                                                     localIndex const numConstitutivePointsPerParentIndex )
 {
   m_poreVolumeMultiplier.resize( 0, numConstitutivePointsPerParentIndex );
   m_dPVMult_dPressure.resize( 0, numConstitutivePointsPerParentIndex );
-  BASE::AllocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+  BASE::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 }
 
 template< typename BASE >

@@ -44,7 +44,7 @@ public:
    */
   static std::string CatalogName() { return m_catalogNameString; }
 
-  virtual string GetCatalogName() const override { return CatalogName(); }
+  virtual string getCatalogName() const override { return CatalogName(); }
 
   /**
    * Empty struct to serve as a KernelWrapper for the constitutive model.

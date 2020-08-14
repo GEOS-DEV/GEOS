@@ -199,7 +199,7 @@ public:
 
   virtual ~MultiFluidBase() override;
 
-  virtual void AllocateConstitutiveData( dataRepository::Group * const parent,
+  virtual void allocateConstitutiveData( dataRepository::Group * const parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
   // *** MultiFluid-specific interface

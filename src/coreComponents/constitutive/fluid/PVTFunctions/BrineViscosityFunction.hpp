@@ -40,7 +40,7 @@ public:
 
   static constexpr auto m_catalogName = "BrineViscosity";
   static string CatalogName()                    { return m_catalogName; }
-  virtual string GetCatalogName() const override final { return CatalogName(); }
+  virtual string getCatalogName() const override final { return CatalogName(); }
 
   virtual PVTFuncType FunctionType() const override
   {

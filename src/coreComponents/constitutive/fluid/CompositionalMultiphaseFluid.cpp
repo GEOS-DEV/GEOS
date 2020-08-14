@@ -86,10 +86,10 @@ CompositionalMultiphaseFluid::~CompositionalMultiphaseFluid()
 {}
 
 std::unique_ptr< ConstitutiveBase >
-CompositionalMultiphaseFluid::DeliverClone( string const & name,
+CompositionalMultiphaseFluid::deliverClone( string const & name,
                                             Group * const parent ) const
 {
-  std::unique_ptr< ConstitutiveBase > clone = MultiFluidPVTPackageWrapper::DeliverClone( name, parent );
+  std::unique_ptr< ConstitutiveBase > clone = MultiFluidPVTPackageWrapper::deliverClone( name, parent );
   CompositionalMultiphaseFluid & fluid = dynamicCast< CompositionalMultiphaseFluid & >( *clone );
 
   fluid.createFluid();

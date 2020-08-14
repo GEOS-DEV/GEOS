@@ -103,10 +103,10 @@ localIndex SlurryFluidBase::numFluidComponents() const
   return LvArray::integerConversion< localIndex >( m_componentNames.size());
 }
 
-void SlurryFluidBase::AllocateConstitutiveData( Group * const parent,
+void SlurryFluidBase::allocateConstitutiveData( Group * const parent,
                                                 localIndex const numConstitutivePointsPerParentIndex )
 {
-  ConstitutiveBase::AllocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+  ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 
   this->resize( parent->size() );
 

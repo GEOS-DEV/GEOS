@@ -112,7 +112,7 @@ public:
 
   static std::string CatalogName() { return "VanGenuchtenCapillaryPressure"; }
 
-  virtual string GetCatalogName() const override { return CatalogName(); }
+  virtual string getCatalogName() const override { return CatalogName(); }
 
   /// Type of kernel wrapper for in-kernel update
   using KernelWrapper = VanGenuchtenCapillaryPressureUpdate;

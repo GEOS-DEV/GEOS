@@ -106,10 +106,10 @@ ParticleFluid::ParticleFluid( std::string const & name, Group * const parent ):
 ParticleFluid::~ParticleFluid() = default;
 
 std::unique_ptr< ConstitutiveBase >
-ParticleFluid::DeliverClone( string const & name,
+ParticleFluid::deliverClone( string const & name,
                              Group * const parent ) const
 {
-  std::unique_ptr< ConstitutiveBase > clone = ParticleFluidBase::DeliverClone( name, parent );
+  std::unique_ptr< ConstitutiveBase > clone = ParticleFluidBase::deliverClone( name, parent );
 
   ParticleFluid & model = dynamicCast< ParticleFluid & >( *clone );
   model.m_particleSettlingModel = m_particleSettlingModel;

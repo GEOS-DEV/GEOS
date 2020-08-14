@@ -63,7 +63,7 @@ ConstitutiveBase::CatalogInterface::CatalogType & ConstitutiveBase::GetCatalog()
   return catalog;
 }
 
-void ConstitutiveBase::AllocateConstitutiveData( dataRepository::Group * const parent,
+void ConstitutiveBase::allocateConstitutiveData( dataRepository::Group * const parent,
                                                  localIndex const numConstitutivePointsPerParentIndex )
 {
   m_numQuadraturePoints = numConstitutivePointsPerParentIndex;
@@ -96,11 +96,11 @@ void ConstitutiveBase::AllocateConstitutiveData( dataRepository::Group * const p
 }
 
 std::unique_ptr< ConstitutiveBase >
-ConstitutiveBase::DeliverClone( string const & name,
+ConstitutiveBase::deliverClone( string const & name,
                                 Group * const parent ) const
 {
   std::unique_ptr< ConstitutiveBase >
-  newModel = ConstitutiveBase::CatalogInterface::Factory( this->GetCatalogName(), name, parent );
+  newModel = ConstitutiveBase::CatalogInterface::Factory( this->getCatalogName(), name, parent );
 
   newModel->forWrappers( [&]( WrapperBase & wrapper )
   {

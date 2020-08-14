@@ -111,11 +111,11 @@ void CapillaryPressureBase::ResizeFields( localIndex const size,
 }
 
 
-void CapillaryPressureBase::AllocateConstitutiveData( dataRepository::Group * const parent,
+void CapillaryPressureBase::allocateConstitutiveData( dataRepository::Group * const parent,
                                                       localIndex const numConstitutivePointsPerParentIndex )
 {
-  ConstitutiveBase::AllocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
-  ResizeFields( parent->size(), numConstitutivePointsPerParentIndex );
+  ResizeFields( 0, numConstitutivePointsPerParentIndex );
+  ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 }
 
 } // namespace constitutive

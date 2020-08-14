@@ -292,9 +292,9 @@ public:
   // *** ConstitutiveBase interface
   static std::string CatalogName() { return "ProppantSlurryFluid"; }
 
-  virtual string GetCatalogName() const override { return CatalogName(); }
+  virtual string getCatalogName() const override { return CatalogName(); }
 
-  virtual void AllocateConstitutiveData( dataRepository::Group * const parent,
+  virtual void allocateConstitutiveData( dataRepository::Group * const parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
   using KernelWrapper = ProppantSlurryFluidUpdate;

@@ -64,9 +64,9 @@ ConstitutiveManager::HangConstitutiveRelation( string const & constitutiveRelati
   constitutiveRelation = GetConstitutiveRelation( constitutiveRelationInstanceName );
 
   std::unique_ptr< ConstitutiveBase >
-  material = constitutiveRelation->DeliverClone( constitutiveRelationInstanceName, parent );
+  material = constitutiveRelation->deliverClone( constitutiveRelationInstanceName, parent );
 
-  material->AllocateConstitutiveData( parent,
+  material->allocateConstitutiveData( parent,
                                       numConstitutivePointsPerParentIndex );
 
   dataRepository::Group * constitutiveGroup = parent->GetGroup( groupKeyStruct::constitutiveModelsString );

@@ -56,10 +56,10 @@ void SingleFluidBase::PostProcessInput()
 
 }
 
-void SingleFluidBase::AllocateConstitutiveData( Group * const parent,
+void SingleFluidBase::allocateConstitutiveData( Group * const parent,
                                                 localIndex const numConstitutivePointsPerParentIndex )
 {
-  ConstitutiveBase::AllocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+  ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 
   this->resize( parent->size() );
 

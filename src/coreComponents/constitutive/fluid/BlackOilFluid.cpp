@@ -77,11 +77,11 @@ BlackOilFluid::~BlackOilFluid()
 {}
 
 std::unique_ptr< ConstitutiveBase >
-BlackOilFluid::DeliverClone( string const & name,
+BlackOilFluid::deliverClone( string const & name,
                              Group * const parent ) const
 {
   std::unique_ptr< ConstitutiveBase >
-  clone = MultiFluidPVTPackageWrapper::DeliverClone( name, parent );
+  clone = MultiFluidPVTPackageWrapper::deliverClone( name, parent );
   BlackOilFluid & fluid = dynamicCast< BlackOilFluid & >( *clone );
 
   fluid.m_fluidType        = m_fluidType;

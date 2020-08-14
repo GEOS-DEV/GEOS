@@ -55,7 +55,7 @@ public:
    * @param[in]  parent A pointer to the group that contains the instance of the new clone
    * @param[out] clone  A reference to a unique_ptr  that will hold the clone.
    */
-  virtual std::unique_ptr< ConstitutiveBase > DeliverClone( string const & name,
+  virtual std::unique_ptr< ConstitutiveBase > deliverClone( string const & name,
                                                             Group * const parent ) const;
 
 
@@ -88,7 +88,7 @@ public:
    * @brief function to return the catalog name of the derived class
    * @return a string that contains the catalog name of the derived class
    */
-  virtual string GetCatalogName() const = 0;
+  virtual string getCatalogName() const = 0;
 
   ///@}
 
@@ -101,7 +101,7 @@ public:
    *   1) Allocate data according to the size of parent and numConstitutivePointsPerParentIndex
    *   2) Create wrappers to the constitutive data in the parent for easier access
    */
-  virtual void AllocateConstitutiveData( dataRepository::Group * const parent,
+  virtual void allocateConstitutiveData( dataRepository::Group * const parent,
                                          localIndex const numConstitutivePointsPerParentIndex );
 
   struct viewKeyStruct

@@ -40,12 +40,12 @@ public:
   virtual ~CompositionalMultiphaseFluid() override;
 
   virtual std::unique_ptr< ConstitutiveBase >
-  DeliverClone( string const & name,
+  deliverClone( string const & name,
                 Group * const parent ) const override;
 
   static std::string CatalogName() { return "CompositionalMultiphaseFluid"; }
 
-  virtual string GetCatalogName() const override { return CatalogName(); }
+  virtual string getCatalogName() const override { return CatalogName(); }
 
 
   struct viewKeyStruct : MultiFluidPVTPackageWrapper::viewKeyStruct

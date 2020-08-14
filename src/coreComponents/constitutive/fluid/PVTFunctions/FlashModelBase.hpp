@@ -52,7 +52,7 @@ public:
     static CatalogInterface::CatalogType catalog;
     return catalog;
   }
-  virtual string GetCatalogName() const = 0;
+  virtual string getCatalogName() const = 0;
 
 
   string const & FlashModelName() const

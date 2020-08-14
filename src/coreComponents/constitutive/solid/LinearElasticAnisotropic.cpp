@@ -50,10 +50,10 @@ LinearElasticAnisotropic::~LinearElasticAnisotropic()
 {}
 
 
-void LinearElasticAnisotropic::AllocateConstitutiveData( dataRepository::Group * const parent,
+void LinearElasticAnisotropic::allocateConstitutiveData( dataRepository::Group * const parent,
                                                          localIndex const numConstitutivePointsPerParentIndex )
 {
-  SolidBase::AllocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+  SolidBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 
   this->resize( parent->size() );
 //  m_stiffness.resize( parent->size() );

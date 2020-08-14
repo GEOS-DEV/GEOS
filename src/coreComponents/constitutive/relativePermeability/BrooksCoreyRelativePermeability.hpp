@@ -96,7 +96,7 @@ public:
 //START_SPHINX_INCLUDE_00
   static std::string CatalogName() { return "BrooksCoreyRelativePermeability"; }
 
-  virtual string GetCatalogName() const override { return CatalogName(); }
+  virtual string getCatalogName() const override { return CatalogName(); }
 
   /// Type of kernel wrapper for in-kernel update
   using KernelWrapper = BrooksCoreyRelativePermeabilityUpdate;

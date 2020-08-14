@@ -75,10 +75,10 @@ void MultiFluidPVTPackageWrapper::InitializePostSubGroups( Group * const group )
 }
 
 std::unique_ptr< ConstitutiveBase >
-MultiFluidPVTPackageWrapper::DeliverClone( string const & name,
+MultiFluidPVTPackageWrapper::deliverClone( string const & name,
                                            Group * const parent ) const
 {
-  std::unique_ptr< ConstitutiveBase > clone = MultiFluidBase::DeliverClone( name, parent );
+  std::unique_ptr< ConstitutiveBase > clone = MultiFluidBase::deliverClone( name, parent );
 
   MultiFluidPVTPackageWrapper & model = dynamicCast< MultiFluidPVTPackageWrapper & >( *clone );
   model.m_phaseTypes = m_phaseTypes;
