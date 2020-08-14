@@ -270,12 +270,6 @@ real64 PhaseFieldFractureSolver::SplitOperatorStep( real64 const & time_n,
       isConverged = true;
       break;
     }
-    else if (m_subcyclingOption == 0 && iter > 0)
-    {
-      GEOSX_LOG_LEVEL_RANK_0( 1, "***** Single Pass solver, no subcycling *****\n" );
-      isConverged = true;
-      break;
-    }
 
     GEOSX_LOG_LEVEL_RANK_0( 1, "\tIteration: " << iter+1 << ", DamageSolver: " );
 
@@ -298,6 +292,14 @@ real64 PhaseFieldFractureSolver::SplitOperatorStep( real64 const & time_n,
       dtReturn = dtReturnTemporary;
       continue;
     }
+    
+    if (m_subcyclingOption == 0)
+    {
+      GEOSX_LOG_LEVEL_RANK_0( 1, "***** Single Pass solver, no subcycling *****\n" );
+      isConverged = true;
+      break;
+    }
+
     ++iter;
   }
 
