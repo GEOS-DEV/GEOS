@@ -180,11 +180,7 @@ public:
    */
   virtual ~SolidBase() override;
 
-  virtual void DeliverClone( string const & name,
-                             Group * const parent,
-                             std::unique_ptr< ConstitutiveBase > & clone ) const override;
-
-  virtual void AllocateConstitutiveData( dataRepository::Group * const parent,
+  virtual void allocateConstitutiveData( dataRepository::Group * const parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
   struct viewKeyStruct : public ConstitutiveBase::viewKeyStruct
@@ -232,6 +228,8 @@ public:
   ///@}
 
 protected:
+  virtual void PostProcessInput() override;
+
   /// The default density for new allocations.
   real64 m_defaultDensity = 0;
 
@@ -241,9 +239,6 @@ protected:
   /// The material stress at a quadrature point.
 
   array3d< real64, solid::STRESS_PERMUTATION > m_stress;
-  /// band-aid fix...going to have to remove this after we clean up
-  /// initialization for constitutive models.
-  bool m_postProcessed = false;
 };
 
 } // namespace constitutive

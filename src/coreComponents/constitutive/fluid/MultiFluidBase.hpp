@@ -199,11 +199,7 @@ public:
 
   virtual ~MultiFluidBase() override;
 
-  virtual void DeliverClone( string const & name,
-                             Group * const parent,
-                             std::unique_ptr< ConstitutiveBase > & clone ) const override;
-
-  virtual void AllocateConstitutiveData( dataRepository::Group * const parent,
+  virtual void allocateConstitutiveData( dataRepository::Group * const parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
   // *** MultiFluid-specific interface
@@ -315,6 +311,8 @@ public:
     static constexpr auto dTotalDensity_dPressureString                  = "dTotalDensity_dPressure";                // dRho_t/dP
     static constexpr auto dTotalDensity_dTemperatureString               = "dTotalDensity_dTemperature";             // dRho_t/dT
     static constexpr auto dTotalDensity_dGlobalCompFractionString        = "dTotalDensity_dGlobalCompFraction";      // dRho_t/dz
+
+    static constexpr auto useMassString                                  = "useMass";
   } viewKeysMultiFluidBase;
 
 protected:
@@ -329,7 +327,7 @@ protected:
   void ResizeFields( localIndex const size, localIndex const numPts );
 
   // flag indicating whether input/output component fractions are treated as mass fractions
-  bool m_useMass;
+  int m_useMass;
 
   // general fluid composition information
 
