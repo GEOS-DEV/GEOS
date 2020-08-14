@@ -404,7 +404,7 @@
 	</xsd:complexType>
 	<xsd:complexType name="TableFunctionType">
 		<!--coordinateFiles => List of coordinate file names for ND Table-->
-		<xsd:attribute name="coordinateFiles" type="string_array" default="{}" />
+		<xsd:attribute name="coordinateFiles" type="path_array" default="{}" />
 		<!--coordinates => Coordinates inputs for 1D tables-->
 		<xsd:attribute name="coordinates" type="real64_array" default="{0}" />
 		<!--inputVarNames => Name of fields are input to function.-->
@@ -414,7 +414,7 @@
 		<!--values => Values for 1D tables-->
 		<xsd:attribute name="values" type="real64_array" default="{0}" />
 		<!--voxelFile => Voxel file name for ND Table-->
-		<xsd:attribute name="voxelFile" type="string" default="" />
+		<xsd:attribute name="voxelFile" type="path" default="" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>

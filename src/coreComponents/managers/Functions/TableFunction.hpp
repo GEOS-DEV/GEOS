@@ -116,6 +116,24 @@ public:
    */
   array1d< real64 > & getValues()       { return m_values; }
 
+  /**
+   * @brief Set the interpolation method
+   * @param interpolationMethodString The interpolation method string
+   */
+  void setInterpolationMethod( string interpolationMethodString );
+
+  /**
+   * @brief Set the table coordinates
+   * @param coordinates An array of arrays containing table coordinate definitions
+   */
+  void setTableCoordinates( array1d< real64_array > coordinates ) { m_coordinates = coordinates; }
+
+  /**
+   * @brief Set the table values
+   * @param values An array of table values in fortran order
+   */
+  void setTableValues( real64_array values ) { m_values = values; }
+
   /// Enumerator of available interpolation types
   enum class InterpolationType
   {
@@ -130,10 +148,10 @@ private:
   real64_array m_tableCoordinates1D;
 
   /// List of table coordinate file names
-  string_array m_coordinateFiles;
+  path_array m_coordinateFiles;
 
   /// Table voxel file names
-  string m_voxelFile;
+  Path m_voxelFile;
 
   /// Table interpolation method input string
   string m_interpolationMethodString;
