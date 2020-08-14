@@ -46,7 +46,7 @@ own branch. GEOSX branching and merging for development is a simplification of t
 In particular your branch name should follow the ``[purpose]/[developer]/[branch-description]``
 naming schema, where `purpose` is usually one of ``feature, bugfix, doc``, `developer` is
 your chosen identifier (often simply your github username), and branch `branch-description`
- is a short description of the purpose of the branch.
+is a short description of the purpose of the branch.
 
 Create your own branch using the following command:
 
@@ -150,7 +150,7 @@ create a pull request using the same process discussed above in :ref:`Submitting
 
 
 Resolving Submodule Changes In Primary Branch PRs
-=======================================
+=================================================
 
 When you conduct work on a submodule as described above during work on a primary GEOSX
 branch which has a PR, the merging procedure requires that the submodule referenced
