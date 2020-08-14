@@ -20,7 +20,7 @@ Implementation Details
 ----------------------
 Some noteworthy implementation details inside the declaration of ``dataRepository::Group`` are:
 
-.. literalinclude:: Group.hpp
+.. literalinclude:: ../Group.hpp
    :language: c++
    :start-after: //START_SPHINX_INCLUDE_00
    :end-before: /**
@@ -30,7 +30,7 @@ Some noteworthy implementation details inside the declaration of ``dataRepositor
   The types are set in the ``common/DataTypes.hpp`` file, but are typically a ``std::string`` and a 
   ``std::ptrdiff_t`` respectively.
   
-.. literalinclude:: Group.hpp
+.. literalinclude:: ../Group.hpp
    :language: c++
    :start-after: //START_SPHINX_INCLUDE_01
    :end-before: /**
@@ -41,7 +41,7 @@ Some noteworthy implementation details inside the declaration of ``dataRepositor
   a type, and provides functionality for a key or index based lookup. 
   More details may be found in the documentation for ``MappedVector``.
   
-.. literalinclude:: Group.hpp
+.. literalinclude:: ../Group.hpp
    :language: c++
    :start-after: //START_SPHINX_INCLUDE_02
    :end-before: RestartFlags
@@ -73,7 +73,7 @@ To add new sub-``Group`` s there are several ``RegisterGroup`` functions that ad
 the calling ``Group`` scope.
 A listing of these functions is provided:
 
-.. literalinclude:: Group.hpp
+.. literalinclude:: ../Group.hpp
    :language: c++
    :start-after: //START_SPHINX_INCLUDE_REGISTER_GROUP
    :end-before: //END_SPHINX_INCLUDE_REGISTER_GROUP
@@ -90,7 +90,7 @@ Getting Groups
 The collection of functions to retrieve a ``Group`` and their descriptions are taken from source and shown 
 here:
 
-.. literalinclude:: Group.hpp
+.. literalinclude:: ../Group.hpp
    :language: c++
    :start-after: //START_SPHINX_INCLUDE_GET_GROUP
    :end-before: //END_SPHINX_INCLUDE_GET_GROUP
@@ -99,7 +99,7 @@ here:
 Register Wrappers
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. literalinclude:: Group.hpp
+.. literalinclude:: ../Group.hpp
    :language: c++
    :start-after: //START_SPHINX_INCLUDE_REGISTER_WRAPPER
    :end-before: //END_SPHINX_INCLUDE_REGISTER_WRAPPER
@@ -108,7 +108,7 @@ Register Wrappers
 Getting Wrappers/Wrapped Objects
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. literalinclude:: Group.hpp
+.. literalinclude:: ../Group.hpp
    :language: c++
    :start-after: //START_SPHINX_INCLUDE_GET_WRAPPER
    :end-before: //END_SPHINX_INCLUDE_GET_WRAPPER
@@ -116,7 +116,7 @@ Getting Wrappers/Wrapped Objects
 Looping Interface
 ^^^^^^^^^^^^^^^^^
 
-.. literalinclude:: Group.hpp
+.. literalinclude:: ../Group.hpp
    :language: c++
    :start-after: //START_SPHINX_INCLUDE_LOOP_INTERFACE
    :end-before: //END_SPHINX_INCLUDE_LOOP_INTERFACE

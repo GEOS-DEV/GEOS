@@ -1,1 +1,1 @@
-.. include:: ../../../../coreComponents/dataRepository/dataRepository.rst
+.. include:: ../../../../coreComponents/dataRepository/docs/dataRepository.rst

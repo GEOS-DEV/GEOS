@@ -17,7 +17,7 @@ The main code components are described here.
 
    ./dofManager_link
 
-   ./LvArray_link
+   ./LvArray
 
    ./fem_link
 
