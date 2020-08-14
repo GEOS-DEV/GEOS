@@ -117,6 +117,13 @@ public:
                               real64 const time,
                               SortedArray< localIndex > const & set ) const;
 
+  /**
+   * @brief Set the input variable names
+   * @param inputVarNames A list of input variable names
+   */
+  void setInputVarNames( string_array inputVarNames ) { m_inputVarNames = inputVarNames; }
+
+
 protected:
   /// names for the input variables
   string_array m_inputVarNames;
@@ -146,14 +153,13 @@ void FunctionBase::EvaluateT( dataRepository::Group const * const group,
                               real64_array & result ) const
 {
   real64 const * input_ptrs[4];
+  localIndex varSize[4] = {0, 0, 0, 0};
+  int timeVar[4] = {1, 1, 1, 1};
 
   arrayView1d< string const > const & inputVarNames = this->getReference< string_array >( dataRepository::keys::inputVarNames );
-
   localIndex const numVars = LvArray::integerConversion< localIndex >( inputVarNames.size());
-  GEOSX_ERROR_IF( numVars > 4, "Number of variables is: " << numVars );
-
-  localIndex varSize[4];
-  int timeVar[4] = {1, 1, 1, 1};
+  localIndex groupSize = group->size();
+  localIndex totalVarSize = 0;
   for( auto varIndex=0; varIndex<numVars; ++varIndex )
   {
     string const & varName = inputVarNames[varIndex];
@@ -163,16 +169,23 @@ void FunctionBase::EvaluateT( dataRepository::Group const * const group,
       input_ptrs[varIndex] = &time;
       varSize[varIndex] = 1;
       timeVar[varIndex] = 0;
+      ++totalVarSize;
     }
-    else
+    else if( groupSize > 0 )
     {
-      dataRepository::WrapperBase const & wrapper = *(group->getWrapperBase( varName ));
-      input_ptrs[ varIndex ] = reinterpret_cast< double const * >( wrapper.voidPointer() );
-      varSize[ varIndex ] = wrapper.elementByteSize() / sizeof( double );
+      // Should we throw a warning if the group is zero-length?
+      dataRepository::WrapperBase const * wrapper = group->getWrapperBase( varName );
+      input_ptrs[ varIndex ] = reinterpret_cast< double const * >( wrapper->voidPointer() );
+
+      localIndex wrapperSize = LvArray::integerConversion< localIndex >( wrapper->size());
+      varSize[varIndex] = wrapperSize / groupSize;
+      totalVarSize += varSize[varIndex];
     }
   }
 
-  integer count=0;
+  // Make sure the inputs do not exceed the maximum length
+  GEOSX_ERROR_IF( totalVarSize > 4, "Function input size is: " << totalVarSize );
+
   forAll< serialPolicy >( set.size(), [&, set]( localIndex const i )
   {
     localIndex const index = set[ i ];
@@ -188,10 +201,10 @@ void FunctionBase::EvaluateT( dataRepository::Group const * const group,
     }
 
     // TODO: Check this line to make sure it is correct
-    result[count] = static_cast< LEAF const * >(this)->Evaluate( input );
-    ++count;
+    // Note: Since we are iterating over a set, place the result
+    // at the same location as the input.
+    result[index] = static_cast< LEAF const * >(this)->Evaluate( input );
   } );
-
 }
 } /* namespace geosx */
 

@@ -117,6 +117,56 @@ def format_xml_level(output,
         output.write('/>')
 
 
+def format_file(input_fname,
+                indent_size=2,
+                indent_style=0,
+                block_separation_max_depth=2,
+                alphebitize_attributes=False,
+                close_style=0,
+                namespace=0):
+  """Script to format xml files
+
+  @arg input_fname Input file name
+  @arg indent_size Indent size
+  @arg indent_style Style of indentation (0=fixed, 1=hanging)
+  @arg block_separation_max_depth Max depth to separate xml blocks
+  @arg alphebitize_attributes Alphebitize attributes
+  @arg close_style Style of close tag (0=same line, 1=new line)
+  @arg namespace Insert this namespace in the xml description
+  """
+  fname = os.path.expanduser(input_fname)
+  try:
+    tree = ElementTree.parse(fname)
+    root = tree.getroot()
+    prologue_comments = [tmp.text for tmp in root.itersiblings(preceding=True)]
+    epilog_comments = [tmp.text for tmp in root.itersiblings()]
+
+    with open(fname, 'w') as f:
+      f.write('<?xml version=\"1.0\" ?>\n')
+
+      for comment in reversed(prologue_comments):
+        f.write('\n<!--%s-->' % (comment))
+
+      format_xml_level(f,
+                       root,
+                       0,
+                       indent=' '*indent_size,
+                       block_separation_max_depth=block_separation_max_depth,
+                       modify_attribute_indent=indent_style,
+                       sort_attributes=alphebitize_attributes,
+                       close_tag_newline=close_style,
+                       include_namespace=namespace)
+
+      for comment in epilog_comments:
+        f.write('\n<!--%s-->' % (comment))
+      f.write('\n')
+
+  except ElementTree.ParseError as err:
+    print('\nCould not load file: %s' % (fname))
+    print(err.msg)
+    raise Exception('\nCheck input file!')
+
+
 def main():
   """Script to format xml files
 
@@ -134,38 +184,13 @@ def main():
   parser.add_argument('-n', '--namespace', type=int, help='Include namespace', default=0)
   args = parser.parse_args()
 
-  # Process the xml file
-  fname = os.path.expanduser(args.input)
-  try:
-    tree = ElementTree.parse(fname)
-    root = tree.getroot()
-    prologue_comments = [tmp.text for tmp in root.itersiblings(preceding=True)]
-    epilog_comments = [tmp.text for tmp in root.itersiblings()]
-
-    with open(fname, 'w') as f:
-      f.write('<?xml version=\"1.0\" ?>\n')
-
-      for comment in reversed(prologue_comments):
-        f.write('\n<!--%s-->' % (comment))
-
-      format_xml_level(f,
-                       root,
-                       0,
-                       indent=' '*args.indent,
-                       block_separation_max_depth=args.depth,
-                       modify_attribute_indent=args.style,
-                       sort_attributes=args.alphebitize,
-                       close_tag_newline=args.close,
-                       include_namespace=args.namespace)
-
-      for comment in epilog_comments:
-        f.write('\n<!--%s-->' % (comment))
-      f.write('\n')
-
-  except ElementTree.ParseError as err:
-    print('\nCould not load file: %s' % (fname))
-    print(err.msg)
-    raise Exception('\nCheck input file!')
+  format_file(args.input,
+              indent_size=args.indent,
+              indent_style=args.style,
+              block_separation_max_depth=args.depth,
+              alphebitize_attributes=args.alphebitize,
+              close_style=args.close,
+              namespace=args.namespace)
 
 
 if __name__ == "__main__":

@@ -1,7 +1,7 @@
 """Tools for managing units in GEOSX"""
 
 import re
-from pygeos import regex_tools
+from geosx_xml_tools import regex_tools
 
 
 class UnitManager():

@@ -6,5 +6,5 @@ setup(name='hdf5_wrapper',
       author='Chris Sherman',
       author_email='sherman27@llnl.gov',
       packages=['hdf5_wrapper'],
-      install_requires=['h5py', 'numpy'])
+      install_requires=['h5py>=2.10.0', 'numpy>=1.16.2'])
 
