@@ -6,6 +6,7 @@ set( gtest_geosx_tests
      testCapillaryPressure.cpp
      testDruckerPrager.cpp
      testElasticIsotropic.cpp
+     testPropertyConversions.cpp
      testRelPerm.cpp
    )
 
