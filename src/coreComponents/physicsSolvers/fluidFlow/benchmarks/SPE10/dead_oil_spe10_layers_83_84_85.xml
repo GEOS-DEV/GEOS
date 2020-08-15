@@ -8,12 +8,16 @@
       flowSolverName="compositionalMultiphaseFlow"
       wellSolverName="compositionalMultiphaseWell"
       logLevel="1"
-      initialDt="2e3"
+      initialDt="1e3"
       targetRegions="{ reservoir, wellRegion1, wellRegion2, wellRegion3, wellRegion4, wellRegion5 }">
       <NonlinearSolverParameters
         newtonTol="1.0e-4"
+        dtIncIterLimit="0.4"
+        maxTimeStepCuts="10"    
         lineSearchAction="0"
-        newtonMaxIter="40"/>
+        newtonMaxIter="20"/>
+      <!-- Note that the direct solver is going to be quite slow -->
+      <!-- This block will be updated when Hypre becomes the default  -->
       <LinearSolverParameters
         solverType="direct"
         logLevel="0"/>
@@ -26,9 +30,9 @@
       fluidNames="{ fluid }"
       solidNames="{ rock }"
       relPermNames="{ relperm }"
-      maxCompFractionChange="0.9"
+      maxCompFractionChange="0.3"
       temperature="297.15"
-      useMass="0"/>
+      useMass="1"/>
 
     <CompositionalMultiphaseWell
       name="compositionalMultiphaseWell"
@@ -36,38 +40,39 @@
       fluidNames="{ fluid }"
       relPermNames="{ relperm }"
       wellTemperature="297.15"
+      maxCompFractionChange="0.3"      
       logLevel="1"
-      useMass="0">
+      useMass="1">
       <WellControls
         name="wellControls1"
         type="producer"
         control="BHP"
-        targetBHP="4e6"
+        targetBHP="2.7579e7"
         targetRate="1e9"/>
       <WellControls
         name="wellControls2"
         type="producer"
         control="BHP"
-        targetBHP="4e6"
+        targetBHP="2.7579e7"
         targetRate="1e9"/>
       <WellControls
         name="wellControls3"
         type="producer"
         control="BHP"
-        targetBHP="4e6"
+        targetBHP="2.7579e7"
         targetRate="1e9"/>
       <WellControls
         name="wellControls4"
         type="producer"
         control="BHP"
-        targetBHP="4e6"
+        targetBHP="2.7579e7"
         targetRate="1e9"/>
       <WellControls
         name="wellControls5"
         type="injector"
         control="liquidRate"
-        targetBHP="1e8"
-        targetRate="4e1"
+        targetBHP="6.8948e7"
+        targetRate="1e0"
         injectionStream="{ 0.0, 0.0, 1.0 }"/>
     </CompositionalMultiphaseWell>
   </Solvers>
@@ -190,14 +195,15 @@
   <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_MESH_END -->
   <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_EVENTS -->
   <Events
-    maxTime="17280000">
+    maxTime="1.4e7">
     <PeriodicEvent
       name="solverApplications"
+      maxEventDt="2e5"  
       target="/Solvers/coupledFlowAndWells"/>
 
     <PeriodicEvent
       name="vtk"
-      timeFrequency="691200"
+      timeFrequency="2e6"
       targetExactTimestep="1"
       target="/Outputs/vtkOutput"/>
 
@@ -255,16 +261,16 @@
       name="fluid"
       fluidType="DeadOil"
       phaseNames="{ oil, gas, water }"
-      surfaceDensities="{ 800.0, 0.9907, 1022.0 }"
+      surfaceDensities="{ 848.9, 0.9907, 1025.2 }"
       componentMolarWeight="{ 114e-3, 16e-3, 18e-3 }"
       tableFiles="{ pvdo.txt, pvdg.txt, pvtw.txt }"/>
 
     <BrooksCoreyRelativePermeability
       name="relperm"
       phaseNames="{ oil, gas, water }"
-      phaseMinVolumeFraction="{ 0.2, 0.05, 0.05 }"
+      phaseMinVolumeFraction="{ 0.2, 0., 0.2 }"
       phaseRelPermExponent="{ 2.0, 2.0, 2.0 }"
-      phaseRelPermMaxValue="{ 1, 1, 1 }"/>
+      phaseRelPermMaxValue="{ 0.1, 1, 1 }"/>
 
     <PoreVolumeCompressibleSolid
       name="rock"
@@ -282,7 +288,7 @@
       setNames="{ all }"
       objectPath="ElementRegions/reservoir/DEFAULT_HEX"
       fieldName="pressure"
-      scale="5e6"/>
+      scale="4.1369e7"/>
 
     <FieldSpecification
       name="initialComposition_oil"
@@ -291,7 +297,7 @@
       objectPath="ElementRegions/reservoir/DEFAULT_HEX"
       fieldName="globalCompFraction"
       component="0"
-      scale="0.9"/>
+      scale="1.0"/>
 
     <FieldSpecification
       name="initialComposition_gas"
@@ -300,7 +306,7 @@
       objectPath="ElementRegions/reservoir/DEFAULT_HEX"
       fieldName="globalCompFraction"
       component="1"
-      scale="0.05"/>
+      scale="0.0"/>
 
     <FieldSpecification
       name="initialComposition_water"
@@ -309,7 +315,7 @@
       objectPath="ElementRegions/reservoir/DEFAULT_HEX"
       fieldName="globalCompFraction"
       component="2"
-      scale="0.05"/>
+      scale="0.0"/>
   </FieldSpecifications>
 
   <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_FIELD_SPECS_END -->
@@ -324,3 +330,4 @@
 
   <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_OUTPUT_END -->
 </Problem>
+
