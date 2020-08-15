@@ -18,7 +18,7 @@ There are several main components of the FEMKI:
    patterns, and call the ``launch`` function.
 
 #. The kernel interface, which is specified by the
-   `finiteElement::KernelBase <../../../doxygen_output/html/classgeosx_1_1finite_element_1_1_kernel_base.html>`_ class.
+   `finiteElement::KernelBase <../../../doxygen_output/html/classgeosx_1_1finite_element_1_1_implicit_kernel_base.html>`_ class.
    Each physics solver will define a class that contains its kernels functions,
    most likely deriving, or conforming to the API specified by the `KernelBase`
    class. Also part of this class will typically be a nested ``StackVariables``
@@ -40,7 +40,7 @@ function.
 
 The contents of the looping function are displayed here:
 
-.. literalinclude:: ../../../../coreComponents/finiteElement/kernelInterface/KernelBase.hpp
+.. literalinclude:: /coreComponents/finiteElement/kernelInterface/KernelBase.hpp
    :language: c++
    :start-after: //START_regionBasedKernelApplication
    :end-before: //END_regionBasedKernelApplication
@@ -64,7 +64,7 @@ The ``KernelBase::kernelLaunch`` function defines a launching policy, and an
 internal looping pattern over the quadrautre points, and calls the functions
 defined by the ``KernelBase`` as shown here:
 
-.. literalinclude:: ../../../../coreComponents/finiteElement/kernelInterface/KernelBase.hpp
+.. literalinclude:: /coreComponents/finiteElement/kernelInterface/KernelBase.hpp
    :language: c++
    :start-after: //START_kernelLauncher
    :end-before: //END_kernelLauncher
