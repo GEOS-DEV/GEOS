@@ -25,7 +25,7 @@ namespace geosx
 namespace constitutive
 {
 
-/// @namespace Namespace to collect common property conversion functions
+/// @namespace Namespace to collect common property conversion functions (elastic, poroelastic, etc.)
 namespace conversions
 {
 
@@ -57,6 +57,19 @@ GEOSX_FORCE_INLINE
 real64 toPoissonRatio(real64 const & K, real64 const & G)
 {
   return ( 3 * K - 2 * G ) / ( 2 * ( 3 * K + G ) );
+}
+
+/**
+* @brief Compute First Lamé parameter
+* @param[in] K Bulk modulus
+* @param[in] G Shear modulus
+* @return First Lamé parameter
+*/
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+real64 toFirstLame(real64 const & K, real64 const & G)
+{
+  return K - 2 * G / 3;
 }
 
 } /* namespace BulkModeAndShearMod */

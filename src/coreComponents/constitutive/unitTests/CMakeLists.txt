@@ -3,10 +3,10 @@
 #
 
 set( gtest_geosx_tests
+     testCapillaryPressure.cpp
      testDruckerPrager.cpp
-     testLinearElasticIsotropic.cpp
+     testElasticIsotropic.cpp
      testRelPerm.cpp
-     testCapillaryPressure.cpp 
    )
 
 set( dependencyList gtest )

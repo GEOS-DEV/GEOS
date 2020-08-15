@@ -20,6 +20,7 @@
 #define GEOSX_CONSTITUTIVE_SOLID_ELASTICISOTROPIC_HPP_
 
 #include "SolidBase.hpp"
+#include "PropertyConversions.hpp"
 #include "constitutive/ExponentialRelation.hpp"
 #include "LvArray/src/tensorOps.hpp"
 
@@ -171,26 +172,26 @@ GEOSX_FORCE_INLINE
 void ElasticIsotropicUpdates::getElasticStiffness( localIndex const k,
                                                    real64 ( & stiffness )[6][6] ) const
 {
-   real64 const mu = m_shearModulus[k];
-   real64 const lambda = m_bulkModulus[k] - 2.0/3.0 * mu;
+   real64 const G = m_shearModulus[k];
+   real64 const lambda = conversions::BulkModAndShearMod::toFirstLame( m_bulkModulus[k] , G );
 
    LvArray::tensorOps::fill< 6, 6 >( stiffness, 0 );
 
-   stiffness[0][0] = lambda + 2*mu;
+   stiffness[0][0] = lambda + 2*G;
    stiffness[0][1] = lambda;
    stiffness[0][2] = lambda;
    
    stiffness[1][0] = lambda;
-   stiffness[1][1] = lambda + 2*mu;
+   stiffness[1][1] = lambda + 2*G;
    stiffness[1][2] = lambda;
    
    stiffness[2][0] = lambda;
    stiffness[2][1] = lambda;
-   stiffness[2][2] = lambda + 2*mu;
+   stiffness[2][2] = lambda + 2*G;
    
-   stiffness[3][3] = mu;
-   stiffness[4][4] = mu;
-   stiffness[5][5] = mu;
+   stiffness[3][3] = G;
+   stiffness[4][4] = G;
+   stiffness[5][5] = G;
 }
  
 
@@ -202,17 +203,20 @@ void ElasticIsotropicUpdates::smallStrainNoStateUpdate( localIndex const k,
                                                         real64 ( & stress )[6])
 {
   GEOSX_UNUSED_VAR(q);
-  real64 const lambda = m_bulkModulus[k] - 2.0/3.0 * m_shearModulus[k];
-  real64 const vol = lambda * ( totalStrain[0] + totalStrain[1] + totalStrain[2] );
-  real64 const twoG = 2.0 * m_shearModulus[k];
+  
+  real64 const twoG   = 2 * m_shearModulus[k];
+  real64 const lambda = conversions::BulkModAndShearMod::toFirstLame( m_bulkModulus[k] , m_shearModulus[k] );
+  real64 const vol    = lambda * ( totalStrain[0] + totalStrain[1] + totalStrain[2] );
 
   stress[0] = vol + twoG * totalStrain[0];
   stress[1] = vol + twoG * totalStrain[1];
   stress[2] = vol + twoG * totalStrain[2];
+  
   stress[3] = m_shearModulus[k] * totalStrain[3];
   stress[4] = m_shearModulus[k] * totalStrain[4];
   stress[5] = m_shearModulus[k] * totalStrain[5];
 }
+
 
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
@@ -220,17 +224,16 @@ void ElasticIsotropicUpdates::elasticStrainFromStress( localIndex const k,
                                                        real64 const ( & stress)[6],
                                                        real64 ( & elasticStrain)[6] )
 {
-  real64 const K = m_bulkModulus[k];
-  real64 const G = m_shearModulus[k];
-  real64 const E = 9*K*G/(3*K+G);        // young's modulus
-  real64 const v = (3*K-2*G)/2/(3*K+G);  // poisson ratio
+  real64 const E = conversions::BulkModAndShearMod::toYoungsMod( m_bulkModulus[k], m_shearModulus[k] );
+  real64 const nu = conversions::BulkModAndShearMod::toPoissonRatio( m_bulkModulus[k], m_shearModulus[k] );
   
-  elasticStrain[0] = ( stress[0] - v*stress[1] - v*stress[2])/E;
-  elasticStrain[1] = (-v*stress[0] + stress[1] - v*stress[2])/E;
-  elasticStrain[2] = (-v*stress[0] - v*stress[1] + stress[2])/E;
-  elasticStrain[3] = stress[3] / G;
-  elasticStrain[4] = stress[3] / G;
-  elasticStrain[5] = stress[3] / G;
+  elasticStrain[0] = (    stress[0] - nu*stress[1] - nu*stress[2])/E;
+  elasticStrain[1] = (-nu*stress[0] +    stress[1] - nu*stress[2])/E;
+  elasticStrain[2] = (-nu*stress[0] - nu*stress[1] +    stress[2])/E;
+  
+  elasticStrain[3] = stress[3] / m_shearModulus[k];
+  elasticStrain[4] = stress[3] / m_shearModulus[k];
+  elasticStrain[5] = stress[3] / m_shearModulus[k];
 }
                               
 

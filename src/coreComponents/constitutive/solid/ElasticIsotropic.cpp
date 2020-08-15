@@ -17,7 +17,6 @@
  */
 
 #include "ElasticIsotropic.hpp"
-#include "PropertyConversions.hpp"
 
 namespace geosx
 {
