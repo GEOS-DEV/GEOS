@@ -137,9 +137,9 @@ void DruckerPrager::PostProcessInput()
   GEOSX_ASSERT_MSG(m_defaultTanFrictionAngle >= m_defaultTanDilationAngle, "Friction angle should exceed dilation angle");
   
   // set results as array default values
-  this->getWrapper< array1d< real64 > >( viewKeyStruct::oldCohesionString )->
+  this->getWrapper< array2d< real64 > >( viewKeyStruct::oldCohesionString )->
     setApplyDefaultValue( m_defaultCohesion );
-  this->getWrapper< array1d< real64 > >( viewKeyStruct::newCohesionString )->
+  this->getWrapper< array2d< real64 > >( viewKeyStruct::newCohesionString )->
     setApplyDefaultValue( m_defaultCohesion );
   this->getWrapper< array1d< real64 > >( viewKeyStruct::tanDilationAngleString )->
     setApplyDefaultValue( m_defaultTanDilationAngle );

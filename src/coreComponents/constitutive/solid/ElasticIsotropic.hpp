@@ -74,8 +74,8 @@ public:
 
 
   GEOSX_HOST_DEVICE
-  virtual void getStiffness( localIndex const k,
-                             real64 ( & stiffness )[6][6] ) const override final;
+  virtual void getElasticStiffness( localIndex const k,
+                                    real64 ( & stiffness )[6][6] ) const override final;
 
   GEOSX_HOST_DEVICE
   virtual void smallStrainNoStateUpdate( localIndex const k,
@@ -151,6 +151,12 @@ public:
 
 protected:
 
+  // Compute elastic strain given a stress value (small strain assumption)
+  GEOSX_HOST_DEVICE
+  void elasticStrainFromStress( localIndex const k,
+                                real64 const ( & stress)[6],
+                                real64 ( & elasticStrain)[6] );
+
   /// A reference to the ArrayView holding the bulk modulus for each element.
   arrayView1d< real64 const > const m_bulkModulus;
 
@@ -162,8 +168,8 @@ protected:
 
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-void ElasticIsotropicUpdates::getStiffness( localIndex const k,
-                                            real64 ( & stiffness )[6][6] ) const
+void ElasticIsotropicUpdates::getElasticStiffness( localIndex const k,
+                                                   real64 ( & stiffness )[6][6] ) const
 {
    real64 const mu = m_shearModulus[k];
    real64 const lambda = m_bulkModulus[k] - 2.0/3.0 * mu;
@@ -197,17 +203,36 @@ void ElasticIsotropicUpdates::smallStrainNoStateUpdate( localIndex const k,
 {
   GEOSX_UNUSED_VAR(q);
   real64 const lambda = m_bulkModulus[k] - 2.0/3.0 * m_shearModulus[k];
-  real64 const diag = lambda * ( totalStrain[0] + totalStrain[1] + totalStrain[2] );
-  real64 const twoMu = 2.0 * m_shearModulus[k];
+  real64 const vol = lambda * ( totalStrain[0] + totalStrain[1] + totalStrain[2] );
+  real64 const twoG = 2.0 * m_shearModulus[k];
 
-  stress[0] = diag + twoMu * totalStrain[0];
-  stress[1] = diag + twoMu * totalStrain[1];
-  stress[2] = diag + twoMu * totalStrain[2];
+  stress[0] = vol + twoG * totalStrain[0];
+  stress[1] = vol + twoG * totalStrain[1];
+  stress[2] = vol + twoG * totalStrain[2];
   stress[3] = m_shearModulus[k] * totalStrain[3];
   stress[4] = m_shearModulus[k] * totalStrain[4];
   stress[5] = m_shearModulus[k] * totalStrain[5];
 }
 
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void ElasticIsotropicUpdates::elasticStrainFromStress( localIndex const k,
+                                                       real64 const ( & stress)[6],
+                                                       real64 ( & elasticStrain)[6] )
+{
+  real64 const K = m_bulkModulus[k];
+  real64 const G = m_shearModulus[k];
+  real64 const E = 9*K*G/(3*K+G);        // young's modulus
+  real64 const v = (3*K-2*G)/2/(3*K+G);  // poisson ratio
+  
+  elasticStrain[0] = ( stress[0] - v*stress[1] - v*stress[2])/E;
+  elasticStrain[1] = (-v*stress[0] + stress[1] - v*stress[2])/E;
+  elasticStrain[2] = (-v*stress[0] - v*stress[1] + stress[2])/E;
+  elasticStrain[3] = stress[3] / G;
+  elasticStrain[4] = stress[3] / G;
+  elasticStrain[5] = stress[3] / G;
+}
+                              
 
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
@@ -231,7 +256,7 @@ void ElasticIsotropicUpdates::smallStrainNoStateUpdate( localIndex const k,
                                                         real64 ( & stiffness )[6][6] )
 {
   smallStrainNoStateUpdate( k, q, totalStrain, stress);
-  getStiffness( k, stiffness );
+  getElasticStiffness( k, stiffness );
 }
 
 
@@ -244,7 +269,7 @@ void ElasticIsotropicUpdates::smallStrainUpdate( localIndex const k,
                                                  real64 ( & stiffness )[6][6] )
 {
   smallStrainUpdate( k, q, strainIncrement, stress);
-  getStiffness( k, stiffness );
+  getElasticStiffness( k, stiffness );
 }
 
 // TODO: need to confirm stress / strain measures before activating hyper inferfaceh

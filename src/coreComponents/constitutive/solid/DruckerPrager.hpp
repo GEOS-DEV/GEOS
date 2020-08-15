@@ -104,9 +104,9 @@ private:
   
 };
 
-///////////////////////// new proposal /////////////////////////////////////////
 
 GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
 void DruckerPragerUpdates::smallStrainUpdate( localIndex const k,
                                               localIndex const q,
                                               real64 const ( & /*strainIncrement*/ )[6],
@@ -321,7 +321,7 @@ GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void DruckerPragerUpdates::saveConvergedState()
 {
-  SolidBaseUpdates::saveConvergedState();
+  ElasticIsotropicUpdates::saveConvergedState();
   m_oldCohesion.setValues< serialPolicy >( m_newCohesion );
 }
 
@@ -427,8 +427,6 @@ public:
 
 protected:
   virtual void PostProcessInput() override;
-
-  //TODO: maybe define some helper structs for defaults, arrays, arrayViews, etc.
     
   /// Material parameter: The default value of yield surface slope
   real64 m_defaultTanFrictionAngle;

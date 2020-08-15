@@ -381,7 +381,7 @@ void SolidMechanicsEmbeddedFractures::AssembleSystem( real64 const time,
           // TODO: avoid tmp copy due to c-array input
           {
             real64 tmp[6][6];
-            solidConstitutive.getStiffness( embeddedSurfaceToCell[k], tmp );
+            solidConstitutive.getElasticStiffness( embeddedSurfaceToCell[k], tmp );
             LvArray::tensorOps::copy< 6, 6 >( dMatrix, tmp );
           }
 

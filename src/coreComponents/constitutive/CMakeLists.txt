@@ -39,6 +39,7 @@ set( constitutive_headers
      solid/DruckerPrager.hpp
      solid/PoroElastic.hpp
      solid/PoreVolumeCompressibleSolid.hpp
+     solid/PropertyConversions.hpp
      solid/SolidBase.hpp
      relativePermeability/RelativePermeabilityBase.hpp
      relativePermeability/BrooksCoreyRelativePermeability.hpp

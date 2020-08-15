@@ -17,6 +17,7 @@
  */
 
 #include "ElasticIsotropic.hpp"
+#include "PropertyConversions.hpp"
 
 namespace geosx
 {
@@ -110,7 +111,6 @@ void ElasticIsotropic::PostProcessInput()
     real64 & K  = m_defaultBulkModulus;
     real64 & G  = m_defaultShearModulus;
 
-    
     string errorCheck( "( " );
     int numConstantsSpecified = 0;
     if( nu >= 0.0 )
@@ -141,33 +141,33 @@ void ElasticIsotropic::PostProcessInput()
 
     if( nu >= 0.0 && E >= 0.0 )
     {
-      K = E / (3 * ( 1 - 2*nu ) );
-      G = E / (2 * ( 1 + nu ) );
+      K = conversions::YoungsModAndPoissonRatio::toBulkMod( E, nu );
+      G = conversions::YoungsModAndPoissonRatio::toShearMod( E, nu );
     }
     else if( nu >= 0.0 && G >= 0.0 )
     {
-      E = 2 * G * ( 1 + nu );
-      K = E / (3 * ( 1 - 2*nu ) );
+      E = conversions::ShearModAndPoissonRatio::toYoungsMod( G, nu);
+      K = conversions::ShearModAndPoissonRatio::toBulkMod( G, nu);
     }
     else if( nu >= 0 && K >= 0.0 )
     {
-      E = 3 * K * ( 1 - 2 * nu );
-      G = E / ( 2 * ( 1 + nu ) );
+      E = conversions::BulkModAndPoissonRatio::toYoungsMod( K, nu );
+      G = conversions::BulkModAndPoissonRatio::toShearMod( K, nu );
     }
     else if( E >= 0.0 && K >=0 )
     {
-      nu = 0.5 * ( 1 - E /  ( 3 * K ) );
-      G = E / ( 2 * ( 1 + nu ) );
+      nu = conversions::BulkModAndYoungsMod::toPoissonRatio( K, E );
+      G  = conversions::BulkModAndYoungsMod::toShearMod( K, E );
     }
     else if( E >= 0.0 && G >= 0 )
     {
-      nu = 0.5 * E / G - 1.0;
-      K = E / (3 * ( 1 - 2*nu ) );
+      nu = conversions::ShearModAndYoungsMod::toPoissonRatio( G, E );
+      K  = conversions::ShearModAndYoungsMod::toBulkMod( G, E );
     }
     else if( K >= 0.0 && G >= 0.0 )
     {
-      E = 9 * K * G / ( 3 * K + G );
-      nu = ( 3 * K - 2 * G ) / ( 2 * ( 3 * K + G ) );
+      E  = conversions::BulkModAndShearMod::toYoungsMod( K, G );
+      nu = conversions::BulkModAndShearMod::toPoissonRatio( K, G );
     }
     else
     {

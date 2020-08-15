@@ -39,7 +39,7 @@ public:
     m_biotCoefficient( inputBiotCoefficient )
   {}
 
-  using UPDATE_BASE::getStiffness;
+  using UPDATE_BASE::getElasticStiffness;
   using UPDATE_BASE::smallStrainNoStateUpdate;
   using UPDATE_BASE::smallStrainUpdate;
   using UPDATE_BASE::hypoUpdate;

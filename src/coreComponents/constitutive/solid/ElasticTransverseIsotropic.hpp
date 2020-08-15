@@ -82,7 +82,7 @@ public:
   ElasticTransverseIsotropicUpdates & operator=( ElasticTransverseIsotropicUpdates && ) =  delete;
   
   GEOSX_HOST_DEVICE
-  virtual void getStiffness( localIndex const k, real64 ( & stiffness )[6][6] ) const override final;
+  virtual void getElasticStiffness( localIndex const k, real64 ( & stiffness )[6][6] ) const override final;
   
   GEOSX_HOST_DEVICE
   virtual void smallStrainNoStateUpdate( localIndex const k,
@@ -157,7 +157,7 @@ protected:
 
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-void ElasticTransverseIsotropicUpdates::getStiffness( localIndex const k,
+void ElasticTransverseIsotropicUpdates::getElasticStiffness( localIndex const k,
                                                       real64 ( & stiffness )[6][6] ) const
 {
   LvArray::tensorOps::fill< 6, 6 >( stiffness, 0 );
@@ -219,7 +219,7 @@ void ElasticTransverseIsotropicUpdates::smallStrainNoStateUpdate( localIndex con
                                                                   real64 ( & stiffness )[6][6] )
 {
   smallStrainNoStateUpdate( k, q, totalStrain, stress);
-  getStiffness( k, stiffness );
+  getElasticStiffness( k, stiffness );
 }
 
 
@@ -232,7 +232,7 @@ void ElasticTransverseIsotropicUpdates::smallStrainUpdate( localIndex const k,
                                                            real64 ( & stiffness )[6][6] )
 {
   smallStrainUpdate( k, q, strainIncrement, stress);
-  getStiffness( k, stiffness );
+  getElasticStiffness( k, stiffness );
 }
 
 

@@ -281,11 +281,11 @@ public:
    * @param stiffness the stiffness array
    */
   GEOSX_HOST_DEVICE
-  virtual void getStiffness( localIndex const k, real64 ( & stiffness )[6][6] ) const
+  virtual void getElasticStiffness( localIndex const k, real64 ( & stiffness )[6][6] ) const
   {
     GEOSX_UNUSED_VAR(k);
     GEOSX_UNUSED_VAR(stiffness);
-    GEOSX_ERROR("getStiffness() not implemented for this model");
+    GEOSX_ERROR("getElasticStiffness() not implemented for this model");
   }
   
   ///@}

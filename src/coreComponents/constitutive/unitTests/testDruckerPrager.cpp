@@ -39,7 +39,7 @@ TEST( DruckerPragerTests, testModel )
     "      defaultTanFrictionAngle=\"1.0\" "
     "      defaultTanDilationAngle=\"0.5\" "
     "      defaultHardeningRate=\"0.0\" "
-    "      defaultCohesion=\"1.0\"/>"
+    "      defaultCohesion=\"1.56\"/>"
     "</Constitutive>";
 
   xmlWrapper::xmlDocument xmlDocument;

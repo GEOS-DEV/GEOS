@@ -256,7 +256,7 @@ struct ImplicitKernel
       R1Tensor uhat_local[NUM_NODES_PER_ELEM];
 
       real64 c[6][6];
-      constitutive.getStiffness( k, c );
+      constitutive.getElasticStiffness( k, c );
 
     #if defined(CALCFEMSHAPE)
       real64 xLocal[ NUM_NODES_PER_ELEM ][ 3 ];
