@@ -218,6 +218,8 @@
 		</xsd:choice>
 		<!--currentSubEvent => Index of the current subevent-->
 		<xsd:attribute name="currentSubEvent" type="integer" />
+		<!--eventForecast => Indicates when the event is expected to execute-->
+		<xsd:attribute name="eventForecast" type="integer" />
 		<!--isTargetExecuting => Index of the current subevent-->
 		<xsd:attribute name="isTargetExecuting" type="integer" />
 		<!--lastCycle => Last event occurrence (cycle)-->
@@ -233,6 +235,8 @@
 		</xsd:choice>
 		<!--currentSubEvent => Index of the current subevent-->
 		<xsd:attribute name="currentSubEvent" type="integer" />
+		<!--eventForecast => Indicates when the event is expected to execute-->
+		<xsd:attribute name="eventForecast" type="integer" />
 		<!--isTargetExecuting => Index of the current subevent-->
 		<xsd:attribute name="isTargetExecuting" type="integer" />
 		<!--lastCycle => Last event occurrence (cycle)-->
@@ -248,6 +252,8 @@
 		</xsd:choice>
 		<!--currentSubEvent => Index of the current subevent-->
 		<xsd:attribute name="currentSubEvent" type="integer" />
+		<!--eventForecast => Indicates when the event is expected to execute-->
+		<xsd:attribute name="eventForecast" type="integer" />
 		<!--isTargetExecuting => Index of the current subevent-->
 		<xsd:attribute name="isTargetExecuting" type="integer" />
 		<!--lastCycle => Last event occurrence (cycle)-->
@@ -675,14 +681,20 @@
 		<xsd:attribute name="phaseViscosity" type="real64_array3d" />
 		<!--totalDensity => (no description available)-->
 		<xsd:attribute name="totalDensity" type="real64_array2d" />
+		<!--useMass => (no description available)-->
+		<xsd:attribute name="useMass" type="integer" />
 	</xsd:complexType>
 	<xsd:complexType name="BrooksCoreyBakerRelativePermeabilityType">
 		<!--dPhaseRelPerm_dPhaseVolFraction => (no description available)-->
 		<xsd:attribute name="dPhaseRelPerm_dPhaseVolFraction" type="LvArray_Array&lt;double, 4, camp_int_seq&lt;long, 0l, 1l, 2l, 3l&gt;, long, LvArray_ChaiBuffer&gt;" />
+		<!--phaseOrder => (no description available)-->
+		<xsd:attribute name="phaseOrder" type="integer_array" />
 		<!--phaseRelPerm => (no description available)-->
 		<xsd:attribute name="phaseRelPerm" type="real64_array3d" />
 		<!--phaseTypes => (no description available)-->
 		<xsd:attribute name="phaseTypes" type="integer_array" />
+		<!--volFracScale => Factor used to scale the phase capillary pressure, defined as: one minus the sum of the phase minimum volume fractions.-->
+		<xsd:attribute name="volFracScale" type="real64" />
 	</xsd:complexType>
 	<xsd:complexType name="BrooksCoreyCapillaryPressureType">
 		<!--dPhaseCapPressure_dPhaseVolFraction => (no description available)-->
@@ -693,14 +705,20 @@
 		<xsd:attribute name="phaseOrder" type="integer_array" />
 		<!--phaseTypes => (no description available)-->
 		<xsd:attribute name="phaseTypes" type="integer_array" />
+		<!--volFracScale => Factor used to scale the phase capillary pressure, defined as: one minus the sum of the phase minimum volume fractions.-->
+		<xsd:attribute name="volFracScale" type="real64" />
 	</xsd:complexType>
 	<xsd:complexType name="BrooksCoreyRelativePermeabilityType">
 		<!--dPhaseRelPerm_dPhaseVolFraction => (no description available)-->
 		<xsd:attribute name="dPhaseRelPerm_dPhaseVolFraction" type="LvArray_Array&lt;double, 4, camp_int_seq&lt;long, 0l, 1l, 2l, 3l&gt;, long, LvArray_ChaiBuffer&gt;" />
+		<!--phaseOrder => (no description available)-->
+		<xsd:attribute name="phaseOrder" type="integer_array" />
 		<!--phaseRelPerm => (no description available)-->
 		<xsd:attribute name="phaseRelPerm" type="real64_array3d" />
 		<!--phaseTypes => (no description available)-->
 		<xsd:attribute name="phaseTypes" type="integer_array" />
+		<!--volFracScale => Factor used to scale the phase capillary pressure, defined as: one minus the sum of the phase minimum volume fractions.-->
+		<xsd:attribute name="volFracScale" type="real64" />
 	</xsd:complexType>
 	<xsd:complexType name="CompositionalMultiphaseFluidType">
 		<!--dPhaseCompFraction_dGlobalCompFraction => (no description available)-->
@@ -743,6 +761,8 @@
 		<xsd:attribute name="phaseViscosity" type="real64_array3d" />
 		<!--totalDensity => (no description available)-->
 		<xsd:attribute name="totalDensity" type="real64_array2d" />
+		<!--useMass => (no description available)-->
+		<xsd:attribute name="useMass" type="integer" />
 	</xsd:complexType>
 	<xsd:complexType name="CompressibleSinglePhaseFluidType">
 		<!--dDensity_dPressure => (no description available)-->
@@ -751,8 +771,12 @@
 		<xsd:attribute name="dViscosity_dPressure" type="real64_array2d" />
 		<!--density => (no description available)-->
 		<xsd:attribute name="density" type="real64_array2d" />
+		<!--densityModelType => Type of density model (linear, quadratic, exponential)-->
+		<xsd:attribute name="densityModelType" type="geosx_constitutive_ExponentApproximationType" />
 		<!--viscosity => (no description available)-->
 		<xsd:attribute name="viscosity" type="real64_array2d" />
+		<!--viscosityModelType => Type of viscosity model (linear, quadratic, exponential)-->
+		<xsd:attribute name="viscosityModelType" type="geosx_constitutive_ExponentApproximationType" />
 	</xsd:complexType>
 	<xsd:complexType name="ContactType">
 		<xsd:choice minOccurs="0" maxOccurs="1">
@@ -839,6 +863,8 @@
 		<xsd:attribute name="phaseViscosity" type="real64_array3d" />
 		<!--totalDensity => (no description available)-->
 		<xsd:attribute name="totalDensity" type="real64_array2d" />
+		<!--useMass => (no description available)-->
+		<xsd:attribute name="useMass" type="integer" />
 	</xsd:complexType>
 	<xsd:complexType name="NullModelType" />
 	<xsd:complexType name="ParticleFluidType">
@@ -948,10 +974,14 @@
 	<xsd:complexType name="VanGenuchtenBakerRelativePermeabilityType">
 		<!--dPhaseRelPerm_dPhaseVolFraction => (no description available)-->
 		<xsd:attribute name="dPhaseRelPerm_dPhaseVolFraction" type="LvArray_Array&lt;double, 4, camp_int_seq&lt;long, 0l, 1l, 2l, 3l&gt;, long, LvArray_ChaiBuffer&gt;" />
+		<!--phaseOrder => (no description available)-->
+		<xsd:attribute name="phaseOrder" type="integer_array" />
 		<!--phaseRelPerm => (no description available)-->
 		<xsd:attribute name="phaseRelPerm" type="real64_array3d" />
 		<!--phaseTypes => (no description available)-->
 		<xsd:attribute name="phaseTypes" type="integer_array" />
+		<!--volFracScale => Factor used to scale the phase capillary pressure, defined as: one minus the sum of the phase minimum volume fractions.-->
+		<xsd:attribute name="volFracScale" type="real64" />
 	</xsd:complexType>
 	<xsd:complexType name="VanGenuchtenCapillaryPressureType">
 		<!--dPhaseCapPressure_dPhaseVolFraction => (no description available)-->
@@ -962,6 +992,8 @@
 		<xsd:attribute name="phaseOrder" type="integer_array" />
 		<!--phaseTypes => (no description available)-->
 		<xsd:attribute name="phaseTypes" type="integer_array" />
+		<!--volFracScale => Factor used to scale the phase capillary pressure, defined as: one minus the sum of the phase minimum volume fractions.-->
+		<xsd:attribute name="volFracScale" type="real64" />
 	</xsd:complexType>
 	<xsd:complexType name="MeshBodiesType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
