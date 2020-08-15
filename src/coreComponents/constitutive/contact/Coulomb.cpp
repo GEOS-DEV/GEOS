@@ -52,24 +52,6 @@ Coulomb::Coulomb( std::string const & name, Group * const parent ):
 Coulomb::~Coulomb()
 {}
 
-void
-Coulomb::DeliverClone( string const & name,
-                       Group * const parent,
-                       std::unique_ptr< ConstitutiveBase > & clone ) const
-{
-  if( !clone )
-  {
-    clone = std::make_unique< Coulomb >( name, parent );
-  }
-  ConstitutiveBase::DeliverClone( name, parent, clone );
-  Coulomb * const newConstitutiveRelation = dynamic_cast< Coulomb * >(clone.get());
-
-  newConstitutiveRelation->m_postProcessed = false;
-  newConstitutiveRelation->m_cohesion = m_cohesion;
-  newConstitutiveRelation->m_frictionAngle = m_frictionAngle;
-  newConstitutiveRelation->m_frictionCoefficient = m_frictionCoefficient;
-}
-
 real64 Coulomb::limitTangentialTractionNorm( real64 const normalTraction ) const
 {
   return ( m_cohesion - normalTraction * m_frictionCoefficient );

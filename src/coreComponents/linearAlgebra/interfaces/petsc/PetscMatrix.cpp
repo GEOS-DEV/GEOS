@@ -522,7 +522,7 @@ void PetscMatrix::gemv( real64 const alpha,
   GEOSX_LAI_ASSERT( ready() );
 
   PetscVector x_( x );
-  PetscVector b_( x );
+  PetscVector b_( y );
 
   x_.scale( alpha ); // alpha*x_
   y.scale( beta ); // beta*y
@@ -644,7 +644,9 @@ void PetscMatrix::addEntries( PetscMatrix const & src, real64 const scale )
   GEOSX_LAI_ASSERT( numGlobalRows() == src.numGlobalRows() );
   GEOSX_LAI_ASSERT( numGlobalCols() == src.numGlobalCols() );
 
-  GEOSX_LAI_CHECK_ERROR( MatAXPY( m_mat, scale, src.m_mat, SUBSET_NONZERO_PATTERN ) );
+  GEOSX_LAI_CHECK_ERROR( MatSetOption( m_mat, MAT_NEW_NONZERO_ALLOCATION_ERR, PETSC_FALSE ) );
+  GEOSX_LAI_CHECK_ERROR( MatAXPY( m_mat, scale, src.m_mat, DIFFERENT_NONZERO_PATTERN ) );
+  GEOSX_LAI_CHECK_ERROR( MatSetOption( m_mat, MAT_NEW_NONZERO_ALLOCATION_ERR, PETSC_TRUE ) );
 }
 
 void PetscMatrix::addDiagonal( PetscVector const & src )
@@ -883,7 +885,7 @@ localIndex PetscMatrix::numLocalCols() const
 {
   GEOSX_LAI_ASSERT( created() );
   PetscInt cols;
-  GEOSX_LAI_CHECK_ERROR( MatGetSize( m_mat, nullptr, &cols ) );
+  GEOSX_LAI_CHECK_ERROR( MatGetLocalSize( m_mat, nullptr, &cols ) );
   return LvArray::integerConversion< localIndex >( cols );
 }
 

@@ -404,7 +404,7 @@
 	</xsd:complexType>
 	<xsd:complexType name="TableFunctionType">
 		<!--coordinateFiles => List of coordinate file names for ND Table-->
-		<xsd:attribute name="coordinateFiles" type="string_array" default="{}" />
+		<xsd:attribute name="coordinateFiles" type="path_array" default="{}" />
 		<!--coordinates => Coordinates inputs for 1D tables-->
 		<xsd:attribute name="coordinates" type="real64_array" default="{0}" />
 		<!--inputVarNames => Name of fields are input to function.-->
@@ -414,7 +414,7 @@
 		<!--values => Values for 1D tables-->
 		<xsd:attribute name="values" type="real64_array" default="{0}" />
 		<!--voxelFile => Voxel file name for ND Table-->
-		<xsd:attribute name="voxelFile" type="string" default="" />
+		<xsd:attribute name="voxelFile" type="path" default="" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
@@ -1447,8 +1447,8 @@
 		<xsd:attribute name="defaultDensity" type="real64" use="required" />
 		<!--defaultViscosity => Default value for viscosity.-->
 		<xsd:attribute name="defaultViscosity" type="real64" use="required" />
-		<!--densityModel => Type of density model (linear, quadratic, exponential)-->
-		<xsd:attribute name="densityModel" type="string" default="linear" />
+		<!--densityModelString => Type of density model (linear, quadratic, exponential)-->
+		<xsd:attribute name="densityModelString" type="string" default="linear" />
 		<!--referenceDensity => Reference fluid density-->
 		<xsd:attribute name="referenceDensity" type="real64" default="1000" />
 		<!--referencePressure => Reference pressure-->
@@ -1457,8 +1457,8 @@
 		<xsd:attribute name="referenceViscosity" type="real64" default="0.001" />
 		<!--viscosibility => Fluid viscosity exponential coefficient-->
 		<xsd:attribute name="viscosibility" type="real64" default="0" />
-		<!--viscosityModel => Type of viscosity model (linear, quadratic, exponential)-->
-		<xsd:attribute name="viscosityModel" type="string" default="linear" />
+		<!--viscosityModelString => Type of viscosity model (linear, quadratic, exponential)-->
+		<xsd:attribute name="viscosityModelString" type="string" default="linear" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>

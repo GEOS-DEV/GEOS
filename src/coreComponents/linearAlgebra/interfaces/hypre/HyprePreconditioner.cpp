@@ -37,41 +37,21 @@ HyprePreconditioner::HyprePreconditioner( LinearSolverParameters params,
   : Base{},
   m_parameters( std::move( params ) ),
   m_precond{},
-  m_functions( std::make_unique< HyprePrecFuncs >() )
+  m_functions( std::make_unique< HyprePrecFuncs >() ),
+  m_dofManager( dofManager )
 {
+  // Basic setup for functions
+  if( !m_functions )
+  {
+    m_functions = std::make_unique< HyprePrecFuncs >();
+  }
+
+  // Basic setup common for all preconditioners
   if( m_precond == nullptr )
   {
-    if( m_parameters.preconditionerType == "none" )
-    {
-      m_functions->setup = (HYPRE_PtrToParSolverFcn) hypre_ParKrylovIdentitySetup;
-      m_functions->apply = (HYPRE_PtrToParSolverFcn) hypre_ParKrylovIdentity;
-    }
-    else if( m_parameters.preconditionerType == "jacobi" )
-    {
-      m_functions->setup = (HYPRE_PtrToParSolverFcn) HYPRE_ParCSRDiagScaleSetup;
-      m_functions->apply = (HYPRE_PtrToParSolverFcn) HYPRE_ParCSRDiagScale;
-    }
-    else if( m_parameters.preconditionerType == "amg" )
-    {
-      createAMG();
-    }
-    else if( m_parameters.preconditionerType == "mgr" )
-    {
-      createMGR( dofManager );
-    }
-    else if( m_parameters.preconditionerType == "iluk" )
-    {
-      createILU();
-    }
-    else if( m_parameters.preconditionerType == "ilut" )
-    {
-      createILUT();
-    }
-    else
-    {
-      GEOSX_ERROR( "Unsupported preconditioner type: " << m_parameters.preconditionerType );
-    }
+    createHyprePreconditioner( m_dofManager );
   }
+  m_ready = true;
 }
 
 HyprePreconditioner::~HyprePreconditioner()
@@ -112,6 +92,40 @@ HYPRE_Int getHypreAMGRelaxationType( string const & type )
   return typeMap.at( type );
 }
 
+}
+
+void HyprePreconditioner::createHyprePreconditioner( DofManager const * const dofManager )
+{
+  if( m_parameters.preconditionerType == "none" )
+  {
+    m_functions->setup = (HYPRE_PtrToParSolverFcn) hypre_ParKrylovIdentitySetup;
+    m_functions->apply = (HYPRE_PtrToParSolverFcn) hypre_ParKrylovIdentity;
+  }
+  else if( m_parameters.preconditionerType == "jacobi" )
+  {
+    m_functions->setup = (HYPRE_PtrToParSolverFcn) HYPRE_ParCSRDiagScaleSetup;
+    m_functions->apply = (HYPRE_PtrToParSolverFcn) HYPRE_ParCSRDiagScale;
+  }
+  else if( m_parameters.preconditionerType == "amg" )
+  {
+    createAMG();
+  }
+  else if( m_parameters.preconditionerType == "mgr" )
+  {
+    createMGR( dofManager );
+  }
+  else if( m_parameters.preconditionerType == "iluk" )
+  {
+    createILU();
+  }
+  else if( m_parameters.preconditionerType == "ilut" )
+  {
+    createILUT();
+  }
+  else
+  {
+    GEOSX_ERROR( "Unsupported preconditioner type: " << m_parameters.preconditionerType );
+  }
 }
 
 void HyprePreconditioner::createAMG()
@@ -536,6 +550,22 @@ void HyprePreconditioner::createILUT()
 
 void HyprePreconditioner::compute( Matrix const & mat )
 {
+  if( !m_ready )
+  {
+    // Basic setup for functions
+    if( !m_functions )
+    {
+      m_functions = std::make_unique< HyprePrecFuncs >();
+    }
+
+    // Basic setup common for all preconditioners
+    if( m_precond == nullptr )
+    {
+      createHyprePreconditioner( m_dofManager );
+    }
+    m_ready = true;
+  }
+
   PreconditionerBase::compute( mat );
   GEOSX_LAI_CHECK_ERROR( m_functions->setup( m_precond, mat.unwrapped(), nullptr, nullptr ) );
 }
@@ -549,6 +579,9 @@ void HyprePreconditioner::apply( Vector const & src,
   GEOSX_LAI_ASSERT_EQ( src.globalSize(), this->numGlobalCols() );
   GEOSX_LAI_ASSERT_EQ( dst.globalSize(), this->numGlobalRows() );
 
+  // Needed to avoid accumulation inside HYPRE solver phase
+  dst.zero();
+
   m_functions->apply( m_precond, this->matrix().unwrapped(), src.unwrapped(), dst.unwrapped() );
 }
 
@@ -558,12 +591,15 @@ void HyprePreconditioner::clear()
   if( m_precond != nullptr && m_functions && m_functions->destroy != nullptr )
   {
     m_functions->destroy( m_precond );
+    m_precond = nullptr;
   }
   if( aux_precond != nullptr && m_functions && m_functions->aux_destroy != nullptr )
   {
     m_functions->aux_destroy( aux_precond );
+    aux_precond = nullptr;
   }
   m_functions.reset();
+  m_ready = false;
 }
 
 HYPRE_Solver const & HyprePreconditioner::unwrapped() const

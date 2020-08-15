@@ -126,11 +126,7 @@ public:
 
   virtual ~RelativePermeabilityBase() override;
 
-  void DeliverClone( string const & name,
-                     Group * const parent,
-                     std::unique_ptr< ConstitutiveBase > & clone ) const override;
-
-  virtual void AllocateConstitutiveData( dataRepository::Group * const parent,
+  virtual void allocateConstitutiveData( dataRepository::Group * const parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
   localIndex numFluidPhases() const { return m_phaseNames.size(); }
@@ -144,7 +140,7 @@ public:
   {
     static constexpr auto phaseNamesString = "phaseNames";
     static constexpr auto phaseTypesString = "phaseTypes";
-    static constexpr auto phaseOrderString = "phaseTypes";
+    static constexpr auto phaseOrderString = "phaseOrder";
 
     static constexpr auto phaseRelPermString                    = "phaseRelPerm";                    // Kr
     static constexpr auto dPhaseRelPerm_dPhaseVolFractionString = "dPhaseRelPerm_dPhaseVolFraction"; // dKr_p/dS_p

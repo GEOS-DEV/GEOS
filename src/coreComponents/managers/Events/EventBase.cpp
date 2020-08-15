@@ -97,6 +97,9 @@ EventBase::EventBase( const std::string & name,
     setApplyDefaultValue( -1.0e9 )->
     setDescription( "Last event occurrence (cycle)" );
 
+  registerWrapper( viewKeyStruct::eventForecastString, &m_eventForecast )->
+    setDescription( "Indicates when the event is expected to execute" );
+
   registerWrapper( viewKeyStruct::currentSubEventString, &m_currentSubEvent )->
     setDescription( "Index of the current subevent" );
 

@@ -52,7 +52,10 @@ Group::Group( std::string const & name,
 {}
 
 Group::~Group()
-{}
+{
+// TODO enable this and fix bugs this exposes.
+//  m_conduitNode.parent()->remove( m_name );
+}
 
 Group::CatalogInterface::CatalogType & Group::GetCatalog()
 {
