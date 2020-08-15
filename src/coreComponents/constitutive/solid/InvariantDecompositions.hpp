@@ -13,11 +13,11 @@
  */
 
 /**
- * @file SolidUtilities.hpp
+ * @file InvariantDecompositions.hpp
  */
 
-#ifndef GEOSX_CONSTITUTIVE_SOLID_SOLIDUTILITIES_HPP
-#define GEOSX_CONSTITUTIVE_SOLID_SOLIDUTILITIES_HPP
+#ifndef GEOSX_CONSTITUTIVE_SOLID_INVARIANTDECOMPOSITIONS_HPP
+#define GEOSX_CONSTITUTIVE_SOLID_INVARIANTDECOMPOSITIONS_HPP
 
 namespace geosx
 {
@@ -200,7 +200,7 @@ void stressRecomposition(real64 const & volStress,
 
 } /* namespace geosx */
 
-#endif /* GEOSX_CONSTITUTIVE_SOLID_SOLIDUTILITIES_HPP */
+#endif /* GEOSX_CONSTITUTIVE_SOLID_INVARIANTDECOMPOSITIONS_HPP */
 
 
 

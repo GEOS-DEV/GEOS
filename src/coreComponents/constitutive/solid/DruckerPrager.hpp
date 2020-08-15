@@ -20,7 +20,7 @@
 #define GEOSX_CONSTITUTIVE_SOLID_DRUCKERPRAGER_HPP
 
 #include "ElasticIsotropic.hpp"
-#include "SolidUtilities.hpp"
+#include "InvariantDecompositions.hpp"
 #include "LvArray/src/tensorOps.hpp" // TODO: cleanup includes
 
 namespace geosx
