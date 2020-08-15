@@ -14,4 +14,10 @@ both standard solid models as well as poromechanical extensions.
    PoroLinearElasticIsotropic
 
    PoroLinearElasticAnisotropic
+   
+   DruckerPragerPlasticity
+   
+   ModifiedCamClay
+   
+   DelftEgg
 

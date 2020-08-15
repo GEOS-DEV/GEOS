@@ -201,10 +201,22 @@ void DelftEggUpdates::SmallStrainUpdate( localIndex const k,
 
   oldQ = std::sqrt(oldQ); //+ 1e-15; // ;
 
+  if(oldQ < 1e-15)
+  {
+    for(localIndex i=0; i<6; ++i)
+  {
+    oldDeviator[i] =0; // normalized deviatoric direction, "nhat" from previous step
+                                    // also perturbed to avoid divide by zero when Q=0
+                                   // std::cout<<oldDeviator[i]<<std::endl;
+  }
+  }else{
+
     for(localIndex i=0; i<6; ++i)
   {
     oldDeviator[i] /= (oldQ+ 1e-15); // normalized deviatoric direction, "nhat" from previous step
                                     // also perturbed to avoid divide by zero when Q=0
+                                   // std::cout<<oldDeviator[i]<<std::endl;
+  }
   }
   
   oldQ *= std::sqrt(3./2.);
@@ -256,11 +268,24 @@ void DelftEggUpdates::SmallStrainUpdate( localIndex const k,
 
      eps_s_trial  = std::sqrt(eps_s_trial);// + 1e-15; // 
 
-    for(localIndex i=0; i<6; ++i)
+if(eps_s_trial < 1e-15)
+{
+      for(localIndex i=0; i<6; ++i)
+  {
+    deviator[i] =0 ; // normalized deviatoric direction, "nhat" from previous step
+                                            // also perturbed to avoid divide by zero when Q=0;
+                                           // std::cout<<deviator[i]<<std::endl;
+  }
+}else
+{
+      for(localIndex i=0; i<6; ++i)
   {
     deviator[i] /= (eps_s_trial + 1e-15); // normalized deviatoric direction, "nhat" from previous step
                                             // also perturbed to avoid divide by zero when Q=0;
   }
+}
+
+
   // Calculate the normalized deviatoric direction, "nhat"
   
     for(localIndex i=0; i<3; ++i)
@@ -312,7 +337,7 @@ void DelftEggUpdates::SmallStrainUpdate( localIndex const k,
   
   if(yield > 1e-9) // plasticity branch
   {
-    std::cout << "plastic " <<  "\n " << std::endl;
+    //std::cout << "plastic " <<  "\n " << std::endl;
     // the return mapping can in general be written as a newton iteration.
     // here we have a linear problem, so the algorithm will converge in one
     // iteration, but this is a template for more general models with either
@@ -326,7 +351,7 @@ void DelftEggUpdates::SmallStrainUpdate( localIndex const k,
     
     solution[0] = eps_v_trial; // initial guess for elastic volumetric strain
     solution[1] = eps_s_trial; // initial guess for elastic deviatoric strain
-    solution[2] = 0;      // initial guess for plastic multiplier
+    solution[2] = 0.0;      // initial guess for plastic multiplier
     
     real64 norm,normZero = 1e30;
     jacobian.setValues< serialPolicy >( 0 );    
@@ -362,7 +387,7 @@ void DelftEggUpdates::SmallStrainUpdate( localIndex const k,
       
       norm = LvArray::tensorOps::l2Norm<3>(residual);
       
-     std::cout << "iter= " << iter << ", norm =  " << norm << std::endl;
+     //std::cout << "iter= " << iter << ", norm =  " << norm << std::endl;
       
       if(iter==0)
       {
@@ -427,7 +452,7 @@ void DelftEggUpdates::SmallStrainUpdate( localIndex const k,
 
     real64 c1; 
     
-    if(eps_s_trial<1e-10) // confirm eps_s_trial != 0
+    if(eps_s_trial<1e-15) // confirm eps_s_trial != 0
     {
       c1 = 2. * mu;
     }else{
@@ -457,6 +482,7 @@ void DelftEggUpdates::SmallStrainUpdate( localIndex const k,
     }
     
   } // end plastic branch
+  std::cout<<"eps_s = "<<eps_s_trial<<std::endl;
   
   // remember history variables before returning
   
