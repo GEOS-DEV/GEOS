@@ -1,7 +1,7 @@
 .. _TutorialHydraulicFractureWithAdvancedXML:
 
 #####################################################
-Tutorial 10: Hydraulic Fracturing 
+Tutorial 9: Hydraulic Fracturing 
 #####################################################
 
 **Context**
