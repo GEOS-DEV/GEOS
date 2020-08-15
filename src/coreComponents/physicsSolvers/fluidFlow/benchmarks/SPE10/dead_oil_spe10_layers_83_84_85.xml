@@ -16,7 +16,7 @@
         maxTimeStepCuts="10"    
         lineSearchAction="0"
         newtonMaxIter="20"/>
-      <!-- Note that the direct solver is going to be quite slow -->
+      <!-- Note that the direct solver is quite slow -->
       <!-- This block will be updated when Hypre becomes the default  -->
       <LinearSolverParameters
         solverType="direct"
@@ -268,9 +268,9 @@
     <BrooksCoreyRelativePermeability
       name="relperm"
       phaseNames="{ oil, gas, water }"
-      phaseMinVolumeFraction="{ 0.2, 0., 0.2 }"
+      phaseMinVolumeFraction="{ 0.2, 0.0, 0.2 }"
       phaseRelPermExponent="{ 2.0, 2.0, 2.0 }"
-      phaseRelPermMaxValue="{ 0.1, 1, 1 }"/>
+      phaseRelPermMaxValue="{ 0.1, 1.0, 1.0 }"/>
 
     <PoreVolumeCompressibleSolid
       name="rock"
