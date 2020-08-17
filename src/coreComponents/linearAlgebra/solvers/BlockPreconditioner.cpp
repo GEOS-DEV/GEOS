@@ -136,6 +136,14 @@ void BlockPreconditioner< LAI >::computeSchurComplement()
       m_matBlocks( 1, 1 ).addDiagonal( m_rhs( 1 ) );
       break;
     }
+    case SchurComplementOption::FirstBlockUserDefined:
+    {
+      Matrix const & prec00 = m_solvers[0]->preconditionerMatrix();
+      Matrix mat11;
+      prec00.multiplyRAP( m_matBlocks( 1, 0 ), m_matBlocks( 0, 1 ), mat11 );
+      m_matBlocks( 1, 1 ).addEntries( mat11, -1.0 );
+      break;
+    }
     default:
     {
       GEOSX_ERROR( "BlockPreconditioner: unsupported Schur complement option" );

@@ -122,6 +122,18 @@ public:
     return *m_mat;
   }
 
+  /**
+   * @brief Access the preconditioner in matrix form (whenever available). It must be
+   *        overridden by the specific preconditioner
+   * @return reference to the preconditioner matrix
+   */
+  virtual Matrix const & preconditionerMatrix() const
+  {
+    // Just to be able to compile ...
+    return *m_mat;
+    GEOSX_ERROR( "PreconditionerBase::preconditionerMatrix called!. Should be overridden." );
+  }
+
 private:
 
   /// Pointer to the matrix
