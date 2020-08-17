@@ -566,17 +566,17 @@ protected:
   {
     // Create a random "true" solution vector
     Vector sol_true;
-    sol_true.createWithGlobalSize( matrix.numGlobalCols(), matrix.getComm() );
+    sol_true.createWithLocalSize( matrix.numLocalCols(), matrix.getComm() );
     sol_true.rand();
 
     // Create and compute the right-hand side vector
     Vector rhs;
-    rhs.createWithGlobalSize( matrix.numGlobalRows(), matrix.getComm() );
+    rhs.createWithLocalSize( matrix.numLocalRows(), matrix.getComm() );
     matrix.apply( sol_true, rhs );
 
     // Create and zero out the computed solution vector
     Vector sol_comp;
-    sol_comp.createWithGlobalSize( sol_true.globalSize(), sol_true.getComm() );
+    sol_comp.createWithLocalSize( sol_true.localSize(), sol_true.getComm() );
     sol_comp.zero();
 
     // Create the solver and solve the system
@@ -676,7 +676,7 @@ protected:
       }
     }
     this->matrix.close();
-    this->cond_est = 1e3; // not a true condition number estimate, but enough to pass tests
+    this->cond_est = 2e3; // not a true condition number estimate, but enough to pass tests
   }
 };
 

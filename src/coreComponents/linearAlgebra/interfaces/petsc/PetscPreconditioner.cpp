@@ -188,6 +188,9 @@ void PetscPreconditioner::compute( PetscMatrix const & mat )
 {
   Base::compute( mat );
 
+  // Set dofs per node (it can be done only at the matrix level ...)
+  GEOSX_LAI_CHECK_ERROR( MatSetBlockSize( mat.unwrapped(), m_parameters.dofsPerNode ) );
+
   bool const create = m_precond == nullptr;
 
   // Basic setup common for all preconditioners
