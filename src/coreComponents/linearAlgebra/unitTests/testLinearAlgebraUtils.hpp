@@ -290,12 +290,17 @@ void compute2DElasticityOperator( MPI_Comm const comm,
   globalIndex const iCellLower = rank * nLocalCells + ( rank == 0 ? 0 : nExtraCells );
   globalIndex const iCellUpper = iCellLower + nLocalCells + ( rank == 0 ? 0 : nExtraCells ) - 1;
 
+  // Compute node partitioning
+  localIndex nLocalNodes = LvArray::integerConversion< localIndex >( nNodes / nproc );
+  localIndex const nExtraNodes = LvArray::integerConversion< localIndex >( nNodes ) - nLocalNodes * nproc;
+  nLocalNodes += ( rank == 0 ? 0 : nExtraNodes );
+
   // Construct local stiffness matrix (same for all cells)
   stackArray2d< real64, 8*8 > Ke( 8, 8 );
   Q12d_local( hx, hy, youngModulus, poissonRatio, Ke );
 
-  // Create a matrix of global size N with at most 18 non-zeros per row
-  elasticity2D.createWithGlobalSize( nNodes*2, 18, comm );
+  // Create a matrix of local size nLocalNodes*2 with at most 18 non-zeros per row
+  elasticity2D.createWithLocalSize( nLocalNodes*2, 18, comm );
 
   // Open the matrix
   elasticity2D.open();
