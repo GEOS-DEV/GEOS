@@ -4,7 +4,7 @@
 Solid Mechanics Solver
 #####################################
 
-Definition of Terms
+List of symbols
 ===================
 
 .. math::
@@ -35,8 +35,16 @@ Definition of Terms
    \mathbf{w}&\equiv \text { aperture, or gap vector} \notag
 
 
+Introduction
+============
+The `SolidMechanics_LagrangianFEM` solver applies a Continuous Galerkin finite element method to solve the linear momentum balance equation.
+The primary variable is the displacement field which is discretized at the nodes.
+
 Theory
 =========================
+
+Governing equations
+--------------------------
 
 The `SolidMechanics_LagrangianFEM` solves the equations of motion as given by
 
@@ -180,10 +188,6 @@ This approach is typically referred to as the "Leapfrog" method.
 However, in GEOSX we do not offer this option since it can cause some confusion that results from the
 storage of state at different points in time.
 
-Introduction
-============
-The `SolidMechanics_LagrangianFEM` solver applies a Continuous Galerkin finite element method to solve the linear momentum balance equation.
-The primary variable is the displacement field which is discretized at the nodes.
 
 Parameters
 =========================

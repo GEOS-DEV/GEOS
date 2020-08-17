@@ -9,6 +9,12 @@ Introduction
 
 This section describes the use of the poroelasticity models implemented in GEOSX.
 
+Theory
+=========================
+
+Governing equations
+--------------------------
+
 In our model, the geomechanics (elasticity) equation is expressed in terms of the total stress :math:`\mathbf{\sigma}`:
 
 .. math::

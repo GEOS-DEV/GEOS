@@ -12,7 +12,7 @@ The present solver can be combined with the :ref:`CompositionalMultiphaseWell` w
 
 Below, we first review the set of :ref:`equations`, followed by a discussion of the
 choice of :ref:`primary_variables` used in the global variable formulation.
-Then we give an overview of the :ref:`discretization` and we conclude with a brief description of the nonlinear :ref:`solution_strategy`.
+Then we give an overview of the :ref:`discretization` and, finally, we provide a list of the solver :ref:`parameters` and an input :ref:`input_example`.
 
 .. _theory:
 
@@ -175,23 +175,8 @@ The nonlinear solution strategy is based on Newton's method.
 At each Newton iteration, the solver assembles a residual vector, :math:`R`,
 collecting the :math:`n_c` discrete mass conservation equations and the volume
 constraint for all the control volumes.
-The solver also assembles the Jacobian matrix :math:`J` containing the analytical
-derivatives of :math:`R` with respect to the primary variables, namely, pressure
-and component densities.
-The Newton update, :math:`\delta X`, is then computed as:
 
-.. math::
-  \delta X := - J^{-1} R,
-
-The linear system is solved with one of the solvers described in :doc:`/coreComponents/linearAlgebra/docs/LinearSolvers`.
-The Newton update is then applied to the primary variables:
-
-..  math::
-  X := X + \delta X.
-
-This procedure is repeated until convergence.
-
-.. _usage:
+.. _parameters:
 
 Parameters
 ===========
