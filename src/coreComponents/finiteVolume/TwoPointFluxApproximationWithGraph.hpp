@@ -28,7 +28,7 @@ namespace geosx
 /**
  * @class TwoPointFluxApproximationWithGraph
  *
- * Provides management of the interior stencil points when using a two-point flux approximation.
+ * Provides management of the interior stencil points when using a two-point flux approximation. It uses a graph to build stencil instead of a mesh
  */
 class TwoPointFluxApproximationWithGraph : public TwoPointFluxApproximation
 {

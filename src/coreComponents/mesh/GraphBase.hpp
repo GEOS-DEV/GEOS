@@ -34,8 +34,8 @@ class DomainPartition;
 
 /**
  *  @class GraphBase
- *  @brief The GraphBase class provides an abstract base class implementation for different mesh types.
- *	   The GraphBase is the Group specialization for different type of mesh handling.
+ *  @brief The GraphBase class provides an abstract base class implementation for different graph types.
+ *	   The GraphBase is the Group specialization for different type of graph handling.
  */
 class GraphBase : public dataRepository::Group
 {
@@ -54,6 +54,9 @@ public:
    */
   virtual ~GraphBase();
 
+  /**
+   * @brief Function called to construct the graphs
+  */ 
   virtual void GenerateGraph() = 0;
 
 

@@ -25,8 +25,7 @@ namespace geosx
 {
 
 
-
-Edge::Edge( const int index, Vertice* neighbour1, Vertice* neighbour2):
+Edge::Edge( int const index, Vertice* neighbour1, Vertice* neighbour2):
   ind(index),n1(neighbour1),n2(neighbour2)
   {    
     std::cout<<"Constructing edge "<<ind<<" between vertices "<<n1->getIndice()<<" and "<<n2->getIndice()<<"\n";

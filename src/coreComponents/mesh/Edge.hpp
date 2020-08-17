@@ -19,6 +19,8 @@
 #ifndef GEOSX_MESH_EDGE_HPP_
 #define GEOSX_MESH_EDGE_HPP_
 #include "mesh/Vertice.hpp"
+#include "meshUtilities/ComputationalGeometry.hpp"
+
 
 namespace geosx
 {
@@ -26,18 +28,24 @@ namespace geosx
 /**
  * @class Edge
  *
- * An event type for periodic events (using either time or cycle as a basis).
+ * Represents connection between two points for the GraphBase.
  */
 class Edge
 {
 public:
-
-  Edge( const int, Vertice*, Vertice*);
+  /**
+   * @brief Constructor for Edge object
+   * @param [in] index of the edge
+   * @param [in] neighbour1 one of the two Vertices forming the connection
+   * @param [in] neighbour2 the other Vertice
+   * 
+   */   
+  Edge( int const index, Vertice* neighbour1, Vertice* neighbour2);
 
   /// Destructor
   virtual ~Edge();
 
-  int getIndice() const { return ind; }
+  localIndex getIndice() const { return ind; }
 
   Vertice* getN1() const { return n1; }
 
@@ -45,7 +53,7 @@ public:
 
   
 private:
-  int ind;
+  localIndex ind;
   Vertice* n1;
   Vertice* n2;
 };

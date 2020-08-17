@@ -18,6 +18,7 @@
 
 #ifndef GEOSX_MESH_VERTICE_HPP_
 #define GEOSX_MESH_VERTICE_HPP_
+#include "meshUtilities/ComputationalGeometry.hpp"
 
 namespace geosx
 {
@@ -30,17 +31,21 @@ namespace geosx
 class Vertice
 {
 public:
-
+  /**
+  * Constructor for Vertice object
+  * @param [in] index of the vertice
+  *
+  */ 
   Vertice( const int);
 
   /// Destructor
   virtual ~Vertice();
 
-  int getIndice() const { return ind; }
+  localIndex getIndice() const { return ind; }
 
   
 private:
-  int ind;
+  localIndex ind;
 };
 
 } /* namespace geosx */

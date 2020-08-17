@@ -28,7 +28,7 @@ class SolverBase;
 
 /**
  * @class GraphManager
- * @brief This class manages the graph objects in GEOSX (reservoir graph, well graph)
+ * @brief This class manages the graph objects in GEOSX (graph generated from text)
  */
 class GraphManager : public dataRepository::Group
 {
@@ -57,8 +57,7 @@ public:
   virtual void ExpandObjectCatalogs() override;
 
   /**
-   * @brief Generate the graphes of the physical DomainPartition.
-   * @param[in] domain a pointer to the physical DomainPartition
+   * @brief Generate the graphs
    */
   void GenerateGraphs();
 
