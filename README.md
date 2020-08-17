@@ -16,6 +16,15 @@ You may want to browse our
 page for more details on the HPC, numerics,
 and applied engineering components of this effort.
 
+Documentation
+---------------------
+
+Documentation hosted [here](https://geosx-geosx.readthedocs-hosted.com/en/latest/?) contains a *Quick Start* guide and a more detailed *Developer* and *User* Guide.
+
+We have two categories of tutorials.  User-focused tutorials for those primarily interested
+in running existing models, and developer-focused tutorials for those primarily interested
+in adding new capabilities to the code.
+
 Who develops GEOSX?
 -------------------
 GEOSX is an open source project and is developed by a community of researchers at
@@ -42,26 +51,6 @@ code differs from our previous efforts in two important ways:
     within the research and industrial community.  See the release notes below
     for details of the [LGPL 2.1 License](./LICENSE) that has been adopted.
 
-Documentation
----------------------
-
-Documentation is hosted [here](https://geosx-geosx.readthedocs-hosted.com/en/latest/?)
-
-We recommend newcomers to the code read one or both of the following introductory
-guides:
-
-- [Getting Started Guide](https://geosx-geosx.readthedocs-hosted.com/en/latest/docs/sphinx/buildingGuide/DownloadingAndCompiling.html)
-: Basic instructions for downloading, building, and running the code.
-
-- [Developer Guide](https://geosx-geosx.readthedocs-hosted.com/en/latest/docs/sphinx/developerGuide/Index.html)
-: Basic instructions for those interested in contributing code.
-
-Once you are familiar with the basics, you may want to explore our tutorials page:
-- [Tutorials](https://geosx-geosx.readthedocs-hosted.com/en/latest/docs/sphinx/tutorials/Index.html) 
-
-We have two categories of tutorials.  User-focused tutorials for those primarily interested
-in running existing models, and developer-focused tutorials for those primarily interested
-in adding new capabilities to the code.
 
 Release
 -------

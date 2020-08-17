@@ -79,7 +79,7 @@ The solver information is specified in the **NonlinearSolverParameters** and
 **LinearSolverParameters** XML blocks.
 These blocks should be nested in the **CompositionalMultiphaseReservoir** XML block since
 the coupling solver drives the solution strategy.
-Note that any solver information specified in the single-phase physics XML blocks will
+Note that any solver information specified in the single-physics XML blocks will
 not be taken into account.
 
 Here, we instruct GEOSX to perform at least ``newtonMinIter = 1`` Newton iterations and
@@ -239,7 +239,7 @@ model introduced in the **BrooksCoreyRelativePermeability** block.
 
 The rock compressibility is defined in the
 **PoreVolumeCompressibleSolid** block.
-The parameters of these three blocks have been chosen to be close to the original specifications
+The parameters of these three blocks have been chosen to match the original specifications
 of the Egg test case.
 
 .. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/benchmarks/Egg/dead_oil_egg.xml
@@ -359,7 +359,7 @@ This is followed by the creation of the 18553 hexahedral cells of the imported m
   0 >>> 59205 polygons have been created
   0 >>> *** Done
   0 >>> *** Perform partitioning...
-  0 >>> TRIVIAL partioning...
+  0 >>> TRIVIAL partitioning...
   0 >>> Ghost elements...
   0 >>> Clean mesh...
   0 >>> *** Done...
@@ -417,7 +417,7 @@ a `GitHub issue on the project's GitHub page <https://github.com/GEOSX/GEOSX/iss
 
 **Next tutorial**
 
-In the next tutorial :ref:`TutorialCO2FieldCaseUnstructuredGrid`, we learn how to run a
+In :ref:`TutorialCO2FieldCaseUnstructuredGrid`, we learn how to run a
 more complex test case based on an unstructured mesh.
 
 **For more details**

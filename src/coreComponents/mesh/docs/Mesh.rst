@@ -153,7 +153,6 @@ it into the GEOSX mesh data structure.
 The supported mesh format are:
 
 - The GMSH_ file format (.msh v2).
-- The MEDIT_ file format (.mesh)
 - The ECLIPSE file formats (.egrid, .grdecl)
 
 The supported mesh elements for volume elements consist of the following:
@@ -169,13 +168,15 @@ or to define different constitutive properties.
 
 - For the GMSH file format, the regions are defined using the `physical entity names`_
   provided by GMSH.
-- For the MEDIT file format, the regions are defined using the tag of the element.
 - For the ECLIPSE file formats, the regions have to be first defined using the ECLIPSE software.
 
 .. _ImportingExternalMesh:
 
 Importing the Mesh
 ==================
+
+Importing regions
+*****************
 
 Several blocks are involved to import an external mesh into GEOSX, defined in the XML input file.
 These are the ``<Mesh>`` block and the ``<ElementRegions>`` block.
@@ -214,7 +215,7 @@ You have to use the following syntax to declare your ``CellBlocks`` :
 
 .. code-block:: none
 
-  indexOfTheRegionWithinTheMesh_typeOfTheElement
+  nameOfTheRegionWithinTheMesh_typeOfTheElement
 
 The keywords for the element types are :
 
@@ -223,7 +224,44 @@ The keywords for the element types are :
 - PYR
 - HEX
 
+If the regions are not named in the file (it happens with all the eclipse grids and several GMSH mesh
+files), the name of the region is ``DEFAULT``, e.g:
+
+.. code-block:: xml
+
+  <ElementRegions>
+    <ElementRegion name="Default" cellBlocks="DEFAULT_HEX" materialList="water rock"/>
+  </ElementRegions>
+
+Using the gmsh file format, regions can be easily named
+as a preprocessed step using the gmsh software of directly editing the file following the syntax
+defined in the documentation_.
+
+An example of a gmsh file with all the physical regions defined is used in :ref:`TutorialFieldCase`.
+
+Importing surfaces
+******************
+
+Surfaces are imported throught point sets in GEOSX. This feature is supported using only the gmsh file format.
+In the same way than the regions, the surfaces of interests can be defined using the `physical entity names`_.
+The surfaces are automatically import in GEOSX if they exist in the gmsh file.
+Within GEOSX, the point set will have the same name than the one given in the file. This name can be used
+again to impose boundary condition. For instance, if a surface is named "Bottom" and the user wants to
+impose a Dirichlet boundary condition of 0 on it, it can be easily done using this syntax.
+
+.. code-block:: xml
+  <FieldSpecification
+    name="zconstraint"
+    objectPath="nodeManager"
+    fieldName="Velocity"
+    component="2"
+    scale="0.0"
+    setNames="{ Bottom }"/>
+
+The name of the surface of interest appears under the keyword ``setNames``. Again, an example of a gmsh file
+with the surfaces fully defined is available within :ref:`TutorialFieldCase`.
+
 .. _PAMELA: https://github.com/GEOSX/PAMELA
 .. _GMSH: http://gmsh.info
-.. _MEDIT: https://people.sc.fsu.edu/~jburkardt/data/medit/medit.html
-.. _`elementary geometrical tags`: http://gmsh.info/doc/texinfo/gmsh.html#MSH-file-format-version-2
+.. _documentation: https://gmsh.info/doc/texinfo/gmsh.html#MSH-file-format-version-2-_0028Legacy_0029
+.. _`physical entity names`: https://gmsh.info/doc/texinfo/gmsh.html#Elementary-entities-vs-physical-groups
