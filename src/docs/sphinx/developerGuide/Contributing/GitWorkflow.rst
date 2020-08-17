@@ -6,7 +6,7 @@ Git Workflow
 
 The GEOSX project is hosted on github `here <https://github.com/GEOSX>`__.
 For instuctions on how to clone and build GEOSX, please refer to the :ref:`GettingStartedWithGEOSX`.
-Consider consulting `https://try.github.io/ <https://try.github.io/> `_ for practical references on how to use git.
+Consider consulting `https://try.github.io/ <https://try.github.io/>`_ for practical references on how to use git.
 
 Git credentials
 =======================================
@@ -41,7 +41,7 @@ Working on the main code
 
 Once you have cloned the GEOSX repository, you can start developing by creating your
 own branch. GEOSX branching and merging for development is a simplification of the the
-`GitFlow <https://https://www.atlassian.com/git/tutorials/comparing-workflows/gitflow-workflow>`_ branching model.
+`GitFlow <https://www.atlassian.com/git/tutorials/comparing-workflows/gitflow-workflow>`_ branching model.
 
 In particular your branch name should follow the ``[purpose]/[developer]/[branch-description]``
 naming schema, where `purpose` is usually one of ``feature, bugfix, doc``, `developer` is
