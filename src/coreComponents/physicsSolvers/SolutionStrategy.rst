@@ -27,7 +27,7 @@ vector :math:`r` with respect to the primary variables. Then, at each Newton's i
 
 where, :math:`\delta x^{\nu+1}` is the Newton's update. This linear system can be
 solved with a variety of different linear solvers described in :doc:`/coreComponents/linearAlgebra/docs/LinearSolvers`.
-The Newton update, :math:`\dx^{\nu+1}` is then applied to the primary variables:
+The Newton update, :math:`\delta x^{\nu+1}` is then applied to the primary variables:
 
 ..  math::
   x^{\nu+1} = x^{\nu} + \delta x^{\nu+1}.
