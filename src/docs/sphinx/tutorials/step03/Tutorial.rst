@@ -311,7 +311,7 @@ Post-treating under Paraview, we can isolate the *Reservoir* block from its over
 
 Changing point of view and overlaying stream path allows to highlight injection time-variation
 
-.. image:: streamlines.mpg
+.. image:: streamlines.gif
    :width: 600px
 
 which reflects also in the pressure field at different times. 
