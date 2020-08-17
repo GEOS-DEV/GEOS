@@ -17,7 +17,7 @@ def isiterable(obj):
 
 def getHistorySeries( database, variable, setname, indices = None, components = None ):
     """
-    @brief retrieve a list of (time, data) timeseries tuples, each tuple is a single time history data series suitable for plotting
+    @brief retrieve a list of (time, data, idx, comp) timeseries tuples, each tuple is a single time history data series suitable for plotting in addition to the specific set index and component for the time series
     @param database an hdf5_wrapper database to retrieve time history data from
     @param variable the name of the time history variable for which to retrieve time-series data
     @param setname the name of the index set as specified in the geosx input xml for which to query time-series data
@@ -43,7 +43,7 @@ def getHistorySeries( database, variable, setname, indices = None, components = 
     if len(set_match) > 1:
         print(f"Warning: variable/set specification matches multiple datasets: {', '.join(set_match)}")
     if len(time_match) > 1:
-        print(f"Warning: set specificaltion matches multiple time datasets: {', '.join(time_match)}")
+        print(f"Warning: set specification matches multiple time datasets: {', '.join(time_match)}")
 
     set_match = set_match[0]
     time_match = time_match[0]
@@ -85,11 +85,37 @@ def getHistorySeries( database, variable, setname, indices = None, components = 
 
 def commandLinePlotGen():
     parser = argparse.ArgumentParser(description = "A script that parses geosx HDF5 time-history files and produces time-history plots using matplotlib")
-    parser.add_argument("filename", metavar="history_file", type=str, help="The time history file to parse")
-    parser.add_argument("variable", metavar="variable_name", type=str, help="Which time-history variable collected by GEOSX to generate a plot file for.")
-    parser.add_argument("--sets", metavar="name", type=str, action='append', default=[None], nargs="+", help="Which index set of time-history data collected by GEOSX to generate a plot file for, may be specified multiple times with different indices/components for each set.")
-    parser.add_argument("--indices", metavar="index", type=int, default=[], nargs="+", help="An optional list of specific indices in the most-recently specified set.")
-    parser.add_argument("--components", metavar="int", type=int, default=[], nargs="+", help="An optional list of specific variable components")
+    parser.add_argument("filename", 
+                        metavar="history_file", 
+                        type=str, 
+                        help="The time history file to parse")
+
+    parser.add_argument("variable", 
+                        metavar="variable_name", 
+                        type=str, 
+                        help="Which time-history variable collected by GEOSX to generate a plot file for.")
+
+    parser.add_argument("--sets", 
+                        metavar="name", 
+                        type=str, 
+                        action='append', 
+                        default=[None], 
+                        nargs="+", 
+                        help="Which index set of time-history data collected by GEOSX to generate a plot file for, may be specified multiple times with different indices/components for each set.")
+
+    parser.add_argument("--indices", 
+                        metavar="index", 
+                        type=int, 
+                        default=[], 
+                        nargs="+", 
+                        help="An optional list of specific indices in the most-recently specified set.")
+
+    parser.add_argument("--components", 
+                        metavar="int", 
+                        type=int, 
+                        default=[], 
+                        nargs="+", 
+                        help="An optional list of specific variable components")
 
     args = parser.parse_args()
     result = 0

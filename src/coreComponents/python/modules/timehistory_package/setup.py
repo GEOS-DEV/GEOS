@@ -6,4 +6,4 @@ setup(name='time_history_plotting',
       author='William Tobin',
       author_email='tobin6@llnl.gov',
       packages=['plot_time_history'],
-      install_requires=['hdf5_wrapper', 'h5py', 'numpy'])
+      install_requires=['matplotlib', 'hdf5_wrapper', 'h5py', 'numpy'])
