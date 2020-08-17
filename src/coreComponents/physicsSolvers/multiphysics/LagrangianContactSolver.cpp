@@ -35,6 +35,7 @@
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
 #include "linearAlgebra/utilities/LAIHelperFunctions.hpp"
 #include "linearAlgebra/solvers/PreconditionerJacobi.hpp"
+#include "linearAlgebra/solvers/PreconditionerBlockJacobi.hpp"
 #include "linearAlgebra/solvers/BlockPreconditioner.hpp"
 #include "linearAlgebra/solvers/SeparateComponentPreconditioner.hpp"
 #include "math/interpolation/Interpolation.hpp"
@@ -1106,11 +1107,15 @@ void LagrangianContactSolver::CreatePreconditioner()
 {
   if( m_linearSolverParameters.get().preconditionerType == "block" )
   {
+    //auto precond = std::make_unique< BlockPreconditioner< LAInterface > >( BlockShapeOption::LowerUpperTriangular,
+    //                                                                       SchurComplementOption::FirstBlockDiagonal,
+    //                                                                       BlockScalingOption::UserProvided );
     auto precond = std::make_unique< BlockPreconditioner< LAInterface > >( BlockShapeOption::LowerUpperTriangular,
-                                                                           SchurComplementOption::FirstBlockDiagonal,
+                                                                           SchurComplementOption::FirstBlockUserDefined,
                                                                            BlockScalingOption::UserProvided );
 
-    auto tracPrecond = std::make_unique< PreconditionerJacobi< LAInterface > >( PreconditionerJacobi< LAInterface >() );
+    //auto tracPrecond = std::make_unique< PreconditionerJacobi< LAInterface > >( PreconditionerJacobi< LAInterface >() );
+    auto tracPrecond = std::make_unique< PreconditionerBlockJacobi< LAInterface > >( PreconditionerBlockJacobi< LAInterface >( 3 ) );
     precond->setupBlock( 0,
                          { { viewKeyStruct::tractionString, 0, 3 } },
                          std::move( tracPrecond ) );

@@ -124,6 +124,8 @@ public:
   }
 
 private:
+
+  /// The diagonal of the matrix
   Vector * m_diag;
 };
 
