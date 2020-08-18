@@ -25,12 +25,12 @@ We review the set of :ref:`well_equations`, and then we describe the :ref:`well_
 
 .. _well_equations:
 
-Discrete  equations
+Discrete  Equations
 -------------------
 
 We assume that the well is discretized into segments denoted by the index :math:`i`.
 
-Mass conservation
+Mass Conservation
 ~~~~~~~~~~~~~~~~~~
 
 In well segment :math:`i`, mass conservation for component :math:`c` reads:

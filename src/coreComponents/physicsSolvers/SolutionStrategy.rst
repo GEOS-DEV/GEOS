@@ -2,14 +2,14 @@
 .. _SolutionStrategy:
 
 #####################################
-Solution strategy
+Solution Strategy
 #####################################
 
 All  physics solvers share a common solution strategy for nonlinear time-dependent
 problems. Here, we briefly describe the nonlinear solver and the timestepping
 strategy employed.
 
-Nonlinear solver
+Nonlinear Solver
 =================================
 At each time-step, the nonlinear system of discrete residual equations, i.e.
 
@@ -35,7 +35,7 @@ The Newton update, :math:`\delta x^{\nu+1}` is then applied to the primary varia
 This procedure is repeated until convergence is achieved or until the maximum number of
 iterations is reached.
 
-Line search
+Line Search
 ---------------------------
 A line search method can be applied along with the Newton's method to facilitate Nonlinear
 convergence. If the after the Newton's update the residual norm has increased instead
@@ -49,7 +49,7 @@ to provide a reduced residual norm:
 
 2. reject the solution and request a timestep cut;
 
-Timestepping strategy
+Timestepping Strategy
 ==================================
 
 The actual timestep size employed is determined by a combination of several factors.

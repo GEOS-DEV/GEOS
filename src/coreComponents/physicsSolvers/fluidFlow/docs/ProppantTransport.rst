@@ -14,7 +14,7 @@ Theory
 
 The following mass balance and constitutive equations are solved inside fractures,
 
-proppant-fluid slurry flow
+Proppant-fluid Slurry Flow
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. math::
@@ -31,7 +31,7 @@ and :math:`p` is pressure, :math:`\rho_m` and :math:`\mu_m` are density and visc
    K_f =  \frac{a^2}{12}
 
 
-proppant transport
+Proppant Transport
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. math::
@@ -40,7 +40,7 @@ proppant transport
 in which :math:`c` and :math:`\boldsymbol{u}_p` represent the volume fraction and velocity of the proppant particles.
 
 
-multi-component fluid transport
+Multi-component Fluid Transport
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. math::
@@ -67,7 +67,7 @@ and
 in which :math:`\rho_f` and :math:`\boldsymbol{u}_f` are the density and velocity of the carrying fluid, and :math:`\rho_p` is the density of the proppant particles.
 
 
-proppant slip velocity
+Proppant Slip Velocity
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The proppant particle and carrying fluid velocities are related by the slip velocity :math:`\boldsymbol{u}_{slip}`,
@@ -121,7 +121,7 @@ We use a simple expression of :math:`\lambda` proposed by Barree & Conway (1995)
 
 where :math:`\alpha` and :math:`\beta` are empirical constants, :math:`c_{slip}` is the volume fraction exhibiting the greatest particle slip. By default the model parameters are set to the values given in (Barree & Conway, 1995): :math:`\alpha= 1.27`, :math:`c_{slip} =0.1` and :math:`\beta =  1.5`. This model can be extended to account for the transition to the particle pack as the proppant concentration approaches the jamming transition.
 
-proppant bed build-up and load transport
+Proppant Bed Build-up and Load Transport
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 In addition to suspended particle flow the GEOSX has the option to model proppant settling into an immobile bed at the bottom of the fracture. As the proppant cannot settle further down the proppant bed starts to form and develop at the element that is either at the bottom of the fracture or has an underlying element already filled with particles. Such an "inter-facial" element is divided into proppant flow and immobile bed regions based on the proppant-pack height.
@@ -164,7 +164,7 @@ and
 where :math:`\tau` is the shear stress acting on the top of the proppant bed and :math:`f` is the Darcy friction coefficient. :math:`N_{sh, c}` is the critical Shields number for the onset of bed load transport.
 
 
-proppant bridging and screenout
+Proppant Bridging and Screenout
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Proppant bridging occurs when proppant particle size is close to or larger than fracture aperture. The aperture at which bridging occurs, :math:`h_{b}`, is defined simply by
@@ -174,7 +174,7 @@ Proppant bridging occurs when proppant particle size is close to or larger than 
 
 in which :math:`\lambda_{b}` is the bridging factor.
 
-slurry fluid viscosity
+Slurry Fluid Viscosity
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The viscosity of the bulk fluid, :math:`\mu_m`, is calculated as a function of proppant concentration as (Keck et al., 1992),

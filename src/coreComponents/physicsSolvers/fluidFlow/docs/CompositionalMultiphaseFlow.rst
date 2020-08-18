@@ -21,10 +21,10 @@ Theory
 
 .. _equations:
 
-Governing equations
+Governing Equations
 -------------------
 
-Mass conservation equations
+Mass Conservation Equations
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Mass conservation for component :math:`c` is expressed as:
@@ -41,7 +41,7 @@ is the mass fraction of component :math:`c` in phase :math:`\ell`,
 :math:`\rho_{\ell}` is the phase density, and :math:`t` is time. We note that the
 formulation currently implemented in GEOSX is isothermal.
 
-Darcy's law
+Darcy's Law
 ~~~~~~~~~~~
 
 Using the multiphase extension of Darcy's law, the phase velocity :math:`\boldsymbol{u}_{\ell}`
@@ -67,7 +67,7 @@ equations written as:
    - \nabla \cdot \boldsymbol{k} \bigg( \sum_\ell \rho_{\ell} \, y_{c \ell} \, \lambda_{\ell} \nabla \Phi_{\ell}   \bigg)
    - \sum_\ell \rho_{\ell} \, y_{c \ell} \, q_{\ell} = 0.
 
-Constraints and thermodynamic equilibrium
+Constraints and Thermodynamic Equilibrium
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The volume constraint equation states that the pore space is always completely filled by
@@ -99,7 +99,7 @@ Number of equations  Equation type
 
 .. _primary_variables:
 
-Primary variables
+Primary Variables
 ------------------
 
 The variable formulation implemented in GEOSX is a global variable formulation based on
@@ -144,7 +144,7 @@ fractions and saturations with respect to the pressure and component densities.
 Discretization
 --------------
 
-Spatial discretization
+Spatial Discretization
 ~~~~~~~~~~~~~~~~~~~~~~
 
 The governing equations are discretized using standard cell-centered finite-volume
@@ -161,14 +161,14 @@ potential difference (e.g., the phase mobilities) is performed with a first-orde
 phase-per-phase single-point upwinding based on the sign of the phase potential difference
 at the interface.
 
-Temporal discretization
+Temporal Discretization
 ~~~~~~~~~~~~~~~~~~~~~~~
 
 The compositional multiphase solver uses a fully implicit (backward Euler) temporal discretization.
 
 .. _solution_strategy:
 
-Solution strategy
+Solution Strategy
 -----------------
 
 The nonlinear solution strategy is based on Newton's method.
