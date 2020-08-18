@@ -4,7 +4,7 @@
 Solid Mechanics Solver
 #####################################
 
-List of symbols
+List of Symbols
 ===================
 
 .. math::
@@ -43,7 +43,7 @@ The primary variable is the displacement field which is discretized at the nodes
 Theory
 =========================
 
-Governing equations
+Governing Equations
 --------------------------
 
 The `SolidMechanics_LagrangianFEM` solves the equations of motion as given by

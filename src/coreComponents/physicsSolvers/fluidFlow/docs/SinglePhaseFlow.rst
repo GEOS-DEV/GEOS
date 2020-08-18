@@ -17,7 +17,7 @@ Theory
 
 .. _singlephase_equations:
 
-Governing equations
+Governing Equations
 -------------------
 
 This is a cell-centered Finite Volume solver for compressible single-phase flow in porous media.
