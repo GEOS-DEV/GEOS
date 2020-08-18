@@ -5,7 +5,7 @@ Code Components
 The main code components are described here.
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
 
    ./dataRepo_link
 
