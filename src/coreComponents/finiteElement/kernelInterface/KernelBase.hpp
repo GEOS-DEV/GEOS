@@ -608,7 +608,14 @@ real64 regionBasedKernelApplication( MeshLevel & mesh,
       subRegionFE = elementSubRegion.template getReference< FiniteElementBase >( finiteElementName );
 
       finiteElement::dispatch3D( subRegionFE,
-                                 [&] ( auto const finiteElement )
+                                 [&maxResidualContribution,
+                                  &nodeManager,
+                                  &edgeManager,
+                                  &faceManager,
+                                  &kernelConstructorParamsTuple,
+                                  &elementSubRegion,
+                                  &numElems,
+                                  &castedConstitutiveRelation] ( auto const finiteElement )
       {
         using FE_TYPE = TYPEOFREF( finiteElement );
 
