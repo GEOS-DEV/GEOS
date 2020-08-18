@@ -3,20 +3,35 @@
 #
 
 set(testSources
-    testShapeFunctionKernel.cpp
+    testFiniteElementBase.cpp
+    testH1_QuadrilateralFace_Lagrange1_GaussLegendre2.cpp
+    testH1_Hexahedron_Lagrange1_GaussLegendre2.cpp
+    testH1_Tetrahedron_Lagrange1_Gauss1.cpp
+    testH1_Wedge_Lagrange1_Gauss6.cpp
+    testH1_Pyramid_Lagrange1_Gauss5.cpp
+    testH1_TriangleFace_Lagrange1_Gauss1.cpp
    )
 
-if( ENABLE_OPENMP )
-    set( dependencyList ${dependencyList} openmp )
+set( dependencyList gtest )
+
+if ( GEOSX_BUILD_SHARED_LIBS )
+  set (dependencyList ${dependencyList} geosx_core)
+else()
+  set (dependencyList ${dependencyList} ${geosx_core_libs} )
+endif()
+
+if ( ENABLE_MPI )
+  set ( dependencyList ${dependencyList} mpi )
+endif()
+
+if ( ENABLE_OPENMP )
+  set( dependencyList ${dependencyList} openmp )
 endif()
 
 if ( ENABLE_CUDA )
   set( dependencyList ${dependencyList} cuda )
 endif()
 
-if( ENABLE_CALIPER )
-  set( dependencyList ${dependencyList} caliper adiak )
-endif()
 #
 # Add gtest C++ based tests
 #
@@ -25,14 +40,14 @@ foreach(test ${testSources})
     blt_add_executable( NAME ${test_name}
                         SOURCES ${test}
                         OUTPUT_DIR ${TEST_OUTPUT_DIRECTORY}
-                        DEPENDS_ON gtest geosx_core ${dependencyList} )
+                        DEPENDS_ON ${dependencyList} )
 
     blt_add_test( NAME ${test_name} 
                   COMMAND ${test_name}
                   )
 
-    if( ( NOT ${ENABLE_CUDA} ) AND ( CMAKE_CXX_COMPILER_ID STREQUAL "Clang" ) )    
-        set_target_properties(${test_name} PROPERTIES COMPILE_FLAGS "-Wno-everything")    
+    if( ( NOT ${ENABLE_CUDA} ) AND ( CMAKE_CXX_COMPILER_ID STREQUAL "Clang" ) )
+        set_target_properties(${test_name} PROPERTIES COMPILE_FLAGS "-Wno-everything")
     endif()
 
 endforeach()

@@ -93,14 +93,10 @@ public:
 
   virtual ~BrooksCoreyRelativePermeability() override;
 
-  void DeliverClone( string const & name,
-                     Group * const parent,
-                     std::unique_ptr< ConstitutiveBase > & clone ) const override;
-
 //START_SPHINX_INCLUDE_00
   static std::string CatalogName() { return "BrooksCoreyRelativePermeability"; }
 
-  virtual string GetCatalogName() override { return CatalogName(); }
+  virtual string getCatalogName() const override { return CatalogName(); }
 
   /// Type of kernel wrapper for in-kernel update
   using KernelWrapper = BrooksCoreyRelativePermeabilityUpdate;
@@ -117,6 +113,8 @@ public:
     static constexpr auto phaseMinVolumeFractionString = "phaseMinVolumeFraction";
     static constexpr auto phaseRelPermExponentString   = "phaseRelPermExponent";
     static constexpr auto phaseRelPermMaxValueString   = "phaseRelPermMaxValue";
+    static constexpr auto volFracScaleString                = "volFracScale";
+
 
     using ViewKey = dataRepository::ViewKey;
 
@@ -173,7 +171,7 @@ BrooksCoreyRelativePermeabilityUpdate::
     }
     else
     {
-      phaseRelPerm[ip] = (satScaled < 0.0) ? 0.0 : scale;
+      phaseRelPerm[ip] = (satScaled <= 0.0) ? 0.0 : scale;
     }
   }
 }

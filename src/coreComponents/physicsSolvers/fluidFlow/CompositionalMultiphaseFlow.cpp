@@ -45,13 +45,18 @@ using namespace dataRepository;
 using namespace constitutive;
 using namespace CompositionalMultiphaseFlowKernels;
 
+static constexpr real64 minDensForDivision = 1e-10;
+
 CompositionalMultiphaseFlow::CompositionalMultiphaseFlow( const string & name,
                                                           Group * const parent )
   :
   FlowSolverBase( name, parent ),
   m_numPhases( 0 ),
   m_numComponents( 0 ),
-  m_capPressureFlag( 0 )
+  m_capPressureFlag( 0 ),
+  m_maxCompFracChange( 1.0 ),
+  m_minScalingFactor( 0.01 ),
+  m_allowCompDensChopping( 1 )
 {
 //START_SPHINX_INCLUDE_00
   this->registerWrapper( viewKeyStruct::temperatureString, &m_temperature )->
@@ -73,6 +78,18 @@ CompositionalMultiphaseFlow::CompositionalMultiphaseFlow( const string & name,
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Name of the capillary pressure constitutive model to use" );
 
+  this->registerWrapper( viewKeyStruct::maxCompFracChangeString, &m_maxCompFracChange )->
+    setSizedFromParent( 0 )->
+    setInputFlag( InputFlags::OPTIONAL )->
+    setApplyDefaultValue( 1.0 )->
+    setDescription( "Maximum (absolute) change in a component fraction between two Newton iterations" );
+
+  this->registerWrapper( viewKeyStruct::allowLocalCompDensChoppingString, &m_allowCompDensChopping )->
+    setSizedFromParent( 0 )->
+    setInputFlag( InputFlags::OPTIONAL )->
+    setApplyDefaultValue( 1 )->
+    setDescription( "Flag indicating whether local (cell-wise) chopping of negative compositions is allowed" );
+
   m_linearSolverParameters.get().mgr.strategy = "CompositionalMultiphaseFlow";
 
 }
@@ -82,6 +99,11 @@ void CompositionalMultiphaseFlow::PostProcessInput()
   FlowSolverBase::PostProcessInput();
   CheckModelNames( m_relPermModelNames, viewKeyStruct::relPermNamesString );
   m_capPressureFlag = CheckModelNames( m_capPressureModelNames, viewKeyStruct::capPressureNamesString, true );
+
+  GEOSX_ERROR_IF_GT_MSG( m_maxCompFracChange, 1.0,
+                         "The maximum absolute change in component fraction must smaller or equal to 1.0" );
+  GEOSX_ERROR_IF_LT_MSG( m_maxCompFracChange, 0.0,
+                         "The maximum absolute change in component fraction must larger or equal to 0.0" );
 }
 
 void CompositionalMultiphaseFlow::RegisterDataOnMesh( Group * const MeshBodies )
@@ -659,7 +681,7 @@ void CompositionalMultiphaseFlow::SetupDofs( DomainPartition const & domain,
 
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
-  FluxApproximationBase const & fluxApprox = *fvManager.getFluxApproximation( m_discretizationName );
+  FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
 
   dofManager.addCoupling( viewKeyStruct::dofFieldString, fluxApprox );
 }
@@ -817,14 +839,14 @@ void CompositionalMultiphaseFlow::AssembleFluxTerms( real64 const dt,
 
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
-  FluxApproximationBase const & fluxApprox = *fvManager.getFluxApproximation( m_discretizationName );
+  FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
 
   string const & dofKey = dofManager.getKey( viewKeyStruct::dofFieldString );
   ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > >
   elemDofNumber = mesh.getElemManager()->ConstructArrayViewAccessor< globalIndex, 1 >( dofKey );
   elemDofNumber.setName( getName() + "/accessors/" + dofKey );
 
-  fluxApprox.forAllStencils( [&] ( auto const & stencil )
+  fluxApprox.forAllStencils( mesh, [&] ( auto const & stencil )
   {
     KernelLaunchSelector1< FluxKernel >( m_numComponents,
                                          m_numPhases,
@@ -1203,12 +1225,92 @@ void CompositionalMultiphaseFlow::SolveSystem( DofManager const & dofManager,
   SolverBase::SolveSystem( dofManager, matrix, rhs, solution );
 }
 
+real64 CompositionalMultiphaseFlow::ScalingForSystemSolution( DomainPartition const & domain,
+                                                              DofManager const & dofManager,
+                                                              arrayView1d< real64 const > const & localSolution )
+{
+  GEOSX_MARK_FUNCTION;
+
+  // check if we want to rescale the Newton update
+  if( m_maxCompFracChange >= 1.0 )
+  {
+    // no rescaling wanted, we just return 1.0;
+    return 1.0;
+  }
+
+  real64 constexpr eps = minDensForDivision;
+  real64 const maxCompFracChange = m_maxCompFracChange;
+
+  localIndex const NC = m_numComponents;
+
+  MeshLevel const & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
+
+  globalIndex const rankOffset = dofManager.rankOffset();
+  string const dofKey = dofManager.getKey( viewKeyStruct::dofFieldString );
+  real64 scalingFactor = 1.0;
+
+  forTargetSubRegions( mesh, [&]( localIndex const, ElementSubRegionBase const & subRegion )
+  {
+    arrayView1d< globalIndex const > const & dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
+    arrayView1d< integer const > const & elemGhostRank = subRegion.ghostRank();
+
+    arrayView2d< real64 const > const & compDens = subRegion.getReference< array2d< real64 > >( viewKeyStruct::globalCompDensityString );
+    arrayView2d< real64 const > const & dCompDens = subRegion.getReference< array2d< real64 > >( viewKeyStruct::deltaGlobalCompDensityString );
+
+    RAJA::ReduceMin< parallelDeviceReduce, real64 > minVal( 1.0 );
+
+    forAll< parallelDevicePolicy<> >( dofNumber.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
+    {
+      if( elemGhostRank[ei] < 0 )
+      {
+        real64 prevTotalDens = 0;
+        for( localIndex ic = 0; ic < NC; ++ic )
+        {
+          prevTotalDens += compDens[ei][ic] + dCompDens[ei][ic];
+        }
+
+        // compute the change in component densities and component fractions
+        for( localIndex ic = 0; ic < NC; ++ic )
+        {
+          localIndex const lid = dofNumber[ei] + ic + 1 - rankOffset;
+
+          // compute scaling factor based on relative change in component densities
+          real64 const absCompDensChange = fabs( localSolution[lid] );
+          real64 const maxAbsCompDensChange = maxCompFracChange * prevTotalDens;
+
+          // This actually checks the change in component fraction, using a lagged total density
+          // Indeed we can rewrite the following check as:
+          //    | prevCompDens / prevTotalDens - newCompDens / prevTotalDens | > maxCompFracChange
+          // Note that the total density in the second term is lagged (i.e, we use prevTotalDens)
+          // because I found it more robust than using directly newTotalDens (which can vary also
+          // wildly when the compDens change is large)
+          if( absCompDensChange > maxAbsCompDensChange && absCompDensChange > eps )
+          {
+            minVal.min( maxAbsCompDensChange / absCompDensChange );
+          }
+        }
+      }
+    } );
+
+    if( minVal.get() < scalingFactor )
+    {
+      scalingFactor = minVal.get();
+    }
+  } );
+
+  return LvArray::math::max( MpiWrapper::Min( scalingFactor, MPI_COMM_GEOSX ), m_minScalingFactor );
+}
+
+
 bool CompositionalMultiphaseFlow::CheckSystemSolution( DomainPartition const & domain,
                                                        DofManager const & dofManager,
                                                        arrayView1d< real64 const > const & localSolution,
                                                        real64 const scalingFactor )
 {
+  real64 constexpr eps = minDensForDivision;
+
   localIndex const NC = m_numComponents;
+  integer const allowCompDensChopping = m_allowCompDensChopping;
 
   MeshLevel const & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
 
@@ -1237,10 +1339,27 @@ bool CompositionalMultiphaseFlow::CheckSystemSolution( DomainPartition const & d
           real64 const newPres = pres[ei] + dPres[ei] + scalingFactor * localSolution[localRow];
           check.min( newPres >= 0.0 );
         }
-        for( localIndex ic = 0; ic < NC; ++ic )
+
+        // if component density chopping is not allowed, the time step fails if a component density is negative
+        // otherwise, we just check that the total density is positive, and negative component densities
+        // will be chopped (i.e., set to zero) in ApplySystemSolution)
+        if( !allowCompDensChopping )
         {
-          real64 const newDens = compDens[ei][ic] + dCompDens[ei][ic] + scalingFactor * localSolution[localRow + ic + 1];
-          check.min( newDens >= 0.0 );
+          for( localIndex ic = 0; ic < NC; ++ic )
+          {
+            real64 const newDens = compDens[ei][ic] + dCompDens[ei][ic] + scalingFactor * localSolution[localRow + ic + 1];
+            check.min( newDens >= 0.0 );
+          }
+        }
+        else
+        {
+          real64 totalDens = 0.0;
+          for( localIndex ic = 0; ic < NC; ++ic )
+          {
+            real64 const newDens = compDens[ei][ic] + dCompDens[ei][ic] + scalingFactor * localSolution[localRow + ic + 1];
+            totalDens += (newDens > 0.0) ? newDens : 0.0;
+          }
+          check.min( totalDens >= eps );
         }
       }
     } );
@@ -1257,7 +1376,6 @@ void CompositionalMultiphaseFlow::ApplySystemSolution( DofManager const & dofMan
                                                        DomainPartition & domain )
 {
   MeshLevel & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
-
   dofManager.addVectorToField( localSolution,
                                viewKeyStruct::dofFieldString,
                                viewKeyStruct::deltaPressureString,
@@ -1270,6 +1388,13 @@ void CompositionalMultiphaseFlow::ApplySystemSolution( DofManager const & dofMan
                                scalingFactor,
                                1, m_numDofPerCell );
 
+  // if component density chopping is allowed, some component densities may be negative after the update
+  // these negative component densities are set to zero in this function
+  if( m_allowCompDensChopping )
+  {
+    ChopNegativeDensities( domain );
+  }
+
   std::map< string, string_array > fieldNames;
   fieldNames["elems"].emplace_back( string( viewKeyStruct::deltaPressureString ) );
   fieldNames["elems"].emplace_back( string( viewKeyStruct::deltaGlobalCompDensityString ) );
@@ -1278,6 +1403,38 @@ void CompositionalMultiphaseFlow::ApplySystemSolution( DofManager const & dofMan
   forTargetSubRegions( mesh, [&]( localIndex const targetIndex, ElementSubRegionBase & subRegion )
   {
     UpdateState( subRegion, targetIndex );
+  } );
+}
+
+void CompositionalMultiphaseFlow::ChopNegativeDensities( DomainPartition & domain )
+{
+  MeshLevel & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
+
+  localIndex const NC = m_numComponents;
+  forTargetSubRegions( mesh, [&]( localIndex const, ElementSubRegionBase & subRegion )
+  {
+    arrayView1d< integer const > const & ghostRank =
+      subRegion.getReference< array1d< integer > >( ObjectManagerBase::viewKeyStruct::ghostRankString );
+
+    arrayView2d< real64 const > const & compDens =
+      subRegion.getReference< array2d< real64 > >( viewKeyStruct::globalCompDensityString );
+    arrayView2d< real64 > const & dCompDens =
+      subRegion.getReference< array2d< real64 > >( viewKeyStruct::deltaGlobalCompDensityString );
+
+    forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
+    {
+      if( ghostRank[ei] < 0 )
+      {
+        for( localIndex ic = 0; ic < NC; ++ic )
+        {
+          real64 const newDens = compDens[ei][ic] + dCompDens[ei][ic];
+          if( newDens < 0 )
+          {
+            dCompDens[ei][ic] = -compDens[ei][ic];
+          }
+        }
+      }
+    } );
   } );
 }
 

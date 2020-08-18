@@ -32,7 +32,7 @@ TEST( LinearElasticAnisotropicTests, testAllocation )
 
   dataRepository::Group disc( "discretization", nullptr );
   disc.resize( numElems );
-  cm.AllocateConstitutiveData( &disc, numQuadraturePoints );
+  cm.allocateConstitutiveData( &disc, numQuadraturePoints );
 
   EXPECT_EQ( cm.size(), numElems );
   EXPECT_EQ( cm.numQuadraturePoints(), numQuadraturePoints );
@@ -109,7 +109,7 @@ TEST( LinearElasticAnisotropicTests, testStateUpdatePoint )
 
   dataRepository::Group disc( "discretization", nullptr );
   disc.resize( 2 );
-  cm.AllocateConstitutiveData( &disc, 2 );
+  cm.allocateConstitutiveData( &disc, 2 );
 
   auto cw = cm.createKernelUpdates();
 
@@ -259,7 +259,7 @@ TEST( LinearElasticAnisotropicTests, testXML )
   LinearElasticAnisotropic * const model = constitutiveManager.GetConstitutiveRelation< LinearElasticAnisotropic >( "granite" );
   dataRepository::Group disc( "discretization", nullptr );
   disc.resize( 1 );
-  model->AllocateConstitutiveData( &disc, 1 );
+  model->allocateConstitutiveData( &disc, 1 );
 
 
   LinearElasticAnisotropicUpdates kernelWrapper = model->createKernelUpdates();

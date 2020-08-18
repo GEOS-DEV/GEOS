@@ -391,5 +391,18 @@ void ReservoirSolverBase::ImplicitStepComplete( real64 const & time_n,
 void ReservoirSolverBase::ResetViews( DomainPartition * const GEOSX_UNUSED_PARAM( domain ) )
 {}
 
+real64 ReservoirSolverBase::ScalingForSystemSolution( DomainPartition const & domain,
+                                                      DofManager const & dofManager,
+                                                      arrayView1d< real64 const > const & localSolution )
+{
+  real64 const flowScalingFactor = m_flowSolver->ScalingForSystemSolution( domain, dofManager, localSolution );
+  real64 const wellScalingFactor = m_wellSolver->ScalingForSystemSolution( domain, dofManager, localSolution );
+
+  GEOSX_LOG_LEVEL_RANK_0( 2, "Scaling factor for the reservoir: " << flowScalingFactor
+                                                                  << "; for the well(s): " << wellScalingFactor );
+
+  return LvArray::math::min( flowScalingFactor, wellScalingFactor );
+}
+
 
 } /* namespace geosx */

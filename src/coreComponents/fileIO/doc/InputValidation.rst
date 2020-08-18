@@ -47,7 +47,7 @@ While these are ignored by the main code, they may be used to configure various 
   :end-before: <!-- SPHINX_TUT_INT_HEX_PROBLEM_OPEN_END -->
 
 
-The following sections discuss how to setup Sublime Text, Eclipse, and pygeos to validate input xml files before submitting jobs to GEOSX.
+The following sections discuss how to setup Sublime Text, Eclipse, and geosx_xml_tools to validate input xml files before submitting jobs to GEOSX.
 
 
 Sublime Text
@@ -82,12 +82,12 @@ Eclipse will automatically fetch the schema, and validate an active xml file.
 The editor will highlight any lines with errors, and underline the specific errors.
 
 
-Pygeos
+GEOSX XML Tools
 ------------------------------
 
 There are a number of command-line tools for validating input xml files.
-The pygeos package, which is used to enable advanced features such as parameters, symbolic math, etc., contains tools for validating xml files.
-To do so, call the command-line script with the -s argument, i.e.: ``pygeos input_file.xml -s /path/to/schema.xsd``.
+The geosx_xml_tools package, which is used to enable advanced features such as parameters, symbolic math, etc., contains tools for validating xml files.
+To do so, call the command-line script with the -s argument, i.e.: `preprocess_xml input_file.xml -s /path/to/schema.xsd`.
 After compiling the final xml file, pygeos will fetch the designated schema, validate, and print any errors to the screen.
 
 Note: Attributes that are using advanced xml features will likely contain characters that are not allowed by their corresponding type pattern.

@@ -41,7 +41,7 @@ public:
 
   static constexpr auto m_catalogName = "CO2Solubility";
   static string CatalogName()                    { return m_catalogName; }
-  virtual string GetCatalogName() override final { return CatalogName(); }
+  virtual string getCatalogName() const override final { return CatalogName(); }
 
   virtual void Partition( EvalVarArgs const & pressure,
                           EvalVarArgs const & temperature,

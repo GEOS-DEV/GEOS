@@ -103,6 +103,30 @@ public:
     c[5][5] = G;
   }
 
+  void GetStiffness( localIndex const k, array2d< real64 > & c ) const
+  {
+    real64 const G = m_shearModulus[k];
+    real64 const Lame = m_bulkModulus[k] - 2.0/3.0 * G;
+
+    c[0][0] = Lame + 2 * G;
+    c[0][1] = Lame;
+    c[0][2] = Lame;
+
+    c[1][0] = Lame;
+    c[1][1] = Lame + 2 * G;
+    c[1][2] = Lame;
+
+    c[2][0] = Lame;
+    c[2][1] = Lame;
+    c[2][2] = Lame + 2 * G;
+
+    c[3][3] = G;
+
+    c[4][4] = G;
+
+    c[5][5] = G;
+  }
+
   GEOSX_HOST_DEVICE
   virtual void SmallStrainNoState( localIndex const k,
                                    real64 const ( &voigtStrain )[ 6 ],
@@ -275,14 +299,6 @@ public:
    */
   virtual ~LinearElasticIsotropic() override;
 
-  virtual void
-  DeliverClone( string const & name,
-                Group * const parent,
-                std::unique_ptr< ConstitutiveBase > & clone ) const override;
-
-  virtual void AllocateConstitutiveData( dataRepository::Group * const parent,
-                                         localIndex const numConstitutivePointsPerParentIndex ) override;
-
   /**
    * @name Static Factory Catalog members and functions
    */
@@ -296,7 +312,7 @@ public:
    */
   static std::string CatalogName() { return m_catalogNameString; }
 
-  virtual string GetCatalogName() override { return CatalogName(); }
+  virtual string getCatalogName() const override { return CatalogName(); }
 
   ///@}
 
@@ -327,13 +343,13 @@ public:
    * @brief Setter for the default bulk modulus.
    * @param[in] bulkModulus The value that m_defaultBulkModulus will be set to.
    */
-  void setDefaultBulkModulus( real64 const bulkModulus )   { m_defaultBulkModulus = bulkModulus; }
+  void setDefaultBulkModulus( real64 const bulkModulus );
 
   /**
    * @brief Setter for the default shear modulus.
    * @param[in] bulkModulus The value that m_defaultShearModulus will be set to.
    */
-  void setDefaultShearModulus( real64 const shearModulus ) { m_defaultShearModulus = shearModulus; }
+  void setDefaultShearModulus( real64 const shearModulus );
 
   /**
    * @brief Accessor for bulk modulus
@@ -368,7 +384,7 @@ public:
    *        that refers to the data in this.
    * @return An instantiation of LinearElasticIsotropicUpdate.
    */
-  LinearElasticIsotropicUpdates createKernelUpdates( bool const includeState = true )
+  LinearElasticIsotropicUpdates createKernelUpdates( bool const includeState = true ) const
   {
     if( includeState )
     {

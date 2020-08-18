@@ -145,8 +145,8 @@ void FlowSolverBase::InitializePreSubGroups( Group * const rootGroup )
 
   FiniteVolumeManager & fvManager = numericalMethodManager.getFiniteVolumeManager();
 
-  FluxApproximationBase * const fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
-  array1d< string > & stencilTargetRegions = fluxApprox->targetRegions();
+  FluxApproximationBase & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
+  array1d< string > & stencilTargetRegions = fluxApprox.targetRegions();
   std::set< string > stencilTargetRegionsSet( stencilTargetRegions.begin(), stencilTargetRegions.end() );
   for( auto const & targetRegion : targetRegionNames() )
   {
@@ -257,5 +257,16 @@ void FlowSolverBase::ResetViews( MeshLevel & mesh )
   m_element_dSeparationCoefficient_dAperture.setName( getName() + "/accessors/" + FaceElementSubRegion::viewKeyStruct::dSeparationCoeffdAperString );
 #endif
 }
+
+std::vector< string > FlowSolverBase::getConstitutiveRelations( string const & regionName ) const
+{
+
+  localIndex const regionIndex = this->targetRegionIndex( regionName );
+
+  std::vector< string > rval{ m_solidModelNames[regionIndex], m_fluidModelNames[regionIndex] };
+
+  return rval;
+}
+
 
 } // namespace geosx

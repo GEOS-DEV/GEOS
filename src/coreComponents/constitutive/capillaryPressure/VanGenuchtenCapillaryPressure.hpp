@@ -110,13 +110,9 @@ public:
 
   virtual ~VanGenuchtenCapillaryPressure() override;
 
-  void DeliverClone( string const & name,
-                     Group * const parent,
-                     std::unique_ptr< ConstitutiveBase > & clone ) const override;
-
   static std::string CatalogName() { return "VanGenuchtenCapillaryPressure"; }
 
-  virtual string GetCatalogName() override { return CatalogName(); }
+  virtual string getCatalogName() const override { return CatalogName(); }
 
   /// Type of kernel wrapper for in-kernel update
   using KernelWrapper = VanGenuchtenCapillaryPressureUpdate;
@@ -132,7 +128,9 @@ public:
     static constexpr auto phaseMinVolumeFractionString      = "phaseMinVolumeFraction";
     static constexpr auto phaseCapPressureExponentInvString = "phaseCapPressureExponentInv";
     static constexpr auto phaseCapPressureMultiplierString  = "phaseCapPressureMultiplier";
-    static constexpr auto capPressureEpsilonString = "capPressureEpsilon";
+    static constexpr auto capPressureEpsilonString          = "capPressureEpsilon";
+    static constexpr auto volFracScaleString                = "volFracScale";
+
   } viewKeysVanGenuchtenCapillaryPressure;
 
 protected:
