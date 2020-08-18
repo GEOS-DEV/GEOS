@@ -4,9 +4,11 @@
 set( constitutive_headers
      ConstitutiveManager.hpp
      ConstitutiveBase.hpp
+     ConstitutivePassThruHandler.hpp
      ExponentialRelation.hpp
      NullModel.hpp
      capillaryPressure/CapillaryPressureBase.hpp
+     capillaryPressure/capillaryPressureSelector.hpp
      capillaryPressure/BrooksCoreyCapillaryPressure.hpp
      capillaryPressure/VanGenuchtenCapillaryPressure.hpp
      contact/ContactRelationBase.hpp
@@ -21,11 +23,16 @@ set( constitutive_headers
      fluid/PVTFunctions/SpanWagnerCO2DensityFunction.hpp    
      fluid/PVTFunctions/UtilityFunctions.hpp     
      fluid/SingleFluidBase.hpp
+     fluid/singleFluidSelector.hpp
      fluid/MultiFluidBase.hpp
+     fluid/multiFluidSelector.hpp
+     fluid/MultiFluidUtils.hpp
      fluid/CompressibleSinglePhaseFluid.hpp
      fluid/SlurryFluidBase.hpp
+     fluid/slurryFluidSelector.hpp
      fluid/ProppantSlurryFluid.hpp
      fluid/ParticleFluidBase.hpp
+     fluid/particleFluidSelector.hpp
      fluid/ParticleFluid.hpp          
      solid/Damage.hpp
      solid/LinearElasticAnisotropic.hpp
@@ -37,6 +44,7 @@ set( constitutive_headers
      relativePermeability/RelativePermeabilityBase.hpp
      relativePermeability/BrooksCoreyRelativePermeability.hpp
      relativePermeability/BrooksCoreyBakerRelativePermeability.hpp
+     relativePermeability/relativePermeabilitySelector.hpp
      relativePermeability/VanGenuchtenBakerRelativePermeability.hpp
      capillaryPressure/CapillaryPressureBase.hpp
      capillaryPressure/BrooksCoreyCapillaryPressure.hpp

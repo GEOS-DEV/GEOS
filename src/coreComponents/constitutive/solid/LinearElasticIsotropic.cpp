@@ -65,116 +65,99 @@ LinearElasticIsotropic::~LinearElasticIsotropic()
 {}
 
 
-void
-LinearElasticIsotropic::DeliverClone( string const & name,
-                                      Group * const parent,
-                                      std::unique_ptr< ConstitutiveBase > & clone ) const
+void LinearElasticIsotropic::setDefaultBulkModulus( real64 const bulkModulus )
 {
-  if( !clone )
-  {
-    clone = std::make_unique< LinearElasticIsotropic >( name, parent );
-  }
-  SolidBase::DeliverClone( name, parent, clone );
-  LinearElasticIsotropic * const newConstitutiveRelation = dynamic_cast< LinearElasticIsotropic * >(clone.get());
-
-
-  newConstitutiveRelation->m_defaultBulkModulus = m_defaultBulkModulus;
-  newConstitutiveRelation->m_bulkModulus = m_bulkModulus;
-  newConstitutiveRelation->m_defaultDensity = m_defaultDensity;
-  newConstitutiveRelation->m_density = m_density;
-  newConstitutiveRelation->m_defaultShearModulus = m_defaultShearModulus;
-  newConstitutiveRelation->m_shearModulus = m_shearModulus;
-  newConstitutiveRelation->m_stress = m_stress;
+  m_defaultBulkModulus = bulkModulus;
+  this->getWrapper< decltype(m_bulkModulus) >( viewKeyStruct::bulkModulusString )->
+    setApplyDefaultValue( m_defaultBulkModulus );
 }
 
-void LinearElasticIsotropic::AllocateConstitutiveData( dataRepository::Group * const parent,
-                                                       localIndex const numConstitutivePointsPerParentIndex )
+void LinearElasticIsotropic::setDefaultShearModulus( real64 const shearModulus )
 {
-  SolidBase::AllocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
-
-  this->resize( parent->size() );
-  m_bulkModulus.resize( parent->size() );
-  m_shearModulus.resize( parent->size() );
-
-  m_bulkModulus = m_defaultBulkModulus;
-  m_shearModulus = m_defaultShearModulus;
-
+  m_defaultShearModulus = shearModulus;
+  this->getWrapper< decltype(m_shearModulus) >( viewKeyStruct::shearModulusString )->
+    setApplyDefaultValue( m_defaultShearModulus );
 }
+
 
 void LinearElasticIsotropic::PostProcessInput()
 {
 
-  if( !m_postProcessed )
+  SolidBase::PostProcessInput();
+
+  real64 & nu = getReference< real64 >( viewKeyStruct::defaultPoissonRatioString );
+  real64 & E  = getReference< real64 >( viewKeyStruct::defaultYoungsModulusString );
+  real64 & K  = m_defaultBulkModulus;
+  real64 & G  = m_defaultShearModulus;
+
+  string errorCheck( "( " );
+  int numConstantsSpecified = 0;
+  if( nu >= 0.0 )
   {
-    real64 & nu = getReference< real64 >( viewKeyStruct::defaultPoissonRatioString );
-    real64 & E  = getReference< real64 >( viewKeyStruct::defaultYoungsModulusString );
-    real64 & K  = m_defaultBulkModulus;
-    real64 & G  = m_defaultShearModulus;
-
-    string errorCheck( "( " );
-    int numConstantsSpecified = 0;
-    if( nu >= 0.0 )
-    {
-      ++numConstantsSpecified;
-      errorCheck += "nu, ";
-    }
-    if( E >= 0.0 )
-    {
-      ++numConstantsSpecified;
-      errorCheck += "E, ";
-    }
-    if( K >= 0.0 )
-    {
-      ++numConstantsSpecified;
-      errorCheck += "K, ";
-    }
-    if( G >= 0.0 )
-    {
-      ++numConstantsSpecified;
-      errorCheck += "G, ";
-    }
-    errorCheck += ")";
-
-    GEOSX_ERROR_IF( numConstantsSpecified != 2,
-                    "A specific pair of elastic constants is required. Either (K,G) or (E,nu). "<<
-                    "You have specified "<<errorCheck );
-
-    if( nu >= 0.0 && E >= 0.0 )
-    {
-      K = E / (3 * ( 1 - 2*nu ) );
-      G = E / (2 * ( 1 + nu ) );
-    }
-    else if( nu >= 0.0 && G >= 0.0 )
-    {
-      E = 2 * G * ( 1 + nu );
-      K = E / (3 * ( 1 - 2*nu ) );
-    }
-    else if( nu >= 0 && K >= 0.0 )
-    {
-      E = 3 * K * ( 1 - 2 * nu );
-      G = E / ( 2 * ( 1 + nu ) );
-    }
-    else if( E >= 0.0 && K >=0 )
-    {
-      nu = 0.5 * ( 1 - E /  ( 3 * K ) );
-      G = E / ( 2 * ( 1 + nu ) );
-    }
-    else if( E >= 0.0 && G >= 0 )
-    {
-      nu = 0.5 * E / G - 1.0;
-      K = E / (3 * ( 1 - 2*nu ) );
-    }
-    else if( K >= 0.0 && G >= 0.0 )
-    {
-      E = 9 * K * G / ( 3 * K + G );
-      nu = ( 3 * K - 2 * G ) / ( 2 * ( 3 * K + G ) );
-    }
-    else
-    {
-      GEOSX_ERROR( "invalid specification for default elastic constants. "<<errorCheck<<" has been specified." );
-    }
+    ++numConstantsSpecified;
+    errorCheck += "nu, ";
   }
-  m_postProcessed = true;
+  if( E >= 0.0 )
+  {
+    ++numConstantsSpecified;
+    errorCheck += "E, ";
+  }
+  if( K >= 0.0 )
+  {
+    ++numConstantsSpecified;
+    errorCheck += "K, ";
+  }
+  if( G >= 0.0 )
+  {
+    ++numConstantsSpecified;
+    errorCheck += "G, ";
+  }
+  errorCheck += ")";
+
+  GEOSX_ERROR_IF( numConstantsSpecified != 2,
+                  "A specific pair of elastic constants is required. Either (K,G) or (E,nu). "<<
+                  "You have specified "<<errorCheck );
+
+  if( nu >= 0.0 && E >= 0.0 )
+  {
+    K = E / (3 * ( 1 - 2*nu ) );
+    G = E / (2 * ( 1 + nu ) );
+  }
+  else if( nu >= 0.0 && G >= 0.0 )
+  {
+    E = 2 * G * ( 1 + nu );
+    K = E / (3 * ( 1 - 2*nu ) );
+  }
+  else if( nu >= 0 && K >= 0.0 )
+  {
+    E = 3 * K * ( 1 - 2 * nu );
+    G = E / ( 2 * ( 1 + nu ) );
+  }
+  else if( E >= 0.0 && K >=0 )
+  {
+    nu = 0.5 * ( 1 - E /  ( 3 * K ) );
+    G = E / ( 2 * ( 1 + nu ) );
+  }
+  else if( E >= 0.0 && G >= 0 )
+  {
+    nu = 0.5 * E / G - 1.0;
+    K = E / (3 * ( 1 - 2*nu ) );
+  }
+  else if( K >= 0.0 && G >= 0.0 )
+  {
+    E = 9 * K * G / ( 3 * K + G );
+    nu = ( 3 * K - 2 * G ) / ( 2 * ( 3 * K + G ) );
+  }
+  else
+  {
+    GEOSX_ERROR( "invalid specification for default elastic constants. "<<errorCheck<<" has been specified." );
+  }
+
+  this->getWrapper< array1d< real64 > >( viewKeyStruct::bulkModulusString )->
+    setApplyDefaultValue( m_defaultBulkModulus );
+
+  this->getWrapper< array1d< real64 > >( viewKeyStruct::shearModulusString )->
+    setApplyDefaultValue( m_defaultShearModulus );
 }
 
 //void LinearElasticIsotropic::calculateStrainEnergyDensity()

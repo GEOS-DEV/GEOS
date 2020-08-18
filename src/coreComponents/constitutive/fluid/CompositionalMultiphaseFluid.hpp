@@ -39,35 +39,23 @@ public:
 
   virtual ~CompositionalMultiphaseFluid() override;
 
-  virtual void DeliverClone( string const & name,
-                             Group * const parent,
-                             std::unique_ptr< ConstitutiveBase > & clone ) const override;
+  virtual std::unique_ptr< ConstitutiveBase >
+  deliverClone( string const & name,
+                Group * const parent ) const override;
 
   static std::string CatalogName() { return "CompositionalMultiphaseFluid"; }
 
-  virtual string GetCatalogName() override { return CatalogName(); }
+  virtual string getCatalogName() const override { return CatalogName(); }
 
 
   struct viewKeyStruct : MultiFluidPVTPackageWrapper::viewKeyStruct
   {
-    static constexpr auto equationsOfStateString = "equationsOfState";
-
+    static constexpr auto equationsOfStateString             = "equationsOfState";
     static constexpr auto componentCriticalPressureString    = "componentCriticalPressure";
     static constexpr auto componentCriticalTemperatureString = "componentCriticalTemperature";
     static constexpr auto componentAcentricFactorString      = "componentAcentricFactor";
     static constexpr auto componentVolumeShiftString         = "componentVolumeShift";
     static constexpr auto componentBinaryCoeffString         = "componentBinaryCoeff";
-
-    using ViewKey = dataRepository::ViewKey;
-
-    ViewKey equationsOfState = { equationsOfStateString };
-
-    ViewKey componentCriticalPressure    = { componentCriticalPressureString };
-    ViewKey componentCriticalTemperature = { componentCriticalTemperatureString };
-    ViewKey componentAcentricFactor      = { componentAcentricFactorString };
-    ViewKey componentVolumeShift         = { componentVolumeShiftString };
-    ViewKey componentBinaryCoeff         = { componentBinaryCoeffString };
-
   } viewKeysCompositionalMultiphaseFluid;
 
 protected:

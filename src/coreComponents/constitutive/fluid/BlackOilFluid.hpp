@@ -42,19 +42,17 @@ public:
     LiveOil
   };
 
-  static FluidType stringToFluidType( string const & str );
-
   BlackOilFluid( std::string const & name, Group * const parent );
 
   virtual ~BlackOilFluid() override;
 
-  void DeliverClone( string const & name,
-                     Group * const parent,
-                     std::unique_ptr< ConstitutiveBase > & clone ) const override;
+  std::unique_ptr< ConstitutiveBase >
+  deliverClone( string const & name,
+                Group * const parent ) const override;
 
   static std::string CatalogName() { return "BlackOilFluid"; }
 
-  virtual string GetCatalogName() override { return CatalogName(); }
+  virtual string getCatalogName() const override { return CatalogName(); }
 
 
   struct viewKeyStruct : MultiFluidPVTPackageWrapper::viewKeyStruct
@@ -62,13 +60,6 @@ public:
     static constexpr auto surfaceDensitiesString = "surfaceDensities";
     static constexpr auto tableFilesString = "tableFiles";
     static constexpr auto fluidTypeString = "fluidType";
-
-    using ViewKey = dataRepository::ViewKey;
-
-    ViewKey surfaceDensities = { surfaceDensitiesString };
-    ViewKey tableFiles       = { tableFilesString };
-    ViewKey fluidType        = { fluidTypeString };
-
   } viewKeysBlackOilFluid;
 
 protected:

@@ -42,19 +42,16 @@ namespace SolidMechanicsLagrangianFEMKernels
  */
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
-          int NUM_NODES_PER_ELEM,
-          int >
+          typename FE_TYPE >
 class ImplicitNewmark : public QuasiStatic< SUBREGION_TYPE,
                                             CONSTITUTIVE_TYPE,
-                                            NUM_NODES_PER_ELEM,
-                                            NUM_NODES_PER_ELEM >
+                                            FE_TYPE >
 {
 public:
   /// Alias for the base class;
   using Base = QuasiStatic< SUBREGION_TYPE,
                             CONSTITUTIVE_TYPE,
-                            NUM_NODES_PER_ELEM,
-                            NUM_NODES_PER_ELEM >;
+                            FE_TYPE >;
 
   using Base::numNodesPerElem;
   using Base::numTestSupportPointsPerElem;
@@ -84,11 +81,12 @@ public:
                    EdgeManager const & edgeManager,
                    FaceManager const & faceManager,
                    SUBREGION_TYPE const & elementSubRegion,
-                   FiniteElementBase const * const finiteElementSpace,
+                   FE_TYPE const & finiteElementSpace,
                    CONSTITUTIVE_TYPE * const inputConstitutiveType,
                    arrayView1d< globalIndex const > const & inputDofNumber,
-                   ParallelMatrix & inputMatrix,
-                   ParallelVector & inputRhs,
+                   globalIndex const rankOffset,
+                   CRSMatrixView< real64, globalIndex const > const & inputMatrix,
+                   arrayView1d< real64 > const & inputRhs,
                    real64 const (&inputGravityVector)[3],
                    real64 const inputNewmarkGamma,
                    real64 const inputNewmarkBeta,
@@ -102,6 +100,7 @@ public:
           finiteElementSpace,
           inputConstitutiveType,
           inputDofNumber,
+          rankOffset,
           inputMatrix,
           inputRhs,
           inputGravityVector ),
@@ -188,7 +187,7 @@ public:
   {
 
     real64 N[numNodesPerElem];
-    FiniteElementShapeKernel::shapeFunctionValues( q, N );
+    FE_TYPE::shapeFunctionValues( q, N );
 
     Base::quadraturePointJacobianContribution( k, q, stack, [&] GEOSX_DEVICE ( localIndex const a,
                                                                                localIndex const b ) mutable
@@ -217,7 +216,7 @@ public:
    * The ImplicitNewmark implementation adds residual and jacobian
    * contributions from  stiffness based damping.
    */
-  //    GEOSX_HOST_DEVICE
+  GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   real64 complete( localIndex const k,
                    StackVariables & stack ) const

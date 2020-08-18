@@ -75,16 +75,15 @@ public:
 
 
   static std::string CatalogName() { return string( "Poro" ) + BASE::m_catalogNameString; }
-  virtual string GetCatalogName() override { return CatalogName(); }
+  virtual string getCatalogName() const override { return CatalogName(); }
 
   virtual void PostProcessInput() override;
 
-  virtual void
-  DeliverClone( string const & name,
-                dataRepository::Group * const parent,
-                std::unique_ptr< ConstitutiveBase > & clone ) const override;
+  std::unique_ptr< ConstitutiveBase >
+  deliverClone( string const & name,
+                dataRepository::Group * const parent ) const override;
 
-  virtual void AllocateConstitutiveData( dataRepository::Group * const parent,
+  virtual void allocateConstitutiveData( dataRepository::Group * const parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
   inline virtual void
@@ -94,6 +93,9 @@ public:
   {
     m_poreVolumeRelation.Compute( pres, m_poreVolumeMultiplier[k][q], m_dPVMult_dPressure[k][q] );
   }
+
+  virtual void StateUpdateBatchPressure( arrayView1d< real64 const > const & pres,
+                                         arrayView1d< real64 const > const & dPres ) override final;
 
   KernelWrapper createKernelUpdates()
   {

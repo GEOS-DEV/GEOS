@@ -46,32 +46,28 @@ public:
   virtual void
   ImplicitStepSetup( real64 const & time_n,
                      real64 const & dt,
-                     DomainPartition * const domain,
-                     DofManager & dofManager,
-                     ParallelMatrix & matrix,
-                     ParallelVector & rhs,
-                     ParallelVector & solution ) override final;
+                     DomainPartition & domain ) override final;
 
   virtual void
   ImplicitStepComplete( real64 const & time_n,
                         real64 const & dt,
-                        DomainPartition * const domain ) override final;
+                        DomainPartition & domain ) override final;
 
   virtual void
-  ResetStateToBeginningOfStep( DomainPartition * const domain ) override;
+  ResetStateToBeginningOfStep( DomainPartition & domain ) override;
 
   virtual real64
   SolverStep( real64 const & time_n,
               real64 const & dt,
               int const cycleNumber,
-              DomainPartition * const domain ) override;
+              DomainPartition & domain ) override;
 
   real64 SplitOperatorStep( real64 const & time_n,
                             real64 const & dt,
                             integer const cycleNumber,
-                            DomainPartition * const domain );
+                            DomainPartition & domain );
 
-  void mapDamageToQuadrature( DomainPartition * const domain );
+  void mapDamageToQuadrature( DomainPartition & domain );
 
   enum class couplingTypeOption : int
   {

@@ -16,11 +16,10 @@
  * @file MultiFluidBase.hpp
  */
 
-#ifndef GEOSX_CONSTITUTIVE_FLUID_MULTIFLUIDBASE_HPP
-#define GEOSX_CONSTITUTIVE_FLUID_MULTIFLUIDBASE_HPP
+#ifndef GEOSX_CONSTITUTIVE_FLUID_MULTIFLUIDBASE_HPP_
+#define GEOSX_CONSTITUTIVE_FLUID_MULTIFLUIDBASE_HPP_
 
 #include "constitutive/ConstitutiveBase.hpp"
-#include "rajaInterface/GEOS_RAJA_Interface.hpp"
 
 namespace geosx
 {
@@ -28,145 +27,140 @@ namespace geosx
 namespace constitutive
 {
 
-namespace detail
-{
-
-template< typename T, int DIM >
-struct ArraySlice_helper
-{
-  using type = ArraySlice< T, DIM >;
-};
-
-// an array slice of DIM=0 decays to a reference to scalar
-template< typename T >
-struct ArraySlice_helper< T, 0 >
-{
-  using type = T &;
-};
-
-// an array1 slice of DIM=1 uses specialization (possibly a raw pointer)
-template< typename T >
-struct ArraySlice_helper< T, 1 >
-{
-  using type = arraySlice1d< T >;
-};
-
-}
-
-template< int DIM >
-using real_ArraySlice = typename detail::ArraySlice_helper< real64, DIM >::type;
-
-template< int DIM >
-using real_array_const_slice = typename detail::ArraySlice_helper< real64 const, DIM >::type;
-
-// helper struct to represent a var and its derivatives
-template< int DIM >
-struct CompositionalVarContainer
-{
-  real_ArraySlice< DIM >   value; // variable value
-  real_ArraySlice< DIM >   dPres; // derivative w.r.t. pressure
-  real_ArraySlice< DIM >   dTemp; // derivative w.r.t. temperature
-  real_ArraySlice< DIM+1 > dComp; // derivative w.r.t. composition
-};
-
-template< int DIM >
-struct CompositionalVarConstContainer
-{
-  real_array_const_slice< DIM >   value; // variable value
-  real_array_const_slice< DIM >   dPres; // derivative w.r.t. pressure
-  real_array_const_slice< DIM >   dTemp; // derivative w.r.t. temperature
-  real_array_const_slice< DIM+1 > dComp; // derivative w.r.t. composition
-};
-
-class MultiFluidBase : public ConstitutiveBase
+class MultiFluidBaseUpdate
 {
 public:
 
-  MultiFluidBase( std::string const & name, Group * const parent );
-
-  virtual ~MultiFluidBase() override;
-
-  virtual void DeliverClone( string const & name,
-                             Group * const parent,
-                             std::unique_ptr< ConstitutiveBase > & clone ) const override;
-
-  virtual void AllocateConstitutiveData( dataRepository::Group * const parent,
-                                         localIndex const numConstitutivePointsPerParentIndex ) override;
-
-  // *** MultiFluid-specific interface
+  /**
+   * @brief Get number of elements in this wrapper.
+   * @return number of elements
+   */
+  GEOSX_HOST_DEVICE
+  localIndex numElems() const { return m_phaseFraction.size( 0 ); }
 
   /**
-   * @brief Maximum supported number of fluid components (species)
-   *
-   * @note This puts an upper bound on memory use, allowing to optimize code better
+   * @brief Get number of gauss points per element.
+   * @return number of gauss points per element
    */
-  static constexpr localIndex MAX_NUM_COMPONENTS = 32;
+  GEOSX_HOST_DEVICE
+  localIndex numGauss() const { return m_phaseFraction.size( 1 ); }
 
   /**
-   * @brief Maximum supported number of fluid phases
-   *
-   * @note This puts an upper bound on memory use, allowing to optimize code better
+   * @brief Get number of fluid components.
+   * @return number of components
    */
-  static constexpr localIndex MAX_NUM_PHASES = 4;
+  GEOSX_HOST_DEVICE
+  localIndex numComponents() const { return m_componentMolarWeight.size(); }
 
   /**
-   * @brief Perform a single point constitutive update.
-   * @param[in] pressure target pressure value
-   * @param[in] temperature target temperature value
-   * @param[in] composition target fluid composition array
-   * @param[in] k first constitutive index (e.g. elem index)
-   * @param[in] q second constitutive index (e.g. quadrature index)
-   *
-   * @note This function should generally not be called from a kernel, use BatchUpdate instead
+   * @brief Get number of fluid phases.
+   * @return number of phases
    */
-  virtual void PointUpdate( real64 const & pressure,
-                            real64 const & temperature,
-                            arraySlice1d< real64 const > const & composition,
-                            localIndex const k,
-                            localIndex const q ) = 0;
+  GEOSX_HOST_DEVICE
+  localIndex numPhases() const { return m_phaseFraction.size( 2 ); }
 
-  /**
-   * @brief Perform a batch constitutive update (all points).
-   * @param[in] pressure array containing target pressure values
-   * @param[in] temperature array containing target temperature values
-   * @param[in] composition 2D array containing target fluid composition values
-   */
-  virtual void BatchUpdate( arrayView1d< real64 const > const & pressure,
-                            arrayView1d< real64 const > const & temperature,
-                            arrayView2d< real64 const > const & composition ) = 0;
+protected:
 
-  /**
-   * @brief Compute constitutive values at a single point.
-   * @param[in]  pressure target pressure value
-   * @param[in]  temperature target temperature value
-   * @param[in]  composition target fluid composition array
-   * @param[out] phaseFraction phase fractions
-   * @param[out] dPhaseFraction_dPressure derivatives of phase fractions w.r.t. pressure
-   * @param[out] dPhaseFraction_dTemperature derivatives of phase fractions w.r.t. temperature
-   * @param[out] dPhaseFraction_dGlobalCompFraction derivatives of phase fractions w.r.t. composition
-   * @param[out] phaseDensity phase densitites
-   * @param[out] dPhaseDensity_dPressure derivatives of phase densitites w.r.t. pressure
-   * @param[out] dPhaseDensity_dTemperature derivatives of phase densitites w.r.t. temperature
-   * @param[out] dPhaseDensity_dGlobalCompFraction derivatives of phase densitites w.r.t. composition
-   * @param[out] phaseViscosity phase viscosities
-   * @param[out] dPhaseViscosity_dPressure derivatives of phase viscosities w.r.t. pressure
-   * @param[out] dPhaseViscosity_dTemperature derivatives of phase viscosities w.r.t. temperature
-   * @param[out] dPhaseViscosity_dGlobalCompFraction derivatives of phase viscosities w.r.t. composition
-   * @param[out] phaseCompFraction phase compositions
-   * @param[out] dPhaseCompFraction_dPressure derivatives of phase compositions w.r.t. pressure
-   * @param[out] dPhaseCompFraction_dTemperature derivatives of phase compositions w.r.t. temperature
-   * @param[out] dPhaseCompFraction_dGlobalCompFraction derivatives of phase compositions w.r.t. composition
-   * @param[out] totalDensity total fluid mixture density
-   * @param[out] dTotalDensity_dPressure derivatives of total density w.r.t. pressure
-   * @param[out] dTotalDensity_dTemperature derivatives of total density w.r.t. temperature
-   * @param[out] dTotalDensity_dGlobalCompFraction derivatives of total density w.r.t. composition
-   *
-   * @note This function should only be called in extremely rare cases, when constitutive state
-   * needs to be evaluated at a point where constitutive model does not have storage allocated.
-   * It should not be called from kernels since it is virtual.
-   */
-  virtual void Compute( real64 const & pressure,
-                        real64 const & temperature,
+  MultiFluidBaseUpdate( arrayView1d< real64 const > const & componentMolarWeight,
+                        bool const useMass,
+                        arrayView3d< real64 > const & phaseFraction,
+                        arrayView3d< real64 > const & dPhaseFraction_dPressure,
+                        arrayView3d< real64 > const & dPhaseFraction_dTemperature,
+                        arrayView4d< real64 > const & dPhaseFraction_dGlobalCompFraction,
+                        arrayView3d< real64 > const & phaseDensity,
+                        arrayView3d< real64 > const & dPhaseDensity_dPressure,
+                        arrayView3d< real64 > const & dPhaseDensity_dTemperature,
+                        arrayView4d< real64 > const & dPhaseDensity_dGlobalCompFraction,
+                        arrayView3d< real64 > const & phaseViscosity,
+                        arrayView3d< real64 > const & dPhaseViscosity_dPressure,
+                        arrayView3d< real64 > const & dPhaseViscosity_dTemperature,
+                        arrayView4d< real64 > const & dPhaseViscosity_dGlobalCompFraction,
+                        arrayView4d< real64 > const & phaseCompFraction,
+                        arrayView4d< real64 > const & dPhaseCompFraction_dPressure,
+                        arrayView4d< real64 > const & dPhaseCompFraction_dTemperature,
+                        arrayView5d< real64 > const & dPhaseCompFraction_dGlobalCompFraction,
+                        arrayView2d< real64 > const & totalDensity,
+                        arrayView2d< real64 > const & dTotalDensity_dPressure,
+                        arrayView2d< real64 > const & dTotalDensity_dTemperature,
+                        arrayView3d< real64 > const & dTotalDensity_dGlobalCompFraction )
+    : m_componentMolarWeight( componentMolarWeight ),
+    m_useMass( useMass ),
+    m_phaseFraction( phaseFraction ),
+    m_dPhaseFraction_dPressure( dPhaseFraction_dPressure ),
+    m_dPhaseFraction_dTemperature( dPhaseFraction_dTemperature ),
+    m_dPhaseFraction_dGlobalCompFraction( dPhaseFraction_dGlobalCompFraction ),
+    m_phaseDensity( phaseDensity ),
+    m_dPhaseDensity_dPressure( dPhaseDensity_dPressure ),
+    m_dPhaseDensity_dTemperature( dPhaseDensity_dTemperature ),
+    m_dPhaseDensity_dGlobalCompFraction( dPhaseDensity_dGlobalCompFraction ),
+    m_phaseViscosity( phaseViscosity ),
+    m_dPhaseViscosity_dPressure( dPhaseViscosity_dPressure ),
+    m_dPhaseViscosity_dTemperature( dPhaseViscosity_dTemperature ),
+    m_dPhaseViscosity_dGlobalCompFraction( dPhaseViscosity_dGlobalCompFraction ),
+    m_phaseCompFraction( phaseCompFraction ),
+    m_dPhaseCompFraction_dPressure( dPhaseCompFraction_dPressure ),
+    m_dPhaseCompFraction_dTemperature( dPhaseCompFraction_dTemperature ),
+    m_dPhaseCompFraction_dGlobalCompFraction( dPhaseCompFraction_dGlobalCompFraction ),
+    m_totalDensity( totalDensity ),
+    m_dTotalDensity_dPressure( dTotalDensity_dPressure ),
+    m_dTotalDensity_dTemperature( dTotalDensity_dTemperature ),
+    m_dTotalDensity_dGlobalCompFraction( dTotalDensity_dGlobalCompFraction )
+  {}
+
+  /// Default copy constructor
+  MultiFluidBaseUpdate( MultiFluidBaseUpdate const & ) = default;
+
+  /// Default move constructor
+  MultiFluidBaseUpdate( MultiFluidBaseUpdate && ) = default;
+
+  /// Deleted copy assignment operator
+  MultiFluidBaseUpdate & operator=( MultiFluidBaseUpdate const & ) = delete;
+
+  /// Deleted move assignment operator
+  MultiFluidBaseUpdate & operator=( MultiFluidBaseUpdate && ) = delete;
+
+  arrayView1d< real64 const > m_componentMolarWeight;
+
+  bool m_useMass;
+
+  arrayView3d< real64 > m_phaseFraction;
+  arrayView3d< real64 > m_dPhaseFraction_dPressure;
+  arrayView3d< real64 > m_dPhaseFraction_dTemperature;
+  arrayView4d< real64 > m_dPhaseFraction_dGlobalCompFraction;
+
+  arrayView3d< real64 > m_phaseDensity;
+  arrayView3d< real64 > m_dPhaseDensity_dPressure;
+  arrayView3d< real64 > m_dPhaseDensity_dTemperature;
+  arrayView4d< real64 > m_dPhaseDensity_dGlobalCompFraction;
+
+  arrayView3d< real64 > m_phaseViscosity;
+  arrayView3d< real64 > m_dPhaseViscosity_dPressure;
+  arrayView3d< real64 > m_dPhaseViscosity_dTemperature;
+  arrayView4d< real64 > m_dPhaseViscosity_dGlobalCompFraction;
+
+  arrayView4d< real64 > m_phaseCompFraction;
+  arrayView4d< real64 > m_dPhaseCompFraction_dPressure;
+  arrayView4d< real64 > m_dPhaseCompFraction_dTemperature;
+  arrayView5d< real64 > m_dPhaseCompFraction_dGlobalCompFraction;
+
+  arrayView2d< real64 > m_totalDensity;
+  arrayView2d< real64 > m_dTotalDensity_dPressure;
+  arrayView2d< real64 > m_dTotalDensity_dTemperature;
+  arrayView3d< real64 > m_dTotalDensity_dGlobalCompFraction;
+
+private:
+
+  virtual void Compute( real64 const pressure,
+                        real64 const temperature,
+                        arraySlice1d< real64 const > const & composition,
+                        arraySlice1d< real64 > const & phaseFraction,
+                        arraySlice1d< real64 > const & phaseDensity,
+                        arraySlice1d< real64 > const & phaseViscosity,
+                        arraySlice2d< real64 > const & phaseCompFraction,
+                        real64 & totalDensity ) const = 0;
+
+  virtual void Compute( real64 const pressure,
+                        real64 const temperature,
                         arraySlice1d< real64 const > const & composition,
                         arraySlice1d< real64 > const & phaseFraction,
                         arraySlice1d< real64 > const & dPhaseFraction_dPressure,
@@ -188,6 +182,41 @@ public:
                         real64 & dTotalDensity_dPressure,
                         real64 & dTotalDensity_dTemperature,
                         arraySlice1d< real64 > const & dTotalDensity_dGlobalCompFraction ) const = 0;
+
+  virtual void Update( localIndex const k,
+                       localIndex const q,
+                       real64 const pressure,
+                       real64 const temperature,
+                       arraySlice1d< real64 const > const & composition ) const = 0;
+
+};
+
+class MultiFluidBase : public ConstitutiveBase
+{
+public:
+
+  MultiFluidBase( std::string const & name, Group * const parent );
+
+  virtual ~MultiFluidBase() override;
+
+  virtual void allocateConstitutiveData( dataRepository::Group * const parent,
+                                         localIndex const numConstitutivePointsPerParentIndex ) override;
+
+  // *** MultiFluid-specific interface
+
+  /**
+   * @brief Maximum supported number of fluid components (species)
+   *
+   * @note This puts an upper bound on memory use, allowing to optimize code better
+   */
+  static constexpr localIndex MAX_NUM_COMPONENTS = 16;
+
+  /**
+   * @brief Maximum supported number of fluid phases
+   *
+   * @note This puts an upper bound on memory use, allowing to optimize code better
+   */
+  static constexpr localIndex MAX_NUM_PHASES = 4;
 
   /**
    * @return number of fluid components (species) in the model
@@ -282,26 +311,13 @@ public:
     static constexpr auto dTotalDensity_dPressureString                  = "dTotalDensity_dPressure";                // dRho_t/dP
     static constexpr auto dTotalDensity_dTemperatureString               = "dTotalDensity_dTemperature";             // dRho_t/dT
     static constexpr auto dTotalDensity_dGlobalCompFractionString        = "dTotalDensity_dGlobalCompFraction";      // dRho_t/dz
+
+    static constexpr auto useMassString                                  = "useMass";
   } viewKeysMultiFluidBase;
 
 protected:
 
   virtual void PostProcessInput() override;
-
-  /**
-   * @brief Function to batch process constitutive updates via a kernel launch.
-   * @tparam LEAFCLASS The derived class that provides the functions for usein the kernel
-   * @tparam ARGS Parameter pack for arbitrary number of arbitrary types for the function parameter list
-   * @param pressure array containing the pressure values
-   * @param temperature array containing the temperature values
-   * @param composition array containing the fluid composition
-   * @param args arbitrary number of arbitrary types that are passed to the kernel
-   */
-  template< typename LEAFCLASS, typename POLICY=serialPolicy, typename ... ARGS >
-  void BatchUpdateKernel( arrayView1d< real64 const > const & pressure,
-                          arrayView1d< real64 const > const & temperature,
-                          arrayView2d< real64 const > const & composition,
-                          ARGS && ... args );
 
   /**
    * @brief Function called internally to resize member arrays
@@ -311,13 +327,15 @@ protected:
   void ResizeFields( localIndex const size, localIndex const numPts );
 
   // flag indicating whether input/output component fractions are treated as mass fractions
-  bool m_useMass;
+  int m_useMass;
 
   // general fluid composition information
-  string_array m_componentNames;
-  array1d< real64 > m_componentMolarWeight;
 
-  string_array m_phaseNames;
+  array1d< string > m_componentNames;
+  array1d< real64 > m_componentMolarWeight;
+  array1d< string > m_phaseNames;
+
+  // constitutive data
 
   array3d< real64 > m_phaseFraction;
   array3d< real64 > m_dPhaseFraction_dPressure;
@@ -346,84 +364,8 @@ protected:
 
 };
 
-template< typename LEAFCLASS, typename POLICY, typename ... ARGS >
-void MultiFluidBase::BatchUpdateKernel( arrayView1d< real64 const > const & pressure,
-                                        arrayView1d< real64 const > const & temperature,
-                                        arrayView2d< real64 const > const & composition,
-                                        ARGS && ... args )
-{
-  localIndex const numElem = m_phaseDensity.size( 0 );
-  localIndex const numQ    = m_phaseDensity.size( 1 );
-
-  localIndex const NC = numFluidComponents();
-  localIndex const NP = numFluidPhases();
-  bool const useMass = m_useMass;
-
-  arrayView1d< string const > const & phaseNames = m_phaseNames;
-  arrayView1d< real64 const > const & componentMolarWeight = m_componentMolarWeight;
-
-  arrayView3d< real64 > const & phaseFraction = m_phaseFraction;
-  arrayView3d< real64 > const & dPhaseFraction_dPressure = m_dPhaseFraction_dPressure;
-  arrayView3d< real64 > const & dPhaseFraction_dTemperature = m_dPhaseFraction_dTemperature;
-  arrayView4d< real64 > const & dPhaseFraction_dGlobalCompFraction = m_dPhaseFraction_dGlobalCompFraction;
-
-  arrayView3d< real64 > const & phaseDensity = m_phaseDensity;
-  arrayView3d< real64 > const & dPhaseDensity_dPressure = m_dPhaseDensity_dPressure;
-  arrayView3d< real64 > const & dPhaseDensity_dTemperature = m_dPhaseDensity_dTemperature;
-  arrayView4d< real64 > const & dPhaseDensity_dGlobalCompFraction = m_dPhaseDensity_dGlobalCompFraction;
-
-  arrayView3d< real64 > const & phaseViscosity = m_phaseViscosity;
-  arrayView3d< real64 > const & dPhaseViscosity_dPressure = m_dPhaseViscosity_dPressure;
-  arrayView3d< real64 > const & dPhaseViscosity_dTemperature = m_dPhaseViscosity_dTemperature;
-  arrayView4d< real64 > const & dPhaseViscosity_dGlobalCompFraction = m_dPhaseViscosity_dGlobalCompFraction;
-
-  arrayView4d< real64 > const & phaseCompFraction = m_phaseCompFraction;
-  arrayView4d< real64 > const & dPhaseCompFraction_dPressure = m_dPhaseCompFraction_dPressure;
-  arrayView4d< real64 > const & dPhaseCompFraction_dTemperature = m_dPhaseCompFraction_dTemperature;
-  arrayView5d< real64 > const & dPhaseCompFraction_dGlobalCompFraction = m_dPhaseCompFraction_dGlobalCompFraction;
-
-  arrayView2d< real64 > const & totalDensity = m_totalDensity;
-  arrayView2d< real64 > const & dTotalDensity_dPressure = m_dTotalDensity_dPressure;
-  arrayView2d< real64 > const & dTotalDensity_dTemperature = m_dTotalDensity_dTemperature;
-  arrayView3d< real64 > const & dTotalDensity_dGlobalCompFraction = m_dTotalDensity_dGlobalCompFraction;
-
-  forAll< POLICY >( numElem, [=] ( localIndex const k )
-  {
-    for( localIndex q = 0; q < numQ; ++q )
-    {
-      LEAFCLASS::Compute( NC, NP, useMass,
-                          phaseNames,
-                          componentMolarWeight,
-                          pressure[k],
-                          temperature[k],
-                          composition[k],
-                          phaseFraction[k][q],
-                          dPhaseFraction_dPressure[k][q],
-                          dPhaseFraction_dTemperature[k][q],
-                          dPhaseFraction_dGlobalCompFraction[k][q],
-                          phaseDensity[k][q],
-                          dPhaseDensity_dPressure[k][q],
-                          dPhaseDensity_dTemperature[k][q],
-                          dPhaseDensity_dGlobalCompFraction[k][q],
-                          phaseViscosity[k][q],
-                          dPhaseViscosity_dPressure[k][q],
-                          dPhaseViscosity_dTemperature[k][q],
-                          dPhaseViscosity_dGlobalCompFraction[k][q],
-                          phaseCompFraction[k][q],
-                          dPhaseCompFraction_dPressure[k][q],
-                          dPhaseCompFraction_dTemperature[k][q],
-                          dPhaseCompFraction_dGlobalCompFraction[k][q],
-                          totalDensity[k][q],
-                          dTotalDensity_dPressure[k][q],
-                          dTotalDensity_dTemperature[k][q],
-                          dTotalDensity_dGlobalCompFraction[k][q],
-                          args ... );
-    }
-  } );
-}
-
 } //namespace constitutive
 
 } //namespace geosx
 
-#endif //GEOSX_CONSTITUTIVE_FLUID_MULTIFLUIDBASE_HPP
+#endif //GEOSX_CONSTITUTIVE_FLUID_MULTIFLUIDBASE_HPP_

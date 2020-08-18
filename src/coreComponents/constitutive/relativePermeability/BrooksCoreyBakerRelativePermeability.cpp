@@ -60,35 +60,14 @@ BrooksCoreyBakerRelativePermeability::BrooksCoreyBakerRelativePermeability( std:
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Maximum rel perm value for the pair (gas phase, oil phase) at residual water saturation" );
 
+  registerWrapper( viewKeyStruct::volFracScaleString, &m_volFracScale )->
+    setApplyDefaultValue( 1.0 )->
+    setDescription( "Factor used to scale the phase capillary pressure, defined as: one minus the sum of the phase minimum volume fractions." );
+
 }
 
 BrooksCoreyBakerRelativePermeability::~BrooksCoreyBakerRelativePermeability()
 {}
-
-void
-BrooksCoreyBakerRelativePermeability::DeliverClone( string const & name,
-                                                    Group * const parent,
-                                                    std::unique_ptr< ConstitutiveBase > & clone ) const
-{
-  std::unique_ptr< BrooksCoreyBakerRelativePermeability > newModel = std::make_unique< BrooksCoreyBakerRelativePermeability >( name, parent );
-
-  newModel->m_phaseNames = this->m_phaseNames;
-  newModel->m_phaseTypes = this->m_phaseTypes;
-  newModel->m_phaseOrder = this->m_phaseOrder;
-
-  newModel->m_phaseMinVolumeFraction = this->m_phaseMinVolumeFraction;
-
-  newModel->m_waterOilRelPermExponent = this->m_waterOilRelPermExponent;
-  newModel->m_waterOilRelPermMaxValue = this->m_waterOilRelPermMaxValue;
-
-  newModel->m_gasOilRelPermExponent   = this->m_gasOilRelPermExponent;
-  newModel->m_gasOilRelPermMaxValue   = this->m_gasOilRelPermMaxValue;
-
-  newModel->m_volFracScale = this->m_volFracScale;
-
-  clone = std::move( newModel );
-}
-
 
 void BrooksCoreyBakerRelativePermeability::PostProcessInput()
 {
@@ -162,49 +141,18 @@ void BrooksCoreyBakerRelativePermeability::PostProcessInput()
   }
 }
 
-
-void BrooksCoreyBakerRelativePermeability::BatchUpdate( arrayView2d< real64 const > const & phaseVolumeFraction )
+BrooksCoreyBakerRelativePermeability::KernelWrapper BrooksCoreyBakerRelativePermeability::createKernelWrapper()
 {
-
-  arrayView1d< real64 const > const & phaseMinVolumeFraction = m_phaseMinVolumeFraction;
-
-  arrayView1d< real64 const > const & waterOilRelPermExponent = m_waterOilRelPermExponent;
-  arrayView1d< real64 const > const & waterOilRelPermMaxValue = m_waterOilRelPermMaxValue;
-
-  arrayView1d< real64 const > const & gasOilRelPermExponent   = m_gasOilRelPermExponent;
-  arrayView1d< real64 const > const & gasOilRelPermMaxValue   = m_gasOilRelPermMaxValue;
-
-  RelativePermeabilityBase::BatchUpdateKernel< BrooksCoreyBakerRelativePermeability >( phaseVolumeFraction,
-                                                                                       m_phaseOrder,
-                                                                                       phaseMinVolumeFraction,
-                                                                                       waterOilRelPermExponent,
-                                                                                       waterOilRelPermMaxValue,
-                                                                                       gasOilRelPermExponent,
-                                                                                       gasOilRelPermMaxValue,
-                                                                                       m_volFracScale );
-}
-
-
-void BrooksCoreyBakerRelativePermeability::PointUpdate( arraySlice1d< real64 const > const & phaseVolFraction,
-                                                        localIndex const k,
-                                                        localIndex const q )
-{
-  arraySlice1d< real64 > const relPerm           = m_phaseRelPerm[k][q];
-  arraySlice2d< real64 > const dRelPerm_dVolFrac = m_dPhaseRelPerm_dPhaseVolFrac[k][q];
-
-  localIndex const NP = numFluidPhases();
-
-  Compute( NP,
-           phaseVolFraction,
-           relPerm,
-           dRelPerm_dVolFrac,
-           m_phaseOrder,
-           m_phaseMinVolumeFraction,
-           m_waterOilRelPermExponent,
-           m_waterOilRelPermMaxValue,
-           m_gasOilRelPermExponent,
-           m_gasOilRelPermMaxValue,
-           m_volFracScale );
+  return KernelWrapper( m_phaseMinVolumeFraction,
+                        m_waterOilRelPermExponent,
+                        m_waterOilRelPermMaxValue,
+                        m_gasOilRelPermExponent,
+                        m_gasOilRelPermMaxValue,
+                        m_volFracScale,
+                        m_phaseTypes,
+                        m_phaseOrder,
+                        m_phaseRelPerm,
+                        m_dPhaseRelPerm_dPhaseVolFrac );
 }
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, BrooksCoreyBakerRelativePermeability, std::string const &, Group * const )

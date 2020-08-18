@@ -544,7 +544,7 @@ void EdgeManager::SetDomainBoundaryObjects( ObjectManagerBase const * const refe
 
   // get the "isDomainBoundary" field from for *this, and set it to zero
   array1d< integer > & isEdgeOnDomainBoundary = this->getReference< array1d< integer > >( viewKeys.domainBoundaryIndicatorString );
-  isEdgeOnDomainBoundary = 0;
+  isEdgeOnDomainBoundary.setValues< serialPolicy >( 0 );
 
   ArrayOfArraysView< localIndex const > const & faceToEdgeMap = faceManager->edgeList().toViewConst();
 
@@ -596,7 +596,7 @@ void EdgeManager::SetIsExternal( FaceManager const * const faceManager )
   ArrayOfArraysView< localIndex const > const & faceToEdges = faceManager->edgeList().toViewConst();
 
   // get the "isExternal" field from for *this, and set it to zero
-  m_isExternal = 0;
+  m_isExternal.setValues< serialPolicy >( 0 );
 
   // loop through all faces
   for( localIndex kf=0; kf<faceManager->size(); ++kf )
@@ -653,13 +653,13 @@ void EdgeManager::ConnectivityFromGlobalToLocal( const SortedArray< localIndex >
 {
 
 
-  for( SortedArray< localIndex >::const_iterator ke=indices.begin(); ke!=indices.end(); ++ke )
+  for( localIndex const ke : indices )
   {
     for( localIndex a=0; a<m_toNodesRelation.size( 1 ); ++a )
     {
-      const globalIndex gnode = m_toNodesRelation( *ke, a );
+      const globalIndex gnode = m_toNodesRelation( ke, a );
       const localIndex lnode = stlMapLookup( nodeGlobalToLocal, gnode );
-      m_toNodesRelation( *ke, a ) = lnode;
+      m_toNodesRelation( ke, a ) = lnode;
     }
   }
 

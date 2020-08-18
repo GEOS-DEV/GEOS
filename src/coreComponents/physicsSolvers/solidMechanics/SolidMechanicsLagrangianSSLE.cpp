@@ -39,14 +39,6 @@ SolidMechanicsLagrangianSSLE::SolidMechanicsLagrangianSSLE( string const & name,
 SolidMechanicsLagrangianSSLE::~SolidMechanicsLagrangianSSLE()
 {}
 
-void SolidMechanicsLagrangianSSLE::ApplySystemSolution( DofManager const & dofManager,
-                                                        ParallelVector const & solution,
-                                                        real64 const scalingFactor,
-                                                        DomainPartition * const domain )
-{
-  SolidMechanicsLagrangianFEM::ApplySystemSolution( dofManager, solution, scalingFactor, domain );
-}
-
 
 REGISTER_CATALOG_ENTRY( SolverBase, SolidMechanicsLagrangianSSLE, string const &, dataRepository::Group * const )
 } /* namespace geosx */

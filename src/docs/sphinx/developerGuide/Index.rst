@@ -5,59 +5,8 @@ Developer Guide
 Welcome to the GEOSX developer guide.
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
 
-   CodeStyle
+   Contributing/index_contributing.rst
 
-   GitWorkflow
-
-   UnitTests
-
-   IntegratedTests
-
-   Benchmarks
-
-   Sphinx
-
-   /coreComponents/dataRepository/dataRepository.rst
-   
-   WorkingWithData
-   
-   /coreComponents/mesh/docs/meshDeveloperGuide.rst
-
-   Doxygen
-
-   /coreComponents/LvArray/src/docs/sphinx/LvArray.rst
-
-   /coreComponents/managers/docs/ProblemManager.rst
-
-   Caliper
-
-   /coreComponents/dataRepository/dataRepository.rst
-   
-   /coreComponents/mesh/docs/meshDeveloperGuide.rst
-
-   XML
-
-   /coreComponents/linearAlgebra/docs/DofManager.rst
-
-   /coreComponents/finiteElement/kernelInterface/kernelInterface.rst
-
-   AddingNewSolver
-
-
-Overview of the code structure
-
-Managed Groups
-
-Arrays
-
-Data Repository
-
-Physics Solvers
-
-Constitutive Models
-
-Linear Algebra Interface
-
-Portable Programming: RAJA and CHAI
+   KeyComponents/index_KeyComponents.rst

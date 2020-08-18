@@ -163,8 +163,9 @@ void HypreMatrix::createWithGlobalSize( globalIndex const globalRows,
   HYPRE_BigInt const jlower = rank * localColSize + ( rank == 0 ? 0 : colResidual );
   HYPRE_BigInt const jupper = jlower + localColSize + ( rank == 0 ? colResidual : 0 ) - 1;
 
-  array1d< HYPRE_Int > row_sizes( LvArray::integerConversion< localIndex >( iupper - ilower + 1 ) );
-  row_sizes = LvArray::integerConversion< HYPRE_Int >( maxEntriesPerRow );
+  array1d< HYPRE_Int > row_sizes;
+  row_sizes.resizeDefault( LvArray::integerConversion< localIndex >( iupper - ilower + 1 ),
+                           LvArray::integerConversion< HYPRE_Int >( maxEntriesPerRow ) );
 
   initialize( comm,
               ilower,
@@ -191,8 +192,8 @@ void HypreMatrix::createWithLocalSize( localIndex const localRows,
   HYPRE_BigInt const jlower = MpiWrapper::PrefixSum< HYPRE_BigInt >( localCols );
   HYPRE_BigInt const jupper = jlower + localCols - 1;
 
-  array1d< HYPRE_Int > row_sizes( localRows );
-  row_sizes = LvArray::integerConversion< HYPRE_Int >( maxEntriesPerRow );
+  array1d< HYPRE_Int > row_sizes;
+  row_sizes.resizeDefault( localRows, LvArray::integerConversion< HYPRE_Int >( maxEntriesPerRow ) );
 
   initialize( comm,
               ilower,
@@ -233,7 +234,10 @@ void HypreMatrix::zero()
 void HypreMatrix::open()
 {
   GEOSX_LAI_ASSERT( created() && closed() );
-  GEOSX_LAI_CHECK_ERROR( HYPRE_IJMatrixInitialize( m_ij_mat ) );
+  if( m_assembled )
+  {
+    GEOSX_LAI_CHECK_ERROR( HYPRE_IJMatrixInitialize( m_ij_mat ) );
+  }
   m_closed = false;
 }
 
@@ -1339,7 +1343,6 @@ real64 HypreMatrix::normInf() const
   HYPRE_Int const * IA = hypre_CSRMatrixI( prt_diag_CSR );
 
   array1d< HYPRE_Real > row_abs_sum( nrows );
-  row_abs_sum = 0.0;
 
   for( HYPRE_Int i = 0; i < nrows; ++i )
   {

@@ -21,7 +21,7 @@
 
 #include "common/DataTypes.hpp"
 #include "common/DataLayouts.hpp"
-#include "LvArray/src/streamIO.hpp"
+#include "LvArray/src/output.hpp"
 #include "LvArray/src/tensorOps.hpp"
 
 namespace geosx
@@ -80,6 +80,8 @@ array1d< R1Tensor > orderPointsCCW( array1d< R1Tensor > const & points,
  *          and if (- areaTolerance <= area <= areaTolerance), the area is set to zero
  */
 template< typename CENTER_TYPE, typename NORMAL_TYPE >
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
 real64 Centroid_3DPolygon( arraySlice1d< localIndex const > const pointsIndices,
                            arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & points,
                            CENTER_TYPE && center,
@@ -124,10 +126,13 @@ real64 Centroid_3DPolygon( arraySlice1d< localIndex const > const pointsIndices,
   {
     for( localIndex a=0; a<pointsIndices.size(); ++a )
     {
+#if !defined(__CUDA_ARCH__)
       GEOSX_LOG_RANK( "Points: " << points[ pointsIndices[ a ] ] << " " << pointsIndices[ a ] );
+#endif
     }
-
+#if !defined(__CUDA_ARCH__)
     GEOSX_ERROR( "Negative area found : " << area );
+#endif
   }
   else
   {

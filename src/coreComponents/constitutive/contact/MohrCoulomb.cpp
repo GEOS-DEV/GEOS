@@ -52,24 +52,6 @@ MohrCoulomb::MohrCoulomb( std::string const & name, Group * const parent ):
 MohrCoulomb::~MohrCoulomb()
 {}
 
-void
-MohrCoulomb::DeliverClone( string const & name,
-                           Group * const parent,
-                           std::unique_ptr< ConstitutiveBase > & clone ) const
-{
-  if( !clone )
-  {
-    clone = std::make_unique< MohrCoulomb >( name, parent );
-  }
-  ConstitutiveBase::DeliverClone( name, parent, clone );
-  MohrCoulomb * const newConstitutiveRelation = dynamic_cast< MohrCoulomb * >(clone.get());
-
-  newConstitutiveRelation->m_postProcessed = false;
-  newConstitutiveRelation->m_cohesion = m_cohesion;
-  newConstitutiveRelation->m_frictionAngle = m_frictionAngle;
-  newConstitutiveRelation->m_frictionCoefficient = m_frictionCoefficient;
-}
-
 real64 MohrCoulomb::limitTangentialTractionNorm( real64 const normalTraction ) const
 {
   return ( m_cohesion - normalTraction * m_frictionCoefficient );

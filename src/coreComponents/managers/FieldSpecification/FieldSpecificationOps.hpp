@@ -432,13 +432,63 @@ struct FieldSpecificationEqual : public FieldSpecificationOp< OpEqual >
   static inline void SpecifyFieldValue( globalIndex const dof,
                                         typename LAI::ParallelMatrix & matrix,
                                         real64 & rhs,
-                                        real64 const & bcValue,
+                                        real64 const bcValue,
                                         real64 const fieldValue )
   {
     if( matrix.getLocalRowID( dof ) >= 0 )
     {
       real64 const diag = matrix.clearRow( dof, true );
       rhs = -diag * (bcValue - fieldValue);
+    }
+    else
+    {
+      rhs = 0.0;
+    }
+  }
+
+  /**
+   * @brief Function to apply a Dirichlet like boundary condition to a single dof in a system of
+   *        equations.
+   * @param[in] dof The degree of freedom that is to be set.
+   * @param[in] dofRankOffset offset of dof indices on current rank
+   * @param[in,out] matrix the local part of the system matrix
+   * @param[out] rhs The rhs contribution resulting from the application of the BC.
+   * @param[in] bcValue The target value of the Boundary Condition
+   * @param[in] fieldValue The current value of the variable to be set.
+   *
+   * This function clears the matrix row for the specified \p dof, sets the diagonal to some
+   * appropriately scaled value, and sets \p rhs to the negative product of the scaled value
+   * of the diagonal and the difference between \p bcValue and \p fieldValue.
+   *
+   * @note This function assumes the user is doing a Newton-type nonlinear solve and will
+   * negate the rhs vector upon assembly. Thus, it sets the value to negative of the desired
+   * update for the field. For a linear problem, this may lead to unexpected results.
+   */
+  static inline void GEOSX_HOST_DEVICE
+  SpecifyFieldValue( globalIndex const dof,
+                     globalIndex const dofRankOffset,
+                     CRSMatrixView< real64, globalIndex const > const & matrix,
+                     real64 & rhs,
+                     real64 const bcValue,
+                     real64 const fieldValue )
+  {
+    globalIndex const localRow = dof - dofRankOffset;
+    if( localRow >= 0 && localRow < matrix.numRows() )
+    {
+      arraySlice1d< globalIndex const > const columns = matrix.getColumns( localRow );
+      arraySlice1d< real64 > const entries = matrix.getEntries( localRow );
+      localIndex const numEntries = matrix.numNonZeros( localRow );
+
+      real64 diagonal = 0;
+      for( localIndex j = 0; j < numEntries; ++j )
+      {
+        if( columns[ j ] == dof )
+        { diagonal = entries[ j ]; }
+        else
+        { entries[ j ] = 0; }
+      }
+
+      rhs = -diagonal * (bcValue - fieldValue);
     }
     else
     {
@@ -467,6 +517,29 @@ struct FieldSpecificationEqual : public FieldSpecificationOp< OpEqual >
       }
     }
   }
+
+  /**
+   * @brief Function to add some values of a vector.
+   * @tparam POLICY the execution policy to use when setting values
+   * @param rhs the target right-hand side vector
+   * @param dof a list of global DOF indices to be set
+   * @param dofRankOffset offset of dof indices on current rank
+   * @param values a list of values corresponding to \p dof that will be added to \p rhs.
+   */
+  template< typename POLICY >
+  static inline void PrescribeRhsValues( arrayView1d< real64 > const & rhs,
+                                         arrayView1d< globalIndex const > const & dof,
+                                         globalIndex const dofRankOffset,
+                                         arrayView1d< real64 const > const & values )
+  {
+    GEOSX_ASSERT_EQ( dof.size(), values.size() );
+    forAll< POLICY >( dof.size(), [rhs, dof, dofRankOffset, values] GEOSX_HOST_DEVICE ( localIndex const a )
+    {
+      globalIndex const localRow = dof[ a ] - dofRankOffset;
+      if( localRow >= 0 && localRow < rhs.size() )
+      { rhs[ localRow ] = values[ a ]; }
+    } );
+  }
 };
 
 /**
@@ -483,19 +556,23 @@ struct FieldSpecificationAdd : public FieldSpecificationOp< OpAdd >
   /**
    * @brief Function to apply a value to a vector field for a single dof.
    * @param[in] dof The degree of freedom that is to be modified.
+   * @param[in] dofRankOffset offset of dof indices on current rank
    * @param[in] matrix A ParalleMatrix object: the system matrix.
    * @param[out] rhs The rhs contribution to be modified
    * @param[in] bcValue The value to add to rhs
    * @param[in] fieldValue unused.
+   *
    */
-  template< typename LAI >
+  GEOSX_HOST_DEVICE
   static inline void SpecifyFieldValue( globalIndex const dof,
-                                        typename LAI::ParallelMatrix & matrix,
+                                        globalIndex const dofRankOffset,
+                                        CRSMatrixView< real64, globalIndex const > const & matrix,
                                         real64 & rhs,
-                                        real64 const & bcValue,
+                                        real64 const bcValue,
                                         real64 const fieldValue )
   {
     GEOSX_UNUSED_VAR( dof );
+    GEOSX_UNUSED_VAR( dofRankOffset );
     GEOSX_UNUSED_VAR( matrix );
     GEOSX_UNUSED_VAR( fieldValue );
     rhs += bcValue;
@@ -515,6 +592,29 @@ struct FieldSpecificationAdd : public FieldSpecificationOp< OpAdd >
                                          real64 * const values )
   {
     rhs.add( dof, values, num );
+  }
+
+  /**
+   * @brief Function to add some values of a vector.
+   * @tparam POLICY the execution policy to use when setting values
+   * @param rhs the target right-hand side vector
+   * @param dof a list of global DOF indices to be set
+   * @param dofRankOffset offset of dof indices on current rank
+   * @param values a list of values corresponding to \p dof that will be added to \p rhs.
+   */
+  template< typename POLICY >
+  static inline void PrescribeRhsValues( arrayView1d< real64 > const & rhs,
+                                         arrayView1d< globalIndex const > const & dof,
+                                         globalIndex const dofRankOffset,
+                                         arrayView1d< real64 const > const & values )
+  {
+    GEOSX_ASSERT_EQ( dof.size(), values.size() );
+    forAll< POLICY >( dof.size(), [rhs, dof, dofRankOffset, values] GEOSX_HOST_DEVICE ( localIndex const a )
+    {
+      globalIndex const localRow = dof[ a ] - dofRankOffset;
+      if( localRow >= 0 && localRow < rhs.size() )
+      { rhs[ localRow ] += values[ a ]; }
+    } );
   }
 
 };

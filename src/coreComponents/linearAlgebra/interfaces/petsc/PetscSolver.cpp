@@ -19,6 +19,7 @@
 #include "PetscSolver.hpp"
 
 #include "common/Stopwatch.hpp"
+#include "linearAlgebra/DofManager.hpp"
 #include "linearAlgebra/interfaces/petsc/PetscVector.hpp"
 #include "linearAlgebra/interfaces/petsc/PetscMatrix.hpp"
 #include "linearAlgebra/interfaces/petsc/PetscPreconditioner.hpp"
@@ -40,11 +41,14 @@ PetscSolver::PetscSolver( LinearSolverParameters parameters )
 
 void PetscSolver::solve( PetscMatrix & mat,
                          PetscVector & sol,
-                         PetscVector & rhs )
+                         PetscVector & rhs,
+                         DofManager const * const dofManager )
 {
   GEOSX_LAI_ASSERT( mat.ready() );
   GEOSX_LAI_ASSERT( sol.ready() );
   GEOSX_LAI_ASSERT( rhs.ready() );
+
+  GEOSX_UNUSED_VAR( dofManager );
 
   if( m_parameters.solverType == "direct" )
   {

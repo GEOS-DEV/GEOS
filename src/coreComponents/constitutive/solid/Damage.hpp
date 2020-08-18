@@ -120,16 +120,11 @@ public:
 
 
   static std::string CatalogName() { return string( "Damage" ) + BASE::m_catalogNameString; }
-  virtual string GetCatalogName() override { return CatalogName(); }
+  virtual string getCatalogName() const override { return CatalogName(); }
 
   virtual void PostProcessInput() override;
 
-  virtual void
-  DeliverClone( string const & name,
-                dataRepository::Group * const parent,
-                std::unique_ptr< ConstitutiveBase > & clone ) const override;
-
-  virtual void AllocateConstitutiveData( dataRepository::Group * const parent,
+  virtual void allocateConstitutiveData( dataRepository::Group * const parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
 

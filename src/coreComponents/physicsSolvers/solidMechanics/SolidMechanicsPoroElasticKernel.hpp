@@ -45,23 +45,19 @@ namespace SolidMechanicsLagrangianFEMKernels
  */
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
-          int NUM_NODES_PER_ELEM,
-          int UNUSED,
+          typename FE_TYPE,
           template< typename,
                     typename,
-                    int,
-                    int > class BASE >
+                    typename > class BASE >
 class PoroElastic : public BASE< SUBREGION_TYPE,
                                  CONSTITUTIVE_TYPE,
-                                 NUM_NODES_PER_ELEM,
-                                 NUM_NODES_PER_ELEM >
+                                 FE_TYPE >
 {
 public:
   /// Alias for the base class.
   using Base = BASE< SUBREGION_TYPE,
                      CONSTITUTIVE_TYPE,
-                     NUM_NODES_PER_ELEM,
-                     NUM_NODES_PER_ELEM >;
+                     FE_TYPE >;
 
   using Base::m_constitutiveUpdate;
   using typename Base::StackVariables;
@@ -75,11 +71,12 @@ public:
                EdgeManager const & edgeManager,
                FaceManager const & faceManager,
                SUBREGION_TYPE const & elementSubRegion,
-               FiniteElementBase const * const finiteElementSpace,
+               FE_TYPE const & finiteElementSpace,
                CONSTITUTIVE_TYPE * const inputConstitutiveType,
                arrayView1d< globalIndex const > const & inputDofNumber,
-               ParallelMatrix & inputMatrix,
-               ParallelVector & inputRhs,
+               globalIndex const rankOffset,
+               CRSMatrixView< real64, globalIndex const > const & inputMatrix,
+               arrayView1d< real64 > const & inputRhs,
                real64 const (&inputGravityVector)[3] ):
     Base( nodeManager,
           edgeManager,
@@ -88,6 +85,7 @@ public:
           finiteElementSpace,
           inputConstitutiveType,
           inputDofNumber,
+          rankOffset,
           inputMatrix,
           inputRhs,
           inputGravityVector ),
@@ -133,12 +131,10 @@ protected:
  */
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
-          int NUM_NODES_PER_ELEM,
-          int UNUSED >
+          typename FE_TYPE >
 using QuasiStaticPoroElastic = PoroElastic< SUBREGION_TYPE,
                                             CONSTITUTIVE_TYPE,
-                                            NUM_NODES_PER_ELEM,
-                                            NUM_NODES_PER_ELEM,
+                                            FE_TYPE,
                                             QuasiStatic >;
 
 } // namespace SolidMechanicsLagrangianFEMKernels

@@ -30,7 +30,6 @@
 #include "codingUtilities/Utilities.hpp"
 #include "common/DataTypes.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
-#include "finiteElement/ElementLibrary/FiniteElement.h"
 #include "finiteElement/FiniteElementDiscretization.hpp"
 #include "finiteElement/FiniteElementDiscretizationManager.hpp"
 #include "finiteElement/Kinematics.h"
@@ -158,7 +157,7 @@ void ReactionDiffusionFEM::PostProcessInput()
 
 real64 ReactionDiffusionFEM::SolverStep( real64 const & time_n, real64 const & dt,
                                          const int cycleNumber,
-                                         DomainPartition *domain )
+                                         DomainPartition & domain )
 {
   real64 dtReturn = dt;
   if( m_timeIntegrationOption == timeIntegrationOption::ExplicitTransient )
@@ -170,9 +169,10 @@ real64 ReactionDiffusionFEM::SolverStep( real64 const & time_n, real64 const & d
            m_timeIntegrationOption == timeIntegrationOption::SteadyState )
   {
     dtReturn =
-      this->LinearImplicitStep( time_n, dt, cycleNumber, domain, m_dofManager,
-                                m_matrix,
-                                m_rhs, m_solution );
+      this->LinearImplicitStep( time_n,
+                                dt,
+                                cycleNumber,
+                                domain );
   }
   return dtReturn;
 }
@@ -181,7 +181,7 @@ real64 ReactionDiffusionFEM::ExplicitStep(
   real64 const & GEOSX_UNUSED_PARAM( time_n ),
   real64 const & dt,
   const int GEOSX_UNUSED_PARAM( cycleNumber ),
-  DomainPartition * const GEOSX_UNUSED_PARAM( domain ) )
+  DomainPartition & GEOSX_UNUSED_PARAM( domain ) )
 {
   return dt;
 }
@@ -189,23 +189,20 @@ real64 ReactionDiffusionFEM::ExplicitStep(
 void ReactionDiffusionFEM::ImplicitStepSetup(
   real64 const & GEOSX_UNUSED_PARAM( time_n ),
   real64 const & GEOSX_UNUSED_PARAM( dt ),
-  DomainPartition * const domain,
-  DofManager & dofManager,
-  ParallelMatrix & matrix,
-  ParallelVector & rhs, ParallelVector & solution )
+  DomainPartition & domain)
 {
   // Computation of the sparsity pattern
-  SetupSystem( domain, dofManager, matrix, rhs, solution );
+  SetupSystem( domain, m_dofManager, m_localMatrix, m_localRhs, m_localSolution );
 }
 
 void ReactionDiffusionFEM::ImplicitStepComplete(
   real64 const & GEOSX_UNUSED_PARAM( time_n ),
   real64 const & GEOSX_UNUSED_PARAM( dt ),
-  DomainPartition * const GEOSX_UNUSED_PARAM( domain ) )
+  DomainPartition & GEOSX_UNUSED_PARAM( domain ) )
 {}
 
 void ReactionDiffusionFEM::SetupDofs(
-  DomainPartition const * const GEOSX_UNUSED_PARAM( domain ),
+  DomainPartition const & GEOSX_UNUSED_PARAM( domain ),
   DofManager & dofManager ) const
 {
   dofManager.addField( m_fieldName, DofManager::Location::Node );
@@ -213,18 +210,18 @@ void ReactionDiffusionFEM::SetupDofs(
 
 void ReactionDiffusionFEM::AssembleSystem( real64 const time_n,
                                            real64 const GEOSX_UNUSED_PARAM( dt ),
-                                           DomainPartition * const domain,
+                                           DomainPartition & domain,
                                            DofManager const & dofManager,
-                                           ParallelMatrix & matrix,
-                                           ParallelVector & rhs )
+                                                                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                             arrayView1d< real64 > const & localRhs)
 {
-  MeshLevel * const mesh = domain->getMeshBody(0)->getMeshLevel(0);
+  MeshLevel * const mesh = domain.getMeshBody(0)->getMeshLevel(0);
 
   NodeManager * const nodeManager = mesh->getNodeManager();
 
   ElementRegionManager * const elemManager = mesh->getElemManager();
 
-  NumericalMethodsManager const & numericalMethodManager = domain->getNumericalMethodManager();
+  NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
 
   FiniteElementDiscretizationManager const &
   feDiscretizationManager = numericalMethodManager.getFiniteElementDiscretizationManager();
@@ -238,12 +235,6 @@ void ReactionDiffusionFEM::AssembleSystem( real64 const time_n,
 
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X = nodeManager->referencePosition();
 
-  // Initialize all entries to zero
-  matrix.zero();
-  rhs.zero();
-
-  matrix.open();
-  rhs.open();
 
   // begin region loop
   for( localIndex er = 0; er < elemManager->numRegions(); ++er )
@@ -354,13 +345,13 @@ void ReactionDiffusionFEM::AssembleSystem( real64 const time_n,
 }
 
 void ReactionDiffusionFEM::ApplySystemSolution( DofManager const & dofManager,
-                                                ParallelVector const & solution,
+                                                arrayView1d< real64 const > const & localSolution,
                                                 real64 const scalingFactor,
-                                                DomainPartition * const domain )
+                                                DomainPartition & domain )
 {
-  MeshLevel * const mesh = domain->getMeshBody( 0 )->getMeshLevel( 0 );
+  MeshLevel * const mesh = domain.getMeshBody( 0 )->getMeshLevel( 0 );
 
-  dofManager.copyVectorToField( solution,
+  dofManager.copyVectorToField( localSolution,
                                 m_fieldName,
                                 m_fieldName,
                                 scalingFactor );
@@ -372,43 +363,44 @@ void ReactionDiffusionFEM::ApplySystemSolution( DofManager const & dofManager,
   CommunicationTools::SynchronizeFields(
     fieldNames,
     mesh,
-    domain->getNeighbors() );
+    domain.getNeighbors() );
 }
 
 void ReactionDiffusionFEM::ApplyBoundaryConditions(
   real64 const time_n,
-  real64 const dt, DomainPartition * const domain,
+  real64 const dt, DomainPartition & domain,
   DofManager const & dofManager,
-  ParallelMatrix & matrix, ParallelVector & rhs )
+  CRSMatrixView< real64, globalIndex > const & localMatrix,
+                    arrayView1d< real64 > const & localRhs )
 {
-  ApplyDirichletBC_implicit( time_n + dt, dofManager, *domain, m_matrix, m_rhs );
+  ApplyDirichletBC_implicit( time_n + dt, dofManager, domain, localMatrix, localRhs );
 
-  if( getLogLevel() == 2 )
-  {
-    GEOSX_LOG_RANK_0( "After ReactionDiffusionFEM::ApplyBoundaryConditions" );
-    GEOSX_LOG_RANK_0( "\nJacobian:\n" );
-    std::cout << matrix;
-    GEOSX_LOG_RANK_0( "\nResidual:\n" );
-    std::cout << rhs;
-  }
-
-  if( getLogLevel() >= 3 )
-  {
-    NonlinearSolverParameters & solverParams = getNonlinearSolverParameters();
-    integer newtonIter = solverParams.m_numNewtonIterations;
-
-    string filename_mat = "matrix_bc_" + std::to_string( time_n ) + "_" +
-                          std::to_string( newtonIter ) + ".mtx";
-    matrix.write( filename_mat );
-
-    string filename_rhs = "rhs_bc_" + std::to_string( time_n ) + "_" +
-                          std::to_string( newtonIter ) + ".mtx";
-    rhs.write( filename_rhs );
-
-    GEOSX_LOG_RANK_0( "After ReactionDiffusionFEM::ApplyBoundaryConditions" );
-    GEOSX_LOG_RANK_0( "Jacobian: written to " << filename_mat );
-    GEOSX_LOG_RANK_0( "Residual: written to " << filename_rhs );
-  }
+//  if( getLogLevel() == 2 )
+//  {
+//    GEOSX_LOG_RANK_0( "After ReactionDiffusionFEM::ApplyBoundaryConditions" );
+//    GEOSX_LOG_RANK_0( "\nJacobian:\n" );
+//    std::cout << matrix;
+//    GEOSX_LOG_RANK_0( "\nResidual:\n" );
+//    std::cout << rhs;
+//  }
+//
+//  if( getLogLevel() >= 3 )
+//  {
+//    NonlinearSolverParameters & solverParams = getNonlinearSolverParameters();
+//    integer newtonIter = solverParams.m_numNewtonIterations;
+//
+//    string filename_mat = "matrix_bc_" + std::to_string( time_n ) + "_" +
+//                          std::to_string( newtonIter ) + ".mtx";
+//    matrix.write( filename_mat );
+//
+//    string filename_rhs = "rhs_bc_" + std::to_string( time_n ) + "_" +
+//                          std::to_string( newtonIter ) + ".mtx";
+//    rhs.write( filename_rhs );
+//
+//    GEOSX_LOG_RANK_0( "After ReactionDiffusionFEM::ApplyBoundaryConditions" );
+//    GEOSX_LOG_RANK_0( "Jacobian: written to " << filename_mat );
+//    GEOSX_LOG_RANK_0( "Residual: written to " << filename_rhs );
+//  }
 }
 
 void ReactionDiffusionFEM::SolveSystem( DofManager const & dofManager,

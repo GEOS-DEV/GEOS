@@ -89,7 +89,7 @@ public:
    * @brief Copy constructor.
    * @param[in] init the source to copy
    */
-  CellBlock( const CellBlock & init );
+  CellBlock( const CellBlock & init ) = delete;
 
   /**
    * @brief Destructor.
@@ -116,11 +116,6 @@ public:
   {
     arrayView2d< real64 > const & elementCenters = m_elementCenter;
     localIndex nNodes = numNodesPerElement();
-
-    if( !m_elementTypeString.compare( 0, 4, "C3D6" ))
-    {
-      nNodes -= 2;
-    }
 
     forAll< parallelHostPolicy >( size(), [=]( localIndex const k )
     {

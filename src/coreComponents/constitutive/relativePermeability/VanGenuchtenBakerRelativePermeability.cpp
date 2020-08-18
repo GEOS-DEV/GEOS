@@ -60,34 +60,14 @@ VanGenuchtenBakerRelativePermeability::VanGenuchtenBakerRelativePermeability( st
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Maximum rel perm value for the pair (gas phase, oil phase) at residual water saturation" );
 
+  registerWrapper( viewKeyStruct::volFracScaleString, &m_volFracScale )->
+    setApplyDefaultValue( 1.0 )->
+    setDescription( "Factor used to scale the phase capillary pressure, defined as: one minus the sum of the phase minimum volume fractions." );
+
 }
 
 VanGenuchtenBakerRelativePermeability::~VanGenuchtenBakerRelativePermeability()
 {}
-
-void
-VanGenuchtenBakerRelativePermeability::DeliverClone( string const & name,
-                                                     Group * const parent,
-                                                     std::unique_ptr< ConstitutiveBase > & clone ) const
-{
-  std::unique_ptr< VanGenuchtenBakerRelativePermeability > newModel = std::make_unique< VanGenuchtenBakerRelativePermeability >( name, parent );
-
-  newModel->m_phaseNames = this->m_phaseNames;
-  newModel->m_phaseTypes = this->m_phaseTypes;
-  newModel->m_phaseOrder = this->m_phaseOrder;
-
-  newModel->m_phaseMinVolumeFraction = this->m_phaseMinVolumeFraction;
-
-  newModel->m_waterOilRelPermExponentInv = this->m_waterOilRelPermExponentInv;
-  newModel->m_waterOilRelPermMaxValue    = this->m_waterOilRelPermMaxValue;
-
-  newModel->m_gasOilRelPermExponentInv = this->m_gasOilRelPermExponentInv;
-  newModel->m_gasOilRelPermMaxValue    = this->m_gasOilRelPermMaxValue;
-
-  newModel->m_volFracScale = this->m_volFracScale;
-
-  clone = std::move( newModel );
-}
 
 
 void VanGenuchtenBakerRelativePermeability::PostProcessInput()
@@ -163,49 +143,18 @@ void VanGenuchtenBakerRelativePermeability::PostProcessInput()
 
 }
 
-
-void VanGenuchtenBakerRelativePermeability::BatchUpdate( arrayView2d< real64 const > const & phaseVolumeFraction )
+VanGenuchtenBakerRelativePermeability::KernelWrapper VanGenuchtenBakerRelativePermeability::createKernelWrapper()
 {
-
-  arrayView1d< real64 const > const & phaseMinVolumeFraction = m_phaseMinVolumeFraction;
-
-  arrayView1d< real64 const > const & waterOilRelPermExponentInv = m_waterOilRelPermExponentInv;
-  arrayView1d< real64 const > const & waterOilRelPermMaxValue    = m_waterOilRelPermMaxValue;
-
-  arrayView1d< real64 const > const & gasOilRelPermExponentInv = m_gasOilRelPermExponentInv;
-  arrayView1d< real64 const > const & gasOilRelPermMaxValue    = m_gasOilRelPermMaxValue;
-
-  RelativePermeabilityBase::BatchUpdateKernel< VanGenuchtenBakerRelativePermeability >( phaseVolumeFraction,
-                                                                                        m_phaseOrder,
-                                                                                        phaseMinVolumeFraction,
-                                                                                        waterOilRelPermExponentInv,
-                                                                                        waterOilRelPermMaxValue,
-                                                                                        gasOilRelPermExponentInv,
-                                                                                        gasOilRelPermMaxValue,
-                                                                                        m_volFracScale );
-}
-
-
-void VanGenuchtenBakerRelativePermeability::PointUpdate( arraySlice1d< real64 const > const & phaseVolFraction,
-                                                         localIndex const k,
-                                                         localIndex const q )
-{
-  arraySlice1d< real64 > const relPerm           = m_phaseRelPerm[k][q];
-  arraySlice2d< real64 > const dRelPerm_dVolFrac = m_dPhaseRelPerm_dPhaseVolFrac[k][q];
-
-  localIndex const NP = numFluidPhases();
-
-  Compute( NP,
-           phaseVolFraction,
-           relPerm,
-           dRelPerm_dVolFrac,
-           m_phaseOrder,
-           m_phaseMinVolumeFraction,
-           m_waterOilRelPermExponentInv,
-           m_waterOilRelPermMaxValue,
-           m_gasOilRelPermExponentInv,
-           m_gasOilRelPermMaxValue,
-           m_volFracScale );
+  return KernelWrapper( m_phaseMinVolumeFraction,
+                        m_waterOilRelPermExponentInv,
+                        m_waterOilRelPermMaxValue,
+                        m_gasOilRelPermExponentInv,
+                        m_gasOilRelPermMaxValue,
+                        m_volFracScale,
+                        m_phaseTypes,
+                        m_phaseOrder,
+                        m_phaseRelPerm,
+                        m_dPhaseRelPerm_dPhaseVolFrac );
 }
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, VanGenuchtenBakerRelativePermeability, std::string const &, Group * const )

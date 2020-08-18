@@ -99,10 +99,15 @@ if( ENABLE_CUDA )
   set( extraComponentsLinkList ${extraComponentsLinkList} cuda ) 
 endif()
 
+if ( GEOSX_BUILD_SHARED_LIBS )
+  set( extraComponentsLinkList ${extraComponentsLinkList} geosx_core )
+else()
+  set( extraComponentsLinkList ${extraComponentsLinkList} ${geosx_core_libs} )
+endif()
+
 blt_add_executable(NAME geosx
                    SOURCES main/main.cpp
-                   DEPENDS_ON geosx_core 
-                              ${extraComponentsLinkList}
+                   DEPENDS_ON ${extraComponentsLinkList}
                               ${externalComponentsLinkList}
                   )
 
@@ -124,12 +129,6 @@ if( ENABLE_XML_UPDATES AND ENABLE_MPI AND UNIX AND NOT CMAKE_HOST_APPLE AND NOT 
                      COMMAND bash ${CMAKE_SOURCE_DIR}/../scripts/updateRstTables.bash ${CMAKE_SOURCE_DIR} > updateRstTables.log
                      WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
                      DEPENDS geosx
-                     )
-
-  add_custom_target( geosx_format_all_xml_files
-                     COMMAND bash ${CMAKE_SOURCE_DIR}/../scripts/formatXMLFiles.bash -g ${PYTHON_EXECUTABLE} ${CMAKE_SOURCE_DIR}/coreComponents/python/modules/pygeos_package/pygeos/xml_formatter.py ${CMAKE_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/../examples
-                     WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-                     DEPENDS geosx_update_rst_tables
                      )
 
   add_custom_target( geosx_validate_all_xml_files

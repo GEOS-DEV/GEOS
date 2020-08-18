@@ -246,7 +246,7 @@ public:
    * Creates and registers a Group or class derived from Group as a subgroup of this Group.
    */
   template< typename T = Group >
-  T * RegisterGroup( subGroupMap::KeyIndex & keyIndex )
+  T * RegisterGroup( subGroupMap::KeyIndex const & keyIndex )
   {
     T * rval = RegisterGroup< T >( keyIndex.Key(), std::move( std::make_unique< T >( keyIndex.Key(), this )) );
     keyIndex.setIndex( this->m_subGroups.getIndex( keyIndex.Key()) );
@@ -400,35 +400,44 @@ public:
    */
   template< typename T = Group >
   T const * GetGroup( string const & name ) const
-  {
-    return group_cast< T const * >( m_subGroups[name] );
-  }
+  { return group_cast< T const * >( m_subGroups[name] ); }
+
+  /**
+   * @brief @return Return a reference to the Group @p name.
+   * @tparam The type to return.
+   * @param key The name of the group to retrieve.
+   * @note Will abort if the group doesn't exist.
+   */
+  template< typename T = Group >
+  T & getGroupReference( string const & key )
+  { return dynamicCast< T & >( *m_subGroups[ key ] ); }
+
+  /**
+   * @copydoc getGroupReference( string const & )
+   */
+  template< typename T = Group >
+  T const & getGroupReference( string const & key ) const
+  { return dynamicCast< T const & >( *m_subGroups[ key ] ); }
+
+  /**
+   * @copydoc getGroupReference( string const & )
+   */
+  template< typename T = Group >
+  T & GetGroupReference( subGroupMap::KeyIndex const & key )
+  { return dynamicCast< T & >( *m_subGroups[key] ); }
+
+  /**
+   * @copydoc getGroupReference( string const & )
+   */
+  template< typename T = Group >
+  T const & GetGroupReference( subGroupMap::KeyIndex const & key ) const
+  { return dynamicCast< T const & >( *m_subGroups[key] ); }
 
   /**
    * @brief Retrieve a sub-group from the current Group using a KeyIndexT.
    * @tparam T type of subgroup
-   * @param[in,out] key the KeyIndex to use for the lookup
+   * @param[in] key the KeyIndex to use for the lookup
    * @return A pointer to @p T that refers to the sub-group
-   */
-  template< typename T = Group >
-  T * GetGroup( subGroupMap::KeyIndex & key )
-  {
-    return group_cast< T * >( m_subGroups[key] );
-  }
-
-  /**
-   * @copydoc GetGroup(subGroupMap::KeyIndex & key)
-   */
-  template< typename T = Group >
-  T const * GetGroup( subGroupMap::KeyIndex & key ) const
-  {
-    return group_cast< T const * >( m_subGroups[key] );
-  }
-
-  /**
-   * @copydoc GetGroup(subGroupMap::KeyIndex & key)
-   * @note Const-correctness may be broken if the key is incorrect as
-   *       @p key will be modified to contain the correct index.
    */
   template< typename T = Group >
   T * GetGroup( subGroupMap::KeyIndex const & key )
@@ -706,7 +715,7 @@ public:
   {
     for( auto & wrapperIter : m_wrappers )
     {
-      applyLambdaToContainer< Wrapper< TYPE >, Wrapper< TYPES >... >( wrapperIter.second,
+      applyLambdaToContainer< Wrapper< TYPE >, Wrapper< TYPES >... >( *wrapperIter.second,
                                                                       std::forward< LAMBDA >( lambda ));
     }
   }
@@ -831,7 +840,7 @@ public:
    * @return            a pointer to the newly registered/created Wrapper
    */
   template< typename T, typename TBASE=T >
-  Wrapper< TBASE > * registerWrapper( Group::wrapperMap::KeyIndex & viewKey );
+  Wrapper< TBASE > * registerWrapper( Group::wrapperMap::KeyIndex const & viewKey );
 
   /**
    * @brief Register a Wrapper around a given object and take ownership.
@@ -918,18 +927,18 @@ public:
 
   /**
    * @brief Calls RegisterDataOnMesh() recursively.
-   * @param[in,out] MeshBodies the group of MeshBody objects to register data on.
+   * @param[in,out] meshBodies the group of MeshBody objects to register data on.
    */
-  virtual void RegisterDataOnMeshRecursive( Group * const MeshBodies );
+  virtual void RegisterDataOnMeshRecursive( Group * const meshBodies );
 
   /**
    * @brief Register data on mesh entities.
-   * @param[in,out] MeshBody the group of MeshBody objects to register data on.
+   * @param[in,out] meshBodies the group of MeshBody objects to register data on.
    *
    * This function is used to register data on mesh entities such as the NodeManager,
    * FaceManager...etc.
    */
-  virtual void RegisterDataOnMesh( Group * const MeshBody );
+  virtual void RegisterDataOnMesh( Group * const meshBodies );
 
   ///@}
 
@@ -1556,8 +1565,9 @@ template< typename T, typename TBASE >
 Wrapper< TBASE > * Group::registerWrapper( std::string const & name,
                                            ViewKey::index_type * const rkey )
 {
+  std::unique_ptr< TBASE > newObj = std::make_unique< T >();
   m_wrappers.insert( name,
-                     new Wrapper< TBASE >( name, this, std::make_unique< T >() ),
+                     new Wrapper< TBASE >( name, this, std::move( newObj ) ),
                      true );
 
   if( rkey != nullptr )
@@ -1575,7 +1585,7 @@ Wrapper< TBASE > * Group::registerWrapper( std::string const & name,
 /// @endcond
 
 template< typename T, typename TBASE >
-Wrapper< TBASE > * Group::registerWrapper( ViewKey & viewKey )
+Wrapper< TBASE > * Group::registerWrapper( ViewKey const & viewKey )
 {
   ViewKey::index_type index;
   Wrapper< TBASE > * const rval = registerWrapper< T, TBASE >( viewKey.Key(), &index );
@@ -1590,7 +1600,7 @@ Wrapper< T > * Group::registerWrapper( std::string const & name,
                                        std::unique_ptr< T > newObject )
 {
   m_wrappers.insert( name,
-                     new Wrapper< T >( name, this, newObject.release(), true ),
+                     new Wrapper< T >( name, this, std::move( newObject ) ),
                      true );
 
   Wrapper< T > * const rval = getWrapper< T >( name );

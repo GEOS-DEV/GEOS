@@ -22,6 +22,7 @@ SinglePhaseHybridFVM             node               :ref:`XML_SinglePhaseHybridF
 SinglePhaseProppantFVM           node               :ref:`XML_SinglePhaseProppantFVM`           
 SinglePhaseReservoir             node               :ref:`XML_SinglePhaseReservoir`             
 SinglePhaseWell                  node               :ref:`XML_SinglePhaseWell`                  
+SolidMechanicsEmbeddedFractures  node               :ref:`XML_SolidMechanicsEmbeddedFractures`  
 SolidMechanicsLagrangianSSLE     node               :ref:`XML_SolidMechanicsLagrangianSSLE`     
 SolidMechanics_LagrangianFEM     node               :ref:`XML_SolidMechanics_LagrangianFEM`     
 SurfaceGenerator                 node               :ref:`XML_SurfaceGenerator`                 

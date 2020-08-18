@@ -82,13 +82,9 @@ void PhaseFieldFractureSolver::RegisterDataOnMesh( dataRepository::Group * const
 
 void PhaseFieldFractureSolver::ImplicitStepSetup( real64 const & GEOSX_UNUSED_PARAM( time_n ),
                                                   real64 const & GEOSX_UNUSED_PARAM( dt ),
-                                                  DomainPartition * const domain,
-                                                  DofManager & GEOSX_UNUSED_PARAM( dofManager ),
-                                                  ParallelMatrix & GEOSX_UNUSED_PARAM( matrix ),
-                                                  ParallelVector & GEOSX_UNUSED_PARAM( rhs ),
-                                                  ParallelVector & GEOSX_UNUSED_PARAM( solution ) )
+                                                  DomainPartition & domain )
 {
-  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup< MeshBody >( 0 )->getMeshLevel( 0 );
+  MeshLevel * const mesh = domain.getMeshBodies()->GetGroup< MeshBody >( 0 )->getMeshLevel( 0 );
   ElementRegionManager * const elemManager = mesh->getElemManager();
 
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > const totalMeanStress =
@@ -108,7 +104,7 @@ void PhaseFieldFractureSolver::ImplicitStepSetup( real64 const & GEOSX_UNUSED_PA
 
 void PhaseFieldFractureSolver::ImplicitStepComplete( real64 const & GEOSX_UNUSED_PARAM( time_n ),
                                                      real64 const & GEOSX_UNUSED_PARAM( dt ),
-                                                     DomainPartition * const GEOSX_UNUSED_PARAM( domain ) )
+                                                     DomainPartition & GEOSX_UNUSED_PARAM( domain ) )
 {}
 
 void PhaseFieldFractureSolver::PostProcessInput()
@@ -151,9 +147,9 @@ PhaseFieldFractureSolver::~PhaseFieldFractureSolver()
   // TODO Auto-generated destructor stub
 }
 
-void PhaseFieldFractureSolver::ResetStateToBeginningOfStep( DomainPartition * const domain )
+void PhaseFieldFractureSolver::ResetStateToBeginningOfStep( DomainPartition & domain )
 {
-  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup< MeshBody >( 0 )->getMeshLevel( 0 );
+  MeshLevel * const mesh = domain.getMeshBodies()->GetGroup< MeshBody >( 0 )->getMeshLevel( 0 );
   ElementRegionManager * const elemManager = mesh->getElemManager();
 
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > const totalMeanStress =
@@ -174,12 +170,12 @@ void PhaseFieldFractureSolver::ResetStateToBeginningOfStep( DomainPartition * co
 real64 PhaseFieldFractureSolver::SolverStep( real64 const & time_n,
                                              real64 const & dt,
                                              int const cycleNumber,
-                                             DomainPartition * const domain )
+                                             DomainPartition & domain )
 {
   real64 dtReturn = dt;
   if( m_couplingTypeOption == couplingTypeOption::FixedStress )
   {
-    dtReturn = SplitOperatorStep( time_n, dt, cycleNumber, domain->group_cast< DomainPartition * >() );
+    dtReturn = SplitOperatorStep( time_n, dt, cycleNumber, domain );
   }
   else if( m_couplingTypeOption == couplingTypeOption::TightlyCoupled )
   {
@@ -191,7 +187,7 @@ real64 PhaseFieldFractureSolver::SolverStep( real64 const & time_n,
 real64 PhaseFieldFractureSolver::SplitOperatorStep( real64 const & time_n,
                                                     real64 const & dt,
                                                     integer const cycleNumber,
-                                                    DomainPartition * const domain )
+                                                    DomainPartition & domain )
 {
   real64 dtReturn = dt;
   real64 dtReturnTemporary;
@@ -204,29 +200,22 @@ real64 PhaseFieldFractureSolver::SplitOperatorStep( real64 const & time_n,
 
   damageSolver.SetupSystem( domain,
                             damageSolver.getDofManager(),
-                            damageSolver.getSystemMatrix(),
-                            damageSolver.getSystemRhs(),
-                            damageSolver.getSystemSolution() );
+                            damageSolver.getLocalMatrix(),
+                            damageSolver.getLocalRhs(),
+                            damageSolver.getLocalSolution(),
+                            true );
 
   solidSolver.SetupSystem( domain,
                            solidSolver.getDofManager(),
-                           solidSolver.getSystemMatrix(),
-                           solidSolver.getSystemRhs(),
-                           solidSolver.getSystemSolution() );
+                           solidSolver.getLocalMatrix(),
+                           solidSolver.getLocalRhs(),
+                           solidSolver.getLocalSolution() );
 
-  damageSolver.ImplicitStepSetup( time_n, dt, domain,
-                                  damageSolver.getDofManager(),
-                                  damageSolver.getSystemMatrix(),
-                                  damageSolver.getSystemRhs(),
-                                  damageSolver.getSystemSolution() );
+  damageSolver.ImplicitStepSetup( time_n, dt, domain );
 
-  solidSolver.ImplicitStepSetup( time_n, dt, domain,
-                                 solidSolver.getDofManager(),
-                                 solidSolver.getSystemMatrix(),
-                                 solidSolver.getSystemRhs(),
-                                 solidSolver.getSystemSolution() );
+  solidSolver.ImplicitStepSetup( time_n, dt, domain );
 
-  this->ImplicitStepSetup( time_n, dt, domain, m_dofManager, m_matrix, m_rhs, m_solution );
+  this->ImplicitStepSetup( time_n, dt, domain );
 
   NonlinearSolverParameters & solverParams = getNonlinearSolverParameters();
   integer & iter = solverParams.m_numNewtonIterations;
@@ -248,11 +237,7 @@ real64 PhaseFieldFractureSolver::SplitOperatorStep( real64 const & time_n,
     dtReturnTemporary = solidSolver.NonlinearImplicitStep( time_n,
                                                            dtReturn,
                                                            cycleNumber,
-                                                           domain,
-                                                           solidSolver.getDofManager(),
-                                                           solidSolver.getSystemMatrix(),
-                                                           solidSolver.getSystemRhs(),
-                                                           solidSolver.getSystemSolution() );
+                                                           domain );
 
     std::cout << dtReturnTemporary << std::endl;
 
@@ -282,11 +267,7 @@ real64 PhaseFieldFractureSolver::SplitOperatorStep( real64 const & time_n,
     dtReturnTemporary = damageSolver.NonlinearImplicitStep( time_n,
                                                             dtReturn,
                                                             cycleNumber,
-                                                            domain,
-                                                            damageSolver.getDofManager(),
-                                                            damageSolver.getSystemMatrix(),
-                                                            damageSolver.getSystemRhs(),
-                                                            damageSolver.getSystemSolution() );
+                                                            domain );
 
     mapDamageToQuadrature( domain );
 
@@ -310,10 +291,10 @@ real64 PhaseFieldFractureSolver::SplitOperatorStep( real64 const & time_n,
   return dtReturn;
 }
 
-void PhaseFieldFractureSolver::mapDamageToQuadrature( DomainPartition * const domain )
+void PhaseFieldFractureSolver::mapDamageToQuadrature( DomainPartition & domain )
 {
 
-  MeshLevel * const mesh = domain->getMeshBody( 0 )->getMeshLevel( 0 );
+  MeshLevel * const mesh = domain.getMeshBody( 0 )->getMeshLevel( 0 );
   NodeManager * const nodeManager = mesh->getNodeManager();
 
   SolidMechanicsLagrangianFEM &
@@ -329,15 +310,7 @@ void PhaseFieldFractureSolver::mapDamageToQuadrature( DomainPartition * const do
 
   ElementRegionManager * const elemManager = mesh->getElemManager();
 
-  ConstitutiveManager * const constitutiveManager = domain->GetGroup< ConstitutiveManager >( keys::ConstitutiveManager );
-
-  NumericalMethodsManager const & numericalMethodManager = domain->getNumericalMethodManager();
-
-  FiniteElementDiscretizationManager const &
-  feDiscretizationManager = numericalMethodManager.getFiniteElementDiscretizationManager();
-
-  FiniteElementDiscretization const * const
-  feDiscretization = feDiscretizationManager.GetGroup< FiniteElementDiscretization >( m_discretizationName );
+  ConstitutiveManager * const constitutiveManager = domain.GetGroup< ConstitutiveManager >( keys::ConstitutiveManager );
 
   ElementRegionManager::ConstitutiveRelationAccessor< ConstitutiveBase >
   constitutiveRelations = elemManager->ConstructFullConstitutiveAccessor< ConstitutiveBase >( constitutiveManager );
@@ -359,34 +332,42 @@ void PhaseFieldFractureSolver::mapDamageToQuadrature( DomainPartition * const do
       typename CONSTITUTIVE_TYPE::KernelWrapper constitutiveUpdate = damageModel->createKernelUpdates();
 
       arrayView2d< real64 > const & damageFieldOnMaterial = constitutiveUpdate.m_damage;
-
-      localIndex const numNodesPerElement = elementSubRegion.numNodesPerElement();
-
       arrayView2d< localIndex const, cells::NODE_MAP_USD > const &
       elemNodes = elementSubRegion.nodeList();
 
-      globalIndex_array elemDofIndex( numNodesPerElement );
 
-      std::unique_ptr< FiniteElementBase > finiteElement = feDiscretization->getFiniteElement( elementSubRegion.GetElementTypeString() );
-      localIndex const n_q_points = finiteElement->n_quadrature_points();
+      finiteElement::FiniteElementBase const &
+      fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( m_discretizationName );
 
-      for( localIndex k = 0; k < elementSubRegion.size(); ++k )
+      finiteElement::dispatch3D( fe, [&]( auto & finiteElement )
       {
-        for( localIndex q = 0; q < n_q_points; ++q )
+        using FE_TYPE = TYPEOFREF( finiteElement );
+        constexpr localIndex numNodesPerElement = FE_TYPE::numNodes;
+        constexpr localIndex n_q_points = FE_TYPE::numQuadraturePoints;
+        globalIndex_array elemDofIndex( numNodesPerElement );
+
+        for( localIndex k = 0; k < elementSubRegion.size(); ++k )
         {
-          damageFieldOnMaterial( k, q ) = 0;
-          for( localIndex a = 0; a < numNodesPerElement; ++a )
+          for( localIndex q = 0; q < n_q_points; ++q )
           {
-            damageFieldOnMaterial( k, q ) += finiteElement->value( a, q ) * nodalDamage[elemNodes( k, a )];
-            //solution is probably not going to work because the solution of the coupled solver
-            //has both damage and displacements. Using the damageResult field from the Damage solver
-            //is probably better
-            //            std::cout<<"q, N, Dnode = "<<q<<", "<<feDiscretization->m_finiteElement->value(a, q)<<",
-            // "<<nodalDamage[elemNodes(k, a)]<<std::endl;
+            real64 N[ numNodesPerElement ];
+            FE_TYPE::shapeFunctionValues( q, N );
+
+            damageFieldOnMaterial( k, q ) = 0;
+            for( localIndex a = 0; a < numNodesPerElement; ++a )
+            {
+              damageFieldOnMaterial( k, q ) += N[a] * nodalDamage[elemNodes( k, a )];
+              //solution is probably not going to work because the solution of the coupled solver
+              //has both damage and displacements. Using the damageResult field from the Damage solver
+              //is probably better
+              //            std::cout<<"q, N, Dnode = "<<q<<", "<<feDiscretization->m_finiteElement->value(a, q)<<",
+              // "<<nodalDamage[elemNodes(k, a)]<<std::endl;
+            }
+            //          std::cout<<"damage("<<k<<","<<q<<") = "<<damageFieldOnMaterial(k,q)<<std::endl;
           }
-          //          std::cout<<"damage("<<k<<","<<q<<") = "<<damageFieldOnMaterial(k,q)<<std::endl;
         }
-      }
+
+      } );
     } );
   } );
 

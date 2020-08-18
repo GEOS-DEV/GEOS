@@ -150,7 +150,6 @@ public:
    */
   virtual real64 GetTimestepRequest( real64 const time ) override;
 
-
   /**
    * @brief Get event-specifit dt requests.
    * @param time The current simulation time.
@@ -179,7 +178,6 @@ public:
    */
   void SetProgressIndicator( array1d< integer > & eventCounters );
 
-
   /// @cond DO_NOT_DOCUMENT
   struct viewKeyStruct
   {
@@ -190,6 +188,7 @@ public:
     static constexpr auto maxEventDtString = "maxEventDt";
     static constexpr auto lastTimeString = "lastTime";
     static constexpr auto lastCycleString = "lastCycle";
+    static constexpr auto eventForecastString = "eventForecast";
     static constexpr auto targetExactStartStopString = "targetExactStartStop";
     static constexpr auto currentSubEventString = "currentSubEvent";
     static constexpr auto isTargetExecutingString = "isTargetExecuting";
@@ -202,6 +201,7 @@ public:
     dataRepository::ViewKey maxEventDt = { "maxEventDt" };
     dataRepository::ViewKey lastTime = { "lastTime" };
     dataRepository::ViewKey lastCycle = { "lastCycle" };
+    dataRepository::ViewKey eventForecast = { "eventForecast" };
     dataRepository::ViewKey targetExactStartStop = { "targetExactStartStop" };
     dataRepository::ViewKey currentSubEvent = { "currentSubEvent" };
     dataRepository::ViewKey isTargetExecuting = { "isTargetExecuting" };
@@ -212,18 +212,6 @@ public:
   using CatalogInterface = dataRepository::CatalogInterface< EventBase, std::string const &, Group * const >;
   /// @copydoc dataRepository::Group::GetCatalog()
   static CatalogInterface::CatalogType & GetCatalog();
-
-  /**
-   * @brief Get the forecast for this event.
-   * @return The forecast.
-   */
-  integer GetForecast(){ return m_eventForecast; }
-
-  /**
-   * @brief Set the forecast for this event.
-   * @param forecast The forecast.
-   */
-  void SetForecast( integer forecast ){ m_eventForecast = forecast; }
 
   /**
    * @brief Get the sum of the exit flags for the event/sub-events from the last execution.
@@ -238,46 +226,91 @@ public:
   void SetExitFlag( integer flag ){ m_exitFlag = flag; }
 
   /**
-   * @brief Get the event count.
-   * @return The event count.
-   */
-  integer GetEventCount() const { return m_eventCount; }
-
-  /**
-   * @brief Get the event progress.
-   * @return The event progress.
-   */
-  real64  GetEventProgress() const { return m_eventProgress; }
-
-  /**
    * @brief Get the current time increment request for this event.
    * @return The current time increment request.
    */
   real64  GetCurrentEventDtRequest() const { return m_currentEventDtRequest; }
 
   /**
-   * @brief Get the time the event began.
-   * @return The time the event began.
+   * @brief Get the forecast of the current event.
+   * @return The forecast.
+   *
+   * The `getForecast` getter only exists for debugging purpose.
+   * Prefer the predicate versions instead (isReadyForExec(), hasToPrepareForExec(), isIdle()).
    */
-  real64  GetBeginTime() const { return m_beginTime; }
+  integer getForecast() const
+  { return m_eventForecast; }
 
   /**
-   * @brief Get the time the event ended.
-   * @return The time the event ended.
+   * @brief Check if the event is ready for execution.
+   * @return @p true if ready, @p false otherwise.
    */
-  real64  GetEndTime() const { return m_endTime; }
+  bool isReadyForExec() const
+  { return m_eventForecast <= 0; }
+
+  /**
+   * @brief Check if the event must be preparing for execution.
+   * @return @p true if it must prepare, @p false otherwise.
+   */
+  bool hasToPrepareForExec() const
+  { return m_eventForecast == 1; }
+
+  /**
+   * @brief Check if the event is idle.
+   * @return @p true if it is idle, @p false otherwise.
+   */
+  bool isIdle() const
+  { return m_eventForecast > 1; }
+
+protected:
+
+  /**
+   * @brief Define the event as ready for execution.
+   */
+  void setReadyForExec()
+  { m_eventForecast = 0; }
+
+  /**
+   * @brief Define that the event should prepare for execution.
+   */
+  void setPrepareForExec()
+  { m_eventForecast = 1; }
+
+  /**
+   * @brief Define the event as idle.
+   */
+  void setIdle()
+  { m_eventForecast = std::numeric_limits< decltype( m_eventForecast ) >::max(); }
+
+  /**
+   * @brief Sets the forecast
+   * @param forecast The forecast provided as an integer.
+   *
+   * If the forecast is 0 or below, the event is considered being "ready for exec".
+   * If it equals 1, it is in "prepare for exec" status. Above, the event is "idle".
+   * If you can, you may prefer the dedicated setters (setReadyForExec(), setPrepareForExec(), setIdle()).
+   */
+  void setForecast( integer forecast )
+  { m_eventForecast = forecast; }
+
+  /**
+   * @brief Is the event active?
+   * @param time The time at which we want to check if the event is active.
+   * @return @p true if active, @p false otherwise.
+   */
+  bool isActive( real64 const time ) const
+  { return ( time >= m_beginTime ) && ( time < m_endTime ); }
 
   /**
    * @brief Get the target of this event.
    * @return The target of this event.
    */
-  ExecutableGroup * GetEventTarget() const { return m_target; }
+  ExecutableGroup * GetEventTarget() const
+  { return m_target; }
 
-
-protected:
-  /// The last time the event occured.
+  /// The last time the event occurred.
   real64 m_lastTime;
-  /// The last cycle the event occured.
+  /// The last cycle the event occurred.
   integer m_lastCycle;
 
 private:

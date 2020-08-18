@@ -22,7 +22,7 @@
 // Source inclues
 #include "wrapperHelpers.hpp"
 #include "KeyNames.hpp"
-#include "LvArray/src/IntegerConversion.hpp"
+#include "LvArray/src/limits.hpp"
 #include "common/DataTypes.hpp"
 #include "codingUtilities/SFINAE_Macros.hpp"
 #include "LvArray/src/Macros.hpp"
@@ -32,7 +32,7 @@
 #include "codingUtilities/traits.hpp"
 #include "common/GeosxConfig.hpp"
 #include "DefaultValue.hpp"
-#include "LvArray/src/StringUtilities.hpp"
+#include "LvArray/src/system.hpp"
 #include "WrapperBase.hpp"
 
 // System includes
@@ -182,15 +182,26 @@ public:
   {
     std::unique_ptr< WrapperBase >
     clonedWrapper = std::make_unique< Wrapper< T > >( name, parent, this->m_data );
-    clonedWrapper->CopyWrapperAttributes( *this );
+    clonedWrapper->copyWrapperAttributes( *this );
 
     return clonedWrapper;
   }
 
-  ///////////////////////////////////////////////////////////////////////////////////////////////////
-  virtual void CopyWrapperAttributes( WrapperBase const & source ) override
+  virtual void copyWrapper( WrapperBase const & source ) override
   {
-    WrapperBase::CopyWrapperAttributes( source );
+    GEOSX_ERROR_IF( source.getName() != this->m_name, "Tried to clone wrapper of with different name" );
+    WrapperBase::copyWrapperAttributes( source );
+    Wrapper< T > const & castedSource = *cast( &source );
+    m_ownsData = castedSource.m_ownsData;
+    m_default = castedSource.m_default;
+    copyData( source );
+
+  }
+
+  ///////////////////////////////////////////////////////////////////////////////////////////////////
+  virtual void copyWrapperAttributes( WrapperBase const & source ) override
+  {
+    WrapperBase::copyWrapperAttributes( source );
     Wrapper< T > const & castedSource = *cast( &source );
     m_ownsData = castedSource.m_ownsData;
     m_default = castedSource.m_default;
@@ -420,11 +431,17 @@ public:
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
   virtual void resize( int ndims, localIndex const * const dims ) override
-  { wrapperHelpers::resizeDimensions( *m_data, ndims, dims ); }
+  {
+    wrapperHelpers::move( *m_data, LvArray::MemorySpace::CPU, true );
+    wrapperHelpers::resizeDimensions( *m_data, ndims, dims );
+  }
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
   virtual void reserve( localIndex const newCapacity ) override
-  { wrapperHelpers::reserve( reference(), newCapacity ); }
+  {
+    wrapperHelpers::move( *m_data, LvArray::MemorySpace::CPU, true );
+    wrapperHelpers::reserve( reference(), newCapacity );
+  }
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
   virtual localIndex capacity() const override
@@ -435,7 +452,10 @@ public:
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
   virtual void resize( localIndex const newSize ) override
-  { wrapperHelpers::resizeDefault( reference(), newSize, m_default ); }
+  {
+    wrapperHelpers::move( *m_data, LvArray::MemorySpace::CPU, true );
+    wrapperHelpers::resizeDefault( reference(), newSize, m_default );
+  }
 
   /// @cond DO_NOT_DOCUMENT
   struct copy_wrapper
@@ -454,6 +474,21 @@ public:
     static void copy( U const &, localIndex const, localIndex const )
     {}
 
+    template< typename U=T >
+    static
+    typename std::enable_if< traits::hasCopyAssignmentOp< U >, void >::type
+    copyData( U & destinationData, U const & sourceData )
+    {
+      destinationData = sourceData;
+    }
+
+    template< typename U=T >
+    static
+    typename std::enable_if< !traits::hasCopyAssignmentOp< U >, void >::type
+    copyData( U &, U const & )
+    {}
+
+
   };
   /// @endcond
 
@@ -465,6 +500,15 @@ public:
       copy_wrapper::copy( reference(), sourceIndex, destIndex );
     }
   }
+
+
+
+  virtual void copyData( WrapperBase const & source ) override
+  {
+    Wrapper< T > const & castedSource = *cast( &source );
+    copy_wrapper::copyData( *m_data, *castedSource.m_data );
+  }
+
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
   virtual void move( LvArray::MemorySpace const space, bool const touch ) const override
@@ -587,11 +631,25 @@ public:
    * @return pointer to Wrapper<T>
    */
   template< typename U=T >
-  typename std::enable_if< DefaultValue< U >::has_default_value, Wrapper< T > * >::type
+  typename std::enable_if< !traits::is_array< U > && DefaultValue< U >::has_default_value, Wrapper< T > * >::type
   setApplyDefaultValue( typename DefaultValue< U >::value_type const & defaultVal )
   {
     m_default.value = defaultVal;
     *m_data = m_default.value;
+    return this;
+  }
+
+  /**
+   * @brief Set and apply for default value.
+   * @param defaultVal the new default value
+   * @return pointer to Wrapper<T>
+   */
+  template< typename U=T >
+  typename std::enable_if< traits::is_array< U > && DefaultValue< U >::has_default_value, Wrapper< T > * >::type
+  setApplyDefaultValue( typename DefaultValue< U >::value_type const & defaultVal )
+  {
+    m_default.value = defaultVal;
+    m_data->template setValues< serialPolicy >( m_default.value );
     return this;
   }
 
@@ -818,7 +876,7 @@ public:
 #if defined(USE_TOTALVIEW_OUTPUT)
   virtual string totalviewTypeName() const override
   {
-    return LvArray::demangle( typeid( Wrapper< T > ).name() );
+    return LvArray::system::demangle( typeid( Wrapper< T > ).name() );
   }
 
   virtual int setTotalviewDisplay() const override
@@ -826,8 +884,8 @@ public:
     //std::cout<<"executing Wrapper::setTotalviewDisplay()"<<std::endl;
     WrapperBase::setTotalviewDisplay();
     TV_ttf_add_row( "m_ownsData", "bool", &m_ownsData );
-    TV_ttf_add_row( "m_data", LvArray::demangle< T >().c_str(), m_data );
-    TV_ttf_add_row( "m_default", LvArray::demangle< DefaultValue< T > >().c_str(), &m_default );
+    TV_ttf_add_row( "m_data", LvArray::system::demangle< T >().c_str(), m_data );
+    TV_ttf_add_row( "m_default", LvArray::system::demangle< DefaultValue< T > >().c_str(), &m_default );
     return 0;
   }
 //  void tvTemplateInstantiation();

@@ -80,7 +80,7 @@ void CapillaryPressureBase::PostProcessInput()
 
   m_phaseTypes.resize( NP );
   m_phaseOrder.resize( PhaseType::MAX_NUM_PHASES );
-  m_phaseOrder = -1;
+  m_phaseOrder.setValues< serialPolicy >( -1 );
 
   for( localIndex ip = 0; ip < NP; ++ip )
   {
@@ -110,11 +110,12 @@ void CapillaryPressureBase::ResizeFields( localIndex const size,
   m_dPhaseCapPressure_dPhaseVolFrac.resize( size, numPts, NP, NP );
 }
 
-void CapillaryPressureBase::AllocateConstitutiveData( dataRepository::Group * const parent,
+
+void CapillaryPressureBase::allocateConstitutiveData( dataRepository::Group * const parent,
                                                       localIndex const numConstitutivePointsPerParentIndex )
 {
-  ConstitutiveBase::AllocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
-  ResizeFields( parent->size(), numConstitutivePointsPerParentIndex );
+  ResizeFields( 0, numConstitutivePointsPerParentIndex );
+  ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 }
 
 } // namespace constitutive

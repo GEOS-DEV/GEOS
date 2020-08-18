@@ -32,7 +32,7 @@ TEST( LinearElasticIsotropicTests, testAllocation )
 
   dataRepository::Group disc( "discretization", nullptr );
   disc.resize( numElems );
-  cm.AllocateConstitutiveData( &disc, numQuadraturePoints );
+  cm.allocateConstitutiveData( &disc, numQuadraturePoints );
 
   EXPECT_EQ( cm.size(), numElems );
   EXPECT_EQ( cm.numQuadraturePoints(), numQuadraturePoints );
@@ -58,7 +58,7 @@ TEST( LinearElasticIsotropicTests, testStateUpdatePoint )
 
   dataRepository::Group disc( "discretization", nullptr );
   disc.resize( 2 );
-  cm.AllocateConstitutiveData( &disc, 2 );
+  cm.allocateConstitutiveData( &disc, 2 );
   LinearElasticIsotropic::KernelWrapper cmw = cm.createKernelUpdates();
 
   arrayView3d< real64, solid::STRESS_USD > const & stress = cm.getStress();
@@ -84,7 +84,7 @@ TEST( LinearElasticIsotropicTests, testStateUpdatePoint )
   }
 
   {
-    stress = 0;
+    stress.setValues< serialPolicy >( 0 );
     LvArray::tensorOps::fill< 6 >( Ddt, 0 );
 
     Ddt[ 1 ] = strain;
@@ -104,7 +104,7 @@ TEST( LinearElasticIsotropicTests, testStateUpdatePoint )
   }
 
   {
-    stress = 0;
+    stress.setValues< serialPolicy >( 0 );
     LvArray::tensorOps::fill< 6 >( Ddt, 0 );
 
     Ddt[ 2 ] = strain;
@@ -124,7 +124,7 @@ TEST( LinearElasticIsotropicTests, testStateUpdatePoint )
   }
 
   {
-    stress = 0;
+    stress.setValues< serialPolicy >( 0 );
     LvArray::tensorOps::fill< 6 >( Ddt, 0 );
 
     Ddt[ 5 ] = strain;
@@ -144,7 +144,7 @@ TEST( LinearElasticIsotropicTests, testStateUpdatePoint )
   }
 
   {
-    stress = 0;
+    stress.setValues< serialPolicy >( 0 );
     LvArray::tensorOps::fill< 6 >( Ddt, 0 );
 
     Ddt[ 4 ] = strain;
@@ -163,7 +163,7 @@ TEST( LinearElasticIsotropicTests, testStateUpdatePoint )
   }
 
   {
-    stress = 0;
+    stress.setValues< serialPolicy >( 0 );
     LvArray::tensorOps::fill< 6 >( Ddt, 0 );
 
     Ddt[ 3 ] = strain;

@@ -58,30 +58,12 @@ void Damage< BASE >::PostProcessInput()
 {}
 
 template< typename BASE >
-void Damage< BASE >::DeliverClone( string const & name,
-                                        Group * const parent,
-                                        std::unique_ptr< ConstitutiveBase > & clone ) const
+void Damage< BASE >::allocateConstitutiveData( dataRepository::Group * const parent,
+                                               localIndex const numConstitutivePointsPerParentIndex )
 {
-  if( !clone )
-  {
-    clone = std::make_unique< Damage< BASE > >( name, parent );
-  }
-  BASE::DeliverClone( name, parent, clone );
-  Damage< BASE > * const newConstitutiveRelation = dynamic_cast< Damage< BASE > * >(clone.get());
-
-  newConstitutiveRelation->m_damage = m_damage;
-  newConstitutiveRelation->m_strainEnergyDensity = m_strainEnergyDensity;
-}
-
-template< typename BASE >
-void Damage< BASE >::AllocateConstitutiveData( dataRepository::Group * const parent,
-                                                    localIndex const numConstitutivePointsPerParentIndex )
-{
-  BASE::AllocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
-
-  m_damage.resize( parent->size(), numConstitutivePointsPerParentIndex );
-  m_strainEnergyDensity.resize( parent->size(), numConstitutivePointsPerParentIndex );
-
+  m_damage.resize( 0, numConstitutivePointsPerParentIndex );
+  m_strainEnergyDensity.resize( 0, numConstitutivePointsPerParentIndex );
+  BASE::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 }
 
 typedef Damage< LinearElasticIsotropic > DamageLinearElasticIsotropic;

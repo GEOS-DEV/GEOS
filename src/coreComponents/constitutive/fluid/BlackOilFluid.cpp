@@ -19,7 +19,6 @@
 #include "BlackOilFluid.hpp"
 
 #include "codingUtilities/Utilities.hpp"
-#include "managers/ProblemManager.hpp"
 #include "common/Path.hpp"
 
 // PVTPackage includes
@@ -37,21 +36,21 @@ using namespace dataRepository;
 namespace constitutive
 {
 
-BlackOilFluid::FluidType BlackOilFluid::stringToFluidType( string const & str )
+namespace
 {
-  if( str == "LiveOil" )
+
+BlackOilFluid::FluidType getBlackOilFluidType( string const & name )
+{
+  static std::map< string, BlackOilFluid::FluidType > const fluidTypes =
   {
-    return BlackOilFluid::FluidType::LiveOil;
-  }
-  else if( str == "DeadOil" )
-  {
-    return BlackOilFluid::FluidType::DeadOil;
-  }
-  else
-  {
-    GEOSX_ERROR( "Unrecognized black-oil fluid type: " << str );
-  }
-  return BlackOilFluid::FluidType::LiveOil; // keep compilers happy
+    { "LiveOil", BlackOilFluid::FluidType::LiveOil },
+    { "DeadOil", BlackOilFluid::FluidType::DeadOil },
+  };
+  auto const it = fluidTypes.find( name );
+  GEOSX_ERROR_IF( it == fluidTypes.end(), "Black-oil fluid type not supported by PVTPackage: " << name );
+  return it->second;
+}
+
 }
 
 BlackOilFluid::BlackOilFluid( std::string const & name, Group * const parent )
@@ -77,25 +76,17 @@ BlackOilFluid::BlackOilFluid( std::string const & name, Group * const parent )
 BlackOilFluid::~BlackOilFluid()
 {}
 
-void
-BlackOilFluid::DeliverClone( string const & name,
-                             Group * const parent,
-                             std::unique_ptr< ConstitutiveBase > & clone ) const
+std::unique_ptr< ConstitutiveBase >
+BlackOilFluid::deliverClone( string const & name,
+                             Group * const parent ) const
 {
-  if( !clone )
-  {
-    clone = std::make_unique< BlackOilFluid >( name, parent );
-  }
-
-  MultiFluidPVTPackageWrapper::DeliverClone( name, parent, clone );
+  std::unique_ptr< ConstitutiveBase >
+  clone = MultiFluidPVTPackageWrapper::deliverClone( name, parent );
   BlackOilFluid & fluid = dynamicCast< BlackOilFluid & >( *clone );
 
-  fluid.m_surfaceDensities = m_surfaceDensities;
-  fluid.m_tableFiles       = m_tableFiles;
-  fluid.m_fluidTypeString  = m_fluidTypeString;
   fluid.m_fluidType        = m_fluidType;
-
   fluid.createFluid();
+  return clone;
 }
 
 void BlackOilFluid::PostProcessInput()
@@ -121,12 +112,12 @@ void BlackOilFluid::PostProcessInput()
 
 #undef BOFLUID_CHECK_INPUT_LENGTH
 
-  m_fluidType = stringToFluidType( m_fluidTypeString );
+  m_fluidType = getBlackOilFluidType( m_fluidTypeString );
 }
 
 void BlackOilFluid::createFluid()
 {
-  std::vector< PHASE_TYPE > phases( m_pvtPackagePhaseTypes.begin(), m_pvtPackagePhaseTypes.end() );
+  std::vector< PVTPackage::PHASE_TYPE > phases( m_phaseTypes.begin(), m_phaseTypes.end() );
   std::vector< std::string > tableFiles( m_tableFiles.begin(), m_tableFiles.end() );
   std::vector< double > densities( m_surfaceDensities.begin(), m_surfaceDensities.end() );
   std::vector< double > molarWeights( m_componentMolarWeight.begin(), m_componentMolarWeight.end() );
@@ -136,15 +127,17 @@ void BlackOilFluid::createFluid()
     case FluidType::LiveOil:
     {
       m_fluid = std::make_unique< BlackOilMultiphaseSystem >( phases, tableFiles, densities, molarWeights );
+      break;
     }
-    break;
     case FluidType::DeadOil:
     {
       m_fluid = std::make_unique< DeadOilMultiphaseSystem >( phases, tableFiles, densities, molarWeights );
+      break;
     }
-    break;
     default:
+    {
       GEOSX_ERROR( "Unknown fluid type" );
+    }
   }
 }
 

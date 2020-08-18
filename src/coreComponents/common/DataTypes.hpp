@@ -32,11 +32,12 @@
 #include "LvArray/src/Array.hpp"
 #include "LvArray/src/ArrayOfArrays.hpp"
 #include "LvArray/src/ArrayOfSets.hpp"
+#include "LvArray/src/SparsityPattern.hpp"
 #include "LvArray/src/CRSMatrix.hpp"
 #include "LvArray/src/Macros.hpp"
 #include "LvArray/src/SortedArray.hpp"
 #include "LvArray/src/StackBuffer.hpp"
-#include "LvArray/src/NewChaiBuffer.hpp"
+#include "LvArray/src/ChaiBuffer.hpp"
 
 #include "math/TensorT/TensorT.h"
 #include "Path.hpp"
@@ -96,8 +97,8 @@ NEW_TYPE dynamicCast( EXISTING_TYPE & val )
 
   using POINTER_TO_NEW_TYPE = std::remove_reference_t< NEW_TYPE > *;
   POINTER_TO_NEW_TYPE ptr = dynamicCast< POINTER_TO_NEW_TYPE >( &val );
-  GEOSX_ERROR_IF( ptr == nullptr, "Cast from " << LvArray::demangleType( val ) << " to " <<
-                  LvArray::demangleType< NEW_TYPE >() << " failed." );
+  GEOSX_ERROR_IF( ptr == nullptr, "Cast from " << LvArray::system::demangleType( val ) << " to " <<
+                  LvArray::system::demangleType< NEW_TYPE >() << " failed." );
 
   return *ptr;
 }
@@ -163,13 +164,13 @@ using buffer_type = std::vector< buffer_unit_type >;
 template< typename T,
           int NDIM,
           typename PERMUTATION=camp::make_idx_seq_t< NDIM > >
-using Array = LvArray::Array< T, NDIM, PERMUTATION, localIndex, LvArray::NewChaiBuffer >;
+using Array = LvArray::Array< T, NDIM, PERMUTATION, localIndex, LvArray::ChaiBuffer >;
 
 /// Multidimensional array view type. See LvArray:ArrayView for details.
 template< typename T,
           int NDIM,
           int USD = NDIM - 1 >
-using ArrayView = LvArray::ArrayView< T, NDIM, USD, localIndex, LvArray::NewChaiBuffer >;
+using ArrayView = LvArray::ArrayView< T, NDIM, USD, localIndex, LvArray::ChaiBuffer >;
 
 /// Multidimensional array slice type. See LvArray:ArraySlice for details.
 template< typename T, int NDIM, int USD = NDIM - 1 >
@@ -266,23 +267,6 @@ using arraySlice5d = ArraySlice< T, 5, 4 >;
 template< typename T, int MAXSIZE >
 using stackArray5d = StackArray< T, 5, MAXSIZE >;
 
-
-/// Alias for Sparsity pattern class.
-template< typename COL_INDEX, typename INDEX_TYPE=localIndex >
-using SparsityPattern = LvArray::SparsityPattern< COL_INDEX, INDEX_TYPE, LvArray::NewChaiBuffer >;
-
-/// Alias for Sparsity pattern View.
-template< typename COL_INDEX, typename INDEX_TYPE=localIndex >
-using SparsityPatternView = LvArray::SparsityPatternView< COL_INDEX, INDEX_TYPE const, LvArray::NewChaiBuffer >;
-
-/// Alias for CRS Matrix class.
-template< typename T, typename COL_INDEX=localIndex >
-using CRSMatrix = LvArray::CRSMatrix< T, COL_INDEX, localIndex, LvArray::NewChaiBuffer >;
-
-/// Alias for CRS Matrix View.
-template< typename T, typename COL_INDEX=localIndex >
-using CRSMatrixView = LvArray::CRSMatrixView< T, COL_INDEX, localIndex const, LvArray::NewChaiBuffer >;
-
 ///@}
 
 /**
@@ -296,11 +280,11 @@ using set = std::set< T >;
 
 /// A sorted array of local indices.
 template< typename T >
-using SortedArray = LvArray::SortedArray< T, localIndex, LvArray::NewChaiBuffer >;
+using SortedArray = LvArray::SortedArray< T, localIndex, LvArray::ChaiBuffer >;
 
 /// A sorted array view of local indices.
 template< typename T >
-using SortedArrayView = LvArray::SortedArrayView< T, localIndex, LvArray::NewChaiBuffer >;
+using SortedArrayView = LvArray::SortedArrayView< T, localIndex, LvArray::ChaiBuffer >;
 
 ///@}
 
@@ -311,19 +295,35 @@ using SortedArrayView = LvArray::SortedArrayView< T, localIndex, LvArray::NewCha
 
 /// Array of variable-sized arrays. See LvArray::ArrayOfArrays for details.
 template< typename T >
-using ArrayOfArrays = LvArray::ArrayOfArrays< T, localIndex, LvArray::NewChaiBuffer >;
+using ArrayOfArrays = LvArray::ArrayOfArrays< T, localIndex, LvArray::ChaiBuffer >;
 
 /// View of array of variable-sized arrays. See LvArray::ArrayOfArraysView for details.
 template< typename T, bool CONST_SIZES=std::is_const< T >::value >
-using ArrayOfArraysView = LvArray::ArrayOfArraysView< T, localIndex const, CONST_SIZES, LvArray::NewChaiBuffer >;
+using ArrayOfArraysView = LvArray::ArrayOfArraysView< T, localIndex const, CONST_SIZES, LvArray::ChaiBuffer >;
 
 /// Array of variable-sized sets. See LvArray::ArrayOfSets for details.
 template< typename T >
-using ArrayOfSets = LvArray::ArrayOfSets< T, localIndex, LvArray::NewChaiBuffer >;
+using ArrayOfSets = LvArray::ArrayOfSets< T, localIndex, LvArray::ChaiBuffer >;
 
 /// View of array of variable-sized sets. See LvArray::ArrayOfSetsView for details.
 template< typename T >
-using ArrayOfSetsView = LvArray::ArrayOfSetsView< T, localIndex const, LvArray::NewChaiBuffer >;
+using ArrayOfSetsView = LvArray::ArrayOfSetsView< T, localIndex const, LvArray::ChaiBuffer >;
+
+/// Alias for Sparsity pattern class.
+template< typename COL_INDEX, typename INDEX_TYPE=localIndex >
+using SparsityPattern = LvArray::SparsityPattern< COL_INDEX, INDEX_TYPE, LvArray::ChaiBuffer >;
+
+/// Alias for Sparsity pattern View.
+template< typename COL_INDEX, typename INDEX_TYPE=localIndex >
+using SparsityPatternView = LvArray::SparsityPatternView< COL_INDEX, INDEX_TYPE const, LvArray::ChaiBuffer >;
+
+/// Alias for CRS Matrix class.
+template< typename T, typename COL_INDEX=localIndex >
+using CRSMatrix = LvArray::CRSMatrix< T, COL_INDEX, localIndex, LvArray::ChaiBuffer >;
+
+/// Alias for CRS Matrix View.
+template< typename T, typename COL_INDEX=localIndex >
+using CRSMatrixView = LvArray::CRSMatrixView< T, COL_INDEX, localIndex const, LvArray::ChaiBuffer >;
 
 ///@}
 
@@ -534,7 +534,7 @@ public:
     }
     else
     {
-      return LvArray::demangle( key.name());
+      return LvArray::system::demangle( key.name());
     }
   }
 

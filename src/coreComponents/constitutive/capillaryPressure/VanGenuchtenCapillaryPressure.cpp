@@ -28,7 +28,6 @@ using namespace dataRepository;
 namespace constitutive
 {
 
-
 VanGenuchtenCapillaryPressure::VanGenuchtenCapillaryPressure( std::string const & name,
                                                               Group * const parent )
   : CapillaryPressureBase( name, parent )
@@ -53,32 +52,15 @@ VanGenuchtenCapillaryPressure::VanGenuchtenCapillaryPressure( std::string const 
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription(
     "Saturation at which the extremum capillary pressure is attained; used to avoid infinite capillary pressure values for saturations close to 0 and 1" );
+
+  registerWrapper( viewKeyStruct::volFracScaleString, &m_volFracScale )->
+    setApplyDefaultValue( 1.0 )->
+    setDescription( "Factor used to scale the phase capillary pressure, defined as: one minus the sum of the phase minimum volume fractions." );
+
 }
 
 VanGenuchtenCapillaryPressure::~VanGenuchtenCapillaryPressure()
 {}
-
-void
-VanGenuchtenCapillaryPressure::DeliverClone( string const & name,
-                                             Group * const parent,
-                                             std::unique_ptr< ConstitutiveBase > & clone ) const
-{
-  std::unique_ptr< VanGenuchtenCapillaryPressure > newModel = std::make_unique< VanGenuchtenCapillaryPressure >( name, parent );
-
-  newModel->m_phaseNames = this->m_phaseNames;
-  newModel->m_phaseTypes = this->m_phaseTypes;
-  newModel->m_phaseOrder = this->m_phaseOrder;
-
-  newModel->m_phaseMinVolumeFraction      = this->m_phaseMinVolumeFraction;
-  newModel->m_phaseCapPressureExponentInv = this->m_phaseCapPressureExponentInv;
-  newModel->m_phaseCapPressureMultiplier  = this->m_phaseCapPressureMultiplier;
-
-  newModel->m_capPressureEpsilon = this->m_capPressureEpsilon;
-  newModel->m_volFracScale       = this->m_volFracScale;
-
-  clone = std::move( newModel );
-}
-
 
 void VanGenuchtenCapillaryPressure::PostProcessInput()
 {
@@ -125,43 +107,17 @@ void VanGenuchtenCapillaryPressure::PostProcessInput()
   GEOSX_ERROR_IF( m_volFracScale < 0.0, "VanGenuchtenCapillaryPressure: sum of min volume fractions exceeds 1.0" );
 }
 
-
-void VanGenuchtenCapillaryPressure::BatchUpdate( arrayView2d< real64 const > const & phaseVolumeFraction )
+VanGenuchtenCapillaryPressure::KernelWrapper VanGenuchtenCapillaryPressure::createKernelWrapper()
 {
-
-  arrayView1d< real64 const > const & phaseMinVolumeFraction      = m_phaseMinVolumeFraction;
-  arrayView1d< real64 const > const & phaseCapPressureExponentInv = m_phaseCapPressureExponentInv;
-  arrayView1d< real64 const > const & phaseCapPressureMultiplier  = m_phaseCapPressureMultiplier;
-  real64 const & capPressureEpsilon = m_capPressureEpsilon;
-
-  CapillaryPressureBase::BatchUpdateKernel< VanGenuchtenCapillaryPressure >( phaseVolumeFraction,
-                                                                             phaseMinVolumeFraction,
-                                                                             phaseCapPressureExponentInv,
-                                                                             phaseCapPressureMultiplier,
-                                                                             capPressureEpsilon,
-                                                                             m_volFracScale );
-}
-
-
-void VanGenuchtenCapillaryPressure::PointUpdate( arraySlice1d< real64 const > const & phaseVolFraction,
-                                                 localIndex const k,
-                                                 localIndex const q )
-{
-  arraySlice1d< real64 > const capPressure           = m_phaseCapPressure[k][q];
-  arraySlice2d< real64 > const dCapPressure_dVolFrac = m_dPhaseCapPressure_dPhaseVolFrac[k][q];
-
-  localIndex const NP = numFluidPhases();
-
-  Compute( NP,
-           phaseVolFraction,
-           capPressure,
-           dCapPressure_dVolFrac,
-           m_phaseOrder,
-           m_phaseMinVolumeFraction,
-           m_phaseCapPressureExponentInv,
-           m_phaseCapPressureMultiplier,
-           m_capPressureEpsilon,
-           m_volFracScale );
+  return KernelWrapper( m_phaseMinVolumeFraction,
+                        m_phaseCapPressureExponentInv,
+                        m_phaseCapPressureMultiplier,
+                        m_capPressureEpsilon,
+                        m_volFracScale,
+                        m_phaseTypes,
+                        m_phaseOrder,
+                        m_phaseCapPressure,
+                        m_dPhaseCapPressure_dPhaseVolFrac );
 }
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, VanGenuchtenCapillaryPressure, std::string const &, Group * const )

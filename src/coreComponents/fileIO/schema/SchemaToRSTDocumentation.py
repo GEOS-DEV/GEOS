@@ -263,7 +263,7 @@ touched_files = []
 with open('%s.rst' % (complete_output), 'w') as output_handle:
   # Write the file header
   output_handle.write('======================\n')
-  output_handle.write('Data Structure Guide\n')
+  output_handle.write('Datastructure Index\n')
   output_handle.write('======================\n\n')
 
   # Parse the input schema definitions

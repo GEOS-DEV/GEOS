@@ -59,13 +59,15 @@ public:
 
   /**
    * @brief Deleted copy assignment.
+   * @return not callable
    */
-  BlockOperatorView & operator=( BlockOperatorView const & rhs ) = delete;
+  BlockOperatorView & operator=( BlockOperatorView const & ) = delete;
 
   /**
    * @brief Deleted move assignment.
+   * @return not callable
    */
-  BlockOperatorView & operator=( BlockOperatorView && rhs ) = delete;
+  BlockOperatorView & operator=( BlockOperatorView && ) = delete;
 
   ///@}
 

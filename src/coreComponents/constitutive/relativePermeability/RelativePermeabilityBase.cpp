@@ -77,7 +77,7 @@ void RelativePermeabilityBase::PostProcessInput()
 
   m_phaseTypes.resize( NP );
   m_phaseOrder.resize( PhaseType::MAX_NUM_PHASES );
-  m_phaseOrder = -1;
+  m_phaseOrder.setValues< serialPolicy >( -1 );
 
   for( localIndex ip = 0; ip < NP; ++ip )
   {
@@ -102,10 +102,10 @@ void RelativePermeabilityBase::ResizeFields( localIndex const size, localIndex c
   m_dPhaseRelPerm_dPhaseVolFrac.resize( size, numPts, NP, NP );
 }
 
-void RelativePermeabilityBase::AllocateConstitutiveData( dataRepository::Group * const parent,
+void RelativePermeabilityBase::allocateConstitutiveData( dataRepository::Group * const parent,
                                                          localIndex const numConstitutivePointsPerParentIndex )
 {
-  ConstitutiveBase::AllocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+  ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
   ResizeFields( parent->size(), numConstitutivePointsPerParentIndex );
 }
 
