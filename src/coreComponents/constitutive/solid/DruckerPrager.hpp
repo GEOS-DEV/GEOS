@@ -21,7 +21,8 @@
 
 #include "ElasticIsotropic.hpp"
 #include "InvariantDecompositions.hpp"
-#include "LvArray/src/tensorOps.hpp" // TODO: cleanup includes
+#include "PropertyConversions.hpp"
+#include "LvArray/src/tensorOps.hpp"
 
 namespace geosx
 {
@@ -109,210 +110,154 @@ GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void DruckerPragerUpdates::smallStrainUpdate( localIndex const k,
                                               localIndex const q,
-                                              real64 const ( & /*strainIncrement*/ )[6],
+                                              real64 const ( & strainIncrement )[6],
                                               real64 ( & stress )[6],
                                               real64 ( & stiffness )[6][6] )
 {
-  real64 const shear = m_shearModulus[k];
-  real64 const bulk  = m_bulkModulus[k];
-  real64 const lame  = bulk - 2.0/3.0*shear;
-  
-  real64 const friction    = m_tanFrictionAngle[k];
-  real64 const dilation    = m_tanDilationAngle[k];
-  real64 const hardening   = m_hardeningRate[k];
-  real64 const oldCohesion = m_oldCohesion[k][q];
-  
-  real64 cohesion = oldCohesion;
-  
   // elastic predictor (assume strainIncrement is all elastic)
   
-  /*
-  real64 newElasticStrain[6];
-  for(localIndex i=0; i<6; ++i)
-  {
-    newElasticStrain[i] = m_oldElasticStrain[k][q][i] + strainIncrement[i];
-  }
-  */
-  // elastic strain invariants (scalar)
+  ElasticIsotropicUpdates::smallStrainUpdate( k, q, strainIncrement, stress, stiffness);
   
-  real64 volStrain = 0;
-  real64 devStrain = 0;
-  real64 deviator[6] = {};
+  // decompose into mean (P) and von mises (Q) stress invariants
+  // could switch to strain invariant formulation using getElasticStrain() if needed
+    
+  real64 trialP;
+  real64 trialQ;
+  real64 deviator[6];
   
-  /*
-  twoInvariant::strainDecomposition(newElasticStrain,
-                                    volStrain,
-                                    devStrain,
+  twoInvariant::stressDecomposition(stress,
+                                    trialP,
+                                    trialQ,
                                     deviator);
-  */
-  // trial stress invariants
   
-  real64 trialP = bulk * volStrain;
-  real64 trialQ = 3 * shear * devStrain;
+  // check yield function F <= 0, using old hardening variable state
+    
+  real64 yield = trialQ + m_tanFrictionAngle[k] * trialP - m_oldCohesion[k][q];
   
-  // check yield function F <= 0
-  
-  real64 yield = trialQ + friction*trialP - cohesion;
-  
-  if(yield > 1e-9) // plasticity branch
+  if(yield < 1e-9) // elasticity
   {
-    // the return mapping can in general be written as a newton iteration.
-    // here we have a linear problem, so the algorithm will converge in one
-    // iteration, but this is a template for more general models with either
-    // nonlinear hardening or curved yield surfaces.
+    return;
+  }
+  
+  // else, plasticity (trial stress point lies outside yield surface)
+
+  // the return mapping can in general be written as a newton iteration.
+  // here we have a linear problem, so the algorithm will converge in one
+  // iteration, but this is a template for more general models with either
+  // nonlinear hardening or yield surfaces.
     
-    // for GPU we can simplify the DP model to avoid Newton, but Cam-Clay and
-    // others will need it.
+  real64 solution[3], residual[3], delta[3];
+  real64 jacobian[3][3] = {{}}, jacobianInv[3][3];
+  
+  solution[0] = trialP; // initial guess for newP
+  solution[1] = trialQ; // initial guess for newQ
+  solution[2] = 0;      // initial guess for plastic multiplier
+  
+  real64 norm,normZero = 1e30;
+  
+  real64 const & shear       = m_shearModulus[k];
+  real64 const & bulk        = m_bulkModulus[k];
+  real64 const & friction    = m_tanFrictionAngle[k];
+  real64 const & dilation    = m_tanDilationAngle[k];
+  real64 const & hardening   = m_hardeningRate[k];
+  real64 const & oldCohesion = m_oldCohesion[k][q];
+  real64       & newCohesion = m_newCohesion[k][q];
+  
+  // begin newton loop
+  
+  for(localIndex iter=0; iter<20; ++iter)
+  {
+    // apply a linear cohesion decay model.
     
-    // .... change to c-arrays ...
-    array1d< real64 > solution(3), residual(3), delta(3);
-    array2d< real64 > jacobian(3,3), jacobianInv(3,3);
+    newCohesion = oldCohesion-solution[2]*hardening;
+    real64 cohesionDeriv = -hardening;
     
-    solution[0] = trialP; // initial guess for newP
-    solution[1] = trialQ; // initial guess for newQ
-    solution[2] = 0;      // initial guess for plastic multiplier
-    
-    real64 norm,normZero = 1e30;
-    jacobian.setValues< serialPolicy >( 0 );
-    
-    for(localIndex iter=0; iter<10; ++iter) // could be fixed at one iter
+    if(newCohesion < 0)  // check for complete cohesion loss
     {
-      // apply a linear cohesion decay model.  this requires an if() check for negative cohesion.
-      // a log decay model would avoid this, at the price of nonlinearity
-      
-      cohesion = oldCohesion-solution[2]*hardening;
-      real64 cohesionDeriv = -hardening;
-      
-      if(cohesion < 0)  // branch
-      {
-        cohesion = 0;
-        cohesionDeriv = 0;
-      }
-      
-      // assemble residual system
-      
-      residual[0] = solution[0] - trialP + solution[2]*bulk*dilation; // P - trialP + lambda*dG/dP = 0
-      residual[1] = solution[1] - trialQ + solution[2]*3*shear;       // Q - trialQ + lambda*dG/dQ = 0
-      residual[2] = solution[1] + friction*solution[0] - cohesion;    // F = 0
-      
-      // check for convergence (can be avoided for linear model)
-      
-      norm = LvArray::tensorOps::l2Norm<3>(residual);
-      
-      //residual.L2_Norm();  //std::cout << iter << " " << norm << std::endl;
-      
-      if(iter==0)
-      {
-        normZero = norm;
-      }
-      
-      if(norm < 1e-8*(normZero+1)) 
-      {
-        break;
-      }
-      
-      // solve Newton system
-      
-      jacobian(0,0) = 1;
-      jacobian(0,2) = bulk*dilation;
-      jacobian(1,1) = 1;
-      jacobian(1,2) = 3*shear;
-      jacobian(2,0) = friction;
-      jacobian(2,1) = 1;
-      jacobian(2,2) = cohesionDeriv;
-      
-      LvArray::tensorOps::invert<3>(jacobianInv,jacobian);
-      LvArray::tensorOps::AijBj<3,3>(delta,jacobianInv,residual);
-     
-      for(localIndex i=0; i<3; ++i)
-      {
-        solution[i] -= delta[i];
-      }
+      newCohesion = 0;
+      cohesionDeriv = 0;
     }
     
-    // construct stress = P*eye + sqrt(2/3)*Q*nhat
+    // assemble residual system
     
-    twoInvariant::stressRecomposition(solution[0],
-                                      solution[1],
-                                      deviator,
-                                      stress);
-                                          
-    // construct consistent tangent operator
+    residual[0] = solution[0] - trialP + solution[2]*bulk*dilation; // P - trialP + lambda*dG/dP = 0
+    residual[1] = solution[1] - trialQ + solution[2]*3*shear;       // Q - trialQ + lambda*dG/dQ = 0
+    residual[2] = solution[1] + friction*solution[0] - newCohesion; // F = 0
     
-    for(localIndex i=0; i<6; ++i)
+    // check for convergence
+    
+    norm = LvArray::tensorOps::l2Norm<3>(residual);
+        
+    if(iter==0)
     {
-      for(localIndex j=0; j<6; ++j)
-      {
-        stiffness[i][j] = 0;
-      }
+      normZero = norm;
     }
     
-    real64 c1 = 2*shear*solution(1)/trialQ; // TODO: confirm trialQ != 0 for linear DP
-    real64 c2 = jacobianInv(0,0)*bulk - c1/3;
-    real64 c3 = sqrt(2./3)*3*shear*jacobianInv(0,1);
-    real64 c4 = sqrt(2./3)*bulk*jacobianInv(1,0);
-    real64 c5 = 2*jacobianInv(1,1)*shear - c1;
+    if(norm < 1e-8*(normZero+1))
+    {
+      break;
+    }
     
-    array1d< real64 > identity(6);
+    // solve Newton system
     
+    jacobian[0][0] = 1;
+    jacobian[0][2] = bulk*dilation;
+    jacobian[1][1] = 1;
+    jacobian[1][2] = 3*shear;
+    jacobian[2][0] = friction;
+    jacobian[2][1] = 1;
+    jacobian[2][2] = cohesionDeriv;
+    
+    LvArray::tensorOps::invert<3>(jacobianInv,jacobian);
+    LvArray::tensorOps::AijBj<3,3>(delta,jacobianInv,residual);
+   
     for(localIndex i=0; i<3; ++i)
     {
-      stiffness[i][i] = c1;
-      stiffness[i+3][i+3] = 0.5*c1;
-      identity[i] = 1.0;
-      identity[i+3] = 0.0;
+      solution[i] -= delta[i];
     }
-    
-    for(localIndex i=0; i<6; ++i)
-    {
-      for(localIndex j=0; j<6; ++j)
-      {
-        stiffness[i][j] +=   c2 * identity[i] * identity[j]
-                           + c3 * identity[i] * deviator[j]
-                           + c4 * deviator[i] * identity[j]
-                           + c5 * deviator[i] * deviator[j];
-      }
-    }
-    
   }
-  else // elasticity branch
+  
+  // construct stress = P*eye + sqrt(2/3)*Q*nhat
+  
+  twoInvariant::stressRecomposition(solution[0],
+                                    solution[1],
+                                    deviator,
+                                    stress);
+                                        
+  // construct consistent tangent operator
+  
+  LvArray::tensorOps::fill< 6, 6 >( stiffness, 0 );
+  
+  real64 c1 = 2*shear*solution[1]/trialQ;   // divide by zero possible, but only in unphysical zero-strength state
+  real64 c2 = jacobianInv[0][0]*bulk - c1/3;
+  real64 c3 = sqrt(2./3)*3*shear*jacobianInv[0][1];
+  real64 c4 = sqrt(2./3)*bulk*jacobianInv[1][0];
+  real64 c5 = 2*jacobianInv[1][1]*shear - c1;
+  
+  real64 identity[6];
+  
+  for(localIndex i=0; i<3; ++i)
   {
-    twoInvariant::stressRecomposition(trialP,
-                                      trialQ,
-                                      deviator,
-                                      stress);
-                                      
-    for(localIndex i=0; i<6; ++i)
-    {
-      for(localIndex j=0; j<6; ++j)
-      {
-        stiffness[i][j] = 0;
-      }
-    }
-        
-    stiffness[0][0] = lame + 2*shear;
-    stiffness[0][1] = lame;
-    stiffness[0][2] = lame;
-
-    stiffness[1][0] = lame;
-    stiffness[1][1] = lame + 2*shear;
-    stiffness[1][2] = lame;
-
-    stiffness[2][0] = lame;
-    stiffness[2][1] = lame;
-    stiffness[2][2] = lame + 2*shear;
-
-    stiffness[3][3] = shear;
-    stiffness[4][4] = shear;
-    stiffness[5][5] = shear;
+    stiffness[i][i] = c1;
+    stiffness[i+3][i+3] = 0.5*c1;
+    identity[i] = 1.0;
+    identity[i+3] = 0.0;
   }
   
-  // remember history variables before returning
+  for(localIndex i=0; i<6; ++i)
+  {
+    for(localIndex j=0; j<6; ++j)
+    {
+      stiffness[i][j] +=   c2 * identity[i] * identity[j]
+                         + c3 * identity[i] * deviator[j]
+                         + c4 * deviator[i] * identity[j]
+                         + c5 * deviator[i] * deviator[j];
+    }
+  }
   
-  m_newCohesion[k][q] = cohesion;
+  // save new stress and return
   
   saveStress( k, q, stress );
-  
   return;
 }
 

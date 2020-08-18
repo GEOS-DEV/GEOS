@@ -69,14 +69,13 @@ TEST( DruckerPragerTests, testModel )
   
   DruckerPrager::KernelWrapper cmw = cm.createKernelWrapper();
   
-  real64 inc = 1e-4; // tension
+  real64 inc = 1e-4;
   real64 total = 0;
   
   real64 strainIncrement[6] = {inc,0,0,0,0,0};
   real64 stress[6];
   real64 stiffness[6][6];
   
-
   for(localIndex loadstep=0; loadstep < 100; ++loadstep)
   {
     cmw.smallStrainUpdate(0,0,strainIncrement,stress,stiffness);

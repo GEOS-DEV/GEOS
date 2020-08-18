@@ -265,29 +265,6 @@ public:
     GEOSX_ERROR("hyperUpdate() not implemented for this model");
   }
   
-  /**
-   * @brief Return the stiffness at a given element.
-   *
-   * @note If the material model has a strain-dependent material stiffness (e.g.
-   * any plasticity, damage, or nonlinear elastic model) then this interface will
-   * not work.  Users should instead use one of the interfaces where a strain
-   * tensor is provided as input.
-   *
-   * @note Given the limitations above, this function may be removed from the
-   * public interface and made protected in the future.  Direct use in physics
-   * solvers is discouraged.
-   *
-   * @param k the element number
-   * @param stiffness the stiffness array
-   */
-  GEOSX_HOST_DEVICE
-  virtual void getElasticStiffness( localIndex const k, real64 ( & stiffness )[6][6] ) const
-  {
-    GEOSX_UNUSED_VAR(k);
-    GEOSX_UNUSED_VAR(stiffness);
-    GEOSX_ERROR("getElasticStiffness() not implemented for this model");
-  }
-  
   ///@}
   /**
    * @name Update Interfaces: Stress-Only
@@ -386,8 +363,46 @@ public:
   ///@}
   
 
-  
-  
+  /**
+   * @brief Return the stiffness at a given element (small-strain interface)
+   *
+   * @note If the material model has a strain-dependent material stiffness (e.g.
+   * any plasticity, damage, or nonlinear elastic model) then this interface will
+   * not work.  Users should instead use one of the interfaces where a strain
+   * tensor is provided as input.
+   *
+   * @note Given the limitations above, this function may be removed from the
+   * public interface in the future.  Direct use in physics
+   * solvers is discouraged.
+   *
+   * @param k the element number
+   * @param stiffness the stiffness array
+   */
+  GEOSX_HOST_DEVICE
+  virtual void getElasticStiffness( localIndex const k, real64 ( & stiffness )[6][6] ) const
+  {
+    GEOSX_UNUSED_VAR(k);
+    GEOSX_UNUSED_VAR(stiffness);
+    GEOSX_ERROR("getElasticStiffness() not implemented for this model");
+  }
+
+  /**
+   * @brief Return the current elastic strain at a given material point (small-strain interface)
+   *
+   * @param k the element inex
+   * @param q the quadrature index
+   * @param elasticStrain the current elastic strain
+   */
+  GEOSX_HOST_DEVICE
+  virtual void getElasticStrain( localIndex const k,
+                                 localIndex const q,
+                                 real64 ( & elasticStrain )[6] ) const
+  {
+    GEOSX_UNUSED_VAR(k);
+    GEOSX_UNUSED_VAR(q);
+    GEOSX_UNUSED_VAR(elasticStrain);
+    GEOSX_ERROR("getElasticStrain() not implemented for this model");
+  }
   
   
   //////////////// "LEGACY" INTERFACE BELOW -- TO REVISIT ////////////////////////
