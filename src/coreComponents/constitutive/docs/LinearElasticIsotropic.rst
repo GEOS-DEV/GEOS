@@ -48,9 +48,9 @@ or,
       \epsilon_{11} \\
       \epsilon_{22} \\
       \epsilon_{33} \\
-      \epsilon_{23} \\
-      \epsilon_{13} \\
-      \epsilon_{12}
+      2\epsilon_{23} \\
+      2\epsilon_{13} \\
+      2\epsilon_{12}
     \end{bmatrix}.
 
 Variations
