@@ -6,7 +6,7 @@ Tutorial 9: Hydraulic Fracturing
 
 **Context**
 
-In this tutorial, we use a fully coupled hydrofracture solver from GEOSX to solve for the propagation of a single within a reservoir with hetrogeneous in-situ properties.
+In this tutorial, we use a fully coupled hydrofracture solver from GEOSX to solve for the propagation of a single fracture within a reservoir with hetrogeneous in-situ properties.
 Advanced xml features will be used throughout the example.
 
 **Objectives**
@@ -15,8 +15,8 @@ At the end of this tutorial you will know:
 
   - how to use multiple solvers for hydraulic fracturing problems,
   - how to specify pre-existing fractures and where new fractures can develop,
-  - how to construct a mesh with bias
-  - how to specify heterogeneous in-situ properties and initial conditions
+  - how to construct a mesh with bias,
+  - how to specify heterogeneous in-situ properties and initial conditions,
   - how to use parameters, symbolic math, and units in xml files.
 
 
@@ -35,8 +35,8 @@ To install geosx_xml_tools, see :ref:`advanced_xml_features`
 Description of the case
 ------------------------------------------------------------------
 
-Here, our goal is to demonstrate how hydraulic fractures are modeled in an typical environment.
-The in-situ properties and initial conditions are a based upon a randomly generated, fractal, 1D layer-cake model.
+Here, our goal is to demonstrate how hydraulic fractures are modeled in a typical environment.
+The in-situ properties and initial conditions are based upon a randomly generated, fractal, 1D layer-cake model.
 
 
 .. image:: hf_example.png
@@ -73,14 +73,14 @@ Parameters: defining variables to be used throughout the file
 --------------------------------------------------------------
 
 The ``Parameters`` block defines a series of variables that can be used throughout the input file.
-These variables allow a given input file to be easily understood and/or modified for a specific environment, even by non-expert users.  Parameters are specified in pairs of names and values.
+These variables allow a given input file to be easily understood and/or modified for a specific environment, even by non-expert users. Parameters are specified in pairs of names and values.
 The names should only contain alphanumeric characters and underlines.
 The values can contain any type (strings, doubles, etc.).
 
 Parameters can be used throughout the input file (or an included input file) by placing them in-between dollar signs.
 Barring any circular-definition errors, parameters can be used within other parameters.
-For example, see the parameter ``mu_upscaled``
-This value of this parameter is a symbolic expression, which is denoted by the surrounding back-ticks, and is dependent upon two other parameters.
+For example, see the parameter ``mu_upscaled``.
+The value of this parameter is a symbolic expression, which is denoted by the surrounding back-ticks, and is dependent upon two other parameters.
 During pre-processing, geosx_xml_tools will subsititue in the parameter definitions, and evaluate the symbolic expression using a python-derived syntax.
 
 A number of the input parameters include optional unit definitions, which are denoted by the square brackets follwing a value.
@@ -114,8 +114,8 @@ For this example, we want to propagate a single hydraulic fracture along the y=0
 To acheive this, we need to define three nodesets:
 
 - source_a: The location where we want to inject fluid.  Typically, we want this to be a single face in the x-z plane.
-- perf_a: This is the initial fracture for the simulation.  This nodeset needs to be at least two-faces wide in the x-z plane (to represent the fracture at least one internal node needs to be open)
-- fracturable_a: This is the set of faces where we will allow the fracture to grow. For a problem where we expect the fracture to curve out of the y=0 plane, this could be relaced.
+- perf_a: This is the initial fracture for the simulation.  This nodeset needs to be at least two-faces wide in the x-z plane (to represent the fracture at least one internal node needs to be open).
+- fracturable_a: This is the set of faces where we will allow the fracture to grow. For a problem where we expect the fracture to curve out of the y=0 plane, this could be replaced.
 
 .. literalinclude:: ../../../../../examples/hydraulicFracturing/heterogeneousInSituProperties/heterogeneousInSitu_singleFracture.xml
   :language: xml
@@ -129,10 +129,10 @@ Boundary Conditions: defining boundary conditions
 The boundary conditions for this problem are defined in the case-specific and the base xml files.
 The case specific block includes four instructions:
 
-- frac: this marks the initial perforation
-- separableFace: this marks the set of faces that are allowed to break during the simualtion
-- waterDensity: this initializes the fluid in the perforation
-- sourceTerm: this instructs the code to inject fluid into the source_a nodeset.  Note the use of the symbolic expression and parameters in the scale.  This boundary condition is also driven by a function, which we will define later. 
+- frac: this marks the initial perforation.
+- separableFace: this marks the set of faces that are allowed to break during the simualtion.
+- waterDensity: this initializes the fluid in the perforation.
+- sourceTerm: this instructs the code to inject fluid into the source_a nodeset.  Note the usage of the symbolic expression and parameters in the scale.  This boundary condition is also driven by a function, which we will define later. 
 
 .. literalinclude:: ../../../../../examples/hydraulicFracturing/heterogeneousInSituProperties/heterogeneousInSitu_singleFracture.xml
   :language: xml
@@ -140,8 +140,8 @@ The case specific block includes four instructions:
   :end-before: <!-- SPHINX_HYDROFRACTURE_BC_END -->
 
 
-The base block includes instructions to set the initial in-situ properties and stress.
-It also is used to specify the external mechanical boundaries on the system.
+The base block includes instructions to set the initial in-situ properties and stresses.
+It is also used to specify the external mechanical boundaries on the system.
 In this example, we are using roller-boundary conditions (zero normal-displacement).
 Depending upon how close they are to the fracture, they can significantly effect its growth.
 Therefore, it is important to test whether the size of the model is large enough to avoid this.
@@ -161,8 +161,8 @@ Note that the ``gravityVector`` attribute indicates that we are applying gravity
 Similar to other coupled physics solver, the Hydrofracture solver is specified in three parts:
 
 - Hydrofracture: this is the primary solver, which will be called by the event manager.  Two of its key attributes are the names of the dependent solid and fluid solvers.
-- SolidMechanicsLagrangianSSLE: this is the solid mechancis solver
-- SinglePhaseFVM: this is the fluid solver
+- SolidMechanicsLagrangianSSLE: this is the solid mechancis solver.
+- SinglePhaseFVM: this is the fluid solver.
 
 The final solver present in this example is the SurfaceGenerator, which manages how faces in the model break.
 
@@ -175,7 +175,7 @@ The final solver present in this example is the SurfaceGenerator, which manages 
 Events: setting up flexible events
 -----------------------------------------------------------------
 
-Rather than explicitly specify the desired timestep behavior, this example uses a flexible approach to timestepping.
+Rather than explicitly specify the desired timestep behavior, this example uses a flexible approach for timestepping.
 The hydrofracture solver is applied in three segments, where ``maxEventDt`` indicates the maximum allowable timestep:
 
 - solverApplications_a: this corresponds to the problem initialization, where we request ``$dt_max_a$=10``.
@@ -185,8 +185,8 @@ The hydrofracture solver is applied in three segments, where ``maxEventDt`` indi
 Depending upon how well the solution converges, the timestep may be smaller than the maximum requested value.
 Other key events in this problem include:
 
-- preFracture: this calls the surface generator at the beginning of the problem and helps to initialize the fractures.
-- outputs: this produces output silo files
+- preFracture: this calls the surface generator at the beginning of the problem and helps to initialize the fracture.
+- outputs: this produces output silo files.
 - restarts: this is a HaltEvent, which tracks the external clock.  When the runtime exceeds the spefified value (here $t_allocation$=28 minutes), the code will call the target (which writes a restart file) and instruct the code to exit.
 
 
@@ -200,7 +200,7 @@ Functions: building functions to set in-situ properties
 -----------------------------------------------------------------
 
 The function definitions are in the base xml file, and rely upon the files in the tables directory.
-The functions in this example include the flow rate over time, the in-situ principle stress, and the bulk/shear modulus of the rock.
+The functions in this example include the flow rate over time, the in-situ principal stress, and the bulk/shear moduli of the rock.
 Note the use of the table_root parameter, which contains the root path to the table files.
 
 The flow_rate TableFunction is an example of a 1D function.
@@ -251,7 +251,7 @@ To build the final input file ``hydrofracture_processed.xml``, run the following
 Running the case
 ---------------------------------
 
-This is a moderate-sized example, so it is reccomended to run this problem in parallel.
+This is a moderate-sized example, so it is recommended to run this problem in parallel.
 For example, this will run the code on the debug partition using a total of 36 cores:
 
 ``srun -n 36 -ppdebug geosx_bin_dir/geosx -i hydrofracture_processed.xml -x 6 -y 2 -z 3``
@@ -267,8 +267,8 @@ The following figure shows the extents of the generated fracture over time:
 
 .. image:: extents.png
 
-Because we did not explicitly specify the any fracture barriers in this example, the fracture dimensions are controlled by the in-situ stress.
-During the first couple of minutes of growth, the fracture quickly reaches its maximum/minimum height, which corresonds to a region of low in-situ minimum stress.
+Because we did not explicitly specify any fracture barriers in this example, the fracture dimensions are controlled by the in-situ stresses.
+During the first couple of minutes of growth, the fracture quickly reaches its maximum/minimum height, which corresponds to a region of low in-situ minimum stress.
 
 The following figures show the aperture and pressure of the hydraulic fracture (near the source) over time:
 
@@ -286,7 +286,7 @@ To go further
 
 **Feedback on this tutorial**
 
-This concludes the poroelastic tutorial.
+This concludes the hydraulic fracturing tutorial.
 For any feedback on this tutorial, please submit a `GitHub issue on the project's GitHub page <https://github.com/GEOSX/GEOSX/issues>`_.
 
 
