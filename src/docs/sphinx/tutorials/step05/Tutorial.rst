@@ -371,21 +371,26 @@ the code steps into the execution of the simulation itself:
 
 .. code-block:: console
 
-  Running simulation 
-  Time: 0s, dt:1000s, Cycle: 0
-    Attempt:  0, NewtonIter:  0 ; 
+   Time: 0s, dt:10000s, Cycle: 0
 
-    Attempt:  0, NewtonIter:  1 ; 
-  Last LinSolve(iter,res) = (  1, 2.22e-16) ; 
-    Attempt:  0, NewtonIter:  2 ; 
-  Last LinSolve(iter,res) = (  1, 2.22e-16) ; 
-    Attempt:  0, NewtonIter:  3 ; 
-  Last LinSolve(iter,res) = (  1, 2.22e-16) ; 
-    Attempt:  0, NewtonIter:  4 ; 
-  Last LinSolve(iter,res) = (  1, 2.22e-16) ; 
-    Attempt:  0, NewtonIter:  5 ; 
-  Last LinSolve(iter,res) = (  1, 2.22e-16) ; 
-    Attempt:  0, NewtonIter:  6 ; 
+    Attempt:  0, NewtonIter:  0
+    ( Rfluid ) = (3.58e+02) ;     ( R ) = ( 2.23e+05 ) ;
+    Attempt:  0, NewtonIter:  1
+    ( Rfluid ) = (9.69e-01) ;     ( R ) = ( 3.09e+02 ) ;
+    Last LinSolve(iter,res) = (   1, 2.22e-16 ) ;
+    Attempt:  0, NewtonIter:  2
+    ( Rfluid ) = (8.89e-02) ;     ( R ) = ( 2.48e+01 ) ;
+    Last LinSolve(iter,res) = (   1, 2.22e-16 ) ;
+    Attempt:  0, NewtonIter:  3
+    ( Rfluid ) = (1.82e-03) ;     ( R ) = ( 4.73e-01 ) ;
+    Last LinSolve(iter,res) = (   1, 2.22e-16 ) ;
+    Attempt:  0, NewtonIter:  4
+    ( Rfluid ) = (7.46e-07) ;     ( R ) = ( 1.67e-04 ) ;
+    Last LinSolve(iter,res) = (   1, 2.22e-16 ) ;
+    Attempt:  0, NewtonIter:  5
+    ( Rfluid ) = (2.02e-12) ;     ( R ) = ( 3.65e-11 ) ;
+    Last LinSolve(iter,res) = (   1, 2.22e-16 ) ;                                                                                               
+  coupledFlowAndWells: Newton solver converged in less than 6 iterations, time-step required will be doubled.		
                 
 ------------------------------------
 Visualization of results

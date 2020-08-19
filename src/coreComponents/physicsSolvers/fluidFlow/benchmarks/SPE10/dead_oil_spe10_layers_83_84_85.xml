@@ -71,7 +71,7 @@
         name="wellControls5"
         type="injector"
         control="liquidRate"
-        targetBHP="6.8948e7"
+        targetBHP="6.8948e9"
         targetRate="1e0"
         injectionStream="{ 0.0, 0.0, 1.0 }"/>
     </CompositionalMultiphaseWell>

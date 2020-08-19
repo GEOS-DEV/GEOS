@@ -250,6 +250,7 @@ again to impose boundary condition. For instance, if a surface is named "Bottom"
 impose a Dirichlet boundary condition of 0 on it, it can be easily done using this syntax.
 
 .. code-block:: xml
+
   <FieldSpecification
     name="zconstraint"
     objectPath="nodeManager"

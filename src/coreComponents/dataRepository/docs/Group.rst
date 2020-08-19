@@ -5,9 +5,8 @@ Group
 =====
 
 ``dataRepository::Group`` serves as a base class for most objects in GEOSX.
-In GEOSX, the ``Group`` may be thought of as an analogy to the file folder in a hierachical filesystem-like 
-structure.
-As such, a ``Group`` is used as a container class that holds a collection of other Groups, or sub-Groups, 
+In GEOSX, the ``Group`` may be thought of as an analogy to the file folder in a hierachical filesystem-like structure.
+As such, a ``Group`` is used as a container class that holds a collection of other Groups, or sub-Groups,
 a pointer to the parent of the Group, and a collection of Wrappers.
 The ``Group`` also defines a general capability to create and traverse/access the objects in the hierarchy.
 The Wrappers contained in a Group may be of arbitrary type, but in the case of an LvArray object, a Group
@@ -23,7 +22,7 @@ Some noteworthy implementation details inside the declaration of ``dataRepositor
 .. literalinclude:: ../Group.hpp
    :language: c++
    :start-after: //START_SPHINX_INCLUDE_00
-   :end-before: /**
+   :end-before: //END_SPHINX_INCLUDE_00
    
 * In the GEOSX repository, the ``keyType`` is specified to be a ``string`` for all  collection objects, 
   while the ``indexType`` is specified to be a ``localIndex``.
@@ -33,7 +32,7 @@ Some noteworthy implementation details inside the declaration of ``dataRepositor
 .. literalinclude:: ../Group.hpp
    :language: c++
    :start-after: //START_SPHINX_INCLUDE_01
-   :end-before: /**
+   :end-before: //END_SPHINX_INCLUDE_01
    
 * The ``subGroupMap`` and ``wrapperMap`` aliases represent the type of container that the collection of 
   sub-``Group`` s and ``Wrapper`` s are stored in for each ``Group``.
@@ -44,7 +43,7 @@ Some noteworthy implementation details inside the declaration of ``dataRepositor
 .. literalinclude:: ../Group.hpp
    :language: c++
    :start-after: //START_SPHINX_INCLUDE_02
-   :end-before: RestartFlags
+   :end-before: //END_SPHINX_INCLUDE_02
    
 * The ``m_parent`` member is a pointer to the ``Group`` that contains the current ``Group`` as part of its
   collection of sub-``Group`` s.

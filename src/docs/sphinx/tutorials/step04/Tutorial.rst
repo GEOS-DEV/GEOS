@@ -427,19 +427,22 @@ the code steps into the execution of the simulation itself:
 
 .. code-block:: console
 		
-  Running simulation
-  Time: 0s, dt:10s, Cycle: 0
-    Attempt:  0, NewtonIter:  0 ; 
-
-    Attempt:  0, NewtonIter:  1 ; 
-  Last LinSolve(iter,res) = (  1, 2.22e-16) ; 
-    Attempt:  0, NewtonIter:  2 ; 
-  Last LinSolve(iter,res) = (  1, 2.22e-16) ; 
-    Attempt:  0, NewtonIter:  3 ; 
-  Last LinSolve(iter,res) = (  1, 2.22e-16) ; 
-    Attempt:  0, NewtonIter:  4 ; 
-  Last LinSolve(iter,res) = (  1, 2.22e-16) ; 
-  coupledFlowAndWells: Newton solver converged in less than 16 iterations, time-step required will be doubled.
+  Time: 0s, dt:1000s, Cycle: 0
+    Attempt:  0, NewtonIter:  0
+    ( R ) = ( 6.88e+04 ) ; 
+    Attempt:  0, NewtonIter:  1
+    ( R ) = ( 2.73e+03 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.22e-16 ) ; 
+    Attempt:  0, NewtonIter:  2
+    ( R ) = ( 3.60e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.22e-16 ) ; 
+    Attempt:  0, NewtonIter:  3
+    ( R ) = ( 1.30e-02 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.22e-16 ) ; 
+    Attempt:  0, NewtonIter:  4
+    ( R ) = ( 3.65e-07 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.22e-16 ) ; 
+  coupledFlowAndWells: Newton solver converged in less than 8 iterations, time-step required will be doubled.
 
 ------------------------------------
 Visualization of results

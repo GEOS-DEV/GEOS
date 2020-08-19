@@ -66,5 +66,4 @@ Summary
 
 The following table summarizes the available input parameters for the linear solver.
 
-.. literalinclude:: ../../fileIO/schema/docs/LinearSolverParameters.rst
-  :language: xml
+.. include:: ../../fileIO/schema/docs/LinearSolverParameters.rst
