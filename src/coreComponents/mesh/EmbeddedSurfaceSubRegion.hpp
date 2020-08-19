@@ -99,25 +99,11 @@ public:
 
   /**
    * @brief Function to compute the geometric quantities of a specific embedded surface element.
-   * @param index index of the face element
-   */
-  void CalculateElementGeometricQuantities( localIndex const index );
-
-  /**
-   * @brief Function to compute the geometric quantities of a specific embedded surface element.
    * @param intersectionPoints array containing the nodes defining the embedded surface elements
    * @param k index of the face element
    */
   void CalculateElementGeometricQuantities( array1d< R1Tensor > const intersectionPoints,
                                             localIndex k );
-
-  /**
-   * @brief Function to add a new embedded surface element.
-   * @param cellIndex index of the cell element cut by the new embedded surface element
-   * @param normalVector unit normal vector to the embedded surface
-   */
-  void AddNewEmbeddedSurface( localIndex const cellIndex,
-                              R1Tensor normalVector );
 
   /**
    * @brief Function to add a new embedded surface element.

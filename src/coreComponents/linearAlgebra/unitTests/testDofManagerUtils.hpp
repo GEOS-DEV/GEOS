@@ -323,7 +323,7 @@ void makeSparsityFEM( MeshLevel const * const mesh,
     using NodeMapViewTypeConst = traits::ViewTypeConst< NodeMapType >;
 
     NodeMapViewTypeConst & nodeMap =
-    		subRegion.template getReference< NodeMapType >( ElementSubRegionBase::viewKeyStruct::nodeListString ).toViewConst();
+      subRegion.template getReference< NodeMapType >( ElementSubRegionBase::viewKeyStruct::nodeListString ).toViewConst();
 
     localIndex const numNode = subRegion.numNodesPerElement();
     array1d< globalIndex > localDofIndex( numNode * numComp );

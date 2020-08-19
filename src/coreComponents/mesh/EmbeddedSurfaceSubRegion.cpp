@@ -98,12 +98,6 @@ EmbeddedSurfaceSubRegion::EmbeddedSurfaceSubRegion( string const & name,
 EmbeddedSurfaceSubRegion::~EmbeddedSurfaceSubRegion()
 {}
 
-
-void EmbeddedSurfaceSubRegion::CalculateElementGeometricQuantities( localIndex const k )
-{
-  m_elementVolume[k] = m_elementAperture[k] * m_elementArea[k];
-}
-
 void EmbeddedSurfaceSubRegion::CalculateElementGeometricQuantities( NodeManager const & GEOSX_UNUSED_PARAM( nodeManager ),
                                                                     FaceManager const & GEOSX_UNUSED_PARAM( facemanager ) )
 {
@@ -114,15 +108,21 @@ void EmbeddedSurfaceSubRegion::CalculateElementGeometricQuantities( NodeManager 
   } );
 }
 
-void EmbeddedSurfaceSubRegion::AddNewEmbeddedSurface ( localIndex const cellIndex,
-                                                       R1Tensor normalVector )
+void EmbeddedSurfaceSubRegion::CalculateElementGeometricQuantities( array1d< R1Tensor > const intersectionPoints,
+                                                                    localIndex const k )
 {
-  m_embeddedSurfaceToCell.emplace_back( cellIndex );
-  m_normalVector.emplace_back( normalVector );
+  for( localIndex p = 0; p < intersectionPoints.size(); p++ )
+  {
+    LvArray::tensorOps::add< 3 >( m_elementCenter[k], intersectionPoints[ p ] );
+  }
 
-  // resize
-  this->resize( this->size() + 1 );
+  // update area
+  m_elementArea[ k ] = computationalGeometry::ComputeSurfaceArea( intersectionPoints, intersectionPoints.size(), m_normalVector[k] );
 
+  LvArray::tensorOps::scale< 3 >( m_elementCenter[ k ], 1.0 / intersectionPoints.size() );
+
+  // update volume
+  m_elementVolume[k] = m_elementAperture[k] * m_elementArea[k];
 }
 
 bool EmbeddedSurfaceSubRegion::AddNewEmbeddedSurface ( localIndex const cellIndex,
@@ -258,20 +258,6 @@ void EmbeddedSurfaceSubRegion::inheritGhostRank( array1d< array1d< arrayView1d< 
   {
     ghostRank[k] = cellGhostRank[m_embeddedSurfaceToRegion[k]][m_embeddedSurfaceToSubRegion[k]][m_embeddedSurfaceToCell[k]];
   }
-}
-
-void EmbeddedSurfaceSubRegion::CalculateElementGeometricQuantities( array1d< R1Tensor > const intersectionPoints,
-                                                                    localIndex const k )
-{
-  for( localIndex p = 0; p < intersectionPoints.size(); p++ )
-  {
-    LvArray::tensorOps::add< 3 >( m_elementCenter[k], intersectionPoints[ p ] );
-  }
-
-  m_elementArea[ k ] = computationalGeometry::ComputeSurfaceArea( intersectionPoints, intersectionPoints.size(), m_normalVector[k] );
-
-  LvArray::tensorOps::scale< 3 >( m_elementCenter[ k ], 1.0 / intersectionPoints.size() );
-  this->CalculateElementGeometricQuantities( k );
 }
 
 void EmbeddedSurfaceSubRegion::setupRelatedObjectsInRelations( MeshLevel const * const mesh )
