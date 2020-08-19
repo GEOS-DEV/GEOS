@@ -54,14 +54,12 @@ MultiPhaseMultiComponentFluid::~MultiPhaseMultiComponentFluid()
 {}
 
 
-void MultiPhaseMultiComponentFluid::DeliverClone( string const & name,
-                                                  Group * const parent,
-                                                  std::unique_ptr< ConstitutiveBase > & clone ) const
+std::unique_ptr< ConstitutiveBase >
+MultiPhaseMultiComponentFluid::deliverClone( string const & name,
+                                             Group * const parent ) const
 {
-  if( !clone )
-  {
-    clone = std::make_unique< MultiPhaseMultiComponentFluid >( name, parent );
-  }
+  std::unique_ptr< ConstitutiveBase > clone = MultiFluidBase::deliverClone( name, parent );
+
   MultiPhaseMultiComponentFluid * const newConstitutiveRelation = dynamic_cast< MultiPhaseMultiComponentFluid * >(clone.get());
 
 
@@ -83,6 +81,7 @@ void MultiPhaseMultiComponentFluid::DeliverClone( string const & name,
 
   newConstitutiveRelation->m_flashModel = this->m_flashModel;
 
+  return clone;
 }
 
 void MultiPhaseMultiComponentFluid::PostProcessInput()

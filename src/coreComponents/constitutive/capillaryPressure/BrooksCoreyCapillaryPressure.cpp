@@ -54,30 +54,13 @@ BrooksCoreyCapillaryPressure::BrooksCoreyCapillaryPressure( std::string const & 
     setDescription(
     "Wetting-phase saturation at which the max cap. pressure is attained; used to avoid infinite cap. pressure values for saturations close to zero" );
 
+  registerWrapper( viewKeyStruct::volFracScaleString, &m_volFracScale )->
+    setApplyDefaultValue( 1.0 )->
+    setDescription( "Factor used to scale the phase capillary pressure, defined as: one minus the sum of the phase minimum volume fractions." );
 }
 
 BrooksCoreyCapillaryPressure::~BrooksCoreyCapillaryPressure()
 {}
-
-void
-BrooksCoreyCapillaryPressure::DeliverClone( string const & name,
-                                            Group * const parent,
-                                            std::unique_ptr< ConstitutiveBase > & clone ) const
-{
-  if( !clone )
-  {
-    clone = std::make_unique< BrooksCoreyCapillaryPressure >( name, parent );
-  }
-
-  CapillaryPressureBase::DeliverClone( name, parent, clone );
-  BrooksCoreyCapillaryPressure & relPerm = dynamicCast< BrooksCoreyCapillaryPressure & >( *clone );
-
-  relPerm.m_phaseMinVolumeFraction      = m_phaseMinVolumeFraction;
-  relPerm.m_phaseCapPressureExponentInv = m_phaseCapPressureExponentInv;
-  relPerm.m_phaseEntryPressure          = m_phaseEntryPressure;
-  relPerm.m_capPressureEpsilon          = m_capPressureEpsilon;
-  relPerm.m_volFracScale                = m_volFracScale;
-}
 
 
 void BrooksCoreyCapillaryPressure::PostProcessInput()

@@ -188,16 +188,13 @@ public:
 
   // *** ConstitutiveBase interface
 
-  virtual void DeliverClone( string const & name,
-                             Group * const parent,
-                             std::unique_ptr< ConstitutiveBase > & clone ) const override;
-
   static std::string CatalogName() { return "ParticleFluid"; }
 
-  virtual string GetCatalogName() override { return CatalogName(); }
+  virtual string getCatalogName() const override { return CatalogName(); }
 
-  virtual void AllocateConstitutiveData( dataRepository::Group * const parent,
-                                         localIndex const numConstitutivePointsPerParentIndex ) override;
+  std::unique_ptr< ConstitutiveBase >
+  deliverClone( string const & name,
+                Group * const parent ) const override;
 
   /// Type of kernel wrapper for in-kernel update
   using KernelWrapper = ParticleFluidUpdate;

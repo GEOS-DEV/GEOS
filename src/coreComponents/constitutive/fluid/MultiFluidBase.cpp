@@ -88,6 +88,10 @@ MultiFluidBase::MultiFluidBase( std::string const & name, Group * const parent )
     setRestartFlags( RestartFlags::NO_WRITE );
   registerWrapper( viewKeyStruct::dTotalDensity_dGlobalCompFractionString, &m_dTotalDensity_dGlobalCompFraction )->
     setRestartFlags( RestartFlags::NO_WRITE );
+
+  registerWrapper( viewKeyStruct::useMassString, &m_useMass )->
+    setRestartFlags( RestartFlags::NO_WRITE );
+
 }
 
 void MultiFluidBase::ResizeFields( localIndex const size, localIndex const numPts )
@@ -121,29 +125,16 @@ void MultiFluidBase::ResizeFields( localIndex const size, localIndex const numPt
   m_dTotalDensity_dGlobalCompFraction.resize( size, numPts, NC );
 }
 
-void MultiFluidBase::AllocateConstitutiveData( dataRepository::Group * const parent,
+void MultiFluidBase::allocateConstitutiveData( dataRepository::Group * const parent,
                                                localIndex const numConstitutivePointsPerParentIndex )
 {
-  ConstitutiveBase::AllocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+  ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
   ResizeFields( parent->size(), numConstitutivePointsPerParentIndex );
 }
 
 MultiFluidBase::~MultiFluidBase()
 {}
 
-void
-MultiFluidBase::DeliverClone( string const & name,
-                              Group * const parent,
-                              std::unique_ptr< ConstitutiveBase > & clone ) const
-{
-  ConstitutiveBase::DeliverClone( name, parent, clone );
-  MultiFluidBase & fluid = dynamicCast< MultiFluidBase & >( *clone );
-
-  fluid.m_useMass              = m_useMass;
-  fluid.m_componentNames       = m_componentNames;
-  fluid.m_componentMolarWeight = m_componentMolarWeight;
-  fluid.m_phaseNames           = m_phaseNames;
-}
 
 void MultiFluidBase::PostProcessInput()
 {

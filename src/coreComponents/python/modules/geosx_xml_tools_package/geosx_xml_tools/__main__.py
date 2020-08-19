@@ -1,11 +1,11 @@
-"""Command line tools for pygeos"""
+"""Command line tools for geosx_xml_tools"""
 
 import argparse
-from pygeos import xml_processor
+from geosx_xml_tools import xml_processor
 
 
 def main():
-  """Entry point for the pygeos console script
+  """Entry point for the geosx_xml_tools console script
 
   @arg input Input file name
   @arg -o/--output Output filename (default = randomly generated string)
