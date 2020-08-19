@@ -59,7 +59,7 @@ The XML file considered here follows the typical structure of the GEOSX input fi
 
 
 .. _Solver_tag_field_case:
- 
+
 Defining a solver
 -----------------
 
@@ -132,7 +132,7 @@ If this time is ever reached or exceeded, the simulation ends.
 Two ``PeriodicEvent`` are defined.
 - The first one, ``solverApplications``, is associated with the solver. The  ``forceDt`` keyword means that there will always be time-steps of 23 days (2 000 000 seconds).
 - The second, ``outputs``, is associated with the output. The ``timeFrequency`` keyword means that it will be executed every 116 days (10 000 000 seconds). The ``targetExactTimestep`` is set to 1, meaning that the Event Manager will impose this event will be triggered exactly every 116 days, constraining schedulde decided by application to match this date.
-  
+
 
 .. _NumericalMethods_tag_field_case:
 
@@ -148,7 +148,7 @@ Defining the numerical method used in the solver, we will provide information on
 
 The ``TwoPointFluxApproximation`` node should specify
 the primary field to solve for as ``fieldName``.
-For a flow problem, this field is the pressure. 
+For a flow problem, this field is the pressure.
 Here we specified ``targetRegions`` as we only solve flow for reservoir.
 The field under ``coefficientName`` is used during TPFA Transmissibilities construction.
 
@@ -224,10 +224,10 @@ You may note :
  - The ``objectPath`` refers to the ``ÈlementRegion`` in which the field has his value,
  - The ``setName`` field points to the box previously defined to apply the fields,
  - ``name`` and ``fieldName`` have a different meaning: ``name`` is used to give a name to the XML block. This ``name`` must be unique. ``fieldName`` is the name of the field register in GEOSX. This value has to be set according to the expected input fields of each solver.
- 
+
 .. note::
   GEOSX handles permeability as a diagonal matrix, so the three values of the permeability tensor are set individually using the ``component`` field,
- 
+
 .. _Outputs_tag_field_case:
 
 Specifying the output formats
@@ -257,8 +257,12 @@ Eventually, one can define varying properties using ``TableFunction`` under the 
   :start-after: <!-- SPHINX_FIELD_CASE_TFUNC -->
   :end-before: <!-- SPHINX_FIELD_CASE_TFUNC_END -->
 
-Here, the injection pressure is set to vary with time. Attentive reader might have noticed that ``sourceTerm`` was bound to a ``TableFunction`` named *timeInj* under **FieldSpecifications** tag definition.
-The initial pressure and diagonal term of the permeability tensor are also set to be heterogeneously distributed throughout the reservoir thanks to ND-tables. The files *xlin.geos*, *ylin.geos* and *zlin.geos* define a regular meshing of the bounding box containing the reservoir. The *pressure.geos* or *permx.geos* files define values of nammed variables at those points. 
+Here, the injection pressure is set to vary with time. Attentive reader might have
+noticed that ``sourceTerm`` was bound to a ``TableFunction`` named *timeInj* under
+**FieldSpecifications** tag definition. The initial pressure is set based on the values
+contained in the table formed by the files which are specified. In particular,
+the files *xlin.geos*, *ylin.geos* and *zlin.geos* define a regular meshing of
+the bounding box containing the reservoir. The *pressure.geos* file defines the values of the pressure at those points.
 
 
 .. note::
@@ -274,7 +278,7 @@ The simulation can be launched with:
 
   geosx -i FieldCaseTutorial1.xml
 
-One can notice the correct load of the field function among the starting output messages 
+One can notice the correct load of the field function among the starting output messages
 
 .. code-block:: console
 
@@ -298,53 +302,36 @@ One can notice the correct load of the field function among the starting output 
 Visualization of results
 ------------------------------------
 
-Post-treating under Paraview, we can isolate the *Reservoir* block from its over- and under-burden to vizualize pressure distribution on it. Display the logarithmic maps of horizontal and vertical heterogeneous permeability, 
+We can open the file `syntheticReservoirVizFile.pvd` with Paraview to visualize the simulation
+results. The initial pressure field in the reservoir region is provided below as an example.
 
-.. image:: fieldCase-view02.png
+.. image:: pressureField_initial.png
    :width: 600px
 
-.. image:: fieldCase-logkx.png
+Since, in the event block, we have asked for the output to be generated at regular
+intervals throughout the simulation, we can also visualize the pressure
+distribution at different simulation times.
+
+.. image:: pressureField_2e8.png
    :width: 600px
 
-.. image:: fieldCase-logkz.png
+.. image:: pressureField_5e8.png
    :width: 600px
-
-Changing point of view and overlaying stream path allows to highlight injection time-variation
-
-.. image:: streamlines.gif
-   :width: 600px
-
-which reflects also in the pressure field at different times. 
-
-.. image:: pressureField.0000.png
-   :width: 600px
-
-.. image:: pressureField.0025.png
-   :width: 600px
-
-.. image:: pressureField.0050.png
-   :width: 600px
-
-
 
 -----------------------------------
 To go further
 -----------------------------------
 **Feedback on this tutorial**
 
-This concludes the starting field case tutorial.
-For any feedback on this tutorial, please submit a `GitHub issue on the project's GitHub page <https://github.com/GEOSX/GEOSX/issues>`_.
+This concludes this tutorial. For any feedback, please submit a `GitHub issue on
+the project's GitHub page <https://github.com/GEOSX/GEOSX/issues>`_.
 
 **Next tutorial**
 
-In the next tutorial :ref:`TutorialDeadOilBottomLayersSPE10`, we learn how to run a dead oil case on a SPE10 channelized layer.
+In the next tutorial :ref:`TutorialDeadOilBottomLayersSPE10`, we will learn how
+to run a dead oil case on a SPE10 channelized layer.
 
 **For more details**
 
   - More on meshes, please see :ref:`Meshes`.
   - More on events, please see :ref:`EventManager`.
-
- 
-
-
-

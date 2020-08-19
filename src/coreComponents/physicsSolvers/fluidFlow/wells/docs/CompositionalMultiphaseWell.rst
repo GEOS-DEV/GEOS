@@ -55,12 +55,12 @@ In the expression of the potential difference, the mixture density is computed a
 The well index, :math:`WI`, is currently an input of the simulator.
 The superscript :math:`res` means that the variable is evaluated at the center of the reservoir element.
 
-Volume constraint equation
+Volume Constraint Equation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 As in the :ref:`CompositionalMultiphaseFlow`, the system is closed with a volume constraint equation.
 
-Pressure relations
+Pressure Relations
 ~~~~~~~~~~~~~~~~~~
 
 In the current implementation of the well solver, we assume a hydrostatic equilibrium:
@@ -71,7 +71,7 @@ In the current implementation of the well solver, we assume a hydrostatic equili
 where :math:`\rho_{m,(i,i+1)}` is the arithmetic average of the mixture densities evaluated in segments :math:`i` and :math:`i+1`.
 Pressure drop components due to friction and acceleration are not implemented at the moment.
 
-Pressure and rate controls
+Pressure and Rate Controls
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The well solver supports two types of control, namely, pressure control and rate control.
