@@ -13,26 +13,40 @@
  */
 
 /**
- * @file Vertice.cpp
+ * @file GraphVertex.hpp
  */
-#include <string>
-#include <iostream>
-#include "common/Path.hpp"
-#include "Vertice.hpp"
 
+#ifndef GEOSX_MESH_GRAPHVERTEX_HPP_
+#define GEOSX_MESH_GRAPHVERTEX_HPP_
+#include "meshUtilities/ComputationalGeometry.hpp"
 namespace geosx
 {
 
+/**
+ * @class GraphVertex
+ *
+ * An event type for periodic events (using either time or cycle as a basis).
+ */
+class GraphVertex
+{
+public:
+  /**
+  * Constructor for GraphVertex object
+  * @param [in] index of the vertex
+  *
+  */ 
+  GraphVertex( const int);
 
+  /// Destructor
+  virtual ~GraphVertex();
 
-Vertice::Vertice( const int index):
-  ind(index)
-  {    
-    std::cout<<"Constructing vertice "<<ind<<"\n";
-  }
+   localIndex getIndice() const { return ind; }
 
-
-Vertice::~Vertice()
-{}
+  
+private:
+  localIndex ind;
+  };
 
 } /* namespace geosx */
+
+#endif /* GEOSX_MESH_GRAPHVERTEX_HPP_ */

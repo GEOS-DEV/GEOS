@@ -22,8 +22,8 @@ set(mesh_headers
     GraphBase.hpp
     GraphFromText.hpp
     GraphManager.hpp
-    Vertice.hpp
-    Edge.hpp
+    GraphVertex.hpp
+    GraphEdge.hpp
     MeshBody.hpp
     MeshLevel.hpp
     NodeManager.hpp
@@ -52,8 +52,8 @@ set(mesh_sources
     GraphBase.cpp
     GraphFromText.cpp
     GraphManager.cpp
-    Vertice.cpp
-    Edge.cpp
+    GraphVertex.cpp
+    GraphEdge.cpp
     MeshBody.cpp
     MeshLevel.cpp
     NodeManager.cpp

@@ -13,12 +13,12 @@
  */
 
 /**
- * @file Edge.hpp
+ * @file GraphEdge.hpp
  */
 
-#ifndef GEOSX_MESH_EDGE_HPP_
-#define GEOSX_MESH_EDGE_HPP_
-#include "mesh/Vertice.hpp"
+#ifndef GEOSX_MESH_GRAPHEDGE_HPP_
+#define GEOSX_MESH_GRAPHEDGE_HPP_
+#include "mesh/GraphVertex.hpp"
 #include "meshUtilities/ComputationalGeometry.hpp"
 
 
@@ -26,38 +26,38 @@ namespace geosx
 {
 
 /**
- * @class Edge
+ * @class GraphEdge
  *
  * Represents connection between two points for the GraphBase.
  */
-class Edge
+class GraphEdge
 {
 public:
   /**
-   * @brief Constructor for Edge object
+   * @brief Constructor for GraphEdge object
    * @param [in] index of the edge
-   * @param [in] neighbour1 one of the two Vertices forming the connection
-   * @param [in] neighbour2 the other Vertice
+   * @param [in] neighbour1 one of the two GraphVertexs forming the connection
+   * @param [in] neighbour2 the other GraphVertex
    * 
    */   
-  Edge( int const index, Vertice* neighbour1, Vertice* neighbour2);
+  GraphEdge( int const index, GraphVertex* neighbour1, GraphVertex* neighbour2);
 
   /// Destructor
-  virtual ~Edge();
+  virtual ~GraphEdge();
 
   localIndex getIndice() const { return ind; }
 
-  Vertice* getN1() const { return n1; }
+  GraphVertex* getN1() const { return n1; }
 
-  Vertice* getN2() const { return n2; }
+  GraphVertex* getN2() const { return n2; }
 
   
 private:
   localIndex ind;
-  Vertice* n1;
-  Vertice* n2;
+  GraphVertex* n1;
+  GraphVertex* n2;
 };
 
 } /* namespace geosx */
 
-#endif /* GEOSX_MESH_EDGE_HPP_ */
+#endif /* GEOSX_MESH_GRAPHEDGE_HPP_ */

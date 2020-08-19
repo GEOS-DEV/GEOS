@@ -23,8 +23,8 @@
 #include "common/Path.hpp"
 #include "GraphFromText.hpp"
 #include "managers/Functions/FunctionManager.hpp"
-#include "mesh/Edge.hpp"
-#include "mesh/Vertice.hpp"
+#include "mesh/GraphEdge.hpp"
+#include "mesh/GraphVertex.hpp"
 #include "common/Logger.hpp"
 
 namespace geosx
@@ -54,7 +54,17 @@ GraphFromText::GraphFromText( const std::string & name,
 
 
 GraphFromText::~GraphFromText()
-{}
+{
+  for (long unsigned int i=0;i<m_edges.size();i++)
+  {
+    delete(m_edges[i]);
+  }
+  for (long unsigned int i=0;i<m_vertices.size();i++)
+  {
+    delete(m_vertices[i]);
+  }
+
+}
 
 void GraphFromText::GetTargetReferences()
 {
@@ -66,14 +76,46 @@ void GraphFromText::GetTargetReferences()
   }
 }
 
+void GraphFromText::AddEdge(localIndex ind, GraphVertex* v1, GraphVertex* v2)
+{
+  GraphEdge* e;
+  e=new GraphEdge(ind, v1, v2);
+  m_edges.push_back(e);
+}
+
+void GraphFromText::RemoveEdge(localIndex ind)
+{
+  forAll< serialPolicy >( m_edges.size(), [=]( localIndex const i )
+  {
+    if (m_edges[i]->getIndice()==ind)
+    {
+      int test = LvArray::integerConversion< int >(i);
+      m_edges.erase(m_edges.begin()+test);
+    }
+  });
+
+}
+
+GraphVertex* GraphFromText::getVertexWithIndex(localIndex ind)
+{
+  for(long unsigned int i=0; i < m_vertices.size(); i++)
+  {
+    if (m_vertices[i]->getIndice()==ind)
+    {
+      return m_vertices[i];
+    }
+  }
+  return nullptr;
+}
+
+
 
 void GraphFromText::GenerateGraph()
 {
   GetTargetReferences();
   std::ifstream infile(m_file);
   std::string line;
-  std::vector<Vertice*> vertices;
-  //std::vector<Edge*> edges;
+  //std::vector<GraphEdge*> edges;
   while (std::getline(infile, line))
   {
     std::istringstream iss(line);
@@ -83,42 +125,67 @@ void GraphFromText::GenerateGraph()
     int place_b=-1;
     int place_c=-1;
     long unsigned int i=0;
-    while (i<vertices.size() && (place_b==-1 || place_c==-1))
+    while (i<m_vertices.size() && (place_b==-1 || place_c==-1))
     {
-      if (vertices[i]->getIndice()==b)
+      if (m_vertices[i]->getIndice()==b)
       {
         place_b=i;
       }
-      if (vertices[i]->getIndice()==c)
+      if (m_vertices[i]->getIndice()==c)
       {
         place_c=i;
       }
       ++i;
     }
-    Vertice* v1;
-    Vertice* v2;
+    GraphVertex* v1;
+    GraphVertex* v2;
     if(place_b==-1)
     {
-      v1=new Vertice(b);
-      vertices.push_back(v1);
+      v1=new GraphVertex(b);
+      m_vertices.push_back(v1);
     }
     else
     {
-      v1=vertices[place_b];
+      v1=m_vertices[place_b];
     }
     if(place_c==-1)
     {
-      v2=new Vertice(c);
-      vertices.push_back(v2);
+      v2=new GraphVertex(c);
+      m_vertices.push_back(v2);
     }
     else
     {
-      v2=vertices[place_c];
+      v2=m_vertices[place_c];
     }
-    Edge* e1= new Edge(a, v1, v2);
+    GraphEdge* e1= new GraphEdge(a, v1, v2);
     m_edges.push_back(e1);
-
   }
+  this->RemoveEdge(LvArray::integerConversion< localIndex >(2690));
+  this->RemoveEdge(LvArray::integerConversion< localIndex >(2688));
+  this->RemoveEdge(LvArray::integerConversion< localIndex >(2671));
+  this->RemoveEdge(LvArray::integerConversion< localIndex >(2557));
+  this->RemoveEdge(LvArray::integerConversion< localIndex >(2555));
+  this->RemoveEdge(LvArray::integerConversion< localIndex >(2538));
+  this->RemoveEdge(LvArray::integerConversion< localIndex >(2500));
+  this->RemoveEdge(LvArray::integerConversion< localIndex >(2297));
+  GraphVertex* v819 = this->getVertexWithIndex(LvArray::integerConversion< localIndex >(819));
+  GraphVertex* v919 = this->getVertexWithIndex(LvArray::integerConversion< localIndex >(919));
+  GraphVertex* v909 = this->getVertexWithIndex(LvArray::integerConversion< localIndex >(909));
+  GraphVertex* v918 = this->getVertexWithIndex(LvArray::integerConversion< localIndex >(918));
+  GraphVertex* v929 = this->getVertexWithIndex(LvArray::integerConversion< localIndex >(929));
+  GraphVertex* v889 = this->getVertexWithIndex(LvArray::integerConversion< localIndex >(889));
+  GraphVertex* v989 = this->getVertexWithIndex(LvArray::integerConversion< localIndex >(989));
+  GraphVertex* v979 = this->getVertexWithIndex(LvArray::integerConversion< localIndex >(979));
+  GraphVertex* v988 = this->getVertexWithIndex(LvArray::integerConversion< localIndex >(988));
+  GraphVertex* v999 = this->getVertexWithIndex(LvArray::integerConversion< localIndex >(999));
+  this->AddEdge(LvArray::integerConversion< localIndex >(2690),v999,v919);
+  this->AddEdge(LvArray::integerConversion< localIndex >(2688),v988,v919);
+  this->AddEdge(LvArray::integerConversion< localIndex >(2671),v979,v919);
+  this->AddEdge(LvArray::integerConversion< localIndex >(2557),v929,v989);
+  this->AddEdge(LvArray::integerConversion< localIndex >(2555),v918,v989);
+  this->AddEdge(LvArray::integerConversion< localIndex >(2538),v909,v989);
+  this->AddEdge(LvArray::integerConversion< localIndex >(2500),v889,v919);
+  this->AddEdge(LvArray::integerConversion< localIndex >(2297),v819,v989);
 }
 
 REGISTER_CATALOG_ENTRY( GraphBase, GraphFromText, std::string const &, Group * const )

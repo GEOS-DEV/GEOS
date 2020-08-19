@@ -22,7 +22,8 @@
 #include "dataRepository/Group.hpp"
 #include "common/Path.hpp"
 #include "mesh/GraphBase.hpp"
-#include "mesh/Edge.hpp"
+#include "mesh/GraphEdge.hpp"
+#include "mesh/GraphVertex.hpp"
 
 namespace geosx
 {
@@ -50,6 +51,13 @@ public:
   static string CatalogName() { return "GraphFromText"; }
   
   void GetTargetReferences();
+
+  void AddEdge(localIndex ind, GraphVertex* v1, GraphVertex* v2);
+
+  void RemoveEdge(localIndex ind);
+
+  GraphVertex* getVertexWithIndex(localIndex ind);
+
   
   virtual void GenerateGraph() override;
 
@@ -65,7 +73,7 @@ public:
 
   Path getFile() const { return m_file; }
 
-  std::vector<Edge*> getEdges() const { return m_edges; }
+  std::vector<GraphEdge*> getEdges() const { return m_edges; }
 
 
 
@@ -73,7 +81,9 @@ private:
   Path m_file;
   string m_meshString;
   Group * m_mesh;
-  std::vector<Edge*> m_edges;
+  std::vector<GraphEdge*> m_edges;
+  std::vector<GraphVertex*> m_vertices;
+
 };
 
 } /* namespace geosx */

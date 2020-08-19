@@ -13,26 +13,30 @@
  */
 
 /**
- * @file Edge.cpp
+ * @file GraphVertex.cpp
  */
 #include <string>
 #include <iostream>
 #include "common/Path.hpp"
-#include "mesh/Edge.hpp"
-#include "mesh/Vertice.hpp"
+#include "GraphVertex.hpp"
+#include "mesh/GraphEdge.hpp"
 
 namespace geosx
 {
 
 
-Edge::Edge( int const index, Vertice* neighbour1, Vertice* neighbour2):
-  ind(index),n1(neighbour1),n2(neighbour2)
+
+GraphVertex::GraphVertex( const int index):
+  ind(index)
   {    
-    std::cout<<"Constructing edge "<<ind<<" between vertices "<<n1->getIndice()<<" and "<<n2->getIndice()<<"\n";
+    std::cout<<"Constructing vertex "<<ind<<"\n";
   }
 
 
-Edge::~Edge()
-{}
+
+GraphVertex::~GraphVertex()
+  {
+    //std::cout<<"Destructing vertex "<<ind<<"\n";
+  }
 
 } /* namespace geosx */

@@ -53,7 +53,7 @@
       name="outputs"
       timeFrequency="2"
       targetExactTimestep="1"
-      target="/Outputs/siloWellPump"/>
+      target="/Outputs/ExchangeWellPump"/>
 
     <PeriodicEvent
       name="restarts"
@@ -157,7 +157,7 @@
     <FieldSpecification
       name="boundaryPressure"
       objectPath="faceManager"
-      fieldName="facePressure"
+      fieldName="pressure"
       scale="1.1e3"
       setNames="{ left }"/>
   </FieldSpecifications>
@@ -167,7 +167,7 @@
 
   <Outputs>
     <VTK
-      name="siloWellPump"/>
+      name="ExchangeWellPump"/>
 
     <Restart
       name="restartOutput"/>

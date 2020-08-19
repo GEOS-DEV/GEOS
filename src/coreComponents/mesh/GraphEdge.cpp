@@ -13,41 +13,28 @@
  */
 
 /**
- * @file Vertice.hpp
+ * @file GraphEdge.cpp
  */
-
-#ifndef GEOSX_MESH_VERTICE_HPP_
-#define GEOSX_MESH_VERTICE_HPP_
-#include "meshUtilities/ComputationalGeometry.hpp"
+#include <string>
+#include <iostream>
+#include "common/Path.hpp"
+#include "mesh/GraphEdge.hpp"
+#include "mesh/GraphVertex.hpp"
 
 namespace geosx
 {
 
-/**
- * @class Vertice
- *
- * An event type for periodic events (using either time or cycle as a basis).
- */
-class Vertice
-{
-public:
-  /**
-  * Constructor for Vertice object
-  * @param [in] index of the vertice
-  *
-  */ 
-  Vertice( const int);
 
-  /// Destructor
-  virtual ~Vertice();
+GraphEdge::GraphEdge( int const index, GraphVertex* neighbour1, GraphVertex* neighbour2):
+  ind(index),n1(neighbour1),n2(neighbour2)
+  {    
+    std::cout<<"Constructing edge "<<ind<<" between vertices "<<n1->getIndice()<<" and "<<n2->getIndice()<<"\n";
+  }
 
-  localIndex getIndice() const { return ind; }
 
-  
-private:
-  localIndex ind;
-};
+GraphEdge::~GraphEdge()
+  {
+    //std::cout<<"Destructing edge "<<ind<<" between vertices "<<n1->getIndice()<<" and "<<n2->getIndice()<<"\n";
+  }
 
 } /* namespace geosx */
-
-#endif /* GEOSX_MESH_VERTICE_HPP_ */

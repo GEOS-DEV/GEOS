@@ -23,6 +23,7 @@
 #include "meshUtilities/ComputationalGeometry.hpp"
 #include "LvArray/src/tensorOps.hpp"
 #include "mesh/GraphFromText.hpp"
+#include "mesh/GraphEdge.hpp"
 
 namespace geosx
 {
@@ -52,8 +53,8 @@ void TwoPointFluxApproximationWithGraph::computeCellStencil( MeshLevel & mesh) c
   const GraphFromText * graph = Group::group_cast< const GraphFromText * >( tmp );
   CellElementStencilTPFA & stencil = getStencil< CellElementStencilTPFA >( mesh, viewKeyStruct::cellStencilString );
 
-  std::vector<Edge*> edges = graph->getEdges();
-  for(long unsigned int i=0; i<edges.size(); i++)
+  std::vector<GraphEdge*> edges = graph->getEdges();
+  forAll< serialPolicy >( edges.size(), [=, &stencil]( localIndex const i )
   {
     stackArray1d< localIndex, 2 > regionIndex( 2 );
     stackArray1d< localIndex, 2 > subRegionIndex( 2 );
@@ -69,16 +70,13 @@ void TwoPointFluxApproximationWithGraph::computeCellStencil( MeshLevel & mesh) c
     elementIndex[1]=LvArray::integerConversion< localIndex >(edges[i]->getN2()->getIndice());
     stencilWeights[1]=-0.00000000000002;
     localIndex faceIndex = LvArray::integerConversion< localIndex >(edges[i]->getIndice());
-    std::cout<< regionIndex[0]<< " " << subRegionIndex[0] << " "
-    << elementIndex[0] << " " << stencilWeights[0] << " " << regionIndex[1]<< " " << subRegionIndex[1] << " "
-    << elementIndex[1] << " " << stencilWeights[1] << " " << faceIndex << "\n";
     stencil.add( 2,
                  regionIndex.data(),
                  subRegionIndex.data(),
                  elementIndex.data(),
                  stencilWeights.data(),
                  faceIndex);
-  }
+  });
 
 }
 
