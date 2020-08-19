@@ -168,6 +168,7 @@ public:
   {
 
     real64 const strainEnergyDensity = m_constitutiveUpdate.calculateStrainEnergyDensity( k,q );
+//    std::cout<<k<<", "<<q<<", "<< strainEnergyDensity<<std::endl;
 //    real64 D = 0;                                                                   //max between threshold and
                                                                                     // Elastic energy
 //    if( m_localDissipationOption == "Linear" )
@@ -192,8 +193,8 @@ public:
       qp_grad_damage += temp;
     }
 
-    real64 const Gc = 1;
-    real64 const ell = 1;
+    real64 const Gc = 2.7;
+    real64 const ell = 0.2;
 
     for( localIndex a = 0; a < numNodesPerElem; ++a )
     {

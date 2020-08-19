@@ -107,9 +107,18 @@ public:
                                     real64 const scalingFactor,
                                     DomainPartition & domain ) override;
 
+  virtual void
+  ImplicitStepSetup( real64 const & ,
+                     real64 const & ,
+                     DomainPartition &  ) override {}
+
   virtual void ImplicitStepComplete( real64 const & time, 
                                      real64 const & dt,
                                      DomainPartition & domain ) override;
+
+  virtual void
+  ResetStateToBeginningOfStep( DomainPartition &  ) override {}
+
   /**@}*/
 
   void ApplyDirichletBC_implicit( real64 const time,
@@ -151,10 +160,10 @@ public:
     return m_matrix.numGlobalRows();
   }
 
-  void setSolidModelName( string const & name )
-  {
-    m_solidModelName = name;
-  }
+//  void setSolidModelName( string const & name )
+//  {
+//    m_solidModelName = name;
+//  }
 
   string const & getFieldName() const
   {
@@ -169,7 +178,7 @@ private:
   stabledt m_stabledt;
   timeIntegrationOption m_timeIntegrationOption;
   string m_localDissipationOption;
-  string m_solidModelName;
+  array1d<string> m_solidModelNames;
   real64 m_lengthScale;
   real64 m_criticalFractureEnergy;
 

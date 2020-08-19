@@ -474,7 +474,6 @@ real64 SolidMechanicsLagrangianFEM::SolverStep( real64 const & time_n,
     {
       surfaceGenerator->SolverStep( time_n, dt, cycleNumber, domain );
     }
-
   }
   else if( m_timeIntegrationOption == TimeIntegrationOption::ImplicitDynamic ||
            m_timeIntegrationOption == TimeIntegrationOption::QuasiStatic )

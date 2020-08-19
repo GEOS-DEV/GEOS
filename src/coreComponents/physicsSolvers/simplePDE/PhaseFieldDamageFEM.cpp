@@ -70,7 +70,7 @@ PhaseFieldDamageFEM::PhaseFieldDamageFEM( const std::string & name,
                                           Group * const parent ):
   SolverBase( name, parent ),
   m_fieldName( "primaryField" ),
-  m_solidModelName()
+  m_solidModelNames()
 {
 
   registerWrapper< string >( PhaseFieldDamageFEMViewKeys.timeIntegrationOption.Key() )->
@@ -93,7 +93,7 @@ PhaseFieldDamageFEM::PhaseFieldDamageFEM( const std::string & name,
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("critical fracture energy");
 
-  registerWrapper< string >( viewKeyStruct::solidModelNameString, &m_solidModelName )->
+  registerWrapper( viewKeyStruct::solidModelNameString, &m_solidModelNames )->
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "name of solid constitutive model" );
 }
@@ -184,11 +184,12 @@ real64 PhaseFieldDamageFEM::SolverStep( real64 const & time_n,
            timeIntegrationOption::ImplicitTransient ||
            m_timeIntegrationOption == timeIntegrationOption::SteadyState )
   {
-    dtReturn =
-      this->NonlinearImplicitStep( time_n,
-                                   dt,
-                                   cycleNumber,
-                                   domain );
+    this->SetupSystem( domain, m_dofManager, m_localMatrix, m_localRhs, m_localSolution, false );
+
+    dtReturn = this->NonlinearImplicitStep( time_n,
+                                            dt,
+                                            cycleNumber,
+                                            domain );
   }
   return dtReturn;
 }
@@ -248,13 +249,13 @@ void PhaseFieldDamageFEM::AssembleSystem( real64 const GEOSX_UNUSED_PARAM(time_n
   localRhs.setValues< parallelDevicePolicy< 32 > >( 0 );
 
   finiteElement::
-    regionBasedKernelApplication< parallelDevicePolicy< 32 >,
+    regionBasedKernelApplication< serialPolicy,
                                   constitutive::SolidBase,
                                   CellElementSubRegion,
                                   PhaseFieldDamageKernel >( *mesh,
                                                                targetRegionNames(),
                                                                this->getDiscretizationName(),
-                                                               array1d< string >(),
+                                                               m_solidModelNames,
                                                                dofIndex,
                                                                dofManager.rankOffset(),
                                                                localMatrix,
@@ -443,14 +444,14 @@ void PhaseFieldDamageFEM::ApplyBoundaryConditions(
 {
   ApplyDirichletBC_implicit( time_n + dt, dofManager, domain, localMatrix, localRhs );
 
-//  if( getLogLevel() == 2 )
-//  {
-//    GEOSX_LOG_RANK_0( "After PhaseFieldDamageFEM::ApplyBoundaryConditions" );
-//    GEOSX_LOG_RANK_0( "\nJacobian:\n" );
-//    std::cout << matrix;
-//    GEOSX_LOG_RANK_0( "\nResidual:\n" );
-//    std::cout << rhs;
-//  }
+  if( getLogLevel() == 2 )
+  {
+    GEOSX_LOG_RANK_0( "After PhaseFieldDamageFEM::ApplyBoundaryConditions" );
+    GEOSX_LOG_RANK_0( "\nJacobian:\n" );
+    std::cout << localMatrix.toViewConst();
+    GEOSX_LOG_RANK_0( "\nResidual:\n" );
+    std::cout << localRhs;
+  }
 //
 //  if( getLogLevel() >= 3 )
 //  {
@@ -545,6 +546,10 @@ void PhaseFieldDamageFEM::SolveSystem( DofManager const & dofManager,
   rhs.scale( -1.0 ); // TODO decide if we want this here
   solution.zero();
 
+//  GEOSX_LOG_RANK_0( "Before PhaseFieldDamageFEM::SolveSystem" );
+//  std::cout << matrix<<std::endl;
+//  std::cout<< rhs << std::endl;
+
   SolverBase::SolveSystem( dofManager, matrix, rhs, solution );
 
   if( getLogLevel() == 2 )
@@ -578,7 +583,7 @@ void PhaseFieldDamageFEM::ApplyDirichletBC_implicit( real64 const time,
                                                        targetGroup,
                                                        m_fieldName,
                                                        dofManager.getKey( m_fieldName ),
-                                                       1,
+                                                       dofManager.rankOffset(),
                                                        localMatrix,
                                                        localRhs );
   } );

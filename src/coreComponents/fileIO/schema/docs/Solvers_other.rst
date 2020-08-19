@@ -15,7 +15,6 @@ PhaseFieldDamageFEM              node :ref:`DATASTRUCTURE_PhaseFieldDamageFEM`
 PhaseFieldFracture               node :ref:`DATASTRUCTURE_PhaseFieldFracture`               
 Poroelastic                      node :ref:`DATASTRUCTURE_Poroelastic`                      
 ProppantTransport                node :ref:`DATASTRUCTURE_ProppantTransport`                
-ReactionDiffusionFEM             node :ref:`DATASTRUCTURE_ReactionDiffusionFEM`             
 SinglePhaseFVM                   node :ref:`DATASTRUCTURE_SinglePhaseFVM`                   
 SinglePhaseHybridFVM             node :ref:`DATASTRUCTURE_SinglePhaseHybridFVM`             
 SinglePhaseProppantFVM           node :ref:`DATASTRUCTURE_SinglePhaseProppantFVM`           

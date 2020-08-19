@@ -491,23 +491,6 @@ Element: ProppantTransport
 .. include:: ../../coreComponents/fileIO/schema/docs/ProppantTransport.rst
 
 
-<<<<<<< HEAD
-.. _XML_QuadratureRules:
-
-Element: QuadratureRules
-========================
-.. include:: ../../coreComponents/fileIO/schema/docs/QuadratureRules.rst
-
-
-.. _XML_ReactionDiffusionFEM:
-
-Element: ReactionDiffusionFEM
-=============================
-.. include:: ../../coreComponents/fileIO/schema/docs/ReactionDiffusionFEM.rst
-
-
-=======
->>>>>>> develop
 .. _XML_Restart:
 
 Element: Restart
@@ -1205,23 +1188,6 @@ Datastructure: ProppantTransport
 .. include:: ../../coreComponents/fileIO/schema/docs/ProppantTransport_other.rst
 
 
-<<<<<<< HEAD
-.. _DATASTRUCTURE_QuadratureRules:
-
-Datastructure: QuadratureRules
-==============================
-.. include:: ../../coreComponents/fileIO/schema/docs/QuadratureRules_other.rst
-
-
-.. _DATASTRUCTURE_ReactionDiffusionFEM:
-
-Datastructure: ReactionDiffusionFEM
-===================================
-.. include:: ../../coreComponents/fileIO/schema/docs/ReactionDiffusionFEM_other.rst
-
-
-=======
->>>>>>> develop
 .. _DATASTRUCTURE_Restart:
 
 Datastructure: Restart

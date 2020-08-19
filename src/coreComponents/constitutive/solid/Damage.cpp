@@ -55,7 +55,9 @@ Damage< BASE >::~Damage()
 
 template< typename BASE >
 void Damage< BASE >::PostProcessInput()
-{}
+{
+  BASE::PostProcessInput();
+}
 
 template< typename BASE >
 void Damage< BASE >::allocateConstitutiveData( dataRepository::Group * const parent,

@@ -16,7 +16,6 @@ PhaseFieldDamageFEM              node               :ref:`XML_PhaseFieldDamageFE
 PhaseFieldFracture               node               :ref:`XML_PhaseFieldFracture`               
 Poroelastic                      node               :ref:`XML_Poroelastic`                      
 ProppantTransport                node               :ref:`XML_ProppantTransport`                
-ReactionDiffusionFEM             node               :ref:`XML_ReactionDiffusionFEM`             
 SinglePhaseFVM                   node               :ref:`XML_SinglePhaseFVM`                   
 SinglePhaseHybridFVM             node               :ref:`XML_SinglePhaseHybridFVM`             
 SinglePhaseProppantFVM           node               :ref:`XML_SinglePhaseProppantFVM`           
