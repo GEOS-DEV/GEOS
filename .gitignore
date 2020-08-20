@@ -12,6 +12,7 @@ install-*
 *.vscode*
 *.out
 *.core
+*.DS_Store
 geosx.TVD.v3breakpoints*
 host-configs/chaos_5_x86_64_ib-axom_develop-gcc@4.9.3.cmake
 publish.txt
