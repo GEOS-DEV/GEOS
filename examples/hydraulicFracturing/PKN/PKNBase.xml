@@ -17,12 +17,12 @@
     <InternalMesh
       name="mesh1"
       elementTypes="{ C3D8 }"
-      xCoords="{ 0, 150, 200, 400 }"
-      yCoords="{ 0, 150, 200, 400 }"
-      zCoords="{ -400, -100, -20, 20, 100, 400 }"
-      nx="{ 75, 10, 20 }"
-      ny="{ 75, 10, 20 }"
-      nz="{ 10, 10, 20, 10, 10 }"
+      xCoords="{ 0, 10 }"
+      yCoords="{ 0, 10 }"
+      zCoords="{ -20, 20 }"
+      nx="{ 10 }"
+      ny="{ 10 }"
+      nz="{ 10 }"
       cellBlockNames="{ cb1 }"/>
 
     <!--InternalMesh name="mesh1"
