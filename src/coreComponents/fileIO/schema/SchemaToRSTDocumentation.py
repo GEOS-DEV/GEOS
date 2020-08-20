@@ -122,9 +122,8 @@ def buildAttributeMap(root_node, xsd='{http://www.w3.org/2001/XMLSchema}'):
     for comment_node in child_node.iter(etree.Comment):
       tmp = comment_node.text.split(' => ')
       att_name = tmp[0]
-      att_description = tmp[1].replace('\\\\', '\\').replace('\n', '\\n')
+      att_description = tmp[1].replace('\\\\', '\\').replace('\n', '\\n').replace('|', '\\|')
       attribute_map[type_name][att_name]['Description'] = att_description
-      attribute_map[type_name][att_name]['Description'].replace('|', '\\|')
       if (len(tmp) > 2):
        attribute_map[type_name][att_name]['Registered By'] = [x for x in tmp[2].split(', ')]
 
