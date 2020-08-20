@@ -858,7 +858,7 @@ public:
 
 #if defined(GEOSX_USE_PYTHON)
   virtual PyObject * createPythonObject( bool const modify ) override
-  { return wrapperHelpers::createPythonObject( referenceAsView(), modify ); }
+  { return wrapperHelpers::createPythonObject( reference(), modify ); }
 #endif
 
 private:

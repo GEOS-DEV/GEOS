@@ -313,13 +313,12 @@ PyInit_pygeosx()
   if ( !LvArray::python::addTypeToModule( module, geosx::python::getPyWrapperType(), "Wrapper" ) )
   { return nullptr; }
 
-  if ( !LvArray::python::addTypeToModule( module, LvArray::python::getPyArrayType(), "Array" ) )
+  // Add the LvArray submodule.
+  LvArray::python::PyObjectRef<> LvArrayModule = LvArray::python::getModule();
+  if( LvArrayModule == nullptr )
   { return nullptr; }
 
-  if ( !LvArray::python::addTypeToModule( module, LvArray::python::getPySortedArrayType(), "SortedArray" ) )
-  { return nullptr; }
-
-  if ( !LvArray::python::addTypeToModule( module, LvArray::python::getPyCRSMatrixType(), "CRSMatrix" ) )
+  if ( PyModule_AddObject( module, "LvArray", LvArrayModule.release() ) )
   { return nullptr; }
 
   // Since we return module we don't want to decrease the reference count.

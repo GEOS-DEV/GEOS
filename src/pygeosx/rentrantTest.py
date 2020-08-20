@@ -27,7 +27,7 @@ if "-r" not in sys.argv:
       pass
 
   if rank == 0:
-    print("\n\n In python second time around")
+    print("\n\nIn python second time around")
     sys.stdout.flush()
 
   problem = pygeosx.reinit( sys.argv )

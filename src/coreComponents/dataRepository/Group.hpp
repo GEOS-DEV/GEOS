@@ -1649,7 +1649,7 @@ template< typename T >
 T const * Group::GetGroupByPath( string const & path ) const
 {
   // needed for getting root correctly with GetGroupByPath("/");
-  if( path.empty())
+  if( path.empty() || path == "." )
   {
     return group_cast< T const * >( this );
   }
