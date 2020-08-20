@@ -73,7 +73,6 @@ public:
    * @param inputDofNumber The dof number for the primary field.
    * @param rankOffset dof index offset of current rank
    * @param inputSparsity The sparsity pattern to fill.
-   * @param rowSizes The array that will be filled with row sizes.
    * @copydoc geosx::finiteElement::KernelBase::KernelBase
    */
   SparsityKernelBase( NodeManager const & nodeManager,
