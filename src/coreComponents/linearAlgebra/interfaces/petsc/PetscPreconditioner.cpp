@@ -26,23 +26,72 @@
 namespace geosx
 {
 
-
 PetscPreconditioner::PetscPreconditioner( LinearSolverParameters params )
   : Base{},
   m_parameters( std::move( params ) ),
-  m_precond{}
+  m_precond{},
+  m_nullsp{}
 { }
+
+void ConvertRigidBodyModes( LinearSolverParameters const & params,
+                            array1d< PetscVector > const & rigidBodyModes,
+                            MatNullSpace & nullsp )
+{
+  if( rigidBodyModes.empty() )
+  {
+    nullsp = nullptr;
+    return;
+  }
+  else
+  {
+    localIndex const numRBM = LvArray::integerConversion< localIndex >( rigidBodyModes.size() );
+    array1d< Vec > nullvecs( numRBM );
+    for( localIndex i = 0; i < numRBM; ++i )
+    {
+      GEOSX_LAI_CHECK_ERROR( VecDuplicate( rigidBodyModes[i].unwrapped(), &nullvecs[i] ) );
+      GEOSX_LAI_CHECK_ERROR( VecCopy( rigidBodyModes[i].unwrapped(), nullvecs[i] ) );
+      GEOSX_LAI_CHECK_ERROR( VecSetBlockSize( nullvecs[i], params.dofsPerNode ) );
+      GEOSX_LAI_CHECK_ERROR( VecSetUp( nullvecs[i] ) );
+    }
+    GEOSX_LAI_CHECK_ERROR( MatNullSpaceCreate( MPI_COMM_GEOSX, PETSC_FALSE, numRBM, nullvecs.data(), &nullsp ) );
+    for( localIndex i = 0; i < numRBM; ++i )
+    {
+      GEOSX_LAI_CHECK_ERROR( VecDestroy( &nullvecs[i] ) );
+    }
+  }
+}
+
+PetscPreconditioner::PetscPreconditioner( LinearSolverParameters params, array1d< Vector > const & rigidBodyModes )
+  : Base{},
+  m_parameters( std::move( params ) ),
+  m_precond{},
+  m_nullsp{}
+{
+  ConvertRigidBodyModes( params, rigidBodyModes, m_nullsp );
+}
 
 PetscPreconditioner::~PetscPreconditioner()
 {
   clear();
+  if( m_nullsp != nullptr )
+  {
+    MatNullSpaceDestroy( &m_nullsp );
+  }
 }
 
-void CreatePetscAMG( LinearSolverParameters const & params, PC precond )
+void CreatePetscAMG( LinearSolverParameters const & params,
+                     PC precond,
+                     PetscMatrix const & matrix,
+                     MatNullSpace & nullsp )
 {
   // Default options only for the moment
   GEOSX_LAI_CHECK_ERROR( PCSetType( precond, PCGAMG ) );
-  GEOSX_UNUSED_VAR( params )
+
+  if( params.amg.nullSpaceType == "rigidBodyModes" && nullsp != nullptr )
+  {
+    // Add user-defined null space / rigid body mode support
+    GEOSX_LAI_CHECK_ERROR( MatSetNearNullSpace( matrix.unwrapped(), nullsp ) );
+  }
 
   // TODO: need someone familiar with PETSc to take a look at this
 #if 0
@@ -213,7 +262,7 @@ void PetscPreconditioner::compute( PetscMatrix const & mat )
     }
     else if( m_parameters.preconditionerType == "amg" )
     {
-      CreatePetscAMG( m_parameters, m_precond );
+      CreatePetscAMG( m_parameters, m_precond, matrix(), m_nullsp );
     }
     else if( m_parameters.preconditionerType == "mgr" )
     {
@@ -244,8 +293,8 @@ void PetscPreconditioner::compute( PetscMatrix const & mat )
   feenableexcept( fpeflags );
 }
 
-void PetscPreconditioner::apply( PetscVector const & src,
-                                 PetscVector & dst ) const
+void PetscPreconditioner::apply( Vector const & src,
+                                 Vector & dst ) const
 {
   GEOSX_LAI_ASSERT( ready() );
   GEOSX_LAI_ASSERT( src.ready() );

@@ -35,4 +35,11 @@ geosx::HypreInterface::createPreconditioner( LinearSolverParameters params )
   return std::make_unique< HyprePreconditioner >( params );
 }
 
+std::unique_ptr< PreconditionerBase< HypreInterface > >
+geosx::HypreInterface::createPreconditioner( LinearSolverParameters params,
+                                             array1d< HypreVector > const & rigidBodyModes )
+{
+  return std::make_unique< HyprePreconditioner >( params, rigidBodyModes );
+}
+
 }

@@ -61,6 +61,14 @@ public:
   explicit TrilinosPreconditioner( LinearSolverParameters params );
 
   /**
+   * @brief Constructor.
+   * @param params preconditioner parameters
+   * @param rigidBodyModes the elasticity near null kernel
+   */
+  TrilinosPreconditioner( LinearSolverParameters params,
+                          array1d< Vector > const & rigidBodyModes );
+
+  /**
    * @brief Destructor.
    */
   virtual ~TrilinosPreconditioner() override;
@@ -100,6 +108,12 @@ private:
 
   /// Pointer to the Trilinos implementation
   std::unique_ptr< Epetra_Operator > m_precond;
+
+  /// Number of rigid body modes
+  integer m_numRBM;
+
+  /// Trilinos pointer to the rigid body modes
+  array1d< real64 > m_nullSpacePointer;
 };
 
 }

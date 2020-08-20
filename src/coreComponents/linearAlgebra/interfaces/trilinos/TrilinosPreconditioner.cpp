@@ -32,8 +32,44 @@ namespace geosx
 TrilinosPreconditioner::TrilinosPreconditioner( LinearSolverParameters params )
   : Base{},
   m_parameters( std::move( params ) ),
-  m_precond{}
+  m_precond{},
+  m_nullSpacePointer{}
 {}
+
+void ConvertRigidBodyModes( array1d< EpetraVector > const & rigidBodyModes,
+                            integer & numRBM,
+                            array1d< real64 > & nullSpacePointer )
+{
+  if( rigidBodyModes.empty() )
+  {
+    numRBM = 0;
+    return;
+  }
+  else
+  {
+    // ML expects the nullspace modes in a single double vector.
+    localIndex const size = rigidBodyModes[0].localSize();
+    numRBM = LvArray::integerConversion< integer >( rigidBodyModes.size() );
+    nullSpacePointer.resize( numRBM*size );
+    for( localIndex k = 0; k < numRBM; ++k )
+    {
+      for( localIndex j = 0; j < size; ++j )
+      {
+        nullSpacePointer[k*size + j] = rigidBodyModes[k].get( rigidBodyModes[k].getGlobalRowID( j ) );
+      }
+    }
+  }
+}
+
+TrilinosPreconditioner::TrilinosPreconditioner( LinearSolverParameters params,
+                                                array1d< Vector > const & rigidBodyModes )
+  : Base{},
+  m_parameters( std::move( params ) ),
+  m_precond{},
+  m_nullSpacePointer{}
+{
+  ConvertRigidBodyModes( rigidBodyModes, m_numRBM, m_nullSpacePointer );
+}
 
 TrilinosPreconditioner::~TrilinosPreconditioner() = default;
 
@@ -87,7 +123,10 @@ string const & getMLCoarseType( string const & value )
 }
 
 std::unique_ptr< Epetra_Operator >
-CreateMLOperator( LinearSolverParameters const & params, Epetra_RowMatrix const & matrix )
+CreateMLOperator( LinearSolverParameters const & params,
+                  Epetra_RowMatrix const & matrix,
+                  integer const & numRBM,
+                  array1d< real64 > const & nullSpacePointer )
 {
   GEOSX_LAI_ASSERT_EQ( params.preconditionerType, "amg" );
 
@@ -104,6 +143,18 @@ CreateMLOperator( LinearSolverParameters const & params, Epetra_RowMatrix const 
   list.set( "smoother: type", getMLSmootherType( params.amg.smootherType ) );
   list.set( "smoother: pre or post", params.amg.preOrPostSmoothing );
   list.set( "coarse: type", getMLCoarseType( params.amg.coarseType ) );
+
+  if( params.amg.nullSpaceType == "constantModes" )
+  {
+    list.set( "null space: type", "default vectors" );
+  }
+  else if( params.amg.nullSpaceType == "rigidBodyModes" && numRBM > 0 )
+  {
+    // Add user-defined null space / rigid body mode support
+    list.set( "null space: type", "pre-computed" );
+    list.set( "null space: vectors", nullSpacePointer.data() );
+    list.set( "null space: dimension", numRBM );
+  }
 
   std::unique_ptr< Epetra_Operator > precond =
     std::make_unique< ML_Epetra::MultiLevelPreconditioner >( matrix, list );
@@ -174,7 +225,7 @@ void TrilinosPreconditioner::compute( Matrix const & mat )
 
   if( m_parameters.preconditionerType == "amg" )
   {
-    m_precond = CreateMLOperator( m_parameters, mat.unwrapped() );
+    m_precond = CreateMLOperator( m_parameters, mat.unwrapped(), m_numRBM, m_nullSpacePointer );
   }
   else if( m_parameters.preconditionerType == "mgr" )
   {
