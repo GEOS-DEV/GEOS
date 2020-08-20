@@ -245,7 +245,7 @@ Preprocessing the input file
 Because we are using advanced xml features in this example, the input file must be pre-processed using geosx_xml_tools.
 To build the final input file ``hydrofracture_processed.xml``, run the following:
 
-``geosx_bin_dir/format_xml examples/hydraulicFracturing/heterogeneousInSituProperties/heterogeneousInSitu_singleFracture.xml -o hydrofracture_processed.xml``
+``geosx_bin_dir/preprocess_xml examples/hydraulicFracturing/heterogeneousInSituProperties/heterogeneousInSitu_singleFracture.xml -o hydrofracture_processed.xml``
 
 
 Running the case
