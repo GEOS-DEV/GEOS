@@ -33,8 +33,8 @@ def writeTableRST(file_name, values):
 
   # The final column is allowed to span multiple lines
   description_index = sum(M[:-1]) + len(M) - 1
-  multiple_row_format_a = ('{:<%is} ' * (len(M) - 1) + '{:<%is} \n') % M
-  multiple_row_format_b = ' ' * description_index + '{:<%is} \n' % (M[-1])
+  multiple_row_format_a = ('{:<%is} ' * (len(M) - 1) + '| {:<%is} \n') % M
+  multiple_row_format_b = ' ' * description_index + '| {:<%is} \n' % (M[-1])
 
   # Build headers
   boundary = single_row_format.format(*['=' * x for x in M])
@@ -124,6 +124,7 @@ def buildAttributeMap(root_node, xsd='{http://www.w3.org/2001/XMLSchema}'):
       att_name = tmp[0]
       att_description = tmp[1].replace('\\\\', '\\').replace('\n', '\\n')
       attribute_map[type_name][att_name]['Description'] = att_description
+      attribute_map[type_name][att_name]['Description'].replace('|', '\\|')
       if (len(tmp) > 2):
        attribute_map[type_name][att_name]['Registered By'] = [x for x in tmp[2].split(', ')]
 
