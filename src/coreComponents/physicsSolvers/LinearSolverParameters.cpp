@@ -60,7 +60,8 @@ LinearSolverParametersInput::LinearSolverParametersInput( std::string const & na
     setDescription( "Relative convergence tolerance of the iterative method\n"
                     "If the method converges, the iterative solution :math:`\\mathsf{x}_k` is such that\n"
                     "the relative residual norm satisfies:\n"
-                    ":math:`|| \\mathsf{b} - `\\mathsf{A} \\mathsf{x}_k ||_2` < ``tolerance`` * :math:`|| \\mathsf{b} ||_2`|" );
+                    ":math:`\\left\\lVert \\mathsf{b} - \\mathsf{A} \\mathsf{x}_k \\right\\rVert_2` < ``" +
+                    std::string( viewKeyStruct::krylovTolString ) + "`` * :math:`\\left\\lVert\\mathsf{b}\\right\\rVert_2`" );
 
   registerWrapper( viewKeyStruct::krylovAdaptiveTolString, &m_parameters.krylov.useAdaptiveTol )->
     setApplyDefaultValue( m_parameters.krylov.useAdaptiveTol )->
