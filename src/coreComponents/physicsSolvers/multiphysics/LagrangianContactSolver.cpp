@@ -193,7 +193,7 @@ void LagrangianContactSolver::SetupSystem( DomainPartition & domain,
 
   if( !m_precond && m_linearSolverParameters.get().solverType != "direct" )
   {
-    CreatePreconditioner();
+    CreatePreconditioner( domain );
   }
 }
 
@@ -1104,7 +1104,7 @@ real64 LagrangianContactSolver::CalculateResidualNorm( DomainPartition const & d
   return globalResidualNorm[2];
 }
 
-void LagrangianContactSolver::CreatePreconditioner()
+void LagrangianContactSolver::CreatePreconditioner( DomainPartition const & domain )
 {
   if( m_linearSolverParameters.get().preconditionerType == "block" )
   {
@@ -1121,9 +1121,17 @@ void LagrangianContactSolver::CreatePreconditioner()
                          { { viewKeyStruct::tractionString, 0, 3 } },
                          std::move( tracPrecond ) );
 
+    MeshLevel const & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
+    LAIHelperFunctions::ComputeRigidBodyModes( mesh,
+                                               m_dofManager,
+                                               { keys::TotalDisplacement },
+                                               m_rigidBodyModes );
+    //m_rigidBodyModes.clear();
+
     LinearSolverParameters mechParams = m_solidSolver->getLinearSolverParameters();
     mechParams.dofsPerNode = 3;
-    auto mechPrecond = LAInterface::createPreconditioner( mechParams );
+    mechParams.amg.nullSpaceType = "rigidBodyModes";
+    auto mechPrecond = LAInterface::createPreconditioner( mechParams, m_rigidBodyModes );
     precond->setupBlock( 1,
                          { { keys::TotalDisplacement, 0, 3 } },
                          std::move( mechPrecond ) );

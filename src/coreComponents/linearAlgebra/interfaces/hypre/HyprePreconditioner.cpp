@@ -38,7 +38,9 @@ HyprePreconditioner::HyprePreconditioner( LinearSolverParameters params,
   m_parameters( std::move( params ) ),
   m_precond{},
   m_functions( std::make_unique< HyprePrecFuncs >() ),
-  m_dofManager( dofManager )
+  m_dofManager( dofManager ),
+  m_rigidBodyModes( nullptr ),
+  m_nullSpacePointer{}
 {
   // Basic setup for functions
   if( !m_functions )
@@ -54,9 +56,36 @@ HyprePreconditioner::HyprePreconditioner( LinearSolverParameters params,
   m_ready = true;
 }
 
+HyprePreconditioner::HyprePreconditioner( LinearSolverParameters params,
+                                          array1d< HypreVector > const & rigidBodyModes,
+                                          DofManager const * const dofManager )
+  : Base{},
+  m_parameters( std::move( params ) ),
+  m_precond{},
+  m_functions( std::make_unique< HyprePrecFuncs >() ),
+  m_dofManager( dofManager ),
+  m_rigidBodyModes( &rigidBodyModes ),
+  m_nullSpacePointer{}
+{
+  // Basic setup for functions
+  if( !m_functions )
+  {
+    m_functions = std::make_unique< HyprePrecFuncs >();
+  }
+
+  // Basic setup common for all preconditioners
+  if( m_precond == nullptr )
+  {
+    createHyprePreconditioner( m_dofManager );
+  }
+
+  m_ready = true;
+}
+
 HyprePreconditioner::~HyprePreconditioner()
 {
   clear();
+  m_nullSpacePointer.clear();
 }
 
 namespace
@@ -90,6 +119,28 @@ HYPRE_Int getHypreAMGRelaxationType( string const & type )
 
   GEOSX_LAI_ASSERT_MSG( typeMap.count( type ) > 0, "Unsupported Hypre AMG relaxation option: " << type );
   return typeMap.at( type );
+}
+
+void ConvertRigidBodyModes( array1d< HypreVector > const & rigidBodyModes,
+                            HYPRE_Int & numRBM,
+                            array1d< HYPRE_ParVector > & nullSpacePointer )
+{
+  if( rigidBodyModes.empty() )
+  {
+    numRBM = 0;
+    return;
+  }
+  else
+  {
+    numRBM = toHYPRE_Int( rigidBodyModes.size() );
+    nullSpacePointer.resize( numRBM );
+    void * object;
+    for( localIndex k = 0; k < numRBM; ++k )
+    {
+      GEOSX_LAI_CHECK_ERROR( HYPRE_IJVectorGetObject( rigidBodyModes[k].unwrappedIJ(), &object ) );
+      nullSpacePointer[k] = (HYPRE_ParVector) object;
+    }
+  }
 }
 
 }
@@ -132,17 +183,35 @@ void HyprePreconditioner::createAMG()
 {
   GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGCreate( &m_precond ) );
 
+  if( m_rigidBodyModes == nullptr )
+  {
+    m_numRBM = 0;
+  }
+  else
+  {
+    ConvertRigidBodyModes( *m_rigidBodyModes, m_numRBM, m_nullSpacePointer );
+  }
 
   // Hypre's parameters to use BoomerAMG as a preconditioner
   GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetTol( m_precond, 0.0 ) );
   GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetMaxIter( m_precond, 1 ) );
   GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetPrintLevel( m_precond, toHYPRE_Int( m_parameters.logLevel ) ) );;
+  GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetNumFunctions( m_precond, m_parameters.dofsPerNode ) );
 
   // Set maximum number of multigrid levels (default 25)
   GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetMaxLevels( m_precond, toHYPRE_Int( m_parameters.amg.maxLevels ) ) );
 
   // Set type of cycle (1: V-cycle (default); 2: W-cycle)
   GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetCycleType( m_precond, getHypreAMGCycleType( m_parameters.amg.cycleType ) ) );
+
+  if( m_parameters.amg.nullSpaceType == "rigidBodyModes" && m_numRBM > 0 )
+  {
+    // Add user-defined null space / rigid body mode support
+    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetNodal( m_precond, 4 ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetNodalDiag( m_precond, 1 ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetInterpVecVariant( m_precond, m_parameters.dofsPerNode ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetInterpVectors( m_precond, m_numRBM, m_nullSpacePointer.data() ) );
+  }
 
   // Set smoother to be used (other options available, see hypre's documentation)
   // (default "gaussSeidel", i.e. local symmetric Gauss-Seidel)
@@ -582,7 +651,7 @@ void HyprePreconditioner::apply( Vector const & src,
   // Needed to avoid accumulation inside HYPRE solver phase
   dst.zero();
 
-  m_functions->apply( m_precond, this->matrix().unwrapped(), src.unwrapped(), dst.unwrapped() );
+  GEOSX_LAI_CHECK_ERROR( m_functions->apply( m_precond, this->matrix().unwrapped(), src.unwrapped(), dst.unwrapped() ) );
 }
 
 void HyprePreconditioner::clear()
@@ -590,12 +659,12 @@ void HyprePreconditioner::clear()
   PreconditionerBase::clear();
   if( m_precond != nullptr && m_functions && m_functions->destroy != nullptr )
   {
-    m_functions->destroy( m_precond );
+    GEOSX_LAI_CHECK_ERROR( m_functions->destroy( m_precond ) );
     m_precond = nullptr;
   }
   if( aux_precond != nullptr && m_functions && m_functions->aux_destroy != nullptr )
   {
-    m_functions->aux_destroy( aux_precond );
+    GEOSX_LAI_CHECK_ERROR( m_functions->aux_destroy( aux_precond ) );
     aux_precond = nullptr;
   }
   m_functions.reset();

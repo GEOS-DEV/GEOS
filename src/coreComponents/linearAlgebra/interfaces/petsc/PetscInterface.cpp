@@ -43,4 +43,11 @@ PetscInterface::createPreconditioner( LinearSolverParameters params )
   return std::make_unique< PetscPreconditioner >( params );
 }
 
+std::unique_ptr< PreconditionerBase< PetscInterface > >
+PetscInterface::createPreconditioner( LinearSolverParameters params,
+                                      array1d< PetscVector > const & rigidBodyModes )
+{
+  return std::make_unique< PetscPreconditioner >( params, rigidBodyModes );
+}
+
 } //namespace geosx

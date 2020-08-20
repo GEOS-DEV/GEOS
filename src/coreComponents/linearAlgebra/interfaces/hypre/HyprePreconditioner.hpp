@@ -22,6 +22,7 @@
 #include "linearAlgebra/solvers/PreconditionerBase.hpp"
 #include "linearAlgebra/interfaces/hypre/HypreInterface.hpp"
 #include "linearAlgebra/utilities/LinearSolverParameters.hpp"
+#include "HypreUtils.hpp"
 
 #include <memory>
 
@@ -76,6 +77,16 @@ public:
    */
   explicit HyprePreconditioner( LinearSolverParameters params,
                                 DofManager const * const dofManager = nullptr );
+
+  /**
+   * @brief Constructor.
+   * @param params preconditioner parameters
+   * @param rigidBodyModes the elasticity near null kernel
+   * @param dofManager the Degree-of-Freedom manager associated with matrix
+   */
+  HyprePreconditioner( LinearSolverParameters params,
+                       array1d< HypreVector > const & rigidBodyModes,
+                       DofManager const * const dofManager = nullptr );
 
   /**
    * @brief Destructor.
@@ -145,6 +156,15 @@ private:
 
   /// Bool to check if the preconditioner is ready to be computed
   bool m_ready;
+
+  /// Pointer to external data structure storing rigid body modes
+  array1d< HypreVector > const * m_rigidBodyModes = nullptr;
+
+  /// Number of rigid body modes
+  HYPRE_Int m_numRBM;
+
+  /// Hypre pointer to the rigid body modes
+  array1d< HYPRE_ParVector > m_nullSpacePointer;
 };
 
 }
