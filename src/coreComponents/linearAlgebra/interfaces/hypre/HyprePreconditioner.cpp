@@ -29,6 +29,8 @@
 #include <_hypre_IJ_mv.h>
 #include <krylov.h>
 
+#include <fenv.h>
+
 namespace geosx
 {
 
@@ -122,22 +124,31 @@ HYPRE_Int getHypreAMGRelaxationType( string const & type )
 }
 
 void ConvertRigidBodyModes( array1d< HypreVector > const & rigidBodyModes,
-                            HYPRE_Int & numRBM,
+                            HYPRE_Int & numRotations,
                             array1d< HYPRE_ParVector > & nullSpacePointer )
 {
   if( rigidBodyModes.empty() )
   {
-    numRBM = 0;
+    numRotations = 0;
     return;
   }
   else
   {
-    numRBM = toHYPRE_Int( rigidBodyModes.size() );
-    nullSpacePointer.resize( numRBM );
-    void * object;
-    for( localIndex k = 0; k < numRBM; ++k )
+    localIndex dim = 0;
+    if( rigidBodyModes.size() == 3 )
     {
-      GEOSX_LAI_CHECK_ERROR( HYPRE_IJVectorGetObject( rigidBodyModes[k].unwrappedIJ(), &object ) );
+      dim = 2;
+    }
+    else if( rigidBodyModes.size() == 6 )
+    {
+      dim = 3;
+    }
+    numRotations = toHYPRE_Int( rigidBodyModes.size() - dim );
+    nullSpacePointer.resize( numRotations );
+    void * object;
+    for( localIndex k = 0; k < numRotations; ++k )
+    {
+      GEOSX_LAI_CHECK_ERROR( HYPRE_IJVectorGetObject( rigidBodyModes[dim+k].unwrappedIJ(), &object ) );
       nullSpacePointer[k] = (HYPRE_ParVector) object;
     }
   }
@@ -185,11 +196,11 @@ void HyprePreconditioner::createAMG()
 
   if( m_rigidBodyModes == nullptr )
   {
-    m_numRBM = 0;
+    m_numRotations = 0;
   }
   else if( m_nullSpacePointer.empty() )
   {
-    ConvertRigidBodyModes( *m_rigidBodyModes, m_numRBM, m_nullSpacePointer );
+    ConvertRigidBodyModes( *m_rigidBodyModes, m_numRotations, m_nullSpacePointer );
   }
 
   // Hypre's parameters to use BoomerAMG as a preconditioner
@@ -204,13 +215,34 @@ void HyprePreconditioner::createAMG()
   // Set type of cycle (1: V-cycle (default); 2: W-cycle)
   GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetCycleType( m_precond, getHypreAMGCycleType( m_parameters.amg.cycleType ) ) );
 
-  if( m_parameters.amg.nullSpaceType == "rigidBodyModes" && m_numRBM > 0 )
+  if( m_parameters.amg.nullSpaceType == "rigidBodyModes" && m_numRotations > 0 )
   {
+    // Set of options used in MFEM
+    // Nodal coarsening options (nodal coarsening is required for this solver)
+    // See hypre's new_ij driver and the paper for descriptions.
+    HYPRE_Int const nodal                 = 4; // strength reduction norm: 1, 3 or 4
+    HYPRE_Int const nodal_diag            = 1; // diagonal in strength matrix: 0, 1 or 2
+    HYPRE_Int const relax_coarse          = 8; // smoother on the coarsest grid: 8, 99 or 29
+    
+    // Elasticity interpolation options
+    HYPRE_Int const interp_vec_variant    = 2; // 1 = GM-1, 2 = GM-2, 3 = LN
+    HYPRE_Int const q_max                 = 4; // max elements per row for each Q
+    HYPRE_Int const smooth_interp_vectors = 1; // smooth the rigid-body modes?
+    
+    // Optionally pre-process the interpolation matrix through iterative weight
+    // refinement (this is generally applicable for any system)
+    HYPRE_Int const interp_refine         = 1;
+    
+    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetNodal( m_precond, nodal ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetNodalDiag( m_precond, nodal_diag ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetCycleRelaxType( m_precond, relax_coarse, 3 ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetInterpVecVariant( m_precond, interp_vec_variant ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetInterpVecQMax( m_precond, q_max ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetSmoothInterpVectors( m_precond, smooth_interp_vectors ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetInterpRefine( m_precond, interp_refine ) );
+
     // Add user-defined null space / rigid body mode support
-    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetNodal( m_precond, 4 ) );
-    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetNodalDiag( m_precond, 1 ) );
-    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetInterpVecVariant( m_precond, m_parameters.dofsPerNode ) );
-    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetInterpVectors( m_precond, m_numRBM, m_nullSpacePointer.data() ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetInterpVectors( m_precond, m_numRotations, m_nullSpacePointer.data() ) );
   }
 
   // Set smoother to be used (other options available, see hypre's documentation)
@@ -636,7 +668,18 @@ void HyprePreconditioner::compute( Matrix const & mat )
   }
 
   PreconditionerBase::compute( mat );
+
+  // To be able to use Petsc preconditioner (e.g., BoomerAMG) we need to disable floating point exceptions
+  // Save the FPE flags
+  int fpeflags = fegetexcept();
+
+  // Disable floating point exceptions
+  fedisableexcept( FE_ALL_EXCEPT );
+
   GEOSX_LAI_CHECK_ERROR( m_functions->setup( m_precond, mat.unwrapped(), nullptr, nullptr ) );
+
+  // Restore the previous FPE flags
+  feenableexcept( fpeflags );
 }
 
 void HyprePreconditioner::apply( Vector const & src,
