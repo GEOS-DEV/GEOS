@@ -171,7 +171,6 @@ struct SparsityHelper
 //*****************************************************************************
 /**
  * @brief Fills matrix sparsity.
- * @tparam POLICY The RAJA launch policy to pass to the kernel launch.
  * @tparam REGION_TYPE The type of region to loop over. TODO make this a
  *                     parameter pack?
  * @tparam KERNEL_TEMPLATE The type of template for the physics kernel, which
@@ -183,7 +182,6 @@ struct SparsityHelper
  * @param inputDofNumber The global degree of freedom numbers.
  * @param rankOffset Offset of dof indices on curren rank.
  * @param inputSparsityPattern The local sparsity pattern to fill.
- * @param rowSizes The array of local row sizes to be populated
  * @return 0
  *
  * Fills matrix sparsity using information from physics specific implementation
