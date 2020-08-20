@@ -223,16 +223,16 @@ void HyprePreconditioner::createAMG()
     HYPRE_Int const nodal                 = 4; // strength reduction norm: 1, 3 or 4
     HYPRE_Int const nodal_diag            = 1; // diagonal in strength matrix: 0, 1 or 2
     HYPRE_Int const relax_coarse          = 8; // smoother on the coarsest grid: 8, 99 or 29
-    
+
     // Elasticity interpolation options
     HYPRE_Int const interp_vec_variant    = 2; // 1 = GM-1, 2 = GM-2, 3 = LN
     HYPRE_Int const q_max                 = 4; // max elements per row for each Q
     HYPRE_Int const smooth_interp_vectors = 1; // smooth the rigid-body modes?
-    
+
     // Optionally pre-process the interpolation matrix through iterative weight
     // refinement (this is generally applicable for any system)
     HYPRE_Int const interp_refine         = 1;
-    
+
     GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetNodal( m_precond, nodal ) );
     GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetNodalDiag( m_precond, nodal_diag ) );
     GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetCycleRelaxType( m_precond, relax_coarse, 3 ) );
