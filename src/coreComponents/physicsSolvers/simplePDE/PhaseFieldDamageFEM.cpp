@@ -93,7 +93,7 @@ PhaseFieldDamageFEM::PhaseFieldDamageFEM( const std::string & name,
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "critical fracture energy" );
 
-  registerWrapper( viewKeyStruct::solidModelNameString, &m_solidModelNames )->
+  registerWrapper( viewKeyStruct::solidModelNamesString, &m_solidModelNames )->
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "name of solid constitutive model" );
 }

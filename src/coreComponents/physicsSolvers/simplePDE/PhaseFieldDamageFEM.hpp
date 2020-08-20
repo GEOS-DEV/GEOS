@@ -139,7 +139,7 @@ public:
 //    static constexpr auto coeffFieldName = "coeffFieldName";
     static constexpr auto coeffName = "coeffField";
     static constexpr auto localDissipationOption = "localDissipation";
-    static constexpr auto solidModelNameString = "solidMaterialName";
+    static constexpr auto solidModelNamesString = "solidMaterialNames";
     static constexpr auto lengthScale = "lengthScale";
     static constexpr auto criticalFractureEnergy = "criticalFractureEnergy";
 

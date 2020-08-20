@@ -30,7 +30,7 @@
                 discretization="FE1"
                 timeIntegrationOption="SteadyState"
                 fieldName="Damage"
-                solidMaterialName="{shale}"
+                solidMaterialNames="{shale}"
                 localDissipation = "Quadratic"
                 lengthScale = "0.2"
                 criticalFractureEnergy = "2.7"
