@@ -187,7 +187,7 @@ void HyprePreconditioner::createAMG()
   {
     m_numRBM = 0;
   }
-  else
+  else if( m_nullSpacePointer.empty() )
   {
     ConvertRigidBodyModes( *m_rigidBodyModes, m_numRBM, m_nullSpacePointer );
   }
