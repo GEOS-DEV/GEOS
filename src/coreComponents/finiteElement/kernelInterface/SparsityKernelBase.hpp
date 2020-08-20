@@ -84,8 +84,7 @@ public:
                       CONSTITUTIVE_TYPE * const inputConstitutiveType,
                       arrayView1d< globalIndex const > const & inputDofNumber,
                       globalIndex const rankOffset,
-                      SparsityPattern< globalIndex > & inputSparsity,
-                      arrayView1d< localIndex > const & rowSizes ):
+                      SparsityPattern< globalIndex > & inputSparsity ):
     Base( nodeManager,
           edgeManager,
           faceManager,
@@ -96,8 +95,7 @@ public:
           rankOffset,
           CRSMatrix< real64, globalIndex >().toViewConstSizes(),
           array1d< real64 >().toView() ),
-    m_sparsity( inputSparsity ),
-    m_rowSizes( rowSizes )
+    m_sparsity( inputSparsity )
   {}
 
 
@@ -127,8 +125,6 @@ public:
   }
 private:
   SparsityPattern< globalIndex > & m_sparsity;
-
-  arrayView1d< localIndex > const & m_rowSizes;
 };
 
 
@@ -196,8 +192,7 @@ struct SparsityHelper
  * #geosx::finiteElement::SparsityKernelBase to conform with the template
  * pattern specified in the physics kernels.
  */
-template< typename POLICY,
-          typename REGION_TYPE,
+template< typename REGION_TYPE,
           template< typename SUBREGION_TYPE,
                     typename CONSTITUTIVE_TYPE,
                     typename FE_TYPE > class KERNEL_TEMPLATE >
@@ -207,10 +202,10 @@ real64 fillSparsity( MeshLevel & mesh,
                      string const & discretizationName,
                      arrayView1d< globalIndex const > const & inputDofNumber,
                      globalIndex const rankOffset,
-                     SparsityPattern< globalIndex > & inputSparsityPattern,
-                     arrayView1d< localIndex > const & rowSizes )
+                     SparsityPattern< globalIndex > & inputSparsityPattern )
 {
-  regionBasedKernelApplication< POLICY,
+  GEOSX_MARK_FUNCTION;
+  regionBasedKernelApplication< serialPolicy,
                                 constitutive::NullModel,
                                 REGION_TYPE,
                                 SparsityHelper< KERNEL_TEMPLATE >::template Kernel
@@ -220,8 +215,7 @@ real64 fillSparsity( MeshLevel & mesh,
                                    array1d< string >(),
                                    inputDofNumber,
                                    rankOffset,
-                                   inputSparsityPattern,
-                                   rowSizes );
+                                   inputSparsityPattern );
 
   return 0;
 }
