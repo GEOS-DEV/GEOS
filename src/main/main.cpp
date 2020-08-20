@@ -32,6 +32,7 @@
 #include <cmath>
 #include <iostream>
 #include <sys/time.h>
+#include <fenv.h>
 
 using namespace geosx;
 
@@ -39,6 +40,8 @@ using namespace geosx;
 int main( int argc, char *argv[] )
 {
   basicSetup( argc, argv, true );
+
+  LvArray::system::disableFloatingPointExceptions( FE_ALL_EXCEPT );
 
   GEOSX_MARK_FUNCTION_BEGIN;
 
