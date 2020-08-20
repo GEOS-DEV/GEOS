@@ -160,8 +160,8 @@ private:
   /// Pointer to external data structure storing rigid body modes
   array1d< HypreVector > const * m_rigidBodyModes = nullptr;
 
-  /// Number of rigid body modes
-  HYPRE_Int m_numRBM;
+  /// Number of rigid body modes (rotations only)
+  HYPRE_Int m_numRotations;
 
   /// Hypre pointer to the rigid body modes
   array1d< HYPRE_ParVector > m_nullSpacePointer;
