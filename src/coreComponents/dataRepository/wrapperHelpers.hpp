@@ -297,7 +297,7 @@ inline
 void
 pushDataToConduitNode( Path const & var, conduit::Node & node )
 {
-  pushDataToConduitNode( dynamic_cast< std::string const & >(var), node );
+  pushDataToConduitNode( static_cast< std::string const & >(var), node );
 }
 
 // This is for an object that doesn't need to be packed but isn't an LvArray.
