@@ -67,7 +67,7 @@ public:
   virtual real64 calculateStrainEnergyDensity( localIndex const k,
                                                localIndex const q ) const override final
   {
-    real64 const sed = UPDATE_BASE::calculateStrainEnergyDensity(k,q);
+    real64 const sed = UPDATE_BASE::calculateStrainEnergyDensity( k, q );
     if( sed > m_strainEnergyDensity( k, q ) )
     {
       m_strainEnergyDensity( k, q ) = sed;
@@ -78,16 +78,16 @@ public:
   GEOSX_HOST_DEVICE
   virtual void getStress( localIndex const k,
                           localIndex const q,
-                          real64 (&stress)[6] ) const override
+                          real64 (& stress)[6] ) const override
   {
     real64 const damageFactor = ( 1.0 - m_damage( k, q ) )*( 1.0 - m_damage( k, q ) );
 
-    stress[0] = this->m_stress(k,q,0) * damageFactor;
-    stress[1] = this->m_stress(k,q,1) * damageFactor;
-    stress[2] = this->m_stress(k,q,2) * damageFactor;
-    stress[3] = this->m_stress(k,q,3) * damageFactor;
-    stress[4] = this->m_stress(k,q,4) * damageFactor;
-    stress[5] = this->m_stress(k,q,5) * damageFactor;
+    stress[0] = this->m_stress( k, q, 0 ) * damageFactor;
+    stress[1] = this->m_stress( k, q, 1 ) * damageFactor;
+    stress[2] = this->m_stress( k, q, 2 ) * damageFactor;
+    stress[3] = this->m_stress( k, q, 3 ) * damageFactor;
+    stress[4] = this->m_stress( k, q, 4 ) * damageFactor;
+    stress[5] = this->m_stress( k, q, 5 ) * damageFactor;
   }
 
 
@@ -95,12 +95,6 @@ public:
   arrayView2d< real64 > const m_strainEnergyDensity;
 
 };
-
-
-
-
-
-
 
 
 

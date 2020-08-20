@@ -189,7 +189,7 @@ real64 ReactionDiffusionFEM::ExplicitStep(
 void ReactionDiffusionFEM::ImplicitStepSetup(
   real64 const & GEOSX_UNUSED_PARAM( time_n ),
   real64 const & GEOSX_UNUSED_PARAM( dt ),
-  DomainPartition & domain)
+  DomainPartition & domain )
 {
   // Computation of the sparsity pattern
   SetupSystem( domain, m_dofManager, m_localMatrix, m_localRhs, m_localSolution );
@@ -212,10 +212,10 @@ void ReactionDiffusionFEM::AssembleSystem( real64 const time_n,
                                            real64 const GEOSX_UNUSED_PARAM( dt ),
                                            DomainPartition & domain,
                                            DofManager const & dofManager,
-                                                                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                             arrayView1d< real64 > const & localRhs)
+                                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                           arrayView1d< real64 > const & localRhs )
 {
-  MeshLevel * const mesh = domain.getMeshBody(0)->getMeshLevel(0);
+  MeshLevel * const mesh = domain.getMeshBody( 0 )->getMeshLevel( 0 );
 
   NodeManager * const nodeManager = mesh->getNodeManager();
 
@@ -302,7 +302,7 @@ void ReactionDiffusionFEM::AssembleSystem( real64 const time_n,
                 real64 Nb = finiteElement->value( b, q );
                 element_matrix( a, b ) +=
                   detJ[k][q] *
-                  (diffusion * - LvArray::tensorOps::AiBi<3>( dNdX[k][q][a], dNdX[k][q][b] ) + reaction * Na * Nb);
+                  (diffusion * -LvArray::tensorOps::AiBi< 3 >( dNdX[k][q][a], dNdX[k][q][b] ) + reaction * Na * Nb);
 
               }
             }
@@ -371,7 +371,7 @@ void ReactionDiffusionFEM::ApplyBoundaryConditions(
   real64 const dt, DomainPartition & domain,
   DofManager const & dofManager,
   CRSMatrixView< real64, globalIndex > const & localMatrix,
-                    arrayView1d< real64 > const & localRhs )
+  arrayView1d< real64 > const & localRhs )
 {
   ApplyDirichletBC_implicit( time_n + dt, dofManager, domain, localMatrix, localRhs );
 

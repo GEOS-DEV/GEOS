@@ -320,7 +320,7 @@ public:
   {
     real64 stress[6];
 
-    m_constitutiveUpdate.getStress( k,q, stress );
+    m_constitutiveUpdate.getStress( k, q, stress );
 
     stressModifier( stress );
 

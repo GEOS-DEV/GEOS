@@ -82,19 +82,18 @@ protected:
 
 
 
-
 public:
   GEOSX_HOST_DEVICE
   virtual void getStress( localIndex const k,
                           localIndex const q,
-                          real64 (&stress)[6] ) const
+                          real64 (& stress)[6] ) const
   {
-    stress[0] = this->m_stress(k,q,0);
-    stress[1] = this->m_stress(k,q,1);
-    stress[2] = this->m_stress(k,q,2);
-    stress[3] = this->m_stress(k,q,3);
-    stress[4] = this->m_stress(k,q,4);
-    stress[5] = this->m_stress(k,q,5);
+    stress[0] = this->m_stress( k, q, 0 );
+    stress[1] = this->m_stress( k, q, 1 );
+    stress[2] = this->m_stress( k, q, 2 );
+    stress[3] = this->m_stress( k, q, 3 );
+    stress[4] = this->m_stress( k, q, 4 );
+    stress[5] = this->m_stress( k, q, 5 );
   }
 
   /// A reference the material stress at quadrature points.

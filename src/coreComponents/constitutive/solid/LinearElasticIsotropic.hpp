@@ -292,7 +292,7 @@ real64 LinearElasticIsotropicUpdates::calculateStrainEnergyDensity( localIndex c
   real64 const newStrainEnergyDensity = ( stress[0]*stress[0] + stress[1]*stress[1] + stress[2]*stress[2] -
                                           2 * ( nu       * ( stress[1]*stress[2] + stress[0]*stress[1] + stress[0]*stress[2] ) -
                                                 (1 + nu) * ( stress[3]*stress[3] + stress[4]*stress[4] + stress[5]*stress[5] )
-                                              )
+                                                )
                                           ) * invE * 0.5;
   // Make sure strain energy is always non-negative
   GEOSX_ASSERT_MSG( newStrainEnergyDensity >= 0.0,

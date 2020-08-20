@@ -61,8 +61,8 @@ public:
    */
   /**@{*/
 
-  virtual real64 SolverStep( real64 const & time_n, 
-                              real64 const & dt,
+  virtual real64 SolverStep( real64 const & time_n,
+                             real64 const & dt,
                              integer const cycleNumber,
                              DomainPartition & domain ) override;
 
@@ -71,7 +71,7 @@ public:
                                integer const cycleNumber,
                                DomainPartition & domain ) override;
 
-  virtual void ImplicitStepSetup( real64 const & time_n, 
+  virtual void ImplicitStepSetup( real64 const & time_n,
                                   real64 const & dt,
                                   DomainPartition & domain ) override;
 
@@ -82,13 +82,13 @@ public:
                                DomainPartition & domain,
                                DofManager const & dofManager,
                                CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                  arrayView1d< real64 > const & localRhs ) override;
+                               arrayView1d< real64 > const & localRhs ) override;
 
   virtual void ApplyBoundaryConditions( real64 const time, real64 const dt,
                                         DomainPartition & domain,
                                         DofManager const & dofManager,
                                         CRSMatrixView< real64, globalIndex > const & localMatrix,
-                  arrayView1d< real64 > const & localRhs ) override;
+                                        arrayView1d< real64 > const & localRhs ) override;
 
   virtual void SolveSystem( DofManager const & dofManager, ParallelMatrix & matrix,
                             ParallelVector & rhs,

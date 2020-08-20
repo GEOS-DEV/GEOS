@@ -66,18 +66,18 @@ public:
                              integer const cycleNumber,
                              DomainPartition & domain ) override;
 
-  virtual real64 ExplicitStep( real64 const & time_n, 
+  virtual real64 ExplicitStep( real64 const & time_n,
                                real64 const & dt,
                                integer const cycleNumber,
                                DomainPartition & domain ) override;
 
   virtual void SetupSystem( DomainPartition & domain,
-                                               DofManager & dofManager,
-                                               CRSMatrix< real64, globalIndex > & localMatrix,
-                                               array1d< real64 > & localRhs,
-                                               array1d< real64 > & localSolution,
-                                               bool const setSparisty ) override;
-                                               
+                            DofManager & dofManager,
+                            CRSMatrix< real64, globalIndex > & localMatrix,
+                            array1d< real64 > & localRhs,
+                            array1d< real64 > & localSolution,
+                            bool const setSparisty ) override;
+
   virtual void SetupDofs( DomainPartition const & domain,
                           DofManager & dofManager ) const override;
 
@@ -100,7 +100,7 @@ public:
   virtual void SolveSystem( DofManager const & dofManager,
                             ParallelMatrix & matrix,
                             ParallelVector & rhs,
-                            ParallelVector & solution) override;
+                            ParallelVector & solution ) override;
 
   virtual void ApplySystemSolution( DofManager const & dofManager,
                                     arrayView1d< real64 const > const & localSolution,
@@ -108,16 +108,16 @@ public:
                                     DomainPartition & domain ) override;
 
   virtual void
-  ImplicitStepSetup( real64 const & ,
-                     real64 const & ,
-                     DomainPartition &  ) override {}
+  ImplicitStepSetup( real64 const &,
+                     real64 const &,
+                     DomainPartition & ) override {}
 
-  virtual void ImplicitStepComplete( real64 const & time, 
+  virtual void ImplicitStepComplete( real64 const & time,
                                      real64 const & dt,
                                      DomainPartition & domain ) override;
 
   virtual void
-  ResetStateToBeginningOfStep( DomainPartition &  ) override {}
+  ResetStateToBeginningOfStep( DomainPartition & ) override {}
 
   /**@}*/
 
@@ -178,7 +178,7 @@ private:
   stabledt m_stabledt;
   timeIntegrationOption m_timeIntegrationOption;
   string m_localDissipationOption;
-  array1d<string> m_solidModelNames;
+  array1d< string > m_solidModelNames;
   real64 m_lengthScale;
   real64 m_criticalFractureEnergy;
 

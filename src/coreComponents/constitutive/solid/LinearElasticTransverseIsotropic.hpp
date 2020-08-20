@@ -132,7 +132,7 @@ public:
                                                localIndex const q ) const override final
   {
     GEOSX_UNUSED_VAR( k, q );
-    GEOSX_ERROR( "Not implemented");
+    GEOSX_ERROR( "Not implemented" );
     return 0;
   }
 
