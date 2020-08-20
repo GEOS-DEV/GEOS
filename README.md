@@ -19,11 +19,8 @@ and applied engineering components of this effort.
 Documentation
 ---------------------
 
-Documentation hosted [here](https://geosx-geosx.readthedocs-hosted.com/en/latest/?) contains a *Quick Start* guide and a more detailed *Developer* and *User* Guide.
+Our documentation is hosted [here](https://geosx-geosx.readthedocs-hosted.com/en/latest/?).
 
-We have two categories of tutorials.  User-focused tutorials for those primarily interested
-in running existing models, and developer-focused tutorials for those primarily interested
-in adding new capabilities to the code.
 
 Who develops GEOSX?
 -------------------
