@@ -86,47 +86,13 @@ DruckerPrager::~DruckerPrager()
 {}
 
 
-void
-DruckerPrager::DeliverClone( string const & name,
-                                      Group * const parent,
-                                      std::unique_ptr< ConstitutiveBase > & clone ) const
-{
-  if( !clone )
-  {
-    clone = std::make_unique< DruckerPrager >( name, parent );
-  }
-  ElasticIsotropic::DeliverClone( name, parent, clone );
-  
-  DruckerPrager * const newConstitutiveRelation = dynamic_cast< DruckerPrager * >(clone.get());
-
-  newConstitutiveRelation->m_defaultTanFrictionAngle = m_defaultTanFrictionAngle;
-  newConstitutiveRelation->m_defaultTanDilationAngle = m_defaultTanDilationAngle;
-  newConstitutiveRelation->m_defaultCohesion         = m_defaultCohesion;
-  newConstitutiveRelation->m_defaultHardeningRate    = m_defaultHardeningRate;
-  
-  newConstitutiveRelation->m_tanFrictionAngle = m_tanFrictionAngle;
-  newConstitutiveRelation->m_tanDilationAngle = m_tanDilationAngle;
-  newConstitutiveRelation->m_hardeningRate    = m_hardeningRate;
-  newConstitutiveRelation->m_newCohesion      = m_newCohesion;
-  newConstitutiveRelation->m_oldCohesion      = m_oldCohesion;
-}
-
-void DruckerPrager::AllocateConstitutiveData( dataRepository::Group * const parent,
+void DruckerPrager::allocateConstitutiveData( dataRepository::Group * const parent,
                                               localIndex const numConstitutivePointsPerParentIndex )
 {
-  ElasticIsotropic::AllocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+  m_newCohesion.resize( 0, numConstitutivePointsPerParentIndex );
+  m_oldCohesion.resize( 0, numConstitutivePointsPerParentIndex );
   
-  localIndex const numElems = parent->size();
-  this->resize( numElems );
-  
-  // 1d arrays
-  m_tanFrictionAngle.resize( numElems );
-  m_tanDilationAngle.resize( numElems );
-  m_hardeningRate.resize( numElems );
-  
-  // 2d arrays
-  m_newCohesion.resize( numElems, numConstitutivePointsPerParentIndex );
-  m_oldCohesion.resize( numElems, numConstitutivePointsPerParentIndex );
+  ElasticIsotropic::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 }
 
 void DruckerPrager::PostProcessInput()

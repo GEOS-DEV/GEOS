@@ -295,12 +295,8 @@ public:
    */
   virtual ~DruckerPrager() override;
 
-  virtual void
-  DeliverClone( string const & name,
-                Group * const parent,
-                std::unique_ptr< ConstitutiveBase > & clone ) const override;
 
-  virtual void AllocateConstitutiveData( dataRepository::Group * const parent,
+  virtual void allocateConstitutiveData( dataRepository::Group * const parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
   
   /**
@@ -316,7 +312,7 @@ public:
    */
   static std::string CatalogName() { return m_catalogNameString; }
 
-  virtual string GetCatalogName() override { return CatalogName(); }
+  virtual string getCatalogName() const override { return CatalogName(); }
 
   ///@}
 
