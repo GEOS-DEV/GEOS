@@ -1111,6 +1111,8 @@ void LagrangianContactSolver::CreatePreconditioner( DomainPartition const & doma
     std::string const leadingBlockApproximation = "blockJacobi";
 
     LinearSolverParameters mechParams = m_solidSolver->getLinearSolverParameters();
+    // Because of boundary conditions
+    mechParams.isSymmetric = false;
 
     std::unique_ptr< BlockPreconditioner< LAInterface > > precond;
     std::unique_ptr< PreconditionerBase< LAInterface > > tracPrecond;
