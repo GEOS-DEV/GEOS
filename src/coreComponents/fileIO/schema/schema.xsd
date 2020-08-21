@@ -572,12 +572,16 @@
 	<xsd:complexType name="LinearSolverParametersType">
 		<!--amgCoarseSolver => AMG coarsest level solver/smoother type-->
 		<xsd:attribute name="amgCoarseSolver" type="string" default="direct" />
+		<!--amgNullSpaceType => AMG near null space approximation-->
+		<xsd:attribute name="amgNullSpaceType" type="string" default="constantModes" />
 		<!--amgNumSweeps => AMG smoother sweeps-->
 		<xsd:attribute name="amgNumSweeps" type="integer" default="2" />
 		<!--amgSmootherType => AMG smoother type-->
 		<xsd:attribute name="amgSmootherType" type="string" default="gaussSeidel" />
 		<!--amgThreshold => AMG strength-of-connection threshold-->
 		<xsd:attribute name="amgThreshold" type="real64" default="0" />
+		<!--dofsPerNode => Dofs per node (or support location) for non-scalar problems-->
+		<xsd:attribute name="dofsPerNode" type="integer" default="1" />
 		<!--iluFill => ILU(K) fill factor-->
 		<xsd:attribute name="iluFill" type="integer" default="0" />
 		<!--iluThreshold => ILU(T) threshold factor-->
