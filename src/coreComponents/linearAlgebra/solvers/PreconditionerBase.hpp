@@ -129,9 +129,9 @@ public:
    */
   virtual Matrix const & preconditionerMatrix() const
   {
-    // Just to be able to compile ...
-    return *m_mat;
     GEOSX_ERROR( "PreconditionerBase::preconditionerMatrix called!. Should be overridden." );
+    // This is here just to be able to compile ...
+    return *m_mat;
   }
 
 private:
