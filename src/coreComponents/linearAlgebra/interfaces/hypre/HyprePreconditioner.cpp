@@ -669,7 +669,7 @@ void HyprePreconditioner::compute( Matrix const & mat )
 
   PreconditionerBase::compute( mat );
 
-  // To be able to use Petsc preconditioner (e.g., BoomerAMG) we need to disable floating point exceptions
+  // To be able to use Hypre preconditioner (e.g., BoomerAMG) we need to disable floating point exceptions
   // Disable floating point exceptions and save the FPE flags
   int const fpeflags = LvArray::system::disableFloatingPointExceptions( FE_ALL_EXCEPT );
 
