@@ -539,6 +539,7 @@ real64 regionBasedKernelApplication( MeshLevel & mesh,
                                      arrayView1d< string const > const & constitutiveNames,
                                      KERNEL_CONSTRUCTOR_PARAMS && ... kernelConstructorParams )
 {
+  GEOSX_MARK_FUNCTION;
   // save the maximum residual contribution for scaling residuals for convergence criteria.
   real64 maxResidualContribution = 0;
 
