@@ -59,9 +59,9 @@ GraphFromText::~GraphFromText()
   {
     delete(m_edges[i]);
   }
-  for (long unsigned int i=0;i<m_vertices.size();i++)
+  for(map<GraphVertex*,std::vector<GraphEdge*>>::iterator it = m_vertex_edges.begin(); it != m_vertex_edges.end(); ++it) 
   {
-    delete(m_vertices[i]);
+    delete(it->first);
   }
 
 }
@@ -79,8 +79,10 @@ void GraphFromText::GetTargetReferences()
 void GraphFromText::AddEdge(localIndex ind, GraphVertex* v1, GraphVertex* v2)
 {
   GraphEdge* e;
-  e=new GraphEdge(ind, v1, v2);
+  e=new GraphEdge(ind, v1, v2, 0);
   m_edges.push_back(e);
+  m_vertex_edges[v1].push_back(e);
+  m_vertex_edges[v2].push_back(e);
 }
 
 void GraphFromText::RemoveEdge(localIndex ind)
@@ -89,11 +91,58 @@ void GraphFromText::RemoveEdge(localIndex ind)
   {
     if (m_edges[i]->getIndice()==ind)
     {
+      GraphEdge* edge = m_edges[i];
+      forAll< serialPolicy >( m_vertex_edges[edge->getN1()].size(), [=]( localIndex const j )
+      {
+        if (m_vertex_edges[edge->getN1()][j]->getIndice()==ind)
+        {
+          int test = LvArray::integerConversion< int >(j);
+          m_vertex_edges[edge->getN1()].erase(m_vertex_edges[edge->getN1()].begin()+test);
+        }
+      });
+      forAll< serialPolicy >( m_vertex_edges[edge->getN2()].size(), [=]( localIndex const j )
+      {
+        if (m_vertex_edges[edge->getN2()][j]->getIndice()==ind)
+        {
+          int test = LvArray::integerConversion< int >(j);
+          m_vertex_edges[edge->getN2()].erase(m_vertex_edges[edge->getN2()].begin()+test);
+        }
+      });
+
+
       int test = LvArray::integerConversion< int >(i);
       m_edges.erase(m_edges.begin()+test);
+      delete(edge);
     }
   });
 
+}
+
+void GraphFromText::AddVertex(localIndex ind)
+{
+  GraphVertex* v=new GraphVertex(0,0,ind);
+  m_vertices.push_back(v);
+  std::vector<GraphEdge*> edges;
+  m_vertex_edges.insert({v,edges});
+}
+
+void GraphFromText::RemoveVertex(localIndex ind)
+{
+  GraphVertex* v = getVertexWithIndex(ind);
+  std::vector<localIndex> indexes;
+  for(long unsigned int i = 0; i<m_vertex_edges[v].size(); i++)
+  {
+    indexes.push_back(m_vertex_edges[v][i]->getIndice());
+  }
+
+  forAll< serialPolicy >( indexes.size(), [=]( localIndex const i )
+  {
+    std::cout<<indexes[i]<<"\n";
+    RemoveEdge(indexes[i]);
+  });
+  m_vertex_edges.erase(v);
+  delete(v);
+  
 }
 
 GraphVertex* GraphFromText::getVertexWithIndex(localIndex ind)
@@ -119,45 +168,53 @@ void GraphFromText::GenerateGraph()
   while (std::getline(infile, line))
   {
     std::istringstream iss(line);
-    int a, b, c;
-    if (!(iss >> a >> b >> c)) { break; } // error
-    std::cout<<a<<" "<<b<<" "<<c<<"\n" ;
-    int place_b=-1;
-    int place_c=-1;
+    int er1, esr1, ei1, er2, esr2, ei2;
+    real64 transm;
+    if (!(iss >>er1 >> esr1 >> ei1 >> er2 >> esr2 >> ei2 >> transm)) { break; } // error
+    //std::cout<<a<<" "<<b<<" "<<c<<"\n" ;
+    int place_1=-1;
+    int place_2=-1;
     long unsigned int i=0;
-    while (i<m_vertices.size() && (place_b==-1 || place_c==-1))
+    while (i<m_vertices.size() && (place_1==-1 || place_2==-1))
     {
-      if (m_vertices[i]->getIndice()==b)
+      if (m_vertices[i]->getIndice()==ei1)
       {
-        place_b=i;
+        place_1=i;
       }
-      if (m_vertices[i]->getIndice()==c)
+      if (m_vertices[i]->getIndice()==ei2)
       {
-        place_c=i;
+        place_2=i;
       }
       ++i;
     }
     GraphVertex* v1;
     GraphVertex* v2;
-    if(place_b==-1)
+    if(place_1==-1)
     {
-      v1=new GraphVertex(b);
+      v1=new GraphVertex(er1,esr1,ei1);
       m_vertices.push_back(v1);
+      std::vector<GraphEdge*> edges;
+      m_vertex_edges.insert({v1,edges});
     }
     else
     {
-      v1=m_vertices[place_b];
+      v1=m_vertices[place_1];
     }
-    if(place_c==-1)
+    if(place_2==-1)
     {
-      v2=new GraphVertex(c);
+      v2=new GraphVertex(er2,esr2,ei2);
       m_vertices.push_back(v2);
+      std::vector<GraphEdge*> edges;
+      m_vertex_edges.insert({v2,edges});
+
     }
     else
     {
-      v2=m_vertices[place_c];
+      v2=m_vertices[place_2];
     }
-    GraphEdge* e1= new GraphEdge(a, v1, v2);
+    GraphEdge* e1= new GraphEdge(m_edges.size(), v1, v2,transm);
+    m_vertex_edges[v1].push_back(e1);
+    m_vertex_edges[v2].push_back(e1);
     m_edges.push_back(e1);
   }
   this->RemoveEdge(LvArray::integerConversion< localIndex >(2690));
@@ -186,6 +243,8 @@ void GraphFromText::GenerateGraph()
   this->AddEdge(LvArray::integerConversion< localIndex >(2538),v909,v989);
   this->AddEdge(LvArray::integerConversion< localIndex >(2500),v889,v919);
   this->AddEdge(LvArray::integerConversion< localIndex >(2297),v819,v989);
+  this->RemoveVertex(919);
+  this->RemoveVertex(989);
 }
 
 REGISTER_CATALOG_ENTRY( GraphBase, GraphFromText, std::string const &, Group * const )

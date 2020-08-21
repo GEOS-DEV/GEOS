@@ -40,12 +40,14 @@ public:
    * @param [in] neighbour2 the other GraphVertex
    * 
    */   
-  GraphEdge( int const index, GraphVertex* neighbour1, GraphVertex* neighbour2);
+  GraphEdge( int const index, GraphVertex* neighbour1, GraphVertex* neighbour2, real64 transm);
 
   /// Destructor
   virtual ~GraphEdge();
 
   localIndex getIndice() const { return ind; }
+
+  localIndex getIndice() { return ind; }
 
   GraphVertex* getN1() const { return n1; }
 
@@ -56,6 +58,8 @@ private:
   localIndex ind;
   GraphVertex* n1;
   GraphVertex* n2;
+  real64 transmissibility;
+
 };
 
 } /* namespace geosx */

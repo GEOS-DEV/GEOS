@@ -35,16 +35,18 @@ public:
   * @param [in] index of the vertex
   *
   */ 
-  GraphVertex( const int);
+  GraphVertex( const int regionInd, const int subRegionInd, const int vertexInd);
 
   /// Destructor
   virtual ~GraphVertex();
 
-   localIndex getIndice() const { return ind; }
+   localIndex getIndice() const { return vertexIndex; }
 
   
 private:
-  localIndex ind;
+  localIndex regionIndex;
+  localIndex subRegionIndex;
+  localIndex vertexIndex;
   };
 
 } /* namespace geosx */

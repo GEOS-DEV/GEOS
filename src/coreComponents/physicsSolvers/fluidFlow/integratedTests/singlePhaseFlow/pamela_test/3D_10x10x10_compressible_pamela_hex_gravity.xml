@@ -53,7 +53,7 @@
       name="outputs"
       timeFrequency="2"
       targetExactTimestep="1"
-      target="/Outputs/ExchangeWellPump"/>
+      target="/Outputs/VMinusWellPump"/>
 
     <PeriodicEvent
       name="restarts"
@@ -167,7 +167,7 @@
 
   <Outputs>
     <VTK
-      name="ExchangeWellPump"/>
+      name="VMinusWellPump"/>
 
     <Restart
       name="restartOutput"/>

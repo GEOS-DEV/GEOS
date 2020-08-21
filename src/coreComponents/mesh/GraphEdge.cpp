@@ -25,8 +25,8 @@ namespace geosx
 {
 
 
-GraphEdge::GraphEdge( int const index, GraphVertex* neighbour1, GraphVertex* neighbour2):
-  ind(index),n1(neighbour1),n2(neighbour2)
+GraphEdge::GraphEdge( int const index, GraphVertex* neighbour1, GraphVertex* neighbour2, real64 transm):
+  ind(index),n1(neighbour1),n2(neighbour2),transmissibility(transm)
   {    
     std::cout<<"Constructing edge "<<ind<<" between vertices "<<n1->getIndice()<<" and "<<n2->getIndice()<<"\n";
   }

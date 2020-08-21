@@ -26,10 +26,10 @@ namespace geosx
 
 
 
-GraphVertex::GraphVertex( const int index):
-  ind(index)
+GraphVertex::GraphVertex( const int regionInd, const int subRegionInd, const int vertexInd):
+  regionIndex(regionInd),subRegionIndex(subRegionInd),vertexIndex(vertexInd)
   {    
-    std::cout<<"Constructing vertex "<<ind<<"\n";
+    std::cout<<"Constructing vertex "<<regionIndex<<"\n";
   }
 
 

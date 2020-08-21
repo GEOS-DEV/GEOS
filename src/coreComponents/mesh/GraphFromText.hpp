@@ -56,6 +56,10 @@ public:
 
   void RemoveEdge(localIndex ind);
 
+  void RemoveVertex(localIndex ind);
+  
+  void AddVertex(localIndex ind);
+
   GraphVertex* getVertexWithIndex(localIndex ind);
 
   
@@ -83,6 +87,7 @@ private:
   Group * m_mesh;
   std::vector<GraphEdge*> m_edges;
   std::vector<GraphVertex*> m_vertices;
+  std::map<GraphVertex*, std::vector<GraphEdge*>> m_vertex_edges;
 
 };
 
