@@ -266,7 +266,7 @@ the``boundaryFieldName`` attribute specifies that for Dirichlet boundary conditi
 the pressure at the element face value is used.
 Last, the ``coefficientName`` attribute is used for the stencil transmissibility computations.
 
-Note that in GEOSX, we are distinguish solvers from numerical methods,
+Note that in GEOSX, we are distinguishing solvers from numerical methods,
 and their parameterizations are independent. We can thus solve have
 multiple solvers using the same numerical scheme, but with different tolerances, for instance.
 

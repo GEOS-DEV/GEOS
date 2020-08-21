@@ -179,7 +179,7 @@ There are two methods to achieve this regional solve.
                 :start-after: <!-- SPHINX_FIELD_CASE_REGION -->
                 :end-before: <!-- SPHINX_FIELD_CASE_REGION_END -->
 
-We opt for the latest as it allows to visialize over- and underburdens and to change regions handling in ther tag without needing to amend the **ElementRegion** tag.
+We opt for the latest as it allows to visualize over- and underburdens and to change regions handling in ther tag without needing to amend the **ElementRegion** tag.
 
 .. note::
   The material list here was set for a single phase flow problem. This list is subject
@@ -221,12 +221,12 @@ The next step is to specify fields, including:
 You may note :
 
  - All static parameters and initial value fields must have ``initialCondition`` field set to ``1``.
- - The ``objectPath`` refers to the ``ÈlementRegion`` in which the field has his value,
+ - The ``objectPath`` refers to the ``ElementRegion`` in which the field has his value,
  - The ``setName`` field points to the box previously defined to apply the fields,
  - ``name`` and ``fieldName`` have a different meaning: ``name`` is used to give a name to the XML block. This ``name`` must be unique. ``fieldName`` is the name of the field register in GEOSX. This value has to be set according to the expected input fields of each solver.
  
 .. note::
-  GEOSX handles permeability as a diagonal matrix, so the three values of the permeability tensor are set individually using the ``component`` field,
+  GEOSX handles permeability as a diagonal matrix, so the three values of the permeability tensor are set individually using the ``component`` field.
  
 .. _Outputs_tag_field_case:
 

@@ -16,12 +16,12 @@ will not be registered with the :ref:`dataRepository`.
 
 Working with data on the Mesh objects
 =====================================
-the mesh objects in ``GEOSX`` such as the ``FaceManager`` or ``NodeManager``,
+The mesh objects in ``GEOSX`` such as the ``FaceManager`` or ``NodeManager``,
 are derived from ``ObjectManagerBase``, which in turn derives from :ref:`Group`.
 The important distinction is that ``ObjectManagerBase`` contains various members
 that are useful when defining mesh object managers.
 When considering data that is attached to a mesh object, we group the data into
-two catagories:
+two categories:
 
 * `Intrinsic <https://www.merriam-webster.com/dictionary/intrinsic>`_ data is
   data that is required to descibe the object.
