@@ -292,6 +292,14 @@ pushDataToConduitNode( std::string const & var, conduit::Node & node )
   node[ "__values__" ].set_external( dtype, ptr );
 }
 
+// This is for Path since it derives from std::string. See overload for std::string.
+inline
+void
+pushDataToConduitNode( Path const & var, conduit::Node & node )
+{
+  pushDataToConduitNode( static_cast< std::string const & >(var), node );
+}
+
 // This is for an object that doesn't need to be packed but isn't an LvArray.
 template< typename T >
 std::enable_if_t< bufferOps::can_memcpy< typename traits::Pointer< T > > >

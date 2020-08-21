@@ -168,20 +168,20 @@ void LaplaceFEM::SetupSystem( DomainPartition & domain,
   arrayView1d< globalIndex const > const &
   dofIndex = nodeManager->getReference< globalIndex_array >( dofManager.getKey( m_fieldName ) );
 
-  SparsityPattern< globalIndex > pattern( dofManager.numLocalDofs(), dofManager.numGlobalDofs() );
-  array1d< localIndex > rowSizes( dofManager.numLocalDofs() );
+  SparsityPattern< globalIndex > sparsityPattern( dofManager.numLocalDofs(),
+                                                  dofManager.numGlobalDofs(),
+                                                  8*8*3 );
 
-  finiteElement::fillSparsity< serialPolicy,
-                               CellElementSubRegion,
+  finiteElement::fillSparsity< CellElementSubRegion,
                                LaplaceFEMKernel >( *mesh,
                                                    targetRegionNames(),
                                                    this->getDiscretizationName(),
                                                    dofIndex,
                                                    dofManager.rankOffset(),
-                                                   pattern,
-                                                   rowSizes );
+                                                   sparsityPattern );
 
-  localMatrix.assimilate< parallelDevicePolicy<> >( std::move( pattern ) );
+  sparsityPattern.compress();
+  localMatrix.assimilate< parallelDevicePolicy<> >( std::move( sparsityPattern ) );
 
 }
 
