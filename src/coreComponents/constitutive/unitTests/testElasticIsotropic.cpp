@@ -32,7 +32,7 @@ TEST( LinearElasticIsotropicTests, testAllocation )
 
   dataRepository::Group disc( "discretization", nullptr );
   disc.resize( numElems );
-  cm.AllocateConstitutiveData( &disc, numQuadraturePoints );
+  cm.allocateConstitutiveData( &disc, numQuadraturePoints );
 
   EXPECT_EQ( cm.size(), numElems );
   EXPECT_EQ( cm.numQuadraturePoints(), numQuadraturePoints );
@@ -85,10 +85,10 @@ TEST( LinearElasticIsotropicTests, testStateUpdatePoint )
 
   dataRepository::Group disc( "discretization", nullptr );
   disc.resize( 2 );
-  
+
   ElasticIsotropic & cm = *(constitutiveManager.GetConstitutiveRelation<ElasticIsotropic>("granite"));
   
-  cm.AllocateConstitutiveData( &disc, 2 );
+  cm.allocateConstitutiveData( &disc, 2 );
   ElasticIsotropic::KernelWrapper cmw = cm.createKernelUpdates();
 
   arrayView3d< real64, solid::STRESS_USD > const & stress = cm.getStress();

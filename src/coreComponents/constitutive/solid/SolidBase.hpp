@@ -539,11 +539,7 @@ public:
    */
   virtual ~SolidBase() override;
 
-  virtual void DeliverClone( string const & name,
-                             Group * const parent,
-                             std::unique_ptr< ConstitutiveBase > & clone ) const override;
-
-  virtual void AllocateConstitutiveData( dataRepository::Group * const parent,
+  virtual void allocateConstitutiveData( dataRepository::Group * const parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
   
   struct viewKeyStruct : public ConstitutiveBase::viewKeyStruct
@@ -585,6 +581,9 @@ public:
   ///@}
 
 protected:
+
+  virtual void PostProcessInput() override;
+
   /// The current stress at a quadrature point (i.e. at timestep n, global newton iteration k)
   array3d< real64, solid::STRESS_PERMUTATION > m_newStress;
   

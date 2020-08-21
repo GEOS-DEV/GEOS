@@ -65,122 +65,86 @@ ElasticIsotropic::~ElasticIsotropic()
 {}
 
 
-void
-ElasticIsotropic::DeliverClone( string const & name,
-                                Group * const parent,
-                                std::unique_ptr< ConstitutiveBase > & clone ) const
-{
-  if( !clone )
-  {
-    clone = std::make_unique< ElasticIsotropic >( name, parent );
-  }
-  SolidBase::DeliverClone( name, parent, clone );
-  ElasticIsotropic * const newConstitutiveRelation = dynamic_cast< ElasticIsotropic * >(clone.get());
-
-  newConstitutiveRelation->m_defaultBulkModulus  = m_defaultBulkModulus;
-  newConstitutiveRelation->m_defaultShearModulus = m_defaultShearModulus;
-  newConstitutiveRelation->m_bulkModulus  = m_bulkModulus;
-  newConstitutiveRelation->m_shearModulus = m_shearModulus;
-}
-
-
-void ElasticIsotropic::AllocateConstitutiveData( dataRepository::Group * const parent,
-                                                 localIndex const numConstitutivePointsPerParentIndex )
-{
-  SolidBase::AllocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
-
-  localIndex const numElems = parent->size();
-  
-  this->resize( numElems );
-  
-  // TODO: should not be required after recent PR
-  m_bulkModulus.resize( numElems );
-  m_shearModulus.resize( numElems );
-}
-
-
 void ElasticIsotropic::PostProcessInput()
 {
   // check what constants the user actually input, and do conversions as needed
   
-  if( !m_postProcessed )
+  SolidBase::PostProcessInput();
+  
+  real64 & nu = getReference< real64 >( viewKeyStruct::defaultPoissonRatioString );
+  real64 & E  = getReference< real64 >( viewKeyStruct::defaultYoungsModulusString );
+  real64 & K  = m_defaultBulkModulus;
+  real64 & G  = m_defaultShearModulus;
+
+  string errorCheck( "( " );
+  int numConstantsSpecified = 0;
+  if( nu >= 0.0 )
   {
-    real64 & nu = getReference< real64 >( viewKeyStruct::defaultPoissonRatioString );
-    real64 & E  = getReference< real64 >( viewKeyStruct::defaultYoungsModulusString );
-    real64 & K  = m_defaultBulkModulus;
-    real64 & G  = m_defaultShearModulus;
-
-    string errorCheck( "( " );
-    int numConstantsSpecified = 0;
-    if( nu >= 0.0 )
-    {
-      ++numConstantsSpecified;
-      errorCheck += "nu, ";
-    }
-    if( E >= 0.0 )
-    {
-      ++numConstantsSpecified;
-      errorCheck += "E, ";
-    }
-    if( K >= 0.0 )
-    {
-      ++numConstantsSpecified;
-      errorCheck += "K, ";
-    }
-    if( G >= 0.0 )
-    {
-      ++numConstantsSpecified;
-      errorCheck += "G, ";
-    }
-    errorCheck += ")";
-
-    GEOSX_ERROR_IF( numConstantsSpecified != 2,
-                    "A specific pair of elastic constants is required. Either (K,G) or (E,nu). "<<
-                    "You have specified "<<errorCheck );
-
-    if( nu >= 0.0 && E >= 0.0 )
-    {
-      K = conversions::YoungsModAndPoissonRatio::toBulkMod( E, nu );
-      G = conversions::YoungsModAndPoissonRatio::toShearMod( E, nu );
-    }
-    else if( nu >= 0.0 && G >= 0.0 )
-    {
-      E = conversions::ShearModAndPoissonRatio::toYoungsMod( G, nu);
-      K = conversions::ShearModAndPoissonRatio::toBulkMod( G, nu);
-    }
-    else if( nu >= 0 && K >= 0.0 )
-    {
-      E = conversions::BulkModAndPoissonRatio::toYoungsMod( K, nu );
-      G = conversions::BulkModAndPoissonRatio::toShearMod( K, nu );
-    }
-    else if( E >= 0.0 && K >=0 )
-    {
-      nu = conversions::BulkModAndYoungsMod::toPoissonRatio( K, E );
-      G  = conversions::BulkModAndYoungsMod::toShearMod( K, E );
-    }
-    else if( E >= 0.0 && G >= 0 )
-    {
-      nu = conversions::ShearModAndYoungsMod::toPoissonRatio( G, E );
-      K  = conversions::ShearModAndYoungsMod::toBulkMod( G, E );
-    }
-    else if( K >= 0.0 && G >= 0.0 )
-    {
-      E  = conversions::BulkModAndShearMod::toYoungsMod( K, G );
-      nu = conversions::BulkModAndShearMod::toPoissonRatio( K, G );
-    }
-    else
-    {
-      GEOSX_ERROR( "invalid specification for default elastic constants. "<<errorCheck<<" has been specified." );
-    }
-    
-    // set results as array default values
-    this->getWrapper< array1d< real64 > >( viewKeyStruct::bulkModulusString )->
-      setApplyDefaultValue( K );
-    this->getWrapper< array1d< real64 > >( viewKeyStruct::shearModulusString )->
-      setApplyDefaultValue( G );
-        
+    ++numConstantsSpecified;
+    errorCheck += "nu, ";
   }
-  m_postProcessed = true;
+  if( E >= 0.0 )
+  {
+    ++numConstantsSpecified;
+    errorCheck += "E, ";
+  }
+  if( K >= 0.0 )
+  {
+    ++numConstantsSpecified;
+    errorCheck += "K, ";
+  }
+  if( G >= 0.0 )
+  {
+    ++numConstantsSpecified;
+    errorCheck += "G, ";
+  }
+  errorCheck += ")";
+
+  GEOSX_ERROR_IF( numConstantsSpecified != 2,
+                  "A specific pair of elastic constants is required. Either (K,G) or (E,nu). "<<
+                  "You have specified "<<errorCheck );
+
+  if( nu >= 0.0 && E >= 0.0 )
+  {
+    K = conversions::YoungsModAndPoissonRatio::toBulkMod( E, nu );
+    G = conversions::YoungsModAndPoissonRatio::toShearMod( E, nu );
+  }
+  else if( nu >= 0.0 && G >= 0.0 )
+  {
+    E = conversions::ShearModAndPoissonRatio::toYoungsMod( G, nu);
+    K = conversions::ShearModAndPoissonRatio::toBulkMod( G, nu);
+  }
+  else if( nu >= 0 && K >= 0.0 )
+  {
+    E = conversions::BulkModAndPoissonRatio::toYoungsMod( K, nu );
+    G = conversions::BulkModAndPoissonRatio::toShearMod( K, nu );
+  }
+  else if( E >= 0.0 && K >=0 )
+  {
+    nu = conversions::BulkModAndYoungsMod::toPoissonRatio( K, E );
+    G  = conversions::BulkModAndYoungsMod::toShearMod( K, E );
+  }
+  else if( E >= 0.0 && G >= 0 )
+  {
+    nu = conversions::ShearModAndYoungsMod::toPoissonRatio( G, E );
+    K  = conversions::ShearModAndYoungsMod::toBulkMod( G, E );
+  }
+  else if( K >= 0.0 && G >= 0.0 )
+  {
+    E  = conversions::BulkModAndShearMod::toYoungsMod( K, G );
+    nu = conversions::BulkModAndShearMod::toPoissonRatio( K, G );
+  }
+  else
+  {
+    GEOSX_ERROR( "invalid specification for default elastic constants. "<<errorCheck<<" has been specified." );
+  }
+  
+  // set results as array default values
+  this->getWrapper< array1d< real64 > >( viewKeyStruct::bulkModulusString )->
+    setApplyDefaultValue( m_defaultBulkModulus );
+
+  this->getWrapper< array1d< real64 > >( viewKeyStruct::shearModulusString )->
+    setApplyDefaultValue( m_defaultShearModulus );
 }
 
 

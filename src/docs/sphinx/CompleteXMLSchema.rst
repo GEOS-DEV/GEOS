@@ -8,13 +8,6 @@ Input Schema Definitions
 :download:`XML Schema <../../coreComponents/fileIO/schema/docs/../schema.xsd>`
 
 
-.. _XML_BasisFunctions:
-
-Element: BasisFunctions
-=======================
-.. include:: ../../coreComponents/fileIO/schema/docs/BasisFunctions.rst
-
-
 .. _XML_Benchmarks:
 
 Element: Benchmarks
@@ -253,27 +246,6 @@ Element: Functions
 .. include:: ../../coreComponents/fileIO/schema/docs/Functions.rst
 
 
-.. _XML_GaussQuadrature1:
-
-Element: GaussQuadrature1
-=========================
-.. include:: ../../coreComponents/fileIO/schema/docs/GaussQuadrature1.rst
-
-
-.. _XML_GaussQuadrature2:
-
-Element: GaussQuadrature2
-=========================
-.. include:: ../../coreComponents/fileIO/schema/docs/GaussQuadrature2.rst
-
-
-.. _XML_GaussQuadrature3:
-
-Element: GaussQuadrature3
-=========================
-.. include:: ../../coreComponents/fileIO/schema/docs/GaussQuadrature3.rst
-
-
 .. _XML_Geometry:
 
 Element: Geometry
@@ -314,27 +286,6 @@ Element: InternalMesh
 Element: InternalWell
 =====================
 .. include:: ../../coreComponents/fileIO/schema/docs/InternalWell.rst
-
-
-.. _XML_LagrangeBasis1:
-
-Element: LagrangeBasis1
-=======================
-.. include:: ../../coreComponents/fileIO/schema/docs/LagrangeBasis1.rst
-
-
-.. _XML_LagrangeBasis2:
-
-Element: LagrangeBasis2
-=======================
-.. include:: ../../coreComponents/fileIO/schema/docs/LagrangeBasis2.rst
-
-
-.. _XML_LagrangeBasis3:
-
-Element: LagrangeBasis3
-=======================
-.. include:: ../../coreComponents/fileIO/schema/docs/LagrangeBasis3.rst
 
 
 .. _XML_LagrangianContact:
@@ -526,13 +477,6 @@ Element: ProppantTransport
 .. include:: ../../coreComponents/fileIO/schema/docs/ProppantTransport.rst
 
 
-.. _XML_QuadratureRules:
-
-Element: QuadratureRules
-========================
-.. include:: ../../coreComponents/fileIO/schema/docs/QuadratureRules.rst
-
-
 .. _XML_Restart:
 
 Element: Restart
@@ -717,13 +661,6 @@ Element: quartz
 ********************************
 Datastructure Definitions
 ********************************
-
-
-.. _DATASTRUCTURE_BasisFunctions:
-
-Datastructure: BasisFunctions
-=============================
-.. include:: ../../coreComponents/fileIO/schema/docs/BasisFunctions_other.rst
 
 
 .. _DATASTRUCTURE_Benchmarks:
@@ -978,27 +915,6 @@ Datastructure: Functions
 .. include:: ../../coreComponents/fileIO/schema/docs/Functions_other.rst
 
 
-.. _DATASTRUCTURE_GaussQuadrature1:
-
-Datastructure: GaussQuadrature1
-===============================
-.. include:: ../../coreComponents/fileIO/schema/docs/GaussQuadrature1_other.rst
-
-
-.. _DATASTRUCTURE_GaussQuadrature2:
-
-Datastructure: GaussQuadrature2
-===============================
-.. include:: ../../coreComponents/fileIO/schema/docs/GaussQuadrature2_other.rst
-
-
-.. _DATASTRUCTURE_GaussQuadrature3:
-
-Datastructure: GaussQuadrature3
-===============================
-.. include:: ../../coreComponents/fileIO/schema/docs/GaussQuadrature3_other.rst
-
-
 .. _DATASTRUCTURE_Geometry:
 
 Datastructure: Geometry
@@ -1039,27 +955,6 @@ Datastructure: InternalMesh
 Datastructure: InternalWell
 ===========================
 .. include:: ../../coreComponents/fileIO/schema/docs/InternalWell_other.rst
-
-
-.. _DATASTRUCTURE_LagrangeBasis1:
-
-Datastructure: LagrangeBasis1
-=============================
-.. include:: ../../coreComponents/fileIO/schema/docs/LagrangeBasis1_other.rst
-
-
-.. _DATASTRUCTURE_LagrangeBasis2:
-
-Datastructure: LagrangeBasis2
-=============================
-.. include:: ../../coreComponents/fileIO/schema/docs/LagrangeBasis2_other.rst
-
-
-.. _DATASTRUCTURE_LagrangeBasis3:
-
-Datastructure: LagrangeBasis3
-=============================
-.. include:: ../../coreComponents/fileIO/schema/docs/LagrangeBasis3_other.rst
 
 
 .. _DATASTRUCTURE_LagrangianContact:
@@ -1263,13 +1158,6 @@ Datastructure: ProppantSlurryFluid
 Datastructure: ProppantTransport
 ================================
 .. include:: ../../coreComponents/fileIO/schema/docs/ProppantTransport_other.rst
-
-
-.. _DATASTRUCTURE_QuadratureRules:
-
-Datastructure: QuadratureRules
-==============================
-.. include:: ../../coreComponents/fileIO/schema/docs/QuadratureRules_other.rst
 
 
 .. _DATASTRUCTURE_Restart:

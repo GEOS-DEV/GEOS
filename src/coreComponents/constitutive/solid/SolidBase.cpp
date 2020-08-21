@@ -30,9 +30,7 @@ SolidBase::SolidBase( string const & name, Group * const parent ):
   ConstitutiveBase( name, parent ),
   m_newStress( 0, 0, 6 ),
   m_oldStress( 0, 0, 6 ),
-  m_density(),
-  m_defaultDensity( 0 ),
-  m_postProcessed( false )
+  m_density()
 {
   registerWrapper( viewKeyStruct::stressString, &m_newStress )->
     setPlotLevel( PlotLevel::LEVEL_0 )->
@@ -57,32 +55,21 @@ SolidBase::~SolidBase()
 {}
 
 
-void SolidBase::DeliverClone( string const & GEOSX_UNUSED_PARAM( name ),
-                              Group * const GEOSX_UNUSED_PARAM( parent ),
-                              std::unique_ptr< ConstitutiveBase > & clone ) const
+void SolidBase::PostProcessInput()
 {
-  SolidBase * const newConstitutiveRelation = dynamic_cast< SolidBase * >(clone.get());
-
-  newConstitutiveRelation->m_newStress = m_newStress;
-  newConstitutiveRelation->m_oldStress = m_oldStress;
-  newConstitutiveRelation->m_density = m_density;
-  newConstitutiveRelation->m_defaultDensity = m_defaultDensity;
+  this->getWrapper< array2d< real64 > >( viewKeyStruct::densityString )->
+    setApplyDefaultValue( m_defaultDensity );
 }
 
 
-void SolidBase::AllocateConstitutiveData( dataRepository::Group * const parent,
+void SolidBase::allocateConstitutiveData( dataRepository::Group * const parent,
                                           localIndex const numConstitutivePointsPerParentIndex )
 {
-  ConstitutiveBase::AllocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+  m_density.resize( 0, numConstitutivePointsPerParentIndex );
+  m_newStress.resize( 0, numConstitutivePointsPerParentIndex, 6 );
+  m_oldStress.resize( 0, numConstitutivePointsPerParentIndex, 6 );
   
-  localIndex const numElems = parent->size();
-  this->resize( numElems );
-  
-  m_density.resize( numElems, numConstitutivePointsPerParentIndex );
-  m_density.setValues< serialPolicy >( m_defaultDensity );
-
-  m_newStress.resize( numElems, numConstitutivePointsPerParentIndex, 6 );
-  m_oldStress.resize( numElems, numConstitutivePointsPerParentIndex, 6 );
+  ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 }
 
 
