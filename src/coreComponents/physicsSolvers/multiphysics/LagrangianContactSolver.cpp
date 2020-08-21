@@ -1107,30 +1107,49 @@ void LagrangianContactSolver::CreatePreconditioner( DomainPartition const & doma
 {
   if( m_linearSolverParameters.get().preconditionerType == "block" )
   {
-    //auto precond = std::make_unique< BlockPreconditioner< LAInterface > >( BlockShapeOption::LowerUpperTriangular,
-    //                                                                       SchurComplementOption::FirstBlockDiagonal,
-    //                                                                       BlockScalingOption::UserProvided );
-    auto precond = std::make_unique< BlockPreconditioner< LAInterface > >( BlockShapeOption::LowerUpperTriangular,
-                                                                           SchurComplementOption::FirstBlockUserDefined,
-                                                                           BlockScalingOption::UserProvided );
+    // TODO: move among inputs (xml)
+    std::string const leadingBlockApproximation = "blockJacobi";
 
-    //auto tracPrecond = std::make_unique< PreconditionerJacobi< LAInterface > >( PreconditionerJacobi< LAInterface >() );
-    auto tracPrecond = std::make_unique< PreconditionerBlockJacobi< LAInterface > >( PreconditionerBlockJacobi< LAInterface >( 3 ) );
+    LinearSolverParameters mechParams = m_solidSolver->getLinearSolverParameters();
+
+    std::unique_ptr< BlockPreconditioner< LAInterface > > precond;
+    std::unique_ptr< PreconditionerBase< LAInterface > > tracPrecond;
+
+    if( leadingBlockApproximation == "jacobi" )
+    {
+      precond = std::make_unique< BlockPreconditioner< LAInterface > >( BlockShapeOption::LowerUpperTriangular,
+                                                                        SchurComplementOption::FirstBlockDiagonal,
+                                                                        BlockScalingOption::UserProvided );
+      tracPrecond = std::make_unique< PreconditionerJacobi< LAInterface > >( PreconditionerJacobi< LAInterface >() );
+    }
+    else if( leadingBlockApproximation == "blockJacobi" )
+    {
+      precond = std::make_unique< BlockPreconditioner< LAInterface > >( BlockShapeOption::LowerUpperTriangular,
+                                                                        SchurComplementOption::FirstBlockUserDefined,
+                                                                        BlockScalingOption::UserProvided );
+      tracPrecond = std::make_unique< PreconditionerBlockJacobi< LAInterface > >( PreconditionerBlockJacobi< LAInterface >( mechParams.dofsPerNode ) );
+    }
+    else
+    {
+      GEOSX_ERROR( "LagrangianContactSolver::CreatePreconditioner leadingBlockApproximation option " << leadingBlockApproximation << " not supported" );
+    }
+
+    // Preconditioner for the leading block: tracPrecond
     precond->setupBlock( 0,
                          { { viewKeyStruct::tractionString, 0, 3 } },
                          std::move( tracPrecond ) );
 
-    MeshLevel const & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
-    LAIHelperFunctions::ComputeRigidBodyModes( mesh,
-                                               m_dofManager,
-                                               { keys::TotalDisplacement },
-                                               m_rigidBodyModes );
-    //m_rigidBodyModes.clear();
+    if( mechParams.amg.nullSpaceType == "rigidBodyModes" )
+    {
+      MeshLevel const & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
+      LAIHelperFunctions::ComputeRigidBodyModes( mesh,
+                                                 m_dofManager,
+                                                 { keys::TotalDisplacement },
+                                                 m_rigidBodyModes );
+    }
 
-    LinearSolverParameters mechParams = m_solidSolver->getLinearSolverParameters();
-    mechParams.dofsPerNode = 3;
-    mechParams.amg.nullSpaceType = "rigidBodyModes";
-    auto mechPrecond = LAInterface::createPreconditioner( mechParams, m_rigidBodyModes );
+    // Preconditioner for the Schur complement: mechPrecond
+    std::unique_ptr< PreconditionerBase< LAInterface > > mechPrecond = LAInterface::createPreconditioner( mechParams, m_rigidBodyModes );
     precond->setupBlock( 1,
                          { { keys::TotalDisplacement, 0, 3 } },
                          std::move( mechPrecond ) );

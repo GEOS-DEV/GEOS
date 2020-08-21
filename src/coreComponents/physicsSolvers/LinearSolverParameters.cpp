@@ -42,6 +42,11 @@ LinearSolverParametersInput::LinearSolverParametersInput( std::string const & na
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Preconditioner type" );
 
+  registerWrapper( viewKeyStruct::dofsPerNodeString, &m_parameters.dofsPerNode )->
+    setApplyDefaultValue( m_parameters.dofsPerNode )->
+    setInputFlag( InputFlags::OPTIONAL )->
+    setDescription( "Dofs per node (or support location) for non-scalar problems" );
+
   registerWrapper( viewKeyStruct::krylovMaxIterString, &m_parameters.krylov.maxIterations )->
     setApplyDefaultValue( m_parameters.krylov.maxIterations )->
     setInputFlag( InputFlags::OPTIONAL )->
@@ -88,6 +93,11 @@ LinearSolverParametersInput::LinearSolverParametersInput( std::string const & na
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "AMG strength-of-connection threshold" );
 
+  registerWrapper( viewKeyStruct::amgNullSpaceTypeString, &m_parameters.amg.nullSpaceType )->
+    setApplyDefaultValue( m_parameters.amg.nullSpaceType )->
+    setInputFlag( InputFlags::OPTIONAL )->
+    setDescription( "AMG near null space approximation" );
+
   registerWrapper( viewKeyStruct::iluFillString, &m_parameters.ilu.fill )->
     setApplyDefaultValue( m_parameters.ilu.fill )->
     setInputFlag( InputFlags::OPTIONAL )->
@@ -109,6 +119,8 @@ void LinearSolverParametersInput::PostProcessInput()
   static const std::set< string > precondOptions = { "none", "jacobi", "iluk", "ilut", "icc", "amg", "mgr", "block" };
   GEOSX_ERROR_IF( precondOptions.count( m_parameters.preconditionerType ) == 0, "Unsupported preconditioner type: " << m_parameters.preconditionerType );
 
+  GEOSX_ERROR_IF_LE_MSG( m_parameters.dofsPerNode, 0, "Invalid values of " << viewKeyStruct::dofsPerNodeString );
+
   GEOSX_ERROR_IF_LT_MSG( m_parameters.krylov.maxIterations, 0, "Invalid value of " << viewKeyStruct::krylovMaxIterString );
   GEOSX_ERROR_IF_LT_MSG( m_parameters.krylov.maxRestart, 0, "Invalid value of " << viewKeyStruct::krylovMaxRestartString );
 
@@ -121,6 +133,9 @@ void LinearSolverParametersInput::PostProcessInput()
   GEOSX_ERROR_IF_LT_MSG( m_parameters.amg.numSweeps, 0, "Invalid value of " << viewKeyStruct::amgNumSweepsString );
   GEOSX_ERROR_IF_LT_MSG( m_parameters.amg.threshold, 0.0, "Invalid value of " << viewKeyStruct::amgThresholdString );
   GEOSX_ERROR_IF_GT_MSG( m_parameters.amg.threshold, 1.0, "Invalid value of " << viewKeyStruct::amgThresholdString );
+
+  static const std::set< string > nullSpaceOptions = { "constantModes", "rigidBodyModes" };
+  GEOSX_ERROR_IF( nullSpaceOptions.count( m_parameters.amg.nullSpaceType ) == 0, "Unsupported null space type: " << m_parameters.amg.nullSpaceType );
 
   // TODO input validation for other AMG parameters ?
 }
