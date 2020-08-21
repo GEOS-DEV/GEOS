@@ -37,7 +37,7 @@ SolidBase::SolidBase( string const & name, Group * const parent ):
     setApplyDefaultValue( 0 )-> // default to zero initial stress
     setDescription( "Current Material Stress" );
     
-  registerWrapper( viewKeyStruct::stressString, &m_oldStress )->
+  registerWrapper( viewKeyStruct::oldStressString, &m_oldStress )->
     setApplyDefaultValue( 0 )-> // default to zero initial stress
     setDescription( "Previous Material Stress" );
 

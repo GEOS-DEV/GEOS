@@ -545,6 +545,7 @@ public:
   struct viewKeyStruct : public ConstitutiveBase::viewKeyStruct
   {
     static constexpr auto stressString = "stress";
+    static constexpr auto oldStressString = "oldStress";
     static constexpr auto densityString  = "density";
     static constexpr auto defaultDensityString  = "defaultDensity";
   };
