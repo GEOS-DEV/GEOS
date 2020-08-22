@@ -45,14 +45,14 @@ creatable by the "ObjectCatalog".
 In addition, ``CatalogInterface`` is templated on a variadic parameter pack that 
 allows for an arbitrary constructor argument list as shown in the declaration shown below:
 
-.. literalinclude:: ObjectCatalog.hpp
+.. literalinclude:: ../ObjectCatalog.hpp
    :language: c++
    :start-after: //START_SPHINX_0
    :end-before: {
 
 The ``CatalogInterface`` also defines the actual catalog type using the template arguments:
 
-.. literalinclude:: ObjectCatalog.hpp
+.. literalinclude:: ../ObjectCatalog.hpp
    :language: c++
    :start-after: //START_SPHINX_1
    :end-before: //STOP_SPHINX
@@ -65,7 +65,7 @@ After from setting up and populating the catalog, which will be described in the
 the only interface with the catalog will typically be when the ``Factory()`` method is called.
 The definition of the method is given as:
 
-.. literalinclude:: ObjectCatalog.hpp
+.. literalinclude:: ../ObjectCatalog.hpp
    :language: c++
    :start-after: //START_SPHINX_2
    :end-before: //STOP_SPHINX
@@ -87,7 +87,7 @@ CatalogEntry
 The ``CatalogEntry`` class derives from ``CatalogInterface`` and adds the a ``TYPE`` template argument
 to the arguments of the ``CatalogInterface``.
 
-.. literalinclude:: ObjectCatalog.hpp
+.. literalinclude:: ../ObjectCatalog.hpp
    :language: c++
    :start-after: //START_SPHINX_3
    :end-before: {
@@ -101,7 +101,7 @@ function s.t. when key is retrieved from the catalog, then it is possible to cre
 The ``CatalogEntry::Allocate()`` function is a simple creation of the underlying ``TYPE`` as shown by 
 its definition:
 
-.. literalinclude:: ObjectCatalog.hpp
+.. literalinclude:: ../ObjectCatalog.hpp
    :language: c++
    :start-after: //START_SPHINX_4
    :end-before: //STOP_SPHINX
@@ -126,7 +126,7 @@ to use to generate new objects is given in the unit test located in ``testObject
 
 The base class for this example is defined as:
 
-.. literalinclude:: unitTests/testObjectCatalog.cpp
+.. literalinclude:: ../unitTests/testObjectCatalog.cpp
    :language: c++
    :start-after: //START_SPHINX_BASE
    :end-before: //STOP_SPHINX
@@ -158,12 +158,12 @@ There are three requirements for the new type to be registered in the catalog:
 
 A pair of of simple derived class that have the required methods are used in the unit test.
 
-.. literalinclude:: unitTests/testObjectCatalog.cpp
+.. literalinclude:: ../unitTests/testObjectCatalog.cpp
    :language: c++
    :start-after: //START_SPHINX_DERIVED1
    :end-before: //STOP_SPHINX
 
-.. literalinclude:: unitTests/testObjectCatalog.cpp
+.. literalinclude:: ../unitTests/testObjectCatalog.cpp
    :language: c++
    :start-after: //START_SPHINX_DERIVED2
    :end-before: //STOP_SPHINX
@@ -176,7 +176,7 @@ Note the call to ``Factory`` is scoped by ``Base::CatalogInterface``, which is
 an alias to the full templated instantiation of ``CatalogInterface``.
 The arguments for ``Factory`` 
 
-.. literalinclude:: unitTests/testObjectCatalog.cpp
+.. literalinclude:: ../unitTests/testObjectCatalog.cpp
    :language: c++
    :start-after: //START_SPHINX_TEST
    :end-before: //STOP_SPHINX

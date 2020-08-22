@@ -12,7 +12,7 @@ how instantiations of each class relate to each other in the data hierarchy rath
 type relates to each other in an inheritance diagram.
 
 .. _diagFig:
-.. figure:: ../../../../coreComponents/mesh/docs/MeshObjectInstantiationHierarchy.png
+.. figure:: /coreComponents/mesh/docs/MeshObjectInstantiationHierarchy.png
     :align: center
     :figclass: align-center
     :name: MeshObjectInstantiationHierarchy
@@ -23,7 +23,7 @@ To illustrate the mesh hierarchy, we propose to present it along with a model wi
 regions (Top and Bottom) (:numref:`modelFig`).
 
 .. _modelFig:
-.. figure:: ../../../../coreComponents/mesh/docs/model.png
+.. figure:: /coreComponents/mesh/docs/model.png
    :align: center
    :width: 500
    :figclass: align-center
@@ -47,7 +47,7 @@ For instance, the model presented as example can be split into two different dom
 (:numref:`domainPartFig`).
 
 .. _domainPartFig:
-.. figure:: ../../../../coreComponents/mesh/docs/mesh_domain.png
+.. figure:: /coreComponents/mesh/docs/mesh_domain.png
    :align: center
    :width: 500
    :figclass: align-center
@@ -129,7 +129,7 @@ For instance, for a ``CellElementRegion``, there may be one ``CellElementSubRegi
 tetrahedra, one for all hexahedra, one for all wedges and one for all the pyramids (:numref:`meshPolyFig`).
 
 .. _meshPolyFig:
-.. figure:: ../../../../coreComponents/mesh/docs/mesh_multi.png
+.. figure:: /coreComponents/mesh/docs/mesh_multi.png
    :align: center
    :width: 500
    :figclass: align-center

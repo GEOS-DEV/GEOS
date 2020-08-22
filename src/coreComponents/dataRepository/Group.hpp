@@ -59,6 +59,7 @@ using keyType = string;
 
 /// The default index type for entries the hierarchy.
 using indexType = localIndex;
+//END_SPHINX_INCLUDE_00
 
 /**
  * @class Group
@@ -75,6 +76,7 @@ public:
 
   /// The template specialization of MappedVector to use for the collection wrappers objects.
   using wrapperMap = MappedVector< WrapperBase, WrapperBase *, keyType, indexType >;
+  //END_SPHINX_INCLUDE_01
 
   /**
    * @name Constructors/destructor
@@ -1519,6 +1521,7 @@ private:
 
   /// Verbosity flag for group logs
   integer m_logLevel;
+  //END_SPHINX_INCLUDE_02
 
   /// Restart flag for this group... and subsequently all wrappers in this group.
   RestartFlags m_restart_flags;

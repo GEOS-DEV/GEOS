@@ -5,9 +5,8 @@ Group
 =====
 
 ``dataRepository::Group`` serves as a base class for most objects in GEOSX.
-In GEOSX, the ``Group`` may be thought of as an analogy to the file folder in a hierachical filesystem-like 
-structure.
-As such, a ``Group`` is used as a container class that holds a collection of other Groups, or sub-Groups, 
+In GEOSX, the ``Group`` may be thought of as an analogy to the file folder in a hierachical filesystem-like structure.
+As such, a ``Group`` is used as a container class that holds a collection of other Groups, or sub-Groups,
 a pointer to the parent of the Group, and a collection of Wrappers.
 The ``Group`` also defines a general capability to create and traverse/access the objects in the hierarchy.
 The Wrappers contained in a Group may be of arbitrary type, but in the case of an LvArray object, a Group
@@ -20,20 +19,20 @@ Implementation Details
 ----------------------
 Some noteworthy implementation details inside the declaration of ``dataRepository::Group`` are:
 
-.. literalinclude:: Group.hpp
+.. literalinclude:: ../Group.hpp
    :language: c++
    :start-after: //START_SPHINX_INCLUDE_00
-   :end-before: /**
+   :end-before: //END_SPHINX_INCLUDE_00
    
 * In the GEOSX repository, the ``keyType`` is specified to be a ``string`` for all  collection objects, 
   while the ``indexType`` is specified to be a ``localIndex``.
   The types are set in the ``common/DataTypes.hpp`` file, but are typically a ``std::string`` and a 
   ``std::ptrdiff_t`` respectively.
   
-.. literalinclude:: Group.hpp
+.. literalinclude:: ../Group.hpp
    :language: c++
    :start-after: //START_SPHINX_INCLUDE_01
-   :end-before: /**
+   :end-before: //END_SPHINX_INCLUDE_01
    
 * The ``subGroupMap`` and ``wrapperMap`` aliases represent the type of container that the collection of 
   sub-``Group`` s and ``Wrapper`` s are stored in for each ``Group``.
@@ -41,10 +40,10 @@ Some noteworthy implementation details inside the declaration of ``dataRepositor
   a type, and provides functionality for a key or index based lookup. 
   More details may be found in the documentation for ``MappedVector``.
   
-.. literalinclude:: Group.hpp
+.. literalinclude:: ../Group.hpp
    :language: c++
    :start-after: //START_SPHINX_INCLUDE_02
-   :end-before: RestartFlags
+   :end-before: //END_SPHINX_INCLUDE_02
    
 * The ``m_parent`` member is a pointer to the ``Group`` that contains the current ``Group`` as part of its
   collection of sub-``Group`` s.
@@ -73,7 +72,7 @@ To add new sub-``Group`` s there are several ``RegisterGroup`` functions that ad
 the calling ``Group`` scope.
 A listing of these functions is provided:
 
-.. literalinclude:: Group.hpp
+.. literalinclude:: ../Group.hpp
    :language: c++
    :start-after: //START_SPHINX_INCLUDE_REGISTER_GROUP
    :end-before: //END_SPHINX_INCLUDE_REGISTER_GROUP
@@ -90,7 +89,7 @@ Getting Groups
 The collection of functions to retrieve a ``Group`` and their descriptions are taken from source and shown 
 here:
 
-.. literalinclude:: Group.hpp
+.. literalinclude:: ../Group.hpp
    :language: c++
    :start-after: //START_SPHINX_INCLUDE_GET_GROUP
    :end-before: //END_SPHINX_INCLUDE_GET_GROUP
@@ -99,7 +98,7 @@ here:
 Register Wrappers
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. literalinclude:: Group.hpp
+.. literalinclude:: ../Group.hpp
    :language: c++
    :start-after: //START_SPHINX_INCLUDE_REGISTER_WRAPPER
    :end-before: //END_SPHINX_INCLUDE_REGISTER_WRAPPER
@@ -108,7 +107,7 @@ Register Wrappers
 Getting Wrappers/Wrapped Objects
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. literalinclude:: Group.hpp
+.. literalinclude:: ../Group.hpp
    :language: c++
    :start-after: //START_SPHINX_INCLUDE_GET_WRAPPER
    :end-before: //END_SPHINX_INCLUDE_GET_WRAPPER
@@ -116,7 +115,7 @@ Getting Wrappers/Wrapped Objects
 Looping Interface
 ^^^^^^^^^^^^^^^^^
 
-.. literalinclude:: Group.hpp
+.. literalinclude:: ../Group.hpp
    :language: c++
    :start-after: //START_SPHINX_INCLUDE_LOOP_INTERFACE
    :end-before: //END_SPHINX_INCLUDE_LOOP_INTERFACE

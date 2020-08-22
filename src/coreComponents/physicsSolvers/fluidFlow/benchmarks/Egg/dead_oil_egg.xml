@@ -8,17 +8,19 @@
       flowSolverName="compositionalMultiphaseFlow"
       wellSolverName="compositionalMultiphaseWell"
       logLevel="1"
-      initialDt="1e3"
+      initialDt="1e4"
       targetRegions="{ reservoir, wellRegion1, wellRegion2, wellRegion3, wellRegion4, wellRegion5, wellRegion6, wellRegion7, wellRegion8, wellRegion9, wellRegion10, wellRegion11, wellRegion12 }">
       <NonlinearSolverParameters
         newtonTol="1.0e-4"
         newtonMaxIter="10"
         newtonMinIter="1"
-        dtCutIterLimit="0.8"
-        dtIncIterLimit="0.5"
+        dtCutIterLimit="0.9"
+        dtIncIterLimit="0.6"
         timestepCutFactor="0.1"
         maxTimeStepCuts="10"
         lineSearchAction="0"/>
+      <!-- Note that the direct solver is going to be quite slow -->
+      <!-- This block will be updated when Hypre becomes the default  -->
       <LinearSolverParameters
         solverType="direct"
         logLevel="0"/>
@@ -32,6 +34,7 @@
       solidNames="{ rock }"
       relPermNames="{ relperm }"
       temperature="297.15"
+      maxCompFractionChange="0.5"
       logLevel="1"
       useMass="1"/>
 
@@ -41,6 +44,7 @@
       fluidNames="{ fluid }"
       relPermNames="{ relperm }"
       wellTemperature="297.15"
+      maxCompFractionChange="0.5"      
       logLevel="1"
       useMass="1">
       <WellControls
@@ -70,59 +74,59 @@
       <WellControls
         name="wellControls5"
         type="injector"
-        control="BHP"
-        targetBHP="4.2e7"
-        targetRate="1e9"
-        injectionStream="{ 0.005, 0.005, 0.99 }"/>
+        control="liquidRate"
+        targetBHP="5e8"
+        targetRate="8e0"
+        injectionStream="{ 0.0, 0.0, 1.0 }"/>
       <WellControls
         name="wellControls6"
         type="injector"
-        control="BHP"
-        targetBHP="4.2e7"
-        targetRate="1e9"
-        injectionStream="{ 0.005, 0.005, 0.99 }"/>
+        control="liquidRate"
+        targetBHP="5e8"
+        targetRate="8e0"
+        injectionStream="{ 0.0, 0.0, 1.0 }"/>
       <WellControls
         name="wellControls7"
         type="injector"
-        control="BHP"
-        targetBHP="4.2e7"
-        targetRate="1e9"
-        injectionStream="{ 0.0025, 0.0025, 0.995 }"/>
+        control="liquidRate"
+        targetBHP="5e8"
+        targetRate="8e0"
+        injectionStream="{ 0.0, 0.0, 1.0 }"/>
       <WellControls
         name="wellControls8"
         type="injector"
-        control="BHP"
-        targetBHP="4.2e7"
-        targetRate="1e9"
-        injectionStream="{ 0.0025, 0.0025, 0.995 }"/>
+        control="liquidRate"
+        targetBHP="5e8"
+        targetRate="8e0"
+        injectionStream="{ 0.0, 0.0, 1.0 }"/>
       <WellControls
         name="wellControls9"
         type="injector"
-        control="BHP"
-        targetBHP="4.2e7"
-        targetRate="1e9"
-        injectionStream="{ 0.0025, 0.0025, 0.995 }"/>
+        control="liquidRate"
+        targetBHP="5e8"
+        targetRate="8e0"
+        injectionStream="{ 0.0, 0.0, 1.0 }"/>
       <WellControls
         name="wellControls10"
         type="injector"
-        control="BHP"
-        targetBHP="4.2e7"
-        targetRate="1e9"
-        injectionStream="{ 0.0025, 0.0025, 0.995 }"/>
+        control="liquidRate"
+        targetBHP="5e8"
+        targetRate="8e0"
+        injectionStream="{ 0.0, 0.0, 1.0 }"/>
       <WellControls
         name="wellControls11"
         type="injector"
-        control="BHP"
-        targetBHP="4.2e7"
-        targetRate="1e9"
-        injectionStream="{ 0.0025, 0.0025, 0.995 }"/>
+        control="liquidRate"
+        targetBHP="5e8"
+        targetRate="8e0"
+        injectionStream="{ 0.0, 0.0, 1.0 }"/>
       <WellControls
         name="wellControls12"
         type="injector"
-        control="BHP"
-        targetBHP="4.2e7"
-        targetRate="1e9"
-        injectionStream="{ 0.0025, 0.0025, 0.995 }"/>
+        control="liquidRate"
+        targetBHP="5e8"
+        targetRate="8e0"
+        injectionStream="{ 0.0, 0.0, 1.0 }"/>
     </CompositionalMultiphaseWell>
   </Solvers>
 
@@ -535,14 +539,14 @@
   <!-- SPHINX_TUT_DEAD_OIL_EGG_MESH_END -->
   <!-- SPHINX_TUT_DEAD_OIL_EGG_EVENTS -->
   <Events
-    maxTime="31536000">
+    maxTime="1.5e7">
     <PeriodicEvent
       name="solverApplications"
       target="/Solvers/coupledFlowAndWells"/>
 
     <PeriodicEvent
       name="vtk"
-      timeFrequency="216000"
+      timeFrequency="2e6"
       targetExactTimestep="1"
       target="/Outputs/vtkOutput"/>
   </Events>
@@ -622,16 +626,16 @@
       name="fluid"
       fluidType="DeadOil"
       phaseNames="{ oil, gas, water }"
-      surfaceDensities="{ 900.0, 0.9907, 1000.0 }"
+      surfaceDensities="{ 848.9, 0.9907, 1025.2 }"
       componentMolarWeight="{ 114e-3, 16e-3, 18e-3 }"
       tableFiles="{ pvdo.txt, pvdg.txt, pvtw.txt }"/>
-
+    
     <BrooksCoreyRelativePermeability
       name="relperm"
       phaseNames="{ oil, gas, water }"
-      phaseMinVolumeFraction="{ 0.0, 0., 0.0 }"
+      phaseMinVolumeFraction="{ 0.1, 0.0, 0.2 }"
       phaseRelPermExponent="{ 4.0, 2.0, 3.0 }"
-      phaseRelPermMaxValue="{ 0.8, 0.9, 0.75 }"/>
+      phaseRelPermMaxValue="{ 0.8, 1.0, 0.75 }"/>
 
     <PoreVolumeCompressibleSolid
       name="rock"
@@ -665,7 +669,7 @@
       objectPath="ElementRegions/reservoir/DEFAULT_HEX"
       fieldName="globalCompFraction"
       component="0"
-      scale="0.99"/>
+      scale="1.0"/>
 
     <FieldSpecification
       name="initialComposition_gas"
@@ -674,7 +678,7 @@
       objectPath="ElementRegions/reservoir/DEFAULT_HEX"
       fieldName="globalCompFraction"
       component="1"
-      scale="0.001"/>
+      scale="0.0"/>
 
     <FieldSpecification
       name="initialComposition_water"
@@ -683,7 +687,7 @@
       objectPath="ElementRegions/reservoir/DEFAULT_HEX"
       fieldName="globalCompFraction"
       component="2"
-      scale="0.009"/>
+      scale="0.0"/>
   </FieldSpecifications>
 
   <!-- SPHINX_TUT_DEAD_OIL_EGG_FIELD_SPECS_END -->

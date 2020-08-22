@@ -350,7 +350,7 @@ With this construct, we instruct the ``ConstitutiveManager`` class (whose ``cata
 We also fill the data members of the values that we want to use for the simulation.
 For a simulation with multiple regions, we could define multiple relative permeability models in the "Constitutive" XML block (yielding multiple relperm subgroups in GEOSX), with a unique name attribute for each model.
 
-*For more examples on how to contribute to GEOSX, please read "Adding a new Physics Solver".*
+*For more examples on how to contribute to GEOSX, please read* :ref:`AddingNewSolver`
 
 
 Input Schema Generation

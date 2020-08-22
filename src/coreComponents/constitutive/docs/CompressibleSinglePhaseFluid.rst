@@ -29,7 +29,7 @@ where :math:`c_\mu` is viscosibility (viscosity compressibility), :math:`\mu_0` 
 Either exponent may be approximated by linear (default) or quadratic terms of Taylor series expansion.
 Currently there is no temperature dependence in the model, although it may be added in future.
 
-Usage
+Parameters
 =========================
 
 The model is represented by ``<CompressibleSinglePhaseFluid>`` node in the input.
@@ -38,7 +38,7 @@ The following attributes are supported:
 
 .. include:: /coreComponents/fileIO/schema/docs/CompressibleSinglePhaseFluid.rst
 
-Input example
+Example
 =========================
 
 .. code-block:: xml
