@@ -1,3 +1,20 @@
+/*
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
+ *
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
+ *
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
+ */
+
+/**
+ * @file FiniteElementBase.hpp
+ */
 
 
 #ifndef GEOSX_FINITEELEMENT_FINITEELEMENTBASE_HPP_
@@ -84,7 +101,7 @@ public:
    * @brief Calculate the symmetric gradient of a vector valued support field
    *   at a point using the stored basis function gradients for all support
    *   points.
-   * @param dNdX The basis function gradients at a point in the element.
+   * @param gradN The basis function gradients at a point in the element.
    * @param var The vector valued support field that the gradient operator will
    *  be applied to.
    * @param grad The symmetric gradient in Voigt notation.
@@ -97,18 +114,18 @@ public:
    *
    */
   template< int NUM_SUPPORT_POINTS,
-            typename BASIS_GRAD_TYPE >
+            typename GRADIENT_TYPE >
   GEOSX_HOST_DEVICE
-  static void symmetricGradient( BASIS_GRAD_TYPE const & dNdX,
+  static void symmetricGradient( GRADIENT_TYPE const & gradN,
                                  real64 const (&var)[NUM_SUPPORT_POINTS][3],
-                                 real64 ( &grad )[6] );
+                                 real64 ( &gradVar )[6] );
 
 
 
   /**
    * @brief Calculate the gradient of a vector valued support field at a point
    *   using the stored basis function gradients for all support points.
-   * @param dNdX The basis function gradients at a point in the element.
+   * @param gradN The basis function gradients at a point in the element.
    * @param var The vector valued support field that the gradient operator will
    *  be applied to.
    * @param grad The  gradient.
@@ -119,16 +136,16 @@ public:
    * \f]
    */
   template< int NUM_SUPPORT_POINTS,
-            typename BASIS_GRAD_TYPE >
+            typename GRADIENT_TYPE >
   GEOSX_HOST_DEVICE
-  static void gradient( BASIS_GRAD_TYPE const & dNdX,
+  static void gradient( GRADIENT_TYPE const & gradN,
                         real64 const (&var)[NUM_SUPPORT_POINTS][3],
-                        real64 ( &grad )[3][3] );
+                        real64 ( &gradVar )[3][3] );
 
   /**
    * @brief Inner product of all basis function gradients and a rank-2
    *   symmetric tensor.
-   * @param dNdX The basis function gradients at a point in the element.
+   * @param gradN The basis function gradients at a point in the element.
    * @param var The rank-2 symmetric tensor at @p q.
    * @param R The vector resulting from the tensor contraction.
    *
@@ -140,74 +157,79 @@ public:
    *   $var_{ij}$ is the rank-2 symmetric tensor.
    */
   template< int NUM_SUPPORT_POINTS,
-            typename BASIS_GRAD_TYPE >
+            typename GRADIENT_TYPE >
   GEOSX_HOST_DEVICE
-  static void integrateBasisGradientInnerProduct( BASIS_GRAD_TYPE const & dNdX,
-                                                  real64 const (&var_x_detJ_x_W)[6],
-                                                  real64 ( &R )[NUM_SUPPORT_POINTS][3] );
+  static void gradNajAij( GRADIENT_TYPE const & gradN,
+                          real64 const (&var_detJxW)[6],
+                          real64 ( &R )[NUM_SUPPORT_POINTS][3] );
 
   template< int NUM_SUPPORT_POINTS,
-            typename BASIS_GRAD_TYPE >
+            typename GRADIENT_TYPE >
   GEOSX_HOST_DEVICE
-  static void integrateBasisGradientInnerProduct( BASIS_GRAD_TYPE const & dNdX,
-                                                  real64 const (&var_x_detJ_x_W)[3][3],
-                                                  real64 ( &R )[NUM_SUPPORT_POINTS][3] );
+  static void gradNajAij( GRADIENT_TYPE const & gradN,
+                          real64 const (&var_detJxW)[3][3],
+                          real64 ( &R )[NUM_SUPPORT_POINTS][3] );
 
-
-  template< int NUM_SUPPORT_POINTS,
-            typename BASIS_GRAD_TYPE >
+  template< int NUM_SUPPORT_POINTS >
   GEOSX_HOST_DEVICE
-  static void integrateBasisGradientInnerProductPlusForcing( BASIS_GRAD_TYPE const & dNdX,
-                                                             real64 const (&var_x_detJ_x_W)[3][3],
-                                                             real64 const (&N)[NUM_SUPPORT_POINTS],
-                                                             real64 const (&forcingTerm_x_detJ)[3],
-                                                             real64 ( &R )[NUM_SUPPORT_POINTS][3] );
+  static void NaFi( real64 const (&N)[NUM_SUPPORT_POINTS],
+                    real64 const (&forcingTerm_detJ)[3],
+                    real64 ( &R )[NUM_SUPPORT_POINTS][3] );
 
   template< int NUM_SUPPORT_POINTS,
-            typename BASIS_GRAD_TYPE >
+            typename GRADIENT_TYPE >
   GEOSX_HOST_DEVICE
-  static void integrateBasisGradientInnerProductPlusForcing( BASIS_GRAD_TYPE const & dNdX,
-                                                             real64 const (&var_x_detJ_x_W)[6],
-                                                             real64 const (&N)[NUM_SUPPORT_POINTS],
-                                                             real64 const (&forcingTerm_x_detJ)[3],
-                                                             real64 ( &R )[NUM_SUPPORT_POINTS][3] );
+  static void gradNajAij_plus_NaFi( GRADIENT_TYPE const & gradN,
+                                    real64 const (&var_detJxW)[3][3],
+                                    real64 const (&N)[NUM_SUPPORT_POINTS],
+                                    real64 const (&forcingTerm_detJ)[3],
+                                    real64 ( &R )[NUM_SUPPORT_POINTS][3] );
+
+  template< int NUM_SUPPORT_POINTS,
+            typename GRADIENT_TYPE >
+  GEOSX_HOST_DEVICE
+  static void gradNajAij_plus_NaFi( GRADIENT_TYPE const & gradN,
+                                    real64 const (&var_detJxW)[6],
+                                    real64 const (&N)[NUM_SUPPORT_POINTS],
+                                    real64 const (&forcingTerm_detJ)[3],
+                                    real64 ( &R )[NUM_SUPPORT_POINTS][3] );
 
 //TODO we want to keep views and provide interfaces to this data here for cases
 //     where we pre-compute the shape function derivatives...maybe...tbd.
 //private:
-//  arrayView4d< real64 const > const m_dNdX;
+//  arrayView4d< real64 const > const m_gradN;
 //  arrayView2d< real64 const > const m_detJ;
 
 
 };
 
 template< int NUM_SUPPORT_POINTS,
-          typename BASIS_GRAD_TYPE >
+          typename GRADIENT_TYPE >
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-void FiniteElementBase::symmetricGradient( BASIS_GRAD_TYPE const & dNdX,
+void FiniteElementBase::symmetricGradient( GRADIENT_TYPE const & gradN,
                                            real64 const (&var)[NUM_SUPPORT_POINTS][3],
-                                           real64 (& grad)[6] )
+                                           real64 (& gradVar)[6] )
 {
   for( int a=0; a<NUM_SUPPORT_POINTS; ++a )
   {
-    grad[0] = grad[0] + dNdX[a][0] * var[ a ][0];
-    grad[1] = grad[1] + dNdX[a][1] * var[ a ][1];
-    grad[2] = grad[2] + dNdX[a][2] * var[ a ][2];
-    grad[3] = grad[3] + dNdX[a][2] * var[ a ][1] + dNdX[a][1] * var[ a ][2];
-    grad[4] = grad[4] + dNdX[a][2] * var[ a ][0] + dNdX[a][0] * var[ a ][2];
-    grad[5] = grad[5] + dNdX[a][1] * var[ a ][0] + dNdX[a][0] * var[ a ][1];
+    gradVar[0] = gradVar[0] + gradN[a][0] * var[ a ][0];
+    gradVar[1] = gradVar[1] + gradN[a][1] * var[ a ][1];
+    gradVar[2] = gradVar[2] + gradN[a][2] * var[ a ][2];
+    gradVar[3] = gradVar[3] + gradN[a][2] * var[ a ][1] + gradN[a][1] * var[ a ][2];
+    gradVar[4] = gradVar[4] + gradN[a][2] * var[ a ][0] + gradN[a][0] * var[ a ][2];
+    gradVar[5] = gradVar[5] + gradN[a][1] * var[ a ][0] + gradN[a][0] * var[ a ][1];
   }
 }
 
 
 template< int NUM_SUPPORT_POINTS,
-          typename BASIS_GRAD_TYPE >
+          typename GRADIENT_TYPE >
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-void FiniteElementBase::gradient( BASIS_GRAD_TYPE const & dNdX,
+void FiniteElementBase::gradient( GRADIENT_TYPE const & gradN,
                                   real64 const (&var)[NUM_SUPPORT_POINTS][3],
-                                  real64 (& grad)[3][3] )
+                                  real64 (& gradVar)[3][3] )
 {
   for( int a=0; a<NUM_SUPPORT_POINTS; ++a )
   {
@@ -215,79 +237,94 @@ void FiniteElementBase::gradient( BASIS_GRAD_TYPE const & dNdX,
     {
       for( int j = 0; j < 3; ++j )
       {
-        grad[i][j] = grad[i][j] + var[ a ][i] * dNdX[a][j];
+        gradVar[i][j] = gradVar[i][j] + var[ a ][i] * gradN[a][j];
       }
     }
   }
 }
 
 template< int NUM_SUPPORT_POINTS,
-          typename BASIS_GRAD_TYPE >
+          typename GRADIENT_TYPE >
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-void FiniteElementBase::integrateBasisGradientInnerProduct( BASIS_GRAD_TYPE const & dNdX,
-                                                            real64 const (&var_x_detJ_x_W)[6],
-                                                            real64 (& R)[NUM_SUPPORT_POINTS][3] )
+void FiniteElementBase::gradNajAij( GRADIENT_TYPE const & gradN,
+                                    real64 const (&var_detJxW)[6],
+                                    real64 (& R)[NUM_SUPPORT_POINTS][3] )
 {
   for( int a=0; a<NUM_SUPPORT_POINTS; ++a )
   {
-    R[a][0] = R[a][0] - var_x_detJ_x_W[0] * dNdX[a][0] - var_x_detJ_x_W[5] * dNdX[a][1] - var_x_detJ_x_W[4] * dNdX[a][2];
-    R[a][1] = R[a][1] - var_x_detJ_x_W[5] * dNdX[a][0] - var_x_detJ_x_W[1] * dNdX[a][1] - var_x_detJ_x_W[3] * dNdX[a][2];
-    R[a][2] = R[a][2] - var_x_detJ_x_W[4] * dNdX[a][0] - var_x_detJ_x_W[3] * dNdX[a][1] - var_x_detJ_x_W[2] * dNdX[a][2];
+    R[a][0] = R[a][0] - var_detJxW[0] * gradN[a][0] - var_detJxW[5] * gradN[a][1] - var_detJxW[4] * gradN[a][2];
+    R[a][1] = R[a][1] - var_detJxW[5] * gradN[a][0] - var_detJxW[1] * gradN[a][1] - var_detJxW[3] * gradN[a][2];
+    R[a][2] = R[a][2] - var_detJxW[4] * gradN[a][0] - var_detJxW[3] * gradN[a][1] - var_detJxW[2] * gradN[a][2];
   }
 }
 
 
 template< int NUM_SUPPORT_POINTS,
-          typename BASIS_GRAD_TYPE >
+          typename GRADIENT_TYPE >
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-void FiniteElementBase::integrateBasisGradientInnerProduct( BASIS_GRAD_TYPE const & dNdX,
-                                                            real64 const (&var_x_detJ_x_W)[3][3],
-                                                            real64 (& R)[NUM_SUPPORT_POINTS][3] )
+void FiniteElementBase::gradNajAij( GRADIENT_TYPE const & gradN,
+                                    real64 const (&var_detJxW)[3][3],
+                                    real64 (& R)[NUM_SUPPORT_POINTS][3] )
 {
   for( int a=0; a<NUM_SUPPORT_POINTS; ++a )
   {
-    R[a][0] = R[a][0] - var_x_detJ_x_W[0][0] * dNdX[a][0] - var_x_detJ_x_W[0][1] * dNdX[a][1] - var_x_detJ_x_W[0][2] * dNdX[a][2];
-    R[a][1] = R[a][1] - var_x_detJ_x_W[1][0] * dNdX[a][0] - var_x_detJ_x_W[1][1] * dNdX[a][1] - var_x_detJ_x_W[1][2] * dNdX[a][2];
-    R[a][2] = R[a][2] - var_x_detJ_x_W[2][0] * dNdX[a][0] - var_x_detJ_x_W[2][1] * dNdX[a][1] - var_x_detJ_x_W[2][2] * dNdX[a][2];
+    R[a][0] = R[a][0] - var_detJxW[0][0] * gradN[a][0] - var_detJxW[0][1] * gradN[a][1] - var_detJxW[0][2] * gradN[a][2];
+    R[a][1] = R[a][1] - var_detJxW[1][0] * gradN[a][0] - var_detJxW[1][1] * gradN[a][1] - var_detJxW[1][2] * gradN[a][2];
+    R[a][2] = R[a][2] - var_detJxW[2][0] * gradN[a][0] - var_detJxW[2][1] * gradN[a][1] - var_detJxW[2][2] * gradN[a][2];
+  }
+}
+
+template< int NUM_SUPPORT_POINTS >
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void FiniteElementBase::NaFi( real64 const (&N)[NUM_SUPPORT_POINTS],
+                              real64 const (&var_detJxW)[3],
+                              real64 ( & R )[NUM_SUPPORT_POINTS][3] )
+{
+  for( int a=0; a<NUM_SUPPORT_POINTS; ++a )
+  {
+    R[a][0] = R[a][0] + var_detJxW[0] * N[a];
+    R[a][1] = R[a][1] + var_detJxW[1] * N[a];
+    R[a][2] = R[a][2] + var_detJxW[2] * N[a];
   }
 }
 
 
 template< int NUM_SUPPORT_POINTS,
-          typename BASIS_GRAD_TYPE >
+          typename GRADIENT_TYPE >
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-void FiniteElementBase::integrateBasisGradientInnerProductPlusForcing( BASIS_GRAD_TYPE const & dNdX,
-                                                                       real64 const (&var_x_detJ_x_W)[6],
-                                                                       real64 const (&N)[NUM_SUPPORT_POINTS],
-                                                                       real64 const (&forcingTerm_x_detJ)[3],
-                                                                       real64 (& R)[NUM_SUPPORT_POINTS][3] )
+void FiniteElementBase::gradNajAij_plus_NaFi( GRADIENT_TYPE const & gradN,
+                                              real64 const (&var_detJxW)[6],
+                                              real64 const (&N)[NUM_SUPPORT_POINTS],
+                                              real64 const (&forcingTerm_detJ)[3],
+                                              real64 (& R)[NUM_SUPPORT_POINTS][3] )
 {
   for( int a=0; a<NUM_SUPPORT_POINTS; ++a )
   {
-    R[a][0] = R[a][0] - var_x_detJ_x_W[0] * dNdX[a][0] - var_x_detJ_x_W[5] * dNdX[a][1] - var_x_detJ_x_W[4] * dNdX[a][2] + forcingTerm_x_detJ[0] * N[a];
-    R[a][1] = R[a][1] - var_x_detJ_x_W[5] * dNdX[a][0] - var_x_detJ_x_W[1] * dNdX[a][1] - var_x_detJ_x_W[3] * dNdX[a][2] + forcingTerm_x_detJ[1] * N[a];
-    R[a][2] = R[a][2] - var_x_detJ_x_W[4] * dNdX[a][0] - var_x_detJ_x_W[3] * dNdX[a][1] - var_x_detJ_x_W[2] * dNdX[a][2] + forcingTerm_x_detJ[2] * N[a];
+    R[a][0] = R[a][0] - var_detJxW[0] * gradN[a][0] - var_detJxW[5] * gradN[a][1] - var_detJxW[4] * gradN[a][2] + forcingTerm_detJ[0] * N[a];
+    R[a][1] = R[a][1] - var_detJxW[5] * gradN[a][0] - var_detJxW[1] * gradN[a][1] - var_detJxW[3] * gradN[a][2] + forcingTerm_detJ[1] * N[a];
+    R[a][2] = R[a][2] - var_detJxW[4] * gradN[a][0] - var_detJxW[3] * gradN[a][1] - var_detJxW[2] * gradN[a][2] + forcingTerm_detJ[2] * N[a];
   }
 }
 
 template< int NUM_SUPPORT_POINTS,
-          typename BASIS_GRAD_TYPE >
+          typename GRADIENT_TYPE >
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-void FiniteElementBase::integrateBasisGradientInnerProductPlusForcing( BASIS_GRAD_TYPE const & dNdX,
-                                                                       real64 const (&var_x_detJ_x_W)[3][3],
-                                                                       real64 const (&N)[NUM_SUPPORT_POINTS],
-                                                                       real64 const (&forcingTerm_x_detJ)[3],
-                                                                       real64 (& R)[NUM_SUPPORT_POINTS][3] )
+void FiniteElementBase::gradNajAij_plus_NaFi( GRADIENT_TYPE const & gradN,
+                                              real64 const (&var_detJxW)[3][3],
+                                              real64 const (&N)[NUM_SUPPORT_POINTS],
+                                              real64 const (&forcingTerm_detJ)[3],
+                                              real64 (& R)[NUM_SUPPORT_POINTS][3] )
 {
   for( int a=0; a<NUM_SUPPORT_POINTS; ++a )
   {
-    R[a][0] = R[a][0] - var_x_detJ_x_W[0][0] * dNdX[a][0] - var_x_detJ_x_W[0][1] * dNdX[a][1] - var_x_detJ_x_W[0][2] * dNdX[a][2] + forcingTerm_x_detJ[0] * N[a];
-    R[a][1] = R[a][1] - var_x_detJ_x_W[1][0] * dNdX[a][0] - var_x_detJ_x_W[1][1] * dNdX[a][1] - var_x_detJ_x_W[1][2] * dNdX[a][2] + forcingTerm_x_detJ[1] * N[a];
-    R[a][2] = R[a][2] - var_x_detJ_x_W[2][0] * dNdX[a][0] - var_x_detJ_x_W[2][1] * dNdX[a][1] - var_x_detJ_x_W[2][2] * dNdX[a][2] + forcingTerm_x_detJ[2] * N[a];
+    R[a][0] = R[a][0] - var_detJxW[0][0] * gradN[a][0] - var_detJxW[0][1] * gradN[a][1] - var_detJxW[0][2] * gradN[a][2] + forcingTerm_detJ[0] * N[a];
+    R[a][1] = R[a][1] - var_detJxW[1][0] * gradN[a][0] - var_detJxW[1][1] * gradN[a][1] - var_detJxW[1][2] * gradN[a][2] + forcingTerm_detJ[1] * N[a];
+    R[a][2] = R[a][2] - var_detJxW[2][0] * gradN[a][0] - var_detJxW[2][1] * gradN[a][1] - var_detJxW[2][2] * gradN[a][2] + forcingTerm_detJ[2] * N[a];
   }
 }
 }

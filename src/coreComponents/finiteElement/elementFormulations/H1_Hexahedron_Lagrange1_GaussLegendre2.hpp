@@ -163,7 +163,7 @@ public:
 
   using FiniteElementBase::symmetricGradient;
   using FiniteElementBase::gradient;
-  using FiniteElementBase::integrateBasisGradientInnerProduct;
+  using FiniteElementBase::gradNajAij;
 
 
 
@@ -223,10 +223,10 @@ public:
    *   $var_{ij}$ is the rank-2 symmetric tensor.
    */
   GEOSX_HOST_DEVICE
-  static void basisGradientInnerProduct( int const q,
-                                         real64 const (&invJ)[3][3],
-                                         real64 const (&s)[6],
-                                         real64 ( &R )[numNodes][3] );
+  static void gradNajAij( int const q,
+                          real64 const (&invJ)[3][3],
+                          real64 const (&s)[6],
+                          real64 ( &R )[numNodes][3] );
 
 
 
@@ -558,20 +558,21 @@ void H1_Hexahedron_Lagrange1_GaussLegendre2::symmetricGradient( int const q,
 
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-void H1_Hexahedron_Lagrange1_GaussLegendre2::basisGradientInnerProduct( int const q,
-                                                                        real64 const (&invJ)[3][3],
-                                                                        real64 const (&var)[6],
-                                                                        real64 (& R)[numNodes][3] )
+void H1_Hexahedron_Lagrange1_GaussLegendre2::gradNajAij( int const q,
+                                                         real64 const (&invJ)[3][3],
+                                                         real64 const (&var)[6],
+                                                         real64 (& R)[numNodes][3] )
 {
   int qa, qb, qc;
   LagrangeBasis1::TensorProduct3D::multiIndex( q, qa, qb, qc );
 
   supportLoop( qa, qb, qc,
-               [] GEOSX_HOST_DEVICE ( real64 const (&dNdXi)[3],
-                                      int const nodeIndex,
-                                      real64 const (&invJ)[3][3],
-                                      real64 const (&var)[6],
-                                      real64 (& R)[numNodes][3] )
+               [] GEOSX_HOST_DEVICE
+                 ( real64 const (&dNdXi)[3],
+                 int const nodeIndex,
+                 real64 const (&invJ)[3][3],
+                 real64 const (&var)[6],
+                 real64 (& R)[numNodes][3] )
   {
 
     real64 dNdX[3] = {0, 0, 0};
@@ -582,9 +583,9 @@ void H1_Hexahedron_Lagrange1_GaussLegendre2::basisGradientInnerProduct( int cons
         dNdX[i] = dNdX[i] + dNdXi[ j ] * invJ[j][i];
       }
     }
-    R[ nodeIndex ][ 0 ] = R[ nodeIndex ][ 0 ] + var[ 0 ] * dNdX[ 0 ] + var[ 5 ] * dNdX[ 1 ] + var[ 4 ] * dNdX[ 2 ];
-    R[ nodeIndex ][ 1 ] = R[ nodeIndex ][ 1 ] + var[ 5 ] * dNdX[ 0 ] + var[ 1 ] * dNdX[ 1 ] + var[ 3 ] * dNdX[ 2 ];
-    R[ nodeIndex ][ 2 ] = R[ nodeIndex ][ 2 ] + var[ 4 ] * dNdX[ 0 ] + var[ 3 ] * dNdX[ 1 ] + var[ 2 ] * dNdX[ 2 ];
+    R[ nodeIndex ][ 0 ] = R[ nodeIndex ][ 0 ] - var[ 0 ] * dNdX[ 0 ] - var[ 5 ] * dNdX[ 1 ] - var[ 4 ] * dNdX[ 2 ];
+    R[ nodeIndex ][ 1 ] = R[ nodeIndex ][ 1 ] - var[ 5 ] * dNdX[ 0 ] - var[ 1 ] * dNdX[ 1 ] - var[ 3 ] * dNdX[ 2 ];
+    R[ nodeIndex ][ 2 ] = R[ nodeIndex ][ 2 ] - var[ 4 ] * dNdX[ 0 ] - var[ 3 ] * dNdX[ 1 ] - var[ 2 ] * dNdX[ 2 ];
   }, invJ, var, R );
 }
 

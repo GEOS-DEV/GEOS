@@ -1,9 +1,21 @@
 /*
- * BTransposeDB_Helper.hpp
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- *  Created on: Aug 11, 2020
- *      Author: settgast
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
+ *
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
+
+/**
+ * @file SolidModelHelperBase.hpp
+ */
+
 
 #ifndef GEOSX_CONSTITUTIVE_SOLID_SOLIDMODELHELPERBASE_HPP_
 #define GEOSX_CONSTITUTIVE_SOLID_SOLIDMODELHELPERBASE_HPP_

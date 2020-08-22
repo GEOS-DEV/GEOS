@@ -286,11 +286,11 @@ public:
 
     real64 N[numNodesPerElem];
     FE_TYPE::shapeFunctionValues( q, N );
-    FE_TYPE::integrateBasisGradientInnerProductPlusForcing( m_dNdX[k][q],
-                                                            stress,
-                                                            N,
-                                                            gravityForce,
-                                                            reinterpret_cast< real64 (&)[numNodesPerElem][3] >(stack.localResidual) );
+    FE_TYPE::gradNajAij_plus_NaFi( m_dNdX[k][q],
+                                   stress,
+                                   N,
+                                   gravityForce,
+                                   reinterpret_cast< real64 (&)[numNodesPerElem][3] >(stack.localResidual) );
 
   }
 
