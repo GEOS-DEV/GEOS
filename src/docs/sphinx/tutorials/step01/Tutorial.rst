@@ -499,7 +499,7 @@ For instance, here are reported diagonal pressure profile from sink to source bl
 .. image:: Plots.png
    :width: 400px
 
-.. image:: IntHexMovie.mpg
+.. image:: IntHexMovie.gif
    :width: 500px
 
 
