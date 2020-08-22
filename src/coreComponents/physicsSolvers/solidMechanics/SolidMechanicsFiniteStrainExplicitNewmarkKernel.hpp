@@ -257,14 +257,8 @@ public:
     LvArray::tensorOps::symAikBjk< 3 >( P, m_constitutiveUpdate.m_stress[k][q].toSliceConst(), fInv );
     LvArray::tensorOps::scale< 3, 3 >( P, DETJ * detF );
 
-    FE_TYPE::basisGradientInnerProduct( DNDX, P, stack.fLocal );
+    FE_TYPE::integrateBasisGradientInnerProduct( DNDX, P, stack.fLocal );
 
-//    Integrate< numNodesPerElem >( ,
-//                                  DNDX,
-//                                  DETJ,
-//                                  detF,
-//                                  fInv,
-//                                  stack.fLocal );
   }
 
 

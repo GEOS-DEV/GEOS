@@ -20,8 +20,8 @@
 #define GEOSX_CONSTITUTIVE_SOLID_LINEARELASTICISOTROPIC_HPP_
 #include "SolidBase.hpp"
 #include "constitutive/ExponentialRelation.hpp"
-#include "IsotropicStiffnessHelper.hpp"
 #include "LvArray/src/tensorOps.hpp"
+#include "SolidModelHelperIsotropic.hpp"
 
 namespace geosx
 {
@@ -38,7 +38,7 @@ namespace constitutive
 class LinearElasticIsotropicUpdates : public SolidBaseUpdates
 {
 public:
-  using StiffnessHelper = IsotropicStiffnessHelper;
+  using StiffnessHelper = SolidModelHelperIsotropic;
 
   /**
    * @brief Constructor

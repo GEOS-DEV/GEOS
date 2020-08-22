@@ -142,25 +142,35 @@ public:
   template< int NUM_SUPPORT_POINTS,
             typename BASIS_GRAD_TYPE >
   GEOSX_HOST_DEVICE
-  static void basisGradientInnerProduct( BASIS_GRAD_TYPE const & dNdX,
-                                         real64 const (&var)[6],
-                                         real64 ( &R )[NUM_SUPPORT_POINTS][3] );
+  static void integrateBasisGradientInnerProduct( BASIS_GRAD_TYPE const & dNdX,
+                                                  real64 const (&var_x_detJ_x_W)[6],
+                                                  real64 ( &R )[NUM_SUPPORT_POINTS][3] );
 
   template< int NUM_SUPPORT_POINTS,
             typename BASIS_GRAD_TYPE >
   GEOSX_HOST_DEVICE
-  static void basisGradientInnerProduct( BASIS_GRAD_TYPE const & dNdX,
-                                         real64 const (&var)[3][3],
-                                         real64 ( &R )[NUM_SUPPORT_POINTS][3] );
+  static void integrateBasisGradientInnerProduct( BASIS_GRAD_TYPE const & dNdX,
+                                                  real64 const (&var_x_detJ_x_W)[3][3],
+                                                  real64 ( &R )[NUM_SUPPORT_POINTS][3] );
+
 
   template< int NUM_SUPPORT_POINTS,
             typename BASIS_GRAD_TYPE >
   GEOSX_HOST_DEVICE
-  static void basisGradientInnerProductPlusBody( BASIS_GRAD_TYPE const & dNdX,
-                                                 real64 const (&var)[6],
-                                                 real64 const (&N)[NUM_SUPPORT_POINTS],
-                                                 real64 const (&bodyForce)[3],
-                                                 real64 ( &R )[NUM_SUPPORT_POINTS][3] );
+  static void integrateBasisGradientInnerProductPlusForcing( BASIS_GRAD_TYPE const & dNdX,
+                                                             real64 const (&var_x_detJ_x_W)[3][3],
+                                                             real64 const (&N)[NUM_SUPPORT_POINTS],
+                                                             real64 const (&forcingTerm_x_detJ)[3],
+                                                             real64 ( &R )[NUM_SUPPORT_POINTS][3] );
+
+  template< int NUM_SUPPORT_POINTS,
+            typename BASIS_GRAD_TYPE >
+  GEOSX_HOST_DEVICE
+  static void integrateBasisGradientInnerProductPlusForcing( BASIS_GRAD_TYPE const & dNdX,
+                                                             real64 const (&var_x_detJ_x_W)[6],
+                                                             real64 const (&N)[NUM_SUPPORT_POINTS],
+                                                             real64 const (&forcingTerm_x_detJ)[3],
+                                                             real64 ( &R )[NUM_SUPPORT_POINTS][3] );
 
 //TODO we want to keep views and provide interfaces to this data here for cases
 //     where we pre-compute the shape function derivatives...maybe...tbd.
@@ -215,15 +225,15 @@ template< int NUM_SUPPORT_POINTS,
           typename BASIS_GRAD_TYPE >
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-void FiniteElementBase::basisGradientInnerProduct( BASIS_GRAD_TYPE const & dNdX,
-                                                   real64 const (&var_detJq)[6],
-                                                   real64 (& R)[NUM_SUPPORT_POINTS][3] )
+void FiniteElementBase::integrateBasisGradientInnerProduct( BASIS_GRAD_TYPE const & dNdX,
+                                                            real64 const (&var_x_detJ_x_W)[6],
+                                                            real64 (& R)[NUM_SUPPORT_POINTS][3] )
 {
   for( int a=0; a<NUM_SUPPORT_POINTS; ++a )
   {
-    R[a][0] = R[a][0] - var_detJq[0] * dNdX[a][0] - var_detJq[5] * dNdX[a][1] - var_detJq[4] * dNdX[a][2];
-    R[a][1] = R[a][1] - var_detJq[5] * dNdX[a][0] - var_detJq[1] * dNdX[a][1] - var_detJq[3] * dNdX[a][2];
-    R[a][2] = R[a][2] - var_detJq[4] * dNdX[a][0] - var_detJq[3] * dNdX[a][1] - var_detJq[2] * dNdX[a][2];
+    R[a][0] = R[a][0] - var_x_detJ_x_W[0] * dNdX[a][0] - var_x_detJ_x_W[5] * dNdX[a][1] - var_x_detJ_x_W[4] * dNdX[a][2];
+    R[a][1] = R[a][1] - var_x_detJ_x_W[5] * dNdX[a][0] - var_x_detJ_x_W[1] * dNdX[a][1] - var_x_detJ_x_W[3] * dNdX[a][2];
+    R[a][2] = R[a][2] - var_x_detJ_x_W[4] * dNdX[a][0] - var_x_detJ_x_W[3] * dNdX[a][1] - var_x_detJ_x_W[2] * dNdX[a][2];
   }
 }
 
@@ -232,15 +242,15 @@ template< int NUM_SUPPORT_POINTS,
           typename BASIS_GRAD_TYPE >
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-void FiniteElementBase::basisGradientInnerProduct( BASIS_GRAD_TYPE const & dNdX,
-                                                   real64 const (&var_detJq)[3][3],
-                                                   real64 (& R)[NUM_SUPPORT_POINTS][3] )
+void FiniteElementBase::integrateBasisGradientInnerProduct( BASIS_GRAD_TYPE const & dNdX,
+                                                            real64 const (&var_x_detJ_x_W)[3][3],
+                                                            real64 (& R)[NUM_SUPPORT_POINTS][3] )
 {
   for( int a=0; a<NUM_SUPPORT_POINTS; ++a )
   {
-    R[a][0] = R[a][0] - var_detJq[0][0] * dNdX[a][0] - var_detJq[0][1] * dNdX[a][1] - var_detJq[0][2] * dNdX[a][2];
-    R[a][1] = R[a][1] - var_detJq[1][0] * dNdX[a][0] - var_detJq[1][1] * dNdX[a][1] - var_detJq[1][2] * dNdX[a][2];
-    R[a][2] = R[a][2] - var_detJq[2][0] * dNdX[a][0] - var_detJq[2][1] * dNdX[a][1] - var_detJq[2][2] * dNdX[a][2];
+    R[a][0] = R[a][0] - var_x_detJ_x_W[0][0] * dNdX[a][0] - var_x_detJ_x_W[0][1] * dNdX[a][1] - var_x_detJ_x_W[0][2] * dNdX[a][2];
+    R[a][1] = R[a][1] - var_x_detJ_x_W[1][0] * dNdX[a][0] - var_x_detJ_x_W[1][1] * dNdX[a][1] - var_x_detJ_x_W[1][2] * dNdX[a][2];
+    R[a][2] = R[a][2] - var_x_detJ_x_W[2][0] * dNdX[a][0] - var_x_detJ_x_W[2][1] * dNdX[a][1] - var_x_detJ_x_W[2][2] * dNdX[a][2];
   }
 }
 
@@ -249,20 +259,37 @@ template< int NUM_SUPPORT_POINTS,
           typename BASIS_GRAD_TYPE >
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-void FiniteElementBase::basisGradientInnerProductPlusBody( BASIS_GRAD_TYPE const & dNdX,
-                                                           real64 const (&var_detJq)[6],
-                                                           real64 const (&N)[NUM_SUPPORT_POINTS],
-                                                           real64 const (&bodyForce_detJq)[3],
-                                                           real64 (& R)[NUM_SUPPORT_POINTS][3] )
+void FiniteElementBase::integrateBasisGradientInnerProductPlusForcing( BASIS_GRAD_TYPE const & dNdX,
+                                                                       real64 const (&var_x_detJ_x_W)[6],
+                                                                       real64 const (&N)[NUM_SUPPORT_POINTS],
+                                                                       real64 const (&forcingTerm_x_detJ)[3],
+                                                                       real64 (& R)[NUM_SUPPORT_POINTS][3] )
 {
   for( int a=0; a<NUM_SUPPORT_POINTS; ++a )
   {
-    R[a][0] = R[a][0] - var_detJq[0] * dNdX[a][0] - var_detJq[5] * dNdX[a][1] - var_detJq[4] * dNdX[a][2] + bodyForce_detJq[0] * N[a];
-    R[a][1] = R[a][1] - var_detJq[5] * dNdX[a][0] - var_detJq[1] * dNdX[a][1] - var_detJq[3] * dNdX[a][2] + bodyForce_detJq[1] * N[a];
-    R[a][2] = R[a][2] - var_detJq[4] * dNdX[a][0] - var_detJq[3] * dNdX[a][1] - var_detJq[2] * dNdX[a][2] + bodyForce_detJq[2] * N[a];
+    R[a][0] = R[a][0] - var_x_detJ_x_W[0] * dNdX[a][0] - var_x_detJ_x_W[5] * dNdX[a][1] - var_x_detJ_x_W[4] * dNdX[a][2] + forcingTerm_x_detJ[0] * N[a];
+    R[a][1] = R[a][1] - var_x_detJ_x_W[5] * dNdX[a][0] - var_x_detJ_x_W[1] * dNdX[a][1] - var_x_detJ_x_W[3] * dNdX[a][2] + forcingTerm_x_detJ[1] * N[a];
+    R[a][2] = R[a][2] - var_x_detJ_x_W[4] * dNdX[a][0] - var_x_detJ_x_W[3] * dNdX[a][1] - var_x_detJ_x_W[2] * dNdX[a][2] + forcingTerm_x_detJ[2] * N[a];
   }
 }
 
+template< int NUM_SUPPORT_POINTS,
+          typename BASIS_GRAD_TYPE >
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void FiniteElementBase::integrateBasisGradientInnerProductPlusForcing( BASIS_GRAD_TYPE const & dNdX,
+                                                                       real64 const (&var_x_detJ_x_W)[3][3],
+                                                                       real64 const (&N)[NUM_SUPPORT_POINTS],
+                                                                       real64 const (&forcingTerm_x_detJ)[3],
+                                                                       real64 (& R)[NUM_SUPPORT_POINTS][3] )
+{
+  for( int a=0; a<NUM_SUPPORT_POINTS; ++a )
+  {
+    R[a][0] = R[a][0] - var_x_detJ_x_W[0][0] * dNdX[a][0] - var_x_detJ_x_W[0][1] * dNdX[a][1] - var_x_detJ_x_W[0][2] * dNdX[a][2] + forcingTerm_x_detJ[0] * N[a];
+    R[a][1] = R[a][1] - var_x_detJ_x_W[1][0] * dNdX[a][0] - var_x_detJ_x_W[1][1] * dNdX[a][1] - var_x_detJ_x_W[1][2] * dNdX[a][2] + forcingTerm_x_detJ[1] * N[a];
+    R[a][2] = R[a][2] - var_x_detJ_x_W[2][0] * dNdX[a][0] - var_x_detJ_x_W[2][1] * dNdX[a][1] - var_x_detJ_x_W[2][2] * dNdX[a][2] + forcingTerm_x_detJ[2] * N[a];
+  }
+}
 }
 }
 

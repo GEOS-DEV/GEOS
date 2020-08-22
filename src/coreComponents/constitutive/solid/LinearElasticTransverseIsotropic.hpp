@@ -19,9 +19,9 @@
 #ifndef GEOSX_CONSTITUTIVE_SOLID_LINEARELASTICTRANSVERSEISOTROPIC_HPP_
 #define GEOSX_CONSTITUTIVE_SOLID_LINEARELASTICTRANSVERSEISOTROPIC_HPP_
 #include "SolidBase.hpp"
-#include "TransverseIsotropicStiffnessHelper.hpp"
 #include "constitutive/ExponentialRelation.hpp"
 #include "LvArray/src/tensorOps.hpp"
+#include "SolidModelHelperTransverseIsotropic.hpp"
 
 namespace geosx
 {
@@ -40,7 +40,7 @@ namespace constitutive
 class LinearElasticTransverseIsotropicUpdates : public SolidBaseUpdates
 {
 public:
-  using StiffnessHelper = TransverseIsotropicStiffnessHelper;
+  using StiffnessHelper = SolidModelHelperTransverseIsotropic;
 
   /**
    * @brief Constructor

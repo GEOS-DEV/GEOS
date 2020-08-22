@@ -259,9 +259,9 @@ public:
     }
 
 #if !defined( USE_JACOBIAN )
-    FE_TYPE::basisGradientInnerProduct( DNDX, stressLocal, stack.fLocal );
+    FE_TYPE::integrateBasisGradientInnerProduct( DNDX, stressLocal, stack.fLocal );
 #else
-    FE_TYPE::basisGradientInnerProduct( q, invJ, stressLocal, stack.fLocal );
+    FE_TYPE::integrateBasisGradientInnerProduct( q, invJ, stressLocal, stack.fLocal );
 #endif
   }
 

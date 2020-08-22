@@ -234,9 +234,6 @@ public:
 
   /**
    * @copydoc geosx::finiteElement::KernelBase::quadraturePointJacobianContribution
-   * @tparam DYNAMICS_LAMBDA The type of the lambda that will generate dynamics
-   *   terms inside the Jacobian loop.
-   * @param dynamicsTerms The lambda that generates dynamics terms.
    * For solid mechanics kernels, the derivative of the force residual wrt
    * the incremental displacement is filled into the local element jacobian.
    */
@@ -249,7 +246,7 @@ public:
     typename CONSTITUTIVE_TYPE::KernelWrapper::StiffnessHelper stiffnessHelper;
 
     stiffnessHelper.setParams( stack.constitutiveStiffness );
-    stiffnessHelper.template BTDB< numNodesPerElem, 3 >( m_dNdX[k][q], m_detJ( k, q ), stack.localJacobian );
+    stiffnessHelper.template BTDB< numNodesPerElem >( m_dNdX[k][q], m_detJ( k, q ), stack.localJacobian );
   }
 
   /**
@@ -289,11 +286,11 @@ public:
 
     real64 N[numNodesPerElem];
     FE_TYPE::shapeFunctionValues( q, N );
-    FE_TYPE::basisGradientInnerProductPlusBody( m_dNdX[k][q],
-                                                stress,
-                                                N,
-                                                gravityForce,
-                                                reinterpret_cast< real64 (&)[numNodesPerElem][3] >(stack.localResidual) );
+    FE_TYPE::integrateBasisGradientInnerProductPlusForcing( m_dNdX[k][q],
+                                                            stress,
+                                                            N,
+                                                            gravityForce,
+                                                            reinterpret_cast< real64 (&)[numNodesPerElem][3] >(stack.localResidual) );
 
   }
 

@@ -34,16 +34,16 @@ set( constitutive_headers
      fluid/ParticleFluidBase.hpp
      fluid/particleFluidSelector.hpp
      fluid/ParticleFluid.hpp
-     solid/FullStiffnessHelper.hpp
-     solid/IsotropicStiffnessHelper.hpp
      solid/LinearElasticAnisotropic.hpp
      solid/LinearElasticIsotropic.hpp
      solid/LinearElasticTransverseIsotropic.hpp
      solid/PoroElastic.hpp
      solid/PoreVolumeCompressibleSolid.hpp
      solid/SolidBase.hpp
-     solid/StiffnessHelperBase.hpp
-     solid/TransverseIsotropicStiffnessHelper.hpp
+     solid/SolidModelHelperBase.hpp
+     solid/SolidModelHelperFullyAnisotroipic.hpp
+     solid/SolidModelHelperIsotropic.hpp
+     solid/SolidModelHelperTransverseIsotropic.hpp
      relativePermeability/RelativePermeabilityBase.hpp
      relativePermeability/BrooksCoreyRelativePermeability.hpp
      relativePermeability/BrooksCoreyBakerRelativePermeability.hpp

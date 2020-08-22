@@ -163,7 +163,7 @@ public:
 
   using FiniteElementBase::symmetricGradient;
   using FiniteElementBase::gradient;
-  using FiniteElementBase::basisGradientInnerProduct;
+  using FiniteElementBase::integrateBasisGradientInnerProduct;
 
 
 
