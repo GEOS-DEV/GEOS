@@ -15,7 +15,7 @@ Injection and production are performed using multi-segmented wells.
 
 At the end of this tutorial you will know:
 
-  - how to import an external mesh with embedded geological properties (permeability) in the Eclipse format (``.grdecl``),
+  - how to import an external mesh with embedded geological properties (porosity and permeability) in the Eclipse format (``.grdecl``),
   - how to set up a multiphase, multicomponent simulation,
   - how to couple reservoir flow with wells.
 
@@ -115,8 +115,8 @@ In the presence of wells, the **Mesh** block of the XML input file includes two 
  - a collection of sub-blocks **InternalWell** defining the geometry of the wells.
 
 In this tutorial, the reservoir mesh is imported from an Eclipse ``.grdecl`` mesh file that
-describes the mesh and also contains the value of the three components of the permeability
-(in the x, y, and z directions) for each cell.
+describes the mesh. It also contains the value of the three components of the permeability
+(in the x, y, and z directions) and the value of the porosity for each cell.
 The import is requested in the **PAMELAMeshGenerator** XML sub-block. The mesh description
 must be done in meters, and the permeability field must be specified in square meters (not in Darcy or milliDarcy).
 More information about the mesh importer can be found in :ref:`Meshes`.
@@ -159,14 +159,15 @@ serving different purposes: solver application, result output, and restart file 
 
 The periodic event named ``solverApplications`` triggers the application of the solvers
 on their target regions. 
-For a coupled simulation, this event must point to the coupling solver by name. Here, we choose
-the name ``coupledFlowAndWells`` in the **Solvers** block.
-We do not specify any time-stepping information here, so the time step is initialized using
-the ``initialDt`` attribute of the coupling solver. Note that all times are in seconds.
-Then, if the solver converges in more than a certain number of nonlinear iterations (by default 16),
-the time step will be increased.
+For a coupled simulation, this event must point to the coupling solver by name.
+The name of the coupling solver is ``coupledFlowAndWells`` and was defined in the **Solvers** block.
+The time step is initialized using the ``initialDt`` attribute of the coupling solver.
+Then, if the solver converges in more than a certain number of nonlinear iterations (by default, 40% of the
+maximum number of nonlinear iterations), the time step will be increased until it reaches the maximum
+time step size specified with ``maxEventDt``. 
 If the time step fails, the time step will be cut. The parameters defining the time stepping strategy
 can be finely tuned by the user in the coupling solver block.
+Note that all times are in seconds.
 
 The output event forces GEOSX to write out the results at the frequency specified by the attribute
 ``timeFrequency``.
@@ -225,7 +226,7 @@ the **ElementRegions** XML block: **CellElementRegion** and **WellElementRegion*
 Here, we define a **CellElementRegion** named ``reservoir`` corresponding to the
 reservoir mesh.
 The attribute ``cellBlocks`` must be set to ``DEFAULT_HEX`` to point this element region
-to the hexahedral mesh corresponding to the bottom layers of SPE10 that we have
+to the hexahedral mesh corresponding to the bottom layers of SPE10 that was
 imported with the **PAMELAMeshGenerator**.
 Note that ``DEFAULT_HEX`` is a name internally defined by the mesh importer to denote the only
 hexahedral region of the reservoir mesh.
@@ -279,6 +280,11 @@ With the tag **BrooksCoreyRelativePermeability**, we define a relative permeabil
 A list of available relative permeability models can be found at
 :ref:`RelativePermeabilityModels`.
 
+The properties are chosen to match those of the original SPE10 test case.
+Note that the current fluid model implemented in GEOSX only supports unit
+viscosities (i.e., 0.001 Pa.s). Therefore, we set the end point of the oil
+relative permeability to 0.1 to preserve the mobility ratio of the SPE10 test case.
+     
 .. note::
         The names and order of the phases listed for the attribute ``phaseNames`` must be identical in the fluid model (here, **BlackOilFluid**) and the relative permeability model (here, **BrooksCoreyRelativePermeability**). Otherwise, GEOSX will throw an error and terminate. 
 
@@ -320,9 +326,10 @@ XML block. In other words, ``component=0`` is used to initialize the oil
 global component fraction, ``component=1`` is used to initialize the gas global
 component fraction, and ``component=2`` is used to initialize the water global
 component fraction, because we previously set ``phaseNames="{oil, gas, water}"``
-in the **BlackOilFluid** XML block.
+in the **BlackOilFluid** XML block. Since the SPE10 test case only involves
+two-phase flow, we set the initial component fraction of gas to zero.
 
-Note that there is no initialization to perform in the wells since the well
+There is no initialization to perform in the wells since the well
 properties are initialized internally using the reservoir initial conditions.
 
 .. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/benchmarks/SPE10/dead_oil_spe10_layers_83_84_85.xml
@@ -408,7 +415,7 @@ This is followed by the creation of the 39600 hexahedral cells of the imported m
   0 >>> 132840 polygons have been created
   0 >>> *** Done
   0 >>> *** Perform partitioning...
-  0 >>> TRIVIAL partioning...
+  0 >>> TRIVIAL partitioning...
   0 >>> Ghost elements...
   0 >>> Clean mesh...
   0 >>> *** Done...
@@ -420,19 +427,22 @@ the code steps into the execution of the simulation itself:
 
 .. code-block:: console
 		
-  Running simulation
-  Time: 0s, dt:10s, Cycle: 0
-    Attempt:  0, NewtonIter:  0 ; 
-
-    Attempt:  0, NewtonIter:  1 ; 
-  Last LinSolve(iter,res) = (  1, 2.22e-16) ; 
-    Attempt:  0, NewtonIter:  2 ; 
-  Last LinSolve(iter,res) = (  1, 2.22e-16) ; 
-    Attempt:  0, NewtonIter:  3 ; 
-  Last LinSolve(iter,res) = (  1, 2.22e-16) ; 
-    Attempt:  0, NewtonIter:  4 ; 
-  Last LinSolve(iter,res) = (  1, 2.22e-16) ; 
-  coupledFlowAndWells: Newton solver converged in less than 16 iterations, time-step required will be doubled.
+  Time: 0s, dt:1000s, Cycle: 0
+    Attempt:  0, NewtonIter:  0
+    ( R ) = ( 6.88e+04 ) ; 
+    Attempt:  0, NewtonIter:  1
+    ( R ) = ( 2.73e+03 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.22e-16 ) ; 
+    Attempt:  0, NewtonIter:  2
+    ( R ) = ( 3.60e+00 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.22e-16 ) ; 
+    Attempt:  0, NewtonIter:  3
+    ( R ) = ( 1.30e-02 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.22e-16 ) ; 
+    Attempt:  0, NewtonIter:  4
+    ( R ) = ( 3.65e-07 ) ; 
+    Last LinSolve(iter,res) = (   1, 2.22e-16 ) ; 
+  coupledFlowAndWells: Newton solver converged in less than 8 iterations, time-step required will be doubled.
 
 ------------------------------------
 Visualization of results
@@ -464,8 +474,7 @@ a `GitHub issue on the project's GitHub page <https://github.com/GEOSX/GEOSX/iss
 
 **Next tutorial**
 
-In the next tutorial :ref:`TutorialDeadOilEgg`, we learn how to run a
-more complex test case based on the Egg model.
+In :ref:`TutorialDeadOilEgg`, we learn how to run a test case based on the Egg model.
 
 **For more details**
 
