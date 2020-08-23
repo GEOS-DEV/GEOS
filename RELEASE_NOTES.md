@@ -19,7 +19,23 @@
 
 Version v0.2.0 -- Release date 2020-06-20
 ==========================================
-Lots of stuff to fill in...
+* Extensive updates to Data Repository.
+* Discretizations
+  * Finite Element Interface
+  * Finite Volume Stencil
+* Physics Solvers
+  * Solid Mechanics Explcit on GPU, Implicit Assembly on GPU
+  * Single Phase Flow
+  * Composiitonal Multiphase Flow
+  * Surface Generation
+    * Topology change (Legacy GEOSX approach)
+    * Embedded Enhanced Assumed Strain
+  * Hydrofracture Solver
+  * Small Strain aligned Contact using Lagrange Multipliers
+* Mesh Structure
+  * Introduced concept of extrinsic mesh data
+  * Fracture Elements to represent FV cells in fracture
+* Proppant modeling 
 
 Version v0.1.0 -- Release date 2018-02-15
 ==========================================
