@@ -155,6 +155,8 @@ using buffer_type = std::vector< buffer_unit_type >;
 
 ///@}
 
+//START_SPHINX_INCLUDE_00
+
 /**
  * @name Aliases for LvArray::Array class family.
  */
@@ -327,6 +329,7 @@ using CRSMatrixView = LvArray::CRSMatrixView< T, COL_INDEX, localIndex const, Lv
 
 ///@}
 
+//END_SPHINX_INCLUDE_00
 
 /**
  * @name Ordered and unordered map types.

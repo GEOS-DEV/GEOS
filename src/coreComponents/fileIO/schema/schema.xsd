@@ -570,13 +570,15 @@
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="LinearSolverParametersType">
-		<!--amgCoarseSolver => AMG coarsest level solver/smoother type-->
+		<!--amgCoarseSolver => AMG coarsest level solver/smoother type
+Available options are: jacobi, gaussSeidel, blockGaussSeidel, chebyshev, direct-->
 		<xsd:attribute name="amgCoarseSolver" type="string" default="direct" />
 		<!--amgNullSpaceType => AMG near null space approximation-->
 		<xsd:attribute name="amgNullSpaceType" type="string" default="constantModes" />
 		<!--amgNumSweeps => AMG smoother sweeps-->
 		<xsd:attribute name="amgNumSweeps" type="integer" default="2" />
-		<!--amgSmootherType => AMG smoother type-->
+		<!--amgSmootherType => AMG smoother type
+Available options are: jacobi, blockJacobi, gaussSeidel, blockGaussSeidel, chebyshev, icc, ilu, ilut-->
 		<xsd:attribute name="amgSmootherType" type="string" default="gaussSeidel" />
 		<!--amgThreshold => AMG strength-of-connection threshold-->
 		<xsd:attribute name="amgThreshold" type="real64" default="0" />
@@ -588,19 +590,24 @@
 		<xsd:attribute name="iluThreshold" type="real64" default="0" />
 		<!--krylovAdaptiveTol => Use Eisenstat-Walker adaptive linear tolerance-->
 		<xsd:attribute name="krylovAdaptiveTol" type="integer" default="0" />
-		<!--krylovMaxIter => Maximum iterations allowed-->
+		<!--krylovMaxIter => Maximum iterations allowed for an iterative solver-->
 		<xsd:attribute name="krylovMaxIter" type="integer" default="200" />
 		<!--krylovMaxRestart => Maximum iterations before restart (GMRES only)-->
 		<xsd:attribute name="krylovMaxRestart" type="integer" default="200" />
-		<!--krylovTol => Relative convergence tolerance-->
+		<!--krylovTol => Relative convergence tolerance of the iterative method
+If the method converges, the iterative solution :math:`\mathsf{x}_k` is such that
+the relative residual norm satisfies:
+:math:`|| \mathsf{b} - `\mathsf{A} \mathsf{x}_k ||_2` < ``tolerance`` * :math:`|| \mathsf{b} ||_2`|-->
 		<xsd:attribute name="krylovTol" type="real64" default="1e-06" />
 		<!--krylovWeakestTol => Weakest-allowed tolerance for adaptive method-->
 		<xsd:attribute name="krylovWeakestTol" type="real64" default="0.001" />
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
-		<!--preconditionerType => Preconditioner type-->
+		<!--preconditionerType => Preconditioner type
+Available options are: none, jacobi, iluk, ilut, icc, amg, mgr, block-->
 		<xsd:attribute name="preconditionerType" type="string" default="iluk" />
-		<!--solverType => Linear solver type-->
+		<!--solverType => Linear solver type
+Available options are: direct, cg, gmres, fgmres, bicgstab, preconditioner-->
 		<xsd:attribute name="solverType" type="string" default="direct" />
 	</xsd:complexType>
 	<xsd:complexType name="NonlinearSolverParametersType">
