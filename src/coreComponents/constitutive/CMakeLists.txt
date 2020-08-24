@@ -40,10 +40,10 @@ set( constitutive_headers
      solid/PoroElastic.hpp
      solid/PoreVolumeCompressibleSolid.hpp
      solid/SolidBase.hpp
-     solid/SolidModelHelperBase.hpp
-     solid/SolidModelHelperFullyAnisotroipic.hpp
-     solid/SolidModelHelperIsotropic.hpp
-     solid/SolidModelHelperTransverseIsotropic.hpp
+     solid/SolidModelDiscretizationOps.hpp
+     solid/SolidModelDiscretizationOpsFullyAnisotroipic.hpp
+     solid/SolidModelDiscretizationOpsIsotropic.hpp
+     solid/SolidModelDiscretizationOpsTransverseIsotropic.hpp
      relativePermeability/RelativePermeabilityBase.hpp
      relativePermeability/BrooksCoreyRelativePermeability.hpp
      relativePermeability/BrooksCoreyBakerRelativePermeability.hpp

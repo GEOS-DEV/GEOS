@@ -21,7 +21,7 @@
 #include "SolidBase.hpp"
 #include "constitutive/ExponentialRelation.hpp"
 #include "LvArray/src/tensorOps.hpp"
-#include "SolidModelHelperTransverseIsotropic.hpp"
+#include "SolidModelDiscretizationOpsTransverseIsotropic.hpp"
 
 namespace geosx
 {
@@ -40,7 +40,7 @@ namespace constitutive
 class LinearElasticTransverseIsotropicUpdates : public SolidBaseUpdates
 {
 public:
-  using StiffnessHelper = SolidModelHelperTransverseIsotropic;
+  using DiscretizationOps = SolidModelDiscretizationOpsTransverseIsotropic;
 
   /**
    * @brief Constructor
@@ -126,6 +126,17 @@ public:
     c[4][4] = m_c44[k];
     c[5][5] = m_c66[k];
   }
+
+  void setDiscretizationOps( localIndex const k,
+                             DiscretizationOps & discOps )
+  {
+    discOps.m_c11 = m_c11[k];
+    discOps.m_c13 = m_c13[k];
+    discOps.m_c33 = m_c33[k];
+    discOps.m_c44 = m_c44[k];
+    discOps.m_c66 = m_c66[k];
+  }
+
 
 private:
   /// A reference to the ArrayView holding c11 for each element.

@@ -243,7 +243,7 @@ public:
                                             localIndex const q,
                                             StackVariables & stack ) const
   {
-    typename CONSTITUTIVE_TYPE::KernelWrapper::StiffnessHelper stiffnessHelper;
+    typename CONSTITUTIVE_TYPE::KernelWrapper::DiscretizationOps stiffnessHelper;
 
     stiffnessHelper.setParams( stack.constitutiveStiffness );
     stiffnessHelper.template BTDB< numNodesPerElem >( m_dNdX[k][q], m_detJ( k, q ), stack.localJacobian );

@@ -21,7 +21,7 @@
 #include "SolidBase.hpp"
 #include "constitutive/ExponentialRelation.hpp"
 #include "LvArray/src/tensorOps.hpp"
-#include "SolidModelHelperIsotropic.hpp"
+#include "SolidModelDiscretizationOpsIsotropic.hpp"
 
 namespace geosx
 {
@@ -38,7 +38,7 @@ namespace constitutive
 class LinearElasticIsotropicUpdates : public SolidBaseUpdates
 {
 public:
-  using StiffnessHelper = SolidModelHelperIsotropic;
+  using DiscretizationOps = SolidModelDiscretizationOpsIsotropic;
 
   /**
    * @brief Constructor
@@ -127,6 +127,15 @@ public:
     c[4][4] = G;
 
     c[5][5] = G;
+  }
+
+  void setDiscretizationOps( localIndex const k,
+                             DiscretizationOps & discOps )
+  {
+    real64 const G = m_shearModulus[k];
+    real64 const Lame = m_bulkModulus[k] - 2.0/3.0 * G;
+    discOps.m_lambda = Lame;
+    discOps.m_shearModulus = G;
   }
 
   GEOSX_HOST_DEVICE
