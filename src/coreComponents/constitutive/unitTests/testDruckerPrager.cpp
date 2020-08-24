@@ -62,7 +62,7 @@ TEST( DruckerPragerTests, testModel )
   disc.resize( numElem );
   
   DruckerPrager & cm = *(constitutiveManager.GetConstitutiveRelation<DruckerPrager>("granite"));
-  cm.AllocateConstitutiveData( &disc, numQuad );
+  cm.allocateConstitutiveData( &disc, numQuad );
   
   EXPECT_EQ( cm.size(), numElem );
   EXPECT_EQ( cm.numQuadraturePoints(), numQuad );
