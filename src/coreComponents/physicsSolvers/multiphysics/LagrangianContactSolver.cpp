@@ -1304,8 +1304,7 @@ void LagrangianContactSolver::
 
       forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const kfe )
       {
-        localIndex const kf0 = elemsToFaces[kfe][0];
-        localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( kf0 );
+        localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( elemsToFaces[kfe][0] );
 
         globalIndex rowDOF[12];
         real64 nodeRHS[12];
