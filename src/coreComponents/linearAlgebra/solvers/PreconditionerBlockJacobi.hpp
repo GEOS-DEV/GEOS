@@ -50,7 +50,10 @@ public:
     setBlockSize( blockSize );
   }
 
-  virtual ~PreconditionerBlockJacobi() = default;
+  virtual ~PreconditionerBlockJacobi()
+  {
+    delete m_blockDiag;
+  }
 
   /**
    * @brief Set the block size.
@@ -134,7 +137,6 @@ public:
   virtual void clear() override
   {
     m_blockDiag->reset();
-    delete m_blockDiag;
   }
 
   /**

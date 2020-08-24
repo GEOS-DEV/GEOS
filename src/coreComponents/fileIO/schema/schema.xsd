@@ -597,7 +597,7 @@ Available options are: jacobi, blockJacobi, gaussSeidel, blockGaussSeidel, cheby
 		<!--krylovTol => Relative convergence tolerance of the iterative method
 If the method converges, the iterative solution :math:`\mathsf{x}_k` is such that
 the relative residual norm satisfies:
-:math:`|| \mathsf{b} - `\mathsf{A} \mathsf{x}_k ||_2` < ``tolerance`` * :math:`|| \mathsf{b} ||_2`|-->
+:math:`\left\lVert \mathsf{b} - \mathsf{A} \mathsf{x}_k \right\rVert_2` < ``krylovTol`` * :math:`\left\lVert\mathsf{b}\right\rVert_2`-->
 		<xsd:attribute name="krylovTol" type="real64" default="1e-06" />
 		<!--krylovWeakestTol => Weakest-allowed tolerance for adaptive method-->
 		<xsd:attribute name="krylovWeakestTol" type="real64" default="0.001" />

@@ -39,7 +39,10 @@ public:
   /// Alias for matrix type
   using Matrix = typename Base::Matrix;
 
-  virtual ~PreconditionerJacobi() = default;
+  virtual ~PreconditionerJacobi()
+  {
+    delete m_diag;
+  }
 
   /**
    * @brief Compute the preconditioner from a matrix.
@@ -78,8 +81,7 @@ public:
    */
   virtual void clear() override
   {
-    delete m_diag;
-    m_diag = nullptr;
+    m_diag->reset();
   }
 
   /**
