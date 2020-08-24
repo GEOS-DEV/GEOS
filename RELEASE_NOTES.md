@@ -20,22 +20,32 @@
 Version v0.2.0 -- Release date 2020-06-20
 ==========================================
 * Extensive updates to Data Repository.
-* Discretizations
+* Discretization:
   * Finite Element Interface
-  * Finite Volume Stencil
+    * Kernel launching interface looping abstraction.
+    * Element Formulations for 1st order:
+      * 8 node hexahedron
+      * 6 node wedge
+      * 5 node pyramid
+      * 4 node tetrahedron
+  * Finite Volume Stencils (TPFA, infrastructure support for MPFA, but currently 
+    not implemented.)
 * Physics Solvers
-  * Solid Mechanics Explcit on GPU, Implicit Assembly on GPU
-  * Single Phase Flow
-  * Composiitonal Multiphase Flow
+  * Solid Mechanics Explicit on GPU, Implicit Assembly on GPU
+  * Single Phase Flow (Assembly on GPU)
+  * Compositional Multiphase Flow (Assembly on GPU)
   * Surface Generation
-    * Topology change (Legacy GEOSX approach)
-    * Embedded Enhanced Assumed Strain
-  * Hydrofracture Solver
+    * Topology change (Legacy GEOS approach)
+    * Enriched Finite Element Method
+  * Hydrofracture Solver (Legacy GEOS approach)
   * Small Strain aligned Contact using Lagrange Multipliers
 * Mesh Structure
   * Introduced concept of extrinsic mesh data
   * Fracture Elements to represent FV cells in fracture
-* Proppant modeling 
+* Proppant modeling
+* VTK output
+* Linear Algebra Interface layers for Hypre, Trilinos, Petsc
+
 
 Version v0.1.0 -- Release date 2018-02-15
 ==========================================
@@ -44,8 +54,9 @@ Initial Code Release containing:
   * Group
   * Wrapper
   * Input processing 
-* Physics Solver hierarcy
+* Physics Solver hierarchy
   * Solid Mechanics
 * Mesh data structure
   * NodeManager, EdgeManager, FaceManager, ElementManager
   * Silo Output
+
