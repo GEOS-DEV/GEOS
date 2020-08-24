@@ -915,13 +915,13 @@ public:
    */
   arrayView1d< integer > const & getDomainBoundaryIndicator()
   {
-    return getReference< array1d< integer > >( viewKeyStruct::domainBoundaryIndicatorString ).toView();
+    return m_domainBoundaryIndicator.toView();
   }
 
   /// @copydoc getDomainBoundaryIndicator()
   arrayView1d< integer const > const & getDomainBoundaryIndicator() const
   {
-    return getReference< array1d< integer > >( viewKeyStruct::domainBoundaryIndicatorString ).toViewConst();
+    return m_domainBoundaryIndicator.toViewConst();
   }
 
 protected:
@@ -939,6 +939,9 @@ protected:
 
   /// Array that holds if an object is external.
   array1d< integer > m_isExternal;
+
+  /// Domain boundary indicator: 1 means the "index" is on the boundary.
+  array1d< integer > m_domainBoundaryIndicator;
 
   /**
    * @brief Array that holds the ghost information about each object.

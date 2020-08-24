@@ -34,6 +34,7 @@ ObjectManagerBase::ObjectManagerBase( std::string const & name,
   m_localToGlobalMap(),
   m_globalToLocalMap(),
   m_isExternal(),
+  m_domainBoundaryIndicator(),
   m_ghostRank(),
   m_neighborData()
 {
@@ -52,7 +53,7 @@ ObjectManagerBase::ObjectManagerBase( std::string const & name,
     setApplyDefaultValue( -2 )->
     setPlotLevel( PlotLevel::LEVEL_0 );
 
-  registerWrapper< array1d< integer > >( viewKeyStruct::domainBoundaryIndicatorString );
+  registerWrapper< array1d< integer > >( viewKeyStruct::domainBoundaryIndicatorString, &m_domainBoundaryIndicator );
 
   m_sets.registerWrapper< SortedArray< localIndex > >( this->m_ObjectManagerBaseViewKeys.externalSet );
 }
