@@ -28,7 +28,6 @@ set(managers_headers
     ObjectManagerBase.hpp
     ProblemManager.hpp
     NumericalMethodsManager.hpp
-    FieldSpecification/CopyField.hpp
     FieldSpecification/FieldSpecificationBase.hpp
     FieldSpecification/FieldSpecificationManager.hpp
     FieldSpecification/DirichletBoundaryCondition.hpp
@@ -65,7 +64,6 @@ set(managers_sources
     ObjectManagerBase.cpp
     ProblemManager.cpp
     NumericalMethodsManager.cpp
-    FieldSpecification/CopyField.cpp
     FieldSpecification/FieldSpecificationBase.cpp
     FieldSpecification/FieldSpecificationManager.cpp
     FieldSpecification/DirichletBoundaryCondition.cpp

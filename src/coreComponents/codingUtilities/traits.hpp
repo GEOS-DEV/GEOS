@@ -162,6 +162,14 @@ constexpr bool is_sorted_array = LvArray::isSortedArray< T >;
 template< typename T >
 constexpr bool is_sorted_array_view = LvArray::isSortedArrayView< T >;
 
+/// True if T is an instantiation of LvArray::ArrayView or LvArray::Array
+template< typename T >
+constexpr bool is_array_type = traits::is_array_view< T > || traits::is_array< T >;
+
+/// True if T is an instantiation of LvArray::SortedArrayView or LvArray::SortedArray
+template< typename T >
+constexpr bool is_sorted_array_type = traits::is_sorted_array_view< T > || traits::is_sorted_array< T >;
+
 /// True if T is a Tensor class.
 template< typename T >
 constexpr bool is_tensorT = std::is_same< std::remove_const_t< T >, R1Tensor >::value;

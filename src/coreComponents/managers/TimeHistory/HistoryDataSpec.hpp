@@ -157,25 +157,11 @@ private:
 };
 
 /**
- * @brief Whether the type is a supported array type.
- * @tparam T The type to check.
- */
-template< typename T >
-constexpr bool is_array_type = traits::is_array_view< T > || traits::is_array< T >;
-
-/**
- * @brief Whether the type is a supported sorted array (set) type.
- * @tparam T The type to check.
- */
-template< typename T >
-constexpr bool is_sorted_array_type = traits::is_sorted_array_view< T > || traits::is_sorted_array< T >;
-
-/**
  * @brief Whether the type is a supported container for history collection and io operations.
  * @tparam T The type to check.
  */
 template< typename T >
-constexpr bool can_history_io_container = ( is_array_type< T > || is_sorted_array_type< T > );
+constexpr bool can_history_io_container = ( traits::is_array_type< T > || traits::is_sorted_array_type< T > );
 
 /**
  * @brief Produce a HistoryMetadata object for a supported one-dimensional array type.
@@ -224,7 +210,7 @@ getHistoryMetadata( string const & name, SortedArrayView< T const > const & arr,
  */
 template< typename ARRAY_T >
 inline
-typename std::enable_if< ( is_array_type< ARRAY_T >) && (ARRAY_T::NDIM > 1) && can_history_io< typename ARRAY_T::value_type >, HistoryMetadata >::type
+typename std::enable_if< ( traits::is_array_type< ARRAY_T >) && (ARRAY_T::NDIM > 1) && can_history_io< typename ARRAY_T::value_type >, HistoryMetadata >::type
 getHistoryMetadata( string const & name, ARRAY_T const & arr, localIndex sizeOverride = -1 )
 {
   localIndex perIndexSize = arr[ 0 ].size( );
