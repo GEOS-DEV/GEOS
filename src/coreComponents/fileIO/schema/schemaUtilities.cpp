@@ -55,10 +55,6 @@ void ConvertDocumentationToSchema( std::string const & fname,
   schemaTree.load_string( schemaBase.c_str());
   xmlWrapper::xmlNode schemaRoot = schemaTree.child( "xsd:schema" );
 
-  // Build the simple schema types
-  GEOSX_LOG_RANK_0( "  Basic datatypes" );
-  BuildSimpleSchemaTypes( schemaRoot );
-
   // Recursively build the schema from the data structure skeleton
   GEOSX_LOG_RANK_0( "  Data structure layout" );
   SchemaConstruction( group, schemaRoot, schemaRoot, documentationType );
@@ -74,7 +70,7 @@ void AppendSimpleType( xmlWrapper::xmlNode & schemaRoot,
                        string const & name,
                        string const & regex )
 {
-  std::string const advanced_match_string = ".*[\\[\\]`$].*|";
+  std::string const advanced_match_string = R"r(.*[\[\]`$].*|)r";
 
   xmlWrapper::xmlNode newNode = schemaRoot.append_child( "xsd:simpleType" );
   newNode.append_attribute( "name" ) = name.c_str();
@@ -86,7 +82,7 @@ void AppendSimpleType( xmlWrapper::xmlNode & schemaRoot,
   if( regex.empty() )
   {
     GEOSX_WARNING( "schema regex not defined for " << name );
-    patternNode.append_attribute( "value" ) = "(?s).*";
+    patternNode.append_attribute( "value" ) = ".*";
   }
   else
   {
@@ -94,16 +90,6 @@ void AppendSimpleType( xmlWrapper::xmlNode & schemaRoot,
     patternNode.append_attribute( "value" ) = patternString.c_str();
   }
 }
-
-void BuildSimpleSchemaTypes( xmlWrapper::xmlNode schemaRoot )
-{
-  rtTypes::typeRegex typeRegex;
-  for( auto const & regex : typeRegex )
-  {
-    AppendSimpleType( schemaRoot, regex.first, regex.second );
-  }
-}
-
 
 void SchemaConstruction( Group * const group,
                          xmlWrapper::xmlNode schemaRoot,
@@ -226,20 +212,21 @@ void SchemaConstruction( Group * const group,
             xmlWrapper::xmlNode attributeNode = targetTypeDefNode.append_child( "xsd:attribute" );
             attributeNode.append_attribute( "name" ) = attributeName.c_str();
 
-            std::string const wrappedTypeName = rtTypes::typeNames( wrapper->get_typeid() );
-            std::string const xmlSafeName = std::regex_replace( wrappedTypeName, std::regex( "::" ), "_" );
-            GEOSX_LOG_VAR( wrappedTypeName );
-            GEOSX_LOG_VAR( xmlSafeName );
-            attributeNode.append_attribute( "type" ) = xmlSafeName.c_str();
+            // Get the XML-safe type name, drop all geosx namespace prefies for brevity
+            std::string attTypeName = ( documentationType == 1 ) ? wrapper->typeName() : wrapper->typeNameXML();
+            attTypeName = std::regex_replace( attTypeName, std::regex("geosx_"), "" );
+
+            GEOSX_LOG_VAR( attTypeName );
+            attributeNode.append_attribute( "type" ) = attTypeName.c_str();
 
             // Check if the attribute has a previously unseen non-simple type with a custom validation regex
-            if( schemaRoot.find_child_by_attribute( "xsd:simpleType", "name", xmlSafeName.c_str() ).empty() )
+            if( schemaRoot.find_child_by_attribute( "xsd:simpleType", "name", attTypeName.c_str() ).empty() )
             {
               string const regex = wrapper->typeRegex();
-              if( !regex.empty() )
+              //if( !regex.empty() )
               {
                 // Append a new simpleType with a custom regex
-                AppendSimpleType( schemaRoot, xmlSafeName, regex );
+                AppendSimpleType( schemaRoot, attTypeName, regex );
               }
             }
 

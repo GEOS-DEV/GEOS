@@ -1,15 +1,15 @@
 
 
-======= ============== ========================== 
-Name    Type           Description                
-======= ============== ========================== 
-c11     real64_array   Elastic Bulk Modulus Field 
-c13     real64_array   Elastic Bulk Modulus Field 
-c33     real64_array   Elastic Bulk Modulus Field 
-c44     real64_array   Elastic Bulk Modulus Field 
-c66     real64_array   Elastic Bulk Modulus Field 
-density real64_array2d Material Density           
-stress  real64_array3d Material Stress            
-======= ============== ========================== 
+======= ================================================================= ========================== 
+Name    Type                                                              Description                
+======= ================================================================= ========================== 
+c11     Array< double, 1, int_seq< long, 0l >, long, ChaiBuffer >         Elastic Bulk Modulus Field 
+c13     Array< double, 1, int_seq< long, 0l >, long, ChaiBuffer >         Elastic Bulk Modulus Field 
+c33     Array< double, 1, int_seq< long, 0l >, long, ChaiBuffer >         Elastic Bulk Modulus Field 
+c44     Array< double, 1, int_seq< long, 0l >, long, ChaiBuffer >         Elastic Bulk Modulus Field 
+c66     Array< double, 1, int_seq< long, 0l >, long, ChaiBuffer >         Elastic Bulk Modulus Field 
+density Array< double, 2, int_seq< long, 0l, 1l >, long, ChaiBuffer >     Material Density           
+stress  Array< double, 3, int_seq< long, 0l, 1l, 2l >, long, ChaiBuffer > Material Stress            
+======= ================================================================= ========================== 
 
 

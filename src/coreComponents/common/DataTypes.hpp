@@ -27,7 +27,9 @@
 #include "common/GeosxMacros.hpp"
 #include "common/BufferAllocator.hpp"
 #include "common/DataLayouts.hpp"
-#include "Logger.hpp"
+#include "common/Logger.hpp"
+#include "common/Path.hpp"
+
 #include "LvArray/src/Macros.hpp"
 #include "LvArray/src/Array.hpp"
 #include "LvArray/src/ArrayOfArrays.hpp"
@@ -40,7 +42,6 @@
 #include "LvArray/src/ChaiBuffer.hpp"
 
 #include "math/TensorT/TensorT.h"
-#include "Path.hpp"
 
 // TPL includes
 #include <camp/camp.hpp>
@@ -62,6 +63,7 @@
 #include <unordered_map>
 #include <vector>
 #include <set>
+#include <regex>
 
 /**
  * top level geosx namespace contains all code that is specific to GEOSX
@@ -491,58 +493,6 @@ class rtTypes
 public:
 
   /**
-   * @brief Convert a @p std::type_index to a string.
-   * @param key the std::type_index of the type
-   * @return a hard coded string that is related to the std::type_index
-   */
-  static std::string typeNames( std::type_index const key )
-  {
-    const std::unordered_map< std::type_index, std::string > type_names =
-    {
-      {std::type_index( typeid(integer)), "integer"},
-      {std::type_index( typeid(real32)), "real32"},
-      {std::type_index( typeid(real64)), "real64"},
-      {std::type_index( typeid(localIndex)), "localIndex"},
-      {std::type_index( typeid(globalIndex)), "globalIndex"},
-      {std::type_index( typeid(R1Tensor)), "R1Tensor"},
-      {std::type_index( typeid(integer_array)), "integer_array"},
-      {std::type_index( typeid(real32_array)), "real32_array"},
-      {std::type_index( typeid(real64_array)), "real64_array"},
-      {std::type_index( typeid(localIndex_array)), "localIndex_array"},
-      {std::type_index( typeid(globalIndex_array)), "globalIndex_array"},
-      {std::type_index( typeid(r1_array)), "r1_array"},
-      {std::type_index( typeid(integer_array2d)), "integer_array2d"},
-      {std::type_index( typeid(real32_array2d)), "real32_array2d"},
-      {std::type_index( typeid(real64_array2d)), "real64_array2d"},
-      {std::type_index( typeid(localIndex_array2d)), "localIndex_array2d"},
-      {std::type_index( typeid(globalIndex_array2d)), "globalIndex_array2d"},
-      {std::type_index( typeid(integer_array3d)), "integer_array3d"},
-      {std::type_index( typeid(real32_array3d)), "real32_array3d"},
-      {std::type_index( typeid(real64_array3d)), "real64_array3d"},
-      {std::type_index( typeid(localIndex_array3d)), "localIndex_array3d"},
-      {std::type_index( typeid(globalIndex_array3d)), "globalIndex_array3d"},
-      {std::type_index( typeid(r1_array2d)), "r1_array2d"},
-      {std::type_index( typeid(string)), "string"},
-      {std::type_index( typeid(Path)), "path"},
-      {std::type_index( typeid(string_array)), "string_array"},
-      {std::type_index( typeid(path_array)), "path_array"},
-      {std::type_index( typeid(mapPair_array)), "mapPair_array"}
-    };
-
-    // If the data type is not defined here, return type_info.name()
-    auto tmp = type_names.find( key );
-    if( tmp != type_names.end())
-    {
-      return type_names.at( key );
-    }
-    else
-    {
-      return LvArray::system::demangle( key.name());
-    }
-  }
-
-
-  /**
    * @brief A set of enums for each geosx defined data type.
    */
   enum class TypeIDs
@@ -567,7 +517,7 @@ public:
     globalIndex_array2d_id,//!< globalIndex_array2d_id
     real32_array2d_id,     //!< real32_array2d_id
     real64_array2d_id,     //!< real64_array2d_id
-    real64_array2d_ji_id,   //!< real64_array2d_ji_id
+    real64_array2d_ji_id,  //!< real64_array2d_ji_id
     r1_array2d_id,         //!< r1_array2d_id
 
     integer_array3d_id,    //!< integer_array3d_id
@@ -575,7 +525,7 @@ public:
     globalIndex_array3d_id,//!< globalIndex_array3d_id
     real32_array3d_id,     //!< real32_array3d_id
     real64_array3d_id,     //!< real64_array3d_id
-    real64_array3d_kji_id,  //!< real64_array3d_kji_id
+    real64_array3d_kji_id, //!< real64_array3d_kji_id
 
     string_id,           //!< string_id
     Path_id,             //!< Path_id
@@ -595,8 +545,8 @@ public:
     const std::unordered_map< std::type_index, TypeIDs > type_names =
     {
       { std::type_index( typeid(integer)), TypeIDs::integer_id },
-      { std::type_index( typeid(localIndex)), TypeIDs::real32_id },
-      { std::type_index( typeid(globalIndex)), TypeIDs::real64_id },
+      { std::type_index( typeid(localIndex)), TypeIDs::localIndex_id },
+      { std::type_index( typeid(globalIndex)), TypeIDs::globalIndex_id },
       { std::type_index( typeid(real32)), TypeIDs::real32_id },
       { std::type_index( typeid(real64)), TypeIDs::real64_id },
       { std::type_index( typeid(R1Tensor)), TypeIDs::r1Tensor_id },
@@ -638,132 +588,6 @@ public:
       return TypeIDs::none_id;
     }
   }
-
-  /**
-   * @brief Matching regex for data types in xml.
-   */
-  class typeRegex
-  {
-public:
-
-    /// The type of map used to store the map of type parsing regular expressions
-    using regexMapType = std::map< std::string, std::string >;
-
-    /**
-     * @brief Get an iterator to the beginning of regex map.
-     * @return
-     */
-    regexMapType::iterator begin(){return regexMap.begin();}
-
-    /**
-     * @brief Get an iterator to the end of regex map.
-     * @return
-     */
-    regexMapType::iterator end(){return regexMap.end();}
-
-    /**
-     * @brief Get a const iterator to the beginning of regex map.
-     * @return
-     */
-    regexMapType::const_iterator begin() const {return regexMap.begin();}
-
-    /**
-     * @brief Get a const iterator to the end of regex map.
-     * @return
-     */
-    regexMapType::const_iterator end() const {return regexMap.end();}
-
-private:
-
-    /**
-     * @brief Build Array regexes.
-     * @param subPattern
-     * @param dimension
-     * @return
-     *
-     * @note The sub pattern is the base object you are targeting.  It can either
-     *       be a simple type or a lower-dimensional array. Sub-elements and
-     *       axes are given as a comma-separated list enclosed in a curly brace.
-     *       For example, a 2D string array would look like: {{"a", "b"}, {"c", "d"}}
-     */
-    std::string constructArrayRegex( std::string subPattern, integer dimension )
-    {
-      if( dimension > 1 )
-      {
-        subPattern = constructArrayRegex( subPattern, dimension-1 );
-      }
-
-      std::string arrayPattern;
-      if( dimension == 1 )
-      {
-        // Allow the bottom-level to be empty
-        arrayPattern = "\\{\\s*((" + subPattern + ",\\s*)*" + subPattern + ")?\\s*\\}";
-      }
-      else
-      {
-        arrayPattern = "\\{\\s*(" + subPattern + ",\\s*)*" + subPattern + "\\s*\\}";
-      }
-
-      return arrayPattern;
-    }
-
-    // Define the component regexes:
-    // Regex to match an unsigned int (123, etc.)
-    std::string ru = "[\\d]+";
-
-    // Regex to match an signed int (-123, 455, +789, etc.)
-    std::string ri = "[+-]?[\\d]+";
-
-    // Regex to match a float (1, +2.3, -.4, 5.6e7, 8E-9, etc.)
-    // Explanation of parts:
-    // [+-]?[\\d]*  matches an optional +/- at the beginning, any numbers preceding the decimal
-    // ([\\d]\\.?|\\.[\\d]) matches the decimal region of the number (0, 1., 2.3, .4)
-    // [\\d]*  matches any number of numbers following the decimal
-    // ([eE][-+]?[\\d]+|\\s*)  matches an optional scientific notation number
-    // Note: the xsd regex implementation does not allow an empty branch, so use allow whitespace at the end
-    std::string rr = "[+-]?[\\d]*([\\d]\\.?|\\.[\\d])[\\d]*([eE][-+]?[\\d]+|\\s*)";
-
-    // Regex to match a string that does not contain the characters  ,{}
-    std::string rs = "[^,\\{\\}]*";
-
-    // Regex to match a R1Tensor
-    std::string r1 = "\\s*(" + rr + ",\\s*){2}" + rr;
-
-    // Build master list of regexes
-    regexMapType regexMap =
-    {
-      {"integer", ri},
-      {"localIndex", ri},
-      {"globalIndex", ri},
-      {"real32", rr},
-      {"real64", rr},
-      {"R1Tensor", r1},
-      {"integer_array", constructArrayRegex( ri, 1 )},
-      {"localIndex_array", constructArrayRegex( ri, 1 )},
-      {"globalIndex_array", constructArrayRegex( ri, 1 )},
-      {"real32_array", constructArrayRegex( rr, 1 )},
-      {"real64_array", constructArrayRegex( rr, 1 )},
-      {"r1_array", constructArrayRegex( r1, 1 )},
-      {"integer_array2d", constructArrayRegex( ri, 2 )},
-      {"localIndex_array2d", constructArrayRegex( ri, 2 )},
-      {"globalIndex_array2d", constructArrayRegex( ri, 2 )},
-      {"real32_array2d", constructArrayRegex( rr, 2 )},
-      {"real64_array2d", constructArrayRegex( rr, 2 )},
-      {"r1_array2d", constructArrayRegex( r1, 2 )},
-      {"integer_array3d", constructArrayRegex( ri, 3 )},
-      {"localIndex_array3d", constructArrayRegex( ri, 3 )},
-      {"globalIndex_array3d", constructArrayRegex( ri, 3 )},
-      {"real32_array3d", constructArrayRegex( rr, 3 )},
-      {"real64_array3d", constructArrayRegex( rr, 3 )},
-      {"string", rs},
-      {"path", rs},
-      {"string_array", constructArrayRegex( rs, 1 )},
-      {"path_array", constructArrayRegex( rs, 1 )},
-      {"mapPair", rs},
-      {"mapPair_array", constructArrayRegex( rs, 1 )},
-      {"geosx_dataRepository_PlotLevel", ri}
-    };
-  };
 
   /**
    * @brief this function provides a switchyard for the intrinsic supported GEOSX array types which calls a generic
@@ -924,56 +748,7 @@ private:
 
 };
 
-/**
- * @brief Extension point for custom types to provide a validation regexp to schema.
- * @tparam T the type for which the regex is defined
- * @tparam ENABLE used to conditionally enable partial specializations
- *
- * Specializations should define the following method:
- * \code{cpp}
- *   static string get();
- * \endcode
- */
-template< typename T, typename ENABLE = void >
-struct TypeRegex
-{
-  /**
-   * @brief Get the type's regex (default implementation).
-   * @return empty string, indicating no custom regex
-   */
-  static string get() { return {}; }
-};
-
-/**
- * @brief Utility class for querying type names at runtime.
- * @tparam T the target type
- *
- * This relies on LvArray's demangling facilities and simply
- * adds some convenience methods like getting the brief name.
- */
-template< typename T >
-struct TypeName
-{
-  /**
-   * @brief @return Full name of the type.
-   */
-  static string full()
-  {
-    return ::LvArray::system::demangle( typeid( T ).name() );
-  }
-
-  /**
-   * @brief @return brief name of the type (ignoring namespaces).
-   */
-  static string brief()
-  {
-    string const full_name = full();
-    string::size_type const pos = full_name.find_last_of( "::" );
-    return ( pos == string::npos ) ? full_name : full_name.substr( pos );
-  }
-};
-
-}
+} // namespace geosx
 
 
 

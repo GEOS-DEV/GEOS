@@ -1,14 +1,14 @@
 
 
-==================== ============== ========================== 
-Name                 Type           Description                
-==================== ============== ========================== 
-BulkModulus          real64_array   Elastic Bulk Modulus Field 
-ShearModulus         real64_array   Elastic Shear Modulus      
-dPVMult_dDensity     real64_array2d (no description available) 
-density              real64_array2d Material Density           
-poreVolumeMultiplier real64_array2d (no description available) 
-stress               real64_array3d Material Stress            
-==================== ============== ========================== 
+==================== ================================================================= ========================== 
+Name                 Type                                                              Description                
+==================== ================================================================= ========================== 
+BulkModulus          Array< double, 1, int_seq< long, 0l >, long, ChaiBuffer >         Elastic Bulk Modulus Field 
+ShearModulus         Array< double, 1, int_seq< long, 0l >, long, ChaiBuffer >         Elastic Shear Modulus      
+dPVMult_dDensity     Array< double, 2, int_seq< long, 0l, 1l >, long, ChaiBuffer >     (no description available) 
+density              Array< double, 2, int_seq< long, 0l, 1l >, long, ChaiBuffer >     Material Density           
+poreVolumeMultiplier Array< double, 2, int_seq< long, 0l, 1l >, long, ChaiBuffer >     (no description available) 
+stress               Array< double, 3, int_seq< long, 0l, 1l, 2l >, long, ChaiBuffer > Material Stress            
+==================== ================================================================= ========================== 
 
 

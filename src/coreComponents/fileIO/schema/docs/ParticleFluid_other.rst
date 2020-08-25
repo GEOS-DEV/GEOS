@@ -1,15 +1,15 @@
 
 
-======================================= ============== ========================== 
-Name                                    Type           Description                
-======================================= ============== ========================== 
-collisionFactor                         real64_array   (no description available) 
-dCollisionFactor_dProppantConcentration real64_array   (no description available) 
-dSettlingFactor_dComponentConcentration real64_array2d (no description available) 
-dSettlingFactor_dPressure               real64_array   (no description available) 
-dSettlingFactor_dProppantConcentration  real64_array   (no description available) 
-proppantPackPermeability                real64_array   (no description available) 
-settlingFactor                          real64_array   (no description available) 
-======================================= ============== ========================== 
+======================================= ============================================================= ========================== 
+Name                                    Type                                                          Description                
+======================================= ============================================================= ========================== 
+collisionFactor                         Array< double, 1, int_seq< long, 0l >, long, ChaiBuffer >     (no description available) 
+dCollisionFactor_dProppantConcentration Array< double, 1, int_seq< long, 0l >, long, ChaiBuffer >     (no description available) 
+dSettlingFactor_dComponentConcentration Array< double, 2, int_seq< long, 0l, 1l >, long, ChaiBuffer > (no description available) 
+dSettlingFactor_dPressure               Array< double, 1, int_seq< long, 0l >, long, ChaiBuffer >     (no description available) 
+dSettlingFactor_dProppantConcentration  Array< double, 1, int_seq< long, 0l >, long, ChaiBuffer >     (no description available) 
+proppantPackPermeability                Array< double, 1, int_seq< long, 0l >, long, ChaiBuffer >     (no description available) 
+settlingFactor                          Array< double, 1, int_seq< long, 0l >, long, ChaiBuffer >     (no description available) 
+======================================= ============================================================= ========================== 
 
 

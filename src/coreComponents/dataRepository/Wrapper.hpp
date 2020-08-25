@@ -24,6 +24,7 @@
 #include "KeyNames.hpp"
 #include "LvArray/src/limits.hpp"
 #include "common/DataTypes.hpp"
+#include "common/TypeName.hpp"
 #include "codingUtilities/SFINAE_Macros.hpp"
 #include "LvArray/src/Macros.hpp"
 #include "BufferOps.hpp"
@@ -515,6 +516,12 @@ public:
   { return wrapperHelpers::move( reference(), space, touch ); }
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
+  virtual string typeName() const override
+  { return TypeName< T >::full(); }
+
+  virtual string typeNameXML() const override
+  { return TypeName< T >::safe(); }
+
   virtual string typeRegex() const override
   { return TypeRegex< T >::get(); }
 
@@ -663,7 +670,7 @@ public:
   virtual std::string getDefaultValueString() const override
   {
     // Find the dimensionality of the wrapper value
-    std::string wrapper_type = rtTypes::typeNames( std::type_index( get_typeid()));
+    std::string const wrapper_type = typeNameXML();
     integer value_dim = 0;
     if( wrapper_type.find( "array3d" ) != std::string::npos )
     {

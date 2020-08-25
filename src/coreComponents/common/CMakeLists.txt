@@ -11,6 +11,7 @@ set(common_headers
     GeosxMacros.hpp
     Stopwatch.hpp
     TimingMacros.hpp
+    TypeName.hpp
     Logger.hpp
     DataLayouts.hpp
    )

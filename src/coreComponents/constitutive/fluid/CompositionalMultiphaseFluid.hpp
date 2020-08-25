@@ -19,6 +19,7 @@
 #ifndef GEOSX_CONSTITUTIVE_FLUID_COMPOSITIONALMULTIPHASEFLUID_HPP_
 #define GEOSX_CONSTITUTIVE_FLUID_COMPOSITIONALMULTIPHASEFLUID_HPP_
 
+#include "common/EnumStrings.hpp"
 #include "constitutive/fluid/MultiFluidPVTPackageWrapper.hpp"
 
 namespace geosx
@@ -29,6 +30,12 @@ namespace constitutive
 class CompositionalMultiphaseFluid : public MultiFluidPVTPackageWrapper
 {
 public:
+
+  enum class EosType
+  {
+    PengRobinson,
+    SoaveRedlichKwong
+  };
 
   CompositionalMultiphaseFluid( std::string const & name, Group * const parent );
 
@@ -61,7 +68,7 @@ private:
   void createFluid() override;
 
   // names of equations of state to use for each phase
-  string_array m_equationsOfState;
+  array1d< EosType > m_equationsOfState;
 
   // standard EOS component input
   array1d< real64 > m_componentCriticalPressure;
@@ -71,6 +78,8 @@ private:
   array2d< real64 > m_componentBinaryCoeff;
 
 };
+
+ENUM_STRINGS( CompositionalMultiphaseFluid::EosType, "PR", "SRK" )
 
 } /* namespace constitutive */
 

@@ -13,7 +13,7 @@
  */
 
 /**
- * @file Enum.hpp
+ * @file EnumStrings.hpp
  *
  * Collection of utilities to facilitate I/O of enumeration types.
  * Provides a macro definition that allows associating string names
@@ -27,6 +27,7 @@
 #include "codingUtilities/StringUtilities.hpp"
 #include "common/DataTypes.hpp"
 #include "common/Logger.hpp"
+#include "common/TypeName.hpp"
 
 #include <iostream>
 #include <sstream>
@@ -57,7 +58,6 @@ constexpr int countArgs( ARGS ... )
  * @param ... list of names (C-string literals)
  *
  * Conditions (not enforced but won't work correctly if violated):
- *  - the macro must be called in the same namespace the enumeration type is defined in
  *  - the number and order of string arguments passed must match the enum values
  *  - enumeration constants must not have custom values assigned
  *
@@ -65,28 +65,31 @@ constexpr int countArgs( ARGS ... )
  * may be used to get access to strings at runtime. While not strictly necessary,
  * it is recommended that macro call immediately follows the enum definition
  * (or the class definition, if enum is defined inside a class).
+ *
+ * @note The macro must be called in the same namespace the enumeration type is defined
+ *       in, because ADL is tne only way to make <</>> operators usable from any scope.
  */
-#define ENUM_STRINGS( ENUM, ... )                                   \
-static_assert( std::is_enum< ENUM >::value, "Not an enumeration");  \
-                                                                    \
-inline auto const & getEnumStrings( ENUM const )                    \
-{                                                                   \
-  constexpr int N = internal::countArgs( __VA_ARGS__ );             \
-  static constexpr std::array< char const *, N > ss{ __VA_ARGS__ }; \
-  return ss;                                                        \
-}                                                                   \
-                                                                    \
-inline std::ostream & operator<<( std::ostream & os, ENUM const e ) \
-{                                                                   \
-  os << EnumStrings< ENUM >::toString( e );                         \
-  return os;                                                        \
-}                                                                   \
-                                                                    \
-inline std::istream & operator>>( std::istream & is, ENUM & e )     \
-{                                                                   \
-  string s; is >> s;                                                \
-  e = EnumStrings< ENUM >::fromString( s );                         \
-  return is;                                                        \
+#define ENUM_STRINGS( ENUM, ... )                                     \
+static_assert( std::is_enum< ENUM >::value, "Not an enumeration");    \
+                                                                      \
+inline auto const & getEnumStrings( ENUM const )                      \
+{                                                                     \
+  constexpr int N = internal::countArgs( __VA_ARGS__ );               \
+  static constexpr std::array< char const *, N > ss{ __VA_ARGS__ };   \
+  return ss;                                                          \
+}                                                                     \
+                                                                      \
+inline std::ostream & operator<<( std::ostream & os, ENUM const & e ) \
+{                                                                     \
+  os << EnumStrings< ENUM >::toString( e );                           \
+  return os;                                                          \
+}                                                                     \
+                                                                      \
+inline std::istream & operator>>( std::istream & is, ENUM & e )       \
+{                                                                     \
+  string s; is >> s;                                                  \
+  e = EnumStrings< ENUM >::fromString( s );                           \
+  return is;                                                          \
 }
 
 /**

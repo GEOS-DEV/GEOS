@@ -36,15 +36,15 @@ namespace constitutive
 namespace
 {
 
-PVTPackage::EOS_TYPE getCompositionalEosType( string const & name )
+PVTPackage::EOS_TYPE toPVTPackageEosType( CompositionalMultiphaseFluid::EosType const & type )
 {
-  static std::map< string, PVTPackage::EOS_TYPE > const eosTypes =
+  static std::map< CompositionalMultiphaseFluid::EosType, PVTPackage::EOS_TYPE > const eosTypes =
   {
-    { "PR", PVTPackage::EOS_TYPE::PENG_ROBINSON },
-    { "SRK", PVTPackage::EOS_TYPE::REDLICH_KWONG_SOAVE }
+    { CompositionalMultiphaseFluid::EosType::PengRobinson, PVTPackage::EOS_TYPE::PENG_ROBINSON },
+    { CompositionalMultiphaseFluid::EosType::SoaveRedlichKwong, PVTPackage::EOS_TYPE::REDLICH_KWONG_SOAVE }
   };
-  auto const it = eosTypes.find( name );
-  GEOSX_ERROR_IF( it == eosTypes.end(), "Compositional EOS type not supported by PVTPackage: " << name );
+  auto const it = eosTypes.find( type );
+  GEOSX_ERROR_IF( it == eosTypes.end(), "Compositional EOS type not supported by PVTPackage: " << type );
   return it->second;
 }
 
@@ -59,7 +59,7 @@ CompositionalMultiphaseFluid::CompositionalMultiphaseFluid( std::string const & 
 
   registerWrapper( viewKeyStruct::equationsOfStateString, &m_equationsOfState )->
     setInputFlag( InputFlags::REQUIRED )->
-    setDescription( "List of equation of state types for each phase" );
+    setDescription( "List of Equation-of-State types for each phase. Valid options:\n* " + EnumStrings< EosType >::concat( "\n* " ) );
 
   registerWrapper( viewKeyStruct::componentCriticalPressureString, &m_componentCriticalPressure )->
     setInputFlag( InputFlags::REQUIRED )->
@@ -141,8 +141,7 @@ void CompositionalMultiphaseFluid::createFluid()
   localIndex const NP = numFluidPhases();
 
   std::vector< PVTPackage::EOS_TYPE > eos( NP );
-  std::transform( m_equationsOfState.begin(), m_equationsOfState.end(), eos.begin(),
-                  []( string const & name ){ return getCompositionalEosType( name ); } );
+  std::transform( m_equationsOfState.begin(), m_equationsOfState.end(), eos.begin(), toPVTPackageEosType );
 
   std::vector< PVTPackage::PHASE_TYPE > phases( m_phaseTypes.begin(), m_phaseTypes.end() );
   std::vector< std::string > const components( m_componentNames.begin(), m_componentNames.end() );

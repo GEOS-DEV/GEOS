@@ -48,13 +48,6 @@ namespace schemaUtilities
 void ConvertDocumentationToSchema( std::string const & fname, dataRepository::Group * const group, integer documentationType );
 
 /**
- * @brief Generates the simple schema types.
- *
- * @param schemaRoot XML node corresponding to the root
- */
-void BuildSimpleSchemaTypes( xmlWrapper::xmlNode schemaRoot );
-
-/**
  * @brief Recursively builds the schema from the data structure skeleton.
  *
  * @param group group passed in from which the schema information is extracted

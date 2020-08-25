@@ -145,9 +145,17 @@ public:
   virtual void move( LvArray::MemorySpace const space, bool const touch ) const = 0;
 
   /**
-   * @brief Calls T::typeRegex()
-   * @return regex used to validate inputs of wrapped type. If empty, the type does not
-   *         define a custom regex and will use one of the default type regexes.
+   * @brief @return a full name of the type
+   */
+  virtual string typeName() const = 0;
+
+  /**
+   * @brief @return an XML-friendly name of the type
+   */
+  virtual string typeNameXML() const = 0;
+
+  /**
+   * @brief @return regex used to validate inputs of wrapped type
    */
   virtual string typeRegex() const = 0;
 
