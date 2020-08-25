@@ -23,10 +23,6 @@ The children of the Tasks block define different Tasks to be triggered by events
 
 .. include:: ../../../coreComponents/fileIO/schema/docs/Tasks.rst
 
-CopyField
-***************************
-The ``CopyField`` Task is currently non-functional, but will allow a field to be copied into an existing field, or if the targeted field doesn't exist, it will create the field and then copy the data into that field.
-
 PackCollection
 ***************************
 The ``PackCollection`` Task is used to collect time history information from fields. Either the entire field or specified named sets of indices in the field can be collected.

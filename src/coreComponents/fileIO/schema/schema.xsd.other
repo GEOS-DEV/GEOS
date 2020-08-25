@@ -580,11 +580,9 @@
 	</xsd:complexType>
 	<xsd:complexType name="TasksType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
-			<xsd:element name="CopyField" type="CopyFieldType" />
 			<xsd:element name="PackCollection" type="PackCollectionType" />
 		</xsd:choice>
 	</xsd:complexType>
-	<xsd:complexType name="CopyFieldType" />
 	<xsd:complexType name="PackCollectionType" />
 	<xsd:complexType name="commandLineType">
 		<!--beginFromRestart => Flag to indicate restart run.-->

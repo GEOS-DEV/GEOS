@@ -134,13 +134,6 @@ Element: Contact
 .. include:: ../../coreComponents/fileIO/schema/docs/Contact.rst
 
 
-.. _XML_CopyField:
-
-Element: CopyField
-==================
-.. include:: ../../coreComponents/fileIO/schema/docs/CopyField.rst
-
-
 .. _XML_Cylinder:
 
 Element: Cylinder
@@ -815,13 +808,6 @@ Datastructure: ConstitutiveModels
 Datastructure: Contact
 ======================
 .. include:: ../../coreComponents/fileIO/schema/docs/Contact_other.rst
-
-
-.. _DATASTRUCTURE_CopyField:
-
-Datastructure: CopyField
-========================
-.. include:: ../../coreComponents/fileIO/schema/docs/CopyField_other.rst
 
 
 .. _DATASTRUCTURE_Cylinder:

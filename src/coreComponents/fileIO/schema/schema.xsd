@@ -1318,19 +1318,8 @@
 	</xsd:complexType>
 	<xsd:complexType name="TasksType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
-			<xsd:element name="CopyField" type="CopyFieldType" />
 			<xsd:element name="PackCollection" type="PackCollectionType" />
 		</xsd:choice>
-	</xsd:complexType>
-	<xsd:complexType name="CopyFieldType">
-		<!--from => Name of the field to copy.-->
-		<xsd:attribute name="from" type="string" use="required" />
-		<!--targetRegions => Regions on which the copy will be done.-->
-		<xsd:attribute name="targetRegions" type="string_array" use="required" />
-		<!--to => Name of the field that will be created and filled.-->
-		<xsd:attribute name="to" type="string" use="required" />
-		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="PackCollectionType">
 		<!--fieldName => The name of the (packable) field associated with the specified object to retrieve data from-->
