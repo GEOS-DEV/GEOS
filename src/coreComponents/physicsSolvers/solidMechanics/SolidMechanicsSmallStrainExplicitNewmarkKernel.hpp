@@ -240,15 +240,18 @@ public:
     }
 
 #if UPDATE_STRESS == 2
-    m_constitutiveUpdate.SmallStrain( k, q, strain );
+    //m_constitutiveUpdate.SmallStrain( k, q, strain ); // jaw
+    m_constitutiveUpdate.smallStrainUpdate( k, q, strain, stressLocal); // strain = incremental strain
 #else
-    m_constitutiveUpdate.SmallStrainNoState( k, strain, stressLocal );
+    //m_constitutiveUpdate.SmallStrainNoState( k, strain, stressLocal ); // jaw
+    m_constitutiveUpdate.smallStrainNoStateUpdate( k, q, strain, stressLocal ); // strain = total strain
 #endif
 
     for( localIndex c = 0; c < 6; ++c )
     {
 #if UPDATE_STRESS == 2
-      stressLocal[ c ] =  m_constitutiveUpdate.m_newStress( k, q, c ) * (-DETJ);
+      //stressLocal[ c ] =  m_constitutiveUpdate.m_newStress( k, q, c ) * (-DETJ); // jaw
+      stressLocal[ c ] *= -DETJ;
 #elif UPDATE_STRESS == 1
       stressLocal[ c ] = ( stressLocal[ c ] + m_constitutiveUpdate.m_newStress( k, q, c ) ) *(-DETJ);
 #else

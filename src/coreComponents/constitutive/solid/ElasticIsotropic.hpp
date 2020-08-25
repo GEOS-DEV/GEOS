@@ -73,32 +73,37 @@ public:
   /// Deleted move assignment operator
   ElasticIsotropicUpdates & operator=( ElasticIsotropicUpdates && ) =  delete;
 
-
+  // bring in base implementations for any not defined here
+  using SolidBaseUpdates::smallStrainUpdate;
+  using SolidBaseUpdates::smallStrainNoStateUpdate;
+  using SolidBaseUpdates::hypoUpdate;
+  using SolidBaseUpdates::hyperUpdate;
+  
   GEOSX_HOST_DEVICE
   virtual void smallStrainNoStateUpdate( localIndex const k,
                                          localIndex const q,
                                          real64 const ( & totalStrain )[6],
-                                         real64 ( & stress )[6]) override final;
+                                         real64 ( & stress )[6]) const override final;
   
   GEOSX_HOST_DEVICE
   virtual void smallStrainNoStateUpdate( localIndex const k,
                                          localIndex const q,
                                          real64 const ( & totalStrain )[6],
                                          real64 ( & stress )[6],
-                                         real64 ( & stiffness )[6][6] ) override final;
+                                         real64 ( & stiffness )[6][6] ) const override final;
   
   GEOSX_HOST_DEVICE
   virtual void smallStrainUpdate( localIndex const k,
                                   localIndex const q,
                                   real64 const ( & strainIncrement )[6],
-                                  real64 ( & stress )[6]) override final;
+                                  real64 ( & stress )[6]) const override final;
               
   GEOSX_HOST_DEVICE
   virtual void smallStrainUpdate( localIndex const k,
                                   localIndex const q,
                                   real64 const ( & strainIncrement )[6],
                                   real64 ( & stress )[6],
-                                  real64 ( & stiffness )[6][6] ) override; // not final (see druckerPrager)
+                                  real64 ( & stiffness )[6][6] ) const override; // not final (see druckerPrager)
   
   GEOSX_HOST_DEVICE
   virtual void getElasticStiffness( localIndex const k,
@@ -108,23 +113,21 @@ public:
   virtual void getElasticStrain( localIndex const k,
                                  localIndex const q,
                                  real64 ( & elasticStrain )[6]) const override final;
-                         
-  // hypoUpdate() automatically handled by base implementation
-  
+                           
   // TODO: need to confirm hyper stress/strain measures before activatiing
   /*
   GEOSX_HOST_DEVICE
   virtual void hyperUpdate( localIndex const k,
                             localIndex const q,
                             real64 const ( & FminusI )[3][3],
-                            real64 ( & stress )[6] ) override final;
+                            real64 ( & stress )[6] ) const override final;
                             
   GEOSX_HOST_DEVICE
   virtual void hyperUpdate( localIndex const k,
                             localIndex const q,
                             real64 const ( & FminusI )[3][3],
                             real64 ( & stress )[6],
-                            real64 ( & stiffness )[6][6] ) override final;
+                            real64 ( & stiffness )[6][6] ) const override final;
   */
   
   ///////////////////// LEGACY INTERFACE /////////////////////////////////
@@ -202,7 +205,7 @@ GEOSX_FORCE_INLINE
 void ElasticIsotropicUpdates::smallStrainNoStateUpdate( localIndex const k,
                                                         localIndex const q,
                                                         real64 const ( & totalStrain )[6],
-                                                        real64 ( & stress )[6])
+                                                        real64 ( & stress )[6]) const
 {
   GEOSX_UNUSED_VAR(q);
   
@@ -244,7 +247,7 @@ GEOSX_FORCE_INLINE
 void ElasticIsotropicUpdates::smallStrainUpdate( localIndex const k,
                                                  localIndex const q,
                                                  real64 const ( & strainIncrement )[6],
-                                                 real64 ( & stress )[6])
+                                                 real64 ( & stress )[6]) const
 {
   smallStrainNoStateUpdate( k, q, strainIncrement, stress); // stress  = incrementalStress
   LvArray::tensorOps::add< 6 >( stress, m_oldStress[k][q]); // stress += m_oldStress
@@ -258,7 +261,7 @@ void ElasticIsotropicUpdates::smallStrainNoStateUpdate( localIndex const k,
                                                         localIndex const q,
                                                         real64 const ( & totalStrain )[6],
                                                         real64 ( & stress )[6],
-                                                        real64 ( & stiffness )[6][6] )
+                                                        real64 ( & stiffness )[6][6] ) const
 {
   smallStrainNoStateUpdate( k, q, totalStrain, stress);
   getElasticStiffness( k, stiffness );
@@ -271,7 +274,7 @@ void ElasticIsotropicUpdates::smallStrainUpdate( localIndex const k,
                                                  localIndex const q,
                                                  real64 const ( & strainIncrement )[6],
                                                  real64 ( & stress )[6],
-                                                 real64 ( & stiffness )[6][6] )
+                                                 real64 ( & stiffness )[6][6] ) const
 {
   smallStrainUpdate( k, q, strainIncrement, stress);
   getElasticStiffness( k, stiffness );
@@ -284,7 +287,7 @@ GEOSX_FORCE_INLINE
 void ElasticIsotropicUpdates::hyperUpdate( localIndex const k,
                                            localIndex const q,
                                            real64 const (&FmI)[3][3],
-                                           real64 ( & stress )[ 6 ] )
+                                           real64 ( & stress )[ 6 ] ) const
 {
   GEOSX_UNUSED_VAR(q);
   

@@ -206,10 +206,12 @@ public:
                      m_dNdX( k, q, a, 0 ) * stack.uhat_local[a][1];
     }
 
-    m_constitutiveUpdate.SmallStrain( k, q, strainInc );
-
-    GEOSX_UNUSED_VAR( q )
-    m_constitutiveUpdate.getElasticStiffness( k, stack.constitutiveStiffness );
+    //m_constitutiveUpdate.SmallStrain( k, q, strainInc );
+    //GEOSX_UNUSED_VAR( q )
+    //m_constitutiveUpdate.getElasticStiffness( k, stack.constitutiveStiffness ); // jaw
+    
+    real64 localStress[6]; // will be discarded and later accessed via m_newStress directly
+    m_constitutiveUpdate.smallStrainUpdate( k, q, strainInc, localStress, stack.constitutiveStiffness );
   }
 
 

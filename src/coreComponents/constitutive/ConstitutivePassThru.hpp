@@ -23,6 +23,7 @@
 #include "NullModel.hpp"
 #include "solid/ElasticIsotropic.hpp"
 #include "solid/ElasticTransverseIsotropic.hpp"
+#include "solid/DruckerPrager.hpp"
 #include "solid/PoroElastic.hpp"
 
 namespace geosx
@@ -63,6 +64,10 @@ struct ConstitutivePassThru< SolidBase >
     else if( dynamic_cast< ElasticTransverseIsotropic * >( constitutiveRelation ) )
     {
       lambda( static_cast< ElasticTransverseIsotropic * >( constitutiveRelation) );
+    }
+    else if( dynamic_cast< DruckerPrager * >( constitutiveRelation ) )
+    {
+      lambda( static_cast< DruckerPrager * >( constitutiveRelation) );
     }
     else
     {

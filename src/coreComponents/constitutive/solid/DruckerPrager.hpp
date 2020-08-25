@@ -76,16 +76,22 @@ public:
 
   /// Deleted move assignment operator
   DruckerPragerUpdates & operator=( DruckerPragerUpdates && ) =  delete;
-
+  
+  // bring in base implementations for any not defined here
+  using SolidBaseUpdates::smallStrainUpdate;
+  using SolidBaseUpdates::smallStrainNoStateUpdate;
+  using SolidBaseUpdates::hypoUpdate;
+  using SolidBaseUpdates::hyperUpdate;
+  
   GEOSX_HOST_DEVICE
   virtual void smallStrainUpdate( localIndex const k,
                                   localIndex const q,
                                   real64 const ( & strainIncrement )[6],
                                   real64 ( & stress )[6],
-                                  real64 ( & stiffness )[6][6] ) override final;
+                                  real64 ( & stiffness )[6][6] ) const override final;
   
   GEOSX_HOST_DEVICE
-  virtual void saveConvergedState() override final;
+  virtual void saveConvergedState() const override final;
     
 private:
   /// A reference to the ArrayView holding the friction angle for each element.
@@ -112,7 +118,7 @@ void DruckerPragerUpdates::smallStrainUpdate( localIndex const k,
                                               localIndex const q,
                                               real64 const ( & strainIncrement )[6],
                                               real64 ( & stress )[6],
-                                              real64 ( & stiffness )[6][6] )
+                                              real64 ( & stiffness )[6][6] ) const
 {
   // elastic predictor (assume strainIncrement is all elastic)
   
@@ -262,7 +268,7 @@ void DruckerPragerUpdates::smallStrainUpdate( localIndex const k,
 
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-void DruckerPragerUpdates::saveConvergedState()
+void DruckerPragerUpdates::saveConvergedState() const
 {
   ElasticIsotropicUpdates::saveConvergedState();
   m_oldCohesion.setValues< serialPolicy >( m_newCohesion );
@@ -351,7 +357,7 @@ public:
    * @brief Create a instantiation of the DruckerPragerUpdate class that refers to the data in this.
    * @return An instantiation of DruckerPragerUpdate.
    */
-  DruckerPragerUpdates createKernelWrapper() const
+  DruckerPragerUpdates createKernelUpdates() const
   {
     return DruckerPragerUpdates( m_friction,
                                  m_dilation,

@@ -77,7 +77,7 @@ TEST( DruckerPragerTests, testModel )
   // plastic loading.  at the end of the loading, we confirm the
   // stress point lies on the correctly-positioned yield surface.
   
-  DruckerPrager::KernelWrapper cmw = cm.createKernelWrapper();
+  DruckerPrager::KernelWrapper cmw = cm.createKernelUpdates();
   
   real64 strainIncrement[6] = {-1e-4,0,0,0,0,0};
   real64 stress[6];

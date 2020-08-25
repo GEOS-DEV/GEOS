@@ -96,7 +96,8 @@ protected:
    * @param[in] q Quadrature point index.
    */
   GEOSX_HOST_DEVICE
-  virtual void saveConvergedState()
+  GEOSX_FORCE_INLINE
+  virtual void saveConvergedState() const
   {
     m_oldStress.setValues< serialPolicy >( m_newStress );
   }
@@ -110,10 +111,11 @@ protected:
    * @param[in] q Quadrature point index.
    * @param[in] stress Stress to be save to m_newStress[k][q]
    */
-  GEOSX_HOST_DEVICE inline
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   void saveStress( localIndex const k,
                    localIndex const q,
-                   real64 ( & stress )[6])
+                   real64 ( & stress )[6]) const
   {
     LvArray::tensorOps::copy< 6 >( m_newStress[k][q], stress );
   }
@@ -152,7 +154,7 @@ public:
                                   localIndex const q,
                                   real64 const ( & strainIncrement )[6],
                                   real64 ( & stress )[6],
-                                  real64 ( & stiffness )[6][6] )
+                                  real64 ( & stiffness )[6][6] ) const
   {
     GEOSX_UNUSED_VAR(k);
     GEOSX_UNUSED_VAR(q);
@@ -176,7 +178,7 @@ public:
                                          localIndex const q,
                                          real64 const ( & totalStrain )[6],
                                          real64 ( & stress )[6],
-                                         real64 ( & stiffness )[6][6] )
+                                         real64 ( & stiffness )[6][6] ) const
   {
     GEOSX_UNUSED_VAR(k);
     GEOSX_UNUSED_VAR(q);
@@ -221,7 +223,7 @@ public:
                            real64 const ( &Ddt )[6],
                            real64 const ( &Rot )[3][3],
                            real64 ( & stress )[6],
-                           real64 ( & stiffness )[6][6] )
+                           real64 ( & stiffness )[6][6] ) const
   {
     smallStrainUpdate( k, q, Ddt, stress, stiffness );
     
@@ -255,7 +257,7 @@ public:
                             localIndex const q,
                             real64 const ( & FminusI )[3][3],
                             real64 ( & stress )[6],
-                            real64 ( & stiffness )[6][6] )
+                            real64 ( & stiffness )[6][6] ) const
   {
     GEOSX_UNUSED_VAR(k);
     GEOSX_UNUSED_VAR(q);
@@ -297,11 +299,12 @@ public:
   virtual void smallStrainUpdate( localIndex const k,
                                   localIndex const q,
                                   real64 const ( & strainIncrement )[6],
-                                  real64 ( & stress )[6])
+                                  real64 ( & stress )[6]) const
   {
     real64 discard[6][6];
     smallStrainUpdate( k, q, strainIncrement, stress, discard );
   }
+
   
   /**
    * @brief Small strain, stateless update, returning only stress.
@@ -316,7 +319,7 @@ public:
   virtual void smallStrainNoStateUpdate( localIndex const k,
                                          localIndex const q,
                                          real64 const ( & totalStrain )[6],
-                                         real64 ( & stress )[6])
+                                         real64 ( & stress )[6]) const
   {
     real64 discard[6][6];
     smallStrainNoStateUpdate( k, q, totalStrain, stress, discard );
@@ -336,7 +339,7 @@ public:
                            localIndex const q,
                            real64 const ( &Ddt )[6],
                            real64 const ( &Rot )[3][3],
-                           real64 ( & stress )[6])
+                           real64 ( & stress )[6]) const
   {
     real64 discard[6][6];
     hypoUpdate( k, q, Ddt, Rot, stress, discard );
@@ -354,7 +357,7 @@ public:
   virtual void hyperUpdate( localIndex const k,
                             localIndex const q,
                             real64 const ( & FminusI )[3][3],
-                            real64 ( & stress )[6] )
+                            real64 ( & stress )[6] ) const
   {
     real64 discard[6][6];
     hyperUpdate( k, q, FminusI, stress, discard );

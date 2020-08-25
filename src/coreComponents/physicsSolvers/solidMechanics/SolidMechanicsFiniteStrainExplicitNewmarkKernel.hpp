@@ -245,8 +245,10 @@ public:
     real64 Dadt[ 6 ];
     HughesWinget( Rot, Dadt, Ldt );
 
-    m_constitutiveUpdate.HypoElastic( k, q, Dadt, Rot );
-
+    //m_constitutiveUpdate.HypoElastic( k, q, Dadt, Rot ); // jaw
+    real64 localStress[6];
+    m_constitutiveUpdate.hypoUpdate(k, q, Dadt, Rot, localStress );
+    
     Integrate< numNodesPerElem >( m_constitutiveUpdate.m_newStress[k][q].toSliceConst(),
                                   DNDX,
                                   DETJ,
