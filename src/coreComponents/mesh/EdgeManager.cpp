@@ -114,12 +114,6 @@ struct EdgeBuilder
   bool operator!=( EdgeBuilder const & rhs ) const
   { return n1 != rhs.n1; }
 
-//  void print( localIndex i ) const
-//  {
-//    std::cout << "Lowest node: " << i << " - largest node: "  << n1 <<
-//        " - faceId: " << faceID << " - faceLocalEdgeIndex: " << faceLocalEdgeIndex << std::endl;
-//  }
-
   int32_t n1;                  // The larger of the two node indices that comprise the edge.
   int32_t faceID;              // The face the edge came from.
   int32_t faceLocalEdgeIndex;  // The face local index of the edge.
@@ -142,7 +136,7 @@ void createEdgesByLowestNode( ArrayOfArraysView< localIndex const > const & face
   localIndex const numNodes = edgesByLowestNode.size();
   localIndex const numFaces = faceToNodeMap.size();
 
-  // loop over all the faces. //serialPolicy
+  // loop over all the faces.
   forAll< parallelHostPolicy >( numFaces, [&]( localIndex const faceID )
   {
     localIndex const numNodesInFace = faceToNodeMap.sizeOfArray( faceID );
@@ -463,15 +457,6 @@ void EdgeManager::BuildEdges( localIndex const numNodes,
 {
   ArrayOfArrays< EdgeBuilder > edgesByLowestNode( numNodes, 2 * maxEdgesPerNode() );
   createEdgesByLowestNode( faceToNodeMap, edgesByLowestNode.toView() );
-
-//  for (localIndex nodeId=0; nodeId<edgesByLowestNode.size(); ++nodeId)
-//  {
-//    localIndex const numEdges = edgesByLowestNode.sizeOfArray( nodeId );
-//    for (localIndex edge = 0; edge < numEdges; edge++)
-//    {
-//      edgesByLowestNode(nodeId, edge).print(nodeId);
-//    }
-//  }
 
   array1d< localIndex > uniqueEdgeOffsets( numNodes + 1 );
   localIndex const numEdges = calculateTotalNumberOfEdges( edgesByLowestNode.toViewConst(), uniqueEdgeOffsets );

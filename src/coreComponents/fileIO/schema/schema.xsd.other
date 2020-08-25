@@ -1329,8 +1329,6 @@
 		<xsd:attribute name="numEdgesPerElement" type="localIndex" />
 		<!--numFacesPerElement => (no description available)-->
 		<xsd:attribute name="numFacesPerElement" type="localIndex" />
-		<!--numNodes => Number of nodes of each EmbeddedSurface.-->
-		<xsd:attribute name="numNodes" type="integer_array" />
 		<!--numNodesPerElement => (no description available)-->
 		<xsd:attribute name="numNodesPerElement" type="localIndex" />
 		<!--tangentVector1 => Unit vector in the first tangent direction to the embedded surface.-->

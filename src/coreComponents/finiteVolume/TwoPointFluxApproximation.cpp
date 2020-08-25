@@ -622,8 +622,6 @@ void TwoPointFluxApproximation::addEDFracToFractureStencil( MeshLevel & mesh,
 
   localIndex constexpr maxElems = FaceElementStencil::MAX_STENCIL_SIZE;
 
-  // arrayView1d< integer const > const & edgeGhostRank = embSurfEdgeManager->ghostRank();
-
   localIndex connectorIndex = 0;
   // add new connectors/connections between embedded elements to the fracture stencil
   for( localIndex ke = 0; ke <  embSurfEdgeManager->size(); ke++ )

@@ -191,10 +191,11 @@ const
     points->SetPoint( pointIndex, intersectionPoints[pointIndex][0], intersectionPoints[pointIndex][1], intersectionPoints[pointIndex][2] );
   }
 
-  array1d< int > const & numNodesPerElem = esr.numNodesPerSurface();
+  EmbeddedSurfaceSubRegion::NodeMapType const & toNodesMap = esr.nodeList();
+  std::vector< vtkIdType > connectivity( 10 );
   for( localIndex cellIndex = 0; cellIndex < esr.size(); cellIndex++ )
   {
-    std::vector< vtkIdType > connectivity( numNodesPerElem[cellIndex] );
+    connectivity.resize( toNodesMap.sizeOfArray(cellIndex) );
     for( std::size_t i = 0; i < connectivity.size(); i++ )
     {
       connectivity[i] = esr.nodeList( cellIndex, i );

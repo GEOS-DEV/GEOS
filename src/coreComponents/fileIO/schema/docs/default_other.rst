@@ -20,7 +20,6 @@ nodeList                         geosx_InterObjectRelation< LvArray_ArrayOfArray
 normalVector                     r1_array                                                                             Unit normal vector to the embedded surface.                          
 numEdgesPerElement               localIndex                                                                           (no description available)                                           
 numFacesPerElement               localIndex                                                                           (no description available)                                           
-numNodes                         integer_array                                                                        Number of nodes of each EmbeddedSurface.                             
 numNodesPerElement               localIndex                                                                           (no description available)                                           
 tangentVector1                   r1_array                                                                             Unit vector in the first tangent direction to the embedded surface.  
 tangentVector2                   r1_array                                                                             Unit vector in the second tangent direction to the embedded surface. 

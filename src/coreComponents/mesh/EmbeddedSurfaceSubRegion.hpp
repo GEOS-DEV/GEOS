@@ -375,10 +375,6 @@ public:
 
   ///@}
 
-  array1d< int > & numNodesPerSurface() {return m_numNodesPerSurface;}
-
-  array1d< int > const & numNodesPerSurface() const {return m_numNodesPerSurface;}
-
   int totalNumberOfNodes() const;
 
 private:
@@ -409,9 +405,6 @@ private:
 
   /// The member level field for the element center
   array1d< real64 > m_elementArea;
-
-  /// The number of nodes of each embedded surface
-  array1d< int > m_numNodesPerSurface;
 
   /// The number of jump enrichments
   localIndex m_numOfJumpEnrichments;
