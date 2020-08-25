@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Submodules not checking for
-declare -ar exclusion_list=( "blt" )
+declare -ar exclusion_list=( "blt" "integratedTests" )
 echo "Submodules that are excluded from sync test : ${exclusion_list[@]}"
 
 # Do not pull large files
