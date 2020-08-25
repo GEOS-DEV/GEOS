@@ -26,59 +26,59 @@ namespace constitutive
 
 DruckerPrager::DruckerPrager( std::string const & name, Group * const parent ):
   ElasticIsotropic( name, parent ),
-  m_defaultTanFrictionAngle(),
-  m_defaultTanDilationAngle(),
+  m_defaultFrictionAngle(),
+  m_defaultDilationAngle(),
   m_defaultCohesion(),
-  m_defaultHardeningRate(),
-  m_tanFrictionAngle(),
-  m_tanDilationAngle(),
-  m_hardeningRate(),
+  m_defaultHardening(),
+  m_friction(),
+  m_dilation(),
+  m_hardening(),
   m_newCohesion(),
   m_oldCohesion()
 {
   // register default values
 
-  registerWrapper( viewKeyStruct::defaultTanFrictionAngleString, &m_defaultTanFrictionAngle )->
-    setApplyDefaultValue( 1.0 )->
+  registerWrapper( viewKeyStruct::defaultFrictionAngleString, &m_defaultFrictionAngle )->
+    setApplyDefaultValue( 30.0 )->
     setInputFlag( InputFlags::OPTIONAL )->
-    setDescription( "Yield surface slope parameter tan(phi)" );
+    setDescription( "Friction angle (degrees)" );
   
-  registerWrapper( viewKeyStruct::defaultTanDilationAngleString, &m_defaultTanDilationAngle )->
-    setApplyDefaultValue( 0.5 )->
+  registerWrapper( viewKeyStruct::defaultDilationAngleString, &m_defaultDilationAngle )->
+    setApplyDefaultValue( 30.0 )->
     setInputFlag( InputFlags::OPTIONAL )->
-    setDescription( "Plastic potential slope parameter tan(psi)" );
+    setDescription( "Dilation angle (degrees)" );
   
-  registerWrapper( viewKeyStruct::defaultHardeningRateString, &m_defaultHardeningRate )->
-    setApplyDefaultValue( 1e8 )->
+  registerWrapper( viewKeyStruct::defaultHardeningString, &m_defaultHardening )->
+    setApplyDefaultValue( 0.0 )->
     setInputFlag( InputFlags::OPTIONAL )->
-    setDescription( "Cohesion hardening/softening rate parameter" );
+    setDescription( "Cohesion hardening/softening rate" );
   
   registerWrapper( viewKeyStruct::defaultCohesionString, &m_defaultCohesion )->
-    setApplyDefaultValue( 5e6 )->
+    setApplyDefaultValue( 0.0 )->
     setInputFlag( InputFlags::OPTIONAL )->
-    setDescription( "Initial cohesion parameter" );
+    setDescription( "Initial cohesion" );
 
   // register fields
   
-  registerWrapper( viewKeyStruct::tanFrictionAngleString, &m_tanFrictionAngle )->
+  registerWrapper( viewKeyStruct::frictionString, &m_friction )->
     setApplyDefaultValue( -1 )->
-    setDescription( "Yield surface slope tan(phi) field" );
+    setDescription( "Yield surface slope" );
   
-  registerWrapper( viewKeyStruct::tanDilationAngleString, &m_tanDilationAngle )->
+  registerWrapper( viewKeyStruct::dilationString, &m_dilation )->
     setApplyDefaultValue( -1 )->
-    setDescription( "Plastic potential slope tan(psi) field" );
+    setDescription( "Plastic potential slope" );
   
-  registerWrapper( viewKeyStruct::hardeningRateString, &m_hardeningRate )->
+  registerWrapper( viewKeyStruct::hardeningString, &m_hardening )->
     setApplyDefaultValue( -1 )->
-    setDescription( "Hardening rate field" );
+    setDescription( "Hardening rate" );
   
   registerWrapper( viewKeyStruct::newCohesionString, &m_newCohesion )->
     setApplyDefaultValue( -1 )->
-    setDescription( "New cohesion field" );
+    setDescription( "New cohesion state" );
   
-  registerWrapper( viewKeyStruct::oldCohesionString, &m_newCohesion )->
+  registerWrapper( viewKeyStruct::oldCohesionString, &m_oldCohesion )->
     setApplyDefaultValue( -1 )->
-    setDescription( "Old cohesion field" );
+    setDescription( "Old cohesion state" );
 }
 
 
@@ -97,24 +97,37 @@ void DruckerPrager::allocateConstitutiveData( dataRepository::Group * const pare
 
 void DruckerPrager::PostProcessInput()
 {
+  ElasticIsotropic::PostProcessInput();
+  
   GEOSX_ASSERT_MSG(m_defaultCohesion >= 0, "Negative cohesion value detected");
-  GEOSX_ASSERT_MSG(m_defaultTanFrictionAngle >= 0, "Negative friction angle detected");
-  GEOSX_ASSERT_MSG(m_defaultTanDilationAngle >= 0, "Negative dilation angle detected");
-  GEOSX_ASSERT_MSG(m_defaultTanFrictionAngle >= m_defaultTanDilationAngle, "Friction angle should exceed dilation angle");
+  GEOSX_ASSERT_MSG(m_defaultFrictionAngle >= 0, "Negative friction angle detected");
+  GEOSX_ASSERT_MSG(m_defaultDilationAngle >= 0, "Negative dilation angle detected");
+  GEOSX_ASSERT_MSG(m_defaultFrictionAngle >= m_defaultDilationAngle, "Dilation angle should not exceed friction angle");
+  
+  // convert from Mohr-Coulomb constants to Drucker-Prager constants, assuming DP
+  // passes through the compression corners of the MC surface.
+  // see Borja (2013) p. 75
+  
+  real64 phi = m_defaultFrictionAngle * M_PI / 180;
+  real64 psi = m_defaultDilationAngle * M_PI / 180;
+  
+  real64 F = 6 * m_defaultCohesion * cos(phi) / ( 3 + sin(phi) );
+  real64 D = 6 * m_defaultCohesion * cos(psi) / ( 3 + sin(psi) );
+  real64 C = 6 * sin(phi) / ( 3 + sin(phi) );
   
   // set results as array default values
-  this->getWrapper< array2d< real64 > >( viewKeyStruct::oldCohesionString )->
-    setApplyDefaultValue( m_defaultCohesion );
-  this->getWrapper< array2d< real64 > >( viewKeyStruct::newCohesionString )->
-    setApplyDefaultValue( m_defaultCohesion );
-  this->getWrapper< array1d< real64 > >( viewKeyStruct::tanDilationAngleString )->
-    setApplyDefaultValue( m_defaultTanDilationAngle );
-  this->getWrapper< array1d< real64 > >( viewKeyStruct::tanFrictionAngleString )->
-    setApplyDefaultValue( m_defaultTanFrictionAngle );
-  this->getWrapper< array1d< real64 > >( viewKeyStruct::hardeningRateString )->
-    setApplyDefaultValue( m_defaultHardeningRate );
   
-  m_postProcessed = true; // TODO: add parameter conversion helper class for more flexible input
+  this->getWrapper< array2d< real64 > >( viewKeyStruct::oldCohesionString )->
+    setApplyDefaultValue( C );
+  this->getWrapper< array2d< real64 > >( viewKeyStruct::newCohesionString )->
+    setApplyDefaultValue( C );
+  this->getWrapper< array1d< real64 > >( viewKeyStruct::dilationString )->
+    setApplyDefaultValue( D );
+  this->getWrapper< array1d< real64 > >( viewKeyStruct::frictionString )->
+    setApplyDefaultValue( F );
+  this->getWrapper< array1d< real64 > >( viewKeyStruct::hardeningString )->
+    setApplyDefaultValue( m_defaultHardening );
+
 }
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, DruckerPrager, std::string const &, Group * const )
