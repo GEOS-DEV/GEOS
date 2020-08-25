@@ -17,6 +17,8 @@ set( linearAlgebra_headers
      solvers/GMRESsolver.hpp
      solvers/KrylovSolver.hpp
      solvers/KrylovUtils.hpp
+     solvers/DirectSolver.hpp
+     solvers/DirectUtils.hpp
      solvers/PreconditionerBase.hpp
      solvers/PreconditionerIdentity.hpp
      solvers/SeparateComponentPreconditioner.hpp
@@ -42,6 +44,7 @@ set( linearAlgebra_sources
      solvers/CGsolver.cpp
      solvers/GMRESsolver.cpp
      solvers/KrylovSolver.cpp
+     solvers/DirectSolver.cpp
      solvers/SeparateComponentPreconditioner.cpp
      utilities/LAIHelperFunctions.cpp
      DofManager.cpp )

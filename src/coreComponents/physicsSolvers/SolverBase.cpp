@@ -6,7 +6,7 @@
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All rights reserved
+ * All right reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -18,6 +18,7 @@
 #include "common/TimingMacros.hpp"
 #include "linearAlgebra/utilities/LinearSolverParameters.hpp"
 #include "linearAlgebra/solvers/KrylovSolver.hpp"
+#include "linearAlgebra/solvers/DirectSolver.hpp"
 #include "managers/DomainPartition.hpp"
 
 namespace geosx
@@ -785,8 +786,8 @@ void SolverBase::SolveSystem( DofManager const & dofManager,
 
   if( params.solverType == "direct" || !m_precond )
   {
-    LinearSolver solver( params );
-    solver.solve( matrix, solution, rhs, &dofManager );
+    DirectSolver< LAInterface > solver( params );
+    solver.solve( matrix, rhs, solution );
     m_linearSolverResult = solver.result();
   }
   else
