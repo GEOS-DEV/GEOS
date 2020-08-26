@@ -65,9 +65,6 @@
 /// Enables use of PETSc library (CMake option ENABLE_PETSC)
 #cmakedefine GEOSX_USE_PETSC
 
-/// Enables use of SuperLU_Dist library (CMake option ENABLE_SUPERLU_DIST)
-#cmakedefine GEOSX_USE_SUPERLU_DIST
-
 /// Choice of global linear algebra interface (CMake option GEOSX_LA_INTERFACE)
 #cmakedefine GEOSX_LA_INTERFACE @GEOSX_LA_INTERFACE@
 /// Macro defined when Trilinos interface is selected
