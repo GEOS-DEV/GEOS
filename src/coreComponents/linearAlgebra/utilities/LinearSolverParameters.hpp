@@ -39,6 +39,7 @@ public:
   string preconditionerType = "iluk";  ///< Preconditioner type [none, iluk, ilut, amg, mgr, block]
   integer dofsPerNode = 1;             ///< Dofs per node (or support location) for non-scalar problems
   bool isSymmetric = false;            ///< Whether input matrix is symmetric (may affect choice of scheme)
+  real64 directTolerance = 1.e-12;     ///< Tolerance used to check a direct solver solution
 
   /// Krylov-method parameters
   struct Krylov

@@ -44,6 +44,11 @@ LinearSolverParametersInput::LinearSolverParametersInput( std::string const & na
     setDescription( "Preconditioner type\n"
                     "Available options are: none, jacobi, iluk, ilut, icc, amg, mgr, block" );
 
+  registerWrapper( viewKeyStruct::directTolString, &m_parameters.directTolerance )->
+    setApplyDefaultValue( m_parameters.directTolerance )->
+    setInputFlag( InputFlags::OPTIONAL )->
+    setDescription( "Tolerance used to check a direct solver solution" );
+
   registerWrapper( viewKeyStruct::krylovMaxIterString, &m_parameters.krylov.maxIterations )->
     setApplyDefaultValue( m_parameters.krylov.maxIterations )->
     setInputFlag( InputFlags::OPTIONAL )->

@@ -17,8 +17,6 @@ set( linearAlgebra_headers
      solvers/GMRESsolver.hpp
      solvers/KrylovSolver.hpp
      solvers/KrylovUtils.hpp
-     solvers/DirectSolver.hpp
-     solvers/DirectUtils.hpp
      solvers/PreconditionerBase.hpp
      solvers/PreconditionerIdentity.hpp
      solvers/SeparateComponentPreconditioner.hpp
@@ -44,7 +42,6 @@ set( linearAlgebra_sources
      solvers/CGsolver.cpp
      solvers/GMRESsolver.cpp
      solvers/KrylovSolver.cpp
-     solvers/DirectSolver.cpp
      solvers/SeparateComponentPreconditioner.cpp
      utilities/LAIHelperFunctions.cpp
      DofManager.cpp )
@@ -90,14 +87,16 @@ if( ENABLE_HYPRE )
           interfaces/hypre/HyprePreconditioner.hpp
           interfaces/hypre/HypreSolver.hpp
           interfaces/hypre/HypreInterface.hpp
-          interfaces/hypre/HypreUtils.hpp )
+          interfaces/hypre/HypreUtils.hpp
+          interfaces/hypre/SuperluUtils.hpp )
 
     list( APPEND linearAlgebra_sources
           interfaces/hypre/HypreMatrix.cpp
           interfaces/hypre/HypreVector.cpp
           interfaces/hypre/HyprePreconditioner.cpp
           interfaces/hypre/HypreSolver.cpp
-          interfaces/hypre/HypreInterface.cpp )
+          interfaces/hypre/HypreInterface.cpp
+          interfaces/hypre/SuperluUtils.cpp )
 
     list( APPEND dependencyList hypre )
 

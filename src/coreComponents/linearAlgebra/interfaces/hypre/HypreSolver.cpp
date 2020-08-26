@@ -27,6 +27,7 @@
 #include "linearAlgebra/utilities/LinearSolverParameters.hpp"
 #include "linearAlgebra/utilities/LAIHelperFunctions.hpp"
 
+#include "SuperluUtils.hpp"
 #include <_hypre_utilities.h>
 #include <_hypre_parcsr_ls.h>
 #include <_hypre_IJ_mv.h>
@@ -71,25 +72,57 @@ void HypreSolver::solve_direct( HypreMatrix & mat,
                                 HypreVector & sol,
                                 HypreVector & rhs )
 {
-  // Instantiate solver
-  HYPRE_Solver solver;
+  // Convert matrix from Matrix to SuperMatrix format
+  array1d< globalIndex > rowPtr;
+  array1d< globalIndex > cols;
+  array1d< real64 > vals;
+  SuperMatrix SLUDMat;
+  ConvertToSuperMatrix( mat, rowPtr, cols, vals, SLUDMat );
 
-  Stopwatch watch;
-  GEOSX_LAI_CHECK_ERROR( hypre_SLUDistSetup( &solver,
-                                             mat.unwrapped(),
-                                             0 ) );
-  m_result.setupTime = watch.elapsedTime();
-  watch.zero();
-  GEOSX_LAI_CHECK_ERROR( hypre_SLUDistSolve( solver,
-                                             rhs.unwrapped(),
-                                             sol.unwrapped() ) );
-  m_result.solveTime = watch.elapsedTime();
+  MPI_Comm const comm = mat.getComm();
 
-  m_result.status = LinearSolverResult::Status::Success;
-  m_result.numIterations = 1;
-  m_result.residualReduction = NumericTraits< real64 >::eps;
+  // Initialize options.
+  superlu_dist_options_t options;
+  set_default_options_dist( &options );
+  options.ReplaceTinyPivot = YES;
+  if( m_parameters.logLevel > 1 )
+  {
+    options.PrintStat = YES;
+  }
+  else
+  {
+    options.PrintStat = NO;
+  }
 
-  GEOSX_LAI_CHECK_ERROR( hypre_SLUDistDestroy( solver ) );
+  if( m_parameters.logLevel > 0 )
+  {
+    print_sp_ienv_dist( &options );
+    print_options_dist( &options );
+  }
+
+  real64 const bnorm2 = rhs.norm2();
+
+  real64 timeFact, timeSolve;
+  int const info = SolveSuperMatrix( SLUDMat, rhs, sol, comm, options, m_parameters.logLevel, timeFact, timeSolve );
+
+  HypreVector res( rhs );
+  mat.gemv( -1.0, sol, 1.0, res );
+  m_result.residualReduction = res.norm2() / bnorm2;
+
+  if( info == 0 && m_result.residualReduction < m_parameters.directTolerance )
+  {
+    m_result.status = LinearSolverResult::Status::Success;
+    m_result.numIterations = 1;
+    m_result.setupTime = timeFact;
+    m_result.solveTime = timeSolve;
+  }
+  else
+  {
+    m_result.status = LinearSolverResult::Status::NotConverged;
+  }
+
+  // rowPtr, cols, vals will be deallocated when out of scope
+  DestroySuperMatrix( SLUDMat );
 }
 
 namespace

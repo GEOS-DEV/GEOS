@@ -71,6 +71,8 @@ public:
     static constexpr auto solverTypeString         = "solverType";         ///< Solver type key
     static constexpr auto preconditionerTypeString = "preconditionerType"; ///< Preconditioner type key
 
+    static constexpr auto directTolString         = "directTol";         ///< direct solver tolerance key
+
     static constexpr auto krylovMaxIterString     = "krylovMaxIter";     ///< Krylov max iterations key
     static constexpr auto krylovMaxRestartString  = "krylovMaxRestart";  ///< Krylov max iterations key
     static constexpr auto krylovTolString         = "krylovTol";         ///< Krylov tolerance key
