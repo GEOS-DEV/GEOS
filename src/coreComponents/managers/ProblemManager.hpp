@@ -250,6 +250,7 @@ public:
     dataRepository::GroupKey numericalMethodsManager = { numericalMethodsManagerString }; ///< Numerical methods key
     dataRepository::GroupKey outputManager = { "Outputs" };                               ///< Outputs key
     dataRepository::GroupKey physicsSolverManager = { "Solvers" };                        ///< Solvers key
+    dataRepository::GroupKey tasksManager = { "Tasks" };                                  ///< Tasks key
   } groupKeys; ///< Child group viewKeys
 
   /**

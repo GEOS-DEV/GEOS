@@ -8,6 +8,7 @@ set( gtest_geosx_tests
      testFunctions.cpp
    )
 
+
 set( dependencyList gtest )
 
 if ( GEOSX_BUILD_SHARED_LIBS )

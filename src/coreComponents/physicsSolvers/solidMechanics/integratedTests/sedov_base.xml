@@ -25,9 +25,10 @@
       forceDt="1.0e-5"
       target="/Solvers/lagsolve"/>
 
-    <!-- This event is applied every 5e-4s.  The targetExactTimestep
+<!-- This event is applied every 5e-4s.  The targetExactTimestep
     flag allows this event to request a dt modification to match an
     integer multiple of the timeFrequency. -->
+
     <PeriodicEvent
       name="blueprint"
       timeFrequency="1.0e-4"
@@ -45,6 +46,17 @@
       timeFrequency="5.0e-4"
       targetExactTimestep="0"
       target="/Outputs/restartOutput"/>
+
+    <PeriodicEvent name="timeHistoryCollection"
+      timeFrequency="1.0e-5"
+      targetExactTimestep="1"
+      target="/Tasks/velocityCollection" />
+
+    <PeriodicEvent name="timeHistoryOutput"
+      timeFrequency="5.0e-4"
+      targetExactTimestep="0"
+      target="/Outputs/timeHistoryOutput" />
+
   </Events>
 
   <NumericalMethods>
@@ -84,6 +96,7 @@
   </Constitutive>
 
   <FieldSpecifications>
+
     <FieldSpecification
       name="source0"
       initialCondition="1"
@@ -147,7 +160,21 @@
 
     <Restart
       name="restartOutput"/>
+
+    <TimeHistory
+      name="timeHistoryOutput"
+      sources="{/Tasks/velocityCollection}"
+      filename="veloc_history" />
   </Outputs>
+
+  <Tasks>
+    <PackCollection
+      name="velocityCollection"
+      objectPath="nodeManager"
+      setNames="{source}"
+      fieldName="Velocity" />
+  </Tasks>
+
 
   <Geometry>
     <Box
