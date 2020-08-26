@@ -25,7 +25,8 @@ namespace geosx
 {
 //*****************************************************************************
 /**
- * @brief Implements kernels for solving Laplace's equation.
+ * @brief Implements kernels for solving the Damage(or phase-field) equation
+ * in a phase-field fracture problem.
  * @copydoc geosx::finiteElement::KernelBase
  * @tparam NUM_NODES_PER_ELEM The number of nodes per element for the
  *                            @p SUBREGION_TYPE.
@@ -33,8 +34,9 @@ namespace geosx
  *                trial space have the same number of support points.
  *
  * ### PhaseFieldDamageKernel Description
- * Implements the KernelBase interface functions required for solving Laplace's
- * equation using on of the finite element kernel application functions such as
+ * Implements the KernelBase interface functions required for solving the 
+ * Damage(or phase-field) equation in a phase-field fracture problem.
+ * It uses the finite element kernel application functions such as
  * geosx::finiteElement::RegionBasedKernelApplication.
  *
  * In this implementation, the template parameter @p NUM_NODES_PER_ELEM is used

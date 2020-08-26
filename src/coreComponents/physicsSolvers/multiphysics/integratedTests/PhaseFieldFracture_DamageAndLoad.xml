@@ -50,9 +50,9 @@
                   xCoords="{-1, 1}"
                   yCoords="{-1, 1}"
                   zCoords="{-1, 1}"
-                  nx="{4}"
-                  ny="{4}"
-                  nz="{4}"
+                  nx="{3}"
+                  ny="{3}"
+                  nz="{3}"
                   cellBlockNames="{cb1}"/>
   </Mesh>
 
@@ -117,26 +117,12 @@
                         scale="0"
                         setNames="{xneg}"/>
 
-    <!-- <FieldSpecification name="ytraction"
-                        fieldName="Traction"
-                        component="1"
-                        objectPath="faceManager"
-                        scale="1e-3"
-                        setNames="{ypos}"/> -->
-
     <FieldSpecification name="yfix"
                         fieldName="TotalDisplacement"
                         component="1"
                         objectPath="nodeManager"
                         scale="0"
                         setNames="{all}"/>
-
-    <!-- <FieldSpecification name="zboundary"
-                        fieldName="Traction"
-                        component="2"
-                        objectPath="faceManager"
-                        scale="1e-3"
-                        setNames="{zpos}"/> -->
 
     <FieldSpecification name="zfix"
                         fieldName="TotalDisplacement"
@@ -172,10 +158,7 @@
   </Outputs>
 
   <Geometry>
-    <Box name="centerPoint" xMin="-0.001, -0.001, -0.001" xMax="+0.001, +0.001, +0.001"/>
-    <Box name="bottom" xMin="-1.001, -1.001, -1.001" xMax="-0.999, +1.001, +1.001"/>
-    <Box name="middle" xMin="-0.001, -1.001, -1.001" xMax="+0.001, +0.001, +1.001"/>
-    <Box name="top" xMin="+0.999, -1.001, -1.001" xMax="+1.001, +1.001, +1.001"/>
+    <Box name="middle" xMin="-0.334, -1.001, -1.001" xMax="+0.334, +0.001, +1.001"/>
   </Geometry>
 
 </Problem>
