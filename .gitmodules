@@ -10,7 +10,6 @@
 [submodule "integratedTests"]
 	path = integratedTests
 	url = ../integratedTests.git
-	branch = phaseFieldFracture2
 [submodule "src/externalComponents/PAMELA"]
 	path = src/externalComponents/PAMELA
 	url = ../PAMELA.git

@@ -80,8 +80,6 @@ protected:
   /// Deleted move assignment operator
   SolidBaseUpdates & operator=( SolidBaseUpdates && ) =  delete;
 
-
-
 public:
   GEOSX_HOST_DEVICE
   virtual void getStress( localIndex const k,

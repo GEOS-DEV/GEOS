@@ -67,6 +67,5 @@ void SolidBase::allocateConstitutiveData( dataRepository::Group * const parent,
   ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 }
 
-
 }
 } /* namespace geosx */
