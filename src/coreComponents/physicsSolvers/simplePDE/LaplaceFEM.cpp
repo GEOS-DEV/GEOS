@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -168,20 +168,20 @@ void LaplaceFEM::SetupSystem( DomainPartition & domain,
   arrayView1d< globalIndex const > const &
   dofIndex = nodeManager->getReference< globalIndex_array >( dofManager.getKey( m_fieldName ) );
 
-  SparsityPattern< globalIndex > pattern( dofManager.numLocalDofs(), dofManager.numGlobalDofs() );
-  array1d< localIndex > rowSizes( dofManager.numLocalDofs() );
+  SparsityPattern< globalIndex > sparsityPattern( dofManager.numLocalDofs(),
+                                                  dofManager.numGlobalDofs(),
+                                                  8*8*3 );
 
-  finiteElement::fillSparsity< serialPolicy,
-                               CellElementSubRegion,
+  finiteElement::fillSparsity< CellElementSubRegion,
                                LaplaceFEMKernel >( *mesh,
                                                    targetRegionNames(),
                                                    this->getDiscretizationName(),
                                                    dofIndex,
                                                    dofManager.rankOffset(),
-                                                   pattern,
-                                                   rowSizes );
+                                                   sparsityPattern );
 
-  localMatrix.assimilate< parallelDevicePolicy<> >( std::move( pattern ) );
+  sparsityPattern.compress();
+  localMatrix.assimilate< parallelDevicePolicy<> >( std::move( sparsityPattern ) );
 
 }
 

@@ -379,6 +379,13 @@ Element: PAMELAMeshGenerator
 .. include:: ../../coreComponents/fileIO/schema/docs/PAMELAMeshGenerator.rst
 
 
+.. _XML_PackCollection:
+
+Element: PackCollection
+=======================
+.. include:: ../../coreComponents/fileIO/schema/docs/PackCollection.rst
+
+
 .. _XML_Parameter:
 
 Element: Parameter
@@ -589,11 +596,25 @@ Element: TableFunction
 .. include:: ../../coreComponents/fileIO/schema/docs/TableFunction.rst
 
 
+.. _XML_Tasks:
+
+Element: Tasks
+==============
+.. include:: ../../coreComponents/fileIO/schema/docs/Tasks.rst
+
+
 .. _XML_ThickPlane:
 
 Element: ThickPlane
 ===================
 .. include:: ../../coreComponents/fileIO/schema/docs/ThickPlane.rst
+
+
+.. _XML_TimeHistory:
+
+Element: TimeHistory
+====================
+.. include:: ../../coreComponents/fileIO/schema/docs/TimeHistory.rst
 
 
 .. _XML_TwoPointFluxApproximation:
@@ -1055,6 +1076,13 @@ Datastructure: PAMELAMeshGenerator
 .. include:: ../../coreComponents/fileIO/schema/docs/PAMELAMeshGenerator_other.rst
 
 
+.. _DATASTRUCTURE_PackCollection:
+
+Datastructure: PackCollection
+=============================
+.. include:: ../../coreComponents/fileIO/schema/docs/PackCollection_other.rst
+
+
 .. _DATASTRUCTURE_Parameter:
 
 Datastructure: Parameter
@@ -1265,11 +1293,25 @@ Datastructure: TableFunction
 .. include:: ../../coreComponents/fileIO/schema/docs/TableFunction_other.rst
 
 
+.. _DATASTRUCTURE_Tasks:
+
+Datastructure: Tasks
+====================
+.. include:: ../../coreComponents/fileIO/schema/docs/Tasks_other.rst
+
+
 .. _DATASTRUCTURE_ThickPlane:
 
 Datastructure: ThickPlane
 =========================
 .. include:: ../../coreComponents/fileIO/schema/docs/ThickPlane_other.rst
+
+
+.. _DATASTRUCTURE_TimeHistory:
+
+Datastructure: TimeHistory
+==========================
+.. include:: ../../coreComponents/fileIO/schema/docs/TimeHistory_other.rst
 
 
 .. _DATASTRUCTURE_TwoPointFluxApproximation:
