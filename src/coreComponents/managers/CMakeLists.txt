@@ -12,6 +12,13 @@ set(managers_headers
     Outputs/OutputBase.hpp
     Outputs/SiloOutput.hpp
     Outputs/RestartOutput.hpp
+    Outputs/TimeHistoryOutput.hpp
+    Tasks/TasksManager.hpp
+    Tasks/TaskBase.hpp
+    TimeHistory/TimeHistoryCollection.hpp
+    TimeHistory/PackCollection.hpp
+    TimeHistory/HistoryIO.hpp
+    TimeHistory/HistoryDataSpec.hpp
     Outputs/BlueprintOutput.hpp
     Functions/FunctionBase.hpp
     Functions/SymbolicFunction.hpp
@@ -21,7 +28,6 @@ set(managers_headers
     ObjectManagerBase.hpp
     ProblemManager.hpp
     NumericalMethodsManager.hpp
-    FieldSpecification/FieldSpecificationOps.hpp
     FieldSpecification/FieldSpecificationBase.hpp
     FieldSpecification/FieldSpecificationManager.hpp
     FieldSpecification/DirichletBoundaryCondition.hpp
@@ -33,6 +39,7 @@ set(managers_headers
 #
 # Specify all sources
 #
+
 set(managers_sources
     DomainPartition.cpp
     EventManager.cpp
@@ -44,7 +51,11 @@ set(managers_sources
     Outputs/OutputBase.cpp
     Outputs/SiloOutput.cpp
     Outputs/RestartOutput.cpp
+    Outputs/TimeHistoryOutput.cpp
     Outputs/BlueprintOutput.cpp
+    Tasks/TaskBase.cpp
+    Tasks/TasksManager.cpp
+    TimeHistory/PackCollection.cpp
     Functions/FunctionBase.cpp
     Functions/SymbolicFunction.cpp
     Functions/TableFunction.cpp

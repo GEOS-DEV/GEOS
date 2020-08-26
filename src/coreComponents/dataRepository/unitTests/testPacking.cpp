@@ -20,6 +20,8 @@
 #include "managers/initialization.hpp"
 #include "mpiCommunications/CommunicationTools.hpp"
 
+#include "dataRepository/wrapperHelpers.hpp"
+
 #include <ctime>
 #include <cstdlib>
 
@@ -159,6 +161,31 @@ TEST( testPacking, testPackingDevice )
 
   buffer_unit_type const * cbuffer = &buf[0];
   bufferOps::UnpackDevice( cbuffer, unpacked.toView());
+  unpacked.move( LvArray::MemorySpace::CPU );
+  for( localIndex ii = 0; ii < size; ++ii )
+    EXPECT_EQ( veloc[ii], unpacked[ii] );
+}
+
+TEST( testPacking, testPackingDeviceHelper )
+{
+  std::srand( std::time( nullptr ));
+  constexpr localIndex size = 10000;
+  array1d< double > veloc( size );
+  array1d< double > unpacked( size );
+
+  for( localIndex ii = 0; ii < size; ++ii )
+    //for( localIndex jj = 0; jj < 3; ++jj )
+    veloc[ii] = drand();
+
+  buffer_unit_type * null_buf = NULL;
+  localIndex calc_size = bufferOps::PackDevice< false >( null_buf, veloc.toViewConst() );
+
+  buffer_type buf( calc_size );
+  buffer_unit_type * buffer = &buf[0];
+  dataRepository::wrapperHelpers::PackDevice< true >( buffer, veloc.toViewConst());
+
+  buffer_unit_type const * cbuffer = &buf[0];
+  dataRepository::wrapperHelpers::UnpackDevice( cbuffer, unpacked.toView());
   unpacked.move( LvArray::MemorySpace::CPU );
   for( localIndex ii = 0; ii < size; ++ii )
     EXPECT_EQ( veloc[ii], unpacked[ii] );
