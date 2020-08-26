@@ -567,7 +567,7 @@ real64 regionBasedKernelApplication( MeshLevel & mesh,
                                                              &faceManager,
                                                              &kernelConstructorParamsTuple,
                                                              &finiteElementName]
-                                                             ( localIndex const targetRegionIndex, auto & elementSubRegion )
+                                                              ( localIndex const targetRegionIndex, auto & elementSubRegion )
   {
     localIndex const numElems = elementSubRegion.size();
 
@@ -597,7 +597,7 @@ real64 regionBasedKernelApplication( MeshLevel & mesh,
                                                                        &elementSubRegion,
                                                                        &finiteElementName,
                                                                        numElems]
-                                                                       ( auto * const castedConstitutiveRelation )
+                                                                        ( auto * const castedConstitutiveRelation )
     {
       // Create an alias for the type of constitutive model.
       using CONSTITUTIVE_TYPE = TYPEOFPTR( castedConstitutiveRelation );

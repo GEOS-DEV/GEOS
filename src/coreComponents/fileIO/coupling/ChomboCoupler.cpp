@@ -65,14 +65,14 @@ void ChomboCoupler::write( double dt )
   arrayView1d< integer const > const & ghostRank = faces->ghostRank();
 
   localIndex voidRegionIndex = -1;
-  elemRegionManager->forElementRegionsComplete([&]( localIndex const elemRegionIndex,
-                                                    ElementRegionBase const & elemRegion )
+  elemRegionManager->forElementRegionsComplete( [&]( localIndex const elemRegionIndex,
+                                                     ElementRegionBase const & elemRegion )
   {
     if( elemRegion.getName() == "void" )
     {
       voidRegionIndex = elemRegionIndex;
     }
-  });
+  } );
 
   bool * faceMask = new bool[n_faces];
   for( localIndex i = 0; i < n_faces; ++i )
@@ -136,9 +136,9 @@ void ChomboCoupler::read( bool usePressures )
                       m_node_offset, m_n_nodes_written, n_nodes, node_fields );
 
     arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const & reference_pos = nodes->referencePosition();
-    for ( localIndex i = 0; i < n_nodes; ++i )
+    for( localIndex i = 0; i < n_nodes; ++i )
     {
-      for ( localIndex j = 0; j < 3; ++j )
+      for( localIndex j = 0; j < 3; ++j )
       {
         reference_pos( i, j ) = m_referencePositionCopy( i, j );
       }
@@ -172,9 +172,9 @@ void ChomboCoupler::copyNodalData()
   m_displacementCopy.resizeWithoutInitializationOrDestruction( numNodes, 3 );
   m_velocityCopy.resizeWithoutInitializationOrDestruction( numNodes, 3 );
 
-  for ( localIndex i = 0; i < numNodes; ++i )
+  for( localIndex i = 0; i < numNodes; ++i )
   {
-    for ( localIndex j = 0; j < 3; ++j )
+    for( localIndex j = 0; j < 3; ++j )
     {
       m_referencePositionCopy( i, j ) = referencePos( i, j );
       m_displacementCopy( i, j ) = displacement( i, j );
