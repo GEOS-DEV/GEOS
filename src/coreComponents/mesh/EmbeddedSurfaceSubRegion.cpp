@@ -109,7 +109,7 @@ void EmbeddedSurfaceSubRegion::CalculateElementGeometricQuantities( array1d< R1T
   }
 
   // update area
-  m_elementArea[ k ] = computationalGeometry::ComputeSurfaceArea( intersectionPoints, intersectionPoints.size(), m_normalVector[k] );
+  m_elementArea[ k ] = computationalGeometry::ComputeSurfaceArea( intersectionPoints );
 
   LvArray::tensorOps::scale< 3 >( m_elementCenter[ k ], 1.0 / intersectionPoints.size() );
 
@@ -194,7 +194,7 @@ bool EmbeddedSurfaceSubRegion::AddNewEmbeddedSurface ( localIndex const cellInde
     this->resize( surfaceIndex + 1 );
 
     // Reorder the points CCW and then add the point to the list in the nodeManager if it is a new one.
-    intersectionPoints = computationalGeometry::orderPointsCCW( intersectionPoints, intersectionPoints.size(), normalVector );
+    computationalGeometry::orderPointsCCW( intersectionPoints, normalVector );
     array2d< real64, nodes::REFERENCE_POSITION_PERM > & embSurfNodesPos = nodeManager.embSurfNodesPosition();
 
     bool isNew;
@@ -256,9 +256,9 @@ void EmbeddedSurfaceSubRegion::setupRelatedObjectsInRelations( MeshLevel const *
   this->m_toNodesRelation.SetRelatedObject( mesh->getNodeManager() );
 }
 
-int EmbeddedSurfaceSubRegion::totalNumberOfNodes() const
+localIndex EmbeddedSurfaceSubRegion::totalNumberOfNodes() const
 {
-  int totalNumNodes = 0;
+  localIndex totalNumNodes = 0;
   for( localIndex esi=0; esi<size(); esi++ )
   {
     totalNumNodes += m_toNodesRelation.sizeOfArray(esi);

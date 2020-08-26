@@ -44,26 +44,20 @@ R1Tensor LinePlaneIntersection( R1Tensor lineDir,
                                 R1Tensor planeOrigin );
 
 /**
- * @brief Calculate the area of a polygon given the set of points defining it.
+ * @brief Calculate the area of a polygon given the set of points in ccw order defining it.
  * @param[in] points coordinates of the points
- * @param[in] numPoints number of points
- * @param[in] normal unit normal vector to the surface
  * @return the area of the polygon
  */
-real64 ComputeSurfaceArea( array1d< R1Tensor > const & points,
-                           localIndex const numPoints,
-                           R1Tensor const & normal );
+real64 ComputeSurfaceArea( array1d< R1Tensor > const & points );
 
 /**
- * @brief Order a set of points counter-clockwise.
+ * @brief Reorder a set of points counter-clockwise.
  * @param[in] points coordinates of the points
- * @param[in] numPoints number of points
  * @param[in] normal unit normal vector to the surface
  * @return the reordered set of points
  */
-array1d< R1Tensor > orderPointsCCW( array1d< R1Tensor > const & points,
-                                    localIndex const numPoints,
-                                    R1Tensor const & normal );
+  void orderPointsCCW( array1d< R1Tensor > & points,
+                       R1Tensor const & normal );
 
 /**
  * @brief Calculate the centroid of a convex 3D polygon as well as the normal and the rotation matrix.

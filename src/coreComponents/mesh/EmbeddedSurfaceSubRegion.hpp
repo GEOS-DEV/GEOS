@@ -375,7 +375,7 @@ public:
 
   ///@}
 
-  int totalNumberOfNodes() const;
+  localIndex totalNumberOfNodes() const;
 
 private:
 

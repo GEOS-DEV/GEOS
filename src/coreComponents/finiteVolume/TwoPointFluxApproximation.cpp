@@ -618,7 +618,7 @@ void TwoPointFluxApproximation::addEDFracToFractureStencil( MeshLevel & mesh,
 
   EdgeManager::FaceMapType & edgeToEmbSurfacesMap = embSurfEdgeManager->faceList();
 
-  // arrayView1d< integer const > const & ghostRank = fractureSubRegion->ghostRank();
+  arrayView1d< integer const > const & ghostRank = fractureSubRegion->ghostRank();
 
   localIndex constexpr maxElems = FaceElementStencil::MAX_STENCIL_SIZE;
 
@@ -697,7 +697,7 @@ void TwoPointFluxApproximation::addEDFracToFractureStencil( MeshLevel & mesh,
   // loop over the embedded surfaces and add connections to cellStencil
   for( localIndex kes=0; kes  < fractureSubRegion->size(); kes++ )
   {
-    //if( ghostRank[kes] < 0 )
+    if( ghostRank[kes] < 0 )
     {
       localIndex const numElems = 2;   // there is a 1 to 1 relation
 

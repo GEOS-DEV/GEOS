@@ -52,21 +52,16 @@ R1Tensor LinePlaneIntersection( R1Tensor lineDir,
 }
 
 //*************************************************************************************************
-real64 ComputeSurfaceArea( array1d< R1Tensor > const & points,
-                           localIndex const numPoints,
-                           R1Tensor const & normal )
+real64 ComputeSurfaceArea( array1d< R1Tensor > const & points )
 {
-  // reorder points counterclockwise
-  array1d< R1Tensor > pointsReordered = orderPointsCCW( points, numPoints, normal );
-
   real64 surfaceArea = 0.0;
-  for( localIndex a = 0; a < numPoints - 2; ++a )
+  for( localIndex a = 0; a < points.size() - 2; ++a )
   {
-    real64 v1[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( pointsReordered[ a + 1 ] );
-    real64 v2[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( pointsReordered[ a + 2 ] );
+    real64 v1[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( points[ a + 1 ] );
+    real64 v2[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( points[ a + 2 ] );
 
-    LvArray::tensorOps::subtract< 3 >( v1, pointsReordered[ 0 ] );
-    LvArray::tensorOps::subtract< 3 >( v2, pointsReordered[ 0 ] );
+    LvArray::tensorOps::subtract< 3 >( v1, points[ 0 ] );
+    LvArray::tensorOps::subtract< 3 >( v2, points[ 0 ] );
 
     real64 triangleNormal[ 3 ];
     LvArray::tensorOps::crossProduct( triangleNormal, v1, v2 );
@@ -77,10 +72,11 @@ real64 ComputeSurfaceArea( array1d< R1Tensor > const & points,
 }
 
 //*************************************************************************************************
-array1d< R1Tensor > orderPointsCCW( array1d< R1Tensor > const & points,
-                                    localIndex const numPoints,
-                                    R1Tensor const & normal )
+void orderPointsCCW( array1d< R1Tensor > & points,
+                     R1Tensor const & normal )
 {
+  localIndex numPoints = points.size();
+
   array1d< R1Tensor > orderedPoints( numPoints );
 
   std::vector< int > indices( numPoints );
@@ -124,7 +120,7 @@ array1d< R1Tensor > orderPointsCCW( array1d< R1Tensor > const & points,
     orderedPoints[ a ] = points[ indices[ a ] ];
   }
 
-  return orderedPoints;
+  LvArray::tensorOps::copy< 3 >(points, orderedPoints);
 }
 
 //*************************************************************************************************
