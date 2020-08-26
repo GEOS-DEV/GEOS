@@ -97,7 +97,7 @@
       referenceViscosity="5.0e-3"
       viscosibility="0.0"/>
 
-    <LinearElasticIsotropic
+    <ElasticIsotropic
       name="rock"
       defaultDensity="2700"
       defaultBulkModulus="20.0e9"

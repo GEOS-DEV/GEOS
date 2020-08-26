@@ -139,7 +139,7 @@
 
   <!-- SPHINX_POROELASTIC_CONSTITUTIVE -->
   <Constitutive>
-    <PoroLinearElasticIsotropic
+    <PoroElasticIsotropic
       name="shale"
       defaultDensity="2700"
       defaultBulkModulus="61.9e6"

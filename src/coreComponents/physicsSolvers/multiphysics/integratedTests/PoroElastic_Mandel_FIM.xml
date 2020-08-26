@@ -159,7 +159,7 @@
   </ElementRegions>
 
   <Constitutive>
-    <PoroLinearElasticIsotropic
+    <PoroElasticIsotropic
       name="shale"
       defaultDensity="0"
       defaultBulkModulus="5.55555555555555555556e3"

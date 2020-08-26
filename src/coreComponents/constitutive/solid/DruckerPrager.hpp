@@ -153,7 +153,7 @@ void DruckerPragerUpdates::smallStrainUpdate( localIndex const k,
   // nonlinear hardening or yield surfaces.
     
   real64 solution[3], residual[3], delta[3];
-  real64 jacobian[3][3] = {{}}, jacobianInv[3][3];
+  real64 jacobian[3][3] = {{}}, jacobianInv[3][3] = {{}};
   
   solution[0] = trialP; // initial guess for newP
   solution[1] = trialQ; // initial guess for newQ

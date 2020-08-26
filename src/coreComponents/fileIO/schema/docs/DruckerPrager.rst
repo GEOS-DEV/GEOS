@@ -1,16 +1,18 @@
 
 
-======================= ====== ======== =========================================== 
-Name                    Type   Default  Description                                 
-======================= ====== ======== =========================================== 
-defaultBulkModulus      real64 1e+09    Elastic bulk modulus parameter              
-defaultCohesion         real64 5e+06    Initial cohesion parameter                  
-defaultDensity          real64 required Default Material Density                    
-defaultHardeningRate    real64 1e+08    Cohesion hardening/softening rate parameter 
-defaultShearModulus     real64 6e+08    Elastic shear modulus parameter             
-defaultTanDilationAngle real64 0.5      Plastic potential slope parameter tan(psi)  
-defaultTanFrictionAngle real64 1        Yield surface slope parameter tan(phi)      
-name                    string required A name is required for any non-unique nodes 
-======================= ====== ======== =========================================== 
+==================== ====== ======== =========================================== 
+Name                 Type   Default  Description                                 
+==================== ====== ======== =========================================== 
+defaultBulkModulus   real64 -1       Elastic Bulk Modulus Parameter              
+defaultCohesion      real64 0        Initial cohesion                            
+defaultDensity       real64 required Default Material Density                    
+defaultDilationAngle real64 30       Dilation angle (degrees)                    
+defaultFrictionAngle real64 30       Friction angle (degrees)                    
+defaultHardeningRate real64 0        Cohesion hardening/softening rate           
+defaultPoissonRatio  real64 -1       Poisson's ratio                             
+defaultShearModulus  real64 -1       Elastic Shear Modulus Parameter             
+defaultYoungsModulus real64 -1       Elastic Young's Modulus.                    
+name                 string required A name is required for any non-unique nodes 
+==================== ====== ======== =========================================== 
 
 

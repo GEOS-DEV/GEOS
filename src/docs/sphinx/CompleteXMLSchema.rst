@@ -155,6 +155,20 @@ Element: DruckerPrager
 .. include:: ../../coreComponents/fileIO/schema/docs/DruckerPrager.rst
 
 
+.. _XML_ElasticIsotropic:
+
+Element: ElasticIsotropic
+=========================
+.. include:: ../../coreComponents/fileIO/schema/docs/ElasticIsotropic.rst
+
+
+.. _XML_ElasticTransverseIsotropic:
+
+Element: ElasticTransverseIsotropic
+===================================
+.. include:: ../../coreComponents/fileIO/schema/docs/ElasticTransverseIsotropic.rst
+
+
 .. _XML_ElementRegions:
 
 Element: ElementRegions
@@ -302,27 +316,6 @@ Element: LaplaceFEM
 .. include:: ../../coreComponents/fileIO/schema/docs/LaplaceFEM.rst
 
 
-.. _XML_LinearElasticAnisotropic:
-
-Element: LinearElasticAnisotropic
-=================================
-.. include:: ../../coreComponents/fileIO/schema/docs/LinearElasticAnisotropic.rst
-
-
-.. _XML_LinearElasticIsotropic:
-
-Element: LinearElasticIsotropic
-===============================
-.. include:: ../../coreComponents/fileIO/schema/docs/LinearElasticIsotropic.rst
-
-
-.. _XML_LinearElasticTransverseIsotropic:
-
-Element: LinearElasticTransverseIsotropic
-=========================================
-.. include:: ../../coreComponents/fileIO/schema/docs/LinearElasticTransverseIsotropic.rst
-
-
 .. _XML_LinearSolverParameters:
 
 Element: LinearSolverParameters
@@ -428,25 +421,18 @@ Element: PoreVolumeCompressibleSolid
 .. include:: ../../coreComponents/fileIO/schema/docs/PoreVolumeCompressibleSolid.rst
 
 
-.. _XML_PoroLinearElasticAnisotropic:
+.. _XML_PoroElasticIsotropic:
 
-Element: PoroLinearElasticAnisotropic
-=====================================
-.. include:: ../../coreComponents/fileIO/schema/docs/PoroLinearElasticAnisotropic.rst
-
-
-.. _XML_PoroLinearElasticIsotropic:
-
-Element: PoroLinearElasticIsotropic
-===================================
-.. include:: ../../coreComponents/fileIO/schema/docs/PoroLinearElasticIsotropic.rst
+Element: PoroElasticIsotropic
+=============================
+.. include:: ../../coreComponents/fileIO/schema/docs/PoroElasticIsotropic.rst
 
 
-.. _XML_PoroLinearElasticTransverseIsotropic:
+.. _XML_PoroElasticTransverseIsotropic:
 
-Element: PoroLinearElasticTransverseIsotropic
-=============================================
-.. include:: ../../coreComponents/fileIO/schema/docs/PoroLinearElasticTransverseIsotropic.rst
+Element: PoroElasticTransverseIsotropic
+=======================================
+.. include:: ../../coreComponents/fileIO/schema/docs/PoroElasticTransverseIsotropic.rst
 
 
 .. _XML_Poroelastic:
@@ -817,6 +803,20 @@ Datastructure: DruckerPrager
 .. include:: ../../coreComponents/fileIO/schema/docs/DruckerPrager_other.rst
 
 
+.. _DATASTRUCTURE_ElasticIsotropic:
+
+Datastructure: ElasticIsotropic
+===============================
+.. include:: ../../coreComponents/fileIO/schema/docs/ElasticIsotropic_other.rst
+
+
+.. _DATASTRUCTURE_ElasticTransverseIsotropic:
+
+Datastructure: ElasticTransverseIsotropic
+=========================================
+.. include:: ../../coreComponents/fileIO/schema/docs/ElasticTransverseIsotropic_other.rst
+
+
 .. _DATASTRUCTURE_ElementRegions:
 
 Datastructure: ElementRegions
@@ -978,27 +978,6 @@ Datastructure: Level0
 .. include:: ../../coreComponents/fileIO/schema/docs/Level0_other.rst
 
 
-.. _DATASTRUCTURE_LinearElasticAnisotropic:
-
-Datastructure: LinearElasticAnisotropic
-=======================================
-.. include:: ../../coreComponents/fileIO/schema/docs/LinearElasticAnisotropic_other.rst
-
-
-.. _DATASTRUCTURE_LinearElasticIsotropic:
-
-Datastructure: LinearElasticIsotropic
-=====================================
-.. include:: ../../coreComponents/fileIO/schema/docs/LinearElasticIsotropic_other.rst
-
-
-.. _DATASTRUCTURE_LinearElasticTransverseIsotropic:
-
-Datastructure: LinearElasticTransverseIsotropic
-===============================================
-.. include:: ../../coreComponents/fileIO/schema/docs/LinearElasticTransverseIsotropic_other.rst
-
-
 .. _DATASTRUCTURE_LinearSolverParameters:
 
 Datastructure: LinearSolverParameters
@@ -1111,25 +1090,18 @@ Datastructure: PoreVolumeCompressibleSolid
 .. include:: ../../coreComponents/fileIO/schema/docs/PoreVolumeCompressibleSolid_other.rst
 
 
-.. _DATASTRUCTURE_PoroLinearElasticAnisotropic:
+.. _DATASTRUCTURE_PoroElasticIsotropic:
 
-Datastructure: PoroLinearElasticAnisotropic
-===========================================
-.. include:: ../../coreComponents/fileIO/schema/docs/PoroLinearElasticAnisotropic_other.rst
-
-
-.. _DATASTRUCTURE_PoroLinearElasticIsotropic:
-
-Datastructure: PoroLinearElasticIsotropic
-=========================================
-.. include:: ../../coreComponents/fileIO/schema/docs/PoroLinearElasticIsotropic_other.rst
+Datastructure: PoroElasticIsotropic
+===================================
+.. include:: ../../coreComponents/fileIO/schema/docs/PoroElasticIsotropic_other.rst
 
 
-.. _DATASTRUCTURE_PoroLinearElasticTransverseIsotropic:
+.. _DATASTRUCTURE_PoroElasticTransverseIsotropic:
 
-Datastructure: PoroLinearElasticTransverseIsotropic
-===================================================
-.. include:: ../../coreComponents/fileIO/schema/docs/PoroLinearElasticTransverseIsotropic_other.rst
+Datastructure: PoroElasticTransverseIsotropic
+=============================================
+.. include:: ../../coreComponents/fileIO/schema/docs/PoroElasticTransverseIsotropic_other.rst
 
 
 .. _DATASTRUCTURE_Poroelastic:
