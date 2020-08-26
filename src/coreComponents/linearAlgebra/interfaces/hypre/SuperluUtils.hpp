@@ -98,6 +98,20 @@ int SolveSuperMatrix( SuperMatrix & SLUDMat,
  */
 void DestroySuperMatrix( SuperMatrix & SLUDMat );
 
+/**
+ * @brief Converts from GEOSX to SuperLU_Dist columns permutation option
+ * @param[in] value the GEOSX option
+ * @return the SuperLU_Dist option
+ */
+colperm_t const & getColPermType( string const & value );
+
+/**
+ * @brief Converts from GEOSX to SuperLU_Dist rows permutation option
+ * @param[in] value the GEOSX option
+ * @return the SuperLU_Dist option
+ */
+rowperm_t const & getRowPermType( string const & value );
+
 }
 
 #endif /*GEOSX_LINEARALGEBRA_INTERFACES_SUPERLUUTILS_HPP_*/

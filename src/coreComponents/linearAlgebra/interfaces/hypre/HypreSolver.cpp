@@ -84,7 +84,6 @@ void HypreSolver::solve_direct( HypreMatrix & mat,
   // Initialize options.
   superlu_dist_options_t options;
   set_default_options_dist( &options );
-  options.ReplaceTinyPivot = YES;
   if( m_parameters.logLevel > 1 )
   {
     options.PrintStat = YES;
@@ -92,6 +91,33 @@ void HypreSolver::solve_direct( HypreMatrix & mat,
   else
   {
     options.PrintStat = NO;
+  }
+
+  if( m_parameters.direct.equilibrate )
+  {
+    options.Equil = YES;
+  }
+  else
+  {
+    options.Equil = NO;
+  }
+  options.ColPerm = getColPermType( m_parameters.direct.colPerm );
+  options.RowPerm = getRowPermType( m_parameters.direct.rowPerm );
+  if( m_parameters.direct.replaceTinyPivot )
+  {
+    options.ReplaceTinyPivot = YES;
+  }
+  else
+  {
+    options.ReplaceTinyPivot = NO;
+  }
+  if( m_parameters.direct.iterativeRefine )
+  {
+    options.IterRefine = SLU_DOUBLE;
+  }
+  else
+  {
+    options.IterRefine = NOREFINE;
   }
 
   if( m_parameters.logLevel > 0 )
@@ -109,7 +135,7 @@ void HypreSolver::solve_direct( HypreMatrix & mat,
   mat.gemv( -1.0, sol, 1.0, res );
   m_result.residualReduction = res.norm2() / bnorm2;
 
-  if( info == 0 && m_result.residualReduction < m_parameters.directTolerance )
+  if( info == 0 && m_result.residualReduction < m_parameters.direct.relTolerance )
   {
     m_result.status = LinearSolverResult::Status::Success;
     m_result.numIterations = 1;

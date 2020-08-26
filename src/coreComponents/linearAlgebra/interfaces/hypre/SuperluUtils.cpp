@@ -172,4 +172,32 @@ void DestroySuperMatrix( SuperMatrix & SLUDMat )
   SUPERLU_FREE( SLUDMat.Store );
 }
 
+colperm_t const & getColPermType( string const & value )
+{
+  static std::map< string, colperm_t > const optionMap =
+  {
+    { "none", NATURAL },
+    { "MMD_At+A", MMD_AT_PLUS_A },
+    { "MMD_AtA", MMD_ATA },
+    { "metis", METIS_AT_PLUS_A },
+    { "parmetis", PARMETIS },
+  };
+
+  GEOSX_LAI_ASSERT_MSG( optionMap.count( value ) > 0, "Unsupported SuperLU_Dist columns permutation option: " << value );
+  return optionMap.at( value );
+}
+
+rowperm_t const & getRowPermType( string const & value )
+{
+  static std::map< string, rowperm_t > const optionMap =
+  {
+    { "none", NOROWPERM },
+    { "mc64", LargeDiag_MC64 },
+    { "awpm", LargeDiag_AWPM },
+  };
+
+  GEOSX_LAI_ASSERT_MSG( optionMap.count( value ) > 0, "Unsupported SuperLU_Dist rows permutation option: " << value );
+  return optionMap.at( value );
+}
+
 }

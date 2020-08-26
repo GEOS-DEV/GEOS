@@ -581,6 +581,18 @@ Available options are: jacobi, blockJacobi, gaussSeidel, blockGaussSeidel, cheby
 		<xsd:attribute name="amgSmootherType" type="string" default="gaussSeidel" />
 		<!--amgThreshold => AMG strength-of-connection threshold-->
 		<xsd:attribute name="amgThreshold" type="real64" default="0" />
+		<!--directColPerm => How to permute the columns
+Available options are: none, MMD_At+A, MMD_AtA, colAMD, metis, parmetis-->
+		<xsd:attribute name="directColPerm" type="string" default="metis" />
+		<!--directEquil => Whether to scale the rows and columns of the matrix-->
+		<xsd:attribute name="directEquil" type="integer" default="1" />
+		<!--directIterRef => Whether to perform iterative refinement-->
+		<xsd:attribute name="directIterRef" type="integer" default="1" />
+		<!--directReplTinyPivot => Whether to replace tiny pivots by sqrt(epsilon)*norm(A)-->
+		<xsd:attribute name="directReplTinyPivot" type="integer" default="1" />
+		<!--directRowPerm => How to permute the rows
+Available options are: none, mc64, awpm-->
+		<xsd:attribute name="directRowPerm" type="string" default="mc64" />
 		<!--directTol => Tolerance used to check a direct solver solution-->
 		<xsd:attribute name="directTol" type="real64" default="1e-12" />
 		<!--iluFill => ILU(K) fill factor-->

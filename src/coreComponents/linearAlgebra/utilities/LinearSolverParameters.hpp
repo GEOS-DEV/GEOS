@@ -39,7 +39,19 @@ public:
   string preconditionerType = "iluk";  ///< Preconditioner type [none, iluk, ilut, amg, mgr, block]
   integer dofsPerNode = 1;             ///< Dofs per node (or support location) for non-scalar problems
   bool isSymmetric = false;            ///< Whether input matrix is symmetric (may affect choice of scheme)
-  real64 directTolerance = 1.e-12;     ///< Tolerance used to check a direct solver solution
+
+  /// Direct solver parameters
+  struct Direct
+  {
+    real64 relTolerance = 1.e-12;   ///< Tolerance used to check a direct solver solution
+    integer equilibrate = 1;        ///< Whether to scale the rows and columns of the matrix
+    string colPerm = "metis";       ///< How to permute the columns [none, MMD_At+A, MMD_AtA, colAMD,
+                                    ///< metis, parmetis]
+    string rowPerm = "mc64";        ///< How to permute the rows [none, mc64, awpm]
+    integer replaceTinyPivot = 1;   ///< Whether to replace tiny pivots by sqrt(epsilon)*norm(A)
+    integer iterativeRefine = 1;    ///< Whether to perform iterative refinement
+  }
+  direct;                           ///< direct solver parameter struct
 
   /// Krylov-method parameters
   struct Krylov
