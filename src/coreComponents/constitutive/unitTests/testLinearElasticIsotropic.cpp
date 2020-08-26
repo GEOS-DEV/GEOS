@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -32,7 +32,7 @@ TEST( LinearElasticIsotropicTests, testAllocation )
 
   dataRepository::Group disc( "discretization", nullptr );
   disc.resize( numElems );
-  cm.AllocateConstitutiveData( &disc, numQuadraturePoints );
+  cm.allocateConstitutiveData( &disc, numQuadraturePoints );
 
   EXPECT_EQ( cm.size(), numElems );
   EXPECT_EQ( cm.numQuadraturePoints(), numQuadraturePoints );
@@ -58,7 +58,7 @@ TEST( LinearElasticIsotropicTests, testStateUpdatePoint )
 
   dataRepository::Group disc( "discretization", nullptr );
   disc.resize( 2 );
-  cm.AllocateConstitutiveData( &disc, 2 );
+  cm.allocateConstitutiveData( &disc, 2 );
   LinearElasticIsotropic::KernelWrapper cmw = cm.createKernelUpdates();
 
   arrayView3d< real64, solid::STRESS_USD > const & stress = cm.getStress();

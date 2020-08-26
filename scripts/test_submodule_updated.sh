@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Submodules not checking for
-declare -ar exclusion_list=( "blt" )
+declare -ar exclusion_list=( "blt" "integratedTests" )
 echo "Submodules that are excluded from sync test : ${exclusion_list[@]}"
 
 # Do not pull large files
@@ -58,44 +58,28 @@ do
     continue
   fi
 
-  # Check if PR has modified the submodule
-  submodule_modified=0
-  for modification in "${diff_array[@]}"
-  do
-    if [ "${paths_array[$i]}" = "$modification" ]
-    then
-      submodule_modified=1
-      break
-    fi
-  done
+  # Check hashes if not excluded
 
-  if [ $submodule_modified -eq 0 ]
+  # Submodule's main branch
+  main_branch="${main_branches[$module_name]}"
+
+  # Submodule main hash
+  main_hash="$( git -C ${paths_array[$i]} rev-parse $main_branch )"
+
+  # PR hash with prefixed character removed
+  pr_hash="$( echo ${pr_hashes_array[$i]} | tr -cd [:alnum:] )"
+
+  if [ $pr_hash == $main_hash ]
   then
-    echo "PR branch does not change module $module_name"
-  else 
-    # Check hashes if not excluded and differs from develop's hash
-
-    # Submodule's main branch
-    main_branch="${main_branches[$module_name]}"
-
-    # Submodule main hash
-    main_hash="$( git -C ${paths_array[$i]} rev-parse $main_branch )"
-
-    # PR hash with prefixed character removed
-    pr_hash="$( echo ${pr_hashes_array[$i]} | tr -cd [:alnum:] )"
-
-    if [ $pr_hash == $main_hash ]
-    then
-      echo "PR branch and $main_branch have the same hashes for submodule"\
-           "$module_name : $pr_hash"
-    else
-      echo "PR branch and $main_branch have different hashes for submodule"\
-           "$module_name:"
-      echo "---- PR branch has hash $pr_hash"
-      echo "---- $module_name/$main_branch has hash $main_hash"
-      unsync_submodules+=( "$module_name" )
-      exit_code=1
-    fi
+    echo "PR branch and $main_branch have the same hashes for submodule"\
+         "$module_name : $pr_hash"
+  else
+    echo "PR branch and $main_branch have different hashes for submodule"\
+         "$module_name:"
+    echo "---- PR branch has hash $pr_hash"
+    echo "---- $module_name/$main_branch has hash $main_hash"
+    unsync_submodules+=( "$module_name" )
+    exit_code=1
   fi
 done
 

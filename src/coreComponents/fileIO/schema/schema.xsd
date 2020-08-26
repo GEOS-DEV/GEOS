@@ -405,7 +405,7 @@
 	</xsd:complexType>
 	<xsd:complexType name="TableFunctionType">
 		<!--coordinateFiles => List of coordinate file names for ND Table-->
-		<xsd:attribute name="coordinateFiles" type="string_array" default="{}" />
+		<xsd:attribute name="coordinateFiles" type="path_array" default="{}" />
 		<!--coordinates => Coordinates inputs for 1D tables-->
 		<xsd:attribute name="coordinates" type="real64_array" default="{0}" />
 		<!--inputVarNames => Name of fields are input to function.-->
@@ -415,7 +415,7 @@
 		<!--values => Values for 1D tables-->
 		<xsd:attribute name="values" type="real64_array" default="{0}" />
 		<!--voxelFile => Voxel file name for ND Table-->
-		<xsd:attribute name="voxelFile" type="string" default="" />
+		<xsd:attribute name="voxelFile" type="path" default="" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
@@ -571,11 +571,13 @@
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="LinearSolverParametersType">
-		<!--amgCoarseSolver => AMG coarsest level solver/smoother type-->
+		<!--amgCoarseSolver => AMG coarsest level solver/smoother type
+Available options are: jacobi, gaussSeidel, blockGaussSeidel, chebyshev, direct-->
 		<xsd:attribute name="amgCoarseSolver" type="string" default="direct" />
 		<!--amgNumSweeps => AMG smoother sweeps-->
 		<xsd:attribute name="amgNumSweeps" type="integer" default="2" />
-		<!--amgSmootherType => AMG smoother type-->
+		<!--amgSmootherType => AMG smoother type
+Available options are: jacobi, blockJacobi, gaussSeidel, blockGaussSeidel, chebyshev, icc, ilu, ilut-->
 		<xsd:attribute name="amgSmootherType" type="string" default="gaussSeidel" />
 		<!--amgThreshold => AMG strength-of-connection threshold-->
 		<xsd:attribute name="amgThreshold" type="real64" default="0" />
@@ -585,19 +587,24 @@
 		<xsd:attribute name="iluThreshold" type="real64" default="0" />
 		<!--krylovAdaptiveTol => Use Eisenstat-Walker adaptive linear tolerance-->
 		<xsd:attribute name="krylovAdaptiveTol" type="integer" default="0" />
-		<!--krylovMaxIter => Maximum iterations allowed-->
+		<!--krylovMaxIter => Maximum iterations allowed for an iterative solver-->
 		<xsd:attribute name="krylovMaxIter" type="integer" default="200" />
 		<!--krylovMaxRestart => Maximum iterations before restart (GMRES only)-->
 		<xsd:attribute name="krylovMaxRestart" type="integer" default="200" />
-		<!--krylovTol => Relative convergence tolerance-->
+		<!--krylovTol => Relative convergence tolerance of the iterative method
+If the method converges, the iterative solution :math:`\mathsf{x}_k` is such that
+the relative residual norm satisfies:
+:math:`|| \mathsf{b} - `\mathsf{A} \mathsf{x}_k ||_2` < ``tolerance`` * :math:`|| \mathsf{b} ||_2`|-->
 		<xsd:attribute name="krylovTol" type="real64" default="1e-06" />
 		<!--krylovWeakestTol => Weakest-allowed tolerance for adaptive method-->
 		<xsd:attribute name="krylovWeakestTol" type="real64" default="0.001" />
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
-		<!--preconditionerType => Preconditioner type-->
+		<!--preconditionerType => Preconditioner type
+Available options are: none, jacobi, iluk, ilut, icc, amg, mgr, block-->
 		<xsd:attribute name="preconditionerType" type="string" default="iluk" />
-		<!--solverType => Linear solver type-->
+		<!--solverType => Linear solver type
+Available options are: direct, cg, gmres, fgmres, bicgstab, preconditioner-->
 		<xsd:attribute name="solverType" type="string" default="direct" />
 	</xsd:complexType>
 	<xsd:complexType name="NonlinearSolverParametersType">
@@ -777,6 +784,8 @@
 			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
 			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
 		</xsd:choice>
+		<!--allowLocalCompDensityChopping => Flag indicating whether local (cell-wise) chopping of negative compositions is allowed-->
+		<xsd:attribute name="allowLocalCompDensityChopping" type="integer" default="1" />
 		<!--capPressureNames => Name of the capillary pressure constitutive model to use-->
 		<xsd:attribute name="capPressureNames" type="string_array" default="{}" />
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
@@ -791,6 +800,8 @@
 		<xsd:attribute name="inputFluxEstimate" type="real64" default="1" />
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
+		<!--maxCompFractionChange => Maximum (absolute) change in a component fraction between two Newton iterations-->
+		<xsd:attribute name="maxCompFractionChange" type="real64" default="1" />
 		<!--meanPermCoeff => Coefficient to move between harmonic mean (1.0) and arithmetic mean (0.0) for the calculation of permeability between elements.-->
 		<xsd:attribute name="meanPermCoeff" type="real64" default="1" />
 		<!--relPermNames => Name of the relative permeability constitutive model to use-->
@@ -834,6 +845,8 @@
 			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
 			<xsd:element name="WellControls" type="WellControlsType" />
 		</xsd:choice>
+		<!--allowLocalCompDensityChopping => Flag indicating whether local (cell-wise) chopping of negative compositions is allowed-->
+		<xsd:attribute name="allowLocalCompDensityChopping" type="integer" default="1" />
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
 		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
@@ -844,6 +857,8 @@
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
+		<!--maxCompFractionChange => Maximum (absolute) change in a component fraction between two Newton iterations-->
+		<xsd:attribute name="maxCompFractionChange" type="real64" default="1" />
 		<!--relPermNames => Names of relative permeability constitutive models to use-->
 		<xsd:attribute name="relPermNames" type="string_array" use="required" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
@@ -1443,8 +1458,8 @@
 		<xsd:attribute name="defaultDensity" type="real64" use="required" />
 		<!--defaultViscosity => Default value for viscosity.-->
 		<xsd:attribute name="defaultViscosity" type="real64" use="required" />
-		<!--densityModel => Type of density model (linear, quadratic, exponential)-->
-		<xsd:attribute name="densityModel" type="string" default="linear" />
+		<!--densityModelString => Type of density model (linear, quadratic, exponential)-->
+		<xsd:attribute name="densityModelString" type="string" default="linear" />
 		<!--referenceDensity => Reference fluid density-->
 		<xsd:attribute name="referenceDensity" type="real64" default="1000" />
 		<!--referencePressure => Reference pressure-->
@@ -1453,8 +1468,8 @@
 		<xsd:attribute name="referenceViscosity" type="real64" default="0.001" />
 		<!--viscosibility => Fluid viscosity exponential coefficient-->
 		<xsd:attribute name="viscosibility" type="real64" default="0" />
-		<!--viscosityModel => Type of viscosity model (linear, quadratic, exponential)-->
-		<xsd:attribute name="viscosityModel" type="string" default="linear" />
+		<!--viscosityModelString => Type of viscosity model (linear, quadratic, exponential)-->
+		<xsd:attribute name="viscosityModelString" type="string" default="linear" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>

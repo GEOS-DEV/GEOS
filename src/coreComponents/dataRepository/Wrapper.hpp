@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -182,15 +182,26 @@ public:
   {
     std::unique_ptr< WrapperBase >
     clonedWrapper = std::make_unique< Wrapper< T > >( name, parent, this->m_data );
-    clonedWrapper->CopyWrapperAttributes( *this );
+    clonedWrapper->copyWrapperAttributes( *this );
 
     return clonedWrapper;
   }
 
-  ///////////////////////////////////////////////////////////////////////////////////////////////////
-  virtual void CopyWrapperAttributes( WrapperBase const & source ) override
+  virtual void copyWrapper( WrapperBase const & source ) override
   {
-    WrapperBase::CopyWrapperAttributes( source );
+    GEOSX_ERROR_IF( source.getName() != this->m_name, "Tried to clone wrapper of with different name" );
+    WrapperBase::copyWrapperAttributes( source );
+    Wrapper< T > const & castedSource = *cast( &source );
+    m_ownsData = castedSource.m_ownsData;
+    m_default = castedSource.m_default;
+    copyData( source );
+
+  }
+
+  ///////////////////////////////////////////////////////////////////////////////////////////////////
+  virtual void copyWrapperAttributes( WrapperBase const & source ) override
+  {
+    WrapperBase::copyWrapperAttributes( source );
     Wrapper< T > const & castedSource = *cast( &source );
     m_ownsData = castedSource.m_ownsData;
     m_default = castedSource.m_default;
@@ -520,6 +531,21 @@ public:
     static void copy( U const &, localIndex const, localIndex const )
     {}
 
+    template< typename U=T >
+    static
+    typename std::enable_if< traits::hasCopyAssignmentOp< U >, void >::type
+    copyData( U & destinationData, U const & sourceData )
+    {
+      destinationData = sourceData;
+    }
+
+    template< typename U=T >
+    static
+    typename std::enable_if< !traits::hasCopyAssignmentOp< U >, void >::type
+    copyData( U &, U const & )
+    {}
+
+
   };
   /// @endcond
 
@@ -531,6 +557,15 @@ public:
       copy_wrapper::copy( reference(), sourceIndex, destIndex );
     }
   }
+
+
+
+  virtual void copyData( WrapperBase const & source ) override
+  {
+    Wrapper< T > const & castedSource = *cast( &source );
+    copy_wrapper::copyData( *m_data, *castedSource.m_data );
+  }
+
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
   virtual void move( LvArray::MemorySpace const space, bool const touch ) const override

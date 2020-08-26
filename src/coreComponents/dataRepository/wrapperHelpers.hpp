@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -290,6 +290,14 @@ pushDataToConduitNode( std::string const & var, conduit::Node & node )
 
   signed char * const ptr = const_cast< signed char * >( reinterpret_cast< signed char const * >( var.data() ) );
   node[ "__values__" ].set_external( dtype, ptr );
+}
+
+// This is for Path since it derives from std::string. See overload for std::string.
+inline
+void
+pushDataToConduitNode( Path const & var, conduit::Node & node )
+{
+  pushDataToConduitNode( static_cast< std::string const & >(var), node );
 }
 
 // This is for an object that doesn't need to be packed but isn't an LvArray.

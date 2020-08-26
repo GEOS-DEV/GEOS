@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -117,15 +117,11 @@ public:
 
   virtual ~CompressibleSinglePhaseFluid() override;
 
-  virtual void DeliverClone( string const & name,
-                             Group * const parent,
-                             std::unique_ptr< ConstitutiveBase > & clone ) const override;
-
   static std::string CatalogName() { return "CompressibleSinglePhaseFluid"; }
 
-  virtual string GetCatalogName() override { return CatalogName(); }
+  virtual string getCatalogName() const override { return CatalogName(); }
 
-  virtual void AllocateConstitutiveData( dataRepository::Group * const parent,
+  virtual void allocateConstitutiveData( dataRepository::Group * const parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
   /// Type of kernel wrapper for in-kernel update (TODO: support multiple EAT, not just linear)
@@ -139,13 +135,15 @@ public:
 
   struct viewKeyStruct : public SingleFluidBase::viewKeyStruct
   {
-    static constexpr auto compressibilityString    = "compressibility";
-    static constexpr auto viscosibilityString      = "viscosibility";
-    static constexpr auto referencePressureString  = "referencePressure";
-    static constexpr auto referenceDensityString   = "referenceDensity";
-    static constexpr auto referenceViscosityString = "referenceViscosity";
-    static constexpr auto densityModelString       = "densityModel";
-    static constexpr auto viscosityModelString     = "viscosityModel";
+    static constexpr auto compressibilityString      = "compressibility";
+    static constexpr auto viscosibilityString        = "viscosibility";
+    static constexpr auto referencePressureString    = "referencePressure";
+    static constexpr auto referenceDensityString     = "referenceDensity";
+    static constexpr auto referenceViscosityString   = "referenceViscosity";
+    static constexpr auto densityModelStringString   = "densityModelString";
+    static constexpr auto viscosityModelStringString = "viscosityModelString";
+    static constexpr auto densityModelTypeString     = "densityModelType";
+    static constexpr auto viscosityModelTypeString   = "viscosityModelType";
   };
 
 protected:

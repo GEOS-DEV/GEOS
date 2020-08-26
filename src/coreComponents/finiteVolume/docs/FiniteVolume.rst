@@ -1,19 +1,64 @@
 .. _FiniteVolumeDiscretization:
 
-Discretization of Finite Volumes
+Finite Volume Discretization
 ---------------------------------
 
-In the current implementation of the :ref:`SinglePhaseFlow` and the :ref:`CompositionalMultiphaseFlow`, the discretization is based on a cell-centered finite-volume scheme.
+Two different finite-volume discretizations are available to simulate single-phase flow in GEOSX, namely, a standard cell-centered TPFA approach, and a hybrid finite-volume scheme relying on both cell-centered and face-centered degrees of freedom.
+The key difference between these two approaches is the computation of the flux, as detailed below.
 
+Standard cell-centered TPFA FVM
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The flux is computed using a Two-Point Flux Approximation (TPFA). 
-Considering the general compositional multiphase case, the numerical flux of component :math:`c` at the interface between elements :math:`i` and :math:`j` reads:
+This is the standard scheme implemented in the `SinglePhaseFVM` flow solver.
+It only uses cell-centered degrees of freedom and implements a Two-Point Flux Approximation (TPFA) for the computation of the flux.
+The numerical flux is obtained using the following expression for the mass flux between cells :math:`K` and :math:`L`:
 
 .. math::
-  F_{c,(ij)} = T_{(ij)} \sum_{\ell} x^{upw}_{c,\ell} \lambda^{upw}_{\ell} \Delta p_{\ell,(ij)},
+  F_{KL} = \Upsilon_{KL} \frac{\rho^{upw}}{\mu^{upw}} \big( p_K - p_L - \rho^{avg} g ( d_K - d_L ) \big),
 
-where :math:`\Delta p_{\ell,(ij)}` is the phase potential difference at the interface. 
-The phase component fraction, :math:`x^{upw}_{c,\ell}`, and the phase mobility, :math:`\lambda^{upw}_{\ell}`, are upwinded using the sign of the phase potential difference at the interface (single-point upwinding). 
-Finally, :math:`T_{(ij)}` is the standard TPFA transmissibility at the interface.
+where :math:`p_K` is the pressure of cell :math:`K`, :math:`d_K` is the depth of cell :math:`K`, and :math:`\Upsilon_{KL}` is the standard TPFA transmissibility coefficient at the interface.
+The fluid density, :math:`\rho^{upw}`, and the fluid viscosity, :math:`\mu^{upw}`, are upwinded using the sign of the potential difference at the interface. 
 
-The discretization of the flux for single-phase flow is analogous and is omitted for brevity.
+This is currently the only available discretization in the :ref:`CompositionalMultiphaseFlow`. 
+
+Hybrid FVM
+~~~~~~~~~~
+
+This discretization scheme overcomes the limitations of the standard TPFA on non K-orthogonal meshes.
+The hybrid finite-volume scheme--equivalent to the well-known hybrid Mimetic Finite Difference (MFD) scheme--remains consistent with the pressure equation even when the mesh does not satisfy the K-orthogonality condition.
+This numerical scheme is currently implemented in the `SinglePhaseHybridFVM` solver.
+
+The hybrid FVM scheme uses both cell-centered and face-centered pressure degrees of freedom.
+The one-sided face flux, :math:`F_{K,f}`, at face :math:`f` of cell :math:`K` is computed as:
+
+.. math::
+  F_{K,f} = \frac{\rho^{upw}}{\mu^{upw}} \widetilde{F}_{K,f},
+
+where :math:`\widetilde{F}_{K,f}` reads:
+
+.. math::
+  \widetilde{F}_{K,f} = \sum_{f'} \Upsilon_{ff'} \big( p_K - \pi_f - \rho_K g ( d_K - d_f ) \big).
+
+In the previous equation, :math:`p_K` is the cell-centered pressure, :math:`\pi_f` is the face-centered pressure, :math:`d_K` is the depth of cell :math:`K`, and :math:`d_f` is the depth of face :math:`f`.
+The fluid density, :math:`\rho^{upw}`, and the fluid viscosity, :math:`\mu^{upw}`, are upwinded using the sign of :math:`\widetilde{F}_{K,f}`. 
+The local transmissibility :math:`\Upsilon` of size :math:`n_{\textit{local faces}} \times n_{\textit{local faces}}` satisfies:
+
+.. math::
+  N K = \Upsilon C    
+
+Above, :math:`N` is a matrix of size :math:`n_{\textit{local faces}} \times 3` storing the normal vectors to each face in this cell, :math:`C` is a matrix of size :math:`n_{\textit{local faces}} \times 3` storing the vectors from the cell center to the face centers, and :math:`K` is the permeability tensor.  
+The local transmissibility matrix, :math:`\Upsilon`, is currently  computed using the quasi-TPFA approach described in Chapter 6 of this `book <https://doi.org/10.1017/9781108591416>`_.
+The scheme reduces to the TPFA discretization on K-orthogonal meshes but remains consistent when the mesh does not satisfy this property.
+The mass flux :math:`F_{K,f}` written above is then added to the mass conservation equation of cell :math:`K`. 
+
+In addition to the mass conservation equations, the hybrid FVM involves algebraic constraints at each mesh face to enforce mass conservation.
+For a given interior face :math:`f` between two neighboring cells :math:`K` and :math:`L`, the algebraic constraint reads:
+
+.. math::
+  \widetilde{F}_{K,f} + \widetilde{F}_{L,f} = 0.
+
+We obtain a numerical scheme with :math:`n_{\textit{cells}}` cell-centered degrees of freedom and :math:`n_{\textit{faces}}` face-centered pressure degrees of freedom.
+The system involves :math:`n_{\textit{cells}}` mass conservation equations and :math:`n_{\textit{faces}}` face-based constraints.
+The linear systems can be efficiently solved using the MultiGrid Reduction (MGR) preconditioner implemented in the Hypre linear algebra package.  
+
+The implementation of the hybrid FVM scheme for :ref:`CompositionalMultiphaseFlow` is in progress.

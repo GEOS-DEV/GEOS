@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -88,6 +88,10 @@ MultiFluidBase::MultiFluidBase( std::string const & name, Group * const parent )
     setRestartFlags( RestartFlags::NO_WRITE );
   registerWrapper( viewKeyStruct::dTotalDensity_dGlobalCompFractionString, &m_dTotalDensity_dGlobalCompFraction )->
     setRestartFlags( RestartFlags::NO_WRITE );
+
+  registerWrapper( viewKeyStruct::useMassString, &m_useMass )->
+    setRestartFlags( RestartFlags::NO_WRITE );
+
 }
 
 void MultiFluidBase::ResizeFields( localIndex const size, localIndex const numPts )
@@ -121,29 +125,16 @@ void MultiFluidBase::ResizeFields( localIndex const size, localIndex const numPt
   m_dTotalDensity_dGlobalCompFraction.resize( size, numPts, NC );
 }
 
-void MultiFluidBase::AllocateConstitutiveData( dataRepository::Group * const parent,
+void MultiFluidBase::allocateConstitutiveData( dataRepository::Group * const parent,
                                                localIndex const numConstitutivePointsPerParentIndex )
 {
-  ConstitutiveBase::AllocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+  ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
   ResizeFields( parent->size(), numConstitutivePointsPerParentIndex );
 }
 
 MultiFluidBase::~MultiFluidBase()
 {}
 
-void
-MultiFluidBase::DeliverClone( string const & name,
-                              Group * const parent,
-                              std::unique_ptr< ConstitutiveBase > & clone ) const
-{
-  ConstitutiveBase::DeliverClone( name, parent, clone );
-  MultiFluidBase & fluid = dynamicCast< MultiFluidBase & >( *clone );
-
-  fluid.m_useMass              = m_useMass;
-  fluid.m_componentNames       = m_componentNames;
-  fluid.m_componentMolarWeight = m_componentMolarWeight;
-  fluid.m_phaseNames           = m_phaseNames;
-}
 
 void MultiFluidBase::PostProcessInput()
 {

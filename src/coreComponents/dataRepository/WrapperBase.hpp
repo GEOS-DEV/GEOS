@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -463,7 +463,7 @@ public:
    * @brief Copy attributes from another wrapper
    * @param[in] source the source wrapper, must wrap the same type @p T
    */
-  virtual void CopyWrapperAttributes( WrapperBase const & source );
+  virtual void copyWrapperAttributes( WrapperBase const & source );
 
   /**
    * @brief Creates a clone of @p *this WrapperBase
@@ -476,6 +476,19 @@ public:
    */
   virtual std::unique_ptr< WrapperBase > clone( string const & name,
                                                 Group * const parent ) = 0;
+
+  /**
+   * @brief Copy the the data contained in another wrapper into this wrapper.
+   * @param source The wrapper that holds the data to copy.
+   */
+  virtual void copyData( WrapperBase const & source ) = 0;
+
+  /**
+   * @brief Copies the contents of a Wrapper into *this.
+   * @param[in] source The wrapper to copy
+   * @return
+   */
+  virtual void copyWrapper( WrapperBase const & source ) = 0;
 
   /**
    * @brief Get the typeid of T.

@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -105,39 +105,16 @@ ParticleFluid::ParticleFluid( std::string const & name, Group * const parent ):
 
 ParticleFluid::~ParticleFluid() = default;
 
-void ParticleFluid::AllocateConstitutiveData( dataRepository::Group * const parent,
-                                              localIndex const numConstitutivePointsPerParentIndex )
+std::unique_ptr< ConstitutiveBase >
+ParticleFluid::deliverClone( string const & name,
+                             Group * const parent ) const
 {
-  ParticleFluidBase::AllocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+  std::unique_ptr< ConstitutiveBase > clone = ParticleFluidBase::deliverClone( name, parent );
 
-}
+  ParticleFluid & model = dynamicCast< ParticleFluid & >( *clone );
+  model.m_particleSettlingModel = m_particleSettlingModel;
 
-void
-ParticleFluid::DeliverClone( string const & name,
-                             Group * const parent,
-                             std::unique_ptr< ConstitutiveBase > & clone ) const
-{
-  if( !clone )
-  {
-    clone = std::make_unique< ParticleFluid >( name, parent );
-  }
-  ParticleFluidBase::DeliverClone( name, parent, clone );
-  ParticleFluid & fluid = dynamicCast< ParticleFluid & >( *clone );
-
-  fluid.m_proppantDensity  = m_proppantDensity;
-  fluid.m_fluidViscosity   = m_fluidViscosity;
-  fluid.m_proppantDiameter = m_proppantDiameter;
-
-  fluid.m_hinderedSettlingCoefficient = m_hinderedSettlingCoefficient;
-  fluid.m_collisionAlpha = m_collisionAlpha;
-  fluid.m_slipConcentration = m_slipConcentration;
-  fluid.m_collisionBeta = m_collisionBeta;
-
-  fluid.m_sphericity = m_sphericity;
-
-  fluid.m_particleSettlingModelString = m_particleSettlingModelString;
-  fluid.m_particleSettlingModel = m_particleSettlingModel;
-
+  return clone;
 }
 
 void ParticleFluid::PostProcessInput()

@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -111,6 +111,11 @@ public:
                          DofManager const & dofManager,
                          arrayView1d< real64 const > const & localRhs ) override;
 
+  virtual real64
+  ScalingForSystemSolution( DomainPartition const & domain,
+                            DofManager const & dofManager,
+                            arrayView1d< real64 const > const & localSolution ) override;
+
   virtual bool
   CheckSystemSolution( DomainPartition const & domain,
                        DofManager const & dofManager,
@@ -210,6 +215,12 @@ public:
                                       arrayView1d< real64 > const & localRhs ) override;
 
 
+  /**
+   * @brief Sets all the negative component densities (if any) to zero.
+   * @param domain the physical domain object
+   */
+  void ChopNegativeDensities( DomainPartition & domain );
+
   arrayView1d< string const > const & relPermModelNames() const { return m_relPermModelNames; }
 
   struct viewKeyStruct : WellSolverBase::viewKeyStruct
@@ -218,9 +229,12 @@ public:
 
     // inputs
     static constexpr auto temperatureString = "wellTemperature";
-    static constexpr auto useMassFlagString = "useMass";
+    static constexpr auto useMassFlagString = CompositionalMultiphaseFlow::viewKeyStruct::useMassFlagString;
 
-    static constexpr auto relPermNamesString  = "relPermNames";
+    static constexpr auto relPermNamesString  = CompositionalMultiphaseFlow::viewKeyStruct::relPermNamesString;
+
+    static constexpr auto maxCompFracChangeString = CompositionalMultiphaseFlow::viewKeyStruct::maxCompFracChangeString;
+    static constexpr auto allowLocalCompDensChoppingString = CompositionalMultiphaseFlow::viewKeyStruct::allowLocalCompDensChoppingString;
 
     // primary solution field
     static constexpr auto pressureString = CompositionalMultiphaseFlow::viewKeyStruct::pressureString;
@@ -236,11 +250,6 @@ public:
     static constexpr auto dPhaseVolumeFraction_dGlobalCompDensityString =
       CompositionalMultiphaseFlow::viewKeyStruct::dPhaseVolumeFraction_dGlobalCompDensityString;
 
-    // mixture density
-    static constexpr auto mixtureDensityString = "wellElementMixtureDensity";
-    static constexpr auto dMixtureDensity_dPressureString = "dWellElementMixtureDensity_dPres";
-    static constexpr auto dMixtureDensity_dGlobalCompDensityString = "dWellElementMixtureDensity_dComp";
-
     // global component fractions
     static constexpr auto globalCompFractionString = CompositionalMultiphaseFlow::viewKeyStruct::globalCompFractionString;
     static constexpr auto dGlobalCompFraction_dGlobalCompDensityString =
@@ -250,6 +259,7 @@ public:
     static constexpr auto compPerforationRateString = "compPerforationRate";
     static constexpr auto dCompPerforationRate_dPresString = "dCompPerforationRate_dPres";
     static constexpr auto dCompPerforationRate_dCompString = "dCompPerforationRate_dComp";
+
   } viewKeysCompMultiphaseWell;
 
   struct groupKeyStruct : SolverBase::groupKeyStruct
@@ -305,12 +315,6 @@ private:
    */
   void ResizeFields( WellElementSubRegion & subRegion );
 
-  /**
-   * @brief Save all the rates and pressures in the well for reporting purposes
-   * @param well the well with its perforations
-   */
-  void RecordWellData( WellElementSubRegion const & subRegion );
-
   /// the max number of fluid phases
   localIndex m_numPhases;
 
@@ -326,6 +330,14 @@ private:
   /// list of relative permeability model names per target region
   array1d< string > m_relPermModelNames;
 
+  /// maximum (absolute) change in a component fraction between two Newton iterations
+  real64 m_maxCompFracChange;
+
+  /// minimum value of the scaling factor obtained by enforcing maxCompFracChange
+  real64 m_minScalingFactor;
+
+  /// flag indicating whether local (cell-wise) chopping of negative compositions is allowed
+  integer m_allowCompDensChopping;
 
   /// views into reservoir primary variable fields
 

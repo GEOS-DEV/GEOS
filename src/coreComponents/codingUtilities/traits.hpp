@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -173,6 +173,26 @@ constexpr bool is_sorted_array_type = traits::is_sorted_array_view< T > || trait
 /// True if T is a Tensor class.
 template< typename T >
 constexpr bool is_tensorT = std::is_same< std::remove_const_t< T >, R1Tensor >::value;
+
+/// True of T has operator=() defined.
+template< typename _T >
+struct hasCopyAssignmentOperatorImpl
+{
+private:
+  template< typename T > static constexpr auto test( int )->decltype( T()=T(), bool () )
+  { return true; }
+
+  template< typename T > static constexpr auto test( ... )->bool
+  { return false; }
+public:
+  static constexpr bool value = test< _T >( 0 );
+};
+/// True if T has operator= defined, or it is arithmetic or an enum.
+template< typename T >
+static constexpr bool hasCopyAssignmentOp = hasCopyAssignmentOperatorImpl< T >::value ||
+                                            std::is_arithmetic< T >::value ||
+                                            std::is_enum< T >::value;
+
 
 } /* namespace traits */
 
