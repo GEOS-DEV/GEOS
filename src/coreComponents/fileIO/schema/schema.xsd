@@ -169,6 +169,7 @@
 			<xsd:element name="NumericalMethods" type="NumericalMethodsType" maxOccurs="1" />
 			<xsd:element name="Outputs" type="OutputsType" minOccurs="1" maxOccurs="1" />
 			<xsd:element name="Solvers" type="SolversType" minOccurs="1" maxOccurs="1" />
+			<xsd:element name="Tasks" type="TasksType" maxOccurs="1" />
 			<xsd:element name="Constitutive" type="ConstitutiveType" maxOccurs="1" />
 			<xsd:element name="ElementRegions" type="ElementRegionsType" maxOccurs="1" />
 			<xsd:element name="Included" type="IncludedType" maxOccurs="1" />
@@ -665,6 +666,7 @@ Available options are: direct, cg, gmres, fgmres, bicgstab, preconditioner-->
 			<xsd:element name="ChomboIO" type="ChomboIOType" />
 			<xsd:element name="Restart" type="RestartType" />
 			<xsd:element name="Silo" type="SiloType" />
+			<xsd:element name="TimeHistory" type="TimeHistoryType" />
 			<xsd:element name="VTK" type="VTKType" />
 		</xsd:choice>
 	</xsd:complexType>
@@ -723,6 +725,20 @@ Available options are: direct, cg, gmres, fgmres, bicgstab, preconditioner-->
 		<xsd:attribute name="writeFEMFaces" type="integer" default="0" />
 		<!--writeFaceElementMesh => (no description available)-->
 		<xsd:attribute name="writeFaceElementMesh" type="integer" default="1" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="TimeHistoryType">
+		<!--childDirectory => Child directory path-->
+		<xsd:attribute name="childDirectory" type="string" default="" />
+		<!--filename => The filename to which to write time history output.-->
+		<xsd:attribute name="filename" type="string" default="TimeHistory" />
+		<!--format => The output file format for time history output.-->
+		<xsd:attribute name="format" type="string" default="hdf" />
+		<!--parallelThreads => Number of plot files.-->
+		<xsd:attribute name="parallelThreads" type="integer" default="1" />
+		<!--sources => A list of collectors from which to collect and output time history information.-->
+		<xsd:attribute name="sources" type="string_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
@@ -1343,6 +1359,21 @@ Available options are: direct, cg, gmres, fgmres, bicgstab, preconditioner-->
 		<xsd:attribute name="solidMaterialNames" type="string_array" use="required" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="TasksType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="PackCollection" type="PackCollectionType" />
+		</xsd:choice>
+	</xsd:complexType>
+	<xsd:complexType name="PackCollectionType">
+		<!--fieldName => The name of the (packable) field associated with the specified object to retrieve data from-->
+		<xsd:attribute name="fieldName" type="string" use="required" />
+		<!--objectPath => The name of the object from which to retrieve field values.-->
+		<xsd:attribute name="objectPath" type="string" use="required" />
+		<!--setNames => The set(s) for which to retrieve data.-->
+		<xsd:attribute name="setNames" type="string_array" default="{}" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>

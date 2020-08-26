@@ -172,6 +172,7 @@
 			<xsd:element name="Outputs" type="OutputsType" minOccurs="1" maxOccurs="1" />
 			<xsd:element name="Parameters" type="ParametersType" maxOccurs="1" />
 			<xsd:element name="Solvers" type="SolversType" minOccurs="1" maxOccurs="1" />
+			<xsd:element name="Tasks" type="TasksType" maxOccurs="1" />
 			<xsd:element name="commandLine" type="commandLineType" />
 			<xsd:element name="domain" type="domainType" />
 			<xsd:element name="Constitutive" type="ConstitutiveType" maxOccurs="1" />
@@ -372,6 +373,7 @@
 			<xsd:element name="ChomboIO" type="ChomboIOType" />
 			<xsd:element name="Restart" type="RestartType" />
 			<xsd:element name="Silo" type="SiloType" />
+			<xsd:element name="TimeHistory" type="TimeHistoryType" />
 			<xsd:element name="VTK" type="VTKType" />
 		</xsd:choice>
 	</xsd:complexType>
@@ -379,6 +381,10 @@
 	<xsd:complexType name="ChomboIOType" />
 	<xsd:complexType name="RestartType" />
 	<xsd:complexType name="SiloType" />
+	<xsd:complexType name="TimeHistoryType">
+		<!--restart => The current history record to be written, on restart from an earlier time allows use to remove invalid future history.-->
+		<xsd:attribute name="restart" type="integer" />
+	</xsd:complexType>
 	<xsd:complexType name="VTKType" />
 	<xsd:complexType name="ParametersType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -587,6 +593,12 @@
 		<!--trailingFaces => Set containing all the trailing faces-->
 		<xsd:attribute name="trailingFaces" type="LvArray_SortedArray&lt;long, long, LvArray_ChaiBuffer&gt;" />
 	</xsd:complexType>
+	<xsd:complexType name="TasksType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="PackCollection" type="PackCollectionType" />
+		</xsd:choice>
+	</xsd:complexType>
+	<xsd:complexType name="PackCollectionType" />
 	<xsd:complexType name="commandLineType">
 		<!--beginFromRestart => Flag to indicate restart run.-->
 		<xsd:attribute name="beginFromRestart" type="integer" />
