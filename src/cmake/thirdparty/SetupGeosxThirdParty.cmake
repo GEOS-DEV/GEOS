@@ -191,7 +191,7 @@ if(ENABLE_CALIPER)
                  PATHS ${CALIPER_DIR}/share/cmake/caliper)
  
     if(ENABLE_MPI)
-        set(caliper_LIBRARIES caliper-mpi)
+        set(caliper_LIBRARIES caliper)
     else()
         set(caliper_LIBRARIES caliper)
     endif()

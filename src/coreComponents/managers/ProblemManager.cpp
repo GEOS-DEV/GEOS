@@ -28,6 +28,7 @@
 #include "managers/initialization.hpp"
 #include "managers/NumericalMethodsManager.hpp"
 #include "managers/Outputs/OutputManager.hpp"
+#include "managers/Tasks/TasksManager.hpp"
 #include "mesh/MeshBody.hpp"
 #include "meshUtilities/MeshManager.hpp"
 #include "meshUtilities/MeshUtilities.hpp"
@@ -76,12 +77,14 @@ ProblemManager::ProblemManager( const std::string & name,
 
   // RegisterGroup<ConstitutiveManager>(groupKeys.constitutiveManager);
   // RegisterGroup<ElementRegionManager>(groupKeys.elementRegionManager);
+
   m_eventManager = RegisterGroup< EventManager >( groupKeys.eventManager );
   RegisterGroup< NumericalMethodsManager >( groupKeys.numericalMethodsManager );
   RegisterGroup< GeometricObjectManager >( groupKeys.geometricObjectManager );
   RegisterGroup< MeshManager >( groupKeys.meshManager );
   RegisterGroup< OutputManager >( groupKeys.outputManager );
   m_physicsSolverManager = RegisterGroup< PhysicsSolverManager >( groupKeys.physicsSolverManager );
+  RegisterGroup< TasksManager >( groupKeys.tasksManager );
 
   // The function manager is handled separately
   m_functionManager = &FunctionManager::Instance();
@@ -784,7 +787,7 @@ void ProblemManager::setRegionQuadrature( Group & meshBodies,
 
 void ProblemManager::RunSimulation()
 {
-  DomainPartition * domain  = getDomainPartition();
+  DomainPartition * domain = getDomainPartition();
   m_eventManager->Run( domain );
 }
 
