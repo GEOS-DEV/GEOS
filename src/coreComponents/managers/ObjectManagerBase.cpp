@@ -287,11 +287,11 @@ localIndex ObjectManagerBase::PackPrivate( buffer_unit_type * & buffer,
         packedSize += bufferOps::Pack< DOPACK >( buffer, wrapperName );
         if( DOPACK )
         {
-          packedSize += wrapper->PackByIndex( buffer, packList, on_device );
+          packedSize += wrapper->PackByIndex( buffer, packList, true, on_device );
         }
         else
         {
-          packedSize += wrapper->PackByIndexSize( packList, on_device );
+          packedSize += wrapper->PackByIndexSize( packList, true, on_device );
         }
       }
       else
@@ -352,7 +352,7 @@ localIndex ObjectManagerBase::Unpack( buffer_unit_type const * & buffer,
       if( wrapperName != "nullptr" )
       {
         WrapperBase * const wrapper = this->getWrapperBase( wrapperName );
-        unpackedSize += wrapper->UnpackByIndex( buffer, packList, on_device );
+        unpackedSize += wrapper->UnpackByIndex( buffer, packList, true, on_device );
       }
     }
   }
