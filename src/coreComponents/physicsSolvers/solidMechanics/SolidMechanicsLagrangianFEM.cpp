@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -264,6 +264,7 @@ void SolidMechanicsLagrangianFEM::InitializePreSubGroups( Group * const rootGrou
 template< typename ... PARAMS >
 real64 SolidMechanicsLagrangianFEM::explicitKernelDispatch( PARAMS && ... params )
 {
+  GEOSX_MARK_FUNCTION;
   real64 rval = 0;
   if( m_strainTheory==0 )
   {
@@ -632,6 +633,7 @@ void SolidMechanicsLagrangianFEM::ApplyDisplacementBC_implicit( real64 const tim
                                                                 CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                                 arrayView1d< real64 > const & localRhs )
 {
+  GEOSX_MARK_FUNCTION;
   string const dofKey = dofManager.getKey( keys::TotalDisplacement );
 
   FieldSpecificationManager const & fsManager = FieldSpecificationManager::get();
@@ -663,6 +665,7 @@ void SolidMechanicsLagrangianFEM::CRSApplyTractionBC( real64 const time,
                                                       DomainPartition & domain,
                                                       arrayView1d< real64 > const & localRhs )
 {
+  GEOSX_MARK_FUNCTION;
   FieldSpecificationManager & fsManager = FieldSpecificationManager::get();
   FunctionManager const & functionManager = FunctionManager::Instance();
 
@@ -914,6 +917,7 @@ void SolidMechanicsLagrangianFEM::ImplicitStepComplete( real64 const & GEOSX_UNU
 void SolidMechanicsLagrangianFEM::SetupDofs( DomainPartition const & GEOSX_UNUSED_PARAM( domain ),
                                              DofManager & dofManager ) const
 {
+  GEOSX_MARK_FUNCTION;
   dofManager.addField( keys::TotalDisplacement,
                        DofManager::Location::Node,
                        3 );
@@ -939,8 +943,9 @@ void SolidMechanicsLagrangianFEM::SetupSystem( DomainPartition & domain,
   arrayView1d< globalIndex const > const &
   dofNumber = nodeManager.getReference< globalIndex_array >( dofManager.getKey( keys::TotalDisplacement ) );
 
-  SparsityPattern< globalIndex > pattern( dofManager.numLocalDofs(), dofManager.numGlobalDofs() );
-  array1d< localIndex > rowSizes( dofManager.numLocalDofs() );
+  SparsityPattern< globalIndex > sparsityPattern( dofManager.numLocalDofs(),
+                                                  dofManager.numGlobalDofs(),
+                                                  8*8*3*1.2 );
 
   if( m_contactRelationName != viewKeyStruct::noContactRelationNameString )
   {
@@ -952,29 +957,26 @@ void SolidMechanicsLagrangianFEM::SetupSystem( DomainPartition & domain,
     } );
 
     finiteElement::
-      fillSparsity< serialPolicy,
-                    FaceElementSubRegion,
+      fillSparsity< FaceElementSubRegion,
                     SolidMechanicsLagrangianFEMKernels::QuasiStatic >( mesh,
                                                                        allFaceElementRegions,
                                                                        this->getDiscretizationName(),
                                                                        dofNumber,
                                                                        dofManager.rankOffset(),
-                                                                       pattern,
-                                                                       rowSizes );
+                                                                       sparsityPattern );
 
   }
   finiteElement::
-    fillSparsity< serialPolicy,
-                  CellElementSubRegion,
+    fillSparsity< CellElementSubRegion,
                   SolidMechanicsLagrangianFEMKernels::QuasiStatic >( mesh,
                                                                      targetRegionNames(),
                                                                      this->getDiscretizationName(),
                                                                      dofNumber,
                                                                      dofManager.rankOffset(),
-                                                                     pattern,
-                                                                     rowSizes );
+                                                                     sparsityPattern );
 
-  localMatrix.assimilate< parallelDevicePolicy<> >( std::move( pattern ) );
+  sparsityPattern.compress();
+  localMatrix.assimilate< parallelDevicePolicy<> >( std::move( sparsityPattern ) );
 
 
 }
@@ -1174,6 +1176,7 @@ SolidMechanicsLagrangianFEM::ApplySystemSolution( DofManager const & dofManager,
                                                   real64 const scalingFactor,
                                                   DomainPartition & domain )
 {
+  GEOSX_MARK_FUNCTION;
   dofManager.addVectorToField( localSolution,
                                keys::TotalDisplacement,
                                keys::IncrementalDisplacement,
@@ -1205,6 +1208,7 @@ void SolidMechanicsLagrangianFEM::SolveSystem( DofManager const & dofManager,
 
 void SolidMechanicsLagrangianFEM::ResetStateToBeginningOfStep( DomainPartition & domain )
 {
+  GEOSX_MARK_FUNCTION;
   MeshLevel & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
   NodeManager & nodeManager = *mesh.getNodeManager();
 
@@ -1226,6 +1230,7 @@ void SolidMechanicsLagrangianFEM::ResetStateToBeginningOfStep( DomainPartition &
 
 void SolidMechanicsLagrangianFEM::ResetStressToBeginningOfStep( DomainPartition & domain )
 {
+  GEOSX_MARK_FUNCTION;
   MeshLevel & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
 
   forTargetSubRegions< CellElementSubRegion >( mesh, [&]( localIndex const targetIndex,

@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -59,6 +59,7 @@ using keyType = string;
 
 /// The default index type for entries the hierarchy.
 using indexType = localIndex;
+//END_SPHINX_INCLUDE_00
 
 /**
  * @class Group
@@ -75,6 +76,7 @@ public:
 
   /// The template specialization of MappedVector to use for the collection wrappers objects.
   using wrapperMap = MappedVector< WrapperBase, WrapperBase *, keyType, indexType >;
+  //END_SPHINX_INCLUDE_01
 
   /**
    * @name Constructors/destructor
@@ -1519,6 +1521,7 @@ private:
 
   /// Verbosity flag for group logs
   integer m_logLevel;
+  //END_SPHINX_INCLUDE_02
 
   /// Restart flag for this group... and subsequently all wrappers in this group.
   RestartFlags m_restart_flags;

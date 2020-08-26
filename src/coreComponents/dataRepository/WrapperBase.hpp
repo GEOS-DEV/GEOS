@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -22,6 +22,7 @@
 #include "xmlWrapper.hpp"
 #include "RestartFlags.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
+#include "managers/TimeHistory/HistoryDataSpec.hpp"
 
 #include <string>
 #include <memory>
@@ -220,6 +221,13 @@ public:
   ///@}
 
   /**
+   * @brief Get a description of the wrapped data for time history collection/output
+   * @param packCount The number of indices from the wrapped data to collect,
+   * @return HistoryMetadata about the wrapped type
+   */
+  virtual HistoryMetadata getHistoryMetadata( localIndex const packCount ) const = 0;
+
+  /**
    * @name Methods for buffer packing/unpacking
    *
    * This group of functions is used to pack/unpack wrapped object to/from binary buffers
@@ -228,73 +236,79 @@ public:
 
   /**
    * @brief Check whether wrapped type is can be packed into a buffer on host or device.
-   * @param[in] on_device    determine whether the wrapper is packable on host vs device
+   * @param[in] onDevice    determine whether the wrapper is packable on host vs device
    * @return @p true if @p T is packable, @p false otherwise
    */
   virtual
-  bool isPackable( bool on_device = false ) const = 0;
+  bool isPackable( bool onDevice ) const = 0;
 
   /**
    * @brief Pack the entire wrapped object into a buffer.
    * @param[in,out] buffer the binary buffer pointer, advanced upon completion
-   * @param[in] on_device    whether to use device-based packing functions
+   * @param[in] withMetadata whether to pack string metadata with the underlying data
+   * @param[in] onDevice    whether to use device-based packing functions
    *                         (buffer must be either pinned or a device pointer)
    * @return               the number of @p buffer_unit_type units packed
    */
   virtual
-  localIndex Pack( buffer_unit_type * & buffer, bool on_device = false ) const = 0;
+  localIndex Pack( buffer_unit_type * & buffer, bool withMetadata, bool onDevice ) const = 0;
 
   /**
    * @brief For indexable types, pack selected indices of wrapped object into a buffer.
    * @param[in,out] buffer the binary buffer pointer, advanced upon completion
    * @param[in] packList   the list of indices to pack
-   * @param[in] on_device    whether to use device-based packing functions
+   * @param[in] withMetadata whether to pack string metadata with the underlying data
+   * @param[in] onDevice    whether to use device-based packing functions
    *                         (buffer must be either pinned or a device pointer)
    * @return               the number of @p buffer_unit_type units packed
    */
   virtual
-  localIndex PackByIndex( buffer_unit_type * & buffer, arrayView1d< localIndex const > const & packList, bool on_device = false ) const = 0;
+  localIndex PackByIndex( buffer_unit_type * & buffer, arrayView1d< localIndex const > const & packList, bool withMetadata, bool onDevice ) const = 0;
 
   /**
    * @brief Get the buffer size needed to pack the entire wrapped object.
-   * @param[in] on_device    whether to use device-based packing functions
+   * @param[in] withMetadata whether to pack string metadata with the underlying data
+   * @param[in] onDevice    whether to use device-based packing functions
    *                         this matters as the size on device differs from the size on host
    *                         as we pack less metadata on device
    * @return the number of @p buffer_unit_type units needed to pack
    */
   virtual
-  localIndex PackSize( bool on_device = false ) const = 0;
+  localIndex PackSize( bool withMetadata, bool onDevice ) const = 0;
 
   /**
    * @brief Get the buffer size needed to pack the selected indices wrapped object.
    * @param[in] packList the list of indices to pack
-   * @param[in] on_device    whether to use device-based packing functions
+   * @param[in] withMetadata whether to pack string metadata with the underlying data
+   * @param[in] onDevice    whether to use device-based packing functions
    *                         (buffer must be either pinned or a device pointer)
    * @return             the number of @p buffer_unit_type units needed to pack
    */
   virtual
-  localIndex PackByIndexSize( arrayView1d< localIndex const > const & packList, bool on_device = false ) const = 0;
+  localIndex PackByIndexSize( arrayView1d< localIndex const > const & packList, bool withMetadata, bool onDevice ) const = 0;
 
   /**
    * @brief Unpack the entire wrapped object from a buffer.
    * @param[in,out] buffer the binary buffer pointer, advanced upon completion
-   * @param[in] on_device    whether to use device-based packing functions
+   * @param[in] withMetadata whether to expect string metadata with the underlying data
+   * @param[in] onDevice    whether to use device-based packing functions
    *                         (buffer must be either pinned or a device pointer)
    * @return               the number of @p buffer_unit_type units unpacked
    */
   virtual
-  localIndex Unpack( buffer_unit_type const * & buffer, bool on_device = false ) = 0;
+  localIndex Unpack( buffer_unit_type const * & buffer, bool withMetadata, bool onDevice ) = 0;
 
   /**
    * @brief For indexable types, unpack selected indices of wrapped object from a buffer.
    * @param[in,out] buffer    the binary buffer pointer, advanced upon completion
    * @param[in] unpackIndices the list of indices to pack
-   * @param[in] on_device    whether to use device-based packing functions
+   * @param[in] withMetadata whether to include metadata in the packing
+   * @param[in] onDevice    whether to use device-based packing functions
    *                         (buffer must be either pinned or a device pointer)
    * @return                  the number of @p buffer_unit_type units unpacked
    */
   virtual
-  localIndex UnpackByIndex( buffer_unit_type const * & buffer, arrayView1d< localIndex const > const & unpackIndices, bool on_device = false ) = 0;
+  localIndex UnpackByIndex( buffer_unit_type const * & buffer, arrayView1d< localIndex const > const & unpackIndices, bool withMetadata, bool onDevice ) = 0;
 
   ///@}
 
