@@ -45,6 +45,8 @@
 #include <cuda.h>
 #endif
 
+#include <fenv.h>
+
 namespace geosx
 {
 namespace internal
@@ -490,7 +492,12 @@ void finalizeLogger()
 void setupCXXUtils()
 {
   LvArray::system::setSignalHandling( []( int const signal ) { LvArray::system::stackTraceHandler( signal, true ); } );
+
+#if defined(GEOSX_USE_FPE)
   LvArray::system::setFPE();
+#else
+  LvArray::system::disableFloatingPointExceptions( FE_ALL_EXCEPT );
+#endif
 }
 
 ///////////////////////////////////////////////////////////////////////////////
