@@ -31,6 +31,8 @@
 #include <petscmat.h>
 #include <petscksp.h>
 
+#include <fenv.h>
+
 // Put everything under the geosx namespace.
 namespace geosx
 {
@@ -65,6 +67,10 @@ void PetscSolver::solve_direct( PetscMatrix & mat,
                                 PetscVector & sol,
                                 PetscVector & rhs )
 {
+  // To be able to use SuperLU_Dist solver we need to disable floating point exceptions
+  // Disable floating point exceptions and save the FPE flags
+  int const fpeflags = LvArray::system::disableFloatingPointExceptions( FE_ALL_EXCEPT );
+
   MPI_Comm const comm = mat.getComm();
 
   // create linear solver
@@ -99,8 +105,17 @@ void PetscSolver::solve_direct( PetscMatrix & mat,
   mat.gemv( -1.0, sol, 1.0, res );
   m_result.residualReduction = res.norm2() / rhs.norm2();
 
+  // check for nan or inf
+  if( std::isnan( m_result.residualReduction ) || std::isinf( m_result.residualReduction ) )
+  {
+    m_result.status = LinearSolverResult::Status::Breakdown;
+  }
+
   // destroy solver
   GEOSX_LAI_CHECK_ERROR( KSPDestroy( &ksp ) );
+
+  // Restore the previous FPE flags
+  LvArray::system::disableFloatingPointExceptions( fpeflags );
 }
 
 namespace

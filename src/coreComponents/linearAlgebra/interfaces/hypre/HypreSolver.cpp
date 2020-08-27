@@ -33,6 +33,8 @@
 #include <_hypre_IJ_mv.h>
 #include <krylov.h>
 
+#include <fenv.h>
+
 namespace geosx
 {
 
@@ -72,6 +74,10 @@ void HypreSolver::solve_direct( HypreMatrix & mat,
                                 HypreVector & sol,
                                 HypreVector & rhs )
 {
+  // To be able to use SuperLU_Dist solver we need to disable floating point exceptions
+  // Disable floating point exceptions and save the FPE flags
+  int const fpeflags = LvArray::system::disableFloatingPointExceptions( FE_ALL_EXCEPT );
+
   SuperLU_DistData SLUDData;
   SuperLU_DistCreate( mat, m_parameters, SLUDData );
 
@@ -98,10 +104,13 @@ void HypreSolver::solve_direct( HypreMatrix & mat,
   }
   else
   {
-    m_result.status = LinearSolverResult::Status::NotConverged;
+    m_result.status = LinearSolverResult::Status::Breakdown;
   }
 
   SuperLU_DistDestroy( SLUDData );
+
+  // Restore the previous FPE flags
+  LvArray::system::disableFloatingPointExceptions( fpeflags );
 }
 
 namespace

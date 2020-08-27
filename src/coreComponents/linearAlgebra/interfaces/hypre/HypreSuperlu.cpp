@@ -212,6 +212,12 @@ int SuperLU_DistSolve( SuperLU_DistData & SLUDData,
 
   time = watch.elapsedTime();
 
+  // Check for nan or inf
+  if( std::isnan( berr[0] ) || std::isinf( berr[0] ) )
+  {
+    info = 1;
+  }
+
   if( SLUDData.options.PrintStat == YES )
   {
     // Print the statistics.

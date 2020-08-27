@@ -806,6 +806,7 @@ void SolverBase::SolveSystem( DofManager const & dofManager,
 //  ++count;
 
 
+  GEOSX_ERROR_IF( m_linearSolverResult.breakdown(), "Linear solution breakdown -> simulation STOP" );
   GEOSX_WARNING_IF( !m_linearSolverResult.success(), "Linear solution failed" );
 }
 
