@@ -21,14 +21,17 @@
 
 #include "common/DataTypes.hpp"
 #include "linearAlgebra/interfaces/hypre/HypreMatrix.hpp"
+#include "linearAlgebra/utilities/LinearSolverParameters.hpp"
 
+#include <HYPRE_utilities.h>
+#include <seq_mv.h>
 #include <superlu_ddefs.h>
 
 namespace geosx
 {
 
 /**
- * @brief Convert GEOSX global index value to SLUD int_t
+ * @brief Convert GEOSX globalIndex value to SLUD int_t
  * @param index the input value
  * @return the converted value
  */
@@ -38,65 +41,87 @@ inline int_t toSuperlu_intT( globalIndex const index )
 }
 
 /**
- * @brief Converts a non-const array from GEOSX globalIndex type to int_t
+ * @brief Converts a non-const array from GEOSX globalIndex type to SLUD int_t
  * @param[in] index the input array
  * @return the converted array
  */
 inline int_t * toSuperlu_intT( globalIndex * const index )
 {
-  return reinterpret_cast< int_t * >(index);
+  return reinterpret_cast< int_t * >( index );
 }
 
 /**
- * @brief Converts a const array from GEOSX globalIndex type to int_t
+ * @brief Converts a const array from GEOSX globalIndex type to SLUD int_t
  * @param[in] index the input array
  * @return the converted array
  */
 inline int_t const * toSuperlu_intT( globalIndex const * const index )
 {
-  return reinterpret_cast< int_t const * >(index);
+  return reinterpret_cast< int_t const * >( index );
 }
+
+/**
+ * SuperLU_Dist data
+ */
+struct SuperLU_DistData
+{
+  hypre_CSRMatrix * localStrip;       //!< local strip of the HypreMatrix
+  int_t * rowPtr;                     //!< row pointer
+  SuperMatrix mat;                    //!< SuperLU_Dist matrix format
+  dScalePermstruct_t ScalePermstruct; //!< data structure to scale and permute the matrix
+  dLUstruct_t LUstruct;               //!< data structure to store the LU factorization
+  SuperLUStat_t stat;                 //!< data structure to gather some statistics
+  gridinfo_t grid;                    //!< SuperLU_Dist MPI subdivision of load
+  dSOLVEstruct_t SOLVEstruct;         //!< data structure to solve the matrix
+  superlu_dist_options_t options;     //!< SuperLU_Dist options
+  MPI_Comm comm;                      //!< MPI communicator
+};
 
 /**
  * @brief Converts a matrix from Hypre to SuperLU_Dist format
  * @param[in] matrix the HypreMatrix object
- * @param[out] rowPtr the row pointers (SuperMatrix will point to it)
- * @param[out] cols the column indices (SuperMatrix will point to it)
- * @param[out] vals the values (SuperMatrix will point to it)
- * @param[out] SLUDMat the matrix in SuperLU_Dist format
+ * @param[out] SLUDData the structure containing the matrix in SuperLU_Dist format
  */
 void ConvertToSuperMatrix( HypreMatrix const & matrix,
-                           array1d< globalIndex > & rowPtr,
-                           array1d< globalIndex > & cols,
-                           array1d< real64 > & vals,
-                           SuperMatrix & SLUDMat );
+                           SuperLU_DistData & SLUDData );
 
 /**
- * @brief Solves a linear system with SuperLU_Dist. Time is split among factorization and solution.
- * @param[in] SLUDMat the matrix
- * @param[in] b the right-hand side in Hypre format
- * @param[out] x the solution in Hypre format
- * @param[in] comm the MPI communicator
- * @param[in,out] options SuperLU_Dist option object
- * @param[in] logLevel the output level
- * @param[out] timeFact time spent in the factorization phase
- * @param[out] timeSolve time spent in the solution phase
+ * @brief Creates the SuperLU_Dist data structure
+ * @param[in] matrix the HypreMatrix object
+ * @param[in] params the linear solver parameters
+ * @param[out] SLUDData the structure containing the matrix in SuperLU_Dist format
+ */
+void SuperLU_DistCreate( HypreMatrix const & matrix,
+                         LinearSolverParameters const & params,
+                         SuperLU_DistData & SLUDData );
+
+/**
+ * @brief Factorizes a linear system with SuperLU_Dist
+ * @param[in,out] SLUDData the structure containing the matrix in SuperLU_Dist format
+ * @param[out] time time spent in the factorization phase
  * @return info error code
  */
-int SolveSuperMatrix( SuperMatrix & SLUDMat,
-                      HypreVector const & b,
-                      HypreVector & x,
-                      MPI_Comm const & comm,
-                      superlu_dist_options_t & options,
-                      integer const & logLevel,
-                      real64 & timeFact,
-                      real64 & timeSolve );
+int SuperLU_DistSetup( SuperLU_DistData & SLUDData,
+                       real64 & time );
 
 /**
- * @brief Deallocates a SuperLU_Dist matrix
- * @param[in,out] SLUDMat the matrix
+ * @brief Solves a linear system with SuperLU_Dist (matrix has already been factorized)
+ * @param[in,out] SLUDData the structure containing the matrix in SuperLU_Dist format
+ * @param[in] b the right-hand side in Hypre format
+ * @param[out] x the solution in Hypre format
+ * @param[out] time time spent in the solution phase
+ * @return info error code
  */
-void DestroySuperMatrix( SuperMatrix & SLUDMat );
+int SuperLU_DistSolve( SuperLU_DistData & SLUDData,
+                       HypreVector const & b,
+                       HypreVector & x,
+                       real64 & time );
+
+/**
+ * @brief Deallocates a SuperLU_Dist data structure
+ * @param[in,out] SLUDData the structure containing the matrix in SuperLU_Dist format
+ */
+void SuperLU_DistDestroy( SuperLU_DistData & SLUDData );
 
 /**
  * @brief Converts from GEOSX to SuperLU_Dist columns permutation option

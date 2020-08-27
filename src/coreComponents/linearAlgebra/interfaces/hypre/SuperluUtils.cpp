@@ -19,73 +19,124 @@
 #include "SuperluUtils.hpp"
 #include "common/Stopwatch.hpp"
 
+#include "HYPRE.h"
+#include "_hypre_parcsr_mv.h"
+
 namespace geosx
 {
 
+// Check matching requirements on index/value types between GEOSX and SuperLU_Dist
+
+static_assert( sizeof( int_t ) == sizeof( globalIndex ),
+               "SuperLU_Dist int_t and geosx::globalIndex must have the same size" );
+
+static_assert( std::is_signed< int_t >::value == std::is_signed< globalIndex >::value,
+               "SuperLU_Dist int_t and geoex::globalIndex must both be signed or unsigned" );
+
+static_assert( std::is_same< double, real64 >::value,
+               "SuperLU_Dist real and geosx::real64 must be the same type" );
+
 void ConvertToSuperMatrix( HypreMatrix const & matrix,
-                           array1d< globalIndex > & rowPtr,
-                           array1d< globalIndex > & cols,
-                           array1d< real64 > & vals,
-                           SuperMatrix & SLUDMat )
+                           SuperLU_DistData & SLUDData )
 {
-  localIndex const numLocalRows = matrix.numLocalRows();
-  rowPtr.resize( numLocalRows+1 );
-  cols.reserve( matrix.numLocalNonzeros() );
-  vals.reserve( matrix.numLocalNonzeros() );
-  rowPtr[0] = 0;
-  for( localIndex i = 0; i < numLocalRows; ++i )
+  // Merge diag and offd into one matrix (global ids)
+  SLUDData.localStrip = hypre_MergeDiagAndOffd( matrix.unwrapped() );
+
+  HYPRE_Int const * const hypreI = hypre_CSRMatrixI( SLUDData.localStrip );
+  SLUDData.rowPtr = new int_t[matrix.numLocalRows()+1];
+  for( localIndex i = 0; i <= matrix.numLocalRows(); ++i )
   {
-    localIndex const nonZeros = matrix.localRowLength( i );
-    array1d< globalIndex > colIndices( nonZeros );
-    array1d< real64 > values( nonZeros );
-    matrix.getRowCopy( matrix.getGlobalRowID( i ), colIndices, values );
-    cols.insert( rowPtr[i], colIndices.begin(), colIndices.end() );
-    vals.insert( rowPtr[i], values.begin(), values.end() );
-    rowPtr[i+1] = rowPtr[i] + nonZeros;
+    SLUDData.rowPtr[i] = LvArray::integerConversion< int_t >( hypreI[i] );
   }
 
-  dCreate_CompRowLoc_Matrix_dist( &SLUDMat,
+  dCreate_CompRowLoc_Matrix_dist( &SLUDData.mat,
                                   toSuperlu_intT( matrix.numGlobalRows() ),
                                   toSuperlu_intT( matrix.numGlobalRows() ),
                                   toSuperlu_intT( matrix.numLocalNonzeros() ),
-                                  toSuperlu_intT( numLocalRows ),
+                                  toSuperlu_intT( matrix.numLocalRows() ),
                                   toSuperlu_intT( matrix.ilower() ),
-                                  vals.data(),
-                                  toSuperlu_intT( cols.data() ),
-                                  toSuperlu_intT( rowPtr.data() ),
+                                  hypre_CSRMatrixData( SLUDData.localStrip ),
+                                  toSuperlu_intT( hypre_CSRMatrixBigJ( SLUDData.localStrip ) ),
+                                  SLUDData.rowPtr,
                                   SLU_NR_loc,
                                   SLU_D,
                                   SLU_GE );
 }
 
-int SolveSuperMatrix( SuperMatrix & SLUDMat,
-                      HypreVector const & b,
-                      HypreVector & x,
-                      MPI_Comm const & comm,
-                      superlu_dist_options_t & options,
-                      integer const & logLevel,
-                      real64 & timeFact,
-                      real64 & timeSolve )
+void SuperLU_DistCreate( HypreMatrix const & matrix,
+                         LinearSolverParameters const & params,
+                         SuperLU_DistData & SLUDData )
+{
+  // Initialize options.
+  set_default_options_dist( &SLUDData.options );
+  if( params.logLevel > 1 )
+  {
+    SLUDData.options.PrintStat = YES;
+  }
+  else
+  {
+    SLUDData.options.PrintStat = NO;
+  }
+
+  if( params.direct.equilibrate )
+  {
+    SLUDData.options.Equil = YES;
+  }
+  else
+  {
+    SLUDData.options.Equil = NO;
+  }
+  SLUDData.options.ColPerm = getColPermType( params.direct.colPerm );
+  SLUDData.options.RowPerm = getRowPermType( params.direct.rowPerm );
+  if( params.direct.replaceTinyPivot )
+  {
+    SLUDData.options.ReplaceTinyPivot = YES;
+  }
+  else
+  {
+    SLUDData.options.ReplaceTinyPivot = NO;
+  }
+  if( params.direct.iterativeRefine )
+  {
+    SLUDData.options.IterRefine = SLU_DOUBLE;
+  }
+  else
+  {
+    SLUDData.options.IterRefine = NOREFINE;
+  }
+
+  if( params.logLevel > 0 )
+  {
+    print_sp_ienv_dist( &SLUDData.options );
+    print_options_dist( &SLUDData.options );
+  }
+
+  // Convert matrix from Hypre to SuperLU_Dist format
+  ConvertToSuperMatrix( matrix, SLUDData );
+
+  // Save communicator
+  SLUDData.comm = matrix.getComm();
+}
+
+int SuperLU_DistSetup( SuperLU_DistData & SLUDData,
+                       real64 & time )
 {
   Stopwatch watch;
 
-  int_t const m = SLUDMat.nrow;
-  int_t const n = SLUDMat.ncol;
+  int_t const m = SLUDData.mat.nrow;
+  int_t const n = SLUDData.mat.ncol;
 
   // Initialize ScalePermstruct.
-  dScalePermstruct_t ScalePermstruct;
-  dScalePermstructInit( m, n, &ScalePermstruct );
+  dScalePermstructInit( m, n, &SLUDData.ScalePermstruct );
 
   // Initialize LUstruct.
-  dLUstruct_t LUstruct;
-  dLUstructInit( n, &LUstruct );
+  dLUstructInit( n, &SLUDData.LUstruct );
 
   // Initialize the statistics variables.
-  SuperLUStat_t stat;
-  PStatInit( &stat );
+  PStatInit( &SLUDData.stat );
 
   // Create process grid.
-  int const num_procs = MpiWrapper::Comm_size( comm );
+  int const num_procs = MpiWrapper::Comm_size( SLUDData.comm );
   int pcols = 1;
   int prows = 1;
   while( prows*pcols <= num_procs )
@@ -99,77 +150,99 @@ int SolveSuperMatrix( SuperMatrix & SLUDMat,
     prows -= 1;
     pcols = num_procs/prows;
   }
-  gridinfo_t grid;
-  superlu_gridinit( comm, prows, pcols, &grid );
+  superlu_gridinit( SLUDData.comm, prows, pcols, &SLUDData.grid );
 
-  // Call the linear equation solver.
-  int nrhs = 0;
-  int const ldb = b.localSize();
-  dSOLVEstruct_t SOLVEstruct;
+  // Call the linear equation solver to factorize the matrix.
+  int const nrhs = 0;
   int info = 0;
 
-  options.Fact = DOFACT;
-  pdgssvx( &options,
-           &SLUDMat,
-           &ScalePermstruct,
+  SLUDData.options.Fact = DOFACT;
+  pdgssvx( &SLUDData.options,
+           &SLUDData.mat,
+           &SLUDData.ScalePermstruct,
            NULL,
-           ldb,
+           n,
            nrhs,
-           &grid,
-           &LUstruct,
-           &SOLVEstruct,
+           &SLUDData.grid,
+           &SLUDData.LUstruct,
+           &SLUDData.SOLVEstruct,
            NULL,
-           &stat,
+           &SLUDData.stat,
            &info );
 
-  timeFact = watch.elapsedTime();
-  watch.zero();
+  time = watch.elapsedTime();
 
-  if( info == 0 )
-  {
-    options.Fact = FACTORED;
-    nrhs = 1;
-    array1d< real64 > berr( nrhs );
-    x.copy( b );
-    pdgssvx( &options,
-             &SLUDMat,
-             &ScalePermstruct,
-             x.extractLocalVector(),
-             ldb,
-             nrhs,
-             &grid,
-             &LUstruct,
-             &SOLVEstruct,
-             berr.data(),
-             &stat,
-             &info );
-  }
-
-  timeSolve = watch.elapsedTime();
-
-  if( logLevel > 0 )
+  if( SLUDData.options.PrintStat == YES )
   {
     // Print the statistics.
-    PStatPrint( &options, &stat, &grid );
-  }
-
-  // Deallocate other SuperLU data structures
-  dScalePermstructFree( &ScalePermstruct );
-  dDestroy_LU( n, &grid, &LUstruct );
-  dLUstructFree( &LUstruct );
-  PStatFree( &stat );
-  superlu_gridexit( &grid );
-  if( options.SolveInitialized )
-  {
-    dSolveFinalize( &options, &SOLVEstruct );
+    PStatPrint( &SLUDData.options, &SLUDData.stat, &SLUDData.grid );
   }
 
   return info;
 }
 
-void DestroySuperMatrix( SuperMatrix & SLUDMat )
+int SuperLU_DistSolve( SuperLU_DistData & SLUDData,
+                       HypreVector const & b,
+                       HypreVector & x,
+                       real64 & time )
 {
-  SUPERLU_FREE( SLUDMat.Store );
+  Stopwatch watch;
+
+  x.copy( b );
+
+  // Call the linear equation solver to solve the matrix.
+  int const nrhs = 1;
+  int const ldb = b.localSize();
+  array1d< real64 > berr( nrhs );
+  int info = 0;
+
+  SLUDData.options.Fact = FACTORED;
+  pdgssvx( &SLUDData.options,
+           &SLUDData.mat,
+           &SLUDData.ScalePermstruct,
+           x.extractLocalVector(),
+           ldb,
+           nrhs,
+           &SLUDData.grid,
+           &SLUDData.LUstruct,
+           &SLUDData.SOLVEstruct,
+           berr.data(),
+           &SLUDData.stat,
+           &info );
+
+  time = watch.elapsedTime();
+
+  if( SLUDData.options.PrintStat == YES )
+  {
+    // Print the statistics.
+    PStatPrint( &SLUDData.options, &SLUDData.stat, &SLUDData.grid );
+  }
+
+  return info;
+}
+
+void SuperLU_DistDestroy( SuperLU_DistData & SLUDData )
+{
+  // Deallocate other SuperLU data structures
+  dScalePermstructFree( &SLUDData.ScalePermstruct );
+  dDestroy_LU( SLUDData.mat.nrow, &SLUDData.grid, &SLUDData.LUstruct );
+  dLUstructFree( &SLUDData.LUstruct );
+  PStatFree( &SLUDData.stat );
+  superlu_gridexit( &SLUDData.grid );
+  if( SLUDData.options.SolveInitialized )
+  {
+    dSolveFinalize( &SLUDData.options, &SLUDData.SOLVEstruct );
+  }
+
+  // From HYPRE SuperLU_Dist interfaces (superlu.c)
+  // SuperLU frees assigned data, so set them to null before
+  // calling hypre_CSRMatrixdestroy on localStrip to avoid memory errors.
+  hypre_CSRMatrixI( SLUDData.localStrip ) = NULL;
+  hypre_CSRMatrixData( SLUDData.localStrip ) = NULL;
+  hypre_CSRMatrixBigJ( SLUDData.localStrip ) = NULL;
+  hypre_CSRMatrixDestroy( SLUDData.localStrip );
+
+  Destroy_CompRowLoc_Matrix_dist( &SLUDData.mat );
 }
 
 colperm_t const & getColPermType( string const & value )

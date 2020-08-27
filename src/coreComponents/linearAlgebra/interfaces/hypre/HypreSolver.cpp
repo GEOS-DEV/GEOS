@@ -72,74 +72,28 @@ void HypreSolver::solve_direct( HypreMatrix & mat,
                                 HypreVector & sol,
                                 HypreVector & rhs )
 {
-  // Convert matrix from Matrix to SuperMatrix format
-  array1d< globalIndex > rowPtr;
-  array1d< globalIndex > cols;
-  array1d< real64 > vals;
-  SuperMatrix SLUDMat;
-  ConvertToSuperMatrix( mat, rowPtr, cols, vals, SLUDMat );
+  SuperLU_DistData SLUDData;
+  SuperLU_DistCreate( mat, m_parameters, SLUDData );
 
-  MPI_Comm const comm = mat.getComm();
+  int info = 0;
+  real64 timeSetup;
+  info = SuperLU_DistSetup( SLUDData, timeSetup );
 
-  // Initialize options.
-  superlu_dist_options_t options;
-  set_default_options_dist( &options );
-  if( m_parameters.logLevel > 1 )
-  {
-    options.PrintStat = YES;
-  }
-  else
-  {
-    options.PrintStat = NO;
-  }
+  real64 timeSolve;
+  info += SuperLU_DistSolve( SLUDData, rhs, sol, timeSolve );
 
-  if( m_parameters.direct.equilibrate )
+  if( info == 0 )
   {
-    options.Equil = YES;
+    HypreVector res( rhs );
+    mat.gemv( -1.0, sol, 1.0, res );
+    m_result.residualReduction = res.norm2() / rhs.norm2();
   }
-  else
-  {
-    options.Equil = NO;
-  }
-  options.ColPerm = getColPermType( m_parameters.direct.colPerm );
-  options.RowPerm = getRowPermType( m_parameters.direct.rowPerm );
-  if( m_parameters.direct.replaceTinyPivot )
-  {
-    options.ReplaceTinyPivot = YES;
-  }
-  else
-  {
-    options.ReplaceTinyPivot = NO;
-  }
-  if( m_parameters.direct.iterativeRefine )
-  {
-    options.IterRefine = SLU_DOUBLE;
-  }
-  else
-  {
-    options.IterRefine = NOREFINE;
-  }
-
-  if( m_parameters.logLevel > 0 )
-  {
-    print_sp_ienv_dist( &options );
-    print_options_dist( &options );
-  }
-
-  real64 const bnorm2 = rhs.norm2();
-
-  real64 timeFact, timeSolve;
-  int const info = SolveSuperMatrix( SLUDMat, rhs, sol, comm, options, m_parameters.logLevel, timeFact, timeSolve );
-
-  HypreVector res( rhs );
-  mat.gemv( -1.0, sol, 1.0, res );
-  m_result.residualReduction = res.norm2() / bnorm2;
 
   if( info == 0 && m_result.residualReduction < m_parameters.direct.relTolerance )
   {
     m_result.status = LinearSolverResult::Status::Success;
     m_result.numIterations = 1;
-    m_result.setupTime = timeFact;
+    m_result.setupTime = timeSetup;
     m_result.solveTime = timeSolve;
   }
   else
@@ -147,8 +101,7 @@ void HypreSolver::solve_direct( HypreMatrix & mat,
     m_result.status = LinearSolverResult::Status::NotConverged;
   }
 
-  // rowPtr, cols, vals will be deallocated when out of scope
-  DestroySuperMatrix( SLUDMat );
+  SuperLU_DistDestroy( SLUDData );
 }
 
 namespace
