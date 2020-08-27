@@ -26,6 +26,7 @@
 #include "linearAlgebra/utilities/LinearSolverParameters.hpp"
 #include "linearAlgebra/utilities/LAIHelperFunctions.hpp"
 
+#include "PetscSuperlu.hpp"
 #include <petscvec.h>
 #include <petscmat.h>
 #include <petscksp.h>
@@ -72,6 +73,8 @@ void PetscSolver::solve_direct( PetscMatrix & mat,
   GEOSX_LAI_CHECK_ERROR( KSPSetOperators( ksp, mat.unwrapped(), mat.unwrapped() ) );
   GEOSX_LAI_CHECK_ERROR( KSPSetType( ksp, KSPPREONLY ) );
 
+  SuperLU_DistSetFromOptions( mat, m_parameters );
+
   // use direct solve preconditioner SUPERLU DIST
   Stopwatch watch;
   PC prec;
@@ -90,8 +93,11 @@ void PetscSolver::solve_direct( PetscMatrix & mat,
   GEOSX_LAI_CHECK_ERROR( KSPGetConvergedReason( ksp, &reason ) );
 
   m_result.status = reason >= 0 ? LinearSolverResult::Status::Success : LinearSolverResult::Status::Breakdown;
-  m_result.numIterations = 1.0;
-  m_result.residualReduction = NumericTraits< real64 >::eps;
+  m_result.numIterations = 1;
+
+  PetscVector res( rhs );
+  mat.gemv( -1.0, sol, 1.0, res );
+  m_result.residualReduction = res.norm2() / rhs.norm2();
 
   // destroy solver
   GEOSX_LAI_CHECK_ERROR( KSPDestroy( &ksp ) );

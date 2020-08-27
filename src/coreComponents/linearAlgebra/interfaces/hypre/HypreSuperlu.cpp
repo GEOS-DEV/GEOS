@@ -13,10 +13,10 @@
  */
 
 /**
- * @file SuperluUtils.cpp
+ * @file HypreSuperlu.cpp
  */
 
-#include "SuperluUtils.hpp"
+#include "HypreSuperlu.hpp"
 #include "common/Stopwatch.hpp"
 
 #include "HYPRE.h"
@@ -86,8 +86,8 @@ void SuperLU_DistCreate( HypreMatrix const & matrix,
   {
     SLUDData.options.Equil = NO;
   }
-  SLUDData.options.ColPerm = getColPermType( params.direct.colPerm );
-  SLUDData.options.RowPerm = getRowPermType( params.direct.rowPerm );
+  SLUDData.options.ColPerm = HypreGetColPermType( params.direct.colPerm );
+  SLUDData.options.RowPerm = HypreGetRowPermType( params.direct.rowPerm );
   if( params.direct.replaceTinyPivot )
   {
     SLUDData.options.ReplaceTinyPivot = YES;
@@ -245,7 +245,7 @@ void SuperLU_DistDestroy( SuperLU_DistData & SLUDData )
   Destroy_CompRowLoc_Matrix_dist( &SLUDData.mat );
 }
 
-colperm_t const & getColPermType( string const & value )
+colperm_t const & HypreGetColPermType( string const & value )
 {
   static std::map< string, colperm_t > const optionMap =
   {
@@ -260,7 +260,7 @@ colperm_t const & getColPermType( string const & value )
   return optionMap.at( value );
 }
 
-rowperm_t const & getRowPermType( string const & value )
+rowperm_t const & HypreGetRowPermType( string const & value )
 {
   static std::map< string, rowperm_t > const optionMap =
   {

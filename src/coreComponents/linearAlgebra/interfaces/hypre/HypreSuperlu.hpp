@@ -13,11 +13,11 @@
  */
 
 /**
- * @file SuperluUtils.hpp
+ * @file HypreSuperlu.hpp
  */
 
-#ifndef GEOSX_LINEARALGEBRA_INTERFACES_SUPERLUUTILS_HPP_
-#define GEOSX_LINEARALGEBRA_INTERFACES_SUPERLUUTILS_HPP_
+#ifndef GEOSX_LINEARALGEBRA_INTERFACES_HYPRESUPERLU_HPP_
+#define GEOSX_LINEARALGEBRA_INTERFACES_HYPRESUPERLU_HPP_
 
 #include "common/DataTypes.hpp"
 #include "linearAlgebra/interfaces/hypre/HypreMatrix.hpp"
@@ -128,15 +128,15 @@ void SuperLU_DistDestroy( SuperLU_DistData & SLUDData );
  * @param[in] value the GEOSX option
  * @return the SuperLU_Dist option
  */
-colperm_t const & getColPermType( string const & value );
+colperm_t const & HypreGetColPermType( string const & value );
 
 /**
  * @brief Converts from GEOSX to SuperLU_Dist rows permutation option
  * @param[in] value the GEOSX option
  * @return the SuperLU_Dist option
  */
-rowperm_t const & getRowPermType( string const & value );
+rowperm_t const & HypreGetRowPermType( string const & value );
 
 }
 
-#endif /*GEOSX_LINEARALGEBRA_INTERFACES_SUPERLUUTILS_HPP_*/
+#endif /*GEOSX_LINEARALGEBRA_INTERFACES_HYPRESUPERLU_HPP_*/
