@@ -9,129 +9,6 @@ Introduction
 
 The `ProppantTransport` solver applies the finite volume method to solve the equations of proppant transport in hydraulic fractures. The behavior of proppant transport is described by a continuum formulation. Here we briefly outline the usage, governing equations and numerical implementation of the proppant transport model in GEOSX.
 
-<<<<<<< HEAD
-Usage
-=========================
-
-The solver is enabled by adding a ``<ProppantTransport>`` node
-and a ``<SurfaceGenerator>`` node in the Solvers section.
-Like any solver, time stepping is driven by events, see :ref:`EventManager`.
-
-The following attributes are supported:
-
-.. include:: /coreComponents/fileIO/schema/docs/ProppantTransport.rst
-
-In particular:
-
-* ``discretization`` must point to a Finite Volume flux approximation scheme defined in the Numerical Methods section of the input file (see :ref:`FiniteVolumeDiscretization`)
-* ``proppantName`` must point to a particle fluid model defined in the Constitutive section of the input file (see :ref:`Constitutive`)
-* ``fluidName`` must point to a slurry fluid model defined in the Constitutive section of the input file (see :ref:`Constitutive`)
-* ``solidName`` must point to a solid mechanics model defined in the Constitutive section of the input file (see :ref:`Constitutive`)
-* ``targetRegions`` attribute is currently not supported, the solver is always applied to all regions.
-
-Primary solution field labels are ``proppantConcentration`` and 
-``pressure``.
-Initial conditions must be prescribed on these field in every region, and boundary conditions
-must be prescribed on these fields on cell or face sets of interest. For static (non-propagating) fracture problems, the fields ``ruptureState`` and 
-``elementAperture`` should be provided in the initial conditions.
-
-In addition, the solver declares a scalar field named ``referencePorosity`` and a vector field
-named ``permeability``, that contains principal values of the symmetric rank-2 permeability tensor
-(tensor axis are assumed aligned with the global coordinate system).
-These fields must be populated via :ref:`FieldSpecification` section and ``permeability`` should
-be supplied as the value of ``coefficientName`` attribute of the flux approximation scheme used.
-
-
-Input example
-=========================
-
-
-.. code-block::xml
-
-  <Solvers
-    gravityVector="0.0, 0.0, -9.81">
-  
-    <ProppantTransport name="ProppantTransport"
-                       logLevel="1"  
-                       gravityFlag="1"
-                       updateProppantPacking="1"
-                       discretization="singlePhaseTPFA"
-                       targetRegions="{Fracture}"
-                       fluidName="water"
-                       proppantName="sand"		       
-                       solidName="rock">    
-
-      <NonlinearSolverParameters name="nlsp"
-                                 newtonTol="1.0e-6"
-                                 newtonMaxIter="8"
-                                 lineSearchAction="0"
-                                 newtonMinIter="1"
-                                 maxTimeStepCuts="5"/>
-
-      <LinearSolverParameters name="LinearSolverParameters"
-                              krylovTol="1.0e-12"
-                              useDirectSolver="0"/>
-    </ProppantTransport>    
-
-    <FlowProppantTransport name="FlowProppantTransport"
-                           proppantSolverName="ProppantTransport"
-                           flowSolverName="SinglePhaseFlow"
-                           targetRegions="{Fracture}"
-                           logLevel="1">
-    </FlowProppantTransport>
-
-    <SinglePhaseFlow name="SinglePhaseFlow"
-                     logLevel="1"
-                     gravityFlag="1"
-                     discretization="singlePhaseTPFA"
-                     targetRegions="{Fracture}"
-                     fluidName="water"
-                     solidName="rock">
-
-       <NonlinearSolverParameters name="nlsp"
-                                 newtonTol="1.0e-8"
-                                 newtonMaxIter="8"
-                                 lineSearchAction="0"
-                                 newtonMinIter="0"
-                                 maxTimeStepCuts="5"/>
-
-       <LinearSolverParameters name="LinearSolverParameters"
-                               krylovTol="1.0e-12"/>
-
-    </SinglePhaseFlow>
-    
-    <SurfaceGenerator name="SurfaceGen"
-                      logLevel="0"
-                      fractureRegion="Fracture"
-                      targetRegions="{Fracture}"
-                      solidMaterialName="granite"
-                      rockToughness="1e6">
-    </SurfaceGenerator>
-  
-  </Solvers>
-
-  <Constitutive>
-    <ProppantSlurryFluid name="water"
-                         referencePressure="1e5"
-                         referenceDensity="1000"
-                         compressibility="5e-10"
-                         referenceViscosity="0.001"
-                         referenceProppantDensity="2550.0"/>
-
-    <ParticleFluid name="sand"
-                   particleSettlingModel="Stokes"
-		   hinderedSettlingCoefficient="5.9"
-                   proppantDensity="2550.0"
-                   proppantDiameter="4.0e-4"                   
-
-    <PoreVolumeCompressibleSolid name="rock"
-                                 referencePressure="0.0"
-                                 compressibility="1e-9"/>    
-
-  </Constitutive>
-
-=======
->>>>>>> develop
 Theory
 =========================
 
@@ -383,9 +260,9 @@ References
 
 - M. A. Biot & W. L. Medlin. "Theory of Sand Transport in Thin Fluids", Paper presented at the SPE Annual Technical Conference and Exhibition, Las Vegas, NV, 1985.
 
-- X. Hu, K. Wu, X. Song, W. Yu, J. Tang, G. Li, & Z. Shen. "A new model for simulating particle transport in a low‐viscosity fluid for fluid‐driven fracturing", AIChE J. 64 (9), 35423552, 2018.
+- X. Hu, K. Wu, X. Song, W. Yu, J. Tang, G. Li, & Z. Shen. "A new model for simulating particle transport in a low viscosity fluid for fluid driven fracturing", AIChE J. 64 (9), 35423552, 2018.
 
-- R. G. Keck, W. L. Nehmer, & G. S. Strumolo. “A new method for predicting friction pressures and rheology of proppant-laden fracturing fluids", SPE Prod. Eng., 7(1):21-28, 1992.
+- R. G. Keck, W. L. Nehmer, & G. S. Strumolo. A new method for predicting friction pressures and rheology of proppant-laden fracturing fluids", SPE Prod. Eng., 7(1):21-28, 1992.
 
 - M. McClure. "Bed load proppant transport during slickwater hydraulic fracturing: insights from comparisons between published laboratory data and correlations for sediment and pipeline slurry transport", J. Pet. Sci. Eng. 161 (2), 599610, 2018.
 
