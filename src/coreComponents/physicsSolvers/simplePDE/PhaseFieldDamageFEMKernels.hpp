@@ -34,7 +34,7 @@ namespace geosx
  *                trial space have the same number of support points.
  *
  * ### PhaseFieldDamageKernel Description
- * Implements the KernelBase interface functions required for solving the 
+ * Implements the KernelBase interface functions required for solving the
  * Damage(or phase-field) equation in a phase-field fracture problem.
  * It uses the finite element kernel application functions such as
  * geosx::finiteElement::RegionBasedKernelApplication.
