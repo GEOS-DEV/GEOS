@@ -182,7 +182,7 @@ public:
     if( m_localDissipationOption == 1 )
     {
       double const threshold = 3 * m_Gc / (16 * m_lengthScale);           //elastic energy threshold - use when Local Dissipation is linear
-      D = std::max( threshold, strainEnergyDensity );
+      D = fmax( threshold, strainEnergyDensity );
       //D = max(strainEnergy(k,q), strainEnergy(k,q));//debbuging line - remove after testing
     }
 
