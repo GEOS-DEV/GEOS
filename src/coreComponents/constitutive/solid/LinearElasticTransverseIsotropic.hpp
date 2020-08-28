@@ -107,9 +107,11 @@ public:
                              real64 const (&FmI)[3][3] ) const override final;
 
   GEOSX_HOST_DEVICE inline
-  virtual void GetStiffness( localIndex const k, real64 (& c)[6][6] ) const override final
+  virtual void GetStiffness( localIndex const k,
+                             localIndex const q,
+                             real64 (& c)[6][6] ) const override final
   {
-
+    GEOSX_UNUSED_VAR( q );
     memset( c, 0, sizeof( c ) );
     c[0][0] = m_c11[k];
     c[0][1] = m_c11[k] - 2 * m_c66[k];
@@ -123,6 +125,15 @@ public:
     c[3][3] = m_c44[k];
     c[4][4] = m_c44[k];
     c[5][5] = m_c66[k];
+  }
+
+  GEOSX_HOST_DEVICE
+  virtual real64 calculateStrainEnergyDensity( localIndex const k,
+                                               localIndex const q ) const override final
+  {
+    GEOSX_UNUSED_VAR( k, q );
+    GEOSX_ERROR( "Not implemented" );
+    return 0;
   }
 
 private:

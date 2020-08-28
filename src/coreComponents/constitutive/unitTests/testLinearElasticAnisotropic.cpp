@@ -265,7 +265,7 @@ TEST( LinearElasticAnisotropicTests, testXML )
   LinearElasticAnisotropicUpdates kernelWrapper = model->createKernelUpdates();
 
   real64 stiffness[6][6];
-  kernelWrapper.GetStiffness( 0, stiffness );
+  kernelWrapper.GetStiffness( 0, 0, stiffness );
 
   real64 c[6][6] = {
     { 1.0e10, 1.1e9, 1.2e9, 1.3e9, 1.4e9, 1.5e9 },
