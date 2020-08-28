@@ -243,19 +243,24 @@ void SinglePhaseBase::InitializePostInitialConditions_PreSubGroups( Group * cons
 
     ConstitutiveBase const & solid = GetConstitutiveModel( subRegion, m_solidModelNames[targetIndex] );
     arrayView1d< real64 const > const & poroRef = subRegion.getReference< array1d< real64 > >( viewKeyStruct::referencePorosityString );
-    arrayView2d< real64 const > const & pvmult =
-      solid.getReference< array2d< real64 > >( ConstitutiveBase::viewKeyStruct::poreVolumeMultiplierString );
 
     arrayView1d< real64 > const & poro = subRegion.getReference< array1d< real64 > >( viewKeyStruct::porosityString );
 
-    if( pvmult.size() == poro.size() )
+    bool poroInit = false;
+    if( solid.hasWrapper( string(ConstitutiveBase::viewKeyStruct::poreVolumeMultiplierString) ) )
     {
-      forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
+      arrayView2d< real64 const > const &
+      pvmult = solid.getReference< array2d< real64 > >( ConstitutiveBase::viewKeyStruct::poreVolumeMultiplierString );
+      if( pvmult.size() == poro.size() )
       {
-        poro[ei] = poroRef[ei] * pvmult[ei][0];
-      } );
+        forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
+        {
+          poro[ei] = poroRef[ei] * pvmult[ei][0];
+        } );
+        poroInit = true;
+      }
     }
-    else
+    if( !poroInit )
     {
       poro.setValues< parallelDevicePolicy<> >( poroRef );
     }
