@@ -101,29 +101,12 @@
   </Events>
 
   <NumericalMethods>
-    <BasisFunctions> 
-        <LagrangeBasis3 name="linearBasis"  degree = "1"  />
-    </BasisFunctions>
-    
-    <QuadratureRules>
-        <GaussQuadrature3 name="gaussian"   degree="2"  />    
-    </QuadratureRules>
-
-    <QuadratureRules>
-        <GaussQuadrature3 name="constant"   degree="1"  />    
-    </QuadratureRules>
-    
     <FiniteElements>
-        <FiniteElementSpace name="FE1" parentSpace="C3D8" basis="linearBasis" quadrature="gaussian" />
+      <FiniteElementSpace
+        name="FE1"
+        order="1"/>
     </FiniteElements>
-
-    <FiniteElements>
-        <FiniteElementSpace name="FE2" 
-                            parentSpace="C3D8"
-                             basis="linearBasis"
-                             quadrature="constant" />
-    </FiniteElements>
-
+    
     <FiniteVolume>
       <TwoPointFluxApproximation name="singlePhaseTPFA"
                                  fieldName="pressure"

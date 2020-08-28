@@ -17,6 +17,7 @@
       fluidSolverName="SinglePhaseFlow"
       couplingTypeOption="FIM"
       logLevel="1"
+      discretization="FE1"
       targetRegions="{Region2, Fracture}"
       contactRelationName="fractureContact"
       maxNumResolves="2"
