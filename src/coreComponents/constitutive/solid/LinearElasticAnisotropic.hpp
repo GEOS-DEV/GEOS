@@ -95,15 +95,25 @@ public:
                              localIndex const q,
                              real64 const (&FmI)[3][3] ) const override final;
 
+  GEOSX_HOST_DEVICE
+  virtual real64 calculateStrainEnergyDensity( localIndex const k,
+                                               localIndex const q ) const override final
+  {
+    GEOSX_UNUSED_VAR( k, q );
+    GEOSX_ERROR( "Not implemented" );
+    return 0;
+  }
+
 
   /**
-   * accessor to return the stiffness at a given element
-   * @param k the element number
-   * @param c the stiffness array
+   * @copydoc SolidBase::GetStiffness
    */
   GEOSX_HOST_DEVICE inline
-  virtual void GetStiffness( localIndex const k, real64 (& c)[6][6] ) const override final
+  virtual void GetStiffness( localIndex const k,
+                             localIndex const q,
+                             real64 (& c)[6][6] ) const override final
   {
+    GEOSX_UNUSED_VAR( q );
     LvArray::tensorOps::copy< 6, 6 >( c, m_stiffnessView[ k ] );
   }
 

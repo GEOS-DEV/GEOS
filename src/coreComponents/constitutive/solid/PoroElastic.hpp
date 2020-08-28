@@ -102,8 +102,7 @@ public:
     return BASE::template createDerivedKernelUpdates< KernelWrapper >( m_biotCoefficient );
   }
 
-
-  struct viewKeyStruct : public ConstitutiveBase::viewKeyStruct
+  struct viewKeyStruct : public BASE::viewKeyStruct
   {
 
     static constexpr auto compressibilityString =  "compressibility";

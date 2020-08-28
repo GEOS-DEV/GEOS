@@ -166,7 +166,7 @@ This is how the XML block would look like.
                                  verboseLevel="1"
                                  gravityFlag="1"
                                  temperature="297.15" />
-          <SystemSolverParameters newtonTol="1.0e-6"
+          <LinearSolverParameters newtonTol="1.0e-6"
                                   maxIterNewton="15"
                                   useDirectSolver="1"/>
         </XmlNameOfMySolver>
