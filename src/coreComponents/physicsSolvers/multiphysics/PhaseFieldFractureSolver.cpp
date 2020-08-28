@@ -84,7 +84,9 @@ void PhaseFieldFractureSolver::ImplicitStepSetup( real64 const & GEOSX_UNUSED_PA
                                                   real64 const & GEOSX_UNUSED_PARAM( dt ),
                                                   DomainPartition & domain )
 {
-  MeshLevel * const mesh = domain.getMeshBodies()->GetGroup< MeshBody >( 0 )->getMeshLevel( 0 );
+  GEOSX_MARK_FUNCTION;
+  MeshLevel * const mesh = domain.getMeshBody( 0 )->getMeshLevel( 0 );
+
   ElementRegionManager * const elemManager = mesh->getElemManager();
 
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > const totalMeanStress =
@@ -172,6 +174,7 @@ real64 PhaseFieldFractureSolver::SolverStep( real64 const & time_n,
                                              int const cycleNumber,
                                              DomainPartition & domain )
 {
+  GEOSX_MARK_FUNCTION;
   real64 dtReturn = dt;
   if( m_couplingTypeOption == couplingTypeOption::FixedStress )
   {
@@ -189,6 +192,7 @@ real64 PhaseFieldFractureSolver::SplitOperatorStep( real64 const & time_n,
                                                     integer const cycleNumber,
                                                     DomainPartition & domain )
 {
+  GEOSX_MARK_FUNCTION;
   real64 dtReturn = dt;
   real64 dtReturnTemporary;
 
@@ -301,6 +305,7 @@ real64 PhaseFieldFractureSolver::SplitOperatorStep( real64 const & time_n,
 void PhaseFieldFractureSolver::mapDamageToQuadrature( DomainPartition & domain )
 {
 
+  GEOSX_MARK_FUNCTION;
   MeshLevel * const mesh = domain.getMeshBody( 0 )->getMeshLevel( 0 );
   NodeManager * const nodeManager = mesh->getNodeManager();
 
