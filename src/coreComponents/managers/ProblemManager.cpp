@@ -215,7 +215,7 @@ void ProblemManager::ParseCommandLineInput()
       mkdir( outputDirectory.data(), 0755 );
       if( chdir( outputDirectory.data()) != 0 )
       {
-        GEOSX_ERROR( "Could not change to the ouput directory: " + outputDirectory );
+        GEOSX_ERROR( "Could not change to the output directory: " + outputDirectory );
       }
     }
   }
@@ -458,7 +458,7 @@ void ProblemManager::ParseInputFile()
   Py_DECREF( pModule );
 
 #else
-  GEOSX_LOG_RANK_0( "GEOS must be configured to use Python to use parameters, symbolic math, etc. in input files" );
+  GEOSX_LOG_RANK_0( "GEOSX must be configured to use Python to use parameters, symbolic math, etc. in input files" );
 #endif
 
 
