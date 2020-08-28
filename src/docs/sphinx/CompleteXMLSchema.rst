@@ -141,6 +141,13 @@ Element: Cylinder
 .. include:: ../../coreComponents/fileIO/schema/docs/Cylinder.rst
 
 
+.. _XML_DamageLinearElasticIsotropic:
+
+Element: DamageLinearElasticIsotropic
+=====================================
+.. include:: ../../coreComponents/fileIO/schema/docs/DamageLinearElasticIsotropic.rst
+
+
 .. _XML_Dirichlet:
 
 Element: Dirichlet
@@ -419,6 +426,20 @@ Element: Perforation
 Element: PeriodicEvent
 ======================
 .. include:: ../../coreComponents/fileIO/schema/docs/PeriodicEvent.rst
+
+
+.. _XML_PhaseFieldDamageFEM:
+
+Element: PhaseFieldDamageFEM
+============================
+.. include:: ../../coreComponents/fileIO/schema/docs/PhaseFieldDamageFEM.rst
+
+
+.. _XML_PhaseFieldFracture:
+
+Element: PhaseFieldFracture
+===========================
+.. include:: ../../coreComponents/fileIO/schema/docs/PhaseFieldFracture.rst
 
 
 .. _XML_PoreVolumeCompressibleSolid:
@@ -817,6 +838,13 @@ Datastructure: Cylinder
 .. include:: ../../coreComponents/fileIO/schema/docs/Cylinder_other.rst
 
 
+.. _DATASTRUCTURE_DamageLinearElasticIsotropic:
+
+Datastructure: DamageLinearElasticIsotropic
+===========================================
+.. include:: ../../coreComponents/fileIO/schema/docs/DamageLinearElasticIsotropic_other.rst
+
+
 .. _DATASTRUCTURE_Dirichlet:
 
 Datastructure: Dirichlet
@@ -1116,6 +1144,20 @@ Datastructure: Perforation
 Datastructure: PeriodicEvent
 ============================
 .. include:: ../../coreComponents/fileIO/schema/docs/PeriodicEvent_other.rst
+
+
+.. _DATASTRUCTURE_PhaseFieldDamageFEM:
+
+Datastructure: PhaseFieldDamageFEM
+==================================
+.. include:: ../../coreComponents/fileIO/schema/docs/PhaseFieldDamageFEM_other.rst
+
+
+.. _DATASTRUCTURE_PhaseFieldFracture:
+
+Datastructure: PhaseFieldFracture
+=================================
+.. include:: ../../coreComponents/fileIO/schema/docs/PhaseFieldFracture_other.rst
 
 
 .. _DATASTRUCTURE_PoreVolumeCompressibleSolid:
