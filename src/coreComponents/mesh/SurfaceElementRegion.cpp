@@ -46,11 +46,11 @@ void SurfaceElementRegion::GenerateMesh( Group * const cellBlocks )
 
   Group * const elementSubRegions = this->GetGroup( viewKeyStruct::elementSubRegions );
 
-  if( m_subRegionType == "embedded" )
+  if( m_subRegionType == "embeddedElement" )
   {
     elementSubRegions->RegisterGroup< EmbeddedSurfaceSubRegion >( "embeddedSurfaceSubRegion" );
   }
-  else if( m_subRegionType == "conforming" )
+  else if( m_subRegionType == "faceElement" )
   {
     elementSubRegions->RegisterGroup< FaceElementSubRegion >( "faceElementSubRegion" );
   }
