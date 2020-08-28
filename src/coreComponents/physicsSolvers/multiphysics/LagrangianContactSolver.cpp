@@ -27,7 +27,7 @@
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "managers/DomainPartition.hpp"
 #include "managers/NumericalMethodsManager.hpp"
-#include "mesh/FaceElementRegion.hpp"
+#include "mesh/SurfaceElementRegion.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
 #include "mpiCommunications/NeighborCommunicator.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
@@ -82,7 +82,7 @@ void LagrangianContactSolver::RegisterDataOnMesh( dataRepository::Group * const 
     MeshLevel & meshLevel = *Group::group_cast< MeshBody * >( mesh.second )->getMeshLevel( 0 );
 
     ElementRegionManager * const elemManager = meshLevel.getElemManager();
-    elemManager->forElementRegions< FaceElementRegion >( [&] ( FaceElementRegion & region )
+    elemManager->forElementRegions< SurfaceElementRegion >( [&] ( SurfaceElementRegion & region )
     {
       region.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
       {
@@ -883,7 +883,7 @@ void LagrangianContactSolver::SetupDofs( DomainPartition const & domain,
   // restrict coupling to fracture regions only
   ElementRegionManager const & elemManager = *domain.getMeshBody( 0 )->getMeshLevel( 0 )->getElemManager();
   string_array fractureRegions;
-  elemManager.forElementRegions< FaceElementRegion >( [&]( FaceElementRegion const & elementRegion )
+  elemManager.forElementRegions< SurfaceElementRegion >( [&]( SurfaceElementRegion const & elementRegion )
   {
     fractureRegions.emplace_back( elementRegion.getName() );
   } );
@@ -1378,8 +1378,8 @@ void LagrangianContactSolver::AssembleStabilization( DomainPartition const & dom
   // Form the SurfaceGenerator, get the fracture name and use it to retrieve the faceMap (from fracture element to face)
   SurfaceGenerator const * const
   surfaceGenerator = this->getParent()->GetGroup< SolverBase >( "SurfaceGen" )->group_cast< SurfaceGenerator const * >();
-  FaceElementRegion const * const fractureRegion = elemManager.GetRegion< FaceElementRegion >( surfaceGenerator->getFractureRegionName() );
-  FaceElementSubRegion const * const fractureSubRegion = fractureRegion->GetSubRegion< FaceElementSubRegion >( "default" );
+  SurfaceElementRegion const * const fractureRegion = elemManager.GetRegion< SurfaceElementRegion >( surfaceGenerator->getFractureRegionName() );
+  FaceElementSubRegion const * const fractureSubRegion = fractureRegion->GetSubRegion< FaceElementSubRegion >( "faceElementSubRegion" );
   GEOSX_ERROR_IF( !fractureSubRegion->hasWrapper( m_tractionKey ), "The fracture subregion must contain traction field." );
   FaceElementSubRegion::FaceMapType::ViewTypeConst const & faceMap = fractureSubRegion->faceList().toViewConst();
   GEOSX_ERROR_IF( faceMap.size( 1 ) != 2, "A fracture face has to be shared by two cells." );

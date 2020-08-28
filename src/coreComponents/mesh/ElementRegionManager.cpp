@@ -19,7 +19,7 @@
 
 #include "common/TimingMacros.hpp"
 #include "mpiCommunications/CommunicationTools.hpp"
-#include "FaceElementRegion.hpp"
+#include "SurfaceElementRegion.hpp"
 #include "FaceManager.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 #include "CellBlockManager.hpp"

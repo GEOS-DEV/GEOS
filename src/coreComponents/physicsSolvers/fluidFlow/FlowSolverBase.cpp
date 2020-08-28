@@ -99,7 +99,7 @@ void FlowSolverBase::RegisterDataOnMesh( Group * const MeshBodies )
                                                                             ElementRegionBase & region,
                                                                             FaceElementSubRegion & subRegion )
     {
-      FaceElementRegion & faceRegion = dynamicCast< FaceElementRegion & >( region );
+      SurfaceElementRegion & faceRegion = dynamicCast< SurfaceElementRegion & >( region );
 
       subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::referencePorosityString )->
         setApplyDefaultValue( 1.0 );

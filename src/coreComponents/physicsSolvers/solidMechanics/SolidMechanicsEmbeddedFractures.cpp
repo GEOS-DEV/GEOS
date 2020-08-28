@@ -26,7 +26,7 @@
 #include "managers/DomainPartition.hpp"
 #include "managers/NumericalMethodsManager.hpp"
 #include "mesh/NodeManager.hpp"
-#include "mesh/EmbeddedSurfaceRegion.hpp"
+#include "mesh/SurfaceElementRegion.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
 #include "meshUtilities/ComputationalGeometry.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
@@ -71,7 +71,7 @@ void SolidMechanicsEmbeddedFractures::RegisterDataOnMesh( dataRepository::Group 
 
     ElementRegionManager * const elemManager = meshLevel->getElemManager();
     {
-      elemManager->forElementRegions< EmbeddedSurfaceRegion >( [&] ( EmbeddedSurfaceRegion & region )
+      elemManager->forElementRegions< SurfaceElementRegion >( [&] ( SurfaceElementRegion & region )
       {
         region.forElementSubRegions< EmbeddedSurfaceSubRegion >( [&]( EmbeddedSurfaceSubRegion & subRegion )
         {
@@ -149,7 +149,7 @@ void SolidMechanicsEmbeddedFractures::SetupDofs( DomainPartition const & domain,
   ElementRegionManager const & elemManager = *meshLevel.getElemManager();
 
   array1d< string > regions;
-  elemManager.forElementRegions< EmbeddedSurfaceRegion >( [&]( EmbeddedSurfaceRegion const & region ) {
+  elemManager.forElementRegions< SurfaceElementRegion >( [&]( SurfaceElementRegion const & region ) {
     regions.emplace_back( region.getName() );
   } );
 
@@ -308,7 +308,7 @@ void SolidMechanicsEmbeddedFractures::AssembleSystem( real64 const time,
   array2d< real64 > dMatrix( 6, 6 );
 
   // begin region loop
-  elemManager.forElementRegions< EmbeddedSurfaceRegion >( [&]( EmbeddedSurfaceRegion const & embeddedRegion )->void
+  elemManager.forElementRegions< SurfaceElementRegion >( [&]( SurfaceElementRegion const & embeddedRegion )->void
   {
     // loop of embeddeSubregions
     embeddedRegion.forElementSubRegions< EmbeddedSurfaceSubRegion >( [&]( EmbeddedSurfaceSubRegion const & embeddedSurfaceSubRegion )->void

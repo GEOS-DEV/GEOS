@@ -21,7 +21,7 @@
 #include "finiteVolume/BoundaryStencil.hpp"
 #include "finiteVolume/CellElementStencilTPFA.hpp"
 #include "finiteVolume/FaceElementStencil.hpp"
-#include "mesh/FaceElementRegion.hpp"
+#include "mesh/SurfaceElementRegion.hpp"
 #include "meshUtilities/ComputationalGeometry.hpp"
 #include "LvArray/src/tensorOps.hpp"
 
@@ -222,10 +222,10 @@ void TwoPointFluxApproximation::addToFractureStencil( MeshLevel & mesh,
   cellStencil.move( LvArray::MemorySpace::CPU );
 
 
-  FaceElementRegion * const fractureRegion = elemManager->GetRegion< FaceElementRegion >( faceElementRegionName );
+  SurfaceElementRegion * const fractureRegion = elemManager->GetRegion< SurfaceElementRegion >( faceElementRegionName );
   localIndex const fractureRegionIndex = fractureRegion->getIndexInParent();
 
-  FaceElementSubRegion * const fractureSubRegion = fractureRegion->GetSubRegion< FaceElementSubRegion >( "default" );
+  FaceElementSubRegion * const fractureSubRegion = fractureRegion->GetSubRegion< FaceElementSubRegion >( "faceElementSubRegion" );
   FaceElementSubRegion::FaceMapType const & faceMap = fractureSubRegion->faceList();
 
   arrayView1d< localIndex const > const & fractureConnectorsToEdges =

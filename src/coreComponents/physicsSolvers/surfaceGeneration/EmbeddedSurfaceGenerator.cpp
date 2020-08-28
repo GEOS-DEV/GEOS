@@ -25,7 +25,7 @@
 #include "finiteVolume/FiniteVolumeManager.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "managers/NumericalMethodsManager.hpp"
-#include "mesh/EmbeddedSurfaceRegion.hpp"
+#include "mesh/SurfaceElementRegion.hpp"
 #include "mesh/ExtrinsicMeshData.hpp"
 #include "meshUtilities/ComputationalGeometry.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEMKernels.hpp"
@@ -99,8 +99,8 @@ void EmbeddedSurfaceGenerator::InitializePostSubGroups( Group * const problemMan
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodesCoord = nodeManager->referencePosition();
 
   // Get EmbeddedSurfaceSubRegions
-  EmbeddedSurfaceRegion * const embeddedSurfaceRegion =
-    elemManager->GetRegion< EmbeddedSurfaceRegion >( this->m_fractureRegionName );
+  SurfaceElementRegion * const embeddedSurfaceRegion =
+    elemManager->GetRegion< SurfaceElementRegion >( this->m_fractureRegionName );
   EmbeddedSurfaceSubRegion * const embeddedSurfaceSubRegion =
     embeddedSurfaceRegion->GetSubRegion< EmbeddedSurfaceSubRegion >( 0 );
 
