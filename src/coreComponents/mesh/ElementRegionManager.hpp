@@ -25,11 +25,9 @@
 #include "CellElementSubRegion.hpp"
 #include "managers/ObjectManagerBase.hpp"
 #include "dataRepository/ReferenceWrapper.hpp"
-#include "FaceElementRegion.hpp"
-#include "EmbeddedSurfaceRegion.hpp"
+#include "SurfaceElementRegion.hpp"
 #include "fileIO/schema/schemaUtilities.hpp"
 #include "WellElementRegion.hpp"
-#include "EmbeddedSurfaceRegion.hpp"
 
 namespace geosx
 {
@@ -330,7 +328,7 @@ public:
   template< typename LAMBDA >
   void forElementRegionsComplete( LAMBDA lambda ) const
   {
-    forElementRegionsComplete< CellElementRegion, FaceElementRegion, EmbeddedSurfaceRegion,
+    forElementRegionsComplete< CellElementRegion, SurfaceElementRegion,
                                WellElementRegion >( std::forward< LAMBDA >( lambda ) );
   }
 
@@ -342,7 +340,7 @@ public:
   template< typename LAMBDA >
   void forElementRegionsComplete( LAMBDA lambda )
   {
-    forElementRegionsComplete< CellElementRegion, FaceElementRegion, EmbeddedSurfaceRegion,
+    forElementRegionsComplete< CellElementRegion, SurfaceElementRegion,
                                WellElementRegion >( std::forward< LAMBDA >( lambda ) );
   }
 
@@ -396,7 +394,7 @@ public:
   template< typename LOOKUP_CONTAINER, typename LAMBDA >
   void forElementRegionsComplete( LOOKUP_CONTAINER const & targetRegions, LAMBDA lambda ) const
   {
-    forElementRegionsComplete< CellElementRegion, FaceElementRegion, EmbeddedSurfaceRegion,
+    forElementRegionsComplete< CellElementRegion, SurfaceElementRegion,
                                WellElementRegion >( targetRegions, std::forward< LAMBDA >( lambda ) );
   }
 
@@ -410,7 +408,7 @@ public:
   template< typename LOOKUP_CONTAINER, typename LAMBDA >
   void forElementRegionsComplete( LOOKUP_CONTAINER const & targetRegions, LAMBDA lambda )
   {
-    forElementRegionsComplete< CellElementRegion, FaceElementRegion, EmbeddedSurfaceRegion,
+    forElementRegionsComplete< CellElementRegion, SurfaceElementRegion,
                                WellElementRegion >( targetRegions, std::forward< LAMBDA >( lambda ) );
   }
 
