@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -84,6 +84,7 @@ public:
   EmbeddedSurfaceSubRegion( string const & name,
                             dataRepository::Group * const parent );
 
+  /// @brief Destructor
   virtual ~EmbeddedSurfaceSubRegion() override;
 
   ///@}
@@ -126,7 +127,7 @@ public:
    * @param nodeManager the nodemanager group
    * @param edgeManager the edgemanager group
    * @param cellToEdges cellElement to edges map
-   * @param plane the bounded plane which is defining the embedded surface element
+   * @param fracture pointer to the bounded plane which is defining the embedded surface element
    * @return boolean defining whether the embedded element was added or not
    */
   bool AddNewEmbeddedSurface( localIndex const cellIndex,
@@ -135,8 +136,55 @@ public:
                               NodeManager const & nodeManager,
                               EdgeManager const & edgeManager,
                               FixedOneToManyRelation const & cellToEdges,
-                              BoundedPlane const * plane );
+                              BoundedPlane const * fracture );
 
+  /**
+   * @brief inherit ghost rank from cell elements.
+   * @param cellGhostRank cell element ghost ranks
+   */
+  void inheritGhostRank( array1d< array1d< arrayView1d< integer const > > > const & cellGhostRank );
+
+  /**
+   * @brief Given the coordinates of a node, it computes the Heaviside function iside a cut element with respect to the fracture element.
+   * @param nodeCoord coordinate of the node
+   * @param k embedded surface cell index
+   * @return value of the Heaviside
+   */
+  real64 ComputeHeavisideFunction( ArraySlice< real64 const, 1, nodes::REFERENCE_POSITION_USD - 1 > const nodeCoord,
+                                   localIndex const k ) const;
+
+  /**
+   * @brief Get list of intersection points (nodes of the embedded plane), offset and connectivity list
+   * @param nodeManager the node manager
+   * @param edgeManager the edged manager
+   * @param elemManager the element region manager
+   * @param intersectionPoints coordinates of the intersection points
+   * @param connectivityList connectivity list
+   * @param offSet offset
+   */
+  void getIntersectionPoints( NodeManager const & nodeManager,
+                              EdgeManager const & edgeManager,
+                              ElementRegionManager const & elemManager,
+                              array1d< R1Tensor > & intersectionPoints,
+                              array1d< localIndex > & connectivityList,
+                              array1d< int > & offSet ) const;
+  /**
+   * @brief Compute intersection points (nodes of the embedded plane), offset and connectivity list
+   * @param nodeManager the node manager
+   * @param edgeManager the edged manager
+   * @param elemManager the element region manager
+   * @param intersectionPoints coordinates of the intersection points
+   * @param connectivityList connectivity list
+   * @param offSet offset
+   * @param k embedded surface cell index
+   */
+  void ComputeIntersectionPoints( NodeManager const & nodeManager,
+                                  EdgeManager const & edgeManager,
+                                  ElementRegionManager const & elemManager,
+                                  array1d< R1Tensor > & intersectionPoints,
+                                  array1d< localIndex > & connectivityList,
+                                  array1d< int > & offSet,
+                                  localIndex const k ) const;
   ///@}
 
   /**
@@ -230,6 +278,18 @@ public:
    * @brief Getters to embedded surface elements properties.
    */
   ///@{
+
+  /**
+   * @brief Get number of jump enrichments.
+   * @return a reference to the number of jump enrichments
+   */
+  localIndex & numOfJumpEnrichments()       {return m_numOfJumpEnrichments;}
+
+  /**
+   * @brief Get number of jump enrichments.
+   * @return  a constant reference to the number of jump enrichments
+   */
+  localIndex const & numOfJumpEnrichments() const {return m_numOfJumpEnrichments;}
 
   /**
    * @brief Get face element aperture.
@@ -355,6 +415,8 @@ private:
 
   /// The member level field for the element center
   array1d< real64 > m_elementArea;
+
+  localIndex m_numOfJumpEnrichments;
 };
 
 } /* namespace geosx */

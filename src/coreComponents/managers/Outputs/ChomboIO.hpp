@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -30,38 +30,48 @@ namespace geosx
  *
  * A class for coupling to CHOMBO
  */
-class ChomboIO : public OutputBase
+class ChomboIO final : public OutputBase
 {
 public:
-  /// Main constructor
+  /// @copydoc geosx::dataRepository::Group::Group( std::string const & name, Group * const parent )
   ChomboIO( std::string const & name, Group * const parent );
 
   /// Destructor
-  virtual ~ChomboIO() final override;
+  virtual ~ChomboIO() override;
 
-  /// Catalog name interface
+  /**
+   * @brief Catalog name interface
+   * @return This type's catalog name
+   */
   static string CatalogName()
   { return "ChomboIO"; }
 
-  /// This method will be called by the event manager if triggered
+  /**
+   * @brief Writes out a Chombo plot file.
+   * @copydetails EventBase::Execute()
+   */
   virtual void Execute( real64 const time_n,
                         real64 const dt,
                         integer const cycleNumber,
                         integer const eventCounter,
                         real64 const eventProgress,
-                        dataRepository::Group * const domain ) final override;
+                        dataRepository::Group * const domain ) override;
 
-  /// Write one final output as the code exits
+  /**
+   * @brief Writes out a Chombo plot file at the end of the simulation.
+   * @copydetails ExecutableGroup::Cleanup()
+   */
   virtual void Cleanup( real64 const time_n,
                         integer const cycleNumber,
                         integer const eventCounter,
                         real64 const eventProgress,
-                        dataRepository::Group * const domain ) final override
+                        dataRepository::Group * const domain ) override
   {
     m_waitForInput = 0;
     Execute( time_n, 0.0, cycleNumber, eventCounter, eventProgress, domain );
   }
 
+  /// @cond DO_NOT_DOCUMENT
   struct viewKeyStruct
   {
     static constexpr auto outputPathString = "outputPath";
@@ -76,6 +86,7 @@ public:
     dataRepository::ViewKey waitForInput = { waitForInputString };
     dataRepository::ViewKey useChomboPressures = { useChomboPressuresString };
   } viewKeys;
+  /// @endcond
 
 private:
   ChomboCoupler * m_coupler;

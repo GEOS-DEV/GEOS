@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -25,6 +25,7 @@
 namespace geosx
 {
 
+class DofManager;
 class HypreVector;
 class HypreMatrix;
 
@@ -51,12 +52,14 @@ public:
    * @param[in,out] mat the matrix
    * @param[in,out] sol the solution
    * @param[in,out] rhs the right-hand side
+   * @param dofManager the Degree-of-Freedom manager associated with matrix
    *
    * Solve Ax=b with A an HypreMatrix, x and b HypreVector.
    */
   void solve( HypreMatrix & mat,
               HypreVector & sol,
-              HypreVector & rhs );
+              HypreVector & rhs,
+              DofManager const * const dofManager = nullptr );
 
   /**
    * @brief Get the result of previous solve.
@@ -69,7 +72,7 @@ public:
 
 private:
 
-  LinearSolverParameters const & m_parameters;
+  LinearSolverParameters m_parameters;
   LinearSolverResult m_result;
 
   void solve_direct( HypreMatrix & mat,
@@ -78,7 +81,8 @@ private:
 
   void solve_krylov( HypreMatrix & mat,
                      HypreVector & sol,
-                     HypreVector & rhs );
+                     HypreVector & rhs,
+                     DofManager const * const dofManager );
 
 };
 

@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -121,7 +121,7 @@ TEST( TestNeighborComms, testMPICommunication_fromPinnedSetOnDevice )
     MPI_Request request;
     if( rnk == 0 )
     {
-      veloc.move( chai::GPU );
+      veloc.move( LvArray::MemorySpace::GPU );
       auto veloc_view = veloc.toViewConst();
       pack( buf, veloc_view, size );
       MpiWrapper::iSend( buf, byte_size, 1, 0, MPI_COMM_GEOSX, &request );
@@ -135,7 +135,7 @@ TEST( TestNeighborComms, testMPICommunication_fromPinnedSetOnDevice )
       EXPECT_EQ( err, MPI_SUCCESS );
       auto veloc_view = veloc.toView();
       unpack( buf, veloc_view, size );
-      veloc.move( chai::CPU );
+      veloc.move( LvArray::MemorySpace::CPU );
       for( int ii = 0; ii < size; ++ii )
         EXPECT_EQ( veloc[ii], ii );
     }

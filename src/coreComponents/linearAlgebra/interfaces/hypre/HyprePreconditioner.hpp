@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -44,6 +44,9 @@ using HYPRE_Solver = hypre_Solver_struct *;
 namespace geosx
 {
 
+/// Forward-declared struct that hosts preconditioner auxiliary data
+struct HyprePrecAuxData;
+
 /// Forward-declared struct that hosts pointers to preconditioner functions
 struct HyprePrecFuncs;
 
@@ -69,8 +72,10 @@ public:
   /**
    * @brief Constructor.
    * @param params preconditioner parameters
+   * @param dofManager the Degree-of-Freedom manager associated with matrix
    */
-  explicit HyprePreconditioner( LinearSolverParameters params );
+  explicit HyprePreconditioner( LinearSolverParameters params,
+                                DofManager const * const dofManager = nullptr );
 
   /**
    * @brief Destructor.
@@ -112,6 +117,8 @@ private:
 
   void createAMG();
 
+  void createMGR( DofManager const * const dofManager );
+
   void createILU();
 
   void createILUT();
@@ -122,8 +129,14 @@ private:
   /// Pointer to the Hypre implementation
   HYPRE_Solver m_precond;
 
+  /// Pointer to the auxillary preconditioner used in MGR
+  HYPRE_Solver aux_precond;
+
   /// Pointers to hypre functions to setup/solve/destroy preconditioner
   std::unique_ptr< HyprePrecFuncs > m_functions;
+
+  // Pointer to preconditioner auxiliary data
+  std::unique_ptr< HyprePrecAuxData > m_auxData;
 };
 
 }

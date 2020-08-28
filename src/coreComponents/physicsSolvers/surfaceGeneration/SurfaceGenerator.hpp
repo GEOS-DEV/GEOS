@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -83,19 +83,19 @@ public:
                         real64 const GEOSX_UNUSED_PARAM( eventProgress ),
                         dataRepository::Group * domain ) override
   {
-    SolverStep( time_n, dt, cycleNumber, domain->group_cast< DomainPartition * >());
+    SolverStep( time_n, dt, cycleNumber, *domain->group_cast< DomainPartition * >());
   }
 
   virtual real64 SolverStep( real64 const & time_n,
                              real64 const & dt,
                              integer const cycleNumber,
-                             DomainPartition * domain ) override;
+                             DomainPartition & domain ) override;
 
   /**@}*/
 
 
-  int SeparationDriver( DomainPartition * domain,
-                        MeshLevel * const mesh,
+  int SeparationDriver( DomainPartition & domain,
+                        MeshLevel & mesh,
                         std::vector< NeighborCommunicator > & neighbors,
                         int const tileColor,
                         int const numTileColors,
@@ -141,7 +141,7 @@ private:
    * @param partition
    * @param prefrac
    */
-  void IdentifyRupturedFaces( DomainPartition * domain,
+  void IdentifyRupturedFaces( DomainPartition & domain,
                               NodeManager & nodeManager,
                               EdgeManager & edgeManager,
                               FaceManager & faceManager,
@@ -160,7 +160,7 @@ private:
    * @param vecTip
    * @return
    */
-  realT CalculateEdgeSIF ( DomainPartition * domain,
+  realT CalculateEdgeSIF ( DomainPartition & domain,
                            const localIndex edgeID,
                            localIndex & trailFaceID,
                            NodeManager & nodeManager,
@@ -178,7 +178,7 @@ private:
    * @param elementManager
    * @return
    */
-  void CalculateNodeAndFaceSIF ( DomainPartition * domain,
+  void CalculateNodeAndFaceSIF ( DomainPartition & domain,
                                  NodeManager & nodeManager,
                                  EdgeManager & edgeManager,
                                  FaceManager & faceManager,
@@ -198,7 +198,7 @@ private:
    * @param threeNodesPinched
    * @param calculatef_u. True: calculate f_u; False: calculate f_disconnect.
    */
-  int CalculateElementForcesOnEdge ( DomainPartition * domain,
+  int CalculateElementForcesOnEdge ( DomainPartition & domain,
                                      const localIndex edgeID,
                                      realT edgeLength,
                                      localIndex_array & nodeIndices,

@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -17,9 +17,7 @@
 #include "common/DataTypes.hpp"
 #include "common/TimingMacros.hpp"
 #include "common/Path.hpp"
-#include "LvArray/src/SetFPE.hpp"
-#include "LvArray/src/SetSignalHandling.hpp"
-#include "LvArray/src/stackTrace.hpp"
+#include "LvArray/src/system.hpp"
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
 #include "mpiCommunications/MpiWrapper.hpp"
 
@@ -85,7 +83,7 @@ void addUmpireHighWaterMarks()
   constexpr int MAX_NAME_LENGTH = 100;
   char allocatorNameBuffer[ MAX_NAME_LENGTH + 1 ];
   char allocatorNameMinCharsBuffer[ MAX_NAME_LENGTH + 1 ];
-  for( std::string const allocatorName : allocatorNames )
+  for( string const & allocatorName : allocatorNames )
   {
     // Skip umpire internal allocators.
     if( allocatorName.rfind( "__umpire_internal", 0 ) == 0 )
@@ -110,7 +108,8 @@ void addUmpireHighWaterMarks()
     // This is a little redundant since
     std::size_t const mark = rm.getAllocator( allocatorName ).getHighWatermark();
     std::size_t const totalMark = MpiWrapper::Sum( mark );
-    GEOSX_LOG_RANK_0( "Umpire " << std::setw( 15 ) << allocatorName << " high water mark: " << std::setw( 9 ) << LvArray::calculateSize( totalMark ) );
+    GEOSX_LOG_RANK_0( "Umpire " << std::setw( 15 ) << allocatorName << " high water mark: " <<
+                      std::setw( 9 ) << LvArray::system::calculateSize( totalMark ) );
 
     pushStatsIntoAdiak( allocatorName + " high water mark", mark );
   }
@@ -269,7 +268,24 @@ struct Arg : public option::Arg
 void parseCommandLineOptions( int argc, char * * argv )
 {
   // Set the options structs and parse
-  enum optionIndex { UNKNOWN, HELP, INPUT, RESTART, XPAR, YPAR, ZPAR, SCHEMA, NONBLOCKING_MPI, SUPPRESS_PINNED, PROBLEMNAME, OUTPUTDIR, TIMERS };
+  enum optionIndex
+  {
+    UNKNOWN,
+    HELP,
+    INPUT,
+    RESTART,
+    XPAR,
+    YPAR,
+    ZPAR,
+    SCHEMA,
+    NONBLOCKING_MPI,
+    SUPPRESS_PINNED,
+    PROBLEMNAME,
+    OUTPUTDIR,
+    TIMERS,
+    SUPPRESS_MOVE_LOGGING,
+  };
+
   const option::Descriptor usage[] =
   {
     { UNKNOWN, 0, "", "", Arg::Unknown, "USAGE: geosx -i input.xml [options]\n\nOptions:" },
@@ -285,6 +301,7 @@ void parseCommandLineOptions( int argc, char * * argv )
     { SUPPRESS_PINNED, 0, "s", "suppress-pinned", Arg::None, "\t-s, --suppress-pinned \t Suppress usage of pinned memory for MPI communication buffers" },
     { OUTPUTDIR, 0, "o", "output", Arg::NonEmpty, "\t-o, --output, \t Directory to put the output files" },
     { TIMERS, 0, "t", "timers", Arg::NonEmpty, "\t-t, --timers, \t String specifying the type of timer output." },
+    { SUPPRESS_MOVE_LOGGING, 0, "", "suppress-move-logging", Arg::None, "\t--suppress-move-logging \t Suppress logging of host-device data migration" },
     { 0, 0, nullptr, nullptr, nullptr, nullptr }
   };
 
@@ -387,6 +404,11 @@ void parseCommandLineOptions( int argc, char * * argv )
         s_commandLineOptions.timerOutput = opt.arg;
       }
       break;
+      case SUPPRESS_MOVE_LOGGING:
+      {
+        s_commandLineOptions.suppressMoveLogging = true;
+      }
+      break;
     }
   }
 
@@ -440,7 +462,7 @@ void overrideInputFileName( std::string const & inputFileName )
 ///////////////////////////////////////////////////////////////////////////////
 void basicCleanup()
 {
-  LvArray::resetSignalHandling();
+  LvArray::system::resetSignalHandling();
   finalizeLAI();
   finalizeLogger();
   internal::addUmpireHighWaterMarks();
@@ -467,8 +489,8 @@ void finalizeLogger()
 ///////////////////////////////////////////////////////////////////////////////
 void setupCXXUtils()
 {
-  LvArray::setSignalHandling( []( int const signal ) { LvArray::stackTraceHandler( signal, true ); } );
-  LvArray::SetFPE();
+  LvArray::system::setSignalHandling( []( int const signal ) { LvArray::system::stackTraceHandler( signal, true ); } );
+  LvArray::system::setFPE();
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -491,9 +513,7 @@ void setupOpenMP()
 void setupMPI( int argc, char * argv[] )
 {
   MpiWrapper::Init( &argc, &argv );
-#ifdef GEOSX_USE_MPI
-  MPI_Comm_dup( MPI_COMM_WORLD, &MPI_COMM_GEOSX );
-#endif
+  MPI_COMM_GEOSX = MpiWrapper::Comm_dup( MPI_COMM_WORLD );
 }
 
 ///////////////////////////////////////////////////////////////////////////////

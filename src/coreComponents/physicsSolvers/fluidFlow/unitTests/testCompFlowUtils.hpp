@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -15,9 +15,11 @@
 #ifndef GEOSX_TESTCOMPFLOWUTILS_HPP
 #define GEOSX_TESTCOMPFLOWUTILS_HPP
 
-#include "gtest/gtest.h"
-#include "common/DataTypes.hpp"
 #include "codingUtilities/UnitTestUtilities.hpp"
+#include "constitutive/ConstitutiveManager.hpp"
+#include "meshUtilities/MeshManager.hpp"
+#include "managers/ProblemManager.hpp"
+#include "physicsSolvers/fluidFlow/CompositionalMultiphaseFlow.hpp"
 
 namespace geosx
 {
@@ -149,6 +151,59 @@ array3d< real64 > invertLayout( arraySlice3d< real64 const > const & input,
   }
 
   return output;
+}
+
+void fillNumericalJacobian( arrayView1d< real64 const > const & residual,
+                            arrayView1d< real64 const > const & residualOrig,
+                            globalIndex const dofIndex,
+                            real64 const eps,
+                            CRSMatrixView< real64, globalIndex const > const & jacobian )
+{
+  forAll< parallelDevicePolicy<> >( residual.size(), [=] GEOSX_HOST_DEVICE ( localIndex const row )
+  {
+    real64 const dRdX = ( residual[row] - residualOrig[row] ) / eps;
+    if( fabs( dRdX ) > 0.0 )
+    {
+      jacobian.addToRow< serialAtomic >( row, &dofIndex, &dRdX, 1 );
+    }
+  } );
+}
+
+void setupProblemFromXML( ProblemManager & problemManager, char const * const xmlInput )
+{
+  xmlWrapper::xmlDocument xmlDocument;
+  xmlWrapper::xmlResult xmlResult = xmlDocument.load_buffer( xmlInput, strlen( xmlInput ) );
+  if( !xmlResult )
+  {
+    GEOSX_LOG_RANK_0( "XML parsed with errors!" );
+    GEOSX_LOG_RANK_0( "Error description: " << xmlResult.description());
+    GEOSX_LOG_RANK_0( "Error offset: " << xmlResult.offset );
+  }
+
+  int mpiSize = MpiWrapper::Comm_size( MPI_COMM_GEOSX );
+  dataRepository::Group * commandLine =
+    problemManager.GetGroup< dataRepository::Group >( problemManager.groupKeys.commandLine );
+  commandLine->registerWrapper< integer >( problemManager.viewKeys.xPartitionsOverride.Key() )->
+    setApplyDefaultValue( mpiSize );
+
+  xmlWrapper::xmlNode xmlProblemNode = xmlDocument.child( "Problem" );
+  problemManager.InitializePythonInterpreter();
+  problemManager.ProcessInputFileRecursive( xmlProblemNode );
+
+  DomainPartition & domain  = *problemManager.getDomainPartition();
+
+  constitutive::ConstitutiveManager & constitutiveManager = *domain.getConstitutiveManager();
+  xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child( constitutiveManager.getName().c_str());
+  constitutiveManager.ProcessInputFileRecursive( topLevelNode );
+
+  MeshManager & meshManager = *problemManager.GetGroup< MeshManager >( problemManager.groupKeys.meshManager );
+  meshManager.GenerateMeshLevels( &domain );
+
+  ElementRegionManager & elementManager = *domain.getMeshBody( 0 )->getMeshLevel( 0 )->getElemManager();
+  topLevelNode = xmlProblemNode.child( elementManager.getName().c_str());
+  elementManager.ProcessInputFileRecursive( topLevelNode );
+
+  problemManager.ProblemSetup();
 }
 
 } // namespace testing

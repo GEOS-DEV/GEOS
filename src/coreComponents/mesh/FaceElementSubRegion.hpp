@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -83,6 +83,8 @@ public:
   FaceElementSubRegion( string const & name,
                         dataRepository::Group * const parent );
 
+
+  /// @brief Destructor
   virtual ~FaceElementSubRegion() override;
 
   ///@}
@@ -102,6 +104,12 @@ public:
   void CalculateElementGeometricQuantities( localIndex const index,
                                             arrayView1d< real64 const > const & faceArea );
 
+  /**
+   * @brief Function to compute the geometric quantities of a specific face element.
+   * @param k index of the face element
+   * @param faceArea array of all surface areas
+   * @param faceRotationMatrix array of all rotation matrix
+   */
   void CalculateElementGeometricQuantities( localIndex const k,
                                             arrayView1d< real64 const > const & faceArea,
                                             arrayView3d< real64 const > const & faceRotationMatrix );
@@ -112,7 +120,7 @@ public:
                                      arrayView1d< localIndex const > const & packList ) const override;
 
   virtual localIndex UnpackUpDownMaps( buffer_unit_type const * & buffer,
-                                       localIndex_array & packList,
+                                       array1d< localIndex > & packList,
                                        bool const overwriteUpMaps,
                                        bool const overwriteDownMaps ) override;
 
@@ -142,6 +150,7 @@ public:
     /// String key for the derivative of the jacobian.
     static constexpr auto detJString = "detJ";
 
+    /// String key for the element aperture
     static constexpr auto elementApertureString        = "elementAperture";
 
     /// Face element area string.
@@ -269,7 +278,15 @@ public:
    */
   arrayView1d< real64 const > const & getElementArea() const { return m_elementArea; }
 
+  /**
+   * @brief Get face element rotation matrix.
+   * @return a list of all face element rotation matrixces.
+   */
   arrayView3d< real64 > const & getElementRotationMatrix()       { return m_elementRotationMatrix; }
+
+  /**
+   * @copydoc getElementRotationMatrix()
+   */
   arrayView3d< real64 const > const & getElementRotationMatrix() const { return m_elementRotationMatrix; }
 
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT

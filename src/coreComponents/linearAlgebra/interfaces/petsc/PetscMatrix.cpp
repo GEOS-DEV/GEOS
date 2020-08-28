@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -143,7 +143,7 @@ void PetscMatrix::set( real64 const value )
       {
         vals_[i] = value;
       }
-      GEOSX_LAI_CHECK_ERROR( MatSetValues( m_mat, 1, &row, numEntries_, inds_, vals_, INSERT_VALUES ) );
+      GEOSX_LAI_CHECK_ERROR( MatSetValues( m_mat, 1, &row, numEntries_, inds_.data(), vals_.data(), INSERT_VALUES ) );
     }
     GEOSX_LAI_CHECK_ERROR( MatAssemblyBegin( m_mat, MAT_FINAL_ASSEMBLY ) );
     GEOSX_LAI_CHECK_ERROR( MatAssemblyEnd( m_mat, MAT_FINAL_ASSEMBLY ) );
@@ -186,7 +186,7 @@ void PetscMatrix::close()
   // Clear any rows that have been marked for clearing
   if( assembled() )
   {
-    GEOSX_LAI_CHECK_ERROR( MatZeroRows( m_mat, m_rowsToClear.size(), m_rowsToClear, 0.0, nullptr, nullptr ) );
+    GEOSX_LAI_CHECK_ERROR( MatZeroRows( m_mat, m_rowsToClear.size(), m_rowsToClear.data(), 0.0, nullptr, nullptr ) );
 
     for( localIndex i = 0; i < m_rowsToClear.size(); ++i )
     {
@@ -631,8 +631,8 @@ real64 PetscMatrix::clearRow( globalIndex const globalRow,
   // There is no legitimate way in PETSc to zero out a row in a local fashion,
   // without any collective calls. Therefore, we store the rows to be cleared
   // and perform the clearing at the next close() call.
-  m_rowsToClear.push_back( globalRow );
-  m_diagValues.push_back( keepDiag ? oldDiag : diagValue );
+  m_rowsToClear.emplace_back( globalRow );
+  m_diagValues.emplace_back( keepDiag ? oldDiag : diagValue );
 
   return oldDiag;
 }

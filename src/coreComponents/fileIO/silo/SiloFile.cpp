@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -525,7 +525,7 @@ void SiloFile::WriteMeshObject( string const & meshName,
     DBGetDir( m_dbFilePtr, pwd );
     string emptyObject = pwd;
     emptyObject += "/" + meshName;
-    m_emptyMeshes.push_back( emptyObject );
+    m_emptyMeshes.emplace_back( emptyObject );
   }
   else
   {
@@ -633,8 +633,8 @@ void SiloFile::WriteBeamMesh( string const & meshName,
   nodelist.reserve( 2*node1.size());
   for( localIndex i = 0; i < node1.size(); ++i )
   {
-    nodelist.push_back( static_cast< int >(node1[i]));
-    nodelist.push_back( static_cast< int >(node2[i]));
+    nodelist.emplace_back( static_cast< int >(node1[i]));
+    nodelist.emplace_back( static_cast< int >(node2[i]));
   }
 
   WriteBeamMesh( meshName, nnodes, coords, nodelist, cycleNumber, problemTime );
@@ -812,7 +812,7 @@ void SiloFile::WriteMaterialMapsFullStorage( ElementRegionBase const & elemRegio
 //      DBGetDir(m_dbFilePtr, pwd);
 //      string emptyObject = pwd;
 //      emptyObject += "/" + fieldName;
-//      m_emptyVariables.push_back(emptyObject);
+//      m_emptyVariables.emplace_back(emptyObject);
 //    }
 //    else
     {
@@ -1031,16 +1031,14 @@ void SiloFile::ClearEmptiesFromMultiObjects( int const cycleNum )
 
   if( rank != 0 )
   {
-    for( string_array::const_iterator emptyObject=m_emptyVariables.begin();
-         emptyObject!=m_emptyVariables.end(); ++emptyObject )
+    for( std::string const & emptyObject : m_emptyVariables )
     {
-      sendbufferVars += *emptyObject + ' ';
+      sendbufferVars += emptyObject + ' ';
     }
 
-    for( string_array::const_iterator emptyObject=m_emptyMeshes.begin();
-         emptyObject!=m_emptyMeshes.end(); ++emptyObject )
+    for( std::string const & emptyObject : m_emptyMeshes )
     {
-      sendbufferMesh += *emptyObject + ' ';
+      sendbufferMesh += emptyObject + ' ';
     }
 
 //    for( string_array::const_iterator emptyObject=m_emptyMaterials.begin() ;
@@ -1102,12 +1100,12 @@ void SiloFile::ClearEmptiesFromMultiObjects( int const cycleNum )
     std::istringstream iss( receiveBufferVars );
     copy( std::istream_iterator< string >( iss ),
           std::istream_iterator< string >(),
-          std::back_inserter< string_array >( m_emptyVariables ));
+          std::back_inserter( m_emptyVariables ));
 
     std::istringstream issm( receiveBufferMesh );
     copy( std::istream_iterator< string >( issm ),
           std::istream_iterator< string >(),
-          std::back_inserter< string_array >( m_emptyMeshes ));
+          std::back_inserter( m_emptyMeshes ));
   }
 
   if( rank == 0 )
@@ -1116,14 +1114,13 @@ void SiloFile::ClearEmptiesFromMultiObjects( int const cycleNum )
     DBfile *siloFile = DBOpen( baseFilePathAndName.c_str(), DB_UNKNOWN, DB_APPEND );
     string empty( "EMPTY" );
 
-    for( string_array::iterator emptyObject = m_emptyVariables.begin(); emptyObject
-         != m_emptyVariables.end(); ++emptyObject )
+    for( std::string const & emptyObject : m_emptyVariables )
     {
-      size_t pathBegin = emptyObject->find_first_of( '/', 1 );
-      size_t pathEnd = emptyObject->find_last_of( '/' );
-      string domainString( *emptyObject, 1, pathBegin );
-      string pathToMultiObj( *emptyObject, pathBegin, pathEnd - pathBegin );
-      string varName( *emptyObject, pathEnd + 1 );
+      size_t pathBegin = emptyObject.find_first_of( '/', 1 );
+      size_t pathEnd = emptyObject.find_last_of( '/' );
+      string domainString( emptyObject, 1, pathBegin );
+      string pathToMultiObj( emptyObject, pathBegin, pathEnd - pathBegin );
+      string varName( emptyObject, pathEnd + 1 );
 
       DBSetDir( siloFile, pathToMultiObj.c_str());
 
@@ -1163,14 +1160,13 @@ void SiloFile::ClearEmptiesFromMultiObjects( int const cycleNum )
     }
 
 
-    for( string_array::iterator emptyObject = m_emptyMeshes.begin(); emptyObject
-         != m_emptyMeshes.end(); ++emptyObject )
+    for( std::string const & emptyObject : m_emptyMeshes )
     {
-      size_t pathBegin = emptyObject->find_first_of( '/', 1 );
-      size_t pathEnd = emptyObject->find_last_of( '/' );
-      string domainString( *emptyObject, 1, pathBegin );
-      string pathToMultiObj( *emptyObject, pathBegin, pathEnd - pathBegin );
-      string varName( *emptyObject, pathEnd + 1 );
+      size_t pathBegin = emptyObject.find_first_of( '/', 1 );
+      size_t pathEnd = emptyObject.find_last_of( '/' );
+      string domainString( emptyObject, 1, pathBegin );
+      string pathToMultiObj( emptyObject, pathBegin, pathEnd - pathBegin );
+      string varName( emptyObject, pathEnd + 1 );
 
       if( !(pathToMultiObj.compare( "" )) )
       {
@@ -1267,6 +1263,7 @@ void SiloFile::WriteElementRegionSilo( ElementRegionBase const & elemRegion,
 
   localIndex numElems = 0;
   dataRepository::Group fakeGroup( elemRegion.getName(), nullptr );
+  fakeGroup.setRestartFlags( dataRepository::RestartFlags::NO_WRITE );
   std::vector< std::map< string, WrapperBase const * > > viewPointers;
 
   viewPointers.resize( elemRegion.numSubRegions() );
@@ -1301,7 +1298,7 @@ void SiloFile::WriteElementRegionSilo( ElementRegionBase const & elemRegion,
           newWrapper = fakeGroup.registerWrapper< arrayType >( fieldName );
           newWrapper->setPlotLevel( PlotLevel::LEVEL_0 );
           arrayType & newarray = newWrapper->reference();
-          newarray.resize( arrayType::ndim, sourceArray.dims() );
+          newarray.resize( arrayType::NDIM, sourceArray.dims() );
         } );
       }
     }
@@ -1334,7 +1331,14 @@ void SiloFile::WriteElementRegionSilo( ElementRegionBase const & elemRegion,
           sourceWrapper = Wrapper< arrayType >::cast( *(viewPointers[esr][fieldName]));
           typename arrayType::ViewTypeConst const & sourceArray = sourceWrapper.reference();
 
-          targetArray.copy( counter, sourceArray );
+          localIndex const offset = counter * targetArray.strides()[ 0 ];
+          GEOSX_ERROR_IF_GT( sourceArray.size(), targetArray.size() - offset );
+
+          for( localIndex i = 0; i < sourceArray.size(); ++i )
+          {
+            targetArray.data()[ i + offset ] = sourceArray.data()[ i ];
+          }
+
           counter += sourceArray.size( 0 );
         }
         else
@@ -1353,6 +1357,8 @@ void SiloFile::WriteElementRegionSilo( ElementRegionBase const & elemRegion,
                   problemTime,
                   isRestart,
                   localIndex_array() );
+
+  fakeGroup.getConduitNode().parent()->remove( fakeGroup.getName() );
 }
 
 
@@ -1429,11 +1435,11 @@ void SiloFile::WriteElementMesh( ElementRegionBase const & elementRegion,
 
         if( elemGhostRank[k] >= 0 )
         {
-          ghostZoneFlag.push_back( 1 );
+          ghostZoneFlag.emplace_back( 1 );
         }
         else
         {
-          ghostZoneFlag.push_back( 0 );
+          ghostZoneFlag.emplace_back( 0 );
         }
       }
 
@@ -1476,7 +1482,7 @@ void SiloFile::WriteElementMesh( ElementRegionBase const & elementRegion,
 
     for( string const & entry : regionSolidMaterialList2 )
     {
-      regionSolidMaterialList.push_back( entry );
+      regionSolidMaterialList.emplace_back( entry );
     }
     localIndex const numSolids = regionSolidMaterialList.size();
 
@@ -1485,7 +1491,7 @@ void SiloFile::WriteElementMesh( ElementRegionBase const & elementRegion,
 
     for( string const & matName : regionMultiPhaseFluidList )
     {
-      regionFluidMaterialList.push_back( matName );
+      regionFluidMaterialList.emplace_back( matName );
     }
     localIndex const numFluids = regionFluidMaterialList.size();
 
@@ -1675,7 +1681,7 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
                       numNodes,
                       coords,
                       nodeManager->localToGlobalMap().data(),
-                      ghostNodeFlag,
+                      ghostNodeFlag.data(),
                       cycleNum,
                       problemTime,
                       writeArbitraryPolygon );
@@ -1708,10 +1714,10 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
       {
         for( localIndex k = 0; k < numFaces; ++k )
         {
-          faceToNodeMapCopy[0].push_back( faceToNodeMap.sizeOfArray( k ));
-          for( localIndex const a : faceToNodeMap.getIterableArray( k ))
+          faceToNodeMapCopy[0].emplace_back( faceToNodeMap.sizeOfArray( k ));
+          for( localIndex const a : faceToNodeMap[ k ] )
           {
-            faceToNodeMapCopy[0].push_back( a );
+            faceToNodeMapCopy[0].emplace_back( a );
           }
         }
 
@@ -1921,7 +1927,7 @@ void SiloFile::WritePolygonMeshObject( const std::string & meshName,
     DBGetDir( m_dbFilePtr, pwd );
     std::string emptyObject = pwd;
     emptyObject += "/" + meshName;
-    m_emptyMeshes.push_back( emptyObject );
+    m_emptyMeshes.emplace_back( emptyObject );
   }
   else
   {
@@ -2070,7 +2076,7 @@ void SiloFile::WriteWrappersToSilo( string const & meshname,
       {
         auto const & wrapperT = dynamic_cast< dataRepository::Wrapper< array2d< real64, RAJA::PERM_JI > > const & >( *wrapper );
 
-        arrayView2d< real64 const, LvArray::getStrideOneDimension( RAJA::PERM_JI {} ) > const &
+        arrayView2d< real64 const, LvArray::typeManipulation::getStrideOneDimension( RAJA::PERM_JI {} ) > const &
         array = wrapperT.reference();
         this->WriteDataField< real64 >( meshname.c_str(),
                                         fieldName,
@@ -2238,7 +2244,7 @@ void SiloFile::WriteDataField( string const & meshName,
     DBGetDir( m_dbFilePtr, pwd );
     string emptyObject = pwd;
     emptyObject += "/" + fieldName;
-    m_emptyVariables.push_back( emptyObject );
+    m_emptyVariables.emplace_back( emptyObject );
   }
   else
   {
@@ -2495,7 +2501,7 @@ void SiloFile::WriteDataField( string const & meshName,
     DBGetDir( m_dbFilePtr, pwd );
     string emptyObject = pwd;
     emptyObject += "/" + fieldName;
-    m_emptyVariables.push_back( emptyObject );
+    m_emptyVariables.emplace_back( emptyObject );
   }
   else
   {
@@ -2686,7 +2692,7 @@ void SiloFile::WriteMaterialDataField( string const & meshName,
     DBGetDir( m_dbFilePtr, pwd );
     string emptyObject = pwd;
     emptyObject += "/" + fieldName;
-    m_emptyVariables.push_back( emptyObject );
+    m_emptyVariables.emplace_back( emptyObject );
   }
   else
   {
@@ -2725,8 +2731,6 @@ void SiloFile::WriteMaterialDataField( string const & meshName,
 
     array1d< localIndex > mixlen2( nvars );
     array1d< localIndex > nels2( nvars );
-    mixlen2 = 0;
-    nels2 = 0;
 
     elemRegion.forElementSubRegionsIndex< ElementSubRegionBase >(
       [&]( localIndex const esr, ElementSubRegionBase const & subRegion )
@@ -2873,7 +2877,7 @@ void SiloFile::WriteMaterialDataField( string const & meshName,
     else
     {
       vartype = DB_UCDVAR;
-//      GEOS_ERROR("unhandled case in SiloFile::WriteDataField B\n");
+//      GEOSX_ERROR("unhandled case in SiloFile::WriteDataField B\n");
     }
 
     WriteMultiXXXX( vartype, DBPutMultivar, centering, fieldName.c_str(), cycleNumber, multiRoot,

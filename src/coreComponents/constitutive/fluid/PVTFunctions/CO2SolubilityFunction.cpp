@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -28,17 +28,13 @@ using namespace stringutilities;
 namespace PVTProps
 {
 
+constexpr real64 minForDivision = 1e-10;
+
 constexpr real64 T_K_f = 273.15;
 constexpr real64 P_Pa_f = 1e+5;
-
 constexpr real64 P_c = 73.773 * P_Pa_f;
 constexpr real64 T_c = 304.1282;
-//constexpr real64 rho_c = 467.6;
-
-//constexpr real64 R = 188.9241;
-
 constexpr real64 Rgas = 8.314467;
-
 constexpr real64 V_c = Rgas*T_c/P_c;
 
 constexpr real64 acoef[] =
@@ -293,7 +289,7 @@ void CO2SolubilityFunction::MakeTable( string_array const & inputPara )
   while( P <= PEnd )
   {
 
-    pressures.push_back( P );
+    pressures.emplace_back( P );
     P += dP;
 
   }
@@ -303,7 +299,7 @@ void CO2SolubilityFunction::MakeTable( string_array const & inputPara )
   while( T <= TEnd )
   {
 
-    temperatures.push_back( T );
+    temperatures.emplace_back( T );
     T += dT;
 
   }
@@ -335,7 +331,6 @@ void CO2SolubilityFunction::Partition( EvalVarArgs const & pressure, EvalVarArgs
   solubility = m_CO2SolubilityTable->Value( P, T );
 
   real64 const waterMW = m_componentMolarWeight[m_waterIndex];
-  //  real64 CO2MW = m_componentMolarWeight[m_CO2Index];
 
   solubility *= waterMW;
 
@@ -346,7 +341,14 @@ void CO2SolubilityFunction::Partition( EvalVarArgs const & pressure, EvalVarArgs
 
   //Y = C/W = z/(1-z)
 
-  Y = compFraction[m_CO2Index] / (1.0 - compFraction[m_CO2Index]);
+  if( compFraction[m_CO2Index].m_var > 1.0 - minForDivision )
+  {
+    Y = compFraction[m_CO2Index] / minForDivision;
+  }
+  else
+  {
+    Y = compFraction[m_CO2Index] / (1.0 - compFraction[m_CO2Index]);
+  }
 
   if( Y < X )
   {
@@ -356,7 +358,9 @@ void CO2SolubilityFunction::Partition( EvalVarArgs const & pressure, EvalVarArgs
     phaseFraction[m_phaseGasIndex] = 0.0;
 
     for( localIndex c = 0; c < m_componentNames.size(); ++c )
+    {
       phaseCompFraction[m_phaseLiquidIndex][c] = compFraction[c];
+    }
 
   }
   else

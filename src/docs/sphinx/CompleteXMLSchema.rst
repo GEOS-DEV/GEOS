@@ -1,19 +1,11 @@
 ======================
-GEOSX Data Structure
+Datastructure Index
 ======================
 
-********************************
 Input Schema Definitions
-********************************
+========================
 
 :download:`XML Schema <../../coreComponents/fileIO/schema/docs/../schema.xsd>`
-
-
-.. _XML_BasisFunctions:
-
-Element: BasisFunctions
-=======================
-.. include:: ../../coreComponents/fileIO/schema/docs/BasisFunctions.rst
 
 
 .. _XML_Benchmarks:
@@ -149,6 +141,13 @@ Element: Cylinder
 .. include:: ../../coreComponents/fileIO/schema/docs/Cylinder.rst
 
 
+.. _XML_DamageLinearElasticIsotropic:
+
+Element: DamageLinearElasticIsotropic
+=====================================
+.. include:: ../../coreComponents/fileIO/schema/docs/DamageLinearElasticIsotropic.rst
+
+
 .. _XML_Dirichlet:
 
 Element: Dirichlet
@@ -247,27 +246,6 @@ Element: Functions
 .. include:: ../../coreComponents/fileIO/schema/docs/Functions.rst
 
 
-.. _XML_GaussQuadrature1:
-
-Element: GaussQuadrature1
-=========================
-.. include:: ../../coreComponents/fileIO/schema/docs/GaussQuadrature1.rst
-
-
-.. _XML_GaussQuadrature2:
-
-Element: GaussQuadrature2
-=========================
-.. include:: ../../coreComponents/fileIO/schema/docs/GaussQuadrature2.rst
-
-
-.. _XML_GaussQuadrature3:
-
-Element: GaussQuadrature3
-=========================
-.. include:: ../../coreComponents/fileIO/schema/docs/GaussQuadrature3.rst
-
-
 .. _XML_Geometry:
 
 Element: Geometry
@@ -308,27 +286,6 @@ Element: InternalMesh
 Element: InternalWell
 =====================
 .. include:: ../../coreComponents/fileIO/schema/docs/InternalWell.rst
-
-
-.. _XML_LagrangeBasis1:
-
-Element: LagrangeBasis1
-=======================
-.. include:: ../../coreComponents/fileIO/schema/docs/LagrangeBasis1.rst
-
-
-.. _XML_LagrangeBasis2:
-
-Element: LagrangeBasis2
-=======================
-.. include:: ../../coreComponents/fileIO/schema/docs/LagrangeBasis2.rst
-
-
-.. _XML_LagrangeBasis3:
-
-Element: LagrangeBasis3
-=======================
-.. include:: ../../coreComponents/fileIO/schema/docs/LagrangeBasis3.rst
 
 
 .. _XML_LagrangianContact:
@@ -429,6 +386,13 @@ Element: PAMELAMeshGenerator
 .. include:: ../../coreComponents/fileIO/schema/docs/PAMELAMeshGenerator.rst
 
 
+.. _XML_PackCollection:
+
+Element: PackCollection
+=======================
+.. include:: ../../coreComponents/fileIO/schema/docs/PackCollection.rst
+
+
 .. _XML_Parameter:
 
 Element: Parameter
@@ -462,6 +426,20 @@ Element: Perforation
 Element: PeriodicEvent
 ======================
 .. include:: ../../coreComponents/fileIO/schema/docs/PeriodicEvent.rst
+
+
+.. _XML_PhaseFieldDamageFEM:
+
+Element: PhaseFieldDamageFEM
+============================
+.. include:: ../../coreComponents/fileIO/schema/docs/PhaseFieldDamageFEM.rst
+
+
+.. _XML_PhaseFieldFracture:
+
+Element: PhaseFieldFracture
+===========================
+.. include:: ../../coreComponents/fileIO/schema/docs/PhaseFieldFracture.rst
 
 
 .. _XML_PoreVolumeCompressibleSolid:
@@ -520,13 +498,6 @@ Element: ProppantTransport
 .. include:: ../../coreComponents/fileIO/schema/docs/ProppantTransport.rst
 
 
-.. _XML_QuadratureRules:
-
-Element: QuadratureRules
-========================
-.. include:: ../../coreComponents/fileIO/schema/docs/QuadratureRules.rst
-
-
 .. _XML_Restart:
 
 Element: Restart
@@ -581,6 +552,13 @@ Element: SinglePhaseReservoir
 Element: SinglePhaseWell
 ========================
 .. include:: ../../coreComponents/fileIO/schema/docs/SinglePhaseWell.rst
+
+
+.. _XML_SolidMechanicsEmbeddedFractures:
+
+Element: SolidMechanicsEmbeddedFractures
+========================================
+.. include:: ../../coreComponents/fileIO/schema/docs/SolidMechanicsEmbeddedFractures.rst
 
 
 .. _XML_SolidMechanicsLagrangianSSLE:
@@ -639,11 +617,25 @@ Element: TableFunction
 .. include:: ../../coreComponents/fileIO/schema/docs/TableFunction.rst
 
 
+.. _XML_Tasks:
+
+Element: Tasks
+==============
+.. include:: ../../coreComponents/fileIO/schema/docs/Tasks.rst
+
+
 .. _XML_ThickPlane:
 
 Element: ThickPlane
 ===================
 .. include:: ../../coreComponents/fileIO/schema/docs/ThickPlane.rst
+
+
+.. _XML_TimeHistory:
+
+Element: TimeHistory
+====================
+.. include:: ../../coreComponents/fileIO/schema/docs/TimeHistory.rst
 
 
 .. _XML_TwoPointFluxApproximation:
@@ -704,13 +696,6 @@ Element: quartz
 ********************************
 Datastructure Definitions
 ********************************
-
-
-.. _DATASTRUCTURE_BasisFunctions:
-
-Datastructure: BasisFunctions
-=============================
-.. include:: ../../coreComponents/fileIO/schema/docs/BasisFunctions_other.rst
 
 
 .. _DATASTRUCTURE_Benchmarks:
@@ -853,6 +838,13 @@ Datastructure: Cylinder
 .. include:: ../../coreComponents/fileIO/schema/docs/Cylinder_other.rst
 
 
+.. _DATASTRUCTURE_DamageLinearElasticIsotropic:
+
+Datastructure: DamageLinearElasticIsotropic
+===========================================
+.. include:: ../../coreComponents/fileIO/schema/docs/DamageLinearElasticIsotropic_other.rst
+
+
 .. _DATASTRUCTURE_Dirichlet:
 
 Datastructure: Dirichlet
@@ -958,27 +950,6 @@ Datastructure: Functions
 .. include:: ../../coreComponents/fileIO/schema/docs/Functions_other.rst
 
 
-.. _DATASTRUCTURE_GaussQuadrature1:
-
-Datastructure: GaussQuadrature1
-===============================
-.. include:: ../../coreComponents/fileIO/schema/docs/GaussQuadrature1_other.rst
-
-
-.. _DATASTRUCTURE_GaussQuadrature2:
-
-Datastructure: GaussQuadrature2
-===============================
-.. include:: ../../coreComponents/fileIO/schema/docs/GaussQuadrature2_other.rst
-
-
-.. _DATASTRUCTURE_GaussQuadrature3:
-
-Datastructure: GaussQuadrature3
-===============================
-.. include:: ../../coreComponents/fileIO/schema/docs/GaussQuadrature3_other.rst
-
-
 .. _DATASTRUCTURE_Geometry:
 
 Datastructure: Geometry
@@ -1019,27 +990,6 @@ Datastructure: InternalMesh
 Datastructure: InternalWell
 ===========================
 .. include:: ../../coreComponents/fileIO/schema/docs/InternalWell_other.rst
-
-
-.. _DATASTRUCTURE_LagrangeBasis1:
-
-Datastructure: LagrangeBasis1
-=============================
-.. include:: ../../coreComponents/fileIO/schema/docs/LagrangeBasis1_other.rst
-
-
-.. _DATASTRUCTURE_LagrangeBasis2:
-
-Datastructure: LagrangeBasis2
-=============================
-.. include:: ../../coreComponents/fileIO/schema/docs/LagrangeBasis2_other.rst
-
-
-.. _DATASTRUCTURE_LagrangeBasis3:
-
-Datastructure: LagrangeBasis3
-=============================
-.. include:: ../../coreComponents/fileIO/schema/docs/LagrangeBasis3_other.rst
 
 
 .. _DATASTRUCTURE_LagrangianContact:
@@ -1154,6 +1104,13 @@ Datastructure: PAMELAMeshGenerator
 .. include:: ../../coreComponents/fileIO/schema/docs/PAMELAMeshGenerator_other.rst
 
 
+.. _DATASTRUCTURE_PackCollection:
+
+Datastructure: PackCollection
+=============================
+.. include:: ../../coreComponents/fileIO/schema/docs/PackCollection_other.rst
+
+
 .. _DATASTRUCTURE_Parameter:
 
 Datastructure: Parameter
@@ -1187,6 +1144,20 @@ Datastructure: Perforation
 Datastructure: PeriodicEvent
 ============================
 .. include:: ../../coreComponents/fileIO/schema/docs/PeriodicEvent_other.rst
+
+
+.. _DATASTRUCTURE_PhaseFieldDamageFEM:
+
+Datastructure: PhaseFieldDamageFEM
+==================================
+.. include:: ../../coreComponents/fileIO/schema/docs/PhaseFieldDamageFEM_other.rst
+
+
+.. _DATASTRUCTURE_PhaseFieldFracture:
+
+Datastructure: PhaseFieldFracture
+=================================
+.. include:: ../../coreComponents/fileIO/schema/docs/PhaseFieldFracture_other.rst
 
 
 .. _DATASTRUCTURE_PoreVolumeCompressibleSolid:
@@ -1245,13 +1216,6 @@ Datastructure: ProppantTransport
 .. include:: ../../coreComponents/fileIO/schema/docs/ProppantTransport_other.rst
 
 
-.. _DATASTRUCTURE_QuadratureRules:
-
-Datastructure: QuadratureRules
-==============================
-.. include:: ../../coreComponents/fileIO/schema/docs/QuadratureRules_other.rst
-
-
 .. _DATASTRUCTURE_Restart:
 
 Datastructure: Restart
@@ -1306,6 +1270,13 @@ Datastructure: SinglePhaseReservoir
 Datastructure: SinglePhaseWell
 ==============================
 .. include:: ../../coreComponents/fileIO/schema/docs/SinglePhaseWell_other.rst
+
+
+.. _DATASTRUCTURE_SolidMechanicsEmbeddedFractures:
+
+Datastructure: SolidMechanicsEmbeddedFractures
+==============================================
+.. include:: ../../coreComponents/fileIO/schema/docs/SolidMechanicsEmbeddedFractures_other.rst
 
 
 .. _DATASTRUCTURE_SolidMechanicsLagrangianSSLE:
@@ -1364,11 +1335,25 @@ Datastructure: TableFunction
 .. include:: ../../coreComponents/fileIO/schema/docs/TableFunction_other.rst
 
 
+.. _DATASTRUCTURE_Tasks:
+
+Datastructure: Tasks
+====================
+.. include:: ../../coreComponents/fileIO/schema/docs/Tasks_other.rst
+
+
 .. _DATASTRUCTURE_ThickPlane:
 
 Datastructure: ThickPlane
 =========================
 .. include:: ../../coreComponents/fileIO/schema/docs/ThickPlane_other.rst
+
+
+.. _DATASTRUCTURE_TimeHistory:
+
+Datastructure: TimeHistory
+==========================
+.. include:: ../../coreComponents/fileIO/schema/docs/TimeHistory_other.rst
 
 
 .. _DATASTRUCTURE_TwoPointFluxApproximation:
@@ -1474,6 +1459,13 @@ Datastructure: elementRegionsGroup
 Datastructure: elementSubRegions
 ================================
 .. include:: ../../coreComponents/fileIO/schema/docs/elementSubRegions_other.rst
+
+
+.. _DATASTRUCTURE_finiteVolumeStencils:
+
+Datastructure: finiteVolumeStencils
+===================================
+.. include:: ../../coreComponents/fileIO/schema/docs/finiteVolumeStencils_other.rst
 
 
 .. _DATASTRUCTURE_lassen:

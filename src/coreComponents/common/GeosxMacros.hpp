@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -66,15 +66,15 @@
 #define GEOSX_UNUSED_PARAM( X )
 
 /// Used to silence unused variable warnings, cuda doesn't respect casting to void.
-template< typename T >
+template< typename ... ARGS >
 GEOSX_HOST_DEVICE inline constexpr
-void i_g_n_o_r_e( T & ) {}
+void i_g_n_o_r_e( ARGS const & ... ) {}
 
 /// Mark an unused variable and silence compiler warnings.
-#define GEOSX_UNUSED_VAR( X ) i_g_n_o_r_e( X );
+#define GEOSX_UNUSED_VAR( ... ) i_g_n_o_r_e( __VA_ARGS__ );
 
 /// Mark a debug variable and silence compiler warnings.
-#define GEOSX_DEBUG_VAR( X ) GEOSX_UNUSED_VAR( X )
+#define GEOSX_DEBUG_VAR( ... ) GEOSX_UNUSED_VAR( __VA_ARGS__ )
 
 ///@}
 

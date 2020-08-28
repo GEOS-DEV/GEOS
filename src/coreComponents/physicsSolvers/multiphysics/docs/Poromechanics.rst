@@ -9,8 +9,11 @@ Introduction
 
 This section describes the use of the poroelasticity models implemented in GEOSX.
 
-Currently, the poroelasticity model is implemented using a "fixed-stress" coupling, which is a sequential method that solves the flow
-problem first and then geomechanics problem with the rate of volumetric (mean) total stress variation frozen.
+Theory
+=========================
+
+Governing Equations
+--------------------------
 
 In our model, the geomechanics (elasticity) equation is expressed in terms of the total stress :math:`\mathbf{\sigma}`:
 
@@ -36,10 +39,7 @@ Unlike the conventional reservoir model that uses Lagrange’s porosity, in the 
 
 where :math:`K_{s}` is the bulk modulus of the solid grain and :math:`\epsilon_v` is the volumetric strain.
 
-For more details, refer to `Kim(2010)
-<https://pangea.stanford.edu/ERE/pdf/pereports/PhD/Kim10.pdf>`_.
-
-Usage
+Parameters
 ===========================================
 
 The poroelasticity model is implemented as a main solver listed in
@@ -50,7 +50,7 @@ The following attributes are supported:
 
 .. include:: /coreComponents/fileIO/schema/docs/Poroelastic.rst
 
-* ``couplingTypeOption``: defines the coupling scheme. Currently, only "FixedStress" is implemented and "TightlyCoupled" is not yet implemented.
+* ``couplingTypeOption``: defines the coupling scheme.
 
 The solid constitutive model used here is PoroLinearElasticIsotropic, which derives from LinearElasticIsotropic and includes an additional parameter: Biot's coefficient. The fluid constitutive model is the same as SinglePhaseFlow solver. For the parameter setup of each individual solver, please refer to the guideline of the specific solver.
 
@@ -61,7 +61,7 @@ An example of a valid XML block for the constitutive model is given here:
   :start-after: <!-- SPHINX_POROELASTIC_CONSTITUTIVE -->
   :end-before: <!-- SPHINX_POROELASTIC_CONSTITUTIVE_END -->
 
-Input example
+Example
 ===========================================
 
 .. literalinclude:: ../integratedTests/poroElastic_Terzaghi.xml

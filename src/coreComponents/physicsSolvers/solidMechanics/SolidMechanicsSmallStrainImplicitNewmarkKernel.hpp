@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -42,19 +42,16 @@ namespace SolidMechanicsLagrangianFEMKernels
  */
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
-          int NUM_NODES_PER_ELEM,
-          int >
+          typename FE_TYPE >
 class ImplicitNewmark : public QuasiStatic< SUBREGION_TYPE,
                                             CONSTITUTIVE_TYPE,
-                                            NUM_NODES_PER_ELEM,
-                                            NUM_NODES_PER_ELEM >
+                                            FE_TYPE >
 {
 public:
   /// Alias for the base class;
   using Base = QuasiStatic< SUBREGION_TYPE,
                             CONSTITUTIVE_TYPE,
-                            NUM_NODES_PER_ELEM,
-                            NUM_NODES_PER_ELEM >;
+                            FE_TYPE >;
 
   using Base::numNodesPerElem;
   using Base::numTestSupportPointsPerElem;
@@ -69,6 +66,7 @@ public:
   using Base::m_disp;
   using Base::m_uhat;
   using Base::m_detJ;
+  using Base::m_density;
 
   /**
    * @brief Constructor
@@ -83,11 +81,12 @@ public:
                    EdgeManager const & edgeManager,
                    FaceManager const & faceManager,
                    SUBREGION_TYPE const & elementSubRegion,
-                   FiniteElementBase const * const finiteElementSpace,
+                   FE_TYPE const & finiteElementSpace,
                    CONSTITUTIVE_TYPE * const inputConstitutiveType,
                    arrayView1d< globalIndex const > const & inputDofNumber,
-                   ParallelMatrix & inputMatrix,
-                   ParallelVector & inputRhs,
+                   globalIndex const rankOffset,
+                   CRSMatrixView< real64, globalIndex const > const & inputMatrix,
+                   arrayView1d< real64 > const & inputRhs,
                    real64 const (&inputGravityVector)[3],
                    real64 const inputNewmarkGamma,
                    real64 const inputNewmarkBeta,
@@ -101,12 +100,12 @@ public:
           finiteElementSpace,
           inputConstitutiveType,
           inputDofNumber,
+          rankOffset,
           inputMatrix,
           inputRhs,
           inputGravityVector ),
     m_vtilde( nodeManager.totalDisplacement()),
     m_uhattilde( nodeManager.totalDisplacement()),
-    m_density( inputConstitutiveType->getDensity()),
     m_newmarkGamma( inputNewmarkGamma ),
     m_newmarkBeta( inputNewmarkBeta ),
     m_massDamping( inputMassDamping ),
@@ -188,7 +187,7 @@ public:
   {
 
     real64 N[numNodesPerElem];
-    FiniteElementShapeKernel::shapeFunctionValues( q, N );
+    FE_TYPE::shapeFunctionValues( q, N );
 
     Base::quadraturePointJacobianContribution( k, q, stack, [&] GEOSX_DEVICE ( localIndex const a,
                                                                                localIndex const b ) mutable
@@ -217,7 +216,7 @@ public:
    * The ImplicitNewmark implementation adds residual and jacobian
    * contributions from  stiffness based damping.
    */
-  //    GEOSX_HOST_DEVICE
+  GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   real64 complete( localIndex const k,
                    StackVariables & stack ) const
@@ -266,9 +265,6 @@ protected:
   /// The rank-global incremental displacement predictor
   arrayView2d< real64 const, nodes::INCR_DISPLACEMENT_USD > const m_uhattilde;
 
-  /// The rank global density
-  arrayView2d< real64 const > const m_density;
-
   /// The Gamma parameter for Newmark's method.
   real64 const m_newmarkGamma;
 
@@ -289,5 +285,7 @@ protected:
 } // namespace SolidMechanicsLagrangianFEMKernels
 
 } // namespace geosx
+
+#include "finiteElement/kernelInterface/SparsityKernelBase.hpp"
 
 #endif //GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_SOLIDMECHANICSSMALLSTRAINIMPLICITNEWMARK_HPP_

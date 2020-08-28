@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -73,7 +73,16 @@ public:
     integer separateComponents = false;      ///< Apply a separate component filter before AMG construction
     string nullSpaceType = "constantModes";  ///< Null space type [constantModes,rigidBodyModes]
   }
-  amg;                                      //!< Algebraic Multigrid (AMG) parameters
+  amg;                                       ///< Algebraic Multigrid (AMG) parameters
+
+  /// Multigrid reduction parameters
+  struct MGR
+  {
+    string strategy;                    ///< Predefined MGR solution strategy (solver specific)
+    integer separateComponents = false; ///< Apply a separate displacement component (SDC) filter before AMG construction
+    string displacementFieldName;       ///< Displacement field name need for SDC filter
+  }
+  mgr;                                  ///< Multigrid reduction (MGR) parameters
 
   /// Incomplete factorization parameters
   struct ILU

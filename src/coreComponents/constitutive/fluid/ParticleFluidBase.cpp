@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -59,42 +59,15 @@ void ParticleFluidBase::PostProcessInput()
   ConstitutiveBase::PostProcessInput();
 }
 
-void ParticleFluidBase::AllocateConstitutiveData( Group * const parent,
+void ParticleFluidBase::allocateConstitutiveData( Group * const parent,
                                                   localIndex const numConstitutivePointsPerParentIndex )
 {
-  ConstitutiveBase::AllocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+  ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 
   this->resize( parent->size() );
   m_dSettlingFactor_dComponentConcentration.resize( parent->size(), MAX_NUM_COMPONENTS );
-
 }
 
-
-void
-ParticleFluidBase::DeliverClone( string const & name,
-                                 Group * const parent,
-                                 std::unique_ptr< ConstitutiveBase > & clone ) const
-{
-  GEOSX_ERROR_IF( !clone, "clone not allocated" );
-
-  ConstitutiveBase::DeliverClone( name, parent, clone );
-  ParticleFluidBase * const newConstitutiveRelation = dynamic_cast< ParticleFluidBase * >(clone.get());
-
-  newConstitutiveRelation->m_settlingFactor = m_settlingFactor;
-  newConstitutiveRelation->m_dSettlingFactor_dPressure = m_dSettlingFactor_dPressure;
-  newConstitutiveRelation->m_dSettlingFactor_dProppantConcentration = m_dSettlingFactor_dProppantConcentration;
-  newConstitutiveRelation->m_dSettlingFactor_dComponentConcentration = m_dSettlingFactor_dComponentConcentration;
-
-  newConstitutiveRelation->m_collisionFactor = m_collisionFactor;
-  newConstitutiveRelation->m_dCollisionFactor_dProppantConcentration = m_dCollisionFactor_dProppantConcentration;
-
-  newConstitutiveRelation->m_maxProppantConcentration = this->m_maxProppantConcentration;
-
-  newConstitutiveRelation->m_isCollisionalSlip = this->m_isCollisionalSlip;
-
-  newConstitutiveRelation->m_proppantPackPermeability = this->m_proppantPackPermeability;
-
-}
 } //namespace constitutive
 
 } //namespace geosx

@@ -3,7 +3,7 @@
 Physics Solvers
 ============================================
 
-The ``<Solvers>`` section of the input file specifies one or several 
+The ``<Solvers>`` section of the input file specifies one or several
 physics solvers to be included in the simulation.
 
 .. toctree::
@@ -15,10 +15,10 @@ physics solvers to be included in the simulation.
 
    fluidFlow/docs/CompositionalMultiphaseFlow
 
-   fluidFlow/docs/ProppantTransport   
-   
-   fluidFlow/docs/CompositionalMultiphaseWell
+   fluidFlow/wells/docs/CompositionalMultiphaseWell
 
    multiphysics/docs/Poromechanics
 
+   fluidFlow/docs/ProppantTransport
 
+   SolutionStrategy

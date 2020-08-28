@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -19,6 +19,8 @@
 #ifndef GEOSX_EXTRINSIC_MESH_DATA_HPP_
 #define GEOSX_EXTRINSIC_MESH_DATA_HPP_
 
+#include "codingUtilities/traits.hpp"
+#include "dataRepository/RestartFlags.hpp"
 #include "common/DataTypes.hpp"
 
 /**
@@ -33,34 +35,32 @@
  * @param DESCRIPTION A string literal that contains a description of the data for
  *   use in sphinx documentation.
  */
-#define EXTRINSIC_MESH_DATA_TRAIT( NAME,                                        \
-                                   KEY,                                         \
-                                   TYPE,                                        \
-                                   DEFAULT,                                     \
-                                   PLOTLEVEL,                                   \
-                                   RESTARTFLAG,                                 \
-                                   DESCRIPTION )                                \
-/** @struct NAME                                                              */ \
-/** @brief Trait struct for NAME data                                         */ \
-  struct NAME                                                                     \
-  {                                                                               \
+#define EXTRINSIC_MESH_DATA_TRAIT( NAME,                                           \
+                                   KEY,                                            \
+                                   TYPE,                                           \
+                                   DEFAULT,                                        \
+                                   PLOTLEVEL,                                      \
+                                   RESTARTFLAG,                                    \
+                                   DESCRIPTION )                                   \
+/** @struct NAME                                                                */ \
+/** @brief Trait struct for NAME data                                           */ \
+  struct NAME                                                                      \
+  {                                                                                \
     /** The key for registration with the data repository.                      */ \
-    static constexpr auto key = KEY;                                              \
+    static constexpr auto key = KEY;                                               \
     /** The actual type to be registered.                                       */ \
-    using type = TYPE;                                                            \
+    using type = TYPE;                                                             \
     /** The template type T for registration of a container<T>.                 */ \
-    using dataType = internal::typeHelper_t< TYPE >;                                \
+    using dataType = internal::typeHelper_t< TYPE >;                               \
     /** The dataRepository::DefaultValue for NAME.                              */ \
-    static constexpr dataType defaultValue = DEFAULT;                             \
+    static constexpr dataType defaultValue = DEFAULT;                              \
     /** The default dataRepository::PlotLevel for NAME.                         */ \
-    static constexpr auto plotLevel = dataRepository::PlotLevel::PLOTLEVEL;       \
+    static constexpr auto plotLevel = dataRepository::PlotLevel::PLOTLEVEL;        \
     /** The default dataRepository::RestartFlags for NAME.                      */ \
     static constexpr auto restartFlag = dataRepository::RestartFlags::RESTARTFLAG; \
     /** Description of the NAME data for use in sphinx documentation            */ \
-    static constexpr auto description = DESCRIPTION;                              \
+    static constexpr auto description = DESCRIPTION;                               \
   }
-
-
 
 namespace geosx
 {

@@ -1,184 +1,183 @@
+<?xml version="1.0" ?>
 
 <Problem>
+  <Solvers>
+    <SinglePhaseFVM
+      name="SinglePhaseFlow"
+      logLevel="1"
+      discretization="singlePhaseTPFA"
+      targetRegions="{ Fracture }"
+      fluidNames="{ water }"
+      solidNames="{ rock }">
+      <NonlinearSolverParameters
+        newtonTol="1.0e-2"
+        newtonMaxIter="8"/>
+      <LinearSolverParameters
+        solverType="gmres"
+        krylovTol="1.0e-12"/>
+    </SinglePhaseFVM>
 
-    <Solvers>
+    <SurfaceGenerator
+      name="SurfaceGen"
+      logLevel="0"
+      solidMaterialNames="{ rock }"
+      fractureRegion="Fracture"
+      targetRegions="{ Fracture }"
+      rockToughness="1e6"
+      mpiCommOrder="1"/>
+  </Solvers>
 
-        <SinglePhaseFVM
-            name="SinglePhaseFlow"
-            logLevel="1"
-            discretization="singlePhaseTPFA"
-            targetRegions="{Fracture}"
-            fluidNames="{water}"
-            solidNames="{rock}">
-            <NonlinearSolverParameters
-                newtonTol="1.0e-2"
-                newtonMaxIter="8"/>
-            <LinearSolverParameters
-                solverType="gmres"
-                krylovTol="1.0e-12"/>
-        </SinglePhaseFVM>
+  <Mesh>
+    <InternalMesh
+      name="mesh1"
+      elementTypes="{ C3D8 }"
+      xCoords="{ -5, 5 }"
+      yCoords="{ 0, 10 }"
+      zCoords="{ 0, 1 }"
+      nx="{ 10 }"
+      ny="{ 10 }"
+      nz="{ 1 }"
+      cellBlockNames="{ cb1 }"/>
+  </Mesh>
 
-        <SurfaceGenerator
-            name="SurfaceGen"
-            logLevel="0"
-            solidMaterialNames="{rock}"
-            fractureRegion="Fracture"
-            targetRegions="{Fracture}"
-            rockToughness="1e6"
-            mpiCommOrder="1">
-        </SurfaceGenerator>
+  <Geometry>
+    <Box
+      name="left"
+      xMin="-0.01, -0.01, -0.01"
+      xMax=" 1.01, 1.01, 1.01"/>
 
-    </Solvers>
+    <Box
+      name="right"
+      xMin=" 8.99, -0.01, -0.01"
+      xMax="10.01, 1.01, 1.01"/>
 
-    <Mesh>
-        <InternalMesh
-            name="mesh1"
-            elementTypes="{C3D8}"
-            xCoords="{-5, 5}"
-            yCoords="{0, 10}"
-            zCoords="{0, 1}"
-            nx="{10}"
-            ny="{10}"
-            nz="{1}"
-            cellBlockNames="{cb1}" />
-    </Mesh>
+    <Box
+      name="bottom"
+      xMin="-0.01, -0.01, -0.01"
+      xMax="10.01, 1.11, 1.01"/>
 
-    <Geometry>
-        <Box
-            name="left"
-            xMin="-0.01, -0.01, -0.01"
-            xMax=" 1.01,  1.01, 1.01" />
-        <Box
-            name="right"
-            xMin=" 8.99, -0.01, -0.01"
-            xMax="10.01,  1.01, 1.01" />
-        <Box
-            name="bottom"
-            xMin="-0.01, -0.01, -0.01"
-            xMax="10.01,  1.11, 1.01" />
-        <Box
-            name="top"
-            xMin="-0.01,  8.99, -0.01"
-            xMax="10.01, 10.01, 1.01" />
-        <Box
-            name="fracture"
-            xMin="-0.01, -0.01, -0.01"
-            xMax=" 0.01, 10.01, 1.01" />
-        <Box
-            name="source"
-            xMin="-0.01, -0.01, -0.01"
-            xMax=" 0.01,  1.01, 1.01" />
-    </Geometry>
+    <Box
+      name="top"
+      xMin="-0.01, 8.99, -0.01"
+      xMax="10.01, 10.01, 1.01"/>
 
+    <Box
+      name="fracture"
+      xMin="-0.01, -0.01, -0.01"
+      xMax=" 0.01, 10.01, 1.01"/>
 
-    <Events maxTime="10.0">
-        <SoloEvent
-            name="output0"
-            target="/Outputs/siloOutput" />
+    <Box
+      name="source"
+      xMin="-0.01, -0.01, -0.01"
+      xMax=" 0.01, 1.01, 1.01"/>
+  </Geometry>
 
-        <SoloEvent
-            name="preFracture"
-            target="/Solvers/SurfaceGen" />
+  <Events
+    maxTime="10.0">
+    <SoloEvent
+      name="output0"
+      target="/Outputs/siloOutput"/>
 
-        <SoloEvent
-            name="output1"
-            target="/Outputs/siloOutput" />
+    <SoloEvent
+      name="preFracture"
+      target="/Solvers/SurfaceGen"/>
 
-        <PeriodicEvent
-            name="solverApplications"
-            forceDt="1.0"
-            target="/Solvers/SinglePhaseFlow" />
+    <SoloEvent
+      name="output1"
+      target="/Outputs/siloOutput"/>
 
-        <PeriodicEvent
-            name="outputs"
-            cycleFrequency="1"
-            targetExactTimestep="1"
-            target="/Outputs/siloOutput" />
+    <PeriodicEvent
+      name="solverApplications"
+      forceDt="1.0"
+      target="/Solvers/SinglePhaseFlow"/>
 
-        <PeriodicEvent
-            name="restarts"
-            timeFrequency="5.0"
-            targetExactTimestep="0"
-            target="/Outputs/restartOutput" />
-    </Events>
+    <PeriodicEvent
+      name="outputs"
+      cycleFrequency="1"
+      targetExactTimestep="1"
+      target="/Outputs/siloOutput"/>
 
-    <NumericalMethods>
-        <FiniteVolume>
-            <TwoPointFluxApproximation
-                name="singlePhaseTPFA"
-                fieldName="pressure"
-                coefficientName="permeability" />
-        </FiniteVolume>
-    </NumericalMethods>
+    <PeriodicEvent
+      name="restarts"
+      timeFrequency="5.0"
+      targetExactTimestep="0"
+      target="/Outputs/restartOutput"/>
+  </Events>
 
-    <ElementRegions>
-        <CellElementRegion
-            name="Region2"
-            cellBlocks="{cb1}"
-            materialList="{water, rock}" />
+  <NumericalMethods>
+    <FiniteVolume>
+      <TwoPointFluxApproximation
+        name="singlePhaseTPFA"
+        fieldName="pressure"
+        coefficientName="permeability"/>
+    </FiniteVolume>
+  </NumericalMethods>
 
-        <FaceElementRegion
-            name="Fracture"
-            defaultAperture="1.0e-5"
-            materialList="{water, rock}" />
+  <ElementRegions>
+    <CellElementRegion
+      name="Region2"
+      cellBlocks="{ cb1 }"
+      materialList="{ water, rock }"/>
 
-    </ElementRegions>
+    <FaceElementRegion
+      name="Fracture"
+      defaultAperture="1.0e-5"
+      materialList="{ water, rock }"/>
+  </ElementRegions>
 
-    <Constitutive>
-        <CompressibleSinglePhaseFluid
-            name="water"
-            defaultDensity="1000"
-            defaultViscosity="0.001"
-            referencePressure="0.0"
-            referenceDensity="1000"
-            compressibility="5e-10"
-            referenceViscosity="0.001"
-            viscosibility="0.0" />
+  <Constitutive>
+    <CompressibleSinglePhaseFluid
+      name="water"
+      defaultDensity="1000"
+      defaultViscosity="0.001"
+      referencePressure="0.0"
+      referenceDensity="1000"
+      compressibility="5e-10"
+      referenceViscosity="0.001"
+      viscosibility="0.0"/>
 
-        <PoreVolumeCompressibleSolid
-            name="rock"
-            referencePressure="0.0"
-            compressibility="1e-9" />
-    </Constitutive>
+    <PoreVolumeCompressibleSolid
+      name="rock"
+      referencePressure="0.0"
+      compressibility="1e-9"/>
+  </Constitutive>
 
-    <FieldSpecifications>
+  <FieldSpecifications>
+    <FieldSpecification
+      name="frac"
+      initialCondition="1"
+      setNames="{ fracture }"
+      objectPath="faceManager"
+      fieldName="ruptureState"
+      scale="1"/>
 
-        <FieldSpecification
-            name="frac"
-            initialCondition="1"
-            setNames="{fracture}"
-            objectPath="faceManager"
-            fieldName="ruptureState"
-            scale="1" />
+    <FieldSpecification
+      name="source"
+      objectPath="ElementRegions/Fracture"
+      fieldName="pressure"
+      scale="1.0e6"
+      setNames="{ source }"/>
 
-        <FieldSpecification
-            name="source"
-            objectPath="ElementRegions/Fracture"
-            fieldName="pressure"
-            scale="1.0e6"
-            setNames="{source}" />
-        <!-- SourceFlux name="sourceTerm"
+    <!-- SourceFlux name="sourceTerm"
             objectPath="ElementRegions/Fracture"
             scale="-0.01"
             setNames="{source}"/ -->
-
-        <!-- FieldSpecification name="sink"
+    <!-- FieldSpecification name="sink"
             objectPath="ElementRegions/Fracture"
             fieldName="pressure"
             scale="0.0"
             setNames="{top}"/ -->
-    </FieldSpecifications>
+  </FieldSpecifications>
 
-    <Functions>
-    </Functions>
+  <Functions/>
 
-    <Outputs>
-        <Silo
-            name="siloOutput"
-            plotFileRoot="fractureFlow"
-            plotLevel="2" />
-        <Restart name="restartOutput" />
-    </Outputs>
+  <Outputs>
+    <Silo
+      name="siloOutput"
+      plotFileRoot="fractureFlow"
+      plotLevel="2"/>
 
-
+    <Restart
+      name="restartOutput"/>
+  </Outputs>
 </Problem>

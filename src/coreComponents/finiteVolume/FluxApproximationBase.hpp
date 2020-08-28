@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -103,9 +103,6 @@ public:
    */
   static typename CatalogInterface::CatalogType & GetCatalog();
 
-  /// Alias for stored stencil types
-  using BoundaryStencil = FluxStencil< PointDescriptor, real64 >;
-
   FluxApproximationBase() = delete;
 
   /**
@@ -116,70 +113,50 @@ public:
   FluxApproximationBase( string const & name, dataRepository::Group * const parent );
 
   /**
-   * @brief Return a boundary stencil by face set name.
-   * @param[in] setName the face set name
-   * @return the boundary stencil by face set name
+   * @brief Extract stencil stored under the mesh group.
+   * @tparam TYPE type of Stencil to get
+   * @param mesh the mesh level object
+   * @param name name of the stencil object
+   * @return reference to the stencil
    */
-  BoundaryStencil const & getBoundaryStencil( string const & setName ) const;
+  template< typename TYPE >
+  TYPE const & getStencil( MeshLevel const & mesh, string const & name ) const;
 
   /**
-   * @copydoc getBoundaryStencil( string const & ) const
+   * @copydoc getStencil(MeshLevel const &, string const &) const
    */
-  BoundaryStencil & getBoundaryStencil( string const & setName );
-
-  /**
-   * @brief Check if a stencil exists.
-   * @param[in] setName the face set name
-   * @return true if a stencil exists
-   */
-  bool hasBoundaryStencil( string const & setName ) const;
+  template< typename TYPE >
+  TYPE & getStencil( MeshLevel & mesh, string const & name ) const;
 
   /**
    * @brief Call a user-provided function for each stencil.
    * @tparam LAMBDA The type of lambda function passed into the parameter list.
+   * @param[in] mesh the mesh level containing the stencils
    * @param[in] lambda The LAMBDA function
    */
   template< typename LAMBDA >
-  void forAllStencils( LAMBDA && lambda ) const;
+  void forAllStencils( MeshLevel const & mesh, LAMBDA && lambda ) const;
 
   /**
    * @brief Call a user-provided function for the each stencil according to the provided TYPE.
    * @tparam TYPE The type to be passed to forWrappers
    * @tparam TYPES Other types to be passed to forWrappers
    * @tparam LAMBDA The type of lambda function passed into the parameter list.
+   * @param[in] mesh the mesh level containing the stencils
    * @param[in] lambda The LAMBDA function
    */
   template< typename TYPE, typename ... TYPES, typename LAMBDA >
-  void forStencils( LAMBDA && lambda ) const;
-
-  /**
-   * @brief Call a user-provided function for each boundary stencil.
-   * @tparam LAMBDA The type of lambda function passed into the parameter list.
-   * @param[in] lambda The LAMBDA function
-   */
-  template< typename LAMBDA >
-  void forBoundaryStencils( LAMBDA && lambda ) const;
-
-  /**
-   * @brief Triggers computation of the stencil, implemented in derived classes.
-   * @param[in,out] domain The domain on which to perform the stencil computation
-   */
-  void compute( DomainPartition & domain );
+  void forStencils( MeshLevel const & mesh, LAMBDA && lambda ) const;
 
   /**
    * @brief Add a new fracture stencil.
-   * @param[in,out] domain The domain on which to add the fracture stencil
+   * @param[in,out] mesh the mesh on which to add the fracture stencil
    * @param[in] faceElementRegionName the face element region name
    * @param[in] initFlag if true initialize physical fields, like pressure
    */
-  virtual void addToFractureStencil( DomainPartition & domain,
+  virtual void addToFractureStencil( MeshLevel & mesh,
                                      string const & faceElementRegionName,
-                                     bool const initFlag )
-  {
-    GEOSX_UNUSED_VAR( domain );
-    GEOSX_UNUSED_VAR( faceElementRegionName );
-    GEOSX_UNUSED_VAR( initFlag );
-  }
+                                     bool const initFlag ) const = 0;
 
   /**
    * @brief View keys.
@@ -188,22 +165,29 @@ public:
   {
     /// The key for fieldName
     static constexpr auto fieldNameString             = "fieldName";
-    /// The key for boundaryFieldName
-    static constexpr auto boundaryFieldNameString     = "boundaryFieldName";
     /// The key for coefficientName
     static constexpr auto coeffNameString             = "coefficientName";
     /// The key for targetRegions
     static constexpr auto targetRegionsString         = "targetRegions";
     /// The key for areaRelTol
     static constexpr auto areaRelativeToleranceString = "areaRelTol";
+
+    // Keys below are for wrappers registered on MeshLevel, not the current object
+
     /// The key for cellStencil
     static constexpr auto cellStencilString           = "cellStencil";
     /// The key for fractureStencil
     static constexpr auto fractureStencilString       = "fractureStencil";
   };
 
+  /**
+   * @brief Group keys.
+   */
   struct groupKeyStruct
-  {};
+  {
+    /// Key under which the top-level group for all FV stencils will be registered on MeshLevel
+    static constexpr auto stencilMeshGroupString = "finiteVolumeStencils";
+  };
 
   /**
    * @brief Returns the target region name.
@@ -217,34 +201,48 @@ public:
 
 protected:
 
-  /**
-   * @brief Called by InitializePostInitialConditions() prior to initializing sub-Groups.
-   * @param[in] rootGroup A group that is passed in to the initialization functions
-   *            in order to facilitate the initialization.
-   */
+  virtual void RegisterDataOnMesh( Group * const meshBodies ) override;
+
   virtual void InitializePostInitialConditions_PreSubGroups( Group * const rootGroup ) override;
 
   /**
-   * @brief Actual computation of the cell-to-cell stencil, to be overridden by implementations.
-   * @param[in] domain the domain on which to perform the computation
+   * @brief Register the wrapper for cell stencil on a mesh.
+   * @param stencilGroup the group holding the stencil objects
    */
-  virtual void computeCellStencil( DomainPartition const & domain ) = 0;
+  virtual void registerCellStencil( Group & stencilGroup ) const = 0;
 
   /**
-   * @brief Actual computation of the boundary stencil, to be overridden by implementations.
-   * @param[in] domain the domain on which to perform the computation
-   * @param[in] faceSet set of faces
-   * @param[out] stencil the boundary stencil
+   * @brief Actual computation of the cell-to-cell stencil, to be overridden by implementations.
+   * @param[in] mesh the mesh on which to perform the computation
    */
-  virtual void computeBoundaryStencil( DomainPartition const & domain,
-                                       SortedArrayView< localIndex const > const & faceSet,
-                                       BoundaryStencil & stencil ) = 0;
+  virtual void computeCellStencil( MeshLevel & mesh ) const = 0;
+
+  /**
+   * @brief Register the wrapper for fracture stencil on a mesh.
+   * @param stencilGroup the group holding the stencil objects
+   */
+  virtual void registerFractureStencil( Group & stencilGroup ) const = 0;
+
+  /**
+   * @brief Register the wrapper for boundary face stencil on a mesh.
+   * @param stencilGroup the group holding the stencil objects
+   * @param setName the face set name (used as the wrapper name)
+   */
+  virtual void registerBoundaryStencil( Group & stencilGroup,
+                                        string const & setName ) const = 0;
+
+  /**
+   * @brief Allocate and populate a stencil to be used in boundary condition application
+   * @param mesh the target mesh level
+   * @param setName name of the face set, to be used as wrapper name for the produced stencil
+   * @param faceSet set of face indices to use
+   */
+  virtual void computeBoundaryStencil( MeshLevel & mesh,
+                                       string const & setName,
+                                       SortedArrayView< localIndex const > const & faceSet ) const = 0;
 
   /// name of the primary solution field
   string m_fieldName;
-
-  /// name of the boundary field (used to filter boundary conditions)
-  string m_boundaryFieldName;
 
   /// name of the coefficient field
   string m_coeffName;
@@ -255,34 +253,39 @@ protected:
   /// relative tolerance
   real64 m_areaRelTol;
 
+  /// length scale of the mesh body
+  real64 m_lengthScale;
+
 };
 
-template< typename LAMBDA >
-void FluxApproximationBase::forAllStencils( LAMBDA && lambda ) const
+template< typename TYPE >
+TYPE const & FluxApproximationBase::getStencil( MeshLevel const & mesh, string const & name ) const
 {
-//TODO remove dependence on CellElementStencilTPFA and FaceElementStencil
-  this->forWrappers< CellElementStencilTPFA, FaceElementStencil >( [&] ( auto const & wrapper )
-  {
-    lambda( wrapper.reference());
-  } );
+  Group const & stencilGroup = mesh.getGroupReference( groupKeyStruct::stencilMeshGroupString ).getGroupReference( getName() );
+  return stencilGroup.getReference< TYPE >( name );
+}
+
+template< typename TYPE >
+TYPE & FluxApproximationBase::getStencil( MeshLevel & mesh, string const & name ) const
+{
+  Group & stencilGroup = mesh.getGroupReference( groupKeyStruct::stencilMeshGroupString ).getGroupReference( getName() );
+  return stencilGroup.getReference< TYPE >( name );
+}
+
+template< typename LAMBDA >
+void FluxApproximationBase::forAllStencils( MeshLevel const & mesh, LAMBDA && lambda ) const
+{
+  //TODO remove dependence on CellElementStencilTPFA and FaceElementStencil
+  forStencils< CellElementStencilTPFA, FaceElementStencil >( mesh, std::forward< LAMBDA >( lambda ) );
 }
 
 template< typename TYPE, typename ... TYPES, typename LAMBDA >
-void FluxApproximationBase::forStencils( LAMBDA && lambda ) const
+void FluxApproximationBase::forStencils( MeshLevel const & mesh, LAMBDA && lambda ) const
 {
-  this->forWrappers< TYPE, TYPES... >( [&] ( auto const & wrapper )
+  Group const & stencilGroup = mesh.getGroupReference( groupKeyStruct::stencilMeshGroupString ).getGroupReference( getName() );
+  stencilGroup.forWrappers< TYPE, TYPES... >( [&] ( auto const & wrapper )
   {
-    lambda( wrapper.reference());
-  } );
-}
-
-
-template< typename LAMBDA >
-void FluxApproximationBase::forBoundaryStencils( LAMBDA && lambda ) const
-{
-  this->forWrappers< BoundaryStencil >( [&] ( auto const & wrapper )
-  {
-    lambda( wrapper.reference());
+    lambda( wrapper.reference() );
   } );
 }
 

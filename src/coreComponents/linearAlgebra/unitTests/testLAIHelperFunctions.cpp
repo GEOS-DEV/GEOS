@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -118,10 +118,10 @@ TEST_F( LAIHelperFunctionsTest, Test_NodalVectorPermutation )
   arrayView1d< globalIndex const > const & nodeLocalToGlobal = nodeManager->localToGlobalMap();
 
   DofManager dofManager( "test" );
-  dofManager.setMesh( domain, 0, 0 );
+  dofManager.setMesh( *domain, 0, 0 );
 
   string_array Region;
-  Region.push_back( "region1" );
+  Region.emplace_back( "region1" );
 
   dofManager.addField( "nodalVariable", DofManager::Location::Node, 3, Region );
   dofManager.addCoupling( "nodalVariable", "nodalVariable", DofManager::Connector::Elem );
@@ -183,10 +183,10 @@ TEST_F( LAIHelperFunctionsTest, Test_CellCenteredVectorPermutation )
   ElementRegionManager * const elemManager = meshLevel->getElemManager();;
 
   DofManager dofManager( "test" );
-  dofManager.setMesh( domain, 0, 0 );
+  dofManager.setMesh( *domain, 0, 0 );
 
   string_array region;
-  region.push_back( "region1" );
+  region.emplace_back( "region1" );
 
   dofManager.addField( "cellCentered", DofManager::Location::Elem, region );
   dofManager.addCoupling( "cellCentered", "cellCentered", DofManager::Connector::Face );

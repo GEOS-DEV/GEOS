@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -121,7 +121,6 @@ void GMRESsolver< VECTOR >::solve( Vector const & b,
 
   // Create upper Hessenberg matrix
   array2d< real64, MatrixLayout::COL_MAJOR_PERM > H( m_maxRestart + 1, m_maxRestart );
-  H = 0.0;
 
   // Create plane rotation storage
   array1d< real64 > c( m_maxRestart + 1 );
@@ -137,7 +136,7 @@ void GMRESsolver< VECTOR >::solve( Vector const & b,
   for( k = 0; k <= m_maxIterations && m_result.status == LinearSolverResult::Status::NotConverged; )
   {
     // Re-initialize Krylov subspace
-    g = 0.0;
+    g.setValues< serialPolicy >( 0.0 );
     g[0] = r.norm2();
     m_kspace[0].axpby( 1.0 / g[0], r, 0.0 );
 

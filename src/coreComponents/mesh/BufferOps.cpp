@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -78,7 +78,7 @@ localIndex Unpack( buffer_unit_type const * & buffer,
                    ElementRegionManager const * const elementRegionManager,
                    bool const clearFlag )
 {
-  GEOSX_MARK_FUNCTION_TAG( "Unpack OrderedVariableToManyElementRelation" );
+  GEOSX_MARK_SCOPE( "Unpack OrderedVariableToManyElementRelation" );
 
   localIndex sizeOfUnpackedChars = 0;
 
@@ -208,7 +208,7 @@ localIndex Unpack( buffer_unit_type const * & buffer,
                    ElementRegionManager const * const elementRegionManager,
                    bool const clearFlag )
 {
-  GEOSX_MARK_FUNCTION_TAG( "Unpack FixedToManyElementRelation" );
+  GEOSX_MARK_SCOPE( "Unpack FixedToManyElementRelation" );
 
   localIndex sizeOfUnpackedChars = 0;
 

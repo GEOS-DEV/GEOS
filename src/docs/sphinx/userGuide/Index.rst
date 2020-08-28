@@ -13,13 +13,15 @@ Welcome to the GEOSX user guide.
 
    /coreComponents/constitutive/docs/Constitutive
 
-   /coreComponents/managers/docs/NumericalMethodsManager
-
    /coreComponents/managers/docs/EventManager
+
+   /coreComponents/managers/docs/TasksManager
 
    /coreComponents/managers/docs/FunctionManager
 
    /coreComponents/linearAlgebra/docs/LinearSolvers.rst
+
+   /coreComponents/managers/docs/NumericalMethodsManager
 
    /coreComponents/mpiCommunications/docs/SpatialPartition.rst
 
@@ -27,5 +29,5 @@ Welcome to the GEOSX user guide.
 
    /coreComponents/fileIO/doc/InputValidation.rst
 
-   /coreComponents/python/modules/pygeos_package/pygeos/pygeos_documentation
+   /coreComponents/python/modules/geosx_xml_tools_package/geosx_xml_tools/geosx_xml_tools_documentation
 

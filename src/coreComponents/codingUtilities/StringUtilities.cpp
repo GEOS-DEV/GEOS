@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -35,7 +35,7 @@ string_array Tokenize( const std::string & str, const std::string & delimiters )
 
   if( str.length() == 0 )
   {
-    tokens.push_back( str );
+    tokens.emplace_back( str );
   }
   else
   {
@@ -56,10 +56,10 @@ string_array Tokenize( const std::string & str, const std::string & delimiters )
       size_t newPos = lastPos;
       while( (newPos=str.find_first_of( delimiters, lastPos )) != std::string::npos )
       {
-        tokens.push_back( str.substr( lastPos, newPos-lastPos ));
+        tokens.emplace_back( str.substr( lastPos, newPos-lastPos ));
         lastPos = newPos + 1;
       }
-      tokens.push_back( str.substr( lastPos, str.length()-lastPos ));
+      tokens.emplace_back( str.substr( lastPos, str.length()-lastPos ));
     }
     else
     {
@@ -71,11 +71,11 @@ string_array Tokenize( const std::string & str, const std::string & delimiters )
       size_t newPos = lastPos;
       while( (newPos=str.find_first_of( delimiters, lastPos )) != std::string::npos )
       {
-        tokens.push_back( str.substr( lastPos, newPos-lastPos ));
+        tokens.emplace_back( str.substr( lastPos, newPos-lastPos ));
         lastPos = str.find_first_not_of( delimiters, newPos );
       }
       if( lastPos!= std::string::npos )
-        tokens.push_back( str.substr( lastPos, str.length()-lastPos ));
+        tokens.emplace_back( str.substr( lastPos, str.length()-lastPos ));
 
     }
   }

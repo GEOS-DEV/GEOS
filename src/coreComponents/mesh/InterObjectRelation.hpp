@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -47,18 +47,6 @@ public:
   InterObjectRelation( ARGS && ... args ):
     BASETYPE( std::forward< ARGS >( args )... )
   {}
-
-  /**
-   * @brief Equals operator that sets *this to a single value of any type.
-   * @tparam rTYPE An rtype to call the BASETYPE::operator== with.
-   * @param rhs The rtype oject to assign to the BASETYPE.
-   * @return *this
-   */
-  template< typename rTYPE > InterObjectRelation & operator=( const rTYPE & rhs )
-  {
-    BASETYPE::operator=( rhs );
-    return (*this);
-  }
 
   /**
    * @brief Get a reference to this object cast to BASETYPE const.

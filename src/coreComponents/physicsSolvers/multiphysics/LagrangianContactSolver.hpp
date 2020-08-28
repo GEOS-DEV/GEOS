@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -30,6 +30,7 @@ class SolidMechanicsLagrangianFEM;
 class LagrangianContactSolver : public SolverBase
 {
 public:
+
   LagrangianContactSolver( const std::string & name,
                            Group * const parent );
 
@@ -44,120 +45,113 @@ public:
     return "LagrangianContact";
   }
 
-  virtual void InitializePreSubGroups( Group * const rootGroup ) override;
+  virtual void
+  InitializePreSubGroups( Group * const rootGroup ) override;
 
-  virtual void RegisterDataOnMesh( dataRepository::Group * const MeshBodies ) override final;
+  virtual void
+  RegisterDataOnMesh( dataRepository::Group * const MeshBodies ) override final;
 
-  virtual void SetupDofs( DomainPartition const * const domain,
-                          DofManager & dofManager ) const override;
-
-  virtual void SetupSystem( DomainPartition * const domain,
-                            DofManager & dofManager,
-                            ParallelMatrix & matrix,
-                            ParallelVector & rhs,
-                            ParallelVector & solution,
-                            bool const setSparsity = true ) override;
+  virtual void
+  SetupDofs( DomainPartition const & domain,
+             DofManager & dofManager ) const override;
 
   virtual void
   ImplicitStepSetup( real64 const & time_n,
                      real64 const & dt,
-                     DomainPartition * const domain,
-                     DofManager & dofManager,
-                     ParallelMatrix & matrix,
-                     ParallelVector & rhs,
-                     ParallelVector & solution ) override final;
+                     DomainPartition & domain ) override final;
 
-  virtual void ImplicitStepComplete( real64 const & time_n,
-                                     real64 const & dt,
-                                     DomainPartition * const domain ) override final;
+  virtual void
+  ImplicitStepComplete( real64 const & time_n,
+                        real64 const & dt,
+                        DomainPartition & domain ) override final;
 
-  virtual void AssembleSystem( real64 const time,
-                               real64 const dt,
-                               DomainPartition * const domain,
-                               DofManager const & dofManager,
-                               ParallelMatrix & matrix,
-                               ParallelVector & rhs ) override;
+  virtual void
+  AssembleSystem( real64 const time,
+                  real64 const dt,
+                  DomainPartition & domain,
+                  DofManager const & dofManager,
+                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                  arrayView1d< real64 > const & localRhs ) override;
 
-  virtual void ApplyBoundaryConditions( real64 const time,
-                                        real64 const dt,
-                                        DomainPartition * const domain,
-                                        DofManager const & dofManager,
-                                        ParallelMatrix & matrix,
-                                        ParallelVector & rhs ) override;
+  virtual void
+  ApplyBoundaryConditions( real64 const time,
+                           real64 const dt,
+                           DomainPartition & domain,
+                           DofManager const & dofManager,
+                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                           arrayView1d< real64 > const & localRhs ) override;
 
   virtual real64
-  CalculateResidualNorm( DomainPartition const * const domain,
+  CalculateResidualNorm( DomainPartition const & domain,
                          DofManager const & dofManager,
-                         ParallelVector const & rhs ) override;
+                         arrayView1d< real64 const > const & localRhs ) override;
 
-  virtual void SolveSystem( DofManager const & dofManager,
-                            ParallelMatrix & matrix,
-                            ParallelVector & rhs,
-                            ParallelVector & solution ) override;
+  virtual void
+  SolveSystem( DofManager const & dofManager,
+               ParallelMatrix & matrix,
+               ParallelVector & rhs,
+               ParallelVector & solution ) override;
 
   virtual void
   ApplySystemSolution( DofManager const & dofManager,
-                       ParallelVector const & solution,
+                       arrayView1d< real64 const > const & localSolution,
                        real64 const scalingFactor,
-                       DomainPartition * const domain ) override;
+                       DomainPartition & domain ) override;
 
-  virtual void ResetStateToBeginningOfStep( DomainPartition * const domain ) override;
+  virtual void
+  ResetStateToBeginningOfStep( DomainPartition & domain ) override;
 
-  virtual real64 SolverStep( real64 const & time_n,
-                             real64 const & dt,
-                             int const cycleNumber,
-                             DomainPartition * const domain ) override;
+  virtual real64
+  SolverStep( real64 const & time_n,
+              real64 const & dt,
+              int const cycleNumber,
+              DomainPartition & domain ) override;
 
-  virtual void SetNextDt( real64 const & currentDt,
-                          real64 & nextDt ) override;
+  virtual void
+  SetNextDt( real64 const & currentDt,
+             real64 & nextDt ) override;
 
 
-  virtual real64 ExplicitStep( real64 const & time_n,
-                               real64 const & dt,
-                               integer const cycleNumber,
-                               DomainPartition * const domain ) override;
+  virtual real64
+  ExplicitStep( real64 const & time_n,
+                real64 const & dt,
+                integer const cycleNumber,
+                DomainPartition & domain ) override;
 
-  virtual real64 NonlinearImplicitStep( real64 const & time_n,
-                                        real64 const & dt,
-                                        integer const cycleNumber,
-                                        DomainPartition * const domain,
-                                        DofManager const & dofManager,
-                                        ParallelMatrix & matrix,
-                                        ParallelVector & rhs,
-                                        ParallelVector & solution ) override;
+  virtual real64
+  NonlinearImplicitStep( real64 const & time_n,
+                         real64 const & dt,
+                         integer const cycleNumber,
+                         DomainPartition & domain ) override;
 
-  virtual bool LineSearch( real64 const & time_n,
-                           real64 const & dt,
-                           integer const GEOSX_UNUSED_PARAM( cycleNumber ),
-                           DomainPartition * const domain,
-                           DofManager const & dofManager,
-                           ParallelMatrix & matrix,
-                           ParallelVector & rhs,
-                           ParallelVector const & solution,
-                           real64 const scaleFactor,
-                           real64 & lastResidual ) override;
+  virtual bool
+  LineSearch( real64 const & time_n,
+              real64 const & dt,
+              integer const cycleNumber,
+              DomainPartition & domain,
+              DofManager const & dofManager,
+              CRSMatrixView< real64, globalIndex const > const & localMatrix,
+              arrayView1d< real64 > const & localRhs,
+              arrayView1d< real64 const > const & localSolution,
+              real64 const scaleFactor,
+              real64 & lastResidual ) override;
 
-  void UpdateDeformationForCoupling( DomainPartition * const domain );
+  void UpdateDeformationForCoupling( DomainPartition & domain );
 
-  void AssembleForceResidualDerivativeWrtTraction( DomainPartition * const domain,
+  void AssembleForceResidualDerivativeWrtTraction( DomainPartition & domain,
                                                    DofManager const & dofManager,
-                                                   ParallelMatrix * const matrix,
-                                                   ParallelVector * const rhs );
+                                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                   arrayView1d< real64 > const & localRhs );
 
-  void AssembleTractionResidualDerivativeWrtDisplacementAndTraction( DomainPartition const * const domain,
+  void AssembleTractionResidualDerivativeWrtDisplacementAndTraction( DomainPartition const & domain,
                                                                      DofManager const & dofManager,
-                                                                     ParallelMatrix * const matrix,
-                                                                     ParallelVector * const rhs );
+                                                                     CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                                     arrayView1d< real64 > const & localRhs );
 
-  void AssembleStabilization( DomainPartition const * const domain,
+  void AssembleStabilization( DomainPartition const & domain,
                               DofManager const & dofManager,
-                              ParallelMatrix * const matrix,
-                              ParallelVector * const rhs );
-
-  real64 SplitOperatorStep( real64 const & time_n,
-                            real64 const & dt,
-                            integer const cycleNumber,
-                            DomainPartition * const domain );
+                              CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                              arrayView1d< real64 > const & localRhs );
 
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
@@ -219,10 +213,9 @@ private:
   struct FractureState
   {
     static constexpr integer STICK = 0;    ///< element is closed: no jump across the discontinuity
-    static constexpr integer SLIP = 1;     ///< element is sliding: no normal jump across the discontinuity, but sliding
-                                           ///< is allowed for
-    static constexpr integer NEW_SLIP = 2; ///< element just starts sliding: no normal jump across the discontinuity,
-                                           ///< but sliding is allowed for
+    static constexpr integer SLIP = 1;     ///< element is sliding: no normal jump across the discontinuity, but sliding is allowed for
+    static constexpr integer NEW_SLIP = 2; ///< element just starts sliding: no normal jump across the discontinuity, but sliding is allowed
+                                           ///< for
     static constexpr integer OPEN = 3;     ///< element is open: no constraints are imposed
   };
 
@@ -255,43 +248,36 @@ private:
     return stringState;
   }
 
-  bool CompareFractureStates( integer const & state0, integer const & state1 ) const
-  {
-    if( state0 == state1 )
-    {
-      return true;
-    }
-    else if( state0 == FractureState::NEW_SLIP && state1 == FractureState::SLIP )
-    {
-      return true;
-    }
-    else if( state0 == FractureState::SLIP && state1 == FractureState::NEW_SLIP )
-    {
-      return true;
-    }
-    return false;
-  }
-
-  void ComputeTolerances( DomainPartition * const domain ) const;
-
 public:
 
-  void InitializeFractureState( MeshLevel * const mesh,
-                                string const fieldName ) const;
+  void InitializeFractureState( MeshLevel & mesh,
+                                string const & fieldName ) const;
 
-  void SetFractureStateForElasticStep( DomainPartition * const domain ) const;
+  void SetFractureStateForElasticStep( DomainPartition & domain ) const;
 
-  bool UpdateFractureState( DomainPartition * const domain ) const;
+  bool UpdateFractureState( DomainPartition & domain ) const;
 
-  void SynchronizeFractureState( DomainPartition * const domain ) const;
+  void SynchronizeFractureState( DomainPartition & domain ) const;
 
-  bool IsFractureAllInStickCondition( DomainPartition const * const domain ) const;
+  bool IsFractureAllInStickCondition( DomainPartition const & domain ) const;
 
-  void ComputeFractureStateStatistics( DomainPartition const * const domain,
+  void ComputeFractureStateStatistics( DomainPartition const & domain,
                                        globalIndex & numStick,
                                        globalIndex & numSlip,
                                        globalIndex & numOpen,
                                        bool printAll = false ) const;
+
+  void ComputeTolerances( DomainPartition & domain ) const;
+
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  static bool CompareFractureStates( integer const state0,
+                                     integer const state1 )
+  {
+    return state0 == state1
+           || ( state0 == FractureState::NEW_SLIP && state1 == FractureState::SLIP )
+           || ( state0 == FractureState::SLIP && state1 == FractureState::NEW_SLIP );
+  }
 };
 
 } /* namespace geosx */

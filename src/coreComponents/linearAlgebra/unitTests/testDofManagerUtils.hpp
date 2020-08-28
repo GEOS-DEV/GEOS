@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -32,7 +32,7 @@ namespace testing
  * @param problemManager the target problem manager
  * @param xmlInput       the XML input string
  */
-void setupProblem( ProblemManager * const problemManager, char const * const xmlInput )
+void setupProblemFromXML( ProblemManager * const problemManager, char const * const xmlInput )
 {
   xmlWrapper::xmlDocument xmlDocument;
   xmlWrapper::xmlResult xmlResult = xmlDocument.load_buffer( xmlInput, strlen( xmlInput ) );
@@ -79,13 +79,13 @@ string_array getRegions( MeshLevel const * const mesh, std::vector< string > con
   string_array regions;
   if( !input.empty() )
   {
-    regions.insert( 0, input.data(), input.size() );
+    regions.insert( 0, input.begin(), input.end() );
   }
   else
   {
     mesh->getElemManager()->forElementRegions( [&]( ElementRegionBase const & region )
     {
-      regions.push_back( region.getName() );
+      regions.emplace_back( region.getName() );
     } );
   }
   return regions;
@@ -145,7 +145,6 @@ struct forLocalObjectsImpl
       manager->getReference< array1d< integer > >( ObjectManagerBase::viewKeyStruct::ghostRankString );
 
     array1d< bool > visited( ghostRank.size() );
-    visited = false;
 
     mesh->getElemManager()->forElementSubRegions( regions, [&]( localIndex const, auto const & subRegion )
     {
@@ -268,7 +267,7 @@ void makeSparsityTPFA( MeshLevel const * const mesh,
 
   array1d< globalIndex > localDofIndex( numElem * numComp );
   array2d< real64 > localValues( numElem * numComp, numElem * numComp );
-  localValues = 1.0;
+  localValues.setValues< serialPolicy >( 1.0 );
 
   // Loop over faces and assemble TPFA-style "flux" contributions
   forLocalObjects< DofManager::Location::Face >( mesh, regions, [&]( localIndex const kf )
@@ -325,7 +324,7 @@ void makeSparsityFEM( MeshLevel const * const mesh,
     localIndex const numNode = subRegion.numNodesPerElement();
     array1d< globalIndex > localDofIndex( numNode * numComp );
     array2d< real64 > localValues( numNode * numComp, numNode * numComp );
-    localValues = 1.0;
+    localValues.setValues< serialPolicy >( 1.0 );
 
     for( localIndex k = 0; k < subRegion.size(); ++k )
     {
@@ -382,9 +381,9 @@ void makeSparsityFEM_FVM( MeshLevel const * const mesh,
     array1d< globalIndex > localNodeDofIndex( numNode * numCompNode );
     array1d< globalIndex > localElemDofIndex( numCompElem );
     array2d< real64 > localValues1( numNode * numCompNode, numCompElem );
-    localValues1 = 1.0;
+    localValues1.setValues< serialPolicy >( 1.0 );
     array2d< real64 > localValues2( numCompElem, numNode * numCompNode );
-    localValues2 = 1.0;
+    localValues2.setValues< serialPolicy >( 1.0 );
 
     for( localIndex k = 0; k < subRegion.size(); ++k )
     {
@@ -428,7 +427,7 @@ void makeSparsityMass( MeshLevel const * const mesh,
 
   array1d< globalIndex > localDofIndex( numComp );
   array2d< real64 > localValues( numComp, numComp );
-  localValues = 1.0;
+  localValues.setValues< serialPolicy >( 1.0 );
 
   forLocalObjects< DofManager::Location::Elem >( mesh, regions, [&]( auto const & idx )
   {
@@ -471,7 +470,7 @@ void makeSparsityFlux( MeshLevel const * const mesh,
     localIndex const numFace = subRegion.numFacesPerElement();
     array1d< globalIndex > localDofIndex( numFace * numComp );
     array2d< real64 > localValues( numFace * numComp, numFace * numComp );
-    localValues = 1.0;
+    localValues.setValues< serialPolicy >( 1.0 );
 
     for( localIndex k = 0; k < subRegion.size(); ++k )
     {

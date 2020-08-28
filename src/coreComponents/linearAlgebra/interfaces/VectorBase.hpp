@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -21,6 +21,7 @@
 
 #include "linearAlgebra/common.hpp"
 #include "mpiCommunications/MpiWrapper.hpp"
+#include "rajaInterface/GEOS_RAJA_Interface.hpp"
 
 namespace geosx
 {
@@ -148,7 +149,7 @@ protected:
    * @param localValues local data to put into vector
    * @param comm MPI communicator to use
    */
-  virtual void create( arraySlice1d< real64 const > const & localValues, MPI_Comm const & comm ) = 0;
+  virtual void create( arrayView1d< real64 const > const & localValues, MPI_Comm const & comm ) = 0;
 
   ///@}
 
@@ -406,6 +407,19 @@ protected:
    * @return pointer to local vector data
    */
   virtual real64 * extractLocalVector() = 0;
+
+  /**
+   * @brief Extract local solution by copying into a user-provided array
+   * @param localVector the array view to write to (must be properly sized)
+   */
+  virtual void extract( arrayView1d< real64 > const & localVector ) const
+  {
+    real64 const * const data = extractLocalVector();
+    forAll< parallelHostPolicy >( localSize(), [=] ( localIndex const k )
+    {
+      localVector[k] = data[k];
+    } );
+  }
 
   /**
    * @brief Get the communicator used by this vector

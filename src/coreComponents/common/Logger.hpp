@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -47,7 +47,7 @@
  */
 #define GEOSX_LOG_RANK_0_IF( EXP, msg ) \
   do { \
-    if( geosx::logger::internal::rank == 0 && EXP ) \
+    if( ::geosx::logger::internal::rank == 0 && EXP ) \
     { \
       std::ostringstream oss; \
       oss << msg; \
@@ -71,7 +71,7 @@
     if( EXP ) \
     { \
       std::ostringstream oss; \
-      oss << "Rank " << geosx::logger::internal::rankString << ": " << msg; \
+      oss << "Rank " << ::geosx::logger::internal::rankString << ": " << msg; \
       *logger::internal::rankStream << oss.str() << std::endl; \
     } \
   } while( false )
@@ -93,7 +93,7 @@
  * @param EXP an expression that will be evaluated as a predicate
  * @param msg a message to log (any expression that can be stream inserted)
  */
-#define GEOSX_ERROR_IF( EXP, msg ) LVARRAY_ERROR_IF( EXP, "***** Rank " << geosx::logger::internal::rankString << ": " << msg )
+#define GEOSX_ERROR_IF( EXP, msg ) LVARRAY_ERROR_IF( EXP, "***** Rank " << ::geosx::logger::internal::rankString << ": " << msg )
 
 /**
  * @brief Raise a hard error and terminate the program.
@@ -106,7 +106,7 @@
  * @param EXP an expression that will be evaluated as a predicate
  * @param msg a message to log (any expression that can be stream inserted)
  */
-#define GEOSX_ASSERT_MSG( EXP, msg ) LVARRAY_ASSERT_MSG( EXP, "***** Rank " << geosx::logger::internal::rankString << ": " << msg )
+#define GEOSX_ASSERT_MSG( EXP, msg ) LVARRAY_ASSERT_MSG( EXP, "***** Rank " << ::geosx::logger::internal::rankString << ": " << msg )
 
 /**
  * @brief Assert a condition in debug builds.
@@ -146,7 +146,7 @@
  * @param rhs expression to be evaluated and used as right-hand side in comparison
  * @param msg a message to log (any expression that can be stream inserted)
  */
-#define GEOSX_ERROR_IF_EQ_MSG( lhs, rhs, msg ) LVARRAY_ERROR_IF_EQ_MSG( lhs, rhs, "***** Rank " << geosx::logger::internal::rankString << ": " << msg )
+#define GEOSX_ERROR_IF_EQ_MSG( lhs, rhs, msg ) LVARRAY_ERROR_IF_EQ_MSG( lhs, rhs, "***** Rank " << ::geosx::logger::internal::rankString << ": " << msg )
 
 /**
  * @brief Raise a hard error if two values are equal.
@@ -161,7 +161,7 @@
  * @param rhs expression to be evaluated and used as right-hand side in comparison
  * @param msg a message to log (any expression that can be stream inserted)
  */
-#define GEOSX_ERROR_IF_NE_MSG( lhs, rhs, msg ) LVARRAY_ERROR_IF_NE_MSG( lhs, rhs, "***** Rank " << geosx::logger::internal::rankString << ": " << msg )
+#define GEOSX_ERROR_IF_NE_MSG( lhs, rhs, msg ) LVARRAY_ERROR_IF_NE_MSG( lhs, rhs, "***** Rank " << ::geosx::logger::internal::rankString << ": " << msg )
 
 /**
  * @brief Raise a hard error if two values are not equal.
@@ -176,7 +176,7 @@
  * @param rhs expression to be evaluated and used as right-hand side in comparison
  * @param msg a message to log (any expression that can be stream inserted)
  */
-#define GEOSX_ERROR_IF_GT_MSG( lhs, rhs, msg ) LVARRAY_ERROR_IF_GT_MSG( lhs, rhs, "***** Rank " << geosx::logger::internal::rankString << ": " << msg )
+#define GEOSX_ERROR_IF_GT_MSG( lhs, rhs, msg ) LVARRAY_ERROR_IF_GT_MSG( lhs, rhs, "***** Rank " << ::geosx::logger::internal::rankString << ": " << msg )
 
 /**
  * @brief Raise a hard error if one value compares greater than the other.
@@ -191,7 +191,7 @@
  * @param rhs expression to be evaluated and used as right-hand side in comparison
  * @param msg a message to log (any expression that can be stream inserted)
  */
-#define GEOSX_ERROR_IF_GE_MSG( lhs, rhs, msg ) LVARRAY_ERROR_IF_GE_MSG( lhs, rhs, "***** Rank " << geosx::logger::internal::rankString << ": " << msg )
+#define GEOSX_ERROR_IF_GE_MSG( lhs, rhs, msg ) LVARRAY_ERROR_IF_GE_MSG( lhs, rhs, "***** Rank " << ::geosx::logger::internal::rankString << ": " << msg )
 
 /**
  * @brief Raise a hard error if one value compares greater than or equal to the other.
@@ -206,7 +206,7 @@
  * @param rhs expression to be evaluated and used as right-hand side in comparison
  * @param msg a message to log (any expression that can be stream inserted)
  */
-#define GEOSX_ERROR_IF_LT_MSG( lhs, rhs, msg ) LVARRAY_ERROR_IF_LT_MSG( lhs, rhs, "***** Rank " << geosx::logger::internal::rankString << ": " << msg )
+#define GEOSX_ERROR_IF_LT_MSG( lhs, rhs, msg ) LVARRAY_ERROR_IF_LT_MSG( lhs, rhs, "***** Rank " << ::geosx::logger::internal::rankString << ": " << msg )
 
 /**
  * @brief Raise a hard error if one value compares less than the other.
@@ -221,7 +221,7 @@
  * @param rhs expression to be evaluated and used as right-hand side in comparison
  * @param msg a message to log (any expression that can be stream inserted)
  */
-#define GEOSX_ERROR_IF_LE_MSG( lhs, rhs, msg ) LVARRAY_ERROR_IF_LE_MSG( lhs, rhs, "***** Rank " << geosx::logger::internal::rankString << ": " << msg )
+#define GEOSX_ERROR_IF_LE_MSG( lhs, rhs, msg ) LVARRAY_ERROR_IF_LE_MSG( lhs, rhs, "***** Rank " << ::geosx::logger::internal::rankString << ": " << msg )
 
 /**
  * @brief Raise a hard error if one value compares less than or equal to the other.
@@ -236,7 +236,7 @@
  * @param rhs expression to be evaluated and used as right-hand side in comparison
  * @param msg a message to log (any expression that can be stream inserted)
  */
-#define GEOSX_ASSERT_EQ_MSG( lhs, rhs, msg ) LVARRAY_ASSERT_EQ_MSG( lhs, rhs, "***** Rank " << geosx::logger::internal::rankString << ": " << msg )
+#define GEOSX_ASSERT_EQ_MSG( lhs, rhs, msg ) LVARRAY_ASSERT_EQ_MSG( lhs, rhs, "***** Rank " << ::geosx::logger::internal::rankString << ": " << msg )
 
 /**
  * @brief Assert that two values compare equal in debug builds.
@@ -266,7 +266,7 @@
  * @param rhs expression to be evaluated and used as right-hand side in comparison
  * @param msg a message to log (any expression that can be stream inserted)
  */
-#define GEOSX_ASSERT_GT_MSG( lhs, rhs, msg ) LVARRAY_ASSERT_GT_MSG( lhs, rhs, "***** Rank " << geosx::logger::internal::rankString << ": " << msg )
+#define GEOSX_ASSERT_GT_MSG( lhs, rhs, msg ) LVARRAY_ASSERT_GT_MSG( lhs, rhs, "***** Rank " << ::geosx::logger::internal::rankString << ": " << msg )
 
 /**
  * @brief Assert that one value compares greater than the other in debug builds.
@@ -281,7 +281,7 @@
  * @param rhs expression to be evaluated and used as right-hand side in comparison
  * @param msg a message to log (any expression that can be stream inserted)
  */
-#define GEOSX_ASSERT_GE_MSG( lhs, rhs, msg ) LVARRAY_ASSERT_GE_MSG( lhs, rhs, "***** Rank " << geosx::logger::internal::rankString << ": " << msg )
+#define GEOSX_ASSERT_GE_MSG( lhs, rhs, msg ) LVARRAY_ASSERT_GE_MSG( lhs, rhs, "***** Rank " << ::geosx::logger::internal::rankString << ": " << msg )
 
 /**
  * @brief Assert that one value compares greater than or equal to the other in debug builds.

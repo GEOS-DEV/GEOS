@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -80,7 +80,7 @@ public:
    * @name viewKeyStruct/groupKeyStruct
    */
   ///@{
-
+  /// @cond DO_NOT_DOCUMENT
   struct viewKeyStruct
   {
     static constexpr auto maxTimeString = "maxTime";
@@ -98,13 +98,13 @@ public:
     dataRepository::ViewKey maxCycle = { "maxCycle" };
     dataRepository::ViewKey currentSubEvent = { "currentSubEvent" };
   } viewKeys;
-
+  /// @endcond
   ///@}
 
-  /// Catalog interface
+  /// Alias to access the object catalog for EventBase derived types.
   using CatalogInterface = dataRepository::CatalogInterface< EventBase, std::string const &, Group * const >;
 
-  /// Catalog interface
+  /// @copydoc dataRepository::Group::GetCatalog()
   static CatalogInterface::CatalogType & GetCatalog();
 
 private:

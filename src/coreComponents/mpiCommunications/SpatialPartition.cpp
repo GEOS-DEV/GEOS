@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -223,27 +223,22 @@ void SpatialPartition::AddNeighbors( const unsigned int idim,
 
 void SpatialPartition::AddNeighborsMetis( SortedArray< globalIndex > & neighborList )
 {
-  SortedArray< globalIndex >::iterator itNeighbor = neighborList.begin();
-  for(; itNeighbor != neighborList.end(); itNeighbor++ )
+  for( globalIndex const gid : neighborList )
   {
     m_neighbors.push_back( NeighborCommunicator());
-    m_neighbors.back().SetNeighborRank( LvArray::integerConversion< int >( *itNeighbor ) );
+    m_neighbors.back().SetNeighborRank( LvArray::integerConversion< int >( gid ) );
 
-//    m_neighbors.back().Initialize( LvArray::integerConversion<int>(*itNeighbor), this->m_rank, this->m_size );
+//    m_neighbors.back().Initialize( LvArray::integerConversion<int>(gid), this->m_rank, this->m_size );
   }
 }
 
 
-void SpatialPartition::GetPartitionBoundingBox( R1Tensor & xmin, R1Tensor & xmax )
-{
-  xmin = m_xBoundingBoxMin;
-  xmax = m_xBoundingBoxMax;
-}
+//void SpatialPartition::GetPartitionBoundingBox( R1Tensor & xmin, R1Tensor & xmax )
+//{
+//  xmin = m_xBoundingBoxMin;
+//  xmax = m_xBoundingBoxMax;
+//}
 
-/**
- * @param min global minimum spatial dimensions
- * @param max global maximum spatial dimensions
- **/
 void SpatialPartition::setSizes( const R1Tensor & min, const R1Tensor & max )
 {
 
@@ -307,10 +302,9 @@ void SpatialPartition::setSizes( const R1Tensor & min, const R1Tensor & max )
       m_max( i ) = min( i ) + (m_coords( i ) + 1) * m_blockSize( i );
 
       m_PartitionLocations[i].resize( nlocl );
-      localIndex j = 0;
-      for( array1d< real64 >::iterator it = m_PartitionLocations[i].begin(); it != m_PartitionLocations[i].end(); ++it, ++j )
+      for( localIndex j = 0; j < m_PartitionLocations[ i ].size(); ++j )
       {
-        *it = (j+1) * m_blockSize( i );
+        m_PartitionLocations[ i ][ j ] = (j+1) * m_blockSize( i );
       }
     }
     else if( nlocl == m_PartitionLocations[i].size() )
@@ -339,16 +333,16 @@ void SpatialPartition::setSizes( const R1Tensor & min, const R1Tensor & max )
   }
 }
 
-void SpatialPartition::setGlobalDomainSizes( const R1Tensor & min, const R1Tensor & max )
-{
-  // global values
-  // without updating partition sizes.  We need this in mesh generator when we
-  // have extension zones.
-  m_gridMin = min;
-  m_gridMax = max;
-  m_gridSize = max;
-  m_gridSize -= min;
-}
+//void SpatialPartition::setGlobalDomainSizes( const R1Tensor & min, const R1Tensor & max )
+//{
+//  // global values
+//  // without updating partition sizes.  We need this in mesh generator when we
+//  // have extension zones.
+//  m_gridMin = min;
+//  m_gridMax = max;
+//  m_gridSize = max;
+//  m_gridSize -= min;
+//}
 
 void SpatialPartition::SetPartitionGeometricalBoundary( R1Tensor & min, R1Tensor & max )
 {

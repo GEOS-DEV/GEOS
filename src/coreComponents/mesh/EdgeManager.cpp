@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -151,7 +151,7 @@ void createEdgesByLowestNode( ArrayOfArraysView< localIndex const > const & face
         std::swap( node0, node1 );
 
       // And append the edge to edgesByLowestNode.
-      edgesByLowestNode.atomicAppendToArray( RAJA::auto_atomic{}, node0, EdgeBuilder( node1, faceID, a ) );
+      edgesByLowestNode.emplaceBackAtomic< parallelHostAtomic >( node0, node1, faceID, a );
     }
   } );
 
@@ -544,7 +544,7 @@ void EdgeManager::SetDomainBoundaryObjects( ObjectManagerBase const * const refe
 
   // get the "isDomainBoundary" field from for *this, and set it to zero
   array1d< integer > & isEdgeOnDomainBoundary = this->getReference< array1d< integer > >( viewKeys.domainBoundaryIndicatorString );
-  isEdgeOnDomainBoundary = 0;
+  isEdgeOnDomainBoundary.setValues< serialPolicy >( 0 );
 
   ArrayOfArraysView< localIndex const > const & faceToEdgeMap = faceManager->edgeList().toViewConst();
 
@@ -596,7 +596,7 @@ void EdgeManager::SetIsExternal( FaceManager const * const faceManager )
   ArrayOfArraysView< localIndex const > const & faceToEdges = faceManager->edgeList().toViewConst();
 
   // get the "isExternal" field from for *this, and set it to zero
-  m_isExternal = 0;
+  m_isExternal.setValues< serialPolicy >( 0 );
 
   // loop through all faces
   for( localIndex kf=0; kf<faceManager->size(); ++kf )
@@ -653,13 +653,13 @@ void EdgeManager::ConnectivityFromGlobalToLocal( const SortedArray< localIndex >
 {
 
 
-  for( SortedArray< localIndex >::const_iterator ke=indices.begin(); ke!=indices.end(); ++ke )
+  for( localIndex const ke : indices )
   {
     for( localIndex a=0; a<m_toNodesRelation.size( 1 ); ++a )
     {
-      const globalIndex gnode = m_toNodesRelation( *ke, a );
+      const globalIndex gnode = m_toNodesRelation( ke, a );
       const localIndex lnode = stlMapLookup( nodeGlobalToLocal, gnode );
-      m_toNodesRelation( *ke, a ) = lnode;
+      m_toNodesRelation( ke, a ) = lnode;
     }
   }
 

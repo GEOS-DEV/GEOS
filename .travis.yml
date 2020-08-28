@@ -2,7 +2,7 @@ language: minimal
 
 env:
   global:
-  - GEOSX_TPL_TAG=112-421
+  - GEOSX_TPL_TAG=121-439
 
 # The integrated test repository contains large data (using git lfs) and we do not use them here.
 # To save time (and money) we do not let travis automatically clone all our (lfs) subrepositories and do it by hand.
@@ -10,8 +10,8 @@ git:
   submodules: false
 geosx_before_script: &geosx_before_script
   before_script:
-  - git submodule update --init --recursive src/coreComponents/LvArray
   - git submodule update --init --recursive src/cmake/blt
+  - git submodule update --init --recursive src/coreComponents/LvArray
   - git submodule update --init --recursive src/externalComponents/PVTPackage
   - git submodule update --init src/externalComponents/PAMELA
   - git submodule update --init --recursive src/coreComponents/fileIO/coupling/hdf5_interface

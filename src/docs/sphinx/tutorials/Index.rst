@@ -1,28 +1,34 @@
+.. _Tutorials:
+
+
 Tutorials
 =================================
 
-The easiest way to learn to use GEOSX is through a few worked examples.
-Here, we have included several tutorials showing how to solve some simple but common problems.
-After working through these examples, you should have a good feel for the overall
-structure of the code and the important components that go into defining a simulation.
+The easiest way to learn to use GEOSX is through worked examples.
+Here, we have included tutorials showing how to run some common problems.
+After working through these examples, you should have a good understanding of how to set up and solve your own models.
 
-These tutorials are meant as a supplement to the User Guide, not a replacement. 
-The guide provides a comprehensive description of all options
-available within the code, as well as background theory for key methods.  
-
-We suggest new users begin with the tutorials, and then start exploring sections of 
-the User Guide most relevant to their needs.  Those interested in developing within
-the GEOSX framework should also read the Developer Guide.
+Note that these tutorials are intended to be followed in sequence, as each step introduces a few new skills.
+Most of the tutorial models are also quite small, so that large computational resources are not required.
 
 .. toctree::
    :maxdepth: 1
 
-   singlePhaseFlow/Tutorial
+   step01/Tutorial
 
-   elasticity/Tutorial
+   step02/Tutorial
 
-   compositionalFlow/Tutorial
+   step03/Tutorial
 
-   poroElasticity/Tutorial
+   step04/Tutorial
 
-   fieldCase/Tutorial
+   step05/Tutorial
+
+   step06/Tutorial
+
+   step07/Tutorial
+
+   step08/Tutorial
+
+   step09/Tutorial
+

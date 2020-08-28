@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -21,7 +21,7 @@
 
 #include "common/DataTypes.hpp"
 #include "common/DataLayouts.hpp"
-#include "LvArray/src/streamIO.hpp"
+#include "LvArray/src/output.hpp"
 #include "LvArray/src/tensorOps.hpp"
 
 namespace geosx
@@ -80,6 +80,8 @@ array1d< R1Tensor > orderPointsCCW( array1d< R1Tensor > const & points,
  *          and if (- areaTolerance <= area <= areaTolerance), the area is set to zero
  */
 template< typename CENTER_TYPE, typename NORMAL_TYPE >
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
 real64 Centroid_3DPolygon( arraySlice1d< localIndex const > const pointsIndices,
                            arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & points,
                            CENTER_TYPE && center,
@@ -124,10 +126,13 @@ real64 Centroid_3DPolygon( arraySlice1d< localIndex const > const pointsIndices,
   {
     for( localIndex a=0; a<pointsIndices.size(); ++a )
     {
+#if !defined(__CUDA_ARCH__)
       GEOSX_LOG_RANK( "Points: " << points[ pointsIndices[ a ] ] << " " << pointsIndices[ a ] );
+#endif
     }
-
+#if !defined(__CUDA_ARCH__)
     GEOSX_ERROR( "Negative area found : " << area );
+#endif
   }
   else
   {

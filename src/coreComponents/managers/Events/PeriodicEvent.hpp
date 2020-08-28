@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -32,23 +32,27 @@ namespace geosx
 class PeriodicEvent : public EventBase
 {
 public:
-  /// Main constructor
+
+  /// @copydoc geosx::dataRepository::Group::Group( std::string const & name, Group * const parent )
   PeriodicEvent( const std::string & name,
                  Group * const parent );
 
   /// Destructor
   virtual ~PeriodicEvent() override;
 
-  /// Catalog name interface
+  /**
+   * @brief Catalog name interface.
+   * @return This type's catalog name.
+   **/
   static string CatalogName() { return "PeriodicEvent"; }
 
   /**
-   * Estimate the expected number of cycles until an event is expected to trigger.
-   * The event frequency can be specified in terms of:
-   *   - time (timeFrequency > 0, units = seconds)
-   *   - or cycle (cycleFrequency >= 0, units = cycles)
-   *
-   * In addition, there is an optional function input that will be called if the
+   * @copydoc EventBase::EstimateEventTiming()
+   * @note Estimate the expected number of cycles until an event is expected to trigger.
+   *       The event frequency can be specified in terms of:
+   *        - time (timeFrequency > 0, units = seconds)
+   *        - or cycle (cycleFrequency >= 0, units = cycles)
+   * @note In addition, there is an optional function input that will be called if the
    * the nominal forecast (based on timing) is zero.
    */
   virtual void EstimateEventTiming( real64 const time,
@@ -57,6 +61,11 @@ public:
                                     dataRepository::Group * domain ) override;
 
   /**
+   * @brief Determine if an optional function f should be called, and call it if so.
+   * @param time The current simulation time.
+   * @param dt The current simulation time increment.
+   * @param cycle The current simulation cycle.
+   * @param domain The DomainPartition upcast to a Group.
    * If the event forecast is zero, and an optional function (f) is specified, then
    * this method will be called to see if the event should be triggered or ignored.
    * For example, this could be used to periodically check the condition of the mesh,
@@ -78,14 +87,14 @@ public:
                                        dataRepository::Group * domain );
 
   /**
+   * @copydoc EventBase::GetEventTypeDtRequest()
    * Grab the next time-step.  If requested, then limit the requested
    * dt to exactly match the time frequency
    */
   virtual real64 GetEventTypeDtRequest( real64 const time ) override;
 
-
-  /*
-   * This method is called as the code exits the main run loop
+  /**
+   * @copydoc ExecutableGroup::Cleanup()
    */
   virtual void Cleanup( real64 const time_n,
                         integer const cycleNumber,
@@ -97,6 +106,7 @@ public:
   /// A pointer to an optional function
   dataRepository::Group * m_functionTarget;
 
+  /// @cond DO_NOT_DOCUMENT
   struct viewKeyStruct
   {
     static constexpr auto timeFrequencyString = "timeFrequency";
@@ -109,7 +119,6 @@ public:
     static constexpr auto functionStatOptionString = "stat";
     static constexpr auto eventThresholdString = "threshold";
 
-
     dataRepository::ViewKey timeFrequency = { "timeFrequency" };
     dataRepository::ViewKey cycleFrequency = { "cycleFrequency" };
     dataRepository::ViewKey targetExactTimestep = { "targetExactTimestep" };
@@ -120,17 +129,24 @@ public:
     dataRepository::ViewKey functionStatOption = { "stat" };
     dataRepository::ViewKey eventThreshold = { "threshold" };
   } periodicEventViewKeys;
+  /// @endcond
 
+  /// The event time frequency
   real64 m_timeFrequency;
+  /// The event cycle frequency
   integer m_cycleFrequency;
+  /// Whether to target the exact timestep
   integer m_targetExactTimestep;
+  /// The optional function's name
   string m_functionName;
+  /// The name of the optional function input object
   string m_functionInputObject;
+  /// The name of the optional function input set
   string m_functionInputSetname;
+  /// The optional funciton's statistic option
   integer m_functionStatOption;
+  /// The event threshold
   real64 m_eventThreshold;
-
-
 
 };
 

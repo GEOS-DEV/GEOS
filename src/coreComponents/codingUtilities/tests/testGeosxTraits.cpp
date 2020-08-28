@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -206,9 +206,44 @@ TEST( testGeosxTraits, is_string )
 
 TEST( testGeosxTraits, is_array )
 {
-  static_assert( is_array< LvArray::Array< int, 1, camp::make_idx_seq< 0 >::type, int > >, "Should be true." );
+  static_assert( is_array< array1d< int > >, "Should be true." );
 
   static_assert( !is_array< int >, "Should be false." );
   static_assert( !is_array< double >, "Should be false." );
   static_assert( !is_array< void >, "Should be false." );
+}
+
+
+struct Foo
+{
+  Foo & operator=( Foo const & ) = default;
+  int m_value;
+};
+
+struct Bar
+{
+  Bar & operator=( Bar const & ) = delete;
+  int m_value;
+};
+
+enum enumFoo
+{
+  blah,
+  yada
+};
+
+enum class enumClassFoo
+{
+  blah,
+  yada
+};
+
+TEST( testGeosxTraits, hasCopyAssignment )
+{
+  static_assert( hasCopyAssignmentOp< enumFoo >, "Should be true." );
+  static_assert( hasCopyAssignmentOp< enumClassFoo >, "Should be true." );
+  static_assert( hasCopyAssignmentOp< int >, "Should be true." );
+  static_assert( hasCopyAssignmentOp< real64 >, "Should be true." );
+  static_assert( hasCopyAssignmentOp< Foo >, "Should be true." );
+  static_assert( !hasCopyAssignmentOp< Bar >, "Should be false." );
 }

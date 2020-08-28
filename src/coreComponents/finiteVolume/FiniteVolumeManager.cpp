@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -20,9 +20,7 @@
 #include "FiniteVolumeManager.hpp"
 
 #include "finiteVolume/FluxApproximationBase.hpp"
-#include "managers/DomainPartition.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
-#include "meshUtilities/ComputationalGeometry.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
 
 namespace geosx
@@ -57,14 +55,14 @@ void FiniteVolumeManager::ExpandObjectCatalogs()
 }
 
 
-FluxApproximationBase const * FiniteVolumeManager::getFluxApproximation( std::string const & name ) const
+FluxApproximationBase const & FiniteVolumeManager::getFluxApproximation( std::string const & name ) const
 {
-  return this->GetGroup< FluxApproximationBase >( name );
+  return getGroupReference< FluxApproximationBase >( name );
 }
 
-FluxApproximationBase * FiniteVolumeManager::getFluxApproximation( std::string const & name )
+FluxApproximationBase & FiniteVolumeManager::getFluxApproximation( std::string const & name )
 {
-  return this->GetGroup< FluxApproximationBase >( name );
+  return getGroupReference< FluxApproximationBase >( name );
 }
 
 

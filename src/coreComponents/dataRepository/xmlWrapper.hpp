@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -22,7 +22,9 @@
 // Source includes
 #include "common/DataTypes.hpp"
 #include "dataRepository/DefaultValue.hpp"
-#include "LvArray/src/streamIO.hpp"
+#include "rajaInterface/GEOS_RAJA_Interface.hpp"
+#include "LvArray/src/output.hpp"
+#include "LvArray/src/input.hpp"
 
 // TPL includes
 #include <pugixml.hpp>
@@ -142,7 +144,7 @@ public:
   template< typename T, int NDIM, typename PERMUTATION >
   static std::enable_if_t< traits::CanStreamInto< std::istringstream, T > >
   StringToInputVariable( Array< T, NDIM, PERMUTATION > & array, string const & value )
-  { LvArray::stringToArray( array, value ); }
+  { LvArray::input::stringToArray( array, value ); }
 
   ///@}
 
@@ -181,7 +183,7 @@ public:
     else
     {
       // set the value to the default value
-      rval = defVal;
+      equate( rval, defVal );
     }
     return true;
   }
@@ -255,11 +257,35 @@ public:
   static std::enable_if_t< !canParseVariable< T >, bool >
   ReadAttributeAsType( T &, string const &, xmlNode const &, U const & )
   {
-    GEOSX_ERROR( "Cannot parse the given type " << LvArray::demangleType< T >() );
+    GEOSX_ERROR( "Cannot parse the given type " << LvArray::system::demangleType< T >() );
     return false;
   }
 
   ///@}
+
+private:
+
+  /**
+   * @brief Set @p lhs equal to @p rhs.
+   * @tparam T The type of @p lhs and @p rhs.
+   * @param lhs The value to set to @p rhs.
+   * @param rhs The value to set @p lhs to.
+   */
+  template< typename T >
+  static void equate( T & lhs, T const & rhs )
+  { lhs = rhs; }
+
+  /**
+   * @brief Set the entries of @p lhs equal to @p rhs.
+   * @tparam T The type of the values in @p lhs and @p rhs.
+   * @tparam NDIM The dimension of @p lhs.
+   * @tparam PERM The permutation of @p rhs.
+   * @param lhs The array of value to set to @p rhs.
+   * @param rhs The value to set @p lhs to.
+   */
+  template< typename T, int NDIM, typename PERM >
+  static void equate( Array< T, NDIM, PERM > const & lhs, T const & rhs )
+  { lhs.template setValues< serialPolicy >( rhs ); }
 
 };
 

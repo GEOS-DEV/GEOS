@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -70,13 +70,16 @@ public:
     Base(),
     problemManager( std::make_unique< ProblemManager >( "Problem", nullptr ) ),
     dofManager( "test" )
-  {
-    setupProblem( problemManager.get(), xmlInput );
-    mesh = problemManager->getDomainPartition()->getMeshBody( 0 )->getMeshLevel( 0 );
-    dofManager.setMesh( problemManager->getDomainPartition(), 0, 0 );
-  }
+  {}
 
 protected:
+
+  void SetUp() override
+  {
+    setupProblemFromXML( problemManager.get(), xmlInput );
+    mesh = problemManager->getDomainPartition()->getMeshBody( 0 )->getMeshLevel( 0 );
+    dofManager.setMesh( *problemManager->getDomainPartition(), 0, 0 );
+  }
 
   std::unique_ptr< ProblemManager > const problemManager;
   MeshLevel * mesh;
@@ -104,7 +107,7 @@ void checkLocalDofNumbers( MeshLevel const * const mesh,
   {
     SCOPED_TRACE( "idx = " + std::to_string( idx ) );
     EXPECT_GE( dofIndex[idx], 0 );
-    dofNumbers.push_back( dofIndex[idx] );
+    dofNumbers.emplace_back( dofIndex[idx] );
   } );
 }
 
@@ -129,7 +132,7 @@ void checkLocalDofNumbers< DofManager::Location::Elem >( MeshLevel const * const
   {
     globalIndex const dofIndex = dofNumber[idx[0]][idx[1]][idx[2]];
     EXPECT_GE( dofIndex, 0 );
-    dofNumbers.push_back( dofIndex );
+    dofNumbers.emplace_back( dofIndex );
   } );
 }
 
@@ -254,7 +257,7 @@ void DofManagerIndicesTest::test( std::vector< FieldDesc > fields )
       {
         EXPECT_EQ( dofNumbers.front(), allDofNumbers.back() + lastNumComp );
       }
-      allDofNumbers.insert( allDofNumbers.size(), dofNumbers.data(), dofNumbers.size() );
+      allDofNumbers.insert( allDofNumbers.size(), dofNumbers.begin(), dofNumbers.end() );
     }
     lastNumComp = f.components;
   }

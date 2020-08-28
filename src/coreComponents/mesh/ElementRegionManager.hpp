@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -26,8 +26,9 @@
 #include "managers/ObjectManagerBase.hpp"
 #include "dataRepository/ReferenceWrapper.hpp"
 #include "FaceElementRegion.hpp"
+#include "EmbeddedSurfaceRegion.hpp"
 #include "fileIO/schema/schemaUtilities.hpp"
-#include "wells/WellElementRegion.hpp"
+#include "WellElementRegion.hpp"
 #include "EmbeddedSurfaceRegion.hpp"
 
 namespace geosx
@@ -749,8 +750,8 @@ public:
    * @return ElementViewAccessor that contains VIEWTYPE data
    */
   template< typename VIEWTYPE, typename LHS=VIEWTYPE >
-  ElementViewAccessor< LHS > ConstructViewAccessor( string const & name,
-                                                    string const & neighborName = string() ) const;
+  ElementViewAccessor< LHS >
+  ConstructViewAccessor( string const & name, string const & neighborName = string() ) const;
 
   /**
    * @brief This is a function to construct a ElementViewAccessor to access the data registered on the mesh.
@@ -760,8 +761,20 @@ public:
    * @return ElementViewAccessor that contains VIEWTYPE data
    */
   template< typename VIEWTYPE, typename LHS=VIEWTYPE >
-  ElementViewAccessor< LHS > ConstructViewAccessor( string const & name,
-                                                    string const & neighborName = string() );
+  ElementViewAccessor< LHS >
+  ConstructViewAccessor( string const & name, string const & neighborName = string() );
+
+  /**
+   * @brief This is a function to construct a ElementViewAccessor to access array data registered on the mesh.
+   * @tparam T data type
+   * @tparam NDIM number of array dimensions
+   * @param name view name of the data
+   * @param neighborName neighbor data name
+   * @return ElementViewAccessor that contains ArrayView<T const, NDIM> of data
+   */
+  template< typename T, int NDIM >
+  ElementViewAccessor< ArrayView< T const, NDIM > >
+  ConstructArrayViewAccessor( string const & name, string const & neighborName = string() ) const;
 
   /**
    * @brief This is a const function to construct a ElementViewAccessor to access the data registered on the mesh.
@@ -845,6 +858,22 @@ public:
                                  arrayView1d< string const > const & materialNames,
                                  bool const allowMissingViews = false );
 
+  /**
+   * @brief Construct a view accessor for material data, assuming array as storage type
+   * @tparam T underlying data type
+   * @tparam NDIM number of array dimensions
+   * @param viewName view name of the data
+   * @param regionNames list of region names
+   * @param materialNames list of corresponding material names
+   * @param allowMissingViews flag to indicate whether it is allowed to miss the specified material data in material list
+   * @return MaterialViewAccessor that contains the data views
+   */
+  template< typename T, int NDIM >
+  ElementViewAccessor< ArrayView< T const, NDIM > >
+  ConstructMaterialArrayViewAccessor( string const & viewName,
+                                      arrayView1d< string const > const & regionNames,
+                                      arrayView1d< string const > const & materialNames,
+                                      bool const allowMissingViews = false ) const;
 
   /**
    * @brief Construct a ConstitutiveRelationAccessor.
@@ -856,6 +885,13 @@ public:
   ConstitutiveRelationAccessor< CONSTITUTIVE_TYPE >
   ConstructFullConstitutiveAccessor( constitutive::ConstitutiveManager const * const cm ) const;
 
+
+  /**
+   * @brief Construct a ConstitutiveRelationAccessor.
+   * @tparam CONSTITUTIVE_TYPE constitutive type
+   * @param cm pointer to ConstitutiveManager
+   * @return ConstitutiveRelationAccessor
+   */
   template< typename CONSTITUTIVE_TYPE >
   ConstitutiveRelationAccessor< CONSTITUTIVE_TYPE >
   ConstructFullConstitutiveAccessor( constitutive::ConstitutiveManager const * const cm );
@@ -889,6 +925,7 @@ public:
             string_array const & wrapperNames,
             ElementViewAccessor< arrayView1d< localIndex > > const & packList ) const;
 
+  /// @copydoc dataRepository::Group::Unpack
   using ObjectManagerBase::Unpack;
 
   /**
@@ -983,6 +1020,7 @@ public:
    */
   struct groupKeyStruct : public ObjectManagerBase::groupKeyStruct
   {
+    /// element regions group string key
     static constexpr auto elementRegionsGroup = "elementRegionsGroup";
   } m_ElementRegionManagerKeys; ///< Element region manager keys
 
@@ -1064,7 +1102,7 @@ ElementRegionManager::ConstructViewAccessor( string const & viewName, string con
         group = group->GetGroup( ObjectManagerBase::groupKeyStruct::neighborDataString )->GetGroup( neighborName );
       }
 
-      if( group->hasWrapper( viewName ) )
+      if( group->hasWrapper( viewName ) && group->getWrapperBase( viewName )->get_typeid() == typeid( VIEWTYPE ) )
       {
         viewAccessor[kReg][kSubReg] = group->getReference< VIEWTYPE >( viewName );
       }
@@ -1095,13 +1133,21 @@ ElementRegionManager::
         group = group->GetGroup( ObjectManagerBase::groupKeyStruct::neighborDataString )->GetGroup( neighborName );
       }
 
-      if( group->hasWrapper( viewName ) )
+      if( group->hasWrapper( viewName ) && group->getWrapperBase( viewName )->get_typeid() == typeid( VIEWTYPE ) )
       {
         viewAccessor[kReg][kSubReg] = group->getReference< VIEWTYPE >( viewName );
       }
     }
   }
   return viewAccessor;
+}
+
+template< typename T, int NDIM >
+ElementRegionManager::ElementViewAccessor< ArrayView< T const, NDIM > >
+ElementRegionManager::
+  ConstructArrayViewAccessor( string const & name, string const & neighborName ) const
+{
+  return ConstructViewAccessor< Array< T, NDIM >, ArrayView< T const, NDIM > >( name, neighborName );
 }
 
 template< typename VIEWTYPE >
@@ -1329,6 +1375,20 @@ ElementRegionManager::ConstructMaterialViewAccessor( string const & viewName,
     } );
   }
   return accessor;
+}
+
+template< typename T, int NDIM >
+ElementRegionManager::ElementViewAccessor< ArrayView< T const, NDIM > >
+ElementRegionManager::
+  ConstructMaterialArrayViewAccessor( string const & viewName,
+                                      arrayView1d< string const > const & regionNames,
+                                      arrayView1d< string const > const & materialNames,
+                                      bool const allowMissingViews ) const
+{
+  return ConstructMaterialViewAccessor< Array< T, NDIM >, ArrayView< T const, NDIM > >( viewName,
+                                                                                        regionNames,
+                                                                                        materialNames,
+                                                                                        allowMissingViews );
 }
 
 template< typename CONSTITUTIVE_TYPE >

@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -53,13 +53,11 @@ namespace SolidMechanicsLagrangianFEMKernels
  */
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
-          int NUM_NODES_PER_ELEM,
-          int UNUSED >
+          typename FE_TYPE >
 class QuasiStatic :
   public finiteElement::ImplicitKernelBase< SUBREGION_TYPE,
                                             CONSTITUTIVE_TYPE,
-                                            NUM_NODES_PER_ELEM,
-                                            NUM_NODES_PER_ELEM,
+                                            FE_TYPE,
                                             3,
                                             3 >
 {
@@ -67,17 +65,17 @@ public:
   /// Alias for the base class;
   using Base = finiteElement::ImplicitKernelBase< SUBREGION_TYPE,
                                                   CONSTITUTIVE_TYPE,
-                                                  NUM_NODES_PER_ELEM,
-                                                  NUM_NODES_PER_ELEM,
+                                                  FE_TYPE,
                                                   3,
                                                   3 >;
 
   /// Number of nodes per element...which is equal to the
   /// numTestSupportPointPerElem and numTrialSupportPointPerElem by definition.
-  static constexpr int numNodesPerElem = NUM_NODES_PER_ELEM;
+  static constexpr int numNodesPerElem = Base::numTestSupportPointsPerElem;
   using Base::numDofPerTestSupportPoint;
   using Base::numDofPerTrialSupportPoint;
   using Base::m_dofNumber;
+  using Base::m_dofRankOffset;
   using Base::m_matrix;
   using Base::m_rhs;
   using Base::m_elemsToNodes;
@@ -93,11 +91,12 @@ public:
                EdgeManager const & edgeManager,
                FaceManager const & faceManager,
                SUBREGION_TYPE const & elementSubRegion,
-               FiniteElementBase const * const finiteElementSpace,
+               FE_TYPE const & finiteElementSpace,
                CONSTITUTIVE_TYPE * const inputConstitutiveType,
                arrayView1d< globalIndex const > const & inputDofNumber,
-               ParallelMatrix & inputMatrix,
-               ParallelVector & inputRhs,
+               globalIndex const rankOffset,
+               CRSMatrixView< real64, globalIndex const > const & inputMatrix,
+               arrayView1d< real64 > const & inputRhs,
                real64 const (&inputGravityVector)[3] ):
     Base( nodeManager,
           edgeManager,
@@ -106,13 +105,15 @@ public:
           finiteElementSpace,
           inputConstitutiveType,
           inputDofNumber,
+          rankOffset,
           inputMatrix,
           inputRhs ),
     m_disp( nodeManager.totalDisplacement()),
     m_uhat( nodeManager.incrementalDisplacement()),
     m_dNdX( elementSubRegion.dNdX() ),
     m_detJ( elementSubRegion.detJ() ),
-    m_gravityVector{ inputGravityVector[0], inputGravityVector[1], inputGravityVector[2] }
+    m_gravityVector{ inputGravityVector[0], inputGravityVector[1], inputGravityVector[2] },
+    m_density( inputConstitutiveType->getDensity())
   {}
 
 
@@ -138,13 +139,13 @@ public:
     {}
 
     /// Stack storage for the element local nodal displacement
-    R1Tensor u_local[numNodesPerElem];
+    real64 u_local[numNodesPerElem][numDofPerTrialSupportPoint];
 
     /// Stack storage for the element local nodal incremental displacement
-    R1Tensor uhat_local[numNodesPerElem];
+    real64 uhat_local[numNodesPerElem][numDofPerTrialSupportPoint];
 
     /// Stack storage for the constitutive stiffness at a quadrature point.
-    real64 constitutiveStiffness[6][6];
+    real64 constitutiveStiffness[ 6 ][ 6 ];
   };
   //*****************************************************************************
 
@@ -161,7 +162,7 @@ public:
   void setup( localIndex const k,
               StackVariables & stack ) const
   {
-    for( localIndex a=0; a<NUM_NODES_PER_ELEM; ++a )
+    for( localIndex a=0; a<numNodesPerElem; ++a )
     {
       localIndex const localNodeIndex = m_elemsToNodes( k, a );
 
@@ -190,7 +191,7 @@ public:
                                    StackVariables & stack ) const
   {
     real64 strainInc[6] = {0};
-    for( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )
+    for( localIndex a = 0; a < numNodesPerElem; ++a )
     {
       strainInc[0] = strainInc[0] + m_dNdX( k, q, a, 0 ) * stack.uhat_local[a][0];
       strainInc[1] = strainInc[1] + m_dNdX( k, q, a, 1 ) * stack.uhat_local[a][1];
@@ -208,7 +209,7 @@ public:
     m_constitutiveUpdate.SmallStrain( k, q, strainInc );
 
     GEOSX_UNUSED_VAR( q )
-    m_constitutiveUpdate.GetStiffness( k, stack.constitutiveStiffness );
+    m_constitutiveUpdate.GetStiffness( k, q, stack.constitutiveStiffness );
   }
 
 
@@ -260,9 +261,9 @@ public:
                                             StackVariables & stack,
                                             DYNAMICS_LAMBDA && dynamicsTerms = NoOpFunctors{} ) const
   {
-    for( localIndex a=0; a<NUM_NODES_PER_ELEM; ++a )
+    for( localIndex a=0; a<numNodesPerElem; ++a )
     {
-      for( localIndex b=0; b<NUM_NODES_PER_ELEM; ++b )
+      for( localIndex b=0; b<numNodesPerElem; ++b )
       {
         real64 const (&c)[6][6] = stack.constitutiveStiffness;
         stack.localJacobian[ a*3+0 ][ b*3+0 ] -= ( c[0][0]*m_dNdX( k, q, a, 0 )*m_dNdX( k, q, b, 0 ) +
@@ -317,61 +318,64 @@ public:
                                             StackVariables & stack,
                                             STRESS_MODIFIER && stressModifier = NoOpFunctors{} ) const
   {
-    real64 stress[6] = { m_constitutiveUpdate.m_stress( k, q, 0 ),
-                         m_constitutiveUpdate.m_stress( k, q, 1 ),
-                         m_constitutiveUpdate.m_stress( k, q, 2 ),
-                         m_constitutiveUpdate.m_stress( k, q, 3 ),
-                         m_constitutiveUpdate.m_stress( k, q, 4 ),
-                         m_constitutiveUpdate.m_stress( k, q, 5 ) };
+    real64 stress[6];
+
+    m_constitutiveUpdate.getStress( k, q, stress );
 
     stressModifier( stress );
 
-    for( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )
+    real64 const gravityForce[3] = { m_gravityVector[0] * m_density( k, q ),
+                                     m_gravityVector[1] * m_density( k, q ),
+                                     m_gravityVector[2] * m_density( k, q ) };
+
+    real64 N[numNodesPerElem];
+    FE_TYPE::shapeFunctionValues( q, N );
+    for( localIndex a = 0; a < numNodesPerElem; ++a )
     {
       stack.localResidual[ a * 3 + 0 ] -= ( stress[ 0 ] * m_dNdX( k, q, a, 0 ) +
                                             stress[ 5 ] * m_dNdX( k, q, a, 1 ) +
                                             stress[ 4 ] * m_dNdX( k, q, a, 2 ) -
-                                            m_gravityVector[0] ) * m_detJ( k, q );
+                                            gravityForce[0] * N[a] ) * m_detJ( k, q );
       stack.localResidual[ a * 3 + 1 ] -= ( stress[ 5 ] * m_dNdX( k, q, a, 0 ) +
                                             stress[ 1 ] * m_dNdX( k, q, a, 1 ) +
                                             stress[ 3 ] * m_dNdX( k, q, a, 2 ) -
-                                            m_gravityVector[1] ) * m_detJ( k, q );
+                                            gravityForce[1] * N[a] ) * m_detJ( k, q );
       stack.localResidual[ a * 3 + 2 ] -= ( stress[ 4 ] * m_dNdX( k, q, a, 0 ) +
                                             stress[ 3 ] * m_dNdX( k, q, a, 1 ) +
                                             stress[ 2 ] * m_dNdX( k, q, a, 2 ) -
-                                            m_gravityVector[2] ) * m_detJ( k, q );
+                                            gravityForce[2] * N[a] ) * m_detJ( k, q );
     }
   }
 
   /**
    * @copydoc geosx::finiteElement::ImplicitKernelBase::complete
    */
-  //GEOSX_HOST_DEVICE
+  GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   real64 complete( localIndex const k,
                    StackVariables & stack ) const
   {
     GEOSX_UNUSED_VAR( k );
-    real64 meanForce = 0;
-    for( localIndex a=0; a<stack.numRows; ++a )
+    real64 maxForce = 0;
+
+    for( int localNode = 0; localNode < numNodesPerElem; ++localNode )
     {
-//        RAJA::atomicMax< RAJA::auto_atomic >( &meanForce, stack.localResidual[a] );
-      meanForce = std::max( meanForce, stack.localResidual[a] );
-//                meanForce += fabs( stack.localResidual[a] );
+      for( int dim = 0; dim < numDofPerTestSupportPoint; ++dim )
+      {
+        localIndex const dof = LvArray::integerConversion< localIndex >( stack.localRowDofIndex[ numDofPerTestSupportPoint * localNode + dim ] - m_dofRankOffset );
+        if( dof < 0 || dof >= m_matrix.numRows() ) continue;
+        m_matrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( dof,
+                                                                                stack.localRowDofIndex,
+                                                                                stack.localJacobian[ numDofPerTestSupportPoint * localNode + dim ],
+                                                                                numNodesPerElem * numDofPerTrialSupportPoint );
+
+        RAJA::atomicAdd< parallelDeviceAtomic >( &m_rhs[ dof ], stack.localResidual[ numDofPerTestSupportPoint * localNode + dim ] );
+        maxForce = fmax( maxForce, fabs( stack.localResidual[ numDofPerTestSupportPoint * localNode + dim ] ) );
+      }
     }
-//            meanForce /= stack.ndof;
 
-    m_matrix.add( stack.localRowDofIndex,
-                  stack.localColDofIndex,
-                  &(stack.localJacobian[0][0]),
-                  stack.numRows,
-                  stack.numCols );
 
-    m_rhs.add( stack.localRowDofIndex,
-               stack.localResidual,
-               stack.numRows );
-
-    return meanForce;
+    return maxForce;
   }
 
 
@@ -392,6 +396,8 @@ protected:
   /// The gravity vector.
   real64 const m_gravityVector[3];
 
+  /// The rank global density
+  arrayView2d< real64 const > const m_density;
 
 };
 
@@ -399,5 +405,7 @@ protected:
 } // namespace SolidMechanicsLagrangianFEMKernels
 
 } // namespace geosx
+
+#include "finiteElement/kernelInterface/SparsityKernelBase.hpp"
 
 #endif // GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_SOLIDMECHANICSSMALLSTRAINQUASISTATIC_HPP_

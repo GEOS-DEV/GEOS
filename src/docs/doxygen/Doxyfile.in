@@ -763,9 +763,10 @@ INPUT = @PROJECT_SOURCE_DIR@/coreComponents/common \
         @PROJECT_SOURCE_DIR@/coreComponents/dataRepository \
         @PROJECT_SOURCE_DIR@/coreComponents/fileIO \
         @PROJECT_SOURCE_DIR@/coreComponents/linearAlgebra \
-        @PROJECT_SOURCE_DIR@/coreComponents/wells \
-        @PROJECT_SOURCE_DIR@/coreComponents/meshUtilities \
         @PROJECT_SOURCE_DIR@/coreComponents/LvArray/src \
+        @PROJECT_SOURCE_DIR@/coreComponents/mesh \
+        @PROJECT_SOURCE_DIR@/coreComponents/managers \
+        @PROJECT_SOURCE_DIR@/coreComponents/meshUtilities \
         @PROJECT_SOURCE_DIR@/coreComponents/finiteElement/kernelInterface \
         @PROJECT_SOURCE_DIR@/coreComponents/mesh/ExtrinsicMeshData.hpp \
         @PROJECT_SOURCE_DIR@/coreComponents/physicsSolvers/simplePDE/LaplaceFEMKernels.hpp \
@@ -776,11 +777,6 @@ INPUT = @PROJECT_SOURCE_DIR@/coreComponents/common \
         @PROJECT_SOURCE_DIR@/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsSmallStrainQuasiStaticKernel.hpp \
         @PROJECT_SOURCE_DIR@/coreComponents/finiteVolume \
         @CMAKE_BINARY_DIR@/include/common 
-
-
-
-#        @PROJECT_SOURCE_DIR@/coreComponents/managers \
-#        @PROJECT_SOURCE_DIR@/coreComponents/mesh \
 
 # This tag can be used to specify the character encoding of the source files
 # that doxygen parses. Internally doxygen uses the UTF-8 encoding. Doxygen uses

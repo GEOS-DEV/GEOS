@@ -1,13 +1,13 @@
 .. _SinglePhaseFlow:
 
 #####################################
-Single-phase Flow Solver
+Singlephase Flow Solver
 #####################################
 
 Introduction
 =============
 
-Here, we describe the single-phase flow solver. 
+Here, we describe the single-phase flow solver.
 The role of this solver is to implement the fully implicit finite-volume discretization (mainly, accumulation and source terms, boundary conditions) of the equations governing compressible single-phase flow in porous media.
 This solver can be combined with the SinglePhaseWell class which handles the discrete multi-segment well model and provides source/sink terms for the fluid flow solver.
 
@@ -17,7 +17,7 @@ Theory
 
 .. _singlephase_equations:
 
-Governing equations
+Governing Equations
 -------------------
 
 This is a cell-centered Finite Volume solver for compressible single-phase flow in porous media.
@@ -68,7 +68,7 @@ Applying the divergence theorem to the second term leads to
 
 where :math:`S_i` represents the surface area of the element :math:`V_i` and :math:`\boldsymbol{n}` is a outward unit vector normal to the surface.
 
-For the flux term, the (static) transmissibility is currently computed with a Two-Point Flux Approximation (TPFA) as described in :ref:`FiniteVolume`.
+For the flux term, the (static) transmissibility is currently computed with a Two-Point Flux Approximation (TPFA) as described in :ref:`FiniteVolumeDiscretization`.
 
 The pressure-dependent mobility :math:`\lambda = \frac{\rho}{\mu}` at the interface is approximated using a first-order upwinding on the sign of the potential difference.
 
@@ -82,8 +82,8 @@ Let :math:`t_0 < t_1 < \cdots < t_N=T` be a grid discretization of the time inte
 
 where :math:`\Delta t = t_{n+1}-t_n` is the time-step. The expression of this residual equation and its derivative are used to form a linear system, which is solved via the solver package.
 
-Usage
-======
+Parameters
+===================
 
 The solver is enabled by adding a ``<SinglePhaseFVM>`` node in the Solvers section.
 Like any solver, time stepping is driven by events, see :ref:`EventManager`.
@@ -94,7 +94,7 @@ The following attributes are supported:
 
 In particular:
 
-* ``discretization`` must point to a Finite Volume flux approximation scheme defined in the Numerical Methods section of the input file (see :ref:`FiniteVolume`)
+* ``discretization`` must point to a Finite Volume flux approximation scheme defined in the Numerical Methods section of the input file (see :ref:`FiniteVolumeDiscretization`)
 * ``fluidName`` must point to a single phase fluid model defined in the Constitutive section of the input file (see :ref:`Constitutive`)
 * ``solidName`` must point to a solid mechanics model defined in the Constitutive section of the input file (see :ref:`Constitutive`)
 * ``targetRegions`` is used to specify the regions on which the solver is applied
@@ -104,7 +104,7 @@ Initial conditions must be prescribed on this field in every region, and boundar
 must be prescribed on this field on cell or face sets of interest.
 
 
-Input example
+Example
 =========================
 
 .. literalinclude:: ../integratedTests/singlePhaseFlow/3D_10x10x10_compressible.xml
@@ -112,4 +112,4 @@ Input example
   :start-after: <!-- SPHINX_TUT_INT_HEX_SOLVERS -->
   :end-before: <!-- SPHINX_TUT_INT_HEX_SOLVERS_END -->
 
-We refer the reader to :ref:`this page <TutorialSinglePhaseFlow>` for a complete tutorial illustrating the use of this solver.
+We refer the reader to :ref:`this page <TutorialSinglePhaseFlowWithInternalMesh>` for a complete tutorial illustrating the use of this solver.

@@ -16,6 +16,7 @@ NumericalMethods    node unique           :ref:`XML_NumericalMethods`
 Outputs             node unique, required :ref:`XML_Outputs`             
 Parameters          node unique           :ref:`XML_Parameters`          
 Solvers             node unique, required :ref:`XML_Solvers`             
+Tasks               node unique           :ref:`XML_Tasks`               
 =================== ==== ================ ============================== 
 
 

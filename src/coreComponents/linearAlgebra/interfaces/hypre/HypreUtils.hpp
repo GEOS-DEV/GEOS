@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -84,6 +84,7 @@ struct HyprePrecFuncs
   SetupFunc setup{};     ///< pointer to setup function
   ApplyFunc apply{};     ///< pointer to apply function
   DestroyFunc destroy{}; ///< pointer to destroy function
+  DestroyFunc aux_destroy{}; ///< pointer to auxillary destroy function
 };
 
 /**
@@ -126,6 +127,14 @@ struct HypreSolverFuncs
   GetNumIter getNumIter{};     ///< pointer to get number of iterations function
   GetFinalNorm getFinalNorm{}; ///< pointer to get final residual norm function
   DestroyFunc destroy{};       ///< pointer to destroy function
+};
+
+/**
+ * @brief Container for hypre preconditioner auxiliary data.
+ */
+struct HyprePrecAuxData
+{
+  array1d< HYPRE_Int > point_marker_array; ///< array1d of unique tags for local degrees of freedom
 };
 
 }

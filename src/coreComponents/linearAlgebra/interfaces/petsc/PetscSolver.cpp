@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -19,6 +19,7 @@
 #include "PetscSolver.hpp"
 
 #include "common/Stopwatch.hpp"
+#include "linearAlgebra/DofManager.hpp"
 #include "linearAlgebra/interfaces/petsc/PetscVector.hpp"
 #include "linearAlgebra/interfaces/petsc/PetscMatrix.hpp"
 #include "linearAlgebra/interfaces/petsc/PetscPreconditioner.hpp"
@@ -40,11 +41,14 @@ PetscSolver::PetscSolver( LinearSolverParameters parameters )
 
 void PetscSolver::solve( PetscMatrix & mat,
                          PetscVector & sol,
-                         PetscVector & rhs )
+                         PetscVector & rhs,
+                         DofManager const * const dofManager )
 {
   GEOSX_LAI_ASSERT( mat.ready() );
   GEOSX_LAI_ASSERT( sol.ready() );
   GEOSX_LAI_ASSERT( rhs.ready() );
+
+  GEOSX_UNUSED_VAR( dofManager );
 
   if( m_parameters.solverType == "direct" )
   {

@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -16,6 +16,7 @@
  * @file FaceManager.cpp
  */
 
+#include "mesh/ExtrinsicMeshData.hpp"
 #include "FaceManager.hpp"
 #include "NodeManager.hpp"
 #include "BufferOps.hpp"
@@ -30,10 +31,6 @@ namespace geosx
 {
 using namespace dataRepository;
 
-/**
- *
- * @return
- */
 FaceManager::FaceManager( string const &, Group * const parent ):
   ObjectManagerBase( "FaceManager", parent )
 {
@@ -70,10 +67,6 @@ FaceManager::FaceManager( string const &, Group * const parent ):
 //  this->AddKeylessDataField<R1Tensor>("FaceCenter",true,true);
 }
 
-/**
- *
- * @return
- */
 FaceManager::~FaceManager()
 {}
 
@@ -116,6 +109,7 @@ struct FaceBuilder
   /**
    * @brief Imposes an ordering on FaceBuilders. First compares n1, then n2, then er, esr, and k.
    * @param [in] rhs the FaceBuilder to compare against.
+   * @return true if argument faceBuilder has lower second or third nodes or smaller region, subregion or element
    */
   bool operator<( FaceBuilder const & rhs ) const
   {
@@ -133,15 +127,22 @@ struct FaceBuilder
   /**
    * @brief Return true if the two FaceBuilders share the same second and third smallest nodes.
    * @param [in] rhs the FaceBuilder to compare against.
+   * @return true if face second and third smallest node that comprise the face are the same
    */
   bool operator==( FaceBuilder const & rhs ) const
   { return n1 == rhs.n1 && n2 == rhs.n2; }
 
+  /// index of the second smallest node of the face
   int32_t n1;
+  /// index of the thirs smallest node of the face
   int32_t n2;
+  /// element region label
   int32_t er;
+  /// element subregion label
   int32_t esr;
+  /// element label the face belongs to index
   int32_t k;
+  /// the element local index of this face.
   int32_t elementLocalFaceIndex;
 };
 
@@ -185,7 +186,7 @@ void findSmallestThreeValues( arrayView1d< localIndex const > const & values, lo
 /**
  * @brief Populate the facesByLowestNode map.
  * @param [in] elementManager the ElementRegionManager associated with this mesh level.
- * @param [in/out] facesByLowestNode of size numNodes, where each sub array has been preallocated to hold
+ * @param [inout] facesByLowestNode of size numNodes, where each sub array has been preallocated to hold
  *        *enough* space.
  * For each face of each element, this function gets the three lowest nodes in the face {n0, n1, n2}, creates
  * an EdgeBuilder associated with the face from n1 and n2 and then appends the EdgeBuilder to facesByLowestNode[ n0 ].
@@ -225,8 +226,13 @@ void createFacesByLowestNode( ElementRegionManager const & elementManager,
             subRegion.GetFaceNodes( k, elementLocalFaceIndex, tempNodeList );
             findSmallestThreeValues( tempNodeList, lowestNodes );
 
-            facesByLowestNode.atomicAppendToArray( RAJA::auto_atomic{}, lowestNodes[0],
-                                                   FaceBuilder( lowestNodes[1], lowestNodes[2], er, esr, k, elementLocalFaceIndex ) );
+            facesByLowestNode.emplaceBackAtomic< parallelHostAtomic >( lowestNodes[0],
+                                                                       lowestNodes[1],
+                                                                       lowestNodes[2],
+                                                                       er,
+                                                                       esr,
+                                                                       k,
+                                                                       elementLocalFaceIndex );
           }
         }
       }
@@ -246,6 +252,7 @@ void createFacesByLowestNode( ElementRegionManager const & elementManager,
  * @param [in] facesByLowestNode and array of size numNodes of arrays of FaceBuilders associated with each node.
  * @param [out] uniqueFaceOffsets an array of size numNodes + 1. After this function returns node i contains
  *              faces with IDs ranging from uniqueFaceOffsets[ i ] to uniqueFaceOffsets[ i + 1 ] - 1.
+ * @return return total number of faces
  */
 localIndex calculateTotalNumberOfFaces( ArrayOfArraysView< FaceBuilder const > const & facesByLowestNode,
                                         arrayView1d< localIndex > const & uniqueFaceOffsets )
@@ -291,7 +298,7 @@ localIndex calculateTotalNumberOfFaces( ArrayOfArraysView< FaceBuilder const > c
  * @param [in] elementManager the ElementRegionManager.
  * @param [in] facesByLowestNode and array of size numNodes of arrays of FaceBuilders associated with each node.
  * @param [in] uniqueFaceOffsets an containing the unique face IDs for each node in facesByLowestNode.
- * param [out] faceToNodeMap the map from faces to nodes. This function resizes the array appropriately.
+ * @param [out] faceToNodeMap the map from faces to nodes. This function resizes the array appropriately.
  */
 void resizeFaceToNodeMap( ElementRegionManager const & elementManager,
                           ArrayOfArraysView< FaceBuilder const > const & facesByLowestNode,
@@ -374,10 +381,10 @@ void resizeFaceToNodeMap( ElementRegionManager const & elementManager,
  * @param [in] faceID the ID of the face to add.
  * @param [in] fb0 the FaceBuilder associated with the first element of the current face.
  * @param [in] fb1 the FaceBuilder associated with the second element of the current face.
- * @param [in/out] elemRegionList the face to element region map.
- * @param [in/out] elemSubRegionList the face to element subregion map.
- * @param [in/out] elemList the face to element map.
- * @param [in/out] nodeList the face to node map.
+ * @param [inout] elemRegionList the face to element region map.
+ * @param [inout] elemSubRegionList the face to element subregion map.
+ * @param [inout] elemList the face to element map.
+ * @param [inout] nodeList the face to node map.
  */
 void addInteriorFace( ElementRegionManager & elementManager,
                       localIndex const faceID,
@@ -432,11 +439,11 @@ void addInteriorFace( ElementRegionManager & elementManager,
  * @brief Add a boundary face to the element lists, the face to node map, and the element to face map.
  * @param [in] elementManager the ElementRegionManager associated with this mesh level.
  * @param [in] faceID the ID of the face to add.
- * @param [in] fb0 the FaceBuilder associated with the first element of the current face.
- * @param [in/out] elemRegionList the face to element region map.
- * @param [in/out] elemSubRegionList the face to element subregion map.
- * @param [in/out] elemList the face to element map.
- * @param [in/out] nodeList the face to node map.
+ * @param [in] fb the FaceBuilder associated with the first element of the current face.
+ * @param [inout] elemRegionList the face to element region map.
+ * @param [inout] elemSubRegionList the face to element subregion map.
+ * @param [inout] elemList the face to element map.
+ * @param [inout] nodeList the face to node map.
  */
 void addBoundaryFace( ElementRegionManager & elementManager,
                       localIndex const faceID,
@@ -477,11 +484,10 @@ void addBoundaryFace( ElementRegionManager & elementManager,
  * @param [in] elementManager the ElementRegionManager associated with this mesh level.
  * @param [in] facesByLowestNode and array of size numNodes of arrays of FaceBuilders associated with each node.
  * @param [in] uniqueFaceOffsets an array containing the unique ID of the first face associated with each node.
- * @param [in/out] elemRegionList the face to element region map.
- * @param [in/out] elemSubRegionList the face to element subregion map.
- * @param [in/out] elemList the face to element map.
- * @param [in/out] nodeList the face to node map.
- * @param [in] maxFaceNodes the maximum number of nodes associated with any face.
+ * @param [inout] elemRegionList the face to element region map.
+ * @param [inout] elemSubRegionList the face to element subregion map.
+ * @param [inout] elemList the face to element map.
+ * @param [inout] nodeList the face to node map.
  */
 void populateMaps( ElementRegionManager & elementManager,
                    ArrayOfArraysView< FaceBuilder const > const & facesByLowestNode,
@@ -614,7 +620,7 @@ void FaceManager::SetDomainBoundaryObjects( NodeManager * const nodeManager )
   // Set value of domainBounaryIndicator to one if it is found to have only one elements that it
   // is connected to.
   integer_array & faceDomainBoundaryIndicator = this->getReference< integer_array >( viewKeys.domainBoundaryIndicator );
-  faceDomainBoundaryIndicator = 0;
+  faceDomainBoundaryIndicator.setValues< serialPolicy >( 0 );
 
   arrayView2d< localIndex const > const & elemRegionList = this->elementRegionList();
 
@@ -627,7 +633,7 @@ void FaceManager::SetDomainBoundaryObjects( NodeManager * const nodeManager )
   } );
 
   integer_array & nodeDomainBoundaryIndicator = nodeManager->getReference< integer_array >( nodeManager->viewKeys.domainBoundaryIndicator );
-  nodeDomainBoundaryIndicator = 0;
+  nodeDomainBoundaryIndicator.setValues< serialPolicy >( 0 );
 
   ArrayOfArraysView< localIndex const > const & faceToNodesMap = this->nodeList().toViewConst();
 
@@ -650,7 +656,7 @@ void FaceManager::SetIsExternal()
   integer_array const &
   isDomainBoundary = this->getReference< integer_array >( viewKeys.domainBoundaryIndicator );
 
-  m_isExternal = 0;
+  m_isExternal.setValues< serialPolicy >( 0 );
   for( localIndex k=0; k<size(); ++k )
   {
     if( isDomainBoundary[k]==1 )
@@ -953,8 +959,7 @@ void FaceManager::compressRelationMaps()
 
 void FaceManager::enforceStateFieldConsistencyPostTopologyChange( std::set< localIndex > const & targetIndices )
 {
-  arrayView1d< localIndex const > const &
-  childFaceIndices = getReference< array1d< localIndex > >( ObjectManagerBase::viewKeyStruct::childIndexString );
+  arrayView1d< localIndex const > const & childFaceIndices = getExtrinsicData< extrinsicMeshData::ChildIndex >();
 
   ObjectManagerBase::enforceStateFieldConsistencyPostTopologyChange ( targetIndices );
 

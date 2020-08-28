@@ -21,6 +21,7 @@ set(common_sources
     BufferAllocator.cpp
     DataTypes.cpp
     Logger.cpp
+    Path.cpp
    )
 
 set( dependencyList lvarray pugixml )
@@ -61,7 +62,7 @@ blt_add_library( NAME                  common
 #                 SHARED TRUE
                )
 
-target_include_directories( common PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)
+target_include_directories( common PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
 
 geosx_add_code_checks(PREFIX common )
 

@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -54,31 +54,13 @@ BrooksCoreyCapillaryPressure::BrooksCoreyCapillaryPressure( std::string const & 
     setDescription(
     "Wetting-phase saturation at which the max cap. pressure is attained; used to avoid infinite cap. pressure values for saturations close to zero" );
 
+  registerWrapper( viewKeyStruct::volFracScaleString, &m_volFracScale )->
+    setApplyDefaultValue( 1.0 )->
+    setDescription( "Factor used to scale the phase capillary pressure, defined as: one minus the sum of the phase minimum volume fractions." );
 }
 
 BrooksCoreyCapillaryPressure::~BrooksCoreyCapillaryPressure()
 {}
-
-void
-BrooksCoreyCapillaryPressure::DeliverClone( string const & name,
-                                            Group * const parent,
-                                            std::unique_ptr< ConstitutiveBase > & clone ) const
-{
-  std::unique_ptr< BrooksCoreyCapillaryPressure > newModel = std::make_unique< BrooksCoreyCapillaryPressure >( name, parent );
-
-  newModel->m_phaseNames = this->m_phaseNames;
-  newModel->m_phaseTypes = this->m_phaseTypes;
-  newModel->m_phaseOrder = this->m_phaseOrder;
-
-  newModel->m_phaseMinVolumeFraction      = this->m_phaseMinVolumeFraction;
-  newModel->m_phaseCapPressureExponentInv = this->m_phaseCapPressureExponentInv;
-  newModel->m_phaseEntryPressure          = this->m_phaseEntryPressure;
-
-  newModel->m_capPressureEpsilon = this->m_capPressureEpsilon;
-  newModel->m_volFracScale       = this->m_volFracScale;
-
-  clone = std::move( newModel );
-}
 
 
 void BrooksCoreyCapillaryPressure::PostProcessInput()
@@ -126,44 +108,17 @@ void BrooksCoreyCapillaryPressure::PostProcessInput()
   GEOSX_ERROR_IF( m_volFracScale < 0.0, "BrooksCoreyCapillaryPressure: sum of min volume fractions exceeds 1.0" );
 }
 
-
-void BrooksCoreyCapillaryPressure::BatchUpdate( arrayView2d< real64 const > const & phaseVolumeFraction )
+BrooksCoreyCapillaryPressure::KernelWrapper BrooksCoreyCapillaryPressure::createKernelWrapper()
 {
-
-  arrayView1d< real64 const > const & phaseMinVolumeFraction      = m_phaseMinVolumeFraction;
-  arrayView1d< real64 const > const & phaseCapPressureExponentInv = m_phaseCapPressureExponentInv;
-  arrayView1d< real64 const > const & phaseEntryPressure          = m_phaseEntryPressure;
-  real64 const & capPressureEpsilon = m_capPressureEpsilon;
-
-  CapillaryPressureBase::BatchUpdateKernel< BrooksCoreyCapillaryPressure >( phaseVolumeFraction,
-                                                                            phaseMinVolumeFraction,
-                                                                            phaseCapPressureExponentInv,
-                                                                            phaseEntryPressure,
-                                                                            capPressureEpsilon,
-                                                                            m_volFracScale );
-}
-
-
-void BrooksCoreyCapillaryPressure::PointUpdate( arraySlice1d< real64 const > const & phaseVolFraction,
-                                                localIndex const k,
-                                                localIndex const q )
-{
-  arraySlice1d< real64 > const capPressure           = m_phaseCapPressure[k][q];
-  arraySlice2d< real64 > const dCapPressure_dVolFrac = m_dPhaseCapPressure_dPhaseVolFrac[k][q];
-
-
-  localIndex const NP = numFluidPhases();
-
-  Compute( NP,
-           phaseVolFraction,
-           capPressure,
-           dCapPressure_dVolFrac,
-           m_phaseOrder,
-           m_phaseMinVolumeFraction,
-           m_phaseCapPressureExponentInv,
-           m_phaseEntryPressure,
-           m_capPressureEpsilon,
-           m_volFracScale );
+  return KernelWrapper( m_phaseMinVolumeFraction,
+                        m_phaseCapPressureExponentInv,
+                        m_phaseEntryPressure,
+                        m_capPressureEpsilon,
+                        m_volFracScale,
+                        m_phaseTypes,
+                        m_phaseOrder,
+                        m_phaseCapPressure,
+                        m_dPhaseCapPressure_dPhaseVolFrac );
 }
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, BrooksCoreyCapillaryPressure, std::string const &, Group * const )

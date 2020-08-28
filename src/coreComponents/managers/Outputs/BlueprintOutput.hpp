@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -59,34 +59,25 @@ public:
 
   /**
    * @brief Writes out a Blueprint plot file.
-   * @param time The current simulation time.
-   * @param dt The current time step.
-   * @param cycle The current cycle.
-   * @param evenCounter The event counter.
-   * @param eventProgress The event progress.
-   * @param domain The DomainPartition to write out up-casted to a Group.
+   * @copydetails EventBase::Execute()
    */
-  virtual void Execute( real64 const time,
+  virtual void Execute( real64 const time_n,
                         real64 const dt,
-                        integer const cycle,
+                        integer const cycleNumber,
                         integer const eventCounter,
                         real64 const eventProgress,
                         dataRepository::Group * domain ) override;
 
   /**
    * @brief Writes out a Blueprint plot file at the end of the simulation.
-   * @param time The current simulation time.
-   * @param cycle The current cycle.
-   * @param evenCounter The event counter.
-   * @param eventProgress The event progress.
-   * @param domain The DomainPartition to write out up-casted to a Group.
+   * @copydetails ExecutableGroup::Cleanup()
    */
-  virtual void Cleanup( real64 const time,
-                        integer const cycle,
+  virtual void Cleanup( real64 const time_n,
+                        integer const cycleNumber,
                         integer const eventCounter,
                         real64 const eventProgress,
                         dataRepository::Group * domain ) override
-  { Execute( time, 0, cycle, eventCounter, eventProgress, domain ); }
+  { Execute( time_n, 0, cycleNumber, eventCounter, eventProgress, domain ); }
 
 private:
 

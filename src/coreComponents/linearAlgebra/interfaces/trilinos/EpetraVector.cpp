@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -116,18 +116,21 @@ void EpetraVector::createWithGlobalSize( globalIndex const globalSize,
   m_vector = std::make_unique< Epetra_FEVector >( map );
 }
 
-void EpetraVector::create( arraySlice1d< real64 const > const & localValues,
+void EpetraVector::create( arrayView1d< real64 const > const & localValues,
                            MPI_Comm const & MPI_PARAM( comm ) )
 {
   GEOSX_LAI_ASSERT( closed() );
+
+  localValues.move( LvArray::MemorySpace::CPU, false );
+
   int const localSize = LvArray::integerConversion< int >( localValues.size() );
-  Epetra_Map const map( -1,
+  Epetra_Map const map( LvArray::integerConversion< long long >( -1 ),
                         localSize,
                         0,
                         Epetra_MpiComm( MPI_PARAM( comm ) ) );
   m_vector = std::make_unique< Epetra_FEVector >( Copy,
                                                   map,
-                                                  const_cast< real64 * >( localValues.dataIfContiguous() ),
+                                                  const_cast< real64 * >( localValues.data() ),
                                                   localSize,
                                                   1 );
 }

@@ -4,34 +4,7 @@
 Solid Mechanics Solver
 #####################################
 
-Introduction
-============
-The `SolidMechanics_LagrangianFEM` solver applies a Continuous Galerkin finite element method to solve the linear momentum balance equation.
-The primary variable is the displacement field which is discretized at the nodes.
-
-Usage
-=========================
-An example of a valid XML block is given here:
-
-.. literalinclude:: ../integratedTests/sedov.xml
-  :language: xml
-  :start-after: <!-- SPHINX_SOLID_MECHANICS_SOLVER -->
-  :end-before: <!-- SPHINX_SOLID_MECHANICS_SOLVER_END -->
-
-In the preceding XML block, The `SolidMechanics_LagrangianFEM` is specified by the title of the subblock of the `Solvers` block.
-The following attributes are supported in the input block for `SolidMechanics_LagrangianFEM`:
-
-.. include:: /coreComponents/fileIO/schema/docs/SolidMechanics_LagrangianFEM.rst
-
-The following data are allocated and used by the solver:
-
-.. include:: /coreComponents/fileIO/schema/docs/SolidMechanics_LagrangianFEM_other.rst
-
-
-Theory
-=========================
-
-Definition of Terms
+List of Symbols
 ===================
 
 .. math::
@@ -61,6 +34,17 @@ Definition of Terms
    \mathbf{x}& \equiv \text { current position} \notag \\
    \mathbf{w}&\equiv \text { aperture, or gap vector} \notag
 
+
+Introduction
+============
+The `SolidMechanics_LagrangianFEM` solver applies a Continuous Galerkin finite element method to solve the linear momentum balance equation.
+The primary variable is the displacement field which is discretized at the nodes.
+
+Theory
+=========================
+
+Governing Equations
+--------------------------
 
 The `SolidMechanics_LagrangianFEM` solves the equations of motion as given by
 
@@ -203,3 +187,26 @@ Note that the velocities may be stored at the midstep, resulting one less kinema
 This approach is typically referred to as the "Leapfrog" method.
 However, in GEOSX we do not offer this option since it can cause some confusion that results from the
 storage of state at different points in time.
+
+
+Parameters
+=========================
+
+In the preceding XML block, The `SolidMechanics_LagrangianFEM` is specified by the title of the subblock of the `Solvers` block.
+The following attributes are supported in the input block for `SolidMechanics_LagrangianFEM`:
+
+.. include:: /coreComponents/fileIO/schema/docs/SolidMechanics_LagrangianFEM.rst
+
+The following data are allocated and used by the solver:
+
+.. include:: /coreComponents/fileIO/schema/docs/SolidMechanics_LagrangianFEM_other.rst
+
+Example
+=========================
+
+An example of a valid XML block is given here:
+
+.. literalinclude:: ../integratedTests/sedov.xml
+  :language: xml
+  :start-after: <!-- SPHINX_SOLID_MECHANICS_SOLVER -->
+  :end-before: <!-- SPHINX_SOLID_MECHANICS_SOLVER_END -->

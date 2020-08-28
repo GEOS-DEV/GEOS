@@ -99,10 +99,15 @@ if( ENABLE_CUDA )
   set( extraComponentsLinkList ${extraComponentsLinkList} cuda ) 
 endif()
 
+if ( GEOSX_BUILD_SHARED_LIBS )
+  set( extraComponentsLinkList ${extraComponentsLinkList} geosx_core )
+else()
+  set( extraComponentsLinkList ${extraComponentsLinkList} ${geosx_core_libs} )
+endif()
+
 blt_add_executable(NAME geosx
                    SOURCES main/main.cpp
-                   DEPENDS_ON geosx_core 
-                              ${extraComponentsLinkList}
+                   DEPENDS_ON ${extraComponentsLinkList}
                               ${externalComponentsLinkList}
                   )
 
@@ -118,7 +123,7 @@ set_target_properties( geosx PROPERTIES INSTALL_RPATH_USE_LINK_PATH TRUE )
 
 install(TARGETS geosx RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
 
-if( ENABLE_XML_UPDATES AND ENABLE_MPI AND UNIX AND NOT APPLE AND NOT ENABLE_CUDA )
+if( ENABLE_XML_UPDATES AND ENABLE_MPI AND UNIX AND NOT CMAKE_HOST_APPLE AND NOT ENABLE_CUDA )
   add_custom_target( geosx_update_rst_tables
                      ALL
                      COMMAND bash ${CMAKE_SOURCE_DIR}/../scripts/updateRstTables.bash ${CMAKE_SOURCE_DIR} > updateRstTables.log
@@ -134,7 +139,7 @@ if( ENABLE_XML_UPDATES AND ENABLE_MPI AND UNIX AND NOT APPLE AND NOT ENABLE_CUDA
                      )
 endif()
 
-if( ${SPHINX_FOUND} )
+if( SPHINX_FOUND )
   blt_add_sphinx_target( geosx_docs )
 endif()
 

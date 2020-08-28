@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -89,7 +89,7 @@ public:
    * @brief Copy constructor.
    * @param[in] init the source to copy
    */
-  CellBlock( const CellBlock & init );
+  CellBlock( const CellBlock & init ) = delete;
 
   /**
    * @brief Destructor.
@@ -116,11 +116,6 @@ public:
   {
     arrayView2d< real64 > const & elementCenters = m_elementCenter;
     localIndex nNodes = numNodesPerElement();
-
-    if( !m_elementTypeString.compare( 0, 4, "C3D6" ))
-    {
-      nNodes -= 2;
-    }
 
     forAll< parallelHostPolicy >( size(), [=]( localIndex const k )
     {
@@ -278,7 +273,7 @@ public:
   template< typename T >
   T & AddProperty( string const & propertyName )
   {
-    m_externalPropertyNames.push_back( propertyName );
+    m_externalPropertyNames.emplace_back( propertyName );
     return this->registerWrapper< T >( propertyName )->reference();
   }
 

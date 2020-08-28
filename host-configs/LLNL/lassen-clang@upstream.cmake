@@ -3,6 +3,9 @@ include(${CMAKE_CURRENT_LIST_DIR}/../../src/coreComponents/LvArray/host-configs/
 # asmjit doesn't work on PowerPC
 set(ENABLE_MATHPRESSO OFF CACHE BOOL "")
 
+# Builds static libraries
+set(GEOSX_BUILD_SHARED_LIBS OFF CACHE BOOL "")
+
 # Silo configure script doesn't recognize systype
 set(SILO_BUILD_TYPE powerpc64-unknown-linux-gnu CACHE STRING "")
 

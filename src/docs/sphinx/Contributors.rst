@@ -2,9 +2,9 @@
 Contributors
 ###############################################################################
 
-An up-to-date list of contributors can be found here:
+An up-to-date list of all GEOSX contributors can be found on our Github page:
 
-https://github.com/GEOSX/GEOSX/graphs/contributors
+`GEOSX Contributors <https://github.com/GEOSX/GEOSX/graphs/contributors>`_
 
 The following is the list of GEOSX contributors as of January 2019:
 

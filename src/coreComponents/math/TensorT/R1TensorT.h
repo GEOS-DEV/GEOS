@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -60,7 +60,7 @@ public:
   explicit R1TensorT( const int data ): TensorBaseT< T_dim >( realT( data ) ) {}
 
   template< int USD >
-  R1TensorT( LvArray::ArraySlice< realT const, 1, USD > const & src ):
+  R1TensorT( LvArray::ArraySlice< realT const, 1, USD, std::ptrdiff_t > const & src ):
     TensorBaseT< T_dim >()
   { *this = src; }
 
@@ -72,6 +72,8 @@ public:
    * the correct dimension
    */
   R1TensorT( realT x, realT y );  //2D only
+
+  GEOSX_HOST_DEVICE
   R1TensorT( realT x, realT y, realT z ); //3D only
 
   //***** ASSIGNMENT OPERATORS *************************************************
@@ -88,7 +90,7 @@ public:
 
   template< int USD >
   GEOSX_HOST_DEVICE CONSTEXPR_WITH_NDEBUG inline
-  R1TensorT & operator=( LvArray::ArraySlice< realT const, 1, USD > const & src )
+  R1TensorT & operator=( LvArray::ArraySlice< realT const, 1, USD, std::ptrdiff_t > const & src )
   {
     GEOSX_ASSERT_EQ( src.size(), T_dim );
 
@@ -104,7 +106,7 @@ public:
 
   template< int USD >
   GEOSX_HOST_DEVICE CONSTEXPR_WITH_NDEBUG inline
-  R1TensorT & operator+=( LvArray::ArraySlice< realT const, 1, USD > const & src )
+  R1TensorT & operator+=( LvArray::ArraySlice< realT const, 1, USD, std::ptrdiff_t > const & src )
   {
     GEOSX_ASSERT_EQ( src.size(), T_dim );
 
@@ -118,16 +120,16 @@ public:
 
   template< int USD >
   GEOSX_HOST_DEVICE constexpr inline
-  R1TensorT & operator+=( LvArray::ArraySlice< realT, 1, USD > const & src )
+  R1TensorT & operator+=( LvArray::ArraySlice< realT, 1, USD, std::ptrdiff_t > const & src )
   {
-    return (*this) += reinterpret_cast< LvArray::ArraySlice< realT const, 1, USD > const & >( src );
+    return (*this) += reinterpret_cast< LvArray::ArraySlice< realT const, 1, USD, std::ptrdiff_t > const & >( src );
   }
 
   using TensorBaseT< T_dim >::operator-=;
 
   template< int USD >
   GEOSX_HOST_DEVICE CONSTEXPR_WITH_NDEBUG inline
-  R1TensorT & operator-=( LvArray::ArraySlice< realT const, 1, USD > const & src )
+  R1TensorT & operator-=( LvArray::ArraySlice< realT const, 1, USD, std::ptrdiff_t > const & src )
   {
     GEOSX_ASSERT_EQ( src.size(), T_dim );
 
@@ -164,6 +166,7 @@ public:
 
   //****** TENSOR OPERATIONS **************************************************
   /// take the L2 norm of the tensor
+  GEOSX_HOST_DEVICE
   realT L2_Norm( void ) const;
 
   /// get the unit vector
@@ -171,6 +174,7 @@ public:
   { realT n = this->L2_Norm(); return (n>0.0) ? (*this/n) : *this; }
 
   /// Normalize the vector
+  GEOSX_HOST_DEVICE
   realT Normalize( void )
   { realT n = this->L2_Norm(); if( n>0.0 ) *this /= n; return n; }
 
@@ -272,6 +276,7 @@ inline R1TensorT< T_dim > & R1TensorT< T_dim >::operator=( const realT & rhs )
  * @return L2 norm of tensor
  */
 template< int T_dim >
+GEOSX_HOST_DEVICE
 inline realT R1TensorT< T_dim >::L2_Norm( void ) const
 {
   realT norm = 0.0;

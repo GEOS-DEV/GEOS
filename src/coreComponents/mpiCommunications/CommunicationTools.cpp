@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -88,7 +88,7 @@ void CommunicationTools::AssignGlobalIndices( ObjectManagerBase & object,
 {
   GEOSX_MARK_FUNCTION;
   integer_array & ghostRank = object.getReference< integer_array >( object.m_ObjectManagerBaseViewKeys.ghostRank );
-  ghostRank = -2;
+  ghostRank.setValues< serialPolicy >( -2 );
 
   int const commRank = MpiWrapper::Comm_rank();
 
@@ -136,7 +136,7 @@ void CommunicationTools::AssignGlobalIndices( ObjectManagerBase & object,
       tempComp.second = a;
 
       // push the tempComp onto the map.
-      indexByFirstCompositionIndex[firstCompositionIndex].push_back( std::move( tempComp ) );
+      indexByFirstCompositionIndex[firstCompositionIndex].emplace_back( std::move( tempComp ) );
       bufferSize += 2 + nodeList.size();
     }
   }
@@ -150,11 +150,11 @@ void CommunicationTools::AssignGlobalIndices( ObjectManagerBase & object,
     if( objectToCompositionObject[a].size() > 0 )
     {
       std::vector< globalIndex > const & nodeList = objectToCompositionObject[a];
-      objectToCompositionObjectSendBuffer.push_back( nodeList.size() );
-      objectToCompositionObjectSendBuffer.push_back( localToGlobal[a] );
+      objectToCompositionObjectSendBuffer.emplace_back( nodeList.size() );
+      objectToCompositionObjectSendBuffer.emplace_back( localToGlobal[a] );
       for( std::size_t b = 0; b < nodeList.size(); ++b )
       {
-        objectToCompositionObjectSendBuffer.push_back( nodeList[b] );
+        objectToCompositionObjectSendBuffer.emplace_back( nodeList[b] );
       }
     }
   }
@@ -242,14 +242,14 @@ void CommunicationTools::AssignGlobalIndices( ObjectManagerBase & object,
       std::vector< globalIndex > temp;
       for( localIndex b = 1; b < dataSize; ++b )
       {
-        temp.push_back( *( recBuffer++ ) );
+        temp.emplace_back( *( recBuffer++ ) );
       }
 
       // fill neighborCompositionObjects
       std::pair< std::vector< globalIndex >, globalIndex >
       tempComp( std::make_pair( std::move( temp ), std::move( neighborGlobalIndex ) ) );
 
-      neighborCompositionObjects[neighborIndex][firstCompositionIndex].push_back( tempComp );
+      neighborCompositionObjects[neighborIndex][firstCompositionIndex].emplace_back( tempComp );
     }
 
     // Set iterators to the beginning of each indexByFirstCompositionIndex,
@@ -451,7 +451,7 @@ CommunicationTools::
         if( globalPartitionBoundaryObjectsIndices[localCounter] == neighborPartitionBoundaryObjects[i][neighborCounter] )
         {
           localIndex const localMatchedIndex = objectManager->globalToLocalMap( globalPartitionBoundaryObjectsIndices[localCounter] );
-          matchedPartitionBoundaryObjects.push_back( localMatchedIndex );
+          matchedPartitionBoundaryObjects.emplace_back( localMatchedIndex );
           domainBoundaryIndicator[ localMatchedIndex ] = 2;
           ++localCounter;
           ++neighborCounter;
@@ -589,8 +589,8 @@ void fixReceiveLists( ObjectManagerBase & objectManager,
     for( std::pair< globalIndex, int > const & pair : ghostsFromSecondNeighbor )
     {
       localIndex const lid = objectManager.globalToLocalMap( pair.first );
-      ghostsBySecondNeighbor[ pair.second ].push_back( lid );
-      ghostsToFix.push_back( lid );
+      ghostsBySecondNeighbor[ pair.second ].emplace_back( lid );
+      ghostsToFix.emplace_back( lid );
       ghostRank[ lid ] = pair.second;
     }
 
@@ -601,7 +601,7 @@ void fixReceiveLists( ObjectManagerBase & objectManager,
     for( std::pair< int const, std::vector< localIndex > > const & pair : ghostsBySecondNeighbor )
     {
       array1d< localIndex > & trueOwnerRecvList = objectManager.getNeighborData( pair.first ).ghostsToReceive();
-      trueOwnerRecvList.insert( trueOwnerRecvList.size(), pair.second.data(), pair.second.size() );
+      trueOwnerRecvList.insert( trueOwnerRecvList.size(), pair.second.begin(), pair.second.end() );
     }
   }
 

@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -18,9 +18,6 @@
 
 #include "EdgeManager.hpp"
 #include "FaceElementRegion.hpp"
-#include "finiteElement/basis/LagrangeBasis.hpp"
-#include "finiteElement/quadrature/GaussQuadrature.hpp"
-#include "finiteElement/ElementLibrary/FiniteElement.h"
 
 
 namespace geosx
@@ -160,8 +157,8 @@ localIndex FaceElementRegion::AddToFractureMesh( real64 const time_np1,
     {
       // if not, then fill increase the size of the fractureConnectors to face elements map and
       // fill the fractureConnectorsToEdges map with the current edge....and the inverse map too.
-      edgeManager->m_fractureConnectorEdgesToFaceElements.appendArray( nullptr, 0 );
-      edgeManager->m_fractureConnectorsEdgesToEdges.push_back( edge );
+      edgeManager->m_fractureConnectorEdgesToFaceElements.appendArray( 0 );
+      edgeManager->m_fractureConnectorsEdgesToEdges.emplace_back( edge );
       edgeManager->m_edgesToFractureConnectorsEdges[edge] = edgeManager->m_fractureConnectorsEdgesToEdges.size()-1;
     }
     // now fill the fractureConnectorsToFaceElements map. This is analogous to the edge to face map
