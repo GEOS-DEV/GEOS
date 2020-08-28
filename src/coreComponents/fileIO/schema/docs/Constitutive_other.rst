@@ -11,6 +11,7 @@ CompositionalMultiphaseFluid          node :ref:`DATASTRUCTURE_CompositionalMult
 CompressibleSinglePhaseFluid          node :ref:`DATASTRUCTURE_CompressibleSinglePhaseFluid`          
 Contact                               node :ref:`DATASTRUCTURE_Contact`                               
 Coulomb                               node :ref:`DATASTRUCTURE_Coulomb`                               
+DamageLinearElasticIsotropic          node :ref:`DATASTRUCTURE_DamageLinearElasticIsotropic`          
 LinearElasticAnisotropic              node :ref:`DATASTRUCTURE_LinearElasticAnisotropic`              
 LinearElasticIsotropic                node :ref:`DATASTRUCTURE_LinearElasticIsotropic`                
 LinearElasticTransverseIsotropic      node :ref:`DATASTRUCTURE_LinearElasticTransverseIsotropic`      

@@ -403,6 +403,8 @@
 			<xsd:element name="LagrangianContact" type="LagrangianContactType" />
 			<xsd:element name="LagrangianContactWithFlow" type="LagrangianContactWithFlowType" />
 			<xsd:element name="LaplaceFEM" type="LaplaceFEMType" />
+			<xsd:element name="PhaseFieldDamageFEM" type="PhaseFieldDamageFEMType" />
+			<xsd:element name="PhaseFieldFracture" type="PhaseFieldFractureType" />
 			<xsd:element name="Poroelastic" type="PoroelasticType" />
 			<xsd:element name="ProppantTransport" type="ProppantTransportType" />
 			<xsd:element name="SinglePhaseFVM" type="SinglePhaseFVMType" />
@@ -483,6 +485,22 @@
 		<xsd:attribute name="maxStableDt" type="real64" />
 	</xsd:complexType>
 	<xsd:complexType name="LaplaceFEMType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
+			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
+		</xsd:choice>
+		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
+		<xsd:attribute name="maxStableDt" type="real64" />
+	</xsd:complexType>
+	<xsd:complexType name="PhaseFieldDamageFEMType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
+			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
+		</xsd:choice>
+		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
+		<xsd:attribute name="maxStableDt" type="real64" />
+	</xsd:complexType>
+	<xsd:complexType name="PhaseFieldFractureType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
 			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
@@ -646,6 +664,7 @@
 			<xsd:element name="CompressibleSinglePhaseFluid" type="CompressibleSinglePhaseFluidType" />
 			<xsd:element name="Contact" type="ContactType" />
 			<xsd:element name="Coulomb" type="CoulombType" />
+			<xsd:element name="DamageLinearElasticIsotropic" type="DamageLinearElasticIsotropicType" />
 			<xsd:element name="LinearElasticAnisotropic" type="LinearElasticAnisotropicType" />
 			<xsd:element name="LinearElasticIsotropic" type="LinearElasticIsotropicType" />
 			<xsd:element name="LinearElasticTransverseIsotropic" type="LinearElasticTransverseIsotropicType" />
@@ -808,6 +827,20 @@
 		<xsd:choice minOccurs="0" maxOccurs="1">
 			<xsd:element name="TableFunction" type="TableFunctionType" />
 		</xsd:choice>
+	</xsd:complexType>
+	<xsd:complexType name="DamageLinearElasticIsotropicType">
+		<!--BulkModulus => Elastic Bulk Modulus Field-->
+		<xsd:attribute name="BulkModulus" type="real64_array" />
+		<!--ShearModulus => Elastic Shear Modulus-->
+		<xsd:attribute name="ShearModulus" type="real64_array" />
+		<!--damage => Material Damage Variable-->
+		<xsd:attribute name="damage" type="real64_array2d" />
+		<!--density => Material Density-->
+		<xsd:attribute name="density" type="real64_array2d" />
+		<!--strainEnergyDensity => Stress Deviator-->
+		<xsd:attribute name="strainEnergyDensity" type="real64_array2d" />
+		<!--stress => Material Stress-->
+		<xsd:attribute name="stress" type="real64_array3d" />
 	</xsd:complexType>
 	<xsd:complexType name="LinearElasticAnisotropicType">
 		<!--density => Material Density-->
