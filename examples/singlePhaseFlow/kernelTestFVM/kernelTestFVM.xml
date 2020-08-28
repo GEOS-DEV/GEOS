@@ -17,7 +17,7 @@
         solverType="gmres"
         krylovTol="1.0"
         krylovMaxIter="1"
-        preconditionerType="none"
+        preconditionerType="amg"
         logLevel="0"/>
     </SinglePhaseFVM>
   </Solvers>
