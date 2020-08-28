@@ -19,7 +19,7 @@
 
 #ifndef GEOSX_CONSTITUTIVE_SOLID_DAMAGE_HPP_
 #define GEOSX_CONSTITUTIVE_SOLID_DAMAGE_HPP_
-#define LORENTZ 1
+#define LORENTZ 0
 #include "constitutive/solid/SolidBase.hpp"
 
 namespace geosx

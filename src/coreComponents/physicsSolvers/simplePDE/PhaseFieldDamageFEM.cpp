@@ -154,6 +154,7 @@ real64 PhaseFieldDamageFEM::SolverStep( real64 const & time_n, real64 const & dt
                                         const int cycleNumber,
                                         DomainPartition *domain )
 {
+  GEOSX_MARK_FUNCTION;
   real64 dtReturn = dt;
   if( m_timeIntegrationOption == timeIntegrationOption::ExplicitTransient )
   {
@@ -189,6 +190,7 @@ void PhaseFieldDamageFEM::ImplicitStepSetup(
   ParallelVector & rhs, ParallelVector & solution )
 {
   // Computation of the sparsity pattern
+  GEOSX_MARK_FUNCTION;
   SetupSystem( domain, dofManager, matrix, rhs, solution );
 }
 
@@ -202,6 +204,7 @@ void PhaseFieldDamageFEM::SetupDofs(
   DomainPartition const * const GEOSX_UNUSED_PARAM( domain ),
   DofManager & dofManager ) const
 {
+  GEOSX_MARK_FUNCTION;
   dofManager.addField( m_fieldName, DofManager::Location::Node );
 
   dofManager.addCoupling( m_fieldName,
@@ -217,6 +220,7 @@ void PhaseFieldDamageFEM::AssembleSystem( real64 const time_n,
                                           ParallelMatrix & matrix,
                                           ParallelVector & rhs )
 {
+  GEOSX_MARK_FUNCTION;
   MeshLevel * const mesh = domain->getMeshBody( 0 )->getMeshLevel( 0 );
   NodeManager * const nodeManager = mesh->getNodeManager();
   ElementRegionManager * const elemManager = mesh->getElemManager();
@@ -426,6 +430,7 @@ void PhaseFieldDamageFEM::ApplySystemSolution( DofManager const & dofManager,
                                                real64 const scalingFactor,
                                                DomainPartition * const domain )
 {
+  GEOSX_MARK_FUNCTION;
   MeshLevel * const mesh = domain->getMeshBody( 0 )->getMeshLevel( 0 );
 
   dofManager.addVectorToField( solution,
@@ -448,6 +453,7 @@ void PhaseFieldDamageFEM::ApplyBoundaryConditions(
   DofManager const & dofManager,
   ParallelMatrix & matrix, ParallelVector & rhs )
 {
+  GEOSX_MARK_FUNCTION;
   ApplyDirichletBC_implicit( time_n + dt, dofManager, *domain, m_matrix, m_rhs );
 
   if( getLogLevel() == 2 )
@@ -483,17 +489,17 @@ PhaseFieldDamageFEM::CalculateResidualNorm( DomainPartition const * const GEOSX_
                                             DofManager const & GEOSX_UNUSED_PARAM( dofManager ),
                                             ParallelVector const & rhs )
 {
-
+  GEOSX_MARK_FUNCTION;
   real64 const norm = rhs.norm2();
   return norm;
 
 }
-
 void PhaseFieldDamageFEM::SolveSystem( DofManager const & dofManager,
                                        ParallelMatrix & matrix,
                                        ParallelVector & rhs,
                                        ParallelVector & solution )
 {
+  GEOSX_MARK_FUNCTION;
   rhs.scale( -1.0 ); // TODO decide if we want this here
   solution.zero();
 
@@ -514,6 +520,7 @@ void PhaseFieldDamageFEM::ApplyDirichletBC_implicit( real64 const time,
                                                      ParallelVector & rhs )
 
 {
+  GEOSX_MARK_FUNCTION;
   FieldSpecificationManager const & fsManager = FieldSpecificationManager::get();
   matrix.open();
   rhs.open();
