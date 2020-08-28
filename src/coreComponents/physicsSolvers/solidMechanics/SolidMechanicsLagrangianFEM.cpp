@@ -764,11 +764,13 @@ void SolidMechanicsLagrangianFEM::ApplyChomboPressure( DofManager const & dofMan
     int const numNodes = LvArray::integerConversion< int >( faceToNodeMap.sizeOfArray( kf ));
     for( int a=0; a<numNodes; ++a )
     {
+      localIndex const dof = dofNumber[ faceToNodeMap( kf, a ) ];
+      if( dof < 0 || dof >= localRhs.size() ) continue;
+
       for( int component=0; component<3; ++component )
       {
-        localIndex const dof = dofNumber[ faceToNodeMap( kf, a ) ] + component;
         real64 const value = -facePressure[ kf ] * faceNormal( kf, component ) * faceArea[kf] / numNodes;
-        localRhs[ dof ] += value;
+        localRhs[ dof + component ] += value;
       }
     }
   } );
