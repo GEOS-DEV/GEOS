@@ -620,6 +620,8 @@ Available options are: none, jacobi, iluk, ilut, icc, amg, mgr, block-->
 		<!--solverType => Linear solver type
 Available options are: direct, cg, gmres, fgmres, bicgstab, preconditioner-->
 		<xsd:attribute name="solverType" type="string" default="direct" />
+		<!--stopIfError => Whether to stop the simulation if the linear solver reports an error-->
+		<xsd:attribute name="stopIfError" type="integer" default="1" />
 	</xsd:complexType>
 	<xsd:complexType name="NonlinearSolverParametersType">
 		<!--allowNonConverged => Allow non-converged solution to be accepted. (i.e. exit from the Newton loop without achieving the desired tolerance)-->

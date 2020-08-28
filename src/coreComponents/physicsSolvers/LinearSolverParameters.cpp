@@ -44,6 +44,11 @@ LinearSolverParametersInput::LinearSolverParametersInput( std::string const & na
     setDescription( "Preconditioner type\n"
                     "Available options are: none, jacobi, iluk, ilut, icc, amg, mgr, block" );
 
+  registerWrapper( viewKeyStruct::stopIfErrorString, &m_parameters.stopIfError )->
+    setApplyDefaultValue( m_parameters.stopIfError )->
+    setInputFlag( InputFlags::OPTIONAL )->
+    setDescription( "Whether to stop the simulation if the linear solver reports an error" );
+
   registerWrapper( viewKeyStruct::directTolString, &m_parameters.direct.relTolerance )->
     setApplyDefaultValue( m_parameters.direct.relTolerance )->
     setInputFlag( InputFlags::OPTIONAL )->
@@ -150,6 +155,8 @@ void LinearSolverParametersInput::PostProcessInput()
   static const std::set< string > precondOptions = { "none", "jacobi", "iluk", "ilut", "icc", "amg", "mgr", "block" };
   GEOSX_ERROR_IF( precondOptions.count( m_parameters.preconditionerType ) == 0, "Unsupported preconditioner type: " << m_parameters.preconditionerType );
 
+  GEOSX_ERROR_IF( binaryOptions.count( m_parameters.stopIfError ) == 0, viewKeyStruct::stopIfErrorString << " option can be either 0 (false) or 1 (true)" );
+
   GEOSX_ERROR_IF( binaryOptions.count( m_parameters.direct.equilibrate ) == 0, viewKeyStruct::directEquilString << " option can be either 0 (false) or 1 (true)" );
 
   static const std::set< string > directColPermOptions = { "none", "MMD_At+A", "MMD_AtA", "colAMD", "metis", "parmetis" };
@@ -160,7 +167,7 @@ void LinearSolverParametersInput::PostProcessInput()
 
   GEOSX_ERROR_IF( binaryOptions.count( m_parameters.direct.replaceTinyPivot ) == 0, viewKeyStruct::directReplTinyPivotString << " option can be either 0 (false) or 1 (true)" );
 
-  GEOSX_ERROR_IF( binaryOptions.count( m_parameters.direct.iterativeRefine ) == 0, viewKeyStruct::directIterRefString << "option can be either 0 (false) or 1 (true)" );
+  GEOSX_ERROR_IF( binaryOptions.count( m_parameters.direct.iterativeRefine ) == 0, viewKeyStruct::directIterRefString << " option can be either 0 (false) or 1 (true)" );
 
   GEOSX_ERROR_IF_LT_MSG( m_parameters.krylov.maxIterations, 0, "Invalid value of " << viewKeyStruct::krylovMaxIterString );
   GEOSX_ERROR_IF_LT_MSG( m_parameters.krylov.maxRestart, 0, "Invalid value of " << viewKeyStruct::krylovMaxRestartString );

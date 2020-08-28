@@ -70,6 +70,7 @@ public:
   {
     static constexpr auto solverTypeString         = "solverType";         ///< Solver type key
     static constexpr auto preconditionerTypeString = "preconditionerType"; ///< Preconditioner type key
+    static constexpr auto stopIfErrorString        = "stopIfError";        ///< stop if error key
 
     static constexpr auto directTolString = "directTol";                      ///< direct solver tolerance key
     static constexpr auto directEquilString = "directEquil";                  ///< direct solver equilibrate key

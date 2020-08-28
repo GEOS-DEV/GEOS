@@ -39,6 +39,7 @@ public:
   string preconditionerType = "iluk";  ///< Preconditioner type [none, iluk, ilut, amg, mgr, block]
   integer dofsPerNode = 1;             ///< Dofs per node (or support location) for non-scalar problems
   bool isSymmetric = false;            ///< Whether input matrix is symmetric (may affect choice of scheme)
+  integer stopIfError = 1;             ///< Whether to stop the simulation if the linear solver reports an error
 
   /// Direct solver parameters
   struct Direct
