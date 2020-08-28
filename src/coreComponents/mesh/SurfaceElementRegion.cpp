@@ -27,13 +27,13 @@ using namespace dataRepository;
 SurfaceElementRegion::SurfaceElementRegion( string const & name, Group * const parent ):
   ElementRegionBase( name, parent )
 {
-	registerWrapper( viewKeyStruct::subRegionTypeString, &m_subRegionType )->
-			setInputFlag( InputFlags::REQUIRED )->
-			setDescription( "Defines the type of surface element subregion. It can either be embedded or conforming." );
+  registerWrapper( viewKeyStruct::subRegionTypeString, &m_subRegionType )->
+    setInputFlag( InputFlags::REQUIRED )->
+    setDescription( "Defines the type of surface element subregion. It can either be embedded or conforming." );
 
-	registerWrapper( viewKeyStruct::defaultApertureString, &m_defaultAperture )->
-			setInputFlag( InputFlags::REQUIRED )->
-			setDescription( "The default aperture of newly formed surface elements." );
+  registerWrapper( viewKeyStruct::defaultApertureString, &m_defaultAperture )->
+    setInputFlag( InputFlags::REQUIRED )->
+    setDescription( "The default aperture of newly formed surface elements." );
 }
 
 SurfaceElementRegion::~SurfaceElementRegion()
@@ -42,19 +42,21 @@ SurfaceElementRegion::~SurfaceElementRegion()
 
 void SurfaceElementRegion::GenerateMesh( Group * const cellBlocks )
 {
-  GEOSX_UNUSED_VAR(cellBlocks);
+  GEOSX_UNUSED_VAR( cellBlocks );
 
   Group * const elementSubRegions = this->GetGroup( viewKeyStruct::elementSubRegions );
 
-  switch(m_subRegionType) {
-  case "embedded" :
-	  EmbeddedSurfaceSubRegion * const subRegion = elementSubRegions->RegisterGroup< EmbeddedSurfaceSubRegion >( "embeddedSurfaceSubRegion" );
-	  break;
-  case "conforming" :
-	  FaceElementSubRegion    * const subRegion = elementSubRegions->RegisterGroup< FaceElementSubRegion >( "faceElementSubRegion" );
-	  break;
-  default:
-	  GEOSX_ERROR("Invalid subregion type");
+  if( m_subRegionType == "embedded" )
+  {
+    elementSubRegions->RegisterGroup< EmbeddedSurfaceSubRegion >( "embeddedSurfaceSubRegion" );
+  }
+  else if( m_subRegionType == "conforming" )
+  {
+    elementSubRegions->RegisterGroup< FaceElementSubRegion >( "faceElementSubRegion" );
+  }
+  else
+  {
+    GEOSX_ERROR( "Invalid subregion type" );
   }
 }
 
@@ -67,14 +69,12 @@ void SurfaceElementRegion::InitializePreSubGroups( Group * const )
   } );
 }
 
-
-
 localIndex SurfaceElementRegion::AddToFractureMesh( real64 const time_np1,
-                                                 EdgeManager * const edgeManager,
-                                                 FaceManager const * const faceManager,
-                                                 ArrayOfArraysView< localIndex const >  const & originalFaceToEdgeMap,
-                                                 string const & subRegionName,
-                                                 localIndex const faceIndices[2] )
+                                                    EdgeManager * const edgeManager,
+                                                    FaceManager const * const faceManager,
+                                                    ArrayOfArraysView< localIndex const >  const & originalFaceToEdgeMap,
+                                                    string const & subRegionName,
+                                                    localIndex const faceIndices[2] )
 {
   localIndex rval = -1;
 

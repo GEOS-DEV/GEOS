@@ -25,7 +25,7 @@
 #include "finiteVolume/FiniteVolumeManager.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "managers/NumericalMethodsManager.hpp"
-#include "mesh/FaceElementRegion.hpp"
+#include "mesh/SurfaceElementRegion.hpp"
 #include "mesh/ExtrinsicMeshData.hpp"
 #include "meshUtilities/ComputationalGeometry.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEMKernels.hpp"
@@ -414,7 +414,7 @@ void SurfaceGenerator::postRestartInitialization( Group * const domain0 )
 
     EdgeManager * const edgeManager = meshLevel->getEdgeManager();
     ElementRegionManager * const elemManager = meshLevel->getElemManager();
-    FaceElementRegion * const fractureRegion = elemManager->GetRegion< FaceElementRegion >( this->m_fractureRegionName );
+    SurfaceElementRegion * const fractureRegion = elemManager->GetRegion< SurfaceElementRegion >( this->m_fractureRegionName );
     FaceElementSubRegion * const fractureSubRegion = fractureRegion->GetSubRegion< FaceElementSubRegion >( 0 );
 
     for( localIndex fce=0; fce<edgeManager->m_fractureConnectorEdgesToFaceElements.size(); ++fce )
@@ -478,7 +478,7 @@ real64 SurfaceGenerator::SolverStep( real64 const & time_n,
     {
       ElementRegionManager * const elemManager = meshLevel->getElemManager();
       EdgeManager * const edgeManager = meshLevel->getEdgeManager();
-      FaceElementRegion * const fractureRegion = elemManager->GetRegion< FaceElementRegion >( this->m_fractureRegionName );
+      SurfaceElementRegion * const fractureRegion = elemManager->GetRegion< SurfaceElementRegion >( this->m_fractureRegionName );
 
       for( localIndex a=0; a<fvManager.numSubGroups(); ++a )
       {
@@ -681,7 +681,7 @@ int SurfaceGenerator::SeparationDriver( DomainPartition & domain,
   }
 
 
-  real64 ruptureRate = calculateRuptureRate( *(elementManager.GetRegion< FaceElementRegion >( this->m_fractureRegionName )), edgeManager );
+  real64 ruptureRate = calculateRuptureRate( *(elementManager.GetRegion< SurfaceElementRegion >( this->m_fractureRegionName )), edgeManager );
 
   GEOSX_LOG_LEVEL_RANK_0( 3, "rupture rate is " << ruptureRate );
   if( ruptureRate > 0 )
@@ -1625,7 +1625,7 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
   arrayView1d< integer > const & edgeIsExternal = edgeManager.isExternal();
   arrayView1d< integer > const & nodeIsExternal = nodeManager.isExternal();
 
-  FaceElementRegion * const fractureElementRegion = elementManager.GetRegion< FaceElementRegion >( "Fracture" );
+  SurfaceElementRegion * const fractureElementRegion = elementManager.GetRegion< SurfaceElementRegion >( "Fracture" );
   integer_array & isFaceSeparable = faceManager.getReference< integer_array >( "isFaceSeparable" );
 
   arrayView2d< real64 > const & faceNormals = faceManager.faceNormal();
@@ -4459,7 +4459,7 @@ void SurfaceGenerator::
 }
 
 real64
-SurfaceGenerator::calculateRuptureRate( FaceElementRegion & faceElementRegion,
+SurfaceGenerator::calculateRuptureRate( SurfaceElementRegion & faceElementRegion,
                                         EdgeManager const & edgeManager )
 {
   real64 maxRuptureRate = 0;

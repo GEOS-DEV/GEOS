@@ -350,7 +350,7 @@ void VTKPolyDataWriterInterface::WriteWellElementRegions( real64 time, ElementRe
 
 void VTKPolyDataWriterInterface::WriteFaceElementRegions( real64 time, ElementRegionManager const & elemManager, NodeManager const & nodeManager ) const
 {
-  elemManager.forElementRegions< FaceElementRegion >( [&]( FaceElementRegion const & er )->void
+  elemManager.forElementRegions< SurfaceElementRegion >( [&]( SurfaceElementRegion const & er )->void
   {
     auto esr = er.GetSubRegion( 0 )->group_cast< FaceElementSubRegion const * >();
     vtkSmartPointer< vtkUnstructuredGrid > ug = vtkUnstructuredGrid::New();
@@ -379,7 +379,7 @@ void VTKPolyDataWriterInterface::WriteEmbeddedSurfaceElementRegions( real64 time
                                                                      NodeManager const & nodeManager,
                                                                      EdgeManager const & edgeManager ) const
 {
-  elemManager.forElementRegions< EmbeddedSurfaceRegion >( [&]( EmbeddedSurfaceRegion const & er )->void
+  elemManager.forElementRegions< SurfaceElementRegion >( [&]( SurfaceElementRegion const & er )->void
   {
     auto esr = er.GetSubRegion( 0 )->group_cast< EmbeddedSurfaceSubRegion const * >();
     vtkSmartPointer< vtkUnstructuredGrid > ug = vtkUnstructuredGrid::New();
@@ -416,12 +416,12 @@ void VTKPolyDataWriterInterface::WriteVTMFile( real64 time, ElementRegionManager
     elemManager.forElementRegions< WellElementRegion >( writeSubBlocks );
 
     // Surfaces
-    vtmWriter.AddBlock( FaceElementRegion::CatalogName() );
-    elemManager.forElementRegions< FaceElementRegion >( writeSubBlocks );
+    vtmWriter.AddBlock( SurfaceElementRegion::CatalogName() );
+    elemManager.forElementRegions< SurfaceElementRegion >( writeSubBlocks );
 
-    // Embedded Surfaces
-    vtmWriter.AddBlock( EmbeddedSurfaceRegion::CatalogName() );
-    elemManager.forElementRegions< EmbeddedSurfaceRegion >( writeSubBlocks );
+//    // Embedded Surfaces
+//    vtmWriter.AddBlock( EmbeddedSurfaceRegion::CatalogName() );
+//    elemManager.forElementRegions< EmbeddedSurfaceRegion >( writeSubBlocks );
 
     vtmWriter.Save();
   }

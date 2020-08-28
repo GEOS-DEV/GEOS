@@ -108,17 +108,17 @@ public:
 
 
   /**
-    * @name Getters / Setters
-    */
-   ///@{
+   * @name Getters / Setters
+   */
+  ///@{
 
-   /**
-    * @brief Get default aperture value.
-    * @return default aperture value
-    */
-   real64 getDefaultAperture() const { return m_defaultAperture; }
+  /**
+   * @brief Get default aperture value.
+   * @return default aperture value
+   */
+  real64 getDefaultAperture() const { return m_defaultAperture; }
 
-   ///@}
+  ///@}
 
   /**
    * @brief A struct to serve as a container for variable strings and keys.
@@ -126,8 +126,8 @@ public:
    */
   struct viewKeyStruct : public ElementRegionBase::viewKeyStruct
   {
-	/// SubRegion type string
-	static constexpr auto subRegionTypeString = "subRegionType";
+    /// SubRegion type string
+    static constexpr auto subRegionTypeString = "subRegionType";
     /// Fracture set string
     static constexpr auto fractureSetString = "fractureSet";
     /// Default fracture aperture
@@ -136,6 +136,8 @@ public:
     static constexpr auto ruptureTimeString = "ruptureTime";
   };
 
+protected:
+  virtual void InitializePreSubGroups( Group * const ) override;
 
 private:
 

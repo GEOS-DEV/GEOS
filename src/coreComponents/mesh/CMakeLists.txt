@@ -11,7 +11,7 @@ set(mesh_headers
     ElementRegionBase.hpp
     ElementRegionManager.hpp
     FaceElementSubRegion.hpp
-    SurfaceElmentRegion.hpp
+    SurfaceElementRegion.hpp
     EmbeddedSurfaceSubRegion.hpp
     WellElementSubRegion.hpp
     WellElementRegion.hpp
