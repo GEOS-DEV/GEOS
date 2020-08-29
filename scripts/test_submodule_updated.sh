@@ -1,14 +1,21 @@
 #!/bin/bash
 
 # Submodules not checking for
-declare -ar exclusion_list=( "blt" "integratedTests" )
+declare -ar exclusion_list=( "blt" )
 echo "Submodules that are excluded from sync test : ${exclusion_list[@]}"
 
 # Do not pull large files
 git lfs uninstall &> /dev/null
 
 # Pull submodule to get .git files.
-git submodule update --quiet --init
+#git submodule update --init integratedTests
+git submodule update --init src/cmake/blt
+git submodule update --init src/coreComponents/LvArray
+git submodule update --init src/externalComponents/PVTPackage
+git submodule update --init src/externalComponents/PAMELA
+git submodule update --init src/coreComponents/fileIO/coupling/hdf5_interface
+git submodule update --init src/coreComponents/physicsSolvers/GEOSX_PTP
+
 
 # Initialize PR submodule hashes
 declare -ar pr_hashes_array=( $(git submodule status | awk '{print $1}') )
@@ -23,12 +30,13 @@ declare -ar diff_array=( $(git diff --name-only origin/develop) )
 declare -Ar main_branches=(
   ["blt"]="origin/develop"
   ["LvArray"]="origin/develop"
-#  ["integratedTests"]="origin/develop"
   ["GEOSX_PTP"]="origin/master"
   ["hdf5_interface"]="origin/master"
   ["PAMELA"]="origin/master"
   ["PVTPackage"]="origin/master"
 )
+
+#  ["integratedTests"]="origin/develop"
 
 length=${#paths_array[@]}
 
