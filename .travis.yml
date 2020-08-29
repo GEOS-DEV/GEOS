@@ -46,8 +46,6 @@ geosx_linux_build: &geosx_linux_build
     ${TRAVIS_BUILD_DIR_MOUNT_POINT}/scripts/travis_build_and_test.sh ${BUILD_AND_TEST_ARGS};
 
 geosx_osx_build: &geosx_osx_build
-  stage: build
-  name: Mac_OSX
   os: osx
   osx_image: xcode11.2
   install:
@@ -112,14 +110,14 @@ jobs:
     name: code_style
     <<: *geosx_linux_build
     env:
-    - DOCKER_REPOSITORY=geosx/centos7.7.1908-clang9.0.0
+    - DOCKER_REPOSITORY=geosx/ubuntu18.04-gcc8
     - CMAKE_BUILD_TYPE=Release
     - BUILD_AND_TEST_ARGS=--test-code-style
   - stage: check_code_style_and_docs
     name: documentation
     <<: *geosx_linux_build
     env:
-    - DOCKER_REPOSITORY=geosx/centos7.7.1908-clang9.0.0
+    - DOCKER_REPOSITORY=geosx/ubuntu18.04-gcc8
     - CMAKE_BUILD_TYPE=Release
     - BUILD_AND_TEST_ARGS=--test-documentation
   - stage: build
@@ -143,7 +141,9 @@ jobs:
     - DOCKER_REPOSITORY=geosx/pangea2-gcc8.3.0-openmpi2.1.5-mkl2019.3
     - CMAKE_BUILD_TYPE=Release
     - BUILD_AND_TEST_ARGS=--disable-unit-tests
-  - <<: *geosx_osx_build
+  - stage: build
+    name: Mac_OSX
+    <<: *geosx_osx_build
   - stage: build
     name: Centos7.7_clang9.0.0_release
     <<: *geosx_linux_build
