@@ -346,10 +346,7 @@ PhaseFieldDamageFEM::CalculateResidualNorm( DomainPartition const & domain,
     if( ghostRank[k] < 0 )
     {
       localIndex const localRow = LvArray::integerConversion< localIndex >( dofNumber[k] - rankOffset );
-      for( localIndex dim = 0; dim < 3; ++dim )
-      {
-        localSum += localRhs[localRow + dim] * localRhs[localRow + dim];
-      }
+      localSum += localRhs[localRow] * localRhs[localRow];
     }
   } );
 
