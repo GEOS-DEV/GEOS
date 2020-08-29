@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Submodules not checking for
-declare -ar exclusion_list=( "blt" )
+declare -ar exclusion_list=( "blt" "integratedTests" )
 echo "Submodules that are excluded from sync test : ${exclusion_list[@]}"
 
 # Do not pull large files
@@ -30,13 +30,13 @@ declare -ar diff_array=( $(git diff --name-only origin/develop) )
 declare -Ar main_branches=(
   ["blt"]="origin/develop"
   ["LvArray"]="origin/develop"
+  ["integratedTests"]="origin/develop"
   ["GEOSX_PTP"]="origin/master"
   ["hdf5_interface"]="origin/master"
   ["PAMELA"]="origin/master"
   ["PVTPackage"]="origin/master"
 )
 
-#  ["integratedTests"]="origin/develop"
 
 length=${#paths_array[@]}
 
