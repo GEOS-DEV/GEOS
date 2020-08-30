@@ -305,7 +305,7 @@ void PhaseFieldFractureSolver::mapDamageToQuadrature( DomainPartition & domain )
   string const & damageFieldName = damageSolver.getFieldName();
 
   //should get reference to damage field here.
-  arrayView1d< real64 > const & nodalDamage = nodeManager->getReference< array1d< real64 > >( damageFieldName );
+  arrayView1d< real64 const > const nodalDamage = nodeManager->getReference< array1d< real64 > >( damageFieldName );
 
   ElementRegionManager * const elemManager = mesh->getElemManager();
 
@@ -316,36 +316,30 @@ void PhaseFieldFractureSolver::mapDamageToQuadrature( DomainPartition & domain )
 
 
   // begin region loop
-  forTargetSubRegionsComplete< CellElementSubRegion >( *mesh, [&]( localIndex const targetIndex,
-                                                                   localIndex const,
-                                                                   localIndex const,
-                                                                   ElementRegionBase &,
-                                                                   CellElementSubRegion & elementSubRegion )
+  forTargetSubRegionsComplete< CellElementSubRegion >( *mesh, [this, &solidSolver, nodalDamage]
+  ( localIndex const targetIndex, localIndex, localIndex, ElementRegionBase &, CellElementSubRegion & elementSubRegion )
   {
     constitutive::ConstitutiveBase * const
     solidModel = elementSubRegion.getConstitutiveModel< constitutive::ConstitutiveBase >( solidSolver.solidMaterialNames()[targetIndex] );
 
-    ConstitutivePassThru< DamageBase >::Execute( solidModel, [&]( auto * const damageModel )
+    ConstitutivePassThru< DamageBase >::Execute( solidModel, [this, &elementSubRegion, nodalDamage]( auto * const damageModel )
     {
       using CONSTITUTIVE_TYPE = TYPEOFPTR( damageModel );
       typename CONSTITUTIVE_TYPE::KernelWrapper constitutiveUpdate = damageModel->createKernelUpdates();
 
-      arrayView2d< real64 > const & damageFieldOnMaterial = constitutiveUpdate.m_damage;
-      arrayView2d< localIndex const, cells::NODE_MAP_USD > const &
-      elemNodes = elementSubRegion.nodeList();
+      arrayView2d< real64 > const damageFieldOnMaterial = constitutiveUpdate.m_damage;
+      arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemNodes = elementSubRegion.nodeList();
 
-
-      finiteElement::FiniteElementBase const &
+      finiteElement::FiniteElementBase const & 
       fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( m_discretizationName );
 
-      finiteElement::dispatch3D( fe, [&]( auto & finiteElement )
+      finiteElement::dispatch3D( fe, [nodalDamage, &elementSubRegion, damageFieldOnMaterial, elemNodes]( auto & finiteElement )
       {
         using FE_TYPE = TYPEOFREF( finiteElement );
         constexpr localIndex numNodesPerElement = FE_TYPE::numNodes;
         constexpr localIndex n_q_points = FE_TYPE::numQuadraturePoints;
-        globalIndex_array elemDofIndex( numNodesPerElement );
 
-        for( localIndex k = 0; k < elementSubRegion.size(); ++k )
+        forAll< serialPolicy >( elementSubRegion.size(), [nodalDamage, damageFieldOnMaterial, elemNodes] ( localIndex const k )
         {
           for( localIndex q = 0; q < n_q_points; ++q )
           {
@@ -364,8 +358,7 @@ void PhaseFieldFractureSolver::mapDamageToQuadrature( DomainPartition & domain )
             }
             //          std::cout<<"damage("<<k<<","<<q<<") = "<<damageFieldOnMaterial(k,q)<<std::endl;
           }
-        }
-
+        } );
       } );
     } );
   } );
