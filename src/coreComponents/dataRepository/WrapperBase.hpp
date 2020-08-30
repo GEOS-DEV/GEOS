@@ -390,6 +390,7 @@ public:
     if( input == InputFlags::OPTIONAL || input == InputFlags::REQUIRED )
     {
       this->setSizedFromParent( 0 );
+      m_restart_flags = RestartFlags::WRITE;
     }
     m_inputFlag = input;
     return this;
