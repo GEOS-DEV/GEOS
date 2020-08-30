@@ -71,14 +71,6 @@ PhaseFieldDamageFEM::PhaseFieldDamageFEM( const std::string & name,
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "Type of local dissipation function. Can be Linear or Quadratic" );
 
-  registerWrapper( viewKeyStruct::lengthScale, &m_lengthScale )->
-    setInputFlag( InputFlags::REQUIRED )->
-    setDescription( "lenght scale l in the phase-field equation" );
-
-  registerWrapper( viewKeyStruct::criticalFractureEnergy, &m_criticalFractureEnergy )->
-    setInputFlag( InputFlags::REQUIRED )->
-    setDescription( "critical fracture energy" );
-
   registerWrapper( viewKeyStruct::solidModelNamesString, &m_solidModelNames )->
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "name of solid constitutive model" );
@@ -251,8 +243,6 @@ void PhaseFieldDamageFEM::AssembleSystem( real64 const GEOSX_UNUSED_PARAM( time_
                                                             localMatrix,
                                                             localRhs,
                                                             m_fieldName,
-                                                            m_criticalFractureEnergy,
-                                                            m_lengthScale,
                                                             m_localDissipationOption=="Linear" ? 1 : 2 );
 #else // this has your changes to the old base code
   matrix.zero();
@@ -302,7 +292,7 @@ void PhaseFieldDamageFEM::AssembleSystem( real64 const GEOSX_UNUSED_PARAM( time_
         //real64 ell = m_lengthScale;                       //phase-field length scale
         real64 ell = constitutiveUpdate.getRegularizationLength();
         //real64 Gc = m_criticalFractureEnergy;             //energy release rate
-	real64 Gc = constitutiveUpdate.getCriticalFractureEnergy();
+	       real64 Gc = constitutiveUpdate.getCriticalFractureEnergy();
 
         real64 threshold = constitutiveUpdate.getEnergyThreshold();//elastic energy threshold - use when Local Dissipation is linear
 

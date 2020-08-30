@@ -96,8 +96,6 @@ public:
                           CRSMatrixView< real64, globalIndex const > const & inputMatrix,
                           arrayView1d< real64 > const & inputRhs,
                           string const & fieldName,
-                          real64 const Gc,
-                          real64 const lengthScale,
                           int const localDissipationOption ):
     Base( nodeManager,
           edgeManager,
@@ -112,8 +110,6 @@ public:
     m_nodalDamage( nodeManager.template getReference< array1d< real64 > >( fieldName )),
     m_dNdX( elementSubRegion.dNdX() ),
     m_detJ( elementSubRegion.detJ() ),
-    m_Gc( Gc ),
-    m_lengthScale( lengthScale ),
     m_localDissipationOption( localDissipationOption )
   {}
 
@@ -176,14 +172,15 @@ public:
   {
 
     real64 const strainEnergyDensity = m_constitutiveUpdate.calculateStrainEnergyDensity( k, q );
-//    std::cout<<k<<", "<<q<<", "<< strainEnergyDensity<<std::endl;
+    real64 const ell = m_constitutiveUpdate.getRegularizationLength();
+    real64 const Gc = m_constitutiveUpdate.getCriticalFractureEnergy();
+    real64 const threshold = m_constitutiveUpdate.getEnergyThreshold();
+
     real64 D = 0;                                                                   //max between threshold and
                                                                                     // Elastic energy
     if( m_localDissipationOption == 1 )
     {
-      double const threshold = 3 * m_Gc / (16 * m_lengthScale);           //elastic energy threshold - use when Local Dissipation is linear
       D = fmax( threshold, strainEnergyDensity );
-      //D = max(strainEnergy(k,q), strainEnergy(k,q));//debbuging line - remove after testing
     }
 
     //Interpolate d and grad_d
@@ -206,33 +203,32 @@ public:
     {
       if( m_localDissipationOption == 1 )
       {
-        stack.localResidual[ a ] += m_detJ[k][q] * ( N[a] * (m_lengthScale * D - 3 * m_Gc / 16 )/ m_Gc -
-                                                     0.375*pow( m_lengthScale, 2 ) * LvArray::tensorOps::AiBi< 3 >( qp_grad_damage, m_dNdX[k][q][a] ) -
-                                                     m_lengthScale * D/m_Gc * N[a] * qp_damage
-                                                     );
+        stack.localResidual[ a ] += m_detJ[k][q] * ( -3 * N[a] / 16  -
+                                  0.375*pow( ell, 2 ) * LvArray::tensorOps::AiBi<3>( qp_grad_damage, m_dNdX[k][q][a] ) -
+                                  (0.5 * ell * D/Gc) * N[a] * m_constitutiveUpdate.GetDegradationDerivative(qp_damage));
       }
       else
       {
-        stack.localResidual[ a ] += m_detJ[k][q] * ( N[a] * (2 * m_lengthScale) * strainEnergyDensity / m_Gc -
-                                                     ( pow( m_lengthScale, 2 ) * LvArray::tensorOps::AiBi< 3 >( qp_grad_damage, m_dNdX[k][q][a] ) +
-                                                       N[a] * qp_damage * (1 + 2 * m_lengthScale*strainEnergyDensity/m_Gc)
-                                                     )
-                                                     );
+        stack.localResidual[ a ] -= m_detJ[k][q] * (N[a] * qp_damage +
+                                          (pow( ell, 2 ) * LvArray::tensorOps::AiBi<3>( qp_grad_damage, m_dNdX[k][q][a] ) +
+                                           N[a] * m_constitutiveUpdate.GetDegradationDerivative(qp_damage) * (ell*strainEnergyDensity/Gc)) );
+
       }
       for( localIndex b = 0; b < numNodesPerElem; ++b )
       {
         if( m_localDissipationOption == 1 )
         {
           stack.localJacobian[ a ][ b ] -= m_detJ[k][q] *
-                                           (0.375*pow( m_lengthScale, 2 ) * LvArray::tensorOps::AiBi< 3 >( m_dNdX[k][q][a], m_dNdX[k][q][b] ) +
-                                            (m_lengthScale * D/m_Gc) * N[a] * N[b]);
+                                    (0.375*pow( ell, 2 ) * LvArray::tensorOps::AiBi<3>( m_dNdX[k][q][a], m_dNdX[k][q][b] ) +
+                                     (0.5 * ell * D/Gc) * m_constitutiveUpdate.GetDegradationSecondDerivative(qp_damage) * N[a] * N[b]);
+
         }
         else
         {
           stack.localJacobian[ a ][ b ] -= m_detJ[k][q] *
-                                           ( pow( m_lengthScale, 2 ) * LvArray::tensorOps::AiBi< 3 >( m_dNdX[k][q][a], m_dNdX[k][q][b] ) +
-                                             N[a] * N[b] * (1 + 2 * m_lengthScale*strainEnergyDensity/m_Gc )
-                                           );
+                                    ( pow( ell, 2 ) * LvArray::tensorOps::AiBi<3>( m_dNdX[k][q][a], m_dNdX[k][q][b] ) +
+                                        N[a] * N[b] * (1 + m_constitutiveUpdate.GetDegradationSecondDerivative(qp_damage) * ell*strainEnergyDensity/Gc )
+                                    );
         }
       }
     }
@@ -281,8 +277,6 @@ protected:
   /// The global determinant of the parent/physical Jacobian.
   arrayView2d< real64 const > const m_detJ;
 
-  real64 const m_Gc;
-  real64 const m_lengthScale;
   int const m_localDissipationOption;
 
 };
