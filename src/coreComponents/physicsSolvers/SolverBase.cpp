@@ -73,6 +73,7 @@ SolverBase::SolverBase( std::string const & name,
   registerWrapper( viewKeyStruct::initialDtString, &m_nextDt )->
     setApplyDefaultValue( 1e99 )->
     setInputFlag( InputFlags::OPTIONAL )->
+    setRestartFlags( RestartFlags::WRITE_AND_READ )->
     setDescription( "Initial time-step value required by the solver to the event manager." );
 
   RegisterGroup( groupKeyStruct::linearSolverParametersString, &m_linearSolverParameters );
