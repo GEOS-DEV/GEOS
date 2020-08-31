@@ -612,8 +612,7 @@ void WellElementSubRegion::UpdateNodeManagerSize( MeshLevel & mesh,
   // resize nodeManager to account for the new well nodes and update the properties
   nodeManager->resize( oldNumNodesLocal + numWellNodesLocal );
 
-  array1d< integer > &
-  isDomainBoundary = nodeManager->getReference< integer_array >( m_ObjectManagerBaseViewKeys.domainBoundaryIndicator );
+  arrayView1d< integer > const & isDomainBoundary = nodeManager->getDomainBoundaryIndicator();
 
   arrayView1d< globalIndex > const & nodeLocalToGlobal = nodeManager->localToGlobalMap();
 

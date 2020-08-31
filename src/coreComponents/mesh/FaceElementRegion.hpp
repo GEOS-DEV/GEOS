@@ -130,10 +130,6 @@ public:
 
     /// Default aperture string
     static constexpr auto defaultApertureString = "defaultAperture";
-
-    /// Rupture time string
-    constexpr static auto ruptureTimeString = "ruptureTime";
-
   };
 
 protected:
