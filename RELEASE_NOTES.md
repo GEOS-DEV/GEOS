@@ -28,15 +28,25 @@ Version v0.2.0 -- Release date 2020-06-20
       * 6 node wedge
       * 5 node pyramid
       * 4 node tetrahedron
-  * Finite Volume Stencils (TPFA, infrastructure support for MPFA, but currently 
-    not implemented.)
+  * Finite Volume Stencils for Classical (cell-centered) FVM formulation (TPFA, infrastructure support for MPFA, but currently 
+    not implemented)
+  * Inner Products for Hybrid FVM formulation (current support for TPFA and quasi-TPFA) 
 * Physics Solvers
   * Solid Mechanics Explicit on GPU, Implicit Assembly on GPU
   * Single Phase Flow (Assembly on GPU)
+    * Classical FVM and Hybrid FVM formulations
+    * Porous matrix and DFM fracture flow
   * Compositional Multiphase Flow (Assembly on GPU)
+    * Fully Implicit Isothermal Overall Composition Formulation
+    * A library of fluid constitutive models:
+      * Equation-of-State based hydrocarbon compositional
+      * Three-phase extended Black-oil
+      * Two-phase CO2-brine  
   * Surface Generation
     * Topology change (Legacy GEOS approach)
-    * Enriched Finite Element Method
+* Embedded Discrete Fractures
+  * Enriched Finite Element Method for the discretization of the mechanics
+  * Piecewise constant displacement jump enrichment
   * Hydrofracture Solver (Legacy GEOS approach)
   * Small Strain aligned Contact using Lagrange Multipliers
     * Discrete Fracture Model using a low order stabilized mixed finite element
@@ -61,4 +71,3 @@ Initial Code Release containing:
 * Mesh data structure
   * NodeManager, EdgeManager, FaceManager, ElementManager
   * Silo Output
-

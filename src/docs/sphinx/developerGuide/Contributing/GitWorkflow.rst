@@ -281,7 +281,7 @@ Creating a pull request early in the development process is preferred as it allo
 for developers to collaborate on the branch more readily.
 
 .. note::
-   When initially creating a pull request (PR) on GitHub, create it is a draft PR while
+   When initially creating a pull request (PR) on GitHub, create it as a draft PR while
    work is ongoing and the PR isn't ready for testing, review, and merge consideration.
 
 When you create the initial draft PR, please ensure that you apply appropriate labels.
