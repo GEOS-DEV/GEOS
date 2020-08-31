@@ -250,6 +250,7 @@ development of ``feature/smith/dodgeBullets``.
 This would look like:
 
 .. code-block:: sh
+
    git checkout develop
    git pull
    git checkout feature/smith/dodgeBullets
