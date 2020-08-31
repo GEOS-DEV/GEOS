@@ -148,7 +148,7 @@
       cellBlocks="{ cb1 }"
       materialList="{ rock }"/>
 
-    <FaceElementRegion
+    <SurfaceElementRegion
       name="Fracture"
       defaultAperture="0.0"
       materialList="{ fractureMaterial }"/>

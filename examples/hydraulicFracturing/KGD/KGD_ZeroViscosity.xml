@@ -80,7 +80,7 @@
       cellBlocks="{ cb1 }"
       materialList="{ water, rock }"/>
 
-    <FaceElementRegion
+    <SurfaceElementRegion
       name="Fracture"
       defaultAperture="0.02e-3"
       materialList="{ water, rock }"/>

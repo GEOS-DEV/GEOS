@@ -121,7 +121,6 @@
 
     <SurfaceElementRegion
       name="Fracture"
-      subRegionType="embeddedElement"
       defaultAperture = "1e-4"
       materialList="{ water }"/>
   </ElementRegions>

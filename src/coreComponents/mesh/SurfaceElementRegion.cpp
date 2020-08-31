@@ -27,10 +27,6 @@ using namespace dataRepository;
 SurfaceElementRegion::SurfaceElementRegion( string const & name, Group * const parent ):
   ElementRegionBase( name, parent )
 {
-  registerWrapper( viewKeyStruct::subRegionTypeString, &m_subRegionType )->
-    setInputFlag( InputFlags::REQUIRED )->
-    setDescription( "Defines the type of surface element subregion. It can either be embedded or conforming." );
-
   registerWrapper( viewKeyStruct::defaultApertureString, &m_defaultAperture )->
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "The default aperture of newly formed surface elements." );
@@ -46,18 +42,10 @@ void SurfaceElementRegion::GenerateMesh( Group * const cellBlocks )
 
   Group * const elementSubRegions = this->GetGroup( viewKeyStruct::elementSubRegions );
 
-  if( m_subRegionType == "embeddedElement" )
-  {
-    elementSubRegions->RegisterGroup< EmbeddedSurfaceSubRegion >( "embeddedSurfaceSubRegion" );
-  }
-  else if( m_subRegionType == "faceElement" )
-  {
-    elementSubRegions->RegisterGroup< FaceElementSubRegion >( "faceElementSubRegion" );
-  }
-  else
-  {
-    GEOSX_ERROR( "Invalid subregion type" );
-  }
+  elementSubRegions->RegisterGroup< EmbeddedSurfaceSubRegion >( "embeddedSurfaceSubRegion" );
+
+  elementSubRegions->RegisterGroup< FaceElementSubRegion >( "faceElementSubRegion" );
+
 }
 
 void SurfaceElementRegion::InitializePreSubGroups( Group * const )

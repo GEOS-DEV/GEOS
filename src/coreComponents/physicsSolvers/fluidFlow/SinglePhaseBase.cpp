@@ -262,8 +262,8 @@ void SinglePhaseBase::InitializePostInitialConditions_PreSubGroups( Group * cons
   } );
 
   mesh.getElemManager()->forElementRegions< SurfaceElementRegion >( targetRegionNames(),
-                                                                 [&]( localIndex const targetIndex,
-                                                                      SurfaceElementRegion & region )
+                                                                    [&]( localIndex const targetIndex,
+                                                                         SurfaceElementRegion & region )
   {
     region.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
     {
