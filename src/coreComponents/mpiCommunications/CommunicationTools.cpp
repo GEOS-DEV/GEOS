@@ -418,7 +418,7 @@ CommunicationTools::
                                        std::vector< NeighborCommunicator > & allNeighbors )
 {
   GEOSX_MARK_FUNCTION;
-  integer_array & domainBoundaryIndicator = objectManager->getReference< integer_array >( objectManager->m_ObjectManagerBaseViewKeys.domainBoundaryIndicator );
+  arrayView1d< integer > const & domainBoundaryIndicator = objectManager->getDomainBoundaryIndicator();
 
   array1d< globalIndex > globalPartitionBoundaryObjectsIndices;
   objectManager->ConstructGlobalListOfBoundaryObjects( globalPartitionBoundaryObjectsIndices );
