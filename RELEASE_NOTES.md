@@ -37,6 +37,7 @@ Version v0.2.0 -- Release date 2020-06-20
     * Classical FVM and Hybrid FVM formulations
     * Porous matrix and DFM fracture flow
   * Compositional Multiphase Flow (Assembly on GPU)
+  * Multi-segmented Wells for Single Phase and Compositional Multiphase Flow (Assembly on GPU)
     * Fully Implicit Isothermal Overall Composition Formulation
     * A library of fluid constitutive models:
       * Equation-of-State based hydrocarbon compositional
