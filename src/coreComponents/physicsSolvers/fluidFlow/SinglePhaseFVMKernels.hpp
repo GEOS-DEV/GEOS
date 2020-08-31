@@ -310,10 +310,10 @@ struct FaceDirichletBCKernel
     real64 const dDens_dP = 0.5 * dDens_dPres[er][esr][ei][0];
 
     // Evaluate potential difference
-    real64 const potDif = trans[ Order::ELEM ] * ( pres[er][esr][ei] + dPres[er][esr][ei] + densMean * gravCoef[er][esr][ei] )
-                          + trans[ Order::FACE ] * ( presFace[kf] + densMean * gravCoefFace[kf] );
+    real64 const potDif = trans[ Order::ELEM ] * ( pres[er][esr][ei] + dPres[er][esr][ei] - densMean * gravCoef[er][esr][ei] )
+                          + trans[ Order::FACE ] * ( presFace[kf] - densMean * gravCoefFace[kf] );
 
-    real64 const dPotDif_dP = trans[ Order::ELEM ] * ( 1.0 + dDens_dP * gravCoef[er][esr][ei] );
+    real64 const dPotDif_dP = trans[ Order::ELEM ] * ( 1.0 - dDens_dP * gravCoef[er][esr][ei] );
 
     // Upwind mobility
     localIndex const k_up = ( potDif >= 0 ) ? Order::ELEM : Order::FACE;
