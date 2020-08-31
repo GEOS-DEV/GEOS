@@ -51,11 +51,16 @@ Version v0.2.0 -- Release date 2020-06-20
   * Hydrofracture Solver (Legacy GEOS approach)
   * Small Strain aligned Contact using Lagrange Multipliers
     * Discrete Fracture Model using a low order stabilized mixed finite element
+  * Proppant Transport Solver
+    * FVM formulation
+    * Modeling the following major physical processes:
+      * Proppant-fluid slurry flow and mutlicomponent trasnport in fractures
+      * Proppant gravitational settling
+      * Proppant bed build-up and development
       space
 * Mesh Structure
   * Introduced concept of extrinsic mesh data
   * Fracture Elements to represent FV cells in fracture
-* Proppant modeling
 * VTK output
 * Linear Algebra Interface layers for Hypre, Trilinos, Petsc
 
