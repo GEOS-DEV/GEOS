@@ -39,6 +39,8 @@ Version v0.2.0 -- Release date 2020-06-20
     * Enriched Finite Element Method
   * Hydrofracture Solver (Legacy GEOS approach)
   * Small Strain aligned Contact using Lagrange Multipliers
+    * Discrete Fracture Model using a low order stabilized mixed finite element
+      space
 * Mesh Structure
   * Introduced concept of extrinsic mesh data
   * Fracture Elements to represent FV cells in fracture
