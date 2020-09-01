@@ -112,12 +112,6 @@
         order="1"/>
     </FiniteElements>
 
-    <FiniteElements>
-      <FiniteElementSpace
-        name="FE2"
-        order="1"/>
-    </FiniteElements>
-
     <FiniteVolume>
       <TwoPointFluxApproximation
         name="singlePhaseTPFA"
