@@ -16,6 +16,7 @@
  * @file FaceElementRegion.cpp
  */
 
+#include "ExtrinsicMeshData.hpp"
 #include "EdgeManager.hpp"
 #include "FaceElementRegion.hpp"
 
@@ -73,8 +74,7 @@ localIndex FaceElementRegion::AddToFractureMesh( real64 const time_np1,
   rval = subRegion->size() - 1;
 
 
-  arrayView1d< real64 > const &
-  ruptureTime = subRegion->getReference< real64_array >( viewKeyStruct::ruptureTimeString );
+  arrayView1d< real64 > const & ruptureTime = subRegion->getExtrinsicData< extrinsicMeshData::RuptureTime >();
 
   arrayView1d< real64 > const &
   creationMass = subRegion->getReference< real64_array >( FaceElementSubRegion::viewKeyStruct::creationMassString );
