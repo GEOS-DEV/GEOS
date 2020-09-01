@@ -530,8 +530,7 @@ void testNumericalJacobian( CompositionalMultiphaseFlow & solver,
   solver.forTargetSubRegions( mesh, [&]( localIndex const,
                                          ElementSubRegionBase & subRegion )
   {
-    arrayView1d< integer const > const & elemGhostRank =
-      subRegion.getReference< array1d< integer > >( ObjectManagerBase::viewKeyStruct::ghostRankString );
+    arrayView1d< integer const > const & elemGhostRank = subRegion.ghostRank();
 
     arrayView1d< globalIndex const > const & dofNumber =
       subRegion.getReference< array1d< globalIndex > >( dofKey );
