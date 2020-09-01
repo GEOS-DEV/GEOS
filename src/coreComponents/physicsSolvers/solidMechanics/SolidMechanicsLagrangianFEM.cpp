@@ -765,7 +765,8 @@ void SolidMechanicsLagrangianFEM::ApplyChomboPressure( DofManager const & dofMan
     for( int a=0; a<numNodes; ++a )
     {
       localIndex const dof = dofNumber[ faceToNodeMap( kf, a ) ];
-      if( dof < 0 || dof >= localRhs.size() ) continue;
+      if( dof < 0 || dof >= localRhs.size() )
+        continue;
 
       for( int component=0; component<3; ++component )
       {

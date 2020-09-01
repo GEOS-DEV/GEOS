@@ -317,7 +317,7 @@ void PhaseFieldFractureSolver::mapDamageToQuadrature( DomainPartition & domain )
 
   // begin region loop
   forTargetSubRegionsComplete< CellElementSubRegion >( *mesh, [this, &solidSolver, nodalDamage]
-  ( localIndex const targetIndex, localIndex, localIndex, ElementRegionBase &, CellElementSubRegion & elementSubRegion )
+                                                         ( localIndex const targetIndex, localIndex, localIndex, ElementRegionBase &, CellElementSubRegion & elementSubRegion )
   {
     constitutive::ConstitutiveBase * const
     solidModel = elementSubRegion.getConstitutiveModel< constitutive::ConstitutiveBase >( solidSolver.solidMaterialNames()[targetIndex] );
@@ -330,7 +330,7 @@ void PhaseFieldFractureSolver::mapDamageToQuadrature( DomainPartition & domain )
       arrayView2d< real64 > const damageFieldOnMaterial = constitutiveUpdate.m_damage;
       arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemNodes = elementSubRegion.nodeList();
 
-      finiteElement::FiniteElementBase const & 
+      finiteElement::FiniteElementBase const &
       fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( m_discretizationName );
 
       finiteElement::dispatch3D( fe, [nodalDamage, &elementSubRegion, damageFieldOnMaterial, elemNodes]( auto & finiteElement )
