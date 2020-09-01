@@ -318,8 +318,7 @@ real64 SinglePhaseHybridFVM::CalculateResidualNorm( DomainPartition const & doma
     subRegionCounter++;
   } );
 
-  arrayView1d< integer const > const & faceGhostRank =
-    faceManager.getReference< array1d< integer > >( ObjectManagerBase::viewKeyStruct::ghostRankString );
+  arrayView1d< integer const > const & faceGhostRank = faceManager.ghostRank();
   arrayView1d< globalIndex const > const & faceDofNumber =
     faceManager.getReference< array1d< globalIndex > >( faceDofKey );
 
@@ -410,8 +409,7 @@ SinglePhaseHybridFVM::CheckSystemSolution( DomainPartition const & domain,
 
   } );
 
-  arrayView1d< integer const > const & faceGhostRank =
-    faceManager.getReference< array1d< integer > >( ObjectManagerBase::viewKeyStruct::ghostRankString );
+  arrayView1d< integer const > const & faceGhostRank = faceManager.ghostRank();
   arrayView1d< globalIndex const > const & faceDofNumber =
     faceManager.getReference< array1d< globalIndex > >( faceDofKey );
 

@@ -87,7 +87,7 @@ void CommunicationTools::AssignGlobalIndices( ObjectManagerBase & object,
                                               std::vector< NeighborCommunicator > & neighbors )
 {
   GEOSX_MARK_FUNCTION;
-  integer_array & ghostRank = object.getReference< integer_array >( object.m_ObjectManagerBaseViewKeys.ghostRank );
+  arrayView1d< integer > const & ghostRank = object.ghostRank();
   ghostRank.setValues< serialPolicy >( -2 );
 
   int const commRank = MpiWrapper::Comm_rank();
