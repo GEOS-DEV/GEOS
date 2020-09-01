@@ -167,13 +167,13 @@ public:
     /// Embedded surface element normal vector string
     static constexpr auto normalVectorString           = "normalVector";
 
+    /// Tangent vector 1 string
     static constexpr auto t1VectorString           = "tangentVector1";
 
+    /// Tangent vector 2 string
     static constexpr auto t2VectorString           = "tangentVector2";
 
-
-    static constexpr auto numNodesString               = "numNodes";
-
+    /// Connectivity index string
     static constexpr auto connectivityIndexString     = "connectivityIndex";
   };
 
@@ -373,9 +373,14 @@ public:
    */
   array1d< real64 > const & getConnectivityIndex() const { return m_connectivityIndex;}
 
+  /**
+   * @brief Get the total number of nodes of the subregion
+   * @return the total number of nodes.
+   */
+  localIndex totalNumberOfNodes() const;
+
   ///@}
 
-  localIndex totalNumberOfNodes() const;
 
 private:
 

@@ -72,14 +72,6 @@ public:
 
   ///@}
 
-  /*
-   * @brief Add fractured eleme to list and relative entries to the map.
-   * @param cellElemIndex cell element index
-   * @param embSurfIndex embedded surface element index
-   */
-  void addFracturedElement(localIndex const cellElemIndex,
-		                   localIndex const embSurfIndex);
-
   /**
    * @name Overriding packing / Unpacking functions
    */

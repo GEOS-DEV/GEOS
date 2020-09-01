@@ -117,12 +117,12 @@ void orderPointsCCW( array1d< R1Tensor > & points,
   for( localIndex a=0; a < numPoints; a++ )
   {
     // fill in with ordered
-    LvArray::tensorOps::copy< 3 >( orderedPoints[ a ], points[ indices[ a ] ]);
+    LvArray::tensorOps::copy< 3 >( orderedPoints[ a ], points[ indices[ a ] ] );
   }
 
-  for (localIndex a = 0; a < numPoints; a++)
+  for( localIndex a = 0; a < numPoints; a++ )
   {
-	  LvArray::tensorOps::copy< 3 >(points[a], orderedPoints[a]);
+    LvArray::tensorOps::copy< 3 >( points[a], orderedPoints[a] );
   }
 }
 

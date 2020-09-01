@@ -195,7 +195,7 @@ const
   std::vector< vtkIdType > connectivity( 10 );
   for( localIndex cellIndex = 0; cellIndex < esr.size(); cellIndex++ )
   {
-    connectivity.resize( toNodesMap.sizeOfArray(cellIndex) );
+    connectivity.resize( toNodesMap.sizeOfArray( cellIndex ) );
     for( std::size_t i = 0; i < connectivity.size(); i++ )
     {
       connectivity[i] = esr.nodeList( cellIndex, i );

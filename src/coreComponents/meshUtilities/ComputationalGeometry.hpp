@@ -56,8 +56,8 @@ real64 ComputeSurfaceArea( array1d< R1Tensor > const & points );
  * @param[in] normal unit normal vector to the surface
  * @return the reordered set of points
  */
-  void orderPointsCCW( array1d< R1Tensor > & points,
-                       R1Tensor const & normal );
+void orderPointsCCW( array1d< R1Tensor > & points,
+                     R1Tensor const & normal );
 
 /**
  * @brief Calculate the centroid of a convex 3D polygon as well as the normal and the rotation matrix.

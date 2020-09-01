@@ -218,7 +218,7 @@ bool EmbeddedSurfaceSubRegion::AddNewEmbeddedSurface ( localIndex const cellInde
       if( isNew )
       {
         // Add the point to the
-    	nodeIndex = embSurfNodesPos.size( 0 );
+        nodeIndex = embSurfNodesPos.size( 0 );
         embSurfNodesPos.resize( nodeIndex + 1 );
         LvArray::tensorOps::copy< 3 >( embSurfNodesPos[nodeIndex], intersectionPoints[j] );
       }
@@ -261,7 +261,7 @@ localIndex EmbeddedSurfaceSubRegion::totalNumberOfNodes() const
   localIndex totalNumNodes = 0;
   for( localIndex esi=0; esi<size(); esi++ )
   {
-    totalNumNodes += m_toNodesRelation.sizeOfArray(esi);
+    totalNumNodes += m_toNodesRelation.sizeOfArray( esi );
   }
   return totalNumNodes;
 }
