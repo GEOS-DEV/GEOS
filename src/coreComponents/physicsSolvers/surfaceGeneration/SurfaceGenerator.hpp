@@ -507,7 +507,6 @@ private:
     constexpr static auto failCriterionString = "failCriterion";
     constexpr static auto solidMaterialNameString = "solidMaterialNames";
     constexpr static auto fExternalString = "fExternal";
-    constexpr static auto SIFNodeString = "SIFNode";
     constexpr static auto tipNodesString = "tipNodes";
     constexpr static auto tipEdgesString = "tipEdges";
     constexpr static auto tipFacesString = "tipFaces";
