@@ -101,10 +101,14 @@ geosx_pangea_build: &geosx_pangea_build
 
 stages:
   - check_code_style_and_docs
-  - build
   - check_submodules
+  - build
 
 jobs:
+  allow_failures:
+  - name: code_style
+  - name: documentation
+  - name: check_submodules
   include:
   - stage: check_code_style_and_docs
     name: code_style
@@ -120,6 +124,8 @@ jobs:
     - DOCKER_REPOSITORY=geosx/ubuntu18.04-gcc8
     - CMAKE_BUILD_TYPE=Release
     - BUILD_AND_TEST_ARGS=--test-documentation
+  - stage: check_submodules
+    script: scripts/test_submodule_updated.sh
   - stage: build
     name: Ubuntu18.04_clang8.0.0_cuda10.1.243_release
     <<: *geosx_linux_build
@@ -162,5 +168,3 @@ jobs:
     env:
     - DOCKER_REPOSITORY=geosx/ubuntu18.04-gcc8
     - CMAKE_BUILD_TYPE=Debug
-  - stage: check_submodules
-    script: scripts/test_submodule_updated.sh
