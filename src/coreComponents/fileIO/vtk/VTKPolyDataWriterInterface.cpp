@@ -348,50 +348,51 @@ void VTKPolyDataWriterInterface::WriteWellElementRegions( real64 time, ElementRe
   } );
 }
 
-void VTKPolyDataWriterInterface::WriteFaceElementRegions( real64 time, ElementRegionManager const & elemManager, NodeManager const & nodeManager ) const
+void VTKPolyDataWriterInterface::WriteSurfaceElementRegions( real64 time,
+                                                             ElementRegionManager const & elemManager,
+                                                             NodeManager const & nodeManager,
+                                                             EdgeManager const & edgeManager ) const
 {
   elemManager.forElementRegions< SurfaceElementRegion >( [&]( SurfaceElementRegion const & er )->void
   {
-    auto esr = er.GetSubRegion( 0 )->group_cast< FaceElementSubRegion const * >();
     vtkSmartPointer< vtkUnstructuredGrid > ug = vtkUnstructuredGrid::New();
-    auto VTKSurface = GetSurface( *esr, nodeManager );
-    ug->SetPoints( VTKSurface.first );
-    if( esr->numNodesPerElement() == 8 )
+    if( er.subRegionType() == "embeddedElement" )
     {
-      ug->SetCells( VTK_HEXAHEDRON, VTKSurface.second );
+      auto esr = er.GetSubRegion( 0 )->group_cast< EmbeddedSurfaceSubRegion const * >();
+
+      auto VTKSurface = GetEmbeddedSurface( *esr, elemManager, nodeManager, edgeManager );
+      ug->SetPoints( VTKSurface.first );
+      ug->SetCells( VTK_POLYGON, VTKSurface.second );
+
+      WriteElementFields< EmbeddedSurfaceSubRegion >( ug->GetCellData(), er );
+
     }
-    else if( esr->numNodesPerElement() == 6 )
+    else if( er.subRegionType() == "faceElement" )
     {
-      ug->SetCells( VTK_WEDGE, VTKSurface.second );
+      auto esr = er.GetSubRegion( 0 )->group_cast< FaceElementSubRegion const * >();
+
+      auto VTKSurface = GetSurface( *esr, nodeManager );
+
+      ug->SetPoints( VTKSurface.first );
+      if( esr->numNodesPerElement() == 8 )
+      {
+        ug->SetCells( VTK_HEXAHEDRON, VTKSurface.second );
+      }
+      else if( esr->numNodesPerElement() == 6 )
+      {
+        ug->SetCells( VTK_WEDGE, VTKSurface.second );
+      }
+      else
+      {
+        GEOSX_ERROR( "Elements with " << esr->numNodesPerElement() << " nodes can't be output "
+                                      << "in the FaceElementRegion " << er.getName() );
+      }
+      WriteElementFields< FaceElementSubRegion >( ug->GetCellData(), er );
     }
-    else
-    {
-      GEOSX_ERROR( "Elements with " << esr->numNodesPerElement() << " nodes can't be output "
-                                    << "in the FaceElementRegion " << er.getName() );
-    }
-    WriteElementFields< FaceElementSubRegion >( ug->GetCellData(), er );
     WriteUnstructuredGrid( ug, time, er.getName() );
   } );
 }
 
-void VTKPolyDataWriterInterface::WriteEmbeddedSurfaceElementRegions( real64 time,
-                                                                     ElementRegionManager const & elemManager,
-                                                                     NodeManager const & nodeManager,
-                                                                     EdgeManager const & edgeManager ) const
-{
-  elemManager.forElementRegions< SurfaceElementRegion >( [&]( SurfaceElementRegion const & er )->void
-  {
-    auto esr = er.GetSubRegion( 0 )->group_cast< EmbeddedSurfaceSubRegion const * >();
-    vtkSmartPointer< vtkUnstructuredGrid > ug = vtkUnstructuredGrid::New();
-
-    auto VTKEmbeddedSurface = GetEmbeddedSurface( *esr, elemManager, nodeManager, edgeManager );
-    ug->SetPoints( VTKEmbeddedSurface.first );
-    ug->SetCells( VTK_POLYGON, VTKEmbeddedSurface.second );
-
-    WriteElementFields< EmbeddedSurfaceSubRegion >( ug->GetCellData(), er );
-    WriteUnstructuredGrid( ug, time, er.getName() );
-  } );
-}
 
 void VTKPolyDataWriterInterface::WriteVTMFile( real64 time, ElementRegionManager const & elemManager, VTKVTMWriter const & vtmWriter ) const
 {
@@ -418,10 +419,6 @@ void VTKPolyDataWriterInterface::WriteVTMFile( real64 time, ElementRegionManager
     // Surfaces
     vtmWriter.AddBlock( SurfaceElementRegion::CatalogName() );
     elemManager.forElementRegions< SurfaceElementRegion >( writeSubBlocks );
-
-//    // Embedded Surfaces
-//    vtmWriter.AddBlock( EmbeddedSurfaceRegion::CatalogName() );
-//    elemManager.forElementRegions< EmbeddedSurfaceRegion >( writeSubBlocks );
 
     vtmWriter.Save();
   }
@@ -482,8 +479,7 @@ void VTKPolyDataWriterInterface::Write( real64 time, integer cycle, DomainPartit
   EdgeManager const & edgeManager = *domain.getMeshBody( 0 )->getMeshLevel( 0 )->getEdgeManager();
   WriteCellElementRegions( time, elemManager, nodeManager );
   WriteWellElementRegions( time, elemManager, nodeManager );
-  WriteFaceElementRegions( time, elemManager, nodeManager );
-  WriteEmbeddedSurfaceElementRegions( time, elemManager, nodeManager, edgeManager );
+  WriteSurfaceElementRegions( time, elemManager, nodeManager, edgeManager );
   string vtmPath = GetTimeStepSubFolder( time ) + ".vtm";
   VTKVTMWriter vtmWriter( vtmPath );
   WriteVTMFile( time, elemManager, vtmWriter );

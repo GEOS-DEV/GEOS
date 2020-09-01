@@ -1874,7 +1874,7 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
                                                                      &edgeManager,
                                                                      &faceManager,
                                                                      this->m_originalFaceToEdges.toViewConst(),
-                                                                     "default",
+                                                                     "faceElementSubRegion",
                                                                      faceIndices );
           m_faceElemsRupturedThisSolve.insert( newFaceElement );
           modifiedObjects.newElements[ {fractureElementRegion->getIndexInParent(), 0} ].insert( newFaceElement );

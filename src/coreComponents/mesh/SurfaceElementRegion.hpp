@@ -118,6 +118,13 @@ public:
    */
   real64 getDefaultAperture() const { return m_defaultAperture; }
 
+  /**
+   * @brief Get subRegion type.
+   * @return subRegion type string
+   */
+  string subRegionType() const { return m_subRegionType; }
+
+
   ///@}
 
   /**
@@ -126,6 +133,9 @@ public:
    */
   struct viewKeyStruct : public ElementRegionBase::viewKeyStruct
   {
+    /// subRegion type string
+    static constexpr auto subRegionTypeString = "subRegionType";
+
     /// Fracture set string
     static constexpr auto fractureSetString = "fractureSet";
     /// Default fracture aperture
@@ -138,6 +148,8 @@ protected:
   virtual void InitializePreSubGroups( Group * const ) override;
 
 private:
+
+  string m_subRegionType;
 
   real64 m_defaultAperture;
 
