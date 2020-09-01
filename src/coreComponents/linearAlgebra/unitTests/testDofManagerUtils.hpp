@@ -141,8 +141,7 @@ struct forLocalObjectsImpl
     using helper = testMeshHelper< LOC >;
     ObjectManagerBase const * const manager = mesh->GetGroup< ObjectManagerBase >( helper::managerKey );
 
-    arrayView1d< integer const > ghostRank =
-      manager->getReference< array1d< integer > >( ObjectManagerBase::viewKeyStruct::ghostRankString );
+    arrayView1d< integer const > ghostRank = manager->ghostRank();
 
     array1d< bool > visited( ghostRank.size() );
 
@@ -186,8 +185,7 @@ struct forLocalObjectsImpl< DofManager::Location::Elem >
                                                                             ElementRegionBase const &,
                                                                             ElementSubRegionBase const & subRegion )
     {
-      arrayView1d< integer const > ghostRank =
-        subRegion.getReference< array1d< integer > >( ObjectManagerBase::viewKeyStruct::ghostRankString );
+      arrayView1d< integer const > ghostRank = subRegion.ghostRank();
 
       for( localIndex ei = 0; ei < subRegion.size(); ++ei )
       {

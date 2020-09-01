@@ -448,8 +448,7 @@ FluxKernel::Launch( localIndex er,
                     arrayView1d< real64 > const & localRhs )
 {
   // get the cell-centered DOF numbers and ghost rank for the assembly
-  arrayView1d< integer const > const & elemGhostRank =
-    subRegion.getReference< array1d< integer > >( ObjectManagerBase::viewKeyStruct::ghostRankString );
+  arrayView1d< integer const > const & elemGhostRank = subRegion.ghostRank();
 
   // get the map from elem to faces
   arrayView2d< localIndex const > const & elemToFaces = subRegion.faceList();
