@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -15,9 +15,10 @@
 #include "ChomboCoupler.hpp"
 #include "hdf5_interface/coupler.hpp"
 #include "mesh/FaceManager.hpp"
+#include "mesh/ExtrinsicMeshData.hpp"
+
 #include <cstdint>
 #include <tuple>
-
 #include <cstdio>
 
 namespace geosx
@@ -56,8 +57,8 @@ void ChomboCoupler::write( double dt )
     }
   }
 
-  arrayView1d< integer const > const & ruptureState = faces->getReference< integer_array >( "ruptureState" );
-  arrayView1d< integer const > const & ghostRank = faces->getReference< integer_array >( faces->viewKeys.ghostRank );
+  arrayView1d< integer const > const & ruptureState = faces->getExtrinsicData< extrinsicMeshData::RuptureState >();
+  arrayView1d< integer const > const & ghostRank = faces->ghostRank();
 
   bool * faceMask = new bool[n_faces];
   for( localIndex i = 0; i < n_faces; ++i )

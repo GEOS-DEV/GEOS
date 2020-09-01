@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -21,6 +21,7 @@
 #define GEOSX_CONSTITUTIVE_CONSTITUTIVEPASSTHRU_HPP_
 
 #include "NullModel.hpp"
+#include "solid/Damage.hpp"
 #include "solid/LinearElasticIsotropic.hpp"
 #include "solid/LinearElasticAnisotropic.hpp"
 #include "solid/LinearElasticTransverseIsotropic.hpp"
@@ -57,7 +58,11 @@ struct ConstitutivePassThru< SolidBase >
   {
     GEOSX_ERROR_IF( constitutiveRelation == nullptr, "ConstitutiveBase* == nullptr" );
 
-    if( dynamic_cast< LinearElasticIsotropic * >( constitutiveRelation ) )
+    if( dynamic_cast< Damage< LinearElasticIsotropic > * >( constitutiveRelation ) )
+    {
+      lambda( static_cast< Damage< LinearElasticIsotropic > * >( constitutiveRelation) );
+    }
+    else if( dynamic_cast< LinearElasticIsotropic * >( constitutiveRelation ) )
     {
       lambda( static_cast< LinearElasticIsotropic * >( constitutiveRelation) );
     }
@@ -156,6 +161,36 @@ struct ConstitutivePassThru< PoroElasticBase >
   }
 };
 
+/**
+ * Specialization for the Damage models.
+ */
+template<>
+struct ConstitutivePassThru< DamageBase >
+{
+  template< typename LAMBDA >
+  static
+  void Execute( ConstitutiveBase * const constitutiveRelation,
+                LAMBDA && lambda )
+  {
+    GEOSX_ERROR_IF( constitutiveRelation == nullptr, "ConstitutiveBase* == nullptr" );
+
+    if( dynamic_cast< Damage< LinearElasticIsotropic > * >( constitutiveRelation ) )
+    {
+      lambda( static_cast< Damage< LinearElasticIsotropic > * >( constitutiveRelation) );
+    }
+    else
+    {
+      string name;
+      if( constitutiveRelation !=nullptr )
+      {
+        name = constitutiveRelation->getName();
+      }
+      GEOSX_ERROR( "ConstitutivePassThru<DamgeBase>::Execute( "<<
+                   constitutiveRelation<<" ) failed. ( "<<
+                   constitutiveRelation<<" ) is named "<<name );
+    }
+  }
+};
 
 }
 }

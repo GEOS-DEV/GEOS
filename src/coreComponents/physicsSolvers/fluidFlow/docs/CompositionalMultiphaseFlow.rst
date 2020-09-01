@@ -7,12 +7,12 @@ Compositional Multiphase Flow Solver
 Introduction
 =============
 
-This flow solver is in charge of implementing the finite-volume discretization (mainly, accumulation and flux terms, boundary conditions) of the equations governing compositional multiphase flow in porous media. 
+This flow solver is in charge of implementing the finite-volume discretization (mainly, accumulation and flux terms, boundary conditions) of the equations governing compositional multiphase flow in porous media.
 The present solver can be combined with the :ref:`CompositionalMultiphaseWell` which handles the discrete multi-segment well model and provides source/sink terms for the fluid flow solver.
 
 Below, we first review the set of :ref:`equations`, followed by a discussion of the
-choice of :ref:`primary_variables` used in the global variable formulation. 
-Then we give an overview of the :ref:`discretization` and we conclude with a brief description of the nonlinear :ref:`solution_strategy`. 
+choice of :ref:`primary_variables` used in the global variable formulation.
+Then we give an overview of the :ref:`discretization` and, finally, we provide a list of the solver :ref:`parameters` and an input :ref:`input_example`.
 
 .. _theory:
 
@@ -21,10 +21,10 @@ Theory
 
 .. _equations:
 
-Governing equations
+Governing Equations
 -------------------
 
-Mass conservation equations
+Mass Conservation Equations
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Mass conservation for component :math:`c` is expressed as:
@@ -41,7 +41,7 @@ is the mass fraction of component :math:`c` in phase :math:`\ell`,
 :math:`\rho_{\ell}` is the phase density, and :math:`t` is time. We note that the
 formulation currently implemented in GEOSX is isothermal.
 
-Darcy's law
+Darcy's Law
 ~~~~~~~~~~~
 
 Using the multiphase extension of Darcy's law, the phase velocity :math:`\boldsymbol{u}_{\ell}`
@@ -67,7 +67,7 @@ equations written as:
    - \nabla \cdot \boldsymbol{k} \bigg( \sum_\ell \rho_{\ell} \, y_{c \ell} \, \lambda_{\ell} \nabla \Phi_{\ell}   \bigg)
    - \sum_\ell \rho_{\ell} \, y_{c \ell} \, q_{\ell} = 0.
 
-Constraints and thermodynamic equilibrium
+Constraints and Thermodynamic Equilibrium
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The volume constraint equation states that the pore space is always completely filled by
@@ -99,7 +99,7 @@ Number of equations  Equation type
 
 .. _primary_variables:
 
-Primary variables
+Primary Variables
 ------------------
 
 The variable formulation implemented in GEOSX is a global variable formulation based on
@@ -144,7 +144,7 @@ fractions and saturations with respect to the pressure and component densities.
 Discretization
 --------------
 
-Spatial discretization
+Spatial Discretization
 ~~~~~~~~~~~~~~~~~~~~~~
 
 The governing equations are discretized using standard cell-centered finite-volume
@@ -161,40 +161,25 @@ potential difference (e.g., the phase mobilities) is performed with a first-orde
 phase-per-phase single-point upwinding based on the sign of the phase potential difference
 at the interface.
 
-Temporal discretization
+Temporal Discretization
 ~~~~~~~~~~~~~~~~~~~~~~~
 
 The compositional multiphase solver uses a fully implicit (backward Euler) temporal discretization.
 
 .. _solution_strategy:
 
-Solution strategy
+Solution Strategy
 -----------------
 
 The nonlinear solution strategy is based on Newton's method.
 At each Newton iteration, the solver assembles a residual vector, :math:`R`,
 collecting the :math:`n_c` discrete mass conservation equations and the volume
 constraint for all the control volumes.
-The solver also assembles the Jacobian matrix :math:`J` containing the analytical
-derivatives of :math:`R` with respect to the primary variables, namely, pressure
-and component densities.
-The Newton update, :math:`\delta X`, is then computed as:
 
-.. math::
-  \delta X := - J^{-1} R,
+.. _parameters:
 
-The linear system is solved with one of the solvers described in :doc:`/coreComponents/linearAlgebra/docs/LinearSolvers`.
-The Newton update is then applied to the primary variables:
-
-..  math::
-  X := X + \delta X.
-
-This procedure is repeated until convergence.
-
-.. _usage:
-
-Usage
-=====
+Parameters
+===========
 
 The following attributes are supported:
 
@@ -202,7 +187,7 @@ The following attributes are supported:
 
 .. _input_example:
 
-Input example
+Example
 =========================
 
 .. literalinclude:: ../integratedTests/compositionalMultiphaseFlow/deadoil_3ph_staircase_3d.xml

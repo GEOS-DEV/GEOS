@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -16,6 +16,7 @@
  * @file FaceElementRegion.cpp
  */
 
+#include "ExtrinsicMeshData.hpp"
 #include "EdgeManager.hpp"
 #include "FaceElementRegion.hpp"
 
@@ -73,8 +74,7 @@ localIndex FaceElementRegion::AddToFractureMesh( real64 const time_np1,
   rval = subRegion->size() - 1;
 
 
-  arrayView1d< real64 > const &
-  ruptureTime = subRegion->getReference< real64_array >( viewKeyStruct::ruptureTimeString );
+  arrayView1d< real64 > const & ruptureTime = subRegion->getExtrinsicData< extrinsicMeshData::RuptureTime >();
 
   arrayView1d< real64 > const &
   creationMass = subRegion->getReference< real64_array >( FaceElementSubRegion::viewKeyStruct::creationMassString );

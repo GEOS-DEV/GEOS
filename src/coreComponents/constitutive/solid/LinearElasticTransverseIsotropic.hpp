@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -107,9 +107,11 @@ public:
                              real64 const (&FmI)[3][3] ) const override final;
 
   GEOSX_HOST_DEVICE inline
-  virtual void GetStiffness( localIndex const k, real64 (& c)[6][6] ) const override final
+  virtual void GetStiffness( localIndex const k,
+                             localIndex const q,
+                             real64 (& c)[6][6] ) const override final
   {
-
+    GEOSX_UNUSED_VAR( q );
     memset( c, 0, sizeof( c ) );
     c[0][0] = m_c11[k];
     c[0][1] = m_c11[k] - 2 * m_c66[k];
@@ -123,6 +125,15 @@ public:
     c[3][3] = m_c44[k];
     c[4][4] = m_c44[k];
     c[5][5] = m_c66[k];
+  }
+
+  GEOSX_HOST_DEVICE
+  virtual real64 calculateStrainEnergyDensity( localIndex const k,
+                                               localIndex const q ) const override final
+  {
+    GEOSX_UNUSED_VAR( k, q );
+    GEOSX_ERROR( "Not implemented" );
+    return 0;
   }
 
 private:

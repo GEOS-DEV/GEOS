@@ -1,7 +1,7 @@
 .. _AddingNewSolver:
 
 Adding a new Physics Solver
-##################################################
+###########################
 
 In this tutorial, you will learn how to construct a new GEOSX Physics Solver class.
 We will use *LaplaceFEM* solver, computing the solution of the Laplace problem in
@@ -22,13 +22,13 @@ For readability, member functions in the text will be referenced by their names 
 arguments will be omitted.
 
 *LaplaceFEM* overview
-=============================
+=====================
 The *LaplaceFEM* solver can be found in ``./src/coreComponents/physicsSolvers/simplePDE/``.
 Let us inspect declarations in ``LaplaceFEM.hpp`` and implementations in ``LaplaceFEM.cpp``
 before diving into specifying a new solver class that meets our needs.
 
-Declaration file
------------------
+Declaration file (reference)
+----------------------------
 The four included headers are:
 
  - ``physicsSolver/SolverBase.hpp`` which declares the abstraction class shared by all physics solvers;
@@ -37,7 +37,7 @@ The four included headers are:
 
 Right after that, a struct is designed to store the maximal stable timestep.
 
-   .. literalinclude:: ../../../../coreComponents/physicsSolvers/simplePDE/LaplaceFEM.hpp
+.. literalinclude:: ../../../../coreComponents/physicsSolvers/simplePDE/LaplaceFEM.hpp
       :language: c++
       :start-after: //START_SPHINX_INCLUDE_00
       :end-before: //END_SPHINX_INCLUDE_00
@@ -51,8 +51,8 @@ Some forward declarations are following :
 Let us jump forward to the class enum and variable as they contain the data used
 specifically in the implementation of *LaplaceFEM*.
 
-class enums and variables
-``````````````````````````````
+class enums and variables (reference)
+`````````````````````````````````````
 The class exhibits three member variables:
 
  - ``m_fieldName`` which stores the name of the diffused variable (*e.g.* the temperature) as a `string`;
@@ -114,8 +114,8 @@ as will be further explored in the next :ref:`Implementation` section.
 
 Let us jump back to focus on a ``struct`` which play also an important role: the *viewKeyStruct* structure.
 
-*viewKeyStruct* structure
-`````````````````````````````
+*viewKeyStruct* structure (reference)
+`````````````````````````````````````
 
 This embedded instantiated structure is a common pattern shared by all solvers.
 It stores ``dataRepository::ViewKey`` type objects that are used as binding data
@@ -137,8 +137,8 @@ In the following section, we will see where this binding takes place.
 
 .. _Implementation:
 
-Implementation File
---------------------
+Implementation File (reference)
+-------------------------------
 Switching to implementation, we will focus on few implementations, leaving details
 to other tutorials.
 
@@ -197,11 +197,11 @@ to writing our new *LaplaceDiffFEM* solver.
   We might want to remove final keyword from ``PostProcessInput()`` as it will prevent you from overriding it.
 
 Start doing your own Physic solver
-===================================
+==================================
 As we will extend *LaplaceFEM* capabilities, we will derive publicly from it.
 
 Declaration File
------------------
+----------------
 
 As there is only few places where we have to change, the whole declaration file is reported below and
 commented afterwards.
@@ -268,7 +268,7 @@ and to our ``m_diffusion`` class variable on the other.
 
 
 Implementation File
----------------------
+-------------------
 As we have seen in :ref:`Implementation`, the first place where to implement a new register from XML input is
 in the constructor. The ``diffusionCoeff`` entry we have defined in the ``laplaceDiffFEMViewKeys``
 will then be asked as a required input. If not provided, the error thrown will ask for it described asked
@@ -344,7 +344,7 @@ or add a getter in *LaplaceFEM* class to correct the error. The getter option ha
 Note: For consistency do not forget to change LaplaceFEM to LaplaceDiffFEM in the guards comments
 
 Last steps
-===========
+==========
 
 After assembling both declarations and implementations for our new solver, the final steps go as:
 

@@ -9,6 +9,8 @@ Contributing
 
    GitWorkflow.rst
 
+   developingOnDocker.rst
+
    Sphinx.rst
 
    Doxygen.rst

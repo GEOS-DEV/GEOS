@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -141,8 +141,7 @@ struct forLocalObjectsImpl
     using helper = testMeshHelper< LOC >;
     ObjectManagerBase const * const manager = mesh->GetGroup< ObjectManagerBase >( helper::managerKey );
 
-    arrayView1d< integer const > ghostRank =
-      manager->getReference< array1d< integer > >( ObjectManagerBase::viewKeyStruct::ghostRankString );
+    arrayView1d< integer const > ghostRank = manager->ghostRank();
 
     array1d< bool > visited( ghostRank.size() );
 
@@ -188,8 +187,7 @@ struct forLocalObjectsImpl< DofManager::Location::Elem >
                                                                             ElementRegionBase const &,
                                                                             ElementSubRegionBase const & subRegion )
     {
-      arrayView1d< integer const > ghostRank =
-        subRegion.getReference< array1d< integer > >( ObjectManagerBase::viewKeyStruct::ghostRankString );
+      arrayView1d< integer const > ghostRank = subRegion.ghostRank();
 
       for( localIndex ei = 0; ei < subRegion.size(); ++ei )
       {

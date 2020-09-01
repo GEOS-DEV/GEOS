@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -403,7 +403,7 @@ real64 HydrofractureSolver::SplitOperatorStep( real64 const & GEOSX_UNUSED_PARAM
 //
 //    // call the default linear solver on the system
 //    m_flowSolver->SolveSystem( getLinearSystemRepository(),
-//                 getSystemSolverParameters() );
+//                 getLinearSolverParameters() );
 //
 //    // apply the system solution to the fields/variables
 //    m_flowSolver->ApplySystemSolution( getLinearSystemRepository(), 1.0, domain );
@@ -415,7 +415,7 @@ real64 HydrofractureSolver::SplitOperatorStep( real64 const & GEOSX_UNUSED_PARAM
 //      continue;
 //    }
 //
-////    if (m_fluidSolver->getSystemSolverParameters()->numNewtonIterations() == 0 && iter > 0 && getLogLevel() >= 1)
+////    if (m_fluidSolver->getLinearSolverParameters()->numNewtonIterations() == 0 && iter > 0 && getLogLevel() >= 1)
 ////    {
 ////      GEOSX_LOG_RANK_0( "***** The iterative coupling has converged in " << iter  << " iterations! *****\n" );
 ////      break;
@@ -437,7 +437,7 @@ real64 HydrofractureSolver::SplitOperatorStep( real64 const & GEOSX_UNUSED_PARAM
 //
 //    // call the default linear solver on the system
 //    m_solidSolver->SolveSystem( getLinearSystemRepository(),
-//                 getSystemSolverParameters() );
+//                 getLinearSolverParameters() );
 //
 //    // apply the system solution to the fields/variables
 //    m_solidSolver->ApplySystemSolution( getLinearSystemRepository(), 1.0, domain );
@@ -455,7 +455,7 @@ real64 HydrofractureSolver::SplitOperatorStep( real64 const & GEOSX_UNUSED_PARAM
 //      dtReturn = dtReturnTemporary;
 //      continue;
 //    }
-////    if (m_solidSolver->getSystemSolverParameters()->numNewtonIterations() > 0)
+////    if (m_solidSolver->getLinearSolverParameters()->numNewtonIterations() > 0)
 //    {
 //      this->UpdateDeformationForCoupling(domain);
 ////      m_fluidSolver->UpdateState(domain);

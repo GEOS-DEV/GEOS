@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -308,11 +308,11 @@ localIndex Group::PackSize( string_array const & wrapperNames,
       packedSize += bufferOps::PackSize( wrapperPair.first );
       if( packList.empty() )
       {
-        packedSize += wrapperPair.second->PackSize( on_device );
+        packedSize += wrapperPair.second->PackSize( true, on_device );
       }
       else
       {
-        packedSize += wrapperPair.second->PackByIndexSize( packList, on_device );
+        packedSize += wrapperPair.second->PackByIndexSize( packList, true, on_device );
       }
     }
   }
@@ -325,11 +325,11 @@ localIndex Group::PackSize( string_array const & wrapperNames,
       packedSize += bufferOps::PackSize( wrapperName );
       if( packList.empty() )
       {
-        packedSize += wrapper->PackSize( on_device );
+        packedSize += wrapper->PackSize( true, on_device );
       }
       else
       {
-        packedSize += wrapper->PackByIndexSize( packList, on_device );
+        packedSize += wrapper->PackByIndexSize( packList, true, on_device );
       }
     }
   }
@@ -376,11 +376,11 @@ localIndex Group::Pack( buffer_unit_type * & buffer,
       if( packList.empty() )
       {
         // invoke wrapper pack kernel
-        packedSize += wrapperPair.second->Pack( buffer, on_device );
+        packedSize += wrapperPair.second->Pack( buffer, true, on_device );
       }
       else
       {
-        packedSize += wrapperPair.second->PackByIndex( buffer, packList, on_device );
+        packedSize += wrapperPair.second->PackByIndex( buffer, packList, true, on_device );
       }
     }
   }
@@ -393,11 +393,11 @@ localIndex Group::Pack( buffer_unit_type * & buffer,
       packedSize += bufferOps::Pack< true >( buffer, wrapperName );
       if( packList.empty() )
       {
-        packedSize += wrapper->Pack( buffer, on_device );
+        packedSize += wrapper->Pack( buffer, true, on_device );
       }
       else
       {
-        packedSize += wrapper->PackByIndex( buffer, packList, on_device );
+        packedSize += wrapper->PackByIndex( buffer, packList, true, on_device );
       }
     }
   }
@@ -447,7 +447,7 @@ localIndex Group::Unpack( buffer_unit_type const * & buffer,
     string wrapperName;
     unpackedSize += bufferOps::Unpack( buffer, wrapperName );
     WrapperBase * const wrapper = this->getWrapperBase( wrapperName );
-    wrapper->UnpackByIndex( buffer, packList, on_device );
+    wrapper->UnpackByIndex( buffer, packList, true, on_device );
   }
 
 
