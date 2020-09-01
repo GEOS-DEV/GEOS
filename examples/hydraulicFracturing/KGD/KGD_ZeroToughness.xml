@@ -13,8 +13,9 @@
       name="hydrofracture"
       solidSolverName="lagsolve"
       fluidSolverName="SinglePhaseFlow"
-      couplingTypeOption="TightlyCoupled"
+      couplingTypeOption="FIM"
       logLevel="1"
+      discretization="FE1"
       targetRegions="{ Region2, Fracture }"
       contactRelationName="fractureContact"
       maxNumResolves="2">
@@ -45,12 +46,12 @@
         krylovTol="1.0e-10"
         logLevel="0"/>
     </SolidMechanicsLagrangianSSLE>
-
     <SinglePhaseFVM
       name="SinglePhaseFlow"
       logLevel="0"
       discretization="singlePhaseTPFA"
       targetRegions="{ Fracture }"
+      meanPermCoeff="0.8"
       fluidNames="{ water }"
       solidNames="{ rock }"
       inputFluxEstimate="1">
@@ -110,7 +111,7 @@
         name="aperTable"
         coordinates="{ -0.01, -1.0e-3, 0.0 }"
         values="{ 0.005, 0.01e-3, 0.02e-3 }"/>
-    </Contact>
+    </Contact>    
   </Constitutive>
 
   <Outputs>

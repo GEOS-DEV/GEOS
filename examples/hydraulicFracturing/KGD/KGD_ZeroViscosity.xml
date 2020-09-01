@@ -13,8 +13,9 @@
       name="hydrofracture"
       solidSolverName="lagsolve"
       fluidSolverName="SinglePhaseFlow"
-      couplingTypeOption="TightlyCoupled"
+      couplingTypeOption="FIM"
       logLevel="1"
+      discretization="FE1"
       targetRegions="{ Region2, Fracture }"
       contactRelationName="fractureContact"
       maxNumResolves="2">
@@ -53,6 +54,7 @@
       targetRegions="{ Fracture }"
       fluidNames="{ water }"
       solidNames="{ rock }"
+      meanPermCoeff="0.8"
       inputFluxEstimate="1">
       <NonlinearSolverParameters
         newtonTol="1.0e-5"
