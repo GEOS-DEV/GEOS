@@ -247,7 +247,7 @@ void SinglePhaseBase::InitializePostInitialConditions_PreSubGroups( Group * cons
     arrayView1d< real64 > const & poro = subRegion.getReference< array1d< real64 > >( viewKeyStruct::porosityString );
 
     bool poroInit = false;
-    if( solid.hasWrapper( string(ConstitutiveBase::viewKeyStruct::poreVolumeMultiplierString) ) )
+    if( solid.hasWrapper( string( ConstitutiveBase::viewKeyStruct::poreVolumeMultiplierString ) ) )
     {
       arrayView2d< real64 const > const &
       pvmult = solid.getReference< array2d< real64 > >( ConstitutiveBase::viewKeyStruct::poreVolumeMultiplierString );
