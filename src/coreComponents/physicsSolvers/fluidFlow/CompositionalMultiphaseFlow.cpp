@@ -1409,8 +1409,7 @@ void CompositionalMultiphaseFlow::ChopNegativeDensities( DomainPartition & domai
   localIndex const NC = m_numComponents;
   forTargetSubRegions( mesh, [&]( localIndex const, ElementSubRegionBase & subRegion )
   {
-    arrayView1d< integer const > const & ghostRank =
-      subRegion.getReference< array1d< integer > >( ObjectManagerBase::viewKeyStruct::ghostRankString );
+    arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
 
     arrayView2d< real64 const > const & compDens =
       subRegion.getReference< array2d< real64 > >( viewKeyStruct::globalCompDensityString );
