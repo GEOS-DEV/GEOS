@@ -88,6 +88,10 @@ void SuperLU_DistCreate( HypreMatrix const & matrix,
   }
   SLUDData.options.ColPerm = HypreGetColPermType( params.direct.colPerm );
   SLUDData.options.RowPerm = HypreGetRowPermType( params.direct.rowPerm );
+  if( params.direct.colPerm == "parmetis" )
+  {
+    SLUDData.options.ParSymbFact = YES;
+  }
   if( params.direct.replaceTinyPivot )
   {
     SLUDData.options.ReplaceTinyPivot = YES;

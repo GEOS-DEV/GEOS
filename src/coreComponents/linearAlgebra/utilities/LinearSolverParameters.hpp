@@ -41,14 +41,14 @@ public:
   bool isSymmetric = false;            ///< Whether input matrix is symmetric (may affect choice of scheme)
   integer stopIfError = 1;             ///< Whether to stop the simulation if the linear solver reports an error
 
-  /// Direct solver parameters
+  /// Direct solver parameters: used for SuperLU_Dist interface through hypre and PETSc
   struct Direct
   {
     real64 relTolerance = 1.e-12;   ///< Tolerance used to check a direct solver solution
     integer equilibrate = 1;        ///< Whether to scale the rows and columns of the matrix
     string colPerm = "metis";       ///< How to permute the columns [none, MMD_At+A, MMD_AtA, colAMD,
                                     ///< metis, parmetis]
-    string rowPerm = "mc64";        ///< How to permute the rows [none, mc64, awpm]
+    string rowPerm = "mc64";        ///< How to permute the rows [none, mc64]
     integer replaceTinyPivot = 1;   ///< Whether to replace tiny pivots by sqrt(epsilon)*norm(A)
     integer iterativeRefine = 1;    ///< Whether to perform iterative refinement
   }

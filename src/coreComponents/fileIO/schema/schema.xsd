@@ -591,7 +591,7 @@ Available options are: none, MMD_At+A, MMD_AtA, colAMD, metis, parmetis-->
 		<!--directReplTinyPivot => Whether to replace tiny pivots by sqrt(epsilon)*norm(A)-->
 		<xsd:attribute name="directReplTinyPivot" type="integer" default="1" />
 		<!--directRowPerm => How to permute the rows
-Available options are: none, mc64, awpm-->
+Available options are: none, mc64-->
 		<xsd:attribute name="directRowPerm" type="string" default="mc64" />
 		<!--directTol => Tolerance used to check a direct solver solution-->
 		<xsd:attribute name="directTol" type="real64" default="1e-12" />

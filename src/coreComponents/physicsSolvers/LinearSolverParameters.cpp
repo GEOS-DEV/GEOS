@@ -69,7 +69,7 @@ LinearSolverParametersInput::LinearSolverParametersInput( std::string const & na
     setApplyDefaultValue( m_parameters.direct.rowPerm )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "How to permute the rows\n"
-                    "Available options are: none, mc64, awpm" );
+                    "Available options are: none, mc64" );
 
   registerWrapper( viewKeyStruct::directReplTinyPivotString, &m_parameters.direct.replaceTinyPivot )->
     setApplyDefaultValue( m_parameters.direct.replaceTinyPivot )->
@@ -162,7 +162,7 @@ void LinearSolverParametersInput::PostProcessInput()
   static const std::set< string > directColPermOptions = { "none", "MMD_At+A", "MMD_AtA", "colAMD", "metis", "parmetis" };
   GEOSX_ERROR_IF( directColPermOptions.count( m_parameters.direct.colPerm ) == 0, "Unsupported columns permutation: " << m_parameters.direct.colPerm );
 
-  static const std::set< string > directRowPermOptions = { "none", "mc64", "awpm" };
+  static const std::set< string > directRowPermOptions = { "none", "mc64" };
   GEOSX_ERROR_IF( directRowPermOptions.count( m_parameters.direct.rowPerm ) == 0, "Unsupported rows permutation: " << m_parameters.direct.rowPerm );
 
   GEOSX_ERROR_IF( binaryOptions.count( m_parameters.direct.replaceTinyPivot ) == 0, viewKeyStruct::directReplTinyPivotString << " option can be either 0 (false) or 1 (true)" );
