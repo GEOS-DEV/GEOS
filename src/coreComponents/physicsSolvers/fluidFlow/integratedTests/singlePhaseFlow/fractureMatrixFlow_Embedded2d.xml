@@ -4,7 +4,7 @@
     gravityVector="0.0, 0.0, -9.81">
     <SinglePhaseFVM
       name="SinglePhaseFlow"
-      logLevel="1"
+      logLevel="3"
       discretization="singlePhaseTPFA"
       targetRegions="{ Region2, Fracture }"
       fluidNames="{ water }"
