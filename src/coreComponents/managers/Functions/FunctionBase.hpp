@@ -186,6 +186,10 @@ void FunctionBase::EvaluateT( dataRepository::Group const * const group,
   // Make sure the inputs do not exceed the maximum length
   GEOSX_ERROR_IF( totalVarSize > 4, "Function input size is: " << totalVarSize );
 
+  // Make sure the result / set size match
+  GEOSX_ERROR_IF( result.size() != set.size(), "To apply a function to a set, the size of the result and set must match" );
+
+
   forAll< serialPolicy >( set.size(), [&, set]( localIndex const i )
   {
     localIndex const index = set[ i ];
@@ -200,10 +204,8 @@ void FunctionBase::EvaluateT( dataRepository::Group const * const group,
       }
     }
 
-    // TODO: Check this line to make sure it is correct
-    // Note: Since we are iterating over a set, place the result
-    // at the same location as the input.
-    result[index] = static_cast< LEAF const * >(this)->Evaluate( input );
+    // Note: we expect that result is the same size as the set
+    result[i] = static_cast< LEAF const * >(this)->Evaluate( input );
   } );
 }
 } /* namespace geosx */
