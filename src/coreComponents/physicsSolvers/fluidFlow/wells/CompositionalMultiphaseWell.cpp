@@ -583,8 +583,7 @@ void CompositionalMultiphaseWell::AssembleVolumeBalanceTerms( real64 const GEOSX
     string const wellDofKey = dofManager.getKey( WellElementDofName() );
     arrayView1d< globalIndex const > const & wellElemDofNumber =
       subRegion.getReference< array1d< globalIndex > >( wellDofKey );
-    arrayView1d< integer const > const & wellElemGhostRank =
-      subRegion.getReference< array1d< integer > >( ObjectManagerBase::viewKeyStruct::ghostRankString );
+    arrayView1d< integer const > const & wellElemGhostRank = subRegion.ghostRank();
 
     // get the properties on the well element
     arrayView2d< real64 const > const & wellElemPhaseVolFrac =
@@ -631,8 +630,7 @@ CompositionalMultiphaseWell::CalculateResidualNorm( DomainPartition const & doma
     string const wellDofKey = dofManager.getKey( WellElementDofName() );
     arrayView1d< globalIndex const > const & wellElemDofNumber =
       subRegion.getReference< array1d< globalIndex > >( wellDofKey );
-    arrayView1d< integer const > const & wellElemGhostRank =
-      subRegion.getReference< array1d< integer > >( ObjectManagerBase::viewKeyStruct::ghostRankString );
+    arrayView1d< integer const > const & wellElemGhostRank = subRegion.ghostRank();
     arrayView1d< real64 const > const & wellElemVolume =
       subRegion.getReference< array1d< real64 > >( ElementSubRegionBase::viewKeyStruct::elementVolumeString );
 
@@ -677,8 +675,7 @@ CompositionalMultiphaseWell::ScalingForSystemSolution( DomainPartition const & d
     string const wellDofKey = dofManager.getKey( WellElementDofName() );
     arrayView1d< globalIndex const > const & wellElemDofNumber =
       subRegion.getReference< array1d< globalIndex > >( wellDofKey );
-    arrayView1d< integer const > const & wellElemGhostRank =
-      subRegion.getReference< array1d< integer > >( ObjectManagerBase::viewKeyStruct::ghostRankString );
+    arrayView1d< integer const > const & wellElemGhostRank = subRegion.ghostRank();
 
     // get a reference to the primary variables on well elements
     arrayView2d< real64 const > const & wellElemCompDens =
@@ -725,8 +722,7 @@ CompositionalMultiphaseWell::CheckSystemSolution( DomainPartition const & domain
     string const wellDofKey = dofManager.getKey( WellElementDofName() );
     arrayView1d< globalIndex const > const & wellElemDofNumber =
       subRegion.getReference< array1d< globalIndex > >( wellDofKey );
-    arrayView1d< integer const > const & wellElemGhostRank =
-      subRegion.getReference< array1d< integer > >( ObjectManagerBase::viewKeyStruct::ghostRankString );
+    arrayView1d< integer const > const & wellElemGhostRank = subRegion.ghostRank();
 
     // get a reference to the primary variables on well elements
     arrayView1d< real64 const > const & wellElemPressure =
@@ -906,8 +902,7 @@ void CompositionalMultiphaseWell::ChopNegativeDensities( DomainPartition & domai
   forTargetSubRegions< WellElementSubRegion >( meshLevel, [&]( localIndex const,
                                                                WellElementSubRegion & subRegion )
   {
-    arrayView1d< integer const > const & wellElemGhostRank =
-      subRegion.getReference< array1d< integer > >( ObjectManagerBase::viewKeyStruct::ghostRankString );
+    arrayView1d< integer const > const & wellElemGhostRank = subRegion.ghostRank();
 
     arrayView2d< real64 const > const & wellElemCompDens =
       subRegion.getReference< array2d< real64 > >( viewKeyStruct::globalCompDensityString );

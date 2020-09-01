@@ -16,9 +16,10 @@
 #include "hdf5_interface/coupler.hpp"
 #include "mesh/ElementRegionManager.hpp"
 #include "mesh/FaceManager.hpp"
+#include "mesh/ExtrinsicMeshData.hpp"
+
 #include <cstdint>
 #include <tuple>
-
 #include <cstdio>
 
 namespace geosx
@@ -61,7 +62,7 @@ void ChomboCoupler::write( double dt )
     }
   }
 
-  arrayView1d< integer const > const & ruptureState = faces->getReference< integer_array >( "ruptureState" );
+  arrayView1d< integer const > const & ruptureState = faces->getExtrinsicData< extrinsicMeshData::RuptureState >();
   arrayView1d< integer const > const & ghostRank = faces->ghostRank();
 
   localIndex voidRegionIndex = -1;
