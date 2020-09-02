@@ -301,7 +301,7 @@ public:
    * @brief Return the  maximum number of edges per node.
    * @return Maximum allowable number of edges connected to one node (hardcoded for now)
    */
-  constexpr int maxEdgesPerNode() const { return 100; }
+  constexpr int maxEdgesPerNode() const { return 200; }
 
   /**
    * @name Getters for stored value.
