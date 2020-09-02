@@ -1148,9 +1148,9 @@ void LagrangianContactSolver::CreatePreconditioner( DomainPartition const & doma
 
     if( mechParams.amg.nullSpaceType == "rigidBodyModes" )
     {
-      MeshLevel const & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
       if( m_solidSolver->getRigidBodyModes().empty() )
       {
+        MeshLevel const & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
         LAIHelperFunctions::ComputeRigidBodyModes( mesh,
                                                    m_dofManager,
                                                    { keys::TotalDisplacement },

@@ -67,7 +67,7 @@ PetscPreconditioner::PetscPreconditioner( LinearSolverParameters params, array1d
   m_precond{},
   m_nullsp{}
 {
-  if( params.amg.nullSpaceType == "rigidBodyModes" )
+  if( m_parameters.amg.nullSpaceType == "rigidBodyModes" )
   {
     ConvertRigidBodyModes( params, nearNullKernel, m_nullsp );
   }

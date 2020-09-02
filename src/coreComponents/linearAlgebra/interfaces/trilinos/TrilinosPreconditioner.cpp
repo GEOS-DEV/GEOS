@@ -68,7 +68,7 @@ TrilinosPreconditioner::TrilinosPreconditioner( LinearSolverParameters params,
   m_precond{},
   m_nullSpacePointer{}
 {
-  if( params.amg.nullSpaceType == "rigidBodyModes" )
+  if( m_parameters.amg.nullSpaceType == "rigidBodyModes" )
   {
     ConvertRigidBodyModes( nearNullKernel, m_nullKernelSize, m_nullSpacePointer );
   }
