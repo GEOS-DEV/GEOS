@@ -50,7 +50,6 @@ HypreSolver::HypreSolver( LinearSolverParameters parameters )
 //// Top-Level Solver
 //// ----------------------------
 //// We switch between different solverTypes here
-//
 void HypreSolver::solve( HypreMatrix & mat,
                          HypreVector & sol,
                          HypreVector & rhs,
@@ -60,7 +59,7 @@ void HypreSolver::solve( HypreMatrix & mat,
   GEOSX_LAI_ASSERT( sol.ready() );
   GEOSX_LAI_ASSERT( rhs.ready() );
 
-  if( m_parameters.solverType == "direct" )
+  if( m_parameters.solverType == LinearSolverParameters::SolverType::direct )
   {
     solve_direct( mat, sol, rhs );
   }
@@ -210,25 +209,32 @@ void CreateHypreKrylovSolver( LinearSolverParameters const & params,
                               HYPRE_Solver & solver,
                               HypreSolverFuncs & solverFuncs )
 {
-  if( params.solverType == "gmres" )
+  switch( params.solverType )
   {
-    CreateHypreGMRES( params, comm, solver, solverFuncs );
-  }
-  else if( params.solverType == "fgmres" )
-  {
-    CreateHypreFlexGMRES( params, comm, solver, solverFuncs );
-  }
-  else if( params.solverType == "bicgstab" )
-  {
-    CreateHypreBiCGSTAB( params, comm, solver, solverFuncs );
-  }
-  else if( params.solverType == "cg" )
-  {
-    CreateHypreCG( params, comm, solver, solverFuncs );
-  }
-  else
-  {
-    GEOSX_ERROR( "Unsupported Hypre solver type: " << params.solverType );
+    case LinearSolverParameters::SolverType::gmres:
+    {
+      CreateHypreGMRES( params, comm, solver, solverFuncs );
+      break;
+    }
+    case LinearSolverParameters::SolverType::fgmres:
+    {
+      CreateHypreFlexGMRES( params, comm, solver, solverFuncs );
+      break;
+    }
+    case LinearSolverParameters::SolverType::bicgstab:
+    {
+      CreateHypreBiCGSTAB( params, comm, solver, solverFuncs );
+      break;
+    }
+    case LinearSolverParameters::SolverType::cg:
+    {
+      CreateHypreCG( params, comm, solver, solverFuncs );
+      break;
+    }
+    default:
+    {
+      GEOSX_ERROR( "Solver type not supported in hypre interface: " << params.solverType );
+    }
   }
 }
 
@@ -249,11 +255,11 @@ void HypreSolver::solve_krylov( HypreMatrix & mat,
   HypreMatrix separateComponentMatrix;
   HYPRE_Solver uu_amg_solver = {};//TODO: this is a quick and dirty first implementation
 
-  if( m_parameters.amg.separateComponents && m_parameters.preconditionerType != "mgr" )
+  if( m_parameters.amg.separateComponents && m_parameters.preconditionerType != LinearSolverParameters::PreconditionerType::mgr )
   {
     LAIHelperFunctions::SeparateComponentFilter( mat, separateComponentMatrix, m_parameters.dofsPerNode );
   }
-  else if( m_parameters.preconditionerType == "mgr" && m_parameters.mgr.separateComponents )
+  else if( m_parameters.preconditionerType == LinearSolverParameters::PreconditionerType::mgr && m_parameters.mgr.separateComponents )
   {
     // Extract displacement block
     HypreMatrix Pu;
@@ -329,7 +335,7 @@ void HypreSolver::solve_krylov( HypreMatrix & mat,
 
   // Destroy solver
   GEOSX_LAI_CHECK_ERROR( solverFuncs.destroy( solver ) );
-  if( m_parameters.preconditionerType == "mgr" && m_parameters.mgr.separateComponents )
+  if( m_parameters.preconditionerType == LinearSolverParameters::PreconditionerType::mgr && m_parameters.mgr.separateComponents )
   {
     GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGDestroy( uu_amg_solver ) );
   }

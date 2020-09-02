@@ -20,6 +20,7 @@
 #ifndef GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_HYDROFRACTURESOLVER_HPP_
 #define GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_HYDROFRACTURESOLVER_HPP_
 
+#include "common/EnumStrings.hpp"
 #include "physicsSolvers/SolverBase.hpp"
 
 namespace geosx
@@ -139,7 +140,7 @@ public:
 
   void initializeNewFaceElements( DomainPartition const & domain );
 
-  enum class couplingTypeOption : int
+  enum class CouplingTypeOption : integer
   {
     FIM,
     SIM_FixedStress
@@ -177,9 +178,8 @@ private:
   string m_solidSolverName;
   string m_flowSolverName;
   string m_contactRelationName;
-  string m_couplingTypeOptionString;
 
-  couplingTypeOption m_couplingTypeOption;
+  CouplingTypeOption m_couplingTypeOption;
 
   SolidMechanicsLagrangianFEM * m_solidSolver;
   FlowSolverBase * m_flowSolver;
@@ -200,6 +200,8 @@ private:
   integer m_maxNumResolves;
   integer m_numResolves[2];
 };
+
+ENUM_STRINGS( HydrofractureSolver::CouplingTypeOption, "FIM", "SIM_FixedStress" )
 
 } /* namespace geosx */
 

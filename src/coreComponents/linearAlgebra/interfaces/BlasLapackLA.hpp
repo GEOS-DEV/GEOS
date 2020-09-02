@@ -48,7 +48,7 @@ struct BlasLapackLA
    * @enum  RandomNumberDistribution
    * @brief This enum class specifies the type of distribution for generating random real numbers.
    */
-  enum class RandomNumberDistribution : int
+  enum class RandomNumberDistribution : integer
   {
     UNIFORM_01 = 1,   //!< uniform distribution (0,1)
     UNIFORM_m1p1 = 2, //!< uniform distribution (-1,1)

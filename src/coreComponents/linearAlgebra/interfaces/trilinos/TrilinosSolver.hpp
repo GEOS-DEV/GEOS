@@ -28,7 +28,6 @@ namespace geosx
 class DofManager;
 class EpetraVector;
 class EpetraMatrix;
-class LinearSolverParameters;
 
 /**
  * @brief This class creates and provides basic support for AztecOO, Amesos and ML libraries.
