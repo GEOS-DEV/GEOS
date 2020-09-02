@@ -47,7 +47,7 @@ ReservoirSolverBase::ReservoirSolverBase( const std::string & name,
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "Name of the well solver to use in the reservoir-well system solver" );
 
-  this->getWrapper<string>( viewKeyStruct::discretizationString )->
+  this->getWrapper< string >( viewKeyStruct::discretizationString )->
     setInputFlag( InputFlags::FALSE );
 
 }

@@ -40,7 +40,7 @@ WellSolverBase::WellSolverBase( std::string const & name,
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "Name of fluid constitutive object to use for this solver." );
 
-  this->getWrapper<string>( viewKeyStruct::discretizationString )->
+  this->getWrapper< string >( viewKeyStruct::discretizationString )->
     setInputFlag( InputFlags::FALSE );
 }
 

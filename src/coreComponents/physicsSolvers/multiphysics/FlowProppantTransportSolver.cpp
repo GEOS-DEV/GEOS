@@ -46,7 +46,7 @@ FlowProppantTransportSolver::FlowProppantTransportSolver( const std::string & na
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "Name of the flow solver to use in the flowProppantTransport solver" );
 
-  this->getWrapper<string>( viewKeyStruct::discretizationString )->
+  this->getWrapper< string >( viewKeyStruct::discretizationString )->
     setInputFlag( InputFlags::FALSE );
 }
 
