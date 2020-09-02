@@ -267,7 +267,7 @@ public:
    * @return gives a non-const realT* which points to t_data
    * @brief returns a non-const realT* which points to t_data
    */
-  GEOSX_HOST_DEVICE inline constexpr
+  GEOSX_HOST_DEVICE inline
   realT * Data( void )
   {
     return t_data;

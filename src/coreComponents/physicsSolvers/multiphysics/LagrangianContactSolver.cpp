@@ -42,6 +42,10 @@
 #include "finiteElement/elementFormulations/H1_TriangleFace_Lagrange1_Gauss1.hpp"
 #include "finiteElement/elementFormulations/H1_QuadrilateralFace_Lagrange1_GaussLegendre2.hpp"
 
+#if defined( __INTEL_COMPILER )
+#pragma GCC optimize "O0"
+#endif
+
 namespace geosx
 {
 
