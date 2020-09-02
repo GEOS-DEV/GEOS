@@ -148,13 +148,13 @@ void CreatePetscAMG( LinearSolverParameters const & params, PC precond )
 #endif
 }
 
-PCType getPetscSmootherType( string const & type )
+PCType getPetscSmootherType( LinearSolverParameters::PreconditionerType const & type )
 {
-  static std::map< string, PCType > const typeMap =
+  static std::map< LinearSolverParameters::PreconditionerType, PCType > const typeMap =
   {
-    { "iluk", PCILU },
-    { "icc", PCICC },
-    { "jacobi", PCJACOBI },
+    { LinearSolverParameters::PreconditionerType::iluk, PCILU },
+    { LinearSolverParameters::PreconditionerType::icc, PCICC },
+    { LinearSolverParameters::PreconditionerType::jacobi, PCJACOBI },
   };
 
   GEOSX_LAI_ASSERT_MSG( typeMap.count( type ) > 0, "Unsupported Petsc smoother option: " << type );
@@ -199,30 +199,33 @@ void PetscPreconditioner::compute( PetscMatrix const & mat )
   // Add specifics
   if( create )
   {
-    if( m_parameters.preconditionerType == "none" )
+    switch( m_parameters.preconditionerType )
     {
-      GEOSX_LAI_CHECK_ERROR( PCSetType( m_precond, PCNONE ) );
-    }
-    else if( m_parameters.preconditionerType == "jacobi" )
-    {
-      GEOSX_LAI_CHECK_ERROR( PCSetType( m_precond, PCJACOBI ) );
-    }
-    else if( m_parameters.preconditionerType == "amg" )
-    {
-      CreatePetscAMG( m_parameters, m_precond );
-    }
-    else if( m_parameters.preconditionerType == "mgr" )
-    {
-      GEOSX_ERROR( "MGR preconditioner available only through the hypre interface" );
-    }
-    else if( m_parameters.preconditionerType == "iluk" ||
-             m_parameters.preconditionerType == "icc" )
-    {
-      CreatePetscSmoother( m_parameters, m_precond );
-    }
-    else
-    {
-      GEOSX_ERROR( "Preconditioner type not available: " << m_parameters.preconditionerType );
+      case LinearSolverParameters::PreconditionerType::none:
+      {
+        GEOSX_LAI_CHECK_ERROR( PCSetType( m_precond, PCNONE ) );
+        break;
+      }
+      case LinearSolverParameters::PreconditionerType::jacobi:
+      {
+        GEOSX_LAI_CHECK_ERROR( PCSetType( m_precond, PCJACOBI ) );
+        break;
+      }
+      case LinearSolverParameters::PreconditionerType::amg:
+      {
+        CreatePetscAMG( m_parameters, m_precond );
+        break;
+      }
+      case LinearSolverParameters::PreconditionerType::iluk:
+      case LinearSolverParameters::PreconditionerType::icc:
+      {
+        CreatePetscSmoother( m_parameters, m_precond );
+        break;
+      }
+      default:
+      {
+        GEOSX_ERROR( "Preconditioner type not supported in PETSc interface: " << m_parameters.preconditionerType );
+      }
     }
   }
 

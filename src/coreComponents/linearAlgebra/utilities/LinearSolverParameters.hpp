@@ -19,7 +19,7 @@
 #ifndef GEOSX_LINEARALGEBRA_UTILITIES_LINEARSOLVERPARAMETERS_HPP_
 #define GEOSX_LINEARALGEBRA_UTILITIES_LINEARSOLVERPARAMETERS_HPP_
 
-#include "dataRepository/Group.hpp"
+#include "common/EnumStrings.hpp"
 
 namespace geosx
 {
@@ -30,15 +30,45 @@ namespace geosx
  * This class holds a simple tree of linear solver options.
  * They are set to default values, but can be overwritten as needed.
  */
-class LinearSolverParameters
+struct LinearSolverParameters
 {
-public:
+  /**
+   * @brief Linear solver type.
+   */
+  enum class SolverType : integer
+  {
+    direct,        ///< Direct solver
+    cg,            ///< CG
+    gmres,         ///< GMRES
+    fgmres,        ///< Flexible GMRES
+    bicgstab,      ///< BiCGStab
+    preconditioner ///< Preconditioner only
+  };
 
-  integer logLevel = 0;                ///< Output level [0=none, 1=basic, 2=everything]
-  string solverType = "direct";        ///< Solver type [direct, cg, gmres, bicgstab, preconditioner]
-  string preconditionerType = "iluk";  ///< Preconditioner type [none, iluk, ilut, amg, mgr, block]
-  integer dofsPerNode = 1;             ///< Dofs per node (or support location) for non-scalar problems
-  bool isSymmetric = false;            ///< Whether input matrix is symmetric (may affect choice of scheme)
+  /**
+   * @brief Preconditioner type.
+   */
+  enum class PreconditionerType : integer
+  {
+    none,   ///< No preconditioner
+    jacobi, ///< Jacobi smoothing
+    gs,     ///< Gauss-Seidel smoothing
+    sgs,    ///< Symmetric Gauss-Seidel smoothing
+    iluk,   ///< Incomplete LU with k-level of fill
+    ilut,   ///< Incomplete LU with thresholding
+    icc,    ///< Incomplete Cholesky
+    ict,    ///< Incomplete Cholesky with thresholding
+    amg,    ///< Algebraic Multigrid
+    mgr,    ///< Multigrid reduction (Hypre only)
+    block   ///< Block preconditioner
+  };
+
+  integer logLevel = 0;     ///< Output level [0=none, 1=basic, 2=everything]
+  integer dofsPerNode = 1;  ///< Dofs per node (or support location) for non-scalar problems
+  bool isSymmetric = false; ///< Whether input matrix is symmetric (may affect choice of scheme)
+
+  SolverType solverType = SolverType::direct;                        ///< Solver type
+  PreconditionerType preconditionerType = PreconditionerType::iluk;  ///< Preconditioner type
 
   /// Krylov-method parameters
   struct Krylov
@@ -99,6 +129,27 @@ public:
   }
   dd;                      ///< Domain decomposition parameter struct
 };
+
+ENUM_STRINGS( LinearSolverParameters::SolverType,
+              "direct",
+              "cg",
+              "gmres",
+              "fgmres",
+              "bicgstab",
+              "preconditioner" )
+
+ENUM_STRINGS( LinearSolverParameters::PreconditionerType,
+              "none",
+              "jacobi",
+              "gs",
+              "sgs",
+              "iluk",
+              "ilut",
+              "icc",
+              "ict",
+              "amg",
+              "mgr",
+              "block" )
 
 } /* namespace geosx */
 
