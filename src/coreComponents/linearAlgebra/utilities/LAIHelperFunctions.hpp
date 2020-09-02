@@ -179,9 +179,10 @@ void ComputeRigidBodyModes( MeshLevel const & mesh,
       numComponents = numComponents > 0 ? numComponents : numComponentsField;
       GEOSX_ERROR_IF( numComponents != numComponentsField, "Rigid body modes called with different number of components." );
       globalIndex const globalOffset = dofManager.globalOffset( selection[k] );
+      globalIndex const numLocalDofs = LvArray::integerConversion< globalIndex >( dofManager.numLocalDofs( selection[k] ) );
       for( globalIndex i = 0; i < dofNumber.size(); ++i )
       {
-        if( dofNumber[i] >= globalOffset && ( dofNumber[i] - globalOffset ) < dofManager.numLocalDofs( selection[k] ) )
+        if( dofNumber[i] >= globalOffset && ( dofNumber[i] - globalOffset ) < numLocalDofs )
         {
           globalNodeList.emplace_back( ( dofNumber[i]-globalOffset )/numComponentsField );
         }

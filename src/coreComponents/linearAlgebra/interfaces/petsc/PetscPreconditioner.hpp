@@ -72,9 +72,9 @@ public:
   /**
    * @brief Constructor.
    * @param params preconditioner parameters
-   * @param rigidBodyModes the elasticity near null kernel
+   * @param nearNullKernel the user-provided near null kernel
    */
-  PetscPreconditioner( LinearSolverParameters params, array1d< Vector > const & rigidBodyModes );
+  PetscPreconditioner( LinearSolverParameters params, array1d< Vector > const & nearNullKernel );
 
   /**
    * @brief Destructor.

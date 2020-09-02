@@ -41,7 +41,7 @@ public:
 
   virtual ~PreconditionerJacobi()
   {
-    delete m_diag;
+    delete m_diagInv;
   }
 
   /**
@@ -51,9 +51,10 @@ public:
   virtual void compute( Matrix const & mat ) override
   {
     GEOSX_LAI_ASSERT( mat.ready() );
-    m_diag = new Vector();
-    m_diag->createWithLocalSize( mat.numLocalRows(), mat.getComm() );
-    mat.extractDiagonal( *m_diag );
+    m_diagInv = new Vector();
+    m_diagInv->createWithLocalSize( mat.numLocalRows(), mat.getComm() );
+    mat.extractDiagonal( *m_diagInv );
+    m_diagInv->reciprocal();
   }
 
   /**
@@ -81,7 +82,7 @@ public:
    */
   virtual void clear() override
   {
-    m_diag->reset();
+    m_diagInv->reset();
   }
 
   /**
@@ -90,7 +91,7 @@ public:
    */
   virtual globalIndex numGlobalRows() const override final
   {
-    return m_diag->globalSize();
+    return m_diagInv->globalSize();
   }
 
   /**
@@ -99,7 +100,7 @@ public:
    */
   virtual globalIndex numGlobalCols() const override final
   {
-    return m_diag->globalSize();
+    return m_diagInv->globalSize();
   }
 
   /**
@@ -117,18 +118,18 @@ public:
 
     real64 const * const src_data = src.extractLocalVector();
     real64 * const dst_data = dst.extractLocalVector();
-    real64 const * const diag_data = m_diag->extractLocalVector();
+    real64 const * const diagInv_data = m_diagInv->extractLocalVector();
     dst.copy( src );
     for( localIndex i = 0; i < src.localSize(); ++i )
     {
-      dst_data[i] = src_data[i] / diag_data[i];
+      dst_data[i] = src_data[i] * diagInv_data[i];
     }
   }
 
 private:
 
   /// The diagonal of the matrix
-  Vector * m_diag;
+  Vector * m_diagInv;
 };
 
 }

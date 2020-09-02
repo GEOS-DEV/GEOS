@@ -81,11 +81,11 @@ public:
   /**
    * @brief Constructor.
    * @param params preconditioner parameters
-   * @param rigidBodyModes the elasticity near null kernel
+   * @param nearNullKernel the user-provided near null kernel
    * @param dofManager the Degree-of-Freedom manager associated with matrix
    */
   HyprePreconditioner( LinearSolverParameters params,
-                       array1d< HypreVector > const & rigidBodyModes,
+                       array1d< HypreVector > const & nearNullKernel,
                        DofManager const * const dofManager = nullptr );
 
   /**
@@ -157,13 +157,13 @@ private:
   /// Bool to check if the preconditioner is ready to be computed
   bool m_ready;
 
-  /// Pointer to external data structure storing rigid body modes
-  array1d< HypreVector > const * m_rigidBodyModes = nullptr;
+  /// Pointer to external data structure storing the near null kernel
+  array1d< HypreVector > const * m_nearNullKernel = nullptr;
 
-  /// Number of rigid body modes (rotations only)
-  HYPRE_Int m_numRotations;
+  /// Number of near null kernel vectors (in case of rigid body modes, only rotations are used)
+  HYPRE_Int m_nullKernelSize;
 
-  /// Hypre pointer to the rigid body modes
+  /// Hypre pointer to the near null kernel
   array1d< HYPRE_ParVector > m_nullSpacePointer;
 };
 

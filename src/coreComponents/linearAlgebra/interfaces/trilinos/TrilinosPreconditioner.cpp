@@ -36,11 +36,11 @@ TrilinosPreconditioner::TrilinosPreconditioner( LinearSolverParameters params )
   m_nullSpacePointer{}
 {}
 
-void ConvertRigidBodyModes( array1d< EpetraVector > const & rigidBodyModes,
+void ConvertRigidBodyModes( array1d< EpetraVector > const & nearNullKernel,
                             integer & numRBM,
                             array1d< real64 > & nullSpacePointer )
 {
-  if( rigidBodyModes.empty() )
+  if( nearNullKernel.empty() )
   {
     numRBM = 0;
     return;
@@ -48,27 +48,30 @@ void ConvertRigidBodyModes( array1d< EpetraVector > const & rigidBodyModes,
   else
   {
     // ML expects the nullspace modes in a single double vector.
-    localIndex const size = rigidBodyModes[0].localSize();
-    numRBM = LvArray::integerConversion< integer >( rigidBodyModes.size() );
+    localIndex const size = nearNullKernel[0].localSize();
+    numRBM = LvArray::integerConversion< integer >( nearNullKernel.size() );
     nullSpacePointer.resize( numRBM*size );
     for( localIndex k = 0; k < numRBM; ++k )
     {
       for( localIndex j = 0; j < size; ++j )
       {
-        nullSpacePointer[k*size + j] = rigidBodyModes[k].get( rigidBodyModes[k].getGlobalRowID( j ) );
+        nullSpacePointer[k*size + j] = nearNullKernel[k].get( nearNullKernel[k].getGlobalRowID( j ) );
       }
     }
   }
 }
 
 TrilinosPreconditioner::TrilinosPreconditioner( LinearSolverParameters params,
-                                                array1d< Vector > const & rigidBodyModes )
+                                                array1d< Vector > const & nearNullKernel )
   : Base{},
   m_parameters( std::move( params ) ),
   m_precond{},
   m_nullSpacePointer{}
 {
-  ConvertRigidBodyModes( rigidBodyModes, m_numRBM, m_nullSpacePointer );
+  if( params.amg.nullSpaceType == "rigidBodyModes" )
+  {
+    ConvertRigidBodyModes( nearNullKernel, m_nullKernelSize, m_nullSpacePointer );
+  }
 }
 
 TrilinosPreconditioner::~TrilinosPreconditioner() = default;
@@ -225,7 +228,7 @@ void TrilinosPreconditioner::compute( Matrix const & mat )
 
   if( m_parameters.preconditionerType == "amg" )
   {
-    m_precond = CreateMLOperator( m_parameters, mat.unwrapped(), m_numRBM, m_nullSpacePointer );
+    m_precond = CreateMLOperator( m_parameters, mat.unwrapped(), m_nullKernelSize, m_nullSpacePointer );
   }
   else if( m_parameters.preconditionerType == "mgr" )
   {
