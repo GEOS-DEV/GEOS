@@ -37,6 +37,8 @@ set(ENABLE_GEOSX_PTP ON CACHE BOOL "" FORCE)
 set(ENABLE_PYTHON ON CACHE BOOL "")
 set(Python3_EXECUTABLE "/usr/gapps/GEOSX/python/${CONFIG_NAME}/bin/python3" CACHE PATH "" FORCE)
 
+set(PYTHON_POST_EXECUTABLE "/usr/gapps/GEOSX/python/${CONFIG_NAME}/bin/python3" CACHE PATH "" FORCE)
+
 set(ENABLE_CALIPER ON CACHE BOOL "")
 set(ENABLE_PAPI ON CACHE BOOL "")
 set(PAPI_PREFIX /usr/tce/packages/papi/papi-5.4.3 CACHE PATH "")

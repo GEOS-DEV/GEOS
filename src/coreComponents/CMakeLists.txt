@@ -13,6 +13,7 @@ set( subdirs
      meshUtilities
      mpiCommunications
      physicsSolvers
+     python
      )
 
 
@@ -34,7 +35,7 @@ if( ENABLE_PYTHON )
 endif()
 
 foreach( lib ${subdirs} )
-    if( NOT ${lib} STREQUAL "math" )
+    if( NOT ( ${lib} STREQUAL "math" OR ${lib} STREQUAL "python" ) )
       list( APPEND coreLibs ${lib})
     endif()
 endforeach()

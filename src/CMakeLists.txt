@@ -120,12 +120,6 @@ if( ENABLE_XML_UPDATES AND ENABLE_MPI AND UNIX AND NOT CMAKE_HOST_APPLE AND NOT 
                      DEPENDS geosx
                      )
 
-  add_custom_target( geosx_format_all_xml_files
-                     COMMAND bash ${CMAKE_SOURCE_DIR}/../scripts/formatXMLFiles.bash -g ${CMAKE_BINARY_DIR}/bin/format_xml ${CMAKE_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/../examples
-                     WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-                     DEPENDS geosx_update_rst_tables
-                     )
-
   add_custom_target( geosx_validate_all_xml_files
                      ALL
                      COMMAND bash ${CMAKE_SOURCE_DIR}/../scripts/validateXMLFiles.bash -g ${CMAKE_SOURCE_DIR}/coreComponents/fileIO/schema/schema.xsd ${CMAKE_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/../examples
