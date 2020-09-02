@@ -187,10 +187,10 @@ void findSmallestThreeValues( arrayView1d< localIndex const > const & values, lo
  * @brief Populate the facesByLowestNode map.
  * @param [in] elementManager the ElementRegionManager associated with this mesh level.
  * @param [inout] facesByLowestNode of size numNodes, where each sub array has been preallocated to hold
- *        *enough* space.
- * For each face of each element, this function gets the three lowest nodes in the face {n0, n1, n2}, creates
- * an EdgeBuilder associated with the face from n1 and n2 and then appends the EdgeBuilder to facesByLowestNode[ n0 ].
- * Finally it sorts the contents of each sub-array of facesByLowestNode from least to greatest.
+ *   *enough* space.
+ * @details For each face of each element, this function gets the three lowest nodes in the face {n0, n1, n2},
+ *   appends a FaceBuilder to @c facesByLowestNode[ n0 ]. Finally it sorts the contents of each sub-array of
+ *   facesByLowestNode from least to greatest.
  */
 void createFacesByLowestNode( ElementRegionManager const & elementManager,
                               ArrayOfArraysView< FaceBuilder > const & facesByLowestNode )
