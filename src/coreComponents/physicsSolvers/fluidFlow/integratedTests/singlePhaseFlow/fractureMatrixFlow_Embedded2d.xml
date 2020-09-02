@@ -75,11 +75,11 @@
       targetExactTimestep="1"
       target="/Outputs/vtkOutput"/>
 
-    <!--PeriodicEvent
+    <PeriodicEvent
       name="restarts"
-      timeFrequency="25000"
+      timeFrequency="1e3"
       targetExactTimestep="0"
-      target="/Outputs/sidreRestart"/-->
+      target="/Outputs/sidreRestart"/>
   </Events>
 
   <NumericalMethods>

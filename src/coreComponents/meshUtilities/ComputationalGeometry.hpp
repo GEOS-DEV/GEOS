@@ -46,6 +46,7 @@ R1Tensor LinePlaneIntersection( R1Tensor lineDir,
 /**
  * @brief Calculate the area of a polygon given the set of points in ccw order defining it.
  * @param[in] points coordinates of the points
+ * @param[in] normal vector normal to the plane
  * @return the area of the polygon
  */
 real64 ComputeSurfaceArea( array1d< R1Tensor > const & points,
