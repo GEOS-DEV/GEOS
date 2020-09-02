@@ -63,6 +63,11 @@ Version v0.2.0 -- Release date 2020-06-20
   * Fracture Elements to represent FV cells in fracture
 * VTK output
 * Linear Algebra Interface layers for Hypre, Trilinos, Petsc
+  * Common interface for supported linear algebra packages
+  * Krylov solvers (CG, GMRES, BiCGSTAB)
+  * Preconditioners (Algebraic Multigrid, incomplete factorizations)
+  * Block matrix and vector support
+  * Serial and parallel direct solvers
 
 
 Version v0.1.0 -- Release date 2018-02-15
