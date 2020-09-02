@@ -1,10 +1,12 @@
 #!/bin/bash
 env
+
 # The or_die function run the passed command line and
 # exits the program in case of non zero error code
 function or_die () {
     "$@"
     local status=$?
+
     if [[ $status != 0 ]] ; then
         echo ERROR $status command: $@
         exit $status

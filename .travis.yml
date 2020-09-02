@@ -99,72 +99,86 @@ geosx_pangea_build: &geosx_pangea_build
   - gcloud auth activate-service-account --key-file=${GEOSX_GCLOUD_KEY}
   - gsutil cp -a public-read ${GEOSX_BUNDLE} gs://geosx/Pangea2/
 
+return_script: &return_script
+  script:
+  - |
+    if [[ $(curl -sS -H "Travis-API-Version: 3" -X \
+          GET https://api.travis-ci.com/build/$TRAVIS_BUILD_ID/jobs | \
+          jq -r '.jobs[] | select( (.stage.name == "checks") and
+          (.allow_failure == true)) | .state') == *failed* ]]; then
+      exit 1
+    else
+      exit 0
+    fi
+
 stages:
-  - check_code_style_and_docs
-  - check_submodules
-  - build
+  - checks
+  - builds
+  - return_status
 
 jobs:
   allow_failures:
-  - name: code_style
   - name: documentation
   - name: check_submodules
   include:
-  - stage: check_code_style_and_docs
+  - stage: checks
     name: code_style
     <<: *geosx_linux_build
     env:
     - DOCKER_REPOSITORY=geosx/ubuntu18.04-gcc8
     - CMAKE_BUILD_TYPE=Release
     - BUILD_AND_TEST_ARGS=--test-code-style
-  - stage: check_code_style_and_docs
+  - stage: checks
     name: documentation
     <<: *geosx_linux_build
     env:
     - DOCKER_REPOSITORY=geosx/ubuntu18.04-gcc8
     - CMAKE_BUILD_TYPE=Release
     - BUILD_AND_TEST_ARGS=--test-documentation
-  - stage: check_submodules
+  - stage: checks
+    name: check_submodules
     script: scripts/test_submodule_updated.sh
-  - stage: build
+  - stage: builds
     name: Ubuntu18.04_clang8.0.0_cuda10.1.243_release
     <<: *geosx_linux_build
     env:
     - DOCKER_REPOSITORY=geosx/ubuntu18.04-clang8.0.0-cuda10.1.243
     - CMAKE_BUILD_TYPE=Release
     - BUILD_AND_TEST_ARGS=--disable-unit-tests
-  - stage: build
+  - stage: builds
     name: Centos7.6_gcc8.3.1_cuda10.1.243_release
     <<: *geosx_linux_build
     env:
     - DOCKER_REPOSITORY=geosx/centos7.6.1810-gcc8.3.1-cuda10.1.243
     - CMAKE_BUILD_TYPE=Release
     - BUILD_AND_TEST_ARGS=--disable-unit-tests
-  - stage: build
+  - stage: builds
     name: Pangea2_gcc8.3.0_release
     <<: *geosx_pangea_build
     env:
     - DOCKER_REPOSITORY=geosx/pangea2-gcc8.3.0-openmpi2.1.5-mkl2019.3
     - CMAKE_BUILD_TYPE=Release
     - BUILD_AND_TEST_ARGS=--disable-unit-tests
-  - stage: build
+  - stage: builds
     name: Mac_OSX
     <<: *geosx_osx_build
-  - stage: build
+  - stage: builds
     name: Centos7.7_clang9.0.0_release
     <<: *geosx_linux_build
     env:
     - DOCKER_REPOSITORY=geosx/centos7.7.1908-clang9.0.0
     - CMAKE_BUILD_TYPE=Release
-  - stage: build
+  - stage: builds
     name: Ubuntu18.04_gcc8_release
     <<: *geosx_linux_build
     env:
     - DOCKER_REPOSITORY=geosx/ubuntu18.04-gcc8
     - CMAKE_BUILD_TYPE=Release
-  - stage: build
+  - stage: builds
     name: Ubuntu18.04_gcc8_debug
     <<: *geosx_linux_build
     env:
     - DOCKER_REPOSITORY=geosx/ubuntu18.04-gcc8
     - CMAKE_BUILD_TYPE=Debug
+  - stage: return_status
+    <<: *return_script
