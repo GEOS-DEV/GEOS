@@ -1149,14 +1149,17 @@ void LagrangianContactSolver::CreatePreconditioner( DomainPartition const & doma
     if( mechParams.amg.nullSpaceType == "rigidBodyModes" )
     {
       MeshLevel const & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
-      LAIHelperFunctions::ComputeRigidBodyModes( mesh,
-                                                 m_dofManager,
-                                                 { keys::TotalDisplacement },
-                                                 m_rigidBodyModes );
+      if( m_solidSolver->getRigidBodyModes().empty() )
+      {
+        LAIHelperFunctions::ComputeRigidBodyModes( mesh,
+                                                   m_dofManager,
+                                                   { keys::TotalDisplacement },
+                                                   m_solidSolver->getRigidBodyModes() );
+      }
     }
 
     // Preconditioner for the Schur complement: mechPrecond
-    std::unique_ptr< PreconditionerBase< LAInterface > > mechPrecond = LAInterface::createPreconditioner( mechParams, m_rigidBodyModes );
+    std::unique_ptr< PreconditionerBase< LAInterface > > mechPrecond = LAInterface::createPreconditioner( mechParams, m_solidSolver->getRigidBodyModes() );
     precond->setupBlock( 1,
                          { { keys::TotalDisplacement, 0, 3 } },
                          std::move( mechPrecond ) );
