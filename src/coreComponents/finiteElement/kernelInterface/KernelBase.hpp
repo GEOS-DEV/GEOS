@@ -560,8 +560,14 @@ real64 regionBasedKernelApplication( MeshLevel & mesh,
 
   // Loop over all sub-regions in regiongs of type REGION_TYPE, that are listed in the targetRegions array.
   elementRegionManager.forElementSubRegions< REGION_TYPE >( targetRegions,
-                                                            [&] ( localIndex const targetRegionIndex,
-                                                                  auto & elementSubRegion )
+                                                            [&constitutiveNames,
+                                                             &maxResidualContribution,
+                                                             &nodeManager,
+                                                             &edgeManager,
+                                                             &faceManager,
+                                                             &kernelConstructorParamsTuple,
+                                                             &finiteElementName]
+                                                              ( localIndex const targetRegionIndex, auto & elementSubRegion )
   {
     localIndex const numElems = elementSubRegion.size();
 
@@ -583,10 +589,19 @@ real64 regionBasedKernelApplication( MeshLevel & mesh,
 
     // Call the constitutive dispatch which converts the type of constitutive model into a compile time constant.
     constitutive::ConstitutivePassThru< CONSTITUTIVE_BASE >::Execute( constitutiveRelation,
-                                                                      [&]( auto * const castedConstitutiveRelation )
+                                                                      [&maxResidualContribution,
+                                                                       &nodeManager,
+                                                                       &edgeManager,
+                                                                       &faceManager,
+                                                                       &kernelConstructorParamsTuple,
+                                                                       &elementSubRegion,
+                                                                       &finiteElementName,
+                                                                       numElems]
+                                                                        ( auto * const castedConstitutiveRelation )
     {
-      // Create an alias for the type of contitutive model.
+      // Create an alias for the type of constitutive model.
       using CONSTITUTIVE_TYPE = TYPEOFPTR( castedConstitutiveRelation );
+
 
       string const elementTypeString = elementSubRegion.GetElementTypeString();
 
@@ -594,11 +609,16 @@ real64 regionBasedKernelApplication( MeshLevel & mesh,
       subRegionFE = elementSubRegion.template getReference< FiniteElementBase >( finiteElementName );
 
       finiteElement::dispatch3D( subRegionFE,
-                                 [&] ( auto const finiteElement )
+                                 [&maxResidualContribution,
+                                  &nodeManager,
+                                  &edgeManager,
+                                  &faceManager,
+                                  &kernelConstructorParamsTuple,
+                                  &elementSubRegion,
+                                  &numElems,
+                                  &castedConstitutiveRelation] ( auto const finiteElement )
       {
         using FE_TYPE = TYPEOFREF( finiteElement );
-//        // Compile time values!
-//        static constexpr int NUM_QUADRATURE_POINTS = FE_TYPE::numQuadraturePoints;
 
         // Define an alias for the kernel type for easy use.
         using KERNEL_TYPE = KERNEL_TEMPLATE< SUBREGIONTYPE,

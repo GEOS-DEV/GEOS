@@ -1018,6 +1018,8 @@ HydrofractureSolver::
 
       forAll< serialPolicy >( subRegion.size(), [=] ( localIndex const kfe )
       {
+        constexpr int kfSign[2] = { -1, 1 };
+
         R1Tensor Nbar = faceNormal[elemsToFaces[kfe][0]];
         Nbar -= faceNormal[elemsToFaces[kfe][1]];
         Nbar.Normalize();
@@ -1047,10 +1049,10 @@ HydrofractureSolver::
             for( int i=0; i<3; ++i )
             {
               rowDOF[3*a+i] = dispDofNumber[faceToNodeMap( faceIndex, a )] + i;
-              nodeRHS[3*a+i] = -nodalForce[i] * pow( -1, kf );
-              fext[faceToNodeMap( faceIndex, a )][i] += -nodalForce[i] * pow( -1, kf );
+              nodeRHS[3*a+i] = nodalForce[i] * kfSign[kf];
+              fext[faceToNodeMap( faceIndex, a )][i] += nodalForce[i] * kfSign[kf];
 
-              dRdP( 3*a+i, 0 ) = -Ja * Nbar[i] * pow( -1, kf );
+              dRdP( 3*a+i, 0 ) = Ja * Nbar[i] * kfSign[kf];
             }
           }
 
@@ -1139,6 +1141,8 @@ HydrofractureSolver::
     {
       //if (elemGhostRank[ei] < 0)
       {
+        constexpr int kfSign[2] = { -1, 1 };
+
         globalIndex const elemDOF = presDofNumber[ei];
         localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( elemsToFaces[ei][0] );
         real64 const dAccumulationResidualdAperture = dens[ei][0] * area[ei];
@@ -1163,7 +1167,7 @@ HydrofractureSolver::
               for( int i = 0; i < 3; ++i )
               {
                 nodeDOF[kf * 3 * numNodesPerFace + 3 * a + i] = dispDofNumber[faceToNodeMap( elemsToFaces[ei][kf], a )] + i;
-                real64 const dGap_dU = -pow( -1, kf ) * Nbar[i] / numNodesPerFace;
+                real64 const dGap_dU = kfSign[kf] * Nbar[i] / numNodesPerFace;
                 real64 const dAper_dU = contactRelation->dEffectiveAperture_dAperture( aperture[ei] ) * dGap_dU;
                 dRdU( kf * 3 * numNodesPerFace + 3 * a + i ) = dAccumulationResidualdAperture * dAper_dU;
               }
@@ -1193,7 +1197,7 @@ HydrofractureSolver::
               {
                 nodeDOF[kf * 3 * numNodesPerFace + 3 * a + i] =
                   dispDofNumber[faceToNodeMap( elemsToFaces[ei2][kf], a )] + i;
-                real64 const dGap_dU = -pow( -1, kf ) * Nbar[i] / numNodesPerFace;
+                real64 const dGap_dU = kfSign[kf] * Nbar[i] / numNodesPerFace;
                 real64 const
                 dAper_dU = contactRelation->dEffectiveAperture_dAperture( aperture[ei2] ) * dGap_dU;
                 dRdU( kf * 3 * numNodesPerFace + 3 * a + i ) = dRdAper * dAper_dU;

@@ -36,6 +36,10 @@
 #include "linearAlgebra/utilities/LAIHelperFunctions.hpp"
 #include "math/interpolation/Interpolation.hpp"
 
+#if defined( __INTEL_COMPILER )
+#pragma GCC optimize "O0"
+#endif
+
 namespace geosx
 {
 
