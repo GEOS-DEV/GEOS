@@ -19,6 +19,7 @@
 #ifndef GEOSX_DATAREPOSITORY_INPUTFLAGS_HPP_
 #define GEOSX_DATAREPOSITORY_INPUTFLAGS_HPP_
 
+#include "common/DataTypes.hpp"
 #include "common/Logger.hpp"
 
 namespace geosx
@@ -32,7 +33,7 @@ namespace dataRepository
  *
  * Enumeration of flags that control reading XML input and schema generation.
  */
-enum class InputFlags : int
+enum class InputFlags : integer
 {
   INVALID,            ///< Invalid value
   FALSE,              ///< Not read from input

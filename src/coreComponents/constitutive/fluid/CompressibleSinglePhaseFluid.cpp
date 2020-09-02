@@ -27,7 +27,9 @@ namespace constitutive
 {
 
 CompressibleSinglePhaseFluid::CompressibleSinglePhaseFluid( std::string const & name, Group * const parent ):
-  SingleFluidBase( name, parent )
+  SingleFluidBase( name, parent ),
+  m_densityModelType( ExponentApproximationType::Linear ),
+  m_viscosityModelType( ExponentApproximationType::Linear )
 {
   registerWrapper( viewKeyStruct::compressibilityString, &m_compressibility )->
     setApplyDefaultValue( 0.0 )->
@@ -54,23 +56,15 @@ CompressibleSinglePhaseFluid::CompressibleSinglePhaseFluid( std::string const & 
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Reference fluid viscosity" );
 
-  registerWrapper( viewKeyStruct::densityModelStringString, &m_densityModelString )->
-    setApplyDefaultValue( "linear" )->
-    setInputFlag( InputFlags::OPTIONAL )->
-    setDescription( "Type of density model (linear, quadratic, exponential)" );
-
-  registerWrapper( viewKeyStruct::viscosityModelStringString, &m_viscosityModelString )->
-    setApplyDefaultValue( "linear" )->
-    setInputFlag( InputFlags::OPTIONAL )->
-    setDescription( "Type of viscosity model (linear, quadratic, exponential)" );
-
   registerWrapper( viewKeyStruct::densityModelTypeString, &m_densityModelType )->
-    setRestartFlags( dataRepository::RestartFlags::NO_WRITE )->
-    setDescription( "Type of density model (linear, quadratic, exponential)" );
+    setApplyDefaultValue( m_densityModelType )->
+    setInputFlag( InputFlags::OPTIONAL )->
+    setDescription( "Type of density model. Valid options:\n* " + EnumStrings< ExponentApproximationType >::concat( "\n* " ) );
 
   registerWrapper( viewKeyStruct::viscosityModelTypeString, &m_viscosityModelType )->
-    setRestartFlags( dataRepository::RestartFlags::NO_WRITE )->
-    setDescription( "Type of viscosity model (linear, quadratic, exponential)" );
+    setApplyDefaultValue( m_viscosityModelType )->
+    setInputFlag( InputFlags::OPTIONAL )->
+    setDescription( "Type of viscosity model. Valid options:\n* " + EnumStrings< ExponentApproximationType >::concat( "\n* " ) );
 }
 
 CompressibleSinglePhaseFluid::~CompressibleSinglePhaseFluid() = default;
@@ -100,16 +94,13 @@ void CompressibleSinglePhaseFluid::PostProcessInput()
   GEOSX_ERROR_IF_LE_MSG( m_referenceViscosity, 0.0,
                          getName() << ": invalid value of " << viewKeyStruct::referenceViscosityString );
 
-  m_densityModelType   = stringToExponentType( m_densityModelString );
-  m_viscosityModelType = stringToExponentType( m_viscosityModelString );
-
   // Due to the way update wrapper is currently implemented, we can only support one model type
 
   GEOSX_ERROR_IF( m_densityModelType != ExponentApproximationType::Linear,
-                  getName() << ": model type currently not supported: " << m_densityModelString );
+                  getName() << ": model type currently not supported: " << m_densityModelType );
 
   GEOSX_ERROR_IF( m_viscosityModelType != ExponentApproximationType::Linear,
-                  getName() << ": model type currently not supported: " << m_viscosityModelString );
+                  getName() << ": model type currently not supported: " << m_viscosityModelType );
 
   // Set default values for derivatives (cannot be done in base class)
   // TODO: reconsider the necessity of this

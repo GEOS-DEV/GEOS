@@ -50,7 +50,7 @@ namespace dataRepository
 namespace internal
 {
 
-template< typename T >
+template< typename T, typename ENABLE = void >
 struct conduitTypeInfo
 {};
 
@@ -73,6 +73,10 @@ CONDUIT_TYPE_INFO( unsigned long long, CONDUIT_NATIVE_UNSIGNED_LONG_LONG );
 CONDUIT_TYPE_INFO( float, CONDUIT_NATIVE_FLOAT );
 CONDUIT_TYPE_INFO( double, CONDUIT_NATIVE_DOUBLE );
 
+// Enum types forward to underlying integer types
+template< typename T >
+struct conduitTypeInfo< T, std::enable_if_t< std::is_enum< T >::value > > : public conduitTypeInfo< std::underlying_type_t< T > >
+{};
 
 // Tensor types
 CONDUIT_TYPE_INFO( R1Tensor, CONDUIT_NATIVE_DOUBLE );

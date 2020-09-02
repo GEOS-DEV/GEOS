@@ -91,7 +91,7 @@ SolidMechanicsLagrangianFEM::SolidMechanicsLagrangianFEM( const std::string & na
   registerWrapper( viewKeyStruct::timeIntegrationOptionString, &m_timeIntegrationOption )->
     setInputFlag( InputFlags::OPTIONAL )->
     setApplyDefaultValue( m_timeIntegrationOption )->
-    setDescription( "Time integration method. Options are: \n QuasiStatic \n ImplicitDynamic \n ExplicitDynamic" );
+    setDescription( "Time integration method. Options are:\n* " + EnumStrings< TimeIntegrationOption >::concat( "\n* " ) );
 
   registerWrapper( viewKeyStruct::useVelocityEstimateForQSString, &m_useVelocityEstimateForQS )->
     setApplyDefaultValue( 0 )->

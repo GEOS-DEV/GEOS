@@ -16,7 +16,7 @@
       <NonlinearSolverParameters
         newtonTol="1.0e-8"
         newtonMaxIter="8"
-        lineSearchAction="0"
+        lineSearchAction="None"
         newtonMinIter="1"/>
       <LinearSolverParameters
         solverType="gmres"
@@ -49,7 +49,7 @@
       <NonlinearSolverParameters
         newtonTol="1.0e-8"
         newtonMaxIter="8"
-        lineSearchAction="0"
+        lineSearchAction="None"
         newtonMinIter="1"/>
       <LinearSolverParameters
         solverType="gmres"

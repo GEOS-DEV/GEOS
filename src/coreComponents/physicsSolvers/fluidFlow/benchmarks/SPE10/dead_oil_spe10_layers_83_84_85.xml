@@ -14,7 +14,7 @@
         newtonTol="1.0e-4"
         dtIncIterLimit="0.4"
         maxTimeStepCuts="10"    
-        lineSearchAction="0"
+        lineSearchAction="None"
         newtonMaxIter="20"/>
       <!-- Note that the direct solver is quite slow -->
       <!-- This block will be updated when Hypre becomes the default  -->
