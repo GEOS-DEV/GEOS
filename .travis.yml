@@ -70,7 +70,7 @@ geosx_osx_build: &geosx_osx_build
     -DENABLE_GEOSX_PTP:BOOL=ON -DENABLE_DOXYGEN:BOOL=OFF
   - cd build-darwin-clang-debug
   - make -j $(nproc) VERBOSE=1
-  - ctest -V
+  - ctest -V -E "testUncrustifyCheck|testDoxygenCheck"
 
 geosx_pangea_build: &geosx_pangea_build
   <<: *geosx_linux_build
