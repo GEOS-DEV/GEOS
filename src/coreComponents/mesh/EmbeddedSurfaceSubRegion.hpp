@@ -43,7 +43,7 @@ public:
   using NodeMapType = InterObjectRelation< ArrayOfArrays< localIndex > >;
 
   /// Embedded surface element to edges map type
-  using EdgeMapType = InterObjectRelation< array1d< array1d< localIndex > > >;
+  using EdgeMapType = InterObjectRelation< ArrayOfArrays< localIndex > >;
 
   /// Embedded surface element to faces map type
   using FaceMapType = FixedOneToManyRelation;
@@ -189,7 +189,7 @@ public:
   ///@{
 
   /**
-   * @brief Get the embedded surface element to nodes map (background grid nodes).
+   * @brief Get the embedded surface element to nodes map.
    * @return the embedded surface element to node map
    */
   NodeMapType const & nodeList() const
@@ -216,6 +216,25 @@ public:
    * @copydoc nodeList( localIndex const k, localIndex a )
    */
   localIndex const & nodeList( localIndex const k, localIndex a ) const { return m_toNodesRelation( k, a ); }
+
+
+  /**
+   * @brief Get the embedded surface element to edges map.
+   * @return the embedded surface element to node map
+   */
+  EdgeMapType & edgeList()
+  {
+    return m_toEdgesRelation;
+  }
+
+  /**
+   * @copydoc edgeList()
+   */
+  EdgeMapType const & edgeList() const
+  {
+    return m_toEdgesRelation;
+  }
+
 
   /**
    * @brief Get the embedded surface element to region map (background grid nodes).
@@ -404,6 +423,9 @@ private:
 
   /// list of nodes
   NodeMapType m_toNodesRelation;
+
+  /// list of edges
+  EdgeMapType m_toEdgesRelation;
 
   /// The member level field for the element center
   array1d< real64 > m_elementAperture;

@@ -157,14 +157,12 @@ void EmbeddedSurfaceGenerator::InitializePostSubGroups( Group * const problemMan
   GEOSX_LOG_LEVEL_RANK_0( 1, "Number of embedded surface elements: " << embeddedSurfaceSubRegion->size() );
 
   // Populate EdgeManager for embedded surfaces.
-  EdgeManager * const embSurfEdgeManager = meshLevel->getEmbdSurfEdgeManager();
+  EdgeManager & embSurfEdgeManager = meshLevel->getEmbdSurfEdgeManager();
 
-  ArrayOfArrays< localIndex > embSurfToEdgeMap;
-  embSurfToEdgeMap.resize( embeddedSurfaceSubRegion->size() );
-
+  EmbeddedSurfaceSubRegion::EdgeMapType & embSurfToEdgeMap = embeddedSurfaceSubRegion->edgeList();
   EmbeddedSurfaceSubRegion::NodeMapType & embSurfToNodeMap = embeddedSurfaceSubRegion->nodeList();
 
-  embSurfEdgeManager->BuildEdges( embeddedSurfaceSubRegion->totalNumberOfNodes(), embSurfToNodeMap.toViewConst(), embSurfToEdgeMap );
+  embSurfEdgeManager.BuildEdges( embeddedSurfaceSubRegion->totalNumberOfNodes(), embSurfToNodeMap.toViewConst(), embSurfToEdgeMap );
 }
 
 void EmbeddedSurfaceGenerator::InitializePostInitialConditions_PreSubGroups( Group * const GEOSX_UNUSED_PARAM ( problemManager ) )

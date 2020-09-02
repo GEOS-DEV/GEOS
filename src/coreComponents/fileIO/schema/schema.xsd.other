@@ -1344,6 +1344,8 @@
 		<xsd:attribute name="connectivityIndex" type="real64_array" />
 		<!--domainBoundaryIndicator => (no description available)-->
 		<xsd:attribute name="domainBoundaryIndicator" type="integer_array" />
+		<!--edgeList => Map to the edges.-->
+		<xsd:attribute name="edgeList" type="geosx_InterObjectRelation&lt;LvArray_ArrayOfArrays&lt;long, long, LvArray_ChaiBuffer&gt; &gt;" />
 		<!--elementAperture => The aperture of each EmbeddedSurface.-->
 		<xsd:attribute name="elementAperture" type="real64_array" />
 		<!--elementArea => The area of each EmbeddedSurface element.-->
@@ -1352,7 +1354,7 @@
 		<xsd:attribute name="elementCenter" type="real64_array2d" />
 		<!--elementVolume => The volume of each EmbeddedSurface element.-->
 		<xsd:attribute name="elementVolume" type="real64_array" />
-		<!--fractureElementsToCellIndices => Map to the cells.-->
+		<!--fractureElementsToCellIndices => Map to the cell elements.-->
 		<xsd:attribute name="fractureElementsToCellIndices" type="localIndex_array" />
 		<!--fractureElementsToRegionIndex => Map to the region cut by each EmbeddedSurface.-->
 		<xsd:attribute name="fractureElementsToRegionIndex" type="localIndex_array" />

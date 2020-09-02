@@ -5,11 +5,12 @@ Name                             Type                                           
 ================================ ==================================================================================== ==================================================================== 
 connectivityIndex                real64_array                                                                         Connectivity index of each EmbeddedSurface.                          
 domainBoundaryIndicator          integer_array                                                                        (no description available)                                           
+edgeList                         geosx_InterObjectRelation< LvArray_ArrayOfArrays< long, long, LvArray_ChaiBuffer > > Map to the edges.                                                    
 elementAperture                  real64_array                                                                         The aperture of each EmbeddedSurface.                                
 elementArea                      real64_array                                                                         The area of each EmbeddedSurface element.                            
 elementCenter                    real64_array2d                                                                       The center of each EmbeddedSurface element.                          
 elementVolume                    real64_array                                                                         The volume of each EmbeddedSurface element.                          
-fractureElementsToCellIndices    localIndex_array                                                                     Map to the cells.                                                    
+fractureElementsToCellIndices    localIndex_array                                                                     Map to the cell elements.                                            
 fractureElementsToRegionIndex    localIndex_array                                                                     Map to the region cut by each EmbeddedSurface.                       
 fractureElementsToSubRegionIndex localIndex_array                                                                     Map to the subregion cut by each EmbeddedSurface.                    
 ghostRank                        integer_array                                                                        (no description available)                                           

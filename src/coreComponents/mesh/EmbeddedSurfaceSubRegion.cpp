@@ -52,8 +52,11 @@ EmbeddedSurfaceSubRegion::EmbeddedSurfaceSubRegion( string const & name,
   registerWrapper( viewKeyStruct::nodeListString, &m_toNodesRelation )->
     setDescription( "Map to the nodes attached to each EmbeddedSurface." );
 
+  registerWrapper( viewKeyStruct::edgeListString, &m_toEdgesRelation )->
+    setDescription( "Map to the edges." );
+
   registerWrapper( viewKeyStruct::cellListString, &m_embeddedSurfaceToCell )->
-    setDescription( "Map to the cells." );
+    setDescription( "Map to the cell elements." );
 
   registerWrapper( viewKeyStruct::normalVectorString, &m_normalVector )->
     setDescription( "Unit normal vector to the embedded surface." );
@@ -109,7 +112,7 @@ void EmbeddedSurfaceSubRegion::CalculateElementGeometricQuantities( array1d< R1T
   }
 
   // update area
-  m_elementArea[ k ] = computationalGeometry::ComputeSurfaceArea( intersectionPoints );
+  m_elementArea[ k ] = computationalGeometry::ComputeSurfaceArea( intersectionPoints, m_normalVector[k] );
 
   LvArray::tensorOps::scale< 3 >( m_elementCenter[ k ], 1.0 / intersectionPoints.size() );
 
@@ -145,7 +148,7 @@ bool EmbeddedSurfaceSubRegion::AddNewEmbeddedSurface ( localIndex const cellInde
    * - Volume:
    */
 
-  bool addEmbeddedElem = true;
+  bool addEmbeddedElem = false;
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodesCoord = nodeManager.referencePosition();
   EdgeManager::NodeMapType::ViewTypeConst const & edgeToNodes = edgeManager.nodeList();
   R1Tensor origin        = fracture->getCenter();
@@ -178,9 +181,9 @@ bool EmbeddedSurfaceSubRegion::AddNewEmbeddedSurface ( localIndex const cellInde
                                                             origin );
 
       // Check if the point is inside the fracture (bounded plane)
-      if( !fracture->IsCoordInObject( point ) )
+      if( fracture->IsCoordInObject( point ) )
       {
-        addEmbeddedElem = false;
+        addEmbeddedElem = true;
       }
       intersectionPoints.emplace_back( point );
     }

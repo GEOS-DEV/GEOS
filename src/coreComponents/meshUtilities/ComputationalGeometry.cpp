@@ -52,16 +52,26 @@ R1Tensor LinePlaneIntersection( R1Tensor lineDir,
 }
 
 //*************************************************************************************************
-real64 ComputeSurfaceArea( array1d< R1Tensor > const & points )
+real64 ComputeSurfaceArea( array1d< R1Tensor > const & points,
+                           R1Tensor const & normal )
 {
   real64 surfaceArea = 0.0;
+
+  array1d< R1Tensor > orderedPoints ( points.size());
+  for( localIndex a = 0; a < points.size(); a++ )
+  {
+    LvArray::tensorOps::copy< 3 >( orderedPoints[a], points[a] );
+  }
+
+  orderPointsCCW( orderedPoints, normal );
+
   for( localIndex a = 0; a < points.size() - 2; ++a )
   {
-    real64 v1[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( points[ a + 1 ] );
-    real64 v2[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( points[ a + 2 ] );
+    real64 v1[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( orderedPoints[ a + 1 ] );
+    real64 v2[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( orderedPoints[ a + 2 ] );
 
-    LvArray::tensorOps::subtract< 3 >( v1, points[ 0 ] );
-    LvArray::tensorOps::subtract< 3 >( v2, points[ 0 ] );
+    LvArray::tensorOps::subtract< 3 >( v1, orderedPoints[ 0 ] );
+    LvArray::tensorOps::subtract< 3 >( v2, orderedPoints[ 0 ] );
 
     real64 triangleNormal[ 3 ];
     LvArray::tensorOps::crossProduct( triangleNormal, v1, v2 );
@@ -89,6 +99,7 @@ void orderPointsCCW( array1d< R1Tensor > & points,
     LvArray::tensorOps::add< 3 >( centroid, points[ a ] );
     indices[ a ] = a;
   }
+
   LvArray::tensorOps::scale< 3 >( centroid, 1.0 / numPoints );
 
   R1Tensor v0 = LVARRAY_TENSOROPS_INIT_LOCAL_3( centroid );

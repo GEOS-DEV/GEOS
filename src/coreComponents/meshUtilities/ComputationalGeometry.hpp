@@ -48,7 +48,8 @@ R1Tensor LinePlaneIntersection( R1Tensor lineDir,
  * @param[in] points coordinates of the points
  * @return the area of the polygon
  */
-real64 ComputeSurfaceArea( array1d< R1Tensor > const & points );
+real64 ComputeSurfaceArea( array1d< R1Tensor > const & points,
+                           R1Tensor const & normal );
 
 /**
  * @brief Reorder a set of points counter-clockwise.

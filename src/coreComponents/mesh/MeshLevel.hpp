@@ -146,12 +146,12 @@ public:
    * @brief Get the edge Manager related to the embedded surfaces grid.
    * @return a pointer to the edgeManager related to the embedded surfaces grid
    */
-  EdgeManager const * getEmbdSurfEdgeManager() const { return &m_embSurfEdgeManager; }
+  EdgeManager const & getEmbdSurfEdgeManager() const { return m_embSurfEdgeManager; }
 
   /**
    * @copydoc getEmbdSurfEdgeManager() const
    */
-  EdgeManager * getEmbdSurfEdgeManager()             { return &m_embSurfEdgeManager; }
+  EdgeManager & getEmbdSurfEdgeManager()             { return m_embSurfEdgeManager; }
 
   ///@}
 
@@ -165,7 +165,7 @@ private:
   FaceManager m_faceManager;
   /// Manager for element data
   ElementRegionManager m_elementManager;
-
+  /// Manager for embedded surfaces edge data
   EdgeManager m_embSurfEdgeManager;
 
 };

@@ -30,8 +30,6 @@ namespace geosx
 class CellElementSubRegion : public CellBlock
 {
 public:
-
-  using EmbSurfMapType = InterObjectRelation< ArrayOfArrays< localIndex > >;
   /**
    * @name Constructor / Destructor
    */
