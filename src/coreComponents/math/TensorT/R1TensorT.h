@@ -89,7 +89,7 @@ public:
 
 
   template< int USD >
-  GEOSX_HOST_DEVICE CONSTEXPR_WITH_NDEBUG inline
+  GEOSX_HOST_DEVICE inline
   R1TensorT & operator=( LvArray::ArraySlice< realT const, 1, USD, std::ptrdiff_t > const & src )
   {
     GEOSX_ASSERT_EQ( src.size(), T_dim );
@@ -105,7 +105,7 @@ public:
   using TensorBaseT< T_dim >::operator+=;
 
   template< int USD >
-  GEOSX_HOST_DEVICE CONSTEXPR_WITH_NDEBUG inline
+  GEOSX_HOST_DEVICE inline
   R1TensorT & operator+=( LvArray::ArraySlice< realT const, 1, USD, std::ptrdiff_t > const & src )
   {
     GEOSX_ASSERT_EQ( src.size(), T_dim );
@@ -128,7 +128,7 @@ public:
   using TensorBaseT< T_dim >::operator-=;
 
   template< int USD >
-  GEOSX_HOST_DEVICE CONSTEXPR_WITH_NDEBUG inline
+  GEOSX_HOST_DEVICE inline
   R1TensorT & operator-=( LvArray::ArraySlice< realT const, 1, USD, std::ptrdiff_t > const & src )
   {
     GEOSX_ASSERT_EQ( src.size(), T_dim );

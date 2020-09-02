@@ -25,6 +25,10 @@
 #include "meshUtilities/ComputationalGeometry.hpp"
 #include "LvArray/src/tensorOps.hpp"
 
+#if defined( __INTEL_COMPILER )
+#pragma GCC optimize "O0"
+#endif
+
 namespace geosx
 {
 
