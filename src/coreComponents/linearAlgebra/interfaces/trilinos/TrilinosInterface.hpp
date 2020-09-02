@@ -59,12 +59,12 @@ struct TrilinosInterface
   /**
    * @brief Create a Trilinos-based preconditioner object.
    * @param params the preconditioner parameters
-   * @param rigidBodyModes the elasticity near null kernel
+   * @param nearNullKernel the user-provided near null kernel
    * @return an owning pointer to the newly created preconditioner
    */
   static std::unique_ptr< PreconditionerBase< TrilinosInterface > >
   createPreconditioner( LinearSolverParameters params,
-                        array1d< EpetraVector > const & rigidBodyModes );
+                        array1d< EpetraVector > const & nearNullKernel );
 
   /// Alias for EpetraMatrix
   using ParallelMatrix = EpetraMatrix;

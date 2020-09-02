@@ -22,7 +22,6 @@
 #include "linearAlgebra/DofManager.hpp"
 #include "linearAlgebra/interfaces/hypre/HypreUtils.hpp"
 #include "linearAlgebra/utilities/LinearSolverParameters.hpp"
-#include "linearAlgebra/utilities/LAIHelperFunctions.hpp"
 
 #include <_hypre_utilities.h>
 #include <_hypre_parcsr_ls.h>
@@ -41,7 +40,7 @@ HyprePreconditioner::HyprePreconditioner( LinearSolverParameters params,
   m_precond{},
   m_functions( std::make_unique< HyprePrecFuncs >() ),
   m_dofManager( dofManager ),
-  m_rigidBodyModes( nullptr ),
+  m_nearNullKernel( nullptr ),
   m_nullSpacePointer{}
 {
   // Basic setup for functions
@@ -59,14 +58,14 @@ HyprePreconditioner::HyprePreconditioner( LinearSolverParameters params,
 }
 
 HyprePreconditioner::HyprePreconditioner( LinearSolverParameters params,
-                                          array1d< HypreVector > const & rigidBodyModes,
+                                          array1d< HypreVector > const & nearNullKernel,
                                           DofManager const * const dofManager )
   : Base{},
   m_parameters( std::move( params ) ),
   m_precond{},
   m_functions( std::make_unique< HyprePrecFuncs >() ),
   m_dofManager( dofManager ),
-  m_rigidBodyModes( &rigidBodyModes ),
+  m_nearNullKernel( &nearNullKernel ),
   m_nullSpacePointer{}
 {
   // Basic setup for functions
@@ -123,11 +122,11 @@ HYPRE_Int getHypreAMGRelaxationType( string const & type )
   return typeMap.at( type );
 }
 
-void ConvertRigidBodyModes( array1d< HypreVector > const & rigidBodyModes,
+void ConvertRigidBodyModes( array1d< HypreVector > const & nearNullKernel,
                             HYPRE_Int & numRotations,
                             array1d< HYPRE_ParVector > & nullSpacePointer )
 {
-  if( rigidBodyModes.empty() )
+  if( nearNullKernel.empty() )
   {
     numRotations = 0;
     return;
@@ -135,20 +134,20 @@ void ConvertRigidBodyModes( array1d< HypreVector > const & rigidBodyModes,
   else
   {
     localIndex dim = 0;
-    if( rigidBodyModes.size() == 3 )
+    if( nearNullKernel.size() == 3 )
     {
       dim = 2;
     }
-    else if( rigidBodyModes.size() == 6 )
+    else if( nearNullKernel.size() == 6 )
     {
       dim = 3;
     }
-    numRotations = toHYPRE_Int( rigidBodyModes.size() - dim );
+    numRotations = toHYPRE_Int( nearNullKernel.size() - dim );
     nullSpacePointer.resize( numRotations );
     void * object;
     for( localIndex k = 0; k < numRotations; ++k )
     {
-      GEOSX_LAI_CHECK_ERROR( HYPRE_IJVectorGetObject( rigidBodyModes[dim+k].unwrappedIJ(), &object ) );
+      GEOSX_LAI_CHECK_ERROR( HYPRE_IJVectorGetObject( nearNullKernel[dim+k].unwrappedIJ(), &object ) );
       nullSpacePointer[k] = (HYPRE_ParVector) object;
     }
   }
@@ -158,35 +157,44 @@ void ConvertRigidBodyModes( array1d< HypreVector > const & rigidBodyModes,
 
 void HyprePreconditioner::createHyprePreconditioner( DofManager const * const dofManager )
 {
-  if( m_parameters.preconditionerType == "none" )
+  switch( m_parameters.preconditionerType )
   {
-    m_functions->setup = (HYPRE_PtrToParSolverFcn) hypre_ParKrylovIdentitySetup;
-    m_functions->apply = (HYPRE_PtrToParSolverFcn) hypre_ParKrylovIdentity;
-  }
-  else if( m_parameters.preconditionerType == "jacobi" )
-  {
-    m_functions->setup = (HYPRE_PtrToParSolverFcn) HYPRE_ParCSRDiagScaleSetup;
-    m_functions->apply = (HYPRE_PtrToParSolverFcn) HYPRE_ParCSRDiagScale;
-  }
-  else if( m_parameters.preconditionerType == "amg" )
-  {
-    createAMG();
-  }
-  else if( m_parameters.preconditionerType == "mgr" )
-  {
-    createMGR( dofManager );
-  }
-  else if( m_parameters.preconditionerType == "iluk" )
-  {
-    createILU();
-  }
-  else if( m_parameters.preconditionerType == "ilut" )
-  {
-    createILUT();
-  }
-  else
-  {
-    GEOSX_ERROR( "Unsupported preconditioner type: " << m_parameters.preconditionerType );
+    case LinearSolverParameters::PreconditionerType::none:
+    {
+      m_functions->setup = (HYPRE_PtrToParSolverFcn) hypre_ParKrylovIdentitySetup;
+      m_functions->apply = (HYPRE_PtrToParSolverFcn) hypre_ParKrylovIdentity;
+      break;
+    }
+    case LinearSolverParameters::PreconditionerType::jacobi:
+    {
+      m_functions->setup = (HYPRE_PtrToParSolverFcn) HYPRE_ParCSRDiagScaleSetup;
+      m_functions->apply = (HYPRE_PtrToParSolverFcn) HYPRE_ParCSRDiagScale;
+      break;
+    }
+    case LinearSolverParameters::PreconditionerType::amg:
+    {
+      createAMG();
+      break;
+    }
+    case LinearSolverParameters::PreconditionerType::mgr:
+    {
+      createMGR( dofManager );
+      break;
+    }
+    case LinearSolverParameters::PreconditionerType::iluk:
+    {
+      createILU();
+      break;
+    }
+    case LinearSolverParameters::PreconditionerType::ilut:
+    {
+      createILUT();
+      break;
+    }
+    default:
+    {
+      GEOSX_ERROR( "Preconditioner type not supported in hypre interface: " << m_parameters.preconditionerType );
+    }
   }
 }
 
@@ -194,13 +202,13 @@ void HyprePreconditioner::createAMG()
 {
   GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGCreate( &m_precond ) );
 
-  if( m_rigidBodyModes == nullptr )
+  if( m_nearNullKernel == nullptr )
   {
-    m_numRotations = 0;
+    m_nullKernelSize = 0;
   }
-  else if( m_nullSpacePointer.empty() )
+  else if( m_nullSpacePointer.empty() && m_parameters.amg.nullSpaceType == "rigidBodyModes" )
   {
-    ConvertRigidBodyModes( *m_rigidBodyModes, m_numRotations, m_nullSpacePointer );
+    ConvertRigidBodyModes( *m_nearNullKernel, m_nullKernelSize, m_nullSpacePointer );
   }
 
   // Hypre's parameters to use BoomerAMG as a preconditioner
@@ -215,11 +223,18 @@ void HyprePreconditioner::createAMG()
   // Set type of cycle (1: V-cycle (default); 2: W-cycle)
   GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetCycleType( m_precond, getHypreAMGCycleType( m_parameters.amg.cycleType ) ) );
 
-  if( m_parameters.amg.nullSpaceType == "rigidBodyModes" && m_numRotations > 0 )
+  if( m_parameters.amg.nullSpaceType == "rigidBodyModes" && m_nullKernelSize > 0 )
   {
     // Set of options used in MFEM
     // Nodal coarsening options (nodal coarsening is required for this solver)
     // See hypre's new_ij driver and the paper for descriptions.
+
+    // For further information, see:
+    // Improving algebraic multigrid interpolation operators for linear elasticity problems
+    // A. H. Baker Tz. V. Kolev U. M. Yang
+    // Numerical Linear Algebra with Applications 17 (2-3), 495-517
+    // doi:10.1002/nla.688
+
     HYPRE_Int const nodal                 = 4; // strength reduction norm: 1, 3 or 4
     HYPRE_Int const nodal_diag            = 1; // diagonal in strength matrix: 0, 1 or 2
     HYPRE_Int const relax_coarse          = 8; // smoother on the coarsest grid: 8, 99 or 29
@@ -242,7 +257,7 @@ void HyprePreconditioner::createAMG()
     GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetInterpRefine( m_precond, interp_refine ) );
 
     // Add user-defined null space / rigid body mode support
-    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetInterpVectors( m_precond, m_numRotations, m_nullSpacePointer.data() ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetInterpVectors( m_precond, m_nullKernelSize, m_nullSpacePointer.data() ) );
   }
 
   // Set smoother to be used (other options available, see hypre's documentation)

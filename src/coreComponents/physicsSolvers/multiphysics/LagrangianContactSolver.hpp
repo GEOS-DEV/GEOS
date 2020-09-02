@@ -261,8 +261,6 @@ private:
     return stringState;
   }
 
-  array1d< LAInterface::ParallelVector > m_rigidBodyModes;
-
   void CreatePreconditioner( DomainPartition const & domain );
 
 public:

@@ -24,7 +24,6 @@
 #include "finiteElement/Kinematics.h"
 #include "finiteElement/kernelInterface/ImplicitKernelBase.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
-#include "TimeIntegrationOption.hpp"
 
 namespace geosx
 {

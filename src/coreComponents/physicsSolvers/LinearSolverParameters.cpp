@@ -30,19 +30,15 @@ LinearSolverParametersInput::LinearSolverParametersInput( std::string const & na
   setInputFlags( InputFlags::OPTIONAL );
   enableLogLevelInput();
 
-  // note: default parameter values preset by base class
-
   registerWrapper( viewKeyStruct::solverTypeString, &m_parameters.solverType )->
     setApplyDefaultValue( m_parameters.solverType )->
     setInputFlag( InputFlags::OPTIONAL )->
-    setDescription( "Linear solver type\n"
-                    "Available options are: direct, cg, gmres, fgmres, bicgstab, preconditioner" );
+    setDescription( "Linear solver type. Available options are:\n* " + EnumStrings< LinearSolverParameters::SolverType >::concat( "\n* " ) );
 
   registerWrapper( viewKeyStruct::preconditionerTypeString, &m_parameters.preconditionerType )->
     setApplyDefaultValue( m_parameters.preconditionerType )->
     setInputFlag( InputFlags::OPTIONAL )->
-    setDescription( "Preconditioner type\n"
-                    "Available options are: none, jacobi, iluk, ilut, icc, amg, mgr, block" );
+    setDescription( "Preconditioner type. Available options are:\n* " + EnumStrings< LinearSolverParameters::PreconditionerType >::concat( "\n* " ) );
 
   registerWrapper( viewKeyStruct::dofsPerNodeString, &m_parameters.dofsPerNode )->
     setApplyDefaultValue( m_parameters.dofsPerNode )->
@@ -119,12 +115,6 @@ LinearSolverParametersInput::LinearSolverParametersInput( std::string const & na
 void LinearSolverParametersInput::PostProcessInput()
 {
   m_parameters.logLevel = getLogLevel();
-
-  static const std::set< string > solverOptions = { "direct", "cg", "gmres", "fgmres", "bicgstab", "preconditioner" };
-  GEOSX_ERROR_IF( solverOptions.count( m_parameters.solverType ) == 0, "Unsupported solver type: " << m_parameters.solverType );
-
-  static const std::set< string > precondOptions = { "none", "jacobi", "iluk", "ilut", "icc", "amg", "mgr", "block" };
-  GEOSX_ERROR_IF( precondOptions.count( m_parameters.preconditionerType ) == 0, "Unsupported preconditioner type: " << m_parameters.preconditionerType );
 
   GEOSX_ERROR_IF_LE_MSG( m_parameters.dofsPerNode, 0, "Invalid values of " << viewKeyStruct::dofsPerNodeString );
 

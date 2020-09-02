@@ -63,12 +63,12 @@ struct PetscInterface
   /**
    * @brief Create a PETSc-based preconditioner object.
    * @param params the parameters for preconditioner
-   * @param rigidBodyModes the elasticity near null kernel
+   * @param nearNullKernel the user-provided near null kernel
    * @return owning pointer to the newly created preconditioner
    */
   static std::unique_ptr< PreconditionerBase< PetscInterface > >
   createPreconditioner( LinearSolverParameters params,
-                        array1d< PetscVector > const & rigidBodyModes );
+                        array1d< PetscVector > const & nearNullKernel );
 
   /// Alias for PetscMatrix
   using ParallelMatrix = PetscMatrix;

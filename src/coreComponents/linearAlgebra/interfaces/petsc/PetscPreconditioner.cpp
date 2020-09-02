@@ -34,22 +34,22 @@ PetscPreconditioner::PetscPreconditioner( LinearSolverParameters params )
 { }
 
 void ConvertRigidBodyModes( LinearSolverParameters const & params,
-                            array1d< PetscVector > const & rigidBodyModes,
+                            array1d< PetscVector > const & nearNullKernel,
                             MatNullSpace & nullsp )
 {
-  if( rigidBodyModes.empty() )
+  if( nearNullKernel.empty() )
   {
     nullsp = nullptr;
     return;
   }
   else
   {
-    localIndex const numRBM = LvArray::integerConversion< localIndex >( rigidBodyModes.size() );
+    localIndex const numRBM = LvArray::integerConversion< localIndex >( nearNullKernel.size() );
     array1d< Vec > nullvecs( numRBM );
     for( localIndex i = 0; i < numRBM; ++i )
     {
-      GEOSX_LAI_CHECK_ERROR( VecDuplicate( rigidBodyModes[i].unwrapped(), &nullvecs[i] ) );
-      GEOSX_LAI_CHECK_ERROR( VecCopy( rigidBodyModes[i].unwrapped(), nullvecs[i] ) );
+      GEOSX_LAI_CHECK_ERROR( VecDuplicate( nearNullKernel[i].unwrapped(), &nullvecs[i] ) );
+      GEOSX_LAI_CHECK_ERROR( VecCopy( nearNullKernel[i].unwrapped(), nullvecs[i] ) );
       GEOSX_LAI_CHECK_ERROR( VecSetBlockSize( nullvecs[i], params.dofsPerNode ) );
       GEOSX_LAI_CHECK_ERROR( VecSetUp( nullvecs[i] ) );
     }
@@ -61,13 +61,16 @@ void ConvertRigidBodyModes( LinearSolverParameters const & params,
   }
 }
 
-PetscPreconditioner::PetscPreconditioner( LinearSolverParameters params, array1d< Vector > const & rigidBodyModes )
+PetscPreconditioner::PetscPreconditioner( LinearSolverParameters params, array1d< Vector > const & nearNullKernel )
   : Base{},
   m_parameters( std::move( params ) ),
   m_precond{},
   m_nullsp{}
 {
-  ConvertRigidBodyModes( params, rigidBodyModes, m_nullsp );
+  if( m_parameters.amg.nullSpaceType == "rigidBodyModes" )
+  {
+    ConvertRigidBodyModes( params, nearNullKernel, m_nullsp );
+  }
 }
 
 PetscPreconditioner::~PetscPreconditioner()
@@ -206,13 +209,13 @@ void CreatePetscAMG( LinearSolverParameters const & params,
 #endif
 }
 
-PCType getPetscSmootherType( string const & type )
+PCType getPetscSmootherType( LinearSolverParameters::PreconditionerType const & type )
 {
-  static std::map< string, PCType > const typeMap =
+  static std::map< LinearSolverParameters::PreconditionerType, PCType > const typeMap =
   {
-    { "iluk", PCILU },
-    { "icc", PCICC },
-    { "jacobi", PCJACOBI },
+    { LinearSolverParameters::PreconditionerType::iluk, PCILU },
+    { LinearSolverParameters::PreconditionerType::icc, PCICC },
+    { LinearSolverParameters::PreconditionerType::jacobi, PCJACOBI },
   };
 
   GEOSX_LAI_ASSERT_MSG( typeMap.count( type ) > 0, "Unsupported Petsc smoother option: " << type );
@@ -260,34 +263,37 @@ void PetscPreconditioner::compute( PetscMatrix const & mat )
   // Add specifics
   if( create )
   {
-    if( m_parameters.preconditionerType == "none" )
+    switch( m_parameters.preconditionerType )
     {
-      GEOSX_LAI_CHECK_ERROR( PCSetType( m_precond, PCNONE ) );
-    }
-    else if( m_parameters.preconditionerType == "jacobi" )
-    {
-      GEOSX_LAI_CHECK_ERROR( PCSetType( m_precond, PCJACOBI ) );
-    }
-    else if( m_parameters.preconditionerType == "amg" )
-    {
-      CreatePetscAMG( m_parameters, m_precond, matrix(), m_nullsp );
-    }
-    else if( m_parameters.preconditionerType == "mgr" )
-    {
-      GEOSX_ERROR( "MGR preconditioner available only through the hypre interface" );
-    }
-    else if( m_parameters.preconditionerType == "iluk" ||
-             m_parameters.preconditionerType == "icc" )
-    {
-      CreatePetscSmoother( m_parameters, m_precond );
-    }
-    else
-    {
-      GEOSX_ERROR( "Preconditioner type not available: " << m_parameters.preconditionerType );
+      case LinearSolverParameters::PreconditionerType::none:
+      {
+        GEOSX_LAI_CHECK_ERROR( PCSetType( m_precond, PCNONE ) );
+        break;
+      }
+      case LinearSolverParameters::PreconditionerType::jacobi:
+      {
+        GEOSX_LAI_CHECK_ERROR( PCSetType( m_precond, PCJACOBI ) );
+        break;
+      }
+      case LinearSolverParameters::PreconditionerType::amg:
+      {
+        CreatePetscAMG( m_parameters, m_precond, mat, m_nullsp );
+        break;
+      }
+      case LinearSolverParameters::PreconditionerType::iluk:
+      case LinearSolverParameters::PreconditionerType::icc:
+      {
+        CreatePetscSmoother( m_parameters, m_precond );
+        break;
+      }
+      default:
+      {
+        GEOSX_ERROR( "Preconditioner type not supported in PETSc interface: " << m_parameters.preconditionerType );
+      }
     }
   }
 
-  // To be able to use Petsc preconditioner (e.g., BoomerAMG) we need to disable floating point exceptions
+  // To be able to use Petsc preconditioner (e.g., GAMG) we need to disable floating point exceptions
   // Disable floating point exceptions and save the FPE flags
   int const fpeflags = LvArray::system::disableFloatingPointExceptions( FE_ALL_EXCEPT );
 

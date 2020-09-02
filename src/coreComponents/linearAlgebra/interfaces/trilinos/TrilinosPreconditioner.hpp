@@ -63,10 +63,10 @@ public:
   /**
    * @brief Constructor.
    * @param params preconditioner parameters
-   * @param rigidBodyModes the elasticity near null kernel
+   * @param nearNullKernel the user-provided near null kernel
    */
   TrilinosPreconditioner( LinearSolverParameters params,
-                          array1d< Vector > const & rigidBodyModes );
+                          array1d< Vector > const & nearNullKernel );
 
   /**
    * @brief Destructor.
@@ -109,10 +109,10 @@ private:
   /// Pointer to the Trilinos implementation
   std::unique_ptr< Epetra_Operator > m_precond;
 
-  /// Number of rigid body modes
-  integer m_numRBM;
+  /// Number of near null kernel vectors
+  integer m_nullKernelSize;
 
-  /// Trilinos pointer to the rigid body modes
+  /// Trilinos pointer to the near null kernel
   array1d< real64 > m_nullSpacePointer;
 };
 
