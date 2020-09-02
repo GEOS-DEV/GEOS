@@ -29,7 +29,7 @@ namespace dataRepository
  *
  * A scoped enum for the restart options.
  */
-enum class RestartFlags : int
+enum class RestartFlags : integer
 {
   NO_WRITE,      ///< Doe no write into restart
   WRITE,         ///< Write into restart
@@ -41,7 +41,7 @@ enum class RestartFlags : int
  *
  * A scoped enum for the Plot options.
  */
-enum class PlotLevel : int
+enum class PlotLevel : integer
 {
   LEVEL_0, ///< Write to plot always
   LEVEL_1, ///< Write to plot when plotLevel>=1 is specified in input

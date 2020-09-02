@@ -18,7 +18,7 @@
         dtIncIterLimit="0.6"
         timestepCutFactor="0.1"
         maxTimeStepCuts="10"
-        lineSearchAction="0"/>
+        lineSearchAction="None"/>
       <!-- Note that the direct solver is going to be quite slow -->
       <!-- This block will be updated when Hypre becomes the default  -->
       <LinearSolverParameters

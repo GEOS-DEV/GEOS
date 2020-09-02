@@ -19,12 +19,8 @@
 #ifndef GEOSX_CONSTITUTIVE_FLUID_BLACKOILFLUID_HPP_
 #define GEOSX_CONSTITUTIVE_FLUID_BLACKOILFLUID_HPP_
 
+#include "common/EnumStrings.hpp"
 #include "constitutive/fluid/MultiFluidPVTPackageWrapper.hpp"
-
-namespace PVTPackage
-{
-class BlackOilMultiphaseSystem;
-}
 
 namespace geosx
 {
@@ -36,7 +32,7 @@ class BlackOilFluid : public MultiFluidPVTPackageWrapper
 {
 public:
 
-  enum class FluidType
+  enum class FluidType : integer
   {
     DeadOil,
     LiveOil
@@ -75,13 +71,12 @@ private:
   // Black-oil table filenames
   path_array m_tableFiles;
 
-  // Input string for type of black-oil fluid (live/dead)
-  string m_fluidTypeString;
-
   // Type of black-oil fluid (live/dead)
   FluidType m_fluidType;
 
 };
+
+ENUM_STRINGS( BlackOilFluid::FluidType, "DeadOil", "LiveOil" )
 
 } /* namespace constitutive */
 

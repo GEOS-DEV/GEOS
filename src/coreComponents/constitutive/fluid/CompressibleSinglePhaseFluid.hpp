@@ -140,8 +140,6 @@ public:
     static constexpr auto referencePressureString    = "referencePressure";
     static constexpr auto referenceDensityString     = "referenceDensity";
     static constexpr auto referenceViscosityString   = "referenceViscosity";
-    static constexpr auto densityModelStringString   = "densityModelString";
-    static constexpr auto viscosityModelStringString = "viscosityModelString";
     static constexpr auto densityModelTypeString     = "densityModelType";
     static constexpr auto viscosityModelTypeString   = "viscosityModelType";
   };
@@ -166,12 +164,6 @@ private:
 
   /// reference viscosity parameter
   real64 m_referenceViscosity;
-
-  /// input string for type of density model (linear, quadratic, exponential)
-  string m_densityModelString;
-
-  /// input string for type of viscosity model (linear, quadratic, exponential)
-  string m_viscosityModelString;
 
   /// type of density model (linear, quadratic, exponential)
   ExponentApproximationType m_densityModelType;

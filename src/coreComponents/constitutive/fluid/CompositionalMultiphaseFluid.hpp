@@ -21,11 +21,6 @@
 
 #include "constitutive/fluid/MultiFluidPVTPackageWrapper.hpp"
 
-namespace PVTPackage
-{
-class CompositionalMultiphaseSystem;
-}
-
 namespace geosx
 {
 namespace constitutive

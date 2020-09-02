@@ -14,7 +14,6 @@
 
 /**
  * @file LaplaceFEM.cpp
- *
  */
 
 // Source includes
@@ -22,18 +21,10 @@
 #include "LaplaceFEMKernels.hpp"
 
 #include "mpiCommunications/CommunicationTools.hpp"
-#include "mpiCommunications/NeighborCommunicator.hpp"
-#include "codingUtilities/Utilities.hpp"
 #include "common/TimingMacros.hpp"
 #include "common/DataTypes.hpp"
-#include "constitutive/ConstitutiveManager.hpp"
-#include "finiteElement/FiniteElementDiscretization.hpp"
 #include "finiteElement/FiniteElementDiscretizationManager.hpp"
-#include "finiteElement/Kinematics.h"
-#include "managers/NumericalMethodsManager.hpp"
-#include "codingUtilities/Utilities.hpp"
 #include "managers/DomainPartition.hpp"
-#include "managers/NumericalMethodsManager.hpp"
 
 namespace geosx
 {
@@ -52,15 +43,15 @@ LaplaceFEM::LaplaceFEM( const std::string & name,
                         Group * const parent ):
   SolverBase( name, parent ),
   m_fieldName( "primaryField" ),
-  m_timeIntegrationOption( timeIntegrationOption::ImplicitTransient )
+  m_timeIntegrationOption( TimeIntegrationOption::ImplicitTransient )
 {
-  registerWrapper< string >( laplaceFEMViewKeys.timeIntegrationOption.Key())->
+  registerWrapper( laplaceFEMViewKeys.timeIntegrationOption.Key(), &m_timeIntegrationOption )->
     setInputFlag( InputFlags::REQUIRED )->
-    setDescription( "option for default time integration method" );
+    setDescription( "Time integration method. Options are:\n* " + EnumStrings< TimeIntegrationOption >::concat( "\n* " ) );
 
-  registerWrapper< string >( laplaceFEMViewKeys.fieldVarName.Key(), &m_fieldName )->
+  registerWrapper( laplaceFEMViewKeys.fieldVarName.Key(), &m_fieldName )->
     setInputFlag( InputFlags::REQUIRED )->
-    setDescription( "name of field variable" );
+    setDescription( "Name of field variable" );
 }
 //END_SPHINX_INCLUDE_01
 
@@ -85,44 +76,18 @@ void LaplaceFEM::RegisterDataOnMesh( Group * const MeshBodies )
 }
 //END_SPHINX_INCLUDE_02
 
-//START_SPHINX_INCLUDE_03
-void LaplaceFEM::PostProcessInput()
-{
-  SolverBase::PostProcessInput();
-
-  string tiOption = this->getReference< string >( laplaceFEMViewKeys.timeIntegrationOption );
-
-  if( tiOption == "SteadyState" )
-  {
-    this->m_timeIntegrationOption = timeIntegrationOption::SteadyState;
-  }
-  else if( tiOption == "ImplicitTransient" )
-  {
-    this->m_timeIntegrationOption = timeIntegrationOption::ImplicitTransient;
-  }
-  else if( tiOption == "ExplicitTransient" )
-  {
-    this->m_timeIntegrationOption = timeIntegrationOption::ExplicitTransient;
-  }
-  else
-  {
-    GEOSX_ERROR( "invalid time integration option" );
-  }
-}
-//END_SPHINX_INCLUDE_03
-
 real64 LaplaceFEM::SolverStep( real64 const & time_n,
                                real64 const & dt,
                                const int cycleNumber,
                                DomainPartition & domain )
 {
   real64 dtReturn = dt;
-  if( m_timeIntegrationOption == timeIntegrationOption::ExplicitTransient )
+  if( m_timeIntegrationOption == TimeIntegrationOption::ExplicitTransient )
   {
     dtReturn = ExplicitStep( time_n, dt, cycleNumber, domain );
   }
-  else if( m_timeIntegrationOption == timeIntegrationOption::ImplicitTransient ||
-           m_timeIntegrationOption == timeIntegrationOption::SteadyState )
+  else if( m_timeIntegrationOption == TimeIntegrationOption::ImplicitTransient ||
+           m_timeIntegrationOption == TimeIntegrationOption::SteadyState )
   {
     dtReturn = this->LinearImplicitStep( time_n, dt, cycleNumber, domain );
   }
@@ -216,34 +181,6 @@ void LaplaceFEM::AssembleSystem( real64 const GEOSX_UNUSED_PARAM( time_n ),
                                                       m_fieldName );
 
 
-
-  //END_SPHINX_INCLUDE_04
-
-  if( getLogLevel() == 2 )
-  {
-    GEOSX_LOG_RANK_0( "After LaplaceFEM::AssembleSystem" );
-    GEOSX_LOG_RANK_0( "\nJacobian:\n" );
-//    std::cout << matrix;
-    GEOSX_LOG_RANK_0( "\nResidual:\n" );
-//    std::cout << rhs;
-  }
-
-//  if( getLogLevel() >= 3 )
-//  {
-//    integer newtonIter = m_nonlinearSolverParameters.m_numNewtonIterations;
-//>>>>>>> develop
-//
-//      finiteElementLaunchDispatch< LaplaceFEMKernels::ImplicitKernel >( numNodesPerElement,
-//                                                                        n_q_points,
-//                                                                        dNdX,
-//                                                                        detJ,
-//                                                                        elemNodes,
-//                                                                        dofIndex,
-//                                                                        dofManager.rankOffset(),
-//                                                                        localMatrix );
-//
-//    } );
-//  }
 
   //END_SPHINX_INCLUDE_04
 }
