@@ -50,9 +50,9 @@ fi
 or_die make -j $(nproc) VERBOSE=1
 or_die make install VERBOSE=1
 
-# Unit tests
+# Unit tests (excluding previously ran checks)
 if [[ "$*" != *--disable-unit-tests* ]]; then
-  or_die ctest -V
+  or_die ctest -V -E "testUncrustifyCheck|testDoxygenCheck"
 fi
 
 exit 0
