@@ -15,6 +15,7 @@
 #ifndef GEOSX_PHYSICSSOLVERS_NONLINEARSOLVERPARAMETERS_HPP_
 #define GEOSX_PHYSICSSOLVERS_NONLINEARSOLVERPARAMETERS_HPP_
 
+#include "common/EnumStrings.hpp"
 #include "dataRepository/Group.hpp"
 
 namespace geosx
@@ -106,8 +107,18 @@ public:
     return std::ceil( m_dtIncIterLimit * m_maxIterNewton );
   }
 
+  /**
+   * @brief Indicates the handling of line search in a Newton loop.
+   */
+  enum class LineSearchAction : integer
+  {
+    None,    ///< Do not use line search
+    Attempt, ///< Use line search. Allow exit from line search without achieving smaller residual than starting residual.
+    Require, ///< Use line search. If smaller residual than starting residual is not achieved, cut time step.
+  };
+
   /// Flag to apply a line search.
-  integer m_lineSearchAction;
+  LineSearchAction m_lineSearchAction;
 
   /// The maximum number of line search cuts to attempt.
   integer m_lineSearchMaxCuts;
@@ -148,8 +159,9 @@ public:
   /// number of times that the time-step had to be cut
   integer m_numdtAttempts;
 
-
 };
+
+ENUM_STRINGS( NonlinearSolverParameters::LineSearchAction, "None", "Attempt", "Require" )
 
 } /* namespace geosx */
 

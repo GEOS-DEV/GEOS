@@ -19,6 +19,7 @@
 #ifndef GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_SOLIDMECHANICSLAGRANGIANFEM_HPP_
 #define GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_SOLIDMECHANICSLAGRANGIANFEM_HPP_
 
+#include "common/EnumStrings.hpp"
 #include "common/TimingMacros.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
 #include "mpiCommunications/CommunicationTools.hpp"
@@ -26,17 +27,8 @@
 
 #include "SolidMechanicsLagrangianFEMKernels.hpp"
 
-
-
 namespace geosx
 {
-namespace dataRepository
-{
-class Group;
-}
-class FieldSpecificationBase;
-class FiniteElementBase;
-class DomainPartition;
 
 /**
  * @class SolidMechanicsLagrangianFEM
@@ -46,6 +38,18 @@ class DomainPartition;
 class SolidMechanicsLagrangianFEM : public SolverBase
 {
 public:
+
+  /**
+   * @enum TimeIntegrationOption
+   *
+   * The options for time integration
+   */
+  enum class TimeIntegrationOption : integer
+  {
+    QuasiStatic,      //!< QuasiStatic
+    ImplicitDynamic,  //!< ImplicitDynamic
+    ExplicitDynamic   //!< ExplicitDynamic
+  };
 
   /**
    * Constructor
@@ -305,6 +309,8 @@ protected:
 
 };
 
+ENUM_STRINGS( SolidMechanicsLagrangianFEM::TimeIntegrationOption, "QuasiStatic", "ImplicitDynamic", "ExplicitDynamic" )
+
 //**********************************************************************************************************************
 //**********************************************************************************************************************
 //**********************************************************************************************************************
@@ -357,7 +363,6 @@ void SolidMechanicsLagrangianFEM::AssemblyLaunch( DomainPartition & domain,
                           localRhs );
 
 }
-
 
 } /* namespace geosx */
 
