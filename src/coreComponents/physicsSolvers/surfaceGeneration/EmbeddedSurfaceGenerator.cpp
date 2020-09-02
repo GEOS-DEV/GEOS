@@ -53,6 +53,10 @@ EmbeddedSurfaceGenerator::EmbeddedSurfaceGenerator( const std::string & name,
   registerWrapper( viewKeyStruct::fractureRegionNameString, &m_fractureRegionName )->
     setInputFlag( dataRepository::InputFlags::OPTIONAL )->
     setApplyDefaultValue( "FractureRegion" );
+
+  this->getWrapper<string>( viewKeyStruct::discretizationString )->
+    setInputFlag( InputFlags::FALSE );
+
 }
 
 EmbeddedSurfaceGenerator::~EmbeddedSurfaceGenerator()

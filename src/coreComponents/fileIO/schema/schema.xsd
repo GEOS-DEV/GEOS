@@ -826,8 +826,6 @@ Available options are: direct, cg, gmres, fgmres, bicgstab, preconditioner-->
 		</xsd:choice>
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
-		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
-		<xsd:attribute name="discretization" type="string" default="none" />
 		<!--flowSolverName => Name of the flow solver to use in the reservoir-well system solver-->
 		<xsd:attribute name="flowSolverName" type="string" use="required" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
@@ -851,8 +849,6 @@ Available options are: direct, cg, gmres, fgmres, bicgstab, preconditioner-->
 		<xsd:attribute name="allowLocalCompDensityChopping" type="integer" default="1" />
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
-		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
-		<xsd:attribute name="discretization" type="string" default="none" />
 		<!--fluidNames => Name of fluid constitutive object to use for this solver.-->
 		<xsd:attribute name="fluidNames" type="string_array" use="required" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
@@ -893,8 +889,6 @@ Available options are: direct, cg, gmres, fgmres, bicgstab, preconditioner-->
 		</xsd:choice>
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
-		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
-		<xsd:attribute name="discretization" type="string" default="none" />
 		<!--fractureRegion => (no description available)-->
 		<xsd:attribute name="fractureRegion" type="string" default="FractureRegion" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
@@ -915,8 +909,6 @@ Available options are: direct, cg, gmres, fgmres, bicgstab, preconditioner-->
 		</xsd:choice>
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
-		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
-		<xsd:attribute name="discretization" type="string" default="none" />
 		<!--flowSolverName => Name of the flow solver to use in the flowProppantTransport solver-->
 		<xsd:attribute name="flowSolverName" type="string" use="required" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
@@ -942,7 +934,7 @@ Available options are: direct, cg, gmres, fgmres, bicgstab, preconditioner-->
 		<!--couplingTypeOption => Coupling option: (FIM, SIM_FixedStress)-->
 		<xsd:attribute name="couplingTypeOption" type="string" use="required" />
 		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
-		<xsd:attribute name="discretization" type="string" default="none" />
+		<xsd:attribute name="discretization" type="string" use="required" />
 		<!--fluidSolverName => Name of the fluid mechanics solver to use in the poroelastic solver-->
 		<xsd:attribute name="fluidSolverName" type="string" use="required" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
@@ -969,8 +961,6 @@ Available options are: direct, cg, gmres, fgmres, bicgstab, preconditioner-->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
 		<!--contactRelationName => Name of the constitutive law used for fracture elements-->
 		<xsd:attribute name="contactRelationName" type="string" use="required" />
-		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
-		<xsd:attribute name="discretization" type="string" default="none" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
 		<!--logLevel => Log level-->
@@ -992,7 +982,7 @@ Available options are: direct, cg, gmres, fgmres, bicgstab, preconditioner-->
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
 		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
-		<xsd:attribute name="discretization" type="string" default="none" />
+		<xsd:attribute name="discretization" type="string" use="required" />
 		<!--fieldName => name of field variable-->
 		<xsd:attribute name="fieldName" type="string" use="required" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
@@ -1016,7 +1006,7 @@ Available options are: direct, cg, gmres, fgmres, bicgstab, preconditioner-->
 		<!--criticalFractureEnergy => critical fracture energy-->
 		<xsd:attribute name="criticalFractureEnergy" type="real64" use="required" />
 		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
-		<xsd:attribute name="discretization" type="string" default="none" />
+		<xsd:attribute name="discretization" type="string" use="required" />
 		<!--fieldName => name of field variable-->
 		<xsd:attribute name="fieldName" type="string" use="required" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
@@ -1048,7 +1038,7 @@ Available options are: direct, cg, gmres, fgmres, bicgstab, preconditioner-->
 		<!--damageSolverName => Name of the damage mechanics solver to use in the PhaseFieldFracture solver-->
 		<xsd:attribute name="damageSolverName" type="string" use="required" />
 		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
-		<xsd:attribute name="discretization" type="string" default="none" />
+		<xsd:attribute name="discretization" type="string" use="required" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
 		<!--logLevel => Log level-->
@@ -1072,7 +1062,7 @@ Available options are: direct, cg, gmres, fgmres, bicgstab, preconditioner-->
 		<!--couplingTypeOption => Coupling option: (FIM, SIM_FixedStress)-->
 		<xsd:attribute name="couplingTypeOption" type="string" use="required" />
 		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
-		<xsd:attribute name="discretization" type="string" default="none" />
+		<xsd:attribute name="discretization" type="string" use="required" />
 		<!--fluidSolverName => Name of the fluid mechanics solver to use in the poroelastic solver-->
 		<xsd:attribute name="fluidSolverName" type="string" use="required" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
@@ -1213,8 +1203,6 @@ Available options are: direct, cg, gmres, fgmres, bicgstab, preconditioner-->
 		</xsd:choice>
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
-		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
-		<xsd:attribute name="discretization" type="string" default="none" />
 		<!--flowSolverName => Name of the flow solver to use in the reservoir-well system solver-->
 		<xsd:attribute name="flowSolverName" type="string" use="required" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
@@ -1236,8 +1224,6 @@ Available options are: direct, cg, gmres, fgmres, bicgstab, preconditioner-->
 		</xsd:choice>
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
-		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
-		<xsd:attribute name="discretization" type="string" default="none" />
 		<!--fluidNames => Name of fluid constitutive object to use for this solver.-->
 		<xsd:attribute name="fluidNames" type="string_array" use="required" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
@@ -1258,8 +1244,6 @@ Available options are: direct, cg, gmres, fgmres, bicgstab, preconditioner-->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
 		<!--contactRelationName => Name of contact relation to enforce constraints on fracture boundary.-->
 		<xsd:attribute name="contactRelationName" type="string" use="required" />
-		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
-		<xsd:attribute name="discretization" type="string" default="none" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
 		<!--logLevel => Log level-->
@@ -1281,7 +1265,7 @@ Available options are: direct, cg, gmres, fgmres, bicgstab, preconditioner-->
 		<!--contactRelationName => Name of contact relation to enforce constraints on fracture boundary.-->
 		<xsd:attribute name="contactRelationName" type="string" default="NOCONTACT" />
 		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
-		<xsd:attribute name="discretization" type="string" default="none" />
+		<xsd:attribute name="discretization" type="string" use="required" />
 		<!--effectiveStress => Apply fluid pressure to produce effective stress when integrating stress.-->
 		<xsd:attribute name="effectiveStress" type="integer" default="0" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
@@ -1326,7 +1310,7 @@ Available options are: direct, cg, gmres, fgmres, bicgstab, preconditioner-->
 		<!--contactRelationName => Name of contact relation to enforce constraints on fracture boundary.-->
 		<xsd:attribute name="contactRelationName" type="string" default="NOCONTACT" />
 		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
-		<xsd:attribute name="discretization" type="string" default="none" />
+		<xsd:attribute name="discretization" type="string" use="required" />
 		<!--effectiveStress => Apply fluid pressure to produce effective stress when integrating stress.-->
 		<xsd:attribute name="effectiveStress" type="integer" default="0" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
@@ -1368,8 +1352,6 @@ Available options are: direct, cg, gmres, fgmres, bicgstab, preconditioner-->
 		</xsd:choice>
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
-		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
-		<xsd:attribute name="discretization" type="string" default="none" />
 		<!--fractureRegion => (no description available)-->
 		<xsd:attribute name="fractureRegion" type="string" default="Fracture" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
