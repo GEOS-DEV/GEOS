@@ -56,8 +56,7 @@ SolverBase::SolverBase( std::string const & name,
     setDescription( "Value of the Maximum Stable Timestep for this solver." );
 
   this->registerWrapper( viewKeyStruct::discretizationString, &m_discretizationName )->
-    setApplyDefaultValue( "none" )->
-    setInputFlag( InputFlags::OPTIONAL )->
+    setInputFlag( InputFlags::REQUIRED )->
     setDescription( "Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this "
                     "solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` "
                     "should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` "

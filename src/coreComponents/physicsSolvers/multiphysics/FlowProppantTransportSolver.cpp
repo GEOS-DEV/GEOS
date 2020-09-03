@@ -45,6 +45,9 @@ FlowProppantTransportSolver::FlowProppantTransportSolver( const std::string & na
   registerWrapper( viewKeyStruct::flowSolverNameString, &m_flowSolverName )->
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "Name of the flow solver to use in the flowProppantTransport solver" );
+
+  this->getWrapper< string >( viewKeyStruct::discretizationString )->
+    setInputFlag( InputFlags::FALSE );
 }
 
 void FlowProppantTransportSolver::RegisterDataOnMesh( dataRepository::Group * const )

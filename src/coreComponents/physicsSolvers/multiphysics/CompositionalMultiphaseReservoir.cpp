@@ -38,7 +38,9 @@ using namespace constitutive;
 CompositionalMultiphaseReservoir::CompositionalMultiphaseReservoir( const std::string & name,
                                                                     Group * const parent ):
   ReservoirSolverBase( name, parent )
-{ m_linearSolverParameters.get().mgr.strategy = "CompositionalMultiphaseReservoir"; }
+{
+  m_linearSolverParameters.get().mgr.strategy = "CompositionalMultiphaseReservoir";
+}
 
 CompositionalMultiphaseReservoir::~CompositionalMultiphaseReservoir()
 {}
