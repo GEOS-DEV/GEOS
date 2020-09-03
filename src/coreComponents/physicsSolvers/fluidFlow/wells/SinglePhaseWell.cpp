@@ -40,8 +40,7 @@ using namespace constitutive;
 using namespace SinglePhaseWellKernels;
 
 SinglePhaseWell::SinglePhaseWell( const string & name,
-                                  Group * const parent )
-  :
+                                  Group * const parent ):
   WellSolverBase( name, parent )
 {
   m_numDofPerWellElement = 2;
