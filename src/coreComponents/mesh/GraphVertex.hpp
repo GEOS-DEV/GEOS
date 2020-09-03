@@ -40,13 +40,36 @@ public:
   /// Destructor
   virtual ~GraphVertex();
 
-   localIndex getIndice() const { return vertexIndex; }
+  globalIndex getGlobalVertexIndex() const { return m_globalVertexIndex; }
 
+  globalIndex getGlobalVertexIndex() { return m_globalVertexIndex; }
+
+  localIndex getLocalVertexIndex() const { return m_localVertexIndex; }
+
+  localIndex getLocalVertexIndex() { return m_localVertexIndex; }
+
+  localIndex getRegionIndex() const { return m_regionIndex; }
+
+  localIndex getRegionIndex() { return m_regionIndex; }
+
+  localIndex getSubRegionIndex() const { return m_subRegionIndex; }
+
+  localIndex getSubRegionIndex() { return m_subRegionIndex; }
+
+  localIndex getGhostIndex() const { return m_ghostIndex; }
+
+  localIndex getGhostIndex() { return m_ghostIndex; }
+
+  void setGhostIndex (int ghostIndex) { m_ghostIndex = ghostIndex; }
+
+  void setLocalIndex (int elementIndex) { m_localVertexIndex = elementIndex; }
   
 private:
-  localIndex regionIndex;
-  localIndex subRegionIndex;
-  localIndex vertexIndex;
+  localIndex m_regionIndex;
+  localIndex m_subRegionIndex;
+  localIndex m_localVertexIndex;
+  globalIndex m_globalVertexIndex;
+  localIndex m_ghostIndex;
   };
 
 } /* namespace geosx */

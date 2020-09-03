@@ -481,8 +481,6 @@
 		<xsd:attribute name="file" type="path" use="required" />
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
-		<!--mesh => Name of the mesh to link to the graph.-->
-		<xsd:attribute name="mesh" type="string" default="" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>

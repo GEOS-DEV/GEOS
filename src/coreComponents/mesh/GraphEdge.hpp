@@ -45,20 +45,28 @@ public:
   /// Destructor
   virtual ~GraphEdge();
 
-  localIndex getIndice() const { return ind; }
+  localIndex getEdgeIndex() const { return m_EdgeIndex; }
 
-  localIndex getIndice() { return ind; }
+  localIndex getEdgeIndex() { return m_EdgeIndex; }
 
-  GraphVertex* getN1() const { return n1; }
+  GraphVertex* getVertex1() const { return m_vertex1; }
 
-  GraphVertex* getN2() const { return n2; }
+  GraphVertex* getVertex1() { return m_vertex1; }
+
+  GraphVertex* getVertex2() const { return m_vertex2; }
+
+  GraphVertex* getVertex2() { return m_vertex2; }
+
+  real64 getTransmissibility() const { return m_transmissibility; }
+
+  real64 getTransmissibility() { return m_transmissibility; }
 
   
 private:
-  localIndex ind;
-  GraphVertex* n1;
-  GraphVertex* n2;
-  real64 transmissibility;
+  localIndex m_EdgeIndex;
+  GraphVertex* m_vertex1;
+  GraphVertex* m_vertex2;
+  real64 m_transmissibility;
 
 };
 

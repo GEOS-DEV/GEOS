@@ -18,6 +18,7 @@
 #include "mpiCommunications/SpatialPartition.hpp"
 #include "GraphBase.hpp"
 #include "common/TimingMacros.hpp"
+#include "mesh/MeshLevel.hpp"
 
 namespace geosx
 {
@@ -59,5 +60,14 @@ void GraphManager::GenerateGraphs()
     meshGen.GenerateGraph();
   } );
 }
+
+void GraphManager::PartitionGraphs(const MeshLevel & meshLevel)
+{
+  forSubGroups< GraphBase >( [&]( GraphBase & meshGen )
+  {
+    meshGen.PartitionGraph(meshLevel);
+  } );
+}
+
 
 } /* namespace geosx */

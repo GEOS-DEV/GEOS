@@ -158,21 +158,23 @@ Group * ProblemManager::CreateChild( string const & GEOSX_UNUSED_PARAM( childKey
 void ProblemManager::ProblemSetup()
 {
   GEOSX_MARK_FUNCTION;
+
   PostProcessInputRecursive();
 
   GenerateMesh();
 
-  GenerateGraph();
-
   ApplyNumericalMethods();
 
   RegisterDataOnMeshRecursive( GetGroup< DomainPartition >( groupKeys.domain )->getMeshBodies() );
+
+  GenerateGraph();
 
   Initialize( this );
 
   ApplyInitialConditions();
 
   InitializePostInitialConditions( this );
+
 }
 
 
@@ -649,6 +651,12 @@ void ProblemManager::GenerateGraph()
  
   GraphManager * graphManager = this->GetGroup< GraphManager >( groupKeys.graphManager );
   graphManager->GenerateGraphs();
+  DomainPartition * domain  = getDomainPartition();
+  Group * const meshBodies = domain->getMeshBodies();
+  MeshBody * const meshBody = meshBodies->GetGroup< MeshBody >( 0 );
+  MeshLevel & meshLevel = *meshBody->GetGroup< MeshLevel >( 0 );
+  graphManager->PartitionGraphs(meshLevel);
+
 }
 
 

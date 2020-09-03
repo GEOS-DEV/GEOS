@@ -16,6 +16,10 @@
  * @file TwoPointFluxApproximationWithGraph.cpp
  *
  */
+
+#include <unistd.h>
+#include <limits.h>
+
 #include "TwoPointFluxApproximationWithGraph.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "finiteVolume/CellElementStencilTPFA.hpp"
@@ -24,6 +28,7 @@
 #include "LvArray/src/tensorOps.hpp"
 #include "mesh/GraphFromText.hpp"
 #include "mesh/GraphEdge.hpp"
+
 
 namespace geosx
 {
@@ -41,42 +46,93 @@ TwoPointFluxApproximationWithGraph::TwoPointFluxApproximationWithGraph( std::str
 
 }
 
-void TwoPointFluxApproximationWithGraph::recoverGraph() const
-{
-}
-
-
 void TwoPointFluxApproximationWithGraph::computeCellStencil( MeshLevel & mesh) const
 {
   const Group * tmp = this->GetGroupByPath( m_graphString );
   GEOSX_ERROR_IF( tmp == nullptr, "Can't find group with path " << m_graphString );
   const GraphFromText * graph = Group::group_cast< const GraphFromText * >( tmp );
+  ElementRegionManager const & elemManager = *mesh.getElemManager();
+
   CellElementStencilTPFA & stencil = getStencil< CellElementStencilTPFA >( mesh, viewKeyStruct::cellStencilString );
 
+  
   std::vector<GraphEdge*> edges = graph->getEdges();
-  forAll< serialPolicy >( edges.size(), [=, &stencil]( localIndex const i )
-  {
-    stackArray1d< localIndex, 2 > regionIndex( 2 );
-    stackArray1d< localIndex, 2 > subRegionIndex( 2 );
-    stackArray1d< localIndex, 2 > elementIndex( 2 );
-    stackArray1d< real64, 2 > stencilWeights( 2 );
-    regionIndex[0]=LvArray::integerConversion< localIndex >(0);
-    subRegionIndex[0]=LvArray::integerConversion< localIndex >(0);
-    elementIndex[0]=LvArray::integerConversion< localIndex >(edges[i]->getN1()->getIndice());
-    stencilWeights[0]=0.00000000000002;
+  std::vector<GraphVertex*> vertices = graph->getVertices();
+  stencil.reserve( edges.size() );
 
-    regionIndex[1]=LvArray::integerConversion< localIndex >(0);
-    subRegionIndex[1]=LvArray::integerConversion< localIndex >(0);
-    elementIndex[1]=LvArray::integerConversion< localIndex >(edges[i]->getN2()->getIndice());
-    stencilWeights[1]=-0.00000000000002;
-    localIndex faceIndex = LvArray::integerConversion< localIndex >(edges[i]->getIndice());
-    stencil.add( 2,
+  ElementRegionManager::ElementViewAccessor< arrayView1d< integer const > > const elemGhostRank =
+    elemManager.ConstructArrayViewAccessor< integer, 1 >( ObjectManagerBase::viewKeyStruct::ghostRankString );
+  ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > const localToGlobalMap =
+    elemManager.ConstructArrayViewAccessor< globalIndex, 1 >( ObjectManagerBase::viewKeyStruct::localToGlobalMapString );
+  /*
+  std::vector <GraphVertex*> new_vertex;
+  for( long unsigned int i=0; i<vertices.size(); i++)
+  {
+    new_vertex.push_back(vertices[i]);
+  }
+  for (long int i = 0; i<elemGhostRank[0][0].size(); i++)
+  {
+    std::cout<<i<<"\n";
+    std::cout<<localToGlobalMap[0][0][i]<<"\n";
+    std::cout<<"\n";
+    for (long unsigned int j = 0; j<new_vertex.size();j++)
+    {
+      if (localToGlobalMap[0][0][i] == new_vertex[i]->getEdgeIndex())
+      {
+        new_vertex.erase(new_vertex.begin()+i);
+      }
+    }
+  }
+  for ( long unsigned int i=0; i<new_vertex.size(); i++)
+  {
+    std::cout<<new_vertex[i]->getEdgeIndex()<<" ";
+    for (long unsigned int j = 0; j<vertices.size();j++)
+    {
+      if (vertices[j]->getEdgeIndex == new_vertex[i]->getEdgeIndex())
+      {
+        graph->RemoveVertex(vertices[j]);
+      }
+    }
+  std::cout<<"\n";
+  }
+  */
+ 
+  for( long unsigned int i=0; i<edges.size(); i++)
+  {
+    //std::cout<<localToGlobalMap[0][0][edges[i]->getVertex1()->getIndice()]<<"\n";
+
+        //std::cout<< elemGhostRank[edges[i]->getVertex1()->getRegionIndex()][edges[i]->getVertex1()->getSubRegionIndex()][edges[i]->getVertex1()->getIndice()] << " " << elemGhostRank[edges[i]->getVertex2()->getRegionIndex()][edges[i]->getVertex2()->getSubRegionIndex()][edges[i]->getVertex2()->getIndice()] << "\n";
+    //std::cout<< edges[i]->getVertex1()->getIndice() << " " << edges[i]->getVertex2()->getIndice() << "\n\n";
+
+    if( edges[i]->getVertex1()->getGhostIndex() >= 0 &&
+        edges[i]->getVertex2()->getGhostIndex() >= 0 )
+    {
+      //std::cout<<"Ghosted\n";
+    }
+    else
+    {
+      stackArray1d< localIndex, 2 > regionIndex( 2 );
+      stackArray1d< localIndex, 2 > subRegionIndex( 2 );
+      stackArray1d< localIndex, 2 > elementIndex( 2 );
+      stackArray1d< real64, 2 > stencilWeights( 2 );
+      regionIndex[0]=LvArray::integerConversion< localIndex >(edges[i]->getVertex1()->getRegionIndex());
+      subRegionIndex[0]=LvArray::integerConversion< localIndex >(edges[i]->getVertex1()->getSubRegionIndex());
+      elementIndex[0]=LvArray::integerConversion< localIndex >(edges[i]->getVertex1()->getLocalVertexIndex());
+      stencilWeights[0] = edges[i]->getTransmissibility();
+ 
+      regionIndex[1]=LvArray::integerConversion< localIndex >(edges[i]->getVertex2()->getRegionIndex());
+      subRegionIndex[1]=LvArray::integerConversion< localIndex >(edges[i]->getVertex2()->getSubRegionIndex());
+      elementIndex[1]=LvArray::integerConversion< localIndex >(edges[i]->getVertex2()->getLocalVertexIndex());
+      stencilWeights[1]=-edges[i]->getTransmissibility();
+    localIndex faceIndex = LvArray::integerConversion< localIndex >(edges[i]->getEdgeIndex());
+      stencil.add( 2,
                  regionIndex.data(),
                  subRegionIndex.data(),
                  elementIndex.data(),
                  stencilWeights.data(),
                  faceIndex);
-  });
+    }
+  }
 
 }
 

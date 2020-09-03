@@ -24,6 +24,8 @@
 #include "mesh/GraphBase.hpp"
 #include "mesh/GraphEdge.hpp"
 #include "mesh/GraphVertex.hpp"
+#include "mesh/MeshLevel.hpp"
+
 
 namespace geosx
 {
@@ -50,20 +52,63 @@ public:
    **/
   static string CatalogName() { return "GraphFromText"; }
   
-  void GetTargetReferences();
+  /**
+  * @brief Creation and registration of a new edge
+  * @param[in] ind index of the edge
+  * @param[in] v1 first vertex on the edge
+  * @param[in] v2 second vertex on the edge
+  * @param[in] transm transmissibility associated with the edge
+  */ 
+  void AddEdge(localIndex ind, GraphVertex* v1, GraphVertex* v2, real64 transm);
 
-  void AddEdge(localIndex ind, GraphVertex* v1, GraphVertex* v2);
-
+  /**
+  * @brief Deletion of an edge using its index
+  * @param[in] ind index of the dege to remove
+  */ 
   void RemoveEdge(localIndex ind);
 
-  void RemoveVertex(localIndex ind);
-  
-  void AddVertex(localIndex ind);
+  /**
+  * @brief Deletion of a vertex using its indexes
+  * @param[in] er Region index
+  * @param[in] esr Surregion index
+  * @param[in] ei Global vertex index
+  */ 
+  void RemoveVertex(localIndex er, localIndex esr, globalIndex ei);
 
-  GraphVertex* getVertexWithIndex(localIndex ind);
-
+  /**
+  * @brief Deletion of a vertex using itself as parameter
+  * @param[in] vertex Vertex to delete
+  */
+  void RemoveVertex(GraphVertex* vertex);
   
+  /**
+  * @brief Creation and registration of a new edge
+  * @param[in] er Region index
+  * @param[in] esr Surregion index
+  * @param[in] ei Global vertex index
+  */ 
+  void AddVertex(localIndex er, localIndex esr, globalIndex ei);
+
+  /**
+  * @brief Recover a vertex by using its indexes
+  * @param[in] er Region index
+  * @param[in] esr Surregion index
+  * @param[in] ei Global vertex index
+  * @return the vertex with given indexes, provided it exists
+  */ 
+  GraphVertex* getVertexWithGlobalIndex(localIndex er, localIndex esr, globalIndex ei);
+  
+  /**
+   * @brief Function called to construct the graphs
+  */
   virtual void GenerateGraph() override;
+
+  /**
+  * @brief Function called to partition of the graph using the partition of given mesh
+  * @param[in] meshLevel the mesh already partitioned to copy from
+  */
+  virtual void PartitionGraph(const MeshLevel & meshLevel) override;
+
 
  
   /// @cond DO_NOT_DOCUMENT
@@ -77,17 +122,13 @@ public:
 
   Path getFile() const { return m_file; }
 
-  std::vector<GraphEdge*> getEdges() const { return m_edges; }
-
-
+  
 
 private:
   Path m_file;
   string m_meshString;
   Group * m_mesh;
-  std::vector<GraphEdge*> m_edges;
-  std::vector<GraphVertex*> m_vertices;
-  std::map<GraphVertex*, std::vector<GraphEdge*>> m_vertex_edges;
+  
 
 };
 

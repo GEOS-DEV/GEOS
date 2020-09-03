@@ -21,6 +21,8 @@
 
 #include "dataRepository/Group.hpp"
 #include "managers/DomainPartition.hpp"
+#include "mesh/MeshLevel.hpp"
+
 
 namespace geosx
 {
@@ -28,7 +30,7 @@ class SolverBase;
 
 /**
  * @class GraphManager
- * @brief This class manages the graph objects in GEOSX (graph generated from text)
+ * @brief This class manages the graph objects in GEOSX (for the moment only connectivity from text file)
  */
 class GraphManager : public dataRepository::Group
 {
@@ -41,7 +43,9 @@ public:
    */
   GraphManager( std::string const & name,
                Group * const parent );
-
+  /**
+  * @brief Destructor of GraphManager overrinding the one from Group
+  */
   virtual ~GraphManager() override;
 
 
@@ -60,6 +64,13 @@ public:
    * @brief Generate the graphs
    */
   void GenerateGraphs();
+
+  /**
+  * @brief Partition of the graph using the partition of given mesh
+  * @param[in] meshLevel the mesh already partitioned to copy
+  */ 
+  void PartitionGraphs(const MeshLevel & meshLevel);
+
 
 private:
 

@@ -48,8 +48,6 @@ public:
    * @param parent the parent group of this group.
    */
   TwoPointFluxApproximationWithGraph( std::string const & name, dataRepository::Group * const parent );
-
-  void recoverGraph() const;
   
 
   /// @cond DO_NOT_DOCUMENT

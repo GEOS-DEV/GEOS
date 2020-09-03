@@ -27,9 +27,9 @@ namespace geosx
 
 
 GraphVertex::GraphVertex( const int regionInd, const int subRegionInd, const int vertexInd):
-  regionIndex(regionInd),subRegionIndex(subRegionInd),vertexIndex(vertexInd)
+  m_regionIndex(regionInd),m_subRegionIndex(subRegionInd),m_globalVertexIndex(vertexInd)
   {    
-    std::cout<<"Constructing vertex "<<regionIndex<<"\n";
+    //std::cout<<"Constructing vertex "<<m_globalVertexIndex<<"\n";
   }
 
 
