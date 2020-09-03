@@ -64,7 +64,7 @@ static PyObject * PyGroup_repr( PyObject * const obj )
 }
 
 static constexpr char const * PyGroup_groupsDocString =
-"groups()\n"
+"groups(self)\n"
 "--\n\n"
 "Return a list of the subgroups.\n"
 "\n"
@@ -103,7 +103,7 @@ static PyObject * PyGroup_groups( PyGroup * const self, PyObject * const args )
 }
 
 static constexpr char const * PyGroup_wrappersDocString =
-"wrappers()\n"
+"wrappers(self)\n"
 "--\n\n"
 "Return a list of the wrappers.\n"
 "\n"
@@ -142,7 +142,7 @@ static PyObject * PyGroup_wrappers( PyGroup * const self, PyObject * const args 
 }
 
 static constexpr char const * PyGroup_getGroupDocString =
-"getGroup(path)\n"
+"get_group(self, path)\n"
 "--\n\n"
 "Return the `Group` at the relative path `path` or `None` if it doesn't exist.\n"
 "\n"
@@ -184,9 +184,9 @@ static PyObject * PyGroup_getGroup( PyGroup * const self, PyObject * const args 
 }
 
 static constexpr char const * PyGroup_getWrapperDocString =
-"getWrapper(path)\n"
+"get_wrapper(self, path)\n"
 "--\n\n"
-"Return the `Wrapper` at the relative path `path` or `None` if it doesn't exist.\n"
+"Return the ``Wrapper`` at the relative path ``path`` or ``None`` if it doesn't exist.\n"
 "\n"
 "Parameters\n"
 "__________\n"
@@ -195,7 +195,7 @@ static constexpr char const * PyGroup_getWrapperDocString =
 "\n"
 "Returns\n"
 "_______\n"
-"Group\n"
+"Wrapper\n"
 "    The wrapper at the relative path.";
 static PyObject * PyGroup_getWrapper( PyGroup * const self, PyObject * const args )
 {
@@ -240,8 +240,8 @@ BEGIN_ALLOW_DESIGNATED_INITIALIZERS
 static PyMethodDef PyGroup_methods[] = {
   { "groups", (PyCFunction) PyGroup_groups, METH_NOARGS, PyGroup_groupsDocString },
   { "wrappers", (PyCFunction) PyGroup_wrappers, METH_NOARGS, PyGroup_wrappersDocString },
-  { "getGroup", (PyCFunction) PyGroup_getGroup, METH_VARARGS, PyGroup_getGroupDocString },
-  { "getWrapper", (PyCFunction) PyGroup_getWrapper, METH_VARARGS, PyGroup_getWrapperDocString },
+  { "get_group", (PyCFunction) PyGroup_getGroup, METH_VARARGS, PyGroup_getGroupDocString },
+  { "get_wrapper", (PyCFunction) PyGroup_getWrapper, METH_VARARGS, PyGroup_getWrapperDocString },
   { nullptr, nullptr, 0, nullptr } // Sentinel
 };
 

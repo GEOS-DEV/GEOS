@@ -59,15 +59,10 @@ static PyObject * PyWrapper_repr( PyObject * const obj )
 }
 
 static constexpr char const * PyWrapper_valueDocString =
-"value(modify)\n"
+"value(self)\n"
 "--\n\n"
-"Access the wrapped value. If the wrapped type is unable to be exported into Python 'None' is returned.\n"
+"Return a view of the wrapped value, or ``None`` if it cannot be exported to Python.\n"
 "\n"
-"Parameters\n"
-"__________\n"
-"modify : bool\n"
-"    If the wrapped value will be modified in Python. This is not used for some types like `std::string` "
-"which return a copy or `LvArray::SortedArray` which is never modifiable in Python.\n"
 "\n"
 "Returns\n"
 "_______\n"
@@ -77,25 +72,21 @@ static constexpr char const * PyWrapper_valueDocString =
 "    If the wrapped type is a `LvArray::SortedArray`. The returned array is a shallow copy but it is "
 "never modifiable.\n"
 "numpy.ndarray\n"
-"    If the wrapped type is an `LvArray::Array`. The returned array is a shallow copy and is modifiable "
-"if `modify` is `True`.\n"
+"    If the wrapped type is an `LvArray::Array`. The returned array is a shallow copy."
 "str\n"
 "    If the wrapped type is a std::string this returns a copy of the string.\n"
 "list of str\n"
 "    If the wrapped type is a `LvArray::Array< std::string, 1, ... > or a `std::vector< std::string >`. "
-"This is a copy and `modify` is not used.\n"
+"This is a copy."
 "None\n"
 "    If the wrapped type is not covered by any of the above.";
 static PyObject * PyWrapper_value( PyWrapper * const self, PyObject * const args )
 {
   VERIFY_NON_NULL_SELF( self );
   VERIFY_INITIALIZED( self );
+  LVARRAY_UNUSED_VARIABLE( args );
 
-  int modify;
-  if ( !PyArg_ParseTuple( args, "p", &modify ) )
-  { return nullptr; }
-
-  PyObject * const ret = self->wrapper->createPythonObject( modify );
+  PyObject * const ret = self->wrapper->createPythonObject( );
 
   // The return value can be a nullptr for two reasons. The first is if the wrapped object is not
   // exportable to Python, in which case we want to return 'None'. The second is if an error occurred

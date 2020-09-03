@@ -10,7 +10,7 @@ if rank == 0:
     print( "In python" )
     sys.stdout.flush()
 
-# If not a restart run then we'll run the SSLE-sedov problem first. 
+# If not a restart run then we'll run the SSLE-sedov problem first.
 if "-r" not in sys.argv:
   argCopy = list( sys.argv )
 
@@ -21,7 +21,7 @@ if "-r" not in sys.argv:
   argCopy[ outputIndex ] = sys.argv[ outputIndex ] + "_ssle_dummy"
 
   problem = pygeosx.initialize( rank, argCopy )
-  pygeosx.applyInitialConditions()
+  pygeosx.apply_initial_conditions()
 
   while pygeosx.run() != pygeosx.COMPLETED:
       pass
@@ -34,7 +34,7 @@ if "-r" not in sys.argv:
 else:
   problem = pygeosx.initialize( rank, sys.argv )
 
-pygeosx.applyInitialConditions()
+pygeosx.apply_initial_conditions()
 
 while pygeosx.run() != pygeosx.COMPLETED:
     pass

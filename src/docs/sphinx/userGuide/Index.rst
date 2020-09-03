@@ -29,3 +29,4 @@ Welcome to the GEOSX user guide.
 
    /coreComponents/python/modules/pygeos_package/pygeos/pygeos_documentation
 
+   /pygeosx/pygeosx_documentation.rst

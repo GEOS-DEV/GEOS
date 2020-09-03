@@ -685,12 +685,12 @@ UnpackByIndexDevice( buffer_unit_type const * &, T &, IDX & )
 
 template< typename T >
 inline std::enable_if_t< LvArray::python::CanCreate< T >, PyObject * >
-createPythonObject( T & object, bool const modify )
-{ return LvArray::python::create( object, modify ); }
+createPythonObject( T & object )
+{ return LvArray::python::create( object ); }
 
 template< typename T >
 inline std::enable_if_t< !LvArray::python::CanCreate< T >, PyObject * >
-createPythonObject( T &, bool )
+createPythonObject( T & )
 { return nullptr; }
 
 #endif

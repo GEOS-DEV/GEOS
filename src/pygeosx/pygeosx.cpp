@@ -146,7 +146,7 @@ static PyObject * reinit( PyObject * self, PyObject * args )
 }
 
 static constexpr char const * applyInitialConditionsDocString =
-"applyInitialConditions()\n"
+"apply_initial_conditions()\n"
 "--\n\n"
 "Apply the initial conditions.\n"
 "\n"
@@ -171,8 +171,8 @@ static constexpr char const * runDocString =
 "Returns\n"
 "_______\n"
 "int\n"
-"    The state of the simulation. If the simulation has ended the value is `COMPLETED`. If the "
-"simulation still has steps left to run the value is `READY_TO_RUN`.";
+"    The state of the simulation. If the simulation has ended the value is ``COMPLETED``. If the "
+"simulation still has steps left to run the value is ``READY_TO_RUN``.";
 static PyObject * run( PyObject * self, PyObject * args )
 {
   GEOSX_UNUSED_VAR( self, args );
@@ -234,7 +234,7 @@ static bool addConstants( PyObject * module )
  */
 static bool addExitHandler( PyObject * module ){
   LvArray::python::PyObjectRef<> atexit_module { PyImport_ImportModule( "atexit" ) };
-  
+
   if ( atexit_module == nullptr )
   { return false; }
 
@@ -250,7 +250,7 @@ static bool addExitHandler( PyObject * module ){
   { return false; }
 
   LvArray::python::PyObjectRef<> returnval { PyObject_CallFunctionObjArgs( atexit_register_pyfunc, finalize_pyfunc.get(), nullptr ) };
-  
+
   return returnval != nullptr;
 }
 
@@ -262,7 +262,7 @@ BEGIN_ALLOW_DESIGNATED_INITIALIZERS
 static PyMethodDef pygeosxFuncs[] = {
   { "initialize", geosx::initialize, METH_VARARGS, geosx::initializeDocString },
   { "reinit", geosx::reinit, METH_VARARGS, geosx::reinitDocString },
-  { "applyInitialConditions", geosx::applyInitialConditions, METH_NOARGS, geosx::applyInitialConditionsDocString },
+  { "apply_initial_conditions", geosx::applyInitialConditions, METH_NOARGS, geosx::applyInitialConditionsDocString },
   { "run", geosx::run, METH_NOARGS, geosx::runDocString },
   { "finalize", geosx::finalize, METH_NOARGS, geosx::finalizeDocString },
   { nullptr, nullptr, 0, nullptr }        /* Sentinel */
@@ -314,12 +314,9 @@ PyInit_pygeosx()
   { return nullptr; }
 
   // Add the LvArray submodule.
-  LvArray::python::PyObjectRef<> LvArrayModule = LvArray::python::getModule();
-  if( LvArrayModule == nullptr )
-  { return nullptr; }
-
-  if ( PyModule_AddObject( module, "LvArray", LvArrayModule.release() ) )
-  { return nullptr; }
+  if ( !LvArray::python::addPyLvArrayModule( module ) ){
+    return nullptr;
+  }
 
   // Since we return module we don't want to decrease the reference count.
   return module.release();

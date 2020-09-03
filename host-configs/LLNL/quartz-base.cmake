@@ -25,7 +25,7 @@ set(MPIEXEC_NUMPROC_FLAG "-n" CACHE STRING "")
 set(GEOSX_TPL_ROOT_DIR /usr/gapps/GEOSX/thirdPartyLibs CACHE PATH "")
 set(GEOSX_TPL_DIR ${GEOSX_TPL_ROOT_DIR}/2020-07-08/install-${CONFIG_NAME}-release CACHE PATH "")
 
-set(SPHINX_EXECUTABLE /collab/usr/gapps/python/build/spack-toss3.2/opt/spack/linux-rhel7-x86_64/gcc-4.9.3/python-2.7.14-7rci3jkmuht2uiwp433afigveuf4ocnu/bin/sphinx-build CACHE PATH "")
+set(SPHINX_EXECUTABLE ${CMAKE_CURRENT_LIST_DIR}/../../src/coreComponents/LvArray/scripts/sphinx.sh CACHE PATH "")
 set(DOXYGEN_EXECUTABLE ${GEOSX_TPL_ROOT_DIR}/doxygen/bin/doxygen CACHE PATH "")
 
 set(ENABLE_GTEST_DEATH_TESTS ON CACHE BOOL "")
