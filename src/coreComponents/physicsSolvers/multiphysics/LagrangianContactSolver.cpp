@@ -207,7 +207,7 @@ void LagrangianContactSolver::ImplicitStepSetup( real64 const & time_n,
 {
   ComputeRotationMatrices( domain );
   ComputeTolerances( domain );
-  UpdateDeformationForCoupling( domain );
+  ComputeLocalJump( domain );
 
   m_solidSolver->ImplicitStepSetup( time_n, dt, domain );
 }
@@ -336,7 +336,11 @@ void LagrangianContactSolver::ComputeTolerances( DomainPartition & domain ) cons
         if( ghostRank[kfe] < 0 )
         {
           real64 const area = faceArea[kfe];
-          real64 stiffApprox[ 2 ][ 3 ];
+          // approximation of the stiffness along coordinate directions
+          // ( first, second ) index -> ( element index, direction )
+          // 1. T -> top (index 0), B -> bottom (index 1)
+          // 2. the coordinate direction (x, y, z)
+          real64 stiffDiagApprox[ 2 ][ 3 ];
           real64 averageYoungModulus = 0.0;
           real64 averageConstrainedModulus = 0.0;
           real64 averageBoxSize0 = 0.0;
@@ -384,9 +388,10 @@ void LagrangianContactSolver::ComputeTolerances( DomainPartition & domain ) cons
             real64 const nu = ( 3.0 * K - 2.0 * G ) / ( 2.0 * ( 3.0 * K + G ) );
             real64 const M = K + 4.0 / 3.0 * G;
 
+            // Combine E and nu to obtain a stiffness approximation (like it was an hexahedron)
             for( localIndex j = 0; j < 3; ++j )
             {
-              stiffApprox[ i ][ j ] = E / ( ( 1.0 + nu )*( 1.0 - 2.0*nu ) ) * 4.0 / 9.0 * ( 2.0 - 3.0 * nu ) * volume / ( boxSize[j]*boxSize[j] );
+              stiffDiagApprox[ i ][ j ] = E / ( ( 1.0 + nu )*( 1.0 - 2.0*nu ) ) * 4.0 / 9.0 * ( 2.0 - 3.0 * nu ) * volume / ( boxSize[j]*boxSize[j] );
             }
 
             averageYoungModulus += 0.5*E;
@@ -394,23 +399,24 @@ void LagrangianContactSolver::ComputeTolerances( DomainPartition & domain ) cons
             averageBoxSize0 += 0.5*boxSize[0];
           }
 
+          // Average the stiffness and compute the inverse
           real64 invStiffApprox[ 3 ][ 3 ] = { { 0 } };
           for( localIndex j = 0; j < 3; ++j )
           {
-            invStiffApprox[ j ][ j ] = ( stiffApprox[ 0 ][ j ] + stiffApprox[ 1 ][ j ] ) / ( stiffApprox[ 0 ][ j ] * stiffApprox[ 1 ][ j ] );
+            invStiffApprox[ j ][ j ] = ( stiffDiagApprox[ 0 ][ j ] + stiffDiagApprox[ 1 ][ j ] ) / ( stiffDiagApprox[ 0 ][ j ] * stiffDiagApprox[ 1 ][ j ] );
           }
 
-          // Compute R^T * (invK) * R
+          // Rotate in the local reference system, computing R^T * (invK) * R
           real64 temp[ 3 ][ 3 ];
           LvArray::tensorOps::AkiBkj< 3, 3, 3 >( temp, faceRotationMatrix[ kfe ], invStiffApprox );
           real64 rotatedInvStiffApprox[ 3 ][ 3 ];
           LvArray::tensorOps::AikBkj< 3, 3, 3 >( rotatedInvStiffApprox, temp, faceRotationMatrix[ kfe ] );
           LvArray::tensorOps::scale< 3, 3 >( rotatedInvStiffApprox, area );
 
+          // Finally, compute tolerances for the given fracture element
           normalDisplacementTolerance[kfe] = rotatedInvStiffApprox[ 0 ][ 0 ] * averageYoungModulus / 2.e+7;
           slidingTolerance[kfe] = sqrt( rotatedInvStiffApprox[ 1 ][ 1 ] * rotatedInvStiffApprox[ 1 ][ 1 ] +
                                         rotatedInvStiffApprox[ 2 ][ 2 ] * rotatedInvStiffApprox[ 2 ][ 2 ] ) * averageYoungModulus / 2.e+7;
-
           normalTractionTolerance[kfe] = 1.0 / 2.0 * averageConstrainedModulus / averageBoxSize0 * normalDisplacementTolerance[kfe];
         }
       } );
@@ -472,13 +478,13 @@ real64 LagrangianContactSolver::SolverStep( real64 const & time_n,
   // currently the only method is implicit time integration
   dtReturn = NonlinearImplicitStep( time_n, dt, cycleNumber, domain );
 
-  // final step for completion of timestep. typically secondary variable updates and cleanup.
+  // final step for completion of timestep. Typically secondary variable updates and cleanup.
   ImplicitStepComplete( time_n, dtReturn, domain );
 
   return dtReturn;
 }
 
-void LagrangianContactSolver::UpdateDeformationForCoupling( DomainPartition & domain )
+void LagrangianContactSolver::ComputeLocalJump( DomainPartition & domain )
 {
   MeshLevel & meshLevel = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
 
@@ -569,8 +575,7 @@ real64 LagrangianContactSolver::NonlinearImplicitStep( real64 const & time_n,
 
   bool isActiveSetConverged = false;
 
-  // outer loop attempts to apply full timestep, and managed the cutting of the timestep if
-  // required.
+  // outer loop attempts to apply full timestep, and manages timestep cut if required.
   for( dtAttempt = 0; dtAttempt < maxNumberDtCuts; ++dtAttempt )
   {
     // reset the solver state, since we are restarting the time step
@@ -1339,10 +1344,14 @@ void LagrangianContactSolver::
             for( localIndex i = 0; i < 3; ++i )
             {
               rowDOF[3*a+i] = dispDofNumber[faceToNodeMap( faceIndex, a )] + i;
-              // Opposite sign w.r.t. theory because of minus sign in stiffness matrix definition (K < 0)
+              // Opposite sign w.r.t. to formulation presented in
+              // Algebraically Stabilized Lagrange Multiplier Method for Frictional Contact Mechanics with Hydraulically Active Fractures
+              // Franceschini, A., Castelletto, N., White, J. A., Tchelepi, H. A.
+              // Computer Methods in Applied Mechanics and Engineering (2020) 368  113161
+              // doi: 10.1016/j.cma.2020.113161
               nodeRHS[3*a+i] = +globalNodalForce[i] * pow( -1, kf );
 
-              // Opposite sign w.r.t. theory because of minus sign in stiffness matrix definition (K < 0)
+              // Opposite sign w.r.t. to the same formulation as above
               dRdT( 3*a+i, 0 ) = +nodalArea[a] * rotationMatrix( kfe, i, 0 ) * pow( -1, kf );
               dRdT( 3*a+i, 1 ) = +nodalArea[a] * rotationMatrix( kfe, i, 1 ) * pow( -1, kf );
               dRdT( 3*a+i, 2 ) = +nodalArea[a] * rotationMatrix( kfe, i, 2 ) * pow( -1, kf );
@@ -1768,7 +1777,7 @@ void LagrangianContactSolver::AssembleStabilization( DomainPartition const & dom
         real64 const areafac = nodalArea0[node0index0] * nodalArea1[node0index1] + nodalArea0[node1index0] * nodalArea1[node1index1];
 
         // first index: face, second index: element (T/B), third index: dof (x, y, z)
-        real64 stiffApprox[ 2 ][ 2 ][ 3 ];
+        real64 stiffDiagApprox[ 2 ][ 2 ][ 3 ];
         for( localIndex kf = 0; kf < 2; ++kf )
         {
           // Get fracture, face and region/subregion/element indices (for elements on both sides)
@@ -1817,9 +1826,10 @@ void LagrangianContactSolver::AssembleStabilization( DomainPartition const & dom
             real64 const E = 9.0 * K * G / ( 3.0 * K + G );
             real64 const nu = ( 3.0 * K - 2.0 * G ) / ( 2.0 * ( 3.0 * K + G ) );
 
+            // Combine E and nu to obtain a stiffness approximation (like it was an hexahedron)
             for( localIndex j = 0; j < 3; ++j )
             {
-              stiffApprox[ kf ][ i ][ j ] = E / ( ( 1.0 + nu )*( 1.0 - 2.0*nu ) ) * 2.0 / 9.0 * ( 2.0 - 3.0 * nu ) * volume / ( boxSize[j]*boxSize[j] );
+              stiffDiagApprox[ kf ][ i ][ j ] = E / ( ( 1.0 + nu )*( 1.0 - 2.0*nu ) ) * 2.0 / 9.0 * ( 2.0 - 3.0 * nu ) * volume / ( boxSize[j]*boxSize[j] );
             }
           }
         }
@@ -1830,8 +1840,8 @@ void LagrangianContactSolver::AssembleStabilization( DomainPartition const & dom
           // T -> top (index 0), B -> bottom (index 1)
           // Ka(i,i) = KT(i,i) + KB(i,i)
           // Kb(i,i) = KT(i,i) + KB(i,i)
-          invTotStiffApprox[ i ][ i ] = 1.0 / ( stiffApprox[ 0 ][ 0 ][ i ] + stiffApprox[ 1 ][ 0 ][ i ] )
-                                        + 1.0 / ( stiffApprox[ 0 ][ 1 ][ i ] + stiffApprox[ 1 ][ 1 ][ i ] );
+          invTotStiffApprox[ i ][ i ] = 1.0 / ( stiffDiagApprox[ 0 ][ 0 ][ i ] + stiffDiagApprox[ 1 ][ 0 ][ i ] )
+                                        + 1.0 / ( stiffDiagApprox[ 0 ][ 1 ][ i ] + stiffDiagApprox[ 1 ][ 1 ][ i ] );
         }
 
         array2d< real64 > avgRotationMatrix( 3, 3 );
@@ -2052,7 +2062,7 @@ void LagrangianContactSolver::ApplySystemSolution( DofManager const & dofManager
                                          domain.getNeighbors(),
                                          true );
 
-  UpdateDeformationForCoupling( domain );
+  ComputeLocalJump( domain );
 }
 
 void LagrangianContactSolver::InitializeFractureState( MeshLevel & mesh,

@@ -144,7 +144,7 @@ public:
               real64 const scaleFactor,
               real64 & lastResidual ) override;
 
-  void UpdateDeformationForCoupling( DomainPartition & domain );
+  void ComputeLocalJump( DomainPartition & domain );
 
   void AssembleForceResidualDerivativeWrtTraction( DomainPartition & domain,
                                                    DofManager const & dofManager,
