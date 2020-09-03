@@ -1314,65 +1314,111 @@ void LagrangianContactSolver::
       rotationMatrix = subRegion.getReference< array3d< real64 > >( viewKeyStruct::rotationMatrixString );
       arrayView2d< localIndex const > const & elemsToFaces = subRegion.faceList();
 
-      forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const kfe )
-      {
-        localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( elemsToFaces[kfe][0] );
 
-        globalIndex rowDOF[12];
-        real64 nodeRHS[12];
-        stackArray2d< real64, 3*4*3 > dRdT( 3*numNodesPerFace, 3 );
-        globalIndex colDOF[3];
-        for( localIndex i = 0; i < 3; ++i )
+//      finiteElement::FiniteElementBase const &
+//      fe = subRegion.getReference< finiteElement::FiniteElementBase >( this->getDiscretizationName() );
+//      finiteElement::dispatch2D( fe,
+//                                 [&] ( auto const finiteElement )
+//      {
+//        using FE_TYPE = TYPEOFREF( finiteElement );
+//
+//        constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
+//        constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
+
+
+        forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const kfe )
         {
-          colDOF[i] = tracDofNumber[kfe] + i;
-        }
+          localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( elemsToFaces[kfe][0] );
+          localIndex const numQuadraturePointsPerElem = numNodesPerFace==3 ? 1 : 4;
 
-        for( localIndex kf = 0; kf < 2; ++kf )
-        {
-          localIndex const faceIndex = elemsToFaces[kfe][kf];
-
-          // Compute local area contribution for each node
-          array1d< real64 > nodalArea;
-          ComputeFaceNodalArea( nodePosition, faceToNodeMap, elemsToFaces[kfe][kf], nodalArea );
-
-          for( localIndex a = 0; a < numNodesPerFace; ++a )
+          globalIndex rowDOF[12];
+          real64 nodeRHS[12];
+          stackArray2d< real64, 3*4*3 > dRdT( 3*numNodesPerFace, 3 );
+          globalIndex colDOF[3];
+          for( localIndex i = 0; i < 3; ++i )
           {
-            real64 const localNodalForce[ 3 ] = { traction( kfe, 0 ) * nodalArea[a], traction( kfe, 1 ) * nodalArea[a], traction( kfe, 2 ) * nodalArea[a] };
-            real64 globalNodalForce[ 3 ];
-            LvArray::tensorOps::AijBj< 3, 3 >( globalNodalForce, rotationMatrix[ kfe ], localNodalForce );
+            colDOF[i] = tracDofNumber[kfe] + i;
+          }
 
-            for( localIndex i = 0; i < 3; ++i )
+          real64 xLocal[2][4][3];
+          for( localIndex kf = 0; kf < 2; ++kf )
+          {
+            localIndex const faceIndex = elemsToFaces[kfe][kf];
+            for( localIndex a = 0; a < numNodesPerFace; ++a )
             {
-              rowDOF[3*a+i] = dispDofNumber[faceToNodeMap( faceIndex, a )] + i;
-              // Opposite sign w.r.t. to formulation presented in
-              // Algebraically Stabilized Lagrange Multiplier Method for Frictional Contact Mechanics with Hydraulically Active Fractures
-              // Franceschini, A., Castelletto, N., White, J. A., Tchelepi, H. A.
-              // Computer Methods in Applied Mechanics and Engineering (2020) 368  113161
-              // doi: 10.1016/j.cma.2020.113161
-              nodeRHS[3*a+i] = +globalNodalForce[i] * pow( -1, kf );
-
-              // Opposite sign w.r.t. to the same formulation as above
-              dRdT( 3*a+i, 0 ) = +nodalArea[a] * rotationMatrix( kfe, i, 0 ) * pow( -1, kf );
-              dRdT( 3*a+i, 1 ) = +nodalArea[a] * rotationMatrix( kfe, i, 1 ) * pow( -1, kf );
-              dRdT( 3*a+i, 2 ) = +nodalArea[a] * rotationMatrix( kfe, i, 2 ) * pow( -1, kf );
+              for( localIndex j = 0; j < 3; ++j )
+              {
+                xLocal[kf][a][j] = nodePosition[ faceToNodeMap( faceIndex, a ) ][j];
+              }
             }
           }
 
-          for( localIndex idof = 0; idof < numNodesPerFace * 3; ++idof )
-          {
-            localIndex const localRow = LvArray::integerConversion< localIndex >( rowDOF[idof] - rankOffset );
+          real64 N[4];
 
-            if( localRow >= 0 && localRow < localMatrix.numRows() )
+          for( localIndex q=0; q<numQuadraturePointsPerElem; ++q )
+          {
+            if( numNodesPerFace==3 )
             {
-              localMatrix.addToRow< parallelHostAtomic >( localRow,
-                                                          colDOF,
-                                                          dRdT[idof].dataIfContiguous(),
-                                                          3 );
-              RAJA::atomicAdd( parallelHostAtomic{}, &localRhs[localRow], nodeRHS[idof] );
+              using NT = real64[3];
+              H1_TriangleFace_Lagrange1_Gauss1::shapeFunctionValues( q, reinterpret_cast<NT &>(N) );
+            }
+            else if( numNodesPerFace==4 )
+            {
+              H1_QuadrilateralFace_Lagrange1_GaussLegendre2::shapeFunctionValues( q, N );
+            }
+
+            constexpr int normalSign[2] = { 1,-1 };
+            for( localIndex kf = 0; kf < 2; ++kf )
+            {
+              localIndex const faceIndex = elemsToFaces[kfe][kf];
+              using xLocalTriangle = real64[3][3];
+              real64 const detJxW = numNodesPerFace==3 ?
+                                    H1_TriangleFace_Lagrange1_Gauss1::transformedQuadratureWeight( q, reinterpret_cast< xLocalTriangle &>( xLocal[kf] ) ) :
+                                    H1_QuadrilateralFace_Lagrange1_GaussLegendre2::transformedQuadratureWeight( q, xLocal[kf] );
+
+              for( localIndex a = 0; a < numNodesPerFace; ++a )
+              {
+                real64 const NaDetJxQ = N[a] * detJxW;
+                real64 const localNodalForce[ 3 ] = { traction( kfe, 0 ) * NaDetJxQ,
+                                                      traction( kfe, 1 ) * NaDetJxQ,
+                                                      traction( kfe, 2 ) * NaDetJxQ };
+                real64 globalNodalForce[ 3 ];
+                LvArray::tensorOps::AijBj< 3, 3 >( globalNodalForce, rotationMatrix[ kfe ], localNodalForce );
+
+                for( localIndex i = 0; i < 3; ++i )
+                {
+                  rowDOF[3*a+i] = dispDofNumber[faceToNodeMap( faceIndex, a )] + i;
+                  // Opposite sign w.r.t. to formulation presented in
+                  // Algebraically Stabilized Lagrange Multiplier Method for Frictional Contact Mechanics with Hydraulically Active Fractures
+                  // Franceschini, A., Castelletto, N., White, J. A., Tchelepi, H. A.
+                  // Computer Methods in Applied Mechanics and Engineering (2020) 368  113161
+                  // doi: 10.1016/j.cma.2020.113161
+                  nodeRHS[3*a+i] = +globalNodalForce[i] * normalSign[ kf ];
+
+                  // Opposite sign w.r.t. to the same formulation as above
+                  dRdT( 3*a+i, 0 ) = rotationMatrix( kfe, i, 0 ) * normalSign[ kf ] * NaDetJxQ;
+                  dRdT( 3*a+i, 1 ) = rotationMatrix( kfe, i, 1 ) * normalSign[ kf ] * NaDetJxQ;
+                  dRdT( 3*a+i, 2 ) = rotationMatrix( kfe, i, 2 ) * normalSign[ kf ] * NaDetJxQ;
+                }
+              }
+
+              for( localIndex idof = 0; idof < numNodesPerFace * 3; ++idof )
+              {
+                localIndex const localRow = LvArray::integerConversion< localIndex >( rowDOF[idof] - rankOffset );
+
+                if( localRow >= 0 && localRow < localMatrix.numRows() )
+                {
+                  localMatrix.addToRow< parallelHostAtomic >( localRow,
+                                                              colDOF,
+                                                              dRdT[idof].dataIfContiguous(),
+                                                              3 );
+                  RAJA::atomicAdd( parallelHostAtomic{}, &localRhs[localRow], nodeRHS[idof] );
+                }
+              }
             }
           }
-        }
-      } );
+        } );
+//      } );
     }
   } );
 }
