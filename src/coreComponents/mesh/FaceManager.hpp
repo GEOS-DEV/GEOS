@@ -317,7 +317,7 @@ public:
    * @brief Get the constant upper limit for number of faces per Node.
    * @return constant expression of the max number of faces per node
    */
-  constexpr int maxFacesPerNode() const { return 100; }
+  constexpr int maxFacesPerNode() const { return 200; }
 
   /**
    * @brief Get a mutable accessor to a table containing all the face area.
