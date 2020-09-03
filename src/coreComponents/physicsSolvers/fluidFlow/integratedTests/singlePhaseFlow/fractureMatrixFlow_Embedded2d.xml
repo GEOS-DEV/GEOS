@@ -59,7 +59,8 @@
   </Geometry>
 
   <Events
-    maxTime="2e3">
+    maxTime="2e3"
+    logLevel="3">
     <SoloEvent
       name="preFracture"
       target="/Solvers/SurfaceGenerator"/>
@@ -78,7 +79,7 @@
     <PeriodicEvent
       name="restarts"
       timeFrequency="1e3"
-      targetExactTimestep="0"
+      targetExactTimestep="1"
       target="/Outputs/sidreRestart"/>
   </Events>
 

@@ -186,7 +186,8 @@ VTKPolyDataWriterInterface::GetEmbeddedSurface( EmbeddedSurfaceSubRegion const &
 
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & intersectionPoints = nodeManager.embSurfNodesPosition();;
 
-  points->SetNumberOfPoints( esr.totalNumberOfNodes() );
+  points->SetNumberOfPoints( intersectionPoints.size(0) );
+  std::cout << "Number of points: " << intersectionPoints.size(0) << std::endl;
   for( localIndex pointIndex = 0; pointIndex < intersectionPoints.size( 0 ); pointIndex++ )
   {
     points->SetPoint( pointIndex, intersectionPoints[pointIndex][0], intersectionPoints[pointIndex][1], intersectionPoints[pointIndex][2] );

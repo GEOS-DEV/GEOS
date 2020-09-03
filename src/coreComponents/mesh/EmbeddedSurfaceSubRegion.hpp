@@ -392,12 +392,6 @@ public:
    */
   array1d< real64 > const & getConnectivityIndex() const { return m_connectivityIndex;}
 
-  /**
-   * @brief Get the total number of nodes of the subregion
-   * @return the total number of nodes.
-   */
-  localIndex totalNumberOfNodes() const;
-
   ///@}
 
 

@@ -148,7 +148,7 @@ bool EmbeddedSurfaceSubRegion::AddNewEmbeddedSurface ( localIndex const cellInde
    * - Volume:
    */
 
-  bool addEmbeddedElem = false;
+  bool addEmbeddedElem = true;
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodesCoord = nodeManager.referencePosition();
   EdgeManager::NodeMapType::ViewTypeConst const & edgeToNodes = edgeManager.nodeList();
   R1Tensor origin        = fracture->getCenter();
@@ -181,15 +181,15 @@ bool EmbeddedSurfaceSubRegion::AddNewEmbeddedSurface ( localIndex const cellInde
                                                             origin );
 
       // Check if the point is inside the fracture (bounded plane)
-      if( fracture->IsCoordInObject( point ) )
+      if( !(fracture->IsCoordInObject( point )) )
       {
-        addEmbeddedElem = true;
+        addEmbeddedElem = false;
       }
       intersectionPoints.emplace_back( point );
     }
   } //end of edge loop
 
-  if( addEmbeddedElem )
+  if( addEmbeddedElem && intersectionPoints.size() > 0 )
   {
 
     // resize
@@ -257,16 +257,6 @@ void EmbeddedSurfaceSubRegion::inheritGhostRank( array1d< array1d< arrayView1d< 
 void EmbeddedSurfaceSubRegion::setupRelatedObjectsInRelations( MeshLevel const * const mesh )
 {
   this->m_toNodesRelation.SetRelatedObject( mesh->getNodeManager() );
-}
-
-localIndex EmbeddedSurfaceSubRegion::totalNumberOfNodes() const
-{
-  localIndex totalNumNodes = 0;
-  for( localIndex esi=0; esi<size(); esi++ )
-  {
-    totalNumNodes += m_toNodesRelation.sizeOfArray( esi );
-  }
-  return totalNumNodes;
 }
 
 real64 EmbeddedSurfaceSubRegion::ComputeHeavisideFunction( ArraySlice< real64 const, 1, nodes::REFERENCE_POSITION_USD - 1 > const nodeCoord,
