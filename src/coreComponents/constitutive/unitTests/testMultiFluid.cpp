@@ -382,8 +382,8 @@ MultiFluidBase * makeLiveOilFluid( string const & name, Group * parent )
   tableNames.resize( 3 );
   tableNames[0] = "pvto.txt"; tableNames[1] = "pvtg.txt"; tableNames[2] = "pvtw.txt";
 
-  auto & fluidType = fluid->getReference< string >( BlackOilFluid::viewKeyStruct::fluidTypeString );
-  fluidType = "LiveOil";
+  auto & fluidType = fluid->getReference< BlackOilFluid::FluidType >( BlackOilFluid::viewKeyStruct::fluidTypeString );
+  fluidType = BlackOilFluid::FluidType::LiveOil;
 
   fluid->PostProcessInputRecursive();
   return fluid;
@@ -415,8 +415,8 @@ MultiFluidBase * makeDeadOilFluid( string const & name, Group * parent )
   tableNames.resize( 3 );
   tableNames[0] = "pvdo.txt"; tableNames[1] = "pvdg.txt"; tableNames[2] = "pvdw.txt";
 
-  auto & fluidType = fluid->getReference< string >( BlackOilFluid::viewKeyStruct::fluidTypeString );
-  fluidType = "DeadOil";
+  auto & fluidType = fluid->getReference< BlackOilFluid::FluidType >( BlackOilFluid::viewKeyStruct::fluidTypeString );
+  fluidType = BlackOilFluid::FluidType::DeadOil;
 
   fluid->PostProcessInputRecursive();
   return fluid;

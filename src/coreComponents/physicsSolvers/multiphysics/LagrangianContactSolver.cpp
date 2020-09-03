@@ -649,7 +649,7 @@ real64 LagrangianContactSolver::NonlinearImplicitStep( real64 const & time_n,
         scaleFactor = ScalingForSystemSolution( domain, m_dofManager, m_localSolution );
 
         // do line search in case residual has increased
-        if( m_nonlinearSolverParameters.m_lineSearchAction>0 && newtonIter > 0 )
+        if( m_nonlinearSolverParameters.m_lineSearchAction != NonlinearSolverParameters::LineSearchAction::None && newtonIter > 0 )
         {
           bool lineSearchSuccess = LineSearch( time_n,
                                                stepDt,
@@ -664,11 +664,11 @@ real64 LagrangianContactSolver::NonlinearImplicitStep( real64 const & time_n,
 
           if( !lineSearchSuccess )
           {
-            if( m_nonlinearSolverParameters.m_lineSearchAction==1 )
+            if( m_nonlinearSolverParameters.m_lineSearchAction == NonlinearSolverParameters::LineSearchAction::Attempt )
             {
               GEOSX_LOG_LEVEL_RANK_0( 1, "        Line search failed to produce reduced residual. Accepting iteration." );
             }
-            else if( m_nonlinearSolverParameters.m_lineSearchAction==2 )
+            else if( m_nonlinearSolverParameters.m_lineSearchAction == NonlinearSolverParameters::LineSearchAction::Require )
             {
               // if line search failed, then break out of the main Newton loop. Timestep will be cut.
               GEOSX_LOG_LEVEL_RANK_0( 1, "        Line search failed to produce reduced residual. Exiting Newton Loop." );

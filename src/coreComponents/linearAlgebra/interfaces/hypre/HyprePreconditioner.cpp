@@ -22,7 +22,6 @@
 #include "linearAlgebra/DofManager.hpp"
 #include "linearAlgebra/interfaces/hypre/HypreUtils.hpp"
 #include "linearAlgebra/utilities/LinearSolverParameters.hpp"
-#include "linearAlgebra/utilities/LAIHelperFunctions.hpp"
 
 #include <_hypre_utilities.h>
 #include <_hypre_parcsr_ls.h>
@@ -41,35 +40,44 @@ HyprePreconditioner::HyprePreconditioner( LinearSolverParameters params,
 {
   if( m_precond == nullptr )
   {
-    if( m_parameters.preconditionerType == "none" )
+    switch( m_parameters.preconditionerType )
     {
-      m_functions->setup = (HYPRE_PtrToParSolverFcn) hypre_ParKrylovIdentitySetup;
-      m_functions->apply = (HYPRE_PtrToParSolverFcn) hypre_ParKrylovIdentity;
-    }
-    else if( m_parameters.preconditionerType == "jacobi" )
-    {
-      m_functions->setup = (HYPRE_PtrToParSolverFcn) HYPRE_ParCSRDiagScaleSetup;
-      m_functions->apply = (HYPRE_PtrToParSolverFcn) HYPRE_ParCSRDiagScale;
-    }
-    else if( m_parameters.preconditionerType == "amg" )
-    {
-      createAMG();
-    }
-    else if( m_parameters.preconditionerType == "mgr" )
-    {
-      createMGR( dofManager );
-    }
-    else if( m_parameters.preconditionerType == "iluk" )
-    {
-      createILU();
-    }
-    else if( m_parameters.preconditionerType == "ilut" )
-    {
-      createILUT();
-    }
-    else
-    {
-      GEOSX_ERROR( "Unsupported preconditioner type: " << m_parameters.preconditionerType );
+      case LinearSolverParameters::PreconditionerType::none:
+      {
+        m_functions->setup = (HYPRE_PtrToParSolverFcn) hypre_ParKrylovIdentitySetup;
+        m_functions->apply = (HYPRE_PtrToParSolverFcn) hypre_ParKrylovIdentity;
+        break;
+      }
+      case LinearSolverParameters::PreconditionerType::jacobi:
+      {
+        m_functions->setup = (HYPRE_PtrToParSolverFcn) HYPRE_ParCSRDiagScaleSetup;
+        m_functions->apply = (HYPRE_PtrToParSolverFcn) HYPRE_ParCSRDiagScale;
+        break;
+      }
+      case LinearSolverParameters::PreconditionerType::amg:
+      {
+        createAMG();
+        break;
+      }
+      case LinearSolverParameters::PreconditionerType::mgr:
+      {
+        createMGR( dofManager );
+        break;
+      }
+      case LinearSolverParameters::PreconditionerType::iluk:
+      {
+        createILU();
+        break;
+      }
+      case LinearSolverParameters::PreconditionerType::ilut:
+      {
+        createILUT();
+        break;
+      }
+      default:
+      {
+        GEOSX_ERROR( "Preconditioner type not supported in hypre interface: " << m_parameters.preconditionerType );
+      }
     }
   }
 }

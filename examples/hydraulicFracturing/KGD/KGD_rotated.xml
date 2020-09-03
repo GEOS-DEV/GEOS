@@ -8,7 +8,7 @@
       name="hydrofracture"
       solidSolverName="lagsolve"
       fluidSolverName="SinglePhaseFlow"
-      couplingTypeOption="TightlyCoupled"
+      couplingTypeOption="FIM"
       logLevel="1"
       discretization="FE1"
       targetRegions="{ Region2, Fracture }"

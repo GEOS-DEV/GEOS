@@ -13,7 +13,7 @@
       name="hydrofracture"
       solidSolverName="lagsolve"
       fluidSolverName="SinglePhaseFlow"
-      couplingTypeOption="TightlyCoupled"
+      couplingTypeOption="FIM"
       logLevel="1"
       discretization="FE1"
       targetRegions="{ Region2, Fracture }"
@@ -40,7 +40,7 @@
         newtonTol="1.0e-6"
         newtonMaxIter="5"/>
       <LinearSolverParameters
-        preconditionerType="gmres"
+        solverType="gmres"
         krylovTol="1.0e-10"
         logLevel="0"/>
     </SolidMechanicsLagrangianSSLE>

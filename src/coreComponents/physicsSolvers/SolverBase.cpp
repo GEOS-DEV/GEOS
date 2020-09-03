@@ -497,7 +497,8 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
       }
 
       // do line search in case residual has increased
-      if( m_nonlinearSolverParameters.m_lineSearchAction>0 && residualNorm > lastResidual )
+      if( m_nonlinearSolverParameters.m_lineSearchAction != NonlinearSolverParameters::LineSearchAction::None
+          && residualNorm > lastResidual )
       {
         residualNorm = lastResidual;
         bool lineSearchSuccess = LineSearch( time_n,
@@ -513,11 +514,11 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
 
         if( !lineSearchSuccess )
         {
-          if( m_nonlinearSolverParameters.m_lineSearchAction==1 )
+          if( m_nonlinearSolverParameters.m_lineSearchAction == NonlinearSolverParameters::LineSearchAction::Attempt )
           {
             GEOSX_LOG_LEVEL_RANK_0( 1, "        Line search failed to produce reduced residual. Accepting iteration." );
           }
-          else if( m_nonlinearSolverParameters.m_lineSearchAction==2 )
+          else if( m_nonlinearSolverParameters.m_lineSearchAction == NonlinearSolverParameters::LineSearchAction::Require )
           {
             // if line search failed, then break out of the main Newton loop. Timestep will be cut.
             GEOSX_LOG_LEVEL_RANK_0( 1, "        Line search failed to produce reduced residual. Exiting Newton Loop." );
@@ -783,7 +784,7 @@ void SolverBase::SolveSystem( DofManager const & dofManager,
   //       so we can have constant access to last solve statistics, convergence history, etc.
   //       This requires unifying "LAI interface" solvers with "native" Krylov solvers somehow.
 
-  if( params.solverType == "direct" || !m_precond )
+  if( params.solverType == LinearSolverParameters::SolverType::direct || !m_precond )
   {
     LinearSolver solver( params );
     solver.solve( matrix, solution, rhs, &dofManager );
