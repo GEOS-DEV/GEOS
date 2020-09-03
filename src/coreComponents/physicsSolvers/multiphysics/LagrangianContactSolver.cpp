@@ -207,7 +207,7 @@ void LagrangianContactSolver::ImplicitStepSetup( real64 const & time_n,
 {
   ComputeRotationMatrices( domain );
   ComputeTolerances( domain );
-  ComputeLocalJump( domain );
+  ComputeFaceDisplacementJump( domain );
 
   m_solidSolver->ImplicitStepSetup( time_n, dt, domain );
 }
@@ -484,7 +484,7 @@ real64 LagrangianContactSolver::SolverStep( real64 const & time_n,
   return dtReturn;
 }
 
-void LagrangianContactSolver::ComputeLocalJump( DomainPartition & domain )
+void LagrangianContactSolver::ComputeFaceDisplacementJump( DomainPartition & domain )
 {
   MeshLevel & meshLevel = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
 
@@ -1099,7 +1099,7 @@ real64 LagrangianContactSolver::CalculateResidualNorm( DomainPartition const & d
     globalResidualNorm[0] /= (m_initialResidual[0]+1.0);
     globalResidualNorm[1] /= (m_initialResidual[1]+1.0);
     // Add 0 just to match Matlab code results
-    globalResidualNorm[2] /= (m_initialResidual[2]+0.0);
+    globalResidualNorm[2] /= (m_initialResidual[2]+1.0);
   }
 
   char output[94] = {0};
@@ -2062,7 +2062,7 @@ void LagrangianContactSolver::ApplySystemSolution( DofManager const & dofManager
                                          domain.getNeighbors(),
                                          true );
 
-  ComputeLocalJump( domain );
+  ComputeFaceDisplacementJump( domain );
 }
 
 void LagrangianContactSolver::InitializeFractureState( MeshLevel & mesh,
