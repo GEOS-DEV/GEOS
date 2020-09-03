@@ -343,7 +343,7 @@ static bool addConstants( PyObject * module )
  */
 static bool addExitHandler( PyObject * module ){
   LvArray::python::PyObjectRef<> atexit_module { PyImport_ImportModule( "atexit" ) };
-  
+
   if ( atexit_module == nullptr )
   { return false; }
 
@@ -359,7 +359,7 @@ static bool addExitHandler( PyObject * module ){
   { return false; }
 
   LvArray::python::PyObjectRef<> returnval { PyObject_CallFunctionObjArgs( atexit_register_pyfunc, finalize_pyfunc.get(), nullptr ) };
-  
+
   return returnval != nullptr;
 }
 
