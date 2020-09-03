@@ -24,7 +24,6 @@
       rockToughness="1e6"
       nodeBasedSIF="1"
       logLevel="1"
-      discretization="FE1"
       fractureRegion="Fracture"
       targetRegions="{ Region2 }"
       mpiCommOrder="1"/>

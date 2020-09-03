@@ -39,6 +39,9 @@ WellSolverBase::WellSolverBase( std::string const & name,
   this->registerWrapper( viewKeyStruct::fluidNamesString, &m_fluidModelNames )->
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "Name of fluid constitutive object to use for this solver." );
+
+  this->getWrapper< string >( viewKeyStruct::discretizationString )->
+    setInputFlag( InputFlags::FALSE );
 }
 
 Group * WellSolverBase::CreateChild( string const & childKey, string const & childName )

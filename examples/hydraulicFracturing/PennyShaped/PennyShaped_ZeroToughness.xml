@@ -15,6 +15,7 @@
       fluidSolverName="SinglePhaseFlow"
       couplingTypeOption="FIM"
       logLevel="1"
+      discretization="FE1"
       targetRegions="{ Region2, Fracture }"
       contactRelationName="fractureContact"
       maxNumResolves="1"
@@ -67,7 +68,6 @@
     <SurfaceGenerator
       name="SurfaceGen"
       logLevel="0"
-      discretization="FE1"
       fractureRegion="Fracture"
       targetRegions="{ Region2 }"
       nodeBasedSIF="1"
