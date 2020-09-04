@@ -226,6 +226,8 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
   //    element
   real64 dtReturn = dt;
 
+  m_totalTime = time_n + dt;
+
   SolverBase * const surfaceGenerator =  this->getParent()->GetGroup< SolverBase >( "SurfaceGen" );
 
   if( m_couplingTypeOption == couplingTypeOption::SIM_FixedStress )
@@ -419,7 +421,10 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
 
 	      if (viscosity < 2.0e-3) // Toughness-dominated case
 	      {
-		refDispFirstStep = 0.5 * pow(3.0/2.0*Eprime/Kprime*volume, 2.0/3.0);
+		refDispFirstStep = 0.5 * pow(3.0/2.0*
+					     pow(Kprime/Eprime,2.0)*
+					     volume/1.0,  // assume that the tip thickness is 1
+					     1.0/3.0);
 	      }
 	      else  // Viscosity-dominated case
 	      {
@@ -427,13 +432,16 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
 		real64 gamma_m0 = 0.616;
 		real64 velocity = 2.0/3.0 * Lm * gamma_m0 / total_time;
 		real64 Betam = pow(2.0, 1.0/3.0) * pow(3.0, 5.0/6.0);
-		real64 lengthFirstStep = pow( 5.0/3.0*volume/Betam*
-					      pow(Eprime/(mup*velocity),1.0/3.0)
-					     ,3.0/5.0);
-		refDispFirstStep = 0.5 * Betam *
-				   pow(mup*velocity*lengthFirstStep*lengthFirstStep/Eprime , 1.0/3.0);
-    //            refDispFirstStep = 0.00019;
+		//real64 lengthFirstStep = pow( 5.0/3.0*volume/Betam*
+		//			      pow(Eprime/(mup*velocity),1.0/3.0)
+		//			     ,3.0/5.0);
+		refDispFirstStep = 0.5 * pow(5.0/3.0*
+					     volume/1.0*
+					     pow(Betam, 3.0/2.0)*
+					     pow(mup*velocity/Eprime, 0.5),
+					     2.0/5.0);
 	      }
+	      //refDispFirstStep = 0.00019;
 
 	      for (auto const & node : nodeMap[m_tipElement])
 	      {
@@ -451,7 +459,7 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
 		      {
 			disp(node, 0) = faceNormal(face)[0] > 0 ? -refDispFirstStep : refDispFirstStep;
 			dispIncre(node,0) = disp(node,0) - 0.0;
-			//std::cout << "Rank " << rank << ": Node " << node << ": " << disp(node,0) << std::endl;
+//			std::cout << "Rank " << rank << ": Node " << node << ": " << disp(node,0) << std::endl;
 		      }
 		    } // for localIndex j
 		  } // for localIndex i
@@ -1582,6 +1590,9 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
       myFile.close();
     }
 
+    //TJ: write face element aperture and pressure
+
+
   }
 
   return dtReturn;
@@ -1589,6 +1600,10 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
 
 void HydrofractureSolver::UpdateDeformationForCoupling( DomainPartition * const domain )
 {
+  //TJ the hard coded elmt length
+  real64 const meshSize = 1.0;  // this value needs to be changed for a mesh-refinement
+  GEOSX_LOG_RANK_0( "Mesh size = " << meshSize );
+
   MeshLevel * const meshLevel = domain->getMeshBody( 0 )->getMeshLevel( 0 );
   ElementRegionManager * const elemManager = meshLevel->getElemManager();
   NodeManager const * const nodeManager = meshLevel->getNodeManager();
@@ -1670,6 +1685,131 @@ void HydrofractureSolver::UpdateDeformationForCoupling( DomainPartition * const 
 #endif
       deltaVolume[kfe] = effectiveAperture[kfe] * area[kfe] - volume[kfe];
     }
+
+    //TJ: modify the aperture and deltaVolume at the tip element
+    //    according to the nonlinear relationship between aperture
+    //    and nodal displacement at the tip
+    SurfaceGenerator * const mySurface = this->getParent()->GetGroup< SurfaceGenerator >( "SurfaceGen" );
+    SortedArray< localIndex > const trailingFaces = mySurface->getTrailingFaces();
+    FaceElementSubRegion::FaceMapType & faceMap = subRegion.faceList();
+
+    for(auto const & trailingFace : trailingFaces)
+    {
+      bool found = false;
+      // loop over all the face element
+      for(localIndex i=0; i<faceMap.size(0); i++)
+      {
+	// loop over all the (TWO) faces in a face element
+	for(localIndex j=0; j<faceMap.size(1); j++)
+	{
+	  // if the trailingFace is one of the two faces in a face element,
+	  // we find it
+	  if (faceMap[i][j] == trailingFace)
+	  {
+	    m_tipElement = i;
+	    found = true;
+	    break;
+	  }
+	} // for localIndex j
+	if (found)
+	  break;
+      } // for localIndex i
+      GEOSX_ASSERT_MSG( found == true,
+		    "Trailing face is not found among the fracture face elements" );
+//      std::cout << "UpdateDeformationForCoupling :: m_tipElement = " << m_tipElement << std::endl;
+
+      //MeshLevel & mesh = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
+//      NodeManager & const myNodeManager = meshLevel->getNodeManager();
+
+      MeshLevel & mesh = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
+      NodeManager & myNodeManager = *mesh.getNodeManager();
+
+      FaceElementSubRegion::NodeMapType & nodeMap = subRegion.nodeList();
+      localIndex_array myChildIndex = myNodeManager.getReference<localIndex_array>("childIndex");
+      localIndex refNodeIndex=-1;
+      for(localIndex i=0; i<nodeMap[m_tipElement].size(); i++)
+      {
+	localIndex node = nodeMap[m_tipElement][i];
+	if ( myChildIndex[node] >= 0)
+	{
+	  refNodeIndex = node;
+	  break;
+	}
+      }
+
+      //TJ: use the displacement gap at the newly split node pair for the tip deltaVolume
+      real64 refDisp = std::abs( u(refNodeIndex,0) - u(myChildIndex[refNodeIndex],0) );
+
+      //TJ: should check refDisp, instead of individual displacement value
+      GEOSX_ASSERT_MSG( u(refNodeIndex,0) < 1.0e-12,
+      		"Node crosses the symmetric plane." );
+/*
+      std::cout  << " disp " << refNodeIndex               << " = " << u(refNodeIndex,0)
+	         << ", disp " << myChildIndex[refNodeIndex] << " = " << u(myChildIndex[refNodeIndex],0)
+	                      << std::endl;
+      std::cout << "refDisp = " << refDisp << std::endl;
+*/
+      real64 const shearModulus = domain->GetGroup("Constitutive")
+			                  ->GetGroup("rock")
+			                  ->getReference<real64>("defaultShearModulus");
+      real64 const bulkModulus = domain->GetGroup("Constitutive")
+		                         ->GetGroup("rock")
+				         ->getReference<real64>("defaultBulkModulus");
+      real64 const toughness = mySurface->getReference<real64>("rockToughness");
+      real64 const viscosity = domain->GetGroup("Constitutive")
+                                     ->GetGroup("water")
+				       ->getReference<real64>("defaultViscosity");
+
+
+      // The unit of injectionRate is kg per second
+      real64 const injectionRate = domain->getParent()
+                                         ->GetGroup<FieldSpecificationManager>("FieldSpecifications")
+                                         ->GetGroup<SourceFluxBoundaryCondition>("sourceTerm")
+					   ->getReference<real64>("scale");
+
+      // The injectionRate is only for half domain of the KGD problem,
+      // to retrieve the full injection rate, we need to multiply it by 2.0
+      real64 const q0 = 2.0 * std::abs(injectionRate) /1.0e3;
+      real64 const total_time = m_totalTime;
+
+      real64 const nu = ( 1.5 * bulkModulus - shearModulus ) / ( 3.0 * bulkModulus + shearModulus );
+      real64 const E = ( 9.0 * bulkModulus * shearModulus )/ ( 3.0 * bulkModulus + shearModulus );
+      real64 const Eprime = E/(1.0-nu*nu);
+      real64 const PI = 2 * acos(0.0);
+      real64 const Kprime = 4.0*sqrt(2.0/PI)*toughness;
+      real64 const mup = 12.0 * viscosity;
+
+      real64 vTip;
+      real64 aperTip;
+
+      if (viscosity < 2.0e-3) // Toughness-dominated case
+      {
+	//TJ: the tip asymptote w = Kprime / Eprime * x^(1/2)
+	vTip = 2.0/3.0 * pow(Eprime/Kprime, 2.0) * pow(refDisp, 3.0);
+      }
+      else // Viscosity-dominated case
+      {
+	real64 Lm = pow( Eprime*pow(q0,3.0)*pow(total_time,4.0)/mup, 1.0/6.0 );
+	real64 gamma_m0 = 0.616;
+	real64 velocity = 2.0/3.0 * Lm * gamma_m0 / total_time;
+	real64 Betam = pow(2.0, 1.0/3.0) * pow(3.0, 5.0/6.0);
+	vTip = 3.0/5.0 * pow(Betam, -3.0/2.0) * pow( Eprime/mup/velocity, 1.0/2.0)
+	               * pow(refDisp, 5.0/2.0);
+      }
+      // average aperture
+      aperTip = vTip/meshSize;
+
+      aperture[m_tipElement] = aperTip;
+      effectiveAperture[m_tipElement] = contactRelation->effectiveAperture( aperture[m_tipElement] );
+
+      deltaVolume[m_tipElement] = effectiveAperture[m_tipElement] * area[m_tipElement]
+				- volume[m_tipElement];
+//      std::cout << "Tip element " << m_tipElement
+//	        << " : delta volume = " << deltaVolume[m_tipElement] << std::endl;
+
+//      std::cout << "End of tip volume manipulation." << std::endl;
+    }
+
 
   } );
 }
@@ -2574,6 +2714,10 @@ HydrofractureSolver::
 {
   GEOSX_MARK_FUNCTION;
 
+  //TJ the hard coded elmt length
+  real64 const meshSize = 1.0;  // this value needs to be changed for a mesh-refinement
+  GEOSX_LOG_RANK_0( "Mesh size = " << meshSize );
+
   MeshLevel const & mesh = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
   FaceManager const * const faceManager = mesh.getFaceManager();
   NodeManager const * const nodeManager = mesh.getNodeManager();
@@ -2587,6 +2731,42 @@ HydrofractureSolver::
 
   ContactRelationBase const * const
   contactRelation = constitutiveManager->GetGroup< ContactRelationBase >( m_contactRelationName );
+
+  arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const & disp = nodeManager->totalDisplacement();
+  SurfaceGenerator * const mySurface = this->getParent()->GetGroup< SurfaceGenerator >( "SurfaceGen" );
+
+  real64 const shearModulus = domain->GetGroup("Constitutive")
+			                  ->GetGroup("rock")
+			                  ->getReference<real64>("defaultShearModulus");
+  real64 const bulkModulus = domain->GetGroup("Constitutive")
+		                         ->GetGroup("rock")
+				         ->getReference<real64>("defaultBulkModulus");
+  real64 const toughness = mySurface->getReference<real64>("rockToughness");
+  real64 const viscosity = domain->GetGroup("Constitutive")
+                                 ->GetGroup("water")
+				       ->getReference<real64>("defaultViscosity");
+
+
+  // The unit of injectionRate is kg per second
+  real64 const injectionRate = domain->getParent()
+                                     ->GetGroup<FieldSpecificationManager>("FieldSpecifications")
+                                     ->GetGroup<SourceFluxBoundaryCondition>("sourceTerm")
+					   ->getReference<real64>("scale");
+
+  // The injectionRate is only for half domain of the KGD problem,
+  // to retrieve the full injection rate, we need to multiply it by 2.0
+  real64 const q0 = 2.0 * std::abs(injectionRate) /1.0e3;
+  real64 const total_time = m_totalTime;
+
+  real64 const nu = ( 1.5 * bulkModulus - shearModulus ) / ( 3.0 * bulkModulus + shearModulus );
+  real64 const E = ( 9.0 * bulkModulus * shearModulus )/ ( 3.0 * bulkModulus + shearModulus );
+  real64 const Eprime = E/(1.0-nu*nu);
+  real64 const PI = 2 * acos(0.0);
+  real64 const Kprime = 4.0*sqrt(2.0/PI)*toughness;
+  real64 const mup = 12.0 * viscosity;
+
+
+
 
   matrix10->open();
 
@@ -2617,10 +2797,15 @@ HydrofractureSolver::
 
     arrayView1d< R1Tensor const > const & faceNormal = faceManager->faceNormal();
 
+
+
 //    arrayView1d< real64 const > const & separationCoeff = subRegion.getSeparationCoefficient();
 //    arrayView1d<real64 const> const &
 //    dseparationCoeff_dAper  =
 // subRegion.getReference<array1d<real64>>(FaceElementSubRegion::viewKeyStruct::dSeparationCoeffdAperString);
+
+    //TJ
+//    FaceElementSubRegion::NodeMapType & nodeMap = subRegion.nodeList();
 
 
     forAll< serialPolicy >( subRegion.size(), [=]( localIndex ei )
@@ -2658,12 +2843,105 @@ HydrofractureSolver::
                 nodeDOF[kf * 3 * numNodesPerFace + 3 * a + i] =
                   dispDofNumber[faceToNodeMap( elemsToFaces[ei][kf], a )] + i;
                 real64 const dGap_dU = -pow( -1, kf ) * Nbar[i] / numNodesPerFace;
-                real64 const
-                dAper_dU = contactRelation->dEffectiveAperture_dAperture( aperture[ei] ) * dGap_dU;
+                real64 const dAper_dU = contactRelation->dEffectiveAperture_dAperture( aperture[ei] ) * dGap_dU;
                 dRdU( kf * 3 * numNodesPerFace + 3 * a + i ) = dAccumulationResidualdAperture * dAper_dU;
               }
             }
           }
+
+          //TJ: for the tip element, the relationship between aperture and displacement
+          //    is nonlinear. Therefore, we need to rewrite dAper_dU and dRdU
+          SortedArray< localIndex > const trailingFaces = mySurface->getTrailingFaces();
+	  SortedArray< localIndex > const tipNodes = mySurface->getTipNodes();
+
+          for(auto const & trailingFace : trailingFaces)
+          {
+            //TJ: elmt ei is a tip element, do the modification on dRdU
+            if ( (elemsToFaces[ei][0] == trailingFace) || (elemsToFaces[ei][1] == trailingFace) )
+            {
+//              std::cout << "elmt " << ei << " is a tip element." << std::endl;
+              //TJ: calculate 1/2 * ( (u11-u10) + (u21-u20) ) dot normal_direction
+              real64 averageGap = 0.0;
+              for (localIndex kf = 0; kf < 2; ++kf)
+              {
+                for( localIndex a = 0; a < numNodesPerFace; ++a )
+                {
+                  localIndex node = faceToNodeMap( elemsToFaces[ei][kf], a );
+  	          if ( std::find( tipNodes.begin(), tipNodes.end(), node ) == tipNodes.end() )
+  	          {
+ //                   std::cout << "Face " << kf << ": node " << node << std::endl;
+                    R1Tensor temp = disp[node];
+                    averageGap += (-pow(-1,kf)) * Dot( temp, Nbar)/2 ;
+  	          }
+                }
+              }
+//              std::cout << averageGap << std::endl;
+
+              real64 coeff;
+              real64 dGap_dU_tip;
+              real64 dAper_dU_tip;
+              if (viscosity < 2.0e-3) // Toughness-dominated case
+              {
+        	//TJ: the tip asymptote w = Kprime / Eprime * x^(1/2)
+        	coeff = 2.0/3.0 * pow(Eprime/Kprime, 2.0)/meshSize;
+                for (localIndex kf = 0; kf < 2; ++kf)
+                {
+                  for( localIndex a = 0; a < numNodesPerFace; ++a )
+                  {
+                    localIndex node = faceToNodeMap( elemsToFaces[ei][kf], a );
+  	            if ( std::find( tipNodes.begin(), tipNodes.end(), node ) == tipNodes.end() )
+  	            {
+  	              for (int i = 0; i < 3; ++i)
+  	              {
+  	                dGap_dU_tip = 3.0/2.0 * coeff * pow(averageGap, 2.0) * (-pow(-1, kf)) *Nbar[i];
+  	                dAper_dU_tip = contactRelation->dEffectiveAperture_dAperture( aperture[ei] ) * dGap_dU_tip;
+  	                dRdU( kf * 3 * numNodesPerFace + 3 * a + i ) = dAccumulationResidualdAperture * dAper_dU_tip;
+  	              }
+  	            }
+  	            else
+  	            {
+  	              for (int i = 0; i < 3; ++i)
+  	              {
+  	                dRdU( kf * 3 * numNodesPerFace + 3 * a + i ) = 0.0;
+  	              }
+  	            } // if else
+                  } // for( localIndex a = 0; a < numNodesPerFace; ++a )
+                } // for (localIndex kf = 0; kf < 2; ++kf)
+              }
+              else // Viscosity-dominated case
+              {
+        	real64 Lm = pow( Eprime*pow(q0,3.0)*pow(total_time,4.0)/mup, 1.0/6.0 );
+        	real64 gamma_m0 = 0.616;
+        	real64 velocity = 2.0/3.0 * Lm * gamma_m0 / total_time;
+        	real64 Betam = pow(2.0, 1.0/3.0) * pow(3.0, 5.0/6.0);
+        	coeff = 3.0/5.0 * pow(Betam, -3.0/2.0) * pow(Eprime/mup/velocity, 0.5)/meshSize;
+                for (localIndex kf = 0; kf < 2; ++kf)
+                {
+                  for( localIndex a = 0; a < numNodesPerFace; ++a )
+                  {
+                    localIndex node = faceToNodeMap( elemsToFaces[ei][kf], a );
+  	            if ( std::find( tipNodes.begin(), tipNodes.end(), node ) == tipNodes.end() )
+  	            {
+  	              for (int i = 0; i < 3; ++i)
+  	              {
+  	                dGap_dU_tip = 5.0/4.0 * coeff * pow(averageGap, 3.0/2.0) * (-pow(-1, kf)) * Nbar[i];
+  	                dAper_dU_tip = contactRelation->dEffectiveAperture_dAperture( aperture[ei] ) * dGap_dU_tip;
+  	                dRdU( kf * 3 * numNodesPerFace + 3 * a + i ) = dAccumulationResidualdAperture * dAper_dU_tip;
+  	              }
+  	            }
+  	            else
+  	            {
+  	              for (int i = 0; i < 3; ++i)
+  	              {
+  	                dRdU( kf * 3 * numNodesPerFace + 3 * a + i ) = 0.0;
+  	              }
+  	            } // if else
+                  } // for( localIndex a = 0; a < numNodesPerFace; ++a )
+                } // for (localIndex kf = 0; kf < 2; ++kf)
+              } // toughness or viscosity dominated case
+            }  // if ei is a tip element
+          } // loop over all the trailing faces
+
           matrix10->add( elemDOF,
                          nodeDOF,
                          dRdU.data(),
@@ -2696,6 +2974,100 @@ HydrofractureSolver::
               }
             }
           }
+
+          //TJ: for the tip element, the relationship between aperture and displacement
+          //    is nonlinear. Therefore, we need to rewrite dAper_dU and dRdU
+          SortedArray< localIndex > const trailingFaces = mySurface->getTrailingFaces();
+	  SortedArray< localIndex > const tipNodes = mySurface->getTipNodes();
+
+          for(auto const & trailingFace : trailingFaces)
+          {
+            //TJ: elmt ei is a tip element, do the modification on dRdU
+            if ( (elemsToFaces[ei2][0] == trailingFace) || (elemsToFaces[ei2][1] == trailingFace) )
+            {
+//              std::cout << "elmt " << ei2 << " is a tip element." << std::endl;
+              //TJ: calculate 1/2 * ( (u11-u10) + (u21-u20) ) dot normal_direction
+              real64 averageGap = 0.0;
+              for (localIndex kf = 0; kf < 2; ++kf)
+              {
+                for( localIndex a = 0; a < numNodesPerFace; ++a )
+                {
+                  localIndex node = faceToNodeMap( elemsToFaces[ei2][kf], a );
+  	          if ( std::find( tipNodes.begin(), tipNodes.end(), node ) == tipNodes.end() )
+  	          {
+//                    std::cout << "Face " << kf << ": node " << node << std::endl;
+                    R1Tensor temp = disp[node];
+                    averageGap += (-pow(-1,kf)) * Dot( temp, Nbar)/2 ;
+  	          }
+                }
+              }
+//              std::cout << averageGap << std::endl;
+
+              real64 coeff;
+              real64 dGap_dU_tip;
+              real64 dAper_dU_tip;
+              if (viscosity < 2.0e-3) // Toughness-dominated case
+              {
+        	//TJ: the tip asymptote w = Kprime / Eprime * x^(1/2)
+        	coeff = 2.0/3.0 * pow(Eprime/Kprime, 2.0)/meshSize;
+                for (localIndex kf = 0; kf < 2; ++kf)
+                {
+                  for( localIndex a = 0; a < numNodesPerFace; ++a )
+                  {
+                    localIndex node = faceToNodeMap( elemsToFaces[ei2][kf], a );
+  	            if ( std::find( tipNodes.begin(), tipNodes.end(), node ) == tipNodes.end() )
+  	            {
+  	              for (int i = 0; i < 3; ++i)
+  	              {
+  	                dGap_dU_tip = 3.0/2.0 * coeff * pow(averageGap, 2.0) * (-pow(-1, kf)) *Nbar[i];
+  	                dAper_dU_tip = contactRelation->dEffectiveAperture_dAperture( aperture[ei2] ) * dGap_dU_tip;
+  	                dRdU( kf * 3 * numNodesPerFace + 3 * a + i ) = dRdAper * dAper_dU_tip;
+  	              }
+  	            }
+  	            else
+  	            {
+  	              for (int i = 0; i < 3; ++i)
+  	              {
+  	                dRdU( kf * 3 * numNodesPerFace + 3 * a + i ) = 0.0;
+  	              }
+  	            } // if else
+                  } // for( localIndex a = 0; a < numNodesPerFace; ++a )
+                } // for (localIndex kf = 0; kf < 2; ++kf)
+              }
+              else // Viscosity-dominated case
+              {
+        	real64 Lm = pow( Eprime*pow(q0,3.0)*pow(total_time,4.0)/mup, 1.0/6.0 );
+        	real64 gamma_m0 = 0.616;
+        	real64 velocity = 2.0/3.0 * Lm * gamma_m0 / total_time;
+        	real64 Betam = pow(2.0, 1.0/3.0) * pow(3.0, 5.0/6.0);
+        	coeff = 3.0/5.0 * pow(Betam, -3.0/2.0) * pow(Eprime/mup/velocity, 0.5)/meshSize;
+                for (localIndex kf = 0; kf < 2; ++kf)
+                {
+                  for( localIndex a = 0; a < numNodesPerFace; ++a )
+                  {
+                    localIndex node = faceToNodeMap( elemsToFaces[ei2][kf], a );
+  	            if ( std::find( tipNodes.begin(), tipNodes.end(), node ) == tipNodes.end() )
+  	            {
+  	              for (int i = 0; i < 3; ++i)
+  	              {
+  	                dGap_dU_tip = 5.0/4.0 * coeff * pow(averageGap, 3.0/2.0) * (-pow(-1, kf)) * Nbar[i];
+  	                dAper_dU_tip = contactRelation->dEffectiveAperture_dAperture( aperture[ei2] ) * dGap_dU_tip;
+  	                dRdU( kf * 3 * numNodesPerFace + 3 * a + i ) = dRdAper * dAper_dU_tip;
+  	              }
+  	            }
+  	            else
+  	            {
+  	              for (int i = 0; i < 3; ++i)
+  	              {
+  	                dRdU( kf * 3 * numNodesPerFace + 3 * a + i ) = 0.0;
+  	              }
+  	            } // if else
+                  } // for( localIndex a = 0; a < numNodesPerFace; ++a )
+                } // for (localIndex kf = 0; kf < 2; ++kf)
+              } // toughness or viscosity dominated case
+            }  // if ei2 is a tip element
+          } // loop over all the trailing faces
+
           matrix10->add( elemDOF,
                          nodeDOF,
                          dRdU.data(),

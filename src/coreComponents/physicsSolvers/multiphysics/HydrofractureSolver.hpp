@@ -224,6 +224,9 @@ private:
   //    the tip
   localIndex m_channelElement;
 
+  //TJ: total_time, needed for evaluating velocity
+  real64 m_totalTime;
+
 #ifdef USING_TRILINOS
   real64 m_densityScaling;
   real64 m_pressureScaling;

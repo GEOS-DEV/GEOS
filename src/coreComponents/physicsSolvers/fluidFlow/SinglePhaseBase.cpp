@@ -368,8 +368,8 @@ void SinglePhaseBase::ImplicitStepSetup( real64 const & GEOSX_UNUSED_PARAM( time
 
 }
 
-void SinglePhaseBase::ImplicitStepComplete( real64 const & GEOSX_UNUSED_PARAM( time_n ),
-                                            real64 const & GEOSX_UNUSED_PARAM( dt ),
+void SinglePhaseBase::ImplicitStepComplete( real64 const &  time_n,
+                                            real64 const &  dt ,
                                             DomainPartition * const domain )
 {
   GEOSX_MARK_FUNCTION;
@@ -394,6 +394,45 @@ void SinglePhaseBase::ImplicitStepComplete( real64 const & GEOSX_UNUSED_PARAM( t
       pres[ei] += dPres[ei];
       vol[ei] += dVol[ei];
     } );
+
+    //TJ: write pressure
+    if (subRegion.size() > 0 )
+    {
+      real64 const viscosityFile = domain->GetGroup("Constitutive")
+					 ->GetGroup("water")
+					   ->getReference<real64>("defaultViscosity");
+      Group * elementSubRegions = domain->GetGroup("MeshBodies")
+					->GetGroup<MeshBody>("mesh1")
+					->GetGroup<MeshLevel>("Level0")
+					->GetGroup<ElementRegionManager>("ElementRegions")
+					->GetRegion< FaceElementRegion >( "Fracture" )
+					->GetGroup("elementSubRegions");
+      FaceElementSubRegion * fracSubRegion = elementSubRegions->GetGroup< FaceElementSubRegion >( "default" );
+
+      std::stringstream stream;
+      stream << std::fixed << std::setprecision(1) << time_n+dt;
+
+      string fileName;
+      if (viscosityFile < 2.0e-3)
+	fileName = "ZeroViscosity_" + stream.str() + "s.hist";
+      else
+	fileName = "ZeroToughness_" + stream.str() + "s.hist";
+
+      std::ofstream myFile;
+      myFile.open(fileName, std::ios::out | std::ios::app);
+
+      for (localIndex ei = 0; ei < subRegion.size(); ei++)
+      {
+	myFile << subRegion.getElementCenter()[ei][0] << "\t"  //x
+	       << subRegion.getElementCenter()[ei][1] << "\t"  //y
+	       << subRegion.getElementCenter()[ei][2] << "\t"  //z
+	       << fracSubRegion->getElementAperture()[ei]  << "\t"  //aperture
+	       << pres[ei] << "\n";                            //pressure
+      }
+
+      myFile.close();
+    }
+
   } );
 
 
