@@ -154,7 +154,16 @@ void EmbeddedSurfaceGenerator::InitializePostSubGroups( Group * const problemMan
 
   embeddedSurfaceSubRegion->inheritGhostRank( cellElemGhostRank );
 
-  GEOSX_LOG_LEVEL_RANK_0( 1, "Number of embedded surface elements: " << embeddedSurfaceSubRegion->size() );
+  // Sum across all ranks
+  localIndex localNum = embeddedSurfaceSubRegion->size();
+  localIndex totalNum = 0;
+  MpiWrapper::allReduce( &localNum,
+                         &totalNum,
+                         1,
+						 MPI_SUM,
+                         MPI_COMM_GEOSX );
+
+  GEOSX_LOG_LEVEL_RANK_0( 1, "Number of embedded surface elements: " << totalNum );
 
   // Populate EdgeManager for embedded surfaces.
   EdgeManager & embSurfEdgeManager = meshLevel->getEmbdSurfEdgeManager();
@@ -162,7 +171,9 @@ void EmbeddedSurfaceGenerator::InitializePostSubGroups( Group * const problemMan
   EmbeddedSurfaceSubRegion::EdgeMapType & embSurfToEdgeMap = embeddedSurfaceSubRegion->edgeList();
   EmbeddedSurfaceSubRegion::NodeMapType & embSurfToNodeMap = embeddedSurfaceSubRegion->nodeList();
 
-  embSurfEdgeManager.BuildEdges( embeddedSurfaceSubRegion->totalNumberOfNodes(), embSurfToNodeMap.toViewConst(), embSurfToEdgeMap );
+  localIndex numOfPoints = nodeManager->embSurfNodesPosition().size(0);
+
+  embSurfEdgeManager.BuildEdges( numOfPoints, embSurfToNodeMap.toViewConst(), embSurfToEdgeMap );
 }
 
 void EmbeddedSurfaceGenerator::InitializePostInitialConditions_PreSubGroups( Group * const GEOSX_UNUSED_PARAM ( problemManager ) )
