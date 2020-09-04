@@ -164,7 +164,7 @@ void EmbeddedSurfaceGenerator::InitializePostSubGroups( Group * const problemMan
   MpiWrapper::allReduce( &localNum,
                          &totalNum,
                          1,
-						 MPI_SUM,
+                         MPI_SUM,
                          MPI_COMM_GEOSX );
 
   GEOSX_LOG_LEVEL_RANK_0( 1, "Number of embedded surface elements: " << totalNum );
@@ -175,7 +175,7 @@ void EmbeddedSurfaceGenerator::InitializePostSubGroups( Group * const problemMan
   EmbeddedSurfaceSubRegion::EdgeMapType & embSurfToEdgeMap = embeddedSurfaceSubRegion->edgeList();
   EmbeddedSurfaceSubRegion::NodeMapType & embSurfToNodeMap = embeddedSurfaceSubRegion->nodeList();
 
-  localIndex numOfPoints = nodeManager->embSurfNodesPosition().size(0);
+  localIndex numOfPoints = nodeManager->embSurfNodesPosition().size( 0 );
 
   embSurfEdgeManager.BuildEdges( numOfPoints, embSurfToNodeMap.toViewConst(), embSurfToEdgeMap );
 }
