@@ -87,6 +87,10 @@ void HypreSolver::solve_direct( HypreMatrix & mat,
   real64 timeSolve;
   info += SuperLU_DistSolve( SLUDData, rhs, sol, timeSolve );
 
+  // Save setup and solution times
+  m_result.setupTime = timeSetup;
+  m_result.solveTime = timeSolve;
+
   if( info == 0 )
   {
     HypreVector res( rhs );
@@ -94,12 +98,10 @@ void HypreSolver::solve_direct( HypreMatrix & mat,
     m_result.residualReduction = res.norm2() / rhs.norm2();
   }
 
-  if( info == 0 && m_result.residualReduction < m_parameters.direct.relTolerance )
+  if( info == 0 && m_result.residualReduction < m_parameters.direct.checkResidualTolerance )
   {
     m_result.status = LinearSolverResult::Status::Success;
     m_result.numIterations = 1;
-    m_result.setupTime = timeSetup;
-    m_result.solveTime = timeSolve;
   }
   else
   {

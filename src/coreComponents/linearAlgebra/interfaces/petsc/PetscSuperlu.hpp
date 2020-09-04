@@ -34,20 +34,6 @@ namespace geosx
 void SuperLU_DistSetFromOptions( PetscMatrix const & matrix,
                                  LinearSolverParameters const & params );
 
-/**
- * @brief Converts from GEOSX to SuperLU_Dist columns permutation option
- * @param[in] value the GEOSX option
- * @return the SuperLU_Dist option
- */
-string const & PetscGetColPermType( string const & value );
-
-/**
- * @brief Converts from GEOSX to SuperLU_Dist rows permutation option
- * @param[in] value the GEOSX option
- * @return the SuperLU_Dist option
- */
-string const & PetscGetRowPermType( string const & value );
-
 }
 
 #endif /*GEOSX_LINEARALGEBRA_INTERFACES_PETSCSUPERLU_HPP_*/

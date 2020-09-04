@@ -45,8 +45,8 @@ LinearSolverParametersInput::LinearSolverParametersInput( std::string const & na
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Whether to stop the simulation if the linear solver reports an error" );
 
-  registerWrapper( viewKeyStruct::directTolString, &m_parameters.direct.relTolerance )->
-    setApplyDefaultValue( m_parameters.direct.relTolerance )->
+  registerWrapper( viewKeyStruct::directCheckResTolString, &m_parameters.direct.checkResidualTolerance )->
+    setApplyDefaultValue( m_parameters.direct.checkResidualTolerance )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Tolerance used to check a direct solver solution" );
 
@@ -58,14 +58,12 @@ LinearSolverParametersInput::LinearSolverParametersInput( std::string const & na
   registerWrapper( viewKeyStruct::directColPermString, &m_parameters.direct.colPerm )->
     setApplyDefaultValue( m_parameters.direct.colPerm )->
     setInputFlag( InputFlags::OPTIONAL )->
-    setDescription( "How to permute the columns\n"
-                    "Available options are: none, MMD_At+A, MMD_AtA, colAMD, metis, parmetis" );
+    setDescription( "How to permute the columns. Available options are:\n* " + EnumStrings< LinearSolverParameters::Direct::ColPerm >::concat( "\n* " ) );
 
   registerWrapper( viewKeyStruct::directRowPermString, &m_parameters.direct.rowPerm )->
     setApplyDefaultValue( m_parameters.direct.rowPerm )->
     setInputFlag( InputFlags::OPTIONAL )->
-    setDescription( "How to permute the rows\n"
-                    "Available options are: none, mc64" );
+    setDescription( "How to permute the rows. Available options are:\n* " + EnumStrings< LinearSolverParameters::Direct::RowPerm >::concat( "\n* " ) );
 
   registerWrapper( viewKeyStruct::directReplTinyPivotString, &m_parameters.direct.replaceTinyPivot )->
     setApplyDefaultValue( m_parameters.direct.replaceTinyPivot )->
@@ -146,18 +144,12 @@ void LinearSolverParametersInput::PostProcessInput()
   static const std::set< integer > binaryOptions = { 0, 1 };
 
   GEOSX_ERROR_IF( binaryOptions.count( m_parameters.stopIfError ) == 0, viewKeyStruct::stopIfErrorString << " option can be either 0 (false) or 1 (true)" );
-
   GEOSX_ERROR_IF( binaryOptions.count( m_parameters.direct.equilibrate ) == 0, viewKeyStruct::directEquilString << " option can be either 0 (false) or 1 (true)" );
-
-  static const std::set< string > directColPermOptions = { "none", "MMD_At+A", "MMD_AtA", "colAMD", "metis", "parmetis" };
-  GEOSX_ERROR_IF( directColPermOptions.count( m_parameters.direct.colPerm ) == 0, "Unsupported columns permutation: " << m_parameters.direct.colPerm );
-
-  static const std::set< string > directRowPermOptions = { "none", "mc64" };
-  GEOSX_ERROR_IF( directRowPermOptions.count( m_parameters.direct.rowPerm ) == 0, "Unsupported rows permutation: " << m_parameters.direct.rowPerm );
-
   GEOSX_ERROR_IF( binaryOptions.count( m_parameters.direct.replaceTinyPivot ) == 0, viewKeyStruct::directReplTinyPivotString << " option can be either 0 (false) or 1 (true)" );
-
   GEOSX_ERROR_IF( binaryOptions.count( m_parameters.direct.iterativeRefine ) == 0, viewKeyStruct::directIterRefString << " option can be either 0 (false) or 1 (true)" );
+
+  GEOSX_ERROR_IF_LT_MSG( m_parameters.direct.checkResidualTolerance, 0.0, "Invalid value of " << viewKeyStruct::krylovTolString );
+  GEOSX_ERROR_IF_GT_MSG( m_parameters.direct.checkResidualTolerance, 1.0, "Invalid value of " << viewKeyStruct::krylovTolString );
 
   GEOSX_ERROR_IF_LT_MSG( m_parameters.krylov.maxIterations, 0, "Invalid value of " << viewKeyStruct::krylovMaxIterString );
   GEOSX_ERROR_IF_LT_MSG( m_parameters.krylov.maxRestart, 0, "Invalid value of " << viewKeyStruct::krylovMaxRestartString );

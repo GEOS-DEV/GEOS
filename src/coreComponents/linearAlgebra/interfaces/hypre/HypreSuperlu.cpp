@@ -31,11 +31,77 @@ static_assert( sizeof( int_t ) == sizeof( globalIndex ),
                "SuperLU_Dist int_t and geosx::globalIndex must have the same size" );
 
 static_assert( std::is_signed< int_t >::value == std::is_signed< globalIndex >::value,
-               "SuperLU_Dist int_t and geoex::globalIndex must both be signed or unsigned" );
+               "SuperLU_Dist int_t and geosx::globalIndex must both be signed or unsigned" );
 
 static_assert( std::is_same< double, real64 >::value,
                "SuperLU_Dist real and geosx::real64 must be the same type" );
 
+namespace
+{
+
+/**
+ * @brief Convert GEOSX globalIndex value to SLUD int_t
+ * @param index the input value
+ * @return the converted value
+ */
+inline int_t toSuperlu_intT( globalIndex const index )
+{
+  return LvArray::integerConversion< int_t >( index );
+}
+
+/**
+ * @brief Converts a non-const array from GEOSX globalIndex type to SLUD int_t
+ * @param[in] index the input array
+ * @return the converted array
+ */
+inline int_t * toSuperlu_intT( globalIndex * const index )
+{
+  return reinterpret_cast< int_t * >( index );
+}
+
+/**
+ * @brief Converts from GEOSX to SuperLU_Dist columns permutation option
+ * @param[in] value the GEOSX option
+ * @return the SuperLU_Dist option
+ */
+colperm_t const & getColPermType( LinearSolverParameters::Direct::ColPerm const & value )
+{
+  static std::map< LinearSolverParameters::Direct::ColPerm, colperm_t > const optionMap =
+  {
+    { LinearSolverParameters::Direct::ColPerm::none, NATURAL },
+    { LinearSolverParameters::Direct::ColPerm::MMD_AtplusA, MMD_AT_PLUS_A },
+    { LinearSolverParameters::Direct::ColPerm::MMD_AtA, MMD_ATA },
+    { LinearSolverParameters::Direct::ColPerm::colAMD, COLAMD },
+    { LinearSolverParameters::Direct::ColPerm::metis, METIS_AT_PLUS_A },
+    { LinearSolverParameters::Direct::ColPerm::parmetis, PARMETIS },
+  };
+
+  GEOSX_LAI_ASSERT_MSG( optionMap.count( value ) > 0, "Unsupported SuperLU_Dist columns permutation option: " << value );
+  return optionMap.at( value );
+}
+
+/**
+ * @brief Converts from GEOSX to SuperLU_Dist rows permutation option
+ * @param[in] value the GEOSX option
+ * @return the SuperLU_Dist option
+ */
+rowperm_t const & getRowPermType( LinearSolverParameters::Direct::RowPerm const & value )
+{
+  static std::map< LinearSolverParameters::Direct::RowPerm, rowperm_t > const optionMap =
+  {
+    { LinearSolverParameters::Direct::RowPerm::none, NOROWPERM },
+    { LinearSolverParameters::Direct::RowPerm::mc64, LargeDiag_MC64 },
+  };
+
+  GEOSX_LAI_ASSERT_MSG( optionMap.count( value ) > 0, "Unsupported SuperLU_Dist rows permutation option: " << value );
+  return optionMap.at( value );
+}
+
+/**
+ * @brief Converts a matrix from Hypre to SuperLU_Dist format
+ * @param[in] matrix the HypreMatrix object
+ * @param[out] SLUDData the structure containing the matrix in SuperLU_Dist format
+ */
 void ConvertToSuperMatrix( HypreMatrix const & matrix,
                            SuperLU_DistData & SLUDData )
 {
@@ -62,6 +128,7 @@ void ConvertToSuperMatrix( HypreMatrix const & matrix,
                                   SLU_D,
                                   SLU_GE );
 }
+}
 
 void SuperLU_DistCreate( HypreMatrix const & matrix,
                          LinearSolverParameters const & params,
@@ -69,45 +136,13 @@ void SuperLU_DistCreate( HypreMatrix const & matrix,
 {
   // Initialize options.
   set_default_options_dist( &SLUDData.options );
-  if( params.logLevel > 1 )
-  {
-    SLUDData.options.PrintStat = YES;
-  }
-  else
-  {
-    SLUDData.options.PrintStat = NO;
-  }
-
-  if( params.direct.equilibrate )
-  {
-    SLUDData.options.Equil = YES;
-  }
-  else
-  {
-    SLUDData.options.Equil = NO;
-  }
-  SLUDData.options.ColPerm = HypreGetColPermType( params.direct.colPerm );
-  SLUDData.options.RowPerm = HypreGetRowPermType( params.direct.rowPerm );
-  if( params.direct.colPerm == "parmetis" )
-  {
-    SLUDData.options.ParSymbFact = YES;
-  }
-  if( params.direct.replaceTinyPivot )
-  {
-    SLUDData.options.ReplaceTinyPivot = YES;
-  }
-  else
-  {
-    SLUDData.options.ReplaceTinyPivot = NO;
-  }
-  if( params.direct.iterativeRefine )
-  {
-    SLUDData.options.IterRefine = SLU_DOUBLE;
-  }
-  else
-  {
-    SLUDData.options.IterRefine = NOREFINE;
-  }
+  SLUDData.options.PrintStat = params.logLevel > 1 ? YES : NO;
+  SLUDData.options.Equil = params.direct.equilibrate ? YES : NO;
+  SLUDData.options.ColPerm = getColPermType( params.direct.colPerm );
+  SLUDData.options.RowPerm = getRowPermType( params.direct.rowPerm );
+  SLUDData.options.ParSymbFact = params.direct.colPerm == LinearSolverParameters::Direct::ColPerm::parmetis ? YES : NO;
+  SLUDData.options.ReplaceTinyPivot = params.direct.replaceTinyPivot ? YES : NO;
+  SLUDData.options.IterRefine = params.direct.iterativeRefine ? SLU_DOUBLE : NOREFINE;
 
   if( params.logLevel > 0 )
   {
@@ -139,21 +174,16 @@ int SuperLU_DistSetup( SuperLU_DistData & SLUDData,
   // Initialize the statistics variables.
   PStatInit( &SLUDData.stat );
 
-  // Create process grid.
+  // Create process grid: the target is to have the process grid as square as possible
   int const num_procs = MpiWrapper::Comm_size( SLUDData.comm );
-  int pcols = 1;
-  int prows = 1;
-  while( prows*pcols <= num_procs )
+  int prows = static_cast< int >( std::sqrt( num_procs ) );
+  while( num_procs % prows )
   {
-    ++prows;
+    --prows;
   }
-  --prows;
-  pcols = num_procs/prows;
-  while( prows*pcols != num_procs )
-  {
-    prows -= 1;
-    pcols = num_procs/prows;
-  }
+  int pcols = num_procs/prows;
+  std::tie( prows, pcols ) = std::minmax( prows, pcols );
+
   superlu_gridinit( SLUDData.comm, prows, pcols, &SLUDData.grid );
 
   // Call the linear equation solver to factorize the matrix.
@@ -253,34 +283,6 @@ void SuperLU_DistDestroy( SuperLU_DistData & SLUDData )
   hypre_CSRMatrixDestroy( SLUDData.localStrip );
 
   Destroy_CompRowLoc_Matrix_dist( &SLUDData.mat );
-}
-
-colperm_t const & HypreGetColPermType( string const & value )
-{
-  static std::map< string, colperm_t > const optionMap =
-  {
-    { "none", NATURAL },
-    { "MMD_At+A", MMD_AT_PLUS_A },
-    { "MMD_AtA", MMD_ATA },
-    { "metis", METIS_AT_PLUS_A },
-    { "parmetis", PARMETIS },
-  };
-
-  GEOSX_LAI_ASSERT_MSG( optionMap.count( value ) > 0, "Unsupported SuperLU_Dist columns permutation option: " << value );
-  return optionMap.at( value );
-}
-
-rowperm_t const & HypreGetRowPermType( string const & value )
-{
-  static std::map< string, rowperm_t > const optionMap =
-  {
-    { "none", NOROWPERM },
-    { "mc64", LargeDiag_MC64 },
-    { "awpm", LargeDiag_AWPM },
-  };
-
-  GEOSX_LAI_ASSERT_MSG( optionMap.count( value ) > 0, "Unsupported SuperLU_Dist rows permutation option: " << value );
-  return optionMap.at( value );
 }
 
 }

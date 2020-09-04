@@ -31,36 +31,6 @@ namespace geosx
 {
 
 /**
- * @brief Convert GEOSX globalIndex value to SLUD int_t
- * @param index the input value
- * @return the converted value
- */
-inline int_t toSuperlu_intT( globalIndex const index )
-{
-  return LvArray::integerConversion< int_t >( index );
-}
-
-/**
- * @brief Converts a non-const array from GEOSX globalIndex type to SLUD int_t
- * @param[in] index the input array
- * @return the converted array
- */
-inline int_t * toSuperlu_intT( globalIndex * const index )
-{
-  return reinterpret_cast< int_t * >( index );
-}
-
-/**
- * @brief Converts a const array from GEOSX globalIndex type to SLUD int_t
- * @param[in] index the input array
- * @return the converted array
- */
-inline int_t const * toSuperlu_intT( globalIndex const * const index )
-{
-  return reinterpret_cast< int_t const * >( index );
-}
-
-/**
  * SuperLU_Dist data
  */
 struct SuperLU_DistData
@@ -76,14 +46,6 @@ struct SuperLU_DistData
   superlu_dist_options_t options;     //!< SuperLU_Dist options
   MPI_Comm comm;                      //!< MPI communicator
 };
-
-/**
- * @brief Converts a matrix from Hypre to SuperLU_Dist format
- * @param[in] matrix the HypreMatrix object
- * @param[out] SLUDData the structure containing the matrix in SuperLU_Dist format
- */
-void ConvertToSuperMatrix( HypreMatrix const & matrix,
-                           SuperLU_DistData & SLUDData );
 
 /**
  * @brief Creates the SuperLU_Dist data structure
@@ -122,20 +84,6 @@ int SuperLU_DistSolve( SuperLU_DistData & SLUDData,
  * @param[in,out] SLUDData the structure containing the matrix in SuperLU_Dist format
  */
 void SuperLU_DistDestroy( SuperLU_DistData & SLUDData );
-
-/**
- * @brief Converts from GEOSX to SuperLU_Dist columns permutation option
- * @param[in] value the GEOSX option
- * @return the SuperLU_Dist option
- */
-colperm_t const & HypreGetColPermType( string const & value );
-
-/**
- * @brief Converts from GEOSX to SuperLU_Dist rows permutation option
- * @param[in] value the GEOSX option
- * @return the SuperLU_Dist option
- */
-rowperm_t const & HypreGetRowPermType( string const & value );
 
 }
 

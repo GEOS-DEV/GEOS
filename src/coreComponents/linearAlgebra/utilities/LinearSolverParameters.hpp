@@ -74,13 +74,34 @@ struct LinearSolverParameters
   /// Direct solver parameters: used for SuperLU_Dist interface through hypre and PETSc
   struct Direct
   {
-    real64 relTolerance = 1.e-12;   ///< Tolerance used to check a direct solver solution
-    integer equilibrate = 1;        ///< Whether to scale the rows and columns of the matrix
-    string colPerm = "metis";       ///< How to permute the columns [none, MMD_At+A, MMD_AtA, colAMD,
-                                    ///< metis, parmetis]
-    string rowPerm = "mc64";        ///< How to permute the rows [none, mc64]
-    integer replaceTinyPivot = 1;   ///< Whether to replace tiny pivots by sqrt(epsilon)*norm(A)
-    integer iterativeRefine = 1;    ///< Whether to perform iterative refinement
+    /**
+     * @brief How to permute the columns
+     */
+    enum class ColPerm : integer
+    {
+      none,        ///< natural
+      MMD_AtplusA, ///< multiple minimum degree on At+A
+      MMD_AtA,     ///< multiple minimum degree on At*A (heavy)
+      colAMD,      ///< approximate minimum degree on columns
+      metis,       ///< using METIS
+      parmetis     ///< using ParMETIS
+    };
+
+    /**
+     * @brief How to permute the rows
+     */
+    enum class RowPerm : integer
+    {
+      none, ///< natural
+      mc64  ///< using HSL routine MC64
+    };
+
+    real64 checkResidualTolerance = 1.e-12; ///< Tolerance used to check a direct solver solution
+    integer equilibrate = 1;                ///< Whether to scale the rows and columns of the matrix
+    ColPerm colPerm = ColPerm::metis;       ///< Columns permutation
+    RowPerm rowPerm = RowPerm::mc64;        ///< Rows permutation
+    integer replaceTinyPivot = 1;           ///< Whether to replace tiny pivots by sqrt(epsilon)*norm(A)
+    integer iterativeRefine = 1;            ///< Whether to perform iterative refinement
   }
   direct;                           ///< direct solver parameter struct
 
@@ -164,6 +185,18 @@ ENUM_STRINGS( LinearSolverParameters::PreconditionerType,
               "amg",
               "mgr",
               "block" )
+
+ENUM_STRINGS( LinearSolverParameters::Direct::ColPerm,
+              "none",
+              "MMD_AtplusA",
+              "MMD_AtA",
+              "colAMD",
+              "metis",
+              "parmetis" )
+
+ENUM_STRINGS( LinearSolverParameters::Direct::RowPerm,
+              "none",
+              "mc64" )
 
 } /* namespace geosx */
 

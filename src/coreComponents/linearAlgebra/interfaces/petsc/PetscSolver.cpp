@@ -95,20 +95,31 @@ void PetscSolver::solve_direct( PetscMatrix & mat,
   GEOSX_LAI_CHECK_ERROR( KSPSolve( ksp, rhs.unwrapped(), sol.unwrapped() ) );
   m_result.solveTime = watch.elapsedTime();
 
-  KSPConvergedReason reason;
-  GEOSX_LAI_CHECK_ERROR( KSPGetConvergedReason( ksp, &reason ) );
-
-  m_result.status = reason >= 0 ? LinearSolverResult::Status::Success : LinearSolverResult::Status::Breakdown;
-  m_result.numIterations = 1;
-
-  PetscVector res( rhs );
-  mat.gemv( -1.0, sol, 1.0, res );
-  m_result.residualReduction = res.norm2() / rhs.norm2();
-
   // check for nan or inf
   if( std::isnan( m_result.residualReduction ) || std::isinf( m_result.residualReduction ) )
   {
     m_result.status = LinearSolverResult::Status::Breakdown;
+  }
+  else
+  {
+    KSPConvergedReason reason;
+    GEOSX_LAI_CHECK_ERROR( KSPGetConvergedReason( ksp, &reason ) );
+
+    m_result.status = reason >= 0 ? LinearSolverResult::Status::Success : LinearSolverResult::Status::Breakdown;
+
+    PetscVector res( rhs );
+    mat.gemv( -1.0, sol, 1.0, res );
+    m_result.residualReduction = res.norm2() / rhs.norm2();
+
+    if( m_result.status == LinearSolverResult::Status::Success && m_result.residualReduction < m_parameters.direct.checkResidualTolerance )
+    {
+      m_result.status = LinearSolverResult::Status::Success;
+      m_result.numIterations = 1;
+    }
+    else
+    {
+      m_result.status = LinearSolverResult::Status::Breakdown;
+    }
   }
 
   // destroy solver
