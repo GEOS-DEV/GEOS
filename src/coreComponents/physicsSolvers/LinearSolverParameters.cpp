@@ -75,6 +75,11 @@ LinearSolverParametersInput::LinearSolverParametersInput( std::string const & na
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Whether to perform iterative refinement" );
 
+  registerWrapper( viewKeyStruct::directParallelString, &m_parameters.direct.parallel )->
+    setApplyDefaultValue( m_parameters.direct.parallel )->
+    setInputFlag( InputFlags::OPTIONAL )->
+    setDescription( "Whether to use a parallel solver (instead of a serial one)" );
+
   registerWrapper( viewKeyStruct::krylovMaxIterString, &m_parameters.krylov.maxIterations )->
     setApplyDefaultValue( m_parameters.krylov.maxIterations )->
     setInputFlag( InputFlags::OPTIONAL )->
@@ -147,6 +152,7 @@ void LinearSolverParametersInput::PostProcessInput()
   GEOSX_ERROR_IF( binaryOptions.count( m_parameters.direct.equilibrate ) == 0, viewKeyStruct::directEquilString << " option can be either 0 (false) or 1 (true)" );
   GEOSX_ERROR_IF( binaryOptions.count( m_parameters.direct.replaceTinyPivot ) == 0, viewKeyStruct::directReplTinyPivotString << " option can be either 0 (false) or 1 (true)" );
   GEOSX_ERROR_IF( binaryOptions.count( m_parameters.direct.iterativeRefine ) == 0, viewKeyStruct::directIterRefString << " option can be either 0 (false) or 1 (true)" );
+  GEOSX_ERROR_IF( binaryOptions.count( m_parameters.direct.parallel ) == 0, viewKeyStruct::directParallelString << " option can be either 0 (false) or 1 (true)" );
 
   GEOSX_ERROR_IF_LT_MSG( m_parameters.direct.checkResidualTolerance, 0.0, "Invalid value of " << viewKeyStruct::krylovTolString );
   GEOSX_ERROR_IF_GT_MSG( m_parameters.direct.checkResidualTolerance, 1.0, "Invalid value of " << viewKeyStruct::krylovTolString );

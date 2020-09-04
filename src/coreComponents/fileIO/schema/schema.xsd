@@ -599,6 +599,8 @@ Available options are: jacobi, blockJacobi, gaussSeidel, blockGaussSeidel, cheby
 		<xsd:attribute name="directEquil" type="integer" default="1" />
 		<!--directIterRef => Whether to perform iterative refinement-->
 		<xsd:attribute name="directIterRef" type="integer" default="1" />
+		<!--directParallel => Whether to use a parallel solver (instead of a serial one)-->
+		<xsd:attribute name="directParallel" type="integer" default="1" />
 		<!--directReplTinyPivot => Whether to replace tiny pivots by sqrt(epsilon)*norm(A)-->
 		<xsd:attribute name="directReplTinyPivot" type="integer" default="1" />
 		<!--directRowPerm => How to permute the rows. Available options are:

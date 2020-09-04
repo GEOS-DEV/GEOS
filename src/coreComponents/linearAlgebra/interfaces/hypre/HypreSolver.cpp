@@ -32,6 +32,9 @@
 #include <_hypre_parcsr_ls.h>
 #include <_hypre_IJ_mv.h>
 #include <krylov.h>
+#ifdef GEOSX_USE_SUITESPARSE
+#include "HypreSuiteSparse.hpp"
+#endif
 
 #include <fenv.h>
 
@@ -69,16 +72,21 @@ void HypreSolver::solve( HypreMatrix & mat,
   }
 }
 
-void HypreSolver::solve_direct( HypreMatrix & mat,
-                                HypreVector & sol,
-                                HypreVector & rhs )
+namespace
+{
+
+void solve_parallelDirect( LinearSolverParameters const & parameters,
+                           HypreMatrix & mat,
+                           HypreVector & sol,
+                           HypreVector & rhs,
+                           LinearSolverResult & result )
 {
   // To be able to use SuperLU_Dist solver we need to disable floating point exceptions
   // Disable floating point exceptions and save the FPE flags
   int const fpeflags = LvArray::system::disableFloatingPointExceptions( FE_ALL_EXCEPT );
 
   SuperLU_DistData SLUDData;
-  SuperLU_DistCreate( mat, m_parameters, SLUDData );
+  SuperLU_DistCreate( mat, parameters, SLUDData );
 
   int info = 0;
   real64 timeSetup;
@@ -88,24 +96,24 @@ void HypreSolver::solve_direct( HypreMatrix & mat,
   info += SuperLU_DistSolve( SLUDData, rhs, sol, timeSolve );
 
   // Save setup and solution times
-  m_result.setupTime = timeSetup;
-  m_result.solveTime = timeSolve;
+  result.setupTime = timeSetup;
+  result.solveTime = timeSolve;
 
   if( info == 0 )
   {
     HypreVector res( rhs );
     mat.gemv( -1.0, sol, 1.0, res );
-    m_result.residualReduction = res.norm2() / rhs.norm2();
+    result.residualReduction = res.norm2() / rhs.norm2();
   }
 
-  if( info == 0 && m_result.residualReduction < m_parameters.direct.checkResidualTolerance )
+  if( info == 0 && result.residualReduction < parameters.direct.checkResidualTolerance )
   {
-    m_result.status = LinearSolverResult::Status::Success;
-    m_result.numIterations = 1;
+    result.status = LinearSolverResult::Status::Success;
+    result.numIterations = 1;
   }
   else
   {
-    m_result.status = LinearSolverResult::Status::Breakdown;
+    result.status = LinearSolverResult::Status::Breakdown;
   }
 
   SuperLU_DistDestroy( SLUDData );
@@ -114,8 +122,54 @@ void HypreSolver::solve_direct( HypreMatrix & mat,
   LvArray::system::disableFloatingPointExceptions( fpeflags );
 }
 
-namespace
+#ifdef GEOSX_USE_SUITESPARSE
+void solve_serialDirect( LinearSolverParameters const & parameters,
+                         HypreMatrix & mat,
+                         HypreVector & sol,
+                         HypreVector & rhs,
+                         LinearSolverResult & result )
 {
+  // To be able to use SuperLU_Dist solver we need to disable floating point exceptions
+  // Disable floating point exceptions and save the FPE flags
+  int const fpeflags = LvArray::system::disableFloatingPointExceptions( FE_ALL_EXCEPT );
+
+  SuiteSparseData SSData;
+  SuiteSparseCreate( mat, parameters, SSData );
+
+  int info = 0;
+  real64 timeSetup;
+  info = SuiteSparseSetup( SSData, timeSetup );
+
+  real64 timeSolve;
+  info += SuiteSparseSolve( SSData, rhs, sol, timeSolve );
+
+  // Save setup and solution times
+  result.setupTime = timeSetup;
+  result.solveTime = timeSolve;
+
+  if( info == 0 )
+  {
+    HypreVector res( rhs );
+    mat.gemv( -1.0, sol, 1.0, res );
+    result.residualReduction = res.norm2() / rhs.norm2();
+  }
+
+  if( info == 0 && result.residualReduction < parameters.direct.checkResidualTolerance )
+  {
+    result.status = LinearSolverResult::Status::Success;
+    result.numIterations = 1;
+  }
+  else
+  {
+    result.status = LinearSolverResult::Status::Breakdown;
+  }
+
+  SuiteSparseDestroy( SSData );
+
+  // Restore the previous FPE flags
+  LvArray::system::disableFloatingPointExceptions( fpeflags );
+}
+#endif
 
 void CreateHypreGMRES( LinearSolverParameters const & params,
                        MPI_Comm const comm,
@@ -241,6 +295,24 @@ void CreateHypreKrylovSolver( LinearSolverParameters const & params,
 }
 
 } // namespace
+
+void HypreSolver::solve_direct( HypreMatrix & mat,
+                                HypreVector & sol,
+                                HypreVector & rhs )
+{
+  if( m_parameters.direct.parallel )
+  {
+    solve_parallelDirect( m_parameters, mat, sol, rhs, m_result );
+  }
+  else
+  {
+#ifdef GEOSX_USE_SUITESPARSE
+    solve_serialDirect( m_parameters, mat, sol, rhs, m_result );
+#else
+    GEOSX_ERROR( "Hypre direct solver interface: serial direct solver not available (try to compile GEOSX TPLs with SuiteSparse)." );
+#endif
+  }
+}
 
 void HypreSolver::solve_krylov( HypreMatrix & mat,
                                 HypreVector & sol,

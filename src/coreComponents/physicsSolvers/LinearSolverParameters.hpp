@@ -78,6 +78,7 @@ public:
     static constexpr auto directRowPermString       = "directRowPerm";        ///< direct solver rows permutation key
     static constexpr auto directReplTinyPivotString = "directReplTinyPivot";  ///< direct solver replace tiny pivot key
     static constexpr auto directIterRefString       = "directIterRef";        ///< direct solver iterative refinement key
+    static constexpr auto directParallelString      = "directParallel";       ///< direct solver parallelism key
 
     static constexpr auto krylovMaxIterString     = "krylovMaxIter";     ///< Krylov max iterations key
     static constexpr auto krylovMaxRestartString  = "krylovMaxRestart";  ///< Krylov max iterations key

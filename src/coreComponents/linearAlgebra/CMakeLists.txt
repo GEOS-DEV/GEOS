@@ -100,6 +100,18 @@ if( ENABLE_HYPRE )
 
     list( APPEND dependencyList hypre )
 
+    if( ENABLE_SUITESPARSE )
+
+        list( APPEND linearAlgebra_headers
+              interfaces/hypre/HypreSuiteSparse.hpp )
+
+        list( APPEND linearAlgebra_sources
+              interfaces/hypre/HypreSuiteSparse.cpp )
+
+        list( APPEND dependencyList suitesparse )
+
+    endif()
+
 endif()
 
 if( ENABLE_PETSC )

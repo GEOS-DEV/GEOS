@@ -102,6 +102,7 @@ struct LinearSolverParameters
     RowPerm rowPerm = RowPerm::mc64;        ///< Rows permutation
     integer replaceTinyPivot = 1;           ///< Whether to replace tiny pivots by sqrt(epsilon)*norm(A)
     integer iterativeRefine = 1;            ///< Whether to perform iterative refinement
+    integer parallel = 1;                   ///< Whether to use a parallel solver (instead of a serial one)
   }
   direct;                           ///< direct solver parameter struct
 
