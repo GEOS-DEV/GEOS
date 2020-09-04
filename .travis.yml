@@ -3,6 +3,7 @@ language: minimal
 env:
   global:
   - GEOSX_TPL_TAG=121-439
+  - secure: CGs2uH6efq1Me6xJWRr0BnwtwxoujzlowC4FHXHdWbNOkPsXf7nCgdaW5vthfD3bhnOeEUQSrfxdhTRtyU/NfcKLmKgGBnZOdUG4/JJK4gDSJ2Wp8LZ/mB0QEoODKVxbh+YtoAiHe3y4M9PGCs+wkNDw/3eEU00cK12DZ6gad0RbLjI3xkhEr/ZEZDZkcYg9yHAhl5bmpqoh/6QGnIg8mxIqdAtGDw+6tT0EgUqjeqc5bG5WwsamKzJItHSXD5zx8IJAlgDk4EzEGjZe0m56YnNfb9iwqqUsmL3Cuwgs7ByVDYw78JC5Kv42YqoxA5BxMT2mFsEe37TpYNXlzofU7ma2Duw9DGXWQd4IkTCcBxlyR0I0bfo0TmgO+y7PYG9lIyHPUkENemdozsZcWamqqkqegiEdRhDVYlSRo3mu7iCwTS6ZTALliVyEYjYxYb7oAnR3cNywXjblTCI8oKfgLSY+8WijM9SRl57JruIHLkLMCjmRI+cZBfv5tS2tYQTBPkygGrigrrN77ZiC7/TGyfggSN0+y0oYtOAgqEnBcKcreiibMW7tKcV2Z1RFD9ZvIkSc1EXLUPDP8FX1oyhmqBMqVo8LksrYLDJHQ05+F3YNgl2taSt7uMjQ4e8iZ3/IjFeMnbylDw+cj/RbS520HXsFPbWFm2Pb9pceA9n6GnY=
 
 # The integrated test repository contains large data (using git lfs) and we do not use them here.
 # To save time (and money) we do not let travis automatically clone all our (lfs) subrepositories and do it by hand.
@@ -105,13 +106,16 @@ draft_script: &draft_script
   - if [[ $TRAVIS_PULL_REQUEST == false ]]; then exit 0; fi;
   - |
     is_draft=$(curl -H "Accept: application/vnd.github.v3+json" \
-        https://api.github.com/repos/GEOSX/GEOSX/pulls/$TRAVIS_PULL_REQUEST | \
+        https://api.github.com/repos/$TRAVIS_PULL_REQUEST_SLUG/pulls/$TRAVIS_PULL_REQUEST | \
         jq ".draft")
 
   # CI jobs will be cancelled if PR is a draft.
   # PR status must be "Open" to run CI.
   - |
     if [[ $is_draft == true ]]; then
+      curl -sS -H "Travis-API-Version: 3" \
+      -H "Authorization: token $AUTH_VAR" \
+      -X POST https://api.travis-ci.com/build/$TRAVIS_BUILD_ID/cancel
       exit 1
     else
       exit 0
@@ -119,20 +123,20 @@ draft_script: &draft_script
 
 return_script: &return_script
   script:
+  # Verifies if all the "checks" jobs passed
   - |
-    if [[ $(curl -sS -H "Travis-API-Version: 3" -X \
-          GET https://api.travis-ci.com/build/$TRAVIS_BUILD_ID/jobs | \
-          jq -r '.jobs[] | select( (.stage.name == "checks") and
-          (.allow_failure == true)) | .state') == *failed* ]]; then
-      exit 1
-    else
-      exit 0
-    fi
+    states=$(curl -sS -H "Travis-API-Version: 3" \
+             -X GET https://api.travis-ci.com/build/$TRAVIS_BUILD_ID/jobs | \
+             jq -r '.jobs[] | select( (.stage.name == "checks") and
+             (.allow_failure == true)) | .state ')
+  - num_states=$(echo $states | wc -w)
+  - num_passed=$(echo $states | grep -o "passed" | wc -w)
+  - if [[ $num_states == $num_passed ]]; then exit 0; else exit 1; fi
 
 stages:
-  - checks
-  - builds
-  - return_status
+- checks
+- builds
+- return_status
 
 jobs:
   allow_failures:
