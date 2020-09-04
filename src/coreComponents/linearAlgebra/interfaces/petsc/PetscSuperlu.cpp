@@ -67,7 +67,7 @@ string const & getRowPermType( LinearSolverParameters::Direct::RowPerm const & v
 void SuperLU_DistSetFromOptions( PetscMatrix const & matrix,
                                  LinearSolverParameters const & params )
 {
-  // Initialize options.
+  // Set options.
   if( params.logLevel > 0 )
   {
     PetscOptionsSetValue( nullptr, "-mat_superlu_dist_statprint", "1" );

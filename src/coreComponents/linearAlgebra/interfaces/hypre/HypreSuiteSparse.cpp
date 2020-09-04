@@ -151,6 +151,7 @@ void SuiteSparseCreate( HypreMatrix const & matrix,
   // Get the default control parameters
   umfpack_dl_defaults( SSData.Control );
   SSData.Control[UMFPACK_PRL] = params.logLevel > 1 ? 6 : 1;
+  SSData.Control[UMFPACK_ORDERING] = UMFPACK_ORDERING_BEST;
 
   // Convert matrix from Hypre to SuiteSparse format
   ConvertToSuiteSparseMatrix( matrix, SSData );

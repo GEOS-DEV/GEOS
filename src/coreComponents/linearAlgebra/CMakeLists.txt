@@ -135,6 +135,18 @@ if( ENABLE_PETSC )
 
     list( APPEND dependencyList petsc )
 
+    if( ENABLE_SUITESPARSE )
+
+        list( APPEND linearAlgebra_headers
+              interfaces/petsc/PetscSuiteSparse.hpp )
+
+        list( APPEND linearAlgebra_sources
+              interfaces/petsc/PetscSuiteSparse.cpp )
+
+        list( APPEND dependencyList suitesparse )
+
+    endif()
+
 endif()
 
 if( ENABLE_OPENMP )

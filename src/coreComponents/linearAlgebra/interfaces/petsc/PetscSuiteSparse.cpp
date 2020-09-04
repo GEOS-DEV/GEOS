@@ -13,27 +13,31 @@
  */
 
 /**
- * @file PetscSuperlu.hpp
+ * @file PetscSuiteSparse.cpp
  */
 
-#ifndef GEOSX_LINEARALGEBRA_INTERFACES_PETSCSUPERLU_HPP_
-#define GEOSX_LINEARALGEBRA_INTERFACES_PETSCSUPERLU_HPP_
-
-#include "common/DataTypes.hpp"
-#include "linearAlgebra/interfaces/petsc/PetscMatrix.hpp"
-#include "linearAlgebra/utilities/LinearSolverParameters.hpp"
+#include "PetscSuiteSparse.hpp"
+#include <petsc.h>
+#include <superlu_ddefs.h>
 
 namespace geosx
 {
 
-/**
- * @brief Sets SuperLU_Dist options
- * @param[in] matrix the PetscMatrix object
- * @param[in] params the linear solver parameters
- */
-void SuperLU_DistSetFromOptions( PetscMatrix const & matrix,
-                                 LinearSolverParameters const & params );
+void SuiteSparseSetFromOptions( PetscMatrix const & matrix,
+                                LinearSolverParameters const & params )
+{
+  GEOSX_UNUSED_VAR( matrix );
 
+  // Set options.
+  if( params.logLevel > 0 )
+  {
+    PetscOptionsSetValue( nullptr, "-mat_umfpack_prl", "6" );
+  }
+  else
+  {
+    PetscOptionsSetValue( nullptr, "-mat_umfpack_prl", "1" );
+  }
+  PetscOptionsSetValue( nullptr, "-mat_umfpack_ordering", "BEST" );
 }
 
-#endif /*GEOSX_LINEARALGEBRA_INTERFACES_PETSCSUPERLU_HPP_*/
+}

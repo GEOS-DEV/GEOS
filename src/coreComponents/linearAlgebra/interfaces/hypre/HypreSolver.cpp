@@ -129,7 +129,7 @@ void solve_serialDirect( LinearSolverParameters const & parameters,
                          HypreVector & rhs,
                          LinearSolverResult & result )
 {
-  // To be able to use SuperLU_Dist solver we need to disable floating point exceptions
+  // To be able to use UMFPACK direct solver we need to disable floating point exceptions
   // Disable floating point exceptions and save the FPE flags
   int const fpeflags = LvArray::system::disableFloatingPointExceptions( FE_ALL_EXCEPT );
 
