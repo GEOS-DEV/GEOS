@@ -68,7 +68,8 @@ void sortIntReal64( Int * arrayInt, real64 * arrayReal64, localIndex const size 
   }
   for( localIndex s = 1, d; s < size; ++s )
   {
-    for( d = permutation[s]; d < s; d = permutation[d] );
+    for( d = permutation[s]; d < s; d = permutation[d] )
+      ;
     if( d == s )
     {
       while( d = permutation[d], d != s )
@@ -180,13 +181,13 @@ int SuiteSparseSetup( SuiteSparseData & SSData,
       umfpack_dl_report_status( SSData.Control, status );
       GEOSX_ERROR( "Hypre SuiteSparse interface: umfpack_dl_symbolic failed." );
     }
- 
+
     // print the symbolic factorization
     if( SSData.logLevel > 1 )
     {
       umfpack_dl_report_symbolic( SSData.Symbolic, SSData.Control );
     }
- 
+
     // numeric factorization
     status = umfpack_dl_numeric( SSData.rowPtr,
                                  SSData.colIndices,
@@ -195,13 +196,13 @@ int SuiteSparseSetup( SuiteSparseData & SSData,
                                  &SSData.Numeric,
                                  SSData.Control,
                                  SSData.Info );
-    if (status < 0)
+    if( status < 0 )
     {
       umfpack_dl_report_info( SSData.Control, SSData.Info );
       umfpack_dl_report_status( SSData.Control, status );
       GEOSX_ERROR( "Hypre SuiteSparse interface: umfpack_dl_numeric failed." );
     }
- 
+
     // print the numeric factorization
     if( SSData.logLevel > 1 )
     {
