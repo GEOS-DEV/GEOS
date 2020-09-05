@@ -1740,8 +1740,7 @@ void HydrofractureSolver::UpdateDeformationForCoupling( DomainPartition * const 
 	}
       }
 
-      //TJ: use the displacement gap at the newly split node pair for the tip deltaVolume
-      real64 refDisp = std::abs( u(refNodeIndex,0) - u(myChildIndex[refNodeIndex],0) );
+
 
       //TJ: should check refDisp, instead of individual displacement value
 //      GEOSX_ASSERT_MSG( u(refNodeIndex,0) < 1.0e-12,
@@ -1765,7 +1764,8 @@ void HydrofractureSolver::UpdateDeformationForCoupling( DomainPartition * const 
 	  }
 	}
       }
-
+      //TJ: use the displacement gap at the newly split node pair for the tip deltaVolume
+      real64 refDisp = std::abs( u(refNodeIndex,0) - u(myChildIndex[refNodeIndex],0) );
 
       std::cout  << " disp " << refNodeIndex               << " = " << u(refNodeIndex,0)
 	         << ", disp " << myChildIndex[refNodeIndex] << " = " << u(myChildIndex[refNodeIndex],0)
