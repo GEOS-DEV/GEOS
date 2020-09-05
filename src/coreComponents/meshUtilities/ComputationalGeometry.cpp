@@ -53,20 +53,25 @@ R1Tensor LinePlaneIntersection( R1Tensor lineDir,
 
 //*************************************************************************************************
 real64 ComputeSurfaceArea( array1d< R1Tensor > const & points,
-                           localIndex const numPoints,
                            R1Tensor const & normal )
 {
-  // reorder points counterclockwise
-  array1d< R1Tensor > pointsReordered = orderPointsCCW( points, numPoints, normal );
-
   real64 surfaceArea = 0.0;
-  for( localIndex a = 0; a < numPoints - 2; ++a )
-  {
-    real64 v1[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( pointsReordered[ a + 1 ] );
-    real64 v2[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( pointsReordered[ a + 2 ] );
 
-    LvArray::tensorOps::subtract< 3 >( v1, pointsReordered[ 0 ] );
-    LvArray::tensorOps::subtract< 3 >( v2, pointsReordered[ 0 ] );
+  array1d< R1Tensor > orderedPoints ( points.size());
+  for( localIndex a = 0; a < points.size(); a++ )
+  {
+    LvArray::tensorOps::copy< 3 >( orderedPoints[a], points[a] );
+  }
+
+  orderPointsCCW( orderedPoints, normal );
+
+  for( localIndex a = 0; a < points.size() - 2; ++a )
+  {
+    real64 v1[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( orderedPoints[ a + 1 ] );
+    real64 v2[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( orderedPoints[ a + 2 ] );
+
+    LvArray::tensorOps::subtract< 3 >( v1, orderedPoints[ 0 ] );
+    LvArray::tensorOps::subtract< 3 >( v2, orderedPoints[ 0 ] );
 
     real64 triangleNormal[ 3 ];
     LvArray::tensorOps::crossProduct( triangleNormal, v1, v2 );
@@ -77,10 +82,11 @@ real64 ComputeSurfaceArea( array1d< R1Tensor > const & points,
 }
 
 //*************************************************************************************************
-array1d< R1Tensor > orderPointsCCW( array1d< R1Tensor > const & points,
-                                    localIndex const numPoints,
-                                    R1Tensor const & normal )
+void orderPointsCCW( array1d< R1Tensor > & points,
+                     R1Tensor const & normal )
 {
+  localIndex numPoints = points.size();
+
   array1d< R1Tensor > orderedPoints( numPoints );
 
   std::vector< int > indices( numPoints );
@@ -93,6 +99,7 @@ array1d< R1Tensor > orderPointsCCW( array1d< R1Tensor > const & points,
     LvArray::tensorOps::add< 3 >( centroid, points[ a ] );
     indices[ a ] = a;
   }
+
   LvArray::tensorOps::scale< 3 >( centroid, 1.0 / numPoints );
 
   R1Tensor v0 = LVARRAY_TENSOROPS_INIT_LOCAL_3( centroid );
@@ -121,10 +128,13 @@ array1d< R1Tensor > orderPointsCCW( array1d< R1Tensor > const & points,
   for( localIndex a=0; a < numPoints; a++ )
   {
     // fill in with ordered
-    orderedPoints[ a ] = points[ indices[ a ] ];
+    LvArray::tensorOps::copy< 3 >( orderedPoints[ a ], points[ indices[ a ] ] );
   }
 
-  return orderedPoints;
+  for( localIndex a = 0; a < numPoints; a++ )
+  {
+    LvArray::tensorOps::copy< 3 >( points[a], orderedPoints[a] );
+  }
 }
 
 //*************************************************************************************************
