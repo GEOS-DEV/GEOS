@@ -30,7 +30,6 @@ namespace geosx
 class CellElementSubRegion : public CellBlock
 {
 public:
-
   /**
    * @name Constructor / Destructor
    */

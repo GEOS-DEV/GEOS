@@ -80,8 +80,6 @@ void CellElementSubRegion::ConstructSubRegionFromFaceSet( FaceManager const * co
   SortedArrayView< localIndex const > const & targetSet = faceManager->sets().getReference< SortedArray< localIndex > >( setName );
   m_toFacesRelation.resize( 0, 2 );
   this->resize( targetSet.size() );
-
-
 }
 
 void CellElementSubRegion::ViewPackingExclusionList( SortedArray< localIndex > & exclusionList ) const
