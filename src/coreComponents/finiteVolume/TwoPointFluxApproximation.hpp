@@ -67,6 +67,10 @@ protected:
                                        string const & setName,
                                        SortedArrayView< localIndex const > const & faceSet ) const override;
 
+  virtual void addEDFracToFractureStencil( MeshLevel & mesh,
+                                           string const & embeddedSurfaceRegionName ) const override;
+
+
 };
 
 }
