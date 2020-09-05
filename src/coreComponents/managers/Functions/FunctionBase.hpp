@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -186,6 +186,10 @@ void FunctionBase::EvaluateT( dataRepository::Group const * const group,
   // Make sure the inputs do not exceed the maximum length
   GEOSX_ERROR_IF( totalVarSize > 4, "Function input size is: " << totalVarSize );
 
+  // Make sure the result / set size match
+  GEOSX_ERROR_IF( result.size() != set.size(), "To apply a function to a set, the size of the result and set must match" );
+
+
   forAll< serialPolicy >( set.size(), [&, set]( localIndex const i )
   {
     localIndex const index = set[ i ];
@@ -200,10 +204,8 @@ void FunctionBase::EvaluateT( dataRepository::Group const * const group,
       }
     }
 
-    // TODO: Check this line to make sure it is correct
-    // Note: Since we are iterating over a set, place the result
-    // at the same location as the input.
-    result[index] = static_cast< LEAF const * >(this)->Evaluate( input );
+    // Note: we expect that result is the same size as the set
+    result[i] = static_cast< LEAF const * >(this)->Evaluate( input );
   } );
 }
 } /* namespace geosx */

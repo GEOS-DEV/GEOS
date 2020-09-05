@@ -5,7 +5,7 @@ Developer Guide
 Welcome to the GEOSX developer guide.
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 3
 
    Contributing/index_contributing.rst
 

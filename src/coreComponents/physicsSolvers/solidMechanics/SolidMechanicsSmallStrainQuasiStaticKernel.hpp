@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -196,7 +196,7 @@ public:
     m_constitutiveUpdate.SmallStrain( k, q, strainInc );
 
     GEOSX_UNUSED_VAR( q )
-    m_constitutiveUpdate.GetStiffness( k, stack.constitutiveStiffness );
+    m_constitutiveUpdate.GetStiffness( k, q, stack.constitutiveStiffness );
   }
 
 
@@ -266,12 +266,9 @@ public:
                                             StackVariables & stack,
                                             STRESS_MODIFIER && stressModifier = NoOpFunctors{} ) const
   {
-    real64 stress[6] = { m_constitutiveUpdate.m_stress( k, q, 0 ),
-                         m_constitutiveUpdate.m_stress( k, q, 1 ),
-                         m_constitutiveUpdate.m_stress( k, q, 2 ),
-                         m_constitutiveUpdate.m_stress( k, q, 3 ),
-                         m_constitutiveUpdate.m_stress( k, q, 4 ),
-                         m_constitutiveUpdate.m_stress( k, q, 5 ) };
+    real64 stress[6];
+
+    m_constitutiveUpdate.getStress( k, q, stress );
 
     stressModifier( stress );
 

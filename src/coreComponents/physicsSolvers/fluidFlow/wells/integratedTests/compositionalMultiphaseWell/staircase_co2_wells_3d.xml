@@ -10,7 +10,7 @@
       targetRegions="{ Channel, wellRegion1, wellRegion2 }">
       <NonlinearSolverParameters
         newtonTol="1.0e-8"
-        lineSearchAction="0"
+        lineSearchAction="None"
         newtonMaxIter="40"/>
       <LinearSolverParameters
         solverType="direct"

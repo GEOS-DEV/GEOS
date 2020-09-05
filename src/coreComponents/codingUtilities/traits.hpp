@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -149,6 +149,26 @@ constexpr bool is_string = std::is_base_of< std::string, T >::value;
 /// True if T is an instantiation of LvArray::Array.
 template< typename T >
 constexpr bool is_array = LvArray::isArray< T >;
+
+/// True if T is an instantiation of LvArray::ArrayView.
+template< typename T >
+constexpr bool is_array_view = LvArray::isArrayView< T >;
+
+/// True if T is an instantiation of LvArray::SortedArray.
+template< typename T >
+constexpr bool is_sorted_array = LvArray::isSortedArray< T >;
+
+/// True if T is an instantiation of LvArray:SortedArrayView.
+template< typename T >
+constexpr bool is_sorted_array_view = LvArray::isSortedArrayView< T >;
+
+/// True if T is an instantiation of LvArray::ArrayView or LvArray::Array
+template< typename T >
+constexpr bool is_array_type = traits::is_array_view< T > || traits::is_array< T >;
+
+/// True if T is an instantiation of LvArray::SortedArrayView or LvArray::SortedArray
+template< typename T >
+constexpr bool is_sorted_array_type = traits::is_sorted_array_view< T > || traits::is_sorted_array< T >;
 
 /// True if T is a Tensor class.
 template< typename T >

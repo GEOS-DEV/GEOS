@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -140,8 +140,6 @@ public:
     static constexpr auto referencePressureString    = "referencePressure";
     static constexpr auto referenceDensityString     = "referenceDensity";
     static constexpr auto referenceViscosityString   = "referenceViscosity";
-    static constexpr auto densityModelStringString   = "densityModelString";
-    static constexpr auto viscosityModelStringString = "viscosityModelString";
     static constexpr auto densityModelTypeString     = "densityModelType";
     static constexpr auto viscosityModelTypeString   = "viscosityModelType";
   };
@@ -166,12 +164,6 @@ private:
 
   /// reference viscosity parameter
   real64 m_referenceViscosity;
-
-  /// input string for type of density model (linear, quadratic, exponential)
-  string m_densityModelString;
-
-  /// input string for type of viscosity model (linear, quadratic, exponential)
-  string m_viscosityModelString;
 
   /// type of density model (linear, quadratic, exponential)
   ExponentApproximationType m_densityModelType;

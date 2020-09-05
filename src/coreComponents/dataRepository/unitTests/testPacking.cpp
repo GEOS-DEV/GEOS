@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -19,6 +19,8 @@
 #include "dataRepository/BufferOpsDevice.hpp"
 #include "managers/initialization.hpp"
 #include "mpiCommunications/CommunicationTools.hpp"
+
+#include "dataRepository/wrapperHelpers.hpp"
 
 #include <ctime>
 #include <cstdlib>
@@ -159,6 +161,31 @@ TEST( testPacking, testPackingDevice )
 
   buffer_unit_type const * cbuffer = &buf[0];
   bufferOps::UnpackDevice( cbuffer, unpacked.toView());
+  unpacked.move( LvArray::MemorySpace::CPU );
+  for( localIndex ii = 0; ii < size; ++ii )
+    EXPECT_EQ( veloc[ii], unpacked[ii] );
+}
+
+TEST( testPacking, testPackingDeviceHelper )
+{
+  std::srand( std::time( nullptr ));
+  constexpr localIndex size = 10000;
+  array1d< double > veloc( size );
+  array1d< double > unpacked( size );
+
+  for( localIndex ii = 0; ii < size; ++ii )
+    //for( localIndex jj = 0; jj < 3; ++jj )
+    veloc[ii] = drand();
+
+  buffer_unit_type * null_buf = NULL;
+  localIndex calc_size = bufferOps::PackDevice< false >( null_buf, veloc.toViewConst() );
+
+  buffer_type buf( calc_size );
+  buffer_unit_type * buffer = &buf[0];
+  dataRepository::wrapperHelpers::PackDevice< true >( buffer, veloc.toViewConst());
+
+  buffer_unit_type const * cbuffer = &buf[0];
+  dataRepository::wrapperHelpers::UnpackDevice( cbuffer, unpacked.toView());
   unpacked.move( LvArray::MemorySpace::CPU );
   for( localIndex ii = 0; ii < size; ++ii )
     EXPECT_EQ( veloc[ii], unpacked[ii] );

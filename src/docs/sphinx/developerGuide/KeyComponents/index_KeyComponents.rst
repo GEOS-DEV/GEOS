@@ -5,7 +5,7 @@ Code Components
 The main code components are described here.
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
 
    ./dataRepo_link
 
@@ -17,7 +17,7 @@ The main code components are described here.
 
    ./dofManager_link
 
-   ./LvArray_link
+   ./LvArray
 
    ./fem_link
 

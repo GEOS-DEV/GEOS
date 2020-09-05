@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -40,7 +40,7 @@ class EmbeddedSurfaceSubRegion : public ElementSubRegionBase
 public:
 
   /// Embedded surface element to nodes map type
-  using NodeMapType = InterObjectRelation< array2d< localIndex, cells::NODE_MAP_PERMUTATION > >;
+  using NodeMapType = InterObjectRelation< ArrayOfArrays< localIndex > >;
 
   /// Embedded surface element to edges map type
   using EdgeMapType = InterObjectRelation< ArrayOfArrays< localIndex > >;
@@ -99,25 +99,11 @@ public:
 
   /**
    * @brief Function to compute the geometric quantities of a specific embedded surface element.
-   * @param index index of the face element
-   */
-  void CalculateElementGeometricQuantities( localIndex const index );
-
-  /**
-   * @brief Function to compute the geometric quantities of a specific embedded surface element.
    * @param intersectionPoints array containing the nodes defining the embedded surface elements
    * @param k index of the face element
    */
   void CalculateElementGeometricQuantities( array1d< R1Tensor > const intersectionPoints,
                                             localIndex k );
-
-  /**
-   * @brief Function to add a new embedded surface element.
-   * @param cellIndex index of the cell element cut by the new embedded surface element
-   * @param normalVector unit normal vector to the embedded surface
-   */
-  void AddNewEmbeddedSurface( localIndex const cellIndex,
-                              R1Tensor normalVector );
 
   /**
    * @brief Function to add a new embedded surface element.
@@ -133,7 +119,7 @@ public:
   bool AddNewEmbeddedSurface( localIndex const cellIndex,
                               localIndex const regionIndex,
                               localIndex const subRegionIndex,
-                              NodeManager const & nodeManager,
+                              NodeManager & nodeManager,
                               EdgeManager const & edgeManager,
                               FixedOneToManyRelation const & cellToEdges,
                               BoundedPlane const * fracture );
@@ -153,38 +139,8 @@ public:
   real64 ComputeHeavisideFunction( ArraySlice< real64 const, 1, nodes::REFERENCE_POSITION_USD - 1 > const nodeCoord,
                                    localIndex const k ) const;
 
-  /**
-   * @brief Get list of intersection points (nodes of the embedded plane), offset and connectivity list
-   * @param nodeManager the node manager
-   * @param edgeManager the edged manager
-   * @param elemManager the element region manager
-   * @param intersectionPoints coordinates of the intersection points
-   * @param connectivityList connectivity list
-   * @param offSet offset
-   */
-  void getIntersectionPoints( NodeManager const & nodeManager,
-                              EdgeManager const & edgeManager,
-                              ElementRegionManager const & elemManager,
-                              array1d< R1Tensor > & intersectionPoints,
-                              array1d< localIndex > & connectivityList,
-                              array1d< int > & offSet ) const;
-  /**
-   * @brief Compute intersection points (nodes of the embedded plane), offset and connectivity list
-   * @param nodeManager the node manager
-   * @param edgeManager the edged manager
-   * @param elemManager the element region manager
-   * @param intersectionPoints coordinates of the intersection points
-   * @param connectivityList connectivity list
-   * @param offSet offset
-   * @param k embedded surface cell index
-   */
-  void ComputeIntersectionPoints( NodeManager const & nodeManager,
-                                  EdgeManager const & edgeManager,
-                                  ElementRegionManager const & elemManager,
-                                  array1d< R1Tensor > & intersectionPoints,
-                                  array1d< localIndex > & connectivityList,
-                                  array1d< int > & offSet,
-                                  localIndex const k ) const;
+
+
   ///@}
 
   /**
@@ -210,6 +166,15 @@ public:
 
     /// Embedded surface element normal vector string
     static constexpr auto normalVectorString           = "normalVector";
+
+    /// Tangent vector 1 string
+    static constexpr auto t1VectorString           = "tangentVector1";
+
+    /// Tangent vector 2 string
+    static constexpr auto t2VectorString           = "tangentVector2";
+
+    /// Connectivity index string
+    static constexpr auto connectivityIndexString     = "connectivityIndex";
   };
 
   virtual void setupRelatedObjectsInRelations( MeshLevel const * const mesh ) override;
@@ -224,7 +189,7 @@ public:
   ///@{
 
   /**
-   * @brief Get the embedded surface element to nodes map (background grid nodes).
+   * @brief Get the embedded surface element to nodes map.
    * @return the embedded surface element to node map
    */
   NodeMapType const & nodeList() const
@@ -238,6 +203,38 @@ public:
   {
     return m_toNodesRelation;
   }
+
+  /**
+   * @brief Get the local index of the a-th node of the k-th element.
+   * @param[in] k the index of the element
+   * @param[in] a the index of the node in the element
+   * @return a reference to the local index of the node
+   */
+  localIndex & nodeList( localIndex const k, localIndex a ) { return m_toNodesRelation( k, a ); }
+
+  /**
+   * @copydoc nodeList( localIndex const k, localIndex a )
+   */
+  localIndex const & nodeList( localIndex const k, localIndex a ) const { return m_toNodesRelation( k, a ); }
+
+
+  /**
+   * @brief Get the embedded surface element to edges map.
+   * @return the embedded surface element to node map
+   */
+  EdgeMapType & edgeList()
+  {
+    return m_toEdgesRelation;
+  }
+
+  /**
+   * @copydoc edgeList()
+   */
+  EdgeMapType const & edgeList() const
+  {
+    return m_toEdgesRelation;
+  }
+
 
   /**
    * @brief Get the embedded surface element to region map (background grid nodes).
@@ -382,7 +379,21 @@ public:
    * @copydoc getTangentVector2( localIndex k )
    */
   R1Tensor const & getTangentVector2( localIndex k ) const { return m_tangentVector2[k];}
+
+
+  /**
+   * @brief Get the connectivity index of the  embedded surface element.
+   * @return the connectivity index
+   */
+  array1d< real64 > & getConnectivityIndex()   { return m_connectivityIndex;}
+
+  /**
+   * @copydoc getConnectivityIndex()
+   */
+  array1d< real64 > const & getConnectivityIndex() const { return m_connectivityIndex;}
+
   ///@}
+
 
 private:
 
@@ -405,10 +416,10 @@ private:
   array1d< localIndex > m_embeddedSurfaceToCell;
 
   /// list of nodes
-  NodeMapType m_toNodesRelation;    // Not used for now. Will need for Flow?
+  NodeMapType m_toNodesRelation;
 
-  /// list of edges (if necessary)
-  EdgeMapType m_toEdgesRelation;    // Not used for now. Will need for Flow?
+  /// list of edges
+  EdgeMapType m_toEdgesRelation;
 
   /// The member level field for the element center
   array1d< real64 > m_elementAperture;
@@ -416,8 +427,13 @@ private:
   /// The member level field for the element center
   array1d< real64 > m_elementArea;
 
+  /// The number of jump enrichments
   localIndex m_numOfJumpEnrichments;
+
+  /// The CI of the cells
+  array1d< real64 > m_connectivityIndex;
 };
+
 
 } /* namespace geosx */
 

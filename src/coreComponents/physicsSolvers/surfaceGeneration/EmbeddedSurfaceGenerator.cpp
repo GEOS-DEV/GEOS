@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -53,27 +53,17 @@ EmbeddedSurfaceGenerator::EmbeddedSurfaceGenerator( const std::string & name,
   registerWrapper( viewKeyStruct::fractureRegionNameString, &m_fractureRegionName )->
     setInputFlag( dataRepository::InputFlags::OPTIONAL )->
     setApplyDefaultValue( "FractureRegion" );
+
+  this->getWrapper< string >( viewKeyStruct::discretizationString )->
+    setInputFlag( InputFlags::FALSE );
+
 }
 
 EmbeddedSurfaceGenerator::~EmbeddedSurfaceGenerator()
 {}
 
-void EmbeddedSurfaceGenerator::RegisterDataOnMesh( Group * const MeshBodies )
-{
-  for( auto & mesh : MeshBodies->GetSubGroups() )
-  {
-    MeshLevel * const meshLevel = mesh.second->group_cast< MeshBody * >()->getMeshLevel( 0 );
-
-    NodeManager * const nodeManager = meshLevel->getNodeManager();
-    EdgeManager * const edgeManager = meshLevel->getEdgeManager();
-
-    nodeManager->registerExtrinsicData< extrinsicMeshData::ParentIndex >( this->getName() );
-    nodeManager->registerExtrinsicData< extrinsicMeshData::ChildIndex >( this->getName() );
-
-    edgeManager->registerExtrinsicData< extrinsicMeshData::ParentIndex >( this->getName() );
-    edgeManager->registerExtrinsicData< extrinsicMeshData::ChildIndex >( this->getName() );
-  }
-}
+void EmbeddedSurfaceGenerator::RegisterDataOnMesh( Group * const GEOSX_UNUSED_PARAM( MeshBodies ) )
+{}
 
 void EmbeddedSurfaceGenerator::InitializePostSubGroups( Group * const problemManager )
 {
@@ -146,6 +136,7 @@ void EmbeddedSurfaceGenerator::InitializePostSubGroups( Group * const problemMan
         } // end loop over nodes
         if( isPositive * isNegative == 1 )
         {
+
           bool added = embeddedSurfaceSubRegion->AddNewEmbeddedSurface( cellIndex,
                                                                         er,
                                                                         esr,
@@ -154,7 +145,9 @@ void EmbeddedSurfaceGenerator::InitializePostSubGroups( Group * const problemMan
                                                                         cellToEdges,
                                                                         &fracture );
           if( added )
+          {
             GEOSX_LOG_LEVEL_RANK_0( 2, "Element " << cellIndex << " is fractured" );
+          }
         }
       } // end loop over cells
     } );// end loop over subregions
@@ -165,7 +158,26 @@ void EmbeddedSurfaceGenerator::InitializePostSubGroups( Group * const problemMan
 
   embeddedSurfaceSubRegion->inheritGhostRank( cellElemGhostRank );
 
-  GEOSX_LOG_LEVEL_RANK_0( 1, "Number of embedded surface elements: " << embeddedSurfaceSubRegion->size() );
+  // Sum across all ranks
+  localIndex localNum = embeddedSurfaceSubRegion->size();
+  localIndex totalNum = 0;
+  MpiWrapper::allReduce( &localNum,
+                         &totalNum,
+                         1,
+                         MPI_SUM,
+                         MPI_COMM_GEOSX );
+
+  GEOSX_LOG_LEVEL_RANK_0( 1, "Number of embedded surface elements: " << totalNum );
+
+  // Populate EdgeManager for embedded surfaces.
+  EdgeManager & embSurfEdgeManager = meshLevel->getEmbdSurfEdgeManager();
+
+  EmbeddedSurfaceSubRegion::EdgeMapType & embSurfToEdgeMap = embeddedSurfaceSubRegion->edgeList();
+  EmbeddedSurfaceSubRegion::NodeMapType & embSurfToNodeMap = embeddedSurfaceSubRegion->nodeList();
+
+  localIndex numOfPoints = nodeManager->embSurfNodesPosition().size( 0 );
+
+  embSurfEdgeManager.BuildEdges( numOfPoints, embSurfToNodeMap.toViewConst(), embSurfToEdgeMap );
 }
 
 void EmbeddedSurfaceGenerator::InitializePostInitialConditions_PreSubGroups( Group * const GEOSX_UNUSED_PARAM ( problemManager ) )
@@ -184,13 +196,41 @@ void EmbeddedSurfaceGenerator::postRestartInitialization( Group * const GEOSX_UN
 real64 EmbeddedSurfaceGenerator::SolverStep( real64 const & GEOSX_UNUSED_PARAM( time_n ),
                                              real64 const & GEOSX_UNUSED_PARAM( dt ),
                                              const int GEOSX_UNUSED_PARAM( cycleNumber ),
-                                             DomainPartition & GEOSX_UNUSED_PARAM( domain ) )
+                                             DomainPartition & domain )
 {
   real64 rval = 0;
   /*
-   * This should be method that generates new fracture elements based on the propagation criterion of choice.
+   * This should be the method that generates new fracture elements based on the propagation criterion of choice.
    */
+
+  // Add the embedded elements to the fracture stencil.
+  addToFractureStencil( domain );
+
   return rval;
+}
+
+void EmbeddedSurfaceGenerator::addToFractureStencil( DomainPartition & domain )
+{
+  // Add embedded elements to the fracture Stencil
+  NumericalMethodsManager & numericalMethodManager = domain.getNumericalMethodManager();
+
+  FiniteVolumeManager & fvManager = numericalMethodManager.getFiniteVolumeManager();
+
+  for( auto & mesh : domain.getMeshBodies()->GetSubGroups() )
+  {
+    MeshLevel * meshLevel = Group::group_cast< MeshBody * >( mesh.second )->getMeshLevel( 0 );
+
+    for( localIndex a=0; a<fvManager.numSubGroups(); ++a )
+    {
+      FluxApproximationBase * const fluxApprox = fvManager.GetGroup< FluxApproximationBase >( a );
+      if( fluxApprox!=nullptr )
+      {
+        fluxApprox->addEDFracToFractureStencil( *meshLevel,
+                                                this->m_fractureRegionName );
+      }
+    }
+  }
+
 }
 
 REGISTER_CATALOG_ENTRY( SolverBase,
