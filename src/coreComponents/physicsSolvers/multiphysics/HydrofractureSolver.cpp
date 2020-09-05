@@ -1724,6 +1724,9 @@ void HydrofractureSolver::UpdateDeformationForCoupling( DomainPartition * const 
       MeshLevel & mesh = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
       NodeManager & myNodeManager = *mesh.getNodeManager();
 
+      array2d< real64, nodes::TOTAL_DISPLACEMENT_PERM > & disp = myNodeManager.totalDisplacement();
+      array2d< real64, nodes::TOTAL_DISPLACEMENT_PERM > & dispIncre = myNodeManager.incrementalDisplacement();
+
       FaceElementSubRegion::NodeMapType & nodeMap = subRegion.nodeList();
       localIndex_array myChildIndex = myNodeManager.getReference<localIndex_array>("childIndex");
       localIndex refNodeIndex=-1;
@@ -1741,14 +1744,34 @@ void HydrofractureSolver::UpdateDeformationForCoupling( DomainPartition * const 
       real64 refDisp = std::abs( u(refNodeIndex,0) - u(myChildIndex[refNodeIndex],0) );
 
       //TJ: should check refDisp, instead of individual displacement value
-      GEOSX_ASSERT_MSG( u(refNodeIndex,0) < 1.0e-12,
-      		"Node crosses the symmetric plane." );
-/*
+//      GEOSX_ASSERT_MSG( u(refNodeIndex,0) < 1.0e-12,
+//      		"Node crosses the symmetric plane." );
+
+      //TJ: if nodes cross they symmetric plane, do not terminate.
+      //    instead, change the displacement to zero
+      if (u(refNodeIndex,0) > 1.0e-12)
+      {
+	for(localIndex i=0; i<nodeMap[m_tipElement].size(); i++)
+	{
+	  localIndex node = nodeMap[m_tipElement][i];
+	  if ( myChildIndex[node] >= 0)
+	  {
+	    std::cout << "Nodes cross symmetric plane, zero the displacement of node "
+		      << node << " and " << myChildIndex[node] << std::endl;
+	    disp(node,0)=0.0;
+	    dispIncre(node,0)=0.0;
+	    disp(myChildIndex[node],0)=0.0;
+	    dispIncre(myChildIndex[node],0)=0.0;
+	  }
+	}
+      }
+
+
       std::cout  << " disp " << refNodeIndex               << " = " << u(refNodeIndex,0)
 	         << ", disp " << myChildIndex[refNodeIndex] << " = " << u(myChildIndex[refNodeIndex],0)
 	                      << std::endl;
       std::cout << "refDisp = " << refDisp << std::endl;
-*/
+
       real64 const shearModulus = domain->GetGroup("Constitutive")
 			                  ->GetGroup("rock")
 			                  ->getReference<real64>("defaultShearModulus");
