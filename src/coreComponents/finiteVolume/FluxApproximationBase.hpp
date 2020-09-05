@@ -159,6 +159,14 @@ public:
                                      bool const initFlag ) const = 0;
 
   /**
+   * @brief Add a new embedded fracture stencil.
+   * @param[in,out] mesh the mesh on which to add the fracture stencil
+   * @param[in] embeddedSurfaceRegionName the embedded surface element region name
+   */
+  virtual void addEDFracToFractureStencil( MeshLevel & mesh,
+                                           string const & embeddedSurfaceRegionName ) const = 0;
+
+  /**
    * @brief View keys.
    */
   struct viewKeyStruct
