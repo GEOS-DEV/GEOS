@@ -177,28 +177,6 @@ public:
 
   }
 
-  /**
-   * @copydoc geosx::finiteElement::KernelBase::quadraturePointStateUpdate
-   *
-   * For solid mechanics kernels, the strain increment is calculated, and the
-   * constitutive update is called. In addition, the constitutive stiffness
-   * stack variable is filled by the constitutive model.
-   */
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  void quadraturePointStateUpdate( localIndex const k,
-                                   localIndex const q,
-                                   StackVariables & stack ) const
-  {
-    real64 strainInc[6] = {0};
-    FE_TYPE::symmetricGradient( m_dNdX[k][q], stack.uhat_local, strainInc );
-
-    m_constitutiveUpdate.SmallStrain( k, q, strainInc );
-
-    GEOSX_UNUSED_VAR( q )
-    m_constitutiveUpdate.GetStiffness( k, q, stack.constitutiveStiffness );
-  }
-
 
   /**
    * @brief Internal struct to provide no-op defaults used in the inclusion
@@ -233,39 +211,32 @@ public:
   };
 
   /**
-   * @copydoc geosx::finiteElement::KernelBase::quadraturePointJacobianContribution
-   * For solid mechanics kernels, the derivative of the force residual wrt
-   * the incremental displacement is filled into the local element jacobian.
-   */
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  void quadraturePointJacobianContribution( localIndex const k,
-                                            localIndex const q,
-                                            StackVariables & stack ) const
-  {
-    typename CONSTITUTIVE_TYPE::KernelWrapper::DiscretizationOps stiffnessHelper;
-
-    stiffnessHelper.setParams( stack.constitutiveStiffness );
-    stiffnessHelper.template BTDB< numNodesPerElem >( m_dNdX[k][q], m_detJ( k, q ), stack.localJacobian );
-  }
-
-  /**
-   * @copydoc geosx::finiteElement::KernelBase::quadraturePointResidualContribution
-   * @tparam STRESS_MODIFIER The type of the function to modify the stress
-   *   prior to integration.
-   * @param stressModifier The stress modifier functor/lambda.
+   * @copydoc geosx::finiteElement::KernelBase::quadraturePointKernel
    *
-   * The divergence of the stress is integrated over the volume of the element,
-   * yielding the nodal force (residual) contributions.
+   * For solid mechanics kernels, the strain increment is calculated, and the
+   * constitutive update is called. In addition, the constitutive stiffness
+   * stack variable is filled by the constitutive model.
    */
   template< typename STRESS_MODIFIER = NoOpFunctors >
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  void quadraturePointResidualContribution( localIndex const k,
-                                            localIndex const q,
-                                            StackVariables & stack,
-                                            STRESS_MODIFIER && stressModifier = NoOpFunctors{} ) const
+  void quadraturePointKernel( localIndex const k,
+                                   localIndex const q,
+                                   StackVariables & stack,
+                                   STRESS_MODIFIER && stressModifier = NoOpFunctors{} ) const
   {
+    real64 strainInc[6] = {0};
+    FE_TYPE::symmetricGradient( m_dNdX[k][q], stack.uhat_local, strainInc );
+
+    m_constitutiveUpdate.SmallStrain( k, q, strainInc );
+
+    m_constitutiveUpdate.GetStiffness( k, q, stack.constitutiveStiffness );
+
+    typename CONSTITUTIVE_TYPE::KernelWrapper::DiscretizationOps stiffnessHelper;
+
+    stiffnessHelper.setParams( stack.constitutiveStiffness );
+    stiffnessHelper.template BTDB< numNodesPerElem >( m_dNdX[k][q], m_detJ( k, q ), stack.localJacobian );
+
     real64 stress[6];
 
     m_constitutiveUpdate.getStress( k, q, stress );
@@ -288,7 +259,6 @@ public:
                                    N,
                                    gravityForce,
                                    reinterpret_cast< real64 (&)[numNodesPerElem][3] >(stack.localResidual) );
-
   }
 
   /**

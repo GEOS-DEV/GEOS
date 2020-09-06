@@ -278,7 +278,7 @@ public:
    * @param q The quadrature point index.
    * @param stack The StackVariable object that hold the stack variables.
    *
-   * ### KernelBase::quadraturePointStateUpdate() Description
+   * ### KernelBase::quadraturePointKernel() Description
    *
    * The operations found here are the mapping from the support points to the
    * quadrature point, calculation of gradients, etc. From this data the
@@ -287,59 +287,9 @@ public:
    */
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  void quadraturePointStateUpdate( localIndex const k,
+  void quadraturePointKernel( localIndex const k,
                                    localIndex const q,
                                    StackVariables & stack ) const
-  {
-    GEOSX_UNUSED_VAR( k );
-    GEOSX_UNUSED_VAR( q );
-    GEOSX_UNUSED_VAR( stack );
-  }
-
-  /**
-   * @brief Form the element local Jacobian matrix.
-   * @tparam STACK_VARIABLE_TYPE The type of StackVariable that holds the stack
-   *                             variables. This is most likely a defined in a
-   *                             type that derives from KernelBase.
-   * @param k The element index.
-   * @param q The quadrature point index.
-   * @param stack The StackVariable object that hold the stack variables.
-   *
-   * ### KernelBase::quadraturePointJacobianContribution() Description
-   *
-   * The results of quadraturePointStateUpdate are used to form the local
-   * element Jacobian matrix.
-   */
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  void quadraturePointJacobianContribution( localIndex const k,
-                                            localIndex const q,
-                                            StackVariables & stack ) const
-  {
-    GEOSX_UNUSED_VAR( k );
-    GEOSX_UNUSED_VAR( q );
-    GEOSX_UNUSED_VAR( stack );
-  }
-
-  /**
-   * @brief Calculates the element local Residual vector.
-   * @tparam STACK_VARIABLE_TYPE The type of StackVariable that holds the stack
-   *                             variables. This is most likely a defined in a
-   *                             type that derives from KernelBase.
-   * @param k The element index.
-   * @param q The quadrature point index.
-   * @param stack The StackVariable object that hold the stack variables.
-   *
-   * ### KernelBase::quadraturePointResidualContribution() Description
-   *
-   * The results of quadraturePointStateUpdate are used to form the local
-   * element residual vector.
-   */
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  void quadraturePointResidualContribution( localIndex const k,
-                                            localIndex const q,
-                                            StackVariables & stack ) const
   {
     GEOSX_UNUSED_VAR( k );
     GEOSX_UNUSED_VAR( q );
@@ -404,11 +354,7 @@ public:
       kernelComponent.setup( k, stack );
       for( integer q=0; q<numQuadraturePointsPerElem; ++q )
       {
-        kernelComponent.quadraturePointStateUpdate( k, q, stack );
-
-        kernelComponent.quadraturePointJacobianContribution( k, q, stack );
-
-        kernelComponent.quadraturePointResidualContribution( k, q, stack );
+        kernelComponent.quadraturePointKernel( k, q, stack );
       }
       maxResidual.max( kernelComponent.complete( k, stack ) );
     } );
@@ -452,11 +398,7 @@ public:
 
       for( integer q=0; q<numQuadraturePointsPerElem; ++q )
       {
-        kernelComponent.quadraturePointStateUpdate( k, q, stack );
-
-        kernelComponent.quadraturePointJacobianContribution( k, q, stack );
-
-        kernelComponent.quadraturePointResidualContribution( k, q, stack );
+        kernelComponent.quadraturePointKernel( k, q, stack );
       }
       maxResidual.max( kernelComponent.complete( k, stack ) );
 

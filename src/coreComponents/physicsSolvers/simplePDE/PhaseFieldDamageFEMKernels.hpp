@@ -170,7 +170,7 @@ public:
    */
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  void quadraturePointJacobianContribution( localIndex const k,
+  void quadraturePointKernel( localIndex const k,
                                             localIndex const q,
                                             StackVariables & stack ) const
   {

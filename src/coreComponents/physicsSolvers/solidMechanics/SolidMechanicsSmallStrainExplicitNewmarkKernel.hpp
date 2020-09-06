@@ -196,7 +196,7 @@ public:
   }
 
   /**
-   * @copydoc geosx::finiteElement::KernelBase::quadraturePointStateUpdate
+   * @copydoc geosx::finiteElement::KernelBase::quadraturePointKernel
    *
    * ### ExplicitSmallStrain Description
    * Calculates the shape function derivatives, and the strain tensor. Then
@@ -206,7 +206,7 @@ public:
    */
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  void quadraturePointStateUpdate( localIndex const k,
+  void quadraturePointKernel( localIndex const k,
                                    localIndex const q,
                                    StackVariables & stack ) const
   {
@@ -315,11 +315,7 @@ public:
       kernelComponent.setup( k, stack );
       for( integer q=0; q<KERNEL_TYPE::numQuadraturePointsPerElem; ++q )
       {
-        kernelComponent.quadraturePointStateUpdate( k, q, stack );
-
-        kernelComponent.quadraturePointJacobianContribution( k, q, stack );
-
-        kernelComponent.quadraturePointResidualContribution( k, q, stack );
+        kernelComponent.quadraturePointKernel( k, q, stack );
       }
       kernelComponent.complete( k, stack );
     } );

@@ -103,12 +103,12 @@ public:
    */
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  void quadraturePointResidualContribution( localIndex const k,
+  void quadraturePointKernel( localIndex const k,
                                             localIndex const q,
                                             StackVariables & stack ) const
   {
     real64 const biotCoefficient = m_constitutiveUpdate.getBiotCoefficient();
-    Base::quadraturePointResidualContribution( k, q, stack, [=] GEOSX_HOST_DEVICE ( real64 (& stress)[6] )
+    Base::quadraturePointKernel( k, q, stack, [=] GEOSX_HOST_DEVICE ( real64 (& stress)[6] )
     {
       real64 const pressure = biotCoefficient * ( m_fluidPressure[k] + m_deltaFluidPressure[k] );
       stress[0] -= pressure;

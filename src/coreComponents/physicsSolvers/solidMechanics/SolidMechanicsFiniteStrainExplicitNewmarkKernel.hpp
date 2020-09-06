@@ -197,11 +197,11 @@ public:
   }
 
   /**
-   * @copydoc ExplicitSmallStrain::quadraturePointStateUpdate
+   * @copydoc ExplicitSmallStrain::quadraturePointKernel
    */
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  void quadraturePointStateUpdate( localIndex const k,
+  void quadraturePointKernel( localIndex const k,
                                    localIndex const q,
                                    StackVariables & stack ) const
   {
