@@ -87,8 +87,8 @@ void SinglePhaseFVM< BASE >::SetupSystem( DomainPartition & domain,
 
   {
     localIndex numRows = 0;
-    this->template forTargetSubRegions< FaceElementSubRegion >( mesh, [&]( localIndex const,
-                                                                           FaceElementSubRegion const & elementSubRegion )
+    this->template forTargetSubRegions< FaceElementSubRegion, EmbeddedSurfaceSubRegion >( mesh, [&]( localIndex const,
+                                                                                                     auto const & elementSubRegion )
     {
       numRows += elementSubRegion.size();
     } );
