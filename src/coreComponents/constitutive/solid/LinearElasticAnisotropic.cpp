@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -21,7 +21,6 @@
 namespace geosx
 {
 using namespace dataRepository;
-using namespace cxx_utilities;
 namespace constitutive
 {
 
@@ -31,7 +30,7 @@ LinearElasticAnisotropic::LinearElasticAnisotropic( std::string const & name, Gr
   SolidBase( name, parent ),
   m_defaultStiffness( 6, 6 )
 {
-  registerWrapper( viewKeyStruct::defaultStiffnessString, &m_defaultStiffness, false )->
+  registerWrapper( viewKeyStruct::defaultStiffnessString, &m_defaultStiffness )->
     setInputFlag( InputFlags::REQUIRED )->
     setSizedFromParent( 0 )->
     setDescription( "Default Elastic Stiffness Tensor in Voigt notation (6x6 matrix)" );
@@ -39,7 +38,7 @@ LinearElasticAnisotropic::LinearElasticAnisotropic( std::string const & name, Gr
   m_defaultStiffness.resize( 6, 6 );
 
   // These are temporary until we figure out how to read in multidim arrays from input.
-  registerWrapper( viewKeyStruct::stiffnessString, &m_stiffness, 0 )->
+  registerWrapper( viewKeyStruct::stiffnessString, &m_stiffness )->
     setApplyDefaultValue( 0 )->
     setDescription( "Fully Anisotropic Elastic Stiffness Field in Voigt notation (6x6 matrix)" );
 
@@ -51,26 +50,10 @@ LinearElasticAnisotropic::~LinearElasticAnisotropic()
 {}
 
 
-void
-LinearElasticAnisotropic::DeliverClone( string const & name,
-                                        Group * const parent,
-                                        std::unique_ptr< ConstitutiveBase > & clone ) const
-{
-  if( !clone )
-  {
-    clone = std::make_unique< LinearElasticAnisotropic >( name, parent );
-  }
-  SolidBase::DeliverClone( name, parent, clone );
-  LinearElasticAnisotropic * const newConstitutiveRelation = dynamic_cast< LinearElasticAnisotropic * >(clone.get());
-
-  newConstitutiveRelation->m_defaultStiffness = m_defaultStiffness;
-  //newConstitutiveRelation->m_stiffness = m_stiffness;
-}
-
-void LinearElasticAnisotropic::AllocateConstitutiveData( dataRepository::Group * const parent,
+void LinearElasticAnisotropic::allocateConstitutiveData( dataRepository::Group * const parent,
                                                          localIndex const numConstitutivePointsPerParentIndex )
 {
-  SolidBase::AllocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+  SolidBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 
   this->resize( parent->size() );
 //  m_stiffness.resize( parent->size() );

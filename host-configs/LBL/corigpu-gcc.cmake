@@ -1,4 +1,4 @@
-include(${CMAKE_CURRENT_LIST_DIR}/../src/coreComponents/cxx-utilities/host-configs/corigpu-gcc.cmake)
+include(${CMAKE_CURRENT_LIST_DIR}/../src/coreComponents/LvArray/host-configs/corigpu-gcc.cmake)
 
 # asmjit doesn't work on PowerPC
 set(ENABLE_MATHPRESSO OFF CACHE BOOL "")

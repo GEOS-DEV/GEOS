@@ -13,7 +13,13 @@ set( nranks 2 )
 #
 # Add gtest C++ based tests
 #
-set( dependencyList gtest geosx_core )
+set( dependencyList gtest )
+
+if ( GEOSX_BUILD_SHARED_LIBS )
+  set (dependencyList ${dependencyList} geosx_core)
+else()
+  set (dependencyList ${dependencyList} ${geosx_core_libs} )
+endif()
 
 if ( ENABLE_MPI )
   set ( dependencyList ${dependencyList} mpi )

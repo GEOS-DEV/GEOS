@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -26,7 +26,7 @@ namespace geosx
 
 /**
  * @struct CellElementStencilTPFA_Traits
- * Struct to predeclare the types and consexpr values of CellElementStencilTPFA so that they may be used in
+ * Struct to predeclare the types and constexpr values of CellElementStencilTPFA so that they may be used in
  * StencilBase.
  */
 struct CellElementStencilTPFA_Traits
@@ -67,7 +67,9 @@ class CellElementStencilTPFA : public StencilBase< CellElementStencilTPFA_Traits
 {
 public:
 
-  /// default constructor
+  /**
+   * @brief Default constructor.
+   */
   CellElementStencilTPFA();
 
   virtual void add( localIndex const numPts,
@@ -77,16 +79,23 @@ public:
                     real64 const * const weights,
                     localIndex const connectorIndex ) override final;
 
+  /**
+   * @brief Return the stencil size.
+   * @return the stencil size
+   */
   virtual localIndex size() const override final
   { return m_elementRegionIndices.size( 0 ); }
 
   /**
-   * @brief Gives the number of points in a stencil entry.
+   * @brief Give the number of points in a stencil entry.
    * @param[in] index of the stencil entry for which to query the size
    * @return the size of a stencil entry
    */
-  constexpr localIndex stencilSize( localIndex GEOSX_UNUSED_PARAM( index ) ) const
-  { return MAX_STENCIL_SIZE; }
+  constexpr localIndex stencilSize( localIndex index ) const
+  {
+    GEOSX_UNUSED_VAR( index );
+    return MAX_STENCIL_SIZE;
+  }
 
 };
 

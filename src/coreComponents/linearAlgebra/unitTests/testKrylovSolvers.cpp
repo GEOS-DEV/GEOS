@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -24,217 +24,242 @@
 #include "managers/initialization.hpp"
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
 #include "linearAlgebra/utilities/BlockOperatorWrapper.hpp"
-#include "linearAlgebra/utilities/BlockOperator.hpp"
-#include "linearAlgebra/utilities/BlockVectorWrapper.hpp"
 #include "linearAlgebra/solvers/PreconditionerIdentity.hpp"
-#include "linearAlgebra/solvers/CGsolver.hpp"
-#include "linearAlgebra/solvers/BiCGSTABsolver.hpp"
-
-/**
- * \file testKrylovSolvers.cpp
- * \brief This test file is part of the ctest suite and tests native GEOSX  Krylov solvers.
- * It mainly uses dummy 2D Laplace operator matrices to test the solvers along with a
- * simple (block) identity preconditioner.
- */
+#include "linearAlgebra/solvers/KrylovSolver.hpp"
 
 using namespace geosx;
 
-// BEGIN_RST_NARRATIVE testKrylovSolvers.rst
-
-/**
- * @function testGEOSXSolvers
- *
- * @brief Test the GEOSX solvers for monolithic matrices by solving a system with
- * a Laplace operator and the identity matrix as a (dummy) preconditioner.
- */
-
-// -----------------------------------------
-// Test GEOSX solvers on monolithic matrices
-// -----------------------------------------
-// We now test the GEOSX implementation of the Conjugate Gradient (CG) and BiCGSTAB algorithms
-// on monolithic matrices.
-template< template< typename T > class SOLVER, typename LAI >
-void testGEOSXSolvers()
+LinearSolverParameters params_CG()
 {
-  // Define aliases templated on the Linear Algebra Interface (LAI).
-  using Matrix = typename LAI::ParallelMatrix;
-  using Vector = typename LAI::ParallelVector;
-
-  // Use nxn cartesian mesh to generate the Laplace 2D operator.
-  globalIndex constexpr n = 100;
-  globalIndex constexpr N = n * n;
-
-  // Compute a 2D Laplace operator and identity matrix
-  Matrix matrix;
-  Matrix identity;
-  compute2DLaplaceOperator( MPI_COMM_GEOSX, n, matrix );
-  computeIdentity( MPI_COMM_GEOSX, N, identity );
-
-  // Define vectors
-  Vector x_true, x_comp, b;
-  x_true.createWithGlobalSize( N, MPI_COMM_GEOSX );
-  x_comp.createWithGlobalSize( N, MPI_COMM_GEOSX );
-  b.createWithGlobalSize( N, MPI_COMM_GEOSX );
-
-  x_true.rand();
-  x_comp.zero();
-
-  matrix.apply( x_true, b );
-
-  // Solve
-  SOLVER< Vector > solver( matrix, identity, 1e-8, 300 );
-  solver.solve( b, x_comp );
-  /////////////////////////////////////////
-//  GEOSX_LOG_RANK_0("Iterations: " + std::to_string(solver.numIterations()));
-//  if ( MpiWrapper::Comm_rank( MPI_COMM_GEOSX ) == 0)
-//  {
-//    GEOSX_LOG_RANK_VAR( solver.relativeResidual() );
-//  }
-  /////////////////////////////////////////
-
-  real64 const norm_true = x_true.norm2();
-  real64 const norm_comp = x_comp.norm2();
-  EXPECT_LT( std::fabs( norm_comp / norm_true - 1. ), 5e-6 );
-
-  PreconditionerIdentity< LAI > preconIdentity;
-  preconIdentity.compute( matrix );
-  SOLVER< Vector > solver2( matrix, preconIdentity, 1e-8, 300 );
-  x_comp.zero();
-
-  solver2.solve( b, x_comp );
-  /////////////////////////////////////////
-//  GEOSX_LOG_RANK_0("Iterations: " + std::to_string(solver.numIterations()));
-//  if ( MpiWrapper::Comm_rank( MPI_COMM_GEOSX ) == 0)
-//  {
-//    GEOSX_LOG_RANK_VAR( solver.residualNormVector() );
-//  }
-  /////////////////////////////////////////
-
-
-  real64 const norm_true2 = x_true.norm2();
-  real64 const norm_comp2 = x_comp.norm2();
-  EXPECT_LT( std::fabs( norm_comp2 / norm_true2 - 1. ), 5e-6 );
+  LinearSolverParameters parameters;
+  parameters.krylov.relTolerance = 1e-8;
+  parameters.krylov.maxIterations = 500;
+  parameters.solverType = geosx::LinearSolverParameters::SolverType::cg;
+  parameters.isSymmetric = true;
+  return parameters;
 }
 
-/**
- * @function testGEOSXBlockSolvers
- *
- * @brief Test the GEOSX block solvers by solving a system with a block matrix
- * made of tiled Laplace operators and using the identity as a preconditioner.
- */
-
-// -----------------------------------------
-// Test GEOSX solvers on block matrices
-// -----------------------------------------
-// We finish by testing the GEOSX implementation of the Conjugate Gradient (CG) and BiCGSTAB algorithms
-// on block matrices.
-template< template< typename T > class SOLVER, typename LAI >
-void testGEOSXBlockSolvers()
+LinearSolverParameters params_BiCGSTAB()
 {
-  // The usual typenames
-  using Matrix = typename LAI::ParallelMatrix;
-  using Vector = typename LAI::ParallelVector;
-
-  // We are going to assembly the following dummy system
-  // [L L] [x_true] = [b_0]
-  // [0 L] [x_true] = [b_1]
-
-  globalIndex constexpr n = 100;
-  globalIndex constexpr N = n * n;
-
-  // Declare and allocate block matrices/vectors
-
-  // Set up a block operator consisting of two laplacian blocks
-  // Here we demonstrate creating a thin wrapper pointing to the same matrix twice
-  Matrix matrix;
-  compute2DLaplaceOperator( MPI_COMM_GEOSX, n, matrix );
-  BlockOperatorWrapper< Vector, Matrix > block_matrix( 2, 2 );
-  block_matrix.set( 0, 0, matrix );
-  block_matrix.set( 1, 1, matrix );
-
-  // Set up block identity preconditioner
-  // Here we instantiate a concrete block matrix with two independent blocks
-  BlockOperator< Vector, Matrix > block_precon( 2, 2 );
-  computeIdentity( MPI_COMM_GEOSX, N, block_precon.block( 0, 0 ) );
-  computeIdentity( MPI_COMM_GEOSX, N, block_precon.block( 1, 1 ) );
-  computeZero( MPI_COMM_GEOSX, N, block_precon.block( 0, 1 ) );
-  computeZero( MPI_COMM_GEOSX, N, block_precon.block( 1, 0 ) );
-
-  // Create rhs and solution vectors
-  BlockVector< Vector > x_true( 2 );
-  BlockVector< Vector > x_comp( 2 );
-  BlockVector< Vector > b( 2 );
-
-  x_true.block( 0 ).createWithGlobalSize( N, MPI_COMM_GEOSX );
-  x_true.block( 1 ).createWithGlobalSize( N, MPI_COMM_GEOSX );
-  x_comp.block( 0 ).createWithGlobalSize( N, MPI_COMM_GEOSX );
-  x_comp.block( 1 ).createWithGlobalSize( N, MPI_COMM_GEOSX );
-  b.block( 0 ).createWithGlobalSize( N, MPI_COMM_GEOSX );
-  b.block( 1 ).createWithGlobalSize( N, MPI_COMM_GEOSX );
-
-  x_true.rand();
-  x_comp.zero();
-
-  // Set right hand side.
-  block_matrix.apply( x_true, b );
-
-  // Create block CG solver object and solve
-  SOLVER< BlockVectorView< Vector > > solver( block_matrix, block_precon, 1e-8, 300 );
-  solver.solve( b, x_comp );
-
-  // The true solution is the vector x, so we check if the norm are equal.
-  // Note: the tolerance is higher that in the previous cases because the matrix is
-  // twice as big and the condition number is higher. See details on the error
-  // bounds of Krylov methods wrt the condition number.
-  real64 const norm_x_true = x_true.norm2();
-  real64 const norm_x = x_comp.norm2();
-  EXPECT_LT( std::fabs( norm_x / norm_x_true - 1. ), 5e-6 );
+  LinearSolverParameters parameters;
+  parameters.krylov.relTolerance = 1e-8;
+  parameters.krylov.maxIterations = 500;
+  parameters.solverType = geosx::LinearSolverParameters::SolverType::bicgstab;
+  return parameters;
 }
 
-// END_RST_NARRATIVE
+LinearSolverParameters params_GMRES()
+{
+  LinearSolverParameters parameters;
+  parameters.krylov.relTolerance = 1e-8;
+  parameters.krylov.maxIterations = 500;
+  parameters.solverType = geosx::LinearSolverParameters::SolverType::gmres;
+  return parameters;
+}
+
+template< typename OPERATOR, typename PRECOND, typename VECTOR >
+class KrylovSolverTestBase : public ::testing::Test
+{
+public:
+
+  using Base = ::testing::Test;
+
+  // Constructor that allows subclass to pass initialization args to matrix/precond
+  // Unfortunately, only one set of args can be passed to both and none to vectors
+  template< typename ... ARGS >
+  KrylovSolverTestBase( ARGS && ... args ):
+    Base(),
+    matrix( std::forward< ARGS >( args ) ... ),
+    precond( std::forward< ARGS >( args ) ... )
+  {}
+
+protected:
+
+  OPERATOR matrix;
+  PRECOND precond;
+  VECTOR sol_true;
+  VECTOR sol_comp;
+  VECTOR rhs_true;
+  real64 cond_est = 1.0;
+
+  void test( LinearSolverParameters const & params )
+  {
+    sol_true.rand();
+    sol_comp.zero();
+    matrix.apply( sol_true, rhs_true );
+
+    // Create the solver and solve the system
+    using Vector = typename OPERATOR::Vector;
+    std::unique_ptr< KrylovSolver< Vector > > const solver = KrylovSolver< Vector >::Create( params, matrix, precond );
+    solver->solve( rhs_true, sol_comp );
+    EXPECT_TRUE( solver->result().success() );
+
+    // Check that solution is within epsilon of true
+    sol_comp.axpy( -1.0, sol_true );
+    real64 const relTol = cond_est * params.krylov.relTolerance;
+    EXPECT_LT( sol_comp.norm2() / sol_true.norm2(), relTol );
+  }
+};
+
+///////////////////////////////////////////////////////////////////////////////////////
 
 template< typename LAI >
-class KrylovSolverTest : public ::testing::Test
-{};
+class KrylovSolverTest : public KrylovSolverTestBase< typename LAI::ParallelMatrix,
+                                                      PreconditionerIdentity< LAI >,
+                                                      typename LAI::ParallelVector >
+{
+public:
 
-TYPED_TEST_CASE_P( KrylovSolverTest );
+  using Matrix = typename LAI::ParallelMatrix;
+  using Vector = typename LAI::ParallelVector;
+
+  using Base = KrylovSolverTestBase< typename LAI::ParallelMatrix,
+                                     PreconditionerIdentity< LAI >,
+                                     typename LAI::ParallelVector >;
+
+  KrylovSolverTest(): Base() {}
+
+protected:
+
+  void SetUp()
+  {
+    // Compute matrix and preconditioner
+    globalIndex constexpr n = 100;
+    compute2DLaplaceOperator( MPI_COMM_GEOSX, n, this->matrix );
+    this->precond.compute( this->matrix );
+
+    // Set up vectors
+    this->sol_true.createWithGlobalSize( this->matrix.numGlobalCols(), MPI_COMM_GEOSX );
+    this->sol_comp.createWithGlobalSize( this->matrix.numGlobalCols(), MPI_COMM_GEOSX );
+    this->rhs_true.createWithGlobalSize( this->matrix.numGlobalRows(), MPI_COMM_GEOSX );
+
+    // Condition number for the Laplacian matrix estimate: 4 * n^2 / pi^2
+    this->cond_est = 1.5 * 4.0 * n * n / std::pow( M_PI, 2 );
+  }
+};
+
+TYPED_TEST_SUITE_P( KrylovSolverTest );
 
 TYPED_TEST_P( KrylovSolverTest, CG )
 {
-  testGEOSXSolvers< CGsolver, TypeParam >();
+  this->test( params_CG() );
 }
 
 TYPED_TEST_P( KrylovSolverTest, BiCGSTAB )
 {
-  testGEOSXSolvers< BiCGSTABsolver, TypeParam >();
+  this->test( params_BiCGSTAB() );
 }
 
-TYPED_TEST_P( KrylovSolverTest, CG_block )
+TYPED_TEST_P( KrylovSolverTest, GMRES )
 {
-  testGEOSXBlockSolvers< CGsolver, TypeParam >();
+  this->test( params_GMRES() );
 }
 
-TYPED_TEST_P( KrylovSolverTest, BiCGSTAB_block )
-{
-  testGEOSXBlockSolvers< BiCGSTABsolver, TypeParam >();
-}
-
-REGISTER_TYPED_TEST_CASE_P( KrylovSolverTest,
-                            CG,
-                            BiCGSTAB,
-                            CG_block,
-                            BiCGSTAB_block );
+REGISTER_TYPED_TEST_SUITE_P( KrylovSolverTest,
+                             CG,
+                             BiCGSTAB,
+                             GMRES );
 
 #ifdef GEOSX_USE_TRILINOS
-INSTANTIATE_TYPED_TEST_CASE_P( Trilinos, KrylovSolverTest, TrilinosInterface );
+INSTANTIATE_TYPED_TEST_SUITE_P( Trilinos, KrylovSolverTest, TrilinosInterface, );
 #endif
 
 #ifdef GEOSX_USE_HYPRE
-INSTANTIATE_TYPED_TEST_CASE_P( Hypre, KrylovSolverTest, HypreInterface );
+INSTANTIATE_TYPED_TEST_SUITE_P( Hypre, KrylovSolverTest, HypreInterface, );
 #endif
 
 #ifdef GEOSX_USE_PETSC
-INSTANTIATE_TYPED_TEST_CASE_P( Petsc, KrylovSolverTest, PetscInterface );
+INSTANTIATE_TYPED_TEST_SUITE_P( Petsc, KrylovSolverTest, PetscInterface, );
+#endif
+
+///////////////////////////////////////////////////////////////////////////////////////
+
+template< typename LAI >
+class KrylovSolverBlockTest : public KrylovSolverTestBase< BlockOperatorWrapper< typename LAI::ParallelVector, typename LAI::ParallelMatrix >,
+                                                           BlockOperatorWrapper< typename LAI::ParallelVector >,
+                                                           BlockVector< typename LAI::ParallelVector > >
+{
+public:
+
+  using Matrix = typename LAI::ParallelMatrix;
+  using Vector = typename LAI::ParallelVector;
+
+  using Base = KrylovSolverTestBase< BlockOperatorWrapper< typename LAI::ParallelVector, typename LAI::ParallelMatrix >,
+                                     BlockOperatorWrapper< typename LAI::ParallelVector >,
+                                     BlockVector< typename LAI::ParallelVector > >;
+
+  KrylovSolverBlockTest(): Base( 2, 2 ) {}
+
+protected:
+
+  Matrix laplace2D;
+  PreconditionerIdentity< LAI > identity;
+
+  void SetUp()
+  {
+    globalIndex constexpr n = 100;
+    compute2DLaplaceOperator( MPI_COMM_GEOSX, n, laplace2D );
+
+    // We are going to assembly the following dummy system
+    // [L 0] [x_true] = [b_0]
+    // [0 L] [x_true] = [b_1]
+    this->matrix.set( 0, 0, laplace2D );
+    this->matrix.set( 1, 1, laplace2D );
+
+    // Set up block identity preconditioning operator
+    identity.compute( laplace2D );
+    this->precond.set( 0, 0, identity );
+    this->precond.set( 1, 1, identity );
+
+    // Setup vectors
+    this->sol_true.resize( 2 );
+    this->sol_comp.resize( 2 );
+    this->rhs_true.resize( 2 );
+
+    for( localIndex i = 0; i < 2; ++i )
+    {
+      this->sol_true.block( i ).createWithGlobalSize( laplace2D.numGlobalCols(), MPI_COMM_GEOSX );
+      this->sol_comp.block( i ).createWithGlobalSize( laplace2D.numGlobalCols(), MPI_COMM_GEOSX );
+      this->rhs_true.block( i ).createWithGlobalSize( laplace2D.numGlobalRows(), MPI_COMM_GEOSX );
+    }
+
+    // Condition number for the Laplacian matrix estimate: 4 * n^2 / pi^2
+    this->cond_est = 3 * 4.0 * n * n / std::pow( M_PI, 2 );
+  }
+};
+
+TYPED_TEST_SUITE_P( KrylovSolverBlockTest );
+
+TYPED_TEST_P( KrylovSolverBlockTest, CG )
+{
+  this->test( params_CG() );
+}
+
+TYPED_TEST_P( KrylovSolverBlockTest, BiCGSTAB )
+{
+  this->test( params_BiCGSTAB() );
+}
+
+TYPED_TEST_P( KrylovSolverBlockTest, GMRES )
+{
+  this->test( params_GMRES() );
+}
+
+REGISTER_TYPED_TEST_SUITE_P( KrylovSolverBlockTest,
+                             CG,
+                             BiCGSTAB,
+                             GMRES );
+
+#ifdef GEOSX_USE_TRILINOS
+INSTANTIATE_TYPED_TEST_SUITE_P( Trilinos, KrylovSolverBlockTest, TrilinosInterface, );
+#endif
+
+#ifdef GEOSX_USE_HYPRE
+INSTANTIATE_TYPED_TEST_SUITE_P( Hypre, KrylovSolverBlockTest, HypreInterface, );
+#endif
+
+#ifdef GEOSX_USE_PETSC
+INSTANTIATE_TYPED_TEST_SUITE_P( Petsc, KrylovSolverBlockTest, PetscInterface, );
 #endif
 
 

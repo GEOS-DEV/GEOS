@@ -14,6 +14,9 @@ set(mesh_headers
     FaceElementRegion.hpp
     EmbeddedSurfaceSubRegion.hpp
     EmbeddedSurfaceRegion.hpp
+    WellElementSubRegion.hpp
+    WellElementRegion.hpp
+    ExtrinsicMeshData.hpp
     FaceManager.hpp
     InterObjectRelation.hpp
     MeshBody.hpp
@@ -38,6 +41,8 @@ set(mesh_sources
     FaceElementSubRegion.cpp
     EmbeddedSurfaceRegion.cpp
     EmbeddedSurfaceSubRegion.cpp
+    WellElementRegion.cpp
+    WellElementSubRegion.cpp
     FaceManager.cpp
     MeshBody.cpp
     MeshLevel.cpp

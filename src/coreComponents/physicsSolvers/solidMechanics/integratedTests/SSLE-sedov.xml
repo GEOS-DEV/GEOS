@@ -1,15 +1,17 @@
+<?xml version="1.0" ?>
 
-<Problem>  
+<Problem>
   <Solvers>
-    <SolidMechanicsLagrangianSSLE name="lagsolve" 
-                                  cflFactor="0.25"
-                                  discretization="FE1"
-                                  targetRegions="{Region2}"
-                                  solidMaterialNames="{shale}"/>
+    <SolidMechanicsLagrangianSSLE
+      name="lagsolve"
+      cflFactor="0.25"
+      discretization="FE1"
+      targetRegions="{ Region2 }"
+      solidMaterialNames="{ shale }"/>
   </Solvers>
 
   <Included>
-    <File name="./sedov_base.xml"/>
+    <File
+      name="./sedov_base.xml"/>
   </Included>
-
 </Problem>

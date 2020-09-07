@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -23,9 +23,6 @@
 #include "managers/ObjectManagerBase.hpp"
 #include "mesh/NodeManager.hpp"
 #include "managers/NumericalMethodsManager.hpp"
-#include "basis/BasisBase.hpp"
-#include "quadrature/QuadratureBase.hpp"
-#include "ElementLibrary/FiniteElement.h"
 #include "codingUtilities/Utilities.hpp"
 #include "common/TimingMacros.hpp"
 
@@ -34,7 +31,7 @@
 namespace geosx
 {
 using namespace dataRepository;
-
+using namespace finiteElement;
 
 
 FiniteElementDiscretization::FiniteElementDiscretization( std::string const & name, Group * const parent ):
@@ -42,75 +39,70 @@ FiniteElementDiscretization::FiniteElementDiscretization( std::string const & na
 {
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 
-  registerWrapper( keys::basis, &m_basisName, false )->setInputFlag( InputFlags::REQUIRED );
-  registerWrapper( keys::quadrature, &m_quadratureName, false )->setInputFlag( InputFlags::REQUIRED );
-  registerWrapper( keys::parentSpace, &m_parentSpace, false )->setInputFlag( InputFlags::REQUIRED );
+  registerWrapper( viewKeyStruct::orderString, &m_order )->
+    setInputFlag( InputFlags::REQUIRED )->
+    setDescription( "The order of the finite element basis." );
+
+  registerWrapper( viewKeyStruct::formulationString, &m_formulation )->
+    setInputFlag( InputFlags::OPTIONAL )->
+    setApplyDefaultValue( "default" )->
+    setDescription( "Specifier to indicate any specialized formuations. "
+                    "For instance, one of the many enhanced assumed strain "
+                    "methods of the Hexahedron parent shape would be indicated "
+                    "here" );
 }
 
 FiniteElementDiscretization::~FiniteElementDiscretization()
-{
-  delete m_finiteElement;
-}
+{}
 
-localIndex FiniteElementDiscretization::getNumberOfQuadraturePoints() const
-{
-  return m_quadrature->size();
-}
-
-std::unique_ptr< FiniteElementBase > FiniteElementDiscretization::getFiniteElement( string const & ) const
-{
-  return FiniteElementBase::CatalogInterface::Factory( m_parentSpace,
-                                                       *m_basis,
-                                                       *m_quadrature,
-                                                       0 );
-}
-
-void FiniteElementDiscretization::ApplySpaceToTargetCells( ElementSubRegionBase * const cellBlock ) const
-{
-  GEOSX_MARK_FUNCTION;
-
-  // TODO THis crap needs to get cleaned up and worked out in the data structure
-  // much better than this.
-  // Need to provide some mechanism to set the sizedFromParent during the
-  // registration, or only allow documentation node
-  // registration.
-
-  //TODO: wu40: Temporarily use the parent space (read from xml) to assign element type for finite element calculation
-  // (for C3D6 mesh).
-  //Need to do this in a more natural way.
-  std::unique_ptr< FiniteElementBase > fe = getFiniteElement( m_parentSpace );
-
-  // dNdX holds a lot of POD data and it gets set in the method below so there's no need to zero initialize it.
-  array3d< R1Tensor > & dNdX = cellBlock->registerWrapper< array3d< R1Tensor > >( keys::dNdX )->reference();
-  dNdX.resizeWithoutInitializationOrDestruction( cellBlock->size(), m_quadrature->size(), fe->dofs_per_element() );
-
-  auto & constitutiveMap = cellBlock->getWrapper< std::pair< array2d< localIndex >, array2d< localIndex > > >(
-    CellElementSubRegion::viewKeyStruct::constitutiveMapString )->reference();
-  constitutiveMap.first.resize( cellBlock->size(), m_quadrature->size() );
-  constitutiveMap.second.resize( cellBlock->size(), m_quadrature->size() );
-
-  array2d< real64 > & detJ = cellBlock->registerWrapper< array2d< real64 > >( keys::detJ )->reference();
-  detJ.resize( cellBlock->size(), m_quadrature->size() );
-}
 
 void FiniteElementDiscretization::PostProcessInput()
 {
-  auto const & basisName = this->getReference< string >( keys::basis );
-  auto const & quadratureName = this->getReference< string >( keys::quadrature );
-
-  // TODO find a better way to do this that doesn't involve getParent(). We
-  // shouldn't really use that unless there is no
-  // other choice.
-  Group const *  numericalMethods = this->getParent()->getParent();
-  Group const *  basisManager = numericalMethods->GetGroup( keys::basisFunctions );
-  Group const *  quadratureManager = numericalMethods->GetGroup( keys::quadratureRules );
-
-  m_basis = basisManager->GetGroup< BasisBase >( basisName );
-  m_quadrature = quadratureManager->GetGroup< QuadratureBase >( quadratureName );
-  m_finiteElement = new FiniteElement< 3 >( *m_basis, *m_quadrature, 0 );
+  GEOSX_ERROR_IF( m_order!=1, "Higher order finite element spaces are currently not supported." );
+  GEOSX_ERROR_IF( m_formulation!="default", "Only standard element formulations are currently supported." );
 }
 
-
+std::unique_ptr< FiniteElementBase >
+FiniteElementDiscretization::factory( string const & parentElementShape ) const
+{
+  std::unique_ptr< FiniteElementBase > rval;
+  if( m_order==1 )
+  {
+    if( parentElementShape ==  finiteElement::ParentElementTypeStrings::Hexahedron )
+    {
+      rval = std::make_unique< H1_Hexahedron_Lagrange1_GaussLegendre2 >();
+    }
+    else if( parentElementShape == finiteElement::ParentElementTypeStrings::Tetrahedon )
+    {
+      rval = std::make_unique< H1_Tetrahedron_Lagrange1_Gauss1 >();
+    }
+    else if( parentElementShape == finiteElement::ParentElementTypeStrings::Prism )
+    {
+      rval = std::make_unique< H1_Wedge_Lagrange1_Gauss6 >();
+    }
+    else if( parentElementShape == finiteElement::ParentElementTypeStrings::Pyramid )
+    {
+      rval = std::make_unique< H1_Pyramid_Lagrange1_Gauss5 >();
+    }
+    else if( parentElementShape == finiteElement::ParentElementTypeStrings::Quadralateral )
+    {
+      rval = std::make_unique< H1_QuadrilateralFace_Lagrange1_GaussLegendre2 >();
+    }
+    else if( parentElementShape == finiteElement::ParentElementTypeStrings::Triangle )
+    {
+      rval = std::make_unique< H1_TriangleFace_Lagrange1_Gauss1 >();
+    }
+    else
+    {
+      GEOSX_ERROR( "Key value of "<<parentElementShape<<" does not have an associated element formulation." );
+    }
+  }
+  else
+  {
+    GEOSX_ERROR( "Elements with m_order>1 are not currently supported." );
+  }
+  return rval;
+}
 
 REGISTER_CATALOG_ENTRY( Group, FiniteElementDiscretization, std::string const &, Group * const )
 

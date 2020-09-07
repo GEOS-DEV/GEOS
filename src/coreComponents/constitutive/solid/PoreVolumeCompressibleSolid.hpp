@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -36,26 +36,28 @@ public:
 
   virtual ~PoreVolumeCompressibleSolid() override;
 
-  void DeliverClone( string const & name,
-                     Group * const parent,
-                     std::unique_ptr< ConstitutiveBase > & clone ) const override;
+  std::unique_ptr< ConstitutiveBase > deliverClone( string const & name,
+                                                    Group * const parent ) const override;
 
-  virtual void AllocateConstitutiveData( dataRepository::Group * const parent,
+  virtual void allocateConstitutiveData( dataRepository::Group * const parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
 
   static std::string CatalogName() { return "PoreVolumeCompressibleSolid"; }
 
-  virtual string GetCatalogName() override { return CatalogName(); }
+  virtual string getCatalogName() const override { return CatalogName(); }
 
   virtual void StateUpdatePointPressure( real64 const & pres,
                                          localIndex const k,
                                          localIndex const q ) override final;
 
+  virtual void StateUpdateBatchPressure( arrayView1d< real64 const > const & pres,
+                                         arrayView1d< real64 const > const & dPres ) override final;
+
   struct viewKeyStruct : public ConstitutiveBase::viewKeyStruct
   {
-    dataRepository::ViewKey compressibility   = { "compressibility"   };
-    dataRepository::ViewKey referencePressure = { "referencePressure" };
+    static constexpr auto compressibilityString = "compressibility";
+    static constexpr auto referencePressureString = "referencePressure";
   } viewKeys;
 
 protected:
@@ -74,13 +76,6 @@ private:
 
   ExponentialRelation< real64, ExponentApproximationType::Linear > m_poreVolumeRelation;
 };
-
-inline void PoreVolumeCompressibleSolid::StateUpdatePointPressure( real64 const & pres,
-                                                                   localIndex const k,
-                                                                   localIndex const q )
-{
-  m_poreVolumeRelation.Compute( pres, m_poreVolumeMultiplier[k][q], m_dPVMult_dPressure[k][q] );
-}
 
 }/* namespace constitutive */
 

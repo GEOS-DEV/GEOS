@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -25,16 +25,22 @@
 #include "linearAlgebra/interfaces/MatrixBase.hpp"
 
 /**
- * See comment in PetscVector.hpp about the rationale for this declaration.
+ * @name PETSc forward declarations.
+ *
+ * Forward declare PETSc's matrix struct and pointer aliases in order
+ * to avoid including PETSc headers and leaking into the rest of GEOSX.
  */
-struct _p_Mat;
-typedef struct _p_Mat * Mat;
+///@{
+
+/// Mat struct forward declaration
+extern "C" struct _p_Mat;
+
+///@}
 
 namespace geosx
 {
 
 /**
- * @class PetscMatrix
  * @brief This class creates and provides basic support for the Mat
  *        matrix object type used in PETSc.
  */
@@ -43,6 +49,12 @@ class PetscMatrix final : public virtual LinearOperator< PetscVector >,
 {
 public:
 
+  /// Compatible vector type
+  using Vector = PetscVector;
+
+  /// Alias for PETSc matrix struct pointer
+  using Mat = struct _p_Mat *;
+
   /**
    * @name Constructor/Destructor Methods
    */
@@ -50,15 +62,12 @@ public:
 
   /**
    * @brief Empty matrix constructor.
-   *
-   * Create an empty (distributed) matrix.
    */
   PetscMatrix();
 
   /**
    * @brief Copy constructor.
-   *
-   * Create new matrix from matrix <tt>src</tt>.
+   * @param[in] src the matrix to be copied
    */
   PetscMatrix( PetscMatrix const & src );
 
@@ -76,11 +85,13 @@ public:
 
   using MatrixBase::createWithLocalSize;
   using MatrixBase::createWithGlobalSize;
+  using MatrixBase::create;
   using MatrixBase::closed;
   using MatrixBase::assembled;
   using MatrixBase::insertable;
   using MatrixBase::modifiable;
   using MatrixBase::ready;
+  using MatrixBase::residual;
 
   virtual void createWithLocalSize( localIndex const localRows,
                                     localIndex const localCols,
@@ -145,27 +156,27 @@ public:
 
   virtual void add( arraySlice1d< globalIndex const > const & rowIndices,
                     arraySlice1d< globalIndex const > const & colIndices,
-                    arraySlice2d< real64 const, 1 > const & values ) override;
+                    arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & values ) override;
 
   virtual void set( arraySlice1d< globalIndex const > const & rowIndices,
                     arraySlice1d< globalIndex const > const & colIndices,
-                    arraySlice2d< real64 const, 1 > const & values ) override;
+                    arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & values ) override;
 
   virtual void insert( arraySlice1d< globalIndex const > const & rowIndices,
                        arraySlice1d< globalIndex const > const & colIndices,
-                       arraySlice2d< real64 const, 1 > const & values ) override;
+                       arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & values ) override;
 
   virtual void add( arraySlice1d< globalIndex const > const & rowIndices,
                     arraySlice1d< globalIndex const > const & colIndices,
-                    arraySlice2d< real64 const, 0 > const & values ) override;
+                    arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & values ) override;
 
   virtual void set( arraySlice1d< globalIndex const > const & rowIndices,
                     arraySlice1d< globalIndex const > const & colIndices,
-                    arraySlice2d< real64 const, 0 > const & values ) override;
+                    arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & values ) override;
 
   virtual void insert( arraySlice1d< globalIndex const > const & rowIndices,
                        arraySlice1d< globalIndex const > const & colIndices,
-                       arraySlice2d< real64 const, 0 > const & values ) override;
+                       arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & values ) override;
 
   virtual void add( globalIndex const * rowIndices,
                     globalIndex const * colIndices,
@@ -228,6 +239,10 @@ public:
                            bool const keepDiag = false,
                            real64 const diagValue = 0.0 ) override;
 
+  virtual void addEntries( PetscMatrix const & src, real64 const scale = 1.0 ) override;
+
+  virtual void addDiagonal( PetscVector const & src ) override;
+
   virtual localIndex maxRowLength() const override;
 
   virtual localIndex localRowLength( localIndex localRowIndex ) const override;
@@ -235,6 +250,8 @@ public:
   virtual localIndex globalRowLength( globalIndex globalRowIndex ) const override;
 
   virtual real64 getDiagValue( globalIndex globalRow ) const override;
+
+  virtual void extractDiagonal( PetscVector & dst ) const override;
 
   virtual void getRowCopy( globalIndex globalRow,
                            arraySlice1d< globalIndex > const & colIndices,
@@ -251,6 +268,10 @@ public:
   virtual globalIndex ilower() const override;
 
   virtual globalIndex iupper() const override;
+
+  virtual globalIndex jlower() const override;
+
+  virtual globalIndex jupper() const override;
 
   virtual localIndex numLocalNonzeros() const override;
 
@@ -276,12 +297,14 @@ public:
   ///@}
 
   /**
-   * @brief Returns a pointer to the underlying matrix.
+   * @brief Returns a const pointer to the underlying matrix.
+   * @return the const pointer to the underlying matrix.
    */
   const Mat & unwrapped() const;
 
   /**
    * @brief Returns a non-const pointer to the underlying matrix.
+   * @return the non-const pointer to the underlying matrix.
    */
   Mat & unwrapped();
 

@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -61,12 +61,14 @@ public:
   /**
    * @brief Copy assignment.
    * @param src EpetraVector to be copied.
+   * @return the new vector
    */
   EpetraVector & operator=( EpetraVector const & src );
 
   /**
    * @brief Move assignment.
    * @param src EpetraVector to be moved from.
+   * @return the new vector
    */
   EpetraVector & operator=( EpetraVector && src ) noexcept;
 
@@ -84,6 +86,7 @@ public:
 
   using VectorBase::closed;
   using VectorBase::ready;
+  using VectorBase::extract;
 
   virtual bool created() const override;
 
@@ -93,7 +96,7 @@ public:
   virtual void createWithGlobalSize( globalIndex const globalSize,
                                      MPI_Comm const & comm ) override;
 
-  virtual void create( arraySlice1d< real64 const > const & localValues,
+  virtual void create( arrayView1d< real64 const > const & localValues,
                        MPI_Comm const & comm ) override;
 
   virtual void open() override;
@@ -129,6 +132,8 @@ public:
   virtual void rand( unsigned const seed = 1984 ) override;
 
   virtual void scale( real64 const scalingFactor ) override;
+
+  virtual void reciprocal() override;
 
   virtual real64 dot( EpetraVector const & vec ) const override;
 
@@ -179,11 +184,13 @@ public:
 
   /**
    * @brief Returns a const pointer to the underlying Epetra object.
+   * @return const pointer to the underlying Epetra object
    */
   Epetra_FEVector const & unwrapped() const;
 
   /**
    * @brief Returns a non-const pointer to the underlying Epetra object.
+   * @return non-const pointer to the underlying Epetra object
    */
   Epetra_FEVector & unwrapped();
 

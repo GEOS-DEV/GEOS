@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -31,27 +31,44 @@ class EdgeManager;
  * @class EmbeddedSurfaceRegion
  *
  * The EmbeddedSurfaceRegion class contains the functionality to support the concept of a EmbeddedSurfaceRegion in the
- * element
- * hierarchy. EmbeddedSurfaceRegion derives from ElementRegion and has an entry in the ObjectManagerBase catalog.
- *
- *
+ * element hierarchy. EmbeddedSurfaceRegion derives from ElementRegion and has an entry in the ObjectManagerBase
+ * catalog.
  */
 class EmbeddedSurfaceRegion : public ElementRegionBase
 {
 public:
-  /**
-   * @brief constructor
-   * @param name The name of the object in the data hierarchy.
-   * @param parent Pointer to the parent group in the data hierarchy.
-   */
 
+  /**
+   * @name Constructor / Destructor
+   */
+  ///@{
+
+  /**
+   * @brief Constructor.
+   * @param name the name of the object in the data hierarchy.
+   * @param parent a pointer to the parent group in the data hierarchy.
+   */
   EmbeddedSurfaceRegion( string const & name, Group * const parent );
 
+  /**
+   * @brief Deleted default constructor.
+   */
   EmbeddedSurfaceRegion() = delete;
-  virtual ~EmbeddedSurfaceRegion() override;
 
   /**
-   * @brief The key name for the EmbeddedSurfaceRegion in the object catalog.
+   * @brief Default destructor.
+   */
+  virtual ~EmbeddedSurfaceRegion() override;
+
+  ///@}
+
+  /**
+   * @name Static factory catalog functions
+   */
+  ///@{
+
+  /**
+   * @brief Get the key name for the EmbeddedSurfaceRegion in the object catalog.
    * @return A string containing the key name.
    */
   static const string CatalogName()
@@ -60,13 +77,24 @@ public:
   virtual const string getCatalogName() const override final
   { return EmbeddedSurfaceRegion::CatalogName(); }
 
+  ///@}
+
+  /**
+   * @brief A struct to serve as a container for variable strings and keys.
+   * @struct viewKeyStruct
+   */
   struct viewKeyStruct : public ElementRegionBase::viewKeyStruct
   {
+    /// Fracture set string
     static constexpr auto fractureSetString = "fractureSet";
+    /// Default fracture aperture
+    static constexpr auto defaultApertureString = "defaultAperture";
   };
 
 
 private:
+
+  real64 m_defaultAperture;
 
 };
 

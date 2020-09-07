@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -78,25 +78,29 @@ localIndex Unpack( buffer_unit_type const * & buffer,
                    ElementRegionManager const * const elementRegionManager,
                    bool const clearFlag )
 {
+  GEOSX_MARK_SCOPE( "Unpack OrderedVariableToManyElementRelation" );
+
   localIndex sizeOfUnpackedChars = 0;
 
   localIndex numIndicesUnpacked;
   sizeOfUnpackedChars += bufferOps::Unpack( buffer, numIndicesUnpacked );
   GEOSX_ERROR_IF( numIndicesUnpacked != packList.size(), "" );
 
+  std::vector< std::array< localIndex, 3 > > values;
   for( localIndex a=0; a<packList.size(); ++a )
   {
+    values.clear();
+
     localIndex const index = packList[a];
     sizeOfUnpackedChars += bufferOps::Unpack( buffer, numIndicesUnpacked );
 
-    std::set< std::tuple< localIndex, localIndex, localIndex > > values;
     if( !clearFlag )
     {
       for( localIndex b=0; b<var.m_toElementRegion.sizeOfArray( index ); ++b )
       {
-        values.insert( std::make_tuple( var.m_toElementRegion[index][b],
-                                        var.m_toElementSubRegion[index][b],
-                                        var.m_toElementIndex[index][b] ) );
+        values.push_back( { var.m_toElementRegion[index][b],
+                            var.m_toElementSubRegion[index][b],
+                            var.m_toElementIndex[index][b] } );
       }
     }
 
@@ -122,32 +126,28 @@ localIndex Unpack( buffer_unit_type const * & buffer,
                                                       localIndex( -1 ) );
         if( localElementIndex!=-1 )
         {
-          values.insert( std::make_tuple( elemRegionIndex,
-                                          elemSubRegionIndex,
-                                          localElementIndex ) );
+          values.push_back( { elemRegionIndex,
+                              elemSubRegionIndex,
+                              localElementIndex } );
         }
       }
       else
       {
-        values.insert( std::make_tuple( -1, -1, -1 ) );
+        values.push_back( { -1, -1, -1 } );
       }
     }
 
-    localIndex const newSize = values.size();
+    localIndex const numUniqueValues = LvArray::sortedArrayManipulation::makeSortedUnique( values.begin(), values.end() );
 
-    var.m_toElementRegion.resizeArray( index, newSize );
-    var.m_toElementSubRegion.resizeArray( index, newSize );
-    var.m_toElementIndex.resizeArray( index, newSize );
+    var.m_toElementRegion.resizeArray( index, numUniqueValues );
+    var.m_toElementSubRegion.resizeArray( index, numUniqueValues );
+    var.m_toElementIndex.resizeArray( index, numUniqueValues );
 
+    for( localIndex b=0; b < numUniqueValues; ++b )
     {
-      localIndex b=0;
-      for( auto & value : values )
-      {
-        var.m_toElementRegion[index][b]    = std::get< 0 >( value );
-        var.m_toElementSubRegion[index][b] = std::get< 1 >( value );
-        var.m_toElementIndex[index][b]     = std::get< 2 >( value );
-        ++b;
-      }
+      var.m_toElementRegion( index, b ) = values[ b ][ 0 ];
+      var.m_toElementSubRegion( index, b ) = values[ b ][ 1 ];
+      var.m_toElementIndex( index, b ) = values[ b ][ 2 ];
     }
   }
 
@@ -208,6 +208,8 @@ localIndex Unpack( buffer_unit_type const * & buffer,
                    ElementRegionManager const * const elementRegionManager,
                    bool const clearFlag )
 {
+  GEOSX_MARK_SCOPE( "Unpack FixedToManyElementRelation" );
+
   localIndex sizeOfUnpackedChars = 0;
 
   localIndex numIndicesUnpacked;

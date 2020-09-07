@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -32,7 +32,12 @@ void AggregateElementSubRegion::CreateFromFineToCoarseMap( localIndex nbAggregat
                                                            array1d< localIndex > const & fineToCoarse,
                                                            array1d< R1Tensor > const & barycenters )
 {
-  m_elementCenter = barycenters;
+  m_elementCenter.resize( barycenters.size( 0 ), barycenters.size( 1 ) );
+  LvArray::forValuesInSliceWithIndices( m_elementCenter.toSlice(), [&] ( double & value, localIndex i, localIndex j )
+  {
+    value = barycenters[ i ][ j ];
+  } );
+
   m_nbFineCellsPerCoarseCell.resize( nbAggregates + 1 );
   m_fineToCoarse.resize( fineToCoarse.size() );
 

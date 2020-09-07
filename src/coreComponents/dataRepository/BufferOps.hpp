@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -21,21 +21,25 @@
 #include "codingUtilities/Utilities.hpp"
 #include "codingUtilities/static_if.hpp"
 #include "codingUtilities/traits.hpp"
-#include "cxx-utilities/src/IntegerConversion.hpp"
+#include "LvArray/src/limits.hpp"
 
 #include <type_traits>
 
 namespace geosx
 {
 
-/* Forward declaration of InterObjectRelation */
+/**
+ * @brief Forward declaration of InterObjectRelation
+ */
 template< typename T >
 class InterObjectRelation;
 
 namespace bufferOps
 {
 
-/* Forward declaration of is_packable */
+/**
+ * @brief Forward declaration of is_packable
+ */
 template< typename T >
 struct is_packable_helper;
 
@@ -102,6 +106,7 @@ constexpr bool is_map_packable_by_index< mapBase< T_KEY, T_VAL, SORTED > > = is_
 
 template< typename T >
 constexpr bool can_memcpy_helper = std::is_arithmetic< T >::value ||
+                                   std::is_enum< T >::value ||
                                    traits::is_tensorT< T >;
 
 template< typename T >
@@ -464,7 +469,7 @@ template< typename SORTED0, typename SORTED1 >
 inline
 localIndex
 Unpack( buffer_unit_type const * & buffer,
-        arrayView1d< localIndex > & var,
+        arrayView1d< localIndex > const & var,
         array1d< localIndex > const & indices,
         mapBase< globalIndex, localIndex, SORTED0 > const & globalToLocalMap,
         mapBase< globalIndex, localIndex, SORTED1 > const & relatedObjectGlobalToLocalMap );
@@ -474,7 +479,7 @@ Unpack( buffer_unit_type const * & buffer,
 template< bool DO_PACKING, typename SORTED >
 localIndex
 Pack( buffer_unit_type * & buffer,
-      arrayView1d< localIndex_array const > const & var,
+      arrayView1d< arrayView1d< localIndex const > const > const & var,
       mapBase< localIndex, array1d< globalIndex >, SORTED > const & unmappedGlobalIndices,
       arrayView1d< localIndex const > const & indices,
       arrayView1d< globalIndex const > const & localToGlobalMap,

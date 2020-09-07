@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -19,7 +19,7 @@
 #include "CellElementRegion.hpp"
 #include "AggregateElementSubRegion.hpp"
 #include "common/TimingMacros.hpp"
-#include "cxx-utilities/src/SparsityPattern.hpp"
+#include "LvArray/src/SparsityPattern.hpp"
 #include "metis.h"
 
 namespace geosx
@@ -29,10 +29,10 @@ using namespace dataRepository;
 CellElementRegion::CellElementRegion( string const & name, Group * const parent ):
   ElementRegionBase( name, parent )
 {
-  registerWrapper( viewKeyStruct::sourceCellBlockNames, &m_cellBlockNames, false )->
+  registerWrapper( viewKeyStruct::sourceCellBlockNames, &m_cellBlockNames )->
     setInputFlag( InputFlags::OPTIONAL );
 
-  registerWrapper( viewKeyStruct::coarseningRatioString, &m_coarseningRatio, false )->
+  registerWrapper( viewKeyStruct::coarseningRatioString, &m_coarseningRatio )->
     setInputFlag( InputFlags::OPTIONAL );
 }
 
@@ -67,9 +67,9 @@ void CellElementRegion::GenerateAggregates( FaceManager const * const faceManage
   AggregateElementSubRegion * const aggregateSubRegion =
     elementSubRegions->RegisterGroup< AggregateElementSubRegion >( "coarse" );
 
-  array2d< localIndex > const & elemRegionList     = faceManager->elementRegionList();
-  array2d< localIndex > const & elemSubRegionList  = faceManager->elementSubRegionList();
-  array2d< localIndex > const & elemList           = faceManager->elementList();
+  arrayView2d< localIndex const > const & elemRegionList     = faceManager->elementRegionList();
+  arrayView2d< localIndex const > const & elemSubRegionList  = faceManager->elementSubRegionList();
+  arrayView2d< localIndex const > const & elemList           = faceManager->elementList();
 
   // Counting the total number of cell and number of vertices
   localIndex nbCellElements = 0;
@@ -79,23 +79,23 @@ void CellElementRegion::GenerateAggregates( FaceManager const * const faceManage
   } );
 
   // Number of aggregate computation
-  localIndex nbAggregates = integer_conversion< localIndex >( int(nbCellElements * m_coarseningRatio) );
+  localIndex nbAggregates = LvArray::integerConversion< localIndex >( int(nbCellElements * m_coarseningRatio) );
   GEOSX_LOG_RANK_0( "Generating " << nbAggregates  << " aggregates on region " << this->getName());
 
   // METIS variable declarations
   using idx_t = ::idx_t;
   idx_t options[METIS_NOPTIONS];                                    // Contains the METIS options
   METIS_SetDefaultOptions( options );                                 // ... That are set by default
-  idx_t nnodes = integer_conversion< idx_t >( nbCellElements );     // Number of connectivity graph nodes
+  idx_t nnodes = LvArray::integerConversion< idx_t >( nbCellElements );     // Number of connectivity graph nodes
   idx_t nconst = 1;                                                 // Number of balancy constraints
   idx_t objval;                                                     // Total communication volume
   array1d< idx_t > parts( nnodes );                                   // Map element index -> aggregate index
-  idx_t nparts = integer_conversion< idx_t >( nbAggregates );       // Number of aggregates to be generated
+  idx_t nparts = LvArray::integerConversion< idx_t >( nbAggregates );       // Number of aggregates to be generated
 
 
   // Compute the connectivity graph
-  LvArray::SparsityPattern< idx_t, idx_t > graph( integer_conversion< idx_t >( nbCellElements ),
-                                                  integer_conversion< idx_t >( nbCellElements ) );
+  SparsityPattern< idx_t, idx_t > graph( LvArray::integerConversion< idx_t >( nbCellElements ),
+                                         LvArray::integerConversion< idx_t >( nbCellElements ) );
   localIndex nbConnections = 0;
   array1d< localIndex > offsetSubRegions( this->GetSubRegions().size() );
   for( localIndex subRegionIndex = 1; subRegionIndex < offsetSubRegions.size(); subRegionIndex++ )
@@ -107,9 +107,9 @@ void CellElementRegion::GenerateAggregates( FaceManager const * const faceManage
     if( elemRegionList[kf][0] == regionIndex && elemRegionList[kf][1] == regionIndex && elemRegionList[kf][0] )
     {
       localIndex const esr0 = elemSubRegionList[kf][0];
-      idx_t const ei0  = integer_conversion< idx_t >( elemList[kf][0] + offsetSubRegions[esr0] );
+      idx_t const ei0  = LvArray::integerConversion< idx_t >( elemList[kf][0] + offsetSubRegions[esr0] );
       localIndex const esr1 = elemSubRegionList[kf][1];
-      idx_t const ei1  = integer_conversion< idx_t >( elemList[kf][1] + offsetSubRegions[esr1] );
+      idx_t const ei1  = LvArray::integerConversion< idx_t >( elemList[kf][1] + offsetSubRegions[esr1] );
       graph.insertNonZero( ei0, ei1 );
       graph.insertNonZero( ei1, ei0 );
       nbConnections++;
@@ -163,9 +163,17 @@ void CellElementRegion::GenerateAggregates( FaceManager const * const faceManage
     {
       if( ghostRank[cellIndex] >= 0 )
         continue;
-      R1Tensor center = elementSubRegion.getElementCenter()[cellIndex];
-      center *= normalizeVolumes[cellIndex + offsetSubRegions[subRegionIndex]];
-      aggregateBarycenters[parts[cellIndex + offsetSubRegions[subRegionIndex]]] += center;
+
+      // TODO Change the rest of this to
+      // LvArray::tensorOps::scaledAdd< 3 >( aggregateBarycenters[ parts[ cellIndex + offsetSubRegions[ subRegionIndex ]
+      // ] ],
+      //                                     elementSubRegion.getElementCenter()[ cellIndex ],
+      //                                     normalizeVolumes[ cellIndex + offsetSubRegions[ subRegionIndex ] ] )
+      real64 const center[ 3 ] =
+        LVARRAY_TENSOROPS_INIT_LOCAL_3( normalizeVolumes[ cellIndex + offsetSubRegions[ subRegionIndex ] ] * elementSubRegion.getElementCenter()[ cellIndex ] );
+      aggregateBarycenters[ parts[ cellIndex + offsetSubRegions[ subRegionIndex ] ] ][ 0 ] += center[ 0 ];
+      aggregateBarycenters[ parts[ cellIndex + offsetSubRegions[ subRegionIndex ] ] ][ 1 ] += center[ 1 ];
+      aggregateBarycenters[ parts[ cellIndex + offsetSubRegions[ subRegionIndex ] ] ][ 2 ] += center[ 2 ];
     }
   } );
 
@@ -173,7 +181,7 @@ void CellElementRegion::GenerateAggregates( FaceManager const * const faceManage
   array1d< localIndex > partsGEOS( parts.size() );
   for( localIndex fineCellIndex = 0; fineCellIndex < partsGEOS.size(); fineCellIndex++ )
   {
-    partsGEOS[fineCellIndex] = integer_conversion< localIndex >( parts[fineCellIndex] );
+    partsGEOS[fineCellIndex] = LvArray::integerConversion< localIndex >( parts[fineCellIndex] );
   }
   aggregateSubRegion->CreateFromFineToCoarseMap( nbAggregates, partsGEOS, aggregateBarycenters );
 }

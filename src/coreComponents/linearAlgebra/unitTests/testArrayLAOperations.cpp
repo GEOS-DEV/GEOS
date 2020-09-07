@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -22,7 +22,7 @@
 
 #include "common/DataTypes.hpp"
 #include "managers/initialization.hpp"
-
+#include "rajaInterface/GEOS_RAJA_Interface.hpp"
 #include "linearAlgebra/interfaces/BlasLapackLA.hpp"
 
 using namespace geosx;
@@ -122,7 +122,7 @@ void determinant_test()
     // Construct 1d discrete Laplacian with Dirichlet boundary conditions
     // at both ends
     Laplacian1d.resize( N, N );
-    Laplacian1d = 0.0;
+    Laplacian1d.setValues< serialPolicy >( 0.0 );
     for( INDEX_TYPE i = 0; i < N; ++i )
     {
       for( INDEX_TYPE j = 0; j < N; ++j )
@@ -194,7 +194,7 @@ void matrix_norm1_test()
 
   // Compute norm1
   array1d< real64 > tmp( N );
-  tmp = 0;
+  tmp.setValues< serialPolicy >( 0 );
   for( INDEX_TYPE i = 0; i < M; ++i )
   {
     for( INDEX_TYPE j = 0; j < N; ++j )
@@ -508,13 +508,13 @@ void matrixT_vector_multiply_test()
 template< typename LAI >
 void matrix_matrix_multiply_test()
 {
-  array1d< INDEX_TYPE > M_indeces;
-  M_indeces.push_back( 1 );
-  M_indeces.push_back( 6 );
-  M_indeces.push_back( 24 );
-  M_indeces.push_back( 100 );
-  array1d< INDEX_TYPE > N_indeces( M_indeces );
-  array1d< INDEX_TYPE > K_indeces( M_indeces );
+  array1d< INDEX_TYPE > M_indices;
+  M_indices.emplace_back( 1 );
+  M_indices.emplace_back( 6 );
+  M_indices.emplace_back( 24 );
+  M_indices.emplace_back( 100 );
+  array1d< INDEX_TYPE > N_indices( M_indices );
+  array1d< INDEX_TYPE > K_indices( M_indices );
 
   array2d< real64 > A;
   array2d< real64 > B;
@@ -523,11 +523,11 @@ void matrix_matrix_multiply_test()
   real64 alpha = 3.0;
   real64 beta = 7.0;
 
-  for( INDEX_TYPE M : M_indeces )
+  for( INDEX_TYPE M : M_indices )
   {
-    for( INDEX_TYPE N : N_indeces )
+    for( INDEX_TYPE N : N_indices )
     {
-      for( INDEX_TYPE K : K_indeces )
+      for( INDEX_TYPE K : K_indices )
       {
         // Resize matrices
         A.resize( M, K );
@@ -582,13 +582,13 @@ void matrix_matrix_multiply_test()
 template< typename LAI >
 void matrixT_matrix_multiply_test()
 {
-  array1d< INDEX_TYPE > M_indeces;
-  M_indeces.push_back( 1 );
-  M_indeces.push_back( 6 );
-  M_indeces.push_back( 24 );
-  M_indeces.push_back( 100 );
-  array1d< INDEX_TYPE > N_indeces( M_indeces );
-  array1d< INDEX_TYPE > K_indeces( M_indeces );
+  array1d< INDEX_TYPE > M_indices;
+  M_indices.emplace_back( 1 );
+  M_indices.emplace_back( 6 );
+  M_indices.emplace_back( 24 );
+  M_indices.emplace_back( 100 );
+  array1d< INDEX_TYPE > N_indices( M_indices );
+  array1d< INDEX_TYPE > K_indices( M_indices );
 
   array2d< real64 > A;
   array2d< real64 > B;
@@ -597,11 +597,11 @@ void matrixT_matrix_multiply_test()
   real64 alpha = 3.0;
   real64 beta = 7.0;
 
-  for( INDEX_TYPE M : M_indeces )
+  for( INDEX_TYPE M : M_indices )
   {
-    for( INDEX_TYPE N : N_indeces )
+    for( INDEX_TYPE N : N_indices )
     {
-      for( INDEX_TYPE K : K_indeces )
+      for( INDEX_TYPE K : K_indices )
       {
         // Resize matrices
         A.resize( K, M );
@@ -656,13 +656,13 @@ void matrixT_matrix_multiply_test()
 template< typename LAI >
 void matrix_matrixT_multiply_test()
 {
-  array1d< INDEX_TYPE > M_indeces;
-  M_indeces.push_back( 1 );
-  M_indeces.push_back( 6 );
-  M_indeces.push_back( 24 );
-  M_indeces.push_back( 100 );
-  array1d< INDEX_TYPE > N_indeces( M_indeces );
-  array1d< INDEX_TYPE > K_indeces( M_indeces );
+  array1d< INDEX_TYPE > M_indices;
+  M_indices.emplace_back( 1 );
+  M_indices.emplace_back( 6 );
+  M_indices.emplace_back( 24 );
+  M_indices.emplace_back( 100 );
+  array1d< INDEX_TYPE > N_indices( M_indices );
+  array1d< INDEX_TYPE > K_indices( M_indices );
 
   array2d< real64 > A;
   array2d< real64 > B;
@@ -671,11 +671,11 @@ void matrix_matrixT_multiply_test()
   real64 alpha = 3.0;
   real64 beta = 7.0;
 
-  for( INDEX_TYPE M : M_indeces )
+  for( INDEX_TYPE M : M_indices )
   {
-    for( INDEX_TYPE N : N_indeces )
+    for( INDEX_TYPE N : N_indices )
     {
-      for( INDEX_TYPE K : K_indeces )
+      for( INDEX_TYPE K : K_indices )
       {
         // Resize matrices
         A.resize( M, K );
@@ -730,13 +730,13 @@ void matrix_matrixT_multiply_test()
 template< typename LAI >
 void matrixT_matrixT_multiply_test()
 {
-  array1d< INDEX_TYPE > M_indeces;
-  M_indeces.push_back( 1 );
-  M_indeces.push_back( 6 );
-  M_indeces.push_back( 24 );
-  M_indeces.push_back( 100 );
-  array1d< INDEX_TYPE > N_indeces( M_indeces );
-  array1d< INDEX_TYPE > K_indeces( M_indeces );
+  array1d< INDEX_TYPE > M_indices;
+  M_indices.emplace_back( 1 );
+  M_indices.emplace_back( 6 );
+  M_indices.emplace_back( 24 );
+  M_indices.emplace_back( 100 );
+  array1d< INDEX_TYPE > N_indices( M_indices );
+  array1d< INDEX_TYPE > K_indices( M_indices );
 
   array2d< real64 > A;
   array2d< real64 > B;
@@ -745,11 +745,11 @@ void matrixT_matrixT_multiply_test()
   real64 alpha = 3.0;
   real64 beta = 7.0;
 
-  for( INDEX_TYPE M : M_indeces )
+  for( INDEX_TYPE M : M_indices )
   {
-    for( INDEX_TYPE N : N_indeces )
+    for( INDEX_TYPE N : N_indices )
     {
-      for( INDEX_TYPE K : K_indeces )
+      for( INDEX_TYPE K : K_indices )
       {
         // Resize matrices
         A.resize( K, M );
@@ -816,7 +816,7 @@ void matrix_inverse_test()
     // Construct 1d discrete Laplacian with Dirichlet boundary conditions
     // at both ends
     Laplacian1d.resize( N, N );
-    Laplacian1d = 0;
+    Laplacian1d.setValues< serialPolicy >( 0 );
     for( INDEX_TYPE i = 0; i < N; ++i )
     {
       for( INDEX_TYPE j = 0; j < N; ++j )
@@ -862,16 +862,16 @@ void matrix_inverse_test()
 template< typename LAI >
 void vector_copy_test()
 {
-  array1d< INDEX_TYPE > N_indeces;
-  N_indeces.push_back( 1 );
-  N_indeces.push_back( 6 );
-  N_indeces.push_back( 24 );
-  N_indeces.push_back( 100 );
+  array1d< INDEX_TYPE > N_indices;
+  N_indices.emplace_back( 1 );
+  N_indices.emplace_back( 6 );
+  N_indices.emplace_back( 24 );
+  N_indices.emplace_back( 100 );
 
   array1d< real64 > src;
   array1d< real64 > dst;
 
-  for( INDEX_TYPE N : N_indeces )
+  for( INDEX_TYPE N : N_indices )
   {
     src.resize( N );
     dst.resize( N );
@@ -897,19 +897,19 @@ void vector_copy_test()
 template< typename LAI >
 void matrix_copy_test()
 {
-  array1d< INDEX_TYPE > M_indeces;
-  M_indeces.push_back( 1 );
-  M_indeces.push_back( 6 );
-  M_indeces.push_back( 24 );
-  M_indeces.push_back( 100 );
-  array1d< INDEX_TYPE > N_indeces( M_indeces );
+  array1d< INDEX_TYPE > M_indices;
+  M_indices.emplace_back( 1 );
+  M_indices.emplace_back( 6 );
+  M_indices.emplace_back( 24 );
+  M_indices.emplace_back( 100 );
+  array1d< INDEX_TYPE > N_indices( M_indices );
 
   array2d< real64 > src;
   array2d< real64 > dst;
 
-  for( INDEX_TYPE M : M_indeces )
+  for( INDEX_TYPE M : M_indices )
   {
-    for( INDEX_TYPE N : N_indeces )
+    for( INDEX_TYPE N : N_indices )
     {
       src.resize( M, N );
       dst.resize( M, N );
@@ -1051,14 +1051,14 @@ template< typename LAI >
 void matrix_svd_test()
 {
   array1d< INDEX_TYPE > M_indices;
-  M_indices.push_back( 1 );
-  M_indices.push_back( 2 );
-  M_indices.push_back( 3 );
-  M_indices.push_back( 4 );
-  M_indices.push_back( 5 );
-  M_indices.push_back( 6 );
-  M_indices.push_back( 7 );
-  M_indices.push_back( 8 );
+  M_indices.emplace_back( 1 );
+  M_indices.emplace_back( 2 );
+  M_indices.emplace_back( 3 );
+  M_indices.emplace_back( 4 );
+  M_indices.emplace_back( 5 );
+  M_indices.emplace_back( 6 );
+  M_indices.emplace_back( 7 );
+  M_indices.emplace_back( 8 );
   array1d< INDEX_TYPE > N_indices( M_indices );
 
   array2d< real64 > A;

@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -24,30 +24,41 @@
 namespace geosx
 {
 
+/**
+ * @brief Concrete representation of a block operator.
+ * @tparam VECTOR type of vector that sub-blocks of this view can operate on
+ * @tparam OPERATOR type of operator that can operate on @p VECTOR
+ *                  (can be base class or a more specialized derived class)
+ *
+ * This extends BlockOperatorView class by providing storage for sub-block operators.
+ * The @p OPERATOR type needs to be default-constructible.
+ */
 template< typename VECTOR, typename OPERATOR >
 class BlockOperator : public BlockOperatorView< VECTOR, OPERATOR >
 {
 public:
 
-  /// The base class
+  /// Alias for base type
   using Base = BlockOperatorView< VECTOR, OPERATOR >;
 
-  /// The type of vector this linear operator operates on
+  /// Alias for vector type
   using Vector = typename Base::Vector;
 
   /**
    * @brief Create an operator with (@p nRows, @p nCols) blocks.
+   * @param nRows number of block rows
+   * @param nCols number of block columns
    */
   BlockOperator( localIndex const nRows, localIndex const nCols );
 
   /**
-   * @brief Copy constructor
+   * @brief Copy constructor.
    * @param rhs the block operator to copy from
    */
   BlockOperator( BlockOperator const & rhs );
 
   /**
-   * @brief Move constructor
+   * @brief Move constructor.
    * @param rhs the block operator to move from
    */
   BlockOperator( BlockOperator && rhs );

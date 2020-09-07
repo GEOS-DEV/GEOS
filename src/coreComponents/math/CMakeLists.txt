@@ -5,9 +5,8 @@
 set(math_headers
   	TensorT/TensorT.h
   	TensorT/R1TensorT.h
-  	TensorT/R2TensorT.h
-  	TensorT/R2SymTensorT.h
   	TensorT/TensorBaseT.h
+  	interpolation/Interpolation.hpp
    )
 
 #

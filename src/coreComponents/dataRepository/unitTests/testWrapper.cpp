@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -19,134 +19,127 @@
 using namespace geosx;
 using namespace dataRepository;
 
-
-TEST( testWrapper, testSetters )
+template< typename T >
+class WrapperSetGet : public ::testing::Test
 {
-  Group group( "group", nullptr );
-  Wrapper< int > wrapper( "wrapper", &group );
-  WrapperBase * wrapperBasePtr = &wrapper;
+public:
+  WrapperSetGet():
+    m_group( "root", nullptr ),
+    m_wrapper( "wrapper", &m_group ),
+    m_wrapperBase( m_wrapper )
+  {}
 
+  void testSizedFromParent( int const value )
   {
     {
-      auto rval = wrapper.setSizedFromParent( true );
-      EXPECT_TRUE( (std::is_same< decltype(rval), Wrapper< int > * >::value) );
-      EXPECT_TRUE( wrapper.sizedFromParent() );
-    }
-    {
-      auto rval = wrapper.setSizedFromParent( false );
-      EXPECT_TRUE( (std::is_same< decltype(rval), Wrapper< int > * >::value) );
-      EXPECT_FALSE( wrapper.sizedFromParent() );
+      Wrapper< T > * rval = m_wrapper.setSizedFromParent( value );
+      EXPECT_EQ( value, m_wrapper.sizedFromParent() );
+      EXPECT_EQ( rval, &m_wrapper );
     }
 
     {
-      auto rval = wrapperBasePtr->setSizedFromParent( true );
-      EXPECT_TRUE( (std::is_same< decltype(rval), WrapperBase * >::value) );
-      EXPECT_TRUE( wrapperBasePtr->sizedFromParent() );
-    }
-    {
-      auto rval = wrapperBasePtr->setSizedFromParent( false );
-      EXPECT_TRUE( (std::is_same< decltype(rval), WrapperBase * >::value) );
-      EXPECT_FALSE( wrapperBasePtr->sizedFromParent() );
+      WrapperBase * rval = m_wrapperBase.setSizedFromParent( value );
+      EXPECT_EQ( value, m_wrapperBase.sizedFromParent() );
+      EXPECT_EQ( rval, &m_wrapperBase );
     }
   }
 
+  void testRestartFlags( RestartFlags const value )
   {
     {
-      auto rval = wrapper.setRestartFlags( RestartFlags::NO_WRITE );
-      EXPECT_TRUE( (std::is_same< decltype(rval), Wrapper< int > * >::value) );
-      EXPECT_TRUE( wrapper.getRestartFlags()==RestartFlags::NO_WRITE );
-    }
-    {
-      auto rval = wrapper.setRestartFlags( RestartFlags::WRITE_AND_READ );
-      EXPECT_TRUE( (std::is_same< decltype(rval), Wrapper< int > * >::value) );
-      EXPECT_TRUE( wrapper.getRestartFlags()==RestartFlags::WRITE_AND_READ );
+      Wrapper< T > * rval = m_wrapper.setRestartFlags( value );
+      EXPECT_EQ( value, m_wrapper.getRestartFlags() );
+      EXPECT_EQ( rval, &m_wrapper );
     }
 
     {
-      auto rval = wrapperBasePtr->setRestartFlags( RestartFlags::NO_WRITE );
-      EXPECT_TRUE( (std::is_same< decltype(rval), WrapperBase * >::value) );
-      EXPECT_TRUE( wrapperBasePtr->getRestartFlags()==RestartFlags::NO_WRITE );
-    }
-    {
-      auto rval = wrapperBasePtr->setRestartFlags( RestartFlags::WRITE_AND_READ );
-      EXPECT_TRUE( (std::is_same< decltype(rval), WrapperBase * >::value) );
-      EXPECT_TRUE( wrapperBasePtr->getRestartFlags()==RestartFlags::WRITE_AND_READ );
+      WrapperBase * rval = m_wrapperBase.setRestartFlags( value );
+      EXPECT_EQ( value, m_wrapperBase.getRestartFlags() );
+      EXPECT_EQ( rval, &m_wrapperBase );
     }
   }
 
+  void testPlotLevel( PlotLevel const value )
   {
     {
-      auto rval = wrapper.setPlotLevel( PlotLevel::LEVEL_0 );
-      EXPECT_TRUE( (std::is_same< decltype(rval), Wrapper< int > * >::value) );
-      EXPECT_TRUE( wrapper.getPlotLevel()==PlotLevel::LEVEL_0 );
-    }
-    {
-      auto rval = wrapper.setPlotLevel( PlotLevel::LEVEL_1 );
-      EXPECT_TRUE( (std::is_same< decltype(rval), Wrapper< int > * >::value) );
-      EXPECT_TRUE( wrapper.getPlotLevel()==PlotLevel::LEVEL_1 );
+      Wrapper< T > * rval = m_wrapper.setPlotLevel( value );
+      EXPECT_EQ( value, m_wrapper.getPlotLevel() );
+      EXPECT_EQ( rval, &m_wrapper );
     }
 
     {
-      auto rval = wrapperBasePtr->setPlotLevel( PlotLevel::LEVEL_0 );
-      EXPECT_TRUE( (std::is_same< decltype(rval), WrapperBase * >::value) );
-      EXPECT_TRUE( wrapperBasePtr->getPlotLevel()==PlotLevel::LEVEL_0 );
-    }
-    {
-      auto rval = wrapperBasePtr->setPlotLevel( PlotLevel::LEVEL_1 );
-      EXPECT_TRUE( (std::is_same< decltype(rval), WrapperBase * >::value) );
-      EXPECT_TRUE( wrapperBasePtr->getPlotLevel()==PlotLevel::LEVEL_1 );
+      WrapperBase * rval = m_wrapperBase.setPlotLevel( value );
+      EXPECT_EQ( value, m_wrapperBase.getPlotLevel() );
+      EXPECT_EQ( rval, &m_wrapperBase );
     }
   }
 
+  void testInputFlags( InputFlags const value )
   {
     {
-      auto rval = wrapper.setInputFlag( InputFlags::OPTIONAL );
-      EXPECT_TRUE( (std::is_same< decltype(rval), Wrapper< int > * >::value) );
-      EXPECT_TRUE( wrapper.getInputFlag()==InputFlags::OPTIONAL );
-    }
-    {
-      auto rval = wrapper.setInputFlag( InputFlags::REQUIRED );
-      EXPECT_TRUE( (std::is_same< decltype(rval), Wrapper< int > * >::value) );
-      EXPECT_TRUE( wrapper.getInputFlag()==InputFlags::REQUIRED );
+      Wrapper< T > * rval = m_wrapper.setInputFlag( value );
+      EXPECT_EQ( value, m_wrapper.getInputFlag() );
+      EXPECT_EQ( rval, &m_wrapper );
     }
 
     {
-      auto rval = wrapperBasePtr->setInputFlag( InputFlags::OPTIONAL );
-      EXPECT_TRUE( (std::is_same< decltype(rval), WrapperBase * >::value) );
-      EXPECT_TRUE( wrapperBasePtr->getInputFlag()==InputFlags::OPTIONAL );
-    }
-    {
-      auto rval = wrapperBasePtr->setInputFlag( InputFlags::REQUIRED );
-      EXPECT_TRUE( (std::is_same< decltype(rval), WrapperBase * >::value) );
-      EXPECT_TRUE( wrapperBasePtr->getInputFlag()==InputFlags::REQUIRED );
+      WrapperBase * rval = m_wrapperBase.setInputFlag( value );
+      EXPECT_EQ( value, m_wrapperBase.getInputFlag() );
+      EXPECT_EQ( rval, &m_wrapperBase );
     }
   }
 
+  void testDescription( std::string const & value )
   {
     {
-      string description( "Description of wrapped object 1" );
-      auto rval = wrapper.setDescription( description );
-      EXPECT_TRUE( (std::is_same< decltype(rval), Wrapper< int > * >::value) );
-      EXPECT_TRUE( wrapper.getDescription()==description );
-    }
-    {
-      string description( "Description of wrapped object 2" );
-      auto rval = wrapper.setDescription( description );
-      EXPECT_TRUE( (std::is_same< decltype(rval), Wrapper< int > * >::value) );
-      EXPECT_TRUE( wrapper.getDescription()==description );
+      Wrapper< T > * rval = m_wrapper.setDescription( value );
+      EXPECT_EQ( value, m_wrapper.getDescription() );
+      EXPECT_EQ( rval, &m_wrapper );
     }
 
     {
-      string description( "Description of wrapped object 3" );
-      auto rval = wrapperBasePtr->setDescription( description );
-      EXPECT_TRUE( (std::is_same< decltype(rval), WrapperBase * >::value) );
-      EXPECT_TRUE( wrapperBasePtr->getDescription()==description );
-    }
-    {
-      string description( "Description of wrapped object 4" );
-      auto rval = wrapperBasePtr->setDescription( description );
-      EXPECT_TRUE( (std::is_same< decltype(rval), WrapperBase * >::value) );
-      EXPECT_TRUE( wrapperBasePtr->getDescription()==description );
+      WrapperBase * rval = m_wrapperBase.setDescription( value );
+      EXPECT_EQ( value, m_wrapperBase.getDescription() );
+      EXPECT_EQ( rval, &m_wrapperBase );
     }
   }
+
+private:
+  Group m_group;
+  Wrapper< T > m_wrapper;
+  WrapperBase & m_wrapperBase;
+};
+
+using WrapperSetGetTypes = ::testing::Types< int, array1d< real64 > >;
+
+TYPED_TEST_SUITE( WrapperSetGet, WrapperSetGetTypes, );
+
+TYPED_TEST( WrapperSetGet, SizedFromParent )
+{
+  this->testSizedFromParent( true );
+  this->testSizedFromParent( false );
+}
+
+TYPED_TEST( WrapperSetGet, RestartFlags )
+{
+  this->testRestartFlags( RestartFlags::NO_WRITE );
+  this->testRestartFlags( RestartFlags::WRITE_AND_READ );
+}
+
+TYPED_TEST( WrapperSetGet, PlotLevel )
+{
+  this->testPlotLevel( PlotLevel::LEVEL_0 );
+  this->testPlotLevel( PlotLevel::LEVEL_1 );
+}
+
+TYPED_TEST( WrapperSetGet, InputFlag )
+{
+  this->testInputFlags( InputFlags::OPTIONAL );
+  this->testInputFlags( InputFlags::REQUIRED );
+}
+
+TYPED_TEST( WrapperSetGet, Description )
+{
+  this->testDescription( "First description." );
+  this->testDescription( "Second description." );
 }

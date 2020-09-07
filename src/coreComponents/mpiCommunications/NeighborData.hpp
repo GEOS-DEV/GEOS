@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -39,16 +39,16 @@ public:
   NeighborData( std::string const & name, Group * const parent ):
     dataRepository::Group( name, parent )
   {
-    this->registerWrapper( "matchedPartitionBoundaryObjects", &m_matchedPartitionBoundary, false )->
+    this->registerWrapper( "matchedPartitionBoundaryObjects", &m_matchedPartitionBoundary )->
       setSizedFromParent( 0 );
 
-    this->registerWrapper( "ghostsToSend", &m_ghostsToSend, false )->
+    this->registerWrapper( "ghostsToSend", &m_ghostsToSend )->
       setSizedFromParent( 0 );
 
-    this->registerWrapper( "ghostsToReceive", &m_ghostsToReceive, false )->
+    this->registerWrapper( "ghostsToReceive", &m_ghostsToReceive )->
       setSizedFromParent( 0 );
 
-    this->registerWrapper( "adjacencyList", &m_adjacencyList, false )->
+    this->registerWrapper( "adjacencyList", &m_adjacencyList )->
       setSizedFromParent( 0 );
   }
 

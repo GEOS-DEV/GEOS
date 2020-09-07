@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -32,18 +32,22 @@ namespace geosx
 class SoloEvent : public EventBase
 {
 public:
-  /// Main constructor
+
+  /// @copydoc geosx::dataRepository::Group::Group( std::string const & name, Group * const parent )
   SoloEvent( const std::string & name,
              Group * const parent );
 
   /// Destructor
   virtual ~SoloEvent() override;
 
-  /// Catalog name interface
+  /**
+   * @brief Catalog name interface.
+   * @return This type's catalog name.
+   **/
   static string CatalogName() { return "SoloEvent"; }
 
   /**
-   * Estimate the expected number of cycles until an event is expected to trigger.
+   * @copydoc EventBase::EstimateEventTiming()
    */
   virtual void EstimateEventTiming( real64 const time,
                                     real64 const dt,
@@ -51,12 +55,11 @@ public:
                                     dataRepository::Group * domain ) override;
 
   /**
-   * Grab the next time-step.  If requested, then limit the requested
-   * dt to exactly match the application time
+   * @copydoc EventBase::GetEventTypeDtRequest()
    */
   virtual real64 GetEventTypeDtRequest( real64 const time ) override;
 
-
+  /// @cond DO_NOT_DOCUMENT
   struct viewKeyStruct
   {
     static constexpr auto targetTimeString = "targetTime";
@@ -67,9 +70,13 @@ public:
     dataRepository::ViewKey targetCycle = { "targetCycle" };
     dataRepository::ViewKey targetExactTimestep = { "targetExactTimestep" };
   } SoloEventViewKeys;
+  /// @endcond
 
+  /// The target time
   real64 m_targetTime;
+  /// The target cycle
   integer m_targetCycle;
+  /// Whether to target the exact time step
   integer m_targetExactTimestep;
 
 };

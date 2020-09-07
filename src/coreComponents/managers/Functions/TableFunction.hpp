@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -19,7 +19,8 @@
 #ifndef GEOSX_MANAGERS_FUNCTIONS_TABLEFUNCTION_HPP_
 #define GEOSX_MANAGERS_FUNCTIONS_TABLEFUNCTION_HPP_
 
-#include "FunctionBase.hpp"
+#include "common/EnumStrings.hpp"
+#include "managers/Functions/FunctionBase.hpp"
 
 namespace geosx
 {
@@ -45,7 +46,6 @@ public:
    */
   virtual ~TableFunction() override;
 
-  ///
   /**
    * @brief The catalog name interface
    * @return name of the TableFunction in the FunctionBase catalog
@@ -63,10 +63,14 @@ public:
   template< typename T >
   void parse_file( array1d< T > & target, string const & filename, char delimiter );
 
-  /// Initialize the table function
+  /**
+   * @brief Initialize the table function
+   */
   virtual void InitializeFunction() override;
 
-  /// Build the maps used to evaluate the table function
+  /**
+   * @brief Build the maps used to evaluate the table function
+   */
   void reInitializeFunction();
 
   /**
@@ -98,7 +102,7 @@ public:
   array1d< real64_array > const & getCoordinates() const { return m_coordinates; }
 
   /**
-   * @copydoc const & getCoordinates() const
+   * @copydoc getCoordinates() const
    */
   array1d< real64_array > & getCoordinates()       { return m_coordinates; }
 
@@ -109,12 +113,12 @@ public:
   array1d< real64 > const & getValues() const { return m_values; }
 
   /**
-   * @copydoc const & getValues() const
+   * @copydoc getValues() const
    */
   array1d< real64 > & getValues()       { return m_values; }
 
   /// Enumerator of available interpolation types
-  enum class InterpolationType
+  enum class InterpolationType : integer
   {
     Linear,
     Nearest,
@@ -122,18 +126,33 @@ public:
     Lower
   };
 
+  /**
+   * @brief Set the interpolation method
+   * @param method The interpolation method
+   */
+  void setInterpolationMethod( InterpolationType const method ) { m_interpolationMethod = method; }
+
+  /**
+   * @brief Set the table coordinates
+   * @param coordinates An array of arrays containing table coordinate definitions
+   */
+  void setTableCoordinates( array1d< real64_array > coordinates ) { m_coordinates = coordinates; }
+
+  /**
+   * @brief Set the table values
+   * @param values An array of table values in fortran order
+   */
+  void setTableValues( real64_array values ) { m_values = values; }
+
 private:
   /// Coordinates for 1D table
   real64_array m_tableCoordinates1D;
 
   /// List of table coordinate file names
-  string_array m_coordinateFiles;
+  path_array m_coordinateFiles;
 
   /// Table voxel file names
-  string m_voxelFile;
-
-  /// Table interpolation method input string
-  string m_interpolationMethodString;
+  Path m_voxelFile;
 
   /// Table interpolation method
   InterpolationType m_interpolationMethod;
@@ -165,6 +184,8 @@ private:
   /// The number of active table corners
   localIndex m_numCorners;
 };
+
+ENUM_STRINGS( TableFunction::InterpolationType, "linear", "nearest", "upper", "lower" )
 
 
 } /* namespace geosx */

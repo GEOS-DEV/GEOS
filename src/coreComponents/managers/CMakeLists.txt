@@ -11,8 +11,15 @@ set(managers_headers
     Outputs/OutputManager.hpp
     Outputs/OutputBase.hpp
     Outputs/SiloOutput.hpp
-    Outputs/VTKOutput.hpp
     Outputs/RestartOutput.hpp
+    Outputs/TimeHistoryOutput.hpp
+    Tasks/TasksManager.hpp
+    Tasks/TaskBase.hpp
+    TimeHistory/TimeHistoryCollection.hpp
+    TimeHistory/PackCollection.hpp
+    TimeHistory/HistoryIO.hpp
+    TimeHistory/HistoryDataSpec.hpp
+    Outputs/BlueprintOutput.hpp
     Functions/FunctionBase.hpp
     Functions/SymbolicFunction.hpp
     Functions/TableFunction.hpp
@@ -21,7 +28,6 @@ set(managers_headers
     ObjectManagerBase.hpp
     ProblemManager.hpp
     NumericalMethodsManager.hpp
-    FieldSpecification/FieldSpecificationOps.hpp
     FieldSpecification/FieldSpecificationBase.hpp
     FieldSpecification/FieldSpecificationManager.hpp
     FieldSpecification/DirichletBoundaryCondition.hpp
@@ -33,6 +39,7 @@ set(managers_headers
 #
 # Specify all sources
 #
+
 set(managers_sources
     DomainPartition.cpp
     EventManager.cpp
@@ -43,8 +50,12 @@ set(managers_sources
     Outputs/OutputManager.cpp
     Outputs/OutputBase.cpp
     Outputs/SiloOutput.cpp
-    Outputs/VTKOutput.cpp
     Outputs/RestartOutput.cpp
+    Outputs/TimeHistoryOutput.cpp
+    Outputs/BlueprintOutput.cpp
+    Tasks/TaskBase.cpp
+    Tasks/TasksManager.cpp
+    TimeHistory/PackCollection.cpp
     Functions/FunctionBase.cpp
     Functions/SymbolicFunction.cpp
     Functions/TableFunction.cpp
@@ -65,10 +76,15 @@ if( ENABLE_MPI )
     list( APPEND managers_sources Outputs/ChomboIO.cpp )
 endif()
 
+if( ENABLE_VTK )
+    list( APPEND managers_headers Outputs/VTKOutput.hpp )
+    list( APPEND managers_sources Outputs/VTKOutput.cpp )
+endif()
+
 if( BUILD_OBJ_LIBS )
-  set( dependencyList dataRepository fileIO optionparser RAJA linearAlgebra )
+  set( dependencyList dataRepository fileIO optionparser RAJA linearAlgebra conduit conduit_relay conduit_blueprint )
 else()
-  set( dependencyList common fileIO linearAlgebra optionparser RAJA mpiCommunications )
+  set( dependencyList common fileIO linearAlgebra optionparser RAJA mpiCommunications conduit conduit_relay conduit_blueprint )
 endif()
 
 if( ENABLE_MATHPRESSO )

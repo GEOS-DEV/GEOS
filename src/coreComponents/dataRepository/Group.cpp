@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -52,7 +52,10 @@ Group::Group( std::string const & name,
 {}
 
 Group::~Group()
-{}
+{
+// TODO enable this and fix bugs this exposes.
+//  m_conduitNode.parent()->remove( m_name );
+}
 
 Group::CatalogInterface::CatalogType & Group::GetCatalog()
 {
@@ -61,10 +64,10 @@ Group::CatalogInterface::CatalogType & Group::GetCatalog()
 }
 
 WrapperBase * Group::registerWrapper( string const & name,
-                                      WrapperBase * const wrapper )
+                                      std::unique_ptr< WrapperBase > wrapper )
 {
   return m_wrappers.insert( name,
-                            wrapper,
+                            wrapper.release(),
                             true );
 }
 
@@ -249,7 +252,7 @@ void Group::InitializationOrder( string_array & order )
 {
   for( auto & subGroupIter : this->m_subGroups )
   {
-    order.push_back( subGroupIter.first );
+    order.emplace_back( subGroupIter.first );
   }
 }
 
@@ -305,11 +308,11 @@ localIndex Group::PackSize( string_array const & wrapperNames,
       packedSize += bufferOps::PackSize( wrapperPair.first );
       if( packList.empty() )
       {
-        packedSize += wrapperPair.second->PackSize( on_device );
+        packedSize += wrapperPair.second->PackSize( true, on_device );
       }
       else
       {
-        packedSize += wrapperPair.second->PackByIndexSize( packList, on_device );
+        packedSize += wrapperPair.second->PackByIndexSize( packList, true, on_device );
       }
     }
   }
@@ -322,11 +325,11 @@ localIndex Group::PackSize( string_array const & wrapperNames,
       packedSize += bufferOps::PackSize( wrapperName );
       if( packList.empty() )
       {
-        packedSize += wrapper->PackSize( on_device );
+        packedSize += wrapper->PackSize( true, on_device );
       }
       else
       {
-        packedSize += wrapper->PackByIndexSize( packList, on_device );
+        packedSize += wrapper->PackByIndexSize( packList, true, on_device );
       }
     }
   }
@@ -373,11 +376,11 @@ localIndex Group::Pack( buffer_unit_type * & buffer,
       if( packList.empty() )
       {
         // invoke wrapper pack kernel
-        packedSize += wrapperPair.second->Pack( buffer, on_device );
+        packedSize += wrapperPair.second->Pack( buffer, true, on_device );
       }
       else
       {
-        packedSize += wrapperPair.second->PackByIndex( buffer, packList, on_device );
+        packedSize += wrapperPair.second->PackByIndex( buffer, packList, true, on_device );
       }
     }
   }
@@ -390,11 +393,11 @@ localIndex Group::Pack( buffer_unit_type * & buffer,
       packedSize += bufferOps::Pack< true >( buffer, wrapperName );
       if( packList.empty() )
       {
-        packedSize += wrapper->Pack( buffer, on_device );
+        packedSize += wrapper->Pack( buffer, true, on_device );
       }
       else
       {
-        packedSize += wrapper->PackByIndex( buffer, packList, on_device );
+        packedSize += wrapper->PackByIndex( buffer, packList, true, on_device );
       }
     }
   }
@@ -444,7 +447,7 @@ localIndex Group::Unpack( buffer_unit_type const * & buffer,
     string wrapperName;
     unpackedSize += bufferOps::Unpack( buffer, wrapperName );
     WrapperBase * const wrapper = this->getWrapperBase( wrapperName );
-    wrapper->UnpackByIndex( buffer, packList, on_device );
+    wrapper->UnpackByIndex( buffer, packList, true, on_device );
   }
 
 
@@ -561,7 +564,7 @@ void Group::enableLogLevelInput()
 {
   string const logLevelString = "logLevel";
 
-  registerWrapper( logLevelString, &m_logLevel, false )->
+  registerWrapper( logLevelString, &m_logLevel )->
     setApplyDefaultValue( 0 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Log level" );

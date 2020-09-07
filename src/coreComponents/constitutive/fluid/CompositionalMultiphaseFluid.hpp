@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -21,11 +21,6 @@
 
 #include "constitutive/fluid/MultiFluidPVTPackageWrapper.hpp"
 
-namespace PVTPackage
-{
-class CompositionalMultiphaseSystem;
-}
-
 namespace geosx
 {
 namespace constitutive
@@ -39,35 +34,23 @@ public:
 
   virtual ~CompositionalMultiphaseFluid() override;
 
-  virtual void DeliverClone( string const & name,
-                             Group * const parent,
-                             std::unique_ptr< ConstitutiveBase > & clone ) const override;
+  virtual std::unique_ptr< ConstitutiveBase >
+  deliverClone( string const & name,
+                Group * const parent ) const override;
 
   static std::string CatalogName() { return "CompositionalMultiphaseFluid"; }
 
-  virtual string GetCatalogName() override { return CatalogName(); }
+  virtual string getCatalogName() const override { return CatalogName(); }
 
 
   struct viewKeyStruct : MultiFluidPVTPackageWrapper::viewKeyStruct
   {
-    static constexpr auto equationsOfStateString = "equationsOfState";
-
+    static constexpr auto equationsOfStateString             = "equationsOfState";
     static constexpr auto componentCriticalPressureString    = "componentCriticalPressure";
     static constexpr auto componentCriticalTemperatureString = "componentCriticalTemperature";
     static constexpr auto componentAcentricFactorString      = "componentAcentricFactor";
     static constexpr auto componentVolumeShiftString         = "componentVolumeShift";
     static constexpr auto componentBinaryCoeffString         = "componentBinaryCoeff";
-
-    using ViewKey = dataRepository::ViewKey;
-
-    ViewKey equationsOfState = { equationsOfStateString };
-
-    ViewKey componentCriticalPressure    = { componentCriticalPressureString };
-    ViewKey componentCriticalTemperature = { componentCriticalTemperatureString };
-    ViewKey componentAcentricFactor      = { componentAcentricFactorString };
-    ViewKey componentVolumeShift         = { componentVolumeShiftString };
-    ViewKey componentBinaryCoeff         = { componentBinaryCoeffString };
-
   } viewKeysCompositionalMultiphaseFluid;
 
 protected:

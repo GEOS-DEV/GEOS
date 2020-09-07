@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -92,33 +92,25 @@ public:
   /**@{*/
 
   virtual void
-  SetupDofs( DomainPartition const * const domain,
+  SetupDofs( DomainPartition const & domain,
              DofManager & dofManager ) const override;
 
-  virtual void
-  ApplyBoundaryConditions( real64 const time_n,
-                           real64 const dt,
-                           DomainPartition * const domain,
-                           DofManager const & dofManager,
-                           ParallelMatrix & matrix,
-                           ParallelVector & rhs ) override;
-
   virtual real64
-  CalculateResidualNorm( DomainPartition const * const domain,
+  CalculateResidualNorm( DomainPartition const & domain,
                          DofManager const & dofManager,
-                         ParallelVector const & rhs ) override;
+                         arrayView1d< real64 const > const & localRhs ) override;
 
   virtual bool
-  CheckSystemSolution( DomainPartition const * const domain,
+  CheckSystemSolution( DomainPartition const & domain,
                        DofManager const & dofManager,
-                       ParallelVector const & solution,
+                       arrayView1d< real64 const > const & localSolution,
                        real64 const scalingFactor ) override;
 
   virtual void
   ApplySystemSolution( DofManager const & dofManager,
-                       ParallelVector const & solution,
+                       arrayView1d< real64 const > const & localSolution,
                        real64 const scalingFactor,
-                       DomainPartition * const domain ) override;
+                       DomainPartition & domain ) override;
 
   /**
    * @brief assembles the flux terms for all cells
@@ -130,12 +122,11 @@ public:
    * @param rhs the system right-hand side vector
    */
   virtual
-  void AssembleFluxTerms( real64 const time_n,
-                          real64 const dt,
-                          DomainPartition const * const domain,
-                          DofManager const * const dofManager,
-                          ParallelMatrix * const matrix,
-                          ParallelVector * const rhs ) override;
+  void AssembleFluxTerms( real64 const dt,
+                          DomainPartition const & domain,
+                          DofManager const & dofManager,
+                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                          arrayView1d< real64 > const & localRhs ) const override;
 
   /**@}*/
 
@@ -146,38 +137,6 @@ public:
   {} groupKeysCompMultiphaseFVM;
 
 private:
-
-  /**
-   * @brief Function to perform the Application of Dirichlet type BC's
-   * @param time current time
-   * @param dt time step
-   * @param dofManager degree-of-freedom manager associated with the linear system
-   * @param domain the domain
-   * @param matrix the system matrix
-   * @param rhs the system right-hand side vector
-   */
-  void ApplyDirichletBC_implicit( real64 const time,
-                                  real64 const dt,
-                                  DofManager const * const dofManager,
-                                  DomainPartition * const domain,
-                                  ParallelMatrix * const matrix,
-                                  ParallelVector * const rhs );
-
-  /**
-   * @brief Function to perform the application of a flux boundary condition
-   * @param time current time
-   * @param dt time step
-   * @param dofManager degree-of-freedom manager associated with the linear system
-   * @param domain the domain
-   * @param matrix the system matrix
-   * @param rhs the system right-hand side vector
-   */
-  void ApplySourceFluxBC( real64 const time,
-                          real64 const dt,
-                          DofManager const * const dofManager,
-                          DomainPartition * const domain,
-                          ParallelMatrix * const matrix,
-                          ParallelVector * const rhs );
 
   // no data needed here, see CompositionalMultiphaseBase
 

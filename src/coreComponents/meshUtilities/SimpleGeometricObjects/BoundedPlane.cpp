@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -29,23 +29,23 @@ BoundedPlane::BoundedPlane( const std::string & name, Group * const parent ):
   m_lengthVector{ 0.0, 0.0, 0.0 },
   m_widthVector{ 0.0, 0.0, 0.0 }
 {
-  registerWrapper( viewKeyStruct::originString, &m_origin, false )->
+  registerWrapper( viewKeyStruct::originString, &m_origin )->
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "Origin point (x,y,z) of the plane (basically, any point on the plane)" );
 
-  registerWrapper( viewKeyStruct::normalString, &m_normal, false )->
+  registerWrapper( viewKeyStruct::normalString, &m_normal )->
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "Normal (n_x,n_y,n_z) to the plane (will be normalized automatically)" );
 
-  registerWrapper( viewKeyStruct::mLengthVectorString, &m_lengthVector, false )->
+  registerWrapper( viewKeyStruct::mLengthVectorString, &m_lengthVector )->
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "Tangent vector defining the orthonormal basis along with the normal." );
 
-  registerWrapper( viewKeyStruct::mWidthVectorString, &m_widthVector, false )->
+  registerWrapper( viewKeyStruct::mWidthVectorString, &m_widthVector )->
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "Tangent vector defining the orthonormal basis along with the normal." );
 
-  registerWrapper( viewKeyStruct::dimensionsString, &m_dimensions, false )->
+  registerWrapper( viewKeyStruct::dimensionsString, &m_dimensions )->
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "Length and width of the bounded plane" );
 

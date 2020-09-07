@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -29,8 +29,10 @@
 
 #include "silo.h"
 
-// forward declaration for structure internal to silo/pmpio.h
+/// _PMPIO_baton_t struct forward declaration
 struct _PMPIO_baton_t;
+
+/// Type alias for _PMPIO_baton_t struct
 typedef _PMPIO_baton_t PMPIO_baton_t;
 
 namespace geosx
@@ -68,7 +70,7 @@ public:
 
   /**
    * @brief Initializes silo for input/output
-   * @param readwrite input/output specifier
+   * @param numGroups number of individual Silo files to generate
    */
   void Initialize( int const numGroups=1 );
 
@@ -77,12 +79,18 @@ public:
    */
   void Finish();
 
+  /**
+   *  @brief obtain the group number of the calling processor, indexed from zero.
+   *  @param i rank of calling processor in the MPI communicator
+   *  @return group number of the calling processor, indexed from zero
+   */
   int groupRank( int const i ) const;
 
   /**
    * @brief Wait for the Baton when writing using PMPIO
    * @param domainNumber domain partition number
    * @param cycleNum  cycle number of simulation
+   * @param eventCounter Counter to indicate the event number during the current timestep.
    * @param isRestart whether or not we are writing a restart file
    *
    * This function requests the write baton from silo PMPIO. The involves determining
@@ -132,11 +140,12 @@ public:
    * @param nnodes number of nodes
    * @param coords array[3] of pointers to x, y, and z.
    * @param globalNodeNum array to the global node numbers. This might be redundant as there is a field for this.
+   * @param ghostNodeName Character array for whether or not a node is a ghost. ( 0 = local, 1 = ghost )
+   * @param ghostZoneName Character array for whether or not a zone is a ghost. ( 0 = local, 1 = ghost )
    * @param numShapes number of element zone type (i.e. number of zone types with different topology)
    * @param shapecnt pointer to array that contains the number of zones per shape type
    * @param meshConnectivity pointer to array that contains the zone to element map for each  zone type
    * @param globalElementNum pointer to array of global zone numbers for each shape type
-   * @param
    * @param shapetype pointer to array containing the shape types
    * @param shapesize pointer to array containing the number of nodes in each zone in the shape types
    * @param cycleNumber the current cycle number
@@ -161,21 +170,40 @@ public:
                         int const cycleNumber,
                         real64 const problemTime );
 
-
+  /**
+   * @todo Verify: documentation missing / incomplete. The TPL version of doxygen on Travis cannot parse
+   * unnamed parameters, @p dummy parameter introduced to remove warning
+   *
+   * @param meshName name of the mesh in the silo db
+   * @param nnodes number of nodes
+   * @param coords array[3] of pointers to x, y, and z.
+   * @param dummy1 unused parameter
+   * @param numRegions
+   * @param shapecnt pointer to array that contains the number of zones per shape type
+   * @param meshConnectivity pointer to array that contains the zone to element map for each  zone type
+   * @param globalElementNum pointer to array of global zone numbers for each shape type
+   * @param dummy2 unused parameter
+   * @param shapetype pointer to array containing the shape types
+   * @param shapesize pointer to array containing the number of nodes in each zone in the shape types
+   * @param cycleNumber the current cycle number
+   * @param problemTime the current problem time
+   * @param lnodelist
+   */
   void WritePolygonMeshObject( const std::string & meshName,
                                const localIndex nnodes,
                                realT * coords[3],
-                               const globalIndex *,
+                               const globalIndex * dummy1,
                                const int numRegions,
                                const int * shapecnt,
                                const localIndex * const * const meshConnectivity,
                                const globalIndex * const * const globalElementNum,
-                               const int * const * const,
+                               const int * const * const dummy2,
                                const int * const shapetype,
                                const int * const shapesize,
                                const int cycleNumber,
                                const realT problemTime,
                                const int lnodelist );
+
 /**
  * @brief write a domain parititon out to silo file
  * @param domain the domain partition to write
@@ -188,7 +216,20 @@ public:
                              real64 const problemTime,
                              bool const isRestart );
 
-
+  /**
+   * @todo Verify: documentation missing / incomplete.
+   *
+   * @param elementRegion the element region that holds the data to be written to the silo file
+   * @param nodeManager the NodeManager containing the nodes of the domain to be output
+   * @param meshName name of the mesh to write
+   * @param nnodes number of nodes
+   * @param coords array[3] of pointers to x, y, and z.
+   * @param globalNodeNum array to the global node numbers. This might be redundant as there is a field for this.
+   * @param ghostNodeFlag
+   * @param cycleNumber the current cycle number
+   * @param problemTime the current problem time
+   * @param writeArbitraryPolygon
+   */
   void WriteElementMesh( ElementRegionBase const & elementRegion,
                          NodeManager const * const nodeManager,
                          string const & meshName,
@@ -203,7 +244,6 @@ public:
   /**
    * @brief write a mesh level out to the silo file
    * @param meshLevel the meshLevel to write out
-   * @param constitutiveManager the constitutive manager object that holds the constitutive data
    * @param cycleNum the current cycle number
    * @param problemTime the current problem time
    * @param isRestart whether or not we want to write restart only data
@@ -260,6 +300,13 @@ public:
                       int const cycleNumber,
                       real64 const problemTime );
 
+  /**
+   * @param elementRegion the element region that holds the data to be written to the silo file
+   * @param meshName name of the mesh to write
+   * @param regionMaterialList  region material list
+   * @param cycleNumber current cycle number
+   * @param problemTime current problem time
+   */
   void WriteMaterialMapsFullStorage( ElementRegionBase const & elementRegion,
                                      string const & meshName,
                                      string_array const & regionMaterialList,
@@ -271,7 +318,7 @@ public:
    * @param siloDirName the name of the silo directory to put this data into (i.e. nodalFields, elemFields)
    * @param meshname the name of the mesh attach this write to
    * @param centering the centering of the data (e.g. DB_ZONECENT)
-   * @param cycleNumber current cycle number
+   * @param cycleNum current cycle number
    * @param problemTime current problem time
    * @param isRestart write restart only data
    * @param mask indices to write out to the silo file
@@ -285,6 +332,14 @@ public:
                        bool const isRestart,
                        const localIndex_array & mask );
 
+  /**
+   * @param elemRegion the element region that holds the data to be written to the silo file
+   * @param siloDirName the name of the silo directory to put this data into (i.e. nodalFields, elemFields)
+   * @param meshName the name of the mesh attach this write to
+   * @param cycleNum current cycle number
+   * @param problemTime current problem time
+   * @param isRestart write restart only data
+   */
   void WriteElementRegionSilo( ElementRegionBase const & elemRegion,
                                string const & siloDirName,
                                string const & meshName,
@@ -293,7 +348,7 @@ public:
                                bool const isRestart );
   /**
    * Writes the contents of a group of Wrapper objects
-   * @tparam the output varaible type
+   * @tparam the output variable type
    * @param meshname the name of the mesh attach this write to
    * @param wrappers a group of wrappers
    * @param centering the silo centering to use for this operation (DB_NODECENT, DB_ZONECENT)
@@ -315,11 +370,11 @@ public:
 
   /**
    *
-   * @param meshname the name of the mesh attach this write to
+   * @param meshName the name of the mesh attach this write to
    * @param fieldName name of the field to write
    * @param field field data
    * @param centering the silo centering to use for this operation (DB_NODECENT, DB_ZONECENT)
-   * @param cycleNum the current cycle number
+   * @param cycleNumber the current cycle number
    * @param problemTime the current problem time
    * @param multiRoot location to write the multivar entries
    */
@@ -334,11 +389,11 @@ public:
 
   /**
    *
-   * @param meshname the name of the mesh attach this write to
+   * @param meshName the name of the mesh attach this write to
    * @param fieldName name of the field to write
    * @param field field data
    * @param centering the silo centering to use for this operation (DB_NODECENT, DB_ZONECENT)
-   * @param cycleNum the current cycle number
+   * @param cycleNumber the current cycle number
    * @param problemTime the current problem time
    * @param multiRoot location to write the multivar entries
    */
@@ -352,12 +407,11 @@ public:
                        string const & multiRoot );
 
   /**
-   *
-   * @param meshname the name of the mesh attach this write to
+   * @param meshName the name of the mesh attach this write to
    * @param fieldName name of the field to write
    * @param field field data
    * @param centering the silo centering to use for this operation (DB_NODECENT, DB_ZONECENT)
-   * @param cycleNum the current cycle number
+   * @param cycleNumber the current cycle number
    * @param problemTime the current problem time
    * @param multiRoot location to write the multivar entries
    */
@@ -370,6 +424,17 @@ public:
                        real64 const problemTime,
                        string const & multiRoot );
 
+  /**
+   * @todo Verify: documentation missing / incomplete
+   * @param meshName the name of the mesh attach this write to
+   * @param fieldName name of the field to write
+   * @param field field data
+   * @param siloTensorRank <B>****** UNUSED IN THE IMPLEMENTATION ****** </B>
+   * @param centering the silo centering to use for this operation (DB_NODECENT, DB_ZONECENT)
+   * @param cycleNumber the current cycle number
+   * @param problemTime the current problem time
+   * @param multiRoot location to write the multivar entries
+   */
   template< typename OUTTYPE, typename TYPE, int NDIM, int USD >
   void WriteDataField( string const & meshName,
                        string const & fieldName,
@@ -380,6 +445,18 @@ public:
                        real64 const problemTime,
                        string const & multiRoot );
 
+  /**
+   * @todo Verify: documentation missing / incomplete
+   * @param meshName the name of the mesh attach this write to
+   * @param fieldName name of the field to write
+   * @param field field data
+   * @param elemRegion the element region that holds the data to be written to the silo file
+   * @param centering the silo centering to use for this operation (DB_NODECENT, DB_ZONECENT)
+   * @param cycleNumber the current cycle number
+   * @param problemTime the current problem time
+   * @param multiRoot location to write the multivar entries
+   * @param materialNames material names
+   */
   template< typename OUTTYPE, typename TYPE >
   void WriteMaterialDataField( string const & meshName,
                                string const & fieldName,
@@ -391,6 +468,17 @@ public:
                                string const & multiRoot,
                                string_array const & materialNames );
 
+  /**
+   * @todo Verify: documentation missing / incomplete
+   * @param meshName the name of the mesh attach this write to
+   * @param fieldName name of the field to write
+   * @param elemRegion the element region that holds the data to be written to the silo file
+   * @param centering the silo centering to use for this operation (DB_NODECENT, DB_ZONECENT)
+   * @param cycleNumber the current cycle number
+   * @param problemTime the current problem time
+   * @param multiRoot location to write the multivar entries
+   * @param materialNames material names
+   */
   template< typename OUTTYPE, typename TYPE >
   void WriteMaterialDataField2d( string const & meshName,
                                  string const & fieldName,
@@ -401,7 +489,17 @@ public:
                                  string const & multiRoot,
                                  string_array const & materialNames );
 
-
+  /**
+   * @todo Verify: documentation missing / incomplete
+   * @param meshName the name of the mesh attach this write to
+   * @param fieldName name of the field to write
+   * @param elemRegion the element region that holds the data to be written to the silo file
+   * @param centering the silo centering to use for this operation (DB_NODECENT, DB_ZONECENT)
+   * @param cycleNumber the current cycle number
+   * @param problemTime the current problem time
+   * @param multiRoot location to write the multivar entries
+   * @param materialNames material names
+   */
   template< typename OUTTYPE, typename TYPE >
   void WriteMaterialDataField3d( string const & meshName,
                                  string const & fieldName,
@@ -412,6 +510,17 @@ public:
                                  string const & multiRoot,
                                  string_array const & materialNames );
 
+  /**
+   * @todo Verify: documentation missing / incomplete
+   * @param meshName the name of the mesh attach this write to
+   * @param fieldName name of the field to write
+   * @param elemRegion the element region that holds the data to be written to the silo file
+   * @param centering the silo centering to use for this operation (DB_NODECENT, DB_ZONECENT)
+   * @param cycleNumber the current cycle number
+   * @param problemTime the current problem time
+   * @param multiRoot location to write the multivar entries
+   * @param materialNames material names
+   */
   template< typename OUTTYPE, typename TYPE >
   void WriteMaterialDataField4d( string const & meshName,
                                  string const & fieldName,
@@ -422,13 +531,29 @@ public:
                                  string const & multiRoot,
                                  string_array const & materialNames );
 
+  /**
+   * @todo Verify: documentation missing / incomplete
+   * @param subDir
+   * @param matDir
+   * @param matIndex
+   * @param fieldName
+   */
   void WriteMaterialVarDefinition( string const & subDir,
                                    string const & matDir,
                                    localIndex const matIndex,
                                    string const & fieldName );
 
+  /**
+   * @todo Verify: documentation missing / incomplete
+   * @param MatDir
+   */
   void WriteStressVarDefinition( string const & MatDir );
 
+  /**
+   * @todo Verify: documentation missing / incomplete
+   * @param fieldName vector field name
+   * @param subDirectory
+   */
   void WriteVectorVarDefinition( string const & fieldName,
                                  string const & subDirectory );
 
@@ -456,7 +581,7 @@ public:
 
 
   /**
-   * fucntion to clear any empty multi-objects
+   * function to clear any empty multi-objects
    * @param cycleNum
    *
    * When we write our multimesh and multivar objects, we do it assuming that there is a non-empty multimesh
@@ -465,34 +590,64 @@ public:
    */
   void ClearEmptiesFromMultiObjects( int const cycleNum );
 
-
+  /**
+   * @brief Sets the number of individual Silo files to generate
+   * @param numGroups number of individual Silo files to generate
+   */
   void setNumGroups( int const numGroups )
   {
     m_numGroups = numGroups;
   }
 
+  /**
+   * @brief Sets the plot level option
+   * @param plotLevel the plot level desired value
+   */
   void setPlotLevel( int const plotLevel )
   {
-    m_plotLevel = dataRepository::IntToPlotLevel( plotLevel );
+    m_plotLevel = dataRepository::toPlotLevel( plotLevel );
   }
 
+  /**
+   * @brief Sets the edge mesh output option
+   * @param val if 1, the edge mesh is written to a Silo file
+   */
   void setWriteEdgeMesh( int const val )
   {
     m_writeEdgeMesh = val;
   }
+
+  /**
+   * @brief Sets the face mesh output option
+   * @param val if 1, the face mesh is written to a Silo file
+   */
   void setWriteFaceMesh( int const val )
   {
     m_writeFaceMesh = val;
   }
+
+  /**
+   * @brief Sets the cell element mesh output option
+   * @param val if 1 the cell element mesh is written to a Silo file
+   */
   void setWriteCellElementMesh( int const val )
   {
     m_writeCellElementMesh = val;
   }
+
+  /**
+   * @brief Sets the face element mesh output option
+   * @param val if 1 the face element mesh is written to a Silo file
+   */
   void setWriteFaceElementMesh( int const val )
   {
     m_writeFaceElementMesh = val;
   }
 
+  /**
+   * @brief Sets root of the filename that will be read/written
+   * @param fileRoot root of the filename
+   */
   void setPlotFileRoot( string const & fileRoot )
   {
     m_plotFileRoot = fileRoot;
@@ -528,9 +683,9 @@ private:
 
   string m_baseFileName;
 
-  string_array m_emptyMeshes;
+  std::vector< std::string > m_emptyMeshes;
 //  string_array m_emptyMaterials;
-  string_array m_emptyVariables;
+  std::vector< std::string > m_emptyVariables;
 
   integer m_writeEdgeMesh;
   integer m_writeFaceMesh;
@@ -540,15 +695,6 @@ private:
   dataRepository::PlotLevel m_plotLevel;
 
   bool m_ghostFlags;
-
-  /**
-   *
-   * @return returns the ordering of nodes for a silo zone type.
-   */
-  integer_array SiloNodeOrdering( const string & elementType );
-
-
-
 };
 
 /**
@@ -601,60 +747,96 @@ OUTTYPE CastField( const TYPE & field, int const i )
   return field.Data()[i];
 }
 
-template<>
-inline real64 CastField< real64, R2SymTensor >( const R2SymTensor & field, int const i )
+/**
+ * @todo Verify: the TPL version of doxygen on Travis cannot parse unnamed parameters, @p dummy
+ *       parameter introduced to remove warning
+ * @param field the value to cast
+ * @param dummy unused parameter
+ * @return the casted value
+ */
+template<> inline int CastField< int, int >( const int & field, int const dummy )
 {
-  int ii = 0;
-  if( i==1 )
-    ii=2;
-  if( i==2 )
-    ii=5;
-  if( i==3 )
-    ii=4;
-  if( i==4 )
-    ii=3;
-  if( i==5 )
-    ii=1;
-  return field.Data()[ii];
-}
-
-
-template<> inline int CastField< int, int >( const int & field, int const )
-{
+  GEOSX_UNUSED_VAR( dummy );
   return field;
 }
 
-
-template<> inline long int CastField< long int, long int >( const long int & field, int const )
+/**
+ * @todo Verify: the TPL version of doxygen on Travis cannot parse unnamed parameters, @p dummy
+ *       parameter introduced to remove warning
+ * @param field the value to cast
+ * @param dummy unused parameter
+ * @return the casted value
+ */
+template<> inline long int CastField< long int, long int >( const long int & field, int const dummy )
 {
+  GEOSX_UNUSED_VAR( dummy );
   return field;
 }
 
-template<> inline int CastField< int, long int >( const long int & field, int const )
+/**
+ * @todo Verify: the TPL version of doxygen on Travis cannot parse unnamed parameters, @p dummy
+ *       parameter introduced to remove warning
+ * @param field the value to cast
+ * @param dummy unused parameter
+ * @return the casted value
+ */
+template<> inline int CastField< int, long int >( const long int & field, int const dummy )
 {
-  return integer_conversion< int >( field );
+  GEOSX_UNUSED_VAR( dummy );
+  return LvArray::integerConversion< int >( field );
 }
 
-template<> inline long long int CastField< long long int, long long int >( const long long int & field, int const )
+/**
+ * @todo Verify: the TPL version of doxygen on Travis cannot parse unnamed parameters, @p dummy
+ *       parameter introduced to remove warning
+ * @param field the value to cast
+ * @param dummy unused parameter
+ * @return the casted value
+ */
+template<> inline long long int CastField< long long int, long long int >( const long long int & field, int const dummy )
 {
+  GEOSX_UNUSED_VAR( dummy );
   return field;
 }
 
-template<> inline int CastField< int, long long int >( const long long int & field, int const )
+/**
+ * @todo Verify: the TPL version of doxygen on Travis cannot parse unnamed parameters, @p dummy
+ *       parameter introduced to remove warning
+ * @param field the value to cast
+ * @param dummy unused parameter
+ * @return the casted value
+ */
+template<> inline int CastField< int, long long int >( const long long int & field, int const dummy )
 {
-  return integer_conversion< int >( field );
+  GEOSX_UNUSED_VAR( dummy );
+  return LvArray::integerConversion< int >( field );
 }
 
-template<> inline real64 CastField< real64, real64 >( const real64 & field, int const )
+/**
+ * @todo Verify: the TPL version of doxygen on Travis cannot parse unnamed parameters, @p dummy
+ *       parameter introduced to remove warning
+ * @param field the value to cast
+ * @param dummy unused parameter
+ * @return the casted value
+ */
+template<> inline real64 CastField< real64, real64 >( const real64 & field, int const dummy )
 {
+  GEOSX_UNUSED_VAR( dummy );
   return field;
 }
-template<> inline float CastField< float, real64 >( const real64 & field, int const )
+
+/**
+ * @todo Verify: the TPL version of doxygen on Travis cannot parse unnamed parameters, @p dummy
+ *       parameter introduced to remove warning
+ * @param field the value to cast
+ * @param dummy unused parameter
+ * @return the casted value
+ */
+template<> inline float CastField< float, real64 >( const real64 & field, int const dummy )
 {
+  GEOSX_UNUSED_VAR( dummy );
   return static_cast< float >(field);
 }
-
-
 
 /**
  * @tparam the type of the field

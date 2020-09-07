@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -64,17 +64,22 @@ class DofManagerTestBase : public ::testing::Test
 {
 public:
 
+  using Base = ::testing::Test;
+
   DofManagerTestBase():
-    ::testing::Test(),
-                                             problemManager( std::make_unique< ProblemManager >( "Problem", nullptr ) ),
+    Base(),
+    problemManager( std::make_unique< ProblemManager >( "Problem", nullptr ) ),
     dofManager( "test" )
-  {
-    setupProblem( problemManager.get(), xmlInput );
-    mesh = problemManager->getDomainPartition()->getMeshBody( 0 )->getMeshLevel( 0 );
-    dofManager.setMesh( problemManager->getDomainPartition(), 0, 0 );
-  }
+  {}
 
 protected:
+
+  void SetUp() override
+  {
+    setupProblemFromXML( problemManager.get(), xmlInput );
+    mesh = problemManager->getDomainPartition()->getMeshBody( 0 )->getMeshLevel( 0 );
+    dofManager.setMesh( *problemManager->getDomainPartition(), 0, 0 );
+  }
 
   std::unique_ptr< ProblemManager > const problemManager;
   MeshLevel * mesh;
@@ -94,14 +99,15 @@ void checkLocalDofNumbers( MeshLevel const * const mesh,
                            string_array const & regions,
                            array1d< globalIndex > & dofNumbers )
 {
-  ObjectManagerBase const * const manager = mesh->GetGroup< ObjectManagerBase >( testMeshHelper< LOC >::managerKey );
+  ObjectManagerBase const * const manager =
+    mesh->GetGroup< ObjectManagerBase >( geosx::testing::internal::testMeshHelper< LOC >::managerKey );
   arrayView1d< globalIndex const > dofIndex = manager->getReference< array1d< globalIndex > >( dofIndexKey );
 
   forLocalObjects< LOC >( mesh, regions, [&]( localIndex const idx )
   {
     SCOPED_TRACE( "idx = " + std::to_string( idx ) );
     EXPECT_GE( dofIndex[idx], 0 );
-    dofNumbers.push_back( dofIndex[idx] );
+    dofNumbers.emplace_back( dofIndex[idx] );
   } );
 }
 
@@ -126,7 +132,7 @@ void checkLocalDofNumbers< DofManager::Location::Elem >( MeshLevel const * const
   {
     globalIndex const dofIndex = dofNumber[idx[0]][idx[1]][idx[2]];
     EXPECT_GE( dofIndex, 0 );
-    dofNumbers.push_back( dofIndex );
+    dofNumbers.emplace_back( dofIndex );
   } );
 }
 
@@ -251,7 +257,7 @@ void DofManagerIndicesTest::test( std::vector< FieldDesc > fields )
       {
         EXPECT_EQ( dofNumbers.front(), allDofNumbers.back() + lastNumComp );
       }
-      allDofNumbers.insert( allDofNumbers.size(), dofNumbers.data(), dofNumbers.size() );
+      allDofNumbers.insert( allDofNumbers.size(), dofNumbers.begin(), dofNumbers.end() );
     }
     lastNumComp = f.components;
   }
@@ -452,7 +458,7 @@ protected:
              std::map< std::pair< string, string >, CouplingDesc > couplings = {} );
 };
 
-TYPED_TEST_CASE_P( DofManagerSparsityTest );
+TYPED_TEST_SUITE_P( DofManagerSparsityTest );
 
 template< typename LAI >
 void DofManagerSparsityTest< LAI >::test( std::vector< FieldDesc > fields,
@@ -712,28 +718,28 @@ TYPED_TEST_P( DofManagerSparsityTest, FEM_TPFA_Partial )
   } );
 }
 
-REGISTER_TYPED_TEST_CASE_P( DofManagerSparsityTest,
-                            TPFA_Full,
-                            TPFA_Partial,
-                            FEM_Full,
-                            FEM_Partial,
-                            Mass_Full,
-                            Mass_Partial,
-                            Flux_Full,
-                            Flux_Partial,
-                            FEM_TPFA_Full,
-                            FEM_TPFA_Partial );
+REGISTER_TYPED_TEST_SUITE_P( DofManagerSparsityTest,
+                             TPFA_Full,
+                             TPFA_Partial,
+                             FEM_Full,
+                             FEM_Partial,
+                             Mass_Full,
+                             Mass_Partial,
+                             Flux_Full,
+                             Flux_Partial,
+                             FEM_TPFA_Full,
+                             FEM_TPFA_Partial );
 
 #ifdef GEOSX_USE_TRILINOS
-INSTANTIATE_TYPED_TEST_CASE_P( Trilinos, DofManagerSparsityTest, TrilinosInterface );
+INSTANTIATE_TYPED_TEST_SUITE_P( Trilinos, DofManagerSparsityTest, TrilinosInterface, );
 #endif
 
 #ifdef GEOSX_USE_HYPRE
-INSTANTIATE_TYPED_TEST_CASE_P( Hypre, DofManagerSparsityTest, HypreInterface );
+INSTANTIATE_TYPED_TEST_SUITE_P( Hypre, DofManagerSparsityTest, HypreInterface, );
 #endif
 
 #ifdef GEOSX_USE_PETSC
-INSTANTIATE_TYPED_TEST_CASE_P( Petsc, DofManagerSparsityTest, PetscInterface );
+INSTANTIATE_TYPED_TEST_SUITE_P( Petsc, DofManagerSparsityTest, PetscInterface, );
 #endif
 
 /**
@@ -755,13 +761,13 @@ protected:
   using Base::addFields;
 
   void test( std::vector< FieldDesc > fields,
-             localIndex block, localIndex loComp, localIndex hiComp,
+             std::vector< DofManager::SubComponent > selection,
              std::map< std::pair< string, string >, CouplingDesc > couplings = {} );
 };
 
 template< typename LAI >
 void DofManagerRestrictorTest< LAI >::test( std::vector< FieldDesc > fields,
-                                            localIndex block, localIndex loComp, localIndex hiComp,
+                                            std::vector< DofManager::SubComponent > selection,
                                             std::map< std::pair< string, string >, CouplingDesc > couplings )
 {
   addFields( fields, couplings );
@@ -773,24 +779,45 @@ void DofManagerRestrictorTest< LAI >::test( std::vector< FieldDesc > fields,
   A.set( 1 );
 
   // Create prolongation and restriction to 2 out of 3 components
-  Matrix P;
-  dofManager.makeRestrictor( fields[block].name, P, MPI_COMM_GEOSX, true, loComp, hiComp );
+  Matrix R, P;
+  dofManager.makeRestrictor( selection, A.getComm(), false, R );
+  dofManager.makeRestrictor( selection, A.getComm(), true, P );
 
   // Compute the sub-matrix via PtAP
   Matrix Asub_PtAP;
   A.multiplyPtAP( P, Asub_PtAP );
 
   // Compute the sub-matrix via RAP
-  Matrix R;
   Matrix Asub_RAP;
-  P.transpose( R );
   A.multiplyRAP( R, P, Asub_RAP );
+
+  // Filter the selected fields
+  std::vector< FieldDesc > selectedFields( selection.size() );
+  for( std::size_t k = 0; k < selection.size(); ++k )
+  {
+    selectedFields[k] = *std::find_if( fields.begin(), fields.end(),
+                                       [&]( FieldDesc const & f ) { return f.name == selection[k].fieldName; } );
+    selectedFields[k].components = selection[k].hiComp - selection[k].loComp;
+  }
+
+  // Filter the couplings of selected fields
+  std::map< std::pair< string, string >, CouplingDesc > couplingsSelected;
+  for( auto it = couplings.begin(); it != couplings.end(); ++it )
+  {
+    std::pair< string, string > const & fieldNames = it->first;
+    bool const f1 = std::count_if( selectedFields.begin(), selectedFields.end(),
+                                   [&]( FieldDesc const & f ) { return f.name == fieldNames.first; } ) > 0;
+    bool const f2 = std::count_if( selectedFields.begin(), selectedFields.end(),
+                                   [&]( FieldDesc const & f ) { return f.name == fieldNames.second; } ) > 0;
+    if( f1 && f2 )
+    {
+      couplingsSelected.emplace( *it );
+    }
+  }
 
   // Now reset the DofManager and make a field with sub-components only
   dofManager.clear();
-  FieldDesc subField = fields[block];
-  subField.components = hiComp - loComp;
-  addFields( { subField } );
+  addFields( selectedFields, couplingsSelected );
 
   // Compute the expected matrix
   Matrix B;
@@ -799,98 +826,150 @@ void DofManagerRestrictorTest< LAI >::test( std::vector< FieldDesc > fields,
   B.set( 1 );
 
   // Check if the matrices match
-  compareMatrices( Asub_PtAP, B );
-  compareMatrices( Asub_RAP, B );
+  {
+    SCOPED_TRACE( "PtAP" );
+    compareMatrices( Asub_PtAP, B );
+  }
+  {
+    SCOPED_TRACE( "RAP" );
+    compareMatrices( Asub_RAP, B );
+  }
 }
 
-TYPED_TEST_CASE_P( DofManagerRestrictorTest );
+TYPED_TEST_SUITE_P( DofManagerRestrictorTest );
 
 TYPED_TEST_P( DofManagerRestrictorTest, SingleBlock )
 {
-  TestFixture::test( {
+  TestFixture::test(
+  {
     { "pressure",
       DofManager::Location::Elem,
       DofManager::Connector::Face,
-      3, makeSparsityTPFA< typename TestFixture::Matrix >,
+      3, nullptr,
       { "region1", "region3", "region4" }
     }
   },
-                     0, 1, 3 );
+  {
+    { "pressure", 1, 3 }
+  }
+    );
 }
 
-TYPED_TEST_P( DofManagerRestrictorTest, MultiBlock1 )
+TYPED_TEST_P( DofManagerRestrictorTest, MultiBlock_First )
 {
-  TestFixture::test( {
+  TestFixture::test(
+  {
     { "displacement",
       DofManager::Location::Node,
       DofManager::Connector::Elem,
-      3, makeSparsityFEM< typename TestFixture::Matrix >,
+      3, nullptr,
       { "region1", "region3", "region4" }
     },
     { "pressure",
       DofManager::Location::Elem,
       DofManager::Connector::Face,
-      2, makeSparsityTPFA< typename TestFixture::Matrix >,
+      2, nullptr,
       { "region1", "region2", "region4" }
     }
   },
-                     0, 1, 3,
+  {
+    { "displacement", 1, 3 }
+  },
   {
     {
       { "displacement", "pressure" },
       { DofManager::Connector::Elem,
-        makeSparsityFEM_FVM< typename TestFixture::Matrix >,
+        nullptr,
         true,
         { "region4" }
       }
     }
-  } );
+  }
+    );
 }
 
-TYPED_TEST_P( DofManagerRestrictorTest, MultiBlock2 )
+TYPED_TEST_P( DofManagerRestrictorTest, MultiBlock_Second )
 {
-  TestFixture::test( {
+  TestFixture::test(
+  {
     { "displacement",
       DofManager::Location::Node,
       DofManager::Connector::Elem,
-      3, makeSparsityFEM< typename TestFixture::Matrix >,
+      3, nullptr,
       { "region1", "region3", "region4" }
     },
     { "pressure",
       DofManager::Location::Elem,
       DofManager::Connector::Face,
-      2, makeSparsityTPFA< typename TestFixture::Matrix >,
+      2, nullptr,
       { "region1", "region2", "region4" }
     }
   },
-                     1, 1, 2,
+  {
+    { "pressure", 1, 2 }
+  },
   {
     {
       { "displacement", "pressure" },
       { DofManager::Connector::Elem,
-        makeSparsityFEM_FVM< typename TestFixture::Matrix >,
+        nullptr,
         true,
         { "region4" }
       }
     }
-  } );
+  }
+    );
 }
 
-REGISTER_TYPED_TEST_CASE_P( DofManagerRestrictorTest,
-                            SingleBlock,
-                            MultiBlock1,
-                            MultiBlock2 );
+TYPED_TEST_P( DofManagerRestrictorTest, MultiBlock_Both )
+{
+  TestFixture::test(
+  {
+    { "displacement",
+      DofManager::Location::Node,
+      DofManager::Connector::Elem,
+      3, nullptr,
+      { "region1", "region3", "region4" }
+    },
+    { "pressure",
+      DofManager::Location::Elem,
+      DofManager::Connector::Face,
+      2, nullptr,
+      { "region1", "region2", "region4" }
+    }
+  },
+  {
+    { "displacement", 1, 3 }, { "pressure", 1, 2 }
+  },
+  {
+    {
+      { "displacement", "pressure" },
+      { DofManager::Connector::Elem,
+        nullptr,
+        true,
+        { "region4" }
+      }
+    }
+  }
+    );
+}
+
+REGISTER_TYPED_TEST_SUITE_P( DofManagerRestrictorTest,
+                             SingleBlock,
+                             MultiBlock_First,
+                             MultiBlock_Second,
+                             MultiBlock_Both );
 
 #ifdef GEOSX_USE_TRILINOS
-INSTANTIATE_TYPED_TEST_CASE_P( Trilinos, DofManagerRestrictorTest, TrilinosInterface );
+INSTANTIATE_TYPED_TEST_SUITE_P( Trilinos, DofManagerRestrictorTest, TrilinosInterface, );
 #endif
 
 #ifdef GEOSX_USE_HYPRE
-INSTANTIATE_TYPED_TEST_CASE_P( Hypre, DofManagerRestrictorTest, HypreInterface );
+INSTANTIATE_TYPED_TEST_SUITE_P( Hypre, DofManagerRestrictorTest, HypreInterface, );
 #endif
 
 #ifdef GEOSX_USE_PETSC
-INSTANTIATE_TYPED_TEST_CASE_P( Petsc, DofManagerRestrictorTest, PetscInterface );
+INSTANTIATE_TYPED_TEST_SUITE_P( Petsc, DofManagerRestrictorTest, PetscInterface, );
 #endif
 
 int main( int argc, char * * argv )

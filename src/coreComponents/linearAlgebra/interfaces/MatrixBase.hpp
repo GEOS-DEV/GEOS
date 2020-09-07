@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -21,6 +21,7 @@
 
 #include "linearAlgebra/common.hpp"
 #include "linearAlgebra/interfaces/LinearOperator.hpp"
+//#include "LvArray/src/streamIO.hpp"
 
 namespace geosx
 {
@@ -47,13 +48,15 @@ namespace geosx
 template< typename MATRIX, typename VECTOR >
 class MatrixBase : public virtual LinearOperator< VECTOR >
 {
-protected:
+public:
 
   /// Type alias for actual derived matrix class
   using Matrix = MATRIX;
 
   /// Type alias for a compatible vector class
   using Vector = VECTOR;
+
+protected:
 
   /**
    * @name Constructors/destructor/assignment
@@ -68,10 +71,31 @@ protected:
     m_assembled( false )
   {}
 
+  /**
+   * @brief Copy constructor.
+   */
   MatrixBase( MatrixBase const & ) = default;
+
+  /**
+   * @brief Move constructor.
+   */
   MatrixBase( MatrixBase && ) = default;
+
+  /**
+   * @brief Copy assignment.
+   * @return reference to this object
+   */
   MatrixBase & operator=( MatrixBase const & ) = default;
+
+  /**
+   * @brief Move assignment.
+   * @return reference to this object
+   */
   MatrixBase & operator=( MatrixBase && ) = default;
+
+  /**
+   * @brief Destructor.
+   */
   ~MatrixBase() = default;
 
   ///@}
@@ -190,6 +214,40 @@ protected:
                         localIndex const maxEntriesPerRow,
                         MPI_Comm const & comm ) = 0;
 
+  /**
+   * @brief Create parallel matrix from a local CRS matrix.
+   * @param localMatrix The input local matrix.
+   * @param comm The MPI communicator to use.
+   *
+   * @note Copies values, so that @p localMatrix does not need to retain its values after the call.
+   * @todo Replace generic implementation with more efficient ones in each package.
+   */
+  virtual void create( CRSMatrixView< real64 const, globalIndex const > const & localMatrix,
+                       MPI_Comm const & comm )
+  {
+    localMatrix.move( LvArray::MemorySpace::CPU, false );
+
+    localIndex maxEntriesPerRow = 0;
+    for( localIndex i = 0; i < localMatrix.numRows(); ++i )
+    {
+      maxEntriesPerRow = std::max( maxEntriesPerRow, localMatrix.numNonZeros( i ) );
+    }
+
+    createWithLocalSize( localMatrix.numRows(),
+                         localMatrix.numRows(),
+                         maxEntriesPerRow,
+                         comm );
+
+    globalIndex const rankOffset = ilower();
+
+    open();
+    for( localIndex localRow = 0; localRow < localMatrix.numRows(); ++localRow )
+    {
+      insert( localRow + rankOffset, localMatrix.getColumns( localRow ), localMatrix.getEntries( localRow ) );
+    }
+    close();
+  }
+
   ///@}
 
   /**
@@ -231,6 +289,7 @@ protected:
 
   /**
    * @brief Set all non-zero elements to a value.
+   * @param value the value to set all elements to
    */
   virtual void set( real64 const value ) = 0;
 
@@ -255,11 +314,9 @@ protected:
 
   /**
    * @brief Add to one element.
-   *
-   * @param rowIndex Global row index.
-   * @param colIndex Global column index.
-   * @param value Value to add to prescribed location.
-   *
+   * @param rowIndex Global row index
+   * @param colIndex Global column index
+   * @param value Value to add to prescribed location
    */
   virtual void add( globalIndex const rowIndex,
                     globalIndex const colIndex,
@@ -267,11 +324,9 @@ protected:
 
   /**
    * @brief Set one element.
-   *
-   * @param rowIndex Global row index.
-   * @param colIndex Global column index.
-   * @param value Value to set at prescribed location.
-   *
+   * @param rowIndex Global row index
+   * @param colIndex Global column index
+   * @param value Value to set at prescribed location
    */
   virtual void set( globalIndex const rowIndex,
                     globalIndex const colIndex,
@@ -279,11 +334,9 @@ protected:
 
   /**
    * @brief Insert one element.
-   *
-   * @param rowIndex Global row index.
-   * @param colIndex Global column index.
-   * @param value Value to insert at prescribed location.
-   *
+   * @param rowIndex Global row index
+   * @param colIndex Global column index
+   * @param value Value to insert at prescribed location
    */
   virtual void insert( globalIndex const rowIndex,
                        globalIndex const colIndex,
@@ -291,10 +344,9 @@ protected:
 
   /**
    * @brief Add elements to one row using c-style arrays
-   *
-   * @param rowIndex Global row index.
+   * @param rowIndex Global row index
    * @param colIndices Global column indices
-   * @param values Values to add to prescribed locations.
+   * @param values Values to add to prescribed locations
    * @param size Number of elements
    */
   virtual void add( globalIndex const rowIndex,
@@ -304,10 +356,9 @@ protected:
 
   /**
    * @brief Set elements to one row using c-style arrays
-   *
-   * @param rowIndex Global row index.
+   * @param rowIndex Global row index
    * @param colIndices Global column indices
-   * @param values Values to add to prescribed locations.
+   * @param values Values to add to prescribed locations
    * @param size Number of elements
    */
   virtual void set( globalIndex const rowIndex,
@@ -317,10 +368,9 @@ protected:
 
   /**
    * @brief Insert elements to one row using c-style arrays
-   *
-   * @param rowIndex Global row index.
+   * @param rowIndex Global row index
    * @param colIndices Global column indices
-   * @param values Values to add to prescribed locations.
+   * @param values Values to add to prescribed locations
    * @param size Number of elements
    */
   virtual void insert( globalIndex const rowIndex,
@@ -330,10 +380,9 @@ protected:
 
   /**
    * @brief Add elements to one row using array1d
-   *
-   * @param rowIndex Global row index.
+   * @param rowIndex Global row index
    * @param colIndices Global column indices
-   * @param values Values to add to prescribed locations.
+   * @param values Values to add to prescribed locations
    */
   virtual void add( globalIndex const rowIndex,
                     arraySlice1d< globalIndex const > const & colIndices,
@@ -341,10 +390,9 @@ protected:
 
   /**
    * @brief Set elements of one row using array1d
-   *
-   * @param rowIndex Global row index.
+   * @param rowIndex Global row index
    * @param colIndices Global column indices
-   * @param values Values to add to prescribed locations.
+   * @param values Values to add to prescribed locations
    */
   virtual void set( globalIndex const rowIndex,
                     arraySlice1d< globalIndex const > const & colIndices,
@@ -352,101 +400,81 @@ protected:
 
   /**
    * @brief Insert elements of one row using array1d
-   *
-   * @param rowIndex Global row index.
+   * @param rowIndex Global row index
    * @param colIndices Global column indices
-   * @param values Values to add to prescribed locations.
+   * @param values Values to add to prescribed locations
    */
   virtual void insert( globalIndex const rowIndex,
                        arraySlice1d< globalIndex const > const & colIndices,
                        arraySlice1d< real64 const > const & values ) = 0;
 
   /**
-   * @brief Add dense matrix.
-   *
-   * @param rowIndices Global row indices.
+   * @brief Add a dense block of values.
+   * @param rowIndices Global row indices
    * @param colIndices Global col indices
-   * @param values Dense local matrix of values.
-   *
-   * @note Row major layout assumed in values
+   * @param values Dense local matrix of values
    */
   virtual void add( arraySlice1d< globalIndex const > const & rowIndices,
                     arraySlice1d< globalIndex const > const & colIndices,
                     arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & values ) = 0;
 
   /**
-   * @brief Set dense matrix.
-   *
-   * @param rowIndices Global row indices.
+   * @brief Set a dense block of values.
+   * @param rowIndices Global row indices
    * @param colIndices Global col indices
-   * @param values Dense local matrix of values.
-   *
-   * @note Row major layout assumed in values
+   * @param values Dense local matrix of values
    */
   virtual void set( arraySlice1d< globalIndex const > const & rowIndices,
                     arraySlice1d< globalIndex const > const & colIndices,
                     arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & values ) = 0;
 
   /**
-   * @brief Insert dense matrix.
-   *
-   * @param rowIndices Global row indices.
+   * @brief Insert a dense block of values.
+   * @param rowIndices Global row indices
    * @param colIndices Global col indices
-   * @param values Dense local matrix of values.
-   *
-   * @note Row major layout assumed in values
+   * @param values Dense local matrix of values
    */
   virtual void insert( arraySlice1d< globalIndex const > const & rowIndices,
                        arraySlice1d< globalIndex const > const & colIndices,
                        arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & values ) = 0;
 
   /**
-   * @brief Add dense matrix.
-   *
-   * @param rowIndices Global row indices.
+   * @brief Add a dense block of values.
+   * @param rowIndices Global row indices
    * @param colIndices Global col indices
-   * @param values Dense local matrix of values.
-   *
-   * @note Column major layout assumed in values
+   * @param values Dense local matrix of values
    */
   virtual void add( arraySlice1d< globalIndex const > const & rowIndices,
                     arraySlice1d< globalIndex const > const & colIndices,
                     arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & values ) = 0;
 
   /**
-   * @brief Set dense matrix.
-   *
-   * @param rowIndices Global row indices.
+   * @brief Set a dense block of values.
+   * @param rowIndices Global row indices
    * @param colIndices Global col indices
-   * @param values Dense local matrix of values.
-   *
-   * @note Column major layout assumed in values
+   * @param values Dense local matrix of values
    */
   virtual void set( arraySlice1d< globalIndex const > const & rowIndices,
                     arraySlice1d< globalIndex const > const & colIndices,
                     arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & values ) = 0;
 
   /**
-   * @brief Insert dense matrix.
-   *
-   * @param rowIndices Global row indices.
+   * @brief Insert a dense block of values.
+   * @param rowIndices Global row indices
    * @param colIndices Global col indices
-   * @param values Dense local matrix of values.
-   *
-   * @note Column major layout assumed in values
+   * @param values Dense local matrix of values
    */
   virtual void insert( arraySlice1d< globalIndex const > const & rowIndices,
                        arraySlice1d< globalIndex const > const & colIndices,
                        arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & values ) = 0;
 
   /**
-   * @brief Add dense matrix.
-   *
-   * @param rowIndices Global row indices.
+   * @brief Add a dense block of values.
+   * @param rowIndices Global row indices
    * @param colIndices Global col indices
-   * @param values Dense local matrix of values.
-   * @param numRows Number of row indices.
-   * @param numCols Number of column indices.
+   * @param values Dense local matrix of values
+   * @param numRows Number of row indices
+   * @param numCols Number of column indices
    *
    * @note Row major layout assumed in values
    */
@@ -457,13 +485,12 @@ protected:
                     localIndex const numCols ) = 0;
 
   /**
-   * @brief Set dense matrix.
-   *
-   * @param rowIndices Global row indices.
+   * @brief Set a dense block of values.
+   * @param rowIndices Global row indices
    * @param colIndices Global col indices
-   * @param values Dense local matrix of values.
-   * @param numRows Number of row indices.
-   * @param numCols Number of column indices.
+   * @param values Dense local matrix of values
+   * @param numRows Number of row indices
+   * @param numCols Number of column indices
    *
    * @note Row major layout assumed in values
    */
@@ -476,12 +503,11 @@ protected:
   /**
    * @brief Insert dense matrix.
    *
-   * @param rowIndices Global row indices.
+   * @param rowIndices Global row indices
    * @param colIndices Global col indices
-   * @param values Dense local matrix of values.
-   * @param numRows Number of row indices.
-   * @param numCols Number of column indices.
-   *
+   * @param values Dense local matrix of values
+   * @param numRows Number of row indices
+   * @param numCols Number of column indices
    * @note Row major layout assumed in values
    */
   virtual void insert( globalIndex const * rowIndices,
@@ -507,13 +533,32 @@ protected:
   virtual void applyTranspose( Vector const & src, Vector & dst ) const = 0;
 
   /**
+   * @brief Compute residual <tt>r = Ax - b</tt>.
+   *
+   * Overrides LinearOperator::residual().
+   *
+   * @param x Input solution.
+   * @param b Input right hand side.
+   * @param r Output residual.
+   *
+   * @note @p x and @p r cannot alias the same vector.
+   */
+  virtual void residual( Vector const & x, Vector const & b, Vector & r ) const override
+  {
+    if( &b != &r )
+    {
+      r.copy( b );
+    }
+    gemv( -1.0, x, 1.0, r );
+  }
+
+  /**
    * @brief Matrix/Matrix multiplication.
    *
-   * Compute <tt>this * B = C<tt>.
+   * Compute <tt>this * B = C</tt>.
    *
    * @param src Input matrix (B).
    * @param dst Output matrix (C).
-   * @param closeResult whether to close @p dst for additional entries.
    *
    * Note that the output matrix C should have the same
    * row-map as this.  If close() has already been called
@@ -526,11 +571,10 @@ protected:
   /**
    * @brief Matrix/Matrix transpose multiplication.
    *
-   * Compute <tt>this^T * B = C<tt>.
+   * Compute <tt>this^T * B = C</tt>.
    *
    * @param src Input matrix (B).
    * @param dst Output matrix (C).
-   * @param closeResult whether to close @p dst for additional entries.
    *
    * Note that the output matrix C should have the same
    * row-map as this.  If close() has already been called
@@ -543,11 +587,10 @@ protected:
   /**
    * @brief Matrix/Matrix transpose multiplication.
    *
-   * Compute <tt>B * this^T = C<tt>.
+   * Compute <tt>B * this^T = C</tt>.
    *
    * @param src Input matrix (B).
    * @param dst Output matrix (C).
-   * @param closeResult whether to close @p dst for additional entries.
    *
    * Note that the output matrix C should have the same
    * row-map as this.  If close() has already been called
@@ -607,6 +650,7 @@ protected:
    * @param y Output vector.
    * @param useTranspose Boolean, set to true to use <tt>A^T</tt>.
    *
+   * @warning @p x and @p y cannot alias the same vector.
    */
   virtual void gemv( real64 const alpha,
                      Vector const & x,
@@ -635,9 +679,8 @@ protected:
   /**
    * @brief Post-multiplies (right) with diagonal matrix consisting of the values in vecRight
    * and pre-multiplies (left) with diagonal matrix consisting of the values in vec.
-   * @param vec vecLeft to pre-multiply with.
-   * @param vec vecRight to post-multiply with.
-   *
+   * @param vecLeft vec to pre-multiply with.
+   * @param vecRight vec to post-multiply with.
    */
   virtual void leftRightScale( Vector const & vecLeft,
                                Vector const & vecRight ) = 0;
@@ -645,7 +688,7 @@ protected:
   /**
    * @brief Matrix transposition.
    *
-   * Compute <tt>B = this^T<tt>.
+   * Compute <tt>B = this^T</tt>.
    *
    * @param dst Output matrix (B).
    *
@@ -665,6 +708,25 @@ protected:
                            bool const keepDiag = false,
                            real64 const diagValue = 0.0 ) = 0;
 
+  /**
+   * @brief Add entries of another matrix to this.
+   * @param src   the source matrix
+   * @param scale factor to scale entries of @p src by
+   *
+   * @note Sparsity pattern of @p this must be a superset of sparsity of @p src.
+   *       @p this and @p src must have the same parallel row distribution.
+   */
+  virtual void addEntries( Matrix const & src, real64 const scale = 1.0 ) = 0;
+
+  /**
+   * @brief Add entries of a vector to the diagonal of this matrix.
+   * @param src the source vector
+   *
+   * @note @p this must be square and have a (possibly zero) diagonal entry in every row.
+   *       @p this and @p src must have the same parallel row distribution.
+   */
+  virtual void addDiagonal( Vector const & src ) = 0;
+
   ///@}
 
   /**
@@ -673,13 +735,16 @@ protected:
   ///@{
 
   /**
-   * @brief Returns the number of nozero entries in the longest
-   * row of the matrix.
+   * @brief Returns the number of nonzero entries in the longest row of the matrix.
+   * @return the max length of a row
+   *
+   * Collective.
    */
   virtual localIndex maxRowLength() const = 0;
 
   /**
    * @brief Get row length via local row index.
+   * @param[in] localRowIndex the local row index
    * @return the number of nonzero entries in the row
    *
    * TODO: Breaks the goal of hiding local row indexing from user.
@@ -689,15 +754,18 @@ protected:
 
   /**
    * @brief Get row length via global row index.
+   * @param[in] globalRowIndex the global row index
    * @return the number of nonzero entries in the row
    */
-  virtual localIndex globalRowLength( globalIndex globalRowIndex ) const = 0;
+  virtual localIndex globalRowLength( globalIndex const globalRowIndex ) const = 0;
 
   /**
-   * @brief Returns a copy of the data in row <tt>globalRow</tt>.
-   * Note that the input arrays will be resized internally to fit the number of entries.
+   * @brief Returns a copy of the data in row @p globalRow.
+   * @param[in]  globalRow  the index of global row to extract
+   * @param[out] colIndices the output array of global column indices (must have a large enough size)
+   * @param[out] values     the output array of values (must have a large enough size)
    */
-  virtual void getRowCopy( globalIndex globalRow,
+  virtual void getRowCopy( globalIndex const globalRow,
                            arraySlice1d< globalIndex > const & colIndices,
                            arraySlice1d< real64 > const & values ) const = 0;
 
@@ -709,69 +777,115 @@ protected:
   virtual real64 getDiagValue( globalIndex globalRow ) const = 0;
 
   /**
+   * @brief Extract diagonal values into a vector.
+   * @param dst the target vector, must have the same row partitioning as @p this
+   */
+  virtual void extractDiagonal( Vector & dst ) const = 0;
+
+  /**
    * @brief Returns the number of global rows.
+   * @return number of global rows
    */
   virtual globalIndex numGlobalRows() const override = 0;
 
   /**
    * @brief Returns the number of global columns.
+   * @return number of global columns
    */
   virtual globalIndex numGlobalCols() const override = 0;
 
   /**
-   * @brief Return the local number of columns on each processor
+   * @brief Return the local number of columns on each processor.
+   * @return number of local columns
    */
   virtual localIndex numLocalRows() const = 0;
 
   /**
-   * @brief Return the local number of columns on each processor
+   * @brief Return the local number of columns on each processor.
+   * @return number of local rows
+   *
+   * @note Matrix implementations don't physically "own" columns ranges as they do rows.
+   * Instead, the local column range refers to the "diagonal" block of columns which would
+   * correspond to the local range of entries of a source vector created with the same
+   * local/global size as the number of matrix columns.
    */
   virtual localIndex numLocalCols() const = 0;
 
   /**
    * @brief Returns the index of the first global row owned by that processor.
+   * @return the index of the first global row owned by that processor
    */
   virtual globalIndex ilower() const = 0;
 
   /**
-   * @brief Returns the next index after last global row owned by that processor.
+   * @brief Returns index one past the last global row owned by that processor.
+   * @return the next index after last global row owned by that processor
    *
    * @note The intention is for [ilower; iupper) to be used as a half-open index range
    */
   virtual globalIndex iupper() const = 0;
 
   /**
+   * @brief Returns the index of the first global col owned by that processor.
+   * @return index of the first owned global col
+   *
+   * @note Matrix implementations don't physically "own" column ranges the same way
+   * they do row ranges. Instead, the column range refers to the "diagonal" block of
+   * columns which would correspond to the local range of entries of a vector created
+   * with the same local/global size as the number of matrix columns.
+   */
+  virtual globalIndex jlower() const = 0;
+
+  /**
+   * @brief Returns index one past the last global col owned by that processor.
+   * @return index one past the last owned global col
+   *
+   * @note The intention is for [jlower; jupper) to be used as a half-open index range.
+   * @note Also see note for @p jlower() about the meaning of "owned" columns.
+   */
+  virtual globalIndex jupper() const = 0;
+
+  /**
    * @brief Returns the number of nonzeros in the local portion of the matrix
+   * @return the number of nonzeros in the local portion of the matrix
    */
   virtual localIndex numLocalNonzeros() const = 0;
 
   /**
    * @brief Returns the total number of nonzeros in the matrix
+   * @return the total number of nonzeros in the matrix
    */
   virtual globalIndex numGlobalNonzeros() const = 0;
 
   /**
    * @brief Returns the infinity norm of the matrix.
+   * @return the value of infinity norm
    */
   virtual real64 normInf() const = 0;
 
   /**
    * @brief Returns the one norm of the matrix.
+   * @return the value of 1-norm
    */
   virtual real64 norm1() const = 0;
 
   /**
    * @brief Returns the Frobenius norm of the matrix.
+   * @return the value of Frobenius norm
    */
   virtual real64 normFrobenius() const = 0;
 
   /**
    * @brief Map a global row index to local row index
+   * @param index the global row index
+   * @return the local row index corresponding to @p index, or -1 if not a local row
    */
   virtual localIndex getLocalRowID( globalIndex const index ) const = 0;
 
   /**
    * @brief Map a local row index to global row index
+   * @param index the local row index (between 0 and number of local rows)
+   * @return the global row index corresponding to @p index
    */
   virtual globalIndex getGlobalRowID( localIndex const index ) const = 0;
 
@@ -792,13 +906,15 @@ protected:
   ///@{
 
   /**
-   * @brief Print the matrix in Trilinos format to the terminal.
+   * @brief Print the matrix in Trilinos format to a stream.
+   * @param os the output stream
    */
   virtual void print( std::ostream & os = std::cout ) const = 0;
 
   /**
    * @brief Write the matrix to filename in a matlab-compatible format.
-   * @param mtxFormat if @p true, MatrixMarket format is used, otherwise MATLAB
+   * @param filename name of the output file
+   * @param format   output format
    *
    * Within octave / matlab:
    * >> load filename
@@ -829,6 +945,6 @@ protected:
 
 };
 
-}
+} // namespace geosx
 
 #endif //GEOSX_LINEARALGEBRA_INTERFACES_MATRIXBASE_HPP_

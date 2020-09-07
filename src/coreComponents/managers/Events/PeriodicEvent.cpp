@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -24,7 +24,6 @@ namespace geosx
 
 using namespace dataRepository;
 
-
 PeriodicEvent::PeriodicEvent( const std::string & name,
                               Group * const parent ):
   EventBase( name, parent ),
@@ -38,53 +37,50 @@ PeriodicEvent::PeriodicEvent( const std::string & name,
   m_functionStatOption( 0 ),
   m_eventThreshold( 0.0 )
 {
-  registerWrapper( viewKeyStruct::timeFrequencyString, &m_timeFrequency, false )->
+  registerWrapper( viewKeyStruct::timeFrequencyString, &m_timeFrequency )->
     setApplyDefaultValue( -1.0 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Event application frequency (time).  Note: if this value is specified, it will override any cycle-based behavior." );
 
-  registerWrapper( viewKeyStruct::cycleFrequencyString, &m_cycleFrequency, false )->
+  registerWrapper( viewKeyStruct::cycleFrequencyString, &m_cycleFrequency )->
     setApplyDefaultValue( 1 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Event application frequency (cycle, default)" );
 
-  registerWrapper( viewKeyStruct::targetExactTimestepString, &m_targetExactTimestep, false )->
+  registerWrapper( viewKeyStruct::targetExactTimestepString, &m_targetExactTimestep )->
     setApplyDefaultValue( 1 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription(
     "If this option is set, the event will reduce its timestep requests to match the specified timeFrequency perfectly: dt_request = min(dt_request, t_last + time_frequency - time))." );
 
-  registerWrapper( viewKeyStruct::functionNameString, &m_functionName, false )->
+  registerWrapper( viewKeyStruct::functionNameString, &m_functionName )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Name of an optional function to evaluate when the time/cycle criteria are met."
                     "If the result is greater than the specified eventThreshold, the function will continue to execute." );
 
-  registerWrapper( viewKeyStruct::functionInputObjectString, &m_functionInputObject, false )->
+  registerWrapper( viewKeyStruct::functionInputObjectString, &m_functionInputObject )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "If the optional function requires an object as an input, specify its path here." );
 
-  registerWrapper( viewKeyStruct::functionInputSetnameString, &m_functionInputSetname, false )->
+  registerWrapper( viewKeyStruct::functionInputSetnameString, &m_functionInputSetname )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "If the optional function is applied to an object, specify the setname to evaluate (default = everything)." );
 
-  registerWrapper( viewKeyStruct::functionStatOptionString, &m_functionStatOption, false )->
+  registerWrapper( viewKeyStruct::functionStatOptionString, &m_functionStatOption )->
     setApplyDefaultValue( 0 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "If the optional function is applied to an object, specify the statistic to compare to the eventThreshold."
                     "The current options include: min, avg, and max." );
 
-  registerWrapper( viewKeyStruct::eventThresholdString, &m_eventThreshold, false )->
+  registerWrapper( viewKeyStruct::eventThresholdString, &m_eventThreshold )->
     setApplyDefaultValue( 0.0 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "If the optional function is used, the event will execute if the value returned by the function exceeds this threshold." );
 
 }
 
-
 PeriodicEvent::~PeriodicEvent()
 {}
-
-
 
 void PeriodicEvent::EstimateEventTiming( real64 const time,
                                          real64 const dt,
@@ -94,32 +90,31 @@ void PeriodicEvent::EstimateEventTiming( real64 const time,
   // Check event status
   if( cycle == 0 )
   {
-    SetForecast( 0 );
+    setReadyForExec();
   }
   else if( m_timeFrequency >= 0.0 )
   {
     if( dt <= 0 )
     {
-      SetForecast( std::numeric_limits< integer >::max());
+      setIdle();
     }
     else
     {
       // Note: add a small value to this forecast to account for floating point errors
       real64 forecast = ((m_timeFrequency - (time - m_lastTime)) / dt) + 1e-10;
-      SetForecast( static_cast< integer >(std::min( std::max( forecast, 0.0 ), 1e9 )));
+      setForecast( static_cast< integer >(std::min( std::max( forecast, 0.0 ), 1e9 )) );
     }
   }
   else
   {
-    SetForecast( m_cycleFrequency - (cycle - m_lastCycle));
+    setForecast( m_cycleFrequency - ( cycle - m_lastCycle ) );
   }
 
-  if((this->GetForecast() <= 0) && (m_functionName.empty() == 0))
+  if( this->isReadyForExec() && ( !m_functionName.empty() ) )
   {
     CheckOptionalFunctionThreshold( time, dt, cycle, domain );
   }
 }
-
 
 void PeriodicEvent::CheckOptionalFunctionThreshold( real64 const time,
                                                     real64 const GEOSX_UNUSED_PARAM( dt ),
@@ -181,11 +176,11 @@ void PeriodicEvent::CheckOptionalFunctionThreshold( real64 const time,
   // Forcast event
   if( result > m_eventThreshold )
   {
-    SetForecast( 0 );
+    setReadyForExec();
   }
   else
   {
-    SetForecast( std::numeric_limits< integer >::max());
+    setIdle();
   }
 }
 
@@ -214,7 +209,6 @@ real64 PeriodicEvent::GetEventTypeDtRequest( real64 const time )
   return requestedDt;
 }
 
-
 void PeriodicEvent::Cleanup( real64 const time_n,
                              integer const cycleNumber,
                              integer const GEOSX_UNUSED_PARAM( eventCounter ),
@@ -222,7 +216,7 @@ void PeriodicEvent::Cleanup( real64 const time_n,
                              Group * domain )
 {
   // Only call the cleanup method of the target/children if it is within its application time
-  if( ( time_n >= GetBeginTime() ) && ( time_n <= GetEndTime() ) )
+  if( isActive( time_n ) )
   {
     ExecutableGroup * target = GetEventTarget();
     if( target != nullptr )
@@ -239,7 +233,6 @@ void PeriodicEvent::Cleanup( real64 const time_n,
   }
 }
 
-
-
 REGISTER_CATALOG_ENTRY( EventBase, PeriodicEvent, std::string const &, Group * const )
+
 } /* namespace geosx */

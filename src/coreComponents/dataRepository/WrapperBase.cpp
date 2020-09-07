@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -32,7 +32,7 @@ WrapperBase::WrapperBase( std::string const & name,
   m_parent( parent ),
   m_sizedFromParent( 1 ),
   m_restart_flags( RestartFlags::WRITE_AND_READ ),
-  m_plotLevel( PlotLevel::LEVEL_3 ),
+  m_plotLevel( PlotLevel::NOPLOT ),
   m_inputFlag( InputFlags::INVALID ),
   m_description(),
   m_registeringObjects(),
@@ -45,26 +45,22 @@ WrapperBase::WrapperBase( std::string const & name,
 WrapperBase::~WrapperBase()
 {}
 
-
-// WrapperBase::WrapperBase( WrapperBase && source ):
-//   m_name( std::move( source.m_name ) ),
-//   m_parent( source.m_parent ),
-//   m_sizedFromParent( source.m_sizedFromParent ),
-//   m_restart_flags( source.m_restart_flags )
-//   m_conduitNode( source.m_conduitNode )
-// {}
-
 void WrapperBase::resize()
 {
   resize( m_parent->size());
 }
 
-void WrapperBase::CopyWrapperAttributes( WrapperBase const & source )
+void WrapperBase::copyWrapperAttributes( WrapperBase const & source )
 {
-  m_name = source.m_name;
+  GEOSX_ERROR_IF( source.m_name != this->m_name,
+                  "Tried to clone wrapper attributes from a wrapper with a different name" );
   m_sizedFromParent = source.m_sizedFromParent;
   m_restart_flags = source.m_restart_flags;
+  m_plotLevel  = source.m_plotLevel;
+  m_inputFlag = source.m_inputFlag;
+  m_description = source.m_description;
 }
+
 
 string WrapperBase::dumpInputOptions( bool const outputHeader ) const
 {
@@ -96,13 +92,13 @@ int WrapperBase::setTotalviewDisplay() const
 {
   //std::cout<<"exectuing WrapperBase::setTotalviewDisplay()"<<std::endl;
 //  TV_ttf_add_row("TYPE", TV_ttf_type_ascii_string, type.c_str() );
-  TV_ttf_add_row( "m_name", cxx_utilities::demangle< string >().c_str(), &m_name );
-  TV_ttf_add_row( "m_parent", cxx_utilities::demangle< Group >().c_str(), m_parent );
+  TV_ttf_add_row( "m_name", LvArray::system::demangle< string >().c_str(), &m_name );
+  TV_ttf_add_row( "m_parent", LvArray::system::demangle< Group >().c_str(), m_parent );
   TV_ttf_add_row( "m_sizedFromParent", "int", &m_sizedFromParent );
-  TV_ttf_add_row( "m_restart_flags", cxx_utilities::demangle< RestartFlags >().c_str(), &m_restart_flags );
-  TV_ttf_add_row( "m_plotLevel", cxx_utilities::demangle< PlotLevel >().c_str(), &m_plotLevel );
-  TV_ttf_add_row( "m_inputFlag", cxx_utilities::demangle< InputFlags >().c_str(), &m_inputFlag );
-  TV_ttf_add_row( "m_description", cxx_utilities::demangle< string >().c_str(), &m_description );
+  TV_ttf_add_row( "m_restart_flags", LvArray::system::demangle< RestartFlags >().c_str(), &m_restart_flags );
+  TV_ttf_add_row( "m_plotLevel", LvArray::system::demangle< PlotLevel >().c_str(), &m_plotLevel );
+  TV_ttf_add_row( "m_inputFlag", LvArray::system::demangle< InputFlags >().c_str(), &m_inputFlag );
+  TV_ttf_add_row( "m_description", LvArray::system::demangle< string >().c_str(), &m_description );
   size_t junk = m_registeringObjects.size();
   TV_ttf_add_row( "m_registeringObjects",
                   totalview::format< string, size_t >( 1, &junk ).c_str(),

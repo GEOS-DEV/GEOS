@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -63,7 +63,7 @@ ConstitutiveBase::CatalogInterface::CatalogType & ConstitutiveBase::GetCatalog()
   return catalog;
 }
 
-void ConstitutiveBase::AllocateConstitutiveData( dataRepository::Group * const parent,
+void ConstitutiveBase::allocateConstitutiveData( dataRepository::Group * const parent,
                                                  localIndex const numConstitutivePointsPerParentIndex )
 {
   m_numQuadraturePoints = numConstitutivePointsPerParentIndex;
@@ -76,8 +76,7 @@ void ConstitutiveBase::AllocateConstitutiveData( dataRepository::Group * const p
       if( wrapper.second->sizedFromParent() )
       {
         string const wrapperName = wrapper.first;
-        std::unique_ptr< WrapperBase > newWrapper = wrapper.second->clone( wrapperName, parent );
-        parent->registerWrapper( makeFieldName( this->getName(), wrapperName ), newWrapper.release() )->
+        parent->registerWrapper( makeFieldName( this->getName(), wrapperName ), wrapper.second->clone( wrapperName, parent ) )->
           setRestartFlags( RestartFlags::NO_WRITE );
       }
     }
@@ -88,28 +87,27 @@ void ConstitutiveBase::AllocateConstitutiveData( dataRepository::Group * const p
     if( wrapper.second->sizedFromParent() )
     {
       string const wrapperName = wrapper.first;
-      std::unique_ptr< WrapperBase > newWrapper = wrapper.second->clone( wrapperName, parent );
-      parent->registerWrapper( makeFieldName( this->getName(), wrapperName ), newWrapper.release() )->
+      parent->registerWrapper( makeFieldName( this->getName(), wrapperName ), wrapper.second->clone( wrapperName, parent ) )->
         setRestartFlags( RestartFlags::NO_WRITE );
     }
   }
 
+  this->resize( parent->size() );
 }
 
-void ConstitutiveBase::resize( localIndex newsize )
+std::unique_ptr< ConstitutiveBase >
+ConstitutiveBase::deliverClone( string const & name,
+                                Group * const parent ) const
 {
-  Group::resize( newsize );
-}
+  std::unique_ptr< ConstitutiveBase >
+  newModel = ConstitutiveBase::CatalogInterface::Factory( this->getCatalogName(), name, parent );
 
-void ConstitutiveBase::DeliverClone( string const & GEOSX_UNUSED_PARAM( name ),
-                                     Group * const GEOSX_UNUSED_PARAM( parent ),
-                                     std::unique_ptr< ConstitutiveBase > & clone ) const
-{
-  GEOSX_ASSERT( clone );
-  clone->forWrappers( [&]( WrapperBase & wrapper )
+  newModel->forWrappers( [&]( WrapperBase & wrapper )
   {
-    wrapper.CopyWrapperAttributes( *(this->getWrapperBase( wrapper.getName() ) ) );
+    wrapper.copyWrapper( *(this->getWrapperBase( wrapper.getName() ) ) );
   } );
+
+  return newModel;
 }
 
 

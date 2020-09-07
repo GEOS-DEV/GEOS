@@ -1,5 +1,7 @@
+<?xml version="1.0" ?>
+
 <Problem>
-<!--
+  <!--
 Note: This example uses the advanced xml input features,
            and needs to be compiled using pygeos.
 
@@ -10,13 +12,18 @@ using the following rules:
     Merge all attributes at the current level
     Continue merging objects at the next level if:
       At the root level and an object with the matching tag exists
-      The “name” attribute is present and a object with the matching tag and name exist
+      The "name" attribute is present and a object with the matching tag and name exist
       Any preexisting attributes are overwritten by the donor
     Otherwise insert the target into the xml structure as-is
 -->
   <Included>
-      <File name="./included/included_a.xml"/>
-      <File name="./included/included_b.xml"/>
-      <File name="./included/included_c.xml"/>
+    <File
+      name="./included/included_a.xml"/>
+
+    <File
+      name="./included/included_b.xml"/>
+
+    <File
+      name="./included/included_c.xml"/>
   </Included>
 </Problem>

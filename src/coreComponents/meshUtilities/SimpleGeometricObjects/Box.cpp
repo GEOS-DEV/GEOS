@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -35,22 +35,22 @@ Box::Box( const std::string & name, Group * const parent ):
   m_cosStrike{ 0.0 },
   m_sinStrike{ 0.0 }
 {
-  registerWrapper( viewKeyStruct::xMinString, &m_min, false )->
+  registerWrapper( viewKeyStruct::xMinString, &m_min )->
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "Minimum (x,y,z) coordinates of the box" );
 
-  registerWrapper( viewKeyStruct::xMaxString, &m_max, false )->
+  registerWrapper( viewKeyStruct::xMaxString, &m_max )->
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "Maximum (x,y,z) coordinates of the box" );
 
-  registerWrapper( viewKeyStruct::strikeAngleString, &m_strikeAngle, false )->
+  registerWrapper( viewKeyStruct::strikeAngleString, &m_strikeAngle )->
     setApplyDefaultValue( -90.0 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "The strike angle of the box" );
 
-  registerWrapper( viewKeyStruct::boxCenterString, &m_boxCenter, false );
-  registerWrapper( viewKeyStruct::cosStrikeString, &m_cosStrike, false );
-  registerWrapper( viewKeyStruct::sinStrikeString, &m_sinStrike, false );
+  registerWrapper( viewKeyStruct::boxCenterString, &m_boxCenter );
+  registerWrapper( viewKeyStruct::cosStrikeString, &m_cosStrike );
+  registerWrapper( viewKeyStruct::sinStrikeString, &m_sinStrike );
 }
 
 Box::~Box()

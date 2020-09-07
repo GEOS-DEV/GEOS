@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -47,27 +47,27 @@ FlowSolverBase::FlowSolverBase( std::string const & name,
   m_elementAperture0(),
   m_elementAperture()
 {
-  this->registerWrapper( viewKeyStruct::discretizationString, &m_discretizationName, false )->
+  this->registerWrapper( viewKeyStruct::discretizationString, &m_discretizationName )->
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "Name of discretization object to use for this solver." );
 
-  this->registerWrapper( viewKeyStruct::fluidNamesString, &m_fluidModelNames, false )->
+  this->registerWrapper( viewKeyStruct::fluidNamesString, &m_fluidModelNames )->
     setInputFlag( InputFlags::REQUIRED )->
     setSizedFromParent( 0 )->
     setDescription( "Names of fluid constitutive models for each region." );
 
-  this->registerWrapper( viewKeyStruct::solidNamesString, &m_solidModelNames, false )->
+  this->registerWrapper( viewKeyStruct::solidNamesString, &m_solidModelNames )->
     setInputFlag( InputFlags::REQUIRED )->
     setSizedFromParent( 0 )->
     setDescription( "Names of solid constitutive models for each region." );
 
-  this->registerWrapper( viewKeyStruct::inputFluxEstimateString, &m_fluxEstimate, false )->
+  this->registerWrapper( viewKeyStruct::inputFluxEstimateString, &m_fluxEstimate )->
     setApplyDefaultValue( 1.0 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Initial estimate of the input flux used only for residual scaling. This should be "
                     "essentially equivalent to the input flux * dt." );
 
-  this->registerWrapper( viewKeyStruct::meanPermCoeffString, &m_meanPermCoeff, false )->
+  this->registerWrapper( viewKeyStruct::meanPermCoeffString, &m_meanPermCoeff )->
     setApplyDefaultValue( 1.0 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Coefficient to move between harmonic mean (1.0) and arithmetic mean (0.0) for the "
@@ -141,14 +141,12 @@ void FlowSolverBase::InitializePreSubGroups( Group * const rootGroup )
   }
 
   // fill stencil targetRegions
-  NumericalMethodsManager * const
-  numericalMethodManager = domain->getParent()->GetGroup< NumericalMethodsManager >( keys::numericalMethodsManager );
+  NumericalMethodsManager & numericalMethodManager = domain->getNumericalMethodManager();
 
-  FiniteVolumeManager * const
-  fvManager = numericalMethodManager->GetGroup< FiniteVolumeManager >( keys::finiteVolumeManager );
+  FiniteVolumeManager & fvManager = numericalMethodManager.getFiniteVolumeManager();
 
-  FluxApproximationBase * const fluxApprox = fvManager->getFluxApproximation( m_discretizationName );
-  array1d< string > & stencilTargetRegions = fluxApprox->targetRegions();
+  FluxApproximationBase & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
+  array1d< string > & stencilTargetRegions = fluxApprox.targetRegions();
   std::set< string > stencilTargetRegionsSet( stencilTargetRegions.begin(), stencilTargetRegions.end() );
   for( auto const & targetRegion : targetRegionNames() )
   {
@@ -158,7 +156,7 @@ void FlowSolverBase::InitializePreSubGroups( Group * const rootGroup )
   stencilTargetRegions.clear();
   for( auto const & targetRegion : stencilTargetRegionsSet )
   {
-    stencilTargetRegions.push_back( targetRegion );
+    stencilTargetRegions.emplace_back( targetRegion );
   }
 }
 
@@ -166,83 +164,109 @@ void FlowSolverBase::InitializePostInitialConditions_PreSubGroups( Group * const
 {
   SolverBase::InitializePostInitialConditions_PreSubGroups( rootGroup );
 
-  DomainPartition * const domain = rootGroup->GetGroup< DomainPartition >( keys::domain );
+  DomainPartition & domain = *rootGroup->GetGroup< DomainPartition >( keys::domain );
+  MeshLevel & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
 
-  ResetViews( domain );
+  ResetViews( mesh );
 
   // Precompute solver-specific constant data (e.g. gravity-depth)
-  PrecomputeData( domain );
+  PrecomputeData( mesh );
 }
 
-void FlowSolverBase::PrecomputeData( DomainPartition * const domain )
+void FlowSolverBase::PrecomputeData( MeshLevel & mesh )
 {
-  MeshLevel & mesh = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
   FaceManager & faceManager = *mesh.getFaceManager();
-
   R1Tensor const gravVector = gravityVector();
 
   forTargetSubRegions( mesh, [&]( localIndex const,
                                   ElementSubRegionBase & subRegion )
   {
-    arrayView1d< R1Tensor const > const & elemCenter =
-      subRegion.getReference< array1d< R1Tensor > >( CellBlock::viewKeyStruct::elementCenterString );
+    arrayView2d< real64 const > const & elemCenter = subRegion.getElementCenter();
 
     arrayView1d< real64 > const & gravityCoef =
       subRegion.getReference< array1d< real64 > >( viewKeyStruct::gravityCoefString );
 
-    forAll< serialPolicy >( subRegion.size(), [=]( localIndex a )
+    forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const ei )
     {
-      gravityCoef[a] = Dot( elemCenter[a], gravVector );
+      gravityCoef[ ei ] = elemCenter( ei, 0 ) * gravVector[ 0 ] + elemCenter( ei, 1 ) * gravVector[ 1 ] + elemCenter( ei, 2 ) * gravVector[ 2 ];
     } );
   } );
 
   {
-    arrayView1d< R1Tensor const > const & faceCenter =
-      faceManager.getReference< array1d< R1Tensor > >( FaceManager::viewKeyStruct::faceCenterString );
+    arrayView2d< real64 const > const & faceCenter = faceManager.faceCenter();
 
     arrayView1d< real64 > const & gravityCoef =
       faceManager.getReference< array1d< real64 > >( viewKeyStruct::gravityCoefString );
 
-    forAll< serialPolicy >( faceManager.size(), [=] ( localIndex a )
+    forAll< parallelHostPolicy >( faceManager.size(), [=] ( localIndex const kf )
     {
-      gravityCoef[a] = Dot( faceCenter[a], gravVector );
+      // TODO change to LvArray::tensorOps::AiBi once gravVector is a c-array.
+      gravityCoef[ kf ] = faceCenter[ kf ][ 0 ] * gravVector[ 0 ];
+      gravityCoef[ kf ] += faceCenter[ kf ][ 1 ] * gravVector[ 1 ];
+      gravityCoef[ kf ] += faceCenter[ kf ][ 2 ] * gravVector[ 2 ];
     } );
   }
 }
 
 FlowSolverBase::~FlowSolverBase() = default;
 
-void FlowSolverBase::ResetViews( DomainPartition * const domain )
+void FlowSolverBase::ResetViews( MeshLevel & mesh )
 {
-  MeshLevel * const mesh = domain->getMeshBody( 0 )->getMeshLevel( 0 );
-  ElementRegionManager * const elemManager = mesh->getElemManager();
+  ElementRegionManager const & elemManager = *mesh.getElemManager();
 
-  m_elemGhostRank =
-    elemManager->ConstructViewAccessor< array1d< integer >, arrayView1d< integer > >( ObjectManagerBase::viewKeyStruct::ghostRankString );
-  m_volume =
-    elemManager->ConstructViewAccessor< array1d< real64 >, arrayView1d< real64 > >( ElementSubRegionBase::viewKeyStruct::elementVolumeString );
-  m_gravCoef =
-    elemManager->ConstructViewAccessor< array1d< real64 >, arrayView1d< real64 > >( viewKeyStruct::gravityCoefString );
-  m_porosityRef =
-    elemManager->ConstructViewAccessor< array1d< real64 >, arrayView1d< real64 > >( viewKeyStruct::referencePorosityString );
+  m_elemGhostRank.clear();
+  m_elemGhostRank = elemManager.ConstructArrayViewAccessor< integer, 1 >( ObjectManagerBase::viewKeyStruct::ghostRankString );
+  m_elemGhostRank.setName( getName() + "/accessors/" + ObjectManagerBase::viewKeyStruct::ghostRankString );
 
-  m_elementArea =
-    elemManager->ConstructViewAccessor< array1d< real64 >, arrayView1d< real64 > >( FaceElementSubRegion::viewKeyStruct::elementAreaString );
-  m_elementAperture =
-    elemManager->ConstructViewAccessor< array1d< real64 >, arrayView1d< real64 > >( FaceElementSubRegion::viewKeyStruct::elementApertureString );
-  m_elementAperture0 =
-    elemManager->ConstructViewAccessor< array1d< real64 >, arrayView1d< real64 > >( viewKeyStruct::aperture0String );
+  m_volume.clear();
+  m_volume = elemManager.ConstructArrayViewAccessor< real64, 1 >( ElementSubRegionBase::viewKeyStruct::elementVolumeString );
+  m_volume.setName( getName() + "/accessors/" + ElementSubRegionBase::viewKeyStruct::elementVolumeString );
 
-  m_effectiveAperture =
-    elemManager->ConstructViewAccessor< array1d< real64 >, arrayView1d< real64 > >( viewKeyStruct::effectiveApertureString );
+  m_gravCoef.clear();
+  m_gravCoef = elemManager.ConstructArrayViewAccessor< real64, 1 >( viewKeyStruct::gravityCoefString );
+  m_gravCoef.setName( getName() + "/accessors/" + viewKeyStruct::gravityCoefString );
+
+  m_porosityRef.clear();
+  m_porosityRef = elemManager.ConstructArrayViewAccessor< real64, 1 >( viewKeyStruct::referencePorosityString );
+  m_porosityRef.setName( getName() + "/accessors/" + viewKeyStruct::referencePorosityString );
+
+  m_elementArea.clear();
+  m_elementArea = elemManager.ConstructArrayViewAccessor< real64, 1 >( FaceElementSubRegion::viewKeyStruct::elementAreaString );
+  m_elementArea.setName( getName() + "/accessors/" + FaceElementSubRegion::viewKeyStruct::elementAreaString );
+
+  m_elementAperture.clear();
+  m_elementAperture = elemManager.ConstructArrayViewAccessor< real64, 1 >( FaceElementSubRegion::viewKeyStruct::elementApertureString );
+  m_elementAperture.setName( getName() + "/accessors/" + FaceElementSubRegion::viewKeyStruct::elementApertureString );
+
+  m_elementAperture0.clear();
+  m_elementAperture0 = elemManager.ConstructArrayViewAccessor< real64, 1 >( viewKeyStruct::aperture0String );
+  m_elementAperture0.setName( getName() + "/accessors/" + viewKeyStruct::aperture0String );
+
+  m_effectiveAperture.clear();
+  m_effectiveAperture = elemManager.ConstructArrayViewAccessor< real64, 1 >( viewKeyStruct::effectiveApertureString );
+  m_effectiveAperture.setName( getName() + "/accessors/" + viewKeyStruct::effectiveApertureString );
 
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
-  m_elementSeparationCoefficient =
-    elemManager->ConstructViewAccessor< array1d< real64 >, arrayView1d< real64 > >( FaceElementSubRegion::viewKeyStruct::separationCoeffString );
+  m_elementSeparationCoefficient.clear();
+  m_elementSeparationCoefficient = elemManager.ConstructArrayViewAccessor< real64, 1 >( FaceElementSubRegion::viewKeyStruct::separationCoeffString );
+  m_elementSeparationCoefficient.setName( getName() + "/accessors/" + FaceElementSubRegion::viewKeyStruct::separationCoeffString );
 
-  m_element_dSeparationCoefficient_dAperture =
-    elemManager->ConstructViewAccessor< array1d< real64 >, arrayView1d< real64 > >( FaceElementSubRegion::viewKeyStruct::dSeparationCoeffdAperString );
+  m_element_dSeparationCoefficient_dAperture.clear();
+  m_element_dSeparationCoefficient_dAperture = elemManager.ConstructArrayViewAccessor< real64, 1 >(
+    FaceElementSubRegion::viewKeyStruct::dSeparationCoeffdAperString );
+  m_element_dSeparationCoefficient_dAperture.setName( getName() + "/accessors/" + FaceElementSubRegion::viewKeyStruct::dSeparationCoeffdAperString );
 #endif
 }
+
+std::vector< string > FlowSolverBase::getConstitutiveRelations( string const & regionName ) const
+{
+
+  localIndex const regionIndex = this->targetRegionIndex( regionName );
+
+  std::vector< string > rval{ m_solidModelNames[regionIndex], m_fluidModelNames[regionIndex] };
+
+  return rval;
+}
+
 
 } // namespace geosx

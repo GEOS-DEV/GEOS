@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -32,15 +32,15 @@ Cylinder::Cylinder( const std::string & name, Group * const parent ):
   m_point2{ 0.0, 0.0, 0.0 },
   m_radius{ 0.0 }
 {
-  registerWrapper( viewKeyStruct::point1String, &m_point1, false )->
+  registerWrapper( viewKeyStruct::point1String, &m_point1 )->
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "Center point of one (upper or lower) face of the cylinder" );
 
-  registerWrapper( viewKeyStruct::point2String, &m_point2, false )->
+  registerWrapper( viewKeyStruct::point2String, &m_point2 )->
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "Center point of the other face of the cylinder" );
 
-  registerWrapper( viewKeyStruct::radiusString, &m_radius, false )->
+  registerWrapper( viewKeyStruct::radiusString, &m_radius )->
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "Radius of the cylinder" );
 

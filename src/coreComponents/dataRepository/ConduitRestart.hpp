@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -39,7 +39,7 @@
     static constexpr int id = CONDUIT_TYPE ## _ID; \
     static constexpr int sizeOfConduitType = sizeof( type ); \
     static constexpr int numConduitValues = sizeof( T ) / sizeOfConduitType; \
-    static_assert( sizeof( T ) % sizeOfConduitType == 0, "T cannot be made made up of CONDUIT_TYPE." ); \
+    static_assert( sizeof( T ) % sizeOfConduitType == 0, #T " cannot be made made up of " #CONDUIT_TYPE "." ); \
   }
 
 namespace geosx
@@ -50,7 +50,7 @@ namespace dataRepository
 namespace internal
 {
 
-template< typename T >
+template< typename T, typename ENABLE = void >
 struct conduitTypeInfo
 {};
 
@@ -73,11 +73,13 @@ CONDUIT_TYPE_INFO( unsigned long long, CONDUIT_NATIVE_UNSIGNED_LONG_LONG );
 CONDUIT_TYPE_INFO( float, CONDUIT_NATIVE_FLOAT );
 CONDUIT_TYPE_INFO( double, CONDUIT_NATIVE_DOUBLE );
 
+// Enum types forward to underlying integer types
+template< typename T >
+struct conduitTypeInfo< T, std::enable_if_t< std::is_enum< T >::value > > : public conduitTypeInfo< std::underlying_type_t< T > >
+{};
 
 // Tensor types
 CONDUIT_TYPE_INFO( R1Tensor, CONDUIT_NATIVE_DOUBLE );
-CONDUIT_TYPE_INFO( R2Tensor, CONDUIT_NATIVE_DOUBLE );
-CONDUIT_TYPE_INFO( R2SymTensor, CONDUIT_NATIVE_DOUBLE );
 
 } // namespace internal
 
@@ -85,6 +87,8 @@ template< typename T >
 using conduitTypeInfo = internal::conduitTypeInfo< std::remove_const_t< std::remove_pointer_t< T > > >;
 
 extern conduit::Node rootConduitNode;
+
+std::string writeRootFile( conduit::Node & root, std::string const & rootPath );
 
 void writeTree( std::string const & path );
 

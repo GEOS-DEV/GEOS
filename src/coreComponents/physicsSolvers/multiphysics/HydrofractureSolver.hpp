@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -20,6 +20,7 @@
 #ifndef GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_HYDROFRACTURESOLVER_HPP_
 #define GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_HYDROFRACTURESOLVER_HPP_
 
+#include "common/EnumStrings.hpp"
 #include "physicsSolvers/SolverBase.hpp"
 
 namespace geosx
@@ -49,46 +50,43 @@ public:
   virtual void RegisterDataOnMesh( dataRepository::Group * const MeshBodies ) override final;
 #endif
 
-  virtual void SetupDofs( DomainPartition const * const domain,
+  virtual void SetupDofs( DomainPartition const & domain,
                           DofManager & dofManager ) const override;
 
-  virtual void SetupSystem( DomainPartition * const domain,
+  virtual void SetupSystem( DomainPartition & domain,
                             DofManager & dofManager,
-                            ParallelMatrix & matrix,
-                            ParallelVector & rhs,
-                            ParallelVector & solution ) override;
+                            CRSMatrix< real64, globalIndex > & localMatrix,
+                            array1d< real64 > & localRhs,
+                            array1d< real64 > & localSolution,
+                            bool const setSparsity = true ) override;
 
   virtual void
   ImplicitStepSetup( real64 const & time_n,
                      real64 const & dt,
-                     DomainPartition * const domain,
-                     DofManager & dofManager,
-                     ParallelMatrix & matrix,
-                     ParallelVector & rhs,
-                     ParallelVector & solution ) override final;
+                     DomainPartition & domain ) override final;
 
   virtual void ImplicitStepComplete( real64 const & time_n,
                                      real64 const & dt,
-                                     DomainPartition * const domain ) override final;
+                                     DomainPartition & domain ) override final;
 
   virtual void AssembleSystem( real64 const time,
                                real64 const dt,
-                               DomainPartition * const domain,
+                               DomainPartition & domain,
                                DofManager const & dofManager,
-                               ParallelMatrix & matrix,
-                               ParallelVector & rhs ) override;
+                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                               arrayView1d< real64 > const & localRhs ) override;
 
   virtual void ApplyBoundaryConditions( real64 const time,
                                         real64 const dt,
-                                        DomainPartition * const domain,
+                                        DomainPartition & domain,
                                         DofManager const & dofManager,
-                                        ParallelMatrix & matrix,
-                                        ParallelVector & rhs ) override;
+                                        CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                        arrayView1d< real64 > const & localRhs ) override;
 
   virtual real64
-  CalculateResidualNorm( DomainPartition const * const domain,
+  CalculateResidualNorm( DomainPartition const & domain,
                          DofManager const & dofManager,
-                         ParallelVector const & rhs ) override;
+                         arrayView1d< real64 const > const & localRhs ) override;
 
   virtual void SolveSystem( DofManager const & dofManager,
                             ParallelMatrix & matrix,
@@ -96,22 +94,22 @@ public:
                             ParallelVector & solution ) override;
 
   virtual real64
-  ScalingForSystemSolution( DomainPartition const * const domain,
+  ScalingForSystemSolution( DomainPartition const & domain,
                             DofManager const & dofManager,
-                            ParallelVector const & solution ) override;
+                            arrayView1d< real64 const > const & localSolution ) override;
 
   virtual void
   ApplySystemSolution( DofManager const & dofManager,
-                       ParallelVector const & solution,
+                       arrayView1d< real64 const > const & localSolution,
                        real64 const scalingFactor,
-                       DomainPartition * const domain ) override;
+                       DomainPartition & domain ) override;
 
-  virtual void ResetStateToBeginningOfStep( DomainPartition * const domain ) override;
+  virtual void ResetStateToBeginningOfStep( DomainPartition & domain ) override;
 
   virtual real64 SolverStep( real64 const & time_n,
                              real64 const & dt,
                              int const cycleNumber,
-                             DomainPartition * const domain ) override;
+                             DomainPartition & domain ) override;
 
   virtual void SetNextDt( real64 const & currentDt,
                           real64 & nextDt ) override;
@@ -120,30 +118,29 @@ public:
   virtual real64 ExplicitStep( real64 const & time_n,
                                real64 const & dt,
                                integer const cycleNumber,
-                               DomainPartition * const domain ) override;
+                               DomainPartition & domain ) override;
 
-  void UpdateDeformationForCoupling( DomainPartition * const domain );
+  void UpdateDeformationForCoupling( DomainPartition & domain );
 
 //  void ApplyFractureFluidCoupling( DomainPartition * const domain,
 //                                   systemSolverInterface::EpetraBlockSystem & blockSystem );
 
-  void AssembleForceResidualDerivativeWrtPressure( DomainPartition * const domain,
+  void AssembleForceResidualDerivativeWrtPressure( DomainPartition & domain,
                                                    ParallelMatrix * const matrix01,
-                                                   ParallelVector * const rhs0 );
+                                                   arrayView1d< real64 > const & rhs0 );
 
-  void AssembleFluidMassResidualDerivativeWrtDisplacement( DomainPartition const * const domain,
-                                                           ParallelMatrix * const matrix10,
-                                                           ParallelVector * const rhs0 );
+  void AssembleFluidMassResidualDerivativeWrtDisplacement( DomainPartition const & domain,
+                                                           ParallelMatrix * const matrix10 );
 
 
   real64 SplitOperatorStep( real64 const & time_n,
                             real64 const & dt,
                             integer const cycleNumber,
-                            DomainPartition * const domain );
+                            DomainPartition & domain );
 
   void initializeNewFaceElements( DomainPartition const & domain );
 
-  enum class couplingTypeOption : int
+  enum class CouplingTypeOption : integer
   {
     FIM,
     SIM_FixedStress
@@ -181,15 +178,16 @@ private:
   string m_solidSolverName;
   string m_flowSolverName;
   string m_contactRelationName;
-  string m_couplingTypeOptionString;
 
-  couplingTypeOption m_couplingTypeOption;
+  CouplingTypeOption m_couplingTypeOption;
 
   SolidMechanicsLagrangianFEM * m_solidSolver;
   FlowSolverBase * m_flowSolver;
 
+#ifdef GEOSX_LA_INTERFACE_TRILINOS
   real64 m_densityScaling;
   real64 m_pressureScaling;
+#endif
 
   std::unique_ptr< ParallelMatrix > m_blockDiagUU;
 
@@ -202,6 +200,8 @@ private:
   integer m_maxNumResolves;
   integer m_numResolves[2];
 };
+
+ENUM_STRINGS( HydrofractureSolver::CouplingTypeOption, "FIM", "SIM_FixedStress" )
 
 } /* namespace geosx */
 

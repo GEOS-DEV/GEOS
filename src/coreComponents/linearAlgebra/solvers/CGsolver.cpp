@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -17,11 +17,14 @@
  *
  */
 
+
 #include "CGsolver.hpp"
 
+#include "common/Stopwatch.hpp"
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
 #include "linearAlgebra/interfaces/LinearOperator.hpp"
 #include "linearAlgebra/utilities/BlockVectorView.hpp"
+#include "linearAlgebra/solvers/KrylovUtils.hpp"
 
 namespace geosx
 {
@@ -59,83 +62,84 @@ CGsolver< VECTOR >::~CGsolver() = default;
 // Monolithic CG solver
 // ----------------------------
 template< typename VECTOR >
-void CGsolver< VECTOR >::solve( Vector const & b,
-                                Vector & x ) const
+void CGsolver< VECTOR >::solve( Vector const & b, Vector & x ) const
 
 {
-  // Shortcuts for operators
-  LinearOperator< VECTOR > const & A = m_operator;
-  LinearOperator< VECTOR > const & M = m_precond;
+  Stopwatch watch;
 
-  // Get the global size and resize residual norm vector
-  localIndex const N = m_maxIterations;
-  m_residualNormVector.resize( N + 1 );
-
-  // Get the norm of the right hand side
-  real64 const normb = b.norm2();
+  // Compute the target absolute tolerance
+  real64 const absTol = b.norm2() * m_tolerance;
 
   // Define residual vector
-  VectorTemp rk( x );
+  VectorTemp r = createTempVector( b );
 
   // Compute initial rk =  b - Ax
-  A.residual( x, b, rk );
-  m_residualNormVector[0]= rk.norm2();
+  m_operator.residual( x, b, r );
 
   // Preconditioning
-  VectorTemp zk( x );
-  M.apply( rk, zk );
+  VectorTemp z = createTempVector( x );
 
-  // pk = zk
-  VectorTemp pk( zk );
-  VectorTemp Apk( zk );
+  // Search direction
+  VectorTemp p = createTempVector( z );
+  VectorTemp Ap = createTempVector( z );
 
-  // Declare older vectors
-  VectorTemp rkold( rk );
-  VectorTemp zkold( zk );
+  // Keep old value of preconditioned residual norm
+  real64 tau_old = 0.0;
+
+  p.zero();
+  m_result.status = LinearSolverResult::Status::NotConverged;
+  m_result.numIterations = 0;
+  m_residualNorms.resize( m_maxIterations + 1 );
 
   localIndex k;
-  for( k = 0; k < N; k++ )
+  real64 rnorm = 0.0;
+
+  for( k = 0; k <= m_maxIterations; ++k )
   {
-    // Compute Apk
-    A.apply( pk, Apk );
-
-    // compute alpha
-    real64 const alpha = rk.dot( zk ) / pk.dot( Apk );
-
-    // Update x = x + alpha*ph
-    x.axpby( alpha, pk, 1.0 );
-
-    // Update rk = rk - alpha*Apk
-    rkold.copy( rk );
-    zkold.copy( zk );
-    rk.axpby( -alpha, Apk, 1.0 );
-    m_residualNormVector[ k+1 ] = rk.norm2();
+    rnorm = r.norm2();
+    logProgress( k, rnorm );
 
     // Convergence check on ||rk||/||b||
-    if( m_residualNormVector[ k+1 ] / normb < 1e-8 )
+    if( rnorm < absTol )
     {
+      m_result.status = LinearSolverResult::Status::Success;
       break;
     }
 
-    // Update zk = Mrk
-    M.apply( rk, zk );
+    // Update z = Mr
+    m_precond.apply( r, z );
 
     // Compute beta
-    real64 const beta = zk.dot( rk ) / zkold.dot( rkold );
+    real64 const tau = z.dot( r );
+    real64 const beta = k > 0 ? tau / tau_old : 0.0;
 
-    // Update pk = pk + beta*zk
-    pk.axpby( 1.0, zk, beta );
+    // Update p = z + beta*p
+    p.axpby( 1.0, z, beta );
+
+    // Compute Ap
+    m_operator.apply( p, Ap );
+
+    // compute alpha
+    real64 const pAp = p.dot( Ap );
+    GEOSX_KRYLOV_BREAKDOWN_IF_ZERO( pAp );
+    real64 const alpha = tau / pAp;
+
+    // Update x = x + alpha*p
+    x.axpby( alpha, p, 1.0 );
+
+    // Update rk = rk - alpha*Ap
+    r.axpby( -alpha, Ap, 1.0 );
+
+    // Keep the old tau value
+    tau_old = tau;
   }
 
-  // Convergence statistics
-  m_numIterations = k;
-  m_convergenceFlag = k < N;
-  m_residualNormVector.resize( m_numIterations + 1 );
+  m_result.numIterations = k;
+  m_result.residualReduction = rnorm / absTol * m_tolerance;
+  m_result.solveTime = watch.elapsedTime();
 
-  if( m_verbosity >= 1 )
-  {
-    GEOSX_LOG_RANK_0( "CG " << (k < N ? "converged" : "did not converge") << " in " << k << " iterations." );
-  }
+  logResult();
+  m_residualNorms.resize( m_result.numIterations + 1 );
 }
 
 // END_RST_NARRATIVE

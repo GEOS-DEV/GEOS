@@ -26,69 +26,74 @@
 
 #if defined(GEOSX_USE_MPI)
   #include <mpi.h>
-  #define MPI_PARAM( x ) x
+#define MPI_PARAM( x ) x
 #else
-  #define MPI_PARAM( x )
+#define MPI_PARAM( x )
 typedef int MPI_Comm;
 
-  #define MPI_COMM_NULL      ((MPI_Comm)0x04000000)
-  #define MPI_COMM_WORLD ((MPI_Comm)0x44000000)
+#define MPI_COMM_NULL      ((MPI_Comm)0x04000000)
+#define MPI_COMM_WORLD     ((MPI_Comm)0x44000000)
+#define MPI_COMM_SELF      ((MPI_Comm)0x40000000)
+
 
 typedef int MPI_Datatype;
-  #define MPI_CHAR           ((MPI_Datatype)0x4c000101)
-  #define MPI_SIGNED_CHAR    ((MPI_Datatype)0x4c000118)
-  #define MPI_UNSIGNED_CHAR  ((MPI_Datatype)0x4c000102)
-  #define MPI_BYTE           ((MPI_Datatype)0x4c00010d)
-  #define MPI_WCHAR          ((MPI_Datatype)0x4c00040e)
-  #define MPI_SHORT          ((MPI_Datatype)0x4c000203)
-  #define MPI_UNSIGNED_SHORT ((MPI_Datatype)0x4c000204)
-  #define MPI_INT            ((MPI_Datatype)0x4c000405)
-  #define MPI_UNSIGNED       ((MPI_Datatype)0x4c000406)
-  #define MPI_LONG           ((MPI_Datatype)0x4c000807)
-  #define MPI_UNSIGNED_LONG  ((MPI_Datatype)0x4c000808)
-  #define MPI_FLOAT          ((MPI_Datatype)0x4c00040a)
-  #define MPI_DOUBLE         ((MPI_Datatype)0x4c00080b)
-  #define MPI_LONG_DOUBLE    ((MPI_Datatype)0x4c00100c)
-  #define MPI_LONG_LONG_INT  ((MPI_Datatype)0x4c000809)
-  #define MPI_UNSIGNED_LONG_LONG ((MPI_Datatype)0x4c000819)
-  #define MPI_LONG_LONG      MPI_LONG_LONG_INT
+#define MPI_CHAR           ((MPI_Datatype)0x4c000101)
+#define MPI_SIGNED_CHAR    ((MPI_Datatype)0x4c000118)
+#define MPI_UNSIGNED_CHAR  ((MPI_Datatype)0x4c000102)
+#define MPI_BYTE           ((MPI_Datatype)0x4c00010d)
+#define MPI_WCHAR          ((MPI_Datatype)0x4c00040e)
+#define MPI_SHORT          ((MPI_Datatype)0x4c000203)
+#define MPI_UNSIGNED_SHORT ((MPI_Datatype)0x4c000204)
+#define MPI_INT            ((MPI_Datatype)0x4c000405)
+#define MPI_UNSIGNED       ((MPI_Datatype)0x4c000406)
+#define MPI_LONG           ((MPI_Datatype)0x4c000807)
+#define MPI_UNSIGNED_LONG  ((MPI_Datatype)0x4c000808)
+#define MPI_FLOAT          ((MPI_Datatype)0x4c00040a)
+#define MPI_DOUBLE         ((MPI_Datatype)0x4c00080b)
+#define MPI_LONG_DOUBLE    ((MPI_Datatype)0x4c00100c)
+#define MPI_LONG_LONG_INT  ((MPI_Datatype)0x4c000809)
+#define MPI_UNSIGNED_LONG_LONG ((MPI_Datatype)0x4c000819)
+#define MPI_LONG_LONG      MPI_LONG_LONG_INT
+#define MPI_CXX_BOOL       ((MPI_Datatype)0x0c000000)
 
 typedef int MPI_Op;
 
-  #define MPI_MAX     (MPI_Op)(0x58000001)
-  #define MPI_MIN     (MPI_Op)(0x58000002)
-  #define MPI_SUM     (MPI_Op)(0x58000003)
-  #define MPI_PROD    (MPI_Op)(0x58000004)
-  #define MPI_LAND    (MPI_Op)(0x58000005)
-  #define MPI_BAND    (MPI_Op)(0x58000006)
-  #define MPI_LOR     (MPI_Op)(0x58000007)
-  #define MPI_BOR     (MPI_Op)(0x58000008)
-  #define MPI_LXOR    (MPI_Op)(0x58000009)
-  #define MPI_BXOR    (MPI_Op)(0x5800000a)
-  #define MPI_MINLOC  (MPI_Op)(0x5800000b)
-  #define MPI_MAXLOC  (MPI_Op)(0x5800000c)
-  #define MPI_REPLACE (MPI_Op)(0x5800000d)
-  #define MPI_NO_OP   (MPI_Op)(0x5800000e)
+#define MPI_MAX     (MPI_Op)(0x58000001)
+#define MPI_MIN     (MPI_Op)(0x58000002)
+#define MPI_SUM     (MPI_Op)(0x58000003)
+#define MPI_PROD    (MPI_Op)(0x58000004)
+#define MPI_LAND    (MPI_Op)(0x58000005)
+#define MPI_BAND    (MPI_Op)(0x58000006)
+#define MPI_LOR     (MPI_Op)(0x58000007)
+#define MPI_BOR     (MPI_Op)(0x58000008)
+#define MPI_LXOR    (MPI_Op)(0x58000009)
+#define MPI_BXOR    (MPI_Op)(0x5800000a)
+#define MPI_MINLOC  (MPI_Op)(0x5800000b)
+#define MPI_MAXLOC  (MPI_Op)(0x5800000c)
+#define MPI_REPLACE (MPI_Op)(0x5800000d)
+#define MPI_NO_OP   (MPI_Op)(0x5800000e)
 
-  #define MPI_SUCCESS          0      /* Successful return code */
-  #define MPI_UNDEFINED (-32766)
-  #define MPI_STATUS_IGNORE (MPI_Status *)1
-  #define MPI_REQUEST_NULL  ((MPI_Request)0x2c000000)
+#define MPI_SUCCESS          0        /* Successful return code */
+#define MPI_UNDEFINED (-32766)
+#define MPI_STATUS_IGNORE (MPI_Status *)1
+#define MPI_STATUSES_IGNORE (MPI_Status *)1
+#define MPI_REQUEST_NULL  ((MPI_Request)0x2c000000)
 typedef int MPI_Request;
+
+typedef int MPI_Info;
+#define MPI_INFO_NULL (MPI_Info)(0x60000000)
 
 struct MPI_Status
 {
   int junk;
 };
 
-
-
 #endif
 
 #if defined(NDEBUG)
-  #define MPI_CHECK_ERROR( error ) ((void) error)
+#define MPI_CHECK_ERROR( error ) ((void) error)
 #else
-  #define MPI_CHECK_ERROR( error ) GEOSX_ERROR_IF_NE( error, MPI_SUCCESS );
+#define MPI_CHECK_ERROR( error ) GEOSX_ERROR_IF_NE( error, MPI_SUCCESS );
 #endif
 
 
@@ -179,6 +184,7 @@ public:
 
   static MPI_Comm Comm_dup( MPI_Comm const comm );
 
+  static MPI_Comm Comm_split( MPI_Comm const comm, int color, int key );
 
   static int Test( MPI_Request * request, int * flag, MPI_Status * status );
 
@@ -313,6 +319,13 @@ public:
    */
   template< typename T >
   static int allReduce( T const * sendbuf, T * recvbuf, int count, MPI_Op op, MPI_Comm comm );
+
+
+  template< typename T >
+  static int scan( T const * sendbuf, T * recvbuf, int count, MPI_Op op, MPI_Comm comm );
+
+  template< typename T >
+  static int exscan( T const * sendbuf, T * recvbuf, int count, MPI_Op op, MPI_Comm comm );
 
   /**
    * @brief Strongly typed wrapper around MPI_Bcast.
@@ -506,6 +519,8 @@ template<> inline MPI_Datatype MpiWrapper::getMpiType< unsigned int >()         
 template<> inline MPI_Datatype MpiWrapper::getMpiType< unsigned long int >()      { return MPI_UNSIGNED_LONG; }
 template<> inline MPI_Datatype MpiWrapper::getMpiType< unsigned long long int >() { return MPI_UNSIGNED_LONG_LONG; }
 
+template<> inline MPI_Datatype MpiWrapper::getMpiType< bool >()                   { return MPI_CXX_BOOL; }
+
 inline MPI_Op MpiWrapper::getMpiOp( Reduction const op )
 {
   switch( op )
@@ -573,7 +588,7 @@ int MpiWrapper::allGather( arrayView1d< T const > const & sendValues,
                            array1d< T > & allValues,
                            MPI_Comm MPI_PARAM( comm ) )
 {
-  int const sendSize = integer_conversion< int >( sendValues.size() );
+  int const sendSize = LvArray::integerConversion< int >( sendValues.size() );
 #ifdef GEOSX_USE_MPI
   int const mpiSize = Comm_size( comm );
   allValues.resize( mpiSize * sendSize );
@@ -607,6 +622,38 @@ int MpiWrapper::allReduce( T const * const sendbuf,
   return MPI_Allreduce( sendbuf, recvbuf, count, MPI_TYPE, op, comm );
 #else
   memcpy( recvbuf, sendbuf, count*sizeof(T) );
+  return 0;
+#endif
+}
+
+template< typename T >
+int MpiWrapper::scan( T const * const sendbuf,
+                      T * const recvbuf,
+                      int count,
+                      MPI_Op MPI_PARAM( op ),
+                      MPI_Comm MPI_PARAM( comm ) )
+{
+#ifdef GEOSX_USE_MPI
+  MPI_Datatype const MPI_TYPE = getMpiType< T >();
+  return MPI_Scan( sendbuf, recvbuf, count, MPI_TYPE, op, comm );
+#else
+  memcpy( recvbuf, sendbuf, count*sizeof(T) );
+  return 0;
+#endif
+}
+
+template< typename T >
+int MpiWrapper::exscan( T const * const MPI_PARAM( sendbuf ),
+                        T * const recvbuf,
+                        int count,
+                        MPI_Op MPI_PARAM( op ),
+                        MPI_Comm MPI_PARAM( comm ) )
+{
+#ifdef GEOSX_USE_MPI
+  MPI_Datatype const MPI_TYPE = getMpiType< T >();
+  return MPI_Exscan( sendbuf, recvbuf, count, MPI_TYPE, op, comm );
+#else
+  memset( recvbuf, 0, count*sizeof(T) );
   return 0;
 #endif
 }
@@ -806,12 +853,13 @@ int MpiWrapper::iSend( T const * const buf,
 template< typename U, typename T >
 U MpiWrapper::PrefixSum( T const value )
 {
-  U const convertedValue = value;
   U localResult;
 
+#ifdef GEOSX_USE_MPI
+  U const convertedValue = value;
   int const error = MPI_Exscan( &convertedValue, &localResult, 1, getMpiType< U >(), MPI_SUM, MPI_COMM_GEOSX );
   MPI_CHECK_ERROR( error );
-
+#endif
   if( Comm_rank() == 0 )
   {
     localResult = 0;
@@ -822,7 +870,7 @@ U MpiWrapper::PrefixSum( T const value )
 
 
 template< typename T >
-T MpiWrapper::Reduce( T const & value, Reduction const MPI_PARAM( op ), MPI_Comm MPI_PARAM( comm ) )
+T MpiWrapper::Reduce( T const & value, Reduction const MPI_PARAM( op ), MPI_Comm comm )
 {
   T result = value;
 #ifdef GEOSX_USE_MPI
@@ -832,19 +880,19 @@ T MpiWrapper::Reduce( T const & value, Reduction const MPI_PARAM( op ), MPI_Comm
 }
 
 template< typename T >
-T MpiWrapper::Sum( T const & value, MPI_Comm MPI_PARAM( comm ) )
+T MpiWrapper::Sum( T const & value, MPI_Comm comm )
 {
   return MpiWrapper::Reduce( value, Reduction::Sum, comm );
 }
 
 template< typename T >
-T MpiWrapper::Min( T const & value, MPI_Comm MPI_PARAM( comm ) )
+T MpiWrapper::Min( T const & value, MPI_Comm comm )
 {
   return MpiWrapper::Reduce( value, Reduction::Min, comm );
 }
 
 template< typename T >
-T MpiWrapper::Max( T const & value, MPI_Comm MPI_PARAM( comm ) )
+T MpiWrapper::Max( T const & value, MPI_Comm comm )
 {
   return MpiWrapper::Reduce( value, Reduction::Max, comm );
 }

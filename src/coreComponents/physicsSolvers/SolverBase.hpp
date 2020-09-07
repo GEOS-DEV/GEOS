@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -15,38 +15,24 @@
 #ifndef GEOSX_PHYSICSSOLVERS_SOLVERBASE_HPP_
 #define GEOSX_PHYSICSSOLVERS_SOLVERBASE_HPP_
 
-
-
-#include <string>
-#include <limits>
-
-#include "dataRepository/Group.hpp"
 #include "codingUtilities/traits.hpp"
 #include "common/DataTypes.hpp"
 #include "dataRepository/ExecutableGroup.hpp"
+#include "linearAlgebra/interfaces/InterfaceTypes.hpp"
+#include "linearAlgebra/utilities/LinearSolverResult.hpp"
+#include "linearAlgebra/DofManager.hpp"
 #include "managers/DomainPartition.hpp"
 #include "mesh/MeshBody.hpp"
-#include "physicsSolvers/SystemSolverParameters.hpp"
 #include "physicsSolvers/NonlinearSolverParameters.hpp"
+#include "physicsSolvers/LinearSolverParameters.hpp"
 
-#include "linearAlgebra/interfaces/InterfaceTypes.hpp"
-#include "linearAlgebra/utilities/LinearSolverParameters.hpp"
-#include "linearAlgebra/DofManager.hpp"
+#include <string>
+#include <limits>
 
 namespace geosx
 {
 
 class DomainPartition;
-class SystemSolverParameters;
-
-namespace dataRepository
-{
-namespace keys
-{
-string const courant = "courant";
-string const maxDt   = "maxDt";
-}
-}
 
 class SolverBase : public ExecutableGroup
 {
@@ -109,6 +95,27 @@ public:
   DofManager const & getDofManager() const { return m_dofManager; }
 
   /**
+   * @brief Getter for local matrix
+   * @return a reference to linear system matrix of this solver
+   */
+  CRSMatrix< real64, globalIndex > & getLocalMatrix()       { return m_localMatrix; }
+  CRSMatrixView< real64 const, globalIndex const > const & getLocalMatrix() const { return m_localMatrix.toViewConst(); }
+
+  /**
+   * @brief Getter for local rhs vector
+   * @return a reference to linear system right-hand side of this solver
+   */
+  array1d< real64 > & getLocalRhs()       { return m_localRhs; }
+  arrayView1d< real64 const > const & getLocalRhs() const { return m_localRhs.toViewConst(); }
+
+  /**
+   * @brief Getter for local solution vector
+   * @return a reference to solution vector of this solver
+   */
+  array1d< real64 > & getLocalSolution()       { return m_localSolution; }
+  arrayView1d< real64 const > const & getLocalSolution() const { return m_localSolution.toViewConst(); }
+
+  /**
    * @defgroup Solver Interface Functions
    *
    * These functions provide the primary interface that is required for derived classes
@@ -129,7 +136,7 @@ public:
   virtual real64 SolverStep( real64 const & time_n,
                              real64 const & dt,
                              integer const cycleNumber,
-                             DomainPartition * const domain );
+                             DomainPartition & domain );
 
 
 
@@ -167,7 +174,7 @@ public:
   virtual real64 ExplicitStep( real64 const & time_n,
                                real64 const & dt,
                                integer const cycleNumber,
-                               DomainPartition * const domain );
+                               DomainPartition & domain );
 
   /**
    * @brief Function for a nonlinear implicit integration step
@@ -184,16 +191,12 @@ public:
    * This function implements a nonlinear newton method for implicit problems. It requires that the
    * other functions in the solver interface are implemented in the derived physics solver. The
    * nonlinear loop includes a simple line search algorithm, and will cut the timestep if
-   * convergence is not achieved according to the parameters in systemSolverParameters member.
+   * convergence is not achieved according to the parameters in linearSolverParameters member.
    */
   virtual real64 NonlinearImplicitStep( real64 const & time_n,
                                         real64 const & dt,
                                         integer const cycleNumber,
-                                        DomainPartition * const domain,
-                                        DofManager const & dofManager,
-                                        ParallelMatrix & matrix,
-                                        ParallelVector & rhs,
-                                        ParallelVector & solution );
+                                        DomainPartition & domain );
 
   /**
    * @brief Function to perform line search
@@ -211,17 +214,17 @@ public:
    * This function implements a nonlinear newton method for implicit problems. It requires that the
    * other functions in the solver interface are implemented in the derived physics solver. The
    * nonlinear loop includes a simple line search algorithm, and will cut the timestep if
-   * convergence is not achieved according to the parameters in systemSolverParameters member.
+   * convergence is not achieved according to the parameters in linearSolverParameters member.
    */
   virtual bool
   LineSearch( real64 const & time_n,
               real64 const & dt,
               integer const cycleNumber,
-              DomainPartition * const domain,
+              DomainPartition & domain,
               DofManager const & dofManager,
-              ParallelMatrix & matrix,
-              ParallelVector & rhs,
-              ParallelVector const & solution,
+              CRSMatrixView< real64, globalIndex const > const & localMatrix,
+              arrayView1d< real64 > const & localRhs,
+              arrayView1d< real64 const > const & localSolution,
               real64 const scaleFactor,
               real64 & lastResidual );
 
@@ -241,16 +244,12 @@ public:
    * assumes that the solution is achieved in a iteration. The use of this function requires that
    * the other functions in the solver interface are implemented in the derived physics solver. The
    * nonlinear loop includes a simple line search algorithm, and will cut the timestep if
-   * convergence is not achieved according to the parameters in systemSolverParameters member.
+   * convergence is not achieved according to the parameters in linearSolverParameters member.
    */
   virtual real64 LinearImplicitStep( real64 const & time_n,
                                      real64 const & dt,
                                      integer const cycleNumber,
-                                     DomainPartition * const domain,
-                                     DofManager & dofManager,
-                                     ParallelMatrix & matrix,
-                                     ParallelVector & rhs,
-                                     ParallelVector & solution );
+                                     DomainPartition & domain );
 
   /**
    * @brief function to perform setup for implicit timestep
@@ -271,18 +270,14 @@ public:
   virtual void
   ImplicitStepSetup( real64 const & time_n,
                      real64 const & dt,
-                     DomainPartition * const domain,
-                     DofManager & dofManager,
-                     ParallelMatrix & matrix,
-                     ParallelVector & rhs,
-                     ParallelVector & solution );
+                     DomainPartition & domain );
 
   /**
    * @brief Populate degree-of-freedom manager with fields relevant to this solver
    * @param dofManager degree-of-freedom manager associated with the linear system
    */
   virtual void
-  SetupDofs( DomainPartition const * const domain,
+  SetupDofs( DomainPartition const & domain,
              DofManager & dofManager ) const;
 
   /**
@@ -297,11 +292,12 @@ public:
    *       sufficient for most single-physics solvers.
    */
   virtual void
-  SetupSystem( DomainPartition * const domain,
+  SetupSystem( DomainPartition & domain,
                DofManager & dofManager,
-               ParallelMatrix & matrix,
-               ParallelVector & rhs,
-               ParallelVector & solution );
+               CRSMatrix< real64, globalIndex > & localMatrix,
+               array1d< real64 > & localRhs,
+               array1d< real64 > & localSolution,
+               bool const setSparsity = true );
 
   /**
    * @brief function to assemble the linear system matrix and rhs
@@ -325,10 +321,10 @@ public:
   virtual void
   AssembleSystem( real64 const time,
                   real64 const dt,
-                  DomainPartition * const domain,
+                  DomainPartition & domain,
                   DofManager const & dofManager,
-                  ParallelMatrix & matrix,
-                  ParallelVector & rhs );
+                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                  arrayView1d< real64 > const & localRhs );
 
   /**
    * @brief apply boundary condition to system
@@ -345,10 +341,38 @@ public:
   virtual void
   ApplyBoundaryConditions( real64 const time,
                            real64 const dt,
-                           DomainPartition * const domain,
+                           DomainPartition & domain,
                            DofManager const & dofManager,
-                           ParallelMatrix & matrix,
-                           ParallelVector & rhs );
+                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                           arrayView1d< real64 > const & localRhs );
+
+  /**
+   * @brief Output the assembled linear system for debug purposes.
+   * @param time beginning-of-step time
+   * @param cycleNumber event cycle number
+   * @param nonlinearIteration current nonlinear iteration number
+   * @param matrix system matrix
+   * @param rhs system right-hand side vector
+   */
+  void
+  DebugOutputSystem( real64 const & time,
+                     integer const cycleNumber,
+                     integer const nonlinearIteration,
+                     ParallelMatrix const & matrix,
+                     ParallelVector const & rhs ) const;
+
+  /**
+   * @brief Output the linear system solution for debug purposes.
+   * @param time beginning-of-step time
+   * @param cycleNumber event cycle number
+   * @param nonlinearIteration current nonlinear iteration number
+   * @param solution system solution vector
+   */
+  void
+  DebugOutputSolution( real64 const & time,
+                       integer const cycleNumber,
+                       integer const nonlinearIteration,
+                       ParallelVector const & solution ) const;
 
   /**
    * @brief calculate the norm of the global system residual
@@ -361,9 +385,9 @@ public:
    * a tolerance.
    */
   virtual real64
-  CalculateResidualNorm( DomainPartition const * const domain,
+  CalculateResidualNorm( DomainPartition const & domain,
                          DofManager const & dofManager,
-                         ParallelVector const & rhs );
+                         arrayView1d< real64 const > const & localRhs );
 
   /**
    * @brief function to apply a linear system solver to the assembled system.
@@ -400,9 +424,9 @@ public:
    *
    */
   virtual bool
-  CheckSystemSolution( DomainPartition const * const domain,
+  CheckSystemSolution( DomainPartition const & domain,
                        DofManager const & dofManager,
-                       ParallelVector const & solution,
+                       arrayView1d< real64 const > const & localSolution,
                        real64 const scalingFactor );
 
   /**
@@ -413,9 +437,9 @@ public:
    * @return The factor that should be used to scale the solution vector values when they are being applied.
    */
   virtual real64
-  ScalingForSystemSolution( DomainPartition const * const domain,
+  ScalingForSystemSolution( DomainPartition const & domain,
                             DofManager const & dofManager,
-                            ParallelVector const & solution );
+                            arrayView1d< real64 const > const & localSolution );
 
   /**
    * @brief Function to apply the solution vector to the state
@@ -442,9 +466,9 @@ public:
    */
   virtual void
   ApplySystemSolution( DofManager const & dofManager,
-                       ParallelVector const & solution,
+                       arrayView1d< real64 const > const & localSolution,
                        real64 const scalingFactor,
-                       DomainPartition * const domain );
+                       DomainPartition & domain );
 
   /**
    * @brief reset state of physics back to the beginning of the step.
@@ -458,7 +482,7 @@ public:
    * solution method such as LinearImplicitStep() or NonlinearImplicitStep().
    */
   virtual void
-  ResetStateToBeginningOfStep( DomainPartition * const domain );
+  ResetStateToBeginningOfStep( DomainPartition & domain );
 
   /**
    * @brief perform cleanup for implicit timestep
@@ -476,7 +500,7 @@ public:
   virtual void
   ImplicitStepComplete( real64 const & time,
                         real64 const & dt,
-                        DomainPartition * const domain );
+                        DomainPartition & domain );
 
 
   /*
@@ -490,7 +514,6 @@ public:
   {return m_nextDt;};
 
   virtual Group * CreateChild( string const & childKey, string const & childName ) override;
-  virtual void ExpandObjectCatalogs() override;
 
   using CatalogInterface = dataRepository::CatalogInterface< SolverBase, std::string const &, Group * const >;
   static CatalogInterface::CatalogType & GetCatalog();
@@ -507,7 +530,7 @@ public:
 
   struct groupKeyStruct
   {
-    constexpr static auto systemSolverParametersString = "SystemSolverParameters";
+    constexpr static auto linearSolverParametersString = "LinearSolverParameters";
     constexpr static auto nonlinearSolverParametersString = "NonlinearSolverParameters";
   } groupKeys;
 
@@ -523,26 +546,36 @@ public:
   R1Tensor const gravityVector() const;
 
   /**
-   * accessor for the system solver parameters.
-   * @return
+   * @brief accessor for the linear solver parameters.
+   * @return the linear solver parameter list
    */
-
-  SystemSolverParameters * getSystemSolverParameters()
+  LinearSolverParameters & getLinearSolverParameters()
   {
-    return &m_systemSolverParameters;
+    return m_linearSolverParameters.get();
   }
 
-  SystemSolverParameters const * getSystemSolverParameters() const
+  /**
+   * @brief const accessor for the linear solver parameters.
+   * @return the linear solver parameter list
+   */
+  LinearSolverParameters const & getLinearSolverParameters() const
   {
-    return &m_systemSolverParameters;
+    return m_linearSolverParameters.get();
   }
 
-
+  /**
+   * @brief accessor for the nonlinear solver parameters.
+   * @return the nonlinear solver parameter list
+   */
   NonlinearSolverParameters & getNonlinearSolverParameters()
   {
     return m_nonlinearSolverParameters;
   }
 
+  /**
+   * @brief const accessor for the nonlinear solver parameters.
+   * @return the nonlinear solver parameter list
+   */
   NonlinearSolverParameters const & getNonlinearSolverParameters() const
   {
     return m_nonlinearSolverParameters;
@@ -551,6 +584,14 @@ public:
   string getDiscretization() const { return m_discretizationName; }
 
   arrayView1d< string const > const & targetRegionNames() const { return m_targetRegionNames; }
+
+  virtual std::vector< string > getConstitutiveRelations( string const & regionName ) const
+  {
+    GEOSX_UNUSED_VAR( regionName );
+    GEOSX_ERROR( "SolverBase::getConstitutiveRelations( string const &) should "
+                 "be overridden the solver contains a discretization specification." );
+    return std::vector< string >();
+  }
 
   /**
    * @brief Get position of a given region within solver's target region list
@@ -615,13 +656,14 @@ public:
       template forElementSubRegionsComplete< SUBREGIONTYPE, SUBREGIONTYPES... >( targetRegionNames(), std::forward< LAMBDA >( lambda ) );
   }
 
+  string getDiscretizationName() const {return m_discretizationName;}
+
 protected:
 
-  virtual void PostProcessInput() override;
+  static real64 EisenstatWalker( real64 const newNewtonNorm,
+                                 real64 const oldNewtonNorm,
+                                 real64 const weakestTol );
 
-  void SetLinearSolverParameters();
-
-  string getDiscretizationName() const {return m_discretizationName;}
 
   template< typename BASETYPE = constitutive::ConstitutiveBase, typename LOOKUP_TYPE >
   static BASETYPE const & GetConstitutiveModel( dataRepository::Group const & dataGroup, LOOKUP_TYPE const & key );
@@ -659,8 +701,6 @@ protected:
   void ValidateModelMapping( ElementRegionManager const & elemRegionManager,
                              arrayView1d< string const > const & modelNames ) const;
 
-  SystemSolverParameters m_systemSolverParameters;
-
   real64 m_cflFactor;
   real64 m_maxStableDt;
   real64 m_nextDt;
@@ -676,8 +716,19 @@ protected:
   ParallelVector m_rhs;
   ParallelVector m_solution;
 
+  /// Local system matrix and rhs
+  CRSMatrix< real64, globalIndex > m_localMatrix;
+  array1d< real64 > m_localRhs;
+  array1d< real64 > m_localSolution;
+
+  /// Custom preconditioner for the "native" iterative solver
+  std::unique_ptr< PreconditionerBase< LAInterface > > m_precond;
+
   /// Linear solver parameters
-  LinearSolverParameters m_linearSolverParameters;
+  LinearSolverParametersInput m_linearSolverParameters;
+
+  /// Result of the last linear solve
+  LinearSolverResult m_linearSolverResult;
 
   /// Nonlinear solver parameters
   NonlinearSolverParameters m_nonlinearSolverParameters;

@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -17,16 +17,18 @@
  */
 
 #include "EpetraMatrix.hpp"
-#include "EpetraUtils.hpp"
+
+#include "codingUtilities/Utilities.hpp"
+#include "linearAlgebra/interfaces/trilinos/EpetraUtils.hpp"
 
 #include <Epetra_Map.h>
 #include <Epetra_FECrsGraph.h>
 #include <Epetra_FECrsMatrix.h>
 #include <Epetra_FEVector.h>
+#include <Epetra_Vector.h>
 #include <EpetraExt_MatrixMatrix.h>
 #include <EpetraExt_RowMatrixOut.h>
 #include <EpetraExt_Transpose_RowMatrix.h>
-#include <ml_epetra_utils.h>
 
 #ifdef GEOSX_USE_MPI
 #include <Epetra_MpiComm.h>
@@ -75,7 +77,7 @@ void EpetraMatrix::createWithGlobalSize( globalIndex const globalRows,
                                               Epetra_MpiComm( MPI_PARAM( comm ) ) );
   m_matrix = std::make_unique< Epetra_FECrsMatrix >( Copy,
                                                      *m_dst_map,
-                                                     integer_conversion< int >( maxEntriesPerRow ),
+                                                     LvArray::integerConversion< int >( maxEntriesPerRow ),
                                                      false );
 }
 
@@ -91,17 +93,17 @@ void EpetraMatrix::createWithLocalSize( localIndex const localRows,
 
   reset();
 
-  m_dst_map = std::make_unique< Epetra_Map >( integer_conversion< globalIndex >( -1 ),
-                                              integer_conversion< int >( localRows ),
+  m_dst_map = std::make_unique< Epetra_Map >( LvArray::integerConversion< globalIndex >( -1 ),
+                                              LvArray::integerConversion< int >( localRows ),
                                               0,
                                               Epetra_MpiComm( MPI_PARAM( comm ) ) );
-  m_src_map = std::make_unique< Epetra_Map >( integer_conversion< globalIndex >( -1 ),
-                                              integer_conversion< int >( localCols ),
+  m_src_map = std::make_unique< Epetra_Map >( LvArray::integerConversion< globalIndex >( -1 ),
+                                              LvArray::integerConversion< int >( localCols ),
                                               0,
                                               Epetra_MpiComm( MPI_PARAM( comm ) ) );
   m_matrix = std::make_unique< Epetra_FECrsMatrix >( Copy,
                                                      *m_dst_map,
-                                                     integer_conversion< int >( maxEntriesPerRow ),
+                                                     LvArray::integerConversion< int >( maxEntriesPerRow ),
                                                      false );
 }
 
@@ -174,7 +176,7 @@ void EpetraMatrix::add( globalIndex const rowIndex,
 {
   GEOSX_LAI_ASSERT( modifiable() );
   GEOSX_LAI_CHECK_ERROR( m_matrix->SumIntoGlobalValues( rowIndex,
-                                                        integer_conversion< int >( size ),
+                                                        LvArray::integerConversion< int >( size ),
                                                         values,
                                                         toEpetraLongLong( colIndices ) ) );
 }
@@ -186,7 +188,7 @@ void EpetraMatrix::set( globalIndex const rowIndex,
 {
   GEOSX_LAI_ASSERT( modifiable() );
   GEOSX_LAI_CHECK_ERROR( m_matrix->ReplaceGlobalValues( rowIndex,
-                                                        integer_conversion< int >( size ),
+                                                        LvArray::integerConversion< int >( size ),
                                                         values,
                                                         toEpetraLongLong( colIndices ) ) );
 }
@@ -198,7 +200,7 @@ void EpetraMatrix::insert( globalIndex const rowIndex,
 {
   GEOSX_LAI_ASSERT( insertable() );
   GEOSX_LAI_CHECK_ERROR_NNEG( m_matrix->InsertGlobalValues( rowIndex,
-                                                            integer_conversion< int >( size ),
+                                                            LvArray::integerConversion< int >( size ),
                                                             values,
                                                             toEpetraLongLong( colIndices ) ) );
 }
@@ -209,7 +211,7 @@ void EpetraMatrix::add( globalIndex const rowIndex,
 {
   GEOSX_LAI_ASSERT( modifiable() );
   GEOSX_LAI_CHECK_ERROR( m_matrix->SumIntoGlobalValues( rowIndex,
-                                                        integer_conversion< int >( colIndices.size() ),
+                                                        LvArray::integerConversion< int >( colIndices.size() ),
                                                         values,
                                                         toEpetraLongLong( colIndices ) ) );
 }
@@ -220,7 +222,7 @@ void EpetraMatrix::set( globalIndex const rowIndex,
 {
   GEOSX_LAI_ASSERT( modifiable() );
   GEOSX_LAI_CHECK_ERROR( m_matrix->ReplaceGlobalValues( rowIndex,
-                                                        integer_conversion< int >( colIndices.size() ),
+                                                        LvArray::integerConversion< int >( colIndices.size() ),
                                                         values,
                                                         toEpetraLongLong( colIndices ) ) );
 }
@@ -231,7 +233,7 @@ void EpetraMatrix::insert( globalIndex const rowIndex,
 {
   GEOSX_LAI_ASSERT( insertable() );
   GEOSX_LAI_CHECK_ERROR_NNEG( m_matrix->InsertGlobalValues( rowIndex,
-                                                            integer_conversion< int >( colIndices.size() ),
+                                                            LvArray::integerConversion< int >( colIndices.size() ),
                                                             values,
                                                             toEpetraLongLong( colIndices ) ) );
 }
@@ -241,9 +243,9 @@ void EpetraMatrix::add( arraySlice1d< globalIndex const > const & rowIndices,
                         arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & values )
 {
   GEOSX_LAI_ASSERT( modifiable() );
-  GEOSX_LAI_CHECK_ERROR( m_matrix->SumIntoGlobalValues( integer_conversion< int >( rowIndices.size() ),
+  GEOSX_LAI_CHECK_ERROR( m_matrix->SumIntoGlobalValues( LvArray::integerConversion< int >( rowIndices.size() ),
                                                         toEpetraLongLong( rowIndices ),
-                                                        integer_conversion< int >( colIndices.size() ),
+                                                        LvArray::integerConversion< int >( colIndices.size() ),
                                                         toEpetraLongLong( colIndices ),
                                                         values.dataIfContiguous(),
                                                         Epetra_FECrsMatrix::ROW_MAJOR ) );
@@ -254,9 +256,9 @@ void EpetraMatrix::set( arraySlice1d< globalIndex const > const & rowIndices,
                         arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & values )
 {
   GEOSX_LAI_ASSERT( modifiable() );
-  GEOSX_LAI_CHECK_ERROR( m_matrix->ReplaceGlobalValues( integer_conversion< int >( rowIndices.size() ),
+  GEOSX_LAI_CHECK_ERROR( m_matrix->ReplaceGlobalValues( LvArray::integerConversion< int >( rowIndices.size() ),
                                                         toEpetraLongLong( rowIndices ),
-                                                        integer_conversion< int >( colIndices.size() ),
+                                                        LvArray::integerConversion< int >( colIndices.size() ),
                                                         toEpetraLongLong( colIndices ),
                                                         values.dataIfContiguous(),
                                                         Epetra_FECrsMatrix::ROW_MAJOR ) );
@@ -267,9 +269,9 @@ void EpetraMatrix::insert( arraySlice1d< globalIndex const > const & rowIndices,
                            arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & values )
 {
   GEOSX_LAI_ASSERT( insertable() );
-  GEOSX_LAI_CHECK_ERROR_NNEG( m_matrix->InsertGlobalValues( integer_conversion< int >( rowIndices.size() ),
+  GEOSX_LAI_CHECK_ERROR_NNEG( m_matrix->InsertGlobalValues( LvArray::integerConversion< int >( rowIndices.size() ),
                                                             toEpetraLongLong( rowIndices ),
-                                                            integer_conversion< int >( colIndices.size() ),
+                                                            LvArray::integerConversion< int >( colIndices.size() ),
                                                             toEpetraLongLong( colIndices ),
                                                             values.dataIfContiguous(),
                                                             Epetra_FECrsMatrix::ROW_MAJOR ) );
@@ -280,9 +282,9 @@ void EpetraMatrix::add( arraySlice1d< globalIndex const > const & rowIndices,
                         arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & values )
 {
   GEOSX_LAI_ASSERT( modifiable() );
-  GEOSX_LAI_CHECK_ERROR( m_matrix->SumIntoGlobalValues( integer_conversion< int >( rowIndices.size() ),
+  GEOSX_LAI_CHECK_ERROR( m_matrix->SumIntoGlobalValues( LvArray::integerConversion< int >( rowIndices.size() ),
                                                         toEpetraLongLong( rowIndices ),
-                                                        integer_conversion< int >( colIndices.size() ),
+                                                        LvArray::integerConversion< int >( colIndices.size() ),
                                                         toEpetraLongLong( colIndices ),
                                                         values.dataIfContiguous(),
                                                         Epetra_FECrsMatrix::COLUMN_MAJOR ) );
@@ -293,9 +295,9 @@ void EpetraMatrix::set( arraySlice1d< globalIndex const > const & rowIndices,
                         arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & values )
 {
   GEOSX_LAI_ASSERT( modifiable() );
-  GEOSX_LAI_CHECK_ERROR( m_matrix->ReplaceGlobalValues( integer_conversion< int >( rowIndices.size() ),
+  GEOSX_LAI_CHECK_ERROR( m_matrix->ReplaceGlobalValues( LvArray::integerConversion< int >( rowIndices.size() ),
                                                         toEpetraLongLong( rowIndices ),
-                                                        integer_conversion< int >( colIndices.size() ),
+                                                        LvArray::integerConversion< int >( colIndices.size() ),
                                                         toEpetraLongLong( colIndices ),
                                                         values.dataIfContiguous(),
                                                         Epetra_FECrsMatrix::COLUMN_MAJOR ) );
@@ -306,9 +308,9 @@ void EpetraMatrix::insert( arraySlice1d< globalIndex const > const & rowIndices,
                            arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & values )
 {
   GEOSX_LAI_ASSERT( insertable() );
-  GEOSX_LAI_CHECK_ERROR_NNEG( m_matrix->InsertGlobalValues( integer_conversion< int >( rowIndices.size() ),
+  GEOSX_LAI_CHECK_ERROR_NNEG( m_matrix->InsertGlobalValues( LvArray::integerConversion< int >( rowIndices.size() ),
                                                             toEpetraLongLong( rowIndices ),
-                                                            integer_conversion< int >( colIndices.size() ),
+                                                            LvArray::integerConversion< int >( colIndices.size() ),
                                                             toEpetraLongLong( colIndices ),
                                                             values.dataIfContiguous(),
                                                             Epetra_FECrsMatrix::COLUMN_MAJOR ) );
@@ -321,9 +323,9 @@ void EpetraMatrix::add( globalIndex const * rowIndices,
                         localIndex const numCols )
 {
   GEOSX_LAI_ASSERT( modifiable() );
-  GEOSX_LAI_CHECK_ERROR( m_matrix->SumIntoGlobalValues( integer_conversion< int >( numRows ),
+  GEOSX_LAI_CHECK_ERROR( m_matrix->SumIntoGlobalValues( LvArray::integerConversion< int >( numRows ),
                                                         toEpetraLongLong( rowIndices ),
-                                                        integer_conversion< int >( numCols ),
+                                                        LvArray::integerConversion< int >( numCols ),
                                                         toEpetraLongLong( colIndices ),
                                                         values,
                                                         Epetra_FECrsMatrix::ROW_MAJOR ) );
@@ -336,9 +338,9 @@ void EpetraMatrix::set( globalIndex const * rowIndices,
                         localIndex const numCols )
 {
   GEOSX_LAI_ASSERT( modifiable() );
-  GEOSX_LAI_CHECK_ERROR( m_matrix->ReplaceGlobalValues( integer_conversion< int >( numRows ),
+  GEOSX_LAI_CHECK_ERROR( m_matrix->ReplaceGlobalValues( LvArray::integerConversion< int >( numRows ),
                                                         toEpetraLongLong( rowIndices ),
-                                                        integer_conversion< int >( numCols ),
+                                                        LvArray::integerConversion< int >( numCols ),
                                                         toEpetraLongLong( colIndices ),
                                                         values,
                                                         Epetra_FECrsMatrix::ROW_MAJOR ) );
@@ -351,9 +353,9 @@ void EpetraMatrix::insert( globalIndex const * rowIndices,
                            localIndex const numCols )
 {
   GEOSX_LAI_ASSERT( insertable() );
-  GEOSX_LAI_CHECK_ERROR_NNEG( m_matrix->InsertGlobalValues( integer_conversion< int >( numRows ),
+  GEOSX_LAI_CHECK_ERROR_NNEG( m_matrix->InsertGlobalValues( LvArray::integerConversion< int >( numRows ),
                                                             toEpetraLongLong( rowIndices ),
-                                                            integer_conversion< int >( numCols ),
+                                                            LvArray::integerConversion< int >( numCols ),
                                                             toEpetraLongLong( colIndices ),
                                                             values,
                                                             Epetra_FECrsMatrix::ROW_MAJOR ) );
@@ -492,6 +494,12 @@ void EpetraMatrix::gemv( real64 const alpha,
 void EpetraMatrix::scale( real64 const scalingFactor )
 {
   GEOSX_LAI_ASSERT( ready() );
+
+  if( isEqual( scalingFactor, 1.0 ) )
+  {
+    return;
+  }
+
   GEOSX_LAI_CHECK_ERROR( m_matrix->Scale( scalingFactor ) );
 }
 
@@ -559,6 +567,30 @@ real64 EpetraMatrix::clearRow( globalIndex const globalRow,
   return oldDiag;
 }
 
+void EpetraMatrix::addEntries( EpetraMatrix const & src, real64 const scale )
+{
+  GEOSX_LAI_ASSERT( ready() );
+  GEOSX_LAI_ASSERT( src.ready() );
+  GEOSX_LAI_ASSERT( numGlobalRows() == src.numGlobalRows() );
+  GEOSX_LAI_ASSERT( numGlobalCols() == src.numGlobalCols() );
+
+  GEOSX_LAI_CHECK_ERROR( EpetraExt::MatrixMatrix::Add( src.unwrapped(), false, scale, *m_matrix, 1.0 ) );
+}
+
+void EpetraMatrix::addDiagonal( EpetraVector const & src )
+{
+  GEOSX_LAI_ASSERT( ready() );
+  GEOSX_LAI_ASSERT( src.ready() );
+  GEOSX_LAI_ASSERT( numGlobalRows() == numGlobalCols() );
+  GEOSX_LAI_ASSERT( numLocalRows() == src.localSize() );
+
+  // XXX: It's not clear if this is better or worse than element-wise add()
+  Epetra_Vector diag( *m_dst_map, false );
+  GEOSX_LAI_CHECK_ERROR( m_matrix->ExtractDiagonalCopy( diag ) );
+  GEOSX_LAI_CHECK_ERROR( diag.Update( 1.0, src.unwrapped(), 1.0 ) );
+  GEOSX_LAI_CHECK_ERROR( m_matrix->ReplaceDiagonalValues( diag ) );
+}
+
 localIndex EpetraMatrix::maxRowLength() const
 {
   GEOSX_LAI_ASSERT( assembled() );
@@ -568,7 +600,7 @@ localIndex EpetraMatrix::maxRowLength() const
 localIndex EpetraMatrix::localRowLength( localIndex localRowIndex ) const
 {
   GEOSX_LAI_ASSERT( assembled() );
-  return m_matrix->NumMyEntries( integer_conversion< int >( localRowIndex ) );
+  return m_matrix->NumMyEntries( LvArray::integerConversion< int >( localRowIndex ) );
 }
 
 localIndex EpetraMatrix::globalRowLength( globalIndex globalRowIndex ) const
@@ -594,10 +626,10 @@ void EpetraMatrix::getRowCopy( globalIndex globalRow,
   GEOSX_LAI_ASSERT_GE( colIndices.size(), numEntries );
   GEOSX_LAI_ASSERT_GE( values.size(), numEntries );
 
-  localIndex const length = integer_conversion< localIndex >( numEntries );
+  localIndex const length = LvArray::integerConversion< localIndex >( numEntries );
   for( localIndex i = 0; i < length; ++i )
   {
-    colIndices[i] = integer_conversion< globalIndex >( m_matrix->GCID64( indices_ptr[i] ) );
+    colIndices[i] = LvArray::integerConversion< globalIndex >( m_matrix->GCID64( indices_ptr[i] ) );
     values[i] = values_ptr[i];
   }
 }
@@ -625,6 +657,36 @@ real64 EpetraMatrix::getDiagValue( globalIndex globalRow ) const
   return 0.0;
 }
 
+void EpetraMatrix::extractDiagonal( EpetraVector & dst ) const
+{
+  GEOSX_LAI_ASSERT( ready() );
+  GEOSX_LAI_ASSERT( dst.ready() );
+  GEOSX_LAI_ASSERT_EQ( dst.localSize(), numLocalRows() );
+
+  // This doesn't work because ExtractDiagonalCopy takes an Epetra_Vector,
+  // not Epetra_FEVector which is unrelated (ugh):
+  // GEOSX_LAI_CHECK_ERROR( m_matrix->ExtractDiagonalCopy( dst.unwrapped() ) );
+
+  dst.zero();
+  real64 * const values = dst.extractLocalVector();
+
+  int length;
+  int * indices_ptr;
+  double * values_ptr;
+
+  for( localIndex localRow = 0; localRow < numLocalRows(); ++localRow )
+  {
+    GEOSX_LAI_CHECK_ERROR( m_matrix->ExtractMyRowView( localRow, length, values_ptr, indices_ptr ) );
+    for( int j = 0; j < length; ++j )
+    {
+      if( indices_ptr[j] == localRow )
+      {
+        values[localRow] = values_ptr[j];
+      }
+    }
+  }
+}
+
 Epetra_FECrsMatrix const & EpetraMatrix::unwrapped() const
 {
   GEOSX_LAI_ASSERT( created() );
@@ -640,7 +702,7 @@ Epetra_FECrsMatrix & EpetraMatrix::unwrapped()
 globalIndex EpetraMatrix::numGlobalRows() const
 {
   GEOSX_LAI_ASSERT( created() );
-  return m_matrix->NumGlobalRows64();
+  return m_dst_map->NumGlobalElements64();
 }
 
 globalIndex EpetraMatrix::numGlobalCols() const
@@ -652,13 +714,25 @@ globalIndex EpetraMatrix::numGlobalCols() const
 globalIndex EpetraMatrix::ilower() const
 {
   GEOSX_LAI_ASSERT( created() );
-  return m_matrix->RowMap().MinMyGID64();
+  return m_dst_map->MinMyGID64();
 }
 
 globalIndex EpetraMatrix::iupper() const
 {
   GEOSX_LAI_ASSERT( created() );
-  return m_matrix->RowMap().MaxMyGID64() + 1;
+  return m_dst_map->MaxMyGID64() + 1;
+}
+
+globalIndex EpetraMatrix::jlower() const
+{
+  GEOSX_LAI_ASSERT( created() );
+  return m_src_map->MinMyGID64();
+}
+
+globalIndex EpetraMatrix::jupper() const
+{
+  GEOSX_LAI_ASSERT( created() );
+  return m_src_map->MaxMyGID64() + 1;
 }
 
 localIndex EpetraMatrix::numLocalNonzeros() const
@@ -702,7 +776,7 @@ globalIndex EpetraMatrix::getGlobalRowID( localIndex const index ) const
   GEOSX_LAI_ASSERT( created() );
   GEOSX_LAI_ASSERT_GE( index, 0 );
   GEOSX_LAI_ASSERT_GT( numLocalRows(), index );
-  return m_matrix->GRID64( integer_conversion< int >( index ) );
+  return m_matrix->GRID64( LvArray::integerConversion< int >( index ) );
 }
 
 localIndex EpetraMatrix::numLocalCols() const
@@ -783,126 +857,3 @@ void EpetraMatrix::multiply( bool const transA,
 }
 
 } // end geosx namespace
-
-
-/* TODO: We should make a decision about thread safety in another
- * pull request.  Either we make Epetra threadsafe or we move to
- * Tpetra as an alternative.
- */
-
-/* SCRATCH CODE - possible template for threadsafe assembly */
-/* DELETE WHEN NO LONGER NEEDED */
-
-/*
-   // """""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-   // Ignore the following. Thread-safe prototype, commented out.
-   // """""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-   //  template<typename int_type>
-   //  int Epetra_CrsMatrix::TSumIntoGlobalValues(int_type Row,
-   //              int NumEntries,
-   //              const double * srcValues,
-   //              const int_type *Indices)
-   //  {
-   int j;
-   int ierr = 0;
-   int Loc = 0;
-
-
-   int locRow = Graph_.LRID( Row ); // Normalize row range
-
-   if( locRow < 0 || locRow >= NumMyRows_ )
-   {
-    EPETRA_CHK_ERR( -1 ); // Not in Row range
-   }
-
-   if( StaticGraph() && !Graph_.HaveColMap())
-   {
-    EPETRA_CHK_ERR( -1 );
-   }
-
-   double * RowValues = Values( locRow );
-
-   if( !StaticGraph())
-   {
-    for( j=0 ; j<NumEntries ; j++ )
-    {
-      int_type Index = Indices[j];
-      if( Graph_.FindglobalIndexLoc( locRow, Index, j, Loc ))
-   //  #ifdef EPETRA_HAVE_OMP
-   //  #ifdef EPETRA_HAVE_OMP_NONASSOCIATIVE
-   //  #pragma omp atomic
-   //  #endif
-   //  #endif
-   //          RowValues[Loc] += srcValues[j];
-        RAJA::atomicAdd<ATOMIC_POL2>( &RowValues [Loc], srcValues[j] );
-      else
-        ierr = 2;   // Value Excluded
-    }
-   }
-   else
-   {
-    const Epetra_BlockMap& colmap = Graph_.ColMap();
-    int NumColIndices = Graph_.NumMyIndices( locRow );
-    const int* ColIndices = Graph_.Indices( locRow );
-
-    if( Graph_.Sorted())
-    {
-      int insertPoint;
-      for( j=0 ; j<NumEntries ; j++ )
-      {
-        int Index = colmap.LID( Indices[j] );
-
-        // Check whether the next added element is the subsequent element in
-        // the graph indices, then we can skip the binary search
-        if( Loc < NumColIndices && Index == ColIndices[Loc] )
-   //  #ifdef EPETRA_HAVE_OMP
-   //  #ifdef EPETRA_HAVE_OMP_NONASSOCIATIVE
-   //  #pragma omp atomic
-   //  #endif
-   //  #endif
-   //            RowValues[Loc] += srcValues[j];
-          RAJA::atomicAdd<ATOMIC_POL2>( &RowValues [Loc], srcValues[j] );
-        else
-        {
-          Loc = Epetra_Util_binary_search( Index, ColIndices, NumColIndices, insertPoint );
-          if( Loc > -1 )
-   //  #ifdef EPETRA_HAVE_OMP
-   //  #ifdef EPETRA_HAVE_OMP_NONASSOCIATIVE
-   //  #pragma omp atomic
-   //  #endif
-   //  #endif
-   //              RowValues[Loc] += srcValues[j];
-            RAJA::atomicAdd<ATOMIC_POL2>( &RowValues [Loc], srcValues[j] );
-          else
-            ierr = 2;   // Value Excluded
-        }
- ++Loc;
-      }
-    }
-    else
-      for( j=0 ; j<NumEntries ; j++ )
-      {
-        int Index = colmap.LID( Indices[j] );
-        if( Graph_.FindMyIndexLoc( NumColIndices, ColIndices, Index, j, Loc ))
-   //  #ifdef EPETRA_HAVE_OMP
-   //  #ifdef EPETRA_HAVE_OMP_NONASSOCIATIVE
-   //  #pragma omp atomic
-   //  #endif
-   //  #endif
-   //            RowValues[Loc] += srcValues[j];
-          RAJA::atomicAdd<ATOMIC_POL2>( &RowValues [Loc], srcValues[j] );
-        else
-          ierr = 2;   // Value Excluded
-      }
-   }
-
-   NormOne_ = -1.0;   // Reset Norm so it will be recomputed.
-   NormInf_ = -1.0;   // Reset Norm so it will be recomputed.
-   NormFrob_ = -1.0;
-
-   EPETRA_CHK_ERR( ierr );
-
-   return(0);
-   //  }
-
- */

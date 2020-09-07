@@ -122,7 +122,7 @@ def buildAttributeMap(root_node, xsd='{http://www.w3.org/2001/XMLSchema}'):
     for comment_node in child_node.iter(etree.Comment):
       tmp = comment_node.text.split(' => ')
       att_name = tmp[0]
-      att_description = tmp[1].replace('\\\\', '\\').replace('\n', '\\n')
+      att_description = tmp[1].replace('\\\\', '\\').replace('\n', '\\n').replace('|', '\\|')
       attribute_map[type_name][att_name]['Description'] = att_description
       if (len(tmp) > 2):
        attribute_map[type_name][att_name]['Registered By'] = [x for x in tmp[2].split(', ')]
@@ -263,13 +263,12 @@ touched_files = []
 with open('%s.rst' % (complete_output), 'w') as output_handle:
   # Write the file header
   output_handle.write('======================\n')
-  output_handle.write('GEOSX Data Structure\n')
+  output_handle.write('Datastructure Index\n')
   output_handle.write('======================\n\n')
 
   # Parse the input schema definitions
-  output_handle.write('********************************\n')
   output_handle.write('Input Schema Definitions\n')
-  output_handle.write('********************************\n\n')
+  output_handle.write('========================\n\n')
 
   output_handle.write(':download:`XML Schema <%s/../schema.xsd>`\n\n' % (sphinx_path))
 

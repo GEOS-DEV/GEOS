@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -19,7 +19,8 @@
 #ifndef GEOSX_CONSITUTIVE_EXPONENTIALRELATION_HPP_
 #define GEOSX_CONSITUTIVE_EXPONENTIALRELATION_HPP_
 
-#include <common/DataTypes.hpp>
+#include "common/DataTypes.hpp"
+#include "common/EnumStrings.hpp"
 
 #include <cmath>
 
@@ -32,12 +33,155 @@ namespace constitutive
 /**
  * @enum Enumeration describing available approximations of the exponent
  */
-enum class ExponentApproximationType
+enum class ExponentApproximationType : integer
 {
   Full,
   Linear,
   Quadratic
 };
+
+ENUM_STRINGS( ExponentApproximationType, "exponential", "linear", "quadratic" )
+
+namespace detail
+{
+
+// bring into scope for ADL
+using std::exp;
+using std::log;
+using std::sqrt;
+
+/**
+ * @brief Specializations of this struct provide compute methods for different exponent approximations
+ * @tparam T the data type
+ * @tparam EAT the type/order of exponent approximation (linear, quadratic, full)
+ * @tparam INVERSE whether to compute the inverse of the exponent
+ */
+template< typename T, ExponentApproximationType EAT, bool INVERSE = false >
+struct ExponentialCompute
+{};
+
+template< typename T >
+struct ExponentialCompute< T, ExponentApproximationType::Full, false >
+{
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  static void Compute( const T & x0, const T & y0, const T & alpha, const T & x, T & y )
+  {
+    y = y0 * exp( alpha * (x - x0));
+  }
+
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  static void Compute( const T & x0, const T & y0, const T & alpha, const T & x, T & y, T & dy_dx )
+  {
+    y = y0 * exp( alpha * (x - x0));
+    dy_dx = alpha * y;
+  }
+};
+
+template< typename T >
+struct ExponentialCompute< T, ExponentApproximationType::Full, true >
+{
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  static void Compute( const T & x0, const T & y0, const T & alpha, const T & y, T & x )
+  {
+    x = x0 + log( y / y0 ) / alpha;
+  }
+
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  static void Compute( const T & x0, const T & y0, const T & alpha, const T & y, T & x, T & dx_dy )
+  {
+    const T alpha_inv = T( 1.0 ) / alpha;
+    x = x0 + alpha_inv * log( y / y0 );
+    dx_dy = alpha_inv / y;
+  }
+};
+
+template< typename T >
+struct ExponentialCompute< T, ExponentApproximationType::Quadratic, false >
+{
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  static void Compute( const T & x0, const T & y0, const T & alpha, const T & x, T & y )
+  {
+    const T z = T( 1.0 ) + alpha * (x - x0);
+    y = y0 / T( 2.0 ) * (T( 1.0 ) + z * z);
+  }
+
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  static void Compute( const T & x0, const T & y0, const T & alpha, const T & x, T & y, T & dy_dx )
+  {
+    const T z = T( 1.0 ) + alpha * (x - x0);
+    y = y0 / T( 2.0 ) * (T( 1.0 ) + z * z);
+    dy_dx = alpha * y0 * z;
+  }
+};
+
+template< typename T >
+struct ExponentialCompute< T, ExponentApproximationType::Quadratic, true >
+{
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  static void Compute( const T & x0, const T & y0, const T & alpha, const T & y, T & x )
+  {
+    const T z = sqrt( T( 2.0 ) * y / y0 - T( 1.0 ));
+    x = x0 + (z - 1) / alpha;
+  }
+
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  static void Compute( const T & x0, const T & y0, const T & alpha, const T & y, T & x, T & dx_dy )
+  {
+    const T alpha_inv = T( 1.0 ) / alpha;
+    const T z = sqrt( T( 2.0 ) * y / y0 - T( 1.0 ));
+    x = x0 + alpha_inv * (z - 1);
+    dx_dy = alpha_inv / (y0 * z);
+  }
+};
+
+template< typename T >
+struct ExponentialCompute< T, ExponentApproximationType::Linear, false >
+{
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  static void Compute( const T & x0, const T & y0, const T & alpha, const T & x, T & y )
+  {
+    y = y0 * (T( 1.0 ) + alpha * (x - x0));
+  }
+
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  static void Compute( const T & x0, const T & y0, const T & alpha, const T & x, T & y, T & dy_dx )
+  {
+    y = y0 * (T( 1.0 ) + alpha * (x - x0));
+    dy_dx = alpha * y0;
+  }
+};
+
+template< typename T >
+struct ExponentialCompute< T, ExponentApproximationType::Linear, true >
+{
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  static void Compute( const T & x0, const T & y0, const T & alpha, const T & y, T & x )
+  {
+    x = x0 + (y / y0 - 1) / alpha;
+  }
+
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  static void Compute( const T & x0, const T & y0, const T & alpha, const T & y, T & x, T & dx_dy )
+  {
+    const T alpha_inv = T( 1.0 ) / alpha;
+    x = x0 + alpha_inv * (y / y0 - 1);
+    dx_dy = alpha_inv / y0;
+  }
+};
+
+}
 
 /**
  * @class ExponentialRelation
@@ -61,7 +205,10 @@ public:
   /**
    * @brief Default constructor. Sets \f$ x0 = 0, y0 = 1, alpha = 1 \f$
    */
-  explicit ExponentialRelation();
+  GEOSX_HOST_DEVICE
+  ExponentialRelation()
+    : ExponentialRelation( T( 0 ), T( 1 ), T( 1 ) )
+  {}
 
   /**
    * @brief Constructor with arguments
@@ -69,7 +216,11 @@ public:
    * @param y0 scaling coefficient
    * @param alpha exponential coefficient
    */
-  explicit ExponentialRelation( T x0, T y0, T alpha );
+  GEOSX_HOST_DEVICE
+  ExponentialRelation( T x0, T y0, T alpha )
+  {
+    SetCoefficients( x0, y0, alpha );
+  }
 
   // *** setters ***
 
@@ -79,7 +230,13 @@ public:
    * @param y0 scaling coefficient
    * @param alpha exponential coefficient
    */
-  void SetCoefficients( T x0, T y0, T alpha );
+  GEOSX_HOST_DEVICE
+  void SetCoefficients( T x0, T y0, T alpha )
+  {
+    m_x0 = x0;
+    m_y0 = y0;
+    m_alpha = alpha;
+  }
 
   // *** no-derivative computes ***
 
@@ -88,14 +245,23 @@ public:
    * @param x
    * @param y
    */
-  void Compute( const T & x, T & y ) const;
+  GEOSX_HOST_DEVICE
+  void Compute( const T & x, T & y ) const
+  {
+    detail::ExponentialCompute< T, EAT >::Compute( m_x0, m_y0, m_alpha, x, y );
+  }
+
 
   /**
    * @brief Compute inverse value
    * @param y
    * @param x
    */
-  void Inverse( const T & y, T & x ) const;
+  GEOSX_HOST_DEVICE
+  void Inverse( const T & y, T & x ) const
+  {
+    detail::ExponentialCompute< T, EAT, true >::Compute( m_x0, m_y0, m_alpha, y, x );
+  }
 
   // *** derivative computes ***
 
@@ -105,7 +271,11 @@ public:
    * @param y
    * @param dy_dx
    */
-  void Compute( const T & x, T & y, T & dy_dx ) const;
+  GEOSX_HOST_DEVICE
+  void Compute( const T & x, T & y, T & dy_dx ) const
+  {
+    detail::ExponentialCompute< T, EAT >::Compute( m_x0, m_y0, m_alpha, x, y, dy_dx );
+  }
 
   /**
    * @brief Compute inverse value and derivative
@@ -113,7 +283,11 @@ public:
    * @param x
    * @param dx_dy
    */
-  void Inverse( const T & y, T & x, T & dx_dy ) const;
+  GEOSX_HOST_DEVICE
+  void Inverse( const T & y, T & x, T & dx_dy ) const
+  {
+    detail::ExponentialCompute< T, EAT, true >::Compute( m_x0, m_y0, m_alpha, y, x, dx_dy );
+  }
 
 private:
 
@@ -141,7 +315,7 @@ struct ExponentApproximationTypeWrapper
  * @param lambda user-provided generic lambda to be called with an instance of EAT wrapper type
  */
 template< typename T, typename LAMBDA >
-void ExponentApproximationTypeSwitchBlock( ExponentApproximationType const type, T const & x0, T const & y0, T const & alpha, LAMBDA && lambda )
+void ExponentApproximationTypeSwitchBlock( ExponentApproximationType const type, T const & x0, T const & y0, T const & alpha, LAMBDA lambda )
 {
   switch( type )
   {
@@ -179,167 +353,7 @@ void makeExponentialRelation( ExponentApproximationType type,
                               T const & x0, T const & y0, T const & alpha,
                               LAMBDA && lambda )
 {
-  ExponentApproximationTypeSwitchBlock( type, x0, y0, alpha, std::move( lambda ));
-}
-
-namespace detail
-{
-
-// bring into scope for ADL
-using std::exp;
-using std::log;
-using std::sqrt;
-
-/**
- * @brief Specializations of this struct provide compute methods for different exponent approximations
- * @tparam T the data type
- * @tparam EAT the type/order of exponent approximation (linear, quadratic, full)
- * @tparam INVERSE whether to compute the inverse of the exponent
- */
-template< typename T, ExponentApproximationType EAT, bool INVERSE = false >
-struct ExponentialCompute
-{};
-
-template< typename T >
-struct ExponentialCompute< T, ExponentApproximationType::Full, false >
-{
-  inline static void Compute( const T & x0, const T & y0, const T & alpha, const T & x, T & y )
-  {
-    y = y0 * exp( alpha * (x - x0));
-  }
-
-  inline static void Compute( const T & x0, const T & y0, const T & alpha, const T & x, T & y, T & dy_dx )
-  {
-    y = y0 * exp( alpha * (x - x0));
-    dy_dx = alpha * y;
-  }
-};
-
-template< typename T >
-struct ExponentialCompute< T, ExponentApproximationType::Full, true >
-{
-  inline static void Compute( const T & x0, const T & y0, const T & alpha, const T & y, T & x )
-  {
-    x = x0 + log( y / y0 ) / alpha;
-  }
-
-  inline static void Compute( const T & x0, const T & y0, const T & alpha, const T & y, T & x, T & dx_dy )
-  {
-    const T alpha_inv = T( 1.0 ) / alpha;
-    x = x0 + alpha_inv * log( y / y0 );
-    dx_dy = alpha_inv / y;
-  }
-};
-
-template< typename T >
-struct ExponentialCompute< T, ExponentApproximationType::Quadratic, false >
-{
-  inline static void Compute( const T & x0, const T & y0, const T & alpha, const T & x, T & y )
-  {
-    const T z = T( 1.0 ) + alpha * (x - x0);
-    y = y0 / T( 2.0 ) * (T( 1.0 ) + z * z);
-  }
-
-  inline static void Compute( const T & x0, const T & y0, const T & alpha, const T & x, T & y, T & dy_dx )
-  {
-    const T z = T( 1.0 ) + alpha * (x - x0);
-    y = y0 / T( 2.0 ) * (T( 1.0 ) + z * z);
-    dy_dx = alpha * y0 * z;
-  }
-};
-
-template< typename T >
-struct ExponentialCompute< T, ExponentApproximationType::Quadratic, true >
-{
-  inline static void Compute( const T & x0, const T & y0, const T & alpha, const T & y, T & x )
-  {
-    const T z = sqrt( T( 2.0 ) * y / y0 - T( 1.0 ));
-    x = x0 + (z - 1) / alpha;
-  }
-
-  inline static void Compute( const T & x0, const T & y0, const T & alpha, const T & y, T & x, T & dx_dy )
-  {
-    const T alpha_inv = T( 1.0 ) / alpha;
-    const T z = sqrt( T( 2.0 ) * y / y0 - T( 1.0 ));
-    x = x0 + alpha_inv * (z - 1);
-    dx_dy = alpha_inv / (y0 * z);
-  }
-};
-
-template< typename T >
-struct ExponentialCompute< T, ExponentApproximationType::Linear, false >
-{
-  inline static void Compute( const T & x0, const T & y0, const T & alpha, const T & x, T & y )
-  {
-    y = y0 * (T( 1.0 ) + alpha * (x - x0));
-  }
-
-  inline static void Compute( const T & x0, const T & y0, const T & alpha, const T & x, T & y, T & dy_dx )
-  {
-    y = y0 * (T( 1.0 ) + alpha * (x - x0));
-    dy_dx = alpha * y0;
-  }
-};
-
-template< typename T >
-struct ExponentialCompute< T, ExponentApproximationType::Linear, true >
-{
-  inline static void Compute( const T & x0, const T & y0, const T & alpha, const T & y, T & x )
-  {
-    x = x0 + (y / y0 - 1) / alpha;
-  }
-
-  inline static void Compute( const T & x0, const T & y0, const T & alpha, const T & y, T & x, T & dx_dy )
-  {
-    const T alpha_inv = T( 1.0 ) / alpha;
-    x = x0 + alpha_inv * (y / y0 - 1);
-    dx_dy = alpha_inv / y0;
-  }
-};
-
-}
-
-template< typename T, ExponentApproximationType EAT >
-ExponentialRelation< T, EAT >::ExponentialRelation()
-  : ExponentialRelation( T( 0 ), T( 1 ), T( 1 ))
-{}
-
-template< typename T, ExponentApproximationType EAT >
-ExponentialRelation< T, EAT >::ExponentialRelation( T x0, T y0, T alpha )
-{
-  SetCoefficients( x0, y0, alpha );
-}
-
-template< typename T, ExponentApproximationType EAT >
-void ExponentialRelation< T, EAT >::SetCoefficients( T x0, T y0, T alpha )
-{
-  m_x0 = x0;
-  m_y0 = y0;
-  m_alpha = alpha;
-}
-
-template< typename T, ExponentApproximationType EAT >
-void ExponentialRelation< T, EAT >::Compute( const T & x, T & y ) const
-{
-  detail::ExponentialCompute< T, EAT >::Compute( m_x0, m_y0, m_alpha, x, y );
-}
-
-template< typename T, ExponentApproximationType EAT >
-void ExponentialRelation< T, EAT >::Inverse( const T & y, T & x ) const
-{
-  detail::ExponentialCompute< T, EAT, true >::Compute( m_x0, m_y0, m_alpha, y, x );
-}
-
-template< typename T, ExponentApproximationType EAT >
-void ExponentialRelation< T, EAT >::Compute( const T & x, T & y, T & dy_dx ) const
-{
-  detail::ExponentialCompute< T, EAT >::Compute( m_x0, m_y0, m_alpha, x, y, dy_dx );
-}
-
-template< typename T, ExponentApproximationType EAT >
-void ExponentialRelation< T, EAT >::Inverse( const T & y, T & x, T & dx_dy ) const
-{
-  detail::ExponentialCompute< T, EAT, true >::Compute( m_x0, m_y0, m_alpha, y, x, dx_dy );
+  ExponentApproximationTypeSwitchBlock( type, x0, y0, alpha, std::forward< LAMBDA >( lambda ) );
 }
 
 } // namespace constitutive

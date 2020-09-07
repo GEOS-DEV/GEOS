@@ -346,14 +346,13 @@ class Benchmark:
         Arguments:
             self: The Benchmark to check.
         """
-        # TODO(corbett5): With Slurm jobs sometimes finish well before the child process completes.
-        if self.status == Status.SUBMITTED and self.process.poll() is not None:
-            if self.getTimingFile():
-                self.status = Status.SUCCESS
-                print( "Completed {}".format( self ) )
-            else:
-                self.status = Status.FAILURE
-                print( "Failed {}".format( self ) )
+        jobExited = self.status == Status.SUBMITTED and self.process.poll() is not None
+        if self.getTimingFile() is not None:
+            self.status = Status.SUCCESS
+            print( "Completed {}".format( self ) )
+        elif jobExited:
+            self.status = Status.FAILURE
+            print( "Failed {}".format( self ) )
 
         return self.status == Status.SUCCESS or self.status == Status.FAILURE
 
@@ -364,10 +363,9 @@ class Benchmark:
         Arguments:
             self: The Benchmark to kill.
         """
-        if not self.hasCompleted():
-            self.process.kill()
-            self.process.wait()
-            self.status = Status.FAILURE
+        self.process.kill()
+        self.process.wait()
+        self.hasCompleted()
 
     def __str__( self ):
         """
@@ -438,6 +436,7 @@ def submitAllAndWait( machine, benchmarks, timeLimit ):
 
         minutesRun = ( time.time() - startTime ) / 60
         if minutesRun > timeLimit:
+            print( "The time limit of {} minutes has been exceeded, killing all unfinished jobs.".format( timeLimit ) )
             for benchmark in benchmarks:
                 benchmark.kill()
 
@@ -533,10 +532,10 @@ def main():
     timeLimit = 60
     parser = argparse.ArgumentParser()
     parser.add_argument( "geosxPath", help="The path to the GEOSX executable to benchmark.")
-    parser.add_argument( "outputDirectory", help="The directory to write the output to.")
+    parser.add_argument( "outputDirectory", help="The parent directory to run the benchmarks in.")
     parser.add_argument( "-t", "--timeLimit", type=int, help="Time limit for the entire script in minutes, the default is {}.". format( timeLimit ), default=timeLimit )
     parser.add_argument( "-o", "--timingCollectionDir", help="Directory to copy the timing files to." )
-    parser.add_argument( "-e", "--errorCollectionDir", help="Directory to copy the output from an failed runs to." )
+    parser.add_argument( "-e", "--errorCollectionDir", help="Directory to copy the output from any failed runs to." )
     args = parser.parse_args()
 
     geosxPath = os.path.abspath( args.geosxPath )
@@ -582,7 +581,7 @@ def main():
     if errorCollectionDir is not None:
         createDirectory( errorCollectionDir, True )
         for benchmark in benchmarks:
-            if benchmark.status != Status.SUCCESS:
+            if benchmark.status != Status.SUCCESS and os.path.isfile( benchmark.getOutputFile() ):
                 outputFile = benchmark.getOutputFile()
                 newLocation = os.path.join( errorCollectionDir, os.path.relpath( outputFile, outputDir ) )
                 shutil.copy2( outputFile, newLocation )

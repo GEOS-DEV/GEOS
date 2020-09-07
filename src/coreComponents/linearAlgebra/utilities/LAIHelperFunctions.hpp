@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -31,29 +31,29 @@ namespace LAIHelperFunctions
 {
 
 /**
- * Create a permuation matrix for a given nodal variable.
- * @param[in]  nodeManager
- * @param[in]  nRows
- * @param[in]  nCols
- * @param[in]  nDofPerNode
- * @param[in]  DofKey
- * @param[out] permutationMatrix
+ * @brief Create a permutation matrix for a given nodal variable.
+ * @param[in]  nodeManager       the node manager
+ * @param[in]  nRows             number of local rows in the matrix
+ * @param[in]  nCols             number of local columns in the matrix
+ * @param[in]  nDofPerNode       number of degrees-of-freedom per node
+ * @param[in]  dofKey            DofManager key used to access dof index array
+ * @param[out] permutationMatrix the target matrix
  */
 void CreatePermutationMatrix( NodeManager const * const nodeManager,
                               localIndex const nRows,
                               localIndex const nCols,
                               int const nDofPerNode,
-                              string const DofKey,
+                              string const dofKey,
                               ParallelMatrix & permutationMatrix );
 
 /**
- * Create a permuation matrix for a given nodal variable.
- * @param[in]  elementRegionManager
- * @param[in]  nRows
- * @param[in]  nCols
- * @param[in]  nDofPerCell
- * @param[in]  DofKey
- * @param[out] permutationMatrix
+ * @brief Create a permutation matrix for a given nodal variable.
+ * @param[in]  elemManager       the element region manager
+ * @param[in]  nRows             number of local rows in the matrix
+ * @param[in]  nCols             number of local columns in the matrix
+ * @param[in]  nDofPerNode       number of degrees-of-freedom per node
+ * @param[in]  dofKey            DofManager key used to access dof index array
+ * @param[out] permutationMatrix the target matrix
  */
 void CreatePermutationMatrix( ElementRegionManager const * const elemManager,
                               localIndex const nRows,
@@ -63,37 +63,33 @@ void CreatePermutationMatrix( ElementRegionManager const * const elemManager,
                               ParallelMatrix & permutationMatrix );
 
 /**
- * Create a permuation matrix for a given nodal variable.
- * @param[in]  nodeManager
- * @param[in]  nRows
- * @param[in]  nCols
- * @param[in]  nDofPerCell
- * @param[in]  DofKey
- * @param[out] permuationMatrix
+ * @brief Permute a vector.
+ * @param[in] vector            the source vector
+ * @param[in] permutationMatrix the permutation matrix
+ * @return the permuted vector
  */
 ParallelVector PermuteVector( ParallelVector const & vector,
-                              ParallelMatrix const & permuationMatrix );
+                              ParallelMatrix const & permutationMatrix );
 
 /**
- * Permute a square matrix
- * @param[in] matrix to be permuted
- * @param[in] permutation matrix
- * @param[out] permutedMatrix
+ * @brief Permute rows and columns of a square matrix.
+ * @param[in] matrix            the source matrix
+ * @param[in] permutationMatrix permutation matrix
+ * @return the permuted matrix
  */
 ParallelMatrix PermuteMatrix( ParallelMatrix const & matrix,
                               ParallelMatrix const & permutationMatrix );
 
 /**
- * Permute a rectangular matrix
- * @param[in] matrix to be permuted
- * @param[in] left permutation matrix
- * @param[in] right permutation matrix
- * @param[out] permutedMatrix
+ * Permute rows and columns of a rectangular matrix
+ * @param[in] matrix                 the source matrix
+ * @param[in] permutationMatrixLeft  left permutation matrix
+ * @param[in] permutationMatrixRight right permutation matrix
+ * @return the permuted matrix
  */
 ParallelMatrix PermuteMatrix( ParallelMatrix const & matrix,
-                              ParallelMatrix const & permuationMatrixLeft,
+                              ParallelMatrix const & permutationMatrixLeft,
                               ParallelMatrix const & permutationMatrixRight );
-
 
 void PrintPermutedVector( ParallelVector const & vector,
                           ParallelMatrix const & permuationMatrix,
@@ -109,14 +105,16 @@ void PrintPermutedMatrix( ParallelMatrix const & matrix,
                           ParallelMatrix const & permutationMatrixRight,
                           std::ostream & os );
 
-
-//void SeparateComponentFilter(ParallelMatrix const & src,
-//                             ParallelMatrix & dst,
-//                             const localIndex dofsPerNode);
-
-template< typename LAI >
-void SeparateComponentFilter( typename LAI::ParallelMatrix const & src,
-                              typename LAI::ParallelMatrix & dst,
+/**
+ * @brief Apply a separate component approximation (filter) to a matrix.
+ * @tparam MATRIX the type of matrices
+ * @param src         the source matrix
+ * @param dst         the target (filtered) matrix
+ * @param dofsPerNode number of degrees-of-freedom per node
+ */
+template< typename MATRIX >
+void SeparateComponentFilter( MATRIX const & src,
+                              MATRIX & dst,
                               const localIndex dofsPerNode )
 {
   GEOSX_ERROR_IF( dofsPerNode < 2, "Function requires dofsPerNode > 1" );

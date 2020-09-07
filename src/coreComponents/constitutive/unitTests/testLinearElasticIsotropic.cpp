@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -32,7 +32,7 @@ TEST( LinearElasticIsotropicTests, testAllocation )
 
   dataRepository::Group disc( "discretization", nullptr );
   disc.resize( numElems );
-  cm.AllocateConstitutiveData( &disc, numQuadraturePoints );
+  cm.allocateConstitutiveData( &disc, numQuadraturePoints );
 
   EXPECT_EQ( cm.size(), numElems );
   EXPECT_EQ( cm.numQuadraturePoints(), numQuadraturePoints );
@@ -58,129 +58,127 @@ TEST( LinearElasticIsotropicTests, testStateUpdatePoint )
 
   dataRepository::Group disc( "discretization", nullptr );
   disc.resize( 2 );
-  cm.AllocateConstitutiveData( &disc, 2 );
-  LinearElasticIsotropic::KernelWrapper cmw = cm.createKernelWrapper();
+  cm.allocateConstitutiveData( &disc, 2 );
+  LinearElasticIsotropic::KernelWrapper cmw = cm.createKernelUpdates();
 
   arrayView3d< real64, solid::STRESS_USD > const & stress = cm.getStress();
 
   real64 const strain = 0.1;
-  R2SymTensor Ddt;
-  R2Tensor Rot;
+  real64 Ddt[ 6 ] = { 0 };
+  real64 Rot[ 3 ][ 3 ] = { { 0 } };
 
   {
-    Ddt( 0, 0 ) = strain;
-    Rot( 0, 0 ) = 1;
-    Rot( 1, 1 ) = 1;
-    Rot( 2, 2 ) = 1;
+    Ddt[ 0 ] = strain;
+    Rot[ 0 ][ 0 ] = 1;
+    Rot[ 1 ][ 1 ] = 1;
+    Rot[ 2 ][ 2 ] = 1;
 
-    cmw.HypoElastic( 0, 0, Ddt.Data(), Rot );
+    cmw.HypoElastic( 0, 0, Ddt, Rot );
 
-    ASSERT_DOUBLE_EQ( stress( 0, 0, 0 ), (2.0/3.0*strain)*2*G + strain*K );
-    ASSERT_DOUBLE_EQ( stress( 0, 0, 1 ), (-1.0/3.0*strain)*2*G + strain*K );
-    ASSERT_DOUBLE_EQ( stress( 0, 0, 2 ), (-1.0/3.0*strain)*2*G + strain*K );
-    ASSERT_DOUBLE_EQ( stress( 0, 0, 3 ), 0.0 );
-    ASSERT_DOUBLE_EQ( stress( 0, 0, 4 ), 0.0 );
-    ASSERT_DOUBLE_EQ( stress( 0, 0, 5 ), 0.0 );
+    EXPECT_DOUBLE_EQ( stress( 0, 0, 0 ), (2.0/3.0*strain)*2*G + strain*K );
+    EXPECT_DOUBLE_EQ( stress( 0, 0, 1 ), (-1.0/3.0*strain)*2*G + strain*K );
+    EXPECT_DOUBLE_EQ( stress( 0, 0, 2 ), (-1.0/3.0*strain)*2*G + strain*K );
+    EXPECT_DOUBLE_EQ( stress( 0, 0, 3 ), 0 );
+    EXPECT_DOUBLE_EQ( stress( 0, 0, 4 ), 0 );
+    EXPECT_DOUBLE_EQ( stress( 0, 0, 5 ), 0 );
   }
 
   {
-    stress = 0;
-    Ddt = 0;
+    stress.setValues< serialPolicy >( 0 );
+    LvArray::tensorOps::fill< 6 >( Ddt, 0 );
 
-    Ddt( 1, 1 ) = strain;
-    Rot( 0, 0 ) = 1;
-    Rot( 1, 1 ) = 1;
-    Rot( 2, 2 ) = 1;
+    Ddt[ 1 ] = strain;
+    Rot[ 0 ][ 0 ] = 1;
+    Rot[ 1 ][ 1 ] = 1;
+    Rot[ 2 ][ 2 ] = 1;
 
-    cmw.HypoElastic( 0, 0, Ddt.Data(), Rot );
+    cmw.HypoElastic( 0, 0, Ddt, Rot );
 
 
-    ASSERT_DOUBLE_EQ( stress( 0, 0, 0 ), (-1.0/3.0*strain)*2*G + strain*K );
-    ASSERT_DOUBLE_EQ( stress( 0, 0, 1 ), (2.0/3.0*strain)*2*G + strain*K );
-    ASSERT_DOUBLE_EQ( stress( 0, 0, 2 ), (-1.0/3.0*strain)*2*G + strain*K );
-    ASSERT_DOUBLE_EQ( stress( 0, 0, 3 ), 0.0 );
-    ASSERT_DOUBLE_EQ( stress( 0, 0, 4 ), 0.0 );
-    ASSERT_DOUBLE_EQ( stress( 0, 0, 5 ), 0.0 );
+    EXPECT_DOUBLE_EQ( stress( 0, 0, 0 ), (-1.0/3.0*strain)*2*G + strain*K );
+    EXPECT_DOUBLE_EQ( stress( 0, 0, 1 ), (2.0/3.0*strain)*2*G + strain*K );
+    EXPECT_DOUBLE_EQ( stress( 0, 0, 2 ), (-1.0/3.0*strain)*2*G + strain*K );
+    EXPECT_DOUBLE_EQ( stress( 0, 0, 3 ), 0 );
+    EXPECT_DOUBLE_EQ( stress( 0, 0, 4 ), 0 );
+    EXPECT_DOUBLE_EQ( stress( 0, 0, 5 ), 0 );
   }
 
   {
-    stress = 0;
-    Ddt = 0;
+    stress.setValues< serialPolicy >( 0 );
+    LvArray::tensorOps::fill< 6 >( Ddt, 0 );
 
-    Ddt( 2, 2 ) = strain;
-    Rot( 0, 0 ) = 1;
-    Rot( 1, 1 ) = 1;
-    Rot( 2, 2 ) = 1;
+    Ddt[ 2 ] = strain;
+    Rot[ 0 ][ 0 ] = 1;
+    Rot[ 1 ][ 1 ] = 1;
+    Rot[ 2 ][ 2 ] = 1;
 
-    cmw.HypoElastic( 0, 0, Ddt.Data(), Rot );
+    cmw.HypoElastic( 0, 0, Ddt, Rot );
 
 
-    ASSERT_DOUBLE_EQ( stress( 0, 0, 0 ), (-1.0/3.0*strain)*2*G + strain*K );
-    ASSERT_DOUBLE_EQ( stress( 0, 0, 1 ), (-1.0/3.0*strain)*2*G + strain*K );
-    ASSERT_DOUBLE_EQ( stress( 0, 0, 2 ), (2.0/3.0*strain)*2*G + strain*K );
-    ASSERT_DOUBLE_EQ( stress( 0, 0, 3 ), 0.0 );
-    ASSERT_DOUBLE_EQ( stress( 0, 0, 4 ), 0.0 );
-    ASSERT_DOUBLE_EQ( stress( 0, 0, 5 ), 0.0 );
+    EXPECT_DOUBLE_EQ( stress( 0, 0, 0 ), (-1.0/3.0*strain)*2*G + strain*K );
+    EXPECT_DOUBLE_EQ( stress( 0, 0, 1 ), (-1.0/3.0*strain)*2*G + strain*K );
+    EXPECT_DOUBLE_EQ( stress( 0, 0, 2 ), (2.0/3.0*strain)*2*G + strain*K );
+    EXPECT_DOUBLE_EQ( stress( 0, 0, 3 ), 0 );
+    EXPECT_DOUBLE_EQ( stress( 0, 0, 4 ), 0 );
+    EXPECT_DOUBLE_EQ( stress( 0, 0, 5 ), 0 );
   }
 
   {
-    stress = 0;
-    Ddt = 0;
+    stress.setValues< serialPolicy >( 0 );
+    LvArray::tensorOps::fill< 6 >( Ddt, 0 );
 
-    Ddt( 0, 1 ) = strain;
-    Rot( 0, 0 ) = 1;
-    Rot( 1, 1 ) = 1;
-    Rot( 2, 2 ) = 1;
+    Ddt[ 5 ] = strain;
+    Rot[ 0 ][ 0 ] = 1;
+    Rot[ 1 ][ 1 ] = 1;
+    Rot[ 2 ][ 2 ] = 1;
 
-    cmw.HypoElastic( 0, 0, Ddt.Data(), Rot );
+    cmw.HypoElastic( 0, 0, Ddt, Rot );
 
 
-    ASSERT_DOUBLE_EQ( stress( 0, 0, 0 ), 0.0 );
-    ASSERT_DOUBLE_EQ( stress( 0, 0, 1 ), 0.0 );
-    ASSERT_DOUBLE_EQ( stress( 0, 0, 2 ), 0.0 );
-    ASSERT_DOUBLE_EQ( stress( 0, 0, 3 ), 0.0 );
-    ASSERT_DOUBLE_EQ( stress( 0, 0, 4 ), 0.0 );
-    ASSERT_DOUBLE_EQ( stress( 0, 0, 5 ), strain*2*G );
+    EXPECT_DOUBLE_EQ( stress( 0, 0, 0 ), 0 );
+    EXPECT_DOUBLE_EQ( stress( 0, 0, 1 ), 0 );
+    EXPECT_DOUBLE_EQ( stress( 0, 0, 2 ), 0 );
+    EXPECT_DOUBLE_EQ( stress( 0, 0, 3 ), 0 );
+    EXPECT_DOUBLE_EQ( stress( 0, 0, 4 ), 0 );
+    EXPECT_DOUBLE_EQ( stress( 0, 0, 5 ), strain*2*G );
   }
 
   {
-    stress = 0;
-    Ddt = 0;
+    stress.setValues< serialPolicy >( 0 );
+    LvArray::tensorOps::fill< 6 >( Ddt, 0 );
 
-    Ddt( 0, 2 ) = strain;
-    Rot( 0, 0 ) = 1;
-    Rot( 1, 1 ) = 1;
-    Rot( 2, 2 ) = 1;
+    Ddt[ 4 ] = strain;
+    Rot[ 0 ][ 0 ] = 1;
+    Rot[ 1 ][ 1 ] = 1;
+    Rot[ 2 ][ 2 ] = 1;
 
-    cmw.HypoElastic( 0, 0, Ddt.Data(), Rot );
+    cmw.HypoElastic( 0, 0, Ddt, Rot );
 
-
-    ASSERT_DOUBLE_EQ( stress( 0, 0, 0 ), 0.0 );
-    ASSERT_DOUBLE_EQ( stress( 0, 0, 1 ), 0.0 );
-    ASSERT_DOUBLE_EQ( stress( 0, 0, 2 ), 0.0 );
-    ASSERT_DOUBLE_EQ( stress( 0, 0, 3 ), 0.0 );
-    ASSERT_DOUBLE_EQ( stress( 0, 0, 4 ), strain*2*G );
-    ASSERT_DOUBLE_EQ( stress( 0, 0, 5 ), 0.0 );
+    EXPECT_DOUBLE_EQ( stress( 0, 0, 0 ), 0 );
+    EXPECT_DOUBLE_EQ( stress( 0, 0, 1 ), 0 );
+    EXPECT_DOUBLE_EQ( stress( 0, 0, 2 ), 0 );
+    EXPECT_DOUBLE_EQ( stress( 0, 0, 3 ), 0 );
+    EXPECT_DOUBLE_EQ( stress( 0, 0, 4 ), strain*2*G );
+    EXPECT_DOUBLE_EQ( stress( 0, 0, 5 ), 0 );
   }
 
   {
-    stress = 0;
-    Ddt = 0;
+    stress.setValues< serialPolicy >( 0 );
+    LvArray::tensorOps::fill< 6 >( Ddt, 0 );
 
-    Ddt( 1, 2 ) = strain;
-    Rot( 0, 0 ) = 1;
-    Rot( 1, 1 ) = 1;
-    Rot( 2, 2 ) = 1;
+    Ddt[ 3 ] = strain;
+    Rot[ 0 ][ 0 ] = 1;
+    Rot[ 1 ][ 1 ] = 1;
+    Rot[ 2 ][ 2 ] = 1;
 
-    cmw.HypoElastic( 0, 0, Ddt.Data(), Rot );
+    cmw.HypoElastic( 0, 0, Ddt, Rot );
 
-
-    ASSERT_DOUBLE_EQ( stress( 0, 0, 0 ), 0.0 );
-    ASSERT_DOUBLE_EQ( stress( 0, 0, 1 ), 0.0 );
-    ASSERT_DOUBLE_EQ( stress( 0, 0, 2 ), 0.0 );
-    ASSERT_DOUBLE_EQ( stress( 0, 0, 3 ), strain*2*G );
-    ASSERT_DOUBLE_EQ( stress( 0, 0, 4 ), 0.0 );
-    ASSERT_DOUBLE_EQ( stress( 0, 0, 5 ), 0.0 );
+    EXPECT_DOUBLE_EQ( stress( 0, 0, 0 ), 0 );
+    EXPECT_DOUBLE_EQ( stress( 0, 0, 1 ), 0 );
+    EXPECT_DOUBLE_EQ( stress( 0, 0, 2 ), 0 );
+    EXPECT_DOUBLE_EQ( stress( 0, 0, 3 ), strain*2*G );
+    EXPECT_DOUBLE_EQ( stress( 0, 0, 4 ), 0 );
+    EXPECT_DOUBLE_EQ( stress( 0, 0, 5 ), 0 );
   }
 }
 

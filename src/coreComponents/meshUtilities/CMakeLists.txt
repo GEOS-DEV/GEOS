@@ -7,7 +7,9 @@ set(meshUtilities_headers
     MeshManager.hpp
     MeshGeneratorBase.hpp
     InternalMeshGenerator.hpp
-    VTMMeshGenerator.hpp
+    InternalWellGenerator.hpp
+    PerforationData.hpp
+    Perforation.hpp
     MeshUtilities.hpp
     SimpleGeometricObjects/GeometricObjectManager.hpp
     SimpleGeometricObjects/SimpleGeometricObjectBase.hpp
@@ -25,7 +27,9 @@ set(meshUtilities_sources
     MeshManager.cpp
     MeshGeneratorBase.cpp
     InternalMeshGenerator.cpp
-    VTMMeshGenerator.cpp
+    InternalWellGenerator.cpp
+    PerforationData.cpp
+    Perforation.cpp
     MeshUtilities.cpp
     SimpleGeometricObjects/GeometricObjectManager.cpp
     SimpleGeometricObjects/SimpleGeometricObjectBase.cpp

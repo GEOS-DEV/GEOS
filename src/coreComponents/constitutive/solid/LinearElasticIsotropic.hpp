@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -20,6 +20,7 @@
 #define GEOSX_CONSTITUTIVE_SOLID_LINEARELASTICISOTROPIC_HPP_
 #include "SolidBase.hpp"
 #include "constitutive/ExponentialRelation.hpp"
+#include "LvArray/src/tensorOps.hpp"
 
 namespace geosx
 {
@@ -36,6 +37,7 @@ namespace constitutive
 class LinearElasticIsotropicUpdates : public SolidBaseUpdates
 {
 public:
+
   /**
    * @brief Constructor
    * @param[in] bulkModulus The ArrayView holding the bulk modulus data for each
@@ -53,14 +55,14 @@ public:
     m_shearModulus( shearModulus )
   {}
 
+  /// Deleted default constructor
+  LinearElasticIsotropicUpdates() = delete;
+
   /// Default copy constructor
   LinearElasticIsotropicUpdates( LinearElasticIsotropicUpdates const & ) = default;
 
   /// Default move constructor
   LinearElasticIsotropicUpdates( LinearElasticIsotropicUpdates && ) = default;
-
-  /// Deleted default constructor
-  LinearElasticIsotropicUpdates() = delete;
 
   /// Deleted copy assignment operator
   LinearElasticIsotropicUpdates & operator=( LinearElasticIsotropicUpdates const & ) = delete;
@@ -70,17 +72,42 @@ public:
 
 
   /**
-   * accessor to return the stiffness at a given element
-   * @param[in] k the element number
-   * @param[in] c the stiffness array
+   * @copydoc SolidBase::GetStiffness
    */
   GEOSX_HOST_DEVICE inline
-  virtual void GetStiffness( localIndex const k, real64 (& c)[6][6] ) const override final
+  virtual void GetStiffness( localIndex const k,
+                             localIndex const q,
+                             real64 (& c)[6][6] ) const override
   {
+    GEOSX_UNUSED_VAR( q );
     real64 const G = m_shearModulus[k];
     real64 const Lame = m_bulkModulus[k] - 2.0/3.0 * G;
 
-    memset( c, 0, sizeof( c ) );
+    LvArray::tensorOps::fill< 6, 6 >( c, 0 );
+
+    c[0][0] = Lame + 2 * G;
+    c[0][1] = Lame;
+    c[0][2] = Lame;
+
+    c[1][0] = Lame;
+    c[1][1] = Lame + 2 * G;
+    c[1][2] = Lame;
+
+    c[2][0] = Lame;
+    c[2][1] = Lame;
+    c[2][2] = Lame + 2 * G;
+
+    c[3][3] = G;
+
+    c[4][4] = G;
+
+    c[5][5] = G;
+  }
+
+  void GetStiffness( localIndex const k, array2d< real64 > & c ) const
+  {
+    real64 const G = m_shearModulus[k];
+    real64 const Lame = m_bulkModulus[k] - 2.0/3.0 * G;
 
     c[0][0] = Lame + 2 * G;
     c[0][1] = Lame;
@@ -103,29 +130,33 @@ public:
 
   GEOSX_HOST_DEVICE
   virtual void SmallStrainNoState( localIndex const k,
-                                   real64 const * const GEOSX_RESTRICT voigtStrain,
-                                   real64 * const GEOSX_RESTRICT stress ) const override final;
+                                   real64 const ( &voigtStrain )[ 6 ],
+                                   real64 ( &stress )[ 6 ] ) const override final;
 
   GEOSX_HOST_DEVICE
   virtual void SmallStrain( localIndex const k,
                             localIndex const q,
-                            real64 const * const GEOSX_RESTRICT voigtStrainIncrement ) const override final;
+                            real64 const ( &voigtStrainInc )[ 6 ] ) const override final;
 
   GEOSX_HOST_DEVICE
   virtual void HypoElastic( localIndex const k,
                             localIndex const q,
-                            real64 const * const GEOSX_RESTRICT Ddt,
-                            R2Tensor const & Rot ) const override final;
+                            real64 const ( &Ddt )[ 6 ],
+                            real64 const ( &Rot )[ 3 ][ 3 ] ) const override final;
 
   GEOSX_HOST_DEVICE
   virtual void HyperElastic( localIndex const k,
                              real64 const (&FmI)[3][3],
-                             real64 * const GEOSX_RESTRICT stress ) const override final;
+                             real64 ( &stress )[ 6 ] ) const override final;
 
   GEOSX_HOST_DEVICE
   virtual void HyperElastic( localIndex const k,
                              localIndex const q,
                              real64 const (&FmI)[3][3] ) const override final;
+
+  GEOSX_HOST_DEVICE
+  virtual real64 calculateStrainEnergyDensity( localIndex const k,
+                                               localIndex const q ) const override;
 
 private:
   /// A reference to the ArrayView holding the bulk modulus for each element.
@@ -140,19 +171,19 @@ private:
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void LinearElasticIsotropicUpdates::SmallStrainNoState( localIndex const k,
-                                                        real64 const * GEOSX_RESTRICT const voigtStrain,
-                                                        real64 * GEOSX_RESTRICT const stress ) const
+                                                        real64 const ( &voigtStrain )[ 6 ],
+                                                        real64 ( & stress )[ 6 ] ) const
 {
   real64 const lambda = m_bulkModulus[k] - 2.0/3.0 * m_shearModulus[k];
   real64 const diag = lambda * ( voigtStrain[0] + voigtStrain[1] + voigtStrain[2] );
   real64 const TwoG = 2.0 * m_shearModulus[k];
 
-  stress[0] = stress[0] + diag + TwoG * voigtStrain[0];
-  stress[1] = stress[1] + diag + TwoG * voigtStrain[1];
-  stress[2] = stress[2] + diag + TwoG * voigtStrain[2];
-  stress[3] = stress[3] + m_shearModulus[k] * voigtStrain[3];
-  stress[4] = stress[4] + m_shearModulus[k] * voigtStrain[4];
-  stress[5] = stress[5] + m_shearModulus[k] * voigtStrain[5];
+  stress[0] = diag + TwoG * voigtStrain[0];
+  stress[1] = diag + TwoG * voigtStrain[1];
+  stress[2] = diag + TwoG * voigtStrain[2];
+  stress[3] = m_shearModulus[k] * voigtStrain[3];
+  stress[4] = m_shearModulus[k] * voigtStrain[4];
+  stress[5] = m_shearModulus[k] * voigtStrain[5];
 
 }
 
@@ -161,7 +192,7 @@ GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void LinearElasticIsotropicUpdates::SmallStrain( localIndex const k,
                                                  localIndex const q,
-                                                 real64 const * const GEOSX_RESTRICT voigtStrainInc ) const
+                                                 real64 const ( &voigtStrainInc )[ 6 ] ) const
 {
   real64 const lambda = m_bulkModulus[k] - 2.0/3.0 * m_shearModulus[k];
   real64 const volStrain = ( voigtStrainInc[0] + voigtStrainInc[1] + voigtStrainInc[2] );
@@ -180,41 +211,30 @@ GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void LinearElasticIsotropicUpdates::HypoElastic( localIndex const k,
                                                  localIndex const q,
-                                                 real64 const * const GEOSX_RESTRICT Ddt,
-                                                 R2Tensor const & Rot ) const
+                                                 real64 const ( &Ddt )[ 6 ],
+                                                 real64 const ( &Rot )[ 3 ][ 3 ] ) const
 {
-  real64 const lambda = m_bulkModulus[k] - 2.0/3.0 * m_shearModulus[k];
-  real64 const volStrain = ( Ddt[0] + Ddt[2] + Ddt[5] );
-  real64 const TwoG = 2.0 * m_shearModulus[k];
+  real64 const lambda = m_bulkModulus[ k ] - 2.0 / 3.0 * m_shearModulus[ k ];
+  real64 const volStrain = ( Ddt[ 0 ] + Ddt[ 1 ] + Ddt[ 2 ] );
+  real64 const TwoG = 2.0 * m_shearModulus[ k ];
 
+  m_stress( k, q, 0 ) =  m_stress( k, q, 0 ) + TwoG * Ddt[ 0 ] + lambda * volStrain;
+  m_stress( k, q, 1 ) =  m_stress( k, q, 1 ) + TwoG * Ddt[ 1 ] + lambda * volStrain;
+  m_stress( k, q, 2 ) =  m_stress( k, q, 2 ) + TwoG * Ddt[ 2 ] + lambda * volStrain;
+  m_stress( k, q, 3 ) =  m_stress( k, q, 3 ) + TwoG * Ddt[ 3 ];
+  m_stress( k, q, 4 ) =  m_stress( k, q, 4 ) + TwoG * Ddt[ 4 ];
+  m_stress( k, q, 5 ) =  m_stress( k, q, 5 ) + TwoG * Ddt[ 5 ];
 
-  m_stress( k, q, 0 ) =  m_stress( k, q, 0 ) + TwoG * Ddt[0] + lambda * volStrain;
-  m_stress( k, q, 1 ) =  m_stress( k, q, 1 ) + TwoG * Ddt[2] + lambda * volStrain;
-  m_stress( k, q, 2 ) =  m_stress( k, q, 2 ) + TwoG * Ddt[5] + lambda * volStrain;
-  m_stress( k, q, 3 ) =  m_stress( k, q, 3 ) + TwoG * Ddt[4];
-  m_stress( k, q, 4 ) =  m_stress( k, q, 4 ) + TwoG * Ddt[3];
-  m_stress( k, q, 5 ) =  m_stress( k, q, 5 ) + TwoG * Ddt[1];
-
-  R2SymTensor stress;
-  stress = m_stress[k][q];
-
-  R2SymTensor temp;
-  real64 const * const pTemp = temp.Data();
-  temp.QijAjkQlk( stress, Rot );
-
-  m_stress( k, q, 0 ) = pTemp[0];
-  m_stress( k, q, 1 ) = pTemp[2];
-  m_stress( k, q, 2 ) = pTemp[5];
-  m_stress( k, q, 3 ) = pTemp[4];
-  m_stress( k, q, 4 ) = pTemp[3];
-  m_stress( k, q, 5 ) = pTemp[1];
+  real64 temp[ 6 ] = { 0 };
+  LvArray::tensorOps::AikSymBklAjl< 3 >( temp, Rot, m_stress[ k ][ q ] );
+  LvArray::tensorOps::copy< 6 >( m_stress[ k ][ q ], temp );
 }
 
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void LinearElasticIsotropicUpdates::HyperElastic( localIndex const k,
                                                   real64 const (&FmI)[3][3],
-                                                  real64 * const GEOSX_RESTRICT stress ) const
+                                                  real64 ( & stress )[ 6 ] ) const
 {
   real64 const C1 = 0.5 * m_shearModulus[k];
   real64 const D1 = 0.5 * m_bulkModulus[k];
@@ -235,9 +255,9 @@ void LinearElasticIsotropicUpdates::HyperElastic( localIndex const k,
                      1/3 *(-FmI[0][0] * (2 + FmI[0][0]) - FmI[1][1] * (2 + FmI[1][1]) + 2 * FmI[2][2] * (2 + FmI[2][2]) -
                            FmI[0][1]*FmI[0][1] - FmI[0][2]*FmI[0][2] - FmI[1][0]*FmI[1][0] - FmI[1][2]*FmI[1][2] + 2 * FmI[2][0]*FmI[2][0] + 2 * FmI[2][1]*
                            FmI[2][1]),
-                     FmI[1][2] + FmI[1][0]*FmI[2][0] + FmI[2][1] + FmI[1][1]*FmI[2][1] + FmI[1][2]*FmI[2][2],
-                     FmI[0][2] + FmI[2][0] + FmI[0][0]*FmI[2][0] + FmI[0][1]*FmI[2][1] + FmI[0][2]*FmI[2][2],
-                     FmI[0][1] + FmI[1][0] + FmI[0][0]*FmI[1][0] + FmI[0][1]*FmI[1][1] + FmI[0][2]*FmI[1][2]
+                     FmI[1][2] + FmI[1][0] * FmI[2][0] + FmI[2][1] + FmI[1][1]*FmI[2][1] + FmI[1][2]*FmI[2][2],
+                     FmI[0][2] + FmI[2][0] + FmI[0][0] * FmI[2][0] + FmI[0][1]*FmI[2][1] + FmI[0][2]*FmI[2][2],
+                     FmI[0][1] + FmI[1][0] + FmI[0][0] * FmI[1][0] + FmI[0][1]*FmI[1][1] + FmI[0][2]*FmI[1][2]
   };
 
   real64 const C = 2 * C1 / pow( detFm1 + 1, 2.0/3.0 );
@@ -255,14 +275,32 @@ void LinearElasticIsotropicUpdates::HyperElastic( localIndex const k,
                                                   localIndex const q,
                                                   real64 const (&FmI)[3][3] ) const
 {
-  real64 stress[6];
+  real64 stress[ 6 ];
   HyperElastic( k, FmI, stress );
-
-  for( localIndex i=0; i<6; ++i )
-  {
-    m_stress( k, q, i ) = stress[i];
-  }
+  LvArray::tensorOps::copy< 6 >( m_stress[ k ][ q ], stress );
 }
+
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+real64 LinearElasticIsotropicUpdates::calculateStrainEnergyDensity( localIndex const k,
+                                                                    localIndex const q ) const
+{
+  real64 const invE = ( 3.0 * m_bulkModulus[k] + m_shearModulus[k] ) / ( 9.0 * m_bulkModulus[k] * m_shearModulus[k] );
+  real64 const nu = ( 1.5 * m_bulkModulus[k] - m_shearModulus[k] ) / ( 3.0 * m_bulkModulus[k] + m_shearModulus[k] );
+
+  auto const & stress = m_stress[k][q];
+  real64 const newStrainEnergyDensity = ( stress[0]*stress[0] + stress[1]*stress[1] + stress[2]*stress[2] -
+                                          2 * ( nu       * ( stress[1]*stress[2] + stress[0]*stress[1] + stress[0]*stress[2] ) -
+                                                (1 + nu) * ( stress[3]*stress[3] + stress[4]*stress[4] + stress[5]*stress[5] )
+                                                )
+                                          ) * invE * 0.5;
+  // Make sure strain energy is always non-negative
+  GEOSX_ASSERT_MSG( newStrainEnergyDensity >= 0.0,
+                    "negative strain energy density" );
+
+  return newStrainEnergyDensity;
+}
+
 
 /**
  * @class LinearElasticIsotropic
@@ -288,14 +326,6 @@ public:
    */
   virtual ~LinearElasticIsotropic() override;
 
-  virtual void
-  DeliverClone( string const & name,
-                Group * const parent,
-                std::unique_ptr< ConstitutiveBase > & clone ) const override;
-
-  virtual void AllocateConstitutiveData( dataRepository::Group * const parent,
-                                         localIndex const numConstitutivePointsPerParentIndex ) override;
-
   /**
    * @name Static Factory Catalog members and functions
    */
@@ -309,7 +339,7 @@ public:
    */
   static std::string CatalogName() { return m_catalogNameString; }
 
-  virtual string GetCatalogName() override { return CatalogName(); }
+  virtual string getCatalogName() const override { return CatalogName(); }
 
   ///@}
 
@@ -340,13 +370,13 @@ public:
    * @brief Setter for the default bulk modulus.
    * @param[in] bulkModulus The value that m_defaultBulkModulus will be set to.
    */
-  void setDefaultBulkModulus( real64 const bulkModulus )   { m_defaultBulkModulus = bulkModulus; }
+  void setDefaultBulkModulus( real64 const bulkModulus );
 
   /**
    * @brief Setter for the default shear modulus.
    * @param[in] bulkModulus The value that m_defaultShearModulus will be set to.
    */
-  void setDefaultShearModulus( real64 const shearModulus ) { m_defaultShearModulus = shearModulus; }
+  void setDefaultShearModulus( real64 const shearModulus );
 
   /**
    * @brief Accessor for bulk modulus
@@ -381,10 +411,37 @@ public:
    *        that refers to the data in this.
    * @return An instantiation of LinearElasticIsotropicUpdate.
    */
-  LinearElasticIsotropicUpdates createKernelWrapper()
+  LinearElasticIsotropicUpdates createKernelUpdates( bool const includeState = true ) const
   {
-    return LinearElasticIsotropicUpdates( m_bulkModulus, m_shearModulus, m_stress );
+    if( includeState )
+    {
+      return LinearElasticIsotropicUpdates( m_bulkModulus, m_shearModulus, m_stress );
+    }
+    else
+    {
+      return LinearElasticIsotropicUpdates( m_bulkModulus,
+                                            m_shearModulus,
+                                            typename decltype(m_stress)::ViewType{} );
+    }
   }
+
+  /**
+   * @brief Construct an update kernel for a derived type.
+   * @tparam UPDATE_KERNEL The type of update kernel from the derived type.
+   * @tparam PARAMS The parameter pack to hold the constructor parameters for
+   *   the derived update kernel.
+   * @param constructorParams The constructor parameter for the derived type.
+   * @return An @p UPDATE_KERNEL object.
+   */
+  template< typename UPDATE_KERNEL, typename ... PARAMS >
+  UPDATE_KERNEL createDerivedKernelUpdates( PARAMS && ... constructorParams )
+  {
+    return UPDATE_KERNEL( std::forward< PARAMS >( constructorParams )...,
+                          m_bulkModulus,
+                          m_shearModulus,
+                          m_stress );
+  }
+
 
 protected:
   virtual void PostProcessInput() override;

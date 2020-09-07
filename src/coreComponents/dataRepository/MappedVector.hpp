@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -23,7 +23,10 @@
 #include "KeyIndexT.hpp"
 #include "common/GeosxMacros.hpp"
 #include "common/Logger.hpp"
-#include "cxx-utilities/src/IntegerConversion.hpp"
+#include "LvArray/src/limits.hpp"
+
+// System includes
+#include <vector>
 
 namespace geosx
 {
@@ -189,7 +192,7 @@ public:
    * @param keyIndex
    * @return pointer to const T
    */
-  inline T const * operator[]( KeyIndex & keyIndex ) const
+  inline T const * operator[]( KeyIndex const & keyIndex ) const
   {
     INDEX_TYPE index = keyIndex.Index();
 
@@ -214,45 +217,8 @@ public:
    * @param keyIndex
    * @return pointer to T
    */
-  inline T * operator[]( KeyIndex & keyIndex )
-  { return const_cast< T * >( const_cast< MappedVector< T, T_PTR, KEY_TYPE, INDEX_TYPE > const * >(this)->operator[]( keyIndex ) ); }
-
-
-
-  /**
-   *
-   * @param keyIndex
-   * @return pointer to const T
-   */
-  inline T const * operator[]( KeyIndex const & keyIndex ) const
-  {
-//    INDEX_TYPE index = keyIndex.Index();
-//
-//    if( index==KeyIndex::invalid_index )
-//    {
-//      GEOSX_ERROR("MappedVector::operator[]( KeyIndex const & keyIndex ):
-// invalid key index passed as const into accessor function\n");
-//    }
-//#if RANGE_CHECKING==1
-//    else if (m_values[index].first!=keyIndex.Key() )
-//    {
-//      GEOSX_ERROR("MappedVector::operator[]( KeyIndex const & keyIndex ):
-// inconsistent key passed as const into accessor function\n")
-//    }
-//#endif
-//
-//    return this->operator[]( index );
-    return this->operator[]( const_cast< KeyIndex & >(keyIndex) );
-  }
-
-  /**
-   *
-   * @param keyIndex
-   * @return pointer to T
-   */
   inline T * operator[]( KeyIndex const & keyIndex )
   { return const_cast< T * >( const_cast< MappedVector< T, T_PTR, KEY_TYPE, INDEX_TYPE > const * >(this)->operator[]( keyIndex ) ); }
-
 
   ///@}
 
@@ -341,7 +307,6 @@ public:
   /**
    * @brief  Remove element at given index
    * @param  index  index of element to remove.
-   * @return  void
    *
    * Completely remove element at given index and corresponding key lookup.
    * If pointed-to object is owned, it is deleted.
@@ -377,7 +342,6 @@ public:
   /**
    *  @brief  Remove element at given key
    *  @param  key  key of element to remove.
-   *  @return  void
    *
    *  This function will set the element at the given key to nullptr.
    */
@@ -393,7 +357,6 @@ public:
   /**
    *  @brief  Remove element at given key
    *  @param  keyIndex  key of element to remove.
-   *  @return  void
    *
    *  This function will set the element at the given key to nullptr.
    */
@@ -416,7 +379,7 @@ public:
   {
     for( typename valueContainer::size_type a = 0; a < m_values.size(); ++a )
     {
-      deleteValue( integer_conversion< INDEX_TYPE >( a ) );
+      deleteValue( LvArray::integerConversion< INDEX_TYPE >( a ) );
     }
     m_constKeyValues.clear();
     m_constValues.clear();
@@ -434,7 +397,7 @@ public:
    */
   inline INDEX_TYPE size() const
   {
-    return integer_conversion< INDEX_TYPE >( m_values.size() );
+    return LvArray::integerConversion< INDEX_TYPE >( m_values.size() );
   }
 
   /**

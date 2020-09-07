@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -33,7 +33,7 @@ FunctionBase::FunctionBase( const std::string & name,
 {
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 
-  registerWrapper( keys::inputVarNames, &m_inputVarNames, 0 )->
+  registerWrapper( keys::inputVarNames, &m_inputVarNames )->
     setInputFlag( InputFlags::OPTIONAL )->
     setSizedFromParent( 0 )->
     setDescription( "Name of fields are input to function." );
@@ -47,7 +47,7 @@ integer FunctionBase::isFunctionOfTime() const
 {
   integer rval=0;
   arrayView1d< string const > const & inputVarNames = this->getReference< string_array >( dataRepository::keys::inputVarNames );
-  localIndex numVars = integer_conversion< localIndex >( inputVarNames.size());
+  localIndex numVars = LvArray::integerConversion< localIndex >( inputVarNames.size());
 
   if( numVars==1 )
   {
@@ -77,7 +77,7 @@ real64_array FunctionBase::EvaluateStats( dataRepository::Group const * const gr
 {
   localIndex N = set.size();
   real64_array sub( N );
-  Evaluate( group, time, set, sub );
+  Evaluate( group, time, set.toViewConst(), sub );
 
   real64_array result( 3 );
   result[0] = 1e10;   // min

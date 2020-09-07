@@ -6,8 +6,10 @@ set(common_headers
     ${CMAKE_BINARY_DIR}/include/common/GeosxConfig.hpp
     BufferAllocator.hpp
     DataTypes.hpp
+    EnumStrings.hpp
     Path.hpp
     GeosxMacros.hpp
+    Stopwatch.hpp
     TimingMacros.hpp
     Logger.hpp
     DataLayouts.hpp
@@ -17,11 +19,13 @@ set(common_headers
 # Specify all sources
 #
 set(common_sources
+    BufferAllocator.cpp
     DataTypes.cpp
     Logger.cpp
+    Path.cpp
    )
 
-set( dependencyList cxx-utilities pugixml )
+set( dependencyList lvarray pugixml )
 
 if( ENABLE_OPENMP )
   set( dependencyList ${dependencyList} openmp )
@@ -59,7 +63,7 @@ blt_add_library( NAME                  common
 #                 SHARED TRUE
                )
 
-target_include_directories( common PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)
+target_include_directories( common PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
 
 geosx_add_code_checks(PREFIX common )
 

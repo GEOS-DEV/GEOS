@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -32,7 +32,7 @@ TEST( LinearElasticAnisotropicTests, testAllocation )
 
   dataRepository::Group disc( "discretization", nullptr );
   disc.resize( numElems );
-  cm.AllocateConstitutiveData( &disc, numQuadraturePoints );
+  cm.allocateConstitutiveData( &disc, numQuadraturePoints );
 
   EXPECT_EQ( cm.size(), numElems );
   EXPECT_EQ( cm.numQuadraturePoints(), numQuadraturePoints );
@@ -48,9 +48,9 @@ TEST( LinearElasticAnisotropicTests, testAllocation )
   EXPECT_EQ( stress.size( 2 ), 6 );
 }
 
-void stressCalc( real64 const c[6][6], R2SymTensor const Ddt, real64 stressVoigt[6] )
+void stressCalc( real64 const c[6][6], real64 const ( &Ddt )[ 6 ], real64 stressVoigt[6] )
 {
-  real64 const DdtVoigt[6] = { Ddt( 0, 0 ), Ddt( 1, 1 ), Ddt( 2, 2 ), 2*Ddt( 1, 2 ), 2*Ddt( 0, 2 ), 2*Ddt( 0, 1 ) };
+  real64 const DdtVoigt[6] = { Ddt[ 0 ], Ddt[ 1 ], Ddt[ 2 ], 2 * Ddt[ 3 ], 2 * Ddt[ 4 ], 2 * Ddt[ 5 ] };
 
   for( int i=0; i<6; ++i )
   {
@@ -62,14 +62,14 @@ void stressCalc( real64 const c[6][6], R2SymTensor const Ddt, real64 stressVoigt
   }
 }
 
-void voigtStrain( real64 strainVoigt[6], R2SymTensor const Ddt )
+void voigtStrain( real64 strainVoigt[6], real64 const Ddt[ 6 ] )
 {
-  strainVoigt[0] = Ddt( 0, 0 );
-  strainVoigt[1] = Ddt( 1, 1 );
-  strainVoigt[2] = Ddt( 2, 2 );
-  strainVoigt[3] = Ddt( 1, 2 )*2;
-  strainVoigt[4] = Ddt( 0, 2 )*2;
-  strainVoigt[5] = Ddt( 0, 1 )*2;
+  strainVoigt[0] = Ddt[ 0 ];
+  strainVoigt[1] = Ddt[ 1 ];
+  strainVoigt[2] = Ddt[ 2 ];
+  strainVoigt[3] = Ddt[ 3 ] * 2;
+  strainVoigt[4] = Ddt[ 4 ] * 2;
+  strainVoigt[5] = Ddt[ 5 ] * 2;
 }
 
 void stressSliceCheck( arrayView3d< real64 const, solid::STRESS_USD > const & stress, real64 const stressV[6] )
@@ -109,40 +109,40 @@ TEST( LinearElasticAnisotropicTests, testStateUpdatePoint )
 
   dataRepository::Group disc( "discretization", nullptr );
   disc.resize( 2 );
-  cm.AllocateConstitutiveData( &disc, 2 );
+  cm.allocateConstitutiveData( &disc, 2 );
 
-  auto cw = cm.createKernelWrapper();
+  auto cw = cm.createKernelUpdates();
 
 
   auto const & stateStress = cw.m_stress;
 
   real64 const strain = 0.1;
-  R2SymTensor Ddt;
-  real64 strainV[6] = {0};
-  real64 stressV[6] = {0.0};
-  real64 stressV2[6] = {0.0};
-  R2Tensor Rot;
+  real64 Ddt[ 6 ] = { 0 };
+  real64 strainV[6] = { 0 };
+  real64 stressV[6] = { 0 };
+  real64 stressV2[6] = { 0 };
+  real64 Rot[ 3 ][ 3 ] = { { 0 } };
 
   {
-    Ddt( 0, 0 ) = strain;
-    Rot( 0, 0 ) = 1;
-    Rot( 1, 1 ) = 1;
-    Rot( 2, 2 ) = 1;
+    Ddt[ 0 ] = strain;
+    Rot[ 0 ][ 0 ] = 1;
+    Rot[ 1 ][ 1 ] = 1;
+    Rot[ 2 ][ 2 ] = 1;
 
-    cw.HypoElastic( 0, 0, Ddt.Data(), Rot );
+    cw.HypoElastic( 0, 0, Ddt, Rot );
     stressCalc( c, Ddt, stressV );
     stressSliceCheck( stateStress, stressV );
 
-    stateStress=0;
-    cw.HypoElastic( 0, 0, Ddt.Data(), Rot );
+    stateStress.setValues< serialPolicy >( 0 );
+    cw.HypoElastic( 0, 0, Ddt, Rot );
     stressSliceCheck( stateStress, stressV );
 
     voigtStrain( strainV, Ddt );
-    stateStress=0;
+    stateStress.setValues< serialPolicy >( 0 );
     cw.SmallStrain( 0, 0, strainV );
     stressSliceCheck( stateStress, stressV );
 
-    stateStress=0;
+    stateStress.setValues< serialPolicy >( 0 );
     cw.SmallStrainNoState( 0, strainV, stressV2 );
     stressCheck( stressV, stressV2 );
 
@@ -150,75 +150,75 @@ TEST( LinearElasticAnisotropicTests, testStateUpdatePoint )
   }
 
   {
-    stateStress = 0;
-    Ddt = 0;
+    stateStress.setValues< serialPolicy >( 0 );
+    LvArray::tensorOps::fill< 6 >( Ddt, 0 );
 
-    Ddt( 1, 1 ) = strain;
-    Rot( 0, 0 ) = 1;
-    Rot( 1, 1 ) = 1;
-    Rot( 2, 2 ) = 1;
+    Ddt[ 1 ] = strain;
+    Rot[ 0 ][ 0 ] = 1;
+    Rot[ 1 ][ 1 ] = 1;
+    Rot[ 2 ][ 2 ] = 1;
 
-    cw.HypoElastic( 0, 0, Ddt.Data(), Rot );
+    cw.HypoElastic( 0, 0, Ddt, Rot );
     stressCalc( c, Ddt, stressV );
     stressSliceCheck( stateStress, stressV );
 
   }
 
   {
-    stateStress = 0;
-    Ddt = 0;
+    stateStress.setValues< serialPolicy >( 0 );
+    LvArray::tensorOps::fill< 6 >( Ddt, 0 );
 
-    Ddt( 2, 2 ) = strain;
-    Rot( 0, 0 ) = 1;
-    Rot( 1, 1 ) = 1;
-    Rot( 2, 2 ) = 1;
+    Ddt[ 2 ] = strain;
+    Rot[ 0 ][ 0 ] = 1;
+    Rot[ 1 ][ 1 ] = 1;
+    Rot[ 2 ][ 2 ] = 1;
 
-    cw.HypoElastic( 0, 0, Ddt.Data(), Rot );
+    cw.HypoElastic( 0, 0, Ddt, Rot );
     stressCalc( c, Ddt, stressV );
     stressSliceCheck( stateStress, stressV );
 
   }
 
   {
-    stateStress = 0;
-    Ddt = 0;
+    stateStress.setValues< serialPolicy >( 0 );
+    LvArray::tensorOps::fill< 6 >( Ddt, 0 );
 
-    Ddt( 0, 1 ) = strain;
-    Rot( 0, 0 ) = 1;
-    Rot( 1, 1 ) = 1;
-    Rot( 2, 2 ) = 1;
+    Ddt[ 5 ] = strain;
+    Rot[ 0 ][ 0 ] = 1;
+    Rot[ 1 ][ 1 ] = 1;
+    Rot[ 2 ][ 2 ] = 1;
 
-    cw.HypoElastic( 0, 0, Ddt.Data(), Rot );
+    cw.HypoElastic( 0, 0, Ddt, Rot );
     stressCalc( c, Ddt, stressV );
     stressSliceCheck( stateStress, stressV );
 
   }
 
   {
-    stateStress = 0;
-    Ddt = 0;
+    stateStress.setValues< serialPolicy >( 0 );
+    LvArray::tensorOps::fill< 6 >( Ddt, 0 );
 
-    Ddt( 0, 2 ) = strain;
-    Rot( 0, 0 ) = 1;
-    Rot( 1, 1 ) = 1;
-    Rot( 2, 2 ) = 1;
+    Ddt[ 4 ] = strain;
+    Rot[ 0 ][ 0 ] = 1;
+    Rot[ 1 ][ 1 ] = 1;
+    Rot[ 2 ][ 2 ] = 1;
 
-    cw.HypoElastic( 0, 0, Ddt.Data(), Rot );
+    cw.HypoElastic( 0, 0, Ddt, Rot );
     stressCalc( c, Ddt, stressV );
     stressSliceCheck( stateStress, stressV );
 
   }
 
   {
-    stateStress = 0;
-    Ddt = 0;
+    stateStress.setValues< serialPolicy >( 0 );
+    LvArray::tensorOps::fill< 6 >( Ddt, 0 );
 
-    Ddt( 1, 2 ) = strain;
-    Rot( 0, 0 ) = 1;
-    Rot( 1, 1 ) = 1;
-    Rot( 2, 2 ) = 1;
+    Ddt[ 3 ] = strain;
+    Rot[ 0 ][ 0 ] = 1;
+    Rot[ 1 ][ 1 ] = 1;
+    Rot[ 2 ][ 2 ] = 1;
 
-    cw.HypoElastic( 0, 0, Ddt.Data(), Rot );
+    cw.HypoElastic( 0, 0, Ddt, Rot );
     stressCalc( c, Ddt, stressV );
     stressSliceCheck( stateStress, stressV );
 
@@ -259,13 +259,13 @@ TEST( LinearElasticAnisotropicTests, testXML )
   LinearElasticAnisotropic * const model = constitutiveManager.GetConstitutiveRelation< LinearElasticAnisotropic >( "granite" );
   dataRepository::Group disc( "discretization", nullptr );
   disc.resize( 1 );
-  model->AllocateConstitutiveData( &disc, 1 );
+  model->allocateConstitutiveData( &disc, 1 );
 
 
-  LinearElasticAnisotropicUpdates kernelWrapper = model->createKernelWrapper();
+  LinearElasticAnisotropicUpdates kernelWrapper = model->createKernelUpdates();
 
   real64 stiffness[6][6];
-  kernelWrapper.GetStiffness( 0, stiffness );
+  kernelWrapper.GetStiffness( 0, 0, stiffness );
 
   real64 c[6][6] = {
     { 1.0e10, 1.1e9, 1.2e9, 1.3e9, 1.4e9, 1.5e9 },

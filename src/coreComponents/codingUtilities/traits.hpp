@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -21,7 +21,8 @@
 
 // Source includes
 #include "common/DataTypes.hpp"
-#include "cxx-utilities/src/templateHelpers.hpp"
+#include "LvArray/src/typeManipulation.hpp"
+#include "LvArray/src/bufferManipulation.hpp"
 #include "SFINAE_Macros.hpp"
 
 // System includes
@@ -42,10 +43,11 @@ HAS_MEMBER_FUNCTION( data, void const *, );
 
 /**
  * @brief Defines a static constexpr bool HasMemberFunction_move< @p CLASS >
- *        that is true iff the method @p CLASS ::move(chai::ExecutionSpace, bool) exists.
+ *        that is true iff the method @p CLASS ::move(LvArray::MemorySpace, bool) exists.
  * @tparam CLASS The type to test.
  */
-HAS_MEMBER_FUNCTION_NO_RTYPE( move, chai::CPU, true );
+template< typename CLASS >
+static constexpr bool HasMemberFunction_move = LvArray::bufferManipulation::HasMemberFunction_move< CLASS >;
 
 /**
  * @brief Defines a static constexpr bool HasMemberFunction_setName< @p CLASS >
@@ -82,7 +84,13 @@ HAS_MEMBER_FUNCTION_NO_RTYPE( resize, 0 );
  */
 HAS_MEMBER_FUNCTION_NO_RTYPE( reserve, localIndex( 55 ) );
 
-HAS_MEMBER_FUNCTION_NO_RTYPE( toView, );
+/**
+ * @brief Defines a static constexpr bool HasMemberFunction_toView< @p CLASS >
+ *        that is true iff the method @p CLASS ::toView() exists.
+ * @tparam CLASS The type to test.
+ */
+template< typename CLASS >
+static constexpr bool HasMemberFunction_toView = LvArray::typeManipulation::HasMemberFunction_toView< CLASS >;
 
 /**
  * @brief Defines a static constexpr bool with two template parameter CanStreamInto
@@ -116,20 +124,6 @@ struct GetPointerType< T, true >
   using ConstPointer = std::remove_pointer_t< Pointer > const *;
 };
 
-template< typename T,
-          bool HAS_VIEW_TYPE = HasMemberFunction_toView< T > >
-struct GetViewType
-{
-  using ViewType = T &;
-  using ViewTypeConst = T const &;
-};
-
-template< class T >
-struct GetViewType< T, true >
-{
-  using ViewType = decltype( std::declval< T >().toView() );
-  using ViewTypeConst = decltype( std::declval< T >().toViewConst() );
-};
 } // namespace internal
 
 /// Type aliased to whatever T::data() returns or T * if that method doesn't exist.
@@ -142,25 +136,63 @@ using ConstPointer = typename internal::GetPointerType< T >::ConstPointer;
 
 /// Type aliased to whatever T::toView() returns or T & if that method doesn't exist.
 template< typename T >
-using ViewType = typename internal::GetViewType< T >::ViewType;
+using ViewType = LvArray::typeManipulation::ViewType< T > &;
 
 /// Type aliased to whatever T::toViewConst() returns or T const & if that method doesn't exist.
 template< typename T >
-using ViewTypeConst = typename internal::GetViewType< T >::ViewTypeConst;
+using ViewTypeConst = LvArray::typeManipulation::ViewTypeConst< T > &;
 
 /// True if T is or inherits from std::string.
 template< typename T >
-constexpr bool is_string = std::is_base_of_v< std::string, T >;
+constexpr bool is_string = std::is_base_of< std::string, T >::value;
 
 /// True if T is an instantiation of LvArray::Array.
 template< typename T >
 constexpr bool is_array = LvArray::isArray< T >;
 
+/// True if T is an instantiation of LvArray::ArrayView.
+template< typename T >
+constexpr bool is_array_view = LvArray::isArrayView< T >;
+
+/// True if T is an instantiation of LvArray::SortedArray.
+template< typename T >
+constexpr bool is_sorted_array = LvArray::isSortedArray< T >;
+
+/// True if T is an instantiation of LvArray:SortedArrayView.
+template< typename T >
+constexpr bool is_sorted_array_view = LvArray::isSortedArrayView< T >;
+
+/// True if T is an instantiation of LvArray::ArrayView or LvArray::Array
+template< typename T >
+constexpr bool is_array_type = traits::is_array_view< T > || traits::is_array< T >;
+
+/// True if T is an instantiation of LvArray::SortedArrayView or LvArray::SortedArray
+template< typename T >
+constexpr bool is_sorted_array_type = traits::is_sorted_array_view< T > || traits::is_sorted_array< T >;
+
 /// True if T is a Tensor class.
 template< typename T >
-constexpr bool is_tensorT = std::is_same_v< std::remove_const_t< T >, R1Tensor > ||
-                            std::is_same_v< std::remove_const_t< T >, R2Tensor > ||
-                            std::is_same_v< std::remove_const_t< T >, R2SymTensor >;
+constexpr bool is_tensorT = std::is_same< std::remove_const_t< T >, R1Tensor >::value;
+
+/// True of T has operator=() defined.
+template< typename _T >
+struct hasCopyAssignmentOperatorImpl
+{
+private:
+  template< typename T > static constexpr auto test( int )->decltype( T()=T(), bool () )
+  { return true; }
+
+  template< typename T > static constexpr auto test( ... )->bool
+  { return false; }
+public:
+  static constexpr bool value = test< _T >( 0 );
+};
+/// True if T has operator= defined, or it is arithmetic or an enum.
+template< typename T >
+static constexpr bool hasCopyAssignmentOp = hasCopyAssignmentOperatorImpl< T >::value ||
+                                            std::is_arithmetic< T >::value ||
+                                            std::is_enum< T >::value;
+
 
 } /* namespace traits */
 

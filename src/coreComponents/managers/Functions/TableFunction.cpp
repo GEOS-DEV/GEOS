@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -46,7 +46,6 @@ TableFunction::TableFunction( const std::string & name,
   m_tableCoordinates1D(),
   m_coordinateFiles(),
   m_voxelFile(),
-  m_interpolationMethodString(),
   m_interpolationMethod( InterpolationType::Linear ),
   m_coordinates(),
   m_values(),
@@ -56,26 +55,26 @@ TableFunction::TableFunction( const std::string & name,
   m_corners(),
   m_numCorners( 0 )
 {
-  registerWrapper( keys::tableCoordinates, &m_tableCoordinates1D, false )->
+  registerWrapper( keys::tableCoordinates, &m_tableCoordinates1D )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Coordinates inputs for 1D tables" );
 
-  registerWrapper( keys::tableValues, &m_values, false )->
+  registerWrapper( keys::tableValues, &m_values )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Values for 1D tables" );
 
-  registerWrapper( keys::coordinateFiles, &m_coordinateFiles, false )->
+  registerWrapper( keys::coordinateFiles, &m_coordinateFiles )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "List of coordinate file names for ND Table" );
 
-  registerWrapper( keys::voxelFile, &m_voxelFile, false )->
+  registerWrapper( keys::voxelFile, &m_voxelFile )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Voxel file name for ND Table" );
 
-  registerWrapper( keys::tableInterpolation, &m_interpolationMethodString, false )->
+  registerWrapper( keys::tableInterpolation, &m_interpolationMethod )->
     setInputFlag( InputFlags::OPTIONAL )->
-    setDescription( "Interpolation method (options = linear, nearest, upper, lower)" )->
-    setApplyDefaultValue( "linear" );
+    setDescription( "Interpolation method. Valid options:\n* " + EnumStrings< InterpolationType >::concat( "\n* " ) )->
+    setApplyDefaultValue( m_interpolationMethod );
 }
 
 TableFunction::~TableFunction()
@@ -104,7 +103,7 @@ void TableFunction::parse_file( array1d< T > & target, string const & filename, 
     }
     while( ss>>value )
     {
-      target.push_back( value );
+      target.emplace_back( value );
       while( ss.peek() == delimiter || ss.peek() == ' ' )
       {
         ss.ignore();
@@ -119,12 +118,17 @@ void TableFunction::parse_file( array1d< T > & target, string const & filename, 
 void TableFunction::InitializeFunction()
 {
   // Read in data
-  if( m_coordinateFiles.empty())
+  if( m_coordinates.size() > 0 )
+  {
+    // This function appears to be already initialized
+    // Apparently, this can be called multiple times during unit tests?
+  }
+  else if( m_coordinateFiles.empty() )
   {
     // 1D Table
     m_dimensions = 1;
-    m_coordinates.push_back( m_tableCoordinates1D );
-    m_size.push_back( m_tableCoordinates1D.size());
+    m_coordinates.emplace_back( m_tableCoordinates1D );
+    m_size.emplace_back( m_tableCoordinates1D.size());
 
     // Check to make sure that the table dimensions match
     GEOSX_ERROR_IF( m_size[0] != m_values.size(), "1D Table function coordinates and values must have the same length." );
@@ -132,53 +136,31 @@ void TableFunction::InitializeFunction()
   else
   {
     // ND Table
-    m_dimensions = integer_conversion< localIndex >( m_coordinateFiles.size());
+    m_dimensions = LvArray::integerConversion< localIndex >( m_coordinateFiles.size());
     m_coordinates.resize( m_dimensions );
 
     parse_file( m_values, m_voxelFile, ',' );
     for( localIndex ii=0; ii<m_dimensions; ++ii )
     {
       parse_file( m_coordinates[ii], m_coordinateFiles[ii], ',' );
-      m_size.push_back( m_coordinates[ii].size());
+      m_size.emplace_back( m_coordinates[ii].size());
     }
   }
-
-
-  // Parse the interpolation method string
-  if( m_interpolationMethodString == "linear" )
-  {
-    m_interpolationMethod = InterpolationType::Linear;
-  }
-  else if( m_interpolationMethodString == "nearest" )
-  {
-    m_interpolationMethod = InterpolationType::Nearest;
-  }
-  else if( m_interpolationMethodString == "upper" )
-  {
-    m_interpolationMethod = InterpolationType::Upper;
-  }
-  else if( m_interpolationMethodString == "lower" )
-  {
-    m_interpolationMethod = InterpolationType::Lower;
-  }
-  else
-  {
-    GEOSX_ERROR( "Unrecognized interpolation type: " << m_interpolationMethodString );
-  }
-
 
   reInitializeFunction();
 }
 
 void TableFunction::reInitializeFunction()
 {
+  m_dimensions = LvArray::integerConversion< localIndex >( m_coordinates.size());
+  m_size.resize( m_dimensions );
 
   // Setup index increment (assume data is in Fortran array order)
   localIndex increment = 1;
   m_indexIncrement.resize( m_dimensions );
   for( localIndex ii=0; ii<m_dimensions; ++ii )
   {
-    m_size[ii] = m_coordinates[ii].size();
+    m_size[ii] = LvArray::integerConversion< localIndex >( m_coordinates[ii].size() );
     m_indexIncrement[ii] = increment;
     increment *= m_size[ii];
   }
@@ -234,7 +216,7 @@ real64 TableFunction::Evaluate( real64 const * const input ) const
         // Note: lower_bound uses a binary search...  If we assume coordinates are
         // evenly spaced, we can speed things up considerably
         auto lower = std::lower_bound( m_coordinates[ii].begin(), m_coordinates[ii].end(), input[ii] );
-        bounds[ii][1] = integer_conversion< localIndex >( std::distance( m_coordinates[ii].begin(), lower ));
+        bounds[ii][1] = LvArray::integerConversion< localIndex >( std::distance( m_coordinates[ii].begin(), lower ));
         bounds[ii][0] = bounds[ii][1] - 1;
 
         real64 dx = m_coordinates[ii][bounds[ii][1]] - m_coordinates[ii][bounds[ii][0]];
@@ -287,7 +269,7 @@ real64 TableFunction::Evaluate( real64 const * const input ) const
         // Coordinate is within the table axis
         // Note: std::distance will return the index of the upper table vertex
         auto lower = std::lower_bound( m_coordinates[ii].begin(), m_coordinates[ii].end(), input[ii] );
-        subIndex = integer_conversion< localIndex >( std::distance( m_coordinates[ii].begin(), lower ));
+        subIndex = LvArray::integerConversion< localIndex >( std::distance( m_coordinates[ii].begin(), lower ));
 
         // Interpolation types:
         //   - Nearest returns the value of the closest table vertex

@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -30,21 +30,29 @@ class PreconditionerIdentity : public PreconditionerBase< LAI >
 {
 public:
 
+  /// Alias for base type
+  using Base = PreconditionerBase< LAI >;
+
+  /// Alias for vector type
+  using Vector = typename Base::Vector;
+
+  /// Alias for matrix type
+  using Matrix = typename Base::Matrix;
+
   virtual ~PreconditionerIdentity() = default;
 
-  using Vector = typename LinearOperator< typename LAI::ParallelVector >::Vector;
-  using Matrix = typename LAI::ParallelMatrix;
-
   /**
-   * @brief Compute the preconditioner from a matrix
-   * @param mat the matrix to precondition
+   * @brief Apply operator to a vector.
+   *
+   * @param src Input vector (src).
+   * @param dst Output vector (dst).
    */
   virtual void apply( Vector const & src,
                       Vector & dst ) const override
   {
     GEOSX_LAI_ASSERT_EQ( this->numGlobalRows(), dst.globalSize() );
     GEOSX_LAI_ASSERT_EQ( this->numGlobalCols(), src.globalSize() );
-    dst = src;
+    dst.copy( src );
   }
 };
 

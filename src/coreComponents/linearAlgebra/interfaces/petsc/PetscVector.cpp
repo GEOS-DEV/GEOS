@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -17,7 +17,10 @@
  */
 
 #include "PetscVector.hpp"
-#include "PetscUtils.hpp"
+
+#include "codingUtilities/Utilities.hpp"
+#include "linearAlgebra/interfaces/petsc/PetscUtils.hpp"
+
 #include <petscvec.h>
 
 namespace geosx
@@ -55,6 +58,7 @@ PetscVector & PetscVector::operator=( PetscVector const & src )
 {
   GEOSX_LAI_ASSERT( &src != this );
   GEOSX_LAI_ASSERT( src.ready() );
+  reset();
   GEOSX_LAI_CHECK_ERROR( VecDuplicate( src.m_vec, &m_vec ) );
   GEOSX_LAI_CHECK_ERROR( VecCopy( src.m_vec, m_vec ) );
   return *this;
@@ -103,12 +107,14 @@ void PetscVector::createWithGlobalSize( globalIndex const globalSize, MPI_Comm c
   GEOSX_LAI_CHECK_ERROR( VecSetSizes( m_vec, PETSC_DECIDE, globalSize ) );
 }
 
-void PetscVector::create( arraySlice1d< real64 const > const & localValues, MPI_Comm const & comm )
+void PetscVector::create( arrayView1d< real64 const > const & localValues, MPI_Comm const & comm )
 {
   GEOSX_LAI_ASSERT( closed() );
   reset();
   PetscInt const size = localValues.size();
   PetscScalar * values;
+
+  localValues.move( LvArray::MemorySpace::CPU, false );
 
   GEOSX_LAI_CHECK_ERROR( VecCreate( comm, &m_vec ) );
   GEOSX_LAI_CHECK_ERROR( VecSetType( m_vec, VECMPI ) );
@@ -199,6 +205,7 @@ void PetscVector::rand( unsigned const seed )
   // create random context
   PetscRandom ran;
   GEOSX_LAI_CHECK_ERROR( PetscRandomCreate( PETSC_COMM_WORLD, &ran ) );
+  GEOSX_LAI_CHECK_ERROR( PetscRandomSetInterval( ran, -1.0, 1.0 ) );
 
   // set random seed
   GEOSX_LAI_CHECK_ERROR( PetscRandomSetSeed( ran, seed ) );
@@ -227,7 +234,19 @@ void PetscVector::close()
 void PetscVector::scale( real64 const scalingFactor )
 {
   GEOSX_LAI_ASSERT( ready() );
+
+  if( isEqual( scalingFactor, 1.0 ) )
+  {
+    return;
+  }
+
   GEOSX_LAI_CHECK_ERROR( VecScale( m_vec, scalingFactor ) );
+}
+
+void PetscVector::reciprocal()
+{
+  GEOSX_LAI_ASSERT( ready() );
+  GEOSX_LAI_CHECK_ERROR( VecReciprocal( m_vec ) );
 }
 
 real64 PetscVector::dot( PetscVector const & vec ) const
@@ -444,7 +463,7 @@ localIndex PetscVector::getLocalRowID( globalIndex const globalRow ) const
   GEOSX_LAI_ASSERT( created() );
   PetscInt low, high;
   GEOSX_LAI_CHECK_ERROR( VecGetOwnershipRange( m_vec, &low, &high ) );
-  return ( globalRow >= low && globalRow < high) ? integer_conversion< localIndex >( globalRow - low ) : -1;
+  return ( globalRow >= low && globalRow < high) ? LvArray::integerConversion< localIndex >( globalRow - low ) : -1;
 }
 
 globalIndex PetscVector::getGlobalRowID( localIndex const localRow ) const

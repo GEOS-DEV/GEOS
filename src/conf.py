@@ -41,7 +41,23 @@ if read_the_docs_build:
     config_dst = os.path.join(common_path, "GeosxConfig.hpp")
 
     input_dirs = ["coreComponents/common",
-                  "coreComponents/dataRepository"]
+                  "coreComponents/dataRepository",
+                  "coreComponents/fileIO",
+                  "coreComponents/linearAlgebra",
+                  "coreComponents/LvArray/src",
+                  "coreComponents/mesh",
+                  "coreComponents/managers",
+                  "coreComponents/meshUtilities",
+                  "coreComponents/wells",
+                  "coreComponents/finiteElement/kernelInterface",
+                  "coreComponents/mesh/ExtrinsicMeshData.hpp",
+                  "coreComponents/physicsSolvers/simplePDE/LaplaceFEMKernels.hpp",
+                  "coreComponents/physicsSolvers/solidMechanics/SolidMechanicsFiniteStrainExplicitNewmarkKernel.hpp",
+                  "coreComponents/physicsSolvers/solidMechanics/SolidMechanicsPoroElasticKernel.hpp",
+                  "coreComponents/physicsSolvers/solidMechanics/SolidMechanicsSmallStrainExplicitNewmarkKernel.hpp",
+                  "coreComponents/physicsSolvers/solidMechanics/SolidMechanicsSmallStrainImplicitNewmarkKernel.hpp",
+                  "coreComponents/physicsSolvers/solidMechanics/SolidMechanicsSmallStrainQuasiStaticKernel.hpp",
+                  "coreComponents/finiteVolume"]
 
     # Write correct ReadtheDocs path and input directories
     shutil.copy(doxyfile_src, doxyfile_dst)
@@ -62,7 +78,7 @@ if read_the_docs_build:
 # -- Project information -----------------------------------------------------
 
 project = u'GEOSX'
-copyright = u'2018, Lawrence Livermore National Laboratory'
+copyright = u'2018- LLNL, Stanford, and Total S.A'
 author = u'Randolph Settgast'
 
 # The short X.Y version
@@ -82,7 +98,8 @@ release = u''
 # ones.
 extensions = [
 #    'sphinx.ext.mathjax'
-    'sphinx.ext.imgmath'
+    'sphinx.ext.imgmath',
+    'sphinx.ext.todo'
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -107,7 +124,9 @@ language = None
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path .
-exclude_patterns = [u'_build', 'Thumbs.db', '.DS_Store','cmake/*']
+exclude_patterns = [u'_build', 'Thumbs.db', '.DS_Store', 'cmake/*']
+
+todo_include_todos = True
 
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = 'sphinx'

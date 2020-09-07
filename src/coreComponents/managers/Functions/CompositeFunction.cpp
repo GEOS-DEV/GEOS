@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -46,15 +46,15 @@ CompositeFunction::CompositeFunction( const std::string & name,
   m_numSubFunctions(),
   m_subFunctions()
 {
-  registerWrapper( keys::functionNames, &m_functionNames, false )->
+  registerWrapper( keys::functionNames, &m_functionNames )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "List of source functions. The order must match the variableNames argument." );
 
-  registerWrapper( keys::variableNames, &m_variableNames, false )->
+  registerWrapper( keys::variableNames, &m_variableNames )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "List of variables in expression" );
 
-  registerWrapper( keys::expression, &m_expression, false )->
+  registerWrapper( keys::expression, &m_expression )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Composite math expression" );
 }
@@ -81,10 +81,10 @@ void CompositeFunction::InitializeFunction()
 
   // Grab pointers to sub functions
   FunctionManager & functionManager = FunctionManager::Instance();
-  m_numSubFunctions = integer_conversion< localIndex >( m_functionNames.size());
+  m_numSubFunctions = LvArray::integerConversion< localIndex >( m_functionNames.size());
   for( localIndex ii=0; ii<m_numSubFunctions; ++ii )
   {
-    m_subFunctions.push_back( functionManager.GetGroup< FunctionBase >( m_functionNames[ii] ));
+    m_subFunctions.emplace_back( functionManager.GetGroup< FunctionBase >( m_functionNames[ii] ));
   }
 #else
   GEOSX_ERROR( "GEOSX was not configured with mathpresso!" );
@@ -105,7 +105,7 @@ void CompositeFunction::Evaluate( dataRepository::Group const * const group,
   {
     real64_array tmp( result.size());
     m_subFunctions[ii]->Evaluate( group, time, set, tmp );
-    subFunctionResults.push_back( std::move( tmp ));
+    subFunctionResults.emplace_back( std::move( tmp ));
   }
 
   // Evaluate the symbolic math

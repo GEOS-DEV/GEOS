@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -26,6 +26,7 @@
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "managers/NumericalMethodsManager.hpp"
 #include "mesh/EmbeddedSurfaceRegion.hpp"
+#include "mesh/ExtrinsicMeshData.hpp"
 #include "meshUtilities/ComputationalGeometry.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEMKernels.hpp"
 #include "meshUtilities/SimpleGeometricObjects/GeometricObjectManager.hpp"
@@ -45,13 +46,17 @@ EmbeddedSurfaceGenerator::EmbeddedSurfaceGenerator( const std::string & name,
                                                     Group * const parent ):
   SolverBase( name, parent )
 {
-  registerWrapper( viewKeyStruct::solidMaterialNameString, &m_solidMaterialNames, false )->
+  registerWrapper( viewKeyStruct::solidMaterialNameString, &m_solidMaterialNames )->
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "Name of the solid material used in solid mechanic solver" );
 
-  registerWrapper( viewKeyStruct::fractureRegionNameString, &m_fractureRegionName, false )->
+  registerWrapper( viewKeyStruct::fractureRegionNameString, &m_fractureRegionName )->
     setInputFlag( dataRepository::InputFlags::OPTIONAL )->
     setApplyDefaultValue( "FractureRegion" );
+
+  this->getWrapper< string >( viewKeyStruct::discretizationString )->
+    setInputFlag( InputFlags::FALSE );
+
 }
 
 EmbeddedSurfaceGenerator::~EmbeddedSurfaceGenerator()
@@ -66,25 +71,11 @@ void EmbeddedSurfaceGenerator::RegisterDataOnMesh( Group * const MeshBodies )
     NodeManager * const nodeManager = meshLevel->getNodeManager();
     EdgeManager * const edgeManager = meshLevel->getEdgeManager();
 
-    nodeManager->registerWrapper< localIndex_array >( ObjectManagerBase::viewKeyStruct::parentIndexString )->
-      setApplyDefaultValue( -1 )->
-      setPlotLevel( dataRepository::PlotLevel::LEVEL_1 )->
-      setDescription( "Parent index of node." );
+    nodeManager->registerExtrinsicData< extrinsicMeshData::ParentIndex >( this->getName() );
+    nodeManager->registerExtrinsicData< extrinsicMeshData::ChildIndex >( this->getName() );
 
-    nodeManager->registerWrapper< localIndex_array >( ObjectManagerBase::viewKeyStruct::childIndexString )->
-      setApplyDefaultValue( -1 )->
-      setPlotLevel( dataRepository::PlotLevel::LEVEL_1 )->
-      setDescription( "Child index of node." );
-
-    edgeManager->registerWrapper< localIndex_array >( ObjectManagerBase::viewKeyStruct::parentIndexString )->
-      setApplyDefaultValue( -1 )->
-      setPlotLevel( dataRepository::PlotLevel::LEVEL_1 )->
-      setDescription( "Parent index of the edge." );
-
-    edgeManager->registerWrapper< localIndex_array >( ObjectManagerBase::viewKeyStruct::childIndexString )->
-      setApplyDefaultValue( -1 )->
-      setPlotLevel( dataRepository::PlotLevel::LEVEL_1 )->
-      setDescription( "Child index of the edge." );
+    edgeManager->registerExtrinsicData< extrinsicMeshData::ParentIndex >( this->getName() );
+    edgeManager->registerExtrinsicData< extrinsicMeshData::ChildIndex >( this->getName() );
   }
 }
 
@@ -173,6 +164,11 @@ void EmbeddedSurfaceGenerator::InitializePostSubGroups( Group * const problemMan
     } );// end loop over subregions
   } );// end loop over thick planes
 
+  ElementRegionManager::ElementViewAccessor< arrayView1d< integer const > > const & cellElemGhostRank =
+    elemManager->ConstructArrayViewAccessor< integer, 1 >( ObjectManagerBase::viewKeyStruct::ghostRankString );
+
+  embeddedSurfaceSubRegion->inheritGhostRank( cellElemGhostRank );
+
   GEOSX_LOG_LEVEL_RANK_0( 1, "Number of embedded surface elements: " << embeddedSurfaceSubRegion->size() );
 }
 
@@ -192,7 +188,7 @@ void EmbeddedSurfaceGenerator::postRestartInitialization( Group * const GEOSX_UN
 real64 EmbeddedSurfaceGenerator::SolverStep( real64 const & GEOSX_UNUSED_PARAM( time_n ),
                                              real64 const & GEOSX_UNUSED_PARAM( dt ),
                                              const int GEOSX_UNUSED_PARAM( cycleNumber ),
-                                             DomainPartition * const GEOSX_UNUSED_PARAM( domain ) )
+                                             DomainPartition & GEOSX_UNUSED_PARAM( domain ) )
 {
   real64 rval = 0;
   /*

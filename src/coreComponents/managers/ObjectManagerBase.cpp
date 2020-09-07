@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -17,7 +17,9 @@
  */
 
 #include "ObjectManagerBase.hpp"
+
 #include "common/TimingMacros.hpp"
+#include "mesh/ExtrinsicMeshData.hpp"
 #include "mpiCommunications/MpiWrapper.hpp"
 
 namespace geosx
@@ -32,25 +34,26 @@ ObjectManagerBase::ObjectManagerBase( std::string const & name,
   m_localToGlobalMap(),
   m_globalToLocalMap(),
   m_isExternal(),
+  m_domainBoundaryIndicator(),
   m_ghostRank(),
   m_neighborData()
 {
-  RegisterGroup( groupKeyStruct::setsString, &m_sets, false );
-  RegisterGroup( groupKeyStruct::neighborDataString, &m_neighborGroup, false );
+  RegisterGroup( groupKeyStruct::setsString, &m_sets );
+  RegisterGroup( groupKeyStruct::neighborDataString, &m_neighborGroup );
 
-  registerWrapper( viewKeyStruct::localToGlobalMapString, &m_localToGlobalMap, false )->
+  registerWrapper( viewKeyStruct::localToGlobalMapString, &m_localToGlobalMap )->
     setApplyDefaultValue( -1 )->
     setDescription( "Array that contains a map from localIndex to globalIndex." );
 
-  registerWrapper( viewKeyStruct::globalToLocalMapString, &m_globalToLocalMap, false );
+  registerWrapper( viewKeyStruct::globalToLocalMapString, &m_globalToLocalMap );
 
-  registerWrapper( viewKeyStruct::isExternalString, &m_isExternal, false );
+  registerWrapper( viewKeyStruct::isExternalString, &m_isExternal );
 
-  registerWrapper( viewKeyStruct::ghostRankString, &m_ghostRank, false )->
+  registerWrapper( viewKeyStruct::ghostRankString, &m_ghostRank )->
     setApplyDefaultValue( -2 )->
     setPlotLevel( PlotLevel::LEVEL_0 );
 
-  registerWrapper< array1d< integer > >( viewKeyStruct::domainBoundaryIndicatorString );
+  registerWrapper< array1d< integer > >( viewKeyStruct::domainBoundaryIndicatorString, &m_domainBoundaryIndicator );
 
   m_sets.registerWrapper< SortedArray< localIndex > >( this->m_ObjectManagerBaseViewKeys.externalSet );
 }
@@ -169,24 +172,24 @@ void ObjectManagerBase::ConstructSetFromSetAndMap( SortedArrayView< localIndex c
 
 void ObjectManagerBase::ConstructLocalListOfBoundaryObjects( localIndex_array & objectList ) const
 {
-  arrayView1d< integer const > const & isDomainBoundary = this->getReference< integer_array >( m_ObjectManagerBaseViewKeys.domainBoundaryIndicator );
+  arrayView1d< integer const > const & isDomainBoundary = this->getDomainBoundaryIndicator();
   for( localIndex k=0; k<size(); ++k )
   {
     if( isDomainBoundary[k] == 1 )
     {
-      objectList.push_back( k );
+      objectList.emplace_back( k );
     }
   }
 }
 
 void ObjectManagerBase::ConstructGlobalListOfBoundaryObjects( globalIndex_array & objectList ) const
 {
-  arrayView1d< integer const > const & isDomainBoundary = this->getReference< integer_array >( m_ObjectManagerBaseViewKeys.domainBoundaryIndicator );
+  arrayView1d< integer const > const & isDomainBoundary = this->getDomainBoundaryIndicator();
   for( localIndex k=0; k<size(); ++k )
   {
     if( isDomainBoundary[k] == 1 )
     {
-      objectList.push_back( this->m_localToGlobalMap[k] );
+      objectList.emplace_back( this->m_localToGlobalMap[k] );
     }
   }
   std::sort( objectList.begin(), objectList.end() );
@@ -285,11 +288,11 @@ localIndex ObjectManagerBase::PackPrivate( buffer_unit_type * & buffer,
         packedSize += bufferOps::Pack< DOPACK >( buffer, wrapperName );
         if( DOPACK )
         {
-          packedSize += wrapper->PackByIndex( buffer, packList, on_device );
+          packedSize += wrapper->PackByIndex( buffer, packList, true, on_device );
         }
         else
         {
-          packedSize += wrapper->PackByIndexSize( packList, on_device );
+          packedSize += wrapper->PackByIndexSize( packList, true, on_device );
         }
       }
       else
@@ -350,7 +353,7 @@ localIndex ObjectManagerBase::Unpack( buffer_unit_type const * & buffer,
       if( wrapperName != "nullptr" )
       {
         WrapperBase * const wrapper = this->getWrapperBase( wrapperName );
-        unpackedSize += wrapper->UnpackByIndex( buffer, packList, on_device );
+        unpackedSize += wrapper->UnpackByIndex( buffer, packList, true, on_device );
       }
     }
   }
@@ -385,10 +388,10 @@ localIndex ObjectManagerBase::PackParentChildMapsPrivate( buffer_unit_type * & b
 {
   localIndex packedSize = 0;
 
-  if( this->hasWrapper( m_ObjectManagerBaseViewKeys.parentIndex ) )
+  if( this->hasExtrinsicData< extrinsicMeshData::ParentIndex >() )
   {
-    arrayView1d< localIndex const > const & parentIndex = this->getReference< localIndex_array >( m_ObjectManagerBaseViewKeys.parentIndex );
-    packedSize += bufferOps::Pack< DOPACK >( buffer, string( viewKeyStruct::parentIndexString ) );
+    arrayView1d< localIndex const > const & parentIndex = this->getExtrinsicData< extrinsicMeshData::ParentIndex >();
+    packedSize += bufferOps::Pack< DOPACK >( buffer, string( extrinsicMeshData::ParentIndex::key ) );
     packedSize += bufferOps::Pack< DOPACK >( buffer,
                                              parentIndex,
                                              packList,
@@ -396,10 +399,10 @@ localIndex ObjectManagerBase::PackParentChildMapsPrivate( buffer_unit_type * & b
                                              this->m_localToGlobalMap );
   }
 
-  if( this->hasWrapper( m_ObjectManagerBaseViewKeys.childIndex ) )
+  if( this->hasExtrinsicData< extrinsicMeshData::ChildIndex >() )
   {
-    arrayView1d< localIndex const > const & childIndex = this->getReference< localIndex_array >( m_ObjectManagerBaseViewKeys.childIndex );
-    packedSize += bufferOps::Pack< DOPACK >( buffer, string( viewKeyStruct::childIndexString ) );
+    arrayView1d< localIndex const > const & childIndex = this->getExtrinsicData< extrinsicMeshData::ChildIndex >();
+    packedSize += bufferOps::Pack< DOPACK >( buffer, string( extrinsicMeshData::ChildIndex::key ) );
     packedSize += bufferOps::Pack< DOPACK >( buffer,
                                              childIndex,
                                              packList,
@@ -423,13 +426,13 @@ localIndex ObjectManagerBase::UnpackParentChildMaps( buffer_unit_type const * & 
 {
   localIndex unpackedSize = 0;
 
-  if( this->hasWrapper( m_ObjectManagerBaseViewKeys.parentIndex ) )
+  if( this->hasExtrinsicData< extrinsicMeshData::ParentIndex >() )
   {
-    localIndex_array & parentIndex = this->getReference< localIndex_array >( m_ObjectManagerBaseViewKeys.parentIndex );
+    arrayView1d< localIndex > const & parentIndex = this->getExtrinsicData< extrinsicMeshData::ParentIndex >();
     string shouldBeParentIndexString;
     unpackedSize += bufferOps::Unpack( buffer, shouldBeParentIndexString );
-    GEOSX_ERROR_IF( shouldBeParentIndexString != viewKeyStruct::parentIndexString,
-                    "value read from buffer is:"<<shouldBeParentIndexString<<". It should be "<<viewKeyStruct::parentIndexString );
+    GEOSX_ERROR_IF( shouldBeParentIndexString != extrinsicMeshData::ParentIndex::key,
+                    "value read from buffer is:" << shouldBeParentIndexString << ". It should be " << extrinsicMeshData::ParentIndex::key );
     unpackedSize += bufferOps::Unpack( buffer,
                                        parentIndex,
                                        packList,
@@ -437,13 +440,13 @@ localIndex ObjectManagerBase::UnpackParentChildMaps( buffer_unit_type const * & 
                                        this->m_globalToLocalMap );
   }
 
-  if( this->hasWrapper( m_ObjectManagerBaseViewKeys.childIndex ) )
+  if( this->hasExtrinsicData< extrinsicMeshData::ChildIndex >() )
   {
-    localIndex_array & childIndex = this->getReference< localIndex_array >( m_ObjectManagerBaseViewKeys.childIndex );
+    arrayView1d< localIndex > const & childIndex = this->getExtrinsicData< extrinsicMeshData::ChildIndex >();
     string shouldBeChildIndexString;
     unpackedSize += bufferOps::Unpack( buffer, shouldBeChildIndexString );
-    GEOSX_ERROR_IF( shouldBeChildIndexString != viewKeyStruct::childIndexString,
-                    "value read from buffer is:"<<shouldBeChildIndexString<<". It should be "<<viewKeyStruct::childIndexString );
+    GEOSX_ERROR_IF( shouldBeChildIndexString != extrinsicMeshData::ChildIndex::key,
+                    "value read from buffer is:" << shouldBeChildIndexString << ". It should be " << extrinsicMeshData::ChildIndex::key );
     unpackedSize += bufferOps::Unpack( buffer,
                                        childIndex,
                                        packList,
@@ -472,7 +475,7 @@ localIndex ObjectManagerBase::PackSets( buffer_unit_type * & buffer,
     packedSize += bufferOps::Pack< DOPACK >( buffer,
                                              currentSet,
                                              packList,
-                                             SortedArray< globalIndex >(),
+                                             SortedArray< globalIndex >().toViewConst(),
                                              m_localToGlobalMap );
   }
   return packedSize;
@@ -554,10 +557,11 @@ localIndex ObjectManagerBase::PackGlobalMapsPrivate( buffer_unit_type * & buffer
     packedSize += bufferOps::Pack< DOPACK >( buffer, globalIndices );
   }
 
-  if( this->hasWrapper( viewKeys().parentIndex ) )
+  // FIXME is this the responsibility of this instance to do this?
+  if( this->hasExtrinsicData< extrinsicMeshData::ParentIndex >() )
   {
-    arrayView1d< localIndex const > const & parentIndex = this->getReference< localIndex_array >( viewKeys().parentIndex );
-    packedSize += bufferOps::Pack< DOPACK >( buffer, string( viewKeyStruct::parentIndexString ) );
+    arrayView1d< localIndex const > const & parentIndex = this->getExtrinsicData< extrinsicMeshData::ParentIndex >();
+    packedSize += bufferOps::Pack< DOPACK >( buffer, string( extrinsicMeshData::ParentIndex::key ) );
     packedSize += bufferOps::Pack< DOPACK >( buffer,
                                              parentIndex,
                                              packList,
@@ -591,6 +595,8 @@ localIndex ObjectManagerBase::UnpackGlobalMaps( buffer_unit_type const * & buffe
                                                 localIndex_array & packList,
                                                 integer const recursive )
 {
+  GEOSX_MARK_FUNCTION;
+
   localIndex unpackedSize = 0;
   string groupName;
   unpackedSize += bufferOps::Unpack( buffer, groupName );
@@ -634,7 +640,7 @@ localIndex ObjectManagerBase::UnpackGlobalMaps( buffer_unit_type const * & buffe
 
         unpackedLocalIndices( a ) = newLocalIndex;
 
-        newGlobalIndices.push_back( globalIndices[a] );
+        newGlobalIndices.emplace_back( globalIndices[a] );
 
         ++numNewIndices;
 
@@ -672,12 +678,12 @@ localIndex ObjectManagerBase::UnpackGlobalMaps( buffer_unit_type const * & buffe
   }
 
 
-  if( this->hasWrapper( m_ObjectManagerBaseViewKeys.parentIndex ) )
+  if( this->hasExtrinsicData< extrinsicMeshData::ParentIndex >() )
   {
-    array1d< localIndex > & parentIndex = this->getReference< localIndex_array >( m_ObjectManagerBaseViewKeys.parentIndex );
+    arrayView1d< localIndex > const & parentIndex = this->getExtrinsicData< extrinsicMeshData::ParentIndex >();
     string parentIndicesString;
     unpackedSize += bufferOps::Unpack( buffer, parentIndicesString );
-    GEOSX_ERROR_IF( parentIndicesString != viewKeyStruct::parentIndexString, "ObjectManagerBase::Unpack(): label incorrect" );
+    GEOSX_ERROR_IF( parentIndicesString != extrinsicMeshData::ParentIndex::key, "ObjectManagerBase::Unpack(): label incorrect" );
     unpackedSize += bufferOps::Unpack( buffer,
                                        parentIndex,
                                        packList,
@@ -720,8 +726,8 @@ void ObjectManagerBase::ViewPackingExclusionList( SortedArray< localIndex > & ex
   exclusionList.insert( this->getWrapperIndex( viewKeyStruct::localToGlobalMapString ));
   exclusionList.insert( this->getWrapperIndex( viewKeyStruct::globalToLocalMapString ));
   exclusionList.insert( this->getWrapperIndex( viewKeyStruct::ghostRankString ));
-  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::parentIndexString ));
-  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::childIndexString ));
+  exclusionList.insert( this->getWrapperIndex( extrinsicMeshData::ParentIndex::key ));
+  exclusionList.insert( this->getWrapperIndex( extrinsicMeshData::ChildIndex::key ));
 
 }
 
@@ -765,7 +771,7 @@ void ObjectManagerBase::SetReceiveLists()
   {
     if( m_ghostRank[a] > -1 )
     {
-      getNeighborData( m_ghostRank[ a ] ).ghostsToReceive().push_back( a );
+      getNeighborData( m_ghostRank[ a ] ).ghostsToReceive().emplace_back( a );
     }
   }
 }
@@ -789,15 +795,15 @@ integer ObjectManagerBase::SplitObject( localIndex const indexToSplit,
   // copy the fields
   CopyObject( indexToSplit, newIndex );
 
-  if( this->hasWrapper( m_ObjectManagerBaseViewKeys.parentIndex ) )
+  if( this->hasExtrinsicData< extrinsicMeshData::ParentIndex >() )
   {
-    arrayView1d< localIndex > const & parentIndex = this->getReference< localIndex_array >( m_ObjectManagerBaseViewKeys.parentIndex );
+    arrayView1d< localIndex > const & parentIndex = this->getExtrinsicData< extrinsicMeshData::ParentIndex >();
     parentIndex[newIndex] = indexToSplit;
   }
 
-  if( this->hasWrapper( m_ObjectManagerBaseViewKeys.childIndex ) )
+  if( this->hasExtrinsicData< extrinsicMeshData::ChildIndex >() )
   {
-    arrayView1d< localIndex > const & childIndex = this->getReference< localIndex_array >( m_ObjectManagerBaseViewKeys.childIndex );
+    arrayView1d< localIndex > const & childIndex = this->getExtrinsicData< extrinsicMeshData::ChildIndex >();
     childIndex[indexToSplit] = newIndex;
   }
 
@@ -820,12 +826,11 @@ integer ObjectManagerBase::SplitObject( localIndex const indexToSplit,
 
 void ObjectManagerBase::inheritGhostRankFromParent( std::set< localIndex > const & indices )
 {
-  arrayView1d< localIndex const > const &
-  parentIndex = this->getReference< localIndex_array >( m_ObjectManagerBaseViewKeys.parentIndex );
+  arrayView1d< localIndex const > const & parentIndex = this->getExtrinsicData< extrinsicMeshData::ParentIndex >();
 
   for( auto const a : indices )
   {
-    m_ghostRank[a] = m_ghostRank[ parentIndex[a] ];
+    m_ghostRank[ a ] = m_ghostRank[ parentIndex[ a ] ];
   }
 }
 
@@ -840,6 +845,11 @@ void ObjectManagerBase::CopyObject( const localIndex source, const localIndex de
   for( localIndex i=0; i<m_sets.wrappers().size(); ++i )
   {
     SortedArray< localIndex > & targetSet = m_sets.getReference< SortedArray< localIndex > >( i );
+
+#if !defined(__CUDA_ARCH__)
+    targetSet.move( LvArray::MemorySpace::CPU, true );
+#endif
+
     if( targetSet.count( source ) > 0 )
     {
       targetSet.insert( destination );
@@ -881,7 +891,7 @@ void ObjectManagerBase::CleanUpMap( std::set< localIndex > const & targetIndices
     }
     for( auto const & val : eraseList )
     {
-      upmap[targetIndex].erase( val );
+      upmap[targetIndex].remove( val );
     }
   }
 }
@@ -890,13 +900,12 @@ void ObjectManagerBase::CleanUpMap( std::set< localIndex > const & targetIndices
                                     ArrayOfSetsView< localIndex > const & upmap,
                                     arrayView2d< localIndex const > const & downmap )
 {
+  std::vector< localIndex > eraseList;
   for( localIndex const targetIndex : targetIndices )
   {
-    // We sort from largest to smallest so when we erase from the upmap subsequent
-    // indices are valid.
-    SortedArray< localIndex > eraseList;
+    eraseList.clear();
     localIndex pos = 0;
-    for( auto const & compositeIndex : upmap.getIterableSet( targetIndex ) )
+    for( auto const & compositeIndex : upmap[ targetIndex ] )
     {
       bool hasTargetIndex = false;
       for( localIndex a=0; a<downmap.size( 1 ); ++a )
@@ -910,13 +919,14 @@ void ObjectManagerBase::CleanUpMap( std::set< localIndex > const & targetIndices
 
       if( !hasTargetIndex )
       {
-        eraseList.insert( pos );
+        eraseList.emplace_back( pos );
       }
 
       ++pos;
     }
 
-    upmap.removeSortedFromSet( targetIndex, eraseList.begin(), eraseList.size() );
+    localIndex const numUniqueIndices = LvArray::sortedArrayManipulation::makeSortedUnique( eraseList.begin(), eraseList.end() );
+    upmap.removeFromSet( targetIndex, eraseList.begin(), eraseList.begin() + numUniqueIndices );
   }
 }
 
@@ -945,7 +955,7 @@ void ObjectManagerBase::CleanUpMap( std::set< localIndex > const & targetIndices
     }
     for( auto const & val : eraseList )
     {
-      upmap[targetIndex].erase( val );
+      upmap[targetIndex].remove( val );
     }
   }
 }
@@ -954,11 +964,12 @@ void ObjectManagerBase::CleanUpMap( std::set< localIndex > const & targetIndices
                                     ArrayOfSetsView< localIndex > const & upmap,
                                     arrayView1d< arrayView1d< localIndex const > const > const & downmap )
 {
+  std::vector< localIndex > eraseList;
   for( localIndex const targetIndex : targetIndices )
   {
-    SortedArray< localIndex > eraseList;
+    eraseList.clear();
     localIndex pos = 0;
-    for( localIndex const compositeIndex : upmap.getIterableSet( targetIndex ) )
+    for( localIndex const compositeIndex : upmap[ targetIndex ] )
     {
       bool hasTargetIndex = false;
       for( localIndex a=0; a<downmap[compositeIndex].size(); ++a )
@@ -972,13 +983,14 @@ void ObjectManagerBase::CleanUpMap( std::set< localIndex > const & targetIndices
 
       if( !hasTargetIndex )
       {
-        eraseList.insert( pos );
+        eraseList.emplace_back( pos );
       }
 
       ++pos;
     }
 
-    upmap.removeSortedFromSet( targetIndex, eraseList.data(), eraseList.size() );
+    localIndex const numUniqueIndices = LvArray::sortedArrayManipulation::makeSortedUnique( eraseList.begin(), eraseList.end() );
+    upmap.removeFromSet( targetIndex, eraseList.begin(), eraseList.begin() + numUniqueIndices );
   }
 }
 
@@ -986,13 +998,14 @@ void ObjectManagerBase::CleanUpMap( std::set< localIndex > const & targetIndices
                                     ArrayOfSetsView< localIndex > const & upmap,
                                     ArrayOfArraysView< localIndex const > const & downmap )
 {
+  std::vector< localIndex > eraseList;
   for( localIndex const targetIndex : targetIndices )
   {
-    SortedArray< localIndex > eraseList;
-    for( localIndex const compositeIndex : upmap.getIterableSet( targetIndex ) )
+    eraseList.clear();
+    for( localIndex const compositeIndex : upmap[ targetIndex ] )
     {
       bool hasTargetIndex = false;
-      for( localIndex const compositeLocalIndex : downmap.getIterableArray( compositeIndex ) )
+      for( localIndex const compositeLocalIndex : downmap[ compositeIndex ] )
       {
         if( compositeLocalIndex == targetIndex )
         {
@@ -1002,19 +1015,19 @@ void ObjectManagerBase::CleanUpMap( std::set< localIndex > const & targetIndices
 
       if( !hasTargetIndex )
       {
-        eraseList.insert( compositeIndex );
+        eraseList.emplace_back( compositeIndex );
       }
     }
 
-    upmap.removeSortedFromSet( targetIndex, eraseList.data(), eraseList.size() );
+    localIndex const numUniqueIndices = LvArray::sortedArrayManipulation::makeSortedUnique( eraseList.begin(), eraseList.end() );
+    upmap.removeFromSet( targetIndex, eraseList.begin(), eraseList.begin() + numUniqueIndices );
   }
 }
 
 
 void ObjectManagerBase::enforceStateFieldConsistencyPostTopologyChange( std::set< localIndex > const & targetIndices )
 {
-  arrayView1d< localIndex const > const &
-  childFaceIndices = getReference< array1d< localIndex > >( ObjectManagerBase::viewKeyStruct::childIndexString );
+  arrayView1d< localIndex const > const & childFaceIndices = getExtrinsicData< extrinsicMeshData::ChildIndex >();
 
   for( localIndex const targetIndex : targetIndices )
   {
@@ -1025,5 +1038,16 @@ void ObjectManagerBase::enforceStateFieldConsistencyPostTopologyChange( std::set
     }
   }
 }
+
+
+void ObjectManagerBase::moveSets( LvArray::MemorySpace const targetSpace )
+{
+  m_sets.forWrappers< SortedArray< localIndex > >( [&] ( auto & wrapper )
+  {
+    SortedArray< localIndex > & set = wrapper.reference();
+    set.move( targetSpace );
+  } );
+}
+
 
 } /* namespace geosx */

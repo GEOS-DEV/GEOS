@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -43,17 +43,40 @@ public:
     m_connectorIndices()
   {}
 
-  virtual ~StencilBase() = default;
-  StencilBase( StencilBase const & ) = default;
-  StencilBase( StencilBase && ) = default;
   /**
-   * @brief reserve the size of the stencil
+   * @brief Destructor.
+   */
+  virtual ~StencilBase() = default;
+
+  /**
+   * @brief Constructor.
+   */
+  StencilBase( StencilBase const & ) = default;
+
+  /**
+   * @brief Move constructor.
+   */
+  StencilBase( StencilBase && ) = default;
+
+  /**
+   * @brief Reserve the size of the stencil.
    * @param[in] size the size of the stencil to reserve
    */
   virtual void reserve( localIndex const size );
 
   /**
-   * @brief Add an entry to the stencil
+   * @brief Move the data arrays associated with the stencil to a specified
+   *   memory space.
+   * @param space The target memory space.
+   *
+   * @note The existence of this function indicates we need to redesign the
+   * stencil classes.
+   */
+  virtual void move( LvArray::MemorySpace const space );
+
+
+  /**
+   * @brief Add an entry to the stencil.
    * @param[in] numPts The number of points in the stencil entry
    * @param[in] elementRegionIndices The element region indices for each point in the stencil entry
    * @param[in] elementSubRegionIndices The element sub-region indices for each point in the stencil entry
@@ -69,7 +92,7 @@ public:
                     localIndex const connectorIndex ) = 0;
 
   /**
-   * @brief Zero weights for a stencil entry
+   * @brief Zero weights for a stencil entry.
    * @param[in] connectorIndex The index of the connector element that the stencil acts across for which the weights are
    *                           to be zero.
    * @return True if a valid connectorIndex was found, and had its corresponding weights set to zero.
@@ -77,35 +100,40 @@ public:
   virtual bool zero( localIndex const connectorIndex );
 
   /**
-   * @brief Give the number of stencil entries
+   * @brief Give the number of stencil entries.
    * @return The number of stencil entries
    */
   virtual localIndex size() const = 0;
 
+  /**
+   * @brief Set the name used in data movement logging callbacks.
+   * @param name the name prefix for the stencil's data arrays
+   */
+  void setName( string const & name );
 
   /**
-   * @brief Const access to the element regions indices
+   * @brief Const access to the element regions indices.
    * @return A view to const
    */
-  typename LEAFCLASSTRAITS::IndexContainerViewConstType const & getElementRegionIndices() const { return m_elementRegionIndices; }
+  typename LEAFCLASSTRAITS::IndexContainerViewConstType const & getElementRegionIndices() const { return m_elementRegionIndices.toViewConst(); }
 
   /**
-   * @brief Const access to the element subregions indices
+   * @brief Const access to the element subregions indices.
    * @return A view to const
    */
-  typename LEAFCLASSTRAITS::IndexContainerViewConstType const & getElementSubRegionIndices() const { return m_elementSubRegionIndices; }
+  typename LEAFCLASSTRAITS::IndexContainerViewConstType const & getElementSubRegionIndices() const { return m_elementSubRegionIndices.toViewConst(); }
 
   /**
-   * @brief Const access to the element indices
+   * @brief Const access to the element indices.
    * @return A view to const
    */
-  typename LEAFCLASSTRAITS::IndexContainerViewConstType const & getElementIndices() const { return m_elementIndices; }
+  typename LEAFCLASSTRAITS::IndexContainerViewConstType const & getElementIndices() const { return m_elementIndices.toViewConst(); }
 
   /**
-   * @brief Const access to the stencil weights
+   * @brief Const access to the stencil weights.
    * @return A view to const
    */
-  typename LEAFCLASSTRAITS::WeightContainerViewConstType const & getWeights() const { return m_weights; }
+  typename LEAFCLASSTRAITS::WeightContainerViewConstType const & getWeights() const { return m_weights.toViewConst(); }
 
 protected:
   /// The container for the element region indices for each point in each stencil
@@ -149,6 +177,26 @@ bool StencilBase< LEAFCLASSTRAITS, LEAFCLASS >::zero( localIndex const connector
     }
   } );
 }
+
+template< typename LEAFCLASSTRAITS, typename LEAFCLASS >
+void StencilBase< LEAFCLASSTRAITS, LEAFCLASS >::setName( string const & name )
+{
+  m_elementRegionIndices.setName( name + "/elementRegionIndices" );
+  m_elementSubRegionIndices.setName( name + "/elementSubRegionIndices" );
+  m_elementIndices.setName( name + "/elementIndices" );
+  m_weights.setName( name + "/weights" );
+}
+
+template< typename LEAFCLASSTRAITS, typename LEAFCLASS >
+void StencilBase< LEAFCLASSTRAITS, LEAFCLASS >::move( LvArray::MemorySpace const space )
+{
+  m_elementRegionIndices.move( space, true );
+  m_elementSubRegionIndices.move( space, true );
+  m_elementIndices.move( space, true );
+  m_weights.move( space, true );
+}
+
+
 } /* namespace geosx */
 
 #endif /* GEOSX_FINITEVOLUME_STENCILBASE_HPP_ */

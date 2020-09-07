@@ -78,7 +78,7 @@ void MpiWrapper::Comm_free( MPI_Comm & comm )
 #ifdef GEOSX_USE_MPI
   MPI_CHECK_ERROR( MPI_Comm_free( &comm ) );
 #else
-  comm = MPI_COMM_NULL;
+//  comm = MPI_COMM_NULL;
 #endif
 }
 
@@ -139,6 +139,17 @@ MPI_Comm MpiWrapper::Comm_dup( MPI_Comm const comm )
   MPI_Comm duplicate;
   MPI_CHECK_ERROR( MPI_Comm_dup( comm, &duplicate ) );
   return duplicate;
+#else
+  return comm;
+#endif
+}
+
+MPI_Comm MpiWrapper::Comm_split( MPI_Comm const comm, int color, int key )
+{
+#ifdef GEOSX_USE_MPI
+  MPI_Comm scomm;
+  MPI_CHECK_ERROR( MPI_Comm_split( comm, color, key, &scomm ) );
+  return scomm;
 #else
   return comm;
 #endif

@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -36,7 +36,7 @@ DomainPartition::DomainPartition( std::string const & name,
                                   Group * const parent ):
   Group( name, parent )
 {
-  this->registerWrapper( "Neighbors", &m_neighbors, false )->
+  this->registerWrapper( "Neighbors", &m_neighbors )->
     setRestartFlags( RestartFlags::NO_WRITE )->
     setSizedFromParent( false );
 
@@ -64,12 +64,12 @@ void DomainPartition::InitializationOrder( string_array & order )
 {
   SortedArray< string > usedNames;
   {
-    order.push_back( keys::ConstitutiveManager );
+    order.emplace_back( keys::ConstitutiveManager );
     usedNames.insert( keys::ConstitutiveManager );
   }
 
   {
-    order.push_back( groupKeysStruct::meshBodiesString );
+    order.emplace_back( string( groupKeysStruct::meshBodiesString ) );
     usedNames.insert( groupKeysStruct::meshBodiesString );
   }
 
@@ -78,7 +78,7 @@ void DomainPartition::InitializationOrder( string_array & order )
   {
     if( usedNames.count( subGroup.first ) == 0 )
     {
-      order.push_back( subGroup.first );
+      order.emplace_back( subGroup.first );
     }
   }
 }
@@ -89,24 +89,23 @@ void DomainPartition::GenerateSets()
   GEOSX_MARK_FUNCTION;
 
   MeshLevel * const mesh = this->getMeshBody( 0 )->getMeshLevel( 0 );
-  Group const * const nodeManager = mesh->getNodeManager();
+  NodeManager const * const nodeManager = mesh->getNodeManager();
 
-  dataRepository::Group const * const
-  nodeSets = nodeManager->GetGroup( ObjectManagerBase::groupKeyStruct::setsString );
+  dataRepository::Group const & nodeSets = nodeManager->sets();
 
   map< string, array1d< bool > > nodeInSet; // map to contain indicator of whether a node is in a set.
   string_array setNames; // just a holder for the names of the sets
 
   // loop over all wrappers and fill the nodeIndSet arrays for each set
-  for( auto & wrapper : nodeSets->wrappers() )
+  for( auto & wrapper : nodeSets.wrappers() )
   {
     string name = wrapper.second->getName();
     nodeInSet[name].resize( nodeManager->size() );
-    nodeInSet[name] = false;
-    Wrapper< SortedArray< localIndex > > const * const setPtr = nodeSets->getWrapper< SortedArray< localIndex > >( name );
+    nodeInSet[name].setValues< serialPolicy >( false );
+    Wrapper< SortedArray< localIndex > > const * const setPtr = nodeSets.getWrapper< SortedArray< localIndex > >( name );
     if( setPtr!=nullptr )
     {
-      setNames.push_back( name );
+      setNames.emplace_back( name );
       SortedArrayView< localIndex const > const & set = setPtr->reference();
       for( localIndex const a : set )
       {
@@ -183,7 +182,7 @@ void DomainPartition::SetupCommunications( bool use_nonblocking )
   {
     for( integer const neighborRank : m_metisNeighborList )
     {
-      m_neighbors.push_back( NeighborCommunicator( neighborRank ) );
+      m_neighbors.emplace_back( NeighborCommunicator( neighborRank ) );
     }
   }
 
@@ -191,10 +190,10 @@ void DomainPartition::SetupCommunications( bool use_nonblocking )
   array1d< int > firstNeighborRanks;
   for( NeighborCommunicator const & neighbor : m_neighbors )
   {
-    firstNeighborRanks.push_back( neighbor.NeighborRank() );
+    firstNeighborRanks.emplace_back( neighbor.NeighborRank() );
   }
 
-  constexpr int neighborsTag = 43543;
+  int neighborsTag = 54;
 
   // Send this list of neighbors to all neighbors.
   std::vector< MPI_Request > requests( m_neighbors.size() );
@@ -224,7 +223,7 @@ void DomainPartition::SetupCommunications( bool use_nonblocking )
 
   for( integer const neighborRank : secondNeighborRanks )
   {
-    m_neighbors.push_back( NeighborCommunicator( neighborRank ) );
+    m_neighbors.emplace_back( NeighborCommunicator( neighborRank ) );
   }
 
   MpiWrapper::Waitall( requests.size(), requests.data(), MPI_STATUSES_IGNORE );
@@ -283,16 +282,16 @@ void DomainPartition::AddNeighbors( const unsigned int idim,
     if( !me )
     {
       int const neighborRank = MpiWrapper::Cart_rank( cartcomm, ncoords );
-      m_neighbors.push_back( NeighborCommunicator( neighborRank ) );
+      m_neighbors.emplace_back( NeighborCommunicator( neighborRank ) );
     }
   }
   else
   {
-    const int dim = partition.m_Partitions( integer_conversion< localIndex >( idim ));
-    const bool periodic = partition.m_Periodic( integer_conversion< localIndex >( idim ));
+    const int dim = partition.m_Partitions( LvArray::integerConversion< localIndex >( idim ));
+    const bool periodic = partition.m_Periodic( LvArray::integerConversion< localIndex >( idim ));
     for( int i = -1; i < 2; i++ )
     {
-      ncoords[idim] = partition.m_coords( integer_conversion< localIndex >( idim )) + i;
+      ncoords[idim] = partition.m_coords( LvArray::integerConversion< localIndex >( idim )) + i;
       bool ok = true;
       if( periodic )
       {
@@ -312,47 +311,5 @@ void DomainPartition::AddNeighbors( const unsigned int idim,
     }
   }
 }
-
-
-void DomainPartition::ReadSilo( const SiloFile & siloFile,
-                                const int cycleNum,
-                                const realT problemTime,
-                                const bool isRestart )
-{
-
-  ReadFiniteElementMesh( siloFile, cycleNum, problemTime, isRestart );
-
-//  ReadCommonPlanes( siloFile, cycleNum, problemTime, isRestart );
-//  ReadCartesianGrid( siloFile, cycleNum, problemTime, isRestart );
-//  m_wellboreManager.ReadSilo( siloFile, "WellboreFields", "wellbore_mesh",
-//                              DB_NODECENT, cycleNum, problemTime, isRestart );
-
-}
-
-
-void DomainPartition::ReadFiniteElementMesh( const SiloFile & GEOSX_UNUSED_PARAM( siloFile ),
-                                             const int GEOSX_UNUSED_PARAM( cycleNum ),
-                                             const realT GEOSX_UNUSED_PARAM( problemTime ),
-                                             const bool GEOSX_UNUSED_PARAM( isRestart ) )
-{
-
-
-//  int err = m_feNodeManager->ReadSilo( siloFile, "NodalFields", "volume_mesh",
-//                                      DB_NODECENT, cycleNum, problemTime,
-// isRestart );
-////  err = m_feNodeManager->ReadSilo( siloFile, "NodalFieldsB", "face_mesh",
-////                                      DB_NODECENT, cycleNum, problemTime,
-// isRestart );
-//  if(err)
-//    return;
-//
-//  m_feElementManager->ReadSilo( siloFile, "volume_mesh",
-//                               cycleNum, problemTime, isRestart );
-//
-//  m_feNodeManager->ConstructNodeToElementMap( m_feElementManager );
-
-}
-
-
 
 } /* namespace geosx */

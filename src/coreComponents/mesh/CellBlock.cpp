@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -31,16 +31,13 @@ using namespace dataRepository;
 CellBlock::CellBlock( string const & name, Group * const parent ):
   ElementSubRegionBase( name, parent ),
   m_toNodesRelation(),
-  m_toFacesRelation()
+  m_toEdgesRelation(),
+  m_toFacesRelation(),
+  m_externalPropertyNames()
 {
-  registerWrapper( viewKeyStruct::nodeListString, &m_toNodesRelation, 0 );
-  registerWrapper( viewKeyStruct::edgeListString, &m_toEdgesRelation, 0 );
-  registerWrapper( viewKeyStruct::faceListString, &m_toFacesRelation, 0 );
-  registerWrapper( viewKeyStruct::numNodesPerElementString, &m_numNodesPerElement, 0 );
-  registerWrapper( viewKeyStruct::numEdgesPerElementString, &m_numEdgesPerElement, 0 );
-  registerWrapper( viewKeyStruct::numFacesPerElementString, &m_numFacesPerElement, 0 );
-  registerWrapper( viewKeyStruct::elementCenterString, &m_elementCenter, 0 );
-  registerWrapper( viewKeyStruct::elementVolumeString, &m_elementVolume, 0 );
+  registerWrapper( viewKeyStruct::nodeListString, &m_toNodesRelation );
+  registerWrapper( viewKeyStruct::edgeListString, &m_toEdgesRelation );
+  registerWrapper( viewKeyStruct::faceListString, &m_toFacesRelation );
 }
 
 CellBlock::~CellBlock()
@@ -281,10 +278,7 @@ void CellBlock::SetElementType( string const & elementType )
   else if( !m_elementTypeString.compare( 0, 4, "C3D6" ))
   {
     // Triangular prism
-
-    // This element type uses the HEX shape functions, so numNodesPerElement needs to be 8 until we have a proper
-    // element type for this
-    this->setNumNodesPerElement( 8 );
+    this->setNumNodesPerElement( 6 );
     this->setNumIndependentNodesPerElement( 6 );
     this->setNumEdgesPerElement( 9 );
     this->setNumFacesPerElement( 5 );

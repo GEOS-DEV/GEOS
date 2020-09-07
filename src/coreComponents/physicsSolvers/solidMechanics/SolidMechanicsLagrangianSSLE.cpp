@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -38,62 +38,6 @@ SolidMechanicsLagrangianSSLE::SolidMechanicsLagrangianSSLE( string const & name,
 
 SolidMechanicsLagrangianSSLE::~SolidMechanicsLagrangianSSLE()
 {}
-
-void SolidMechanicsLagrangianSSLE::ApplySystemSolution( DofManager const & dofManager,
-                                                        ParallelVector const & solution,
-                                                        real64 const scalingFactor,
-                                                        DomainPartition * const domain )
-{
-  SolidMechanicsLagrangianFEM::ApplySystemSolution( dofManager, solution, scalingFactor, domain );
-}
-
-
-void
-SolidMechanicsLagrangianSSLE::updateStress( DomainPartition * const domain )
-{
-  MeshLevel & mesh = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
-  NodeManager & nodeManager = *mesh.getNodeManager();
-
-  NumericalMethodsManager const & numericalMethodManager =
-    *domain->getParent()->GetGroup< NumericalMethodsManager >( dataRepository::keys::numericalMethodsManager );
-  FiniteElementDiscretizationManager const & feDiscretizationManager =
-    *numericalMethodManager.GetGroup< FiniteElementDiscretizationManager >( dataRepository::keys::finiteElementDiscretizations );
-  FiniteElementDiscretization const & feDiscretization =
-    *feDiscretizationManager.GetGroup< FiniteElementDiscretization >( m_discretizationName );
-
-  arrayView2d< real64 const, nodes::INCR_DISPLACEMENT_USD > const & incDisp = nodeManager.incrementalDisplacement();
-
-  // begin region loop
-  forTargetSubRegions< CellElementSubRegion >( mesh, [&]( localIndex const targetIndex,
-                                                          CellElementSubRegion & elementSubRegion )
-  {
-    arrayView3d< R1Tensor const > const &
-    dNdX = elementSubRegion.getReference< array3d< R1Tensor > >( dataRepository::keys::dNdX );
-
-    arrayView2d< real64 const > const & detJ = elementSubRegion.getReference< array2d< real64 > >( dataRepository::keys::detJ );
-
-    arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion.nodeList();
-    localIndex const numNodesPerElement = elemsToNodes.size( 1 );
-
-    std::unique_ptr< FiniteElementBase >
-    fe = feDiscretization.getFiniteElement( elementSubRegion.GetElementTypeString() );
-
-    SolidBase & constitutiveRelation = GetConstitutiveModel< SolidBase >( elementSubRegion, m_solidMaterialNames[targetIndex] );
-
-    // space for element matrix and rhs
-
-    using Kernels = SolidMechanicsLagrangianSSLEKernels::StressCalculationKernel;
-    return SolidMechanicsLagrangianFEMKernels::
-      ElementKernelLaunchSelector< Kernels >( numNodesPerElement,
-                                              fe->n_quadrature_points(),
-                                              &constitutiveRelation,
-                                              elementSubRegion.size(),
-                                              elemsToNodes,
-                                              dNdX,
-                                              detJ,
-                                              incDisp );
-  } );
-}
 
 
 REGISTER_CATALOG_ENTRY( SolverBase, SolidMechanicsLagrangianSSLE, string const &, dataRepository::Group * const )

@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -26,7 +26,6 @@ namespace geosx
 {
 
 using namespace dataRepository;
-using namespace cxx_utilities;
 
 
 EventManager::EventManager( std::string const & name,
@@ -44,29 +43,29 @@ EventManager::EventManager( std::string const & name,
   // This enables logLevel filtering
   enableLogLevelInput();
 
-  registerWrapper( viewKeyStruct::maxTimeString, &m_maxTime, false )->
+  registerWrapper( viewKeyStruct::maxTimeString, &m_maxTime )->
     setApplyDefaultValue( std::numeric_limits< real64 >::max())->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Maximum simulation time for the global event loop." );
 
-  registerWrapper( viewKeyStruct::maxCycleString, &m_maxCycle, false )->
+  registerWrapper( viewKeyStruct::maxCycleString, &m_maxCycle )->
     setApplyDefaultValue( std::numeric_limits< integer >::max())->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Maximum simulation cycle for the global event loop." );
 
-  registerWrapper( viewKeyStruct::timeString, &m_time, false )->
+  registerWrapper( viewKeyStruct::timeString, &m_time )->
     setRestartFlags( RestartFlags::WRITE_AND_READ )->
     setDescription( "Current simulation time." );
 
-  registerWrapper( viewKeyStruct::dtString, &m_dt, false )->
+  registerWrapper( viewKeyStruct::dtString, &m_dt )->
     setRestartFlags( RestartFlags::WRITE_AND_READ )->
     setDescription( "Current simulation timestep." );
 
-  registerWrapper( viewKeyStruct::cycleString, &m_cycle, false )->
+  registerWrapper( viewKeyStruct::cycleString, &m_cycle )->
     setRestartFlags( RestartFlags::WRITE_AND_READ )->
     setDescription( "Current simulation cycle number." );
 
-  registerWrapper( viewKeyStruct::currentSubEventString, &m_currentSubEvent, false )->
+  registerWrapper( viewKeyStruct::currentSubEventString, &m_currentSubEvent )->
     setRestartFlags( RestartFlags::WRITE_AND_READ )->
     setDescription( "Index of the current subevent." );
 
@@ -157,20 +156,18 @@ void EventManager::Run( dataRepository::Group * domain )
 
       // Calculate the event and sub-event forecasts
       subEvent->CheckEvents( m_time, m_dt, m_cycle, domain );
-      integer eventForecast = subEvent->GetForecast();
 
       // Print debug information for logLevel >= 1
       GEOSX_LOG_LEVEL_RANK_0( 1,
                               "     Event: " << m_currentSubEvent << " (" << subEvent->getName() << "), dt_request=" << subEvent->GetCurrentEventDtRequest() << ", forecast=" <<
-                              eventForecast );
+                              subEvent->getForecast() );
 
       // Execute, signal events
-      if( eventForecast == 1 )
+      if( subEvent->hasToPrepareForExec() )
       {
         subEvent->SignalToPrepareForExecution( m_time, m_dt, m_cycle, domain );
       }
-
-      if( eventForecast <= 0 )
+      else if( subEvent->isReadyForExec() )
       {
         subEvent->Execute( m_time, m_dt, m_cycle, 0, 0, domain );
       }

@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -98,34 +98,48 @@ void checkRelativeError( real64 const v1, real64 const v2, real64 const relTol, 
   EXPECT_PRED_FORMAT4( checkRelativeErrorFormat, v1, v2, relTol, absTol );
 }
 
-void compareMatrixRow( globalIndex const rowNumber, real64 const relTol, real64 const absTol,
-                       localIndex const numRowEntries1, globalIndex const * const indices1, real64 const * const values1,
-                       localIndex const numRowEntries2, globalIndex const * const indices2, real64 const * const values2 )
+template< typename ROW_INDEX, typename COL_INDEX, typename VALUE >
+void compareMatrixRow( ROW_INDEX const rowNumber, VALUE const relTol, VALUE const absTol,
+                       localIndex const length1, COL_INDEX const * const indices1, VALUE const * const values1,
+                       localIndex const length2, COL_INDEX const * const indices2, VALUE const * const values2 )
 {
   SCOPED_TRACE( "Row " + std::to_string( rowNumber ));
 
-  EXPECT_EQ( numRowEntries1, numRowEntries2 );
+  EXPECT_EQ( length1, length2 );
 
-  for( localIndex j1 = 0, j2 = 0; j1 < numRowEntries1 && j2 < numRowEntries2; ++j1, ++j2 )
+  for( localIndex j1 = 0, j2 = 0; j1 < length1 && j2 < length2; ++j1, ++j2 )
   {
-    while( j1 < numRowEntries1 && j2 < numRowEntries2 && indices1[j1] != indices1[j2] )
+    while( j1 < length1 && j2 < length2 && indices1[j1] != indices1[j2] )
     {
-      while( j1 < numRowEntries1 && indices1[j1] < indices2[j2] )
+      while( j1 < length1 && indices1[j1] < indices2[j2] )
       {
         ADD_FAILURE() << "column " << indices1[j1] << ") in matrix 1 does not have a match";
       }
-      while( j2 < numRowEntries2 && indices2[j2] < indices1[j1] )
+      while( j2 < length2 && indices2[j2] < indices1[j1] )
       {
         ADD_FAILURE() << "column " << indices2[j2] << ") in matrix 2 does not have a match";
       }
     }
-    if( j1 < numRowEntries1 && j2 < numRowEntries2 )
+    if( j1 < length1 && j2 < length2 )
     {
       SCOPED_TRACE( "Column " + std::to_string( indices1[j1] ));
 
       checkRelativeError( values1[j1], values2[j1], relTol, absTol );
     }
   }
+}
+
+template< typename ROW_INDEX, typename COL_INDEX, typename VALUE >
+void compareMatrixRow( ROW_INDEX const rowNumber, VALUE const relTol, VALUE const absTol,
+                       arraySlice1d< COL_INDEX const > indices1, arraySlice1d< VALUE const > values1,
+                       arraySlice1d< COL_INDEX const > indices2, arraySlice1d< VALUE const > values2 )
+{
+  ASSERT_EQ( indices1.size(), values1.size() );
+  ASSERT_EQ( indices2.size(), values2.size() );
+
+  compareMatrixRow( rowNumber, relTol, absTol,
+                    indices1.size(), indices1.dataIfContiguous(), values1.dataIfContiguous(),
+                    indices2.size(), indices2.dataIfContiguous(), values2.dataIfContiguous() );
 }
 
 template< typename MATRIX >
@@ -160,8 +174,29 @@ void compareMatrices( MATRIX const & matrix1,
   }
 }
 
+template< typename T, typename COL_INDEX >
+void compareLocalMatrices( CRSMatrixView< T const, COL_INDEX const > const & matrix1,
+                           CRSMatrixView< T const, COL_INDEX const > const & matrix2,
+                           real64 const relTol = DEFAULT_REL_TOL,
+                           real64 const absTol = DEFAULT_ABS_TOL )
+{
+  ASSERT_EQ( matrix1.numRows(), matrix2.numRows() );
+  ASSERT_EQ( matrix1.numColumns(), matrix2.numColumns() );
+
+  matrix1.move( LvArray::MemorySpace::CPU, false );
+  matrix2.move( LvArray::MemorySpace::CPU, false );
+
+  // check the accuracy across local rows
+  for( localIndex i = 0; i < matrix1.numRows(); ++i )
+  {
+    compareMatrixRow( i, relTol, absTol,
+                      matrix1.getColumns( i ), matrix1.getEntries( i ),
+                      matrix2.getColumns( i ), matrix2.getEntries( i ) );
+  }
 }
 
-}
+} // namespace testing
+
+} // namespace geosx
 
 #endif //GEOSX_CODINGUTILITIES_UNITTESTUTILITIES_HPP

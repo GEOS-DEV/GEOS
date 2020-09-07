@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -23,7 +23,6 @@ namespace geosx
 {
 
 using namespace dataRepository;
-using namespace cxx_utilities;
 
 OutputManager::OutputManager( std::string const & name,
                               Group * const parent ):
@@ -48,7 +47,7 @@ Group * OutputManager::CreateChild( string const & childKey, string const & chil
 void OutputManager::ExpandObjectCatalogs()
 {
   // During schema generation, register one of each type derived from OutputBase here
-  for( auto & catalogIter: OutputBase::GetCatalog())
+  for( auto & catalogIter: OutputBase::GetCatalog() )
   {
     CreateChild( catalogIter.first, catalogIter.first );
   }

@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -27,13 +27,7 @@ namespace geosx
 {
 namespace dataRepository
 {
-
-/**
- * @namespace wrapperDefaultValue
- *
- * namespace to scope traits that are used for default values
- */
-namespace wrapperDefaultValue
+namespace internal
 {
 
 /**
@@ -45,18 +39,11 @@ template< typename T >
 struct is_defaultable
 {
   /// attribute to set what type is able to contain a default value
-  static constexpr bool value = std::is_same< T, int >::value ||
-                                std::is_same< T, long int >::value ||
-                                std::is_same< T, long long int >::value ||
-                                std::is_same< T, unsigned int >::value ||
-                                std::is_same< T, unsigned long int >::value ||
-                                std::is_same< T, unsigned long long int >::value ||
-                                std::is_floating_point< T >::value ||
+  static constexpr bool value = std::is_arithmetic< T > ::value ||
                                 std::is_same< T, string >::value ||
                                 std::is_same< T, Path >::value ||
-                                std::is_same< T, R1Tensor >::value ||
-                                std::is_same< T, R2Tensor >::value ||
-                                std::is_same< T, R2SymTensor >::value;
+                                traits::is_tensorT< T > ||
+                                std::is_enum< T >::value;
 };
 
 /**
@@ -80,20 +67,20 @@ struct Helper
  * @struct Helper
  * @tparam T type to check
  *
- * Specialization of Helper struct to return if a type \p T has a default
+ * Specialization of Helper struct to return if a type @p T has a default
  * value. This specialization specifically tests the type itself. Contains
  * a member to hold a default value.
  */
 template< typename T >
 struct Helper< T, std::enable_if_t< is_defaultable< T >::value > >
 {
-  /// attribute to indicate whether type \p T has a default value
+  /// attribute to indicate whether type @p T has a default value
   static constexpr bool has_default_value = true;
 
   /// alias for the type T
   using value_type = T;
 
-  /// a member to hold a default value for the type \p T
+  /// a member to hold a default value for the type @p T
   value_type value = value_type();
 };
 
@@ -101,22 +88,23 @@ struct Helper< T, std::enable_if_t< is_defaultable< T >::value > >
  * @struct Helper
  * @tparam T type to check
  *
- * Specialization of Helper struct to return if a type \p T has a default
+ * Specialization of Helper struct to return if a type @p T has a default
  * value. This specialization specifically tests the type has an alias
  * named "value_type" as is the case for stl containers and GEOSX
  * containers.
  */
 template< typename T >
 struct Helper< T, std::enable_if_t< traits::HasAlias_value_type< T > &&
-                                    is_defaultable< typename T::value_type >::value > >
+                                    is_defaultable< typename T::value_type >::value &&
+                                    !traits::is_string< T > > >
 {
-  /// attribute to indicate whether type \p T has a default value
+  /// attribute to indicate whether type @p T has a default value
   static constexpr bool has_default_value = true;
 
   /// alias for the type T
   using value_type = typename T::value_type;
 
-  /// a member to hold a default value for the type \p T
+  /// a member to hold a default value for the type @p T
   value_type value = value_type();
 };
 
@@ -134,14 +122,14 @@ operator<<( std::ostream & stream, Helper< T > const & value )
   return stream << value.value;
 }
 
-} // namespace wrapperDefaultValue
+} // namespace internal
 
 /**
  * @tparam T the type to check
- * A templated alias to hold default values.
+ * @brief A templated alias to hold default values.
  */
 template< typename T >
-using DefaultValue = wrapperDefaultValue::Helper< T >;
+using DefaultValue = internal::Helper< T >;
 
 } // namespace dataRepository
 } // namespace geosx

@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -38,19 +38,39 @@ class EdgeManager;
 class FaceElementRegion : public ElementRegionBase
 {
 public:
+
   /**
-   * @brief constructor
-   * @param name The name of the object in the data hierarchy.
-   * @param parent Pointer to the parent group in the data hierarchy.
+   * @name Constructor / Destructor
+   */
+  ///@{
+
+  /**
+   * @brief Constructor.
+   * @param name the name of the object in the data hierarchy.
+   * @param parent a pointer to the parent group in the data hierarchy.
    */
   FaceElementRegion( string const & name, Group * const parent );
 
+  /**
+   * @brief Deleted default constructor.
+   */
   FaceElementRegion() = delete;
+
+  /**
+   * @brief Default destructor.
+   */
   virtual ~FaceElementRegion() override;
+
+  ///@}
+
+  /**
+   * @name Static factory catalog functions
+   */
+  ///@{
 
   /**
    * @brief The key name for the FaceElementRegion in the object catalog.
-   * @return A string containing the key name.
+   * @return a string containing the key name.
    */
   static const string CatalogName()
   { return "FaceElementRegion"; }
@@ -58,15 +78,24 @@ public:
   virtual const string getCatalogName() const override final
   { return FaceElementRegion::CatalogName(); }
 
+  ///@}
+
+  /**
+   * @name Generation of the face element mesh region
+   */
+  ///@{
 
   virtual void GenerateMesh( Group * ) override {}
 
   /**
-   * @brief This function generates and adds entries to the face/fracture mesh
-   * @param faceManager A pointer to the FaceManager object.
-   * @param subRegionName The name of the FaceElementSubRegion to insert the new entries.
-   * @param faceIndices The local indices of the new faces that define the face element.
-   * @return The local index of the new FaceElement entry.
+   * @brief This function generates and adds entries to the face/fracture mesh.
+   * @param time_np1 rupture time
+   * @param edgeManager pointer to the EdgeManager object.
+   * @param faceManager pointer to the FaceManager object.
+   * @param originalFaceToEdges face-to-edge map before the rupture.
+   * @param subRegionName the name of the FaceElementSubRegion to insert the new entries.
+   * @param faceIndices the local indices of the new faces that define the face element.
+   * @return the local index of the new FaceElement entry.
    */
   localIndex AddToFractureMesh( real64 const time_np1,
                                 EdgeManager * const edgeManager,
@@ -75,16 +104,32 @@ public:
                                 string const & subRegionName,
                                 localIndex const faceIndices[2] );
 
+  ///@}
 
+  /**
+   * @name Getters / Setters
+   */
+  ///@{
+
+  /**
+   * @brief Get default aperture value.
+   * @return default aperture value
+   */
   real64 getDefaultAperture() const { return m_defaultAperture; }
 
+  ///@}
 
+  /**
+   * @brief A struct to serve as a container for variable strings and keys.
+   * @struct viewKeyStruct
+   */
   struct viewKeyStruct : public ElementRegionBase::viewKeyStruct
   {
+    /// Fracture set string
     static constexpr auto fractureSetString = "fractureSet";
-    static constexpr auto defaultApertureString = "defaultAperture";
-    constexpr static auto ruptureTimeString = "ruptureTime";
 
+    /// Default aperture string
+    static constexpr auto defaultApertureString = "defaultAperture";
   };
 
 protected:
@@ -92,7 +137,8 @@ protected:
 
 
 private:
-  /// The
+
+  /// The default aperture
   real64 m_defaultAperture;
 };
 

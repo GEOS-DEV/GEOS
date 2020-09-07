@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -19,26 +19,15 @@
 
 #include "BiCGSTABsolver.hpp"
 
+#include "common/Stopwatch.hpp"
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
 #include "linearAlgebra/interfaces/LinearOperator.hpp"
-#include "linearAlgebra/utilities/BlockOperatorView.hpp"
-#include "linearAlgebra/utilities/BlockVectorView.hpp"
+#include "linearAlgebra/solvers/KrylovUtils.hpp"
 
 namespace geosx
 {
 
-// BEGIN_RST_NARRATIVE BiCGSTABsolver.rst
-// ==============================
-// BiCGSTAB Solver
-// ==============================
-// Implementation of the BiCGSTAB algorithm.
-// The notation is consistent with "Iterative Methods for
-// Linear and Non-Linear Equations" from C.T. Kelley (1995)
-// and "Iterative Methods for Sparse Linear Systems" from Y. Saad (2003).
 
-// ----------------------------
-// Constructor
-// ----------------------------
 template< typename VECTOR >
 BiCGSTABsolver< VECTOR >::BiCGSTABsolver( LinearOperator< Vector > const & A,
                                           LinearOperator< Vector > const & M,
@@ -48,127 +37,122 @@ BiCGSTABsolver< VECTOR >::BiCGSTABsolver( LinearOperator< Vector > const & A,
   : KrylovSolver< VECTOR >( A, M, tolerance, maxIterations, verbosity )
 {}
 
-// ----------------------------
-// Destructor
-// ----------------------------
 template< typename VECTOR >
 BiCGSTABsolver< VECTOR >::~BiCGSTABsolver() = default;
 
-// ----------------------------
-// Monolithic BiCGSTAB solver
-// ----------------------------
 template< typename VECTOR >
 void BiCGSTABsolver< VECTOR >::solve( Vector const & b,
                                       Vector & x ) const
 {
-  // Shortcuts for operators
-  LinearOperator< VECTOR > const & A = m_operator;
-  LinearOperator< VECTOR > const & M = m_precond;
+  Stopwatch watch;
 
-  // Get the global size and resize residual norm vector
-  localIndex const N = m_maxIterations;
-  m_residualNormVector.resize( N + 1 );
-
-  // Get the norm of the right hand side
-  real64 const normb = b.norm2();
+  // Compute the target absolute tolerance
+  real64 const absTol = b.norm2() * m_tolerance;
 
   // Define vectors
-  VectorTemp rk( x );
+  VectorTemp r( x );
 
   // Compute initial rk
-  A.residual( x, b, rk );
-  m_residualNormVector[0]= rk.norm2();
+  m_operator.residual( x, b, r );
 
   // Define vectors
-  VectorTemp r0_hat( rk );
+  VectorTemp r0( r );
 
-  // Define scalars and initialize some
-  real64 rhok_1 = rk.dot( r0_hat );
+  // Define scalars and reinitialize some
+  real64 rho_old = r.dot( r0 );
   real64 alpha = 1.0;
-  real64 omegak = 1.0;
+  real64 omega = 1.0;
 
-  // Define vectors and set them to 0
-  VectorTemp vk( rk ); vk.zero();
-  VectorTemp pk( rk ); pk.zero();
-  VectorTemp y( rk );
-  VectorTemp z( rk );
-  VectorTemp t( rk );
-  VectorTemp s( rk );
-  VectorTemp h( x );
-  VectorTemp q( x );
+  // Define temporary vectors
+  VectorTemp v = createTempVector( r );
+  VectorTemp p = createTempVector( r );
+  VectorTemp y = createTempVector( r );
+  VectorTemp z = createTempVector( r );
+  VectorTemp t = createTempVector( r );
+  VectorTemp s = createTempVector( r );
+  VectorTemp q = createTempVector( x );
+
+  v.zero();
+  p.zero();
+  m_result.status = LinearSolverResult::Status::NotConverged;
+  m_residualNorms.resize( m_maxIterations + 1 );
 
   localIndex k;
-  for( k = 0; k < N; k++ )
+  real64 rnorm = 0.0;
+
+  for( k = 0; k <= m_maxIterations; ++k )
   {
-    // Compute r0_hat.rk
-    real64 const rhok = rk.dot( r0_hat );
-
-    // Compute beta
-    real64 const beta = rhok / rhok_1 * alpha / omegak;
-
-    // Keep the old value of rho
-    rhok_1 = rhok;
-
-    // Update pk = rk + beta*(pk - omega*vk)
-    pk.axpy( -omegak, vk );
-    pk.axpby( 1., rk, beta );
-
-    // Uptate vk = MApk
-    M.apply( pk, y );
-    A.apply( y, vk );
-
-    // Compute alpha
-    alpha = rhok / vk.dot( r0_hat );
-
-    // compute h = x + alpha*y
-    h.copy( x );
-    h.axpy( alpha, y );
-
-    // Compute s = rk - alpha*vk
-    s.copy( rk );
-    s.axpy( -alpha, vk );
-
-    // Compute z = Ms
-    M.apply( s, z );
-
-    // Compute t = Az
-    A.apply( z, t );
-
-    // Compute t = Mt
-    M.apply( t, q );
-
-    // Update omega
-    omegak = q.dot( z ) / q.dot( q );
-
-    // Update x = h + omega*z
-    h.axpy( omegak, z );
-    x.copy( h );
-
-    // Update rk = s - omega*t
-    s.axpy( -omegak, t );
-    rk.copy( s );
-    m_residualNormVector[ k+1 ] = rk.norm2();
+    rnorm = r.norm2();
+    logProgress( k, rnorm );
 
     // Convergence check on ||rk||/||b||
-    if( m_residualNormVector[ k+1 ] / normb < 1e-8 )
+    if( rnorm < absTol )
     {
+      m_result.status = LinearSolverResult::Status::Success;
       break;
     }
 
+    // Compute r0.rk
+    real64 const rho = r.dot( r0 );
+
+    GEOSX_KRYLOV_BREAKDOWN_IF_ZERO( rho_old );
+    GEOSX_KRYLOV_BREAKDOWN_IF_ZERO( omega );
+
+    // Compute beta
+    real64 const beta = rho / rho_old * alpha / omega;
+
+    // Update p = r + beta*(p - omega*v)
+    p.axpy( -omega, v );
+    p.axpby( 1., r, beta );
+
+    // Update vk = MApk
+    m_precond.apply( p, y );
+    m_operator.apply( y, v );
+
+    // Compute alpha
+    real64 const vr0 = v.dot( r0 );
+    GEOSX_KRYLOV_BREAKDOWN_IF_ZERO( vr0 );
+    alpha = rho / vr0;
+
+    // compute x = x + alpha*y
+    x.axpy( alpha, y );
+
+    // Compute s = rk - alpha*vk
+    s.copy( r );
+    s.axpy( -alpha, v );
+
+    // Compute z = Ms
+    m_precond.apply( s, z );
+
+    // Compute t = Az
+    m_operator.apply( z, t );
+
+    // Compute t = Mt
+    m_precond.apply( t, q );
+
+    // Update omega
+    real64 const q2 = q.dot( q );
+    GEOSX_KRYLOV_BREAKDOWN_IF_ZERO( q2 );
+    omega = q.dot( z ) / q2;
+
+    // Update x = x + omega*z
+    x.axpy( omega, z );
+
+    // Update rk = s - omega*t
+    s.axpy( -omega, t );
+    r.copy( s );
+
+    // Keep the old value of rho
+    rho_old = rho;
   }
 
-  // Convergence statistics
-  m_numIterations = k;
-  m_convergenceFlag = k < N;
-  m_residualNormVector.resize( m_numIterations + 1 );
+  m_result.numIterations = k;
+  m_result.residualReduction = rnorm / absTol * m_tolerance;
+  m_result.solveTime = watch.elapsedTime();
 
-  if( m_verbosity >= 1 )
-  {
-    GEOSX_LOG_RANK_0( "BiCGSTAB " << (k < N ? "converged" : "did not converge") << " in " << k << " iterations." );
-  }
+  logResult();
+  m_residualNorms.resize( m_result.numIterations + 1 );
 }
-
-// END_RST_NARRATIVE
 
 // -----------------------
 // Explicit Instantiations

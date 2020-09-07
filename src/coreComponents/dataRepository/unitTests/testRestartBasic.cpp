@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -19,6 +19,7 @@
 #include "dataRepository/Wrapper.hpp"
 #include "dataRepository/ConduitRestart.hpp"
 #include "mpiCommunications/MpiWrapper.hpp"
+#include "utils.hpp"
 
 // TPL includes
 #include <gtest/gtest.h>
@@ -26,140 +27,12 @@
 // System includes
 #include <random>
 
-
 namespace geosx
 {
 namespace dataRepository
 {
-
-int rand( int const min, int const max )
+namespace testing
 {
-  static std::mt19937_64 gen;
-  return std::uniform_int_distribution< int >( min, max )( gen );
-}
-
-template< typename T >
-void fillValue( T & val )
-{
-  val = rand( -100, 100 );
-}
-
-void fillValue( R1Tensor & val )
-{
-  for( int i = 0; i < 3; ++i )
-  {
-    val[ i ] = rand( -100, 100 );
-  }
-}
-
-void fillValue( R2Tensor & val )
-{
-  for( int i = 0; i < 3; ++i )
-  {
-    for( int j = 0; j < 3; ++j )
-    {
-      val( i, j ) = rand( -100, 100 );
-    }
-  }
-}
-
-void fillValue( std::string & val )
-{
-  int const num = rand( -100, 100 );
-  val = std::to_string( num ) +
-        std::string( " The rest of this is to avoid any small string optimizations. " ) +
-        std::to_string( 2 * num );
-}
-
-template< typename T, typename U >
-void fillValue( std::pair< T, U > val )
-{
-  fillValue( val.first );
-  fillValue( val.second );
-}
-
-template< typename T >
-void fillValue( std::vector< T > & val )
-{
-  val.resize( rand( 0, 30 ) );
-  for( T & v : val )
-  {
-    fillValue( v );
-  }
-}
-
-template< typename T, int NDIM, typename PERMUTATION >
-void fillValue( Array< T, NDIM, PERMUTATION > & val )
-{
-  localIndex dims[ NDIM ];
-  for( int i = 0; i < NDIM; ++i )
-  {
-    dims[ i ] = rand( 1, 10 );
-  }
-
-  val.resize( NDIM, dims );
-
-  for( localIndex i = 0; i < val.size(); ++i )
-  {
-    fillValue( val.data()[ i ] );
-  }
-}
-
-template< typename T >
-void fillValue( SortedArray< T > & val )
-{
-  int const nVals = rand( 0, 30 );
-  for( int i = 0; i < nVals; ++i )
-  {
-    T v;
-    fillValue( v );
-    val.insert( v );
-  }
-}
-
-template< typename K, typename V, typename SORTED >
-void fillValue( mapBase< K, V, SORTED > & val )
-{
-  int const nVals = rand( 0, 30 );
-  for( int i = 0; i < nVals; ++i )
-  {
-    K k;
-    V v;
-    fillValue( k );
-    fillValue( v );
-    val[ k ] = v;
-  }
-}
-
-
-template< typename T >
-void compareValues( T const & val, T const & valFromFile )
-{
-  EXPECT_EQ( val, valFromFile );
-}
-
-template< typename T, int NDIM, typename PERMUTATION >
-void compareValues( Array< T, NDIM, PERMUTATION > const & val,
-                    Array< T, NDIM, PERMUTATION > const & valFromFile )
-{
-  ASSERT_EQ( val.size(), valFromFile.size() );
-  for( localIndex i = 0; i < val.size(); ++i )
-  {
-    compareValues( val.data()[ i ], valFromFile.data()[ i ] );
-  }
-}
-
-template< typename T >
-void compareValues( SortedArray< T > const & val,
-                    SortedArray< T > const & valFromFile )
-{
-  ASSERT_EQ( val.size(), valFromFile.size() );
-  for( localIndex i = 0; i < val.size(); ++i )
-  {
-    compareValues( val[ i ], valFromFile[ i ] );
-  }
-}
-
 
 template< typename T >
 class SingleWrapperTest : public ::testing::Test
@@ -185,7 +58,7 @@ public:
   void test()
   {
     T value;
-    fillValue( value );
+    fill( value, 100 );
 
     // Set the value
     m_wrapper->reference() = value;
@@ -209,9 +82,8 @@ public:
     EXPECT_EQ( m_group->size(), m_groupSize );
     EXPECT_EQ( m_wrapper->sizedFromParent(), m_wrapperSizedFromParent );
 
-
     // Compare the values
-    compareValues( value, m_wrapper->reference() );
+    compare( value, m_wrapper->reference() );
   }
 
 private:
@@ -228,24 +100,19 @@ private:
 using TestTypes = ::testing::Types< int,
                                     double,
                                     R1Tensor,
-                                    R2Tensor,
                                     std::pair< int, R1Tensor >, // This should be passed to conduit via an external
                                                                 // pointer but currently we're packing it.
                                     std::pair< std::string, double >,
                                     std::string,
                                     std::vector< int >,
-                                    std::vector< R2Tensor >,
                                     // std::vector< std::string > bufferOps currently can't pack this
                                     array1d< double >,
-                                    array1d< R2Tensor >,
                                     array1d< std::string >,
                                     array1d< array1d< double > >,
                                     array1d< array1d< std::string > >,
                                     array2d< double >,
-                                    array2d< R2Tensor >,
                                     array2d< std::string >,
                                     array2d< double, RAJA::PERM_JI >,
-                                    array2d< R2Tensor, RAJA::PERM_JI >,
                                     array2d< std::string, RAJA::PERM_JI >,
                                     array3d< double >,
                                     array3d< std::string >,
@@ -258,15 +125,16 @@ using TestTypes = ::testing::Types< int,
                                     map< long, int >,
                                     unordered_map< long, int >
                                     >;
-TYPED_TEST_CASE( SingleWrapperTest, TestTypes );
+TYPED_TEST_SUITE( SingleWrapperTest, TestTypes, );
 
 TYPED_TEST( SingleWrapperTest, WriteAndRead )
 {
   this->test();
 }
 
-} /* end namespace dataRepository */
-} /* end namespace geosx */
+} // namespace testing
+} // namespace dataRepository
+} // namespace geosx
 
 int main( int argc, char * argv[] )
 {

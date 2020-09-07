@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -83,7 +83,7 @@ void NeighborCommunicator::MPI_iSendReceiveBufferSizes( int const commID,
                                                         MPI_Request & mpiRecvRequest,
                                                         MPI_Comm mpiComm )
 {
-//  m_sendBufferSize[commID] = integer_conversion<int>( m_sendBuffer[commID].size());
+//  m_sendBufferSize[commID] = LvArray::integerConversion<int>( m_sendBuffer[commID].size());
   MPI_iSendReceive( &m_sendBufferSize[commID], 1, mpiSendRequest,
                     &m_receiveBufferSize[commID],
                     1, mpiRecvRequest,
@@ -108,10 +108,10 @@ void NeighborCommunicator::MPI_iSendReceiveBuffers( int const commID,
   m_receiveBuffer[commID].resize( m_receiveBufferSize[commID] );
 
   MPI_iSendReceive( m_sendBuffer[commID].data(),
-                    integer_conversion< int >( m_sendBuffer[commID].size()),
+                    LvArray::integerConversion< int >( m_sendBuffer[commID].size()),
                     mpiSendRequest,
                     m_receiveBuffer[commID].data(),
-                    integer_conversion< int >( m_receiveBuffer[commID].size()),
+                    LvArray::integerConversion< int >( m_receiveBuffer[commID].size()),
                     mpiRecvRequest,
                     commID,
                     mpiComm );
@@ -414,12 +414,10 @@ void NeighborCommunicator::UnpackGhosts( MeshLevel & mesh,
   unpackedSize += faceManager.UnpackUpDownMaps( receiveBufferPtr, faceUnpackList, false, false );
   unpackedSize += elemManager.UnpackUpDownMaps( receiveBufferPtr, elementAdjacencyReceiveListArray, false );
 
-
   unpackedSize += nodeManager.Unpack( receiveBufferPtr, nodeUnpackList, 0 );
   unpackedSize += edgeManager.Unpack( receiveBufferPtr, edgeUnpackList, 0 );
   unpackedSize += faceManager.Unpack( receiveBufferPtr, faceUnpackList, 0 );
   unpackedSize += elemManager.Unpack( receiveBufferPtr, elementAdjacencyReceiveList );
-
 }
 
 void NeighborCommunicator::PrepareAndSendSyncLists( MeshLevel const & mesh,
@@ -613,7 +611,7 @@ void NeighborCommunicator::PackCommBufferForSync( std::map< string, string_array
   arrayView1d< localIndex const > const & faceGhostsToSend = faceManager.getNeighborData( m_neighborRank ).ghostsToSend();
 
   buffer_type & sendBuffer = SendBuffer( commID );
-  int const bufferSize =  integer_conversion< int >( sendBuffer.size());
+  int const bufferSize =  LvArray::integerConversion< int >( sendBuffer.size());
   buffer_unit_type * sendBufferPtr = sendBuffer.data();
 
   int packedSize = 0;

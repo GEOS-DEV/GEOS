@@ -2,19 +2,18 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
  */
 
-/*
- * testLAIHelperFunctions.cpp
- *  Created on: Oct 29, 2019
+/**
+ * @file testLAIHelperFunctions.cpp
  */
 
 #include "gtest/gtest.h"
@@ -28,7 +27,6 @@
 #include "managers/DomainPartition.hpp"
 #include "meshUtilities/MeshManager.hpp"
 #include "mpiCommunications/CommunicationTools.hpp"
-#include "mpiCommunications/NeighborCommunicator.hpp"
 #include "linearAlgebra/utilities/LAIHelperFunctions.hpp"
 
 using namespace geosx;
@@ -38,29 +36,6 @@ static real64 const tolerance  = machinePrecision;//1e-10;
 
 class LAIHelperFunctionsTest : public ::testing::Test
 {
-public:
-  /**
-   * @brief Set the timer function.
-   *
-   * @param [out] time double actual time.
-   */
-  void setTimer( double & time )
-  {
-    time = MpiWrapper::Wtime();
-  }
-
-  /**
-   * @brief Get elapsed time.
-   *
-   * @param [inout] time double
-   * - on input: actual time from setTimer;
-   * - on output: elapsed time.
-   */
-  void getElapsedTime( double & time )
-  {
-    time = MpiWrapper::Wtime() - time;
-  }
-
 protected:
 
   /**
@@ -143,10 +118,10 @@ TEST_F( LAIHelperFunctionsTest, Test_NodalVectorPermutation )
   arrayView1d< globalIndex const > const & nodeLocalToGlobal = nodeManager->localToGlobalMap();
 
   DofManager dofManager( "test" );
-  dofManager.setMesh( domain, 0, 0 );
+  dofManager.setMesh( *domain, 0, 0 );
 
   string_array Region;
-  Region.push_back( "region1" );
+  Region.emplace_back( "region1" );
 
   dofManager.addField( "nodalVariable", DofManager::Location::Node, 3, Region );
   dofManager.addCoupling( "nodalVariable", "nodalVariable", DofManager::Connector::Elem );
@@ -208,10 +183,10 @@ TEST_F( LAIHelperFunctionsTest, Test_CellCenteredVectorPermutation )
   ElementRegionManager * const elemManager = meshLevel->getElemManager();;
 
   DofManager dofManager( "test" );
-  dofManager.setMesh( domain, 0, 0 );
+  dofManager.setMesh( *domain, 0, 0 );
 
   string_array region;
-  region.push_back( "region1" );
+  region.emplace_back( "region1" );
 
   dofManager.addField( "cellCentered", DofManager::Location::Elem, region );
   dofManager.addCoupling( "cellCentered", "cellCentered", DofManager::Connector::Face );

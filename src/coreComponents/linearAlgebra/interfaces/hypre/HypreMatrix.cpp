@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -17,6 +17,7 @@
  */
 
 #include "HypreMatrix.hpp"
+#include "codingUtilities/Utilities.hpp"
 
 #include "HYPRE.h"
 #include "_hypre_IJ_mv.h"
@@ -72,7 +73,7 @@ HypreMatrix::HypreMatrix( HypreMatrix const & src )
                                                       &jupper ) );
 
   // Get number of non-zeroes per row
-  HYPRE_Int nrows = integer_conversion< HYPRE_Int >( iupper - ilower + 1 );
+  HYPRE_Int nrows = LvArray::integerConversion< HYPRE_Int >( iupper - ilower + 1 );
   array1d< HYPRE_BigInt > rows( nrows );
   array1d< HYPRE_Int > row_sizes( nrows );
 
@@ -148,22 +149,23 @@ void HypreMatrix::createWithGlobalSize( globalIndex const globalRows,
 
   reset();
 
-  HYPRE_Int const rank  = integer_conversion< HYPRE_Int >( MpiWrapper::Comm_rank( comm ) );
-  HYPRE_Int const nproc = integer_conversion< HYPRE_Int >( MpiWrapper::Comm_size( comm ) );
+  HYPRE_Int const rank  = LvArray::integerConversion< HYPRE_Int >( MpiWrapper::Comm_rank( comm ) );
+  HYPRE_Int const nproc = LvArray::integerConversion< HYPRE_Int >( MpiWrapper::Comm_size( comm ) );
 
-  HYPRE_Int const localRowSize = integer_conversion< HYPRE_Int >( globalRows / nproc );
-  HYPRE_Int const rowResidual = integer_conversion< HYPRE_Int >( globalRows % nproc );
+  HYPRE_Int const localRowSize = LvArray::integerConversion< HYPRE_Int >( globalRows / nproc );
+  HYPRE_Int const rowResidual = LvArray::integerConversion< HYPRE_Int >( globalRows % nproc );
 
-  HYPRE_Int const localColSize = integer_conversion< HYPRE_Int >( globalCols / nproc );
-  HYPRE_Int const colResidual = integer_conversion< HYPRE_Int >( globalCols % nproc );
+  HYPRE_Int const localColSize = LvArray::integerConversion< HYPRE_Int >( globalCols / nproc );
+  HYPRE_Int const colResidual = LvArray::integerConversion< HYPRE_Int >( globalCols % nproc );
 
   HYPRE_BigInt const ilower = rank * localRowSize + ( rank == 0 ? 0 : rowResidual );
   HYPRE_BigInt const iupper = ilower + localRowSize + ( rank == 0 ? rowResidual : 0 ) - 1;
   HYPRE_BigInt const jlower = rank * localColSize + ( rank == 0 ? 0 : colResidual );
   HYPRE_BigInt const jupper = jlower + localColSize + ( rank == 0 ? colResidual : 0 ) - 1;
 
-  array1d< HYPRE_Int > row_sizes( integer_conversion< localIndex >( iupper - ilower + 1 ) );
-  row_sizes = integer_conversion< HYPRE_Int >( maxEntriesPerRow );
+  array1d< HYPRE_Int > row_sizes;
+  row_sizes.resizeDefault( LvArray::integerConversion< localIndex >( iupper - ilower + 1 ),
+                           LvArray::integerConversion< HYPRE_Int >( maxEntriesPerRow ) );
 
   initialize( comm,
               ilower,
@@ -190,8 +192,8 @@ void HypreMatrix::createWithLocalSize( localIndex const localRows,
   HYPRE_BigInt const jlower = MpiWrapper::PrefixSum< HYPRE_BigInt >( localCols );
   HYPRE_BigInt const jupper = jlower + localCols - 1;
 
-  array1d< HYPRE_Int > row_sizes( localRows );
-  row_sizes = integer_conversion< HYPRE_Int >( maxEntriesPerRow );
+  array1d< HYPRE_Int > row_sizes;
+  row_sizes.resizeDefault( localRows, LvArray::integerConversion< HYPRE_Int >( maxEntriesPerRow ) );
 
   initialize( comm,
               ilower,
@@ -232,7 +234,10 @@ void HypreMatrix::zero()
 void HypreMatrix::open()
 {
   GEOSX_LAI_ASSERT( created() && closed() );
-  GEOSX_LAI_CHECK_ERROR( HYPRE_IJMatrixInitialize( m_ij_mat ) );
+  if( m_assembled )
+  {
+    GEOSX_LAI_CHECK_ERROR( HYPRE_IJMatrixInitialize( m_ij_mat ) );
+  }
   m_closed = false;
 }
 
@@ -322,7 +327,7 @@ void HypreMatrix::add( globalIndex const rowIndex,
 {
   GEOSX_LAI_ASSERT( modifiable() );
 
-  HYPRE_Int ncols = integer_conversion< HYPRE_Int >( size );
+  HYPRE_Int ncols = LvArray::integerConversion< HYPRE_Int >( size );
   GEOSX_LAI_CHECK_ERROR( HYPRE_IJMatrixAddToValues( m_ij_mat,
                                                     1,
                                                     &ncols,
@@ -340,7 +345,7 @@ void HypreMatrix::set( globalIndex const rowIndex,
   GEOSX_LAI_ASSERT_GE( rowIndex, ilower() );
   GEOSX_LAI_ASSERT_GT( iupper(), rowIndex );
 
-  HYPRE_Int ncols = integer_conversion< HYPRE_Int >( size );
+  HYPRE_Int ncols = LvArray::integerConversion< HYPRE_Int >( size );
   GEOSX_LAI_CHECK_ERROR( HYPRE_IJMatrixSetValues( m_ij_mat,
                                                   1,
                                                   &ncols,
@@ -356,7 +361,7 @@ void HypreMatrix::insert( globalIndex const rowIndex,
 {
   GEOSX_LAI_ASSERT( insertable() );
 
-  HYPRE_Int ncols = integer_conversion< HYPRE_Int >( size );
+  HYPRE_Int ncols = LvArray::integerConversion< HYPRE_Int >( size );
   GEOSX_LAI_CHECK_ERROR( HYPRE_IJMatrixAddToValues( m_ij_mat,
                                                     1,
                                                     &ncols,
@@ -371,7 +376,7 @@ void HypreMatrix::add( globalIndex const rowIndex,
 {
   GEOSX_LAI_ASSERT( modifiable() );
 
-  HYPRE_Int ncols = integer_conversion< HYPRE_Int >( colIndices.size() );
+  HYPRE_Int ncols = LvArray::integerConversion< HYPRE_Int >( colIndices.size() );
   GEOSX_LAI_CHECK_ERROR( HYPRE_IJMatrixAddToValues( m_ij_mat,
                                                     1,
                                                     &ncols,
@@ -388,7 +393,7 @@ void HypreMatrix::set( globalIndex const rowIndex,
   GEOSX_LAI_ASSERT_GE( rowIndex, ilower() );
   GEOSX_LAI_ASSERT_GT( iupper(), rowIndex );
 
-  HYPRE_Int ncols = integer_conversion< HYPRE_Int >( colIndices.size() );
+  HYPRE_Int ncols = LvArray::integerConversion< HYPRE_Int >( colIndices.size() );
   GEOSX_LAI_CHECK_ERROR( HYPRE_IJMatrixSetValues( m_ij_mat,
                                                   1,
                                                   &ncols,
@@ -403,7 +408,7 @@ void HypreMatrix::insert( globalIndex const rowIndex,
 {
   GEOSX_LAI_ASSERT( insertable() );
 
-  HYPRE_Int ncols = integer_conversion< HYPRE_Int >( colIndices.size() );
+  HYPRE_Int ncols = LvArray::integerConversion< HYPRE_Int >( colIndices.size() );
   GEOSX_LAI_CHECK_ERROR( HYPRE_IJMatrixAddToValues( m_ij_mat,
                                                     1,
                                                     &ncols,
@@ -426,7 +431,7 @@ void HypreMatrix::set( arraySlice1d< globalIndex const > const & rowIndices,
                        arraySlice1d< globalIndex const > const & colIndices,
                        arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & values )
 {
-  for( localIndex i = 0; i < integer_conversion< localIndex >( rowIndices.size() ); ++i )
+  for( localIndex i = 0; i < LvArray::integerConversion< localIndex >( rowIndices.size() ); ++i )
   {
     set( rowIndices[i], colIndices, values[i] );
   }
@@ -442,6 +447,9 @@ void HypreMatrix::insert( arraySlice1d< globalIndex const > const & rowIndices,
   }
 }
 
+namespace
+{
+
 template< typename T, int SRC_USD, int DST_USD >
 static void convertArrayLayout( arraySlice2d< T const, SRC_USD > const & src,
                                 arraySlice2d< T, DST_USD > const & dst )
@@ -455,6 +463,8 @@ static void convertArrayLayout( arraySlice2d< T const, SRC_USD > const & src,
       dst( i, j ) = src( i, j );
     }
   }
+}
+
 }
 
 void HypreMatrix::add( arraySlice1d< globalIndex const > const & rowIndices,
@@ -784,6 +794,11 @@ void HypreMatrix::scale( real64 const scalingFactor )
 {
   GEOSX_LAI_ASSERT( ready() );
 
+  if( isEqual( scalingFactor, 1.0 ) )
+  {
+    return;
+  }
+
   hypre_CSRMatrix * const prt_diag_CSR = hypre_ParCSRMatrixDiag( m_parcsr_mat );
   HYPRE_Int const diag_nnz = hypre_CSRMatrixNumNonzeros( prt_diag_CSR );
   HYPRE_Real * const ptr_diag_data = hypre_CSRMatrixData( prt_diag_CSR );
@@ -840,18 +855,62 @@ void HypreMatrix::leftScale( HypreVector const & vec )
 
 }
 
+void HypreMatrix::addEntries( HypreMatrix const & src, real64 const scale )
+{
+  GEOSX_LAI_ASSERT( ready() );
+  GEOSX_LAI_ASSERT( src.ready() );
+  GEOSX_LAI_ASSERT( numGlobalRows() == src.numGlobalRows() );
+  GEOSX_LAI_ASSERT( numGlobalCols() == src.numGlobalCols() );
+
+  array1d< globalIndex > colIndices;
+  array1d< real64 > values;
+  open();
+  for( globalIndex rowIndex = src.ilower(); rowIndex < src.iupper(); ++rowIndex )
+  {
+    localIndex const numEntries = src.globalRowLength( rowIndex );
+    colIndices.resize( numEntries );
+    values.resize( numEntries );
+    src.getRowCopy( rowIndex, colIndices, values );
+    if( !isEqual( scale, 1.0 ) )
+    {
+      for( localIndex i = 0; i < numEntries; ++i )
+      {
+        values[i] *= scale;
+      }
+    }
+    add( rowIndex, colIndices, values );
+  }
+  close();
+}
+
+void HypreMatrix::addDiagonal( HypreVector const & src )
+{
+  GEOSX_LAI_ASSERT( ready() );
+  GEOSX_LAI_ASSERT( src.ready() );
+  GEOSX_LAI_ASSERT( numGlobalRows() == numGlobalCols() );
+  GEOSX_LAI_ASSERT( numLocalRows() == src.localSize() );
+
+  open();
+  real64 const * values = src.extractLocalVector();
+  for( globalIndex i = ilower(), ii = 0; i < iupper(); ++i, ++ii )
+  {
+    add( i, i, values[ii] );
+  }
+  close();
+}
+
 localIndex HypreMatrix::maxRowLength() const
 {
   GEOSX_LAI_ASSERT( assembled() );
 
-  HYPRE_Int const nrows = integer_conversion< HYPRE_Int >( numLocalRows() );
+  HYPRE_Int const nrows = LvArray::integerConversion< HYPRE_Int >( numLocalRows() );
 
   array1d< HYPRE_BigInt > rows( nrows );
   array1d< HYPRE_Int > ncols( nrows );
 
   for( HYPRE_Int i = 0; i < nrows; ++i )
   {
-    rows[i] = ilower() + integer_conversion< HYPRE_BigInt >( i );
+    rows[i] = ilower() + LvArray::integerConversion< HYPRE_BigInt >( i );
   }
 
   GEOSX_LAI_CHECK_ERROR( HYPRE_IJMatrixGetRowCounts( m_ij_mat,
@@ -872,7 +931,7 @@ localIndex HypreMatrix::globalRowLength( globalIndex globalRowIndex ) const
 {
   GEOSX_LAI_ASSERT( assembled() );
 
-  HYPRE_BigInt row = integer_conversion< HYPRE_BigInt >( globalRowIndex );
+  HYPRE_BigInt row = LvArray::integerConversion< HYPRE_BigInt >( globalRowIndex );
   HYPRE_Int ncols;
 
   GEOSX_LAI_CHECK_ERROR( HYPRE_IJMatrixGetRowCounts( m_ij_mat,
@@ -880,7 +939,7 @@ localIndex HypreMatrix::globalRowLength( globalIndex globalRowIndex ) const
                                                      &row,
                                                      &ncols ) );
 
-  return integer_conversion< localIndex >( ncols );
+  return LvArray::integerConversion< localIndex >( ncols );
 }
 
 void HypreMatrix::getRowCopy( globalIndex globalRow,
@@ -915,13 +974,13 @@ real64 HypreMatrix::getDiagValue( globalIndex globalRow ) const
   GEOSX_LAI_ASSERT_GT( iupper(), globalRow );
 
   // Get local row index
-  HYPRE_Int const localRow = integer_conversion< HYPRE_Int >( getLocalRowID( globalRow ) );
+  HYPRE_Int const localRow = LvArray::integerConversion< HYPRE_Int >( getLocalRowID( globalRow ) );
 
   // Get diagonal block
-  hypre_CSRMatrix const * const prt_CSR  = hypre_ParCSRMatrixDiag( m_parcsr_mat );
-  HYPRE_Int const * const IA       = hypre_CSRMatrixI( prt_CSR );
-  HYPRE_Int const * const JA       = hypre_CSRMatrixJ( prt_CSR );
-  HYPRE_Real const * const ptr_data = hypre_CSRMatrixData( prt_CSR );
+  hypre_CSRMatrix const * const prt_CSR = hypre_ParCSRMatrixDiag( m_parcsr_mat );
+  HYPRE_Int const * const IA            = hypre_CSRMatrixI( prt_CSR );
+  HYPRE_Int const * const JA            = hypre_CSRMatrixJ( prt_CSR );
+  HYPRE_Real const * const ptr_data     = hypre_CSRMatrixData( prt_CSR );
 
   for( HYPRE_Int j = IA[localRow]; j < IA[localRow + 1]; ++j )
   {
@@ -933,6 +992,32 @@ real64 HypreMatrix::getDiagValue( globalIndex globalRow ) const
   return 0.0;
 }
 
+void HypreMatrix::extractDiagonal( HypreVector & dst ) const
+{
+  GEOSX_LAI_ASSERT( ready() );
+  GEOSX_LAI_ASSERT( dst.ready() );
+  GEOSX_LAI_ASSERT_EQ( dst.localSize(), numLocalRows() );
+
+  dst.zero();
+  real64 * const values = dst.extractLocalVector();
+
+  hypre_CSRMatrix const * const prt_CSR  = hypre_ParCSRMatrixDiag( m_parcsr_mat );
+  HYPRE_Int const * const IA             = hypre_CSRMatrixI( prt_CSR );
+  HYPRE_Int const * const JA             = hypre_CSRMatrixJ( prt_CSR );
+  HYPRE_Real const * const ptr_data      = hypre_CSRMatrixData( prt_CSR );
+
+  for( localIndex localRow = 0; localRow < numLocalRows(); ++localRow )
+  {
+    for( HYPRE_Int j = IA[localRow]; j < IA[localRow + 1]; ++j )
+    {
+      if( JA[j] == localRow )
+      {
+        values[localRow] = ptr_data[j];
+      }
+    }
+  }
+}
+
 real64 HypreMatrix::clearRow( globalIndex const globalRow,
                               bool const keepDiag,
                               real64 const diagValue )
@@ -942,7 +1027,7 @@ real64 HypreMatrix::clearRow( globalIndex const globalRow,
   GEOSX_LAI_ASSERT_GT( iupper(), globalRow );
 
   // Get local row index
-  HYPRE_Int const localRow = integer_conversion< HYPRE_Int >( getLocalRowID( globalRow ) );
+  HYPRE_Int const localRow = LvArray::integerConversion< HYPRE_Int >( getLocalRowID( globalRow ) );
 
   // Clear row in diagonal block
   hypre_CSRMatrix * prt_CSR  = hypre_ParCSRMatrixDiag( m_parcsr_mat );
@@ -981,24 +1066,14 @@ real64 HypreMatrix::clearRow( globalIndex const globalRow,
   return oldDiag;
 }
 
-HYPRE_IJMatrix const & HypreMatrix::unwrapped() const
-{
-  return m_ij_mat;
-}
-
-HYPRE_IJMatrix & HypreMatrix::unwrapped()
-{
-  return m_ij_mat;
-}
-
-HYPRE_ParCSRMatrix const & HypreMatrix::unwrappedParCSR() const
+HYPRE_ParCSRMatrix const & HypreMatrix::unwrapped() const
 {
   return m_parcsr_mat;
 }
 
-HYPRE_ParCSRMatrix & HypreMatrix::unwrappedParCSR()
+HYPRE_IJMatrix const & HypreMatrix::unwrappedIJ() const
 {
-  return m_parcsr_mat;
+  return m_ij_mat;
 }
 
 localIndex HypreMatrix::getLocalRowID( globalIndex const index ) const
@@ -1008,7 +1083,7 @@ localIndex HypreMatrix::getLocalRowID( globalIndex const index ) const
   GEOSX_LAI_CHECK_ERROR( HYPRE_IJMatrixGetLocalRange( m_ij_mat,
                                                       &ilower, &iupper,
                                                       &jlower, &jupper ) );
-  return (index >= ilower && index <= iupper) ? integer_conversion< localIndex >( index - ilower ) : -1;
+  return (index >= ilower && index <= iupper) ? LvArray::integerConversion< localIndex >( index - ilower ) : -1;
 }
 
 globalIndex HypreMatrix::getGlobalRowID( localIndex const index ) const
@@ -1034,13 +1109,13 @@ globalIndex HypreMatrix::numGlobalCols() const
 localIndex HypreMatrix::numLocalRows() const
 {
   GEOSX_LAI_ASSERT( created() );
-  return integer_conversion< localIndex >( iupper() - ilower() );
+  return LvArray::integerConversion< localIndex >( iupper() - ilower() );
 }
 
 localIndex HypreMatrix::numLocalCols() const
 {
   GEOSX_LAI_ASSERT( created() );
-  return integer_conversion< localIndex >( jupper() - jlower() );
+  return LvArray::integerConversion< localIndex >( jupper() - jlower() );
 }
 
 globalIndex HypreMatrix::ilower() const
@@ -1051,7 +1126,7 @@ globalIndex HypreMatrix::ilower() const
   GEOSX_LAI_CHECK_ERROR( HYPRE_IJMatrixGetLocalRange( m_ij_mat,
                                                       &ilower, &iupper,
                                                       &jlower, &jupper ) );
-  return integer_conversion< globalIndex >( ilower );
+  return LvArray::integerConversion< globalIndex >( ilower );
 }
 
 globalIndex HypreMatrix::iupper() const
@@ -1064,7 +1139,7 @@ globalIndex HypreMatrix::iupper() const
                                                       &iupper,
                                                       &jlower,
                                                       &jupper ) );
-  return integer_conversion< globalIndex >( iupper + 1 );
+  return LvArray::integerConversion< globalIndex >( iupper + 1 );
 }
 
 globalIndex HypreMatrix::jlower() const
@@ -1077,7 +1152,7 @@ globalIndex HypreMatrix::jlower() const
                                                       &iupper,
                                                       &jlower,
                                                       &jupper ) );
-  return integer_conversion< globalIndex >( jlower );
+  return LvArray::integerConversion< globalIndex >( jlower );
 }
 
 globalIndex HypreMatrix::jupper() const
@@ -1090,7 +1165,7 @@ globalIndex HypreMatrix::jupper() const
                                                       &iupper,
                                                       &jlower,
                                                       &jupper ) );
-  return integer_conversion< globalIndex >( jupper + 1 );
+  return LvArray::integerConversion< globalIndex >( jupper + 1 );
 }
 
 localIndex HypreMatrix::numLocalNonzeros() const
@@ -1103,12 +1178,12 @@ localIndex HypreMatrix::numLocalNonzeros() const
   hypre_CSRMatrix * prt_offdiag_CSR = hypre_ParCSRMatrixOffd( m_parcsr_mat );
   HYPRE_Int offdiag_nnz = hypre_CSRMatrixNumNonzeros( prt_offdiag_CSR );
 
-  return integer_conversion< localIndex >( diag_nnz + offdiag_nnz );
+  return LvArray::integerConversion< localIndex >( diag_nnz + offdiag_nnz );
 }
 
 globalIndex HypreMatrix::numGlobalNonzeros() const
 {
-  return MpiWrapper::Sum( integer_conversion< globalIndex >( numLocalNonzeros() ), getComm() );
+  return MpiWrapper::Sum( LvArray::integerConversion< globalIndex >( numLocalNonzeros() ), getComm() );
 }
 
 void HypreMatrix::print( std::ostream & os ) const
@@ -1151,8 +1226,8 @@ void HypreMatrix::print( std::ostream & os ) const
           sprintf( str,
                    "%11i%20lli%20lli%24.10e\n",
                    iRank,
-                   firstRowID + integer_conversion< globalIndex >( i ),
-                   firstDiagColID + integer_conversion< globalIndex >( diag_JA[j] ),
+                   firstRowID + LvArray::integerConversion< globalIndex >( i ),
+                   firstDiagColID + LvArray::integerConversion< globalIndex >( diag_JA[j] ),
                    ptr_diag_data[j] );
           os << str;
         }
@@ -1161,7 +1236,7 @@ void HypreMatrix::print( std::ostream & os ) const
           sprintf( str,
                    "%11i%20lli%20lli%24.10e\n",
                    iRank,
-                   firstRowID + integer_conversion< globalIndex >( i ),
+                   firstRowID + LvArray::integerConversion< globalIndex >( i ),
                    col_map_offdiag[ offdiag_JA[j] ],
                    ptr_offdiag_data[j] );
           os << str;
@@ -1268,7 +1343,6 @@ real64 HypreMatrix::normInf() const
   HYPRE_Int const * IA = hypre_CSRMatrixI( prt_diag_CSR );
 
   array1d< HYPRE_Real > row_abs_sum( nrows );
-  row_abs_sum = 0.0;
 
   for( HYPRE_Int i = 0; i < nrows; ++i )
   {

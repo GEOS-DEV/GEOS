@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -37,50 +37,83 @@ class FluxStencil
 public:
 
   /**
-   * @brief Number of points the flux is between (normally 2)
+   * @brief Number of points the flux is between (normally 2).
    */
   static localIndex constexpr NUM_POINT_IN_FLUX = 2;
 
   /**
-   * @brief Maximum number of points in a stencil (required to use static arrays in kernels)
+   * @brief Maximum number of points in a stencil (required to use static arrays in kernels).
    */
   static localIndex constexpr MAX_STENCIL_SIZE = 18;
 
-  // provide aliases for template type parameters
+  /// Alias for INDEX
   using index_type  = INDEX;
+  /// Alias for WEIGHT
   using weight_type = WEIGHT;
 
   explicit FluxStencil();
 
+  /**
+   * @brief Constructor.
+   * @param[in] numConn number of connections
+   * @param[in] avgStencilSize average stencil size
+   */
   explicit FluxStencil( localIndex const numConn,
                         localIndex const avgStencilSize );
 
-  /// return the size of the stencil collection (i.e. number of connections)
+  /**
+   * @brief Return the size of the stencil collection (i.e. number of connections).
+   * @return the size of the stencil collection (i.e. number of connections)
+   */
   localIndex numConnections() const;
 
-  /// resize the collection
+  /**
+   * @brief Resize the collection.
+   * @param[in] numConn number of connections
+   * @param[in] avgStencilSize average stencil size
+   */
   void reserve( localIndex const numConn,
                 localIndex const avgStencilSize );
 
-  /// add data for one connection
+  /**
+   * @brief Add data for one connection.
+   * @param[in] numPts number of points to be added
+   * @param[in] indices the INDEX array
+   * @param[in] weights the WEIGHT array
+   * @param[in] connectorIndex the connector index
+   */
   void add( localIndex const numPts,
             INDEX const * const indices,
             WEIGHT const * const weights,
             localIndex const connectorIndex );
 
-  /// zero out connections
+  /**
+   * @brief Zero out connections.
+   * @param[in] connectorIndex the connector index
+   * @return true if the stencil is zeroed out
+   */
   bool zero( localIndex const connectorIndex );
 
-  /// called after adding connections is done to compress the data and release unused memory
+  /**
+   * @brief Called after adding connections is done to compress the data.
+   */
   void compress();
 
+  /**
+   * @struct Entry
+   * @brief Structure containing the index and the weight of the single edge in the stencil graph.
+   */
   struct Entry
   {
-    INDEX index;
-    WEIGHT weight;
+    INDEX index;   ///< edge index
+    WEIGHT weight; ///< edge weight
   };
 
-  ArrayOfArraysView< Entry const, true > getConnections() const { return m_connections; }
+  /**
+   * @brief Return the connections.
+   * @return the connections
+   */
+  ArrayOfArraysView< Entry const, true > getConnections() const { return m_connections.toViewConst(); }
 
 private:
 
@@ -130,7 +163,7 @@ void FluxStencil< INDEX, WEIGHT >::add( localIndex const numPts,
     entries[i] = { indices[i], weights[i] };
   }
 
-  m_connections.appendArray( entries.data(), numPts );
+  m_connections.appendArray( entries.begin(), entries.end() );
   m_connectorIndices[connectorIndex] = m_connections.size() - 1;
 }
 

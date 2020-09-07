@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -37,8 +37,8 @@ TEST( testGeosxTraits, test_is_noncontainer_type_packable )
 
 TEST( testGeosxTraits, test_is_array_packable )
 {
-  static_assert( is_packable_array< Array< double, 2, RAJA::PERM_IJ > >, "Should be true." );
-  static_assert( is_packable_array< Array< double, 2, RAJA::PERM_JI > >, "Should be true." );
+  static_assert( is_packable_array< array2d< real64, RAJA::PERM_IJ > >, "Should be true." );
+  static_assert( is_packable_array< array2d< real64, RAJA::PERM_JI > >, "Should be true." );
 
   static_assert( !is_packable_array< int >, "Should be false." );
   static_assert( !is_packable_array< double >, "Should be false." );
@@ -49,6 +49,6 @@ TEST( testGeosxTraits, test_is_array_packable )
 TEST( testGeosxTraits, test_is_packable_map )
 {
   static_assert( is_packable_map< map< string, int > >, "Should be true." );
-  static_assert( is_packable_map< map< string, Array< int, 1 > > >, "Should be true." );
+  static_assert( is_packable_map< map< string, array1d< int > > >, "Should be true." );
   static_assert( !is_packable_map< map< string, std::pair< int, int > > >, "Should be false" );
 }

@@ -29,15 +29,30 @@ or_die python scripts/config-build.py \
               -DENABLE_GEOSX_PTP:BOOL=ON \
               -DBLT_MPI_COMMAND_APPEND:STRING=--allow-run-as-root \
               -DENABLE_CUDA:BOOL=${ENABLE_CUDA:-OFF} \
-              -DCMAKE_CUDA_FLAGS:STRING=\""${CMAKE_CUDA_FLAGS:-Unused}"\"
+              -DCMAKE_CUDA_FLAGS:STRING=\""${CMAKE_CUDA_FLAGS:-Unused}"\" \
+              -DCUDA_TOOLKIT_ROOT_DIR:PATH=${CUDA_TOOLKIT_ROOT_DIR:-/usr/local/cuda} \
+              -DCUDA_ARCH:STRING=${CUDA_ARCH:sm_70}
 
 or_die cd ${GEOSX_BUILD_DIR}
+
+# Code style check
+if [[ "$*" == *--test-code-style* ]]; then
+  or_die ctest -V -R "testUncrustifyCheck"
+  exit 0
+fi
+
+# Documentation check
+if [[ "$*" == *--test-documentation* ]]; then
+  or_die ctest -V -R "testDoxygenCheck"
+  exit 0
+fi
+
 or_die make -j $(nproc) VERBOSE=1
 or_die make install VERBOSE=1
 
 # Unit tests
 if [[ "$*" != *--disable-unit-tests* ]]; then
   or_die ctest -V
-fi 
+fi
 
 exit 0

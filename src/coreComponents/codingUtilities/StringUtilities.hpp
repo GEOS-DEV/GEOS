@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -23,167 +23,72 @@
 #include <cstring>
 #include <memory>
 #include <sstream>
+ #include <iomanip>
 #include <algorithm>
 #include <map>
 
 
 #include "common/DataTypes.hpp"
-#include "cxx-utilities/src/IntegerConversion.hpp"
+#include "LvArray/src/limits.hpp"
 
 namespace geosx
 {
 namespace stringutilities
 {
-template< class Type >
-std::string toString( Type theVar );
-
-template< class Type >
-Type fromString( std::string theString );
-
-//////////////////////////////////////////////////
-
-//
-// toString
-//
-/// convert a variable to a string
-template< class Type >
-std::string toString( Type theVar )
-{
-  std::ostringstream oss;
-  oss << theVar;
-  return oss.str();
-}
-// override the template for string->string
-template<>
-inline std::string toString< std::string >( std::string theVar )
-{
-  return theVar;
-}
-
-//
-// fromString
-//
-/// returns a variable from a string
-template< class Type >
-Type fromString( std::string theString )
-{
-  std::istringstream iss( theString );
-  Type theVar;
-  iss >> theVar;
-  return theVar;
-}
-// override the template for string->string
-template<>
-inline std::string fromString< std::string >( std::string theVar )
-{
-  return theVar;
-}
-
-// override the template for string->real64
-// Allows unit manager to convert units
-template<>
-real64 fromString< real64 >( std::string theVar );
-
-// override the template for FieldType
-//template <>
-//inline FieldType fromString<FieldType>(std::string theString){
-//  using namespace FieldInfo;
-//  if(theString==FieldInfo::IntegerStr){
-//    return integerField;
-//  } else if(theString==FieldInfo::GlobalIndexStr){
-//  return globalIndexField;
-//  } else if(theString==FieldInfo::LocalIndexStr){
-//  return localIndexField;
-//  } else if(theString==FieldInfo::RealStr){
-//    return realField;
-//  } else if(theString==FieldInfo::R1TensorStr){
-//    return R1TensorField;
-//  } else if(theString==FieldInfo::R2TensorStr){
-//    return R2TensorField;
-//  } else if(theString==FieldInfo::R2SymTensorStr){
-//    return R2SymTensorField;
-//  }else {
-//    throw GPException("Error fromString: unrecognized field type: " +
-// theString +".");
-//  }
-//}
-
-/// Convert a string to lowercase
-void toLower( std::string & theString );
-std::string lowercase( std::string theString );
-
-/// Convert a string to uppercase
-void toUpper( std::string & theString );
-std::string uppercase( std::string theString );
-
-/// Check for case insensitive equality between strings
-bool ieq( std::string strA, std::string strB );
 
 /// Overloaded function to check equality between strings and char arrays
 /// Mainly used to avoid char*==char* mistakes
-inline bool streq( const std::string & strA, const std::string & strB )
-{
-  return strA == strB;
-}
-inline bool streq( const std::string & strA, const char * strB )
-{
-  return strA == strB;
-}
-inline bool streq( const char * strA, const std::string & strB )
-{
-  return strA == strB;
-}
-inline bool streq( const char * strA, const char * strB )
-{
-  return !strcmp( strA, strB );
-}
+inline bool streq( std::string const & strA, std::string const & strB )
+{ return strA == strB; }
 
-/// string is integer
-inline bool strIsInt( std::string theString )
+inline bool streq( std::string const & strA, char const * const strB )
+{ return strA == strB; }
+
+inline bool streq( char const * const strA, std::string const & strB )
+{ return strA == strB; }
+
+inline bool streq( char const * const strA, char const * const strB )
+{ return !strcmp( strA, strB ); }
+
+/**
+ * @brief Join strings or other printable objects with a delimiter.
+ * @tparam S    type of delimiter, usually char, char const * or std::string
+ * @tparam IT   type of iterator into the range of objects to join
+ * @param delim delimiter used to glue together strings
+ * @param first iterator to start of the range
+ * @param last  iterator past-the-end of the range
+ * @return a new string containing input strings concatenated with a delimiter
+ */
+template< typename IT, typename S = char >
+std::string strjoin( IT first, IT last, S const & delim = S() )
 {
-  std::istringstream iss( theString );
-  int dummy;
-  iss >> dummy;
-  return !iss.fail();
+  std::ostringstream oss;
+  if( first != last )
+  {
+    oss << *first;
+  }
+  while( ++first != last )
+  {
+    oss << delim << *first;
+  }
+  return oss.str();
 }
 
 /// Subdivide string by delimiters
-string_array Tokenize( const std::string & str, const std::string & delimiters );
+string_array Tokenize( std::string const & str, std::string const & delimiters );
 
-/// Subdivide string delimited by sequence of characters
-string_array TokenizeSeq( const std::string & str, const std::string & seq );
-
-/// Split string at first token
-string_array Split( const std::string & str, const std::string & delimiters );
-
-
-/// Expand string vector based on multiple tokens eg [a, b**3, c] => [a,b,b,b,c]
-inline void ExpandMultipleTokens( string_array & sVector, const std::string & multipleToken="**" )
+/**
+ * @brief Retuns a string containing a padded value
+ * @param[in] value to be padded
+ * @param[in] size size of the padding
+ */
+template< typename T >
+string PadValue( T value, int size )
 {
-  localIndex n= integer_conversion< localIndex >( sVector.size());
-  string_array newVec;
-  for( localIndex i =0; i < n; ++i )
-  {
-    string_array keyMult = TokenizeSeq( sVector[i], multipleToken );
-    if( (keyMult.size() == 2) && strIsInt( keyMult[1] ) )
-    {
-      int numMult = fromString< int >( keyMult[1] );
-      for( int j=0; j < numMult; ++j )
-      {
-        newVec.push_back( keyMult[0] );
-      }
-    }
-    else
-    {
-      newVec.push_back( sVector[i] );
-    }
-
-  }
-  sVector = newVec;
+  std::stringstream paddedStringStream;
+  paddedStringStream << std::setfill( '0' ) << std::setw( size ) << value;
+  return paddedStringStream.str();
 }
-
-string EncodeBase64( unsigned char const * const bytes,
-                     integer dataSize );
 }
 }
 

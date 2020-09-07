@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -16,12 +16,6 @@
  * @file ConduitRestart.cpp
  */
 
-// HACK: the fmt/fmt.hpp include needs to come before the ConduitRestart.hpp or
-//       it is *possible* to get a compile error where
-//       umpire::util::FixedMallocPool::Pool is used in a template in
-//       axom fmt. I have no idea why this is occuring and don't have
-//       the time to diagnose the issue right now.
-#include <fmt/fmt.hpp>
 // Source includes
 #include "ConduitRestart.hpp"
 #include "mpiCommunications/MpiWrapper.hpp"
@@ -39,27 +33,32 @@ namespace dataRepository
 conduit::Node rootConduitNode;
 
 
-std::string writeRootNode( std::string const & rootPath )
+std::string writeRootFile( conduit::Node & root, std::string const & rootPath )
 {
   std::string rootDirName, rootFileName;
   splitPath( rootPath, rootDirName, rootFileName );
 
   if( MpiWrapper::Comm_rank() == 0 )
   {
-    conduit::Node root;
+    makeDirsForPath( rootPath );
+
+    root[ "protocol/name" ] = "hdf5";
+    root[ "protocol/version" ] = CONDUIT_VERSION;
+
     root[ "number_of_files" ] = MpiWrapper::Comm_size();
     root[ "file_pattern" ] = rootFileName + "/rank_%07d.hdf5";
 
-    conduit::relay::io::save( root, rootPath + ".root", "hdf5" );
+    root[ "number_of_trees" ] = 1;
+    root[ "tree_pattern" ] = "/";
 
-    std::string cmd = "mkdir -p " + rootPath;
-    int ret = std::system( cmd.c_str());
-    GEOSX_WARNING_IF( ret != 0, "Failed to create directory: command '" << cmd << "' exited with code " << std::to_string( ret ) );
+    conduit::relay::io::save( root, rootPath + ".root", "hdf5" );
   }
 
   MpiWrapper::Barrier( MPI_COMM_GEOSX );
 
-  return fmt::sprintf( rootPath + "/rank_%07d.hdf5", MpiWrapper::Comm_rank() );
+  std::vector< char > buffer( rootPath.size() + 64 );
+  GEOSX_ERROR_IF_GE( std::snprintf( buffer.data(), buffer.size(), "%s/rank_%07d.hdf5", rootPath.data(), MpiWrapper::Comm_rank() ), 1024 );
+  return buffer.data();
 }
 
 
@@ -84,7 +83,10 @@ std::string readRootNode( std::string const & rootPath )
   }
 
   MpiWrapper::Broadcast( rankFilePattern, 0 );
-  return fmt::sprintf( rankFilePattern, MpiWrapper::Comm_rank() );
+
+  char buffer[ 1024 ];
+  GEOSX_ERROR_IF_GE( std::snprintf( buffer, 1024, rankFilePattern.data(), MpiWrapper::Comm_rank() ), 1024 );
+  return buffer;
 }
 
 /* Write out a restart file. */
@@ -92,7 +94,8 @@ void writeTree( std::string const & path )
 {
   GEOSX_MARK_FUNCTION;
 
-  std::string const filePathForRank = writeRootNode( path );
+  conduit::Node root;
+  std::string const filePathForRank = writeRootFile( root, path );
   GEOSX_LOG_RANK( "Writing out restart file at " << filePathForRank );
   conduit::relay::io::save( rootConduitNode, filePathForRank, "hdf5" );
 }

@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -18,9 +18,13 @@
 
 #include "PetscSolver.hpp"
 
-#include "PetscVector.hpp"
-#include "PetscMatrix.hpp"
+#include "common/Stopwatch.hpp"
+#include "linearAlgebra/DofManager.hpp"
+#include "linearAlgebra/interfaces/petsc/PetscVector.hpp"
+#include "linearAlgebra/interfaces/petsc/PetscMatrix.hpp"
+#include "linearAlgebra/interfaces/petsc/PetscPreconditioner.hpp"
 #include "linearAlgebra/utilities/LinearSolverParameters.hpp"
+#include "linearAlgebra/utilities/LAIHelperFunctions.hpp"
 
 #include <petscvec.h>
 #include <petscmat.h>
@@ -30,20 +34,23 @@
 namespace geosx
 {
 
-PetscSolver::PetscSolver( LinearSolverParameters const & parameters )
+PetscSolver::PetscSolver( LinearSolverParameters parameters )
   :
-  m_parameters( parameters )
+  m_parameters( std::move( parameters ) )
 {}
 
 void PetscSolver::solve( PetscMatrix & mat,
                          PetscVector & sol,
-                         PetscVector & rhs )
+                         PetscVector & rhs,
+                         DofManager const * const dofManager )
 {
   GEOSX_LAI_ASSERT( mat.ready() );
   GEOSX_LAI_ASSERT( sol.ready() );
   GEOSX_LAI_ASSERT( rhs.ready() );
 
-  if( m_parameters.solverType == "direct" )
+  GEOSX_UNUSED_VAR( dofManager );
+
+  if( m_parameters.solverType == LinearSolverParameters::SolverType::direct )
   {
     solve_direct( mat, sol, rhs );
   }
@@ -66,147 +73,148 @@ void PetscSolver::solve_direct( PetscMatrix & mat,
   GEOSX_LAI_CHECK_ERROR( KSPSetType( ksp, KSPPREONLY ) );
 
   // use direct solve preconditioner SUPERLU DIST
+  Stopwatch watch;
   PC prec;
   GEOSX_LAI_CHECK_ERROR( KSPGetPC( ksp, &prec ) );
   GEOSX_LAI_CHECK_ERROR( PCSetType( prec, PCLU ) );
   GEOSX_LAI_CHECK_ERROR( PCFactorSetMatSolverType( prec, MATSOLVERSUPERLU_DIST ) );
+  GEOSX_LAI_CHECK_ERROR( PCSetUp( prec ) );
+  m_result.setupTime = watch.elapsedTime();
 
   // solve system
-  GEOSX_LAI_CHECK_ERROR( KSPSetFromOptions( ksp ) );
+  watch.zero();
   GEOSX_LAI_CHECK_ERROR( KSPSolve( ksp, rhs.unwrapped(), sol.unwrapped() ) );
+  m_result.solveTime = watch.elapsedTime();
+
+  KSPConvergedReason reason;
+  GEOSX_LAI_CHECK_ERROR( KSPGetConvergedReason( ksp, &reason ) );
+
+  m_result.status = reason >= 0 ? LinearSolverResult::Status::Success : LinearSolverResult::Status::Breakdown;
+  m_result.numIterations = 1.0;
+  m_result.residualReduction = NumericTraits< real64 >::eps;
+
+  // destroy solver
+  GEOSX_LAI_CHECK_ERROR( KSPDestroy( &ksp ) );
 }
+
+namespace
+{
+
+void CreatePetscKrylovSolver( LinearSolverParameters const & params,
+                              MPI_Comm const comm,
+                              KSP & ksp )
+{
+  GEOSX_LAI_CHECK_ERROR( KSPCreate( comm, &ksp ) );
+  GEOSX_LAI_CHECK_ERROR( KSPSetNormType( ksp, KSP_NORM_UNPRECONDITIONED ) );
+  GEOSX_LAI_CHECK_ERROR( KSPSetTolerances( ksp, params.krylov.relTolerance, PETSC_DEFAULT,
+                                           PETSC_DEFAULT, params.krylov.maxIterations ) );
+
+  // pick the solver type
+  switch( params.solverType )
+  {
+    case LinearSolverParameters::SolverType::gmres:
+    {
+      GEOSX_LAI_CHECK_ERROR( KSPSetType( ksp, KSPGMRES ) );
+      GEOSX_LAI_CHECK_ERROR( KSPGMRESSetRestart( ksp, params.krylov.maxRestart ) );
+      break;
+    }
+    case LinearSolverParameters::SolverType::bicgstab:
+    {
+      GEOSX_LAI_CHECK_ERROR( KSPSetType( ksp, KSPBCGS ) );
+      break;
+    }
+    case LinearSolverParameters::SolverType::cg:
+    {
+      GEOSX_LAI_CHECK_ERROR( KSPSetType( ksp, KSPCG ) );
+      break;
+    }
+    default:
+    {
+      GEOSX_ERROR( "Solver type not supported in PETSc interface: " << params.solverType );
+    }
+  }
+}
+
+} // namespace
 
 void PetscSolver::solve_krylov( PetscMatrix & mat,
                                 PetscVector & sol,
                                 PetscVector & rhs )
 {
-  MPI_Comm const comm = mat.getComm();
+  Stopwatch watch;
 
   // create linear solver
   KSP ksp;
-  GEOSX_LAI_CHECK_ERROR( KSPCreate( comm, &ksp ) );
-  GEOSX_LAI_CHECK_ERROR( KSPSetOperators( ksp, mat.unwrapped(), mat.unwrapped() ) );
-  GEOSX_LAI_CHECK_ERROR( KSPGMRESSetRestart( ksp, m_parameters.krylov.maxRestart ) );
-  GEOSX_LAI_CHECK_ERROR( KSPSetTolerances( ksp, m_parameters.krylov.tolerance, PETSC_DEFAULT,
-                                           PETSC_DEFAULT, m_parameters.krylov.maxIterations ) );
+  CreatePetscKrylovSolver( m_parameters, mat.getComm(), ksp );
 
-  // pick the solver type
-  if( m_parameters.solverType == "gmres" )
-  {
-    GEOSX_LAI_CHECK_ERROR( KSPSetType( ksp, KSPGMRES ) );
-  }
-  else if( m_parameters.solverType == "bicgstab" )
-  {
-    GEOSX_LAI_CHECK_ERROR( KSPSetType( ksp, KSPBCGS ) );
-  }
-  else if( m_parameters.solverType == "cg" )
-  {
-    GEOSX_LAI_CHECK_ERROR( KSPSetType( ksp, KSPCG ) );
-  }
-  else
-  {
-    GEOSX_ERROR( "The requested linear solverType doesn't seem to exist" );
-  }
+  // This can be used to extract residual norm history:
+  //array1d< real64 > residualNorms( m_parameters.krylov.maxIterations + 1 );
+  //GEOSX_LAI_CHECK_ERROR( KSPSetResidualHistory( ksp, residualNorms.data(), residualNorms.size(), PETSC_TRUE ) );
 
-  // create a preconditioner and pick type
-  PC prec;
-  GEOSX_LAI_CHECK_ERROR( KSPGetPC( ksp, &prec ) );
+  // Deal with separate component approximation
+  PetscMatrix separateComponentMatrix;
+  if( m_parameters.amg.separateComponents )
+  {
+    LAIHelperFunctions::SeparateComponentFilter( mat, separateComponentMatrix, m_parameters.dofsPerNode );
+  }
+  PetscMatrix & precondMat = m_parameters.amg.separateComponents ? separateComponentMatrix : mat;
 
-  if( m_parameters.preconditionerType == "none" )
-  {
-    PCSetType( prec, PCNONE );
-  }
-  else if( m_parameters.preconditionerType == "jacobi" )
-  {
-    PCSetType( prec, PCJACOBI );
-  }
-  else if( m_parameters.preconditionerType == "ilu" )
-  {
-    GEOSX_ERROR( "The requested linear preconditionerType isn't available in PETSc" );
-  }
-  else if( m_parameters.preconditionerType == "icc" )
-  {
-    GEOSX_ERROR( "The requested linear preconditionerType isn't available in PETSc" );
-  }
-  else if( m_parameters.preconditionerType == "ilut" )
-  {
-#ifdef GEOSX_USE_MPI
-    GEOSX_LAI_CHECK_ERROR( PCSetType( prec, PCHYPRE ) );
-    GEOSX_LAI_CHECK_ERROR( PCHYPRESetType( prec, "pilut" ) );
-#else
-    GEOSX_ERROR( "Can't use HYPRE through PETSc in serial" );
-#endif
-  }
-  else if( m_parameters.preconditionerType == "amg" )
-  {
-    std::map< std::string, std::string > translate; // maps GEOSX to PETSc syntax for Hyper options
+  // create and compute a preconditioner and set into KSP
+  PetscPreconditioner precond( m_parameters );
+  precond.compute( precondMat );
+  KSPSetPC( ksp, precond.unwrapped() );
 
-    translate.insert( std::make_pair( "jacobi", "Jacobi" ));
-    translate.insert( std::make_pair( "sequentialGaussSeidel", "sequential-Gauss-Seidel" ));
-    translate.insert( std::make_pair( "seqboundaryGaussSeidel", "seqboundary-Gauss-Seidel" ));
-    translate.insert( std::make_pair( "sorJacobi", "SOR/Jacobi" ));
-    translate.insert( std::make_pair( "backwardSorJacobi", "backward-SOR/Jacobi" ));
-    translate.insert( std::make_pair( "symmetricSorJacobi", "symmetric-SOR/Jacobi" ));
-    translate.insert( std::make_pair( "l1scaledSorJacobi", "l1scaled-SOR/Jacobi" ));
-    translate.insert( std::make_pair( "direct", "Gaussian-elimination" ));
-    translate.insert( std::make_pair( "l1GaussSeidel", "l1-Gauss-Seidel" ));
-    translate.insert( std::make_pair( "backwardl1GaussSeidel", "backward-l1-Gauss-Seidel" ));
-    translate.insert( std::make_pair( "cg", "CG" ));
-    translate.insert( std::make_pair( "chebyshev", "Chebyshev" ));
-    translate.insert( std::make_pair( "fcfJacobi", "FCF-Jacobi" ));
-    translate.insert( std::make_pair( "l1scaledJacobi", "l1scaled-Jacobi" ));
-
-#ifdef GEOSX_USE_MPI
-    GEOSX_LAI_CHECK_ERROR( PCSetType( prec, PCHYPRE ) );
-    GEOSX_LAI_CHECK_ERROR( PCHYPRESetType( prec, "boomeramg" ) );
-#else
-    GEOSX_ERROR( "Can't use HYPRE through PETSc in serial" );
-#endif
-    // PETSc needs char[]
-    char max_levels[10], cycle_type[10], num_sweeps[10], smoother_type[30], coarse_type[30];
-    sprintf( max_levels, "%d", m_parameters.amg.maxLevels );
-    sprintf( cycle_type, "%s", m_parameters.amg.cycleType.c_str() );
-    sprintf( num_sweeps, "%d", m_parameters.amg.maxLevels );
-    sprintf( smoother_type, "%s", translate[m_parameters.amg.smootherType].c_str() );
-    sprintf( coarse_type, "%s", translate[m_parameters.amg.coarseType].c_str() );
-
-    GEOSX_LAI_CHECK_ERROR( PetscOptionsSetValue( nullptr, "-pc_hypre_boomeramg_max_levels", max_levels ) );
-    GEOSX_LAI_CHECK_ERROR( PetscOptionsSetValue( nullptr, "-pc_hypre_boomeramg_cycle_type", cycle_type ) );
-    // relaxation method
-    // available in HYPRE: Jacobi, sequential-Gauss-Seidel, seqboundary-Gauss-Seidel, SOR/Jacobi backward-SOR/Jacobi,
-    // symmetric-SOR/Jacobi
-    //   l1scaled-SOR/Jacobi Gaussian-elimination, l1-Gauss-Seidel, backward-l1-Gauss-Seidel, CG, Chebyshev FCF-Jacobi,
-    // l1scaled-Jacobi
-    GEOSX_LAI_CHECK_ERROR( PetscOptionsSetValue( nullptr, "-pc_hypre_boomeramg_relax_type_all", smoother_type ) ); // default:
-                                                                                                                   // symmetric-SOR/Jacobi
-    GEOSX_LAI_CHECK_ERROR( PetscOptionsSetValue( nullptr, "-pc_hypre_boomeramg_relax_type_coarse", coarse_type ) ); // default:
-                                                                                                                    // Gaussian-elimination
-    // number of relaxation sweeps
-    GEOSX_LAI_CHECK_ERROR( PetscOptionsSetValue( nullptr, "-pc_hypre_boomeramg_grid_sweeps_all", num_sweeps ) );
-    GEOSX_LAI_CHECK_ERROR( PetscOptionsSetValue( nullptr, "-pc_hypre_boomeramg_grid_sweeps_coarse", num_sweeps ) ); // coarsest
-                                                                                                                    // grid
-  }
-  else
-  {
-    GEOSX_ERROR( "The requested preconditioner type isn't available in PETSc" );
-  }
+  GEOSX_LAI_CHECK_ERROR( KSPSetOperators( ksp, mat.unwrapped(), precondMat.unwrapped() ) );
 
   // display output
   if( m_parameters.logLevel > 0 )
   {
     GEOSX_LAI_CHECK_ERROR( PetscOptionsSetValue( nullptr, "-ksp_monitor", nullptr ) );
   }
+  GEOSX_LAI_CHECK_ERROR( KSPSetFromOptions( ksp ) );
+
+  m_result.setupTime = watch.elapsedTime();
 
   // Actually solve
-  GEOSX_LAI_CHECK_ERROR( KSPSetFromOptions( ksp ) );
+  watch.zero();
   GEOSX_LAI_CHECK_ERROR( KSPSolve( ksp, rhs.unwrapped(), sol.unwrapped() ) );
+  m_result.solveTime = watch.elapsedTime();
 
+  // Get status indicator
   KSPConvergedReason result;
   GEOSX_LAI_CHECK_ERROR( KSPGetConvergedReason( ksp, &result ) );
   GEOSX_WARNING_IF( result < 0, "PetscSolver: Krylov convergence not achieved" );
 
+  switch( result )
+  {
+    case KSP_CONVERGED_RTOL:
+    case KSP_CONVERGED_ATOL:
+    case KSP_CONVERGED_ITS:
+    {
+      m_result.status = LinearSolverResult::Status::Success;
+      break;
+    }
+    case KSP_DIVERGED_ITS:
+    case KSP_DIVERGED_DTOL:
+    {
+      m_result.status = LinearSolverResult::Status::NotConverged;
+      break;
+    }
+    default:
+    {
+      m_result.status = LinearSolverResult::Status::Breakdown;
+    }
+  }
+
+  // Get number of iterations performed
+  PetscInt numIter;
+  GEOSX_LAI_CHECK_ERROR( KSPGetIterationNumber( ksp, &numIter ) );
+  m_result.numIterations = numIter;
+
   // reset verbosity option
   GEOSX_LAI_CHECK_ERROR( PetscOptionsClearValue( nullptr, "-ksp_monitor" ) );
+
+  GEOSX_LAI_CHECK_ERROR( KSPDestroy( &ksp ) );
 }
 
 } // end geosx namespace

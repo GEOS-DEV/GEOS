@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -39,11 +39,12 @@ ContactRelationBase::ContactRelationBase( string const & name,
   m_apertureFunction( nullptr ),
   m_apertureTolerance( 1.0e-99 )
 {
-  registerWrapper( viewKeyStruct::penaltyStiffnessString, &m_penaltyStiffness, 0 )->
-    setInputFlag( InputFlags::REQUIRED )->
+  registerWrapper( viewKeyStruct::penaltyStiffnessString, &m_penaltyStiffness )->
+    //setInputFlag( InputFlags::REQUIRED )->
+    setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Value of the penetration penalty stiffness. Units of Pressure/length" );
 
-  registerWrapper( viewKeyStruct::apertureToleranceString, &m_apertureTolerance, 0 )->
+  registerWrapper( viewKeyStruct::apertureToleranceString, &m_apertureTolerance )->
     setApplyDefaultValue( 1.0e-9 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Value to be used to avoid floating point errors in expressions involving aperture. "
@@ -58,24 +59,27 @@ ContactRelationBase::ContactRelationBase( string const & name,
 ContactRelationBase::~ContactRelationBase()
 {}
 
+real64 ContactRelationBase::limitTangentialTractionNorm( real64 const GEOSX_UNUSED_PARAM( normalTraction ) ) const
+{
+  GEOSX_ERROR( "ContactRelationBase::limitTangentialTractionNorm called!. Should be overridden." );
+  return 0;
+}
 
+real64 ContactRelationBase::dLimitTangentialTractionNorm_dNormalTraction( real64 const GEOSX_UNUSED_PARAM( normalTraction ) ) const
+{
+  GEOSX_ERROR( "ContactRelationBase::dLimitTangentialTractionNorm_dNormalTraction called!. Should be overridden." );
+  return 0;
+}
 
 Group *
 ContactRelationBase::CreateChild( string const & catalogKey, string const & childName )
 {
-  Group * rval = nullptr;
-
   FunctionBase::CatalogInterface::CatalogType const & functionCatalog = FunctionBase::GetCatalog();
-  if( functionCatalog.count( catalogKey ) )
-  {
-    m_apertureFunction = (FunctionBase::CatalogInterface::Factory( catalogKey, childName, this )).release();
-    rval =  FunctionManager::Instance().RegisterGroup( childName, m_apertureFunction, 1 );
-  }
-  else
-  {
-    GEOSX_ERROR( catalogKey<<" is an invalid key ContactRelationBase child group." );
-  }
-  return rval;
+  GEOSX_ERROR_IF( !functionCatalog.count( catalogKey ), catalogKey << " is an invalid key ContactRelationBase child group." );
+
+  m_apertureFunction = FunctionManager::Instance().RegisterGroup( childName, FunctionBase::CatalogInterface::Factory( catalogKey, childName, this ) );
+
+  return m_apertureFunction;
 }
 
 
@@ -125,11 +129,11 @@ void ContactRelationBase::InitializePreSubGroups( Group * const )
 
     real64 m_apertureTransition = (yvals[n] - slope * xvals[n] ) / ( 1.0 - slope );
 
-    xvals.push_back( m_apertureTransition );
-    yvals.push_back( m_apertureTransition );
+    xvals.emplace_back( m_apertureTransition );
+    yvals.emplace_back( m_apertureTransition );
 
-    xvals.push_back( m_apertureTransition*10e9 );
-    yvals.push_back( m_apertureTransition*10e9 );
+    xvals.emplace_back( m_apertureTransition*10e9 );
+    yvals.emplace_back( m_apertureTransition*10e9 );
 
     apertureTable->reInitializeFunction();
   }

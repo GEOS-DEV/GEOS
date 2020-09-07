@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -21,6 +21,7 @@
 
 #include "linearAlgebra/common.hpp"
 #include "mpiCommunications/MpiWrapper.hpp"
+#include "rajaInterface/GEOS_RAJA_Interface.hpp"
 
 namespace geosx
 {
@@ -47,6 +48,7 @@ class VectorBase
 {
 protected:
 
+  /// Alias for VECTOR
   using Vector = VECTOR;
 
   /**
@@ -61,10 +63,31 @@ protected:
     : m_closed( true )
   {}
 
+  /**
+   * @brief Copy constructor.
+   */
   VectorBase( VectorBase const & ) = default;
+
+  /**
+   * @brief Move constructor.
+   */
   VectorBase( VectorBase && ) = default;
+
+  /**
+   * @brief Copy assignment.
+   * @return reference to this object
+   */
   VectorBase & operator=( VectorBase const & ) = default;
+
+  /**
+   * @brief Move assignment.
+   * @return reference to this object
+   */
   VectorBase & operator=( VectorBase && ) = default;
+
+  /**
+   * @brief Destructor.
+   */
   ~VectorBase() = default;
 
   ///@}
@@ -126,7 +149,7 @@ protected:
    * @param localValues local data to put into vector
    * @param comm MPI communicator to use
    */
-  virtual void create( arraySlice1d< real64 const > const & localValues, MPI_Comm const & comm ) = 0;
+  virtual void create( arrayView1d< real64 const > const & localValues, MPI_Comm const & comm ) = 0;
 
   ///@}
 
@@ -258,8 +281,15 @@ protected:
   virtual void scale( real64 const scalingFactor ) = 0;
 
   /**
+   * @brief Replace vector elements by their reciprocals
+   * @note No guarding is done against division by zero.
+   */
+  virtual void reciprocal() = 0;
+
+  /**
    * @brief Dot product with the vector vec.
    * @param vec vector to dot-product with
+   * @return dot product
    */
   virtual real64 dot( Vector const & vec ) const = 0;
 
@@ -354,12 +384,14 @@ protected:
 
   /**
    * @brief Map a global row index to local row index.
+   * @param[in] globalRow the global row index
    * @return global row index corresponding to @p globalRow
    */
   virtual localIndex getLocalRowID( globalIndex const globalRow ) const = 0;
 
   /**
    * @brief Map a local row index to global row index.
+   * @param[in] localRow the local row index
    * @return global row index corresponding to @p localRow
    */
   virtual globalIndex getGlobalRowID( localIndex const localRow ) const = 0;
@@ -375,6 +407,19 @@ protected:
    * @return pointer to local vector data
    */
   virtual real64 * extractLocalVector() = 0;
+
+  /**
+   * @brief Extract local solution by copying into a user-provided array
+   * @param localVector the array view to write to (must be properly sized)
+   */
+  virtual void extract( arrayView1d< real64 > const & localVector ) const
+  {
+    real64 const * const data = extractLocalVector();
+    forAll< parallelHostPolicy >( localSize(), [=] ( localIndex const k )
+    {
+      localVector[k] = data[k];
+    } );
+  }
 
   /**
    * @brief Get the communicator used by this vector
@@ -398,6 +443,7 @@ protected:
   /**
    * @brief Write the vector to a file.
    * @param filename name of the output file
+   * @param[in] format output format
    */
   virtual void write( string const & filename,
                       LAIOutputFormat const format = LAIOutputFormat::MATRIX_MARKET ) const = 0;

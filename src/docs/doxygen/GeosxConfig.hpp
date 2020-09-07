@@ -17,6 +17,9 @@
 /// GEOSX full version number string
 #define GEOSX_VERSION_FULL  "0.0.31"
 
+/// Enables floating point execptions
+#define GEOSX_USE_FPE
+
 /// Enables bounds check in LvArray classes (CMake option ARRAY_BOUNDS_CHECK)
 #define GEOSX_USE_ARRAY_BOUNDS_CHECK
 
@@ -67,6 +70,12 @@
 
 /// Choice of global linear algebra interface (CMake option GEOSX_LA_INTERFACE)
 #define GEOSX_LA_INTERFACE Trilinos
+/// Macro defined when Trilinos interface is selected
+#define GEOSX_LA_INTERFACE_TRILINOS
+/// Macro defined when Hypre interface is selected
+/* #undef GEOSX_LA_INTERFACE_HYPRE */
+/// Macro defined when PETSc interface is selected
+/* #undef GEOSX_LA_INTERFACE_PETSC */
 
 /// Platform-dependent mangling of fortran function names (CMake option FORTRAN_MANGLE_NO_UNDERSCORE)
 #define FORTRAN_MANGLE_NO_UNDERSCORE

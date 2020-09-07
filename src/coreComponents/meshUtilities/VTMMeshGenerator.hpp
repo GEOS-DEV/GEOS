@@ -2,23 +2,23 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
  */
 
 /**
- * @file VTMMeshGenerator.h
+ * @file VTMMeshGenerator.hpp
  *
  */
 
-#ifndef VTMMESHGENERATOR_H_
-#define VTMMESHGENERATOR_H_
+#ifndef GEOSX_MESHUTILITIES_VTMMESHGENERATOR_HPP
+#define GEOSX_MESHUTILITIES_VTMMESHGENERATOR_HPP
 
 #include "dataRepository/Group.hpp"
 #include "codingUtilities/Utilities.hpp"
@@ -31,27 +31,53 @@ namespace geosx
 
 namespace dataRepository
 {
+/*
+ * @name keys for InternalMesh object
+ */
+///@{
 namespace keys
 {
+///key for file path access
 string const filePath = "file";
 }
+///@}
 }
 
 class NodeManager;
 class DomainPartition;
 
+/**
+ *  @class VTMMeshGenerator
+ *  @brief The VTMMeshGenerator class provides a class implementation of VTK genrated meshes (.vtm).
+ */
 class VTMMeshGenerator : public MeshGeneratorBase
 {
 public:
+
+  /**
+   * @brief Main constructor for MeshGenerator base class.
+   * @param[in] name of the VTMMeshGenerator object
+   * @param[in] parent the parent Group pointer for the MeshGenerator object
+   */
   VTMMeshGenerator( const std::string & name,
                     Group * const parent );
 
   virtual ~VTMMeshGenerator() override;
 
+  /**
+   * @brief Return the name of the VTMMeshGenerator in object Catalog
+   * @return string that contains the key name to VTMMeshGenerator in the Catalog
+   */
   static string CatalogName() { return "MeshFile"; }
 
   virtual void GenerateElementRegions( DomainPartition & domain ) override;
 
+  /**
+   * @brief Create a new geometric object (box, plane, etc) as a child of this group.
+   * @param childKey the catalog key of the new geometric object to create
+   * @param childName the name of the new geometric object in the repository
+   * @return the group child
+   */
   virtual Group * CreateChild( string const & childKey, string const & childName ) override;
 
   virtual void GenerateMesh( DomainPartition * const domain ) override;
@@ -70,6 +96,11 @@ public:
 //  int m_delayMeshDeformation;
 
 protected:
+
+  /**
+   * @brief This function provides capability to post process input values prior to
+   * any other initialization operations.
+   */
   void PostProcessInput() override final;
 
 private:
@@ -77,8 +108,13 @@ private:
   /// Contains the path to the VTM file
   string m_fileName;
 
+  /// VTM file data structure from VTK API
   VtmFile m_vtmFile;
 
+  /**
+   * @brief Convert ndim node spatialized index to node global index.
+   * @param[in] node ndim spatialized array index
+   */
   inline globalIndex NodeGlobalIndex( const int GEOSX_UNUSED_PARAM( index )[3] )
   {
     globalIndex rval = 0;
@@ -89,6 +125,10 @@ private:
     return rval;
   }
 
+  /**
+   * @brief Convert ndim element spatialized index to element global index.
+   * @param[in] element ndim spatialized array index
+   */
   inline globalIndex ElemGlobalIndex( const int GEOSX_UNUSED_PARAM( index )[3] )
   {
     globalIndex rval = 0;
@@ -99,6 +139,13 @@ private:
     return rval;
   }
 
+  /**
+   * @brief Construct the node position for a spatially indexed node.
+   * @param[in] a ndim spatial index for the considered node
+   * @param[in] trianglePattern triangle pattern identifier
+   *
+   * @note In pattern 0, half nodes have 4 edges and the other half have 8; for Pattern 1, every node has 6.
+   */
   inline R1Tensor NodePosition( const int GEOSX_UNUSED_PARAM( a )[3], int GEOSX_UNUSED_PARAM( trianglePattern ) )
   {
     R1Tensor X;
@@ -165,6 +212,11 @@ private:
     return X;
   }
 
+  /**
+   * @brief
+   * @param[in]
+   * @return an array of the element center coordinates
+   */
   inline R1Tensor ElemCenterPosition( const int GEOSX_UNUSED_PARAM( k )[3] )
   {
     R1Tensor X;
@@ -180,6 +232,11 @@ private:
   }
 
 public:
+
+  /**
+   * @brief Check if the mesh is a radial mesh.
+   * @return true if the Internal mesh is radial, false else
+   */
   inline bool isRadial()
   {
     /*
@@ -192,4 +249,4 @@ public:
 };
 }
 
-#endif /* INTERNALMESHGENERATOR_H_ */
+#endif /* GEOSX_MESHUTILITIES_VTMMESHGENERATOR_HPP */

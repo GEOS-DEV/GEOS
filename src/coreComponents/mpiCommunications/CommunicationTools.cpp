@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -87,8 +87,8 @@ void CommunicationTools::AssignGlobalIndices( ObjectManagerBase & object,
                                               std::vector< NeighborCommunicator > & neighbors )
 {
   GEOSX_MARK_FUNCTION;
-  integer_array & ghostRank = object.getReference< integer_array >( object.m_ObjectManagerBaseViewKeys.ghostRank );
-  ghostRank = -2;
+  arrayView1d< integer > const & ghostRank = object.ghostRank();
+  ghostRank.setValues< serialPolicy >( -2 );
 
   int const commRank = MpiWrapper::Comm_rank();
 
@@ -136,7 +136,7 @@ void CommunicationTools::AssignGlobalIndices( ObjectManagerBase & object,
       tempComp.second = a;
 
       // push the tempComp onto the map.
-      indexByFirstCompositionIndex[firstCompositionIndex].push_back( std::move( tempComp ) );
+      indexByFirstCompositionIndex[firstCompositionIndex].emplace_back( std::move( tempComp ) );
       bufferSize += 2 + nodeList.size();
     }
   }
@@ -150,11 +150,11 @@ void CommunicationTools::AssignGlobalIndices( ObjectManagerBase & object,
     if( objectToCompositionObject[a].size() > 0 )
     {
       std::vector< globalIndex > const & nodeList = objectToCompositionObject[a];
-      objectToCompositionObjectSendBuffer.push_back( nodeList.size() );
-      objectToCompositionObjectSendBuffer.push_back( localToGlobal[a] );
+      objectToCompositionObjectSendBuffer.emplace_back( nodeList.size() );
+      objectToCompositionObjectSendBuffer.emplace_back( localToGlobal[a] );
       for( std::size_t b = 0; b < nodeList.size(); ++b )
       {
-        objectToCompositionObjectSendBuffer.push_back( nodeList[b] );
+        objectToCompositionObjectSendBuffer.emplace_back( nodeList[b] );
       }
     }
   }
@@ -165,7 +165,7 @@ void CommunicationTools::AssignGlobalIndices( ObjectManagerBase & object,
   array1d< int >  receiveBufferSizes( neighbors.size());
   array1d< globalIndex_array > receiveBuffers( neighbors.size());
 
-  int const sendSize = integer_conversion< int const >( objectToCompositionObjectSendBuffer.size() );
+  int const sendSize = LvArray::integerConversion< int const >( objectToCompositionObjectSendBuffer.size() );
 
   for( std::size_t neighborIndex = 0; neighborIndex < neighbors.size(); ++neighborIndex )
   {
@@ -230,7 +230,7 @@ void CommunicationTools::AssignGlobalIndices( ObjectManagerBase & object,
     while( recBuffer < endBuffer )
     {
       // the first thing packed was the data size for a given object
-      localIndex dataSize = integer_conversion< localIndex >( *recBuffer++ );
+      localIndex dataSize = LvArray::integerConversion< localIndex >( *recBuffer++ );
 
       // the second thing packed was the globalIndex of that object
       const globalIndex neighborGlobalIndex = *( recBuffer++ );
@@ -242,14 +242,14 @@ void CommunicationTools::AssignGlobalIndices( ObjectManagerBase & object,
       std::vector< globalIndex > temp;
       for( localIndex b = 1; b < dataSize; ++b )
       {
-        temp.push_back( *( recBuffer++ ) );
+        temp.emplace_back( *( recBuffer++ ) );
       }
 
       // fill neighborCompositionObjects
       std::pair< std::vector< globalIndex >, globalIndex >
       tempComp( std::make_pair( std::move( temp ), std::move( neighborGlobalIndex ) ) );
 
-      neighborCompositionObjects[neighborIndex][firstCompositionIndex].push_back( tempComp );
+      neighborCompositionObjects[neighborIndex][firstCompositionIndex].emplace_back( tempComp );
     }
 
     // Set iterators to the beginning of each indexByFirstCompositionIndex,
@@ -418,7 +418,7 @@ CommunicationTools::
                                        std::vector< NeighborCommunicator > & allNeighbors )
 {
   GEOSX_MARK_FUNCTION;
-  integer_array & domainBoundaryIndicator = objectManager->getReference< integer_array >( objectManager->m_ObjectManagerBaseViewKeys.domainBoundaryIndicator );
+  arrayView1d< integer > const & domainBoundaryIndicator = objectManager->getDomainBoundaryIndicator();
 
   array1d< globalIndex > globalPartitionBoundaryObjectsIndices;
   objectManager->ConstructGlobalListOfBoundaryObjects( globalPartitionBoundaryObjectsIndices );
@@ -451,7 +451,7 @@ CommunicationTools::
         if( globalPartitionBoundaryObjectsIndices[localCounter] == neighborPartitionBoundaryObjects[i][neighborCounter] )
         {
           localIndex const localMatchedIndex = objectManager->globalToLocalMap( globalPartitionBoundaryObjectsIndices[localCounter] );
-          matchedPartitionBoundaryObjects.push_back( localMatchedIndex );
+          matchedPartitionBoundaryObjects.emplace_back( localMatchedIndex );
           domainBoundaryIndicator[ localMatchedIndex ] = 2;
           ++localCounter;
           ++neighborCounter;
@@ -479,8 +479,6 @@ CommunicationTools::
 void verifyGhostingConsistency( ObjectManagerBase const & objectManager,
                                 std::vector< NeighborCommunicator > const & neighbors )
 {
-  GEOSX_MARK_FUNCTION;
-
   arrayView1d< integer const > const & ghostRank = objectManager.ghostRank();
 
   /// Variable to track if an error has occurred.
@@ -551,9 +549,7 @@ void removeFromCommList( std::vector< localIndex > const & indicesToRemove, arra
 void fixReceiveLists( ObjectManagerBase & objectManager,
                       std::vector< NeighborCommunicator > const & neighbors )
 {
-  GEOSX_MARK_FUNCTION;
-
-  constexpr int nonLocalGhostsTag = 54673246;
+  int nonLocalGhostsTag = 45;
 
   std::vector< MPI_Request > nonLocalGhostsRequests( neighbors.size() );
 
@@ -593,8 +589,8 @@ void fixReceiveLists( ObjectManagerBase & objectManager,
     for( std::pair< globalIndex, int > const & pair : ghostsFromSecondNeighbor )
     {
       localIndex const lid = objectManager.globalToLocalMap( pair.first );
-      ghostsBySecondNeighbor[ pair.second ].push_back( lid );
-      ghostsToFix.push_back( lid );
+      ghostsBySecondNeighbor[ pair.second ].emplace_back( lid );
+      ghostsToFix.emplace_back( lid );
       ghostRank[ lid ] = pair.second;
     }
 
@@ -605,7 +601,7 @@ void fixReceiveLists( ObjectManagerBase & objectManager,
     for( std::pair< int const, std::vector< localIndex > > const & pair : ghostsBySecondNeighbor )
     {
       array1d< localIndex > & trueOwnerRecvList = objectManager.getNeighborData( pair.first ).ghostsToReceive();
-      trueOwnerRecvList.insert( trueOwnerRecvList.size(), pair.second.data(), pair.second.size() );
+      trueOwnerRecvList.insert( trueOwnerRecvList.size(), pair.second.begin(), pair.second.end() );
     }
   }
 
@@ -762,7 +758,9 @@ void CommunicationTools::FindGhosts( MeshLevel & meshLevel,
   removeUnusedNeighbors( nodeManager, edgeManager, faceManager, elemManager, neighbors );
 
   nodeManager.CompressRelationMaps();
-  edgeManager.CompressRelationMaps();
+  edgeManager.compressRelationMaps();
+  faceManager.compressRelationMaps();
+
   CommunicationTools::releaseCommID( commID );
 }
 

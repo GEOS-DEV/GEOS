@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -16,11 +16,9 @@
  * @file FaceElementRegion.cpp
  */
 
+#include "ExtrinsicMeshData.hpp"
 #include "EdgeManager.hpp"
 #include "FaceElementRegion.hpp"
-#include "finiteElement/basis/LagrangeBasis.hpp"
-#include "finiteElement/quadrature/GaussQuadrature.hpp"
-#include "finiteElement/ElementLibrary/FiniteElement.h"
 
 
 namespace geosx
@@ -32,7 +30,7 @@ FaceElementRegion::FaceElementRegion( string const & name, Group * const parent 
 {
   this->GetGroup( viewKeyStruct::elementSubRegions )->RegisterGroup< FaceElementSubRegion >( "default" );
 
-  registerWrapper( viewKeyStruct::defaultApertureString, &m_defaultAperture, false )->
+  registerWrapper( viewKeyStruct::defaultApertureString, &m_defaultAperture )->
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "The default aperture of for new faceElements." );
 
@@ -65,9 +63,9 @@ localIndex FaceElementRegion::AddToFractureMesh( real64 const time_np1,
 
   SortedArray< localIndex > connectedEdges;
 
-  array2d< localIndex > const & faceToElementRegion = faceManager->elementRegionList();
-  array2d< localIndex > const & faceToElementSubRegion = faceManager->elementSubRegionList();
-  array2d< localIndex > const & faceToElementIndex = faceManager->elementList();
+  arrayView2d< localIndex const > const & faceToElementRegion = faceManager->elementRegionList();
+  arrayView2d< localIndex const > const & faceToElementSubRegion = faceManager->elementSubRegionList();
+  arrayView2d< localIndex const > const & faceToElementIndex = faceManager->elementList();
 
   Group * elementSubRegions = this->GetGroup( viewKeyStruct::elementSubRegions );
 
@@ -76,14 +74,13 @@ localIndex FaceElementRegion::AddToFractureMesh( real64 const time_np1,
   rval = subRegion->size() - 1;
 
 
-  arrayView1d< real64 > const &
-  ruptureTime = subRegion->getReference< real64_array >( viewKeyStruct::ruptureTimeString );
+  arrayView1d< real64 > const & ruptureTime = subRegion->getExtrinsicData< extrinsicMeshData::RuptureTime >();
 
   arrayView1d< real64 > const &
   creationMass = subRegion->getReference< real64_array >( FaceElementSubRegion::viewKeyStruct::creationMassString );
 
-  arrayView1d< R1Tensor const > const & faceCenter = faceManager->faceCenter();
-  arrayView1d< R1Tensor > const & elemCenter = subRegion->getElementCenter();
+  arrayView2d< real64 const > const & faceCenter = faceManager->faceCenter();
+  arrayView2d< real64 > const & elemCenter = subRegion->getElementCenter();
   arrayView1d< real64 const > const & elemArea = subRegion->getElementArea();
 
   arrayView1d< integer > const & subRegionGhostRank = subRegion->ghostRank();
@@ -94,13 +91,12 @@ localIndex FaceElementRegion::AddToFractureMesh( real64 const time_np1,
   FaceElementSubRegion::EdgeMapType & edgeMap = subRegion->edgeList();
   FaceElementSubRegion::FaceMapType & faceMap = subRegion->faceList();
 
-  ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager->nodeList();
+  ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager->nodeList().toViewConst();
 
   localIndex const kfe = subRegion->size() - 1;
   ruptureTime( kfe ) = time_np1;
 
-  elemCenter( kfe ) = faceCenter( faceIndices[0] );
-
+  LvArray::tensorOps::copy< 3 >( elemCenter[ kfe ], faceCenter[ faceIndices[ 0 ] ] );
 
   faceMap[kfe][0] = faceIndices[0];
   faceMap[kfe][1] = faceIndices[1];
@@ -161,8 +157,8 @@ localIndex FaceElementRegion::AddToFractureMesh( real64 const time_np1,
     {
       // if not, then fill increase the size of the fractureConnectors to face elements map and
       // fill the fractureConnectorsToEdges map with the current edge....and the inverse map too.
-      edgeManager->m_fractureConnectorEdgesToFaceElements.appendArray( nullptr, 0 );
-      edgeManager->m_fractureConnectorsEdgesToEdges.push_back( edge );
+      edgeManager->m_fractureConnectorEdgesToFaceElements.appendArray( 0 );
+      edgeManager->m_fractureConnectorsEdgesToEdges.emplace_back( edge );
       edgeManager->m_edgesToFractureConnectorsEdges[edge] = edgeManager->m_fractureConnectorsEdgesToEdges.size()-1;
     }
     // now fill the fractureConnectorsToFaceElements map. This is analogous to the edge to face map
@@ -176,7 +172,7 @@ localIndex FaceElementRegion::AddToFractureMesh( real64 const time_np1,
   }
 
 
-  subRegion->CalculateElementGeometricQuantities( kfe, faceManager->faceArea() );
+  subRegion->CalculateElementGeometricQuantities( kfe, faceManager->faceArea(), faceManager->faceRotationMatrix() );
 
   creationMass[kfe] *= elemArea[kfe];
 

@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -36,17 +36,24 @@ namespace geosx
 class SymbolicFunction : public FunctionBase
 {
 public:
-  /// Main constructor
+  /// @copydoc geosx::dataRepository::Group::Group( std::string const & name, Group * const parent )
   SymbolicFunction( const std::string & name,
                     dataRepository::Group * const parent );
 
-  /// Destructor
+  /**
+   * @brief The destructor
+   */
   virtual ~SymbolicFunction() override;
 
-  /// Catalog name interface
+  /**
+   * @brief The catalog name interface
+   * @return name of the TableFunction in the FunctionBase catalog
+   */
   static string CatalogName() { return "SymbolicFunction"; }
 
-  /// Function initialization
+  /**
+   * @brief Initialize the table function
+   */
   virtual void InitializeFunction() override;
 
   /**
@@ -67,6 +74,7 @@ public:
   /**
    * @brief Method to evaluate a function
    * @param input a scalar input
+   * @return the function result
    */
   inline real64 Evaluate( real64 const * const input ) const override final
   {
@@ -78,12 +86,35 @@ public:
 #endif
   }
 
+
+  /**
+   * @brief Set the symbolic variable names
+   * @param variableNames An array of variable names used in the expression
+   */
+  void setSymbolicVariableNames( string_array variableNames ) { m_variableNames = variableNames; }
+
+  /**
+   * @brief Set the symbolic expression
+   * @param expression A string containing the symbolic expression
+   */
+  void setSymbolicExpression( string expression ) { m_expression = expression; }
+
+
+
 private:
   // Symbolic math driver objects
 #ifdef GEOSX_USE_MATHPRESSO
   mathpresso::Context parserContext;
   mathpresso::Expression parserExpression;
 #endif
+
+
+  /// Symbolic expression variable names
+  string_array m_variableNames;
+
+  /// Symbolic expression
+  string m_expression;
+
 };
 
 
