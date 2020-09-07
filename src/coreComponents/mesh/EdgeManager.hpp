@@ -125,6 +125,17 @@ public:
   void BuildEdges( FaceManager * const faceManager, NodeManager * const nodeManager );
 
   /**
+   * @brief Build faces-to-edges and nodes-to-edges relation maps.
+   * @param[in] numNodes number of nodes
+   * @param[in] faceToNodeMap manager face-to-nodes map
+   * @param[in] faceToEdgeMap manager face-to-edges map
+   */
+  void BuildEdges( localIndex const numNodes,
+                   ArrayOfArraysView< localIndex const > const & faceToNodeMap,
+                   ArrayOfArrays< localIndex > & faceToEdgeMap );
+
+
+  /**
    * @brief Build \p globalEdgeNodes, a  vector containing all the global indices
    * of each nodes of each edges
    * @param[in] nodeManager the nodeManager object.
@@ -290,7 +301,7 @@ public:
    * @brief Return the  maximum number of edges per node.
    * @return Maximum allowable number of edges connected to one node (hardcoded for now)
    */
-  constexpr int maxEdgesPerNode() const { return 100; }
+  constexpr int maxEdgesPerNode() const { return 200; }
 
   /**
    * @name Getters for stored value.

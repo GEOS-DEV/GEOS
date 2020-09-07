@@ -232,7 +232,7 @@ void HyprePreconditioner::createAMG()
     // For further information, see:
     // Improving algebraic multigrid interpolation operators for linear elasticity problems
     // A. H. Baker Tz. V. Kolev U. M. Yang
-    // Numerical Linear Algebra with Applications 17 (2-3), 495-517
+    // Numerical Linear Algebra with Applications (2010) 17 (2-3), 495-517
     // doi:10.1002/nla.688
 
     HYPRE_Int const nodal                 = 4; // strength reduction norm: 1, 3 or 4

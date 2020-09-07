@@ -121,6 +121,28 @@ void FlowSolverBase::RegisterDataOnMesh( Group * const MeshBodies )
         setPlotLevel( PlotLevel::LEVEL_0 );
     } );
 
+    //TODO: I think these 2 subregions should be treated in the same way. Need to unify the region
+    elemManager->forElementSubRegionsComplete< EmbeddedSurfaceSubRegion >( [&]( localIndex const,
+                                                                                localIndex const,
+                                                                                ElementRegionBase & region,
+                                                                                EmbeddedSurfaceSubRegion & subRegion )
+    {
+      EmbeddedSurfaceRegion & embSurfRegion = dynamicCast< EmbeddedSurfaceRegion & >( region );
+
+      subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::referencePorosityString )->
+        setApplyDefaultValue( 1.0 );
+
+      subRegion.registerWrapper< array1d< R1Tensor > >( viewKeyStruct::permeabilityString )->setPlotLevel( PlotLevel::LEVEL_0 );
+      subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::gravityCoefString )->setApplyDefaultValue( 0.0 );
+      subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::aperture0String )->
+        setDefaultValue( embSurfRegion.getDefaultAperture() );
+      subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::effectiveApertureString )->
+        setApplyDefaultValue( subRegion.getWrapper< array1d< real64 > >( EmbeddedSurfaceSubRegion::
+                                                                           viewKeyStruct::
+                                                                           elementApertureString )->getDefaultValue() )->
+        setPlotLevel( PlotLevel::LEVEL_0 );
+    } );
+
     FaceManager * const faceManager = mesh.getFaceManager();
     faceManager->registerWrapper< array1d< real64 > >( viewKeyStruct::gravityCoefString )->setApplyDefaultValue( 0.0 );
   }
