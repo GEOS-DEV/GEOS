@@ -76,7 +76,7 @@ public:
    *
    */
   GEOSX_HOST_DEVICE
-  static void shapeFunctionValues( localIndex const q,
+  static void calcN( localIndex const q,
                                    real64 ( &N )[numNodes] );
 
   /**
@@ -149,7 +149,7 @@ GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void
 H1_QuadrilateralFace_Lagrange1_GaussLegendre2::
-  shapeFunctionValues( localIndex const q,
+  calcN( localIndex const q,
                        real64 (& N)[numNodes] )
 {
   for( localIndex a=0; a<numNodes; ++a )

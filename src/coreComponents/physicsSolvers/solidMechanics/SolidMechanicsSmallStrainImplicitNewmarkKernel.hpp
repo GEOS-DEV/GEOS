@@ -189,7 +189,7 @@ public:
     Base::quadraturePointJacobianContribution( k, q, stack );
 
     real64 N[numNodesPerElem];
-    FE_TYPE::shapeFunctionValues( q, N );
+    FE_TYPE::calcN( q, N );
 
     for( int a=0; a<numNodesPerElem; ++a )
     {

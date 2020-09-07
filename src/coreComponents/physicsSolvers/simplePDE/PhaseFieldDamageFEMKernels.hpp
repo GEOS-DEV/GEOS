@@ -188,7 +188,7 @@ public:
 
     //Interpolate d and grad_d
     real64 N[ numNodesPerElem ];
-    FE_TYPE::shapeFunctionValues( q, N );
+    FE_TYPE::calcN( q, N );
 
     real64 qp_damage = 0.0;
     R1Tensor qp_grad_damage;

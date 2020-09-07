@@ -80,7 +80,7 @@ public:
    *
    */
   GEOSX_HOST_DEVICE
-  static void shapeFunctionValues( localIndex const q,
+  static void calcN( localIndex const q,
                                    real64 ( &N )[numNodes] );
 
   /**
@@ -93,9 +93,9 @@ public:
    * @return The determinant of the parent/physical transformation matrix.
    */
   GEOSX_HOST_DEVICE
-  static real64 shapeFunctionDerivatives( localIndex const q,
+  static real64 calcGradN( localIndex const q,
                                           real64 const (&X)[numNodes][3],
-                                          real64 ( &dNdX )[numNodes][3] );
+                                          real64 ( &gradN )[numNodes][3] );
 
 
   /**
@@ -242,7 +242,7 @@ private:
   static void
     applyJacobianTransformationToShapeFunctionsDerivatives( int const q,
                                                             real64 const ( &invJ )[3][3],
-                                                            real64 ( &dNdX )[numNodes][3] );
+                                                            real64 ( &gradN )[numNodes][3] );
 
 };
 
@@ -290,7 +290,7 @@ void
 H1_Wedge_Lagrange1_Gauss6::
   applyJacobianTransformationToShapeFunctionsDerivatives( int const q,
                                                           real64 const ( &invJ )[3][3],
-                                                          real64 (& dNdX)[numNodes][3] )
+                                                          real64 (& gradN)[numNodes][3] )
 {
   real64 const r  = quadratureParentCoords0( q );
   real64 const s  = quadratureParentCoords1( q );
@@ -311,10 +311,10 @@ H1_Wedge_Lagrange1_Gauss6::
       localIndex const nodeIndex = linearMap( a, b );
       for( int i = 0; i < 3; ++i )
       {
-        dNdX[nodeIndex][i] = 0.0;
+        gradN[nodeIndex][i] = 0.0;
         for( int j = 0; j < 3; ++j )
         {
-          dNdX[nodeIndex][i] = dNdX[nodeIndex][i] + dNdXi[ j ] * invJ[j][i];
+          gradN[nodeIndex][i] = gradN[nodeIndex][i] + dNdXi[ j ] * invJ[j][i];
         }
       }
     }
@@ -327,7 +327,7 @@ GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void
 H1_Wedge_Lagrange1_Gauss6::
-  shapeFunctionValues( localIndex const q,
+  calcN( localIndex const q,
                        real64 (& N)[numNodes] )
 {
   real64 const r  = quadratureParentCoords0( q );
@@ -348,9 +348,9 @@ GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 real64
 H1_Wedge_Lagrange1_Gauss6::
-  shapeFunctionDerivatives( localIndex const q,
+  calcGradN( localIndex const q,
                             real64 const (&X)[numNodes][3],
-                            real64 (& dNdX)[numNodes][3] )
+                            real64 (&gradN)[numNodes][3] )
 {
   real64 J[3][3] = {{0}};
 
@@ -358,7 +358,7 @@ H1_Wedge_Lagrange1_Gauss6::
 
   real64 const detJ = inverse( J );
 
-  applyJacobianTransformationToShapeFunctionsDerivatives( q, J, dNdX );
+  applyJacobianTransformationToShapeFunctionsDerivatives( q, J, gradN );
 
   return detJ * weight;
 }

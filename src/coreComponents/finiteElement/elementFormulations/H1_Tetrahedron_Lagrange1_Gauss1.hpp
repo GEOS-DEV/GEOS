@@ -74,7 +74,7 @@ public:
    *   point.
    */
   GEOSX_HOST_DEVICE
-  static void shapeFunctionValues( localIndex const q,
+  static void calcN( localIndex const q,
                                    real64 ( &N )[numNodes] );
 
   /**
@@ -87,9 +87,9 @@ public:
    * @return The determinant of the parent/physical transformation matrix.
    */
   GEOSX_HOST_DEVICE
-  static real64 shapeFunctionDerivatives( localIndex const q,
+  static real64 calcGradN( localIndex const q,
                                           real64 const (&X)[numNodes][3],
-                                          real64 ( &dNdX )[numNodes][3] );
+                                          real64 ( &gradN )[numNodes][3] );
 
   /**
    * @brief Calculate the integration weights for a quadrature point.
@@ -137,7 +137,7 @@ GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void
 H1_Tetrahedron_Lagrange1_Gauss1::
-  shapeFunctionValues( localIndex const q,
+  calcN( localIndex const q,
                        real64 (& N)[numNodes] )
 {
   GEOSX_UNUSED_VAR( q );
@@ -155,27 +155,27 @@ GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 real64
 H1_Tetrahedron_Lagrange1_Gauss1::
-  shapeFunctionDerivatives( localIndex const q,
+  calcGradN( localIndex const q,
                             real64 const (&X)[numNodes][3],
-                            real64 (& dNdX)[numNodes][3] )
+                            real64 (& gradN)[numNodes][3] )
 {
   GEOSX_UNUSED_VAR( q );
 
-  dNdX[0][0] =  X[1][1]*( X[3][2] - X[2][2] ) - X[2][1]*( X[3][2] - X[1][2] ) + X[3][1]*( X[2][2] - X[1][2] );
-  dNdX[0][1] = -X[1][0]*( X[3][2] - X[2][2] ) + X[2][0]*( X[3][2] - X[1][2] ) - X[3][0]*( X[2][2] - X[1][2] );
-  dNdX[0][2] =  X[1][0]*( X[3][1] - X[2][1] ) - X[2][0]*( X[3][1] - X[1][1] ) + X[3][0]*( X[2][1] - X[1][1] );
+  gradN[0][0] =  X[1][1]*( X[3][2] - X[2][2] ) - X[2][1]*( X[3][2] - X[1][2] ) + X[3][1]*( X[2][2] - X[1][2] );
+  gradN[0][1] = -X[1][0]*( X[3][2] - X[2][2] ) + X[2][0]*( X[3][2] - X[1][2] ) - X[3][0]*( X[2][2] - X[1][2] );
+  gradN[0][2] =  X[1][0]*( X[3][1] - X[2][1] ) - X[2][0]*( X[3][1] - X[1][1] ) + X[3][0]*( X[2][1] - X[1][1] );
 
-  dNdX[1][0] = -X[0][1]*( X[3][2] - X[2][2] ) + X[2][1]*( X[3][2] - X[0][2] ) - X[3][1]*( X[2][2] - X[0][2] );
-  dNdX[1][1] =  X[0][0]*( X[3][2] - X[2][2] ) - X[2][0]*( X[3][2] - X[0][2] ) + X[3][0]*( X[2][2] - X[0][2] );
-  dNdX[1][2] = -X[0][0]*( X[3][1] - X[2][1] ) + X[2][0]*( X[3][1] - X[0][1] ) - X[3][0]*( X[2][1] - X[0][1] );
+  gradN[1][0] = -X[0][1]*( X[3][2] - X[2][2] ) + X[2][1]*( X[3][2] - X[0][2] ) - X[3][1]*( X[2][2] - X[0][2] );
+  gradN[1][1] =  X[0][0]*( X[3][2] - X[2][2] ) - X[2][0]*( X[3][2] - X[0][2] ) + X[3][0]*( X[2][2] - X[0][2] );
+  gradN[1][2] = -X[0][0]*( X[3][1] - X[2][1] ) + X[2][0]*( X[3][1] - X[0][1] ) - X[3][0]*( X[2][1] - X[0][1] );
 
-  dNdX[2][0] =  X[0][1]*( X[3][2] - X[1][2] ) - X[1][1]*( X[3][2] - X[0][2] ) + X[3][1]*( X[1][2] - X[0][2] );
-  dNdX[2][1] = -X[0][0]*( X[3][2] - X[1][2] ) + X[1][0]*( X[3][2] - X[0][2] ) - X[3][0]*( X[1][2] - X[0][2] );
-  dNdX[2][2] =  X[0][0]*( X[3][1] - X[1][1] ) - X[1][0]*( X[3][1] - X[0][1] ) + X[3][0]*( X[1][1] - X[0][1] );
+  gradN[2][0] =  X[0][1]*( X[3][2] - X[1][2] ) - X[1][1]*( X[3][2] - X[0][2] ) + X[3][1]*( X[1][2] - X[0][2] );
+  gradN[2][1] = -X[0][0]*( X[3][2] - X[1][2] ) + X[1][0]*( X[3][2] - X[0][2] ) - X[3][0]*( X[1][2] - X[0][2] );
+  gradN[2][2] =  X[0][0]*( X[3][1] - X[1][1] ) - X[1][0]*( X[3][1] - X[0][1] ) + X[3][0]*( X[1][1] - X[0][1] );
 
-  dNdX[3][0] = -X[0][1]*( X[2][2] - X[1][2] ) + X[1][1]*( X[2][2] - X[0][2] ) - X[2][1]*( X[1][2] - X[0][2] );
-  dNdX[3][1] =  X[0][0]*( X[2][2] - X[1][2] ) - X[1][0]*( X[2][2] - X[0][2] ) + X[2][0]*( X[1][2] - X[0][2] );
-  dNdX[3][2] = -X[0][0]*( X[2][1] - X[1][1] ) + X[1][0]*( X[2][1] - X[0][1] ) - X[2][0]*( X[1][1] - X[0][1] );
+  gradN[3][0] = -X[0][1]*( X[2][2] - X[1][2] ) + X[1][1]*( X[2][2] - X[0][2] ) - X[2][1]*( X[1][2] - X[0][2] );
+  gradN[3][1] =  X[0][0]*( X[2][2] - X[1][2] ) - X[1][0]*( X[2][2] - X[0][2] ) + X[2][0]*( X[1][2] - X[0][2] );
+  gradN[3][2] = -X[0][0]*( X[2][1] - X[1][1] ) + X[1][0]*( X[2][1] - X[0][1] ) - X[2][0]*( X[1][1] - X[0][1] );
 
   real64 detJ = determinantJacobianTransformation( X );
   real64 factor = 1.0 / ( detJ );
@@ -184,7 +184,7 @@ H1_Tetrahedron_Lagrange1_Gauss1::
   {
     for( int j = 0; j < 3; ++j )
     {
-      dNdX[i][j] *= factor;
+      gradN[i][j] *= factor;
     }
   }
 

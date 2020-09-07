@@ -102,7 +102,7 @@ public:
    */
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  static void shapeFunctionValues( localIndex const q,
+  static void calcN( localIndex const q,
                                    real64 (& N)[numNodes] )
   {
     int qa, qb, qc;
@@ -124,9 +124,9 @@ public:
    * @return The determinant of the parent/physical transformation matrix.
    */
   GEOSX_HOST_DEVICE
-  static real64 shapeFunctionDerivatives( localIndex const q,
+  static real64 calcGradN( localIndex const q,
                                           real64 const (&X)[numNodes][3],
-                                          real64 ( &dNdX )[numNodes][3] );
+                                          real64 ( &gradN )[numNodes][3] );
 
 
   /**
@@ -264,7 +264,7 @@ public:
                                                             int const qb,
                                                             int const qc,
                                                             real64 const ( &invJ )[3][3],
-                                                            real64 ( &dNdX )[numNodes][3] );
+                                                            real64 ( &gradN )[numNodes][3] );
 
 
 private:
@@ -410,9 +410,9 @@ H1_Hexahedron_Lagrange1_GaussLegendre2::supportLoop( int const qa,
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 real64
-H1_Hexahedron_Lagrange1_GaussLegendre2::shapeFunctionDerivatives( localIndex const q,
+H1_Hexahedron_Lagrange1_GaussLegendre2::calcGradN( localIndex const q,
                                                                   real64 const (&X)[numNodes][3],
-                                                                  real64 (& dNdX)[numNodes][3] )
+                                                                  real64 (&gradN)[numNodes][3] )
 {
   real64 J[3][3] = {{0}};
 
@@ -424,7 +424,7 @@ H1_Hexahedron_Lagrange1_GaussLegendre2::shapeFunctionDerivatives( localIndex con
 
   real64 const detJ = inverse( J );
 
-  applyJacobianTransformationToShapeFunctionsDerivatives( qa, qb, qc, J, dNdX );
+  applyJacobianTransformationToShapeFunctionsDerivatives( qa, qb, qc, J, gradN );
 
   return detJ * weight;
 }
@@ -477,28 +477,28 @@ H1_Hexahedron_Lagrange1_GaussLegendre2::
                                                           int const qb,
                                                           int const qc,
                                                           real64 const ( &invJ )[3][3],
-                                                          real64 (& dNdX)[numNodes][3] )
+                                                          real64 (& gradN)[numNodes][3] )
 {
   supportLoop( qa, qb, qc, [] GEOSX_HOST_DEVICE ( real64 const (&dNdXi)[3],
                                                   int const nodeIndex,
                                                   real64 const (&invJ)[3][3],
-                                                  real64 (& dNdX)[numNodes][3] )
+                                                  real64 (& gradN)[numNodes][3] )
   {
 //    for( int i = 0; i < 3; ++i )
 //    {
-//      dNdX[nodeIndex][i] = 0.0;
+//      gradN[nodeIndex][i] = 0.0;
 //      for( int j = 0; j < 3; ++j )
 //      {
-//        dNdX[nodeIndex][i] = dNdX[nodeIndex][i] + dNdXi[ j ] * invJ[j][i];
+//        gradN[nodeIndex][i] = gradN[nodeIndex][i] + dNdXi[ j ] * invJ[j][i];
 //      }
 //    }
     // smaller register footprint by manually unrolling the for loops.
-    dNdX[nodeIndex][0] = dNdXi[0] * invJ[0][0] + dNdXi[1] * invJ[1][0] + dNdXi[2] * invJ[2][0];
-    dNdX[nodeIndex][1] = dNdXi[0] * invJ[0][1] + dNdXi[1] * invJ[1][1] + dNdXi[2] * invJ[2][1];
-    dNdX[nodeIndex][2] = dNdXi[0] * invJ[0][2] + dNdXi[1] * invJ[1][2] + dNdXi[2] * invJ[2][2];
+    gradN[nodeIndex][0] = dNdXi[0] * invJ[0][0] + dNdXi[1] * invJ[1][0] + dNdXi[2] * invJ[2][0];
+    gradN[nodeIndex][1] = dNdXi[0] * invJ[0][1] + dNdXi[1] * invJ[1][1] + dNdXi[2] * invJ[2][1];
+    gradN[nodeIndex][2] = dNdXi[0] * invJ[0][2] + dNdXi[1] * invJ[1][2] + dNdXi[2] * invJ[2][2];
 
 
-  }, invJ, dNdX );
+  }, invJ, gradN );
 }
 
 
@@ -538,21 +538,21 @@ void H1_Hexahedron_Lagrange1_GaussLegendre2::symmetricGradient( int const q,
                                                   real64 (& grad)[6] )
   {
 
-    real64 dNdX[3] = {0, 0, 0};
+    real64 gradN[3] = {0, 0, 0};
     for( int i = 0; i < 3; ++i )
     {
       for( int j = 0; j < 3; ++j )
       {
-        dNdX[i] = dNdX[i] + dNdXi[ j ] * invJ[j][i];
+        gradN[i] = gradN[i] + dNdXi[ j ] * invJ[j][i];
       }
     }
 
-    grad[0] = grad[0] + dNdX[0] * var[ nodeIndex ][0];
-    grad[1] = grad[1] + dNdX[1] * var[ nodeIndex ][1];
-    grad[2] = grad[2] + dNdX[2] * var[ nodeIndex ][2];
-    grad[3] = grad[3] + dNdX[2] * var[ nodeIndex ][1] + dNdX[1] * var[ nodeIndex ][2];
-    grad[4] = grad[4] + dNdX[2] * var[ nodeIndex ][0] + dNdX[0] * var[ nodeIndex ][2];
-    grad[5] = grad[5] + dNdX[1] * var[ nodeIndex ][0] + dNdX[0] * var[ nodeIndex ][1];
+    grad[0] = grad[0] + gradN[0] * var[ nodeIndex ][0];
+    grad[1] = grad[1] + gradN[1] * var[ nodeIndex ][1];
+    grad[2] = grad[2] + gradN[2] * var[ nodeIndex ][2];
+    grad[3] = grad[3] + gradN[2] * var[ nodeIndex ][1] + gradN[1] * var[ nodeIndex ][2];
+    grad[4] = grad[4] + gradN[2] * var[ nodeIndex ][0] + gradN[0] * var[ nodeIndex ][2];
+    grad[5] = grad[5] + gradN[1] * var[ nodeIndex ][0] + gradN[0] * var[ nodeIndex ][1];
   }, invJ, var, grad );
 }
 
@@ -575,17 +575,17 @@ void H1_Hexahedron_Lagrange1_GaussLegendre2::gradNajAij( int const q,
                  real64 (& R)[numNodes][3] )
   {
 
-    real64 dNdX[3] = {0, 0, 0};
+    real64 gradN[3] = {0, 0, 0};
     for( int i = 0; i < 3; ++i )
     {
       for( int j = 0; j < 3; ++j )
       {
-        dNdX[i] = dNdX[i] + dNdXi[ j ] * invJ[j][i];
+        gradN[i] = gradN[i] + dNdXi[ j ] * invJ[j][i];
       }
     }
-    R[ nodeIndex ][ 0 ] = R[ nodeIndex ][ 0 ] - var[ 0 ] * dNdX[ 0 ] - var[ 5 ] * dNdX[ 1 ] - var[ 4 ] * dNdX[ 2 ];
-    R[ nodeIndex ][ 1 ] = R[ nodeIndex ][ 1 ] - var[ 5 ] * dNdX[ 0 ] - var[ 1 ] * dNdX[ 1 ] - var[ 3 ] * dNdX[ 2 ];
-    R[ nodeIndex ][ 2 ] = R[ nodeIndex ][ 2 ] - var[ 4 ] * dNdX[ 0 ] - var[ 3 ] * dNdX[ 1 ] - var[ 2 ] * dNdX[ 2 ];
+    R[ nodeIndex ][ 0 ] = R[ nodeIndex ][ 0 ] - var[ 0 ] * gradN[ 0 ] - var[ 5 ] * gradN[ 1 ] - var[ 4 ] * gradN[ 2 ];
+    R[ nodeIndex ][ 1 ] = R[ nodeIndex ][ 1 ] - var[ 5 ] * gradN[ 0 ] - var[ 1 ] * gradN[ 1 ] - var[ 3 ] * gradN[ 2 ];
+    R[ nodeIndex ][ 2 ] = R[ nodeIndex ][ 2 ] - var[ 4 ] * gradN[ 0 ] - var[ 3 ] * gradN[ 1 ] - var[ 2 ] * gradN[ 2 ];
   }, invJ, var, R );
 }
 

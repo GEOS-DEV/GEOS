@@ -124,7 +124,7 @@ struct ExplicitKernel
   static
   void Integrate( arraySlice1d< real64 const, USD > const & fieldVar,
   #if defined(CALCFEMSHAPE)
-                  real64 const (&dNdX)[ N ][ 3 ],
+                  real64 const (&gradN)[ N ][ 3 ],
   #else
                   arraySlice2d< real64 const > const & dNdX,
   #endif

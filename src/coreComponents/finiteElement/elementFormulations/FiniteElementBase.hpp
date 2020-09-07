@@ -194,13 +194,23 @@ public:
                                     real64 const (&forcingTerm_detJ)[3],
                                     real64 ( &R )[NUM_SUPPORT_POINTS][3] );
 
-//TODO we want to keep views and provide interfaces to this data here for cases
-//     where we pre-compute the shape function derivatives...maybe...tbd.
-//private:
-//  arrayView4d< real64 const > const m_gradN;
-//  arrayView2d< real64 const > const m_detJ;
 
+  void setGradNView( arrayView4d< real64 const > const & source )
+  {
+    m_viewGradN = source;
+  }
 
+  void setDetJView( arrayView2d< real64 const > const & source )
+  {
+    m_viewDetJ = source;
+  }
+
+//  void setGradN( localIndex const k,
+//                 localIndex const q )
+
+protected:
+  arrayView4d< real64 const > m_viewGradN;
+  arrayView2d< real64 const > m_viewDetJ;
 };
 
 template< int NUM_SUPPORT_POINTS,

@@ -253,7 +253,7 @@ public:
     }
 
     real64 N[numNodesPerElem];
-    FE_TYPE::shapeFunctionValues( q, N );
+    FE_TYPE::calcN( q, N );
     FE_TYPE::gradNajAij_plus_NaFi( m_dNdX[k][q],
                                    stress,
                                    N,

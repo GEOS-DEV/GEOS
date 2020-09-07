@@ -62,7 +62,7 @@ void testKernelDriver()
     for( localIndex q=0; q<numQuadraturePoints; ++q )
     {
       real64 N[numNodes] = {0};
-      H1_Pyramid_Lagrange1_Gauss5::shapeFunctionValues( q, N );
+      H1_Pyramid_Lagrange1_Gauss5::calcN( q, N );
       for( localIndex a=0; a<numNodes; ++a )
       {
         viewN( q, a ) = N[a];
@@ -77,7 +77,7 @@ void testKernelDriver()
     for( localIndex q=0; q<numQuadraturePoints; ++q )
     {
       real64 dNdX[numNodes][3] = {{0}};
-      viewDetJ[q] = H1_Pyramid_Lagrange1_Gauss5::shapeFunctionDerivatives( q,
+      viewDetJ[q] = H1_Pyramid_Lagrange1_Gauss5::calcGradN( q,
                                                                            xCoords,
                                                                            dNdX );
 

@@ -73,6 +73,34 @@ dispatch3D( FiniteElementBase const & input,
   }
 }
 
+
+template< typename LAMBDA >
+void
+dispatch3D( FiniteElementBase & input,
+            LAMBDA && lambda )
+{
+  if( auto * const ptr1 = dynamic_cast< H1_Hexahedron_Lagrange1_GaussLegendre2 * >(&input) )
+  {
+    lambda( *ptr1 );
+  }
+  else if( auto * const ptr2 = dynamic_cast< H1_Wedge_Lagrange1_Gauss6 * >(&input) )
+  {
+    lambda( *ptr2 );
+  }
+  else if( auto * const ptr3 = dynamic_cast< H1_Tetrahedron_Lagrange1_Gauss1 * >(&input) )
+  {
+    lambda( *ptr3 );
+  }
+  else if( auto * const ptr4 = dynamic_cast< H1_Pyramid_Lagrange1_Gauss5 * >(&input) )
+  {
+    lambda( *ptr4 );
+  }
+  else
+  {
+    GEOSX_ERROR( "finiteElement::dispatch3D() is not implemented for input of "<<typeid(input).name() );
+  }
+}
+
 template< typename LAMBDA >
 void
 dispatch2D( FiniteElementBase const & input,
