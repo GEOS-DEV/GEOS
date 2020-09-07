@@ -40,8 +40,7 @@ HyprePreconditioner::HyprePreconditioner( LinearSolverParameters params,
   m_precond{},
   m_functions( std::make_unique< HyprePrecFuncs >() ),
   m_dofManager( dofManager ),
-  m_nearNullKernel( nullptr ),
-  m_nullSpacePointer{}
+  m_nearNullKernel( nullptr )
 {
   // Basic setup for functions
   if( !m_functions )
@@ -65,15 +64,8 @@ HyprePreconditioner::HyprePreconditioner( LinearSolverParameters params,
   m_precond{},
   m_functions( std::make_unique< HyprePrecFuncs >() ),
   m_dofManager( dofManager ),
-  m_nearNullKernel( &nearNullKernel ),
-  m_nullSpacePointer{}
+  m_nearNullKernel( &nearNullKernel )
 {
-  // Basic setup for functions
-  if( !m_functions )
-  {
-    m_functions = std::make_unique< HyprePrecFuncs >();
-  }
-
   // Basic setup common for all preconditioners
   if( m_precond == nullptr )
   {
@@ -86,7 +78,6 @@ HyprePreconditioner::HyprePreconditioner( LinearSolverParameters params,
 HyprePreconditioner::~HyprePreconditioner()
 {
   clear();
-  m_nullSpacePointer.clear();
 }
 
 namespace
@@ -123,12 +114,10 @@ HYPRE_Int getHypreAMGRelaxationType( string const & type )
 }
 
 void ConvertRigidBodyModes( array1d< HypreVector > const & nearNullKernel,
-                            HYPRE_Int & numRotations,
                             array1d< HYPRE_ParVector > & nullSpacePointer )
 {
   if( nearNullKernel.empty() )
   {
-    numRotations = 0;
     return;
   }
   else
@@ -142,7 +131,11 @@ void ConvertRigidBodyModes( array1d< HypreVector > const & nearNullKernel,
     {
       dim = 3;
     }
-    numRotations = toHYPRE_Int( nearNullKernel.size() - dim );
+    else
+    {
+      GEOSX_ERROR( "Hypre preconditioner: rigid body modes can be either 3 or 6. Current number: " << nearNullKernel.size() );
+    }
+    localIndex const numRotations = toHYPRE_Int( nearNullKernel.size() - dim );
     nullSpacePointer.resize( numRotations );
     void * object;
     for( localIndex k = 0; k < numRotations; ++k )
@@ -202,13 +195,10 @@ void HyprePreconditioner::createAMG()
 {
   GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGCreate( &m_precond ) );
 
-  if( m_nearNullKernel == nullptr )
+  m_auxData = std::unique_ptr< HyprePrecAuxData >( new HyprePrecAuxData() );
+  if( m_nearNullKernel != nullptr && m_auxData->nullSpacePointer.empty() && m_parameters.amg.nullSpaceType == "rigidBodyModes" )
   {
-    m_nullKernelSize = 0;
-  }
-  else if( m_nullSpacePointer.empty() && m_parameters.amg.nullSpaceType == "rigidBodyModes" )
-  {
-    ConvertRigidBodyModes( *m_nearNullKernel, m_nullKernelSize, m_nullSpacePointer );
+    ConvertRigidBodyModes( *m_nearNullKernel, m_auxData->nullSpacePointer );
   }
 
   // Hypre's parameters to use BoomerAMG as a preconditioner
@@ -223,7 +213,7 @@ void HyprePreconditioner::createAMG()
   // Set type of cycle (1: V-cycle (default); 2: W-cycle)
   GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetCycleType( m_precond, getHypreAMGCycleType( m_parameters.amg.cycleType ) ) );
 
-  if( m_parameters.amg.nullSpaceType == "rigidBodyModes" && m_nullKernelSize > 0 )
+  if( m_parameters.amg.nullSpaceType == "rigidBodyModes" && m_auxData->nullSpacePointer.size() > 0 )
   {
     // Set of options used in MFEM
     // Nodal coarsening options (nodal coarsening is required for this solver)
@@ -257,7 +247,7 @@ void HyprePreconditioner::createAMG()
     GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetInterpRefine( m_precond, interp_refine ) );
 
     // Add user-defined null space / rigid body mode support
-    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetInterpVectors( m_precond, m_nullKernelSize, m_nullSpacePointer.data() ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetInterpVectors( m_precond, m_auxData->nullSpacePointer.size(), m_auxData->nullSpacePointer.data() ) );
   }
 
   // Set smoother to be used (other options available, see hypre's documentation)
@@ -353,7 +343,10 @@ void HyprePreconditioner::createMGR( DofManager const * const dofManager )
   array1d< localIndex > numComponentsPerField = dofManager->numComponentsPerField();
   array1d< localIndex > numLocalDofsPerField = dofManager->numLocalDofsPerField();
 
-  m_auxData = std::unique_ptr< HyprePrecAuxData >( new HyprePrecAuxData() );
+  if( m_auxData == nullptr )
+  {
+    m_auxData = std::unique_ptr< HyprePrecAuxData >( new HyprePrecAuxData() );
+  }
   m_auxData->point_marker_array = computeLocalDofComponentLabels( numComponentsPerField,
                                                                   numLocalDofsPerField );
 

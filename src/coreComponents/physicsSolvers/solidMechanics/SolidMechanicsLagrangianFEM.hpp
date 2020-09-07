@@ -267,12 +267,12 @@ public:
 
   real64 & getMaxForce() { return m_maxForce; }
 
-  arrayView1d< LAInterface::ParallelVector > const & getRigidBodyModes() const
+  arrayView1d< ParallelVector > const & getRigidBodyModes() const
   {
     return m_rigidBodyModes;
   }
 
-  array1d< LAInterface::ParallelVector > & getRigidBodyModes()
+  array1d< ParallelVector > & getRigidBodyModes()
   {
     return m_rigidBodyModes;
   }
@@ -305,7 +305,7 @@ protected:
   SolidMechanicsLagrangianFEM();
 
   /// Rigid body modes
-  array1d< LAInterface::ParallelVector > m_rigidBodyModes;
+  array1d< ParallelVector > m_rigidBodyModes;
 
 };
 

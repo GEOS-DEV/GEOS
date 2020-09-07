@@ -109,11 +109,8 @@ private:
   /// Pointer to the Trilinos implementation
   std::unique_ptr< Epetra_Operator > m_precond;
 
-  /// Number of near null kernel vectors
-  integer m_nullKernelSize;
-
   /// Trilinos pointer to the near null kernel
-  array1d< real64 > m_nullSpacePointer;
+  array2d< real64 > m_nullSpacePointer;
 };
 
 }

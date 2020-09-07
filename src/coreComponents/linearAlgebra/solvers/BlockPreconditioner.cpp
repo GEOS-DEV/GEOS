@@ -113,9 +113,6 @@ void BlockPreconditioner< LAI >::computeSchurComplement()
     }
     case SchurComplementOption::FirstBlockDiagonal:
     {
-      // In this case, the sparsity pattern of triple product can be denser
-      // than that of (1,1)-block. Therefore, we have to add (1,1)-block to
-      // the triple product result, not the other way around.
       m_matBlocks( 0, 0 ).extractDiagonal( m_rhs( 0 ) );
       m_rhs( 0 ).reciprocal();
       m_matBlocks( 0, 1 ).leftScale( m_rhs( 0 ) );

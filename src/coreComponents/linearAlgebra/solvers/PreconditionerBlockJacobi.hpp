@@ -85,6 +85,8 @@ public:
     array1d< globalIndex > idxBlk( m_blockSize );
     array2d< real64 > values( m_blockSize, m_blockSize );
     array2d< real64 > valuesInv( m_blockSize, m_blockSize );
+    array1d< globalIndex > cols;
+    array1d< real64 > vals;
     for( globalIndex i = mat.ilower(); i < mat.iupper(); i+=m_blockSize )
     {
       values.setValues< serialPolicy >( 0.0 );
@@ -93,8 +95,8 @@ public:
         globalIndex const iRow = i + LvArray::integerConversion< globalIndex >( j );
         idxBlk[j] = iRow;
         localIndex const rowLength = mat.globalRowLength( iRow );
-        array1d< globalIndex > cols( rowLength );
-        array1d< real64 > vals( rowLength );
+        cols.resize( rowLength );
+        vals.resize( rowLength );
         mat.getRowCopy( iRow, cols, vals );
         for( localIndex k = 0; k < rowLength; ++k )
         {
@@ -152,6 +154,15 @@ public:
     GEOSX_LAI_ASSERT_EQ( this->numGlobalCols(), src.globalSize() );
 
     m_blockDiag->apply( src, dst );
+  }
+
+  /**
+   * @brief Whether the preconditioner is available in matrix form
+   * @return true: explicit form is available
+   */
+  virtual bool hasPreconditionerMatrix() const override
+  {
+    return true;
   }
 
   /**

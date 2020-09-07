@@ -869,7 +869,6 @@ void HypreMatrix::addEntries( HypreMatrix const & src, real64 const scale )
                                           src.unwrapped(),
                                           &parCSRMatrix ) );
 
-  reset();
   parCSRtoIJ( parCSRMatrix );
 }
 

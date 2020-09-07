@@ -22,7 +22,6 @@
 #include "linearAlgebra/solvers/PreconditionerBase.hpp"
 #include "linearAlgebra/interfaces/hypre/HypreInterface.hpp"
 #include "linearAlgebra/utilities/LinearSolverParameters.hpp"
-#include "HypreUtils.hpp"
 
 #include <memory>
 
@@ -159,12 +158,6 @@ private:
 
   /// Pointer to external data structure storing the near null kernel
   array1d< HypreVector > const * m_nearNullKernel = nullptr;
-
-  /// Number of near null kernel vectors (in case of rigid body modes, only rotations are used)
-  HYPRE_Int m_nullKernelSize;
-
-  /// Hypre pointer to the near null kernel
-  array1d< HYPRE_ParVector > m_nullSpacePointer;
 };
 
 }

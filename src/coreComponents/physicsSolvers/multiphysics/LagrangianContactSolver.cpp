@@ -1201,9 +1201,9 @@ void LagrangianContactSolver::ComputeRotationMatrices( DomainPartition & domain 
       arrayView3d< real64 > const &
       rotationMatrix = subRegion.getReference< array3d< real64 > >( viewKeyStruct::rotationMatrixString );
 
-      forAll< serialPolicy >( subRegion.size(), [=]( localIndex const kfe )
+      forAll< parallelHostPolicy >( subRegion.size(), [=]( localIndex const kfe )
       {
-        array1d< real64 > Nbar( 3 );
+        stackArray1d< real64, 3 > Nbar( 3 );
         Nbar[ 0 ] = faceNormal[elemsToFaces[kfe][0]][0] - faceNormal[elemsToFaces[kfe][1]][0];
         Nbar[ 1 ] = faceNormal[elemsToFaces[kfe][0]][1] - faceNormal[elemsToFaces[kfe][1]][1];
         Nbar[ 2 ] = faceNormal[elemsToFaces[kfe][0]][2] - faceNormal[elemsToFaces[kfe][1]][2];
