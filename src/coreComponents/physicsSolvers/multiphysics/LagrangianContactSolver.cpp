@@ -1136,14 +1136,14 @@ void LagrangianContactSolver::CreatePreconditioner( DomainPartition const & doma
       precond = std::make_unique< BlockPreconditioner< LAInterface > >( BlockShapeOption::LowerUpperTriangular,
                                                                         SchurComplementOption::FirstBlockDiagonal,
                                                                         BlockScalingOption::UserProvided );
-      tracPrecond = std::make_unique< PreconditionerJacobi< LAInterface > >( PreconditionerJacobi< LAInterface >() );
+      tracPrecond = std::make_unique< PreconditionerJacobi< LAInterface > >();
     }
     else if( leadingBlockApproximation == "blockJacobi" )
     {
       precond = std::make_unique< BlockPreconditioner< LAInterface > >( BlockShapeOption::LowerUpperTriangular,
                                                                         SchurComplementOption::FirstBlockUserDefined,
                                                                         BlockScalingOption::UserProvided );
-      tracPrecond = std::make_unique< PreconditionerBlockJacobi< LAInterface > >( PreconditionerBlockJacobi< LAInterface >( mechParams.dofsPerNode ) );
+      tracPrecond = std::make_unique< PreconditionerBlockJacobi< LAInterface > >( mechParams.dofsPerNode );
     }
     else
     {

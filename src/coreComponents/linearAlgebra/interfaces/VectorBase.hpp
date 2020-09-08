@@ -323,7 +323,7 @@ protected:
    * @param y second vector (output)
    */
   virtual void pointwiseProduct( Vector const & x,
-                                 Vector & y ) = 0;
+                                 Vector & y ) const = 0;
 
   /**
    * @brief 1-norm of the vector.

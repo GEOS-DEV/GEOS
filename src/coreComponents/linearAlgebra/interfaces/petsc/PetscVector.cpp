@@ -292,7 +292,7 @@ void PetscVector::axpby( real64 const alpha,
 }
 
 void PetscVector::pointwiseProduct( PetscVector const & x,
-                                    PetscVector & y )
+                                    PetscVector & y ) const
 {
   GEOSX_LAI_ASSERT( ready() );
   GEOSX_LAI_ASSERT( x.ready() );

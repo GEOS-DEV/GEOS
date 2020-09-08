@@ -39,11 +39,6 @@ public:
   /// Alias for matrix type
   using Matrix = typename Base::Matrix;
 
-  virtual ~PreconditionerJacobi()
-  {
-    delete m_diagInv;
-  }
-
   /**
    * @brief Compute the preconditioner from a matrix.
    * @param mat the matrix to precondition.
@@ -51,10 +46,9 @@ public:
   virtual void compute( Matrix const & mat ) override
   {
     GEOSX_LAI_ASSERT( mat.ready() );
-    m_diagInv = new Vector();
-    m_diagInv->createWithLocalSize( mat.numLocalRows(), mat.getComm() );
-    mat.extractDiagonal( *m_diagInv );
-    m_diagInv->reciprocal();
+    m_diagInv.createWithLocalSize( mat.numLocalRows(), mat.getComm() );
+    mat.extractDiagonal( m_diagInv );
+    m_diagInv.reciprocal();
   }
 
   /**
@@ -82,7 +76,7 @@ public:
    */
   virtual void clear() override
   {
-    m_diagInv->reset();
+    m_diagInv.reset();
   }
 
   /**
@@ -91,8 +85,8 @@ public:
    */
   virtual globalIndex numGlobalRows() const override final
   {
-    GEOSX_LAI_ASSERT( m_diagInv->ready() );
-    return m_diagInv->globalSize();
+    GEOSX_LAI_ASSERT( m_diagInv.ready() );
+    return m_diagInv.globalSize();
   }
 
   /**
@@ -101,8 +95,8 @@ public:
    */
   virtual globalIndex numGlobalCols() const override final
   {
-    GEOSX_LAI_ASSERT( m_diagInv->ready() );
-    return m_diagInv->globalSize();
+    GEOSX_LAI_ASSERT( m_diagInv.ready() );
+    return m_diagInv.globalSize();
   }
 
   /**
@@ -114,17 +108,17 @@ public:
   virtual void apply( Vector const & src,
                       Vector & dst ) const override
   {
-    GEOSX_LAI_ASSERT( m_diagInv->ready() );
+    GEOSX_LAI_ASSERT( m_diagInv.ready() );
     GEOSX_LAI_ASSERT_EQ( this->numGlobalRows(), dst.globalSize() );
     GEOSX_LAI_ASSERT_EQ( this->numGlobalCols(), src.globalSize() );
 
-    m_diagInv->pointwiseProduct( src, dst );
+    m_diagInv.pointwiseProduct( src, dst );
   }
 
 private:
 
   /// The diagonal of the matrix
-  Vector * m_diagInv;
+  Vector m_diagInv;
 };
 
 }

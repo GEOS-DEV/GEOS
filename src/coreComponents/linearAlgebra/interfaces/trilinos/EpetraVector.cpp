@@ -284,7 +284,7 @@ void EpetraVector::axpby( real64 const alpha,
 }
 
 void EpetraVector::pointwiseProduct( EpetraVector const & x,
-                                     EpetraVector & y )
+                                     EpetraVector & y ) const
 {
   GEOSX_LAI_ASSERT( ready() );
   GEOSX_LAI_ASSERT( x.ready() );

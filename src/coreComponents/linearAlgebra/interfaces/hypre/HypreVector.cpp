@@ -343,7 +343,7 @@ void HypreVector::axpby( real64 const alpha,
 }
 
 void HypreVector::pointwiseProduct( HypreVector const & x,
-                                    HypreVector & y )
+                                    HypreVector & y ) const
 {
   GEOSX_LAI_ASSERT( ready() );
   GEOSX_LAI_ASSERT( x.ready() );

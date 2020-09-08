@@ -50,11 +50,6 @@ public:
     m_blockSize = blockSize;
   }
 
-  virtual ~PreconditionerBlockJacobi()
-  {
-    delete m_blockDiag;
-  }
-
   /**
    * @brief Compute the preconditioner from a matrix.
    * @param mat the matrix to precondition.
@@ -68,9 +63,8 @@ public:
 
     PreconditionerBase< LAI >::compute( mat );
 
-    m_blockDiag = new Matrix();
-    m_blockDiag->createWithLocalSize( mat.numLocalRows(), mat.numLocalCols(), m_blockSize, mat.getComm() );
-    m_blockDiag->open();
+    m_blockDiag.createWithLocalSize( mat.numLocalRows(), mat.numLocalCols(), m_blockSize, mat.getComm() );
+    m_blockDiag.open();
 
     array1d< globalIndex > idxBlk( m_blockSize );
     array2d< real64 > values( m_blockSize, m_blockSize );
@@ -98,9 +92,9 @@ public:
         }
       }
       BlasLapackLA::matrixInverse( values, valuesInv );
-      m_blockDiag->insert( idxBlk, idxBlk, valuesInv );
+      m_blockDiag.insert( idxBlk, idxBlk, valuesInv );
     }
-    m_blockDiag->close();
+    m_blockDiag.close();
   }
 
   /**
@@ -128,7 +122,7 @@ public:
    */
   virtual void clear() override
   {
-    m_blockDiag->reset();
+    m_blockDiag.reset();
   }
 
   /**
@@ -140,11 +134,11 @@ public:
   virtual void apply( Vector const & src,
                       Vector & dst ) const override
   {
-    GEOSX_LAI_ASSERT( m_blockDiag->ready() );
+    GEOSX_LAI_ASSERT( m_blockDiag.ready() );
     GEOSX_LAI_ASSERT_EQ( this->numGlobalRows(), dst.globalSize() );
     GEOSX_LAI_ASSERT_EQ( this->numGlobalCols(), src.globalSize() );
 
-    m_blockDiag->apply( src, dst );
+    m_blockDiag.apply( src, dst );
   }
 
   /**
@@ -153,7 +147,7 @@ public:
    */
   virtual bool hasPreconditionerMatrix() const override
   {
-    GEOSX_LAI_ASSERT( m_blockDiag->ready() );
+    GEOSX_LAI_ASSERT( m_blockDiag.ready() );
     return true;
   }
 
@@ -163,14 +157,14 @@ public:
    */
   virtual Matrix const & preconditionerMatrix() const override
   {
-    GEOSX_LAI_ASSERT( m_blockDiag->ready() );
-    return *m_blockDiag;
+    GEOSX_LAI_ASSERT( m_blockDiag.ready() );
+    return m_blockDiag;
   }
 
 private:
 
   /// The preconditioner matrix
-  Matrix * m_blockDiag;
+  Matrix m_blockDiag;
 
   /// Block size
   localIndex m_blockSize = 0;
