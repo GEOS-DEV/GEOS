@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -1263,6 +1263,7 @@ void SiloFile::WriteElementRegionSilo( ElementRegionBase const & elemRegion,
 
   localIndex numElems = 0;
   dataRepository::Group fakeGroup( elemRegion.getName(), nullptr );
+  fakeGroup.setRestartFlags( dataRepository::RestartFlags::NO_WRITE );
   std::vector< std::map< string, WrapperBase const * > > viewPointers;
 
   viewPointers.resize( elemRegion.numSubRegions() );
@@ -1297,7 +1298,7 @@ void SiloFile::WriteElementRegionSilo( ElementRegionBase const & elemRegion,
           newWrapper = fakeGroup.registerWrapper< arrayType >( fieldName );
           newWrapper->setPlotLevel( PlotLevel::LEVEL_0 );
           arrayType & newarray = newWrapper->reference();
-          newarray.resize( arrayType::ndim, sourceArray.dims() );
+          newarray.resize( arrayType::NDIM, sourceArray.dims() );
         } );
       }
     }
@@ -1356,6 +1357,8 @@ void SiloFile::WriteElementRegionSilo( ElementRegionBase const & elemRegion,
                   problemTime,
                   isRestart,
                   localIndex_array() );
+
+  fakeGroup.getConduitNode().parent()->remove( fakeGroup.getName() );
 }
 
 
@@ -1410,7 +1413,9 @@ void SiloFile::WriteElementMesh( ElementRegionBase const & elementRegion,
 
     int count = 0;
 
-    elementRegion.forElementSubRegions( [&]( auto const & elementSubRegion )
+    elementRegion.forElementSubRegions< CellElementSubRegion,
+                                        FaceElementSubRegion,
+                                        WellElementSubRegion >( [&]( auto const & elementSubRegion )
     {
       typename TYPEOFREF( elementSubRegion ) ::NodeMapType const & elemsToNodes = elementSubRegion.nodeList();
 
@@ -2073,7 +2078,7 @@ void SiloFile::WriteWrappersToSilo( string const & meshname,
       {
         auto const & wrapperT = dynamic_cast< dataRepository::Wrapper< array2d< real64, RAJA::PERM_JI > > const & >( *wrapper );
 
-        arrayView2d< real64 const, LvArray::getStrideOneDimension( RAJA::PERM_JI {} ) > const &
+        arrayView2d< real64 const, LvArray::typeManipulation::getStrideOneDimension( RAJA::PERM_JI {} ) > const &
         array = wrapperT.reference();
         this->WriteDataField< real64 >( meshname.c_str(),
                                         fieldName,
@@ -2874,7 +2879,7 @@ void SiloFile::WriteMaterialDataField( string const & meshName,
     else
     {
       vartype = DB_UCDVAR;
-//      GEOS_ERROR("unhandled case in SiloFile::WriteDataField B\n");
+//      GEOSX_ERROR("unhandled case in SiloFile::WriteDataField B\n");
     }
 
     WriteMultiXXXX( vartype, DBPutMultivar, centering, fieldName.c_str(), cycleNumber, multiRoot,

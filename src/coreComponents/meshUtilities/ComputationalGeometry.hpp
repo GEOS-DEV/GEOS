@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -21,7 +21,7 @@
 
 #include "common/DataTypes.hpp"
 #include "common/DataLayouts.hpp"
-#include "LvArray/src/streamIO.hpp"
+#include "LvArray/src/output.hpp"
 #include "LvArray/src/tensorOps.hpp"
 
 namespace geosx
@@ -44,26 +44,22 @@ R1Tensor LinePlaneIntersection( R1Tensor lineDir,
                                 R1Tensor planeOrigin );
 
 /**
- * @brief Calculate the area of a polygon given the set of points defining it.
+ * @brief Calculate the area of a polygon given the set of points in ccw order defining it.
  * @param[in] points coordinates of the points
- * @param[in] numPoints number of points
- * @param[in] normal unit normal vector to the surface
+ * @param[in] normal vector normal to the plane
  * @return the area of the polygon
  */
 real64 ComputeSurfaceArea( array1d< R1Tensor > const & points,
-                           localIndex const numPoints,
                            R1Tensor const & normal );
 
 /**
- * @brief Order a set of points counter-clockwise.
+ * @brief Reorder a set of points counter-clockwise.
  * @param[in] points coordinates of the points
- * @param[in] numPoints number of points
  * @param[in] normal unit normal vector to the surface
  * @return the reordered set of points
  */
-array1d< R1Tensor > orderPointsCCW( array1d< R1Tensor > const & points,
-                                    localIndex const numPoints,
-                                    R1Tensor const & normal );
+void orderPointsCCW( array1d< R1Tensor > & points,
+                     R1Tensor const & normal );
 
 /**
  * @brief Calculate the centroid of a convex 3D polygon as well as the normal and the rotation matrix.

@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -476,27 +476,27 @@ void InternalMeshGenerator::GenerateMesh( DomainPartition * const domain )
   }
 
   // TODO This needs to be rewritten for dimensions lower than 3.
-  string_array::const_iterator iterRegion = m_regionNames.begin();
+  localIndex regionOffset = 0;
   for( int iblock = 0; iblock < m_nElems[0].size(); ++iblock )
   {
     for( int jblock = 0; jblock < m_nElems[1].size(); ++jblock )
     {
-      for( int kblock = 0; kblock < m_nElems[2].size(); ++kblock, ++iterRegion )
+      for( int kblock = 0; kblock < m_nElems[2].size(); ++kblock, ++regionOffset )
       {
-        numElemsInRegions[*iterRegion] = 0;
-        elemTypeInRegions[*iterRegion] = "";
+        numElemsInRegions[ m_regionNames[ regionOffset ] ] = 0;
+        elemTypeInRegions[ m_regionNames[ regionOffset ] ] = "";
       }
     }
   }
 
-  iterRegion = m_regionNames.begin();
+  regionOffset = 0;
   {
     localIndex iR = 0;
     for( int iblock = 0; iblock < m_nElems[0].size(); ++iblock )
     {
       for( int jblock = 0; jblock < m_nElems[1].size(); ++jblock )
       {
-        for( int kblock = 0; kblock < m_nElems[2].size(); ++kblock, ++iterRegion, ++iR )
+        for( int kblock = 0; kblock < m_nElems[2].size(); ++kblock, ++regionOffset, ++iR )
         {
           int numElemsInRegion = 1;
           numElemsInRegion *= lastElemIndexForBlockInPartition[0][iblock] - firstElemIndexForBlockInPartition[0][iblock] + 1;
@@ -511,8 +511,8 @@ void InternalMeshGenerator::GenerateMesh( DomainPartition * const domain )
           }
 
           numElemsInRegion *= m_numElePerBox[iR];
-          numElemsInRegions[*iterRegion] += numElemsInRegion;
-          elemTypeInRegions[*iterRegion] = m_elementType[iR];
+          numElemsInRegions[ m_regionNames[ regionOffset ] ] += numElemsInRegion;
+          elemTypeInRegions[ m_regionNames[ regionOffset ] ] = m_elementType[iR];
 
         }
       }
@@ -645,7 +645,7 @@ void InternalMeshGenerator::GenerateMesh( DomainPartition * const domain )
     elementManager->resize( numElements, elementRegionNames, elementTypes );
 
     // assign global numbers to elements
-    iterRegion = m_regionNames.begin();
+    regionOffset = 0;
     SortedArray< std::string > processedRegionNames;
     localIndex iR = 0;
 
@@ -653,14 +653,14 @@ void InternalMeshGenerator::GenerateMesh( DomainPartition * const domain )
     {
       for( int jblock = 0; jblock < m_nElems[1].size(); ++jblock )
       {
-        for( int kblock = 0; kblock < m_nElems[2].size(); ++kblock, ++iterRegion, ++iR )
+        for( int kblock = 0; kblock < m_nElems[2].size(); ++kblock, ++regionOffset, ++iR )
         {
 //          ElementRegionT& elemRegion =
 // domain->m_feElementManager->m_ElementRegions[*iterRegion];
 
-          CellBlock * elemRegion =  elementManager->GetRegion( *iterRegion );
+          CellBlock * elemRegion =  elementManager->GetRegion( m_regionNames[ regionOffset ] );
           int const numNodesPerElem = LvArray::integerConversion< int >( elemRegion->numNodesPerElement());
-          integer_array nodeIDInBox( numNodesPerElem );
+          integer_array nodeIDInBox( 8 );
 
           arrayView2d< localIndex, cells::NODE_MAP_USD > elemsToNodes = elemRegion->nodeList();
           arrayView1d< globalIndex > const & elemLocalToGlobal = elemRegion->localToGlobalMap();
@@ -742,7 +742,7 @@ void InternalMeshGenerator::GenerateMesh( DomainPartition * const domain )
 
                 for( int iEle = 0; iEle < m_numElePerBox[iR]; ++iEle )
                 {
-                  localIndex & localElemIndex = localElemIndexInRegion[*iterRegion];
+                  localIndex & localElemIndex = localElemIndexInRegion[ m_regionNames[ regionOffset ] ];
                   elemLocalToGlobal[localElemIndex] = ElemGlobalIndex( index ) * m_numElePerBox[iR] + iEle;
 
                   GetElemToNodesRelationInBox( m_elementType[iR], index, iEle, nodeIDInBox.data(),

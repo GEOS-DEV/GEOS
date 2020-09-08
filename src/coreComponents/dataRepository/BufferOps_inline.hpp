@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -20,7 +20,7 @@
 #include "codingUtilities/Utilities.hpp"
 #include "codingUtilities/static_if.hpp"
 #include "codingUtilities/traits.hpp"
-#include "LvArray/src/IntegerConversion.hpp"
+#include "LvArray/src/limits.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
 
 #include <type_traits>
@@ -102,9 +102,9 @@ localIndex Pack( buffer_unit_type * & buffer, SortedArray< T > const & var )
 {
   const localIndex length = LvArray::integerConversion< localIndex >( var.size() );
   localIndex sizeOfPackedChars = Pack< DO_PACKING >( buffer, length );
-  for( typename SortedArray< T >::const_iterator i=var.begin(); i!=var.end(); ++i )
+  for( T const & val : var )
   {
-    sizeOfPackedChars += Pack< DO_PACKING >( buffer, *i );
+    sizeOfPackedChars += Pack< DO_PACKING >( buffer, val );
   }
   return sizeOfPackedChars;
 }
@@ -740,15 +740,14 @@ localIndex Pack( buffer_unit_type * & buffer,
   const localIndex length = LvArray::integerConversion< localIndex >( var.size()+unmappedGlobalIndices.size());
   localIndex sizeOfPackedChars = Pack< DO_PACKING >( buffer, length );
 
-  for( typename SortedArray< localIndex >::const_iterator i=var.begin(); i!=var.end(); ++i )
+  for( localIndex const lid : var )
   {
-    sizeOfPackedChars += Pack< DO_PACKING >( buffer, localToGlobal[*i] );
+    sizeOfPackedChars += Pack< DO_PACKING >( buffer, localToGlobal[ lid ] );
   }
 
-  for( typename SortedArray< globalIndex >::const_iterator i=unmappedGlobalIndices.begin();
-       i!=unmappedGlobalIndices.end(); ++i )
+  for( globalIndex const gid : unmappedGlobalIndices )
   {
-    sizeOfPackedChars += Pack< DO_PACKING >( buffer, *i );
+    sizeOfPackedChars += Pack< DO_PACKING >( buffer, gid );
   }
 
 
@@ -816,10 +815,9 @@ localIndex Pack( buffer_unit_type * & buffer,
     sizeOfPackedChars += Pack< DO_PACKING >( buffer, localToGlobal[temp[a]] );
   }
 
-  for( typename SortedArray< globalIndex >::const_iterator i=unmappedGlobalIndices.begin();
-       i!=unmappedGlobalIndices.end(); ++i )
+  for( globalIndex const gid : unmappedGlobalIndices )
   {
-    sizeOfPackedChars += Pack< DO_PACKING >( buffer, *i );
+    sizeOfPackedChars += Pack< DO_PACKING >( buffer, gid );
   }
 
   return sizeOfPackedChars;

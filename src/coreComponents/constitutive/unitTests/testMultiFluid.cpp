@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -123,12 +123,11 @@ void testNumericalDerivatives( MultiFluidBase & fluid,
   auto const & phases     = fluid.getReference< string_array >( MultiFluidBase::viewKeyStruct::phaseNamesString );
 
   // create a clone of the fluid to run updates on
-  std::unique_ptr< ConstitutiveBase > fluidCopyPtr;
-  fluid.DeliverClone( "fluidCopy", nullptr, fluidCopyPtr );
+  std::unique_ptr< ConstitutiveBase > fluidCopyPtr = fluid.deliverClone( "fluidCopy", nullptr );
   MultiFluidBase & fluidCopy = *fluidCopyPtr->group_cast< MultiFluidBase * >();
 
-  fluid.AllocateConstitutiveData( fluid.getParent(), 1 );
-  fluidCopy.AllocateConstitutiveData( fluid.getParent(), 1 );
+  fluid.allocateConstitutiveData( fluid.getParent(), 1 );
+  fluidCopy.allocateConstitutiveData( fluid.getParent(), 1 );
 
   // extract data views from both fluids
   #define GET_FLUID_DATA( FLUID, DIM, KEY ) \
@@ -310,7 +309,7 @@ class CompositionalFluidTest : public ::testing::Test
 {
 protected:
 
-  static void SetUpTestCase()
+  virtual void SetUp() override
   {
     parent = std::make_unique< Group >( "parent", nullptr );
     parent->resize( 1 );
@@ -321,15 +320,9 @@ protected:
     parent->InitializePostInitialConditions( parent.get() );
   }
 
-  static void TearDownTestCase()
-  {}
-
-  static std::unique_ptr< Group > parent;
-  static MultiFluidBase * fluid;
+  std::unique_ptr< Group > parent;
+  MultiFluidBase * fluid;
 };
-
-std::unique_ptr< Group > CompositionalFluidTest::parent( nullptr );
-MultiFluidBase * CompositionalFluidTest::fluid( nullptr );
 
 TEST_F( CompositionalFluidTest, numericalDerivativesMolar )
 {
@@ -389,8 +382,8 @@ MultiFluidBase * makeLiveOilFluid( string const & name, Group * parent )
   tableNames.resize( 3 );
   tableNames[0] = "pvto.txt"; tableNames[1] = "pvtg.txt"; tableNames[2] = "pvtw.txt";
 
-  auto & fluidType = fluid->getReference< string >( BlackOilFluid::viewKeyStruct::fluidTypeString );
-  fluidType = "LiveOil";
+  auto & fluidType = fluid->getReference< BlackOilFluid::FluidType >( BlackOilFluid::viewKeyStruct::fluidTypeString );
+  fluidType = BlackOilFluid::FluidType::LiveOil;
 
   fluid->PostProcessInputRecursive();
   return fluid;
@@ -422,8 +415,8 @@ MultiFluidBase * makeDeadOilFluid( string const & name, Group * parent )
   tableNames.resize( 3 );
   tableNames[0] = "pvdo.txt"; tableNames[1] = "pvdg.txt"; tableNames[2] = "pvdw.txt";
 
-  auto & fluidType = fluid->getReference< string >( BlackOilFluid::viewKeyStruct::fluidTypeString );
-  fluidType = "DeadOil";
+  auto & fluidType = fluid->getReference< BlackOilFluid::FluidType >( BlackOilFluid::viewKeyStruct::fluidTypeString );
+  fluidType = BlackOilFluid::FluidType::DeadOil;
 
   fluid->PostProcessInputRecursive();
   return fluid;
@@ -447,7 +440,7 @@ class LiveOilFluidTest : public ::testing::Test
 {
 protected:
 
-  static void SetUpTestCase()
+  virtual void SetUp() override
   {
     writeTableToFile( "pvto.txt", pvto_str );
     writeTableToFile( "pvtg.txt", pvtg_str );
@@ -461,19 +454,16 @@ protected:
     parent->InitializePostInitialConditions( parent.get() );
   }
 
-  static void TearDownTestCase()
+  virtual void TearDown() override
   {
     removeFile( "pvto.txt" );
     removeFile( "pvtg.txt" );
     removeFile( "pvtw.txt" );
   }
 
-  static std::unique_ptr< Group > parent;
-  static MultiFluidBase * fluid;
+  std::unique_ptr< Group > parent;
+  MultiFluidBase * fluid;
 };
-
-std::unique_ptr< Group > LiveOilFluidTest::parent( nullptr );
-MultiFluidBase * LiveOilFluidTest::fluid( nullptr );
 
 TEST_F( LiveOilFluidTest, numericalDerivativesMolar )
 {
@@ -512,7 +502,7 @@ class DeadOilFluidTest : public ::testing::Test
 {
 protected:
 
-  static void SetUpTestCase()
+  virtual void SetUp() override
   {
     writeTableToFile( "pvdo.txt", pvdo_str );
     writeTableToFile( "pvdg.txt", pvdg_str );
@@ -526,19 +516,16 @@ protected:
     parent->InitializePostInitialConditions( parent.get() );
   }
 
-  static void TearDownTestCase()
+  virtual void TearDown() override
   {
     removeFile( "pvdo.txt" );
     removeFile( "pvdg.txt" );
     removeFile( "pvdw.txt" );
   }
 
-  static std::unique_ptr< Group > parent;
-  static MultiFluidBase * fluid;
+  std::unique_ptr< Group > parent;
+  MultiFluidBase * fluid;
 };
-
-std::unique_ptr< Group > DeadOilFluidTest::parent( nullptr );
-MultiFluidBase * DeadOilFluidTest::fluid( nullptr );
 
 TEST_F( DeadOilFluidTest, numericalDerivativesMolar )
 {

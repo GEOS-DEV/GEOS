@@ -73,7 +73,6 @@
         name="fluidTPFA"
         targetRegions="{ Reservoir }"
         fieldName="pressure"
-        boundaryFieldName="boundaryFacePressure"
         coefficientName="permeability"/>
     </FiniteVolume>
   </NumericalMethods>
@@ -90,7 +89,7 @@
       targetRegions="{ Reservoir, wellRegion }">
       <NonlinearSolverParameters
         newtonTol="1.0e-4"
-        lineSearchAction="0"
+        lineSearchAction="None"
         newtonMaxIter="40"/>
       <LinearSolverParameters
         solverType="direct"

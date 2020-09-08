@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -200,17 +200,17 @@ struct MapHelperImpl< array2d< T, PERMUTATION > >
     return map( i0, i1 );
   }
 
-  static localIndex size0( arrayView2d<T const, LvArray::getStrideOneDimension( PERMUTATION {} ) > const & map )
+  static localIndex size0( arrayView2d<T const, LvArray::typeManipulation::getStrideOneDimension( PERMUTATION {} ) > const & map )
   {
     return map.size( 0 );
   }
 
-  static localIndex size1( arrayView2d<T const, LvArray::getStrideOneDimension( PERMUTATION {} ) > const & map, localIndex const GEOSX_UNUSED_PARAM( i0 ) )
+  static localIndex size1( arrayView2d<T const, LvArray::typeManipulation::getStrideOneDimension( PERMUTATION {} ) > const & map, localIndex const GEOSX_UNUSED_PARAM( i0 ) )
   {
     return map.size( 1 );
   }
 
-  static T const & value( arrayView2d<T const, LvArray::getStrideOneDimension( PERMUTATION {} ) > const & map, localIndex const i0, localIndex const i1 )
+  static T const & value( arrayView2d<T const, LvArray::typeManipulation::getStrideOneDimension( PERMUTATION {} ) > const & map, localIndex const i0, localIndex const i1 )
   {
     return map( i0, i1 );
   }

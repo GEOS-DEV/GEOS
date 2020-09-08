@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -448,8 +448,7 @@ FluxKernel::Launch( localIndex er,
                     arrayView1d< real64 > const & localRhs )
 {
   // get the cell-centered DOF numbers and ghost rank for the assembly
-  arrayView1d< integer const > const & elemGhostRank =
-    subRegion.getReference< array1d< integer > >( ObjectManagerBase::viewKeyStruct::ghostRankString );
+  arrayView1d< integer const > const & elemGhostRank = subRegion.ghostRank();
 
   // get the map from elem to faces
   arrayView2d< localIndex const > const & elemToFaces = subRegion.faceList();

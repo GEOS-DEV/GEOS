@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -21,7 +21,7 @@
 
 // Source includes
 #include "common/DataTypes.hpp"
-#include "LvArray/src/templateHelpers.hpp"
+#include "LvArray/src/typeManipulation.hpp"
 #include "LvArray/src/bufferManipulation.hpp"
 #include "SFINAE_Macros.hpp"
 
@@ -90,7 +90,7 @@ HAS_MEMBER_FUNCTION_NO_RTYPE( reserve, localIndex( 55 ) );
  * @tparam CLASS The type to test.
  */
 template< typename CLASS >
-static constexpr bool HasMemberFunction_toView = LvArray::HasMemberFunction_toView< CLASS >;
+static constexpr bool HasMemberFunction_toView = LvArray::typeManipulation::HasMemberFunction_toView< CLASS >;
 
 /**
  * @brief Defines a static constexpr bool with two template parameter CanStreamInto
@@ -136,11 +136,11 @@ using ConstPointer = typename internal::GetPointerType< T >::ConstPointer;
 
 /// Type aliased to whatever T::toView() returns or T & if that method doesn't exist.
 template< typename T >
-using ViewType = typename LvArray::GetViewType< T >::type &;
+using ViewType = LvArray::typeManipulation::ViewType< T > &;
 
 /// Type aliased to whatever T::toViewConst() returns or T const & if that method doesn't exist.
 template< typename T >
-using ViewTypeConst = typename LvArray::GetViewTypeConst< T >::type &;
+using ViewTypeConst = LvArray::typeManipulation::ViewTypeConst< T > &;
 
 /// True if T is or inherits from std::string.
 template< typename T >
@@ -150,9 +150,49 @@ constexpr bool is_string = std::is_base_of< std::string, T >::value;
 template< typename T >
 constexpr bool is_array = LvArray::isArray< T >;
 
+/// True if T is an instantiation of LvArray::ArrayView.
+template< typename T >
+constexpr bool is_array_view = LvArray::isArrayView< T >;
+
+/// True if T is an instantiation of LvArray::SortedArray.
+template< typename T >
+constexpr bool is_sorted_array = LvArray::isSortedArray< T >;
+
+/// True if T is an instantiation of LvArray:SortedArrayView.
+template< typename T >
+constexpr bool is_sorted_array_view = LvArray::isSortedArrayView< T >;
+
+/// True if T is an instantiation of LvArray::ArrayView or LvArray::Array
+template< typename T >
+constexpr bool is_array_type = traits::is_array_view< T > || traits::is_array< T >;
+
+/// True if T is an instantiation of LvArray::SortedArrayView or LvArray::SortedArray
+template< typename T >
+constexpr bool is_sorted_array_type = traits::is_sorted_array_view< T > || traits::is_sorted_array< T >;
+
 /// True if T is a Tensor class.
 template< typename T >
 constexpr bool is_tensorT = std::is_same< std::remove_const_t< T >, R1Tensor >::value;
+
+/// True of T has operator=() defined.
+template< typename _T >
+struct hasCopyAssignmentOperatorImpl
+{
+private:
+  template< typename T > static constexpr auto test( int )->decltype( T()=T(), bool () )
+  { return true; }
+
+  template< typename T > static constexpr auto test( ... )->bool
+  { return false; }
+public:
+  static constexpr bool value = test< _T >( 0 );
+};
+/// True if T has operator= defined, or it is arithmetic or an enum.
+template< typename T >
+static constexpr bool hasCopyAssignmentOp = hasCopyAssignmentOperatorImpl< T >::value ||
+                                            std::is_arithmetic< T >::value ||
+                                            std::is_enum< T >::value;
+
 
 } /* namespace traits */
 

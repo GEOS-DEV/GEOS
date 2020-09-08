@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -51,24 +51,6 @@ MohrCoulomb::MohrCoulomb( std::string const & name, Group * const parent ):
 
 MohrCoulomb::~MohrCoulomb()
 {}
-
-void
-MohrCoulomb::DeliverClone( string const & name,
-                           Group * const parent,
-                           std::unique_ptr< ConstitutiveBase > & clone ) const
-{
-  if( !clone )
-  {
-    clone = std::make_unique< MohrCoulomb >( name, parent );
-  }
-  ConstitutiveBase::DeliverClone( name, parent, clone );
-  MohrCoulomb * const newConstitutiveRelation = dynamic_cast< MohrCoulomb * >(clone.get());
-
-  newConstitutiveRelation->m_postProcessed = false;
-  newConstitutiveRelation->m_cohesion = m_cohesion;
-  newConstitutiveRelation->m_frictionAngle = m_frictionAngle;
-  newConstitutiveRelation->m_frictionCoefficient = m_frictionCoefficient;
-}
 
 real64 MohrCoulomb::limitTangentialTractionNorm( real64 const normalTraction ) const
 {

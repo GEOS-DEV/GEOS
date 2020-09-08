@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -29,7 +29,6 @@ namespace dataRepository
 class Group;
 }
 class FieldSpecificationBase;
-class FiniteElementBase;
 class DomainPartition;
 
 /**
@@ -79,6 +78,9 @@ public:
   arrayView1d< string const > const & fluidModelNames() const { return m_fluidModelNames; }
 
   arrayView1d< string const > const & solidModelNames() const { return m_solidModelNames; }
+
+  virtual std::vector< string > getConstitutiveRelations( string const & regionName ) const override;
+
 
   localIndex numDofPerCell() const { return m_numDofPerCell; }
 

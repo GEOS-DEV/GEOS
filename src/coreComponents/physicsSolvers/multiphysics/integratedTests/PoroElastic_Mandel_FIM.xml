@@ -137,31 +137,16 @@
   </Events>
 
   <NumericalMethods>
-    <BasisFunctions>
-      <LagrangeBasis3
-        name="linearBasis"
-        degree="1"/>
-    </BasisFunctions>
-
-    <QuadratureRules>
-      <GaussQuadrature3
-        name="gaussian"
-        degree="2"/>
-    </QuadratureRules>
-
     <FiniteElements>
       <FiniteElementSpace
         name="FE1"
-        parentSpace="C3D8"
-        basis="linearBasis"
-        quadrature="gaussian"/>
+        order="1"/>
     </FiniteElements>
 
     <FiniteVolume>
       <TwoPointFluxApproximation
         name="singlePhaseTPFA"
         fieldName="pressure"
-        boundaryFieldName="boundaryFacePressure"
         coefficientName="permeability"/>
     </FiniteVolume>
   </NumericalMethods>
@@ -328,7 +313,7 @@
     <FieldSpecification
       name="boundaryPressure"
       objectPath="faceManager"
-      fieldName="boundaryFacePressure"
+      fieldName="pressure"
       scale="0.000e0"
       setNames="{ xpos }"
       functionName="timeFunction"/>

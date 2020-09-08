@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -63,12 +63,12 @@ public:
    * @param[in] name the provided name
    * @return the FluxApproximation associated with the provided name
    */
-  FluxApproximationBase const * getFluxApproximation( string const & name ) const;
+  FluxApproximationBase const & getFluxApproximation( string const & name ) const;
 
   /**
    * @copydoc getFluxApproximation( string const & ) const
    */
-  FluxApproximationBase * getFluxApproximation( string const & name );
+  FluxApproximationBase & getFluxApproximation( string const & name );
 
 private:
 

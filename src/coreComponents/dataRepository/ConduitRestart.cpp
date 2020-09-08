@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -40,9 +40,7 @@ std::string writeRootFile( conduit::Node & root, std::string const & rootPath )
 
   if( MpiWrapper::Comm_rank() == 0 )
   {
-    std::string cmd = "mkdir -p " + rootPath;
-    int ret = std::system( cmd.data() );
-    GEOSX_ERROR_IF( ret != 0, "Failed to create directory: command '" << cmd << "' exited with code " << std::to_string( ret ) );
+    makeDirsForPath( rootPath );
 
     root[ "protocol/name" ] = "hdf5";
     root[ "protocol/version" ] = CONDUIT_VERSION;

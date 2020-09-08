@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -25,6 +25,10 @@
 #include "meshUtilities/ComputationalGeometry.hpp"
 #include "LvArray/src/tensorOps.hpp"
 
+#if defined( __INTEL_COMPILER )
+#pragma GCC optimize "O0"
+#endif
+
 namespace geosx
 {
 
@@ -42,15 +46,19 @@ TwoPointFluxApproximation::TwoPointFluxApproximation( std::string const & name,
 
 }
 
-void TwoPointFluxApproximation::computeCellStencil( DomainPartition const & domain )
+void TwoPointFluxApproximation::registerCellStencil( Group & stencilGroup ) const
 {
-  MeshBody const & meshBody = *domain.getMeshBody( 0 );
-  MeshLevel const & mesh = *meshBody.getMeshLevel( 0 );
+  stencilGroup.registerWrapper< CellElementStencilTPFA >( viewKeyStruct::cellStencilString )->
+    setRestartFlags( RestartFlags::NO_WRITE );
+}
+
+void TwoPointFluxApproximation::computeCellStencil( MeshLevel & mesh ) const
+{
   NodeManager const & nodeManager = *mesh.getNodeManager();
   FaceManager const & faceManager = *mesh.getFaceManager();
   ElementRegionManager const & elemManager = *mesh.getElemManager();
 
-  CellElementStencilTPFA & stencil = this->getReference< CellElementStencilTPFA >( viewKeyStruct::cellStencilString );
+  CellElementStencilTPFA & stencil = getStencil< CellElementStencilTPFA >( mesh, viewKeyStruct::cellStencilString );
 
   arrayView2d< localIndex const > const & elemRegionList = faceManager.elementRegionList();
   arrayView2d< localIndex const > const & elemSubRegionList = faceManager.elementSubRegionList();
@@ -80,7 +88,7 @@ void TwoPointFluxApproximation::computeCellStencil( DomainPartition const & doma
 
   stencil.reserve( faceManager.size() );
 
-  real64 const lengthTolerance = meshBody.getGlobalLengthScale() * m_areaRelTol;
+  real64 const lengthTolerance = m_lengthScale * m_areaRelTol;
   real64 const areaTolerance = lengthTolerance * lengthTolerance;
   real64 const weightTolerance = 1e-30 * lengthTolerance; // TODO: choice of constant based on physics?
 
@@ -142,13 +150,13 @@ void TwoPointFluxApproximation::computeCellStencil( DomainPartition const & doma
 
       real64 const c2fDistance = LvArray::tensorOps::normalize< 3 >( cellToFaceVec );
 
-      LvArray::tensorOps::elementWiseMultiplication< 3 >( faceConormal, coefficient[er][esr][ei], faceNormal );
+      LvArray::tensorOps::hadamardProduct< 3 >( faceConormal, coefficient[er][esr][ei], faceNormal );
       real64 halfWeight = LvArray::tensorOps::AiBi< 3 >( cellToFaceVec, faceConormal );
 
       // correct negative weight issue arising from non-K-orthogonal grids
       if( halfWeight < 0.0 )
       {
-        LvArray::tensorOps::elementWiseMultiplication< 3 >( faceConormal, coefficient[er][esr][ei], cellToFaceVec );
+        LvArray::tensorOps::hadamardProduct< 3 >( faceConormal, coefficient[er][esr][ei], cellToFaceVec );
         halfWeight = LvArray::tensorOps::AiBi< 3 >( cellToFaceVec, faceConormal );
       }
 
@@ -183,16 +191,20 @@ void TwoPointFluxApproximation::computeCellStencil( DomainPartition const & doma
   } );
 }
 
-
-void TwoPointFluxApproximation::addToFractureStencil( DomainPartition & domain,
-                                                      string const & faceElementRegionName,
-                                                      bool const initFlag )
+void TwoPointFluxApproximation::registerFractureStencil( Group & stencilGroup ) const
 {
-  MeshLevel * const mesh = domain.getMeshBodies()->GetGroup< MeshBody >( 0 )->getMeshLevel( 0 );
-  NodeManager * const nodeManager = mesh->getNodeManager();
-  EdgeManager const * const edgeManager = mesh->getEdgeManager();
-  FaceManager const * const faceManager = mesh->getFaceManager();
-  ElementRegionManager * const elemManager = mesh->getElemManager();
+  stencilGroup.registerWrapper< FaceElementStencil >( viewKeyStruct::fractureStencilString )->
+    setRestartFlags( RestartFlags::NO_WRITE );
+}
+
+void TwoPointFluxApproximation::addToFractureStencil( MeshLevel & mesh,
+                                                      string const & faceElementRegionName,
+                                                      bool const initFlag ) const
+{
+  NodeManager * const nodeManager = mesh.getNodeManager();
+  EdgeManager const * const edgeManager = mesh.getEdgeManager();
+  FaceManager const * const faceManager = mesh.getFaceManager();
+  ElementRegionManager * const elemManager = mesh.getElemManager();
 
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > const elemCenter =
     elemManager->ConstructArrayViewAccessor< real64, 2 >( CellBlock::viewKeyStruct::elementCenterString );
@@ -208,8 +220,8 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition & domain,
   arrayView2d< real64 const > const & faceNormal = faceManager->faceNormal();
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X = nodeManager->referencePosition();
 
-  FaceElementStencil & fractureStencil = getReference< FaceElementStencil >( viewKeyStruct::fractureStencilString );
-  CellElementStencilTPFA & cellStencil = getReference< CellElementStencilTPFA >( viewKeyStruct::cellStencilString );
+  FaceElementStencil & fractureStencil = getStencil< FaceElementStencil >( mesh, viewKeyStruct::fractureStencilString );
+  CellElementStencilTPFA & cellStencil = getStencil< CellElementStencilTPFA >( mesh, viewKeyStruct::cellStencilString );
   fractureStencil.move( LvArray::MemorySpace::CPU );
   cellStencil.move( LvArray::MemorySpace::CPU );
 
@@ -559,7 +571,7 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition & domain,
 
             real64 const c2fDistance = LvArray::tensorOps::normalize< 3 >( cellToFaceVec );
 
-            LvArray::tensorOps::elementWiseMultiplication< 3 >( faceConormal, coefficient[er][esr][ei], faceNormal[faceIndex] );
+            LvArray::tensorOps::hadamardProduct< 3 >( faceConormal, coefficient[er][esr][ei], faceNormal[faceIndex] );
             real64 const ht = LvArray::tensorOps::AiBi< 3 >( cellToFaceVec, faceConormal ) * faceArea[faceIndex] / c2fDistance;
 
             // assume the h for the faceElement to the connector (Face) is zero. thus the weights are trivial.
@@ -586,19 +598,169 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition & domain,
   }
 }
 
-void TwoPointFluxApproximation::computeBoundaryStencil( DomainPartition const & domain,
-                                                        string const & setName,
-                                                        SortedArrayView< localIndex const > const & faceSet )
+void TwoPointFluxApproximation::addEDFracToFractureStencil( MeshLevel & mesh,
+                                                            string const & embeddedSurfaceRegionName ) const
 {
-  MeshBody const & meshBody = *domain.getMeshBody( 0 );
-  MeshLevel const & mesh = *meshBody.getMeshLevel( 0 );
+  EdgeManager const & embSurfEdgeManager = mesh.getEmbdSurfEdgeManager();
+  ElementRegionManager & elemManager = *( mesh.getElemManager() );
+  NodeManager & nodeManager = *( mesh.getNodeManager() );
+
+  // Get the stencils
+  FaceElementStencil & fractureStencil = getStencil< FaceElementStencil >( mesh, viewKeyStruct::fractureStencilString );
+  CellElementStencilTPFA & cellStencil = getStencil< CellElementStencilTPFA >( mesh, viewKeyStruct::cellStencilString );
+  fractureStencil.move( LvArray::MemorySpace::CPU );
+  cellStencil.move( LvArray::MemorySpace::CPU );
+
+  EmbeddedSurfaceRegion & fractureRegion = *( elemManager.GetRegion<
+                                                EmbeddedSurfaceRegion >( embeddedSurfaceRegionName ) );
+  localIndex const fractureRegionIndex = fractureRegion.getIndexInParent();
+
+  EmbeddedSurfaceSubRegion & fractureSubRegion = *( fractureRegion.GetSubRegion<
+                                                      EmbeddedSurfaceSubRegion >( "default" ) );
+
+  // arrayView1d< real64 const > const & fractureElemArea   = fractureSubRegion->getElementArea();
+  arrayView2d< real64 const > const & fractureElemCenter = fractureSubRegion.getElementCenter();
+  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X = nodeManager.embSurfNodesPosition();
+
+  EdgeManager::FaceMapType const & edgeToEmbSurfacesMap = embSurfEdgeManager.faceList();
+
+  arrayView1d< integer const > const & ghostRank = fractureSubRegion.ghostRank();
+
+  localIndex constexpr maxElems = FaceElementStencil::MAX_STENCIL_SIZE;
+
+  localIndex connectorIndex = 0;
+  // add new connectors/connections between embedded elements to the fracture stencil
+  for( localIndex ke = 0; ke <  embSurfEdgeManager.size(); ke++ )
+  {
+    // for now there is no generation of new elements so we add all edges.
+    localIndex const numElems = 2;  // hardcoded for now but unless there is an intersection it should always be 2.
+    if( edgeToEmbSurfacesMap.sizeOfSet( ke ) > 1 ) // to be a connector it need to be attached to at least 2 elements.
+    {
+
+      GEOSX_ERROR_IF( numElems > maxElems, "Max stencil size exceeded by fracture-fracture connector " << ke );
+
+      stackArray1d< localIndex, maxElems > stencilCellsRegionIndex( numElems );
+      stackArray1d< localIndex, maxElems > stencilCellsSubRegionIndex( numElems );
+      stackArray1d< localIndex, maxElems > stencilCellsIndex( numElems );
+      stackArray1d< real64, maxElems > stencilWeights( numElems );
+
+      stackArray1d< R1Tensor, maxElems > stencilCellCenterToEdgeCenters( numElems );
+      stackArray1d< integer, maxElems > isGhostConnectors( numElems );
+
+      //TODO get edge geometry
+      R1Tensor const edgeCenter = embSurfEdgeManager.calculateCenter( ke, X );
+      real64 const edgeLength   = embSurfEdgeManager.calculateLength( ke, X ).L2_Norm();
+
+      // loop over all embedded surface elements attached to the connector and add them to the stencil
+      for( localIndex kes = 0; kes < numElems; kes++ )
+      {
+        localIndex const fractureElementIndex = edgeToEmbSurfacesMap[ke][kes];
+
+        // compute distance between cell centers
+        real64 cellCenterToEdgeCenter[ 3 ];
+        LvArray::tensorOps::copy< 3 >( cellCenterToEdgeCenter, edgeCenter );
+        LvArray::tensorOps::subtract< 3 >( cellCenterToEdgeCenter, fractureElemCenter[fractureElementIndex] );
+
+        // form the CellStencil entry
+        stencilCellsRegionIndex[kes]    = fractureRegionIndex;
+        stencilCellsSubRegionIndex[kes] = 0;  // there is only one subregion.
+        stencilCellsIndex[kes]          = fractureElementIndex;
+
+        //TODO use the proper geometrical info to compute the weight.
+        stencilWeights[kes] =  1.0 / 12.0 * edgeLength / LvArray::tensorOps::l2Norm< 3 >( cellCenterToEdgeCenter );
+
+        LvArray::tensorOps::copy< 3 >( stencilCellCenterToEdgeCenters[kes], cellCenterToEdgeCenter );
+      }
+
+      // add/overwrite the stencil for index fci
+      fractureStencil.add( numElems,
+                           stencilCellsRegionIndex.data(),
+                           stencilCellsSubRegionIndex.data(),
+                           stencilCellsIndex.data(),
+                           stencilWeights.data(),
+                           connectorIndex );
+
+      fractureStencil.add( numElems,
+                           stencilCellCenterToEdgeCenters.data(),
+                           connectorIndex );
+
+      connectorIndex++;
+    }
+  }
+
+  // Add connections EmbeddedSurface to/from CellElements.
+  arrayView1d< localIndex const > const & elemRegionList    = fractureSubRegion.getSurfaceToRegionList();
+  arrayView1d< localIndex const > const & elemSubRegionList = fractureSubRegion.getSurfaceToSubRegionList();
+  arrayView1d< localIndex const > const & elemList          = fractureSubRegion.getSurfaceToCellList();
+  arrayView1d< real64 const >     const & connectivityIndex = fractureSubRegion.getConnectivityIndex();
+
+  ElementRegionManager::ElementViewAccessor< arrayView1d< R1Tensor const > > const permeabilityTensor =
+    elemManager.ConstructArrayViewAccessor< R1Tensor, 1 >( m_coeffName );
+
+  // start from last connectorIndex from cell-To-cell connections
+  connectorIndex = cellStencil.size();
+
+  // loop over the embedded surfaces and add connections to cellStencil
+  for( localIndex kes=0; kes  < fractureSubRegion.size(); kes++ )
+  {
+    if( ghostRank[kes] < 0 )
+    {
+      localIndex const numElems = 2;   // there is a 1 to 1 relation
+
+      GEOSX_ERROR_IF( numElems > maxElems, "Max stencil size exceeded by fracture-cell connector " << kes );
+
+      stackArray1d< localIndex, maxElems > stencilCellsRegionIndex( numElems );
+      stackArray1d< localIndex, maxElems > stencilCellsSubRegionIndex( numElems );
+      stackArray1d< localIndex, maxElems > stencilCellsIndex( numElems );
+      stackArray1d< real64, maxElems > stencilWeights( numElems );
+
+      localIndex const er  = elemRegionList[kes];
+      localIndex const esr = elemSubRegionList[kes];
+      localIndex const ei  = elemList[kes];
+
+      // Here goes EDFM transmissibility computation.
+      real64 avPerm = LvArray::tensorOps::l2Norm< 3 >( permeabilityTensor[er][esr][ei] );
+
+      real64 const ht = connectivityIndex[kes] * avPerm;   // Using matrix perm coz assuming fracture is highly permeable for now.
+
+      //
+      stencilCellsRegionIndex[0] = er;
+      stencilCellsSubRegionIndex[0] = esr;
+      stencilCellsIndex[0] = ei;
+      stencilWeights[0] =  ht;
+
+      stencilCellsRegionIndex[1] = fractureRegionIndex;
+      stencilCellsSubRegionIndex[1] = 0;
+      stencilCellsIndex[1] = kes;
+      stencilWeights[1] = -ht;
+
+      cellStencil.add( 2,
+                       stencilCellsRegionIndex.data(),
+                       stencilCellsSubRegionIndex.data(),
+                       stencilCellsIndex.data(),
+                       stencilWeights.data(),
+                       connectorIndex );
+
+      connectorIndex++;
+    }
+  }
+}
+
+void TwoPointFluxApproximation::registerBoundaryStencil( Group & stencilGroup, string const & setName ) const
+{
+  stencilGroup.registerWrapper< BoundaryStencil >( setName )->
+    setRestartFlags( RestartFlags::NO_WRITE );
+}
+
+void TwoPointFluxApproximation::computeBoundaryStencil( MeshLevel & mesh,
+                                                        string const & setName,
+                                                        SortedArrayView< localIndex const > const & faceSet ) const
+{
   NodeManager const & nodeManager = *mesh.getNodeManager();
   FaceManager const & faceManager = *mesh.getFaceManager();
   ElementRegionManager const & elemManager = *mesh.getElemManager();
 
-  // register a new stencil object
-  Wrapper< BoundaryStencil > * wrapper = registerWrapper< BoundaryStencil >( setName )->setRestartFlags( RestartFlags::NO_WRITE );
-  BoundaryStencil & stencil = wrapper->reference();
+  BoundaryStencil & stencil = getStencil< BoundaryStencil >( mesh, setName );
 
   arrayView2d< localIndex const > const & elemRegionList     = faceManager.elementRegionList();
   arrayView2d< localIndex const > const & elemSubRegionList  = faceManager.elementSubRegionList();
@@ -630,7 +792,7 @@ void TwoPointFluxApproximation::computeBoundaryStencil( DomainPartition const & 
   stackArray1d< localIndex, numPts > stencilElemOrFaceIndices( numPts );
   stackArray1d< real64, numPts > stencilWeights( numPts );
 
-  real64 const lengthTolerance = meshBody.getGlobalLengthScale() * this->m_areaRelTol;
+  real64 const lengthTolerance = m_lengthScale * m_areaRelTol;
   real64 const areaTolerance = lengthTolerance * lengthTolerance;
   real64 const weightTolerance = 1e-30 * lengthTolerance; // TODO: choice of constant based on physics?
 
@@ -675,13 +837,13 @@ void TwoPointFluxApproximation::computeBoundaryStencil( DomainPartition const & 
 
       real64 const c2fDistance = LvArray::tensorOps::normalize< 3 >( cellToFaceVec );
 
-      LvArray::tensorOps::elementWiseMultiplication< 3 >( faceConormal, coefficient[er][esr][ei], faceNormal );
+      LvArray::tensorOps::hadamardProduct< 3 >( faceConormal, coefficient[er][esr][ei], faceNormal );
       real64 faceWeight = LvArray::tensorOps::AiBi< 3 >( cellToFaceVec, faceConormal );
 
       // correct negative weight issue arising from non-K-orthogonal grids
       if( faceWeight < 0.0 )
       {
-        LvArray::tensorOps::elementWiseMultiplication< 3 >( faceConormal, coefficient[er][esr][ei], cellToFaceVec );
+        LvArray::tensorOps::hadamardProduct< 3 >( faceConormal, coefficient[er][esr][ei], cellToFaceVec );
         faceWeight = LvArray::tensorOps::AiBi< 3 >( cellToFaceVec, faceConormal );
       }
 

@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -40,7 +40,6 @@ R1Tensor LinePlaneIntersection( R1Tensor lineDir,
    * d = (planeOrigin - linePoint) * planeNormal / (lineDir * planeNormal )
    * pInt = d*lineDir+linePoint;
    */
-
   real64 dummy[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( planeOrigin );
   LvArray::tensorOps::subtract< 3 >( dummy, linePoint );
   real64 const d = LvArray::tensorOps::AiBi< 3 >( dummy, planeNormal ) /
@@ -54,20 +53,25 @@ R1Tensor LinePlaneIntersection( R1Tensor lineDir,
 
 //*************************************************************************************************
 real64 ComputeSurfaceArea( array1d< R1Tensor > const & points,
-                           localIndex const numPoints,
                            R1Tensor const & normal )
 {
-  // reorder points counterclockwise
-  array1d< R1Tensor > pointsReordered = orderPointsCCW( points, numPoints, normal );
-
   real64 surfaceArea = 0.0;
-  for( localIndex a = 0; a < numPoints - 2; ++a )
-  {
-    real64 v1[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( pointsReordered[ a + 1 ] );
-    real64 v2[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( pointsReordered[ a + 2 ] );
 
-    LvArray::tensorOps::subtract< 3 >( v1, pointsReordered[ 0 ] );
-    LvArray::tensorOps::subtract< 3 >( v2, pointsReordered[ 0 ] );
+  array1d< R1Tensor > orderedPoints ( points.size());
+  for( localIndex a = 0; a < points.size(); a++ )
+  {
+    LvArray::tensorOps::copy< 3 >( orderedPoints[a], points[a] );
+  }
+
+  orderPointsCCW( orderedPoints, normal );
+
+  for( localIndex a = 0; a < points.size() - 2; ++a )
+  {
+    real64 v1[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( orderedPoints[ a + 1 ] );
+    real64 v2[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( orderedPoints[ a + 2 ] );
+
+    LvArray::tensorOps::subtract< 3 >( v1, orderedPoints[ 0 ] );
+    LvArray::tensorOps::subtract< 3 >( v2, orderedPoints[ 0 ] );
 
     real64 triangleNormal[ 3 ];
     LvArray::tensorOps::crossProduct( triangleNormal, v1, v2 );
@@ -78,10 +82,11 @@ real64 ComputeSurfaceArea( array1d< R1Tensor > const & points,
 }
 
 //*************************************************************************************************
-array1d< R1Tensor > orderPointsCCW( array1d< R1Tensor > const & points,
-                                    localIndex const numPoints,
-                                    R1Tensor const & normal )
+void orderPointsCCW( array1d< R1Tensor > & points,
+                     R1Tensor const & normal )
 {
+  localIndex numPoints = points.size();
+
   array1d< R1Tensor > orderedPoints( numPoints );
 
   std::vector< int > indices( numPoints );
@@ -94,6 +99,7 @@ array1d< R1Tensor > orderPointsCCW( array1d< R1Tensor > const & points,
     LvArray::tensorOps::add< 3 >( centroid, points[ a ] );
     indices[ a ] = a;
   }
+
   LvArray::tensorOps::scale< 3 >( centroid, 1.0 / numPoints );
 
   R1Tensor v0 = LVARRAY_TENSOROPS_INIT_LOCAL_3( centroid );
@@ -122,10 +128,13 @@ array1d< R1Tensor > orderPointsCCW( array1d< R1Tensor > const & points,
   for( localIndex a=0; a < numPoints; a++ )
   {
     // fill in with ordered
-    orderedPoints[ a ] = points[ indices[ a ] ];
+    LvArray::tensorOps::copy< 3 >( orderedPoints[ a ], points[ indices[ a ] ] );
   }
 
-  return orderedPoints;
+  for( localIndex a = 0; a < numPoints; a++ )
+  {
+    LvArray::tensorOps::copy< 3 >( points[a], orderedPoints[a] );
+  }
 }
 
 //*************************************************************************************************
@@ -163,8 +172,8 @@ void RotationMatrix_3D( arraySlice1d< real64 const > const normal,
 {
   real64 m1[ 3 ] = { normal[ 2 ], 0.0, -normal[ 0 ] };
   real64 m2[ 3 ] = { 0.0, normal[ 2 ], -normal[ 1 ] };
-  real64 const norm_m1 = LvArray::tensorOps::normalize< 3 >( m1 );
-  real64 const norm_m2 = LvArray::tensorOps::normalize< 3 >( m2 );
+  real64 const norm_m1 = LvArray::tensorOps::l2Norm< 3 >( m1 );
+  real64 const norm_m2 = LvArray::tensorOps::l2Norm< 3 >( m2 );
 
   // If present, looks for a vector with 0 norm
   // Fix the uncertain case of norm_m1 very close to norm_m2
@@ -172,12 +181,14 @@ void RotationMatrix_3D( arraySlice1d< real64 const > const normal,
   {
     LvArray::tensorOps::crossProduct( m2, normal, m1 );
     LvArray::tensorOps::normalize< 3 >( m2 );
+    LvArray::tensorOps::normalize< 3 >( m1 );
   }
   else
   {
     LvArray::tensorOps::crossProduct( m1, normal, m2 );
     LvArray::tensorOps::scale< 3 >( m1, -1 );
     LvArray::tensorOps::normalize< 3 >( m1 );
+    LvArray::tensorOps::normalize< 3 >( m2 );
   }
 
   // Save everything in the standard form (3x3 rotation matrix)

@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -49,37 +49,40 @@ KrylovSolver< VECTOR >::Create( LinearSolverParameters const & parameters,
                                 LinearOperator< VECTOR > const & matrix,
                                 LinearOperator< VECTOR > const & precond )
 {
-  if( parameters.solverType == "cg" )
+  switch( parameters.solverType )
   {
-    GEOSX_ERROR_IF( !parameters.isSymmetric, "Cannot use CG solver with a non-symmetric system" );
-    return std::make_unique< CGsolver< Vector > >( matrix,
-                                                   precond,
-                                                   parameters.krylov.relTolerance,
-                                                   parameters.krylov.maxIterations,
-                                                   parameters.logLevel );
+    case LinearSolverParameters::SolverType::cg:
+    {
+      GEOSX_ERROR_IF( !parameters.isSymmetric, "Cannot use CG solver with a non-symmetric system" );
+      return std::make_unique< CGsolver< Vector > >( matrix,
+                                                     precond,
+                                                     parameters.krylov.relTolerance,
+                                                     parameters.krylov.maxIterations,
+                                                     parameters.logLevel );
+    }
+    case LinearSolverParameters::SolverType::bicgstab:
+    {
+      return std::make_unique< BiCGSTABsolver< Vector > >( matrix,
+                                                           precond,
+                                                           parameters.krylov.relTolerance,
+                                                           parameters.krylov.maxIterations,
+                                                           parameters.logLevel );
+    }
+    case LinearSolverParameters::SolverType::gmres:
+    {
+      return std::make_unique< GMRESsolver< Vector > >( matrix,
+                                                        precond,
+                                                        parameters.krylov.relTolerance,
+                                                        parameters.krylov.maxIterations,
+                                                        parameters.logLevel,
+                                                        parameters.krylov.maxRestart );
+    }
+    default:
+    {
+      GEOSX_ERROR( "Unsupported linear solver type: " << parameters.solverType );
+    }
   }
-  else if( parameters.solverType == "bicgstab" )
-  {
-    return std::make_unique< BiCGSTABsolver< Vector > >( matrix,
-                                                         precond,
-                                                         parameters.krylov.relTolerance,
-                                                         parameters.krylov.maxIterations,
-                                                         parameters.logLevel );
-  }
-  else if( parameters.solverType == "gmres" )
-  {
-    return std::make_unique< GMRESsolver< Vector > >( matrix,
-                                                      precond,
-                                                      parameters.krylov.relTolerance,
-                                                      parameters.krylov.maxIterations,
-                                                      parameters.logLevel,
-                                                      parameters.krylov.maxRestart );
-  }
-  else
-  {
-    GEOSX_ERROR( "Unsupported linear solver type: " << parameters.solverType );
-    return {};
-  }
+  return {};
 }
 
 // -----------------------

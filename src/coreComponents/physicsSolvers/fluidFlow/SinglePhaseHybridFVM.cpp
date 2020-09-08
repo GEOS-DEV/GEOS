@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -58,12 +58,7 @@ void SinglePhaseHybridFVM::RegisterDataOnMesh( Group * const MeshBodies )
     MeshLevel * const meshLevel = Group::group_cast< MeshBody * >( mesh.second )->getMeshLevel( 0 );
     FaceManager * const faceManager = meshLevel->getFaceManager();
 
-    // primary variables: face pressures
-    faceManager->registerWrapper< array1d< real64 > >( viewKeyStruct::facePressureString )->
-      setPlotLevel( PlotLevel::LEVEL_0 )->
-      setRegisteringObjects( this->getName())->
-      setDescription( "An array that holds the pressures at the faces." );
-
+    // primary variables: face pressures changes
     faceManager->registerWrapper< array1d< real64 > >( viewKeyStruct::deltaFacePressureString )->
       setPlotLevel( PlotLevel::LEVEL_0 )->
       setRegisteringObjects( this->getName())->
@@ -323,8 +318,7 @@ real64 SinglePhaseHybridFVM::CalculateResidualNorm( DomainPartition const & doma
     subRegionCounter++;
   } );
 
-  arrayView1d< integer const > const & faceGhostRank =
-    faceManager.getReference< array1d< integer > >( ObjectManagerBase::viewKeyStruct::ghostRankString );
+  arrayView1d< integer const > const & faceGhostRank = faceManager.ghostRank();
   arrayView1d< globalIndex const > const & faceDofNumber =
     faceManager.getReference< array1d< globalIndex > >( faceDofKey );
 
@@ -415,8 +409,7 @@ SinglePhaseHybridFVM::CheckSystemSolution( DomainPartition const & domain,
 
   } );
 
-  arrayView1d< integer const > const & faceGhostRank =
-    faceManager.getReference< array1d< integer > >( ObjectManagerBase::viewKeyStruct::ghostRankString );
+  arrayView1d< integer const > const & faceGhostRank = faceManager.ghostRank();
   arrayView1d< globalIndex const > const & faceDofNumber =
     faceManager.getReference< array1d< globalIndex > >( faceDofKey );
 

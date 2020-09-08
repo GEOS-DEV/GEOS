@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -87,7 +87,7 @@ void CommunicationTools::AssignGlobalIndices( ObjectManagerBase & object,
                                               std::vector< NeighborCommunicator > & neighbors )
 {
   GEOSX_MARK_FUNCTION;
-  integer_array & ghostRank = object.getReference< integer_array >( object.m_ObjectManagerBaseViewKeys.ghostRank );
+  arrayView1d< integer > const & ghostRank = object.ghostRank();
   ghostRank.setValues< serialPolicy >( -2 );
 
   int const commRank = MpiWrapper::Comm_rank();
@@ -418,7 +418,7 @@ CommunicationTools::
                                        std::vector< NeighborCommunicator > & allNeighbors )
 {
   GEOSX_MARK_FUNCTION;
-  integer_array & domainBoundaryIndicator = objectManager->getReference< integer_array >( objectManager->m_ObjectManagerBaseViewKeys.domainBoundaryIndicator );
+  arrayView1d< integer > const & domainBoundaryIndicator = objectManager->getDomainBoundaryIndicator();
 
   array1d< globalIndex > globalPartitionBoundaryObjectsIndices;
   objectManager->ConstructGlobalListOfBoundaryObjects( globalPartitionBoundaryObjectsIndices );
@@ -549,7 +549,7 @@ void removeFromCommList( std::vector< localIndex > const & indicesToRemove, arra
 void fixReceiveLists( ObjectManagerBase & objectManager,
                       std::vector< NeighborCommunicator > const & neighbors )
 {
-  constexpr int nonLocalGhostsTag = 54673246;
+  int nonLocalGhostsTag = 45;
 
   std::vector< MPI_Request > nonLocalGhostsRequests( neighbors.size() );
 

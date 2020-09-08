@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -566,7 +566,7 @@ void DofManager::setSparsityPatternFromStencil( MATRIX & pattern,
 
   // 2. Assemble diagonal and off-diagonal blocks for elements in stencil
   MATRIX * const pattern_ptr = &pattern;
-  coupling.stencils->forAllStencils( [&]( auto const & stencil )
+  coupling.stencils->forAllStencils( *m_mesh, [&]( auto const & stencil )
   {
     using StenciType = typename std::decay< decltype( stencil ) >::type;
     constexpr localIndex maxNumFluxElems = StenciType::NUM_POINT_IN_FLUX;
@@ -752,7 +752,7 @@ void DofManager::setSparsityPatternFromStencil( SparsityPattern< globalIndex > &
   array1d< globalIndex > colDofIndices( NC );
 
   // 1. Assemble diagonal and off-diagonal blocks for elements in stencil
-  coupling.stencils->forAllStencils( [&]( auto const & stencil )
+  coupling.stencils->forAllStencils( *m_mesh, [&]( auto const & stencil )
   {
     using StenciType = typename std::decay< decltype( stencil ) >::type;
     constexpr localIndex maxNumFluxElems = StenciType::NUM_POINT_IN_FLUX;
@@ -1100,7 +1100,7 @@ void DofManager::countRowLengthsFromStencil( arrayView1d< localIndex > const & r
   array1d< globalIndex > colDofIndices( NC );
 
   // 1. Count row contributions from stencil
-  coupling.stencils->forAllStencils( [&]( auto const & stencil )
+  coupling.stencils->forAllStencils( *m_mesh, [&]( auto const & stencil )
   {
     using StenciType = typename std::decay< decltype( stencil ) >::type;
     typename StenciType::IndexContainerViewConstType const & seri = stencil.getElementRegionIndices();

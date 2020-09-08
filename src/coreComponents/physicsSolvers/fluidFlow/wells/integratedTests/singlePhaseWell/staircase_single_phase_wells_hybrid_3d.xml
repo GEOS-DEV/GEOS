@@ -9,7 +9,7 @@
       logLevel="1"
       targetRegions="{ Channel, wellRegion1, wellRegion2 }">
       <NonlinearSolverParameters
-        lineSearchAction="0"
+        lineSearchAction="None"
         newtonMaxIter="40"/>
       <LinearSolverParameters
         solverType="direct"
@@ -132,7 +132,6 @@
       <TwoPointFluxApproximation
         name="singlePhaseTPFA"
         fieldName="pressure"
-        boundaryFieldName="facePressure"
         targetRegions="{ Channel }"
         coefficientName="permeability"/>
     </FiniteVolume>

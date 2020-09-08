@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -67,7 +67,7 @@ void TrilinosSolver::solve( EpetraMatrix & mat,
     rhs_raw.Multiply( 1.0, scaling, tmp, 0.0 );
   }
 
-  if( m_parameters.solverType == "direct" )
+  if( m_parameters.solverType == LinearSolverParameters::SolverType::direct )
   {
     solve_direct( mat, sol, rhs );
   }
@@ -122,23 +122,28 @@ namespace
 
 void CreateTrilinosKrylovSolver( LinearSolverParameters const & params, AztecOO & solver )
 {
-  // Choose the solver type
-  if( params.solverType == "gmres" )
+  switch( params.solverType )
   {
-    GEOSX_LAI_CHECK_ERROR( solver.SetAztecOption( AZ_solver, AZ_gmres ) );
-    GEOSX_LAI_CHECK_ERROR( solver.SetAztecOption( AZ_kspace, params.krylov.maxRestart ) );
-  }
-  else if( params.solverType == "bicgstab" )
-  {
-    GEOSX_LAI_CHECK_ERROR( solver.SetAztecOption( AZ_solver, AZ_bicgstab ) );
-  }
-  else if( params.solverType == "cg" )
-  {
-    GEOSX_LAI_CHECK_ERROR( solver.SetAztecOption( AZ_solver, AZ_cg ) );
-  }
-  else
-  {
-    GEOSX_ERROR( "Unsupported linear solver type: " << params.solverType );
+    case LinearSolverParameters::SolverType::gmres:
+    {
+      GEOSX_LAI_CHECK_ERROR( solver.SetAztecOption( AZ_solver, AZ_gmres ) );
+      GEOSX_LAI_CHECK_ERROR( solver.SetAztecOption( AZ_kspace, params.krylov.maxRestart ) );
+      break;
+    }
+    case LinearSolverParameters::SolverType::bicgstab:
+    {
+      GEOSX_LAI_CHECK_ERROR( solver.SetAztecOption( AZ_solver, AZ_bicgstab ) );
+      break;
+    }
+    case LinearSolverParameters::SolverType::cg:
+    {
+      GEOSX_LAI_CHECK_ERROR( solver.SetAztecOption( AZ_solver, AZ_cg ) );
+      break;
+    }
+    default:
+    {
+      GEOSX_ERROR( "Solver type not supported in Trilinos interface: " << params.solverType );
+    }
   }
 
   // Ask for a convergence normalized by the right hand side

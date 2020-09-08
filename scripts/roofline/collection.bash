@@ -20,6 +20,7 @@ metricsFileRoot=$4
 
 echo $buildRoot
 echo $inputFile
+echo $kernelPattern
 echo $metricsFileRoot
 
 

@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -23,8 +23,7 @@
 #include "common/DataTypes.hpp"
 #include "common/TimingMacros.hpp"
 #include "constitutive/ConstitutivePassThru.hpp"
-#include "finiteElement/FiniteElementDiscretization.hpp"
-#include "finiteElement/FiniteElementShapeFunctionKernel.hpp"
+#include "finiteElement/FiniteElementDispatch.hpp"
 #include "mesh/ElementRegionManager.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
 
@@ -37,6 +36,7 @@
 /// Use std::tuple to hold constructor params.
 #define CONSTRUCTOR_PARAM_OPTION 1
 #endif
+
 #if CONSTRUCTOR_PARAM_OPTION==1
 namespace std
 {
@@ -153,52 +153,6 @@ integralTypeDispatch( INTEGRAL_TYPE const input,
   }
 }
 
-
-/**
- * @brief Call a lambda function (callback) with an integral_constant
- *        conversion of the input integral type to allow for static
- *        dispatch.
- * @tparam INTEGRAL_TYPE The type of integer passed in @p input.
- * @tparam LAMBDA The type of @p lambda to execute.
- * @param input The integer to convert to an integral_constant.
- * @param lambda The generic lambda function (takes the integral_constant as
- *               a parameter) that will be executed.
- *
- * Implements a switchyard to convert the value of @p input to an
- * integral_constant<@p INTEGRAL_TYPE, @p input>, and pass that to @p lambda.
- * This allows a runtime @p input to be dispatched as a compile time constant.
- * Note that @p LAMBDA must be a generic lambda that takes in a single `auto`
- * parameter and then converts the value to an INTEGRAL_TYPE. For instance:
- *
- *     int value = 1;
- *     integralTypeDispatch( 1, [&]( auto const constValueType )
- *     {
- *       static constexpr int constValue = decltype( constValueType )::value;
- *
- *       func< constValue >(...);
- *     };
- */
-template< typename INTEGRAL_TYPE, typename LAMBDA >
-void
-quadtratureDispatch( INTEGRAL_TYPE const input,
-                     LAMBDA && lambda )
-{
-  switch( input )
-  {
-    case 1:
-    {
-      lambda( std::integral_constant< INTEGRAL_TYPE, 1 >() );
-      break;
-    }
-    case 8:
-    {
-      lambda( std::integral_constant< INTEGRAL_TYPE, 8 >() );
-      break;
-    }
-    default:
-      GEOSX_ERROR( "quadtratureDispatch() is not implemented for value of: "<<input );
-  }
-}
 //*****************************************************************************
 //*****************************************************************************
 //*****************************************************************************
@@ -237,8 +191,7 @@ quadtratureDispatch( INTEGRAL_TYPE const input,
  */
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
-          int NUM_TEST_SUPPORT_POINTS_PER_ELEM,
-          int NUM_TRIAL_SUPPORT_POINTS_PER_ELEM,
+          typename FE_TYPE,
           int NUM_DOF_PER_TEST_SP,
           int NUM_DOF_PER_TRIAL_SP >
 class KernelBase
@@ -246,11 +199,11 @@ class KernelBase
 public:
   /// Compile time value for the number of test function support points per
   /// element.
-  static constexpr int numTestSupportPointsPerElem  = NUM_TEST_SUPPORT_POINTS_PER_ELEM;
+  static constexpr int numTestSupportPointsPerElem  = FE_TYPE::numNodes;
 
   /// Compile time value for the number of trial function support points per
   /// element.
-  static constexpr int numTrialSupportPointsPerElem = NUM_TRIAL_SUPPORT_POINTS_PER_ELEM;
+  static constexpr int numTrialSupportPointsPerElem = FE_TYPE::numNodes;
 
   /// Compile time value for the number of degrees of freedom per test function
   /// support point.
@@ -259,6 +212,9 @@ public:
   /// Compile time value for the number of degrees of freedom per trial
   /// function support point.
   static constexpr int numDofPerTrialSupportPoint   = NUM_DOF_PER_TRIAL_SP;
+
+  /// Compile time value for the number of quadrature points per element.
+  static constexpr int numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
 
   /**
    * @brief Constructor
@@ -269,7 +225,7 @@ public:
    *                           which currently doesn't do much.
    */
   KernelBase( SUBREGION_TYPE const & elementSubRegion,
-              FiniteElementBase const * const finiteElementSpace,
+              FE_TYPE const & finiteElementSpace,
               CONSTITUTIVE_TYPE * const inputConstitutiveType ):
     m_elemsToNodes( elementSubRegion.nodeList().toViewConst() ),
     m_elemGhostRank( elementSubRegion.ghostRank() ),
@@ -428,7 +384,6 @@ public:
    * that follow the interface set by KernelBase.
    */
   template< typename POLICY,
-            int NUM_QUADRATURE_POINTS,
             typename KERNEL_TYPE >
   static
   typename std::enable_if< std::is_same< POLICY, serialPolicy >::value ||
@@ -447,7 +402,7 @@ public:
       typename KERNEL_TYPE::StackVariables stack;
 
       kernelComponent.setup( k, stack );
-      for( integer q=0; q<NUM_QUADRATURE_POINTS; ++q )
+      for( integer q=0; q<numQuadraturePointsPerElem; ++q )
       {
         kernelComponent.quadraturePointStateUpdate( k, q, stack );
 
@@ -474,7 +429,6 @@ public:
    * that follow the interface set by KernelBase.
    */
   template< typename POLICY,
-            int NUM_QUADRATURE_POINTS,
             typename KERNEL_TYPE >
   static
   typename std::enable_if< !( std::is_same< POLICY, serialPolicy >::value ||
@@ -496,7 +450,7 @@ public:
 
       kernelComponent.setup( k, stack );
 
-      for( integer q=0; q<NUM_QUADRATURE_POINTS; ++q )
+      for( integer q=0; q<numQuadraturePointsPerElem; ++q )
       {
         kernelComponent.quadraturePointStateUpdate( k, q, stack );
 
@@ -524,7 +478,7 @@ protected:
 
   /// The finite element space/discretization object for the element type in
   /// the SUBREGION_TYPE.
-  FiniteElementBase const * m_finiteElementSpace;
+  FE_TYPE const & m_finiteElementSpace;
 };
 
 
@@ -558,10 +512,9 @@ protected:
  * @param mesh The MeshLevel object.
  * @param targetRegions The names of the target regions(of type @p REGION_TYPE)
  *                      to apply the @p KERNEL_TEMPLATE.
+ * @param finiteElementName The name of the finite element.
  * @param constitutiveNames The names of the constitutive models present in the
  *                          Region.
- * @param feDiscretization A pointer to the finite element discretization/space
- *                         object.
  * @param kernelConstructorParams The parameter list for corresponding to the
  *                                parameter @p KERNEL_CONSTRUCTOR_PARAMS that
  *                                are passed to the @p KERNEL_TEMPLATE
@@ -577,16 +530,16 @@ template< typename POLICY,
           typename REGION_TYPE,
           template< typename SUBREGION_TYPE,
                     typename CONSTITUTIVE_TYPE,
-                    int NUM_TEST_SUPPORT_POINTS_PER_ELEM,
-                    int NUM_TRIAL_SUPPORT_POINTS_PER_ELEM > class KERNEL_TEMPLATE,
+                    typename FE_TYPE > class KERNEL_TEMPLATE,
           typename ... KERNEL_CONSTRUCTOR_PARAMS >
 static
 real64 regionBasedKernelApplication( MeshLevel & mesh,
                                      arrayView1d< string const > const & targetRegions,
+                                     string const & finiteElementName,
                                      arrayView1d< string const > const & constitutiveNames,
-                                     FiniteElementDiscretization const * const feDiscretization,
                                      KERNEL_CONSTRUCTOR_PARAMS && ... kernelConstructorParams )
 {
+  GEOSX_MARK_FUNCTION;
   // save the maximum residual contribution for scaling residuals for convergence criteria.
   real64 maxResidualContribution = 0;
 
@@ -607,25 +560,19 @@ real64 regionBasedKernelApplication( MeshLevel & mesh,
 
   // Loop over all sub-regions in regiongs of type REGION_TYPE, that are listed in the targetRegions array.
   elementRegionManager.forElementSubRegions< REGION_TYPE >( targetRegions,
-                                                            [&] ( localIndex const targetRegionIndex,
-                                                                  auto & elementSubRegion )
+                                                            [&constitutiveNames,
+                                                             &maxResidualContribution,
+                                                             &nodeManager,
+                                                             &edgeManager,
+                                                             &faceManager,
+                                                             &kernelConstructorParamsTuple,
+                                                             &finiteElementName]
+                                                              ( localIndex const targetRegionIndex, auto & elementSubRegion )
   {
     localIndex const numElems = elementSubRegion.size();
 
     // Create an alias for the type of subregion we are in, which is now known at compile time.
     typedef TYPEOFREF( elementSubRegion ) SUBREGIONTYPE;
-
-    // Extract the number of quadrature point from the finite element object.
-    FiniteElementBase const * finiteElementSpace = nullptr;
-    if( feDiscretization != nullptr )
-    {
-      finiteElementSpace = ( feDiscretization->getFiniteElement( elementSubRegion.GetElementTypeString() ) ).get();
-    }
-
-    localIndex const
-    numQuadraturePointsPerElem = finiteElementSpace == nullptr ?
-                                 1 :
-                                 finiteElementSpace->n_quadrature_points();
 
     // Get the constitutive model...and allocate a null constitutive model if required.
     constitutive::ConstitutiveBase * constitutiveRelation = nullptr;
@@ -642,67 +589,80 @@ real64 regionBasedKernelApplication( MeshLevel & mesh,
 
     // Call the constitutive dispatch which converts the type of constitutive model into a compile time constant.
     constitutive::ConstitutivePassThru< CONSTITUTIVE_BASE >::Execute( constitutiveRelation,
-                                                                      [&]( auto * const castedConstitutiveRelation )
+                                                                      [&maxResidualContribution,
+                                                                       &nodeManager,
+                                                                       &edgeManager,
+                                                                       &faceManager,
+                                                                       &kernelConstructorParamsTuple,
+                                                                       &elementSubRegion,
+                                                                       &finiteElementName,
+                                                                       numElems]
+                                                                        ( auto * const castedConstitutiveRelation )
     {
-      // Create an alias for the type of contitutive model.
+      // Create an alias for the type of constitutive model.
       using CONSTITUTIVE_TYPE = TYPEOFPTR( castedConstitutiveRelation );
 
-      // Apply a sequence of integer dispatch functions to convert the number of nodes per element,
-      // and number of quadrature points per element to a compile time constant.
-      integralTypeDispatch( elementSubRegion.numNodesPerElement(), [&]( auto const NNPE )
+
+      string const elementTypeString = elementSubRegion.GetElementTypeString();
+
+      FiniteElementBase &
+      subRegionFE = elementSubRegion.template getReference< FiniteElementBase >( finiteElementName );
+
+      finiteElement::dispatch3D( subRegionFE,
+                                 [&maxResidualContribution,
+                                  &nodeManager,
+                                  &edgeManager,
+                                  &faceManager,
+                                  &kernelConstructorParamsTuple,
+                                  &elementSubRegion,
+                                  &numElems,
+                                  &castedConstitutiveRelation] ( auto const finiteElement )
       {
-        quadtratureDispatch( numQuadraturePointsPerElem, [&]( auto const NQPPE )
-        {
-          // Compile time values!
-          static constexpr int NUM_NODES_PER_ELEM = decltype( NNPE )::value;
-          static constexpr int NUM_QUADRATURE_POINTS = decltype( NQPPE )::value;
+        using FE_TYPE = TYPEOFREF( finiteElement );
 
-          // Define an alias for the kernel type for easy use.
-          using KERNEL_TYPE = KERNEL_TEMPLATE< SUBREGIONTYPE,
-                                               CONSTITUTIVE_TYPE,
-                                               NUM_NODES_PER_ELEM,
-                                               NUM_NODES_PER_ELEM >;
+        // Define an alias for the kernel type for easy use.
+        using KERNEL_TYPE = KERNEL_TEMPLATE< SUBREGIONTYPE,
+                                             CONSTITUTIVE_TYPE,
+                                             FE_TYPE >;
 
-          // 1) Combine the tuple containing the physics kernel specific constructor parameters with
-          // the parameters common to all phsyics kernels that use this interface,
-          // 2) Instantiate the kernel.
-          // note: have two options, using std::tuple and camp::tuple. Due to a bug in the OSX
-          // implementation of std::tuple_cat, we must use camp on OSX. In the future, we should
-          // only use one option...most likely camp since we can easily fix bugs.
+        // 1) Combine the tuple containing the physics kernel specific constructor parameters with
+        // the parameters common to all phsyics kernels that use this interface,
+        // 2) Instantiate the kernel.
+        // note: have two options, using std::tuple and camp::tuple. Due to a bug in the OSX
+        // implementation of std::tuple_cat, we must use camp on OSX. In the future, we should
+        // only use one option...most likely camp since we can easily fix bugs.
 #if CONSTRUCTOR_PARAM_OPTION==1
-          auto temp = std::forward_as_tuple( nodeManager,
-                                             edgeManager,
-                                             faceManager,
-                                             elementSubRegion,
-                                             finiteElementSpace,
-                                             castedConstitutiveRelation );
+        auto temp = std::forward_as_tuple( nodeManager,
+                                           edgeManager,
+                                           faceManager,
+                                           elementSubRegion,
+                                           finiteElement,
+                                           castedConstitutiveRelation );
 
-          auto fullKernelComponentConstructorArgs = std::tuple_cat( temp,
-                                                                    kernelConstructorParamsTuple );
+        auto fullKernelComponentConstructorArgs = std::tuple_cat( temp,
+                                                                  kernelConstructorParamsTuple );
 
-          KERNEL_TYPE kernelComponent = std::make_from_tuple< KERNEL_TYPE >( fullKernelComponentConstructorArgs );
+        KERNEL_TYPE kernelComponent = std::make_from_tuple< KERNEL_TYPE >( fullKernelComponentConstructorArgs );
 
 #elif CONSTRUCTOR_PARAM_OPTION==2
-          auto temp = camp::forward_as_tuple( nodeManager,
-                                              edgeManager,
-                                              faceManager,
-                                              elementSubRegion,
-                                              finiteElementSpace,
-                                              castedConstitutiveRelation );
-          auto fullKernelComponentConstructorArgs = camp::tuple_cat_pair_forward( temp,
-                                                                                  kernelConstructorParamsTuple );
-          KERNEL_TYPE kernelComponent = camp::make_from_tuple< KERNEL_TYPE >( fullKernelComponentConstructorArgs );
+        auto temp = camp::forward_as_tuple( nodeManager,
+                                            edgeManager,
+                                            faceManager,
+                                            elementSubRegion,
+                                            finiteElement,
+                                            castedConstitutiveRelation );
+        auto fullKernelComponentConstructorArgs = camp::tuple_cat_pair_forward( temp,
+                                                                                kernelConstructorParamsTuple );
+        KERNEL_TYPE kernelComponent = camp::make_from_tuple< KERNEL_TYPE >( fullKernelComponentConstructorArgs );
 
 #endif
 
-          // Call the kernelLaunch function, and store the maximum contribution to the residual.
-          maxResidualContribution =
-            std::max( maxResidualContribution,
-                      KERNEL_TYPE::template kernelLaunch< POLICY,
-                                                          NUM_QUADRATURE_POINTS
-                                                          >( numElems,
-                                                             kernelComponent ) );
-        } );
+        // Call the kernelLaunch function, and store the maximum contribution to the residual.
+        maxResidualContribution =
+          std::max( maxResidualContribution,
+                    KERNEL_TYPE::template kernelLaunch< POLICY,
+                                                        KERNEL_TYPE >( numElems,
+                                                                       kernelComponent ) );
       } );
     } );
 

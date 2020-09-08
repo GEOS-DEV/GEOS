@@ -17,7 +17,7 @@
         solverType="gmres"
         krylovTol="1.0"
         krylovMaxIter="1"
-        preconditionerType="none"
+        preconditionerType="amg"
         logLevel="0"/>
     </SinglePhaseFVM>
   </Solvers>
@@ -71,7 +71,6 @@
       <TwoPointFluxApproximation
         name="tpfa"
         fieldName="pressure"
-        boundaryFieldName="boundaryFacePressure"
         coefficientName="permeability"/>
     </FiniteVolume>
   </NumericalMethods>

@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -19,6 +19,7 @@
 #ifndef GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_SOLIDMECHANICSLAGRANGIANFEM_HPP_
 #define GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_SOLIDMECHANICSLAGRANGIANFEM_HPP_
 
+#include "common/EnumStrings.hpp"
 #include "common/TimingMacros.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
 #include "mpiCommunications/CommunicationTools.hpp"
@@ -26,17 +27,8 @@
 
 #include "SolidMechanicsLagrangianFEMKernels.hpp"
 
-
-
 namespace geosx
 {
-namespace dataRepository
-{
-class Group;
-}
-class FieldSpecificationBase;
-class FiniteElementBase;
-class DomainPartition;
 
 /**
  * @class SolidMechanicsLagrangianFEM
@@ -46,6 +38,18 @@ class DomainPartition;
 class SolidMechanicsLagrangianFEM : public SolverBase
 {
 public:
+
+  /**
+   * @enum TimeIntegrationOption
+   *
+   * The options for time integration
+   */
+  enum class TimeIntegrationOption : integer
+  {
+    QuasiStatic,      //!< QuasiStatic
+    ImplicitDynamic,  //!< ImplicitDynamic
+    ExplicitDynamic   //!< ExplicitDynamic
+  };
 
   /**
    * Constructor
@@ -160,8 +164,7 @@ public:
   template< typename CONSTITUTIVE_BASE,
             template< typename SUBREGION_TYPE,
                       typename CONSTITUTIVE_TYPE,
-                      int NUM_TEST_SUPPORT_POINTS_PER_ELEM,
-                      int NUM_TRIAL_SUPPORT_POINTS_PER_ELEM > class KERNEL_TEMPLATE,
+                      typename FE_TYPE > class KERNEL_TEMPLATE,
             typename ... PARAMS >
   void AssemblyLaunch( DomainPartition & domain,
                        DofManager const & dofManager,
@@ -262,6 +265,8 @@ public:
     m_effectiveStress = input;
   }
 
+  real64 & getMaxForce() { return m_maxForce; }
+
 
 protected:
   virtual void PostProcessInput() override final;
@@ -292,6 +297,8 @@ protected:
 
 };
 
+ENUM_STRINGS( SolidMechanicsLagrangianFEM::TimeIntegrationOption, "QuasiStatic", "ImplicitDynamic", "ExplicitDynamic" )
+
 //**********************************************************************************************************************
 //**********************************************************************************************************************
 //**********************************************************************************************************************
@@ -300,8 +307,7 @@ protected:
 template< typename CONSTITUTIVE_BASE,
           template< typename SUBREGION_TYPE,
                     typename CONSTITUTIVE_TYPE,
-                    int NUM_TEST_SUPPORT_POINTS_PER_ELEM,
-                    int NUM_TRIAL_SUPPORT_POINTS_PER_ELEM > class KERNEL_TEMPLATE,
+                    typename FE_TYPE > class KERNEL_TEMPLATE,
           typename ... PARAMS >
 void SolidMechanicsLagrangianFEM::AssemblyLaunch( DomainPartition & domain,
                                                   DofManager const & dofManager,
@@ -314,19 +320,10 @@ void SolidMechanicsLagrangianFEM::AssemblyLaunch( DomainPartition & domain,
 
   NodeManager const & nodeManager = *(mesh.getNodeManager());
 
-  NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
-
-  FiniteElementDiscretizationManager const &
-  feDiscretizationManager = numericalMethodManager.getFiniteElementDiscretizationManager();
-
-  FiniteElementDiscretization const * const
-  feDiscretization = feDiscretizationManager.GetGroup< FiniteElementDiscretization >( m_discretizationName );
-
   string const dofKey = dofManager.getKey( dataRepository::keys::TotalDisplacement );
   arrayView1d< globalIndex const > const & dofNumber = nodeManager.getReference< globalIndex_array >( dofKey );
 
   ResetStressToBeginningOfStep( domain );
-
 
   real64 const gravityVectorData[3] = { gravityVector().Data()[0],
                                         gravityVector().Data()[1],
@@ -338,8 +335,8 @@ void SolidMechanicsLagrangianFEM::AssemblyLaunch( DomainPartition & domain,
                                                CellElementSubRegion,
                                                KERNEL_TEMPLATE >( mesh,
                                                                   targetRegionNames(),
+                                                                  this->getDiscretizationName(),
                                                                   m_solidMaterialNames,
-                                                                  feDiscretization,
                                                                   dofNumber,
                                                                   dofManager.rankOffset(),
                                                                   localMatrix,
@@ -354,7 +351,6 @@ void SolidMechanicsLagrangianFEM::AssemblyLaunch( DomainPartition & domain,
                           localRhs );
 
 }
-
 
 } /* namespace geosx */
 

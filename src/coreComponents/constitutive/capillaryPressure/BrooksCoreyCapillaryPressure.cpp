@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -54,30 +54,13 @@ BrooksCoreyCapillaryPressure::BrooksCoreyCapillaryPressure( std::string const & 
     setDescription(
     "Wetting-phase saturation at which the max cap. pressure is attained; used to avoid infinite cap. pressure values for saturations close to zero" );
 
+  registerWrapper( viewKeyStruct::volFracScaleString, &m_volFracScale )->
+    setApplyDefaultValue( 1.0 )->
+    setDescription( "Factor used to scale the phase capillary pressure, defined as: one minus the sum of the phase minimum volume fractions." );
 }
 
 BrooksCoreyCapillaryPressure::~BrooksCoreyCapillaryPressure()
 {}
-
-void
-BrooksCoreyCapillaryPressure::DeliverClone( string const & name,
-                                            Group * const parent,
-                                            std::unique_ptr< ConstitutiveBase > & clone ) const
-{
-  if( !clone )
-  {
-    clone = std::make_unique< BrooksCoreyCapillaryPressure >( name, parent );
-  }
-
-  CapillaryPressureBase::DeliverClone( name, parent, clone );
-  BrooksCoreyCapillaryPressure & relPerm = dynamicCast< BrooksCoreyCapillaryPressure & >( *clone );
-
-  relPerm.m_phaseMinVolumeFraction      = m_phaseMinVolumeFraction;
-  relPerm.m_phaseCapPressureExponentInv = m_phaseCapPressureExponentInv;
-  relPerm.m_phaseEntryPressure          = m_phaseEntryPressure;
-  relPerm.m_capPressureEpsilon          = m_capPressureEpsilon;
-  relPerm.m_volFracScale                = m_volFracScale;
-}
 
 
 void BrooksCoreyCapillaryPressure::PostProcessInput()

@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -86,10 +86,13 @@ public:
     // This key is defined in problem manager:
     static constexpr auto elemManagerString = "ElementRegions";
 
+    static constexpr auto embSurfEdgeManagerString = "embeddedSurfacesEdgeManager";
+
     dataRepository::GroupKey nodeManager = {nodeManagerString};
     dataRepository::GroupKey edgeManager = {edgeManagerString};
     dataRepository::GroupKey faceManager = {faceManagerString};
     dataRepository::GroupKey elemManager = {elemManagerString};
+    dataRepository::GroupKey embSurfEdgeManager = {embSurfEdgeManagerString};
   } groupKeys;
 
   /// @endcond
@@ -139,6 +142,17 @@ public:
    */
   ElementRegionManager * getElemManager()             { return &m_elementManager; }
 
+  /**
+   * @brief Get the edge Manager related to the embedded surfaces grid.
+   * @return a pointer to the edgeManager related to the embedded surfaces grid
+   */
+  EdgeManager const & getEmbdSurfEdgeManager() const { return m_embSurfEdgeManager; }
+
+  /**
+   * @copydoc getEmbdSurfEdgeManager() const
+   */
+  EdgeManager & getEmbdSurfEdgeManager()             { return m_embSurfEdgeManager; }
+
   ///@}
 
 private:
@@ -151,6 +165,8 @@ private:
   FaceManager m_faceManager;
   /// Manager for element data
   ElementRegionManager m_elementManager;
+  /// Manager for embedded surfaces edge data
+  EdgeManager m_embSurfEdgeManager;
 
 };
 

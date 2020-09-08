@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -195,6 +195,31 @@ private:
    */
   std::pair< vtkSmartPointer< vtkPoints >, vtkSmartPointer< vtkCellArray > >GetSurface( FaceElementSubRegion const & esr,
                                                                                         NodeManager const & nodeManager ) const;
+
+  /*!
+   * @brief Gets the cell connectivities and the vertices coordinates
+   * as VTK objects for a specific EmbeddedSurafaceSubRegion
+   * @param[in] esr the EmbeddedSurfaceSubRegion to be output
+   * @param[in] elemManager the elemManager associated with the DomainPartition being written.
+   * @param[in] nodeManager the NodeManager associated with the DomainPartition being written.
+   * @param[in] edgeManager the edgeManager associated with the DomainPartition being written.
+   * @return a pair containing a VTKPoints (with the information on the vertices and their coordinates)
+   * and a VTKCellArray (with the cell connectivities).
+   */
+  std::pair< vtkSmartPointer< vtkPoints >, vtkSmartPointer< vtkCellArray > >GetEmbeddedSurface( EmbeddedSurfaceSubRegion const & esr,
+                                                                                                NodeManager const & nodeManager ) const;
+
+  /*!
+   * @brief Writes the files containing the faces elements
+   * @details There will be one file written per FaceElementRegion and per rank
+   * @param[in] time the time-step
+   * @param[in] elemManager the ElementRegionManager containing the FaceElementRegions to be output
+   * @param[in] nodeManager the NodeManager containing the nodes of the domain to be output
+   * @param[in] edgeManager the EdgeManager used to compute the embedded fracture intersection
+   */
+  void WriteEmbeddedSurfaceElementRegions( real64 time,
+                                           ElementRegionManager const & elemManager,
+                                           NodeManager const & nodeManager ) const;
 
   /*!
    * @brief Writes a VTM file for the time-step \p time.

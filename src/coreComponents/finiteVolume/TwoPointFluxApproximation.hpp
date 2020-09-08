@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -50,15 +50,26 @@ public:
 
 protected:
 
-  virtual void computeCellStencil( DomainPartition const & domain ) override;
+  virtual void registerCellStencil( Group & stencilGroup ) const override;
 
-  virtual void addToFractureStencil( DomainPartition & domain,
+  virtual void computeCellStencil( MeshLevel & mesh ) const override;
+
+  virtual void registerFractureStencil( Group & stencilGroup ) const override;
+
+  virtual void addToFractureStencil( MeshLevel & mesh,
                                      string const & faceElementRegionName,
-                                     bool const initFlag ) override;
+                                     bool const initFlag ) const override;
 
-  virtual void computeBoundaryStencil( DomainPartition const & domain,
+  virtual void registerBoundaryStencil( Group & stencilGroup,
+                                        string const & setName ) const override;
+
+  virtual void computeBoundaryStencil( MeshLevel & mesh,
                                        string const & setName,
-                                       SortedArrayView< localIndex const > const & faceSet ) override;
+                                       SortedArrayView< localIndex const > const & faceSet ) const override;
+
+  virtual void addEDFracToFractureStencil( MeshLevel & mesh,
+                                           string const & embeddedSurfaceRegionName ) const override;
+
 
 };
 

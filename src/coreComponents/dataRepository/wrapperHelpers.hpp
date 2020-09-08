@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -71,12 +71,12 @@ template< typename T, typename ... INDICES >
 std::string getIndicesToComponent( T const &, int const component, INDICES const ... existingIndices )
 {
   GEOSX_ERROR_IF_NE( component, 0 );
-  return LvArray::getIndexString( existingIndices ... );
+  return LvArray::indexing::getIndexString( existingIndices ... );
 }
 
 template< typename ... INDICES >
 std::string getIndicesToComponent( R1Tensor const &, int const component, INDICES const ... existingIndices )
-{ return LvArray::getIndexString( existingIndices ..., component ); }
+{ return LvArray::indexing::getIndexString( existingIndices ..., component ); }
 
 template< typename T >
 T const * getPointerToComponent( T const & var, int const component )
@@ -245,7 +245,7 @@ template< typename T >
 std::enable_if_t< !bufferOps::can_memcpy< typename traits::Pointer< T > > >
 pushDataToConduitNode( T const & var, conduit::Node & node )
 {
-  internal::logOutputType( LvArray::demangleType( var ), "Packing for output: " );
+  internal::logOutputType( LvArray::system::demangleType( var ), "Packing for output: " );
 
   // Get the number of bytes in the packed object.
   localIndex const byteSize = bufferOps::PackSize( var );
@@ -283,7 +283,7 @@ inline
 void
 pushDataToConduitNode( std::string const & var, conduit::Node & node )
 {
-  internal::logOutputType( LvArray::demangleType( var ), "Output via external pointer: " );
+  internal::logOutputType( LvArray::system::demangleType( var ), "Output via external pointer: " );
 
   constexpr int conduitTypeID = conduitTypeInfo< signed char >::id;
   conduit::DataType const dtype( conduitTypeID, var.size() );
@@ -292,12 +292,20 @@ pushDataToConduitNode( std::string const & var, conduit::Node & node )
   node[ "__values__" ].set_external( dtype, ptr );
 }
 
+// This is for Path since it derives from std::string. See overload for std::string.
+inline
+void
+pushDataToConduitNode( Path const & var, conduit::Node & node )
+{
+  pushDataToConduitNode( static_cast< std::string const & >(var), node );
+}
+
 // This is for an object that doesn't need to be packed but isn't an LvArray.
 template< typename T >
 std::enable_if_t< bufferOps::can_memcpy< typename traits::Pointer< T > > >
 pushDataToConduitNode( T const & var, conduit::Node & node )
 {
-  internal::logOutputType( LvArray::demangleType( var ), "Output via external pointer: " );
+  internal::logOutputType( LvArray::system::demangleType( var ), "Output via external pointer: " );
 
   constexpr int conduitTypeID = conduitTypeInfo< typename traits::Pointer< T > >::id;
   constexpr int sizeofConduitType = conduitTypeInfo< typename traits::Pointer< T > >::sizeOfConduitType;
@@ -344,7 +352,7 @@ std::enable_if_t< bufferOps::can_memcpy< T > >
 pushDataToConduitNode( Array< T, NDIM, PERMUTATION > const & var,
                        conduit::Node & node )
 {
-  internal::logOutputType( LvArray::demangleType( var ), "Output array via external pointer: " );
+  internal::logOutputType( LvArray::system::demangleType( var ), "Output array via external pointer: " );
 
   // Push the data into conduit
   constexpr int conduitTypeID = conduitTypeInfo< T >::id;
@@ -515,7 +523,7 @@ void addBlueprintField( T const &,
                         std::string const &,
                         std::vector< std::string > const & )
 {
-  GEOSX_ERROR( "Cannot create a mcarray out of " << LvArray::demangleType< T >() <<
+  GEOSX_ERROR( "Cannot create a mcarray out of " << LvArray::system::demangleType< T >() <<
                "\nWas trying to write it to " << fields.path() );
 }
 
@@ -561,7 +569,7 @@ void populateMCArray( T const &,
                       conduit::Node & node,
                       std::vector< std::string > const & )
 {
-  GEOSX_ERROR( "Cannot create a mcarray out of " << LvArray::demangleType< T >() <<
+  GEOSX_ERROR( "Cannot create a mcarray out of " << LvArray::system::demangleType< T >() <<
                "\nWas trying to write it to " << node.path() );
 }
 
@@ -601,7 +609,7 @@ averageOverSecondDim( ArrayView< T const, NDIM, USD > const & var )
 template< typename T >
 std::unique_ptr< int > averageOverSecondDim( T const & )
 {
-  GEOSX_ERROR( "Cannot average over the second dimension of " << LvArray::demangleType< T >() );
+  GEOSX_ERROR( "Cannot average over the second dimension of " << LvArray::system::demangleType< T >() );
   return std::unique_ptr< int >( nullptr );
 }
 
@@ -629,12 +637,13 @@ UnpackByIndex( buffer_unit_type const * &, T &, IDX & )
 
 
 template< bool DO_PACKING, typename T >
-inline std::enable_if_t< bufferOps::is_container< T > && bufferOps::can_memcpy< T >, localIndex >
+inline std::enable_if_t< bufferOps::is_container< T > || bufferOps::can_memcpy< T >, localIndex >
 PackDevice( buffer_unit_type * & buffer, T & var )
 { return bufferOps::PackDevice< DO_PACKING >( buffer, var ); }
 
+
 template< bool DO_PACKING, typename T >
-inline std::enable_if_t< !bufferOps::is_container< T > || !bufferOps::can_memcpy< T >, localIndex >
+inline std::enable_if_t< !bufferOps::is_container< T > && !bufferOps::can_memcpy< T >, localIndex >
 PackDevice( buffer_unit_type * &, T & )
 {
   GEOSX_ERROR( "Trying to pack data type ("<<typeid(T).name()<<") on device but type is not packable on device." );
@@ -672,6 +681,45 @@ UnpackByIndexDevice( buffer_unit_type const * & buffer, T & var, IDX & idx )
 template< typename T, typename IDX >
 inline std::enable_if_t< !bufferOps::is_container< T >, localIndex >
 UnpackByIndexDevice( buffer_unit_type const * &, T &, IDX & )
+{ return 0; }
+
+
+template< bool DO_PACKING, typename T >
+localIndex
+PackDataDevice( buffer_unit_type * & buffer, T & var )
+{ return bufferOps::PackDataDevice< DO_PACKING >( buffer, var ); }
+
+template< bool DO_PACKING, typename T, typename IDX >
+inline std::enable_if_t< bufferOps::is_container< T >, localIndex >
+PackDataByIndexDevice( buffer_unit_type * & buffer, T & var, IDX & idx )
+{ return bufferOps::PackDataByIndexDevice< DO_PACKING >( buffer, var, idx ); }
+
+template< bool DO_PACKING, typename T, typename IDX >
+inline std::enable_if_t< !bufferOps::is_container< T >, localIndex >
+PackDataByIndexDevice( buffer_unit_type * &, T &, IDX & )
+{
+  GEOSX_ERROR( "Trying to pack data type ("<<typeid(T).name()<<") on device but type is not packable by index." );
+  return 0;
+}
+
+template< typename T >
+inline std::enable_if_t< bufferOps::is_container< T >, localIndex >
+UnpackDataDevice( buffer_unit_type const * & buffer, T & var )
+{ return bufferOps::UnpackDataDevice( buffer, var ); }
+
+template< typename T >
+inline std::enable_if_t< !bufferOps::is_container< T >, localIndex >
+UnpackDataDevice( buffer_unit_type const * &, T & )
+{ return 0; }
+
+template< typename T, typename IDX >
+inline std::enable_if_t< bufferOps::is_container< T >, localIndex >
+UnpackDataByIndexDevice( buffer_unit_type const * & buffer, T & var, IDX & idx )
+{ return bufferOps::UnpackDataByIndexDevice( buffer, var, idx ); }
+
+template< typename T, typename IDX >
+inline std::enable_if_t< !bufferOps::is_container< T >, localIndex >
+UnpackDataByIndexDevice( buffer_unit_type const * &, T &, IDX & )
 { return 0; }
 
 } // namespace WrapperHelpers
