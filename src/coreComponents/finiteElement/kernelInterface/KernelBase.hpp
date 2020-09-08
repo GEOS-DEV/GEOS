@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -539,6 +539,7 @@ real64 regionBasedKernelApplication( MeshLevel & mesh,
                                      arrayView1d< string const > const & constitutiveNames,
                                      KERNEL_CONSTRUCTOR_PARAMS && ... kernelConstructorParams )
 {
+  GEOSX_MARK_FUNCTION;
   // save the maximum residual contribution for scaling residuals for convergence criteria.
   real64 maxResidualContribution = 0;
 
@@ -559,8 +560,14 @@ real64 regionBasedKernelApplication( MeshLevel & mesh,
 
   // Loop over all sub-regions in regiongs of type REGION_TYPE, that are listed in the targetRegions array.
   elementRegionManager.forElementSubRegions< REGION_TYPE >( targetRegions,
-                                                            [&] ( localIndex const targetRegionIndex,
-                                                                  auto & elementSubRegion )
+                                                            [&constitutiveNames,
+                                                             &maxResidualContribution,
+                                                             &nodeManager,
+                                                             &edgeManager,
+                                                             &faceManager,
+                                                             &kernelConstructorParamsTuple,
+                                                             &finiteElementName]
+                                                              ( localIndex const targetRegionIndex, auto & elementSubRegion )
   {
     localIndex const numElems = elementSubRegion.size();
 
@@ -582,10 +589,19 @@ real64 regionBasedKernelApplication( MeshLevel & mesh,
 
     // Call the constitutive dispatch which converts the type of constitutive model into a compile time constant.
     constitutive::ConstitutivePassThru< CONSTITUTIVE_BASE >::Execute( constitutiveRelation,
-                                                                      [&]( auto * const castedConstitutiveRelation )
+                                                                      [&maxResidualContribution,
+                                                                       &nodeManager,
+                                                                       &edgeManager,
+                                                                       &faceManager,
+                                                                       &kernelConstructorParamsTuple,
+                                                                       &elementSubRegion,
+                                                                       &finiteElementName,
+                                                                       numElems]
+                                                                        ( auto * const castedConstitutiveRelation )
     {
-      // Create an alias for the type of contitutive model.
+      // Create an alias for the type of constitutive model.
       using CONSTITUTIVE_TYPE = TYPEOFPTR( castedConstitutiveRelation );
+
 
       string const elementTypeString = elementSubRegion.GetElementTypeString();
 
@@ -593,11 +609,16 @@ real64 regionBasedKernelApplication( MeshLevel & mesh,
       subRegionFE = elementSubRegion.template getReference< FiniteElementBase >( finiteElementName );
 
       finiteElement::dispatch3D( subRegionFE,
-                                 [&] ( auto const finiteElement )
+                                 [&maxResidualContribution,
+                                  &nodeManager,
+                                  &edgeManager,
+                                  &faceManager,
+                                  &kernelConstructorParamsTuple,
+                                  &elementSubRegion,
+                                  &numElems,
+                                  &castedConstitutiveRelation] ( auto const finiteElement )
       {
         using FE_TYPE = TYPEOFREF( finiteElement );
-//        // Compile time values!
-//        static constexpr int NUM_QUADRATURE_POINTS = FE_TYPE::numQuadraturePoints;
 
         // Define an alias for the kernel type for easy use.
         using KERNEL_TYPE = KERNEL_TEMPLATE< SUBREGIONTYPE,

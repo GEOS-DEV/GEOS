@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -89,21 +89,20 @@ void DomainPartition::GenerateSets()
   GEOSX_MARK_FUNCTION;
 
   MeshLevel * const mesh = this->getMeshBody( 0 )->getMeshLevel( 0 );
-  Group const * const nodeManager = mesh->getNodeManager();
+  NodeManager const * const nodeManager = mesh->getNodeManager();
 
-  dataRepository::Group const * const
-  nodeSets = nodeManager->GetGroup( ObjectManagerBase::groupKeyStruct::setsString );
+  dataRepository::Group const & nodeSets = nodeManager->sets();
 
   map< string, array1d< bool > > nodeInSet; // map to contain indicator of whether a node is in a set.
   string_array setNames; // just a holder for the names of the sets
 
   // loop over all wrappers and fill the nodeIndSet arrays for each set
-  for( auto & wrapper : nodeSets->wrappers() )
+  for( auto & wrapper : nodeSets.wrappers() )
   {
     string name = wrapper.second->getName();
     nodeInSet[name].resize( nodeManager->size() );
     nodeInSet[name].setValues< serialPolicy >( false );
-    Wrapper< SortedArray< localIndex > > const * const setPtr = nodeSets->getWrapper< SortedArray< localIndex > >( name );
+    Wrapper< SortedArray< localIndex > > const * const setPtr = nodeSets.getWrapper< SortedArray< localIndex > >( name );
     if( setPtr!=nullptr )
     {
       setNames.emplace_back( name );
@@ -194,7 +193,7 @@ void DomainPartition::SetupCommunications( bool use_nonblocking )
     firstNeighborRanks.emplace_back( neighbor.NeighborRank() );
   }
 
-  constexpr int neighborsTag = 43543;
+  int neighborsTag = 54;
 
   // Send this list of neighbors to all neighbors.
   std::vector< MPI_Request > requests( m_neighbors.size() );

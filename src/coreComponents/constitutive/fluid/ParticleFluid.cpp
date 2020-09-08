@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -26,39 +26,13 @@ using namespace dataRepository;
 namespace constitutive
 {
 
-namespace
-{
-
-ParticleSettlingModel stringToParticleSettlingModel( string const & str )
-{
-  if( str == "Stokes" )
-  {
-    return ParticleSettlingModel::Stokes;
-  }
-  else if( str == "Intermediate" )
-  {
-    return ParticleSettlingModel::Intermediate;
-  }
-  else if( str == "Turbulence" )
-  {
-    return ParticleSettlingModel::Turbulence;
-  }
-  else
-  {
-    GEOSX_ERROR( "Unrecognized particle settling velocity model: " << str );
-  }
-  return ParticleSettlingModel::Stokes;
-}
-
-}
-
 ParticleFluid::ParticleFluid( std::string const & name, Group * const parent ):
   ParticleFluidBase( name, parent )
 {
 
-  registerWrapper( viewKeyStruct::particleSettlingModelString, &m_particleSettlingModelString )->
+  registerWrapper( viewKeyStruct::particleSettlingModelString, &m_particleSettlingModel )->
     setInputFlag( InputFlags::REQUIRED )->
-    setDescription( "Particle settling velocity model" );
+    setDescription( "Particle settling velocity model. Valid options:\n* " + EnumStrings< ParticleSettlingModel >::concat( "\n* " ) );
 
   registerWrapper( viewKeyStruct::proppantDensityString, &m_proppantDensity )->
     setApplyDefaultValue( 1400.0 )->
@@ -105,24 +79,9 @@ ParticleFluid::ParticleFluid( std::string const & name, Group * const parent ):
 
 ParticleFluid::~ParticleFluid() = default;
 
-std::unique_ptr< ConstitutiveBase >
-ParticleFluid::deliverClone( string const & name,
-                             Group * const parent ) const
-{
-  std::unique_ptr< ConstitutiveBase > clone = ParticleFluidBase::deliverClone( name, parent );
-
-  ParticleFluid & model = dynamicCast< ParticleFluid & >( *clone );
-  model.m_particleSettlingModel = m_particleSettlingModel;
-
-  return clone;
-}
-
 void ParticleFluid::PostProcessInput()
 {
   ParticleFluidBase::PostProcessInput();
-
-  GEOSX_ERROR_IF( m_particleSettlingModelString.empty(),
-                  "Invalid particle settling model in ParticleFluid " );
 
   GEOSX_ERROR_IF( m_proppantDensity < 500.0,
                   "Invalid proppantDensity in ParticleFluid, which must >= 500.0 " );
@@ -143,8 +102,6 @@ void ParticleFluid::PostProcessInput()
                   "Invalid slipConcentration in ParticleFluid, which must <= 0.3" );
 
   m_packPermeabilityCoef = pow( m_sphericity * m_proppantDiameter, 2.0 ) / 180.0;
-
-  m_particleSettlingModel = stringToParticleSettlingModel( m_particleSettlingModelString );
 }
 
 ParticleFluid::KernelWrapper

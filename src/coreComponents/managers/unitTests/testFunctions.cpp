@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -85,7 +85,7 @@ TEST( FunctionTests, 1DTable )
   testExpected[3] = -5.0;
   testExpected[4] = 3.0;
   testExpected[5] = 7.0;
-  table_a->setInterpolationMethod( "linear" );
+  table_a->setInterpolationMethod( TableFunction::InterpolationType::Linear );
   evaluate1DFunction( table_a, testCoordinates.toView(), testExpected.toView() );
 
   // Upper
@@ -95,7 +95,7 @@ TEST( FunctionTests, 1DTable )
   testExpected[3] = -5.0;
   testExpected[4] = 7.0;
   testExpected[5] = 7.0;
-  table_a->setInterpolationMethod( "upper" );
+  table_a->setInterpolationMethod( TableFunction::InterpolationType::Upper );
   evaluate1DFunction( table_a, testCoordinates.toView(), testExpected.toView() );
 
   // Lower
@@ -105,7 +105,7 @@ TEST( FunctionTests, 1DTable )
   testExpected[3] = 3.0;
   testExpected[4] = -5.0;
   testExpected[5] = 7.0;
-  table_a->setInterpolationMethod( "lower" );
+  table_a->setInterpolationMethod( TableFunction::InterpolationType::Lower );
   evaluate1DFunction( table_a, testCoordinates.toView(), testExpected.toView() );
 
   // Nearest
@@ -115,7 +115,7 @@ TEST( FunctionTests, 1DTable )
   testExpected[3] = -5.0;
   testExpected[4] = 7.0;
   testExpected[5] = 7.0;
-  table_a->setInterpolationMethod( "nearest" );
+  table_a->setInterpolationMethod( TableFunction::InterpolationType::Nearest );
   evaluate1DFunction( table_a, testCoordinates.toView(), testExpected.toView() );
 
 }
@@ -168,7 +168,7 @@ TEST( FunctionTests, 2DTable )
   TableFunction * table_b = functionManager->CreateChild( "TableFunction", "table_b" )->group_cast< TableFunction * >();
   table_b->setTableCoordinates( coordinates );
   table_b->setTableValues( values );
-  table_b->setInterpolationMethod( "linear" );
+  table_b->setInterpolationMethod( TableFunction::InterpolationType::Linear );
   table_b->setInputVarNames( inputVarNames );
   table_b->reInitializeFunction();
 
@@ -290,7 +290,7 @@ TEST( FunctionTests, 4DTable_multipleInputs )
   TableFunction * table_c = functionManager->CreateChild( "TableFunction", "table_c" )->group_cast< TableFunction * >();
   table_c->setTableCoordinates( coordinates );
   table_c->setTableValues( values );
-  table_c->setInterpolationMethod( "linear" );
+  table_c->setInterpolationMethod( TableFunction::InterpolationType::Linear );
   table_c->setInputVarNames( inputVarNames );
   table_c->reInitializeFunction();
 

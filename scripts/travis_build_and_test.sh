@@ -1,10 +1,12 @@
 #!/bin/bash
 env
+
 # The or_die function run the passed command line and
 # exits the program in case of non zero error code
 function or_die () {
     "$@"
     local status=$?
+
     if [[ $status != 0 ]] ; then
         echo ERROR $status command: $@
         exit $status
@@ -34,13 +36,25 @@ or_die python scripts/config-build.py \
               -DCUDA_ARCH:STRING=${CUDA_ARCH:sm_70}
 
 or_die cd ${GEOSX_BUILD_DIR}
-#or_die make geosx_doxygen VERBOSE=1
+
+# Code style check
+if [[ "$*" == *--test-code-style* ]]; then
+  or_die ctest -V -R "testUncrustifyCheck"
+  exit 0
+fi
+
+# Documentation check
+if [[ "$*" == *--test-documentation* ]]; then
+  or_die ctest -V -R "testDoxygenCheck"
+  exit 0
+fi
+
 or_die make -j $(nproc) VERBOSE=1
 or_die make install VERBOSE=1
 
-# Unit tests
+# Unit tests (excluding previously ran checks)
 if [[ "$*" != *--disable-unit-tests* ]]; then
-  or_die ctest -V
+  or_die ctest -V -E "testUncrustifyCheck|testDoxygenCheck"
 fi
 
 exit 0

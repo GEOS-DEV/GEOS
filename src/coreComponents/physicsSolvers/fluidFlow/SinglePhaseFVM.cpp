@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -87,8 +87,8 @@ void SinglePhaseFVM< BASE >::SetupSystem( DomainPartition & domain,
 
   {
     localIndex numRows = 0;
-    this->template forTargetSubRegions< FaceElementSubRegion >( mesh, [&]( localIndex const,
-                                                                           FaceElementSubRegion const & elementSubRegion )
+    this->template forTargetSubRegions< FaceElementSubRegion, EmbeddedSurfaceSubRegion >( mesh, [&]( localIndex const,
+                                                                                                     auto const & elementSubRegion )
     {
       numRows += elementSubRegion.size();
     } );

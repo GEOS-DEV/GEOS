@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -718,13 +718,11 @@ public:
     /// String key to the local->global map
     static constexpr auto localToGlobalMapString = "localToGlobalMap";
 
-    /// View key to domain boundary indicator
-    dataRepository::ViewKey domainBoundaryIndicator = { domainBoundaryIndicatorString };
     /// View key to external set
     dataRepository::ViewKey externalSet = { externalSetString };
     /// View key to ghost ranks
     dataRepository::ViewKey ghostRank = { ghostRankString };
-    /// View key to global->local mao
+    /// View key to global->local map
     dataRepository::ViewKey globalToLocalMap = { globalToLocalMapString };
     /// View key to the local->global map
     dataRepository::ViewKey localToGlobalMap = { localToGlobalMapString };
@@ -910,6 +908,22 @@ public:
   globalIndex maxGlobalIndex() const
   { return m_maxGlobalIndex; }
 
+  /**
+   * @brief Get the domain boundary indicator
+   * @return The information in an array of integers, mainly treated as booleans
+   *         (1 meaning the "index" is on the boundary).
+   */
+  arrayView1d< integer > const & getDomainBoundaryIndicator()
+  {
+    return m_domainBoundaryIndicator.toView();
+  }
+
+  /// @copydoc getDomainBoundaryIndicator()
+  arrayView1d< integer const > const & getDomainBoundaryIndicator() const
+  {
+    return m_domainBoundaryIndicator.toViewConst();
+  }
+
 protected:
   /// Group that holds object sets.
   Group m_sets;
@@ -925,6 +939,9 @@ protected:
 
   /// Array that holds if an object is external.
   array1d< integer > m_isExternal;
+
+  /// Domain boundary indicator: 1 means the "index" is on the boundary.
+  array1d< integer > m_domainBoundaryIndicator;
 
   /**
    * @brief Array that holds the ghost information about each object.

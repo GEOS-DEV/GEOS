@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -19,6 +19,7 @@
 #ifndef GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_SOLIDMECHANICSLAGRANGIANFEM_HPP_
 #define GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_SOLIDMECHANICSLAGRANGIANFEM_HPP_
 
+#include "common/EnumStrings.hpp"
 #include "common/TimingMacros.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
 #include "mpiCommunications/CommunicationTools.hpp"
@@ -26,17 +27,8 @@
 
 #include "SolidMechanicsLagrangianFEMKernels.hpp"
 
-
-
 namespace geosx
 {
-namespace dataRepository
-{
-class Group;
-}
-class FieldSpecificationBase;
-class FiniteElementBase;
-class DomainPartition;
 
 /**
  * @class SolidMechanicsLagrangianFEM
@@ -46,6 +38,18 @@ class DomainPartition;
 class SolidMechanicsLagrangianFEM : public SolverBase
 {
 public:
+
+  /**
+   * @enum TimeIntegrationOption
+   *
+   * The options for time integration
+   */
+  enum class TimeIntegrationOption : integer
+  {
+    QuasiStatic,      //!< QuasiStatic
+    ImplicitDynamic,  //!< ImplicitDynamic
+    ExplicitDynamic   //!< ExplicitDynamic
+  };
 
   /**
    * Constructor
@@ -293,6 +297,8 @@ protected:
 
 };
 
+ENUM_STRINGS( SolidMechanicsLagrangianFEM::TimeIntegrationOption, "QuasiStatic", "ImplicitDynamic", "ExplicitDynamic" )
+
 //**********************************************************************************************************************
 //**********************************************************************************************************************
 //**********************************************************************************************************************
@@ -345,7 +351,6 @@ void SolidMechanicsLagrangianFEM::AssemblyLaunch( DomainPartition & domain,
                           localRhs );
 
 }
-
 
 } /* namespace geosx */
 

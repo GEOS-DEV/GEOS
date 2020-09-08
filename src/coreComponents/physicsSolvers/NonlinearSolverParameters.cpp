@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -29,12 +29,12 @@ NonlinearSolverParameters::NonlinearSolverParameters( std::string const & name,
   enableLogLevelInput();
 
   registerWrapper( viewKeysStruct::lineSearchActionString, &m_lineSearchAction )->
-    setApplyDefaultValue( 1 )->
+    setApplyDefaultValue( LineSearchAction::Attempt )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "How the line search is to be used. Options are: \n "
-                    "0 - Do not use line search.\n"
-                    "1 - Use line search. Allow exit from line search without achieving smaller residual than starting residual.\n"
-                    "2 - Use line search. If smaller residual than starting resdual is not achieved, cut time step.\n" );
+                    "* None    - Do not use line search.\n"
+                    "* Attempt - Use line search. Allow exit from line search without achieving smaller residual than starting residual.\n"
+                    "* Require - Use line search. If smaller residual than starting resdual is not achieved, cut time step." );
 
   registerWrapper( viewKeysStruct::lineSearchMaxCutsString, &m_lineSearchMaxCuts )->
     setApplyDefaultValue( 4 )->

@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -384,14 +384,13 @@ void populateMaps( ArrayOfArraysView< EdgeBuilder const > const & edgesByLowestN
         if( j + numMatches == numEdges )
           break;
       }
-
       // Then add the edge.
       addEdge( edgesByLowestNode, faceToEdgeMap.toView(), edgeToFaceMap.toView(), edgeToNodeMap, curEdgeID, nodeID, j, numMatches );
       ++curEdgeID;
       j += numMatches;
     }
 
-    if( j == numFaces - 1 )
+    if( j == numEdges - 1 )
     {
       addEdge( edgesByLowestNode, faceToEdgeMap.toView(), edgeToFaceMap.toView(), edgeToNodeMap, curEdgeID, nodeID, j, 1 );
     }
@@ -450,6 +449,30 @@ void EdgeManager::BuildEdges( FaceManager * const faceManager, NodeManager * con
   } );
 
   SetDomainBoundaryObjects( faceManager );
+}
+
+void EdgeManager::BuildEdges( localIndex const numNodes,
+                              ArrayOfArraysView< localIndex const > const & faceToNodeMap,
+                              ArrayOfArrays< localIndex > & faceToEdgeMap )
+{
+  ArrayOfArrays< EdgeBuilder > edgesByLowestNode( numNodes, 2 * maxEdgesPerNode() );
+  createEdgesByLowestNode( faceToNodeMap, edgesByLowestNode.toView() );
+
+  array1d< localIndex > uniqueEdgeOffsets( numNodes + 1 );
+  localIndex const numEdges = calculateTotalNumberOfEdges( edgesByLowestNode.toViewConst(), uniqueEdgeOffsets );
+
+  resizeEdgeToFaceMap( edgesByLowestNode.toViewConst(),
+                       uniqueEdgeOffsets,
+                       m_toFacesRelation );
+
+  resize( numEdges );
+
+  populateMaps( edgesByLowestNode.toViewConst(),
+                uniqueEdgeOffsets,
+                faceToNodeMap,
+                faceToEdgeMap,
+                m_toFacesRelation,
+                m_toNodesRelation );
 }
 
 
@@ -539,11 +562,10 @@ void EdgeManager::SetDomainBoundaryObjects( ObjectManagerBase const * const refe
 
   // get the "isDomainBoundary" field from the faceManager. This should have
   // been set already!
-  arrayView1d< integer const > const & isFaceOnDomainBoundary =
-    faceManager->getReference< array1d< integer > >( faceManager->viewKeys.domainBoundaryIndicator );
+  arrayView1d< integer const > const & isFaceOnDomainBoundary = faceManager->getDomainBoundaryIndicator();
 
   // get the "isDomainBoundary" field from for *this, and set it to zero
-  array1d< integer > & isEdgeOnDomainBoundary = this->getReference< array1d< integer > >( viewKeys.domainBoundaryIndicatorString );
+  arrayView1d< integer > const & isEdgeOnDomainBoundary = this->getDomainBoundaryIndicator();
   isEdgeOnDomainBoundary.setValues< serialPolicy >( 0 );
 
   ArrayOfArraysView< localIndex const > const & faceToEdgeMap = faceManager->edgeList().toViewConst();
@@ -624,7 +646,7 @@ void EdgeManager::ExtractMapFromObjectForAssignGlobalIndexNumbers( ObjectManager
   localIndex const numEdges = size();
 
   arrayView2d< localIndex const > const & edgeNodes = this->nodeList();
-  arrayView1d< integer const > const & isDomainBoundary = this->getReference< integer_array >( viewKeys.domainBoundaryIndicator );
+  arrayView1d< integer const > const & isDomainBoundary = this->getDomainBoundaryIndicator();
 
   globalEdgeNodes.resize( numEdges );
 

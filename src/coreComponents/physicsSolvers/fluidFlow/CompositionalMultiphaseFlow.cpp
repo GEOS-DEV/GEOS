@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -33,6 +33,10 @@
 #include "mpiCommunications/CommunicationTools.hpp"
 #include "mpiCommunications/MpiWrapper.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseFlowKernels.hpp"
+
+#if defined( __INTEL_COMPILER )
+#pragma GCC optimize "O0"
+#endif
 
 namespace geosx
 {
@@ -1409,8 +1413,7 @@ void CompositionalMultiphaseFlow::ChopNegativeDensities( DomainPartition & domai
   localIndex const NC = m_numComponents;
   forTargetSubRegions( mesh, [&]( localIndex const, ElementSubRegionBase & subRegion )
   {
-    arrayView1d< integer const > const & ghostRank =
-      subRegion.getReference< array1d< integer > >( ObjectManagerBase::viewKeyStruct::ghostRankString );
+    arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
 
     arrayView2d< real64 const > const & compDens =
       subRegion.getReference< array2d< real64 > >( viewKeyStruct::globalCompDensityString );
