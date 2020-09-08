@@ -1136,7 +1136,13 @@ void LagrangianContactSolver::CreatePreconditioner( DomainPartition const & doma
       precond = std::make_unique< BlockPreconditioner< LAInterface > >( BlockShapeOption::LowerUpperTriangular,
                                                                         SchurComplementOption::FirstBlockDiagonal,
                                                                         BlockScalingOption::UserProvided );
-      tracPrecond = std::make_unique< PreconditionerJacobi< LAInterface > >();
+      // Using GEOSX implementation of Jacobi preconditioner
+      // tracPrecond = std::make_unique< PreconditionerJacobi< LAInterface > >();
+
+      // Using LAI implementation of Jacobi preconditioner
+      LinearSolverParameters tracParams;
+      tracParams.preconditionerType = LinearSolverParameters::PreconditionerType::jacobi;
+      tracPrecond = LAInterface::createPreconditioner( tracParams );
     }
     else if( leadingBlockApproximation == "blockJacobi" )
     {
