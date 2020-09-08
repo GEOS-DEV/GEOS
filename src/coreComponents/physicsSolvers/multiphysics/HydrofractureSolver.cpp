@@ -50,8 +50,7 @@ HydrofractureSolver::HydrofractureSolver( const std::string & name,
   SolverBase( name, parent ),
   m_solidSolverName(),
   m_flowSolverName(),
-  m_couplingTypeOptionString( "FIM" ),
-  m_couplingTypeOption(),
+  m_couplingTypeOption( CouplingTypeOption::FIM ),
   m_solidSolver( nullptr ),
   m_flowSolver( nullptr ),
   m_maxNumResolves( 10 )
@@ -64,9 +63,9 @@ HydrofractureSolver::HydrofractureSolver( const std::string & name,
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "Name of the fluid mechanics solver to use in the poroelastic solver" );
 
-  registerWrapper( viewKeyStruct::couplingTypeOptionStringString, &m_couplingTypeOptionString )->
+  registerWrapper( viewKeyStruct::couplingTypeOptionStringString, &m_couplingTypeOption )->
     setInputFlag( InputFlags::REQUIRED )->
-    setDescription( "Coupling option: (FIM, SIM_FixedStress)" );
+    setDescription( "Coupling method. Valid options:\n* " + EnumStrings< CouplingTypeOption >::concat( "\n* " ) );
 
   registerWrapper( viewKeyStruct::contactRelationNameString, &m_contactRelationName )->
     setInputFlag( InputFlags::REQUIRED )->
@@ -145,21 +144,6 @@ void HydrofractureSolver::ImplicitStepComplete( real64 const & time_n,
 
 void HydrofractureSolver::PostProcessInput()
 {
-  string ctOption = this->getReference< string >( viewKeyStruct::couplingTypeOptionStringString );
-
-  if( ctOption == "SIM_FixedStress" )
-  {
-    this->m_couplingTypeOption = couplingTypeOption::SIM_FixedStress;
-  }
-  else if( ctOption == "FIM" )
-  {
-    this->m_couplingTypeOption = couplingTypeOption::FIM;
-  }
-  else
-  {
-    GEOSX_ERROR( "invalid coupling type option: " + ctOption );
-  }
-
   m_solidSolver = this->getParent()->GetGroup< SolidMechanicsLagrangianFEM >( m_solidSolverName );
   GEOSX_ERROR_IF( m_solidSolver == nullptr, this->getName() << ": invalid solid solver name: " << m_solidSolverName );
 
@@ -190,11 +174,11 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
 
   SolverBase * const surfaceGenerator = this->getParent()->GetGroup< SolverBase >( "SurfaceGen" );
 
-  if( m_couplingTypeOption == couplingTypeOption::SIM_FixedStress )
+  if( m_couplingTypeOption == CouplingTypeOption::SIM_FixedStress )
   {
     dtReturn = SplitOperatorStep( time_n, dt, cycleNumber, domain );
   }
-  else if( m_couplingTypeOption == couplingTypeOption::FIM )
+  else if( m_couplingTypeOption == CouplingTypeOption::FIM )
   {
 
     ImplicitStepSetup( time_n, dt, domain );
@@ -403,7 +387,7 @@ real64 HydrofractureSolver::SplitOperatorStep( real64 const & GEOSX_UNUSED_PARAM
 //
 //    // call the default linear solver on the system
 //    m_flowSolver->SolveSystem( getLinearSystemRepository(),
-//                 getSystemSolverParameters() );
+//                 getLinearSolverParameters() );
 //
 //    // apply the system solution to the fields/variables
 //    m_flowSolver->ApplySystemSolution( getLinearSystemRepository(), 1.0, domain );
@@ -415,7 +399,7 @@ real64 HydrofractureSolver::SplitOperatorStep( real64 const & GEOSX_UNUSED_PARAM
 //      continue;
 //    }
 //
-////    if (m_fluidSolver->getSystemSolverParameters()->numNewtonIterations() == 0 && iter > 0 && getLogLevel() >= 1)
+////    if (m_fluidSolver->getLinearSolverParameters()->numNewtonIterations() == 0 && iter > 0 && getLogLevel() >= 1)
 ////    {
 ////      GEOSX_LOG_RANK_0( "***** The iterative coupling has converged in " << iter  << " iterations! *****\n" );
 ////      break;
@@ -437,7 +421,7 @@ real64 HydrofractureSolver::SplitOperatorStep( real64 const & GEOSX_UNUSED_PARAM
 //
 //    // call the default linear solver on the system
 //    m_solidSolver->SolveSystem( getLinearSystemRepository(),
-//                 getSystemSolverParameters() );
+//                 getLinearSolverParameters() );
 //
 //    // apply the system solution to the fields/variables
 //    m_solidSolver->ApplySystemSolution( getLinearSystemRepository(), 1.0, domain );
@@ -455,7 +439,7 @@ real64 HydrofractureSolver::SplitOperatorStep( real64 const & GEOSX_UNUSED_PARAM
 //      dtReturn = dtReturnTemporary;
 //      continue;
 //    }
-////    if (m_solidSolver->getSystemSolverParameters()->numNewtonIterations() > 0)
+////    if (m_solidSolver->getLinearSolverParameters()->numNewtonIterations() > 0)
 //    {
 //      this->UpdateDeformationForCoupling(domain);
 ////      m_fluidSolver->UpdateState(domain);
@@ -1018,6 +1002,8 @@ HydrofractureSolver::
 
       forAll< serialPolicy >( subRegion.size(), [=] ( localIndex const kfe )
       {
+        constexpr int kfSign[2] = { -1, 1 };
+
         R1Tensor Nbar = faceNormal[elemsToFaces[kfe][0]];
         Nbar -= faceNormal[elemsToFaces[kfe][1]];
         Nbar.Normalize();
@@ -1047,10 +1033,10 @@ HydrofractureSolver::
             for( int i=0; i<3; ++i )
             {
               rowDOF[3*a+i] = dispDofNumber[faceToNodeMap( faceIndex, a )] + i;
-              nodeRHS[3*a+i] = -nodalForce[i] * pow( -1, kf );
-              fext[faceToNodeMap( faceIndex, a )][i] += -nodalForce[i] * pow( -1, kf );
+              nodeRHS[3*a+i] = nodalForce[i] * kfSign[kf];
+              fext[faceToNodeMap( faceIndex, a )][i] += nodalForce[i] * kfSign[kf];
 
-              dRdP( 3*a+i, 0 ) = -Ja * Nbar[i] * pow( -1, kf );
+              dRdP( 3*a+i, 0 ) = Ja * Nbar[i] * kfSign[kf];
             }
           }
 
@@ -1139,6 +1125,8 @@ HydrofractureSolver::
     {
       //if (elemGhostRank[ei] < 0)
       {
+        constexpr int kfSign[2] = { -1, 1 };
+
         globalIndex const elemDOF = presDofNumber[ei];
         localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( elemsToFaces[ei][0] );
         real64 const dAccumulationResidualdAperture = dens[ei][0] * area[ei];
@@ -1163,7 +1151,7 @@ HydrofractureSolver::
               for( int i = 0; i < 3; ++i )
               {
                 nodeDOF[kf * 3 * numNodesPerFace + 3 * a + i] = dispDofNumber[faceToNodeMap( elemsToFaces[ei][kf], a )] + i;
-                real64 const dGap_dU = -pow( -1, kf ) * Nbar[i] / numNodesPerFace;
+                real64 const dGap_dU = kfSign[kf] * Nbar[i] / numNodesPerFace;
                 real64 const dAper_dU = contactRelation->dEffectiveAperture_dAperture( aperture[ei] ) * dGap_dU;
                 dRdU( kf * 3 * numNodesPerFace + 3 * a + i ) = dAccumulationResidualdAperture * dAper_dU;
               }
@@ -1193,7 +1181,7 @@ HydrofractureSolver::
               {
                 nodeDOF[kf * 3 * numNodesPerFace + 3 * a + i] =
                   dispDofNumber[faceToNodeMap( elemsToFaces[ei2][kf], a )] + i;
-                real64 const dGap_dU = -pow( -1, kf ) * Nbar[i] / numNodesPerFace;
+                real64 const dGap_dU = kfSign[kf] * Nbar[i] / numNodesPerFace;
                 real64 const
                 dAper_dU = contactRelation->dEffectiveAperture_dAperture( aperture[ei2] ) * dGap_dU;
                 dRdU( kf * 3 * numNodesPerFace + 3 * a + i ) = dRdAper * dAper_dU;
@@ -1347,7 +1335,7 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_PARAM( do
   LinearSolverParameters const & linParams = m_linearSolverParameters.get();
 
   const bool use_diagonal_prec = true;
-  const bool use_bicgstab      = (linParams.solverType == "bicgstab");
+  const bool use_bicgstab      = (linParams.solverType == LinearSolverParameters::SolverType::bicgstab);
 
   // set initial guess to zero
 
@@ -1486,7 +1474,7 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_PARAM( do
   {
     RCP< Teuchos::ParameterList > list = rcp( new Teuchos::ParameterList( "precond_list" ), true );
 
-    if( linParams.preconditionerType == "amg" )
+    if( linParams.preconditionerType == LinearSolverParameters::PreconditionerType::amg )
     {
       list->set( "Preconditioner Type", "ML" );
       list->sublist( "Preconditioner Types" ).sublist( "ML" ).set( "Base Method Defaults", "SA" );

@@ -40,8 +40,7 @@ using namespace constitutive;
 using namespace SinglePhaseWellKernels;
 
 SinglePhaseWell::SinglePhaseWell( const string & name,
-                                  Group * const parent )
-  :
+                                  Group * const parent ):
   WellSolverBase( name, parent )
 {
   m_numDofPerWellElement = 2;
@@ -397,8 +396,7 @@ SinglePhaseWell::CalculateResidualNorm( DomainPartition const & domain,
     string const wellDofKey = dofManager.getKey( WellElementDofName() );
     arrayView1d< globalIndex const > const & wellElemDofNumber =
       subRegion.getReference< array1d< globalIndex > >( wellDofKey );
-    arrayView1d< integer const > const & wellElemGhostRank =
-      subRegion.getReference< array1d< integer > >( ObjectManagerBase::viewKeyStruct::ghostRankString );
+    arrayView1d< integer const > const & wellElemGhostRank = subRegion.ghostRank();
     arrayView1d< real64 const > const & wellElemVolume = subRegion.getElementVolume();
 
     SingleFluidBase const & fluid = GetConstitutiveModel< SingleFluidBase >( subRegion, m_fluidModelNames[targetIndex] );
@@ -437,8 +435,7 @@ bool SinglePhaseWell::CheckSystemSolution( DomainPartition const & domain,
     string const wellDofKey = dofManager.getKey( WellElementDofName() );
     arrayView1d< globalIndex const > const & wellElemDofNumber =
       subRegion.getReference< array1d< globalIndex > >( wellDofKey );
-    arrayView1d< integer const > const & wellElemGhostRank =
-      subRegion.getReference< array1d< integer > >( ObjectManagerBase::viewKeyStruct::ghostRankString );
+    arrayView1d< integer const > const & wellElemGhostRank = subRegion.ghostRank();
 
     // get a reference to the primary variables on well elements
     arrayView1d< real64 const > const & wellElemPressure =

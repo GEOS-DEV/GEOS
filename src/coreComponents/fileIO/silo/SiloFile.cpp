@@ -1413,7 +1413,9 @@ void SiloFile::WriteElementMesh( ElementRegionBase const & elementRegion,
 
     int count = 0;
 
-    elementRegion.forElementSubRegions( [&]( auto const & elementSubRegion )
+    elementRegion.forElementSubRegions< CellElementSubRegion,
+                                        FaceElementSubRegion,
+                                        WellElementSubRegion >( [&]( auto const & elementSubRegion )
     {
       typename TYPEOFREF( elementSubRegion ) ::NodeMapType const & elemsToNodes = elementSubRegion.nodeList();
 
@@ -2877,7 +2879,7 @@ void SiloFile::WriteMaterialDataField( string const & meshName,
     else
     {
       vartype = DB_UCDVAR;
-//      GEOS_ERROR("unhandled case in SiloFile::WriteDataField B\n");
+//      GEOSX_ERROR("unhandled case in SiloFile::WriteDataField B\n");
     }
 
     WriteMultiXXXX( vartype, DBPutMultivar, centering, fieldName.c_str(), cycleNumber, multiRoot,

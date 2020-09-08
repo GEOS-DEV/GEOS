@@ -15,7 +15,7 @@
         newtonTol="1.0e-6"
         logLevel="2"
         newtonMaxIter="10"
-        lineSearchAction="2"
+        lineSearchAction="Require"
         lineSearchMaxCuts="2"
         maxTimeStepCuts="2"/>
       <LinearSolverParameters
@@ -41,7 +41,6 @@
     <SurfaceGenerator
       name="SurfaceGen"
       logLevel="0"
-      discretization="FE1"
       fractureRegion="Fracture"
       targetRegions="{ Region }"
       solidMaterialNames="{ rock }"

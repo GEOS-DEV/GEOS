@@ -34,6 +34,7 @@ ObjectManagerBase::ObjectManagerBase( std::string const & name,
   m_localToGlobalMap(),
   m_globalToLocalMap(),
   m_isExternal(),
+  m_domainBoundaryIndicator(),
   m_ghostRank(),
   m_neighborData()
 {
@@ -52,7 +53,7 @@ ObjectManagerBase::ObjectManagerBase( std::string const & name,
     setApplyDefaultValue( -2 )->
     setPlotLevel( PlotLevel::LEVEL_0 );
 
-  registerWrapper< array1d< integer > >( viewKeyStruct::domainBoundaryIndicatorString );
+  registerWrapper< array1d< integer > >( viewKeyStruct::domainBoundaryIndicatorString, &m_domainBoundaryIndicator );
 
   m_sets.registerWrapper< SortedArray< localIndex > >( this->m_ObjectManagerBaseViewKeys.externalSet );
 }
@@ -171,7 +172,7 @@ void ObjectManagerBase::ConstructSetFromSetAndMap( SortedArrayView< localIndex c
 
 void ObjectManagerBase::ConstructLocalListOfBoundaryObjects( localIndex_array & objectList ) const
 {
-  arrayView1d< integer const > const & isDomainBoundary = this->getReference< integer_array >( m_ObjectManagerBaseViewKeys.domainBoundaryIndicator );
+  arrayView1d< integer const > const & isDomainBoundary = this->getDomainBoundaryIndicator();
   for( localIndex k=0; k<size(); ++k )
   {
     if( isDomainBoundary[k] == 1 )
@@ -183,7 +184,7 @@ void ObjectManagerBase::ConstructLocalListOfBoundaryObjects( localIndex_array & 
 
 void ObjectManagerBase::ConstructGlobalListOfBoundaryObjects( globalIndex_array & objectList ) const
 {
-  arrayView1d< integer const > const & isDomainBoundary = this->getReference< integer_array >( m_ObjectManagerBaseViewKeys.domainBoundaryIndicator );
+  arrayView1d< integer const > const & isDomainBoundary = this->getDomainBoundaryIndicator();
   for( localIndex k=0; k<size(); ++k )
   {
     if( isDomainBoundary[k] == 1 )

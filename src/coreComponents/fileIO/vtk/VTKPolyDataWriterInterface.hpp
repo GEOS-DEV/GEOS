@@ -198,9 +198,7 @@ private:
    * and a VTKCellArray (with the cell connectivities).
    */
   std::pair< vtkSmartPointer< vtkPoints >, vtkSmartPointer< vtkCellArray > >GetEmbeddedSurface( EmbeddedSurfaceSubRegion const & esr,
-                                                                                                ElementRegionManager const & elemManager,
-                                                                                                NodeManager const & nodeManager,
-                                                                                                EdgeManager const & edgeManager ) const;
+                                                                                                NodeManager const & nodeManager ) const;
 
   /*!
    * @brief Writes the files containing the faces elements
@@ -208,12 +206,10 @@ private:
    * @param[in] time the time-step
    * @param[in] elemManager the ElementRegionManager containing the FaceElementRegions to be output
    * @param[in] nodeManager the NodeManager containing the nodes of the domain to be output
-   * @param[in] edgeManager the EdgeManager used to compute the embedded fracture intersection
    */
   void WriteSurfaceElementRegions( real64 time,
                                    ElementRegionManager const & elemManager,
-                                   NodeManager const & nodeManager,
-                                   EdgeManager const & edgeManager ) const;
+                                   NodeManager const & nodeManager ) const;
 
   /*!
    * @brief Writes a VTM file for the time-step \p time.

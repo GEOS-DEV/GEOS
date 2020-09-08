@@ -91,7 +91,7 @@ SolidMechanicsLagrangianFEM::SolidMechanicsLagrangianFEM( const std::string & na
   registerWrapper( viewKeyStruct::timeIntegrationOptionString, &m_timeIntegrationOption )->
     setInputFlag( InputFlags::OPTIONAL )->
     setApplyDefaultValue( m_timeIntegrationOption )->
-    setDescription( "Time integration method. Options are: \n QuasiStatic \n ImplicitDynamic \n ExplicitDynamic" );
+    setDescription( "Time integration method. Options are:\n* " + EnumStrings< TimeIntegrationOption >::concat( "\n* " ) );
 
   registerWrapper( viewKeyStruct::useVelocityEstimateForQSString, &m_useVelocityEstimateForQS )->
     setApplyDefaultValue( 0 )->
@@ -475,7 +475,6 @@ real64 SolidMechanicsLagrangianFEM::SolverStep( real64 const & time_n,
     {
       surfaceGenerator->SolverStep( time_n, dt, cycleNumber, domain );
     }
-
   }
   else if( m_timeIntegrationOption == TimeIntegrationOption::ImplicitDynamic ||
            m_timeIntegrationOption == TimeIntegrationOption::QuasiStatic )
@@ -765,11 +764,14 @@ void SolidMechanicsLagrangianFEM::ApplyChomboPressure( DofManager const & dofMan
     int const numNodes = LvArray::integerConversion< int >( faceToNodeMap.sizeOfArray( kf ));
     for( int a=0; a<numNodes; ++a )
     {
+      localIndex const dof = dofNumber[ faceToNodeMap( kf, a ) ];
+      if( dof < 0 || dof >= localRhs.size() )
+        continue;
+
       for( int component=0; component<3; ++component )
       {
-        localIndex const dof = dofNumber[ faceToNodeMap( kf, a ) ] + component;
         real64 const value = -facePressure[ kf ] * faceNormal( kf, component ) * faceArea[kf] / numNodes;
-        localRhs[ dof ] += value;
+        localRhs[ dof + component ] += value;
       }
     }
   } );
