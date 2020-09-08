@@ -41,6 +41,7 @@ HyprePreconditioner::HyprePreconditioner( LinearSolverParameters params,
   m_functions( std::make_unique< HyprePrecFuncs >() ),
   m_auxData{},
   m_dofManager( dofManager ),
+  m_ready{},
   m_nearNullKernel{}
 {}
 
@@ -53,6 +54,7 @@ HyprePreconditioner::HyprePreconditioner( LinearSolverParameters params,
   m_functions( std::make_unique< HyprePrecFuncs >() ),
   m_auxData{},
   m_dofManager( dofManager ),
+  m_ready{},
   m_nearNullKernel( &nearNullKernel )
 {}
 
