@@ -40,11 +40,6 @@ LinearSolverParametersInput::LinearSolverParametersInput( std::string const & na
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Preconditioner type. Available options are:\n* " + EnumStrings< LinearSolverParameters::PreconditionerType >::concat( "\n* " ) );
 
-  registerWrapper( viewKeyStruct::dofsPerNodeString, &m_parameters.dofsPerNode )->
-    setApplyDefaultValue( m_parameters.dofsPerNode )->
-    setInputFlag( InputFlags::OPTIONAL )->
-    setDescription( "Dofs per node (or support location) for non-scalar problems" );
-
   registerWrapper( viewKeyStruct::krylovMaxIterString, &m_parameters.krylov.maxIterations )->
     setApplyDefaultValue( m_parameters.krylov.maxIterations )->
     setInputFlag( InputFlags::OPTIONAL )->
@@ -115,8 +110,6 @@ LinearSolverParametersInput::LinearSolverParametersInput( std::string const & na
 void LinearSolverParametersInput::PostProcessInput()
 {
   m_parameters.logLevel = getLogLevel();
-
-  GEOSX_ERROR_IF_LE_MSG( m_parameters.dofsPerNode, 0, "Invalid values of " << viewKeyStruct::dofsPerNodeString );
 
   GEOSX_ERROR_IF_LT_MSG( m_parameters.krylov.maxIterations, 0, "Invalid value of " << viewKeyStruct::krylovMaxIterString );
   GEOSX_ERROR_IF_LT_MSG( m_parameters.krylov.maxRestart, 0, "Invalid value of " << viewKeyStruct::krylovMaxRestartString );

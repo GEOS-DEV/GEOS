@@ -47,22 +47,12 @@ public:
   PreconditionerBlockJacobi( localIndex const & blockSize = 0 )
     : m_blockDiag{}
   {
-    setBlockSize( blockSize );
+    m_blockSize = blockSize;
   }
 
   virtual ~PreconditionerBlockJacobi()
   {
     delete m_blockDiag;
-  }
-
-  /**
-   * @brief Set the block size.
-   * @param blockSize the block size.
-   */
-  void setBlockSize( localIndex const & blockSize )
-  {
-    GEOSX_LAI_ASSERT_GT( blockSize, 0 );
-    m_blockSize = blockSize;
   }
 
   /**
@@ -150,6 +140,7 @@ public:
   virtual void apply( Vector const & src,
                       Vector & dst ) const override
   {
+    GEOSX_LAI_ASSERT( m_blockDiag->ready() );
     GEOSX_LAI_ASSERT_EQ( this->numGlobalRows(), dst.globalSize() );
     GEOSX_LAI_ASSERT_EQ( this->numGlobalCols(), src.globalSize() );
 
@@ -162,6 +153,7 @@ public:
    */
   virtual bool hasPreconditionerMatrix() const override
   {
+    GEOSX_LAI_ASSERT( m_blockDiag->ready() );
     return true;
   }
 
@@ -171,6 +163,7 @@ public:
    */
   virtual Matrix const & preconditionerMatrix() const override
   {
+    GEOSX_LAI_ASSERT( m_blockDiag->ready() );
     return *m_blockDiag;
   }
 

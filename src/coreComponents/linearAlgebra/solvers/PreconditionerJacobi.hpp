@@ -91,6 +91,7 @@ public:
    */
   virtual globalIndex numGlobalRows() const override final
   {
+    GEOSX_LAI_ASSERT( m_diagInv->ready() );
     return m_diagInv->globalSize();
   }
 
@@ -100,6 +101,7 @@ public:
    */
   virtual globalIndex numGlobalCols() const override final
   {
+    GEOSX_LAI_ASSERT( m_diagInv->ready() );
     return m_diagInv->globalSize();
   }
 
@@ -112,18 +114,11 @@ public:
   virtual void apply( Vector const & src,
                       Vector & dst ) const override
   {
+    GEOSX_LAI_ASSERT( m_diagInv->ready() );
     GEOSX_LAI_ASSERT_EQ( this->numGlobalRows(), dst.globalSize() );
     GEOSX_LAI_ASSERT_EQ( this->numGlobalCols(), src.globalSize() );
-    GEOSX_LAI_ASSERT_EQ( src.localSize(), dst.localSize() );
 
-    real64 const * const src_data = src.extractLocalVector();
-    real64 * const dst_data = dst.extractLocalVector();
-    real64 const * const diagInv_data = m_diagInv->extractLocalVector();
-    dst.copy( src );
-    for( localIndex i = 0; i < src.localSize(); ++i )
-    {
-      dst_data[i] = src_data[i] * diagInv_data[i];
-    }
+    m_diagInv->pointwiseProduct( src, dst );
   }
 
 private:

@@ -342,6 +342,24 @@ void HypreVector::axpby( real64 const alpha,
   axpy( alpha, x );
 }
 
+void HypreVector::pointwiseProduct( HypreVector const & x,
+                                    HypreVector & y )
+{
+  GEOSX_LAI_ASSERT( ready() );
+  GEOSX_LAI_ASSERT( x.ready() );
+  GEOSX_LAI_ASSERT( y.ready() );
+  GEOSX_LAI_ASSERT_EQ( localSize(), x.localSize() );
+  GEOSX_LAI_ASSERT_EQ( localSize(), y.localSize() );
+
+  real64 const * const data = extractLocalVector();
+  real64 const * const x_data = x.extractLocalVector();
+  real64 * const y_data = y.extractLocalVector();
+  for( localIndex i = 0; i < localSize(); ++i )
+  {
+    y_data[i] = data[i] * x_data[i];
+  }
+}
+
 real64 HypreVector::norm1() const
 {
   GEOSX_LAI_ASSERT( ready() );

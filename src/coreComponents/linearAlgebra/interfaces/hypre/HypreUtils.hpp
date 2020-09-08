@@ -135,7 +135,7 @@ struct HypreSolverFuncs
 struct HyprePrecAuxData
 {
   array1d< HYPRE_Int > point_marker_array;     ///< array1d of unique tags for local degrees of freedom
-  array1d< HYPRE_ParVector > nullSpacePointer; /// Hypre pointer to the near null kernel
+  array1d< HYPRE_ParVector > nullSpacePointer; ///< Hypre pointer to the near null kernel
 };
 
 }

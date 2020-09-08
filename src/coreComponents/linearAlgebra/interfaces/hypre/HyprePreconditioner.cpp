@@ -39,22 +39,10 @@ HyprePreconditioner::HyprePreconditioner( LinearSolverParameters params,
   m_parameters( std::move( params ) ),
   m_precond{},
   m_functions( std::make_unique< HyprePrecFuncs >() ),
+  m_auxData{},
   m_dofManager( dofManager ),
-  m_nearNullKernel( nullptr )
-{
-  // Basic setup for functions
-  if( !m_functions )
-  {
-    m_functions = std::make_unique< HyprePrecFuncs >();
-  }
-
-  // Basic setup common for all preconditioners
-  if( m_precond == nullptr )
-  {
-    createHyprePreconditioner( m_dofManager );
-  }
-  m_ready = true;
-}
+  m_nearNullKernel{}
+{}
 
 HyprePreconditioner::HyprePreconditioner( LinearSolverParameters params,
                                           array1d< HypreVector > const & nearNullKernel,
@@ -63,17 +51,10 @@ HyprePreconditioner::HyprePreconditioner( LinearSolverParameters params,
   m_parameters( std::move( params ) ),
   m_precond{},
   m_functions( std::make_unique< HyprePrecFuncs >() ),
+  m_auxData{},
   m_dofManager( dofManager ),
   m_nearNullKernel( &nearNullKernel )
-{
-  // Basic setup common for all preconditioners
-  if( m_precond == nullptr )
-  {
-    createHyprePreconditioner( m_dofManager );
-  }
-
-  m_ready = true;
-}
+{}
 
 HyprePreconditioner::~HyprePreconditioner()
 {

@@ -318,6 +318,14 @@ protected:
                       real64 const beta ) = 0;
 
   /**
+   * @brief Compute the componentwise multiplication <tt>y</tt> = <tt>v * x</tt>.
+   * @param x first vector (input)
+   * @param y second vector (output)
+   */
+  virtual void pointwiseProduct( Vector const & x,
+                                 Vector & y ) = 0;
+
+  /**
    * @brief 1-norm of the vector.
    * @return the 1-norm value
    */

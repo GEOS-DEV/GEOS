@@ -283,6 +283,18 @@ void EpetraVector::axpby( real64 const alpha,
   GEOSX_LAI_CHECK_ERROR( m_vector->Update( alpha, x.unwrapped(), beta ) );
 }
 
+void EpetraVector::pointwiseProduct( EpetraVector const & x,
+                                     EpetraVector & y )
+{
+  GEOSX_LAI_ASSERT( ready() );
+  GEOSX_LAI_ASSERT( x.ready() );
+  GEOSX_LAI_ASSERT( y.ready() );
+  GEOSX_LAI_ASSERT_EQ( globalSize(), x.globalSize() );
+  GEOSX_LAI_ASSERT_EQ( globalSize(), y.globalSize() );
+
+  GEOSX_LAI_CHECK_ERROR( ( y.unwrapped() ).Multiply( 1.0, unwrapped(), x.unwrapped(), 0.0 ) );
+}
+
 real64 EpetraVector::norm1() const
 {
   GEOSX_LAI_ASSERT( ready() );

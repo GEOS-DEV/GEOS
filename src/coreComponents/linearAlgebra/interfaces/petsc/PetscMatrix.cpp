@@ -656,16 +656,23 @@ real64 PetscMatrix::clearRow( globalIndex const globalRow,
   return oldDiag;
 }
 
-void PetscMatrix::addEntries( PetscMatrix const & src, real64 const scale )
+void PetscMatrix::addEntries( PetscMatrix const & src, real64 const scale, bool const samePattern )
 {
   GEOSX_LAI_ASSERT( ready() );
   GEOSX_LAI_ASSERT( src.ready() );
   GEOSX_LAI_ASSERT( numGlobalRows() == src.numGlobalRows() );
   GEOSX_LAI_ASSERT( numGlobalCols() == src.numGlobalCols() );
 
-  GEOSX_LAI_CHECK_ERROR( MatSetOption( m_mat, MAT_NEW_NONZERO_ALLOCATION_ERR, PETSC_FALSE ) );
-  GEOSX_LAI_CHECK_ERROR( MatAXPY( m_mat, scale, src.m_mat, DIFFERENT_NONZERO_PATTERN ) );
-  GEOSX_LAI_CHECK_ERROR( MatSetOption( m_mat, MAT_NEW_NONZERO_ALLOCATION_ERR, PETSC_TRUE ) );
+  if( samePattern )
+  {
+    GEOSX_LAI_CHECK_ERROR( MatAXPY( m_mat, scale, src.m_mat, SUBSET_NONZERO_PATTERN ) );
+  }
+  else
+  {
+    GEOSX_LAI_CHECK_ERROR( MatSetOption( m_mat, MAT_NEW_NONZERO_ALLOCATION_ERR, PETSC_FALSE ) );
+    GEOSX_LAI_CHECK_ERROR( MatAXPY( m_mat, scale, src.m_mat, DIFFERENT_NONZERO_PATTERN ) );
+    GEOSX_LAI_CHECK_ERROR( MatSetOption( m_mat, MAT_NEW_NONZERO_ALLOCATION_ERR, PETSC_TRUE ) );
+  }
 }
 
 void PetscMatrix::addDiagonal( PetscVector const & src )

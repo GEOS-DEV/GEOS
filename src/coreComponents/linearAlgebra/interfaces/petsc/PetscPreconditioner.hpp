@@ -113,7 +113,7 @@ private:
   PC m_precond;
 
   /// Pointer to the near null space
-  MatNullSpace m_nullsp = nullptr;
+  MatNullSpace m_nullsp;
 };
 
 }

@@ -70,7 +70,6 @@ public:
   {
     static constexpr auto solverTypeString         = "solverType";         ///< Solver type key
     static constexpr auto preconditionerTypeString = "preconditionerType"; ///< Preconditioner type key
-    static constexpr auto dofsPerNodeString        = "dofsPerNode";        ///< Dofs per node key
 
     static constexpr auto krylovMaxIterString     = "krylovMaxIter";     ///< Krylov max iterations key
     static constexpr auto krylovMaxRestartString  = "krylovMaxRestart";  ///< Krylov max iterations key
