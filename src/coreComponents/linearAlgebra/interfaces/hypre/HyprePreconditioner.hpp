@@ -93,6 +93,11 @@ public:
   virtual ~HyprePreconditioner() override;
 
   /**
+   * @brief Create the preconditioner from the input parameters.
+   */
+  void create();
+
+  /**
    * @brief Compute the preconditioner from a matrix.
    * @param mat the matrix to precondition.
    */

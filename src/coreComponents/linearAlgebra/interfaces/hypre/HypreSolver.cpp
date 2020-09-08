@@ -228,6 +228,7 @@ void HypreSolver::solve_krylov( HypreMatrix & mat,
 
   // Create the preconditioner, but don't compute (this is done by solver setup)
   HyprePreconditioner precond( m_parameters, dofManager );
+  precond.create();
 
   // Deal with separate component approximation
   // TODO: preliminary version for separate displacement components

@@ -640,7 +640,7 @@ void HyprePreconditioner::createILUT()
   m_functions->destroy = HYPRE_ILUDestroy;
 }
 
-void HyprePreconditioner::compute( Matrix const & mat )
+void HyprePreconditioner::create()
 {
   if( !m_ready )
   {
@@ -657,6 +657,11 @@ void HyprePreconditioner::compute( Matrix const & mat )
     }
     m_ready = true;
   }
+}
+
+void HyprePreconditioner::compute( Matrix const & mat )
+{
+  create();
 
   PreconditionerBase::compute( mat );
 
