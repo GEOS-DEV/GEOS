@@ -99,6 +99,17 @@ public:
                              int const cycleNumber,
                              DomainPartition & domain ) override;
 
+  template< typename CONSTITUTIVE_BASE,
+            template< typename SUBREGION_TYPE,
+                      typename CONSTITUTIVE_TYPE,
+                      typename FE_TYPE > class KERNEL_TEMPLATE,
+            typename ... PARAMS >
+  void AssemblyLaunch( DomainPartition & domain,
+                       DofManager const & dofManager,
+                       CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                       arrayView1d< real64 > const & localRhs,
+                       PARAMS && ... params );
+
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
     constexpr static auto solidSolverNameString = "solidSolverName";
@@ -198,6 +209,60 @@ private:
   string m_contactRelationName;
 
 };
+
+
+//**********************************************************************************************************************
+//**********************************************************************************************************************
+//**********************************************************************************************************************
+
+
+template< typename CONSTITUTIVE_BASE,
+          template< typename SUBREGION_TYPE,
+                    typename CONSTITUTIVE_TYPE,
+                    typename FE_TYPE > class KERNEL_TEMPLATE,
+          typename ... PARAMS >
+void SolidMechanicsEmbeddedFractures::AssemblyLaunch( DomainPartition & domain,
+                                                      DofManager const & dofManager,
+                                                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                      arrayView1d< real64 > const & localRhs,
+                                                      PARAMS && ... params )
+{
+  GEOSX_MARK_FUNCTION;
+  MeshLevel & mesh = *(domain.getMeshBodies()->GetGroup< MeshBody >( 0 )->getMeshLevel( 0 ));
+
+  NodeManager const & nodeManager = *(mesh.getNodeManager());
+
+  string const dofKey = dofManager.getKey( dataRepository::keys::TotalDisplacement );
+  arrayView1d< globalIndex const > const & dofNumber = nodeManager.getReference< globalIndex_array >( dofKey );
+
+  ResetStressToBeginningOfStep( domain );
+
+  real64 const gravityVectorData[3] = { gravityVector().Data()[0],
+                                        gravityVector().Data()[1],
+                                        gravityVector().Data()[2] };
+
+  m_maxForce = finiteElement::
+                 regionBasedKernelApplication< parallelDevicePolicy< 32 >,
+                                               CONSTITUTIVE_BASE,
+                                               CellElementSubRegion,
+                                               KERNEL_TEMPLATE >( mesh,
+                                                                  targetRegionNames(),
+                                                                  this->getDiscretizationName(),
+                                                                  m_solidMaterialNames,
+                                                                  dofNumber,
+                                                                  dofManager.rankOffset(),
+                                                                  localMatrix,
+                                                                  localRhs,
+                                                                  gravityVectorData,
+                                                                  std::forward< PARAMS >( params )... );
+
+
+  ApplyContactConstraint( dofManager,
+                          domain,
+                          localMatrix,
+                          localRhs );
+
+}
 
 } /* namespace geosx */
 

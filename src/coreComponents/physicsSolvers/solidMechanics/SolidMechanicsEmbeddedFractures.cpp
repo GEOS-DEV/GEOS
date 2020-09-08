@@ -581,6 +581,32 @@ void SolidMechanicsEmbeddedFractures::AddCouplingNumNonzeros( DomainPartition & 
   } );
 }
 
+void SolidMechanicsEmbeddedFractures::AssembleSystem2( real64 const time,
+                                                       real64 const dt,
+                                                       DomainPartition & domain,
+                                                       DofManager const & dofManager,
+                                                       CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                       arrayView1d< real64 > const & localRhs )
+{
+  GEOSX_MARK_FUNCTION;
+
+  m_solidSolver->AssembleSystem( time,
+                                 dt,
+                                 domain,
+                                 dofManager,
+                                 localMatrix,
+                                 localRhs );
+
+
+  AssemblyLaunch< constitutive::SolidBase,
+                  SolidMechanicsLagrangianFEMKernels::QuasiStatic >( domain,
+                                                                     dofManager,
+                                                                     localMatrix,
+                                                                     localRhs );
+
+
+}
+
 void SolidMechanicsEmbeddedFractures::AddCouplingSparsityPattern( DomainPartition const & domain,
                                                                   DofManager const & dofManager,
                                                                   SparsityPatternView< globalIndex > const & pattern ) const

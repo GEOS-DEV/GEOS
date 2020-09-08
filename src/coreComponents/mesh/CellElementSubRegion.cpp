@@ -84,6 +84,16 @@ void CellElementSubRegion::ConstructSubRegionFromFaceSet( FaceManager const * co
 
 }
 
+
+void CellElementSubRegion::addFracturedElement( localIndex const cellElemIndex,
+                                                localIndex const embSurfIndex )
+{
+  // add the element to the fractured elements list
+  m_fracturedCells.insert( cellElemIndex );
+  // add the connection between the element and the embedded surface to the map
+  m_toEmbeddedSurfaces.emplaceBack( cellElemIndex, embSurfIndex );
+}
+
 void CellElementSubRegion::ViewPackingExclusionList( SortedArray< localIndex > & exclusionList ) const
 {
   ObjectManagerBase::ViewPackingExclusionList( exclusionList );

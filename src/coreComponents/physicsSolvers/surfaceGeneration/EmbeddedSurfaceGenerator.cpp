@@ -154,7 +154,13 @@ void EmbeddedSurfaceGenerator::InitializePostSubGroups( Group * const problemMan
                                                                         cellToEdges,
                                                                         &fracture );
           if( added )
+          {
             GEOSX_LOG_LEVEL_RANK_0( 2, "Element " << cellIndex << " is fractured" );
+
+            // Add the information to the CellElementSubRegion
+            subRegion.addFracturedElement( cellIndex, embeddedSurfaceSubRegion->size()-1 );
+          }
+
         }
       } // end loop over cells
     } );// end loop over subregions
