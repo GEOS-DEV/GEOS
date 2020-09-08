@@ -364,7 +364,7 @@ void VTKPolyDataWriterInterface::WriteSurfaceElementRegions( real64 time,
     {
       auto esr = er.GetSubRegion( 0 )->group_cast< EmbeddedSurfaceSubRegion const * >();
 
-      auto VTKSurface = GetEmbeddedSurface( *esr, elemManager, nodeManager, edgeManager );
+      auto VTKSurface = GetEmbeddedSurface( *esr, nodeManager );
       ug->SetPoints( VTKSurface.first );
       ug->SetCells( VTK_POLYGON, VTKSurface.second );
 
