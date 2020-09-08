@@ -62,7 +62,7 @@ geosx_osx_build: &geosx_osx_build
   - BREW_HASH=$(echo -n ${METADATA} | python3 -c "import sys, json; print(json.load(sys.stdin)['metadata']['BREW_HASH'], end='')")
   - BREW_URL=https://raw.github.com/Homebrew/homebrew-core/${BREW_HASH}
 #   - brew install ${BREW_URL}/Formula/open-mpi.rb
-  - brew extract open-mpi ${BREW_HASH} homebrew/custom
+  - brew install TotoGax/geosx/open-mpi-geosx
   <<: *geosx_before_script
   script:
   - python ${TRAVIS_BUILD_DIR}/scripts/config-build.py
