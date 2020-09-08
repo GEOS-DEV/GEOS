@@ -49,10 +49,10 @@ geosx_linux_build: &geosx_linux_build
 geosx_osx_build: &geosx_osx_build
   os: osx
   osx_image: xcode11.2
-  addons:
-    homebrew:
-      taps: totogaz/geosx
-      casks: open-mpi-geosx
+#   addons:
+#     homebrew:
+#       taps: totogaz/geosx
+#       casks: open-mpi-geosx
   install:
   - TPL_METADATA_URL=https://www.googleapis.com/storage/v1/b/geosx/o/TPL%2Fosx-${GEOSX_TPL_TAG}.tar
   - TPL_BULK_URL=${TPL_METADATA_URL}?alt=media
@@ -66,7 +66,7 @@ geosx_osx_build: &geosx_osx_build
   - BREW_HASH=$(echo -n ${METADATA} | python3 -c "import sys, json; print(json.load(sys.stdin)['metadata']['BREW_HASH'], end='')")
   - BREW_URL=https://raw.github.com/Homebrew/homebrew-core/${BREW_HASH}
 #   - brew install ${BREW_URL}/Formula/open-mpi.rb
-  - brew install TotoGax/geosx/open-mpi-geosx
+  - brew install TotoGaz/geosx/open-mpi-geosx
   <<: *geosx_before_script
   script:
   - python ${TRAVIS_BUILD_DIR}/scripts/config-build.py
