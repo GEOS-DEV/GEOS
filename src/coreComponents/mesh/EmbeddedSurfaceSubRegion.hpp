@@ -240,34 +240,34 @@ public:
    * @brief Get the embedded surface element to region map (background grid nodes).
    * @return the embedded surface element to region map
    */
-  arrayView1d< localIndex > const & getSurfaceToRegionList()       { return m_embeddedSurfaceToRegion; }
+  arrayView1d< localIndex > getSurfaceToRegionList() { return m_embeddedSurfaceToRegion; }
 
   /**
    * @copydoc getSurfaceToRegionList()
    */
-  arrayView1d< localIndex const > const & getSurfaceToRegionList() const { return m_embeddedSurfaceToRegion; }
+  arrayView1d< localIndex const > getSurfaceToRegionList() const { return m_embeddedSurfaceToRegion; }
 
   /**
    * @brief Get the embedded surface element to subregion map (of cell elemtns being cut).
    * @return the embedded surface element to subregion map
    */
-  arrayView1d< localIndex > const & getSurfaceToSubRegionList()       { return m_embeddedSurfaceToSubRegion; }
+  arrayView1d< localIndex > getSurfaceToSubRegionList() { return m_embeddedSurfaceToSubRegion; }
 
   /**
    * @copydoc getSurfaceToSubRegionList()
    */
-  arrayView1d< localIndex const > const & getSurfaceToSubRegionList() const { return m_embeddedSurfaceToSubRegion; }
+  arrayView1d< localIndex const > getSurfaceToSubRegionList() const { return m_embeddedSurfaceToSubRegion; }
 
   /**
    * @brief Get the embedded surface element to cell element map
    * @return the embedded surface element to cell element map
    */
-  arrayView1d< localIndex > const & getSurfaceToCellList()       { return m_embeddedSurfaceToCell; }
+  arrayView1d< localIndex > getSurfaceToCellList() { return m_embeddedSurfaceToCell; }
 
   /**
    * @copydoc getSurfaceToCellList()
    */
-  arrayView1d< localIndex const > const & getSurfaceToCellList() const { return m_embeddedSurfaceToCell; }
+  arrayView1d< localIndex const > getSurfaceToCellList() const { return m_embeddedSurfaceToCell; }
   ///@}
 
   /**
@@ -292,42 +292,42 @@ public:
    * @brief Get face element aperture.
    * @return the aperture of the embedded surface elements
    */
-  arrayView1d< real64 > const & getElementAperture()       { return m_elementAperture; }
+  arrayView1d< real64 > getElementAperture() { return m_elementAperture; }
 
   /**
    * @copydoc getElementAperture()
    */
-  arrayView1d< real64 const > const & getElementAperture() const { return m_elementAperture; }
+  arrayView1d< real64 const > getElementAperture() const { return m_elementAperture; }
 
   /**
    * @brief Get the embedded surface elements surface area.
    * @return the surface area of the embedded surface elements
    */
-  arrayView1d< real64 > const & getElementArea()       { return m_elementArea; }
+  arrayView1d< real64 > getElementArea() { return m_elementArea; }
 
   /**
    * @copydoc getElementArea()
    */
-  arrayView1d< real64 const > const & getElementArea() const { return m_elementArea; }
+  arrayView1d< real64 const > getElementArea() const { return m_elementArea; }
 
 
   /**
    * @brief Get normal vectors.
    * @return an array of normal vectors.
    */
-  array1d< R1Tensor > & getNormalVector()       { return m_normalVector; }
+  array1d< R1Tensor > & getNormalVector() { return m_normalVector; }
 
   /**
    * @copydoc getNormalVector()
    */
-  array1d< R1Tensor > const & getNormalVector() const { return m_normalVector; }
+  arrayView1d< R1Tensor const > getNormalVector() const { return m_normalVector; }
 
   /**
    * @brief Get normal vector of a specific embedded surface element.
    * @param k index of the embedded surface element
    * @return the normal vector of a specific embedded surface element
    */
-  R1Tensor & getNormalVector( localIndex k )       { return m_normalVector[k];}
+  R1Tensor & getNormalVector( localIndex k ) { return m_normalVector[k];}
 
   /**
    * @copydoc getNormalVector( localIndex k )
@@ -338,42 +338,42 @@ public:
    * @brief Get an array of the first tangent vector of the embedded surface elements.
    * @return an array of the first tangent vector of the embedded surface elements
    */
-  array1d< R1Tensor > & getTangentVector1()       { return m_tangentVector1; }
+  array1d< R1Tensor > & getTangentVector1() { return m_tangentVector1; }
 
   /**
    * @copydoc getTangentVector1()
    */
-  array1d< R1Tensor > const & getTangentVector1() const { return m_tangentVector1; }
+  arrayView1d< R1Tensor const > getTangentVector1() const { return m_tangentVector1; }
 
   /**
    * @brief Get the first tangent vector of a specific embedded surface element.
    * @param k index of the embedded surface element
    * @return the first tangent vector of a specific embedded surface element
    */
-  R1Tensor & getTangentVector1( localIndex k )       { return m_tangentVector1[k];}
+  R1Tensor & getTangentVector1( localIndex k ) { return m_tangentVector1[k];}
 
   /**
    * @copydoc getTangentVector1( localIndex k )
    */
-  R1Tensor const & getTangentVector1( localIndex k ) const { return m_tangentVector1[k];}
+  R1Tensor const & getTangentVector1( localIndex k ) const { return m_tangentVector1[k]; }
 
   /**
    * @brief Get an array of the second tangent vector of the embedded surface elements.
    * @return an array of the second tangent vector of the embedded surface elements
    */
-  array1d< R1Tensor > & getTangentVector2()       { return m_tangentVector2; }
+  array1d< R1Tensor > & getTangentVector2() { return m_tangentVector2; }
 
   /**
    * @copydoc getTangentVector2()
    */
-  array1d< R1Tensor > const & getTangentVector2() const { return m_tangentVector2; }
+  arrayView1d< R1Tensor const > getTangentVector2() const { return m_tangentVector2; }
 
   /**
    * @brief Get the second tangent vector of a specific embedded surface element.
    * @param k index of the embedded surface element
    * @return the second tangent vector of a specific embedded surface element
    */
-  R1Tensor & getTangentVector2( localIndex k )       { return m_tangentVector2[k];}
+  R1Tensor & getTangentVector2( localIndex k ) { return m_tangentVector2[k];}
 
   /**
    * @copydoc getTangentVector2( localIndex k )
