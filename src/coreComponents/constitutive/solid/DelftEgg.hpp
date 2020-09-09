@@ -387,7 +387,7 @@ if(eps_s_trial < 1e-15)
       
       norm = LvArray::tensorOps::l2Norm<3>(residual);
       
-     //std::cout << "iter= " << iter << ", norm =  " << norm << std::endl;
+     std::cout << "iter= " << iter << ", norm =  " << norm << std::endl;
       
       if(iter==0)
       {
@@ -482,7 +482,7 @@ if(eps_s_trial < 1e-15)
     }
     
   } // end plastic branch
-  std::cout<<"eps_s = "<<eps_s_trial<<std::endl;
+  //std::cout<<"eps_s = "<<eps_s_trial
   
   // remember history variables before returning
   

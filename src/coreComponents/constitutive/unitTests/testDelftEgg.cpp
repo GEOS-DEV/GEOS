@@ -78,7 +78,7 @@ TEST( DelftEggTests, testModel )
   //                  strainIncrement.setValues< serialPolicy >( 0 );
   //                  strainIncrement[0][0] = inc;
 
-  real64 strainIncrement[6] = {0, 0, 0, inc, inc, inc};
+  real64 strainIncrement[6] = {inc, inc, inc, 0, 0, 0};
   real64 stress[6] = {0, 0, 0, 0, 0, 0};
   real64 stiffness[6][6];
 
