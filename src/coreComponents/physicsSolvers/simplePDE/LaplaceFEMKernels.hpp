@@ -73,6 +73,7 @@ public:
   using Base::m_matrix;
   using Base::m_rhs;
   using Base::m_elemsToNodes;
+  using Base::m_finiteElementSpace;
 
   /// The number of nodes per element.
   static constexpr int numNodesPerElem = Base::numTestSupportPointsPerElem;
@@ -104,6 +105,7 @@ public:
           rankOffset,
           inputMatrix,
           inputRhs ),
+    m_X( nodeManager.referencePosition() ),
     m_primaryField( nodeManager.template getReference< array1d< real64 > >( fieldName )),
     m_dNdX( elementSubRegion.dNdX() ),
     m_detJ( elementSubRegion.detJ() )
@@ -126,8 +128,17 @@ public:
     GEOSX_HOST_DEVICE
     StackVariables():
       Base::StackVariables(),
+            xLocal(),
             primaryField_local{ 0.0 }
     {}
+
+#if !defined(CALC_FEM_SHAPE_IN_KERNEL)
+    /// Dummy
+    int xLocal;
+#else
+    /// C-array stack storage for element local the nodal positions.
+    real64 xLocal[ numNodesPerElem ][ 3 ];
+#endif
 
     /// C-array storage for the element local primary field variable.
     real64 primaryField_local[numNodesPerElem];
@@ -151,6 +162,13 @@ public:
     {
       localIndex const localNodeIndex = m_elemsToNodes( k, a );
 
+#if defined(CALC_FEM_SHAPE_IN_KERNEL)
+      for( int i=0; i<3; ++i )
+      {
+        stack.xLocal[ a ][ i ] = m_X[ localNodeIndex ][ i ];
+      }
+#endif
+
       stack.primaryField_local[ a ] = m_primaryField[ localNodeIndex ];
       stack.localRowDofIndex[a] = m_dofNumber[localNodeIndex];
       stack.localColDofIndex[a] = m_dofNumber[localNodeIndex];
@@ -163,14 +181,17 @@ public:
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   void quadraturePointKernel( localIndex const k,
-                                            localIndex const q,
-                                            StackVariables & stack ) const
+                              localIndex const q,
+                              StackVariables & stack ) const
   {
+    real64 dNdX[ numNodesPerElem ][ 3 ];
+    real64 const detJ = m_finiteElementSpace.template getGradN< FE_TYPE >( k, q, stack.xLocal, dNdX );
+
     for( localIndex a=0; a<numNodesPerElem; ++a )
     {
       for( localIndex b=0; b<numNodesPerElem; ++b )
       {
-        stack.localJacobian[ a ][ b ] += LvArray::tensorOps::AiBi< 3 >( m_dNdX[k][q][a], m_dNdX[k][q][b] ) * m_detJ( k, q );
+        stack.localJacobian[ a ][ b ] += LvArray::tensorOps::AiBi< 3 >( dNdX[a], dNdX[b] ) * detJ;
       }
     }
   }
@@ -217,6 +238,9 @@ public:
 
 
 protected:
+  /// The array containing the nodal position array.
+  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const m_X;
+
   /// The global primary field array.
   arrayView1d< real64 const > const m_primaryField;
 

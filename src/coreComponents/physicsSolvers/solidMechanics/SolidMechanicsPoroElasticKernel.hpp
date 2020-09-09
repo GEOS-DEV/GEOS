@@ -104,8 +104,8 @@ public:
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   void quadraturePointKernel( localIndex const k,
-                                            localIndex const q,
-                                            StackVariables & stack ) const
+                              localIndex const q,
+                              StackVariables & stack ) const
   {
     real64 const biotCoefficient = m_constitutiveUpdate.getBiotCoefficient();
     Base::quadraturePointKernel( k, q, stack, [=] GEOSX_HOST_DEVICE ( real64 (& stress)[6] )

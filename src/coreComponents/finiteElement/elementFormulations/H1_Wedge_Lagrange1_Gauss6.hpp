@@ -81,7 +81,7 @@ public:
    */
   GEOSX_HOST_DEVICE
   static void calcN( localIndex const q,
-                                   real64 ( &N )[numNodes] );
+                     real64 ( &N )[numNodes] );
 
   /**
    * @brief Calculate the shape functions derivatives wrt the physical
@@ -94,9 +94,8 @@ public:
    */
   GEOSX_HOST_DEVICE
   static real64 calcGradN( localIndex const q,
-                                          real64 const (&X)[numNodes][3],
-                                          real64 ( &gradN )[numNodes][3] );
-
+                           real64 const (&X)[numNodes][3],
+                           real64 ( &gradN )[numNodes][3] );
 
   /**
    * @brief Calculate the integration weights for a quadrature point.
@@ -328,7 +327,7 @@ GEOSX_FORCE_INLINE
 void
 H1_Wedge_Lagrange1_Gauss6::
   calcN( localIndex const q,
-                       real64 (& N)[numNodes] )
+         real64 (& N)[numNodes] )
 {
   real64 const r  = quadratureParentCoords0( q );
   real64 const s  = quadratureParentCoords1( q );
@@ -349,8 +348,8 @@ GEOSX_FORCE_INLINE
 real64
 H1_Wedge_Lagrange1_Gauss6::
   calcGradN( localIndex const q,
-                            real64 const (&X)[numNodes][3],
-                            real64 (&gradN)[numNodes][3] )
+             real64 const (&X)[numNodes][3],
+             real64 (& gradN)[numNodes][3] )
 {
   real64 J[3][3] = {{0}};
 

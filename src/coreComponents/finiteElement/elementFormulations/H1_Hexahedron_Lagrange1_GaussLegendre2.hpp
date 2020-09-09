@@ -103,7 +103,7 @@ public:
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   static void calcN( localIndex const q,
-                                   real64 (& N)[numNodes] )
+                     real64 (& N)[numNodes] )
   {
     int qa, qb, qc;
     LagrangeBasis1::TensorProduct3D::multiIndex( q, qa, qb, qc );
@@ -125,8 +125,8 @@ public:
    */
   GEOSX_HOST_DEVICE
   static real64 calcGradN( localIndex const q,
-                                          real64 const (&X)[numNodes][3],
-                                          real64 ( &gradN )[numNodes][3] );
+                           real64 const (&X)[numNodes][3],
+                           real64 ( &gradN )[numNodes][3] );
 
 
   /**
@@ -411,8 +411,8 @@ GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 real64
 H1_Hexahedron_Lagrange1_GaussLegendre2::calcGradN( localIndex const q,
-                                                                  real64 const (&X)[numNodes][3],
-                                                                  real64 (&gradN)[numNodes][3] )
+                                                   real64 const (&X)[numNodes][3],
+                                                   real64 (& gradN)[numNodes][3] )
 {
   real64 J[3][3] = {{0}};
 

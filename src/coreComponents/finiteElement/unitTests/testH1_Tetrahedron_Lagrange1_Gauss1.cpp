@@ -72,8 +72,8 @@ void testKernelDriver()
     {
       real64 dNdX[numNodes][3] = {{0}};
       viewDetJxW[q] = H1_Tetrahedron_Lagrange1_Gauss1::calcGradN( q,
-                                                                                 xCoords,
-                                                                                 dNdX );
+                                                                  xCoords,
+                                                                  dNdX );
       for( localIndex a=0; a<numNodes; ++a )
       {
         for( int i = 0; i < 3; ++i )

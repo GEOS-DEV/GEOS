@@ -75,6 +75,7 @@ public:
   using Base::m_rhs;
   using Base::m_elemsToNodes;
   using Base::m_constitutiveUpdate;
+  using Base::m_finiteElementSpace;
 
   /// The number of nodes per element.
   static constexpr int numNodesPerElem = Base::numTestSupportPointsPerElem;
@@ -109,9 +110,8 @@ public:
           rankOffset,
           inputMatrix,
           inputRhs ),
+    m_X( nodeManager.referencePosition()),
     m_nodalDamage( nodeManager.template getReference< array1d< real64 > >( fieldName )),
-    m_dNdX( elementSubRegion.dNdX() ),
-    m_detJ( elementSubRegion.detJ() ),
     m_Gc( Gc ),
     m_lengthScale( lengthScale ),
     m_localDissipationOption( localDissipationOption )
@@ -134,8 +134,17 @@ public:
     GEOSX_HOST_DEVICE
     StackVariables():
       Base::StackVariables(),
+            xLocal(),
             nodalDamageLocal{ 0.0 }
     {}
+
+#if !defined(CALC_FEM_SHAPE_IN_KERNEL)
+    /// Dummy
+    int xLocal;
+#else
+    /// C-array stack storage for element local the nodal positions.
+    real64 xLocal[ numNodesPerElem ][ 3 ];
+#endif
 
     /// C-array storage for the element local primary field variable.
     real64 nodalDamageLocal[numNodesPerElem];
@@ -159,6 +168,13 @@ public:
     {
       localIndex const localNodeIndex = m_elemsToNodes( k, a );
 
+#if defined(CALC_FEM_SHAPE_IN_KERNEL)
+      for( int i=0; i<3; ++i )
+      {
+        stack.xLocal[ a ][ i ] = m_X[ localNodeIndex ][ i ];
+      }
+#endif
+
       stack.nodalDamageLocal[ a ] = m_nodalDamage[ localNodeIndex ];
       stack.localRowDofIndex[a] = m_dofNumber[localNodeIndex];
       stack.localColDofIndex[a] = m_dofNumber[localNodeIndex];
@@ -171,9 +187,11 @@ public:
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   void quadraturePointKernel( localIndex const k,
-                                            localIndex const q,
-                                            StackVariables & stack ) const
+                              localIndex const q,
+                              StackVariables & stack ) const
   {
+    real64 dNdX[ numNodesPerElem ][ 3 ];
+    real64 const detJ = m_finiteElementSpace.template getGradN< FE_TYPE >( k, q, stack.xLocal, dNdX );
 
     real64 const strainEnergyDensity = m_constitutiveUpdate.calculateStrainEnergyDensity( k, q );
 //    std::cout<<k<<", "<<q<<", "<< strainEnergyDensity<<std::endl;
@@ -197,7 +215,7 @@ public:
     for( localIndex a = 0; a < numNodesPerElem; ++a )
     {
       qp_damage += N[a] * stack.nodalDamageLocal[a];
-      temp = m_dNdX[k][q][a];
+      temp = dNdX[a];
       temp *= stack.nodalDamageLocal[a];
       qp_grad_damage += temp;
     }
@@ -206,31 +224,31 @@ public:
     {
       if( m_localDissipationOption == 1 )
       {
-        stack.localResidual[ a ] += m_detJ[k][q] * ( N[a] * (m_lengthScale * D - 3 * m_Gc / 16 )/ m_Gc -
-                                                     0.375*pow( m_lengthScale, 2 ) * LvArray::tensorOps::AiBi< 3 >( qp_grad_damage, m_dNdX[k][q][a] ) -
-                                                     m_lengthScale * D/m_Gc * N[a] * qp_damage
-                                                     );
+        stack.localResidual[ a ] += detJ * ( N[a] * (m_lengthScale * D - 3 * m_Gc / 16 )/ m_Gc -
+                                             0.375*pow( m_lengthScale, 2 ) * LvArray::tensorOps::AiBi< 3 >( qp_grad_damage, dNdX[a] ) -
+                                             m_lengthScale * D/m_Gc * N[a] * qp_damage
+                                             );
       }
       else
       {
-        stack.localResidual[ a ] += m_detJ[k][q] * ( N[a] * (2 * m_lengthScale) * strainEnergyDensity / m_Gc -
-                                                     ( pow( m_lengthScale, 2 ) * LvArray::tensorOps::AiBi< 3 >( qp_grad_damage, m_dNdX[k][q][a] ) +
-                                                       N[a] * qp_damage * (1 + 2 * m_lengthScale*strainEnergyDensity/m_Gc)
-                                                     )
-                                                     );
+        stack.localResidual[ a ] += detJ * ( N[a] * (2 * m_lengthScale) * strainEnergyDensity / m_Gc -
+                                             ( pow( m_lengthScale, 2 ) * LvArray::tensorOps::AiBi< 3 >( qp_grad_damage, dNdX[a] ) +
+                                               N[a] * qp_damage * (1 + 2 * m_lengthScale*strainEnergyDensity/m_Gc)
+                                             )
+                                             );
       }
       for( localIndex b = 0; b < numNodesPerElem; ++b )
       {
         if( m_localDissipationOption == 1 )
         {
-          stack.localJacobian[ a ][ b ] -= m_detJ[k][q] *
-                                           (0.375*pow( m_lengthScale, 2 ) * LvArray::tensorOps::AiBi< 3 >( m_dNdX[k][q][a], m_dNdX[k][q][b] ) +
+          stack.localJacobian[ a ][ b ] -= detJ *
+                                           (0.375*pow( m_lengthScale, 2 ) * LvArray::tensorOps::AiBi< 3 >( dNdX[a], dNdX[b] ) +
                                             (m_lengthScale * D/m_Gc) * N[a] * N[b]);
         }
         else
         {
-          stack.localJacobian[ a ][ b ] -= m_detJ[k][q] *
-                                           ( pow( m_lengthScale, 2 ) * LvArray::tensorOps::AiBi< 3 >( m_dNdX[k][q][a], m_dNdX[k][q][b] ) +
+          stack.localJacobian[ a ][ b ] -= detJ *
+                                           ( pow( m_lengthScale, 2 ) * LvArray::tensorOps::AiBi< 3 >( dNdX[a], dNdX[b] ) +
                                              N[a] * N[b] * (1 + 2 * m_lengthScale*strainEnergyDensity/m_Gc )
                                            );
         }
@@ -272,14 +290,11 @@ public:
 
 
 protected:
+  /// The array containing the nodal position array.
+  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const m_X;
+
   /// The global primary field array.
   arrayView1d< real64 const > const m_nodalDamage;
-
-  /// The global shape function derivatives array.
-  arrayView4d< real64 const > const m_dNdX;
-
-  /// The global determinant of the parent/physical Jacobian.
-  arrayView2d< real64 const > const m_detJ;
 
   real64 const m_Gc;
   real64 const m_lengthScale;

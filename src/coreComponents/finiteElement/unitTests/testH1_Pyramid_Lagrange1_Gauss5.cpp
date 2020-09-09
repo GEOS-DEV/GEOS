@@ -78,8 +78,8 @@ void testKernelDriver()
     {
       real64 dNdX[numNodes][3] = {{0}};
       viewDetJ[q] = H1_Pyramid_Lagrange1_Gauss5::calcGradN( q,
-                                                                           xCoords,
-                                                                           dNdX );
+                                                            xCoords,
+                                                            dNdX );
 
 
       for( localIndex a=0; a<numNodes; ++a )

@@ -76,7 +76,7 @@ public:
    */
   GEOSX_HOST_DEVICE
   static void calcN( localIndex const q,
-                                   real64 ( &N )[numNodes] );
+                     real64 ( &N )[numNodes] );
 
   /**
    * @brief Calculate the integration weights for a quadrature point.
@@ -103,7 +103,7 @@ GEOSX_FORCE_INLINE
 void
 H1_TriangleFace_Lagrange1_Gauss1::
   calcN( localIndex const q,
-                       real64 (& N)[numNodes] )
+         real64 (& N)[numNodes] )
 {
   GEOSX_UNUSED_VAR( q );
 

@@ -223,8 +223,8 @@ public:
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   void quadraturePointKernel( localIndex const k,
-                                   localIndex const q,
-                                   StackVariables & stack ) const
+                              localIndex const q,
+                              StackVariables & stack ) const
   {
     GEOSX_UNUSED_VAR( k );
     GEOSX_UNUSED_VAR( q );

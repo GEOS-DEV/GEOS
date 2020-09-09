@@ -80,6 +80,7 @@ public:
   using Base::m_rhs;
   using Base::m_elemsToNodes;
   using Base::m_constitutiveUpdate;
+  using Base::m_finiteElementSpace;
 
 
   /**
@@ -108,10 +109,9 @@ public:
           rankOffset,
           inputMatrix,
           inputRhs ),
+    m_X( nodeManager.referencePosition()),
     m_disp( nodeManager.totalDisplacement()),
     m_uhat( nodeManager.incrementalDisplacement()),
-    m_dNdX( elementSubRegion.dNdX() ),
-    m_detJ( elementSubRegion.detJ() ),
     m_gravityVector{ inputGravityVector[0], inputGravityVector[1], inputGravityVector[2] },
     m_density( inputConstitutiveType->getDensity())
   {}
@@ -133,10 +133,19 @@ public:
     GEOSX_HOST_DEVICE
     StackVariables():
       Base::StackVariables(),
+                                       xLocal(),
                                        u_local(),
                                        uhat_local(),
-                                       constitutiveStiffness{ {0.0} }
+                                       constitutiveStiffness()
     {}
+
+#if !defined(CALC_FEM_SHAPE_IN_KERNEL)
+    /// Dummy
+    int xLocal;
+#else
+    /// C-array stack storage for element local the nodal positions.
+    real64 xLocal[ numNodesPerElem ][ 3 ];
+#endif
 
     /// Stack storage for the element local nodal displacement
     real64 u_local[numNodesPerElem][numDofPerTrialSupportPoint];
@@ -168,6 +177,9 @@ public:
 
       for( int i=0; i<3; ++i )
       {
+#if defined(CALC_FEM_SHAPE_IN_KERNEL)
+        stack.xLocal[ a ][ i ] = m_X[ localNodeIndex ][ i ];
+#endif
         stack.u_local[ a ][i] = m_disp[ localNodeIndex ][i];
         stack.uhat_local[ a ][i] = m_uhat[ localNodeIndex ][i];
         stack.localRowDofIndex[a*3+i] = m_dofNumber[localNodeIndex]+i;
@@ -221,12 +233,15 @@ public:
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   void quadraturePointKernel( localIndex const k,
-                                   localIndex const q,
-                                   StackVariables & stack,
-                                   STRESS_MODIFIER && stressModifier = NoOpFunctors{} ) const
+                              localIndex const q,
+                              StackVariables & stack,
+                              STRESS_MODIFIER && stressModifier = NoOpFunctors{} ) const
   {
+    real64 dNdX[ numNodesPerElem ][ 3 ];
+    real64 const detJ = m_finiteElementSpace.template getGradN< FE_TYPE >( k, q, stack.xLocal, dNdX );
+
     real64 strainInc[6] = {0};
-    FE_TYPE::symmetricGradient( m_dNdX[k][q], stack.uhat_local, strainInc );
+    FE_TYPE::symmetricGradient( dNdX, stack.uhat_local, strainInc );
 
     m_constitutiveUpdate.SmallStrain( k, q, strainInc );
 
@@ -235,7 +250,7 @@ public:
     typename CONSTITUTIVE_TYPE::KernelWrapper::DiscretizationOps stiffnessHelper;
 
     stiffnessHelper.setParams( stack.constitutiveStiffness );
-    stiffnessHelper.template BTDB< numNodesPerElem >( m_dNdX[k][q], m_detJ( k, q ), stack.localJacobian );
+    stiffnessHelper.template BTDB< numNodesPerElem >( dNdX, detJ, stack.localJacobian );
 
     real64 stress[6];
 
@@ -243,18 +258,18 @@ public:
 
     stressModifier( stress );
 
-    real64 const gravityForce[3] = { m_gravityVector[0] * m_density( k, q )* m_detJ( k, q ),
-                                     m_gravityVector[1] * m_density( k, q )* m_detJ( k, q ),
-                                     m_gravityVector[2] * m_density( k, q )* m_detJ( k, q ) };
+    real64 const gravityForce[3] = { m_gravityVector[0] * m_density( k, q )* detJ,
+                                     m_gravityVector[1] * m_density( k, q )* detJ,
+                                     m_gravityVector[2] * m_density( k, q )* detJ };
 
     for( localIndex i=0; i<6; ++i )
     {
-      stress[i] *= m_detJ( k, q );
+      stress[i] *= detJ;
     }
 
     real64 N[numNodesPerElem];
     FE_TYPE::calcN( q, N );
-    FE_TYPE::gradNajAij_plus_NaFi( m_dNdX[k][q],
+    FE_TYPE::gradNajAij_plus_NaFi( dNdX,
                                    stress,
                                    N,
                                    gravityForce,
@@ -295,17 +310,14 @@ public:
 
 
 protected:
+  /// The array containing the nodal position array.
+  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const m_X;
+
   /// The rank-global displacement array.
   arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const m_disp;
 
   /// The rank-global incremental displacement array.
   arrayView2d< real64 const, nodes::INCR_DISPLACEMENT_USD > const m_uhat;
-
-  /// The shape function derivative for each quadrature point.
-  arrayView4d< real64 const > const m_dNdX;
-
-  /// The parent->physical jacobian determinant for each quadrature point.
-  arrayView2d< real64 const > const m_detJ;
 
   /// The gravity vector.
   real64 const m_gravityVector[3];

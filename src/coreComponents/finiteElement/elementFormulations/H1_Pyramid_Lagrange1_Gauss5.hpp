@@ -84,7 +84,7 @@ public:
    */
   GEOSX_HOST_DEVICE
   static void calcN( localIndex const q,
-                                   real64 ( &N )[numNodes] );
+                     real64 ( &N )[numNodes] );
 
   /**
    * @brief Calculate the shape functions derivatives wrt the physical
@@ -97,8 +97,8 @@ public:
    */
   GEOSX_HOST_DEVICE
   static real64 calcGradN( localIndex const q,
-                                          real64 const (&X)[numNodes][3],
-                                          real64 ( &gradN )[numNodes][3] );
+                           real64 const (&X)[numNodes][3],
+                           real64 ( &gradN )[numNodes][3] );
 
   /**
    * @brief Calculate the integration weights for a quadrature point.
@@ -317,7 +317,7 @@ void
 H1_Pyramid_Lagrange1_Gauss5::
   applyJacobianTransformationToShapeFunctionsDerivatives( int const q,
                                                           real64 const ( &invJ )[3][3],
-                                                          real64 (&gradN)[numNodes][3] )
+                                                          real64 (& gradN)[numNodes][3] )
 {
   real64 const quadratureCoords[3] = { quadratureParentCoords0( q ),
                                        quadratureParentCoords1( q ),
@@ -364,7 +364,7 @@ GEOSX_FORCE_INLINE
 void
 H1_Pyramid_Lagrange1_Gauss5::
   calcN( localIndex const q,
-                       real64 ( & N )[numNodes] )
+         real64 ( & N )[numNodes] )
 {
   real64 const xi[3] = { quadratureParentCoords0( q ),
                          quadratureParentCoords1( q ),
@@ -382,8 +382,8 @@ H1_Pyramid_Lagrange1_Gauss5::
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 real64 H1_Pyramid_Lagrange1_Gauss5::calcGradN( localIndex const q,
-                                                              real64 const (&X)[numNodes][3],
-                                                              real64 (&gradN)[numNodes][3] )
+                                               real64 const (&X)[numNodes][3],
+                                               real64 (& gradN)[numNodes][3] )
 {
   real64 J[3][3] = {{0}};
 

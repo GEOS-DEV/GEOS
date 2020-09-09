@@ -68,21 +68,21 @@ template< int NUM_SUPPORT_POINTS,
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void SolidModelDiscretizationOpsIsotropic::BTDB( BASIS_GRADIENT const & gradN,
-                                      real64 const & detJxW,
-                                      real64 (& elementStiffness)[NUM_SUPPORT_POINTS *3][NUM_SUPPORT_POINTS *3] )
+                                                 real64 const & detJxW,
+                                                 real64 (& elementStiffness)[NUM_SUPPORT_POINTS *3][NUM_SUPPORT_POINTS *3] )
 {
   real64 const lambda2G = ( 2 * m_shearModulus + m_lambda ) * detJxW;
   real64 const lambda = this->m_lambda * detJxW;
   real64 const G = this->m_shearModulus * detJxW;
   SolidModelDiscretizationOps::BTDB< NUM_SUPPORT_POINTS >( gradN,
-                                                    elementStiffness,
-                                                    [ lambda,
-                                                      G,
-                                                      lambda2G ] GEOSX_HOST_DEVICE
-                                                      ( int const a,
-                                                      int const b,
-                                                      real64 const (&gradNa_gradNb)[3][3],
-                                                      real64 (& elementStiffness)[NUM_SUPPORT_POINTS*3][NUM_SUPPORT_POINTS*3] )
+                                                           elementStiffness,
+                                                           [ lambda,
+                                                             G,
+                                                             lambda2G ] GEOSX_HOST_DEVICE
+                                                             ( int const a,
+                                                             int const b,
+                                                             real64 const (&gradNa_gradNb)[3][3],
+                                                             real64 (& elementStiffness)[NUM_SUPPORT_POINTS*3][NUM_SUPPORT_POINTS*3] )
   {
     elementStiffness[a*3+0][b*3+0] = elementStiffness[a*3+0][b*3+0] - gradNa_gradNb[1][1] * G - gradNa_gradNb[2][2] * G - gradNa_gradNb[0][0] * lambda2G;
     elementStiffness[a*3+0][b*3+1] = elementStiffness[a*3+0][b*3+1] - gradNa_gradNb[1][0] * G - gradNa_gradNb[0][1] * lambda;
@@ -102,21 +102,21 @@ template< int NUM_SUPPORT_POINTS,
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void SolidModelDiscretizationOpsIsotropic::diagBTDB( BASIS_GRADIENT const & gradN,
-                                          real64 const & detJxW,
-                                          real64 (& diagElementStiffness)[NUM_SUPPORT_POINTS *3] )
+                                                     real64 const & detJxW,
+                                                     real64 (& diagElementStiffness)[NUM_SUPPORT_POINTS *3] )
 {
   real64 const lambda2G = ( 2 * m_shearModulus + m_lambda ) * detJxW;
   real64 const lambda = this->m_lambda * detJxW;
   real64 const G = this->m_shearModulus * detJxW;
 
   SolidModelDiscretizationOps::diagBTDB< NUM_SUPPORT_POINTS >( gradN,
-                                                        diagElementStiffness,
-                                                        [ lambda,
-                                                          G,
-                                                          lambda2G ] GEOSX_HOST_DEVICE
-                                                          ( const int a,
-                                                          const real64 (& gradN_gradN)[3],
-                                                          real64 (& diagElementStiffness)[NUM_SUPPORT_POINTS*3] )
+                                                               diagElementStiffness,
+                                                               [ lambda,
+                                                                 G,
+                                                                 lambda2G ] GEOSX_HOST_DEVICE
+                                                                 ( const int a,
+                                                                 const real64 (& gradN_gradN)[3],
+                                                                 real64 (& diagElementStiffness)[NUM_SUPPORT_POINTS*3] )
   {
     diagElementStiffness[ a*3+0 ] = diagElementStiffness[ a*3+0 ] - gradN_gradN[0] * lambda2G - gradN_gradN[1] * G - gradN_gradN[2] * G;
     diagElementStiffness[ a*3+1 ] = diagElementStiffness[ a*3+1 ] - gradN_gradN[1] * lambda2G - gradN_gradN[0] * G - gradN_gradN[2] * G;
@@ -131,45 +131,45 @@ template< int NUM_SUPPORT_POINTS,
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void SolidModelDiscretizationOpsIsotropic::diagRowSumBTDB( BASIS_GRADIENT const & gradN,
-                                                real64 const & detJxW,
-                                                real64 ( & diagSumElementStiffness )[NUM_SUPPORT_POINTS*3] )
+                                                           real64 const & detJxW,
+                                                           real64 ( & diagSumElementStiffness )[NUM_SUPPORT_POINTS*3] )
 {
   real64 const lambda2G = ( 2 * m_shearModulus + m_lambda ) * detJxW;
   real64 const lambda = this->m_lambda * detJxW;
   real64 const G = this->m_shearModulus * detJxW;
   SolidModelDiscretizationOps::diagRowSumBTDB< NUM_SUPPORT_POINTS >( gradN,
-                                                              diagSumElementStiffness,
-                                                              [ lambda,
-                                                                G,
-                                                                lambda2G ] GEOSX_HOST_DEVICE
-                                                                ( int const a,
-                                                                real64 const (&gradNa_gradNb)[3][3],
-                                                                real64 (& diagSumElementStiffness)[NUM_SUPPORT_POINTS*3] )
+                                                                     diagSumElementStiffness,
+                                                                     [ lambda,
+                                                                       G,
+                                                                       lambda2G ] GEOSX_HOST_DEVICE
+                                                                       ( int const a,
+                                                                       real64 const (&gradNa_gradNb)[3][3],
+                                                                       real64 (& diagSumElementStiffness)[NUM_SUPPORT_POINTS*3] )
   {
     diagSumElementStiffness[a*3+0] = diagSumElementStiffness[a*3+0] -
-                                   gradNa_gradNb[1][1] * G -
-                                   gradNa_gradNb[2][2] * G -
-                                   gradNa_gradNb[0][0] * lambda2G -
-                                   gradNa_gradNb[1][0] * G -
-                                   gradNa_gradNb[0][1] * lambda -
-                                   gradNa_gradNb[2][0] * G -
-                                   gradNa_gradNb[0][2] * lambda;
+                                     gradNa_gradNb[1][1] * G -
+                                     gradNa_gradNb[2][2] * G -
+                                     gradNa_gradNb[0][0] * lambda2G -
+                                     gradNa_gradNb[1][0] * G -
+                                     gradNa_gradNb[0][1] * lambda -
+                                     gradNa_gradNb[2][0] * G -
+                                     gradNa_gradNb[0][2] * lambda;
     diagSumElementStiffness[a*3+1] = diagSumElementStiffness[a*3+1] -
-                                   gradNa_gradNb[0][1] * G -
-                                   gradNa_gradNb[1][0] * lambda -
-                                   gradNa_gradNb[0][0] * G -
-                                   gradNa_gradNb[2][2] * G -
-                                   gradNa_gradNb[1][1] * lambda2G -
-                                   gradNa_gradNb[2][1] * G -
-                                   gradNa_gradNb[1][2] * lambda;
+                                     gradNa_gradNb[0][1] * G -
+                                     gradNa_gradNb[1][0] * lambda -
+                                     gradNa_gradNb[0][0] * G -
+                                     gradNa_gradNb[2][2] * G -
+                                     gradNa_gradNb[1][1] * lambda2G -
+                                     gradNa_gradNb[2][1] * G -
+                                     gradNa_gradNb[1][2] * lambda;
     diagSumElementStiffness[a*3+2] = diagSumElementStiffness[a*3+2] -
-                                   gradNa_gradNb[0][2] * G -
-                                   gradNa_gradNb[2][0] * lambda -
-                                   gradNa_gradNb[1][2] * G -
-                                   gradNa_gradNb[2][1] * lambda -
-                                   gradNa_gradNb[0][0] * G -
-                                   gradNa_gradNb[1][1] * G -
-                                   gradNa_gradNb[2][2] * lambda2G;
+                                     gradNa_gradNb[0][2] * G -
+                                     gradNa_gradNb[2][0] * lambda -
+                                     gradNa_gradNb[1][2] * G -
+                                     gradNa_gradNb[2][1] * lambda -
+                                     gradNa_gradNb[0][0] * G -
+                                     gradNa_gradNb[1][1] * G -
+                                     gradNa_gradNb[2][2] * lambda2G;
   } );
 }
 

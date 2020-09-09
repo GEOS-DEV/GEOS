@@ -28,11 +28,6 @@ namespace geosx
 namespace SolidMechanicsLagrangianFEMKernels
 {
 
-#if defined(GEOSX_USE_CUDA)
-/// Macro variable to indicate whether or not to calculate the shape function
-/// derivatives in the kernel instead of using a pre-calculated value.
-#define CALCFEMSHAPE
-#endif
 /// If UPDATE_STRESS is undef, uses total displacement and stress is not
 /// updated at all.
 /// If UPDATE_STRESS 1, uses total displacement to and adds material stress
@@ -115,9 +110,6 @@ public:
   using Base::m_vel;
   using Base::m_acc;
 #if !defined(CALCFEMSHAPE)
-  using Base::m_dNdX;
-  using Base::m_detJ;
-#else
   using Base::m_X;
 #endif
 
@@ -151,12 +143,7 @@ public:
   {
     using Base::StackVariables::fLocal;
     using Base::StackVariables::varLocal;
-
-  #if defined(CALCFEMSHAPE)
     using Base::StackVariables::xLocal;
-    using Base::StackVariables::dNdX;
-    using Base::StackVariables::detJ;
-  #endif
 
 
     /**
@@ -187,7 +174,7 @@ public:
       localIndex const nodeIndex = m_elemsToNodes( k, a );
       for( int i=0; i<numDofPerTrialSupportPoint; ++i )
       {
-#if defined(CALCFEMSHAPE)
+#if defined(CALC_FEM_SHAPE_IN_KERNEL)
         stack.xLocal[ a ][ i ] = m_X[ nodeIndex ][ i ];
 #endif
         stack.uLocal[ a ][ i ] = m_u[ nodeIndex ][ i ];
@@ -202,33 +189,20 @@ public:
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   void quadraturePointKernel( localIndex const k,
-                                   localIndex const q,
-                                   StackVariables & stack ) const
+                              localIndex const q,
+                              StackVariables & stack ) const
   {
-#if defined(CALCFEMSHAPE)
     real64 dNdX[ numNodesPerElem ][ 3 ];
-    real64 const detJ = FE_TYPE::calcGradN( q, stack.xLocal, dNdX );
+    real64 const detJ = m_finiteElementSpace.template getGradN< FE_TYPE >( k, q, stack.xLocal, dNdX );
 
-    /// Macro to substitute in the shape function derivatives.
-    #define DNDX dNdX
-
-    /// Macro to substitute the determinant of the jacobian transformation to the parent space.
-    #define DETJ detJ
-#else
-    /// @cond DOXYGEN_SKIP
-    #define DNDX m_dNdX[k][q].toSliceConst()
-    #define DETJ m_detJ( k, q )
-    /// @endcond DOXYGEN_SKIP
-#endif
     real64 dUhatdX[3][3] = { {0, 0, 0}, {0, 0, 0}, {0, 0, 0} };
     real64 dUdX[3][3] = { {0, 0, 0}, {0, 0, 0}, {0, 0, 0} };
     real64 F[3][3] = { {0, 0, 0}, {0, 0, 0}, {0, 0, 0} };
     real64 Ldt[3][3] = { {0, 0, 0}, {0, 0, 0}, {0, 0, 0} };
     real64 fInv[3][3] = { {0, 0, 0}, {0, 0, 0}, {0, 0, 0} };
 
-
-    FE_TYPE::gradient( DNDX, stack.varLocal, dUhatdX );
-    FE_TYPE::gradient( DNDX, stack.uLocal, dUdX );
+    FE_TYPE::gradient( dNdX, stack.varLocal, dUhatdX );
+    FE_TYPE::gradient( dNdX, stack.uLocal, dUdX );
 
     LvArray::tensorOps::scale< 3, 3 >( dUhatdX, m_dt );
 
@@ -255,18 +229,15 @@ public:
 
     real64 P[ 3 ][ 3 ];
     LvArray::tensorOps::symAikBjk< 3 >( P, m_constitutiveUpdate.m_stress[k][q].toSliceConst(), fInv );
-    LvArray::tensorOps::scale< 3, 3 >( P, DETJ * detF );
+    LvArray::tensorOps::scale< 3, 3 >( P, detJ * detF );
 
-    FE_TYPE::gradNajAij( DNDX, P, stack.fLocal );
+    FE_TYPE::gradNajAij( dNdX, P, stack.fLocal );
 
   }
 
 
 
 };
-#undef CALCFEMSHAPE
-#undef DNDX
-#undef DETJ
 #undef UPDATE_STRESS
 
 

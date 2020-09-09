@@ -63,8 +63,8 @@ template< int NUM_SUPPORT_POINTS,
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void SolidModelDiscretizationOps::BTDB( BASIS_GRADIENT const & gradN,
-                                 real64 (& elementStiffness)[NUM_SUPPORT_POINTS*3][NUM_SUPPORT_POINTS*3],
-                                 CBF && callbackFunction )
+                                        real64 (& elementStiffness)[NUM_SUPPORT_POINTS*3][NUM_SUPPORT_POINTS*3],
+                                        CBF && callbackFunction )
 {
   for( int a=0; a<NUM_SUPPORT_POINTS; ++a )
   {
@@ -94,8 +94,8 @@ template< int NUM_SUPPORT_POINTS,
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void SolidModelDiscretizationOps::diagBTDB( BASIS_GRADIENT const & gradN,
-                                     real64 (& diagElementStiffness)[NUM_SUPPORT_POINTS*3],
-                                     CBF && callbackFunction )
+                                            real64 (& diagElementStiffness)[NUM_SUPPORT_POINTS*3],
+                                            CBF && callbackFunction )
 {
   for( int a=0; a<NUM_SUPPORT_POINTS; ++a )
   {
@@ -111,8 +111,8 @@ template< int NUM_SUPPORT_POINTS,
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void SolidModelDiscretizationOps::diagRowSumBTDB( BASIS_GRADIENT const & gradN,
-                                           real64 ( & diagSumElementStiffness )[NUM_SUPPORT_POINTS*3],
-                                           CBF && callbackFunction )
+                                                  real64 ( & diagSumElementStiffness )[NUM_SUPPORT_POINTS*3],
+                                                  CBF && callbackFunction )
 {
   for( int a=0; a<NUM_SUPPORT_POINTS; ++a )
   {

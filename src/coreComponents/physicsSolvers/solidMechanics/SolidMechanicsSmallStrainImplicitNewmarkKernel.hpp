@@ -65,8 +65,10 @@ public:
   using Base::m_elemsToNodes;
   using Base::m_disp;
   using Base::m_uhat;
-  using Base::m_detJ;
   using Base::m_density;
+  using Base::m_finiteElementSpace;
+
+
 
   /**
    * @brief Constructor
@@ -187,6 +189,7 @@ public:
   {
 
     Base::quadraturePointJacobianContribution( k, q, stack );
+    real64 detJ=0;
 
     real64 N[numNodesPerElem];
     FE_TYPE::calcN( q, N );
@@ -195,7 +198,7 @@ public:
     {
       for( int b=a; b<numNodesPerElem; ++b )
       {
-        real64 const integrationFactor = m_density( k, q ) * N[a] * N[b] * m_detJ( k, q );
+        real64 const integrationFactor = m_density( k, q ) * N[a] * N[b] * detJ;
         real64 const temp1 = ( m_massDamping * m_newmarkGamma/( m_newmarkBeta * m_dt )
                                + 1.0 / ( m_newmarkBeta * m_dt * m_dt ) )* integrationFactor;
 

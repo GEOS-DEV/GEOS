@@ -16,6 +16,10 @@
  * @file FiniteElementBase.hpp
  */
 
+#if !defined(GEOSX_USE_CUDA)
+#define CALC_FEM_SHAPE_IN_KERNEL
+#endif
+
 
 #ifndef GEOSX_FINITEELEMENT_FINITEELEMENTBASE_HPP_
 #define GEOSX_FINITEELEMENT_FINITEELEMENTBASE_HPP_
@@ -95,6 +99,35 @@ public:
            J[2][0] * ( J[0][1]*J[1][2] - J[0][2]*J[1][1] );
   }
 
+  template< typename LEAF >
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  real64 getGradN( localIndex const k,
+                   localIndex const q,
+                   real64 const (&X)[LEAF::numNodes][3],
+                   real64 ( & gradN )[LEAF::numNodes][3] ) const
+  {
+    GEOSX_UNUSED_VAR( k );
+    return LEAF::calcGradN( q, X, gradN );
+  }
+
+
+  template< typename LEAF >
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  real64 getGradN( localIndex const k,
+                   localIndex const q,
+                   int const,
+                   real64 ( & gradN )[LEAF::numNodes][3] ) const
+  {
+    for( int a=0; a<LEAF::numNodes; ++a )
+    {
+      gradN[a][0] = m_viewGradN( k, q, a, 0 );
+      gradN[a][1] = m_viewGradN( k, q, a, 1 );
+      gradN[a][2] = m_viewGradN( k, q, a, 2 );
+    }
+    return m_viewDetJ( k, q );
+  }
 
 
   /**
