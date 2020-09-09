@@ -62,6 +62,10 @@ struct SolidModelDiscretizationOpsIsotropic : public SolidModelDiscretizationOps
   real64 m_shearModulus;
 };
 
+#if __GNUC__ && !defined(NDEBUG)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wshadow"
+#endif
 
 template< int NUM_SUPPORT_POINTS,
           typename BASIS_GRADIENT >
@@ -172,6 +176,9 @@ void SolidModelDiscretizationOpsIsotropic::diagRowSumBTDB( BASIS_GRADIENT const 
                                      gradNa_gradNb[2][2] * lambda2G;
   } );
 }
+#if __GNUC__ && !defined(NDEBUG)
+#pragma GCC diagnostic pop
+#endif
 
 }
 }

@@ -430,6 +430,11 @@ H1_Hexahedron_Lagrange1_GaussLegendre2::calcGradN( localIndex const q,
 }
 
 //*************************************************************************************************
+#if __GNUC__ && !defined(NDEBUG)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wshadow"
+#endif
+
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void
@@ -621,7 +626,9 @@ void H1_Hexahedron_Lagrange1_GaussLegendre2::gradient( int const q,
     }
   }, invJ, var, grad );
 }
-
+#if __GNUC__ && !defined(NDEBUG)
+#pragma GCC diagnostic pop
+#endif
 
 }
 }

@@ -68,6 +68,10 @@ struct SolidModelDiscretizationOpsTransverseIsotropic : public SolidModelDiscret
   real64 m_c66;
 };
 
+#if __GNUC__ && !defined(NDEBUG)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wshadow"
+#endif
 
 template< int NUM_SUPPORT_POINTS,
           typename BASIS_GRADIENT >
@@ -192,6 +196,9 @@ void SolidModelDiscretizationOpsTransverseIsotropic::diagRowSumBTDB( BASIS_GRADI
                                      c33 * gradNa_gradNb[2][2];
   } );
 }
+#if __GNUC__ && !defined(NDEBUG)
+#pragma GCC diagnostic pop
+#endif
 
 }
 }

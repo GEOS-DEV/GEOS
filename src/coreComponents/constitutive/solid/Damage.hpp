@@ -70,9 +70,9 @@ public:
                              localIndex const q,
                              typename UPDATE_BASE::DiscretizationOps & discOps ) const
   {
-    UPDATE_BASE::setDiscretizationOps(k, q, discOps);
+    UPDATE_BASE::setDiscretizationOps( k, q, discOps );
     real64 const damageFactor = ( 1.0 - m_damage( k, q ) )*( 1.0 - m_damage( k, q ) );
-    discOps.scaleParams(damageFactor);
+    discOps.scaleParams( damageFactor );
   }
 
 
