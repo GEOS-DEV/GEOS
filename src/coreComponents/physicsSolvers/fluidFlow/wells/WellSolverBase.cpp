@@ -206,15 +206,15 @@ void WellSolverBase::PrecomputeData( DomainPartition & domain )
   {
     PerforationData * const perforationData = subRegion.GetPerforationData();
 
-    arrayView2d< real64 const > const & wellElemLocation = subRegion.getElementCenter();
+    arrayView2d< real64 const > const wellElemLocation = subRegion.getElementCenter();
 
-    arrayView1d< real64 > const & wellElemGravCoef =
+    arrayView1d< real64 > const wellElemGravCoef =
       subRegion.getReference< array1d< real64 > >( viewKeyStruct::gravityCoefString );
 
-    arrayView1d< R1Tensor const > const & perfLocation =
+    arrayView1d< R1Tensor const > const perfLocation =
       perforationData->getReference< array1d< R1Tensor > >( PerforationData::viewKeyStruct::locationString );
 
-    arrayView1d< real64 > const & perfGravCoef =
+    arrayView1d< real64 > const perfGravCoef =
       perforationData->getReference< array1d< real64 > >( viewKeyStruct::gravityCoefString );
 
     for( localIndex iwelem = 0; iwelem < subRegion.size(); ++iwelem )
