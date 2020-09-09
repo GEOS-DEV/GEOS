@@ -67,7 +67,7 @@ geosx_osx_build: &geosx_osx_build
   - BREW_URL=https://raw.github.com/Homebrew/homebrew-core/${BREW_HASH}
 #   - brew install ${BREW_URL}/Formula/open-mpi.rb
 #   - brew install TotoGaz/geosx/open-mpi
-  - brew install toGaz/geosx/open-mpi
+  - brew install open-mpi
   <<: *geosx_before_script
   script:
   - python ${TRAVIS_BUILD_DIR}/scripts/config-build.py
