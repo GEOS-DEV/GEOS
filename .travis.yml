@@ -66,7 +66,7 @@ geosx_osx_build: &geosx_osx_build
   - BREW_HASH=$(echo -n ${METADATA} | python3 -c "import sys, json; print(json.load(sys.stdin)['metadata']['BREW_HASH'], end='')")
   - BREW_URL=https://raw.github.com/Homebrew/homebrew-core/${BREW_HASH}
   - wget ${BREW_URL}/Formula/open-mpi.rb
-  - brew install open-mpi.rb
+  - HOMEBREW_NO_AUTO_UPDATE=1 brew install ./open-mpi.rb
   <<: *geosx_before_script
   script:
   - python ${TRAVIS_BUILD_DIR}/scripts/config-build.py
