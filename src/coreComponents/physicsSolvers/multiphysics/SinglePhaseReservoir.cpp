@@ -141,10 +141,10 @@ void SinglePhaseReservoir::AssembleCouplingTerms( real64 const GEOSX_UNUSED_PARA
   ElementRegionManager const & elemManager = *meshLevel.getElemManager();
 
   string const resDofKey = dofManager.getKey( m_wellSolver->ResElementDofName() );
-  ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > resDofNumberAccessor =
+  ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > const resDofNumberAccessor =
     elemManager.ConstructArrayViewAccessor< globalIndex, 1 >( resDofKey );
-  ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > >::ViewTypeConst resDofNumber =
-    resDofNumberAccessor.toViewConst();
+  ElementRegionManager::ElementViewConst< arrayView1d< globalIndex const > > const resDofNumber =
+    resDofNumberAccessor.toNestedViewConst();
   globalIndex const rankOffset = dofManager.rankOffset();
 
   // loop over the wells
@@ -155,24 +155,24 @@ void SinglePhaseReservoir::AssembleCouplingTerms( real64 const GEOSX_UNUSED_PARA
 
     // get the degrees of freedom
     string const wellDofKey = dofManager.getKey( m_wellSolver->WellElementDofName() );
-    arrayView1d< globalIndex const > const & wellElemDofNumber =
+    arrayView1d< globalIndex const > const wellElemDofNumber =
       subRegion.getReference< array1d< globalIndex > >( wellDofKey );
 
     // get well variables on perforations
-    arrayView1d< real64 const > const & perfRate =
+    arrayView1d< real64 const > const perfRate =
       perforationData->getReference< array1d< real64 > >( SinglePhaseWell::viewKeyStruct::perforationRateString );
-    arrayView2d< real64 const > const & dPerfRate_dPres =
+    arrayView2d< real64 const > const dPerfRate_dPres =
       perforationData->getReference< array2d< real64 > >( SinglePhaseWell::viewKeyStruct::dPerforationRate_dPresString );
 
-    arrayView1d< localIndex const > const & perfWellElemIndex =
+    arrayView1d< localIndex const > const perfWellElemIndex =
       perforationData->getReference< array1d< localIndex > >( PerforationData::viewKeyStruct::wellElementIndexString );
 
     // get the element region, subregion, index
-    arrayView1d< localIndex const > const & resElementRegion =
+    arrayView1d< localIndex const > const resElementRegion =
       perforationData->getReference< array1d< localIndex > >( PerforationData::viewKeyStruct::reservoirElementRegionString );
-    arrayView1d< localIndex const > const & resElementSubRegion =
+    arrayView1d< localIndex const > const resElementSubRegion =
       perforationData->getReference< array1d< localIndex > >( PerforationData::viewKeyStruct::reservoirElementSubregionString );
-    arrayView1d< localIndex const > const & resElementIndex =
+    arrayView1d< localIndex const > const resElementIndex =
       perforationData->getReference< array1d< localIndex > >( PerforationData::viewKeyStruct::reservoirElementIndexString );
 
     // loop over the perforations and add the rates to the residual and jacobian

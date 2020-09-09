@@ -44,7 +44,7 @@ MeshUtilities::~MeshUtilities()
 void MeshUtilities::GenerateNodesets( dataRepository::Group const * geometries,
                                       NodeManager * const nodeManager )
 {
-  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X = nodeManager->referencePosition();
+  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X = nodeManager->referencePosition();
   localIndex const numNodes = nodeManager->size();
   Group & sets = nodeManager->sets();
 
