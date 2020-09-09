@@ -76,8 +76,7 @@ void solve_parallelDirect( LinearSolverParameters const & parameters,
                            LinearSolverResult & result )
 {
   // To be able to use SuperLU_Dist solver we need to disable floating point exceptions
-  // Disable floating point exceptions and save the FPE flags
-  int const fpeflags = LvArray::system::disableFloatingPointExceptions( FE_ALL_EXCEPT );
+  LvArray::system::FloatingPointExceptionGuard guard( FE_ALL_EXCEPT );
 
   MPI_Comm const comm = mat.getComm();
 
@@ -132,9 +131,6 @@ void solve_parallelDirect( LinearSolverParameters const & parameters,
 
   // destroy solver
   GEOSX_LAI_CHECK_ERROR( KSPDestroy( &ksp ) );
-
-  // Restore the previous FPE flags
-  LvArray::system::disableFloatingPointExceptions( fpeflags );
 }
 
 #ifdef GEOSX_USE_SUITESPARSE
@@ -145,8 +141,7 @@ void solve_serialDirect( LinearSolverParameters const & parameters,
                          LinearSolverResult & result )
 {
   // To be able to use UMFPACK direct solver we need to disable floating point exceptions
-  // Disable floating point exceptions and save the FPE flags
-  int const fpeflags = LvArray::system::disableFloatingPointExceptions( FE_ALL_EXCEPT );
+  LvArray::system::FloatingPointExceptionGuard guard( FE_ALL_EXCEPT );
 
   MPI_Comm const comm = mat.getComm();
 
@@ -242,9 +237,6 @@ void solve_serialDirect( LinearSolverParameters const & parameters,
       result.status = LinearSolverResult::Status::Breakdown;
     }
   }
-
-  // Restore the previous FPE flags
-  LvArray::system::disableFloatingPointExceptions( fpeflags );
 }
 #endif
 
