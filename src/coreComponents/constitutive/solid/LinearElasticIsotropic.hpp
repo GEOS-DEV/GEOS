@@ -310,19 +310,19 @@ real64 LinearElasticIsotropicUpdates::calculateStrainEnergyDensity( localIndex c
 
   //make adjustments for Volumetric Split
   /////////////////////////////////
-  real64 traceOfStress = this->m_stress(k,q,0) + this->m_stress(k,q,1) + this->m_stress(k,q,2);
-  real64 compressionIndicator = 0;
-  if (traceOfStress < 0.0)
-  {
-    compressionIndicator = 1;
-  }
-  real64 const activeStrainEnergyDensity = newStrainEnergyDensity - compressionIndicator*(traceOfStress/3.0)*(traceOfStress/3.0)/(2*m_bulkModulus[k]);
-  return activeStrainEnergyDensity;
+  //real64 traceOfStress = this->m_stress(k,q,0) + this->m_stress(k,q,1) + this->m_stress(k,q,2);
+  //real64 compressionIndicator = 0;
+  // if (traceOfStress < 0.0)
+  // {
+  //   compressionIndicator = 1;
+  // }
+  // real64 const activeStrainEnergyDensity = newStrainEnergyDensity - compressionIndicator*(traceOfStress/3.0)*(traceOfStress/3.0)/(2*m_bulkModulus[k]);
+  // return activeStrainEnergyDensity;
   /////////////////////////////////
   //end of adjustments
 
   //regular return
-  //return newStrainEnergyDensity;
+  return newStrainEnergyDensity;
 }
 
 

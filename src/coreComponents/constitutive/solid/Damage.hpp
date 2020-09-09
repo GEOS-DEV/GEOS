@@ -57,7 +57,7 @@ public:
   #if LORENTZ
 
   GEOSX_HOST_DEVICE
-  real64 GetDegradationValue( localIndex const k,
+  virtual real64 GetDegradationValue( localIndex const k,
                               localIndex const q) const {
      real64 m = 3*m_criticalFractureEnergy/(8*m_lengthScale*m_criticalStrainEnergy);
      real64 p = 1;
@@ -65,14 +65,14 @@ public:
   }
 
   GEOSX_HOST_DEVICE
-  real64 GetDegradationDerivative( real64 const d) const {
+  virtual real64 GetDegradationDerivative( real64 const d) const {
      real64 m = 3*m_criticalFractureEnergy/(8*m_lengthScale*m_criticalStrainEnergy);
      real64 p = 1;
      return -m*(1 - d)*(1 + (2*p + 1)*d) / pow( pow(1-d,2) + m*d*(1+p*d), 2);
   }
 
   GEOSX_HOST_DEVICE
-  real64 GetDegradationSecondDerivative( real64 const d) const {
+  virtual real64 GetDegradationSecondDerivative( real64 const d) const {
      real64 m = 3*m_criticalFractureEnergy/(8*m_lengthScale*m_criticalStrainEnergy);
      real64 p = 1;
      return -2*m*( pow(d,3)*(2*m*p*p + m*p + 2*p + 1) + pow(d,2)*(-3*m*p*p -3*p) + d*(-3*m*p - 3) + (-m+p+2) )/pow( pow(1-d,2) + m*d*(1+p*d), 3);
@@ -82,18 +82,18 @@ public:
   //Standard Quadratic Degradation Function
 
   GEOSX_HOST_DEVICE
-  real64 GetDegradationValue( localIndex const k,
+  virtual real64 GetDegradationValue( localIndex const k,
                               localIndex const q) const {
      return (1 - m_damage( k,q ))*(1 - m_damage( k,q ));
   }
 
   GEOSX_HOST_DEVICE
-  real64 GetDegradationDerivative( real64 const d) const {
+  virtual real64 GetDegradationDerivative( real64 const d) const {
      return -2*(1 - d);
   }
 
   GEOSX_HOST_DEVICE
-  real64 GetDegradationSecondDerivative( real64 const d) const {
+  virtual real64 GetDegradationSecondDerivative( real64 const d) const {
      return 2 * (d - d + 1);
   }
   #endif
@@ -101,68 +101,31 @@ public:
   GEOSX_HOST_DEVICE inline
   virtual void GetStiffness( localIndex const k,
                              localIndex const q,
-                             real64 (& c)[6][6] ) const override final
+                             real64 (& c)[6][6] ) const override
   {
-    // no tension-compression assymetry
-    // UPDATE_BASE::GetStiffness( k, q, c );
-    // real64 const damageFactor = ( 1.0 - m_damage( k, q ) )*( 1.0 - m_damage( k, q ) );
-    // for( localIndex i=0; i<6; ++i )
-    // {
-    //   for( localIndex j=0; j<6; ++j )
-    //   {
-    //     c[i][j] *= damageFactor;
-    //   }
-    // }
-
-    //Volumetric/Deviatoric Split
-
     UPDATE_BASE::GetStiffness( k, q, c );
-    real64 const damageFactor = GetDegradationValue( k,q );
-    real64 const K = UPDATE_BASE::getBulkModulus(k);
-    real64 traceOfStress = this->m_stress(k,q,0) + this->m_stress(k,q,1) + this->m_stress(k,q,2);
-    real64 compressionIndicator = 0;
-    if (traceOfStress < 0.0)
-    {
-      compressionIndicator = 1;
-    }
-
+    real64 const damageFactor = ( 1.0 - m_damage( k, q ) )*( 1.0 - m_damage( k, q ) );
     for( localIndex i=0; i<6; ++i )
     {
       for( localIndex j=0; j<6; ++j )
       {
-        if (i < 4 && j < 4) {
-          c[i][j] = damageFactor * c[i][j] + (1 - damageFactor)*K*compressionIndicator;
-        }
-        else {
-          c[i][j] *= damageFactor;
-        }
+        c[i][j] *= damageFactor;
       }
     }
-
+ 
   }
 
   GEOSX_HOST_DEVICE
-  virtual real64 calculateStrainEnergyDensity( localIndex const k,
-                                               localIndex const q ) const override final
+  virtual real64 calculateActiveStrainEnergyDensity( localIndex const k,
+                                               localIndex const q ) const 
   {
-    //real64 const K = UPDATE_BASE::getBulkModulus(k);
-    // real64 traceOfStress = this->m_stress(k,q,0) + this->m_stress(k,q,1) + this->m_stress(k,q,2);
-    // real64 compressionIndicator = 0;
-    // if (traceOfStress < 0.0)
-    // {
-    //   compressionIndicator = 1;
-    //   // std::cout << "compression state detected" <<std::endl;
-    //   // std::cout << "Strain Energy Would Be: "<< UPDATE_BASE::calculateStrainEnergyDensity(k,q) <<std::endl;
-    // }
-
-    //real64 const sed = UPDATE_BASE::calculateStrainEnergyDensity(k,q) - compressionIndicator*(traceOfStress/3.0)*(traceOfStress/3.0)/(2*K);
     real64 const sed = UPDATE_BASE::calculateStrainEnergyDensity(k,q);
 
     if( sed > m_strainEnergyDensity( k, q ) )
     {
       m_strainEnergyDensity( k, q ) = sed;
     }
-    // std::cout << "Strain Energy is: "<<m_strainEnergyDensity( k,q )<<std::endl;
+    
     return m_strainEnergyDensity( k, q );
   }
 
@@ -172,33 +135,16 @@ public:
                           real64 (& stress)[6] ) const override
   {
     //no tension-compression asymmetry
-
-    // real64 const damageFactor = ( 1.0 - m_damage( k, q ) )*( 1.0 - m_damage( k, q ) );
-    //
-    // stress[0] = this->m_stress(k,q,0) * damageFactor;
-    // stress[1] = this->m_stress(k,q,1) * damageFactor;
-    // stress[2] = this->m_stress(k,q,2) * damageFactor;
-    // stress[3] = this->m_stress(k,q,3) * damageFactor;
-    // stress[4] = this->m_stress(k,q,4) * damageFactor;
-    // stress[5] = this->m_stress(k,q,5) * damageFactor;
-
-    //volumetric-deviatoric split
-
+    
     real64 const damageFactor = GetDegradationValue( k,q );
-
-    real64 traceOfStress = this->m_stress(k,q,0) + this->m_stress(k,q,1) + this->m_stress(k,q,2);
-    real64 compressionIndicator = 0;
-    if (traceOfStress < 0.0)
-    {
-      compressionIndicator = 1;
-    }
-
-    stress[0] = this->m_stress(k,q,0) * damageFactor + traceOfStress / 3.0 * (1 - damageFactor) * compressionIndicator;
-    stress[1] = this->m_stress(k,q,1) * damageFactor + traceOfStress / 3.0 * (1 - damageFactor) * compressionIndicator;
-    stress[2] = this->m_stress(k,q,2) * damageFactor + traceOfStress / 3.0 * (1 - damageFactor) * compressionIndicator;
+  
+    stress[0] = this->m_stress(k,q,0) * damageFactor;
+    stress[1] = this->m_stress(k,q,1) * damageFactor;
+    stress[2] = this->m_stress(k,q,2) * damageFactor;
     stress[3] = this->m_stress(k,q,3) * damageFactor;
     stress[4] = this->m_stress(k,q,4) * damageFactor;
     stress[5] = this->m_stress(k,q,5) * damageFactor;
+
   }
 
   GEOSX_HOST_DEVICE

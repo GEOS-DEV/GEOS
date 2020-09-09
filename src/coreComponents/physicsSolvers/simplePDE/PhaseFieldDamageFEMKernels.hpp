@@ -171,7 +171,7 @@ public:
                                             StackVariables & stack ) const
   {
 
-    real64 const strainEnergyDensity = m_constitutiveUpdate.calculateStrainEnergyDensity( k, q );
+    real64 const strainEnergyDensity = m_constitutiveUpdate.calculateActiveStrainEnergyDensity( k, q );
     real64 const ell = m_constitutiveUpdate.getRegularizationLength();
     real64 const Gc = m_constitutiveUpdate.getCriticalFractureEnergy();
     real64 const threshold = m_constitutiveUpdate.getEnergyThreshold();
