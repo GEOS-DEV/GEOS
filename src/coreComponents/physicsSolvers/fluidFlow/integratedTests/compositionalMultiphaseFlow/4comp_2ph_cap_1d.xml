@@ -2,24 +2,7 @@
 
 <Problem>
   <Solvers>
-<<<<<<< HEAD
-  
-    <CompositionalMultiphaseFVM name="compflow"
-                                logLevel="1"
-                                discretization="fluidTPFA"
-                                targetRegions="{Region1}"
-                                fluidNames="{fluid1}"
-                                solidNames="{rock}"
-                                relPermNames="{relperm}"
-                                capPressureNames="{capPressure}"
-                                temperature="297.15"
-                                useMass="0">
-      <NonlinearSolverParameters newtonTol="1.0e-6"
-                                 newtonMaxIter="15"/>
-      <SystemSolverParameters useDirectSolver="1"/>
-    </CompositionalMultiphaseFVM>
-=======
-    <CompositionalMultiphaseFlow
+    <CompositionalMultiphaseFVM
       name="compflow"
       logLevel="1"
       discretization="fluidTPFA"
@@ -35,8 +18,7 @@
         newtonMaxIter="15"/>
       <LinearSolverParameters
         solverType="direct"/>
-    </CompositionalMultiphaseFlow>
->>>>>>> develop
+    </CompositionalMultiphaseFVM>
   </Solvers>
 
   <Mesh>

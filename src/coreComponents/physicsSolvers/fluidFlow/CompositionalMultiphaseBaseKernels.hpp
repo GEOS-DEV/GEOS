@@ -121,68 +121,6 @@ struct PhaseVolumeFractionKernel
           arrayView3d< real64 > const & dPhaseVolFrac_dComp );
 };
 
-/******************************** PhaseMobilityKernel ********************************/
-
-/**
- * @brief Functions to compute phase mobilities and derivatives from density, viscosity and relperm
- */
-struct PhaseMobilityKernel
-{
-  template< localIndex NC, localIndex NP >
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  static void
-  Compute( arraySlice2d< real64 const > const & dCompFrac_dCompDens,
-           arraySlice1d< real64 const > const & phaseDens,
-           arraySlice1d< real64 const > const & dPhaseDens_dPres,
-           arraySlice2d< real64 const > const & dPhaseDens_dComp,
-           arraySlice1d< real64 const > const & phaseVisc,
-           arraySlice1d< real64 const > const & dPhaseVisc_dPres,
-           arraySlice2d< real64 const > const & dPhaseVisc_dComp,
-           arraySlice1d< real64 const > const & phaseRelPerm,
-           arraySlice2d< real64 const > const & dPhaseRelPerm_dPhaseVolFrac,
-           arraySlice1d< real64 const > const & dPhaseVolFrac_dPres,
-           arraySlice2d< real64 const > const & dPhaseVolFrac_dComp,
-           arraySlice1d< real64 > const & phaseMob,
-           arraySlice1d< real64 > const & dPhaseMob_dPres,
-           arraySlice2d< real64 > const & dPhaseMob_dComp );
-
-  template< localIndex NC, localIndex NP >
-  static void
-  Launch( localIndex const size,
-          arrayView3d< real64 const > const & dCompFrac_dCompDens,
-          arrayView3d< real64 const > const & phaseDens,
-          arrayView3d< real64 const > const & dPhaseDens_dPres,
-          arrayView4d< real64 const > const & dPhaseDens_dComp,
-          arrayView3d< real64 const > const & phaseVisc,
-          arrayView3d< real64 const > const & dPhaseVisc_dPres,
-          arrayView4d< real64 const > const & dPhaseVisc_dComp,
-          arrayView3d< real64 const > const & phaseRelPerm,
-          arrayView4d< real64 const > const & dPhaseRelPerm_dPhaseVolFrac,
-          arrayView2d< real64 const > const & dPhaseVolFrac_dPres,
-          arrayView3d< real64 const > const & dPhaseVolFrac_dComp,
-          arrayView2d< real64 > const & phaseMob,
-          arrayView2d< real64 > const & dPhaseMob_dPres,
-          arrayView3d< real64 > const & dPhaseMob_dComp );
-
-  template< localIndex NC, localIndex NP >
-  static void
-  Launch( SortedArrayView< localIndex const > const & targetSet,
-          arrayView3d< real64 const > const & dCompFrac_dCompDens,
-          arrayView3d< real64 const > const & phaseDens,
-          arrayView3d< real64 const > const & dPhaseDens_dPres,
-          arrayView4d< real64 const > const & dPhaseDens_dComp,
-          arrayView3d< real64 const > const & phaseVisc,
-          arrayView3d< real64 const > const & dPhaseVisc_dPres,
-          arrayView4d< real64 const > const & dPhaseVisc_dComp,
-          arrayView3d< real64 const > const & phaseRelPerm,
-          arrayView4d< real64 const > const & dPhaseRelPerm_dPhaseVolFrac,
-          arrayView2d< real64 const > const & dPhaseVolFrac_dPres,
-          arrayView3d< real64 const > const & dPhaseVolFrac_dComp,
-          arrayView2d< real64 > const & phaseMob,
-          arrayView2d< real64 > const & dPhaseMob_dPres,
-          arrayView3d< real64 > const & dPhaseMob_dComp );
-};
 
 /******************************** FluidUpdateKernel ********************************/
 

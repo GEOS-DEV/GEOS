@@ -1,13 +1,13 @@
 <?xml version="1.0" ?>
 
 <Problem>
-  <Solvers>
+  <Solvers gravityVector="0.0, 0.0, 0.0">
     <CompositionalMultiphaseReservoir
       name="reservoirSystem"
       flowSolverName="compositionalMultiphaseFlow"
       wellSolverName="compositionalMultiphaseWell"
       logLevel="1"
-      targetRegions="{ Region1, wellRegion1, wellRegion2 }">
+      targetRegions="{ Channel, wellRegion1, wellRegion2 }">
       <NonlinearSolverParameters
         newtonTol="1.0e-8"
         lineSearchAction="None"
@@ -17,16 +17,17 @@
         logLevel="0"/>
     </CompositionalMultiphaseReservoir>
 
-    <CompositionalMultiphaseFVM
+    <CompositionalMultiphaseHybridFVM
       name="compositionalMultiphaseFlow"
       logLevel="1"
       discretization="fluidTPFA"
-      targetRegions="{ Region1 }"
+      targetRegions="{ Channel }"
       fluidNames="{ fluid1 }"
       solidNames="{ rock }"
       relPermNames="{ relperm }"
-      temperature="297.15"
-      useMass="0"/>
+      temperature="368.15"
+      maxCompFractionChange="0.2"
+      useMass="1"/>
 
     <CompositionalMultiphaseWell
       name="compositionalMultiphaseWell"
@@ -34,49 +35,43 @@
       targetRegions="{ wellRegion1, wellRegion2 }"
       fluidNames="{ fluid1 }"
       relPermNames="{ relperm }"
-      wellTemperature="297.15"
-      useMass="0">
+      wellTemperature="368.15"
+      maxCompFractionChange="0.2"      
+      useMass="1">
       <WellControls
         name="wellControls1"
         type="producer"
         control="BHP"
-        targetBHP="4e6"
+        targetBHP="1e6"
         targetRate="1"/>
       <WellControls
         name="wellControls2"
         type="injector"
         control="liquidRate"
         targetBHP="1e8"
-        targetRate="1e-4"
-        injectionStream="{ 0.1, 0.1, 0.1, 0.7 }"/>
+        targetRate="1e-2"
+        injectionStream="{ 0.995, 0.005 }"/>
     </CompositionalMultiphaseWell>
   </Solvers>
 
   <Mesh>
-    <InternalMesh
-      name="mesh1"
-      elementTypes="{ C3D8 }"
-      xCoords="{ 0, 5 }"
-      yCoords="{ 0, 1 }"
-      zCoords="{ 0, 1 }"
-      nx="{ 5 }"
-      ny="{ 1 }"
-      nz="{ 1 }"
-      cellBlockNames="{ cb1 }"/>
+
+    <PAMELAMeshGenerator name="mesh1"
+                         file="staircase3d_tet.msh"/>
 
     <InternalWell
       name="well_producer1"
       wellRegionName="wellRegion1"
       wellControlsName="wellControls1"
       meshName="mesh1"
-      polylineNodeCoords="{ { 4.5, 0, 2 },
-                            { 4.5, 0, 0.5 } }"
+      polylineNodeCoords="{ { 9.5, 0.5, 12 },
+                            { 9.5, 0.5, 0.05 } }"
       polylineSegmentConn="{ { 0, 1 } }"
       radius="0.1"
-      numElementsPerSegment="2">
+      numElementsPerSegment="20">
       <Perforation
         name="producer1_perf1"
-        distanceFromHead="1.45"/>
+        distanceFromHead="11.95"/>
     </InternalWell>
 
     <InternalWell
@@ -84,36 +79,52 @@
       wellRegionName="wellRegion2"
       wellControlsName="wellControls2"
       meshName="mesh1"
-      polylineNodeCoords="{ { 0.5, 0, 2 },
-                            { 0.5, 0, 0.5 } }"
+      polylineNodeCoords="{ { 9.5, 0.2, 12 },
+                            { 9.5, 0.2, 9.5 } }"
       polylineSegmentConn="{ { 0, 1 } }"
       radius="0.1"
-      numElementsPerSegment="3">
+      numElementsPerSegment="30">
       <Perforation
         name="injector1_perf1"
-        distanceFromHead="1.45"/>
+        distanceFromHead="2.45"/>
     </InternalWell>
   </Mesh>
 
   <Events
-    maxTime="2.5e4">
-    <PeriodicEvent
-      name="solverApplications"
-      forceDt="2.5e3"
-      target="/Solvers/reservoirSystem"/>
-
+    maxTime="2.5e5">
     <PeriodicEvent
       name="outputs"
-      timeFrequency="2.5e3"
+      timeFrequency="5e4"
       targetExactTimestep="1"
       target="/Outputs/siloOutput"/>
 
     <PeriodicEvent
+      name="solverApplications"
+      forceDt="5e4"
+      target="/Solvers/reservoirSystem"/>
+
+    <PeriodicEvent
       name="restarts"
-      timeFrequency="1.25e4"
+      timeFrequency="1.5e4"
       targetExactTimestep="0"
       target="/Outputs/restartOutput"/>
   </Events>
+
+  <ElementRegions>
+
+    <CellElementRegion
+      name="Channel"
+      cellBlocks="{ DEFAULT_TETRA }"
+      materialList="{ fluid1, rock, relperm }"/>
+    
+    <WellElementRegion
+      name="wellRegion1"
+      materialList="{ fluid1, relperm }"/>
+
+    <WellElementRegion
+      name="wellRegion2"
+      materialList="{ fluid1, relperm }"/>
+  </ElementRegions>
 
   <NumericalMethods>
     <FiniteVolume>
@@ -124,36 +135,14 @@
     </FiniteVolume>
   </NumericalMethods>
 
-  <ElementRegions>
-    <CellElementRegion
-      name="Region1"
-      cellBlocks="{ cb1 }"
-      materialList="{ fluid1, rock, relperm }"/>
-
-    <WellElementRegion
-      name="wellRegion1"
-      materialList="{ fluid1, relperm }"/>
-
-    <WellElementRegion
-      name="wellRegion2"
-      materialList="{ fluid1, relperm }"/>
-  </ElementRegions>
-
   <Constitutive>
-    <CompositionalMultiphaseFluid
+    <MultiPhaseMultiComponentFluid
       name="fluid1"
-      phaseNames="{ oil, gas }"
-      equationsOfState="{ PR, PR }"
-      componentNames="{ N2, C10, C20, H2O }"
-      componentCriticalPressure="{ 34e5, 25.3e5, 14.6e5, 220.5e5 }"
-      componentCriticalTemperature="{ 126.2, 622.0, 782.0, 647.0 }"
-      componentAcentricFactor="{ 0.04, 0.443, 0.816, 0.344 }"
-      componentMolarWeight="{ 28e-3, 134e-3, 275e-3, 18e-3 }"
-      componentVolumeShift="{ 0, 0, 0, 0 }"
-      componentBinaryCoeff="{ { 0, 0, 0, 0 },
-                              { 0, 0, 0, 0 },
-                              { 0, 0, 0, 0 },
-                              { 0, 0, 0, 0 } }"/>
+      phaseNames="{ gas, water }"
+      componentNames="{ co2, water }"
+      componentMolarWeight="{ 44e-3, 18e-3 }"
+      phasePVTParaFiles="{ pvtgas.txt, pvtliquid.txt }"
+      flashModelParaFile="co2flash.txt"/>
 
     <PoreVolumeCompressibleSolid
       name="rock"
@@ -162,96 +151,74 @@
 
     <BrooksCoreyRelativePermeability
       name="relperm"
-      phaseNames="{ oil, gas }"
-      phaseMinVolumeFraction="{ 0.1, 0.15 }"
-      phaseRelPermExponent="{ 2.0, 2.0 }"
+      phaseNames="{ gas, water }"
+      phaseMinVolumeFraction="{ 0.05, 0.05 }"
+      phaseRelPermExponent="{ 2, 1.5 }"
       phaseRelPermMaxValue="{ 0.8, 0.9 }"/>
   </Constitutive>
 
   <FieldSpecifications>
     <FieldSpecification
-      name="permx"
+      name="permx_channel"
       component="0"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions/Region1/cb1"
+      objectPath="ElementRegions/Channel"
       fieldName="permeability"
       scale="2.0e-16"/>
 
     <FieldSpecification
-      name="permy"
+      name="permy_channel"
       component="1"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions/Region1/cb1"
+      objectPath="ElementRegions/Channel"
       fieldName="permeability"
       scale="2.0e-16"/>
 
     <FieldSpecification
-      name="permz"
+      name="permz_channel"
       component="2"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions/Region1/cb1"
+      objectPath="ElementRegions/Channel"
       fieldName="permeability"
       scale="2.0e-16"/>
 
     <FieldSpecification
-      name="referencePorosity"
+      name="porosity_channel"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions/Region1/cb1"
+      objectPath="ElementRegions/Channel"
       fieldName="referencePorosity"
-      scale="0.05"/>
+      scale="0.1"/>
 
-    <!-- Initial pressure: ~5 bar -->
     <FieldSpecification
-      name="initialPressure"
+      name="initialPressure_channel"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions/Region1/cb1"
+      objectPath="ElementRegions/Channel"
       fieldName="pressure"
-      scale="5e6"/>
+      scale="9e6"/>
 
-    <!-- Initial composition: no water, only heavy hydrocarbon components and N2 -->
     <FieldSpecification
-      name="initialComposition_N2"
+      name="initialComposition_co2"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions/Region1/cb1"
+      objectPath="ElementRegions/Channel"
       fieldName="globalCompFraction"
       component="0"
-      scale="0.099"/>
+      scale="0.005"/>
 
     <FieldSpecification
-      name="initialComposition_C10"
+      name="initialComposition_water"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions/Region1/cb1"
+      objectPath="ElementRegions/Channel"
       fieldName="globalCompFraction"
       component="1"
-      scale="0.3"/>
-
-    <FieldSpecification
-      name="initialComposition_C20"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/Region1/cb1"
-      fieldName="globalCompFraction"
-      component="2"
-      scale="0.6"/>
-
-    <FieldSpecification
-      name="initialComposition_H20"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/Region1/cb1"
-      fieldName="globalCompFraction"
-      component="3"
-      scale="0.001"/>
+      scale="0.995"/>
   </FieldSpecifications>
-
-  <Functions/>
 
   <Outputs>
     <Silo

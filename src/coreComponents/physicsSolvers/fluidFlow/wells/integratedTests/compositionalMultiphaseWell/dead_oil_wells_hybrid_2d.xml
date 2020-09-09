@@ -1,7 +1,7 @@
 <?xml version="1.0" ?>
 
 <Problem>
-  <Solvers>
+  <Solvers gravityVector="0.0, 0.0, 0.0">
     <CompositionalMultiphaseReservoir
       name="reservoirSystem"
       flowSolverName="compositionalMultiphaseFlow"
@@ -9,15 +9,13 @@
       logLevel="1"
       targetRegions="{ Region1, wellRegion1, wellRegion2, wellRegion3 }">
       <NonlinearSolverParameters
-        newtonTol="1.0e-8"
-        lineSearchAction="None"
         newtonMaxIter="40"/>
       <LinearSolverParameters
         solverType="direct"
         logLevel="0"/>
     </CompositionalMultiphaseReservoir>
 
-    <CompositionalMultiphaseFVM
+    <CompositionalMultiphaseHybridFVM
       name="compositionalMultiphaseFlow"
       logLevel="1"
       discretization="fluidTPFA"
@@ -28,7 +26,6 @@
       temperature="297.15"
       useMass="0"/>
 
-    <!-- SPHINX_COMP_WELL_SOLVER -->
     <CompositionalMultiphaseWell
       name="compositionalMultiphaseWell"
       logLevel="1"
@@ -54,11 +51,9 @@
         type="injector"
         control="liquidRate"
         targetBHP="1e8"
-        targetRate="5e-3"
-        injectionStream="{ 0.1, 0.1, 0.1, 0.7 }"/>
+        targetRate="1e-1"
+        injectionStream="{ 0.0, 0.0, 1.0 }"/>
     </CompositionalMultiphaseWell>
-
-    <!-- SPHINX_COMP_WELL_SOLVER_END -->
   </Solvers>
 
   <Mesh>
@@ -139,21 +134,21 @@
   </Mesh>
 
   <Events
-    maxTime="7e3">
+    maxTime="1e6">
     <PeriodicEvent
       name="solverApplications"
-      forceDt="1e3"
+      forceDt="1e4"
       target="/Solvers/reservoirSystem"/>
 
     <PeriodicEvent
       name="outputs"
-      timeFrequency="1e3"
+      timeFrequency="1e5"
       targetExactTimestep="1"
       target="/Outputs/siloOutput"/>
 
     <PeriodicEvent
       name="restarts"
-      timeFrequency="3e3"
+      timeFrequency="5e5"
       targetExactTimestep="0"
       target="/Outputs/restartOutput"/>
   </Events>
@@ -187,20 +182,13 @@
   </ElementRegions>
 
   <Constitutive>
-    <CompositionalMultiphaseFluid
+    <BlackOilFluid
       name="fluid1"
-      phaseNames="{ oil, gas }"
-      equationsOfState="{ PR, PR }"
-      componentNames="{ N2, C10, C20, H2O }"
-      componentCriticalPressure="{ 34e5, 25.3e5, 14.6e5, 220.5e5 }"
-      componentCriticalTemperature="{ 126.2, 622.0, 782.0, 647.0 }"
-      componentAcentricFactor="{ 0.04, 0.443, 0.816, 0.344 }"
-      componentMolarWeight="{ 28e-3, 134e-3, 275e-3, 18e-3 }"
-      componentVolumeShift="{ 0, 0, 0, 0 }"
-      componentBinaryCoeff="{ { 0, 0, 0, 0 },
-                              { 0, 0, 0, 0 },
-                              { 0, 0, 0, 0 },
-                              { 0, 0, 0, 0 } }"/>
+      fluidType="DeadOil"
+      phaseNames="{ oil, gas, water }"
+      surfaceDensities="{ 800.0, 0.9907, 1022.0 }"
+      componentMolarWeight="{ 114e-3, 16e-3, 18e-3 }"
+      tableFiles="{ pvdo.txt, pvdg.txt, pvtw.txt }"/>
 
     <PoreVolumeCompressibleSolid
       name="rock"
@@ -209,10 +197,10 @@
 
     <BrooksCoreyRelativePermeability
       name="relperm"
-      phaseNames="{ oil, gas }"
-      phaseMinVolumeFraction="{ 0.1, 0.15 }"
-      phaseRelPermExponent="{ 2.0, 2.0 }"
-      phaseRelPermMaxValue="{ 0.8, 0.9 }"/>
+      phaseNames="{ oil, gas, water }"
+      phaseMinVolumeFraction="{ 0.05, 0.05, 0.05 }"
+      phaseRelPermExponent="{ 2.0, 2.0, 1.5 }"
+      phaseRelPermMaxValue="{ 0.8, 0.9, 0.9 }"/>
   </Constitutive>
 
   <FieldSpecifications>
@@ -260,41 +248,40 @@
       fieldName="pressure"
       scale="5e6"/>
 
+    <FieldSpecification
+      name="initialFacePressure"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="faceManager"
+      fieldName="facePressure"
+      scale="5e6"/>
+    
     <!-- Initial composition: no water, only heavy hydrocarbon components and N2 -->
     <FieldSpecification
-      name="initialComposition_N2"
+      name="initialComposition_oil"
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/Region1/cb1"
       fieldName="globalCompFraction"
       component="0"
-      scale="0.099"/>
+      scale="0.6"/>
 
     <FieldSpecification
-      name="initialComposition_C10"
+      name="initialComposition_gas"
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/Region1/cb1"
       fieldName="globalCompFraction"
       component="1"
-      scale="0.3"/>
+      scale="0.399"/>
 
     <FieldSpecification
-      name="initialComposition_C20"
+      name="initialComposition_water"
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/Region1/cb1"
       fieldName="globalCompFraction"
       component="2"
-      scale="0.6"/>
-
-    <FieldSpecification
-      name="initialComposition_H20"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/Region1/cb1"
-      fieldName="globalCompFraction"
-      component="3"
       scale="0.001"/>
   </FieldSpecifications>
 

@@ -147,6 +147,13 @@ public:
                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
                      arrayView1d< real64 > const & localRhs ) const override;
 
+  /**
+   * @brief Recompute phase mobility from constitutive and primary variables
+   * @param domain the domain containing the mesh and fields
+   */
+  virtual void
+  UpdatePhaseMobility( Group & dataGroup, localIndex const targetIndex ) const override;
+
   /**@}*/
 
   struct viewKeyStruct : CompositionalMultiphaseBase::viewKeyStruct

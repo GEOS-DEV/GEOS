@@ -46,12 +46,13 @@ void updateDensity( real64 const & refPres,
   dElemDens_dp = compressibility * elemDens;
 }
 
+template< localIndex NF >
 void updateUpwindedMobilities( globalIndex const elemDofNumber,
                                real64 const & elemDens,
                                real64 const & dElemDens_dp,
-                               arraySlice1d< real64 > const & upwMobility,
-                               arraySlice1d< real64 > const & dUpwMobility_dp,
-                               arraySlice1d< globalIndex > const & upwDofNumber )
+                               real64 (& upwMobility)[ NF ],
+                               real64 (& dUpwMobility_dp)[ NF ],
+                               globalIndex (& upwDofNumber)[ NF ] )
 {
   // we assume that viscosity is independent of pressure
   real64 const elemVisc = 0.001;
@@ -60,9 +61,9 @@ void updateUpwindedMobilities( globalIndex const elemDofNumber,
 
   for( localIndex ifaceLoc = 0; ifaceLoc < NF; ++ifaceLoc )
   {
-    upwMobility( ifaceLoc ) = elemMobility;
-    dUpwMobility_dp( ifaceLoc ) = dElemMobility_dp;
-    upwDofNumber( ifaceLoc ) = elemDofNumber;
+    upwMobility[ifaceLoc] = elemMobility;
+    dUpwMobility_dp[ifaceLoc] = dElemMobility_dp;
+    upwDofNumber[ifaceLoc] = elemDofNumber;
   }
 }
 
@@ -218,9 +219,9 @@ TEST( SinglePhaseHybridFVMKernels, assembleConstraints )
                              rhs,
                              rhsPerturb );
 
-  stackArray1d< real64, NF > oneSidedVolFlux( NF );
-  stackArray1d< real64, NF > dOneSidedVolFlux_dp( NF );
-  stackArray2d< real64, NF *NF > dOneSidedVolFlux_dfp( NF, NF );
+  real64 oneSidedVolFlux[ NF ] = { 0.0 };
+  real64 dOneSidedVolFlux_dp[ NF ] = { 0.0 };
+  real64 dOneSidedVolFlux_dfp[ NF ][ NF ] = {{ 0.0 }};
 
   ///////////////////////////////////////
   // 2) Compute analytical derivatives //
@@ -412,21 +413,21 @@ TEST( SinglePhaseHybridFVMKernels, assembleOneSidedMassFluxes )
                              rhs,
                              rhsPerturb );
 
-  stackArray1d< real64, NF > upwMobility( NF );
-  stackArray1d< real64, NF > dUpwMobility_dp( NF );
-  stackArray1d< globalIndex, NF > upwDofNumber( NF );
+  real64 upwMobility[ NF ] = { 0.0 };
+  real64 dUpwMobility_dp[ NF ] = { 0.0 };
+  globalIndex upwDofNumber[ NF ] = { 0 };
 
   // no upwinding to do since we are in a one-cell problem
-  updateUpwindedMobilities( elemDofNumber,
-                            elemDens,
-                            dElemDens_dp,
-                            upwMobility,
-                            dUpwMobility_dp,
-                            upwDofNumber );
+  updateUpwindedMobilities< NF >( elemDofNumber,
+                                  elemDens,
+                                  dElemDens_dp,
+                                  upwMobility,
+                                  dUpwMobility_dp,
+                                  upwDofNumber );
 
-  stackArray1d< real64, NF > oneSidedVolFlux( NF );
-  stackArray1d< real64, NF > dOneSidedVolFlux_dp( NF );
-  stackArray2d< real64, NF *NF > dOneSidedVolFlux_dfp( NF, NF );
+  real64 oneSidedVolFlux[ NF ] = { 0.0 };
+  real64 dOneSidedVolFlux_dp[ NF ] = { 0.0 };
+  real64 dOneSidedVolFlux_dfp[ NF ][ NF ] = {{ 0.0 }};
 
   ///////////////////////////////////////
   // 2) Compute analytical derivatives //
@@ -471,7 +472,7 @@ TEST( SinglePhaseHybridFVMKernels, assembleOneSidedMassFluxes )
   real64 const dElemPresPerturb = perturbParameter * (elemPres + perturbParameter);
   // we need to update density and mobility to account for the perturbation
   updateDensity( refPres, elemPres, dElemPresPerturb, elemDens, dElemDens_dp );
-  updateUpwindedMobilities( elemDofNumber, elemDens, dElemDens_dp, upwMobility, dUpwMobility_dp, upwDofNumber );
+  updateUpwindedMobilities< NF >( elemDofNumber, elemDens, dElemDens_dp, upwMobility, dUpwMobility_dp, upwDofNumber );
 
   LvArray::tensorOps::fill< NF >( oneSidedVolFlux, 0 );
   LvArray::tensorOps::fill< NF >( dOneSidedVolFlux_dp, 0 );
@@ -522,7 +523,7 @@ TEST( SinglePhaseHybridFVMKernels, assembleOneSidedMassFluxes )
   /////////////////////////////////////////////////////////////////////////////////
 
   updateDensity( refPres, elemPres, dElemPres, elemDens, dElemDens_dp );
-  updateUpwindedMobilities( elemDofNumber, elemDens, dElemDens_dp, upwMobility, dUpwMobility_dp, upwDofNumber );
+  updateUpwindedMobilities< NF >( elemDofNumber, elemDens, dElemDens_dp, upwMobility, dUpwMobility_dp, upwDofNumber );
   for( localIndex ifaceLoc = 0; ifaceLoc < NF; ++ifaceLoc )
   {
     dFacePres.setValues< serialPolicy >( 0 );

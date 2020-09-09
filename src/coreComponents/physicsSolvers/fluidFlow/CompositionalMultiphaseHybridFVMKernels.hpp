@@ -30,6 +30,61 @@ namespace geosx
 namespace CompositionalMultiphaseHybridFVMKernels
 {
 
+/******************************** PhaseMobilityKernel ********************************/
+
+/**
+ * @brief Functions to compute phase mobilities and derivatives from viscosity and relperm
+ */
+struct PhaseMobilityKernel
+{
+  template< localIndex NC, localIndex NP >
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  static void
+  Compute( arraySlice2d< real64 const > const & dCompFrac_dCompDens,
+           arraySlice1d< real64 const > const & phaseVisc,
+           arraySlice1d< real64 const > const & dPhaseVisc_dPres,
+           arraySlice2d< real64 const > const & dPhaseVisc_dComp,
+           arraySlice1d< real64 const > const & phaseRelPerm,
+           arraySlice2d< real64 const > const & dPhaseRelPerm_dPhaseVolFrac,
+           arraySlice1d< real64 const > const & dPhaseVolFrac_dPres,
+           arraySlice2d< real64 const > const & dPhaseVolFrac_dComp,
+           arraySlice1d< real64 > const & phaseMob,
+           arraySlice1d< real64 > const & dPhaseMob_dPres,
+           arraySlice2d< real64 > const & dPhaseMob_dComp );
+
+  template< localIndex NC, localIndex NP >
+  static void
+  Launch( localIndex const size,
+          arrayView3d< real64 const > const & dCompFrac_dCompDens,
+          arrayView3d< real64 const > const & phaseVisc,
+          arrayView3d< real64 const > const & dPhaseVisc_dPres,
+          arrayView4d< real64 const > const & dPhaseVisc_dComp,
+          arrayView3d< real64 const > const & phaseRelPerm,
+          arrayView4d< real64 const > const & dPhaseRelPerm_dPhaseVolFrac,
+          arrayView2d< real64 const > const & dPhaseVolFrac_dPres,
+          arrayView3d< real64 const > const & dPhaseVolFrac_dComp,
+          arrayView2d< real64 > const & phaseMob,
+          arrayView2d< real64 > const & dPhaseMob_dPres,
+          arrayView3d< real64 > const & dPhaseMob_dComp );
+
+  template< localIndex NC, localIndex NP >
+  static void
+  Launch( SortedArrayView< localIndex const > const & targetSet,
+          arrayView3d< real64 const > const & dCompFrac_dCompDens,
+          arrayView3d< real64 const > const & phaseVisc,
+          arrayView3d< real64 const > const & dPhaseVisc_dPres,
+          arrayView4d< real64 const > const & dPhaseVisc_dComp,
+          arrayView3d< real64 const > const & phaseRelPerm,
+          arrayView4d< real64 const > const & dPhaseRelPerm_dPhaseVolFrac,
+          arrayView2d< real64 const > const & dPhaseVolFrac_dPres,
+          arrayView3d< real64 const > const & dPhaseVolFrac_dComp,
+          arrayView2d< real64 > const & phaseMob,
+          arrayView2d< real64 > const & dPhaseMob_dPres,
+          arrayView3d< real64 > const & dPhaseMob_dComp );
+};
+
+
 /******************************** UpwindingHelper ********************************/
 
 struct UpwindingHelper
@@ -45,6 +100,28 @@ struct UpwindingHelper
   template< typename VIEWTYPE >
   using ElementView = typename ElementRegionManager::ElementViewAccessor< VIEWTYPE >::ViewTypeConst;
 
+  /**
+   * @brief At a given one-sided face, compute the upwind viscous transport coefficient
+   * @param[in] er index of this element's region
+   * @param[in] esr index of this element's subregion
+   * @param[in] ei index of this element
+   * @param[in] ifaceLoc the local index of this face
+   * @param[in] phaseDens the phase densities in the domain (non-local)
+   * @param[in] dPhaseDens_dPres the derivatives of the phase densities in the domain wrt pressure (non-local)
+   * @param[in] dPhaseDens_dCompFrac the derivatives of the phase densities in the domain wrt component fraction (non-local)
+   * @param[in] phaseMob the phase mobilities in the domain (non-local)
+   * @param[in] dPhaseMob_dPres the derivatives of the phase mobilities in the domain wrt pressure (non-local)
+   * @param[in] dPhaseMob_dCompDens the derivatives of the phase mobilities in the domain wrt component fraction (non-local)
+   * @param[in] dCompFrac_dCompDens the derivatives of the component fraction in the domain wrt component density (non-local)
+   * @param[in] phaseCompFrac the phase component fractions in the domain (non-local)
+   * @param[in] dPhaseCompFrac_dPres the derivatives of the phase component fractions in the domain wrt pressure (non-local)
+   * @param[in] dPhaseCompFrac_dCompFrac the derivatives of the phase component fractions in the domain wrt component fraction (non-local)
+   * @param[in] elemDofNumber the dof number of the cell centered pressures (non-local)
+   * @param[out] upwPhaseViscCoef the upwind viscous transport coef at this face
+   * @param[out] dUpwPhaseViscCoef_dPres the derivative of the upwind viscous transport coef wrt pressure at this face
+   * @param[out] dUpwPhaseViscCoef_dCompDens the derivatives of the upwind viscous transport coef wrt component density at this face
+   * @param[out] upwDofNumber the dof number of the upwind cell at this face
+   */
   template< localIndex NF, localIndex NC, localIndex NP >
   GEOSX_HOST_DEVICE
   static void
@@ -65,7 +142,6 @@ struct UpwindingHelper
                        real64 ( &dUpwPhaseViscCoef_dPres )[ NF ][ NP ][ NC ],
                        real64 ( &dUpwPhaseViscCoef_dCompDens )[ NF ][ NP ][ NC ][ NC ],
                        globalIndex ( &upwDofNumber )[ NF ][ NP ] );
-
 };
 
 struct AssemblerKernelHelper
@@ -90,12 +166,18 @@ struct AssemblerKernelHelper
    * @param[in] elemPres the pressure at this element's center
    * @param[in] dElemPres the accumulated pressure updates at this element's center
    * @param[in] elemGravDepth the depth at this element's center
-   * @param[in] elemDens the density at this elenent's center
-   * @param[in] dElemDens_dp the derivative of the density at this element's center
+   * @param[in] phaseDens the phase densities in the element
+   * @param[in] dPhaseDens_dPres the derivatives of the phase densities in the element wrt pressire
+   * @param[in] dPhaseDens_dCompFrac the derivatives of the phase densities in the element wrt component fraction
+   * @param[in] phaseMob the phase mobilities in the element
+   * @param[in] dPhaseMob_dPres the derivatives of the phase mobilities in the element wrt pressure
+   * @param[in] dPhaseMob_dCompDens the derivatives of the phase mobilities in the element wrt component fraction
+   * @param[in] dCompFrac_dCompDens the derivatives of the component fraction in the element wrt component density
    * @param[in] transMatrix the transmissibility matrix in this element
    * @param[out] oneSidedVolFlux the volumetric fluxes at this element's faces
-   * @param[out] dOneSidedVolFlux_dp the derivatives of the vol fluxes wrt to this element's cell centered pressure
-   * @param[out] dOneSidedVolFlux_dfp the derivatives of the vol fluxes wrt to this element's face pressures
+   * @param[out] dOneSidedVolFlux_dPres the derivatives of the vol fluxes wrt to this element's cell centered pressure
+   * @param[out] dOneSidedVolFlux_dFacePres the derivatives of the vol fluxes wrt to this element's face pressures
+   * @param[out] dOneSidedVolFlux_dCompDens the derivatives of the vol fluxes wrt to this element's component density
    */
   template< localIndex NF, localIndex NC, localIndex NP >
   GEOSX_HOST_DEVICE
@@ -110,6 +192,9 @@ struct AssemblerKernelHelper
                               arraySlice1d< real64 const > const & elemPhaseDens,
                               arraySlice1d< real64 const > const & dElemPhaseDens_dPres,
                               arraySlice2d< real64 const > const & dElemPhaseDens_dCompFrac,
+                              arraySlice1d< real64 const > const & elemPhaseMob,
+                              arraySlice1d< real64 const > const & dElemPhaseMob_dPres,
+                              arraySlice2d< real64 const > const & dElemPhaseMob_dCompDens,
                               arraySlice2d< real64 const > const & dElemCompFrac_dCompDens,
                               arraySlice2d< real64 const > const & transMatrix,
                               real64 ( &oneSidedVolFlux )[ NF ],
@@ -118,25 +203,31 @@ struct AssemblerKernelHelper
                               real64 ( &dOneSidedVolFlux_dCompDens )[ NF ][ NC ] );
 
   /**
-   * @brief In a given element, collect the upwinded mobilities at this element's faces
+   * @brief In a given element, collect the upwinded viscous transport coefficients at this element's faces.
+   * @param[in] er index of this element's region
+   * @param[in] esr index of this element's subregion
+   * @param[in] ei index of this element
    * @param[in] elemRegionList face-to-elemRegions map
    * @param[in] elemSubRegionList face-to-elemSubRegions map
    * @param[in] elemList face-to-elemIds map
    * @param[in] regionFilter set containing the indices of the target regions
    * @param[in] elemToFaces elem-to-faces maps
-   * @param[in] mob the mobilities in the domain (non-local)
-   * @param[in] dMob_dp the derivatives of the mobilities in the domain wrt cell-centered pressure (non-local)
-   * @param[in] elemDofNumber the dof numbers of all the cell centered pressures (non-local)
-   * @param[in] er index of this element's region
-   * @param[in] esr index of this element's subregion
-   * @param[in] ei index of this element
+   * @param[in] phaseDens the phase densities in the domain (non-local)
+   * @param[in] dPhaseDens_dPres the derivatives of the phase densities in the domain wrt pressure (non-local)
+   * @param[in] dPhaseDens_dCompFrac the derivatives of the phase densities in the domain wrt component fraction (non-local)
+   * @param[in] phaseMob the phase mobilities in the domain (non-local)
+   * @param[in] dPhaseMob_dPres the derivatives of the phase mobilities in the domain wrt pressure (non-local)
+   * @param[in] dPhaseMob_dCompDens the derivatives of the phase mobilities in the domain wrt component fraction (non-local)
+   * @param[in] dCompFrac_dCompDens the derivatives of the component fraction in the domain wrt component density (non-local)
+   * @param[in] phaseCompFrac the phase component fractions in the domain (non-local)
+   * @param[in] dPhaseCompFrac_dPres the derivatives of the phase component fractions in the domain wrt pressure (non-local)
+   * @param[in] dPhaseCompFrac_dCompFrac the derivatives of the phase component fractions in the domain wrt component fraction (non-local)
+   * @param[in] elemDofNumber the dof number of the cell centered pressures (non-local)
    * @param[in] oneSidedVolFlux the volumetric fluxes at this element's faces
-   * @param[inout] upwMobility the upwinded mobilities at this element's faces
-   * @param[inout] dUpwMobility_dp the derivatives of the upwinded mobilities wrt the cell-centered pressures (local or
-   * neighbor)
-   * @param[inout] upwDofNumber  the dof number of the upwind pressure
-   *
-   * Note: because of the upwinding, this function requires non-local information
+   * @param[out] upwPhaseViscCoef the upwind viscous transport coef for each face
+   * @param[out] dUpwPhaseViscCoef_dPres the derivative of the upwind viscous transport coef wrt pressure for each face
+   * @param[out] dUpwPhaseViscCoef_dCompDens the derivatives of the upwind viscous transport coef wrt component density for each face
+   * @param[out] upwDofNumber the dof number of the upwind cell for each face
    */
   template< localIndex NF, localIndex NC, localIndex NP >
   GEOSX_HOST_DEVICE
@@ -165,18 +256,20 @@ struct AssemblerKernelHelper
                                 globalIndex ( &upwDofNumber )[ NF ][ NP ] );
 
   /**
-   * @brief In a given element, assemble the mass conservation equation
-   * @param[in] dt the time step size
-   * @param[in] faceDofNumber the dof numbers of the face pressures
+   * @brief In a given element, assemble the mass conservation equations.
+   * @param[in] faceDofNumber the dof numbers of the face pressures in this subRegion
    * @param[in] elemToFaces the map from one-sided face to face to access face Dof numbers
    * @param[in] elemDofNumber the dof number of this element's cell centered pressure
+   * @param[in] rankOffset the offset of this rank
    * @param[in] oneSidedVolFlux the volumetric fluxes at this element's faces
-   * @param[in] dOneSidedVolFlux_dp the derivatives of the vol fluxes wrt to this element's cell centered pressure
-   * @param[in] dOneSidedVolFlux_dfp the derivatives of the vol fluxes wrt to this element's face pressures
-   * @param[in] upwMobility the upwinded mobilities at this element's faces
-   * @param[in] dUpwMobility_dp the derivatives of the upwinded mobilities wrt the cell-centered pressures (local or
-   * neighbor)
-   * @param[in] upwDofNumber  the dof number of the upwind pressure
+   * @param[in] dOneSidedVolFlux_dPres the derivatives of the vol fluxes wrt to this element's cell centered pressure
+   * @param[in] dOneSidedVolFlux_dFacePres the derivatives of the vol fluxes wrt to this element's face pressures
+   * @param[in] dOneSidedVolFlux_dCompDens the derivatives of the vol fluxes wrt to this element's component density
+   * @param[in] upwPhaseViscCoef the upwind viscous transport coef for each face
+   * @param[in] dUpwPhaseViscCoef_dPres the derivative of the upwind viscous transport coef wrt pressure for each face
+   * @param[in] dUpwPhaseViscCoef_dCompDens the derivatives of the upwind viscous transport coef wrt component density for each face
+   * @param[in] upwDofNumber the dof number of the upwind cell for each face
+   * @param[in] dt the time step size
    * @param[inout] matrix the jacobian matrix
    * @param[inout] rhs the residual
    */
@@ -201,12 +294,15 @@ struct AssemblerKernelHelper
 
   /**
    * @brief In a given element, assemble the constraints at this element's faces
-   * @param[in] faceDofNumber the dof numbers of the face pressures
+   * @param[in] faceDofNumber the dof numbers of the face pressures in the subRegion
+   * @param[in] faceGhostRank the ghost ranks of the face pressures in the subRegion
    * @param[in] elemToFaces the map from one-sided face to face to access face Dof numbers
    * @param[in] elemDofNumber the dof number of this element's cell centered pressure
+   * @param[in] rankOffset the offset of this rank
    * @param[in] oneSidedVolFlux the volumetric fluxes at this element's faces
-   * @param[in] dOneSidedVolFlux_dp the derivatives of the vol fluxes wrt to this element's cell centered pressure
-   * @param[in] dOneSidedVolFlux_dfp the derivatives of the vol fluxes wrt to this element's face pressures
+   * @param[in] dOneSidedVolFlux_dPres the derivatives of the vol fluxes wrt to this element's cell centered pressure
+   * @param[in] dOneSidedVolFlux_dFacePres the derivatives of the vol fluxes wrt to this element's face pressures
+   * @param[in] dOneSidedVolFlux_dCompDens the derivatives of the vol fluxes wrt to this element's component density
    * @param[inout] matrix the jacobian matrix
    * @param[inout] rhs the residual
    */
@@ -243,7 +339,7 @@ struct AssemblerKernel
   using ElementView = typename ElementRegionManager::ElementViewAccessor< VIEWTYPE >::ViewTypeConst;
 
   /**
-   * @brief In a given element, assemble the mass conservation equation and the contribution of this element to the face
+   * @brief In a given element, assemble the mass conservation equations and the contribution of this element to the face
    * constraints
    * @param[in] er index of this element's region
    * @param[in] esr index of this element's subregion
@@ -260,14 +356,23 @@ struct AssemblerKernel
    * @param[in] elemToFaces the map from one-sided face to face
    * @param[in] elemPres the pressure at this element's center
    * @param[in] dElemPres the accumulated pressure updates at this element's center
-   * @param[in] eleomGravCoef the depth at this element's center
-   * @param[in] elemDens the density at this elenent's center
-   * @param[in] dElemDens_dp the derivative of the density at this element's center
-   * @param[in] mobility the mobilities in the domain (non-local)
-   * @param[in] dMobility_dPres the derivatives of the mobilities in the domain wrt cell-centered pressure (non-local)
+   * @param[in] elemGravCoef the depth at this element's center
+   * @param[in] phaseDens the phase densities in the domain (non-local)
+   * @param[in] dPhaseDens_dPres the derivatives of the phase densities in the domain wrt pressure (non-local)
+   * @param[in] dPhaseDens_dCompFrac the derivatives of the phase densities in the domain wrt component fraction (non-local)
+   * @param[in] phaseMob the phase mobilities in the domain (non-local)
+   * @param[in] dPhaseMob_dPres the derivatives of the phase mobilities in the domain wrt pressure (non-local)
+   * @param[in] dPhaseMob_dCompDens the derivatives of the phase mobilities in the domain wrt component fraction (non-local)
+   * @param[in] dCompFrac_dCompDens the derivatives of the component fraction in the domain wrt component density (non-local)
+   * @param[in] phaseCompFrac the phase component fractions in the domain (non-local)
+   * @param[in] dPhaseCompFrac_dPres the derivatives of the phase component fractions in the domain wrt pressure (non-local)
+   * @param[in] dPhaseCompFrac_dCompFrac the derivatives of the phase component fractions in the domain wrt component fraction (non-local)
    * @param[in] elemDofNumber the dof number of the cell centered pressures (non-local)
-   * @param[in] transMatrix the transmissibility matrix in this element
+   * @param[in] elemGhostRank the ghost rank of the element in which we assemble the fluxes
+   * @param[in] rankOffset the offset of this rank
+   * @param[in] lengthTolerance tolerance used in the transmissibility matrix computation
    * @param[in] dt time step size
+   * @param[in] transMatrix the transmissibility matrix in this element
    * @param[inout] matrix the system matrix
    * @param[inout] rhs the system right-hand side vector
    */
@@ -325,35 +430,39 @@ struct FluxKernel
   using ElementView = typename ElementRegionManager::ElementViewAccessor< VIEWTYPE >::ViewTypeConst;
 
   /**
-   * @brief In a given element, assemble the mass conservation equation and the contribution of this element to the face
-   * constraints
-   * @param[in] numPhases number of fluid phases
-   * @param[in] numComponents number of components
+   * @brief In a given subRegion, assemble the mass conservation equations and the contribution of the elements of this subRegion  to the
+   * face constraints.
    * @param[in] er index of this element's region
    * @param[in] esr index of this element's subregion
-   * @param[in] ei index of this element
+   * @param[in] subRegion the subRegion in which we are going to assemble the fluxes
    * @param[in] regionFilter set containing the indices of the target regions
+   * @param[in] nodePosition position of the nodes
    * @param[in] elemRegionList face-to-elemRegions map
    * @param[in] elemSubRegionList face-to-elemSubRegions map
    * @param[in] elemList face-to-elemIds map
+   * @param[in] faceToNodes map from face to nodes
    * @param[in] faceDofNumber the dof numbers of the face pressures
-   * @param[in] facePotential the phase potentials at the mesh faces at the beginning of the time step
-   * @param[in] dFacePotential the accumulated potential updates at the mesh face
+   * @param[in] faceGhostRank  the ghost ranks of the face pressures
+   * @param[in] facePres the pressures at the mesh faces at the beginning of the time step
+   * @param[in] dFacePres the accumulated pressure updates at the mesh face
    * @param[in] faceGravDepth the depth at the mesh faces
    * @param[in] elemToFaces the map from one-sided face to face
    * @param[in] elemPres the pressure at this element's center
    * @param[in] dElemPres the accumulated pressure updates at this element's center
    * @param[in] elemGravDepth the depth at this element's center
-   * @param[in] elemDens the density at this elenent's center
-   * @param[in] dElemDens_dPres the derivative of the density wrt pressure at this element's center
-   * @param[in] dElemDens_dComp the derivative of the density wrt component densities at this element's center
-   * @param[in] elemPhaseMobility the mobilities in the domain (non-local)
-   * @param[in] dElemPhaseMobility_dPres the derivatives of the mobilities in the domain wrt cell-centered pressure
-   *(non-local)
-   * @param[in] dElemPhaseMobility_dComp the derivatives of the mobilities in the domain wrt cell-centered component
-   * densities (non-local)
+   * @param[in] phaseDens the phase densities in the domain (non-local)
+   * @param[in] dPhaseDens_dPres the derivatives of the phase densities in the domain wrt pressure (non-local)
+   * @param[in] dPhaseDens_dCompFrac the derivatives of the phase densities in the domain wrt component fraction (non-local)
+   * @param[in] phaseMob the phase mobilities in the domain (non-local)
+   * @param[in] dPhaseMob_dPres the derivatives of the phase mobilities in the domain wrt pressure (non-local)
+   * @param[in] dPhaseMob_dCompDens the derivatives of the phase mobilities in the domain wrt component fraction (non-local)
+   * @param[in] dCompFrac_dCompDens the derivatives of the component fraction in the domain wrt component density (non-local)
+   * @param[in] phaseCompFrac the phase component fractions in the domain (non-local)
+   * @param[in] dPhaseCompFrac_dPres the derivatives of the phase component fractions in the domain wrt pressure (non-local)
+   * @param[in] dPhaseCompFrac_dCompFrac the derivatives of the phase component fractions in the domain wrt component fraction (non-local)
    * @param[in] elemDofNumber the dof number of the cell centered pressures (non-local)
-   * @param[in] transMatrix the transmissibility matrix in this element
+   * @param[in] rankOffset the offset of this rank
+   * @param[in] lengthTolerance tolerance used in the transmissibility matrix computation
    * @param[in] dt time step size
    * @param[inout] matrix the system matrix
    * @param[inout] rhs the system right-hand side vector
@@ -406,6 +515,7 @@ struct ResidualNormKernel
           localIndex const numPhases,
           arrayView1d< globalIndex const > const & facePresDofNumber,
           arrayView1d< integer const > const & faceGhostRank,
+          SortedArrayView< localIndex const > const & regionFilter,
           arrayView2d< localIndex const > const & elemRegionList,
           arrayView2d< localIndex const > const & elemSubRegionList,
           arrayView2d< localIndex const > const & elemList,
@@ -418,7 +528,7 @@ struct ResidualNormKernel
 
     forAll< POLICY >( facePresDofNumber.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iface )
     {
-      // if not ghost face and if adjacent to target region
+      // if not ghost face and if adjacent to target region, increment the residual norm
       if( faceGhostRank[iface] < 0 && facePresDofNumber[iface] >= 0 )
       {
         real64 normalizer = 0;
@@ -430,10 +540,11 @@ struct ResidualNormKernel
           localIndex const ei  = elemList[iface][k];
 
           bool const onBoundary = (er == -1 || esr == -1 || ei == -1);
+          bool const isInTarget = regionFilter.contains( er );
 
-          // if not on boundary, save the mobility and the upwDofNumber
-          if( !onBoundary )
+          if( !onBoundary && isInTarget )
           {
+            // compute a normalizer to obtain a dimensionless norm
             real64 totalMobOld = 0.0;
             for( localIndex ip = 0; ip < numPhases; ++ip )
             {
@@ -446,8 +557,8 @@ struct ResidualNormKernel
         }
         normalizer /= elemCounter;
 
-        localIndex const lid = facePresDofNumber[iface] - rankOffset;
-        real64 const val = localResidual[lid] / normalizer; // to get something dimensionless
+        localIndex const lid = LvArray::integerConversion< localIndex >( facePresDofNumber[iface] - rankOffset );
+        real64 const val = localResidual[lid] / normalizer;
         sumScaled += val * val;
       }
     } );
@@ -476,9 +587,9 @@ struct SolutionCheckKernel
 
     forAll< POLICY >( dofNumber.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iface )
     {
-      if( ghostRank[iface] < 0 )
+      if( ghostRank[iface] < 0 && dofNumber[iface] >= 0 )
       {
-        localIndex const localRow = dofNumber[iface] - rankOffset;
+        localIndex const localRow = LvArray::integerConversion< localIndex >( dofNumber[iface] - rankOffset );
         {
           real64 const newFacePres = facePres[iface] + dFacePres[iface] + scalingFactor * localSolution[localRow];
           check.min( newFacePres >= 0.0 );

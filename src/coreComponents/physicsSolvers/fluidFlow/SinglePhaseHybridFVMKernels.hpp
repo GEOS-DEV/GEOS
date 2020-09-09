@@ -65,19 +65,19 @@ struct AssemblerKernelHelper
   template< localIndex NF >
   GEOSX_HOST_DEVICE
   static void
-  ComputeOneSidedVolFluxes( arrayView1d< real64 const > const & facePres,
-                            arrayView1d< real64 const > const & dFacePres,
-                            arrayView1d< real64 const > const & faceGravCoef,
-                            arraySlice1d< localIndex const > const & elemToFaces,
-                            real64 const & elemPres,
-                            real64 const & dElemPres,
-                            real64 const & elemGravDepth,
-                            real64 const & elemDens,
-                            real64 const & dElemDens_dp,
-                            arraySlice2d< real64 const > const & transMatrix,
-                            arraySlice1d< real64 > const & oneSidedVolFlux,
-                            arraySlice1d< real64 > const & dOneSidedVolFlux_dp,
-                            arraySlice2d< real64 > const & dOneSidedVolFlux_dfp );
+    ComputeOneSidedVolFluxes( arrayView1d< real64 const > const & facePres,
+                              arrayView1d< real64 const > const & dFacePres,
+                              arrayView1d< real64 const > const & faceGravCoef,
+                              arraySlice1d< localIndex const > const & elemToFaces,
+                              real64 const & elemPres,
+                              real64 const & dElemPres,
+                              real64 const & elemGravDepth,
+                              real64 const & elemDens,
+                              real64 const & dElemDens_dp,
+                              arraySlice2d< real64 const > const & transMatrix,
+                              real64 ( &oneSidedVolFlux )[ NF ],
+                              real64 ( &dOneSidedVolFlux_dp )[ NF ],
+                              real64 ( &dOneSidedVolFlux_dfp )[ NF ][ NF ] );
 
   /**
    * @brief In a given element, collect the upwinded mobilities at this element's faces
@@ -103,21 +103,21 @@ struct AssemblerKernelHelper
   template< localIndex NF >
   GEOSX_HOST_DEVICE
   static void
-  UpdateUpwindedCoefficients( localIndex const er,
-                              localIndex const esr,
-                              localIndex const ei,
-                              arrayView2d< localIndex const > const & elemRegionList,
-                              arrayView2d< localIndex const > const & elemSubRegionList,
-                              arrayView2d< localIndex const > const & elemList,
-                              SortedArrayView< localIndex const > const & regionFilter,
-                              arraySlice1d< localIndex const > const & elemToFaces,
-                              ElementView< arrayView1d< real64 const > > const & mobility,
-                              ElementView< arrayView1d< real64 const > > const & dMobility_dp,
-                              ElementView< arrayView1d< globalIndex const > > const & elemDofNumber,
-                              arraySlice1d< real64 const > const & oneSidedVolFlux,
-                              arraySlice1d< real64 > const & upwMobility,
-                              arraySlice1d< real64 > const & dUpwMobility_dp,
-                              arraySlice1d< globalIndex > const & upwDofNumber );
+    UpdateUpwindedCoefficients( localIndex const er,
+                                localIndex const esr,
+                                localIndex const ei,
+                                arrayView2d< localIndex const > const & elemRegionList,
+                                arrayView2d< localIndex const > const & elemSubRegionList,
+                                arrayView2d< localIndex const > const & elemList,
+                                SortedArrayView< localIndex const > const & regionFilter,
+                                arraySlice1d< localIndex const > const & elemToFaces,
+                                ElementView< arrayView1d< real64 const > > const & mobility,
+                                ElementView< arrayView1d< real64 const > > const & dMobility_dp,
+                                ElementView< arrayView1d< globalIndex const > > const & elemDofNumber,
+                                real64 const (&oneSidedVolFlux)[ NF ],
+                                real64 ( &upwMobility )[ NF ],
+                                real64 ( &dUpwMobility_dp )[ NF ],
+                                globalIndex ( &upwDofNumber )[ NF ] );
 
   /**
    * @brief In a given element, assemble the mass conservation equation
@@ -142,12 +142,12 @@ struct AssemblerKernelHelper
                               arraySlice1d< localIndex const > const & elemToFaces,
                               globalIndex const elemDofNumber,
                               globalIndex const rankOffset,
-                              arraySlice1d< real64 const > const & oneSidedVolFlux,
-                              arraySlice1d< real64 const > const & dOneSidedVolFlux_dp,
-                              arraySlice2d< real64 const > const & dOneSidedVolFlux_dfp,
-                              arraySlice1d< real64 const > const & upwMobility,
-                              arraySlice1d< real64 const > const & dUpwMobility_dp,
-                              arraySlice1d< globalIndex const > const & upwDofNumber,
+                              real64 const (&oneSidedVolFlux)[ NF ],
+                              real64 const (&dOneSidedVolFlux_dp)[ NF ],
+                              real64 const (&dOneSidedVolFlux_dfp)[ NF ][ NF ],
+                              real64 const (&upwMobility)[ NF ],
+                              real64 const (&dUpwMobility_dp)[ NF ],
+                              globalIndex const (&upwDofNumber)[ NF ],
                               real64 const & dt,
                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
                               arrayView1d< real64 > const & localRhs );
@@ -172,9 +172,9 @@ struct AssemblerKernelHelper
                        arraySlice1d< localIndex const > const & elemToFaces,
                        globalIndex const elemDofNumber,
                        globalIndex const rankOffset,
-                       arraySlice1d< real64 const > const & oneSidedVolFlux,
-                       arraySlice1d< real64 const > const & dOneSidedVolFlux_dp,
-                       arraySlice2d< real64 const > const & dOneSidedVolFlux_dfp,
+                       real64 const (&oneSidedVolFlux)[ NF ], \
+                       real64 const (&dOneSidedVolFlux_dp)[ NF ], \
+                       real64 const (&dOneSidedVolFlux_dfp)[ NF ][ NF ], \
                        CRSMatrixView< real64, globalIndex const > const & localMatrix,
                        arrayView1d< real64 > const & localRhs );
 
@@ -374,7 +374,7 @@ struct ResidualNormKernel
         normalizer /= elemCounter;
         normalizer /= defaultViscosity;
 
-        localIndex const lid = facePresDofNumber[iface] - rankOffset;
+        localIndex const lid = LvArray::integerConversion< localIndex >( facePresDofNumber[iface] - rankOffset );
         real64 const val = localResidual[lid] / normalizer; // to get something dimensionless
         sumScaled += val * val;
       }

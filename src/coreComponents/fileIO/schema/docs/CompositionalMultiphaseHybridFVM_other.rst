@@ -1,13 +1,13 @@
 
 
-========================= ============== ================================ ========================================================================= 
-Name                      Type           Registered On                    Description                                                               
-========================= ============== ================================ ========================================================================= 
-maxStableDt               real64                                          Value of the Maximum Stable Timestep for this solver.                     
-deltaFacePhasePotential   real64_array2d :ref:`DATASTRUCTURE_FaceManager` An array that holds the accumulated phase potential updates at the faces. 
-facePhasePotential        real64_array2d :ref:`DATASTRUCTURE_FaceManager` An array that holds the phase potentials at the faces.                    
-NonlinearSolverParameters node                                            :ref:`DATASTRUCTURE_NonlinearSolverParameters`                            
-SystemSolverParameters    node                                            :ref:`DATASTRUCTURE_SystemSolverParameters`                               
-========================= ============== ================================ ========================================================================= 
+========================= ============ ================================ ======================================================================== 
+Name                      Type         Registered On                    Description                                                              
+========================= ============ ================================ ======================================================================== 
+maxStableDt               real64                                        Value of the Maximum Stable Timestep for this solver.                    
+deltaFacePressure         real64_array :ref:`DATASTRUCTURE_FaceManager` An array that holds the accumulated phase pressure updates at the faces. 
+facePressure              real64_array :ref:`DATASTRUCTURE_FaceManager` An array that holds the pressures at the faces.                          
+LinearSolverParameters    node                                          :ref:`DATASTRUCTURE_LinearSolverParameters`                              
+NonlinearSolverParameters node                                          :ref:`DATASTRUCTURE_NonlinearSolverParameters`                           
+========================= ============ ================================ ======================================================================== 
 
 

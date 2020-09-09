@@ -174,7 +174,7 @@ public:
    * @brief Recompute phase mobility from constitutive and primary variables
    * @param domain the domain containing the mesh and fields
    */
-  void UpdatePhaseMobility( Group & dataGroup, localIndex const targetIndex ) const;
+  virtual void UpdatePhaseMobility( Group & dataGroup, localIndex const targetIndex ) const = 0;
 
   /**
    * @brief Recompute all dependent quantities from primary variables (including constitutive models)

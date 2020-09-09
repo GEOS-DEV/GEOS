@@ -27,6 +27,183 @@ namespace geosx
 namespace CompositionalMultiphaseHybridFVMKernels
 {
 
+/******************************** PhaseMobilityKernel ********************************/
+
+template< localIndex NC, localIndex NP >
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void
+PhaseMobilityKernel::
+  Compute( arraySlice2d< real64 const > const & dCompFrac_dCompDens,
+           arraySlice1d< real64 const > const & phaseVisc,
+           arraySlice1d< real64 const > const & dPhaseVisc_dPres,
+           arraySlice2d< real64 const > const & dPhaseVisc_dComp,
+           arraySlice1d< real64 const > const & phaseRelPerm,
+           arraySlice2d< real64 const > const & dPhaseRelPerm_dPhaseVolFrac,
+           arraySlice1d< real64 const > const & dPhaseVolFrac_dPres,
+           arraySlice2d< real64 const > const & dPhaseVolFrac_dComp,
+           arraySlice1d< real64 > const & phaseMob,
+           arraySlice1d< real64 > const & dPhaseMob_dPres,
+           arraySlice2d< real64 > const & dPhaseMob_dComp )
+{
+  real64 dRelPerm_dC[NC];
+  real64 dVisc_dC[NC];
+
+  for( localIndex ip = 0; ip < NP; ++ip )
+  {
+    real64 const viscosity = phaseVisc[ip];
+    real64 const dVisc_dP = dPhaseVisc_dPres[ip];
+    applyChainRule( NC, dCompFrac_dCompDens, dPhaseVisc_dComp[ip], dVisc_dC );
+
+    real64 const relPerm = phaseRelPerm[ip];
+    real64 dRelPerm_dP = 0.0;
+    for( localIndex ic = 0; ic < NC; ++ic )
+    {
+      dRelPerm_dC[ic] = 0.0;
+    }
+
+    for( localIndex jp = 0; jp < NP; ++jp )
+    {
+      real64 const dRelPerm_dS = dPhaseRelPerm_dPhaseVolFrac[ip][jp];
+      dRelPerm_dP += dRelPerm_dS * dPhaseVolFrac_dPres[jp];
+
+      for( localIndex jc = 0; jc < NC; ++jc )
+      {
+        dRelPerm_dC[jc] += dRelPerm_dS * dPhaseVolFrac_dComp[jp][jc];
+      }
+    }
+
+    real64 const mobility = relPerm / viscosity;
+
+    phaseMob[ip] = mobility;
+    dPhaseMob_dPres[ip] = dRelPerm_dP / viscosity
+                          - mobility * dVisc_dP / viscosity;
+
+    // compositional derivatives
+    for( localIndex jc = 0; jc < NC; ++jc )
+    {
+      dPhaseMob_dComp[ip][jc] = dRelPerm_dC[jc] / viscosity
+                                - mobility * dVisc_dC[jc] / viscosity;
+    }
+  }
+}
+
+template< localIndex NC, localIndex NP >
+void PhaseMobilityKernel::
+  Launch( localIndex const size,
+          arrayView3d< real64 const > const & dCompFrac_dCompDens,
+          arrayView3d< real64 const > const & phaseVisc,
+          arrayView3d< real64 const > const & dPhaseVisc_dPres,
+          arrayView4d< real64 const > const & dPhaseVisc_dComp,
+          arrayView3d< real64 const > const & phaseRelPerm,
+          arrayView4d< real64 const > const & dPhaseRelPerm_dPhaseVolFrac,
+          arrayView2d< real64 const > const & dPhaseVolFrac_dPres,
+          arrayView3d< real64 const > const & dPhaseVolFrac_dComp,
+          arrayView2d< real64 > const & phaseMob,
+          arrayView2d< real64 > const & dPhaseMob_dPres,
+          arrayView3d< real64 > const & dPhaseMob_dComp )
+{
+  forAll< parallelDevicePolicy<> >( size, [=] GEOSX_HOST_DEVICE ( localIndex const a )
+  {
+    Compute< NC, NP >( dCompFrac_dCompDens[a],
+                       phaseVisc[a][0],
+                       dPhaseVisc_dPres[a][0],
+                       dPhaseVisc_dComp[a][0],
+                       phaseRelPerm[a][0],
+                       dPhaseRelPerm_dPhaseVolFrac[a][0],
+                       dPhaseVolFrac_dPres[a],
+                       dPhaseVolFrac_dComp[a],
+                       phaseMob[a],
+                       dPhaseMob_dPres[a],
+                       dPhaseMob_dComp[a] );
+  } );
+}
+
+template< localIndex NC, localIndex NP >
+void PhaseMobilityKernel::
+  Launch( SortedArrayView< localIndex const > const & targetSet,
+          arrayView3d< real64 const > const & dCompFrac_dCompDens,
+          arrayView3d< real64 const > const & phaseVisc,
+          arrayView3d< real64 const > const & dPhaseVisc_dPres,
+          arrayView4d< real64 const > const & dPhaseVisc_dComp,
+          arrayView3d< real64 const > const & phaseRelPerm,
+          arrayView4d< real64 const > const & dPhaseRelPerm_dPhaseVolFrac,
+          arrayView2d< real64 const > const & dPhaseVolFrac_dPres,
+          arrayView3d< real64 const > const & dPhaseVolFrac_dComp,
+          arrayView2d< real64 > const & phaseMob,
+          arrayView2d< real64 > const & dPhaseMob_dPres,
+          arrayView3d< real64 > const & dPhaseMob_dComp )
+{
+  forAll< parallelDevicePolicy<> >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const i )
+  {
+    localIndex const a = targetSet[ i ];
+    Compute< NC, NP >( dCompFrac_dCompDens[a],
+                       phaseVisc[a][0],
+                       dPhaseVisc_dPres[a][0],
+                       dPhaseVisc_dComp[a][0],
+                       phaseRelPerm[a][0],
+                       dPhaseRelPerm_dPhaseVolFrac[a][0],
+                       dPhaseVolFrac_dPres[a],
+                       dPhaseVolFrac_dComp[a],
+                       phaseMob[a],
+                       dPhaseMob_dPres[a],
+                       dPhaseMob_dComp[a] );
+  } );
+}
+
+#define INST_PhaseMobilityKernel( NC, NP ) \
+  template \
+  void \
+  PhaseMobilityKernel:: \
+    Launch< NC, NP >( localIndex const size, \
+                      arrayView3d< real64 const > const & dCompFrac_dCompDens, \
+                      arrayView3d< real64 const > const & phaseVisc, \
+                      arrayView3d< real64 const > const & dPhaseVisc_dPres, \
+                      arrayView4d< real64 const > const & dPhaseVisc_dComp, \
+                      arrayView3d< real64 const > const & phaseRelPerm, \
+                      arrayView4d< real64 const > const & dPhaseRelPerm_dPhaseVolFrac, \
+                      arrayView2d< real64 const > const & dPhaseVolFrac_dPres, \
+                      arrayView3d< real64 const > const & dPhaseVolFrac_dComp, \
+                      arrayView2d< real64 > const & phaseMob, \
+                      arrayView2d< real64 > const & dPhaseMob_dPres, \
+                      arrayView3d< real64 > const & dPhaseMob_dComp ); \
+  template \
+  void \
+  PhaseMobilityKernel:: \
+    Launch< NC, NP >( SortedArrayView< localIndex const > const & targetSet, \
+                      arrayView3d< real64 const > const & dCompFrac_dCompDens, \
+                      arrayView3d< real64 const > const & phaseVisc, \
+                      arrayView3d< real64 const > const & dPhaseVisc_dPres, \
+                      arrayView4d< real64 const > const & dPhaseVisc_dComp, \
+                      arrayView3d< real64 const > const & phaseRelPerm, \
+                      arrayView4d< real64 const > const & dPhaseRelPerm_dPhaseVolFrac, \
+                      arrayView2d< real64 const > const & dPhaseVolFrac_dPres, \
+                      arrayView3d< real64 const > const & dPhaseVolFrac_dComp, \
+                      arrayView2d< real64 > const & phaseMob, \
+                      arrayView2d< real64 > const & dPhaseMob_dPres, \
+                      arrayView3d< real64 > const & dPhaseMob_dComp )
+
+INST_PhaseMobilityKernel( 1, 1 );
+INST_PhaseMobilityKernel( 2, 1 );
+INST_PhaseMobilityKernel( 3, 1 );
+INST_PhaseMobilityKernel( 4, 1 );
+INST_PhaseMobilityKernel( 5, 1 );
+
+INST_PhaseMobilityKernel( 1, 2 );
+INST_PhaseMobilityKernel( 2, 2 );
+INST_PhaseMobilityKernel( 3, 2 );
+INST_PhaseMobilityKernel( 4, 2 );
+INST_PhaseMobilityKernel( 5, 2 );
+
+INST_PhaseMobilityKernel( 1, 3 );
+INST_PhaseMobilityKernel( 2, 3 );
+INST_PhaseMobilityKernel( 3, 3 );
+INST_PhaseMobilityKernel( 4, 3 );
+INST_PhaseMobilityKernel( 5, 3 );
+
+#undef INST_PhaseMobilityKernel
+
+
 /******************************** UpwindingHelper ********************************/
 
 template< localIndex NF, localIndex NC, localIndex NP >
@@ -133,6 +310,9 @@ AssemblerKernelHelper::ComputeOneSidedVolFluxes( arrayView1d< real64 const > con
                                                  arraySlice1d< real64 const > const & elemPhaseDens,
                                                  arraySlice1d< real64 const > const & dElemPhaseDens_dPres,
                                                  arraySlice2d< real64 const > const & dElemPhaseDens_dCompFrac,
+                                                 arraySlice1d< real64 const > const & elemPhaseMob,
+                                                 arraySlice1d< real64 const > const & dElemPhaseMob_dPres,
+                                                 arraySlice2d< real64 const > const & dElemPhaseMob_dCompDens,
                                                  arraySlice2d< real64 const > const & dElemCompFrac_dCompDens,
                                                  arraySlice2d< real64 const > const & transMatrix,
                                                  real64 (& oneSidedVolFlux)[ NF ],
@@ -143,7 +323,7 @@ AssemblerKernelHelper::ComputeOneSidedVolFluxes( arrayView1d< real64 const > con
   real64 dPhaseDens_dC[ NP ][ NC ] = {{ 0.0 }};
   real64 dPresDif_dCompDens[ NC ] = { 0.0 };
   real64 dPhaseGravDif_dCompDens[ NC ] = { 0.0 };
-  real64 dPhasePotDif_dCompDens[ NC ] = { 0.0 };
+  real64 dPhaseMobPotDif_dCompDens[ NC ] = { 0.0 };
 
   // 0) precompute dPhaseDens_dC since it is always computed at the element center
   for( localIndex ip = 0; ip < NP; ++ip )
@@ -163,8 +343,8 @@ AssemblerKernelHelper::ComputeOneSidedVolFluxes( arrayView1d< real64 const > con
 
       // depth difference between element center and face center
       real64 const ccGravCoef = elemGravCoef;
-      real64 const fGravCoef  = faceGravCoef[elemToFaces[ifaceLoc]];
-      real64 const gravCoefDif   = ccGravCoef - fGravCoef;
+      real64 const fGravCoef = faceGravCoef[elemToFaces[ifaceLoc]];
+      real64 const gravCoefDif = ccGravCoef - fGravCoef;
 
       for( localIndex ip = 0; ip < NP; ++ip )
       {
@@ -193,24 +373,27 @@ AssemblerKernelHelper::ComputeOneSidedVolFluxes( arrayView1d< real64 const > con
 
         // potential difference
         real64 const phasePotDif = presDif - phaseGravDif;
-        real64 const dPhasePotDif_dPres = dPresDif_dPres - dPhaseGravDif_dPres;
-        real64 const dPhasePotDif_dFacePres = dPresDif_dFacePres;
+        real64 const phaseMobPotDif = elemPhaseMob[ip] * phasePotDif;
+        real64 const dPhaseMobPotDif_dPres = dElemPhaseMob_dPres[ip] * phasePotDif
+                                             + elemPhaseMob[ip] * (dPresDif_dPres - dPhaseGravDif_dPres);
+        real64 const dPhaseMobPotDif_dFacePres = elemPhaseMob[ip] * dPresDif_dFacePres;
         for( localIndex ic = 0; ic < NC; ++ic )
         {
-          dPhasePotDif_dCompDens[ic] = dPresDif_dCompDens[ic] - dPhaseGravDif_dCompDens[ic];
+          dPhaseMobPotDif_dCompDens[ic] = dElemPhaseMob_dCompDens[ip][ic] * phasePotDif
+                                          + elemPhaseMob[ip] * (dPresDif_dCompDens[ic] - dPhaseGravDif_dCompDens[ic]);
         }
 
         // this is going to store T \sum_p \lambda_p (\nabla p - \rho_p g \nabla d)
-        oneSidedVolFlux[ifaceLoc]                      = oneSidedVolFlux[ifaceLoc]
-                                                         + transMatrix[ifaceLoc][jfaceLoc] * phasePotDif;
-        dOneSidedVolFlux_dPres[ifaceLoc]               = dOneSidedVolFlux_dPres[ifaceLoc]
-                                                         + transMatrix[ifaceLoc][jfaceLoc] * dPhasePotDif_dPres;
+        oneSidedVolFlux[ifaceLoc] = oneSidedVolFlux[ifaceLoc]
+                                    + transMatrix[ifaceLoc][jfaceLoc] * phaseMobPotDif;
+        dOneSidedVolFlux_dPres[ifaceLoc] = dOneSidedVolFlux_dPres[ifaceLoc]
+                                           + transMatrix[ifaceLoc][jfaceLoc] * dPhaseMobPotDif_dPres;
         dOneSidedVolFlux_dFacePres[ifaceLoc][jfaceLoc] = dOneSidedVolFlux_dFacePres[ifaceLoc][jfaceLoc]
-                                                         + transMatrix[ifaceLoc][jfaceLoc] * dPhasePotDif_dFacePres;
+                                                         + transMatrix[ifaceLoc][jfaceLoc] * dPhaseMobPotDif_dFacePres;
         for( localIndex ic = 0; ic < NC; ++ic )
         {
           dOneSidedVolFlux_dCompDens[ifaceLoc][ic] = dOneSidedVolFlux_dCompDens[ifaceLoc][ic]
-                                                     + transMatrix[ifaceLoc][jfaceLoc] * dPhasePotDif_dCompDens[ic];
+                                                     + transMatrix[ifaceLoc][jfaceLoc] * dPhaseMobPotDif_dCompDens[ic];
         }
       }
     }
@@ -354,7 +537,7 @@ AssemblerKernelHelper::AssembleOneSidedMassFluxes( arrayView1d< globalIndex cons
   for( localIndex ifaceLoc = 0; ifaceLoc < NF; ++ifaceLoc )
   {
 
-    localIndex const elemVarsOffset = NC*(ifaceLoc+1);
+    localIndex const elemVarsOffset = NDOF*(ifaceLoc+1);
 
     for( localIndex ip = 0; ip < NP; ++ip )
     {
@@ -364,27 +547,30 @@ AssemblerKernelHelper::AssembleOneSidedMassFluxes( arrayView1d< globalIndex cons
 
         // compute the mass flux at the one-sided face plus its derivatives
         // add the newly computed flux to the sum
-        sumLocalMassFluxes[ic] = sumLocalMassFluxes[ic]
-                                 + dt * upwPhaseViscCoef[ifaceLoc][ip][ic] * oneSidedVolFlux[ifaceLoc];
+
+        real64 const dt_upwPhaseViscCoef = dt * upwPhaseViscCoef[ifaceLoc][ip][ic];
+
+        sumLocalMassFluxes[ic] = sumLocalMassFluxes[ic] + dt_upwPhaseViscCoef * oneSidedVolFlux[ifaceLoc];
         dSumLocalMassFluxes_dElemVars[ic][0] = dSumLocalMassFluxes_dElemVars[ic][0]
-                                               + dt * upwPhaseViscCoef[ifaceLoc][ip][ic] * dOneSidedVolFlux_dPres[ifaceLoc];
+                                               + dt_upwPhaseViscCoef * dOneSidedVolFlux_dPres[ifaceLoc];
         for( localIndex jc = 0; jc < NC; ++jc )
         {
           dSumLocalMassFluxes_dElemVars[ic][jc+1] = dSumLocalMassFluxes_dElemVars[ic][jc+1]
-                                                    + dt * upwPhaseViscCoef[ifaceLoc][ip][ic] * dOneSidedVolFlux_dCompDens[ifaceLoc][jc];
+                                                    + dt_upwPhaseViscCoef * dOneSidedVolFlux_dCompDens[ifaceLoc][jc];
         }
 
-        dSumLocalMassFluxes_dElemVars[ic][elemVarsOffset] = dt * dUpwPhaseViscCoef_dPres[ifaceLoc][ip][ic] * oneSidedVolFlux[ifaceLoc];
+        dSumLocalMassFluxes_dElemVars[ic][elemVarsOffset] = dSumLocalMassFluxes_dElemVars[ic][elemVarsOffset]
+                                                            + dt * dUpwPhaseViscCoef_dPres[ifaceLoc][ip][ic] * oneSidedVolFlux[ifaceLoc];
         for( localIndex jc = 0; jc < NC; ++jc )
         {
-          dSumLocalMassFluxes_dElemVars[ic][elemVarsOffset+jc+1] = dSumLocalMassFluxes_dElemVars[ic][jc+1]
+          dSumLocalMassFluxes_dElemVars[ic][elemVarsOffset+jc+1] = dSumLocalMassFluxes_dElemVars[ic][elemVarsOffset+jc+1]
                                                                    + dt * dUpwPhaseViscCoef_dCompDens[ifaceLoc][ip][ic][jc] * oneSidedVolFlux[ifaceLoc];
         }
 
         for( localIndex jfaceLoc = 0; jfaceLoc < NF; ++jfaceLoc )
         {
           dSumLocalMassFluxes_dFaceVars[ic][jfaceLoc] = dSumLocalMassFluxes_dFaceVars[ic][jfaceLoc]
-                                                        + dt * upwPhaseViscCoef[ifaceLoc][ip][ic] * dOneSidedVolFlux_dFacePres[ifaceLoc][jfaceLoc];
+                                                        + dt_upwPhaseViscCoef * dOneSidedVolFlux_dFacePres[ifaceLoc][jfaceLoc];
         }
       }
     }
@@ -478,8 +664,8 @@ AssemblerKernelHelper::AssembleConstraints( arrayView1d< globalIndex const > con
     // dof number of this face constraint
     localIndex const eqnLocalRowIndex = LvArray::integerConversion< localIndex >( faceDofNumber[elemToFaces[ifaceLoc]] - rankOffset );
 
-    GEOSX_ASSERT_GE( eqnRowLocalIndex, 0 );
-    GEOSX_ASSERT_GT( localMatrix.numRows(), eqnRowLocalIndex );
+    GEOSX_ASSERT_GE( eqnLocalRowIndex, 0 );
+    GEOSX_ASSERT_GT( localMatrix.numRows(), eqnLocalRowIndex );
 
     // residual
     atomicAdd( parallelDeviceAtomic{}, &localRhs[eqnLocalRowIndex], flux );
@@ -542,7 +728,7 @@ AssemblerKernel::Compute( localIndex const er, localIndex const esr, localIndex 
   real64 dOneSidedVolFlux_dFacePres[ NF ][ NF ] = {{ 0.0 }};
   real64 dOneSidedVolFlux_dCompDens[ NF ][ NC ] = {{ 0.0 }};
 
-  // upwinded mobility
+  // upwinded phase viscous transport coefficient
   real64 upwPhaseViscCoef[ NF ][ NP ][ NC ] = {{{ 0.0 }}};
   real64 dUpwPhaseViscCoef_dPres[ NF ][ NP ][ NC ] = {{{ 0.0 }}};
   real64 dUpwPhaseViscCoef_dCompDens[ NF ][ NP ][ NC ][ NC ] = {{{{ 0.0 }}}};
@@ -566,6 +752,9 @@ AssemblerKernel::Compute( localIndex const er, localIndex const esr, localIndex 
                                                                  phaseDens[er][esr][ei][0],
                                                                  dPhaseDens_dPres[er][esr][ei][0],
                                                                  dPhaseDens_dCompFrac[er][esr][ei][0],
+                                                                 phaseMob[er][esr][ei],
+                                                                 dPhaseMob_dPres[er][esr][ei],
+                                                                 dPhaseMob_dCompDens[er][esr][ei],
                                                                  dCompFrac_dCompDens[er][esr][ei],
                                                                  transMatrix,
                                                                  oneSidedVolFlux,
@@ -820,6 +1009,9 @@ INST_UpwindingHelper( 6, 5, 3 );
                                                                  arraySlice1d< real64 const > const & elemPhaseDens, \
                                                                  arraySlice1d< real64 const > const & dElemPhaseDens_dPres, \
                                                                  arraySlice2d< real64 const > const & dElemPhaseDens_dCompFrac, \
+                                                                 arraySlice1d< real64 const > const & elemPhaseMob, \
+                                                                 arraySlice1d< real64 const > const & dElemPhaseMob_dPres, \
+                                                                 arraySlice2d< real64 const > const & dElemPhaseMob_dCompDens, \
                                                                  arraySlice2d< real64 const > const & dElemCompFrac_dCompDens, \
                                                                  arraySlice2d< real64 const > const & transMatrix, \
                                                                  real64 ( &oneSidedVolFlux )[ NF ], \

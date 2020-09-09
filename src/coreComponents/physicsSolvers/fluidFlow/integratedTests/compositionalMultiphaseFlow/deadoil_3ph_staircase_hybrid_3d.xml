@@ -1,54 +1,65 @@
 <?xml version="1.0" ?>
 
 <Problem>
-  <Solvers>
-    <CompositionalMultiphaseFVM
+  <!-- START_SPHINX_INCLUDE_SOLVER_BLOCK -->
+  <Solvers gravityVector="0.0, 0.0, 0.0">
+    <CompositionalMultiphaseHybridFVM
       name="compflow"
       logLevel="1"
       discretization="fluidTPFA"
+      targetRegions="{ Channel }"
       fluidNames="{ fluid1 }"
       solidNames="{ rock }"
       relPermNames="{ relperm }"
       temperature="300"
-      useMass="0"
-      targetRegions="{ Region1 }">
+      maxCompFractionChange="0.5"
+      useMass="0">
       <NonlinearSolverParameters
         newtonTol="1.0e-10"
         newtonMaxIter="15"
         maxTimeStepCuts="2"
-        lineSearchMaxCuts="2"/>
+	lineSearchAction="None"/>
       <LinearSolverParameters
         solverType="direct"/>
-    </CompositionalMultiphaseFVM>
+    </CompositionalMultiphaseHybridFVM>
   </Solvers>
 
+  <!-- END_SPHINX_INCLUDE_SOLVER_BLOCK -->
+  <!-- START_SPHINX_INCLUDE_MESH_BLOCK -->
   <Mesh>
+
     <InternalMesh
       name="mesh1"
       elementTypes="{ C3D8 }"
-      xCoords="{ 0, 10 }"
-      yCoords="{ 0, 1 }"
-      zCoords="{ 0, 1 }"
-      nx="{ 10 }"
-      ny="{ 1 }"
-      nz="{ 1 }"
-      cellBlockNames="{ block1 }"/>
+      xCoords="{ 0, 5, 10 }"
+      yCoords="{ 0, 5, 10 }"
+      zCoords="{ 0, 2.5, 5, 7.5, 10 }"
+      nx="{ 5, 5 }"
+      ny="{ 5, 5 }"
+      nz="{ 3, 3, 3, 3 }"
+      cellBlockNames="{ b00, b01, b02, b03, b04, b05, b06, b07, b08, b09, b10, b11, b12, b13, b14, b15 }"/>
+    
   </Mesh>
 
+  <!-- END_SPHINX_INCLUDE_MESH_BLOCK -->
+  <!-- START_SPHINX_INCLUDE_GEOM_BLOCK -->
   <Geometry>
+
     <Box
       name="source"
-      xMin="-0.01, -0.01, -0.01"
-      xMax=" 1.01, 1.01, 1.01"/>
+      xMin=" 8.99, -0.01, 7.49"
+      xMax="10.01, 1.01, 10.01"/>
 
     <Box
       name="sink"
       xMin=" 8.99, -0.01, -0.01"
-      xMax="10.01, 1.01, 1.01"/>
+      xMax="10.01, 1.01, 2.51"/>
   </Geometry>
 
+  <!-- END_SPHINX_INCLUDE_GEOM_BLOCK -->
+  <!-- START_SPHINX_INCLUDE_EVENTS_BLOCK -->
   <Events
-    maxTime="2e7">
+    maxTime="1e7">
     <PeriodicEvent
       name="outputs"
       timeFrequency="1e6"
@@ -57,15 +68,16 @@
 
     <PeriodicEvent
       name="solverApplications1"
-      forceDt="1e4"
+      forceDt="1e5"
       beginTime="0"
-      endTime="1e5"
+      endTime="1e6"
       target="/Solvers/compflow"/>
 
     <PeriodicEvent
       name="solverApplications2"
-      forceDt="1e5"
-      beginTime="1e5"
+      forceDt="1e6"
+      beginTime="1e6"
+      endTime="1e7"      
       target="/Solvers/compflow"/>
 
     <PeriodicEvent
@@ -75,22 +87,35 @@
       target="/Outputs/restartOutput"/>
   </Events>
 
+  <!-- END_SPHINX_INCLUDE_EVENTS_BLOCK -->
+  <!-- START_SPHINX_INCLUDE_ELEMREG_BLOCK -->
+  <ElementRegions>
+
+    <CellElementRegion
+      name="Channel"
+      cellBlocks="{ b08, b00, b01, b05, b06, b14, b15, b11 }"
+      materialList="{ fluid1, rock, relperm }"/>
+
+    <CellElementRegion
+      name="Barrier"
+      cellBlocks="{ b04, b12, b13, b09, b10, b02, b03, b07 }"
+      materialList="{ }"/>
+  </ElementRegions>
+
+  <!-- END_SPHINX_INCLUDE_ELEMREG_BLOCK -->
+  <!-- START_SPHINX_INCLUDE_NUMMET_BLOCK -->
   <NumericalMethods>
     <FiniteVolume>
       <TwoPointFluxApproximation
         name="fluidTPFA"
         fieldName="pressure"
+        targetRegions="{ Channel }"
         coefficientName="permeability"/>
     </FiniteVolume>
   </NumericalMethods>
 
-  <ElementRegions>
-    <CellElementRegion
-      name="Region1"
-      cellBlocks="{ block1 }"
-      materialList="{ fluid1, rock, relperm }"/>
-  </ElementRegions>
-
+  <!-- END_SPHINX_INCLUDE_NUMMET_BLOCK -->
+  <!-- START_SPHINX_INCLUDE_CONST_BLOCK -->
   <Constitutive>
     <BlackOilFluid
       name="fluid1"
@@ -109,61 +134,73 @@
       name="relperm"
       phaseNames="{ oil, gas, water }"
       phaseMinVolumeFraction="{ 0.05, 0.05, 0.05 }"
-      phaseRelPermExponent="{ 1.5, 1.5, 1.5 }"
-      phaseRelPermMaxValue="{ 0.9, 0.9, 0.9 }"/>
+      phaseRelPermExponent="{ 2.0, 2.0, 1.5 }"
+      phaseRelPermMaxValue="{ 0.8, 0.9, 0.9 }"/>
   </Constitutive>
 
+  <!-- END_SPHINX_INCLUDE_CONST_BLOCK -->
+  <!-- START_SPHINX_INCLUDE_PERM_BLOCK -->
   <FieldSpecifications>
     <FieldSpecification
-      name="permx"
+      name="permx_channel"
       component="0"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions/Region1/block1"
+      objectPath="ElementRegions/Channel"
       fieldName="permeability"
-      scale="1.0e-16"/>
+      scale="1.0e-15"/>
 
     <FieldSpecification
-      name="permy"
+      name="permy_channel"
       component="1"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions/Region1/block1"
+      objectPath="ElementRegions/Channel"
       fieldName="permeability"
-      scale="1.0e-16"/>
+      scale="1.0e-15"/>
 
     <FieldSpecification
-      name="permz"
+      name="permz_channel"
       component="2"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions/Region1/block1"
+      objectPath="ElementRegions/Channel"
       fieldName="permeability"
-      scale="1.0e-16"/>
+      scale="1.0e-15"/>
 
     <FieldSpecification
-      name="referencePorosity"
+      name="porosity_channel"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions/Region1/block1"
+      objectPath="ElementRegions/Channel"
       fieldName="referencePorosity"
       scale="0.2"/>
 
+    <!-- END_SPHINX_INCLUDE_PERM_BLOCK -->
     <!-- Initial pressure: ~5 bar -->
+    <!-- START_SPHINX_INCLUDE_INIT_BLOCK -->
     <FieldSpecification
       name="initialPressure"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions/Region1/block1"
+      objectPath="ElementRegions/Channel"
       fieldName="pressure"
       scale="5e6"/>
 
+    <FieldSpecification
+      name="initialFacePressure"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="faceManager"
+      fieldName="facePressure"
+      scale="5e6"/>
+    
     <!-- Initial composition: no water, only heavy hydrocarbon components and N2 -->
     <FieldSpecification
       name="initialComposition_oil"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions/Region1/block1"
+      objectPath="ElementRegions/Channel"
       fieldName="globalCompFraction"
       component="0"
       scale="0.6"/>
@@ -172,7 +209,7 @@
       name="initialComposition_gas"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions/Region1/block1"
+      objectPath="ElementRegions/Channel"
       fieldName="globalCompFraction"
       component="1"
       scale="0.399"/>
@@ -181,15 +218,17 @@
       name="initialComposition_water"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions/Region1/block1"
+      objectPath="ElementRegions/Channel"
       fieldName="globalCompFraction"
       component="2"
       scale="0.001"/>
 
+    <!-- END_SPHINX_INCLUDE_INIT_BLOCK -->
+    <!-- START_SPHINX_INCLUDE_BC_BLOCK -->
     <!-- Injection pressure: ~10 bar -->
     <FieldSpecification
       name="sourceTermPressure"
-      objectPath="ElementRegions/Region1/block1"
+      objectPath="ElementRegions/Channel"
       fieldName="pressure"
       scale="1e7"
       setNames="{ source }"/>
@@ -198,7 +237,7 @@
     <FieldSpecification
       name="sourceTermComposition_oil"
       setNames="{ source }"
-      objectPath="ElementRegions/Region1/block1"
+      objectPath="ElementRegions/Channel"
       fieldName="globalCompFraction"
       component="0"
       scale="0.1"/>
@@ -206,7 +245,7 @@
     <FieldSpecification
       name="sourceTermComposition_gas"
       setNames="{ source }"
-      objectPath="ElementRegions/Region1/block1"
+      objectPath="ElementRegions/Channel"
       fieldName="globalCompFraction"
       component="1"
       scale="0.1"/>
@@ -214,7 +253,7 @@
     <FieldSpecification
       name="sourceTermComposition_water"
       setNames="{ source }"
-      objectPath="ElementRegions/Region1/block1"
+      objectPath="ElementRegions/Channel"
       fieldName="globalCompFraction"
       component="2"
       scale="0.8"/>
@@ -222,7 +261,7 @@
     <!-- Production pressure: ~2 bar, -->
     <FieldSpecification
       name="sinkTerm"
-      objectPath="ElementRegions/Region1/block1"
+      objectPath="ElementRegions/Channel"
       fieldName="pressure"
       scale="2e5"
       setNames="{ sink }"/>
@@ -231,7 +270,7 @@
     <FieldSpecification
       name="sinkTermComposition_oil"
       setNames="{ sink }"
-      objectPath="ElementRegions/Region1/block1"
+      objectPath="ElementRegions/Channel"
       fieldName="globalCompFraction"
       component="0"
       scale="0.6"/>
@@ -239,7 +278,7 @@
     <FieldSpecification
       name="sinkTermComposition_gas"
       setNames="{ sink }"
-      objectPath="ElementRegions/Region1/block1"
+      objectPath="ElementRegions/Channel"
       fieldName="globalCompFraction"
       component="1"
       scale="0.399"/>
@@ -247,17 +286,22 @@
     <FieldSpecification
       name="sinkTermComposition_water"
       setNames="{ sink }"
-      objectPath="ElementRegions/Region1/block1"
+      objectPath="ElementRegions/Channel"
       fieldName="globalCompFraction"
       component="2"
       scale="0.001"/>
   </FieldSpecifications>
 
+  <!-- END_SPHINX_INCLUDE_BC_BLOCK -->
+  <!-- START_SPHINX_INCLUDE_OUTPUT_BLOCK -->
   <Outputs>
     <Silo
-      name="siloOutput"/>
+      name="siloOutput"
+      plotLevel="3"/>
 
     <Restart
       name="restartOutput"/>
   </Outputs>
+
+  <!-- END_SPHINX_INCLUDE_OUTPUT_BLOCK -->
 </Problem>

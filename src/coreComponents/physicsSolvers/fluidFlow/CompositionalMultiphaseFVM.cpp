@@ -314,6 +314,67 @@ void CompositionalMultiphaseFVM::ApplySystemSolution( DofManager const & dofMana
   } );
 }
 
+void CompositionalMultiphaseFVM::UpdatePhaseMobility( Group & dataGroup, localIndex const targetIndex ) const
+{
+  GEOSX_MARK_FUNCTION;
+
+  // note that for convenience, the phase mobility computed here also includes phase density
+
+  // outputs
+
+  arrayView2d< real64 > const & phaseMob =
+    dataGroup.getReference< array2d< real64 > >( viewKeyStruct::phaseMobilityString );
+
+  arrayView2d< real64 > const & dPhaseMob_dPres =
+    dataGroup.getReference< array2d< real64 > >( viewKeyStruct::dPhaseMobility_dPressureString );
+
+  arrayView3d< real64 > const & dPhaseMob_dComp =
+    dataGroup.getReference< array3d< real64 > >( viewKeyStruct::dPhaseMobility_dGlobalCompDensityString );
+
+  // inputs
+
+  arrayView2d< real64 const > const & dPhaseVolFrac_dPres =
+    dataGroup.getReference< array2d< real64 > >( viewKeyStruct::dPhaseVolumeFraction_dPressureString );
+
+  arrayView3d< real64 const > const & dPhaseVolFrac_dComp =
+    dataGroup.getReference< array3d< real64 > >( viewKeyStruct::dPhaseVolumeFraction_dGlobalCompDensityString );
+
+  arrayView3d< real64 const > const & dCompFrac_dCompDens =
+    dataGroup.getReference< array3d< real64 > >( viewKeyStruct::dGlobalCompFraction_dGlobalCompDensityString );
+
+  MultiFluidBase const & fluid = GetConstitutiveModel< MultiFluidBase >( dataGroup, m_fluidModelNames[targetIndex] );
+
+  arrayView3d< real64 const > const & phaseDens = fluid.phaseDensity();
+  arrayView3d< real64 const > const & dPhaseDens_dPres = fluid.dPhaseDensity_dPressure();
+  arrayView4d< real64 const > const & dPhaseDens_dComp = fluid.dPhaseDensity_dGlobalCompFraction();
+
+  arrayView3d< real64 const > const & phaseVisc = fluid.phaseViscosity();
+  arrayView3d< real64 const > const & dPhaseVisc_dPres = fluid.dPhaseViscosity_dPressure();
+  arrayView4d< real64 const > const & dPhaseVisc_dComp = fluid.dPhaseViscosity_dGlobalCompFraction();
+
+  RelativePermeabilityBase const & relperm = GetConstitutiveModel< RelativePermeabilityBase >( dataGroup, m_relPermModelNames[targetIndex] );
+
+  arrayView3d< real64 const > const & phaseRelPerm = relperm.phaseRelPerm();
+  arrayView4d< real64 const > const & dPhaseRelPerm_dPhaseVolFrac = relperm.dPhaseRelPerm_dPhaseVolFraction();
+
+  KernelLaunchSelector2< PhaseMobilityKernel >( m_numComponents, m_numPhases,
+                                                dataGroup.size(),
+                                                dCompFrac_dCompDens,
+                                                phaseDens,
+                                                dPhaseDens_dPres,
+                                                dPhaseDens_dComp,
+                                                phaseVisc,
+                                                dPhaseVisc_dPres,
+                                                dPhaseVisc_dComp,
+                                                phaseRelPerm,
+                                                dPhaseRelPerm_dPhaseVolFrac,
+                                                dPhaseVolFrac_dPres,
+                                                dPhaseVolFrac_dComp,
+                                                phaseMob,
+                                                dPhaseMob_dPres,
+                                                dPhaseMob_dComp );
+}
+
 
 REGISTER_CATALOG_ENTRY( SolverBase, CompositionalMultiphaseFVM, string const &, Group * const )
 }// namespace geosx

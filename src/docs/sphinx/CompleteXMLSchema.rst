@@ -99,6 +99,13 @@ Element: CompositionalMultiphaseFluid
 .. include:: ../../coreComponents/fileIO/schema/docs/CompositionalMultiphaseFluid.rst
 
 
+.. _XML_CompositionalMultiphaseHybridFVM:
+
+Element: CompositionalMultiphaseHybridFVM
+=========================================
+.. include:: ../../coreComponents/fileIO/schema/docs/CompositionalMultiphaseHybridFVM.rst
+
+
 .. _XML_CompositionalMultiphaseReservoir:
 
 Element: CompositionalMultiphaseReservoir
@@ -787,6 +794,13 @@ Datastructure: CompositionalMultiphaseFVM
 Datastructure: CompositionalMultiphaseFluid
 ===========================================
 .. include:: ../../coreComponents/fileIO/schema/docs/CompositionalMultiphaseFluid_other.rst
+
+
+.. _DATASTRUCTURE_CompositionalMultiphaseHybridFVM:
+
+Datastructure: CompositionalMultiphaseHybridFVM
+===============================================
+.. include:: ../../coreComponents/fileIO/schema/docs/CompositionalMultiphaseHybridFVM_other.rst
 
 
 .. _DATASTRUCTURE_CompositionalMultiphaseReservoir:
