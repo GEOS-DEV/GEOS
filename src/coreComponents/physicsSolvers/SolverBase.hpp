@@ -70,50 +70,50 @@ public:
    * @brief Getter for system matrix
    * @return a reference to linear system matrix of this solver
    */
-  ParallelMatrix & getSystemMatrix()       { return m_matrix; }
+  ParallelMatrix & getSystemMatrix() { return m_matrix; }
   ParallelMatrix const & getSystemMatrix() const { return m_matrix; }
 
   /**
    * @brief Getter for system rhs vector
    * @return a reference to linear system right-hand side of this solver
    */
-  ParallelVector & getSystemRhs()       { return m_rhs; }
+  ParallelVector & getSystemRhs() { return m_rhs; }
   ParallelVector const & getSystemRhs() const { return m_rhs; }
 
   /**
    * @brief Getter for system solution vector
    * @return a reference to solution vector of this solver
    */
-  ParallelVector & getSystemSolution()       { return m_solution; }
+  ParallelVector & getSystemSolution() { return m_solution; }
   ParallelVector const & getSystemSolution() const { return m_solution; }
 
   /**
    * @brief Getter for degree-of-freedom manager
    * @return a reference to degree-of-freedom manager of this solver
    */
-  DofManager & getDofManager()       { return m_dofManager; }
+  DofManager & getDofManager() { return m_dofManager; }
   DofManager const & getDofManager() const { return m_dofManager; }
 
   /**
    * @brief Getter for local matrix
    * @return a reference to linear system matrix of this solver
    */
-  CRSMatrix< real64, globalIndex > & getLocalMatrix()       { return m_localMatrix; }
-  CRSMatrixView< real64 const, globalIndex const > const & getLocalMatrix() const { return m_localMatrix.toViewConst(); }
+  CRSMatrix< real64, globalIndex > & getLocalMatrix() { return m_localMatrix; }
+  CRSMatrixView< real64 const, globalIndex const > getLocalMatrix() const { return m_localMatrix.toViewConst(); }
 
   /**
    * @brief Getter for local rhs vector
    * @return a reference to linear system right-hand side of this solver
    */
-  array1d< real64 > & getLocalRhs()       { return m_localRhs; }
-  arrayView1d< real64 const > const & getLocalRhs() const { return m_localRhs.toViewConst(); }
+  array1d< real64 > & getLocalRhs() { return m_localRhs; }
+  arrayView1d< real64 const > getLocalRhs() const { return m_localRhs; }
 
   /**
    * @brief Getter for local solution vector
    * @return a reference to solution vector of this solver
    */
-  array1d< real64 > & getLocalSolution()       { return m_localSolution; }
-  arrayView1d< real64 const > const & getLocalSolution() const { return m_localSolution.toViewConst(); }
+  array1d< real64 > & getLocalSolution() { return m_localSolution; }
+  arrayView1d< real64 const > getLocalSolution() const { return m_localSolution; }
 
   /**
    * @defgroup Solver Interface Functions
@@ -583,7 +583,7 @@ public:
 
   string getDiscretization() const { return m_discretizationName; }
 
-  arrayView1d< string const > const & targetRegionNames() const { return m_targetRegionNames; }
+  arrayView1d< string const > targetRegionNames() const { return m_targetRegionNames; }
 
   virtual std::vector< string > getConstitutiveRelations( string const & regionName ) const
   {

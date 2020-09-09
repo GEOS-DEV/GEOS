@@ -893,16 +893,14 @@ template< bool DOPACK >
 localIndex WellElementSubRegion::PackUpDownMapsPrivate( buffer_unit_type * & buffer,
                                                         arrayView1d< localIndex const > const & packList ) const
 {
-  localIndex packedSize = 0;
-
-  packedSize += bufferOps::Pack< DOPACK >( buffer,
-                                           nodeList().Base().toViewConst(),
-                                           m_unmappedGlobalIndicesInNodelist,
-                                           packList,
-                                           this->localToGlobalMap(),
-                                           nodeList().RelatedObjectLocalToGlobal() );
-
-  return packedSize;
+  arrayView1d< globalIndex const > const localToGlobal = this->localToGlobalMap();
+  arrayView1d< globalIndex const > const nodeLocalToGlobal = nodeList().RelatedObjectLocalToGlobal();
+  return bufferOps::Pack< DOPACK >( buffer,
+                                    nodeList().Base().toViewConst(),
+                                    m_unmappedGlobalIndicesInNodelist,
+                                    packList,
+                                    localToGlobal.toSliceConst(),
+                                    nodeLocalToGlobal );
 }
 
 localIndex WellElementSubRegion::UnpackUpDownMaps( buffer_unit_type const * & buffer,
@@ -910,16 +908,12 @@ localIndex WellElementSubRegion::UnpackUpDownMaps( buffer_unit_type const * & bu
                                                    bool const GEOSX_UNUSED_PARAM( overwriteUpMaps ),
                                                    bool const GEOSX_UNUSED_PARAM( overwriteDownMaps ) )
 {
-  localIndex unPackedSize = 0;
-
-  unPackedSize += bufferOps::Unpack( buffer,
-                                     nodeList().Base().toView(),
-                                     packList,
-                                     m_unmappedGlobalIndicesInNodelist,
-                                     this->globalToLocalMap(),
-                                     nodeList().RelatedObjectGlobalToLocal() );
-
-  return unPackedSize;
+  return bufferOps::Unpack( buffer,
+                            nodeList().Base().toView(),
+                            packList,
+                            m_unmappedGlobalIndicesInNodelist,
+                            this->globalToLocalMap(),
+                            nodeList().RelatedObjectGlobalToLocal() );
 }
 
 void WellElementSubRegion::FixUpDownMaps( bool const clearIfUnmapped )

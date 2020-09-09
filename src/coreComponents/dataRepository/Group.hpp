@@ -1207,7 +1207,7 @@ public:
    * @note An error will be raised if wrapper does not exist or type cast is invalid.
    */
   template< typename T, typename LOOKUP_TYPE >
-  traits::ViewTypeConst< T >
+  GEOSX_DECLTYPE_AUTO_RETURN
   getReference( LOOKUP_TYPE const & lookup ) const
   {
     Wrapper< T > const * const wrapper = getWrapper< T >( lookup );
@@ -1253,7 +1253,7 @@ public:
    * @note An error will be raised if wrapper does not exist or type cast is invalid.
    */
   template< typename T >
-  traits::ViewTypeConst< T >
+  GEOSX_DECLTYPE_AUTO_RETURN
   getReference( char const * const name ) const
   { return getReference< T >( string( name ) ); }
 

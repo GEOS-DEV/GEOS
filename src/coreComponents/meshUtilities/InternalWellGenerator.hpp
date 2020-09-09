@@ -150,31 +150,31 @@ public:
    * @brief Get the physical location of the centers of well elements.
    * @return list of center locations of the well elements
    */
-  arrayView1d< R1Tensor const > const & GetElemCoords() const { return m_elemCenterCoords; }
+  arrayView1d< R1Tensor const > GetElemCoords() const { return m_elemCenterCoords; }
 
   /**
    * @brief Get the global indices mapping an element to the next.
    * @return list providing the global index of the next element for each element
    */
-  arrayView1d< globalIndex const > const & GetNextElemIndex() const { return m_nextElemId; }
+  arrayView1d< globalIndex const > GetNextElemIndex() const { return m_nextElemId; }
 
   /**
    * @brief Get the global indices mapping an element to the previous ones.
    * @return list providing the global indices of the previous elements for each element
    */
-  arrayView1d< arrayView1d< globalIndex const > const > const & GetPrevElemIndices() const { return m_prevElemId.toViewConst(); }
+  arrayView1d< arrayView1d< globalIndex const > const > GetPrevElemIndices() const { return m_prevElemId.toNestedViewConst(); }
 
   /**
    * @brief Get the global indices of the well nodes nodes connected to each element.
    * @return list providing the global index of the well nodes for each well element
    */
-  arrayView2d< globalIndex const > const & GetElemToNodesMap() const { return m_elemToNodesMap; }
+  arrayView2d< globalIndex const > GetElemToNodesMap() const { return m_elemToNodesMap; }
 
   /**
    * @brief Get the volume of the well elements.
    * @return list of volumes of the well elements
    */
-  arrayView1d< real64 const > const & GetElemVolume() const { return m_elemVolume; }
+  arrayView1d< real64 const > GetElemVolume() const { return m_elemVolume; }
 
   /**
    * @brief Get the radius in the well.
@@ -194,7 +194,7 @@ public:
    * @brief Get the physical location of the centers of well elements.
    * @return list of center locations of the well elements
    */
-  arrayView1d< R1Tensor const > const & GetNodeCoords() const { return m_nodeCoords; }
+  arrayView1d< R1Tensor const > GetNodeCoords() const { return m_nodeCoords; }
 
 
 
@@ -210,19 +210,19 @@ public:
    * @brief Get the locations of the perforations.
    * @return list of locations of all the perforations on the well
    */
-  arrayView1d< R1Tensor const > const & GetPerfCoords() const { return m_perfCoords; }
+  arrayView1d< R1Tensor const > GetPerfCoords() const { return m_perfCoords; }
 
   /**
    * @brief Get the well transmissibility at the perforations.
    * @return list of well transmissibility at all the perforations on the well
    */
-  arrayView1d< real64 const > const & GetPerfTransmissibility() const { return m_perfTransmissibility; }
+  arrayView1d< real64 const > GetPerfTransmissibility() const { return m_perfTransmissibility; }
 
   /**
    * @brief Get the global indices of the well elements connected to each perforation.
    * @return list providing the global index of the connected well element for each perforation
    */
-  arrayView1d< globalIndex const > const & GetPerfElemIndex() const { return m_perfElemId; }
+  arrayView1d< globalIndex const > GetPerfElemIndex() const { return m_perfElemId; }
 
   ///@}
 

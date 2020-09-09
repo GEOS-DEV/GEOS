@@ -150,8 +150,8 @@ public:
   /**
    * @brief @return The array of shape function derivatives.
    */
-  arrayView4d< real64 const > const & dNdX() const
-  { return m_dNdX.toViewConst(); }
+  arrayView4d< real64 const > dNdX() const
+  { return m_dNdX; }
 
   /**
    * @brief @return The array of jacobian determinantes.
@@ -162,8 +162,8 @@ public:
   /**
    * @brief @return The array of jacobian determinantes.
    */
-  arrayView2d< real64 const > const & detJ() const
-  { return m_detJ.toViewConst(); }
+  arrayView2d< real64 const > detJ() const
+  { return m_detJ; }
 
   /// Map used for constitutive grouping
   map< string, localIndex_array > m_constitutiveGrouping;

@@ -55,6 +55,8 @@ void PerforationData::ComputeWellTransmissibility( MeshLevel const & mesh,
   ElementRegionManager::ElementViewAccessor< arrayView1d< R1Tensor const > > const perm =
     mesh.getElemManager()->ConstructViewAccessor< array1d< R1Tensor >, arrayView1d< R1Tensor const > >( permeabilityKey );
 
+  arrayView2d< real64 const > const wellElemCenter = wellElemSubRegion->getElementCenter();
+
   // for all the local perforations on this well
   for( localIndex iperf = 0; iperf < size(); ++iperf )
   {
@@ -88,7 +90,7 @@ void PerforationData::ComputeWellTransmissibility( MeshLevel const & mesh,
     // compute the vector perforation - well elem center
     // this vector will be used to decide whether this is a vectical well or not
     localIndex const wellElemIndex   = m_wellElementIndex[iperf];
-    R1Tensor vecWellElemCenterToPerf = wellElemSubRegion->getElementCenter()[wellElemIndex];
+    R1Tensor vecWellElemCenterToPerf = wellElemCenter[wellElemIndex];
     vecWellElemCenterToPerf -= m_location[iperf];
 
     // check if this is a vertical well or a horizontal well

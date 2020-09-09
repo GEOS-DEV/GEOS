@@ -261,10 +261,10 @@ void HydrofractureSolver::UpdateDeformationForCoupling( DomainPartition & domain
   NodeManager const * const nodeManager = meshLevel->getNodeManager();
   FaceManager * const faceManager = meshLevel->getFaceManager();
 
-  arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const & u = nodeManager->totalDisplacement();
-  arrayView2d< real64 const > const & faceNormal = faceManager->faceNormal();
-  // arrayView1d<real64 const> const & faceArea = faceManager->faceArea();
-  ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager->nodeList().toViewConst();
+  arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const u = nodeManager->totalDisplacement();
+  arrayView2d< real64 const > const faceNormal = faceManager->faceNormal();
+  // arrayView1d<real64 const> const faceArea = faceManager->faceArea();
+  ArrayOfArraysView< localIndex const > const faceToNodeMap = faceManager->nodeList().toViewConst();
 
   ConstitutiveManager const * const constitutiveManager = domain.getConstitutiveManager();
 
@@ -273,12 +273,12 @@ void HydrofractureSolver::UpdateDeformationForCoupling( DomainPartition & domain
 
   elemManager->forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
   {
-    arrayView1d< real64 > const & aperture = subRegion.getElementAperture();
-    arrayView1d< real64 > const & effectiveAperture = subRegion.getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::effectiveApertureString );
-    arrayView1d< real64 const > const & volume = subRegion.getElementVolume();
-    arrayView1d< real64 > const & deltaVolume = subRegion.getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::deltaVolumeString );
-    arrayView1d< real64 const > const & area = subRegion.getElementArea();
-    arrayView2d< localIndex const > const & elemsToFaces = subRegion.faceList();
+    arrayView1d< real64 > const aperture = subRegion.getElementAperture();
+    arrayView1d< real64 > const effectiveAperture = subRegion.getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::effectiveApertureString );
+    arrayView1d< real64 const > const volume = subRegion.getElementVolume();
+    arrayView1d< real64 > const deltaVolume = subRegion.getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::deltaVolumeString );
+    arrayView1d< real64 const > const area = subRegion.getElementArea();
+    arrayView2d< localIndex const > const elemsToFaces = subRegion.faceList();
 
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
     arrayView1d< real64 const > const &
@@ -546,8 +546,8 @@ void HydrofractureSolver::SetupSystem( DomainPartition & domain,
   elemManager.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion const & elementSubRegion )
   {
     localIndex const numElems = elementSubRegion.size();
-    array1d< array1d< localIndex > > const & elemsToNodes = elementSubRegion.nodeList();
-    arrayView1d< globalIndex const > const &
+    ArrayOfArraysView< localIndex const > const elemsToNodes = elementSubRegion.nodeList().toViewConst();
+    arrayView1d< globalIndex const > const
     faceElementDofNumber = elementSubRegion.getReference< array1d< globalIndex > >( presDofKey );
 
     for( localIndex k=0; k<numElems; ++k )
@@ -597,9 +597,9 @@ void HydrofractureSolver::SetupSystem( DomainPartition & domain,
       FaceElementSubRegion const & elementSubRegion =
         *elemManager.GetRegion( seri[iconn][0] )->GetSubRegion< FaceElementSubRegion >( sesri[iconn][0] );
 
-      array1d< array1d< localIndex > > const & elemsToNodes = elementSubRegion.nodeList();
+      ArrayOfArraysView< localIndex const > const elemsToNodes = elementSubRegion.nodeList().toViewConst();
 
-      arrayView1d< globalIndex const > const & faceElementDofNumber =
+      arrayView1d< globalIndex const > const faceElementDofNumber =
         elementSubRegion.getReference< array1d< globalIndex > >( presDofKey );
 
       for( localIndex k0=0; k0<numFluxElems; ++k0 )
@@ -1102,19 +1102,19 @@ HydrofractureSolver::
     string const & fluidName = m_flowSolver->fluidModelNames()[m_flowSolver->targetRegionIndex( region.getName() )];
     SingleFluidBase const & fluid = GetConstitutiveModel< SingleFluidBase >( subRegion, fluidName );
 
-    arrayView1d< integer const > const & elemGhostRank = subRegion.ghostRank();
-    arrayView1d< globalIndex const > const & presDofNumber = subRegion.getReference< array1d< globalIndex > >( presDofKey );
-    arrayView1d< globalIndex const > const & dispDofNumber = nodeManager.getReference< array1d< globalIndex > >( dispDofKey );
+    arrayView1d< integer const > const elemGhostRank = subRegion.ghostRank();
+    arrayView1d< globalIndex const > const presDofNumber = subRegion.getReference< array1d< globalIndex > >( presDofKey );
+    arrayView1d< globalIndex const > const dispDofNumber = nodeManager.getReference< array1d< globalIndex > >( dispDofKey );
 
-    arrayView2d< real64 const > const & dens = fluid.density();
+    arrayView2d< real64 const > const dens = fluid.density();
 
-    arrayView1d< real64 const > const & aperture = subRegion.getElementAperture();
-    arrayView1d< real64 const > const & area = subRegion.getElementArea();
+    arrayView1d< real64 const > const aperture = subRegion.getElementAperture();
+    arrayView1d< real64 const > const area = subRegion.getElementArea();
 
-    arrayView2d< localIndex const > const & elemsToFaces = subRegion.faceList();
-    ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager.nodeList().toViewConst();
+    arrayView2d< localIndex const > const elemsToFaces = subRegion.faceList();
+    ArrayOfArraysView< localIndex const > const faceToNodeMap = faceManager.nodeList().toViewConst();
 
-    arrayView2d< real64 const > const & faceNormal = faceManager.faceNormal();
+    arrayView2d< real64 const > const faceNormal = faceManager.faceNormal();
 
 //    arrayView1d< real64 const > const & separationCoeff = subRegion.getSeparationCoefficient();
 //    arrayView1d<real64 const> const & dseparationCoeff_dAper  =

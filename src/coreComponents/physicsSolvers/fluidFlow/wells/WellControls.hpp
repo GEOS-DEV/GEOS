@@ -176,7 +176,7 @@ public:
    * @brief Const accessor for the composition of the injection rate
    * @return a global component fraction vector
    */
-  arrayView1d< real64 const > const & GetInjectionStream() const { return m_injectionStream; }
+  arrayView1d< real64 const > GetInjectionStream() const { return m_injectionStream; }
 
   ///@}
 

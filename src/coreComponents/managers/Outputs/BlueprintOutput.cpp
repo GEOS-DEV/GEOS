@@ -60,7 +60,7 @@ void reorderElementToNodeMap( CellElementSubRegion const & subRegion, conduit::N
 {
   GEOSX_MARK_FUNCTION;
 
-  arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemToNodeMap = subRegion.nodeList();
+  arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemToNodeMap = subRegion.nodeList();
   localIndex const numElems = elemToNodeMap.size( 0 );
   localIndex const numNodesPerElem = elemToNodeMap.size( 1 );
 

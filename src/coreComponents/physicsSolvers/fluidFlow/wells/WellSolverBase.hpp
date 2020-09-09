@@ -242,7 +242,7 @@ public:
    */
   virtual void UpdateState( WellElementSubRegion & subRegion, localIndex const targetIndex ) = 0;
 
-  arrayView1d< string const > const & fluidModelNames() const { return m_fluidModelNames; }
+  arrayView1d< string const > const fluidModelNames() const { return m_fluidModelNames; }
 
   virtual std::vector< string > getConstitutiveRelations( string const & regionName ) const override;
 

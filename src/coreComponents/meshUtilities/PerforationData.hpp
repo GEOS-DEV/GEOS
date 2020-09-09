@@ -141,42 +141,42 @@ public:
    * @brief Get perforation-to-well-element connectivity.
    * @return list of well element index connected to each perforation
    */
-  arrayView1d< localIndex > & GetWellElements() { return m_wellElementIndex; }
+  arrayView1d< localIndex > GetWellElements() { return m_wellElementIndex; }
 
 
   /**
    * @brief Provide an immutable accessor to a const perforation-to-well-element connectivity.
    * @return list of well element index connected to each perforation
    */
-  arrayView1d< localIndex const > const & GetWellElements() const { return m_wellElementIndex; }
+  arrayView1d< localIndex const > GetWellElements() const { return m_wellElementIndex; }
 
 
   /**
    * @brief Get perforation locations.
    * @return list of perforation locations
    */
-  arrayView1d< R1Tensor > & GetLocation() { return m_location; }
+  arrayView1d< R1Tensor > GetLocation() { return m_location; }
 
 
   /**
    * @brief Provide an immutable accessor to a const perforation location arrayView.
    * @return list of perforation locations
    */
-  arrayView1d< R1Tensor const > const & GetLocation() const { return m_location; }
+  arrayView1d< R1Tensor const > GetLocation() const { return m_location; }
 
 
   /**
    * @brief Provide an immutable accessor to a const perforation well indices array.
    * @return list of perforation well indices
    */
-  arrayView1d< real64 const > const & GetWellTransmissibility() const { return m_wellTransmissibility; }
+  arrayView1d< real64 const > GetWellTransmissibility() const { return m_wellTransmissibility; }
 
 
   /**
    * @brief Get perforation well indices.
    * @return list of perforation well indices
    */
-  arrayView1d< real64 > & GetWellTransmissibility() { return m_wellTransmissibility; }
+  arrayView1d< real64 > GetWellTransmissibility() { return m_wellTransmissibility; }
 
   ///@}
 

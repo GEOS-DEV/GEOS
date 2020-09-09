@@ -382,17 +382,17 @@ struct PerforationKernel
    * by calling .toView() or .toViewConst() on an accessor instance
    */
   template< typename VIEWTYPE >
-  using ElementView = typename ElementRegionManager::ElementViewAccessor< VIEWTYPE >::ViewTypeConst;
+  using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
 
   template< typename POLICY >
   static void
   Launch( localIndex const size,
-          ElementView< arrayView1d< real64 const > > const & resPressure,
-          ElementView< arrayView1d< real64 const > > const & dResPressure,
-          ElementView< arrayView2d< real64 const > > const & resDensity,
-          ElementView< arrayView2d< real64 const > > const & dResDensity_dPres,
-          ElementView< arrayView2d< real64 const > > const & resViscosity,
-          ElementView< arrayView2d< real64 const > > const & dResViscosity_dPres,
+          ElementViewConst< arrayView1d< real64 const > > const & resPressure,
+          ElementViewConst< arrayView1d< real64 const > > const & dResPressure,
+          ElementViewConst< arrayView2d< real64 const > > const & resDensity,
+          ElementViewConst< arrayView2d< real64 const > > const & dResDensity_dPres,
+          ElementViewConst< arrayView2d< real64 const > > const & resViscosity,
+          ElementViewConst< arrayView2d< real64 const > > const & dResViscosity_dPres,
           arrayView1d< real64 const > const & wellElemGravCoef,
           arrayView1d< real64 const > const & wellElemPressure,
           arrayView1d< real64 const > const & dWellElemPressure,
@@ -516,7 +516,7 @@ struct PresInitializationKernel
    * by calling .toView() or .toViewConst() on an accessor instance
    */
   template< typename VIEWTYPE >
-  using ElementView = typename ElementRegionManager::ElementViewAccessor< VIEWTYPE >::ViewTypeConst;
+  using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
 
   template< typename POLICY >
   static void
@@ -526,8 +526,8 @@ struct PresInitializationKernel
           int const topRank,
           localIndex const numPerforations,
           WellControls const & wellControls,
-          ElementView< arrayView1d< real64 const > > const & resPressure,
-          ElementView< arrayView2d< real64 const > > const & resDensity,
+          ElementViewConst< arrayView1d< real64 const > > const & resPressure,
+          ElementViewConst< arrayView2d< real64 const > > const & resDensity,
           arrayView1d< localIndex const > const & resElementRegion,
           arrayView1d< localIndex const > const & resElementSubRegion,
           arrayView1d< localIndex const > const & resElementIndex,

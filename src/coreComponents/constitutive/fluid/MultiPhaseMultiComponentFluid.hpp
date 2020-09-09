@@ -218,7 +218,7 @@ public:
     return KernelWrapper( m_phaseDensityFuns,
                           m_phaseViscosityFuns,
                           m_flashModel,
-                          m_componentMolarWeight,
+                          m_componentMolarWeight.toViewConst(),
                           m_useMass,
                           m_phaseFraction,
                           m_dPhaseFraction_dPressure,

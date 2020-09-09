@@ -173,20 +173,20 @@ public:
    * @brief Get the center of each element in this subregion.
    * @return an arrayView1d of const element centers
    */
-  arrayView2d< real64 const > const & getElementCenter() const
+  arrayView2d< real64 const > getElementCenter() const
   { return m_elementCenter; }
 
   /**
    * @copydoc getElementCenter() const
    */
-  arrayView2d< real64 > const & getElementCenter()
+  arrayView2d< real64 > getElementCenter()
   { return m_elementCenter; }
 
   /**
    * @brief Get the volume of each element in this subregion.
    * @return an arrayView1d of const element volumes
    */
-  arrayView1d< real64 const > const & getElementVolume() const
+  arrayView1d< real64 const > getElementVolume() const
   { return m_elementVolume; }
 
   /**

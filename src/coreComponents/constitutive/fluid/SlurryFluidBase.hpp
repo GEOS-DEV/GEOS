@@ -254,59 +254,59 @@ public:
 
   localIndex numFluidComponents() const;
 
-  arrayView1d< real64 const > const & nIndex() const { return m_nIndices; }
-  arrayView1d< real64 > const & KIndex() const { return m_Ks; }
+  arrayView1d< real64 > KIndex() const { return m_Ks; }
+  arrayView1d< real64 const > nIndex() const { return m_nIndices; }
 
-  arrayView2d< real64 const > const & density() const { return m_density; }
-  arrayView2d< real64 > const & density() { return m_density; }
+  arrayView2d< real64 > density() { return m_density; }
+  arrayView2d< real64 const > density() const { return m_density; }
 
-  arrayView2d< real64 const > const & dDensity_dPressure() const { return m_dDens_dPres; }
-  arrayView2d< real64 > const & dDensity_dPressure() { return m_dDens_dPres; }
+  arrayView2d< real64 > dDensity_dPressure() { return m_dDens_dPres; }
+  arrayView2d< real64 const > dDensity_dPressure() const { return m_dDens_dPres; }
 
-  arrayView2d< real64 const > const & dDensity_dProppantConcentration() const { return m_dDens_dProppantConc; }
-  arrayView2d< real64 > const & dDensity_dProppantConcentration() { return m_dDens_dProppantConc; }
+  arrayView2d< real64 > dDensity_dProppantConcentration() { return m_dDens_dProppantConc; }
+  arrayView2d< real64 const > dDensity_dProppantConcentration() const { return m_dDens_dProppantConc; }
 
-  arrayView3d< real64 const > const & dDensity_dComponentConcentration() const { return m_dDens_dCompConc; }
-  arrayView3d< real64 > const & dDensity_dComponentConcentration() { return m_dDens_dCompConc; }
+  arrayView3d< real64 > dDensity_dComponentConcentration() { return m_dDens_dCompConc; }
+  arrayView3d< real64 const > dDensity_dComponentConcentration() const { return m_dDens_dCompConc; }
 
-  arrayView2d< real64 const > const & fluidDensity() const { return m_fluidDensity; }
-  arrayView2d< real64 > const & fluidDensity() { return m_fluidDensity; }
+  arrayView2d< real64 > fluidDensity() { return m_fluidDensity; }
+  arrayView2d< real64 const > fluidDensity() const { return m_fluidDensity; }
 
-  arrayView2d< real64 const > const & dFluidDensity_dPressure() const { return m_dFluidDens_dPres; }
-  arrayView2d< real64 > const & dFluidDensity_dPressure() { return m_dFluidDens_dPres; }
+  arrayView2d< real64 > dFluidDensity_dPressure() { return m_dFluidDens_dPres; }
+  arrayView2d< real64 const > dFluidDensity_dPressure() const { return m_dFluidDens_dPres; }
 
-  arrayView3d< real64 const > const & dFluidDensity_dComponentConcentration() const { return m_dFluidDens_dCompConc; }
-  arrayView3d< real64 > const & dFluidDensity_dComponentConcentration() { return m_dFluidDens_dCompConc; }
+  arrayView3d< real64 > dFluidDensity_dComponentConcentration() { return m_dFluidDens_dCompConc; }
+  arrayView3d< real64 const > dFluidDensity_dComponentConcentration() const { return m_dFluidDens_dCompConc; }
 
-  arrayView3d< real64 const > const & componentDensity() const { return m_componentDensity; }
-  arrayView3d< real64 > const & componentDensity()       { return m_componentDensity; }
+  arrayView3d< real64 > componentDensity() { return m_componentDensity; }
+  arrayView3d< real64 const > componentDensity() const { return m_componentDensity; }
 
-  arrayView3d< real64 const > const & dComponentDensity_dPressure() const { return m_dCompDens_dPres; }
-  arrayView3d< real64 > const & dComponentDensity_dPressure()       { return m_dCompDens_dPres; }
+  arrayView3d< real64 > dComponentDensity_dPressure() { return m_dCompDens_dPres; }
+  arrayView3d< real64 const > dComponentDensity_dPressure() const { return m_dCompDens_dPres; }
 
-  arrayView4d< real64 const > const & dComponentDensity_dComponentConcentration() const { return m_dCompDens_dCompConc; }
-  arrayView4d< real64 > const & dComponentDensity_dComponentConcentration()       { return m_dCompDens_dCompConc; }
+  arrayView4d< real64 > dComponentDensity_dComponentConcentration() { return m_dCompDens_dCompConc; }
+  arrayView4d< real64 const > dComponentDensity_dComponentConcentration() const { return m_dCompDens_dCompConc; }
 
-  arrayView2d< real64 const > const & fluidViscosity() const { return m_fluidViscosity; }
-  arrayView2d< real64 > const & fluidViscosity()       { return m_fluidViscosity; }
+  arrayView2d< real64 > fluidViscosity(){ return m_fluidViscosity; }
+  arrayView2d< real64 const > fluidViscosity() const { return m_fluidViscosity; }
 
-  arrayView2d< real64 const > const & dFluidViscosity_dPressure() const { return m_dFluidVisc_dPres; }
-  arrayView2d< real64 > const & dFluidViscosity_dPressure()       { return m_dFluidVisc_dPres; }
+  arrayView2d< real64 > dFluidViscosity_dPressure() { return m_dFluidVisc_dPres; }
+  arrayView2d< real64 const > dFluidViscosity_dPressure() const { return m_dFluidVisc_dPres; }
 
-  arrayView3d< real64 const > const & dFluidViscosity_dComponentConcentration() const { return m_dFluidVisc_dCompConc; }
-  arrayView3d< real64 > const & dFluidViscosity_dComponentConcentration()       { return m_dFluidVisc_dCompConc; }
+  arrayView3d< real64 > dFluidViscosity_dComponentConcentration() { return m_dFluidVisc_dCompConc; }
+  arrayView3d< real64 const > dFluidViscosity_dComponentConcentration() const { return m_dFluidVisc_dCompConc; }
 
-  arrayView2d< real64 const > const & viscosity() const { return m_viscosity; }
-  arrayView2d< real64 > const & viscosity()       { return m_viscosity; }
+  arrayView2d< real64 > viscosity() { return m_viscosity; }
+  arrayView2d< real64 const > viscosity() const { return m_viscosity; }
 
-  arrayView2d< real64 const > const & dViscosity_dPressure() const { return m_dVisc_dPres; }
-  arrayView2d< real64 > const & dViscosity_dPressure()       { return m_dVisc_dPres; }
+  arrayView2d< real64 > dViscosity_dPressure() { return m_dVisc_dPres; }
+  arrayView2d< real64 const > dViscosity_dPressure() const { return m_dVisc_dPres; }
 
-  arrayView2d< real64 const > const & dViscosity_dProppantConcentration() const { return m_dVisc_dProppantConc; }
-  arrayView2d< real64 > const & dViscosity_dProppantConcentration()       { return m_dVisc_dProppantConc; }
+  arrayView2d< real64 > dViscosity_dProppantConcentration() { return m_dVisc_dProppantConc; }
+  arrayView2d< real64 const > dViscosity_dProppantConcentration() const { return m_dVisc_dProppantConc; }
 
-  arrayView3d< real64 const > const & dViscosity_dComponentConcentration() const { return m_dVisc_dCompConc; }
-  arrayView3d< real64 > const & dViscosity_dComponentConcentration()       { return m_dVisc_dCompConc; }
+  arrayView3d< real64 > dViscosity_dComponentConcentration() { return m_dVisc_dCompConc; }
+  arrayView3d< real64 const > dViscosity_dComponentConcentration() const { return m_dVisc_dCompConc; }
 
   bool isNewtonianFluid() const { return m_isNewtonianFluid; }
 

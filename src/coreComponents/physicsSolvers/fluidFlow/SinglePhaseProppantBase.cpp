@@ -59,7 +59,7 @@ SinglePhaseBase::FluidPropViews SinglePhaseProppantBase::getFluidProperties( con
            slurryFluid.getWrapper< array2d< real64 > >( SlurryFluidBase::viewKeyStruct::viscosityString )->getDefaultValue() };
 }
 
-arrayView1d< real64 const > const & SinglePhaseProppantBase::getPoreVolumeMult( ElementSubRegionBase const & subRegion ) const
+arrayView1d< real64 const > SinglePhaseProppantBase::getPoreVolumeMult( ElementSubRegionBase const & subRegion ) const
 {
   return subRegion.getReference< array1d< real64 > >( ProppantTransport::viewKeyStruct::poroMultiplierString );
 }
@@ -68,25 +68,25 @@ void SinglePhaseProppantBase::UpdateFluidModel( Group & dataGroup, localIndex co
 {
   GEOSX_MARK_FUNCTION;
 
-  arrayView1d< real64 const > const & pres =
+  arrayView1d< real64 const > const pres =
     dataGroup.getReference< array1d< real64 > >( viewKeyStruct::pressureString );
 
-  arrayView1d< real64 const > const & dPres =
+  arrayView1d< real64 const > const dPres =
     dataGroup.getReference< array1d< real64 > >( viewKeyStruct::deltaPressureString );
 
-  arrayView1d< real64 const > const & proppantConcentration =
+  arrayView1d< real64 const > const proppantConcentration =
     dataGroup.getReference< array1d< real64 > >( ProppantTransport::viewKeyStruct::proppantConcentrationString );
 
-  arrayView1d< real64 const > const & dProppantConcentration =
+  arrayView1d< real64 const > const dProppantConcentration =
     dataGroup.getReference< array1d< real64 > >( ProppantTransport::viewKeyStruct::deltaProppantConcentrationString );
 
-  arrayView2d< real64 const > const & componentConcentration =
+  arrayView2d< real64 const > const componentConcentration =
     dataGroup.getReference< array2d< real64 > >( ProppantTransport::viewKeyStruct::componentConcentrationString );
 
-  arrayView1d< R1Tensor const > const & cellBasedFlux =
+  arrayView1d< R1Tensor const > const cellBasedFlux =
     dataGroup.getReference< array1d< R1Tensor > >( ProppantTransport::viewKeyStruct::cellBasedFluxString );
 
-  arrayView1d< integer const > const & isProppantBoundaryElement =
+  arrayView1d< integer const > const isProppantBoundaryElement =
     dataGroup.getReference< array1d< integer > >( ProppantTransport::viewKeyStruct::isProppantBoundaryString );
 
   SlurryFluidBase & fluid = GetConstitutiveModel< SlurryFluidBase >( dataGroup, m_fluidModelNames[targetIndex] );
