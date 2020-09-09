@@ -150,7 +150,7 @@ bool EmbeddedSurfaceSubRegion::AddNewEmbeddedSurface ( localIndex const cellInde
 
   bool addEmbeddedElem = true;
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodesCoord = nodeManager.referencePosition();
-  EdgeManager::NodeMapType::ViewTypeConst const & edgeToNodes = edgeManager.nodeList();
+  arrayView2d< localIndex const > const edgeToNodes = edgeManager.nodeList();
   R1Tensor origin        = fracture->getCenter();
   R1Tensor normalVector  = fracture->getNormal();
   localIndex edgeIndex;
@@ -209,8 +209,8 @@ bool EmbeddedSurfaceSubRegion::AddNewEmbeddedSurface ( localIndex const cellInde
       isNew = true;
       for( localIndex h=0; h < embSurfNodesPos.size( 0 ); h++ )
       {
-        LvArray::tensorOps::copy< 3 >( distance, intersectionPoints[j] );
-        LvArray::tensorOps::subtract< 3 >( distance, embSurfNodesPos.toViewConst()[h] );
+        LvArray::tensorOps::copy< 3 >( distance, intersectionPoints[ j ] );
+        LvArray::tensorOps::subtract< 3 >( distance, embSurfNodesPos[ h ] );
         if( distance.L2_Norm() < 1e-9 )
         {
           isNew = false;

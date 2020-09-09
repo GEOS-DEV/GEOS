@@ -100,8 +100,8 @@ void SinglePhaseWell::UpdateFluidModel( WellElementSubRegion & subRegion, localI
 {
   GEOSX_MARK_FUNCTION;
 
-  arrayView1d< real64 const > const & pres = subRegion.getReference< array1d< real64 > >( viewKeyStruct::pressureString );
-  arrayView1d< real64 const > const & dPres = subRegion.getReference< array1d< real64 > >( viewKeyStruct::deltaPressureString );
+  arrayView1d< real64 const > const pres = subRegion.getReference< array1d< real64 > >( viewKeyStruct::pressureString );
+  arrayView1d< real64 const > const dPres = subRegion.getReference< array1d< real64 > >( viewKeyStruct::deltaPressureString );
 
   SingleFluidBase & fluid = GetConstitutiveModel< SingleFluidBase >( subRegion, m_fluidModelNames[targetIndex] );
 
@@ -135,21 +135,21 @@ void SinglePhaseWell::InitializeWells( DomainPartition & domain )
     PerforationData const & perforationData = *subRegion.GetPerforationData();
 
     // get the info stored on well elements
-    arrayView1d< real64 const > const & wellElemGravCoef =
+    arrayView1d< real64 const > const wellElemGravCoef =
       subRegion.getReference< array1d< real64 > >( viewKeyStruct::gravityCoefString );
 
     // get well primary variables on well elements
-    arrayView1d< real64 > const & wellElemPressure =
+    arrayView1d< real64 > const wellElemPressure =
       subRegion.getReference< array1d< real64 > >( viewKeyStruct::pressureString );
-    arrayView1d< real64 > const & connRate =
+    arrayView1d< real64 > const connRate =
       subRegion.getReference< array1d< real64 > >( viewKeyStruct::connRateString );
 
     // get the element region, subregion, index
-    arrayView1d< localIndex const > const & resElementRegion =
+    arrayView1d< localIndex const > const resElementRegion =
       perforationData.getReference< array1d< localIndex > >( PerforationData::viewKeyStruct::reservoirElementRegionString );
-    arrayView1d< localIndex const > const & resElementSubRegion =
+    arrayView1d< localIndex const > const resElementSubRegion =
       perforationData.getReference< array1d< localIndex > >( PerforationData::viewKeyStruct::reservoirElementSubregionString );
-    arrayView1d< localIndex const > const & resElementIndex =
+    arrayView1d< localIndex const > const resElementIndex =
       perforationData.getReference< array1d< localIndex > >( PerforationData::viewKeyStruct::reservoirElementIndexString );
 
     // 1) Loop over all perforations to compute an average density
@@ -161,8 +161,8 @@ void SinglePhaseWell::InitializeWells( DomainPartition & domain )
                                                                 subRegion.GetTopRank(),
                                                                 perforationData.GetNumPerforationsGlobal(),
                                                                 wellControls,
-                                                                m_resPressure.toViewConst(),
-                                                                m_resDensity.toViewConst(),
+                                                                m_resPressure.toNestedViewConst(),
+                                                                m_resDensity.toNestedViewConst(),
                                                                 resElementRegion,
                                                                 resElementSubRegion,
                                                                 resElementIndex,
@@ -318,50 +318,50 @@ void SinglePhaseWell::ComputePerforationRates( WellElementSubRegion & subRegion,
   PerforationData * const perforationData = subRegion.GetPerforationData();
 
   // get the degrees of freedom and depth
-  arrayView1d< real64 const > const & wellElemGravCoef =
+  arrayView1d< real64 const > const wellElemGravCoef =
     subRegion.getReference< array1d< real64 > >( viewKeyStruct::gravityCoefString );
 
   // get well primary variables on well elements
-  arrayView1d< real64 const > const &
+  arrayView1d< real64 const > const
   wellElemPressure = subRegion.getReference< array1d< real64 > >( viewKeyStruct::pressureString );
-  arrayView1d< real64 const > const &
+  arrayView1d< real64 const > const
   dWellElemPressure = subRegion.getReference< array1d< real64 > >( viewKeyStruct::deltaPressureString );
 
   // get well constitutive data
   SingleFluidBase const & fluid = GetConstitutiveModel< SingleFluidBase >( subRegion, m_fluidModelNames[targetIndex] );
-  arrayView2d< real64 const > const & wellElemDensity = fluid.density();
-  arrayView2d< real64 const > const & dWellElemDensity_dPres = fluid.dDensity_dPressure();
-  arrayView2d< real64 const > const & wellElemViscosity = fluid.viscosity();
-  arrayView2d< real64 const > const & dWellElemViscosity_dPres = fluid.dViscosity_dPressure();
+  arrayView2d< real64 const > const wellElemDensity = fluid.density();
+  arrayView2d< real64 const > const dWellElemDensity_dPres = fluid.dDensity_dPressure();
+  arrayView2d< real64 const > const wellElemViscosity = fluid.viscosity();
+  arrayView2d< real64 const > const dWellElemViscosity_dPres = fluid.dViscosity_dPressure();
 
   // get well variables on perforations
-  arrayView1d< real64 const > const & perfGravCoef =
+  arrayView1d< real64 const > const perfGravCoef =
     perforationData->getReference< array1d< real64 > >( viewKeyStruct::gravityCoefString );
-  arrayView1d< localIndex const > const & perfWellElemIndex =
+  arrayView1d< localIndex const > const perfWellElemIndex =
     perforationData->getReference< array1d< localIndex > >( PerforationData::viewKeyStruct::wellElementIndexString );
-  arrayView1d< real64 const > const & perfTransmissibility =
+  arrayView1d< real64 const > const perfTransmissibility =
     perforationData->getReference< array1d< real64 > >( PerforationData::viewKeyStruct::wellTransmissibilityString );
 
-  arrayView1d< real64 > const & perfRate =
+  arrayView1d< real64 > const perfRate =
     perforationData->getReference< array1d< real64 > >( viewKeyStruct::perforationRateString );
-  arrayView2d< real64 > const & dPerfRate_dPres =
+  arrayView2d< real64 > const dPerfRate_dPres =
     perforationData->getReference< array2d< real64 > >( viewKeyStruct::dPerforationRate_dPresString );
 
   // get the element region, subregion, index
-  arrayView1d< localIndex const > const & resElementRegion =
+  arrayView1d< localIndex const > const resElementRegion =
     perforationData->getReference< array1d< localIndex > >( PerforationData::viewKeyStruct::reservoirElementRegionString );
-  arrayView1d< localIndex const > const & resElementSubRegion =
+  arrayView1d< localIndex const > const resElementSubRegion =
     perforationData->getReference< array1d< localIndex > >( PerforationData::viewKeyStruct::reservoirElementSubregionString );
-  arrayView1d< localIndex const > const & resElementIndex =
+  arrayView1d< localIndex const > const resElementIndex =
     perforationData->getReference< array1d< localIndex > >( PerforationData::viewKeyStruct::reservoirElementIndexString );
 
   PerforationKernel::Launch< parallelDevicePolicy<> >( perforationData->size(),
-                                                       m_resPressure.toViewConst(),
-                                                       m_deltaResPressure.toViewConst(),
-                                                       m_resDensity.toViewConst(),
-                                                       m_dResDens_dPres.toViewConst(),
-                                                       m_resViscosity.toViewConst(),
-                                                       m_dResVisc_dPres.toViewConst(),
+                                                       m_resPressure.toNestedViewConst(),
+                                                       m_deltaResPressure.toNestedViewConst(),
+                                                       m_resDensity.toNestedViewConst(),
+                                                       m_dResDens_dPres.toNestedViewConst(),
+                                                       m_resViscosity.toNestedViewConst(),
+                                                       m_dResVisc_dPres.toNestedViewConst(),
                                                        wellElemGravCoef,
                                                        wellElemPressure,
                                                        dWellElemPressure,
@@ -580,13 +580,13 @@ void SinglePhaseWell::ImplicitStepComplete( real64 const & GEOSX_UNUSED_PARAM( t
   elemManager.forElementSubRegions< WellElementSubRegion >( [&]( WellElementSubRegion & subRegion )
   {
     // get a reference to the primary variables on well elements
-    arrayView1d< real64 > const & wellElemPressure =
+    arrayView1d< real64 > const wellElemPressure =
       subRegion.getReference< array1d< real64 > >( viewKeyStruct::pressureString );
-    arrayView1d< real64 const > const & dWellElemPressure =
+    arrayView1d< real64 const > const dWellElemPressure =
       subRegion.getReference< array1d< real64 > >( viewKeyStruct::deltaPressureString );
-    arrayView1d< real64 > const & connRate =
+    arrayView1d< real64 > const connRate =
       subRegion.getReference< array1d< real64 > >( viewKeyStruct::connRateString );
-    arrayView1d< real64 const > const & dConnRate =
+    arrayView1d< real64 const > const dConnRate =
       subRegion.getReference< array1d< real64 > >( viewKeyStruct::deltaConnRateString );
 
     forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iwelem )

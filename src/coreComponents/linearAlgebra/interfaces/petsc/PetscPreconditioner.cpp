@@ -294,14 +294,12 @@ void PetscPreconditioner::compute( PetscMatrix const & mat )
   }
 
   // To be able to use Petsc preconditioner (e.g., GAMG) we need to disable floating point exceptions
-  // Disable floating point exceptions and save the FPE flags
-  int const fpeflags = LvArray::system::disableFloatingPointExceptions( FE_ALL_EXCEPT );
+  {
+    LvArray::system::FloatingPointExceptionGuard guard( FE_ALL_EXCEPT );
 
-  GEOSX_LAI_CHECK_ERROR( PCSetUp( m_precond ) );
-  GEOSX_LAI_CHECK_ERROR( PCSetUpOnBlocks( m_precond ) );
-
-  // Restore the previous FPE flags
-  LvArray::system::disableFloatingPointExceptions( fpeflags );
+    GEOSX_LAI_CHECK_ERROR( PCSetUp( m_precond ) );
+    GEOSX_LAI_CHECK_ERROR( PCSetUpOnBlocks( m_precond ) );
+  }
 }
 
 void PetscPreconditioner::apply( Vector const & src,

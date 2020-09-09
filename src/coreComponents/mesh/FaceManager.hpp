@@ -330,13 +330,13 @@ public:
    * @brief Get an immutable accessor to a table containing all the face area.
    * @return an immutable table containing all the face area
    */
-  arrayView1d< real64 const > const & faceArea() const { return m_faceArea; }
+  arrayView1d< real64 const > faceArea() const { return m_faceArea; }
 
   /**
    * @brief Get an immutable accessor to a table containing all the face centers.
    * @return an immutable table containing all the face centers
    */
-  arrayView2d< real64 const > const & faceCenter() const { return m_faceCenter; }
+  arrayView2d< real64 const > faceCenter() const { return m_faceCenter; }
 
   /**
    * @brief Get a mutable accessor to a table containing all the face normals.
@@ -344,13 +344,13 @@ public:
    * or modify the face normals in this FaceManager
    * @return a table containing all the face normals
    */
-  arrayView2d< real64 > const & faceNormal() { return m_faceNormal; }
+  array2d< real64 > const & faceNormal() { return m_faceNormal; }
 
   /**
    * @brief Get an immutable accessor to a table containing all the face normals.
    * @return an immutable table containing all the face normals
    */
-  arrayView2d< real64 const > const & faceNormal() const { return m_faceNormal; }
+  arrayView2d< real64 const > faceNormal() const { return m_faceNormal; }
 
   /**
    * @brief Get a mutable accessor to a map containing the list of each nodes for each faces.
@@ -380,37 +380,37 @@ public:
    * @brief Get a mutable accessor to the faces-to-ElementRegion relation.
    * @return non-const reference to faces-to-ElementRegion relation
    */
-  arrayView2d< localIndex > const & elementRegionList() { return m_toElements.m_toElementRegion; }
+  array2d< localIndex > const & elementRegionList() { return m_toElements.m_toElementRegion; }
 
   /**
    * @brief Get an immutable accessor to the faces-to-ElementRegion relation.
    * @return const reference to nodes-to-ElementRegion relation
    */
-  arrayView2d< localIndex const > const & elementRegionList() const { return m_toElements.m_toElementRegion; }
+  arrayView2d< localIndex const > elementRegionList() const { return m_toElements.m_toElementRegion; }
 
   /**
    * @brief Get a mutable accessor to the faces-to-ElementSubRegion relation.
    * @return non-const reference to faces-to-ElementSubRegion relation
    */
-  arrayView2d< localIndex > const & elementSubRegionList() { return m_toElements.m_toElementSubRegion; }
+  array2d< localIndex > const & elementSubRegionList() { return m_toElements.m_toElementSubRegion; }
 
   /**
    * @brief Get an immutable accessor to the faces-to-ElementSubRegion relation.
    * @return const reference to faces-to-ElementSubRegion relation
    */
-  arrayView2d< localIndex const > const & elementSubRegionList() const { return m_toElements.m_toElementSubRegion; }
+  arrayView2d< localIndex const > elementSubRegionList() const { return m_toElements.m_toElementSubRegion; }
 
   /**
    * @brief Get a mutable accessor to the faces-to-element-index relation.
    * @return non-const reference to faces-to-element-index relation
    */
-  arrayView2d< localIndex > const & elementList() { return m_toElements.m_toElementIndex; }
+  array2d< localIndex > const & elementList() { return m_toElements.m_toElementIndex; }
 
   /**
    * @brief Get an imutable accessor to the faces-to-element-index relation.
    * @return const reference to faces-to-elements relation
    */
-  arrayView2d< localIndex const > const & elementList() const { return m_toElements.m_toElementIndex; }
+  arrayView2d< localIndex const > elementList() const { return m_toElements.m_toElementIndex; }
 
   /**
    * @brief Get a mutable accessor to the faces-to-element-index relation.
