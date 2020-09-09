@@ -50,17 +50,17 @@ Damage< BASE >::Damage( string const & name, Group * const parent ):
     setPlotLevel( PlotLevel::LEVEL_0 )->
     setDescription( "Stress Deviator" );
 
-  this->registerWrapper(viewKeyStruct::lengthScaleString, &m_lengthScale)->
-    setInputFlag(InputFlags::REQUIRED)->
-    setDescription("lenght scale l in the phase-field equation");
+  this->registerWrapper( viewKeyStruct::lengthScaleString, &m_lengthScale )->
+    setInputFlag( InputFlags::REQUIRED )->
+    setDescription( "lenght scale l in the phase-field equation" );
 
-  this->registerWrapper(viewKeyStruct::criticalFractureEnergyString, &m_criticalFractureEnergy)->
-    setInputFlag(InputFlags::REQUIRED)->
-    setDescription("critical fracture energy");
+  this->registerWrapper( viewKeyStruct::criticalFractureEnergyString, &m_criticalFractureEnergy )->
+    setInputFlag( InputFlags::REQUIRED )->
+    setDescription( "critical fracture energy" );
 
-  this->registerWrapper(viewKeyStruct::criticalStrainEnergyString, &m_criticalStrainEnergy)->
-    setInputFlag(InputFlags::REQUIRED)->
-    setDescription("material critical stress in a 1d tension test");
+  this->registerWrapper( viewKeyStruct::criticalStrainEnergyString, &m_criticalStrainEnergy )->
+    setInputFlag( InputFlags::REQUIRED )->
+    setDescription( "material critical stress in a 1d tension test" );
 }
 
 template< typename BASE >

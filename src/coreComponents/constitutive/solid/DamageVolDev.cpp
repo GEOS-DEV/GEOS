@@ -33,7 +33,7 @@ namespace constitutive
 
 template< typename BASE >
 DamageVolDev< BASE >::DamageVolDev( string const & name, Group * const parent ):
-  Damage<BASE>( name, parent )
+  Damage< BASE >( name, parent )
 {}
 
 template< typename BASE >

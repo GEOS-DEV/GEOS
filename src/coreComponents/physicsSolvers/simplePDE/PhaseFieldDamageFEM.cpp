@@ -292,7 +292,7 @@ void PhaseFieldDamageFEM::AssembleSystem( real64 const GEOSX_UNUSED_PARAM( time_
         //real64 ell = m_lengthScale;                       //phase-field length scale
         real64 ell = constitutiveUpdate.getRegularizationLength();
         //real64 Gc = m_criticalFractureEnergy;             //energy release rate
-	       real64 Gc = constitutiveUpdate.getCriticalFractureEnergy();
+        real64 Gc = constitutiveUpdate.getCriticalFractureEnergy();
 
         real64 threshold = constitutiveUpdate.getEnergyThreshold();//elastic energy threshold - use when Local Dissipation is linear
 
@@ -307,14 +307,14 @@ void PhaseFieldDamageFEM::AssembleSystem( real64 const GEOSX_UNUSED_PARAM( time_
             element_matrix = 0.0;
             for( localIndex q = 0; q < n_q_points; ++q )
             {
-              real64 const strainEnergyDensity = constitutiveUpdate.calculateStrainEnergyDensity( k,q );
+              real64 const strainEnergyDensity = constitutiveUpdate.calculateStrainEnergyDensity( k, q );
               real64 D = 0;                                                                   //max between threshold and
                                                                                               // Elastic energy
               if( m_localDissipationOption == "Linear" )
               {
                 D = std::max( threshold, strainEnergyDensity );
                 //D = max(strainEnergy(k,q), strainEnergy(k,q));//debbuging line - remove after testing
-	      }
+              }
               //Interpolate d and grad_d
 
               real64 qp_damage = 0.0;
@@ -343,11 +343,10 @@ void PhaseFieldDamageFEM::AssembleSystem( real64 const GEOSX_UNUSED_PARAM( time_
                   //                                   (ell * D/Gc) * Na * qp_damage);
 
                   element_rhs( a ) += detJ[k][q] * ( -3 * Na / 16  -
-                                                    0.375*pow( ell, 2 ) * LvArray::tensorOps::AiBi<3>( qp_grad_damage, dNdX[k][q][a] ) -
-                                                    (0.5 * ell * D/Gc) * Na * constitutiveUpdate.GetDegradationDerivative(qp_damage));
+                                                     0.375*pow( ell, 2 ) * LvArray::tensorOps::AiBi< 3 >( qp_grad_damage, dNdX[k][q][a] ) -
+                                                     (0.5 * ell * D/Gc) * Na * constitutiveUpdate.GetDegradationDerivative( qp_damage ));
 
                 }
-
                 else
                 {
                   // element_rhs( a ) += detJ[k][q] * (Na * (2 * ell) * strainEnergyDensity / Gc -
@@ -356,8 +355,8 @@ void PhaseFieldDamageFEM::AssembleSystem( real64 const GEOSX_UNUSED_PARAM( time_
 
 
                   element_rhs( a ) -= detJ[k][q] * (Na * qp_damage +
-                                                    (pow( ell, 2 ) * LvArray::tensorOps::AiBi<3>( qp_grad_damage, dNdX[k][q][a] ) +
-                                                     Na * constitutiveUpdate.GetDegradationDerivative(qp_damage) * (ell*strainEnergyDensity/Gc)) );
+                                                    (pow( ell, 2 ) * LvArray::tensorOps::AiBi< 3 >( qp_grad_damage, dNdX[k][q][a] ) +
+                                                     Na * constitutiveUpdate.GetDegradationDerivative( qp_damage ) * (ell*strainEnergyDensity/Gc)) );
                 }
 
                 for( localIndex b = 0; b < numNodesPerElement; ++b )
@@ -370,11 +369,10 @@ void PhaseFieldDamageFEM::AssembleSystem( real64 const GEOSX_UNUSED_PARAM( time_
                     //                            (ell * D/Gc) * Na * Nb);
                     //
                     element_matrix( a, b ) -= detJ[k][q] *
-                                              (0.375*pow( ell, 2 ) * LvArray::tensorOps::AiBi<3>( dNdX[k][q][a], dNdX[k][q][b] ) +
-                                               (0.5 * ell * D/Gc) * constitutiveUpdate.GetDegradationSecondDerivative(qp_damage) * Na * Nb);
+                                              (0.375*pow( ell, 2 ) * LvArray::tensorOps::AiBi< 3 >( dNdX[k][q][a], dNdX[k][q][b] ) +
+                                               (0.5 * ell * D/Gc) * constitutiveUpdate.GetDegradationSecondDerivative( qp_damage ) * Na * Nb);
 
                   }
-
                   else
                   {
                     // element_matrix( a, b ) -= detJ[k][q] *
@@ -383,8 +381,8 @@ void PhaseFieldDamageFEM::AssembleSystem( real64 const GEOSX_UNUSED_PARAM( time_
                     //                           );
 
                     element_matrix( a, b ) -= detJ[k][q] *
-                                              ( pow( ell, 2 ) * LvArray::tensorOps::AiBi<3>( dNdX[k][q][a], dNdX[k][q][b] ) +
-                                                  Na * Nb * (1 + constitutiveUpdate.GetDegradationSecondDerivative(qp_damage) * ell*strainEnergyDensity/Gc )
+                                              ( pow( ell, 2 ) * LvArray::tensorOps::AiBi< 3 >( dNdX[k][q][a], dNdX[k][q][b] ) +
+                                                Na * Nb * (1 + constitutiveUpdate.GetDegradationSecondDerivative( qp_damage ) * ell*strainEnergyDensity/Gc )
                                               );
                   }
                 }

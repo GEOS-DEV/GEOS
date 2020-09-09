@@ -159,12 +159,14 @@ public:
                                                localIndex const q ) const override;
 
   GEOSX_HOST_DEVICE
-  virtual real64 getBulkModulus( localIndex const k ) const {
+  virtual real64 getBulkModulus( localIndex const k ) const
+  {
     return m_bulkModulus[k];
   }
 
   GEOSX_HOST_DEVICE
-  virtual real64 getShearModulus( localIndex const k ) const {
+  virtual real64 getShearModulus( localIndex const k ) const
+  {
     return m_shearModulus[k];
   }
 
@@ -316,7 +318,8 @@ real64 LinearElasticIsotropicUpdates::calculateStrainEnergyDensity( localIndex c
   // {
   //   compressionIndicator = 1;
   // }
-  // real64 const activeStrainEnergyDensity = newStrainEnergyDensity - compressionIndicator*(traceOfStress/3.0)*(traceOfStress/3.0)/(2*m_bulkModulus[k]);
+  // real64 const activeStrainEnergyDensity = newStrainEnergyDensity -
+  // compressionIndicator*(traceOfStress/3.0)*(traceOfStress/3.0)/(2*m_bulkModulus[k]);
   // return activeStrainEnergyDensity;
   /////////////////////////////////
   //end of adjustments
