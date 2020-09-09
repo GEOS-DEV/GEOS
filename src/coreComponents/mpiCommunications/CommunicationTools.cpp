@@ -717,7 +717,7 @@ void CommunicationTools::FindGhosts( MeshLevel & meshLevel,
   //   the sync list exchange while another process still has not unpacked the ghosts received from
   //   the first process. Depending on the mpi implementation the sync send from the first process
   //   can be recv'd by the second process instead of the ghost send which has already been sent but
-  //   not necessarily recieved.
+  //   not necessarily received.
   // Some restructuring to ensure this can't happen ( can also probably just change the send/recv tagging )
   //   can eliminate this. But at present runtimes are the same in either case, as time is mostly just
   //   shifted from the waitall in UnpackAndRebuildSyncLists since the processes are more 'in-sync' when

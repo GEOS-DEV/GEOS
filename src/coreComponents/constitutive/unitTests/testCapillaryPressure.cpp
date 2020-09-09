@@ -42,9 +42,9 @@ void testNumericalDerivatives( CapillaryPressureBase & capPressure,
   capPressure.allocateConstitutiveData( capPressure.getParent(), 1 );
   capPressureCopy.allocateConstitutiveData( capPressure.getParent(), 1 );
 
-  arraySlice1d< real64 const > phaseCapPressure = capPressure.phaseCapPressure()[0][0];
-  arraySlice2d< real64 const > dPhaseCapPressure_dSat = capPressure.dPhaseCapPressure_dPhaseVolFraction()[0][0];
-  arraySlice1d< real64 const > phaseCapPressureCopy = capPressureCopy.phaseCapPressure()[0][0];
+  arrayView3d< real64 const > phaseCapPressure = capPressure.phaseCapPressure();
+  arrayView4d< real64 const > dPhaseCapPressure_dSat = capPressure.dPhaseCapPressure_dPhaseVolFraction();
+  arrayView3d< real64 const > phaseCapPressureCopy = capPressureCopy.phaseCapPressure();
 
   // set the fluid state to current
   constitutive::constitutiveUpdatePassThru( capPressure, [&] ( auto & castedCapPres )
@@ -54,7 +54,7 @@ void testNumericalDerivatives( CapillaryPressureBase & capPressure,
   } );
 
   // update saturation and check derivatives
-  auto dPhaseCapPressure_dS = invertLayout( dPhaseCapPressure_dSat, NP, NP );
+  auto dPhaseCapPressure_dS = invertLayout( dPhaseCapPressure_dSat[ 0 ][ 0 ], NP, NP );
 
   array1d< real64 > satNew( NP );
   for( localIndex jp = 0; jp < NP; ++jp )
@@ -73,9 +73,9 @@ void testNumericalDerivatives( CapillaryPressureBase & capPressure,
     } );
 
     string var = "phaseVolFrac[" + phases[jp] + "]";
-    checkDerivative( phaseCapPressureCopy.toSliceConst(),
-                     phaseCapPressure.toSliceConst(),
-                     dPhaseCapPressure_dS[jp].toSliceConst(),
+    checkDerivative( phaseCapPressureCopy[ 0 ][ 0 ],
+                     phaseCapPressure[ 0 ][ 0 ],
+                     dPhaseCapPressure_dS[ jp ].toSliceConst(),
                      dS,
                      relTol,
                      "phaseCapPressure",

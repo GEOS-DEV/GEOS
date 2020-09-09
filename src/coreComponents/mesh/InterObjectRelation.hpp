@@ -78,7 +78,7 @@ public:
    * @brief Get the LocalToGlobal mapping from the related object.
    * @return The LocalToGlobal mapping from the related object.
    */
-  arrayView1d< globalIndex const > const & RelatedObjectLocalToGlobal() const
+  arrayView1d< globalIndex const > RelatedObjectLocalToGlobal() const
   { return this->m_relatedObject->localToGlobalMap(); }
 
   /**
@@ -96,7 +96,7 @@ private:
  * @brief A relationship from single objects to many other objects, where
  *        each object is related to the same number of objects.
  **/
-typedef InterObjectRelation< array2d< localIndex > >                FixedOneToManyRelation;
+typedef InterObjectRelation< array2d< localIndex > > FixedOneToManyRelation;
 }
 
 #endif /* GEOSX_MESH_INTEROBJECTRELATION_HPP_ */

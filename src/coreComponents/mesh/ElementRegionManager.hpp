@@ -51,11 +51,27 @@ public:
   constexpr static int maxNumNodesPerElem = 8;
 
   /**
-   * @brief The ElementViewAccessor at the ElementRegionManager level is a 2D array of  VIEWTYPE.
+   * @brief The ElementViewAccessor at the ElementRegionManager level is an array of array of VIEWTYPE.
    * @tparam VIEWTYPE data type
    */
   template< typename VIEWTYPE >
   using ElementViewAccessor = array1d< array1d< VIEWTYPE > >;
+
+  /**
+   * @brief The ElementViewAccessor at the ElementRegionManager level is the
+   *   type resulting from ElementViewAccessor< VIEWTYPE >::toNestedView().
+   * @tparam VIEWTYPE data type
+   */
+  template< typename VIEWTYPE >
+  using ElementView = typename ElementViewAccessor< VIEWTYPE >::NestedViewType;
+
+  /**
+   * @brief The ElementViewAccessor at the ElementRegionManager level is the
+   *   type resulting from ElementViewAccessor< VIEWTYPE >::toNestedViewConst().
+   * @tparam VIEWTYPE data type
+   */
+  template< typename VIEWTYPE >
+  using ElementViewConst = typename ElementViewAccessor< VIEWTYPE >::NestedViewTypeConst;
 
   /**
    * @brief The ElementViewAccessor at the ElementRegionManager level is a 2D array of ReferenceWrapper around VIEWTYPE.

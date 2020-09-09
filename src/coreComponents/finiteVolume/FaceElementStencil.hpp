@@ -128,7 +128,7 @@ public:
    * @brief Give the array of vectors pointing from the cell center to the edge center.
    * @return The array of vectors pointing from the cell center to the edge center
    */
-  ArrayOfArraysView< R1Tensor const > const & getCellCenterToEdgeCenters() const
+  ArrayOfArraysView< R1Tensor const > getCellCenterToEdgeCenters() const
   { return m_cellCenterToEdgeCenters.toViewConst(); }
 
 private:

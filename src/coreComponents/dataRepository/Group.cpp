@@ -352,7 +352,7 @@ localIndex Group::PackSize( string_array const & wrapperNames,
                             integer const recursive,
                             bool on_device ) const
 {
-  arrayView1d< localIndex > nullArray;
+  arrayView1d< localIndex const > nullArray;
   return PackSize( wrapperNames, nullArray, recursive, on_device );
 }
 
@@ -422,7 +422,7 @@ localIndex Group::Pack( buffer_unit_type * & buffer,
                         integer const recursive,
                         bool on_device ) const
 {
-  arrayView1d< localIndex > nullArray;
+  arrayView1d< localIndex const > nullArray;
   return Pack( buffer, wrapperNames, nullArray, recursive, on_device );
 }
 

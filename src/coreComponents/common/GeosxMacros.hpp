@@ -93,4 +93,7 @@ void i_g_n_o_r_e( ARGS const & ... ) {}
 /// preprocessor variable for the C99 restrict keyword for use with the "this" pointer
 #define GEOSX_RESTRICT_THIS LVARRAY_RESTRICT_THIS
 
+/// Doxygen can't parse a `decltype( auto )` return type, using this gets around that.
+#define GEOSX_DECLTYPE_AUTO_RETURN decltype( auto )
+
 #endif // GEOSX_COMMON_GEOSXMACROS_HPP_

@@ -132,7 +132,7 @@ struct FluxKernel
    * by calling .toView() or .toViewConst() on an accessor instance
    */
   template< typename VIEWTYPE >
-  using ElementView = typename ElementRegionManager::ElementViewAccessor< VIEWTYPE >::ViewTypeConst;
+  using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
 
   /**
    * @brief launches the kernel to assemble the flux contributions to the linear system.
@@ -155,23 +155,23 @@ struct FluxKernel
     Launch( STENCIL_TYPE const & stencil,
             real64 const dt,
             globalIndex const rankOffset,
-            ElementView< arrayView1d< globalIndex const > > const & dofNumber,
-            ElementView< arrayView1d< integer const > > const & ghostRank,
-            ElementView< arrayView1d< real64 const > > const & pres,
-            ElementView< arrayView1d< real64 const > > const & dPres,
-            ElementView< arrayView1d< real64 const > > const & gravCoef,
-            ElementView< arrayView2d< real64 const > > const & dens,
-            ElementView< arrayView2d< real64 const > > const & dDens_dPres,
-            ElementView< arrayView1d< real64 const > > const & mob,
-            ElementView< arrayView1d< real64 const > > const & dMob_dPres,
-            ElementView< arrayView1d< real64 const > > const & aperture0,
-            ElementView< arrayView1d< real64 const > > const & aperture,
-            ElementView< arrayView1d< R1Tensor const > > const & transTMultiplier,
+            ElementViewConst< arrayView1d< globalIndex const > > const & dofNumber,
+            ElementViewConst< arrayView1d< integer const > > const & ghostRank,
+            ElementViewConst< arrayView1d< real64 const > > const & pres,
+            ElementViewConst< arrayView1d< real64 const > > const & dPres,
+            ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
+            ElementViewConst< arrayView2d< real64 const > > const & dens,
+            ElementViewConst< arrayView2d< real64 const > > const & dDens_dPres,
+            ElementViewConst< arrayView1d< real64 const > > const & mob,
+            ElementViewConst< arrayView1d< real64 const > > const & dMob_dPres,
+            ElementViewConst< arrayView1d< real64 const > > const & aperture0,
+            ElementViewConst< arrayView1d< real64 const > > const & aperture,
+            ElementViewConst< arrayView1d< R1Tensor const > > const & transTMultiplier,
             R1Tensor const gravityVector,
             real64 const meanPermCoeff,
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
-            ElementView< arrayView1d< real64 const > > const & s,
-            ElementView< arrayView1d< real64 const > > const & dSdAper,
+            ElementViewConst< arrayView1d< real64 const > > const & s,
+            ElementViewConst< arrayView1d< real64 const > > const & dSdAper,
 #endif
             CRSMatrixView< real64, globalIndex const > const & localMatrix,
             arrayView1d< real64 > const & localRhs,
@@ -191,13 +191,13 @@ struct FluxKernel
            arraySlice1d< localIndex const > const & sesri,
            arraySlice1d< localIndex const > const & sei,
            arraySlice1d< real64 const > const & stencilWeights,
-           ElementView< arrayView1d< real64 const > > const & pres,
-           ElementView< arrayView1d< real64 const > > const & dPres,
-           ElementView< arrayView1d< real64 const > > const & gravCoef,
-           ElementView< arrayView2d< real64 const > > const & dens,
-           ElementView< arrayView2d< real64 const > > const & dDens_dPres,
-           ElementView< arrayView1d< real64 const > > const & mob,
-           ElementView< arrayView1d< real64 const > > const & dMob_dPres,
+           ElementViewConst< arrayView1d< real64 const > > const & pres,
+           ElementViewConst< arrayView1d< real64 const > > const & dPres,
+           ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
+           ElementViewConst< arrayView2d< real64 const > > const & dens,
+           ElementViewConst< arrayView2d< real64 const > > const & dDens_dPres,
+           ElementViewConst< arrayView1d< real64 const > > const & mob,
+           ElementViewConst< arrayView1d< real64 const > > const & dMob_dPres,
            real64 const dt,
            arraySlice1d< real64 > const & flux,
            arraySlice2d< real64 > const & fluxJacobian );
@@ -261,7 +261,7 @@ struct FluxKernel
 struct FaceDirichletBCKernel
 {
   template< typename VIEWTYPE >
-  using ElementView = FluxKernel::ElementView< VIEWTYPE >;
+  using ElementViewConst = FluxKernel::ElementViewConst< VIEWTYPE >;
 
   template< typename FLUID_WRAPPER >
   GEOSX_HOST_DEVICE
@@ -270,13 +270,13 @@ struct FaceDirichletBCKernel
                        arraySlice1d< localIndex const > const & sesri,
                        arraySlice1d< localIndex const > const & sefi,
                        arraySlice1d< real64 const > const & trans,
-                       ElementView< arrayView1d< real64 const > > const & pres,
-                       ElementView< arrayView1d< real64 const > > const & dPres,
-                       ElementView< arrayView1d< real64 const > > const & gravCoef,
-                       ElementView< arrayView2d< real64 const > > const & dens,
-                       ElementView< arrayView2d< real64 const > > const & dDens_dPres,
-                       ElementView< arrayView1d< real64 const > > const & mob,
-                       ElementView< arrayView1d< real64 const > > const & dMob_dPres,
+                       ElementViewConst< arrayView1d< real64 const > > const & pres,
+                       ElementViewConst< arrayView1d< real64 const > > const & dPres,
+                       ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
+                       ElementViewConst< arrayView2d< real64 const > > const & dens,
+                       ElementViewConst< arrayView2d< real64 const > > const & dDens_dPres,
+                       ElementViewConst< arrayView1d< real64 const > > const & mob,
+                       ElementViewConst< arrayView1d< real64 const > > const & dMob_dPres,
                        arrayView1d< real64 const > const & presFace,
                        arrayView1d< real64 const > const & gravCoefFace,
                        FLUID_WRAPPER const & fluidWrapper,
@@ -327,16 +327,16 @@ struct FaceDirichletBCKernel
                       BoundaryStencil::IndexContainerViewConstType const & sesri,
                       BoundaryStencil::IndexContainerViewConstType const & sefi,
                       BoundaryStencil::WeightContainerViewConstType const & trans,
-                      ElementView< arrayView1d< integer const > > const & ghostRank,
-                      ElementView< arrayView1d< globalIndex const > > const & dofNumber,
+                      ElementViewConst< arrayView1d< integer const > > const & ghostRank,
+                      ElementViewConst< arrayView1d< globalIndex const > > const & dofNumber,
                       globalIndex const rankOffset,
-                      ElementView< arrayView1d< real64 const > > const & pres,
-                      ElementView< arrayView1d< real64 const > > const & dPres,
-                      ElementView< arrayView1d< real64 const > > const & gravCoef,
-                      ElementView< arrayView2d< real64 const > > const & dens,
-                      ElementView< arrayView2d< real64 const > > const & dDens_dPres,
-                      ElementView< arrayView1d< real64 const > > const & mob,
-                      ElementView< arrayView1d< real64 const > > const & dMob_dPres,
+                      ElementViewConst< arrayView1d< real64 const > > const & pres,
+                      ElementViewConst< arrayView1d< real64 const > > const & dPres,
+                      ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
+                      ElementViewConst< arrayView2d< real64 const > > const & dens,
+                      ElementViewConst< arrayView2d< real64 const > > const & dDens_dPres,
+                      ElementViewConst< arrayView1d< real64 const > > const & mob,
+                      ElementViewConst< arrayView1d< real64 const > > const & dMob_dPres,
                       arrayView1d< real64 const > const & presFace,
                       arrayView1d< real64 const > const & gravCoefFace,
                       FLUID_WRAPPER const & fluidWrapper,

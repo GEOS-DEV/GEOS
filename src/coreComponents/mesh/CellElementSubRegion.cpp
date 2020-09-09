@@ -48,7 +48,7 @@ void CellElementSubRegion::CopyFromCellBlock( CellBlock * source )
   this->resize( source->size());
   this->nodeList() = source->nodeList();
 
-  arrayView1d< globalIndex const > const & sourceLocalToGlobal = source->localToGlobalMap();
+  arrayView1d< globalIndex const > const sourceLocalToGlobal = source->localToGlobalMap();
   this->m_localToGlobalMap.resize( sourceLocalToGlobal.size() );
   for( localIndex i = 0; i < localToGlobalMap().size(); ++i )
   {
@@ -108,21 +108,25 @@ template< bool DOPACK >
 localIndex CellElementSubRegion::PackUpDownMapsPrivate( buffer_unit_type * & buffer,
                                                         arrayView1d< localIndex const > const & packList ) const
 {
-  localIndex packedSize = 0;
 
-  packedSize += bufferOps::Pack< DOPACK >( buffer,
-                                           nodeList().Base().toViewConst(),
-                                           m_unmappedGlobalIndicesInNodelist,
-                                           packList,
-                                           this->localToGlobalMap(),
-                                           nodeList().RelatedObjectLocalToGlobal() );
+  arrayView1d< globalIndex const > const localToGlobal = this->localToGlobalMap();
+  arrayView1d< globalIndex const > nodeLocalToGlobal = nodeList().RelatedObjectLocalToGlobal();
+  arrayView1d< globalIndex const > faceLocalToGlobal = faceList().RelatedObjectLocalToGlobal();
+
+
+  localIndex packedSize = bufferOps::Pack< DOPACK >( buffer,
+                                                     nodeList().Base().toViewConst(),
+                                                     m_unmappedGlobalIndicesInNodelist,
+                                                     packList,
+                                                     localToGlobal,
+                                                     nodeLocalToGlobal );
 
   packedSize += bufferOps::Pack< DOPACK >( buffer,
                                            faceList().Base().toViewConst(),
                                            m_unmappedGlobalIndicesInFacelist,
                                            packList,
-                                           this->localToGlobalMap(),
-                                           faceList().RelatedObjectLocalToGlobal() );
+                                           localToGlobal,
+                                           faceLocalToGlobal );
 
   return packedSize;
 }

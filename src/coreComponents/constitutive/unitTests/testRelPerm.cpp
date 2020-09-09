@@ -42,9 +42,9 @@ void testNumericalDerivatives( RelativePermeabilityBase & relPerm,
   relPerm.allocateConstitutiveData( relPerm.getParent(), 1 );
   relPermCopy.allocateConstitutiveData( relPerm.getParent(), 1 );
 
-  arraySlice1d< real64 const > phaseRelPerm = relPerm.phaseRelPerm()[0][0];
-  arraySlice2d< real64 const > dPhaseRelPerm_dSat = relPerm.dPhaseRelPerm_dPhaseVolFraction()[0][0];
-  arraySlice1d< real64 const > phaseRelPermCopy = relPermCopy.phaseRelPerm()[0][0];
+  arrayView3d< real64 const > const phaseRelPerm = relPerm.phaseRelPerm();
+  arrayView4d< real64 const > const dPhaseRelPerm_dSat = relPerm.dPhaseRelPerm_dPhaseVolFraction();
+  arrayView3d< real64 const > const phaseRelPermCopy = relPermCopy.phaseRelPerm();
 
   // set the fluid state to current
   constitutive::constitutiveUpdatePassThru( relPerm, [&] ( auto & castedRelPerm )
@@ -54,7 +54,7 @@ void testNumericalDerivatives( RelativePermeabilityBase & relPerm,
   } );
 
   // update saturation and check derivatives
-  auto dPhaseRelPerm_dS = invertLayout( dPhaseRelPerm_dSat, NP, NP );
+  auto dPhaseRelPerm_dS = invertLayout( dPhaseRelPerm_dSat[ 0 ][ 0 ], NP, NP );
 
   array1d< real64 > satNew( NP );
   for( localIndex jp = 0; jp < NP; ++jp )
@@ -73,9 +73,9 @@ void testNumericalDerivatives( RelativePermeabilityBase & relPerm,
     } );
 
     string const var = "phaseVolFrac[" + phases[jp] + "]";
-    checkDerivative( phaseRelPermCopy.toSliceConst(),
-                     phaseRelPerm.toSliceConst(),
-                     dPhaseRelPerm_dS[jp].toSliceConst(),
+    checkDerivative( phaseRelPermCopy[ 0 ][ 0 ],
+                     phaseRelPerm[ 0 ][ 0 ],
+                     dPhaseRelPerm_dS[ jp ].toSliceConst(),
                      dS,
                      relTol,
                      "phaseRelPerm",

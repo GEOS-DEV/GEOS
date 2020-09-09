@@ -467,7 +467,7 @@ public:
 
 protected:
   /// The element to nodes map.
-  typename SUBREGION_TYPE::NodeMapType::base_type::ViewTypeConst const m_elemsToNodes;
+  traits::ViewTypeConst< typename SUBREGION_TYPE::NodeMapType::base_type > const m_elemsToNodes;
 
   /// The element ghost rank array.
   arrayView1d< integer const > const m_elemGhostRank;

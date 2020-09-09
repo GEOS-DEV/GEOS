@@ -115,25 +115,25 @@ public:
    * @brief Const access to the element regions indices.
    * @return A view to const
    */
-  typename LEAFCLASSTRAITS::IndexContainerViewConstType const & getElementRegionIndices() const { return m_elementRegionIndices.toViewConst(); }
+  typename LEAFCLASSTRAITS::IndexContainerViewConstType getElementRegionIndices() const { return m_elementRegionIndices.toViewConst(); }
 
   /**
    * @brief Const access to the element subregions indices.
    * @return A view to const
    */
-  typename LEAFCLASSTRAITS::IndexContainerViewConstType const & getElementSubRegionIndices() const { return m_elementSubRegionIndices.toViewConst(); }
+  typename LEAFCLASSTRAITS::IndexContainerViewConstType getElementSubRegionIndices() const { return m_elementSubRegionIndices.toViewConst(); }
 
   /**
    * @brief Const access to the element indices.
    * @return A view to const
    */
-  typename LEAFCLASSTRAITS::IndexContainerViewConstType const & getElementIndices() const { return m_elementIndices.toViewConst(); }
+  typename LEAFCLASSTRAITS::IndexContainerViewConstType getElementIndices() const { return m_elementIndices.toViewConst(); }
 
   /**
    * @brief Const access to the stencil weights.
    * @return A view to const
    */
-  typename LEAFCLASSTRAITS::WeightContainerViewConstType const & getWeights() const { return m_weights.toViewConst(); }
+  typename LEAFCLASSTRAITS::WeightContainerViewConstType getWeights() const { return m_weights.toViewConst(); }
 
 protected:
   /// The container for the element region indices for each point in each stencil

@@ -65,7 +65,7 @@ public:
   { return m_matchedPartitionBoundary; }
 
   /// @copydoc matchedPartitionBoundary()
-  arrayView1d< localIndex const > const & matchedPartitionBoundary() const
+  arrayView1d< localIndex const > matchedPartitionBoundary() const
   { return m_matchedPartitionBoundary; }
 
   /**
@@ -75,7 +75,7 @@ public:
   { return m_ghostsToSend; }
 
   /// @copydoc ghostsToSend()
-  arrayView1d< localIndex const > const & ghostsToSend() const
+  arrayView1d< localIndex const > ghostsToSend() const
   { return m_ghostsToSend; }
 
   /**
@@ -85,7 +85,7 @@ public:
   { return m_ghostsToReceive; }
 
   /// @copydoc ghostsToReceive()
-  arrayView1d< localIndex const > const & ghostsToReceive() const
+  arrayView1d< localIndex const > ghostsToReceive() const
   { return m_ghostsToReceive; }
 
   /**
@@ -95,7 +95,7 @@ public:
   { return m_adjacencyList; }
 
   /// @copydoc adjacencyList()
-  arrayView1d< localIndex const > const & adjacencyList() const
+  arrayView1d< localIndex const > adjacencyList() const
   { return m_adjacencyList; }
 
   /**
@@ -106,7 +106,7 @@ public:
   { return m_nonLocalGhosts; }
 
   /// @copydoc nonLocalGhosts()
-  arrayView1d< std::pair< globalIndex, int > const > const & nonLocalGhosts() const
+  arrayView1d< std::pair< globalIndex, int > const > nonLocalGhosts() const
   { return m_nonLocalGhosts; }
 
 private:

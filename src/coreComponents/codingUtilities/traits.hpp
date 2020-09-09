@@ -136,11 +136,11 @@ using ConstPointer = typename internal::GetPointerType< T >::ConstPointer;
 
 /// Type aliased to whatever T::toView() returns or T & if that method doesn't exist.
 template< typename T >
-using ViewType = LvArray::typeManipulation::ViewType< T > &;
+using ViewType = LvArray::typeManipulation::ViewType< T >;
 
 /// Type aliased to whatever T::toViewConst() returns or T const & if that method doesn't exist.
 template< typename T >
-using ViewTypeConst = LvArray::typeManipulation::ViewTypeConst< T > &;
+using ViewTypeConst = LvArray::typeManipulation::ViewTypeConst< T >;
 
 /// True if T is or inherits from std::string.
 template< typename T >
