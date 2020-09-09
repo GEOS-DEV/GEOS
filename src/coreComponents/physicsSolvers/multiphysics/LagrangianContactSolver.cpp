@@ -1230,6 +1230,7 @@ void LagrangianContactSolver::ComputeFaceNodalArea( arrayView2d< real64 const, n
   // finiteElement::FiniteElementBase const &
   // fe = fractureSubRegion->getReference< finiteElement::FiniteElementBase >( surfaceGenerator->getDiscretizationName() );
   // but it's either empty (unknown discretization) or for 3D only (e.g., hexahedra)
+  GEOSX_MARK_FUNCTION;
 
   localIndex const TriangularPermutation[3] = { 0, 1, 2 };
   localIndex const QuadrilateralPermutation[4] = { 0, 1, 3, 2 };
