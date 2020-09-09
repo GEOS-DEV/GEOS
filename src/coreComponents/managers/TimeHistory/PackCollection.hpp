@@ -77,6 +77,12 @@ public:
   /// @endcond
 
 protected:
+  /**
+   * @brief Get the target object from which to collect time history data.
+   * @param domain The problem domain.
+   * @return The target object as a group.
+   */
+  Group const * getTargetObject( DomainPartition & domain );
 
   /// @copydoc geosx::HistoryCollection::collect
   virtual void collect( Group * domain,

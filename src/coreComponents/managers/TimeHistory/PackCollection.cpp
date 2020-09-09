@@ -32,9 +32,9 @@ void PackCollection::InitializePostSubGroups( Group * const group )
 
 HistoryMetadata PackCollection::getMetadata( ProblemManager & pm, localIndex collectionIdx )
 {
-  DomainPartition const & domain = *(pm.getDomainPartition( ));
-  MeshLevel const & meshLevel = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
-  Group const * target_object = meshLevel.GetGroupByPath( m_objectPath );
+  DomainPartition & domain = *(pm.getDomainPartition( ));
+  //MeshLevel const & meshLevel = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
+  Group const * target_object = this->getTargetObject( domain ); //meshLevel.GetGroupByPath( m_objectPath );
   WrapperBase const * target = target_object->getWrapperBase( m_fieldName );
   if( m_setNames.size() != 0 )
   {
@@ -52,9 +52,10 @@ HistoryMetadata PackCollection::getMetadata( ProblemManager & pm, localIndex col
 
 void PackCollection::updateSetsIndices( ProblemManager & pm )
 {
-  DomainPartition const & domain = *(pm.getDomainPartition( ));
-  MeshLevel const & meshLevel = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
-  Group const * target_object = meshLevel.GetGroupByPath( m_objectPath );
+  DomainPartition & domain = *(pm.getDomainPartition( ));
+  //MeshLevel const & meshLevel = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
+  //Group const * target_object = meshLevel.GetGroupByPath( m_objectPath );
+  Group const * target_object = this->getTargetObject( domain );
   WrapperBase const * target = target_object->getWrapperBase( m_fieldName );
   GEOSX_ERROR_IF( !target->isPackable( false ), "The object targeted for collection must be packable!" );
   localIndex num_sets = m_setNames.size( );
@@ -80,6 +81,39 @@ void PackCollection::updateSetsIndices( ProblemManager & pm )
   }
 }
 
+// TODO : once we add additional history collectors, this should likely be pulled into a super-class
+Group const * PackCollection::getTargetObject( DomainPartition & domain )
+{
+  MeshLevel * const meshLevel = domain.getMeshBody( 0 )->getMeshLevel( 0 );
+  dataRepository::Group * targetGroup = meshLevel;
+  string_array const targetTokens = stringutilities::Tokenize( m_objectPath, "/" );
+  localIndex const targetTokenLength = LvArray::integerConversion< localIndex >( targetTokens.size() );
+
+  string processedPath;
+  for( localIndex pathLevel = 0; pathLevel < targetTokenLength; ++pathLevel )
+  {
+    dataRepository::Group * const elemRegionSubGroup = targetGroup->GetGroup( ElementRegionManager::groupKeyStruct::elementRegionsGroup );
+    if( elemRegionSubGroup != nullptr )
+    {
+      targetGroup = elemRegionSubGroup;
+    }
+    dataRepository::Group * const elemSubRegionSubGroup = targetGroup->GetGroup( ElementRegionBase::viewKeyStruct::elementSubRegions );
+    if( elemSubRegionSubGroup != nullptr )
+    {
+      targetGroup = elemSubRegionSubGroup;
+    }
+    if( targetTokens[pathLevel] == ElementRegionManager::groupKeyStruct::elementRegionsGroup ||
+        targetTokens[pathLevel] == ElementRegionBase::viewKeyStruct::elementSubRegions )
+    {
+      continue;
+    }
+    targetGroup = targetGroup->GetGroup( targetTokens[pathLevel] );
+    processedPath += "/" + targetTokens[pathLevel];
+    GEOSX_ERROR_IF( targetGroup == nullptr, "PackCollction::getTargetObject( ): Last entry in objectPath (" << processedPath << ") is not found" );
+  }
+  return targetGroup;
+}
+
 void PackCollection::collect( Group * domain_group,
                               real64 const GEOSX_UNUSED_PARAM( time_n ),
                               real64 const GEOSX_UNUSED_PARAM( dt ),
@@ -88,9 +122,10 @@ void PackCollection::collect( Group * domain_group,
 {
   GEOSX_MARK_FUNCTION;
   GEOSX_ERROR_IF( collectionIdx >= getCollectionCount( ), "Attempting to collection from an invalid collection index!" );
-  DomainPartition const & domain = dynamicCast< DomainPartition const & >( *domain_group );
-  MeshLevel const & meshLevel = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
-  Group const * target_object = meshLevel.GetGroupByPath( m_objectPath );
+  DomainPartition & domain = dynamicCast< DomainPartition & >( *domain_group );
+  //MeshLevel const & meshLevel = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
+  //Group const * target_object = meshLevel.GetGroupByPath( m_objectPath );
+  Group const * target_object = this->getTargetObject( domain );
   WrapperBase const * target = target_object->getWrapperBase( m_fieldName );
   if( m_setNames.size( ) > 0 )
   {
