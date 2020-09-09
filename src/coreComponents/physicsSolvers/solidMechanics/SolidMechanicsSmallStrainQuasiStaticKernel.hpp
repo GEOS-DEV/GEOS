@@ -245,11 +245,9 @@ public:
 
     m_constitutiveUpdate.SmallStrain( k, q, strainInc );
 
-    m_constitutiveUpdate.GetStiffness( k, q, stack.constitutiveStiffness );
-
     typename CONSTITUTIVE_TYPE::KernelWrapper::DiscretizationOps stiffnessHelper;
+    m_constitutiveUpdate.setDiscretizationOps( k, q, stiffnessHelper );
 
-    stiffnessHelper.setParams( stack.constitutiveStiffness );
     stiffnessHelper.template BTDB< numNodesPerElem >( dNdX, detJ, stack.localJacobian );
 
     real64 stress[6];

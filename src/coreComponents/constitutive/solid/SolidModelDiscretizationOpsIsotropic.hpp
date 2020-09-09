@@ -52,10 +52,10 @@ struct SolidModelDiscretizationOpsIsotropic : public SolidModelDiscretizationOps
 
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  void setParams( real64 (& C)[6][6] )
+  void scaleParams( real64 const scale )
   {
-    m_lambda = C[1][0];
-    m_shearModulus = C[5][5];
+    m_lambda *= scale;
+    m_shearModulus *= scale;
   }
 
   real64 m_lambda;

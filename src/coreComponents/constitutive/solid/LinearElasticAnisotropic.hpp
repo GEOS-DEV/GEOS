@@ -119,6 +119,17 @@ public:
     LvArray::tensorOps::copy< 6, 6 >( c, m_stiffnessView[ k ] );
   }
 
+  GEOSX_FORCE_INLINE
+  GEOSX_HOST_DEVICE
+  void setDiscretizationOps( localIndex const k,
+                             localIndex const q,
+                             DiscretizationOps & discOps ) const
+  {
+    GEOSX_UNUSED_VAR( q )
+    LvArray::tensorOps::copy< 6, 6 >( discOps.m_c, m_stiffnessView[ k ] );
+  }
+
+
   /// A reference to the ArrayView holding the Voigt Stiffness tensor in each
   /// element.
   arrayView3d< real64 const, solid::STIFFNESS_USD > const m_stiffnessView;

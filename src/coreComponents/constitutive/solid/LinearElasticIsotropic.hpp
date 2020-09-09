@@ -131,8 +131,10 @@ public:
   }
 
   void setDiscretizationOps( localIndex const k,
-                             DiscretizationOps & discOps )
+                             localIndex const q,
+                             DiscretizationOps & discOps ) const
   {
+    GEOSX_UNUSED_VAR( q )
     real64 const G = m_shearModulus[k];
     real64 const Lame = m_bulkModulus[k] - 2.0/3.0 * G;
     discOps.m_lambda = Lame;

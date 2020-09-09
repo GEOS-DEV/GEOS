@@ -52,16 +52,11 @@ struct SolidModelDiscretizationOpsFullyAnisotroipic : public SolidModelDiscretiz
 
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  void setParams( real64 (& C)[6][6] )
+  void scaleParams( real64 const scale )
   {
-    for( int i=0; i<6; ++i )
-    {
-      for( int j=0; j<6; ++j )
-      {
-        m_c[i][j] = C[i][j];
-      }
-    }
+    LvArray::tensorOps::scale< 6, 6 >( m_c, scale );
   }
+
 
   real64 m_c[6][6];
 };

@@ -108,7 +108,8 @@ public:
                              localIndex const q,
                              real64 const (&FmI)[3][3] ) const override final;
 
-  GEOSX_HOST_DEVICE inline
+  GEOSX_FORCE_INLINE
+  GEOSX_HOST_DEVICE
   virtual void GetStiffness( localIndex const k,
                              localIndex const q,
                              real64 (& c)[6][6] ) const override final
@@ -129,9 +130,13 @@ public:
     c[5][5] = m_c66[k];
   }
 
+  GEOSX_FORCE_INLINE
+  GEOSX_HOST_DEVICE
   void setDiscretizationOps( localIndex const k,
-                             DiscretizationOps & discOps )
+                             localIndex const q,
+                             DiscretizationOps & discOps ) const
   {
+    GEOSX_UNUSED_VAR( q )
     discOps.m_c11 = m_c11[k];
     discOps.m_c13 = m_c13[k];
     discOps.m_c33 = m_c33[k];

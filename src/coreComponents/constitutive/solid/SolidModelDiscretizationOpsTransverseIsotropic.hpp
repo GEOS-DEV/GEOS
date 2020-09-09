@@ -52,13 +52,13 @@ struct SolidModelDiscretizationOpsTransverseIsotropic : public SolidModelDiscret
 
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  void setParams( real64 (& C)[6][6] )
+  void scaleParams( real64 const scale )
   {
-    m_c11 = C[0][0];
-    m_c13 = C[0][2];
-    m_c33 = C[2][2];
-    m_c44 = C[3][3];
-    m_c66 = C[5][5];
+    m_c11 *= scale;
+    m_c13 *= scale;
+    m_c33 *= scale;
+    m_c44 *= scale;
+    m_c66 *= scale;
   }
 
   real64 m_c11;

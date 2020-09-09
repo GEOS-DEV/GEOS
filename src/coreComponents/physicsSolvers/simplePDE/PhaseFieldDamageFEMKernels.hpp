@@ -209,15 +209,14 @@ public:
     FE_TYPE::calcN( q, N );
 
     real64 qp_damage = 0.0;
-    R1Tensor qp_grad_damage;
-    R1Tensor temp;
+    real64 qp_grad_damage[3] = {0};
     // TODO replace with FEM operators once either PR is merged into develop.
     for( localIndex a = 0; a < numNodesPerElem; ++a )
     {
       qp_damage += N[a] * stack.nodalDamageLocal[a];
-      temp = dNdX[a];
-      temp *= stack.nodalDamageLocal[a];
-      qp_grad_damage += temp;
+      qp_grad_damage[0] += dNdX[a][0] * stack.nodalDamageLocal[a];
+      qp_grad_damage[1] += dNdX[a][1] * stack.nodalDamageLocal[a];
+      qp_grad_damage[2] += dNdX[a][2] * stack.nodalDamageLocal[a];
     }
 
     for( localIndex a = 0; a < numNodesPerElem; ++a )

@@ -41,6 +41,7 @@ public:
   {}
 
 
+  using UPDATE_BASE::setDiscretizationOps;
   using UPDATE_BASE::GetStiffness;
   using UPDATE_BASE::SmallStrainNoState;
   using UPDATE_BASE::SmallStrain;
@@ -62,6 +63,18 @@ public:
       }
     }
   }
+
+  GEOSX_FORCE_INLINE
+  GEOSX_HOST_DEVICE
+  void setDiscretizationOps( localIndex const k,
+                             localIndex const q,
+                             typename UPDATE_BASE::DiscretizationOps & discOps ) const
+  {
+    UPDATE_BASE::setDiscretizationOps(k, q, discOps);
+    real64 const damageFactor = ( 1.0 - m_damage( k, q ) )*( 1.0 - m_damage( k, q ) );
+    discOps.scaleParams(damageFactor);
+  }
+
 
   GEOSX_HOST_DEVICE
   virtual real64 calculateStrainEnergyDensity( localIndex const k,
