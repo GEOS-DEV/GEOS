@@ -8,6 +8,7 @@ PackCollection::PackCollection ( string const & name, Group * parent )
   , m_objectPath( )
   , m_fieldName( )
   , m_setNames( )
+  , m_setSizeOverride( )
 {
   registerWrapper( PackCollection::viewKeysStruct::objectPath, &m_objectPath )->
     setInputFlag( InputFlags::REQUIRED )->
@@ -20,6 +21,10 @@ PackCollection::PackCollection ( string const & name, Group * parent )
   registerWrapper( PackCollection::viewKeysStruct::setNames, &m_setNames )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "The set(s) for which to retrieve data." );
+
+  registerWrapper( PackCollection::viewKeysStruct::minSetsSize, &m_setSizeOverride)->
+    setInputFlag( InputFlags::OPTIONAL )->
+    setDescription( "The minimum size of the set(s) to be collected (use for sets that expand during the simulation).");
 }
 
 void PackCollection::InitializePostSubGroups( Group * const group )
@@ -39,14 +44,14 @@ HistoryMetadata PackCollection::getMetadata( ProblemManager & pm, localIndex col
   if( m_setNames.size() != 0 )
   {
     GEOSX_ERROR_IF( collectionIdx >= m_setNames.size(), "Invalid collection index specified." );
-    localIndex num_indices = m_setsIndices[ collectionIdx ].size( );
+    localIndex num_indices = m_setSizeOverride > 0 ? m_setSizeOverride : m_setsIndices[ collectionIdx ].size( );
     HistoryMetadata metadata = target->getHistoryMetadata( num_indices );
     metadata.setName( metadata.getName() + " " + m_setNames[ collectionIdx ] );
     return metadata;
   }
   else
   {
-    return target->getHistoryMetadata( -1 );
+    return target->getHistoryMetadata( m_setSizeOverride );
   }
 }
 

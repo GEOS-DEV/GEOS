@@ -73,6 +73,7 @@ public:
     static constexpr auto objectPath = "objectPath";
     static constexpr auto fieldName = "fieldName";
     static constexpr auto setNames = "setNames";
+    static constexpr auto minSetsSize = "minSetsSize";
   } keys;
   /// @endcond
 
@@ -102,6 +103,8 @@ private:
   string m_fieldName;
   /// The names of the sets to collect history info from
   string_array m_setNames;
+  /// Override the size of the sets to be collected from
+  localIndex m_setSizeOverride;
 };
 
 }

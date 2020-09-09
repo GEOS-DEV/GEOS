@@ -102,6 +102,7 @@ public:
       //  function pointer is actually assigned (an error would be thrown on the call attempt even so)
       GEOSX_ERROR_IF( m_bufferCalls[collectionIdx] == nullptr,
                       "History collection buffer retrieval function is unassigned, did you declare a related TimeHistoryOutput event?" );
+      // TODO : grab the metadata again, determine if the size has changed, update the buffer call if so...
       // using GEOSX_ERROR_IF_EQ causes type issues since the values are used in iostreams
       buffer_unit_type * buffer = m_bufferCalls[collectionIdx]();
       collect( domain, time_n, dt, collectionIdx, buffer );
