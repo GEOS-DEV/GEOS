@@ -269,7 +269,7 @@ real64 SolidMechanicsLagrangianFEM::explicitKernelDispatch( PARAMS && ... params
   if( m_strainTheory==0 )
   {
     rval = finiteElement::
-             regionBasedKernelApplication< serialPolicy,
+             regionBasedKernelApplication< parallelDevicePolicy< 32 >,
                                            constitutive::SolidBase,
                                            CellElementSubRegion,
                                            SolidMechanicsLagrangianFEMKernels::ExplicitSmallStrain >( std::forward< PARAMS >( params )... );
@@ -277,7 +277,7 @@ real64 SolidMechanicsLagrangianFEM::explicitKernelDispatch( PARAMS && ... params
   else if( m_strainTheory==1 )
   {
     rval = finiteElement::
-             regionBasedKernelApplication< serialPolicy,
+             regionBasedKernelApplication< parallelDevicePolicy< 32 >,
                                            constitutive::SolidBase,
                                            CellElementSubRegion,
                                            SolidMechanicsLagrangianFEMKernels::ExplicitFiniteStrain >( std::forward< PARAMS >( params )... );

@@ -37,46 +37,6 @@ namespace SolidMechanicsLagrangianFEMKernels
 
 
 /**
- * @brief Integrate the divergence of a rank-2 tensor in Voigt notation
- * @tparam N The number of support points.
- * @tparam USD The stride one dimensions.
- * @param fieldVar The rank-2 tensor in Voigt notation.
- * @param dNdX The shape function derivatives at this quadrature point.
- * @param detJ The jacobian for the parent space transformation.
- * @param detF The determinant of the deformation gradient.
- * @param fInv The inverse of the deformation gradient.
- * @param result The resulting vector.
- */
-template< int N, int USD >
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
-static
-void Integrate( arraySlice1d< real64 const, USD > const & fieldVar,
- #if defined(CALCFEMSHAPE)
-                real64 const (&gradN)[ N ][ 3 ],
- #else
-                arraySlice2d< real64 const > const & dNdX,
- #endif
-                real64 const detJ,
-                real64 const detF,
-                real64 const ( &fInv )[ 3 ][ 3 ],
-                real64 ( & result )[ N ][ 3 ] )
-{
-  GEOSX_ASSERT_EQ( fieldVar.size(), 6 );
-
-  real64 const integrationFactor = -detJ * detF;
-
-  real64 P[ 3 ][ 3 ];
-  LvArray::tensorOps::symAikBjk< 3 >( P, fieldVar, fInv );
-  LvArray::tensorOps::scale< 3, 3 >( P, integrationFactor );
-
-  for( int a = 0; a < N; ++a )     // loop through all shape functions in element
-  {
-    LvArray::tensorOps::plusAijBj< 3, 3 >( result[ a ], P, dNdX[ a ] );
-  }
-}
-
-/**
  * @brief Implements kernels for solving the equations of motion using the
  *   explicit Newmark method under the finite strain assumption.
  * @copydoc ExplicitSmallStrain

@@ -16,7 +16,7 @@
  * @file FiniteElementBase.hpp
  */
 
-#if !defined(GEOSX_USE_CUDA)
+#if defined(GEOSX_USE_CUDA)
 #define CALC_FEM_SHAPE_IN_KERNEL
 #endif
 

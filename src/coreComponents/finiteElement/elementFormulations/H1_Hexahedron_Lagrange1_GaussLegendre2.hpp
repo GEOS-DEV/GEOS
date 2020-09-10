@@ -614,14 +614,14 @@ void H1_Hexahedron_Lagrange1_GaussLegendre2::gradient( int const q,
   {
     for( int i = 0; i < 3; ++i )
     {
-      real64 dNdX=0.0;;
+      real64 gradN=0.0;;
       for( int j = 0; j < 3; ++j )
       {
-        dNdX = dNdX + dNdXi[ j ] * invJ[j][i];
+        gradN = gradN + dNdXi[ j ] * invJ[j][i];
       }
       for( int k = 0; k < 3; ++k )
       {
-        grad[k][i] = grad[k][i] + dNdX * var[ nodeIndex ][k];
+        grad[k][i] = grad[k][i] + gradN * var[ nodeIndex ][k];
       }
     }
   }, invJ, var, grad );

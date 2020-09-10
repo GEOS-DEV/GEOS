@@ -268,52 +268,11 @@ public:
    * This is a generic launching function for all of the finite element kernels
    * that follow the interface set by KernelBase.
    */
-  template< typename POLICY,
-            typename KERNEL_TYPE >
-  static
-  typename std::enable_if< std::is_same< POLICY, serialPolicy >::value ||
-                           std::is_same< POLICY, parallelHostPolicy >::value, real64 >::type
-  kernelLaunch( localIndex const numElems,
-                KERNEL_TYPE const & kernelComponent )
-  {
-    GEOSX_MARK_FUNCTION;
-
-    // Define a RAJA reduction variable to get the maximum residual contribution.
-    RAJA::ReduceMax< ReducePolicy< POLICY >, real64 > maxResidual( 0 );
-
-    forAll< POLICY >( numElems,
-                      [=] ( localIndex const k )
-    {
-      typename KERNEL_TYPE::StackVariables stack;
-
-      kernelComponent.setup( k, stack );
-      for( integer q=0; q<numQuadraturePointsPerElem; ++q )
-      {
-        kernelComponent.quadraturePointKernel( k, q, stack );
-      }
-      maxResidual.max( kernelComponent.complete( k, stack ) );
-    } );
-    return maxResidual.get();
-  }
-
   //START_kernelLauncher
-  /**
-   * @brief Kernel Launcher.
-   * @tparam POLICY The RAJA policy to use for the launch.
-   * @tparam NUM_QUADRATURE_POINTS The number of quadrature points per element.
-   * @tparam KERNEL_TYPE The type of Kernel to execute.
-   * @param numElems The number of elements to process in this launch.
-   * @param kernelComponent The instantiation of KERNEL_TYPE to execute.
-   * @return The maximum residual.
-   *
-   * This is a generic launching function for all of the finite element kernels
-   * that follow the interface set by KernelBase.
-   */
   template< typename POLICY,
             typename KERNEL_TYPE >
   static
-  typename std::enable_if< !( std::is_same< POLICY, serialPolicy >::value ||
-                              std::is_same< POLICY, parallelHostPolicy >::value ), real64 >::type
+  real64
   kernelLaunch( localIndex const numElems,
                 KERNEL_TYPE const & kernelComponent )
   {
@@ -322,21 +281,17 @@ public:
     // Define a RAJA reduction variable to get the maximum residual contribution.
     RAJA::ReduceMax< ReducePolicy< POLICY >, real64 > maxResidual( 0 );
 
-    // launch the kernel
     forAll< POLICY >( numElems,
-                      [=] GEOSX_DEVICE ( localIndex const k )
+                      [=] GEOSX_HOST_DEVICE ( localIndex const k )
     {
-      // allocate the stack variables
       typename KERNEL_TYPE::StackVariables stack;
 
       kernelComponent.setup( k, stack );
-
       for( integer q=0; q<numQuadraturePointsPerElem; ++q )
       {
         kernelComponent.quadraturePointKernel( k, q, stack );
       }
       maxResidual.max( kernelComponent.complete( k, stack ) );
-
     } );
     return maxResidual.get();
   }

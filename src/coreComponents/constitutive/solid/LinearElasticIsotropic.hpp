@@ -130,6 +130,8 @@ public:
     c[5][5] = G;
   }
 
+  GEOSX_FORCE_INLINE
+  GEOSX_HOST_DEVICE
   void setDiscretizationOps( localIndex const k,
                              localIndex const q,
                              DiscretizationOps & discOps ) const
