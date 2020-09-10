@@ -224,7 +224,10 @@ public:
 
   /**
    * @copydoc geosx::finiteElement::KernelBase::quadraturePointKernel
-   *
+   * @tparam STRESS_MODIFIER Type of optional functor to allow for the
+   * modification of stress prior to integration.
+   * @param stressModifier An optional functor to allow for the modification
+   *  of stress prior to integration.
    * For solid mechanics kernels, the strain increment is calculated, and the
    * constitutive update is called. In addition, the constitutive stiffness
    * stack variable is filled by the constitutive model.

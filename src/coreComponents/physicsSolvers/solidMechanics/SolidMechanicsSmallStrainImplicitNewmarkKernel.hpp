@@ -176,16 +176,16 @@ public:
   }
 
   /**
-   * @copydoc geosx::finiteElement::KernelBase::quadraturePointJacobianContribution
+   * @copydoc geosx::finiteElement::KernelBase::quadraturePointKernel
    *
    * The ImplcitNewmark kernel adds the calculation of the inertia damping,
    * jacobian and residual contributions.
    */
   GEOSX_DEVICE
   GEOSX_FORCE_INLINE
-  void quadraturePointJacobianContribution( localIndex const k,
-                                            localIndex const q,
-                                            StackVariables & stack ) const
+  void quadraturePointKernel( localIndex const k,
+                              localIndex const q,
+                              StackVariables & stack ) const
   {
 
     Base::quadraturePointJacobianContribution( k, q, stack );

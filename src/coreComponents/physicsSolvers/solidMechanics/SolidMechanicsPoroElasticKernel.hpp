@@ -96,7 +96,7 @@ public:
 
 
   /**
-   * @copydoc geosx::finiteElement::KernelBase::quadraturePointResidualContribution
+   * @copydoc geosx::finiteElement::KernelBase::quadraturePointKernel
    *
    * The divergence of the effective stress is integrated over the volume of
    * the element, yielding the nodal force (residual) contributions.

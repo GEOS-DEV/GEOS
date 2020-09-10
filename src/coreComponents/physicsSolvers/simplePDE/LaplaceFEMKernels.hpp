@@ -176,7 +176,7 @@ public:
   }
 
   /**
-   * @copydoc geosx::finiteElement::ImplicitKernelBase::quadraturePointJacobianContribution
+   * @copydoc geosx::finiteElement::ImplicitKernelBase::quadraturePointKernel
    */
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
