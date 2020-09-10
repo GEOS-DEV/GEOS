@@ -219,37 +219,30 @@ public:
       qp_grad_damage[2] += dNdX[a][2] * stack.nodalDamageLocal[a];
     }
 
+    real64 const lengthScale2 = pow( m_lengthScale, 2 );
+    real64 const invGc = 1.0 / m_Gc;
+    real64 const sedTerm = 2 * m_lengthScale*strainEnergyDensity * invGc;
+
     for( localIndex a = 0; a < numNodesPerElem; ++a )
     {
       if( m_localDissipationOption == 1 )
       {
-        stack.localResidual[ a ] += detJ * ( N[a] * (m_lengthScale * D - 3 * m_Gc / 16 )/ m_Gc -
-                                             0.375*pow( m_lengthScale, 2 ) * LvArray::tensorOps::AiBi< 3 >( qp_grad_damage, dNdX[a] ) -
-                                             m_lengthScale * D/m_Gc * N[a] * qp_damage
-                                             );
+        stack.localResidual[ a ] += ( N[a] * ( m_lengthScale * D * ( 1 - qp_damage ) - 0.1875 * m_Gc ) * invGc
+                                      - 0.375 * lengthScale2 * LvArray::tensorOps::AiBi< 3 >( dNdX[a], qp_grad_damage ) ) * detJ;
+        for( localIndex b = 0; b < numNodesPerElem; ++b )
+        {
+          stack.localJacobian[ a ][ b ] -= ( m_lengthScale * D * invGc * N[a] * N[b]
+                                             + 0.375 * lengthScale2 * LvArray::tensorOps::AiBi< 3 >( dNdX[a], dNdX[b] ) ) * detJ;
+        }
       }
       else
       {
-        stack.localResidual[ a ] += detJ * ( N[a] * (2 * m_lengthScale) * strainEnergyDensity / m_Gc -
-                                             ( pow( m_lengthScale, 2 ) * LvArray::tensorOps::AiBi< 3 >( qp_grad_damage, dNdX[a] ) +
-                                               N[a] * qp_damage * (1 + 2 * m_lengthScale*strainEnergyDensity/m_Gc)
-                                             )
-                                             );
-      }
-      for( localIndex b = 0; b < numNodesPerElem; ++b )
-      {
-        if( m_localDissipationOption == 1 )
+        stack.localResidual[ a ] += ( N[a] * ( sedTerm * ( 1 - qp_damage ) - qp_damage )
+                                      - ( lengthScale2 * LvArray::tensorOps::AiBi< 3 >( dNdX[a], qp_grad_damage ) ) ) * detJ;
+        for( localIndex b = 0; b < numNodesPerElem; ++b )
         {
-          stack.localJacobian[ a ][ b ] -= detJ *
-                                           (0.375*pow( m_lengthScale, 2 ) * LvArray::tensorOps::AiBi< 3 >( dNdX[a], dNdX[b] ) +
-                                            (m_lengthScale * D/m_Gc) * N[a] * N[b]);
-        }
-        else
-        {
-          stack.localJacobian[ a ][ b ] -= detJ *
-                                           ( pow( m_lengthScale, 2 ) * LvArray::tensorOps::AiBi< 3 >( dNdX[a], dNdX[b] ) +
-                                             N[a] * N[b] * (1 + 2 * m_lengthScale*strainEnergyDensity/m_Gc )
-                                           );
+          stack.localJacobian[ a ][ b ] -= ( N[a] * N[b] * (1 + sedTerm )
+                                             + lengthScale2 * LvArray::tensorOps::AiBi< 3 >( dNdX[a], dNdX[b] ) ) * detJ;
         }
       }
     }
