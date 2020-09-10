@@ -22,7 +22,7 @@ PackCollection::PackCollection ( string const & name, Group * parent )
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "The set(s) for which to retrieve data." );
 
-  registerWrapper( PackCollection::viewKeysStruct::minSetsSize, &m_minimumSetSize )->
+  registerWrapper( PackCollection::viewKeysStruct::minSetSize, &m_minimumSetSize )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDefaultValue( -1 )->
     setDescription( "The minimum size of the set(s) to be collected (use for sets that expand during the simulation)." );

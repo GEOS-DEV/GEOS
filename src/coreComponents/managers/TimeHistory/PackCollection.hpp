@@ -73,7 +73,7 @@ public:
     static constexpr auto objectPath = "objectPath";
     static constexpr auto fieldName = "fieldName";
     static constexpr auto setNames = "setNames";
-    static constexpr auto minSetsSize = "minSetsSize";
+    static constexpr auto minSetSize = "minSetSize";
   } keys;
   /// @endcond
 
