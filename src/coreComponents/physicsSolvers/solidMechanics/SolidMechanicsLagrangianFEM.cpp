@@ -61,11 +61,13 @@ SolidMechanicsLagrangianFEM::SolidMechanicsLagrangianFEM( const std::string & na
 //  m_elemsNotAttachedToSendOrReceiveNodes(),
   m_sendOrReceiveNodes(),
   m_nonSendOrReceiveNodes(),
+  m_targetNodes(),
   m_iComm(),
   m_effectiveStress( 0 )
 {
   m_sendOrReceiveNodes.setName( "SolidMechanicsLagrangianFEM::m_sendOrReceiveNodes" );
   m_nonSendOrReceiveNodes.setName( "SolidMechanicsLagrangianFEM::m_nonSendOrReceiveNodes" );
+  m_targetNodes.setName( "SolidMechanicsLagrangianFEM::m_targetNodes" );
 
   registerWrapper( viewKeyStruct::newmarkGammaString, &m_newmarkGamma )->
     setApplyDefaultValue( 0.5 )->
@@ -348,6 +350,7 @@ void SolidMechanicsLagrangianFEM::updateIntrinsicNodalData( DomainPartition * co
 
           for( localIndex a=0; a<elementSubRegion.numNodesPerElement(); ++a )
           {
+            m_targetNodes.insert( elemsToNodes[k][a] );
             if( nodeGhostRank[elemsToNodes[k][a]] >= -1 )
             {
               m_sendOrReceiveNodes.insert( elemsToNodes[k][a] );
@@ -430,6 +433,7 @@ void SolidMechanicsLagrangianFEM::InitializePostInitialConditions_PreSubGroups( 
           bool isAttachedToGhostNode = false;
           for( localIndex a=0; a<elementSubRegion.numNodesPerElement(); ++a )
           {
+            m_targetNodes.insert( elemsToNodes[k][a] );
             if( nodeGhostRank[elemsToNodes[k][a]] >= -1 )
             {
               isAttachedToGhostNode = true;
@@ -922,7 +926,8 @@ void SolidMechanicsLagrangianFEM::SetupDofs( DomainPartition const & GEOSX_UNUSE
   GEOSX_MARK_FUNCTION;
   dofManager.addField( keys::TotalDisplacement,
                        DofManager::Location::Node,
-                       3 );
+                       3,
+                       targetRegionNames() );
 
   dofManager.addCoupling( keys::TotalDisplacement,
                           keys::TotalDisplacement,
@@ -1110,12 +1115,15 @@ SolidMechanicsLagrangianFEM::
 
   RAJA::ReduceSum< parallelDeviceReduce, real64 > localSum( 0.0 );
 
-  forAll< parallelDevicePolicy<> >( nodeManager.size(),
-                                    [localRhs, localSum, dofNumber, rankOffset, ghostRank] GEOSX_HOST_DEVICE ( localIndex const k )
+  SortedArrayView< localIndex const > const & targetNodes = m_targetNodes.toViewConst();
+
+  forAll< parallelDevicePolicy<> >( targetNodes.size(),
+                                    [localRhs, localSum, dofNumber, rankOffset, ghostRank, targetNodes] GEOSX_HOST_DEVICE ( localIndex const k )
   {
-    if( ghostRank[k] < 0 )
+    if( ghostRank[targetNodes[k]] < 0 )
     {
-      localIndex const localRow = LvArray::integerConversion< localIndex >( dofNumber[k] - rankOffset );
+      localIndex const localRow = LvArray::integerConversion< localIndex >( dofNumber[targetNodes[k]] - rankOffset );
+
       for( localIndex dim = 0; dim < 3; ++dim )
       {
         localSum += localRhs[localRow + dim] * localRhs[localRow + dim];
