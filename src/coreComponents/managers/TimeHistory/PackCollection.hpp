@@ -86,7 +86,7 @@ protected:
   Group const * getTargetObject( DomainPartition & domain );
 
   /// @copydoc geosx::HistoryCollection::collect
-  virtual void collect( Group * domain,
+  virtual void collect( DomainPartition & domain,
                         real64 const time_n,
                         real64 const dt,
                         localIndex const collectionIdx,
@@ -103,8 +103,8 @@ private:
   string m_fieldName;
   /// The names of the sets to collect history info from
   string_array m_setNames;
-  /// Override the size of the sets to be collected from
-  localIndex m_setSizeOverride;
+  /// Set the minimum size of all the sets being collected on each process
+  localIndex m_minimumSetSize;
 };
 
 }

@@ -8,7 +8,7 @@ PackCollection::PackCollection ( string const & name, Group * parent )
   , m_objectPath( )
   , m_fieldName( )
   , m_setNames( )
-  , m_setSizeOverride( )
+  , m_minimumSetSize( )
 {
   registerWrapper( PackCollection::viewKeysStruct::objectPath, &m_objectPath )->
     setInputFlag( InputFlags::REQUIRED )->
@@ -22,8 +22,9 @@ PackCollection::PackCollection ( string const & name, Group * parent )
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "The set(s) for which to retrieve data." );
 
-  registerWrapper( PackCollection::viewKeysStruct::minSetsSize, &m_setSizeOverride )->
+  registerWrapper( PackCollection::viewKeysStruct::minSetsSize, &m_minimumSetSize )->
     setInputFlag( InputFlags::OPTIONAL )->
+    setDefaultValue( -1 )->
     setDescription( "The minimum size of the set(s) to be collected (use for sets that expand during the simulation)." );
 }
 
@@ -43,14 +44,15 @@ HistoryMetadata PackCollection::getMetadata( ProblemManager & pm, localIndex col
   if( m_setNames.size() != 0 )
   {
     GEOSX_ERROR_IF( collectionIdx >= m_setNames.size(), "Invalid collection index specified." );
-    localIndex num_indices = m_setSizeOverride > 0 ? m_setSizeOverride : m_setsIndices[ collectionIdx ].size( );
+    localIndex num_indices = m_setsIndices[ collectionIdx ].size( );
+    num_indices = m_minimumSetSize > num_indices ? m_minimumSetSize : num_indices;
     HistoryMetadata metadata = target->getHistoryMetadata( num_indices );
     metadata.setName( metadata.getName() + " " + m_setNames[ collectionIdx ] );
     return metadata;
   }
   else
   {
-    return target->getHistoryMetadata( m_setSizeOverride );
+    return target->getHistoryMetadata( m_minimumSetSize );
   }
 }
 
@@ -116,7 +118,7 @@ Group const * PackCollection::getTargetObject( DomainPartition & domain )
   return targetGroup;
 }
 
-void PackCollection::collect( Group * domain_group,
+void PackCollection::collect( DomainPartition & domain,
                               real64 const GEOSX_UNUSED_PARAM( time_n ),
                               real64 const GEOSX_UNUSED_PARAM( dt ),
                               localIndex collectionIdx,
@@ -124,7 +126,6 @@ void PackCollection::collect( Group * domain_group,
 {
   GEOSX_MARK_FUNCTION;
   GEOSX_ERROR_IF( collectionIdx >= getCollectionCount( ), "Attempting to collection from an invalid collection index!" );
-  DomainPartition & domain = dynamicCast< DomainPartition & >( *domain_group );
   Group const * target_object = this->getTargetObject( domain );
   WrapperBase const * target = target_object->getWrapperBase( m_fieldName );
   if( m_setNames.size( ) > 0 )
