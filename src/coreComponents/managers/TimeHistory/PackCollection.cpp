@@ -22,9 +22,9 @@ PackCollection::PackCollection ( string const & name, Group * parent )
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "The set(s) for which to retrieve data." );
 
-  registerWrapper( PackCollection::viewKeysStruct::minSetsSize, &m_setSizeOverride)->
+  registerWrapper( PackCollection::viewKeysStruct::minSetsSize, &m_setSizeOverride )->
     setInputFlag( InputFlags::OPTIONAL )->
-    setDescription( "The minimum size of the set(s) to be collected (use for sets that expand during the simulation).");
+    setDescription( "The minimum size of the set(s) to be collected (use for sets that expand during the simulation)." );
 }
 
 void PackCollection::InitializePostSubGroups( Group * const group )
@@ -38,8 +38,7 @@ void PackCollection::InitializePostSubGroups( Group * const group )
 HistoryMetadata PackCollection::getMetadata( ProblemManager & pm, localIndex collectionIdx )
 {
   DomainPartition & domain = *(pm.getDomainPartition( ));
-  //MeshLevel const & meshLevel = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
-  Group const * target_object = this->getTargetObject( domain ); //meshLevel.GetGroupByPath( m_objectPath );
+  Group const * target_object = this->getTargetObject( domain );
   WrapperBase const * target = target_object->getWrapperBase( m_fieldName );
   if( m_setNames.size() != 0 )
   {
@@ -58,8 +57,6 @@ HistoryMetadata PackCollection::getMetadata( ProblemManager & pm, localIndex col
 void PackCollection::updateSetsIndices( ProblemManager & pm )
 {
   DomainPartition & domain = *(pm.getDomainPartition( ));
-  //MeshLevel const & meshLevel = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
-  //Group const * target_object = meshLevel.GetGroupByPath( m_objectPath );
   Group const * target_object = this->getTargetObject( domain );
   WrapperBase const * target = target_object->getWrapperBase( m_fieldName );
   GEOSX_ERROR_IF( !target->isPackable( false ), "The object targeted for collection must be packable!" );
@@ -128,8 +125,6 @@ void PackCollection::collect( Group * domain_group,
   GEOSX_MARK_FUNCTION;
   GEOSX_ERROR_IF( collectionIdx >= getCollectionCount( ), "Attempting to collection from an invalid collection index!" );
   DomainPartition & domain = dynamicCast< DomainPartition & >( *domain_group );
-  //MeshLevel const & meshLevel = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
-  //Group const * target_object = meshLevel.GetGroupByPath( m_objectPath );
   Group const * target_object = this->getTargetObject( domain );
   WrapperBase const * target = target_object->getWrapperBase( m_fieldName );
   if( m_setNames.size( ) > 0 )

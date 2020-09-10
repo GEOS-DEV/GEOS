@@ -169,10 +169,10 @@
 
   <Tasks>
     <PackCollection
-      name="velocityCollection"
-      objectPath="nodeManager"
-      setNames="{source}"
-      fieldName="Velocity" />
+        name="velocityCollection"
+        objectPath="nodeManager"
+        setNames="{source}"
+        fieldName="Velocity" />
   </Tasks>
 
 
