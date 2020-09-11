@@ -251,7 +251,7 @@ public:
     typename CONSTITUTIVE_TYPE::KernelWrapper::DiscretizationOps stiffnessHelper;
     m_constitutiveUpdate.setDiscretizationOps( k, q, stiffnessHelper );
 
-    stiffnessHelper.template BTDB< numNodesPerElem >( dNdX, detJ, stack.localJacobian );
+    stiffnessHelper.template BTDB< numNodesPerElem >( dNdX, -detJ, stack.localJacobian );
 
     real64 stress[6];
 
@@ -265,7 +265,7 @@ public:
 
     for( localIndex i=0; i<6; ++i )
     {
-      stress[i] *= detJ;
+      stress[i] *= -detJ;
     }
 
     real64 N[numNodesPerElem];

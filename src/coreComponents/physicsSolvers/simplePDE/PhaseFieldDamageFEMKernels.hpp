@@ -209,15 +209,8 @@ public:
     FE_TYPE::calcN( q, N );
 
     real64 qp_damage = 0.0;
-    real64 qp_grad_damage[3] = {0};
-    // TODO replace with FEM operators once either PR is merged into develop.
-    for( localIndex a = 0; a < numNodesPerElem; ++a )
-    {
-      qp_damage += N[a] * stack.nodalDamageLocal[a];
-      qp_grad_damage[0] += dNdX[a][0] * stack.nodalDamageLocal[a];
-      qp_grad_damage[1] += dNdX[a][1] * stack.nodalDamageLocal[a];
-      qp_grad_damage[2] += dNdX[a][2] * stack.nodalDamageLocal[a];
-    }
+    real64 qp_grad_damage[3] = {0, 0, 0};
+    FE_TYPE::valueAndGradient( N, dNdX, stack.nodalDamageLocal, qp_damage, qp_grad_damage );
 
     real64 const lengthScale2 = pow( m_lengthScale, 2 );
     real64 const invGc = 1.0 / m_Gc;
@@ -227,21 +220,21 @@ public:
     {
       if( m_localDissipationOption == 1 )
       {
-        stack.localResidual[ a ] += ( N[a] * ( m_lengthScale * D * ( 1 - qp_damage ) - 0.1875 * m_Gc ) * invGc
+        stack.localResidual[ a ] += ( +N[a] * ( m_lengthScale * D * ( 1 - qp_damage ) - 0.1875 * m_Gc ) * invGc
                                       - 0.375 * lengthScale2 * LvArray::tensorOps::AiBi< 3 >( dNdX[a], qp_grad_damage ) ) * detJ;
         for( localIndex b = 0; b < numNodesPerElem; ++b )
         {
-          stack.localJacobian[ a ][ b ] -= ( m_lengthScale * D * invGc * N[a] * N[b]
+          stack.localJacobian[ a ][ b ] -= ( +m_lengthScale * D * invGc * N[a] * N[b]
                                              + 0.375 * lengthScale2 * LvArray::tensorOps::AiBi< 3 >( dNdX[a], dNdX[b] ) ) * detJ;
         }
       }
       else
       {
-        stack.localResidual[ a ] += ( N[a] * ( sedTerm * ( 1 - qp_damage ) - qp_damage )
+        stack.localResidual[ a ] += ( +N[a] * ( sedTerm * ( 1 - qp_damage ) - qp_damage )
                                       - ( lengthScale2 * LvArray::tensorOps::AiBi< 3 >( dNdX[a], qp_grad_damage ) ) ) * detJ;
         for( localIndex b = 0; b < numNodesPerElem; ++b )
         {
-          stack.localJacobian[ a ][ b ] -= ( N[a] * N[b] * (1 + sedTerm )
+          stack.localJacobian[ a ][ b ] -= ( +N[a] * N[b] * (1 + sedTerm )
                                              + lengthScale2 * LvArray::tensorOps::AiBi< 3 >( dNdX[a], dNdX[b] ) ) * detJ;
         }
       }

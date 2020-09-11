@@ -101,15 +101,15 @@ void SolidModelDiscretizationOpsTransverseIsotropic::BTDB( BASIS_GRADIENT const 
                                                              real64 const (&gradNa_gradNb)[3][3],
                                                              real64 (& elementStiffness)[NUM_SUPPORT_POINTS*3][NUM_SUPPORT_POINTS*3] )
   {
-    elementStiffness[a*3+0][b*3+0] = elementStiffness[a*3+0][b*3+0] - c11 * gradNa_gradNb[0][0] - c66 * gradNa_gradNb[1][1] - c44 * gradNa_gradNb[2][2];
-    elementStiffness[a*3+0][b*3+1] = elementStiffness[a*3+0][b*3+1] - c12 * gradNa_gradNb[0][1] - c66 * gradNa_gradNb[1][0];
-    elementStiffness[a*3+0][b*3+2] = elementStiffness[a*3+0][b*3+2] - c13 * gradNa_gradNb[0][2] - c44 * gradNa_gradNb[2][0];
-    elementStiffness[a*3+1][b*3+0] = elementStiffness[a*3+1][b*3+0] - c66 * gradNa_gradNb[0][1] - c12 * gradNa_gradNb[1][0];
-    elementStiffness[a*3+1][b*3+1] = elementStiffness[a*3+1][b*3+1] - c66 * gradNa_gradNb[0][0] - c11 * gradNa_gradNb[1][1] - c44 * gradNa_gradNb[2][2];
-    elementStiffness[a*3+1][b*3+2] = elementStiffness[a*3+1][b*3+2] - c13 * gradNa_gradNb[1][2] - c44 * gradNa_gradNb[2][1];
-    elementStiffness[a*3+2][b*3+0] = elementStiffness[a*3+2][b*3+0] - c44 * gradNa_gradNb[0][2] - c13 * gradNa_gradNb[2][0];
-    elementStiffness[a*3+2][b*3+1] = elementStiffness[a*3+2][b*3+1] - c44 * gradNa_gradNb[1][2] - c13 * gradNa_gradNb[2][1];
-    elementStiffness[a*3+2][b*3+2] = elementStiffness[a*3+2][b*3+2] - c44 * gradNa_gradNb[0][0] - c44 * gradNa_gradNb[1][1] - c33 * gradNa_gradNb[2][2];
+    elementStiffness[a*3+0][b*3+0] = elementStiffness[a*3+0][b*3+0] + c11 * gradNa_gradNb[0][0] + c66 * gradNa_gradNb[1][1] + c44 * gradNa_gradNb[2][2];
+    elementStiffness[a*3+0][b*3+1] = elementStiffness[a*3+0][b*3+1] + c12 * gradNa_gradNb[0][1] + c66 * gradNa_gradNb[1][0];
+    elementStiffness[a*3+0][b*3+2] = elementStiffness[a*3+0][b*3+2] + c13 * gradNa_gradNb[0][2] + c44 * gradNa_gradNb[2][0];
+    elementStiffness[a*3+1][b*3+0] = elementStiffness[a*3+1][b*3+0] + c66 * gradNa_gradNb[0][1] + c12 * gradNa_gradNb[1][0];
+    elementStiffness[a*3+1][b*3+1] = elementStiffness[a*3+1][b*3+1] + c66 * gradNa_gradNb[0][0] + c11 * gradNa_gradNb[1][1] + c44 * gradNa_gradNb[2][2];
+    elementStiffness[a*3+1][b*3+2] = elementStiffness[a*3+1][b*3+2] + c13 * gradNa_gradNb[1][2] + c44 * gradNa_gradNb[2][1];
+    elementStiffness[a*3+2][b*3+0] = elementStiffness[a*3+2][b*3+0] + c44 * gradNa_gradNb[0][2] + c13 * gradNa_gradNb[2][0];
+    elementStiffness[a*3+2][b*3+1] = elementStiffness[a*3+2][b*3+1] + c44 * gradNa_gradNb[1][2] + c13 * gradNa_gradNb[2][1];
+    elementStiffness[a*3+2][b*3+2] = elementStiffness[a*3+2][b*3+2] + c44 * gradNa_gradNb[0][0] + c44 * gradNa_gradNb[1][1] + c33 * gradNa_gradNb[2][2];
   } );
 }
 
@@ -137,9 +137,9 @@ void SolidModelDiscretizationOpsTransverseIsotropic::diagBTDB( BASIS_GRADIENT co
                                                 const real64 (& gradN_gradN)[3],
                                                 real64 (& diagElementStiffness)[NUM_SUPPORT_POINTS*3] )
   {
-    diagElementStiffness[a*3+0] = diagElementStiffness[a*3+0] - c11 * gradN_gradN[0] - c66 * gradN_gradN[1] - c44 * gradN_gradN[2];
-    diagElementStiffness[a*3+1] = diagElementStiffness[a*3+1] - c66 * gradN_gradN[0] - c11 * gradN_gradN[1] - c44 * gradN_gradN[2];
-    diagElementStiffness[a*3+2] = diagElementStiffness[a*3+2] - c44 * gradN_gradN[0] - c44 * gradN_gradN[1] - c33 * gradN_gradN[2];
+    diagElementStiffness[a*3+0] = diagElementStiffness[a*3+0] + c11 * gradN_gradN[0] + c66 * gradN_gradN[1] + c44 * gradN_gradN[2];
+    diagElementStiffness[a*3+1] = diagElementStiffness[a*3+1] + c66 * gradN_gradN[0] + c11 * gradN_gradN[1] + c44 * gradN_gradN[2];
+    diagElementStiffness[a*3+2] = diagElementStiffness[a*3+2] + c44 * gradN_gradN[0] + c44 * gradN_gradN[1] + c33 * gradN_gradN[2];
   } );
 }
 
@@ -170,29 +170,29 @@ void SolidModelDiscretizationOpsTransverseIsotropic::diagRowSumBTDB( BASIS_GRADI
                                                                        real64 const (&gradNa_gradNb)[3][3],
                                                                        real64 (& diagSumElementStiffness)[NUM_SUPPORT_POINTS*3] )
   {
-    diagSumElementStiffness[a*3+0] = diagSumElementStiffness[a*3+0] -
-                                     c11 * gradNa_gradNb[0][0] -
-                                     c66 * gradNa_gradNb[1][1] -
-                                     c44 * gradNa_gradNb[2][2] -
-                                     c12 * gradNa_gradNb[0][1] -
-                                     c66 * gradNa_gradNb[1][0] -
-                                     c13 * gradNa_gradNb[0][2] -
+    diagSumElementStiffness[a*3+0] = diagSumElementStiffness[a*3+0] +
+                                     c11 * gradNa_gradNb[0][0] +
+                                     c66 * gradNa_gradNb[1][1] +
+                                     c44 * gradNa_gradNb[2][2] +
+                                     c12 * gradNa_gradNb[0][1] +
+                                     c66 * gradNa_gradNb[1][0] +
+                                     c13 * gradNa_gradNb[0][2] +
                                      c44 * gradNa_gradNb[2][0];
-    diagSumElementStiffness[a*3+1] = diagSumElementStiffness[a*3+1] -
-                                     c66 * gradNa_gradNb[0][1] -
-                                     c12 * gradNa_gradNb[1][0] -
-                                     c66 * gradNa_gradNb[0][0] -
-                                     c11 * gradNa_gradNb[1][1] -
-                                     c44 * gradNa_gradNb[2][2] -
-                                     c13 * gradNa_gradNb[1][2] -
+    diagSumElementStiffness[a*3+1] = diagSumElementStiffness[a*3+1] +
+                                     c66 * gradNa_gradNb[0][1] +
+                                     c12 * gradNa_gradNb[1][0] +
+                                     c66 * gradNa_gradNb[0][0] +
+                                     c11 * gradNa_gradNb[1][1] +
+                                     c44 * gradNa_gradNb[2][2] +
+                                     c13 * gradNa_gradNb[1][2] +
                                      c44 * gradNa_gradNb[2][1];
-    diagSumElementStiffness[a*3+2] = diagSumElementStiffness[a*3+2] -
-                                     c44 * gradNa_gradNb[0][2] -
-                                     c13 * gradNa_gradNb[2][0] -
-                                     c44 * gradNa_gradNb[1][2] -
-                                     c13 * gradNa_gradNb[2][1] -
-                                     c44 * gradNa_gradNb[0][0] -
-                                     c44 * gradNa_gradNb[1][1] -
+    diagSumElementStiffness[a*3+2] = diagSumElementStiffness[a*3+2] +
+                                     c44 * gradNa_gradNb[0][2] +
+                                     c13 * gradNa_gradNb[2][0] +
+                                     c44 * gradNa_gradNb[1][2] +
+                                     c13 * gradNa_gradNb[2][1] +
+                                     c44 * gradNa_gradNb[0][0] +
+                                     c44 * gradNa_gradNb[1][1] +
                                      c33 * gradNa_gradNb[2][2];
   } );
 }

@@ -189,7 +189,7 @@ public:
 
     real64 P[ 3 ][ 3 ];
     LvArray::tensorOps::symAikBjk< 3 >( P, m_constitutiveUpdate.m_stress[k][q].toSliceConst(), fInv );
-    LvArray::tensorOps::scale< 3, 3 >( P, detJ * detF );
+    LvArray::tensorOps::scale< 3, 3 >( P, -detJ * detF );
 
     FE_TYPE::gradNajAij( dNdX, P, stack.fLocal );
 

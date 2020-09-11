@@ -34,8 +34,7 @@ namespace finiteElement
 {
 
 /**
- * @class FiniteElementShapeFunctionKernelBase
- * @brief Base class for the finite element kernels.
+ * @brief Base class for FEM element implementations.
  */
 class FiniteElementBase
 {
@@ -99,27 +98,51 @@ public:
            J[2][0] * ( J[0][1]*J[1][2] - J[0][2]*J[1][1] );
   }
 
+  /**
+   * @brief Get the shape function gradients.
+   * @tparam LEAF Type of the derived finite element implementation.
+   * @param k The element index.
+   * @param q The quadrature point index.
+   * @param X Array of coordinates as the reference for the gradients.
+   * @param gradN Return array of the shape function gradients.
+   * @return The determinant of the Jacobian transformation matrix.
+   *
+   * This function calls the function to calculate shape function gradients.
+   */
   template< typename LEAF >
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   real64 getGradN( localIndex const k,
                    localIndex const q,
                    real64 const (&X)[LEAF::numNodes][3],
-                   real64 ( & gradN )[LEAF::numNodes][3] ) const
+                   real64 (& gradN)[LEAF::numNodes][3] ) const
   {
     GEOSX_UNUSED_VAR( k );
     return LEAF::calcGradN( q, X, gradN );
   }
 
 
+  /**
+   * @brief Get the shape function gradients.
+   * @tparam LEAF Type of the derived finite element implementation.
+   * @param k The element index.
+   * @param q The quadrature point index.
+   * @param X dummy variable.
+   * @param gradN Return array of the shape function gradients.
+   * @return The determinant of the Jacobian transformation matrix.
+   *
+   * This function returns pre-calculated shape function gradients.
+   */
   template< typename LEAF >
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   real64 getGradN( localIndex const k,
                    localIndex const q,
-                   int const,
-                   real64 ( & gradN )[LEAF::numNodes][3] ) const
+                   int const X,
+                   real64 (& gradN)[LEAF::numNodes][3] ) const
   {
+    GEOSX_UNUSED_VAR( X );
+
     for( int a=0; a<LEAF::numNodes; ++a )
     {
       gradN[a][0] = m_viewGradN( k, q, a, 0 );
@@ -129,11 +152,63 @@ public:
     return m_viewDetJ( k, q );
   }
 
+  /**
+   * @name Value Operator Functions
+   */
+  ///@{
+
+  /**
+   * @brief Compute the interpolated value of a variable.
+   * @tparam NUM_SUPPORT_POINTS The number of support points for the element.
+   * @param N Array (for each support point) of shape function values at the
+   *   coordinate the variable is to be interpolated.
+   * @param var Array of variable values for each support point.
+   * @param value The interpolated value of @p var.
+   *
+   * This is the standard finite element interpolation operator of a discrete
+   * variable defined at the support points.
+   * The operator is expressed as:
+   * \f[
+   * value  = \sum_a^{numSupport} \left ( N_a var_a \right ),
+   * \f]
+
+   * @note The shape function values @p N must be evaluated prior to calling this
+   * function.
+   *
+   */
+  template< int NUM_SUPPORT_POINTS >
+  GEOSX_HOST_DEVICE
+  static
+  void value( real64 const (&N)[NUM_SUPPORT_POINTS],
+              real64 const (&var)[NUM_SUPPORT_POINTS],
+              real64 & value );
+
+  /**
+   * @brief Compute the interpolated value of a vector variable.
+   * @tparam NUM_COMPONENTS Number of components for the vector variable.
+   * @copydoc value
+   */
+  template< int NUM_SUPPORT_POINTS,
+            int NUM_COMPONENTS >
+  GEOSX_HOST_DEVICE
+  static
+  void value( real64 const (&N)[NUM_SUPPORT_POINTS],
+              real64 const (&var)[NUM_SUPPORT_POINTS][NUM_COMPONENTS],
+              real64 ( &value )[NUM_COMPONENTS] );
+
+  ///@}
+
+  /**
+   * @name Gradient Operator Functions
+   */
+  ///@{
 
   /**
    * @brief Calculate the symmetric gradient of a vector valued support field
    *   at a point using the stored basis function gradients for all support
    *   points.
+   * @tparam NUM_SUPPORT_POINTS The number of support points for the element.
+   * @tparam GRADIENT_TYPE The type of the array object holding the shape
    * @param gradN The basis function gradients at a point in the element.
    * @param var The vector valued support field that the gradient operator will
    *  be applied to.
@@ -153,15 +228,33 @@ public:
                                  real64 const (&var)[NUM_SUPPORT_POINTS][3],
                                  real64 ( &gradVar )[6] );
 
-
-
   /**
-   * @brief Calculate the gradient of a vector valued support field at a point
-   *   using the stored basis function gradients for all support points.
+   * @brief Calculate the gradient of a scalar valued support field at a point
+   *   using the input basis function gradients.
+   * @tparam NUM_SUPPORT_POINTS The number of support points for the element.
+   * @tparam GRADIENT_TYPE The type of the array object holding the shape
+   *   function gradients.
    * @param gradN The basis function gradients at a point in the element.
    * @param var The vector valued support field that the gradient operator will
    *  be applied to.
    * @param grad The  gradient.
+   *
+   * More precisely, the operator is defined as:
+   * \f[
+   * grad_{j}  = \sum_a^{nSupport} \left ( \frac{\partial N_a}{\partial X_j} var_{a}\right ),
+   * \f]
+   */
+  template< int NUM_SUPPORT_POINTS,
+            typename GRADIENT_TYPE >
+  GEOSX_HOST_DEVICE
+  static void gradient( GRADIENT_TYPE const & gradN,
+                        real64 const (&var)[NUM_SUPPORT_POINTS],
+                        real64 ( &gradVar )[3] );
+
+  /**
+   * @brief Calculate the gradient of a vector valued support field at a point
+   *   using the input basis function gradients.
+   * @copydoc gradient
    *
    * More precisely, the operator is defined as:
    * \f[
@@ -174,13 +267,52 @@ public:
   static void gradient( GRADIENT_TYPE const & gradN,
                         real64 const (&var)[NUM_SUPPORT_POINTS][3],
                         real64 ( &gradVar )[3][3] );
+  ///@}
 
   /**
-   * @brief Inner product of all basis function gradients and a rank-2
+   * @name Multi-Operator Functions
+   */
+  ///@{
+
+  /**
+   *
+   * @tparam NUM_SUPPORT_POINTS The number of support points for the element.
+   * @tparam GRADIENT_TYPE
+   * @param N
+   * @param gradN
+   * @param var
+   * @param value
+   * @param gradVar
+   */
+  template< int NUM_SUPPORT_POINTS,
+            typename GRADIENT_TYPE >
+  GEOSX_HOST_DEVICE
+  static void valueAndGradient( real64 const (&N)[NUM_SUPPORT_POINTS],
+                                GRADIENT_TYPE const & gradN,
+                                real64 const (&var)[NUM_SUPPORT_POINTS],
+                                real64 & value,
+                                real64 ( &gradVar )[3] );
+
+  ///@}
+
+  /**
+   * @name Scattering Operator Functions
+   *
+   * These functions take quadrature data and map it to the support points
+   * through some operator.
+   */
+  ///@{
+
+  /**
+   * @brief Inner product of each basis function gradient with a rank-2
    *   symmetric tensor.
+   * @tparam NUM_SUPPORT_POINTS The number of support points for the element.
+   * @tparam GRADIENT_TYPE The type of the array object holding the shape
+   *   function gradients.
    * @param gradN The basis function gradients at a point in the element.
-   * @param var The rank-2 symmetric tensor at @p q.
-   * @param R The vector resulting from the tensor contraction.
+   * @param var_detJxW The rank-2 symmetric tensor at @p q scaled by J*W.
+   * @param R The vector at each support point which will hold the result from
+   *   the tensor contraction.
    *
    * More precisely, the operator is defined as:
    * \f[
@@ -196,6 +328,12 @@ public:
                           real64 const (&var_detJxW)[6],
                           real64 ( &R )[NUM_SUPPORT_POINTS][3] );
 
+  /**
+   * @copydoc gradNajAij
+   * @brief Inner product of each basis function gradient with a rank-2
+   *   tensor.
+   * @param var_detJxW The rank-2 tensor at @p q scaled by J*W.
+   */
   template< int NUM_SUPPORT_POINTS,
             typename GRADIENT_TYPE >
   GEOSX_HOST_DEVICE
@@ -203,48 +341,126 @@ public:
                           real64 const (&var_detJxW)[3][3],
                           real64 ( &R )[NUM_SUPPORT_POINTS][3] );
 
+  /**
+   * @brief Product of each shape function with a vector forcing term.
+   * @tparam NUM_SUPPORT_POINTS The number of support points for the element.
+   * @param N The shape function value at a predetermined coordinate in the element.
+   * @param forcingTerm_detJxW A vector scaled by detJxW
+   * @param R The vector at each support point which will hold the result from
+   *   the tensor contraction.
+   */
   template< int NUM_SUPPORT_POINTS >
   GEOSX_HOST_DEVICE
   static void NaFi( real64 const (&N)[NUM_SUPPORT_POINTS],
-                    real64 const (&forcingTerm_detJ)[3],
+                    real64 const (&forcingTerm_detJxW)[3],
                     real64 ( &R )[NUM_SUPPORT_POINTS][3] );
 
+  /**
+   * @brief Inner product of each basis function gradient with a rank-2
+   *   symmetric tensor added to the product each shape function with a vector.
+   * @tparam NUM_SUPPORT_POINTS The number of support points for the element.
+   * @tparam GRADIENT_TYPE The type of the array object holding the shape
+   *   function gradients.
+   * @param gradN The basis function gradients at a point in the element.
+   * @param var_detJxW The rank-2 symmetric tensor at @p q scaled by J*W.
+   * @param N The shape function value at a predetermined coordinate in the element.
+   * @param forcingTerm_detJxW A vector scaled by detJxW
+   * @param R The vector at each support point which will hold the result from
+   *   the tensor contraction.
+   *
+   * \f[
+   * R_i = \sum_a^{nSupport} \left ( \frac{\partial N_a}{\partial X_j} var_{ij} + N_a f_i \right ),
+   * \f]
+   */
   template< int NUM_SUPPORT_POINTS,
             typename GRADIENT_TYPE >
   GEOSX_HOST_DEVICE
   static void gradNajAij_plus_NaFi( GRADIENT_TYPE const & gradN,
                                     real64 const (&var_detJxW)[3][3],
                                     real64 const (&N)[NUM_SUPPORT_POINTS],
-                                    real64 const (&forcingTerm_detJ)[3],
+                                    real64 const (&forcingTerm_detJxW)[3],
                                     real64 ( &R )[NUM_SUPPORT_POINTS][3] );
 
+  /**
+   * @brief Inner product of each basis function gradient with a rank-2
+   *   tensor added to the product each shape function with a vector.
+   * @copydoc gradNajAij_plus_NaFi
+   */
   template< int NUM_SUPPORT_POINTS,
             typename GRADIENT_TYPE >
   GEOSX_HOST_DEVICE
   static void gradNajAij_plus_NaFi( GRADIENT_TYPE const & gradN,
                                     real64 const (&var_detJxW)[6],
                                     real64 const (&N)[NUM_SUPPORT_POINTS],
-                                    real64 const (&forcingTerm_detJ)[3],
+                                    real64 const (&forcingTerm_detJxW)[3],
                                     real64 ( &R )[NUM_SUPPORT_POINTS][3] );
 
 
+  /**
+   * @brief Sets m_viewGradN equal to an input view.
+   * @param source The view to assign to m_viewGradN.
+   */
   void setGradNView( arrayView4d< real64 const > const & source )
   {
     m_viewGradN = source;
   }
 
+  /**
+   * @brief Sets m_viewDetJ equal to an input view.
+   * @param source The view to assign to m_viewDetJ.
+   */
   void setDetJView( arrayView2d< real64 const > const & source )
   {
     m_viewDetJ = source;
   }
 
-//  void setGradN( localIndex const k,
-//                 localIndex const q )
-
 protected:
+  /// View to potentially hold pre-calculated shape function gradients.
   arrayView4d< real64 const > m_viewGradN;
+
+  /// View to potentially hold pre-calculated weighted jacobian transformation
+  /// determinants.
   arrayView2d< real64 const > m_viewDetJ;
 };
+
+//*************************************************************************************************
+//***** Interpolated Value Functions **************************************************************
+//*************************************************************************************************
+
+template< int NUM_SUPPORT_POINTS >
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void FiniteElementBase::value( real64 const (&N)[NUM_SUPPORT_POINTS],
+                               real64 const (&var)[NUM_SUPPORT_POINTS],
+                               real64 & value )
+{
+  for( int a=0; a<NUM_SUPPORT_POINTS; ++a )
+  {
+    value += N[a] * var[a];
+  }
+}
+
+template< int NUM_SUPPORT_POINTS,
+          int NUM_COMPONENTS >
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void FiniteElementBase::value( real64 const (&N)[NUM_SUPPORT_POINTS],
+                               real64 const (&var)[NUM_SUPPORT_POINTS][NUM_COMPONENTS],
+                               real64 (& value)[NUM_COMPONENTS] )
+{
+  for( int a=0; a<NUM_SUPPORT_POINTS; ++a )
+  {
+    for( int i=0; i<NUM_COMPONENTS; ++i )
+    {
+      value[i] += N[a] * var[a][i];
+    }
+  }
+}
+
+
+//*************************************************************************************************
+//***** Variable Gradient Functions ***************************************************************
+//*************************************************************************************************
 
 template< int NUM_SUPPORT_POINTS,
           typename GRADIENT_TYPE >
@@ -265,6 +481,22 @@ void FiniteElementBase::symmetricGradient( GRADIENT_TYPE const & gradN,
   }
 }
 
+template< int NUM_SUPPORT_POINTS,
+          typename GRADIENT_TYPE >
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void FiniteElementBase::gradient( GRADIENT_TYPE const & gradN,
+                                  real64 const (&var)[NUM_SUPPORT_POINTS],
+                                  real64 (& gradVar)[3] )
+{
+  for( int a=0; a<NUM_SUPPORT_POINTS; ++a )
+  {
+    for( int i = 0; i < 3; ++i )
+    {
+      gradVar[i] = gradVar[i] + var[ a ] * gradN[a][i];
+    }
+  }
+}
 
 template< int NUM_SUPPORT_POINTS,
           typename GRADIENT_TYPE >
@@ -286,6 +518,30 @@ void FiniteElementBase::gradient( GRADIENT_TYPE const & gradN,
   }
 }
 
+
+
+template< int NUM_SUPPORT_POINTS,
+          typename GRADIENT_TYPE >
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void FiniteElementBase::valueAndGradient( real64 const (&N)[NUM_SUPPORT_POINTS],
+                                          GRADIENT_TYPE const & gradN,
+                                          real64 const (&var)[NUM_SUPPORT_POINTS],
+                                          real64 & value,
+                                          real64 (& gradVar)[3] )
+{
+  for( int a=0; a<NUM_SUPPORT_POINTS; ++a )
+  {
+    value += N[a] * var[a];
+    for( int i = 0; i < 3; ++i )
+    {
+      gradVar[i] = gradVar[i] + var[ a ] * gradN[a][i];
+    }
+  }
+}
+
+
+
 template< int NUM_SUPPORT_POINTS,
           typename GRADIENT_TYPE >
 GEOSX_HOST_DEVICE
@@ -296,9 +552,9 @@ void FiniteElementBase::gradNajAij( GRADIENT_TYPE const & gradN,
 {
   for( int a=0; a<NUM_SUPPORT_POINTS; ++a )
   {
-    R[a][0] = R[a][0] - var_detJxW[0] * gradN[a][0] - var_detJxW[5] * gradN[a][1] - var_detJxW[4] * gradN[a][2];
-    R[a][1] = R[a][1] - var_detJxW[5] * gradN[a][0] - var_detJxW[1] * gradN[a][1] - var_detJxW[3] * gradN[a][2];
-    R[a][2] = R[a][2] - var_detJxW[4] * gradN[a][0] - var_detJxW[3] * gradN[a][1] - var_detJxW[2] * gradN[a][2];
+    R[a][0] = R[a][0] + var_detJxW[0] * gradN[a][0] + var_detJxW[5] * gradN[a][1] + var_detJxW[4] * gradN[a][2];
+    R[a][1] = R[a][1] + var_detJxW[5] * gradN[a][0] + var_detJxW[1] * gradN[a][1] + var_detJxW[3] * gradN[a][2];
+    R[a][2] = R[a][2] + var_detJxW[4] * gradN[a][0] + var_detJxW[3] * gradN[a][1] + var_detJxW[2] * gradN[a][2];
   }
 }
 
@@ -313,9 +569,9 @@ void FiniteElementBase::gradNajAij( GRADIENT_TYPE const & gradN,
 {
   for( int a=0; a<NUM_SUPPORT_POINTS; ++a )
   {
-    R[a][0] = R[a][0] - var_detJxW[0][0] * gradN[a][0] - var_detJxW[0][1] * gradN[a][1] - var_detJxW[0][2] * gradN[a][2];
-    R[a][1] = R[a][1] - var_detJxW[1][0] * gradN[a][0] - var_detJxW[1][1] * gradN[a][1] - var_detJxW[1][2] * gradN[a][2];
-    R[a][2] = R[a][2] - var_detJxW[2][0] * gradN[a][0] - var_detJxW[2][1] * gradN[a][1] - var_detJxW[2][2] * gradN[a][2];
+    R[a][0] = R[a][0] + var_detJxW[0][0] * gradN[a][0] + var_detJxW[0][1] * gradN[a][1] + var_detJxW[0][2] * gradN[a][2];
+    R[a][1] = R[a][1] + var_detJxW[1][0] * gradN[a][0] + var_detJxW[1][1] * gradN[a][1] + var_detJxW[1][2] * gradN[a][2];
+    R[a][2] = R[a][2] + var_detJxW[2][0] * gradN[a][0] + var_detJxW[2][1] * gradN[a][1] + var_detJxW[2][2] * gradN[a][2];
   }
 }
 
@@ -342,14 +598,14 @@ GEOSX_FORCE_INLINE
 void FiniteElementBase::gradNajAij_plus_NaFi( GRADIENT_TYPE const & gradN,
                                               real64 const (&var_detJxW)[6],
                                               real64 const (&N)[NUM_SUPPORT_POINTS],
-                                              real64 const (&forcingTerm_detJ)[3],
+                                              real64 const (&forcingTerm_detJxW)[3],
                                               real64 (& R)[NUM_SUPPORT_POINTS][3] )
 {
   for( int a=0; a<NUM_SUPPORT_POINTS; ++a )
   {
-    R[a][0] = R[a][0] - var_detJxW[0] * gradN[a][0] - var_detJxW[5] * gradN[a][1] - var_detJxW[4] * gradN[a][2] + forcingTerm_detJ[0] * N[a];
-    R[a][1] = R[a][1] - var_detJxW[5] * gradN[a][0] - var_detJxW[1] * gradN[a][1] - var_detJxW[3] * gradN[a][2] + forcingTerm_detJ[1] * N[a];
-    R[a][2] = R[a][2] - var_detJxW[4] * gradN[a][0] - var_detJxW[3] * gradN[a][1] - var_detJxW[2] * gradN[a][2] + forcingTerm_detJ[2] * N[a];
+    R[a][0] = R[a][0] + var_detJxW[0] * gradN[a][0] + var_detJxW[5] * gradN[a][1] + var_detJxW[4] * gradN[a][2] + forcingTerm_detJxW[0] * N[a];
+    R[a][1] = R[a][1] + var_detJxW[5] * gradN[a][0] + var_detJxW[1] * gradN[a][1] + var_detJxW[3] * gradN[a][2] + forcingTerm_detJxW[1] * N[a];
+    R[a][2] = R[a][2] + var_detJxW[4] * gradN[a][0] + var_detJxW[3] * gradN[a][1] + var_detJxW[2] * gradN[a][2] + forcingTerm_detJxW[2] * N[a];
   }
 }
 
@@ -360,14 +616,14 @@ GEOSX_FORCE_INLINE
 void FiniteElementBase::gradNajAij_plus_NaFi( GRADIENT_TYPE const & gradN,
                                               real64 const (&var_detJxW)[3][3],
                                               real64 const (&N)[NUM_SUPPORT_POINTS],
-                                              real64 const (&forcingTerm_detJ)[3],
+                                              real64 const (&forcingTerm_detJxW)[3],
                                               real64 (& R)[NUM_SUPPORT_POINTS][3] )
 {
   for( int a=0; a<NUM_SUPPORT_POINTS; ++a )
   {
-    R[a][0] = R[a][0] - var_detJxW[0][0] * gradN[a][0] - var_detJxW[0][1] * gradN[a][1] - var_detJxW[0][2] * gradN[a][2] + forcingTerm_detJ[0] * N[a];
-    R[a][1] = R[a][1] - var_detJxW[1][0] * gradN[a][0] - var_detJxW[1][1] * gradN[a][1] - var_detJxW[1][2] * gradN[a][2] + forcingTerm_detJ[1] * N[a];
-    R[a][2] = R[a][2] - var_detJxW[2][0] * gradN[a][0] - var_detJxW[2][1] * gradN[a][1] - var_detJxW[2][2] * gradN[a][2] + forcingTerm_detJ[2] * N[a];
+    R[a][0] = R[a][0] + var_detJxW[0][0] * gradN[a][0] + var_detJxW[0][1] * gradN[a][1] + var_detJxW[0][2] * gradN[a][2] + forcingTerm_detJxW[0] * N[a];
+    R[a][1] = R[a][1] + var_detJxW[1][0] * gradN[a][0] + var_detJxW[1][1] * gradN[a][1] + var_detJxW[1][2] * gradN[a][2] + forcingTerm_detJxW[1] * N[a];
+    R[a][2] = R[a][2] + var_detJxW[2][0] * gradN[a][0] + var_detJxW[2][1] * gradN[a][1] + var_detJxW[2][2] * gradN[a][2] + forcingTerm_detJxW[2] * N[a];
   }
 }
 }

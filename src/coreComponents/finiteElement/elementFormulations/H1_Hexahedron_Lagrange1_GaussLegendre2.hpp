@@ -322,8 +322,8 @@ H1_Hexahedron_Lagrange1_GaussLegendre2::supportLoop( int const qa,
                                                      PARAMS &&... params )
 {
 
-  /// Options for how to calculate the parent gradients.
-  #define PARENT_GRADIENT_METHOD 2
+/// Options for how to calculate the parent gradients.
+#define PARENT_GRADIENT_METHOD 2
 #if PARENT_GRADIENT_METHOD == 1
   // This option calculates the basis values at the quadrature point for each
   // linear basis index.
@@ -630,6 +630,7 @@ void H1_Hexahedron_Lagrange1_GaussLegendre2::gradient( int const q,
 #pragma GCC diagnostic pop
 #endif
 
+#undef PARENT_GRADIENT_METHOD
 }
 }
 

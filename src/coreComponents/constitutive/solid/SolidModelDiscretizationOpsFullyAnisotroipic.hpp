@@ -80,42 +80,42 @@ void SolidModelDiscretizationOpsFullyAnisotroipic::BTDB( BASIS_GRADIENT const & 
         { gradN[a][2] * gradN[b][0], gradN[a][2] * gradN[b][1], gradN[a][2] * gradN[b][2] } };
 
 
-      elementStiffness[a*3+0][b*3+0] = elementStiffness[a*3+0][b*3+0] -
-                                       ( m_c[0][0] * gradNa_gradNb[0][0] - m_c[0][5] * gradNa_gradNb[0][1] - m_c[0][4] * gradNa_gradNb[0][2] -
-                                         m_c[5][0] * gradNa_gradNb[1][0] - m_c[5][5] * gradNa_gradNb[1][1] - m_c[5][4] * gradNa_gradNb[1][2] -
-                                         m_c[4][0] * gradNa_gradNb[2][0] - m_c[4][5] * gradNa_gradNb[2][1] - m_c[4][4] * gradNa_gradNb[2][2] ) * detJxW;
-      elementStiffness[a*3+0][b*3+1] = elementStiffness[a*3+0][b*3+1] -
-                                       (m_c[0][5] * gradNa_gradNb[0][0] - m_c[0][1] * gradNa_gradNb[0][1] - m_c[0][3] * gradNa_gradNb[0][2] -
-                                        m_c[5][5] * gradNa_gradNb[1][0] - m_c[5][1] * gradNa_gradNb[1][1] - m_c[5][3] * gradNa_gradNb[1][2] -
-                                        m_c[4][5] * gradNa_gradNb[2][0] - m_c[4][1] * gradNa_gradNb[2][1] - m_c[4][3] * gradNa_gradNb[2][2] ) * detJxW;
-      elementStiffness[a*3+0][b*3+2] = elementStiffness[a*3+0][b*3+2] -
-                                       (m_c[0][4] * gradNa_gradNb[0][0] - m_c[0][3] * gradNa_gradNb[0][1] - m_c[0][2] * gradNa_gradNb[0][2] -
-                                        m_c[5][4] * gradNa_gradNb[1][0] - m_c[5][3] * gradNa_gradNb[1][1] - m_c[5][2] * gradNa_gradNb[1][2] -
-                                        m_c[4][4] * gradNa_gradNb[2][0] - m_c[4][3] * gradNa_gradNb[2][1] - m_c[4][2] * gradNa_gradNb[2][2] ) * detJxW;
-      elementStiffness[a*3+1][b*3+0] = elementStiffness[a*3+1][b*3+0] -
-                                       (m_c[5][0] * gradNa_gradNb[0][0] - m_c[5][5] * gradNa_gradNb[0][1] - m_c[5][4] * gradNa_gradNb[0][2] -
-                                        m_c[1][0] * gradNa_gradNb[1][0] - m_c[1][5] * gradNa_gradNb[1][1] - m_c[1][4] * gradNa_gradNb[1][2] -
-                                        m_c[3][0] * gradNa_gradNb[2][0] - m_c[3][5] * gradNa_gradNb[2][1] - m_c[3][4] * gradNa_gradNb[2][2] ) * detJxW;
-      elementStiffness[a*3+1][b*3+1] = elementStiffness[a*3+1][b*3+1] -
-                                       (m_c[5][5] * gradNa_gradNb[0][0] - m_c[5][1] * gradNa_gradNb[0][1] - m_c[5][3] * gradNa_gradNb[0][2] -
-                                        m_c[1][5] * gradNa_gradNb[1][0] - m_c[1][1] * gradNa_gradNb[1][1] - m_c[1][3] * gradNa_gradNb[1][2] -
-                                        m_c[3][5] * gradNa_gradNb[2][0] - m_c[3][1] * gradNa_gradNb[2][1] - m_c[3][3] * gradNa_gradNb[2][2] ) * detJxW;
-      elementStiffness[a*3+1][b*3+2] = elementStiffness[a*3+1][b*3+2] -
-                                       (m_c[5][4] * gradNa_gradNb[0][0] - m_c[5][3] * gradNa_gradNb[0][1] - m_c[5][2] * gradNa_gradNb[0][2] -
-                                        m_c[1][4] * gradNa_gradNb[1][0] - m_c[1][3] * gradNa_gradNb[1][1] - m_c[1][2] * gradNa_gradNb[1][2] -
-                                        m_c[3][4] * gradNa_gradNb[2][0] - m_c[3][3] * gradNa_gradNb[2][1] - m_c[3][2] * gradNa_gradNb[2][2] ) * detJxW;
-      elementStiffness[a*3+2][b*3+0] = elementStiffness[a*3+2][b*3+0] -
-                                       (m_c[4][0] * gradNa_gradNb[0][0] - m_c[4][5] * gradNa_gradNb[0][1] - m_c[4][4] * gradNa_gradNb[0][2] -
-                                        m_c[3][0] * gradNa_gradNb[1][0] - m_c[3][5] * gradNa_gradNb[1][1] - m_c[3][4] * gradNa_gradNb[1][2] -
-                                        m_c[2][0] * gradNa_gradNb[2][0] - m_c[2][5] * gradNa_gradNb[2][1] - m_c[2][4] * gradNa_gradNb[2][2] ) * detJxW;
-      elementStiffness[a*3+2][b*3+1] = elementStiffness[a*3+2][b*3+1] -
-                                       (m_c[4][5] * gradNa_gradNb[0][0] - m_c[4][1] * gradNa_gradNb[0][1] - m_c[4][3] * gradNa_gradNb[0][2] -
-                                        m_c[3][5] * gradNa_gradNb[1][0] - m_c[3][1] * gradNa_gradNb[1][1] - m_c[3][3] * gradNa_gradNb[1][2] -
-                                        m_c[2][5] * gradNa_gradNb[2][0] - m_c[2][1] * gradNa_gradNb[2][1] - m_c[2][3] * gradNa_gradNb[2][2] ) * detJxW;
-      elementStiffness[a*3+2][b*3+2] = elementStiffness[a*3+2][b*3+2] -
-                                       (m_c[4][4] * gradNa_gradNb[0][0] - m_c[4][3] * gradNa_gradNb[0][1] - m_c[4][2] * gradNa_gradNb[0][2] -
-                                        m_c[3][4] * gradNa_gradNb[1][0] - m_c[3][3] * gradNa_gradNb[1][1] - m_c[3][2] * gradNa_gradNb[1][2] -
-                                        m_c[2][4] * gradNa_gradNb[2][0] - m_c[2][3] * gradNa_gradNb[2][1] - m_c[2][2] * gradNa_gradNb[2][2] ) * detJxW;
+      elementStiffness[a*3+0][b*3+0] = elementStiffness[a*3+0][b*3+0] +
+                                       ( m_c[0][0] * gradNa_gradNb[0][0] + m_c[0][5] * gradNa_gradNb[0][1] + m_c[0][4] * gradNa_gradNb[0][2] +
+                                         m_c[5][0] * gradNa_gradNb[1][0] + m_c[5][5] * gradNa_gradNb[1][1] + m_c[5][4] * gradNa_gradNb[1][2] +
+                                         m_c[4][0] * gradNa_gradNb[2][0] + m_c[4][5] * gradNa_gradNb[2][1] + m_c[4][4] * gradNa_gradNb[2][2] ) * detJxW;
+      elementStiffness[a*3+0][b*3+1] = elementStiffness[a*3+0][b*3+1] +
+                                       (m_c[0][5] * gradNa_gradNb[0][0] + m_c[0][1] * gradNa_gradNb[0][1] + m_c[0][3] * gradNa_gradNb[0][2] +
+                                        m_c[5][5] * gradNa_gradNb[1][0] + m_c[5][1] * gradNa_gradNb[1][1] + m_c[5][3] * gradNa_gradNb[1][2] +
+                                        m_c[4][5] * gradNa_gradNb[2][0] + m_c[4][1] * gradNa_gradNb[2][1] + m_c[4][3] * gradNa_gradNb[2][2] ) * detJxW;
+      elementStiffness[a*3+0][b*3+2] = elementStiffness[a*3+0][b*3+2] +
+                                       (m_c[0][4] * gradNa_gradNb[0][0] + m_c[0][3] * gradNa_gradNb[0][1] + m_c[0][2] * gradNa_gradNb[0][2] +
+                                        m_c[5][4] * gradNa_gradNb[1][0] + m_c[5][3] * gradNa_gradNb[1][1] + m_c[5][2] * gradNa_gradNb[1][2] +
+                                        m_c[4][4] * gradNa_gradNb[2][0] + m_c[4][3] * gradNa_gradNb[2][1] + m_c[4][2] * gradNa_gradNb[2][2] ) * detJxW;
+      elementStiffness[a*3+1][b*3+0] = elementStiffness[a*3+1][b*3+0] +
+                                       (m_c[5][0] * gradNa_gradNb[0][0] + m_c[5][5] * gradNa_gradNb[0][1] + m_c[5][4] * gradNa_gradNb[0][2] +
+                                        m_c[1][0] * gradNa_gradNb[1][0] + m_c[1][5] * gradNa_gradNb[1][1] + m_c[1][4] * gradNa_gradNb[1][2] +
+                                        m_c[3][0] * gradNa_gradNb[2][0] + m_c[3][5] * gradNa_gradNb[2][1] + m_c[3][4] * gradNa_gradNb[2][2] ) * detJxW;
+      elementStiffness[a*3+1][b*3+1] = elementStiffness[a*3+1][b*3+1] +
+                                       (m_c[5][5] * gradNa_gradNb[0][0] + m_c[5][1] * gradNa_gradNb[0][1] + m_c[5][3] * gradNa_gradNb[0][2] +
+                                        m_c[1][5] * gradNa_gradNb[1][0] + m_c[1][1] * gradNa_gradNb[1][1] + m_c[1][3] * gradNa_gradNb[1][2] +
+                                        m_c[3][5] * gradNa_gradNb[2][0] + m_c[3][1] * gradNa_gradNb[2][1] + m_c[3][3] * gradNa_gradNb[2][2] ) * detJxW;
+      elementStiffness[a*3+1][b*3+2] = elementStiffness[a*3+1][b*3+2] +
+                                       (m_c[5][4] * gradNa_gradNb[0][0] + m_c[5][3] * gradNa_gradNb[0][1] + m_c[5][2] * gradNa_gradNb[0][2] +
+                                        m_c[1][4] * gradNa_gradNb[1][0] + m_c[1][3] * gradNa_gradNb[1][1] + m_c[1][2] * gradNa_gradNb[1][2] +
+                                        m_c[3][4] * gradNa_gradNb[2][0] + m_c[3][3] * gradNa_gradNb[2][1] + m_c[3][2] * gradNa_gradNb[2][2] ) * detJxW;
+      elementStiffness[a*3+2][b*3+0] = elementStiffness[a*3+2][b*3+0] +
+                                       (m_c[4][0] * gradNa_gradNb[0][0] + m_c[4][5] * gradNa_gradNb[0][1] + m_c[4][4] * gradNa_gradNb[0][2] +
+                                        m_c[3][0] * gradNa_gradNb[1][0] + m_c[3][5] * gradNa_gradNb[1][1] + m_c[3][4] * gradNa_gradNb[1][2] +
+                                        m_c[2][0] * gradNa_gradNb[2][0] + m_c[2][5] * gradNa_gradNb[2][1] + m_c[2][4] * gradNa_gradNb[2][2] ) * detJxW;
+      elementStiffness[a*3+2][b*3+1] = elementStiffness[a*3+2][b*3+1] +
+                                       (m_c[4][5] * gradNa_gradNb[0][0] + m_c[4][1] * gradNa_gradNb[0][1] + m_c[4][3] * gradNa_gradNb[0][2] +
+                                        m_c[3][5] * gradNa_gradNb[1][0] + m_c[3][1] * gradNa_gradNb[1][1] + m_c[3][3] * gradNa_gradNb[1][2] +
+                                        m_c[2][5] * gradNa_gradNb[2][0] + m_c[2][1] * gradNa_gradNb[2][1] + m_c[2][3] * gradNa_gradNb[2][2] ) * detJxW;
+      elementStiffness[a*3+2][b*3+2] = elementStiffness[a*3+2][b*3+2] +
+                                       (m_c[4][4] * gradNa_gradNb[0][0] + m_c[4][3] * gradNa_gradNb[0][1] + m_c[4][2] * gradNa_gradNb[0][2] +
+                                        m_c[3][4] * gradNa_gradNb[1][0] + m_c[3][3] * gradNa_gradNb[1][1] + m_c[3][2] * gradNa_gradNb[1][2] +
+                                        m_c[2][4] * gradNa_gradNb[2][0] + m_c[2][3] * gradNa_gradNb[2][1] + m_c[2][2] * gradNa_gradNb[2][2] ) * detJxW;
     }
   }
 }
@@ -135,18 +135,18 @@ void SolidModelDiscretizationOpsFullyAnisotroipic::diagBTDB( BASIS_GRADIENT cons
     { { gradN[a][0] * gradN[a][0], gradN[a][0] * gradN[a][1], gradN[a][0] * gradN[a][2] },
       { gradN[a][1] * gradN[a][0], gradN[a][1] * gradN[a][1], gradN[a][1] * gradN[a][2] },
       { gradN[a][2] * gradN[a][0], gradN[a][2] * gradN[a][1], gradN[a][2] * gradN[a][2] } };
-    diagElementStiffness[a*3+0] = diagElementStiffness[a*3+0] -
-                                  (m_c[0][0] * gradN_gradN[0][0] - m_c[0][5] * gradN_gradN[0][1] - m_c[0][4] * gradN_gradN[0][2] -
-                                   m_c[5][0] * gradN_gradN[1][0] - m_c[5][5] * gradN_gradN[1][1] - m_c[5][4] * gradN_gradN[1][2] -
-                                   m_c[4][0] * gradN_gradN[2][0] - m_c[4][5] * gradN_gradN[2][1] - m_c[4][4] * gradN_gradN[2][2] ) * detJxW;
-    diagElementStiffness[a*3+1] = diagElementStiffness[a*3+1] -
-                                  (m_c[5][5] * gradN_gradN[0][0] - m_c[5][1] * gradN_gradN[0][1] - m_c[5][3] * gradN_gradN[0][2] -
-                                   m_c[1][5] * gradN_gradN[1][0] - m_c[1][1] * gradN_gradN[1][1] - m_c[1][3] * gradN_gradN[1][2] -
-                                   m_c[3][5] * gradN_gradN[2][0] - m_c[3][1] * gradN_gradN[2][1] - m_c[3][3] * gradN_gradN[2][2] ) * detJxW;
-    diagElementStiffness[a*3+2] = diagElementStiffness[a*3+2] -
-                                  (m_c[4][4] * gradN_gradN[0][0] - m_c[4][3] * gradN_gradN[0][1] - m_c[4][2] * gradN_gradN[0][2] -
-                                   m_c[3][4] * gradN_gradN[1][0] - m_c[3][3] * gradN_gradN[1][1] - m_c[3][2] * gradN_gradN[1][2] -
-                                   m_c[2][4] * gradN_gradN[2][0] - m_c[2][3] * gradN_gradN[2][1] - m_c[2][2] * gradN_gradN[2][2] ) * detJxW;
+    diagElementStiffness[a*3+0] = diagElementStiffness[a*3+0] +
+                                  (m_c[0][0] * gradN_gradN[0][0] + m_c[0][5] * gradN_gradN[0][1] + m_c[0][4] * gradN_gradN[0][2] +
+                                   m_c[5][0] * gradN_gradN[1][0] + m_c[5][5] * gradN_gradN[1][1] + m_c[5][4] * gradN_gradN[1][2] +
+                                   m_c[4][0] * gradN_gradN[2][0] + m_c[4][5] * gradN_gradN[2][1] + m_c[4][4] * gradN_gradN[2][2] ) * detJxW;
+    diagElementStiffness[a*3+1] = diagElementStiffness[a*3+1] +
+                                  (m_c[5][5] * gradN_gradN[0][0] + m_c[5][1] * gradN_gradN[0][1] + m_c[5][3] * gradN_gradN[0][2] +
+                                   m_c[1][5] * gradN_gradN[1][0] + m_c[1][1] * gradN_gradN[1][1] + m_c[1][3] * gradN_gradN[1][2] +
+                                   m_c[3][5] * gradN_gradN[2][0] + m_c[3][1] * gradN_gradN[2][1] + m_c[3][3] * gradN_gradN[2][2] ) * detJxW;
+    diagElementStiffness[a*3+2] = diagElementStiffness[a*3+2] +
+                                  (m_c[4][4] * gradN_gradN[0][0] + m_c[4][3] * gradN_gradN[0][1] + m_c[4][2] * gradN_gradN[0][2] +
+                                   m_c[3][4] * gradN_gradN[1][0] + m_c[3][3] * gradN_gradN[1][1] + m_c[3][2] * gradN_gradN[1][2] +
+                                   m_c[2][4] * gradN_gradN[2][0] + m_c[2][3] * gradN_gradN[2][1] + m_c[2][2] * gradN_gradN[2][2] ) * detJxW;
   }
 }
 
@@ -169,36 +169,36 @@ void SolidModelDiscretizationOpsFullyAnisotroipic::diagRowSumBTDB( BASIS_GRADIEN
         { gradN[a][2] * gradN[b][0], gradN[a][2] * gradN[b][1], gradN[a][2] * gradN[b][2] } };
 
 
-      diagSumElementStiffness[a*3+0] = diagSumElementStiffness[a*3+0] -
-                                       ( m_c[0][0] * gradNa_gradNb[0][0] - m_c[0][5] * gradNa_gradNb[0][1] - m_c[0][4] * gradNa_gradNb[0][2] -
-                                         m_c[5][0] * gradNa_gradNb[1][0] - m_c[5][5] * gradNa_gradNb[1][1] - m_c[5][4] * gradNa_gradNb[1][2] -
-                                         m_c[4][0] * gradNa_gradNb[2][0] - m_c[4][5] * gradNa_gradNb[2][1] - m_c[4][4] * gradNa_gradNb[2][2] -
-                                         m_c[0][5] * gradNa_gradNb[0][0] - m_c[0][1] * gradNa_gradNb[0][1] - m_c[0][3] * gradNa_gradNb[0][2] -
-                                         m_c[5][5] * gradNa_gradNb[1][0] - m_c[5][1] * gradNa_gradNb[1][1] - m_c[5][3] * gradNa_gradNb[1][2] -
-                                         m_c[4][5] * gradNa_gradNb[2][0] - m_c[4][1] * gradNa_gradNb[2][1] - m_c[4][3] * gradNa_gradNb[2][2] -
-                                         m_c[0][4] * gradNa_gradNb[0][0] - m_c[0][3] * gradNa_gradNb[0][1] - m_c[0][2] * gradNa_gradNb[0][2] -
-                                         m_c[5][4] * gradNa_gradNb[1][0] - m_c[5][3] * gradNa_gradNb[1][1] - m_c[5][2] * gradNa_gradNb[1][2] -
-                                         m_c[4][4] * gradNa_gradNb[2][0] - m_c[4][3] * gradNa_gradNb[2][1] - m_c[4][2] * gradNa_gradNb[2][2] ) * detJxW;
-      diagSumElementStiffness[a*3+1] = diagSumElementStiffness[a*3+1] -
-                                       (m_c[5][0] * gradNa_gradNb[0][0] - m_c[5][5] * gradNa_gradNb[0][1] - m_c[5][4] * gradNa_gradNb[0][2] -
-                                        m_c[1][0] * gradNa_gradNb[1][0] - m_c[1][5] * gradNa_gradNb[1][1] - m_c[1][4] * gradNa_gradNb[1][2] -
-                                        m_c[3][0] * gradNa_gradNb[2][0] - m_c[3][5] * gradNa_gradNb[2][1] - m_c[3][4] * gradNa_gradNb[2][2] -
-                                        m_c[5][5] * gradNa_gradNb[0][0] - m_c[5][1] * gradNa_gradNb[0][1] - m_c[5][3] * gradNa_gradNb[0][2] -
-                                        m_c[1][5] * gradNa_gradNb[1][0] - m_c[1][1] * gradNa_gradNb[1][1] - m_c[1][3] * gradNa_gradNb[1][2] -
-                                        m_c[3][5] * gradNa_gradNb[2][0] - m_c[3][1] * gradNa_gradNb[2][1] - m_c[3][3] * gradNa_gradNb[2][2] -
-                                        m_c[5][4] * gradNa_gradNb[0][0] - m_c[5][3] * gradNa_gradNb[0][1] - m_c[5][2] * gradNa_gradNb[0][2] -
-                                        m_c[1][4] * gradNa_gradNb[1][0] - m_c[1][3] * gradNa_gradNb[1][1] - m_c[1][2] * gradNa_gradNb[1][2] -
-                                        m_c[3][4] * gradNa_gradNb[2][0] - m_c[3][3] * gradNa_gradNb[2][1] - m_c[3][2] * gradNa_gradNb[2][2] ) * detJxW;
-      diagSumElementStiffness[a*3+2] = diagSumElementStiffness[a*3+2] -
-                                       (m_c[4][0] * gradNa_gradNb[0][0] - m_c[4][5] * gradNa_gradNb[0][1] - m_c[4][4] * gradNa_gradNb[0][2] -
-                                        m_c[3][0] * gradNa_gradNb[1][0] - m_c[3][5] * gradNa_gradNb[1][1] - m_c[3][4] * gradNa_gradNb[1][2] -
-                                        m_c[2][0] * gradNa_gradNb[2][0] - m_c[2][5] * gradNa_gradNb[2][1] - m_c[2][4] * gradNa_gradNb[2][2] -
-                                        m_c[4][5] * gradNa_gradNb[0][0] - m_c[4][1] * gradNa_gradNb[0][1] - m_c[4][3] * gradNa_gradNb[0][2] -
-                                        m_c[3][5] * gradNa_gradNb[1][0] - m_c[3][1] * gradNa_gradNb[1][1] - m_c[3][3] * gradNa_gradNb[1][2] -
-                                        m_c[2][5] * gradNa_gradNb[2][0] - m_c[2][1] * gradNa_gradNb[2][1] - m_c[2][3] * gradNa_gradNb[2][2] -
-                                        m_c[4][4] * gradNa_gradNb[0][0] - m_c[4][3] * gradNa_gradNb[0][1] - m_c[4][2] * gradNa_gradNb[0][2] -
-                                        m_c[3][4] * gradNa_gradNb[1][0] - m_c[3][3] * gradNa_gradNb[1][1] - m_c[3][2] * gradNa_gradNb[1][2] -
-                                        m_c[2][4] * gradNa_gradNb[2][0] - m_c[2][3] * gradNa_gradNb[2][1] - m_c[2][2] * gradNa_gradNb[2][2] ) * detJxW;
+      diagSumElementStiffness[a*3+0] = diagSumElementStiffness[a*3+0] +
+                                       ( m_c[0][0] * gradNa_gradNb[0][0] + m_c[0][5] * gradNa_gradNb[0][1] + m_c[0][4] * gradNa_gradNb[0][2] +
+                                         m_c[5][0] * gradNa_gradNb[1][0] + m_c[5][5] * gradNa_gradNb[1][1] + m_c[5][4] * gradNa_gradNb[1][2] +
+                                         m_c[4][0] * gradNa_gradNb[2][0] + m_c[4][5] * gradNa_gradNb[2][1] + m_c[4][4] * gradNa_gradNb[2][2] +
+                                         m_c[0][5] * gradNa_gradNb[0][0] + m_c[0][1] * gradNa_gradNb[0][1] + m_c[0][3] * gradNa_gradNb[0][2] +
+                                         m_c[5][5] * gradNa_gradNb[1][0] + m_c[5][1] * gradNa_gradNb[1][1] + m_c[5][3] * gradNa_gradNb[1][2] +
+                                         m_c[4][5] * gradNa_gradNb[2][0] + m_c[4][1] * gradNa_gradNb[2][1] + m_c[4][3] * gradNa_gradNb[2][2] +
+                                         m_c[0][4] * gradNa_gradNb[0][0] + m_c[0][3] * gradNa_gradNb[0][1] + m_c[0][2] * gradNa_gradNb[0][2] +
+                                         m_c[5][4] * gradNa_gradNb[1][0] + m_c[5][3] * gradNa_gradNb[1][1] + m_c[5][2] * gradNa_gradNb[1][2] +
+                                         m_c[4][4] * gradNa_gradNb[2][0] + m_c[4][3] * gradNa_gradNb[2][1] + m_c[4][2] * gradNa_gradNb[2][2] ) * detJxW;
+      diagSumElementStiffness[a*3+1] = diagSumElementStiffness[a*3+1] +
+                                       (m_c[5][0] * gradNa_gradNb[0][0] + m_c[5][5] * gradNa_gradNb[0][1] + m_c[5][4] * gradNa_gradNb[0][2] +
+                                        m_c[1][0] * gradNa_gradNb[1][0] + m_c[1][5] * gradNa_gradNb[1][1] + m_c[1][4] * gradNa_gradNb[1][2] +
+                                        m_c[3][0] * gradNa_gradNb[2][0] + m_c[3][5] * gradNa_gradNb[2][1] + m_c[3][4] * gradNa_gradNb[2][2] +
+                                        m_c[5][5] * gradNa_gradNb[0][0] + m_c[5][1] * gradNa_gradNb[0][1] + m_c[5][3] * gradNa_gradNb[0][2] +
+                                        m_c[1][5] * gradNa_gradNb[1][0] + m_c[1][1] * gradNa_gradNb[1][1] + m_c[1][3] * gradNa_gradNb[1][2] +
+                                        m_c[3][5] * gradNa_gradNb[2][0] + m_c[3][1] * gradNa_gradNb[2][1] + m_c[3][3] * gradNa_gradNb[2][2] +
+                                        m_c[5][4] * gradNa_gradNb[0][0] + m_c[5][3] * gradNa_gradNb[0][1] + m_c[5][2] * gradNa_gradNb[0][2] +
+                                        m_c[1][4] * gradNa_gradNb[1][0] + m_c[1][3] * gradNa_gradNb[1][1] + m_c[1][2] * gradNa_gradNb[1][2] +
+                                        m_c[3][4] * gradNa_gradNb[2][0] + m_c[3][3] * gradNa_gradNb[2][1] + m_c[3][2] * gradNa_gradNb[2][2] ) * detJxW;
+      diagSumElementStiffness[a*3+2] = diagSumElementStiffness[a*3+2] +
+                                       (m_c[4][0] * gradNa_gradNb[0][0] + m_c[4][5] * gradNa_gradNb[0][1] + m_c[4][4] * gradNa_gradNb[0][2] +
+                                        m_c[3][0] * gradNa_gradNb[1][0] + m_c[3][5] * gradNa_gradNb[1][1] + m_c[3][4] * gradNa_gradNb[1][2] +
+                                        m_c[2][0] * gradNa_gradNb[2][0] + m_c[2][5] * gradNa_gradNb[2][1] + m_c[2][4] * gradNa_gradNb[2][2] +
+                                        m_c[4][5] * gradNa_gradNb[0][0] + m_c[4][1] * gradNa_gradNb[0][1] + m_c[4][3] * gradNa_gradNb[0][2] +
+                                        m_c[3][5] * gradNa_gradNb[1][0] + m_c[3][1] * gradNa_gradNb[1][1] + m_c[3][3] * gradNa_gradNb[1][2] +
+                                        m_c[2][5] * gradNa_gradNb[2][0] + m_c[2][1] * gradNa_gradNb[2][1] + m_c[2][3] * gradNa_gradNb[2][2] +
+                                        m_c[4][4] * gradNa_gradNb[0][0] + m_c[4][3] * gradNa_gradNb[0][1] + m_c[4][2] * gradNa_gradNb[0][2] +
+                                        m_c[3][4] * gradNa_gradNb[1][0] + m_c[3][3] * gradNa_gradNb[1][1] + m_c[3][2] * gradNa_gradNb[1][2] +
+                                        m_c[2][4] * gradNa_gradNb[2][0] + m_c[2][3] * gradNa_gradNb[2][1] + m_c[2][2] * gradNa_gradNb[2][2] ) * detJxW;
     }
   }
 }

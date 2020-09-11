@@ -188,7 +188,7 @@ public:
                               StackVariables & stack ) const
   {
 
-    Base::quadraturePointJacobianContribution( k, q, stack );
+    Base::quadraturePointKernel( k, q, stack );
     real64 detJ=0;
 
     real64 N[numNodesPerElem];
