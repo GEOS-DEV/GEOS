@@ -398,28 +398,28 @@ public:
    * @return A const reference to arrayView1d<real64> containing the bulk
    *         modulus (at every element).
    */
-  arrayView1d< real64 > const & bulkModulus()       { return m_bulkModulus; }
+  arrayView1d< real64 > bulkModulus() { return m_bulkModulus; }
 
   /**
    * @brief Const accessor for bulk modulus
    * @return A const reference to arrayView1d<real64 const> containing the bulk
    *         modulus (at every element).
    */
-  arrayView1d< real64 const > const & bulkModulus() const { return m_bulkModulus; }
+  arrayView1d< real64 const > bulkModulus() const { return m_bulkModulus; }
 
   /**
    * @brief Accessor for shear modulus
    * @return A const reference to arrayView1d<real64> containing the shear
    *         modulus (at every element).
    */
-  arrayView1d< real64 > const & shearModulus()       { return m_shearModulus; }
+  arrayView1d< real64 > shearModulus() { return m_shearModulus; }
 
   /**
    * @brief Const accessor for shear modulus
    * @return A const reference to arrayView1d<real64 const> containing the
    *         shear modulus (at every element).
    */
-  arrayView1d< real64 const > const & shearModulus() const { return m_shearModulus; }
+  arrayView1d< real64 const > shearModulus() const { return m_shearModulus; }
 
   /**
    * @brief Create a instantiation of the LinearElasticIsotropicUpdate class
@@ -436,7 +436,7 @@ public:
     {
       return LinearElasticIsotropicUpdates( m_bulkModulus,
                                             m_shearModulus,
-                                            typename decltype(m_stress)::ViewType{} );
+                                            arrayView3d< real64, solid::STRESS_USD >() );
     }
   }
 

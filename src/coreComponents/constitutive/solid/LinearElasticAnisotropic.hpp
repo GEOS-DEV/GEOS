@@ -314,7 +314,7 @@ public:
    * @brief Const Getter for stiffness tensor
    * @return ArrayView to the stiffness tensor
    */
-  arrayView3d< real64 const, solid::STIFFNESS_USD > const & getStiffness() const
+  arrayView3d< real64 const, solid::STIFFNESS_USD > getStiffness() const
   {
     return m_stiffness;
   }
@@ -323,7 +323,7 @@ public:
    * @brief Non-const Getter for stiffness tensor
    * @return ArrayView to the stiffness tensor
    */
-  arrayView3d< real64, solid::STIFFNESS_USD > const & getStiffness()
+  arrayView3d< real64, solid::STIFFNESS_USD > getStiffness()
   {
     return m_stiffness;
   }

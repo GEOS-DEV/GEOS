@@ -421,62 +421,62 @@ public:
    * @brief Const-Getter for 11 component of Voigt stiffness tensor.
    * @return reference to immutable 11 component of Voigt stiffness tensor.
    */
-  arrayView1d< real64 const > const & getC11() const { return m_c11; }
+  arrayView1d< real64 const > getC11() const { return m_c11; }
 
   /**
    * @brief Getter for 11 component of Voigt stiffness tensor.
    * @return reference to mutable 11 component of Voigt stiffness tensor.
    */
-  arrayView1d< real64 >       const & getC11()       { return m_c11; }
+  arrayView1d< real64 > getC11() { return m_c11; }
 
 
   /**
    * @brief Const-Getter for 13 component of Voigt stiffness tensor.
    * @return reference to immutable 13 component of Voigt stiffness tensor.
    */
-  arrayView1d< real64 const > const & getC13() const { return m_c13; }
+  arrayView1d< real64 const > getC13() const { return m_c13; }
 
   /**
    * @brief Getter for 13 component of Voigt stiffness tensor.
    * @return reference to mutable 13 component of Voigt stiffness tensor.
    */
-  arrayView1d< real64 >       const & getC13()       { return m_c13; }
+  arrayView1d< real64 > getC13() { return m_c13; }
 
   /**
    * @brief Const-Getter for 33 component of Voigt stiffness tensor.
    * @return reference to immutable 33 component of Voigt stiffness tensor.
    */
-  arrayView1d< real64 const > const & getC33() const { return m_c33; }
+  arrayView1d< real64 const > getC33() const { return m_c33; }
 
   /**
    * @brief Getter for 33 component of Voigt stiffness tensor.
    * @return reference to mutable 33 component of Voigt stiffness tensor.
    */
-  arrayView1d< real64 >       const & getC33()       { return m_c33; }
+  arrayView1d< real64 > getC33() { return m_c33; }
 
   /**
    * @brief Const-Getter for 44 component of Voigt stiffness tensor.
    * @return reference to immutable 44 component of Voigt stiffness tensor.
    */
-  arrayView1d< real64 const > const & getC44() const { return m_c44; }
+  arrayView1d< real64 const > getC44() const { return m_c44; }
 
   /**
    * @brief Getter for 44 component of Voigt stiffness tensor.
    * @return reference to mutable 44 component of Voigt stiffness tensor.
    */
-  arrayView1d< real64 >       const & getC44()       { return m_c44; }
+  arrayView1d< real64 > getC44() { return m_c44; }
 
   /**
    * @brief Const-Getter for 66 component of Voigt stiffness tensor.
    * @return reference to immutable 66 component of Voigt stiffness tensor.
    */
-  arrayView1d< real64 const > const & getC66() const { return m_c66; }
+  arrayView1d< real64 const > getC66() const { return m_c66; }
 
   /**
    * @brief Getter for 66 component of Voigt stiffness tensor.
    * @return reference to mutable 66 component of Voigt stiffness tensor.
    */
-  arrayView1d< real64 >       const & getC66()       { return m_c66; }
+  arrayView1d< real64 > getC66() { return m_c66; }
 
   /**
    * @brief Create a instantiation of the
