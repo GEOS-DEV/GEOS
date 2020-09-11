@@ -63,26 +63,7 @@ public:
    * @return The determinant of @p J.
    */
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  static real64 inverse( real64 (& J)[3][3] )
-  {
-    real64 const temp[3][3] =
-    { { J[1][1]*J[2][2] - J[1][2]*J[2][1], J[0][2]*J[2][1] - J[0][1]*J[2][2], J[0][1]*J[1][2] - J[0][2]*J[1][1] },
-      { J[1][2]*J[2][0] - J[1][0]*J[2][2], J[0][0]*J[2][2] - J[0][2]*J[2][0], J[0][2]*J[1][0] - J[0][0]*J[1][2] },
-      { J[1][0]*J[2][1] - J[1][1]*J[2][0], J[0][1]*J[2][0] - J[0][0]*J[2][1], J[0][0]*J[1][1] - J[0][1]*J[1][0] } };
-
-    real64 const det =  J[0][0] * temp[0][0] + J[1][0] * temp[0][1] + J[2][0] * temp[0][2];
-    real64 const invDet = 1.0 / det;
-
-    for( int i=0; i<3; ++i )
-    {
-      for( int j=0; j<3; ++j )
-      {
-        J[i][j] = temp[i][j] * invDet;
-      }
-    }
-    return det;
-  }
+  static real64 inverse( real64 ( &J )[3][3] );
 
   /**
    * @brief Calculate the determinant of a 3x3 c-array.
@@ -90,13 +71,7 @@ public:
    * @return The determinant of @p J
    */
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  static real64 detJ( real64 const (&J)[3][3] )
-  {
-    return J[0][0] * ( J[1][1]*J[2][2] - J[1][2]*J[2][1] ) +
-           J[1][0] * ( J[0][2]*J[2][1] - J[0][1]*J[2][2] ) +
-           J[2][0] * ( J[0][1]*J[1][2] - J[0][2]*J[1][1] );
-  }
+  static real64 detJ( real64 const (&J)[3][3] );
 
   /**
    * @brief Get the shape function gradients.
@@ -111,15 +86,10 @@ public:
    */
   template< typename LEAF >
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
   real64 getGradN( localIndex const k,
                    localIndex const q,
                    real64 const (&X)[LEAF::numNodes][3],
-                   real64 (& gradN)[LEAF::numNodes][3] ) const
-  {
-    GEOSX_UNUSED_VAR( k );
-    return LEAF::calcGradN( q, X, gradN );
-  }
+                   real64 ( &gradN )[LEAF::numNodes][3] ) const;
 
 
   /**
@@ -135,22 +105,10 @@ public:
    */
   template< typename LEAF >
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
   real64 getGradN( localIndex const k,
                    localIndex const q,
                    int const X,
-                   real64 (& gradN)[LEAF::numNodes][3] ) const
-  {
-    GEOSX_UNUSED_VAR( X );
-
-    for( int a=0; a<LEAF::numNodes; ++a )
-    {
-      gradN[a][0] = m_viewGradN( k, q, a, 0 );
-      gradN[a][1] = m_viewGradN( k, q, a, 1 );
-      gradN[a][2] = m_viewGradN( k, q, a, 2 );
-    }
-    return m_viewDetJ( k, q );
-  }
+                   real64 ( &gradN )[LEAF::numNodes][3] ) const;
 
   /**
    * @name Value Operator Functions
@@ -212,7 +170,7 @@ public:
    * @param gradN The basis function gradients at a point in the element.
    * @param var The vector valued support field that the gradient operator will
    *  be applied to.
-   * @param grad The symmetric gradient in Voigt notation.
+   * @param gradVar The symmetric gradient in Voigt notation.
    *
    * More precisely, the operator is defined as:
    * \f[
@@ -237,7 +195,7 @@ public:
    * @param gradN The basis function gradients at a point in the element.
    * @param var The vector valued support field that the gradient operator will
    *  be applied to.
-   * @param grad The  gradient.
+   * @param gradVar The  gradient.
    *
    * More precisely, the operator is defined as:
    * \f[
@@ -310,16 +268,18 @@ public:
    * @tparam GRADIENT_TYPE The type of the array object holding the shape
    *   function gradients.
    * @param gradN The basis function gradients at a point in the element.
-   * @param var_detJxW The rank-2 symmetric tensor at @p q scaled by J*W.
+   * @param var_detJxW The rank-2 tensor at @p q scaled by J*W.
    * @param R The vector at each support point which will hold the result from
    *   the tensor contraction.
    *
    * More precisely, the operator is defined as:
+   *
    * \f[
-   * R_i = \sum_a^{nSupport} \left ( \frac{\partial N_a}{\partial X_j} var_{ij}\right ),
+   * R_i = \sum_a^{nSupport} \left( \frac{\partial N_a}{\partial X_j} var_{ij}\right),
    * \f]
-   * where $\frac{\partial N_a}{\partial X_j}$ is the basis function gradient,
-   *   $var_{ij}$ is the rank-2 symmetric tensor.
+   *
+   * where \f$\frac{\partial N_a}{\partial X_j}\f$ is the basis function gradient,
+   *   \f$var_{ij}\f$ is the rank-2 symmetric tensor.
    */
   template< int NUM_SUPPORT_POINTS,
             typename GRADIENT_TYPE >
@@ -332,7 +292,6 @@ public:
    * @copydoc gradNajAij
    * @brief Inner product of each basis function gradient with a rank-2
    *   tensor.
-   * @param var_detJxW The rank-2 tensor at @p q scaled by J*W.
    */
   template< int NUM_SUPPORT_POINTS,
             typename GRADIENT_TYPE >
@@ -422,6 +381,75 @@ protected:
   /// determinants.
   arrayView2d< real64 const > m_viewDetJ;
 };
+
+
+/// @cond Doxygen_Suppress
+
+//*************************************************************************************************
+//***** Definitons ********************************************************************************
+//*************************************************************************************************
+
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+real64 FiniteElementBase::inverse( real64 (& J)[3][3] )
+{
+  real64 const temp[3][3] =
+  { { J[1][1]*J[2][2] - J[1][2]*J[2][1], J[0][2]*J[2][1] - J[0][1]*J[2][2], J[0][1]*J[1][2] - J[0][2]*J[1][1] },
+    { J[1][2]*J[2][0] - J[1][0]*J[2][2], J[0][0]*J[2][2] - J[0][2]*J[2][0], J[0][2]*J[1][0] - J[0][0]*J[1][2] },
+    { J[1][0]*J[2][1] - J[1][1]*J[2][0], J[0][1]*J[2][0] - J[0][0]*J[2][1], J[0][0]*J[1][1] - J[0][1]*J[1][0] } };
+
+  real64 const det =  J[0][0] * temp[0][0] + J[1][0] * temp[0][1] + J[2][0] * temp[0][2];
+  real64 const invDet = 1.0 / det;
+
+  for( int i=0; i<3; ++i )
+  {
+    for( int j=0; j<3; ++j )
+    {
+      J[i][j] = temp[i][j] * invDet;
+    }
+  }
+  return det;
+}
+
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+real64 FiniteElementBase::detJ( real64 const (&J)[3][3] )
+{
+  return J[0][0] * ( J[1][1]*J[2][2] - J[1][2]*J[2][1] ) +
+         J[1][0] * ( J[0][2]*J[2][1] - J[0][1]*J[2][2] ) +
+         J[2][0] * ( J[0][1]*J[1][2] - J[0][2]*J[1][1] );
+}
+
+template< typename LEAF >
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+real64 FiniteElementBase::getGradN( localIndex const k,
+                                    localIndex const q,
+                                    real64 const (&X)[LEAF::numNodes][3],
+                                    real64 (& gradN)[LEAF::numNodes][3] ) const
+{
+  GEOSX_UNUSED_VAR( k );
+  return LEAF::calcGradN( q, X, gradN );
+}
+
+template< typename LEAF >
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+real64 FiniteElementBase::getGradN( localIndex const k,
+                                    localIndex const q,
+                                    int const X,
+                                    real64 (& gradN)[LEAF::numNodes][3] ) const
+{
+  GEOSX_UNUSED_VAR( X );
+
+  for( int a=0; a<LEAF::numNodes; ++a )
+  {
+    gradN[a][0] = m_viewGradN( k, q, a, 0 );
+    gradN[a][1] = m_viewGradN( k, q, a, 1 );
+    gradN[a][2] = m_viewGradN( k, q, a, 2 );
+  }
+  return m_viewDetJ( k, q );
+}
 
 //*************************************************************************************************
 //***** Interpolated Value Functions **************************************************************
@@ -626,6 +654,8 @@ void FiniteElementBase::gradNajAij_plus_NaFi( GRADIENT_TYPE const & gradN,
     R[a][2] = R[a][2] + var_detJxW[2][0] * gradN[a][0] + var_detJxW[2][1] * gradN[a][1] + var_detJxW[2][2] * gradN[a][2] + forcingTerm_detJxW[2] * N[a];
   }
 }
+/// @endcond
+
 }
 }
 

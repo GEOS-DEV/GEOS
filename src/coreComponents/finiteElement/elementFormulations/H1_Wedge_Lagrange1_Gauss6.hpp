@@ -88,7 +88,7 @@ public:
    *   coordinates.
    * @param q Index of the quadrature point.
    * @param X Array containing the coordinates of the support points.
-   * @param dNdX Array to contain the shape function derivatives for all
+   * @param gradN Array to contain the shape function derivatives for all
    *   support points at the coordinates of the quadrature point @p q.
    * @return The determinant of the parent/physical transformation matrix.
    */
@@ -234,7 +234,7 @@ private:
    *   shape function derivatives in the physical space.
    * @param q The linear index of quadrature point
    * @param invJ The Jacobian transformation from parent->physical space.
-   * @param dNdX Array to contain the shape function derivatives for all
+   * @param gradN Array to contain the shape function derivatives for all
    *             support points at the coordinates of the quadrature point @p q.
    */
   GEOSX_HOST_DEVICE

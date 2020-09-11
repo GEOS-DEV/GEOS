@@ -44,7 +44,7 @@ public:
   /**
    * @brief Calculate the parent coordinates for the xi0 direction, given the
    *   linear index of a support point.
-   * @param a The linear index of support point
+   * @param supportPointIndex The linear index of support point
    * @return parent coordinate in the xi0 direction.
    */
   GEOSX_HOST_DEVICE
@@ -187,7 +187,7 @@ public:
     /**
      * @brief Calculate the Cartesian/TensorProduct index given the linear index
      *   of a support point.
-     * @param a The linear index of support point
+     * @param linearIndex The linear index of support point
      * @param i0 The Cartesian index of the support point in the xi0 direction.
      * @param i1 The Cartesian index of the support point in the xi1 direction.
      * @param i2 The Cartesian index of the support point in the xi2 direction.

@@ -119,7 +119,7 @@ public:
    *   coordinates.
    * @param q Index of the quadrature point.
    * @param X Array containing the coordinates of the support points.
-   * @param dNdX Array to contain the shape function derivatives for all
+   * @param gradN Array to contain the shape function derivatives for all
    *   support points at the coordinates of the quadrature point @p q.
    * @return The determinant of the parent/physical transformation matrix.
    */
@@ -143,11 +143,10 @@ public:
   /**
    * @brief Calculates the isoparametric "Jacobian" transformation
    *   matrix/mapping from the parent space to the physical space.
-   * @param qa The 1d quadrature point index in xi0 direction (0,1)
-   * @param qb The 1d quadrature point index in xi1 direction (0,1)
-   * @param qc The 1d quadrature point index in xi2 direction (0,1)
+   * @param q The quadrature point index in 3d space.
    * @param X Array containing the coordinates of the support points.
    * @param J Array to store the Jacobian transformation.
+   * @return The determinant of the Jacobian transformation matrix.
    */
   GEOSX_HOST_DEVICE
   static real64 inverseJacobianTransformation( int const q,
@@ -161,9 +160,9 @@ public:
   }
 
 
-  using FiniteElementBase::symmetricGradient;
-  using FiniteElementBase::gradient;
-  using FiniteElementBase::gradNajAij;
+//  using FiniteElementBase::symmetricGradient;
+//  using FiniteElementBase::gradient;
+//  using FiniteElementBase::gradNajAij;
 
 
 
@@ -217,15 +216,15 @@ public:
    *
    * More precisely, the operator is defined as:
    * \f[
-   * R_i = \sum_a^{nSupport} \left ( \frac{\partial N_a}{\partial X_j} var_{ij}\right ),
+   * R_i = \sum_a^{nSupport} \left( \frac{\partial N_a}{\partial X_j} var_{ij} \right),
    * \f]
-   * where $\frac{\partial N_a}{\partial X_j}$ is the basis function gradient,
-   *   $var_{ij}$ is the rank-2 symmetric tensor.
+   * where \f$\frac{\partial N_a}{\partial X_j}\f$ is the basis function gradient,
+   *   \f$var_{ij}\f$ is the rank-2 symmetric tensor.
    */
   GEOSX_HOST_DEVICE
   static void gradNajAij( int const q,
                           real64 const (&invJ)[3][3],
-                          real64 const (&s)[6],
+                          real64 const (&var)[6],
                           real64 ( &R )[numNodes][3] );
 
 
@@ -255,7 +254,7 @@ public:
    * @param qb The 1d quadrature point index in xi1 direction (0,1)
    * @param qc The 1d quadrature point index in xi2 direction (0,1)
    * @param invJ The Jacobian transformation from parent->physical space.
-   * @param dNdX Array to contain the shape function derivatives for all
+   * @param gradN Array to contain the shape function derivatives for all
    *   support points at the coordinates of the quadrature point @p q.
    */
   GEOSX_HOST_DEVICE
@@ -290,6 +289,17 @@ private:
 //  constexpr static short dpsi1 = 1;
 
 
+  /**
+   * @brief Applies a function inside a generic loop in over the tensor product
+   *   indices.
+   * @tparam FUNC The type of function to call within the support loop.
+   * @tparam PARAMS The parameter pack types to pass through to @p FUNC.
+   * @param qa The 1d quadrature point index in xi0 direction (0,1)
+   * @param qb The 1d quadrature point index in xi1 direction (0,1)
+   * @param qc The 1d quadrature point index in xi2 direction (0,1)
+   * @param func The function to call within the support loop.
+   * @param params The parameters to pass to @p func.
+   */
   template< typename FUNC, typename ... PARAMS >
   GEOSX_HOST_DEVICE
   static void supportLoop( int const qa,
@@ -313,6 +323,8 @@ private:
 //  return rval;
 //}
 
+/// @cond Doxygen_Suppress
+
 template< typename FUNC, typename ... PARAMS >
 GEOSX_HOST_DEVICE GEOSX_FORCE_INLINE void
 H1_Hexahedron_Lagrange1_GaussLegendre2::supportLoop( int const qa,
@@ -323,7 +335,7 @@ H1_Hexahedron_Lagrange1_GaussLegendre2::supportLoop( int const qa,
 {
 
 /// Options for how to calculate the parent gradients.
-#define PARENT_GRADIENT_METHOD 2
+  #define PARENT_GRADIENT_METHOD 2
 #if PARENT_GRADIENT_METHOD == 1
   // This option calculates the basis values at the quadrature point for each
   // linear basis index.
@@ -626,6 +638,9 @@ void H1_Hexahedron_Lagrange1_GaussLegendre2::gradient( int const q,
     }
   }, invJ, var, grad );
 }
+
+/// @endcond
+
 #if __GNUC__
 #pragma GCC diagnostic pop
 #endif
