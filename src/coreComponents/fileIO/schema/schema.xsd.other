@@ -167,7 +167,6 @@
 			<xsd:element name="Outputs" type="OutputsType" minOccurs="1" maxOccurs="1" />
 			<xsd:element name="Parameters" type="ParametersType" maxOccurs="1" />
 			<xsd:element name="Solvers" type="SolversType" minOccurs="1" maxOccurs="1" />
-			<xsd:element name="Tasks" type="TasksType" maxOccurs="1" />
 			<xsd:element name="commandLine" type="commandLineType" />
 			<xsd:element name="domain" type="domainType" />
 			<xsd:element name="Constitutive" type="ConstitutiveType" maxOccurs="1" />
@@ -619,12 +618,6 @@
 		<!--trailingFaces => Set containing all the trailing faces-->
 		<xsd:attribute name="trailingFaces" type="LvArray_SortedArray&lt;long, long, LvArray_ChaiBuffer&gt;" />
 	</xsd:complexType>
-	<xsd:complexType name="TasksType">
-		<xsd:choice minOccurs="0" maxOccurs="unbounded">
-			<xsd:element name="PackCollection" type="PackCollectionType" />
-		</xsd:choice>
-	</xsd:complexType>
-	<xsd:complexType name="PackCollectionType" />
 	<xsd:complexType name="commandLineType">
 		<!--beginFromRestart => Flag to indicate restart run.-->
 		<xsd:attribute name="beginFromRestart" type="integer" />

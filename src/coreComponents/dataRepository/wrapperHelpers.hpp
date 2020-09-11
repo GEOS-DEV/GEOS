@@ -742,7 +742,10 @@ UnpackDataByIndexDevice( buffer_unit_type const * &, T const &, IDX & )
 template< typename T >
 inline std::enable_if_t< LvArray::python::CanCreate< T >, PyObject * >
 createPythonObject( T & object, bool const modify )
-{ return LvArray::python::create( object, modify ); }
+{ 
+  GEOSX_UNUSED_VAR( modify );
+  return LvArray::python::create( object );
+}
 
 template< typename T >
 inline std::enable_if_t< !LvArray::python::CanCreate< T >, PyObject * >
