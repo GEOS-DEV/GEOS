@@ -3,7 +3,7 @@
 <Problem>
   <Solvers
     gravityVector="0.0, 0.0, -9.81">
-    <SinglePhaseFVM
+    <SinglePhaseHybridFVM
       name="flowSolver"
       logLevel="0"
       discretization="tpfaFlow"
@@ -15,7 +15,7 @@
         newtonMaxIter="8"/>
       <LinearSolverParameters
         solverType="direct"/>
-    </SinglePhaseFVM>
+    </SinglePhaseHybridFVM>
   </Solvers>
 
   <Mesh>
@@ -185,6 +185,9 @@
       scale="5e5"
       setNames="{ sink }"/>
 
+    <!-- Note that with the HybridFVM solver, it is not possible to -->
+    <!-- set a transMultiplier to 0, since it makes the system singular -->
+    <!-- This is happens because then a face constraint becomes 0 = 0...  -->
     <FieldSpecification
       name="impermeableBarrierTransMult"
       objectPath="faceManager"
@@ -199,8 +202,6 @@
       scale="0.9"
       setNames="{ lowPermBarrier }"/>
 
-    
-    
   </FieldSpecifications>
 
   <Outputs>

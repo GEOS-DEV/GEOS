@@ -348,6 +348,8 @@ TEST( testHybridFVMInnerProducts, TPFA_hexa )
             transMatrixRef );
 
   stackArray2d< real64, NF *NF > transMatrix( NF, NF );
+  array1d< real64 > transMultiplier( NF );
+  transMultiplier.setValues< parallelHostPolicy >( 1.0 );
 
   stackArray1d< real64, 3 > center( 3 );
   center[0] = elemCenter[0];
@@ -356,6 +358,7 @@ TEST( testHybridFVMInnerProducts, TPFA_hexa )
   real64 const perm[ 3 ] = { elemPerm[0], elemPerm[1], elemPerm[2] };
 
   TPFACellInnerProductKernel::Compute< NF >( nodePosition.toViewConst(),
+                                             transMultiplier.toViewConst(),
                                              faceToNodes.toViewConst(),
                                              elemToFaces.toSliceConst(),
                                              center,
@@ -393,7 +396,8 @@ TEST( testHybridFVMInnerProducts, QTPFA_hexa )
             transMatrixRef );
 
   stackArray2d< real64, NF *NF > transMatrix( NF, NF );
-
+  array1d< real64 > transMultiplier( NF );
+  transMultiplier.setValues< parallelHostPolicy >( 1.0 );
 
   stackArray1d< real64, 3 > center( 3 );
   center[0] = elemCenter[0];
@@ -402,6 +406,7 @@ TEST( testHybridFVMInnerProducts, QTPFA_hexa )
   real64 const perm[ 3 ] = { elemPerm[0], elemPerm[1], elemPerm[2] };
 
   QTPFACellInnerProductKernel::Compute< NF >( nodePosition.toViewConst(),
+                                              transMultiplier.toViewConst(),
                                               faceToNodes.toViewConst(),
                                               elemToFaces.toSliceConst(),
                                               center,
@@ -438,6 +443,8 @@ TEST( testHybridFVMInnerProducts, TPFA_tetra )
              transMatrixRef );
 
   stackArray2d< real64, NF *NF > transMatrix( NF, NF );
+  array1d< real64 > transMultiplier( NF );
+  transMultiplier.setValues< parallelHostPolicy >( 1.0 );
 
   stackArray1d< real64, 3 > center( 3 );
   center[0] = elemCenter[0];
@@ -446,6 +453,7 @@ TEST( testHybridFVMInnerProducts, TPFA_tetra )
   real64 const perm[ 3 ] = { elemPerm[0], elemPerm[1], elemPerm[2] };
 
   TPFACellInnerProductKernel::Compute< NF >( nodePosition.toViewConst(),
+                                             transMultiplier.toViewConst(),
                                              faceToNodes.toViewConst(),
                                              elemToFaces.toSliceConst(),
                                              center,
@@ -483,6 +491,8 @@ TEST( testHybridFVMInnerProducts, QTPFA_tetra )
              transMatrixRef );
 
   stackArray2d< real64, NF *NF > transMatrix( NF, NF );
+  array1d< real64 > transMultiplier( NF );
+  transMultiplier.setValues< parallelHostPolicy >( 1.0 );
 
   stackArray1d< real64, 3 > center( 3 );
   center[0] = elemCenter[0];
@@ -491,6 +501,7 @@ TEST( testHybridFVMInnerProducts, QTPFA_tetra )
   real64 const perm[ 3 ] = { elemPerm[0], elemPerm[1], elemPerm[2] };
 
   QTPFACellInnerProductKernel::Compute< NF >( nodePosition.toViewConst(),
+                                              transMultiplier.toViewConst(),
                                               faceToNodes.toViewConst(),
                                               elemToFaces.toSliceConst(),
                                               center,

@@ -65,6 +65,9 @@ void TwoPointFluxApproximation::computeCellStencil( MeshLevel & mesh ) const
   arrayView2d< localIndex const > const & elemList = faceManager.elementList();
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X = nodeManager.referencePosition();
 
+  arrayView1d< real64 const > const & transMultiplier =
+    faceManager.getReference< array1d< real64 > >( viewKeyStruct::transMultiplierString );
+
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > const elemCenter =
     elemManager.ConstructArrayViewAccessor< real64, 2 >( CellBlock::viewKeyStruct::elementCenterString );
 
@@ -95,7 +98,7 @@ void TwoPointFluxApproximation::computeCellStencil( MeshLevel & mesh ) const
   forAll< serialPolicy >( faceManager.size(), [=, &stencil]( localIndex const kf )
   {
     // Filter out boundary faces
-    if( elemList[kf][0] < 0 || elemList[kf][1] < 0 )
+    if( elemList[kf][0] < 0 || elemList[kf][1] < 0 || transMultiplier[kf] < 1e-16 )
     {
       return;
     }
@@ -171,7 +174,7 @@ void TwoPointFluxApproximation::computeCellStencil( MeshLevel & mesh ) const
 
     for( localIndex ke = 0; ke < 2; ++ke )
     {
-      stencilWeights[ke] = faceWeight * (ke == 0 ? 1 : -1);
+      stencilWeights[ke] = transMultiplier[kf] * faceWeight * (ke == 0 ? 1 : -1);
     }
 
     // Ensure elements are added to stencil in order of global indices
@@ -219,6 +222,9 @@ void TwoPointFluxApproximation::addToFractureStencil( MeshLevel & mesh,
   arrayView2d< real64 const > faceCenter = faceManager->faceCenter();
   arrayView2d< real64 const > faceNormal = faceManager->faceNormal();
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > X = nodeManager->referencePosition();
+
+  arrayView1d< real64 const > const & transMultiplier =
+    faceManager->getReference< array1d< real64 > >( viewKeyStruct::transMultiplierString );
 
   FaceElementStencil & fractureStencil = getStencil< FaceElementStencil >( mesh, viewKeyStruct::fractureStencilString );
   CellElementStencilTPFA & cellStencil = getStencil< CellElementStencilTPFA >( mesh, viewKeyStruct::cellStencilString );
@@ -535,6 +541,7 @@ void TwoPointFluxApproximation::addToFractureStencil( MeshLevel & mesh,
                               faceNormal,
                               faceArea,
                               coefficient,
+                              transMultiplier,
                               fractureRegionIndex ] ( localIndex const k )
     {
       localIndex const kfe = newFaceElements[k];
@@ -553,6 +560,7 @@ void TwoPointFluxApproximation::addToFractureStencil( MeshLevel & mesh,
         // remove cell-to-cell connections from cell stencil and add in new connections
         if( cellStencil.zero( faceMap[kfe][0] ) )
         {
+
           for( localIndex ke = 0; ke < numElems; ++ke )
           {
             localIndex const faceIndex = faceMap[kfe][ke];
@@ -574,16 +582,19 @@ void TwoPointFluxApproximation::addToFractureStencil( MeshLevel & mesh,
             LvArray::tensorOps::hadamardProduct< 3 >( faceConormal, coefficient[er][esr][ei], faceNormal[faceIndex] );
             real64 const ht = LvArray::tensorOps::AiBi< 3 >( cellToFaceVec, faceConormal ) * faceArea[faceIndex] / c2fDistance;
 
+            // the trans multiplier here is that of the original face (copied when the face was split)
+            real64 const mult = transMultiplier[faceIndex];
+
             // assume the h for the faceElement to the connector (Face) is zero. thus the weights are trivial.
             stencilCellsRegionIndex[0] = er;
             stencilCellsSubRegionIndex[0] = esr;
             stencilCellsIndex[0] = ei;
-            stencilWeights[0] =  ht;
+            stencilWeights[0] =  mult * ht;
 
             stencilCellsRegionIndex[1] = fractureRegionIndex;
             stencilCellsSubRegionIndex[1] = 0;
             stencilCellsIndex[1] = kfe;
-            stencilWeights[1] = -ht;
+            stencilWeights[1] = -mult * ht;
 
             cellStencil.add( 2,
                              stencilCellsRegionIndex.data(),

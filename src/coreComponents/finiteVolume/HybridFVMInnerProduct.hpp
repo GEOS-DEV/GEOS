@@ -110,6 +110,7 @@ struct TPFACellInnerProductKernel
   /**
    * @brief In a given element, recompute the transmissibility matrix in a cell using TPFA.
    * @param[in] nodePosition the position of the nodes
+   * @param[in] transMultiplier the transmissibility multipliers at the mesh faces
    * @param[in] faceToNodes the map from the face to their nodes
    * @param[in] elemToFaces the maps from the one-sided face to the corresponding face
    * @param[in] elemCenter the center of the element
@@ -121,6 +122,7 @@ struct TPFACellInnerProductKernel
   GEOSX_HOST_DEVICE
   static void
   Compute( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition,
+           arrayView1d< real64 const > const & transMultiplier,
            ArrayOfArraysView< localIndex const > const & faceToNodes,
            arraySlice1d< localIndex const > const & elemToFaces,
            arraySlice1d< real64 const > const & elemCenter,
@@ -136,6 +138,8 @@ struct TPFACellInnerProductKernel
     // we are ready to compute the transmissibility matrix
     for( localIndex ifaceLoc = 0; ifaceLoc < NF; ++ifaceLoc )
     {
+      real64 const mult = transMultiplier[elemToFaces[ifaceLoc]];
+
       for( localIndex jfaceLoc = 0; jfaceLoc < NF; ++jfaceLoc )
       {
         // for now, TPFA trans
@@ -167,7 +171,7 @@ struct TPFACellInnerProductKernel
 
           // 3) compute the one-sided face transmissibility
           transMatrix[ifaceLoc][jfaceLoc]  = LvArray::tensorOps::AiBi< 3 >( cellToFaceVec, faceConormal );
-          transMatrix[ifaceLoc][jfaceLoc] *= faceArea / c2fDistance;
+          transMatrix[ifaceLoc][jfaceLoc] *= mult * faceArea / c2fDistance;
           transMatrix[ifaceLoc][jfaceLoc]  = LvArray::math::max( transMatrix[ifaceLoc][jfaceLoc], weightTolerance );
         }
         else
@@ -178,9 +182,7 @@ struct TPFACellInnerProductKernel
     }
   }
 
-
 };
-
 
 /******************************** Quasi TPFA Kernel ********************************/
 
@@ -194,6 +196,7 @@ struct QTPFACellInnerProductKernel
   /**
    * @brief In a given element, recompute the transmissibility matrix using a consistent inner product.
    * @param[in] nodePosition the position of the nodes
+   * @param[in] transMultiplier the transmissibility multipliers at the mesh faces
    * @param[in] faceToNodes the map from the face to their nodes
    * @param[in] elemToFaces the maps from the one-sided face to the corresponding face
    * @param[in] elemCenter the center of the element
@@ -210,6 +213,7 @@ struct QTPFACellInnerProductKernel
   GEOSX_HOST_DEVICE
   static void
   Compute( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition,
+           arrayView1d< real64 const > const & transMultiplier,
            ArrayOfArraysView< localIndex const > const & faceToNodes,
            arraySlice1d< localIndex const > const & elemToFaces,
            arraySlice1d< real64 const > const & elemCenter,
@@ -302,6 +306,25 @@ struct QTPFACellInnerProductKernel
     LvArray::tensorOps::plusAikBkj< NF, NF, NF >( transMatrix,
                                                   worka_numFacesByNumFaces,
                                                   workc_numFacesByNumFaces );
+
+    // TODO: implement correctly the transmissibility calculation with multipliers
+    //
+    // we would like to do (if not too expensive):
+    // T = LvArray::tensorOps::invert< NF >( LvArray::tensorOps::invert< NF >( transMatrix ) + D )
+    // where D is diagonal matrix computed from the multipliers
+    //
+    // Ref: Nilsen, H. M., J. R. Natvig, and K.-A Lie.,
+    // "Accurate modeling of faults by multipoint, mimetic, and mixed methods." SPEJ
+
+    // placeholder before we can implement the hybrid treatment of trans multipliers
+    for( localIndex i = 0; i < NF; ++i )
+    {
+      real64 const mult = transMultiplier[elemToFaces[i]];
+      for( localIndex j = 0; j < NF; ++j )
+      {
+        transMatrix[i][j] *= mult;
+      }
+    }
   }
 
 };

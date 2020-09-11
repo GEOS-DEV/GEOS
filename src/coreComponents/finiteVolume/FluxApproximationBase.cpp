@@ -90,6 +90,14 @@ void FluxApproximationBase::RegisterDataOnMesh( Group * const meshBodies )
       {
         registerBoundaryStencil( stencilGroup, setName );
       } );
+
+      FaceManager & faceManager = *mesh.getFaceManager();
+      faceManager.registerWrapper< array1d< real64 > >( viewKeyStruct::transMultiplierString )->
+        setApplyDefaultValue( 1.0 )->
+        setPlotLevel( PlotLevel::LEVEL_0 )->
+        setRegisteringObjects( this->getName() )->
+        setDescription( "An array that holds the transmissibility multipliers" );
+
     } );
   } );
 }
@@ -107,6 +115,25 @@ void FluxApproximationBase::InitializePostInitialConditions_PreSubGroups( Group 
 
     meshBody.forSubGroups< MeshLevel >( [&]( MeshLevel & mesh )
     {
+      // For each face, get the transmissibility multipliers
+      fsManager.Apply( 0.0,
+                       &domain,
+                       "faceManager",
+                       m_coeffName + viewKeyStruct::transMultiplierString,
+                       [&] ( FieldSpecificationBase const * const fs,
+                             string const &,
+                             SortedArrayView< localIndex const > const & targetSet,
+                             Group * const targetGroup,
+                             string const & )
+      {
+        // apply the field value on the trans multipliers
+        fs->ApplyFieldValue< FieldSpecificationEqual, parallelDevicePolicy<> >( targetSet,
+                                                                                0.0,
+                                                                                targetGroup,
+                                                                                viewKeyStruct::transMultiplierString );
+
+      } );
+
       // Compute the main cell-based stencil
       computeCellStencil( mesh );
 
