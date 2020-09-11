@@ -114,10 +114,11 @@ std::pair< vtkSmartPointer< vtkPoints >, vtkSmartPointer< vtkCellArray > >VTKPol
                                                                                                                NodeManager const & nodeManager ) const
 {
   vtkSmartPointer< vtkPoints > points = vtkPoints::New();
-  points->SetNumberOfPoints( esr.size() + 1 );
+  localIndex const numPoints = esr.size() > 0 ? esr.size() + 1 : 0;
+  points->SetNumberOfPoints( numPoints );
   vtkSmartPointer< vtkCellArray > cellsArray = vtkCellArray::New();
   cellsArray->SetNumberOfCells( esr.size() );
-  localIndex numberOfNodesPerElement = esr.numNodesPerElement();
+  localIndex const numberOfNodesPerElement = esr.numNodesPerElement();
   GEOSX_ERROR_IF_NE( numberOfNodesPerElement, 2 );
   std::vector< vtkIdType > connectivity( numberOfNodesPerElement );
 
