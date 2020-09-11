@@ -21,8 +21,8 @@
 #endif
 
 
-#ifndef GEOSX_FINITEELEMENT_FINITEELEMENTBASE_HPP_
-#define GEOSX_FINITEELEMENT_FINITEELEMENTBASE_HPP_
+#ifndef GEOSX_FINITEELEMENT_ELEMENTFORMULATIONS_FINITEELEMENTBASE_HPP_
+#define GEOSX_FINITEELEMENT_ELEMENTFORMULATIONS_FINITEELEMENTBASE_HPP_
 
 #include "common/DataTypes.hpp"
 #include "common/GeosxMacros.hpp"
@@ -659,4 +659,22 @@ void FiniteElementBase::gradNajAij_plus_NaFi( GRADIENT_TYPE const & gradN,
 }
 }
 
-#endif //GEOSX_CORE_FINITEELEMENT_FINITEELEMENTBASE
+
+/// Macro to simplify name resolution in derived classes.
+#define USING_FINITEELEMENTBASE                               \
+  /** @copydoc FiniteElementBase::value                  */ \
+  using FiniteElementBase::value;                           \
+  /** @copydoc FiniteElementBase::symmetricGradient      */ \
+  using FiniteElementBase::symmetricGradient;               \
+  /** @copydoc FiniteElementBase::gradient               */ \
+  using FiniteElementBase::gradient;                        \
+  /** @copydoc FiniteElementBase::valueAndGradient       */ \
+  using FiniteElementBase::valueAndGradient;                \
+  /** @copydoc FiniteElementBase::gradNajAij             */ \
+  using FiniteElementBase::gradNajAij;                      \
+  /** @copydoc FiniteElementBase::NaFi                   */ \
+  using FiniteElementBase::NaFi;                            \
+  /** @copydoc FiniteElementBase::gradNajAij_plus_NaFi   */ \
+  using FiniteElementBase::gradNajAij_plus_NaFi;
+
+#endif //GEOSX_FINITEELEMENT_ELEMENTFORMULATIONS_FINITEELEMENTBASE

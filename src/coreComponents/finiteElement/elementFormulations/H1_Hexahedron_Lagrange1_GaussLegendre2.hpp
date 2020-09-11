@@ -16,8 +16,8 @@
  * @file H1_Hexahedron_Lagrange1_GaussLegendre2.hpp
  */
 
-#ifndef GEOSX_CORE_FINITEELEMENT_TRILINEARHEXAHEDRON
-#define GEOSX_CORE_FINITEELEMENT_TRILINEARHEXAHEDRON
+#ifndef GEOSX_FINITEELEMENT_ELEMENTFORMULATIONS_TRILINEARHEXAHEDRON
+#define GEOSX_FINITEELEMENT_ELEMENTFORMULATIONS_TRILINEARHEXAHEDRON
 
 #include "FiniteElementBase.hpp"
 #include "LagrangeBasis1.hpp"
@@ -79,6 +79,7 @@ public:
   /// The number of quadrature points per element.
   constexpr static localIndex numQuadraturePoints = 8;
 
+  USING_FINITEELEMENTBASE
 
   virtual ~H1_Hexahedron_Lagrange1_GaussLegendre2() override
   {}
@@ -158,12 +159,6 @@ public:
     jacobianTransformation( qa, qb, qc, X, J );
     return inverse( J );
   }
-
-
-//  using FiniteElementBase::symmetricGradient;
-//  using FiniteElementBase::gradient;
-//  using FiniteElementBase::gradNajAij;
-
 
 
   /**

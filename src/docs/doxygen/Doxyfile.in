@@ -844,7 +844,13 @@ EXCLUDE_PATTERNS       = */legacy/* */cmake/*
 # Note that the wildcards are matched against the file with absolute path, so to
 # exclude all test directories use the pattern */test/*
 
-EXCLUDE_SYMBOLS        = internal detail wrapperHelpers wrapperDefaultValue bufferOps timingHelpers
+EXCLUDE_SYMBOLS        = internal \
+                         detail \
+                         wrapperHelpers \
+                         wrapperDefaultValue \
+                         bufferOps \
+                         timingHelpers \
+                         *_HPP *_HPP_
 
 # The EXAMPLE_PATH tag can be used to specify one or more files or directories
 # that contain example code fragments that are included (see the \include
@@ -2021,7 +2027,8 @@ EXPAND_AS_DEFINED      = LVARRAY_HOST_DEVICE \
                          GEOSX_HOST_DEVICE \
                          DISABLE_HD_WARNING \
                          EXTRINSIC_MESH_DATA_TRAIT \
-                         GEOSX_FORCE_INLINE
+                         GEOSX_FORCE_INLINE \
+                         USING_FINITEELEMENTBASE
 
 # If the SKIP_FUNCTION_MACROS tag is set to YES then doxygen's preprocessor will
 # remove all references to function-like macros that are alone on a line, have
