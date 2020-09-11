@@ -45,6 +45,7 @@ fi
 
 # Documentation check
 if [[ "$*" == *--test-documentation* ]]; then
+  apt-get install ghostscript
   or_die ctest -V -R "testDoxygenCheck"
   exit 0
 fi
