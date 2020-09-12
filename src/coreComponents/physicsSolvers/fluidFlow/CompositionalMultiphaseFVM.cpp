@@ -159,42 +159,31 @@ real64 CompositionalMultiphaseFVM::CalculateResidualNorm( DomainPartition const 
                                                           DofManager const & dofManager,
                                                           arrayView1d< real64 const > const & localRhs )
 {
-  localIndex const NDOF = m_numComponents + 1;
-
   MeshLevel const & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
   real64 localResidualNorm = 0.0;
 
   globalIndex const rankOffset = dofManager.rankOffset();
   string const dofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString );
 
-  forTargetSubRegions( mesh, [&]( localIndex const targetIndex, ElementSubRegionBase const & subRegion )
+  forTargetSubRegions( mesh, [&]( localIndex const, ElementSubRegionBase const & subRegion )
   {
-    MultiFluidBase const & fluid = GetConstitutiveModel< MultiFluidBase >( subRegion, m_fluidModelNames[targetIndex] );
-
     arrayView1d< globalIndex const > dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
     arrayView1d< integer const > const & elemGhostRank = subRegion.ghostRank();
     arrayView1d< real64 const > const & volume = subRegion.getElementVolume();
     arrayView1d< real64 const > const & refPoro = subRegion.getReference< array1d< real64 > >( viewKeyStruct::referencePorosityString );
-    arrayView2d< real64 const > const & totalDens = fluid.totalDensity();
+    arrayView1d< real64 const > const & totalDensOld = subRegion.getReference< array1d< real64 > >( viewKeyStruct::totalDensityOldString );
 
-    RAJA::ReduceSum< parallelDeviceReduce, real64 > localSum( 0.0 );
+    ResidualNormKernel::Launch< parallelDevicePolicy<>,
+                                parallelDeviceReduce >( localRhs,
+                                                        rankOffset,
+                                                        numFluidComponents(),
+                                                        dofNumber,
+                                                        elemGhostRank,
+                                                        refPoro,
+                                                        volume,
+                                                        totalDensOld,
+                                                        localResidualNorm );
 
-    forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
-    {
-      if( elemGhostRank[ei] < 0 )
-      {
-        localIndex const localRow = dofNumber[ei] - rankOffset;
-        real64 const normalizer = totalDens[ei][0] * refPoro[ei] * volume[ei];
-
-        for( localIndex idof = 0; idof < NDOF; ++idof )
-        {
-          real64 const val = localRhs[localRow + idof] / normalizer;
-          localSum += val * val;
-        }
-      }
-    } );
-
-    localResidualNorm += localSum.get();
   } );
 
   // compute global residual norm
@@ -215,16 +204,10 @@ bool CompositionalMultiphaseFVM::CheckSystemSolution( DomainPartition const & do
                                                       arrayView1d< real64 const > const & localSolution,
                                                       real64 const scalingFactor )
 {
-  real64 constexpr eps = CompositionalMultiphaseBaseKernels::minDensForDivision;
-
-  localIndex const NC = m_numComponents;
-  integer const allowCompDensChopping = m_allowCompDensChopping;
-
   MeshLevel const & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
 
-  globalIndex const rankOffset = dofManager.rankOffset();
   string const dofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString );
-  int localCheck = 1;
+  localIndex localCheck = 1;
 
   forTargetSubRegions( mesh, [&]( localIndex const, ElementSubRegionBase const & subRegion )
   {
@@ -236,43 +219,21 @@ bool CompositionalMultiphaseFVM::CheckSystemSolution( DomainPartition const & do
     arrayView2d< real64 const > const & compDens = subRegion.getReference< array2d< real64 > >( viewKeyStruct::globalCompDensityString );
     arrayView2d< real64 const > const & dCompDens = subRegion.getReference< array2d< real64 > >( viewKeyStruct::deltaGlobalCompDensityString );
 
-    RAJA::ReduceMin< parallelDeviceReduce, integer > check( 1 );
+    localIndex const subRegionSolutionCheck =
+      SolutionCheckKernel::Launch< parallelDevicePolicy<>,
+                                   parallelDeviceReduce >( localSolution,
+                                                           dofManager.rankOffset(),
+                                                           numFluidComponents(),
+                                                           dofNumber,
+                                                           elemGhostRank,
+                                                           pres,
+                                                           dPres,
+                                                           compDens,
+                                                           dCompDens,
+                                                           m_allowCompDensChopping,
+                                                           scalingFactor );
 
-    forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
-    {
-      if( elemGhostRank[ei] < 0 )
-      {
-        localIndex const localRow = dofNumber[ei] - rankOffset;
-        {
-          real64 const newPres = pres[ei] + dPres[ei] + scalingFactor * localSolution[localRow];
-          check.min( newPres >= 0.0 );
-        }
-
-        // if component density chopping is not allowed, the time step fails if a component density is negative
-        // otherwise, we just check that the total density is positive, and negative component densities
-        // will be chopped (i.e., set to zero) in ApplySystemSolution)
-        if( !allowCompDensChopping )
-        {
-          for( localIndex ic = 0; ic < NC; ++ic )
-          {
-            real64 const newDens = compDens[ei][ic] + dCompDens[ei][ic] + scalingFactor * localSolution[localRow + ic + 1];
-            check.min( newDens >= 0.0 );
-          }
-        }
-        else
-        {
-          real64 totalDens = 0.0;
-          for( localIndex ic = 0; ic < NC; ++ic )
-          {
-            real64 const newDens = compDens[ei][ic] + dCompDens[ei][ic] + scalingFactor * localSolution[localRow + ic + 1];
-            totalDens += (newDens > 0.0) ? newDens : 0.0;
-          }
-          check.min( totalDens >= eps );
-        }
-      }
-    } );
-
-    localCheck = std::min( localCheck, check.get() );
+    localCheck = std::min( localCheck, subRegionSolutionCheck );
   } );
 
   return MpiWrapper::Min( localCheck, MPI_COMM_GEOSX );

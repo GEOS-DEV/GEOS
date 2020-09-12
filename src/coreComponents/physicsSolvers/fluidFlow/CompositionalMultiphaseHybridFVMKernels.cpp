@@ -225,7 +225,7 @@ UpwindingHelper::UpwindViscousTerm( localIndex const er, localIndex const esr, l
                                     real64 (& upwPhaseViscCoef)[ NF ][ NP ][ NC ],
                                     real64 (& dUpwPhaseViscCoef_dPres)[ NF ][ NP ][ NC ],
                                     real64 (& dUpwPhaseViscCoef_dCompDens)[ NF ][ NP ][ NC ][ NC ],
-                                    globalIndex (& upwDofNumber)[ NF ][ NP ] )
+                                    globalIndex (& upwViscDofNumber)[ NF ] )
 {
   real64 dUpwMobRatio_dCompDens[ NC ] = { 0.0 };
   real64 dUpwDensMobRatio_dCompDens[ NC ] = { 0.0 };
@@ -288,10 +288,9 @@ UpwindingHelper::UpwindViscousTerm( localIndex const er, localIndex const esr, l
                                                             + phaseCompFrac[er][esr][ei][0][ip][ic] * dUpwDensMobRatio_dCompDens[jc];
       }
     }
-
-    // 5) Save the dof number of the upwind cell
-    upwDofNumber[ifaceLoc][ip] = elemDofNumber[er][esr][ei];
   }
+  // 5) Save the dof number of the upwind cell
+  upwViscDofNumber[ifaceLoc] = elemDofNumber[er][esr][ei];
 }
 
 
@@ -424,7 +423,7 @@ AssemblerKernelHelper::UpdateUpwindedCoefficients( localIndex const er, localInd
                                                    real64 (& upwPhaseViscCoef)[ NF ][ NP ][ NC ],
                                                    real64 (& dUpwPhaseViscCoef_dPres)[ NF ][ NP ][ NC ],
                                                    real64 (& dUpwPhaseViscCoef_dCompDens)[ NF ][ NP ][ NC ][ NC ],
-                                                   globalIndex (& upwDofNumber)[ NF ][ NP ] )
+                                                   globalIndex (& upwViscDofNumber)[ NF ] )
 {
   // for this element, loop over the local (one-sided) faces
   for( localIndex ifaceLoc = 0; ifaceLoc < NF; ++ifaceLoc )
@@ -446,7 +445,7 @@ AssemblerKernelHelper::UpdateUpwindedCoefficients( localIndex const er, localInd
                                                       upwPhaseViscCoef,
                                                       dUpwPhaseViscCoef_dPres,
                                                       dUpwPhaseViscCoef_dCompDens,
-                                                      upwDofNumber );
+                                                      upwViscDofNumber );
 
     // if the local elem if upstream, we are done, we can proceed to the next one-sided face
     // otherwise, we have to access the properties of the neighbor element
@@ -472,7 +471,7 @@ AssemblerKernelHelper::UpdateUpwindedCoefficients( localIndex const er, localInd
           bool const onBoundary       = (erNeighbor == -1 || esrNeighbor == -1 || eiNeighbor == -1);
           bool const neighborInTarget = regionFilter.contains( erNeighbor );
 
-          // if not on boundary, save the mobility and the upwDofNumber
+          // if not on boundary, save the mobility and the upwViscDofNumber
           if( !onBoundary && neighborInTarget )
           {
             UpwindingHelper::UpwindViscousTerm< NF, NC, NP >( erNeighbor, esrNeighbor, eiNeighbor, ifaceLoc,
@@ -490,7 +489,7 @@ AssemblerKernelHelper::UpdateUpwindedCoefficients( localIndex const er, localInd
                                                               upwPhaseViscCoef,
                                                               dUpwPhaseViscCoef_dPres,
                                                               dUpwPhaseViscCoef_dCompDens,
-                                                              upwDofNumber );
+                                                              upwViscDofNumber );
           }
           // if the face is on the boundary, use the properties of the local elem
         }
@@ -513,7 +512,7 @@ AssemblerKernelHelper::AssembleOneSidedMassFluxes( arrayView1d< globalIndex cons
                                                    real64 const (&upwPhaseViscCoef)[ NF ][ NP ][ NC ],
                                                    real64 const (&dUpwPhaseViscCoef_dPres)[ NF ][ NP ][ NC ],
                                                    real64 const (&dUpwPhaseViscCoef_dCompDens)[ NF ][ NP ][ NC ][ NC ],
-                                                   globalIndex const (&upwDofNumber)[ NF ][ NP ],
+                                                   globalIndex const (&upwViscDofNumber)[ NF ],
                                                    real64 const & dt,
                                                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                    arrayView1d< real64 > const & localRhs )
@@ -578,7 +577,7 @@ AssemblerKernelHelper::AssembleOneSidedMassFluxes( arrayView1d< globalIndex cons
     // collect the relevant dof numbers
     for( localIndex idof = 0; idof < NDOF; ++idof )
     {
-      dofColIndicesElemVars[elemVarsOffset+idof] = upwDofNumber[ifaceLoc][0] + idof;
+      dofColIndicesElemVars[elemVarsOffset+idof] = upwViscDofNumber[ifaceLoc] + idof;
     }
     dofColIndicesFaceVars[ifaceLoc] = faceDofNumber[elemToFaces[ifaceLoc]];
   }
@@ -732,7 +731,7 @@ AssemblerKernel::Compute( localIndex const er, localIndex const esr, localIndex 
   real64 upwPhaseViscCoef[ NF ][ NP ][ NC ] = {{{ 0.0 }}};
   real64 dUpwPhaseViscCoef_dPres[ NF ][ NP ][ NC ] = {{{ 0.0 }}};
   real64 dUpwPhaseViscCoef_dCompDens[ NF ][ NP ][ NC ][ NC ] = {{{{ 0.0 }}}};
-  globalIndex upwDofNumber[ NF ][ NP ] = {{ 0 }};
+  globalIndex upwViscDofNumber[ NF ] = { 0 };
 
   /*
    * compute auxiliary quantities at the one sided faces of this element:
@@ -788,7 +787,7 @@ AssemblerKernel::Compute( localIndex const er, localIndex const esr, localIndex 
                                                                      upwPhaseViscCoef,
                                                                      dUpwPhaseViscCoef_dPres,
                                                                      dUpwPhaseViscCoef_dCompDens,
-                                                                     upwDofNumber );
+                                                                     upwViscDofNumber );
 
     /*
      * perform assembly in this element in two steps:
@@ -809,7 +808,7 @@ AssemblerKernel::Compute( localIndex const er, localIndex const esr, localIndex 
                                                                      upwPhaseViscCoef,
                                                                      dUpwPhaseViscCoef_dPres,
                                                                      dUpwPhaseViscCoef_dCompDens,
-                                                                     upwDofNumber,
+                                                                     upwViscDofNumber,
                                                                      dt,
                                                                      localMatrix,
                                                                      localRhs );
@@ -892,8 +891,7 @@ FluxKernel::Launch( localIndex er,
 
   // assemble the residual and Jacobian element by element
   // in this loop we assemble both equation types: mass conservation in the elements and constraints at the faces
-  using KERNEL_POLICY = parallelDevicePolicy< 32 >;
-  forAll< KERNEL_POLICY >( subRegion.size(), [=] GEOSX_DEVICE ( localIndex const ei )
+  forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_DEVICE ( localIndex const ei )
   {
 
     // transmissibility matrix
@@ -967,7 +965,7 @@ FluxKernel::Launch( localIndex er,
                                                     real64 ( &upwPhaseViscCoef )[ NF ][ NP ][ NC ], \
                                                     real64 ( &dUpwPhaseViscCoef_dPres )[ NF ][ NP ][ NC ], \
                                                     real64 ( &dUpwPhaseViscCoef_dCompDens )[ NF ][ NP ][ NC ][ NC ], \
-                                                    globalIndex ( &upwDofNumber )[ NF ][ NP ] )
+                                                    globalIndex ( &upwViscDofNumber )[ NF ] )
 
 INST_UpwindingHelper( 4, 2, 2 );
 INST_UpwindingHelper( 4, 3, 2 );
@@ -1041,7 +1039,7 @@ INST_UpwindingHelper( 6, 5, 3 );
                                                                    real64 ( &upwPhaseViscCoef )[ NF ][ NP ][ NC ], \
                                                                    real64 ( &dUpwPhaseViscCoef_dPres )[ NF ][ NP ][ NC ], \
                                                                    real64 ( &dUpwPhaseViscCoef_dCompDens )[ NF ][ NP ][ NC ][ NC ], \
-                                                                   globalIndex ( &upwDofNumber )[ NF ][ NP ] ); \
+                                                                   globalIndex ( &upwViscDofNumber )[ NF ] ); \
   template \
   void \
   AssemblerKernelHelper::AssembleOneSidedMassFluxes< NF, NC, NP >( arrayView1d< globalIndex const > const & faceDofNumber, \
@@ -1055,7 +1053,7 @@ INST_UpwindingHelper( 6, 5, 3 );
                                                                    real64 const (&upwPhaseViscCoef)[ NF ][ NP ][ NC ], \
                                                                    real64 const (&dUpwPhaseViscCoef_dPres)[ NF ][ NP ][ NC ], \
                                                                    real64 const (&dUpwPhaseViscCoef_dCompDens)[ NF ][ NP ][ NC ][ NC ], \
-                                                                   globalIndex const (&upwDofNumber)[ NF ][ NP ], \
+                                                                   globalIndex const (&upwViscDofNumber)[ NF ], \
                                                                    real64 const & dt, \
                                                                    CRSMatrixView< real64, globalIndex const > const & localMatrix, \
                                                                    arrayView1d< real64 > const & localRhs ); \

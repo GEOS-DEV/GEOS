@@ -408,7 +408,6 @@ real64 CompositionalMultiphaseHybridFVM::CalculateResidualNorm( DomainPartition 
                                                                                                elemSubRegionList.toNestedViewConst(),
                                                                                                elemList.toNestedViewConst(),
                                                                                                m_volume.toNestedViewConst(),
-                                                                                               m_totalDensOld.toNestedViewConst(),
                                                                                                m_phaseMobOld.toNestedViewConst(),
                                                                                                localResidualNorm );
 

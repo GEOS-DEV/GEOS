@@ -120,7 +120,7 @@ struct UpwindingHelper
    * @param[out] upwPhaseViscCoef the upwind viscous transport coef at this face
    * @param[out] dUpwPhaseViscCoef_dPres the derivative of the upwind viscous transport coef wrt pressure at this face
    * @param[out] dUpwPhaseViscCoef_dCompDens the derivatives of the upwind viscous transport coef wrt component density at this face
-   * @param[out] upwDofNumber the dof number of the upwind cell at this face
+   * @param[out] upwViscDofNumber the dof number of the upwind cell at this face
    */
   template< localIndex NF, localIndex NC, localIndex NP >
   GEOSX_HOST_DEVICE
@@ -141,7 +141,7 @@ struct UpwindingHelper
                        real64 ( &upwPhaseViscCoef )[ NF ][ NP ][ NC ],
                        real64 ( &dUpwPhaseViscCoef_dPres )[ NF ][ NP ][ NC ],
                        real64 ( &dUpwPhaseViscCoef_dCompDens )[ NF ][ NP ][ NC ][ NC ],
-                       globalIndex ( &upwDofNumber )[ NF ][ NP ] );
+                       globalIndex ( &upwViscDofNumber )[ NF ] );
 };
 
 struct AssemblerKernelHelper
@@ -227,7 +227,7 @@ struct AssemblerKernelHelper
    * @param[out] upwPhaseViscCoef the upwind viscous transport coef for each face
    * @param[out] dUpwPhaseViscCoef_dPres the derivative of the upwind viscous transport coef wrt pressure for each face
    * @param[out] dUpwPhaseViscCoef_dCompDens the derivatives of the upwind viscous transport coef wrt component density for each face
-   * @param[out] upwDofNumber the dof number of the upwind cell for each face
+   * @param[out] upwViscDofNumber the dof number of the upwind cell for each face
    */
   template< localIndex NF, localIndex NC, localIndex NP >
   GEOSX_HOST_DEVICE
@@ -253,7 +253,7 @@ struct AssemblerKernelHelper
                                 real64 ( &upwPhaseViscCoef )[ NF ][ NP ][ NC ],
                                 real64 ( &dUpwPhaseViscCoef_dPres )[ NF ][ NP ][ NC ],
                                 real64 ( &dUpwPhaseViscCoef_dCompDens )[ NF ][ NP ][ NC ][ NC ],
-                                globalIndex ( &upwDofNumber )[ NF ][ NP ] );
+                                globalIndex ( &upwViscDofNumber )[ NF ] );
 
   /**
    * @brief In a given element, assemble the mass conservation equations.
@@ -268,7 +268,7 @@ struct AssemblerKernelHelper
    * @param[in] upwPhaseViscCoef the upwind viscous transport coef for each face
    * @param[in] dUpwPhaseViscCoef_dPres the derivative of the upwind viscous transport coef wrt pressure for each face
    * @param[in] dUpwPhaseViscCoef_dCompDens the derivatives of the upwind viscous transport coef wrt component density for each face
-   * @param[in] upwDofNumber the dof number of the upwind cell for each face
+   * @param[in] upwViscDofNumber the dof number of the upwind cell for each face
    * @param[in] dt the time step size
    * @param[inout] matrix the jacobian matrix
    * @param[inout] rhs the residual
@@ -287,7 +287,7 @@ struct AssemblerKernelHelper
                               real64 const (&upwPhaseViscCoef)[ NF ][ NP ][ NC ],
                               real64 const (&dUpwPhaseViscCoef_dPres)[ NF ][ NP ][ NC ],
                               real64 const (&dUpwPhaseViscCoef_dCompDens)[ NF ][ NP ][ NC ][ NC ],
-                              globalIndex const (&upwDofNumber)[ NF ][ NP ],
+                              globalIndex const (&upwViscDofNumber)[ NF ],
                               real64 const & dt,
                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
                               arrayView1d< real64 > const & localRhs );
@@ -520,7 +520,6 @@ struct ResidualNormKernel
           arrayView2d< localIndex const > const & elemSubRegionList,
           arrayView2d< localIndex const > const & elemList,
           ElementViewConst< arrayView1d< real64 const > > const & elemVolume,
-          ElementViewConst< arrayView1d< real64 const > > const & totalDensOld,
           ElementViewConst< arrayView2d< real64 const > > const & phaseMobOld,
           real64 & localResidualNorm )
   {
@@ -550,14 +549,14 @@ struct ResidualNormKernel
             {
               totalMobOld += phaseMobOld[er][esr][ei][ip];
             }
-            normalizer += totalDensOld[er][esr][ei] * elemVolume[er][esr][ei]
-                          / totalMobOld;
+            normalizer += elemVolume[er][esr][ei] / totalMobOld;
             elemCounter++;
           }
         }
         normalizer /= elemCounter;
 
         localIndex const lid = LvArray::integerConversion< localIndex >( facePresDofNumber[iface] - rankOffset );
+        // note: unit of localResidual[lid] * totalMobOld: m^3, so this is dimensionless
         real64 const val = localResidual[lid] / normalizer;
         sumScaled += val * val;
       }
