@@ -1120,9 +1120,10 @@ SolidMechanicsLagrangianFEM::
   forAll< parallelDevicePolicy<> >( targetNodes.size(),
                                     [localRhs, localSum, dofNumber, rankOffset, ghostRank, targetNodes] GEOSX_HOST_DEVICE ( localIndex const k )
   {
-    if( ghostRank[targetNodes[k]] < 0 )
+    localIndex const nodeIndex = targetNodes[k];
+    if( ghostRank[nodeIndex] < 0 )
     {
-      localIndex const localRow = LvArray::integerConversion< localIndex >( dofNumber[targetNodes[k]] - rankOffset );
+      localIndex const localRow = LvArray::integerConversion< localIndex >( dofNumber[nodeIndex] - rankOffset );
 
       for( localIndex dim = 0; dim < 3; ++dim )
       {
