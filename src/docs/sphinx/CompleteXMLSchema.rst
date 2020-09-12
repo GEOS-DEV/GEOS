@@ -1475,6 +1475,13 @@ Datastructure: elementSubRegions
 .. include:: ../../coreComponents/fileIO/schema/docs/elementSubRegions_other.rst
 
 
+.. _DATASTRUCTURE_embeddedSurfacesEdgeManager:
+
+Datastructure: embeddedSurfacesEdgeManager
+==========================================
+.. include:: ../../coreComponents/fileIO/schema/docs/embeddedSurfacesEdgeManager_other.rst
+
+
 .. _DATASTRUCTURE_finiteVolumeStencils:
 
 Datastructure: finiteVolumeStencils

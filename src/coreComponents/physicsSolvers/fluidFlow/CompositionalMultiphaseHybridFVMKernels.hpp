@@ -98,7 +98,7 @@ struct UpwindingHelper
    * by calling .toView() or .toViewConst() on an accessor instance
    */
   template< typename VIEWTYPE >
-  using ElementView = typename ElementRegionManager::ElementViewAccessor< VIEWTYPE >::ViewTypeConst;
+  using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
 
   /**
    * @brief At a given one-sided face, compute the upwind viscous transport coefficient
@@ -127,17 +127,17 @@ struct UpwindingHelper
   static void
     UpwindViscousTerm( localIndex const er, localIndex const esr, localIndex const ei,
                        localIndex const ifaceLoc,
-                       ElementView< arrayView3d< real64 const > > const & phaseDens,
-                       ElementView< arrayView3d< real64 const > > const & dPhaseDens_dPres,
-                       ElementView< arrayView4d< real64 const > > const & dPhaseDens_dCompFrac,
-                       ElementView< arrayView2d< real64 const > > const & phaseMob,
-                       ElementView< arrayView2d< real64 const > > const & dPhaseMob_dPres,
-                       ElementView< arrayView3d< real64 const > > const & dPhaseMob_dCompDens,
-                       ElementView< arrayView3d< real64 const > > const & dCompFrac_dCompDens,
-                       ElementView< arrayView4d< real64 const > > const & phaseCompFrac,
-                       ElementView< arrayView4d< real64 const > > const & dPhaseCompFrac_dPres,
-                       ElementView< arrayView5d< real64 const > > const & dPhaseCompFrac_dCompFrac,
-                       ElementView< arrayView1d< globalIndex const > > const & elemDofNumber,
+                       ElementViewConst< arrayView3d< real64 const > > const & phaseDens,
+                       ElementViewConst< arrayView3d< real64 const > > const & dPhaseDens_dPres,
+                       ElementViewConst< arrayView4d< real64 const > > const & dPhaseDens_dCompFrac,
+                       ElementViewConst< arrayView2d< real64 const > > const & phaseMob,
+                       ElementViewConst< arrayView2d< real64 const > > const & dPhaseMob_dPres,
+                       ElementViewConst< arrayView3d< real64 const > > const & dPhaseMob_dCompDens,
+                       ElementViewConst< arrayView3d< real64 const > > const & dCompFrac_dCompDens,
+                       ElementViewConst< arrayView4d< real64 const > > const & phaseCompFrac,
+                       ElementViewConst< arrayView4d< real64 const > > const & dPhaseCompFrac_dPres,
+                       ElementViewConst< arrayView5d< real64 const > > const & dPhaseCompFrac_dCompFrac,
+                       ElementViewConst< arrayView1d< globalIndex const > > const & elemDofNumber,
                        real64 ( &upwPhaseViscCoef )[ NF ][ NP ][ NC ],
                        real64 ( &dUpwPhaseViscCoef_dPres )[ NF ][ NP ][ NC ],
                        real64 ( &dUpwPhaseViscCoef_dCompDens )[ NF ][ NP ][ NC ][ NC ],
@@ -155,7 +155,7 @@ struct AssemblerKernelHelper
    * by calling .toView() or .toViewConst() on an accessor instance
    */
   template< typename VIEWTYPE >
-  using ElementView = typename ElementRegionManager::ElementViewAccessor< VIEWTYPE >::ViewTypeConst;
+  using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
 
   /**
    * @brief In a given element, compute the one-sided volumetric fluxes at this element's faces
@@ -238,17 +238,17 @@ struct AssemblerKernelHelper
                                 arrayView2d< localIndex const > const & elemList,
                                 SortedArrayView< localIndex const > const & regionFilter,
                                 arraySlice1d< localIndex const > const & elemToFaces,
-                                ElementView< arrayView3d< real64 const > > const & phaseDens,
-                                ElementView< arrayView3d< real64 const > > const & dPhaseDens_dPres,
-                                ElementView< arrayView4d< real64 const > > const & dPhaseDens_dCompFrac,
-                                ElementView< arrayView2d< real64 const > > const & phaseMob,
-                                ElementView< arrayView2d< real64 const > > const & dPhaseMob_dPres,
-                                ElementView< arrayView3d< real64 const > > const & dPhaseMob_dCompDens,
-                                ElementView< arrayView3d< real64 const > > const & dCompFrac_dCompDens,
-                                ElementView< arrayView4d< real64 const > > const & phaseCompFrac,
-                                ElementView< arrayView4d< real64 const > > const & dPhaseCompFrac_dPres,
-                                ElementView< arrayView5d< real64 const > > const & dPhaseCompFrac_dCompFrac,
-                                ElementView< arrayView1d< globalIndex const > > const & elemDofNumber,
+                                ElementViewConst< arrayView3d< real64 const > > const & phaseDens,
+                                ElementViewConst< arrayView3d< real64 const > > const & dPhaseDens_dPres,
+                                ElementViewConst< arrayView4d< real64 const > > const & dPhaseDens_dCompFrac,
+                                ElementViewConst< arrayView2d< real64 const > > const & phaseMob,
+                                ElementViewConst< arrayView2d< real64 const > > const & dPhaseMob_dPres,
+                                ElementViewConst< arrayView3d< real64 const > > const & dPhaseMob_dCompDens,
+                                ElementViewConst< arrayView3d< real64 const > > const & dCompFrac_dCompDens,
+                                ElementViewConst< arrayView4d< real64 const > > const & phaseCompFrac,
+                                ElementViewConst< arrayView4d< real64 const > > const & dPhaseCompFrac_dPres,
+                                ElementViewConst< arrayView5d< real64 const > > const & dPhaseCompFrac_dCompFrac,
+                                ElementViewConst< arrayView1d< globalIndex const > > const & elemDofNumber,
                                 real64 const (&oneSidedVolFlux)[ NF ],
                                 real64 ( &upwPhaseViscCoef )[ NF ][ NP ][ NC ],
                                 real64 ( &dUpwPhaseViscCoef_dPres )[ NF ][ NP ][ NC ],
@@ -336,7 +336,7 @@ struct AssemblerKernel
    * by calling .toView() or .toViewConst() on an accessor instance
    */
   template< typename VIEWTYPE >
-  using ElementView = typename ElementRegionManager::ElementViewAccessor< VIEWTYPE >::ViewTypeConst;
+  using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
 
   /**
    * @brief In a given element, assemble the mass conservation equations and the contribution of this element to the face
@@ -393,17 +393,17 @@ struct AssemblerKernel
            real64 const & elemPres,
            real64 const & dElemPres,
            real64 const & elemGravCoef,
-           ElementView< arrayView3d< real64 const > > const & phaseDens,
-           ElementView< arrayView3d< real64 const > > const & dPhaseDens_dPres,
-           ElementView< arrayView4d< real64 const > > const & dPhaseDens_dCompFrac,
-           ElementView< arrayView2d< real64 const > > const & phaseMob,
-           ElementView< arrayView2d< real64 const > > const & dPhaseMob_dPres,
-           ElementView< arrayView3d< real64 const > > const & dPhaseMob_dCompDens,
-           ElementView< arrayView3d< real64 const > > const & dCompFrac_dCompDens,
-           ElementView< arrayView4d< real64 const > > const & phaseCompFrac,
-           ElementView< arrayView4d< real64 const > > const & dPhaseCompFrac_dPres,
-           ElementView< arrayView5d< real64 const > > const & dPhaseCompFrac_dComp,
-           ElementView< arrayView1d< globalIndex const > > const & elemDofNumber,
+           ElementViewConst< arrayView3d< real64 const > > const & phaseDens,
+           ElementViewConst< arrayView3d< real64 const > > const & dPhaseDens_dPres,
+           ElementViewConst< arrayView4d< real64 const > > const & dPhaseDens_dCompFrac,
+           ElementViewConst< arrayView2d< real64 const > > const & phaseMob,
+           ElementViewConst< arrayView2d< real64 const > > const & dPhaseMob_dPres,
+           ElementViewConst< arrayView3d< real64 const > > const & dPhaseMob_dCompDens,
+           ElementViewConst< arrayView3d< real64 const > > const & dCompFrac_dCompDens,
+           ElementViewConst< arrayView4d< real64 const > > const & phaseCompFrac,
+           ElementViewConst< arrayView4d< real64 const > > const & dPhaseCompFrac_dPres,
+           ElementViewConst< arrayView5d< real64 const > > const & dPhaseCompFrac_dComp,
+           ElementViewConst< arrayView1d< globalIndex const > > const & elemDofNumber,
            integer const elemGhostRank,
            globalIndex const rankOffset,
            real64 const & dt,
@@ -427,7 +427,7 @@ struct FluxKernel
    * by calling .toView() or .toViewConst() on an accessor instance
    */
   template< typename VIEWTYPE >
-  using ElementView = typename ElementRegionManager::ElementViewAccessor< VIEWTYPE >::ViewTypeConst;
+  using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
 
   /**
    * @brief In a given subRegion, assemble the mass conservation equations and the contribution of the elements of this subRegion  to the
@@ -482,17 +482,17 @@ struct FluxKernel
           arrayView1d< real64 const > const & facePres,
           arrayView1d< real64 const > const & dFacePres,
           arrayView1d< real64 const > const & faceGravCoef,
-          ElementView< arrayView3d< real64 const > > const & phaseDens,
-          ElementView< arrayView3d< real64 const > > const & dPhaseDens_dPres,
-          ElementView< arrayView4d< real64 const > > const & dPhaseDens_dCompFrac,
-          ElementView< arrayView2d< real64 const > > const & phaseMob,
-          ElementView< arrayView2d< real64 const > > const & dPhaseMob_dPres,
-          ElementView< arrayView3d< real64 const > > const & dPhaseMob_dCompDens,
-          ElementView< arrayView3d< real64 const > > const & dCompFrac_dCompDens,
-          ElementView< arrayView4d< real64 const > > const & phaseCompFrac,
-          ElementView< arrayView4d< real64 const > > const & dPhaseCompFrac_dPres,
-          ElementView< arrayView5d< real64 const > > const & dPhaseCompFrac_dCompFrac,
-          ElementView< arrayView1d< globalIndex const > > const & elemDofNumber,
+          ElementViewConst< arrayView3d< real64 const > > const & phaseDens,
+          ElementViewConst< arrayView3d< real64 const > > const & dPhaseDens_dPres,
+          ElementViewConst< arrayView4d< real64 const > > const & dPhaseDens_dCompFrac,
+          ElementViewConst< arrayView2d< real64 const > > const & phaseMob,
+          ElementViewConst< arrayView2d< real64 const > > const & dPhaseMob_dPres,
+          ElementViewConst< arrayView3d< real64 const > > const & dPhaseMob_dCompDens,
+          ElementViewConst< arrayView3d< real64 const > > const & dCompFrac_dCompDens,
+          ElementViewConst< arrayView4d< real64 const > > const & phaseCompFrac,
+          ElementViewConst< arrayView4d< real64 const > > const & dPhaseCompFrac_dPres,
+          ElementViewConst< arrayView5d< real64 const > > const & dPhaseCompFrac_dCompFrac,
+          ElementViewConst< arrayView1d< globalIndex const > > const & elemDofNumber,
           globalIndex const rankOffset,
           real64 const lengthTolerance,
           real64 const dt,
@@ -506,7 +506,7 @@ struct FluxKernel
 struct ResidualNormKernel
 {
   template< typename VIEWTYPE >
-  using ElementView = typename ElementRegionManager::ElementViewAccessor< VIEWTYPE >::ViewTypeConst;
+  using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
 
   template< typename POLICY, typename REDUCE_POLICY >
   static void
@@ -519,9 +519,9 @@ struct ResidualNormKernel
           arrayView2d< localIndex const > const & elemRegionList,
           arrayView2d< localIndex const > const & elemSubRegionList,
           arrayView2d< localIndex const > const & elemList,
-          ElementView< arrayView1d< real64 const > > const & elemVolume,
-          ElementView< arrayView1d< real64 const > > const & totalDensOld,
-          ElementView< arrayView2d< real64 const > > const & phaseMobOld,
+          ElementViewConst< arrayView1d< real64 const > > const & elemVolume,
+          ElementViewConst< arrayView1d< real64 const > > const & totalDensOld,
+          ElementViewConst< arrayView2d< real64 const > > const & phaseMobOld,
           real64 & localResidualNorm )
   {
     RAJA::ReduceSum< REDUCE_POLICY, real64 > sumScaled( 0.0 );

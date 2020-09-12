@@ -240,9 +240,9 @@ public:
 
   /**@}*/
 
-  arrayView1d< string const > const & relPermModelNames() const { return m_relPermModelNames; }
+  arrayView1d< string const > relPermModelNames() const { return m_relPermModelNames; }
 
-  arrayView1d< string const > const & capPresModelNames() const { return m_capPressureModelNames; }
+  arrayView1d< string const > capPresModelNames() const { return m_capPressureModelNames; }
 
   struct viewKeyStruct : FlowSolverBase::viewKeyStruct
   {

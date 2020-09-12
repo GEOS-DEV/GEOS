@@ -1292,7 +1292,7 @@ void SiloFile::WriteElementRegionSilo( ElementRegionBase const & elemRegion,
           typedef decltype( array ) arrayType;
           Wrapper< arrayType > const &
           sourceWrapper = Wrapper< arrayType >::cast( *wrapper );
-          typename arrayType::ViewTypeConst const & sourceArray = sourceWrapper.reference();
+          traits::ViewTypeConst< arrayType > const sourceArray = sourceWrapper.reference();
 
           Wrapper< arrayType > * const
           newWrapper = fakeGroup.registerWrapper< arrayType >( fieldName );
@@ -1329,7 +1329,7 @@ void SiloFile::WriteElementRegionSilo( ElementRegionBase const & elemRegion,
         {
           Wrapper< arrayType > const &
           sourceWrapper = Wrapper< arrayType >::cast( *(viewPointers[esr][fieldName]));
-          typename arrayType::ViewTypeConst const & sourceArray = sourceWrapper.reference();
+          traits::ViewTypeConst< arrayType > const sourceArray = sourceWrapper.reference().toViewConst();
 
           localIndex const offset = counter * targetArray.strides()[ 0 ];
           GEOSX_ERROR_IF_GT( sourceArray.size(), targetArray.size() - offset );
@@ -1413,12 +1413,14 @@ void SiloFile::WriteElementMesh( ElementRegionBase const & elementRegion,
 
     int count = 0;
 
-    elementRegion.forElementSubRegions( [&]( auto const & elementSubRegion )
+    elementRegion.forElementSubRegions< CellElementSubRegion,
+                                        FaceElementSubRegion,
+                                        WellElementSubRegion >( [&]( auto const & elementSubRegion )
     {
       typename TYPEOFREF( elementSubRegion ) ::NodeMapType const & elemsToNodes = elementSubRegion.nodeList();
 
       // TODO HACK. this isn't correct for variable relations.
-      elementToNodeMap[count].resize( elemsToNodes.size( 0 ), elementSubRegion.numNodesPerElement( 0 ) );
+      elementToNodeMap[count].resize( elementSubRegion.size(), elementSubRegion.numNodesPerElement( 0 ) );
 
       arrayView1d< integer const > const & elemGhostRank = elementSubRegion.ghostRank();
 

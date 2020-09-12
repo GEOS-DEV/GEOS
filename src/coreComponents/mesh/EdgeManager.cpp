@@ -384,14 +384,13 @@ void populateMaps( ArrayOfArraysView< EdgeBuilder const > const & edgesByLowestN
         if( j + numMatches == numEdges )
           break;
       }
-
       // Then add the edge.
       addEdge( edgesByLowestNode, faceToEdgeMap.toView(), edgeToFaceMap.toView(), edgeToNodeMap, curEdgeID, nodeID, j, numMatches );
       ++curEdgeID;
       j += numMatches;
     }
 
-    if( j == numFaces - 1 )
+    if( j == numEdges - 1 )
     {
       addEdge( edgesByLowestNode, faceToEdgeMap.toView(), edgeToFaceMap.toView(), edgeToNodeMap, curEdgeID, nodeID, j, 1 );
     }
@@ -450,6 +449,30 @@ void EdgeManager::BuildEdges( FaceManager * const faceManager, NodeManager * con
   } );
 
   SetDomainBoundaryObjects( faceManager );
+}
+
+void EdgeManager::BuildEdges( localIndex const numNodes,
+                              ArrayOfArraysView< localIndex const > const & faceToNodeMap,
+                              ArrayOfArrays< localIndex > & faceToEdgeMap )
+{
+  ArrayOfArrays< EdgeBuilder > edgesByLowestNode( numNodes, 2 * maxEdgesPerNode() );
+  createEdgesByLowestNode( faceToNodeMap, edgesByLowestNode.toView() );
+
+  array1d< localIndex > uniqueEdgeOffsets( numNodes + 1 );
+  localIndex const numEdges = calculateTotalNumberOfEdges( edgesByLowestNode.toViewConst(), uniqueEdgeOffsets );
+
+  resizeEdgeToFaceMap( edgesByLowestNode.toViewConst(),
+                       uniqueEdgeOffsets,
+                       m_toFacesRelation );
+
+  resize( numEdges );
+
+  populateMaps( edgesByLowestNode.toViewConst(),
+                uniqueEdgeOffsets,
+                faceToNodeMap,
+                faceToEdgeMap,
+                m_toFacesRelation,
+                m_toNodesRelation );
 }
 
 
@@ -622,8 +645,8 @@ void EdgeManager::ExtractMapFromObjectForAssignGlobalIndexNumbers( ObjectManager
 
   localIndex const numEdges = size();
 
-  arrayView2d< localIndex const > const & edgeNodes = this->nodeList();
-  arrayView1d< integer const > const & isDomainBoundary = this->getDomainBoundaryIndicator();
+  arrayView2d< localIndex const > const edgeNodes = this->nodeList();
+  arrayView1d< integer const > const isDomainBoundary = this->getDomainBoundaryIndicator();
 
   globalEdgeNodes.resize( numEdges );
 
@@ -781,15 +804,17 @@ template< bool DOPACK >
 localIndex EdgeManager::PackUpDownMapsPrivate( buffer_unit_type * & buffer,
                                                arrayView1d< localIndex const > const & packList ) const
 {
-  localIndex packedSize = 0;
+  arrayView1d< globalIndex const > const localToGlobal = localToGlobalMap();
+  arrayView1d< globalIndex const > nodeLocalToGlobal = nodeList().RelatedObjectLocalToGlobal();
+  arrayView1d< globalIndex const > faceLocalToGlobal = faceList().RelatedObjectLocalToGlobal();
 
-  packedSize += bufferOps::Pack< DOPACK >( buffer, string( viewKeyStruct::nodeListString ) );
+  localIndex packedSize = bufferOps::Pack< DOPACK >( buffer, string( viewKeyStruct::nodeListString ) );
   packedSize += bufferOps::Pack< DOPACK >( buffer,
                                            m_toNodesRelation.Base().toViewConst(),
                                            m_unmappedGlobalIndicesInToNodes,
                                            packList,
-                                           localToGlobalMap(),
-                                           m_toNodesRelation.RelatedObjectLocalToGlobal() );
+                                           localToGlobal,
+                                           nodeLocalToGlobal );
 
 
   packedSize += bufferOps::Pack< DOPACK >( buffer, string( viewKeyStruct::faceListString ) );
@@ -797,8 +822,8 @@ localIndex EdgeManager::PackUpDownMapsPrivate( buffer_unit_type * & buffer,
                                            m_toFacesRelation.Base().toArrayOfArraysView(),
                                            m_unmappedGlobalIndicesInToFaces,
                                            packList,
-                                           localToGlobalMap(),
-                                           m_toFacesRelation.RelatedObjectLocalToGlobal() );
+                                           localToGlobal,
+                                           faceLocalToGlobal );
 
   return packedSize;
 }

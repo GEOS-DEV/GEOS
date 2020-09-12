@@ -294,7 +294,7 @@ ElementRegionManager::PackPrivate( buffer_unit_type * & buffer,
     {
       packedSize += bufferOps::Pack< DOPACK >( buffer, subRegion.getName() );
 
-      arrayView1d< localIndex > const elemList = packList[kReg][esr];
+      arrayView1d< localIndex const > const elemList = packList[kReg][esr];
       if( DOPACK )
       {
         packedSize += subRegion.Pack( buffer, wrapperNames, elemList, 0 );
@@ -399,7 +399,7 @@ ElementRegionManager::PackGlobalMapsPrivate( buffer_unit_type * & buffer,
     {
       packedSize += bufferOps::Pack< DOPACK >( buffer, subRegion.getName() );
 
-      arrayView1d< localIndex > const & elemList = packList[kReg][esr];
+      arrayView1d< localIndex const > const elemList = packList[kReg][esr];
       if( DOPACK )
       {
         packedSize += subRegion.PackGlobalMaps( buffer, elemList, 0 );
@@ -496,7 +496,7 @@ ElementRegionManager::PackUpDownMapsPrivate( buffer_unit_type * & buffer,
     {
       packedSize += bufferOps::Pack< DOPACK >( buffer, subRegion.getName() );
 
-      arrayView1d< localIndex > const & elemList = packList[kReg][esr];
+      arrayView1d< localIndex > const elemList = packList[kReg][esr];
       if( DOPACK )
       {
         packedSize += subRegion.PackUpDownMaps( buffer, elemList );

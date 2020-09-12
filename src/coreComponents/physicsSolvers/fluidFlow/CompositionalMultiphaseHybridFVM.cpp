@@ -120,9 +120,9 @@ void CompositionalMultiphaseHybridFVM::ImplicitStepComplete( real64 const & time
   FaceManager & faceManager = *meshLevel.getFaceManager();
 
   // get the face-based pressure
-  arrayView1d< real64 > const & facePres =
+  arrayView1d< real64 > const facePres =
     faceManager.getReference< array1d< real64 > >( viewKeyStruct::facePressureString );
-  arrayView1d< real64 > const & dFacePres =
+  arrayView1d< real64 > const dFacePres =
     faceManager.getReference< array1d< real64 > >( viewKeyStruct::deltaFacePressureString );
 
   forAll< parallelDevicePolicy<> >( faceManager.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iface )
@@ -240,17 +240,17 @@ void CompositionalMultiphaseHybridFVM::AssembleFluxTerms( real64 const dt,
                                         facePres,
                                         dFacePres,
                                         faceGravCoef,
-                                        m_phaseDens.toViewConst(),
-                                        m_dPhaseDens_dPres.toViewConst(),
-                                        m_dPhaseDens_dComp.toViewConst(),
-                                        m_phaseMob.toViewConst(),
-                                        m_dPhaseMob_dPres.toViewConst(),
-                                        m_dPhaseMob_dCompDens.toViewConst(),
-                                        m_dCompFrac_dCompDens.toViewConst(),
-                                        m_phaseCompFrac.toViewConst(),
-                                        m_dPhaseCompFrac_dPres.toViewConst(),
-                                        m_dPhaseCompFrac_dComp.toViewConst(),
-                                        elemDofNumber.toViewConst(),
+                                        m_phaseDens.toNestedViewConst(),
+                                        m_dPhaseDens_dPres.toNestedViewConst(),
+                                        m_dPhaseDens_dComp.toNestedViewConst(),
+                                        m_phaseMob.toNestedViewConst(),
+                                        m_dPhaseMob_dPres.toNestedViewConst(),
+                                        m_dPhaseMob_dCompDens.toNestedViewConst(),
+                                        m_dCompFrac_dCompDens.toNestedViewConst(),
+                                        m_phaseCompFrac.toNestedViewConst(),
+                                        m_dPhaseCompFrac_dPres.toNestedViewConst(),
+                                        m_dPhaseCompFrac_dComp.toNestedViewConst(),
+                                        elemDofNumber.toNestedViewConst(),
                                         dofManager.rankOffset(),
                                         lengthTolerance,
                                         dt,
@@ -401,15 +401,15 @@ real64 CompositionalMultiphaseHybridFVM::CalculateResidualNorm( DomainPartition 
                                                                        parallelDeviceReduce >( localRhs,
                                                                                                rankOffset,
                                                                                                numFluidPhases(),
-                                                                                               faceDofNumber.toViewConst(),
-                                                                                               faceGhostRank.toViewConst(),
+                                                                                               faceDofNumber.toNestedViewConst(),
+                                                                                               faceGhostRank.toNestedViewConst(),
                                                                                                m_regionFilter.toViewConst(),
-                                                                                               elemRegionList.toViewConst(),
-                                                                                               elemSubRegionList.toViewConst(),
-                                                                                               elemList.toViewConst(),
-                                                                                               m_volume.toViewConst(),
-                                                                                               m_totalDensOld.toViewConst(),
-                                                                                               m_phaseMobOld.toViewConst(),
+                                                                                               elemRegionList.toNestedViewConst(),
+                                                                                               elemSubRegionList.toNestedViewConst(),
+                                                                                               elemList.toNestedViewConst(),
+                                                                                               m_volume.toNestedViewConst(),
+                                                                                               m_totalDensOld.toNestedViewConst(),
+                                                                                               m_phaseMobOld.toNestedViewConst(),
                                                                                                localResidualNorm );
 
   // 3. Combine the two norms
@@ -512,24 +512,24 @@ void CompositionalMultiphaseHybridFVM::UpdatePhaseMobility( Group & dataGroup, l
 
   // outputs
 
-  arrayView2d< real64 > const & phaseMob =
+  arrayView2d< real64 > const phaseMob =
     dataGroup.getReference< array2d< real64 > >( viewKeyStruct::phaseMobilityString );
 
-  arrayView2d< real64 > const & dPhaseMob_dPres =
+  arrayView2d< real64 > const dPhaseMob_dPres =
     dataGroup.getReference< array2d< real64 > >( viewKeyStruct::dPhaseMobility_dPressureString );
 
-  arrayView3d< real64 > const & dPhaseMob_dComp =
+  arrayView3d< real64 > const dPhaseMob_dComp =
     dataGroup.getReference< array3d< real64 > >( viewKeyStruct::dPhaseMobility_dGlobalCompDensityString );
 
-  // // inputs
+  // inputs
 
-  arrayView2d< real64 const > const & dPhaseVolFrac_dPres =
+  arrayView2d< real64 const > const dPhaseVolFrac_dPres =
     dataGroup.getReference< array2d< real64 > >( viewKeyStruct::dPhaseVolumeFraction_dPressureString );
 
-  arrayView3d< real64 const > const & dPhaseVolFrac_dComp =
+  arrayView3d< real64 const > const dPhaseVolFrac_dComp =
     dataGroup.getReference< array3d< real64 > >( viewKeyStruct::dPhaseVolumeFraction_dGlobalCompDensityString );
 
-  arrayView3d< real64 const > const & dCompFrac_dCompDens =
+  arrayView3d< real64 const > const dCompFrac_dCompDens =
     dataGroup.getReference< array3d< real64 > >( viewKeyStruct::dGlobalCompFraction_dGlobalCompDensityString );
 
   MultiFluidBase const & fluid = GetConstitutiveModel< MultiFluidBase >( dataGroup, m_fluidModelNames[targetIndex] );
