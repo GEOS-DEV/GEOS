@@ -8,7 +8,7 @@
       elementTypes="{ C3D8 }"
       nx="{ 1 }"
       ny="{ 1 }"
-      nz="{ 100, 100 }"
+      nz="{ 10, 10 }"
       xCoords="{ 0, 100 }"
       yCoords="{ 0, 100 }"
       zCoords="{ 0, 100, 200 }"/>
