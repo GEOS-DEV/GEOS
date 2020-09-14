@@ -401,9 +401,11 @@ void GraphFromText::RemapFace(const MeshLevel & mesh)
           std::cout<< h << " " << m_boundaryEdges[i]->getEdgeIndex() << "\n";
           std::cout<< elemList[h][0] << " " << m_boundaryEdges[i]->getVertex1()->getLocalVertexIndex() << " " << m_boundaryEdges[i]->getVertex2()->getLocalVertexIndex() << " " << m_boundaryEdges[i]->getVertex2()->getSubRegionIndex() << " " << m_boundaryEdges[i]->getVertex2()->getRegionIndex() << "\n\n";
           /*
-          GraphVertex f1 = *(m_boundaryEdges[i]->getVertex2());
-          GraphVertex* f2 = &f1;
-          GraphVertexFace* face =  dynamic_cast<GraphVertexFace*>(f2);
+          GraphVertex* face;
+          face =  dynamic_cast<GraphVertex*>(m_boundaryEdges[i]->getVertex2());
+          if (face==0) {std::cout << "Null pointer on second type-cast.\n";}
+          */
+          /*
           std::cout<< face->getCorrespondingId();
           face->setCorrespondingId(h);
           std::cout<< face->getCorrespondingId();
