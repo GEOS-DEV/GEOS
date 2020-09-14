@@ -21,6 +21,7 @@
 #endif
 
 
+
 #ifndef GEOSX_FINITEELEMENT_ELEMENTFORMULATIONS_FINITEELEMENTBASE_HPP_
 #define GEOSX_FINITEELEMENT_ELEMENTFORMULATIONS_FINITEELEMENTBASE_HPP_
 
@@ -40,6 +41,27 @@ class FiniteElementBase
 {
 public:
 
+  FiniteElementBase() = default;
+
+  FiniteElementBase( FiniteElementBase const & source ):
+#ifdef CALC_FEM_SHAPE_IN_KERNEL
+    m_viewGradN(),
+    m_viewDetJ()
+#else
+    m_viewGradN( source.m_viewGradN ),
+    m_viewDetJ( source.m_viewDetJ )
+#endif
+  {}
+
+  FiniteElementBase( FiniteElementBase && ) = default;
+  FiniteElementBase & operator=( FiniteElementBase const & ) = delete;
+  FiniteElementBase & operator=( FiniteElementBase && ) = delete;
+
+  /**
+   * @brief Destructor
+   */
+  virtual ~FiniteElementBase() = default;
+
   /**
    * @brief Virtual getter for the number of quadrature points per element.
    * @return The number of quadrature points per element.
@@ -51,11 +73,6 @@ public:
    * @return The number of support points per element.
    */
   virtual localIndex getNumSupportPoints() const = 0;
-
-  /**
-   * @brief Destructor
-   */
-  virtual ~FiniteElementBase() = default;
 
   /**
    * @brief Computes the inverse of a 3x3 c-array.
@@ -233,14 +250,17 @@ public:
   ///@{
 
   /**
-   *
+   * @brief Calculate the value and gradient of a scalar valued support field
+   *   at a point using the input basis function gradients.
    * @tparam NUM_SUPPORT_POINTS The number of support points for the element.
-   * @tparam GRADIENT_TYPE
-   * @param N
-   * @param gradN
-   * @param var
-   * @param value
-   * @param gradVar
+   * @tparam GRADIENT_TYPE The type of the array object holding the shape
+   * @param N Array (for each support point) of shape function values at the
+   *   coordinate the variable is to be interpolated.
+   * @param gradN The basis function gradients at a point in the element.
+   * @param var The vector valued support field that the gradient operator will
+   *  be applied to.
+   * @param value The value at the point for which N was specified.
+   * @param gradVar The gradient at the point for which gradN was specified.
    */
   template< int NUM_SUPPORT_POINTS,
             typename GRADIENT_TYPE >
@@ -361,6 +381,16 @@ public:
    */
   void setGradNView( arrayView4d< real64 const > const & source )
   {
+    GEOSX_ERROR_IF_NE_MSG( source.size( 1 ),
+                           getNumQuadraturePoints(),
+                           "2nd-dimension of gradN array does not match number of quadrature points" );
+    GEOSX_ERROR_IF_NE_MSG( source.size( 2 ),
+                           getNumSupportPoints(),
+                           "3rd-dimension of gradN array does not match number of support points" );
+    GEOSX_ERROR_IF_NE_MSG( source.size( 3 ),
+                           3,
+                           "4th-dimension of gradN array does not match 3" );
+
     m_viewGradN = source;
   }
 
@@ -370,8 +400,30 @@ public:
    */
   void setDetJView( arrayView2d< real64 const > const & source )
   {
+    GEOSX_ERROR_IF_NE_MSG( source.size( 1 ),
+                           getNumQuadraturePoints(),
+                           "2nd-dimension of gradN array does not match number of quadrature points" );
     m_viewDetJ = source;
   }
+
+  /**
+   * @brief Getter for m_viewGradN
+   * @return A new arrayView copy of m_viewGradN.
+   */
+  arrayView4d< real64 const > getGradNView() const
+  {
+    return m_viewGradN;
+  }
+
+  /**
+   * @brief Getter for m_viewDetJ
+   * @return A new arrayView copy of m_viewDetJ.
+   */
+  arrayView2d< real64 const > getDetJView() const
+  {
+    return m_viewDetJ;
+  }
+
 
 protected:
   /// View to potentially hold pre-calculated shape function gradients.
