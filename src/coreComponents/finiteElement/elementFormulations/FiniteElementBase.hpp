@@ -462,9 +462,10 @@ void FiniteElementBase::value( real64 const (&N)[NUM_SUPPORT_POINTS],
                                real64 const (&var)[NUM_SUPPORT_POINTS],
                                real64 & value )
 {
-  for( int a=0; a<NUM_SUPPORT_POINTS; ++a )
+  value = N[0] * var[0];
+  for( int a=1; a<NUM_SUPPORT_POINTS; ++a )
   {
-    value += N[a] * var[a];
+    value = value + N[a] * var[a];
   }
 }
 
@@ -476,11 +477,17 @@ void FiniteElementBase::value( real64 const (&N)[NUM_SUPPORT_POINTS],
                                real64 const (&var)[NUM_SUPPORT_POINTS][NUM_COMPONENTS],
                                real64 (& value)[NUM_COMPONENTS] )
 {
-  for( int a=0; a<NUM_SUPPORT_POINTS; ++a )
+
+  for( int i=0; i<NUM_COMPONENTS; ++i )
+  {
+    value[i] = N[0] * var[0][i];
+  }
+
+  for( int a=1; a<NUM_SUPPORT_POINTS; ++a )
   {
     for( int i=0; i<NUM_COMPONENTS; ++i )
     {
-      value[i] += N[a] * var[a][i];
+      value[i] = value[i] + N[a] * var[a][i];
     }
   }
 }
@@ -498,7 +505,14 @@ void FiniteElementBase::symmetricGradient( GRADIENT_TYPE const & gradN,
                                            real64 const (&var)[NUM_SUPPORT_POINTS][3],
                                            real64 (& gradVar)[6] )
 {
-  for( int a=0; a<NUM_SUPPORT_POINTS; ++a )
+  gradVar[0] = gradN[0][0] * var[0][0];
+  gradVar[1] = gradN[0][1] * var[0][1];
+  gradVar[2] = gradN[0][2] * var[0][2];
+  gradVar[3] = gradN[0][2] * var[0][1] + gradN[0][1] * var[0][2];
+  gradVar[4] = gradN[0][2] * var[0][0] + gradN[0][0] * var[0][2];
+  gradVar[5] = gradN[0][1] * var[0][0] + gradN[0][0] * var[0][1];
+
+  for( int a=1; a<NUM_SUPPORT_POINTS; ++a )
   {
     gradVar[0] = gradVar[0] + gradN[a][0] * var[ a ][0];
     gradVar[1] = gradVar[1] + gradN[a][1] * var[ a ][1];
@@ -517,11 +531,15 @@ void FiniteElementBase::gradient( GRADIENT_TYPE const & gradN,
                                   real64 const (&var)[NUM_SUPPORT_POINTS],
                                   real64 (& gradVar)[3] )
 {
-  for( int a=0; a<NUM_SUPPORT_POINTS; ++a )
+  for( int i = 0; i < 3; ++i )
+  {
+    gradVar[i] = var[0] * gradN[0][i];
+  }
+  for( int a=1; a<NUM_SUPPORT_POINTS; ++a )
   {
     for( int i = 0; i < 3; ++i )
     {
-      gradVar[i] = gradVar[i] + var[ a ] * gradN[a][i];
+      gradVar[i] = gradVar[i] + var[a] * gradN[a][i];
     }
   }
 }
@@ -534,13 +552,20 @@ void FiniteElementBase::gradient( GRADIENT_TYPE const & gradN,
                                   real64 const (&var)[NUM_SUPPORT_POINTS][3],
                                   real64 (& gradVar)[3][3] )
 {
-  for( int a=0; a<NUM_SUPPORT_POINTS; ++a )
+  for( int i = 0; i < 3; ++i )
+  {
+    for( int j = 0; j < 3; ++j )
+    {
+      gradVar[i][j] = var[0][i] * gradN[0][j];
+    }
+  }
+  for( int a=1; a<NUM_SUPPORT_POINTS; ++a )
   {
     for( int i = 0; i < 3; ++i )
     {
       for( int j = 0; j < 3; ++j )
       {
-        gradVar[i][j] = gradVar[i][j] + var[ a ][i] * gradN[a][j];
+        gradVar[i][j] = gradVar[i][j] + var[a][i] * gradN[a][j];
       }
     }
   }
@@ -558,9 +583,15 @@ void FiniteElementBase::valueAndGradient( real64 const (&N)[NUM_SUPPORT_POINTS],
                                           real64 & value,
                                           real64 (& gradVar)[3] )
 {
-  for( int a=0; a<NUM_SUPPORT_POINTS; ++a )
+  value = N[0] * var[0];
+  for( int i = 0; i < 3; ++i )
   {
-    value += N[a] * var[a];
+    gradVar[i] = var[0] * gradN[0][i];
+  }
+
+  for( int a=1; a<NUM_SUPPORT_POINTS; ++a )
+  {
+    value = value + N[a] * var[a];
     for( int i = 0; i < 3; ++i )
     {
       gradVar[i] = gradVar[i] + var[ a ] * gradN[a][i];
