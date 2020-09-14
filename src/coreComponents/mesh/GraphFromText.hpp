@@ -109,7 +109,7 @@ public:
   */
   virtual void PartitionGraph(const MeshLevel & meshLevel) override;
 
-
+  virtual void RemapFace(const MeshLevel & mesh);
  
   /// @cond DO_NOT_DOCUMENT
   struct viewKeyStruct
@@ -127,7 +127,7 @@ public:
 private:
   Path m_file;
   string m_meshString;
-  Group * m_mesh;
+  std::vector<GraphEdge*> m_boundaryEdges;
   
 
 };

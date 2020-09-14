@@ -25,6 +25,7 @@
 #include "managers/Functions/FunctionManager.hpp"
 #include "mesh/GraphEdge.hpp"
 #include "mesh/GraphVertex.hpp"
+#include "mesh/GraphVertexFace.hpp"
 #include "mesh/MeshLevel.hpp"
 #include "common/Logger.hpp"
 
@@ -198,14 +199,20 @@ void GraphFromText::GenerateGraph()
 {
   std::ifstream infile(m_file);
   std::string line;
+  std::string type;
+  int size;
+  int count = 0;
+  infile >> type >> size;
+  std::getline(infile, line);
   //std::vector<GraphEdge*> edges;
-  while (std::getline(infile, line))
+  while (std::getline(infile, line) && count< size)
   {
     std::istringstream iss(line);
     int er1, esr1, ei1, er2, esr2, ei2;
     real64 transm;
     //The input file is written with thr triple index (regionIndex, subRegionIndex,globalVertexIndex) of the two connected point and associated transmissibility
     if (!(iss >>er1 >> esr1 >> ei1 >> er2 >> esr2 >> ei2 >> transm)) { break; } // error
+    count++;
     int place_1=-1;
     int place_2=-1;
     long unsigned int i=0;
@@ -257,43 +264,71 @@ void GraphFromText::GenerateGraph()
     m_vertexWithEdgesMap[v1].push_back(e);
     m_vertexWithEdgesMap[v2].push_back(e);
     }
-  /*
-  this->RemoveEdge(LvArray::integerConversion< localIndex >(2690));
-  this->RemoveEdge(LvArray::integerConversion< localIndex >(2688));
-  this->RemoveEdge(LvArray::integerConversion< localIndex >(2671));
-  this->RemoveEdge(LvArray::integerConversion< localIndex >(2557));
-  this->RemoveEdge(LvArray::integerConversion< localIndex >(2555));
-  this->RemoveEdge(LvArray::integerConversion< localIndex >(2538));
-  this->RemoveEdge(LvArray::integerConversion< localIndex >(2500));
-  this->RemoveEdge(LvArray::integerConversion< localIndex >(2297));
-  GraphVertex* v819 = this->getVertexWithIndex(LvArray::integerConversion< localIndex >(819));
-  GraphVertex* v919 = this->getVertexWithIndex(LvArray::integerConversion< localIndex >(919));
-  GraphVertex* v909 = this->getVertexWithIndex(LvArray::integerConversion< localIndex >(909));
-  GraphVertex* v918 = this->getVertexWithIndex(LvArray::integerConversion< localIndex >(918));
-  GraphVertex* v929 = this->getVertexWithIndex(LvArray::integerConversion< localIndex >(929));
-  GraphVertex* v889 = this->getVertexWithIndex(LvArray::integerConversion< localIndex >(889));
-  GraphVertex* v989 = this->getVertexWithIndex(LvArray::integerConversion< localIndex >(989));
-  GraphVertex* v979 = this->getVertexWithIndex(LvArray::integerConversion< localIndex >(979));
-  GraphVertex* v988 = this->getVertexWithIndex(LvArray::integerConversion< localIndex >(988));
-  GraphVertex* v999 = this->getVertexWithIndex(LvArray::integerConversion< localIndex >(999));
-  this->AddEdge(LvArray::integerConversion< localIndex >(2690),v999,v919);
-  this->AddEdge(LvArray::integerConversion< localIndex >(2688),v988,v919);
-  this->AddEdge(LvArray::integerConversion< localIndex >(2671),v979,v919);
-  this->AddEdge(LvArray::integerConversion< localIndex >(2557),v929,v989);
-  this->AddEdge(LvArray::integerConversion< localIndex >(2555),v918,v989);
-  this->AddEdge(LvArray::integerConversion< localIndex >(2538),v909,v989);
-  this->AddEdge(LvArray::integerConversion< localIndex >(2500),v889,v919);
-  this->AddEdge(LvArray::integerConversion< localIndex >(2297),v819,v989);
-  this->RemoveVertex(919);
-  this->RemoveVertex(989);
-  */
-  /*
-  for (long unsigned int i=400; i<500; ++i)
+  infile >> type >> size;
+  std::getline(infile, line);
+  count = 0;
+  //std::vector<GraphEdge*> edges;
+  while (std::getline(infile, line) && count< size)
   {
-    std::cout<<i<<"\n";
-    this->RemoveVertex(0,0,i);
-  }
-  */
+    std::istringstream iss(line);
+    int er1, esr1, ei1, er2, esr2, ei2;
+    real64 transm;
+    //The input file is written with thr triple index (regionIndex, subRegionIndex,globalVertexIndex) of the two connected point and associated transmissibility
+    if (!(iss >>er1 >> esr1 >> ei1 >> er2 >> esr2 >> ei2 >> transm)) { break; } // error
+    count++;
+    int place_1=-1;
+    int place_2=-1;
+    long unsigned int i=0;
+    //We search if any of the two point is already created
+    //If it is the case we recover its position in the place variables
+    while (i<m_vertices.size() && (place_1==-1 || place_2==-1))
+    {
+      if (m_vertices[i]->getGlobalVertexIndex()==ei1 && m_vertices[i]->getRegionIndex()==er1 && m_vertices[i]->getSubRegionIndex()==esr1 )
+      {
+        place_1=i;
+      }
+      if (m_vertices[i]->getGlobalVertexIndex()==ei2 && m_vertices[i]->getRegionIndex()==er2 && m_vertices[i]->getSubRegionIndex()==esr2 )
+      {
+        place_2=i;
+      }
+      ++i;
+    }
+    //Create or recover the two vertices
+    //Add them to the vertex list and create an entry in the map for them
+    GraphVertex* v1;
+    GraphVertexFace* v2;
+    if(place_1==-1)
+    {
+      v1=new GraphVertex(er1,esr1,ei1);
+      m_vertices.push_back(v1);
+      std::vector<GraphEdge*> edges;
+      m_vertexWithEdgesMap.insert({v1,edges});
+    }
+    else
+    {
+      v1=m_vertices[place_1];
+    }
+    if(place_2==-1)
+    {
+      std::cout<<er2 << " " << esr2 << " " << ei2 << "\n";
+      v2=new GraphVertexFace(er2,esr2,ei2);
+      m_vertices.push_back(v2);
+      std::vector<GraphEdge*> edges;
+      m_vertexWithEdgesMap.insert({v2,edges});
+
+    }
+    else
+    {
+      v2=dynamic_cast<GraphVertexFace*>(m_vertices[place_2]);
+    }
+    //Create the edge, add it to the edge list
+    GraphEdge* e= new GraphEdge(m_edges.size()+m_boundaryEdges.size(), v1, v2,transm);
+    m_boundaryEdges.push_back(e);
+    //Add the edge to the list of linked edge for his two vertices
+    m_vertexWithEdgesMap[v1].push_back(e);
+    m_vertexWithEdgesMap[v2].push_back(e);
+
+  } 
 }
 
 void GraphFromText::PartitionGraph(const MeshLevel & mesh)
@@ -347,7 +382,36 @@ void GraphFromText::PartitionGraph(const MeshLevel & mesh)
       RemoveVertex(m_vertices[to_delete]);
     }
   }
-  
+  RemapFace(mesh);
+}
+
+void GraphFromText::RemapFace(const MeshLevel & mesh)
+{
+  FaceManager const & faceManager = *mesh.getFaceManager();
+  arrayView2d< localIndex const > const & elemList = faceManager.elementList();
+  for(localIndex h = 0; h < faceManager.size(); h++)
+  {
+    // Filter out boundary faces
+    if( elemList[h][1] < 0)
+    {
+      for (long unsigned int i = 0; i < m_boundaryEdges.size(); i++)
+      {
+        if (elemList[h][0] == m_boundaryEdges[i]->getVertex1()->getLocalVertexIndex())
+        {
+          std::cout<< h << " " << m_boundaryEdges[i]->getEdgeIndex() << "\n";
+          std::cout<< elemList[h][0] << " " << m_boundaryEdges[i]->getVertex1()->getLocalVertexIndex() << " " << m_boundaryEdges[i]->getVertex2()->getLocalVertexIndex() << " " << m_boundaryEdges[i]->getVertex2()->getSubRegionIndex() << " " << m_boundaryEdges[i]->getVertex2()->getRegionIndex() << "\n\n";
+          /*
+          GraphVertex f1 = *(m_boundaryEdges[i]->getVertex2());
+          GraphVertex* f2 = &f1;
+          GraphVertexFace* face =  dynamic_cast<GraphVertexFace*>(f2);
+          std::cout<< face->getCorrespondingId();
+          face->setCorrespondingId(h);
+          std::cout<< face->getCorrespondingId();
+          */
+        }
+      }
+    }
+  }
 }
 
 

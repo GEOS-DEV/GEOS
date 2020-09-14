@@ -60,10 +60,14 @@ public:
 
   localIndex getGhostIndex() { return m_ghostIndex; }
 
+  localIndex getCorrespondingId() const {return 0;}
+
   void setGhostIndex (int ghostIndex) { m_ghostIndex = ghostIndex; }
 
   void setLocalIndex (int elementIndex) { m_localVertexIndex = elementIndex; }
   
+  void setCorrespondingId (int correspondingId) {std::cout<<"Could not write " << correspondingId << "\n";}
+
 private:
   localIndex m_regionIndex;
   localIndex m_subRegionIndex;

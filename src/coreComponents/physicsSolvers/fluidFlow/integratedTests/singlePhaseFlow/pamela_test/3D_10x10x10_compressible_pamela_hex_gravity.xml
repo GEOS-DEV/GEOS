@@ -65,7 +65,7 @@
   <Graphs>
     <GraphFromText
       name="graph"
-      file="cube_10x10x10_hex_graph.txt"/>
+      file="cube_10x10x10_hex_graph2.txt"/>
   </Graphs>
   <!-- SPHINX_TUT_EXT_HEX_EVENTS_END -->
   <!-- SPHINX_TUT_EXT_HEX_NUM_METHODS -->
