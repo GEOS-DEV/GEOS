@@ -709,18 +709,3 @@ TEST( FiniteElementBase, test_plus_gradNajAij_plus_NaFi )
   }
 }
 
-
-
-using namespace geosx;
-int main( int argc, char * argv[] )
-{
-  testing::InitGoogleTest();
-
-  basicSetup( argc, argv, false );
-
-  int const result = RUN_ALL_TESTS();
-
-  basicCleanup();
-
-  return result;
-}
