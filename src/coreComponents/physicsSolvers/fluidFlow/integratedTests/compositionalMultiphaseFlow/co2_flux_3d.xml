@@ -70,7 +70,7 @@
       name="outputs"
       timeFrequency="1e5"
       targetExactTimestep="1"
-      target="/Outputs/siloOutput"/>
+      target="/Outputs/vtkOutput"/>
 
     <PeriodicEvent
       name="restarts"
@@ -248,8 +248,8 @@
   <Functions/>
 
   <Outputs>
-    <Silo
-      name="siloOutput"/>
+    <VTK
+      name="vtkOutput"/>
 
     <Restart
       name="sidreRestart"/>
