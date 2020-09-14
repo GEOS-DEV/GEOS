@@ -146,9 +146,9 @@ return_script: &return_script
 
 stages:
 - checks
-- codecov
 - builds
 - return_status
+- codecovStage
 
 jobs:
   allow_failures:
@@ -221,6 +221,6 @@ jobs:
     - CMAKE_BUILD_TYPE=Debug
   - stage: return_status
     <<: *return_script
-  - stage: builds
+  - stage: codecovStage
     name: codecov
     <<: *codecov_script
