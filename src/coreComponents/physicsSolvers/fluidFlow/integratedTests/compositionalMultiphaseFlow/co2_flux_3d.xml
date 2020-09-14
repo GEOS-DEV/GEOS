@@ -155,10 +155,11 @@
 
     <FieldSpecification
       name="barrierTransMult"
+      initialCondition="1"
+      setNames="{ barrier }"      
       objectPath="faceManager"
       fieldName="permeabilityTransMultiplier"
-      scale="0.0"
-      setNames="{ barrier }"/>
+      scale="0.0"/>
     
     <FieldSpecification
       name="initialPressure"

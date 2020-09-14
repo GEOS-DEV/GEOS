@@ -89,8 +89,8 @@ struct AssemblerKernelHelper
    * @param[in] elemList face-to-elemIds map
    * @param[in] regionFilter set containing the indices of the target regions
    * @param[in] elemToFaces elem-to-faces maps
-   * @param[in] mobilities the mobilities in the domain (non-local)
-   * @param[in] dMobilities_dp the derivatives of the mobilities in the domain wrt cell-centered pressure (non-local)
+   * @param[in] mobility the mobilities in the domain (non-local)
+   * @param[in] dMobility_dp the derivatives of the mobilities in the domain wrt cell-centered pressure (non-local)
    * @param[in] elemDofNumber the dof numbers of all the cell centered pressures (non-local)
    * @param[in] oneSidedVolFlux the volumetric fluxes at this element's faces
    * @param[inout] upwMobility the upwinded mobilities at this element's faces

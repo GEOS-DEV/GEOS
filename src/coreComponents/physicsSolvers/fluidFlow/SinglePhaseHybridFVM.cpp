@@ -179,6 +179,10 @@ void SinglePhaseHybridFVM::AssembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( t
   NodeManager const & nodeManager = *mesh.getNodeManager();
   FaceManager const & faceManager = *mesh.getFaceManager();
 
+  NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
+  FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
+  FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
+
   // node data (for transmissibility computation)
 
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition = nodeManager.referencePosition();
@@ -209,8 +213,9 @@ void SinglePhaseHybridFVM::AssembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( t
 
   // get the face-centered transMultiplier
   // TODO: implement some kind of HybridFVMApprox that inherits from FluxApproximationBase
+  string const & coeffName = fluxApprox.getReference< string >( FluxApproximationBase::viewKeyStruct::coeffNameString );
   arrayView1d< real64 const > const & transMultiplier =
-    faceManager.getReference< array1d< real64 > >( FluxApproximationBase::viewKeyStruct::transMultiplierString );
+    faceManager.getReference< array1d< real64 > >( coeffName + FluxApproximationBase::viewKeyStruct::transMultiplierString );
 
   // get the face-to-nodes connectivity for the transmissibility calculation
   ArrayOfArraysView< localIndex const > const & faceToNodes = faceManager.nodeList().toViewConst();

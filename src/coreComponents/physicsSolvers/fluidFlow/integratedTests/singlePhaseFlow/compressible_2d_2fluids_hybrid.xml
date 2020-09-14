@@ -171,6 +171,17 @@
       fieldName="pressure"
       scale="5e6"/>
 
+    <!-- Note that with the HybridFVM solver, it is not possible to -->
+    <!-- set a transMultiplier to 0, since it makes the system singular -->
+    <!-- This happens because then one of the face constraints becomes 0 = 0...  -->
+    <FieldSpecification
+      name="impermeableBarrierTransMult"
+      initialCondition="1"
+      setNames="{ impermeableBarrier1, impermeableBarrier2 }"
+      objectPath="faceManager"
+      fieldName="permeabilityTransMultiplier"
+      scale="0.1"/>
+
     <FieldSpecification
       name="sourceTerm"
       objectPath="ElementRegions"
@@ -184,16 +195,6 @@
       fieldName="pressure"
       scale="5e5"
       setNames="{ sink }"/>
-
-    <!-- Note that with the HybridFVM solver, it is not possible to -->
-    <!-- set a transMultiplier to 0, since it makes the system singular -->
-    <!-- This is happens because then a face constraint becomes 0 = 0...  -->
-    <FieldSpecification
-      name="impermeableBarrierTransMult"
-      objectPath="faceManager"
-      fieldName="permeabilityTransMultiplier"
-      scale="0.1"
-      setNames="{ impermeableBarrier1, impermeableBarrier2 }"/>
 
     <FieldSpecification
       name="lowPermBarrierTransMult"

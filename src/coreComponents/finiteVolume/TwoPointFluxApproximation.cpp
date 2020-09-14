@@ -18,6 +18,7 @@
  */
 #include "TwoPointFluxApproximation.hpp"
 
+#include "codingUtilities/Utilities.hpp"
 #include "finiteVolume/BoundaryStencil.hpp"
 #include "finiteVolume/CellElementStencilTPFA.hpp"
 #include "finiteVolume/FaceElementStencil.hpp"
@@ -66,7 +67,7 @@ void TwoPointFluxApproximation::computeCellStencil( MeshLevel & mesh ) const
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X = nodeManager.referencePosition();
 
   arrayView1d< real64 const > const & transMultiplier =
-    faceManager.getReference< array1d< real64 > >( viewKeyStruct::transMultiplierString );
+    faceManager.getReference< array1d< real64 > >( m_coeffName + viewKeyStruct::transMultiplierString );
 
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > const elemCenter =
     elemManager.ConstructArrayViewAccessor< real64, 2 >( CellBlock::viewKeyStruct::elementCenterString );
@@ -98,7 +99,7 @@ void TwoPointFluxApproximation::computeCellStencil( MeshLevel & mesh ) const
   forAll< serialPolicy >( faceManager.size(), [=, &stencil]( localIndex const kf )
   {
     // Filter out boundary faces
-    if( elemList[kf][0] < 0 || elemList[kf][1] < 0 || transMultiplier[kf] < 1e-16 )
+    if( elemList[kf][0] < 0 || elemList[kf][1] < 0 || isZero( transMultiplier[kf] ) )
     {
       return;
     }
@@ -224,7 +225,7 @@ void TwoPointFluxApproximation::addToFractureStencil( MeshLevel & mesh,
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > X = nodeManager->referencePosition();
 
   arrayView1d< real64 const > const & transMultiplier =
-    faceManager->getReference< array1d< real64 > >( viewKeyStruct::transMultiplierString );
+    faceManager->getReference< array1d< real64 > >( m_coeffName + viewKeyStruct::transMultiplierString );
 
   FaceElementStencil & fractureStencil = getStencil< FaceElementStencil >( mesh, viewKeyStruct::fractureStencilString );
   CellElementStencilTPFA & cellStencil = getStencil< CellElementStencilTPFA >( mesh, viewKeyStruct::cellStencilString );
