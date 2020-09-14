@@ -708,4 +708,3 @@ TEST( FiniteElementBase, test_plus_gradNajAij_plus_NaFi )
     }
   }
 }
-
