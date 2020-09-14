@@ -124,6 +124,14 @@ draft_script: &draft_script
       exit 0
     fi
 
+codecov_script: & codecov_script
+  install:
+  - pip install coverage
+  script:
+  - coverage run -m unittest discover
+  after_success:
+  - bash <(curl -s https://codecov.io/bash)
+
 return_script: &return_script
   script:
   # Verifies if all the "checks" jobs passed
@@ -138,6 +146,7 @@ return_script: &return_script
 
 stages:
 - checks
+- codecov
 - builds
 - return_status
 
@@ -146,6 +155,7 @@ jobs:
   - name: code_style
   - name: documentation
   - name: check_submodules
+  - name: codecov
   include:
   - stage: checks
     name: check_pr_is_not_a_draft
@@ -211,3 +221,6 @@ jobs:
     - CMAKE_BUILD_TYPE=Debug
   - stage: return_status
     <<: *return_script
+  - stage: builds
+    name: codecov
+    <<: *codecov_script
