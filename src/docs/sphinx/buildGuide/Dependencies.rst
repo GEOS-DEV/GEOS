@@ -20,7 +20,7 @@ On Debian flavored distributions, consider the following command line.
     apt-get install git git-lfs gcc g++ gfortran python2.7
 
 The GEOSX software makes use of multiple libraries.
-**Most of them are mirrored in the** `thidPartyLib/tplMirror <https://github.com/GEOSX/thirdPartyLibs/tree/master/tplMirror>`__ **folder and will be configured and build by the GEOSX TPL building process.**
+**Most of them are mirrored in the** `thidPartyLib/tplMirror <https://github.com/GEOSX/thirdPartyLibs/tree/master/tplMirror>`__ **folder or can be downloaded using the** `thirdPartyLibs/scripts/download_prerequisites.py <https://github.com/GEOSX/thirdPartyLibs/blob/master/scripts/download_prerequisites.py>`__ ** (see :ref:`QuickStart_download`). They will be configured and build by the GEOSX TPL building process.**
 You may want to check the `CMakeLists.txt <https://github.com/GEOSX/thirdPartyLibs/blob/master/CMakeLists.txt>`_ that contains the versions of the dependencies.
 
 LLNL HPC libraries and tool boxes...

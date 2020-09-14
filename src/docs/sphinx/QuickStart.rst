@@ -87,6 +87,8 @@ If you are not familiar with the basics of Git, `here is a helpful resource <htt
 
 If you intend to develop inside the GEOSX codebase, you may benefit from setting up your git credentials (see :ref:`GitWorkflow`).
 
+.. _QuickStart_download:
+
 Download
 ======================
 
@@ -142,6 +144,9 @@ Next, we do the same for the TPL repository.  From the ``codes`` directory, type
 
    git clone https://github.com/GEOSX/thirdPartyLibs.git
    cd thirdPartyLibs
+   # Downloading some third party libraries from their dedicated internet sites.
+   python3 scripts/download_prerequisites.py --tpl=scripts/tpls.yaml --dest=tplMirror
+   # Some other third party libraries are provided as git-lfs files directly in the repository.
    git lfs install
    git pull
    git submodule init
