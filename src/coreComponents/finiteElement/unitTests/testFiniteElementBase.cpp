@@ -12,9 +12,6 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-/**
- * @file testFiniteElementBase.cpp
- */
 
 #include "finiteElement/elementFormulations/FiniteElementBase.hpp"
 #include "managers/initialization.hpp"
@@ -228,7 +225,7 @@ TEST( FiniteElementBase, test_capture )
 #endif
 
 
-  forAll< serialPolicy >( 1, [ feBase, gradNDimsView, detJDimsView ]( int const i )
+  forAll< serialPolicy >( 1, [ feBase, gradNDimsView, detJDimsView ]( int const )
   {
     gradNDimsView[0] = feBase.getGradNView().size( 0 );
     gradNDimsView[1] = feBase.getGradNView().size( 1 );
@@ -331,12 +328,12 @@ static void symmetricGradient( real64 const (&gradN)[NUM_SUPPORT_POINTS][3],
   }
   for( int a=0; a<NUM_SUPPORT_POINTS; ++a )
   {
-    gradVar[0] = gradVar[0] + gradN[a][0] * var[ a ][0];
-    gradVar[1] = gradVar[1] + gradN[a][1] * var[ a ][1];
-    gradVar[2] = gradVar[2] + gradN[a][2] * var[ a ][2];
-    gradVar[3] = gradVar[3] + gradN[a][2] * var[ a ][1] + gradN[a][1] * var[ a ][2];
-    gradVar[4] = gradVar[4] + gradN[a][2] * var[ a ][0] + gradN[a][0] * var[ a ][2];
-    gradVar[5] = gradVar[5] + gradN[a][1] * var[ a ][0] + gradN[a][0] * var[ a ][1];
+    gradVar[0] += gradN[a][0] * var[ a ][0];
+    gradVar[1] += gradN[a][1] * var[ a ][1];
+    gradVar[2] += gradN[a][2] * var[ a ][2];
+    gradVar[3] += gradN[a][2] * var[ a ][1] + gradN[a][1] * var[ a ][2];
+    gradVar[4] += gradN[a][2] * var[ a ][0] + gradN[a][0] * var[ a ][2];
+    gradVar[5] += gradN[a][1] * var[ a ][0] + gradN[a][0] * var[ a ][1];
   }
 }
 
@@ -380,7 +377,7 @@ static void gradient( real64 const (&gradN)[NUM_SUPPORT_POINTS][3],
   {
     for( int i = 0; i < 3; ++i )
     {
-      gradVar[i] = gradVar[i] + var[ a ] * gradN[a][i];
+      gradVar[i] += var[ a ] * gradN[a][i];
     }
   }
 }
@@ -403,7 +400,7 @@ static void gradient( real64 const (&gradN)[NUM_SUPPORT_POINTS][3],
     {
       for( int j = 0; j < 3; ++j )
       {
-        gradVar[i][j] = gradVar[i][j] + var[ a ][i] * gradN[a][j];
+        gradVar[i][j] += var[ a ][i] * gradN[a][j];
       }
     }
   }
@@ -465,7 +462,7 @@ static void valueAndGradient( real64 const (&N)[NUM_SUPPORT_POINTS],
     value += N[a] * var[a];
     for( int i = 0; i < 3; ++i )
     {
-      gradVar[i] = gradVar[i] + var[ a ] * gradN[a][i];
+      gradVar[i] +=  var[ a ] * gradN[a][i];
     }
   }
 }
@@ -565,10 +562,10 @@ TEST( FiniteElementBase, test_plus_gradNajAij )
   real64 r2Tensor[3][3];
   real64 r2SymmTensor[6];
 
-  real64 baselineResult[NUM_SUPPORT_POINTS][3] = {0};
-  real64 feResult[NUM_SUPPORT_POINTS][3] = {0};
-  real64 baselineResultSym[NUM_SUPPORT_POINTS][3] = {0};
-  real64 feResultSym[NUM_SUPPORT_POINTS][3] = {0};
+  real64 baselineResult[NUM_SUPPORT_POINTS][3] = {{0}};
+  real64 feResult[NUM_SUPPORT_POINTS][3] = {{0}};
+  real64 baselineResultSym[NUM_SUPPORT_POINTS][3] = {{0}};
+  real64 feResultSym[NUM_SUPPORT_POINTS][3] = {{0}};
 
   for( int q=0; q<20; ++q )
   {
@@ -615,8 +612,8 @@ TEST( FiniteElementBase, test_plus_NaFi )
   real64 N[NUM_SUPPORT_POINTS];
   real64 f[3];
 
-  real64 baselineResult[NUM_SUPPORT_POINTS][3] = {0};
-  real64 feResult[NUM_SUPPORT_POINTS][3] = {0};
+  real64 baselineResult[NUM_SUPPORT_POINTS][3] = {{0}};
+  real64 feResult[NUM_SUPPORT_POINTS][3] = {{0}};
 
   for( int q=0; q<20; ++q )
   {
@@ -682,10 +679,10 @@ TEST( FiniteElementBase, test_plus_gradNajAij_plus_NaFi )
   real64 r2SymmTensor[6];
   real64 f[3];
 
-  real64 baselineResult[NUM_SUPPORT_POINTS][3] = {0};
-  real64 feResult[NUM_SUPPORT_POINTS][3] = {0};
-  real64 baselineResultSym[NUM_SUPPORT_POINTS][3] = {0};
-  real64 feResultSym[NUM_SUPPORT_POINTS][3] = {0};
+  real64 baselineResult[NUM_SUPPORT_POINTS][3] = {{0}};
+  real64 feResult[NUM_SUPPORT_POINTS][3] = {{0}};
+  real64 baselineResultSym[NUM_SUPPORT_POINTS][3] = {{0}};
+  real64 feResultSym[NUM_SUPPORT_POINTS][3] = {{0}};
 
   for( int q=0; q<20; ++q )
   {

@@ -41,8 +41,13 @@ class FiniteElementBase
 {
 public:
 
+  /// Default Constructor
   FiniteElementBase() = default;
 
+  /**
+   * @brief Copy Constructor
+   * @param source The object to copy.
+   */
   FiniteElementBase( FiniteElementBase const & source ):
 #ifdef CALC_FEM_SHAPE_IN_KERNEL
     m_viewGradN(),
@@ -53,8 +58,19 @@ public:
 #endif
   {}
 
+  /// Default Move constructor
   FiniteElementBase( FiniteElementBase && ) = default;
+
+  /**
+   * @brief Deleted copy assignment operator
+   * @return deleted
+   */
   FiniteElementBase & operator=( FiniteElementBase const & ) = delete;
+
+  /**
+   * @brief Deleted move assignment operator
+   * @return deleted
+   */
   FiniteElementBase & operator=( FiniteElementBase && ) = delete;
 
   /**
@@ -744,20 +760,13 @@ void FiniteElementBase::plus_gradNajAij_plus_NaFi( GRADIENT_TYPE const & gradN,
 
 
 /// Macro to simplify name resolution in derived classes.
-#define USING_FINITEELEMENTBASE                                \
-  /** @copydoc FiniteElementBase::value                     */ \
-  using FiniteElementBase::value;                              \
-  /** @copydoc FiniteElementBase::symmetricGradient         */ \
-  using FiniteElementBase::symmetricGradient;                  \
-  /** @copydoc FiniteElementBase::gradient                  */ \
-  using FiniteElementBase::gradient;                           \
-  /** @copydoc FiniteElementBase::valueAndGradient          */ \
-  using FiniteElementBase::valueAndGradient;                   \
-  /** @copydoc FiniteElementBase::plus_gradNajAij           */ \
-  using FiniteElementBase::plus_gradNajAij;                    \
-  /** @copydoc FiniteElementBase::plus_NaFi                 */ \
-  using FiniteElementBase::plus_NaFi;                          \
-  /** @copydoc FiniteElementBase::plus_gradNajAij_plus_NaFi */ \
+#define USING_FINITEELEMENTBASE                       \
+  using FiniteElementBase::value;                     \
+  using FiniteElementBase::symmetricGradient;         \
+  using FiniteElementBase::gradient;                  \
+  using FiniteElementBase::valueAndGradient;          \
+  using FiniteElementBase::plus_gradNajAij;           \
+  using FiniteElementBase::plus_NaFi;                 \
   using FiniteElementBase::plus_gradNajAij_plus_NaFi;
 
 #endif //GEOSX_FINITEELEMENT_ELEMENTFORMULATIONS_FINITEELEMENTBASE

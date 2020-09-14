@@ -79,7 +79,9 @@ public:
   /// The number of quadrature points per element.
   constexpr static localIndex numQuadraturePoints = 8;
 
+  /** @cond Doxygen_Suppress */
   USING_FINITEELEMENTBASE
+  /** @endcond Doxygen_Suppress */
 
   virtual ~H1_Hexahedron_Lagrange1_GaussLegendre2() override
   {}

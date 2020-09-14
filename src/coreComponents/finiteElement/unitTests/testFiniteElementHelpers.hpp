@@ -80,18 +80,18 @@ inline void randomVar( real64 (& v)[3][3] )
   }
 }
 
+/*
+   template< typename FE_FORMULATION >
+   void createTestElement( real64 (& X)[FE_FORMULATION::numNodes][3] )
+   {
+   constexpr int numNodes = FE_FORMULATION::numNodes;
+   constexpr int numQuadraturePts = FE_FORMULATION::numQuadraturePoints;
+   real64 xCoords[numNodes][3];
+   real64 pCoords[numNodes][3];
 
-template< typename FE_FORMULATION >
-void createTestElement( real64 (& X)[FE_FORMULATION::numNodes][3] )
-{
-  constexpr int numNodes = FE_FORMULATION::numNodes;
-  constexpr int numQuadraturePts = FE_FORMULATION::numQuadraturePoints;
-  real64 xCoords[numNodes][3];
-  real64 pCoords[numNodes][3];
-
-  srand( 1234 );
-  for( int a=0; a<numNodes; ++a )
-  {
+   srand( 1234 );
+   for( int a=0; a<numNodes; ++a )
+   {
     pCoords[a][0] = FE_FORMULATION::parentCoords0( a );
     pCoords[a][1] = FE_FORMULATION::parentCoords1( a );
     pCoords[a][2] = FE_FORMULATION::parentCoords2( a );
@@ -99,8 +99,10 @@ void createTestElement( real64 (& X)[FE_FORMULATION::numNodes][3] )
     xCoords[a][0] = FE_FORMULATION::parentCoords0( a ) + rando( -0.3, 0.3 );
     xCoords[a][1] = FE_FORMULATION::parentCoords1( a ) + rando( -0.3, 0.3 );
     xCoords[a][2] = FE_FORMULATION::parentCoords2( a ) + rando( -0.3, 0.3 );
-  }
-}
+   }
+   }
+ */
+
 }
 
 #endif
