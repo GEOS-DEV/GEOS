@@ -123,15 +123,7 @@ draft_script: &draft_script
     else
       exit 0
     fi
-
-codecov_script: & codecov_script
-  install:
-  - pip install coverage
-  script:
-  - coverage run -m unittest discover
-  after_success:
-  - bash <(curl -s https://codecov.io/bash)
-
+    
 return_script: &return_script
   script:
   # Verifies if all the "checks" jobs passed
@@ -148,7 +140,6 @@ stages:
 - checks
 - builds
 - return_status
-- codecovStage
 
 jobs:
   allow_failures:
@@ -223,4 +214,17 @@ jobs:
     <<: *return_script
   - stage: codecovStage
     name: codecov
-    <<: *codecov_script
+    addons:
+      apt:
+        packages: lcov  
+    <<: *geosx_linux_build
+    after_success:
+    # Create lcov report
+    - lcov --capture --directory . --output-file coverage.info
+    - lcov --remove coverage.info '/usr/*' --output-file coverage.info # filter system-files
+    - lcov --list coverage.info # debug info
+    # Uploading report to CodeCov
+    - bash <(curl -s https://codecov.io/bash) -f coverage.info || echo "Codecov did not collect coverage reports"
+    env:
+    - DOCKER_REPOSITORY=geosx/ubuntu18.04-gcc8
+    - CMAKE_BUILD_TYPE=Release
