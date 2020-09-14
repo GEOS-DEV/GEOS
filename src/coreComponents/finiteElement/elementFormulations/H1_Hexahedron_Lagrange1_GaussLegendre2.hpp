@@ -217,10 +217,10 @@ public:
    *   \f$var_{ij}\f$ is the rank-2 symmetric tensor.
    */
   GEOSX_HOST_DEVICE
-  static void gradNajAij( int const q,
-                          real64 const (&invJ)[3][3],
-                          real64 const (&var)[6],
-                          real64 ( &R )[numNodes][3] );
+  static void plus_gradNajAij( int const q,
+                               real64 const (&invJ)[3][3],
+                               real64 const (&var)[6],
+                               real64 ( &R )[numNodes][3] );
 
 
 
@@ -570,10 +570,10 @@ void H1_Hexahedron_Lagrange1_GaussLegendre2::symmetricGradient( int const q,
 
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-void H1_Hexahedron_Lagrange1_GaussLegendre2::gradNajAij( int const q,
-                                                         real64 const (&invJ)[3][3],
-                                                         real64 const (&var)[6],
-                                                         real64 (& R)[numNodes][3] )
+void H1_Hexahedron_Lagrange1_GaussLegendre2::plus_gradNajAij( int const q,
+                                                              real64 const (&invJ)[3][3],
+                                                              real64 const (&var)[6],
+                                                              real64 (& R)[numNodes][3] )
 {
   int qa, qb, qc;
   LagrangeBasis1::TensorProduct3D::multiIndex( q, qa, qb, qc );

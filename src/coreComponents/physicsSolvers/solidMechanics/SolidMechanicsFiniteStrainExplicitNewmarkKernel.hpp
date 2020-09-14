@@ -191,7 +191,7 @@ public:
     LvArray::tensorOps::symAikBjk< 3 >( P, m_constitutiveUpdate.m_stress[k][q].toSliceConst(), fInv );
     LvArray::tensorOps::scale< 3, 3 >( P, -detJ * detF );
 
-    FE_TYPE::gradNajAij( dNdX, P, stack.fLocal );
+    FE_TYPE::plus_gradNajAij( dNdX, P, stack.fLocal );
 
   }
 

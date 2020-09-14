@@ -58,8 +58,8 @@ static real64 inverse( real64 (& J)[3][3] )
 
 template< int NUM_SUPPORT_POINTS >
 static void value( real64 const (&N)[NUM_SUPPORT_POINTS],
-                               real64 const (&var)[NUM_SUPPORT_POINTS],
-                               real64 & value )
+                   real64 const (&var)[NUM_SUPPORT_POINTS],
+                   real64 & value )
 {
   value = 0;
   for( int a=0; a<NUM_SUPPORT_POINTS; ++a )
@@ -71,12 +71,12 @@ static void value( real64 const (&N)[NUM_SUPPORT_POINTS],
 template< int NUM_SUPPORT_POINTS,
           int NUM_COMPONENTS >
 static void value( real64 const (&N)[NUM_SUPPORT_POINTS],
-                               real64 const (&var)[NUM_SUPPORT_POINTS][NUM_COMPONENTS],
-                               real64 (& value)[NUM_COMPONENTS] )
+                   real64 const (&var)[NUM_SUPPORT_POINTS][NUM_COMPONENTS],
+                   real64 (& value)[NUM_COMPONENTS] )
 {
   for( int i=0; i<NUM_COMPONENTS; ++i )
   {
-    value[i] = 0 ;
+    value[i] = 0;
   }
   for( int a=0; a<NUM_SUPPORT_POINTS; ++a )
   {
@@ -89,9 +89,9 @@ static void value( real64 const (&N)[NUM_SUPPORT_POINTS],
 
 
 template< int NUM_SUPPORT_POINTS >
-static void symmetricGradient( real64 const (& gradN)[NUM_SUPPORT_POINTS][3],
-                                           real64 const (&var)[NUM_SUPPORT_POINTS][3],
-                                           real64 (& gradVar)[6] )
+static void symmetricGradient( real64 const (&gradN)[NUM_SUPPORT_POINTS][3],
+                               real64 const (&var)[NUM_SUPPORT_POINTS][3],
+                               real64 (& gradVar)[6] )
 {
   for( int i=0; i<6; ++i )
   {
@@ -109,9 +109,9 @@ static void symmetricGradient( real64 const (& gradN)[NUM_SUPPORT_POINTS][3],
 }
 
 template< int NUM_SUPPORT_POINTS >
-static void gradient( real64 const (& gradN)[NUM_SUPPORT_POINTS][3],
-                                  real64 const (&var)[NUM_SUPPORT_POINTS],
-                                  real64 (& gradVar)[3] )
+static void gradient( real64 const (&gradN)[NUM_SUPPORT_POINTS][3],
+                      real64 const (&var)[NUM_SUPPORT_POINTS],
+                      real64 (& gradVar)[3] )
 {
   for( int i=0; i<3; ++i )
   {
@@ -127,9 +127,9 @@ static void gradient( real64 const (& gradN)[NUM_SUPPORT_POINTS][3],
 }
 
 template< int NUM_SUPPORT_POINTS >
-static void gradient( real64 const (& gradN)[NUM_SUPPORT_POINTS][3],
-                                  real64 const (&var)[NUM_SUPPORT_POINTS][3],
-                                  real64 (& gradVar)[3][3] )
+static void gradient( real64 const (&gradN)[NUM_SUPPORT_POINTS][3],
+                      real64 const (&var)[NUM_SUPPORT_POINTS][3],
+                      real64 (& gradVar)[3][3] )
 {
   for( int i = 0; i < 3; ++i )
   {
@@ -154,10 +154,10 @@ static void gradient( real64 const (& gradN)[NUM_SUPPORT_POINTS][3],
 
 template< int NUM_SUPPORT_POINTS >
 static void valueAndGradient( real64 const (&N)[NUM_SUPPORT_POINTS],
-                              real64 const (& gradN)[NUM_SUPPORT_POINTS][3],
-                                          real64 const (&var)[NUM_SUPPORT_POINTS],
-                                          real64 & value,
-                                          real64 (& gradVar)[3] )
+                              real64 const (&gradN)[NUM_SUPPORT_POINTS][3],
+                              real64 const (&var)[NUM_SUPPORT_POINTS],
+                              real64 & value,
+                              real64 (& gradVar)[3] )
 {
   value = 0;
   for( int i = 0; i < 3; ++i )
@@ -178,9 +178,9 @@ static void valueAndGradient( real64 const (&N)[NUM_SUPPORT_POINTS],
 
 
 template< int NUM_SUPPORT_POINTS >
-static void gradNajAij( real64 const (& gradN)[NUM_SUPPORT_POINTS][3],
-                                    real64 const (&var_detJxW)[6],
-                                    real64 (& R)[NUM_SUPPORT_POINTS][3] )
+static void plus_gradNajAij( real64 const (&gradN)[NUM_SUPPORT_POINTS][3],
+                             real64 const (&var_detJxW)[6],
+                             real64 (& R)[NUM_SUPPORT_POINTS][3] )
 {
   for( int a=0; a<NUM_SUPPORT_POINTS; ++a )
   {
@@ -194,9 +194,9 @@ static void gradNajAij( real64 const (& gradN)[NUM_SUPPORT_POINTS][3],
 template< int NUM_SUPPORT_POINTS >
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-void gradNajAij( real64 const (& gradN)[NUM_SUPPORT_POINTS][3],
-                                    real64 const (&var_detJxW)[3][3],
-                                    real64 (& R)[NUM_SUPPORT_POINTS][3] )
+void plus_gradNajAij( real64 const (&gradN)[NUM_SUPPORT_POINTS][3],
+                      real64 const (&var_detJxW)[3][3],
+                      real64 (& R)[NUM_SUPPORT_POINTS][3] )
 {
   for( int a=0; a<NUM_SUPPORT_POINTS; ++a )
   {
@@ -207,9 +207,9 @@ void gradNajAij( real64 const (& gradN)[NUM_SUPPORT_POINTS][3],
 }
 
 template< int NUM_SUPPORT_POINTS >
-static void NaFi( real64 const (&N)[NUM_SUPPORT_POINTS],
-                              real64 const (&var_detJxW)[3],
-                              real64 ( & R )[NUM_SUPPORT_POINTS][3] )
+static void plus_NaFi( real64 const (&N)[NUM_SUPPORT_POINTS],
+                       real64 const (&var_detJxW)[3],
+                       real64 ( & R )[NUM_SUPPORT_POINTS][3] )
 {
   for( int a=0; a<NUM_SUPPORT_POINTS; ++a )
   {
@@ -221,11 +221,11 @@ static void NaFi( real64 const (&N)[NUM_SUPPORT_POINTS],
 
 
 template< int NUM_SUPPORT_POINTS >
-static void gradNajAij_plus_NaFi( real64 const (& gradN)[NUM_SUPPORT_POINTS][3],
-                                              real64 const (&var_detJxW)[6],
-                                              real64 const (&N)[NUM_SUPPORT_POINTS],
-                                              real64 const (&forcingTerm_detJxW)[3],
-                                              real64 (& R)[NUM_SUPPORT_POINTS][3] )
+static void plus_gradNajAij_plus_NaFi( real64 const (&gradN)[NUM_SUPPORT_POINTS][3],
+                                       real64 const (&var_detJxW)[6],
+                                       real64 const (&N)[NUM_SUPPORT_POINTS],
+                                       real64 const (&forcingTerm_detJxW)[3],
+                                       real64 (& R)[NUM_SUPPORT_POINTS][3] )
 {
   for( int a=0; a<NUM_SUPPORT_POINTS; ++a )
   {
@@ -236,11 +236,11 @@ static void gradNajAij_plus_NaFi( real64 const (& gradN)[NUM_SUPPORT_POINTS][3],
 }
 
 template< int NUM_SUPPORT_POINTS >
-static void gradNajAij_plus_NaFi( real64 const (& gradN)[NUM_SUPPORT_POINTS][3],
-                                              real64 const (&var_detJxW)[3][3],
-                                              real64 const (&N)[NUM_SUPPORT_POINTS],
-                                              real64 const (&forcingTerm_detJxW)[3],
-                                              real64 (& R)[NUM_SUPPORT_POINTS][3] )
+static void plus_gradNajAij_plus_NaFi( real64 const (&gradN)[NUM_SUPPORT_POINTS][3],
+                                       real64 const (&var_detJxW)[3][3],
+                                       real64 const (&N)[NUM_SUPPORT_POINTS],
+                                       real64 const (&forcingTerm_detJxW)[3],
+                                       real64 (& R)[NUM_SUPPORT_POINTS][3] )
 {
   for( int a=0; a<NUM_SUPPORT_POINTS; ++a )
   {
@@ -320,18 +320,13 @@ TEST( FiniteElementBase, testDetJHost )
 
 
 TEST( FiniteElementBase, setGradNView )
-{
-}
+{}
 
 TEST( FiniteElementBase, setDetJView )
-{
-
-}
+{}
 
 TEST( FiniteElementBase, testGetGradN )
-{
-
-}
+{}
 
 
 TEST( FiniteElementBase, testValue )
@@ -344,9 +339,9 @@ TEST( FiniteElementBase, testValue )
 
   for( int q=0; q<20; ++q )
   {
-    randomShape(N);
-    randomSupportVar(scalar);
-    randomSupportVar(vector);
+    randomShape( N );
+    randomSupportVar( scalar );
+    randomSupportVar( vector );
 
     real64 referenceScalarValue = -1.0;
     real64 feBaseScalarValue = -1.0;
@@ -356,8 +351,8 @@ TEST( FiniteElementBase, testValue )
     EXPECT_FLOAT_EQ( feBaseScalarValue, referenceScalarValue );
 
 
-    real64 referenceVectorValue[3] = {-1,-1,-1};
-    real64 feBaseVectorValue[3] = {-1,-1,-1};
+    real64 referenceVectorValue[3] = {-1, -1, -1};
+    real64 feBaseVectorValue[3] = {-1, -1, -1};
     value( N, vector, referenceVectorValue );
     FiniteElementBase::value( N, vector, feBaseVectorValue );
 
@@ -377,11 +372,11 @@ TEST( FiniteElementBase, testSymmetricGradient )
 
   for( int q=0; q<20; ++q )
   {
-    randomShapeGradient(gradN);
-    randomSupportVar(vector);
+    randomShapeGradient( gradN );
+    randomSupportVar( vector );
 
-    real64 referenceVectorGradient[6] = {-1,-1,-1,-1,-1,-1};
-    real64 feBaseVectorGradient[6] = {-1,-1,-1,-1,-1,-1};
+    real64 referenceVectorGradient[6] = {-1, -1, -1, -1, -1, -1};
+    real64 feBaseVectorGradient[6] = {-1, -1, -1, -1, -1, -1};
     symmetricGradient( gradN, vector, referenceVectorGradient );
     FiniteElementBase::symmetricGradient( gradN, vector, feBaseVectorGradient );
 
@@ -402,18 +397,18 @@ TEST( FiniteElementBase, testGradient )
 
   for( int q=0; q<20; ++q )
   {
-    randomShapeGradient(gradN);
-    randomSupportVar(scalar);
-    randomSupportVar(vector);
+    randomShapeGradient( gradN );
+    randomSupportVar( scalar );
+    randomSupportVar( vector );
 
-    real64 referenceScalarGradient[3] = {-1,-1,-1};
-    real64 feBaseScalarGradient[3] = {-1,-1,-1};
+    real64 referenceScalarGradient[3] = {-1, -1, -1};
+    real64 feBaseScalarGradient[3] = {-1, -1, -1};
     gradient( gradN, scalar, referenceScalarGradient );
     FiniteElementBase::gradient( gradN, scalar, feBaseScalarGradient );
 
 
-    real64 referenceVectorGradient[3][3] = {{-1,-1,-1},{-1,-1,-1},{-1,-1,-1}};
-    real64 feBaseVectorGradient[3][3] = {{-1,-1,-1},{-1,-1,-1},{-1,-1,-1}};
+    real64 referenceVectorGradient[3][3] = {{-1, -1, -1}, {-1, -1, -1}, {-1, -1, -1}};
+    real64 feBaseVectorGradient[3][3] = {{-1, -1, -1}, {-1, -1, -1}, {-1, -1, -1}};
     gradient( gradN, vector, referenceVectorGradient );
     FiniteElementBase::gradient( gradN, vector, feBaseVectorGradient );
 
@@ -439,17 +434,17 @@ TEST( FiniteElementBase, testValueAndGradient )
 
   for( int q=0; q<20; ++q )
   {
-    randomShape(N);
-    randomShapeGradient(gradN);
-    randomSupportVar(scalar);
-    randomSupportVar(vector);
+    randomShape( N );
+    randomShapeGradient( gradN );
+    randomSupportVar( scalar );
+    randomSupportVar( vector );
 
 
 
     real64 referenceScalarValue = -1.0;
     real64 feBaseScalarValue = -1.0;
-    real64 referenceScalarGradient[3] = {-1,-1,-1};
-    real64 feBaseScalarGradient[3] = {-1,-1,-1};
+    real64 referenceScalarGradient[3] = {-1, -1, -1};
+    real64 feBaseScalarGradient[3] = {-1, -1, -1};
     valueAndGradient( N, gradN, scalar, referenceScalarValue, referenceScalarGradient );
     FiniteElementBase::valueAndGradient( N, gradN, scalar, feBaseScalarValue, feBaseScalarGradient );
 
@@ -505,23 +500,23 @@ TEST( FiniteElementBase, testGradNajAij )
 
   for( int q=0; q<20; ++q )
   {
-    randomShape(N);
-    randomShapeGradient(gradN);
-    randomVar(r2Tensor);
-    randomVar(r2SymmTensor);
-    randomVar(f);
+    randomShape( N );
+    randomShapeGradient( gradN );
+    randomVar( r2Tensor );
+    randomVar( r2SymmTensor );
+    randomVar( f );
 
-    gradNajAij( gradN, r2Tensor, baselineResult );
-    FiniteElementBase::gradNajAij( gradN, r2Tensor, feResult );
+    plus_gradNajAij( gradN, r2Tensor, baselineResult );
+    FiniteElementBase::plus_gradNajAij( gradN, r2Tensor, feResult );
 
-    gradNajAij( gradN, r2SymmTensor, baselineResultSym );
-    FiniteElementBase::gradNajAij( gradN, r2SymmTensor, feResultSym );
+    plus_gradNajAij( gradN, r2SymmTensor, baselineResultSym );
+    FiniteElementBase::plus_gradNajAij( gradN, r2SymmTensor, feResultSym );
 
-    gradNajAij_plus_NaFi( gradN, r2Tensor, N, f, baselineResult2 );
-    FiniteElementBase::gradNajAij_plus_NaFi( gradN, r2Tensor, N, f, feResult2 );
+    plus_gradNajAij_plus_NaFi( gradN, r2Tensor, N, f, baselineResult2 );
+    FiniteElementBase::plus_gradNajAij_plus_NaFi( gradN, r2Tensor, N, f, feResult2 );
 
-    gradNajAij_plus_NaFi( gradN, r2SymmTensor, N, f, baselineResultSym2 );
-    FiniteElementBase::gradNajAij_plus_NaFi( gradN, r2SymmTensor, N, f, feResultSym2 );
+    plus_gradNajAij_plus_NaFi( gradN, r2SymmTensor, N, f, baselineResultSym2 );
+    FiniteElementBase::plus_gradNajAij_plus_NaFi( gradN, r2SymmTensor, N, f, feResultSym2 );
   }
 
   for( int a=0; a<NUM_SUPPORT_POINTS; ++a )

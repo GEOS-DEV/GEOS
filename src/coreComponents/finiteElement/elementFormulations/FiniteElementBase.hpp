@@ -284,21 +284,21 @@ public:
   template< int NUM_SUPPORT_POINTS,
             typename GRADIENT_TYPE >
   GEOSX_HOST_DEVICE
-  static void gradNajAij( GRADIENT_TYPE const & gradN,
-                          real64 const (&var_detJxW)[6],
-                          real64 ( &R )[NUM_SUPPORT_POINTS][3] );
+  static void plus_gradNajAij( GRADIENT_TYPE const & gradN,
+                               real64 const (&var_detJxW)[6],
+                               real64 ( &R )[NUM_SUPPORT_POINTS][3] );
 
   /**
-   * @copydoc gradNajAij
+   * @copydoc plus_gradNajAij
    * @brief Inner product of each basis function gradient with a rank-2
    *   tensor.
    */
   template< int NUM_SUPPORT_POINTS,
             typename GRADIENT_TYPE >
   GEOSX_HOST_DEVICE
-  static void gradNajAij( GRADIENT_TYPE const & gradN,
-                          real64 const (&var_detJxW)[3][3],
-                          real64 ( &R )[NUM_SUPPORT_POINTS][3] );
+  static void plus_gradNajAij( GRADIENT_TYPE const & gradN,
+                               real64 const (&var_detJxW)[3][3],
+                               real64 ( &R )[NUM_SUPPORT_POINTS][3] );
 
   /**
    * @brief Product of each shape function with a vector forcing term.
@@ -310,9 +310,9 @@ public:
    */
   template< int NUM_SUPPORT_POINTS >
   GEOSX_HOST_DEVICE
-  static void NaFi( real64 const (&N)[NUM_SUPPORT_POINTS],
-                    real64 const (&forcingTerm_detJxW)[3],
-                    real64 ( &R )[NUM_SUPPORT_POINTS][3] );
+  static void plus_NaFi( real64 const (&N)[NUM_SUPPORT_POINTS],
+                         real64 const (&forcingTerm_detJxW)[3],
+                         real64 ( &R )[NUM_SUPPORT_POINTS][3] );
 
   /**
    * @brief Inner product of each basis function gradient with a rank-2
@@ -334,25 +334,25 @@ public:
   template< int NUM_SUPPORT_POINTS,
             typename GRADIENT_TYPE >
   GEOSX_HOST_DEVICE
-  static void gradNajAij_plus_NaFi( GRADIENT_TYPE const & gradN,
-                                    real64 const (&var_detJxW)[3][3],
-                                    real64 const (&N)[NUM_SUPPORT_POINTS],
-                                    real64 const (&forcingTerm_detJxW)[3],
-                                    real64 ( &R )[NUM_SUPPORT_POINTS][3] );
+  static void plus_gradNajAij_plus_NaFi( GRADIENT_TYPE const & gradN,
+                                         real64 const (&var_detJxW)[3][3],
+                                         real64 const (&N)[NUM_SUPPORT_POINTS],
+                                         real64 const (&forcingTerm_detJxW)[3],
+                                         real64 ( &R )[NUM_SUPPORT_POINTS][3] );
 
   /**
    * @brief Inner product of each basis function gradient with a rank-2
    *   tensor added to the product each shape function with a vector.
-   * @copydoc gradNajAij_plus_NaFi
+   * @copydoc plus_gradNajAij_plus_NaFi
    */
   template< int NUM_SUPPORT_POINTS,
             typename GRADIENT_TYPE >
   GEOSX_HOST_DEVICE
-  static void gradNajAij_plus_NaFi( GRADIENT_TYPE const & gradN,
-                                    real64 const (&var_detJxW)[6],
-                                    real64 const (&N)[NUM_SUPPORT_POINTS],
-                                    real64 const (&forcingTerm_detJxW)[3],
-                                    real64 ( &R )[NUM_SUPPORT_POINTS][3] );
+  static void plus_gradNajAij_plus_NaFi( GRADIENT_TYPE const & gradN,
+                                         real64 const (&var_detJxW)[6],
+                                         real64 const (&N)[NUM_SUPPORT_POINTS],
+                                         real64 const (&forcingTerm_detJxW)[3],
+                                         real64 ( &R )[NUM_SUPPORT_POINTS][3] );
 
 
   /**
@@ -605,9 +605,9 @@ template< int NUM_SUPPORT_POINTS,
           typename GRADIENT_TYPE >
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-void FiniteElementBase::gradNajAij( GRADIENT_TYPE const & gradN,
-                                    real64 const (&var_detJxW)[6],
-                                    real64 (& R)[NUM_SUPPORT_POINTS][3] )
+void FiniteElementBase::plus_gradNajAij( GRADIENT_TYPE const & gradN,
+                                         real64 const (&var_detJxW)[6],
+                                         real64 (& R)[NUM_SUPPORT_POINTS][3] )
 {
   for( int a=0; a<NUM_SUPPORT_POINTS; ++a )
   {
@@ -622,9 +622,9 @@ template< int NUM_SUPPORT_POINTS,
           typename GRADIENT_TYPE >
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-void FiniteElementBase::gradNajAij( GRADIENT_TYPE const & gradN,
-                                    real64 const (&var_detJxW)[3][3],
-                                    real64 (& R)[NUM_SUPPORT_POINTS][3] )
+void FiniteElementBase::plus_gradNajAij( GRADIENT_TYPE const & gradN,
+                                         real64 const (&var_detJxW)[3][3],
+                                         real64 (& R)[NUM_SUPPORT_POINTS][3] )
 {
   for( int a=0; a<NUM_SUPPORT_POINTS; ++a )
   {
@@ -637,9 +637,9 @@ void FiniteElementBase::gradNajAij( GRADIENT_TYPE const & gradN,
 template< int NUM_SUPPORT_POINTS >
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-void FiniteElementBase::NaFi( real64 const (&N)[NUM_SUPPORT_POINTS],
-                              real64 const (&var_detJxW)[3],
-                              real64 ( & R )[NUM_SUPPORT_POINTS][3] )
+void FiniteElementBase::plus_NaFi( real64 const (&N)[NUM_SUPPORT_POINTS],
+                                   real64 const (&var_detJxW)[3],
+                                   real64 ( & R )[NUM_SUPPORT_POINTS][3] )
 {
   for( int a=0; a<NUM_SUPPORT_POINTS; ++a )
   {
@@ -654,11 +654,11 @@ template< int NUM_SUPPORT_POINTS,
           typename GRADIENT_TYPE >
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-void FiniteElementBase::gradNajAij_plus_NaFi( GRADIENT_TYPE const & gradN,
-                                              real64 const (&var_detJxW)[6],
-                                              real64 const (&N)[NUM_SUPPORT_POINTS],
-                                              real64 const (&forcingTerm_detJxW)[3],
-                                              real64 (& R)[NUM_SUPPORT_POINTS][3] )
+void FiniteElementBase::plus_gradNajAij_plus_NaFi( GRADIENT_TYPE const & gradN,
+                                                   real64 const (&var_detJxW)[6],
+                                                   real64 const (&N)[NUM_SUPPORT_POINTS],
+                                                   real64 const (&forcingTerm_detJxW)[3],
+                                                   real64 (& R)[NUM_SUPPORT_POINTS][3] )
 {
   for( int a=0; a<NUM_SUPPORT_POINTS; ++a )
   {
@@ -672,11 +672,11 @@ template< int NUM_SUPPORT_POINTS,
           typename GRADIENT_TYPE >
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-void FiniteElementBase::gradNajAij_plus_NaFi( GRADIENT_TYPE const & gradN,
-                                              real64 const (&var_detJxW)[3][3],
-                                              real64 const (&N)[NUM_SUPPORT_POINTS],
-                                              real64 const (&forcingTerm_detJxW)[3],
-                                              real64 (& R)[NUM_SUPPORT_POINTS][3] )
+void FiniteElementBase::plus_gradNajAij_plus_NaFi( GRADIENT_TYPE const & gradN,
+                                                   real64 const (&var_detJxW)[3][3],
+                                                   real64 const (&N)[NUM_SUPPORT_POINTS],
+                                                   real64 const (&forcingTerm_detJxW)[3],
+                                                   real64 (& R)[NUM_SUPPORT_POINTS][3] )
 {
   for( int a=0; a<NUM_SUPPORT_POINTS; ++a )
   {
@@ -692,20 +692,20 @@ void FiniteElementBase::gradNajAij_plus_NaFi( GRADIENT_TYPE const & gradN,
 
 
 /// Macro to simplify name resolution in derived classes.
-#define USING_FINITEELEMENTBASE                               \
-  /** @copydoc FiniteElementBase::value                  */ \
-  using FiniteElementBase::value;                           \
-  /** @copydoc FiniteElementBase::symmetricGradient      */ \
-  using FiniteElementBase::symmetricGradient;               \
-  /** @copydoc FiniteElementBase::gradient               */ \
-  using FiniteElementBase::gradient;                        \
-  /** @copydoc FiniteElementBase::valueAndGradient       */ \
-  using FiniteElementBase::valueAndGradient;                \
-  /** @copydoc FiniteElementBase::gradNajAij             */ \
-  using FiniteElementBase::gradNajAij;                      \
-  /** @copydoc FiniteElementBase::NaFi                   */ \
-  using FiniteElementBase::NaFi;                            \
-  /** @copydoc FiniteElementBase::gradNajAij_plus_NaFi   */ \
-  using FiniteElementBase::gradNajAij_plus_NaFi;
+#define USING_FINITEELEMENTBASE                                \
+  /** @copydoc FiniteElementBase::value                     */ \
+  using FiniteElementBase::value;                              \
+  /** @copydoc FiniteElementBase::symmetricGradient         */ \
+  using FiniteElementBase::symmetricGradient;                  \
+  /** @copydoc FiniteElementBase::gradient                  */ \
+  using FiniteElementBase::gradient;                           \
+  /** @copydoc FiniteElementBase::valueAndGradient          */ \
+  using FiniteElementBase::valueAndGradient;                   \
+  /** @copydoc FiniteElementBase::plus_gradNajAij           */ \
+  using FiniteElementBase::plus_gradNajAij;                    \
+  /** @copydoc FiniteElementBase::plus_NaFi                 */ \
+  using FiniteElementBase::plus_NaFi;                          \
+  /** @copydoc FiniteElementBase::plus_gradNajAij_plus_NaFi */ \
+  using FiniteElementBase::plus_gradNajAij_plus_NaFi;
 
 #endif //GEOSX_FINITEELEMENT_ELEMENTFORMULATIONS_FINITEELEMENTBASE

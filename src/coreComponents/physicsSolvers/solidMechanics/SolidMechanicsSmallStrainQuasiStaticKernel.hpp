@@ -270,11 +270,11 @@ public:
 
     real64 N[numNodesPerElem];
     FE_TYPE::calcN( q, N );
-    FE_TYPE::gradNajAij_plus_NaFi( dNdX,
-                                   stress,
-                                   N,
-                                   gravityForce,
-                                   reinterpret_cast< real64 (&)[numNodesPerElem][3] >(stack.localResidual) );
+    FE_TYPE::plus_gradNajAij_plus_NaFi( dNdX,
+                                        stress,
+                                        N,
+                                        gravityForce,
+                                        reinterpret_cast< real64 (&)[numNodesPerElem][3] >(stack.localResidual) );
   }
 
   /**
