@@ -26,6 +26,7 @@
 #include "mesh/GraphEdge.hpp"
 #include "mesh/GraphVertex.hpp"
 #include "mesh/GraphVertexFace.hpp"
+#include "mesh/GraphVertexPoint.hpp"
 #include "mesh/MeshLevel.hpp"
 #include "common/Logger.hpp"
 
@@ -310,7 +311,7 @@ void GraphFromText::GenerateGraph()
     }
     if(place_2==-1)
     {
-      std::cout<<er2 << " " << esr2 << " " << ei2 << "\n";
+      //std::cout<<er2 << " " << esr2 << " " << ei2 << "\n";
       v2=new GraphVertexFace(er2,esr2,ei2);
       m_vertices.push_back(v2);
       std::vector<GraphEdge*> edges;
@@ -398,18 +399,17 @@ void GraphFromText::RemapFace(const MeshLevel & mesh)
       {
         if (elemList[h][0] == m_boundaryEdges[i]->getVertex1()->getLocalVertexIndex())
         {
-          std::cout<< h << " " << m_boundaryEdges[i]->getEdgeIndex() << "\n";
-          std::cout<< elemList[h][0] << " " << m_boundaryEdges[i]->getVertex1()->getLocalVertexIndex() << " " << m_boundaryEdges[i]->getVertex2()->getLocalVertexIndex() << " " << m_boundaryEdges[i]->getVertex2()->getSubRegionIndex() << " " << m_boundaryEdges[i]->getVertex2()->getRegionIndex() << "\n\n";
-          /*
-          GraphVertex* face;
-          face =  dynamic_cast<GraphVertex*>(m_boundaryEdges[i]->getVertex2());
+          //std::cout<< h << " " << m_boundaryEdges[i]->getEdgeIndex() << "\n";
+          //std::cout<< elemList[h][0] << " " << m_boundaryEdges[i]->getVertex1()->getLocalVertexIndex() << " " << m_boundaryEdges[i]->getVertex2()->getLocalVertexIndex() << " " << m_boundaryEdges[i]->getVertex2()->getSubRegionIndex() << " " << m_boundaryEdges[i]->getVertex2()->getRegionIndex() << "\n\n";
+          
+          GraphVertexFace* face;
+          face =  static_cast<GraphVertexFace*>(m_boundaryEdges[i]->getVertex2());
           if (face==0) {std::cout << "Null pointer on second type-cast.\n";}
-          */
-          /*
-          std::cout<< face->getCorrespondingId();
+          
+          
+          //std::cout<< "\n" << face->getCorrespondingId() << " ";
           face->setCorrespondingId(h);
-          std::cout<< face->getCorrespondingId();
-          */
+          //std::cout<< face->getCorrespondingId()<< "\n";
         }
       }
     }
