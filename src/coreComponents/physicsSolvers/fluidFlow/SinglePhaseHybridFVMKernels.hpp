@@ -44,7 +44,7 @@ struct AssemblerKernelHelper
    * by calling .toView() or .toViewConst() on an accessor instance
    */
   template< typename VIEWTYPE >
-  using ElementView = typename ElementRegionManager::ElementViewAccessor< VIEWTYPE >::ViewTypeConst;
+  using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
 
   /**
    * @brief In a given element, compute the one-sided volumetric fluxes at this element's faces
@@ -111,9 +111,9 @@ struct AssemblerKernelHelper
                               arrayView2d< localIndex const > const & elemList,
                               SortedArrayView< localIndex const > const & regionFilter,
                               arraySlice1d< localIndex const > const & elemToFaces,
-                              ElementView< arrayView1d< real64 const > > const & mobility,
-                              ElementView< arrayView1d< real64 const > > const & dMobility_dp,
-                              ElementView< arrayView1d< globalIndex const > > const & elemDofNumber,
+                              ElementViewConst< arrayView1d< real64 const > > const & mobility,
+                              ElementViewConst< arrayView1d< real64 const > > const & dMobility_dp,
+                              ElementViewConst< arrayView1d< globalIndex const > > const & elemDofNumber,
                               arraySlice1d< real64 const > const & oneSidedVolFlux,
                               arraySlice1d< real64 > const & upwMobility,
                               arraySlice1d< real64 > const & dUpwMobility_dp,
@@ -193,7 +193,7 @@ struct AssemblerKernel
    * by calling .toView() or .toViewConst() on an accessor instance
    */
   template< typename VIEWTYPE >
-  using ElementView = typename ElementRegionManager::ElementViewAccessor< VIEWTYPE >::ViewTypeConst;
+  using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
 
   /**
    * @brief In a given element, assemble the mass conservation equation and the contribution of this element to the face
@@ -245,9 +245,9 @@ struct AssemblerKernel
            real64 const & elemGravCoef,
            real64 const & elemDens,
            real64 const & dElemDens_dp,
-           ElementView< arrayView1d< real64 const > > const & mobility,
-           ElementView< arrayView1d< real64 const > > const & dMobility_dp,
-           ElementView< arrayView1d< globalIndex const > > const & elemDofNumber,
+           ElementViewConst< arrayView1d< real64 const > > const & mobility,
+           ElementViewConst< arrayView1d< real64 const > > const & dMobility_dp,
+           ElementViewConst< arrayView1d< globalIndex const > > const & elemDofNumber,
            integer const elemGhostRank,
            globalIndex const rankOffset,
            real64 const & dt,
@@ -270,7 +270,7 @@ struct FluxKernel
    * by calling .toView() or .toViewConst() on an accessor instance
    */
   template< typename VIEWTYPE >
-  using ElementView = typename ElementRegionManager::ElementViewAccessor< VIEWTYPE >::ViewTypeConst;
+  using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
 
   /**
    * @brief Assemble the mass conservation equations and face constraints in the cell subregion
@@ -315,9 +315,9 @@ struct FluxKernel
           arrayView1d< real64 const > const & facePres,
           arrayView1d< real64 const > const & dFacePres,
           arrayView1d< real64 const > const & faceGravCoef,
-          ElementView< arrayView1d< real64 const > > const & mobility,
-          ElementView< arrayView1d< real64 const > > const & dMobility_dp,
-          ElementView< arrayView1d< globalIndex const > > const & elemDofNumber,
+          ElementViewConst< arrayView1d< real64 const > > const & mobility,
+          ElementViewConst< arrayView1d< real64 const > > const & dMobility_dp,
+          ElementViewConst< arrayView1d< globalIndex const > > const & elemDofNumber,
           localIndex const rankOffset,
           real64 const lengthTolerance,
           real64 const dt,
@@ -331,7 +331,7 @@ struct FluxKernel
 struct ResidualNormKernel
 {
   template< typename VIEWTYPE >
-  using ElementView = typename ElementRegionManager::ElementViewAccessor< VIEWTYPE >::ViewTypeConst;
+  using ElementViewConst = typename ElementRegionManager::ElementViewConst< VIEWTYPE >;
 
   template< typename POLICY, typename REDUCE_POLICY, typename LOCAL_VECTOR >
   static void
@@ -342,7 +342,7 @@ struct ResidualNormKernel
           arrayView2d< localIndex const > const & elemRegionList,
           arrayView2d< localIndex const > const & elemSubRegionList,
           arrayView2d< localIndex const > const & elemList,
-          ElementView< arrayView1d< real64 const > > const & elemVolume,
+          ElementViewConst< arrayView1d< real64 const > > const & elemVolume,
           real64 const & defaultViscosity,
           real64 * localResidualNorm )
   {

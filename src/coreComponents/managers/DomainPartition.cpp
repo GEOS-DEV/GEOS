@@ -124,7 +124,7 @@ void DomainPartition::GenerateSets()
 
     for( std::string const & setName : setNames )
     {
-      arrayView1d< bool const > const & nodeInCurSet = nodeInSet[setName];
+      arrayView1d< bool const > const nodeInCurSet = nodeInSet[setName];
 
       SortedArray< localIndex > & targetSet = elementSets.registerWrapper< SortedArray< localIndex > >( setName )->reference();
       for( localIndex k = 0; k < subRegion.size(); ++k )

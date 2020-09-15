@@ -519,8 +519,7 @@ int SurfaceGenerator::SeparationDriver( DomainPartition & domain,
   std::vector< std::set< localIndex > > nodesToRupturedFaces;
   std::vector< std::set< localIndex > > edgesToRupturedFaces;
 
-  ArrayOfArraysView< localIndex > const & nodeToElementMap = nodeManager.elementList().toView();
-  ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager.nodeList().toViewConst();
+  ArrayOfArrays< localIndex > const & nodeToElementMap = nodeManager.elementList();
 
   map< string, string_array > fieldNames;
   fieldNames["face"].emplace_back( string( extrinsicMeshData::RuptureState::key ) );
@@ -570,7 +569,7 @@ int SurfaceGenerator::SeparationDriver( DomainPartition & domain,
   int rval = 0;
   //  array1d<MaterialBaseStateDataT*>&  temp = elementManager.m_ElementRegions["PM1"].m_materialStates;
 
-  const arrayView1d< integer > & isNodeGhost = nodeManager.ghostRank();
+  array1d< integer > const & isNodeGhost = nodeManager.ghostRank();
 
   for( int color=0; color<numTileColors; ++color )
   {
@@ -636,6 +635,8 @@ int SurfaceGenerator::SeparationDriver( DomainPartition & domain,
 
 #endif
 
+    ArrayOfArraysView< localIndex const > const faceToNodeMap = faceManager.nodeList().toViewConst();
+
     elementManager.forElementSubRegionsComplete< FaceElementSubRegion >( [&]( localIndex const er,
                                                                               localIndex const esr,
                                                                               ElementRegionBase &,
@@ -656,7 +657,7 @@ int SurfaceGenerator::SeparationDriver( DomainPartition & domain,
 
       for( localIndex kfe=0; kfe<subRegion.size(); ++kfe )
       {
-        nodeMap[kfe].resize( 8 );
+        nodeMap.resizeArray( kfe, 8 );
 
         localIndex const numNodesInFace = faceToNodeMap.sizeOfArray( faceMap[ kfe ][ 0 ] );
         for( localIndex a = 0; a < numNodesInFace; ++a )
@@ -1604,42 +1605,42 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
 {
   int const rank = MpiWrapper::Comm_rank( MPI_COMM_WORLD );
 
-  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X = nodeManager.referencePosition();
+  array2d< real64, nodes::REFERENCE_POSITION_PERM > const & X = nodeManager.referencePosition();
   ArrayOfSets< localIndex > & nodeToEdgeMap = nodeManager.edgeList();
   ArrayOfSets< localIndex > & nodeToFaceMap = nodeManager.faceList();
   ArrayOfArrays< localIndex > & nodeToRegionMap = nodeManager.elementRegionList();
   ArrayOfArrays< localIndex > & nodeToSubRegionMap = nodeManager.elementSubRegionList();
   ArrayOfArrays< localIndex > & nodeToElementMap = nodeManager.elementList();
 
-  arrayView2d< localIndex > & edgeToNodeMap = edgeManager.nodeList();
+  array2d< localIndex > & edgeToNodeMap = edgeManager.nodeList();
   ArrayOfSets< localIndex > & edgeToFaceMap = edgeManager.faceList();
 
   ArrayOfArrays< localIndex > & faceToNodeMap = faceManager.nodeList();
   ArrayOfArrays< localIndex > & faceToEdgeMap = faceManager.edgeList();
-  arrayView2d< localIndex > const & faceToRegionMap = faceManager.elementRegionList();
-  arrayView2d< localIndex > const & faceToSubRegionMap = faceManager.elementSubRegionList();
-  arrayView2d< localIndex > const & faceToElementMap = faceManager.elementList();
+  array2d< localIndex > const & faceToRegionMap = faceManager.elementRegionList();
+  array2d< localIndex > const & faceToSubRegionMap = faceManager.elementSubRegionList();
+  array2d< localIndex > const & faceToElementMap = faceManager.elementList();
 
-  arrayView1d< integer const > const & faceIsExternal = faceManager.isExternal();
-  arrayView1d< integer > const & edgeIsExternal = edgeManager.isExternal();
-  arrayView1d< integer > const & nodeIsExternal = nodeManager.isExternal();
+  array1d< integer > const & faceIsExternal = faceManager.isExternal();
+  array1d< integer > const & edgeIsExternal = edgeManager.isExternal();
+  array1d< integer > const & nodeIsExternal = nodeManager.isExternal();
 
   SurfaceElementRegion * const fractureElementRegion = elementManager.GetRegion< SurfaceElementRegion >( "Fracture" );
-  arrayView1d< integer const > const & isFaceSeparable = faceManager.getExtrinsicData< extrinsicMeshData::IsFaceSeparable >();
+  array1d< integer > const & isFaceSeparable = faceManager.getExtrinsicData< extrinsicMeshData::IsFaceSeparable >();
 
-  arrayView2d< real64 > const & faceNormals = faceManager.faceNormal();
+  array2d< real64 > const & faceNormals = faceManager.faceNormal();
 
-  arrayView1d< localIndex const > const & parentEdgeIndices = edgeManager.getExtrinsicData< extrinsicMeshData::ParentIndex >();
-  arrayView1d< localIndex const > const & childEdgeIndices = edgeManager.getExtrinsicData< extrinsicMeshData::ChildIndex >();
-  arrayView1d< localIndex const > const & parentNodeIndices = nodeManager.getExtrinsicData< extrinsicMeshData::ParentIndex >();
-  arrayView1d< localIndex const > const & childNodeIndices = nodeManager.getExtrinsicData< extrinsicMeshData::ChildIndex >();
+  array1d< localIndex > const & parentEdgeIndices = edgeManager.getExtrinsicData< extrinsicMeshData::ParentIndex >();
+  array1d< localIndex > const & childEdgeIndices = edgeManager.getExtrinsicData< extrinsicMeshData::ChildIndex >();
+  array1d< localIndex > const & parentNodeIndices = nodeManager.getExtrinsicData< extrinsicMeshData::ParentIndex >();
+  array1d< localIndex > const & childNodeIndices = nodeManager.getExtrinsicData< extrinsicMeshData::ChildIndex >();
 
-  arrayView1d< integer > const & degreeFromCrack = nodeManager.getExtrinsicData< extrinsicMeshData::DegreeFromCrack >();
-  arrayView1d< integer > const & nodeDegreeFromCrackTip = nodeManager.getExtrinsicData< extrinsicMeshData::DegreeFromCrackTip >();
-  arrayView1d< integer > const & faceDegreeFromCrackTip = faceManager.getExtrinsicData< extrinsicMeshData::DegreeFromCrackTip >();
+  array1d< integer > const & degreeFromCrack = nodeManager.getExtrinsicData< extrinsicMeshData::DegreeFromCrack >();
+  array1d< integer > const & nodeDegreeFromCrackTip = nodeManager.getExtrinsicData< extrinsicMeshData::DegreeFromCrackTip >();
+  array1d< integer > const & faceDegreeFromCrackTip = faceManager.getExtrinsicData< extrinsicMeshData::DegreeFromCrackTip >();
 
-  arrayView1d< real64 > const & nodeRuptureTime = nodeManager.getExtrinsicData< extrinsicMeshData::RuptureTime >();
-  arrayView1d< real64 > const & faceRuptureTime = faceManager.getExtrinsicData< extrinsicMeshData::RuptureTime >();
+  array1d< real64 > const & nodeRuptureTime = nodeManager.getExtrinsicData< extrinsicMeshData::RuptureTime >();
+  array1d< real64 > const & faceRuptureTime = faceManager.getExtrinsicData< extrinsicMeshData::RuptureTime >();
 
   // ***** split all the objects first *****
 
@@ -1755,7 +1756,7 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
 
 
   // split the faces
-  arrayView1d< integer > const & ruptureState = faceManager.getExtrinsicData< extrinsicMeshData::RuptureState >();
+  array1d< integer > const & ruptureState = faceManager.getExtrinsicData< extrinsicMeshData::RuptureState >();
   map< localIndex, localIndex > splitFaces;
 
 
@@ -1896,8 +1897,8 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
    *  - location 1 gets the new node,edge,face.
    */
 
-  arrayView1d< localIndex > const & parentFaceIndex = faceManager.getExtrinsicData< extrinsicMeshData::ParentIndex >();
-  arrayView1d< localIndex > const & childFaceIndex = faceManager.getExtrinsicData< extrinsicMeshData::ChildIndex >();
+  array1d< localIndex > const & parentFaceIndex = faceManager.getExtrinsicData< extrinsicMeshData::ParentIndex >();
+  array1d< localIndex > const & childFaceIndex = faceManager.getExtrinsicData< extrinsicMeshData::ChildIndex >();
 
   // 1) loop over all elements attached to the nodeID
   for( map< std::pair< CellElementSubRegion *, localIndex >, int >::const_iterator iter_elem =
@@ -1920,8 +1921,8 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
       modifiedObjects.modifiedElements[{regionIndex, subRegionIndex}].insert( elemIndex );
 
 
-      arrayView2d< localIndex, cells::NODE_MAP_USD > const & elemsToNodes = elemSubRegion.nodeList();
-      arrayView2d< localIndex > & elemsToFaces = elemSubRegion.faceList();
+      array2d< localIndex, cells::NODE_MAP_PERMUTATION > const & elemsToNodes = elemSubRegion.nodeList();
+      array2d< localIndex > const & elemsToFaces = elemSubRegion.faceList();
 
       if( getLogLevel() > 1 )
         std::cout<<"Element "<<elemIndex<<std::endl;
@@ -2054,19 +2055,19 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
 
           if( getLogLevel() > 1 )
           {
-            std::cout<<"    faceToRegionMap["<<newFaceIndex<<"][0]    = "<<faceToRegionMap[newFaceIndex][0]<<std::endl;
-            std::cout<<"    faceToSubRegionMap["<<newFaceIndex<<"][0] = "<<faceToSubRegionMap[newFaceIndex][0]<<std::endl;
-            std::cout<<"    faceToElementMap["<<newFaceIndex<<"][0]      = "<<faceToElementMap[newFaceIndex][0]<<std::endl;
-            std::cout<<"    faceToRegionMap["<<newFaceIndex<<"][1]    = "<<faceToRegionMap[newFaceIndex][1]<<std::endl;
-            std::cout<<"    faceToSubRegionMap["<<newFaceIndex<<"][1] = "<<faceToSubRegionMap[newFaceIndex][1]<<std::endl;
-            std::cout<<"    faceToElementMap["<<newFaceIndex<<"][1]      = "<<faceToElementMap[newFaceIndex][1]<<std::endl;
+            GEOSX_LOG( "    faceToRegionMap["<<newFaceIndex<<"][0]    = "<<faceToRegionMap[newFaceIndex][0] );
+            GEOSX_LOG( "    faceToSubRegionMap["<<newFaceIndex<<"][0] = "<<faceToSubRegionMap[newFaceIndex][0] );
+            GEOSX_LOG( "    faceToElementMap["<<newFaceIndex<<"][0]      = "<<faceToElementMap[newFaceIndex][0] );
+            GEOSX_LOG( "    faceToRegionMap["<<newFaceIndex<<"][1]    = "<<faceToRegionMap[newFaceIndex][1] );
+            GEOSX_LOG( "    faceToSubRegionMap["<<newFaceIndex<<"][1] = "<<faceToSubRegionMap[newFaceIndex][1] );
+            GEOSX_LOG( "    faceToElementMap["<<newFaceIndex<<"][1]      = "<<faceToElementMap[newFaceIndex][1] );
 
-            std::cout<<"    faceToRegionMap["<<faceIndex<<"][0]    = "<<faceToRegionMap[faceIndex][0]<<std::endl;
-            std::cout<<"    faceToSubRegionMap["<<faceIndex<<"][0] = "<<faceToSubRegionMap[faceIndex][0]<<std::endl;
-            std::cout<<"    faceToElementMap["<<faceIndex<<"][0]      = "<<faceToElementMap[faceIndex][0]<<std::endl;
-            std::cout<<"    faceToRegionMap["<<faceIndex<<"][1]    = "<<faceToRegionMap[faceIndex][1]<<std::endl;
-            std::cout<<"    faceToSubRegionMap["<<faceIndex<<"][1] = "<<faceToSubRegionMap[faceIndex][1]<<std::endl;
-            std::cout<<"    faceToElementMap["<<faceIndex<<"][1]      = "<<faceToElementMap[faceIndex][1]<<std::endl;
+            GEOSX_LOG( "    faceToRegionMap["<<faceIndex<<"][0]    = "<<faceToRegionMap[faceIndex][0] );
+            GEOSX_LOG( "    faceToSubRegionMap["<<faceIndex<<"][0] = "<<faceToSubRegionMap[faceIndex][0] );
+            GEOSX_LOG( "    faceToElementMap["<<faceIndex<<"][0]      = "<<faceToElementMap[faceIndex][0] );
+            GEOSX_LOG( "    faceToRegionMap["<<faceIndex<<"][1]    = "<<faceToRegionMap[faceIndex][1] );
+            GEOSX_LOG( "    faceToSubRegionMap["<<faceIndex<<"][1] = "<<faceToSubRegionMap[faceIndex][1] );
+            GEOSX_LOG( "    faceToElementMap["<<faceIndex<<"][1]      = "<<faceToElementMap[faceIndex][1] );
 
           }
 
@@ -2077,15 +2078,16 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
             localIndex elementIndex = faceToElementMap[iFace][0];
             CellElementSubRegion * elementSubRegion = elementManager.GetRegion( faceToRegionMap[iFace][0] )->
                                                         GetSubRegion< CellElementSubRegion >( faceToSubRegionMap[iFace][0] );
+            arrayView2d< real64 const > const subRegionElemCenter = elementSubRegion->getElementCenter();
 
-            faceManager.SortFaceNodes( X, elementSubRegion->getElementCenter()[elementIndex], faceToNodeMap[iFace], faceToNodeMap.sizeOfArray( iFace ) );
+            faceManager.SortFaceNodes( X, subRegionElemCenter[ elementIndex ], faceToNodeMap[ iFace ], faceToNodeMap.sizeOfArray( iFace ) );
 
             //Face normal need to be updated here
             real64 fCenter[ 3 ];
-            computationalGeometry::Centroid_3DPolygon( faceToNodeMap[iFace],
+            computationalGeometry::Centroid_3DPolygon( faceToNodeMap[ iFace ],
                                                        X,
                                                        fCenter,
-                                                       faceNormals[iFace] );
+                                                       faceNormals[ iFace ] );
           }
 
         } // if( splitFaces.count( faceID ) > 0 )
@@ -2843,11 +2845,11 @@ void SurfaceGenerator::CalculateNodeAndFaceSIF( DomainPartition & domain,
                                                                                                                constitutiveManager );
 
 
-  ElementRegionManager::ElementViewAccessor< array4d< real64 > > const
-  dNdX = elementManager.ConstructViewAccessor< array4d< real64 > >( keys::dNdX );
+  ElementRegionManager::ElementViewAccessor< arrayView4d< real64 const > > const
+  dNdX = elementManager.ConstructViewAccessor< array4d< real64 >, arrayView4d< real64 const > >( keys::dNdX );
 
-  ElementRegionManager::ElementViewAccessor< array2d< real64 > > const
-  detJ = elementManager.ConstructViewAccessor< array2d< real64 > >( keys::detJ );
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > const
+  detJ = elementManager.ConstructViewAccessor< array2d< real64 >, arrayView2d< real64 const > >( keys::detJ );
 
 
 
@@ -3664,11 +3666,11 @@ int SurfaceGenerator::CalculateElementForcesOnEdge( DomainPartition & domain,
                                                              arrayView3d< real64 const, solid::STRESS_USD > >( SolidBase::viewKeyStruct::stressString,
                                                                                                                constitutiveManager );
 
-  ElementRegionManager::ElementViewAccessor< array4d< real64 > > const
-  dNdX = elementManager.ConstructViewAccessor< array4d< real64 > >( keys::dNdX );
+  ElementRegionManager::ElementViewAccessor< arrayView4d< real64 const > > const
+  dNdX = elementManager.ConstructViewAccessor< array4d< real64 >, arrayView4d< real64 const > >( keys::dNdX );
 
-  ElementRegionManager::ElementViewAccessor< array2d< real64 > > const
-  detJ = elementManager.ConstructViewAccessor< array2d< real64 > >( keys::detJ );
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > const
+  detJ = elementManager.ConstructViewAccessor< array2d< real64 >, arrayView2d< real64 const > >( keys::detJ );
 
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > const elemCenter =
     elementManager.ConstructViewAccessor< array2d< real64 >, arrayView2d< real64 const > >( ElementSubRegionBase::viewKeyStruct::elementCenterString );

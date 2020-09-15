@@ -390,7 +390,7 @@ localIndex ObjectManagerBase::PackParentChildMapsPrivate( buffer_unit_type * & b
 
   if( this->hasExtrinsicData< extrinsicMeshData::ParentIndex >() )
   {
-    arrayView1d< localIndex const > const & parentIndex = this->getExtrinsicData< extrinsicMeshData::ParentIndex >();
+    arrayView1d< localIndex const > const parentIndex = this->getExtrinsicData< extrinsicMeshData::ParentIndex >();
     packedSize += bufferOps::Pack< DOPACK >( buffer, string( extrinsicMeshData::ParentIndex::key ) );
     packedSize += bufferOps::Pack< DOPACK >( buffer,
                                              parentIndex,
@@ -516,7 +516,7 @@ localIndex ObjectManagerBase::UnpackSets( buffer_unit_type const * & buffer )
 }
 
 
-localIndex ObjectManagerBase::PackGlobalMapsSize( arrayView1d< localIndex > const & packList,
+localIndex ObjectManagerBase::PackGlobalMapsSize( arrayView1d< localIndex const > const & packList,
                                                   integer const recursive ) const
 {
   buffer_unit_type * junk = nullptr;
@@ -524,7 +524,7 @@ localIndex ObjectManagerBase::PackGlobalMapsSize( arrayView1d< localIndex > cons
 }
 
 localIndex ObjectManagerBase::PackGlobalMaps( buffer_unit_type * & buffer,
-                                              arrayView1d< localIndex > const & packList,
+                                              arrayView1d< localIndex const > const & packList,
                                               integer const recursive ) const
 {
   return PackGlobalMapsPrivate< true >( buffer, packList, recursive );
@@ -826,7 +826,7 @@ integer ObjectManagerBase::SplitObject( localIndex const indexToSplit,
 
 void ObjectManagerBase::inheritGhostRankFromParent( std::set< localIndex > const & indices )
 {
-  arrayView1d< localIndex const > const & parentIndex = this->getExtrinsicData< extrinsicMeshData::ParentIndex >();
+  arrayView1d< localIndex const > const parentIndex = this->getExtrinsicData< extrinsicMeshData::ParentIndex >();
 
   for( auto const a : indices )
   {
@@ -1027,7 +1027,7 @@ void ObjectManagerBase::CleanUpMap( std::set< localIndex > const & targetIndices
 
 void ObjectManagerBase::enforceStateFieldConsistencyPostTopologyChange( std::set< localIndex > const & targetIndices )
 {
-  arrayView1d< localIndex const > const & childFaceIndices = getExtrinsicData< extrinsicMeshData::ChildIndex >();
+  arrayView1d< localIndex const > const childFaceIndices = getExtrinsicData< extrinsicMeshData::ChildIndex >();
 
   for( localIndex const targetIndex : targetIndices )
   {

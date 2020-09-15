@@ -118,7 +118,7 @@ public:
    * @brief Get convergence history of a linear solve.
    * @return array containing residual norms of every iteration (including initial)
    */
-  arrayView1d< real64 const > const & history() const
+  arrayView1d< real64 const > history() const
   {
     return m_residualNorms;
   }

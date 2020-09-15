@@ -39,10 +39,10 @@ class FaceElementSubRegion : public ElementSubRegionBase
 public:
 
   /// Face element to nodes map type
-  using NodeMapType = InterObjectRelation< array1d< array1d< localIndex > > >;
+  using NodeMapType = InterObjectRelation< ArrayOfArrays< localIndex > >;
 
   /// Face element to edges map type
-  using EdgeMapType = InterObjectRelation< array1d< array1d< localIndex > > >;
+  using EdgeMapType = InterObjectRelation< ArrayOfArrays< localIndex > >;
 
   /// Face element to faces map type
   using FaceMapType = InterObjectRelation< array2d< localIndex > >;
@@ -260,45 +260,45 @@ public:
    * @brief Get face element aperture.
    * @return the aperture of the face elements
    */
-  arrayView1d< real64 > const & getElementAperture()       { return m_elementAperture; }
+  arrayView1d< real64 > getElementAperture() { return m_elementAperture; }
 
   /**
    * @copydoc getElementAperture()
    */
-  arrayView1d< real64 const > const & getElementAperture() const { return m_elementAperture; }
+  arrayView1d< real64 const > getElementAperture() const { return m_elementAperture; }
 
   /**
    * @brief Get face element surface area.
    * @return the surface area of the face element
    */
-  arrayView1d< real64 > const & getElementArea()       { return m_elementArea; }
+  arrayView1d< real64 > getElementArea() { return m_elementArea; }
 
   /**
    * @copydoc getElementArea()
    */
-  arrayView1d< real64 const > const & getElementArea() const { return m_elementArea; }
+  arrayView1d< real64 const > getElementArea() const { return m_elementArea; }
 
   /**
    * @brief Get face element rotation matrix.
    * @return a list of all face element rotation matrixces.
    */
-  arrayView3d< real64 > const & getElementRotationMatrix()       { return m_elementRotationMatrix; }
+  arrayView3d< real64 > getElementRotationMatrix() { return m_elementRotationMatrix; }
 
   /**
    * @copydoc getElementRotationMatrix()
    */
-  arrayView3d< real64 const > const & getElementRotationMatrix() const { return m_elementRotationMatrix; }
+  arrayView3d< real64 const > getElementRotationMatrix() const { return m_elementRotationMatrix; }
 
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
   /**
    * @brief Get separation coefficient.
    * @return the separation coefficient
    */
-  arrayView1d< real64 > const & getSeparationCoefficient()       { return m_separationCoefficient; }
+  arrayView1d< real64 > getSeparationCoefficient() { return m_separationCoefficient; }
   /**
    * @copydoc getSeparationCoefficient()
    */
-  arrayView1d< real64 const > const & getSeparationCoefficient() const { return m_separationCoefficient; }
+  arrayView1d< real64 const > getSeparationCoefficient() const { return m_separationCoefficient; }
 #endif
 
   ///@}
@@ -327,7 +327,7 @@ public:
   /**
    * @brief @return The array of shape function derivatives.
    */
-  arrayView4d< real64 const > const & dNdX() const
+  arrayView4d< real64 const > dNdX() const
   { return m_dNdX.toViewConst(); }
 
   /**
@@ -339,8 +339,8 @@ public:
   /**
    * @brief @return The array of jacobian determinantes.
    */
-  arrayView2d< real64 const > const & detJ() const
-  { return m_detJ.toViewConst(); }
+  arrayView2d< real64 const > detJ() const
+  { return m_detJ; }
 
 private:
 
