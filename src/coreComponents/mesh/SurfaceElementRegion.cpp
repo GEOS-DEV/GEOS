@@ -106,8 +106,8 @@ localIndex SurfaceElementRegion::AddToFractureMesh( real64 const time_np1,
 
   arrayView1d< integer const > const & faceGhostRank = faceManager->ghostRank();
 
-  FaceElementSubRegion::NodeMapType & nodeMap = subRegion->nodeList();
-  FaceElementSubRegion::EdgeMapType & edgeMap = subRegion->edgeList();
+  SurfaceElementSubRegion::NodeMapType & nodeMap = subRegion->nodeList();
+  SurfaceElementSubRegion::EdgeMapType & edgeMap = subRegion->edgeList();
   FaceElementSubRegion::FaceMapType & faceMap = subRegion->faceList();
 
   ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager->nodeList().toViewConst();
@@ -129,7 +129,7 @@ localIndex SurfaceElementRegion::AddToFractureMesh( real64 const time_np1,
   localIndex const numNodesInFace1 = faceToNodeMap.sizeOfArray( faceIndices[ 1 ] );
 
   //Temporarily set the map size 8 for both quadrangle and triangle faces. TODO: need to fix for arbitrary face sizes.
-  nodeMap[kfe].resize( 8 );
+  nodeMap.resizeArray( kfe, 8 );
 
   for( localIndex a = 0; a < numNodesInFace0; ++a )
   {
@@ -151,7 +151,7 @@ localIndex SurfaceElementRegion::AddToFractureMesh( real64 const time_np1,
   // the facesToEdges entry.
   localIndex const faceID = faceIndices[0];
   localIndex const numEdges = originalFaceToEdgeMap.sizeOfArray( faceID );
-  edgeMap[kfe].resize( numEdges );
+  edgeMap.resizeArray( kfe, numEdges );
   for( localIndex a=0; a<numEdges; ++a )
   {
     edgeMap[kfe][a] = originalFaceToEdgeMap( faceID, a );

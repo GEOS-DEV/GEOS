@@ -612,7 +612,7 @@ void TwoPointFluxApproximation::addEDFracToFractureStencil( MeshLevel & mesh,
   cellStencil.move( LvArray::MemorySpace::CPU );
 
   SurfaceElementRegion & fractureRegion = *( elemManager.GetRegion<
-                                                SurfaceElementRegion >( embeddedSurfaceRegionName ) );
+                                               SurfaceElementRegion >( embeddedSurfaceRegionName ) );
   localIndex const fractureRegionIndex = fractureRegion.getIndexInParent();
 
   EmbeddedSurfaceSubRegion & fractureSubRegion = *( fractureRegion.GetSubRegion<

@@ -30,16 +30,13 @@ using namespace dataRepository;
 
 EmbeddedSurfaceSubRegion::EmbeddedSurfaceSubRegion( string const & name,
                                                     dataRepository::Group * const parent ):
-  ElementSubRegionBase( name, parent ),
+  SurfaceElementSubRegion( name, parent ),
   m_normalVector(),
   m_tangentVector1(),
   m_tangentVector2(),
   m_embeddedSurfaceToRegion(),
   m_embeddedSurfaceToSubRegion(),
   m_embeddedSurfaceToCell(),
-  m_toNodesRelation(),
-  m_elementAperture(),
-  m_elementArea(),
   m_numOfJumpEnrichments( 3 ),
   m_connectivityIndex()
 {
@@ -48,12 +45,6 @@ EmbeddedSurfaceSubRegion::EmbeddedSurfaceSubRegion( string const & name,
 
   registerWrapper( viewKeyStruct::subregionListString, &m_embeddedSurfaceToSubRegion )->
     setDescription( "Map to the subregion cut by each EmbeddedSurface." );
-
-  registerWrapper( viewKeyStruct::nodeListString, &m_toNodesRelation )->
-    setDescription( "Map to the nodes attached to each EmbeddedSurface." );
-
-  registerWrapper( viewKeyStruct::edgeListString, &m_toEdgesRelation )->
-    setDescription( "Map to the edges." );
 
   registerWrapper( viewKeyStruct::cellListString, &m_embeddedSurfaceToCell )->
     setDescription( "Map to the cell elements." );
@@ -66,15 +57,6 @@ EmbeddedSurfaceSubRegion::EmbeddedSurfaceSubRegion( string const & name,
 
   registerWrapper( viewKeyStruct::t2VectorString, &m_tangentVector2 )->
     setDescription( "Unit vector in the second tangent direction to the embedded surface." );
-
-  registerWrapper( viewKeyStruct::elementApertureString, &m_elementAperture )->
-    setApplyDefaultValue( 1.0e-5 )->
-    setPlotLevel( dataRepository::PlotLevel::LEVEL_0 )->
-    setDescription( "The aperture of each EmbeddedSurface." );
-
-  registerWrapper( viewKeyStruct::elementAreaString, &m_elementArea )->
-    setApplyDefaultValue( -1.0 )->
-    setDescription( "The area of each EmbeddedSurface element." );
 
   registerWrapper( viewKeyStruct::elementCenterString, &m_elementCenter )->
     setDescription( "The center of each EmbeddedSurface element." );

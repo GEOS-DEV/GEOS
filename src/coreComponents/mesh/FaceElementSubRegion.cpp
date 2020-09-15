@@ -31,17 +31,13 @@ using namespace dataRepository;
 
 FaceElementSubRegion::FaceElementSubRegion( string const & name,
                                             dataRepository::Group * const parent ):
-  ElementSubRegionBase( name, parent ),
+  SurfaceElementSubRegion( name, parent ),
   m_unmappedGlobalIndicesInToNodes(),
   m_unmappedGlobalIndicesInToEdges(),
   m_unmappedGlobalIndicesInToFaces(),
   m_faceElementsToCells(),
   m_newFaceElements(),
-  m_toNodesRelation(),
-  m_toEdgesRelation(),
   m_toFacesRelation(),
-  m_elementAperture(),
-  m_elementArea(),
   m_elementRotationMatrix()
 {
   SetElementType( "C3D8" );
@@ -50,25 +46,9 @@ FaceElementSubRegion::FaceElementSubRegion( string const & name,
 
   registerWrapper( viewKeyStruct::detJString, &m_detJ )->setSizedFromParent( 1 )->reference();
 
-  registerWrapper( viewKeyStruct::nodeListString, &m_toNodesRelation )->
-    setDescription( "Map to the nodes attached to each FaceElement." );
-
-  registerWrapper( viewKeyStruct::edgeListString, &m_toEdgesRelation )->
-    setDescription( "Map to the edges attached to each FaceElement." );
-
   registerWrapper( viewKeyStruct::faceListString, &m_toFacesRelation )->
     setDescription( "Map to the faces attached to each FaceElement." )->
     reference().resize( 0, 2 );
-
-  registerWrapper( viewKeyStruct::elementApertureString, &m_elementAperture )->
-    setApplyDefaultValue( -1.0 )->
-    setPlotLevel( dataRepository::PlotLevel::LEVEL_0 )->
-    setDescription( "The aperture of each FaceElement." );
-
-  registerWrapper( viewKeyStruct::elementAreaString, &m_elementArea )->
-    setApplyDefaultValue( -1.0 )->
-    setPlotLevel( dataRepository::PlotLevel::LEVEL_2 )->
-    setDescription( "The area of each FaceElement." );
 
   registerWrapper( viewKeyStruct::elementRotationMatrixString, &m_elementRotationMatrix )->
     setApplyDefaultValue( 0.0 )->
