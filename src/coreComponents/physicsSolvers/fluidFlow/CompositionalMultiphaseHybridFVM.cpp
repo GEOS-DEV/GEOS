@@ -41,7 +41,11 @@ CompositionalMultiphaseHybridFVM::CompositionalMultiphaseHybridFVM( const std::s
                                                                     Group * const parent ):
   CompositionalMultiphaseBase( name, parent ),
   m_areaRelTol( 1e-8 )
-{}
+{
+
+  m_linearSolverParameters.get().mgr.strategy = "CompositionalMultiphaseHybridFVM";
+
+}
 
 void CompositionalMultiphaseHybridFVM::RegisterDataOnMesh( Group * const MeshBodies )
 {

@@ -510,6 +510,109 @@ void HyprePreconditioner::createMGR( DofManager const * const dofManager )
 
     m_functions->aux_destroy = HYPRE_ILUDestroy;
   }
+  else if( m_parameters.mgr.strategy == "CompositionalMultiphaseHybridFVM" )
+  {
+    // Labels description stored in point_marker_array
+    //                         0 = pressure
+    //                         1 = density
+    //                       ... = ... (densities)
+    // numCellCenteredLabels - 1 = density
+    // numLabels - 1             = face pressure
+    //
+    // 3-level MGR reduction strategy inspired from CompositionalMultiphaseReservoir
+    // 1st level: eliminate the density associated with the volume constraint
+    // 2nd level: eliminate the rest of the densities
+    // 3rd level: eliminate the cell-centered pressure
+    // The coarse grid is the interface pressure system and is solved with BoomerAMG
+    //
+    // TODO:
+    // - Understand what I am doing
+
+
+    HYPRE_Int numCellCenteredLabels = LvArray::integerConversion< HYPRE_Int >( numComponentsPerField[0] );
+    HYPRE_Int numFaceCenteredLabels = LvArray::integerConversion< HYPRE_Int >( numComponentsPerField[1] );
+    HYPRE_Int numLabels = numCellCenteredLabels + numFaceCenteredLabels;
+
+    mgr_bsize = numLabels;
+    mgr_nlevels = 3;
+
+    /* options for solvers at each level */
+    HYPRE_Int mgr_gsmooth_type = 16; // ILU(0)
+    HYPRE_Int mgr_num_gsmooth_sweeps = 1;
+
+    mgr_level_interp_type.resize( mgr_nlevels );
+    mgr_level_interp_type[0] = 2;
+    mgr_level_interp_type[1] = 2;
+    mgr_level_interp_type[2] = 2;
+
+    mgr_level_frelax_method.resize( mgr_nlevels );
+    mgr_level_frelax_method[0] = 0; // Jacobi
+    mgr_level_frelax_method[1] = 0; // Jacobi
+    mgr_level_frelax_method[2] = 0; // TODO: understand the different possibilities here. Should I use an AMG V-cycle?
+
+    mgr_num_cindexes.resize( mgr_nlevels );
+    mgr_num_cindexes[0] = mgr_bsize - 1; // eliminate the last density
+    mgr_num_cindexes[1] = 2;             // eliminate all other densities
+    mgr_num_cindexes[2] = 1;             // eliminate cell centered pressure
+
+    lv_cindexes.resize( mgr_nlevels );
+    for( int cid=0; cid < mgr_bsize; cid++ )
+    {
+      // All points except the last reservoir density
+      // which corresponds to the volume constraint equation
+      if( cid != numCellCenteredLabels - 1 )
+      {
+        lv_cindexes[0].push_back( cid );
+      }
+    }
+    for( auto & cid : lv_cindexes[0] )
+    {
+      // eliminate all other densities
+      if( cid == 0 || cid == numLabels - 1 )
+      {
+        lv_cindexes[1].push_back( cid );
+      }
+    }
+    for( auto & cid : lv_cindexes[1] )
+    {
+      // eliminate the cell-centered pressure
+      if( cid == numLabels - 1 )
+      {
+        lv_cindexes[2].push_back( cid );
+      }
+    }
+
+    mgr_cindexes.resize( mgr_nlevels );
+    for( HYPRE_Int iLevel = 0; iLevel < mgr_nlevels; ++iLevel )
+    {
+      mgr_cindexes[iLevel] = lv_cindexes[iLevel].data();
+    }
+
+    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGCreate( &aux_precond ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetPrintLevel( aux_precond, 0 ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetMaxIter( aux_precond, 1 ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetTol( aux_precond, 0.0 ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetRelaxOrder( aux_precond, 1 ) );
+
+    GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetCpointsByPointMarkerArray( m_precond, mgr_bsize, mgr_nlevels,
+                                                                  mgr_num_cindexes.data(),
+                                                                  mgr_cindexes.data(),
+                                                                  m_auxData->point_marker_array.data() ) );
+
+    GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetLevelFRelaxMethod( m_precond, mgr_level_frelax_method.data() ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetNonCpointsToFpoints( m_precond, 1 ));
+    GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetLevelInterpType( m_precond, mgr_level_interp_type.data() ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetGlobalsmoothType( m_precond, mgr_gsmooth_type ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetMaxGlobalsmoothIters( m_precond, mgr_num_gsmooth_sweeps ) );
+    GEOSX_LAI_CHECK_ERROR(
+      HYPRE_MGRSetCoarseSolver( m_precond,
+                                (HYPRE_PtrToParSolverFcn)HYPRE_BoomerAMGSolve,
+                                (HYPRE_PtrToParSolverFcn)HYPRE_BoomerAMGSetup,
+                                aux_precond )
+      );
+
+    m_functions->aux_destroy = HYPRE_BoomerAMGDestroy;
+  }
   else
   {
     GEOSX_ERROR( "Unsupported MGR strategy: " << m_parameters.mgr.strategy );
