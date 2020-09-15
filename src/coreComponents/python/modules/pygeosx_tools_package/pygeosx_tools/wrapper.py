@@ -10,6 +10,13 @@ comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
 
 
+def get_wrapper(problem, key, write_flag=False):
+  local_values = problem.getWrapper(key).value(write_flag)
+  if not isinstance(local_values, np.ndarray):
+    local_values = local_values.toNumPy()
+  return local_values
+
+
 def get_global_value_range(problem, key):
   """
   @brief get the range of a target value across all processes
@@ -18,7 +25,7 @@ def get_global_value_range(problem, key):
   @return global_min the minimum value of the target
   @return global_max the maximum value of the target
   """
-  local_values = problem.getWrapper(key).value(False).toNumPy()
+  local_values = get_wrapper(problem, key)
 
   # 1D arrays will return a scalar, ND arrays an array
   N = np.shape(local_values)
@@ -28,11 +35,10 @@ def get_global_value_range(problem, key):
     local_min = np.zeros(N[1]) + 1e100
     local_max = np.zeros(N[1]) - 1e100
 
-  # Ignore zero-length results, calculate min based on last axis
+  # Ignore zero-length results
   if len(local_values):
-    range_axis = tuple([ii for ii in range(0, len(N)-1)])
-    local_min = np.amin(local_values, axis=range_axis)
-    local_max = np.amax(local_values, axis=range_axis)
+    local_min = np.amin(local_values, axis=0)
+    local_max = np.amax(local_values, axis=0)
 
   # Gather the results onto rank 0
   all_min = comm.gather(local_min, root=0)
@@ -81,7 +87,7 @@ def set_wrapper_to_value(problem, key, value):
   @param key the path of the target wrapper
   @param value set the values in the wrapper to this number
   """
-  local_values = problem.getWrapper(key).value(True).toNumPy()
+  local_values = get_wrapper(problem, key, write_flag=True)
   local_values[...] = value
 
 
@@ -96,8 +102,8 @@ def set_wrapper_with_function(problem, target_key, input_keys, fn, target_index=
   """
   if isinstance(input_keys, str):
     input_keys = [input_keys]
-  local_target = problem.getWrapper(target_key).value(True).toNumPy()
-  local_inputs = [problem.getWrapper(k).value(False).toNumPy() for k in input_keys]
+  local_target = get_wrapper(problem, target_key, write_flag=True)
+  local_inputs = [get_wrapper(problem, k) for k in input_keys]
 
   # Run the function, check the shape of outputs/target
   fn_output = fn(*local_inputs)
@@ -205,7 +211,7 @@ def run_queries(problem, records):
   """
   for k in records.keys():
     if (k == 'time'):
-      current_time = problem.getWrapper("Events/time").value(False)
+      current_time = get_wrapper(problem, "Events/time")
       records[k]['history'].append(current_time * records[k]['scale'])
     else:
       tmp = print_global_value_range(problem, k, records[k]['label'], scale=records[k]['scale'])
@@ -235,7 +241,7 @@ def plot_history(records,
     for k in records.keys():
       if (k != 'time'):
         # Set the active figure
-        plt.figure(records[k]['fhandle'].number)
+        fa = plt.figure(records[k]['fhandle'].number)
 
         # Assemble values to plot
         t = np.array(records['time']['history'])
@@ -255,8 +261,13 @@ def plot_history(records,
           # This is a 2D field
           columns = 2
           rows = int(np.ceil(N[2] / float(columns)))
+
+          # Setup axes
+          if (('axes' not in records[k]) or (len(fa.axes) == 0)):
+            records[k]['axes'] = [plt.subplot(rows, columns, ii+1) for ii in range(0, N[2])]
+
           for ii in range(0, N[2]):
-            ax = plt.subplot(rows, columns, ii+1)
+            ax = records[k]['axes'][ii]
             ax.cla()
             ax.plot(t, x[:, 0, ii], label='min')
             ax.plot(t, x[:, 1, ii], label='max')
