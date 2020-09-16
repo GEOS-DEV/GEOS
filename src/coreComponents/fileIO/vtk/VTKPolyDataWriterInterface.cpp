@@ -113,7 +113,13 @@ vtkSmartPointer< vtkPoints >  VTKPolyDataWriterInterface::GetVTKPoints( NodeMana
 std::pair< vtkSmartPointer< vtkPoints >, vtkSmartPointer< vtkCellArray > >VTKPolyDataWriterInterface::GetWell( WellElementSubRegion const & esr,
                                                                                                                NodeManager const & nodeManager ) const
 {
+  // some notes about WellElementSubRegion:
+  // - if the well represented by this subRegion is not on this rank, esr.size() = 0
+  // - otherwise, esr.size() is equal to the number of well elements of the well on this rank
+  // Each well element has two nodes, shared with the previous and next well elements, respectively
   vtkSmartPointer< vtkPoints > points = vtkPoints::New();
+  // if esr.size() == 0, we set the number of points and cells to zero
+  // if not, we set the number of points to esr.size()+1 and the number of cells to esr.size()
   localIndex const numPoints = esr.size() > 0 ? esr.size() + 1 : 0;
   points->SetNumberOfPoints( numPoints );
   vtkSmartPointer< vtkCellArray > cellsArray = vtkCellArray::New();
@@ -124,9 +130,11 @@ std::pair< vtkSmartPointer< vtkPoints >, vtkSmartPointer< vtkCellArray > >VTKPol
 
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const referencePosition = nodeManager.referencePosition();
 
+  // note that if esr.size() == 0, we don't have any point or cell to add below and we just return
+
   for( localIndex edge = 0; edge < esr.size(); edge++ )
   {
-    localIndex firstPoint = esr.nodeList()[edge][0];
+    localIndex const firstPoint = esr.nodeList()[edge][0];
     auto point = referencePosition[firstPoint];
     points->SetPoint( edge, point[0], point[1], point[2] );
     connectivity[0] = edge;
@@ -136,7 +144,7 @@ std::pair< vtkSmartPointer< vtkPoints >, vtkSmartPointer< vtkCellArray > >VTKPol
 
   if( esr.size() > 0 )
   {
-    localIndex lastPoint = esr.nodeList()[ esr.size() -1  ][1];
+    localIndex const lastPoint = esr.nodeList()[ esr.size() -1  ][1];
     auto point = referencePosition[lastPoint];
     points->SetPoint( esr.size(), point[0], point[1], point[2] );
   }
