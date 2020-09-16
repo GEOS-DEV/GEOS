@@ -34,8 +34,6 @@
 #include "PetscSuiteSparse.hpp"
 #endif
 
-#include <fenv.h>
-
 // Put everything under the geosx namespace.
 namespace geosx
 {
@@ -76,7 +74,7 @@ void solve_parallelDirect( LinearSolverParameters const & parameters,
                            LinearSolverResult & result )
 {
   // To be able to use SuperLU_Dist solver we need to disable floating point exceptions
-  LvArray::system::FloatingPointExceptionGuard guard( FE_ALL_EXCEPT );
+  LvArray::system::FloatingPointExceptionGuard guard;
 
   MPI_Comm const comm = mat.getComm();
 
@@ -141,7 +139,7 @@ void solve_serialDirect( LinearSolverParameters const & parameters,
                          LinearSolverResult & result )
 {
   // To be able to use UMFPACK direct solver we need to disable floating point exceptions
-  LvArray::system::FloatingPointExceptionGuard guard( FE_ALL_EXCEPT );
+  LvArray::system::FloatingPointExceptionGuard guard;
 
   MPI_Comm const comm = mat.getComm();
 

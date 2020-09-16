@@ -22,8 +22,6 @@
 
 #include <petscksp.h>
 
-#include <fenv.h>
-
 namespace geosx
 {
 
@@ -231,13 +229,8 @@ void PetscPreconditioner::compute( PetscMatrix const & mat )
     }
   }
 
-  // To be able to use Petsc preconditioner (e.g., GAMG) we need to disable floating point exceptions
-  {
-    LvArray::system::FloatingPointExceptionGuard guard( FE_ALL_EXCEPT );
-
-    GEOSX_LAI_CHECK_ERROR( PCSetUp( m_precond ) );
-    GEOSX_LAI_CHECK_ERROR( PCSetUpOnBlocks( m_precond ) );
-  }
+  GEOSX_LAI_CHECK_ERROR( PCSetUp( m_precond ) );
+  GEOSX_LAI_CHECK_ERROR( PCSetUpOnBlocks( m_precond ) );
 }
 
 void PetscPreconditioner::apply( PetscVector const & src,

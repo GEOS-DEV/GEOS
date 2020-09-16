@@ -34,7 +34,6 @@ class LAOperationsTest : public ::testing::Test
 
 TYPED_TEST_SUITE_P( LAOperationsTest );
 
-/*
 TYPED_TEST_P( LAOperationsTest, VectorFunctions )
 {
   // Define alias
@@ -236,7 +235,6 @@ TYPED_TEST_P( LAOperationsTest, VectorFunctions )
     EXPECT_EQ( localVec[x.getLocalRowID( i )], x.get( i ) );
   }
 }
-*/
 
 #if 0
 TYPED_TEST_P( LAOperationsTest, MatrixFunctions )
@@ -433,7 +431,6 @@ TYPED_TEST_P( LAOperationsTest, MatrixFunctions )
 }
 #endif
 
-/*
 TYPED_TEST_P( LAOperationsTest, MatrixMatrixOperations )
 {
   using Matrix = typename TypeParam::ParallelMatrix;
@@ -487,7 +484,23 @@ TYPED_TEST_P( LAOperationsTest, RectangularMatrixOperations )
   EXPECT_DOUBLE_EQ( b, static_cast< real64 >( nCols ) );
   EXPECT_DOUBLE_EQ( c, std::sqrt( static_cast< real64 >( nRows * ( nRows + 1 ) * ( 2 * nRows + 1 ) ) / 3.0 ) );
 }
-*/
+
+REGISTER_TYPED_TEST_SUITE_P( LAOperationsTest,
+                             VectorFunctions,
+                             MatrixMatrixOperations,
+                             RectangularMatrixOperations );
+
+#ifdef GEOSX_USE_TRILINOS
+INSTANTIATE_TYPED_TEST_SUITE_P( Trilinos, LAOperationsTest, TrilinosInterface, );
+#endif
+
+#ifdef GEOSX_USE_HYPRE
+INSTANTIATE_TYPED_TEST_SUITE_P( Hypre, LAOperationsTest, HypreInterface, );
+#endif
+
+#ifdef GEOSX_USE_PETSC
+INSTANTIATE_TYPED_TEST_SUITE_P( Petsc, LAOperationsTest, PetscInterface, );
+#endif
 
 ///////////////////////////////////////////////////////////////////////////////////////
 
@@ -786,7 +799,6 @@ int main( int argc, char * * argv )
   setupMKL();
   setupLogger();
   setupLAI( argc, argv );
-    LvArray::system::setFPE();
 
   int const result = RUN_ALL_TESTS();
   geosx::basicCleanup();

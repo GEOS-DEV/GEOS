@@ -36,8 +36,6 @@
 #include "HypreSuiteSparse.hpp"
 #endif
 
-#include <fenv.h>
-
 namespace geosx
 {
 
@@ -82,8 +80,7 @@ void solve_parallelDirect( LinearSolverParameters const & parameters,
                            LinearSolverResult & result )
 {
   // To be able to use SuperLU_Dist solver we need to disable floating point exceptions
-  //LvArray::system::FloatingPointExceptionGuard guard( FE_ALL_EXCEPT );
-  int const exceptions = LvArray::system::disableFloatingPointExceptions( FE_ALL_EXCEPT );
+  LvArray::system::FloatingPointExceptionGuard guard;
 
   SuperLU_DistData SLUDData;
   SuperLU_DistCreate( mat, parameters, SLUDData );
@@ -117,8 +114,6 @@ void solve_parallelDirect( LinearSolverParameters const & parameters,
   }
 
   SuperLU_DistDestroy( SLUDData );
-
-  LvArray::system::enableFloatingPointExceptions( exceptions );
 }
 
 #ifdef GEOSX_USE_SUITESPARSE
@@ -129,7 +124,7 @@ void solve_serialDirect( LinearSolverParameters const & parameters,
                          LinearSolverResult & result )
 {
   // To be able to use UMFPACK direct solver we need to disable floating point exceptions
-  LvArray::system::FloatingPointExceptionGuard guard( FE_ALL_EXCEPT );
+  LvArray::system::FloatingPointExceptionGuard guard;
 
   SuiteSparseData SSData;
   SuiteSparseCreate( mat, parameters, SSData );
