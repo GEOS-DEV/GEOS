@@ -170,7 +170,7 @@ public:
   }
 
   GEOSX_HOST_DEVICE
-  real64 getEnergyThreshold() const
+  virtual real64 getEnergyThreshold() const
   {
     #if LORENTZ
     return m_criticalStrainEnergy;

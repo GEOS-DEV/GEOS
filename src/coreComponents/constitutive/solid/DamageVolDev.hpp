@@ -161,7 +161,7 @@ public:
   }
 
   GEOSX_HOST_DEVICE
-  real64 getEnergyThreshold() const
+  real64 getEnergyThreshold() const override
   {
     return 3*m_criticalFractureEnergy/(16 * m_lengthScale);
   }

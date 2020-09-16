@@ -22,6 +22,7 @@
 
 #include "NullModel.hpp"
 #include "solid/DamageVolDev.hpp"
+#include "solid/DamageSpectral.hpp"
 #include "solid/LinearElasticIsotropic.hpp"
 #include "solid/LinearElasticAnisotropic.hpp"
 #include "solid/LinearElasticTransverseIsotropic.hpp"
@@ -182,6 +183,11 @@ struct ConstitutivePassThru< DamageBase >
     {
       lambda( static_cast< DamageVolDev< LinearElasticIsotropic > * >( constitutiveRelation) );
     }
+    else if( dynamic_cast< DamageSpectral< LinearElasticIsotropic > * >( constitutiveRelation ) )
+    {
+      lambda( static_cast< DamageSpectral< LinearElasticIsotropic > * >( constitutiveRelation) );
+    }
+    
     else
     {
       string name;
