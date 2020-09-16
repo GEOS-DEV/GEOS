@@ -73,13 +73,13 @@ int ToVTKCellType( const string & elementType )
   return vtkIdentifier;
 }
 
-localIndex VTKPolyDataWriterInterface::AskMPIRankForNbElementsInRegion( ElementRegionBase const & er, int rank ) const
+void VTKPolyDataWriterInterface:: gatherNbElementsInRegion( ElementRegionBase const & er, 
+                                                            array1d< localIndex > & nbElemsInRegion ) const
 {
   localIndex nbElems = er.getNumberOfElements();
   int const mpiSize = MpiWrapper::Comm_size( MPI_COMM_GEOSX );
-  array1d< localIndex > nbElemsInRegion( mpiSize );
+  nbElemsInRegion.resize( mpiSize );
   MpiWrapper::gather( &nbElems, 1, nbElemsInRegion.data(), 1, 0, MPI_COMM_GEOSX );
-  return nbElemsInRegion[rank];
 }
 
 VTKPolyDataWriterInterface::VTKPolyDataWriterInterface( string const & outputName ):
@@ -410,11 +410,13 @@ void VTKPolyDataWriterInterface::WriteVTMFile( real64 time, ElementRegionManager
   int const mpiRank = MpiWrapper::Comm_rank( MPI_COMM_GEOSX );
   int const mpiSize = MpiWrapper::Comm_size( MPI_COMM_GEOSX );
   auto writeSubBlocks = [&]( ElementRegionBase const & er ) {
+    array1d< localIndex > nbElemsInRegion;
+    gatherNbElementsInRegion( er,  nbElemsInRegion );
     vtmWriter.AddSubBlock( er.getCatalogName(), er.getName() );
     for( int i = 0; i < mpiSize; i++ )
     {
       string const dataSetFile = GetDataSetFilePath( er, time, i );
-      if( AskMPIRankForNbElementsInRegion( er, i ) > 0 )
+      if( nbElemsInRegion[i] > 0 )
       {
         if( mpiRank == 0 )
         {
