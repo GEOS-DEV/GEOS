@@ -71,7 +71,8 @@ void FluxKernel::
 #endif
                                     ParallelMatrix * const jacobian,
                                     ParallelVector * const residual,
-                                    CRSMatrixView< real64, localIndex > const & )
+                                    CRSMatrixView< real64, localIndex > const &,
+				    DomainPartition const * const)
 {
   constexpr localIndex maxNumFluxElems = CellElementStencilTPFA::NUM_POINT_IN_FLUX;
   constexpr localIndex numFluxElems = CellElementStencilTPFA::NUM_POINT_IN_FLUX;
@@ -154,7 +155,8 @@ void FluxKernel::
 #endif
                                 ParallelMatrix * const jacobian,
                                 ParallelVector * const residual,
-                                CRSMatrixView< real64, localIndex > const & dR_dAper )
+                                CRSMatrixView< real64, localIndex > const & dR_dAper,
+				DomainPartition const * const domain)
 {
   constexpr localIndex maxNumFluxElems = FaceElementStencil::NUM_POINT_IN_FLUX;
   constexpr localIndex maxStencilSize = FaceElementStencil::MAX_STENCIL_SIZE;
@@ -233,7 +235,9 @@ void FluxKernel::
                                    dt,
                                    localFlux,
                                    localFluxJacobian,
-                                   dFlux_dAper );
+                                   dFlux_dAper,
+				   domain,
+				   iconn);
 
       // extract DOF numbers
       eqnRowIndices = -1;

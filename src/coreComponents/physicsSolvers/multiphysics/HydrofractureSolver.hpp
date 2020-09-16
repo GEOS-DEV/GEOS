@@ -141,7 +141,8 @@ public:
 
   void AssembleFluidMassResidualDerivativeWrtDisplacement( DomainPartition const * const domain,
                                                            ParallelMatrix * const matrix10,
-                                                           ParallelVector * const rhs0 );
+                                                           ParallelVector * const rhs0,
+							   real64 const dt);
 
 
   real64 SplitOperatorStep( real64 const & time_n,
@@ -151,6 +152,9 @@ public:
 
   //TJ: getter for the tip location after each time step
   inline real64 getConvergedTipLoc() const {return m_convergedTipLoc;}
+
+  //TJ: getter for the total time
+  inline real64 getTotalTime() const {return m_totalTime;}
 
   void initializeNewFaceElements( DomainPartition const & domain );
 

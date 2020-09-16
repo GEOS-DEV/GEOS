@@ -24,6 +24,15 @@
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
 
+//TJ
+#include "physicsSolvers/surfaceGeneration/SurfaceGenerator.hpp"
+#include "physicsSolvers/PhysicsSolverManager.hpp"
+#include "managers/ProblemManager.hpp"
+#include "dataRepository/Group.hpp"
+#include "managers/FieldSpecification/SourceFluxBoundaryCondition.hpp"
+#include "physicsSolvers/multiphysics/HydrofractureSolver.hpp"
+#include "managers/FieldSpecification/FieldSpecificationManager.hpp"
+
 namespace geosx
 {
 
@@ -177,7 +186,8 @@ struct FluxKernel
 #endif
             ParallelMatrix * const jacobian,
             ParallelVector * const residual,
-            CRSMatrixView< real64, localIndex > const & dR_dAper );
+            CRSMatrixView< real64, localIndex > const & dR_dAper,
+	    DomainPartition const * const domain);
 
 
   /**
@@ -402,11 +412,105 @@ struct FluxKernel
                    real64 const dt,
                    arraySlice1d< real64 > const & flux,
                    arraySlice2d< real64 > const & fluxJacobian,
-                   arraySlice2d< real64 > const & dFlux_dAperture )
+                   arraySlice2d< real64 > const & dFlux_dAperture,
+		   DomainPartition const * const domain,
+		   localIndex const iconn)
   {
     real64 sumOfWeights = 0;
     real64 aperTerm[10];
     real64 dAperTerm_dAper[10];
+
+    MeshLevel const * mesh = domain->getMeshBodies()->GetGroup< MeshBody >( 0 )->getMeshLevel( 0 );
+    NodeManager const * myNodeManager = mesh->getNodeManager();
+    arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X = myNodeManager->referencePosition();
+//  auto myChildIndex = myNodeManager->getReference<localIndex_array>("childIndex");
+
+    FaceManager const * myFaceManager = mesh->getFaceManager();
+
+    EdgeManager const * edgeManager = mesh->getEdgeManager();
+    EdgeManager::NodeMapType edgeToNodeMap = edgeManager->nodeList();
+    arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const & disp = myNodeManager->totalDisplacement();
+
+
+    arrayView1d< localIndex const > const &
+      fractureConnectorsToEdges = edgeManager->getReference< array1d< localIndex > >( EdgeManager::
+                                                                                        viewKeyStruct::
+                                                                                        fractureConnectorEdgesToEdgesString );
+
+    dataRepository::Group const * myProblemManager = domain->getParent();
+    PhysicsSolverManager const * myPhysicsSolverManager = myProblemManager->GetGroup< PhysicsSolverManager >("Solvers");
+    SurfaceGenerator const * mySurface = myPhysicsSolverManager
+				       ->GetGroup< SurfaceGenerator >( "SurfaceGen" );
+    HydrofractureSolver const * myHydroSolver = myPhysicsSolverManager
+	                               ->GetGroup< HydrofractureSolver >( "hydrofracture" );
+
+
+    SortedArray< localIndex > const trailingFaces = mySurface->getTrailingFaces();
+    SortedArray< localIndex > const tipNodes = mySurface->getTipNodes();
+
+    dataRepository::Group const * elementSubRegions = domain->GetGroup("MeshBodies")
+					->GetGroup<MeshBody>("mesh1")
+					->GetGroup<MeshLevel>("Level0")
+					->GetGroup<ElementRegionManager>("ElementRegions")
+					->GetRegion< FaceElementRegion >( "Fracture" )
+					->GetGroup("elementSubRegions");
+
+    FaceElementSubRegion const * subRegion = elementSubRegions->GetGroup< FaceElementSubRegion >( "default" );
+    FaceElementSubRegion::FaceMapType const & faceMap = subRegion->faceList();
+
+    real64 const shearModulus = domain->GetGroup("Constitutive")
+			                  ->GetGroup("rock")
+			                  ->getReference<real64>("defaultShearModulus");
+    real64 const bulkModulus = domain->GetGroup("Constitutive")
+		                         ->GetGroup("rock")
+				         ->getReference<real64>("defaultBulkModulus");
+//    real64 const toughness = mySurface->getReference<real64>("rockToughness");
+    real64 const viscosity = domain->GetGroup("Constitutive")
+                                   ->GetGroup("water")
+				       ->getReference<real64>("defaultViscosity");
+
+
+    // The unit of injectionRate is kg per second
+    real64 const injectionRate = domain->getParent()
+                                       ->GetGroup<FieldSpecificationManager>("FieldSpecifications")
+                                       ->GetGroup<SourceFluxBoundaryCondition>("sourceTerm")
+					   ->getReference<real64>("scale");
+
+    // The injectionRate is only for half domain of the KGD problem,
+    // to retrieve the full injection rate, we need to multiply it by 2.0
+    real64 const q0 = 2.0 * std::abs(injectionRate) /1.0e3;
+    real64 const totalTime = myHydroSolver->getTotalTime();
+
+    real64 const nu = ( 1.5 * bulkModulus - shearModulus ) / ( 3.0 * bulkModulus + shearModulus );
+    real64 const E = ( 9.0 * bulkModulus * shearModulus )/ ( 3.0 * bulkModulus + shearModulus );
+    real64 const Eprime = E/(1.0-nu*nu);
+//    real64 const PI = 2 * acos(0.0);
+//    real64 const Kprime = 4.0*sqrt(2.0/PI)*toughness;
+    real64 const mup = 12.0 * viscosity;
+
+    SortedArray< localIndex > tipElements;
+    for(auto const & trailingFace : trailingFaces)
+    {
+      bool found = false;
+      // loop over all the face element
+      for(localIndex i=0; i<faceMap.size(0); i++)
+      {
+	// loop over all the (TWO) faces in a face element
+	for(localIndex j=0; j<faceMap.size(1); j++)
+	{
+	  // if the trailingFace is one of the two faces in a face element,
+	  // we find it
+	  if (faceMap[i][j] == trailingFace)
+	  {
+	    tipElements.insert(i);
+	    found = true;
+	    break;
+	  }
+	} // for localIndex j
+	if (found)
+	  break;
+      } // for localIndex i
+    }  // for(auto const & trailingFace : trailingFaces)
 
     for( localIndex k=0; k<numFluxElems; ++k )
     {
@@ -491,27 +595,137 @@ struct FluxKernel
         localIndex const k_up = (potDif >= 0) ? 0 : 1;
 
         localIndex ei_up  = stencilElementIndices[k[k_up]];
+        std::cout << "ei_up = " << ei_up << std::endl;
 
         real64 const mobility     = mob[ei_up];
         real64 const dMobility_dP = dMob_dPres[ei_up];
 
         // Compute flux and fill flux rval
-        real64 const fluxVal = mobility * weight * potDif * dt;
-        flux[k[0]] += fluxVal;
-        flux[k[1]] -= fluxVal;
+        real64 fluxVal = mobility * weight * potDif * dt;
 
         // compute and fill dFlux_dP
         dFlux_dP[0] = mobility * weight * (  1 - dDensMean_dP[0] * ( gravCoef[ei[0]] - gravCoef[ei[1]] ) ) * dt;
         dFlux_dP[1] = mobility * weight * ( -1 - dDensMean_dP[1] * ( gravCoef[ei[0]] - gravCoef[ei[1]] ) ) * dt;
         dFlux_dP[k_up] += dMobility_dP * weight * potDif * dt;
 
+        real64 dFlux_dAper[2] = { mobility * dWeight_dAper[0] * potDif * dt,
+                     mobility * dWeight_dAper[1] * potDif * dt };
+
+        // TJ: we need to modify the dFlux/dPressure term dFlux_dP for the edge connecting
+        //     the channel element and the tip element
+	if (viscosity >= 2.0e-3) // Viscosity-dominated case
+	{
+	  // TJ: we need to modify the flux term fluxVal for the edge connecting
+	  //     the channel element and the tip element
+	  int tempCount = 0;
+	  int tipElmtIndex;
+	  int channelElmtIndex;
+
+	  for(int i=0; i< numFluxElems; i++)
+	  {
+	    if( std::find( tipElements.begin(), tipElements.end(), ei[i] ) != tipElements.end() )
+	    {
+	      tempCount++;
+	      tipElmtIndex = k[i];
+	    }
+	    else
+	    {
+              channelElmtIndex = k[i];
+	    }
+	  }
+
+//	  std::cout << tempCount << std::endl;
+
+	  // TJ: we find the edge connecting the channel element and the tip element
+	  if(tempCount == 1)
+	  {
+	    localIndex tipElmt = ei[tipElmtIndex];
+	    localIndex channelElmt = ei[channelElmtIndex];
+	    std::cout << "Elmts pair " << ei[0] << " and " << ei[1] << std::endl;
+	    std::cout << "The tip element is " << tipElmt << std::endl;
+	    std::cout << "The channel element is " << channelElmt << std::endl;
+
+	    arrayView1d< R1Tensor const > const & faceNormal = myFaceManager->faceNormal();
+	    arrayView2d< localIndex const > const & elemsToFaces = subRegion->faceList();
+	    ArrayOfArraysView< localIndex const > const & faceToNodeMap = myFaceManager->nodeList().toViewConst();
+
+	    localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( elemsToFaces[tipElmt][0] );
+
+
+	    R1Tensor NbarTip = faceNormal[elemsToFaces[tipElmt][0]];
+	    NbarTip -= faceNormal[elemsToFaces[tipElmt][1]];
+	    NbarTip.Normalize();
+
+	    real64 averageGap = 0.0;
+	    for (localIndex kf = 0; kf < 2; ++kf)
+	    {
+	      for( localIndex a = 0; a < numNodesPerFace; ++a )
+	      {
+		localIndex node = faceToNodeMap( elemsToFaces[tipElmt][kf], a );
+		if ( std::find( tipNodes.begin(), tipNodes.end(), node ) == tipNodes.end() )
+		{
+		  std::cout << "Node " << node << " : " << disp[node] <<  std::endl;
+		  R1Tensor temp = disp[node];
+		  averageGap += (-pow(-1,kf)) * Dot( temp, NbarTip)/2 ;
+		}
+	      }
+	    }
+	    std::cout << "averageGap = " << averageGap << std::endl;
+
+	    localIndex const edgeIndex = fractureConnectorsToEdges[iconn];
+	    real64 const edgeLength = edgeManager->calculateLength( edgeIndex, X ).L2_Norm();
+
+            real64 gradP;
+            real64 coeff;
+	    real64 Lm = pow( Eprime*pow(q0,3.0)*pow(totalTime,4.0)/mup, 1.0/6.0 );
+	    real64 gamma_m0 = 0.616;
+	    real64 velocity = 2.0/3.0 * Lm * gamma_m0 / totalTime;
+	    real64 Betam = pow(2.0, 1.0/3.0) * pow(3.0, 5.0/6.0);
+
+            coeff = -pow(6.0, -2.0/3.0) * pow(Eprime*Eprime*mup*velocity, 1.0/3.0);
+            //TJ: gradP is a positive number
+            gradP = -1.0/3.0 * coeff * pow(Betam, 2.0) * pow(Eprime/mup/velocity, -2.0/3.0)
+                             * pow(averageGap, -2.0);
+
+            real64 modifiedFluxVal;
+            modifiedFluxVal = dt * mobility * edgeLength/12.0 * pow(averageGap, 3.0) * gradP;
+
+            std::cout << "Flux value = " << modifiedFluxVal << std::endl;
+//            std::cout << "Tip elmt index = " << tipElmtIndex << std::endl;
+//            std::cout << "Channel elmt index = " << channelElmtIndex << std::endl;
+//            std::cout << "ComputeJunction mobility = " << mobility << std::endl;
+
+            flux[tipElmtIndex] -= modifiedFluxVal;
+            flux[channelElmtIndex] += modifiedFluxVal;
+
+	    fluxVal = 0.0;
+
+	    real64 modifieddFlux_dP[2] = {0, 0};
+	    modifieddFlux_dP[k_up] = dt * dMobility_dP * edgeLength/12.0 * pow(averageGap, 3.0) * gradP;
+            std::cout << "localFluxJocobianWrtPressure = " << modifieddFlux_dP[k_up] << std::endl;
+
+
+	    fluxJacobian[tipElmtIndex][tipElmtIndex]         -= modifieddFlux_dP[tipElmtIndex];
+	    fluxJacobian[tipElmtIndex][channelElmtIndex]     -= modifieddFlux_dP[channelElmtIndex];
+	    fluxJacobian[channelElmtIndex][tipElmtIndex]     += modifieddFlux_dP[tipElmtIndex];
+	    fluxJacobian[channelElmtIndex][channelElmtIndex] += modifieddFlux_dP[channelElmtIndex];
+
+	    dFlux_dP[0] = 0.0;
+	    dFlux_dP[1] = 0.0;
+
+	    dFlux_dAper[0] = 0.0;
+	    dFlux_dAper[1] = 0.0;
+	  } // if(tempCount == 1) the edge connecting the channel and the tip elements
+	} //if (viscosity >= 2.0e-3) // Viscosity-dominated case
+
+        flux[k[0]] += fluxVal;
+        flux[k[1]] -= fluxVal;
+
         fluxJacobian[k[0]][k[0]] += dFlux_dP[0];
         fluxJacobian[k[0]][k[1]] += dFlux_dP[1];
         fluxJacobian[k[1]][k[0]] -= dFlux_dP[0];
         fluxJacobian[k[1]][k[1]] -= dFlux_dP[1];
 
-        real64 const dFlux_dAper[2] = { mobility * dWeight_dAper[0] * potDif * dt,
-                     mobility * dWeight_dAper[1] * potDif * dt };
         dFlux_dAperture[k[0]][k[0]] += dFlux_dAper[0];
         dFlux_dAperture[k[0]][k[1]] += dFlux_dAper[1];
         dFlux_dAperture[k[1]][k[0]] -= dFlux_dAper[0];

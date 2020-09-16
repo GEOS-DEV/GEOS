@@ -314,7 +314,8 @@ void SinglePhaseFVM< BASE >::AssembleFluxTerms( real64 const GEOSX_UNUSED_PARAM(
 #endif
                         matrix,
                         rhs,
-                        m_derivativeFluxResidual_dAperture->toView() );
+                        m_derivativeFluxResidual_dAperture->toView(),
+			domain);
   } );
 }
 
