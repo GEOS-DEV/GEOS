@@ -20,8 +20,6 @@
 #define GEOSX_MESH_FACEELEMENTSUBREGION_HPP_
 
 #include "SurfaceElementSubRegion.hpp"
-#include "InterObjectRelation.hpp"
-#include "ToElementRelation.hpp"
 
 namespace geosx
 {
@@ -147,18 +145,6 @@ public:
     /// String for registering the elementRotationMatrix with the repository.
     static constexpr auto elementRotationMatrixString  = "elementRotationMatrix";
 
-    /// Face element to cell regions map string.
-    static constexpr auto faceElementsToCellRegionsString    = "fractureElementsToCellRegions";
-
-    /// Face element to cell subregions map string.
-    static constexpr auto faceElementsToCellSubRegionsString    = "fractureElementsToCellSubRegions";
-
-    /// Face element to cell indices map string.
-    static constexpr auto faceElementsToCellIndexString    = "fractureElementsToCellIndices";
-
-    /// Mass creation string.
-    constexpr static auto creationMassString = "creationMass";
-
 #if GEOSX_USE_SEPARATION_COEFFICIENT
 
     /// Separation coefficient string.
@@ -243,9 +229,6 @@ public:
 
   /// Unmapped face elements to faces map
   map< localIndex, array1d< globalIndex > > m_unmappedGlobalIndicesInToFaces;
-
-  /// Map between the face elements and the cells
-  FixedToManyElementRelation m_faceElementsToCells;
 
   /// List of the new face elements that have been generated
   SortedArray< localIndex > m_newFaceElements;

@@ -238,7 +238,7 @@ void TwoPointFluxApproximation::addToFractureStencil( MeshLevel & mesh,
   ArrayOfArraysView< localIndex const > const & fractureConnectorsToFaceElements =
     edgeManager->getReference< ArrayOfArrays< localIndex > >( EdgeManager::viewKeyStruct::fractureConnectorsEdgesToFaceElementsIndexString );
 
-  FixedToManyElementRelation const & faceElementsToCells = fractureSubRegion->m_faceElementsToCells;
+  FixedToManyElementRelation const & faceElementsToCells = fractureSubRegion->getToCellRelation();
 
   localIndex constexpr maxElems = FaceElementStencil::MAX_STENCIL_SIZE;
 
@@ -689,9 +689,8 @@ void TwoPointFluxApproximation::addEDFracToFractureStencil( MeshLevel & mesh,
   }
 
   // Add connections EmbeddedSurface to/from CellElements.
-  arrayView1d< localIndex const > const & elemRegionList    = fractureSubRegion.getSurfaceToRegionList();
-  arrayView1d< localIndex const > const & elemSubRegionList = fractureSubRegion.getSurfaceToSubRegionList();
-  arrayView1d< localIndex const > const & elemList          = fractureSubRegion.getSurfaceToCellList();
+  FixedToManyElementRelation const & faceElementsToCells = fractureSubRegion.getToCellRelation();
+
   arrayView1d< real64 const >     const & connectivityIndex = fractureSubRegion.getConnectivityIndex();
 
   ElementRegionManager::ElementViewAccessor< arrayView1d< R1Tensor const > > const permeabilityTensor =
@@ -714,9 +713,9 @@ void TwoPointFluxApproximation::addEDFracToFractureStencil( MeshLevel & mesh,
       stackArray1d< localIndex, maxElems > stencilCellsIndex( numElems );
       stackArray1d< real64, maxElems > stencilWeights( numElems );
 
-      localIndex const er  = elemRegionList[kes];
-      localIndex const esr = elemSubRegionList[kes];
-      localIndex const ei  = elemList[kes];
+      localIndex const er  = faceElementsToCells.m_toElementRegion[kes][0];
+      localIndex const esr = faceElementsToCells.m_toElementSubRegion[kes][0];
+      localIndex const ei  = faceElementsToCells.m_toElementIndex[kes][0];
 
       // Here goes EDFM transmissibility computation.
       real64 avPerm = LvArray::tensorOps::l2Norm< 3 >( permeabilityTensor[er][esr][ei] );

@@ -143,15 +143,6 @@ public:
    */
   struct viewKeyStruct : SurfaceElementSubRegion::viewKeyStruct
   {
-    /// Embedded surface element cell list string
-    static constexpr auto cellListString               = "fractureElementsToCellIndices";
-
-    /// Embedded surface element region list string
-    static constexpr auto regionListString             = "fractureElementsToRegionIndex";
-
-    /// Embedded surface element subregion list string
-    static constexpr auto subregionListString          = "fractureElementsToSubRegionIndex";
-
     /// Embedded surface element normal vector string
     static constexpr auto normalVectorString           = "normalVector";
 
@@ -170,45 +161,45 @@ public:
   virtual string GetElementTypeString() const override final { return "Embedded"; }
 
 
-  /**
-   * @name Relation Accessors
-   * @brief Accessor function for the various inter-object relations
-   */
-  ///@{
-
-  /**
-   * @brief Get the embedded surface element to region map (background grid nodes).
-   * @return the embedded surface element to region map
-   */
-  arrayView1d< localIndex > getSurfaceToRegionList() { return m_embeddedSurfaceToRegion; }
-
-  /**
-   * @copydoc getSurfaceToRegionList()
-   */
-  arrayView1d< localIndex const > getSurfaceToRegionList() const { return m_embeddedSurfaceToRegion; }
-
-  /**
-   * @brief Get the embedded surface element to subregion map (of cell elemtns being cut).
-   * @return the embedded surface element to subregion map
-   */
-  arrayView1d< localIndex > getSurfaceToSubRegionList() { return m_embeddedSurfaceToSubRegion; }
-
-  /**
-   * @copydoc getSurfaceToSubRegionList()
-   */
-  arrayView1d< localIndex const > getSurfaceToSubRegionList() const { return m_embeddedSurfaceToSubRegion; }
-
-  /**
-   * @brief Get the embedded surface element to cell element map
-   * @return the embedded surface element to cell element map
-   */
-  arrayView1d< localIndex > getSurfaceToCellList() { return m_embeddedSurfaceToCell; }
-
-  /**
-   * @copydoc getSurfaceToCellList()
-   */
-  arrayView1d< localIndex const > getSurfaceToCellList() const { return m_embeddedSurfaceToCell; }
-  ///@}
+//  /**
+//   * @name Relation Accessors
+//   * @brief Accessor function for the various inter-object relations
+//   */
+//  ///@{
+//
+//  /**
+//   * @brief Get the embedded surface element to region map (background grid nodes).
+//   * @return the embedded surface element to region map
+//   */
+//  arrayView1d< localIndex > getSurfaceToRegionList() { return m_embeddedSurfaceToRegion; }
+//
+//  /**
+//   * @copydoc getSurfaceToRegionList()
+//   */
+//  arrayView1d< localIndex const > getSurfaceToRegionList() const { return m_embeddedSurfaceToRegion; }
+//
+//  /**
+//   * @brief Get the embedded surface element to subregion map (of cell elemtns being cut).
+//   * @return the embedded surface element to subregion map
+//   */
+//  arrayView1d< localIndex > getSurfaceToSubRegionList() { return m_embeddedSurfaceToSubRegion; }
+//
+//  /**
+//   * @copydoc getSurfaceToSubRegionList()
+//   */
+//  arrayView1d< localIndex const > getSurfaceToSubRegionList() const { return m_embeddedSurfaceToSubRegion; }
+//
+//  /**
+//   * @brief Get the embedded surface element to cell element map
+//   * @return the embedded surface element to cell element map
+//   */
+//  arrayView1d< localIndex > getSurfaceToCellList() { return m_embeddedSurfaceToCell; }
+//
+//  /**
+//   * @copydoc getSurfaceToCellList()
+//   */
+//  arrayView1d< localIndex const > getSurfaceToCellList() const { return m_embeddedSurfaceToCell; }
+//  ///@}
 
   /**
    * @name Properties Getters
@@ -322,15 +313,6 @@ private:
 
   // tangential direction 2
   array1d< R1Tensor > m_tangentVector2;
-
-  /// list of regions
-  array1d< localIndex > m_embeddedSurfaceToRegion;
-
-  /// list of subregions
-  array1d< localIndex > m_embeddedSurfaceToSubRegion;
-
-  /// list of elements cut by the embedded surface elem
-  array1d< localIndex > m_embeddedSurfaceToCell;
 
   /// The number of jump enrichments
   localIndex m_numOfJumpEnrichments;

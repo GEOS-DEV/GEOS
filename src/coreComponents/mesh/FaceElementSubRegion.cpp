@@ -35,7 +35,6 @@ FaceElementSubRegion::FaceElementSubRegion( string const & name,
   m_unmappedGlobalIndicesInToNodes(),
   m_unmappedGlobalIndicesInToEdges(),
   m_unmappedGlobalIndicesInToFaces(),
-  m_faceElementsToCells(),
   m_newFaceElements(),
   m_toFacesRelation(),
   m_elementRotationMatrix()
@@ -56,26 +55,6 @@ FaceElementSubRegion::FaceElementSubRegion( string const & name,
     setDescription( "The rotation matrix of each FaceElement." )->
     reference().resizeDimension< 1, 2 >( 3, 3 );
 
-  registerWrapper( viewKeyStruct::faceElementsToCellRegionsString, &m_faceElementsToCells.m_toElementRegion )->
-    setApplyDefaultValue( -1 )->
-    setPlotLevel( PlotLevel::NOPLOT )->
-    setDescription( "A map of face element local indices to the cell local indices" );
-
-  registerWrapper( viewKeyStruct::faceElementsToCellSubRegionsString, &m_faceElementsToCells.m_toElementSubRegion )->
-    setApplyDefaultValue( -1 )->
-    setPlotLevel( PlotLevel::NOPLOT )->
-    setDescription( "A map of face element local indices to the cell local indices" );
-
-  registerWrapper( viewKeyStruct::faceElementsToCellIndexString, &m_faceElementsToCells.m_toElementIndex )->
-    setApplyDefaultValue( -1 )->
-    setPlotLevel( PlotLevel::NOPLOT )->
-    setDescription( "A map of face element local indices to the cell local indices" );
-
-  registerWrapper< real64_array >( viewKeyStruct::creationMassString )->
-    setApplyDefaultValue( 0.0 )->
-    setPlotLevel( dataRepository::PlotLevel::LEVEL_1 )->
-    setDescription( "The amount of remaining mass that was introduced when the FaceElement was created." );
-
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
   registerWrapper( viewKeyStruct::separationCoeffString, &m_separationCoefficient )->
     setApplyDefaultValue( 0.0 )->
@@ -83,8 +62,8 @@ FaceElementSubRegion::FaceElementSubRegion( string const & name,
     setDescription( "Scalar indicator of level of separation for a fracturing face." );
 #endif
 
-  m_faceElementsToCells.resize( 0, 2 );
-  m_faceElementsToCells.setElementRegionManager( getParent()->getParent()->getParent()->getParent()->group_cast< ElementRegionManager * >() );
+  m_surfaceElementsToCells.resize( 0, 2 );
+  m_surfaceElementsToCells.setElementRegionManager( getParent()->getParent()->getParent()->getParent()->group_cast< ElementRegionManager * >() );
 
   m_numNodesPerElement = 8;
 }
@@ -177,11 +156,11 @@ localIndex FaceElementSubRegion::PackUpDownMapsPrivate( buffer_unit_type * & buf
                                            faceLocalToGlobal );
 
 
-  packedSize += bufferOps::Pack< DOPACK >( buffer, string( viewKeyStruct::faceElementsToCellRegionsString ) );
+  packedSize += bufferOps::Pack< DOPACK >( buffer, string( viewKeyStruct::surfaceElementsToCellRegionsString ) );
   packedSize += bufferOps::Pack< DOPACK >( buffer,
-                                           this->m_faceElementsToCells,
+                                           this->m_surfaceElementsToCells,
                                            packList,
-                                           m_faceElementsToCells.getElementRegionManager() );
+                                           m_surfaceElementsToCells.getElementRegionManager() );
 
   return packedSize;
 }
@@ -231,12 +210,12 @@ localIndex FaceElementSubRegion::UnpackUpDownMaps( buffer_unit_type const * & bu
 
   string elementListString;
   unPackedSize += bufferOps::Unpack( buffer, elementListString );
-  GEOSX_ERROR_IF_NE( elementListString, viewKeyStruct::faceElementsToCellRegionsString );
+  GEOSX_ERROR_IF_NE( elementListString, viewKeyStruct::surfaceElementsToCellRegionsString );
 
   unPackedSize += bufferOps::Unpack( buffer,
-                                     m_faceElementsToCells,
+                                     m_surfaceElementsToCells,
                                      packList.toViewConst(),
-                                     m_faceElementsToCells.getElementRegionManager(),
+                                     m_surfaceElementsToCells.getElementRegionManager(),
                                      overwriteUpMaps );
 
 
@@ -276,9 +255,9 @@ void FaceElementSubRegion::ViewPackingExclusionList( SortedArray< localIndex > &
   exclusionList.insert( this->getWrapperIndex( viewKeyStruct::nodeListString ));
   exclusionList.insert( this->getWrapperIndex( viewKeyStruct::edgeListString ));
   exclusionList.insert( this->getWrapperIndex( viewKeyStruct::faceListString ));
-  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::faceElementsToCellRegionsString ));
-  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::faceElementsToCellSubRegionsString ));
-  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::faceElementsToCellIndexString ));
+  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::surfaceElementsToCellRegionsString ));
+  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::surfaceElementsToCellSubRegionsString ));
+  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::surfaceElementsToCellIndexString ));
 }
 
 } /* namespace geosx */
