@@ -76,6 +76,37 @@ geosx_osx_build: &geosx_osx_build
   - make -j $(nproc) VERBOSE=1
   - ctest -V -E "testUncrustifyCheck|testDoxygenCheck"
 
+geosx_osx_build_rel: &geosx_osx_build_rel
+  os: osx
+  osx_image: xcode11.2
+  install:
+  - TPL_METADATA_URL=https://www.googleapis.com/storage/v1/b/geosx/o/TPL%2Fosx-${GEOSX_TPL_TAG}.tar
+  - TPL_BULK_URL=${TPL_METADATA_URL}?alt=media
+    # Extracting the GEOSX_TPL installation directory
+  - METADATA=$(curl -s "${TPL_METADATA_URL}")
+  - GEOSX_TPL_DIR=$(echo -n ${METADATA} | python3 -c "import sys, json; print(json.load(sys.stdin)['metadata']['GEOSX_TPL_DIR'], end='')")
+  - sudo mkdir -p -m a=rwx ${GEOSX_TPL_DIR}
+    # Then download the TPLs and uncompress where needed
+  - curl -s "${TPL_BULK_URL}" | tar --strip-component=1 --directory=${GEOSX_TPL_DIR} -xf -
+    # Now let's deal with Homebrew third parties
+  - BREW_HASH=$(echo -n ${METADATA} | python3 -c "import sys, json; print(json.load(sys.stdin)['metadata']['BREW_HASH'], end='')")
+  - BREW_URL=https://raw.github.com/Homebrew/homebrew-core/${BREW_HASH}
+  - wget ${BREW_URL}/Formula/open-mpi.rb
+  - brew update
+  - HOMEBREW_NO_AUTO_UPDATE=1 brew install ./open-mpi.rb
+  - for dep in `brew deps open-mpi.rb`; do brew install $dep; done
+  <<: *geosx_before_script
+  script:
+  - python ${TRAVIS_BUILD_DIR}/scripts/config-build.py
+    -hc ${TRAVIS_BUILD_DIR}/host-configs/darwin-clang.cmake
+    -bt Release
+    -DGEOSX_TPL_DIR=${GEOSX_TPL_DIR}
+    -DBLT_MPI_COMMAND_APPEND:STRING="--oversubscribe"
+    -DENABLE_GEOSX_PTP:BOOL=ON -DENABLE_DOXYGEN:BOOL=OFF
+  - cd build-darwin-clang-release
+  - make -j $(nproc) VERBOSE=1
+  - ctest -V -E "testUncrustifyCheck|testDoxygenCheck"
+
 geosx_pangea_build: &geosx_pangea_build
   <<: *geosx_linux_build
   # We use the most recent ubuntu distribution available in travis-ci to ensure maximum support of google cloud's sdk.
@@ -191,6 +222,9 @@ jobs:
   - stage: builds
     name: Mac_OSX
     <<: *geosx_osx_build
+  - stage: builds
+    name: Mac_OSX_rel
+    <<: *geosx_osx_build_rel
   - stage: builds
     name: Centos7.7_clang9.0.0_release
     <<: *geosx_linux_build
