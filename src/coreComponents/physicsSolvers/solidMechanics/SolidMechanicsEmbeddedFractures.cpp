@@ -339,9 +339,9 @@ void SolidMechanicsEmbeddedFractures::AssembleSystem( real64 const time,
         {
           // Get rock matrix element subregion
           CellElementSubRegion const * const elementSubRegion =
-        		  Group::group_cast< CellElementSubRegion const * const >
-          ( elemManager.GetRegion( embeddedSurfacesToCells.m_toElementRegion[k][0] )->
-        		  GetSubRegion( embeddedSurfacesToCells.m_toElementSubRegion[k][0] ));
+            Group::group_cast< CellElementSubRegion const * const >
+              ( elemManager.GetRegion( embeddedSurfacesToCells.m_toElementRegion[k][0] )->
+                GetSubRegion( embeddedSurfacesToCells.m_toElementSubRegion[k][0] ));
 
           localIndex cellElementIndex = embeddedSurfacesToCells.m_toElementIndex[k][0];
 
@@ -450,7 +450,7 @@ void SolidMechanicsEmbeddedFractures::AssembleSystem( real64 const time,
                                            q,
                                            elemsToNodes,
                                            nodesCoord,
-										   cellElementIndex,
+                                           cellElementIndex,
                                            numNodesPerElement,
                                            dNdX );
 
@@ -556,11 +556,11 @@ void SolidMechanicsEmbeddedFractures::AddCouplingNumNonzeros( DomainPartition & 
 
     for( localIndex k=0; k<numEmbeddedElems; ++k )
     {
-    	// Get rock matrix element subregion
-    	CellElementSubRegion const * const subRegion =
-    			Group::group_cast< CellElementSubRegion const * const >
-    	( elemManager.GetRegion( embeddedSurfacesToCells.m_toElementRegion[k][0] )->
-    			GetSubRegion( embeddedSurfacesToCells.m_toElementSubRegion[k][0] ));
+      // Get rock matrix element subregion
+      CellElementSubRegion const * const subRegion =
+        Group::group_cast< CellElementSubRegion const * const >
+          ( elemManager.GetRegion( embeddedSurfacesToCells.m_toElementRegion[k][0] )->
+            GetSubRegion( embeddedSurfacesToCells.m_toElementSubRegion[k][0] ));
 
       localIndex cellElementIndex = embeddedSurfacesToCells.m_toElementIndex[k][0];
 

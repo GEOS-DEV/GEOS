@@ -145,15 +145,15 @@ public:
    */
   FixedToManyElementRelation & getToCellRelation()
   {
-	  return m_surfaceElementsToCells;
+    return m_surfaceElementsToCells;
   }
 
   /**
-    * @copydoc getToCellRelation()
-    */
+   * @copydoc getToCellRelation()
+   */
   FixedToManyElementRelation const & getToCellRelation() const
   {
-	  return m_surfaceElementsToCells;
+    return m_surfaceElementsToCells;
   }
 
   ///@}

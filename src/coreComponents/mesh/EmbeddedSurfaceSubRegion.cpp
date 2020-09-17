@@ -222,9 +222,9 @@ void EmbeddedSurfaceSubRegion::inheritGhostRank( array1d< array1d< arrayView1d< 
   arrayView1d< integer > const & ghostRank = this->ghostRank();
   for( localIndex k=0; k < size(); ++k )
   {
-	localIndex regionIndex    = m_surfaceElementsToCells.m_toElementRegion[k][0];
-	localIndex subRegionIndex = m_surfaceElementsToCells.m_toElementSubRegion[k][0];
-	localIndex cellIndex      = m_surfaceElementsToCells.m_toElementIndex[k][0];
+    localIndex regionIndex    = m_surfaceElementsToCells.m_toElementRegion[k][0];
+    localIndex subRegionIndex = m_surfaceElementsToCells.m_toElementSubRegion[k][0];
+    localIndex cellIndex      = m_surfaceElementsToCells.m_toElementIndex[k][0];
 
     ghostRank[k] = cellGhostRank[regionIndex][subRegionIndex][cellIndex];
   }
