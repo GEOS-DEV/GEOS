@@ -81,9 +81,9 @@ localIndex SurfaceElementRegion::AddToFractureMesh( real64 const time_np1,
 
   SortedArray< localIndex > connectedEdges;
 
-  arrayView2d< localIndex const > const & faceToElementRegion = faceManager->elementRegionList();
-  arrayView2d< localIndex const > const & faceToElementSubRegion = faceManager->elementSubRegionList();
-  arrayView2d< localIndex const > const & faceToElementIndex = faceManager->elementList();
+  arrayView2d< localIndex const > const faceToElementRegion = faceManager->elementRegionList();
+  arrayView2d< localIndex const > const faceToElementSubRegion = faceManager->elementSubRegionList();
+  arrayView2d< localIndex const > const faceToElementIndex = faceManager->elementList();
 
   Group * elementSubRegions = this->GetGroup( viewKeyStruct::elementSubRegions );
 
@@ -92,25 +92,25 @@ localIndex SurfaceElementRegion::AddToFractureMesh( real64 const time_np1,
   rval = subRegion->size() - 1;
 
 
-  arrayView1d< real64 > const &
+  arrayView1d< real64 > const
   ruptureTime = subRegion->getReference< real64_array >( viewKeyStruct::ruptureTimeString );
 
-  arrayView1d< real64 > const &
+  arrayView1d< real64 > const
   creationMass = subRegion->getReference< real64_array >( FaceElementSubRegion::viewKeyStruct::creationMassString );
 
-  arrayView2d< real64 const > const & faceCenter = faceManager->faceCenter();
-  arrayView2d< real64 > const & elemCenter = subRegion->getElementCenter();
-  arrayView1d< real64 const > const & elemArea = subRegion->getElementArea();
+  arrayView2d< real64 const > const faceCenter = faceManager->faceCenter();
+  arrayView2d< real64 > const elemCenter = subRegion->getElementCenter();
+  arrayView1d< real64 const > const elemArea = subRegion->getElementArea();
 
-  arrayView1d< integer > const & subRegionGhostRank = subRegion->ghostRank();
+  arrayView1d< integer > const subRegionGhostRank = subRegion->ghostRank();
 
-  arrayView1d< integer const > const & faceGhostRank = faceManager->ghostRank();
+  arrayView1d< integer const > const faceGhostRank = faceManager->ghostRank();
 
   SurfaceElementSubRegion::NodeMapType & nodeMap = subRegion->nodeList();
   SurfaceElementSubRegion::EdgeMapType & edgeMap = subRegion->edgeList();
   FaceElementSubRegion::FaceMapType & faceMap = subRegion->faceList();
 
-  ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager->nodeList().toViewConst();
+  ArrayOfArraysView< localIndex const > const faceToNodeMap = faceManager->nodeList().toViewConst();
 
   localIndex const kfe = subRegion->size() - 1;
   ruptureTime( kfe ) = time_np1;

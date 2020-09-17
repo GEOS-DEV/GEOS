@@ -372,15 +372,15 @@ void SurfaceGenerator::InitializePostInitialConditions_PreSubGroups( Group * con
             //          localIndex const er = elementManager->GetRegions().getIndex( elementRegionName );
             //          localIndex const esr = elementRegion->GetSubRegions().getIndex( elementSubRegion->getName() );
 
-            arrayView1d< real64 const > const & K_IC_00 = elementSubRegion->getExtrinsicData< extrinsicMeshData::K_IC_00 >();
-            arrayView1d< real64 const > const & K_IC_01 = elementSubRegion->getExtrinsicData< extrinsicMeshData::K_IC_01 >();
-            arrayView1d< real64 const > const & K_IC_02 = elementSubRegion->getExtrinsicData< extrinsicMeshData::K_IC_02 >();
-            arrayView1d< real64 const > const & K_IC_10 = elementSubRegion->getExtrinsicData< extrinsicMeshData::K_IC_10 >();
-            arrayView1d< real64 const > const & K_IC_11 = elementSubRegion->getExtrinsicData< extrinsicMeshData::K_IC_11 >();
-            arrayView1d< real64 const > const & K_IC_12 = elementSubRegion->getExtrinsicData< extrinsicMeshData::K_IC_12 >();
-            arrayView1d< real64 const > const & K_IC_20 = elementSubRegion->getExtrinsicData< extrinsicMeshData::K_IC_20 >();
-            arrayView1d< real64 const > const & K_IC_21 = elementSubRegion->getExtrinsicData< extrinsicMeshData::K_IC_21 >();
-            arrayView1d< real64 const > const & K_IC_22 = elementSubRegion->getExtrinsicData< extrinsicMeshData::K_IC_22 >();
+            arrayView1d< real64 const > const K_IC_00 = elementSubRegion->getExtrinsicData< extrinsicMeshData::K_IC_00 >();
+            arrayView1d< real64 const > const K_IC_01 = elementSubRegion->getExtrinsicData< extrinsicMeshData::K_IC_01 >();
+            arrayView1d< real64 const > const K_IC_02 = elementSubRegion->getExtrinsicData< extrinsicMeshData::K_IC_02 >();
+            arrayView1d< real64 const > const K_IC_10 = elementSubRegion->getExtrinsicData< extrinsicMeshData::K_IC_10 >();
+            arrayView1d< real64 const > const K_IC_11 = elementSubRegion->getExtrinsicData< extrinsicMeshData::K_IC_11 >();
+            arrayView1d< real64 const > const K_IC_12 = elementSubRegion->getExtrinsicData< extrinsicMeshData::K_IC_12 >();
+            arrayView1d< real64 const > const K_IC_20 = elementSubRegion->getExtrinsicData< extrinsicMeshData::K_IC_20 >();
+            arrayView1d< real64 const > const K_IC_21 = elementSubRegion->getExtrinsicData< extrinsicMeshData::K_IC_21 >();
+            arrayView1d< real64 const > const K_IC_22 = elementSubRegion->getExtrinsicData< extrinsicMeshData::K_IC_22 >();
 
             R1Tensor k0;
             k0[0] = K_IC_00[iEle]*faceNormals[kf][0] + K_IC_10[iEle]*faceNormals[kf][1] + K_IC_20[iEle]*faceNormals[kf][2];
