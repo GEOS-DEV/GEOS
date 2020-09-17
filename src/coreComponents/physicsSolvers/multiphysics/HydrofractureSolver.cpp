@@ -228,6 +228,8 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
 
   m_totalTime = time_n + dt;
 
+  m_meshSize = 1.0;  //hard-coded mesh size, the only place needs to be changed
+
   SolverBase * const surfaceGenerator =  this->getParent()->GetGroup< SolverBase >( "SurfaceGen" );
 
   if( m_couplingTypeOption == couplingTypeOption::SIM_FixedStress )
@@ -253,7 +255,7 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
     int const rank = MpiWrapper::Comm_rank( MPI_COMM_WORLD );
 
     //TJ the hard coded elmt length
-    real64 const meshSize = 1.0;  // this value needs to be changed for a mesh-refinement
+    real64 const meshSize = m_meshSize;  // this value needs to be changed for a mesh-refinement
     GEOSX_LOG_RANK_0( "Mesh size = " << meshSize );
 
     //TJ: We use this global flag to ensure that the MPI processes are either ALL in
@@ -1601,7 +1603,7 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
 void HydrofractureSolver::UpdateDeformationForCoupling( DomainPartition * const domain )
 {
   //TJ the hard coded elmt length
-  real64 const meshSize = 1.0;  // this value needs to be changed for a mesh-refinement
+  real64 const meshSize = m_meshSize;  // this value needs to be changed for a mesh-refinement
   GEOSX_LOG_RANK_0( "Mesh size = " << meshSize );
 
   MeshLevel * const meshLevel = domain->getMeshBody( 0 )->getMeshLevel( 0 );
@@ -1652,6 +1654,8 @@ void HydrofractureSolver::UpdateDeformationForCoupling( DomainPartition * const 
       {
         temp += u[faceToNodeMap( kf0, a )];
         temp -= u[faceToNodeMap( kf1, a )];
+	std::cout << "Node " << faceToNodeMap( kf0, a ) << " : " << u[faceToNodeMap( kf0, a )] <<  std::endl;
+	std::cout << "Node " << faceToNodeMap( kf1, a ) << " : " << u[faceToNodeMap( kf1, a )] <<  std::endl;
       }
 
       // TODO this needs a proper contact based strategy for aperture
@@ -2739,7 +2743,7 @@ HydrofractureSolver::
   GEOSX_MARK_FUNCTION;
 
   //TJ the hard coded elmt length
-  real64 const meshSize = 1.0;  // this value needs to be changed for a mesh-refinement
+  real64 const meshSize = m_meshSize;  // this value needs to be changed for a mesh-refinement
   GEOSX_LOG_RANK_0( "Mesh size = " << meshSize );
 
   MeshLevel const & mesh = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
@@ -2954,6 +2958,8 @@ HydrofractureSolver::
   	            {
   	              for (int i = 0; i < 3; ++i)
   	              {
+  	                nodeDOF[kf * 3 * numNodesPerFace + 3 * a + i] =
+  	                  dispDofNumber[faceToNodeMap( elemsToFaces[ei][kf], a )] + i;
   	                dGap_dU_tip = 3.0/2.0 * coeff * pow(averageGap, 2.0) * (-pow(-1, kf)) *Nbar[i];
   	                dAper_dU_tip = contactRelation->dEffectiveAperture_dAperture( aperture[ei] ) * dGap_dU_tip;
   	                dRdU( kf * 3 * numNodesPerFace + 3 * a + i ) = dAccumulationResidualdAperture * dAper_dU_tip;
@@ -2963,6 +2969,8 @@ HydrofractureSolver::
   	            {
   	              for (int i = 0; i < 3; ++i)
   	              {
+  	                nodeDOF[kf * 3 * numNodesPerFace + 3 * a + i] =
+  	                  dispDofNumber[faceToNodeMap( elemsToFaces[ei][kf], a )] + i;
   	                dRdU( kf * 3 * numNodesPerFace + 3 * a + i ) = 0.0;
   	              }
   	            } // if else
@@ -2976,6 +2984,9 @@ HydrofractureSolver::
         	real64 velocity = 2.0/3.0 * Lm * gamma_m0 / total_time;
         	real64 Betam = pow(2.0, 1.0/3.0) * pow(3.0, 5.0/6.0);
         	coeff = 3.0/5.0 * pow(Betam, -3.0/2.0) * pow(Eprime/mup/velocity, 0.5)/meshSize;
+                real64 coeff1 = -pow(6.0, -2.0/3.0) * pow(Eprime*Eprime*mup*velocity, 1.0/3.0);
+		real64 coeff2 = 3.0/2.0 * coeff1/meshSize * pow(Betam, -1.0)
+					* pow(Eprime/mup/velocity, 1.0/3.0);
                 for (localIndex kf = 0; kf < 2; ++kf)
                 {
                   for( localIndex a = 0; a < numNodesPerFace; ++a )
@@ -2985,15 +2996,25 @@ HydrofractureSolver::
   	            {
   	              for (int i = 0; i < 3; ++i)
   	              {
+  	                nodeDOF[kf * 3 * numNodesPerFace + 3 * a + i] =
+  	                  dispDofNumber[faceToNodeMap( elemsToFaces[ei][kf], a )] + i;
   	                dGap_dU_tip = 5.0/4.0 * coeff * pow(averageGap, 3.0/2.0) * (-pow(-1, kf)) * Nbar[i];
   	                dAper_dU_tip = contactRelation->dEffectiveAperture_dAperture( aperture[ei] ) * dGap_dU_tip;
   	                dRdU( kf * 3 * numNodesPerFace + 3 * a + i ) = dAccumulationResidualdAperture * dAper_dU_tip;
+                        if (m_convergedTipLoc > 1.0*meshSize)
+                        {
+			  dRdU( kf * 3 * numNodesPerFace + 3 * a + i ) = 0.0;
+			  real64 const dGap_dU = -1.0/2.0 * pow(-1, kf) * Nbar[i];
+			  dRdU( kf * 3 * numNodesPerFace + 3 * a + i ) = -coeff2 * dGap_dU / Eprime;
+                        }
   	              }
   	            }
   	            else
   	            {
   	              for (int i = 0; i < 3; ++i)
   	              {
+  	                nodeDOF[kf * 3 * numNodesPerFace + 3 * a + i] =
+  	                  dispDofNumber[faceToNodeMap( elemsToFaces[ei][kf], a )] + i;
   	                dRdU( kf * 3 * numNodesPerFace + 3 * a + i ) = 0.0;
   	              }
   	            } // if else
@@ -3081,6 +3102,8 @@ HydrofractureSolver::
   	            {
   	              for (int i = 0; i < 3; ++i)
   	              {
+  	                nodeDOF[kf * 3 * numNodesPerFace + 3 * a + i] =
+  	                  dispDofNumber[faceToNodeMap( elemsToFaces[ei2][kf], a )] + i;
   	                dGap_dU_tip = 3.0/2.0 * coeff * pow(averageGap, 2.0) * (-pow(-1, kf)) *Nbar[i];
   	                dAper_dU_tip = contactRelation->dEffectiveAperture_dAperture( aperture[ei2] ) * dGap_dU_tip;
   	                dRdU( kf * 3 * numNodesPerFace + 3 * a + i ) = dRdAper * dAper_dU_tip;
@@ -3090,6 +3113,8 @@ HydrofractureSolver::
   	            {
   	              for (int i = 0; i < 3; ++i)
   	              {
+  	                nodeDOF[kf * 3 * numNodesPerFace + 3 * a + i] =
+  	                  dispDofNumber[faceToNodeMap( elemsToFaces[ei2][kf], a )] + i;
   	                dRdU( kf * 3 * numNodesPerFace + 3 * a + i ) = 0.0;
   	              }
   	            } // if else
@@ -3112,6 +3137,8 @@ HydrofractureSolver::
   	            {
   	              for (int i = 0; i < 3; ++i)
   	              {
+  	                nodeDOF[kf * 3 * numNodesPerFace + 3 * a + i] =
+  	                  dispDofNumber[faceToNodeMap( elemsToFaces[ei2][kf], a )] + i;
   	                dGap_dU_tip = 5.0/4.0 * coeff * pow(averageGap, 3.0/2.0) * (-pow(-1, kf)) * Nbar[i];
   	                dAper_dU_tip = contactRelation->dEffectiveAperture_dAperture( aperture[ei2] ) * dGap_dU_tip;
   	                dRdU( kf * 3 * numNodesPerFace + 3 * a + i ) = dRdAper * dAper_dU_tip;
@@ -3121,6 +3148,8 @@ HydrofractureSolver::
   	            {
   	              for (int i = 0; i < 3; ++i)
   	              {
+  	                nodeDOF[kf * 3 * numNodesPerFace + 3 * a + i] =
+  	                  dispDofNumber[faceToNodeMap( elemsToFaces[ei2][kf], a )] + i;
   	                dRdU( kf * 3 * numNodesPerFace + 3 * a + i ) = 0.0;
   	              }
   	            } // if else
@@ -3132,156 +3161,164 @@ HydrofractureSolver::
 
           //TJ: for the two elements, one of which is the tip element, and the other
           //    is channel element, modify the dRdU term
-          if (viscosity >= 2.0e-3) // Viscosity-dominated case
+          real64 tipLoc = m_convergedTipLoc;
+          if (tipLoc > 1.0*meshSize)
           {
-            int tempCount = 0;
-            localIndex tipElmt;
-            localIndex channelElmt;
+	    if (viscosity >= 2.0e-3) // Viscosity-dominated case
+	    {
+	      int tempCount = 0;
+	      localIndex tipElmt;
+	      localIndex channelElmt;
 
-	    if( std::find( tipElements.begin(), tipElements.end(), ei ) != tipElements.end() )
-	    {
-              tipElmt = ei;
-              tempCount++;
-	    }
-	    else
-	    {
-	      channelElmt = ei;
-	    }
-
-	    if( std::find( tipElements.begin(), tipElements.end(), ei2 ) != tipElements.end() )
-	    {
-              tipElmt = ei2;
-              tempCount++;
-	    }
-	    else
-	    {
-	      channelElmt = ei2;
-	    }
-            //TJ: we find the pair of tip and channel elements
-            if(tempCount == 1)
-            {
-              std::cout << "tipElmt: " << tipElmt << ", "
-        	        << "channelElmt: " << channelElmt << std::endl;
-	      R1Tensor NbarTip = faceNormal[elemsToFaces[tipElmt][0]];
-	      NbarTip -= faceNormal[elemsToFaces[tipElmt][1]];
-	      NbarTip.Normalize();
-
-	      real64 averageGap = 0.0;
-	      for (localIndex kf = 0; kf < 2; ++kf)
+	      if( std::find( tipElements.begin(), tipElements.end(), ei ) != tipElements.end() )
 	      {
-		for( localIndex a = 0; a < numNodesPerFace; ++a )
+		tipElmt = ei;
+		tempCount++;
+	      }
+	      else
+	      {
+		channelElmt = ei;
+	      }
+
+	      if( std::find( tipElements.begin(), tipElements.end(), ei2 ) != tipElements.end() )
+	      {
+		tipElmt = ei2;
+		tempCount++;
+	      }
+	      else
+	      {
+		channelElmt = ei2;
+	      }
+	      //TJ: we find the pair of tip and channel elements
+	      if(tempCount == 1)
+	      {
+		std::cout << "tipElmt: " << tipElmt << ", "
+			  << "channelElmt: " << channelElmt << std::endl;
+		R1Tensor NbarTip = faceNormal[elemsToFaces[tipElmt][0]];
+		NbarTip -= faceNormal[elemsToFaces[tipElmt][1]];
+		NbarTip.Normalize();
+
+		real64 averageGap = 0.0;
+		for (localIndex kf = 0; kf < 2; ++kf)
 		{
-		  localIndex node = faceToNodeMap( elemsToFaces[tipElmt][kf], a );
-		  if ( std::find( tipNodes.begin(), tipNodes.end(), node ) == tipNodes.end() )
+		  for( localIndex a = 0; a < numNodesPerFace; ++a )
 		  {
-		    std::cout << "Node " << node << " : " << disp[node] <<  std::endl;
-		    R1Tensor temp = disp[node];
-		    averageGap += (-pow(-1,kf)) * Dot( temp, NbarTip)/2 ;
-		  }
-		}
-	      }
-	      std::cout << "averageGap = " << averageGap << std::endl;
-
-	      //TJ: we need to calculate edge length
-	      R1Tensor edgeVector;
-	      localIndex node1Index;
-	      for( localIndex a = 0; a < numNodesPerFace; ++a )
-	      {
-		localIndex node = faceToNodeMap( elemsToFaces[tipElmt][0], a );
-		if ( std::find( tipNodes.begin(), tipNodes.end(), node ) == tipNodes.end() )
-		{
-                  node1Index = node;
-                  edgeVector = X[node];
-                  break;
-		}
-	      }
-	      for( localIndex a = 0; a < numNodesPerFace; ++a )
-	      {
-		localIndex node = faceToNodeMap( elemsToFaces[tipElmt][0], a );
-		if (   ( std::find( tipNodes.begin(), tipNodes.end(), node ) == tipNodes.end() )
-		    &&  node != node1Index  )
-		{
-		  edgeVector -= X[node];
-                  break;
-		}
-	      }
-              real64 const edgeLength = edgeVector.L2_Norm();
-
-              real64 gradP;
-              real64 coeff;
-	      real64 Lm = pow( Eprime*pow(q0,3.0)*pow(total_time,4.0)/mup, 1.0/6.0 );
-	      real64 gamma_m0 = 0.616;
-	      real64 velocity = 2.0/3.0 * Lm * gamma_m0 / total_time;
-	      real64 Betam = pow(2.0, 1.0/3.0) * pow(3.0, 5.0/6.0);
-
-              coeff = -pow(6.0, -2.0/3.0) * pow(Eprime*Eprime*mup*velocity, 1.0/3.0);
-              //TJ: gradP is a positive number
-              gradP = -1.0/3.0 * coeff * pow(Betam, 2.0) * pow(Eprime/mup/velocity, -2.0/3.0)
-                               * pow(averageGap, -2.0);
-
-              std::cout << "gradP = " << gradP << std::endl;
-              std::cout << "Pressure at tipElmt = " << pres[tipElmt] + dPres[tipElmt] << std::endl;
-              std::cout << "Density at tipElmt = " << dens[tipElmt][0] << std::endl;
-              std::cout << "Pressure at channelElmt = " << pres[channelElmt] + dPres[channelElmt] << std::endl;
-              std::cout << "Density at channelElmt = " << dens[channelElmt][0] << std::endl;
-
-
-              real64 const densMean = 0.5 * ( dens[tipElmt][0] + dens[channelElmt][0] );
-              real64 const potDif =  ( ( pres[tipElmt] + dPres[tipElmt] ) - ( pres[channelElmt] + dPres[channelElmt] ) -
-                                       densMean * ( gravCoef[tipElmt] - gravCoef[channelElmt] ) );
-
-              // upwinding of fluid properties (make this an option?)
-              localIndex const ei_up = (potDif >= 0) ? tipElmt : channelElmt;
-              std::cout << "ei_up = " << ei_up << std::endl;
-
-              real64 const mob = mobility[ei_up];
-
-              real64 dGradP_dGap = 2.0/3.0 * coeff * pow(Betam, 2.0)
-                                           * pow(Eprime/mup/velocity, -2.0/3.0)
-					   * pow(averageGap, -3.0);
-
-              real64 term = dt * mob * edgeLength/12.0
-        	         * ( 3.0*pow(averageGap, 2.0)*gradP + pow(averageGap, 3.0)*dGradP_dGap );
-
-              std::cout << "Magnitude of the 1-0 diagonal term = " << term << std::endl;
-
-              real64 sign;
-
-              if (ei == tipElmt)
-              {
-        	sign = -1.0;
-              }
-              else
-              {
-        	sign = 1.0;
-              }
-
-              real64 dGap_dU;
-              for (localIndex kf = 0; kf < 2; ++kf)
-	      {
-		for( localIndex a = 0; a < numNodesPerFace; ++a )
-		{
-		  localIndex node = faceToNodeMap( elemsToFaces[tipElmt][kf], a );
-		  if ( std::find( tipNodes.begin(), tipNodes.end(), node ) == tipNodes.end() )
-		  {
-		    for (int i = 0; i < 3; ++i)
+		    localIndex node = faceToNodeMap( elemsToFaces[tipElmt][kf], a );
+		    if ( std::find( tipNodes.begin(), tipNodes.end(), node ) == tipNodes.end() )
 		    {
-		      dGap_dU = -1.0/2.0 * pow(-1, kf) * NbarTip[i];
-		      dRdU( kf * 3 * numNodesPerFace + 3 * a + i ) = sign * term * dGap_dU;
+		      std::cout << "Node " << node << " : " << disp[node] <<  std::endl;
+		      R1Tensor temp = disp[node];
+		      averageGap += (-pow(-1,kf)) * Dot( temp, NbarTip)/2 ;
 		    }
 		  }
-		  else
-		  {
-		    for (int i = 0; i < 3; ++i)
-		    {
-		      dRdU( kf * 3 * numNodesPerFace + 3 * a + i ) = 0.0;
-		    }
-		  } // if else
-		} // for( localIndex a = 0; a < numNodesPerFace; ++a )
-	      } // for (localIndex kf = 0; kf < 2; ++kf)
-            } // if(tempCount == 1) we find the pair of tip and channel elmts
-          } // if (viscosity >= 2.0e-3) viscosity dominated
+		}
+		std::cout << "averageGap = " << averageGap << std::endl;
 
+		//TJ: we need to calculate edge length
+		R1Tensor edgeVector;
+		localIndex node1Index;
+		for( localIndex a = 0; a < numNodesPerFace; ++a )
+		{
+		  localIndex node = faceToNodeMap( elemsToFaces[tipElmt][0], a );
+		  if ( std::find( tipNodes.begin(), tipNodes.end(), node ) == tipNodes.end() )
+		  {
+		    node1Index = node;
+		    edgeVector = X[node];
+		    break;
+		  }
+		}
+		for( localIndex a = 0; a < numNodesPerFace; ++a )
+		{
+		  localIndex node = faceToNodeMap( elemsToFaces[tipElmt][0], a );
+		  if (   ( std::find( tipNodes.begin(), tipNodes.end(), node ) == tipNodes.end() )
+		      &&  node != node1Index  )
+		  {
+		    edgeVector -= X[node];
+		    break;
+		  }
+		}
+		real64 const edgeLength = edgeVector.L2_Norm();
+
+		real64 gradP;
+		real64 coeff;
+		real64 Lm = pow( Eprime*pow(q0,3.0)*pow(total_time,4.0)/mup, 1.0/6.0 );
+		real64 gamma_m0 = 0.616;
+		real64 velocity = 2.0/3.0 * Lm * gamma_m0 / total_time;
+		real64 Betam = pow(2.0, 1.0/3.0) * pow(3.0, 5.0/6.0);
+
+		coeff = -pow(6.0, -2.0/3.0) * pow(Eprime*Eprime*mup*velocity, 1.0/3.0);
+		//TJ: gradP is a positive number
+		gradP = -1.0/3.0 * coeff * pow(Betam, 2.0) * pow(Eprime/mup/velocity, -2.0/3.0)
+				 * pow(averageGap, -2.0);
+
+		std::cout << "gradP = " << gradP << std::endl;
+		std::cout << "Pressure at tipElmt = " << pres[tipElmt] + dPres[tipElmt] << std::endl;
+		std::cout << "Density at tipElmt = " << dens[tipElmt][0] << std::endl;
+		std::cout << "Pressure at channelElmt = " << pres[channelElmt] + dPres[channelElmt] << std::endl;
+		std::cout << "Density at channelElmt = " << dens[channelElmt][0] << std::endl;
+
+
+		real64 const densMean = 0.5 * ( dens[tipElmt][0] + dens[channelElmt][0] );
+		real64 const potDif =  ( ( pres[tipElmt] + dPres[tipElmt] ) - ( pres[channelElmt] + dPres[channelElmt] ) -
+					 densMean * ( gravCoef[tipElmt] - gravCoef[channelElmt] ) );
+
+		// upwinding of fluid properties (make this an option?)
+		localIndex const ei_up = (potDif >= 0) ? tipElmt : channelElmt;
+		std::cout << "ei_up = " << ei_up << std::endl;
+
+		real64 const mob = mobility[ei_up];
+
+		real64 dGradP_dGap = 2.0/3.0 * coeff * pow(Betam, 2.0)
+					     * pow(Eprime/mup/velocity, -2.0/3.0)
+					     * pow(averageGap, -3.0);
+
+		real64 term = dt * mob * edgeLength/12.0
+			   * ( 3.0*pow(averageGap, 2.0)*gradP + pow(averageGap, 3.0)*dGradP_dGap );
+
+		//std::cout << "Magnitude of the 1-0 diagonal term = " << term << std::endl;
+
+		real64 sign;
+
+		if (ei == tipElmt)
+		{
+		  sign = -1.0;
+		  sign = 0.0;
+		}
+		else
+		{
+		  sign = 1.0;
+		}
+
+		real64 dGap_dU;
+		for (localIndex kf = 0; kf < 2; ++kf)
+		{
+		  for( localIndex a = 0; a < numNodesPerFace; ++a )
+		  {
+		    localIndex node = faceToNodeMap( elemsToFaces[tipElmt][kf], a );
+		    if ( std::find( tipNodes.begin(), tipNodes.end(), node ) == tipNodes.end() )
+		    {
+		      for (int i = 0; i < 3; ++i)
+		      {
+			nodeDOF[kf * 3 * numNodesPerFace + 3 * a + i] =
+			  dispDofNumber[faceToNodeMap( elemsToFaces[tipElmt][kf], a )] + i;
+			dGap_dU = -1.0/2.0 * pow(-1, kf) * NbarTip[i];
+			dRdU( kf * 3 * numNodesPerFace + 3 * a + i ) = sign * term * dGap_dU;
+		      }
+		    }
+		    else
+		    {
+		      for (int i = 0; i < 3; ++i)
+		      {
+			nodeDOF[kf * 3 * numNodesPerFace + 3 * a + i] =
+			  dispDofNumber[faceToNodeMap( elemsToFaces[tipElmt][kf], a )] + i;
+			dRdU( kf * 3 * numNodesPerFace + 3 * a + i ) = 0.0;
+		      }
+		    } // if else
+		  } // for( localIndex a = 0; a < numNodesPerFace; ++a )
+		} // for (localIndex kf = 0; kf < 2; ++kf)
+	      } // if(tempCount == 1) we find the pair of tip and channel elmts
+	    } // if (viscosity >= 2.0e-3) viscosity dominated
+          } // if tipLoc > 2.0*meshSize
           matrix10->add( elemDOF,
                          nodeDOF,
                          dRdU.data(),

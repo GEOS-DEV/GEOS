@@ -123,7 +123,8 @@ public:
                            CellElementSubRegion const & subRegion,
                            DofManager const & dofManager,
                            ParallelMatrix * const matrix,
-                           ParallelVector * const rhs );
+                           ParallelVector * const rhs,
+			   DomainPartition const * const domain);
 
   template< bool ISPORO >
   void AccumulationLaunch( localIndex const er,
@@ -131,7 +132,8 @@ public:
                            FaceElementSubRegion const & subRegion,
                            DofManager const & dofManager,
                            ParallelMatrix * const matrix,
-                           ParallelVector * const rhs );
+                           ParallelVector * const rhs,
+			   DomainPartition const * const domain);
 
 
   /**

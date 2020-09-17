@@ -27,6 +27,15 @@
 #include "managers/NumericalMethodsManager.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBaseKernels.hpp"
 
+//TJ
+#include "physicsSolvers/surfaceGeneration/SurfaceGenerator.hpp"
+#include "physicsSolvers/PhysicsSolverManager.hpp"
+#include "physicsSolvers/multiphysics/HydrofractureSolver.hpp"
+#include "managers/FieldSpecification/SourceFluxBoundaryCondition.hpp"
+#include "managers/FieldSpecification/FieldSpecificationManager.hpp"
+
+
+
 /**
  * @namespace the geosx namespace that encapsulates the majority of the code
  */
@@ -530,7 +539,8 @@ void SinglePhaseBase::AccumulationLaunch( localIndex const er,
                                           CellElementSubRegion const & subRegion,
                                           DofManager const & dofManager,
                                           ParallelMatrix * const matrix,
-                                          ParallelVector * const rhs )
+                                          ParallelVector * const rhs,
+					  DomainPartition const * const GEOSX_UNUSED_PARAM(domain))
 {
   string const dofKey = dofManager.getKey( viewKeyStruct::pressureString );
   arrayView1d< globalIndex const > const & dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
@@ -593,7 +603,8 @@ void SinglePhaseBase::AccumulationLaunch( localIndex const er,
                                           FaceElementSubRegion const & subRegion,
                                           DofManager const & dofManager,
                                           ParallelMatrix * const matrix,
-                                          ParallelVector * const rhs )
+                                          ParallelVector * const rhs,
+					  DomainPartition const * const domain)
 {
   string const dofKey = dofManager.getKey( viewKeyStruct::pressureString );
   arrayView1d< globalIndex const > const & dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
@@ -606,6 +617,84 @@ void SinglePhaseBase::AccumulationLaunch( localIndex const er,
   arrayView2d< real64 const > const & dens           = m_density[er][esr];
   arrayView2d< real64 const > const & dDens_dPres    = m_dDens_dPres[er][esr];
   arrayView1d< real64 const > const & poroMultiplier = m_poroMultiplier[er][esr];
+
+  arrayView1d< real64 const > const & dPres         = m_deltaPressure[er][esr];
+  arrayView1d< real64 const > const & pres          = m_pressure[er][esr];
+
+  MeshLevel const * mesh = domain->getMeshBody( 0 )->getMeshLevel( 0 );
+  FaceManager const * const faceManager = mesh->getFaceManager();
+  ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager->nodeList().toViewConst();
+  arrayView1d< R1Tensor const > const & faceNormal = faceManager->faceNormal();
+
+  NodeManager const * const nodeManager = mesh->getNodeManager();
+  arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const & disp = nodeManager->totalDisplacement();
+
+
+  dataRepository::Group const * myProblemManager = domain->getParent();
+  PhysicsSolverManager const * myPhysicsSolverManager = myProblemManager->GetGroup< PhysicsSolverManager >("Solvers");
+  SurfaceGenerator const * mySurface = myPhysicsSolverManager
+				       ->GetGroup< SurfaceGenerator >( "SurfaceGen" );
+  HydrofractureSolver const * myHydroSolver = myPhysicsSolverManager
+				   ->GetGroup< HydrofractureSolver >( "hydrofracture" );
+  real64 const meshSize = myHydroSolver->getMeshSize();
+
+
+  real64 const shearModulus = domain->GetGroup("Constitutive")
+			                  ->GetGroup("rock")
+			                  ->getReference<real64>("defaultShearModulus");
+  real64 const bulkModulus = domain->GetGroup("Constitutive")
+		                         ->GetGroup("rock")
+				         ->getReference<real64>("defaultBulkModulus");
+  real64 const viscosity = domain->GetGroup("Constitutive")
+                                 ->GetGroup("water")
+				       ->getReference<real64>("defaultViscosity");
+
+
+  // The unit of injectionRate is kg per second
+  real64 const injectionRate = domain->getParent()
+                                     ->GetGroup<FieldSpecificationManager>("FieldSpecifications")
+                                     ->GetGroup<SourceFluxBoundaryCondition>("sourceTerm")
+					   ->getReference<real64>("scale");
+
+  // The injectionRate is only for half domain of the KGD problem,
+  // to retrieve the full injection rate, we need to multiply it by 2.0
+  real64 const q0 = 2.0 * std::abs(injectionRate) /1.0e3;
+  real64 const totalTime = myHydroSolver->getTotalTime();
+
+  real64 const nu = ( 1.5 * bulkModulus - shearModulus ) / ( 3.0 * bulkModulus + shearModulus );
+  real64 const E = ( 9.0 * bulkModulus * shearModulus )/ ( 3.0 * bulkModulus + shearModulus );
+  real64 const Eprime = E/(1.0-nu*nu);
+  real64 const mup = 12.0 * viscosity;
+
+  SortedArray< localIndex > const trailingFaces = mySurface->getTrailingFaces();
+  SortedArray< localIndex > const tipNodes = mySurface->getTipNodes();
+  arrayView2d< localIndex const > const & elemsToFaces = subRegion.faceList();
+
+  std::cout << tipNodes.size() << std::endl;
+
+  SortedArray< localIndex > tipElements;
+  for(auto const & trailingFace : trailingFaces)
+  {
+    bool found = false;
+    // loop over all the face element
+    for(localIndex i=0; i<elemsToFaces.size(0); i++)
+    {
+      // loop over all the (TWO) faces in a face element
+      for(localIndex j=0; j<elemsToFaces.size(1); j++)
+      {
+	// if the trailingFace is one of the two faces in a face element,
+	// we find it
+	if (elemsToFaces[i][j] == trailingFace)
+	{
+	  tipElements.insert(i);
+	  found = true;
+	  break;
+	}
+      } // for localIndex j
+      if (found)
+	break;
+    } // for localIndex i
+  }  // for(auto const & trailingFace : trailingFaces)
 
   //TJ:
 /*  std::cout << "dens(0) = " << dens[0][0] << std::endl;
@@ -649,9 +738,65 @@ void SinglePhaseBase::AccumulationLaunch( localIndex const er,
 #if ALLOW_CREATION_MASS>0
       if( volume[ei] * densOld[ei] > 1.1 * creationMass[ei] )
       {
-        localAccum += creationMass[ei] * 0.25;
+        //localAccum += creationMass[ei] * 0.25;
+        //std::cout << "Artificial mass " << creationMass[ei] * 0.25 << " is created in elmt "
+         //         << ei << std::endl;
+        //GEOSX_ASSERT_MSG( 0,
+        //		    "Artificial mass is created." );
       }
 #endif
+      //TJ: Here, we change the residual of the tip element mass conservation into
+      //    the residual of the pressure-tipGap relationship
+      if (viscosity >= 2.0e-3) // Viscosity-dominated case
+      {
+	real64 const tipLoc = myHydroSolver->getConvergedTipLoc();
+	if (tipLoc > 1.0*meshSize)
+	{
+	  //TJ: We need to recalculate the residual and the jacobian for the tip elmt
+	  if( std::find( tipElements.begin(), tipElements.end(), ei ) != tipElements.end() )
+	  {
+	    localAccum = 0.0;
+	    localAccumJacobian = 0.0;
+
+	    real64 Lm = pow( Eprime*pow(q0,3.0)*pow(totalTime,4.0)/mup, 1.0/6.0 );
+	    real64 gamma_m0 = 0.616;
+	    real64 velocity = 2.0/3.0 * Lm * gamma_m0 / totalTime;
+	    real64 Betam = pow(2.0, 1.0/3.0) * pow(3.0, 5.0/6.0);
+
+	    real64 const coeffTemp = -pow(6.0, -2.0/3.0) * pow(Eprime*Eprime*mup*velocity, 1.0/3.0);
+	    real64 const coeff = 3.0/2.0 * coeffTemp/meshSize * pow(Betam, -1.0)
+					 * pow(Eprime/mup/velocity, 1.0/3.0);
+
+	    localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( elemsToFaces[ei][0] );
+	    R1Tensor Nbar = faceNormal[elemsToFaces[ei][0]];
+	    Nbar -= faceNormal[elemsToFaces[ei][1]];
+	    Nbar.Normalize();
+
+	    real64 averageGap = 0.0;
+	    for (localIndex kf = 0; kf < 2; ++kf)
+	    {
+	      for( localIndex a = 0; a < numNodesPerFace; ++a )
+	      {
+		localIndex node = faceToNodeMap( elemsToFaces[ei][kf], a );
+		if ( std::find( tipNodes.begin(), tipNodes.end(), node ) == tipNodes.end() )
+		{
+		  R1Tensor temp = disp[node];
+		  averageGap += (-pow(-1,kf)) * Dot( temp, Nbar)/2 ;
+		}
+	      }
+	    }
+
+	    localAccum = pres[ei] + dPres[ei] - coeff * averageGap;
+	    localAccum = localAccum / Eprime;
+	    localAccumJacobian = 1.0 / Eprime;
+
+	  } // if the elmt is tip elmt
+	} // tipLoc > 2.0*meshSize
+      } // if (viscosity >= 2.0e-3) // Viscosity-dominated case
+
+
+
+
       // add contribution to global residual and jacobian
       matrix->add( elemDOF, elemDOF, localAccumJacobian );
       rhs->add( elemDOF, localAccum );
@@ -676,7 +821,7 @@ void SinglePhaseBase::AssembleAccumulationTerms( DomainPartition const * const d
                                                                                   ElementRegionBase const &,
                                                                                   auto const & subRegion )
   {
-    AccumulationLaunch< ISPORO >( er, esr, subRegion, *dofManager, matrix, rhs );
+    AccumulationLaunch< ISPORO >( er, esr, subRegion, *dofManager, matrix, rhs, domain );
   } );
 }
 

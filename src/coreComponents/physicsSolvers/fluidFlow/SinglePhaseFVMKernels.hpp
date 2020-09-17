@@ -443,6 +443,8 @@ struct FluxKernel
 				       ->GetGroup< SurfaceGenerator >( "SurfaceGen" );
     HydrofractureSolver const * myHydroSolver = myPhysicsSolverManager
 	                               ->GetGroup< HydrofractureSolver >( "hydrofracture" );
+    real64 const tipLoc = myHydroSolver->getConvergedTipLoc();
+    real64 const meshSize = myHydroSolver->getMeshSize();
 
 
     SortedArray< localIndex > const trailingFaces = mySurface->getTrailingFaces();
@@ -613,110 +615,116 @@ struct FluxKernel
 
         // TJ: we need to modify the dFlux/dPressure term dFlux_dP for the edge connecting
         //     the channel element and the tip element
-	if (viscosity >= 2.0e-3) // Viscosity-dominated case
-	{
-	  // TJ: we need to modify the flux term fluxVal for the edge connecting
-	  //     the channel element and the tip element
-	  int tempCount = 0;
-	  int tipElmtIndex;
-	  int channelElmtIndex;
-
-	  for(int i=0; i< numFluxElems; i++)
+        if (tipLoc > 1.0*meshSize)
+        {
+	  if (viscosity >= 2.0e-3) // Viscosity-dominated case
 	  {
-	    if( std::find( tipElements.begin(), tipElements.end(), ei[i] ) != tipElements.end() )
+	    // TJ: we need to modify the flux term fluxVal for the edge connecting
+	    //     the channel element and the tip element
+	    int tempCount = 0;
+	    int tipElmtIndex;
+	    int channelElmtIndex;
+
+	    for(int i=0; i< numFluxElems; i++)
 	    {
-	      tempCount++;
-	      tipElmtIndex = k[i];
-	    }
-	    else
-	    {
-              channelElmtIndex = k[i];
-	    }
-	  }
-
-//	  std::cout << tempCount << std::endl;
-
-	  // TJ: we find the edge connecting the channel element and the tip element
-	  if(tempCount == 1)
-	  {
-	    localIndex tipElmt = ei[tipElmtIndex];
-	    localIndex channelElmt = ei[channelElmtIndex];
-	    std::cout << "Elmts pair " << ei[0] << " and " << ei[1] << std::endl;
-	    std::cout << "The tip element is " << tipElmt << std::endl;
-	    std::cout << "The channel element is " << channelElmt << std::endl;
-
-	    arrayView1d< R1Tensor const > const & faceNormal = myFaceManager->faceNormal();
-	    arrayView2d< localIndex const > const & elemsToFaces = subRegion->faceList();
-	    ArrayOfArraysView< localIndex const > const & faceToNodeMap = myFaceManager->nodeList().toViewConst();
-
-	    localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( elemsToFaces[tipElmt][0] );
-
-
-	    R1Tensor NbarTip = faceNormal[elemsToFaces[tipElmt][0]];
-	    NbarTip -= faceNormal[elemsToFaces[tipElmt][1]];
-	    NbarTip.Normalize();
-
-	    real64 averageGap = 0.0;
-	    for (localIndex kf = 0; kf < 2; ++kf)
-	    {
-	      for( localIndex a = 0; a < numNodesPerFace; ++a )
+	      if( std::find( tipElements.begin(), tipElements.end(), ei[i] ) != tipElements.end() )
 	      {
-		localIndex node = faceToNodeMap( elemsToFaces[tipElmt][kf], a );
-		if ( std::find( tipNodes.begin(), tipNodes.end(), node ) == tipNodes.end() )
-		{
-		  std::cout << "Node " << node << " : " << disp[node] <<  std::endl;
-		  R1Tensor temp = disp[node];
-		  averageGap += (-pow(-1,kf)) * Dot( temp, NbarTip)/2 ;
-		}
+		tempCount++;
+		tipElmtIndex = k[i];
+	      }
+	      else
+	      {
+		channelElmtIndex = k[i];
 	      }
 	    }
-	    std::cout << "averageGap = " << averageGap << std::endl;
 
-	    localIndex const edgeIndex = fractureConnectorsToEdges[iconn];
-	    real64 const edgeLength = edgeManager->calculateLength( edgeIndex, X ).L2_Norm();
+    //	  std::cout << tempCount << std::endl;
 
-            real64 gradP;
-            real64 coeff;
-	    real64 Lm = pow( Eprime*pow(q0,3.0)*pow(totalTime,4.0)/mup, 1.0/6.0 );
-	    real64 gamma_m0 = 0.616;
-	    real64 velocity = 2.0/3.0 * Lm * gamma_m0 / totalTime;
-	    real64 Betam = pow(2.0, 1.0/3.0) * pow(3.0, 5.0/6.0);
+	    // TJ: we find the edge connecting the channel element and the tip element
+	    if(tempCount == 1)
+	    {
+	      localIndex tipElmt = ei[tipElmtIndex];
+	      localIndex channelElmt = ei[channelElmtIndex];
+	      std::cout << "Elmts pair " << ei[0] << " and " << ei[1] << std::endl;
+	      std::cout << "The tip element is " << tipElmt << std::endl;
+	      std::cout << "The channel element is " << channelElmt << std::endl;
 
-            coeff = -pow(6.0, -2.0/3.0) * pow(Eprime*Eprime*mup*velocity, 1.0/3.0);
-            //TJ: gradP is a positive number
-            gradP = -1.0/3.0 * coeff * pow(Betam, 2.0) * pow(Eprime/mup/velocity, -2.0/3.0)
-                             * pow(averageGap, -2.0);
+	      arrayView1d< R1Tensor const > const & faceNormal = myFaceManager->faceNormal();
+	      arrayView2d< localIndex const > const & elemsToFaces = subRegion->faceList();
+	      ArrayOfArraysView< localIndex const > const & faceToNodeMap = myFaceManager->nodeList().toViewConst();
 
-            real64 modifiedFluxVal;
-            modifiedFluxVal = dt * mobility * edgeLength/12.0 * pow(averageGap, 3.0) * gradP;
-
-            std::cout << "Flux value = " << modifiedFluxVal << std::endl;
-//            std::cout << "Tip elmt index = " << tipElmtIndex << std::endl;
-//            std::cout << "Channel elmt index = " << channelElmtIndex << std::endl;
-//            std::cout << "ComputeJunction mobility = " << mobility << std::endl;
-
-            flux[tipElmtIndex] -= modifiedFluxVal;
-            flux[channelElmtIndex] += modifiedFluxVal;
-
-	    fluxVal = 0.0;
-
-	    real64 modifieddFlux_dP[2] = {0, 0};
-	    modifieddFlux_dP[k_up] = dt * dMobility_dP * edgeLength/12.0 * pow(averageGap, 3.0) * gradP;
-            std::cout << "localFluxJocobianWrtPressure = " << modifieddFlux_dP[k_up] << std::endl;
+	      localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( elemsToFaces[tipElmt][0] );
 
 
-	    fluxJacobian[tipElmtIndex][tipElmtIndex]         -= modifieddFlux_dP[tipElmtIndex];
-	    fluxJacobian[tipElmtIndex][channelElmtIndex]     -= modifieddFlux_dP[channelElmtIndex];
-	    fluxJacobian[channelElmtIndex][tipElmtIndex]     += modifieddFlux_dP[tipElmtIndex];
-	    fluxJacobian[channelElmtIndex][channelElmtIndex] += modifieddFlux_dP[channelElmtIndex];
+	      R1Tensor NbarTip = faceNormal[elemsToFaces[tipElmt][0]];
+	      NbarTip -= faceNormal[elemsToFaces[tipElmt][1]];
+	      NbarTip.Normalize();
 
-	    dFlux_dP[0] = 0.0;
-	    dFlux_dP[1] = 0.0;
+	      real64 averageGap = 0.0;
+	      for (localIndex kf = 0; kf < 2; ++kf)
+	      {
+		for( localIndex a = 0; a < numNodesPerFace; ++a )
+		{
+		  localIndex node = faceToNodeMap( elemsToFaces[tipElmt][kf], a );
+		  if ( std::find( tipNodes.begin(), tipNodes.end(), node ) == tipNodes.end() )
+		  {
+		    std::cout << "Node " << node << " : " << disp[node] <<  std::endl;
+		    R1Tensor temp = disp[node];
+		    averageGap += (-pow(-1,kf)) * Dot( temp, NbarTip)/2 ;
+		  }
+		}
+	      }
+	      std::cout << "averageGap = " << averageGap << std::endl;
 
-	    dFlux_dAper[0] = 0.0;
-	    dFlux_dAper[1] = 0.0;
-	  } // if(tempCount == 1) the edge connecting the channel and the tip elements
-	} //if (viscosity >= 2.0e-3) // Viscosity-dominated case
+	      localIndex const edgeIndex = fractureConnectorsToEdges[iconn];
+	      real64 const edgeLength = edgeManager->calculateLength( edgeIndex, X ).L2_Norm();
+
+	      real64 gradP;
+	      real64 coeff;
+	      real64 Lm = pow( Eprime*pow(q0,3.0)*pow(totalTime,4.0)/mup, 1.0/6.0 );
+	      real64 gamma_m0 = 0.616;
+	      real64 velocity = 2.0/3.0 * Lm * gamma_m0 / totalTime;
+	      real64 Betam = pow(2.0, 1.0/3.0) * pow(3.0, 5.0/6.0);
+
+	      coeff = -pow(6.0, -2.0/3.0) * pow(Eprime*Eprime*mup*velocity, 1.0/3.0);
+	      //TJ: gradP is a positive number
+	      gradP = -1.0/3.0 * coeff * pow(Betam, 2.0) * pow(Eprime/mup/velocity, -2.0/3.0)
+			       * pow(averageGap, -2.0);
+
+	      real64 modifiedFluxVal;
+	      modifiedFluxVal = dt * mobility * edgeLength/12.0 * pow(averageGap, 3.0) * gradP;
+
+	      std::cout << "Flux value = " << modifiedFluxVal << std::endl;
+    //            std::cout << "Tip elmt index = " << tipElmtIndex << std::endl;
+    //            std::cout << "Channel elmt index = " << channelElmtIndex << std::endl;
+    //            std::cout << "ComputeJunction mobility = " << mobility << std::endl;
+
+	      //flux[tipElmtIndex] -= modifiedFluxVal;
+	      flux[tipElmtIndex] -= 0.0;
+	      flux[channelElmtIndex] += modifiedFluxVal;
+
+	      fluxVal = 0.0;
+
+	      real64 modifieddFlux_dP[2] = {0, 0};
+	      modifieddFlux_dP[k_up] = dt * dMobility_dP * edgeLength/12.0 * pow(averageGap, 3.0) * gradP;
+	      //std::cout << "localFluxJocobianWrtPressure = " << modifieddFlux_dP[k_up] << std::endl;
+
+
+	      //fluxJacobian[tipElmtIndex][tipElmtIndex]         -= modifieddFlux_dP[tipElmtIndex];
+	      //fluxJacobian[tipElmtIndex][channelElmtIndex]     -= modifieddFlux_dP[channelElmtIndex];
+	      fluxJacobian[tipElmtIndex][tipElmtIndex]         -= 0.0;
+	      fluxJacobian[tipElmtIndex][channelElmtIndex]     -= 0.0;
+	      fluxJacobian[channelElmtIndex][tipElmtIndex]     += modifieddFlux_dP[tipElmtIndex];
+	      fluxJacobian[channelElmtIndex][channelElmtIndex] += modifieddFlux_dP[channelElmtIndex];
+
+	      dFlux_dP[0] = 0.0;
+	      dFlux_dP[1] = 0.0;
+
+	      dFlux_dAper[0] = 0.0;
+	      dFlux_dAper[1] = 0.0;
+	    } // if(tempCount == 1) the edge connecting the channel and the tip elements
+	  } //if (viscosity >= 2.0e-3) // Viscosity-dominated case
+        } // tipLoc > 2.0*meshSize
 
         flux[k[0]] += fluxVal;
         flux[k[1]] -= fluxVal;

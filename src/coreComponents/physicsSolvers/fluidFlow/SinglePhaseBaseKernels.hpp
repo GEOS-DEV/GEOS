@@ -198,8 +198,6 @@ struct AccumulationKernel< FaceElementSubRegion >
 
     // Derivative of residual wrt to pressure in the cell
     localAccumJacobian =  dDens_dPres * volNew;
-    std::cout << "localAccumJacobianWrtPressure = " << localAccumJacobian << std::endl;
-
   }
 };
 

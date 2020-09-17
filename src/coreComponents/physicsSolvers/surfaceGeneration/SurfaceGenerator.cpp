@@ -2879,10 +2879,6 @@ void SurfaceGenerator::IdentifyRupturedFacesTipTreatment(DomainPartition * GEOSX
 							 const bool prefrac,
 							 real64 const time_np1)
 {
-  //TJ the hard coded elmt length
-  real64 const meshSize = 1.0;  // this value needs to be changed for a mesh-refinement
-  GEOSX_LOG_RANK_0( "Mesh size = " << meshSize );
-
   arrayView1d< integer > const & isEdgeGhost = edgeManager.ghostRank();
   ModifiedObjectLists modifiedObjects;
   arrayView1d< R1Tensor > const & faceCenter = faceManager.faceCenter();
@@ -2891,6 +2887,7 @@ void SurfaceGenerator::IdentifyRupturedFacesTipTreatment(DomainPartition * GEOSX
 
   HydrofractureSolver * const myHydroSolver = this->getParent()->GetGroup< HydrofractureSolver >( "hydrofracture" );
   real64 const tipLoc = myHydroSolver->getConvergedTipLoc();
+
   int const rank = MpiWrapper::Comm_rank( MPI_COMM_WORLD );
 //  std::cout << "Rank " << rank << ": tipLoc = " << tipLoc << std::endl;
 
@@ -2948,6 +2945,11 @@ void SurfaceGenerator::IdentifyRupturedFacesTipTreatment(DomainPartition * GEOSX
 	  integer const component = 1;
 	  real64 tipElmtBC = faceCenter[pickedFace][component]
 			   - 0.5*sqrt(faceArea[pickedFace]);
+
+	  //TJ the hard coded elmt length
+	  real64 const meshSize = myHydroSolver->getMeshSize();  // this value needs to be changed for a mesh-refinement
+	  GEOSX_LOG_RANK_0( "Mesh size = " << meshSize );
+
 	  tipElmtBC = faceCenter[pickedFace][component]
 	  			   - 0.5 * meshSize;  //hard coded
 	  std::cout << "Rank " << rank << ": tipLoc = " << tipLoc << std::endl;
