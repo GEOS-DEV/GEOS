@@ -160,47 +160,6 @@ public:
 
   virtual string GetElementTypeString() const override final { return "Embedded"; }
 
-
-//  /**
-//   * @name Relation Accessors
-//   * @brief Accessor function for the various inter-object relations
-//   */
-//  ///@{
-//
-//  /**
-//   * @brief Get the embedded surface element to region map (background grid nodes).
-//   * @return the embedded surface element to region map
-//   */
-//  arrayView1d< localIndex > getSurfaceToRegionList() { return m_embeddedSurfaceToRegion; }
-//
-//  /**
-//   * @copydoc getSurfaceToRegionList()
-//   */
-//  arrayView1d< localIndex const > getSurfaceToRegionList() const { return m_embeddedSurfaceToRegion; }
-//
-//  /**
-//   * @brief Get the embedded surface element to subregion map (of cell elemtns being cut).
-//   * @return the embedded surface element to subregion map
-//   */
-//  arrayView1d< localIndex > getSurfaceToSubRegionList() { return m_embeddedSurfaceToSubRegion; }
-//
-//  /**
-//   * @copydoc getSurfaceToSubRegionList()
-//   */
-//  arrayView1d< localIndex const > getSurfaceToSubRegionList() const { return m_embeddedSurfaceToSubRegion; }
-//
-//  /**
-//   * @brief Get the embedded surface element to cell element map
-//   * @return the embedded surface element to cell element map
-//   */
-//  arrayView1d< localIndex > getSurfaceToCellList() { return m_embeddedSurfaceToCell; }
-//
-//  /**
-//   * @copydoc getSurfaceToCellList()
-//   */
-//  arrayView1d< localIndex const > getSurfaceToCellList() const { return m_embeddedSurfaceToCell; }
-//  ///@}
-
   /**
    * @name Properties Getters
    * @brief Getters to embedded surface elements properties.

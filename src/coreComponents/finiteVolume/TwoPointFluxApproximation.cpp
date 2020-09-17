@@ -689,7 +689,7 @@ void TwoPointFluxApproximation::addEDFracToFractureStencil( MeshLevel & mesh,
   }
 
   // Add connections EmbeddedSurface to/from CellElements.
-  FixedToManyElementRelation const & faceElementsToCells = fractureSubRegion.getToCellRelation();
+  FixedToManyElementRelation const & surfaceElementsToCells = fractureSubRegion.getToCellRelation();
 
   arrayView1d< real64 const >     const & connectivityIndex = fractureSubRegion.getConnectivityIndex();
 
@@ -713,9 +713,9 @@ void TwoPointFluxApproximation::addEDFracToFractureStencil( MeshLevel & mesh,
       stackArray1d< localIndex, maxElems > stencilCellsIndex( numElems );
       stackArray1d< real64, maxElems > stencilWeights( numElems );
 
-      localIndex const er  = faceElementsToCells.m_toElementRegion[kes][0];
-      localIndex const esr = faceElementsToCells.m_toElementSubRegion[kes][0];
-      localIndex const ei  = faceElementsToCells.m_toElementIndex[kes][0];
+      localIndex const er  = surfaceElementsToCells.m_toElementRegion[kes][0];
+      localIndex const esr = surfaceElementsToCells.m_toElementSubRegion[kes][0];
+      localIndex const ei  = surfaceElementsToCells.m_toElementIndex[kes][0];
 
       // Here goes EDFM transmissibility computation.
       real64 avPerm = LvArray::tensorOps::l2Norm< 3 >( permeabilityTensor[er][esr][ei] );
