@@ -176,10 +176,10 @@ struct FluxKernel
    * by calling .toView() or .toViewConst() on an accessor instance
    */
   template< typename VIEWTYPE >
-  using ElementViewConst = typename ElementRegionManager::ElementViewAccessor< VIEWTYPE >::ViewTypeConst;
+  using ElementViewConst = typename ElementRegionManager::ElementViewConst< VIEWTYPE >;
 
   template< typename VIEWTYPE >
-  using ElementView = typename ElementRegionManager::ElementViewAccessor< VIEWTYPE >::ViewType;
+  using ElementView = typename ElementRegionManager::ElementView< VIEWTYPE >;
 
   /**
    * @brief launches the kernel to assemble the flux contributions to the linear system.
@@ -311,10 +311,10 @@ struct ProppantPackVolumeKernel
 {
 
   template< typename VIEWTYPE >
-  using ElementView = typename ElementRegionManager::ElementViewAccessor< VIEWTYPE >::ViewType;
+  using ElementView = ElementRegionManager::ElementView< VIEWTYPE >;
 
   template< typename VIEWTYPE >
-  using ElementViewConst = typename ElementRegionManager::ElementViewAccessor< VIEWTYPE >::ViewTypeConst;
+  using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
 
   template< typename STENCIL_TYPE >
   static void
