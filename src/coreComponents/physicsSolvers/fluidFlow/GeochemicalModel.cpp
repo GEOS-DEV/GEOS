@@ -27,7 +27,7 @@
 #include "common/DataTypes.hpp"
 #include "common/TimingMacros.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
-#include "constitutive/Fluid/ReactiveFluidBase.hpp"
+#include "constitutive/fluid/ReactiveFluidBase.hpp"
 #include "finiteVolume/FiniteVolumeManager.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "managers/DomainPartition.hpp"
@@ -55,12 +55,13 @@ GeochemicalModel::GeochemicalModel( const std::string& name,
   FlowSolverBase(name, parent)
 {
 
-  this->registerWrapper( viewKeyStruct::reactiveFluidNameString,  &m_reactiveFluidName,  false )->setInputFlag(InputFlags::REQUIRED)->
+  this->registerWrapper( viewKeyStruct::reactiveFluidNameString,  &m_reactiveFluidName )->
+    setInputFlag(InputFlags::REQUIRED)->
     setDescription("Name of chemical system constitutive object to use for this solver");
 
-  this->registerWrapper( viewKeyStruct::reactiveFluidIndexString, &m_reactiveFluidIndex, false );
+  this->registerWrapper( viewKeyStruct::reactiveFluidIndexString, &m_reactiveFluidIndex );
 
-  this->registerWrapper( viewKeyStruct::outputSpeciesFileNameString, &m_outputSpeciesFileName, false )->
+  this->registerWrapper( viewKeyStruct::outputSpeciesFileNameString, &m_outputSpeciesFileName )->
     setInputFlag(InputFlags::OPTIONAL)->    
     setDescription("Output species to file");
 
@@ -73,23 +74,22 @@ void GeochemicalModel::RegisterDataOnMesh(Group * const MeshBodies)
   for( auto & mesh : MeshBodies->GetSubGroups() )
   {
 
-    MeshLevel * const meshLevel = Group::group_cast<MeshBody *>(mesh.second)->getMeshLevel(0);
+    MeshLevel * meshLevel = Group::group_cast< MeshBody * >( mesh.second )->getMeshLevel( 0 );
 
-    applyToSubRegions( meshLevel, [&] ( ElementSubRegionBase * const subRegion)
+    forTargetSubRegions( *meshLevel,
+                         [&]
+                         ( localIndex const GEOSX_UNUSED_PARAM(targetIndex),
+                           ElementSubRegionBase & subRegion)
     {
-      subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::pressureString )->setPlotLevel(PlotLevel::LEVEL_0);
-      subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::deltaPressureString );
-
-      subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::temperatureString )->setPlotLevel(PlotLevel::LEVEL_0);
-      subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::deltaTemperatureString );      
-
-      subRegion->registerWrapper< array2d<real64> >( viewKeyStruct::concentrationString )->setPlotLevel(PlotLevel::LEVEL_0);
-      subRegion->registerWrapper< array2d<real64> >( viewKeyStruct::deltaConcentrationString );
-
-      subRegion->registerWrapper< array2d<real64> >( viewKeyStruct::totalConcentrationString );
-      subRegion->registerWrapper< array2d<real64> >( viewKeyStruct::concentrationNewString );                  
-
-      subRegion->registerWrapper< array1d<globalIndex> >( viewKeyStruct::blockLocalDofNumberString );
+      subRegion.registerWrapper< array1d<real64> >( viewKeyStruct::pressureString )->setPlotLevel(PlotLevel::LEVEL_0);
+      subRegion.registerWrapper< array1d<real64> >( viewKeyStruct::deltaPressureString );
+      subRegion.registerWrapper< array1d<real64> >( viewKeyStruct::temperatureString )->setPlotLevel(PlotLevel::LEVEL_0);
+      subRegion.registerWrapper< array1d<real64> >( viewKeyStruct::deltaTemperatureString );
+      subRegion.registerWrapper< array2d<real64> >( viewKeyStruct::concentrationString )->setPlotLevel(PlotLevel::LEVEL_0);
+      subRegion.registerWrapper< array2d<real64> >( viewKeyStruct::deltaConcentrationString );
+      subRegion.registerWrapper< array2d<real64> >( viewKeyStruct::totalConcentrationString );
+      subRegion.registerWrapper< array2d<real64> >( viewKeyStruct::concentrationNewString );
+      subRegion.registerWrapper< array1d<globalIndex> >( viewKeyStruct::blockLocalDofNumberString );
 
     } );
 
@@ -106,7 +106,7 @@ void GeochemicalModel::InitializePreSubGroups(Group * const rootGroup)
 
   ReactiveFluidBase const * reactiveFluid  = cm->GetConstitutiveRelation<ReactiveFluidBase>( m_reactiveFluidName );
   
-  GEOS_ERROR_IF( reactiveFluid == nullptr, "Geochemical model " + m_reactiveFluidName + " not found" );
+  GEOSX_ERROR_IF( reactiveFluid == nullptr, "Geochemical model " + m_reactiveFluidName + " not found" );
   m_reactiveFluidIndex = reactiveFluid->getIndexInParent();
 
   m_numBasisSpecies     = reactiveFluid->numBasisSpecies();
@@ -125,14 +125,15 @@ void GeochemicalModel::ResizeFields( MeshLevel * const meshLevel )
 {
   localIndex const NC = m_numBasisSpecies;
 
-  applyToSubRegions( meshLevel, [&] ( ElementSubRegionBase * const subRegion )
+  forTargetSubRegions( *meshLevel,
+                       [&]
+                       ( localIndex const,
+                         ElementSubRegionBase & subRegion )
   {
-    subRegion->getReference< array2d<real64> >(viewKeyStruct::concentrationString).resizeDimension<1>(NC);
-    subRegion->getReference< array2d<real64> >(viewKeyStruct::deltaConcentrationString).resizeDimension<1>(NC);
-
-    subRegion->getReference< array2d<real64> >(viewKeyStruct::totalConcentrationString).resizeDimension<1>(NC);
-
-    subRegion->getReference< array2d<real64> >(viewKeyStruct::concentrationNewString).resizeDimension<1>(NC);    
+    subRegion.getReference< array2d<real64> >(viewKeyStruct::concentrationString).resizeDimension<1>(NC);
+    subRegion.getReference< array2d<real64> >(viewKeyStruct::deltaConcentrationString).resizeDimension<1>(NC);
+    subRegion.getReference< array2d<real64> >(viewKeyStruct::totalConcentrationString).resizeDimension<1>(NC);
+    subRegion.getReference< array2d<real64> >(viewKeyStruct::concentrationNewString).resizeDimension<1>(NC);
 
   });
 
@@ -142,7 +143,7 @@ void GeochemicalModel::UpdateReactiveFluidModel(Group * const dataGroup)
 {
   GEOSX_MARK_FUNCTION;
 
-  ReactiveFluidBase * const reactiveFluid = GetConstitutiveModel<ReactiveFluidBase>( dataGroup, m_reactiveFluidName );
+  ReactiveFluidBase & reactiveFluid = GetConstitutiveModel<ReactiveFluidBase>( *dataGroup, m_reactiveFluidName );
 
   arrayView1d<real64 const> const & pres = dataGroup->getReference<array1d<real64>>( viewKeyStruct::pressureString );
   arrayView1d<real64 const> const & dPres = dataGroup->getReference<array1d<real64>>( viewKeyStruct::deltaPressureString );
@@ -154,12 +155,13 @@ void GeochemicalModel::UpdateReactiveFluidModel(Group * const dataGroup)
   arrayView2d<real64 const> const & dConc = dataGroup->getReference<array2d<real64>>( viewKeyStruct::deltaConcentrationString );  
   arrayView2d<real64> & concNew = dataGroup->getReference<array2d<real64>>( viewKeyStruct::concentrationNewString );
   
-  forall_in_range<RAJA::seq_exec>( 0, dataGroup->size(), GEOSX_LAMBDA ( localIndex const a )
+  forAll<serialPolicy>( dataGroup->size(), [&] ( localIndex const a )
   {
     for(localIndex ic = 0; ic < m_numBasisSpecies; ++ic)
+    {
       concNew[a][ic] = conc[a][ic] + dConc[a][ic];
-    
-    reactiveFluid->PointUpdate( pres[a] + dPres[a], temp[a] + dTemp[a], concNew[a], a);
+    }
+    reactiveFluid.PointUpdate( pres[a] + dPres[a], temp[a] + dTemp[a], concNew[a], a);
   });
 
 }
@@ -183,23 +185,23 @@ void GeochemicalModel::InitializePostInitialConditions_PreSubGroups( Group * con
 
   //TODO this is a hack until the sets are fixed to include ghosts!!
   std::map<string, string_array > fieldNames;
-  fieldNames["elems"].push_back( viewKeyStruct::pressureString );
-  fieldNames["elems"].push_back( viewKeyStruct::temperatureString );  
-  fieldNames["elems"].push_back( viewKeyStruct::concentrationString );  
+  fieldNames["elems"].emplace_back( viewKeyStruct::pressureString );
+  fieldNames["elems"].emplace_back( viewKeyStruct::temperatureString );
+  fieldNames["elems"].emplace_back( viewKeyStruct::concentrationString );
 
-  array1d<NeighborCommunicator> & comms =
-    domain->getReference< array1d<NeighborCommunicator>>( domain->viewKeys.neighbors );
+  std::vector<NeighborCommunicator> & comms =
+    domain->getNeighbors();
 
   CommunicationTools::SynchronizeFields( fieldNames, mesh, comms );
 
-  ResetViews( domain );
+  ResetViews( *mesh );
 
 }
 
 real64 GeochemicalModel::SolverStep( real64 const& time_n,
                                     real64 const& dt,
                                     const int cycleNumber,
-                                    DomainPartition * domain )
+                                    DomainPartition & domain )
 {
   GEOSX_MARK_FUNCTION;
 
@@ -207,22 +209,14 @@ real64 GeochemicalModel::SolverStep( real64 const& time_n,
 
   ImplicitStepSetup( time_n,
                      dt,
-                     domain,
-                     m_dofManager,
-                     m_matrix,
-                     m_rhs,
-                     m_solution );
+                     domain );
 
 
   // currently the only method is implicit time integration
   dt_return= this->NonlinearImplicitStep( time_n,
                                           dt,
                                           cycleNumber,
-                                          domain,
-                                          m_dofManager,
-                                          m_matrix,
-                                          m_rhs,
-                                          m_solution );
+                                          domain );
 
   // final step for completion of timestep. typically secondary variable updates and cleanup.
   ImplicitStepComplete( time_n, dt_return, domain );
@@ -232,23 +226,24 @@ real64 GeochemicalModel::SolverStep( real64 const& time_n,
 }
 
 
-void GeochemicalModel::ImplicitStepSetup( real64 const & GEOSX_UNUSED_ARG( time_n ),
-                                          real64 const & GEOSX_UNUSED_ARG( dt ),
-                                           DomainPartition * const domain,
-                                           DofManager & GEOSX_UNUSED_ARG(dofManager),
-                                           ParallelMatrix & GEOSX_UNUSED_ARG(matrix),
-                                           ParallelVector & GEOSX_UNUSED_ARG(rhs),
-                                          ParallelVector & GEOSX_UNUSED_ARG(solution) )
+void GeochemicalModel::ImplicitStepSetup( real64 const & time_n,
+                                          real64 const & dt,
+                                          DomainPartition & domain )
 {
-  ResetViews( domain );
+  GEOSX_UNUSED_VAR(time_n, dt);
 
-  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
+  MeshLevel & mesh = *(domain.getMeshBody(0)->getMeshLevel(0));
+  ResetViews( mesh );
 
   /* The loop below could be moved to SolverStep after ImplicitStepSetup */
   
-  applyToSubRegions( mesh, [&] ( localIndex er, localIndex esr,
-                                 ElementRegionBase * const GEOSX_UNUSED_ARG( region ),
-                                 ElementSubRegionBase * const subRegion )
+  forTargetSubRegionsComplete( mesh,
+                               [&]
+                               ( localIndex const,
+                                 localIndex const er,
+                                 localIndex const esr,
+                                 ElementRegionBase & GEOSX_UNUSED_PARAM( region ),
+                                 ElementSubRegionBase & subRegion )
   {
 
     arrayView1d<real64> const & dPres   = m_deltaPressure[er][esr];
@@ -258,7 +253,7 @@ void GeochemicalModel::ImplicitStepSetup( real64 const & GEOSX_UNUSED_ARG( time_
     arrayView2d<real64> const & totalConc   = m_totalConcentration[er][esr];
     
 
-    forall_in_range<serialPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
+    forAll<serialPolicy>( subRegion.size(), [=] ( localIndex const ei )
     {
       dPres[ei] = 0.0;
       dTemp[ei] = 0.0;
@@ -270,30 +265,34 @@ void GeochemicalModel::ImplicitStepSetup( real64 const & GEOSX_UNUSED_ARG( time_
 
     } );
 
-    UpdateState( subRegion );
+    UpdateState( &subRegion );
     
   } );
 
   // setup dof numbers and linear system
   SetupSystem( domain,
                m_dofManager,
-               m_matrix,
-               m_rhs,
-               m_solution  );
+               m_localMatrix,
+               m_localRhs,
+               m_localSolution  );
 
 }
 
-void GeochemicalModel::ImplicitStepComplete(real64 const & GEOSX_UNUSED_ARG( time_n ),
-                                            real64 const & GEOSX_UNUSED_ARG( dt ),
-                                            DomainPartition * const domain )
+void GeochemicalModel::ImplicitStepComplete(real64 const & GEOSX_UNUSED_PARAM( time_n ),
+                                            real64 const & GEOSX_UNUSED_PARAM( dt ),
+                                            DomainPartition & domain )
 {
   GEOSX_MARK_FUNCTION;
 
-  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
+  MeshLevel & mesh = *(domain.getMeshBody(0)->getMeshLevel(0));
 
-  applyToSubRegions( mesh, [&] ( localIndex er, localIndex esr,
-                                 ElementRegionBase * const GEOSX_UNUSED_ARG( region ),
-                                 ElementSubRegionBase * const subRegion )
+  forTargetSubRegionsComplete( mesh,
+                              [&]
+                              ( localIndex const,
+                                localIndex const er,
+                                localIndex const esr,
+                                ElementRegionBase & GEOSX_UNUSED_PARAM( region ),
+                                ElementSubRegionBase & subRegion )
   {
     arrayView1d<real64> const & pres = m_pressure[er][esr];
     arrayView1d<real64> const & temp = m_temperature[er][esr];    
@@ -304,97 +303,94 @@ void GeochemicalModel::ImplicitStepComplete(real64 const & GEOSX_UNUSED_ARG( tim
     arrayView1d<real64 const> const & dTemp = m_deltaTemperature[er][esr];    
     arrayView2d<real64 const> const & dConc = m_deltaConcentration[er][esr];    
 
-    forall_in_range<serialPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
+    forAll<serialPolicy>( subRegion.size(),
+                          [=]
+                          ( localIndex const ei )
     {
-
       pres[ei] += dPres[ei];
       temp[ei] += dTemp[ei];      
       for (localIndex ic = 0; ic < m_numBasisSpecies; ++ic)
+      {
         conc[ei][ic] += dConc[ei][ic];
-
+      }
     } );
 
   } );
 
-  WriteSpeciesToFile(domain);
+  WriteSpeciesToFile(&domain);
 
 }
 
-void GeochemicalModel::SetupDofs( DomainPartition const * const GEOSX_UNUSED_ARG(domain),
-                                   DofManager & dofManager ) const
+void GeochemicalModel::SetupDofs( DomainPartition const & GEOSX_UNUSED_PARAM(domain),
+                                  DofManager & dofManager ) const
 {
   dofManager.addField( viewKeyStruct::pressureString,
                        DofManager::Location::Elem,
-                       DofManager::Connectivity::Face,
-                       m_numDofPerCell,
-                       m_targetRegions );
+                       targetRegionNames() );
 }
 
 
 void GeochemicalModel::AssembleSystem( real64 const time,
                                        real64 const dt,
-                                       DomainPartition * const domain,
+                                       DomainPartition & domain,
                                        DofManager const & dofManager,
-                                       ParallelMatrix & matrix,
-                                       ParallelVector & rhs )
+                                       CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                       arrayView1d< real64 > const & localRhs )
 {
   GEOSX_MARK_FUNCTION;
 
-  matrix.zero();
-  rhs.zero();
-
-  matrix.open();
-  rhs.open();
-
-  AssembleAccumulationTerms( domain, &dofManager, &matrix, &rhs );
+  AssembleAccumulationTerms( domain, dofManager, localMatrix, localRhs );
 
   AssembleFluxTerms( time,
                      dt,
                      domain,
-                     &dofManager,
-                     &matrix,
-                     &rhs);
-
-    
-  matrix.close();
-  rhs.close();
+                     dofManager,
+                     localMatrix,
+                     localRhs);
 
 
-  if( verboseLevel() >= 2 )
+
+  if( getLogLevel() >= 2 )
   {
-    GEOS_LOG_RANK("After GeochemicalModel::AssembleSystem");
-    GEOS_LOG_RANK_0("\nJacobian:\n");
-    matrix.print(std::cout);
-    GEOS_LOG_RANK_0("\nResidual:\n");
-    rhs.print(std::cout);
+    GEOSX_LOG_RANK("After GeochemicalModel::AssembleSystem");
+    GEOSX_LOG_RANK_0("\nJacobian:\n");
+    std::cout<<localMatrix.toViewConst()<<std::endl;
+    GEOSX_LOG_RANK_0("\nResidual:\n");
+    std::cout<<localRhs.toViewConst()<<std::endl;
   }
 
 }
 
-void GeochemicalModel::AssembleAccumulationTerms( DomainPartition * const domain,
-                                                   DofManager const * const dofManager,
-                                                   ParallelMatrix * const matrix,
-                                                   ParallelVector * const rhs)
+void GeochemicalModel::AssembleAccumulationTerms( DomainPartition & domain,
+                                                  DofManager const & dofManager,
+                                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                  arrayView1d< real64 > const & localRhs )
 {
   GEOSX_MARK_FUNCTION;
 
-  ConstitutiveManager * const cm = domain->getConstitutiveManager();
 
-  ReactiveFluidBase const * reactiveFluid  = cm->GetConstitutiveRelation<ReactiveFluidBase>( m_reactiveFluidName );
-  
-  const array2d<real64> & stochMatrix = reactiveFluid->StochMatrix();
-  const array1d<bool> & isHplus = reactiveFluid->IsHplus();   
-
-  MeshLevel const * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
+  MeshLevel const & mesh = *(domain.getMeshBody(0)->getMeshLevel(0));
 
   
-  applyToSubRegions( mesh, [&] ( localIndex er, localIndex esr,
-                                 ElementRegionBase const * const GEOSX_UNUSED_ARG( region ),
-                                 ElementSubRegionBase const * const subRegion )
+  forTargetSubRegionsComplete( mesh,
+                               [&]
+                               ( localIndex const,
+                                 localIndex const er,
+                                 localIndex const esr,
+                                 ElementRegionBase const & GEOSX_UNUSED_PARAM( region ),
+                                 ElementSubRegionBase const & subRegion )
   {
 
-    string const dofKey = dofManager->getKey( viewKeyStruct::pressureString );
-    arrayView1d<globalIndex const> const & dofNumber = subRegion->getReference< array1d<globalIndex> >( dofKey );    
+
+    ReactiveFluidBase const & reactiveFluid  = GetConstitutiveModel<ReactiveFluidBase>( subRegion,
+                                                                                        m_reactiveFluidName );
+
+    arrayView2d<real64> const stochMatrix = reactiveFluid.StochMatrix();
+    arrayView1d<bool> const isHplus = reactiveFluid.IsHplus();
+
+
+    string const dofKey = dofManager.getKey( viewKeyStruct::pressureString );
+    arrayView1d<globalIndex const> const & dofNumber = subRegion.getReference< array1d<globalIndex> >( dofKey );
     
     arrayView1d<integer const>     const & elemGhostRank = m_elemGhostRank[er][esr];
 
@@ -405,7 +401,7 @@ void GeochemicalModel::AssembleAccumulationTerms( DomainPartition * const domain
     arrayView2d<real64 const> const & dependentConc     = m_dependentConc[er][esr][m_reactiveFluidIndex];
     arrayView3d<real64 const> const & dDependentConc_dConc     = m_dDependentConc_dConc[er][esr][m_reactiveFluidIndex];         
 
-    forall_in_range<serialPolicy>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex ei )
+    forAll<serialPolicy>( subRegion.size(), [=] ( localIndex const ei )
     {
       if (elemGhostRank[ei] < 0)
       {
@@ -420,7 +416,7 @@ void GeochemicalModel::AssembleAccumulationTerms( DomainPartition * const domain
           localAccumDOF[idof] = elemDOF + idof;
         }
         
-        localAccumJacobian = 0.0;
+//        localAccumJacobian = 0.0;
 
         for (localIndex ic = 0; ic < m_numBasisSpecies; ++ic)
           {
@@ -453,16 +449,24 @@ void GeochemicalModel::AssembleAccumulationTerms( DomainPartition * const domain
           }
 
 
-
         // add contribution to global residual and jacobian
-        rhs->add( localAccumDOF.data(),
-                  localAccum.data(),
-                  m_numDofPerCell );
+//        rhs->add( localAccumDOF.data(),
+//                  localAccum.data(),
+//                  m_numDofPerCell );
+//
+//        matrix->add( localAccumDOF.data(),
+//                     localAccumDOF.data(),
+//                     localAccumJacobian.data(),
+//                     m_numDofPerCell, m_numDofPerCell );
 
-        matrix->add( localAccumDOF.data(),
-                     localAccumDOF.data(),
-                     localAccumJacobian.data(),
-                     m_numDofPerCell, m_numDofPerCell );        
+        for( localIndex i = 0; i < m_numDofPerCell; ++i )
+        {
+          localRhs[localAccumDOF[i]] += localAccum[i];
+          localMatrix.addToRow< serialAtomic >( localAccumDOF[i],
+                                                localAccumDOF.data(),
+                                                localAccumJacobian[i],
+                                                m_numDofPerCell );
+        }
 
       }
 
@@ -471,64 +475,75 @@ void GeochemicalModel::AssembleAccumulationTerms( DomainPartition * const domain
 
 }
 
-void GeochemicalModel::AssembleFluxTerms( real64 const GEOSX_UNUSED_ARG(time_n),
-                                          real64 const GEOSX_UNUSED_ARG(dt),
-                                          DomainPartition const * const GEOSX_UNUSED_ARG(domain),
-                                          DofManager const * const GEOSX_UNUSED_ARG(dofManager),
-                                          ParallelMatrix * const GEOSX_UNUSED_ARG(matrix),
-                                          ParallelVector * const GEOSX_UNUSED_ARG(rhs) )
+void GeochemicalModel::AssembleFluxTerms( real64 const time_n,
+                                          real64 const dt,
+                                          DomainPartition const & domain,
+                                          DofManager const & dofManager,
+                                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                          arrayView1d< real64 > const & localRhs )
 {
-
+  GEOSX_UNUSED_VAR( time_n );
+  GEOSX_UNUSED_VAR( dt );
+  GEOSX_UNUSED_VAR( domain );
+  GEOSX_UNUSED_VAR( dofManager );
+  GEOSX_UNUSED_VAR( localMatrix );
+  GEOSX_UNUSED_VAR( localRhs );
 }
 
-void GeochemicalModel::ApplyBoundaryConditions(real64 const GEOSX_UNUSED_ARG(time_n),
-                                               real64 const GEOSX_UNUSED_ARG(dt),
-                                               DomainPartition * const GEOSX_UNUSED_ARG(domain),
-                                               DofManager const & GEOSX_UNUSED_ARG(dofManager),
-                                               ParallelMatrix & GEOSX_UNUSED_ARG(matrix),
-                                               ParallelVector & GEOSX_UNUSED_ARG(rhs) )
+void GeochemicalModel::ApplyBoundaryConditions(real64 const time,
+                                               real64 const dt,
+                                               DomainPartition & domain,
+                                               DofManager const & dofManager,
+                                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                               arrayView1d< real64 > const & localRhs )
 {
+  GEOSX_UNUSED_VAR( time );
+  GEOSX_UNUSED_VAR( dt );
+  GEOSX_UNUSED_VAR( domain );
+  GEOSX_UNUSED_VAR( dofManager );
+  GEOSX_UNUSED_VAR( localMatrix );
+  GEOSX_UNUSED_VAR( localRhs );
 
 }
 
 
 real64
 GeochemicalModel::
-CalculateResidualNorm( DomainPartition const * const domain,
+CalculateResidualNorm( DomainPartition const & domain,
                        DofManager const & dofManager,
-                       ParallelVector const & rhs )
+                       arrayView1d< real64 const > const & localRhs )
 {
 
-  MeshLevel const * const mesh = domain->getMeshBody(0)->getMeshLevel(0);
-
-  // get a view into local residual vector
-  real64 const * localResidual = rhs.extractLocalVector();
+  MeshLevel const & mesh = *(domain.getMeshBody(0)->getMeshLevel(0));
 
   string const dofKey = dofManager.getKey( viewKeyStruct::pressureString );  
+  globalIndex const rankOffset = dofManager.rankOffset();
 
   // compute the norm of local residual scaled by cell pore volume
   real64 localResidualNorm = 0.0;
 
-  applyToSubRegions( mesh, [&] ( localIndex const er, localIndex const esr,
-                                 ElementRegionBase const * const GEOSX_UNUSED_ARG( region ),
-                                 ElementSubRegionBase const * const subRegion )
+  forTargetSubRegionsComplete( mesh,
+                               [&]
+                               ( localIndex const,
+                                 localIndex const er,
+                                 localIndex const esr,
+                                 ElementRegionBase const & GEOSX_UNUSED_PARAM( region ),
+                                 ElementSubRegionBase const & subRegion )
   {
 
-    arrayView1d<globalIndex const> const & dofNumber = subRegion->getReference< array1d<globalIndex> >( dofKey );
-    
+    arrayView1d<globalIndex const> const & dofNumber = subRegion.getReference< array1d<globalIndex> >( dofKey );
     arrayView1d<integer const> const & elemGhostRank = m_elemGhostRank[er][esr];
 
-    localIndex const subRegionSize = subRegion->size();
+    localIndex const subRegionSize = subRegion.size();
     for ( localIndex a = 0; a < subRegionSize; ++a )
     {
 
       if (elemGhostRank[a] < 0)
       {
-        localIndex const offset = dofNumber[a];
         for (localIndex idof = 0; idof < m_numDofPerCell; ++idof)
         {
-          localIndex const lid = rhs.getLocalRowID( offset + idof );
-          real64 const val = localResidual[lid];
+          localIndex const lid = dofNumber[a] - rankOffset;
+          real64 const val = localRhs[lid];
           localResidualNorm += val * val;
         }
       }
@@ -545,39 +560,30 @@ CalculateResidualNorm( DomainPartition const * const domain,
 
 
 void GeochemicalModel::ApplySystemSolution( DofManager const & dofManager,
-                                             ParallelVector const & solution,
-                                             real64 const scalingFactor,
-                                             DomainPartition * const domain )
+                                            arrayView1d< real64 const > const & localSolution,
+                                            real64 const scalingFactor,
+                                            DomainPartition & domain )
 {
   
-  MeshLevel * mesh = domain->getMeshBody(0)->getMeshLevel(0);
+  MeshLevel & mesh = *(domain.getMeshBody(0)->getMeshLevel(0));
 
-  applyToSubRegions( mesh, [&] ( localIndex GEOSX_UNUSED_ARG(er), localIndex GEOSX_UNUSED_ARG(esr),
-                                 ElementRegionBase * const GEOSX_UNUSED_ARG( region ),
-                                 ElementSubRegionBase * const subRegion )
-  {
-
-    dofManager.addVectorToField( solution,
-                                 viewKeyStruct::pressureString,
-                                 scalingFactor,
-                                 subRegion,
-                                 viewKeyStruct::deltaConcentrationString,
-                                 0, m_numDofPerCell );
-  } );
+  dofManager.addVectorToField( localSolution,
+                               viewKeyStruct::pressureString,
+                               viewKeyStruct::deltaConcentrationString,
+                               scalingFactor,
+                               0, m_numDofPerCell );
 
   std::map<string, string_array > fieldNames;
-  fieldNames["elems"].push_back( viewKeyStruct::deltaPressureString );
-  fieldNames["elems"].push_back( viewKeyStruct::deltaTemperatureString );  
-  fieldNames["elems"].push_back( viewKeyStruct::deltaConcentrationString );
+  fieldNames["elems"].emplace_back( viewKeyStruct::deltaPressureString );
+  fieldNames["elems"].emplace_back( viewKeyStruct::deltaTemperatureString );
+  fieldNames["elems"].emplace_back( viewKeyStruct::deltaConcentrationString );
 
-  array1d<NeighborCommunicator> & comms =
-    domain->getReference< array1d<NeighborCommunicator> >( domain->viewKeys.neighbors );
+  CommunicationTools::SynchronizeFields( fieldNames, &mesh, domain.getNeighbors() );
 
-  CommunicationTools::SynchronizeFields( fieldNames, mesh, comms );
-
-  applyToSubRegions( mesh, [&] ( ElementSubRegionBase * subRegion )
+  this->forTargetSubRegions( mesh, [&] ( localIndex const,
+                                         ElementSubRegionBase & subRegion )
   {
-    UpdateState( subRegion );
+    UpdateState( &subRegion );
   } );
 
 }
@@ -594,25 +600,24 @@ void GeochemicalModel::SolveSystem( DofManager const & dofManager,
 
   SolverBase::SolveSystem( dofManager, matrix, rhs, solution );
 
-  if( verboseLevel() >= 2 )
+  if( getLogLevel() >= 2 )
   {
-    GEOS_LOG_RANK("After GeochemicalModel::SolveSystem");
-    GEOS_LOG_RANK("\nsolution\n" << solution);
+    GEOSX_LOG_RANK("After GeochemicalModel::SolveSystem");
+    GEOSX_LOG_RANK("\nsolution\n");
+    std::cout<<solution<<std::endl;
   }
 
 }
 
-void GeochemicalModel::ResetStateToBeginningOfStep( DomainPartition * const GEOSX_UNUSED_ARG(domain) )
+void GeochemicalModel::ResetStateToBeginningOfStep( DomainPartition & GEOSX_UNUSED_PARAM(domain) )
 {
 }
 
-void GeochemicalModel::ResetViews(DomainPartition * const domain)
+void GeochemicalModel::ResetViews( MeshLevel & mesh )
 {
-  FlowSolverBase::ResetViews(domain);
+  FlowSolverBase::ResetViews(mesh);
 
-  MeshLevel * const mesh = domain->getMeshBody( 0 )->getMeshLevel( 0 );
-  ElementRegionManager * const elemManager = mesh->getElemManager();
-  ConstitutiveManager * const constitutiveManager = domain->getConstitutiveManager();
+  ElementRegionManager * const elemManager = mesh.getElemManager();
 
   m_pressure =
     elemManager->ConstructViewAccessor<array1d<real64>, arrayView1d<real64>>( viewKeyStruct::pressureString );
@@ -635,11 +640,11 @@ void GeochemicalModel::ResetViews(DomainPartition * const domain)
     elemManager->ConstructViewAccessor<array2d<real64>, arrayView2d<real64>>( viewKeyStruct::concentrationNewString );
 
   
-  m_dependentConc = 
-    elemManager->ConstructFullMaterialViewAccessor<array2d<real64>, arrayView2d<real64> >( ReactiveFluidBase::viewKeyStruct::dependentConcString, constitutiveManager );
-
-  m_dDependentConc_dConc = 
-    elemManager->ConstructFullMaterialViewAccessor<array3d<real64>, arrayView3d<real64> >( ReactiveFluidBase::viewKeyStruct::dDependentConc_dConcString, constitutiveManager );
+//  m_dependentConc =
+//    elemManager->ConstructFullMaterialViewAccessor<array2d<real64>, arrayView2d<real64> >( ReactiveFluidBase::viewKeyStruct::dependentConcString, constitutiveManager );
+//
+//  m_dDependentConc_dConc =
+//    elemManager->ConstructFullMaterialViewAccessor<array3d<real64>, arrayView3d<real64> >( ReactiveFluidBase::viewKeyStruct::dDependentConc_dConcString, constitutiveManager );
 
 }
 
@@ -652,7 +657,7 @@ void GeochemicalModel::WriteSpeciesToFile(DomainPartition * const domain)
     return;
 
   std::ofstream os(m_outputSpeciesFileName);
-  GEOS_ERROR_IF(!os.is_open(), "Cannot open the species-output file");
+  GEOSX_ERROR_IF(!os.is_open(), "Cannot open the species-output file");
   
   ConstitutiveManager * const cm = domain->getConstitutiveManager();
 
@@ -694,18 +699,18 @@ void GeochemicalModel::WriteSpeciesToFile(DomainPartition * const domain)
                   for(localIndex ic = 0; ic < m_numBasisSpecies; ++ic)
                     {
 
-                      indices.push_back(count++);
+                      indices.emplace_back(count++);
 
-                      speciesConc.push_back(conc[ei][ic]);
+                      speciesConc.emplace_back(conc[ei][ic]);
 
                     }
 
                   for(localIndex ic = 0; ic < m_numDependentSpecies; ++ic)
                     {
             
-                      indices.push_back(count++);
+                      indices.emplace_back(count++);
 
-                      speciesConc.push_back(dependentConc[ei][ic]);         
+                      speciesConc.emplace_back(dependentConc[ei][ic]);
 
                     }
 

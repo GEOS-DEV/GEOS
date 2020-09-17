@@ -27,7 +27,6 @@ namespace geosx
 {
 
 using namespace dataRepository;
-using namespace cxx_utilities;
 
 namespace constitutive
 {
@@ -36,7 +35,7 @@ static void interpolation(const string &name, const array1d<real64> &values1, co
 {
 
   if(value1 < values1[0] || value1 > values1[values1.size()-1])
-    GEOS_ERROR("variable: " + name + " is out of bound!");
+    GEOSX_ERROR("variable: " + name + " is out of bound!");
 
   localIndex idx = 0;
 
@@ -61,7 +60,7 @@ static DatabaseType stringToDatabaseType( string const & databaseType )
     return DatabaseType::EQ36;
   }
 
-  GEOS_ERROR("Database type not supported: " << databaseType);
+  GEOSX_ERROR("Database type not supported: " << databaseType);
 
   return DatabaseType::invalidType;
 }
@@ -73,7 +72,7 @@ static ActivityCoefModel stringToActivityCoefModel( string const & activityCoefM
     return ActivityCoefModel::BDot;
   }
 
-  GEOS_ERROR("Activity coefficient model not supported: " << activityCoefModel);
+  GEOSX_ERROR("Activity coefficient model not supported: " << activityCoefModel);
 
   return ActivityCoefModel::invalidModel;
 }
@@ -82,50 +81,30 @@ EquilibratedChemicalFluid::EquilibratedChemicalFluid( std::string const & name, 
           ReactiveFluidBase( name, parent )
 {
 
-  registerWrapper( viewKeyStruct::databaseTypeString, &m_databaseTypeString, false )->
+  registerWrapper( viewKeyStruct::databaseTypeString, &m_databaseTypeString )->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("Thermodynamic database");
 
-  registerWrapper( viewKeyStruct::databaseFileString, &m_databaseFileName, false )->
+  registerWrapper( viewKeyStruct::databaseFileString, &m_databaseFileName )->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("Thermodynamic database file name");  
 
-  registerWrapper( viewKeyStruct::activityCoefModelString, &m_activityCoefModelString, false )->
+  registerWrapper( viewKeyStruct::activityCoefModelString, &m_activityCoefModelString )->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("Activity coefficient model");
 }
 
 EquilibratedChemicalFluid::~EquilibratedChemicalFluid() = default;
 
-void EquilibratedChemicalFluid::AllocateConstitutiveData( dataRepository::Group * const parent,
+void EquilibratedChemicalFluid::allocateConstitutiveData( dataRepository::Group * const parent,
                                                           localIndex const numConstitutivePointsPerParentIndex )
 {
-  ReactiveFluidBase::AllocateConstitutiveData(parent, numConstitutivePointsPerParentIndex);
+  ReactiveFluidBase::allocateConstitutiveData(parent, numConstitutivePointsPerParentIndex);
 
   ResizeFields( parent->size() );
 
 }
 
-void
-EquilibratedChemicalFluid::DeliverClone( string const & name,
-                                         Group * const parent,
-                                         std::unique_ptr<ConstitutiveBase> & clone ) const
-{
-  if( !clone )
-  {
-    clone = std::make_unique<EquilibratedChemicalFluid>( name, parent );
-  }
-  ReactiveFluidBase::DeliverClone( name, parent, clone );
-  EquilibratedChemicalFluid * const newConstitutiveRelation = dynamic_cast<EquilibratedChemicalFluid *>(clone.get());
-
-  newConstitutiveRelation->m_databaseTypeString    = this->m_databaseTypeString;
-  newConstitutiveRelation->m_databaseFileName   = this->m_databaseFileName;
-  newConstitutiveRelation->m_activityCoefModelString = this->m_activityCoefModelString;   
-
-  newConstitutiveRelation->m_databaseType     = this->m_databaseType;
-  newConstitutiveRelation->m_activityCoefModel   = this->m_activityCoefModel;
-  newConstitutiveRelation->ReadDatabase();
-}
 
 void EquilibratedChemicalFluid::PostProcessInput()
 {
@@ -180,7 +159,7 @@ void EquilibratedChemicalFluid::ReadDatabase()
   m_dependentSpeciesNames.clear();
   for(localIndex ic = 0; ic < dependentSpecies.size(); ++ic)
   {
-    m_dependentSpeciesNames.push_back(dependentSpecies[ic].name);
+    m_dependentSpeciesNames.emplace_back(dependentSpecies[ic].name);
   }
 
   localIndex const NBasis = numBasisSpecies();
@@ -188,7 +167,7 @@ void EquilibratedChemicalFluid::ReadDatabase()
 
   m_stochMatrix.resize(NBasis, NDependent);
 
-  m_stochMatrix = 0;
+  m_stochMatrix.setValues<serialPolicy>(0);
 
   for(localIndex j = 0; j < dependentSpecies.size(); ++j)
   {
@@ -228,7 +207,7 @@ void EquilibratedChemicalFluid::PointUpdate( real64 const & pressure, real64 con
 
 }
 
-void EquilibratedChemicalFluid::ComputeLogActCoef( real64 const & GEOSX_UNUSED_ARG(pressure),
+void EquilibratedChemicalFluid::ComputeLogActCoef( real64 const & pressure,
                                                    real64 const & temperature,
                                                    real64 const & ionicStrength,
                                                    array1d<real64> & logActCoef1,
@@ -236,7 +215,7 @@ void EquilibratedChemicalFluid::ComputeLogActCoef( real64 const & GEOSX_UNUSED_A
                                                    array1d<real64> & logActCoef2,
                                                    array1d<real64> & dLogActCoef2)
 {
-
+  GEOSX_UNUSED_VAR(pressure);
   localIndex const NBasis = numBasisSpecies();
   localIndex const NDependent = numDependentSpecies();  
 
@@ -316,7 +295,7 @@ void EquilibratedChemicalFluid::ComputeLogActCoef( real64 const & GEOSX_UNUSED_A
     }
   }
   else
-    GEOS_ERROR("wrong activity coef model");   
+    GEOSX_ERROR("wrong activity coef model");
 
 }
 

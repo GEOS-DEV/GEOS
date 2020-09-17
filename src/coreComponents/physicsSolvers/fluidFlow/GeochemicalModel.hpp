@@ -23,10 +23,8 @@
 #ifndef SRC_COMPONENTS_CORE_SRC_PHYSICSSOLVERS_GEOCHEMICALMODEL_HPP_
 #define SRC_COMPONENTS_CORE_SRC_PHYSICSSOLVERS_GEOCHEMICALMODEL_HPP_
 
-#include "physicsSolvers/FiniteVolume/FlowSolverBase.hpp"
-#include "constitutive/Fluid/ReactiveFluidBase.hpp"
-
-class Epetra_FECrsGraph;
+#include "FlowSolverBase.hpp"
+#include "constitutive/fluid/ReactiveFluidBase.hpp"
 
 namespace geosx
 {
@@ -89,7 +87,7 @@ public:
   virtual real64 SolverStep( real64 const& time_n,
                              real64 const& dt,
                              integer const cycleNumber,
-                             DomainPartition * domain ) override;
+                             DomainPartition & domain ) override;
 
   /**
    * @defgroup Solver Interface Functions
@@ -101,34 +99,30 @@ public:
   virtual void
   ImplicitStepSetup( real64 const & time_n,
                      real64 const & dt,
-                     DomainPartition * const domain,
-                     DofManager & dofManager,
-                     ParallelMatrix & matrix,
-                     ParallelVector & rhs,
-                     ParallelVector & solution ) override;
+                     DomainPartition & domain ) override;
 
   virtual void
-  SetupDofs( DomainPartition const * const domain,
+  SetupDofs( DomainPartition const & domain,
              DofManager & dofManager ) const override;
 
   virtual void AssembleSystem( real64 const time,
                                real64 const dt,
-                               DomainPartition * const domain,
+                               DomainPartition & domain,
                                DofManager const & dofManager,
-                               ParallelMatrix & matrix,
-                               ParallelVector & rhs ) override;
+                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                               arrayView1d< real64 > const & localRhs ) override;
 
   virtual void ApplyBoundaryConditions( real64 const time,
                                         real64 const dt,
-                                        DomainPartition * const domain,
+                                        DomainPartition & domain,
                                         DofManager const & dofManager,
-                                        ParallelMatrix & matrix,
-                                        ParallelVector & rhs ) override;
+                                        CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                        arrayView1d< real64 > const & localRhs ) override;
 
   virtual real64
-  CalculateResidualNorm( DomainPartition const * const domain,
+  CalculateResidualNorm( DomainPartition const & domain,
                          DofManager const & dofManager,
-                         ParallelVector const & rhs ) override;
+                         arrayView1d< real64 const > const & localRhs ) override;
 
   virtual void SolveSystem( DofManager const & dofManager,
                             ParallelMatrix & matrix,
@@ -137,16 +131,16 @@ public:
 
   virtual void
   ApplySystemSolution( DofManager const & dofManager,
-                       ParallelVector const & solution,
+                       arrayView1d< real64 const > const & localSolution,
                        real64 const scalingFactor,
-                       DomainPartition * const domain ) override;
+                       DomainPartition & domain ) override;
 
 
-  virtual void ResetStateToBeginningOfStep( DomainPartition * const domain ) override;
+  virtual void ResetStateToBeginningOfStep( DomainPartition & domain ) override;
 
   virtual  void ImplicitStepComplete( real64 const & time,
                                       real64 const & dt,
-                                      DomainPartition * const domain ) override;
+                                      DomainPartition & domain ) override;
 
   /**
    * @brief assembles the accumulation terms for all cells
@@ -156,10 +150,10 @@ public:
    * @param dt time step
    */
 
-  void AssembleAccumulationTerms( DomainPartition * const domain,
-                                  DofManager const * const dofManager,
-                                  ParallelMatrix * const matrix,
-                                  ParallelVector * const rhs );
+  void AssembleAccumulationTerms( DomainPartition & domain,
+                                  DofManager const & dofManager,
+                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                  arrayView1d< real64 > const & localRhs );
 
   /**
    * @brief assembles the flux terms for all cells
@@ -169,12 +163,12 @@ public:
    * @param dt time step
    */
 
-  void AssembleFluxTerms( real64 const time_n,
+  void AssembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( time_n ),
                           real64 const dt,
-                          DomainPartition const * const domain,
-                          DofManager const * const dofManager,
-                          ParallelMatrix * const matrix,
-                          ParallelVector * const rhs );
+                          DomainPartition const & domain,
+                          DofManager const & dofManager,
+                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                          arrayView1d< real64 > const & localRhs );
 
   void ResizeFields( MeshLevel * const meshLevel );
 
@@ -247,7 +241,7 @@ private:
   /**
    * @brief Setup stored views into domain data for the current step
    */
-  void ResetViews( DomainPartition * const domain ) override;
+  void ResetViews( MeshLevel & mesh ) override;
 
   /**
    * @brief Function to update all constitutive models

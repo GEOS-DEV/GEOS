@@ -58,11 +58,8 @@ public:
 
   // *** ConstitutiveBase interface
 
-  virtual void DeliverClone( string const & name,
-                             Group * const parent,
-                             std::unique_ptr<ConstitutiveBase> & clone ) const override = 0;
 
-  virtual void AllocateConstitutiveData( dataRepository::Group * const parent,
+  virtual void allocateConstitutiveData( dataRepository::Group * const parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
   static constexpr localIndex MAX_NUM_SPECIES = 32;
@@ -71,7 +68,6 @@ public:
 
   virtual void PointUpdate( real64 const & pressure, real64 const & temperature, arraySlice1d<real64 const> const & concentration, localIndex const k) = 0;
 
-  virtual void BatchUpdate( arrayView1d<real64 const> const & pressure, arrayView1d<real64 const> const & temperature, arrayView2d<real64 const> const & concentration ) = 0;
 
   localIndex numBasisSpecies() const
   {

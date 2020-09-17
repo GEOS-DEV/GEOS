@@ -77,7 +77,7 @@ struct ActCoefParameters
 
     virtual ~ThermoDatabaseBase(){}
 
-    using CatalogInterface = cxx_utilities::CatalogInterface< ThermoDatabaseBase, string const &, string_array const & >;
+    using CatalogInterface = dataRepository::CatalogInterface< ThermoDatabaseBase, string const &, string_array const & >;
 
     static typename CatalogInterface::CatalogType& GetCatalog()
     {

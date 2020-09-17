@@ -21,7 +21,7 @@
  * @file EQ36Database.cpp
  */
 
-#include "constitutive/Fluid/ThermoDatabases/EQ36Database.hpp"
+#include "EQ36Database.hpp"
 
 using namespace std;
 
@@ -76,7 +76,7 @@ void EQ36Database::CreateChemicalSystem(const string_array& basisSpeciesNames)
     string_array strs = Tokenize(str," ");
     for(localIndex i = 0; i < strs.size(); ++i)
     {
-      m_actCoefParameters.temperatures.push_back(std::stod(strs[i]));
+      m_actCoefParameters.temperatures.emplace_back(std::stod(strs[i]));
     }
   }
 
@@ -90,7 +90,7 @@ void EQ36Database::CreateChemicalSystem(const string_array& basisSpeciesNames)
     string_array strs = Tokenize(str," ");
     for(localIndex i = 0; i < strs.size(); ++i)
     {
-      m_actCoefParameters.pressures.push_back(std::stod(strs[i]));
+      m_actCoefParameters.pressures.emplace_back(std::stod(strs[i]));
     }
   }
 
@@ -112,7 +112,7 @@ void EQ36Database::CreateChemicalSystem(const string_array& basisSpeciesNames)
     string_array strs = Tokenize(str," ");
     for(localIndex i = 0; i < strs.size(); ++i)
     {
-      m_actCoefParameters.DHAs.push_back(std::stod(strs[i]));
+      m_actCoefParameters.DHAs.emplace_back(std::stod(strs[i]));
     }
   }
 
@@ -134,7 +134,7 @@ void EQ36Database::CreateChemicalSystem(const string_array& basisSpeciesNames)
     string_array strs = Tokenize(str," ");
     for(localIndex i = 0; i < strs.size(); ++i)
     {
-      m_actCoefParameters.DHBs.push_back(std::stod(strs[i])*1e8);
+      m_actCoefParameters.DHBs.emplace_back(std::stod(strs[i])*1e8);
     }
   }
 
@@ -156,11 +156,11 @@ void EQ36Database::CreateChemicalSystem(const string_array& basisSpeciesNames)
     string_array strs = Tokenize(str," ");
     for(localIndex i = 0; i < strs.size(); ++i)
     {
-      m_actCoefParameters.BDots.push_back(std::stod(strs[i]));
+      m_actCoefParameters.BDots.emplace_back(std::stod(strs[i]));
     }
   }
 
-  GEOS_ERROR_IF(m_actCoefParameters.temperatures.size() != m_actCoefParameters.pressures.size() || m_actCoefParameters.temperatures.size() != m_actCoefParameters.DHAs.size() || m_actCoefParameters.temperatures.size() != m_actCoefParameters.DHBs.size() || m_actCoefParameters.temperatures.size() != m_actCoefParameters.BDots.size(),"Internal error when reading database");
+  GEOSX_ERROR_IF(m_actCoefParameters.temperatures.size() != m_actCoefParameters.pressures.size() || m_actCoefParameters.temperatures.size() != m_actCoefParameters.DHAs.size() || m_actCoefParameters.temperatures.size() != m_actCoefParameters.DHBs.size() || m_actCoefParameters.temperatures.size() != m_actCoefParameters.BDots.size(),"Internal error when reading database");
 
   /* read basis species */
 
@@ -199,7 +199,7 @@ void EQ36Database::CreateChemicalSystem(const string_array& basisSpeciesNames)
           entry.MW = MW;
           entry.DHazero = DHazero;
           entry.charge = charge;
-          m_basisSpecies.push_back(entry);
+          m_basisSpecies.emplace_back(entry);
 
           if(speciesName == "H2O")
             H2OIndex = count;
@@ -310,7 +310,7 @@ void EQ36Database::CreateChemicalSystem(const string_array& basisSpeciesNames)
           entry.stochs = stochs;
           entry.logKs = logKs;
 
-          m_dependentSpecies.push_back(entry);
+          m_dependentSpecies.emplace_back(entry);
 
           speciesIndices.clear();
           stochs.clear();
@@ -401,14 +401,14 @@ void EQ36Database::CreateChemicalSystem(const string_array& basisSpeciesNames)
           for(localIndex i = 0; i < strs2.size(); ++i)
           {
             if(i % 2 == 0)
-              stochs.push_back(std::stod(strs2[i]));
+              stochs.emplace_back(std::stod(strs2[i]));
             else
-              speciesNames.push_back(strs2[i]);
+              speciesNames.emplace_back(strs2[i]);
           }
 
         }
 
-        GEOS_ERROR_IF(num1 != speciesNames.size() || num1 != stochs.size() || speciesName != speciesNames[0], "Internal error when reading database");
+        GEOSX_ERROR_IF(num1 != speciesNames.size() || num1 != stochs.size() || speciesName != speciesNames[0], "Internal error when reading database");
 
         bool notFound = 0;
 
@@ -447,7 +447,7 @@ void EQ36Database::CreateChemicalSystem(const string_array& basisSpeciesNames)
             string_array strs2 = Tokenize(str2," ");
 
             for(localIndex i = 0; i < strs2.size(); ++i)
-              logKs.push_back(std::stod(strs2[i]));
+              logKs.emplace_back(std::stod(strs2[i]));
 
           }
 
@@ -489,7 +489,7 @@ void EQ36Database::CreateChemicalSystem(const string_array& basisSpeciesNames)
           entry.stochs = stochs;
           entry.logKs = logKs;
 
-          m_dependentSpecies.push_back(entry);
+          m_dependentSpecies.emplace_back(entry);
 
           speciesIndices.clear();
           stochs.clear();
@@ -578,14 +578,14 @@ void EQ36Database::CreateChemicalSystem(const string_array& basisSpeciesNames)
           for(localIndex i = 0; i < strs2.size(); ++i)
           {
             if(i % 2 == 0)
-              stochs.push_back(std::stod(strs2[i]));
+              stochs.emplace_back(std::stod(strs2[i]));
             else
-              speciesNames.push_back(strs2[i]);
+              speciesNames.emplace_back(strs2[i]);
           }
 
         }
 
-        GEOS_ERROR_IF(num1 != speciesNames.size() || num1 != stochs.size() || speciesName != speciesNames[0], "Internal error when reading database");
+        GEOSX_ERROR_IF(num1 != speciesNames.size() || num1 != stochs.size() || speciesName != speciesNames[0], "Internal error when reading database");
 
         bool notFound = 0;
 
@@ -624,7 +624,7 @@ void EQ36Database::CreateChemicalSystem(const string_array& basisSpeciesNames)
             string_array strs2 = Tokenize(str2," ");
 
             for(localIndex i = 0; i < strs2.size(); ++i)
-              logKs.push_back(std::stod(strs2[i]));
+              logKs.emplace_back(std::stod(strs2[i]));
 
           }
 
@@ -664,7 +664,7 @@ void EQ36Database::CreateChemicalSystem(const string_array& basisSpeciesNames)
           entry.stochs = stochs;
           entry.logKs = logKs;
 
-          m_dependentSpecies.push_back(entry);
+          m_dependentSpecies.emplace_back(entry);
 
           speciesIndices.clear();
           stochs.clear();
@@ -753,14 +753,14 @@ void EQ36Database::CreateChemicalSystem(const string_array& basisSpeciesNames)
           for(localIndex i = 0; i < strs2.size(); ++i)
           {
             if(i % 2 == 0)
-              stochs.push_back(std::stod(strs2[i]));
+              stochs.emplace_back(std::stod(strs2[i]));
             else
-              speciesNames.push_back(strs2[i]);
+              speciesNames.emplace_back(strs2[i]);
           }
 
         }
 
-        GEOS_ERROR_IF(num1 != speciesNames.size() || num1 != stochs.size() || speciesName != speciesNames[0], "Internal error when reading database");
+        GEOSX_ERROR_IF(num1 != speciesNames.size() || num1 != stochs.size() || speciesName != speciesNames[0], "Internal error when reading database");
 
         bool notFound = 0;
 
@@ -799,7 +799,7 @@ void EQ36Database::CreateChemicalSystem(const string_array& basisSpeciesNames)
             string_array strs2 = Tokenize(str2," ");
 
             for(localIndex i = 0; i < strs2.size(); ++i)
-              logKs.push_back(std::stod(strs2[i]));
+              logKs.emplace_back(std::stod(strs2[i]));
 
           }
 
@@ -840,7 +840,7 @@ void EQ36Database::CreateChemicalSystem(const string_array& basisSpeciesNames)
           entry.stochs = stochs;
           entry.logKs = logKs;
 
-          m_dependentSpecies.push_back(entry);
+          m_dependentSpecies.emplace_back(entry);
 
           speciesIndices.clear();
           stochs.clear();
@@ -930,14 +930,14 @@ void EQ36Database::CreateChemicalSystem(const string_array& basisSpeciesNames)
           for(localIndex i = 0; i < strs2.size(); ++i)
           {
             if(i % 2 == 0)
-              stochs.push_back(std::stod(strs2[i]));
+              stochs.emplace_back(std::stod(strs2[i]));
             else
-              speciesNames.push_back(strs2[i]);
+              speciesNames.emplace_back(strs2[i]);
           }
 
         }
 
-        GEOS_ERROR_IF(num1 != speciesNames.size() || num1 != stochs.size() || speciesName != speciesNames[0], "Internal error when reading database");
+        GEOSX_ERROR_IF(num1 != speciesNames.size() || num1 != stochs.size() || speciesName != speciesNames[0], "Internal error when reading database");
 
         bool notFound = 0;
 
@@ -976,7 +976,7 @@ void EQ36Database::CreateChemicalSystem(const string_array& basisSpeciesNames)
             string_array strs2 = Tokenize(str2," ");
 
             for(localIndex i = 0; i < strs2.size(); ++i)
-              logKs.push_back(std::stod(strs2[i]));
+              logKs.emplace_back(std::stod(strs2[i]));
 
           }
 
@@ -1017,7 +1017,7 @@ void EQ36Database::CreateChemicalSystem(const string_array& basisSpeciesNames)
           entry.stochs = stochs;
           entry.logKs = logKs;
 
-          m_dependentSpecies.push_back(entry);
+          m_dependentSpecies.emplace_back(entry);
 
           speciesIndices.clear();
           stochs.clear();
@@ -1106,14 +1106,14 @@ void EQ36Database::CreateChemicalSystem(const string_array& basisSpeciesNames)
           for(localIndex i = 0; i < strs2.size(); ++i)
           {
             if(i % 2 == 0)
-              stochs.push_back(std::stod(strs2[i]));
+              stochs.emplace_back(std::stod(strs2[i]));
             else
-              speciesNames.push_back(strs2[i]);
+              speciesNames.emplace_back(strs2[i]);
           }
 
         }
 
-        GEOS_ERROR_IF(num1 != speciesNames.size() || num1 != stochs.size() || speciesName != speciesNames[0], "Internal error when reading database");
+        GEOSX_ERROR_IF(num1 != speciesNames.size() || num1 != stochs.size() || speciesName != speciesNames[0], "Internal error when reading database");
 
         bool notFound = 0;
 
@@ -1152,7 +1152,7 @@ void EQ36Database::CreateChemicalSystem(const string_array& basisSpeciesNames)
             string_array strs2 = Tokenize(str2," ");
 
             for(localIndex i = 0; i < strs2.size(); ++i)
-              logKs.push_back(std::stod(strs2[i]));
+              logKs.emplace_back(std::stod(strs2[i]));
 
           }
 

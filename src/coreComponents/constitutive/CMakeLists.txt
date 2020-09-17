@@ -6,7 +6,6 @@ set( constitutive_headers
      ConstitutiveBase.hpp
      ConstitutivePassThruHandler.hpp
      ExponentialRelation.hpp
-<<<<<<< HEAD
      NullModel.hpp
      capillaryPressure/CapillaryPressureBase.hpp
      capillaryPressure/capillaryPressureSelector.hpp
