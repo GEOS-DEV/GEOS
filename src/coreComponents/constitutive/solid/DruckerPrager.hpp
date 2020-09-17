@@ -122,10 +122,11 @@ void DruckerPragerUpdates::smallStrainUpdate( localIndex const k,
 {
   // elastic predictor (assume strainIncrement is all elastic)
   
+  std::cout << "in DP" << std::endl;
+  
   ElasticIsotropicUpdates::smallStrainUpdate( k, q, strainIncrement, stress, stiffness);
   
   // decompose into mean (P) and von mises (Q) stress invariants
-  // could switch to strain invariant formulation using getElasticStrain() if needed
     
   real64 trialP;
   real64 trialQ;

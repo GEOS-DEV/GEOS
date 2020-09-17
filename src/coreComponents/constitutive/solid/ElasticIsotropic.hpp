@@ -209,6 +209,8 @@ void ElasticIsotropicUpdates::smallStrainNoStateUpdate( localIndex const k,
 {
   GEOSX_UNUSED_VAR(q);
   
+    //std::cout << "in EINS" << std::endl;
+    
   real64 const twoG   = 2 * m_shearModulus[k];
   real64 const lambda = conversions::BulkModAndShearMod::toFirstLame( m_bulkModulus[k] , m_shearModulus[k] );
   real64 const vol    = lambda * ( totalStrain[0] + totalStrain[1] + totalStrain[2] );
@@ -249,6 +251,8 @@ void ElasticIsotropicUpdates::smallStrainUpdate( localIndex const k,
                                                  real64 const ( & strainIncrement )[6],
                                                  real64 ( & stress )[6]) const
 {
+ //std::cout << "in EI" << std::endl;
+ 
   smallStrainNoStateUpdate( k, q, strainIncrement, stress); // stress  = incrementalStress
   LvArray::tensorOps::add< 6 >( stress, m_oldStress[k][q]); // stress += m_oldStress
   saveStress( k, q, stress);                                // m_newStress = stress

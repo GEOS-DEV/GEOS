@@ -209,7 +209,7 @@ public:
     //m_constitutiveUpdate.SmallStrain( k, q, strainInc );
     //GEOSX_UNUSED_VAR( q )
     //m_constitutiveUpdate.getElasticStiffness( k, stack.constitutiveStiffness ); // jaw
-    
+        
     real64 localStress[6]; // will be discarded and later accessed via m_newStress directly
     m_constitutiveUpdate.smallStrainUpdate( k, q, strainInc, localStress, stack.constitutiveStiffness );
   }
@@ -268,6 +268,7 @@ public:
       for( localIndex b=0; b<numNodesPerElem; ++b )
       {
         real64 const (&c)[6][6] = stack.constitutiveStiffness;
+                
         stack.localJacobian[ a*3+0 ][ b*3+0 ] -= ( c[0][0]*m_dNdX( k, q, a, 0 )*m_dNdX( k, q, b, 0 ) +
                                                    c[5][5]*m_dNdX( k, q, a, 1 )*m_dNdX( k, q, b, 1 ) +
                                                    c[4][4]*m_dNdX( k, q, a, 2 )*m_dNdX( k, q, b, 2 ) ) * m_detJ( k, q );
@@ -326,7 +327,7 @@ public:
                          m_constitutiveUpdate.m_newStress( k, q, 3 ),
                          m_constitutiveUpdate.m_newStress( k, q, 4 ),
                          m_constitutiveUpdate.m_newStress( k, q, 5 ) };
-
+    
     stressModifier( stress );
 
     real64 const gravityForce[3] = { m_gravityVector[0] * m_density( k, q ),

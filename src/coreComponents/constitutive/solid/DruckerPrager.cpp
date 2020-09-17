@@ -74,6 +74,7 @@ DruckerPrager::DruckerPrager( std::string const & name, Group * const parent ):
   
   registerWrapper( viewKeyStruct::newCohesionString, &m_newCohesion )->
     setApplyDefaultValue( -1 )->
+    setPlotLevel( dataRepository::PlotLevel::LEVEL_3)->
     setDescription( "New cohesion state" );
   
   registerWrapper( viewKeyStruct::oldCohesionString, &m_oldCohesion )->
@@ -111,10 +112,10 @@ void DruckerPrager::PostProcessInput()
   real64 phi = m_defaultFrictionAngle * M_PI / 180;
   real64 psi = m_defaultDilationAngle * M_PI / 180;
   
-  real64 F = 6 * m_defaultCohesion * cos(phi) / ( 3 + sin(phi) );
-  real64 D = 6 * m_defaultCohesion * cos(psi) / ( 3 + sin(psi) );
-  real64 C = 6 * sin(phi) / ( 3 + sin(phi) );
-  
+  real64 C = 6 * m_defaultCohesion * cos(phi) / ( 3 + sin(phi) );
+  real64 F = 6 * sin(phi) / ( 3 + sin(phi) );
+  real64 D = 6 * sin(psi) / ( 3 + sin(psi) );
+    
   // set results as array default values
   
   this->getWrapper< array2d< real64 > >( viewKeyStruct::oldCohesionString )->
