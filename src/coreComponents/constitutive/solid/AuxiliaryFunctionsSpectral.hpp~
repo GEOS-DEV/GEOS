@@ -45,6 +45,19 @@ void NegativePartOfTensor( real64 (&eigs)[3], real64 (&eigvecs)[3][3], real64 (&
 }
 
 GEOSX_HOST_DEVICE
+void recoverStrainFromStress(array1d const stress, real64 (&strain)[6], real64 const K, real64 const mu)
+{
+  real64 E = 9*K*mu / (3*K + mu);
+  real64 nu = (3*K - 2*mu) / (6*K + 2*mu);
+  strain[0] = (stress[0] - nu*(stress[1] + stress[2]))/E;
+  strain[1] = (stress[1] - nu*(stress[0] + stress[2]))/E;
+  strain[2] = (stress[2] - nu*(stress[0] + stress[1]))/E;
+  strain[3] = (1 + nu)*stress[3]/E;
+  strain[4] = (1 + nu)*stress[4]/E;
+  strain[5] = (1 + nu)*stress[5]/E;
+}
+
+GEOSX_HOST_DEVICE
 int voigt(int voigtIndex, int pairIndex)
 {
   if (pairIndex != 1 && pairIndex != 2){
