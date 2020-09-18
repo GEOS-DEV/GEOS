@@ -351,7 +351,7 @@ static bool addExitHandler( PyObject * module ){
   if ( atexit_register_pyfunc == nullptr )
   { return false; }
 
-  LvArray::python::PyObjectRef<> finalize_pyfunc { PyObject_GetAttrString( module, "finalize" ) };
+  LvArray::python::PyObjectRef<> finalize_pyfunc { PyObject_GetAttrString( module, "_finalize" ) };
   if ( finalize_pyfunc == nullptr )
   { return false; }
 
