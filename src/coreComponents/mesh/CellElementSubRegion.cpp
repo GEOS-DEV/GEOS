@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -48,7 +48,7 @@ void CellElementSubRegion::CopyFromCellBlock( CellBlock * source )
   this->resize( source->size());
   this->nodeList() = source->nodeList();
 
-  arrayView1d< globalIndex const > const & sourceLocalToGlobal = source->localToGlobalMap();
+  arrayView1d< globalIndex const > const sourceLocalToGlobal = source->localToGlobalMap();
   this->m_localToGlobalMap.resize( sourceLocalToGlobal.size() );
   for( localIndex i = 0; i < localToGlobalMap().size(); ++i )
   {
@@ -80,8 +80,6 @@ void CellElementSubRegion::ConstructSubRegionFromFaceSet( FaceManager const * co
   SortedArrayView< localIndex const > const & targetSet = faceManager->sets().getReference< SortedArray< localIndex > >( setName );
   m_toFacesRelation.resize( 0, 2 );
   this->resize( targetSet.size() );
-
-
 }
 
 void CellElementSubRegion::ViewPackingExclusionList( SortedArray< localIndex > & exclusionList ) const
@@ -110,21 +108,25 @@ template< bool DOPACK >
 localIndex CellElementSubRegion::PackUpDownMapsPrivate( buffer_unit_type * & buffer,
                                                         arrayView1d< localIndex const > const & packList ) const
 {
-  localIndex packedSize = 0;
 
-  packedSize += bufferOps::Pack< DOPACK >( buffer,
-                                           nodeList().Base().toViewConst(),
-                                           m_unmappedGlobalIndicesInNodelist,
-                                           packList,
-                                           this->localToGlobalMap(),
-                                           nodeList().RelatedObjectLocalToGlobal() );
+  arrayView1d< globalIndex const > const localToGlobal = this->localToGlobalMap();
+  arrayView1d< globalIndex const > nodeLocalToGlobal = nodeList().RelatedObjectLocalToGlobal();
+  arrayView1d< globalIndex const > faceLocalToGlobal = faceList().RelatedObjectLocalToGlobal();
+
+
+  localIndex packedSize = bufferOps::Pack< DOPACK >( buffer,
+                                                     nodeList().Base().toViewConst(),
+                                                     m_unmappedGlobalIndicesInNodelist,
+                                                     packList,
+                                                     localToGlobal,
+                                                     nodeLocalToGlobal );
 
   packedSize += bufferOps::Pack< DOPACK >( buffer,
                                            faceList().Base().toViewConst(),
                                            m_unmappedGlobalIndicesInFacelist,
                                            packList,
-                                           this->localToGlobalMap(),
-                                           faceList().RelatedObjectLocalToGlobal() );
+                                           localToGlobal,
+                                           faceLocalToGlobal );
 
   return packedSize;
 }

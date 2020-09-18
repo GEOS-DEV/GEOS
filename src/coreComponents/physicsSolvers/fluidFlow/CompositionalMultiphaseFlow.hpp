@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -140,6 +140,11 @@ public:
                ParallelVector & rhs,
                ParallelVector & solution ) override;
 
+  virtual real64
+  ScalingForSystemSolution( DomainPartition const & domain,
+                            DofManager const & dofManager,
+                            arrayView1d< real64 const > const & localSolution ) override;
+
   virtual bool
   CheckSystemSolution( DomainPartition const & domain,
                        DofManager const & dofManager,
@@ -265,9 +270,9 @@ public:
 
   /**@}*/
 
-  arrayView1d< string const > const & relPermModelNames() const { return m_relPermModelNames; }
+  arrayView1d< string const > relPermModelNames() const { return m_relPermModelNames; }
 
-  arrayView1d< string const > const & capPresModelNames() const { return m_capPressureModelNames; }
+  arrayView1d< string const > capPresModelNames() const { return m_capPressureModelNames; }
 
   struct viewKeyStruct : FlowSolverBase::viewKeyStruct
   {
@@ -279,6 +284,9 @@ public:
 
     static constexpr auto relPermNamesString  = "relPermNames";
     static constexpr auto capPressureNamesString  = "capPressureNames";
+
+    static constexpr auto maxCompFracChangeString = "maxCompFractionChange";
+    static constexpr auto allowLocalCompDensChoppingString = "allowLocalCompDensityChopping";
 
     static constexpr auto facePressureString  = "facePressure";
     static constexpr auto bcPressureString    = "bcPressure";
@@ -310,6 +318,7 @@ public:
     static constexpr auto phaseViscosityString             = "phaseViscosity";
     static constexpr auto phaseRelativePermeabilityString  = "phaseRelativePermeability";
     static constexpr auto phaseCapillaryPressureString     = "phaseCapillaryPressure";
+
   } viewKeysCompMultiphaseFlow;
 
   struct groupKeyStruct : SolverBase::groupKeyStruct
@@ -363,6 +372,12 @@ public:
                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
                           arrayView1d< real64 > const & localRhs ) const;
 
+  /**
+   * @brief Sets all the negative component densities (if any) to zero.
+   * @param domain the physical domain object
+   */
+  void ChopNegativeDensities( DomainPartition & domain );
+
 protected:
 
   virtual void PostProcessInput() override;
@@ -393,7 +408,6 @@ private:
    */
   void ResetViews( MeshLevel & mesh ) override;
 
-
   /// the max number of fluid phases
   localIndex m_numPhases;
 
@@ -414,6 +428,16 @@ private:
 
   /// name of the cap pressure constitutive model
   array1d< string > m_capPressureModelNames;
+
+  /// maximum (absolute) change in a component fraction between two Newton iterations
+  real64 m_maxCompFracChange;
+
+  /// minimum value of the scaling factor obtained by enforcing maxCompFracChange
+  real64 m_minScalingFactor;
+
+  /// flag indicating whether local (cell-wise) chopping of negative compositions is allowed
+  integer m_allowCompDensChopping;
+
 
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_pressure;
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_deltaPressure;

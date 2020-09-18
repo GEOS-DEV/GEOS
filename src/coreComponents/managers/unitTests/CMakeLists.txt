@@ -5,7 +5,9 @@
 set( gtest_geosx_tests
      testRecursiveFieldApplication.cpp
      testMeshGeneration.cpp
+     testFunctions.cpp
    )
+
 
 set( dependencyList gtest )
 

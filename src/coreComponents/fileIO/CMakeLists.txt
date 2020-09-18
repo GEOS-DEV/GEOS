@@ -4,6 +4,7 @@
 # Specify all headers
 #
 set( fileIO_headers
+     timeHistory/TimeHistHDF.hpp
      silo/SiloFile.hpp
      schema/schemaUtilities.hpp )
 
@@ -11,6 +12,7 @@ set( fileIO_headers
 # Specify all sources
 #
 set( fileIO_sources
+     timeHistory/TimeHistHDF.cpp
      silo/SiloFile.cpp
      schema/schemaUtilities.cpp )
 
@@ -62,3 +64,5 @@ blt_add_library( NAME                  fileIO
 target_include_directories( fileIO PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)
 
 geosx_add_code_checks(PREFIX fileIO )
+
+add_subdirectory(unitTests)

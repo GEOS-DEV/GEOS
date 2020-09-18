@@ -4,6 +4,7 @@ message("CMAKE_SYSTEM_NAME = ${CMAKE_SYSTEM_NAME}")
 message("CMAKE_HOST_APPLE = ${CMAKE_HOST_APPLE}")
 
 ### OPTIONS ###
+option( GEOSX_ENABLE_FPE "" ON)
 
 option( ENABLE_CALIPER "" OFF )
 

@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -105,24 +105,6 @@ TEST( testGeosxTraits, Pointer )
   static_assert( std::is_same< ConstPointer< SortedArray< float > >, float const * >::value, "Should be true." );
 }
 
-TEST( testGeosxTraits, ViewType )
-{
-  static_assert( std::is_same< ViewType< int >, int & >::value, "Should be true." );
-  static_assert( std::is_same< ViewType< array2d< float, RAJA::PERM_JI > >, arrayView2d< float, 0 > const & >::value, "Should be true." );
-  static_assert( std::is_same< ViewType< SortedArray< double > >, SortedArrayView< double const > const & >::value, "Should be true." );
-  static_assert( std::is_same< ViewType< ArrayOfArrays< int > >, ArrayOfArraysView< int > const & >::value, "Should be true." );
-  static_assert( std::is_same< ViewType< ArrayOfSets< int > >, ArrayOfSetsView< int > const & >::value, "Should be true." );
-  static_assert( std::is_same< ViewType< CRSMatrix< int > >, CRSMatrixView< int > const & >::value, "Should be true." );
-
-  static_assert( std::is_same< ViewTypeConst< int >, int const & >::value, "Should be true." );
-  static_assert( std::is_same< ViewTypeConst< array2d< float, RAJA::PERM_JI > >, arrayView2d< float const, 0 > const & >::value, "Should be true." );
-  static_assert( std::is_same< ViewTypeConst< SortedArray< double > >, SortedArrayView< double const > const & >::value, "Should be true." );
-  static_assert( std::is_same< ViewTypeConst< ArrayOfArrays< int > >, ArrayOfArraysView< int const > const & >::value, "Should be true." );
-  static_assert( std::is_same< ViewTypeConst< ArrayOfSets< int > >, ArrayOfSetsView< int const > const & >::value, "Should be true." );
-  static_assert( std::is_same< ViewTypeConst< CRSMatrix< int, localIndex > >, CRSMatrixView< int const, localIndex const > const & >::value,
-                 "Should be true." );
-}
-
 TEST( testGeosxTraits, HasMemberFunction_data )
 {
   static_assert( HasMemberFunction_data< array1d< double > >, "Should be true." );
@@ -133,19 +115,6 @@ TEST( testGeosxTraits, HasMemberFunction_data )
   static_assert( !HasMemberFunction_data< std::map< string, string > >, "Should be false." );
   static_assert( !HasMemberFunction_data< int >, "Should be false." );
   static_assert( !HasMemberFunction_data< double >, "Should be false." );
-}
-
-TEST( testGeosxTraits, HasMemberFunction_move )
-{
-  static_assert( HasMemberFunction_move< array1d< double > >, "Should be true." );
-  static_assert( HasMemberFunction_move< array5d< array1d< R1Tensor > > >, "Should be true." );
-  static_assert( HasMemberFunction_move< SortedArray< string > >, "Should be true." );
-  static_assert( HasMemberFunction_move< ArrayOfArrays< int > >, "Should be true." );
-
-  static_assert( !HasMemberFunction_move< std::vector< int > >, "Should be true." );
-  static_assert( !HasMemberFunction_move< std::map< string, string > >, "Should be true." );
-  static_assert( !HasMemberFunction_move< int >, "Should be false." );
-  static_assert( !HasMemberFunction_move< double >, "Should be false." );
 }
 
 TEST( testGeosxTraits, HasMemberFunction_size )
@@ -211,4 +180,39 @@ TEST( testGeosxTraits, is_array )
   static_assert( !is_array< int >, "Should be false." );
   static_assert( !is_array< double >, "Should be false." );
   static_assert( !is_array< void >, "Should be false." );
+}
+
+
+struct Foo
+{
+  Foo & operator=( Foo const & ) = default;
+  int m_value;
+};
+
+struct Bar
+{
+  Bar & operator=( Bar const & ) = delete;
+  int m_value;
+};
+
+enum enumFoo
+{
+  blah,
+  yada
+};
+
+enum class enumClassFoo
+{
+  blah,
+  yada
+};
+
+TEST( testGeosxTraits, hasCopyAssignment )
+{
+  static_assert( hasCopyAssignmentOp< enumFoo >, "Should be true." );
+  static_assert( hasCopyAssignmentOp< enumClassFoo >, "Should be true." );
+  static_assert( hasCopyAssignmentOp< int >, "Should be true." );
+  static_assert( hasCopyAssignmentOp< real64 >, "Should be true." );
+  static_assert( hasCopyAssignmentOp< Foo >, "Should be true." );
+  static_assert( !hasCopyAssignmentOp< Bar >, "Should be false." );
 }

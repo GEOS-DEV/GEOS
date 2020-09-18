@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -128,13 +128,11 @@ namespace geosx
  */
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
-          int NUM_NODES_PER_ELEM,
-          int UNUSED >
+          typename FE_TYPE >
 class LaplaceFEMKernel :
   public finiteElement::ImplicitKernelBase< SUBREGION_TYPE,
                                             CONSTITUTIVE_TYPE,
-                                            NUM_NODES_PER_ELEM,
-                                            NUM_NODES_PER_ELEM,
+                                            FE_TYPE,
                                             1,
                                             1 >
 {
@@ -142,8 +140,7 @@ public:
   /// An alias for the base class.
   using Base = finiteElement::ImplicitKernelBase< SUBREGION_TYPE,
                                                   CONSTITUTIVE_TYPE,
-                                                  NUM_NODES_PER_ELEM,
-                                                  NUM_NODES_PER_ELEM,
+                                                  FE_TYPE,
                                                   1,
                                                   1 >;
 
@@ -155,6 +152,9 @@ public:
   using Base::m_rhs;
   using Base::m_elemsToNodes;
 
+  /// The number of nodes per element.
+  static constexpr int numNodesPerElem = Base::numTestSupportPointsPerElem;
+
   /**
    * @brief Constructor
    * @copydoc geosx::finiteElement::ImplicitKernelBase::ImplicitKernelBase
@@ -165,7 +165,7 @@ public:
                     EdgeManager const & edgeManager,
                     FaceManager const & faceManager,
                     SUBREGION_TYPE const & elementSubRegion,
-                    FiniteElementBase const * const finiteElementSpace,
+                    FE_TYPE const & finiteElementSpace,
                     CONSTITUTIVE_TYPE * const inputConstitutiveType,
                     arrayView1d< globalIndex const > const & inputDofNumber,
                     globalIndex const rankOffset,
@@ -208,7 +208,7 @@ public:
     {}
 
     /// C-array storage for the element local primary field variable.
-    real64 primaryField_local[NUM_NODES_PER_ELEM];
+    real64 primaryField_local[numNodesPerElem];
   };
 
 
@@ -225,7 +225,7 @@ public:
   void setup( localIndex const k,
               StackVariables & stack ) const
   {
-    for( localIndex a=0; a<NUM_NODES_PER_ELEM; ++a )
+    for( localIndex a=0; a<numNodesPerElem; ++a )
     {
       localIndex const localNodeIndex = m_elemsToNodes( k, a );
 
@@ -244,9 +244,9 @@ public:
                                             localIndex const q,
                                             StackVariables & stack ) const
   {
-    for( localIndex a=0; a<NUM_NODES_PER_ELEM; ++a )
+    for( localIndex a=0; a<numNodesPerElem; ++a )
     {
-      for( localIndex b=0; b<NUM_NODES_PER_ELEM; ++b )
+      for( localIndex b=0; b<numNodesPerElem; ++b )
       {
         stack.localJacobian[ a ][ b ] += LvArray::tensorOps::AiBi< 3 >( m_dNdX[k][q][a], m_dNdX[k][q][b] ) * m_detJ( k, q );
       }
@@ -268,22 +268,22 @@ public:
     GEOSX_UNUSED_VAR( k );
     real64 maxForce = 0;
 
-    for( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )
+    for( localIndex a = 0; a < numNodesPerElem; ++a )
     {
-      for( localIndex b = 0; b < NUM_NODES_PER_ELEM; ++b )
+      for( localIndex b = 0; b < numNodesPerElem; ++b )
       {
         stack.localResidual[ a ] += stack.localJacobian[ a ][ b ] * stack.primaryField_local[ b ];
       }
     }
 
-    for( int a = 0; a < NUM_NODES_PER_ELEM; ++a )
+    for( int a = 0; a < numNodesPerElem; ++a )
     {
       localIndex const dof = LvArray::integerConversion< localIndex >( stack.localRowDofIndex[ a ] - m_dofRankOffset );
       if( dof < 0 || dof >= m_matrix.numRows() ) continue;
       m_matrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( dof,
                                                                               stack.localColDofIndex,
                                                                               stack.localJacobian[ a ],
-                                                                              NUM_NODES_PER_ELEM );
+                                                                              numNodesPerElem );
 
       RAJA::atomicAdd< parallelDeviceAtomic >( &m_rhs[ dof ], stack.localResidual[ a ] );
       maxForce = fmax( maxForce, fabs( stack.localResidual[ a ] ) );

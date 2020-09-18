@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -123,6 +123,17 @@ public:
    * @param[in] nodeManager manager of all nodes in the DomainPartition
    */
   void BuildEdges( FaceManager * const faceManager, NodeManager * const nodeManager );
+
+  /**
+   * @brief Build faces-to-edges and nodes-to-edges relation maps.
+   * @param[in] numNodes number of nodes
+   * @param[in] faceToNodeMap manager face-to-nodes map
+   * @param[in] faceToEdgeMap manager face-to-edges map
+   */
+  void BuildEdges( localIndex const numNodes,
+                   ArrayOfArraysView< localIndex const > const & faceToNodeMap,
+                   ArrayOfArrays< localIndex > & faceToEdgeMap );
+
 
   /**
    * @brief Build \p globalEdgeNodes, a  vector containing all the global indices
@@ -290,7 +301,7 @@ public:
    * @brief Return the  maximum number of edges per node.
    * @return Maximum allowable number of edges connected to one node (hardcoded for now)
    */
-  constexpr int maxEdgesPerNode() const { return 100; }
+  constexpr int maxEdgesPerNode() const { return 200; }
 
   /**
    * @name Getters for stored value.

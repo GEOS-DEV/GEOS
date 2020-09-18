@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -89,7 +89,7 @@ public:
 
 
   template< int USD >
-  GEOSX_HOST_DEVICE CONSTEXPR_WITH_NDEBUG inline
+  GEOSX_HOST_DEVICE inline
   R1TensorT & operator=( LvArray::ArraySlice< realT const, 1, USD, std::ptrdiff_t > const & src )
   {
     GEOSX_ASSERT_EQ( src.size(), T_dim );
@@ -105,7 +105,7 @@ public:
   using TensorBaseT< T_dim >::operator+=;
 
   template< int USD >
-  GEOSX_HOST_DEVICE CONSTEXPR_WITH_NDEBUG inline
+  GEOSX_HOST_DEVICE inline
   R1TensorT & operator+=( LvArray::ArraySlice< realT const, 1, USD, std::ptrdiff_t > const & src )
   {
     GEOSX_ASSERT_EQ( src.size(), T_dim );
@@ -128,7 +128,7 @@ public:
   using TensorBaseT< T_dim >::operator-=;
 
   template< int USD >
-  GEOSX_HOST_DEVICE CONSTEXPR_WITH_NDEBUG inline
+  GEOSX_HOST_DEVICE inline
   R1TensorT & operator-=( LvArray::ArraySlice< realT const, 1, USD, std::ptrdiff_t > const & src )
   {
     GEOSX_ASSERT_EQ( src.size(), T_dim );

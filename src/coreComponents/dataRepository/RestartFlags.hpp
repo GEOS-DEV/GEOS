@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -29,7 +29,7 @@ namespace dataRepository
  *
  * A scoped enum for the restart options.
  */
-enum class RestartFlags : int
+enum class RestartFlags : integer
 {
   NO_WRITE,      ///< Doe no write into restart
   WRITE,         ///< Write into restart
@@ -41,7 +41,7 @@ enum class RestartFlags : int
  *
  * A scoped enum for the Plot options.
  */
-enum class PlotLevel : int
+enum class PlotLevel : integer
 {
   LEVEL_0, ///< Write to plot always
   LEVEL_1, ///< Write to plot when plotLevel>=1 is specified in input

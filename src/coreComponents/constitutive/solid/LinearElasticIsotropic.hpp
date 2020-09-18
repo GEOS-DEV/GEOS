@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -72,13 +72,14 @@ public:
 
 
   /**
-   * accessor to return the stiffness at a given element
-   * @param[in] k the element number
-   * @param[in] c the stiffness array
+   * @copydoc SolidBase::GetStiffness
    */
   GEOSX_HOST_DEVICE inline
-  virtual void GetStiffness( localIndex const k, real64 (& c)[6][6] ) const override final
+  virtual void GetStiffness( localIndex const k,
+                             localIndex const q,
+                             real64 (& c)[6][6] ) const override
   {
+    GEOSX_UNUSED_VAR( q );
     real64 const G = m_shearModulus[k];
     real64 const Lame = m_bulkModulus[k] - 2.0/3.0 * G;
 
@@ -152,6 +153,10 @@ public:
   virtual void HyperElastic( localIndex const k,
                              localIndex const q,
                              real64 const (&FmI)[3][3] ) const override final;
+
+  GEOSX_HOST_DEVICE
+  virtual real64 calculateStrainEnergyDensity( localIndex const k,
+                                               localIndex const q ) const override;
 
 private:
   /// A reference to the ArrayView holding the bulk modulus for each element.
@@ -275,6 +280,28 @@ void LinearElasticIsotropicUpdates::HyperElastic( localIndex const k,
   LvArray::tensorOps::copy< 6 >( m_stress[ k ][ q ], stress );
 }
 
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+real64 LinearElasticIsotropicUpdates::calculateStrainEnergyDensity( localIndex const k,
+                                                                    localIndex const q ) const
+{
+  real64 const invE = ( 3.0 * m_bulkModulus[k] + m_shearModulus[k] ) / ( 9.0 * m_bulkModulus[k] * m_shearModulus[k] );
+  real64 const nu = ( 1.5 * m_bulkModulus[k] - m_shearModulus[k] ) / ( 3.0 * m_bulkModulus[k] + m_shearModulus[k] );
+
+  auto const & stress = m_stress[k][q];
+  real64 const newStrainEnergyDensity = ( stress[0]*stress[0] + stress[1]*stress[1] + stress[2]*stress[2] -
+                                          2 * ( nu       * ( stress[1]*stress[2] + stress[0]*stress[1] + stress[0]*stress[2] ) -
+                                                (1 + nu) * ( stress[3]*stress[3] + stress[4]*stress[4] + stress[5]*stress[5] )
+                                                )
+                                          ) * invE * 0.5;
+  // Make sure strain energy is always non-negative
+  GEOSX_ASSERT_MSG( newStrainEnergyDensity >= 0.0,
+                    "negative strain energy density" );
+
+  return newStrainEnergyDensity;
+}
+
+
 /**
  * @class LinearElasticIsotropic
  *
@@ -299,14 +326,6 @@ public:
    */
   virtual ~LinearElasticIsotropic() override;
 
-  virtual void
-  DeliverClone( string const & name,
-                Group * const parent,
-                std::unique_ptr< ConstitutiveBase > & clone ) const override;
-
-  virtual void AllocateConstitutiveData( dataRepository::Group * const parent,
-                                         localIndex const numConstitutivePointsPerParentIndex ) override;
-
   /**
    * @name Static Factory Catalog members and functions
    */
@@ -320,7 +339,7 @@ public:
    */
   static std::string CatalogName() { return m_catalogNameString; }
 
-  virtual string GetCatalogName() override { return CatalogName(); }
+  virtual string getCatalogName() const override { return CatalogName(); }
 
   ///@}
 
@@ -351,41 +370,41 @@ public:
    * @brief Setter for the default bulk modulus.
    * @param[in] bulkModulus The value that m_defaultBulkModulus will be set to.
    */
-  void setDefaultBulkModulus( real64 const bulkModulus )   { m_defaultBulkModulus = bulkModulus; }
+  void setDefaultBulkModulus( real64 const bulkModulus );
 
   /**
    * @brief Setter for the default shear modulus.
    * @param[in] bulkModulus The value that m_defaultShearModulus will be set to.
    */
-  void setDefaultShearModulus( real64 const shearModulus ) { m_defaultShearModulus = shearModulus; }
+  void setDefaultShearModulus( real64 const shearModulus );
 
   /**
    * @brief Accessor for bulk modulus
    * @return A const reference to arrayView1d<real64> containing the bulk
    *         modulus (at every element).
    */
-  arrayView1d< real64 > const & bulkModulus()       { return m_bulkModulus; }
+  arrayView1d< real64 > bulkModulus() { return m_bulkModulus; }
 
   /**
    * @brief Const accessor for bulk modulus
    * @return A const reference to arrayView1d<real64 const> containing the bulk
    *         modulus (at every element).
    */
-  arrayView1d< real64 const > const & bulkModulus() const { return m_bulkModulus; }
+  arrayView1d< real64 const > bulkModulus() const { return m_bulkModulus; }
 
   /**
    * @brief Accessor for shear modulus
    * @return A const reference to arrayView1d<real64> containing the shear
    *         modulus (at every element).
    */
-  arrayView1d< real64 > const & shearModulus()       { return m_shearModulus; }
+  arrayView1d< real64 > shearModulus() { return m_shearModulus; }
 
   /**
    * @brief Const accessor for shear modulus
    * @return A const reference to arrayView1d<real64 const> containing the
    *         shear modulus (at every element).
    */
-  arrayView1d< real64 const > const & shearModulus() const { return m_shearModulus; }
+  arrayView1d< real64 const > shearModulus() const { return m_shearModulus; }
 
   /**
    * @brief Create a instantiation of the LinearElasticIsotropicUpdate class
@@ -402,7 +421,7 @@ public:
     {
       return LinearElasticIsotropicUpdates( m_bulkModulus,
                                             m_shearModulus,
-                                            typename decltype(m_stress)::ViewType{} );
+                                            arrayView3d< real64, solid::STRESS_USD >() );
     }
   }
 

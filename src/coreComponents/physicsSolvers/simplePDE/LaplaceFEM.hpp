@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -15,21 +15,13 @@
 #ifndef GEOSX_PHYSICSSOLVERS_SIMPLEPDE_LAPLACE_FEM_HPP_
 #define GEOSX_PHYSICSSOLVERS_SIMPLEPDE_LAPLACE_FEM_HPP_
 
+#include "common/EnumStrings.hpp"
 #include "physicsSolvers/SolverBase.hpp"
 #include "managers/FieldSpecification/FieldSpecificationManager.hpp"
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
-//START_SPHINX_INCLUDE_00
 
 namespace geosx
 {
-namespace dataRepository
-{
-class Group;
-}
-class FieldSpecificationBase;
-class FiniteElementBase;
-class DomainPartition;
-//END_SPHINX_INCLUDE_00
 
 //START_SPHINX_INCLUDE_02
 class LaplaceFEM : public SolverBase
@@ -124,7 +116,7 @@ public:
                                   arrayView1d< real64 > const & localRhs );
 
   //START_SPHINX_INCLUDE_01
-  enum class timeIntegrationOption
+  enum class TimeIntegrationOption : integer
   {
     SteadyState,
     ImplicitTransient,
@@ -141,16 +133,16 @@ public:
   } laplaceFEMViewKeys;
   //END_SPHINX_INCLUDE_04
 
-protected:
-
-  virtual void PostProcessInput() override final;
-
 private:
 
   string m_fieldName;
-  timeIntegrationOption m_timeIntegrationOption;
+  TimeIntegrationOption m_timeIntegrationOption;
 
 };
+
+//START_SPHINX_INCLUDE_05
+ENUM_STRINGS( LaplaceFEM::TimeIntegrationOption, "SteadyState", "ImplicitTransient", "ExplicitTransient" )
+//END_SPHINX_INCLUDE_05
 
 } /* namespace geosx */
 

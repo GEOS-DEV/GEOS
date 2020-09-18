@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -22,6 +22,7 @@
 #include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/contact/ContactRelationBase.hpp"
 #include "constitutive/solid/LinearElasticIsotropic.hpp"
+#include "finiteElement/elementFormulations/FiniteElementBase.hpp"
 #include "managers/DomainPartition.hpp"
 #include "managers/NumericalMethodsManager.hpp"
 #include "mesh/NodeManager.hpp"
@@ -53,6 +54,9 @@ SolidMechanicsEmbeddedFractures::SolidMechanicsEmbeddedFractures( const std::str
   registerWrapper( viewKeyStruct::contactRelationNameString, &m_contactRelationName )->
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "Name of contact relation to enforce constraints on fracture boundary." );
+
+  this->getWrapper< string >( viewKeyStruct::discretizationString )->
+    setInputFlag( InputFlags::FALSE );
 
 }
 
@@ -245,8 +249,6 @@ void SolidMechanicsEmbeddedFractures::AssembleSystem( real64 const time,
   ElementRegionManager const & elemManager = *mesh.getElemManager();
 
   ConstitutiveManager const * const constitutiveManager = domain.getConstitutiveManager();
-  NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
-  FiniteElementDiscretizationManager const & feDiscretizationManager = numericalMethodManager.getFiniteElementDiscretizationManager();
 
   arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const & disp  = nodeManager.totalDisplacement();
   arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const & dDisp = nodeManager.incrementalDisplacement();
@@ -311,8 +313,6 @@ void SolidMechanicsEmbeddedFractures::AssembleSystem( real64 const time,
   // begin region loop
   elemManager.forElementRegions< EmbeddedSurfaceRegion >( [&]( EmbeddedSurfaceRegion const & embeddedRegion )->void
   {
-    FiniteElementDiscretization const *
-    feDiscretization = feDiscretizationManager.GetGroup< FiniteElementDiscretization >( m_solidSolver->getDiscretization());
     // loop of embeddeSubregions
     embeddedRegion.forElementSubRegions< EmbeddedSurfaceSubRegion >( [&]( EmbeddedSurfaceSubRegion const & embeddedSurfaceSubRegion )->void
     {
@@ -344,9 +344,10 @@ void SolidMechanicsEmbeddedFractures::AssembleSystem( real64 const time,
           CellBlock::NodeMapType const & elemsToNodes = elementSubRegion->nodeList();
           // Get the number of nodes per element
           localIndex const numNodesPerElement = elemsToNodes.size( 1 );
+
           // Get finite element discretization info
-          std::unique_ptr< FiniteElementBase >
-          fe = feDiscretization->getFiniteElement( elementSubRegion->GetElementTypeString() );
+          finiteElement::FiniteElementBase const &
+          fe = elementSubRegion->getReference< finiteElement::FiniteElementBase >( m_solidSolver->getDiscretizationName() );
 
           // Resize based on number of dof of the subregion
           int nUdof = numNodesPerElement * 3;
@@ -436,7 +437,7 @@ void SolidMechanicsEmbeddedFractures::AssembleSystem( real64 const time,
           // Compute traction
           ComputeTraction( constitutiveManager, w, tractionVec, dTdw );
 
-          for( integer q=0; q<fe->n_quadrature_points(); ++q )
+          for( integer q=0; q<fe.getNumQuadraturePoints(); ++q )
           {
             const realT detJq = detJ[embeddedSurfaceToCell[k]][q];
             AssembleCompatibilityOperator( compMatrix,

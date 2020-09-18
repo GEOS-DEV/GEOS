@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -612,8 +612,7 @@ void WellElementSubRegion::UpdateNodeManagerSize( MeshLevel & mesh,
   // resize nodeManager to account for the new well nodes and update the properties
   nodeManager->resize( oldNumNodesLocal + numWellNodesLocal );
 
-  array1d< integer > &
-  isDomainBoundary = nodeManager->getReference< integer_array >( m_ObjectManagerBaseViewKeys.domainBoundaryIndicator );
+  arrayView1d< integer > const & isDomainBoundary = nodeManager->getDomainBoundaryIndicator();
 
   arrayView1d< globalIndex > const & nodeLocalToGlobal = nodeManager->localToGlobalMap();
 
@@ -894,16 +893,14 @@ template< bool DOPACK >
 localIndex WellElementSubRegion::PackUpDownMapsPrivate( buffer_unit_type * & buffer,
                                                         arrayView1d< localIndex const > const & packList ) const
 {
-  localIndex packedSize = 0;
-
-  packedSize += bufferOps::Pack< DOPACK >( buffer,
-                                           nodeList().Base().toViewConst(),
-                                           m_unmappedGlobalIndicesInNodelist,
-                                           packList,
-                                           this->localToGlobalMap(),
-                                           nodeList().RelatedObjectLocalToGlobal() );
-
-  return packedSize;
+  arrayView1d< globalIndex const > const localToGlobal = this->localToGlobalMap();
+  arrayView1d< globalIndex const > const nodeLocalToGlobal = nodeList().RelatedObjectLocalToGlobal();
+  return bufferOps::Pack< DOPACK >( buffer,
+                                    nodeList().Base().toViewConst(),
+                                    m_unmappedGlobalIndicesInNodelist,
+                                    packList,
+                                    localToGlobal.toSliceConst(),
+                                    nodeLocalToGlobal );
 }
 
 localIndex WellElementSubRegion::UnpackUpDownMaps( buffer_unit_type const * & buffer,
@@ -911,16 +908,12 @@ localIndex WellElementSubRegion::UnpackUpDownMaps( buffer_unit_type const * & bu
                                                    bool const GEOSX_UNUSED_PARAM( overwriteUpMaps ),
                                                    bool const GEOSX_UNUSED_PARAM( overwriteDownMaps ) )
 {
-  localIndex unPackedSize = 0;
-
-  unPackedSize += bufferOps::Unpack( buffer,
-                                     nodeList().Base().toView(),
-                                     packList,
-                                     m_unmappedGlobalIndicesInNodelist,
-                                     this->globalToLocalMap(),
-                                     nodeList().RelatedObjectGlobalToLocal() );
-
-  return unPackedSize;
+  return bufferOps::Unpack( buffer,
+                            nodeList().Base().toView(),
+                            packList,
+                            m_unmappedGlobalIndicesInNodelist,
+                            this->globalToLocalMap(),
+                            nodeList().RelatedObjectGlobalToLocal() );
 }
 
 void WellElementSubRegion::FixUpDownMaps( bool const clearIfUnmapped )

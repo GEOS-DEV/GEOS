@@ -10,7 +10,7 @@
       proppantDiameter="4.5e-4"
       frictionCoefficient="0.04"
       criticalShieldsNumber="0.0"
-      maxProppantConcentration="0.56"
+      maxProppantConcentration="0.62"
       discretization="singlePhaseTPFA"
       targetRegions="{ Fracture }"
       fluidNames="{ water }"
@@ -19,7 +19,7 @@
       <NonlinearSolverParameters
         newtonTol="1.0e-6"
         newtonMaxIter="8"
-        lineSearchAction="0"
+        lineSearchAction="None"
         maxTimeStepCuts="5"
         newtonMinIter="1"/>
       <LinearSolverParameters
@@ -44,7 +44,7 @@
       <NonlinearSolverParameters
         newtonTol="1.0e-6"
         newtonMaxIter="8"
-        lineSearchAction="0"
+        lineSearchAction="None"
         newtonMinIter="0"/>
       <LinearSolverParameters
         solverType="gmres"
@@ -153,7 +153,7 @@
 
     <FaceElementRegion
       name="Fracture"
-      defaultAperture="7.63e-3"
+      defaultAperture="7.62e-3"
       materialList="{ water, rock, sand }"/>
   </ElementRegions>
 
@@ -163,18 +163,18 @@
       referencePressure="1e5"
       referenceDensity="1000"
       compressibility="0.0"
-      maxProppantConcentration="0.56"
+      maxProppantConcentration="0.62"
       referenceViscosity="0.001"
       referenceProppantDensity="2550.0"/>
 
     <ParticleFluid
       name="sand"
       particleSettlingModel="Stokes"
-      hinderedSettlingCoefficient="5.9"
+      hinderedSettlingCoefficient="4.5"
       isCollisionalSlip="0"
       proppantDensity="2550.0"
       proppantDiameter="4.5e-4"
-      maxProppantConcentration="0.56"/>
+      maxProppantConcentration="0.62"/>
 
     <!-- Below are some dummy parameters that are not used in simulation, but required by silo output  -->
     <PoroLinearElasticIsotropic
@@ -245,7 +245,7 @@
       name="left1a"
       objectPath="ElementRegions/Fracture"
       fieldName="pressure"
-      scale="-0.1262"
+      scale="-0.14"
       component="0"
       setNames="{ left1 }"/>
 
@@ -261,7 +261,7 @@
       name="left2a"
       objectPath="ElementRegions/Fracture"
       fieldName="pressure"
-      scale="-0.1262"
+      scale="-0.14"
       component="0"
       setNames="{ left2 }"/>
 
@@ -277,7 +277,7 @@
       name="left3a"
       objectPath="ElementRegions/Fracture"
       fieldName="pressure"
-      scale="-0.1262"
+      scale="-0.14"
       component="0"
       setNames="{ left3 }"/>
 
