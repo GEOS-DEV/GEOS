@@ -13,12 +13,13 @@
  */
 
 /**
- * @file GraphEdge.hpp
+ * @file GraphEdge2.hpp
  */
 
-#ifndef GEOSX_MESH_GRAPHEDGE_HPP_
-#define GEOSX_MESH_GRAPHEDGE_HPP_
+#ifndef GEOSX_MESH_GRAPHEDGE2_HPP_
+#define GEOSX_MESH_GRAPHEDGE2_HPP_
 #include "mesh/GraphVertex.hpp"
+#include "mesh/GraphVertexFace.hpp"
 #include "meshUtilities/ComputationalGeometry.hpp"
 
 
@@ -26,27 +27,27 @@ namespace geosx
 {
 
 /**
- * @class GraphEdge
+ * @class GraphEdge2
  *
  * Represents connection between two points for the GraphBase.
  */
-class GraphEdge
+class GraphEdge2
 {
 public:
 
-  GraphEdge()=delete;
+  GraphEdge2() = delete;
 
   /**
-   * @brief Constructor for GraphEdge object
+   * @brief Constructor for GraphEdge2 object
    * @param [in] index of the edge
    * @param [in] neighbour1 one of the two GraphVertexs forming the connection
    * @param [in] neighbour2 the other GraphVertex
    * 
    */   
-  GraphEdge( int const index, std::shared_ptr<GraphVertex> neighbour1, std::shared_ptr<GraphVertex> neighbour2, real64 transm);
+  GraphEdge2( int const index, std::shared_ptr<GraphVertex> neighbour1, std::shared_ptr<GraphVertexFace> neighbour2, real64 transm);
 
   /// Destructor
-  virtual ~GraphEdge();
+  virtual ~GraphEdge2();
 
   localIndex getEdgeIndex() const { return m_EdgeIndex; }
 
@@ -56,9 +57,9 @@ public:
 
   std::shared_ptr<GraphVertex> getVertex1() { return m_vertex1; }
 
-  std::shared_ptr<GraphVertex> getVertex2() const { return m_vertex2; }
+  std::shared_ptr<GraphVertexFace> getVertex2() const { return m_vertex2; }
 
-  std::shared_ptr<GraphVertex> getVertex2() { return m_vertex2; }
+  std::shared_ptr<GraphVertexFace> getVertex2() { return m_vertex2; }
 
   real64 getTransmissibility() const { return m_transmissibility; }
 
@@ -68,11 +69,11 @@ public:
 private:
   localIndex m_EdgeIndex;
   std::shared_ptr<GraphVertex> m_vertex1;
-  std::shared_ptr<GraphVertex> m_vertex2;
+  std::shared_ptr<GraphVertexFace> m_vertex2;
   real64 m_transmissibility;
 
 };
 
 } /* namespace geosx */
 
-#endif /* GEOSX_MESH_GRAPHEDGE_HPP_ */
+#endif /* GEOSX_MESH_GRAPHEDGE2_HPP_ */

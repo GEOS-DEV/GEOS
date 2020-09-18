@@ -30,6 +30,8 @@ namespace geosx
 class GraphVertex
 {
 public:
+
+  GraphVertex() = delete;
   /**
   * Constructor for GraphVertex object
   * @param [in] index of the vertex

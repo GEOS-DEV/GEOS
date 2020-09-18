@@ -13,33 +13,31 @@
  */
 
 /**
- * @file GraphVertexFace.hpp
+ * @file GraphVertexPoint.hpp
  */
 
-#ifndef GEOSX_MESH_GRAPHVERTEXFACE_HPP_
-#define GEOSX_MESH_GRAPHVERTEXFACE_HPP_
+#ifndef GEOSX_MESH_GRAPHVERTEXPOINT_HPP_
+#define GEOSX_MESH_GRAPHVERTEXPOINT_HPP_
 #include "meshUtilities/ComputationalGeometry.hpp"
 #include "mesh/GraphVertex.hpp"
 namespace geosx
 {
 
 /**
- * @class GraphVertexFace
+ * @class GraphVertexPoint
  *
  * An event type for periodic events (using either time or cycle as a basis).
  */
-class GraphVertexFace : public GraphVertex
+class GraphVertexPoint : public GraphVertex
 {
 public:
-
-  GraphVertexFace() = delete;
 
   /**
   * Constructor for GraphVertex object
   * @param [in] index of the vertex
   *
   */ 
-  GraphVertexFace( const int regionInd, const int subRegionInd, const int vertexInd);
+  GraphVertexPoint( const int regionInd, const int subRegionInd, const int vertexInd);
 
   localIndex getCorrespondingId() const { return m_correspondingId; }
   
@@ -51,4 +49,4 @@ private:
 
 } /* namespace geosx */
 
-#endif /* GEOSX_MESH_GRAPHVERTEXFACE_HPP_ */
+#endif /* GEOSX_MESH_GRAPHVERTEXPOINT_HPP_ */

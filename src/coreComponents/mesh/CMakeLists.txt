@@ -24,7 +24,9 @@ set(mesh_headers
     GraphManager.hpp
     GraphVertex.hpp
     GraphEdge.hpp
+    GraphEdge2.hpp
     GraphVertexFace.hpp
+    GraphVertexPoint.hpp
     MeshBody.hpp
     MeshLevel.hpp
     NodeManager.hpp
@@ -56,6 +58,7 @@ set(mesh_sources
     GraphVertex.cpp
     GraphVertexFace.cpp
     GraphEdge.cpp
+    GraphEdge2.cpp
     MeshBody.cpp
     MeshLevel.cpp
     NodeManager.cpp

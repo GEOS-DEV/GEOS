@@ -87,25 +87,25 @@ public:
   * @brief Getter of vertex list from the graph
   * @return vertex list from the graph
   */
-  std::vector<GraphVertex*> getVertices() { return m_vertices; }
+  std::vector<std::shared_ptr<GraphVertex>> getVertices() { return m_vertices; }
 
   /**
   * @brief Constant getter of vertex list from the graph
   * @return constant vertex list from the graph
   */
-  std::vector<GraphVertex*> getVertices() const { return m_vertices; }
+  std::vector<std::shared_ptr<GraphVertex>> getVertices() const { return m_vertices; }
 
   /**
   * @brief Getter of association map between vertex and edge from the graph
   * @return association map between vertex and edge from the graph
   */
-  std::map<GraphVertex*, std::vector<GraphEdge*>> getVertexWithEdgesMap() { return m_vertexWithEdgesMap; }
+  std::map<std::shared_ptr<GraphVertex>, std::vector<GraphEdge*>> getVertexWithEdgesMap() { return m_vertexWithEdgesMap; }
 
   /**
   * @brief Constant getter of association map between vertex and edge from the graph
   * @return constant association map between vertex and edge from the graph
   */
-  std::map<GraphVertex*, std::vector<GraphEdge*>> getVertexWithEdgesMap() const { return m_vertexWithEdgesMap; }
+  std::map<std::shared_ptr<GraphVertex>, std::vector<GraphEdge*>> getVertexWithEdgesMap() const { return m_vertexWithEdgesMap; }
 
   /**
    * @brief Return the name of the Graph in object catalog.
@@ -125,8 +125,8 @@ public:
   static CatalogInterface::CatalogType & GetCatalog();
 protected:
   std::vector<GraphEdge*> m_edges;
-  std::vector<GraphVertex*> m_vertices;
-  std::map<GraphVertex*, std::vector<GraphEdge*>> m_vertexWithEdgesMap;
+  std::vector<std::shared_ptr<GraphVertex>> m_vertices;
+  std::map<std::shared_ptr<GraphVertex>, std::vector<GraphEdge*>> m_vertexWithEdgesMap;
 };
 }
 

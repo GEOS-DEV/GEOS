@@ -24,6 +24,7 @@
 #include "GraphFromText.hpp"
 #include "managers/Functions/FunctionManager.hpp"
 #include "mesh/GraphEdge.hpp"
+#include "mesh/GraphEdge2.hpp"
 #include "mesh/GraphVertex.hpp"
 #include "mesh/GraphVertexFace.hpp"
 #include "mesh/GraphVertexPoint.hpp"
@@ -58,15 +59,20 @@ GraphFromText::~GraphFromText()
   {
     delete(m_edges[i]);
   }
-  for(map<GraphVertex*,std::vector<GraphEdge*>>::iterator it = m_vertexWithEdgesMap.begin(); it != m_vertexWithEdgesMap.end(); ++it) 
+  for (long unsigned int i=0;i<m_boundaryEdges.size();i++)
   {
-    delete(it->first);
+    delete(m_boundaryEdges[i]);
+  }
+
+  for(map<std::shared_ptr<GraphVertex>,std::vector<GraphEdge*>>::iterator it = m_vertexWithEdgesMap.begin(); it != m_vertexWithEdgesMap.end(); ++it) 
+  {
+    //delete(it->first);
   }
 
 }
 
 
-void GraphFromText::AddEdge(localIndex ind, GraphVertex* v1, GraphVertex* v2, real64 transm)
+void GraphFromText::AddEdge(localIndex ind, std::shared_ptr<GraphVertex> v1, std::shared_ptr<GraphVertex> v2, real64 transm)
 {
   GraphEdge* e;
   e=new GraphEdge(ind, v1, v2, transm);
@@ -111,7 +117,7 @@ void GraphFromText::RemoveEdge(localIndex ind)
 
 void GraphFromText::AddVertex(localIndex er, localIndex esr, globalIndex ei)
 {
-  GraphVertex* v=new GraphVertex(er,esr,ei);
+  std::shared_ptr<GraphVertex> v=std::make_shared<GraphVertex>(GraphVertex(er,esr,ei));
   m_vertices.push_back(v);
   std::vector<GraphEdge*> edges;
   m_vertexWithEdgesMap.insert({v,edges});
@@ -119,7 +125,7 @@ void GraphFromText::AddVertex(localIndex er, localIndex esr, globalIndex ei)
 
 void GraphFromText::RemoveVertex(localIndex er, localIndex esr, globalIndex ei)
 {
-  GraphVertex* v = getVertexWithGlobalIndex(er,esr,ei);
+  std::shared_ptr<GraphVertex> v = getVertexWithGlobalIndex(er,esr,ei);
   std::vector<localIndex> indexes;
   localIndex loc = -1;
   for(long unsigned int i = 0; i<m_vertices.size(); i++)
@@ -145,11 +151,11 @@ void GraphFromText::RemoveVertex(localIndex er, localIndex esr, globalIndex ei)
     RemoveEdge(indexes[i]);
   });
   m_vertexWithEdgesMap.erase(v);
-  delete(v);
+  //delete(v);
   
 }
 
-void GraphFromText::RemoveVertex(GraphVertex* vertex)
+void GraphFromText::RemoveVertex(std::shared_ptr<GraphVertex> vertex)
 {
   std::vector<localIndex> indexes;
   localIndex loc = -1;
@@ -177,12 +183,12 @@ void GraphFromText::RemoveVertex(GraphVertex* vertex)
     RemoveEdge(indexes[i]);
   });
   m_vertexWithEdgesMap.erase(vertex);
-  delete(vertex);
+  //delete(vertex);
   
 }
 
 
-GraphVertex* GraphFromText::getVertexWithGlobalIndex(localIndex er, localIndex esr, globalIndex ei)
+std::shared_ptr<GraphVertex> GraphFromText::getVertexWithGlobalIndex(localIndex er, localIndex esr, globalIndex ei)
 {
   for(long unsigned int i=0; i < m_vertices.size(); i++)
   {
@@ -233,11 +239,11 @@ void GraphFromText::GenerateGraph()
     }
     //Create or recover the two vertices
     //Add them to the vertex list and create an entry in the map for them
-    GraphVertex* v1;
-    GraphVertex* v2;
+    std::shared_ptr<GraphVertex> v1;
+    std::shared_ptr<GraphVertex> v2;
     if(place_1==-1)
     {
-      v1=new GraphVertex(er1,esr1,ei1);
+      v1=std::make_shared<GraphVertex>(GraphVertex(er1,esr1,ei1));
       m_vertices.push_back(v1);
       std::vector<GraphEdge*> edges;
       m_vertexWithEdgesMap.insert({v1,edges});
@@ -248,7 +254,7 @@ void GraphFromText::GenerateGraph()
     }
     if(place_2==-1)
     {
-      v2=new GraphVertex(er2,esr2,ei2);
+      v2=std::make_shared<GraphVertex>(GraphVertex(er2,esr2,ei2));
       m_vertices.push_back(v2);
       std::vector<GraphEdge*> edges;
       m_vertexWithEdgesMap.insert({v2,edges});
@@ -296,11 +302,11 @@ void GraphFromText::GenerateGraph()
     }
     //Create or recover the two vertices
     //Add them to the vertex list and create an entry in the map for them
-    GraphVertex* v1;
-    GraphVertexFace* v2;
+    std::shared_ptr<GraphVertex> v1;
+    std::shared_ptr<GraphVertexFace> v2;
     if(place_1==-1)
     {
-      v1=new GraphVertex(er1,esr1,ei1);
+      v1=std::make_shared<GraphVertex>(GraphVertex(er1,esr1,ei1));
       m_vertices.push_back(v1);
       std::vector<GraphEdge*> edges;
       m_vertexWithEdgesMap.insert({v1,edges});
@@ -312,22 +318,24 @@ void GraphFromText::GenerateGraph()
     if(place_2==-1)
     {
       //std::cout<<er2 << " " << esr2 << " " << ei2 << "\n";
-      v2=new GraphVertexFace(er2,esr2,ei2);
+      v2=std::make_shared<GraphVertexFace>(GraphVertexFace(er2,esr2,ei2));
+      /*
       m_vertices.push_back(v2);
       std::vector<GraphEdge*> edges;
       m_vertexWithEdgesMap.insert({v2,edges});
+      */
 
     }
     else
     {
-      v2=dynamic_cast<GraphVertexFace*>(m_vertices[place_2]);
+      v2= std::dynamic_pointer_cast<GraphVertexFace>(m_vertices[place_2]);
     }
     //Create the edge, add it to the edge list
-    GraphEdge* e= new GraphEdge(m_edges.size()+m_boundaryEdges.size(), v1, v2,transm);
+    GraphEdge2* e= new GraphEdge2(m_edges.size()+m_boundaryEdges.size(), v1, v2,transm);
     m_boundaryEdges.push_back(e);
     //Add the edge to the list of linked edge for his two vertices
-    m_vertexWithEdgesMap[v1].push_back(e);
-    m_vertexWithEdgesMap[v2].push_back(e);
+    //m_vertexWithEdgesMap[v1].push_back(e);
+    //m_vertexWithEdgesMap[v2].push_back(e);
 
   } 
 }
@@ -340,7 +348,7 @@ void GraphFromText::PartitionGraph(const MeshLevel & mesh)
   ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > const localToGlobalMap =
     elemManager.ConstructArrayViewAccessor< globalIndex, 1 >( ObjectManagerBase::viewKeyStruct::localToGlobalMapString );
   //Create and populate a vector containing the vertices to delete as they are not present in the partition
-  std::vector <GraphVertex*> vertexToDelete;
+  std::vector <std::shared_ptr<GraphVertex>> vertexToDelete;
   for( long unsigned int i=0; i<m_vertices.size(); i++)
   {
     vertexToDelete.push_back(m_vertices[i]);
@@ -392,27 +400,36 @@ void GraphFromText::RemapFace(const MeshLevel & mesh)
   arrayView2d< localIndex const > const & elemList = faceManager.elementList();
   for(localIndex h = 0; h < faceManager.size(); h++)
   {
-    // Filter out boundary faces
+    // Filter in boundary faces
     if( elemList[h][1] < 0)
     {
+      bool found = false;
       for (long unsigned int i = 0; i < m_boundaryEdges.size(); i++)
       {
-        if (elemList[h][0] == m_boundaryEdges[i]->getVertex1()->getLocalVertexIndex())
-        {
-          //std::cout<< h << " " << m_boundaryEdges[i]->getEdgeIndex() << "\n";
-          //std::cout<< elemList[h][0] << " " << m_boundaryEdges[i]->getVertex1()->getLocalVertexIndex() << " " << m_boundaryEdges[i]->getVertex2()->getLocalVertexIndex() << " " << m_boundaryEdges[i]->getVertex2()->getSubRegionIndex() << " " << m_boundaryEdges[i]->getVertex2()->getRegionIndex() << "\n\n";
-          
-          GraphVertexFace* face;
-          face =  static_cast<GraphVertexFace*>(m_boundaryEdges[i]->getVertex2());
+        if (elemList[h][0] == m_boundaryEdges[i]->getVertex1()->getLocalVertexIndex() && !found)
+        { 
+          std::shared_ptr<GraphVertexFace> face;
+          face =  m_boundaryEdges[i]->getVertex2();
           if (face==0) {std::cout << "Null pointer on second type-cast.\n";}
           
-          
-          //std::cout<< "\n" << face->getCorrespondingId() << " ";
-          face->setCorrespondingId(h);
-          //std::cout<< face->getCorrespondingId()<< "\n";
+          if (face->getCorrespondingId() == -1)
+          {
+            //std::cout<< h << " " << m_boundaryEdges[i]->getEdgeIndex() << "\n";
+            //std::cout<< elemList[h][0] << " " << m_boundaryEdges[i]->getVertex1()->getLocalVertexIndex() << " " << m_boundaryEdges[i]->getVertex2()->getLocalVertexIndex() << " " << m_boundaryEdges[i]->getVertex2()->getSubRegionIndex() << " " << m_boundaryEdges[i]->getVertex2()->getRegionIndex() << "\n\n";
+            face->setCorrespondingId(h);
+            found = true;
+            std::cout<< face->getCorrespondingId()<< "\n";
+          }
         }
       }
     }
+  }
+  for (long unsigned int i = 0; i < m_boundaryEdges.size(); i++)
+  {
+    std::shared_ptr<GraphVertexFace> face;
+    face = m_boundaryEdges[i]->getVertex2();
+
+    std::cout << face->getCorrespondingId()<<" "<<m_boundaryEdges[i]->getVertex1()->getLocalVertexIndex()<<"\n";
   }
 }
 

@@ -23,6 +23,7 @@
 #include "common/Path.hpp"
 #include "mesh/GraphBase.hpp"
 #include "mesh/GraphEdge.hpp"
+#include "mesh/GraphEdge2.hpp"
 #include "mesh/GraphVertex.hpp"
 #include "mesh/MeshLevel.hpp"
 
@@ -59,7 +60,7 @@ public:
   * @param[in] v2 second vertex on the edge
   * @param[in] transm transmissibility associated with the edge
   */ 
-  void AddEdge(localIndex ind, GraphVertex* v1, GraphVertex* v2, real64 transm);
+  void AddEdge(localIndex ind, std::shared_ptr<GraphVertex> v1, std::shared_ptr<GraphVertex> v2, real64 transm);
 
   /**
   * @brief Deletion of an edge using its index
@@ -79,7 +80,7 @@ public:
   * @brief Deletion of a vertex using itself as parameter
   * @param[in] vertex Vertex to delete
   */
-  void RemoveVertex(GraphVertex* vertex);
+  void RemoveVertex(std::shared_ptr<GraphVertex> vertex);
   
   /**
   * @brief Creation and registration of a new edge
@@ -96,7 +97,7 @@ public:
   * @param[in] ei Global vertex index
   * @return the vertex with given indexes, provided it exists
   */ 
-  GraphVertex* getVertexWithGlobalIndex(localIndex er, localIndex esr, globalIndex ei);
+  std::shared_ptr<GraphVertex> getVertexWithGlobalIndex(localIndex er, localIndex esr, globalIndex ei);
   
   /**
    * @brief Function called to construct the graphs
@@ -122,12 +123,13 @@ public:
 
   Path getFile() const { return m_file; }
 
+  std::vector<GraphEdge2*> getBoundaryEdges() const { return m_boundaryEdges; }
   
 
 private:
   Path m_file;
   string m_meshString;
-  std::vector<GraphEdge*> m_boundaryEdges;
+  std::vector<GraphEdge2*> m_boundaryEdges;
   
 
 };
