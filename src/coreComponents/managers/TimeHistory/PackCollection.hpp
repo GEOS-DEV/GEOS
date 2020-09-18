@@ -68,15 +68,15 @@ public:
   virtual void updateSetsIndices( DomainPartition & domain ) override final;
 
   /**
-    * @brief Filters out ghost rank indices from setIndices to be collected.
-    * @param setIndex
-    * @param numIndices
-    * @param set
-    * @param ghostrank
-    */
-  void filterGhostIndices(localIndex const setIndex,
-          array1d< localIndex > & set,
-          arrayView1d< integer const > const & ghostRank);
+   * @brief Filters out ghost rank indices from setIndices to be collected.
+   * @param setIndex
+   * @param numIndices
+   * @param set
+   * @param ghostrank
+   */
+  void filterGhostIndices( localIndex const setIndex,
+                           array1d< localIndex > & set,
+                           arrayView1d< integer const > const & ghostRank );
 
   /// @cond DO_NOT_DOCUMENT
   struct viewKeysStruct

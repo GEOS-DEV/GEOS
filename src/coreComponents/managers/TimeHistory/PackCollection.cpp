@@ -53,8 +53,8 @@ HistoryMetadata PackCollection::getMetadata( ProblemManager & pm, localIndex col
   }
   else
   {
-	localIndex num_indices = m_setsIndices[ 0 ].size( );
-	num_indices = m_minimumSetSize > num_indices ? m_minimumSetSize : num_indices;
+    localIndex num_indices = m_setsIndices[ 0 ].size( );
+    num_indices = m_minimumSetSize > num_indices ? m_minimumSetSize : num_indices;
     return target->getHistoryMetadata( num_indices );
   }
 }
@@ -68,9 +68,9 @@ void PackCollection::updateSetsIndices( DomainPartition & domain )
 
   if( num_sets > 0 )
   {
-	// if sets are specified we retrieve the field only from those sets
+    // if sets are specified we retrieve the field only from those sets
 
-	Group const * set_group = target_object->GetGroup( ObjectManagerBase::groupKeyStruct::setsString );
+    Group const * set_group = target_object->GetGroup( ObjectManagerBase::groupKeyStruct::setsString );
     m_setsIndices.resize( num_sets );
     localIndex set_idx = 0;
     for( auto & set_name : m_setNames )
@@ -78,43 +78,44 @@ void PackCollection::updateSetsIndices( DomainPartition & domain )
       dataRepository::Wrapper< SortedArray< localIndex > > const * const set_wrapper = set_group->getWrapper< SortedArray< localIndex > >( set_name );
       if( set_wrapper != nullptr )
       {
-    	  SortedArrayView< localIndex const > const & set = set_wrapper->reference();
-    	  m_setsIndices[ set_idx ].resize( 0 );
-    	  if( set.size() > 0 )
-    	  {
-    		  m_setsIndices[ set_idx ].insert( 0, set.begin(), set.end() );
-    	  }
+        SortedArrayView< localIndex const > const & set = set_wrapper->reference();
+        m_setsIndices[ set_idx ].resize( 0 );
+        if( set.size() > 0 )
+        {
+          m_setsIndices[ set_idx ].insert( 0, set.begin(), set.end() );
+        }
       }
       set_idx++;
     }
-  }else
+  }
+  else
   {
-	  // if no set is specified we retrieve the entire field
-	  m_setsIndices.resize(1);
-	  m_setsIndices[0].resize(target_object->size());
-	  for (localIndex k=0; k <  target_object->size(); k++)
-	  {
-		  m_setsIndices[0][k] = k;
-	  }
+    // if no set is specified we retrieve the entire field
+    m_setsIndices.resize( 1 );
+    m_setsIndices[0].resize( target_object->size());
+    for( localIndex k=0; k <  target_object->size(); k++ )
+    {
+      m_setsIndices[0][k] = k;
+    }
   }
 }
 
-void PackCollection::filterGhostIndices(localIndex const setIndex,
-		                                array1d< localIndex > & set,
-		                                arrayView1d< integer const > const & ghostRank)
+void PackCollection::filterGhostIndices( localIndex const setIndex,
+                                         array1d< localIndex > & set,
+                                         arrayView1d< integer const > const & ghostRank )
 {
-	  // Resize the indices array
+  // Resize the indices array
 
-	  // 3. fill in the non ghost indices
-	  localIndex idx = 0;
-	  for (localIndex k=0; k < m_setsIndices[setIndex].size(); k++ )
-	  {
-		  if (ghostRank[m_setsIndices[setIndex][k]] < 0)
-		  {
-			  set[idx] = m_setsIndices[setIndex][k];
-			  idx++;
-		  }
-	  }
+  // 3. fill in the non ghost indices
+  localIndex idx = 0;
+  for( localIndex k=0; k < m_setsIndices[setIndex].size(); k++ )
+  {
+    if( ghostRank[m_setsIndices[setIndex][k]] < 0 )
+    {
+      set[idx] = m_setsIndices[setIndex][k];
+      idx++;
+    }
+  }
 }
 
 // TODO : once we add additional history collectors, this should likely be pulled into a super-class
@@ -148,7 +149,7 @@ ObjectManagerBase const * PackCollection::getTargetObject( DomainPartition & dom
     GEOSX_ERROR_IF( targetGroup == nullptr, "PackCollction::getTargetObject( ): Last entry in objectPath (" << processedPath << ") is not found" );
   }
 
-  return targetGroup->group_cast< ObjectManagerBase const * > ();
+  return targetGroup->group_cast< ObjectManagerBase const * >();
 }
 
 void PackCollection::collect( DomainPartition & domain,
@@ -166,20 +167,20 @@ void PackCollection::collect( DomainPartition & domain,
   localIndex numIndices = 0;
 
   //  count non ghost indices
-  for (localIndex k=0; k <  m_setsIndices[collectionIdx].size(); k++)
+  for( localIndex k=0; k <  m_setsIndices[collectionIdx].size(); k++ )
   {
-	  if (ghostRank[m_setsIndices[collectionIdx][k]] < 0)
-	  {
-		  numIndices++;
-	  }
+    if( ghostRank[m_setsIndices[collectionIdx][k]] < 0 )
+    {
+      numIndices++;
+    }
   }
 
-  if ( numIndices > 0 )
+  if( numIndices > 0 )
   {
-	  array1d< localIndex > setIndices(numIndices);
-	  filterGhostIndices(collectionIdx, setIndices, ghostRank);
-	  // if we could directly transfer a sorted array to an array1d including on device this wouldn't require storing a copy of the indices
-	  target->PackByIndex( buffer, setIndices, false, true );
+    array1d< localIndex > setIndices( numIndices );
+    filterGhostIndices( collectionIdx, setIndices, ghostRank );
+    // if we could directly transfer a sorted array to an array1d including on device this wouldn't require storing a copy of the indices
+    target->PackByIndex( buffer, setIndices, false, true );
   }
 
 }
