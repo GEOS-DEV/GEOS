@@ -608,6 +608,92 @@ void HyprePreconditioner::createMGR( DofManager const * const dofManager )
 
     m_functions->aux_destroy = HYPRE_ILUDestroy;
   }
+  else if( m_parameters.mgr.strategy == "LagrangianContactMechanics" )
+  {
+    // Contact mechanis with face-centered lagrangian multipliers
+    //
+    // dofLabel: 0 = displacement, x-component
+    // dofLabel: 1 = displacement, y-component
+    // dofLabel: 2 = displacement, z-component
+    // dofLabel: 3 = pressure
+    //
+    // Ingredients
+    //
+    // 1. F-points displacement (0,1,2), C-points pressure (3)
+    // 2. F-points smoother: AMG, single V-cycle, separate displacemente components
+    // 3. C-points coarse-grid/Schur complement solver: boomer AMG
+    // 4. Global smoother: none
+
+    mgr_nlevels = 1;
+    mgr_bsize = 2;
+
+    HYPRE_Int mgr_relax_type = 0;
+    HYPRE_Int mgr_gsmooth_type = 0;
+    HYPRE_Int mgr_num_gsmooth_sweeps = 1;
+    HYPRE_Int mgr_num_relax_sweeps = 0; // skip F-relaxation
+
+    std::vector< HYPRE_Int > mgr_level_restrict_type( mgr_bsize );
+    mgr_level_restrict_type[0] = 0;
+    HYPRE_Int mgr_num_restrict_sweeps = 0;
+    HYPRE_Int mgr_num_interp_sweeps = 0;
+
+    mgr_num_cindexes.resize( mgr_nlevels );
+    mgr_num_cindexes[0] = 1; // Eliminate lagrangian components
+
+    std::vector< HYPRE_BigInt > mgr_idx_array( mgr_bsize );
+    mgr_idx_array[0] = toHYPRE_BigInt( dofManager->rankOffset() );
+    mgr_idx_array[1] = toHYPRE_BigInt( dofManager->rankOffset() + dofManager->numLocalDofs( m_parameters.mgr.displacementFieldName ) );
+
+    lv_cindexes.resize( mgr_nlevels );
+    lv_cindexes[0].push_back( 0 );
+
+    mgr_cindexes.resize( mgr_nlevels );
+    for( HYPRE_Int iLevel = 0; iLevel < mgr_nlevels; ++iLevel )
+    {
+      mgr_cindexes[iLevel] = lv_cindexes[iLevel].data();
+    }
+
+    GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetCpointsByContiguousBlock( m_precond, mgr_bsize, mgr_nlevels,
+                                                                 mgr_idx_array.data(),
+                                                                 mgr_num_cindexes.data(),
+                                                                 mgr_cindexes.data() ) );
+
+
+    mgr_level_interp_type.resize( mgr_nlevels );
+    mgr_level_interp_type[0] = 2; // diagonal scaling (Jacobi)
+
+    mgr_level_frelax_method.resize( mgr_nlevels );
+    mgr_level_frelax_method[0] = 0; // Jacobi
+
+    mgr_coarse_grid_method.resize( mgr_nlevels );
+    mgr_coarse_grid_method[0] = 0; // all
+
+    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGCreate( &aux_precond ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetPrintLevel( aux_precond, 0 ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetMaxIter( aux_precond, 1 ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetTol( aux_precond, 0.0 ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetRelaxOrder( aux_precond, 1 ) );
+
+    GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetLevelRestrictType( m_precond, mgr_level_restrict_type.data() ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetNumRestrictSweeps( m_precond, mgr_num_restrict_sweeps ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetNumInterpSweeps( m_precond, mgr_num_interp_sweeps ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetNumRelaxSweeps( m_precond, mgr_num_relax_sweeps ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetNonCpointsToFpoints( m_precond, 1 ));
+    GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetRelaxType( m_precond, mgr_relax_type ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetLevelFRelaxMethod( m_precond, mgr_level_frelax_method.data() ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetLevelInterpType( m_precond, mgr_level_interp_type.data() ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetCoarseGridMethod( m_precond, mgr_coarse_grid_method.data() ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetGlobalsmoothType( m_precond, mgr_gsmooth_type ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetMaxGlobalsmoothIters( m_precond, mgr_num_gsmooth_sweeps ) );
+    GEOSX_LAI_CHECK_ERROR(
+      HYPRE_MGRSetCoarseSolver( m_precond,
+                                (HYPRE_PtrToParSolverFcn)HYPRE_BoomerAMGSolve,
+                                (HYPRE_PtrToParSolverFcn)HYPRE_BoomerAMGSetup,
+                                aux_precond )
+      );
+
+    m_functions->aux_destroy = HYPRE_BoomerAMGDestroy;
+  }
   else
   {
     GEOSX_ERROR( "Unsupported MGR strategy: " << m_parameters.mgr.strategy );
