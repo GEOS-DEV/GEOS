@@ -73,7 +73,7 @@ int ToVTKCellType( const string & elementType )
   return vtkIdentifier;
 }
 
-void VTKPolyDataWriterInterface:: gatherNbElementsInRegion( ElementRegionBase const & er, 
+void VTKPolyDataWriterInterface::gatherNbElementsInRegion( ElementRegionBase const & er, 
                                                             array1d< localIndex > & nbElemsInRegion ) const
 {
   localIndex nbElems = er.getNumberOfElements();
