@@ -38,7 +38,9 @@ using namespace constitutive;
 CompositionalMultiphaseReservoir::CompositionalMultiphaseReservoir( const std::string & name,
                                                                     Group * const parent ):
   ReservoirSolverBase( name, parent )
-{ m_linearSolverParameters.get().mgr.strategy = "CompositionalMultiphaseReservoir"; }
+{
+  m_linearSolverParameters.get().mgr.strategy = "CompositionalMultiphaseReservoir";
+}
 
 CompositionalMultiphaseReservoir::~CompositionalMultiphaseReservoir()
 {}
@@ -160,10 +162,10 @@ void CompositionalMultiphaseReservoir::AssembleCouplingTerms( real64 const GEOSX
   localIndex const resNDOF = m_wellSolver->NumDofPerResElement();
 
   string const resDofKey = dofManager.getKey( m_wellSolver->ResElementDofName() );
-  ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > resDofNumberAccessor =
+  ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > const resDofNumberAccessor =
     elemManager.ConstructArrayViewAccessor< globalIndex, 1 >( resDofKey );
-  ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > >::ViewTypeConst resDofNumber =
-    resDofNumberAccessor.toViewConst();
+  ElementRegionManager::ElementViewConst< arrayView1d< globalIndex const > > const resDofNumber =
+    resDofNumberAccessor.toNestedViewConst();
   globalIndex const rankOffset = dofManager.rankOffset();
 
   elemManager.forElementSubRegions< WellElementSubRegion >( [&]( WellElementSubRegion const & subRegion )

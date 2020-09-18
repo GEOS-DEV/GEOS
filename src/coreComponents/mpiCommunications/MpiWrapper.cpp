@@ -144,6 +144,17 @@ MPI_Comm MpiWrapper::Comm_dup( MPI_Comm const comm )
 #endif
 }
 
+MPI_Comm MpiWrapper::Comm_split( MPI_Comm const comm, int color, int key )
+{
+#ifdef GEOSX_USE_MPI
+  MPI_Comm scomm;
+  MPI_CHECK_ERROR( MPI_Comm_split( comm, color, key, &scomm ) );
+  return scomm;
+#else
+  return comm;
+#endif
+}
+
 int MpiWrapper::Test( MPI_Request * request, int * flag, MPI_Status * status )
 {
 #ifdef GEOSX_USE_MPI

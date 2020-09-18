@@ -32,7 +32,9 @@
 typedef int MPI_Comm;
 
 #define MPI_COMM_NULL      ((MPI_Comm)0x04000000)
-#define MPI_COMM_WORLD ((MPI_Comm)0x44000000)
+#define MPI_COMM_WORLD     ((MPI_Comm)0x44000000)
+#define MPI_COMM_SELF      ((MPI_Comm)0x40000000)
+
 
 typedef int MPI_Datatype;
 #define MPI_CHAR           ((MPI_Datatype)0x4c000101)
@@ -78,12 +80,13 @@ typedef int MPI_Op;
 #define MPI_REQUEST_NULL  ((MPI_Request)0x2c000000)
 typedef int MPI_Request;
 
+typedef int MPI_Info;
+#define MPI_INFO_NULL (MPI_Info)(0x60000000)
+
 struct MPI_Status
 {
   int junk;
 };
-
-
 
 #endif
 
@@ -181,6 +184,7 @@ public:
 
   static MPI_Comm Comm_dup( MPI_Comm const comm );
 
+  static MPI_Comm Comm_split( MPI_Comm const comm, int color, int key );
 
   static int Test( MPI_Request * request, int * flag, MPI_Status * status );
 
@@ -315,6 +319,13 @@ public:
    */
   template< typename T >
   static int allReduce( T const * sendbuf, T * recvbuf, int count, MPI_Op op, MPI_Comm comm );
+
+
+  template< typename T >
+  static int scan( T const * sendbuf, T * recvbuf, int count, MPI_Op op, MPI_Comm comm );
+
+  template< typename T >
+  static int exscan( T const * sendbuf, T * recvbuf, int count, MPI_Op op, MPI_Comm comm );
 
   /**
    * @brief Strongly typed wrapper around MPI_Bcast.
@@ -611,6 +622,38 @@ int MpiWrapper::allReduce( T const * const sendbuf,
   return MPI_Allreduce( sendbuf, recvbuf, count, MPI_TYPE, op, comm );
 #else
   memcpy( recvbuf, sendbuf, count*sizeof(T) );
+  return 0;
+#endif
+}
+
+template< typename T >
+int MpiWrapper::scan( T const * const sendbuf,
+                      T * const recvbuf,
+                      int count,
+                      MPI_Op MPI_PARAM( op ),
+                      MPI_Comm MPI_PARAM( comm ) )
+{
+#ifdef GEOSX_USE_MPI
+  MPI_Datatype const MPI_TYPE = getMpiType< T >();
+  return MPI_Scan( sendbuf, recvbuf, count, MPI_TYPE, op, comm );
+#else
+  memcpy( recvbuf, sendbuf, count*sizeof(T) );
+  return 0;
+#endif
+}
+
+template< typename T >
+int MpiWrapper::exscan( T const * const MPI_PARAM( sendbuf ),
+                        T * const recvbuf,
+                        int count,
+                        MPI_Op MPI_PARAM( op ),
+                        MPI_Comm MPI_PARAM( comm ) )
+{
+#ifdef GEOSX_USE_MPI
+  MPI_Datatype const MPI_TYPE = getMpiType< T >();
+  return MPI_Exscan( sendbuf, recvbuf, count, MPI_TYPE, op, comm );
+#else
+  memset( recvbuf, 0, count*sizeof(T) );
   return 0;
 #endif
 }

@@ -9,6 +9,7 @@
       fluidSolverName="SinglePhaseFlow"
       couplingTypeOption="FIM"
       logLevel="1"
+      discretization="FE1"
       targetRegions="{ Region2, Fracture }"
       contactRelationName="fractureContact">
       <NonlinearSolverParameters
@@ -58,7 +59,6 @@
     <SurfaceGenerator
       name="SurfaceGen"
       logLevel="0"
-      discretization="FE1"
       fractureRegion="Fracture"
       targetRegions="{ Region2 }"
       solidMaterialNames="{ rock }"
@@ -137,24 +137,10 @@
   </Events>
 
   <NumericalMethods>
-    <BasisFunctions>
-      <LagrangeBasis3
-        name="linearBasis"
-        degree="1"/>
-    </BasisFunctions>
-
-    <QuadratureRules>
-      <GaussQuadrature3
-        name="gaussian"
-        degree="2"/>
-    </QuadratureRules>
-
     <FiniteElements>
       <FiniteElementSpace
         name="FE1"
-        parentSpace="C3D8"
-        basis="linearBasis"
-        quadrature="gaussian"/>
+        order="1"/>
     </FiniteElements>
 
     <FiniteVolume>

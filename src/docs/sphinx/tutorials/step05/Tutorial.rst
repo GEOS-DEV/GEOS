@@ -79,7 +79,7 @@ The solver information is specified in the **NonlinearSolverParameters** and
 **LinearSolverParameters** XML blocks.
 These blocks should be nested in the **CompositionalMultiphaseReservoir** XML block since
 the coupling solver drives the solution strategy.
-Note that any solver information specified in the single-phase physics XML blocks will
+Note that any solver information specified in the single-physics XML blocks will
 not be taken into account.
 
 Here, we instruct GEOSX to perform at least ``newtonMinIter = 1`` Newton iterations and
@@ -239,7 +239,7 @@ model introduced in the **BrooksCoreyRelativePermeability** block.
 
 The rock compressibility is defined in the
 **PoreVolumeCompressibleSolid** block.
-The parameters of these three blocks have been chosen to be close to the original specifications
+The parameters of these three blocks have been chosen to match the original specifications
 of the Egg test case.
 
 .. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/benchmarks/Egg/dead_oil_egg.xml
@@ -359,7 +359,7 @@ This is followed by the creation of the 18553 hexahedral cells of the imported m
   0 >>> 59205 polygons have been created
   0 >>> *** Done
   0 >>> *** Perform partitioning...
-  0 >>> TRIVIAL partioning...
+  0 >>> TRIVIAL partitioning...
   0 >>> Ghost elements...
   0 >>> Clean mesh...
   0 >>> *** Done...
@@ -371,21 +371,26 @@ the code steps into the execution of the simulation itself:
 
 .. code-block:: console
 
-  Running simulation 
-  Time: 0s, dt:1000s, Cycle: 0
-    Attempt:  0, NewtonIter:  0 ; 
+   Time: 0s, dt:10000s, Cycle: 0
 
-    Attempt:  0, NewtonIter:  1 ; 
-  Last LinSolve(iter,res) = (  1, 2.22e-16) ; 
-    Attempt:  0, NewtonIter:  2 ; 
-  Last LinSolve(iter,res) = (  1, 2.22e-16) ; 
-    Attempt:  0, NewtonIter:  3 ; 
-  Last LinSolve(iter,res) = (  1, 2.22e-16) ; 
-    Attempt:  0, NewtonIter:  4 ; 
-  Last LinSolve(iter,res) = (  1, 2.22e-16) ; 
-    Attempt:  0, NewtonIter:  5 ; 
-  Last LinSolve(iter,res) = (  1, 2.22e-16) ; 
-    Attempt:  0, NewtonIter:  6 ; 
+    Attempt:  0, NewtonIter:  0
+    ( Rfluid ) = (3.58e+02) ;     ( R ) = ( 2.23e+05 ) ;
+    Attempt:  0, NewtonIter:  1
+    ( Rfluid ) = (9.69e-01) ;     ( R ) = ( 3.09e+02 ) ;
+    Last LinSolve(iter,res) = (   1, 2.22e-16 ) ;
+    Attempt:  0, NewtonIter:  2
+    ( Rfluid ) = (8.89e-02) ;     ( R ) = ( 2.48e+01 ) ;
+    Last LinSolve(iter,res) = (   1, 2.22e-16 ) ;
+    Attempt:  0, NewtonIter:  3
+    ( Rfluid ) = (1.82e-03) ;     ( R ) = ( 4.73e-01 ) ;
+    Last LinSolve(iter,res) = (   1, 2.22e-16 ) ;
+    Attempt:  0, NewtonIter:  4
+    ( Rfluid ) = (7.46e-07) ;     ( R ) = ( 1.67e-04 ) ;
+    Last LinSolve(iter,res) = (   1, 2.22e-16 ) ;
+    Attempt:  0, NewtonIter:  5
+    ( Rfluid ) = (2.02e-12) ;     ( R ) = ( 3.65e-11 ) ;
+    Last LinSolve(iter,res) = (   1, 2.22e-16 ) ;                                                                                               
+  coupledFlowAndWells: Newton solver converged in less than 6 iterations, time-step required will be doubled.		
                 
 ------------------------------------
 Visualization of results
@@ -417,7 +422,7 @@ a `GitHub issue on the project's GitHub page <https://github.com/GEOSX/GEOSX/iss
 
 **Next tutorial**
 
-In the next tutorial :ref:`TutorialCO2FieldCaseUnstructuredGrid`, we learn how to run a
+In :ref:`TutorialCO2FieldCaseUnstructuredGrid`, we learn how to run a
 more complex test case based on an unstructured mesh.
 
 **For more details**

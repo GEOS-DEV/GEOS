@@ -16,7 +16,7 @@
       <NonlinearSolverParameters
         newtonTol="1.0e-6"
         newtonMaxIter="8"
-        lineSearchAction="0"
+        lineSearchAction="None"
         newtonMinIter="1"
         maxTimeStepCuts="5"/>
       <LinearSolverParameters
@@ -41,7 +41,7 @@
       <NonlinearSolverParameters
         newtonTol="1.0e-6"
         newtonMaxIter="8"
-        lineSearchAction="0"
+        lineSearchAction="None"
         newtonMinIter="0"
         maxTimeStepCuts="5"/>
       <LinearSolverParameters

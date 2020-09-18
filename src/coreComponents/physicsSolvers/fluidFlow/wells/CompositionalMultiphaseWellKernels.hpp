@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -30,6 +30,8 @@ namespace geosx
 
 namespace CompositionalMultiphaseWellKernels
 {
+
+static constexpr real64 minDensForDivision = 1e-10;
 
 /******************************** ControlEquationHelper ********************************/
 
@@ -577,29 +579,29 @@ struct PerforationKernel
    * by calling .toView() or .toViewConst() on an accessor instance
    */
   template< typename VIEWTYPE >
-  using ElementView = typename ElementRegionManager::ElementViewAccessor< VIEWTYPE >::ViewTypeConst;
+  using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
 
   template< typename POLICY >
   static void
   Launch( localIndex const size,
           localIndex const numComponents,
           localIndex const numPhases,
-          ElementView< arrayView1d< real64 const > > const & resPressure,
-          ElementView< arrayView1d< real64 const > > const & dResPressure,
-          ElementView< arrayView2d< real64 const > > const & resPhaseMob,
-          ElementView< arrayView2d< real64 const > > const & dResPhaseMob_dPres,
-          ElementView< arrayView3d< real64 const > > const & dResPhaseMob_dComp,
-          ElementView< arrayView2d< real64 const > > const & dResPhaseVolFrac_dPres,
-          ElementView< arrayView3d< real64 const > > const & dResPhaseVolFrac_dComp,
-          ElementView< arrayView3d< real64 const > > const & dResCompFrac_dCompDens,
-          ElementView< arrayView3d< real64 const > > const & resPhaseVisc,
-          ElementView< arrayView3d< real64 const > > const & dResPhaseVisc_dPres,
-          ElementView< arrayView4d< real64 const > > const & dResPhaseVisc_dComp,
-          ElementView< arrayView4d< real64 const > > const & resPhaseCompFrac,
-          ElementView< arrayView4d< real64 const > > const & dResPhaseCompFrac_dPres,
-          ElementView< arrayView5d< real64 const > > const & dResPhaseCompFrac_dComp,
-          ElementView< arrayView3d< real64 const > > const & resPhaseRelPerm,
-          ElementView< arrayView4d< real64 const > > const & dResPhaseRelPerm_dPhaseVolFrac,
+          ElementViewConst< arrayView1d< real64 const > > const & resPressure,
+          ElementViewConst< arrayView1d< real64 const > > const & dResPressure,
+          ElementViewConst< arrayView2d< real64 const > > const & resPhaseMob,
+          ElementViewConst< arrayView2d< real64 const > > const & dResPhaseMob_dPres,
+          ElementViewConst< arrayView3d< real64 const > > const & dResPhaseMob_dComp,
+          ElementViewConst< arrayView2d< real64 const > > const & dResPhaseVolFrac_dPres,
+          ElementViewConst< arrayView3d< real64 const > > const & dResPhaseVolFrac_dComp,
+          ElementViewConst< arrayView3d< real64 const > > const & dResCompFrac_dCompDens,
+          ElementViewConst< arrayView3d< real64 const > > const & resPhaseVisc,
+          ElementViewConst< arrayView3d< real64 const > > const & dResPhaseVisc_dPres,
+          ElementViewConst< arrayView4d< real64 const > > const & dResPhaseVisc_dComp,
+          ElementViewConst< arrayView4d< real64 const > > const & resPhaseCompFrac,
+          ElementViewConst< arrayView4d< real64 const > > const & dResPhaseCompFrac_dPres,
+          ElementViewConst< arrayView5d< real64 const > > const & dResPhaseCompFrac_dComp,
+          ElementViewConst< arrayView3d< real64 const > > const & resPhaseRelPerm,
+          ElementViewConst< arrayView4d< real64 const > > const & dResPhaseRelPerm_dPhaseVolFrac,
           arrayView1d< real64 const > const & wellElemGravCoef,
           arrayView1d< real64 const > const & wellElemPressure,
           arrayView1d< real64 const > const & dWellElemPressure,
@@ -993,7 +995,7 @@ struct PresCompFracInitializationKernel
    * by calling .toView() or .toViewConst() on an accessor instance
    */
   template< typename VIEWTYPE >
-  using ElementView = typename ElementRegionManager::ElementViewAccessor< VIEWTYPE >::ViewTypeConst;
+  using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
 
   template< typename POLICY >
   static void
@@ -1004,8 +1006,8 @@ struct PresCompFracInitializationKernel
           int const topRank,
           localIndex const numPerforations,
           WellControls const & wellControls,
-          ElementView< arrayView1d< real64 const > > const & resPressure,
-          ElementView< arrayView2d< real64 const > > const & resCompDens,
+          ElementViewConst< arrayView1d< real64 const > > const & resPressure,
+          ElementViewConst< arrayView2d< real64 const > > const & resCompDens,
           arrayView1d< localIndex const > const & resElementRegion,
           arrayView1d< localIndex const > const & resElementSubRegion,
           arrayView1d< localIndex const > const & resElementIndex,
@@ -1209,6 +1211,63 @@ struct ResidualNormKernel
 
 };
 
+/******************************** SolutionScalingKernel ********************************/
+
+struct SolutionScalingKernel
+{
+  template< typename POLICY, typename REDUCE_POLICY, typename LOCAL_VECTOR >
+  static real64
+  Launch( LOCAL_VECTOR const localSolution,
+          globalIndex const rankOffset,
+          localIndex const numComponents,
+          arrayView1d< globalIndex const > const & wellElemDofNumber,
+          arrayView1d< integer const > const & wellElemGhostRank,
+          arrayView2d< real64 const > const & wellElemCompDens,
+          arrayView2d< real64 const > const & dWellElemCompDens,
+          real64 const maxCompFracChange )
+  {
+    real64 constexpr eps = minDensForDivision;
+
+    RAJA::ReduceMin< REDUCE_POLICY, real64 > minVal( 1.0 );
+
+    forAll< POLICY >( wellElemDofNumber.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iwelem )
+    {
+      if( wellElemGhostRank[iwelem] < 0 )
+      {
+
+        real64 prevTotalDens = 0;
+        for( localIndex ic = 0; ic < numComponents; ++ic )
+        {
+          prevTotalDens += wellElemCompDens[iwelem][ic] + dWellElemCompDens[iwelem][ic];
+        }
+
+        for( localIndex ic = 0; ic < numComponents; ++ic )
+        {
+          localIndex const lid = wellElemDofNumber[iwelem] + ic + 1 - rankOffset;
+
+          // compute scaling factor based on relative change in component densities
+          real64 const absCompDensChange = fabs( localSolution[lid] );
+          real64 const maxAbsCompDensChange = maxCompFracChange * prevTotalDens;
+
+          // This actually checks the change in component fraction, using a lagged total density
+          // Indeed we can rewrite the following check as:
+          //    | prevCompDens / prevTotalDens - newCompDens / prevTotalDens | > maxCompFracChange
+          // Note that the total density in the second term is lagged (i.e, we use prevTotalDens)
+          // because I found it more robust than using directly newTotalDens (which can vary also
+          // wildly when the compDens change is large)
+          if( absCompDensChange > maxAbsCompDensChange && absCompDensChange > eps )
+          {
+            minVal.min( maxAbsCompDensChange / absCompDensChange );
+          }
+        }
+      }
+    } );
+    return minVal.get();
+  }
+
+};
+
+
 /******************************** SolutionCheckKernel ********************************/
 
 struct SolutionCheckKernel
@@ -1224,8 +1283,11 @@ struct SolutionCheckKernel
           arrayView1d< real64 const > const & dWellElemPressure,
           arrayView2d< real64 const > const & wellElemCompDens,
           arrayView2d< real64 const > const & dWellElemCompDens,
+          integer const allowCompDensChopping,
           real64 const scalingFactor )
   {
+    real64 constexpr eps = minDensForDivision;
+
     RAJA::ReduceMin< REDUCE_POLICY, localIndex > minVal( 1 );
 
     forAll< POLICY >( wellElemDofNumber.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iwelem )
@@ -1236,18 +1298,41 @@ struct SolutionCheckKernel
         localIndex lid = wellElemDofNumber[iwelem] + CompositionalMultiphaseWell::ColOffset::DPRES - rankOffset;
         real64 const newPres = wellElemPressure[iwelem] + dWellElemPressure[iwelem]
                                + scalingFactor * localSolution[lid];
+
+        // the pressure must be positive
         if( newPres < 0.0 )
         {
           minVal.min( 0 );
         }
 
-        // comp densities
-        for( localIndex ic = 0; ic < numComponents; ++ic )
+        // if component density is not allowed, the time step fails if a component density is negative
+        // otherwise, we just check that the total density is positive, and negative component densities
+        // will be chopped (i.e., set to zero) in ApplySystemSolution
+        if( !allowCompDensChopping )
         {
-          lid = wellElemDofNumber[iwelem] + ic + 1 - rankOffset;
-          real64 const newDens = wellElemCompDens[iwelem][ic] + dWellElemCompDens[iwelem][ic]
-                                 + scalingFactor * localSolution[lid];
-          if( newDens < 0.0 )
+          for( localIndex ic = 0; ic < numComponents; ++ic )
+          {
+            lid = wellElemDofNumber[iwelem] + ic + 1 - rankOffset;
+            real64 const newDens = wellElemCompDens[iwelem][ic] + dWellElemCompDens[iwelem][ic]
+                                   + scalingFactor * localSolution[lid];
+
+            if( newDens < 0 )
+            {
+              minVal.min( 0 );
+            }
+          }
+        }
+        else
+        {
+          real64 totalDens = 0.0;
+          for( localIndex ic = 0; ic < numComponents; ++ic )
+          {
+            lid = wellElemDofNumber[iwelem] + ic + 1 - rankOffset;
+            real64 const newDens = wellElemCompDens[iwelem][ic] + dWellElemCompDens[iwelem][ic]
+                                   + scalingFactor * localSolution[lid];
+            totalDens += (newDens > 0.0) ? newDens : 0.0;
+          }
+          if( totalDens < eps )
           {
             minVal.min( 0 );
           }

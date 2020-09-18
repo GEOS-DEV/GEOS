@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -26,23 +26,21 @@ using namespace dataRepository;
 
 WellControls::WellControls( string const & name, Group * const parent )
   : Group( name, parent ),
-  m_typeString( "" ),
   m_type( Type::PRODUCER ),
   m_refWellElemIndex( -1 ),
-  m_inputControlString( "" ),
   m_currentControl( Control::BHP ),
   m_targetBHP( 0.0 ),
   m_targetRate( 0.0 )
 {
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 
-  registerWrapper( viewKeyStruct::typeString, &m_typeString )->
+  registerWrapper( viewKeyStruct::typeString, &m_type )->
     setInputFlag( InputFlags::REQUIRED )->
-    setDescription( "Well type (producer/injector)" );
+    setDescription( "Well type. Valid options:\n* " + EnumStrings< Type >::concat( "\n* " ) );
 
-  registerWrapper( viewKeyStruct::controlString, &m_inputControlString )->
+  registerWrapper( viewKeyStruct::controlString, &m_currentControl )->
     setInputFlag( InputFlags::REQUIRED )->
-    setDescription( "Well control (BHP/gasRate/oilRate/waterRate)" );
+    setDescription( "Well control. Valid options:\n* " + EnumStrings< Control >::concat( "\n* " ) );
 
   registerWrapper( viewKeyStruct::targetBHPString, &m_targetBHP )->
     setDefaultValue( -1 )->
@@ -84,51 +82,6 @@ void WellControls::SetControl( Control control,
 
 void WellControls::PostProcessInput()
 {
-  // 1) set well type
-
-  if( m_typeString == "producer" )
-  {
-    m_type = Type::PRODUCER;
-  }
-  else if( m_typeString == "injector" )
-  {
-    m_type = Type::INJECTOR;
-  }
-  else
-  {
-    GEOSX_ERROR( "Invalid well type: " << m_typeString );
-  }
-
-  // 2) set initial control type
-
-  if( m_inputControlString == "BHP" )
-  {
-    m_currentControl = Control::BHP;
-  }
-  else if( m_inputControlString == "gasRate" )
-  {
-    m_currentControl = Control::GASRATE;
-    GEOSX_ERROR( "This control is not implemented yet" );
-  }
-  else if( m_inputControlString == "oilRate" )
-  {
-    m_currentControl = Control::OILRATE;
-    GEOSX_ERROR( "This control is not implemented yet" );
-  }
-  else if( m_inputControlString == "waterRate" )
-  {
-    m_currentControl = Control::WATERRATE;
-    GEOSX_ERROR( "This control is not implemented yet" );
-  }
-  else if( m_inputControlString == "liquidRate" )
-  {
-    m_currentControl = Control::LIQUIDRATE;
-  }
-  else
-  {
-    GEOSX_ERROR( "Invalid initial well control: " << m_inputControlString );
-  }
-
   // 3.a) check target BHP
   if( m_targetBHP < 0 )
   {

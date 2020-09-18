@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -92,5 +92,8 @@ void i_g_n_o_r_e( ARGS const & ... ) {}
 
 /// preprocessor variable for the C99 restrict keyword for use with the "this" pointer
 #define GEOSX_RESTRICT_THIS LVARRAY_RESTRICT_THIS
+
+/// Doxygen can't parse a `decltype( auto )` return type, using this gets around that.
+#define GEOSX_DECLTYPE_AUTO_RETURN decltype( auto )
 
 #endif // GEOSX_COMMON_GEOSXMACROS_HPP_

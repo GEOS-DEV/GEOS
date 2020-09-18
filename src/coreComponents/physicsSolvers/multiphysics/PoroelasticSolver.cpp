@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -47,8 +47,7 @@ PoroelasticSolver::PoroelasticSolver( const std::string & name,
   SolverBase( name, parent ),
   m_solidSolverName(),
   m_flowSolverName(),
-  m_couplingTypeOptionString(),
-  m_couplingTypeOption()
+  m_couplingTypeOption( CouplingTypeOption::FIM )
 
 {
   registerWrapper( viewKeyStruct::solidSolverNameString, &m_solidSolverName )->
@@ -59,9 +58,9 @@ PoroelasticSolver::PoroelasticSolver( const std::string & name,
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "Name of the fluid mechanics solver to use in the poroelastic solver" );
 
-  registerWrapper( viewKeyStruct::couplingTypeOptionStringString, &m_couplingTypeOptionString )->
+  registerWrapper( viewKeyStruct::couplingTypeOptionStringString, &m_couplingTypeOption )->
     setInputFlag( InputFlags::REQUIRED )->
-    setDescription( "Coupling option: (FIM, SIM_FixedStress)" );
+    setDescription( "Coupling method. Valid options:\n* " + EnumStrings< CouplingTypeOption >::concat( "\n* " ) );
 
   m_linearSolverParameters.get().mgr.strategy = "Poroelastic";
   m_linearSolverParameters.get().mgr.separateComponents = true;
@@ -112,7 +111,7 @@ void PoroelasticSolver::SetupSystem( DomainPartition & domain,
   // setup monolithic coupled system
   SolverBase::SetupSystem( domain, dofManager, localMatrix, localRhs, localSolution, setSparsity );
 
-  if( !m_precond && m_linearSolverParameters.get().solverType != "direct" )
+  if( !m_precond && m_linearSolverParameters.get().solverType != LinearSolverParameters::SolverType::direct )
   {
     CreatePreconditioner();
   }
@@ -125,7 +124,7 @@ void PoroelasticSolver::ImplicitStepSetup( real64 const & time_n,
   m_flowSolver->ImplicitStepSetup( time_n, dt, domain );
   m_solidSolver->ImplicitStepSetup( time_n, dt, domain );
 
-  if( m_couplingTypeOption == couplingTypeOption::SIM_FixedStress )
+  if( m_couplingTypeOption == CouplingTypeOption::SIM_FixedStress )
   {
     MeshLevel & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
 
@@ -162,33 +161,20 @@ void PoroelasticSolver::PostProcessInput()
   GEOSX_ERROR_IF( m_flowSolver == nullptr, "Flow solver not found or invalid type: " << m_flowSolverName );
   GEOSX_ERROR_IF( m_solidSolver == nullptr, "Solid solver not found or invalid type: " << m_solidSolverName );
 
-  string ctOption = this->getReference< string >( viewKeyStruct::couplingTypeOptionStringString );
-
   m_solidSolver->setEffectiveStress( 1 );
 
-  if( ctOption == "SIM_FixedStress" )
+  if( m_couplingTypeOption == CouplingTypeOption::SIM_FixedStress )
   {
-    m_couplingTypeOption = couplingTypeOption::SIM_FixedStress;
-
     // For this coupled solver the minimum number of Newton Iter should be 0 for both flow and solid solver,
     // otherwise it will never converge.
     m_flowSolver->getNonlinearSolverParameters().m_minIterNewton = 0;
     m_solidSolver->getNonlinearSolverParameters().m_minIterNewton = 0;
   }
-  else if( ctOption == "FIM" )
-  {
-    m_couplingTypeOption = couplingTypeOption::FIM;
-  }
-  else
-  {
-    GEOSX_ERROR( "invalid coupling type option: " + ctOption );
-  }
-
 }
 
 void PoroelasticSolver::InitializePostInitialConditions_PreSubGroups( Group * const problemManager )
 {
-  if( m_couplingTypeOption == couplingTypeOption::SIM_FixedStress )
+  if( m_couplingTypeOption == CouplingTypeOption::SIM_FixedStress )
   {
     m_flowSolver->setPoroElasticCoupling();
     // Calculate initial total mean stress
@@ -228,11 +214,11 @@ real64 PoroelasticSolver::SolverStep( real64 const & time_n,
                                       DomainPartition & domain )
 {
   real64 dt_return = dt;
-  if( m_couplingTypeOption == couplingTypeOption::SIM_FixedStress )
+  if( m_couplingTypeOption == CouplingTypeOption::SIM_FixedStress )
   {
     dt_return = SplitOperatorStep( time_n, dt, cycleNumber, domain );
   }
-  else if( m_couplingTypeOption == couplingTypeOption::FIM )
+  else if( m_couplingTypeOption == CouplingTypeOption::FIM )
   {
     SetupSystem( domain,
                  m_dofManager,
@@ -254,14 +240,6 @@ void PoroelasticSolver::UpdateDeformationForCoupling( DomainPartition & domain )
 
   MeshLevel & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
   NodeManager & nodeManager = *mesh.getNodeManager();
-
-  NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
-
-  FiniteElementDiscretizationManager const &
-  feDiscretizationManager = numericalMethodManager.getFiniteElementDiscretizationManager();
-
-  FiniteElementDiscretization const &
-  feDiscretization = *feDiscretizationManager.GetGroup< FiniteElementDiscretization >( m_discretizationName );
 
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X = nodeManager.referencePosition();
   arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const & u = nodeManager.totalDisplacement();
@@ -309,7 +287,9 @@ void PoroelasticSolver::UpdateDeformationForCoupling( DomainPartition & domain )
 
 
     localIndex const numNodesPerElement = elemsToNodes.size( 1 );
-    localIndex const numQuadraturePoints = feDiscretization.getFiniteElement( elementSubRegion.GetElementTypeString() )->n_quadrature_points();
+    finiteElement::FiniteElementBase const &
+    fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( m_solidSolver->getDiscretizationName() );
+    localIndex const numQuadraturePoints = fe.getNumQuadraturePoints();
 
     // TODO: remove use of R1Tensor and use device policy
     forAll< parallelDevicePolicy< 32 > >( elementSubRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
@@ -385,11 +365,6 @@ void PoroelasticSolver::AssembleCouplingTerms( DomainPartition const & domain,
   MeshLevel const & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
   NodeManager const & nodeManager = *mesh.getNodeManager();
 
-  NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
-
-  FiniteElementDiscretizationManager const &
-  feDiscretizationManager = numericalMethodManager.getFiniteElementDiscretizationManager();
-
   string const uDofKey = dofManager.getKey( keys::TotalDisplacement );
   arrayView1d< globalIndex const > const & uDofNumber = nodeManager.getReference< globalIndex_array >( uDofKey );
 
@@ -397,9 +372,6 @@ void PoroelasticSolver::AssembleCouplingTerms( DomainPartition const & domain,
 
   globalIndex const rankOffset = dofManager.rankOffset();
   string const pDofKey = dofManager.getKey( FlowSolverBase::viewKeyStruct::pressureString );
-
-  FiniteElementDiscretization const & feDiscretization =
-    *feDiscretizationManager.GetGroup< FiniteElementDiscretization >( m_discretizationName );
 
   // begin subregion loop
   forTargetSubRegionsComplete< CellElementSubRegion >( mesh, [&]( localIndex const,
@@ -423,8 +395,9 @@ void PoroelasticSolver::AssembleCouplingTerms( DomainPartition const & domain,
     arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion.nodeList();
     localIndex const numNodesPerElement = elemsToNodes.size( 1 );
 
-    std::unique_ptr< FiniteElementBase >
-    fe = feDiscretization.getFiniteElement( elementSubRegion.GetElementTypeString() );
+    finiteElement::FiniteElementBase const &
+    fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( m_solidSolver->getDiscretizationName() );
+    localIndex const numQuadraturePoints = fe.getNumQuadraturePoints();
 
     real64 const biotCoefficient = solid.getReference< real64 >( "BiotCoefficient" );
 
@@ -436,7 +409,6 @@ void PoroelasticSolver::AssembleCouplingTerms( DomainPartition const & domain,
     localIndex const nUDof = dim * numNodesPerElement;
     localIndex const nPDof = m_flowSolver->numDofPerCell();
     GEOSX_ERROR_IF_GT( nPDof, maxNumPDof );
-    int numQuadraturePoints = fe->n_quadrature_points();
 
     // TODO: remove use of R1Tensor and use device policy
     forAll< parallelDevicePolicy< 32 > >( elementSubRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const k )
@@ -553,7 +525,7 @@ real64 PoroelasticSolver::CalculateResidualNorm( DomainPartition const & domain,
 
 void PoroelasticSolver::CreatePreconditioner()
 {
-  if( m_linearSolverParameters.get().preconditionerType == "block" )
+  if( m_linearSolverParameters.get().preconditionerType == LinearSolverParameters::PreconditionerType::block )
   {
     auto precond = std::make_unique< BlockPreconditioner< LAInterface > >( BlockShapeOption::UpperTriangular,
                                                                            SchurComplementOption::RowsumDiagonalProbing,

@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -113,6 +113,8 @@ protected:
 
 private:
 
+  void addToFractureStencil( DomainPartition & domain );
+
   /**
    * @struct viewKeyStruct holds char strings and viewKeys for fast lookup
    */
@@ -125,7 +127,6 @@ private:
     constexpr static auto rockToughnessString = "rockToughness";
   }; //SurfaceGenViewKeys;
 
-private:
   // solid solver name
   array1d< string > m_solidMaterialNames;
   // fracture region name

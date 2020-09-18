@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -115,25 +115,25 @@ public:
    * @brief Const access to the element regions indices.
    * @return A view to const
    */
-  typename LEAFCLASSTRAITS::IndexContainerViewConstType const & getElementRegionIndices() const { return m_elementRegionIndices.toViewConst(); }
+  typename LEAFCLASSTRAITS::IndexContainerViewConstType getElementRegionIndices() const { return m_elementRegionIndices.toViewConst(); }
 
   /**
    * @brief Const access to the element subregions indices.
    * @return A view to const
    */
-  typename LEAFCLASSTRAITS::IndexContainerViewConstType const & getElementSubRegionIndices() const { return m_elementSubRegionIndices.toViewConst(); }
+  typename LEAFCLASSTRAITS::IndexContainerViewConstType getElementSubRegionIndices() const { return m_elementSubRegionIndices.toViewConst(); }
 
   /**
    * @brief Const access to the element indices.
    * @return A view to const
    */
-  typename LEAFCLASSTRAITS::IndexContainerViewConstType const & getElementIndices() const { return m_elementIndices.toViewConst(); }
+  typename LEAFCLASSTRAITS::IndexContainerViewConstType getElementIndices() const { return m_elementIndices.toViewConst(); }
 
   /**
    * @brief Const access to the stencil weights.
    * @return A view to const
    */
-  typename LEAFCLASSTRAITS::WeightContainerViewConstType const & getWeights() const { return m_weights.toViewConst(); }
+  typename LEAFCLASSTRAITS::WeightContainerViewConstType getWeights() const { return m_weights.toViewConst(); }
 
 protected:
   /// The container for the element region indices for each point in each stencil

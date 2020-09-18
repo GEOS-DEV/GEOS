@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -16,11 +16,9 @@
  * @file FaceElementRegion.cpp
  */
 
+#include "ExtrinsicMeshData.hpp"
 #include "EdgeManager.hpp"
 #include "FaceElementRegion.hpp"
-#include "finiteElement/basis/LagrangeBasis.hpp"
-#include "finiteElement/quadrature/GaussQuadrature.hpp"
-#include "finiteElement/ElementLibrary/FiniteElement.h"
 
 
 namespace geosx
@@ -76,25 +74,24 @@ localIndex FaceElementRegion::AddToFractureMesh( real64 const time_np1,
   rval = subRegion->size() - 1;
 
 
-  arrayView1d< real64 > const &
-  ruptureTime = subRegion->getReference< real64_array >( viewKeyStruct::ruptureTimeString );
+  arrayView1d< real64 > const ruptureTime = subRegion->getExtrinsicData< extrinsicMeshData::RuptureTime >();
 
-  arrayView1d< real64 > const &
+  arrayView1d< real64 > const
   creationMass = subRegion->getReference< real64_array >( FaceElementSubRegion::viewKeyStruct::creationMassString );
 
-  arrayView2d< real64 const > const & faceCenter = faceManager->faceCenter();
-  arrayView2d< real64 > const & elemCenter = subRegion->getElementCenter();
-  arrayView1d< real64 const > const & elemArea = subRegion->getElementArea();
+  arrayView2d< real64 const > const faceCenter = faceManager->faceCenter();
+  arrayView2d< real64 > const elemCenter = subRegion->getElementCenter();
+  arrayView1d< real64 const > const elemArea = subRegion->getElementArea();
 
-  arrayView1d< integer > const & subRegionGhostRank = subRegion->ghostRank();
+  arrayView1d< integer > const subRegionGhostRank = subRegion->ghostRank();
 
-  arrayView1d< integer const > const & faceGhostRank = faceManager->ghostRank();
+  arrayView1d< integer const > const faceGhostRank = faceManager->ghostRank();
 
   FaceElementSubRegion::NodeMapType & nodeMap = subRegion->nodeList();
   FaceElementSubRegion::EdgeMapType & edgeMap = subRegion->edgeList();
   FaceElementSubRegion::FaceMapType & faceMap = subRegion->faceList();
 
-  ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager->nodeList().toViewConst();
+  ArrayOfArraysView< localIndex const > const faceToNodeMap = faceManager->nodeList().toViewConst();
 
   localIndex const kfe = subRegion->size() - 1;
   ruptureTime( kfe ) = time_np1;
@@ -113,7 +110,7 @@ localIndex FaceElementRegion::AddToFractureMesh( real64 const time_np1,
   localIndex const numNodesInFace1 = faceToNodeMap.sizeOfArray( faceIndices[ 1 ] );
 
   //Temporarily set the map size 8 for both quadrangle and triangle faces. TODO: need to fix for arbitrary face sizes.
-  nodeMap[kfe].resize( 8 );
+  nodeMap.resizeArray( kfe, 8 );
 
   for( localIndex a = 0; a < numNodesInFace0; ++a )
   {
@@ -135,7 +132,7 @@ localIndex FaceElementRegion::AddToFractureMesh( real64 const time_np1,
   // the facesToEdges entry.
   localIndex const faceID = faceIndices[0];
   localIndex const numEdges = originalFaceToEdgeMap.sizeOfArray( faceID );
-  edgeMap[kfe].resize( numEdges );
+  edgeMap.resizeArray( kfe, numEdges );
   for( localIndex a=0; a<numEdges; ++a )
   {
     edgeMap[kfe][a] = originalFaceToEdgeMap( faceID, a );

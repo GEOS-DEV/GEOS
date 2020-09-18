@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -37,6 +37,10 @@
 #include "physicsSolvers/fluidFlow/wells/SinglePhaseWellKernels.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellControls.hpp"
 
+#if defined( __INTEL_COMPILER )
+#pragma GCC optimize "O0"
+#endif
+
 namespace geosx
 {
 
@@ -51,7 +55,10 @@ CompositionalMultiphaseWell::CompositionalMultiphaseWell( const string & name,
   m_numPhases( 0 ),
   m_numComponents( 0 ),
   m_temperature( 0.0 ),
-  m_useMass( false )
+  m_useMass( false ),
+  m_maxCompFracChange( 1.0 ),
+  m_minScalingFactor( 0.01 ),
+  m_allowCompDensChopping( 1 )
 {
   this->registerWrapper( viewKeyStruct::temperatureString, &m_temperature )->
     setInputFlag( InputFlags::REQUIRED )->
@@ -65,6 +72,19 @@ CompositionalMultiphaseWell::CompositionalMultiphaseWell( const string & name,
   this->registerWrapper( viewKeyStruct::relPermNamesString, &m_relPermModelNames )->
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "Names of relative permeability constitutive models to use" );
+
+  this->registerWrapper( viewKeyStruct::maxCompFracChangeString, &m_maxCompFracChange )->
+    setSizedFromParent( 0 )->
+    setInputFlag( InputFlags::OPTIONAL )->
+    setApplyDefaultValue( 1.0 )->
+    setDescription( "Maximum (absolute) change in a component fraction between two Newton iterations" );
+
+  this->registerWrapper( viewKeyStruct::allowLocalCompDensChoppingString, &m_allowCompDensChopping )->
+    setSizedFromParent( 0 )->
+    setInputFlag( InputFlags::OPTIONAL )->
+    setApplyDefaultValue( 1 )->
+    setDescription( "Flag indicating whether local (cell-wise) chopping of negative compositions is allowed" );
+
 }
 
 void CompositionalMultiphaseWell::PostProcessInput()
@@ -76,6 +96,12 @@ void CompositionalMultiphaseWell::PostProcessInput()
   GEOSX_ERROR_IF( flowSolver == nullptr,
                   "Flow solver " << GetFlowSolverName() << " not found or incompatible type "
                                                            "(referenced from well solver " << getName() << ")" );
+
+  GEOSX_ERROR_IF_GT_MSG( m_maxCompFracChange, 1.0,
+                         "The maximum absolute change in component fraction must smaller or equal to 1.0" );
+  GEOSX_ERROR_IF_LT_MSG( m_maxCompFracChange, 0.0,
+                         "The maximum absolute change in component fraction must larger or equal to 0.0" );
+
 }
 
 void CompositionalMultiphaseWell::RegisterDataOnMesh( Group * const meshBodies )
@@ -440,8 +466,8 @@ void CompositionalMultiphaseWell::InitializeWells( DomainPartition & domain )
                                                                         subRegion.GetTopRank(),
                                                                         perforationData.GetNumPerforationsGlobal(),
                                                                         wellControls,
-                                                                        m_resPressure.toViewConst(),
-                                                                        m_resGlobalCompDensity.toViewConst(),
+                                                                        m_resPressure.toNestedViewConst(),
+                                                                        m_resGlobalCompDensity.toNestedViewConst(),
                                                                         resElementRegion,
                                                                         resElementSubRegion,
                                                                         resElementIndex,
@@ -557,8 +583,7 @@ void CompositionalMultiphaseWell::AssembleVolumeBalanceTerms( real64 const GEOSX
     string const wellDofKey = dofManager.getKey( WellElementDofName() );
     arrayView1d< globalIndex const > const & wellElemDofNumber =
       subRegion.getReference< array1d< globalIndex > >( wellDofKey );
-    arrayView1d< integer const > const & wellElemGhostRank =
-      subRegion.getReference< array1d< integer > >( ObjectManagerBase::viewKeyStruct::ghostRankString );
+    arrayView1d< integer const > const & wellElemGhostRank = subRegion.ghostRank();
 
     // get the properties on the well element
     arrayView2d< real64 const > const & wellElemPhaseVolFrac =
@@ -605,8 +630,7 @@ CompositionalMultiphaseWell::CalculateResidualNorm( DomainPartition const & doma
     string const wellDofKey = dofManager.getKey( WellElementDofName() );
     arrayView1d< globalIndex const > const & wellElemDofNumber =
       subRegion.getReference< array1d< globalIndex > >( wellDofKey );
-    arrayView1d< integer const > const & wellElemGhostRank =
-      subRegion.getReference< array1d< integer > >( ObjectManagerBase::viewKeyStruct::ghostRankString );
+    arrayView1d< integer const > const & wellElemGhostRank = subRegion.ghostRank();
     arrayView1d< real64 const > const & wellElemVolume =
       subRegion.getReference< array1d< real64 > >( ElementSubRegionBase::viewKeyStruct::elementVolumeString );
 
@@ -627,6 +651,59 @@ CompositionalMultiphaseWell::CalculateResidualNorm( DomainPartition const & doma
   return sqrt( MpiWrapper::Sum( localResidualNorm, MPI_COMM_GEOSX ) );
 }
 
+real64
+CompositionalMultiphaseWell::ScalingForSystemSolution( DomainPartition const & domain,
+                                                       DofManager const & dofManager,
+                                                       arrayView1d< real64 const > const & localSolution )
+{
+  GEOSX_MARK_FUNCTION;
+
+  // check if we want to rescale the Newton update
+  if( m_maxCompFracChange >= 1.0 )
+  {
+    // no rescaling wanted, we just return 1.0;
+    return 1.0;
+  }
+
+  MeshLevel const & meshLevel = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
+
+  real64 scalingFactor = 1.0;
+  forTargetSubRegions< WellElementSubRegion >( meshLevel, [&]( localIndex const,
+                                                               WellElementSubRegion const & subRegion )
+  {
+    // get the degree of freedom numbers on well elements and ghosting info
+    string const wellDofKey = dofManager.getKey( WellElementDofName() );
+    arrayView1d< globalIndex const > const & wellElemDofNumber =
+      subRegion.getReference< array1d< globalIndex > >( wellDofKey );
+    arrayView1d< integer const > const & wellElemGhostRank = subRegion.ghostRank();
+
+    // get a reference to the primary variables on well elements
+    arrayView2d< real64 const > const & wellElemCompDens =
+      subRegion.getReference< array2d< real64 > >( viewKeyStruct::globalCompDensityString );
+    arrayView2d< real64 const > const & dWellElemCompDens =
+      subRegion.getReference< array2d< real64 > >( viewKeyStruct::deltaGlobalCompDensityString );
+
+    real64 const subRegionScalingFactor =
+      SolutionScalingKernel::Launch< parallelDevicePolicy<>,
+                                     parallelDeviceReduce >( localSolution,
+                                                             dofManager.rankOffset(),
+                                                             NumFluidComponents(),
+                                                             wellElemDofNumber,
+                                                             wellElemGhostRank,
+                                                             wellElemCompDens,
+                                                             dWellElemCompDens,
+                                                             m_maxCompFracChange );
+
+
+    if( subRegionScalingFactor < scalingFactor )
+    {
+      scalingFactor = subRegionScalingFactor;
+    }
+  } );
+
+  return LvArray::math::max( MpiWrapper::Min( scalingFactor, MPI_COMM_GEOSX ), m_minScalingFactor );
+}
+
 bool
 CompositionalMultiphaseWell::CheckSystemSolution( DomainPartition const & domain,
                                                   DofManager const & dofManager,
@@ -645,8 +722,7 @@ CompositionalMultiphaseWell::CheckSystemSolution( DomainPartition const & domain
     string const wellDofKey = dofManager.getKey( WellElementDofName() );
     arrayView1d< globalIndex const > const & wellElemDofNumber =
       subRegion.getReference< array1d< globalIndex > >( wellDofKey );
-    arrayView1d< integer const > const & wellElemGhostRank =
-      subRegion.getReference< array1d< integer > >( ObjectManagerBase::viewKeyStruct::ghostRankString );
+    arrayView1d< integer const > const & wellElemGhostRank = subRegion.ghostRank();
 
     // get a reference to the primary variables on well elements
     arrayView1d< real64 const > const & wellElemPressure =
@@ -670,6 +746,7 @@ CompositionalMultiphaseWell::CheckSystemSolution( DomainPartition const & domain
                                                            dWellElemPressure,
                                                            wellElemCompDens,
                                                            dWellElemCompDens,
+                                                           m_allowCompDensChopping,
                                                            scalingFactor );
 
     if( subRegionSolutionCheck == 0 )
@@ -734,22 +811,22 @@ void CompositionalMultiphaseWell::ComputePerforationRates( WellElementSubRegion 
   PerforationKernel::Launch< parallelDevicePolicy<> >( perforationData->size(),
                                                        NumFluidComponents(),
                                                        NumFluidPhases(),
-                                                       m_resPressure.toViewConst(),
-                                                       m_deltaResPressure.toViewConst(),
-                                                       m_resPhaseMob.toViewConst(),
-                                                       m_dResPhaseMob_dPres.toViewConst(),
-                                                       m_dResPhaseMob_dCompDens.toViewConst(),
-                                                       m_dResPhaseVolFrac_dPres.toViewConst(),
-                                                       m_dResPhaseVolFrac_dCompDens.toViewConst(),
-                                                       m_dResCompFrac_dCompDens.toViewConst(),
-                                                       m_resPhaseVisc.toViewConst(),
-                                                       m_dResPhaseVisc_dPres.toViewConst(),
-                                                       m_dResPhaseVisc_dComp.toViewConst(),
-                                                       m_resPhaseCompFrac.toViewConst(),
-                                                       m_dResPhaseCompFrac_dPres.toViewConst(),
-                                                       m_dResPhaseCompFrac_dComp.toViewConst(),
-                                                       m_resPhaseRelPerm.toViewConst(),
-                                                       m_dResPhaseRelPerm_dPhaseVolFrac.toViewConst(),
+                                                       m_resPressure.toNestedViewConst(),
+                                                       m_deltaResPressure.toNestedViewConst(),
+                                                       m_resPhaseMob.toNestedViewConst(),
+                                                       m_dResPhaseMob_dPres.toNestedViewConst(),
+                                                       m_dResPhaseMob_dCompDens.toNestedViewConst(),
+                                                       m_dResPhaseVolFrac_dPres.toNestedViewConst(),
+                                                       m_dResPhaseVolFrac_dCompDens.toNestedViewConst(),
+                                                       m_dResCompFrac_dCompDens.toNestedViewConst(),
+                                                       m_resPhaseVisc.toNestedViewConst(),
+                                                       m_dResPhaseVisc_dPres.toNestedViewConst(),
+                                                       m_dResPhaseVisc_dComp.toNestedViewConst(),
+                                                       m_resPhaseCompFrac.toNestedViewConst(),
+                                                       m_dResPhaseCompFrac_dPres.toNestedViewConst(),
+                                                       m_dResPhaseCompFrac_dComp.toNestedViewConst(),
+                                                       m_resPhaseRelPerm.toNestedViewConst(),
+                                                       m_dResPhaseRelPerm_dPhaseVolFrac.toNestedViewConst(),
                                                        wellElemGravCoef,
                                                        wellElemPressure,
                                                        dWellElemPressure,
@@ -776,6 +853,7 @@ CompositionalMultiphaseWell::ApplySystemSolution( DofManager const & dofManager,
                                                   real64 const scalingFactor,
                                                   DomainPartition & domain )
 {
+  // update all the fields using the global damping coefficients
   dofManager.addVectorToField( localSolution,
                                WellElementDofName(),
                                viewKeyStruct::deltaPressureString,
@@ -794,6 +872,14 @@ CompositionalMultiphaseWell::ApplySystemSolution( DofManager const & dofManager,
                                scalingFactor,
                                m_numDofPerWellElement - 1, m_numDofPerWellElement );
 
+  // if component density chopping is allowed, some component densities may be negative after the update
+  // these negative component densities are set to zero in this function
+  if( m_allowCompDensChopping )
+  {
+    ChopNegativeDensities( domain );
+  }
+
+  // synchronize
   std::map< string, string_array > fieldNames;
   fieldNames["elems"].emplace_back( string( viewKeyStruct::deltaPressureString ) );
   fieldNames["elems"].emplace_back( string( viewKeyStruct::deltaGlobalCompDensityString ) );
@@ -807,6 +893,42 @@ CompositionalMultiphaseWell::ApplySystemSolution( DofManager const & dofManager,
   UpdateStateAll( domain );
 
 }
+
+void CompositionalMultiphaseWell::ChopNegativeDensities( DomainPartition & domain )
+{
+  MeshLevel & meshLevel = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
+  localIndex const NC = m_numComponents;
+
+  forTargetSubRegions< WellElementSubRegion >( meshLevel, [&]( localIndex const,
+                                                               WellElementSubRegion & subRegion )
+  {
+    arrayView1d< integer const > const & wellElemGhostRank = subRegion.ghostRank();
+
+    arrayView2d< real64 const > const & wellElemCompDens =
+      subRegion.getReference< array2d< real64 > >( viewKeyStruct::globalCompDensityString );
+    arrayView2d< real64 > const & dWellElemCompDens =
+      subRegion.getReference< array2d< real64 > >( viewKeyStruct::deltaGlobalCompDensityString );
+
+    forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iwelem )
+    {
+      if( wellElemGhostRank[iwelem] < 0 )
+      {
+        for( localIndex ic = 0; ic < NC; ++ic )
+        {
+          // get the latest component density (i.e., after the update of dWellElemCompDens)
+          real64 const newDens = wellElemCompDens[iwelem][ic] + dWellElemCompDens[iwelem][ic];
+          // we allowed for some densities to be slightly negative in CheckSystemSolution
+          // if the new density is negative, chop back to zero
+          if( newDens < 0 )
+          {
+            dWellElemCompDens[iwelem][ic] = -wellElemCompDens[iwelem][ic];
+          }
+        }
+      }
+    } );
+  } );
+}
+
 
 void CompositionalMultiphaseWell::ResetStateToBeginningOfStep( DomainPartition & domain )
 {

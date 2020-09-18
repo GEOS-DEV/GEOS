@@ -4,7 +4,7 @@
     gravityVector="0.0, 0.0, -9.81">
     <SinglePhaseFVM
       name="SinglePhaseFlow"
-      logLevel="0"
+      logLevel="1"
       discretization="singlePhaseTPFA"
       targetRegions="{ Region2, Fracture }"
       fluidNames="{ water }"
@@ -19,6 +19,7 @@
 
     <EmbeddedSurfaceGenerator
       name="SurfaceGenerator"
+      logLevel="1"
       solidMaterialNames="{ rock }"
       targetRegions="{ Region2, Fracture }"
       fractureRegion="Fracture"/>
@@ -28,63 +29,41 @@
     <InternalMesh
       name="mesh1"
       elementTypes="{ C3D8 }"
-      xCoords="{ -5, 5 }"
-      yCoords="{ 0, 10 }"
+      xCoords="{ 0, 1 }"
+      yCoords="{ 0, 1 }"
       zCoords="{ 0, 1 }"
-      nx="{ 10 }"
-      ny="{ 10 }"
+      nx="{ 11 }"
+      ny="{ 11 }"
       nz="{ 1 }"
       cellBlockNames="{ cb1 }"/>
   </Mesh>
 
   <Geometry>
     <Box
-      name="left"
-      xMin="-0.01, -0.01, -0.01"
-      xMax=" 1.01, 1.01, 1.01"/>
-
-    <Box
-      name="right"
-      xMin=" 8.99, -0.01, -0.01"
-      xMax="10.01, 1.01, 1.01"/>
-
-    <Box
-      name="bottom"
-      xMin="-0.01, -0.01, -0.01"
-      xMax="10.01, 1.11, 1.01"/>
-
-    <Box
-      name="top"
-      xMin="-0.01, 8.99, -0.01"
-      xMax="10.01, 10.01, 1.01"/>
-
-    <Box
       name="source"
       xMin="-0.01, -0.01, -0.01"
-      xMax=" 0.01, 1.01, 1.01"/>
+      xMax=" 1.1,  0.1, 1.01"/>
+      
+      <Box
+      name="sink"
+      xMin="  -0.01,  0.9, -0.01"
+      xMax=" 1.01, 1.01, 1.01"/>
 
     <BoundedPlane
       name="FracturePlane"
       normal="1, 0, 0"
-      origin="0.5, 4.5, 0.5"
+      origin="0.5, 0.5, 0.5"
       lengthVector="0, 1, 0"
       widthVector="0, 0, 1"
-      dimensions="{ 5, 1 }"/>
+      dimensions="{ 0.5, 1 }"/>
   </Geometry>
 
   <Events
-    maxTime="50000">
-    <SoloEvent
-      name="output0"
-      target="/Outputs/siloOutput"/>
-
+    maxTime="2e3"
+    logLevel="3">
     <SoloEvent
       name="preFracture"
       target="/Solvers/SurfaceGenerator"/>
-
-    <SoloEvent
-      name="output1"
-      target="/Outputs/siloOutput"/>
 
     <PeriodicEvent
       name="solverApplications"
@@ -95,12 +74,12 @@
       name="outputs"
       cycleFrequency="1"
       targetExactTimestep="1"
-      target="/Outputs/siloOutput"/>
+      target="/Outputs/vtkOutput"/>
 
     <PeriodicEvent
       name="restarts"
-      timeFrequency="25000"
-      targetExactTimestep="0"
+      timeFrequency="1e3"
+      targetExactTimestep="1"
       target="/Outputs/sidreRestart"/>
   </Events>
 
@@ -121,8 +100,8 @@
 
     <EmbeddedSurfaceElementRegion
       name="Fracture"
-      defaultAperture = "1e-4"
-      materialList="{ water }"/>
+      defaultAperture = "1e-3"
+      materialList="{ water, rock }"/>
   </ElementRegions>
 
   <Constitutive>
@@ -150,7 +129,7 @@
       setNames="{ all }"
       objectPath="ElementRegions/Region2/cb1"
       fieldName="permeability"
-      scale="5.0e-19"/>
+      scale="1.0e-12"/>
 
     <FieldSpecification
       name="permy"
@@ -159,7 +138,7 @@
       setNames="{ all }"
       objectPath="ElementRegions/Region2/cb1"
       fieldName="permeability"
-      scale="5.0e-19"/>
+      scale="1.0e-12"/>
 
     <FieldSpecification
       name="permz"
@@ -168,7 +147,7 @@
       setNames="{ all }"
       objectPath="ElementRegions/Region2/cb1"
       fieldName="permeability"
-      scale="5.0e-19"/>
+      scale="1.0e-12"/>
 
     <FieldSpecification
       name="referencePorosity"
@@ -185,23 +164,30 @@
       objectPath="ElementRegions/Region2/cb1"
       fieldName="pressure"
       scale="0.0"/>
+      
+     <FieldSpecification
+      name="sourceTerm"
+      objectPath="ElementRegions/Region2/cb1"
+      fieldName="pressure"
+      scale="1e7"
+      setNames="{ source }"/>
 
     <FieldSpecification
-      name="source"
-      objectPath="ElementRegions/Fracture"
+      name="sinkTerm"
+      objectPath="ElementRegions/Region2/cb1"
       fieldName="pressure"
-      scale="1.0e7"
-      setNames="{ source }"/>
+      scale="0.0"
+      setNames="{ sink }"/>
   </FieldSpecifications>
 
   <Functions/>
 
   <Outputs>
-    <Silo
-      name="siloOutput"
+     <VTK
+      name="vtkOutput"
       plotFileRoot="fractureMatrixFlow"
-      plotLevel="1"/>
-
+      plotLevel="2"
+      writeBinaryData="0"/>
     <Restart
       name="sidreRestart"/>
   </Outputs>

@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -299,7 +299,7 @@ void DofManager::removeIndexArray( FieldDescription const & field )
 void DofManager::addField( string const & fieldName,
                            Location const location )
 {
-  addField( fieldName, location, 1, array1d< string >() );
+  addField( fieldName, location, 1, arrayView1d< string const >() );
 }
 
 // Just another interface to allow four parameters (no regions)
@@ -307,7 +307,7 @@ void DofManager::addField( string const & fieldName,
                            Location const location,
                            localIndex const components )
 {
-  addField( fieldName, location, components, array1d< string >() );
+  addField( fieldName, location, components, arrayView1d< string const >() );
 }
 
 // Just another interface to allow four parameters (no components)
@@ -878,7 +878,7 @@ void DofManager::setFiniteElementSparsityPattern( SparsityPattern< globalIndex >
     } );
   } );
 
-  arrayView1d< arrayView1d< arrayView2d< localIndex const, cells::NODE_MAP_USD > const > const > const & elemsToNodes = elemsToNodesArray.toViewConst();
+  arrayView1d< arrayView1d< arrayView2d< localIndex const, cells::NODE_MAP_USD > const > const > const & elemsToNodes = elemsToNodesArray.toNestedViewConst();
   ArrayOfArraysView< localIndex const > const & nodesToRegions = nodeManager.elementRegionList();
   ArrayOfArraysView< localIndex const > const & nodesToSubRegions = nodeManager.elementSubRegionList();
   ArrayOfArraysView< localIndex const > const & nodesToElems = nodeManager.elementList();
@@ -1299,8 +1299,8 @@ void vectorToFieldImpl( LOCAL_VECTOR const localVector,
                         localIndex const loComp,
                         localIndex const hiComp )
 {
-  arrayView1d< globalIndex const > const & dofNumber = manager.getReference< array1d< globalIndex > >( dofKey );
-  arrayView1d< integer const > const & ghostRank = manager.ghostRank();
+  arrayView1d< globalIndex const > const dofNumber = manager.getReference< array1d< globalIndex > >( dofKey );
+  arrayView1d< integer const > const ghostRank = manager.ghostRank();
 
   WrapperBase * const wrapper = manager.getWrapperBase( fieldName );
   GEOSX_ASSERT( wrapper != nullptr );

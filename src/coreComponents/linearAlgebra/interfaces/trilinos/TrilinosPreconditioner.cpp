@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -89,8 +89,6 @@ string const & getMLCoarseType( string const & value )
 std::unique_ptr< Epetra_Operator >
 CreateMLOperator( LinearSolverParameters const & params, Epetra_RowMatrix const & matrix )
 {
-  GEOSX_LAI_ASSERT_EQ( params.preconditionerType, "amg" );
-
   Teuchos::ParameterList list;
   GEOSX_LAI_CHECK_ERROR( ML_Epetra::SetDefaults( params.isSymmetric ? "SA" : "NSSA", list ) );
 
@@ -111,29 +109,29 @@ CreateMLOperator( LinearSolverParameters const & params, Epetra_RowMatrix const 
   return precond;
 }
 
-Ifpack::EPrecType getIfpackPrecondType( string const & type )
+Ifpack::EPrecType getIfpackPrecondType( LinearSolverParameters::PreconditionerType const & type )
 {
-  static std::map< string, Ifpack::EPrecType > const typeMap =
+  static std::map< LinearSolverParameters::PreconditionerType, Ifpack::EPrecType > const typeMap =
   {
-    { "iluk", Ifpack::ILU },
-    { "ilut", Ifpack::ILUT },
-    { "icc", Ifpack::IC },
-    { "ict", Ifpack::ICT },
-    { "jacobi", Ifpack::POINT_RELAXATION },
-    { "gs", Ifpack::POINT_RELAXATION },
-    { "sgs", Ifpack::POINT_RELAXATION },
+    { LinearSolverParameters::PreconditionerType::iluk, Ifpack::ILU },
+    { LinearSolverParameters::PreconditionerType::ilut, Ifpack::ILUT },
+    { LinearSolverParameters::PreconditionerType::icc, Ifpack::IC },
+    { LinearSolverParameters::PreconditionerType::ict, Ifpack::ICT },
+    { LinearSolverParameters::PreconditionerType::jacobi, Ifpack::POINT_RELAXATION },
+    { LinearSolverParameters::PreconditionerType::gs, Ifpack::POINT_RELAXATION },
+    { LinearSolverParameters::PreconditionerType::sgs, Ifpack::POINT_RELAXATION },
   };
 
   GEOSX_LAI_ASSERT_MSG( typeMap.count( type ) > 0, "Unsupported Trilinos/Ifpack preconditioner option: " << type );
   return typeMap.at( type );
 }
-string getIfpackRelaxationType( string const & type )
+string getIfpackRelaxationType( LinearSolverParameters::PreconditionerType const & type )
 {
-  static std::map< string, string > const typeMap =
+  static std::map< LinearSolverParameters::PreconditionerType, string > const typeMap =
   {
-    { "jacobi", "Jacobi" },
-    { "gs", "Gauss-Seidel" },
-    { "sgs", "symmetric Gauss-Seidel" },
+    { LinearSolverParameters::PreconditionerType::jacobi, "Jacobi" },
+    { LinearSolverParameters::PreconditionerType::gs, "Gauss-Seidel" },
+    { LinearSolverParameters::PreconditionerType::sgs, "symmetric Gauss-Seidel" },
   };
 
   GEOSX_LAI_ASSERT_MSG( typeMap.count( type ) > 0, "Unsupported Trilinos/Ifpack preconditioner option: " << type );
@@ -172,28 +170,33 @@ void TrilinosPreconditioner::compute( Matrix const & mat )
 {
   Base::compute( mat );
 
-  if( m_parameters.preconditionerType == "amg" )
+  switch( m_parameters.preconditionerType )
   {
-    m_precond = CreateMLOperator( m_parameters, mat.unwrapped() );
-  }
-  else if( m_parameters.preconditionerType == "mgr" )
-  {
-    GEOSX_ERROR( "MGR preconditioner available only through the hypre interface" );
-  }
-  else if( m_parameters.preconditionerType == "iluk" ||
-           m_parameters.preconditionerType == "ilut" ||
-           m_parameters.preconditionerType == "icc" ||
-           m_parameters.preconditionerType == "ict" )
-  {
-    m_precond = CreateIfpackOperator( m_parameters, mat.unwrapped() );
-  }
-  else if( m_parameters.preconditionerType == "none" )
-  {
-    m_precond.reset();
-  }
-  else
-  {
-    GEOSX_ERROR( "Unsupported preconditioner type: " << m_parameters.preconditionerType );
+    case LinearSolverParameters::PreconditionerType::amg:
+    {
+      m_precond = CreateMLOperator( m_parameters, mat.unwrapped() );
+      break;
+    }
+    case LinearSolverParameters::PreconditionerType::jacobi:
+    case LinearSolverParameters::PreconditionerType::gs:
+    case LinearSolverParameters::PreconditionerType::sgs:
+    case LinearSolverParameters::PreconditionerType::iluk:
+    case LinearSolverParameters::PreconditionerType::ilut:
+    case LinearSolverParameters::PreconditionerType::icc:
+    case LinearSolverParameters::PreconditionerType::ict:
+    {
+      m_precond = CreateIfpackOperator( m_parameters, mat.unwrapped() );
+      break;
+    }
+    case LinearSolverParameters::PreconditionerType::none:
+    {
+      m_precond.reset();
+      break;
+    }
+    default:
+    {
+      GEOSX_ERROR( "Preconditioner type not supported in Trilinos interface: " << m_parameters.preconditionerType );
+    }
   }
 }
 
@@ -206,7 +209,7 @@ void TrilinosPreconditioner::apply( Vector const & src,
   GEOSX_LAI_ASSERT_EQ( src.globalSize(), this->numGlobalCols() );
   GEOSX_LAI_ASSERT_EQ( dst.globalSize(), this->numGlobalRows() );
 
-  if( m_parameters.preconditionerType == "none" )
+  if( !m_precond )
   {
     dst.copy( src );
   }

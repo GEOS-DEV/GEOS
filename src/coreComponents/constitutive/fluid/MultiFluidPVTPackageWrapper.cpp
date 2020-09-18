@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -74,14 +74,16 @@ void MultiFluidPVTPackageWrapper::InitializePostSubGroups( Group * const group )
   createFluid();
 }
 
-void MultiFluidPVTPackageWrapper::DeliverClone( string const & name,
-                                                Group * const parent,
-                                                std::unique_ptr< ConstitutiveBase > & clone ) const
+std::unique_ptr< ConstitutiveBase >
+MultiFluidPVTPackageWrapper::deliverClone( string const & name,
+                                           Group * const parent ) const
 {
-  MultiFluidBase::DeliverClone( name, parent, clone );
+  std::unique_ptr< ConstitutiveBase > clone = MultiFluidBase::deliverClone( name, parent );
 
   MultiFluidPVTPackageWrapper & model = dynamicCast< MultiFluidPVTPackageWrapper & >( *clone );
   model.m_phaseTypes = m_phaseTypes;
+
+  return clone;
 }
 
 void MultiFluidPVTPackageWrapperUpdate::Compute( real64 pressure,

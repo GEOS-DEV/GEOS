@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -63,34 +63,15 @@ ProppantSlurryFluid::ProppantSlurryFluid( std::string const & name, Group * cons
 
 ProppantSlurryFluid::~ProppantSlurryFluid() = default;
 
-void ProppantSlurryFluid::AllocateConstitutiveData( dataRepository::Group * const parent,
+void ProppantSlurryFluid::allocateConstitutiveData( dataRepository::Group * const parent,
                                                     localIndex const numConstitutivePointsPerParentIndex )
 {
-  SlurryFluidBase::AllocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+  SlurryFluidBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 
   m_density.setValues< serialPolicy >( m_referenceDensity );
   m_viscosity.setValues< serialPolicy >( m_referenceViscosity );
 }
 
-void
-ProppantSlurryFluid::DeliverClone( string const & name,
-                                   Group * const parent,
-                                   std::unique_ptr< ConstitutiveBase > & clone ) const
-{
-  if( !clone )
-  {
-    clone = std::make_unique< ProppantSlurryFluid >( name, parent );
-  }
-  SlurryFluidBase::DeliverClone( name, parent, clone );
-  ProppantSlurryFluid & fluid = dynamicCast< ProppantSlurryFluid & >( *clone );
-
-  fluid.m_compressibility          = m_compressibility;
-  fluid.m_referenceProppantDensity = m_referenceProppantDensity;
-  fluid.m_referencePressure        = m_referencePressure;
-  fluid.m_referenceDensity         = m_referenceDensity;
-  fluid.m_referenceViscosity       = m_referenceViscosity;
-  fluid.m_maxProppantConcentration = m_maxProppantConcentration;
-}
 
 void ProppantSlurryFluid::PostProcessInput()
 {

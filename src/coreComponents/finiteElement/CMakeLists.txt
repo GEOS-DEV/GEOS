@@ -3,37 +3,29 @@
 #
 set( finiteElement_headers
      FiniteElementDiscretization.hpp
-     ElementLibrary/FiniteElement.h
-     ElementLibrary/FiniteElementBase.h
-     ElementLibrary/TetrahedralElement.hpp
+     FiniteElementDiscretizationManager.hpp
+     FiniteElementDispatch.hpp
      Kinematics.h
-     basis/BasisBase.hpp
-     basis/LagrangeBasis.hpp
-     basis/Polynomial.hpp
-     quadrature/GaussQuadrature.hpp
-     quadrature/QuadratureBase.hpp
-     quadrature/QuadratureRuleManager.hpp
      kernelInterface/KernelBase.hpp
      kernelInterface/ImplicitKernelBase.hpp
      FiniteElementDiscretizationManager.hpp
-     basis/BasisFunctionManager.hpp
+     FiniteElementDispatch.hpp
+     elementFormulations/FiniteElementBase.hpp
+     elementFormulations/H1_Hexahedron_Lagrange1_GaussLegendre2.hpp
+     elementFormulations/H1_QuadrilateralFace_Lagrange1_GaussLegendre2.hpp
+     elementFormulations/H1_Pyramid_Lagrange1_Gauss5.hpp
+     elementFormulations/H1_Tetrahedron_Lagrange1_Gauss1.hpp
+     elementFormulations/H1_TriangleFace_Lagrange1_Gauss1.hpp
+     elementFormulations/H1_Wedge_Lagrange1_Gauss6.hpp
+     elementFormulations/LagrangeBasis1.hpp
+     elementFormulations/LagrangeBasis2.hpp
    )
 #
 # Specify all sources
 #
 set( finiteElement_sources
      FiniteElementDiscretization.cpp
-     ElementLibrary/FiniteElement.cpp
-     ElementLibrary/FiniteElementBase.cpp
-     ElementLibrary/TetrahedralElement.cpp
-     basis/BasisBase.cpp
-     basis/LagrangeBasis.cpp
-     basis/Polynomial.cpp
-     quadrature/GaussQuadrature.cpp
-     quadrature/QuadratureBase.cpp
-     quadrature/QuadratureRuleManager.cpp
      FiniteElementDiscretizationManager.cpp
-     basis/BasisFunctionManager.cpp
    )
 
 if( BUILD_OBJ_LIBS)

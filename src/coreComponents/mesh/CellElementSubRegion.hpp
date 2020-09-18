@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -30,7 +30,6 @@ namespace geosx
 class CellElementSubRegion : public CellBlock
 {
 public:
-
   /**
    * @name Constructor / Destructor
    */
@@ -151,8 +150,8 @@ public:
   /**
    * @brief @return The array of shape function derivatives.
    */
-  arrayView4d< real64 const > const & dNdX() const
-  { return m_dNdX.toViewConst(); }
+  arrayView4d< real64 const > dNdX() const
+  { return m_dNdX; }
 
   /**
    * @brief @return The array of jacobian determinantes.
@@ -163,8 +162,8 @@ public:
   /**
    * @brief @return The array of jacobian determinantes.
    */
-  arrayView2d< real64 const > const & detJ() const
-  { return m_detJ.toViewConst(); }
+  arrayView2d< real64 const > detJ() const
+  { return m_detJ; }
 
   /// Map used for constitutive grouping
   map< string, localIndex_array > m_constitutiveGrouping;

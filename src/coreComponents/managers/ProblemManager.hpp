@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -37,7 +37,10 @@ namespace geosx
 
 class PhysicsSolverManager;
 class DomainPartition;
-
+namespace constitutive
+{
+class ConstitutiveManager;
+}
 /**
  * @class ProblemManager
  * @brief This is the class handling the operation flow of the problem being ran in GEOSX
@@ -130,7 +133,8 @@ public:
   void GenerateMesh();
 
   /**
-   * @brief Applies numerical methods to objects throughout the code
+   * @brief Allocates constitutive relations according to the discretizations
+   *   on each subregion.
    */
   void ApplyNumericalMethods();
 
@@ -246,6 +250,7 @@ public:
     dataRepository::GroupKey numericalMethodsManager = { numericalMethodsManagerString }; ///< Numerical methods key
     dataRepository::GroupKey outputManager = { "Outputs" };                               ///< Outputs key
     dataRepository::GroupKey physicsSolverManager = { "Solvers" };                        ///< Solvers key
+    dataRepository::GroupKey tasksManager = { "Tasks" };                                  ///< Tasks key
   } groupKeys; ///< Child group viewKeys
 
   /**
@@ -273,6 +278,29 @@ protected:
   virtual void PostProcessInput() override final;
 
 private:
+
+  /**
+   * @brief Determine the number of quadrature points required for each
+   *   subregion.
+   * @param meshBodies Reference to the mesh bodies object.
+   * @return A map containing the number of quadrature points for every
+   *   region/subregion key pair.
+   *
+   * Checks all physics solvers for targetRegions and constitutive models to
+   * determine the minimum number of quadrature points for each subregion.
+   */
+  map< std::pair< string, string >, localIndex > calculateRegionQuadrature( Group & meshBodies );
+
+  /**
+   * @brief Allocate constitutive relations on each subregion with appropriate
+   *   number of quadrature point.
+   * @param meshBodies Reference to the mesh bodies object.
+   * @param constitutiveManager The constitutive manager object.
+   * @param regionQuadrature The map containing the number of quadrature points for every subregion.
+   */
+  void setRegionQuadrature( Group & meshBodies,
+                            constitutive::ConstitutiveManager const & constitutiveManager,
+                            map< std::pair< string, string >, localIndex > const & regionQuadrature );
 
   /// The PhysicsSolverManager
   PhysicsSolverManager * m_physicsSolverManager;

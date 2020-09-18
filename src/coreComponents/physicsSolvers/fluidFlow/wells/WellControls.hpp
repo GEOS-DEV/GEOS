@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -20,6 +20,7 @@
 #ifndef GEOSX_PHYSICSSOLVERS_FLUIDFLOW_WELLS_WELLCONTROLS_HPP
 #define GEOSX_PHYSICSSOLVERS_FLUIDFLOW_WELLS_WELLCONTROLS_HPP
 
+#include "common/EnumStrings.hpp"
 #include "dataRepository/Group.hpp"
 
 namespace geosx
@@ -44,7 +45,7 @@ public:
   /** Type of wells
    * Either producer or injector.
    */
-  enum class Type
+  enum class Type : integer
   {
     PRODUCER,  /**< A production well */
     INJECTOR   /**< An injection well */
@@ -54,7 +55,7 @@ public:
   /** Types of well controls
    * Used to specifiy a well's operating conditions
    */
-  enum class Control
+  enum class Control : integer
   {
     BHP,  /**< The well operates at a specified bottom hole pressure (BHP) */
     GASRATE, /**< The well operates at a specified gas flow rate */
@@ -175,7 +176,7 @@ public:
    * @brief Const accessor for the composition of the injection rate
    * @return a global component fraction vector
    */
-  arrayView1d< real64 const > const & GetInjectionStream() const { return m_injectionStream; }
+  arrayView1d< real64 const > GetInjectionStream() const { return m_injectionStream; }
 
   ///@}
 
@@ -234,17 +235,11 @@ protected:
 
 private:
 
-  /// Well type as string
-  string m_typeString;
-
   /// Well type (as Type enum)
   Type m_type;
 
   /// Reference index (currently unused)
   localIndex m_refWellElemIndex;
-
-  /// Well controls as string
-  string m_inputControlString;
 
   /// Well controls as a Control enum
   Control m_currentControl;
@@ -259,6 +254,10 @@ private:
   array1d< real64 >  m_injectionStream;
 
 };
+
+ENUM_STRINGS( WellControls::Type, "producer", "injector" )
+
+ENUM_STRINGS( WellControls::Control, "BHP", "gasRate", "oilRate", "waterRate", "liquidRate" )
 
 } //namespace geosx
 

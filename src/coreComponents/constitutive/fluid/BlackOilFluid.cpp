@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -36,23 +36,6 @@ using namespace dataRepository;
 namespace constitutive
 {
 
-namespace
-{
-
-BlackOilFluid::FluidType getBlackOilFluidType( string const & name )
-{
-  static std::map< string, BlackOilFluid::FluidType > const fluidTypes =
-  {
-    { "LiveOil", BlackOilFluid::FluidType::LiveOil },
-    { "DeadOil", BlackOilFluid::FluidType::DeadOil },
-  };
-  auto const it = fluidTypes.find( name );
-  GEOSX_ERROR_IF( it == fluidTypes.end(), "Black-oil fluid type not supported by PVTPackage: " << name );
-  return it->second;
-}
-
-}
-
 BlackOilFluid::BlackOilFluid( std::string const & name, Group * const parent )
   : MultiFluidPVTPackageWrapper( name, parent )
 {
@@ -68,33 +51,24 @@ BlackOilFluid::BlackOilFluid( std::string const & name, Group * const parent )
     setRestartFlags( RestartFlags::NO_WRITE )->
     setDescription( "List of filenames with input PVT tables" );
 
-  registerWrapper( viewKeyStruct::fluidTypeString, &m_fluidTypeString )->
+  registerWrapper( viewKeyStruct::fluidTypeString, &m_fluidType )->
     setInputFlag( InputFlags::REQUIRED )->
-    setDescription( "Type of black-oil fluid (LiveOil/DeadOil)" );
+    setDescription( "Type of black-oil fluid. Valid options:\n* " + EnumStrings< FluidType >::concat( "\n* " ) );
 }
 
 BlackOilFluid::~BlackOilFluid()
 {}
 
-void
-BlackOilFluid::DeliverClone( string const & name,
-                             Group * const parent,
-                             std::unique_ptr< ConstitutiveBase > & clone ) const
+std::unique_ptr< ConstitutiveBase >
+BlackOilFluid::deliverClone( string const & name,
+                             Group * const parent ) const
 {
-  if( !clone )
-  {
-    clone = std::make_unique< BlackOilFluid >( name, parent );
-  }
-
-  MultiFluidPVTPackageWrapper::DeliverClone( name, parent, clone );
+  std::unique_ptr< ConstitutiveBase >
+  clone = MultiFluidPVTPackageWrapper::deliverClone( name, parent );
   BlackOilFluid & fluid = dynamicCast< BlackOilFluid & >( *clone );
 
-  fluid.m_surfaceDensities = m_surfaceDensities;
-  fluid.m_tableFiles       = m_tableFiles;
-  fluid.m_fluidTypeString  = m_fluidTypeString;
-  fluid.m_fluidType        = m_fluidType;
-
   fluid.createFluid();
+  return clone;
 }
 
 void BlackOilFluid::PostProcessInput()
@@ -118,9 +92,7 @@ void BlackOilFluid::PostProcessInput()
   BOFLUID_CHECK_INPUT_LENGTH( m_surfaceDensities, NP, viewKeyStruct::surfaceDensitiesString )
   BOFLUID_CHECK_INPUT_LENGTH( m_tableFiles, NP, viewKeyStruct::surfaceDensitiesString )
 
-#undef BOFLUID_CHECK_INPUT_LENGTH
-
-  m_fluidType = getBlackOilFluidType( m_fluidTypeString );
+  #undef BOFLUID_CHECK_INPUT_LENGTH
 }
 
 void BlackOilFluid::createFluid()

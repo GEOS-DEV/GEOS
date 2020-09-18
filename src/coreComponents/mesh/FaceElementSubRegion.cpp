@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -166,32 +166,35 @@ template< bool DOPACK >
 localIndex FaceElementSubRegion::PackUpDownMapsPrivate( buffer_unit_type * & buffer,
                                                         arrayView1d< localIndex const > const & packList ) const
 {
-  localIndex packedSize = 0;
+  arrayView1d< globalIndex const > const localToGlobal = this->localToGlobalMap();
+  arrayView1d< globalIndex const > const nodeLocalToGlobal = m_toNodesRelation.RelatedObjectLocalToGlobal();
+  arrayView1d< globalIndex const > const edgeLocalToGlobal = m_toEdgesRelation.RelatedObjectLocalToGlobal();
+  arrayView1d< globalIndex const > const faceLocalToGlobal = m_toFacesRelation.RelatedObjectLocalToGlobal();
 
-  packedSize += bufferOps::Pack< DOPACK >( buffer, string( viewKeyStruct::nodeListString ) );
+  localIndex packedSize = bufferOps::Pack< DOPACK >( buffer, string( viewKeyStruct::nodeListString ) );
 
   packedSize += bufferOps::Pack< DOPACK >( buffer,
-                                           m_toNodesRelation.Base(),
+                                           m_toNodesRelation.Base().toViewConst(),
                                            m_unmappedGlobalIndicesInToNodes,
                                            packList,
-                                           this->localToGlobalMap(),
-                                           m_toNodesRelation.RelatedObjectLocalToGlobal() );
+                                           localToGlobal,
+                                           nodeLocalToGlobal );
 
   packedSize += bufferOps::Pack< DOPACK >( buffer, string( viewKeyStruct::edgeListString ) );
   packedSize += bufferOps::Pack< DOPACK >( buffer,
-                                           m_toEdgesRelation.Base(),
+                                           m_toEdgesRelation.Base().toViewConst(),
                                            m_unmappedGlobalIndicesInToEdges,
                                            packList,
-                                           this->localToGlobalMap(),
-                                           m_toEdgesRelation.RelatedObjectLocalToGlobal() );
+                                           localToGlobal,
+                                           edgeLocalToGlobal );
 
   packedSize += bufferOps::Pack< DOPACK >( buffer, string( viewKeyStruct::faceListString ) );
   packedSize += bufferOps::Pack< DOPACK >( buffer,
                                            m_toFacesRelation.Base().toViewConst(),
                                            m_unmappedGlobalIndicesInToFaces,
                                            packList,
-                                           this->localToGlobalMap(),
-                                           m_toFacesRelation.RelatedObjectLocalToGlobal() );
+                                           localToGlobal,
+                                           faceLocalToGlobal );
 
 
   packedSize += bufferOps::Pack< DOPACK >( buffer, string( viewKeyStruct::faceElementsToCellRegionsString ) );
@@ -252,7 +255,7 @@ localIndex FaceElementSubRegion::UnpackUpDownMaps( buffer_unit_type const * & bu
 
   unPackedSize += bufferOps::Unpack( buffer,
                                      m_faceElementsToCells,
-                                     packList,
+                                     packList.toViewConst(),
                                      m_faceElementsToCells.getElementRegionManager(),
                                      overwriteUpMaps );
 

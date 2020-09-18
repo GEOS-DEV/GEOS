@@ -39,7 +39,7 @@ where the scaled water-phase volume fraction is computed as:
 
 The gas-phase capillary pressure is computed analogously.
 
-Usage
+Parameters
 ===========================
 
 The capillary pressure constitutive model is listed in
@@ -74,7 +74,7 @@ water Water phase
 
 * ``capPressureEpsilon`` - The parameter :math:`\epsilon`. This parameter is used for both the water-phase and gas-phase capillary pressure. To avoid extremely large, or infinite, capillary pressure values, we set :math:`P_{c,w}(S_w) := P_{c,w}(\epsilon)` whenever :math:`S_w < \epsilon`. The gas-phase capillary pressure is treated analogously.
 
-Input example
+Example
 ======================
 
 .. code-block:: xml

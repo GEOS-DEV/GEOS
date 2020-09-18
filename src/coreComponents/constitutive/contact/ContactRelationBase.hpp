@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -61,11 +61,7 @@ public:
    */
   static string CatalogName() { return "Contact"; }
 
-  virtual string GetCatalogName() override { return CatalogName(); }
-
-  virtual void DeliverClone( string const & GEOSX_UNUSED_PARAM( name ),
-                             Group * const GEOSX_UNUSED_PARAM( parent ),
-                             std::unique_ptr< ConstitutiveBase > & GEOSX_UNUSED_PARAM( clone ) ) const override {}
+  virtual string getCatalogName() const override { return CatalogName(); }
 
   virtual Group * CreateChild( string const & catalogKey,
                                string const & name ) override;
