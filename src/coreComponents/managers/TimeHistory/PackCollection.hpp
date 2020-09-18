@@ -65,7 +65,18 @@ public:
    *       from SortedArrayView instead of only ArrayViews will remove this
    *       duplication.
    */
-  void updateSetsIndices( ProblemManager & problemManager );
+  virtual void updateSetsIndices( DomainPartition & domain ) override final;
+
+  /**
+    * @brief Filters out ghost rank indices from setIndices to be collected.
+    * @param setIndex
+    * @param numIndices
+    * @param set
+    * @param ghostrank
+    */
+  void filterGhostIndices(localIndex const setIndex,
+          array1d< localIndex > & set,
+          arrayView1d< integer const > const & ghostRank);
 
   /// @cond DO_NOT_DOCUMENT
   struct viewKeysStruct
@@ -81,9 +92,9 @@ protected:
   /**
    * @brief Get the target object from which to collect time history data.
    * @param domain The problem domain.
-   * @return The target object as a group.
+   * @return The target object as an ObjectManager.
    */
-  Group const * getTargetObject( DomainPartition & domain );
+  ObjectManagerBase const * getTargetObject( DomainPartition & domain );
 
   /// @copydoc geosx::HistoryCollection::collect
   virtual void collect( DomainPartition & domain,

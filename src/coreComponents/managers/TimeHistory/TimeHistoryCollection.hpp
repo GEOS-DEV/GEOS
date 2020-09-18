@@ -106,6 +106,7 @@ public:
       // TODO : grab the metadata again, determine if the size has changed, update the buffer call if so...
       buffer_unit_type * buffer = m_bufferCalls[collectionIdx]();
       DomainPartition & domain = dynamicCast< DomainPartition & >( *domain_group );
+      updateSetsIndices( domain );
       collect( domain, time_n, dt, collectionIdx, buffer );
     }
     int rank = MpiWrapper::Comm_rank();
@@ -172,6 +173,8 @@ public:
     GEOSX_UNUSED_VAR( metaIdx );
     return std::unique_ptr< HistoryCollection >( nullptr );
   }
+
+  virtual void updateSetsIndices ( DomainPartition & domain ) = 0;
 
 protected:
 
