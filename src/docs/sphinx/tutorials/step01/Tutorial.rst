@@ -7,9 +7,10 @@ Tutorial 1: First steps
 **Context**
 
 In this tutorial, we use a single-phase flow solver (see :ref:`SinglePhaseFlow`)
-from GEOSX to solve for pressure propagation on a simple 10x10x10 cube mesh.
-A pressure source term will be set on one face of the cube, and
-a sink term will be set on the opposite face of the cube.
+from GEOSX to solve for pressure propagation on a simple 10x10x10 cube mesh
+with an anisotropic permeability.
+A pressure source term will be set in one corner of the cube, and
+a sink term will be set in the opposite corner of the cube.
 
 **Objectives**
 
@@ -193,7 +194,7 @@ Geometry tag
 
 The **Geometry** tag is useful to define specific parts of a mesh and assign properties to them.
 Here, for instance, we use two **Box** elements to specify where our source and sink pressure terms are located.
-We want the source to be all elements along the x=0 face of the domain, and the sink to be all the elements at x=10.
+We want the source to be the element in the x=0, y=0, z=0 corner of the domain, and the sink to be the element in the opposite corner.
 Later in the file, we will assign a high pressure to the source box, and a low pressure to the sink box.
 
 Note that for an element to be considered **inside** a geometric region, it needs to have all its vertices inside the region.
@@ -376,7 +377,8 @@ We also specify a constant pressure boundary condition
 on the regions identified as ``source`` and ``sink`` (notice the absence of ``initialCondition``
 flag for this constant boundary condition).
 
-All units again are S.I. units; a permeability set to 1.0e-12 m\ :sup:`2` corresponds approximately to 1 Darcy.
+All units again are S.I. units.  The x- and y-permeability are set to 1.0e-12 m\ :sup:`2` (corresponding to approximately to 1 Darcy).
+It is important to notice that the permeability is anisotropic, and z-permeability is two orders of magnitude smaller.
 
 
 .. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/integratedTests/singlePhaseFlow/3D_10x10x10_compressible.xml
@@ -497,7 +499,7 @@ For instance, here are reported diagonal pressure profile from sink to source bl
 .. image:: Plots.png
    :width: 400px
 
-.. image:: IntHexMovie.mpg
+.. image:: IntHexMovie.gif
    :width: 500px
 
 

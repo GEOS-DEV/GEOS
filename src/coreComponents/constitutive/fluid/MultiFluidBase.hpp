@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -199,11 +199,7 @@ public:
 
   virtual ~MultiFluidBase() override;
 
-  virtual void DeliverClone( string const & name,
-                             Group * const parent,
-                             std::unique_ptr< ConstitutiveBase > & clone ) const override;
-
-  virtual void AllocateConstitutiveData( dataRepository::Group * const parent,
+  virtual void allocateConstitutiveData( dataRepository::Group * const parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
   // *** MultiFluid-specific interface
@@ -231,7 +227,7 @@ public:
    * @param ic component index
    * @return name of ic-th fluid component
    */
-  arrayView1d< string const > const & componentNames() const { return m_componentNames; }
+  arrayView1d< string const > componentNames() const { return m_componentNames; }
 
   /**
    * @return number of fluid phases in the model
@@ -242,7 +238,7 @@ public:
    * @param ip phase index
    * @return name of ip-th fluid phase
    */
-  arrayView1d< string const > const & phaseNames() const { return m_phaseNames; }
+  arrayView1d< string const > phaseNames() const { return m_phaseNames; }
 
   /**
    * @brief Get the mass flag.
@@ -259,30 +255,30 @@ public:
    */
   void setMassFlag( bool flag );
 
-  arrayView3d< real64 const > const & phaseFraction() const { return m_phaseFraction; }
-  arrayView3d< real64 const > const & dPhaseFraction_dPressure() const { return m_dPhaseFraction_dPressure; }
-  arrayView3d< real64 const > const & dPhaseFraction_dTemperature() const { return m_dPhaseFraction_dTemperature; }
-  arrayView4d< real64 const > const & dPhaseFraction_dGlobalCompFraction() const { return m_dPhaseFraction_dGlobalCompFraction; }
+  arrayView3d< real64 const > phaseFraction() const { return m_phaseFraction; }
+  arrayView3d< real64 const > dPhaseFraction_dPressure() const { return m_dPhaseFraction_dPressure; }
+  arrayView3d< real64 const > dPhaseFraction_dTemperature() const { return m_dPhaseFraction_dTemperature; }
+  arrayView4d< real64 const > dPhaseFraction_dGlobalCompFraction() const { return m_dPhaseFraction_dGlobalCompFraction; }
 
-  arrayView3d< real64 const > const & phaseDensity() const { return m_phaseDensity; }
-  arrayView3d< real64 const > const & dPhaseDensity_dPressure() const { return m_dPhaseDensity_dPressure; }
-  arrayView3d< real64 const > const & dPhaseDensity_dTemperature() const { return m_dPhaseDensity_dTemperature; }
-  arrayView4d< real64 const > const & dPhaseDensity_dGlobalCompFraction() const { return m_dPhaseDensity_dGlobalCompFraction; }
+  arrayView3d< real64 const > phaseDensity() const { return m_phaseDensity; }
+  arrayView3d< real64 const > dPhaseDensity_dPressure() const { return m_dPhaseDensity_dPressure; }
+  arrayView3d< real64 const > dPhaseDensity_dTemperature() const { return m_dPhaseDensity_dTemperature; }
+  arrayView4d< real64 const > dPhaseDensity_dGlobalCompFraction() const { return m_dPhaseDensity_dGlobalCompFraction; }
 
-  arrayView3d< real64 const > const & phaseViscosity() const { return m_phaseViscosity; }
-  arrayView3d< real64 const > const & dPhaseViscosity_dPressure() const { return m_dPhaseViscosity_dPressure; }
-  arrayView3d< real64 const > const & dPhaseViscosity_dTemperature() const { return m_dPhaseViscosity_dTemperature; }
-  arrayView4d< real64 const > const & dPhaseViscosity_dGlobalCompFraction() const { return m_dPhaseViscosity_dGlobalCompFraction; }
+  arrayView3d< real64 const > phaseViscosity() const { return m_phaseViscosity; }
+  arrayView3d< real64 const > dPhaseViscosity_dPressure() const { return m_dPhaseViscosity_dPressure; }
+  arrayView3d< real64 const > dPhaseViscosity_dTemperature() const { return m_dPhaseViscosity_dTemperature; }
+  arrayView4d< real64 const > dPhaseViscosity_dGlobalCompFraction() const { return m_dPhaseViscosity_dGlobalCompFraction; }
 
-  arrayView4d< real64 const > const & phaseCompFraction() const { return m_phaseCompFraction; }
-  arrayView4d< real64 const > const & dPhaseCompFraction_dPressure() const { return m_dPhaseCompFraction_dPressure; }
-  arrayView4d< real64 const > const & dPhaseCompFraction_dTemperature() const { return m_dPhaseCompFraction_dTemperature; }
-  arrayView5d< real64 const > const & dPhaseCompFraction_dGlobalCompFraction() const { return m_dPhaseCompFraction_dGlobalCompFraction; }
+  arrayView4d< real64 const > phaseCompFraction() const { return m_phaseCompFraction; }
+  arrayView4d< real64 const > dPhaseCompFraction_dPressure() const { return m_dPhaseCompFraction_dPressure; }
+  arrayView4d< real64 const > dPhaseCompFraction_dTemperature() const { return m_dPhaseCompFraction_dTemperature; }
+  arrayView5d< real64 const > dPhaseCompFraction_dGlobalCompFraction() const { return m_dPhaseCompFraction_dGlobalCompFraction; }
 
-  arrayView2d< real64 const > const & totalDensity() const { return m_totalDensity; }
-  arrayView2d< real64 const > const & dTotalDensity_dPressure() const { return m_dTotalDensity_dPressure; }
-  arrayView2d< real64 const > const & dTotalDensity_dTemperature() const { return m_dTotalDensity_dTemperature; }
-  arrayView3d< real64 const > const & dTotalDensity_dGlobalCompFraction() const { return m_dTotalDensity_dGlobalCompFraction; }
+  arrayView2d< real64 const > totalDensity() const { return m_totalDensity; }
+  arrayView2d< real64 const > dTotalDensity_dPressure() const { return m_dTotalDensity_dPressure; }
+  arrayView2d< real64 const > dTotalDensity_dTemperature() const { return m_dTotalDensity_dTemperature; }
+  arrayView3d< real64 const > dTotalDensity_dGlobalCompFraction() const { return m_dTotalDensity_dGlobalCompFraction; }
 
   struct viewKeyStruct : ConstitutiveBase::viewKeyStruct
   {
@@ -315,6 +311,8 @@ public:
     static constexpr auto dTotalDensity_dPressureString                  = "dTotalDensity_dPressure";                // dRho_t/dP
     static constexpr auto dTotalDensity_dTemperatureString               = "dTotalDensity_dTemperature";             // dRho_t/dT
     static constexpr auto dTotalDensity_dGlobalCompFractionString        = "dTotalDensity_dGlobalCompFraction";      // dRho_t/dz
+
+    static constexpr auto useMassString                                  = "useMass";
   } viewKeysMultiFluidBase;
 
 protected:
@@ -329,7 +327,7 @@ protected:
   void ResizeFields( localIndex const size, localIndex const numPts );
 
   // flag indicating whether input/output component fractions are treated as mass fractions
-  bool m_useMass;
+  int m_useMass;
 
   // general fluid composition information
 

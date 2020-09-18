@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -365,6 +365,71 @@ struct AccumulationKernel< FaceElementSubRegion >
     } );
   }
 };
+
+template<>
+struct AccumulationKernel< EmbeddedSurfaceSubRegion >
+{
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  static void
+  Compute( real64 const & densNew,
+           real64 const & densOld,
+           real64 const & dDens_dPres,
+           real64 const & volume,
+           real64 const & dVol,
+           real64 & localAccum,
+           real64 & localAccumJacobian )
+  {
+    real64 const volNew = volume + dVol;
+
+    // Residual contribution is mass conservation in the cell
+    localAccum = densNew * volNew - densOld * volume;
+
+    // Derivative of residual wrt to pressure in the cell
+    localAccumJacobian =  dDens_dPres * volNew;
+  }
+
+  template< bool COUPLED, typename POLICY >
+  static void Launch( localIndex const size,
+                      globalIndex const rankOffset,
+                      arrayView1d< globalIndex const > const & dofNumber,
+                      arrayView1d< integer const > const & elemGhostRank,
+                      arrayView1d< real64 const > const & densOld,
+                      arrayView1d< real64 const > const & volume,
+                      arrayView1d< real64 const > const & dVol,
+                      arrayView2d< real64 const > const & dens,
+                      arrayView2d< real64 const > const & dDens_dPres,
+                      arrayView1d< real64 const > const & poroMultiplier,
+                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                      arrayView1d< real64 > const & localRhs )
+  {
+    forAll< POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const ei )
+    {
+      if( elemGhostRank[ei] < 0 )
+      {
+        real64 localAccum, localAccumJacobian;
+
+        real64 const effectiveVolume = volume[ei] * poroMultiplier[ei];
+
+        Compute( dens[ei][0],
+                 densOld[ei],
+                 dDens_dPres[ei][0],
+                 effectiveVolume,
+                 dVol[ei],
+                 localAccum,
+                 localAccumJacobian );
+
+        globalIndex const elemDOF = dofNumber[ei];
+        localIndex const localElemDof = elemDOF - rankOffset;
+
+        // add contribution to global residual and jacobian (no need for atomics here)
+        localMatrix.addToRow< serialAtomic >( localElemDof, &elemDOF, &localAccumJacobian, 1 );
+        localRhs[localElemDof] += localAccum;
+      }
+    } );
+  }
+};
+
 
 /******************************** FluidUpdateKernel ********************************/
 

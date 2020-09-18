@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -19,7 +19,8 @@
 #ifndef GEOSX_CONSITUTIVE_EXPONENTIALRELATION_HPP_
 #define GEOSX_CONSITUTIVE_EXPONENTIALRELATION_HPP_
 
-#include <common/DataTypes.hpp>
+#include "common/DataTypes.hpp"
+#include "common/EnumStrings.hpp"
 
 #include <cmath>
 
@@ -32,12 +33,14 @@ namespace constitutive
 /**
  * @enum Enumeration describing available approximations of the exponent
  */
-enum class ExponentApproximationType
+enum class ExponentApproximationType : integer
 {
   Full,
   Linear,
   Quadratic
 };
+
+ENUM_STRINGS( ExponentApproximationType, "exponential", "linear", "quadratic" )
 
 namespace detail
 {
@@ -298,19 +301,6 @@ private:
   T m_alpha;
 
 };
-
-inline ExponentApproximationType stringToExponentType( string const & model )
-{
-  static std::map< string, ExponentApproximationType > const approxTypes =
-  {
-    { "linear", ExponentApproximationType::Linear },
-    { "quadratic", ExponentApproximationType::Quadratic },
-    { "exponential", ExponentApproximationType::Full },
-  };
-  auto const it = approxTypes.find( model );
-  GEOSX_ERROR_IF( it == approxTypes.end(), "Model type not supported: " << model );
-  return it->second;
-}
 
 template< ExponentApproximationType EAT >
 struct ExponentApproximationTypeWrapper

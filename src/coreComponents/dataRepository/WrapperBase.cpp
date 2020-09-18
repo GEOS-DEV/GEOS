@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -45,26 +45,22 @@ WrapperBase::WrapperBase( std::string const & name,
 WrapperBase::~WrapperBase()
 {}
 
-
-// WrapperBase::WrapperBase( WrapperBase && source ):
-//   m_name( std::move( source.m_name ) ),
-//   m_parent( source.m_parent ),
-//   m_sizedFromParent( source.m_sizedFromParent ),
-//   m_restart_flags( source.m_restart_flags )
-//   m_conduitNode( source.m_conduitNode )
-// {}
-
 void WrapperBase::resize()
 {
   resize( m_parent->size());
 }
 
-void WrapperBase::CopyWrapperAttributes( WrapperBase const & source )
+void WrapperBase::copyWrapperAttributes( WrapperBase const & source )
 {
-  m_name = source.m_name;
+  GEOSX_ERROR_IF( source.m_name != this->m_name,
+                  "Tried to clone wrapper attributes from a wrapper with a different name" );
   m_sizedFromParent = source.m_sizedFromParent;
   m_restart_flags = source.m_restart_flags;
+  m_plotLevel  = source.m_plotLevel;
+  m_inputFlag = source.m_inputFlag;
+  m_description = source.m_description;
 }
+
 
 string WrapperBase::dumpInputOptions( bool const outputHeader ) const
 {

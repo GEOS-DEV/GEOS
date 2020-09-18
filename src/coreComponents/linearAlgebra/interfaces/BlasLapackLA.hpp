@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -48,7 +48,7 @@ struct BlasLapackLA
    * @enum  RandomNumberDistribution
    * @brief This enum class specifies the type of distribution for generating random real numbers.
    */
-  enum class RandomNumberDistribution : int
+  enum class RandomNumberDistribution : integer
   {
     UNIFORM_01 = 1,   //!< uniform distribution (0,1)
     UNIFORM_m1p1 = 2, //!< uniform distribution (-1,1)

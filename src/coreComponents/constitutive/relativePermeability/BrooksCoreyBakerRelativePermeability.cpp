@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -60,32 +60,14 @@ BrooksCoreyBakerRelativePermeability::BrooksCoreyBakerRelativePermeability( std:
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Maximum rel perm value for the pair (gas phase, oil phase) at residual water saturation" );
 
+  registerWrapper( viewKeyStruct::volFracScaleString, &m_volFracScale )->
+    setApplyDefaultValue( 1.0 )->
+    setDescription( "Factor used to scale the phase capillary pressure, defined as: one minus the sum of the phase minimum volume fractions." );
+
 }
 
 BrooksCoreyBakerRelativePermeability::~BrooksCoreyBakerRelativePermeability()
 {}
-
-void
-BrooksCoreyBakerRelativePermeability::DeliverClone( string const & name,
-                                                    Group * const parent,
-                                                    std::unique_ptr< ConstitutiveBase > & clone ) const
-{
-  if( !clone )
-  {
-    clone = std::make_unique< BrooksCoreyBakerRelativePermeability >( name, parent );
-  }
-
-  RelativePermeabilityBase::DeliverClone( name, parent, clone );
-  BrooksCoreyBakerRelativePermeability & relPerm = dynamicCast< BrooksCoreyBakerRelativePermeability & >( *clone );
-
-  relPerm.m_phaseMinVolumeFraction  = m_phaseMinVolumeFraction;
-  relPerm.m_waterOilRelPermExponent = m_waterOilRelPermExponent;
-  relPerm.m_waterOilRelPermMaxValue = m_waterOilRelPermMaxValue;
-  relPerm.m_gasOilRelPermExponent   = m_gasOilRelPermExponent;
-  relPerm.m_gasOilRelPermMaxValue   = m_gasOilRelPermMaxValue;
-  relPerm.m_volFracScale            = m_volFracScale;
-}
-
 
 void BrooksCoreyBakerRelativePermeability::PostProcessInput()
 {

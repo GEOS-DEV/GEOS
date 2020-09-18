@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -26,8 +26,9 @@ using namespace dataRepository;
 namespace constitutive
 {
 
-SlurryFluidBase::SlurryFluidBase( std::string const & name, Group * const parent )
-  : ConstitutiveBase( name, parent ), m_isNewtonianFluid( true )
+SlurryFluidBase::SlurryFluidBase( std::string const & name, Group * const parent ):
+  ConstitutiveBase( name, parent ),
+  m_isNewtonianFluid( true )
 {
 
   registerWrapper( viewKeyStruct::componentNamesString, &m_componentNames )->
@@ -102,10 +103,10 @@ localIndex SlurryFluidBase::numFluidComponents() const
   return LvArray::integerConversion< localIndex >( m_componentNames.size());
 }
 
-void SlurryFluidBase::AllocateConstitutiveData( Group * const parent,
+void SlurryFluidBase::allocateConstitutiveData( Group * const parent,
                                                 localIndex const numConstitutivePointsPerParentIndex )
 {
-  ConstitutiveBase::AllocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+  ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 
   this->resize( parent->size() );
 
@@ -134,51 +135,6 @@ void SlurryFluidBase::AllocateConstitutiveData( Group * const parent,
   m_dVisc_dProppantConc.resize( parent->size(), numConstitutivePointsPerParentIndex );
   m_dVisc_dCompConc.resize( parent->size(), numConstitutivePointsPerParentIndex, NC );
 
-}
-
-
-void
-SlurryFluidBase::DeliverClone( string const & name,
-                               Group * const parent,
-                               std::unique_ptr< ConstitutiveBase > & clone ) const
-{
-  GEOSX_ERROR_IF( !clone, "clone not allocated" );
-
-  ConstitutiveBase::DeliverClone( name, parent, clone );
-  SlurryFluidBase & fluid = dynamicCast< SlurryFluidBase & >( *clone );
-
-  fluid.m_componentNames  = m_componentNames;
-
-  fluid.m_defaultDensity = m_defaultDensity;
-  fluid.m_defaultCompressibility = m_defaultCompressibility;
-  fluid.m_defaultViscosity = m_defaultViscosity;
-
-  fluid.m_density = m_density;
-  fluid.m_dDens_dPres = m_dDens_dPres;
-  fluid.m_dDens_dProppantConc = m_dDens_dProppantConc;
-  fluid.m_dDens_dCompConc = m_dDens_dCompConc;
-
-  fluid.m_componentDensity = m_componentDensity;
-  fluid.m_dCompDens_dPres = m_dCompDens_dPres;
-  fluid.m_dCompDens_dCompConc = m_dCompDens_dCompConc;
-
-  fluid.m_fluidDensity = m_fluidDensity;
-  fluid.m_dFluidDens_dPres = m_dFluidDens_dPres;
-  fluid.m_dFluidDens_dCompConc = m_dFluidDens_dCompConc;
-
-  fluid.m_fluidViscosity = m_fluidViscosity;
-  fluid.m_dFluidVisc_dPres = m_dFluidVisc_dPres;
-  fluid.m_dFluidVisc_dCompConc = m_dFluidVisc_dCompConc;
-
-  fluid.m_viscosity = m_viscosity;
-  fluid.m_dVisc_dPres = m_dVisc_dPres;
-  fluid.m_dVisc_dProppantConc = m_dVisc_dProppantConc;
-  fluid.m_dVisc_dCompConc = m_dVisc_dCompConc;
-
-  fluid.m_nIndices = m_nIndices;
-  fluid.m_Ks = m_Ks;
-
-  fluid.m_isNewtonianFluid = m_isNewtonianFluid;
 }
 
 

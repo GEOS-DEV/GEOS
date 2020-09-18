@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -70,50 +70,50 @@ public:
    * @brief Getter for system matrix
    * @return a reference to linear system matrix of this solver
    */
-  ParallelMatrix & getSystemMatrix()       { return m_matrix; }
+  ParallelMatrix & getSystemMatrix() { return m_matrix; }
   ParallelMatrix const & getSystemMatrix() const { return m_matrix; }
 
   /**
    * @brief Getter for system rhs vector
    * @return a reference to linear system right-hand side of this solver
    */
-  ParallelVector & getSystemRhs()       { return m_rhs; }
+  ParallelVector & getSystemRhs() { return m_rhs; }
   ParallelVector const & getSystemRhs() const { return m_rhs; }
 
   /**
    * @brief Getter for system solution vector
    * @return a reference to solution vector of this solver
    */
-  ParallelVector & getSystemSolution()       { return m_solution; }
+  ParallelVector & getSystemSolution() { return m_solution; }
   ParallelVector const & getSystemSolution() const { return m_solution; }
 
   /**
    * @brief Getter for degree-of-freedom manager
    * @return a reference to degree-of-freedom manager of this solver
    */
-  DofManager & getDofManager()       { return m_dofManager; }
+  DofManager & getDofManager() { return m_dofManager; }
   DofManager const & getDofManager() const { return m_dofManager; }
 
   /**
    * @brief Getter for local matrix
    * @return a reference to linear system matrix of this solver
    */
-  CRSMatrix< real64, globalIndex > & getLocalMatrix()       { return m_localMatrix; }
-  CRSMatrixView< real64 const, globalIndex const > const & getLocalMatrix() const { return m_localMatrix.toViewConst(); }
+  CRSMatrix< real64, globalIndex > & getLocalMatrix() { return m_localMatrix; }
+  CRSMatrixView< real64 const, globalIndex const > getLocalMatrix() const { return m_localMatrix.toViewConst(); }
 
   /**
    * @brief Getter for local rhs vector
    * @return a reference to linear system right-hand side of this solver
    */
-  array1d< real64 > & getLocalRhs()       { return m_localRhs; }
-  arrayView1d< real64 const > const & getLocalRhs() const { return m_localRhs.toViewConst(); }
+  array1d< real64 > & getLocalRhs() { return m_localRhs; }
+  arrayView1d< real64 const > getLocalRhs() const { return m_localRhs; }
 
   /**
    * @brief Getter for local solution vector
    * @return a reference to solution vector of this solver
    */
-  array1d< real64 > & getLocalSolution()       { return m_localSolution; }
-  arrayView1d< real64 const > const & getLocalSolution() const { return m_localSolution.toViewConst(); }
+  array1d< real64 > & getLocalSolution() { return m_localSolution; }
+  arrayView1d< real64 const > getLocalSolution() const { return m_localSolution; }
 
   /**
    * @defgroup Solver Interface Functions
@@ -583,7 +583,15 @@ public:
 
   string getDiscretization() const { return m_discretizationName; }
 
-  arrayView1d< string const > const & targetRegionNames() const { return m_targetRegionNames; }
+  arrayView1d< string const > targetRegionNames() const { return m_targetRegionNames; }
+
+  virtual std::vector< string > getConstitutiveRelations( string const & regionName ) const
+  {
+    GEOSX_UNUSED_VAR( regionName );
+    GEOSX_ERROR( "SolverBase::getConstitutiveRelations( string const &) should "
+                 "be overridden the solver contains a discretization specification." );
+    return std::vector< string >();
+  }
 
   /**
    * @brief Get position of a given region within solver's target region list
@@ -648,13 +656,14 @@ public:
       template forElementSubRegionsComplete< SUBREGIONTYPE, SUBREGIONTYPES... >( targetRegionNames(), std::forward< LAMBDA >( lambda ) );
   }
 
+  string getDiscretizationName() const {return m_discretizationName;}
+
 protected:
 
   static real64 EisenstatWalker( real64 const newNewtonNorm,
                                  real64 const oldNewtonNorm,
                                  real64 const weakestTol );
 
-  string getDiscretizationName() const {return m_discretizationName;}
 
   template< typename BASETYPE = constitutive::ConstitutiveBase, typename LOOKUP_TYPE >
   static BASETYPE const & GetConstitutiveModel( dataRepository::Group const & dataGroup, LOOKUP_TYPE const & key );

@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -37,10 +37,12 @@ using namespace dataRepository;
 NodeManager::NodeManager( std::string const & name,
                           Group * const parent ):
   ObjectManagerBase( name, parent ),
-  m_referencePosition( 0, 3 )
+  m_referencePosition( 0, 3 ),
+  m_embeddedSurfNodesPosition( 0, 3 )
 {
   registerWrapper( viewKeyStruct::referencePositionString, &m_referencePosition );
   //END_SPHINX_REFPOS_REG
+  registerWrapper( viewKeyStruct::EmbSurfNodesPositionString, &m_embeddedSurfNodesPosition )->setSizedFromParent( 0 );
   this->registerWrapper( viewKeyStruct::edgeListString, &m_toEdgesRelation );
   this->registerWrapper( viewKeyStruct::faceListString, &m_toFacesRelation );
   this->registerWrapper( viewKeyStruct::elementRegionListString, &elementRegionList() );
@@ -69,7 +71,7 @@ void NodeManager::SetEdgeMaps( EdgeManager const * const edgeManager )
 {
   GEOSX_MARK_FUNCTION;
 
-  arrayView2d< localIndex const > const & edgeToNodeMap = edgeManager->nodeList();
+  arrayView2d< localIndex const > const edgeToNodeMap = edgeManager->nodeList();
   localIndex const numEdges = edgeToNodeMap.size( 0 );
   localIndex const numNodes = size();
 
@@ -183,7 +185,7 @@ void NodeManager::SetElementMaps( ElementRegionManager const * const elementRegi
   elementRegionManager->
     forElementSubRegions< CellElementSubRegion >( [&elemsPerNode, &totalNodeElems]( CellElementSubRegion const & subRegion )
   {
-    arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemToNodeMap = subRegion.nodeList();
+    arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemToNodeMap = subRegion.nodeList();
     forAll< parallelHostPolicy >( subRegion.size(), [&elemsPerNode, totalNodeElems, &elemToNodeMap, &subRegion] ( localIndex const k )
     {
       localIndex const numIndependedNodes = subRegion.numIndependentNodesPerElement();
@@ -234,7 +236,7 @@ void NodeManager::SetElementMaps( ElementRegionManager const * const elementRegi
                                                             ( localIndex const er, localIndex const esr, ElementRegionBase const &,
                                                             CellElementSubRegion const & subRegion )
   {
-    arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemToNodeMap = subRegion.nodeList();
+    arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemToNodeMap = subRegion.nodeList();
     for( localIndex k = 0; k < subRegion.size(); ++k )
     {
       for( localIndex a=0; a<subRegion.numIndependentNodesPerElement(); ++a )
@@ -397,7 +399,7 @@ void NodeManager::depopulateUpMaps( std::set< localIndex > const & receivedNodes
 
       CellElementSubRegion const * subRegion = elemRegionManager.GetRegion( elemRegionIndex )->
                                                  GetSubRegion< CellElementSubRegion >( elemSubRegionIndex );
-      arrayView2d< localIndex const, cells::NODE_MAP_USD > const & downmap = subRegion->nodeList();
+      arrayView2d< localIndex const, cells::NODE_MAP_USD > const downmap = subRegion->nodeList();
       bool hasTargetIndex = false;
 
       for( localIndex a=0; a<downmap.size( 1 ); ++a )

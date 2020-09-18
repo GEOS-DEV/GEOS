@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -19,6 +19,7 @@
 #ifndef GEOSX_CONSTITUTIVE_FLUID_PARTICLEFLUID_HPP_
 #define GEOSX_CONSTITUTIVE_FLUID_PARTICLEFLUID_HPP_
 
+#include "common/EnumStrings.hpp"
 #include "constitutive/fluid/ParticleFluidBase.hpp"
 
 namespace geosx
@@ -27,12 +28,14 @@ namespace geosx
 namespace constitutive
 {
 
-enum class ParticleSettlingModel
+enum class ParticleSettlingModel : integer
 {
   Stokes,
   Intermediate,
   Turbulence
 };
+
+ENUM_STRINGS( ParticleSettlingModel, "Stokes", "Intermediate", "Turbulence" )
 
 /**
  * @brief Kernel wrapper for ParticleFluid.
@@ -188,16 +191,9 @@ public:
 
   // *** ConstitutiveBase interface
 
-  virtual void DeliverClone( string const & name,
-                             Group * const parent,
-                             std::unique_ptr< ConstitutiveBase > & clone ) const override;
-
   static std::string CatalogName() { return "ParticleFluid"; }
 
-  virtual string GetCatalogName() override { return CatalogName(); }
-
-  virtual void AllocateConstitutiveData( dataRepository::Group * const parent,
-                                         localIndex const numConstitutivePointsPerParentIndex ) override;
+  virtual string getCatalogName() const override { return CatalogName(); }
 
   /// Type of kernel wrapper for in-kernel update
   using KernelWrapper = ParticleFluidUpdate;
@@ -230,8 +226,6 @@ protected:
   virtual void PostProcessInput() override;
 
 private:
-
-  string m_particleSettlingModelString;
 
   ParticleSettlingModel m_particleSettlingModel;
 

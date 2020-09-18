@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -50,7 +50,7 @@ void PetscSolver::solve( PetscMatrix & mat,
 
   GEOSX_UNUSED_VAR( dofManager );
 
-  if( m_parameters.solverType == "direct" )
+  if( m_parameters.solverType == LinearSolverParameters::SolverType::direct )
   {
     solve_direct( mat, sol, rhs );
   }
@@ -110,22 +110,28 @@ void CreatePetscKrylovSolver( LinearSolverParameters const & params,
                                            PETSC_DEFAULT, params.krylov.maxIterations ) );
 
   // pick the solver type
-  if( params.solverType == "gmres" )
+  switch( params.solverType )
   {
-    GEOSX_LAI_CHECK_ERROR( KSPSetType( ksp, KSPGMRES ) );
-    GEOSX_LAI_CHECK_ERROR( KSPGMRESSetRestart( ksp, params.krylov.maxRestart ) );
-  }
-  else if( params.solverType == "bicgstab" )
-  {
-    GEOSX_LAI_CHECK_ERROR( KSPSetType( ksp, KSPBCGS ) );
-  }
-  else if( params.solverType == "cg" )
-  {
-    GEOSX_LAI_CHECK_ERROR( KSPSetType( ksp, KSPCG ) );
-  }
-  else
-  {
-    GEOSX_ERROR( "Unsupported Petsc solver type: " << params.solverType );
+    case LinearSolverParameters::SolverType::gmres:
+    {
+      GEOSX_LAI_CHECK_ERROR( KSPSetType( ksp, KSPGMRES ) );
+      GEOSX_LAI_CHECK_ERROR( KSPGMRESSetRestart( ksp, params.krylov.maxRestart ) );
+      break;
+    }
+    case LinearSolverParameters::SolverType::bicgstab:
+    {
+      GEOSX_LAI_CHECK_ERROR( KSPSetType( ksp, KSPBCGS ) );
+      break;
+    }
+    case LinearSolverParameters::SolverType::cg:
+    {
+      GEOSX_LAI_CHECK_ERROR( KSPSetType( ksp, KSPCG ) );
+      break;
+    }
+    default:
+    {
+      GEOSX_ERROR( "Solver type not supported in PETSc interface: " << params.solverType );
+    }
   }
 }
 
