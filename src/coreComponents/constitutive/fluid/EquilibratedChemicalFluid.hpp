@@ -17,8 +17,8 @@
  */
 
 /**
-  * @file EquilibratedChemicalFluid.hpp
-  */
+ * @file EquilibratedChemicalFluid.hpp
+ */
 #ifndef SRC_COMPONENTS_CORE_SRC_CONSTITUTIVE_EQUILIBRATEDCHEMICALFLUID_HPP_
 #define SRC_COMPONENTS_CORE_SRC_CONSTITUTIVE_EQUILIBRATEDCHEMICALFLUID_HPP_
 
@@ -54,7 +54,7 @@ public:
   virtual void allocateConstitutiveData( dataRepository::Group * const parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
-  virtual void PointUpdate( real64 const & pressure, real64 const & temperature, arraySlice1d<real64 const> const & concentration, localIndex const k) override;
+  virtual void PointUpdate( real64 const & pressure, real64 const & temperature, arraySlice1d< real64 const > const & concentration, localIndex const k ) override;
 
   // *** Data repository keys
 
@@ -74,41 +74,41 @@ protected:
   virtual void PostProcessInput() override;
 
   virtual void InitializePostSubGroups( Group * const group ) override;
-  
+
 private:
 
   void Compute( real64 const & pressure,
-                real64 const & temperature,             
-                arraySlice1d<const real64> const & concentration,
-                arraySlice1d<real64> const & dependentConc,             
-                arraySlice2d<real64> const & dDependentConc_dConc,
-                ThermoDatabase &thermoDatabase);
+                real64 const & temperature,
+                arraySlice1d< const real64 > const & concentration,
+                arraySlice1d< real64 > const & dependentConc,
+                arraySlice2d< real64 > const & dDependentConc_dConc,
+                ThermoDatabase & thermoDatabase );
 
-  void ReadDatabase();  
+  void ReadDatabase();
 
   void ComputeLogActCoef( real64 const & pressure,
                           real64 const & temperature,
                           real64 const & ionicStrength,
-                          array1d<real64> & logActCoef1,
-                          array1d<real64> & dLogActCoef1,
-                          array1d<real64> & logActCoef2,
-                          array1d<real64> & dLogActCoef2);
+                          array1d< real64 > & logActCoef1,
+                          array1d< real64 > & dLogActCoef1,
+                          array1d< real64 > & logActCoef2,
+                          array1d< real64 > & dLogActCoef2 );
 
-  void ResizeFields(localIndex size);
-  
-  
+  void ResizeFields( localIndex size );
+
+
   string m_databaseTypeString;
 
-  string m_databaseFileName;  
+  string m_databaseFileName;
 
   string m_activityCoefModelString;
-  
+
   DatabaseType m_databaseType;
 
   ActivityCoefModel m_activityCoefModel;
 
   ThermoDatabase m_thermoDatabase;
-  
+
 };
 
 } /* namespace constitutive */

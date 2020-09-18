@@ -17,8 +17,8 @@
  */
 
 /**
-  * @file ReactiveFluidBase.cpp
-  */
+ * @file ReactiveFluidBase.cpp
+ */
 
 #include "ReactiveFluidBase.hpp"
 
@@ -35,24 +35,24 @@ ReactiveFluidBase::ReactiveFluidBase( std::string const & name, Group * const pa
 {
 
   registerWrapper( viewKeyStruct::basisSpeciesNamesString, &m_basisSpeciesNames )->
-    setInputFlag(InputFlags::REQUIRED)->
-    setDescription("Basis speciese name list");
+    setInputFlag( InputFlags::REQUIRED )->
+    setDescription( "Basis speciese name list" );
 
   registerWrapper( viewKeyStruct::logActH2OString, &m_logActH2O )->
-    setApplyDefaultValue(-1.65676E-02)->
-    setInputFlag(InputFlags::OPTIONAL)->    
-    setDescription("logActH2O");
+    setApplyDefaultValue( -1.65676E-02 )->
+    setInputFlag( InputFlags::OPTIONAL )->
+    setDescription( "logActH2O" );
 
   registerWrapper( viewKeyStruct::logFO2gString, &m_logFO2g )->
-    setApplyDefaultValue(-0.7)->
-    setInputFlag(InputFlags::OPTIONAL)->    
-    setDescription("logFO2g");    
+    setApplyDefaultValue( -0.7 )->
+    setInputFlag( InputFlags::OPTIONAL )->
+    setDescription( "logFO2g" );
 
   registerWrapper( viewKeyStruct::dependentConcString, &m_dependentConc );
 
   registerWrapper( viewKeyStruct::dDependentConc_dConcString, &m_dDependentConc_dConc );
 
-  
+
 }
 
 ReactiveFluidBase::~ReactiveFluidBase() = default;
@@ -62,38 +62,38 @@ void ReactiveFluidBase::PostProcessInput()
   ConstitutiveBase::PostProcessInput();
 
   bool HplusNotFound = 1;
-  bool H2OFound = 0;  
+  bool H2OFound = 0;
 
   localIndex const NBasis = numBasisSpecies();
 
-  m_isHplus.resize(NBasis);
-  
-  for(localIndex id = 0; id < NBasis; ++id)
+  m_isHplus.resize( NBasis );
+
+  for( localIndex id = 0; id < NBasis; ++id )
+  {
+
+    if( m_basisSpeciesNames[id] == "H+" )
     {
-
-      if(m_basisSpeciesNames[id] == "H+")
-        {
-          HplusNotFound = 0;
-          m_isHplus[id] = 1;
-        }
-      else
-      {
-        m_isHplus[id] = 0;
-      }
-      
-      if(m_basisSpeciesNames[id] == "H2O")
-        H2OFound = 1;      
-
+      HplusNotFound = 0;
+      m_isHplus[id] = 1;
     }
+    else
+    {
+      m_isHplus[id] = 0;
+    }
+
+    if( m_basisSpeciesNames[id] == "H2O" )
+      H2OFound = 1;
+
+  }
 
   GEOSX_ERROR_IF( HplusNotFound, "ReactiveFluidBase: H+ is not specified in basisSpeciesNames" );
 
   GEOSX_ERROR_IF( H2OFound, "ReactiveFluidBase: H2O cannot be specified in basisSpeciesNames" );
-  
+
 }
 
 void ReactiveFluidBase::allocateConstitutiveData( Group * const parent,
-                                                localIndex const numConstitutivePointsPerParentIndex )
+                                                  localIndex const numConstitutivePointsPerParentIndex )
 {
   ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 }

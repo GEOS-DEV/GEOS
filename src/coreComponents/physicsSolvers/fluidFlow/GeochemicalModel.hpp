@@ -50,8 +50,8 @@ public:
    * @param name the name of this instantiation of Group in the repository
    * @param parent the parent group of this instantiation of Group
    */
-  GeochemicalModel( const std::string& name,
-                   Group * const parent );
+  GeochemicalModel( const std::string & name,
+                    Group * const parent );
 
 
   /// deleted default constructor
@@ -80,12 +80,12 @@ public:
    */
   static string CatalogName() { return "GeochemicalModel"; }
 
-  virtual void InitializePreSubGroups(Group * const rootGroup) override;
+  virtual void InitializePreSubGroups( Group * const rootGroup ) override;
 
-  virtual void RegisterDataOnMesh(Group * const MeshBodies) override;
+  virtual void RegisterDataOnMesh( Group * const MeshBodies ) override;
 
-  virtual real64 SolverStep( real64 const& time_n,
-                             real64 const& dt,
+  virtual real64 SolverStep( real64 const & time_n,
+                             real64 const & dt,
                              integer const cycleNumber,
                              DomainPartition & domain ) override;
 
@@ -138,9 +138,9 @@ public:
 
   virtual void ResetStateToBeginningOfStep( DomainPartition & domain ) override;
 
-  virtual  void ImplicitStepComplete( real64 const & time,
-                                      real64 const & dt,
-                                      DomainPartition & domain ) override;
+  virtual void ImplicitStepComplete( real64 const & time,
+                                     real64 const & dt,
+                                     DomainPartition & domain ) override;
 
   /**
    * @brief assembles the accumulation terms for all cells
@@ -172,7 +172,7 @@ public:
 
   void ResizeFields( MeshLevel * const meshLevel );
 
-  void WriteSpeciesToFile(DomainPartition * const domain);
+  void WriteSpeciesToFile( DomainPartition * const domain );
 
 
   /**@}*/
@@ -181,11 +181,10 @@ public:
   struct viewKeyStruct : FlowSolverBase::viewKeyStruct
   {
 
-    static constexpr auto blockLocalDofNumberString = "blockLocalDofNumber_GeochemicalModel" ;
+    static constexpr auto blockLocalDofNumberString = "blockLocalDofNumber_GeochemicalModel";
 
-    static constexpr auto reactiveFluidNameString      = "reactiveFluidName";
-    static constexpr auto reactiveFluidIndexString      = "reactiveFluidIndex";
-    
+    static constexpr auto reactiveFluidNamesString      = "reactiveFluidName";
+
 
     // primary solution field
     static constexpr auto pressureString      = "pressure";
@@ -199,7 +198,7 @@ public:
 
     static constexpr auto totalConcentrationString      = "totalConcentration";
     static constexpr auto concentrationNewString      = "concentrationNew";
-    static constexpr auto outputSpeciesFileNameString      = "outputSpeciesFileName";        
+    static constexpr auto outputSpeciesFileNameString      = "outputSpeciesFileName";
 
     using ViewKey = dataRepository::ViewKey;
 
@@ -211,23 +210,22 @@ public:
     ViewKey deltaPressure = { deltaPressureString };
 
     ViewKey temperature      = { temperatureString };
-    ViewKey deltaTemperature = { deltaTemperatureString };    
+    ViewKey deltaTemperature = { deltaTemperatureString };
 
     ViewKey concentration      = { concentrationString };
     ViewKey deltaConcentration = { deltaConcentrationString };
 
     ViewKey concentrationNew      = { concentrationNewString };
 
-    ViewKey outputSpeciesFileName  = { outputSpeciesFileNameString };        
-    
+    ViewKey outputSpeciesFileName  = { outputSpeciesFileNameString };
+
   } viewKeysGeochemicalModel;
 
   viewKeyStruct & viewKeys() { return viewKeysGeochemicalModel; }
   viewKeyStruct const & viewKeys() const { return viewKeysGeochemicalModel; }
 
   struct groupKeyStruct : SolverBase::groupKeyStruct
-  {
-  } groupKeysGeochemicalModel;
+  {} groupKeysGeochemicalModel;
 
   groupKeyStruct & groupKeys() { return groupKeysGeochemicalModel; }
   groupKeyStruct const & groupKeys() const { return groupKeysGeochemicalModel; }
@@ -247,44 +245,43 @@ private:
    * @brief Function to update all constitutive models
    * @param domain the domain
    */
-  void UpdateReactiveFluidModel( Group * const dataGroup );
+  void UpdateReactiveFluidModel( Group * const dataGroup, localIndex const targetIndex ) const;
 
-  void UpdateState( Group * dataGroup );
+  void UpdateState( Group * dataGroup, localIndex const targetIndex ) const;
 
   /// views into primary variable fields
 
-  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> m_pressure;
-  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> m_deltaPressure;
+  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > m_pressure;
+  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > m_deltaPressure;
 
-  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> m_temperature;
-  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> m_deltaTemperature;  
+  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > m_temperature;
+  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > m_deltaTemperature;
 
-  ElementRegionManager::ElementViewAccessor<arrayView2d<real64>> m_concentration;
-  ElementRegionManager::ElementViewAccessor<arrayView2d<real64>> m_deltaConcentration;  
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 > > m_concentration;
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 > > m_deltaConcentration;
 
-  ElementRegionManager::ElementViewAccessor<arrayView2d<real64>> m_totalConcentration;
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 > > m_totalConcentration;
 
-  ElementRegionManager::ElementViewAccessor<arrayView2d<real64>> m_concentrationNew;  
-  
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 > > m_concentrationNew;
+
   /// views into material fields
 
-  ElementRegionManager::MaterialViewAccessor<arrayView2d<real64>> m_dependentConc;
-  ElementRegionManager::MaterialViewAccessor<arrayView3d<real64>> m_dDependentConc_dConc;
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_dependentConc;
+  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > m_dDependentConc_dConc;
 
-  string m_reactiveFluidName;
-  localIndex m_reactiveFluidIndex;  
-  localIndex m_numBasisSpecies;
-  localIndex m_numDependentSpecies;  
+  array1d< string > m_reactiveFluidNames;
+  array1d< localIndex > m_numBasisSpecies;
+  array1d< localIndex > m_numDependentSpecies;
 
   string m_outputSpeciesFileName;
-  
+
   //Below is not used in GeochemicalModel model
-  
-  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> m_porosity;
-  
-  ElementRegionManager::MaterialViewAccessor<arrayView2d<real64>> m_pvMult;
-  ElementRegionManager::MaterialViewAccessor<arrayView2d<real64>> m_dPvMult_dPres;
-  
+
+  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > m_porosity;
+
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 > > m_pvMult;
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 > > m_dPvMult_dPres;
+
 };
 
 

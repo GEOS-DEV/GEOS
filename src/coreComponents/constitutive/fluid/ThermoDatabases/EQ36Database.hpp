@@ -36,40 +36,40 @@ class EQ36Database : public ThermoDatabaseBase
 {
 public:
 
-  EQ36Database( const string & fileName, 
-                const string_array & basisSpeciesNames);
+  EQ36Database( const string & fileName,
+                const string_array & basisSpeciesNames );
 
   ~EQ36Database() override
   {}
 
   static constexpr auto m_catalogName = "EQ36";
-  
+
   static string CatalogName()                    { return m_catalogName; }
-  
+
   virtual string GetCatalogName() override final { return CatalogName(); }
 
-  virtual const array1d<Species> & GetBasisSpecies() const override { return m_basisSpecies; }
+  virtual const array1d< Species > & GetBasisSpecies() const override { return m_basisSpecies; }
 
-  virtual const array1d<Species> & GetDependentSpecies() const override { return m_dependentSpecies; }
+  virtual const array1d< Species > & GetDependentSpecies() const override { return m_dependentSpecies; }
 
-  virtual const array1d<localIndex> & GetBasisSpeciesIndices() const override { return m_basisSpeciesIndices; }
+  virtual const array1d< localIndex > & GetBasisSpeciesIndices() const override { return m_basisSpeciesIndices; }
 
-  virtual const ActCoefParameters & GetActCoefParameters() const override { return m_actCoefParameters; }      
-    
-  
+  virtual const ActCoefParameters & GetActCoefParameters() const override { return m_actCoefParameters; }
+
+
 private:
 
   /** read database and generate species properties and stoch matrix */
 
-  void CreateChemicalSystem(const string_array & basisSpeciesNames);
+  void CreateChemicalSystem( const string_array & basisSpeciesNames );
 
-  array1d<Species> m_basisSpecies;
-  array1d<Species> m_dependentSpecies;
+  array1d< Species > m_basisSpecies;
+  array1d< Species > m_dependentSpecies;
 
-  array1d<localIndex> m_basisSpeciesIndices;
+  array1d< localIndex > m_basisSpeciesIndices;
 
   ActCoefParameters m_actCoefParameters;
-  
+
 };
 
 }

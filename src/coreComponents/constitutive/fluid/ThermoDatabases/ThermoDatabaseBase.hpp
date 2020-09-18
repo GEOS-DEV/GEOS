@@ -30,7 +30,7 @@
 
 namespace geosx
 {
-  
+
 namespace constitutive
 {
 
@@ -41,66 +41,66 @@ enum class SpeciesType
   Solid,
   Liquid,
   invalidType
-};  
+};
 
 
-struct Species 
+struct Species
 {
   string name;
   SpeciesType type;
   real64 MW;
   real64 DHazero;
   real64 charge;
-  array1d<localIndex> speciesIndices;
-  array1d<real64> stochs;
-  array1d<real64> logKs;
+  array1d< localIndex > speciesIndices;
+  array1d< real64 > stochs;
+  array1d< real64 > logKs;
 
 };
 
 struct ActCoefParameters
 {
-  array1d<real64> pressures;
-  array1d<real64> temperatures;
-  array1d<real64> DHAs;
-  array1d<real64> DHBs;
-  array1d<real64> BDots;    
+  array1d< real64 > pressures;
+  array1d< real64 > temperatures;
+  array1d< real64 > DHAs;
+  array1d< real64 > DHBs;
+  array1d< real64 > BDots;
 
-};  
-  
-  class ThermoDatabaseBase 
+};
+
+class ThermoDatabaseBase
+{
+public:
+
+  ThermoDatabaseBase( const string & fileName ):
+    m_fileName( fileName )
+  {}
+
+  virtual ~ThermoDatabaseBase(){}
+
+  using CatalogInterface = dataRepository::CatalogInterface< ThermoDatabaseBase, string const &, string_array const & >;
+
+  static typename CatalogInterface::CatalogType & GetCatalog()
   {
-  public:
+    static CatalogInterface::CatalogType catalog;
+    return catalog;
+  }
 
-    ThermoDatabaseBase( const string & fileName) :
-      m_fileName(fileName)
-    {}
+  virtual string GetCatalogName() = 0;
 
-    virtual ~ThermoDatabaseBase(){}
+  virtual const array1d< Species > & GetBasisSpecies() const = 0;
 
-    using CatalogInterface = dataRepository::CatalogInterface< ThermoDatabaseBase, string const &, string_array const & >;
+  virtual const array1d< Species > & GetDependentSpecies() const = 0;
 
-    static typename CatalogInterface::CatalogType& GetCatalog()
-    {
-      static CatalogInterface::CatalogType catalog;
-      return catalog;
-    }
-    
-    virtual string GetCatalogName() = 0;
+  virtual const array1d< localIndex > & GetBasisSpeciesIndices() const = 0;
 
-    virtual const array1d<Species> & GetBasisSpecies() const = 0;
+  virtual const ActCoefParameters & GetActCoefParameters() const = 0;
 
-    virtual const array1d<Species> & GetDependentSpecies() const = 0;
+protected:
+  string m_fileName;
 
-    virtual const array1d<localIndex> & GetBasisSpeciesIndices() const = 0;
+};
 
-    virtual const ActCoefParameters & GetActCoefParameters() const = 0;    
-    
-  protected:
-    string m_fileName;
-
-  };
-
-  typedef std::unique_ptr<ThermoDatabaseBase> ThermoDatabase;
+typedef std::unique_ptr< ThermoDatabaseBase > ThermoDatabase;
 
 }
 
