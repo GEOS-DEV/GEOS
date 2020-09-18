@@ -461,8 +461,9 @@ void GeochemicalModel::AssembleAccumulationTerms( DomainPartition & domain,
 
         for( localIndex i = 0; i < m_numDofPerCell; ++i )
         {
-          localRhs[localAccumDOF[i]] += localAccum[i];
-          localMatrix.addToRow< serialAtomic >( localAccumDOF[i],
+          localIndex const localRow = localAccumDOF[i] - rankOffset;
+          localRhs[localRow] += localAccum[i];
+          localMatrix.addToRow< serialAtomic >( localRow,
                                                 localAccumDOF.data(),
                                                 localAccumJacobian[i],
                                                 m_numDofPerCell );
@@ -640,11 +641,15 @@ void GeochemicalModel::ResetViews( MeshLevel & mesh )
     elemManager->ConstructViewAccessor<array2d<real64>, arrayView2d<real64>>( viewKeyStruct::concentrationNewString );
 
   
-//  m_dependentConc =
-//    elemManager->ConstructFullMaterialViewAccessor<array2d<real64>, arrayView2d<real64> >( ReactiveFluidBase::viewKeyStruct::dependentConcString, constitutiveManager );
-//
-//  m_dDependentConc_dConc =
-//    elemManager->ConstructFullMaterialViewAccessor<array3d<real64>, arrayView3d<real64> >( ReactiveFluidBase::viewKeyStruct::dDependentConc_dConcString, constitutiveManager );
+  m_dependentConc =
+    elemManager->ConstructMaterialArrayViewAccessor< real64, 2 >( ReactiveFluidBase::viewKeyStruct::dependentConcString, 
+                                                                  targetRegionNames(),
+                                                                  reactiveFluidModelNames() );
+
+  m_dDependentConc_dConc =
+    elemManager->ConstructMaterialArrayViewAccessor< real64, 3 >( ReactiveFluidBase::viewKeyStruct::dDependentConc_dConcString, 
+                                                                  targetRegionNames(),
+                                                                  reactiveFluidModelNames() );
 
 }
 

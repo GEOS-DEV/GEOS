@@ -567,7 +567,7 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
       // apply the system solution to the fields/variables
       ApplySystemSolution( m_dofManager, m_localSolution, scaleFactor, domain );
 
-      //      lastResidual = residualNorm;
+      lastResidual = residualNorm;
     }
 
     if( isConverged )
