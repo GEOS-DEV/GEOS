@@ -100,15 +100,15 @@ public:
     real64 const mu = UPDATE_BASE::getShearModulus( k );
     real64 const lambda = K - 2*mu/3;
     //get strain tensor in voigt form
-    real64 strain[6];
+    real64 strain[6] = {};
     recoverStrainFromStress(this->m_stress[k][q], strain, K, mu);
     real64 traceOfStrain = strain[0] + strain[1] + strain[2];
     //get eigenvalues and eigenvectors
-    real64 eigenValues[3];
-    real64 eigenVectors[3][3];
+    real64 eigenValues[3] = {};
+    real64 eigenVectors[3][3] = {};
     LvArray::tensorOps::symEigenvectors<3>(eigenValues, eigenVectors, strain);
     //construct 4th order IxI tensor
-    real64 IxITensor[6][6];
+    real64 IxITensor[6][6] = {};
     for (int i=0; i < 3; i++)
       {
 	for (int j=0; j < 3; j++)
@@ -118,15 +118,15 @@ public:
       }
 
     //construct positive part
-    real64 cPositive[6][6];
-    real64 positiveProjector[6][6];
+    real64 cPositive[6][6] = {};
+    real64 positiveProjector[6][6] = {};
     PositiveProjectorTensor(eigenValues, eigenVectors, positiveProjector);
     LvArray::tensorOps::scaledCopy<6,6>(cPositive, IxITensor, lambda*heaviside(traceOfStrain));
     LvArray::tensorOps::scale<6,6>(positiveProjector, 2*mu);
     LvArray::tensorOps::add<6,6>(cPositive, positiveProjector);
 
     //construct negative part
-    real64 negativeProjector[6][6];
+    real64 negativeProjector[6][6] = {};
     NegativeProjectorTensor(eigenValues, eigenVectors, negativeProjector);
     LvArray::tensorOps::scaledCopy<6,6>(c, IxITensor, lambda*heaviside(-traceOfStrain));
     LvArray::tensorOps::scale<6,6>(negativeProjector, 2*mu);
@@ -145,12 +145,12 @@ public:
     real64 const mu = UPDATE_BASE::getShearModulus( k );
     real64 const lambda = K - 2*mu/3;
     //get strain tensor in voigt form
-    real64 strain[6];
+    real64 strain[6] = {};
     recoverStrainFromStress(this->m_stress[k][q], strain, K, mu);
     real64 traceOfStrain = strain[0] + strain[1] + strain[2];
     //get eigenvalues and eigenvectors
-    real64 eigenValues[3];
-    real64 eigenVectors[3][3];
+    real64 eigenValues[3] = {};
+    real64 eigenVectors[3][3] = {};
     LvArray::tensorOps::symEigenvectors<3>(eigenValues, eigenVectors, strain);
     real64 tracePlus = std::max(traceOfStrain, 0.0);
     //build symmetric matrices of positive and negative eigenvalues
@@ -159,7 +159,7 @@ public:
       {
 	eigenPlus[i] = std::max(eigenValues[i], 0.0);
       }
-    real64 positivePartOfStrain[6];
+    real64 positivePartOfStrain[6] = {};
     LvArray::tensorOps::AikSymBklAjl<3>(positivePartOfStrain, eigenVectors, eigenPlus);
     real64 const sed = 0.5 * lambda * tracePlus * tracePlus + mu * LvArray::tensorOps::l2Norm<6>(positivePartOfStrain)*LvArray::tensorOps::l2Norm<6>(positivePartOfStrain); // the l2Norm should work as a double contraction bc the strain tensor is in voigt notation
     
@@ -183,31 +183,31 @@ public:
     real64 const mu = UPDATE_BASE::getShearModulus( k );
     real64 const lambda = K - 2*mu/3;
     //get strain tensor in voigt form
-    real64 strain[6];
+    real64 strain[6] = {};
     recoverStrainFromStress(this->m_stress[k][q], strain, K, mu);
     real64 traceOfStrain = strain[0] + strain[1] + strain[2];
     //get eigenvalues and eigenvectors
-    real64 eigenValues[3];
-    real64 eigenVectors[3][3];
+    real64 eigenValues[3] = {};
+    real64 eigenVectors[3][3] = {};
     LvArray::tensorOps::symEigenvectors<3>(eigenValues, eigenVectors, strain);
     real64 tracePlus = std::max(traceOfStrain, 0.0);
     real64 traceMinus = std::min(traceOfStrain, 0.0);
     //build symmetric matrices of positive and negative eigenvalues
-    real64 eigenPlus[6];
-    real64 eigenMinus[6];
-    real64 Itensor[6];
+    real64 eigenPlus[6] = {};
+    real64 eigenMinus[6] = {};
+    real64 Itensor[6] = {};
     for (int i = 0; i < 3; i++)
       {
 	Itensor[i] = 1;
 	eigenPlus[i] = std::max(eigenValues[i], 0.0);
 	eigenMinus[i] = std::min(eigenValues[i], 0.0);
       }
-    real64 positivePartOfStrain[6];
-    real64 negativePartOfStrain[6];
+    real64 positivePartOfStrain[6] = {};
+    real64 negativePartOfStrain[6] = {};
     LvArray::tensorOps::AikSymBklAjl<3>(positivePartOfStrain, eigenVectors, eigenPlus);
     LvArray::tensorOps::AikSymBklAjl<3>(negativePartOfStrain, eigenVectors, eigenMinus); 
-    real64 positiveStress[6]; 
-    real64 negativeStress[6];
+    real64 positiveStress[6] = {}; 
+    real64 negativeStress[6] = {};
     LvArray::tensorOps::scaledCopy<6>(positiveStress, Itensor, lambda*tracePlus);
     LvArray::tensorOps::scaledCopy<6>(negativeStress, Itensor, lambda*traceMinus);
     LvArray::tensorOps::scaledAdd<6>(positiveStress, positivePartOfStrain, 2*mu);

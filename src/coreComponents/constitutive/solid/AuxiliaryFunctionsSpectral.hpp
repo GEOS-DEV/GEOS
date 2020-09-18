@@ -21,6 +21,8 @@
 #define GEOSX_CONSTITUTIVE_SOLID_AUXFUNSPECTRAL_HPP_
 #include <algorithm>
 #include <cmath> 
+#include <iostream>
+#include "LvArray/src/output.hpp"
 #include "LvArray/src/tensorOps.hpp"
 namespace geosx
 {
@@ -148,7 +150,7 @@ void QTensor( real64 (&eigvector)[3], real64 (&Q)[6][6] )
   {
     for (int j = 0; j<6; j++)
       {
-	Q[i][j] = M[voigt(i,1)][voigt(i,2)]*M[voigt(j,1)][voigt(j,2)];
+	Q[i][j] = M[voigt(i,1)-1][voigt(i,2)-1]*M[voigt(j,1)-1][voigt(j,2)-1];
       }
   }  	  
 }
@@ -164,7 +166,7 @@ void GTensor( real64 (&eigvec1)[3], real64 (&eigvec2)[3], real64 (&G)[6][6] )
   {
     for (int j = 0; j<6; j++)
       {
-	G[i][j] = M1[voigt(i,1)][voigt(j,1)]*M2[voigt(i,2)][voigt(j,2)] + M1[voigt(i,1)][voigt(j,2)]*M2[voigt(i,2)][voigt(j,1)];
+	G[i][j] = M1[voigt(i,1)-1][voigt(j,1)-1]*M2[voigt(i,2)-1][voigt(j,2)-1] + M1[voigt(i,1)-1][voigt(j,2)-1]*M2[voigt(i,2)-1][voigt(j,1)-1];
       }
   }  	  
 }
@@ -212,8 +214,8 @@ void PositiveProjectorTensor( real64 (&eigs)[3], real64 (&eigvecs)[3][3], real64
 	GTensor(jthEigenVector, ithEigenVector, Gji);
 	LvArray::tensorOps::add<6,6>(Gsym,Gji);
 	//Do update
-	LvArray::tensorOps::scale<6,6>(Gsym, 0.5 * (std::max(eigs[i],0.0) + std::max(eigs[j],0.0))/(2*(eigs[i]+eigs[j])));
-	LvArray::tensorOps::add<6,6>(PositiveProjector, Gsym); 
+	LvArray::tensorOps::scale<6,6>(Gsym, 0.5 * (std::max(eigs[i],0.0) - std::max(eigs[j],0.0))/(2*(eigs[i]-eigs[j])));
+	LvArray::tensorOps::add<6,6>(PositiveProjector, Gsym);
       }
     }
     else {
@@ -281,7 +283,7 @@ void NegativeProjectorTensor( real64 (&eigs)[3], real64 (&eigvecs)[3][3], real64
 	GTensor(jthEigenVector, ithEigenVector, Gji);
 	LvArray::tensorOps::add<6,6>(Gsym,Gji);
 	//Do update
-	LvArray::tensorOps::scale<6,6>(Gsym, 0.5 * (std::min(eigs[i],0.0) + std::min(eigs[j],0.0))/(2*(eigs[i]+eigs[j])));
+	LvArray::tensorOps::scale<6,6>(Gsym, 0.5 * (std::min(eigs[i],0.0) - std::min(eigs[j],0.0))/(2*(eigs[i]-eigs[j])));
 	LvArray::tensorOps::add<6,6>(NegativeProjector, Gsym); 
       }
     }
@@ -306,6 +308,90 @@ void NegativeProjectorTensor( real64 (&eigs)[3], real64 (&eigvecs)[3][3], real64
   }
   								      
 }
+
+  GEOSX_HOST_DEVICE inline
+  void GetStiffnessTest( real64 (& c)[6][6], real64 (& strain)[6], real64 damage )  
+  {
+
+    //Spectral Split
+    real64 const damageFactor = (1-damage)*(1-damage);
+    real64 const mu = 1;
+    real64 const lambda = 1;
+    //get strain tensor in voigt form
+    real64 traceOfStrain = strain[0] + strain[1] + strain[2];
+    //get eigenvalues and eigenvectors
+    real64 eigenValues[3]={};
+    real64 eigenVectors[3][3]={};
+    LvArray::tensorOps::symEigenvectors<3>(eigenValues, eigenVectors, strain);
+    //construct 4th order IxI tensor
+    real64 IxITensor[6][6]={};
+    for (int i=0; i < 3; i++)
+      {
+	for (int j=0; j < 3; j++)
+	  {
+	    IxITensor[i][j] = 1.0;
+	  }
+      }
+
+    //construct positive part
+    real64 cPositive[6][6]={};
+    real64 positiveProjector[6][6]={};
+    PositiveProjectorTensor(eigenValues, eigenVectors, positiveProjector);
+    LvArray::tensorOps::scaledCopy<6,6>(cPositive, IxITensor, lambda*heaviside(traceOfStrain));
+    LvArray::tensorOps::scale<6,6>(positiveProjector, 2*mu);
+    LvArray::tensorOps::add<6,6>(cPositive, positiveProjector);
+
+    //construct negative part
+    real64 negativeProjector[6][6]={};
+    NegativeProjectorTensor(eigenValues, eigenVectors, negativeProjector);
+    LvArray::tensorOps::scaledCopy<6,6>(c, IxITensor, lambda*heaviside(-traceOfStrain));
+    LvArray::tensorOps::scale<6,6>(negativeProjector, 2*mu);
+    LvArray::tensorOps::add<6,6>(c, negativeProjector);
+    //finish up
+    LvArray::tensorOps::scale<6,6>(cPositive, damageFactor);
+    LvArray::tensorOps::add<6,6>(c, cPositive);
+    
+  }
+
+GEOSX_HOST_DEVICE inline
+void getTestStress( real64 (& strain)[6], real64 (& stress)[6] )
+  {
+
+    //Spectral split
+    real64 const damageFactor = 0.25;
+    real64 const mu = 1;
+    real64 const lambda = 1;
+    //get strain tensor in voigt form
+    real64 traceOfStrain = strain[0] + strain[1] + strain[2];
+    //get eigenvalues and eigenvectors
+    real64 eigenValues[3] = {};
+    real64 eigenVectors[3][3] = {};
+    LvArray::tensorOps::symEigenvectors<3>(eigenValues, eigenVectors, strain);
+    //transpose eigenVectors matrix to match convention
+    real64 temp[3][3] = {};
+    LvArray::tensorOps::transpose<3,3>(temp, eigenVectors);
+    LvArray::tensorOps::copy<3,3>(eigenVectors, temp);
+    real64 tracePlus = std::max(traceOfStrain, 0.0);
+    real64 traceMinus = std::min(traceOfStrain, 0.0);
+    //build symmetric matrices of positive and negative eigenvalues
+    real64 Itensor[6] = {};
+    for (int i = 0; i < 3; i++)
+      {
+	Itensor[i] = 1;
+      }
+    real64 positivePartOfStrain[6] = {};
+    real64 negativePartOfStrain[6] = {};
+    PositivePartOfTensor(eigenValues, eigenVectors, positivePartOfStrain);
+    NegativePartOfTensor(eigenValues, eigenVectors, negativePartOfStrain); 
+    real64 positiveStress[6] = {}; 
+    real64 negativeStress[6] = {};
+    LvArray::tensorOps::scaledCopy<6>(positiveStress, Itensor, lambda*tracePlus);
+    LvArray::tensorOps::scaledCopy<6>(negativeStress, Itensor, lambda*traceMinus);
+    LvArray::tensorOps::scaledAdd<6>(positiveStress, positivePartOfStrain, 2*mu);
+    LvArray::tensorOps::scaledAdd<6>(negativeStress, negativePartOfStrain, 2*mu);
+    LvArray::tensorOps::copy<6>(stress,negativeStress);
+    LvArray::tensorOps::scaledAdd<6>(stress, positiveStress, damageFactor);
+  }
 
 } //namespacegeosx 
   
