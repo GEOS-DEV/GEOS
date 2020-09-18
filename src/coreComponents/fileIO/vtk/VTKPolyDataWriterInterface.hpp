@@ -119,8 +119,8 @@ private:
    * @param[in] rank the rank we want to ask
    * @return the number of elements in the region for the asked rank
    */
-  localIndex gatherNbElementsInRegion( ElementRegionBase const & er, 
-                                       array1d< localIndex > & nbElemsInRegion ) const;
+  void gatherNbElementsInRegion( ElementRegionBase const & er, 
+                                 array1d< localIndex > & nbElemsInRegion ) const;
 
   /*!
    * @brief Create a folder at the given time-step \p time
