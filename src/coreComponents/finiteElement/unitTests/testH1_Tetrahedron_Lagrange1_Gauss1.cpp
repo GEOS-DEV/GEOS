@@ -123,7 +123,7 @@ void testKernelDriver()
           }
         }
       }
-      real64 const detJ = FiniteElementBase::inverse( J );
+      real64 const detJ = LvArray::tensorOps::invert< 3 >( J );
       EXPECT_FLOAT_EQ( detJ*weight, viewDetJxW[q] );
 
       for( localIndex a=0; a<numNodes; ++a )

@@ -152,14 +152,14 @@ public:
    * @return The determinant of the Jacobian transformation matrix.
    */
   GEOSX_HOST_DEVICE
-  static real64 inverseJacobianTransformation( int const q,
-                                               real64 const (&X)[numNodes][3],
-                                               real64 ( & J )[3][3] )
+  static real64 invJacobianTransformation( int const q,
+                                           real64 const (&X)[numNodes][3],
+                                           real64 ( & J )[3][3] )
   {
     int qa, qb, qc;
     LagrangeBasis1::TensorProduct3D::multiIndex( q, qa, qb, qc );
     jacobianTransformation( qa, qb, qc, X, J );
-    return inverse( J );
+    return LvArray::tensorOps::invert< 3 >( J );
   }
 
 
@@ -256,11 +256,11 @@ public:
    */
   GEOSX_HOST_DEVICE
   static void
-    applyJacobianTransformationToShapeFunctionsDerivatives( int const qa,
-                                                            int const qb,
-                                                            int const qc,
-                                                            real64 const ( &invJ )[3][3],
-                                                            real64 ( &gradN )[numNodes][3] );
+    applyTransformationToParentGradients( int const qa,
+                                          int const qb,
+                                          int const qc,
+                                          real64 const ( &invJ )[3][3],
+                                          real64 ( &gradN )[numNodes][3] );
 
 
 private:
@@ -431,9 +431,9 @@ H1_Hexahedron_Lagrange1_GaussLegendre2::calcGradN( localIndex const q,
 
   jacobianTransformation( qa, qb, qc, X, J );
 
-  real64 const detJ = inverse( J );
+  real64 const detJ = LvArray::tensorOps::invert< 3 >( J );
 
-  applyJacobianTransformationToShapeFunctionsDerivatives( qa, qb, qc, J, gradN );
+  applyTransformationToParentGradients( qa, qb, qc, J, gradN );
 
   return detJ * weight;
 }
@@ -487,11 +487,11 @@ GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void
 H1_Hexahedron_Lagrange1_GaussLegendre2::
-  applyJacobianTransformationToShapeFunctionsDerivatives( int const qa,
-                                                          int const qb,
-                                                          int const qc,
-                                                          real64 const ( &invJ )[3][3],
-                                                          real64 (& gradN)[numNodes][3] )
+  applyTransformationToParentGradients( int const qa,
+                                        int const qb,
+                                        int const qc,
+                                        real64 const ( &invJ )[3][3],
+                                        real64 (& gradN)[numNodes][3] )
 {
   supportLoop( qa, qb, qc, [] GEOSX_HOST_DEVICE ( real64 const (&dNdXi)[3],
                                                   int const nodeIndex,
@@ -530,7 +530,7 @@ H1_Hexahedron_Lagrange1_GaussLegendre2::
 
   jacobianTransformation( qa, qb, qc, X, J );
 
-  return detJ( J );
+  return LvArray::tensorOps::determinant< 3 >( J );
 }
 
 

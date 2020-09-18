@@ -27,6 +27,7 @@
 
 #include "common/DataTypes.hpp"
 #include "common/GeosxMacros.hpp"
+#include "LvArray/src/tensorOps.hpp"
 
 
 namespace geosx
@@ -89,22 +90,6 @@ public:
    * @return The number of support points per element.
    */
   virtual localIndex getNumSupportPoints() const = 0;
-
-  /**
-   * @brief Computes the inverse of a 3x3 c-array.
-   * @param J The array to invert...which is also used to store the inverse.
-   * @return The determinant of @p J.
-   */
-  GEOSX_HOST_DEVICE
-  static real64 inverse( real64 ( &J )[3][3] );
-
-  /**
-   * @brief Calculate the determinant of a 3x3 c-array.
-   * @param J The input array.
-   * @return The determinant of @p J
-   */
-  GEOSX_HOST_DEVICE
-  static real64 detJ( real64 const (&J)[3][3] );
 
   /**
    * @brief Get the shape function gradients.
@@ -457,37 +442,6 @@ protected:
 //***** Definitons ********************************************************************************
 //*************************************************************************************************
 
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
-real64 FiniteElementBase::inverse( real64 (& J)[3][3] )
-{
-  real64 const temp[3][3] =
-  { { J[1][1]*J[2][2] - J[1][2]*J[2][1], J[0][2]*J[2][1] - J[0][1]*J[2][2], J[0][1]*J[1][2] - J[0][2]*J[1][1] },
-    { J[1][2]*J[2][0] - J[1][0]*J[2][2], J[0][0]*J[2][2] - J[0][2]*J[2][0], J[0][2]*J[1][0] - J[0][0]*J[1][2] },
-    { J[1][0]*J[2][1] - J[1][1]*J[2][0], J[0][1]*J[2][0] - J[0][0]*J[2][1], J[0][0]*J[1][1] - J[0][1]*J[1][0] } };
-
-  real64 const det =  J[0][0] * temp[0][0] + J[1][0] * temp[0][1] + J[2][0] * temp[0][2];
-  real64 const invDet = 1.0 / det;
-
-  for( int i=0; i<3; ++i )
-  {
-    for( int j=0; j<3; ++j )
-    {
-      J[i][j] = temp[i][j] * invDet;
-    }
-  }
-  return det;
-}
-
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
-real64 FiniteElementBase::detJ( real64 const (&J)[3][3] )
-{
-  return J[0][0] * ( J[1][1]*J[2][2] - J[1][2]*J[2][1] ) +
-         J[1][0] * ( J[0][2]*J[2][1] - J[0][1]*J[2][2] ) +
-         J[2][0] * ( J[0][1]*J[1][2] - J[0][2]*J[1][1] );
-}
-
 template< typename LEAF >
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
@@ -510,12 +464,8 @@ real64 FiniteElementBase::getGradN( localIndex const k,
 {
   GEOSX_UNUSED_VAR( X );
 
-  for( int a=0; a<LEAF::numNodes; ++a )
-  {
-    gradN[a][0] = m_viewGradN( k, q, a, 0 );
-    gradN[a][1] = m_viewGradN( k, q, a, 1 );
-    gradN[a][2] = m_viewGradN( k, q, a, 2 );
-  }
+  LvArray::tensorOps::copy< LEAF::numNodes, 3 >( gradN, m_viewGradN[ k ][ q ] );
+
   return m_viewDetJ( k, q );
 }
 
@@ -530,11 +480,7 @@ void FiniteElementBase::value( real64 const (&N)[NUM_SUPPORT_POINTS],
                                real64 const (&var)[NUM_SUPPORT_POINTS],
                                real64 & value )
 {
-  value = N[0] * var[0];
-  for( int a=1; a<NUM_SUPPORT_POINTS; ++a )
-  {
-    value = value + N[a] * var[a];
-  }
+  value = LvArray::tensorOps::AiBi< NUM_SUPPORT_POINTS >( N, var );
 }
 
 template< int NUM_SUPPORT_POINTS,
@@ -546,18 +492,7 @@ void FiniteElementBase::value( real64 const (&N)[NUM_SUPPORT_POINTS],
                                real64 (& value)[NUM_COMPONENTS] )
 {
 
-  for( int i=0; i<NUM_COMPONENTS; ++i )
-  {
-    value[i] = N[0] * var[0][i];
-  }
-
-  for( int a=1; a<NUM_SUPPORT_POINTS; ++a )
-  {
-    for( int i=0; i<NUM_COMPONENTS; ++i )
-    {
-      value[i] = value[i] + N[a] * var[a][i];
-    }
-  }
+  LvArray::tensorOps::AjiBj< 3, NUM_SUPPORT_POINTS >( value, var, N );
 }
 
 
@@ -599,17 +534,7 @@ void FiniteElementBase::gradient( GRADIENT_TYPE const & gradN,
                                   real64 const (&var)[NUM_SUPPORT_POINTS],
                                   real64 (& gradVar)[3] )
 {
-  for( int i = 0; i < 3; ++i )
-  {
-    gradVar[i] = var[0] * gradN[0][i];
-  }
-  for( int a=1; a<NUM_SUPPORT_POINTS; ++a )
-  {
-    for( int i = 0; i < 3; ++i )
-    {
-      gradVar[i] = gradVar[i] + var[a] * gradN[a][i];
-    }
-  }
+  LvArray::tensorOps::AjiBj< 3, NUM_SUPPORT_POINTS >( gradVar, gradN, var );
 }
 
 template< int NUM_SUPPORT_POINTS,
@@ -620,23 +545,7 @@ void FiniteElementBase::gradient( GRADIENT_TYPE const & gradN,
                                   real64 const (&var)[NUM_SUPPORT_POINTS][3],
                                   real64 (& gradVar)[3][3] )
 {
-  for( int i = 0; i < 3; ++i )
-  {
-    for( int j = 0; j < 3; ++j )
-    {
-      gradVar[i][j] = var[0][i] * gradN[0][j];
-    }
-  }
-  for( int a=1; a<NUM_SUPPORT_POINTS; ++a )
-  {
-    for( int i = 0; i < 3; ++i )
-    {
-      for( int j = 0; j < 3; ++j )
-      {
-        gradVar[i][j] = gradVar[i][j] + var[a][i] * gradN[a][j];
-      }
-    }
-  }
+  LvArray::tensorOps::AkiBkj< 3, 3, NUM_SUPPORT_POINTS >( gradVar, var, gradN );
 }
 
 
@@ -696,9 +605,7 @@ void FiniteElementBase::plus_gradNajAij( GRADIENT_TYPE const & gradN,
 {
   for( int a=0; a<NUM_SUPPORT_POINTS; ++a )
   {
-    R[a][0] = R[a][0] + var_detJxW[0][0] * gradN[a][0] + var_detJxW[0][1] * gradN[a][1] + var_detJxW[0][2] * gradN[a][2];
-    R[a][1] = R[a][1] + var_detJxW[1][0] * gradN[a][0] + var_detJxW[1][1] * gradN[a][1] + var_detJxW[1][2] * gradN[a][2];
-    R[a][2] = R[a][2] + var_detJxW[2][0] * gradN[a][0] + var_detJxW[2][1] * gradN[a][1] + var_detJxW[2][2] * gradN[a][2];
+    LvArray::tensorOps::plusAijBj< 3, 3 >( R[a], var_detJxW, gradN[a] );
   }
 }
 
@@ -711,9 +618,7 @@ void FiniteElementBase::plus_NaFi( real64 const (&N)[NUM_SUPPORT_POINTS],
 {
   for( int a=0; a<NUM_SUPPORT_POINTS; ++a )
   {
-    R[a][0] = R[a][0] + var_detJxW[0] * N[a];
-    R[a][1] = R[a][1] + var_detJxW[1] * N[a];
-    R[a][2] = R[a][2] + var_detJxW[2] * N[a];
+    LvArray::tensorOps::scaledAdd< 3 >( R[a], var_detJxW, N[a] );
   }
 }
 

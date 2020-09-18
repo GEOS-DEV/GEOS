@@ -32,9 +32,9 @@ struct SolidModelDiscretizationOpsTransverseIsotropic : public SolidModelDiscret
   template< int NUM_SUPPORT_POINTS,
             typename BASIS_GRADIENT >
   GEOSX_HOST_DEVICE
-  void BTDB( BASIS_GRADIENT const & gradN,
-             real64 const & detJxW,
-             real64 ( &elementStiffness )[NUM_SUPPORT_POINTS*3][NUM_SUPPORT_POINTS*3] );
+  void upperBTDB( BASIS_GRADIENT const & gradN,
+                  real64 const & detJxW,
+                  real64 ( &elementStiffness )[NUM_SUPPORT_POINTS*3][NUM_SUPPORT_POINTS*3] );
 
   template< int NUM_SUPPORT_POINTS,
             typename BASIS_GRADIENT >
@@ -77,9 +77,9 @@ template< int NUM_SUPPORT_POINTS,
           typename BASIS_GRADIENT >
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-void SolidModelDiscretizationOpsTransverseIsotropic::BTDB( BASIS_GRADIENT const & gradN,
-                                                           real64 const & detJxW,
-                                                           real64 (& elementStiffness)[NUM_SUPPORT_POINTS *3][NUM_SUPPORT_POINTS *3] )
+void SolidModelDiscretizationOpsTransverseIsotropic::upperBTDB( BASIS_GRADIENT const & gradN,
+                                                                real64 const & detJxW,
+                                                                real64 (& elementStiffness)[NUM_SUPPORT_POINTS *3][NUM_SUPPORT_POINTS *3] )
 {
   real64 const c12 = (m_c11 - 2 * m_c66) * detJxW;
   real64 const c11 = this->m_c11 * detJxW;
@@ -88,18 +88,18 @@ void SolidModelDiscretizationOpsTransverseIsotropic::BTDB( BASIS_GRADIENT const 
   real64 const c44 = this->m_c44 * detJxW;
   real64 const c66 = this->m_c66 * detJxW;
 
-  SolidModelDiscretizationOps::BTDB< NUM_SUPPORT_POINTS >( gradN,
-                                                           elementStiffness,
-                                                           [ c11,
-                                                             c13,
-                                                             c33,
-                                                             c44,
-                                                             c66,
-                                                             c12 ] GEOSX_HOST_DEVICE
-                                                             ( int const a,
-                                                             int const b,
-                                                             real64 const (&gradNa_gradNb)[3][3],
-                                                             real64 (& elementStiffness)[NUM_SUPPORT_POINTS*3][NUM_SUPPORT_POINTS*3] )
+  SolidModelDiscretizationOps::upperBTDB< NUM_SUPPORT_POINTS >( gradN,
+                                                                elementStiffness,
+                                                                [ c11,
+                                                                  c13,
+                                                                  c33,
+                                                                  c44,
+                                                                  c66,
+                                                                  c12 ] GEOSX_HOST_DEVICE
+                                                                  ( int const a,
+                                                                  int const b,
+                                                                  real64 const (&gradNa_gradNb)[3][3],
+                                                                  real64 (& elementStiffness)[NUM_SUPPORT_POINTS*3][NUM_SUPPORT_POINTS*3] )
   {
     elementStiffness[a*3+0][b*3+0] = elementStiffness[a*3+0][b*3+0] + c11 * gradNa_gradNb[0][0] + c66 * gradNa_gradNb[1][1] + c44 * gradNa_gradNb[2][2];
     elementStiffness[a*3+0][b*3+1] = elementStiffness[a*3+0][b*3+1] + c12 * gradNa_gradNb[0][1] + c66 * gradNa_gradNb[1][0];

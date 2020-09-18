@@ -251,7 +251,7 @@ public:
     typename CONSTITUTIVE_TYPE::KernelWrapper::DiscretizationOps stiffnessHelper;
     m_constitutiveUpdate.setDiscretizationOps( k, q, stiffnessHelper );
 
-    stiffnessHelper.template BTDB< numNodesPerElem >( dNdX, -detJ, stack.localJacobian );
+    stiffnessHelper.template upperBTDB< numNodesPerElem >( dNdX, -detJ, stack.localJacobian );
 
     real64 stress[6];
 
@@ -287,6 +287,8 @@ public:
   {
     GEOSX_UNUSED_VAR( k );
     real64 maxForce = 0;
+
+    CONSTITUTIVE_TYPE::KernelWrapper::DiscretizationOps::template fillLowerBTDB< numNodesPerElem >( stack.localJacobian );
 
     for( int localNode = 0; localNode < numNodesPerElem; ++localNode )
     {

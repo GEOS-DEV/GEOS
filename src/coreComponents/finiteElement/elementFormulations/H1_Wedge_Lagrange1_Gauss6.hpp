@@ -355,7 +355,7 @@ H1_Wedge_Lagrange1_Gauss6::
 
   jacobianTransformation( q, X, J );
 
-  real64 const detJ = inverse( J );
+  real64 const detJ = LvArray::tensorOps::invert< 3 >( J );
 
   applyJacobianTransformationToShapeFunctionsDerivatives( q, J, gradN );
 
@@ -375,7 +375,7 @@ H1_Wedge_Lagrange1_Gauss6::
 
   jacobianTransformation( q, X, J );
 
-  return detJ( J ) * weight;
+  return LvArray::tensorOps::determinant< 3 >( J ) * weight;
 }
 
 }

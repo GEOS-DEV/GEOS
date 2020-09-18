@@ -169,10 +169,7 @@ public:
       localIndex const localNodeIndex = m_elemsToNodes( k, a );
 
 #if defined(CALC_FEM_SHAPE_IN_KERNEL)
-      for( int i=0; i<3; ++i )
-      {
-        stack.xLocal[ a ][ i ] = m_X[ localNodeIndex ][ i ];
-      }
+      LvArray::tensorOps::copy< 3 >( stack.xLocal[ a ], m_X[ localNodeIndex ] );
 #endif
 
       stack.nodalDamageLocal[ a ] = m_nodalDamage[ localNodeIndex ];

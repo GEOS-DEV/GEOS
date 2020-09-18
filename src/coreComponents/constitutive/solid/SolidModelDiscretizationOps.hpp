@@ -13,7 +13,7 @@
  */
 
 /**
- * @file SolidModelHelperBase.hpp
+ * @file SolidModelDiscretizationOps.hpp
  */
 
 
@@ -27,16 +27,26 @@ namespace geosx
 namespace constitutive
 {
 
-
+/**
+ * Base class for objects that assist in performing operations for a
+ * discretization method using constitutive data.
+ * Derived objects will define specific implementations of methods
+ * appropriately for the corresponding constitutive relation.
+ */
 struct SolidModelDiscretizationOps
 {
   template< int NUM_SUPPORT_POINTS,
             typename BASIS_GRADIENT,
             typename CBF >
   GEOSX_HOST_DEVICE
-  void BTDB( BASIS_GRADIENT const & gradN,
-             real64 ( &elementStiffness )[NUM_SUPPORT_POINTS*3][NUM_SUPPORT_POINTS*3],
-             CBF && callbackFunction );
+  void upperBTDB( BASIS_GRADIENT const & gradN,
+                  real64 ( &elementStiffness )[NUM_SUPPORT_POINTS*3][NUM_SUPPORT_POINTS*3],
+                  CBF && callbackFunction );
+
+  template< int NUM_SUPPORT_POINTS >
+  GEOSX_HOST_DEVICE
+  static
+  void fillLowerBTDB( real64 ( &elementStiffness )[NUM_SUPPORT_POINTS*3][NUM_SUPPORT_POINTS*3] );
 
   template< int NUM_SUPPORT_POINTS,
             typename BASIS_GRADIENT,
@@ -62,9 +72,9 @@ template< int NUM_SUPPORT_POINTS,
           typename CBF >
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-void SolidModelDiscretizationOps::BTDB( BASIS_GRADIENT const & gradN,
-                                        real64 (& elementStiffness)[NUM_SUPPORT_POINTS*3][NUM_SUPPORT_POINTS*3],
-                                        CBF && callbackFunction )
+void SolidModelDiscretizationOps::upperBTDB( BASIS_GRADIENT const & gradN,
+                                             real64 (& elementStiffness)[NUM_SUPPORT_POINTS*3][NUM_SUPPORT_POINTS*3],
+                                             CBF && callbackFunction )
 {
   for( int a=0; a<NUM_SUPPORT_POINTS; ++a )
   {
@@ -77,8 +87,15 @@ void SolidModelDiscretizationOps::BTDB( BASIS_GRADIENT const & gradN,
       callbackFunction( a, b, gradNa_gradNb, elementStiffness );
     }
   }
+}
 
-  for( int row=0; row<NUM_SUPPORT_POINTS*3; ++row )
+
+template< int NUM_SUPPORT_POINTS >
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void SolidModelDiscretizationOps::fillLowerBTDB( real64 ( & elementStiffness )[NUM_SUPPORT_POINTS*3][NUM_SUPPORT_POINTS*3] )
+{
+  for( int row=1; row<NUM_SUPPORT_POINTS*3; ++row )
   {
     for( int col=0; col<row; ++col )
     {
@@ -86,6 +103,7 @@ void SolidModelDiscretizationOps::BTDB( BASIS_GRADIENT const & gradN,
     }
   }
 }
+
 
 
 template< int NUM_SUPPORT_POINTS,

@@ -32,9 +32,9 @@ struct SolidModelDiscretizationOpsFullyAnisotroipic : public SolidModelDiscretiz
   template< int NUM_SUPPORT_POINTS,
             typename BASIS_GRADIENT >
   GEOSX_HOST_DEVICE
-  void BTDB( BASIS_GRADIENT const & gradN,
-             real64 const & detJxW,
-             real64 ( &elementStiffness )[NUM_SUPPORT_POINTS*3][NUM_SUPPORT_POINTS*3] );
+  void upperBTDB( BASIS_GRADIENT const & gradN,
+                  real64 const & detJxW,
+                  real64 ( &elementStiffness )[NUM_SUPPORT_POINTS*3][NUM_SUPPORT_POINTS*3] );
 
   template< int NUM_SUPPORT_POINTS,
             typename BASIS_GRADIENT >
@@ -66,9 +66,9 @@ template< int NUM_SUPPORT_POINTS,
           typename BASIS_GRADIENT >
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-void SolidModelDiscretizationOpsFullyAnisotroipic::BTDB( BASIS_GRADIENT const & gradN,
-                                                         real64 const & detJxW,
-                                                         real64 (& elementStiffness)[NUM_SUPPORT_POINTS *3][NUM_SUPPORT_POINTS *3] )
+void SolidModelDiscretizationOpsFullyAnisotroipic::upperBTDB( BASIS_GRADIENT const & gradN,
+                                                              real64 const & detJxW,
+                                                              real64 (& elementStiffness)[NUM_SUPPORT_POINTS *3][NUM_SUPPORT_POINTS *3] )
 {
   for( int a=0; a<NUM_SUPPORT_POINTS; ++a )
   {

@@ -26,6 +26,7 @@
 #include "elementFormulations/H1_Tetrahedron_Lagrange1_Gauss1.hpp"
 #include "elementFormulations/H1_TriangleFace_Lagrange1_Gauss1.hpp"
 #include "elementFormulations/H1_Wedge_Lagrange1_Gauss6.hpp"
+#include "LvArray/src/system.hpp"
 
 
 
@@ -97,7 +98,7 @@ dispatch3D( FiniteElementBase & input,
   }
   else
   {
-    GEOSX_ERROR( "finiteElement::dispatch3D() is not implemented for input of "<<typeid(input).name() );
+    GEOSX_ERROR( "finiteElement::dispatch3D() is not implemented for input of "<<LvArray::system::demangleType( &input ) );
   }
 }
 
@@ -116,7 +117,7 @@ dispatch2D( FiniteElementBase const & input,
   }
   else
   {
-    GEOSX_ERROR( "finiteElement::dispatch2D() is not implemented for input of: "<<typeid(input).name() );
+    GEOSX_ERROR( "finiteElement::dispatch2D() is not implemented for input of: "<<LvArray::system::demangleType( &input ) );
   }
 }
 

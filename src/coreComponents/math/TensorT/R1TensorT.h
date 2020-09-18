@@ -102,17 +102,6 @@ public:
     return *this;
   }
 
-  GEOSX_HOST_DEVICE inline
-  R1TensorT & operator=( realT const (&src)[3] )
-  {
-    for( int i = 0; i < T_dim; ++i )
-    {
-      this->t_data[ i ] = src[ i ];
-    }
-
-    return *this;
-  }
-
   using TensorBaseT< T_dim >::operator+=;
 
   template< int USD >

@@ -389,7 +389,7 @@ real64 H1_Pyramid_Lagrange1_Gauss5::calcGradN( localIndex const q,
 
   jacobianTransformation( q, X, J );
 
-  real64 const detJ = inverse( J );
+  real64 const detJ = LvArray::tensorOps::invert< 3 >( J );
 
   applyJacobianTransformationToShapeFunctionsDerivatives( q, J, gradN );
 
@@ -409,7 +409,7 @@ H1_Pyramid_Lagrange1_Gauss5::
 
   jacobianTransformation( q, X, J );
 
-  return detJ( J ) * quadratureWeight( q );
+  return LvArray::tensorOps::determinant< 3 >( J ) * quadratureWeight( q );
 }
 
 

@@ -155,11 +155,11 @@ public:
     real64 dNdX[ numNodesPerElem ][ 3 ];
     real64 const detJ = m_finiteElementSpace.template getGradN< FE_TYPE >( k, q, stack.xLocal, dNdX );
 
-    real64 dUhatdX[3][3] = { {0, 0, 0}, {0, 0, 0}, {0, 0, 0} };
-    real64 dUdX[3][3] = { {0, 0, 0}, {0, 0, 0}, {0, 0, 0} };
-    real64 F[3][3] = { {0, 0, 0}, {0, 0, 0}, {0, 0, 0} };
-    real64 Ldt[3][3] = { {0, 0, 0}, {0, 0, 0}, {0, 0, 0} };
-    real64 fInv[3][3] = { {0, 0, 0}, {0, 0, 0}, {0, 0, 0} };
+    real64 dUhatdX[3][3] = { {0} };
+    real64 dUdX[3][3] = { {0} };
+    real64 F[3][3] = { {0} };
+    real64 Ldt[3][3] = { {0} };
+    real64 fInv[3][3] = { {0} };
 
     FE_TYPE::gradient( dNdX, stack.varLocal, dUhatdX );
     FE_TYPE::gradient( dNdX, stack.uLocal, dUdX );
