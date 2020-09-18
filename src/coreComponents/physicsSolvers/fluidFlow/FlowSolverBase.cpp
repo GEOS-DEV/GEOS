@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -115,6 +115,28 @@ void FlowSolverBase::RegisterDataOnMesh( Group * const MeshBodies )
         setPlotLevel( PlotLevel::LEVEL_0 );
     } );
 
+    //TODO: I think these 2 subregions should be treated in the same way. Need to unify the region
+    elemManager->forElementSubRegionsComplete< EmbeddedSurfaceSubRegion >( [&]( localIndex const,
+                                                                                localIndex const,
+                                                                                ElementRegionBase & region,
+                                                                                EmbeddedSurfaceSubRegion & subRegion )
+    {
+      EmbeddedSurfaceRegion & embSurfRegion = dynamicCast< EmbeddedSurfaceRegion & >( region );
+
+      subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::referencePorosityString )->
+        setApplyDefaultValue( 1.0 );
+
+      subRegion.registerWrapper< array1d< R1Tensor > >( viewKeyStruct::permeabilityString )->setPlotLevel( PlotLevel::LEVEL_0 );
+      subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::gravityCoefString )->setApplyDefaultValue( 0.0 );
+      subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::aperture0String )->
+        setDefaultValue( embSurfRegion.getDefaultAperture() );
+      subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::effectiveApertureString )->
+        setApplyDefaultValue( subRegion.getWrapper< array1d< real64 > >( EmbeddedSurfaceSubRegion::
+                                                                           viewKeyStruct::
+                                                                           elementApertureString )->getDefaultValue() )->
+        setPlotLevel( PlotLevel::LEVEL_0 );
+    } );
+
     FaceManager * const faceManager = mesh.getFaceManager();
     faceManager->registerWrapper< array1d< real64 > >( viewKeyStruct::gravityCoefString )->setApplyDefaultValue( 0.0 );
   }
@@ -181,9 +203,9 @@ void FlowSolverBase::PrecomputeData( MeshLevel & mesh )
   forTargetSubRegions( mesh, [&]( localIndex const,
                                   ElementSubRegionBase & subRegion )
   {
-    arrayView2d< real64 const > const & elemCenter = subRegion.getElementCenter();
+    arrayView2d< real64 const > const elemCenter = subRegion.getElementCenter();
 
-    arrayView1d< real64 > const & gravityCoef =
+    arrayView1d< real64 > const gravityCoef =
       subRegion.getReference< array1d< real64 > >( viewKeyStruct::gravityCoefString );
 
     forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const ei )
@@ -193,9 +215,9 @@ void FlowSolverBase::PrecomputeData( MeshLevel & mesh )
   } );
 
   {
-    arrayView2d< real64 const > const & faceCenter = faceManager.faceCenter();
+    arrayView2d< real64 const > const faceCenter = faceManager.faceCenter();
 
-    arrayView1d< real64 > const & gravityCoef =
+    arrayView1d< real64 > const gravityCoef =
       faceManager.getReference< array1d< real64 > >( viewKeyStruct::gravityCoefString );
 
     forAll< parallelHostPolicy >( faceManager.size(), [=] ( localIndex const kf )
@@ -257,5 +279,16 @@ void FlowSolverBase::ResetViews( MeshLevel & mesh )
   m_element_dSeparationCoefficient_dAperture.setName( getName() + "/accessors/" + FaceElementSubRegion::viewKeyStruct::dSeparationCoeffdAperString );
 #endif
 }
+
+std::vector< string > FlowSolverBase::getConstitutiveRelations( string const & regionName ) const
+{
+
+  localIndex const regionIndex = this->targetRegionIndex( regionName );
+
+  std::vector< string > rval{ m_solidModelNames[regionIndex], m_fluidModelNames[regionIndex] };
+
+  return rval;
+}
+
 
 } // namespace geosx

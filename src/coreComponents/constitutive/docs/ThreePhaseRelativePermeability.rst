@@ -34,10 +34,10 @@ by `Baker <http://dx.doi.org/10.2118/17369-MS>`__. Specifically, we compute:
 .. math::
     k_{ro,wog}(S_w,S_g) = \frac{ (S_w - S_{w,\textit{min}}) k_{ro,wo}(S_w) + S_g k_{rg,go}(S_g) }{ (S_w - S_{w,\textit{min}}) + S_g }.
 
-This procedure provides a simple but effective formula avoiding 
+This procedure provides a simple but effective formula avoiding
 the problems associated with the other interpolation methods (negative values).
 
-Usage
+Parameters
 ======================
 
 The relative permeability constitutive model is listed in
@@ -74,7 +74,7 @@ water Water phase
 
 * ``gasOilRelPermMaxValue`` - The list of maximum values :math:`k_{\textit{r} \ell,go,\textit{max}}` for the two-phase gas-oil relative permeability data, with the gas max value first and the oil max value next. These exponents are then used to compute :math:`k_{r \ell,go}` in the :doc:`/coreComponents/constitutive/docs/BrooksCoreyRelativePermeability`.
 
-Input example
+Example
 ====================
 
 .. code-block:: xml

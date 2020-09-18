@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -55,9 +55,8 @@ public:
    * @param[in]  parent A pointer to the group that contains the instance of the new clone
    * @param[out] clone  A reference to a unique_ptr  that will hold the clone.
    */
-  virtual void DeliverClone( string const & name,
-                             Group * const parent,
-                             std::unique_ptr< ConstitutiveBase > & clone ) const = 0;
+  virtual std::unique_ptr< ConstitutiveBase > deliverClone( string const & name,
+                                                            Group * const parent ) const;
 
 
   virtual void StateUpdatePointPressure( real64 const & GEOSX_UNUSED_PARAM( pres ),
@@ -70,12 +69,6 @@ public:
     GEOSX_UNUSED_VAR( pres )
     GEOSX_UNUSED_VAR( dPres )
   }
-
-  /**
-   * @brief function to resize the fields in this constitutive model
-   * @param[in] newSize the new size of the fields
-   */
-  virtual void resize( localIndex newSize ) override;
 
   /**
    * @name Static Factory Catalog members and functions
@@ -95,7 +88,7 @@ public:
    * @brief function to return the catalog name of the derived class
    * @return a string that contains the catalog name of the derived class
    */
-  virtual string GetCatalogName() = 0;
+  virtual string getCatalogName() const = 0;
 
   ///@}
 
@@ -108,7 +101,7 @@ public:
    *   1) Allocate data according to the size of parent and numConstitutivePointsPerParentIndex
    *   2) Create wrappers to the constitutive data in the parent for easier access
    */
-  virtual void AllocateConstitutiveData( dataRepository::Group * const parent,
+  virtual void allocateConstitutiveData( dataRepository::Group * const parent,
                                          localIndex const numConstitutivePointsPerParentIndex );
 
   struct viewKeyStruct

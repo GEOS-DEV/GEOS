@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -52,31 +52,15 @@ VanGenuchtenCapillaryPressure::VanGenuchtenCapillaryPressure( std::string const 
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription(
     "Saturation at which the extremum capillary pressure is attained; used to avoid infinite capillary pressure values for saturations close to 0 and 1" );
+
+  registerWrapper( viewKeyStruct::volFracScaleString, &m_volFracScale )->
+    setApplyDefaultValue( 1.0 )->
+    setDescription( "Factor used to scale the phase capillary pressure, defined as: one minus the sum of the phase minimum volume fractions." );
+
 }
 
 VanGenuchtenCapillaryPressure::~VanGenuchtenCapillaryPressure()
 {}
-
-void
-VanGenuchtenCapillaryPressure::DeliverClone( string const & name,
-                                             Group * const parent,
-                                             std::unique_ptr< ConstitutiveBase > & clone ) const
-{
-  if( !clone )
-  {
-    clone = std::make_unique< VanGenuchtenCapillaryPressure >( name, parent );
-  }
-
-  CapillaryPressureBase::DeliverClone( name, parent, clone );
-  VanGenuchtenCapillaryPressure & relPerm = dynamicCast< VanGenuchtenCapillaryPressure & >( *clone );
-
-  relPerm.m_phaseMinVolumeFraction      = m_phaseMinVolumeFraction;
-  relPerm.m_phaseCapPressureExponentInv = m_phaseCapPressureExponentInv;
-  relPerm.m_phaseCapPressureMultiplier  = m_phaseCapPressureMultiplier;
-  relPerm.m_capPressureEpsilon          = m_capPressureEpsilon;
-  relPerm.m_volFracScale                = m_volFracScale;
-}
-
 
 void VanGenuchtenCapillaryPressure::PostProcessInput()
 {

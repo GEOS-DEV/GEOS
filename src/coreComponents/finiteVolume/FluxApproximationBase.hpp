@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -157,6 +157,14 @@ public:
   virtual void addToFractureStencil( MeshLevel & mesh,
                                      string const & faceElementRegionName,
                                      bool const initFlag ) const = 0;
+
+  /**
+   * @brief Add a new embedded fracture stencil.
+   * @param[in,out] mesh the mesh on which to add the fracture stencil
+   * @param[in] embeddedSurfaceRegionName the embedded surface element region name
+   */
+  virtual void addEDFracToFractureStencil( MeshLevel & mesh,
+                                           string const & embeddedSurfaceRegionName ) const = 0;
 
   /**
    * @brief View keys.

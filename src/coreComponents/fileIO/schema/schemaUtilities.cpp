@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -70,33 +70,37 @@ void ConvertDocumentationToSchema( std::string const & fname,
   GEOSX_LOG_RANK_0( "  Done!" );
 }
 
+void AppendSimpleType( xmlWrapper::xmlNode & schemaRoot,
+                       string const & name,
+                       string const & regex )
+{
+  std::string const advanced_match_string = ".*[\\[\\]`$].*|";
+
+  xmlWrapper::xmlNode newNode = schemaRoot.append_child( "xsd:simpleType" );
+  newNode.append_attribute( "name" ) = name.c_str();
+  xmlWrapper::xmlNode restrictionNode = newNode.append_child( "xsd:restriction" );
+  restrictionNode.append_attribute( "base" ) = "xsd:string";
+  xmlWrapper::xmlNode patternNode = restrictionNode.append_child( "xsd:pattern" );
+
+  // Handle the default regex
+  if( regex.empty() )
+  {
+    GEOSX_WARNING( "schema regex not defined for " << name );
+    patternNode.append_attribute( "value" ) = "(?s).*";
+  }
+  else
+  {
+    std::string const patternString = advanced_match_string + regex;
+    patternNode.append_attribute( "value" ) = patternString.c_str();
+  }
+}
 
 void BuildSimpleSchemaTypes( xmlWrapper::xmlNode schemaRoot )
 {
   rtTypes::typeRegex typeRegex;
-  std::string advanced_match_string = ".*[\\[\\]`$].*|";
-
-  for( auto regex=typeRegex.begin(); regex!=typeRegex.end(); ++regex )
+  for( auto const & regex : typeRegex )
   {
-    xmlWrapper::xmlNode newNode = schemaRoot.append_child( "xsd:simpleType" );
-    newNode.append_attribute( "name" ) = regex->first.c_str();
-    xmlWrapper::xmlNode restrictionNode = newNode.append_child( "xsd:restriction" );
-    restrictionNode.append_attribute( "base" ) = "xsd:string";
-    xmlWrapper::xmlNode patternNode = restrictionNode.append_child( "xsd:pattern" );
-
-    // Handle the default regex
-    if( regex->second.empty())
-    {
-      GEOSX_WARNING( "schema regex not defined for " << regex->first );
-      patternNode.append_attribute( "value" ) = "(?s).*";
-    }
-    else
-    {
-      // patternNode.append_attribute("value") = regex->second.c_str();
-
-      std::string patternString = advanced_match_string + regex->second;
-      patternNode.append_attribute( "value" ) = patternString.c_str();
-    }
+    AppendSimpleType( schemaRoot, regex.first, regex.second );
   }
 }
 
@@ -227,6 +231,17 @@ void SchemaConstruction( Group * const group,
             GEOSX_LOG_VAR( wrappedTypeName );
             GEOSX_LOG_VAR( xmlSafeName );
             attributeNode.append_attribute( "type" ) = xmlSafeName.c_str();
+
+            // Check if the attribute has a previously unseen non-simple type with a custom validation regex
+            if( schemaRoot.find_child_by_attribute( "xsd:simpleType", "name", xmlSafeName.c_str() ).empty() )
+            {
+              string const regex = wrapper->typeRegex();
+              if( !regex.empty() )
+              {
+                // Append a new simpleType with a custom regex
+                AppendSimpleType( schemaRoot, xmlSafeName, regex );
+              }
+            }
 
             // (Optional) Default Value
             if( (flag == InputFlags::OPTIONAL_NONUNIQUE) || (flag == InputFlags::REQUIRED_NONUNIQUE))

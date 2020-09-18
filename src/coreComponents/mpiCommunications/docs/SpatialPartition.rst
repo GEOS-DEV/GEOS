@@ -53,7 +53,13 @@ In the command line to run GEOSX, the user can specify the partitioning pattern 
 
 Graph-based partitioning
 ---------------------------
-TODO ...
+
+The Graph-based partitioning is used only when importing exernal meshes using the ``PAMELAMeshGenerator``
+(see :ref:`TutorialFieldCase` section for more details using external meshes). While importing the
+mesh, PAMELA computes the graph of connectivity between all the volume elements of the mesh. The partitioning
+is then done using the METIS_ library. The graph is not weighted so the expected result is as mesh divided
+in ``n`` parts, with ``n`` being the number of MPI ranks used for simulation containing a similar amount
+of cells.
 
 Ghost ranks
 ===============
@@ -75,3 +81,4 @@ Therefore, it is a good practice or habit to hide ghost objects using ghostRank 
 If the visualization method involves interpolation, such as interpolating a zonal field into a nodal field or generating contours, 
 the interpretation near partition boundaries is not accurate.
 
+.. _METIS: http://glaros.dtc.umn.edu/gkhome/metis/metis/overview

@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -39,6 +39,9 @@ WellSolverBase::WellSolverBase( std::string const & name,
   this->registerWrapper( viewKeyStruct::fluidNamesString, &m_fluidModelNames )->
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "Name of fluid constitutive object to use for this solver." );
+
+  this->getWrapper< string >( viewKeyStruct::discretizationString )->
+    setInputFlag( InputFlags::FALSE );
 }
 
 Group * WellSolverBase::CreateChild( string const & childKey, string const & childName )
@@ -203,15 +206,15 @@ void WellSolverBase::PrecomputeData( DomainPartition & domain )
   {
     PerforationData * const perforationData = subRegion.GetPerforationData();
 
-    arrayView2d< real64 const > const & wellElemLocation = subRegion.getElementCenter();
+    arrayView2d< real64 const > const wellElemLocation = subRegion.getElementCenter();
 
-    arrayView1d< real64 > const & wellElemGravCoef =
+    arrayView1d< real64 > const wellElemGravCoef =
       subRegion.getReference< array1d< real64 > >( viewKeyStruct::gravityCoefString );
 
-    arrayView1d< R1Tensor const > const & perfLocation =
+    arrayView1d< R1Tensor const > const perfLocation =
       perforationData->getReference< array1d< R1Tensor > >( PerforationData::viewKeyStruct::locationString );
 
-    arrayView1d< real64 > const & perfGravCoef =
+    arrayView1d< real64 > const perfGravCoef =
       perforationData->getReference< array1d< real64 > >( viewKeyStruct::gravityCoefString );
 
     for( localIndex iwelem = 0; iwelem < subRegion.size(); ++iwelem )
@@ -276,6 +279,17 @@ WellControls const & WellSolverBase::GetWellControls( WellElementSubRegion const
 
   return *wellControls;
 }
+
+std::vector< string > WellSolverBase::getConstitutiveRelations( string const & regionName ) const
+{
+
+  localIndex const regionIndex = this->targetRegionIndex( regionName );
+
+  std::vector< string > rval{  m_fluidModelNames[regionIndex] };
+
+  return rval;
+}
+
 
 
 } // namespace geosx

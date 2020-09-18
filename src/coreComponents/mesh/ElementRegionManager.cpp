@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -294,7 +294,7 @@ ElementRegionManager::PackPrivate( buffer_unit_type * & buffer,
     {
       packedSize += bufferOps::Pack< DOPACK >( buffer, subRegion.getName() );
 
-      arrayView1d< localIndex > const elemList = packList[kReg][esr];
+      arrayView1d< localIndex const > const elemList = packList[kReg][esr];
       if( DOPACK )
       {
         packedSize += subRegion.Pack( buffer, wrapperNames, elemList, 0 );
@@ -399,7 +399,7 @@ ElementRegionManager::PackGlobalMapsPrivate( buffer_unit_type * & buffer,
     {
       packedSize += bufferOps::Pack< DOPACK >( buffer, subRegion.getName() );
 
-      arrayView1d< localIndex > const & elemList = packList[kReg][esr];
+      arrayView1d< localIndex const > const elemList = packList[kReg][esr];
       if( DOPACK )
       {
         packedSize += subRegion.PackGlobalMaps( buffer, elemList, 0 );
@@ -496,7 +496,7 @@ ElementRegionManager::PackUpDownMapsPrivate( buffer_unit_type * & buffer,
     {
       packedSize += bufferOps::Pack< DOPACK >( buffer, subRegion.getName() );
 
-      arrayView1d< localIndex > const & elemList = packList[kReg][esr];
+      arrayView1d< localIndex > const elemList = packList[kReg][esr];
       if( DOPACK )
       {
         packedSize += subRegion.PackUpDownMaps( buffer, elemList );

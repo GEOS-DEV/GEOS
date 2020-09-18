@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -46,7 +46,6 @@ TableFunction::TableFunction( const std::string & name,
   m_tableCoordinates1D(),
   m_coordinateFiles(),
   m_voxelFile(),
-  m_interpolationMethodString(),
   m_interpolationMethod( InterpolationType::Linear ),
   m_coordinates(),
   m_values(),
@@ -72,10 +71,10 @@ TableFunction::TableFunction( const std::string & name,
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Voxel file name for ND Table" );
 
-  registerWrapper( keys::tableInterpolation, &m_interpolationMethodString )->
+  registerWrapper( keys::tableInterpolation, &m_interpolationMethod )->
     setInputFlag( InputFlags::OPTIONAL )->
-    setDescription( "Interpolation method (options = linear, nearest, upper, lower)" )->
-    setApplyDefaultValue( "linear" );
+    setDescription( "Interpolation method. Valid options:\n* " + EnumStrings< InterpolationType >::concat( "\n* " ) )->
+    setApplyDefaultValue( m_interpolationMethod );
 }
 
 TableFunction::~TableFunction()
@@ -119,7 +118,12 @@ void TableFunction::parse_file( array1d< T > & target, string const & filename, 
 void TableFunction::InitializeFunction()
 {
   // Read in data
-  if( m_coordinateFiles.empty())
+  if( m_coordinates.size() > 0 )
+  {
+    // This function appears to be already initialized
+    // Apparently, this can be called multiple times during unit tests?
+  }
+  else if( m_coordinateFiles.empty() )
   {
     // 1D Table
     m_dimensions = 1;
@@ -143,42 +147,20 @@ void TableFunction::InitializeFunction()
     }
   }
 
-
-  // Parse the interpolation method string
-  if( m_interpolationMethodString == "linear" )
-  {
-    m_interpolationMethod = InterpolationType::Linear;
-  }
-  else if( m_interpolationMethodString == "nearest" )
-  {
-    m_interpolationMethod = InterpolationType::Nearest;
-  }
-  else if( m_interpolationMethodString == "upper" )
-  {
-    m_interpolationMethod = InterpolationType::Upper;
-  }
-  else if( m_interpolationMethodString == "lower" )
-  {
-    m_interpolationMethod = InterpolationType::Lower;
-  }
-  else
-  {
-    GEOSX_ERROR( "Unrecognized interpolation type: " << m_interpolationMethodString );
-  }
-
-
   reInitializeFunction();
 }
 
 void TableFunction::reInitializeFunction()
 {
+  m_dimensions = LvArray::integerConversion< localIndex >( m_coordinates.size());
+  m_size.resize( m_dimensions );
 
   // Setup index increment (assume data is in Fortran array order)
   localIndex increment = 1;
   m_indexIncrement.resize( m_dimensions );
   for( localIndex ii=0; ii<m_dimensions; ++ii )
   {
-    m_size[ii] = m_coordinates[ii].size();
+    m_size[ii] = LvArray::integerConversion< localIndex >( m_coordinates[ii].size() );
     m_indexIncrement[ii] = increment;
     increment *= m_size[ii];
   }

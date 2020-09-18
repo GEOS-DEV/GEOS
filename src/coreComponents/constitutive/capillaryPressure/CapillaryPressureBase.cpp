@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -110,23 +110,12 @@ void CapillaryPressureBase::ResizeFields( localIndex const size,
   m_dPhaseCapPressure_dPhaseVolFrac.resize( size, numPts, NP, NP );
 }
 
-void CapillaryPressureBase::DeliverClone( string const & name,
-                                          dataRepository::Group * const parent,
-                                          std::unique_ptr< ConstitutiveBase > & clone ) const
-{
-  ConstitutiveBase::DeliverClone( name, parent, clone );
-  CapillaryPressureBase & relPerm = dynamicCast< CapillaryPressureBase & >( *clone );
 
-  relPerm.m_phaseNames = m_phaseNames;
-  relPerm.m_phaseTypes = m_phaseTypes;
-  relPerm.m_phaseOrder = m_phaseOrder;
-}
-
-void CapillaryPressureBase::AllocateConstitutiveData( dataRepository::Group * const parent,
+void CapillaryPressureBase::allocateConstitutiveData( dataRepository::Group * const parent,
                                                       localIndex const numConstitutivePointsPerParentIndex )
 {
-  ConstitutiveBase::AllocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
-  ResizeFields( parent->size(), numConstitutivePointsPerParentIndex );
+  ResizeFields( 0, numConstitutivePointsPerParentIndex );
+  ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 }
 
 } // namespace constitutive

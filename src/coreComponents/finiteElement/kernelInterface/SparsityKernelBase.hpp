@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -42,14 +42,12 @@ namespace finiteElement
  */
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
-          int NUM_TEST_SUPPORT_POINTS_PER_ELEM,
-          int NUM_TRIAL_SUPPORT_POINTS_PER_ELEM,
+          typename FE_TYPE,
           int NUM_DOF_PER_TEST_SP,
           int NUM_DOF_PER_TRIAL_SP >
 class SparsityKernelBase : public ImplicitKernelBase< SUBREGION_TYPE,
                                                       CONSTITUTIVE_TYPE,
-                                                      NUM_TEST_SUPPORT_POINTS_PER_ELEM,
-                                                      NUM_TRIAL_SUPPORT_POINTS_PER_ELEM,
+                                                      FE_TYPE,
                                                       NUM_DOF_PER_TEST_SP,
                                                       NUM_DOF_PER_TRIAL_SP >
 {
@@ -57,8 +55,7 @@ public:
   /// Alias for the base class. (i.e. #geosx::finiteElement::ImplicitKernelBase)
   using Base = ImplicitKernelBase< SUBREGION_TYPE,
                                    CONSTITUTIVE_TYPE,
-                                   NUM_TEST_SUPPORT_POINTS_PER_ELEM,
-                                   NUM_TRIAL_SUPPORT_POINTS_PER_ELEM,
+                                   FE_TYPE,
                                    NUM_DOF_PER_TEST_SP,
                                    NUM_DOF_PER_TRIAL_SP >;
 
@@ -76,19 +73,17 @@ public:
    * @param inputDofNumber The dof number for the primary field.
    * @param rankOffset dof index offset of current rank
    * @param inputSparsity The sparsity pattern to fill.
-   * @param rowSizes The array that will be filled with row sizes.
    * @copydoc geosx::finiteElement::KernelBase::KernelBase
    */
   SparsityKernelBase( NodeManager const & nodeManager,
                       EdgeManager const & edgeManager,
                       FaceManager const & faceManager,
                       SUBREGION_TYPE const & elementSubRegion,
-                      FiniteElementBase const * const finiteElementSpace,
+                      FE_TYPE const & finiteElementSpace,
                       CONSTITUTIVE_TYPE * const inputConstitutiveType,
                       arrayView1d< globalIndex const > const & inputDofNumber,
                       globalIndex const rankOffset,
-                      SparsityPattern< globalIndex > & inputSparsity,
-                      arrayView1d< localIndex > const & rowSizes ):
+                      SparsityPattern< globalIndex > & inputSparsity ):
     Base( nodeManager,
           edgeManager,
           faceManager,
@@ -99,8 +94,7 @@ public:
           rankOffset,
           CRSMatrix< real64, globalIndex >().toViewConstSizes(),
           array1d< real64 >().toView() ),
-    m_sparsity( inputSparsity ),
-    m_rowSizes( rowSizes )
+    m_sparsity( inputSparsity )
   {}
 
 
@@ -130,8 +124,6 @@ public:
   }
 private:
   SparsityPattern< globalIndex > & m_sparsity;
-
-  arrayView1d< localIndex > const & m_rowSizes;
 };
 
 
@@ -146,8 +138,7 @@ private:
  */
 template< template< typename,
                     typename,
-                    int,
-                    int > class KERNEL_TEMPLATE >
+                    typename > class KERNEL_TEMPLATE >
 struct SparsityHelper
 {
 
@@ -160,20 +151,16 @@ struct SparsityHelper
    */
   template< typename SUBREGION_TYPE,
             typename CONSTITUTIVE_TYPE,
-            int NUM_TEST_SUPPORT_POINTS_PER_ELEM,
-            int NUM_TRIAL_SUPPORT_POINTS_PER_ELEM >
+            typename FE_TYPE >
   using Kernel = SparsityKernelBase< SUBREGION_TYPE,
                                      CONSTITUTIVE_TYPE,
-                                     NUM_TEST_SUPPORT_POINTS_PER_ELEM,
-                                     NUM_TRIAL_SUPPORT_POINTS_PER_ELEM,
+                                     FE_TYPE,
                                      KERNEL_TEMPLATE< SUBREGION_TYPE,
                                                       CONSTITUTIVE_TYPE,
-                                                      NUM_TEST_SUPPORT_POINTS_PER_ELEM,
-                                                      NUM_TRIAL_SUPPORT_POINTS_PER_ELEM >::numDofPerTestSupportPoint,
+                                                      FE_TYPE >::numDofPerTestSupportPoint,
                                      KERNEL_TEMPLATE< SUBREGION_TYPE,
                                                       CONSTITUTIVE_TYPE,
-                                                      NUM_TEST_SUPPORT_POINTS_PER_ELEM,
-                                                      NUM_TRIAL_SUPPORT_POINTS_PER_ELEM >::numDofPerTrialSupportPoint
+                                                      FE_TYPE >::numDofPerTrialSupportPoint
                                      >;
 };
 
@@ -183,7 +170,6 @@ struct SparsityHelper
 //*****************************************************************************
 /**
  * @brief Fills matrix sparsity.
- * @tparam POLICY The RAJA launch policy to pass to the kernel launch.
  * @tparam REGION_TYPE The type of region to loop over. TODO make this a
  *                     parameter pack?
  * @tparam KERNEL_TEMPLATE The type of template for the physics kernel, which
@@ -191,12 +177,10 @@ struct SparsityHelper
  * @param mesh The MeshLevel object.
  * @param targetRegions The names of the target regions(of type @p REGION_TYPE)
  *                      to apply the @p KERNEL_TEMPLATE.
- * @param feDiscretization A pointer to the finite element discretization/space
- *                         object.
+ * @param discretizationName The name of the finite element discretization.
  * @param inputDofNumber The global degree of freedom numbers.
  * @param rankOffset Offset of dof indices on curren rank.
  * @param inputSparsityPattern The local sparsity pattern to fill.
- * @param rowSizes The array of local row sizes to be populated
  * @return 0
  *
  * Fills matrix sparsity using information from physics specific implementation
@@ -205,33 +189,30 @@ struct SparsityHelper
  * #geosx::finiteElement::SparsityKernelBase to conform with the template
  * pattern specified in the physics kernels.
  */
-template< typename POLICY,
-          typename REGION_TYPE,
+template< typename REGION_TYPE,
           template< typename SUBREGION_TYPE,
                     typename CONSTITUTIVE_TYPE,
-                    int NUM_TEST_SUPPORT_POINTS_PER_ELEM,
-                    int NUM_TRIAL_SUPPORT_POINTS_PER_ELEM > class KERNEL_TEMPLATE >
+                    typename FE_TYPE > class KERNEL_TEMPLATE >
 static
 real64 fillSparsity( MeshLevel & mesh,
                      arrayView1d< string const > const & targetRegions,
-                     FiniteElementDiscretization const * const feDiscretization,
+                     string const & discretizationName,
                      arrayView1d< globalIndex const > const & inputDofNumber,
                      globalIndex const rankOffset,
-                     SparsityPattern< globalIndex > & inputSparsityPattern,
-                     arrayView1d< localIndex > const & rowSizes )
+                     SparsityPattern< globalIndex > & inputSparsityPattern )
 {
-  regionBasedKernelApplication< POLICY,
+  GEOSX_MARK_FUNCTION;
+  regionBasedKernelApplication< serialPolicy,
                                 constitutive::NullModel,
                                 REGION_TYPE,
                                 SparsityHelper< KERNEL_TEMPLATE >::template Kernel
                                 >( mesh,
                                    targetRegions,
+                                   discretizationName,
                                    array1d< string >(),
-                                   feDiscretization,
                                    inputDofNumber,
                                    rankOffset,
-                                   inputSparsityPattern,
-                                   rowSizes );
+                                   inputSparsityPattern );
 
   return 0;
 }

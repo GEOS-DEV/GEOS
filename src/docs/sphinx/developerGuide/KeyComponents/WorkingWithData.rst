@@ -80,7 +80,7 @@ To register ``Extrinsic`` data, there are many ways a developer may proceed.
 We will use the example of registering a ``TotalDisplacement`` on the ``NodeManager``
 from the ``SolidMechanics`` solver.
 The most general approach is to define a string key and call one of the
-`Group::registerWrapper() <../../../doxygen_output/html/classgeosx_1_1data_repository_1_1_group.html#a19a9fa78e05def2d605c94963ff251ea>`_
+`Group::registerWrapper() <../../../doxygen_output/html/classgeosx_1_1data_repository_1_1_group.html#a741c3b5728fc47b33fbaad6c4f124991>`_
 functions from ``SolverBase::RegisterMeshData()``.
 Then when you want to use the data, you can call ``Group::getReference()``.
 For example this would look something like:

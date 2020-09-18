@@ -239,4 +239,4 @@ Example
 Current Doxygen
 ====================================
 
-`Link to Doxygen <../../../doxygen_output/html/index.html>`__
+`Link to Doxygen <../../../doxygen_output/html/classes.html>`__

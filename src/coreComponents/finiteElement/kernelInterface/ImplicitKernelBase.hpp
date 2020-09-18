@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -44,14 +44,12 @@ namespace finiteElement
  */
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
-          int NUM_TEST_SUPPORT_POINTS_PER_ELEM,
-          int NUM_TRIAL_SUPPORT_POINTS_PER_ELEM,
+          typename FE_TYPE,
           int NUM_DOF_PER_TEST_SP,
           int NUM_DOF_PER_TRIAL_SP >
 class ImplicitKernelBase : public KernelBase< SUBREGION_TYPE,
                                               CONSTITUTIVE_TYPE,
-                                              NUM_TEST_SUPPORT_POINTS_PER_ELEM,
-                                              NUM_TRIAL_SUPPORT_POINTS_PER_ELEM,
+                                              FE_TYPE,
                                               NUM_DOF_PER_TEST_SP,
                                               NUM_DOF_PER_TRIAL_SP >
 {
@@ -59,8 +57,7 @@ public:
   /// Alias for the base class. (i.e. #geosx::finiteElement::KernelBase)
   using Base = KernelBase< SUBREGION_TYPE,
                            CONSTITUTIVE_TYPE,
-                           NUM_TEST_SUPPORT_POINTS_PER_ELEM,
-                           NUM_TRIAL_SUPPORT_POINTS_PER_ELEM,
+                           FE_TYPE,
                            NUM_DOF_PER_TEST_SP,
                            NUM_DOF_PER_TRIAL_SP >;
 
@@ -86,7 +83,7 @@ public:
                       EdgeManager const & edgeManager,
                       FaceManager const & faceManager,
                       SUBREGION_TYPE const & elementSubRegion,
-                      FiniteElementBase const * const finiteElementSpace,
+                      FE_TYPE const & finiteElementSpace,
                       CONSTITUTIVE_TYPE * const inputConstitutiveType,
                       arrayView1d< globalIndex const > const & inputDofNumber,
                       globalIndex const rankOffset,

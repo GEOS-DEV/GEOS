@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -33,7 +33,9 @@ MeshLevel::MeshLevel( string const & name,
   m_nodeManager( groupStructKeys::nodeManagerString, this ),
   m_edgeManager( groupStructKeys::edgeManagerString, this ),
   m_faceManager( groupStructKeys::faceManagerString, this ),
-  m_elementManager( groupStructKeys::elemManagerString, this )
+  m_elementManager( groupStructKeys::elemManagerString, this ),
+  m_embSurfEdgeManager( groupStructKeys::embSurfEdgeManagerString, this )
+
 {
 
   RegisterGroup( groupStructKeys::nodeManagerString, &m_nodeManager );
@@ -47,6 +49,7 @@ MeshLevel::MeshLevel( string const & name,
 
   RegisterGroup< ElementRegionManager >( groupStructKeys::elemManagerString, &m_elementManager );
 
+  RegisterGroup< EdgeManager >( groupStructKeys::embSurfEdgeManagerString, &m_embSurfEdgeManager );
 
   registerWrapper< integer >( viewKeys.meshLevel );
 }
@@ -117,8 +120,8 @@ void MeshLevel::GenerateAdjacencyLists( arrayView1d< localIndex const > const & 
                                              WellElementSubRegion >( [&]( localIndex const kSubReg,
                                                                           auto const & subRegion )
       {
-        arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = subRegion.nodeList();
-        arrayView2d< localIndex const > const & elemsToFaces = subRegion.faceList();
+        arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes = subRegion.nodeList();
+        arrayView2d< localIndex const > const elemsToFaces = subRegion.faceList();
         for( auto const elementIndex : elementAdjacencySet[kReg][kSubReg] )
         {
           for( localIndex a=0; a<elemsToNodes.size( 1 ); ++a )

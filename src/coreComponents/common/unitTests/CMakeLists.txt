@@ -6,7 +6,7 @@ set(gtest_geosx_tests
    testDataTypes.cpp
    )
 
-set( dependencyList gtest common )
+set( dependencyList common hdf5 gtest )
 
 #
 # Add gtest C++ based tests

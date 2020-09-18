@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -36,16 +36,15 @@ void testNumericalDerivatives( CapillaryPressureBase & capPressure,
   auto const & phases = capPressure.phaseNames();
 
   // create a clone of the capillary pressure to run updates on
-  std::unique_ptr< ConstitutiveBase > capPressureCopyPtr;
-  capPressure.DeliverClone( "fluidCopy", nullptr, capPressureCopyPtr );
+  std::unique_ptr< ConstitutiveBase > capPressureCopyPtr = capPressure.deliverClone( "fluidCopy", nullptr );
   CapillaryPressureBase & capPressureCopy = *capPressureCopyPtr->group_cast< CapillaryPressureBase * >();
 
-  capPressure.AllocateConstitutiveData( capPressure.getParent(), 1 );
-  capPressureCopy.AllocateConstitutiveData( capPressure.getParent(), 1 );
+  capPressure.allocateConstitutiveData( capPressure.getParent(), 1 );
+  capPressureCopy.allocateConstitutiveData( capPressure.getParent(), 1 );
 
-  arraySlice1d< real64 const > phaseCapPressure = capPressure.phaseCapPressure()[0][0];
-  arraySlice2d< real64 const > dPhaseCapPressure_dSat = capPressure.dPhaseCapPressure_dPhaseVolFraction()[0][0];
-  arraySlice1d< real64 const > phaseCapPressureCopy = capPressureCopy.phaseCapPressure()[0][0];
+  arrayView3d< real64 const > phaseCapPressure = capPressure.phaseCapPressure();
+  arrayView4d< real64 const > dPhaseCapPressure_dSat = capPressure.dPhaseCapPressure_dPhaseVolFraction();
+  arrayView3d< real64 const > phaseCapPressureCopy = capPressureCopy.phaseCapPressure();
 
   // set the fluid state to current
   constitutive::constitutiveUpdatePassThru( capPressure, [&] ( auto & castedCapPres )
@@ -55,7 +54,7 @@ void testNumericalDerivatives( CapillaryPressureBase & capPressure,
   } );
 
   // update saturation and check derivatives
-  auto dPhaseCapPressure_dS = invertLayout( dPhaseCapPressure_dSat, NP, NP );
+  auto dPhaseCapPressure_dS = invertLayout( dPhaseCapPressure_dSat[ 0 ][ 0 ], NP, NP );
 
   array1d< real64 > satNew( NP );
   for( localIndex jp = 0; jp < NP; ++jp )
@@ -74,9 +73,9 @@ void testNumericalDerivatives( CapillaryPressureBase & capPressure,
     } );
 
     string var = "phaseVolFrac[" + phases[jp] + "]";
-    checkDerivative( phaseCapPressureCopy.toSliceConst(),
-                     phaseCapPressure.toSliceConst(),
-                     dPhaseCapPressure_dS[jp].toSliceConst(),
+    checkDerivative( phaseCapPressureCopy[ 0 ][ 0 ],
+                     phaseCapPressure[ 0 ][ 0 ],
+                     dPhaseCapPressure_dS[ jp ].toSliceConst(),
                      dS,
                      relTol,
                      "phaseCapPressure",

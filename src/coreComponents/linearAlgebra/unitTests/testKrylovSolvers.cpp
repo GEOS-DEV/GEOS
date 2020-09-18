@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -34,7 +34,7 @@ LinearSolverParameters params_CG()
   LinearSolverParameters parameters;
   parameters.krylov.relTolerance = 1e-8;
   parameters.krylov.maxIterations = 500;
-  parameters.solverType = "cg";
+  parameters.solverType = geosx::LinearSolverParameters::SolverType::cg;
   parameters.isSymmetric = true;
   return parameters;
 }
@@ -44,7 +44,7 @@ LinearSolverParameters params_BiCGSTAB()
   LinearSolverParameters parameters;
   parameters.krylov.relTolerance = 1e-8;
   parameters.krylov.maxIterations = 500;
-  parameters.solverType = "bicgstab";
+  parameters.solverType = geosx::LinearSolverParameters::SolverType::bicgstab;
   return parameters;
 }
 
@@ -53,7 +53,7 @@ LinearSolverParameters params_GMRES()
   LinearSolverParameters parameters;
   parameters.krylov.relTolerance = 1e-8;
   parameters.krylov.maxIterations = 500;
-  parameters.solverType = "gmres";
+  parameters.solverType = geosx::LinearSolverParameters::SolverType::gmres;
   return parameters;
 }
 

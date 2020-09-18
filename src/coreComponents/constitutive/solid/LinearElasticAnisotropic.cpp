@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -50,26 +50,10 @@ LinearElasticAnisotropic::~LinearElasticAnisotropic()
 {}
 
 
-void
-LinearElasticAnisotropic::DeliverClone( string const & name,
-                                        Group * const parent,
-                                        std::unique_ptr< ConstitutiveBase > & clone ) const
-{
-  if( !clone )
-  {
-    clone = std::make_unique< LinearElasticAnisotropic >( name, parent );
-  }
-  SolidBase::DeliverClone( name, parent, clone );
-  LinearElasticAnisotropic * const newConstitutiveRelation = dynamic_cast< LinearElasticAnisotropic * >(clone.get());
-
-  newConstitutiveRelation->m_defaultStiffness = m_defaultStiffness;
-  //newConstitutiveRelation->m_stiffness = m_stiffness;
-}
-
-void LinearElasticAnisotropic::AllocateConstitutiveData( dataRepository::Group * const parent,
+void LinearElasticAnisotropic::allocateConstitutiveData( dataRepository::Group * const parent,
                                                          localIndex const numConstitutivePointsPerParentIndex )
 {
-  SolidBase::AllocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+  SolidBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 
   this->resize( parent->size() );
 //  m_stiffness.resize( parent->size() );

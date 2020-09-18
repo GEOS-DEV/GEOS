@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -81,18 +81,33 @@ protected:
   SolidBaseUpdates & operator=( SolidBaseUpdates && ) =  delete;
 
 public:
+  GEOSX_HOST_DEVICE
+  virtual void getStress( localIndex const k,
+                          localIndex const q,
+                          real64 (& stress)[6] ) const
+  {
+    stress[0] = this->m_stress( k, q, 0 );
+    stress[1] = this->m_stress( k, q, 1 );
+    stress[2] = this->m_stress( k, q, 2 );
+    stress[3] = this->m_stress( k, q, 3 );
+    stress[4] = this->m_stress( k, q, 4 );
+    stress[5] = this->m_stress( k, q, 5 );
+  }
 
   /// A reference the material stress at quadrature points.
   arrayView3d< real64, solid::STRESS_USD > const m_stress;
 
 private:
   /**
-   * accessor to return the stiffness at a given element
-   * @param k the element number
-   * @param c the stiffness array
+   * Return the stiffness at a given element and quadrature point.
+   * @param k The element index.
+   * @param q The quadrature point index.
+   * @param c The stiffness array in Voigt notation.
    */
   GEOSX_HOST_DEVICE
-  virtual void GetStiffness( localIndex const k, real64 ( &c )[6][6] ) const = 0;
+  virtual void GetStiffness( localIndex const k,
+                             localIndex const q,
+                             real64 ( &c )[6][6] ) const = 0;
 
   /**
    * @brief Calculate stress using input generated under small strain
@@ -156,6 +171,10 @@ private:
                              localIndex const q,
                              real64 const (&FmI)[3][3] ) const = 0;
 
+  GEOSX_HOST_DEVICE
+  virtual real64 calculateStrainEnergyDensity( localIndex const k,
+                                               localIndex const q ) const = 0;
+
 
 };
 
@@ -180,12 +199,9 @@ public:
    */
   virtual ~SolidBase() override;
 
-  virtual void DeliverClone( string const & name,
-                             Group * const parent,
-                             std::unique_ptr< ConstitutiveBase > & clone ) const override;
-
-  virtual void AllocateConstitutiveData( dataRepository::Group * const parent,
+  virtual void allocateConstitutiveData( dataRepository::Group * const parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
+
 
   struct viewKeyStruct : public ConstitutiveBase::viewKeyStruct
   {
@@ -218,20 +234,22 @@ public:
   }
 
   /// Non-const/Mutable accessor for density.
-  arrayView2d< real64 >       const & getDensity()       { return m_density; }
+  arrayView2d< real64 > getDensity() { return m_density; }
 
   /// Const/non-mutable accessor for density
-  arrayView2d< real64 const > const & getDensity() const { return m_density; }
+  arrayView2d< real64 const > getDensity() const { return m_density; }
 
   /// Non-const/mutable accessor for stress
-  arrayView3d< real64, solid::STRESS_USD >       const & getStress()       { return m_stress; }
+  arrayView3d< real64, solid::STRESS_USD > getStress() { return m_stress; }
 
   /// Const/non-mutable accessor for stress
-  arrayView3d< real64 const, solid::STRESS_USD > const & getStress() const { return m_stress; }
+  arrayView3d< real64 const, solid::STRESS_USD > getStress() const { return m_stress; }
 
   ///@}
 
 protected:
+  virtual void PostProcessInput() override;
+
   /// The default density for new allocations.
   real64 m_defaultDensity = 0;
 
@@ -241,9 +259,6 @@ protected:
   /// The material stress at a quadrature point.
 
   array3d< real64, solid::STRESS_PERMUTATION > m_stress;
-  /// band-aid fix...going to have to remove this after we clean up
-  /// initialization for constitutive models.
-  bool m_postProcessed = false;
 };
 
 } // namespace constitutive

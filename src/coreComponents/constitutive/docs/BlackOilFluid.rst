@@ -74,7 +74,7 @@ whereas the densities of the two hydrocarbon phases are
 
 See `Petrowiki`_ for more information.
 
-Usage
+Parameters
 =========================
 
 Both types are represented by ``<BlackOilFluid>`` node in the input.
@@ -91,7 +91,7 @@ Supported phase names are:
 * gas
 * water
 
-Input example
+Example
 =========================
 
 .. code-block:: xml

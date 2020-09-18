@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -51,11 +51,27 @@ public:
   constexpr static int maxNumNodesPerElem = 8;
 
   /**
-   * @brief The ElementViewAccessor at the ElementRegionManager level is a 2D array of  VIEWTYPE.
+   * @brief The ElementViewAccessor at the ElementRegionManager level is an array of array of VIEWTYPE.
    * @tparam VIEWTYPE data type
    */
   template< typename VIEWTYPE >
   using ElementViewAccessor = array1d< array1d< VIEWTYPE > >;
+
+  /**
+   * @brief The ElementViewAccessor at the ElementRegionManager level is the
+   *   type resulting from ElementViewAccessor< VIEWTYPE >::toNestedView().
+   * @tparam VIEWTYPE data type
+   */
+  template< typename VIEWTYPE >
+  using ElementView = typename ElementViewAccessor< VIEWTYPE >::NestedViewType;
+
+  /**
+   * @brief The ElementViewAccessor at the ElementRegionManager level is the
+   *   type resulting from ElementViewAccessor< VIEWTYPE >::toNestedViewConst().
+   * @tparam VIEWTYPE data type
+   */
+  template< typename VIEWTYPE >
+  using ElementViewConst = typename ElementViewAccessor< VIEWTYPE >::NestedViewTypeConst;
 
   /**
    * @brief The ElementViewAccessor at the ElementRegionManager level is a 2D array of ReferenceWrapper around VIEWTYPE.

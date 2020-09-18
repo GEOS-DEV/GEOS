@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -44,6 +44,8 @@
 #if defined( GEOSX_USE_CUDA )
 #include <cuda.h>
 #endif
+
+#include <fenv.h>
 
 namespace geosx
 {
@@ -159,7 +161,7 @@ void setupCaliper()
   adiak::value( "compiler version", adiak::version( "clang" __clang_version__ ) );
 #elif defined( __INTEL_COMPILER )
   adiak::value( "compiler", "intel" );
-  adiak::value( "compiler version", adiak::version( "intel" __INTEL_COMPILER ) );
+  adiak::value( "compiler version", adiak::version( "intel" STRINGIZE( __INTEL_COMPILER ) ) );
 #elif defined( __GNUC__ )
   adiak::value( "compiler", "gcc" );
   adiak::value( "compiler version", adiak::version( "gcc" __VERSION__ ) );
@@ -490,7 +492,12 @@ void finalizeLogger()
 void setupCXXUtils()
 {
   LvArray::system::setSignalHandling( []( int const signal ) { LvArray::system::stackTraceHandler( signal, true ); } );
+
+#if defined(GEOSX_USE_FPE)
   LvArray::system::setFPE();
+#else
+  LvArray::system::disableFloatingPointExceptions( FE_ALL_EXCEPT );
+#endif
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -513,9 +520,7 @@ void setupOpenMP()
 void setupMPI( int argc, char * argv[] )
 {
   MpiWrapper::Init( &argc, &argv );
-#ifdef GEOSX_USE_MPI
-  MPI_Comm_dup( MPI_COMM_WORLD, &MPI_COMM_GEOSX );
-#endif
+  MPI_COMM_GEOSX = MpiWrapper::Comm_dup( MPI_COMM_WORLD );
 }
 
 ///////////////////////////////////////////////////////////////////////////////

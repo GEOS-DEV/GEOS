@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -242,9 +242,9 @@ void SinglePhaseHybridFVM::AssembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( t
                                         facePres,
                                         dFacePres,
                                         faceGravCoef,
-                                        m_mobility.toViewConst(),
-                                        m_dMobility_dPres.toViewConst(),
-                                        elemDofNumber.toViewConst(),
+                                        m_mobility.toNestedViewConst(),
+                                        m_dMobility_dPres.toNestedViewConst(),
+                                        elemDofNumber.toNestedViewConst(),
                                         dofManager.rankOffset(),
                                         lengthTolerance,
                                         dt,
@@ -318,8 +318,7 @@ real64 SinglePhaseHybridFVM::CalculateResidualNorm( DomainPartition const & doma
     subRegionCounter++;
   } );
 
-  arrayView1d< integer const > const & faceGhostRank =
-    faceManager.getReference< array1d< integer > >( ObjectManagerBase::viewKeyStruct::ghostRankString );
+  arrayView1d< integer const > const & faceGhostRank = faceManager.ghostRank();
   arrayView1d< globalIndex const > const & faceDofNumber =
     faceManager.getReference< array1d< globalIndex > >( faceDofKey );
 
@@ -333,12 +332,12 @@ real64 SinglePhaseHybridFVM::CalculateResidualNorm( DomainPartition const & doma
   SinglePhaseHybridFVMKernels::ResidualNormKernel::Launch< parallelDevicePolicy<>,
                                                            parallelDeviceReduce >( localRhs,
                                                                                    rankOffset,
-                                                                                   faceDofNumber.toViewConst(),
-                                                                                   faceGhostRank.toViewConst(),
-                                                                                   elemRegionList.toViewConst(),
-                                                                                   elemSubRegionList.toViewConst(),
-                                                                                   elemList.toViewConst(),
-                                                                                   m_volume.toViewConst(),
+                                                                                   faceDofNumber.toNestedViewConst(),
+                                                                                   faceGhostRank.toNestedViewConst(),
+                                                                                   elemRegionList.toNestedViewConst(),
+                                                                                   elemSubRegionList.toNestedViewConst(),
+                                                                                   elemList.toNestedViewConst(),
+                                                                                   m_volume.toNestedViewConst(),
                                                                                    defaultViscosity,
                                                                                    &localResidualNorm[3] );
 
@@ -410,8 +409,7 @@ SinglePhaseHybridFVM::CheckSystemSolution( DomainPartition const & domain,
 
   } );
 
-  arrayView1d< integer const > const & faceGhostRank =
-    faceManager.getReference< array1d< integer > >( ObjectManagerBase::viewKeyStruct::ghostRankString );
+  arrayView1d< integer const > const & faceGhostRank = faceManager.ghostRank();
   arrayView1d< globalIndex const > const & faceDofNumber =
     faceManager.getReference< array1d< globalIndex > >( faceDofKey );
 

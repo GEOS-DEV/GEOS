@@ -14,7 +14,7 @@ Each component (species) is characterized by molar weight and critical propertie
 serve as input parameters for the EOS.
 See `Petrowiki`_ for more information.
 
-Usage
+Parameters
 =========================
 
 The model represented by ``<CompositionalMultiphaseFluid>`` node in the input.
@@ -44,7 +44,7 @@ PR    Peng-Robinson EOS
 SRK   Soave-Redlich-Kwong EOS
 ===== =======================
 
-Input example
+Example
 =========================
 
 .. code-block:: xml

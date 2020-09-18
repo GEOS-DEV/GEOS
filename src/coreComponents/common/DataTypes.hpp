@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -154,6 +154,8 @@ using buffer_type = std::vector< buffer_unit_type >;
 #endif
 
 ///@}
+
+//START_SPHINX_INCLUDE_00
 
 /**
  * @name Aliases for LvArray::Array class family.
@@ -327,6 +329,7 @@ using CRSMatrixView = LvArray::CRSMatrixView< T, COL_INDEX, localIndex const, Lv
 
 ///@}
 
+//END_SPHINX_INCLUDE_00
 
 /**
  * @name Ordered and unordered map types.
@@ -758,7 +761,6 @@ private:
       {"path_array", constructArrayRegex( rs, 1 )},
       {"mapPair", rs},
       {"mapPair_array", constructArrayRegex( rs, 1 )},
-      {"geosx_TimeIntegrationOption", rs},
       {"geosx_dataRepository_PlotLevel", ri}
     };
   };
@@ -920,6 +922,55 @@ private:
     }
   }
 
+};
+
+/**
+ * @brief Extension point for custom types to provide a validation regexp to schema.
+ * @tparam T the type for which the regex is defined
+ * @tparam ENABLE used to conditionally enable partial specializations
+ *
+ * Specializations should define the following method:
+ * \code{cpp}
+ *   static string get();
+ * \endcode
+ */
+template< typename T, typename ENABLE = void >
+struct TypeRegex
+{
+  /**
+   * @brief Get the type's regex (default implementation).
+   * @return empty string, indicating no custom regex
+   */
+  static string get() { return {}; }
+};
+
+/**
+ * @brief Utility class for querying type names at runtime.
+ * @tparam T the target type
+ *
+ * This relies on LvArray's demangling facilities and simply
+ * adds some convenience methods like getting the brief name.
+ */
+template< typename T >
+struct TypeName
+{
+  /**
+   * @brief @return Full name of the type.
+   */
+  static string full()
+  {
+    return ::LvArray::system::demangle( typeid( T ).name() );
+  }
+
+  /**
+   * @brief @return brief name of the type (ignoring namespaces).
+   */
+  static string brief()
+  {
+    string const full_name = full();
+    string::size_type const pos = full_name.find_last_of( "::" );
+    return ( pos == string::npos ) ? full_name : full_name.substr( pos );
+  }
 };
 
 }

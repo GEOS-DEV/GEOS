@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -1263,6 +1263,7 @@ void SiloFile::WriteElementRegionSilo( ElementRegionBase const & elemRegion,
 
   localIndex numElems = 0;
   dataRepository::Group fakeGroup( elemRegion.getName(), nullptr );
+  fakeGroup.setRestartFlags( dataRepository::RestartFlags::NO_WRITE );
   std::vector< std::map< string, WrapperBase const * > > viewPointers;
 
   viewPointers.resize( elemRegion.numSubRegions() );
@@ -1291,7 +1292,7 @@ void SiloFile::WriteElementRegionSilo( ElementRegionBase const & elemRegion,
           typedef decltype( array ) arrayType;
           Wrapper< arrayType > const &
           sourceWrapper = Wrapper< arrayType >::cast( *wrapper );
-          typename arrayType::ViewTypeConst const & sourceArray = sourceWrapper.reference();
+          traits::ViewTypeConst< arrayType > const sourceArray = sourceWrapper.reference();
 
           Wrapper< arrayType > * const
           newWrapper = fakeGroup.registerWrapper< arrayType >( fieldName );
@@ -1328,7 +1329,7 @@ void SiloFile::WriteElementRegionSilo( ElementRegionBase const & elemRegion,
         {
           Wrapper< arrayType > const &
           sourceWrapper = Wrapper< arrayType >::cast( *(viewPointers[esr][fieldName]));
-          typename arrayType::ViewTypeConst const & sourceArray = sourceWrapper.reference();
+          traits::ViewTypeConst< arrayType > const sourceArray = sourceWrapper.reference().toViewConst();
 
           localIndex const offset = counter * targetArray.strides()[ 0 ];
           GEOSX_ERROR_IF_GT( sourceArray.size(), targetArray.size() - offset );
@@ -1356,6 +1357,8 @@ void SiloFile::WriteElementRegionSilo( ElementRegionBase const & elemRegion,
                   problemTime,
                   isRestart,
                   localIndex_array() );
+
+  fakeGroup.getConduitNode().parent()->remove( fakeGroup.getName() );
 }
 
 
@@ -1410,12 +1413,14 @@ void SiloFile::WriteElementMesh( ElementRegionBase const & elementRegion,
 
     int count = 0;
 
-    elementRegion.forElementSubRegions( [&]( auto const & elementSubRegion )
+    elementRegion.forElementSubRegions< CellElementSubRegion,
+                                        FaceElementSubRegion,
+                                        WellElementSubRegion >( [&]( auto const & elementSubRegion )
     {
       typename TYPEOFREF( elementSubRegion ) ::NodeMapType const & elemsToNodes = elementSubRegion.nodeList();
 
       // TODO HACK. this isn't correct for variable relations.
-      elementToNodeMap[count].resize( elemsToNodes.size( 0 ), elementSubRegion.numNodesPerElement( 0 ) );
+      elementToNodeMap[count].resize( elementSubRegion.size(), elementSubRegion.numNodesPerElement( 0 ) );
 
       arrayView1d< integer const > const & elemGhostRank = elementSubRegion.ghostRank();
 
@@ -2874,7 +2879,7 @@ void SiloFile::WriteMaterialDataField( string const & meshName,
     else
     {
       vartype = DB_UCDVAR;
-//      GEOS_ERROR("unhandled case in SiloFile::WriteDataField B\n");
+//      GEOSX_ERROR("unhandled case in SiloFile::WriteDataField B\n");
     }
 
     WriteMultiXXXX( vartype, DBPutMultivar, centering, fieldName.c_str(), cycleNumber, multiRoot,

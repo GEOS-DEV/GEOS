@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -20,6 +20,7 @@
 #define GEOSX_FINITEVOLUME_BOUNDARYSTENCIL_HPP_
 
 #include "StencilBase.hpp"
+#include "codingUtilities/traits.hpp"
 
 namespace geosx
 {
@@ -34,19 +35,19 @@ struct BoundaryStencil_Traits
   using IndexContainerType = array2d< localIndex >;
 
   /// The array view type for the stencil indices
-  using IndexContainerViewType = IndexContainerType::ViewType;
+  using IndexContainerViewType = traits::ViewType< IndexContainerType >;
 
   /// The array view to const type for the stencil indices
-  using IndexContainerViewConstType = IndexContainerType::ViewTypeConst;
+  using IndexContainerViewConstType = traits::ViewTypeConst< IndexContainerType >;
 
   /// The array type that is used to store the weights of the stencil contributors
   using WeightContainerType = array2d< real64 >;
 
   /// The array view type for the stencil weights
-  using WeightContainerViewType = WeightContainerType::ViewType;
+  using WeightContainerViewType = traits::ViewType< WeightContainerType >;
 
   /// The array view to const type for the stencil weights
-  using WeightContainerViewConstType = WeightContainerType::ViewTypeConst;
+  using WeightContainerViewConstType = traits::ViewTypeConst< WeightContainerType >;
 
   /// Number of points the flux is between (always 2 for TPFA)
   static constexpr localIndex NUM_POINT_IN_FLUX = 2;

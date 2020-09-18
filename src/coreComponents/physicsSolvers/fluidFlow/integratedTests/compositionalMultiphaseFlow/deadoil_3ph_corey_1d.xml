@@ -48,29 +48,29 @@
   </Geometry>
 
   <Events
-    maxTime="2e8">
+    maxTime="2e7">
     <PeriodicEvent
       name="outputs"
-      timeFrequency="1e7"
+      timeFrequency="1e6"
       targetExactTimestep="1"
       target="/Outputs/siloOutput"/>
 
     <PeriodicEvent
       name="solverApplications1"
-      forceDt="1e5"
+      forceDt="1e4"
       beginTime="0"
-      endTime="1e6"
+      endTime="1e5"
       target="/Solvers/compflow"/>
 
     <PeriodicEvent
       name="solverApplications2"
-      forceDt="1e6"
-      beginTime="1e6"
+      forceDt="1e5"
+      beginTime="1e5"
       target="/Solvers/compflow"/>
 
     <PeriodicEvent
       name="restarts"
-      timeFrequency="1e8"
+      timeFrequency="1e7"
       targetExactTimestep="0"
       target="/Outputs/restartOutput"/>
   </Events>

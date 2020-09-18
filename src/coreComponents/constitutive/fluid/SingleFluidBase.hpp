@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -163,26 +163,22 @@ public:
 
   // *** ConstitutiveBase interface
 
-  virtual void DeliverClone( string const & name,
-                             Group * const parent,
-                             std::unique_ptr< ConstitutiveBase > & clone ) const override = 0;
-
-  virtual void AllocateConstitutiveData( dataRepository::Group * const parent,
+  virtual void allocateConstitutiveData( dataRepository::Group * const parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
   // *** SingleFluid-specific interface
 
-  arrayView2d< real64 const > const & density() const { return m_density; }
-  arrayView2d< real64 > const & density() { return m_density; }
+  arrayView2d< real64 > density() { return m_density; }
+  arrayView2d< real64 const > density() const { return m_density; }
 
-  arrayView2d< real64 const > const & dDensity_dPressure() const { return m_dDensity_dPressure; }
-  arrayView2d< real64 > const & dDensity_dPressure() { return m_dDensity_dPressure; }
+  arrayView2d< real64 > dDensity_dPressure() { return m_dDensity_dPressure; }
+  arrayView2d< real64 const > dDensity_dPressure() const { return m_dDensity_dPressure; }
 
-  arrayView2d< real64 const > const & viscosity() const { return m_viscosity; }
-  arrayView2d< real64 > const & viscosity() { return m_viscosity; }
+  arrayView2d< real64 > viscosity() { return m_viscosity; }
+  arrayView2d< real64 const > viscosity() const { return m_viscosity; }
 
-  arrayView2d< real64 const > const & dViscosity_dPressure() const { return m_dViscosity_dPressure; }
-  arrayView2d< real64 > const & dViscosity_dPressure() { return m_dViscosity_dPressure; }
+  arrayView2d< real64 > dViscosity_dPressure() { return m_dViscosity_dPressure; }
+  arrayView2d< real64 const > dViscosity_dPressure() const { return m_dViscosity_dPressure; }
 
   real64 defaultDensity() const { return m_defaultDensity; }
   real64 defaultViscosity() const { return m_defaultViscosity; }

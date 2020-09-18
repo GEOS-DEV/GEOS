@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -107,9 +107,11 @@ public:
                              real64 const (&FmI)[3][3] ) const override final;
 
   GEOSX_HOST_DEVICE inline
-  virtual void GetStiffness( localIndex const k, real64 (& c)[6][6] ) const override final
+  virtual void GetStiffness( localIndex const k,
+                             localIndex const q,
+                             real64 (& c)[6][6] ) const override final
   {
-
+    GEOSX_UNUSED_VAR( q );
     memset( c, 0, sizeof( c ) );
     c[0][0] = m_c11[k];
     c[0][1] = m_c11[k] - 2 * m_c66[k];
@@ -123,6 +125,15 @@ public:
     c[3][3] = m_c44[k];
     c[4][4] = m_c44[k];
     c[5][5] = m_c66[k];
+  }
+
+  GEOSX_HOST_DEVICE
+  virtual real64 calculateStrainEnergyDensity( localIndex const k,
+                                               localIndex const q ) const override final
+  {
+    GEOSX_UNUSED_VAR( k, q );
+    GEOSX_ERROR( "Not implemented" );
+    return 0;
   }
 
 private:
@@ -242,14 +253,6 @@ public:
    */
   virtual ~LinearElasticTransverseIsotropic() override;
 
-  virtual void
-  DeliverClone( string const & name,
-                Group * const parent,
-                std::unique_ptr< ConstitutiveBase > & clone ) const override;
-
-  virtual void AllocateConstitutiveData( dataRepository::Group * const parent,
-                                         localIndex const numConstitutivePointsPerParentIndex ) override;
-
   /**
    * @name Static Factory Catalog members and functions
    */
@@ -263,7 +266,7 @@ public:
    */
   static std::string CatalogName() { return m_catalogNameString; }
 
-  virtual string GetCatalogName() override { return CatalogName(); }
+  virtual string getCatalogName() const override { return CatalogName(); }
   ///@}
 
   /**
@@ -400,62 +403,62 @@ public:
    * @brief Const-Getter for 11 component of Voigt stiffness tensor.
    * @return reference to immutable 11 component of Voigt stiffness tensor.
    */
-  arrayView1d< real64 const > const & getC11() const { return m_c11; }
+  arrayView1d< real64 const > getC11() const { return m_c11; }
 
   /**
    * @brief Getter for 11 component of Voigt stiffness tensor.
    * @return reference to mutable 11 component of Voigt stiffness tensor.
    */
-  arrayView1d< real64 >       const & getC11()       { return m_c11; }
+  arrayView1d< real64 > getC11() { return m_c11; }
 
 
   /**
    * @brief Const-Getter for 13 component of Voigt stiffness tensor.
    * @return reference to immutable 13 component of Voigt stiffness tensor.
    */
-  arrayView1d< real64 const > const & getC13() const { return m_c13; }
+  arrayView1d< real64 const > getC13() const { return m_c13; }
 
   /**
    * @brief Getter for 13 component of Voigt stiffness tensor.
    * @return reference to mutable 13 component of Voigt stiffness tensor.
    */
-  arrayView1d< real64 >       const & getC13()       { return m_c13; }
+  arrayView1d< real64 > getC13() { return m_c13; }
 
   /**
    * @brief Const-Getter for 33 component of Voigt stiffness tensor.
    * @return reference to immutable 33 component of Voigt stiffness tensor.
    */
-  arrayView1d< real64 const > const & getC33() const { return m_c33; }
+  arrayView1d< real64 const > getC33() const { return m_c33; }
 
   /**
    * @brief Getter for 33 component of Voigt stiffness tensor.
    * @return reference to mutable 33 component of Voigt stiffness tensor.
    */
-  arrayView1d< real64 >       const & getC33()       { return m_c33; }
+  arrayView1d< real64 > getC33() { return m_c33; }
 
   /**
    * @brief Const-Getter for 44 component of Voigt stiffness tensor.
    * @return reference to immutable 44 component of Voigt stiffness tensor.
    */
-  arrayView1d< real64 const > const & getC44() const { return m_c44; }
+  arrayView1d< real64 const > getC44() const { return m_c44; }
 
   /**
    * @brief Getter for 44 component of Voigt stiffness tensor.
    * @return reference to mutable 44 component of Voigt stiffness tensor.
    */
-  arrayView1d< real64 >       const & getC44()       { return m_c44; }
+  arrayView1d< real64 > getC44() { return m_c44; }
 
   /**
    * @brief Const-Getter for 66 component of Voigt stiffness tensor.
    * @return reference to immutable 66 component of Voigt stiffness tensor.
    */
-  arrayView1d< real64 const > const & getC66() const { return m_c66; }
+  arrayView1d< real64 const > getC66() const { return m_c66; }
 
   /**
    * @brief Getter for 66 component of Voigt stiffness tensor.
    * @return reference to mutable 66 component of Voigt stiffness tensor.
    */
-  arrayView1d< real64 >       const & getC66()       { return m_c66; }
+  arrayView1d< real64 > getC66() { return m_c66; }
 
   /**
    * @brief Create a instantiation of the
