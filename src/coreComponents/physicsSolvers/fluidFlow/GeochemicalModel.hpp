@@ -181,15 +181,8 @@ public:
   struct viewKeyStruct : FlowSolverBase::viewKeyStruct
   {
 
-    static constexpr auto blockLocalDofNumberString = "blockLocalDofNumber_GeochemicalModel";
-
-    static constexpr auto reactiveFluidNamesString      = "reactiveFluidName";
-
-
+    static constexpr auto reactiveFluidNamesString      = "reactiveFluidNames";
     // primary solution field
-    static constexpr auto pressureString      = "pressure";
-    static constexpr auto deltaPressureString = "deltaPressure";
-
     static constexpr auto temperatureString      = "temperature";
     static constexpr auto deltaTemperatureString = "deltaTemperature";
 
@@ -200,35 +193,10 @@ public:
     static constexpr auto concentrationNewString      = "concentrationNew";
     static constexpr auto outputSpeciesFileNameString      = "outputSpeciesFileName";
 
-    using ViewKey = dataRepository::ViewKey;
-
-    // dof numbering
-    ViewKey blockLocalDofNumber = { blockLocalDofNumberString };
-
-    // primary solution field
-    ViewKey pressure      = { pressureString };
-    ViewKey deltaPressure = { deltaPressureString };
-
-    ViewKey temperature      = { temperatureString };
-    ViewKey deltaTemperature = { deltaTemperatureString };
-
-    ViewKey concentration      = { concentrationString };
-    ViewKey deltaConcentration = { deltaConcentrationString };
-
-    ViewKey concentrationNew      = { concentrationNewString };
-
-    ViewKey outputSpeciesFileName  = { outputSpeciesFileNameString };
-
   } viewKeysGeochemicalModel;
-
-  viewKeyStruct & viewKeys() { return viewKeysGeochemicalModel; }
-  viewKeyStruct const & viewKeys() const { return viewKeysGeochemicalModel; }
 
   struct groupKeyStruct : SolverBase::groupKeyStruct
   {} groupKeysGeochemicalModel;
-
-  groupKeyStruct & groupKeys() { return groupKeysGeochemicalModel; }
-  groupKeyStruct const & groupKeys() const { return groupKeysGeochemicalModel; }
 
 protected:
 

@@ -59,8 +59,6 @@ GeochemicalModel::GeochemicalModel( const std::string & name,
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "Name of chemical system constitutive objects to use each target region." );
 
-//  this->registerWrapper( viewKeyStruct::reactiveFluidIndexString, &m_reactiveFluidIndex );
-
   this->registerWrapper( viewKeyStruct::outputSpeciesFileNameString, &m_outputSpeciesFileName )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Output species to file" );
@@ -81,15 +79,12 @@ void GeochemicalModel::RegisterDataOnMesh( Group * const MeshBodies )
                            ( localIndex const GEOSX_UNUSED_PARAM( targetIndex ),
                            ElementSubRegionBase & subRegion )
     {
-      subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::pressureString )->setPlotLevel( PlotLevel::LEVEL_0 );
-      subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::deltaPressureString );
       subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::temperatureString )->setPlotLevel( PlotLevel::LEVEL_0 );
       subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::deltaTemperatureString );
       subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::concentrationString )->setPlotLevel( PlotLevel::LEVEL_0 );
       subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::deltaConcentrationString );
       subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::totalConcentrationString );
       subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::concentrationNewString );
-      subRegion.registerWrapper< array1d< globalIndex > >( viewKeyStruct::blockLocalDofNumberString );
 
     } );
 
@@ -105,6 +100,8 @@ void GeochemicalModel::InitializePreSubGroups( Group * const rootGroup )
 
   MeshLevel & meshLevel = *(domain->getMeshBody( 0 )->getMeshLevel( 0 ));
 
+  m_numBasisSpecies.resize( m_reactiveFluidNames.size() );
+  m_numDependentSpecies.resize( m_reactiveFluidNames.size() );
   this->forTargetSubRegions( meshLevel,
                              [&]
                                ( localIndex const targetRegionIndex,
@@ -189,9 +186,9 @@ void GeochemicalModel::InitializePostInitialConditions_PreSubGroups( Group * con
 
   //TODO this is a hack until the sets are fixed to include ghosts!!
   std::map< string, string_array > fieldNames;
-  fieldNames["elems"].emplace_back( viewKeyStruct::pressureString );
-  fieldNames["elems"].emplace_back( viewKeyStruct::temperatureString );
-  fieldNames["elems"].emplace_back( viewKeyStruct::concentrationString );
+  fieldNames["elems"].emplace_back( string( viewKeyStruct::pressureString ));
+  fieldNames["elems"].emplace_back( string( viewKeyStruct::temperatureString ) );
+  fieldNames["elems"].emplace_back( string( viewKeyStruct::concentrationString ) );
 
   std::vector< NeighborCommunicator > & comms =
     domain->getNeighbors();
@@ -579,9 +576,9 @@ void GeochemicalModel::ApplySystemSolution( DofManager const & dofManager,
                                0, m_numDofPerCell );
 
   std::map< string, string_array > fieldNames;
-  fieldNames["elems"].emplace_back( viewKeyStruct::deltaPressureString );
-  fieldNames["elems"].emplace_back( viewKeyStruct::deltaTemperatureString );
-  fieldNames["elems"].emplace_back( viewKeyStruct::deltaConcentrationString );
+  fieldNames["elems"].emplace_back( string( viewKeyStruct::deltaPressureString ));
+  fieldNames["elems"].emplace_back( string( viewKeyStruct::deltaTemperatureString ) );
+  fieldNames["elems"].emplace_back( string( viewKeyStruct::deltaConcentrationString ) );
 
   CommunicationTools::SynchronizeFields( fieldNames, &mesh, domain.getNeighbors() );
 

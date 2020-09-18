@@ -176,6 +176,13 @@ Element: EmbeddedSurfaceGenerator
 .. include:: ../../coreComponents/fileIO/schema/docs/EmbeddedSurfaceGenerator.rst
 
 
+.. _XML_EquilibratedChemicalFluid:
+
+Element: EquilibratedChemicalFluid
+==================================
+.. include:: ../../coreComponents/fileIO/schema/docs/EquilibratedChemicalFluid.rst
+
+
 .. _XML_Events:
 
 Element: Events
@@ -244,6 +251,13 @@ Element: FlowProppantTransport
 Element: Functions
 ==================
 .. include:: ../../coreComponents/fileIO/schema/docs/Functions.rst
+
+
+.. _XML_GeochemicalModel:
+
+Element: GeochemicalModel
+=========================
+.. include:: ../../coreComponents/fileIO/schema/docs/GeochemicalModel.rst
 
 
 .. _XML_Geometry:
@@ -873,6 +887,13 @@ Datastructure: EmbeddedSurfaceGenerator
 .. include:: ../../coreComponents/fileIO/schema/docs/EmbeddedSurfaceGenerator_other.rst
 
 
+.. _DATASTRUCTURE_EquilibratedChemicalFluid:
+
+Datastructure: EquilibratedChemicalFluid
+========================================
+.. include:: ../../coreComponents/fileIO/schema/docs/EquilibratedChemicalFluid_other.rst
+
+
 .. _DATASTRUCTURE_Events:
 
 Datastructure: Events
@@ -948,6 +969,13 @@ Datastructure: FlowProppantTransport
 Datastructure: Functions
 ========================
 .. include:: ../../coreComponents/fileIO/schema/docs/Functions_other.rst
+
+
+.. _DATASTRUCTURE_GeochemicalModel:
+
+Datastructure: GeochemicalModel
+===============================
+.. include:: ../../coreComponents/fileIO/schema/docs/GeochemicalModel_other.rst
 
 
 .. _DATASTRUCTURE_Geometry:

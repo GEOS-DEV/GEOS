@@ -1,25 +1,28 @@
 <?xml version="1.0" ?>
 <!--# # -->
 
-<Problem xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="geos_v0.0.xsd">
+<Problem>
 
   <Solvers
     gravityVector="0.0,0.0,-9.81">
   
-    <GeochemicalModel name="GeochemicalModel"
-                     verboseLevel="1"
-                     gravityFlag="1"
-                     discretization="dummy"
-                     targetRegions="{Region2}"
-                     fluidName="water"
-                     reactiveFluidName="chem"                
-                     solidName="rock"
-                     outputSpeciesFileName="speciesOutput.txt">
+    <GeochemicalModel 
+      name="GeochemicalModel"
+      logLevel="1"
+      discretization="dummy"
+      targetRegions="{Region2}"
+      fluidNames="{water}"
+      reactiveFluidNames="{chem}"
+      solidNames="{rock}"
+      outputSpeciesFileName="speciesOutput.txt">
 
-    <SystemSolverParameters name="SystemSolverParameters"
-                              krylovTol="1.0e-12"
-                              newtonTol="1.0e-8"
-                              maxIterNewton="10"/>
+      <NonlinearSolverParameters
+        newtonTol="1.0e-8"
+        newtonMaxIter="10"/>
+      <LinearSolverParameters
+        solverType="gmres"
+        krylovTol="1.0e-12"
+        preconditionerType="amg"/>
     </GeochemicalModel>
   </Solvers>
   
@@ -94,9 +97,6 @@
 
   </Constitutive>
 
-  <InitialConditions>
-    
-  </InitialConditions>
 
   <FieldSpecifications>
     <FieldSpecification name="pressure"
@@ -149,10 +149,6 @@
 
   <Functions>
   </Functions>
-
-  <Partition>
-    <SpatialPartition xPar="1" yPar="1" zPar="1"/>
-  </Partition>
 
   <Outputs>
       <Silo name="siloOutput"/>
