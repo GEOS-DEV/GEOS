@@ -90,7 +90,7 @@ public:
   virtual real64 GetTimestepRequest( real64 const time )
   {
     GEOSX_UNUSED_VAR( time );
-    return 0.1 * std::numeric_limits< real64 >::max();
+    return 1e99;
   }
 
 
