@@ -170,6 +170,10 @@ void TrilinosPreconditioner::compute( Matrix const & mat )
 {
   Base::compute( mat );
 
+  // To be able to use Trilinos solvers we need to disable floating point exceptions
+  // In particular, we want to avoid a ML FPE crashes on Mac
+  LvArray::system::FloatingPointExceptionGuard guard;
+
   switch( m_parameters.preconditionerType )
   {
     case LinearSolverParameters::PreconditionerType::amg:

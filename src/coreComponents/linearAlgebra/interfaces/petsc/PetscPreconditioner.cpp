@@ -229,6 +229,9 @@ void PetscPreconditioner::compute( PetscMatrix const & mat )
     }
   }
 
+  // To be able to use PETSc solvers we need to disable floating point exceptions
+  LvArray::system::FloatingPointExceptionGuard guard;
+
   GEOSX_LAI_CHECK_ERROR( PCSetUp( m_precond ) );
   GEOSX_LAI_CHECK_ERROR( PCSetUpOnBlocks( m_precond ) );
 }
