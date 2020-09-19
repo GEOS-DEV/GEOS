@@ -1,7 +1,8 @@
 
 
 if( NOT DEFINED GEOSX_TPL_ROOT_DIR )
-    set( GEOSX_TPL_ROOT_DIR "${CMAKE_SOURCE_DIR}/../../thirdPartyLibs" CACHE PATH "" )
+    get_filename_component( GEOSX_TPL_ROOT_DIR ${CMAKE_SOURCE_DIR}/../../thirdPartyLibs
+                           ABSOLUTE  CACHE )
 endif()
 
 message(STATUS "GEOSX_TPL_ROOT_DIR=${GEOSX_TPL_ROOT_DIR}")
