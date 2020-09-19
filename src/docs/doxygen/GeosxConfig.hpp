@@ -68,6 +68,9 @@
 /// Enables use of PETSc library (CMake option ENABLE_PETSC)
 #define GEOSX_USE_PETSC
 
+/// Enables use of SuiteSparse library (CMake option ENABLE_SUITESPARSE)
+#define GEOSX_USE_SUITESPARSE
+
 /// Choice of global linear algebra interface (CMake option GEOSX_LA_INTERFACE)
 #define GEOSX_LA_INTERFACE Trilinos
 /// Macro defined when Trilinos interface is selected
