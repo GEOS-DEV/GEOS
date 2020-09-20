@@ -20,7 +20,6 @@
 #define GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_SOLIDMECHANICSLAGRANGIANSSLE_HPP_
 
 #include "SolidMechanicsLagrangianFEM.hpp"
-#include "SolidMechanicsLagrangianSSLEKernels.hpp"
 
 namespace geosx
 {

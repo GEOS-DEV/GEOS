@@ -12,86 +12,8 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-///*
-// * @file SolidMechanicsLagrangianFEMKernels.hpp
-// */
-//
-//#pragma once
-//
-//#include "common/DataTypes.hpp"
-//#include "common/TimingMacros.hpp"
-//#include "finiteElement/FiniteElementShapeFunctionKernel.hpp"
-//#include "rajaInterface/GEOS_RAJA_Interface.hpp"
-//
-//namespace geosx
-//{
-//namespace LaplaceFEMKernels
-//{
-//
-//struct ImplicitKernel
-//{
-//
-//  template< localIndex NUM_NODES_PER_ELEM, localIndex NUM_QUADRATURE_POINTS >
-//  static real64 Launch( arrayView4d< real64 const > const & dNdX,
-//                        arrayView2d< real64 const > const & detJ,
-//                        arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemNodes,
-//                        arrayView1d< globalIndex const > const & dofIndex,
-//                        globalIndex const dofRankOffset,
-//                        CRSMatrixView< real64, globalIndex const > const & matrix )
-//  {
-//    localIndex const numElems = dNdX.size( 0 );
-//    GEOSX_ERROR_IF_NE( dNdX.size( 0 ), numElems );
-//    GEOSX_ERROR_IF_NE( dNdX.size( 1 ), NUM_QUADRATURE_POINTS );
-//    GEOSX_ERROR_IF_NE( dNdX.size( 2 ), NUM_NODES_PER_ELEM );
-//
-//    GEOSX_ERROR_IF_NE( detJ.size( 0 ), numElems );
-//    GEOSX_ERROR_IF_NE( detJ.size( 1 ), NUM_QUADRATURE_POINTS );
-//
-//    GEOSX_ERROR_IF_NE( elemNodes.size( 0 ), numElems );
-//    GEOSX_ERROR_IF_NE( elemNodes.size( 1 ), NUM_NODES_PER_ELEM );
-//
-//    // begin element loop, skipping ghost elements
-//    forAll< parallelDevicePolicy< 32 > >( numElems, [=] GEOSX_HOST_DEVICE ( localIndex const k )
-//    {
-//      globalIndex dofIndices[ NUM_NODES_PER_ELEM ];
-//      real64 elementMatrix[ NUM_NODES_PER_ELEM ][ NUM_NODES_PER_ELEM ] = { { 0 } };
-//
-//      for( localIndex q = 0; q < NUM_QUADRATURE_POINTS; ++q )
-//      {
-//        for( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )
-//        {
-//          dofIndices[ a ] = dofIndex[ elemNodes( k, a ) ];
-//
-//          real64 diffusion = 1.0;
-//          for( localIndex b = 0; b < NUM_NODES_PER_ELEM; ++b )
-//          {
-//            elementMatrix[ a ][ b ] += detJ( k, q ) *
-//                                       diffusion *
-//                                       + LvArray::tensorOps::AiBi< 3 >( dNdX[ k ][ q ][ a ], dNdX[ k ][ q ][ b ] );
-//          }
-//
-//        }
-//      }
-//
-//      for( localIndex i = 0; i < NUM_NODES_PER_ELEM; ++i )
-//      {
-//        globalIndex const dof = dofIndices[ i ] - dofRankOffset;
-//        if( dof < 0 || dof >= matrix.numRows() ) continue;
-//        matrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( dof,
-//                                                                     dofIndices,
-//                                                                     elementMatrix[ i ],
-//                                                                     NUM_NODES_PER_ELEM );
-//      }
-//    } );
-//
-//    return 0;
-//  }
-//};
-//
-//} // namespace LaplaceFEMKernels
-//} // namespace geosx
-//=======
-/*
+
+/**
  * @file LaplaceFEMKernels.hpp
  */
 
@@ -151,6 +73,7 @@ public:
   using Base::m_matrix;
   using Base::m_rhs;
   using Base::m_elemsToNodes;
+  using Base::m_finiteElementSpace;
 
   /// The number of nodes per element.
   static constexpr int numNodesPerElem = Base::numTestSupportPointsPerElem;
@@ -182,6 +105,7 @@ public:
           rankOffset,
           inputMatrix,
           inputRhs ),
+    m_X( nodeManager.referencePosition() ),
     m_primaryField( nodeManager.template getReference< array1d< real64 > >( fieldName )),
     m_dNdX( elementSubRegion.dNdX() ),
     m_detJ( elementSubRegion.detJ() )
@@ -204,8 +128,17 @@ public:
     GEOSX_HOST_DEVICE
     StackVariables():
       Base::StackVariables(),
+            xLocal(),
             primaryField_local{ 0.0 }
     {}
+
+#if !defined(CALC_FEM_SHAPE_IN_KERNEL)
+    /// Dummy
+    int xLocal;
+#else
+    /// C-array stack storage for element local the nodal positions.
+    real64 xLocal[ numNodesPerElem ][ 3 ];
+#endif
 
     /// C-array storage for the element local primary field variable.
     real64 primaryField_local[numNodesPerElem];
@@ -229,6 +162,13 @@ public:
     {
       localIndex const localNodeIndex = m_elemsToNodes( k, a );
 
+#if defined(CALC_FEM_SHAPE_IN_KERNEL)
+      for( int i=0; i<3; ++i )
+      {
+        stack.xLocal[ a ][ i ] = m_X[ localNodeIndex ][ i ];
+      }
+#endif
+
       stack.primaryField_local[ a ] = m_primaryField[ localNodeIndex ];
       stack.localRowDofIndex[a] = m_dofNumber[localNodeIndex];
       stack.localColDofIndex[a] = m_dofNumber[localNodeIndex];
@@ -236,19 +176,22 @@ public:
   }
 
   /**
-   * @copydoc geosx::finiteElement::ImplicitKernelBase::quadraturePointJacobianContribution
+   * @copydoc geosx::finiteElement::ImplicitKernelBase::quadraturePointKernel
    */
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  void quadraturePointJacobianContribution( localIndex const k,
-                                            localIndex const q,
-                                            StackVariables & stack ) const
+  void quadraturePointKernel( localIndex const k,
+                              localIndex const q,
+                              StackVariables & stack ) const
   {
+    real64 dNdX[ numNodesPerElem ][ 3 ];
+    real64 const detJ = m_finiteElementSpace.template getGradN< FE_TYPE >( k, q, stack.xLocal, dNdX );
+
     for( localIndex a=0; a<numNodesPerElem; ++a )
     {
       for( localIndex b=0; b<numNodesPerElem; ++b )
       {
-        stack.localJacobian[ a ][ b ] += LvArray::tensorOps::AiBi< 3 >( m_dNdX[k][q][a], m_dNdX[k][q][b] ) * m_detJ( k, q );
+        stack.localJacobian[ a ][ b ] += LvArray::tensorOps::AiBi< 3 >( dNdX[a], dNdX[b] ) * detJ;
       }
     }
   }
@@ -295,6 +238,9 @@ public:
 
 
 protected:
+  /// The array containing the nodal position array.
+  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const m_X;
+
   /// The global primary field array.
   arrayView1d< real64 const > const m_primaryField;
 
