@@ -62,7 +62,7 @@ void testKernelDriver()
     for( localIndex q=0; q<numQuadraturePoints; ++q )
     {
       real64 N[numNodes] = {0};
-      H1_Pyramid_Lagrange1_Gauss5::shapeFunctionValues( q, N );
+      H1_Pyramid_Lagrange1_Gauss5::calcN( q, N );
       for( localIndex a=0; a<numNodes; ++a )
       {
         viewN( q, a ) = N[a];
@@ -77,9 +77,9 @@ void testKernelDriver()
     for( localIndex q=0; q<numQuadraturePoints; ++q )
     {
       real64 dNdX[numNodes][3] = {{0}};
-      viewDetJ[q] = H1_Pyramid_Lagrange1_Gauss5::shapeFunctionDerivatives( q,
-                                                                           xCoords,
-                                                                           dNdX );
+      viewDetJ[q] = H1_Pyramid_Lagrange1_Gauss5::calcGradN( q,
+                                                            xCoords,
+                                                            dNdX );
 
 
       for( localIndex a=0; a<numNodes; ++a )
@@ -137,7 +137,7 @@ void testKernelDriver()
           }
         }
       }
-      real64 const detJ = FiniteElementBase::inverse( J );
+      real64 const detJ = LvArray::tensorOps::invert< 3 >( J );
       EXPECT_FLOAT_EQ( detJ*( weight + 0.25 * ( q & 4 ) * weightDelta ), viewDetJ[q] );
 
       for( localIndex a=0; a<numNodes; ++a )
