@@ -122,6 +122,44 @@ public:
     }
     return 0;
   }
+
+
+
+  /**
+   * @brief Kernel Launcher.
+   * @tparam POLICY The RAJA policy to use for the launch.
+   * @tparam NUM_QUADRATURE_POINTS The number of quadrature points per element.
+   * @tparam KERNEL_TYPE The type of Kernel to execute.
+   * @param numElems The number of elements to process in this launch.
+   * @param kernelComponent The instantiation of KERNEL_TYPE to execute.
+   * @return The maximum residual.
+   *
+   * This is a generic launching function for all of the finite element kernels
+   * that follow the interface set by KernelBase.
+   */
+  template< typename POLICY,
+            typename KERNEL_TYPE >
+  static
+  real64
+  kernelLaunch( localIndex const numElems,
+                KERNEL_TYPE const & kernelComponent )
+  {
+    GEOSX_MARK_FUNCTION;
+
+    // launch the kernel
+    forAll< POLICY >( numElems,
+                      [=] ( localIndex const k )
+    {
+      // allocate the stack variables
+      typename KERNEL_TYPE::StackVariables stack;
+
+      kernelComponent.setup( k, stack );
+
+      kernelComponent.complete( k, stack );
+
+    } );
+    return 0;
+  }
 private:
   SparsityPattern< globalIndex > & m_sparsity;
 };
