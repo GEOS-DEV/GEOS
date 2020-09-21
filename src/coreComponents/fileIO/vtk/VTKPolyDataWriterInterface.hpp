@@ -119,7 +119,7 @@ private:
    * @param[in] rank the rank we want to ask
    * @return the number of elements in the region for the asked rank
    */
-  void gatherNbElementsInRegion( ElementRegionBase const & er, 
+  void gatherNbElementsInRegion( ElementRegionBase const & er,
                                  array1d< localIndex > & nbElemsInRegion ) const;
 
   /*!
