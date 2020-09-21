@@ -1261,7 +1261,7 @@ void LagrangianContactSolver::ComputeFaceNodalArea( arrayView2d< real64 const, n
     for( localIndex q=0; q<H1_TriangleFace_Lagrange1_Gauss1::numQuadraturePoints; ++q )
     {
       real64 const detJ = H1_TriangleFace_Lagrange1_Gauss1::transformedQuadratureWeight( q, xLocal );
-      H1_TriangleFace_Lagrange1_Gauss1::shapeFunctionValues( q, N );
+      H1_TriangleFace_Lagrange1_Gauss1::calcN( q, N );
       for( localIndex a = 0; a < numNodesPerFace; ++a )
       {
         nodalArea[a] += detJ * N[permutation[a]];
@@ -1282,7 +1282,7 @@ void LagrangianContactSolver::ComputeFaceNodalArea( arrayView2d< real64 const, n
     for( localIndex q=0; q<H1_QuadrilateralFace_Lagrange1_GaussLegendre2::numQuadraturePoints; ++q )
     {
       real64 const detJ = H1_QuadrilateralFace_Lagrange1_GaussLegendre2::transformedQuadratureWeight( q, xLocal );
-      H1_QuadrilateralFace_Lagrange1_GaussLegendre2::shapeFunctionValues( q, N );
+      H1_QuadrilateralFace_Lagrange1_GaussLegendre2::calcN( q, N );
       for( localIndex a = 0; a < numNodesPerFace; ++a )
       {
         nodalArea[a] += detJ * N[permutation[a]];
@@ -1367,11 +1367,11 @@ void LagrangianContactSolver::
           if( numNodesPerFace==3 )
           {
             using NT = real64[3];
-            H1_TriangleFace_Lagrange1_Gauss1::shapeFunctionValues( q, reinterpret_cast< NT & >(N) );
+            H1_TriangleFace_Lagrange1_Gauss1::calcN( q, reinterpret_cast< NT & >(N) );
           }
           else if( numNodesPerFace==4 )
           {
-            H1_QuadrilateralFace_Lagrange1_GaussLegendre2::shapeFunctionValues( q, N );
+            H1_QuadrilateralFace_Lagrange1_GaussLegendre2::calcN( q, N );
           }
 
           constexpr int normalSign[2] = { 1, -1 };
