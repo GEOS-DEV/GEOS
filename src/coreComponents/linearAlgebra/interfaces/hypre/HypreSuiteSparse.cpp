@@ -197,6 +197,7 @@ int SuiteSparseSetup( SuiteSparseData & SSData,
                                  &SSData.Numeric,
                                  SSData.Control,
                                  SSData.Info );
+
     if( status < 0 )
     {
       umfpack_dl_report_info( SSData.Control, SSData.Info );
@@ -278,6 +279,11 @@ int SuiteSparseSolve( SuiteSparseData & SSData,
   MpiWrapper::bcast( &time, 1, SSData.workingRank, SSData.comm );
 
   return status;
+}
+
+real64 SuiteSparseCondEst( SuiteSparseData const & SSData )
+{
+  return 1.0 / SSData.Info[UMFPACK_RCOND];
 }
 
 void SuiteSparseDestroy( SuiteSparseData & SSData )

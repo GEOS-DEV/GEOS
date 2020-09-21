@@ -103,7 +103,7 @@ void solve_parallelDirect( LinearSolverParameters const & parameters,
     result.residualReduction = res.norm2() / rhs.norm2();
   }
 
-  if( info == 0 && result.residualReduction < parameters.direct.checkResidualTolerance )
+  if( info == 0 && result.residualReduction < parameters.direct.checkResidualTolerance * SuperLU_DistCondEst( SLUDData ) )
   {
     result.status = LinearSolverResult::Status::Success;
     result.numIterations = 1;
@@ -147,7 +147,7 @@ void solve_serialDirect( LinearSolverParameters const & parameters,
     result.residualReduction = res.norm2() / rhs.norm2();
   }
 
-  if( info == 0 && result.residualReduction < parameters.direct.checkResidualTolerance )
+  if( info == 0 && result.residualReduction < parameters.direct.checkResidualTolerance * SuiteSparseCondEst( SSData ) )
   {
     result.status = LinearSolverResult::Status::Success;
     result.numIterations = 1;

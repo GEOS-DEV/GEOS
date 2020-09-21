@@ -80,6 +80,13 @@ int SuperLU_DistSolve( SuperLU_DistData & SLUDData,
                        real64 & time );
 
 /**
+ * @brief Estimates the condition number of the matrix
+ * @param[in] SLUDData the structure containing the matrix in SuperLU_Dist format
+ * @return the estimated condition number
+ */
+real64 SuperLU_DistCondEst( SuperLU_DistData & SLUDData );
+
+/**
  * @brief Deallocates a SuperLU_Dist data structure
  * @param[in,out] SLUDData the structure containing the matrix in SuperLU_Dist format
  */

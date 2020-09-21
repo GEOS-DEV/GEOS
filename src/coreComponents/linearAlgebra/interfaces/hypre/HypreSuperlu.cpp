@@ -261,6 +261,24 @@ int SuperLU_DistSolve( SuperLU_DistData & SLUDData,
   return info;
 }
 
+real64 SuperLU_DistCondEst( SuperLU_DistData & SLUDData )
+{
+  array1d< real64 > diagU( SLUDData.mat.nrow );
+  pdGetDiagU( SLUDData.mat.nrow,
+              &SLUDData.LUstruct,
+              &SLUDData.grid,
+              diagU.data() );
+
+  real64 minUdiag = std::abs( diagU[0] );
+  real64 maxUdiag = std::abs( diagU[0] );
+  for( globalIndex i = 1; i < LvArray::integerConversion< globalIndex >( SLUDData.mat.nrow ); ++i )
+  {
+    minUdiag = ( std::abs( diagU[i] ) < minUdiag ) ? std::abs( diagU[i] ) : minUdiag;
+    maxUdiag = ( std::abs( diagU[i] ) > maxUdiag ) ? std::abs( diagU[i] ) : maxUdiag;
+  }
+  return maxUdiag / minUdiag;
+}
+
 void SuperLU_DistDestroy( SuperLU_DistData & SLUDData )
 {
   // Deallocate other SuperLU data structures

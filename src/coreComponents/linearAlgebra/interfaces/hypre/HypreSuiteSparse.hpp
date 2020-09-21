@@ -89,6 +89,13 @@ int SuiteSparseSolve( SuiteSparseData & SSData,
                       real64 & time );
 
 /**
+ * @brief Estimates the condition number of the matrix
+ * @param[in] SSData the structure containing the matrix in SuiteSparse format
+ * @return the estimated condition number
+ */
+real64 SuiteSparseCondEst( SuiteSparseData const & SSData );
+
+/**
  * @brief Deallocates a SuiteSparse data structure
  * @param[in,out] SSData the structure containing the matrix in SuiteSparse format
  */
