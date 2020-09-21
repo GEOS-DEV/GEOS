@@ -148,11 +148,9 @@ struct forLocalObjectsImpl
     mesh->getElemManager()->forElementSubRegions( regions, [&]( localIndex const, auto const & subRegion )
     {
       using MapType = typename helper::template ElemToObjMap< std::remove_reference_t< decltype( subRegion ) > >;
-      using MapViewTypeConst = traits::ViewTypeConst< MapType >;
 
-
-      MapViewTypeConst &
-      elemToObjMap = subRegion.template getReference< MapType >( helper::elemMapKey ).toViewConst();
+      traits::ViewTypeConst< MapType > const
+      elemToObjMap = subRegion.template getReference< MapType >( helper::elemMapKey );
 
       for( localIndex k = 0; k < subRegion.size(); ++k )
       {
@@ -318,10 +316,8 @@ void makeSparsityFEM( MeshLevel const * const mesh,
   elemManager->forElementSubRegions( regions, [&]( localIndex const, auto const & subRegion )
   {
     using NodeMapType = typename TYPEOFREF( subRegion ) ::NodeMapType;
-    using NodeMapViewTypeConst = traits::ViewTypeConst< NodeMapType >;
-
-    NodeMapViewTypeConst & nodeMap =
-      subRegion.template getReference< NodeMapType >( ElementSubRegionBase::viewKeyStruct::nodeListString ).toViewConst();
+    traits::ViewTypeConst< NodeMapType > const
+    nodeMap = subRegion.template getReference< NodeMapType >( ElementSubRegionBase::viewKeyStruct::nodeListString );
 
     localIndex const numNode = subRegion.numNodesPerElement();
     array1d< globalIndex > localDofIndex( numNode * numComp );
@@ -372,9 +368,7 @@ void makeSparsityFEM_FVM( MeshLevel const * const mesh,
   elemManager->forElementSubRegions( regions, [&]( localIndex const, auto const & subRegion )
   {
     using NodeMapType = typename TYPEOFREF( subRegion ) ::NodeMapType;
-    using NodeMapViewTypeConst = traits::ViewTypeConst< NodeMapType >;
-
-    NodeMapViewTypeConst &
+    traits::ViewTypeConst< NodeMapType > const
     nodeMap = subRegion.template getReference< NodeMapType >( ElementSubRegionBase::viewKeyStruct::nodeListString );
 
     arrayView1d< globalIndex const > elemDofIndex =
@@ -468,7 +462,7 @@ void makeSparsityFlux( MeshLevel const * const mesh,
   elemManager->forElementSubRegions( regions, [&]( localIndex const, auto const & subRegion )
   {
     using FaceMapType = typename TYPEOFREF( subRegion ) ::FaceMapType;
-    typename FaceMapType::ViewTypeConst const &
+    traits::ViewTypeConst< FaceMapType > const
     faceMap = subRegion.template getReference< FaceMapType >( ElementSubRegionBase::viewKeyStruct::faceListString );
 
     localIndex const numFace = subRegion.numFacesPerElement();

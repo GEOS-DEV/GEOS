@@ -855,12 +855,13 @@ void HypreMatrix::leftScale( HypreVector const & vec )
 
 }
 
-void HypreMatrix::addEntries( HypreMatrix const & src, real64 const scale )
+void HypreMatrix::addEntries( HypreMatrix const & src, real64 const scale, bool samePattern )
 {
   GEOSX_LAI_ASSERT( ready() );
   GEOSX_LAI_ASSERT( src.ready() );
   GEOSX_LAI_ASSERT( numGlobalRows() == src.numGlobalRows() );
   GEOSX_LAI_ASSERT( numGlobalCols() == src.numGlobalCols() );
+  GEOSX_UNUSED_VAR( samePattern );
 
   HYPRE_ParCSRMatrix parCSRMatrix;
   GEOSX_LAI_CHECK_ERROR( hypre_ParcsrAdd( 1.0,
@@ -869,7 +870,6 @@ void HypreMatrix::addEntries( HypreMatrix const & src, real64 const scale )
                                           src.unwrapped(),
                                           &parCSRMatrix ) );
 
-  reset();
   parCSRtoIJ( parCSRMatrix );
 }
 

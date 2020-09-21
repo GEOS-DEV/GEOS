@@ -88,6 +88,10 @@ LagrangianContactSolver::LagrangianContactSolver( const std::string & name,
   this->getWrapper< string >( viewKeyStruct::discretizationString )->
     setInputFlag( InputFlags::FALSE );
 
+  m_linearSolverParameters.get().mgr.strategy = "LagrangianContactMechanics";
+  m_linearSolverParameters.get().mgr.separateComponents = true;
+  m_linearSolverParameters.get().mgr.displacementFieldName = keys::TotalDisplacement;
+  m_linearSolverParameters.get().dofsPerNode = 3;
 }
 
 void LagrangianContactSolver::RegisterDataOnMesh( dataRepository::Group * const MeshBodies )
@@ -316,7 +320,7 @@ void LagrangianContactSolver::ComputeTolerances( DomainPartition & domain ) cons
   using NodeMapViewType = arrayView2d< localIndex const, cells::NODE_MAP_USD >;
   ElementRegionManager::ElementViewAccessor< NodeMapViewType > const elemToNode =
     elemManager.ConstructViewAccessor< CellBlock::NodeMapType, NodeMapViewType >( ElementSubRegionBase::viewKeyStruct::nodeListString );
-  ElementRegionManager::ElementViewAccessor< NodeMapViewType >::ViewTypeConst const & elemToNodeView = elemToNode.toViewConst();
+  ElementRegionManager::ElementViewConst< NodeMapViewType > const elemToNodeView = elemToNode.toNestedViewConst();
 
   elemManager.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
   {
@@ -1135,14 +1139,20 @@ void LagrangianContactSolver::CreatePreconditioner( DomainPartition const & doma
       precond = std::make_unique< BlockPreconditioner< LAInterface > >( BlockShapeOption::LowerUpperTriangular,
                                                                         SchurComplementOption::FirstBlockDiagonal,
                                                                         BlockScalingOption::UserProvided );
-      tracPrecond = std::make_unique< PreconditionerJacobi< LAInterface > >( PreconditionerJacobi< LAInterface >() );
+      // Using GEOSX implementation of Jacobi preconditioner
+      // tracPrecond = std::make_unique< PreconditionerJacobi< LAInterface > >();
+
+      // Using LAI implementation of Jacobi preconditioner
+      LinearSolverParameters tracParams;
+      tracParams.preconditionerType = LinearSolverParameters::PreconditionerType::jacobi;
+      tracPrecond = LAInterface::createPreconditioner( tracParams );
     }
     else if( leadingBlockApproximation == "blockJacobi" )
     {
       precond = std::make_unique< BlockPreconditioner< LAInterface > >( BlockShapeOption::LowerUpperTriangular,
                                                                         SchurComplementOption::FirstBlockUserDefined,
                                                                         BlockScalingOption::UserProvided );
-      tracPrecond = std::make_unique< PreconditionerBlockJacobi< LAInterface > >( PreconditionerBlockJacobi< LAInterface >( mechParams.dofsPerNode ) );
+      tracPrecond = std::make_unique< PreconditionerBlockJacobi< LAInterface > >( mechParams.dofsPerNode );
     }
     else
     {
@@ -1200,9 +1210,9 @@ void LagrangianContactSolver::ComputeRotationMatrices( DomainPartition & domain 
       arrayView3d< real64 > const &
       rotationMatrix = subRegion.getReference< array3d< real64 > >( viewKeyStruct::rotationMatrixString );
 
-      forAll< serialPolicy >( subRegion.size(), [=]( localIndex const kfe )
+      forAll< parallelHostPolicy >( subRegion.size(), [=]( localIndex const kfe )
       {
-        array1d< real64 > Nbar( 3 );
+        stackArray1d< real64, 3 > Nbar( 3 );
         Nbar[ 0 ] = faceNormal[elemsToFaces[kfe][0]][0] - faceNormal[elemsToFaces[kfe][1]][0];
         Nbar[ 1 ] = faceNormal[elemsToFaces[kfe][0]][1] - faceNormal[elemsToFaces[kfe][1]][1];
         Nbar[ 2 ] = faceNormal[elemsToFaces[kfe][0]][2] - faceNormal[elemsToFaces[kfe][1]][2];
@@ -1223,6 +1233,7 @@ void LagrangianContactSolver::ComputeFaceNodalArea( arrayView2d< real64 const, n
   // finiteElement::FiniteElementBase const &
   // fe = fractureSubRegion->getReference< finiteElement::FiniteElementBase >( surfaceGenerator->getDiscretizationName() );
   // but it's either empty (unknown discretization) or for 3D only (e.g., hexahedra)
+  GEOSX_MARK_FUNCTION;
 
   localIndex const TriangularPermutation[3] = { 0, 1, 2 };
   localIndex const QuadrilateralPermutation[4] = { 0, 1, 3, 2 };
@@ -1249,7 +1260,7 @@ void LagrangianContactSolver::ComputeFaceNodalArea( arrayView2d< real64 const, n
     for( localIndex q=0; q<H1_TriangleFace_Lagrange1_Gauss1::numQuadraturePoints; ++q )
     {
       real64 const detJ = H1_TriangleFace_Lagrange1_Gauss1::transformedQuadratureWeight( q, xLocal );
-      H1_TriangleFace_Lagrange1_Gauss1::shapeFunctionValues( q, N );
+      H1_TriangleFace_Lagrange1_Gauss1::calcN( q, N );
       for( localIndex a = 0; a < numNodesPerFace; ++a )
       {
         nodalArea[a] += detJ * N[permutation[a]];
@@ -1270,7 +1281,7 @@ void LagrangianContactSolver::ComputeFaceNodalArea( arrayView2d< real64 const, n
     for( localIndex q=0; q<H1_QuadrilateralFace_Lagrange1_GaussLegendre2::numQuadraturePoints; ++q )
     {
       real64 const detJ = H1_QuadrilateralFace_Lagrange1_GaussLegendre2::transformedQuadratureWeight( q, xLocal );
-      H1_QuadrilateralFace_Lagrange1_GaussLegendre2::shapeFunctionValues( q, N );
+      H1_QuadrilateralFace_Lagrange1_GaussLegendre2::calcN( q, N );
       for( localIndex a = 0; a < numNodesPerFace; ++a )
       {
         nodalArea[a] += detJ * N[permutation[a]];
@@ -1355,11 +1366,11 @@ void LagrangianContactSolver::
           if( numNodesPerFace==3 )
           {
             using NT = real64[3];
-            H1_TriangleFace_Lagrange1_Gauss1::shapeFunctionValues( q, reinterpret_cast< NT & >(N) );
+            H1_TriangleFace_Lagrange1_Gauss1::calcN( q, reinterpret_cast< NT & >(N) );
           }
           else if( numNodesPerFace==4 )
           {
-            H1_QuadrilateralFace_Lagrange1_GaussLegendre2::shapeFunctionValues( q, N );
+            H1_QuadrilateralFace_Lagrange1_GaussLegendre2::calcN( q, N );
           }
 
           constexpr int normalSign[2] = { 1, -1 };
@@ -1681,9 +1692,9 @@ void LagrangianContactSolver::AssembleStabilization( DomainPartition const & dom
 
   // Get the "face to element" map (valid for the entire mesh)
   FaceManager::ElemMapType const & faceToElem = faceManager.toElementRelation();
-  arrayView2d< localIndex const > const & faceToElemRegion = faceToElem.m_toElementRegion.toViewConst();
-  arrayView2d< localIndex const > const & faceToElemSubRegion = faceToElem.m_toElementSubRegion.toViewConst();
-  arrayView2d< localIndex const > const & faceToElemIndex = faceToElem.m_toElementIndex.toViewConst();
+  arrayView2d< localIndex const > const & faceToElemRegion = faceToElem.m_toElementRegion;
+  arrayView2d< localIndex const > const & faceToElemSubRegion = faceToElem.m_toElementSubRegion;
+  arrayView2d< localIndex const > const & faceToElemIndex = faceToElem.m_toElementIndex;
 
   // Form the SurfaceGenerator, get the fracture name and use it to retrieve the faceMap (from fracture element to face)
   SurfaceGenerator const * const
@@ -1691,7 +1702,7 @@ void LagrangianContactSolver::AssembleStabilization( DomainPartition const & dom
   FaceElementRegion const * const fractureRegion = elemManager.GetRegion< FaceElementRegion >( surfaceGenerator->getFractureRegionName() );
   FaceElementSubRegion const * const fractureSubRegion = fractureRegion->GetSubRegion< FaceElementSubRegion >( "default" );
   GEOSX_ERROR_IF( !fractureSubRegion->hasWrapper( m_tractionKey ), "The fracture subregion must contain traction field." );
-  FaceElementSubRegion::FaceMapType::ViewTypeConst const & faceMap = fractureSubRegion->faceList().toViewConst();
+  arrayView2d< localIndex const > const faceMap = fractureSubRegion->faceList();
   GEOSX_ERROR_IF( faceMap.size( 1 ) != 2, "A fracture face has to be shared by two cells." );
 
   // Get the state of fracture elements
@@ -1731,7 +1742,7 @@ void LagrangianContactSolver::AssembleStabilization( DomainPartition const & dom
   using NodeMapViewType = arrayView2d< localIndex const, cells::NODE_MAP_USD >;
   ElementRegionManager::ElementViewAccessor< NodeMapViewType > const elemToNode =
     elemManager.ConstructViewAccessor< CellBlock::NodeMapType, NodeMapViewType >( ElementSubRegionBase::viewKeyStruct::nodeListString );
-  ElementRegionManager::ElementViewAccessor< NodeMapViewType >::ViewTypeConst const & elemToNodeView = elemToNode.toViewConst();
+  ElementRegionManager::ElementViewConst< NodeMapViewType > const elemToNodeView = elemToNode.toNestedViewConst();
 
   arrayView1d< globalIndex const > const & tracDofNumber = fractureSubRegion->getReference< globalIndex_array >( tracDofKey );
 

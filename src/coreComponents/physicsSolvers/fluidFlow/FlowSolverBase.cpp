@@ -209,9 +209,9 @@ void FlowSolverBase::PrecomputeData( MeshLevel & mesh )
   forTargetSubRegions( mesh, [&]( localIndex const,
                                   ElementSubRegionBase & subRegion )
   {
-    arrayView2d< real64 const > const & elemCenter = subRegion.getElementCenter();
+    arrayView2d< real64 const > const elemCenter = subRegion.getElementCenter();
 
-    arrayView1d< real64 > const & gravityCoef =
+    arrayView1d< real64 > const gravityCoef =
       subRegion.getReference< array1d< real64 > >( viewKeyStruct::gravityCoefString );
 
     forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const ei )
@@ -221,9 +221,9 @@ void FlowSolverBase::PrecomputeData( MeshLevel & mesh )
   } );
 
   {
-    arrayView2d< real64 const > const & faceCenter = faceManager.faceCenter();
+    arrayView2d< real64 const > const faceCenter = faceManager.faceCenter();
 
-    arrayView1d< real64 > const & gravityCoef =
+    arrayView1d< real64 > const gravityCoef =
       faceManager.getReference< array1d< real64 > >( viewKeyStruct::gravityCoefString );
 
     forAll< parallelHostPolicy >( faceManager.size(), [=] ( localIndex const kf )

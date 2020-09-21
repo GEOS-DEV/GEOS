@@ -75,6 +75,7 @@ public:
   using Base::m_rhs;
   using Base::m_elemsToNodes;
   using Base::m_constitutiveUpdate;
+  using Base::m_finiteElementSpace;
 
   /// The number of nodes per element.
   static constexpr int numNodesPerElem = Base::numTestSupportPointsPerElem;
@@ -109,9 +110,8 @@ public:
           rankOffset,
           inputMatrix,
           inputRhs ),
+    m_X( nodeManager.referencePosition()),
     m_nodalDamage( nodeManager.template getReference< array1d< real64 > >( fieldName )),
-    m_dNdX( elementSubRegion.dNdX() ),
-    m_detJ( elementSubRegion.detJ() ),
     m_Gc( Gc ),
     m_lengthScale( lengthScale ),
     m_localDissipationOption( localDissipationOption )
@@ -134,8 +134,17 @@ public:
     GEOSX_HOST_DEVICE
     StackVariables():
       Base::StackVariables(),
+            xLocal(),
             nodalDamageLocal{ 0.0 }
     {}
+
+#if !defined(CALC_FEM_SHAPE_IN_KERNEL)
+    /// Dummy
+    int xLocal;
+#else
+    /// C-array stack storage for element local the nodal positions.
+    real64 xLocal[ numNodesPerElem ][ 3 ];
+#endif
 
     /// C-array storage for the element local primary field variable.
     real64 nodalDamageLocal[numNodesPerElem];
@@ -159,6 +168,10 @@ public:
     {
       localIndex const localNodeIndex = m_elemsToNodes( k, a );
 
+#if defined(CALC_FEM_SHAPE_IN_KERNEL)
+      LvArray::tensorOps::copy< 3 >( stack.xLocal[ a ], m_X[ localNodeIndex ] );
+#endif
+
       stack.nodalDamageLocal[ a ] = m_nodalDamage[ localNodeIndex ];
       stack.localRowDofIndex[a] = m_dofNumber[localNodeIndex];
       stack.localColDofIndex[a] = m_dofNumber[localNodeIndex];
@@ -170,10 +183,12 @@ public:
    */
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  void quadraturePointJacobianContribution( localIndex const k,
-                                            localIndex const q,
-                                            StackVariables & stack ) const
+  void quadraturePointKernel( localIndex const k,
+                              localIndex const q,
+                              StackVariables & stack ) const
   {
+    real64 dNdX[ numNodesPerElem ][ 3 ];
+    real64 const detJ = m_finiteElementSpace.template getGradN< FE_TYPE >( k, q, stack.xLocal, dNdX );
 
     real64 const strainEnergyDensity = m_constitutiveUpdate.calculateStrainEnergyDensity( k, q );
 //    std::cout<<k<<", "<<q<<", "<< strainEnergyDensity<<std::endl;
@@ -188,51 +203,36 @@ public:
 
     //Interpolate d and grad_d
     real64 N[ numNodesPerElem ];
-    FE_TYPE::shapeFunctionValues( q, N );
+    FE_TYPE::calcN( q, N );
 
     real64 qp_damage = 0.0;
-    R1Tensor qp_grad_damage;
-    R1Tensor temp;
-    // TODO replace with FEM operators once either PR is merged into develop.
-    for( localIndex a = 0; a < numNodesPerElem; ++a )
-    {
-      qp_damage += N[a] * stack.nodalDamageLocal[a];
-      temp = m_dNdX[k][q][a];
-      temp *= stack.nodalDamageLocal[a];
-      qp_grad_damage += temp;
-    }
+    real64 qp_grad_damage[3] = {0, 0, 0};
+    FE_TYPE::valueAndGradient( N, dNdX, stack.nodalDamageLocal, qp_damage, qp_grad_damage );
+
+    real64 const lengthScale2 = pow( m_lengthScale, 2 );
+    real64 const invGc = 1.0 / m_Gc;
+    real64 const sedTerm = 2 * m_lengthScale*strainEnergyDensity * invGc;
 
     for( localIndex a = 0; a < numNodesPerElem; ++a )
     {
       if( m_localDissipationOption == 1 )
       {
-        stack.localResidual[ a ] += m_detJ[k][q] * ( N[a] * (m_lengthScale * D - 3 * m_Gc / 16 )/ m_Gc -
-                                                     0.375*pow( m_lengthScale, 2 ) * LvArray::tensorOps::AiBi< 3 >( qp_grad_damage, m_dNdX[k][q][a] ) -
-                                                     m_lengthScale * D/m_Gc * N[a] * qp_damage
-                                                     );
+        stack.localResidual[ a ] += ( +N[a] * ( m_lengthScale * D * ( 1 - qp_damage ) - 0.1875 * m_Gc ) * invGc
+                                      - 0.375 * lengthScale2 * LvArray::tensorOps::AiBi< 3 >( dNdX[a], qp_grad_damage ) ) * detJ;
+        for( localIndex b = 0; b < numNodesPerElem; ++b )
+        {
+          stack.localJacobian[ a ][ b ] -= ( +m_lengthScale * D * invGc * N[a] * N[b]
+                                             + 0.375 * lengthScale2 * LvArray::tensorOps::AiBi< 3 >( dNdX[a], dNdX[b] ) ) * detJ;
+        }
       }
       else
       {
-        stack.localResidual[ a ] += m_detJ[k][q] * ( N[a] * (2 * m_lengthScale) * strainEnergyDensity / m_Gc -
-                                                     ( pow( m_lengthScale, 2 ) * LvArray::tensorOps::AiBi< 3 >( qp_grad_damage, m_dNdX[k][q][a] ) +
-                                                       N[a] * qp_damage * (1 + 2 * m_lengthScale*strainEnergyDensity/m_Gc)
-                                                     )
-                                                     );
-      }
-      for( localIndex b = 0; b < numNodesPerElem; ++b )
-      {
-        if( m_localDissipationOption == 1 )
+        stack.localResidual[ a ] += ( +N[a] * ( sedTerm * ( 1 - qp_damage ) - qp_damage )
+                                      - ( lengthScale2 * LvArray::tensorOps::AiBi< 3 >( dNdX[a], qp_grad_damage ) ) ) * detJ;
+        for( localIndex b = 0; b < numNodesPerElem; ++b )
         {
-          stack.localJacobian[ a ][ b ] -= m_detJ[k][q] *
-                                           (0.375*pow( m_lengthScale, 2 ) * LvArray::tensorOps::AiBi< 3 >( m_dNdX[k][q][a], m_dNdX[k][q][b] ) +
-                                            (m_lengthScale * D/m_Gc) * N[a] * N[b]);
-        }
-        else
-        {
-          stack.localJacobian[ a ][ b ] -= m_detJ[k][q] *
-                                           ( pow( m_lengthScale, 2 ) * LvArray::tensorOps::AiBi< 3 >( m_dNdX[k][q][a], m_dNdX[k][q][b] ) +
-                                             N[a] * N[b] * (1 + 2 * m_lengthScale*strainEnergyDensity/m_Gc )
-                                           );
+          stack.localJacobian[ a ][ b ] -= ( +N[a] * N[b] * (1 + sedTerm )
+                                             + lengthScale2 * LvArray::tensorOps::AiBi< 3 >( dNdX[a], dNdX[b] ) ) * detJ;
         }
       }
     }
@@ -272,14 +272,11 @@ public:
 
 
 protected:
+  /// The array containing the nodal position array.
+  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const m_X;
+
   /// The global primary field array.
   arrayView1d< real64 const > const m_nodalDamage;
-
-  /// The global shape function derivatives array.
-  arrayView4d< real64 const > const m_dNdX;
-
-  /// The global determinant of the parent/physical Jacobian.
-  arrayView2d< real64 const > const m_detJ;
 
   real64 const m_Gc;
   real64 const m_lengthScale;

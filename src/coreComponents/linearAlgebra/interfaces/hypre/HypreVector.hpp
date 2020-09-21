@@ -167,6 +167,9 @@ public:
                       HypreVector const & x,
                       real64 const beta ) override;
 
+  virtual void pointwiseProduct( HypreVector const & x,
+                                 HypreVector & y ) const override;
+
   virtual real64 norm1() const override;
 
   virtual real64 norm2() const override;

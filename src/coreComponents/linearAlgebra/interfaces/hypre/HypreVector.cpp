@@ -36,7 +36,7 @@ static_assert( sizeof( HYPRE_BigInt ) == sizeof( globalIndex ),
                "HYPRE_BigInt and geosx::globalIndex must have the same size" );
 
 static_assert( std::is_signed< HYPRE_BigInt >::value == std::is_signed< globalIndex >::value,
-               "HYPRE_BigInt and geoex::globalIndex must both be signed or unsigned" );
+               "HYPRE_BigInt and geosx::globalIndex must both be signed or unsigned" );
 
 static_assert( std::is_same< HYPRE_Real, real64 >::value,
                "HYPRE_Real and geosx::real64 must be the same type" );
@@ -340,6 +340,24 @@ void HypreVector::axpby( real64 const alpha,
 {
   scale( beta );
   axpy( alpha, x );
+}
+
+void HypreVector::pointwiseProduct( HypreVector const & x,
+                                    HypreVector & y ) const
+{
+  GEOSX_LAI_ASSERT( ready() );
+  GEOSX_LAI_ASSERT( x.ready() );
+  GEOSX_LAI_ASSERT( y.ready() );
+  GEOSX_LAI_ASSERT_EQ( localSize(), x.localSize() );
+  GEOSX_LAI_ASSERT_EQ( localSize(), y.localSize() );
+
+  real64 const * const data = extractLocalVector();
+  real64 const * const x_data = x.extractLocalVector();
+  real64 * const y_data = y.extractLocalVector();
+  for( localIndex i = 0; i < localSize(); ++i )
+  {
+    y_data[i] = data[i] * x_data[i];
+  }
 }
 
 real64 HypreVector::norm1() const

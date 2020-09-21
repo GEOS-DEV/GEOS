@@ -39,11 +39,6 @@ public:
   /// Alias for matrix type
   using Matrix = typename Base::Matrix;
 
-  virtual ~PreconditionerJacobi()
-  {
-    delete m_diagInv;
-  }
-
   /**
    * @brief Compute the preconditioner from a matrix.
    * @param mat the matrix to precondition.
@@ -51,10 +46,9 @@ public:
   virtual void compute( Matrix const & mat ) override
   {
     GEOSX_LAI_ASSERT( mat.ready() );
-    m_diagInv = new Vector();
-    m_diagInv->createWithLocalSize( mat.numLocalRows(), mat.getComm() );
-    mat.extractDiagonal( *m_diagInv );
-    m_diagInv->reciprocal();
+    m_diagInv.createWithLocalSize( mat.numLocalRows(), mat.getComm() );
+    mat.extractDiagonal( m_diagInv );
+    m_diagInv.reciprocal();
   }
 
   /**
@@ -82,7 +76,7 @@ public:
    */
   virtual void clear() override
   {
-    m_diagInv->reset();
+    m_diagInv.reset();
   }
 
   /**
@@ -91,7 +85,8 @@ public:
    */
   virtual globalIndex numGlobalRows() const override final
   {
-    return m_diagInv->globalSize();
+    GEOSX_LAI_ASSERT( m_diagInv.ready() );
+    return m_diagInv.globalSize();
   }
 
   /**
@@ -100,7 +95,8 @@ public:
    */
   virtual globalIndex numGlobalCols() const override final
   {
-    return m_diagInv->globalSize();
+    GEOSX_LAI_ASSERT( m_diagInv.ready() );
+    return m_diagInv.globalSize();
   }
 
   /**
@@ -112,24 +108,17 @@ public:
   virtual void apply( Vector const & src,
                       Vector & dst ) const override
   {
+    GEOSX_LAI_ASSERT( m_diagInv.ready() );
     GEOSX_LAI_ASSERT_EQ( this->numGlobalRows(), dst.globalSize() );
     GEOSX_LAI_ASSERT_EQ( this->numGlobalCols(), src.globalSize() );
-    GEOSX_LAI_ASSERT_EQ( src.localSize(), dst.localSize() );
 
-    real64 const * const src_data = src.extractLocalVector();
-    real64 * const dst_data = dst.extractLocalVector();
-    real64 const * const diagInv_data = m_diagInv->extractLocalVector();
-    dst.copy( src );
-    for( localIndex i = 0; i < src.localSize(); ++i )
-    {
-      dst_data[i] = src_data[i] * diagInv_data[i];
-    }
+    m_diagInv.pointwiseProduct( src, dst );
   }
 
 private:
 
   /// The diagonal of the matrix
-  Vector * m_diagInv;
+  Vector m_diagInv;
 };
 
 }

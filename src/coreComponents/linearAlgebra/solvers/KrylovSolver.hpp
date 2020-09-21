@@ -118,7 +118,7 @@ public:
    * @brief Get convergence history of a linear solve.
    * @return array containing residual norms of every iteration (including initial)
    */
-  arrayView1d< real64 const > const & history() const
+  arrayView1d< real64 const > history() const
   {
     return m_residualNorms;
   }
@@ -198,8 +198,7 @@ protected:
   void logProgress( localIndex const iter, real64 const rnorm ) const
   {
     m_residualNorms[iter] = rnorm;
-    GEOSX_LOG_LEVEL_RANK_0( 2, methodName() << " iteration " << iter << ": residual = " <<
-                            std::scientific << std::setprecision( 6 ) << rnorm );
+    GEOSX_LOG_LEVEL_RANK_0( 2, methodName() << " iteration " << iter << ": residual = " << rnorm );
   }
 
   /**

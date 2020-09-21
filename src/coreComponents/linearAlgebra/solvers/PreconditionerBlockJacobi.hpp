@@ -47,21 +47,6 @@ public:
   PreconditionerBlockJacobi( localIndex const & blockSize = 0 )
     : m_blockDiag{}
   {
-    setBlockSize( blockSize );
-  }
-
-  virtual ~PreconditionerBlockJacobi()
-  {
-    delete m_blockDiag;
-  }
-
-  /**
-   * @brief Set the block size.
-   * @param blockSize the block size.
-   */
-  void setBlockSize( localIndex const & blockSize )
-  {
-    GEOSX_LAI_ASSERT_GT( blockSize, 0 );
     m_blockSize = blockSize;
   }
 
@@ -78,13 +63,14 @@ public:
 
     PreconditionerBase< LAI >::compute( mat );
 
-    m_blockDiag = new Matrix();
-    m_blockDiag->createWithLocalSize( mat.numLocalRows(), mat.numLocalCols(), m_blockSize, mat.getComm() );
-    m_blockDiag->open();
+    m_blockDiag.createWithLocalSize( mat.numLocalRows(), mat.numLocalCols(), m_blockSize, mat.getComm() );
+    m_blockDiag.open();
 
     array1d< globalIndex > idxBlk( m_blockSize );
     array2d< real64 > values( m_blockSize, m_blockSize );
     array2d< real64 > valuesInv( m_blockSize, m_blockSize );
+    array1d< globalIndex > cols;
+    array1d< real64 > vals;
     for( globalIndex i = mat.ilower(); i < mat.iupper(); i+=m_blockSize )
     {
       values.setValues< serialPolicy >( 0.0 );
@@ -93,8 +79,8 @@ public:
         globalIndex const iRow = i + LvArray::integerConversion< globalIndex >( j );
         idxBlk[j] = iRow;
         localIndex const rowLength = mat.globalRowLength( iRow );
-        array1d< globalIndex > cols( rowLength );
-        array1d< real64 > vals( rowLength );
+        cols.resize( rowLength );
+        vals.resize( rowLength );
         mat.getRowCopy( iRow, cols, vals );
         for( localIndex k = 0; k < rowLength; ++k )
         {
@@ -106,9 +92,9 @@ public:
         }
       }
       BlasLapackLA::matrixInverse( values, valuesInv );
-      m_blockDiag->insert( idxBlk, idxBlk, valuesInv );
+      m_blockDiag.insert( idxBlk, idxBlk, valuesInv );
     }
-    m_blockDiag->close();
+    m_blockDiag.close();
   }
 
   /**
@@ -136,7 +122,7 @@ public:
    */
   virtual void clear() override
   {
-    m_blockDiag->reset();
+    m_blockDiag.reset();
   }
 
   /**
@@ -148,10 +134,21 @@ public:
   virtual void apply( Vector const & src,
                       Vector & dst ) const override
   {
+    GEOSX_LAI_ASSERT( m_blockDiag.ready() );
     GEOSX_LAI_ASSERT_EQ( this->numGlobalRows(), dst.globalSize() );
     GEOSX_LAI_ASSERT_EQ( this->numGlobalCols(), src.globalSize() );
 
-    m_blockDiag->apply( src, dst );
+    m_blockDiag.apply( src, dst );
+  }
+
+  /**
+   * @brief Whether the preconditioner is available in matrix form
+   * @return true: explicit form is available
+   */
+  virtual bool hasPreconditionerMatrix() const override
+  {
+    GEOSX_LAI_ASSERT( m_blockDiag.ready() );
+    return true;
   }
 
   /**
@@ -160,13 +157,14 @@ public:
    */
   virtual Matrix const & preconditionerMatrix() const override
   {
-    return *m_blockDiag;
+    GEOSX_LAI_ASSERT( m_blockDiag.ready() );
+    return m_blockDiag;
   }
 
 private:
 
   /// The preconditioner matrix
-  Matrix * m_blockDiag;
+  Matrix m_blockDiag;
 
   /// Block size
   localIndex m_blockSize = 0;

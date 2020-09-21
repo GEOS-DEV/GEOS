@@ -22,7 +22,6 @@
 #include "linearAlgebra/solvers/PreconditionerBase.hpp"
 #include "linearAlgebra/interfaces/hypre/HypreInterface.hpp"
 #include "linearAlgebra/utilities/LinearSolverParameters.hpp"
-#include "HypreUtils.hpp"
 
 #include <memory>
 
@@ -94,6 +93,11 @@ public:
   virtual ~HyprePreconditioner() override;
 
   /**
+   * @brief Create the preconditioner from the input parameters.
+   */
+  void create();
+
+  /**
    * @brief Compute the preconditioner from a matrix.
    * @param mat the matrix to precondition.
    */
@@ -140,10 +144,10 @@ private:
   LinearSolverParameters m_parameters;
 
   /// Pointer to the Hypre implementation
-  HYPRE_Solver m_precond = nullptr;
+  HYPRE_Solver m_precond;
 
   /// Pointer to the auxillary preconditioner used in MGR
-  HYPRE_Solver aux_precond = nullptr;
+  HYPRE_Solver aux_precond;
 
   /// Pointers to hypre functions to setup/solve/destroy preconditioner
   std::unique_ptr< HyprePrecFuncs > m_functions;
@@ -158,13 +162,7 @@ private:
   bool m_ready;
 
   /// Pointer to external data structure storing the near null kernel
-  array1d< HypreVector > const * m_nearNullKernel = nullptr;
-
-  /// Number of near null kernel vectors (in case of rigid body modes, only rotations are used)
-  HYPRE_Int m_nullKernelSize;
-
-  /// Hypre pointer to the near null kernel
-  array1d< HYPRE_ParVector > m_nullSpacePointer;
+  array1d< HypreVector > const * m_nearNullKernel;
 };
 
 }

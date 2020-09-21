@@ -21,6 +21,7 @@
 #include "SolidBase.hpp"
 #include "constitutive/ExponentialRelation.hpp"
 #include "LvArray/src/tensorOps.hpp"
+#include "SolidModelDiscretizationOpsFullyAnisotroipic.hpp"
 
 namespace geosx
 {
@@ -40,6 +41,7 @@ namespace constitutive
 class LinearElasticAnisotropicUpdates : public SolidBaseUpdates
 {
 public:
+  using DiscretizationOps = SolidModelDiscretizationOpsFullyAnisotroipic;
 
   /**
    * @brief Constructor
@@ -116,6 +118,17 @@ public:
     GEOSX_UNUSED_VAR( q );
     LvArray::tensorOps::copy< 6, 6 >( c, m_stiffnessView[ k ] );
   }
+
+  GEOSX_FORCE_INLINE
+  GEOSX_HOST_DEVICE
+  void setDiscretizationOps( localIndex const k,
+                             localIndex const q,
+                             DiscretizationOps & discOps ) const
+  {
+    GEOSX_UNUSED_VAR( q )
+    LvArray::tensorOps::copy< 6, 6 >( discOps.m_c, m_stiffnessView[ k ] );
+  }
+
 
   /// A reference to the ArrayView holding the Voigt Stiffness tensor in each
   /// element.
@@ -301,7 +314,7 @@ public:
    * @brief Const Getter for stiffness tensor
    * @return ArrayView to the stiffness tensor
    */
-  arrayView3d< real64 const, solid::STIFFNESS_USD > const & getStiffness() const
+  arrayView3d< real64 const, solid::STIFFNESS_USD > getStiffness() const
   {
     return m_stiffness;
   }
@@ -310,7 +323,7 @@ public:
    * @brief Non-const Getter for stiffness tensor
    * @return ArrayView to the stiffness tensor
    */
-  arrayView3d< real64, solid::STIFFNESS_USD > const & getStiffness()
+  arrayView3d< real64, solid::STIFFNESS_USD > getStiffness()
   {
     return m_stiffness;
   }

@@ -215,10 +215,10 @@ void TwoPointFluxApproximation::addToFractureStencil( MeshLevel & mesh,
   ElementRegionManager::ElementViewAccessor< arrayView1d< R1Tensor const > > const coefficient =
     elemManager->ConstructArrayViewAccessor< R1Tensor, 1 >( m_coeffName );
 
-  arrayView1d< real64 const > const & faceArea   = faceManager->faceArea();
-  arrayView2d< real64 const > const & faceCenter = faceManager->faceCenter();
-  arrayView2d< real64 const > const & faceNormal = faceManager->faceNormal();
-  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X = nodeManager->referencePosition();
+  arrayView1d< real64 const > faceArea   = faceManager->faceArea();
+  arrayView2d< real64 const > faceCenter = faceManager->faceCenter();
+  arrayView2d< real64 const > faceNormal = faceManager->faceNormal();
+  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > X = nodeManager->referencePosition();
 
   FaceElementStencil & fractureStencil = getStencil< FaceElementStencil >( mesh, viewKeyStruct::fractureStencilString );
   CellElementStencilTPFA & cellStencil = getStencil< CellElementStencilTPFA >( mesh, viewKeyStruct::cellStencilString );
@@ -517,9 +517,9 @@ void TwoPointFluxApproximation::addToFractureStencil( MeshLevel & mesh,
 
   // add connections for FaceElements to/from CellElements.
   {
-    arrayView2d< localIndex const > const & elemRegionList = faceElementsToCells.m_toElementRegion;
-    arrayView2d< localIndex const > const & elemSubRegionList = faceElementsToCells.m_toElementSubRegion;
-    arrayView2d< localIndex const > const & elemList = faceElementsToCells.m_toElementIndex;
+    arrayView2d< localIndex const > elemRegionList = faceElementsToCells.m_toElementRegion;
+    arrayView2d< localIndex const > elemSubRegionList = faceElementsToCells.m_toElementSubRegion;
+    arrayView2d< localIndex const > elemList = faceElementsToCells.m_toElementIndex;
 
     forAll< serialPolicy >( newFaceElements.size(),
                             [ newFaceElements,

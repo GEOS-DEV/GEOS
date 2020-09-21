@@ -70,7 +70,15 @@ public:
   {
     static constexpr auto solverTypeString         = "solverType";         ///< Solver type key
     static constexpr auto preconditionerTypeString = "preconditionerType"; ///< Preconditioner type key
-    static constexpr auto dofsPerNodeString        = "dofsPerNode";        ///< Dofs per node key
+    static constexpr auto stopIfErrorString        = "stopIfError";        ///< stop if error key
+
+    static constexpr auto directCheckResTolString   = "directCheckResTol";    ///< direct solver check residual tolerance key
+    static constexpr auto directEquilString         = "directEquil";          ///< direct solver equilibrate key
+    static constexpr auto directColPermString       = "directColPerm";        ///< direct solver columns permutation key
+    static constexpr auto directRowPermString       = "directRowPerm";        ///< direct solver rows permutation key
+    static constexpr auto directReplTinyPivotString = "directReplTinyPivot";  ///< direct solver replace tiny pivot key
+    static constexpr auto directIterRefString       = "directIterRef";        ///< direct solver iterative refinement key
+    static constexpr auto directParallelString      = "directParallel";       ///< direct solver parallelism key
 
     static constexpr auto krylovMaxIterString     = "krylovMaxIter";     ///< Krylov max iterations key
     static constexpr auto krylovMaxRestartString  = "krylovMaxRestart";  ///< Krylov max iterations key

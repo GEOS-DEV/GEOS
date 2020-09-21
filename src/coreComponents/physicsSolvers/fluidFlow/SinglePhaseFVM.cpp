@@ -238,24 +238,24 @@ void SinglePhaseFVM< BASE >::AssembleFluxTerms( real64 const GEOSX_UNUSED_PARAM(
     FluxKernel::Launch( stencil,
                         dt,
                         dofManager.rankOffset(),
-                        elemDofNumber.toViewConst(),
-                        m_elemGhostRank.toViewConst(),
-                        m_pressure.toViewConst(),
-                        m_deltaPressure.toViewConst(),
-                        m_gravCoef.toViewConst(),
-                        m_density.toViewConst(),
-                        m_dDens_dPres.toViewConst(),
-                        m_mobility.toViewConst(),
-                        m_dMobility_dPres.toViewConst(),
-                        m_elementAperture0.toViewConst(),
-                        m_elementConductivity0.toViewConst(),
-                        m_effectiveAperture.toViewConst(),
-                        m_transTMultiplier.toViewConst(),
+                        elemDofNumber.toNestedViewConst(),
+                        m_elemGhostRank.toNestedViewConst(),
+                        m_pressure.toNestedViewConst(),
+                        m_deltaPressure.toNestedViewConst(),
+                        m_gravCoef.toNestedViewConst(),
+                        m_density.toNestedViewConst(),
+                        m_dDens_dPres.toNestedViewConst(),
+                        m_mobility.toNestedViewConst(),
+                        m_dMobility_dPres.toNestedViewConst(),
+                        m_elementAperture0.toNestedViewConst(),
+                        m_elementConductivity0.toNestedViewConst(),
+                        m_effectiveAperture.toNestedViewConst(),
+                        m_transTMultiplier.toNestedViewConst(),
                         this->gravityVector(),
                         this->m_meanPermCoeff,
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
-                        m_elementSeparationCoefficient.toViewConst(),
-                        m_element_dSeparationCoefficient_dAperture.toViewConst(),
+                        m_elementSeparationCoefficient.toNestedViewConst(),
+                        m_element_dSeparationCoefficient_dAperture.toNestedViewConst(),
 #endif
                         localMatrix,
                         localRhs,
@@ -306,10 +306,10 @@ void SinglePhaseFVM< BASE >::ApplyFaceDirichletBC( real64 const time_n,
     regionFluidMap.emplace( er, modelIndex );
   } );
 
-  arrayView1d< real64 const > const & presFace =
+  arrayView1d< real64 const > const presFace =
     faceManager.getReference< array1d< real64 > >( viewKeyStruct::facePressureString );
 
-  arrayView1d< real64 const > const & gravCoefFace =
+  arrayView1d< real64 const > const gravCoefFace =
     faceManager.getReference< array1d< real64 > >( viewKeyStruct::gravityCoefString );
 
   string const & dofKey = dofManager.getKey( viewKeyStruct::pressureString );
@@ -358,16 +358,16 @@ void SinglePhaseFVM< BASE >::ApplyFaceDirichletBC( real64 const time_n,
       typename TYPEOFREF( fluid ) ::KernelWrapper fluidWrapper = fluid.createKernelWrapper();
 
       FaceDirichletBCKernel::Launch( seri, sesri, sefi, trans,
-                                     m_elemGhostRank.toViewConst(),
-                                     elemDofNumber.toViewConst(),
+                                     m_elemGhostRank.toNestedViewConst(),
+                                     elemDofNumber.toNestedViewConst(),
                                      dofManager.rankOffset(),
-                                     m_pressure.toViewConst(),
-                                     m_deltaPressure.toViewConst(),
-                                     m_gravCoef.toViewConst(),
-                                     m_density.toViewConst(),
-                                     m_dDens_dPres.toViewConst(),
-                                     m_mobility.toViewConst(),
-                                     m_dMobility_dPres.toViewConst(),
+                                     m_pressure.toNestedViewConst(),
+                                     m_deltaPressure.toNestedViewConst(),
+                                     m_gravCoef.toNestedViewConst(),
+                                     m_density.toNestedViewConst(),
+                                     m_dDens_dPres.toNestedViewConst(),
+                                     m_mobility.toNestedViewConst(),
+                                     m_dMobility_dPres.toNestedViewConst(),
                                      presFace,
                                      gravCoefFace,
                                      fluidWrapper,

@@ -712,11 +712,14 @@ protected:
    * @brief Add entries of another matrix to this.
    * @param src   the source matrix
    * @param scale factor to scale entries of @p src by
+   * @param samePattern whether to keep the original pattern or to extend it
    *
    * @note Sparsity pattern of @p this must be a superset of sparsity of @p src.
    *       @p this and @p src must have the same parallel row distribution.
    */
-  virtual void addEntries( Matrix const & src, real64 const scale = 1.0 ) = 0;
+  virtual void addEntries( Matrix const & src,
+                           real64 const scale = 1.0,
+                           bool const samePattern = true ) = 0;
 
   /**
    * @brief Add entries of a vector to the diagonal of this matrix.

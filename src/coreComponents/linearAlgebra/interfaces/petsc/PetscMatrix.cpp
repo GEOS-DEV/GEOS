@@ -598,14 +598,11 @@ void PetscMatrix::multiplyPtAP( PetscMatrix const & P,
   dst.reset();
 
   // To be able to use the PtAP product in some cases, we need to disable floating point exceptions
-  // Needs further investigation!
-  // Disable floating point exceptions and save the FPE flags
-  int const fpeflags = LvArray::system::disableFloatingPointExceptions( FE_ALL_EXCEPT );
+  {
+    LvArray::system::FloatingPointExceptionGuard guard( FE_ALL_EXCEPT );
 
-  GEOSX_LAI_CHECK_ERROR( MatPtAP( m_mat, P.m_mat, MAT_INITIAL_MATRIX, PETSC_DEFAULT, &dst.m_mat ) );
-
-  // Restore the previous FPE flags
-  LvArray::system::disableFloatingPointExceptions( fpeflags );
+    GEOSX_LAI_CHECK_ERROR( MatPtAP( m_mat, P.m_mat, MAT_INITIAL_MATRIX, PETSC_DEFAULT, &dst.m_mat ) );
+  }
 
   dst.m_assembled = true;
 }
@@ -656,16 +653,23 @@ real64 PetscMatrix::clearRow( globalIndex const globalRow,
   return oldDiag;
 }
 
-void PetscMatrix::addEntries( PetscMatrix const & src, real64 const scale )
+void PetscMatrix::addEntries( PetscMatrix const & src, real64 const scale, bool const samePattern )
 {
   GEOSX_LAI_ASSERT( ready() );
   GEOSX_LAI_ASSERT( src.ready() );
   GEOSX_LAI_ASSERT( numGlobalRows() == src.numGlobalRows() );
   GEOSX_LAI_ASSERT( numGlobalCols() == src.numGlobalCols() );
 
-  GEOSX_LAI_CHECK_ERROR( MatSetOption( m_mat, MAT_NEW_NONZERO_ALLOCATION_ERR, PETSC_FALSE ) );
-  GEOSX_LAI_CHECK_ERROR( MatAXPY( m_mat, scale, src.m_mat, DIFFERENT_NONZERO_PATTERN ) );
-  GEOSX_LAI_CHECK_ERROR( MatSetOption( m_mat, MAT_NEW_NONZERO_ALLOCATION_ERR, PETSC_TRUE ) );
+  if( samePattern )
+  {
+    GEOSX_LAI_CHECK_ERROR( MatAXPY( m_mat, scale, src.m_mat, SUBSET_NONZERO_PATTERN ) );
+  }
+  else
+  {
+    GEOSX_LAI_CHECK_ERROR( MatSetOption( m_mat, MAT_NEW_NONZERO_ALLOCATION_ERR, PETSC_FALSE ) );
+    GEOSX_LAI_CHECK_ERROR( MatAXPY( m_mat, scale, src.m_mat, DIFFERENT_NONZERO_PATTERN ) );
+    GEOSX_LAI_CHECK_ERROR( MatSetOption( m_mat, MAT_NEW_NONZERO_ALLOCATION_ERR, PETSC_TRUE ) );
+  }
 }
 
 void PetscMatrix::addDiagonal( PetscVector const & src )
