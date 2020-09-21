@@ -73,8 +73,8 @@ int ToVTKCellType( const string & elementType )
   return vtkIdentifier;
 }
 
-void VTKPolyDataWriterInterface::gatherNbElementsInRegion( ElementRegionBase const & er, 
-                                                            array1d< localIndex > & nbElemsInRegion ) const
+void VTKPolyDataWriterInterface::gatherNbElementsInRegion( ElementRegionBase const & er,
+                                                           array1d< localIndex > & nbElemsInRegion ) const
 {
   localIndex nbElems = er.getNumberOfElements();
   int const mpiSize = MpiWrapper::Comm_size( MPI_COMM_GEOSX );
@@ -437,7 +437,7 @@ void VTKPolyDataWriterInterface::WriteVTMFile( real64 time,
   int const mpiSize = MpiWrapper::Comm_size( MPI_COMM_GEOSX );
   auto writeSubBlocks = [&]( ElementRegionBase const & er ) {
     array1d< localIndex > nbElemsInRegion;
-    gatherNbElementsInRegion( er,  nbElemsInRegion );
+    gatherNbElementsInRegion( er, nbElemsInRegion );
     vtmWriter.AddSubBlock( er.getCatalogName(), er.getName() );
     for( int i = 0; i < mpiSize; i++ )
     {
