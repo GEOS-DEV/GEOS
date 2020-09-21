@@ -78,6 +78,10 @@ protected:
 
   virtual void computeCellStencil(MeshLevel & mesh) const override;
 
+  virtual void computeBoundaryStencil( MeshLevel & mesh,
+                                       string const & setName,
+                                       SortedArrayView< localIndex const > const & faceSet ) const override;
+
 private:
   string m_graphString;
   GraphFromText * m_graph;

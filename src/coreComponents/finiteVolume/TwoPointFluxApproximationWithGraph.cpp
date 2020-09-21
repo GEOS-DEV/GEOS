@@ -21,6 +21,8 @@
 #include <limits.h>
 
 #include "TwoPointFluxApproximationWithGraph.hpp"
+
+#include "finiteVolume/BoundaryStencil.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "finiteVolume/CellElementStencilTPFA.hpp"
 #include "mesh/FaceElementRegion.hpp"
@@ -28,6 +30,9 @@
 #include "LvArray/src/tensorOps.hpp"
 #include "mesh/GraphFromText.hpp"
 #include "mesh/GraphEdge.hpp"
+#include "mesh/GraphEdge2.hpp"
+
+#include "mesh/GraphVertexFace.hpp"
 
 
 namespace geosx
@@ -57,46 +62,14 @@ void TwoPointFluxApproximationWithGraph::computeCellStencil( MeshLevel & mesh) c
 
   
   std::vector<GraphEdge*> edges = graph->getEdges();
-  std::vector<GraphVertex*> vertices = graph->getVertices();
+  std::vector<std::shared_ptr<GraphVertex>> vertices = graph->getVertices();
   stencil.reserve( edges.size() );
 
   ElementRegionManager::ElementViewAccessor< arrayView1d< integer const > > const elemGhostRank =
     elemManager.ConstructArrayViewAccessor< integer, 1 >( ObjectManagerBase::viewKeyStruct::ghostRankString );
   ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > const localToGlobalMap =
     elemManager.ConstructArrayViewAccessor< globalIndex, 1 >( ObjectManagerBase::viewKeyStruct::localToGlobalMapString );
-  /*
-  std::vector <GraphVertex*> new_vertex;
-  for( long unsigned int i=0; i<vertices.size(); i++)
-  {
-    new_vertex.push_back(vertices[i]);
-  }
-  for (long int i = 0; i<elemGhostRank[0][0].size(); i++)
-  {
-    std::cout<<i<<"\n";
-    std::cout<<localToGlobalMap[0][0][i]<<"\n";
-    std::cout<<"\n";
-    for (long unsigned int j = 0; j<new_vertex.size();j++)
-    {
-      if (localToGlobalMap[0][0][i] == new_vertex[i]->getEdgeIndex())
-      {
-        new_vertex.erase(new_vertex.begin()+i);
-      }
-    }
-  }
-  for ( long unsigned int i=0; i<new_vertex.size(); i++)
-  {
-    std::cout<<new_vertex[i]->getEdgeIndex()<<" ";
-    for (long unsigned int j = 0; j<vertices.size();j++)
-    {
-      if (vertices[j]->getEdgeIndex == new_vertex[i]->getEdgeIndex())
-      {
-        graph->RemoveVertex(vertices[j]);
-      }
-    }
-  std::cout<<"\n";
-  }
-  */
- 
+   
   for( long unsigned int i=0; i<edges.size(); i++)
   {
     //std::cout<<localToGlobalMap[0][0][edges[i]->getVertex1()->getIndice()]<<"\n";
@@ -133,10 +106,76 @@ void TwoPointFluxApproximationWithGraph::computeCellStencil( MeshLevel & mesh) c
                  faceIndex);
     }
   }
-
 }
 
+void TwoPointFluxApproximationWithGraph::computeBoundaryStencil( MeshLevel & mesh,
+                                                        string const & setName,
+                                                        SortedArrayView< localIndex const > const & faceSet ) const
+{
+const Group * tmp = this->GetGroupByPath( m_graphString );
+  GEOSX_ERROR_IF( tmp == nullptr, "Can't find group with path " << m_graphString );
+  const GraphFromText * graph = Group::group_cast< const GraphFromText * >( tmp );
+  ElementRegionManager const & elemManager = *mesh.getElemManager();
 
+  BoundaryStencil & stencil = getStencil< BoundaryStencil >( mesh, setName );
+  
+  std::vector<GraphEdge2*> edges = graph->getBoundaryEdges();
+  std::vector<std::shared_ptr<GraphVertex>> vertices = graph->getVertices();
+  stencil.reserve( faceSet.size() );
+
+  constexpr localIndex numPts = BoundaryStencil::NUM_POINT_IN_FLUX;
+
+  stackArray1d< localIndex, numPts > stencilRegionIndices( numPts );
+  stackArray1d< localIndex, numPts > stencilSubRegionIndices( numPts );
+  stackArray1d< localIndex, numPts > stencilElemOrFaceIndices( numPts );
+  stackArray1d< real64, numPts > stencilWeights( numPts );
+
+
+  ElementRegionManager::ElementViewAccessor< arrayView1d< integer const > > const elemGhostRank =
+    elemManager.ConstructArrayViewAccessor< integer, 1 >( ObjectManagerBase::viewKeyStruct::ghostRankString );
+  ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > const localToGlobalMap =
+    elemManager.ConstructArrayViewAccessor< globalIndex, 1 >( ObjectManagerBase::viewKeyStruct::localToGlobalMapString );
+  for (long unsigned int i = 0; i < edges.size(); i++)
+  {
+    std::shared_ptr<GraphVertex> face;
+    face =  edges[i]->getVertex2();
+
+    std::cout << face->getCorrespondingId()<<" "<<edges[i]->getVertex1()->getLocalVertexIndex()<<"\n";
+  }
+
+  for( localIndex kf : faceSet )
+  {
+    for( long unsigned int i=0; i<edges.size(); i++)
+    {
+      std::shared_ptr<GraphVertexFace> face = edges[i]->getVertex2();
+      if( edges[i]->getVertex1()->getGhostIndex() >= 0 || kf != face->getCorrespondingId())
+      {
+        //std::cout<<"Ghosted\n";
+      }
+      else
+      {
+        stencilRegionIndices[BoundaryStencil::Order::ELEM] = LvArray::integerConversion< localIndex >(edges[i]->getVertex1()->getRegionIndex());
+        stencilSubRegionIndices[BoundaryStencil::Order::ELEM] = LvArray::integerConversion< localIndex >(edges[i]->getVertex1()->getSubRegionIndex());
+        stencilElemOrFaceIndices[BoundaryStencil::Order::ELEM] = LvArray::integerConversion< localIndex >(edges[i]->getVertex1()->getLocalVertexIndex());
+        stencilWeights[BoundaryStencil::Order::ELEM] = edges[i]->getTransmissibility();
+
+        stencilRegionIndices[BoundaryStencil::Order::FACE] = LvArray::integerConversion< localIndex >(edges[i]->getVertex2()->getRegionIndex());
+        stencilSubRegionIndices[BoundaryStencil::Order::FACE] = LvArray::integerConversion< localIndex >(edges[i]->getVertex2()->getSubRegionIndex());
+        stencilElemOrFaceIndices[BoundaryStencil::Order::FACE] = kf;
+        stencilWeights[BoundaryStencil::Order::FACE] = -edges[i]->getTransmissibility();
+
+        //std::cout << stencilElemOrFaceIndices[0] << " " << stencilElemOrFaceIndices[1] << " " << "\n";
+
+        stencil.add( stencilRegionIndices.size(),
+                     stencilRegionIndices.data(),
+                     stencilSubRegionIndices.data(),
+                     stencilElemOrFaceIndices.data(),
+                     stencilWeights.data(),
+                     kf);
+      }
+    }
+  }
+}
 
 REGISTER_CATALOG_ENTRY( FluxApproximationBase, TwoPointFluxApproximationWithGraph, std::string const &, Group * const )
 
