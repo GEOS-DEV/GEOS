@@ -32,6 +32,7 @@ struct InnerProductType
 {
   static constexpr integer TPFA = 0;
   static constexpr integer QUASI_TPFA = 1;
+  static constexpr integer QUASI_TPFA_WITH_MULTIPLIERS = 2;
 };
 
 void compareTransmissibilityMatrices( arraySlice2d< real64 const > const & transMatrix,
@@ -215,6 +216,32 @@ void makeHexa( array2d< real64, nodes::REFERENCE_POSITION_PERM > & nodePosition,
     transMatrixRef( 5, 5 ) = 6e-12;
     transMatrixRef( 5, 3 ) = -2.25e-12;
   }
+  else if( ipType == InnerProductType::QUASI_TPFA_WITH_MULTIPLIERS )
+  {
+    transMatrixRef( 0, 0 ) = 4.00e-12;
+
+    transMatrixRef( 1, 1 ) = 4.980e-12;
+    transMatrixRef( 1, 2 ) = -2.012e-12;
+    transMatrixRef( 1, 3 ) = 0.177e-12;
+    transMatrixRef( 1, 5 ) = 0.853e-12;
+
+    transMatrixRef( 2, 1 ) = -2.012e-12;
+    transMatrixRef( 2, 2 ) = 4.569e-12;
+    transMatrixRef( 2, 3 ) = 0.009e-12;
+    transMatrixRef( 2, 5 ) = 1.683e-12;
+
+    transMatrixRef( 3, 1 ) = 0.177e-12;
+    transMatrixRef( 3, 2 ) = 0.009e-12;
+    transMatrixRef( 3, 3 ) = 0.410e-12;
+    transMatrixRef( 3, 5 ) = -0.148e-12;
+
+    transMatrixRef( 4, 4 ) = 4e-12;
+
+    transMatrixRef( 5, 1 ) = 0.853e-12;
+    transMatrixRef( 5, 2 ) = 1.683e-12;
+    transMatrixRef( 5, 5 ) = 4.306e-12;
+    transMatrixRef( 5, 3 ) = -0.148e-12;
+  }
 }
 
 
@@ -392,12 +419,15 @@ TEST( testHybridFVMInnerProducts, QTPFA_hexa )
             elemVolume,
             elemPerm,
             lengthTolerance,
-            InnerProductType::QUASI_TPFA,
+            InnerProductType::QUASI_TPFA_WITH_MULTIPLIERS,
             transMatrixRef );
 
   stackArray2d< real64, NF *NF > transMatrix( NF, NF );
   array1d< real64 > transMultiplier( NF );
   transMultiplier.setValues< parallelHostPolicy >( 1.0 );
+  transMultiplier[0] = 0.9;
+  transMultiplier[5] = 0.1;
+  transMultiplier[3] = 0.8;
 
   stackArray1d< real64, 3 > center( 3 );
   center[0] = elemCenter[0];

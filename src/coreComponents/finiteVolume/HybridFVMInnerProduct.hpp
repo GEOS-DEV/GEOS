@@ -19,10 +19,11 @@
 #ifndef GEOSX_PHYSICSSOLVERS_FINITEVOLUME_HYBRIDFVMINNERPRODUCT_HPP
 #define GEOSX_PHYSICSSOLVERS_FINITEVOLUME_HYBRIDFVMINNERPRODUCT_HPP
 
+#include "codingUtilities/Utilities.hpp"
 #include "common/DataTypes.hpp"
-#include "rajaInterface/GEOS_RAJA_Interface.hpp"
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
 #include "meshUtilities/ComputationalGeometry.hpp"
+#include "rajaInterface/GEOS_RAJA_Interface.hpp"
 
 namespace geosx
 {
@@ -133,7 +134,9 @@ struct TPFACellInnerProductKernel
     real64 const areaTolerance = lengthTolerance * lengthTolerance;
     real64 const weightTolerance = 1e-30 * lengthTolerance;
 
+    // assemble full coefficient tensor from principal axis/components
     real64 permTensor[ 3 ][ 3 ] = {{ 0 }};
+    HybridFVMInnerProductHelper::MakeFullTensor( elemPerm, permTensor );
 
     // we are ready to compute the transmissibility matrix
     for( localIndex ifaceLoc = 0; ifaceLoc < NF; ++ifaceLoc )
@@ -165,11 +168,9 @@ struct TPFACellInnerProductKernel
 
           real64 const c2fDistance = LvArray::tensorOps::normalize< 3 >( cellToFaceVec );
 
-          // 2) assemble full coefficient tensor from principal axis/components
-          HybridFVMInnerProductHelper::MakeFullTensor( elemPerm, permTensor );
           LvArray::tensorOps::hadamardProduct< 3 >( faceConormal, elemPerm, faceNormal );
 
-          // 3) compute the one-sided face transmissibility
+          // 2) compute the one-sided face transmissibility
           transMatrix[ifaceLoc][jfaceLoc]  = LvArray::tensorOps::AiBi< 3 >( cellToFaceVec, faceConormal );
           transMatrix[ifaceLoc][jfaceLoc] *= mult * faceArea / c2fDistance;
           transMatrix[ifaceLoc][jfaceLoc]  = LvArray::math::max( transMatrix[ifaceLoc][jfaceLoc], weightTolerance );
@@ -208,6 +209,10 @@ struct QTPFACellInnerProductKernel
    *
    * When tParam = 2, we obtain a scheme that reduces to TPFA
    * on orthogonal meshes, but remains consistent on non-orthogonal meshes
+   *
+   * Ref: Knut-Andreas Lie: An introduction to reservoir simulation using MATLAB/GNU Octave:
+   * User guide for the MATLAB Reservoir Simulation Toolbox (MRST)
+   *
    */
   template< localIndex NF >
   GEOSX_HOST_DEVICE
@@ -224,6 +229,7 @@ struct QTPFACellInnerProductKernel
            arraySlice2d< real64 > const & transMatrix )
   {
     real64 const areaTolerance = lengthTolerance * lengthTolerance;
+    real64 const weightToleranceInv = 1e30 / lengthTolerance;
 
     real64 cellToFaceMat[ NF ][ 3 ] = {{ 0 }};
     real64 normalsMat[ NF ][ 3 ] = {{ 0 }};
@@ -234,12 +240,17 @@ struct QTPFACellInnerProductKernel
     real64 workb_numFacesByNumFaces[ NF ][ NF ] = {{ 0 }};
     real64 workc_numFacesByNumFaces[ NF ][ NF ] = {{ 0 }};
 
+    real64 tpTransInv[ NF ] = { 0.0 };
+
     real64 q0[ NF ], q1[ NF ], q2[ NF ];
+
+    // 0) assemble full coefficient tensor from principal axis/components
+    HybridFVMInnerProductHelper::MakeFullTensor( elemPerm, permMat );
 
     // 1) fill the matrices cellToFaceMat and normalsMat row by row
     for( localIndex ifaceLoc = 0; ifaceLoc < NF; ++ifaceLoc )
     {
-      real64 faceCenter[ 3 ], faceNormal[ 3 ];
+      real64 faceCenter[ 3 ], faceNormal[ 3 ], faceConormal[ 3 ], cellToFaceVec[ 3 ];
 
       // compute the face geometry data: center, normal, vector from cell center to face center
       real64 const faceArea =
@@ -249,32 +260,37 @@ struct QTPFACellInnerProductKernel
                                                    faceNormal,
                                                    areaTolerance );
 
-      q0[ ifaceLoc ] = faceCenter[ 0 ] - elemCenter[ 0 ];
-      q1[ ifaceLoc ] = faceCenter[ 1 ] - elemCenter[ 1 ];
-      q2[ ifaceLoc ] = faceCenter[ 2 ] - elemCenter[ 2 ];
+      LvArray::tensorOps::copy< 3 >( cellToFaceVec, faceCenter );
+      LvArray::tensorOps::subtract< 3 >( cellToFaceVec, elemCenter );
 
-      real64 const dotProduct = q0[ ifaceLoc ] * faceNormal[ 0 ]
-                                + q1[ ifaceLoc ] * faceNormal[ 1 ]
-                                + q2[ ifaceLoc ] * faceNormal[ 2 ];
-      if( dotProduct < 0.0 )
+      // we save this for the orthonormalization
+      q0[ ifaceLoc ] = cellToFaceVec[0];
+      q1[ ifaceLoc ] = cellToFaceVec[1];
+      q2[ ifaceLoc ] = cellToFaceVec[2];
+
+      if( LvArray::tensorOps::AiBi< 3 >( cellToFaceVec, faceNormal ) < 0.0 )
       {
-        LvArray::tensorOps::scale< 3 >( faceNormal, -faceArea );
-      }
-      else
-      {
-        LvArray::tensorOps::scale< 3 >( faceNormal, faceArea );
+        LvArray::tensorOps::scale< 3 >( faceNormal, -1 );
       }
 
+      // the two-point transmissibility is computed to computed here because it is needed
+      // in the implementation of the transmissibility multiplier (see below)
+      real64 const c2fDistance = LvArray::tensorOps::normalize< 3 >( cellToFaceVec );
+      real64 const mult = transMultiplier[elemToFaces[ifaceLoc]];
+      LvArray::tensorOps::hadamardProduct< 3 >( faceConormal, elemPerm, faceNormal );
+      tpTransInv[ifaceLoc] = c2fDistance / faceArea;
+      tpTransInv[ifaceLoc] /= LvArray::tensorOps::AiBi< 3 >( cellToFaceVec, faceConormal );
+      tpTransInv[ifaceLoc] = LvArray::math::min( tpTransInv[ifaceLoc], weightToleranceInv );
+      tpTransInv[ifaceLoc] *= 0.5 * ( 1.0 - mult ) / mult;
+
+      LvArray::tensorOps::scale< 3 >( faceNormal, faceArea );
       normalsMat[ ifaceLoc ][ 0 ] = faceNormal[ 0 ];
       normalsMat[ ifaceLoc ][ 1 ] = faceNormal[ 1 ];
       normalsMat[ ifaceLoc ][ 2 ] = faceNormal[ 2 ];
 
     }
 
-    // 2) assemble full coefficient tensor from principal axis/components
-    HybridFVMInnerProductHelper::MakeFullTensor( elemPerm, permMat );
-
-    // 3) compute N K N'
+    // 2) compute N K N'
     LvArray::tensorOps::AikBjk< 3, NF, 3 >( work_dimByNumFaces,
                                             permMat,
                                             normalsMat );
@@ -282,17 +298,17 @@ struct QTPFACellInnerProductKernel
                                              normalsMat,
                                              work_dimByNumFaces );
 
-    // 4) compute the orthonormalization of the matrix cellToFaceVec
+    // 3) compute the orthonormalization of the matrix cellToFaceVec
     HybridFVMInnerProductHelper::Orthonormalize< NF >( q0, q1, q2, cellToFaceMat );
 
-    // 5) compute P_Q = I - QQ'
+    // 4) compute P_Q = I - QQ'
     // note: we compute -P_Q and then at 6) ( - P_Q ) D ( - P_Q )
     LvArray::tensorOps::addIdentity< NF >( worka_numFacesByNumFaces, -1 );
     LvArray::tensorOps::plusAikAjk< NF, 3 >( worka_numFacesByNumFaces,
                                              cellToFaceMat );
 
-    // 6) compute P_Q D P_Q where D = diag(diag(N K N'))
-    // 7) compute T = ( N K N' + t U diag(diag(N K N')) U ) / elemVolume
+    // 5) compute P_Q D P_Q where D = diag(diag(N K N'))
+    // 6) compute T = ( N K N' + t U diag(diag(N K N')) U ) / elemVolume
     real64 const scale = tParam / elemVolume;
     for( localIndex i = 0; i < NF; ++i )
     {
@@ -307,26 +323,32 @@ struct QTPFACellInnerProductKernel
                                                   worka_numFacesByNumFaces,
                                                   workc_numFacesByNumFaces );
 
-    // TODO: implement correctly the transmissibility calculation with multipliers
-    //
-    // we would like to do (if not too expensive):
-    // T = LvArray::tensorOps::invert< NF >( LvArray::tensorOps::invert< NF >( transMatrix ) + D )
-    // where D is diagonal matrix computed from the multipliers
-    //
+    // 7) incorporate the transmissbility multipliers
     // Ref: Nilsen, H. M., J. R. Natvig, and K.-A Lie.,
     // "Accurate modeling of faults by multipoint, mimetic, and mixed methods." SPEJ
 
-    // placeholder before we can implement the hybrid treatment of trans multipliers
-    for( localIndex i = 0; i < NF; ++i )
+    if( !isZero( LvArray::tensorOps::l2NormSquared< NF >( tpTransInv ) ) )
     {
-      real64 const mult = transMultiplier[elemToFaces[i]];
-      for( localIndex j = 0; j < NF; ++j )
+      // the inverse of the pertubed inverse is computed using the Sherman-Morrison formula
+      for( localIndex k = 0; k < NF; ++k )
       {
-        transMatrix[i][j] *= mult;
+        real64 const mult = LvArray::math::sqrt( tpTransInv[k] );
+        real64 Tmult[ NF ] = { 0.0 };
+        for( localIndex i = 0; i < NF; ++i )
+        {
+          Tmult[i] = transMatrix[k][i] * mult;
+        }
+        real64 const invDenom = 1.0 / ( 1.0 + Tmult[k] * mult );
+        for( localIndex i = 0; i < NF; ++i )
+        {
+          for( localIndex j = 0; j < NF; ++j )
+          {
+            transMatrix[i][j] -= Tmult[i]*Tmult[j]*invDenom;
+          }
+        }
       }
     }
   }
-
 };
 
 

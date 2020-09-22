@@ -44,6 +44,7 @@ SinglePhaseHybridFVM::SinglePhaseHybridFVM( const std::string & name,
 
   // one cell-centered dof per cell
   m_numDofPerCell = 1;
+
 }
 
 
@@ -75,9 +76,13 @@ void SinglePhaseHybridFVM::InitializePostInitialConditions_PreSubGroups( Group *
 
   SinglePhaseBase::InitializePostInitialConditions_PreSubGroups( rootGroup );
 
-  DomainPartition * domain = rootGroup->GetGroup< DomainPartition >( keys::domain );
-  MeshLevel const & mesh = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
+  DomainPartition & domain = *rootGroup->GetGroup< DomainPartition >( keys::domain );
+  MeshLevel const & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
   ElementRegionManager const & elemManager = *mesh.getElemManager();
+  FaceManager const & faceManager = *mesh.getFaceManager();
+  NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
+  FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
+  FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
 
   // in the flux kernel, we need to make sure that we act only on the target regions
   // for that, we need the following region filter
@@ -85,6 +90,21 @@ void SinglePhaseHybridFVM::InitializePostInitialConditions_PreSubGroups( Group *
   {
     m_regionFilter.insert( elemManager.GetRegions().getIndex( regionName ) );
   }
+
+  // check that multipliers are stricly larger than 0, which would work with SinglePhaseFVM, but not with SinglePhaseHybridFVM.
+  // To deal with a 0 multiplier, we would just have to skip the corresponding face in the FluxKernel
+  string const & coeffName = fluxApprox.getReference< string >( FluxApproximationBase::viewKeyStruct::coeffNameString );
+  arrayView1d< real64 const > const & transMultiplier =
+    faceManager.getReference< array1d< real64 > >( coeffName + FluxApproximationBase::viewKeyStruct::transMultiplierString );
+
+  RAJA::ReduceMin< parallelDeviceReduce, real64 > minVal( 1.0 );
+  forAll< parallelDevicePolicy<> >( faceManager.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iface )
+  {
+    minVal.min( transMultiplier[iface] );
+  } );
+
+  GEOSX_ERROR_IF_LE_MSG( minVal.get(), 0.0,
+                         "The transmissibility multipliers used in SinglePhaseHybridFVM must strictly larger than 0.0" );
 
 }
 
@@ -275,8 +295,8 @@ void SinglePhaseHybridFVM::ApplyBoundaryConditions( real64 const time_n,
   GEOSX_MARK_FUNCTION;
 
   SinglePhaseBase::ApplyBoundaryConditions( time_n, dt, domain, dofManager, localMatrix, localRhs );
-  // will implement face boundary conditions later
 }
+
 
 real64 SinglePhaseHybridFVM::CalculateResidualNorm( DomainPartition const & domain,
                                                     DofManager const & dofManager,
