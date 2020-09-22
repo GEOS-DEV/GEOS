@@ -183,6 +183,14 @@
       scale="0.1"/>
 
     <FieldSpecification
+      name="lowPermBarrierTransMult"
+      initialCondition="1"
+      objectPath="faceManager"
+      fieldName="permeabilityTransMultiplier"
+      scale="0.9"
+      setNames="{ lowPermBarrier }"/>
+
+    <FieldSpecification
       name="sourceTerm"
       objectPath="ElementRegions"
       fieldName="pressure"
@@ -195,13 +203,6 @@
       fieldName="pressure"
       scale="5e5"
       setNames="{ sink }"/>
-
-    <FieldSpecification
-      name="lowPermBarrierTransMult"
-      objectPath="faceManager"
-      fieldName="permeabilityTransMultiplier"
-      scale="0.9"
-      setNames="{ lowPermBarrier }"/>
 
   </FieldSpecifications>
 

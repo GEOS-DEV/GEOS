@@ -220,27 +220,27 @@ void makeHexa( array2d< real64, nodes::REFERENCE_POSITION_PERM > & nodePosition,
   {
     transMatrixRef( 0, 0 ) = 4.00e-12;
 
-    transMatrixRef( 1, 1 ) = 4.980e-12;
-    transMatrixRef( 1, 2 ) = -2.012e-12;
-    transMatrixRef( 1, 3 ) = 0.177e-12;
-    transMatrixRef( 1, 5 ) = 0.853e-12;
+    transMatrixRef( 1, 1 ) = 4.817e-12;
+    transMatrixRef( 1, 2 ) = -1.829e-12;
+    transMatrixRef( 1, 3 ) = 0.094e-12;
+    transMatrixRef( 1, 5 ) = 0.851e-12;
 
-    transMatrixRef( 2, 1 ) = -2.012e-12;
-    transMatrixRef( 2, 2 ) = 4.569e-12;
-    transMatrixRef( 2, 3 ) = 0.009e-12;
-    transMatrixRef( 2, 5 ) = 1.683e-12;
+    transMatrixRef( 2, 1 ) = -1.829e-12;
+    transMatrixRef( 2, 2 ) = 3.991e-12;
+    transMatrixRef( 2, 3 ) = 0.008e-12;
+    transMatrixRef( 2, 5 ) = 1.315e-12;
 
-    transMatrixRef( 3, 1 ) = 0.177e-12;
-    transMatrixRef( 3, 2 ) = 0.009e-12;
-    transMatrixRef( 3, 3 ) = 0.410e-12;
-    transMatrixRef( 3, 5 ) = -0.148e-12;
+    transMatrixRef( 3, 1 ) = 0.094e-12;
+    transMatrixRef( 3, 2 ) = 0.008e-12;
+    transMatrixRef( 3, 3 ) = 0.213e-12;
+    transMatrixRef( 3, 5 ) = -0.068e-12;
 
     transMatrixRef( 4, 4 ) = 4e-12;
 
-    transMatrixRef( 5, 1 ) = 0.853e-12;
-    transMatrixRef( 5, 2 ) = 1.683e-12;
-    transMatrixRef( 5, 5 ) = 4.306e-12;
-    transMatrixRef( 5, 3 ) = -0.148e-12;
+    transMatrixRef( 5, 1 ) = 0.851e-12;
+    transMatrixRef( 5, 2 ) = 1.315e-12;
+    transMatrixRef( 5, 5 ) = 3.703e-12;
+    transMatrixRef( 5, 3 ) = -0.068e-12;
   }
 }
 
