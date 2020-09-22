@@ -12,25 +12,25 @@ def print_and_flush(msg, *args, **kwargs):
     sys.stdout.flush()
 
 
-def printWithIndent( msg, indent ):
-    indentString = " " * indent
-    print( indentString + msg.replace( "\n", "\n" + indentString ) )
+def print_with_indent(msg, indent):
+    indent_str = " " * indent
+    print(indent_str + msg.replace("\n", "\n" + indent_str))
 
 
-def printGroup( group, indent=0 ):
-    print( "{}{}".format( " " * indent, group ) )
+def print_group(group, indent=0):
+    print("{}{}".format(" " * indent, group))
 
     indent += 4
-    print( "{}wrappers:".format( " " * indent ) )
+    print("{}wrappers:".format(" " * indent))
 
     for wrapper in group.wrappers():
-        print( "{}{}".format( " " * ( indent + 4 ), wrapper ) )
-        printWithIndent( str( wrapper.value( False ) ), indent + 8 )
+        print("{}{}".format(" " * (indent + 4), wrapper))
+        print_with_indent(str(wrapper.value(False)), indent + 8)
 
-    print( "{}groups:".format( " " * indent ) )
+    print("{}groups:".format(" " * indent))
 
-    for subGroup in group.groups():
-        printGroup( subGroup, indent + 4 )
+    for subgroup in group.groups():
+        print_group(subgroup, indent + 4)
 
 def print_with_indent(msg, indent):
     indent_str = " " * indent
