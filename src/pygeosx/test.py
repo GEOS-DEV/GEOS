@@ -11,9 +11,11 @@ def print_and_flush(msg, *args, **kwargs):
     print("Rank {}: {}".format(rank, msg), *args, **kwargs)
     sys.stdout.flush()
 
+
 def printWithIndent( msg, indent ):
     indentString = " " * indent
     print( indentString + msg.replace( "\n", "\n" + indentString ) )
+
 
 def printGroup( group, indent=0 ):
     print( "{}{}".format( " " * indent, group ) )
