@@ -41,6 +41,7 @@ public:
   {}
 
 
+  using UPDATE_BASE::setDiscretizationOps;
   using UPDATE_BASE::GetStiffness;
   using UPDATE_BASE::SmallStrainNoState;
   using UPDATE_BASE::SmallStrain;
