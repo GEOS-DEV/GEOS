@@ -263,6 +263,26 @@ int SuperLU_DistSolve( SuperLU_DistData & SLUDData,
 
 real64 SuperLU_DistCondEst( SuperLU_DistData & SLUDData )
 {
+  real64 scaleFactor = 1.0;
+  if( SLUDData.options.Equil == YES )
+  {
+    real64 const * R = SLUDData.ScalePermstruct.R;
+    real64 const * C = SLUDData.ScalePermstruct.C;
+
+    real64 minR = std::abs( R[0] );
+    real64 maxR = std::abs( R[0] );
+    real64 minC = std::abs( C[0] );
+    real64 maxC = std::abs( C[0] );
+    for( globalIndex i = 1; i < LvArray::integerConversion< globalIndex >( SLUDData.mat.nrow ); ++i )
+    {
+      minR = ( std::abs( R[i] ) < minR ) ? std::abs( R[i] ) : minR;
+      maxR = ( std::abs( R[i] ) > maxR ) ? std::abs( R[i] ) : maxR;
+      minC = ( std::abs( C[i] ) < minC ) ? std::abs( C[i] ) : minC;
+      maxC = ( std::abs( C[i] ) > maxC ) ? std::abs( C[i] ) : maxC;
+    }
+    scaleFactor = ( maxR / minR ) * (maxC / minC );
+  }
+
   array1d< real64 > diagU( SLUDData.mat.nrow );
   pdGetDiagU( SLUDData.mat.nrow,
               &SLUDData.LUstruct,
@@ -276,7 +296,7 @@ real64 SuperLU_DistCondEst( SuperLU_DistData & SLUDData )
     minUdiag = ( std::abs( diagU[i] ) < minUdiag ) ? std::abs( diagU[i] ) : minUdiag;
     maxUdiag = ( std::abs( diagU[i] ) > maxUdiag ) ? std::abs( diagU[i] ) : maxUdiag;
   }
-  return maxUdiag / minUdiag;
+  return ( maxUdiag / minUdiag ) * scaleFactor;
 }
 
 void SuperLU_DistDestroy( SuperLU_DistData & SLUDData )

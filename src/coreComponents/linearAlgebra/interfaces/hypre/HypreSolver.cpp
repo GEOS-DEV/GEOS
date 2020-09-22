@@ -39,6 +39,9 @@
 namespace geosx
 {
 
+// Add one order of magnitude to allow small error in condition number estimate
+static real64 const machinePrecision = 10.0 * std::numeric_limits< real64 >::epsilon();
+
 typedef HYPRE_Int (* HYPRE_PtrToSolverDestroyFcn)( HYPRE_Solver );
 
 HypreSolver::HypreSolver( LinearSolverParameters parameters )
@@ -103,7 +106,9 @@ void solve_parallelDirect( LinearSolverParameters const & parameters,
     result.residualReduction = res.norm2() / rhs.norm2();
   }
 
-  if( info == 0 && result.residualReduction < parameters.direct.checkResidualTolerance * SuperLU_DistCondEst( SLUDData ) )
+  std::cout << "A " << SuperLU_DistCondEst( SLUDData ) << std::endl;
+  std::cout << "B " << result.residualReduction << " " << machinePrecision * SuperLU_DistCondEst( SLUDData ) << std::endl;
+  if( info == 0 && result.residualReduction < machinePrecision * SuperLU_DistCondEst( SLUDData ) )
   {
     result.status = LinearSolverResult::Status::Success;
     result.numIterations = 1;
@@ -147,7 +152,7 @@ void solve_serialDirect( LinearSolverParameters const & parameters,
     result.residualReduction = res.norm2() / rhs.norm2();
   }
 
-  if( info == 0 && result.residualReduction < parameters.direct.checkResidualTolerance * SuiteSparseCondEst( SSData ) )
+  if( info == 0 && result.residualReduction < machinePrecision * SuiteSparseCondEst( SSData ) )
   {
     result.status = LinearSolverResult::Status::Success;
     result.numIterations = 1;
