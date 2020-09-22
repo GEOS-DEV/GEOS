@@ -60,13 +60,23 @@ void HypreSolver::solve( HypreMatrix & mat,
   GEOSX_LAI_ASSERT( sol.ready() );
   GEOSX_LAI_ASSERT( rhs.ready() );
 
-  if( m_parameters.solverType == LinearSolverParameters::SolverType::direct )
-  {
-    solve_direct( mat, sol, rhs );
+  if( rhs.norm2() > 0.0 )
+  { 
+    if( m_parameters.solverType == LinearSolverParameters::SolverType::direct )
+    {
+      solve_direct( mat, sol, rhs );
+    }
+    else
+    {
+      solve_krylov( mat, sol, rhs, dofManager );
+    }
   }
   else
   {
-    solve_krylov( mat, sol, rhs, dofManager );
+    sol.zero();
+    m_result.status = LinearSolverResult::Status::Success;
+    m_result.setupTime = 0.0;
+    m_result.solveTime = 0.0;
   }
 }
 
