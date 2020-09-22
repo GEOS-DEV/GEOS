@@ -75,6 +75,8 @@
 #cmakedefine GEOSX_LA_INTERFACE @GEOSX_LA_INTERFACE@
 /// Macro defined when Trilinos interface is selected
 #cmakedefine GEOSX_LA_INTERFACE_TRILINOS
+/// Macro defined when Trilinos interface is selected
+#cmakedefine GEOSX_LA_INTERFACE_TRILINOSTPETRA
 /// Macro defined when Hypre interface is selected
 #cmakedefine GEOSX_LA_INTERFACE_HYPRE
 /// Macro defined when PETSc interface is selected

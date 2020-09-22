@@ -19,10 +19,9 @@
 #ifndef GEOSX_LINEARALGEBRA_INTERFACES_EPETRAMATRIX_HPP_
 #define GEOSX_LINEARALGEBRA_INTERFACES_EPETRAMATRIX_HPP_
 
-#include "common/DataTypes.hpp"
-#include "linearAlgebra/interfaces/trilinos/EpetraVector.hpp"
 #include "linearAlgebra/interfaces/LinearOperator.hpp"
 #include "linearAlgebra/interfaces/MatrixBase.hpp"
+#include "linearAlgebra/interfaces/trilinos/EpetraVector.hpp"
 
 class Epetra_Map;
 
@@ -156,18 +155,6 @@ public:
   virtual void insert( arraySlice1d< globalIndex const > const & rowIndices,
                        arraySlice1d< globalIndex const > const & colIndices,
                        arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & values ) override;
-
-  virtual void add( arraySlice1d< globalIndex const > const & rowIndices,
-                    arraySlice1d< globalIndex const > const & colIndices,
-                    arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & values ) override;
-
-  virtual void set( arraySlice1d< globalIndex const > const & rowIndices,
-                    arraySlice1d< globalIndex const > const & colIndices,
-                    arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & values ) override;
-
-  virtual void insert( arraySlice1d< globalIndex const > const & rowIndices,
-                       arraySlice1d< globalIndex const > const & colIndices,
-                       arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & values ) override;
 
   virtual void add( globalIndex const * rowIndices,
                     globalIndex const * colIndices,

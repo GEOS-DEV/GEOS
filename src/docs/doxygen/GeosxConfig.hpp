@@ -75,6 +75,8 @@
 #define GEOSX_LA_INTERFACE Trilinos
 /// Macro defined when Trilinos interface is selected
 #define GEOSX_LA_INTERFACE_TRILINOS
+/// Macro defined when Trilinos interface is selected
+/* #undef GEOSX_LA_INTERFACE_TRILINOSTPETRA */
 /// Macro defined when Hypre interface is selected
 /* #undef GEOSX_LA_INTERFACE_HYPRE */
 /// Macro defined when PETSc interface is selected

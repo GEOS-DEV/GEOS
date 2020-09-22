@@ -252,6 +252,7 @@ REGISTER_TYPED_TEST_SUITE_P( KrylovSolverBlockTest,
 
 #ifdef GEOSX_USE_TRILINOS
 INSTANTIATE_TYPED_TEST_SUITE_P( Trilinos, KrylovSolverBlockTest, TrilinosInterface, );
+INSTANTIATE_TYPED_TEST_SUITE_P( TrilinosTpetra, KrylovSolverBlockTest, TrilinosTpetraInterface, );
 #endif
 
 #ifdef GEOSX_USE_HYPRE

@@ -20,6 +20,18 @@
 
 #include "common/DataTypes.hpp"
 
+#ifdef GEOSX_USE_MPI
+#include <Epetra_MpiComm.h>
+
+/// Alias for specific EpetraComm implementation used.
+using EpetraComm = Epetra_MpiComm;
+#else
+#include <Epetra_SerialComm.h>
+
+/// Alias for specific EpetraComm implementation used.
+using EpetraComm = Epetra_SerialComm;
+#endif
+
 namespace geosx
 {
 

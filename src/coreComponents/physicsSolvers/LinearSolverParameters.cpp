@@ -33,12 +33,14 @@ LinearSolverParametersInput::LinearSolverParametersInput( std::string const & na
   registerWrapper( viewKeyStruct::solverTypeString, &m_parameters.solverType )->
     setApplyDefaultValue( m_parameters.solverType )->
     setInputFlag( InputFlags::OPTIONAL )->
-    setDescription( "Linear solver type. Available options are:\n* " + EnumStrings< LinearSolverParameters::SolverType >::concat( "\n* " ) );
+    setDescription( "Linear solver type. Available options are:\n* "
+                    + EnumStrings< LinearSolverParameters::SolverType >::concat( "\n* " ) );
 
   registerWrapper( viewKeyStruct::preconditionerTypeString, &m_parameters.preconditionerType )->
     setApplyDefaultValue( m_parameters.preconditionerType )->
     setInputFlag( InputFlags::OPTIONAL )->
-    setDescription( "Preconditioner type. Available options are:\n* " + EnumStrings< LinearSolverParameters::PreconditionerType >::concat( "\n* " ) );
+    setDescription( "Preconditioner type. Available options are:\n* "
+                    + EnumStrings< LinearSolverParameters::PreconditionerType >::concat( "\n* " ) );
 
   registerWrapper( viewKeyStruct::stopIfErrorString, &m_parameters.stopIfError )->
     setApplyDefaultValue( m_parameters.stopIfError )->
@@ -117,14 +119,14 @@ LinearSolverParametersInput::LinearSolverParametersInput( std::string const & na
   registerWrapper( viewKeyStruct::amgSmootherString, &m_parameters.amg.smootherType )->
     setApplyDefaultValue( m_parameters.amg.smootherType )->
     setInputFlag( InputFlags::OPTIONAL )->
-    setDescription( "AMG smoother type\n"
-                    "Available options are: jacobi, blockJacobi, gaussSeidel, blockGaussSeidel, chebyshev, icc, ilu, ilut" );
+    setDescription( "AMG smoother type. Valid options (not all may be supported by linear algebra package):\n* "
+                    + EnumStrings< LinearSolverParameters::PreconditionerType >::concat( "\n* " ) );
 
   registerWrapper( viewKeyStruct::amgCoarseString, &m_parameters.amg.coarseType )->
     setApplyDefaultValue( m_parameters.amg.coarseType )->
     setInputFlag( InputFlags::OPTIONAL )->
-    setDescription( "AMG coarsest level solver/smoother type\n"
-                    "Available options are: jacobi, gaussSeidel, blockGaussSeidel, chebyshev, direct" );
+    setDescription( "AMG coarsest level solver/smoother type. Valid options (not all may be supported by linear algebra package):\n* "
+                    + EnumStrings< LinearSolverParameters::PreconditionerType >::concat( "\n* " ) );
 
   registerWrapper( viewKeyStruct::amgThresholdString, &m_parameters.amg.threshold )->
     setApplyDefaultValue( m_parameters.amg.threshold )->

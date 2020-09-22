@@ -178,6 +178,17 @@ public:
     return size;
   }
 
+  inline static bool Comm_compare( MPI_Comm const & comm1, MPI_Comm const & comm2 )
+  {
+#ifdef GEOSX_USE_MPI
+    int result;
+    MPI_Comm_compare( comm1, comm2, &result );
+    return result == MPI_IDENT || result == MPI_CONGRUENT;
+#else
+    return comm1 == comm2;
+#endif
+  }
+
   static int Init( int * argc, char * * * argv );
 
   static void Finalize();

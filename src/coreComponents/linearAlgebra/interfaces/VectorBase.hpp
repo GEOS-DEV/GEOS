@@ -149,7 +149,7 @@ protected:
    * @param localValues local data to put into vector
    * @param comm MPI communicator to use
    */
-  virtual void create( arrayView1d< real64 const > const & localValues, MPI_Comm const & comm ) = 0;
+  virtual void createWithLocalValues( arrayView1d< real64 > const & localValues, MPI_Comm const & comm ) = 0;
 
   ///@}
 
@@ -414,6 +414,7 @@ protected:
    */
   virtual void extract( arrayView1d< real64 > const & localVector ) const
   {
+    GEOSX_LAI_ASSERT_EQ( localSize(), localVector.size() );
     real64 const * const data = extractLocalVector();
     forAll< parallelHostPolicy >( localSize(), [=] ( localIndex const k )
     {

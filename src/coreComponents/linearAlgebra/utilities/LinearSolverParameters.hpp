@@ -50,17 +50,19 @@ struct LinearSolverParameters
    */
   enum class PreconditionerType : integer
   {
-    none,   ///< No preconditioner
-    jacobi, ///< Jacobi smoothing
-    gs,     ///< Gauss-Seidel smoothing
-    sgs,    ///< Symmetric Gauss-Seidel smoothing
-    iluk,   ///< Incomplete LU with k-level of fill
-    ilut,   ///< Incomplete LU with thresholding
-    icc,    ///< Incomplete Cholesky
-    ict,    ///< Incomplete Cholesky with thresholding
-    amg,    ///< Algebraic Multigrid
-    mgr,    ///< Multigrid reduction (Hypre only)
-    block   ///< Block preconditioner
+    none,      ///< No preconditioner
+    jacobi,    ///< Jacobi smoothing
+    gs,        ///< Gauss-Seidel smoothing
+    sgs,       ///< Symmetric Gauss-Seidel smoothing
+    chebyshev, ///< Chebyshev polynomial smoothing
+    iluk,      ///< Incomplete LU with k-level of fill
+    ilut,      ///< Incomplete LU with thresholding
+    icc,       ///< Incomplete Cholesky
+    ict,       ///< Incomplete Cholesky with thresholding
+    amg,       ///< Algebraic Multigrid
+    mgr,       ///< Multigrid reduction (Hypre only)
+    block,     ///< Block preconditioner
+    direct,    ///< Direct solver as preconditioner
   };
 
   integer logLevel = 0;     ///< Output level [0=none, 1=basic, 2=everything]
@@ -128,14 +130,14 @@ struct LinearSolverParameters
   /// Algebraic multigrid parameters
   struct AMG
   {
+    PreconditionerType smootherType = PreconditionerType::gs;   ///< Smoother type
+    PreconditionerType coarseType = PreconditionerType::direct; ///< Coarse-level solver/smoother
+
     integer maxLevels = 20;                  ///< Maximum number of coarsening levels
     string cycleType = "V";                  ///< AMG cycle type
-    string smootherType = "gaussSeidel";     ///< Smoother type
-    string coarseType = "direct";            ///< Coarse-level solver/smoother
     integer numSweeps = 2;                   ///< Number of smoother sweeps
     string preOrPostSmoothing = "both";      ///< Pre and/or post smoothing [pre,post,both]
-    real64 threshold = 0.0;                  ///< Threshold for "strong connections" (for classical and
-                                             ///< smoothed-aggregation AMG)
+    real64 threshold = 0.0;                  ///< Threshold for "strong connections" (for classical and smoothed-aggregation AMG)
     integer separateComponents = false;      ///< Apply a separate component filter before AMG construction
     string nullSpaceType = "constantModes";  ///< Null space type [constantModes,rigidBodyModes]
   }
@@ -179,13 +181,15 @@ ENUM_STRINGS( LinearSolverParameters::PreconditionerType,
               "jacobi",
               "gs",
               "sgs",
+              "chebyshev",
               "iluk",
               "ilut",
               "icc",
               "ict",
               "amg",
               "mgr",
-              "block" )
+              "block",
+              "direct" )
 
 ENUM_STRINGS( LinearSolverParameters::Direct::ColPerm,
               "none",

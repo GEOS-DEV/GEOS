@@ -25,6 +25,7 @@
 #include "HypreUtils.hpp"
 
 #include <iomanip>
+#include <numeric>
 
 namespace geosx
 {
@@ -447,53 +448,6 @@ void HypreMatrix::insert( arraySlice1d< globalIndex const > const & rowIndices,
   }
 }
 
-namespace
-{
-
-template< typename T, int SRC_USD, int DST_USD >
-static void convertArrayLayout( arraySlice2d< T const, SRC_USD > const & src,
-                                arraySlice2d< T, DST_USD > const & dst )
-{
-  GEOSX_ASSERT( src.size( 0 ) == dst.size( 0 ) );
-  GEOSX_ASSERT( src.size( 1 ) == dst.size( 1 ) );
-  for( localIndex i = 0; i < src.size( 0 ); ++i )
-  {
-    for( localIndex j = 0; j < src.size( 1 ); ++j )
-    {
-      dst( i, j ) = src( i, j );
-    }
-  }
-}
-
-}
-
-void HypreMatrix::add( arraySlice1d< globalIndex const > const & rowIndices,
-                       arraySlice1d< globalIndex const > const & colIndices,
-                       arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & values )
-{
-  array2d< real64, MatrixLayout::ROW_MAJOR_PERM > valuesRowMajor( rowIndices.size(), colIndices.size() );
-  convertArrayLayout( values, valuesRowMajor.toSlice() );
-  add( rowIndices, colIndices, valuesRowMajor );
-}
-
-void HypreMatrix::set( arraySlice1d< globalIndex const > const & rowIndices,
-                       arraySlice1d< globalIndex const > const & colIndices,
-                       arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & values )
-{
-  array2d< real64, MatrixLayout::ROW_MAJOR_PERM > valuesRowMajor( rowIndices.size(), colIndices.size() );
-  convertArrayLayout( values, valuesRowMajor.toSlice() );
-  set( rowIndices, colIndices, valuesRowMajor );
-}
-
-void HypreMatrix::insert( arraySlice1d< globalIndex const > const & rowIndices,
-                          arraySlice1d< globalIndex const > const & colIndices,
-                          arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & values )
-{
-  array2d< real64, MatrixLayout::ROW_MAJOR_PERM > valuesRowMajor( rowIndices.size(), colIndices.size() );
-  convertArrayLayout( values, valuesRowMajor.toSlice() );
-  insert( rowIndices, colIndices, valuesRowMajor );
-}
-
 void HypreMatrix::add( globalIndex const * rowIndices,
                        globalIndex const * colIndices,
                        real64 const * values,
@@ -908,10 +862,7 @@ localIndex HypreMatrix::maxRowLength() const
   array1d< HYPRE_BigInt > rows( nrows );
   array1d< HYPRE_Int > ncols( nrows );
 
-  for( HYPRE_Int i = 0; i < nrows; ++i )
-  {
-    rows[i] = ilower() + LvArray::integerConversion< HYPRE_BigInt >( i );
-  }
+  std::iota( rows.begin(), rows.end(), ilower() );
 
   GEOSX_LAI_CHECK_ERROR( HYPRE_IJMatrixGetRowCounts( m_ij_mat,
                                                      nrows,

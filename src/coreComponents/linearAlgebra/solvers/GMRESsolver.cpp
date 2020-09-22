@@ -209,6 +209,8 @@ void GMRESsolver< VECTOR >::solve( Vector const & b,
 #ifdef GEOSX_USE_TRILINOS
 template class GMRESsolver< TrilinosInterface::ParallelVector >;
 template class GMRESsolver< BlockVectorView< TrilinosInterface::ParallelVector > >;
+template class GMRESsolver< TrilinosTpetraInterface::ParallelVector >;
+template class GMRESsolver< BlockVectorView< TrilinosTpetraInterface::ParallelVector > >;
 #endif
 
 #ifdef GEOSX_USE_HYPRE

@@ -123,6 +123,8 @@ private:
 
   void createILUT();
 
+  void createDirect();
+
   /// Parameters for all preconditioners
   LinearSolverParameters m_parameters;
 
@@ -135,7 +137,7 @@ private:
   /// Pointers to hypre functions to setup/solve/destroy preconditioner
   std::unique_ptr< HyprePrecFuncs > m_functions;
 
-  // Pointer to preconditioner auxiliary data
+  /// Pointer to preconditioner auxiliary data
   std::unique_ptr< HyprePrecAuxData > m_auxData;
 };
 

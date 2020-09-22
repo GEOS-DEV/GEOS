@@ -732,6 +732,7 @@ REGISTER_TYPED_TEST_SUITE_P( DofManagerSparsityTest,
 
 #ifdef GEOSX_USE_TRILINOS
 INSTANTIATE_TYPED_TEST_SUITE_P( Trilinos, DofManagerSparsityTest, TrilinosInterface, );
+INSTANTIATE_TYPED_TEST_SUITE_P( TrilinosTpetra, DofManagerSparsityTest, TrilinosTpetraInterface, );
 #endif
 
 #ifdef GEOSX_USE_HYPRE

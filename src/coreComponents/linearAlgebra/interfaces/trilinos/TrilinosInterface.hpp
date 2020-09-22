@@ -23,6 +23,7 @@
 #include "linearAlgebra/interfaces/trilinos/EpetraMatrix.hpp"
 #include "linearAlgebra/interfaces/trilinos/TrilinosSolver.hpp"
 #include "linearAlgebra/solvers/PreconditionerBase.hpp"
+#include "linearAlgebra/utilities/LinearSolverParameters.hpp"
 
 #include <memory>
 
@@ -36,7 +37,7 @@ namespace geosx
 struct TrilinosInterface
 {
   /**
-   * @brief Initializes the MPI environment for the Trilinos library
+   * @brief Initializes the Trilinos library
    *
    * @param[in] argc standard argc as in any C main
    * @param[in] argv standard argv as in any C main
@@ -44,7 +45,7 @@ struct TrilinosInterface
   static void initialize( int & argc, char * * & argv );
 
   /**
-   * @brief Finalizes the MPI environment for the Trilinos library
+   * @brief Finalizes the Trilinos library
    */
   static void finalize();
 

@@ -160,6 +160,8 @@ void BiCGSTABsolver< VECTOR >::solve( Vector const & b,
 #ifdef GEOSX_USE_TRILINOS
 template class BiCGSTABsolver< TrilinosInterface::ParallelVector >;
 template class BiCGSTABsolver< BlockVectorView< TrilinosInterface::ParallelVector > >;
+template class BiCGSTABsolver< TrilinosTpetraInterface::ParallelVector >;
+template class BiCGSTABsolver< BlockVectorView< TrilinosTpetraInterface::ParallelVector > >;
 #endif
 
 #ifdef GEOSX_USE_HYPRE

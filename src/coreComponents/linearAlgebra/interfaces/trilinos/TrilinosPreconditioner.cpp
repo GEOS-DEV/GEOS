@@ -53,33 +53,30 @@ string const & getMLCycleType( string const & value )
   return optionMap.at( value );
 }
 
-string const & getMLSmootherType( string const & value )
+string const & getMLSmootherType( LinearSolverParameters::PreconditionerType const & value )
 {
-  static std::map< string, string > const optionMap =
+  static std::map< LinearSolverParameters::PreconditionerType, string > const optionMap =
   {
-    { "jacobi", "Jacobi" },
-    { "blockJacobi", "block Jacobi" },
-    { "gaussSeidel", "Gauss-Seidel" },
-    { "blockGaussSeidel", "block Gauss-Seidel" },
-    { "chebyshev", "Chebyshev" },
-    { "icc", "IC" },
-    { "ilu", "ILU" },
-    { "ilut", "ILUT" },
+    { LinearSolverParameters::PreconditionerType::jacobi, "Jacobi" },
+    { LinearSolverParameters::PreconditionerType::gs, "Gauss-Seidel" },
+    { LinearSolverParameters::PreconditionerType::chebyshev, "Chebyshev" },
+    { LinearSolverParameters::PreconditionerType::icc, "IC" },
+    { LinearSolverParameters::PreconditionerType::iluk, "ILU" },
+    { LinearSolverParameters::PreconditionerType::ilut, "ILUT" },
   };
 
   GEOSX_LAI_ASSERT_MSG( optionMap.count( value ) > 0, "Unsupported Trilinos/ML smoother option: " << value );
   return optionMap.at( value );
 }
 
-string const & getMLCoarseType( string const & value )
+string const & getMLCoarseType( LinearSolverParameters::PreconditionerType const & value )
 {
-  static std::map< string, string > const optionMap =
+  static std::map< LinearSolverParameters::PreconditionerType, string > const optionMap =
   {
-    { "jacobi", "Jacobi" },
-    { "gaussSeidel", "Gauss-Seidel" },
-    { "blockGaussSeidel", "block Gauss-Seidel" },
-    { "chebyshev", "Chebyshev" },
-    { "direct", "Amesos-KLU"},
+    { LinearSolverParameters::PreconditionerType::jacobi, "Jacobi" },
+    { LinearSolverParameters::PreconditionerType::gs, "Gauss-Seidel" },
+    { LinearSolverParameters::PreconditionerType::chebyshev, "Chebyshev" },
+    { LinearSolverParameters::PreconditionerType::direct, "Amesos-KLU"},
   };
 
   GEOSX_LAI_ASSERT_MSG( optionMap.count( value ) > 0, "Unsupported Trilinos/ML coarse solver option: " << value );
@@ -117,9 +114,11 @@ Ifpack::EPrecType getIfpackPrecondType( LinearSolverParameters::PreconditionerTy
     { LinearSolverParameters::PreconditionerType::ilut, Ifpack::ILUT },
     { LinearSolverParameters::PreconditionerType::icc, Ifpack::IC },
     { LinearSolverParameters::PreconditionerType::ict, Ifpack::ICT },
+    { LinearSolverParameters::PreconditionerType::chebyshev, Ifpack::CHEBYSHEV },
     { LinearSolverParameters::PreconditionerType::jacobi, Ifpack::POINT_RELAXATION },
     { LinearSolverParameters::PreconditionerType::gs, Ifpack::POINT_RELAXATION },
     { LinearSolverParameters::PreconditionerType::sgs, Ifpack::POINT_RELAXATION },
+    { LinearSolverParameters::PreconditionerType::direct, Ifpack::AMESOS },
   };
 
   GEOSX_LAI_ASSERT_MSG( typeMap.count( type ) > 0, "Unsupported Trilinos/Ifpack preconditioner option: " << type );
@@ -146,15 +145,33 @@ CreateIfpackOperator( LinearSolverParameters const & params, Epetra_RowMatrix co
                                                                     const_cast< Epetra_RowMatrix * >( &matrix ),
                                                                     params.dd.overlap ) );
   Teuchos::ParameterList list;
-  if( type == Ifpack::POINT_RELAXATION )
+  switch( type )
   {
-    list.set( "relaxation: type", getIfpackRelaxationType( params.preconditionerType ) );
-  }
-  else
-  {
-    list.set( "fact: level-of-fill", params.ilu.fill );
-    list.set( "fact: ilut level-of-fill", std::max( real64( params.ilu.fill ), 1.0 ) );
-    list.set( "fact: ict level-of-fill", std::max( real64( params.ilu.fill ), 1.0 ) );
+    case Ifpack::POINT_RELAXATION:
+    {
+      list.set( "relaxation: type", getIfpackRelaxationType( params.preconditionerType ) );
+      break;
+    }
+    case Ifpack::ILU:
+    case Ifpack::IC:
+    {
+      list.set( "fact: level-of-fill", params.ilu.fill );
+      break;
+    }
+    case Ifpack::ILUT:
+    {
+      list.set( "fact: ilut level-of-fill", std::max( real64( params.ilu.fill ), 1.0 ) );
+      break;
+    }
+    case Ifpack::ICT:
+    {
+      list.set( "fact: ict level-of-fill", std::max( real64( params.ilu.fill ), 1.0 ) );
+      break;
+    }
+    default:
+    {
+      break;
+    }
   }
 
   GEOSX_LAI_CHECK_ERROR( precond->SetParameters( list ) );
@@ -188,6 +205,7 @@ void TrilinosPreconditioner::compute( Matrix const & mat )
     case LinearSolverParameters::PreconditionerType::ilut:
     case LinearSolverParameters::PreconditionerType::icc:
     case LinearSolverParameters::PreconditionerType::ict:
+    case LinearSolverParameters::PreconditionerType::direct:
     {
       m_precond = CreateIfpackOperator( m_parameters, mat.unwrapped() );
       break;

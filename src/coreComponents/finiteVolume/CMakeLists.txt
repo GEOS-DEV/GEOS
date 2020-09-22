@@ -26,9 +26,9 @@ set( finiteVolume_sources
    )
 
 if ( BUILD_OBJ_LIBS )
-  set( dependencyList dataRepository codingUtilities managers)
+  set( dependencyList dataRepository codingUtilities managers )
 else()
-  set( dependencyList common)
+  set( dependencyList common managers )
 endif()
 
 if ( ENABLE_OPENMP )

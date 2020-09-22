@@ -70,6 +70,7 @@ void SeparateComponentPreconditioner< LAI >::clear()
 // -----------------------
 #ifdef GEOSX_USE_TRILINOS
 template class SeparateComponentPreconditioner< TrilinosInterface >;
+template class SeparateComponentPreconditioner< TrilinosTpetraInterface >;
 #endif
 
 #ifdef GEOSX_USE_HYPRE

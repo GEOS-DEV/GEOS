@@ -2,11 +2,13 @@
 # Specify list of tests
 #
 set( LAI_tests
-     testLAOperations.cpp 
+     testMatrices.cpp
      testArrayLAOperations.cpp
+     testExternalSolvers.cpp
      testKrylovSolvers.cpp
      testDofManager.cpp
-     testLAIHelperFunctions.cpp)
+     testLAIHelperFunctions.cpp
+     testVectors.cpp )
 
 set( nranks 2 )
 

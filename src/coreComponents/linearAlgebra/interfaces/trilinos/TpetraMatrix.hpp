@@ -2,69 +2,46 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All rights reserved
+ * All right reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
  */
 
 /**
- * @file HypreMatrix.hpp
+ * @file TpetraMatrix.hpp
  */
 
-#ifndef GEOSX_LINEARALGEBRA_INTERFACES_HYPREMATRIX_HPP_
-#define GEOSX_LINEARALGEBRA_INTERFACES_HYPREMATRIX_HPP_
+#ifndef GEOSX_LINEARALGEBRA_INTERFACES_TPETRAMATRIX_HPP
+#define GEOSX_LINEARALGEBRA_INTERFACES_TPETRAMATRIX_HPP
 
-#include "common/DataTypes.hpp"
-#include "HypreVector.hpp"
 #include "linearAlgebra/interfaces/LinearOperator.hpp"
 #include "linearAlgebra/interfaces/MatrixBase.hpp"
+#include "linearAlgebra/interfaces/trilinos/TpetraVector.hpp"
 
-/**
- * @name Hypre forward declarations.
- *
- * Forward declare hypre's matrix structs and pointer aliases in order
- * to avoid including hypre headers and leaking into the rest of GEOSX.
- */
-///@{
-
-/// IJMatrix struct forward declaration
-extern "C" struct hypre_IJMatrix_struct;
-
-/// IJMatrix pointer alias
-using HYPRE_IJMatrix = hypre_IJMatrix_struct *;
-
-/// ParCSRMatrix struct forward declaration
-extern "C" struct hypre_ParCSRMatrix_struct;
-
-/// ParCSRMatrix pointer alias
-using HYPRE_ParCSRMatrix = hypre_ParCSRMatrix_struct *;
-
-///@}
+#include <Tpetra_CrsMatrix_fwd.hpp>
+#include <Tpetra_Map_fwd.hpp>
 
 namespace geosx
 {
 
 /**
- * @brief Wrapper class for hypre's ParCSRMatrix.
- *
- * This class creates and provides basic support for the HYPRE_ParCSRMatrix object
- * type used in Hypre using the linear-algebraic system interface (IJ interface).
+ * @brief Wrapper class for Trilinos/Tpetra's CrsMatrix class.
  */
-class HypreMatrix final : public virtual LinearOperator< HypreVector >,
-  private MatrixBase< HypreMatrix, HypreVector >
+class TpetraMatrix : public virtual LinearOperator< TpetraVector >,
+  private MatrixBase< TpetraMatrix, TpetraVector >
 {
 public:
 
   /// Compatible vector type
-  using Vector = HypreVector;
+  using Vector = TpetraVector;
 
   /**
-   * @name Constructor/Destructor Methods
+   * @name Constructor/Destructor methods
    */
   ///@{
 
@@ -73,19 +50,18 @@ public:
    *
    * Create an empty (distributed) matrix.
    */
-
-  HypreMatrix();
+  TpetraMatrix();
 
   /**
    * @brief Copy constructor.
    * @param[in] src the matrix to be copied
    */
-  HypreMatrix( HypreMatrix const & src );
+  TpetraMatrix( TpetraMatrix const & src );
 
   /**
    * @brief Virtual destructor.
    */
-  ~HypreMatrix() override;
+  virtual ~TpetraMatrix() override;
 
   ///@}
 
@@ -195,52 +171,52 @@ public:
                        localIndex const numRows,
                        localIndex const numCols ) override;
 
-  virtual void apply( HypreVector const & src,
-                      HypreVector & dst ) const override;
+  virtual void apply( TpetraVector const & src,
+                      TpetraVector & dst ) const override;
 
-  virtual void applyTranspose( Vector const & src,
-                               Vector & dst ) const override;
+  virtual void applyTranspose( TpetraVector const & src,
+                               TpetraVector & dst ) const override;
 
-  virtual void multiply( HypreMatrix const & src,
-                         HypreMatrix & dst ) const override;
+  virtual void multiply( TpetraMatrix const & src,
+                         TpetraMatrix & dst ) const override;
 
-  virtual void leftMultiplyTranspose( HypreMatrix const & src,
-                                      HypreMatrix & dst ) const override;
+  virtual void leftMultiplyTranspose( TpetraMatrix const & src,
+                                      TpetraMatrix & dst ) const override;
 
-  virtual void rightMultiplyTranspose( HypreMatrix const & src,
-                                       HypreMatrix & dst ) const override;
+  virtual void rightMultiplyTranspose( TpetraMatrix const & src,
+                                       TpetraMatrix & dst ) const override;
 
-  virtual void multiplyRAP( HypreMatrix const & R,
-                            HypreMatrix const & P,
-                            HypreMatrix & dst ) const override;
+  virtual void multiplyRAP( TpetraMatrix const & R,
+                            TpetraMatrix const & P,
+                            TpetraMatrix & dst ) const override;
 
-  virtual void multiplyPtAP( HypreMatrix const & P,
-                             HypreMatrix & dst ) const override;
+  virtual void multiplyPtAP( TpetraMatrix const & P,
+                             TpetraMatrix & dst ) const override;
 
   virtual void gemv( real64 const alpha,
-                     HypreVector const & x,
+                     TpetraVector const & x,
                      real64 const beta,
-                     HypreVector & y,
+                     TpetraVector & y,
                      bool useTranspose = false ) const override;
 
   virtual void scale( real64 const scalingFactor ) override;
 
-  virtual void leftScale( HypreVector const & vec ) override;
+  virtual void leftScale( TpetraVector const & vec ) override;
 
-  virtual void rightScale( HypreVector const & vec ) override;
+  virtual void rightScale( TpetraVector const & vec ) override;
 
-  virtual void leftRightScale( HypreVector const & vecLeft,
-                               HypreVector const & vecRight ) override;
+  virtual void leftRightScale( TpetraVector const & vecLeft,
+                               TpetraVector const & vecRight ) override;
 
-  virtual void transpose( HypreMatrix & dst ) const override;
+  virtual void transpose( TpetraMatrix & dst ) const override;
 
   virtual real64 clearRow( globalIndex const row,
                            bool const keepDiag = false,
                            real64 const diagValue = 0.0 ) override;
 
-  virtual void addEntries( HypreMatrix const & src, real64 const scale = 1.0 ) override;
+  virtual void addEntries( TpetraMatrix const & src, real64 const scale = 1.0 ) override;
 
-  virtual void addDiagonal( HypreVector const & src ) override;
+  virtual void addDiagonal( TpetraVector const & src ) override;
 
   virtual localIndex maxRowLength() const override;
 
@@ -254,7 +230,7 @@ public:
 
   virtual real64 getDiagValue( globalIndex globalRow ) const override;
 
-  virtual void extractDiagonal( HypreVector & dst ) const override;
+  virtual void extractDiagonal( TpetraVector & dst ) const override;
 
   virtual globalIndex numGlobalRows() const override;
 
@@ -282,9 +258,9 @@ public:
 
   virtual real64 normFrobenius() const override;
 
-  virtual localIndex getLocalRowID( globalIndex const index ) const override;
+  virtual localIndex getLocalRowID( globalIndex const globalRow ) const override;
 
-  virtual globalIndex getGlobalRowID( localIndex const index ) const override;
+  virtual globalIndex getGlobalRowID( localIndex const localRow ) const override;
 
   virtual MPI_Comm getComm() const override;
 
@@ -296,36 +272,57 @@ public:
   ///@}
 
   /**
-   * @brief Returns a pointer to implementation.
-   * @return the underlying HYPRE_ParCSRMatrix object.
+   * @brief Alias for Tpetra map template instantiation used by this class.
    */
-  HYPRE_ParCSRMatrix const & unwrapped() const;
+  using Tpetra_Map = Tpetra::Map< int, globalIndex >;
 
   /**
-   * @brief Returns a pointer to implementation.
-   * @return the underlying HYPRE_IJMatrix object.
+   * @brief Alias for specific Tpetra matrix template instantiation wrapped by this class.
+   *
+   * @note This uses Tpetra's default execution/memory space. When built with CUDA support,
+   * this will be equal to Kokkos::Cuda, so we won't be able to create a host-only vector.
+   * If we want both in the same executable, we'll have to make adjustments to our LAI approach.
    */
-  HYPRE_IJMatrix const & unwrappedIJ() const;
+  using Tpetra_CrsMatrix = Tpetra::CrsMatrix< real64, int, globalIndex >;
+
+  /**
+   * @brief Returns a const pointer to the underlying matrix.
+   * @return const pointer to the underlying matrix
+   */
+  Tpetra_CrsMatrix const & unwrapped() const;
+
+  /**
+   * @brief Returns a non-const pointer to the underlying matrix.
+   * @return non-const pointer to the underlying matrix
+   */
+  Tpetra_CrsMatrix & unwrapped();
 
 private:
 
   /**
    * @brief Perform a matrix matrix product with Parallel Matrix
    */
-  void parCSRtoIJ( HYPRE_ParCSRMatrix const & parCSRMatrix );
+  void multiply( bool const transA,
+                 TpetraMatrix const & B,
+                 bool const transB,
+                 TpetraMatrix & C ) const;
 
   /**
-   * Pointer to underlying HYPRE_IJMatrix type.
+   * @brief Create the matrix by copying data from an Epetra_CrsMatrix
+   * @param src the source matrix
    */
-  HYPRE_IJMatrix m_ij_mat = nullptr;
+  void create( Tpetra_CrsMatrix const & src );
 
-  /**
-   * Pointer to underlying HYPRE_ParCSRMatrix type.
-   */
-  HYPRE_ParCSRMatrix m_parcsr_mat = nullptr;
+  /// Pointer to the underlying Epetra_CrsMatrix.
+  std::unique_ptr< Tpetra_CrsMatrix > m_matrix;
 
+  /// Map representing the parallel partitioning of a source vector (x in y=Ax)
+  std::unique_ptr< Tpetra_Map > m_src_map;
+
+  /// Map representing the parallel partitioning of a destination vector (y in y=Ax)
+  std::unique_ptr< Tpetra_Map > m_dst_map;
 };
 
 } // namespace geosx
 
-#endif /*GEOSX_LINEARALGEBRA_INTERFACES_HYPREMATRIX_HPP_*/
+#endif //GEOSX_LINEARALGEBRA_INTERFACES_TPETRAMATRIX_HPP

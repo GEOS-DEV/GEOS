@@ -51,19 +51,21 @@ option( ENABLE_SUITESPARSE "Enables SUITESPARSE" ON )
 
 ### LAI SETUP ###
 
-set( supported_LAI Trilinos Hypre Petsc )
+set( supported_LAI Trilinos TrilinosTpetra Hypre Petsc )
 set( GEOSX_LA_INTERFACE "Trilinos" CACHE STRING "Linear algebra interface to use in solvers" )
-message( STATUS "GEOSX_LA_INTERFACE = ${GEOSX_LA_INTERFACE}" )
+message( "GEOSX_LA_INTERFACE = ${GEOSX_LA_INTERFACE}" )
 
 if( NOT ( GEOSX_LA_INTERFACE IN_LIST supported_LAI ) )
   message( FATAL_ERROR "GEOSX_LA_INTERFACE must be one of: ${supported_LAI}" )
 endif()
 
 string( TOUPPER "${GEOSX_LA_INTERFACE}" upper_LAI )
-if( NOT ENABLE_${upper_LAI} )
-  message( FATAL_ERROR "${GEOSX_LA_INTERFACE} LA interface is selected, but ENABLE_${upper_LAI} is OFF" )
-endif()
 option( GEOSX_LA_INTERFACE_${upper_LAI} "${upper_LAI} LA interface is selected" ON )
+
+string( REPLACE "TPETRA" "" dep_LAI "${upper_LAI}" )
+if( NOT ENABLE_${dep_LAI} )
+  message( FATAL_ERROR "${GEOSX_LA_INTERFACE} LA interface is selected, but ENABLE_${dep_LAI} is OFF" )
+endif()
 
 ### MPI/OMP/CUDA SETUP ###
 
