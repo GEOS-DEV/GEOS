@@ -39,8 +39,8 @@
 namespace geosx
 {
 
-// Add one order of magnitude to allow small error in condition number estimate
-static real64 const machinePrecision = 10.0 * std::numeric_limits< real64 >::epsilon();
+// Add two orders of magnitude to allow small error in condition number estimate
+static real64 const machinePrecision = 100.0 * std::numeric_limits< real64 >::epsilon();
 
 typedef HYPRE_Int (* HYPRE_PtrToSolverDestroyFcn)( HYPRE_Solver );
 
@@ -106,8 +106,6 @@ void solve_parallelDirect( LinearSolverParameters const & parameters,
     result.residualReduction = res.norm2() / rhs.norm2();
   }
 
-  std::cout << "A " << SuperLU_DistCondEst( SLUDData ) << std::endl;
-  std::cout << "B " << result.residualReduction << " " << machinePrecision * SuperLU_DistCondEst( SLUDData ) << std::endl;
   if( info == 0 && result.residualReduction < machinePrecision * SuperLU_DistCondEst( SLUDData ) )
   {
     result.status = LinearSolverResult::Status::Success;
