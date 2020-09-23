@@ -44,6 +44,7 @@ Linear (or more) algebra solvers
 
 - `hypre <https://github.com/hypre-space/hypre>`_ (Library of high performance preconditioners and solvers featuring multigrid methods for the solution of large, sparse linear systems of equations on massively parallel computers.)
 - `petsc <https://www.mcs.anl.gov/petsc>`_ (Suite of data structures and routines for the scalable (parallel) solution of scientific applications modeled by partial differential equations)
+- `suitesparse <https://people.engr.tamu.edu/davis/suitesparse.html>`_ (A suite of sparse matrix software, offering different algorithms)
 - `superlu_dist <https://portal.nersc.gov/project/sparse/superlu>`_ (General purpose library for the direct solution of large, sparse, nonsymmetric systems of linear equations).
 - `trilinos <https://trilinos.github.io>`_ (Collection of reusable scientific software libraries, known in particular for linear solvers, non-linear solvers, transient solvers, optimization solvers, and uncertainty quantification (UQ) solvers.)
 
