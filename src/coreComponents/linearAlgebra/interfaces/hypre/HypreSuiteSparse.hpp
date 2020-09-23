@@ -52,6 +52,7 @@ struct SuiteSparseData
   real64 Control[UMFPACK_CONTROL];    //!< SuiteSparse options
   void * Symbolic;                    //!< pointer to the symbolic factorization
   void * Numeric;                     //!< pointer to the numeric factorization
+  MPI_Comm globalComm;                //!< MPI communicator
   MPI_Comm comm;                      //!< MPI communicator
   int workingRank;                    //!< MPI rank carring out the solution
 };
