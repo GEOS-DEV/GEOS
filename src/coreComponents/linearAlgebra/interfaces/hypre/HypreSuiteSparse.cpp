@@ -307,6 +307,7 @@ void SuiteSparseDestroy( SuiteSparseData & SSData )
       delete [] SSData.data;
       GEOSX_LAI_CHECK_ERROR( hypre_CSRMatrixDestroy( SSData.CSRmatrix ) );
     }
+    MpiWrapper::Comm_free( SSData.comm );
   }
 }
 
