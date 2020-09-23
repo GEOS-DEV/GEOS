@@ -333,7 +333,6 @@ int SuiteSparseSetup( SuiteSparseData & SSData,
                                  &SSData.Numeric,
                                  SSData.Control,
                                  SSData.Info );
-
     if( status < 0 )
     {
       umfpack_dl_report_info( SSData.Control, SSData.Info );
@@ -347,7 +346,6 @@ int SuiteSparseSetup( SuiteSparseData & SSData,
       umfpack_dl_report_numeric( SSData.Symbolic, SSData.Control );
     }
   }
-
   time = watch.elapsedTime();
   MpiWrapper::bcast( &time, 1, SSData.workingRank, SSData.comm );
 
