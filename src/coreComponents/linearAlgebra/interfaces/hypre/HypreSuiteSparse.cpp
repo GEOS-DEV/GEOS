@@ -99,7 +99,7 @@ void ConvertToSuiteSparseMatrix( HypreMatrix const & matrix,
 
   // Define a new communicator restricted to ranks with at least one matrix row
   int rank = MpiWrapper::Comm_rank( matrix.getComm() );
-  int color = ( SSData.CSRmatrix == 0 ) ? MPI_UNDEFINED : MpiWrapper::Comm_rank( matrix.getComm() );
+  int color = ( SSData.CSRmatrix == 0 ) ? MPI_UNDEFINED : 0;
   SSData.comm = MpiWrapper::Comm_split( matrix.getComm(), color, rank );
 
   // Working rank in the new communicator. Index 0 is required by hypre's function
