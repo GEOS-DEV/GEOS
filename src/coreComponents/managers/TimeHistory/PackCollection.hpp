@@ -57,9 +57,9 @@ public:
 
   /**
    * @brief Update the indices related to the sets being collected.
-   * @param problemManager The problem manager cast to a group.
+   * @param domain The domain partition.
    * @note This is only required because we don't want to copy/move the
-   *       indices each collection execution, becuase that causes data movement
+   *       indices each collection execution, because that causes data movement
    *       when collecting data from the device.
    * @note Refactoring the packing functions to allow direct usage of set indices
    *       from SortedArrayView instead of only ArrayViews will remove this
