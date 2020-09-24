@@ -20,7 +20,7 @@
       <LinearSolverParameters
         solverType="direct"
         directParallel="0"
-	directCheckResTol="1.e-10"
+        directCheckResTol="1.e-10"
         logLevel="0"/>
     </SolidMechanicsLagrangianSSLE>
   </Solvers>

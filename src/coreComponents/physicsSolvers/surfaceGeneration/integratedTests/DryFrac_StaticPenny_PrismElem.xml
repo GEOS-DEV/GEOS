@@ -15,7 +15,7 @@
         newtonMaxIter="8"/>
       <LinearSolverParameters
         solverType="direct"
-	directParallel="0"
+        directParallel="0"
         logLevel="0"/>
     </SolidMechanicsLagrangianSSLE>
 

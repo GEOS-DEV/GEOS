@@ -20,7 +20,7 @@
         newtonMinIter="1"/>
       <LinearSolverParameters
         solverType="direct"
-	directParallel="0"
+        directParallel="0"
         logLevel="0"/>
     </ProppantTransport>
     <!-- SPHINX_PROPPANT_TRANSPORT_SOLVER_END -->
