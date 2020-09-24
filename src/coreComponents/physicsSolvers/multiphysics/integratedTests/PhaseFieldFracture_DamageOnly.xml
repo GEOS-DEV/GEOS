@@ -10,7 +10,10 @@
                  discretization="FE1"
                  targetRegions="{Region1}">
     <NonlinearSolverParameters newtonMaxIter="50"/>
-    <LinearSolverParameters logLevel="0"/>
+    <LinearSolverParameters
+      solverType="direct"
+      directParallel="0"
+      logLevel="0"/>
     </PhaseFieldFracture>
 
     <SolidMechanicsLagrangianSSLE name="SolidMechSolve"
@@ -22,8 +25,10 @@
                                   >
           <NonlinearSolverParameters newtonMaxIter="50"
                                      newtonTol="1.0e-6"/>
-          <LinearSolverParameters krylovTol="1.0e-10"
-                                  logLevel="0"/>
+          <LinearSolverParameters
+            solverType="direct"
+            directParallel="0"
+            logLevel="0"/>
     </SolidMechanicsLagrangianSSLE>
 
     <PhaseFieldDamageFEM name="DamageSolve"

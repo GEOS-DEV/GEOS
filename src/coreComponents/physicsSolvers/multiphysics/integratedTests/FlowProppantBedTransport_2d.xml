@@ -20,8 +20,9 @@
         newtonMinIter="1"
         maxTimeStepCuts="5"/>
       <LinearSolverParameters
-        solverType="gmres"
-        krylovTol="1.0e-7"/>
+        solverType="direct"
+	directParallel="0"
+        logLevel="0"/>
     </ProppantTransport>
 
     <FlowProppantTransport
