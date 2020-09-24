@@ -435,7 +435,8 @@ void VTKPolyDataWriterInterface::WriteVTMFile( real64 time,
 {
   int const mpiRank = MpiWrapper::Comm_rank( MPI_COMM_GEOSX );
   int const mpiSize = MpiWrapper::Comm_size( MPI_COMM_GEOSX );
-  auto writeSubBlocks = [&]( ElementRegionBase const & er ) {
+  auto writeSubBlocks = [&]( ElementRegionBase const & er ) 
+  {
     array1d< localIndex > nbElemsInRegion;
     gatherNbElementsInRegion( er, nbElemsInRegion );
     vtmWriter.AddSubBlock( er.getCatalogName(), er.getName() );
