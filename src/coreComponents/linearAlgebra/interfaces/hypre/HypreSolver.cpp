@@ -61,7 +61,7 @@ void HypreSolver::solve( HypreMatrix & mat,
   GEOSX_LAI_ASSERT( rhs.ready() );
 
   if( rhs.norm2() > 0.0 )
-  { 
+  {
     if( m_parameters.solverType == LinearSolverParameters::SolverType::direct )
     {
       solve_direct( mat, sol, rhs );
