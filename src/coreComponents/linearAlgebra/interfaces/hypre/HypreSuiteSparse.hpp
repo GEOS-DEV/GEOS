@@ -53,7 +53,7 @@ struct SuiteSparseData
   void * Symbolic;                    //!< pointer to the symbolic factorization
   void * Numeric;                     //!< pointer to the numeric factorization
   MPI_Comm globalComm;                //!< MPI communicator
-  MPI_Comm comm;                      //!< MPI communicator
+  MPI_Comm comm;                      //!< MPI sub-communicator for ranks that have parts of the matrix
   int workingRank;                    //!< MPI rank carring out the solution
 };
 
