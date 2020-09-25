@@ -17,8 +17,8 @@
  *
  */
 
-#ifndef GEOSX_MESH_SurfaceElementRegion_HPP_
-#define GEOSX_MESH_SurfaceElementRegion_HPP_
+#ifndef GEOSX_MESH_SURFACEELEMENTREGION_HPP_
+#define GEOSX_MESH_SURFACEELEMENTREGION_HPP_
 
 #include "ElementRegionBase.hpp"
 
