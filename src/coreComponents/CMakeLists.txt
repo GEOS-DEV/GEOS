@@ -53,7 +53,11 @@ foreach( lib ${subdirs} )
     add_subdirectory(${lib})
 endforeach()
 
+# Python config
 set( extraComponentsLinkList "" )
+#if( ENABLE_PYTHON )
+#  set( extraComponentsLinkList ${extraComponentsLinkList} python_interp )
+#endif()
 
 if ( ENABLE_OPENMP )
   set( extraComponentsLinkList ${extraComponentsLinkList} openmp )

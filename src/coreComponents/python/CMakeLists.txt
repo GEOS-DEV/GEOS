@@ -33,6 +33,8 @@ add_custom_command( OUTPUT ${GEOSX_XML_TOOLS_BINS}
                     COMMAND ln -s ${CMAKE_BINARY_DIR}/python/geosx/bin/preprocess_xml ${CMAKE_BINARY_DIR}/bin/preprocess_xml
                     COMMAND ln -s ${CMAKE_BINARY_DIR}/python/geosx/bin/format_xml ${CMAKE_BINARY_DIR}/bin/format_xml
                     COMMAND ln -s ${CMAKE_BINARY_DIR}/python/geosx/bin/python ${CMAKE_BINARY_DIR}/bin/python
+                    COMMAND ln -s ${CMAKE_BINARY_DIR}/lib/pygeosx.so ${CMAKE_BINARY_DIR}/python/geosx/lib/python3.8/site-packages/pygeosx.so
+                    COMMAND ln -s ${CMAKE_BINARY_DIR}/lib/libgeosx_core.so ${CMAKE_BINARY_DIR}/python/geosx/lib/python3.8/site-packages/libgeosx_core.so
                     WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
                     )
 
