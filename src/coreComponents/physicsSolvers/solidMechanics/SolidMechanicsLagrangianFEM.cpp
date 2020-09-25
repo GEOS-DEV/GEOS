@@ -337,7 +337,7 @@ void SolidMechanicsLagrangianFEM::updateIntrinsicNodalData( DomainPartition * co
           for( localIndex q=0; q<numQuadraturePointsPerElem; ++q )
           {
             elemMass += rho[er][esr][k][q] * detJ[k][q];
-            FE_TYPE::shapeFunctionValues( q, N );
+            FE_TYPE::calcN( q, N );
 
             for( localIndex a=0; a< numNodesPerElem; ++a )
             {
@@ -419,7 +419,7 @@ void SolidMechanicsLagrangianFEM::InitializePostInitialConditions_PreSubGroups( 
           for( localIndex q=0; q<numQuadraturePointsPerElem; ++q )
           {
             elemMass += rho[er][esr][k][q] * detJ[k][q];
-            FE_TYPE::shapeFunctionValues( q, N );
+            FE_TYPE::calcN( q, N );
 
             for( localIndex a=0; a< numNodesPerElem; ++a )
             {
