@@ -135,9 +135,9 @@
                        cellBlocks="{cb1}"
                        materialList="{water, rock}"/>
 
-    <FaceElementRegion name="Fracture"
-                       defaultAperture="1.0e-4"
-                       materialList="{water, rock}"/>
+    <SurfaceElementRegion name="Fracture"
+                          defaultAperture="1.0e-4"
+                          materialList="{water, rock}"/>
   </ElementRegions>
 
   <Constitutive>
