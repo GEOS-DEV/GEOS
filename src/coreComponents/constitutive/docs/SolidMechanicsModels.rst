@@ -11,10 +11,10 @@ constitutive relation typically depend on the assumptions of
 strain, as well as the rate dependence of the constitutive
 relation itself.
 
-Infintesimal/Small Strain/Deformation
+Infinitesimal/Small Strain/Deformation
 -------------------------------------------------
-An incremental constitutitve update for stress at some time :math:`t^{n+1}` 
-under infintesimal strain assumptions can be expressed as 
+An incremental constitutive update for stress at some time :math:`t^{n+1}` 
+under infinitesimal strain assumptions can be expressed as 
 
 .. math::
    \bm{\sigma^{n+1}} = \bm{\sigma}(\bm{\epsilon^{n}}, \bm{ \dot{{\epsilon}}}, Q^n, \Delta t),
@@ -31,7 +31,7 @@ the constitutive update may also be formulated in terms of total strain:
 
 Finite/Large Strain/Deformation
 -------------------------------------------------
-Similarly, an incremental constitutitve update for under finite strain 
+Similarly, an incremental constitutive update for under finite strain 
 assumptions may be expressed as 
 
 .. math::
@@ -39,23 +39,23 @@ assumptions may be expressed as
 where :math:`\mathbf{F}` and :math:`\mathbf{\dot{{F}}}` are the 
 finite strain deformation gradient and its rate. 
 Note that the finite deformation stress measures such as one of the
-Piola-Kirchoff stress tensors, and one of the finite deformation strain tensors
-are commonly used in finite deformation constitutitve relations.
+Piola-Kirchhoff stress tensors, and one of the finite deformation strain tensors
+are commonly used in finite deformation constitutive relations.
 Of course, any of these finite deformation tensors can be recovered with 
 knowledge of the Cauchy stress (:math:`\bm{\sigma}`) and the deformation 
 gradient :math:`\mathbf{F}`.
 
 When modeling finite deformations, a constitutive update may expressed in 
 terms of a hypoelastic/plastic update.
-A hypoelastic/plastic update is typically a relation similar to the infintesimal 
+A hypoelastic/plastic update is typically a relation similar to the infinitesimal 
 strain update:
 
 .. math::
    \bm{\sigma^{n+1}} = \bm{\sigma}(\mathbf{D}, \mathbf{R}, Q^n, \Delta t),
 
 where the rate/increment in the symmetric small strain tensor is replaced by an 
-objective incremental rate of deforamtion tensor (:math:`\hat{\mathbf{D}}`), and an objective 
-rotation tensor (:math:`\mathbf{R}`) which is applied to the state varaibles in :math:`Q^n`.
+objective incremental rate of deformation tensor (:math:`\hat{\mathbf{D}}`), and an objective 
+rotation tensor (:math:`\mathbf{R}`) which is applied to the state variables in :math:`Q^n`.
 A commonly used method for attaining a weakly objective kinematics for a hypo-update
 is given by the `Hughes-Winget <https://onlinelibrary.wiley.com/doi/abs/10.1002/nme.1620151210>`__ algorithm:
 
@@ -70,7 +70,7 @@ where :math:`\hat{\tensor{L}}` is the `velocity gradient <https://en.wikipedia.o
 
 In a hyperelastic/plastic update, the elastic portion of the relation is 
 expressed in terms of a stored/strain energy function that serves as the
-potnetial for the stress:
+potential for the stress:
 
 .. math::
    \mathbf{S} = \frac{\partial \psi (\tensor{C})}{ \partial \tensor{C} },
@@ -125,14 +125,14 @@ expressed as:
 
 where 
 :math:`\bm{\sigma}` is the Cauchy stress, 
-:math:`\mathbf{S}` is the second Piola-Kirchoff stress,
+:math:`\mathbf{S}` is the second Piola-Kirchhoff stress,
 :math:`\bm{\epsilon}` is the small strain tensor,
 :math:`\mathbf{D}` is the rate of deformation tensor,
 :math:`\mathbf{E}` is the Lagrangian finite strain tensor,
 :math:`\mathbf{B}` is the left Cauchy-Green tensor,
-:math:`\mathbf{C}` is the right Cauchy–Green deformation tensor.
+:math:`\mathbf{C}` is the right Cauchy-Green deformation tensor.
 Therefore, when examining symmetric tensorial deformation measures produced from 
-GEOSX, please note that the values of the shear components will be 2x the acutal
+GEOSX, please note that the values of the shear components will be 2x the actual
 shear components.
 
 
@@ -147,3 +147,5 @@ shear components.
    PoroLinearElasticIsotropic
 
    PoroLinearElasticAnisotropic
+   
+   TwoInvariantPlasticity
