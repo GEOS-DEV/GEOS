@@ -192,6 +192,7 @@ public:
     static constexpr auto totalConcentrationString      = "totalConcentration";
     static constexpr auto concentrationNewString      = "concentrationNew";
     static constexpr auto outputSpeciesFileNameString      = "outputSpeciesFileName";
+    static constexpr auto geochemicalModelString      = "geochemicalModel";
 
   } viewKeysGeochemicalModel;
 

@@ -61,35 +61,6 @@ void ReactiveFluidBase::PostProcessInput()
 {
   ConstitutiveBase::PostProcessInput();
 
-  bool HplusNotFound = 1;
-  bool H2OFound = 0;
-
-  localIndex const NBasis = numBasisSpecies();
-
-  m_isHplus.resize( NBasis );
-
-  for( localIndex id = 0; id < NBasis; ++id )
-  {
-
-    if( m_basisSpeciesNames[id] == "H+" )
-    {
-      HplusNotFound = 0;
-      m_isHplus[id] = 1;
-    }
-    else
-    {
-      m_isHplus[id] = 0;
-    }
-
-    if( m_basisSpeciesNames[id] == "H2O" )
-      H2OFound = 1;
-
-  }
-
-  GEOSX_ERROR_IF( HplusNotFound, "ReactiveFluidBase: H+ is not specified in basisSpeciesNames" );
-
-  GEOSX_ERROR_IF( H2OFound, "ReactiveFluidBase: H2O cannot be specified in basisSpeciesNames" );
-
 }
 
 void ReactiveFluidBase::allocateConstitutiveData( Group * const parent,

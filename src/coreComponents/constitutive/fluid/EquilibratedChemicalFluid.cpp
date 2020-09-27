@@ -101,38 +101,47 @@ void EquilibratedChemicalFluid::allocateConstitutiveData( dataRepository::Group 
 {
   ReactiveFluidBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 
+  m_databaseType   = stringToDatabaseType( m_databaseTypeString );
+  m_activityCoefModel = stringToActivityCoefModel( m_activityCoefModelString );
+
+  ReadDatabase();
+
+  bool HplusNotFound = 1;
+  bool H2OFound = 0;
+
+  localIndex const NBasis = numBasisSpecies();
+
+  m_isHplus.resize( NBasis );
+
+  for( localIndex id = 0; id < NBasis; ++id )
+  {
+
+    if( m_basisSpeciesNames[id] == "H+" )
+    {
+      HplusNotFound = 0;
+      m_isHplus[id] = 1;
+    }
+    else
+    {
+      m_isHplus[id] = 0;
+    }
+
+    if( m_basisSpeciesNames[id] == "H2O" )
+      H2OFound = 1;
+
+  }
+
+  GEOSX_ERROR_IF( HplusNotFound, "ReactiveFluidBase: H+ is not specified in basisSpeciesNames" );
+
+  GEOSX_ERROR_IF( H2OFound, "ReactiveFluidBase: H2O cannot be specified in basisSpeciesNames" );
+
   ResizeFields( parent->size() );
 
 }
 
-
 void EquilibratedChemicalFluid::PostProcessInput()
 {
   ReactiveFluidBase::PostProcessInput();
-
-  static bool isDatabaseRead = 0;
-
-  if( !isDatabaseRead )
-  {
-
-    m_databaseType   = stringToDatabaseType( m_databaseTypeString );
-    m_activityCoefModel = stringToActivityCoefModel( m_activityCoefModelString );
-
-    ReadDatabase();
-
-    isDatabaseRead = 1;
-
-  }
-
-}
-
-void EquilibratedChemicalFluid::InitializePostSubGroups( Group * const group )
-{
-  ReactiveFluidBase::InitializePostSubGroups( group );
-
-  //  ReadDatabase();
-
-  //  ResizeFields( group->size() );
 
 }
 
@@ -153,8 +162,6 @@ void EquilibratedChemicalFluid::ReadDatabase()
     m_thermoDatabase = ( ThermoDatabaseBase::CatalogInterface::Factory( m_databaseTypeString, m_databaseFileName, m_basisSpeciesNames ) );
 
   const array1d< Species > & dependentSpecies = m_thermoDatabase->GetDependentSpecies();
-  //const array1d<Species> &basisSpecies = m_thermoDatabase->GetBasisSpecies();
-  //  const array1d<localIndex> &basisSpeciesIndices = m_thermoDatabase->GetBasisSpeciesIndices();
 
   m_dependentSpeciesNames.clear();
   for( localIndex ic = 0; ic < dependentSpecies.size(); ++ic )
@@ -184,8 +191,6 @@ void EquilibratedChemicalFluid::ReadDatabase()
 
       if( ic >= NBasis )
         continue;
-
-      //localIndex id = basisSpeciesIndices[ic];
 
       real64 nu1 = dependentSpecies[j].stochs[i];
 

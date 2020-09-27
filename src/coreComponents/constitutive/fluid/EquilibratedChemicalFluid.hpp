@@ -73,8 +73,6 @@ public:
 protected:
   virtual void PostProcessInput() override;
 
-  virtual void InitializePostSubGroups( Group * const group ) override;
-
 private:
 
   void Compute( real64 const & pressure,

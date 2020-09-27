@@ -79,6 +79,8 @@ void GeochemicalModel::RegisterDataOnMesh( Group * const MeshBodies )
                            ( localIndex const GEOSX_UNUSED_PARAM( targetIndex ),
                            ElementSubRegionBase & subRegion )
     {
+      subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::pressureString )->setPlotLevel( PlotLevel::LEVEL_0 );
+      subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::deltaPressureString );
       subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::temperatureString )->setPlotLevel( PlotLevel::LEVEL_0 );
       subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::deltaTemperatureString );
       subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::concentrationString )->setPlotLevel( PlotLevel::LEVEL_0 );
@@ -325,9 +327,15 @@ void GeochemicalModel::ImplicitStepComplete( real64 const & GEOSX_UNUSED_PARAM( 
 void GeochemicalModel::SetupDofs( DomainPartition const & GEOSX_UNUSED_PARAM( domain ),
                                   DofManager & dofManager ) const
 {
-  dofManager.addField( viewKeyStruct::pressureString,
+  dofManager.addField( viewKeyStruct::geochemicalModelString,
                        DofManager::Location::Elem,
+                       m_numDofPerCell,
                        targetRegionNames() );
+
+  dofManager.addCoupling( viewKeyStruct::geochemicalModelString,
+                          viewKeyStruct::geochemicalModelString,
+                          DofManager::Connector::None );
+
 }
 
 
@@ -390,7 +398,7 @@ void GeochemicalModel::AssembleAccumulationTerms( DomainPartition & domain,
     arrayView1d< bool > const isHplus = reactiveFluid.IsHplus();
 
 
-    string const dofKey = dofManager.getKey( viewKeyStruct::pressureString );
+    string const dofKey = dofManager.getKey( viewKeyStruct::geochemicalModelString );
     arrayView1d< globalIndex const > const & dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
 
     arrayView1d< integer const >     const & elemGhostRank = m_elemGhostRank[er][esr];
@@ -518,7 +526,7 @@ GeochemicalModel::
 
   MeshLevel const & mesh = *(domain.getMeshBody( 0 )->getMeshLevel( 0 ));
 
-  string const dofKey = dofManager.getKey( viewKeyStruct::pressureString );
+  string const dofKey = dofManager.getKey( viewKeyStruct::geochemicalModelString );
   globalIndex const rankOffset = dofManager.rankOffset();
 
   // compute the norm of local residual scaled by cell pore volume
@@ -570,7 +578,7 @@ void GeochemicalModel::ApplySystemSolution( DofManager const & dofManager,
   MeshLevel & mesh = *(domain.getMeshBody( 0 )->getMeshLevel( 0 ));
 
   dofManager.addVectorToField( localSolution,
-                               viewKeyStruct::pressureString,
+                               viewKeyStruct::geochemicalModelString,
                                viewKeyStruct::deltaConcentrationString,
                                scalingFactor,
                                0, m_numDofPerCell );
