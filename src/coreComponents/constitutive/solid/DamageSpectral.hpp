@@ -107,6 +107,10 @@ public:
     real64 eigenValues[3] = {};
     real64 eigenVectors[3][3] = {};
     LvArray::tensorOps::symEigenvectors<3>(eigenValues, eigenVectors, strain);
+    //tranpose eigenVectors matrix
+    // real64 temp[3][3] = {};
+    // LvArray::tensorOps::transpose<3,3>(temp, eigenVectors);
+    // LvArray::tensorOps::copy<3,3>(eigenVectors, temp);
     //construct 4th order IxI tensor
     real64 IxITensor[6][6] = {};
     for (int i=0; i < 3; i++)
@@ -152,17 +156,24 @@ public:
     real64 eigenValues[3] = {};
     real64 eigenVectors[3][3] = {};
     LvArray::tensorOps::symEigenvectors<3>(eigenValues, eigenVectors, strain);
+    //transpose eigenValues matrix
+    // real64 temp[3][3] = {};
+    // LvArray::tensorOps::transpose<3,3>(temp, eigenVectors);
+    // LvArray::tensorOps::copy<3,3>(eigenVectors, temp);
     real64 tracePlus = std::max(traceOfStrain, 0.0);
     //build symmetric matrices of positive and negative eigenvalues
-    real64 eigenPlus[6];
+    real64 eigenPlus[6] = {0};
     for (int i = 0; i < 3; i++)
       {
 	eigenPlus[i] = std::max(eigenValues[i], 0.0);
       }
-    real64 positivePartOfStrain[6] = {};
+    real64 positivePartOfStrain[6] = {0};
+    for (int i = 0; i < 3; i++)
+      {
+	eigenPlus[i] = std::max(eigenValues[i], 0.0);
+      }
     LvArray::tensorOps::AikSymBklAjl<3>(positivePartOfStrain, eigenVectors, eigenPlus);
     real64 const sed = 0.5 * lambda * tracePlus * tracePlus + mu * LvArray::tensorOps::l2Norm<6>(positivePartOfStrain)*LvArray::tensorOps::l2Norm<6>(positivePartOfStrain); // the l2Norm should work as a double contraction bc the strain tensor is in voigt notation
-    
     //enforce irreversibility using history field for the strain energy density
     if( sed > m_strainEnergyDensity( k, q ) )
     {
@@ -190,6 +201,11 @@ public:
     real64 eigenValues[3] = {};
     real64 eigenVectors[3][3] = {};
     LvArray::tensorOps::symEigenvectors<3>(eigenValues, eigenVectors, strain);
+    //transpose the eigenValues matrix
+    // real64 temp[3][3] = {};
+    // LvArray::tensorOps::transpose<3,3>(temp, eigenVectors);
+    // LvArray::tensorOps::copy<3,3>(eigenVectors, temp);
+    //get trace+ and trace-
     real64 tracePlus = std::max(traceOfStrain, 0.0);
     real64 traceMinus = std::min(traceOfStrain, 0.0);
     //build symmetric matrices of positive and negative eigenvalues

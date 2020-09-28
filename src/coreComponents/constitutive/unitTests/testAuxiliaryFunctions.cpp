@@ -99,12 +99,34 @@ TEST( AuxFunctions, GTensor )
 TEST( AuxFunctions, PositiveProjectorTensor )
 {
   using namespace LvArray;
-  real64 eigs[3] = {1.0, 1.0, -1.0};
+  //distinct eigenvalues
+  real64 eigs[3] = {2.0, 1.0, -1.0};
   real64 eigvecs[3][3] = {{1,1,0},{-2,1,0},{-1,0,1}};
   real64 PositiveProjector[6][6] = {{0,0,0,0,0,0},{0,0,0,0,0,0},{0,0,0,0,0,0},{0,0,0,0,0,0},{0,0,0,0,0,0},{0,0,0,0,0,0}};
   PositiveProjectorTensor(eigs, eigvecs, PositiveProjector);
   std::cout << "P+ is: "<< std::endl;
   GEOSX_LOG(PositiveProjector);
+  //repeated eigenvalues
+  real64 eigs2[3] = {1.0, 1.0, -1.0};
+  real64 eigvecs2[3][3] = {{1,1,0},{-2,1,0},{-1,0,1}};
+  real64 PositiveProjector2[6][6] = {{0,0,0,0,0,0},{0,0,0,0,0,0},{0,0,0,0,0,0},{0,0,0,0,0,0},{0,0,0,0,0,0},{0,0,0,0,0,0}};
+  PositiveProjectorTensor(eigs2, eigvecs2, PositiveProjector2);
+  std::cout << "P+ is: "<< std::endl;
+  GEOSX_LOG(PositiveProjector2);
+  //all eigenvalues are equal
+  real64 eigs3[3] = {1.0, 1.0, 1.0};
+  real64 eigvecs3[3][3] = {{1,1,0},{-2,1,0},{-1,0,1}};
+  real64 PositiveProjector3[6][6] = {{0,0,0,0,0,0},{0,0,0,0,0,0},{0,0,0,0,0,0},{0,0,0,0,0,0},{0,0,0,0,0,0},{0,0,0,0,0,0}};
+  PositiveProjectorTensor(eigs3, eigvecs3, PositiveProjector3);
+  std::cout << "P+ is: "<< std::endl;
+  GEOSX_LOG(PositiveProjector3);
+  //some eigenvalues are zero
+  real64 eigs4[3] = {1.0, 1.0, 0.0};
+  real64 eigvecs4[3][3] = {{1,1,0},{-2,1,0},{-1,0,1}};
+  real64 PositiveProjector4[6][6] = {{0,0,0,0,0,0},{0,0,0,0,0,0},{0,0,0,0,0,0},{0,0,0,0,0,0},{0,0,0,0,0,0},{0,0,0,0,0,0}};
+  PositiveProjectorTensor(eigs4, eigvecs4, PositiveProjector4);
+  std::cout << "P+ is: "<< std::endl;
+  GEOSX_LOG(PositiveProjector4);
 }
 
 TEST( AuxFunctions, NegativeProjectorTensor )
