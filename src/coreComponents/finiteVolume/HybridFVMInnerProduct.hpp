@@ -278,11 +278,17 @@ struct QTPFACellInnerProductKernel
       // TODO: see what it would take to bring the (harmonically averaged) two-point trans here
       real64 const c2fDistance = LvArray::tensorOps::normalize< 3 >( cellToFaceVec );
       real64 const mult = transMultiplier[elemToFaces[ifaceLoc]];
-      LvArray::tensorOps::hadamardProduct< 3 >( faceConormal, elemPerm, faceNormal );
       tpTransInv[ifaceLoc] = c2fDistance / faceArea;
-      tpTransInv[ifaceLoc] /= LvArray::tensorOps::AiBi< 3 >( cellToFaceVec, faceConormal );
-      tpTransInv[ifaceLoc] = LvArray::math::min( tpTransInv[ifaceLoc], weightToleranceInv );
 
+      LvArray::tensorOps::hadamardProduct< 3 >( faceConormal, elemPerm, faceNormal );
+      real64 halfWeight = LvArray::tensorOps::AiBi< 3 >( cellToFaceVec, faceConormal );
+      if( halfWeight < 0.0 )
+      {
+        LvArray::tensorOps::hadamardProduct< 3 >( faceConormal, elemPerm, cellToFaceVec );
+        halfWeight = LvArray::tensorOps::AiBi< 3 >( cellToFaceVec, faceConormal );
+      }
+      tpTransInv[ifaceLoc] /= halfWeight;
+      tpTransInv[ifaceLoc] = LvArray::math::min( tpTransInv[ifaceLoc], weightToleranceInv );
       tpTransInv[ifaceLoc] *=  ( 1.0 - mult ) / mult;
 
       LvArray::tensorOps::scale< 3 >( faceNormal, faceArea );
@@ -340,6 +346,7 @@ struct QTPFACellInnerProductKernel
         {
           Tmult[i] = transMatrix[k][i] * mult;
         }
+
         real64 const invDenom = 1.0 / ( 1.0 + Tmult[k] * mult );
         for( localIndex i = 0; i < NF; ++i )
         {
