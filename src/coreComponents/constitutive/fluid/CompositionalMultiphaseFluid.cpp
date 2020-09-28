@@ -151,7 +151,7 @@ void CompositionalMultiphaseFluid::createFluid()
   std::vector< double > const Mw( m_componentMolarWeight.begin(), m_componentMolarWeight.end() );
   std::vector< double > const Omega( m_componentAcentricFactor.begin(), m_componentAcentricFactor.end() );
 
-  ComponentProperties const compProps( NC, components, Mw, Tc, Pc, Omega );
+  PVTPackage::ComponentProperties const compProps( NC, components, Mw, Tc, Pc, Omega );
 
   m_fluid = std::make_unique< PVTPackage::CompositionalMultiphaseSystem >( phases,
                                                                            eos,
