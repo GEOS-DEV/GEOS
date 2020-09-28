@@ -21,9 +21,11 @@
 #define GEOSX_MESH_SURFACEELEMENTREGION_HPP_
 
 #include "ElementRegionBase.hpp"
+#include "common/EnumStrings.hpp"
 
 namespace geosx
 {
+
 
 class EdgeManager;
 
@@ -37,6 +39,12 @@ class EdgeManager;
 class SurfaceElementRegion : public ElementRegionBase
 {
 public:
+
+  enum class SurfaceSubRegionType : integer
+  {
+    faceElement,
+    embeddedElement
+  };
 
   /**
    * @name Constructor / Destructor
@@ -120,9 +128,9 @@ public:
 
   /**
    * @brief Get subRegion type.
-   * @return subRegion type string
+   * @return subRegion type
    */
-  string subRegionType() const { return m_subRegionType; }
+  SurfaceSubRegionType subRegionType() const { return m_subRegionType; }
 
 
   ///@}
@@ -149,11 +157,13 @@ protected:
 
 private:
 
-  string m_subRegionType;
+  SurfaceSubRegionType m_subRegionType;
 
   real64 m_defaultAperture;
 
 };
+
+ENUM_STRINGS( SurfaceElementRegion::SurfaceSubRegionType, "faceElement", "embeddedElement" )
 
 } /* namespace geosx */
 

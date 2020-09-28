@@ -25,12 +25,13 @@ namespace geosx
 using namespace dataRepository;
 
 SurfaceElementRegion::SurfaceElementRegion( string const & name, Group * const parent ):
-  ElementRegionBase( name, parent )
+  ElementRegionBase( name, parent ),
+  m_subRegionType( SurfaceSubRegionType::faceElement )
 {
   registerWrapper( viewKeyStruct::subRegionTypeString, &m_subRegionType )->
     setInputFlag( InputFlags::OPTIONAL )->
-    setApplyDefaultValue( "faceElement" )->
-    setDescription( "Defines the type of surface element subregion. It can either be embeddedElement or faceElement." );
+    setApplyDefaultValue( m_subRegionType )->
+    setDescription( "Type of surface element subregion. Valid options:\n* " + EnumStrings< SurfaceSubRegionType >::concat( "\n* " ) );
 
   registerWrapper( viewKeyStruct::defaultApertureString, &m_defaultAperture )->
     setInputFlag( InputFlags::REQUIRED )->
@@ -47,17 +48,13 @@ void SurfaceElementRegion::GenerateMesh( Group * const cellBlocks )
 
   Group * const elementSubRegions = this->GetGroup( viewKeyStruct::elementSubRegions );
 
-  if( m_subRegionType == "embeddedElement" )
+  if( m_subRegionType == SurfaceSubRegionType::embeddedElement )
   {
     elementSubRegions->RegisterGroup< EmbeddedSurfaceSubRegion >( "embeddedSurfaceSubRegion" );
   }
-  else if( m_subRegionType == "faceElement" )
+  else if( m_subRegionType == SurfaceSubRegionType::faceElement )
   {
     elementSubRegions->RegisterGroup< FaceElementSubRegion >( "faceElementSubRegion" );
-  }
-  else
-  {
-    GEOSX_ERROR( "Invalid subregion type" );
   }
 }
 

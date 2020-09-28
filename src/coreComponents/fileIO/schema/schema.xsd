@@ -1928,11 +1928,18 @@ the relative residual norm satisfies:
 		<xsd:attribute name="defaultAperture" type="real64" use="required" />
 		<!--materialList => List of materials present in this region-->
 		<xsd:attribute name="materialList" type="string_array" use="required" />
-		<!--subRegionType => Defines the type of surface element subregion. It can either be embeddedElement or faceElement.-->
-		<xsd:attribute name="subRegionType" type="string" default="faceElement" />
+		<!--subRegionType => Type of surface element subregion. Valid options:
+* faceElement
+* embeddedElement-->
+		<xsd:attribute name="subRegionType" type="geosx_SurfaceElementRegion_SurfaceSubRegionType" default="faceElement" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
+	<xsd:simpleType name="geosx_SurfaceElementRegion_SurfaceSubRegionType">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|faceElement|embeddedElement" />
+		</xsd:restriction>
+	</xsd:simpleType>
 	<xsd:complexType name="WellElementRegionType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded" />
 		<!--materialList => List of materials present in this region-->

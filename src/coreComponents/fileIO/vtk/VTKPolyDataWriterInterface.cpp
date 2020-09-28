@@ -378,7 +378,7 @@ void VTKPolyDataWriterInterface::WriteSurfaceElementRegions( real64 time,
   elemManager.forElementRegions< SurfaceElementRegion >( [&]( SurfaceElementRegion const & er )->void
   {
     vtkSmartPointer< vtkUnstructuredGrid > ug = vtkUnstructuredGrid::New();
-    if( er.subRegionType() == "embeddedElement" )
+    if( er.subRegionType() == SurfaceElementRegion::SurfaceSubRegionType::embeddedElement )
     {
       auto esr = er.GetSubRegion( 0 )->group_cast< EmbeddedSurfaceSubRegion const * >();
 
@@ -388,7 +388,7 @@ void VTKPolyDataWriterInterface::WriteSurfaceElementRegions( real64 time,
 
       WriteElementFields< EmbeddedSurfaceSubRegion >( ug->GetCellData(), er );
     }
-    else if( er.subRegionType() == "faceElement" )
+    else if( er.subRegionType() == SurfaceElementRegion::SurfaceSubRegionType::faceElement )
     {
       auto esr = er.GetSubRegion( 0 )->group_cast< FaceElementSubRegion const * >();
 
