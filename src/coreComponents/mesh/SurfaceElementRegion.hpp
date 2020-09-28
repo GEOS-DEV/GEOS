@@ -40,6 +40,11 @@ class SurfaceElementRegion : public ElementRegionBase
 {
 public:
 
+  /**
+   * @enum SurfaceSubRegionType
+   *
+   * The options for the surface subregion type
+   */
   enum class SurfaceSubRegionType : integer
   {
     faceElement,
