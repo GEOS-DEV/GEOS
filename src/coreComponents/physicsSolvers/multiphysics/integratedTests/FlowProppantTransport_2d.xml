@@ -22,8 +22,8 @@
         solverType="gmres"
         krylovTol="1.0e-12"/>
     </ProppantTransport>
-    <!-- SPHINX_PROPPANT_TRANSPORT_SOLVER_END -->
 
+    <!-- SPHINX_PROPPANT_TRANSPORT_SOLVER_END -->
     <!-- SPHINX_PROPPANT_COUPLED_SOLVER_BEGIN -->
     <FlowProppantTransport
       name="FlowProppantTransport"
@@ -36,8 +36,8 @@
         newtonMaxIter="5"/>
       <LinearSolverParameters/>
     </FlowProppantTransport>
-    <!-- SPHINX_PROPPANT_COUPLED_SOLVER_END -->
 
+    <!-- SPHINX_PROPPANT_COUPLED_SOLVER_END -->
     <!-- SPHINX_PROPPANT_FLOW_SOLVER_BEGIN -->
     <SinglePhaseProppantFVM
       name="SinglePhaseFVM"
@@ -55,8 +55,8 @@
         solverType="gmres"
         krylovTol="1.0e-12"/>
     </SinglePhaseProppantFVM>
-    <!-- SPHINX_PROPPANT_FLOW_SOLVER_END -->
 
+    <!-- SPHINX_PROPPANT_FLOW_SOLVER_END -->
     <SurfaceGenerator
       name="SurfaceGen"
       logLevel="0"
