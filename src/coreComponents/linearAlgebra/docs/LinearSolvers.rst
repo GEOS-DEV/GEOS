@@ -136,7 +136,7 @@ Block preconditioner
 ********************
 
 This framework allows the user to design a block preconditioner for a 2 x 2 block matrix. The key component is the Schur complement
-:math:`\mathsf{S} = \mathsf{A}^{11} - \mathsf{A}^{10} \mathsf{\widetilde{A}}_{00}^{-1} \mathsf{A}_{01}` computation, that requires
+:math:`\mathsf{S} = \mathsf{A}_{11} - \mathsf{A}_{10} \mathsf{\widetilde{A}}_{00}^{-1} \mathsf{A}_{01}` computation, that requires
 an approximation of the leading block. Currently, available options for :math:`\mathsf{\widetilde{A}}_{00}^{-1}` are:
 
 * diagonal with diagonal values (essentially, a Jacobi preconditioner);
