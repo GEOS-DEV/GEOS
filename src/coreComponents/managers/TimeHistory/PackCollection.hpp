@@ -71,7 +71,7 @@ public:
    * @brief Filters out ghost rank indices from setIndices to be collected.
    * @param setIndex which set (collection item) needs to be filtered
    * @param set the set of indices without the ghost ones
-   * @param ghostrank the ghost rank of each index for the target object
+   * @param ghostRank the ghost rank of each index for the target object
    */
   void filterGhostIndices( localIndex const setIndex,
                            array1d< localIndex > & set,

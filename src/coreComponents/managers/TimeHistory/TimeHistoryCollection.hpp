@@ -91,7 +91,7 @@ public:
                         integer const cycleNumber,
                         integer const eventCounter,
                         real64 const eventProgress,
-                        Group * domain_group ) override
+                        Group * domain ) override
   {
     GEOSX_UNUSED_VAR( cycleNumber );
     GEOSX_UNUSED_VAR( eventCounter );
@@ -105,9 +105,9 @@ public:
       // using GEOSX_ERROR_IF_EQ caused type issues since the values are used in streams
       // TODO : grab the metadata again, determine if the size has changed, update the buffer call if so...
       buffer_unit_type * buffer = m_bufferCalls[collectionIdx]();
-      DomainPartition & domain = dynamicCast< DomainPartition & >( *domain_group );
-      updateSetsIndices( domain );
-      collect( domain, time_n, dt, collectionIdx, buffer );
+      DomainPartition & domainPart = dynamicCast< DomainPartition & >( *domain );
+      updateSetsIndices( domainPart );
+      collect( domainPart, time_n, dt, collectionIdx, buffer );
     }
     int rank = MpiWrapper::Comm_rank();
     if( rank == 0 && m_timeBufferCall )
@@ -174,6 +174,10 @@ public:
     return std::unique_ptr< HistoryCollection >( nullptr );
   }
 
+  /**
+   * @brief Update the indices from the sets being collected.
+   * @param domain The DomainPartition of the problem.
+   */
   virtual void updateSetsIndices ( DomainPartition & domain ) = 0;
 
 protected:
