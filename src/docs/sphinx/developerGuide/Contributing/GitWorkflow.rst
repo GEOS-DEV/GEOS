@@ -34,7 +34,7 @@ the code through SSH.
 
 If all goes well, you should have a complete copy of the GEOSX source at this point.
 The most common errors people encounter here have to do with Github not recognizing
-thier authentication settings.
+their authentication settings.
 
 Branching Model
 ===============
@@ -50,13 +50,12 @@ The remaining branch types are described in the following subsections.
    `Gitflow <https://nvie.com/posts/a-successful-git-branching-model/>`_
    approach for merging feature branches into develop.
    This was done without cleaning the commit history in each feature
-   branch prior to the merge into develop, resulting in an overly verbose 
-   (i.e. useless) history.
+   branch prior to the merge into develop, resulting in an overly verbose history.
    Furthermore, as would be expected, having many active feature branches resulted
    in a fairly wide/spaghetti history.
-   As some point in the development process, we chose to switch primarily to a 
-   squash merge approach which results in a linear develop history.
-   While this is fixes the spaghetti history, we do potentially lose important
+   At some point in the development process, we chose to switch primarily to a 
+   squash-merge approach which results in a linear develop history.
+   While this fixes the spaghetti history, we do potentially lose important
    commit history during the development process.
    Options for merging are discussed in the following sections.
 
@@ -64,7 +63,7 @@ The remaining branch types are described in the following subsections.
 
 Feature Branches
 ----------------
-New developments (i.e. new features, or modifications to features) are branched off 
+New developments (new features or modifications to features) are branched off 
 of ``develop`` into a ``feature`` branch.
 The naming of feature branches should follow ``feature/[developer]/[branch-description]``
 if you expect that only a single developer will contribute to the branch, 
@@ -96,7 +95,7 @@ Bugfix Branches
 Bugfix branches are used to fix bugs that are present in the ``develop`` branch.
 A similar naming convention to that of the ``feature`` branches are used, replacing
 "feature" with "bugfix" (i.e. ``bugfix/neo/squashAgentSmith``).
-Typically bugfix branches are completed by a single contributor, but just as with
+Typically, bugfix branches are completed by a single contributor, but just as with
 the ``feature`` branches, a collaborative effort may be required resulting a 
 dropping the developer name from the branch name.
 
@@ -172,24 +171,24 @@ Some useful links for use of ``git cherry-pick`` are given here:
 
 Documentation Branches
 ----------------------
-A ``docs`` branch is focused on writing/improving documentation for GEOSX.
-The use of the ``docs`` branch name root applies to both sphinx documentation, 
-or doxygen documentation.
-The ``docs`` branch follow the same naming conventions as described in the :ref:`Feature_Branches`
+A ``docs`` branch is focused on writing and improving the documentation for GEOSX.
+The use of the ``docs`` branch name root applies to both sphinx documentation 
+and doxygen documentation.
+The ``docs`` branch follows the same naming conventions as described in the :ref:`Feature_Branches`
 section.
-The html produced by a Documentation branches should be proof read using sphinx/doxygen 
+The html produced by a documentation branch should be proofread using sphinx/doxygen 
 prior to merging into ``develop``.
 
 
 Keeping Your Branch Current
 ===========================
 Over the course of a long development effort in a single ``feature`` branch, a 
-developer may need either merge ``develop`` into their ``feature`` branch, or rebase
+developer may need to either merge ``develop`` into their ``feature`` branch, or rebase
 their ``feature`` branch on ``develop``.
-We don't have a mandate on how you keep your branch current, but we do have 
+We do not have a mandate on how you keep your branch current, but we do have 
 guidelines on the branch history when merging your branch into ``develop``.
 Typically, merging ``develop`` into your branch is the easiest approach, but will
-lead to a complex relationship with ``develop`` with multiple interactions...which 
+lead to a complex relationship with ``develop`` with multiple interactions... which 
 can lead to a confusing history.
 Conversely, rebasing your branch onto ``develop`` is more difficult, but will lead 
 to a linear history within the branch.
@@ -222,8 +221,8 @@ However, if ``feature/theMatrix`` is merged into ``develop`` via a ``squash merg
 and then ``smith`` would like to merge ``feature/smith/dodgeBullets`` into ``develop``,
 there is a substantial problem due to the diverged history of the branches.
 Specifically, ``feature/smith/dodgeBullets`` branched off a commit in ``feature/theMatrix``
-that doesn't exist in ``develop`` (because it was squash merged).
-For simplicity, lets assume the commit hash that ``feature/smith/dodgeBullets`` 
+that does not exist in ``develop`` (because it was squash-merged).
+For simplicity, let us assume that the commit hash that ``feature/smith/dodgeBullets`` 
 originated from is ``CC``, and that there were commits ``CA, CB, CC, CD`` in ``feature/theMatrix``.
 When ``feature/theMatrix`` was squash-merged, all of the changes appear in ``develop`` as commit ``G``.
 To further complicate the situation, perhaps a complex PR was merged after ``G``, resulting
@@ -274,15 +273,15 @@ current with ``develop``.
 
 Submitting a Pull Request
 ======================================
-Once you have created your branch and pushed to Github, you can now create a 
+Once you have created your branch and pushed changes to Github, you can create a 
 `Pull Request <https://github.com/GEOSX/GEOSX/pulls>`_ on Github.
 The PR creates a central place to review and discuss the ongoing work on the branch. 
 Creating a pull request early in the development process is preferred as it allows 
 for developers to collaborate on the branch more readily.
 
 .. note::
-   When initially creating a pull request (PR) on GitHub, create it as a draft PR while
-   work is ongoing and the PR isn't ready for testing, review, and merge consideration.
+   When initially creating a pull request (PR) on GitHub, always create it as a *draft* PR while
+   work is ongoing and the PR is not ready for testing, review, and merge consideration.
 
 When you create the initial draft PR, please ensure that you apply appropriate labels.
 Applying labels allows other developers to more quickly filter the live PRs and access
@@ -383,12 +382,12 @@ create a pull request using the same process discussed above in :ref:`Submitting
 Resolving Submodule Changes In Primary Branch PRs
 =================================================
 
-When you conduct work on a submodule as described above during work on a primary GEOSX
-branch which has a PR, the merging procedure requires that the submodule referenced
+When you conduct work on a submodule during work on a primary GEOSX
+branch with an open PR, the merging procedure requires that the submodule referenced
 by the GEOSX PR branch be consistent with the submodule in the main branch of the project.
 This is checked and enforced via TravisCI.
 
-Thus in order to merge a PR that includes modifications to submodules, the various PRs for
+Thus, in order to merge a PR that includes modifications to submodules, the various PRs for
 each repository should be staged and finalized, to the point they are all ready to be merged,
 with higher-level PRs in the merge hierarchy having the correct submodule references for the
 current main branch for their repository.
