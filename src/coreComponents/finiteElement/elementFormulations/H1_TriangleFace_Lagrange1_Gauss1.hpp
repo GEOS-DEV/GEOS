@@ -16,8 +16,8 @@
  * @file H1_TriangleFace_Lagrange1_Gauss1.hpp
  */
 
-#ifndef GEOSX_CORE_FINITEELEMENT_H1TRIANGLEFACELAGRANGE1GAUSS1
-#define GEOSX_CORE_FINITEELEMENT_H1TRIANGLEFACELAGRANGE1GAUSS1
+#ifndef GEOSX_FINITEELEMENT_ELEMENTFORMULATIONS_H1TRIANGLEFACELAGRANGE1GAUSS1
+#define GEOSX_FINITEELEMENT_ELEMENTFORMULATIONS_H1TRIANGLEFACELAGRANGE1GAUSS1
 
 #include "FiniteElementBase.hpp"
 
@@ -75,8 +75,8 @@ public:
    *          point.
    */
   GEOSX_HOST_DEVICE
-  static void shapeFunctionValues( localIndex const q,
-                                   real64 ( &N )[numNodes] );
+  static void calcN( localIndex const q,
+                     real64 ( &N )[numNodes] );
 
   /**
    * @brief Calculate the integration weights for a quadrature point.
@@ -102,8 +102,8 @@ GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void
 H1_TriangleFace_Lagrange1_Gauss1::
-  shapeFunctionValues( localIndex const q,
-                       real64 (& N)[numNodes] )
+  calcN( localIndex const q,
+         real64 (& N)[numNodes] )
 {
   GEOSX_UNUSED_VAR( q );
 
@@ -131,4 +131,4 @@ H1_TriangleFace_Lagrange1_Gauss1::
 
 }
 }
-#endif //GEOSX_CORE_FINITEELEMENT_H1TRIANGLEFACELAGRANGE1GAUSS1
+#endif //GEOSX_FINITEELEMENT_ELEMENTFORMULATIONS_H1TRIANGLEFACELAGRANGE1GAUSS1

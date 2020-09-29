@@ -585,6 +585,28 @@ Available options are: jacobi, blockJacobi, gaussSeidel, blockGaussSeidel, cheby
 		<xsd:attribute name="amgSmootherType" type="string" default="gaussSeidel" />
 		<!--amgThreshold => AMG strength-of-connection threshold-->
 		<xsd:attribute name="amgThreshold" type="real64" default="0" />
+		<!--directCheckResTol => Tolerance used to check a direct solver solution-->
+		<xsd:attribute name="directCheckResTol" type="real64" default="1e-12" />
+		<!--directColPerm => How to permute the columns. Available options are:
+* none
+* MMD_AtplusA
+* MMD_AtA
+* colAMD
+* metis
+* parmetis-->
+		<xsd:attribute name="directColPerm" type="geosx_LinearSolverParameters_Direct_ColPerm" default="metis" />
+		<!--directEquil => Whether to scale the rows and columns of the matrix-->
+		<xsd:attribute name="directEquil" type="integer" default="1" />
+		<!--directIterRef => Whether to perform iterative refinement-->
+		<xsd:attribute name="directIterRef" type="integer" default="1" />
+		<!--directParallel => Whether to use a parallel solver (instead of a serial one)-->
+		<xsd:attribute name="directParallel" type="integer" default="1" />
+		<!--directReplTinyPivot => Whether to replace tiny pivots by sqrt(epsilon)*norm(A)-->
+		<xsd:attribute name="directReplTinyPivot" type="integer" default="1" />
+		<!--directRowPerm => How to permute the rows. Available options are:
+* none
+* mc64-->
+		<xsd:attribute name="directRowPerm" type="geosx_LinearSolverParameters_Direct_RowPerm" default="mc64" />
 		<!--iluFill => ILU(K) fill factor-->
 		<xsd:attribute name="iluFill" type="integer" default="0" />
 		<!--iluThreshold => ILU(T) threshold factor-->
@@ -625,7 +647,19 @@ the relative residual norm satisfies:
 * bicgstab
 * preconditioner-->
 		<xsd:attribute name="solverType" type="geosx_LinearSolverParameters_SolverType" default="direct" />
+		<!--stopIfError => Whether to stop the simulation if the linear solver reports an error-->
+		<xsd:attribute name="stopIfError" type="integer" default="1" />
 	</xsd:complexType>
+	<xsd:simpleType name="geosx_LinearSolverParameters_Direct_ColPerm">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|none|MMD_AtplusA|MMD_AtA|colAMD|metis|parmetis" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="geosx_LinearSolverParameters_Direct_RowPerm">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|none|mc64" />
+		</xsd:restriction>
+	</xsd:simpleType>
 	<xsd:simpleType name="geosx_LinearSolverParameters_PreconditionerType">
 		<xsd:restriction base="xsd:string">
 			<xsd:pattern value=".*[\[\]`$].*|none|jacobi|gs|sgs|iluk|ilut|icc|ict|amg|mgr|block" />
