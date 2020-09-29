@@ -1305,9 +1305,9 @@ void SolidMechanicsLagrangianFEM::ApplyContactConstraint( DofManager const & dof
       // TODO: use parallel policy?
       forAll< serialPolicy >( subRegion.size(), [=] ( localIndex const kfe )
       {
-        R1Tensor Nbar = faceNormal[elemsToFaces[kfe][0]];
-        Nbar -= faceNormal[elemsToFaces[kfe][1]];
-        Nbar.Normalize();
+        real64 Nbar[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( faceNormal[elemsToFaces[kfe][0]] );
+        LvArray::tensorOps::subtract< 3 >( Nba, faceNormal[elemsToFaces[kfe][1]] );
+        LvArray::tensorOps::normalize( Nbar );
 
         localIndex const kf0 = elemsToFaces[kfe][0];
         localIndex const kf1 = elemsToFaces[kfe][1];
@@ -1320,12 +1320,12 @@ void SolidMechanicsLagrangianFEM::ApplyContactConstraint( DofManager const & dof
 
         for( localIndex a=0; a<numNodesPerFace; ++a )
         {
-          R1Tensor penaltyForce = Nbar;
+          real64 penaltyForce[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( Nbar );
           localIndex const node0 = facesToNodes[kf0][a];
           localIndex const node1 = facesToNodes[kf1][ a==0 ? a : numNodesPerFace-a ];
-          R1Tensor gap = u[node1];
-          gap -= u[node0];
-          real64 const gapNormal = Dot( gap, Nbar );
+          real64 gap[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( u[node1] );
+          LvArray::tensorOps::subtract< 3 >(gap, u[node0]);
+          real64 const gapNormal = LvArray::tensorOps::AiBi< 3 >( gap, Nbar );
 
           for( int i=0; i<3; ++i )
           {
@@ -1335,11 +1335,11 @@ void SolidMechanicsLagrangianFEM::ApplyContactConstraint( DofManager const & dof
 
           if( gapNormal < 0 )
           {
-            penaltyForce *= -contactStiffness * gapNormal * Ja;
+            LvArray::tensorOps::scale< 3 >(penaltyForce, -contactStiffness * gapNormal * Ja);
             for( int i=0; i<3; ++i )
             {
-              fc[node0] -= penaltyForce;
-              fc[node1] += penaltyForce;
+              LvArray::tensorOps::subtract< 3 >( fc[node0], penaltyForce );
+              LvArray::tensorOps::add< 3 >( fc[node1], penaltyForce );
               nodeRHS[3*a+i]                     -= penaltyForce[i];
               nodeRHS[3*(numNodesPerFace + a)+i] += penaltyForce[i];
 

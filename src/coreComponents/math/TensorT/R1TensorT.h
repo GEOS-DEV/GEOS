@@ -185,15 +185,15 @@ public:
   /// output
   void print( std::ostream & os ) const;
 
-  // define cross product
-  friend inline
-  GEOSX_HOST_DEVICE
-  R1TensorT< T_dim > Cross( const R1TensorT< T_dim > & a, const R1TensorT< T_dim > & b )
-  {
-    R1TensorT< T_dim > c;
-    c.Cross( a, b );
-    return c;
-  }
+//  // define cross product
+//  friend inline
+//  GEOSX_HOST_DEVICE
+//  R1TensorT< T_dim > Cross( const R1TensorT< T_dim > & a, const R1TensorT< T_dim > & b )
+//  {
+//    R1TensorT< T_dim > c;
+//    c.Cross( a, b );
+//    return c;
+//  }
 
 private:
 };

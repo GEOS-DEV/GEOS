@@ -3153,9 +3153,12 @@ void SurfaceGenerator::CalculateNodeAndFaceSIF( DomainPartition & domain,
                   {
                     // We multiply this by 0.9999999 to avoid an exception caused by acos a number slightly larger than
                     // 1.
-                    realT thetaFace = acos( Dot( vecTip, vecFace )*0.999999 );
+                    realT thetaFace = acos( LvArray::tensorOps::AiBi< 3 >( vecTip, vecFace )*0.999999 );
 
-                    if( Dot( Cross( vecTip, vecFace ), vecEdge ) < 0.0 )
+                    real64 tipCrossFace[ 3 ];
+                    LvArray::tensorOps::crossProduct(tipCrossFace, vecTip, vecEdge);
+
+                    if( LvArray::tensorOps::AiBi<3>( tipCrossFace, vecEdge ) < 0.0 )
                     {
                       thetaFace *= -1.0;
                     }
@@ -3268,21 +3271,24 @@ realT SurfaceGenerator::CalculateEdgeSIF( DomainPartition & domain,
   // vecTipNorm: normal of the one of the fracture faces;  vecTip X vecTipNorm should point to the direction of vecEdge
 
   vecTipNorm = faceNormal[faceA];
-  vecTipNorm -= faceNormal[faceAp];
-  vecTipNorm.Normalize();
+  LvArray::tensorOps::subtract< 3 >( vecTipNorm, faceNormal[faceAp] );
+  LvArray::tensorOps::normalize< 3 >(vecTipNorm);
 
   //TODO: wu40: There is a function for EdgeVector in EdgeManager.cpp but has been commented.
   R1Tensor vecEdge = edgeManager.calculateLength( edgeID, X );
   realT const edgeLength = vecEdge.Normalize();
 
-  vecTip.Cross( vecTipNorm, vecEdge );
-  vecTip.Normalize();
+  LvArray::tensorOps::crossProduct(vecTip, vecTipNorm, vecEdge);
+  LvArray::tensorOps::normalize< 3 >(vecTip);
   R1Tensor v0 = edgeManager.calculateCenter( edgeID, X );
-  v0 -= faceCenter[faceA];
+  LvArray::tensorOps::subtract<3> (v0, faceCenter[faceA]);
 
-  if( Dot( v0, vecTip ) < 0 )
+  if( LvArray::tensorOps::AiBi< 3 >( v0, vecTip ) < 0 )
     vecTip *= -1.0;
-  if( Dot( Cross( vecTip, vecTipNorm ), vecEdge ) < 0 )
+
+  real64 tipCrossTipNorm[ 3 ];
+  LvArray::tensorOps::crossProduct( tipCrossTipNorm , vecTip, vecTipNorm );
+  if( LvArray::tensorOps::AiBi< 3 >( tipCrossTipNorm , vecEdge ) < 0 )
   {
     vecTipNorm *= -1;
     faceA = faceInvolved[1];
@@ -4049,7 +4055,9 @@ void SurfaceGenerator::MarkRuptureFaceFromEdge ( localIndex const edgeID,
                                                                     // exception caused by acos a number slightly larger
                                                                     // than 1.
 
-        if( Dot( Cross( vecTip, vecFace ), vecEdge ) < 0.0 )
+        real64 tipCrossFace[ 3 ];
+        LvArray::tensorOps::crossProduct(tipCrossFace, vecTip, vecFace);
+        if( LvArray::tensorOps::AiBi< 3 >( tipCrossFace, vecEdge ) < 0.0 )
         {
           thetaFace *= -1.0;
         }

@@ -108,7 +108,7 @@ void EmbeddedSurfaceGenerator::InitializePostSubGroups( Group * const problemMan
     // Initialize variables
     globalIndex nodeIndex;
     integer isPositive, isNegative;
-    R1Tensor distVec;
+    real64 distVec[ 3 ];
 
     elemManager->forElementSubRegionsComplete< CellElementSubRegion >(
       [&]( localIndex const er, localIndex const esr, ElementRegionBase &, CellElementSubRegion & subRegion )
@@ -122,14 +122,14 @@ void EmbeddedSurfaceGenerator::InitializePostSubGroups( Group * const problemMan
         for( localIndex kn =0; kn<subRegion.numNodesPerElement(); kn++ )
         {
           nodeIndex = cellToNodes[cellIndex][kn];
-          distVec  = nodesCoord[nodeIndex];
-          distVec -= planeCenter;
+          LvArray::tensorOps::copy< 3 >( distVec, nodesCoord[nodeIndex] );
+          LvArray::tensorOps::subtract< 3 >( distVec, planeCenter );
           // check if the dot product is zero
-          if( Dot( distVec, normalVector ) > 0 )
+          if( LvArray::tensorOps::AiBi< 3 >( distVec, normalVector ) > 0 )
           {
             isPositive = 1;
           }
-          else if( Dot( distVec, normalVector ) < 0 )
+          else if( LvArray::tensorOps::AiBi< 3 >( distVec, normalVector ) < 0 )
           {
             isNegative = 1;
           }

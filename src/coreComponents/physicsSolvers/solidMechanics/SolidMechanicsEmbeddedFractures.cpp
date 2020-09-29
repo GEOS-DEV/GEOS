@@ -403,8 +403,8 @@ void SolidMechanicsEmbeddedFractures::AssembleSystem( real64 const time,
           for( localIndex i = 0; i < numNodesPerElement; ++i )
           {
             localIndex const nodeID = elemsToNodes( embeddedSurfaceToCell[k], i );
-            u_local[ i ] = disp[ nodeID ];
-            du_local[ i ] = dDisp[ nodeID ];
+            LvArray::tensorOps::copy< 3 >( u_local[ i ], disp[ nodeID ] );
+            LvArray::tensorOps::copy< 3 >( du_local[ i ], dDisp[ nodeID ] );
           }
 
           // Dof number of jump enrichment

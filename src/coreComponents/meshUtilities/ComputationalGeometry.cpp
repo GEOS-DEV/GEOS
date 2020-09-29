@@ -246,13 +246,19 @@ bool IsPointInsidePolyhedron( arrayView2d< real64 const, nodes::REFERENCE_POSITI
 //*************************************************************************************************
 real64 TetVolume( R1Tensor const * const X )
 {
-  R1Tensor X1_X0( X[1] );
-  X1_X0 -= X[0];
-  R1Tensor X2_X0( X[2] );
-  X2_X0 -= X[0];
-  R1Tensor X3_X0( X[3] );
-  X3_X0 -= X[0];
-  return std::fabs( Dot( X1_X0, Cross( X2_X0, X3_X0 )) / 6.0 );
+  real64 X1_X0[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( X[1] );
+  LvArray::tensorOps::subtract<3>(X1_X0, X[0]);
+
+  real64 X2_X0[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( X[2] );
+  LvArray::tensorOps::subtract<3>(X2_X0, X[0]);
+
+  real64 X3_X0[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( X[3] );
+  LvArray::tensorOps::subtract<3>(X3_X0, X[0]);
+
+  real64 X2_X0crossX3_X0[ 3 ];
+  LvArray::tensorOps::crossProduct(X2_X0crossX3_X0, X2_X0, X3_X0 );
+
+  return std::fabs( LvArray::tensorOps::AiBi<3>( X1_X0, X2_X0crossX3_X0) / 6.0 );
 }
 
 //*************************************************************************************************

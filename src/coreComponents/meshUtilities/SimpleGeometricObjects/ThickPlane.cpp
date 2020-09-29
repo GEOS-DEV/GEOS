@@ -17,6 +17,7 @@
  */
 
 #include "ThickPlane.hpp"
+#include "LvArray/src/tensorOps.hpp"
 
 namespace geosx
 {
@@ -50,8 +51,9 @@ void ThickPlane::PostProcessInput()
   m_thickness *= 0.5; // actually store the half-thickness
   GEOSX_ERROR_IF( m_thickness <= 0, "Error: the plane appears to have zero or negative thickness" );
 
-  m_normal.Normalize();
-  GEOSX_ERROR_IF( std::fabs( m_normal.L2_Norm()-1.0 ) > 1e-15, "Error: could not properly normalize input normal." );
+  LvArray::tensorOps::normalize< 3 >( m_normal );
+  GEOSX_ERROR_IF( std::fabs( LvArray::tensorOps::l2Norm< 3 >( m_normal ) - 1.0 ) > 1e-15,
+                  "Error: could not properly normalize input normal." );
 }
 
 

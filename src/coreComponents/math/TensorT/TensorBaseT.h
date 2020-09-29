@@ -378,17 +378,17 @@ public:
       t_data[i] = (t_data[i] > newval.t_data[i]) ? newval.t_data[i] : t_data[i];
   }
 
-  friend inline
-  GEOSX_HOST_DEVICE
-  realT Dot( const TensorBaseT< T_length > & A, const TensorBaseT< T_length > & B )
-  {
-    realT rval = 0;
-    for( int i=0; i<T_length; ++i )
-    {
-      rval += A.t_data[i] * B.t_data[i];
-    }
-    return rval;
-  }
+//  friend inline
+//  GEOSX_HOST_DEVICE
+//  realT Dot( const TensorBaseT< T_length > & A, const TensorBaseT< T_length > & B )
+//  {
+//    realT rval = 0;
+//    for( int i=0; i<T_length; ++i )
+//    {
+//      rval += A.t_data[i] * B.t_data[i];
+//    }
+//    return rval;
+//  }
 
 private:
   //  TensorBaseT(TensorBaseT<T_length>&);

@@ -192,36 +192,45 @@ inline
 GEOSX_HOST_DEVICE
 real64 HexVolume( R1Tensor const * const X )
 {
-  R1Tensor X7_X1( X[7] );
-  X7_X1 -= X[1];
+  real64 X7_X1[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( X[7] );
+  LvArray::tensorOps::subtract<3>(X7_X1, X[1]);
 
-  R1Tensor X6_X0( X[6] );
-  X6_X0 -= X[0];
+  real64 X6_X0[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( X[6] );
+  LvArray::tensorOps::subtract<3>(X6_X0, X[0]);
 
-  R1Tensor X7_X2( X[7] );
-  X7_X2 -= X[2];
+  real64 X7_X2[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( X[7] );
+  LvArray::tensorOps::subtract<3>(X7_X2, X[2]);
 
-  R1Tensor X3_X0( X[3] );
-  X3_X0 -= X[0];
+  real64 X3_X0[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( X[3] );
+  LvArray::tensorOps::subtract<3>(X3_X0, X[0]);
 
-  R1Tensor X5_X0( X[5] );
-  X5_X0 -= X[0];
+  real64 X5_X0[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( X[5] );
+  LvArray::tensorOps::subtract<3>(X5_X0, X[0]);
 
-  R1Tensor X7_X4( X[7] );
-  X7_X4 -= X[4];
+  real64 X7_X4[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( X[7] );
+  LvArray::tensorOps::subtract<3>(X7_X4, X[4]);
 
-  R1Tensor X7_X1plusX6_X0( X7_X1 );
-  X7_X1plusX6_X0 += X6_X0;
+  real64 X7_X1plusX6_X0[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( X7_X1 );
+  LvArray::tensorOps::add<3>(X7_X1plusX6_X0, X6_X0);
 
-  R1Tensor X7_X2plusX5_X0( X7_X2 );
-  X7_X2plusX5_X0 += X5_X0;
+  real64 X7_X2plusX5_X0[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( X7_X2 );
+  LvArray::tensorOps::add<3>(X7_X2plusX5_X0, X5_X0);
 
-  R1Tensor X7_X4plusX3_X0( X7_X4 );
-  X7_X4plusX3_X0 += X3_X0;
+  real64 X7_X4plusX3_X0[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( X7_X4 );
+  LvArray::tensorOps::add<3>(X7_X4plusX3_X0, X3_X0);
 
-  return 1.0/12.0 * ( Dot( X7_X1plusX6_X0, Cross( X7_X2, X3_X0 ) ) +
-                      Dot( X6_X0, Cross( X7_X2plusX5_X0, X7_X4 ) ) +
-                      Dot( X7_X1, Cross( X5_X0, X7_X4plusX3_X0 ) ) );
+  real64 X7_X2crossX3_X0[3];
+  LvArray::tensorOps::crossProduct(X7_X2crossX3_X0, X7_X2, X3_X0);
+
+  real64 X7_X2plusX5_X0crossX7_X4[3];
+  LvArray::tensorOps::crossProduct(X7_X2plusX5_X0crossX7_X4, X7_X2plusX5_X0, X7_X4);
+
+  real64 X5_X0crossX7_X4plusX3_X0[3];
+  LvArray::tensorOps::crossProduct(X5_X0crossX7_X4plusX3_X0, X5_X0, X7_X4plusX3_X0);
+
+  return 1.0/12.0 * ( LvArray::tensorOps::AiBi<3>( X7_X1plusX6_X0, X7_X2crossX3_X0          ) +
+                      LvArray::tensorOps::AiBi<3>( X6_X0,          X7_X2plusX5_X0crossX7_X4 ) +
+                      LvArray::tensorOps::AiBi<3>( X7_X1,          X5_X0crossX7_X4plusX3_X0 ) );
 }
 
 /**
