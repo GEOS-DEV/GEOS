@@ -22,7 +22,7 @@ This solution stage represents the most computationally expensive portion of a t
 Solution algorithms generally belong to two families of methods: direct methods and iterative methods.
 In GEOSX both options are made available wrapping around well-established open-source linear algebra libraries, namely
 `HYPRE <https://computation.llnl.gov/projects/hypre-scalable-linear-solvers-multigrid-methods>`__,
-`PETSC <https://www.mcs.anl.gov/petsc/>`__,
+`PETSc <https://www.mcs.anl.gov/petsc/>`__,
 `SuperLU <http://crd-legacy.lbl.gov/~xiaoye/SuperLU/>`__, and
 `Trilinos <https://trilinos.github.io/>`__.
 
@@ -67,3 +67,77 @@ Summary
 The following table summarizes the available input parameters for the linear solver.
 
 .. include:: ../../fileIO/schema/docs/LinearSolverParameters.rst
+
+***************************
+Preconditioner descriptions
+***************************
+
+This section provides a brief description of the available preconditioners.
+
+* **None**: no preconditioning is used, i.e., :math:`\mathsf{M}^{-1} = \mathsf{I}`.
+* **Jacobi**: diagonal scaling preconditioning, with :math:`\mathsf{M}^{-1} = \mathsf{D}^{-1}`, with :math:`\mathsf{D}` the matrix diagonal.
+  Further details can be found in:
+
+  - `HYPRE documentation <https://hypre.readthedocs.io/en/latest/api-sol-parcsr.html>`__,
+  - `PETSc documentation <https://www.mcs.anl.gov/petsc/petsc-current/docs/manualpages/PC/PCJACOBI.html>`__,
+  - `Trilinos documentation <https://docs.trilinos.org/dev/packages/ifpack/doc/html/classIfpack__PointRelaxation.html>`__.
+
+* **ILUK**: incomplete LU factorization with fill level k of the original matrix: :math:`\mathsf{M}^{-1} = \mathsf{U}^{-1} \mathsf{L}^{-1}`.
+  Further details can be found in:
+
+  - `HYPRE documentation <https://hypre.readthedocs.io/en/latest/solvers-hypre-ilu.html>`__,
+  - `PETSc documentation <https://www.mcs.anl.gov/petsc/petsc-current/docs/manualpages/PC/PCILU.html>`__,
+  - `Trilinos documentation <https://docs.trilinos.org/dev/packages/ifpack/doc/html/classIfpack__ILU.html>`__.
+
+* **ILUT**: a dual threshold incomplete LU factorization: :math:`\mathsf{M}^{-1} = \mathsf{U}^{-1} \mathsf{L}^{-1}`.
+  Further details can be found in:
+
+  - `HYPRE documentation <https://hypre.readthedocs.io/en/latest/solvers-hypre-ilu.html>`__,
+  - not yet available through PETSc interface,
+  - `Trilinos documentation <https://docs.trilinos.org/dev/packages/ifpack/doc/html/classIfpack__ILUT.html>`__.
+
+* **ICC**: incomplete Cholesky factorization of a symmetric positive definite matrix: :math:`\mathsf{M}^{-1} = \mathsf{L}^{-T} \mathsf{L}^{-1}`.
+  Further details can be found in:
+
+  - not yet available through *hypre* interface,
+  - `PETSc documentation <https://www.mcs.anl.gov/petsc/petsc-current/docs/manualpages/PC/PCICC.html>`__,
+  - `Trilinos documentation <https://docs.trilinos.org/dev/packages/ifpack/doc/html/classIfpack__IC.html>`__.
+
+* **AMG**: algebraic multigrid (can be classical or aggregation-based according to the specific package).
+  Further details can be found in:
+
+  - `HYPRE documentation <https://hypre.readthedocs.io/en/latest/solvers-boomeramg.html>`__,
+  - `PETSc documentation <https://www.mcs.anl.gov/petsc/petsc-current/docs/manualpages/PC/PCGAMG.html>`__,
+  - `Trilinos documentation <https://docs.trilinos.org/dev/packages/ml/doc/html/index.html>`__.
+
+* **MGR**: multigrid reduction. Available through *hypre* interface only. Specific documentation coming soon.
+  Further details can be found in `MGR documentation <https://hypre.readthedocs.io/en/latest/solvers-mgr.html>`__.
+
+* **Block**: custom preconditioner designed for a 2 x 2 block matrix.
+
+********************
+Block preconditioner
+********************
+
+This framework allows the user to design a block preconditioner for a 2 x 2 block matrix. The key component is the Schur complement
+:math:`\mathsf{S} = \mathsf{A}^{11} - \mathsf{A}^{10} \mathsf{\widetilde{A}}_{00}^{-1} \mathsf{A}_{01}` computation, that requires
+an approximation of the leading block. Currently, available options for :math:`\mathsf{\widetilde{A}}_{00}^{-1}` are:
+
+* diagonal with diagonal values (essentially, a Jacobi preconditioner);
+* diagonal with row sums as values (e.g., used for CPR-like preconditioners).
+
+Once the Schur complement is computed, to properly define the block preconditioner we need:
+
+* the preconditioner for :math:`\mathsf{A}_{00}` (any of the above listed single-matrix preconditioner);
+* the preconditioner for :math:`\mathsf{S}` (any of the above listed single-matrix preconditioner);
+* the application strategy. This can be:
+
+  * diagonal: none of the coupling terms is used;
+  * upper triangular: only the upper triangular coupling term is used;
+  * lower-upper triangular: both coupling terms are used.
+
+Moreover, a block scaling is available. Feasible options are:
+
+* none: keep the original scaling;
+* Frobenius norm: equilibrate Frobenius norm of the diagonal blocks;
+* user provided.
