@@ -19,28 +19,28 @@
 
 Version v0.2.0 -- Release date 2020-06-20
 ==========================================
-* Extensive updates to Data Repository.
-* Discretization:
+* Extensive updates to Data Repository
+* Discretization
   * Finite element interface
-    * Kernel launching interface looping abstraction.
+    * Kernel launching interface looping abstraction
     * Element formulations for 1st order:
-      * 8 node hexahedron
-      * 6 node wedge
-      * 5 node pyramid
-      * 4 node tetrahedron
-  * Finite volume stencils for classical (cell-centered) FVM formulation (TPFA, infrastructure support for MPFA, but currently 
+      * 8-node hexahedron
+      * 6-node wedge
+      * 5-node pyramid
+      * 4-node tetrahedron
+  * Finite volume stencils for cell-centered FVM formulations (TPFA, infrastructure support for MPFA, but currently 
     not implemented)
-  * Inner products for Hybrid FVM formulation (current support for TPFA and quasi-TPFA) 
+  * Inner products for Hybrid FVM formulations (current support for TPFA and quasi-TPFA) 
 * Physics Solvers
   * Solid mechanics explicit on GPU, implicit assembly on GPU
-  * Single phase flow (assembly on GPU)
+  * Single-phase flow (assembly on GPU)
     * Classical FVM and Hybrid FVM formulations
     * Porous matrix and DFM fracture flow
   * Compositional multiphase flow (assembly on GPU)
   * Multi-segmented wells for single phase and compositional multiphase flow (assembly on GPU)
     * Fully implicit isothermal overall composition formulation
-    * A library of fluid constitutive models:
-      * Equation-of-state based hydrocarbon compositional
+    * Fluid constitutive models:
+      * Equation-of-state hydrocarbon compositional
       * Three-phase extended black-oil
       * Two-phase CO2-brine  
   * Surface Generation
@@ -48,21 +48,20 @@ Version v0.2.0 -- Release date 2020-06-20
 * Embedded Discrete Fractures
   * Enriched finite element method for the discretization of the mechanics
   * Piecewise constant displacement jump enrichment
-  * Hydrofracture solver (Legacy GEOS approach)
+  * Hydrofracture solver (legacy GEOS approach)
   * Small strain aligned contact using Lagrange multipliers
-    * Discrete fracture model using a low order stabilized mixed finite element
+    * Discrete fracture model using a low-order stabilized mixed finite element method
   * Proppant Transport Solver
     * FVM formulation
-    * Modeling the following major physical processes:
+    * Major physical processes modeled:
       * Proppant-fluid slurry flow and multicomponent transport in fractures
       * Proppant gravitational settling
-      * Proppant bed build-up and development
-      space
+      * Proppant bed build-up and development space
 * Mesh Structure
-  * Introduced concept of extrinsic mesh data
-  * Fracture elements to represent FV cells in fracture
+  * Introduced the concept of extrinsic mesh data
+  * Fracture elements to represent FV cells in fractures
 * VTK output
-* Linear Algebra Interface layers for Hypre, Trilinos, Petsc
+* Linear algebra interface layers for Hypre, Trilinos, Petsc
   * Common interface for supported linear algebra packages
   * Krylov solvers (CG, GMRES, BiCGSTAB)
   * Preconditioners (algebraic multigrid, incomplete factorizations)
