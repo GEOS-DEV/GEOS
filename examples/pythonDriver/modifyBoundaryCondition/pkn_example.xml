@@ -26,6 +26,7 @@
       contactRelationName="fractureContact"
       fluidSolverName="SinglePhaseFlow"
       couplingTypeOption="FIM"
+      discretization="FE1"
       targetRegions="{Region2, Fracture}">
       <NonlinearSolverParameters
         newtonMaxIter="50"
@@ -72,15 +73,14 @@
     </SinglePhaseFVM>
 
     <SurfaceGenerator
-      solidMaterialNames="{rock}"
-      discretization="FE1"
       name="SurfaceGen"
       logLevel="0"
-      rockToughness="1e6"
       fractureRegion="Fracture"
-      targetRegions="{Region2}"
-      mpiCommOrder="1"
-      nodeBasedSIF="1"/>
+      targetRegions="{ Region2 }"
+      solidMaterialNames="{ rock }"
+      rockToughness="1e6"
+      nodeBasedSIF="1"
+      mpiCommOrder="1"/>
   </Solvers>
 
   <ElementRegions>
@@ -186,24 +186,10 @@
   </Events>
 
   <NumericalMethods>
-    <BasisFunctions>
-      <LagrangeBasis3
-        name="linearBasis"
-        degree="1"/>
-    </BasisFunctions>
-
-    <QuadratureRules>
-      <GaussQuadrature3
-        name="gaussian"
-        degree="2"/>
-    </QuadratureRules>
-
     <FiniteElements>
       <FiniteElementSpace
         name="FE1"
-        parentSpace="C3D8"
-        basis="linearBasis"
-        quadrature="gaussian"/>
+        order="1"/>
     </FiniteElements>
 
     <FiniteVolume>

@@ -40,7 +40,7 @@ def run_problem():
 
   # Run the code
   while pygeosx.run() != pygeosx.COMPLETED:
-    time = problem.getWrapper(time_key).value(False)
+    time = problem.get_wrapper(time_key).value(False)
     current_flow_rate = -5.0 - np.sin(np.pi * time / 60.0)
     wrapper.set_wrapper_to_value(problem, bc_key, current_flow_rate)
     if (wrapper.rank == 0):

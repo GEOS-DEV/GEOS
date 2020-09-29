@@ -11,9 +11,9 @@ rank = comm.Get_rank()
 
 
 def get_wrapper(problem, key, write_flag=False):
-  local_values = problem.getWrapper(key).value(write_flag)
+  local_values = problem.get_wrapper(key).value(write_flag)
   if not isinstance(local_values, np.ndarray):
-    local_values = local_values.toNumPy()
+    local_values = local_values.to_numpy()
   return local_values
 
 
@@ -35,10 +35,15 @@ def get_global_value_range(problem, key):
     local_min = np.zeros(N[1]) + 1e100
     local_max = np.zeros(N[1]) - 1e100
 
+  # For >1D arrays, keep the last dimension
+  query_axis = 0
+  if (len(N) > 2):
+    query_axis = tuple([ii for ii in range(0, len(N)-1)])
+
   # Ignore zero-length results
   if len(local_values):
-    local_min = np.amin(local_values, axis=0)
-    local_max = np.amax(local_values, axis=0)
+    local_min = np.amin(local_values, axis=query_axis)
+    local_max = np.amax(local_values, axis=query_axis)
 
   # Gather the results onto rank 0
   all_min = comm.gather(local_min, root=0)

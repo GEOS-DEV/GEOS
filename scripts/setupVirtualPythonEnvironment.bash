@@ -104,7 +104,9 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 source $STARTUP_SCRIPT
 pip install $DIR/../src/coreComponents/python/modules/geosx_xml_tools_package
 pip install $DIR/../src/coreComponents/python/modules/hdf5_wrapper_package
-
+pip install $DIR/../src/coreComponents/python/modules/pygeosx_tools_package
+# pip install $DIR/../src/coreComponents/python/modules/timehistory_package
+  
 
 # Link scripts in the GEOSX build dir
 if [ -n "$GEOSX_BUILD" ]
