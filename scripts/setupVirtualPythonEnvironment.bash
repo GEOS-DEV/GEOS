@@ -5,6 +5,7 @@ PYTHON_ROOT=/usr/tce/packages/python/python-3.6.4
 VIRTUAL_NAME=geosx
 OUTPUT_PATH=$HOME/Python/virtual
 MINICONDA_BUILD=""
+GEOSX_BUILD=""
 
 
 while [[ $# > 0 ]]
@@ -19,6 +20,10 @@ case $key in
     ;;
     -o|--output_path)
     OUTPUT_PATH="$2"
+    shift # past argument
+    ;;
+    -g|--geosx_build)
+    GEOSX_BUILD="$2"
     shift # past argument
     ;;
     -m|--miniconda_build)
@@ -36,6 +41,7 @@ case $key in
     echo "-p/--python_target \"Target parent python (default = system python3.6.4 on LC)\""
     echo "-o/--output_path \"Path to store the new python environment (default = ~/Python/virtual)\""
     echo "-v/--virtual_name \"Virtual environment name (default = geosx)\""
+    echo "-g/--geosx_build \"Path of GEOSX build directory for linking console scripts\""
     echo ""
     exit
     ;;
@@ -98,6 +104,23 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 source $STARTUP_SCRIPT
 pip install $DIR/../src/coreComponents/python/modules/geosx_xml_tools_package
 pip install $DIR/../src/coreComponents/python/modules/hdf5_wrapper_package
+
+
+# Link scripts in the GEOSX build dir
+if [ -n "$GEOSX_BUILD" ]
+then
+    ln -s $OUTPUT_PATH/$VIRTUAL_NAME/bin/preprocess_xml $GEOSX_BUILD/bin/preprocess_xml
+    ln -s $OUTPUT_PATH/$VIRTUAL_NAME/bin/format_xml $GEOSX_BUILD/bin/format_xml
+
+    if [ -f "$GEOSX_BUILD/lib/pygeosx.so" ]
+    then
+        # SITE_PACKAGES=$OUTPUT_PATH/$VIRTUAL_NAME/lib/*/site-packages
+        SITE_PACKAGES=$(find $OUTPUT_PATH/$VIRTUAL_NAME/lib/ -mindepth 1 -maxdepth 1 -type d)/site-packages
+        echo $SITE_PACKAGES
+        ln -s $GEOSX_BUILD/lib/pygeosx.so $SITE_PACKAGES/pygeosx.so
+        ln -s $GEOSX_BUILD/lib/libgeosx_core.so $SITE_PACKAGES/libgeosx_core.so
+    fi
+fi
 
 
 # Print user-info

@@ -26,7 +26,7 @@ def run_problem():
   problem = pygeosx.initialize(rank, sys.argv)
 
   # Apply initial conditions
-  pygeosx.applyInitialConditions()
+  pygeosx.apply_initial_conditions()
 
   # Rather than specifying the wrapper paths explicitly,
   # search for them using a set of filters

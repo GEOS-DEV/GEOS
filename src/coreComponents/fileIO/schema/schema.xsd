@@ -164,6 +164,7 @@
 			<xsd:element name="NumericalMethods" type="NumericalMethodsType" maxOccurs="1" />
 			<xsd:element name="Outputs" type="OutputsType" minOccurs="1" maxOccurs="1" />
 			<xsd:element name="Solvers" type="SolversType" minOccurs="1" maxOccurs="1" />
+			<xsd:element name="Tasks" type="TasksType" maxOccurs="1" />
 			<xsd:element name="Constitutive" type="ConstitutiveType" maxOccurs="1" />
 			<xsd:element name="ElementRegions" type="ElementRegionsType" maxOccurs="1" />
 			<xsd:element name="Included" type="IncludedType" maxOccurs="1" />

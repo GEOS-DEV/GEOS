@@ -23,7 +23,7 @@ def run_problem():
   fracture_aperture_key = wrapper.get_matching_wrapper_path(problem, ['Fracture', 'effectiveAperture'])
 
   # Apply initial conditions
-  pygeosx.applyInitialConditions()
+  pygeosx.apply_initial_conditions()
 
   # Setup monitor
   records = {fracture_location_key: {'label': 'Fracture Extents (m)',

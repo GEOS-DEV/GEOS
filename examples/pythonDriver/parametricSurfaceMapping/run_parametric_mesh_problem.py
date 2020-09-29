@@ -43,7 +43,7 @@ def run_problem():
     wrapper.set_wrapper_with_function(problem, ka, ka, surface_mapping, target_index=2)
 
   # Apply initial conditions
-  pygeosx.applyInitialConditions()
+  pygeosx.apply_initial_conditions()
 
   # Run the code
   while pygeosx.run() != pygeosx.COMPLETED:
