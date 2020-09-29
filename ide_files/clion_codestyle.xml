@@ -59,7 +59,7 @@
       <rule entity="ENUMERATOR" visibility="ANY" specifier="ANY" prefix="" style="PASCAL_CASE" suffix="" />
       <rule entity="TYPEDEF" visibility="ANY" specifier="ANY" prefix="" style="PASCAL_CASE" suffix="" />
       <rule entity="UNION" visibility="ANY" specifier="ANY" prefix="" style="PASCAL_CASE" suffix="" />
-      <rule entity="MEMBER_FUNCTION" visibility="ANY" specifier="ANY" prefix="" style="PASCAL_CASE" suffix="" />
+      <rule entity="MEMBER_FUNCTION" visibility="ANY" specifier="ANY" prefix="" style="CAMEL_CASE" suffix="" />
       <rule entity="MEMBER_FIELD" visibility="PROTECTED,PRIVATE" specifier="ANY" prefix="m_" style="CAMEL_CASE" suffix="" />
       <rule entity="MEMBER_FIELD" visibility="PUBLIC" specifier="ANY" prefix="" style="CAMEL_CASE" suffix="" />
       <rule entity="GLOBAL_FUNCTION" visibility="ANY" specifier="ANY" prefix="" style="PASCAL_CASE" suffix="" />

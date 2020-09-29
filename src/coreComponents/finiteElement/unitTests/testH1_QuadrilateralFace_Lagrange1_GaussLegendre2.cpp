@@ -53,7 +53,7 @@ void testKernelDriver()
     for( localIndex q=0; q<numQuadraturePoints; ++q )
     {
       real64 N[numNodes] = {0};
-      H1_QuadrilateralFace_Lagrange1_GaussLegendre2::shapeFunctionValues( q, N );
+      H1_QuadrilateralFace_Lagrange1_GaussLegendre2::calcN( q, N );
       for( localIndex a=0; a<numNodes; ++a )
       {
         viewN( q, a ) = N[a];

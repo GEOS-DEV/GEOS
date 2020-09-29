@@ -29,11 +29,6 @@ namespace geosx
 namespace SolidMechanicsLagrangianFEMKernels
 {
 
-#if defined(GEOSX_USE_CUDA)
-/// Macro variable to indicate whether or not to calculate the shape function
-/// derivatives in the kernel instead of using a pre-calculated value.
-#define CALCFEMSHAPE
-#endif
 /// If UPDATE_STRESS is undef, uses total displacement and stress is not
 /// updated at all.
 /// If UPDATE_STRESS 1, uses total displacement to and adds material stress
@@ -111,10 +106,6 @@ public:
     Base( elementSubRegion,
           finiteElementSpace,
           inputConstitutiveType ),
-#if !defined(CALCFEMSHAPE)
-    m_dNdX( elementSubRegion.dNdX() ),
-    m_detJ( elementSubRegion.detJ() ),
-#endif
     m_X( nodeManager.referencePosition()),
     m_u( nodeManager.totalDisplacement()),
     m_vel( nodeManager.velocity()),
@@ -139,13 +130,8 @@ public:
     GEOSX_HOST_DEVICE
     StackVariables():
       fLocal{ { 0.0} },
-      varLocal{ {0.0} }
-  #if defined(CALCFEMSHAPE)
-      ,
-      xLocal(),
-      dNdX(),
-      detJ()
-  #endif
+      varLocal{ {0.0} },
+      xLocal()
     {}
 
     /// C-array stack storage for the element local force
@@ -153,16 +139,14 @@ public:
 
     /// C-array stack storage for element local primary variable values.
     real64 varLocal[ numNodesPerElem ][ numDofPerTestSupportPoint ];
-  #if defined(CALCFEMSHAPE)
+
+#if !defined(CALC_FEM_SHAPE_IN_KERNEL)
+    /// Dummy
+    int xLocal;
+#else
     /// C-array stack storage for element local the nodal positions.
-    real64 xLocal[ numNodesPerElem ][ numDofPerTestSupportPoint ];
-
-    /// C-array stack storage for shape function derivatives at a point.
-    real64 dNdX[ numNodesPerElem ][ numDofPerTestSupportPoint ];
-
-    /// C-array stack storage for the jacobian of the parent space mapping.
-    real64 detJ;
-  #endif
+    real64 xLocal[ numNodesPerElem ][ 3 ];
+#endif
   };
   //***************************************************************************
 
@@ -182,7 +166,7 @@ public:
       localIndex const nodeIndex = m_elemsToNodes( k, a );
       for( int i=0; i<numDofPerTrialSupportPoint; ++i )
       {
-#if defined(CALCFEMSHAPE)
+#if defined(CALC_FEM_SHAPE_IN_KERNEL)
         stack.xLocal[ a ][ i ] = m_X[ nodeIndex ][ i ];
 #endif
 
@@ -196,7 +180,7 @@ public:
   }
 
   /**
-   * @copydoc geosx::finiteElement::KernelBase::quadraturePointStateUpdate
+   * @copydoc geosx::finiteElement::KernelBase::quadraturePointKernel
    *
    * ### ExplicitSmallStrain Description
    * Calculates the shape function derivatives, and the strain tensor. Then
@@ -206,39 +190,19 @@ public:
    */
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  void quadraturePointStateUpdate( localIndex const k,
-                                   localIndex const q,
-                                   StackVariables & stack ) const
+  void quadraturePointKernel( localIndex const k,
+                              localIndex const q,
+                              StackVariables & stack ) const
   {
-
-#if defined(CALCFEMSHAPE)
+//#define USE_JACOBIAN
+#if !defined( USE_JACOBIAN )
     real64 dNdX[ numNodesPerElem ][ 3 ];
-    real64 const detJ = FE_TYPE::shapeFunctionDerivatives( q, stack.xLocal, dNdX );
-
+    real64 const detJ = m_finiteElementSpace.template getGradN< FE_TYPE >( k, q, stack.xLocal, dNdX );
     /// Macro to substitute in the shape function derivatives.
-    #define DNDX dNdX
-
-    /// Macro to substitute the determinant of the jacobian transformation to the parent space.
-    #define DETJ detJ
-#else //defined(CALCFEMSHAPE)
-    /// @cond DOXYGEN_SKIP
-    #define DNDX m_dNdX[k][q]
-    #define DETJ m_detJ( k, q )
-    /// @endcond DOXYGEN_SKIP
-#endif //defined(CALCFEMSHAPE)
+    real64 strain[6] = {0};
+    FE_TYPE::symmetricGradient( dNdX, stack.varLocal, strain );
 
     real64 stressLocal[ 6 ] = {0};
-    real64 strain[6] = {0};
-    for( localIndex a = 0; a < numNodesPerElem; ++a )
-    {
-      strain[0] = strain[0] + DNDX[ a ][0] * stack.varLocal[ a ][0];
-      strain[1] = strain[1] + DNDX[ a ][1] * stack.varLocal[ a ][1];
-      strain[2] = strain[2] + DNDX[ a ][2] * stack.varLocal[ a ][2];
-      strain[3] = strain[3] + DNDX[ a ][2] * stack.varLocal[ a ][1] + DNDX[ a ][1] * stack.varLocal[ a ][2];
-      strain[4] = strain[4] + DNDX[ a ][2] * stack.varLocal[ a ][0] + DNDX[ a ][0] * stack.varLocal[ a ][2];
-      strain[5] = strain[5] + DNDX[ a ][1] * stack.varLocal[ a ][0] + DNDX[ a ][0] * stack.varLocal[ a ][1];
-    }
-
 #if UPDATE_STRESS == 2
     m_constitutiveUpdate.SmallStrain( k, q, strain );
 #else
@@ -248,20 +212,43 @@ public:
     for( localIndex c = 0; c < 6; ++c )
     {
 #if UPDATE_STRESS == 2
-      stressLocal[ c ] =  m_constitutiveUpdate.m_stress( k, q, c ) * (-DETJ);
+      stressLocal[ c ] =  -m_constitutiveUpdate.m_stress( k, q, c ) * detJ;
 #elif UPDATE_STRESS == 1
-      stressLocal[ c ] = ( stressLocal[ c ] + m_constitutiveUpdate.m_stress( k, q, c ) ) *(-DETJ);
+      stressLocal[ c ] = -( stressLocal[ c ] + m_constitutiveUpdate.m_stress( k, q, c ) ) * detJ;
 #else
-      stressLocal[ c ] *= -DETJ;
+      stressLocal[ c ] *= -detJ;
 #endif
     }
 
-    for( localIndex a=0; a< numNodesPerElem; ++a )
+    FE_TYPE::plus_gradNajAij( dNdX, stressLocal, stack.fLocal );
+
+#else
+    real64 invJ[3][3];
+    real64 const detJ = FE_TYPE::inverseJacobianTransformation( q, stack.xLocal, invJ );
+
+    real64 strain[6] = {0};
+    FE_TYPE::symmetricGradient( q, invJ, stack.varLocal, strain );
+
+    real64 stressLocal[ 6 ] = {0};
+#if UPDATE_STRESS == 2
+    m_constitutiveUpdate.SmallStrain( k, q, strain );
+#else
+    m_constitutiveUpdate.SmallStrainNoState( k, strain, stressLocal );
+#endif
+
+    for( localIndex c = 0; c < 6; ++c )
     {
-      stack.fLocal[ a ][ 0 ] = stack.fLocal[ a ][ 0 ] + stressLocal[ 0 ] * DNDX[ a ][ 0 ] + stressLocal[ 5 ] * DNDX[ a ][ 1 ] + stressLocal[ 4 ] * DNDX[ a ][ 2 ];
-      stack.fLocal[ a ][ 1 ] = stack.fLocal[ a ][ 1 ] + stressLocal[ 5 ] * DNDX[ a ][ 0 ] + stressLocal[ 1 ] * DNDX[ a ][ 1 ] + stressLocal[ 3 ] * DNDX[ a ][ 2 ];
-      stack.fLocal[ a ][ 2 ] = stack.fLocal[ a ][ 2 ] + stressLocal[ 4 ] * DNDX[ a ][ 0 ] + stressLocal[ 3 ] * DNDX[ a ][ 1 ] + stressLocal[ 2 ] * DNDX[ a ][ 2 ];
+#if UPDATE_STRESS == 2
+      stressLocal[ c ] =  m_constitutiveUpdate.m_stress( k, q, c ) * detJ;
+#elif UPDATE_STRESS == 1
+      stressLocal[ c ] = ( stressLocal[ c ] + m_constitutiveUpdate.m_stress( k, q, c ) ) * DETJ;
+#else
+      stressLocal[ c ] *= DETJ;
+#endif
     }
+
+    FE_TYPE::plus_gradNajAij( q, invJ, stressLocal, stack.fLocal );
+#endif
   }
 
   /**
@@ -314,11 +301,7 @@ public:
       kernelComponent.setup( k, stack );
       for( integer q=0; q<KERNEL_TYPE::numQuadraturePointsPerElem; ++q )
       {
-        kernelComponent.quadraturePointStateUpdate( k, q, stack );
-
-        kernelComponent.quadraturePointJacobianContribution( k, q, stack );
-
-        kernelComponent.quadraturePointResidualContribution( k, q, stack );
+        kernelComponent.quadraturePointKernel( k, q, stack );
       }
       kernelComponent.complete( k, stack );
     } );
@@ -327,12 +310,6 @@ public:
 
 
 protected:
-  #if !defined(CALCFEMSHAPE)
-  /// The shape function derivative for each quadrature point.
-  arrayView4d< real64 const > const m_dNdX;
-  /// The parent->physical jacobian determinant for each quadrature point.
-  arrayView2d< real64 const > const m_detJ;
-  #endif
   /// The array containing the nodal position array.
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const m_X;
 
@@ -354,9 +331,6 @@ protected:
 
 
 };
-#undef CALCFEMSHAPE
-#undef DNDX
-#undef DETJ
 #undef UPDATE_STRESS
 
 } // namespace SolidMechanicsLagrangianFEMKernels
