@@ -116,9 +116,10 @@ then
     then
         # SITE_PACKAGES=$OUTPUT_PATH/$VIRTUAL_NAME/lib/*/site-packages
         SITE_PACKAGES=$(find $OUTPUT_PATH/$VIRTUAL_NAME/lib/ -mindepth 1 -maxdepth 1 -type d)/site-packages
-        echo $SITE_PACKAGES
         ln -s $GEOSX_BUILD/lib/pygeosx.so $SITE_PACKAGES/pygeosx.so
         ln -s $GEOSX_BUILD/lib/libgeosx_core.so $SITE_PACKAGES/libgeosx_core.so
+        ln -s $GEOSX_BUILD/lib/pylvarray.so $SITE_PACKAGES/pylvarray.so
+        # ln -s $GEOSX_BUILD/lib/libgeosx_core.so $SITE_PACKAGES/libgeosx_core.so
     fi
 fi
 
