@@ -13,21 +13,31 @@
  */
 
 /**
- * @file SolidMechanicsLagrangianSSLEKernels.hpp
+ * @file PetscSuiteSparse.cpp
  */
 
-#pragma once
-
-#include "common/DataTypes.hpp"
-#include "common/TimingMacros.hpp"
-#include "constitutive/ConstitutiveBase.hpp"
-#include "finiteElement/Kinematics.h"
-#include "rajaInterface/GEOS_RAJA_Interface.hpp"
+#include "PetscSuiteSparse.hpp"
+#include <petsc.h>
+#include <superlu_ddefs.h>
 
 namespace geosx
 {
 
-namespace SolidMechanicsLagrangianSSLEKernels
-{} // namespace SolidMechanicsLagrangianSSLEKernels
+void SuiteSparseSetFromOptions( PetscMatrix const & matrix,
+                                LinearSolverParameters const & params )
+{
+  GEOSX_UNUSED_VAR( matrix );
 
-} // namespace geosx
+  // Set options.
+  if( params.logLevel > 0 )
+  {
+    PetscOptionsSetValue( nullptr, "-mat_umfpack_prl", "6" );
+  }
+  else
+  {
+    PetscOptionsSetValue( nullptr, "-mat_umfpack_prl", "1" );
+  }
+  PetscOptionsSetValue( nullptr, "-mat_umfpack_ordering", "BEST" );
+}
+
+}

@@ -68,6 +68,15 @@ struct LinearSolverResult
   {
     return status == Status::Success;
   }
+
+  /**
+   * @brief Check whether the last solve brokedown.
+   * @return @p true if last solve brokedown, @p false otherwise
+   */
+  bool breakdown() const
+  {
+    return status == Status::Breakdown;
+  }
 };
 
 }

@@ -122,6 +122,9 @@ FiniteElementDiscretization::
   dNdX.resizeWithoutInitializationOrDestruction( elementSubRegion->size(), numQuadraturePointsPerElem, numNodesPerElem, 3 );
   detJ.resize( elementSubRegion->size(), numQuadraturePointsPerElem );
 
+  finiteElement.setGradNView( dNdX.toViewConst() );
+  finiteElement.setDetJView( detJ.toViewConst() );
+
   for( localIndex k = 0; k < elementSubRegion->size(); ++k )
   {
     real64 xLocal[numNodesPerElem][3];
@@ -139,7 +142,7 @@ FiniteElementDiscretization::
     for( localIndex q = 0; q < numQuadraturePointsPerElem; ++q )
     {
       real64 dNdXLocal[numNodesPerElem][3];
-      detJ( k, q ) = finiteElement.shapeFunctionDerivatives( q, xLocal, dNdXLocal );
+      detJ( k, q ) = finiteElement.calcGradN( q, xLocal, dNdXLocal );
 
       for( localIndex b = 0; b < numNodesPerElem; ++b )
       {

@@ -807,7 +807,14 @@ void SolverBase::SolveSystem( DofManager const & dofManager,
 //  ++count;
 
 
-  GEOSX_WARNING_IF( !m_linearSolverResult.success(), "Linear solution failed" );
+  if( params.stopIfError )
+  {
+    GEOSX_ERROR_IF( m_linearSolverResult.breakdown(), "Linear solution breakdown -> simulation STOP" );
+  }
+  else
+  {
+    GEOSX_WARNING_IF( !m_linearSolverResult.success(), "Linear solution failed" );
+  }
 }
 
 bool SolverBase::CheckSystemSolution( DomainPartition const & GEOSX_UNUSED_PARAM( domain ),

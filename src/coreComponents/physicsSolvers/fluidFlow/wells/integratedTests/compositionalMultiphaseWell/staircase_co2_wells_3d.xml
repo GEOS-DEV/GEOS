@@ -36,7 +36,7 @@
       fluidNames="{ fluid1 }"
       relPermNames="{ relperm }"
       wellTemperature="368.15"
-      maxCompFractionChange="0.2"      
+      maxCompFractionChange="0.2"
       useMass="1">
       <WellControls
         name="wellControls1"
