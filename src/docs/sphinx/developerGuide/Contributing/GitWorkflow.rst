@@ -17,7 +17,7 @@ Before going further, you should `test your ssh connection <https://help.github.
 If it fails (perhaps because of your institution's proxy),
 you may consider the `personal access token option <https://help.github.com/en/github/authenticating-to-github/creating-a-personal-access-token-for-the-command-line>`_ as an alternative.
 
-Downloading The Code
+Downloading the Code
 =======================================
 
 Once you have created an ``ssh-key`` and you have added it to your `Github` account you can download
@@ -54,7 +54,7 @@ The remaining branch types are described in the following subsections.
    (i.e. useless) history.
    Furthermore, as would be expected, having many active feature branches resulted
    in a fairly wide/spaghetti history.
-   As some point in the development process, we choose try switch primarily to a 
+   As some point in the development process, we chose to switch primarily to a 
    squash merge approach which results in a linear develop history.
    While this is fixes the spaghetti history, we do potentially lose important
    commit history during the development process.
@@ -200,7 +200,7 @@ be preserved, we have to option to perform a merge commit in with the PR is merg
 into ``develop``, with the addition of a merge commit, thus maintaining the commit history.
 
 
-Branching Off of a Branch
+Branching off of a Branch
 ===========================
 During the development processes, sometimes it is appropriate to create a branch
 off of a branch. 

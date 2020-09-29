@@ -54,7 +54,7 @@ Version v0.2.0 -- Release date 2020-06-20
   * Proppant Transport Solver
     * FVM formulation
     * Modeling the following major physical processes:
-      * Proppant-fluid slurry flow and mutlicomponent trasnport in fractures
+      * Proppant-fluid slurry flow and multicomponent transport in fractures
       * Proppant gravitational settling
       * Proppant bed build-up and development
       space
