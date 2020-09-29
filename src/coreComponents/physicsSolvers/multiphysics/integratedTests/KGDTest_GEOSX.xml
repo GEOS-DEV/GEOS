@@ -137,7 +137,6 @@
     <FiniteElements>
       <FiniteElementSpace
         name="FE1"
-
         order="1"/>
     </FiniteElements>
 
