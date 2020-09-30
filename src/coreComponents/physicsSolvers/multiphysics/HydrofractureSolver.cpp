@@ -1654,8 +1654,8 @@ void HydrofractureSolver::UpdateDeformationForCoupling( DomainPartition * const 
       {
         temp += u[faceToNodeMap( kf0, a )];
         temp -= u[faceToNodeMap( kf1, a )];
-	std::cout << "Node " << faceToNodeMap( kf0, a ) << " : " << u[faceToNodeMap( kf0, a )] <<  std::endl;
-	std::cout << "Node " << faceToNodeMap( kf1, a ) << " : " << u[faceToNodeMap( kf1, a )] <<  std::endl;
+	//std::cout << "Node " << faceToNodeMap( kf0, a ) << " : " << u[faceToNodeMap( kf0, a )] <<  std::endl;
+	//std::cout << "Node " << faceToNodeMap( kf1, a ) << " : " << u[faceToNodeMap( kf1, a )] <<  std::endl;
       }
 
       // TODO this needs a proper contact based strategy for aperture
@@ -1771,10 +1771,10 @@ void HydrofractureSolver::UpdateDeformationForCoupling( DomainPartition * const 
       //TJ: use the displacement gap at the newly split node pair for the tip deltaVolume
       real64 refDisp = std::abs( u(refNodeIndex,0) - u(myChildIndex[refNodeIndex],0) );
 
-      std::cout  << " disp " << refNodeIndex               << " = " << u(refNodeIndex,0)
-	         << ", disp " << myChildIndex[refNodeIndex] << " = " << u(myChildIndex[refNodeIndex],0)
-	                      << std::endl;
-      std::cout << "refDisp = " << refDisp << std::endl;
+      //std::cout  << " disp " << refNodeIndex               << " = " << u(refNodeIndex,0)
+//	         << ", disp " << myChildIndex[refNodeIndex] << " = " << u(myChildIndex[refNodeIndex],0)
+//	                      << std::endl;
+      //std::cout << "refDisp = " << refDisp << std::endl;
 
       real64 const shearModulus = domain->GetGroup("Constitutive")
 			                  ->GetGroup("rock")
@@ -3065,7 +3065,7 @@ HydrofractureSolver::
           //    is nonlinear. Therefore, we need to rewrite dAper_dU and dRdU
           for(auto const & trailingFace : trailingFaces)
           {
-            //TJ: elmt ei is a tip element, do the modification on dRdU
+            //TJ: elmt ei2 is a tip element, do the modification on dRdU
             if ( (elemsToFaces[ei2][0] == trailingFace) || (elemsToFaces[ei2][1] == trailingFace) )
             {
 //              std::cout << "elmt " << ei2 << " is a tip element." << std::endl;
@@ -3192,8 +3192,8 @@ HydrofractureSolver::
 	      //TJ: we find the pair of tip and channel elements
 	      if(tempCount == 1)
 	      {
-		std::cout << "tipElmt: " << tipElmt << ", "
-			  << "channelElmt: " << channelElmt << std::endl;
+		//std::cout << "tipElmt: " << tipElmt << ", "
+		//	  << "channelElmt: " << channelElmt << std::endl;
 		R1Tensor NbarTip = faceNormal[elemsToFaces[tipElmt][0]];
 		NbarTip -= faceNormal[elemsToFaces[tipElmt][1]];
 		NbarTip.Normalize();
@@ -3206,7 +3206,7 @@ HydrofractureSolver::
 		    localIndex node = faceToNodeMap( elemsToFaces[tipElmt][kf], a );
 		    if ( std::find( tipNodes.begin(), tipNodes.end(), node ) == tipNodes.end() )
 		    {
-		      std::cout << "Node " << node << " : " << disp[node] <<  std::endl;
+		      //std::cout << "Node " << node << " : " << disp[node] <<  std::endl;
 		      R1Tensor temp = disp[node];
 		      averageGap += (-pow(-1,kf)) * Dot( temp, NbarTip)/2 ;
 		    }
@@ -3303,6 +3303,12 @@ HydrofractureSolver::
 			  dispDofNumber[faceToNodeMap( elemsToFaces[tipElmt][kf], a )] + i;
 			dGap_dU = -1.0/2.0 * pow(-1, kf) * NbarTip[i];
 			dRdU( kf * 3 * numNodesPerFace + 3 * a + i ) = sign * term * dGap_dU;
+
+		        real64 dAccumulationResidualdApertureTip = dens[tipElmt][0] * area[tipElmt];
+	                coeff = 3.0/5.0 * pow(Betam, -3.0/2.0) * pow(Eprime/mup/velocity, 0.5)/meshSize;
+  	                real64 dGap_dU_tip = 5.0/4.0 * coeff * pow(averageGap, 3.0/2.0) * (-pow(-1, kf)) * NbarTip[i];
+  	                real64 dAper_dU_tip = contactRelation->dEffectiveAperture_dAperture( aperture[tipElmt] ) * dGap_dU_tip;
+  	                dRdU( kf * 3 * numNodesPerFace + 3 * a + i ) = sign * dAccumulationResidualdApertureTip * dAper_dU_tip;
 		      }
 		    }
 		    else
@@ -3318,7 +3324,7 @@ HydrofractureSolver::
 		} // for (localIndex kf = 0; kf < 2; ++kf)
 	      } // if(tempCount == 1) we find the pair of tip and channel elmts
 	    } // if (viscosity >= 2.0e-3) viscosity dominated
-          } // if tipLoc > 2.0*meshSize
+          } // if tipLoc > 1.0*meshSize
           matrix10->add( elemDOF,
                          nodeDOF,
                          dRdU.data(),

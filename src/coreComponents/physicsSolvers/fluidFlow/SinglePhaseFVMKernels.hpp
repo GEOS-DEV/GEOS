@@ -32,6 +32,9 @@
 #include "managers/FieldSpecification/SourceFluxBoundaryCondition.hpp"
 #include "physicsSolvers/multiphysics/HydrofractureSolver.hpp"
 #include "managers/FieldSpecification/FieldSpecificationManager.hpp"
+#include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
+
+
 
 namespace geosx
 {
@@ -460,6 +463,11 @@ struct FluxKernel
     FaceElementSubRegion const * subRegion = elementSubRegions->GetGroup< FaceElementSubRegion >( "default" );
     FaceElementSubRegion::FaceMapType const & faceMap = subRegion->faceList();
 
+    arrayView1d< real64 const > const & volume = subRegion->getElementVolume();
+    arrayView1d< real64 const > const & deltaVolume = subRegion->getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::deltaVolumeString );
+    arrayView1d< real64 const > const & densOld = subRegion->getReference< array1d< real64 > >
+                              ( SinglePhaseBase::viewKeyStruct::densityOldString );
+
     real64 const shearModulus = domain->GetGroup("Constitutive")
 			                  ->GetGroup("rock")
 			                  ->getReference<real64>("defaultShearModulus");
@@ -645,7 +653,7 @@ struct FluxKernel
 	    {
 	      localIndex tipElmt = ei[tipElmtIndex];
 	      localIndex channelElmt = ei[channelElmtIndex];
-	      std::cout << "Elmts pair " << ei[0] << " and " << ei[1] << std::endl;
+	      //std::cout << "Elmts pair " << ei[0] << " and " << ei[1] << std::endl;
 	      std::cout << "The tip element is " << tipElmt << std::endl;
 	      std::cout << "The channel element is " << channelElmt << std::endl;
 
@@ -668,13 +676,13 @@ struct FluxKernel
 		  localIndex node = faceToNodeMap( elemsToFaces[tipElmt][kf], a );
 		  if ( std::find( tipNodes.begin(), tipNodes.end(), node ) == tipNodes.end() )
 		  {
-		    std::cout << "Node " << node << " : " << disp[node] <<  std::endl;
+		    //std::cout << "Node " << node << " : " << disp[node] <<  std::endl;
 		    R1Tensor temp = disp[node];
 		    averageGap += (-pow(-1,kf)) * Dot( temp, NbarTip)/2 ;
 		  }
 		}
 	      }
-	      std::cout << "averageGap = " << averageGap << std::endl;
+	      //std::cout << "averageGap = " << averageGap << std::endl;
 
 	      localIndex const edgeIndex = fractureConnectorsToEdges[iconn];
 	      real64 const edgeLength = edgeManager->calculateLength( edgeIndex, X ).L2_Norm();
@@ -694,6 +702,15 @@ struct FluxKernel
 	      real64 modifiedFluxVal;
 	      modifiedFluxVal = dt * mobility * edgeLength/12.0 * pow(averageGap, 3.0) * gradP;
 
+	      // flux value in the channel elmt is the fluid increment in the tip elmt
+              real64 densNewTip = dens[tipElmt][0];
+              real64 densOldTip = densOld[tipElmt];
+              real64 dDens_dPresTip = dDens_dPres[tipElmt][0];
+              real64 volumeTip = volume[tipElmt];
+              real64 deltaVolumeTip = deltaVolume[tipElmt];
+              //std::cout << densNewTip << densOldTip << dDens_dPresTip << volumeTip << deltaVolumeTip << std::endl;
+	      modifiedFluxVal = densNewTip * (volumeTip + deltaVolumeTip) - densOldTip * volumeTip;
+
 	      std::cout << "Flux value = " << modifiedFluxVal << std::endl;
     //            std::cout << "Tip elmt index = " << tipElmtIndex << std::endl;
     //            std::cout << "Channel elmt index = " << channelElmtIndex << std::endl;
@@ -706,7 +723,8 @@ struct FluxKernel
 	      fluxVal = 0.0;
 
 	      real64 modifieddFlux_dP[2] = {0, 0};
-	      modifieddFlux_dP[k_up] = dt * dMobility_dP * edgeLength/12.0 * pow(averageGap, 3.0) * gradP;
+	      //modifieddFlux_dP[k_up] = dt * dMobility_dP * edgeLength/12.0 * pow(averageGap, 3.0) * gradP;
+	      modifieddFlux_dP[tipElmtIndex] = dDens_dPresTip * ( volumeTip + deltaVolumeTip );
 	      //std::cout << "localFluxJocobianWrtPressure = " << modifieddFlux_dP[k_up] << std::endl;
 
 
@@ -724,7 +742,7 @@ struct FluxKernel
 	      dFlux_dAper[1] = 0.0;
 	    } // if(tempCount == 1) the edge connecting the channel and the tip elements
 	  } //if (viscosity >= 2.0e-3) // Viscosity-dominated case
-        } // tipLoc > 2.0*meshSize
+        } // tipLoc > 1.0*meshSize
 
         flux[k[0]] += fluxVal;
         flux[k[1]] -= fluxVal;
