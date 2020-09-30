@@ -219,7 +219,7 @@ LinearElasticTransverseIsotropicUpdates::
 {
   SmallStrain( k, q, Ddt );
   real64 temp[ 6 ];
-  LvArray::tensorOps::AikSymBklAjl< 3 >( temp, Rot, m_stress[ k ][ q ] );
+  LvArray::tensorOps::Rij_eq_AikSymBklAjl< 3 >( temp, Rot, m_stress[ k ][ q ] );
   LvArray::tensorOps::copy< 6 >( m_stress[ k ][ q ], temp );
 }
 

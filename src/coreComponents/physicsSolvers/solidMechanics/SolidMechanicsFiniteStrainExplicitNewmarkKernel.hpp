@@ -173,7 +173,7 @@ public:
     LvArray::tensorOps::invert< 3 >( fInv, F );
 
     // chain rule: calculate dv/dx^(n+1/2) = dv/dX * dX/dx^(n+1/2)
-    LvArray::tensorOps::AikBkj< 3, 3, 3 >( Ldt, dUhatdX, fInv );
+    LvArray::tensorOps::Rij_eq_AikBkj< 3, 3, 3 >( Ldt, dUhatdX, fInv );
 
     // calculate gradient (end of step)
     LvArray::tensorOps::copy< 3, 3 >( F, dUhatdX );
@@ -188,7 +188,7 @@ public:
     m_constitutiveUpdate.HypoElastic( k, q, Dadt, Rot );
 
     real64 P[ 3 ][ 3 ];
-    LvArray::tensorOps::symAikBjk< 3 >( P, m_constitutiveUpdate.m_stress[k][q].toSliceConst(), fInv );
+    LvArray::tensorOps::Rij_eq_symAikBjk< 3 >( P, m_constitutiveUpdate.m_stress[k][q].toSliceConst(), fInv );
     LvArray::tensorOps::scale< 3, 3 >( P, -detJ * detF );
 
     FE_TYPE::plus_gradNajAij( dNdX, P, stack.fLocal );
