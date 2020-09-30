@@ -125,14 +125,19 @@ bool BoundedPlane::IsCoordInObject( const R1Tensor & coord ) const
     LvArray::tensorOps::subtract< 3 >( abVec, m_points[0] );
     LvArray::tensorOps::subtract< 3 >( adVec, m_points[0] );
 
-    // 2. Check if it is inside the rectangle
-    if( LvArray::tensorOps::AiBi< 3 >( vec, abVec ) < 0  || LvArray::tensorOps::AiBi< 3 >( vec, abVec )
-        > LvArray::tensorOps::AiBi< 3 >( abVec, abVec )  )
-      isInside = false;
+    real64 const abDotProd = LvArray::tensorOps::AiBi< 3 >( vec, abVec );
+    real64 const adDotProd = LvArray::tensorOps::AiBi< 3 >( vec, adVec );
 
-    if( LvArray::tensorOps::AiBi< 3 >( vec, adVec ) < 0  || LvArray::tensorOps::AiBi< 3 >( vec, adVec )
-        > LvArray::tensorOps::AiBi< 3 >( adVec, adVec )  )
+    // 2. Check if it is inside the rectangle
+    if( abDotProd < 0 || abDotProd > LvArray::tensorOps::l2NormSquared< 3 >( abVec ) )
+    {
       isInside = false;
+    }
+
+    if( adDotProd < 0 || adDotProd > LvArray::tensorOps::l2NormSquared< 3 >( adVec ) )
+    {
+      isInside = false;
+    }
 
   }
   else

@@ -114,13 +114,8 @@ void PAMELAMeshGenerator::GenerateMesh( DomainPartition * const domain )
   Group & nodeSets = nodeManager->sets();
   SortedArray< localIndex > & allNodes  = nodeSets.registerWrapper< SortedArray< localIndex > >( std::string( "all" ) )->reference();
 
-  R1Tensor xMax( std::numeric_limits< real64 >::min(),
-                 std::numeric_limits< real64 >::min(),
-                 std::numeric_limits< real64 >::min());
-
-  R1Tensor xMin( std::numeric_limits< real64 >::max(),
-                 std::numeric_limits< real64 >::max(),
-                 std::numeric_limits< real64 >::max());
+  real64 xMax[3] = { std::numeric_limits< real64 >::min() };
+  real64 xMin[3] = { std::numeric_limits< real64 >::max() };
 
   double zReverseFactor = 1.;
   if( m_isZReverse )
@@ -149,8 +144,9 @@ void PAMELAMeshGenerator::GenerateMesh( DomainPartition * const domain )
       }
     }
   }
-  xMax -= xMin;
-  meshBody->setGlobalLengthScale( std::fabs( xMax.L2_Norm() ) );
+
+  LvArray::tensorOps::subtract< 3 >( xMax, xMin );
+  meshBody->setGlobalLengthScale( LvArray::tensorOps::l2Norm< 3 >( xMax ) );
 
   // First loop which iterate on the regions
   array1d< globalIndex > globalIndexRegionOffset( polyhedronPartMap.size() +1 );
