@@ -15,6 +15,7 @@ At the end of this tutorial you will know:
   - how to import external mesh information and properties,
   - how to run a specific solver (here, flow) in a specific region only,
   - the basic method of using boxes to set up boundary conditions,
+  - how to use *TableFunction* to import fields varying in time and/or space,
   - how to control output frequency and export results for visualization.
 
 
@@ -221,7 +222,7 @@ The next step is to specify fields, including:
 You may note :
 
  - All static parameters and initial value fields must have ``initialCondition`` field set to ``1``.
- - The ``objectPath`` refers to the ``ÈlementRegion`` in which the field has his value,
+ - The ``objectPath`` refers to the ``ElementRegion`` in which the field has his value,
  - The ``setName`` field points to the box previously defined to apply the fields,
  - ``name`` and ``fieldName`` have a different meaning: ``name`` is used to give a name to the XML block. This ``name`` must be unique. ``fieldName`` is the name of the field register in GEOSX. This value has to be set according to the expected input fields of each solver.
 
@@ -242,7 +243,7 @@ Here, we write files in a format natively readable by Paraview under the tar *VT
   :end-before: <!-- SPHINX_FIELD_CASE_OUTPUT_END -->
 
 .. note::
-  The ``name`` keyword defines the name of the output file.
+  The ``name`` keyword defines the name of the output directory.
 
 .. _Functions_tag_field_case:
 
@@ -250,7 +251,7 @@ Here, we write files in a format natively readable by Paraview under the tar *VT
 Using Functions to specify dependent properties
 ------------------------------------------------
 
-Eventually, one can define varying properties using ``TableFunction`` under the **Functions** tag :
+Eventually, one can define varying properties using ``TableFunction`` (:ref:`FunctionManager`) under the **Functions** tag:
 
 .. literalinclude:: ../../../../coreComponents/physicsSolvers/multiphysics/integratedTests/FieldCaseTutorial1.xml
   :language: xml
@@ -262,8 +263,12 @@ noticed that ``sourceTerm`` was bound to a ``TableFunction`` named *timeInj* und
 **FieldSpecifications** tag definition. The initial pressure is set based on the values
 contained in the table formed by the files which are specified. In particular,
 the files *xlin.geos*, *ylin.geos* and *zlin.geos* define a regular meshing of
-the bounding box containing the reservoir. The *pressure.geos* file defines the values of the pressure at those points.
+the bounding box containing the reservoir. The *pressure.geos* file then defines the values of the pressure at those points.
 
+We proceed in a similar manner as for *pressure.geos* to map an heterogeneous permeability field (here the 5th layer of the SPE 10 test case) onto our unstructured grid. This mapping will though use the nearest point interpolation rules.
+
+.. image:: mapping_perm.png
+   :width: 600px
 
 .. note::
   The varying values imposed in *values* or passed through *voxelFile* are premultiplied by the *scale* attribute from **FieldSpecifications**.
@@ -310,7 +315,7 @@ results. The initial pressure field in the reservoir region is provided below as
 
 Since, in the event block, we have asked for the output to be generated at regular
 intervals throughout the simulation, we can also visualize the pressure
-distribution at different simulation times.
+distribution at different simulation timesi, showing the variation in the injection control.
 
 .. image:: pressureField_2e8.png
    :width: 600px
