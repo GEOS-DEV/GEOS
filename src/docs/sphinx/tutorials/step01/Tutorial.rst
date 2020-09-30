@@ -10,7 +10,7 @@ In this tutorial, we use a single-phase flow solver (see :ref:`SinglePhaseFlow`)
 from GEOSX to solve for pressure propagation on a simple 10x10x10 cube mesh
 with an anisotropic permeability.
 A pressure source term will be set in one corner of the cube, and
-a sink term will be set in the opposite corner of the cube.
+a pressure sink term will be set in the opposite corner of the cube.
 
 **Objectives**
 
@@ -123,7 +123,7 @@ Here, we use a Two-Point Flux Approximation (TPFA) finite volume discretization 
 used in finite volume methods.
 
 We have also specified a collection of fluids, rocks, and
-target regions of the mesh on which this solver will be applied (``Region2``).
+target regions of the mesh on which this solver will be applied (``mainRegion``).
 Curly brackets are used in GEOSX inputs to indicate collections of values (sets or lists).
 The curly brackets used here are necessary, even if the collection contains a single value.
 
@@ -262,12 +262,12 @@ To use this scheme, we need to supply more details in the **NumericalMethods** e
   :end-before: <!-- SPHINX_TUT_INT_HEX_NUM_METHODS_END -->
 
 Briefly, the ``fieldName`` attribute specifies which property will be used for flux computations,
-the``boundaryFieldName`` attribute specifies that for Dirichlet boundary conditions,
-the pressure at the element face value is used.
+the ``boundaryFieldName`` attribute specifies that for Dirichlet boundary conditions,
+the pressure value at the element face is used.
 Last, the ``coefficientName`` attribute is used for the stencil transmissibility computations.
 
-Note that in GEOSX, we are distinguish solvers from numerical methods,
-and their parameterizations are independent. We can thus solve have
+Note that in GEOSX, there is a difference between solvers and numerical methods,
+hence their parameterizations are independent. We can thus solve have
 multiple solvers using the same numerical scheme, but with different tolerances, for instance.
 
 
@@ -502,6 +502,9 @@ For instance, here are reported diagonal pressure profile from sink to source bl
 .. image:: IntHexMovie.gif
    :width: 500px
 
+
+.. note::
+  The data extraction to plot this pressure profil can be done using the *Time History* feature as shown in :ref:`TutorialDeadOilBottomLayersSPE10` 
 
 ------------------------------------
 To go further
