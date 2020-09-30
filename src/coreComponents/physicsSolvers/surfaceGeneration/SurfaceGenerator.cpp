@@ -1932,14 +1932,14 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
         std::cout<<"  Looping over all nodes on element, and correcting node<->element maps:"<<std::endl;
 
 
-      R1Tensor elemCenter = {0.0, 0.0, 0.0};
+      real64 elemCenter[3] = {0.0, 0.0, 0.0};
       {
         // loop over all nodes on element
         if( getLogLevel() > 1 )
           std::cout<<"    m_ElementToNodeMap = ( ";
         for( localIndex a=0; a<elemsToNodes.size( 1 ); ++a )
         {
-          elemCenter += X[ elemsToNodes[elemIndex][a] ];
+          LvArray::tensorOps::add< 3 >( elemCenter, X[ elemsToNodes[elemIndex][a] ] );
           // if the node was just split
           if( elemsToNodes[elemIndex][a] == nodeID )
           {
@@ -1955,7 +1955,7 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
           else if( getLogLevel() > 1 )
             std::cout<<elemsToNodes[elemIndex][a]<<", ";
         }
-        elemCenter /= elemsToNodes.size( 1 );
+        LvArray::tensorOps::scale< 3 >( elemCenter , 1/elemsToNodes.size( 1 ) );
         if( getLogLevel() > 1 )
           std::cout<<")"<<std::endl;
 
@@ -2933,7 +2933,7 @@ void SurfaceGenerator::CalculateNodeAndFaceSIF( DomainPartition & domain,
               if( elementsToNodes( ei, n ) == nodeIndex )
               {
                 R1Tensor temp;
-                R1Tensor xEle = elementCenter[ei];
+                real64 xEle[ 3 ]  = LVARRAY_TENSOROPS_INIT_LOCAL_3 ( elementCenter[ei] );
 
                 SolidMechanicsLagrangianFEMKernels::ExplicitKernel::
                   CalculateSingleNodalForce( ei,
@@ -2945,19 +2945,19 @@ void SurfaceGenerator::CalculateNodeAndFaceSIF( DomainPartition & domain,
                                              temp );
 
                 //wu40: the nodal force need to be weighted by Young's modulus and possion's ratio.
-                temp *= youngsModulus;
-                temp /= (1 - poissonRatio * poissonRatio);
+                LvArray::tensorOps::scale< 3 >( temp, youngsModulus );
+                LvArray::tensorOps::scale< 3 >( temp, 1/(1 - poissonRatio * poissonRatio) );
 
-                xEle -= nodePosition;
+                LvArray::tensorOps::subtract< 3 >( xEle, nodePosition );
                 if( LvArray::tensorOps::AiBi< 3 >( xEle, faceNormalVector ) > 0 ) //TODO: check the sign.
                 {
                   nElemEachSide[0] += 1;
-                  nodeDisconnectForce += temp;
+                  LvArray::tensorOps::add< 3 >( nodeDisconnectForce, temp );
                 }
                 else
                 {
                   nElemEachSide[1] +=1;
-                  nodeDisconnectForce -= temp;
+                  LvArray::tensorOps::subtract< 3 >( nodeDisconnectForce, temp );
                 }
               }
             }
@@ -2965,7 +2965,7 @@ void SurfaceGenerator::CalculateNodeAndFaceSIF( DomainPartition & domain,
 
           if( nElemEachSide[0]>=1 && nElemEachSide[1]>=1 )
           {
-            nodeDisconnectForce /= 2.0;
+            LvArray::tensorOps::scale< 3 >( nodeDisconnectForce, 0.5 );
           }
 
           //Find the trailing node according to the node index and face index
@@ -3026,8 +3026,8 @@ void SurfaceGenerator::CalculateNodeAndFaceSIF( DomainPartition & domain,
             theOtherTrailingNodeID = childNodeIndices[tralingNodeID];
           }
 
-          trailingNodeDisp = displacement[theOtherTrailingNodeID];
-          trailingNodeDisp -= displacement[tralingNodeID];
+          LvArray::tensorOps::copy< 3 >( trailingNodeDisp, displacement[theOtherTrailingNodeID] );
+          LvArray::tensorOps::subtract< 3 >( trailingNodeDisp, displacement[tralingNodeID] );
 
           //Calculate average young's modulus and poisson ratio for fext.
           R1Tensor fExternal[2];
@@ -3050,8 +3050,8 @@ void SurfaceGenerator::CalculateNodeAndFaceSIF( DomainPartition & domain,
             averageYoungsModulus /= nodeToRegionMap.sizeOfArray( nodeID );
             averagePoissonRatio /= nodeToRegionMap.sizeOfArray( nodeID );
 
-            fExternal[i] = fext[nodeID];
-            fExternal[i] *= averageYoungsModulus / (1 - averagePoissonRatio * averagePoissonRatio);
+            LvArray::tensorOps::copy< 3 >( fExternal[i], fext[nodeID] );
+            LvArray::tensorOps::scale< 3 >( fExternal[i], averageYoungsModulus / (1 - averagePoissonRatio * averagePoissonRatio) );
           }
 
           //TODO: The sign of fext here is opposite to the sign of fFaceA in function "CalculateEdgeSIF".
@@ -3097,7 +3097,7 @@ void SurfaceGenerator::CalculateNodeAndFaceSIF( DomainPartition & domain,
               LvArray::tensorOps::subtract< 3 >( v0, faceCenter[ trailingFaceIndex ] );
 
               if( LvArray::tensorOps::AiBi< 3 >( v0, vecTip ) < 0 )
-                vecTip *= -1.0;
+                LvArray::tensorOps::scale< 3 >( vecTip, -1.0 );
 
               tipForce[0] = LvArray::tensorOps::AiBi< 3 >( nodeDisconnectForce, vecTipNorm ) - (LvArray::tensorOps::AiBi< 3 >( fExternal[0], vecTipNorm ) - LvArray::tensorOps::AiBi< 3 >( fExternal[1], vecTipNorm ))/2.0;
               tipForce[1] = LvArray::tensorOps::AiBi< 3 >( nodeDisconnectForce, vecTip ) - (LvArray::tensorOps::AiBi< 3 >( fExternal[0], vecTip ) - LvArray::tensorOps::AiBi< 3 >( fExternal[1], vecTip ))/2.0;
@@ -3280,7 +3280,7 @@ real64 SurfaceGenerator::CalculateEdgeSIF( DomainPartition & domain,
 
   //TODO: wu40: There is a function for EdgeVector in EdgeManager.cpp but has been commented.
   R1Tensor vecEdge = edgeManager.calculateLength( edgeID, X );
-  real64 const edgeLength = vecEdge.Normalize();
+  real64 const edgeLength = LvArray::tensorOps::l2Norm< 3 >( vecEdge );
 
   LvArray::tensorOps::crossProduct(vecTip, vecTipNorm, vecEdge);
   LvArray::tensorOps::normalize< 3 >(vecTip);
@@ -3288,13 +3288,13 @@ real64 SurfaceGenerator::CalculateEdgeSIF( DomainPartition & domain,
   LvArray::tensorOps::subtract<3> (v0, faceCenter[faceA]);
 
   if( LvArray::tensorOps::AiBi< 3 >( v0, vecTip ) < 0 )
-    vecTip *= -1.0;
+    LvArray::tensorOps::scale< 3 >( vecTip, -1.0 );
 
   real64 tipCrossTipNorm[ 3 ];
   LvArray::tensorOps::crossProduct( tipCrossTipNorm , vecTip, vecTipNorm );
   if( LvArray::tensorOps::AiBi< 3 >( tipCrossTipNorm , vecEdge ) < 0 )
   {
-    vecTipNorm *= -1;
+    LvArray::tensorOps::scale< 3 >( vecTipNorm, -1 );
     faceA = faceInvolved[1];
     faceAp = faceInvolved[0];
   }
@@ -3469,15 +3469,15 @@ real64 SurfaceGenerator::CalculateEdgeSIF( DomainPartition & domain,
 
           real64 udist;
           R1Tensor x0_x1( X[edgeToNodeMap[edgeID][0]] ), x0_xTrailingEdge( xTrailingEdge );
-          x0_x1 -= X[edgeToNodeMap( edgeID, 1 )];
-          x0_x1.Normalize();
-          x0_xTrailingEdge -= X[edgeToNodeMap( edgeID, 1 )];
+          LvArray::tensorOps::subtract< 3 >( x0_x1, X[edgeToNodeMap( edgeID, 1 )] );
+          LvArray::tensorOps::normalize< 3 >( x0_x1 );
+          LvArray::tensorOps::subtract< 3 >( x0_xTrailingEdge, X[edgeToNodeMap( edgeID, 1 )] );
           udist = LvArray::tensorOps::AiBi< 3 >( x0_x1, x0_xTrailingEdge );
 
           if( udist <= edgeLength && udist > 0.0 )
           {
             R1Tensor vEdge = edgeManager.calculateLength( iedge, X );
-            vEdge.Normalize();
+            LvArray::tensorOps::normalize< 3 >( vEdge );
 
             real64 cosEdge = std::fabs( LvArray::tensorOps::AiBi< 3 >( vEdge, vecEdge ));
             if( cosEdge > maxCosAngle )
@@ -3566,19 +3566,19 @@ real64 SurfaceGenerator::CalculateEdgeSIF( DomainPartition & domain,
       {
         if( j != edgeToNodeMap( edgeID, 0 ) && j != edgeToNodeMap( edgeID, 1 ))
         {
-          tipFaceDisplacement[i] += displacement[j];
+          LvArray::tensorOps::add< 3 >( tipFaceDisplacement[i], displacement[j] );
         }
       }
 
-      tipFaceDisplacement[i] /= (faceToNodeMap.sizeOfArray( faceID ) - 2);
+      LvArray::tensorOps::scale< 3 >( tipFaceDisplacement[i], 1/(faceToNodeMap.sizeOfArray( faceID ) - 2) );
     }
-    tipDisplacement = tipFaceDisplacement[1];
-    tipDisplacement -= tipFaceDisplacement[0];
+    LvArray::tensorOps::copy< 3 >( tipDisplacement, tipFaceDisplacement[1] );
+    LvArray::tensorOps::subtract< 3 >( tipDisplacement, tipFaceDisplacement[0] );
   }
   else
   {
-    tipDisplacement = displacement[openNodeID[1]];
-    tipDisplacement -= displacement[openNodeID[0]];
+    LvArray::tensorOps::copy< 3 >( tipDisplacement, displacement[openNodeID[1]] );
+    LvArray::tensorOps::subtract< 3 >(tipDisplacement, displacement[openNodeID[0]] );
   }
 
   tipOpening[0] = LvArray::tensorOps::AiBi< 3 >( tipDisplacement, vecTipNorm );
@@ -3717,9 +3717,9 @@ int SurfaceGenerator::CalculateElementForcesOnEdge( DomainPartition & domain,
 
       real64 udist;
       R1Tensor x0_x1( X[edgeToNodeMap[edgeID][0]] ), x0_xEle( xEle );
-      x0_x1 -= X[edgeToNodeMap[edgeID][1]];
-      x0_x1.Normalize();
-      x0_xEle -= X[edgeToNodeMap[edgeID][1]];
+      LvArray::tensorOps::subtract< 3 > ( x0_x1, X[edgeToNodeMap[edgeID][1]] );
+      LvArray::tensorOps::normalize< 3 >( x0_x1 );
+      LvArray::tensorOps::subtract< 3 >( x0_xEle, X[edgeToNodeMap[edgeID][1]] );
       udist = LvArray::tensorOps::AiBi< 3 >( x0_x1, x0_xEle );
 
       localIndex const numQuadraturePoints = detJ[er][esr].size( 1 );
@@ -3738,7 +3738,7 @@ int SurfaceGenerator::CalculateElementForcesOnEdge( DomainPartition & domain,
           if( elementsToNodes( ei, n ) == nodeID )
           {
             R1Tensor temp;
-            xEle = elemCenter[er][esr][ei]; //For C3D6 element type, elementsToNodes map may include
+            LvArray::tensorOps::copy< 3 >( xEle, elemCenter[er][esr][ei] ); //For C3D6 element type, elementsToNodes map may include
                                             // repeated indices and the following may run multiple
                                             // times for the same element.
 
@@ -3752,16 +3752,16 @@ int SurfaceGenerator::CalculateElementForcesOnEdge( DomainPartition & domain,
                                          stress[er][esr][m_solidMaterialFullIndex],
                                          temp );
 
-            temp *= youngsModulus;
-            temp /= (1 - poissonRatio * poissonRatio);
+            LvArray::tensorOps::scale< 3 >( temp, youngsModulus );
+            LvArray::tensorOps::scale< 3 >( temp, 1/(1 - poissonRatio * poissonRatio) );
 
             if( !calculatef_u )
             {
-              xEle -= xEdge;
+              LvArray::tensorOps::subtract< 3 >( xEle, xEdge );
               if( LvArray::tensorOps::AiBi< 3 >( xEle, vecTipNorm ) > 0 )
               {
                 nElemEachSide[0] += 1;
-                fNode += temp;
+                LvArray::tensorOps::add< 3 >( fNode, temp );
 
                 //wu40: for debug purpose
 //                std::cout << "ElementID: " << iEle << ", NodeID: " << nodeID << std::endl;
@@ -3772,7 +3772,7 @@ int SurfaceGenerator::CalculateElementForcesOnEdge( DomainPartition & domain,
               else
               {
                 nElemEachSide[1] +=1;
-                fNode -= temp;
+                LvArray::tensorOps::subtract< 3 > ( fNode, temp );
 
                 //wu40: for debug purpose
 //                std::cout << "ElementID: " << iEle << ", NodeID: " << nodeID << std::endl;
@@ -3783,7 +3783,7 @@ int SurfaceGenerator::CalculateElementForcesOnEdge( DomainPartition & domain,
             }
             else
             {
-              fNode += temp;
+              LvArray::tensorOps::add< 3 >( fNode, temp );
 
               //wu40: for debug purpose
 //              std::cout << "ElementID: " << iEle << ", NodeID: " << nodeID << std::endl;
@@ -3806,14 +3806,14 @@ int SurfaceGenerator::CalculateElementForcesOnEdge( DomainPartition & domain,
     // compensation for f_u.
     if( calculatef_u && nodeIndices.size() == 1 && !threeNodesPinched )
     {
-      fNode *= 2.0;
+      LvArray::tensorOps::scale< 3 >( fNode, 2.0 );
     }
   }
 
   if( !calculatef_u )
   {
     if( nElemEachSide[0]>=1 && nElemEachSide[1]>=1 )
-      fNode /= 2.0;
+      LvArray::tensorOps::scale< 3 >( fNode, 0.5 );
     //We have contributions from both sides. The two sizes are the two sides of the fracture plane.  If the fracture
     // face
     // is on domain boundary, it's possible to have just one side.
@@ -3905,10 +3905,10 @@ void SurfaceGenerator::MarkRuptureFaceFromNode ( const localIndex nodeIndex,
       {
         if( m_tipEdges.contains( edgeIndex ))
         {
-          R1Tensor direction( fc );
+          R1Tensor direction = LVARRAY_TENSOROPS_INIT_LOCAL_3( fc );
           R1Tensor const edgeCenter = edgeManager.calculateCenter( edgeIndex, X );
-          direction -= edgeCenter;
-          direction.Normalize();
+          LvArray::tensorOps::subtract< 3 >( direction, edgeCenter );
+          LvArray::tensorOps::normalize< 3 >( direction );
           faceToughness = std::fabs( LvArray::tensorOps::AiBi< 3 >( direction, KIC[faceIndex] ));
 
           faceSIFToToughnessRatio.emplace_back( SIFonFace[faceIndex]/faceToughness );
@@ -4039,18 +4039,21 @@ void SurfaceGenerator::MarkRuptureFaceFromEdge ( localIndex const edgeID,
       //Get the vector in the face and normal to the edge.
       //wu40: there is a function in GEOS for this calculation. Maybe it's worth to have a function in GEOSX too.
       real64 udist;
-      R1Tensor x0_x1( X[edgeToNodeMap[edgeID][0]] ), x0_fc( fc ), ptPrj;
-      x0_x1 -= X[edgeToNodeMap[edgeID][1]];
-      x0_x1.Normalize();
-      x0_fc -= X[edgeToNodeMap[edgeID][1]];
+      R1Tensor x0_x1 = LVARRAY_TENSOROPS_INIT_LOCAL_3( X[edgeToNodeMap[edgeID][0]] );
+      R1Tensor x0_fc = LVARRAY_TENSOROPS_INIT_LOCAL_3( fc );
+      R1Tensor ptPrj;
+
+      LvArray::tensorOps::subtract< 3 >( x0_x1, X[edgeToNodeMap[edgeID][1]] );
+      LvArray::tensorOps::normalize< 3 >( x0_x1 );
+      LvArray::tensorOps::subtract< 3 >( x0_fc, X[edgeToNodeMap[edgeID][1]] );
       udist = LvArray::tensorOps::AiBi< 3 >( x0_x1, x0_fc );
 
-      ptPrj = x0_x1;
-      ptPrj *= udist;
-      ptPrj += X[edgeToNodeMap[edgeID][1]];
-      vecFace = fc;
-      vecFace -= ptPrj;
-      vecFace.Normalize();
+      LvArray::tensorOps::copy< 3 >( ptPrj, x0_x1 );
+      LvArray::tensorOps::scale< 3 >( ptPrj, udist );
+      LvArray::tensorOps::add< 3 >( ptPrj, X[edgeToNodeMap[edgeID][1]] );
+      LvArray::tensorOps::copy< 3 >( vecFace, fc );
+      LvArray::tensorOps::subtract< 3 >( vecFace, ptPrj );
+      LvArray::tensorOps::normalize< 3 >( vecFace);
 
 //      if( LvArray::tensorOps::AiBi< 3 >( vecTip, vecFace ) > cos( m_maxTurnAngle ))
       {
@@ -4069,9 +4072,9 @@ void SurfaceGenerator::MarkRuptureFaceFromEdge ( localIndex const edgeID,
         SIFonFace[iface] = cos( thetaFace / 2.0 ) *
                            ( SIF_I[edgeID] * cos( thetaFace / 2.0 ) * cos( thetaFace / 2.0 ) - 1.5 * SIF_II[edgeID] * sin( thetaFace ) );
 
-        R1Tensor direction( fc );
-        direction -= edgeCenter;
-        direction.Normalize();
+        R1Tensor direction = LVARRAY_TENSOROPS_INIT_LOCAL_3( fc );
+        LvArray::tensorOps::subtract< 3 >( direction, edgeCenter );
+        LvArray::tensorOps::normalize< 3 >( direction );
         real64 faceToughness = std::fabs( LvArray::tensorOps::AiBi< 3 >( direction, KIC[iface] ));
 
         highestSIF = std::max( highestSIF, SIFonFace[iface]/faceToughness );
@@ -4087,10 +4090,12 @@ void SurfaceGenerator::MarkRuptureFaceFromEdge ( localIndex const edgeID,
     for( localIndex i = 0; i < eligibleFaces.size(); ++i )
     {
       localIndex iface = eligibleFaces[i];
-      R1Tensor fc, direction( edgeCenter );
-      fc = faceCenter[iface];
-      direction -= fc;
-      direction.Normalize();
+      R1Tensor fc;
+      R1Tensor direction = LVARRAY_TENSOROPS_INIT_LOCAL_3( edgeCenter );
+
+      LvArray::tensorOps::copy< 3 >( fc, faceCenter[iface] );
+      LvArray::tensorOps::subtract< 3 >( direction, fc );
+      LvArray::tensorOps::normalize< 3 >( direction );
       real64 faceToughness = std::fabs( LvArray::tensorOps::AiBi< 3 >( direction, KIC[iface] ));
 
       real64 splitabilityScore = SIFonFace[iface] - lowestSIF * faceToughness;
@@ -4352,9 +4357,9 @@ real64 SurfaceGenerator::MinimumToughnessOnEdge( const localIndex edgeID,
   R1Tensor faceCenter( 0.0 );
 
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X = nodeManager.referencePosition();
-  edgeCenter += X[edgeManager.nodeList( edgeID, 0 )];
-  edgeCenter += X[edgeManager.nodeList( edgeID, 1 )];
-  edgeCenter *= 0.5;
+  LvArray::tensorOps::add< 3 >( edgeCenter, X[edgeManager.nodeList( edgeID, 0 )] );
+  LvArray::tensorOps::add< 3 >( edgeCenter, X[edgeManager.nodeList( edgeID, 1 )] );
+  LvArray::tensorOps::scale< 3 >( edgeCenter, 0.5 );
 
   arrayView1d< R1Tensor const > const & KIC = faceManager.getExtrinsicData< extrinsicMeshData::K_IC >();
   ArrayOfArraysView< localIndex const > const & faceToNodes = faceManager.nodeList().toViewConst();
@@ -4364,9 +4369,9 @@ real64 SurfaceGenerator::MinimumToughnessOnEdge( const localIndex edgeID,
     faceCenter = 0.0;
     for( localIndex a=0; a<numFaceNodes; ++a )
     {
-      faceCenter += X[ faceToNodes[iface][a] ];
+      LvArray::tensorOps::add< 3 >( faceCenter, X[ faceToNodes[iface][a] ] );
     }
-    faceCenter /= numFaceNodes;
+    LvArray::tensorOps::scale< 3 >( faceCenter, 1/numFaceNodes );
 
     real64 direction[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( faceCenter );
     LvArray::tensorOps::subtract< 3 >( direction, edgeCenter );
@@ -4495,8 +4500,8 @@ SurfaceGenerator::calculateRuptureRate( FaceElementRegion & faceElementRegion,
           real64 const deltaRuptureTime = fabs( ruptureTime( faceElem0 ) - ruptureTime( faceElem1 ));
           if( deltaRuptureTime > 1.0e-14 * (ruptureTime( faceElem0 ) + ruptureTime( faceElem1 )) )
           {
-            R1Tensor distance = elemCenter[ faceElem0 ];
-            distance -= elemCenter[ faceElem1 ];
+            R1Tensor distance =  LVARRAY_TENSOROPS_INIT_LOCAL_3 ( elemCenter[ faceElem0 ] );
+            LvArray::tensorOps::subtract< 3 >( distance, elemCenter[ faceElem1 ] );
             real64 const pairwiseRuptureRate = 1.0 / deltaRuptureTime;
             if( m_faceElemsRupturedThisSolve.count( faceElem0 ) )
             {
