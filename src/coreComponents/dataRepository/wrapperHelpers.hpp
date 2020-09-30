@@ -575,7 +575,7 @@ void populateMCArray( T const &,
 
 template< typename T, int NDIM, int USD >
 std::enable_if_t< ( NDIM > 1 ) &&
-                  ( std::is_arithmetic< T >::value || traits::is_tensorT< T > ),
+                  ( std::is_arithmetic< T >::value ), // || traits::is_tensorT< T > ),
                   std::unique_ptr< Array< T, NDIM - 1 > > >
 averageOverSecondDim( ArrayView< T const, NDIM, USD > const & var )
 {
