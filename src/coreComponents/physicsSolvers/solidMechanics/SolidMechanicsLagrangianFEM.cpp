@@ -307,6 +307,13 @@ void SolidMechanicsLagrangianFEM::updateIntrinsicNodalData( DomainPartition * co
 
   arrayView1d< integer const > const & nodeGhostRank = nodes.ghostRank();
 
+  // to fill m_sendOrReceiveNodes and m_nonSendOrReceiveNodes, we first insert
+  // the nodes one-by-one in the following std::sets. Then, when all the nodes
+  // have been collected, we do a batch insertion into m_sendOrReceiveNodes and
+  // m_nonSendOrReceiveNodes
+  std::set< localIndex > tmpSendOrReceiveNodes;
+  std::set< localIndex > tmpNonSendOrReceiveNodes;
+
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > >
   rho = elementRegionManager.ConstructMaterialViewAccessor< array2d< real64 >, arrayView2d< real64 const > >( "density",
                                                                                                               targetRegionNames(),
@@ -350,20 +357,26 @@ void SolidMechanicsLagrangianFEM::updateIntrinsicNodalData( DomainPartition * co
 
           for( localIndex a=0; a<elementSubRegion.numNodesPerElement(); ++a )
           {
-            m_targetNodes.insert( elemsToNodes[k][a] );
             if( nodeGhostRank[elemsToNodes[k][a]] >= -1 )
             {
-              m_sendOrReceiveNodes.insert( elemsToNodes[k][a] );
+              tmpSendOrReceiveNodes.insert( elemsToNodes[k][a] );
             }
             else
             {
-              m_nonSendOrReceiveNodes.insert( elemsToNodes[k][a] );
+              tmpNonSendOrReceiveNodes.insert( elemsToNodes[k][a] );
             }
           }
         }
       } );
     } );
   } );
+  m_sendOrReceiveNodes.insert( tmpSendOrReceiveNodes.begin(),
+                               tmpSendOrReceiveNodes.end() );
+  m_nonSendOrReceiveNodes.insert( tmpNonSendOrReceiveNodes.begin(),
+                                  tmpNonSendOrReceiveNodes.end() );
+  m_targetNodes = m_sendOrReceiveNodes;
+  m_targetNodes.insert( m_nonSendOrReceiveNodes.begin(),
+                        m_nonSendOrReceiveNodes.end() );
 }
 
 void SolidMechanicsLagrangianFEM::InitializePostInitialConditions_PreSubGroups( Group * const problemManager )
@@ -372,13 +385,19 @@ void SolidMechanicsLagrangianFEM::InitializePostInitialConditions_PreSubGroups( 
   MeshLevel & mesh = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
 
   NodeManager & nodes = *mesh.getNodeManager();
-  //FaceManager * const faceManager = mesh.getFaceManager();
 
   ElementRegionManager & elementRegionManager = *mesh.getElemManager();
 
   arrayView1d< real64 > & mass = nodes.getReference< array1d< real64 > >( keys::Mass );
 
   arrayView1d< integer const > const & nodeGhostRank = nodes.ghostRank();
+
+  // to fill m_sendOrReceiveNodes and m_nonSendOrReceiveNodes, we first insert
+  // the nodes one-by-one in the following std::sets. Then, when all the nodes
+  // have been collected, we do a batch insertion into m_sendOrReceiveNodes and
+  // m_nonSendOrReceiveNodes
+  std::set< localIndex > tmpSendOrReceiveNodes;
+  std::set< localIndex > tmpNonSendOrReceiveNodes;
 
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > >
   rho = elementRegionManager.ConstructMaterialViewAccessor< array2d< real64 >, arrayView2d< real64 const > >( "density",
@@ -393,6 +412,9 @@ void SolidMechanicsLagrangianFEM::InitializePostInitialConditions_PreSubGroups( 
     {
       SortedArray< localIndex > & elemsAttachedToSendOrReceiveNodes = getElemsAttachedToSendOrReceiveNodes( elementSubRegion );
       SortedArray< localIndex > & elemsNotAttachedToSendOrReceiveNodes = getElemsNotAttachedToSendOrReceiveNodes( elementSubRegion );
+
+      std::set< localIndex > tmpElemsAttachedToSendOrReceiveNodes;
+      std::set< localIndex > tmpElemsNotAttachedToSendOrReceiveNodes;
 
       elemsAttachedToSendOrReceiveNodes.setName(
         "SolidMechanicsLagrangianFEM::m_elemsAttachedToSendOrReceiveNodes["
@@ -433,30 +455,42 @@ void SolidMechanicsLagrangianFEM::InitializePostInitialConditions_PreSubGroups( 
           bool isAttachedToGhostNode = false;
           for( localIndex a=0; a<elementSubRegion.numNodesPerElement(); ++a )
           {
-            m_targetNodes.insert( elemsToNodes[k][a] );
             if( nodeGhostRank[elemsToNodes[k][a]] >= -1 )
             {
               isAttachedToGhostNode = true;
-              m_sendOrReceiveNodes.insert( elemsToNodes[k][a] );
+              tmpSendOrReceiveNodes.insert( elemsToNodes[k][a] );
             }
             else
             {
-              m_nonSendOrReceiveNodes.insert( elemsToNodes[k][a] );
+              tmpNonSendOrReceiveNodes.insert( elemsToNodes[k][a] );
             }
           }
 
           if( isAttachedToGhostNode )
           {
-            elemsAttachedToSendOrReceiveNodes.insert( k );
+            tmpElemsAttachedToSendOrReceiveNodes.insert( k );
           }
           else
           {
-            elemsNotAttachedToSendOrReceiveNodes.insert( k );
+            tmpElemsNotAttachedToSendOrReceiveNodes.insert( k );
           }
         }
       } );
+      elemsAttachedToSendOrReceiveNodes.insert( tmpElemsAttachedToSendOrReceiveNodes.begin(),
+                                                tmpElemsAttachedToSendOrReceiveNodes.end() );
+      elemsNotAttachedToSendOrReceiveNodes.insert( tmpElemsNotAttachedToSendOrReceiveNodes.begin(),
+                                                   tmpElemsNotAttachedToSendOrReceiveNodes.end() );
+
     } );
   } );
+
+  m_sendOrReceiveNodes.insert( tmpSendOrReceiveNodes.begin(),
+                               tmpSendOrReceiveNodes.end() );
+  m_nonSendOrReceiveNodes.insert( tmpNonSendOrReceiveNodes.begin(),
+                                  tmpNonSendOrReceiveNodes.end() );
+  m_targetNodes = m_sendOrReceiveNodes;
+  m_targetNodes.insert( m_nonSendOrReceiveNodes.begin(),
+                        m_nonSendOrReceiveNodes.end() );
 }
 
 
