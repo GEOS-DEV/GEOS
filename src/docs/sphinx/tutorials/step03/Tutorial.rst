@@ -265,7 +265,7 @@ contained in the table formed by the files which are specified. In particular,
 the files *xlin.geos*, *ylin.geos* and *zlin.geos* define a regular meshing of
 the bounding box containing the reservoir. The *pressure.geos* file then defines the values of the pressure at those points.
 
-We proceed in a similar manner as for *pressure.geos* to map an heterogeneous permeability field (here the 5th layer of the SPE 10 test case) onto our unstructured grid. This mapping will though use the nearest point interpolation rules.
+We proceed in a similar manner as for *pressure.geos* to map an heterogeneous permeability field (here the 5th layer of the SPE 10 test case) onto our unstructured grid. This mapping will use a nearest point interpolation rule.
 
 .. image:: mapping_perm.png
    :width: 600px
@@ -315,7 +315,7 @@ results. The initial pressure field in the reservoir region is provided below as
 
 Since, in the event block, we have asked for the output to be generated at regular
 intervals throughout the simulation, we can also visualize the pressure
-distribution at different simulation timesi, showing the variation in the injection control.
+distribution at different simulation times, showing the variation in the injection control.
 
 .. image:: pressureField_2e8.png
    :width: 600px
