@@ -373,9 +373,9 @@ void FluxKernel::
                                     ElementViewConst< arrayView1d< real64 const > > const & dMob_dPres,
                                     ElementViewConst< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM( aperture0 ),
                                     ElementViewConst< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM( aperture ),
-                                    ElementViewConst< arrayView1d< R1Tensor const > > const & GEOSX_UNUSED_PARAM( transTMultiplier ),
-                                    R1Tensor const,
-                                    real64 const,
+                                    ElementViewConst< arrayView2d< real64 const > > const & GEOSX_UNUSED_PARAM( transTMultiplier ),
+                                    real64 const ( & GEOSX_UNUSED_PARAM( gravityVector ) )[3],
+                                    real64 const GEOSX_UNUSED_PARAM( meanPermCoeff ),
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
                                     ElementViewConst< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM( s ),
                                     ElementViewConst< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM( dSdAper ),
@@ -458,8 +458,8 @@ void FluxKernel::
                                 ElementViewConst< arrayView1d< real64 const > > const & dMob_dPres,
                                 ElementViewConst< arrayView1d< real64 const > > const & aperture0,
                                 ElementViewConst< arrayView1d< real64 const > > const & aperture,
-                                ElementViewConst< arrayView1d< R1Tensor const > > const & transTMultiplier,
-                                R1Tensor const gravityVector,
+                                ElementViewConst< arrayView2d< real64 const > > const & transTMultiplier,
+                                real64 const ( & gravityVector )[3],
                                 real64 const meanPermCoeff,
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
                                 ElementViewConst< arrayView1d< real64 const > > const & s,
@@ -513,7 +513,7 @@ void FluxKernel::
 
         localIndex const ei = sei[iconn][k];
 
-        if( fabs( Dot( cellCenterToEdgeCenters[iconn][k], gravityVector )) > TINY )
+        if( fabs( LvArray::tensorOps::AiBi< 3 >( cellCenterToEdgeCenters[iconn][k], gravityVector ) ) > TINY )
         {
           effectiveWeights[k] *= transTMultiplier[er][esr][ei][1];
         }

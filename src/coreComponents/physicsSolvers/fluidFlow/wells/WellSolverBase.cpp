@@ -228,7 +228,7 @@ void WellSolverBase::PrecomputeData( DomainPartition & domain )
     forAll< serialPolicy >( perforationData->size(), [=]( localIndex const iperf )
     {
       // precompute the depth of the perforations
-      perfGravCoef[iperf] = Dot( perfLocation[iperf], gravVector );
+      perfGravCoef[iperf] = LvArray::tensorOps::AiBi< 3 >( perfLocation[iperf], gravVector );
     } );
 
 

@@ -843,7 +843,7 @@ void SinglePhaseBase::ResetViewsPrivate( ElementRegionManager const & elemManage
   m_dVisc_dPres.setName( getName() + "/accessors/" + SingleFluidBase::viewKeyStruct::dVisc_dPresString );
 
   m_transTMultiplier.clear();
-  m_transTMultiplier = elemManager.ConstructArrayViewAccessor< R1Tensor, 1 >( viewKeyStruct::transTMultString );
+  m_transTMultiplier = elemManager.ConstructArrayViewAccessor< real64, 2 >( viewKeyStruct::transTMultString );
   m_transTMultiplier.setName( getName() + "/accessors/" + viewKeyStruct::transTMultString );
 }
 
