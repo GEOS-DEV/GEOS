@@ -907,9 +907,18 @@ FluxKernel::Launch( localIndex er,
                                                                        elemCenter[ei],
                                                                        elemVolume[ei],
                                                                        perm,
-                                                                       2,
+                                                                       2.0,
                                                                        lengthTolerance,
                                                                        transMatrix );
+
+    // HybridFVMInnerProduct::TPFACellInnerProductKernel::Compute< NF >( nodePosition,
+    //                                                                   faceToNodes,
+    //                                                                   elemToFaces[ei],
+    //                                                                   elemCenter[ei],
+    //                                                                   perm,
+    //                                                                   lengthTolerance,
+    //                                                                   transMatrix );
+
 
     // perform flux assembly in this element
     CompositionalMultiphaseHybridFVMKernels::AssemblerKernel::Compute< NF, NC, NP >( er, esr, ei,

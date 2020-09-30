@@ -544,11 +544,12 @@ struct ResidualNormKernel
           if( !onBoundary && isInTarget )
           {
             // compute a normalizer to obtain a dimensionless norm
-            real64 totalMobOld = 0.0;
+            real64 sumMobOld = 0.0;
             for( localIndex ip = 0; ip < numPhases; ++ip )
             {
-              totalMobOld += phaseMobOld[er][esr][ei][ip];
+              sumMobOld += phaseMobOld[er][esr][ei][ip];
             }
+            real64 const totalMobOld = ( sumMobOld < 1e-3 ) ? 1e-3 : sumMobOld;
             normalizer += elemVolume[er][esr][ei] / totalMobOld;
             elemCounter++;
           }
