@@ -307,7 +307,7 @@ private:
    * @param[out] k1 absolute permeability in the reservoir element (first direction)
    * @param[out] k2 absolute permeability in the reservoir element (second direction)
    */
-  void DecideWellDirection( R1Tensor const & vecWellElemCenterToPerf,
+  void DecideWellDirection( real64 const ( & vecWellElemCenterToPerf )[3],
                             real64 const & dx, real64 const & dy, real64 const & dz,
                             R1Tensor const & perm,
                             real64 & d1, real64 & d2, real64 & h,

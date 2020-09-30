@@ -191,7 +191,7 @@ public:
    */
   void WritePolygonMeshObject( const std::string & meshName,
                                const localIndex nnodes,
-                               realT * coords[3],
+                               real64 * coords[3],
                                const globalIndex * dummy1,
                                const int numRegions,
                                const int * shapecnt,
@@ -201,7 +201,7 @@ public:
                                const int * const shapetype,
                                const int * const shapesize,
                                const int cycleNumber,
-                               const realT problemTime,
+                               const real64 problemTime,
                                const int lnodelist );
 
 /**

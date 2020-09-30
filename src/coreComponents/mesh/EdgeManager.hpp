@@ -22,6 +22,7 @@
 #include "InterObjectRelation.hpp"
 #include "managers/ObjectManagerBase.hpp"
 #include "ToElementRelation.hpp"
+#include "LvArray/src/tensorOps.hpp"
 
 
 namespace geosx
@@ -398,17 +399,17 @@ private:
 inline R1Tensor EdgeManager::calculateCenter( localIndex const edgeIndex,
                                               arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X ) const
 {
-  R1Tensor center = X[m_toNodesRelation[edgeIndex][0]];
-  center += X[m_toNodesRelation[edgeIndex][1]];
-  center *= 0.5;
+  R1Tensor center = LVARRAY_TENSOROPS_INIT_LOCAL_3( X[m_toNodesRelation[edgeIndex][0]] );
+  LvArray::tensorOps::add< 3 >( center, X[m_toNodesRelation[edgeIndex][1]] );
+  LvArray::tensorOps::scale< 3 >( center, 0.5 );
   return center;
 }
 
 inline R1Tensor EdgeManager::calculateLength( localIndex const edgeIndex,
                                               arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X ) const
 {
-  R1Tensor length = X[m_toNodesRelation[edgeIndex][1]];
-  length -= X[m_toNodesRelation[edgeIndex][0]];
+  R1Tensor length = LVARRAY_TENSOROPS_INIT_LOCAL_3( X[m_toNodesRelation[edgeIndex][1]] );
+  LvArray::tensorOps::subtract< 3 >( length, X[m_toNodesRelation[edgeIndex][0]] );
   return length;
 }
 

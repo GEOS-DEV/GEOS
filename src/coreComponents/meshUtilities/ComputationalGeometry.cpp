@@ -218,7 +218,7 @@ int sgn( T val )
 //*************************************************************************************************
 bool IsPointInsidePolyhedron( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodeCoordinates,
                               array1d< array1d< localIndex > > const & faceNodeIndicies,
-                              R1Tensor const & point,
+                              real64 const ( & point )[3],
                               real64 const areaTolerance )
 {
   localIndex const numFaces = faceNodeIndicies.size( 0 );
@@ -244,57 +244,78 @@ bool IsPointInsidePolyhedron( arrayView2d< real64 const, nodes::REFERENCE_POSITI
 }
 
 //*************************************************************************************************
+GEOSX_HOST_DEVICE
 real64 TetVolume( R1Tensor const * const X )
 {
   real64 X1_X0[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( X[1] );
-  LvArray::tensorOps::subtract<3>(X1_X0, X[0]);
+  LvArray::tensorOps::subtract< 3 >( X1_X0, X[0] );
 
   real64 X2_X0[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( X[2] );
-  LvArray::tensorOps::subtract<3>(X2_X0, X[0]);
+  LvArray::tensorOps::subtract< 3 >( X2_X0, X[0] );
 
   real64 X3_X0[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( X[3] );
-  LvArray::tensorOps::subtract<3>(X3_X0, X[0]);
+  LvArray::tensorOps::subtract< 3 >( X3_X0, X[0] );
 
   real64 X2_X0crossX3_X0[ 3 ];
-  LvArray::tensorOps::crossProduct(X2_X0crossX3_X0, X2_X0, X3_X0 );
+  LvArray::tensorOps::crossProduct( X2_X0crossX3_X0, X2_X0, X3_X0 );
 
   return std::fabs( LvArray::tensorOps::AiBi<3>( X1_X0, X2_X0crossX3_X0) / 6.0 );
 }
 
+GEOSX_HOST_DEVICE
+real64 TetVolume( real64 const ( &X )[4][3] )
+{
+  real64 X1_X0[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( X[1] );
+  LvArray::tensorOps::subtract< 3 >( X1_X0, X[0] );
+
+  real64 X2_X0[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( X[2] );
+  LvArray::tensorOps::subtract< 3 >( X2_X0, X[0] );
+
+  real64 X3_X0[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( X[3] );
+  LvArray::tensorOps::subtract< 3 >( X3_X0, X[0] );
+
+  real64 X2_X0crossX3_X0[3];
+  LvArray::tensorOps::crossProduct( X2_X0crossX3_X0, X2_X0, X3_X0 );
+
+  return fabs( LvArray::tensorOps::AiBi< 3 >( X1_X0, X2_X0crossX3_X0 ) / 6.0 );
+}
+
 //*************************************************************************************************
+GEOSX_HOST_DEVICE
 real64 WedgeVolume( R1Tensor const * const X )
 {
-  R1Tensor tet1[4];
-  tet1[0] = X[0];
-  tet1[1] = X[1];
-  tet1[2] = X[2];
-  tet1[3] = X[4];
-  R1Tensor tet2[4];
-  tet2[0] = X[0];
-  tet2[1] = X[2];
-  tet2[2] = X[4];
-  tet2[3] = X[5];
-  R1Tensor tet3[4];
-  tet3[0] = X[0];
-  tet3[1] = X[3];
-  tet3[2] = X[4];
-  tet3[3] = X[5];
+  real64 const tet1[4][3] = { LVARRAY_TENSOROPS_INIT_LOCAL_3( X[0] ),
+                              LVARRAY_TENSOROPS_INIT_LOCAL_3( X[1] ),
+                              LVARRAY_TENSOROPS_INIT_LOCAL_3( X[2] ),
+                              LVARRAY_TENSOROPS_INIT_LOCAL_3( X[4] ) };
+
+  real64 const tet2[4][3] = { LVARRAY_TENSOROPS_INIT_LOCAL_3( X[0] ),
+                              LVARRAY_TENSOROPS_INIT_LOCAL_3( X[2] ),
+                              LVARRAY_TENSOROPS_INIT_LOCAL_3( X[4] ),
+                              LVARRAY_TENSOROPS_INIT_LOCAL_3( X[5] ) };
+
+  real64 const tet3[4][3] = { LVARRAY_TENSOROPS_INIT_LOCAL_3( X[0] ),
+                              LVARRAY_TENSOROPS_INIT_LOCAL_3( X[3] ),
+                              LVARRAY_TENSOROPS_INIT_LOCAL_3( X[4] ),
+                              LVARRAY_TENSOROPS_INIT_LOCAL_3( X[5] ) };
+
   return TetVolume( tet1 ) + TetVolume( tet2 ) + TetVolume( tet3 );
 }
 
 //*************************************************************************************************
+GEOSX_HOST_DEVICE
 real64 PyramidVolume( R1Tensor const * const X )
 {
-  R1Tensor tet1[4];
-  tet1[0] = X[0];
-  tet1[1] = X[1];
-  tet1[2] = X[2];
-  tet1[3] = X[4];
-  R1Tensor tet2[4];
-  tet2[0] = X[0];
-  tet2[1] = X[2];
-  tet2[2] = X[3];
-  tet2[3] = X[4];
+  real64 const tet1[4][3] = { LVARRAY_TENSOROPS_INIT_LOCAL_3( X[0] ),
+                              LVARRAY_TENSOROPS_INIT_LOCAL_3( X[1] ),
+                              LVARRAY_TENSOROPS_INIT_LOCAL_3( X[2] ),
+                              LVARRAY_TENSOROPS_INIT_LOCAL_3( X[4] ) };
+
+  real64 const tet2[4][3] = { LVARRAY_TENSOROPS_INIT_LOCAL_3( X[0] ),
+                              LVARRAY_TENSOROPS_INIT_LOCAL_3( X[2] ),
+                              LVARRAY_TENSOROPS_INIT_LOCAL_3( X[3] ),
+                              LVARRAY_TENSOROPS_INIT_LOCAL_3( X[4] ) };
+
   return TetVolume( tet1 ) + TetVolume( tet2 );
 }
 

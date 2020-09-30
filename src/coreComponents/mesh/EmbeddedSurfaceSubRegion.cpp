@@ -211,7 +211,7 @@ bool EmbeddedSurfaceSubRegion::AddNewEmbeddedSurface ( localIndex const cellInde
       {
         LvArray::tensorOps::copy< 3 >( distance, intersectionPoints[ j ] );
         LvArray::tensorOps::subtract< 3 >( distance, embSurfNodesPos[ h ] );
-        if( distance.L2_Norm() < 1e-9 )
+        if( LvArray::tensorOps::l2Norm< 3 >( distance ) < 1e-9 )
         {
           isNew = false;
           nodeIndex = h;

@@ -21,6 +21,7 @@
  */
 
 #include "Cylinder.hpp"
+#include "LvArray/src/tensorOps.hpp"
 
 namespace geosx
 {
@@ -54,23 +55,20 @@ bool Cylinder::IsCoordInObject( const R1Tensor & coord ) const
 {
   bool rval = false;
 
-  R1Tensor axisVector, coord_minus_point1, projection, distance;
-  realT height;
+  real64 axisVector[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( m_point2 );
+  LvArray::tensorOps::subtract< 3 >( axisVector, m_point1 );
+  real64 const height = LvArray::tensorOps::normalize< 3 >( axisVector );
 
-  axisVector = m_point2;
-  axisVector -= m_point1;
-  height = axisVector.Normalize();
+  real64 coord_minus_point1[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( coord );
+  LvArray::tensorOps::subtract< 3 >( coord_minus_point1, m_point1 );
 
-  coord_minus_point1 = coord;
-  coord_minus_point1 -= m_point1;
+  real64 projection[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( axisVector );
+  LvArray::tensorOps::scale< 3 >( projection, LvArray::tensorOps::AiBi< 3 >( axisVector, coord_minus_point1 ) );
 
-  projection = axisVector;
-  projection *= Dot( axisVector, coord_minus_point1 );
+  real64 distance[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( coord_minus_point1 );
+  LvArray::tensorOps::subtract< 3 >( distance, projection );
 
-  distance  = coord_minus_point1;
-  distance -= projection;
-
-  if( distance.L2_Norm()<m_radius && projection.L2_Norm()<height )
+  if( LvArray::tensorOps::l2Norm< 3 >( distance ) < m_radius && LvArray::tensorOps::l2Norm< 3 >( projection ) < height )
   {
     rval = true;
   }

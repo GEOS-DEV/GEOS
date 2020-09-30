@@ -439,7 +439,7 @@ void SolidMechanicsEmbeddedFractures::AssembleSystem( real64 const time,
 
           for( integer q=0; q<fe.getNumQuadraturePoints(); ++q )
           {
-            const realT detJq = detJ[embeddedSurfaceToCell[k]][q];
+            const real64 detJq = detJ[embeddedSurfaceToCell[k]][q];
             AssembleCompatibilityOperator( compMatrix,
                                            embeddedSurfaceSubRegion,
                                            k,

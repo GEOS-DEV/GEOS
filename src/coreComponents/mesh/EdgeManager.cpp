@@ -527,7 +527,7 @@ void EdgeManager::BuildEdges( localIndex const numNodes,
 //}
 //
 ///// Returns the length of the edge
-//realT EdgeManager::EdgeLength(const NodeManager * nodeManager, localIndex
+//real64 EdgeManager::EdgeLength(const NodeManager * nodeManager, localIndex
 // edge) const{
 //  const array1d< R1Tensor >& refPosition =
 // nodeManager->GetFieldData<FieldInfo::referencePosition>();

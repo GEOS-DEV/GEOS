@@ -342,7 +342,8 @@ void TwoPointFluxApproximation::addToFractureStencil( MeshLevel & mesh,
 
       // get edge geometry
       R1Tensor const edgeCenter = edgeManager->calculateCenter( edgeIndex, X );
-      real64 const edgeLength = edgeManager->calculateLength( edgeIndex, X ).L2_Norm();
+      R1Tensor const edgeSegment = edgeManager->calculateLength( edgeIndex, X );
+      real64 const edgeLength = LvArray::tensorOps::l2Norm< 3 >( edgeSegment );
 
       real64 initialPressure = 1.0e99;
 #if SET_CREATION_DISPLACEMENT==1
@@ -649,7 +650,8 @@ void TwoPointFluxApproximation::addEDFracToFractureStencil( MeshLevel & mesh,
 
       //TODO get edge geometry
       R1Tensor const edgeCenter = embSurfEdgeManager.calculateCenter( ke, X );
-      real64 const edgeLength   = embSurfEdgeManager.calculateLength( ke, X ).L2_Norm();
+      R1Tensor const edgeSegment = embSurfEdgeManager.calculateLength( ke, X );
+      real64 const edgeLength   = LvArray::tensorOps::l2Norm< 3 >( edgeSegment );
 
       // loop over all embedded surface elements attached to the connector and add them to the stencil
       for( localIndex kes = 0; kes < numElems; kes++ )

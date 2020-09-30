@@ -47,7 +47,7 @@ public:
    * @param neighborList The neighbors to add.
    */
   void AddNeighborsMetis( SortedArray< globalIndex > & neighborList );
-  virtual bool IsCoordInPartition( const realT & coord, const int dir );
+  virtual bool IsCoordInPartition( const real64 & coord, const int dir );
   virtual bool IsCoordInPartition( const R1Tensor & elemCenter );
   virtual bool IsCoordInPartition( const R1Tensor & elemCenter,
                                    const int numDistPartition );
@@ -119,7 +119,7 @@ public:
 
 //  virtual void ReadXMLInput(TICPP::HierarchicalDataNsode& hdn);
 
-  virtual void SetContactGhostRange( const realT bufferSize );
+  virtual void SetContactGhostRange( const real64 bufferSize );
 
 //  virtual void ResetSinglePartitionGlobalToLocalMap(PhysicalDomainT& domain);
 
@@ -152,11 +152,11 @@ public:
 //    return m_max;
 //  }
 //
-//  realT xMin( const int i ) const
+//  real64 xMin( const int i ) const
 //  {
 //    return m_min[i];
 //  }
-//  realT xMax( const int i ) const
+//  real64 xMax( const int i ) const
 //  {
 //    return m_max[i];
 //  }

@@ -90,8 +90,8 @@ void PerforationData::ComputeWellTransmissibility( MeshLevel const & mesh,
     // compute the vector perforation - well elem center
     // this vector will be used to decide whether this is a vectical well or not
     localIndex const wellElemIndex   = m_wellElementIndex[iperf];
-    R1Tensor vecWellElemCenterToPerf = wellElemCenter[wellElemIndex];
-    vecWellElemCenterToPerf -= m_location[iperf];
+    real64 vecWellElemCenterToPerf[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( wellElemCenter[wellElemIndex] );
+    LvArray::tensorOps::subtract< 3 >( vecWellElemCenterToPerf, m_location[iperf] );
 
     // check if this is a vertical well or a horizontal well
     // assign d1, d2, h, k1, and k2 accordingly
@@ -162,7 +162,7 @@ void PerforationData::GetReservoirElementDimensions( MeshLevel const & mesh,
 }
 
 
-void PerforationData::DecideWellDirection( R1Tensor const & vecWellElemCenterToPerf,
+void PerforationData::DecideWellDirection( real64 const ( & vecWellElemCenterToPerf )[3],
                                            real64 const & dx, real64 const & dy, real64 const & dz,
                                            R1Tensor const & perm,
                                            real64 & d1, real64 & d2, real64 & h,
@@ -219,7 +219,7 @@ void PerforationData::ConnectToMeshElements( MeshLevel const & mesh,
   // loop over all the perforations
   for( globalIndex iperfGlobal = 0; iperfGlobal < perfCoordsGlobal.size(); ++iperfGlobal )
   {
-    R1Tensor const & coords = perfCoordsGlobal[iperfGlobal];
+    real64 const coords[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( perfCoordsGlobal[iperfGlobal] );
 
     // TODO actually trace coords
     // TODO what if a fracture element is located
@@ -229,9 +229,9 @@ void PerforationData::ConnectToMeshElements( MeshLevel const & mesh,
                                                    localIndex const esr,
                                                    localIndex const ei ) -> real64
     {
-      R1Tensor v = coords;
-      v -= elemCenter[er][esr][ei];
-      return v.L2_Norm();
+      real64 v[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( coords );
+      LvArray::tensorOps::subtract< 3 >( v, elemCenter[er][esr][ei] );
+      return LvArray::tensorOps::l2Norm< 3 >( v );
     } );
 
     // save the region, subregion and index
@@ -267,7 +267,7 @@ void PerforationData::ConnectToMeshElements( MeshLevel const & mesh,
 
     // construct the local transmissibility and location maps
     m_wellTransmissibility[iperfLocal] = perfTransGlobal[iperfGlobal];
-    m_location[iperfLocal] = coords;
+    LvArray::tensorOps::copy< 3 >( m_location[iperfLocal], coords );
     m_localToGlobalMap[iperfLocal++] = iperfGlobal;
   }
 

@@ -76,7 +76,7 @@ private:
   /// Center point of the other face of the cylinder
   R1Tensor m_point2;
   /// Radius of the cylinder
-  realT m_radius = 0.0;
+  real64 m_radius = 0.0;
 
   /// @cond DO_NOT_DOCUMENT
 

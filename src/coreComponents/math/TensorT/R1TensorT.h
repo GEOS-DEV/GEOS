@@ -101,45 +101,45 @@ public:
 
     return *this;
   }
-
-  using TensorBaseT< T_dim >::operator+=;
-
-  template< int USD >
-  GEOSX_HOST_DEVICE inline
-  R1TensorT & operator+=( LvArray::ArraySlice< realT const, 1, USD, std::ptrdiff_t > const & src )
-  {
-    GEOSX_ASSERT_EQ( src.size(), T_dim );
-
-    for( int i = 0; i < T_dim; ++i )
-    {
-      this->t_data[ i ] += src[ i ];
-    }
-
-    return *this;
-  }
-
-  template< int USD >
-  GEOSX_HOST_DEVICE constexpr inline
-  R1TensorT & operator+=( LvArray::ArraySlice< realT, 1, USD, std::ptrdiff_t > const & src )
-  {
-    return (*this) += reinterpret_cast< LvArray::ArraySlice< realT const, 1, USD, std::ptrdiff_t > const & >( src );
-  }
-
-  using TensorBaseT< T_dim >::operator-=;
-
-  template< int USD >
-  GEOSX_HOST_DEVICE inline
-  R1TensorT & operator-=( LvArray::ArraySlice< realT const, 1, USD, std::ptrdiff_t > const & src )
-  {
-    GEOSX_ASSERT_EQ( src.size(), T_dim );
-
-    for( int i = 0; i < T_dim; ++i )
-    {
-      this->t_data[ i ] -= src[ i ];
-    }
-
-    return *this;
-  }
+//
+//  using TensorBaseT< T_dim >::operator+=;
+//
+//  template< int USD >
+//  GEOSX_HOST_DEVICE inline
+//  R1TensorT & operator+=( LvArray::ArraySlice< realT const, 1, USD, std::ptrdiff_t > const & src )
+//  {
+//    GEOSX_ASSERT_EQ( src.size(), T_dim );
+//
+//    for( int i = 0; i < T_dim; ++i )
+//    {
+//      this->t_data[ i ] += src[ i ];
+//    }
+//
+//    return *this;
+//  }
+//
+//  template< int USD >
+//  GEOSX_HOST_DEVICE constexpr inline
+//  R1TensorT & operator+=( LvArray::ArraySlice< realT, 1, USD, std::ptrdiff_t > const & src )
+//  {
+//    return (*this) += reinterpret_cast< LvArray::ArraySlice< realT const, 1, USD, std::ptrdiff_t > const & >( src );
+//  }
+//
+//  using TensorBaseT< T_dim >::operator-=;
+//
+//  template< int USD >
+//  GEOSX_HOST_DEVICE inline
+//  R1TensorT & operator-=( LvArray::ArraySlice< realT const, 1, USD, std::ptrdiff_t > const & src )
+//  {
+//    GEOSX_ASSERT_EQ( src.size(), T_dim );
+//
+//    for( int i = 0; i < T_dim; ++i )
+//    {
+//      this->t_data[ i ] -= src[ i ];
+//    }
+//
+//    return *this;
+//  }
 
   //***** ACCESS OPERATORS ****************************************************
   /// const access to data
@@ -153,38 +153,38 @@ public:
 
   /// non-const access to data
   GEOSX_HOST_DEVICE GEOSX_FORCE_INLINE realT & operator[]( const int i )       { return this->t_data[i]; }
-
-  realT ProductOfSquares() const;
-
-  /// Hadamard product between two Rank1 tensors
-  void AiBi( const R1TensorT< T_dim > & A, const R1TensorT< T_dim > & B );
-
-  /// cross product of 2 rank1 tensors
-  GEOSX_HOST_DEVICE
-  void Cross( const R1TensorT< T_dim > & a, const R1TensorT< T_dim > & b );
-
-
-  //****** TENSOR OPERATIONS **************************************************
-  /// take the L2 norm of the tensor
+//
+//  realT ProductOfSquares() const;
+//
+//  /// Hadamard product between two Rank1 tensors
+//  void AiBi( const R1TensorT< T_dim > & A, const R1TensorT< T_dim > & B );
+//
+//  /// cross product of 2 rank1 tensors
+//  GEOSX_HOST_DEVICE
+//  void Cross( const R1TensorT< T_dim > & a, const R1TensorT< T_dim > & b );
+//
+//
+//  //****** TENSOR OPERATIONS **************************************************
+//  /// take the L2 norm of the tensor
 //  GEOSX_HOST_DEVICE
 //  realT L2_Norm( void ) const;
-
-  /// get the unit vector
-  R1TensorT< T_dim > UnitVector( void ) const
-  { realT n = this->L2_Norm(); return (n>0.0) ? (*this/n) : *this; }
-
+//
+//  /// get the unit vector
+//  R1TensorT< T_dim > UnitVector( void ) const
+//  { realT n = this->L2_Norm(); return (n>0.0) ? (*this/n) : *this; }
+//
 //  /// Normalize the vector
 //  GEOSX_HOST_DEVICE
 //  realT Normalize( void )
 //  { realT n = this->L2_Norm(); if( n>0.0 ) *this /= n; return n; }
-
-  /// sum the components of the tensor
-  inline realT Sum( void ) const;
-
-  //***** OUTPUT **************************************************************
-  /// output
-  void print( std::ostream & os ) const;
-
+//
+//  /// sum the components of the tensor
+//  inline realT Sum( void ) const;
+//
+//  //***** OUTPUT **************************************************************
+//  /// output
+//  void print( std::ostream & os ) const;
+//
 //  // define cross product
 //  friend inline
 //  GEOSX_HOST_DEVICE
@@ -231,12 +231,12 @@ inline R1TensorT< 3 >::R1TensorT( realT x, realT y, realT z ):
 
 
 
-template< int T_dim >
-void R1TensorT< T_dim >::print( std::ostream & os ) const
-{
-  for( int i = 0; i < T_dim; ++i )
-    os << (*this)( i ) << '\t';
-}
+//template< int T_dim >
+//void R1TensorT< T_dim >::print( std::ostream & os ) const
+//{
+//  for( int i = 0; i < T_dim; ++i )
+//    os << (*this)( i ) << '\t';
+//}
 
 
 //*****************************************************************************
@@ -292,16 +292,16 @@ inline R1TensorT< T_dim > & R1TensorT< T_dim >::operator=( const realT & rhs )
 /**
  * @return sum of the tensor components
  */
-template< int T_dim >
-inline realT R1TensorT< T_dim >::Sum( void ) const
-{
-  realT sum = 0.0;
-
-  for( int i = 1; i <= T_dim; ++i )
-    sum += this->t_data[i - 1];
-
-  return sum;
-}
+//template< int T_dim >
+//inline realT R1TensorT< T_dim >::Sum( void ) const
+//{
+//  realT sum = 0.0;
+//
+//  for( int i = 1; i <= T_dim; ++i )
+//    sum += this->t_data[i - 1];
+//
+//  return sum;
+//}
 
 //***** MULTIPLICATION OPERATORS **********************************************
 
@@ -310,12 +310,12 @@ inline realT R1TensorT< T_dim >::Sum( void ) const
  * @param[in] B rank1 tensor
  * @return none
  */
-template< int T_dim >
-inline void R1TensorT< T_dim >::AiBi( const R1TensorT< T_dim > & A, const R1TensorT< T_dim > & B )
-{
-  for( int i = 0; i < T_dim; i++ )
-    this->t_data[i] = A.t_data[i] * B.t_data[i];
-}
+//template< int T_dim >
+//inline void R1TensorT< T_dim >::AiBi( const R1TensorT< T_dim > & A, const R1TensorT< T_dim > & B )
+//{
+//  for( int i = 0; i < T_dim; i++ )
+//    this->t_data[i] = A.t_data[i] * B.t_data[i];
+//}
 
 /**
  * @param[in] a rank1 tensor
@@ -325,19 +325,19 @@ inline void R1TensorT< T_dim >::AiBi( const R1TensorT< T_dim > & A, const R1Tens
  * this function takes the cross product of two rank1 tensors and places the
  * result into this->tdata
  */
-template< int T_dim >
-GEOSX_HOST_DEVICE
-inline void R1TensorT< T_dim >::Cross( const R1TensorT< T_dim > & a, const R1TensorT< T_dim > & b )
-{
-  if( T_dim == 3 )
-  {
-    this->t_data[0] = a.t_data[1] * b.t_data[2] - a.t_data[2] * b.t_data[1];
-    this->t_data[1] = -(a.t_data[0] * b.t_data[2] - a.t_data[2] * b.t_data[0]);
-    this->t_data[2] = a.t_data[0] * b.t_data[1] - a.t_data[1] * b.t_data[0];
-  }
-//  else
-//    std::cout << "R1TensorT not implemented for nsdof>3";
-
-}
+//template< int T_dim >
+//GEOSX_HOST_DEVICE
+//inline void R1TensorT< T_dim >::Cross( const R1TensorT< T_dim > & a, const R1TensorT< T_dim > & b )
+//{
+//  if( T_dim == 3 )
+//  {
+//    this->t_data[0] = a.t_data[1] * b.t_data[2] - a.t_data[2] * b.t_data[1];
+//    this->t_data[1] = -(a.t_data[0] * b.t_data[2] - a.t_data[2] * b.t_data[0]);
+//    this->t_data[2] = a.t_data[0] * b.t_data[1] - a.t_data[1] * b.t_data[0];
+//  }
+////  else
+////    std::cout << "R1TensorT not implemented for nsdof>3";
+//
+//}
 
 #endif

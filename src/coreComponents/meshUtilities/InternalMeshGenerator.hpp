@@ -145,9 +145,9 @@ private:
   string_array m_regionNames;
 
   /// Minimum extent of mesh dimensions
-  realT m_min[3];
+  real64 m_min[3];
   /// Maximum extent of mesh dimensions
-  realT m_max[3];
+  real64 m_max[3];
 
   //int m_numElems[3];
   /// Ndim x nBlock spatialized array of first elemnt index in the cellBlock
@@ -157,20 +157,20 @@ private:
 
 
 
-//  realT m_wExtensionMin[3];
-//  realT m_wExtensionMax[3];
+//  real64 m_wExtensionMin[3];
+//  real64 m_wExtensionMax[3];
 //  int m_nExtensionLayersMin[3];
 //  int m_nExtensionLayersMax[3];
-//  realT m_extendedMin[3];
-//  realT m_extendedMax[3]; // This is the domain size after we apply n layers
+//  real64 m_extendedMin[3];
+//  real64 m_extendedMax[3]; // This is the domain size after we apply n layers
 // of elements which are of the same size as the core elements.  We will move
 // these nodes to where they should be later when we finish the meshing.
 
   /// Array of number of elements per direction
   int m_numElemsTotal[3];
 
-//  realT m_commonRatioMin[3];
-//  realT m_commonRatioMax[3];
+//  real64 m_commonRatioMin[3];
+//  real64 m_commonRatioMax[3];
 
   // String array listing the element type present
   string_array m_elementType;
@@ -185,7 +185,7 @@ private:
   int m_trianglePattern;
 
   /// Node perturbation amplitude value
-  realT m_fPerturb=0.0;
+  real64 m_fPerturb=0.0;
   /// Random seed for generation of the node perturbation field
   int m_randSeed;
 
@@ -198,14 +198,14 @@ private:
   /// axis index for cartesian to radial coordinates mapping
   // internal temp var
   int m_meshAxis;
-  realT m_meshTheta;
-  realT m_meshPhi;
-  realT m_meshRout;
-  realT m_meshRact;
+  real64 m_meshTheta;
+  real64 m_meshPhi;
+  real64 m_meshRout;
+  real64 m_meshRact;
 /// @endcond
 
   /// skew angle in radians for skewed mesh generation
-  realT m_skewAngle = 0;
+  real64 m_skewAngle = 0;
   /// skew center for skew mesh generation
   R1Tensor m_skewCenter = {0, 0, 0};
 
@@ -250,7 +250,7 @@ private:
   inline R1Tensor NodePosition( const int a[3], int trianglePattern )
   {
     R1Tensor X;
-    realT xInterval( 0 );
+    real64 xInterval( 0 );
 
     int xPosIndex = 0;
     if( trianglePattern == 1 )
@@ -281,8 +281,8 @@ private:
           break;
         }
       }
-      realT min = m_vertices[i][block];
-      realT max = m_vertices[i][block+1];
+      real64 min = m_vertices[i][block];
+      real64 max = m_vertices[i][block+1];
 
 
       X[i] = min + (max-min) * ( double( a[i] - startingIndex ) / m_nElems[i][block] );
@@ -296,11 +296,11 @@ private:
         {
           GEOSX_ERROR_IF( fabs( m_nElemBias[i][block] ) >= 1, "Mesh bias must between -1 and 1!" );
 
-          realT len = max -  min;
-          realT xmean = len / m_nElems[i][block];
-          realT x0 = xmean * double( a[i] - startingIndex );
-          realT chi = m_nElemBias[i][block]/(xmean/len - 1.0);
-          realT dx = -x0*chi + x0*x0*chi/len;
+          real64 len = max -  min;
+          real64 xmean = len / m_nElems[i][block];
+          real64 x0 = xmean * double( a[i] - startingIndex );
+          real64 chi = m_nElemBias[i][block]/(xmean/len - 1.0);
+          real64 dx = -x0*chi + x0*x0*chi/len;
           X[i] += dx;
         }
       }

@@ -150,7 +150,7 @@ private:
   {
     R1Tensor X;
     /*
-       realT xInterval(0);
+       real64 xInterval(0);
 
        int xPosIndex = 0;
        if (trianglePattern == 1)
@@ -181,8 +181,8 @@ private:
         break;
        }
        }
-       realT min = m_vertices[i][block];
-       realT max = m_vertices[i][block+1];
+       real64 min = m_vertices[i][block];
+       real64 max = m_vertices[i][block+1];
 
 
        X[i] = min + (max-min) * ( double( a[i] - startingIndex ) / m_nElems[i][block] );
@@ -194,11 +194,11 @@ private:
         GEOSX_ERROR("Mesh bias must between -1 and 1!");
        }
 
-       realT len = max -  min;
-       realT xmean = len / m_nElems[i][block];
-       realT x0 = xmean * double( a[i] - startingIndex );
-       realT chi = m_nElemBias[i][block]/(xmean/len - 1.0);
-       realT dx = -x0*chi + x0*x0*chi/len;
+       real64 len = max -  min;
+       real64 xmean = len / m_nElems[i][block];
+       real64 x0 = xmean * double( a[i] - startingIndex );
+       real64 chi = m_nElemBias[i][block]/(xmean/len - 1.0);
+       real64 dx = -x0*chi + x0*x0*chi/len;
        X[i] += dx;
        }
 

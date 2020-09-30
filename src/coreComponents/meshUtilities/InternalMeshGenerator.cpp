@@ -283,14 +283,14 @@ void InternalMeshGenerator::PostProcessInput()
 
   m_fPerturb = 0.0;
 
-//    m_fPerturb = hdn.GetAttributeOrDefault<realT>("perturbationFactor", 0.0);
+//    m_fPerturb = hdn.GetAttributeOrDefault<real64>("perturbationFactor", 0.0);
 //    m_randSeed = hdn.GetAttributeOrDefault<int>("perturbationSeed",
 // time(NULL));
 //    srand(m_randSeed);
 //
 //    m_mapToRadial = hdn.GetAttributeOrDefault<int>("mapToRadial", 0);
 //
-//    m_skewAngle = hdn.GetAttributeOrDefault<realT>("skewAngle", 0.0);
+//    m_skewAngle = hdn.GetAttributeOrDefault<real64>("skewAngle", 0.0);
 //    m_skewAngle *= 3.14159265/180;
 //    R1Tensor zeroVector;
 //    zeroVector *= 0.0;
@@ -379,8 +379,8 @@ void InternalMeshGenerator::GenerateMesh( DomainPartition * const domain )
     R1Tensor temp2( m_max );
 
     partition.setSizes( temp1, temp2 );
-    temp2 -= temp1;
-    meshBody->setGlobalLengthScale( std::fabs( temp2.L2_Norm() ) );
+    LvArray::tensorOps::subtract< 3 >( temp2, temp1 );
+    meshBody->setGlobalLengthScale( LvArray::tensorOps::l2Norm< 3 >( temp2 ) );
   }
 
   // find elemCenters for even uniform element sizes
@@ -770,8 +770,8 @@ void InternalMeshGenerator::GenerateMesh( DomainPartition * const domain )
     partition.getPartitionGeometricalBoundary( pMin, pMax );
     for( int i = 0; i < m_dim; ++i )
     {
-      realT xMinByNumElems = ( pMin[i] - m_min[i] ) / ( m_max[i] - m_min[i] ) * m_numElemsTotal[i];
-      realT xMaxByNumElems = ( pMax[i] - m_min[i] ) / ( m_max[i] - m_min[i] ) * m_numElemsTotal[i];
+      real64 xMinByNumElems = ( pMin[i] - m_min[i] ) / ( m_max[i] - m_min[i] ) * m_numElemsTotal[i];
+      real64 xMaxByNumElems = ( pMax[i] - m_min[i] ) / ( m_max[i] - m_min[i] ) * m_numElemsTotal[i];
 
       localIndex iBlockMin( 0 ), iBlockMax( 0 );
       while( ( xMinByNumElems < m_firstElemIndexForBlock[i][iBlockMin] * 1.0 || xMinByNumElems > m_lastElemIndexForBlock[i][iBlockMin] * 1.0 + 1.0 )
@@ -1235,7 +1235,7 @@ void InternalMeshGenerator::RemapMesh( dataRepository::Group * const GEOSX_UNUSE
   //
   //    for (localIndex iN=0; iN!=nodeManager->DataLengths(); ++iN)
   //    {
-  //      realT dx=tableDx->Lookup(X[iN]);
+  //      real64 dx=tableDx->Lookup(X[iN]);
   //      X[iN][0] += dx;
   //    }
   //  }
@@ -1247,7 +1247,7 @@ void InternalMeshGenerator::RemapMesh( dataRepository::Group * const GEOSX_UNUSE
   //
   //    for (localIndex iN=0; iN!=nodeManager->DataLengths(); ++iN)
   //    {
-  //      realT dy=tableDy->Lookup(X[iN]);
+  //      real64 dy=tableDy->Lookup(X[iN]);
   //      X[iN][1] += dy;
   //    }
   //  }
@@ -1259,7 +1259,7 @@ void InternalMeshGenerator::RemapMesh( dataRepository::Group * const GEOSX_UNUSE
   //
   //    for (localIndex iN=0; iN!=nodeManager->DataLengths(); ++iN)
   //    {
-  //      realT dz=tableDz->Lookup(X[iN]);
+  //      real64 dz=tableDz->Lookup(X[iN]);
   //      X[iN][2] += dz;
   //    }
   //  }

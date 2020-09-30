@@ -719,7 +719,7 @@ void FaceManager::SortFaceNodes( arrayView2d< real64 const, nodes::REFERENCE_POS
   {
     fc += X[faceNodes[n]];
   }
-  fc /= realT( numFaceNodes );
+  fc /= real64( numFaceNodes );
 
   R1Tensor ex, ey, ez;
   // Approximate face normal direction (unscaled)
@@ -756,14 +756,14 @@ void FaceManager::SortFaceNodes( arrayView2d< real64 const, nodes::REFERENCE_POS
     ey.Cross( ez, ex );
     ey /= ey.L2_Norm();
 
-    std::pair< realT, localIndex > thetaOrder[MAX_FACE_NODES];
+    std::pair< real64, localIndex > thetaOrder[MAX_FACE_NODES];
 
     /// Sort nodes counterclockwise around face center
     for( localIndex n =0; n < numFaceNodes; ++n )
     {
       R1Tensor v = X[faceNodes[n]];
       v -= fc;
-      thetaOrder[n] = std::pair< realT, localIndex >( atan2( Dot( v, ey ), Dot( v, ex )), faceNodes[n] );
+      thetaOrder[n] = std::pair< real64, localIndex >( atan2( Dot( v, ey ), Dot( v, ex )), faceNodes[n] );
     }
 
     std::sort( thetaOrder, thetaOrder + numFaceNodes );

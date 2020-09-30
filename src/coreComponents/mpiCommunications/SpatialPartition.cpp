@@ -17,19 +17,22 @@
  */
 
 #include "mpiCommunications/SpatialPartition.hpp"
-
 #include "codingUtilities/Utilities.hpp"
+#include "LvArray/src/genericTensorOps.hpp"
 
 //#include "Common/intrinsic_typedefs.h"
 #include <cmath>
 
+namespace geosx
+{
+using namespace dataRepository;
 
 namespace
 {
 
 // Modulo
 // returns a positive value regardless of the sign of numerator
-realT Mod( realT num, realT denom )
+real64 Mod( real64 num, real64 denom )
 {
   if( fabs( denom )<fabs( num )*1.0e-14 )
   {
@@ -42,18 +45,12 @@ realT Mod( realT num, realT denom )
 
 // MapValueToRange
 // returns a periodic value in the range [min, max)
-realT MapValueToRange( realT value, realT min, realT max )
+real64 MapValueToRange( real64 value, real64 min, real64 max )
 {
   return Mod( value-min, max-min )+min;
 }
 
-
-
 }
-
-namespace geosx
-{
-using namespace dataRepository;
 
 SpatialPartition::SpatialPartition():
   PartitionBase(),
@@ -284,7 +281,7 @@ void SpatialPartition::setSizes( const R1Tensor & min, const R1Tensor & max )
   m_gridMin = min;
   m_gridMax = max;
   m_gridSize = max;
-  m_gridSize -= min;
+  LvArray::tensorOps::subtract< 3 >( m_gridSize, min );
 
   // block values
   m_blockSize = m_gridSize;
@@ -352,7 +349,7 @@ void SpatialPartition::SetPartitionGeometricalBoundary( R1Tensor & min, R1Tensor
 }
 
 
-bool SpatialPartition::IsCoordInPartition( const realT & coord, const int dir )
+bool SpatialPartition::IsCoordInPartition( const real64 & coord, const int dir )
 {
   bool rval = true;
   const int i = dir;
@@ -360,7 +357,7 @@ bool SpatialPartition::IsCoordInPartition( const realT & coord, const int dir )
   {
     if( m_Partitions( i ) != 1 )
     {
-      realT localCenter = MapValueToRange( coord, m_gridMin( i ), m_gridMax( i ));
+      real64 localCenter = MapValueToRange( coord, m_gridMin( i ), m_gridMax( i ));
       rval = rval && localCenter >= m_min( i ) && localCenter < m_max( i );
     }
 
@@ -383,7 +380,7 @@ bool SpatialPartition::IsCoordInPartition( const R1Tensor & elemCenter )
 
       if( m_Partitions( i ) != 1 )
       {
-        realT localCenter = MapValueToRange( elemCenter( i ), m_gridMin( i ), m_gridMax( i ));
+        real64 localCenter = MapValueToRange( elemCenter( i ), m_gridMin( i ), m_gridMax( i ));
         rval = rval && localCenter >= m_min( i ) && localCenter < m_max( i );
       }
 
@@ -413,7 +410,7 @@ bool SpatialPartition::IsCoordInPartition( const R1Tensor & elemCenter, const in
 
       if( m_Partitions( i ) != 1 )
       {
-        realT localCenter = MapValueToRange( elemCenter( i ), m_gridMin( i ), m_gridMax( i ));
+        real64 localCenter = MapValueToRange( elemCenter( i ), m_gridMin( i ), m_gridMax( i ));
         rval = rval && localCenter >= m_xBoundingBoxMinTemp( i ) && localCenter <= m_xBoundingBoxMaxTemp( i );
       }
 
@@ -438,7 +435,7 @@ bool SpatialPartition::IsCoordInPartitionClosed( const R1Tensor & elemCenter )
 
       if( m_Partitions( i ) != 1 )
       {
-        realT localCenter = MapValueToRange( elemCenter( i ), m_gridMin( i ), m_gridMax( i ));
+        real64 localCenter = MapValueToRange( elemCenter( i ), m_gridMin( i ), m_gridMax( i ));
         rval = rval && localCenter >= m_min( i ) && localCenter < m_max( i );
       }
 
@@ -462,7 +459,7 @@ bool SpatialPartition::IsCoordInPartitionBoundingBox( const R1Tensor & elemCente
 
       if( m_Partitions( i ) != 1 )
       {
-        realT localCenter = MapValueToRange( elemCenter( i ), m_gridMin( i ), m_gridMax( i ));
+        real64 localCenter = MapValueToRange( elemCenter( i ), m_gridMin( i ), m_gridMax( i ));
         rval = rval && localCenter >= m_xBoundingBoxMin( i ) && localCenter <= m_xBoundingBoxMax( i );
       }
 
@@ -477,13 +474,13 @@ bool SpatialPartition::IsCoordInPartitionBoundingBox( const R1Tensor & elemCente
 
 
 
-void SpatialPartition::SetContactGhostRange( const realT bufferSize )
+void SpatialPartition::SetContactGhostRange( const real64 bufferSize )
 {
-  m_contactGhostMin = m_min;
-  m_contactGhostMin -= bufferSize;
+  LvArray::tensorOps::copy< 3 >( m_contactGhostMin, m_min );
+  LvArray::tensorOps::subtractScalar< 3 >( m_contactGhostMin, bufferSize );
 
-  m_contactGhostMax = m_max;
-  m_contactGhostMax += bufferSize;
+  LvArray::tensorOps::copy< 3 >( m_contactGhostMax, m_max );
+  LvArray::tensorOps::addScalar< 3 >( m_contactGhostMax, bufferSize );
 }
 
 bool SpatialPartition::IsCoordInContactGhostRange( const R1Tensor & elemCenter )
@@ -496,10 +493,10 @@ bool SpatialPartition::IsCoordInContactGhostRange( const R1Tensor & elemCenter )
       if( m_Partitions( i ) != 1 )
       {
 
-        realT minBuffer = m_min( i )-m_contactGhostMin( i );
-        realT maxBuffer = m_contactGhostMax( i )-m_max( i );
-        realT localCenterA = MapValueToRange( elemCenter( i ), m_gridMin( i )-minBuffer, m_gridMax( i )-minBuffer );
-        realT localCenterB = MapValueToRange( elemCenter( i ), m_gridMin( i )+maxBuffer, m_gridMax( i )+maxBuffer );
+        real64 minBuffer = m_min( i )-m_contactGhostMin( i );
+        real64 maxBuffer = m_contactGhostMax( i )-m_max( i );
+        real64 localCenterA = MapValueToRange( elemCenter( i ), m_gridMin( i )-minBuffer, m_gridMax( i )-minBuffer );
+        real64 localCenterB = MapValueToRange( elemCenter( i ), m_gridMin( i )+maxBuffer, m_gridMax( i )+maxBuffer );
 
         rval = rval && (m_Partitions( i )==1 || (localCenterA >= m_contactGhostMin( i ) && localCenterB < m_contactGhostMax( i )));
       }

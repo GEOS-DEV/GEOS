@@ -221,24 +221,25 @@ void InternalWellGenerator::ConstructPolylineNodeToSegmentMap()
     globalIndex const ipolyNode_a = m_segmentToPolyNodeMap[iseg][0];
     globalIndex const ipolyNode_b = m_segmentToPolyNodeMap[iseg][1];
 
-    R1Tensor v = m_polyNodeCoords[ipolyNode_a];
-    v -= m_polyNodeCoords[ipolyNode_b];
+    real64 vSeg[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( m_polyNodeCoords[ipolyNode_a] );
+    LvArray::tensorOps::subtract< 3 >( vSeg, m_polyNodeCoords[ipolyNode_b] );
+
+    real64 const segmentLength = LvArray::tensorOps::l2Norm< 3 >( vSeg );
 
     // various checks and warnings on the segment and element length
-    GEOSX_ERROR_IF( v.L2_Norm() < 1e-2,
-                    "Error in the topology of well " << getName()
-                                                     << ": we detected a polyline segment measuring less than 1 cm" );
+    GEOSX_ERROR_IF( segmentLength < 1e-2,
+                    "Error in the topology of well " << getName() <<
+                    ": we detected a polyline segment measuring less than 1 cm" );
 
-    if( v.L2_Norm() < 1 )
+    if( segmentLength < 1.0 )
     {
       GEOSX_LOG_RANK_0( "Warning: we detected a segment measuring less than 1 m in the topology of well " << getName() );
     }
 
-    if( v.L2_Norm() / static_cast< real64 >(m_numElemsPerSegment) < 1e-2 )
+    if( segmentLength / m_numElemsPerSegment < 1e-2 )
     {
-      GEOSX_LOG_RANK_0( "Warning: the chosen number of elements per polyline segment (" << m_numElemsPerSegment
-                                                                                        << ") leads to well elements measuring less than 1 cm in the topology of well " <<
-                        getName() );
+      GEOSX_LOG_RANK_0( "Warning: the chosen number of elements per polyline segment (" << m_numElemsPerSegment <<
+                        ") leads to well elements measuring less than 1 cm in the topology of well " << getName() );
     }
 
     // map the polyline node ids to the polyline segment ids
@@ -310,8 +311,9 @@ void InternalWellGenerator::DiscretizePolyline()
                                       ? m_segmentToPolyNodeMap[isegCurrent][1]
                                       : m_segmentToPolyNodeMap[isegCurrent][0];
 
-    R1Tensor vPoly = m_polyNodeCoords[ipolyNodeBottom];
-    vPoly -= m_polyNodeCoords[ipolyNodeTop];
+    //R1Tensor vPoly = m_polyNodeCoords[ipolyNodeBottom];
+    real64 vPoly[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( m_polyNodeCoords[ipolyNodeBottom] );
+    LvArray::tensorOps::subtract< 3 >( vPoly, m_polyNodeCoords[ipolyNodeTop] );
 
     // add the well elements and well nodes corresponding to this polyline segment
     for( localIndex iw = 0; iw < m_numElemsPerSegment; ++iw )
@@ -319,9 +321,9 @@ void InternalWellGenerator::DiscretizePolyline()
 
       // 1) set the element location, connectivity
       real64 const scaleCenter = (iw + 0.5) / static_cast< real64 >(m_numElemsPerSegment);
-      m_elemCenterCoords[iwelemCurrent]  = vPoly;
-      m_elemCenterCoords[iwelemCurrent] *= scaleCenter;
-      m_elemCenterCoords[iwelemCurrent] += m_polyNodeCoords[ipolyNodeTop];
+      LvArray::tensorOps::copy< 3 >( m_elemCenterCoords[iwelemCurrent], vPoly );
+      LvArray::tensorOps::scale< 3 >( m_elemCenterCoords[iwelemCurrent], scaleCenter );
+      LvArray::tensorOps::add< 3 >( m_elemCenterCoords[iwelemCurrent], m_polyNodeCoords[ipolyNodeTop] );
 
       GEOSX_ERROR_IF( iwelemCurrent >= m_numElems,
                       "Invalid well topology in well " << getName() );
@@ -341,18 +343,19 @@ void InternalWellGenerator::DiscretizePolyline()
       m_elemToNodesMap[iwelemCurrent][NodeLocation::BOTTOM] = iwellNodeBottom;
 
       real64 const scaleBottom = (iw + 1.0) / static_cast< real64 >(m_numElemsPerSegment);
-      m_nodeCoords[iwellNodeBottom]  = vPoly;
-      m_nodeCoords[iwellNodeBottom] *= scaleBottom;
-      m_nodeCoords[iwellNodeBottom] += m_polyNodeCoords[ipolyNodeTop];
+      LvArray::tensorOps::copy< 3 >( m_elemCenterCoords[iwellNodeBottom], vPoly );
+      LvArray::tensorOps::scale< 3 >( m_elemCenterCoords[iwellNodeBottom], scaleBottom );
+      LvArray::tensorOps::add< 3 >( m_elemCenterCoords[iwellNodeBottom], m_polyNodeCoords[ipolyNodeTop] );
 
       // 3) increment the distance from the well head to the bottom of current element
-      R1Tensor vWellElem = m_nodeCoords[iwellNodeBottom];
-      vWellElem -= m_nodeCoords[iwellNodeTop];
-      m_nodeDistFromHead[iwellNodeBottom]  = vWellElem.L2_Norm();
+      //R1Tensor vWellElem = m_nodeCoords[iwellNodeBottom];
+      real64 vWellElem[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( m_nodeCoords[iwellNodeBottom] );
+      LvArray::tensorOps::subtract< 3 >( vWellElem, m_nodeCoords[iwellNodeTop] );
+      m_nodeDistFromHead[iwellNodeBottom]  = LvArray::tensorOps::l2Norm< 3 >( vWellElem );
       m_nodeDistFromHead[iwellNodeBottom] += m_nodeDistFromHead[iwellNodeTop];
 
       // 4) set element volume
-      m_elemVolume[iwelemCurrent] = vWellElem.L2_Norm() * M_PI * m_radius * m_radius;
+      m_elemVolume[iwelemCurrent] = LvArray::tensorOps::l2Norm< 3 >( vWellElem ) * M_PI * m_radius * m_radius;
 
       // 4) increment the element counter
       ++iwelemCurrent;
@@ -435,11 +438,10 @@ void InternalWellGenerator::ConnectPerforationsToWellElements()
     GEOSX_ERROR_IF( (elemLength <= 0) || (topToPerfDist < 0),
                     "Invalid topology in well " << getName() );
 
-    R1Tensor v = m_nodeCoords[inodeBottom];
-    v -= m_nodeCoords[inodeTop];
-    m_perfCoords[iperf]  = v;
-    m_perfCoords[iperf] *= topToPerfDist / elemLength;
-    m_perfCoords[iperf] += m_nodeCoords[inodeTop];
+    LvArray::tensorOps::copy< 3 >( m_perfCoords[iperf], m_nodeCoords[inodeBottom] );
+    LvArray::tensorOps::subtract< 3 >( m_perfCoords[iperf], m_nodeCoords[inodeTop] );
+    LvArray::tensorOps::scale< 3 >( m_perfCoords[iperf], topToPerfDist / elemLength );
+    LvArray::tensorOps::add< 3 >( m_perfCoords[iperf], m_nodeCoords[inodeTop] );
 
   }
 }

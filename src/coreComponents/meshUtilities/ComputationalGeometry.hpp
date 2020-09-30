@@ -167,7 +167,7 @@ void RotationMatrix_3D( arraySlice1d< real64 const > const normal,
  */
 bool IsPointInsidePolyhedron( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodeCoordinates,
                               array1d< array1d< localIndex > > const & faceNodeIndicies,
-                              R1Tensor const & point,
+                              real64 const ( & point )[3],
                               real64 const areaTolerance = 0.0 );
 
 /**
@@ -238,13 +238,23 @@ real64 HexVolume( R1Tensor const * const X )
  * @param[in] points vertices of the tetrahedron
  * @return the volume of the tetrahedron
  */
+GEOSX_HOST_DEVICE
 real64 TetVolume( R1Tensor const * const points );
+
+/**
+ * @brief Compute the volume of an tetrahedron
+ * @param[in] points vertices of the tetrahedron
+ * @return the volume of the tetrahedron
+ */
+GEOSX_HOST_DEVICE
+real64 TetVolume( real64 const ( &points )[4][3] );
 
 /**
  * @brief Compute the volume of a wedge
  * @param[in] points vertices of the wedge
  * @return the volume of the wedge
  */
+GEOSX_HOST_DEVICE
 real64 WedgeVolume( R1Tensor const * const points );
 
 /**
@@ -252,6 +262,7 @@ real64 WedgeVolume( R1Tensor const * const points );
  * @param[in] points vertices of the pyramid
  * @return the volume of the pyramid
  */
+GEOSX_HOST_DEVICE
 real64 PyramidVolume( R1Tensor const * const points );
 
 } // namespace computationalGeometry

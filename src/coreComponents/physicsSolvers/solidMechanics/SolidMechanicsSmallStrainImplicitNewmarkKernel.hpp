@@ -205,8 +205,8 @@ public:
         constexpr int nsdof = numDofPerTestSupportPoint;
         for( int i=0; i<nsdof; ++i )
         {
-          realT const acc = 1.0 / ( m_newmarkBeta * m_dt * m_dt ) * ( stack.uhat_local[b][i] - stack.uhattilde_local[b][i] );
-          realT const vel = stack.vtilde_local[b][i] +
+          real64 const acc = 1.0 / ( m_newmarkBeta * m_dt * m_dt ) * ( stack.uhat_local[b][i] - stack.uhattilde_local[b][i] );
+          real64 const vel = stack.vtilde_local[b][i] +
                             m_newmarkGamma/( m_newmarkBeta * m_dt ) *( stack.uhat_local[b][i]
                                                                        - stack.uhattilde_local[b][i] );
 

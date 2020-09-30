@@ -78,7 +78,7 @@ public:
    * @param dir The considered direction.
    * @return The predicate result.
    */
-  virtual bool IsCoordInPartition( const realT & coord, const int dir ) = 0;
+  virtual bool IsCoordInPartition( const real64 & coord, const int dir ) = 0;
 
   /**
    * @brief Defines the dimensions of the grid.
@@ -139,7 +139,7 @@ public:
    * @brief Defines a distance/buffer below which we are considered in the contact zone ghosts.
    * @param bufferSize The distance.
    */
-  virtual void SetContactGhostRange( const realT bufferSize ) = 0;
+  virtual void SetContactGhostRange( const real64 bufferSize ) = 0;
 //
 //  void SetBufferSizes( const std::map<string, string_array >& fieldNames,
 //                       const CommRegistry::commID commID  );
@@ -235,13 +235,13 @@ protected:
 
 public:
   /// Unused parameter
-  realT m_t1;
+  real64 m_t1;
   /// Unused parameter
-  realT m_t2;
+  real64 m_t2;
   /// Unused parameter
-  realT m_t3;
+  real64 m_t3;
   /// Unused parameter
-  realT m_t4;
+  real64 m_t4;
   /// Unused parameter
   bool m_hasLocalGhosts;
   /// Unused parameter
