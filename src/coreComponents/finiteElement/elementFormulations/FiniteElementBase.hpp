@@ -492,7 +492,7 @@ void FiniteElementBase::value( real64 const (&N)[NUM_SUPPORT_POINTS],
                                real64 (& value)[NUM_COMPONENTS] )
 {
 
-  LvArray::tensorOps::AjiBj< 3, NUM_SUPPORT_POINTS >( value, var, N );
+  LvArray::tensorOps::Ri_eq_AjiBj< 3, NUM_SUPPORT_POINTS >( value, var, N );
 }
 
 
@@ -534,7 +534,7 @@ void FiniteElementBase::gradient( GRADIENT_TYPE const & gradN,
                                   real64 const (&var)[NUM_SUPPORT_POINTS],
                                   real64 (& gradVar)[3] )
 {
-  LvArray::tensorOps::AjiBj< 3, NUM_SUPPORT_POINTS >( gradVar, gradN, var );
+  LvArray::tensorOps::Ri_eq_AjiBj< 3, NUM_SUPPORT_POINTS >( gradVar, gradN, var );
 }
 
 template< int NUM_SUPPORT_POINTS,
@@ -545,7 +545,7 @@ void FiniteElementBase::gradient( GRADIENT_TYPE const & gradN,
                                   real64 const (&var)[NUM_SUPPORT_POINTS][3],
                                   real64 (& gradVar)[3][3] )
 {
-  LvArray::tensorOps::AkiBkj< 3, 3, NUM_SUPPORT_POINTS >( gradVar, var, gradN );
+  LvArray::tensorOps::Rij_eq_AkiBkj< 3, 3, NUM_SUPPORT_POINTS >( gradVar, var, gradN );
 }
 
 
@@ -605,7 +605,7 @@ void FiniteElementBase::plus_gradNajAij( GRADIENT_TYPE const & gradN,
 {
   for( int a=0; a<NUM_SUPPORT_POINTS; ++a )
   {
-    LvArray::tensorOps::plusAijBj< 3, 3 >( R[a], var_detJxW, gradN[a] );
+    LvArray::tensorOps::Ri_add_AijBj< 3, 3 >( R[a], var_detJxW, gradN[a] );
   }
 }
 
