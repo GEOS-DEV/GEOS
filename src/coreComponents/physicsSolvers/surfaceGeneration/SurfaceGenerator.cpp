@@ -2871,7 +2871,7 @@ void SurfaceGenerator::CalculateNodeAndFaceSIF( DomainPartition & domain,
 //                                      [=] GEOSX_HOST_DEVICE ( localIndex const trailingFacesCounter )
   {
 //    localIndex const trailingFaceIndex = m_trailingFaces[ trailingFacesCounter ];
-    R1Tensor faceNormalVector = faceNormal[trailingFaceIndex];//TODO: check if a ghost face still has the correct
+    R1Tensor faceNormalVector = LVARRAY_TENSOROPS_INIT_LOCAL_3( faceNormal[trailingFaceIndex] );//TODO: check if a ghost face still has the correct
                                                               // attributes such as normal vector, face center, face
                                                               // index.
     localIndex_array unpinchedNodeID;
@@ -2905,7 +2905,7 @@ void SurfaceGenerator::CalculateNodeAndFaceSIF( DomainPartition & domain,
         if( isNodeGhost[nodeIndex] < 0 )
         {
           R1Tensor nodeDisconnectForce;
-          R1Tensor nodePosition = X[nodeIndex];
+          R1Tensor nodePosition = LVARRAY_TENSOROPS_INIT_LOCAL_3( X[nodeIndex] );
           localIndex tralingNodeID = std::numeric_limits< localIndex >::max();
           localIndex nElemEachSide[2];
           nElemEachSide[0] = 0;
@@ -3088,12 +3088,12 @@ void SurfaceGenerator::CalculateNodeAndFaceSIF( DomainPartition & domain,
               LvArray::tensorOps::subtract< 3 >( vecTipNorm, faceNormal[childFaceIndices[trailingFaceIndex]] );
               LvArray::tensorOps::normalize< 3 >( vecTipNorm );
 
-              R1Tensor vecEdge = edgeManager.calculateLength( edgeIndex, X );
+              R1Tensor vecEdge = LVARRAY_TENSOROPS_INIT_LOCAL_3 ( edgeManager.calculateLength( edgeIndex, X ) );
               LvArray::tensorOps::normalize< 3 >( vecEdge );
 
               LvArray::tensorOps::crossProduct(vecTip, vecTipNorm, vecEdge );
               LvArray::tensorOps::normalize< 3 >( vecTip );
-              R1Tensor v0 = edgeManager.calculateCenter( edgeIndex, X );
+              R1Tensor v0 = LVARRAY_TENSOROPS_INIT_LOCAL_3( edgeManager.calculateCenter( edgeIndex, X ) );
               LvArray::tensorOps::subtract< 3 >( v0, faceCenter[ trailingFaceIndex ] );
 
               if( LvArray::tensorOps::AiBi< 3 >( v0, vecTip ) < 0 )
@@ -3279,12 +3279,12 @@ real64 SurfaceGenerator::CalculateEdgeSIF( DomainPartition & domain,
   LvArray::tensorOps::normalize< 3 >(vecTipNorm);
 
   //TODO: wu40: There is a function for EdgeVector in EdgeManager.cpp but has been commented.
-  R1Tensor vecEdge = edgeManager.calculateLength( edgeID, X );
+  R1Tensor vecEdge = LVARRAY_TENSOROPS_INIT_LOCAL_3( edgeManager.calculateLength( edgeID, X ) );
   real64 const edgeLength = LvArray::tensorOps::l2Norm< 3 >( vecEdge );
 
   LvArray::tensorOps::crossProduct(vecTip, vecTipNorm, vecEdge);
   LvArray::tensorOps::normalize< 3 >(vecTip);
-  R1Tensor v0 = edgeManager.calculateCenter( edgeID, X );
+  R1Tensor v0 = LVARRAY_TENSOROPS_INIT_LOCAL_3 ( edgeManager.calculateCenter( edgeID, X ) );
   LvArray::tensorOps::subtract<3> (v0, faceCenter[faceA]);
 
   if( LvArray::tensorOps::AiBi< 3 >( v0, vecTip ) < 0 )
@@ -3465,10 +3465,11 @@ real64 SurfaceGenerator::CalculateEdgeSIF( DomainPartition & domain,
         localIndex pickedTrailingEdge = std::numeric_limits< localIndex >::max();
         for( localIndex const iedge : nodeToEdgeMap[ trailingNodes[ 0 ] ] )
         {
-          R1Tensor const xTrailingEdge = edgeManager.calculateCenter( iedge, X );
+          R1Tensor const xTrailingEdge = LVARRAY_TENSOROPS_INIT_LOCAL_3( edgeManager.calculateCenter( iedge, X ) );
 
           real64 udist;
-          R1Tensor x0_x1( X[edgeToNodeMap[edgeID][0]] ), x0_xTrailingEdge( xTrailingEdge );
+          R1Tensor x0_x1 = LVARRAY_TENSOROPS_INIT_LOCAL_3( X[edgeToNodeMap[edgeID][0]] );
+          R1Tensor x0_xTrailingEdge = LVARRAY_TENSOROPS_INIT_LOCAL_3( xTrailingEdge );
           LvArray::tensorOps::subtract< 3 >( x0_x1, X[edgeToNodeMap( edgeID, 1 )] );
           LvArray::tensorOps::normalize< 3 >( x0_x1 );
           LvArray::tensorOps::subtract< 3 >( x0_xTrailingEdge, X[edgeToNodeMap( edgeID, 1 )] );
@@ -3476,7 +3477,7 @@ real64 SurfaceGenerator::CalculateEdgeSIF( DomainPartition & domain,
 
           if( udist <= edgeLength && udist > 0.0 )
           {
-            R1Tensor vEdge = edgeManager.calculateLength( iedge, X );
+            R1Tensor vEdge = LVARRAY_TENSOROPS_INIT_LOCAL_3( edgeManager.calculateLength( iedge, X ) );
             LvArray::tensorOps::normalize< 3 >( vEdge );
 
             real64 cosEdge = std::fabs( LvArray::tensorOps::AiBi< 3 >( vEdge, vecEdge ));
@@ -3716,7 +3717,9 @@ int SurfaceGenerator::CalculateElementForcesOnEdge( DomainPartition & domain,
       R1Tensor xEle = elemCenter[er][esr][ei];
 
       real64 udist;
-      R1Tensor x0_x1( X[edgeToNodeMap[edgeID][0]] ), x0_xEle( xEle );
+      R1Tensor x0_x1 = LVARRAY_TENSOROPS_INIT_LOCAL_3( X[edgeToNodeMap[edgeID][0]] );
+      R1Tensor x0_xEle = LVARRAY_TENSOROPS_INIT_LOCAL_3( xEle );
+
       LvArray::tensorOps::subtract< 3 > ( x0_x1, X[edgeToNodeMap[edgeID][1]] );
       LvArray::tensorOps::normalize< 3 >( x0_x1 );
       LvArray::tensorOps::subtract< 3 >( x0_xEle, X[edgeToNodeMap[edgeID][1]] );
