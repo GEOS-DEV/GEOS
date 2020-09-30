@@ -93,7 +93,7 @@ See below for details about :ref:`Submitting_a_Pull_Request`.
 Bugfix Branches
 ---------------
 Bugfix branches are used to fix bugs that are present in the ``develop`` branch.
-A similar naming convention to that of the ``feature`` branches are used, replacing
+A similar naming convention to that of the ``feature`` branches is used, replacing
 "feature" with "bugfix" (i.e. ``bugfix/neo/squashAgentSmith``).
 Typically, bugfix branches are completed by a single contributor, but just as with
 the ``feature`` branches, a collaborative effort may be required resulting a 
@@ -113,7 +113,7 @@ will be applied to the branch.
 For instance if we were releasing version ``1.2.0``, we would name the branch
 ``release/1.2.x``.
 In contrast to the ``OneFlow`` approach, we do not delete the ``release`` branch.
-Once the release candidate release is ready, it is tagged and merged back into ``develop``. 
+Once the release candidate is ready, it is tagged and merged back into ``develop``. 
 From that point the ``release`` branch exists to provide a basis for maintaining 
 the major/minor release via the patching index.
 Once the ``release/major.minor.x`` branch is tagged, it only exists as a starting point 
@@ -139,7 +139,7 @@ a patch increment for the release sequence of tags.
 So if a ``hotfix`` was merged into ``release/1.2.z`` with a most recent tag of
 ``1.2.1``, the merged commit would be tagged with ``1.2.2``.
 In addition to merging into the ``release`` branch, the ``hotfix`` may also target 
-``develop`` if it appropriate.
+``develop`` if it is appropriate.
 If the bug exists in ``develop`` and there are no plans to fix the bug prior 
 to the next ``major.minor`` release cycle, then the ``hotfix`` should be merged
 into ``develop``.
@@ -195,7 +195,7 @@ to a linear history within the branch.
 For a complex history, we will perform a squash merge into ``develop``, thereby 
 the work from the branch will appear as a single commit in ``develop``.
 For clean branch histories where the individual commits are meaningful and should 
-be preserved, we have to option to perform a merge commit in with the PR is merged 
+be preserved, we have the option to perform a merge commit in with the PR is merged 
 into ``develop``, with the addition of a merge commit, thus maintaining the commit history.
 
 
@@ -292,7 +292,7 @@ also add any appropriate `flags`.
 
 .. note::
    If your branch and PR will resolve any open issues, be sure to `link` them to
-   the PR to ensure they are appropriate resolved once the PR is merged.
+   the PR to ensure they are appropriately resolved once the PR is merged.
    In order to `link` the issue to the PR for automatic resolution, you must use 
    one of the keywords followed by the issue number (e.g. resolves #1020) in either
    the main description of the PR, or a commit message. 

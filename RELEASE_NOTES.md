@@ -28,21 +28,20 @@ Version v0.2.0 -- Release date 2020-06-20
       * 6-node wedge
       * 5-node pyramid
       * 4-node tetrahedron
-  * Finite volume stencils for cell-centered FVM formulations (TPFA, infrastructure support for MPFA, but currently 
-    not implemented)
-  * Inner products for Hybrid FVM formulations (current support for TPFA and quasi-TPFA) 
+  * Cell-centered Finite Volume method with Two-point Flux Approximation (TPFA)
+  * Hybrid Finite Volume method with TPFA and quasi-TPFA inner products
 * Physics Solvers
   * Solid mechanics explicit on GPU, implicit assembly on GPU
   * Single-phase flow (assembly on GPU)
     * Classical FVM and Hybrid FVM formulations
     * Porous matrix and DFM fracture flow
   * Compositional multiphase flow (assembly on GPU)
-  * Multi-segmented wells for single phase and compositional multiphase flow (assembly on GPU)
     * Fully implicit isothermal overall composition formulation
     * Fluid constitutive models:
       * Equation-of-state hydrocarbon compositional
       * Three-phase extended black-oil
-      * Two-phase CO2-brine  
+      * Two-phase CO2-brine
+  * Multi-segmented wells for single phase and compositional multiphase flow (assembly on GPU)
   * Surface Generation
     * Topology change (legacy GEOS approach)
 * Embedded Discrete Fractures
