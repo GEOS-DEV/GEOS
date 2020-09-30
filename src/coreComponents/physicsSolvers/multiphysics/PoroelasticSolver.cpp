@@ -310,8 +310,8 @@ void PoroelasticSolver::UpdateDeformationForCoupling( DomainPartition & domain )
       R1Tensor Xlocal[ElementRegionManager::maxNumNodesPerElem];
       for( localIndex a = 0; a < numNodesPerElement; ++a )
       {
-        Xlocal[a] = X[elemsToNodes[ei][a]];
-        Xlocal[a] += u[elemsToNodes[ei][a]];
+        LvArray::tensorOps::copy< 3 >( Xlocal[a], X[elemsToNodes[ei][a]] );
+        LvArray::tensorOps::add< 3 >( Xlocal[a], u[elemsToNodes[ei][a]] );
       }
 
       dVol[ei] = computationalGeometry::HexVolume( Xlocal ) - volume[ei];

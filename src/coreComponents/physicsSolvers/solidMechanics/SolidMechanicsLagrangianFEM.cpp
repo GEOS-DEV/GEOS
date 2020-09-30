@@ -1306,8 +1306,8 @@ void SolidMechanicsLagrangianFEM::ApplyContactConstraint( DofManager const & dof
       forAll< serialPolicy >( subRegion.size(), [=] ( localIndex const kfe )
       {
         real64 Nbar[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( faceNormal[elemsToFaces[kfe][0]] );
-        LvArray::tensorOps::subtract< 3 >( Nba, faceNormal[elemsToFaces[kfe][1]] );
-        LvArray::tensorOps::normalize( Nbar );
+        LvArray::tensorOps::subtract< 3 >( Nbar, faceNormal[elemsToFaces[kfe][1]] );
+        LvArray::tensorOps::normalize< 3 >( Nbar );
 
         localIndex const kf0 = elemsToFaces[kfe][0];
         localIndex const kf1 = elemsToFaces[kfe][1];
