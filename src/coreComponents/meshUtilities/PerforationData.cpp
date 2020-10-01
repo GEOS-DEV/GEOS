@@ -52,8 +52,8 @@ void PerforationData::ComputeWellTransmissibility( MeshLevel const & mesh,
 {
 
   // get the permeability in the domain
-  ElementRegionManager::ElementViewAccessor< arrayView1d< R1Tensor const > > const perm =
-    mesh.getElemManager()->ConstructViewAccessor< array1d< R1Tensor >, arrayView1d< R1Tensor const > >( permeabilityKey );
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > const perm =
+    mesh.getElemManager()->ConstructArrayViewAccessor< real64, 2 >( permeabilityKey );
 
   arrayView2d< real64 const > const wellElemCenter = wellElemSubRegion->getElementCenter();
 
@@ -162,7 +162,7 @@ void PerforationData::GetReservoirElementDimensions( MeshLevel const & mesh,
 }
 
 
-void PerforationData::DecideWellDirection( real64 const ( & vecWellElemCenterToPerf )[3],
+void PerforationData::DecideWellDirection( real64 const ( &vecWellElemCenterToPerf )[3],
                                            real64 const & dx, real64 const & dy, real64 const & dz,
                                            R1Tensor const & perm,
                                            real64 & d1, real64 & d2, real64 & h,
@@ -205,19 +205,18 @@ void PerforationData::ConnectToMeshElements( MeshLevel const & mesh,
 {
   ElementRegionManager const * const elemManager = mesh.getElemManager();
   NodeManager const * const nodeManager = mesh.getNodeManager();
-  ElementRegionManager::ElementViewAccessor< arrayView1d< R1Tensor const > >
-  elemCenter = elemManager->ConstructViewAccessor< array1d< R1Tensor >, arrayView1d< R1Tensor const > >( ElementSubRegionBase::
-                                                                                                           viewKeyStruct::
-                                                                                                           elementCenterString );
 
-  arrayView1d< R1Tensor const > const & perfCoordsGlobal = wellGeometry.GetPerfCoords();
-  arrayView1d< real64 const >   const & perfTransGlobal  = wellGeometry.GetPerfTransmissibility();
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > elemCenter =
+    elemManager->ConstructArrayViewAccessor< real64, 2 >( ElementSubRegionBase::viewKeyStruct::elementCenterString );
 
-  resize( perfCoordsGlobal.size() );
+  arrayView2d< real64 const > const & perfCoordsGlobal = wellGeometry.GetPerfCoords();
+  arrayView1d< real64 const > const & perfTransGlobal  = wellGeometry.GetPerfTransmissibility();
+
+  resize( perfCoordsGlobal.size( 0 ) );
   localIndex iperfLocal = 0;
 
   // loop over all the perforations
-  for( globalIndex iperfGlobal = 0; iperfGlobal < perfCoordsGlobal.size(); ++iperfGlobal )
+  for( globalIndex iperfGlobal = 0; iperfGlobal < perfCoordsGlobal.size( 0 ); ++iperfGlobal )
   {
     real64 const coords[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( perfCoordsGlobal[iperfGlobal] );
 

@@ -59,13 +59,13 @@ BoundedPlane::~BoundedPlane()
 void BoundedPlane::PostProcessInput()
 {
   // Make sure that you have an orthonormal basis.
-  LvArray::tensorOps::normalize< 3 >(m_normal);
-  LvArray::tensorOps::normalize< 3 >(m_lengthVector);
-  LvArray::tensorOps::normalize< 3 >(m_widthVector);
+  LvArray::tensorOps::normalize< 3 >( m_normal );
+  LvArray::tensorOps::normalize< 3 >( m_lengthVector );
+  LvArray::tensorOps::normalize< 3 >( m_widthVector );
 
   //Check if they are all orthogonal
   real64 vector[ 3 ];
-  LvArray::tensorOps::crossProduct(vector, m_lengthVector, m_widthVector );
+  LvArray::tensorOps::crossProduct( vector, m_lengthVector, m_widthVector );
 
   GEOSX_ERROR_IF( std::fabs( std::fabs( LvArray::tensorOps::AiBi< 3 >( m_normal, vector )) - 1 ) > 1e-15
                   || std::fabs( LvArray::tensorOps::AiBi< 3 >( m_widthVector, m_lengthVector )) > 1e-15,
@@ -80,11 +80,11 @@ void BoundedPlane::findRectangleLimits()
   real64 lengthVec[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( m_lengthVector );
   real64 widthVec[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( m_widthVector );
 
-  LvArray::tensorOps::scale< 3 >(lengthVec, 0.5 * m_dimensions[0]);
-  LvArray::tensorOps::scale< 3 >(widthVec, 0.5 * m_dimensions[1]);
+  LvArray::tensorOps::scale< 3 >( lengthVec, 0.5 * m_dimensions[0] );
+  LvArray::tensorOps::scale< 3 >( widthVec, 0.5 * m_dimensions[1] );
 
   for( int i=0; i < 4; i++ )
-    LvArray::tensorOps::copy< 3 > ( m_points[i], m_origin );
+    LvArray::tensorOps::copy< 3 >( m_points[i], m_origin );
 
   LvArray::tensorOps::subtract< 3 >( m_points[0], lengthVec );
   LvArray::tensorOps::subtract< 3 >( m_points[0], widthVec );
@@ -92,8 +92,8 @@ void BoundedPlane::findRectangleLimits()
   LvArray::tensorOps::add< 3 >( m_points[1], lengthVec );
   LvArray::tensorOps::subtract< 3 >( m_points[1], widthVec );
 
-  LvArray::tensorOps::add< 3 >(m_points[2], lengthVec );
-  LvArray::tensorOps::add< 3 >(m_points[2], widthVec );
+  LvArray::tensorOps::add< 3 >( m_points[2], lengthVec );
+  LvArray::tensorOps::add< 3 >( m_points[2], widthVec );
 
   LvArray::tensorOps::subtract< 3 >( m_points[3], lengthVec );
   LvArray::tensorOps::add< 3 >( m_points[3], widthVec );

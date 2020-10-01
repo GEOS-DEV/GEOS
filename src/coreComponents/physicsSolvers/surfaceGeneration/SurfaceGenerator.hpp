@@ -161,14 +161,14 @@ private:
    * @return
    */
   real64 CalculateEdgeSIF ( DomainPartition & domain,
-                           const localIndex edgeID,
-                           localIndex & trailFaceID,
-                           NodeManager & nodeManager,
-                           EdgeManager & edgeManager,
-                           FaceManager & faceManager,
-                           ElementRegionManager & elementManager,
-                           R1Tensor & vecTipNorm,
-                           R1Tensor & vecTip );
+                            const localIndex edgeID,
+                            localIndex & trailFaceID,
+                            NodeManager & nodeManager,
+                            EdgeManager & edgeManager,
+                            FaceManager & faceManager,
+                            ElementRegionManager & elementManager,
+                            R1Tensor & vecTipNorm,
+                            R1Tensor & vecTip );
 
   /**
    * @brief
@@ -438,9 +438,9 @@ private:
    * @return
    */
   real64 CalculateKinkAngle ( const localIndex nodeID,
-                             const NodeManager & nodeManager,
-                             EdgeManager & edgeManager,
-                             FaceManager & faceManager );
+                              const NodeManager & nodeManager,
+                              EdgeManager & edgeManager,
+                              FaceManager & faceManager );
 
   /**
    *
@@ -478,9 +478,9 @@ private:
    * @return
    */
   real64 MinimumToughnessOnEdge( const localIndex edgeID,
-                                const NodeManager & nodeManager,
-                                EdgeManager & edgeManager,
-                                FaceManager & faceManager );
+                                 const NodeManager & nodeManager,
+                                 EdgeManager & edgeManager,
+                                 FaceManager & faceManager );
 
   /**
    *
@@ -491,9 +491,9 @@ private:
    * @return
    */
   real64 MinimumToughnessOnNode( const localIndex nodeID,
-                                const NodeManager & nodeManager,
-                                EdgeManager & edgeManager,
-                                FaceManager & faceManager );
+                                 const NodeManager & nodeManager,
+                                 EdgeManager & edgeManager,
+                                 FaceManager & faceManager );
 
 
   real64 calculateRuptureRate( FaceElementRegion & faceElementRegion,

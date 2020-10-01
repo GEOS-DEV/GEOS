@@ -464,8 +464,8 @@ FluxKernel::Launch( localIndex er,
     subRegion.getReference< array2d< real64 > >( CellBlock::viewKeyStruct::elementCenterString );
   arrayView1d< real64 const > const elemVolume =
     subRegion.getReference< array1d< real64 > >( CellBlock::viewKeyStruct::elementVolumeString );
-  arrayView1d< R1Tensor const > const elemPerm =
-    subRegion.getReference< array1d< R1Tensor > >( SinglePhaseBase::viewKeyStruct::permeabilityString );
+  arrayView2d< real64 const > const elemPerm =
+    subRegion.getReference< array2d< real64 > >( SinglePhaseBase::viewKeyStruct::permeabilityString );
 
   // get the cell-centered depth
   arrayView1d< real64 const > const elemGravCoef =
@@ -484,7 +484,7 @@ FluxKernel::Launch( localIndex er,
     // transmissibility matrix
     stackArray2d< real64, NF *NF > transMatrix( NF, NF );
 
-    real64 const perm[ 3 ] = { elemPerm[ei][0], elemPerm[ei][1], elemPerm[ei][2] };
+    real64 const perm[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( elemPerm[ei] );
 
     // recompute the local transmissibility matrix at each iteration
     // we can decide later to precompute transMatrix if needed

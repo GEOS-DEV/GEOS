@@ -102,8 +102,8 @@ void SinglePhaseBase::RegisterDataOnMesh( Group * const MeshBodies )
       subRegion.template registerWrapper< array1d< real64 > >( viewKeyStruct::densityOldString )->
         setRestartFlags( RestartFlags::NO_WRITE );
 
-      subRegion.template registerWrapper< array1d< R1Tensor > >( viewKeyStruct::transTMultString )->
-        setDefaultValue( {1.0, 1.0, 1.0} );
+      subRegion.template registerWrapper< array2d< real64 > >( viewKeyStruct::transTMultString )->
+        setDefaultValue( 1.0 );
       subRegion.template registerWrapper< array1d< real64 > >( viewKeyStruct::poroMultString )->
         setDefaultValue( 1.0 );
     } );

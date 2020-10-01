@@ -167,7 +167,7 @@ void RotationMatrix_3D( arraySlice1d< real64 const > const normal,
  */
 bool IsPointInsidePolyhedron( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodeCoordinates,
                               array1d< array1d< localIndex > > const & faceNodeIndicies,
-                              real64 const ( & point )[3],
+                              real64 const ( &point )[3],
                               real64 const areaTolerance = 0.0 );
 
 /**
@@ -190,80 +190,72 @@ void GetBoundingBox( localIndex elemIndex,
  */
 inline
 GEOSX_HOST_DEVICE
-real64 HexVolume( R1Tensor const * const X )
+real64 HexVolume( real64 const X[][3] )
 {
   real64 X7_X1[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( X[7] );
-  LvArray::tensorOps::subtract<3>(X7_X1, X[1]);
+  LvArray::tensorOps::subtract< 3 >( X7_X1, X[1] );
 
   real64 X6_X0[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( X[6] );
-  LvArray::tensorOps::subtract<3>(X6_X0, X[0]);
+  LvArray::tensorOps::subtract< 3 >( X6_X0, X[0] );
 
   real64 X7_X2[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( X[7] );
-  LvArray::tensorOps::subtract<3>(X7_X2, X[2]);
+  LvArray::tensorOps::subtract< 3 >( X7_X2, X[2] );
 
   real64 X3_X0[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( X[3] );
-  LvArray::tensorOps::subtract<3>(X3_X0, X[0]);
+  LvArray::tensorOps::subtract< 3 >( X3_X0, X[0] );
 
   real64 X5_X0[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( X[5] );
-  LvArray::tensorOps::subtract<3>(X5_X0, X[0]);
+  LvArray::tensorOps::subtract< 3 >( X5_X0, X[0] );
 
   real64 X7_X4[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( X[7] );
-  LvArray::tensorOps::subtract<3>(X7_X4, X[4]);
+  LvArray::tensorOps::subtract< 3 >( X7_X4, X[4] );
 
   real64 X7_X1plusX6_X0[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( X7_X1 );
-  LvArray::tensorOps::add<3>(X7_X1plusX6_X0, X6_X0);
+  LvArray::tensorOps::add< 3 >( X7_X1plusX6_X0, X6_X0 );
 
   real64 X7_X2plusX5_X0[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( X7_X2 );
-  LvArray::tensorOps::add<3>(X7_X2plusX5_X0, X5_X0);
+  LvArray::tensorOps::add< 3 >( X7_X2plusX5_X0, X5_X0 );
 
   real64 X7_X4plusX3_X0[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( X7_X4 );
-  LvArray::tensorOps::add<3>(X7_X4plusX3_X0, X3_X0);
+  LvArray::tensorOps::add< 3 >( X7_X4plusX3_X0, X3_X0 );
 
   real64 X7_X2crossX3_X0[3];
-  LvArray::tensorOps::crossProduct(X7_X2crossX3_X0, X7_X2, X3_X0);
+  LvArray::tensorOps::crossProduct( X7_X2crossX3_X0, X7_X2, X3_X0 );
 
   real64 X7_X2plusX5_X0crossX7_X4[3];
-  LvArray::tensorOps::crossProduct(X7_X2plusX5_X0crossX7_X4, X7_X2plusX5_X0, X7_X4);
+  LvArray::tensorOps::crossProduct( X7_X2plusX5_X0crossX7_X4, X7_X2plusX5_X0, X7_X4 );
 
   real64 X5_X0crossX7_X4plusX3_X0[3];
-  LvArray::tensorOps::crossProduct(X5_X0crossX7_X4plusX3_X0, X5_X0, X7_X4plusX3_X0);
+  LvArray::tensorOps::crossProduct( X5_X0crossX7_X4plusX3_X0, X5_X0, X7_X4plusX3_X0 );
 
-  return 1.0/12.0 * ( LvArray::tensorOps::AiBi<3>( X7_X1plusX6_X0, X7_X2crossX3_X0          ) +
-                      LvArray::tensorOps::AiBi<3>( X6_X0,          X7_X2plusX5_X0crossX7_X4 ) +
-                      LvArray::tensorOps::AiBi<3>( X7_X1,          X5_X0crossX7_X4plusX3_X0 ) );
+  return 1.0/12.0 * ( LvArray::tensorOps::AiBi< 3 >( X7_X1plusX6_X0, X7_X2crossX3_X0 ) +
+                      LvArray::tensorOps::AiBi< 3 >( X6_X0, X7_X2plusX5_X0crossX7_X4 ) +
+                      LvArray::tensorOps::AiBi< 3 >( X7_X1, X5_X0crossX7_X4plusX3_X0 ) );
 }
 
 /**
  * @brief Compute the volume of an tetrahedron
- * @param[in] points vertices of the tetrahedron
+ * @param[in] X vertices of the tetrahedron
  * @return the volume of the tetrahedron
  */
 GEOSX_HOST_DEVICE
-real64 TetVolume( R1Tensor const * const points );
-
-/**
- * @brief Compute the volume of an tetrahedron
- * @param[in] points vertices of the tetrahedron
- * @return the volume of the tetrahedron
- */
-GEOSX_HOST_DEVICE
-real64 TetVolume( real64 const ( &points )[4][3] );
+real64 TetVolume( real64 const X[][3] );
 
 /**
  * @brief Compute the volume of a wedge
- * @param[in] points vertices of the wedge
+ * @param[in] X vertices of the wedge
  * @return the volume of the wedge
  */
 GEOSX_HOST_DEVICE
-real64 WedgeVolume( R1Tensor const * const points );
+real64 WedgeVolume( real64 const X[][3] );
 
 /**
  * @brief Compute the volume of a pyramid
- * @param[in] points vertices of the pyramid
+ * @param[in] X vertices of the pyramid
  * @return the volume of the pyramid
  */
 GEOSX_HOST_DEVICE
-real64 PyramidVolume( R1Tensor const * const points );
+real64 PyramidVolume( real64 const X[][3] );
 
 } // namespace computationalGeometry
 } // namespace geosx

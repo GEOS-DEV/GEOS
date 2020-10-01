@@ -68,8 +68,8 @@ void TwoPointFluxApproximation::computeCellStencil( MeshLevel & mesh ) const
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > const elemCenter =
     elemManager.ConstructArrayViewAccessor< real64, 2 >( CellBlock::viewKeyStruct::elementCenterString );
 
-  ElementRegionManager::ElementViewAccessor< arrayView1d< R1Tensor const > > const coefficient =
-    elemManager.ConstructArrayViewAccessor< R1Tensor, 1 >( m_coeffName );
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > const coefficient =
+    elemManager.ConstructArrayViewAccessor< real64, 2 >( m_coeffName );
 
   ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > const elemGlobalIndex =
     elemManager.ConstructArrayViewAccessor< globalIndex, 1 >( ObjectManagerBase::viewKeyStruct::localToGlobalMapString );
@@ -212,8 +212,8 @@ void TwoPointFluxApproximation::addToFractureStencil( MeshLevel & mesh,
   ElementRegionManager::ElementViewAccessor< arrayView1d< integer const > > const elemGhostRank =
     elemManager->ConstructArrayViewAccessor< integer, 1 >( ObjectManagerBase::viewKeyStruct::ghostRankString );
 
-  ElementRegionManager::ElementViewAccessor< arrayView1d< R1Tensor const > > const coefficient =
-    elemManager->ConstructArrayViewAccessor< R1Tensor, 1 >( m_coeffName );
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > const coefficient =
+    elemManager->ConstructArrayViewAccessor< real64, 2 >( m_coeffName );
 
   arrayView1d< real64 const > faceArea   = faceManager->faceArea();
   arrayView2d< real64 const > faceCenter = faceManager->faceCenter();
@@ -696,8 +696,8 @@ void TwoPointFluxApproximation::addEDFracToFractureStencil( MeshLevel & mesh,
   arrayView1d< localIndex const > const & elemList          = fractureSubRegion.getSurfaceToCellList();
   arrayView1d< real64 const >     const & connectivityIndex = fractureSubRegion.getConnectivityIndex();
 
-  ElementRegionManager::ElementViewAccessor< arrayView1d< R1Tensor const > > const permeabilityTensor =
-    elemManager.ConstructArrayViewAccessor< R1Tensor, 1 >( m_coeffName );
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > const coeffTensor =
+    elemManager.ConstructArrayViewAccessor< real64, 2 >( m_coeffName );
 
   // start from last connectorIndex from cell-To-cell connections
   connectorIndex = cellStencil.size();
@@ -721,8 +721,7 @@ void TwoPointFluxApproximation::addEDFracToFractureStencil( MeshLevel & mesh,
       localIndex const ei  = elemList[kes];
 
       // Here goes EDFM transmissibility computation.
-      real64 avPerm = LvArray::tensorOps::l2Norm< 3 >( permeabilityTensor[er][esr][ei] );
-
+      real64 const avPerm = LvArray::tensorOps::l2Norm< 3 >( coeffTensor[er][esr][ei] );
       real64 const ht = connectivityIndex[kes] * avPerm;   // Using matrix perm coz assuming fracture is highly permeable for now.
 
       //
@@ -775,8 +774,8 @@ void TwoPointFluxApproximation::computeBoundaryStencil( MeshLevel & mesh,
   ElementRegionManager::ElementViewAccessor< arrayView1d< integer const > > const elemGhostRank =
     elemManager.ConstructArrayViewAccessor< integer, 1 >( ObjectManagerBase::viewKeyStruct::ghostRankString );
 
-  ElementRegionManager::ElementViewAccessor< arrayView1d< R1Tensor const > > const coefficient =
-    elemManager.ConstructArrayViewAccessor< R1Tensor, 1 >( m_coeffName );
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > const coefficient =
+    elemManager.ConstructArrayViewAccessor< real64, 2 >( m_coeffName );
 
   ArrayOfArraysView< localIndex const > const & faceToNodes = faceManager.nodeList().toViewConst();
 

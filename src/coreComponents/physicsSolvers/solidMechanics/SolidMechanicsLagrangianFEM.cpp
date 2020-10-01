@@ -1324,7 +1324,7 @@ void SolidMechanicsLagrangianFEM::ApplyContactConstraint( DofManager const & dof
           localIndex const node0 = facesToNodes[kf0][a];
           localIndex const node1 = facesToNodes[kf1][ a==0 ? a : numNodesPerFace-a ];
           real64 gap[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( u[node1] );
-          LvArray::tensorOps::subtract< 3 >(gap, u[node0]);
+          LvArray::tensorOps::subtract< 3 >( gap, u[node0] );
           real64 const gapNormal = LvArray::tensorOps::AiBi< 3 >( gap, Nbar );
 
           for( int i=0; i<3; ++i )
@@ -1335,7 +1335,7 @@ void SolidMechanicsLagrangianFEM::ApplyContactConstraint( DofManager const & dof
 
           if( gapNormal < 0 )
           {
-            LvArray::tensorOps::scale< 3 >(penaltyForce, -contactStiffness * gapNormal * Ja);
+            LvArray::tensorOps::scale< 3 >( penaltyForce, -contactStiffness * gapNormal * Ja );
             for( int i=0; i<3; ++i )
             {
               LvArray::tensorOps::subtract< 3 >( fc[node0], penaltyForce );

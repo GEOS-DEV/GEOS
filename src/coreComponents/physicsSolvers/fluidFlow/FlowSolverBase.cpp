@@ -112,8 +112,8 @@ void FlowSolverBase::RegisterDataOnMesh( Group * const MeshBodies )
         setDefaultValue( faceRegion.getDefaultAperture() );
       subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::effectiveApertureString )->
         setApplyDefaultValue( subRegion.getWrapper< array1d< real64 > >( FaceElementSubRegion::
-                                                                         viewKeyStruct::
-                                                                         elementApertureString )->getDefaultValue() )->
+                                                                           viewKeyStruct::
+                                                                           elementApertureString )->getDefaultValue() )->
         setPlotLevel( PlotLevel::LEVEL_0 );
 
       subRegion.getReference< array2d< real64 > >( viewKeyStruct::permeabilityString ).resizeDimension< 1 >( 3 );

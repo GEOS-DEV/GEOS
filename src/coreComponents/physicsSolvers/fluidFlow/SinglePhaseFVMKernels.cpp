@@ -374,7 +374,7 @@ void FluxKernel::
                                     ElementViewConst< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM( aperture0 ),
                                     ElementViewConst< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM( aperture ),
                                     ElementViewConst< arrayView2d< real64 const > > const & GEOSX_UNUSED_PARAM( transTMultiplier ),
-                                    real64 const ( & GEOSX_UNUSED_PARAM( gravityVector ) )[3],
+                                    real64 const ( &GEOSX_UNUSED_PARAM( gravityVector ) )[3],
                                     real64 const GEOSX_UNUSED_PARAM( meanPermCoeff ),
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
                                     ElementViewConst< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM( s ),
@@ -459,7 +459,7 @@ void FluxKernel::
                                 ElementViewConst< arrayView1d< real64 const > > const & aperture0,
                                 ElementViewConst< arrayView1d< real64 const > > const & aperture,
                                 ElementViewConst< arrayView2d< real64 const > > const & transTMultiplier,
-                                real64 const ( & gravityVector )[3],
+                                real64 const ( &gravityVector )[3],
                                 real64 const meanPermCoeff,
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
                                 ElementViewConst< arrayView1d< real64 const > > const & s,

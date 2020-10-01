@@ -86,31 +86,31 @@ void UniformStrainHexahedron::reinit( const std::vector< R1TensorT< 3 > > & mapp
 
 
   const real64 x[8] = {  mapped_support_points[m_nodeOrdering[0]]( 0 ),
-                        mapped_support_points[m_nodeOrdering[1]]( 0 ),
-                        mapped_support_points[m_nodeOrdering[2]]( 0 ),
-                        mapped_support_points[m_nodeOrdering[3]]( 0 ),
-                        mapped_support_points[m_nodeOrdering[4]]( 0 ),
-                        mapped_support_points[m_nodeOrdering[5]]( 0 ),
-                        mapped_support_points[m_nodeOrdering[6]]( 0 ),
-                        mapped_support_points[m_nodeOrdering[7]]( 0 ) };
+                         mapped_support_points[m_nodeOrdering[1]]( 0 ),
+                         mapped_support_points[m_nodeOrdering[2]]( 0 ),
+                         mapped_support_points[m_nodeOrdering[3]]( 0 ),
+                         mapped_support_points[m_nodeOrdering[4]]( 0 ),
+                         mapped_support_points[m_nodeOrdering[5]]( 0 ),
+                         mapped_support_points[m_nodeOrdering[6]]( 0 ),
+                         mapped_support_points[m_nodeOrdering[7]]( 0 ) };
 
   const real64 y[8] = {  mapped_support_points[m_nodeOrdering[0]]( 1 ),
-                        mapped_support_points[m_nodeOrdering[1]]( 1 ),
-                        mapped_support_points[m_nodeOrdering[2]]( 1 ),
-                        mapped_support_points[m_nodeOrdering[3]]( 1 ),
-                        mapped_support_points[m_nodeOrdering[4]]( 1 ),
-                        mapped_support_points[m_nodeOrdering[5]]( 1 ),
-                        mapped_support_points[m_nodeOrdering[6]]( 1 ),
-                        mapped_support_points[m_nodeOrdering[7]]( 1 ) };
+                         mapped_support_points[m_nodeOrdering[1]]( 1 ),
+                         mapped_support_points[m_nodeOrdering[2]]( 1 ),
+                         mapped_support_points[m_nodeOrdering[3]]( 1 ),
+                         mapped_support_points[m_nodeOrdering[4]]( 1 ),
+                         mapped_support_points[m_nodeOrdering[5]]( 1 ),
+                         mapped_support_points[m_nodeOrdering[6]]( 1 ),
+                         mapped_support_points[m_nodeOrdering[7]]( 1 ) };
 
   const real64 z[8] = {  mapped_support_points[m_nodeOrdering[0]]( 2 ),
-                        mapped_support_points[m_nodeOrdering[1]]( 2 ),
-                        mapped_support_points[m_nodeOrdering[2]]( 2 ),
-                        mapped_support_points[m_nodeOrdering[3]]( 2 ),
-                        mapped_support_points[m_nodeOrdering[4]]( 2 ),
-                        mapped_support_points[m_nodeOrdering[5]]( 2 ),
-                        mapped_support_points[m_nodeOrdering[6]]( 2 ),
-                        mapped_support_points[m_nodeOrdering[7]]( 2 ) };
+                         mapped_support_points[m_nodeOrdering[1]]( 2 ),
+                         mapped_support_points[m_nodeOrdering[2]]( 2 ),
+                         mapped_support_points[m_nodeOrdering[3]]( 2 ),
+                         mapped_support_points[m_nodeOrdering[4]]( 2 ),
+                         mapped_support_points[m_nodeOrdering[5]]( 2 ),
+                         mapped_support_points[m_nodeOrdering[6]]( 2 ),
+                         mapped_support_points[m_nodeOrdering[7]]( 2 ) };
 
 
 
@@ -294,7 +294,7 @@ CalcFBHourForce( const array1d< R1Tensor > & vel,
   R1Tensor q[4];
 
   const real64 BB = Dot( dNdx[0], dNdx[0] ) + Dot( dNdx[1], dNdx[1] ) + Dot( dNdx[2], dNdx[2] ) + Dot( dNdx[3], dNdx[3] ) +
-                   Dot( dNdx[4], dNdx[4] ) + Dot( dNdx[5], dNdx[5] ) + Dot( dNdx[6], dNdx[6] ) + Dot( dNdx[7], dNdx[7] );
+                    Dot( dNdx[4], dNdx[4] ) + Dot( dNdx[5], dNdx[5] ) + Dot( dNdx[6], dNdx[6] ) + Dot( dNdx[7], dNdx[7] );
 
   const real64 Cdamp  = dampcoef * sqrt( rho*modulus*BB / 6.0 ) * volume;
 

@@ -120,7 +120,7 @@ void CollectLocalAndBoundaryNodes( InternalWellGenerator const & wellGeometry,
  * @return true if "location" is contained in reservoir element ei, false otherwise
  */
 bool IsPointInsideElement( NodeManager const * const nodeManager,
-                           real64 const ( & location )[3],
+                           real64 const ( &location )[3],
                            CellBlock const * subRegion,
                            localIndex ei )
 {
@@ -180,7 +180,7 @@ void CollectElementNodes( CellBlock const *         subRegion,
  * @param[inout] eiMatched the element index of the reservoir element that contains "location", if any
  */
 bool VisitNeighborElements( MeshLevel const & mesh,
-                            real64 const ( & location )[3],
+                            real64 const ( &location )[3],
                             SortedArray< localIndex > & nodes,
                             SortedArray< globalIndex > & elements,
                             localIndex & erMatched,
@@ -267,7 +267,7 @@ bool VisitNeighborElements( MeshLevel const & mesh,
  * @param[inout] eiInit the element index of the reservoir element from which we start the search
  */
 void InitializeLocalSearch( MeshLevel const & mesh,
-                            real64 const ( & location )[ 3 ],
+                            real64 const ( &location )[ 3 ],
                             localIndex & erInit,
                             localIndex & esrInit,
                             localIndex & eiInit )
@@ -306,7 +306,7 @@ void InitializeLocalSearch( MeshLevel const & mesh,
  * @param[inout] eiMatched the element index of the reservoir element that contains "location", if any
  */
 bool SearchLocalElements( MeshLevel const & mesh,
-                          real64 const ( & location )[3],
+                          real64 const ( &location )[3],
                           localIndex const & searchDepth,
                           localIndex const & erInit,
                           localIndex const & esrInit,
@@ -461,7 +461,7 @@ void WellElementSubRegion::AssignUnownedElementsInReservoir( MeshLevel & mesh,
                                                              arrayView1d< integer > & elemStatusGlobal ) const
 {
   // get the well and reservoir element coordinates
-  arrayView1d< R1Tensor const > const & wellElemCoordsGlobal = wellGeometry.GetElemCoords();
+  arrayView2d< real64 const > const & wellElemCoordsGlobal = wellGeometry.GetElemCoords();
 
   // assign the well elements based on location wrt the reservoir elements
   // if the center of the well element falls in the domain owned by rank k
@@ -616,7 +616,7 @@ void WellElementSubRegion::UpdateNodeManagerSize( MeshLevel & mesh,
 
   arrayView1d< globalIndex > const & nodeLocalToGlobal = nodeManager->localToGlobalMap();
 
-  arrayView1d< R1Tensor const > const & nodeCoordsGlobal = wellGeometry.GetNodeCoords();
+  arrayView2d< real64 const > const & nodeCoordsGlobal = wellGeometry.GetNodeCoords();
 
   // local *well* index
   localIndex iwellNodeLocal = 0;
@@ -630,10 +630,7 @@ void WellElementSubRegion::UpdateNodeManagerSize( MeshLevel & mesh,
 
     // update node manager maps and position
     nodeLocalToGlobal[inodeLocal]  = nodeOffsetGlobal + iwellNodeGlobal; // global *nodeManager* index
-    for( localIndex i = 0; i < 3; ++i )
-    {
-      X( inodeLocal, i ) = nodeCoordsGlobal[ iwellNodeGlobal ][ i ];
-    }
+    LvArray::tensorOps::copy< 3 >( X[inodeLocal], nodeCoordsGlobal[ iwellNodeGlobal ] );
 
     // mark the boundary nodes for ghosting in DomainPartition::SetupCommunications
     if( boundaryNodes.contains( iwellNodeGlobal ) )
@@ -662,7 +659,7 @@ void WellElementSubRegion::ConstructSubRegionLocalElementMaps( MeshLevel & mesh,
 {
   // get the well geometry
   arrayView1d< globalIndex const > const & nextElemIdGlobal  = wellGeometry.GetNextElemIndex();
-  arrayView1d< R1Tensor const >    const & elemCoordsGlobal  = wellGeometry.GetElemCoords();
+  arrayView2d< real64 const >      const & elemCoordsGlobal  = wellGeometry.GetElemCoords();
   arrayView2d< globalIndex const > const & elemToNodesGlobal = wellGeometry.GetElemToNodesMap();
   arrayView1d< real64 const >      const & elemVolumeGlobal  = wellGeometry.GetElemVolume();
 
@@ -710,10 +707,7 @@ void WellElementSubRegion::ConstructSubRegionLocalElementMaps( MeshLevel & mesh,
       }
     }
 
-    // TODO Change to LvArray::tensorOps::copy
-    m_elementCenter[ iwelemLocal ][ 0 ] = elemCoordsGlobal[ iwelemGlobal ][ 0 ];
-    m_elementCenter[ iwelemLocal ][ 1 ] = elemCoordsGlobal[ iwelemGlobal ][ 1 ];
-    m_elementCenter[ iwelemLocal ][ 2 ] = elemCoordsGlobal[ iwelemGlobal ][ 2 ];
+    LvArray::tensorOps::copy< 3 >( m_elementCenter[ iwelemLocal ], elemCoordsGlobal[ iwelemGlobal ] );
 
     m_elementVolume[iwelemLocal] = elemVolumeGlobal[iwelemGlobal];
     m_radius[iwelemLocal] = wellGeometry.GetElementRadius();
@@ -773,14 +767,14 @@ void WellElementSubRegion::UpdateNodeManagerNodeToElementMap( MeshLevel & mesh )
 void WellElementSubRegion::ConnectPerforationsToMeshElements( MeshLevel & mesh,
                                                               InternalWellGenerator const & wellGeometry )
 {
-  arrayView1d< R1Tensor const > const & perfCoordsGlobal = wellGeometry.GetPerfCoords();
-  arrayView1d< real64 const >   const & perfWellTransmissibilityGlobal = wellGeometry.GetPerfTransmissibility();
+  arrayView2d< real64 const > const perfCoordsGlobal = wellGeometry.GetPerfCoords();
+  arrayView1d< real64 const > const perfWellTransmissibilityGlobal = wellGeometry.GetPerfTransmissibility();
 
-  m_perforationData.resize( perfCoordsGlobal.size() );
+  m_perforationData.resize( perfCoordsGlobal.size( 0 ) );
   localIndex iperfLocal = 0;
 
   // loop over all the perforations
-  for( globalIndex iperfGlobal = 0; iperfGlobal < perfCoordsGlobal.size(); ++iperfGlobal )
+  for( globalIndex iperfGlobal = 0; iperfGlobal < perfCoordsGlobal.size( 0 ); ++iperfGlobal )
   {
     real64 const location[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( perfCoordsGlobal[iperfGlobal] );
 

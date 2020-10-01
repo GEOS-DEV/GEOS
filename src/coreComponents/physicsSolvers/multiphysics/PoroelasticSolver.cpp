@@ -307,7 +307,7 @@ void PoroelasticSolver::UpdateDeformationForCoupling( DomainPartition & domain )
                  * (totalMeanStress[ei] - oldTotalMeanStress[ei] + dPres[ei]);
 
       // update element volume
-      R1Tensor Xlocal[ElementRegionManager::maxNumNodesPerElem];
+      real64 Xlocal[ElementRegionManager::maxNumNodesPerElem][3];
       for( localIndex a = 0; a < numNodesPerElement; ++a )
       {
         LvArray::tensorOps::copy< 3 >( Xlocal[a], X[elemsToNodes[ei][a]] );
