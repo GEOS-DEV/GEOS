@@ -286,6 +286,7 @@ protected:
   string m_contactRelationName;
   SortedArray< localIndex > m_sendOrReceiveNodes;
   SortedArray< localIndex > m_nonSendOrReceiveNodes;
+  SortedArray< localIndex > m_targetNodes;
   MPI_iCommData m_iComm;
 
   /// Indicates whether or not to use effective stress when integrating the
