@@ -48,9 +48,9 @@ TEST( LinearElasticAnisotropicTests, testAllocation )
   EXPECT_EQ( stress.size( 2 ), 6 );
 }
 
-void stressCalc( real64 const c[6][6], real64 const ( &Ddt )[ 6 ], real64 stressVoigt[6] )
+void stressCalc( real64 const c[6][6], real64 const ( &ddt )[ 6 ], real64 stressVoigt[6] )
 {
-  real64 const DdtVoigt[6] = { Ddt[ 0 ], Ddt[ 1 ], Ddt[ 2 ], 2 * Ddt[ 3 ], 2 * Ddt[ 4 ], 2 * Ddt[ 5 ] };
+  real64 const DdtVoigt[6] = { ddt[ 0 ], ddt[ 1 ], ddt[ 2 ], 2 * ddt[ 3 ], 2 * ddt[ 4 ], 2 * ddt[ 5 ] };
 
   for( int i=0; i<6; ++i )
   {
@@ -62,14 +62,14 @@ void stressCalc( real64 const c[6][6], real64 const ( &Ddt )[ 6 ], real64 stress
   }
 }
 
-void voigtStrain( real64 strainVoigt[6], real64 const Ddt[ 6 ] )
+void voigtStrain( real64 strainVoigt[6], real64 const ddt[ 6 ] )
 {
-  strainVoigt[0] = Ddt[ 0 ];
-  strainVoigt[1] = Ddt[ 1 ];
-  strainVoigt[2] = Ddt[ 2 ];
-  strainVoigt[3] = Ddt[ 3 ] * 2;
-  strainVoigt[4] = Ddt[ 4 ] * 2;
-  strainVoigt[5] = Ddt[ 5 ] * 2;
+  strainVoigt[0] = ddt[ 0 ];
+  strainVoigt[1] = ddt[ 1 ];
+  strainVoigt[2] = ddt[ 2 ];
+  strainVoigt[3] = ddt[ 3 ] * 2;
+  strainVoigt[4] = ddt[ 4 ] * 2;
+  strainVoigt[5] = ddt[ 5 ] * 2;
 }
 
 void stressSliceCheck( arrayView3d< real64 const, solid::STRESS_USD > const & stress, real64 const stressV[6] )

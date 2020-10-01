@@ -130,7 +130,7 @@ private:
   HYPRE_Solver m_precond;
 
   /// Pointer to the auxillary preconditioner used in MGR
-  HYPRE_Solver aux_precond;
+  HYPRE_Solver m_auxPrecond;
 
   /// Pointers to hypre functions to setup/solve/destroy preconditioner
   std::unique_ptr< HyprePrecFuncs > m_functions;

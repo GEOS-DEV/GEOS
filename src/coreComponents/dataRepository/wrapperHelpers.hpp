@@ -158,14 +158,14 @@ resizeDefault( T & value, localIndex const newSize, DefaultValue< T > const & GE
 
 template< typename T, int NDIM, typename PERMUTATION >
 inline void
-resizeDimensions( Array< T, NDIM, PERMUTATION > & value, int num_dims, localIndex const * const dims )
-{ value.resize( num_dims, dims ); }
+resizeDimensions( Array< T, NDIM, PERMUTATION > & value, int numDims, localIndex const * const dims )
+{ value.resize( numDims, dims ); }
 
 template< typename T >
 inline void
-resizeDimensions( T & value, int num_dims, localIndex const * const dims )
+resizeDimensions( T & value, int numDims, localIndex const * const dims )
 {
-  if( num_dims != 1 )
+  if( numDims != 1 )
   {
     GEOSX_ERROR( "Data is not multidimensional" );
     return;

@@ -95,18 +95,18 @@ public:
   GEOSX_HOST_DEVICE
   virtual void HypoElastic( localIndex const k,
                             localIndex const q,
-                            real64 const ( &Ddt )[ 6 ],
-                            real64 const ( &Rot )[ 3 ][ 3 ] ) const override final;
+                            real64 const ( &ddt )[ 6 ],
+                            real64 const ( &rot )[ 3 ][ 3 ] ) const override final;
 
   GEOSX_HOST_DEVICE
   virtual void HyperElastic( localIndex const k,
-                             real64 const (&FmI)[3][3],
+                             real64 const (&fmI)[3][3],
                              real64 ( &stress )[ 6 ] ) const override final;
 
   GEOSX_HOST_DEVICE
   virtual void HyperElastic( localIndex const k,
                              localIndex const q,
-                             real64 const (&FmI)[3][3] ) const override final;
+                             real64 const (&fmI)[3][3] ) const override final;
 
   GEOSX_FORCE_INLINE
   GEOSX_HOST_DEVICE
@@ -214,12 +214,12 @@ void
 LinearElasticTransverseIsotropicUpdates::
   HypoElastic( localIndex const k,
                localIndex const q,
-               real64 const ( &Ddt )[ 6 ],
-               real64 const ( &Rot )[ 3 ][ 3 ] ) const
+               real64 const ( &ddt )[ 6 ],
+               real64 const ( &rot )[ 3 ][ 3 ] ) const
 {
-  SmallStrain( k, q, Ddt );
+  SmallStrain( k, q, ddt );
   real64 temp[ 6 ];
-  LvArray::tensorOps::AikSymBklAjl< 3 >( temp, Rot, m_stress[ k ][ q ] );
+  LvArray::tensorOps::AikSymBklAjl< 3 >( temp, rot, m_stress[ k ][ q ] );
   LvArray::tensorOps::copy< 6 >( m_stress[ k ][ q ], temp );
 }
 

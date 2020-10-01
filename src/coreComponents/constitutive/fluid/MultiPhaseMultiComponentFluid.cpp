@@ -197,59 +197,59 @@ void MultiPhaseMultiComponentFluidUpdate::Compute( real64 pressure,
                                                    real64 temperature,
                                                    arraySlice1d< real64 const > const & composition,
                                                    arraySlice1d< real64 > const & phaseFraction,
-                                                   arraySlice1d< real64 > const & dPhaseFraction_dPressure,
-                                                   arraySlice1d< real64 > const & dPhaseFraction_dTemperature,
-                                                   arraySlice2d< real64 > const & dPhaseFraction_dGlobalCompFraction,
+                                                   arraySlice1d< real64 > const & dPhaseFractionDPressure,
+                                                   arraySlice1d< real64 > const & dPhaseFractionDTemperature,
+                                                   arraySlice2d< real64 > const & dPhaseFractionDGlobalCompFraction,
                                                    arraySlice1d< real64 > const & phaseDensity,
-                                                   arraySlice1d< real64 > const & dPhaseDensity_dPressure,
-                                                   arraySlice1d< real64 > const & dPhaseDensity_dTemperature,
-                                                   arraySlice2d< real64 > const & dPhaseDensity_dGlobalCompFraction,
+                                                   arraySlice1d< real64 > const & dPhaseDensityDPressure,
+                                                   arraySlice1d< real64 > const & dPhaseDensityDTemperature,
+                                                   arraySlice2d< real64 > const & dPhaseDensityDGlobalCompFraction,
                                                    arraySlice1d< real64 > const & phaseViscosity,
-                                                   arraySlice1d< real64 > const & dPhaseViscosity_dPressure,
-                                                   arraySlice1d< real64 > const & dPhaseViscosity_dTemperature,
-                                                   arraySlice2d< real64 > const & dPhaseViscosity_dGlobalCompFraction,
+                                                   arraySlice1d< real64 > const & dPhaseViscosityDPressure,
+                                                   arraySlice1d< real64 > const & dPhaseViscosityDTemperature,
+                                                   arraySlice2d< real64 > const & dPhaseViscosityDGlobalCompFraction,
                                                    arraySlice2d< real64 > const & phaseCompFraction,
-                                                   arraySlice2d< real64 > const & dPhaseCompFraction_dPressure,
-                                                   arraySlice2d< real64 > const & dPhaseCompFraction_dTemperature,
-                                                   arraySlice3d< real64 > const & dPhaseCompFraction_dGlobalCompFraction,
+                                                   arraySlice2d< real64 > const & dPhaseCompFractionDPressure,
+                                                   arraySlice2d< real64 > const & dPhaseCompFractionDTemperature,
+                                                   arraySlice3d< real64 > const & dPhaseCompFractionDGlobalCompFraction,
                                                    real64 & totalDensity,
-                                                   real64 & dTotalDensity_dPressure,
-                                                   real64 & dTotalDensity_dTemperature,
-                                                   arraySlice1d< real64 > const & dTotalDensity_dGlobalCompFraction ) const
+                                                   real64 & dTotalDensityDPressure,
+                                                   real64 & dTotalDensityDTemperature,
+                                                   arraySlice1d< real64 > const & dTotalDensityDGlobalCompFraction ) const
 {
   CompositionalVarContainer< 1 > phaseFrac {
     phaseFraction,
-    dPhaseFraction_dPressure,
-    dPhaseFraction_dTemperature,
-    dPhaseFraction_dGlobalCompFraction
+    dPhaseFractionDPressure,
+    dPhaseFractionDTemperature,
+    dPhaseFractionDGlobalCompFraction
   };
 
   CompositionalVarContainer< 1 > phaseDens {
     phaseDensity,
-    dPhaseDensity_dPressure,
-    dPhaseDensity_dTemperature,
-    dPhaseDensity_dGlobalCompFraction
+    dPhaseDensityDPressure,
+    dPhaseDensityDTemperature,
+    dPhaseDensityDGlobalCompFraction
   };
 
   CompositionalVarContainer< 1 > phaseVisc {
     phaseViscosity,
-    dPhaseViscosity_dPressure,
-    dPhaseViscosity_dTemperature,
-    dPhaseViscosity_dGlobalCompFraction
+    dPhaseViscosityDPressure,
+    dPhaseViscosityDTemperature,
+    dPhaseViscosityDGlobalCompFraction
   };
 
   CompositionalVarContainer< 2 > phaseCompFrac {
     phaseCompFraction,
-    dPhaseCompFraction_dPressure,
-    dPhaseCompFraction_dTemperature,
-    dPhaseCompFraction_dGlobalCompFraction
+    dPhaseCompFractionDPressure,
+    dPhaseCompFractionDTemperature,
+    dPhaseCompFractionDGlobalCompFraction
   };
 
   CompositionalVarContainer< 0 > totalDens {
     totalDensity,
-    dTotalDensity_dPressure,
-    dTotalDensity_dTemperature,
-    dTotalDensity_dGlobalCompFraction
+    dTotalDensityDPressure,
+    dTotalDensityDTemperature,
+    dTotalDensityDGlobalCompFraction
   };
 
 #if defined(__CUDACC__)

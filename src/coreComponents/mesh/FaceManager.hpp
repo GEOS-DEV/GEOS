@@ -160,7 +160,7 @@ public:
    * @param[in,out] faceNodes reordered local label list of nodes
    * @param[in] numFaceNodes number of nodes for the face
    */
-  void SortFaceNodes( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X,
+  void SortFaceNodes( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & x,
                       arraySlice1d< real64 const > const elementCenter,
                       localIndex * const faceNodes,
                       localIndex const numFaceNodes );

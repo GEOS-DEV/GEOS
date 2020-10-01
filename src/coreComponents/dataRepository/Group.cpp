@@ -46,8 +46,8 @@ Group::Group( std::string const & name,
   m_capacity( 0 ),
   m_name( name ),
   m_logLevel( 0 ),
-  m_restart_flags( RestartFlags::WRITE_AND_READ ),
-  m_input_flags( InputFlags::INVALID ),
+  m_restartFlags( RestartFlags::WRITE_AND_READ ),
+  m_inputFlags( InputFlags::INVALID ),
   m_conduitNode( conduitNodeFromParent( name, parent ) )
 {}
 
@@ -294,7 +294,7 @@ void Group::InitializePostInitialConditions( Group * const rootGroup )
 localIndex Group::PackSize( string_array const & wrapperNames,
                             arrayView1d< localIndex const > const & packList,
                             integer const recursive,
-                            bool on_device ) const
+                            bool onDevice ) const
 {
   localIndex packedSize = 0;
   packedSize += bufferOps::PackSize( this->getName());
@@ -308,11 +308,11 @@ localIndex Group::PackSize( string_array const & wrapperNames,
       packedSize += bufferOps::PackSize( wrapperPair.first );
       if( packList.empty() )
       {
-        packedSize += wrapperPair.second->PackSize( true, on_device );
+        packedSize += wrapperPair.second->PackSize( true, onDevice );
       }
       else
       {
-        packedSize += wrapperPair.second->PackByIndexSize( packList, true, on_device );
+        packedSize += wrapperPair.second->PackByIndexSize( packList, true, onDevice );
       }
     }
   }
@@ -325,11 +325,11 @@ localIndex Group::PackSize( string_array const & wrapperNames,
       packedSize += bufferOps::PackSize( wrapperName );
       if( packList.empty() )
       {
-        packedSize += wrapper->PackSize( true, on_device );
+        packedSize += wrapper->PackSize( true, onDevice );
       }
       else
       {
-        packedSize += wrapper->PackByIndexSize( packList, true, on_device );
+        packedSize += wrapper->PackByIndexSize( packList, true, onDevice );
       }
     }
   }
@@ -340,7 +340,7 @@ localIndex Group::PackSize( string_array const & wrapperNames,
     for( auto const & keyGroupPair : this->m_subGroups )
     {
       packedSize += bufferOps::PackSize( keyGroupPair.first );
-      packedSize += keyGroupPair.second->PackSize( wrapperNames, packList, recursive, on_device );
+      packedSize += keyGroupPair.second->PackSize( wrapperNames, packList, recursive, onDevice );
     }
   }
 
@@ -350,10 +350,10 @@ localIndex Group::PackSize( string_array const & wrapperNames,
 
 localIndex Group::PackSize( string_array const & wrapperNames,
                             integer const recursive,
-                            bool on_device ) const
+                            bool onDevice ) const
 {
   arrayView1d< localIndex const > nullArray;
-  return PackSize( wrapperNames, nullArray, recursive, on_device );
+  return PackSize( wrapperNames, nullArray, recursive, onDevice );
 }
 
 
@@ -361,7 +361,7 @@ localIndex Group::Pack( buffer_unit_type * & buffer,
                         string_array const & wrapperNames,
                         arrayView1d< localIndex const > const & packList,
                         integer const recursive,
-                        bool on_device ) const
+                        bool onDevice ) const
 {
   localIndex packedSize = 0;
   packedSize += bufferOps::Pack< true >( buffer, this->getName() );
@@ -376,11 +376,11 @@ localIndex Group::Pack( buffer_unit_type * & buffer,
       if( packList.empty() )
       {
         // invoke wrapper pack kernel
-        packedSize += wrapperPair.second->Pack( buffer, true, on_device );
+        packedSize += wrapperPair.second->Pack( buffer, true, onDevice );
       }
       else
       {
-        packedSize += wrapperPair.second->PackByIndex( buffer, packList, true, on_device );
+        packedSize += wrapperPair.second->PackByIndex( buffer, packList, true, onDevice );
       }
     }
   }
@@ -393,11 +393,11 @@ localIndex Group::Pack( buffer_unit_type * & buffer,
       packedSize += bufferOps::Pack< true >( buffer, wrapperName );
       if( packList.empty() )
       {
-        packedSize += wrapper->Pack( buffer, true, on_device );
+        packedSize += wrapper->Pack( buffer, true, onDevice );
       }
       else
       {
-        packedSize += wrapper->PackByIndex( buffer, packList, true, on_device );
+        packedSize += wrapper->PackByIndex( buffer, packList, true, onDevice );
       }
     }
   }
@@ -410,7 +410,7 @@ localIndex Group::Pack( buffer_unit_type * & buffer,
     for( auto const & keyGroupPair : this->m_subGroups )
     {
       packedSize += bufferOps::Pack< true >( buffer, keyGroupPair.first );
-      packedSize += keyGroupPair.second->Pack( buffer, wrapperNames, packList, recursive, on_device );
+      packedSize += keyGroupPair.second->Pack( buffer, wrapperNames, packList, recursive, onDevice );
     }
   }
 
@@ -420,16 +420,16 @@ localIndex Group::Pack( buffer_unit_type * & buffer,
 localIndex Group::Pack( buffer_unit_type * & buffer,
                         string_array const & wrapperNames,
                         integer const recursive,
-                        bool on_device ) const
+                        bool onDevice ) const
 {
   arrayView1d< localIndex const > nullArray;
-  return Pack( buffer, wrapperNames, nullArray, recursive, on_device );
+  return Pack( buffer, wrapperNames, nullArray, recursive, onDevice );
 }
 
 localIndex Group::Unpack( buffer_unit_type const * & buffer,
                           arrayView1d< localIndex > & packList,
                           integer const recursive,
-                          bool on_device )
+                          bool onDevice )
 {
   localIndex unpackedSize = 0;
   string groupName;
@@ -447,7 +447,7 @@ localIndex Group::Unpack( buffer_unit_type const * & buffer,
     string wrapperName;
     unpackedSize += bufferOps::Unpack( buffer, wrapperName );
     WrapperBase * const wrapper = this->getWrapperBase( wrapperName );
-    wrapper->UnpackByIndex( buffer, packList, true, on_device );
+    wrapper->UnpackByIndex( buffer, packList, true, onDevice );
   }
 
 
@@ -466,7 +466,7 @@ localIndex Group::Unpack( buffer_unit_type const * & buffer,
       GEOSX_UNUSED_VAR( index );
       string subGroupName;
       unpackedSize += bufferOps::Unpack( buffer, subGroupName );
-      unpackedSize += this->GetGroup( subGroupName )->Unpack( buffer, packList, recursive, on_device );
+      unpackedSize += this->GetGroup( subGroupName )->Unpack( buffer, packList, recursive, onDevice );
     }
   }
 

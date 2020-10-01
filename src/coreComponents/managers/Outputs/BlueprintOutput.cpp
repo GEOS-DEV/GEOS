@@ -40,14 +40,14 @@ namespace internal
  */
 std::string toBlueprintShape( std::string const & elementType )
 {
-  static std::unordered_map< std::string, std::string > const map =
+  static std::unordered_map< std::string, std::string > const MAP =
   {
     { "C3D8", "hex" },
     { "C3D4", "tet" }
   };
 
-  auto const iter = map.find( elementType );
-  GEOSX_ERROR_IF( iter == map.end(), "No Blueprint type for " << elementType );
+  auto const iter = MAP.find( elementType );
+  GEOSX_ERROR_IF( iter == MAP.end(), "No Blueprint type for " << elementType );
   return iter->second;
 }
 

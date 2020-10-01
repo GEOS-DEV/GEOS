@@ -60,20 +60,20 @@ protected:
   ParticleFluidBaseUpdate( bool const isCollisionalSlip,
                            real64 const maxProppantConcentration,
                            arrayView1d< real64 > const & settlingFactor,
-                           arrayView1d< real64 > const & dSettlingFactor_dPressure,
-                           arrayView1d< real64 > const & dSettlingFactor_dProppantConcentration,
-                           arrayView2d< real64 > const & dSettlingFactor_dComponentConcentration,
+                           arrayView1d< real64 > const & dSettlingFactorDPressure,
+                           arrayView1d< real64 > const & dSettlingFactorDProppantConcentration,
+                           arrayView2d< real64 > const & dSettlingFactorDComponentConcentration,
                            arrayView1d< real64 > const & collisionFactor,
-                           arrayView1d< real64 > const & dCollisionFactor_dProppantConcentration,
+                           arrayView1d< real64 > const & dCollisionFactorDProppantConcentration,
                            arrayView1d< real64 > const & proppantPackPermeability )
     : m_isCollisionalSlip( isCollisionalSlip ),
     m_maxProppantConcentration( maxProppantConcentration ),
     m_settlingFactor( settlingFactor ),
-    m_dSettlingFactor_dPressure( dSettlingFactor_dPressure ),
-    m_dSettlingFactor_dProppantConcentration( dSettlingFactor_dProppantConcentration ),
-    m_dSettlingFactor_dComponentConcentration( dSettlingFactor_dComponentConcentration ),
+    m_dSettlingFactor_dPressure( dSettlingFactorDPressure ),
+    m_dSettlingFactor_dProppantConcentration( dSettlingFactorDProppantConcentration ),
+    m_dSettlingFactor_dComponentConcentration( dSettlingFactorDComponentConcentration ),
     m_collisionFactor( collisionFactor ),
-    m_dCollisionFactor_dProppantConcentration( dCollisionFactor_dProppantConcentration ),
+    m_dCollisionFactor_dProppantConcentration( dCollisionFactorDProppantConcentration ),
     m_proppantPackPermeability( proppantPackPermeability )
   {}
 
@@ -130,11 +130,11 @@ private:
   virtual void Update( localIndex const k,
                        real64 const proppantConcentration,
                        real64 const fluidDensity,
-                       real64 const dFluidDensity_dPressure,
-                       arraySlice1d< real64 const > const & dFluidDensity_dComponentConcentration,
+                       real64 const dFluidDensityDPressure,
+                       arraySlice1d< real64 const > const & dFluidDensityDComponentConcentration,
                        real64 const fluidViscosity,
-                       real64 const dFluidViscosity_dPressure,
-                       arraySlice1d< real64 const > const & dFluidViscosity_dComponentConcentration ) const = 0;
+                       real64 const dFluidViscosityDPressure,
+                       arraySlice1d< real64 const > const & dFluidViscosityDComponentConcentration ) const = 0;
 };
 
 /**

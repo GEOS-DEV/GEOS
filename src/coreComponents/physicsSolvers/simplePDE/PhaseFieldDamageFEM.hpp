@@ -51,7 +51,7 @@ public:
     return "PhaseFieldDamageFEM";
   }
 
-  virtual void RegisterDataOnMesh( Group * const MeshBodies ) override final;
+  virtual void RegisterDataOnMesh( Group * const meshBodies ) override final;
 
   /**
    * @defgroup Solver Interface Functions
@@ -61,12 +61,12 @@ public:
    */
   /**@{*/
 
-  virtual real64 SolverStep( real64 const & time_n,
+  virtual real64 SolverStep( real64 const & timeN,
                              real64 const & dt,
                              integer const cycleNumber,
                              DomainPartition & domain ) override;
 
-  virtual real64 ExplicitStep( real64 const & time_n,
+  virtual real64 ExplicitStep( real64 const & timeN,
                                real64 const & dt,
                                integer const cycleNumber,
                                DomainPartition & domain ) override;

@@ -72,7 +72,7 @@ private:
   real64 m_referencePressure;
 
   array2d< real64 > m_poreVolumeMultiplier;
-  array2d< real64 > m_dPVMult_dPressure;
+  array2d< real64 > m_dPVMultDPressure;
 
   ExponentialRelation< real64, ExponentApproximationType::Linear > m_poreVolumeRelation;
 };

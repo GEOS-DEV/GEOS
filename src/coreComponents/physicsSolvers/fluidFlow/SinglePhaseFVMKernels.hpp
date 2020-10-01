@@ -71,7 +71,7 @@ struct FluxKernelHelper
   static void apertureForPermeablityCalculation( real64 const aper0,
                                                  real64 const aper,
                                                  real64 & aperTerm,
-                                                 real64 & dAperTerm_dAper );
+                                                 real64 & dAperTermDAper );
 
 
 };
@@ -82,10 +82,10 @@ GEOSX_FORCE_INLINE
 void FluxKernelHelper::apertureForPermeablityCalculation< 0 >( real64 const aper0,
                                                                real64 const,
                                                                real64 & aperTerm,
-                                                               real64 & dAperTerm_dAper )
+                                                               real64 & dAperTermDAper )
 {
   aperTerm = aper0*aper0*aper0;
-  dAperTerm_dAper = 0.0;
+  dAperTermDAper = 0.0;
 }
 
 template<>
@@ -94,14 +94,14 @@ GEOSX_FORCE_INLINE
 void FluxKernelHelper::apertureForPermeablityCalculation< 1 >( real64 const aper0,
                                                                real64 const aper,
                                                                real64 & aperTerm,
-                                                               real64 & dAperTerm_dAper )
+                                                               real64 & dAperTermDAper )
 {
   aperTerm = 0.25 * ( aper0*aper0*aper0 +
                       aper0*aper0*aper +
                       aper0*aper*aper +
                       aper*aper*aper );
 
-  dAperTerm_dAper = 0.25 * ( aper0*aper0 +
+  dAperTermDAper = 0.25 * ( aper0*aper0 +
                              2*aper0*aper +
                              3*aper*aper );
 
@@ -115,10 +115,10 @@ inline void
 FluxKernelHelper::apertureForPermeablityCalculation< 2 >( real64 const,
                                                           real64 const aper,
                                                           real64 & aperTerm,
-                                                          real64 & dAperTerm_dAper )
+                                                          real64 & dAperTermDAper )
 {
   aperTerm = aper*aper*aper;
-  dAperTerm_dAper = 3.0*aper*aper;
+  dAperTermDAper = 3.0*aper*aper;
 }
 
 
@@ -161,9 +161,9 @@ struct FluxKernel
             ElementViewConst< arrayView1d< real64 const > > const & dPres,
             ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
             ElementViewConst< arrayView2d< real64 const > > const & dens,
-            ElementViewConst< arrayView2d< real64 const > > const & dDens_dPres,
+            ElementViewConst< arrayView2d< real64 const > > const & dDensDPres,
             ElementViewConst< arrayView1d< real64 const > > const & mob,
-            ElementViewConst< arrayView1d< real64 const > > const & dMob_dPres,
+            ElementViewConst< arrayView1d< real64 const > > const & dMobDPres,
             ElementViewConst< arrayView1d< real64 const > > const & aperture0,
             ElementViewConst< arrayView1d< real64 const > > const & aperture,
             ElementViewConst< arrayView1d< R1Tensor const > > const & transTMultiplier,
@@ -175,7 +175,7 @@ struct FluxKernel
 #endif
             CRSMatrixView< real64, globalIndex const > const & localMatrix,
             arrayView1d< real64 > const & localRhs,
-            CRSMatrixView< real64, localIndex const > const & dR_dAper );
+            CRSMatrixView< real64, localIndex const > const & dRDAper );
 
 
   /**
@@ -195,9 +195,9 @@ struct FluxKernel
            ElementViewConst< arrayView1d< real64 const > > const & dPres,
            ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
            ElementViewConst< arrayView2d< real64 const > > const & dens,
-           ElementViewConst< arrayView2d< real64 const > > const & dDens_dPres,
+           ElementViewConst< arrayView2d< real64 const > > const & dDensDPres,
            ElementViewConst< arrayView1d< real64 const > > const & mob,
-           ElementViewConst< arrayView1d< real64 const > > const & dMob_dPres,
+           ElementViewConst< arrayView1d< real64 const > > const & dMobDPres,
            real64 const dt,
            arraySlice1d< real64 > const & flux,
            arraySlice2d< real64 > const & fluxJacobian );
@@ -219,9 +219,9 @@ struct FluxKernel
            arrayView1d< real64 const > const & dPres,
            arrayView1d< real64 const > const & gravCoef,
            arrayView2d< real64 const > const & dens,
-           arrayView2d< real64 const > const & dDens_dPres,
+           arrayView2d< real64 const > const & dDensDPres,
            arrayView1d< real64 const > const & mob,
-           arrayView1d< real64 const > const & dMob_dPres,
+           arrayView1d< real64 const > const & dMobDPres,
            real64 const dt,
            arraySlice1d< real64 > const & flux,
            arraySlice2d< real64 > const & fluxJacobian );
@@ -241,9 +241,9 @@ struct FluxKernel
                      arrayView1d< real64 const > const & dPres,
                      arrayView1d< real64 const > const & gravCoef,
                      arrayView2d< real64 const > const & dens,
-                     arrayView2d< real64 const > const & dDens_dPres,
+                     arrayView2d< real64 const > const & dDensDPres,
                      arrayView1d< real64 const > const & mob,
-                     arrayView1d< real64 const > const & dMob_dPres,
+                     arrayView1d< real64 const > const & dMobDPres,
                      arrayView1d< real64 const > const & aperture0,
                      arrayView1d< real64 const > const & aperture,
                      real64 const meanPermCoeff,
@@ -254,7 +254,7 @@ struct FluxKernel
                      real64 const dt,
                      arraySlice1d< real64 > const & flux,
                      arraySlice2d< real64 > const & fluxJacobian,
-                     arraySlice2d< real64 > const & dFlux_dAperture );
+                     arraySlice2d< real64 > const & dFluxDAperture );
 };
 
 
@@ -274,15 +274,15 @@ struct FaceDirichletBCKernel
                        ElementViewConst< arrayView1d< real64 const > > const & dPres,
                        ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
                        ElementViewConst< arrayView2d< real64 const > > const & dens,
-                       ElementViewConst< arrayView2d< real64 const > > const & dDens_dPres,
+                       ElementViewConst< arrayView2d< real64 const > > const & dDensDPres,
                        ElementViewConst< arrayView1d< real64 const > > const & mob,
-                       ElementViewConst< arrayView1d< real64 const > > const & dMob_dPres,
+                       ElementViewConst< arrayView1d< real64 const > > const & dMobDPres,
                        arrayView1d< real64 const > const & presFace,
                        arrayView1d< real64 const > const & gravCoefFace,
                        FLUID_WRAPPER const & fluidWrapper,
                        real64 const dt,
                        real64 & flux,
-                       real64 & dFlux_dP )
+                       real64 & dFluxDP )
   {
     using Order = BoundaryStencil::Order;
     localIndex constexpr numElems = BoundaryStencil::NUM_POINT_IN_FLUX;
@@ -302,12 +302,12 @@ struct FaceDirichletBCKernel
     mobility[Order::ELEM] = mob[er][esr][ei];
     SinglePhaseBaseKernels::MobilityKernel::Compute( faceDens, faceVisc, mobility[Order::FACE] );
 
-    dMobility_dP[Order::ELEM] = dMob_dPres[er][esr][ei];
+    dMobility_dP[Order::ELEM] = dMobDPres[er][esr][ei];
     dMobility_dP[Order::FACE] = 0.0;
 
     // Compute average density
     real64 const densMean = 0.5 * ( dens[er][esr][ei][0] + faceDens );
-    real64 const dDens_dP = 0.5 * dDens_dPres[er][esr][ei][0];
+    real64 const dDens_dP = 0.5 * dDensDPres[er][esr][ei][0];
 
     // Evaluate potential difference
     real64 const potDif = trans[ Order::ELEM ] * ( pres[er][esr][ei] + dPres[er][esr][ei] - densMean * gravCoef[er][esr][ei] )
@@ -319,7 +319,7 @@ struct FaceDirichletBCKernel
     localIndex const k_up = ( potDif >= 0 ) ? Order::ELEM : Order::FACE;
 
     flux = dt * mobility[k_up] * potDif;
-    dFlux_dP = dt * ( mobility[k_up] * dPotDif_dP + dMobility_dP[k_up] * potDif );
+    dFluxDP = dt * ( mobility[k_up] * dPotDif_dP + dMobility_dP[k_up] * potDif );
   }
 
   template< typename FLUID_WRAPPER >
@@ -334,9 +334,9 @@ struct FaceDirichletBCKernel
                       ElementViewConst< arrayView1d< real64 const > > const & dPres,
                       ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
                       ElementViewConst< arrayView2d< real64 const > > const & dens,
-                      ElementViewConst< arrayView2d< real64 const > > const & dDens_dPres,
+                      ElementViewConst< arrayView2d< real64 const > > const & dDensDPres,
                       ElementViewConst< arrayView1d< real64 const > > const & mob,
-                      ElementViewConst< arrayView1d< real64 const > > const & dMob_dPres,
+                      ElementViewConst< arrayView1d< real64 const > > const & dMobDPres,
                       arrayView1d< real64 const > const & presFace,
                       arrayView1d< real64 const > const & gravCoefFace,
                       FLUID_WRAPPER const & fluidWrapper,
@@ -356,9 +356,9 @@ struct FaceDirichletBCKernel
                dPres,
                gravCoef,
                dens,
-               dDens_dPres,
+               dDensDPres,
                mob,
-               dMob_dPres,
+               dMobDPres,
                presFace,
                gravCoefFace,
                fluidWrapper,

@@ -39,8 +39,8 @@ SymbolicFunction::SymbolicFunction( const std::string & name,
                                     Group * const parent ):
   FunctionBase( name, parent )
 #ifdef GEOSX_USE_MATHPRESSO
-  , parserContext(),
-  parserExpression()
+  , m_parserContext(),
+  m_parserExpression()
 #endif
 {
   registerWrapper( keys::variableNames, &m_variableNames )->
@@ -64,13 +64,13 @@ void SymbolicFunction::InitializeFunction()
   // Register variables
   for( localIndex ii=0; ii<m_variableNames.size(); ++ii )
   {
-    parserContext.addVariable( m_variableNames[ii].c_str(), static_cast< int >(ii * sizeof(double)));
+    m_parserContext.addVariable( m_variableNames[ii].c_str(), static_cast< int >(ii * sizeof(double)));
   }
 
   // Add built in constants/functions (PI, E, sin, cos, ceil, exp, etc.),
   // compile
-  parserContext.addBuiltIns();
-  mathpresso::Error err = parserExpression.compile( parserContext, m_expression.c_str(), mathpresso::kNoOptions );
+  m_parserContext.addBuiltIns();
+  mathpresso::Error err = m_parserExpression.compile( m_parserContext, m_expression.c_str(), mathpresso::kNoOptions );
   GEOSX_ERROR_IF( err != mathpresso::kErrorOk, "JIT Compiler Error" );
 #else
   GEOSX_ERROR( "GEOSX was not built with mathpresso!" );

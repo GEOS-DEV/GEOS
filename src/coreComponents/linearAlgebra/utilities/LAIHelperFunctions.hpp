@@ -59,7 +59,7 @@ void CreatePermutationMatrix( ElementRegionManager const * const elemManager,
                               localIndex const nRows,
                               localIndex const nCols,
                               int const nDofPerNode,
-                              string const DofKey,
+                              string const dofKey,
                               ParallelMatrix & permutationMatrix );
 
 /**

@@ -61,12 +61,12 @@ inline int d_ij( const int i, const int j )
     return 0;
 }
 
-inline int is_equal( const realT & a, const realT & b, const int num_digits )
+inline int is_equal( const realT & a, const realT & b, const int numDigits )
 {
   int rval=0;
   const realT mean = (a + b)*0.5;
   const realT diff = fabs( a - b );
-  if( diff < mean*pow( 10.0, -num_digits ) )
+  if( diff < mean*pow( 10.0, -numDigits ) )
     rval = 1;
 
   return rval;

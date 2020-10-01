@@ -146,8 +146,8 @@ private:
   GEOSX_HOST_DEVICE
   virtual void HypoElastic( localIndex const k,
                             localIndex const q,
-                            real64 const ( &Ddt )[ 6 ],
-                            real64 const ( &Rot )[ 3 ][ 3 ] ) const = 0;
+                            real64 const ( &ddt )[ 6 ],
+                            real64 const ( &rot )[ 3 ][ 3 ] ) const = 0;
 
   /**
    * @brief Hyper-elastic stress update
@@ -157,7 +157,7 @@ private:
    */
   GEOSX_HOST_DEVICE
   virtual void HyperElastic( localIndex const k,
-                             real64 const (&FmI)[3][3],
+                             real64 const (&fmI)[3][3],
                              real64 ( &stress )[ 6 ] ) const = 0;
 
   /**
@@ -169,7 +169,7 @@ private:
   GEOSX_HOST_DEVICE
   virtual void HyperElastic( localIndex const k,
                              localIndex const q,
-                             real64 const (&FmI)[3][3] ) const = 0;
+                             real64 const (&fmI)[3][3] ) const = 0;
 
   GEOSX_HOST_DEVICE
   virtual real64 calculateStrainEnergyDensity( localIndex const k,

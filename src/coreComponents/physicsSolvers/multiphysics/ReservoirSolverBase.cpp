@@ -98,7 +98,7 @@ void ReservoirSolverBase::InitializePostInitialConditions_PreSubGroups( Group * 
 }
 
 
-real64 ReservoirSolverBase::SolverStep( real64 const & time_n,
+real64 ReservoirSolverBase::SolverStep( real64 const & timeN,
                                         real64 const & dt,
                                         int const cycleNumber,
                                         DomainPartition & domain )
@@ -111,13 +111,13 @@ real64 ReservoirSolverBase::SolverStep( real64 const & time_n,
   SetupSystem( domain, m_dofManager, m_localMatrix, m_localRhs, m_localSolution );
 
   // setup reservoir and well systems
-  ImplicitStepSetup( time_n, dt, domain );
+  ImplicitStepSetup( timeN, dt, domain );
 
   // currently the only method is implicit time integration
-  dt_return = NonlinearImplicitStep( time_n, dt, cycleNumber, domain );
+  dt_return = NonlinearImplicitStep( timeN, dt, cycleNumber, domain );
 
   // complete time step in reservoir and well systems
-  ImplicitStepComplete( time_n, dt_return, domain );
+  ImplicitStepComplete( timeN, dt_return, domain );
 
   return dt_return;
 }
@@ -258,17 +258,17 @@ void ReservoirSolverBase::SetupSystem( DomainPartition & domain,
 }
 
 
-void ReservoirSolverBase::ImplicitStepSetup( real64 const & time_n,
+void ReservoirSolverBase::ImplicitStepSetup( real64 const & timeN,
                                              real64 const & dt,
                                              DomainPartition & domain )
 {
   // setup the individual solvers
-  m_flowSolver->ImplicitStepSetup( time_n, dt, domain );
-  m_wellSolver->ImplicitStepSetup( time_n, dt, domain );
+  m_flowSolver->ImplicitStepSetup( timeN, dt, domain );
+  m_wellSolver->ImplicitStepSetup( timeN, dt, domain );
 }
 
 
-void ReservoirSolverBase::AssembleSystem( real64 const time_n,
+void ReservoirSolverBase::AssembleSystem( real64 const timeN,
                                           real64 const dt,
                                           DomainPartition & domain,
                                           DofManager const & dofManager,
@@ -276,7 +276,7 @@ void ReservoirSolverBase::AssembleSystem( real64 const time_n,
                                           arrayView1d< real64 > const & localRhs )
 {
   // assemble J_RR (excluding perforation rates)
-  m_flowSolver->AssembleSystem( time_n, dt,
+  m_flowSolver->AssembleSystem( timeN, dt,
                                 domain,
                                 dofManager,
                                 localMatrix,
@@ -298,14 +298,14 @@ void ReservoirSolverBase::AssembleSystem( real64 const time_n,
   m_wellSolver->UpdateStateAll( domain );
 
   // assemble J_WW (excluding perforation rates)
-  m_wellSolver->AssembleSystem( time_n, dt,
+  m_wellSolver->AssembleSystem( timeN, dt,
                                 domain,
                                 dofManager,
                                 localMatrix,
                                 localRhs );
 
   // assemble perforation rates in J_WR, J_RW, J_RR and J_WW
-  AssembleCouplingTerms( time_n, dt,
+  AssembleCouplingTerms( timeN, dt,
                          domain,
                          dofManager,
                          localMatrix,
@@ -313,14 +313,14 @@ void ReservoirSolverBase::AssembleSystem( real64 const time_n,
 }
 
 
-void ReservoirSolverBase::ApplyBoundaryConditions( real64 const time_n,
+void ReservoirSolverBase::ApplyBoundaryConditions( real64 const timeN,
                                                    real64 const dt,
                                                    DomainPartition & domain,
                                                    DofManager const & dofManager,
                                                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                    arrayView1d< real64 > const & localRhs )
 {
-  m_flowSolver->ApplyBoundaryConditions( time_n,
+  m_flowSolver->ApplyBoundaryConditions( timeN,
                                          dt,
                                          domain,
                                          dofManager,
@@ -383,12 +383,12 @@ void ReservoirSolverBase::ResetStateToBeginningOfStep( DomainPartition & domain 
   m_wellSolver->ResetStateToBeginningOfStep( domain );
 }
 
-void ReservoirSolverBase::ImplicitStepComplete( real64 const & time_n,
+void ReservoirSolverBase::ImplicitStepComplete( real64 const & timeN,
                                                 real64 const & dt,
                                                 DomainPartition & domain )
 {
-  m_flowSolver->ImplicitStepComplete( time_n, dt, domain );
-  m_wellSolver->ImplicitStepComplete( time_n, dt, domain );
+  m_flowSolver->ImplicitStepComplete( timeN, dt, domain );
+  m_wellSolver->ImplicitStepComplete( timeN, dt, domain );
 }
 
 void ReservoirSolverBase::ResetViews( DomainPartition * const GEOSX_UNUSED_PARAM( domain ) )

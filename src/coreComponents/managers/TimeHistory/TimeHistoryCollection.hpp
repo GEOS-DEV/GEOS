@@ -86,7 +86,7 @@ public:
    * @brief Collects history data.
    * @copydoc EventBase::Execute()
    */
-  virtual void Execute( real64 const time_n,
+  virtual void Execute( real64 const timeN,
                         real64 const dt,
                         integer const cycleNumber,
                         integer const eventCounter,
@@ -104,13 +104,13 @@ public:
                       "History collection buffer retrieval function is unassigned, did you declare a related TimeHistoryOutput event?" );
       // using GEOSX_ERROR_IF_EQ causes type issues since the values are used in iostreams
       buffer_unit_type * buffer = m_bufferCalls[collectionIdx]();
-      collect( domain, time_n, dt, collectionIdx, buffer );
+      collect( domain, timeN, dt, collectionIdx, buffer );
     }
     int rank = MpiWrapper::Comm_rank();
     if( rank == 0 && m_timeBufferCall )
     {
       buffer_unit_type * timeBuffer = m_timeBufferCall();
-      memcpy( timeBuffer, &time_n, sizeof(time_n) );
+      memcpy( timeBuffer, &timeN, sizeof(timeN) );
     }
   }
 
@@ -181,7 +181,7 @@ protected:
    * @param collectionIdx The index of the collection operation to collect from the targeted collection event.
    * @param buffer A properly-sized buffer to serialize history data into.
    */
-  virtual void collect( Group * domain, real64 const time_n, real64 const dt, localIndex const collectionIdx, buffer_unit_type * & buffer ) = 0;
+  virtual void collect( Group * domain, real64 const timeN, real64 const dt, localIndex const collectionIdx, buffer_unit_type * & buffer ) = 0;
 
 protected:
   /// The number of discrete collection operations described by metadata this collection collects.

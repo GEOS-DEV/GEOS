@@ -64,7 +64,7 @@ struct SuiteSparseData
  */
 void SuiteSparseCreate( HypreMatrix const & matrix,
                         LinearSolverParameters const & params,
-                        SuiteSparseData & SSData );
+                        SuiteSparseData & ssData );
 
 /**
  * @brief Factorizes a linear system with SuiteSparse
@@ -72,7 +72,7 @@ void SuiteSparseCreate( HypreMatrix const & matrix,
  * @param[out] time time spent in the factorization phase
  * @return info error code
  */
-int SuiteSparseSetup( SuiteSparseData & SSData,
+int SuiteSparseSetup( SuiteSparseData & ssData,
                       real64 & time );
 
 /**
@@ -83,7 +83,7 @@ int SuiteSparseSetup( SuiteSparseData & SSData,
  * @param[out] time time spent in the solution phase
  * @return info error code
  */
-int SuiteSparseSolve( SuiteSparseData & SSData,
+int SuiteSparseSolve( SuiteSparseData & ssData,
                       HypreVector const & b,
                       HypreVector & x,
                       real64 & time );
@@ -92,7 +92,7 @@ int SuiteSparseSolve( SuiteSparseData & SSData,
  * @brief Deallocates a SuiteSparse data structure
  * @param[in,out] SSData the structure containing the matrix in SuiteSparse format
  */
-void SuiteSparseDestroy( SuiteSparseData & SSData );
+void SuiteSparseDestroy( SuiteSparseData & ssData );
 
 }
 

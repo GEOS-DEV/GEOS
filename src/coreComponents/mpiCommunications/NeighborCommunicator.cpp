@@ -557,7 +557,7 @@ void NeighborCommunicator::UnpackAndRebuildSyncLists( MeshLevel & mesh,
 int NeighborCommunicator::PackCommSizeForSync( std::map< string, string_array > const & fieldNames,
                                                MeshLevel const & mesh,
                                                int const commID,
-                                               bool on_device )
+                                               bool onDevice )
 {
   GEOSX_MARK_FUNCTION;
 
@@ -574,24 +574,24 @@ int NeighborCommunicator::PackCommSizeForSync( std::map< string, string_array > 
 
   if( fieldNames.count( "node" ) > 0 )
   {
-    bufferSize += nodeManager.PackSize( fieldNames.at( "node" ), nodeGhostsToSend, 0, on_device );
+    bufferSize += nodeManager.PackSize( fieldNames.at( "node" ), nodeGhostsToSend, 0, onDevice );
   }
 
   if( fieldNames.count( "edge" ) > 0 )
   {
-    bufferSize += edgeManager.PackSize( fieldNames.at( "edge" ), edgeGhostsToSend, 0, on_device );
+    bufferSize += edgeManager.PackSize( fieldNames.at( "edge" ), edgeGhostsToSend, 0, onDevice );
   }
 
   if( fieldNames.count( "face" ) > 0 )
   {
-    bufferSize += faceManager.PackSize( fieldNames.at( "face" ), faceGhostsToSend, 0, on_device );
+    bufferSize += faceManager.PackSize( fieldNames.at( "face" ), faceGhostsToSend, 0, onDevice );
   }
 
   if( fieldNames.count( "elems" ) > 0 )
   {
     elemManager.forElementSubRegions< ElementSubRegionBase >( [&]( ElementSubRegionBase const & subRegion )
     {
-      bufferSize += subRegion.PackSize( fieldNames.at( "elems" ), subRegion.getNeighborData( m_neighborRank ).ghostsToSend(), 0, on_device );
+      bufferSize += subRegion.PackSize( fieldNames.at( "elems" ), subRegion.getNeighborData( m_neighborRank ).ghostsToSend(), 0, onDevice );
     } );
   }
 
@@ -603,7 +603,7 @@ int NeighborCommunicator::PackCommSizeForSync( std::map< string, string_array > 
 void NeighborCommunicator::PackCommBufferForSync( std::map< string, string_array > const & fieldNames,
                                                   MeshLevel const & mesh,
                                                   int const commID,
-                                                  bool on_device )
+                                                  bool onDevice )
 {
   GEOSX_MARK_FUNCTION;
 
@@ -623,24 +623,24 @@ void NeighborCommunicator::PackCommBufferForSync( std::map< string, string_array
   int packedSize = 0;
   if( fieldNames.count( "node" ) > 0 )
   {
-    packedSize += nodeManager.Pack( sendBufferPtr, fieldNames.at( "node" ), nodeGhostsToSend, 0, on_device );
+    packedSize += nodeManager.Pack( sendBufferPtr, fieldNames.at( "node" ), nodeGhostsToSend, 0, onDevice );
   }
 
   if( fieldNames.count( "edge" ) > 0 )
   {
-    packedSize += edgeManager.Pack( sendBufferPtr, fieldNames.at( "edge" ), edgeGhostsToSend, 0, on_device );
+    packedSize += edgeManager.Pack( sendBufferPtr, fieldNames.at( "edge" ), edgeGhostsToSend, 0, onDevice );
   }
 
   if( fieldNames.count( "face" ) > 0 )
   {
-    packedSize += faceManager.Pack( sendBufferPtr, fieldNames.at( "face" ), faceGhostsToSend, 0, on_device );
+    packedSize += faceManager.Pack( sendBufferPtr, fieldNames.at( "face" ), faceGhostsToSend, 0, onDevice );
   }
 
   if( fieldNames.count( "elems" ) > 0 )
   {
     elemManager.forElementSubRegions( [&]( ElementSubRegionBase const & subRegion )
     {
-      packedSize += subRegion.Pack( sendBufferPtr, fieldNames.at( "elems" ), subRegion.getNeighborData( m_neighborRank ).ghostsToSend(), 0, on_device );
+      packedSize += subRegion.Pack( sendBufferPtr, fieldNames.at( "elems" ), subRegion.getNeighborData( m_neighborRank ).ghostsToSend(), 0, onDevice );
     } );
   }
 
@@ -657,7 +657,7 @@ void NeighborCommunicator::SendRecvBuffers( int const commID )
 void NeighborCommunicator::UnpackBufferForSync( std::map< string, string_array > const & fieldNames,
                                                 MeshLevel * const mesh,
                                                 int const commID,
-                                                bool on_device )
+                                                bool onDevice )
 {
   GEOSX_MARK_FUNCTION;
 
@@ -677,24 +677,24 @@ void NeighborCommunicator::UnpackBufferForSync( std::map< string, string_array >
 
   if( fieldNames.count( "node" ) > 0 )
   {
-    unpackedSize += nodeManager.Unpack( receiveBufferPtr, nodeGhostsToReceive, 0, on_device );
+    unpackedSize += nodeManager.Unpack( receiveBufferPtr, nodeGhostsToReceive, 0, onDevice );
   }
 
   if( fieldNames.count( "edge" ) > 0 )
   {
-    unpackedSize += edgeManager.Unpack( receiveBufferPtr, edgeGhostsToReceive, 0, on_device );
+    unpackedSize += edgeManager.Unpack( receiveBufferPtr, edgeGhostsToReceive, 0, onDevice );
   }
 
   if( fieldNames.count( "face" ) > 0 )
   {
-    unpackedSize += faceManager.Unpack( receiveBufferPtr, faceGhostsToReceive, 0, on_device );
+    unpackedSize += faceManager.Unpack( receiveBufferPtr, faceGhostsToReceive, 0, onDevice );
   }
 
   if( fieldNames.count( "elems" ) > 0 )
   {
     elemManager.forElementSubRegions< ElementSubRegionBase >( [&] ( ElementSubRegionBase & subRegion )
     {
-      unpackedSize += subRegion.Unpack( receiveBufferPtr, subRegion.getNeighborData( m_neighborRank ).ghostsToReceive(), 0, on_device );
+      unpackedSize += subRegion.Unpack( receiveBufferPtr, subRegion.getNeighborData( m_neighborRank ).ghostsToReceive(), 0, onDevice );
     } );
   }
 }

@@ -58,11 +58,11 @@ public:
 
   static void FindGhosts( MeshLevel & meshLevel,
                           std::vector< NeighborCommunicator > & neighbors,
-                          bool use_nonblocking );
+                          bool useNonblocking );
 
   static std::set< int > & getFreeCommIDs();
   static int reserveCommID();
-  static void releaseCommID( int & ID );
+  static void releaseCommID( int & id );
 
   static void FindMatchedPartitionBoundaryObjects( ObjectManagerBase * const group,
                                                    std::vector< NeighborCommunicator > & allNeighbors );
@@ -70,24 +70,24 @@ public:
   static void SynchronizeFields( const std::map< string, string_array > & fieldNames,
                                  MeshLevel * const mesh,
                                  std::vector< NeighborCommunicator > & allNeighbors,
-                                 bool on_device = false );
+                                 bool onDevice = false );
 
   static void SynchronizePackSendRecvSizes( const std::map< string, string_array > & fieldNames,
                                             MeshLevel * const mesh,
                                             std::vector< NeighborCommunicator > & neighbors,
                                             MPI_iCommData & icomm,
-                                            bool on_device = false );
+                                            bool onDevice = false );
 
   static void SynchronizePackSendRecv( const std::map< string, string_array > & fieldNames,
                                        MeshLevel * const mesh,
                                        std::vector< NeighborCommunicator > & allNeighbors,
                                        MPI_iCommData & icomm,
-                                       bool on_device = false );
+                                       bool onDevice = false );
 
   static void SynchronizeUnpack( MeshLevel * const mesh,
                                  std::vector< NeighborCommunicator > & neighbors,
                                  MPI_iCommData & icomm,
-                                 bool on_device = false );
+                                 bool onDevice = false );
 
 
 };

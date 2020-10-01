@@ -38,13 +38,13 @@ namespace
 
 PVTPackage::EOS_TYPE getCompositionalEosType( string const & name )
 {
-  static std::map< string, PVTPackage::EOS_TYPE > const eosTypes =
+  static std::map< string, PVTPackage::EOS_TYPE > const EOS_TYPES =
   {
     { "PR", PVTPackage::EOS_TYPE::PENG_ROBINSON },
     { "SRK", PVTPackage::EOS_TYPE::REDLICH_KWONG_SOAVE }
   };
-  auto const it = eosTypes.find( name );
-  GEOSX_ERROR_IF( it == eosTypes.end(), "Compositional EOS type not supported by PVTPackage: " << name );
+  auto const it = EOS_TYPES.find( name );
+  GEOSX_ERROR_IF( it == EOS_TYPES.end(), "Compositional EOS type not supported by PVTPackage: " << name );
   return it->second;
 }
 

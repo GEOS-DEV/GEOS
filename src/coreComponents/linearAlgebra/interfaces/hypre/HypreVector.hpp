@@ -220,12 +220,12 @@ private:
   /**
    * Pointer to underlying HYPRE_IJVector type.
    */
-  HYPRE_IJVector m_ij_vector;
+  HYPRE_IJVector m_ijVector;
 
   /**
    * Pointer to underlying HYPRE_ParVector type.
    */
-  HYPRE_ParVector m_par_vector;
+  HYPRE_ParVector m_parVector;
 
 };
 

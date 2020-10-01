@@ -211,7 +211,7 @@ void ObjectManagerBase::ConstructGlobalToLocalMap()
 localIndex ObjectManagerBase::PackSize( string_array const & wrapperNames,
                                         arrayView1d< localIndex const > const & packList,
                                         integer const recursive,
-                                        bool on_device ) const
+                                        bool onDevice ) const
 {
   localIndex packedSize = 0;
   buffer_unit_type * junk;
@@ -219,7 +219,7 @@ localIndex ObjectManagerBase::PackSize( string_array const & wrapperNames,
                                             wrapperNames,
                                             packList,
                                             recursive,
-                                            on_device );
+                                            onDevice );
 
   return packedSize;
 }
@@ -228,11 +228,11 @@ localIndex ObjectManagerBase::Pack( buffer_unit_type * & buffer,
                                     string_array const & wrapperNames,
                                     arrayView1d< localIndex const > const & packList,
                                     integer const recursive,
-                                    bool on_device ) const
+                                    bool onDevice ) const
 {
   localIndex packedSize = 0;
 
-  packedSize += this->PackPrivate< true >( buffer, wrapperNames, packList, recursive, on_device );
+  packedSize += this->PackPrivate< true >( buffer, wrapperNames, packList, recursive, onDevice );
 
   return packedSize;
 }
@@ -325,7 +325,7 @@ localIndex ObjectManagerBase::PackPrivate( buffer_unit_type * & buffer,
 localIndex ObjectManagerBase::Unpack( buffer_unit_type const * & buffer,
                                       arrayView1d< localIndex > & packList,
                                       integer const recursive,
-                                      bool on_device )
+                                      bool onDevice )
 {
   localIndex unpackedSize = 0;
   string groupName;
@@ -353,7 +353,7 @@ localIndex ObjectManagerBase::Unpack( buffer_unit_type const * & buffer,
       if( wrapperName != "nullptr" )
       {
         WrapperBase * const wrapper = this->getWrapperBase( wrapperName );
-        unpackedSize += wrapper->UnpackByIndex( buffer, packList, true, on_device );
+        unpackedSize += wrapper->UnpackByIndex( buffer, packList, true, onDevice );
       }
     }
   }
@@ -372,7 +372,7 @@ localIndex ObjectManagerBase::Unpack( buffer_unit_type const * & buffer,
     {
       string subGroupName;
       unpackedSize += bufferOps::Unpack( buffer, subGroupName );
-      unpackedSize += this->GetGroup( subGroupName )->Unpack( buffer, packList, recursive, on_device );
+      unpackedSize += this->GetGroup( subGroupName )->Unpack( buffer, packList, recursive, onDevice );
     }
   }
 

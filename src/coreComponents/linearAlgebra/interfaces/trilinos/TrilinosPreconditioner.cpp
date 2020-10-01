@@ -43,19 +43,19 @@ namespace
 
 string const & getMLCycleType( string const & value )
 {
-  static std::map< string, string > const optionMap =
+  static std::map< string, string > const OPTION_MAP =
   {
     { "V", "MGV" },
     { "W", "MGW" },
   };
 
-  GEOSX_LAI_ASSERT_MSG( optionMap.count( value ) > 0, "Unsupported Trilinos/ML cycle option: " << value );
-  return optionMap.at( value );
+  GEOSX_LAI_ASSERT_MSG( OPTION_MAP.count( value ) > 0, "Unsupported Trilinos/ML cycle option: " << value );
+  return OPTION_MAP.at( value );
 }
 
 string const & getMLSmootherType( string const & value )
 {
-  static std::map< string, string > const optionMap =
+  static std::map< string, string > const OPTION_MAP =
   {
     { "jacobi", "Jacobi" },
     { "blockJacobi", "block Jacobi" },
@@ -67,13 +67,13 @@ string const & getMLSmootherType( string const & value )
     { "ilut", "ILUT" },
   };
 
-  GEOSX_LAI_ASSERT_MSG( optionMap.count( value ) > 0, "Unsupported Trilinos/ML smoother option: " << value );
-  return optionMap.at( value );
+  GEOSX_LAI_ASSERT_MSG( OPTION_MAP.count( value ) > 0, "Unsupported Trilinos/ML smoother option: " << value );
+  return OPTION_MAP.at( value );
 }
 
 string const & getMLCoarseType( string const & value )
 {
-  static std::map< string, string > const optionMap =
+  static std::map< string, string > const OPTION_MAP =
   {
     { "jacobi", "Jacobi" },
     { "gaussSeidel", "Gauss-Seidel" },
@@ -82,8 +82,8 @@ string const & getMLCoarseType( string const & value )
     { "direct", "Amesos-KLU"},
   };
 
-  GEOSX_LAI_ASSERT_MSG( optionMap.count( value ) > 0, "Unsupported Trilinos/ML coarse solver option: " << value );
-  return optionMap.at( value );
+  GEOSX_LAI_ASSERT_MSG( OPTION_MAP.count( value ) > 0, "Unsupported Trilinos/ML coarse solver option: " << value );
+  return OPTION_MAP.at( value );
 }
 
 std::unique_ptr< Epetra_Operator >
@@ -111,7 +111,7 @@ CreateMLOperator( LinearSolverParameters const & params, Epetra_RowMatrix const 
 
 Ifpack::EPrecType getIfpackPrecondType( LinearSolverParameters::PreconditionerType const & type )
 {
-  static std::map< LinearSolverParameters::PreconditionerType, Ifpack::EPrecType > const typeMap =
+  static std::map< LinearSolverParameters::PreconditionerType, Ifpack::EPrecType > const TYPE_MAP =
   {
     { LinearSolverParameters::PreconditionerType::iluk, Ifpack::ILU },
     { LinearSolverParameters::PreconditionerType::ilut, Ifpack::ILUT },
@@ -122,20 +122,20 @@ Ifpack::EPrecType getIfpackPrecondType( LinearSolverParameters::PreconditionerTy
     { LinearSolverParameters::PreconditionerType::sgs, Ifpack::POINT_RELAXATION },
   };
 
-  GEOSX_LAI_ASSERT_MSG( typeMap.count( type ) > 0, "Unsupported Trilinos/Ifpack preconditioner option: " << type );
-  return typeMap.at( type );
+  GEOSX_LAI_ASSERT_MSG( TYPE_MAP.count( type ) > 0, "Unsupported Trilinos/Ifpack preconditioner option: " << type );
+  return TYPE_MAP.at( type );
 }
 string getIfpackRelaxationType( LinearSolverParameters::PreconditionerType const & type )
 {
-  static std::map< LinearSolverParameters::PreconditionerType, string > const typeMap =
+  static std::map< LinearSolverParameters::PreconditionerType, string > const TYPE_MAP =
   {
     { LinearSolverParameters::PreconditionerType::jacobi, "Jacobi" },
     { LinearSolverParameters::PreconditionerType::gs, "Gauss-Seidel" },
     { LinearSolverParameters::PreconditionerType::sgs, "symmetric Gauss-Seidel" },
   };
 
-  GEOSX_LAI_ASSERT_MSG( typeMap.count( type ) > 0, "Unsupported Trilinos/Ifpack preconditioner option: " << type );
-  return typeMap.at( type );
+  GEOSX_LAI_ASSERT_MSG( TYPE_MAP.count( type ) > 0, "Unsupported Trilinos/Ifpack preconditioner option: " << type );
+  return TYPE_MAP.at( type );
 }
 
 std::unique_ptr< Epetra_Operator >

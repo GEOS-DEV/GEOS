@@ -78,7 +78,7 @@ public:
 
   virtual void InitializePreSubGroups( Group * const rootGroup ) override;
 
-  virtual void RegisterDataOnMesh( Group * const MeshBody ) override final;
+  virtual void RegisterDataOnMesh( Group * const meshBody ) override final;
 
   void updateIntrinsicNodalData( DomainPartition * const domain );
 
@@ -90,19 +90,19 @@ public:
    */
   /**@{*/
   virtual
-  real64 SolverStep( real64 const & time_n,
+  real64 SolverStep( real64 const & timeN,
                      real64 const & dt,
                      integer const cycleNumber,
                      DomainPartition & domain ) override;
 
   virtual
-  real64 ExplicitStep( real64 const & time_n,
+  real64 ExplicitStep( real64 const & timeN,
                        real64 const & dt,
                        integer const cycleNumber,
                        DomainPartition & domain ) override;
 
   virtual void
-  ImplicitStepSetup( real64 const & time_n,
+  ImplicitStepSetup( real64 const & timeN,
                      real64 const & dt,
                      DomainPartition & domain ) override;
 

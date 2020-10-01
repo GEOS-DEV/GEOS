@@ -97,7 +97,7 @@ public:
    * @param faceIndices the local indices of the new faces that define the face element.
    * @return the local index of the new FaceElement entry.
    */
-  localIndex AddToFractureMesh( real64 const time_np1,
+  localIndex AddToFractureMesh( real64 const timeNp1,
                                 EdgeManager * const edgeManager,
                                 FaceManager const * const faceManager,
                                 ArrayOfArraysView< localIndex const > const & originalFaceToEdges,

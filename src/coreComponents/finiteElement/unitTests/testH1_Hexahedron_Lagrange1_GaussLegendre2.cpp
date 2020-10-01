@@ -97,16 +97,16 @@ void testKernelDriver()
     { -1, -1, -1, -1, 1, 1, 1, 1 }
   };
 
-  constexpr static real64 quadratureFactor = 1.0 / 1.732050807568877293528;
+  constexpr static real64 QUADRATURE_FACTOR = 1.0 / 1.732050807568877293528;
 
   forAll< serialPolicy >( 1,
                           [=] ( localIndex const )
   {
     for( localIndex q=0; q<numQuadraturePoints; ++q )
     {
-      real64 const xi[3] = { quadratureFactor *pCoords[0][q],
-                             quadratureFactor*pCoords[1][q],
-                             quadratureFactor*pCoords[2][q] };
+      real64 const xi[3] = { QUADRATURE_FACTOR *pCoords[0][q],
+                             QUADRATURE_FACTOR*pCoords[1][q],
+                             QUADRATURE_FACTOR*pCoords[2][q] };
 
       for( localIndex a=0; a<numNodes; ++a )
       {

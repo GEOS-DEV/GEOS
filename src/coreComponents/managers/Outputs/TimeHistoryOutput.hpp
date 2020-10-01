@@ -65,7 +65,7 @@ public:
    * @brief Writes out a time history file.
    * @copydoc EventBase::Execute()
    */
-  virtual void Execute( real64 const time_n,
+  virtual void Execute( real64 const timeN,
                         real64 const dt,
                         integer const cycleNumber,
                         integer const eventCounter,
@@ -75,7 +75,7 @@ public:
    * @brief Writes out a time history file at the end of the simulation.
    * @copydoc ExecutableGroup::Cleanup()
    */
-  virtual void Cleanup( real64 const time_n,
+  virtual void Cleanup( real64 const timeN,
                         integer const cycleNumber,
                         integer const eventCounter,
                         real64 const eventProgress,

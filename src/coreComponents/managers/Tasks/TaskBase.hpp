@@ -54,14 +54,14 @@ public:
   static CatalogInterface::CatalogType & GetCatalog();
 
   /// @copydoc geosx::ExecutableGroup::Execute
-  virtual void Execute( real64 const time_n,
+  virtual void Execute( real64 const timeN,
                         real64 const dt,
                         integer const cycleNumber,
                         integer const eventCounter,
                         real64 const eventProgress,
                         dataRepository::Group * domain ) override
   {
-    GEOSX_UNUSED_VAR( time_n );
+    GEOSX_UNUSED_VAR( timeN );
     GEOSX_UNUSED_VAR( dt );
     GEOSX_UNUSED_VAR( cycleNumber );
     GEOSX_UNUSED_VAR( eventCounter );

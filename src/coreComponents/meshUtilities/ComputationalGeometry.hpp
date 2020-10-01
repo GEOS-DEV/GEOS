@@ -190,25 +190,25 @@ void GetBoundingBox( localIndex elemIndex,
  */
 inline
 GEOSX_HOST_DEVICE
-real64 HexVolume( R1Tensor const * const X )
+real64 HexVolume( R1Tensor const * const x )
 {
-  R1Tensor X7_X1( X[7] );
-  X7_X1 -= X[1];
+  R1Tensor X7_X1( x[7] );
+  X7_X1 -= x[1];
 
-  R1Tensor X6_X0( X[6] );
-  X6_X0 -= X[0];
+  R1Tensor X6_X0( x[6] );
+  X6_X0 -= x[0];
 
-  R1Tensor X7_X2( X[7] );
-  X7_X2 -= X[2];
+  R1Tensor X7_X2( x[7] );
+  X7_X2 -= x[2];
 
-  R1Tensor X3_X0( X[3] );
-  X3_X0 -= X[0];
+  R1Tensor X3_X0( x[3] );
+  X3_X0 -= x[0];
 
-  R1Tensor X5_X0( X[5] );
-  X5_X0 -= X[0];
+  R1Tensor X5_X0( x[5] );
+  X5_X0 -= x[0];
 
-  R1Tensor X7_X4( X[7] );
-  X7_X4 -= X[4];
+  R1Tensor X7_X4( x[7] );
+  X7_X4 -= x[4];
 
   R1Tensor X7_X1plusX6_X0( X7_X1 );
   X7_X1plusX6_X0 += X6_X0;

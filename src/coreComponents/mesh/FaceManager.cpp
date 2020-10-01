@@ -706,7 +706,7 @@ void FaceManager::SortAllFaceNodes( NodeManager const * const nodeManager,
   } );
 }
 
-void FaceManager::SortFaceNodes( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X,
+void FaceManager::SortFaceNodes( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & x,
                                  arraySlice1d< real64 const > const elementCenter,
                                  localIndex * const faceNodes,
                                  localIndex const numFaceNodes )
@@ -717,7 +717,7 @@ void FaceManager::SortFaceNodes( arrayView2d< real64 const, nodes::REFERENCE_POS
   R1Tensor fc( 0 );
   for( localIndex n =0; n < numFaceNodes; ++n )
   {
-    fc += X[faceNodes[n]];
+    fc += x[faceNodes[n]];
   }
   fc /= realT( numFaceNodes );
 
@@ -726,8 +726,8 @@ void FaceManager::SortFaceNodes( arrayView2d< real64 const, nodes::REFERENCE_POS
 
   if( numFaceNodes == 2 )  //2D only.
   {
-    ex = X[faceNodes[1]];
-    ex -= X[faceNodes[0]];
+    ex = x[faceNodes[1]];
+    ex -= x[faceNodes[0]];
     ey = elementCenter;
     ey -= fc;
 
@@ -749,7 +749,7 @@ void FaceManager::SortFaceNodes( arrayView2d< real64 const, nodes::REFERENCE_POS
     ez -= elementCenter;
 
     /// Approximate in-plane axis
-    ex = X[faceNodes[0]];
+    ex = x[faceNodes[0]];
     ex -= fc;
 
     ex /= ex.L2_Norm();
@@ -761,7 +761,7 @@ void FaceManager::SortFaceNodes( arrayView2d< real64 const, nodes::REFERENCE_POS
     /// Sort nodes counterclockwise around face center
     for( localIndex n =0; n < numFaceNodes; ++n )
     {
-      R1Tensor v = X[faceNodes[n]];
+      R1Tensor v = x[faceNodes[n]];
       v -= fc;
       thetaOrder[n] = std::pair< realT, localIndex >( atan2( Dot( v, ey ), Dot( v, ex )), faceNodes[n] );
     }

@@ -268,7 +268,7 @@ struct PressureRelationKernel
           arrayView1d< real64 const > const & wellElemPressure,
           arrayView1d< real64 const > const & dWellElemPressure,
           arrayView2d< real64 const > const & wellElemDensity,
-          arrayView2d< real64 const > const & dWellElemDensity_dPres,
+          arrayView2d< real64 const > const & dWellElemDensityDPres,
           CRSMatrixView< real64, globalIndex const > const & localMatrix,
           arrayView1d< real64 > const & localRhs )
   {
@@ -324,8 +324,8 @@ struct PressureRelationKernel
 
         // compute avg density
         real64 const avgDensity = 0.5 * ( wellElemDensity[iwelem][0] + wellElemDensity[iwelemNext][0] );
-        real64 const dAvgDensity_dPresNext = 0.5 * dWellElemDensity_dPres[iwelemNext][0];
-        real64 const dAvgDensity_dPresCurrent = 0.5 * dWellElemDensity_dPres[iwelem][0];
+        real64 const dAvgDensity_dPresNext = 0.5 * dWellElemDensityDPres[iwelemNext][0];
+        real64 const dAvgDensity_dPresCurrent = 0.5 * dWellElemDensityDPres[iwelem][0];
 
         // compute depth diff times acceleration
         real64 const gravD = wellElemGravCoef[iwelemNext] - wellElemGravCoef[iwelem];
@@ -390,16 +390,16 @@ struct PerforationKernel
           ElementViewConst< arrayView1d< real64 const > > const & resPressure,
           ElementViewConst< arrayView1d< real64 const > > const & dResPressure,
           ElementViewConst< arrayView2d< real64 const > > const & resDensity,
-          ElementViewConst< arrayView2d< real64 const > > const & dResDensity_dPres,
+          ElementViewConst< arrayView2d< real64 const > > const & dResDensityDPres,
           ElementViewConst< arrayView2d< real64 const > > const & resViscosity,
-          ElementViewConst< arrayView2d< real64 const > > const & dResViscosity_dPres,
+          ElementViewConst< arrayView2d< real64 const > > const & dResViscosityDPres,
           arrayView1d< real64 const > const & wellElemGravCoef,
           arrayView1d< real64 const > const & wellElemPressure,
           arrayView1d< real64 const > const & dWellElemPressure,
           arrayView2d< real64 const > const & wellElemDensity,
-          arrayView2d< real64 const > const & dWellElemDensity_dPres,
+          arrayView2d< real64 const > const & dWellElemDensityDPres,
           arrayView2d< real64 const > const & wellElemViscosity,
-          arrayView2d< real64 const > const & dWellElemViscosity_dPres,
+          arrayView2d< real64 const > const & dWellElemViscosityDPres,
           arrayView1d< real64 const > const & perfGravCoef,
           arrayView1d< localIndex const > const & perfWellElemIndex,
           arrayView1d< real64 const > const & perfTransmissibility,
@@ -407,7 +407,7 @@ struct PerforationKernel
           arrayView1d< localIndex const > const & resElementSubRegion,
           arrayView1d< localIndex const > const & resElementIndex,
           arrayView1d< real64 > const & perfRate,
-          arrayView2d< real64 > const & dPerfRate_dPres )
+          arrayView2d< real64 > const & dPerfRateDPres )
   {
     forAll< POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const iperf )
     {
@@ -443,7 +443,7 @@ struct PerforationKernel
 
       real64 const gravD = ( perfGravCoef[iperf] - wellElemGravCoef[iwelem] );
       pressure[SinglePhaseWell::SubRegionTag::WELL] += wellElemDensity[iwelem][0] * gravD;
-      dPressure_dP[SinglePhaseWell::SubRegionTag::WELL] += dWellElemDensity_dPres[iwelem][0] * gravD;
+      dPressure_dP[SinglePhaseWell::SubRegionTag::WELL] += dWellElemDensityDPres[iwelem][0] * gravD;
 
       // multiplier for well side in the flux
       multiplier[SinglePhaseWell::SubRegionTag::WELL] = -1;
@@ -456,7 +456,7 @@ struct PerforationKernel
       for( localIndex i = 0; i < 2; ++i )
       {
         potDif += multiplier[i] * trans * pressure[i];
-        dPerfRate_dPres[iperf][i] = multiplier[i] * trans * dPressure_dP[i];
+        dPerfRateDPres[iperf][i] = multiplier[i] * trans * dPressure_dP[i];
       }
 
       // choose upstream cell based on potential difference
@@ -474,18 +474,18 @@ struct PerforationKernel
       if( k_up == SinglePhaseWell::SubRegionTag::RES ) // use reservoir vars
       {
         densityUp     = resDensity[er][esr][ei][0];
-        dDensityUp_dP = dResDensity_dPres[er][esr][ei][0];
+        dDensityUp_dP = dResDensityDPres[er][esr][ei][0];
 
         viscosityUp     = resViscosity[er][esr][ei][0];
-        dViscosityUp_dP = dResViscosity_dPres[er][esr][ei][0];
+        dViscosityUp_dP = dResViscosityDPres[er][esr][ei][0];
       }
       else // use well vars
       {
         densityUp = wellElemDensity[iwelem][0];
-        dDensityUp_dP = dWellElemDensity_dPres[iwelem][0];
+        dDensityUp_dP = dWellElemDensityDPres[iwelem][0];
 
         viscosityUp = wellElemViscosity[iwelem][0];
-        dViscosityUp_dP = dWellElemViscosity_dPres[iwelem][0];
+        dViscosityUp_dP = dWellElemViscosityDPres[iwelem][0];
       }
 
       // compute mobility
@@ -496,9 +496,9 @@ struct PerforationKernel
       perfRate[iperf] = mobilityUp * potDif;
       for( localIndex ke = 0; ke < 2; ++ke )
       {
-        dPerfRate_dPres[iperf][ke] *= mobilityUp;
+        dPerfRateDPres[iperf][ke] *= mobilityUp;
       }
-      dPerfRate_dPres[iperf][k_up] += dMobilityUp_dP * potDif;
+      dPerfRateDPres[iperf][k_up] += dMobilityUp_dP * potDif;
     } );
   }
 };

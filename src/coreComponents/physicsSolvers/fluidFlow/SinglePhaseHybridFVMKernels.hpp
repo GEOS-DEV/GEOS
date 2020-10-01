@@ -73,11 +73,11 @@ struct AssemblerKernelHelper
                             real64 const & dElemPres,
                             real64 const & elemGravDepth,
                             real64 const & elemDens,
-                            real64 const & dElemDens_dp,
+                            real64 const & dElemDensDp,
                             arraySlice2d< real64 const > const & transMatrix,
                             arraySlice1d< real64 > const & oneSidedVolFlux,
-                            arraySlice1d< real64 > const & dOneSidedVolFlux_dp,
-                            arraySlice2d< real64 > const & dOneSidedVolFlux_dfp );
+                            arraySlice1d< real64 > const & dOneSidedVolFluxDp,
+                            arraySlice2d< real64 > const & dOneSidedVolFluxDfp );
 
   /**
    * @brief In a given element, collect the upwinded mobilities at this element's faces
@@ -112,11 +112,11 @@ struct AssemblerKernelHelper
                               SortedArrayView< localIndex const > const & regionFilter,
                               arraySlice1d< localIndex const > const & elemToFaces,
                               ElementViewConst< arrayView1d< real64 const > > const & mobility,
-                              ElementViewConst< arrayView1d< real64 const > > const & dMobility_dp,
+                              ElementViewConst< arrayView1d< real64 const > > const & dMobilityDp,
                               ElementViewConst< arrayView1d< globalIndex const > > const & elemDofNumber,
                               arraySlice1d< real64 const > const & oneSidedVolFlux,
                               arraySlice1d< real64 > const & upwMobility,
-                              arraySlice1d< real64 > const & dUpwMobility_dp,
+                              arraySlice1d< real64 > const & dUpwMobilityDp,
                               arraySlice1d< globalIndex > const & upwDofNumber );
 
   /**
@@ -143,10 +143,10 @@ struct AssemblerKernelHelper
                               globalIndex const elemDofNumber,
                               globalIndex const rankOffset,
                               arraySlice1d< real64 const > const & oneSidedVolFlux,
-                              arraySlice1d< real64 const > const & dOneSidedVolFlux_dp,
-                              arraySlice2d< real64 const > const & dOneSidedVolFlux_dfp,
+                              arraySlice1d< real64 const > const & dOneSidedVolFluxDp,
+                              arraySlice2d< real64 const > const & dOneSidedVolFluxDfp,
                               arraySlice1d< real64 const > const & upwMobility,
-                              arraySlice1d< real64 const > const & dUpwMobility_dp,
+                              arraySlice1d< real64 const > const & dUpwMobilityDp,
                               arraySlice1d< globalIndex const > const & upwDofNumber,
                               real64 const & dt,
                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
@@ -173,8 +173,8 @@ struct AssemblerKernelHelper
                        globalIndex const elemDofNumber,
                        globalIndex const rankOffset,
                        arraySlice1d< real64 const > const & oneSidedVolFlux,
-                       arraySlice1d< real64 const > const & dOneSidedVolFlux_dp,
-                       arraySlice2d< real64 const > const & dOneSidedVolFlux_dfp,
+                       arraySlice1d< real64 const > const & dOneSidedVolFluxDp,
+                       arraySlice2d< real64 const > const & dOneSidedVolFluxDfp,
                        CRSMatrixView< real64, globalIndex const > const & localMatrix,
                        arrayView1d< real64 > const & localRhs );
 
@@ -244,9 +244,9 @@ struct AssemblerKernel
            real64 const & dElemPres,
            real64 const & elemGravCoef,
            real64 const & elemDens,
-           real64 const & dElemDens_dp,
+           real64 const & dElemDensDp,
            ElementViewConst< arrayView1d< real64 const > > const & mobility,
-           ElementViewConst< arrayView1d< real64 const > > const & dMobility_dp,
+           ElementViewConst< arrayView1d< real64 const > > const & dMobilityDp,
            ElementViewConst< arrayView1d< globalIndex const > > const & elemDofNumber,
            integer const elemGhostRank,
            globalIndex const rankOffset,
@@ -316,7 +316,7 @@ struct FluxKernel
           arrayView1d< real64 const > const & dFacePres,
           arrayView1d< real64 const > const & faceGravCoef,
           ElementViewConst< arrayView1d< real64 const > > const & mobility,
-          ElementViewConst< arrayView1d< real64 const > > const & dMobility_dp,
+          ElementViewConst< arrayView1d< real64 const > > const & dMobilityDp,
           ElementViewConst< arrayView1d< globalIndex const > > const & elemDofNumber,
           localIndex const rankOffset,
           real64 const lengthTolerance,
@@ -412,9 +412,9 @@ void KernelLaunchSelectorFaceSwitch( T value, LAMBDA && lambda )
 template< typename KERNELWRAPPER, typename ... ARGS >
 void KernelLaunchSelector( localIndex numFacesInElem, ARGS && ... args )
 {
-  helpers::KernelLaunchSelectorFaceSwitch( numFacesInElem, [&] ( auto NF )
+  helpers::KernelLaunchSelectorFaceSwitch( numFacesInElem, [&] ( auto nf )
   {
-    KERNELWRAPPER::template Launch< NF() >( std::forward< ARGS >( args )... );
+    KERNELWRAPPER::template Launch< nf() >( std::forward< ARGS >( args )... );
   } );
 }
 

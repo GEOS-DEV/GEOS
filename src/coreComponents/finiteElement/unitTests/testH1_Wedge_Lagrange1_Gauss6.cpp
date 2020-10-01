@@ -33,8 +33,8 @@ void testKernelDriver()
   constexpr int numNodes = 6;
   constexpr int numQuadraturePoints = 6;
   constexpr real64 weight = 1.0 / 6.0;
-  constexpr static real64 quadratureCrossSectionCoord = 1.0 / 6.0;
-  constexpr static real64 quadratureLongitudinalCoord = 1.0 / 1.732050807568877293528;
+  constexpr static real64 QUADRATURE_CROSS_SECTION_COORD = 1.0 / 6.0;
+  constexpr static real64 QUADRATURE_LONGITUDINAL_COORD = 1.0 / 1.732050807568877293528;
 
   array1d< real64 > arrDetJxW( numQuadraturePoints );
   array2d< real64 > arrN( numQuadraturePoints, numNodes );
@@ -102,9 +102,9 @@ void testKernelDriver()
   {
     for( localIndex q=0; q<numQuadraturePoints; ++q )
     {
-      real64 const xi[3] = { quadratureCrossSectionCoord *( 1.0 + 3.0*parentCoords[0][q] ),
-                             quadratureCrossSectionCoord*( 1.0 + 3.0*parentCoords[1][q] ),
-                             quadratureLongitudinalCoord*parentCoords[2][q] };
+      real64 const xi[3] = { QUADRATURE_CROSS_SECTION_COORD *( 1.0 + 3.0*parentCoords[0][q] ),
+                             QUADRATURE_CROSS_SECTION_COORD*( 1.0 + 3.0*parentCoords[1][q] ),
+                             QUADRATURE_LONGITUDINAL_COORD*parentCoords[2][q] };
       for( localIndex a=0; a<numNodes; ++a )
       {
         real64

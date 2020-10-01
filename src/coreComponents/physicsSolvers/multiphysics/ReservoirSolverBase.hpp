@@ -75,7 +75,7 @@ public:
   /**@{*/
 
   virtual void
-  ImplicitStepSetup( real64 const & time_n,
+  ImplicitStepSetup( real64 const & timeN,
                      real64 const & dt,
                      DomainPartition & domain ) override final;
 
@@ -145,7 +145,7 @@ public:
                         DomainPartition & domain ) override;
 
   virtual real64
-  SolverStep( real64 const & time_n,
+  SolverStep( real64 const & timeN,
               real64 const & dt,
               int const cycleNumber,
               DomainPartition & domain ) override;
@@ -161,7 +161,7 @@ public:
    * @param matrix the system matrix
    * @param rhs the system right-hand side vector
    */
-  virtual void AssembleCouplingTerms( real64 const time_n,
+  virtual void AssembleCouplingTerms( real64 const timeN,
                                       real64 const dt,
                                       DomainPartition const & domain,
                                       DofManager const & dofManager,

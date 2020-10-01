@@ -359,9 +359,9 @@ void SinglePhaseWell::ComputePerforationRates( WellElementSubRegion & subRegion,
                                                        m_resPressure.toNestedViewConst(),
                                                        m_deltaResPressure.toNestedViewConst(),
                                                        m_resDensity.toNestedViewConst(),
-                                                       m_dResDens_dPres.toNestedViewConst(),
+                                                       m_dResDensDPres.toNestedViewConst(),
                                                        m_resViscosity.toNestedViewConst(),
-                                                       m_dResVisc_dPres.toNestedViewConst(),
+                                                       m_dResViscDPres.toNestedViewConst(),
                                                        wellElemGravCoef,
                                                        wellElemPressure,
                                                        dWellElemPressure,
@@ -549,11 +549,11 @@ void SinglePhaseWell::ResetViews( DomainPartition & domain )
                                                                                 flowSolver.fluidModelNames() );
     m_resDensity.setName( getName() + "/accessors/" + keys::densityString );
 
-    m_dResDens_dPres.clear();
-    m_dResDens_dPres = elemManager.ConstructMaterialArrayViewAccessor< real64, 2 >( keys::dDens_dPresString,
-                                                                                    flowSolver.targetRegionNames(),
-                                                                                    flowSolver.fluidModelNames() );
-    m_dResDens_dPres.setName( getName() + "/accessors/" + keys::dDens_dPresString );
+    m_dResDensDPres.clear();
+    m_dResDensDPres = elemManager.ConstructMaterialArrayViewAccessor< real64, 2 >( keys::dDens_dPresString,
+                                                                                   flowSolver.targetRegionNames(),
+                                                                                   flowSolver.fluidModelNames() );
+    m_dResDensDPres.setName( getName() + "/accessors/" + keys::dDens_dPresString );
 
     m_resViscosity.clear();
     m_resViscosity = elemManager.ConstructMaterialArrayViewAccessor< real64, 2 >( keys::viscosityString,
@@ -561,11 +561,11 @@ void SinglePhaseWell::ResetViews( DomainPartition & domain )
                                                                                   flowSolver.fluidModelNames() );
     m_resViscosity.setName( getName() + "/accessors/" + keys::viscosityString );
 
-    m_dResVisc_dPres.clear();
-    m_dResVisc_dPres = elemManager.ConstructMaterialArrayViewAccessor< real64, 2 >( keys::dVisc_dPresString,
-                                                                                    flowSolver.targetRegionNames(),
-                                                                                    flowSolver.fluidModelNames() );
-    m_dResVisc_dPres.setName( getName() + "/accessors/" + keys::dVisc_dPresString );
+    m_dResViscDPres.clear();
+    m_dResViscDPres = elemManager.ConstructMaterialArrayViewAccessor< real64, 2 >( keys::dVisc_dPresString,
+                                                                                   flowSolver.targetRegionNames(),
+                                                                                   flowSolver.fluidModelNames() );
+    m_dResViscDPres.setName( getName() + "/accessors/" + keys::dVisc_dPresString );
 
   }
 }

@@ -112,13 +112,13 @@ void TimeHistoryOutput::Execute( real64 const GEOSX_UNUSED_PARAM( time_n ),
   m_recordCount += newBuffered;
 }
 
-void TimeHistoryOutput::Cleanup( real64 const time_n,
+void TimeHistoryOutput::Cleanup( real64 const timeN,
                                  integer const cycleNumber,
                                  integer const eventCounter,
                                  real64 const eventProgress,
                                  dataRepository::Group * domain )
 {
-  Execute( time_n, 0.0, cycleNumber, eventCounter, eventProgress, domain );
+  Execute( timeN, 0.0, cycleNumber, eventCounter, eventProgress, domain );
   // remove any unused trailing space reserved to write additional histories
   for( auto & th_io : m_io )
   {

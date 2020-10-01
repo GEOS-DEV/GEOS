@@ -47,21 +47,21 @@ void CalculateGradients( real64 ( & gradient0 )[ 3 ][ 3 ],
 
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-void HughesWinget( real64 ( & Rot )[ 3 ][ 3 ], real64 ( & Dadt )[ 6 ], real64 const ( &G )[ 3 ][ 3 ] )
+void HughesWinget( real64 ( & rot )[ 3 ][ 3 ], real64 ( & dadt )[ 6 ], real64 const ( &g )[ 3 ][ 3 ] )
 {
   //Dadt = 0.5*(G + GT);
-  Dadt[ 0 ] = G[ 0 ][ 0 ];
-  Dadt[ 1 ] = G[ 1 ][ 1 ];
-  Dadt[ 2 ] = G[ 2 ][ 2 ];
+  dadt[ 0 ] = g[ 0 ][ 0 ];
+  dadt[ 1 ] = g[ 1 ][ 1 ];
+  dadt[ 2 ] = g[ 2 ][ 2 ];
 
-  Dadt[ 3 ] = 0.5 * ( G[ 2 ][ 1 ] + G[ 1 ][ 2 ] );
-  Dadt[ 4 ] = 0.5 * ( G[ 2 ][ 0 ] + G[ 0 ][ 2 ] );
-  Dadt[ 5 ] = 0.5 * ( G[ 0 ][ 1 ] + G[ 1 ][ 0 ] );
+  dadt[ 3 ] = 0.5 * ( g[ 2 ][ 1 ] + g[ 1 ][ 2 ] );
+  dadt[ 4 ] = 0.5 * ( g[ 2 ][ 0 ] + g[ 0 ][ 2 ] );
+  dadt[ 5 ] = 0.5 * ( g[ 0 ][ 1 ] + g[ 1 ][ 0 ] );
 
   //Omega = 0.5*(G - GT);
-  real64 const w12 = 0.5*(G[ 0 ][ 1 ] - G[ 1 ][ 0 ]);
-  real64 const w13 = 0.5*(G[ 0 ][ 2 ] - G[ 2 ][ 0 ]);
-  real64 const w23 = 0.5*(G[ 1 ][ 2 ] - G[ 2 ][ 1 ]);
+  real64 const w12 = 0.5*(g[ 0 ][ 1 ] - g[ 1 ][ 0 ]);
+  real64 const w13 = 0.5*(g[ 0 ][ 2 ] - g[ 2 ][ 0 ]);
+  real64 const w23 = 0.5*(g[ 1 ][ 2 ] - g[ 2 ][ 1 ]);
 
   real64 const w12w12div4 = 0.25*w12*w12;
   real64 const w13w13div4 = 0.25*w13*w13;
@@ -71,17 +71,17 @@ void HughesWinget( real64 ( & Rot )[ 3 ][ 3 ], real64 ( & Dadt )[ 6 ], real64 co
   real64 const w13w23div2 = 0.5*(w13*w23);
   real64 const invDetIplusOmega = 1.0 / ( 1 + ( w12w12div4 + w13w13div4 + w23w23div4 ) );
 
-  Rot[ 0 ][ 0 ] = ( 1.0 + (-w12w12div4 - w13w13div4 + w23w23div4) ) * invDetIplusOmega;
-  Rot[ 0 ][ 1 ] = ( w12 - w13w23div2 ) * invDetIplusOmega;
-  Rot[ 0 ][ 2 ] = ( w13 + w12w23div2 ) * invDetIplusOmega;
+  rot[ 0 ][ 0 ] = ( 1.0 + (-w12w12div4 - w13w13div4 + w23w23div4) ) * invDetIplusOmega;
+  rot[ 0 ][ 1 ] = ( w12 - w13w23div2 ) * invDetIplusOmega;
+  rot[ 0 ][ 2 ] = ( w13 + w12w23div2 ) * invDetIplusOmega;
 
-  Rot[ 1 ][ 0 ] = (-w12 - w13w23div2 ) * invDetIplusOmega;
-  Rot[ 1 ][ 1 ] = ( 1.0 + (-w12w12div4 + w13w13div4 - w23w23div4) ) * invDetIplusOmega;
-  Rot[ 1 ][ 2 ] = ( w23 - w12w13div2 ) * invDetIplusOmega;
+  rot[ 1 ][ 0 ] = (-w12 - w13w23div2 ) * invDetIplusOmega;
+  rot[ 1 ][ 1 ] = ( 1.0 + (-w12w12div4 + w13w13div4 - w23w23div4) ) * invDetIplusOmega;
+  rot[ 1 ][ 2 ] = ( w23 - w12w13div2 ) * invDetIplusOmega;
 
-  Rot[ 2 ][ 0 ] = (-w13 + w12w23div2 ) * invDetIplusOmega;
-  Rot[ 2 ][ 1 ] = (-w23 - w12w13div2 ) * invDetIplusOmega;
-  Rot[ 2 ][ 2 ] = ( 1.0 + ( w12w12div4 - w13w13div4 - w23w23div4) ) * invDetIplusOmega;
+  rot[ 2 ][ 0 ] = (-w13 + w12w23div2 ) * invDetIplusOmega;
+  rot[ 2 ][ 1 ] = (-w23 - w12w13div2 ) * invDetIplusOmega;
+  rot[ 2 ][ 2 ] = ( 1.0 + ( w12w12div4 - w13w13div4 - w23w23div4) ) * invDetIplusOmega;
 }
 }
 

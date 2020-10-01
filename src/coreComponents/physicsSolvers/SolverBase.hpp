@@ -59,7 +59,7 @@ public:
   /**
    * This method is called when it's host event is triggered
    */
-  virtual void Execute( real64 const time_n,
+  virtual void Execute( real64 const timeN,
                         real64 const dt,
                         integer const cycleNumber,
                         integer const eventCounter,
@@ -133,7 +133,7 @@ public:
    * This function is the entry point to perform a solver step. The choice of time integration
    * method is determined in this function, and the appropriate step function is called.
    */
-  virtual real64 SolverStep( real64 const & time_n,
+  virtual real64 SolverStep( real64 const & timeN,
                              real64 const & dt,
                              integer const cycleNumber,
                              DomainPartition & domain );
@@ -171,7 +171,7 @@ public:
    * @param domain the domain object
    * @return return the timestep that was achieved during the step.
    */
-  virtual real64 ExplicitStep( real64 const & time_n,
+  virtual real64 ExplicitStep( real64 const & timeN,
                                real64 const & dt,
                                integer const cycleNumber,
                                DomainPartition & domain );
@@ -193,7 +193,7 @@ public:
    * nonlinear loop includes a simple line search algorithm, and will cut the timestep if
    * convergence is not achieved according to the parameters in linearSolverParameters member.
    */
-  virtual real64 NonlinearImplicitStep( real64 const & time_n,
+  virtual real64 NonlinearImplicitStep( real64 const & timeN,
                                         real64 const & dt,
                                         integer const cycleNumber,
                                         DomainPartition & domain );
@@ -217,7 +217,7 @@ public:
    * convergence is not achieved according to the parameters in linearSolverParameters member.
    */
   virtual bool
-  LineSearch( real64 const & time_n,
+  LineSearch( real64 const & timeN,
               real64 const & dt,
               integer const cycleNumber,
               DomainPartition & domain,
@@ -246,7 +246,7 @@ public:
    * nonlinear loop includes a simple line search algorithm, and will cut the timestep if
    * convergence is not achieved according to the parameters in linearSolverParameters member.
    */
-  virtual real64 LinearImplicitStep( real64 const & time_n,
+  virtual real64 LinearImplicitStep( real64 const & timeN,
                                      real64 const & dt,
                                      integer const cycleNumber,
                                      DomainPartition & domain );
@@ -268,7 +268,7 @@ public:
    * solution method such as LinearImplicitStep() or NonlinearImplicitStep().
    */
   virtual void
-  ImplicitStepSetup( real64 const & time_n,
+  ImplicitStepSetup( real64 const & timeN,
                      real64 const & dt,
                      DomainPartition & domain );
 

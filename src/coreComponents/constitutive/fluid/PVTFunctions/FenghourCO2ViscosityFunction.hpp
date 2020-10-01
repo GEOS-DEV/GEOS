@@ -60,7 +60,7 @@ private:
   void CalculateCO2Viscosity( real64_array const & pressure, real64_array const & temperature, real64_array2d const & density,
                               real64_array2d const & viscosity );
 
-  void FenghourCO2Viscosity( real64 const & Tcent, real64 const & den, real64 & vis );
+  void FenghourCO2Viscosity( real64 const & tCent, real64 const & den, real64 & vis );
 
   TableFunctionPtr m_CO2ViscosityTable;
 };

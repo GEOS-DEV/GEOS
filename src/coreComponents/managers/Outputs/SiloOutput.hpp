@@ -50,7 +50,7 @@ public:
    * @brief Writes out a Silo plot file.
    * @copydoc EventBase::Execute()
    */
-  virtual void Execute( real64 const time_n,
+  virtual void Execute( real64 const timeN,
                         real64 const dt,
                         integer const cycleNumber,
                         integer const eventCounter,
@@ -61,13 +61,13 @@ public:
    * @brief Writes out a Silo plot file at the end of the simulation.
    * @copydoc ExecutableGroup::Cleanup()
    */
-  virtual void Cleanup( real64 const time_n,
+  virtual void Cleanup( real64 const timeN,
                         integer const cycleNumber,
                         integer const eventCounter,
                         real64 const eventProgress,
                         dataRepository::Group * domain ) override
   {
-    Execute( time_n, 0, cycleNumber, eventCounter, eventProgress, domain );
+    Execute( timeN, 0, cycleNumber, eventCounter, eventProgress, domain );
   }
 
   /// @cond DO_NOT_DOCUMENT

@@ -64,7 +64,7 @@ public:
 private:
   // An umpire allocator allocating the type for which this class is instantiated.
   umpire::TypedAllocator< value_type > m_alloc;
-  bool m_prefer_pinned_l;
+  bool m_preferPinnedL;
 public:
   /**
    * @brief Default behavior is to allocate host memory, if there is a pinned memory allocator
@@ -73,10 +73,10 @@ public:
    */
   BufferAllocator()
     : m_alloc( umpire::TypedAllocator< T >( umpire::ResourceManager::getInstance().getAllocator( umpire::resource::Host )))
-    , m_prefer_pinned_l( getPreferPinned( ) )
+    , m_preferPinnedL( getPreferPinned( ) )
   {
     auto & rm = umpire::ResourceManager::getInstance();
-    if( rm.isAllocator( "PINNED" ) && m_prefer_pinned_l )
+    if( rm.isAllocator( "PINNED" ) && m_preferPinnedL )
       m_alloc = umpire::TypedAllocator< T >( rm.getAllocator( umpire::resource::Pinned ));
   }
   /**

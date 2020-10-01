@@ -69,13 +69,13 @@ private:
   /// The path to read from.
   std::string const m_inputPath;
   /// The global face offset.
-  std::int64_t m_face_offset;
+  std::int64_t m_faceOffset;
   /// The local number of faces written.
-  std::int64_t m_n_faces_written;
+  std::int64_t m_nFacesWritten;
   /// The global node offset.
-  std::int64_t m_node_offset;
+  std::int64_t m_nodeOffset;
   /// The local number of nodes written.
-  std::int64_t m_n_nodes_written;
+  std::int64_t m_nNodesWritten;
   /// The mesh to communicate.
   MeshLevel & m_mesh;
   /// Not sure why this is here.

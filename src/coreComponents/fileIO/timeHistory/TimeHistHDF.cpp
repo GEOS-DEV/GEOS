@@ -174,7 +174,7 @@ HDFHistIO::HDFHistIO( string const & filename,
   m_dataBuffer.resize( initAlloc * m_typeSize * m_typeCount );
 }
 
-void HDFHistIO::init( bool exists_okay )
+void HDFHistIO::init( bool existsOkay )
 {
   globalIndex localIdxCount = LvArray::integerConversion< globalIndex >( m_dims[0] );
 
@@ -244,13 +244,13 @@ void HDFHistIO::init( bool exists_okay )
       H5Dclose( dataset );
       H5Sclose( space );
     }
-    else if( exists_okay )
+    else if( existsOkay )
     {
       // todo:
       // hid_t dataset = H5Dopen(target, m_name.c_str( ), H5P_DEFAULT);
       // check that the extent of the filespace is compatible with the data
     }
-    GEOSX_ERROR_IF( inTarget && !exists_okay, "Dataset (" + m_name + ") already exists in output file: " + m_filename );
+    GEOSX_ERROR_IF( inTarget && !existsOkay, "Dataset (" + m_name + ") already exists in output file: " + m_filename );
   }
 }
 
@@ -322,14 +322,14 @@ void HDFHistIO::compressInFile( )
   }
 }
 
-inline void HDFHistIO::resizeFileIfNeeded( localIndex buffered_count )
+inline void HDFHistIO::resizeFileIfNeeded( localIndex bufferedCount )
 {
   if( m_subcomm != MPI_COMM_NULL )
   {
     HDFFile target( m_filename, false, true, m_subcomm );
-    if( m_writeHead + buffered_count > m_writeLimit )
+    if( m_writeHead + bufferedCount > m_writeLimit )
     {
-      while( m_writeHead + buffered_count > m_writeLimit )
+      while( m_writeHead + bufferedCount > m_writeLimit )
       {
         m_writeLimit *= m_overallocMultiple;
       }
@@ -391,7 +391,7 @@ HDFSerialHistIO::HDFSerialHistIO( string const & filename,
   m_dataBuffer.resize( initAlloc * m_typeSize * m_typeCount );
 }
 
-void HDFSerialHistIO::init( bool exists_okay )
+void HDFSerialHistIO::init( bool existsOkay )
 {
   // create a dataset in the file if needed, don't erase file
   if( m_typeCount > 0 )
@@ -426,13 +426,13 @@ void HDFSerialHistIO::init( bool exists_okay )
       H5Dclose( dataset );
       H5Sclose( space );
     }
-    else if( exists_okay )
+    else if( existsOkay )
     {
       // todo:
       // hid_t dataset = H5Dopen(target, m_name.c_str( ), H5P_DEFAULT);
       // check that the extent of the filespace is compatible with the data
     }
-    GEOSX_ERROR_IF( inTarget && !exists_okay, "Dataset (" + m_name + ") already exists in output file: " + m_filename );
+    GEOSX_ERROR_IF( inTarget && !existsOkay, "Dataset (" + m_name + ") already exists in output file: " + m_filename );
   }
 }
 
@@ -498,14 +498,14 @@ void HDFSerialHistIO::compressInFile( )
   }
 }
 
-inline void HDFSerialHistIO::resizeFileIfNeeded( localIndex buffered_count )
+inline void HDFSerialHistIO::resizeFileIfNeeded( localIndex bufferedCount )
 {
   if( m_typeCount > 0 )
   {
     HDFFile target( m_filename, false, false, m_comm );
-    if( m_writeHead + buffered_count > m_writeLimit )
+    if( m_writeHead + bufferedCount > m_writeLimit )
     {
-      while( m_writeHead + buffered_count > m_writeLimit )
+      while( m_writeHead + bufferedCount > m_writeLimit )
       {
         m_writeLimit *= m_overallocMultiple;
       }

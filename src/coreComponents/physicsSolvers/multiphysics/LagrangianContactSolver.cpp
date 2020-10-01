@@ -83,9 +83,9 @@ LagrangianContactSolver::LagrangianContactSolver( const std::string & name,
 
 }
 
-void LagrangianContactSolver::RegisterDataOnMesh( dataRepository::Group * const MeshBodies )
+void LagrangianContactSolver::RegisterDataOnMesh( dataRepository::Group * const meshBodies )
 {
-  for( auto & mesh : MeshBodies->GetSubGroups() )
+  for( auto & mesh : meshBodies->GetSubGroups() )
   {
     MeshLevel & meshLevel = *Group::group_cast< MeshBody * >( mesh.second )->getMeshLevel( 0 );
 
@@ -171,21 +171,21 @@ void LagrangianContactSolver::InitializePreSubGroups( Group * const rootGroup )
   m_contactRelationFullIndex = contactRelation->getIndexInParent();
 }
 
-void LagrangianContactSolver::ImplicitStepSetup( real64 const & time_n,
+void LagrangianContactSolver::ImplicitStepSetup( real64 const & timeN,
                                                  real64 const & dt,
                                                  DomainPartition & domain )
 {
   ComputeTolerances( domain );
   UpdateDeformationForCoupling( domain );
 
-  m_solidSolver->ImplicitStepSetup( time_n, dt, domain );
+  m_solidSolver->ImplicitStepSetup( timeN, dt, domain );
 }
 
-void LagrangianContactSolver::ImplicitStepComplete( real64 const & time_n,
+void LagrangianContactSolver::ImplicitStepComplete( real64 const & timeN,
                                                     real64 const & dt,
                                                     DomainPartition & domain )
 {
-  m_solidSolver->ImplicitStepComplete( time_n, dt, domain );
+  m_solidSolver->ImplicitStepComplete( timeN, dt, domain );
 
   MeshLevel & meshLevel = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
   ElementRegionManager & elemManager = *meshLevel.getElemManager();
@@ -420,14 +420,14 @@ void LagrangianContactSolver::ResetStateToBeginningOfStep( DomainPartition & dom
   } );
 }
 
-real64 LagrangianContactSolver::SolverStep( real64 const & time_n,
+real64 LagrangianContactSolver::SolverStep( real64 const & timeN,
                                             real64 const & dt,
                                             int const cycleNumber,
                                             DomainPartition & domain )
 {
   real64 dtReturn = dt;
 
-  ImplicitStepSetup( time_n,
+  ImplicitStepSetup( timeN,
                      dt,
                      domain );
 
@@ -438,10 +438,10 @@ real64 LagrangianContactSolver::SolverStep( real64 const & time_n,
                m_localSolution );
 
   // currently the only method is implicit time integration
-  dtReturn = NonlinearImplicitStep( time_n, dt, cycleNumber, domain );
+  dtReturn = NonlinearImplicitStep( timeN, dt, cycleNumber, domain );
 
   // final step for completion of timestep. typically secondary variable updates and cleanup.
-  ImplicitStepComplete( time_n, dtReturn, domain );
+  ImplicitStepComplete( timeN, dtReturn, domain );
 
   return dtReturn;
 }
@@ -501,7 +501,7 @@ real64 LagrangianContactSolver::ExplicitStep( real64 const & GEOSX_UNUSED_PARAM(
   return dt;
 }
 
-real64 LagrangianContactSolver::NonlinearImplicitStep( real64 const & time_n,
+real64 LagrangianContactSolver::NonlinearImplicitStep( real64 const & timeN,
                                                        real64 const & dt,
                                                        integer const cycleNumber,
                                                        DomainPartition & domain )
@@ -570,7 +570,7 @@ real64 LagrangianContactSolver::NonlinearImplicitStep( real64 const & time_n,
         m_localRhs.setValues< parallelHostPolicy >( 0.0 );
 
         // call assemble to fill the matrix and the rhs
-        AssembleSystem( time_n,
+        AssembleSystem( timeN,
                         stepDt,
                         domain,
                         m_dofManager,
@@ -578,7 +578,7 @@ real64 LagrangianContactSolver::NonlinearImplicitStep( real64 const & time_n,
                         m_localRhs.toView() );
 
         // apply boundary conditions to system
-        ApplyBoundaryConditions( time_n,
+        ApplyBoundaryConditions( timeN,
                                  stepDt,
                                  domain,
                                  m_dofManager,
@@ -634,13 +634,13 @@ real64 LagrangianContactSolver::NonlinearImplicitStep( real64 const & time_n,
         m_solution.createWithLocalSize( m_matrix.numLocalCols(), MPI_COMM_GEOSX );
 
         // Output the linear system matrix/rhs for debugging purposes
-        DebugOutputSystem( time_n, cycleNumber, newtonIter, m_matrix, m_rhs );
+        DebugOutputSystem( timeN, cycleNumber, newtonIter, m_matrix, m_rhs );
 
         // Solve the linear system
         SolveSystem( m_dofManager, m_matrix, m_rhs, m_solution );
 
         // Output the linear system solution for debugging purposes
-        DebugOutputSolution( time_n, cycleNumber, newtonIter, m_solution );
+        DebugOutputSolution( timeN, cycleNumber, newtonIter, m_solution );
 
         // Copy solution from parallel vector back to local
         // TODO: This step will not be needed when we teach LA vectors to wrap our pointers
@@ -651,7 +651,7 @@ real64 LagrangianContactSolver::NonlinearImplicitStep( real64 const & time_n,
         // do line search in case residual has increased
         if( m_nonlinearSolverParameters.m_lineSearchAction != NonlinearSolverParameters::LineSearchAction::None && newtonIter > 0 )
         {
-          bool lineSearchSuccess = LineSearch( time_n,
+          bool lineSearchSuccess = LineSearch( timeN,
                                                stepDt,
                                                cycleNumber,
                                                domain,
@@ -776,7 +776,7 @@ real64 LagrangianContactSolver::NonlinearImplicitStep( real64 const & time_n,
   return stepDt;
 }
 
-bool LagrangianContactSolver::LineSearch( real64 const & time_n,
+bool LagrangianContactSolver::LineSearch( real64 const & timeN,
                                           real64 const & dt,
                                           integer const GEOSX_UNUSED_PARAM( cycleNumber ),
                                           DomainPartition & domain,
@@ -807,10 +807,10 @@ bool LagrangianContactSolver::LineSearch( real64 const & time_n,
   // re-assemble system
   localMatrix.setValues< parallelHostPolicy >( 0.0 );
   localRhs.setValues< parallelHostPolicy >( 0.0 );
-  AssembleSystem( time_n, dt, domain, dofManager, localMatrix, localRhs );
+  AssembleSystem( timeN, dt, domain, dofManager, localMatrix, localRhs );
 
   // apply boundary conditions to system
-  ApplyBoundaryConditions( time_n, dt, domain, dofManager, localMatrix, localRhs );
+  ApplyBoundaryConditions( timeN, dt, domain, dofManager, localMatrix, localRhs );
 
   // get residual norm
   real64 residualNormT = CalculateResidualNorm( domain, dofManager, localRhs );
@@ -852,10 +852,10 @@ bool LagrangianContactSolver::LineSearch( real64 const & time_n,
     // TODO: add a flag to avoid a completely useless Jacobian computation: rhs is enough
     localMatrix.setValues< parallelHostPolicy >( 0.0 );
     localRhs.setValues< parallelHostPolicy >( 0.0 );
-    AssembleSystem( time_n, dt, domain, dofManager, localMatrix, localRhs );
+    AssembleSystem( timeN, dt, domain, dofManager, localMatrix, localRhs );
 
     // apply boundary conditions to system
-    ApplyBoundaryConditions( time_n, dt, domain, dofManager, localMatrix, localRhs );
+    ApplyBoundaryConditions( timeN, dt, domain, dofManager, localMatrix, localRhs );
 
     if( getLogLevel() >= 1 && logger::internal::rank==0 )
     {

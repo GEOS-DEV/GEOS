@@ -940,7 +940,7 @@ void InternalMeshGenerator::GetElemToNodesRelationInBox( const std::string & ele
                                                          const int index[],
                                                          const int & iEle,
                                                          int nodeIDInBox[],
-                                                         const int node_size )
+                                                         const int nodeSize )
 
 {
   if( elementType == "C3D8" )
@@ -1217,7 +1217,7 @@ void InternalMeshGenerator::GetElemToNodesRelationInBox( const std::string & ele
     mapBoxType[1][1][1] = 7;
 
     int boxType = mapBoxType[index[0] % 2][index[1] % 2][index[2] % 2];
-    for( int i = 0; i < node_size; ++i )
+    for( int i = 0; i < nodeSize; ++i )
     {
       nodeIDInBox[i] = mapBoxTet[boxType][iEle][i];
     }

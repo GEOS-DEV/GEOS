@@ -67,7 +67,7 @@ public:
 
   static string CatalogName() { return "SurfaceGenerator"; }
 
-  virtual void RegisterDataOnMesh( Group * const MeshBody ) override final;
+  virtual void RegisterDataOnMesh( Group * const meshBody ) override final;
 
   /**
    * @defgroup Solver Interface Functions
@@ -76,17 +76,17 @@ public:
    */
   /**@{*/
 
-  virtual void Execute( real64 const time_n,
+  virtual void Execute( real64 const timeN,
                         real64 const dt,
                         integer const cycleNumber,
                         integer const GEOSX_UNUSED_PARAM( eventCounter ),
                         real64 const GEOSX_UNUSED_PARAM( eventProgress ),
                         dataRepository::Group * domain ) override
   {
-    SolverStep( time_n, dt, cycleNumber, *domain->group_cast< DomainPartition * >());
+    SolverStep( timeN, dt, cycleNumber, *domain->group_cast< DomainPartition * >());
   }
 
-  virtual real64 SolverStep( real64 const & time_n,
+  virtual real64 SolverStep( real64 const & timeN,
                              real64 const & dt,
                              integer const cycleNumber,
                              DomainPartition & domain ) override;
@@ -100,7 +100,7 @@ public:
                         int const tileColor,
                         int const numTileColors,
                         const bool prefrac,
-                        const realT time_np1 );
+                        const realT timeNp1 );
 
   /**
    * @brief Function to generate new global indices of a simple object (node, edge, face)
@@ -207,9 +207,9 @@ private:
                                      ElementRegionManager & elementManager,
                                      R1Tensor & vecTipNorm,
                                      R1Tensor & fNode,
-                                     realT & GdivBeta,
+                                     realT & gdivBeta,
                                      bool threeNodesPinched,
-                                     bool calculatef_u );
+                                     bool calculatefU );
 
   /**
    * @brief
@@ -363,7 +363,7 @@ private:
    * @param elemLocations
    */
   void PerformFracture( const localIndex nodeID,
-                        real64 const time_np1,
+                        real64 const timeNp1,
                         NodeManager & nodeManager,
                         EdgeManager & edgeManager,
                         FaceManager & faceManager,

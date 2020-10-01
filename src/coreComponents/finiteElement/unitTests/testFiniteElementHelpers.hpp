@@ -14,11 +14,11 @@ inline real64 rando( real64 const min,
 
 
 template< int NUM_SUPPORT_POINTS >
-inline void randomShape( real64 (& N)[NUM_SUPPORT_POINTS] )
+inline void randomShape( real64 (& n)[NUM_SUPPORT_POINTS] )
 {
   for( int a=0; a<NUM_SUPPORT_POINTS; ++a )
   {
-    N[a] = rando( 0.0, 1.0 );
+    n[a] = rando( 0.0, 1.0 );
   }
 }
 

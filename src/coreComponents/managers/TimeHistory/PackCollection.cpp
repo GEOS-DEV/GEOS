@@ -80,7 +80,7 @@ void PackCollection::updateSetsIndices( ProblemManager & pm )
   }
 }
 
-void PackCollection::collect( Group * domain_group,
+void PackCollection::collect( Group * domainGroup,
                               real64 const GEOSX_UNUSED_PARAM( time_n ),
                               real64 const GEOSX_UNUSED_PARAM( dt ),
                               localIndex collectionIdx,
@@ -88,7 +88,7 @@ void PackCollection::collect( Group * domain_group,
 {
   GEOSX_MARK_FUNCTION;
   GEOSX_ERROR_IF( collectionIdx >= getCollectionCount( ), "Attempting to collection from an invalid collection index!" );
-  DomainPartition const & domain = dynamicCast< DomainPartition const & >( *domain_group );
+  DomainPartition const & domain = dynamicCast< DomainPartition const & >( *domainGroup );
   MeshLevel const & meshLevel = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
   Group const * target_object = meshLevel.GetGroupByPath( m_objectPath );
   WrapperBase const * target = target_object->getWrapperBase( m_fieldName );

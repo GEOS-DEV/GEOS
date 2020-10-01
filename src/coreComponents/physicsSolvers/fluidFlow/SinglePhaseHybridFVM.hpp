@@ -72,7 +72,7 @@ public:
   static string CatalogName()
   { return "SinglePhaseHybridFVM"; }
 
-  virtual void RegisterDataOnMesh( Group * const MeshBodies ) override;
+  virtual void RegisterDataOnMesh( Group * const meshBodies ) override;
 
   /**
    * @defgroup Solver Interface Functions
@@ -82,7 +82,7 @@ public:
   /**@{*/
 
   virtual void
-  ImplicitStepSetup( real64 const & time_n,
+  ImplicitStepSetup( real64 const & timeN,
                      real64 const & dt,
                      DomainPartition & domain ) override;
 
@@ -91,7 +91,7 @@ public:
              DofManager & dofManager ) const override;
 
   virtual void
-  ApplyBoundaryConditions( real64 const time_n,
+  ApplyBoundaryConditions( real64 const timeN,
                            real64 const dt,
                            DomainPartition & domain,
                            DofManager const & dofManager,
@@ -133,7 +133,7 @@ public:
    * @param rhs the system right-hand side vector
    */
   virtual void
-  AssembleFluxTerms( real64 const time_n,
+  AssembleFluxTerms( real64 const timeN,
                      real64 const dt,
                      DomainPartition const & domain,
                      DofManager const & dofManager,

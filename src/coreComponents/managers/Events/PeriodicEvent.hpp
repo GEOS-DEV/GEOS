@@ -96,7 +96,7 @@ public:
   /**
    * @copydoc ExecutableGroup::Cleanup()
    */
-  virtual void Cleanup( real64 const time_n,
+  virtual void Cleanup( real64 const timeN,
                         integer const cycleNumber,
                         integer const eventCounter,
                         real64 const eventProgress,

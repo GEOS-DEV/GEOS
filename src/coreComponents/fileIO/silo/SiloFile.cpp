@@ -3072,17 +3072,17 @@ void SiloFile::WriteMaterialDataField4d( string const & meshName,
   }
 }
 
-void SiloFile::WriteStressVarDefinition( string const & MatDir )
+void SiloFile::WriteStressVarDefinition( string const & matDir )
 {
   {
-    string const expressionName = "/" + MatDir + "/stress";
+    string const expressionName = "/" + matDir + "/stress";
     const char * expObjName = expressionName.c_str();
     const char * const names[1] = { expObjName };
     int const types[1] = { DB_VARTYPE_TENSOR };
-    string const definition = "{{<"+ MatDir + "/stress_11>,<"+ MatDir + "/stress_12>,<"+ MatDir + "/stress_13>},"
-                                                                                                  "{<"+ MatDir + "/stress_12>,<"+ MatDir + "/stress_22>,<"+ MatDir + "/stress_23>},"
-                                                                                                                                                                     "{<"+ MatDir + "/stress_13>,<"+
-                              MatDir + "/stress_23>,<"+ MatDir + "/stress_33>}}";
+    string const definition = "{{<"+ matDir + "/stress_11>,<"+ matDir + "/stress_12>,<"+ matDir + "/stress_13>},"
+                                                                                                  "{<"+ matDir + "/stress_12>,<"+ matDir + "/stress_22>,<"+ matDir + "/stress_23>},"
+                                                                                                                                                                     "{<"+ matDir + "/stress_13>,<"+
+                              matDir + "/stress_23>,<"+ matDir + "/stress_33>}}";
     const char * const defns[1] = { definition.c_str() };
     DBPutDefvars( m_dbBaseFilePtr,
                   expObjName,
@@ -3094,11 +3094,11 @@ void SiloFile::WriteStressVarDefinition( string const & MatDir )
   }
 
   {
-    string const expressionName = "/" + MatDir + "/meanStress";
+    string const expressionName = "/" + matDir + "/meanStress";
     const char * expObjName = expressionName.c_str();
     const char * const names[1] = { expObjName };
     int const types[1] = { DB_VARTYPE_SCALAR };
-    string const definition = "(<"+ MatDir + "/stress_11>+<"+ MatDir + "/stress_22>+<"+ MatDir + "/stress_33>)/3";
+    string const definition = "(<"+ matDir + "/stress_11>+<"+ matDir + "/stress_22>+<"+ matDir + "/stress_33>)/3";
     const char * const defns[1] = { definition.c_str() };
     DBPutDefvars( m_dbBaseFilePtr,
                   expObjName,
@@ -3110,11 +3110,11 @@ void SiloFile::WriteStressVarDefinition( string const & MatDir )
   }
 
   {
-    string const expressionName = "/" + MatDir + "/principalStress";
+    string const expressionName = "/" + matDir + "/principalStress";
     const char * expObjName = expressionName.c_str();
     const char * const names[1] = { expObjName };
     int const types[1] = { DB_VARTYPE_VECTOR };
-    string const definition = "eigenvalue(<"+MatDir+"/stress>)";
+    string const definition = "eigenvalue(<"+matDir+"/stress>)";
     const char * const defns[1] = { definition.c_str() };
     DBPutDefvars( m_dbBaseFilePtr,
                   expObjName,
@@ -3126,11 +3126,11 @@ void SiloFile::WriteStressVarDefinition( string const & MatDir )
   }
 
   {
-    string const expressionName = "/" + MatDir + "/principalStressDirections";
+    string const expressionName = "/" + matDir + "/principalStressDirections";
     const char * expObjName = expressionName.c_str();
     const char * const names[1] = { expObjName };
     int const types[1] = { DB_VARTYPE_TENSOR };
-    string const definition = "eigenvector(<"+MatDir+"/stress>)";
+    string const definition = "eigenvector(<"+matDir+"/stress>)";
     const char * const defns[1] = { definition.c_str() };
     DBPutDefvars( m_dbBaseFilePtr,
                   expObjName,
@@ -3143,11 +3143,11 @@ void SiloFile::WriteStressVarDefinition( string const & MatDir )
 
   for( int i=0; i<3; ++i )
   {
-    string const expressionName = "/" + MatDir + "/principalStressVector" + std::to_string( i );
+    string const expressionName = "/" + matDir + "/principalStressVector" + std::to_string( i );
     const char * expObjName = expressionName.c_str();
     const char * const names[1] = { expObjName };
     int const types[1] = { DB_VARTYPE_VECTOR };
-    string const definition = "transpose(<"+MatDir+"/principalStressDirections>)[" + std::to_string( i ) + "] * <"+ MatDir + "/principalStress>["+
+    string const definition = "transpose(<"+matDir+"/principalStressDirections>)[" + std::to_string( i ) + "] * <"+ matDir + "/principalStress>["+
                               std::to_string( i ) + "]";
     const char * const defns[1] = { definition.c_str() };
     DBPutDefvars( m_dbBaseFilePtr,

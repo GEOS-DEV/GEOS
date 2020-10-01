@@ -153,8 +153,8 @@ public:
 
   static int Cart_coords( MPI_Comm comm, int rank, int maxdims, int coords[] );
 
-  static int Cart_create( MPI_Comm comm_old, int ndims, const int dims[], const int periods[],
-                          int reorder, MPI_Comm * comm_cart );
+  static int Cart_create( MPI_Comm commOld, int ndims, const int dims[], const int periods[],
+                          int reorder, MPI_Comm * commCart );
 
   static int Cart_rank( MPI_Comm comm, const int coords[] );
 
@@ -190,11 +190,11 @@ public:
 
   static int Wait( MPI_Request * request, MPI_Status * status );
 
-  static int Waitany( int count, MPI_Request array_of_requests[], int * indx, MPI_Status * status );
+  static int Waitany( int count, MPI_Request arrayOfRequests[], int * indx, MPI_Status * status );
 
-  static int Waitsome( int count, MPI_Request array_of_requests[], int * outcount, int array_of_indices[], MPI_Status array_of_statuses[] );
+  static int Waitsome( int count, MPI_Request arrayOfRequests[], int * outcount, int arrayOfIndices[], MPI_Status arrayOfStatuses[] );
 
-  static int Waitall( int count, MPI_Request array_of_requests[], MPI_Status array_of_statuses[] );
+  static int Waitall( int count, MPI_Request arrayOfRequests[], MPI_Status arrayOfStatuses[] );
 
   static double Wtime( void );
 
@@ -208,7 +208,7 @@ public:
    *              which has completed.
    * @return MPI_SUCCESS or an MPI_ERROR returned by internal calls to MPI_WaitAny.
    */
-  static int ActiveWaitAny( const int count, MPI_Request array_of_requests[], std::function< void ( int ) > func );
+  static int ActiveWaitAny( const int count, MPI_Request arrayOfRequests[], std::function< void ( int ) > func );
 
   /**
    * Wait on MPI_Requests to complete on or more at a time and trigger a callback to
@@ -219,7 +219,7 @@ public:
    *              which has completed.
    * @return MPI_SUCCESS or an MPI_ERROR returned by internal calls to MPI_WaitSome.
    */
-  static int ActiveWaitSome( const int count, MPI_Request array_of_requests[], std::function< void ( int ) > func );
+  static int ActiveWaitSome( const int count, MPI_Request arrayOfRequests[], std::function< void ( int ) > func );
 
   /**
    * Active non-blocking phased communication with multiple participants,

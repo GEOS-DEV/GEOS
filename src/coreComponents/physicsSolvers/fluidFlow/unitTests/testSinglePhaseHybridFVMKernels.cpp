@@ -35,7 +35,7 @@ void updateDensity( real64 const & refPres,
                     real64 const & elemPres,
                     real64 const & dElemPres,
                     real64 & elemDens,
-                    real64 & dElemDens_dp )
+                    real64 & dElemDensDp )
 {
   // we assume (very) compressible flow to catch wrong derivatives
   real64 const compressibility = 1e-3;
@@ -43,25 +43,25 @@ void updateDensity( real64 const & refPres,
 
   // hard-coded relationship between pressure and density
   elemDens = refDens * exp( compressibility * ( elemPres + dElemPres - refPres ) );
-  dElemDens_dp = compressibility * elemDens;
+  dElemDensDp = compressibility * elemDens;
 }
 
 void updateUpwindedMobilities( globalIndex const elemDofNumber,
                                real64 const & elemDens,
-                               real64 const & dElemDens_dp,
+                               real64 const & dElemDensDp,
                                arraySlice1d< real64 > const & upwMobility,
-                               arraySlice1d< real64 > const & dUpwMobility_dp,
+                               arraySlice1d< real64 > const & dUpwMobilityDp,
                                arraySlice1d< globalIndex > const & upwDofNumber )
 {
   // we assume that viscosity is independent of pressure
   real64 const elemVisc = 0.001;
   real64 elemMobility = elemDens / elemVisc;
-  real64 dElemMobility_dp = dElemDens_dp / elemVisc;
+  real64 dElemMobility_dp = dElemDensDp / elemVisc;
 
   for( localIndex ifaceLoc = 0; ifaceLoc < NF; ++ifaceLoc )
   {
     upwMobility( ifaceLoc ) = elemMobility;
-    dUpwMobility_dp( ifaceLoc ) = dElemMobility_dp;
+    dUpwMobilityDp( ifaceLoc ) = dElemMobility_dp;
     upwDofNumber( ifaceLoc ) = elemDofNumber;
   }
 }
@@ -78,7 +78,7 @@ void setupProblemForTetra( array1d< localIndex > & elemToFaces,
                            real64 & dElemPres,
                            real64 & elemGravCoef,
                            real64 & elemDens,
-                           real64 & dElemDens_dp,
+                           real64 & dElemDensDp,
                            arraySlice2d< real64 > const & transMatrix )
 {
   facePres.resize( NF );
@@ -104,7 +104,7 @@ void setupProblemForTetra( array1d< localIndex > & elemToFaces,
   elemPres  = 1.2e5;
   refPres   = elemPres;
   dElemPres = 0;
-  updateDensity( refPres, elemPres, dElemPres, elemDens, dElemDens_dp );
+  updateDensity( refPres, elemPres, dElemPres, elemDens, dElemDensDp );
 
   // the transmissibility matrix comes from the HybridFVMInnerProduct unit tests
   transMatrix( 0, 0 ) =  5.25e-12;

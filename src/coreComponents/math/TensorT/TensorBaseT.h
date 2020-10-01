@@ -201,28 +201,28 @@ public:
 
   /// function to add the product of a scalar and tensor
   GEOSX_HOST_DEVICE
-  inline void plus_cA( const realT & c, const TensorBaseT< T_length > & A )
+  inline void plus_cA( const realT & c, const TensorBaseT< T_length > & a )
   {
     for( int i = 0; i < T_length; ++i )
-      t_data[i] = t_data[i] + c * A.t_data[i];
+      t_data[i] = t_data[i] + c * a.t_data[i];
 
   }
 
   /// function to take the product of a scalar and tensor
   GEOSX_HOST_DEVICE
-  inline void cA( const realT & c, const TensorBaseT< T_length > & A )
+  inline void cA( const realT & c, const TensorBaseT< T_length > & a )
   {
     for( int i = 0; i < T_length; ++i )
-      t_data[i] = c * A.t_data[i];
+      t_data[i] = c * a.t_data[i];
 
   }
 
   /// function to take the quotient of a tensor by a scalar
   GEOSX_HOST_DEVICE
-  inline void Adivc( const realT & c, const TensorBaseT< T_length > & A )
+  inline void Adivc( const realT & c, const TensorBaseT< T_length > & a )
   {
     for( int i = 0; i < T_length; ++i )
-      t_data[i] = A.t_data[i] / c;
+      t_data[i] = a.t_data[i] / c;
 
   }
 
@@ -380,12 +380,12 @@ public:
 
   friend inline
   GEOSX_HOST_DEVICE
-  realT Dot( const TensorBaseT< T_length > & A, const TensorBaseT< T_length > & B )
+  realT Dot( const TensorBaseT< T_length > & a, const TensorBaseT< T_length > & b )
   {
     realT rval = 0;
     for( int i=0; i<T_length; ++i )
     {
-      rval += A.t_data[i] * B.t_data[i];
+      rval += a.t_data[i] * b.t_data[i];
     }
     return rval;
   }

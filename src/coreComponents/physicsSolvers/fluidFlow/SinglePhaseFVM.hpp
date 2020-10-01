@@ -165,7 +165,7 @@ public:
                bool const setSparsity = true ) override;
 
   virtual void
-  ApplyBoundaryConditions( real64 const time_n,
+  ApplyBoundaryConditions( real64 const timeN,
                            real64 const dt,
                            DomainPartition & domain,
                            DofManager const & dofManager,
@@ -193,7 +193,7 @@ public:
    * @param localRhs the system right-hand side vector
    */
   virtual void
-  AssembleFluxTerms( real64 const time_n,
+  AssembleFluxTerms( real64 const timeN,
                      real64 const dt,
                      DomainPartition const & domain,
                      DofManager const & dofManager,
@@ -231,7 +231,7 @@ private:
    * @param matrix the system matrix
    * @param rhs the system right-hand side vector
    */
-  void ApplyFaceDirichletBC( real64 const time_n,
+  void ApplyFaceDirichletBC( real64 const timeN,
                              real64 const dt,
                              DofManager const & faceSet,
                              DomainPartition & domain,

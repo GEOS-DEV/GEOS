@@ -68,9 +68,9 @@ PoroelasticSolver::PoroelasticSolver( const std::string & name,
   m_linearSolverParameters.get().dofsPerNode = 3;
 }
 
-void PoroelasticSolver::RegisterDataOnMesh( dataRepository::Group * const MeshBodies )
+void PoroelasticSolver::RegisterDataOnMesh( dataRepository::Group * const meshBodies )
 {
-  for( auto & mesh : MeshBodies->GetSubGroups() )
+  for( auto & mesh : meshBodies->GetSubGroups() )
   {
     ElementRegionManager * const elemManager = mesh.second->group_cast< MeshBody * >()->getMeshLevel( 0 )->getElemManager();
 
@@ -117,12 +117,12 @@ void PoroelasticSolver::SetupSystem( DomainPartition & domain,
   }
 }
 
-void PoroelasticSolver::ImplicitStepSetup( real64 const & time_n,
+void PoroelasticSolver::ImplicitStepSetup( real64 const & timeN,
                                            real64 const & dt,
                                            DomainPartition & domain )
 {
-  m_flowSolver->ImplicitStepSetup( time_n, dt, domain );
-  m_solidSolver->ImplicitStepSetup( time_n, dt, domain );
+  m_flowSolver->ImplicitStepSetup( timeN, dt, domain );
+  m_solidSolver->ImplicitStepSetup( timeN, dt, domain );
 
   if( m_couplingTypeOption == CouplingTypeOption::SIM_FixedStress )
   {
@@ -143,12 +143,12 @@ void PoroelasticSolver::ImplicitStepSetup( real64 const & time_n,
   }
 }
 
-void PoroelasticSolver::ImplicitStepComplete( real64 const & time_n,
+void PoroelasticSolver::ImplicitStepComplete( real64 const & timeN,
                                               real64 const & dt,
                                               DomainPartition & domain )
 {
-  m_solidSolver->ImplicitStepComplete( time_n, dt, domain );
-  m_flowSolver->ImplicitStepComplete( time_n, dt, domain );
+  m_solidSolver->ImplicitStepComplete( timeN, dt, domain );
+  m_flowSolver->ImplicitStepComplete( timeN, dt, domain );
 }
 
 void PoroelasticSolver::PostProcessInput()
@@ -208,7 +208,7 @@ void PoroelasticSolver::ResetStateToBeginningOfStep( DomainPartition & domain )
   } );
 }
 
-real64 PoroelasticSolver::SolverStep( real64 const & time_n,
+real64 PoroelasticSolver::SolverStep( real64 const & timeN,
                                       real64 const & dt,
                                       int const cycleNumber,
                                       DomainPartition & domain )
@@ -216,7 +216,7 @@ real64 PoroelasticSolver::SolverStep( real64 const & time_n,
   real64 dt_return = dt;
   if( m_couplingTypeOption == CouplingTypeOption::SIM_FixedStress )
   {
-    dt_return = SplitOperatorStep( time_n, dt, cycleNumber, domain );
+    dt_return = SplitOperatorStep( timeN, dt, cycleNumber, domain );
   }
   else if( m_couplingTypeOption == CouplingTypeOption::FIM )
   {
@@ -226,11 +226,11 @@ real64 PoroelasticSolver::SolverStep( real64 const & time_n,
                  m_localRhs,
                  m_localSolution );
 
-    ImplicitStepSetup( time_n, dt, domain );
+    ImplicitStepSetup( timeN, dt, domain );
 
-    dt_return = NonlinearImplicitStep( time_n, dt, cycleNumber, domain );
+    dt_return = NonlinearImplicitStep( timeN, dt, cycleNumber, domain );
 
-    ImplicitStepComplete( time_n, dt_return, domain );
+    ImplicitStepComplete( timeN, dt_return, domain );
   }
   return dt_return;
 }
@@ -319,7 +319,7 @@ void PoroelasticSolver::UpdateDeformationForCoupling( DomainPartition & domain )
   } );
 }
 
-void PoroelasticSolver::AssembleSystem( real64 const time_n,
+void PoroelasticSolver::AssembleSystem( real64 const timeN,
                                         real64 const dt,
                                         DomainPartition & domain,
                                         DofManager const & dofManager,
@@ -341,7 +341,7 @@ void PoroelasticSolver::AssembleSystem( real64 const time_n,
                                                                                                localRhs );
 
   // assemble J_FF
-  m_flowSolver->AssembleSystem( time_n, dt,
+  m_flowSolver->AssembleSystem( timeN, dt,
                                 domain,
                                 dofManager,
                                 localMatrix,
@@ -483,20 +483,20 @@ void PoroelasticSolver::AssembleCouplingTerms( DomainPartition const & domain,
   } );
 }
 
-void PoroelasticSolver::ApplyBoundaryConditions( real64 const time_n,
+void PoroelasticSolver::ApplyBoundaryConditions( real64 const timeN,
                                                  real64 const dt,
                                                  DomainPartition & domain,
                                                  DofManager const & dofManager,
                                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                  arrayView1d< real64 > const & localRhs )
 {
-  m_solidSolver->ApplyBoundaryConditions( time_n, dt,
+  m_solidSolver->ApplyBoundaryConditions( timeN, dt,
                                           domain,
                                           dofManager,
                                           localMatrix,
                                           localRhs );
 
-  m_flowSolver->ApplyBoundaryConditions( time_n, dt,
+  m_flowSolver->ApplyBoundaryConditions( timeN, dt,
                                          domain,
                                          dofManager,
                                          localMatrix,
@@ -570,7 +570,7 @@ void PoroelasticSolver::ApplySystemSolution( DofManager const & dofManager,
   m_flowSolver->ApplySystemSolution( dofManager, localSolution, -scalingFactor, domain );
 }
 
-real64 PoroelasticSolver::SplitOperatorStep( real64 const & time_n,
+real64 PoroelasticSolver::SplitOperatorStep( real64 const & timeN,
                                              real64 const & dt,
                                              integer const cycleNumber,
                                              DomainPartition & domain )
@@ -590,7 +590,7 @@ real64 PoroelasticSolver::SplitOperatorStep( real64 const & time_n,
                               m_solidSolver->getLocalRhs(),
                               m_solidSolver->getLocalSolution() );
 
-  ImplicitStepSetup( time_n, dt, domain );
+  ImplicitStepSetup( timeN, dt, domain );
 
   int iter = 0;
   while( iter < m_nonlinearSolverParameters.m_maxIterNewton )
@@ -603,7 +603,7 @@ real64 PoroelasticSolver::SplitOperatorStep( real64 const & time_n,
 
     GEOSX_LOG_LEVEL_RANK_0( 1, "\tIteration: " << iter+1  << ", FlowSolver: " );
 
-    dtReturnTemporary = m_flowSolver->NonlinearImplicitStep( time_n, dtReturn, cycleNumber, domain );
+    dtReturnTemporary = m_flowSolver->NonlinearImplicitStep( timeN, dtReturn, cycleNumber, domain );
 
     if( dtReturnTemporary < dtReturn )
     {
@@ -621,7 +621,7 @@ real64 PoroelasticSolver::SplitOperatorStep( real64 const & time_n,
     GEOSX_LOG_LEVEL_RANK_0( 1, "\tIteration: " << iter+1  << ", MechanicsSolver: " );
 
     m_solidSolver->ResetStressToBeginningOfStep( domain );
-    dtReturnTemporary = m_solidSolver->NonlinearImplicitStep( time_n, dtReturn, cycleNumber, domain );
+    dtReturnTemporary = m_solidSolver->NonlinearImplicitStep( timeN, dtReturn, cycleNumber, domain );
 
     if( dtReturnTemporary < dtReturn )
     {
@@ -636,7 +636,7 @@ real64 PoroelasticSolver::SplitOperatorStep( real64 const & time_n,
     ++iter;
   }
 
-  ImplicitStepComplete( time_n, dt, domain );
+  ImplicitStepComplete( timeN, dt, domain );
 
   return dtReturn;
 }

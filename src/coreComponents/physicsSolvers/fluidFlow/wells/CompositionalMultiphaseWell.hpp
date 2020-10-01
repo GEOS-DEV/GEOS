@@ -179,7 +179,7 @@ public:
    * @param matrix the system matrix
    * @param rhs the system right-hand side vector
    */
-  virtual void AssembleFluxTerms( real64 const time_n,
+  virtual void AssembleFluxTerms( real64 const timeN,
                                   real64 const dt,
                                   DomainPartition const & domain,
                                   DofManager const & dofManager,
@@ -195,7 +195,7 @@ public:
    * @param matrix the system matrix
    * @param rhs the system right-hand side vector
    */
-  virtual void AssembleVolumeBalanceTerms( real64 const time_n,
+  virtual void AssembleVolumeBalanceTerms( real64 const timeN,
                                            real64 const dt,
                                            DomainPartition const & domain,
                                            DofManager const & dofManager,
@@ -349,29 +349,29 @@ private:
   /// views into other reservoir variable fields
 
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_resPhaseVolFrac;
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_dResPhaseVolFrac_dPres;
-  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > m_dResPhaseVolFrac_dCompDens;
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_dResPhaseVolFracDPres;
+  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > m_dResPhaseVolFracDCompDens;
 
-  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > m_dResCompFrac_dCompDens;
+  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > m_dResCompFracDCompDens;
 
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_resPhaseMob;
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_dResPhaseMob_dPres;
-  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > m_dResPhaseMob_dCompDens;
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_dResPhaseMobDPres;
+  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > m_dResPhaseMobDCompDens;
 
   /// views into reservoir material fields
 
   ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > m_resPhaseDens;
 
   ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > m_resPhaseVisc;
-  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > m_dResPhaseVisc_dPres;
-  ElementRegionManager::ElementViewAccessor< arrayView4d< real64 const > > m_dResPhaseVisc_dComp;
+  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > m_dResPhaseViscDPres;
+  ElementRegionManager::ElementViewAccessor< arrayView4d< real64 const > > m_dResPhaseViscDComp;
 
   ElementRegionManager::ElementViewAccessor< arrayView4d< real64 const > > m_resPhaseCompFrac;
-  ElementRegionManager::ElementViewAccessor< arrayView4d< real64 const > > m_dResPhaseCompFrac_dPres;
-  ElementRegionManager::ElementViewAccessor< arrayView5d< real64 const > > m_dResPhaseCompFrac_dComp;
+  ElementRegionManager::ElementViewAccessor< arrayView4d< real64 const > > m_dResPhaseCompFracDPres;
+  ElementRegionManager::ElementViewAccessor< arrayView5d< real64 const > > m_dResPhaseCompFracDComp;
 
   ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > m_resPhaseRelPerm;
-  ElementRegionManager::ElementViewAccessor< arrayView4d< real64 const > > m_dResPhaseRelPerm_dPhaseVolFrac;
+  ElementRegionManager::ElementViewAccessor< arrayView4d< real64 const > > m_dResPhaseRelPermDPhaseVolFrac;
 
 };
 

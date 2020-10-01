@@ -75,7 +75,7 @@ SiloOutput::~SiloOutput()
 
 
 
-void SiloOutput::Execute( real64 const time_n,
+void SiloOutput::Execute( real64 const timeN,
                           real64 const dt,
                           integer const cycleNumber,
                           integer const eventCounter,
@@ -101,7 +101,7 @@ void SiloOutput::Execute( real64 const time_n,
   silo.setPlotFileRoot( m_plotFileRoot );
   silo.Initialize( numFiles );
   silo.WaitForBatonWrite( rank, cycleNumber, eventCounter, false );
-  silo.WriteDomainPartition( *domainPartition, cycleNumber, time_n + dt * eventProgress, 0 );
+  silo.WriteDomainPartition( *domainPartition, cycleNumber, timeN + dt * eventProgress, 0 );
   silo.HandOffBaton();
   silo.ClearEmptiesFromMultiObjects( cycleNumber );
   silo.Finish();

@@ -41,7 +41,7 @@ PoreVolumeCompressibleSolid::PoreVolumeCompressibleSolid( std::string const & na
   registerWrapper( viewKeyStruct::poreVolumeMultiplierString, &m_poreVolumeMultiplier )->
     setDefaultValue( 1.0 );
 
-  registerWrapper( viewKeyStruct::dPVMult_dPresString, &m_dPVMult_dPressure );
+  registerWrapper( viewKeyStruct::dPVMult_dPresString, &m_dPVMultDPressure );
 }
 
 PoreVolumeCompressibleSolid::~PoreVolumeCompressibleSolid() = default;
@@ -68,7 +68,7 @@ void PoreVolumeCompressibleSolid::allocateConstitutiveData( dataRepository::Grou
   this->resize( parent->size() );
 
   m_poreVolumeMultiplier.resize( parent->size(), numConstitutivePointsPerParentIndex );
-  m_dPVMult_dPressure.resize( parent->size(), numConstitutivePointsPerParentIndex );
+  m_dPVMultDPressure.resize( parent->size(), numConstitutivePointsPerParentIndex );
   m_poreVolumeMultiplier.setValues< serialPolicy >( 1.0 );
 }
 
@@ -86,7 +86,7 @@ void PoreVolumeCompressibleSolid::StateUpdatePointPressure( real64 const & pres,
                                                             localIndex const k,
                                                             localIndex const q )
 {
-  m_poreVolumeRelation.Compute( pres, m_poreVolumeMultiplier[k][q], m_dPVMult_dPressure[k][q] );
+  m_poreVolumeRelation.Compute( pres, m_poreVolumeMultiplier[k][q], m_dPVMultDPressure[k][q] );
 }
 
 void PoreVolumeCompressibleSolid::StateUpdateBatchPressure( arrayView1d< real64 const > const & pres,
@@ -101,7 +101,7 @@ void PoreVolumeCompressibleSolid::StateUpdateBatchPressure( arrayView1d< real64 
   ExponentialRelation< real64, ExponentApproximationType::Linear > const relation = m_poreVolumeRelation;
 
   arrayView2d< real64 > const & pvmult = m_poreVolumeMultiplier;
-  arrayView2d< real64 > const & dPVMult_dPres = m_dPVMult_dPressure;
+  arrayView2d< real64 > const & dPVMult_dPres = m_dPVMultDPressure;
 
   forAll< parallelDevicePolicy<> >( numElems, [=] GEOSX_HOST_DEVICE ( localIndex const k )
   {

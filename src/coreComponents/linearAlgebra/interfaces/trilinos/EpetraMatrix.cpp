@@ -50,8 +50,8 @@ EpetraMatrix::EpetraMatrix( EpetraMatrix const & src )
 {
   GEOSX_LAI_ASSERT( src.ready() );
   m_matrix = std::make_unique< Epetra_FECrsMatrix >( *src.m_matrix );
-  m_src_map = std::make_unique< Epetra_Map >( m_matrix->DomainMap() );
-  m_dst_map = std::make_unique< Epetra_Map >( m_matrix->RangeMap() );
+  m_srcMap = std::make_unique< Epetra_Map >( m_matrix->DomainMap() );
+  m_dstMap = std::make_unique< Epetra_Map >( m_matrix->RangeMap() );
   m_assembled = true;
 }
 
@@ -69,14 +69,14 @@ void EpetraMatrix::createWithGlobalSize( globalIndex const globalRows,
 
   reset();
 
-  m_dst_map = std::make_unique< Epetra_Map >( globalRows,
-                                              0,
-                                              Epetra_MpiComm( MPI_PARAM( comm ) ) );
-  m_src_map = std::make_unique< Epetra_Map >( globalCols,
-                                              0,
-                                              Epetra_MpiComm( MPI_PARAM( comm ) ) );
+  m_dstMap = std::make_unique< Epetra_Map >( globalRows,
+                                             0,
+                                             Epetra_MpiComm( MPI_PARAM( comm ) ) );
+  m_srcMap = std::make_unique< Epetra_Map >( globalCols,
+                                             0,
+                                             Epetra_MpiComm( MPI_PARAM( comm ) ) );
   m_matrix = std::make_unique< Epetra_FECrsMatrix >( Copy,
-                                                     *m_dst_map,
+                                                     *m_dstMap,
                                                      LvArray::integerConversion< int >( maxEntriesPerRow ),
                                                      false );
 }
@@ -93,16 +93,16 @@ void EpetraMatrix::createWithLocalSize( localIndex const localRows,
 
   reset();
 
-  m_dst_map = std::make_unique< Epetra_Map >( LvArray::integerConversion< globalIndex >( -1 ),
-                                              LvArray::integerConversion< int >( localRows ),
-                                              0,
-                                              Epetra_MpiComm( MPI_PARAM( comm ) ) );
-  m_src_map = std::make_unique< Epetra_Map >( LvArray::integerConversion< globalIndex >( -1 ),
-                                              LvArray::integerConversion< int >( localCols ),
-                                              0,
-                                              Epetra_MpiComm( MPI_PARAM( comm ) ) );
+  m_dstMap = std::make_unique< Epetra_Map >( LvArray::integerConversion< globalIndex >( -1 ),
+                                             LvArray::integerConversion< int >( localRows ),
+                                             0,
+                                             Epetra_MpiComm( MPI_PARAM( comm ) ) );
+  m_srcMap = std::make_unique< Epetra_Map >( LvArray::integerConversion< globalIndex >( -1 ),
+                                             LvArray::integerConversion< int >( localCols ),
+                                             0,
+                                             Epetra_MpiComm( MPI_PARAM( comm ) ) );
   m_matrix = std::make_unique< Epetra_FECrsMatrix >( Copy,
-                                                     *m_dst_map,
+                                                     *m_dstMap,
                                                      LvArray::integerConversion< int >( maxEntriesPerRow ),
                                                      false );
 }
@@ -116,8 +116,8 @@ void EpetraMatrix::reset()
 {
   MatrixBase::reset();
   m_matrix.reset();
-  m_dst_map.reset();
-  m_src_map.reset();
+  m_dstMap.reset();
+  m_srcMap.reset();
 }
 
 void EpetraMatrix::set( real64 const value )
@@ -140,7 +140,7 @@ void EpetraMatrix::open()
 void EpetraMatrix::close()
 {
   GEOSX_LAI_ASSERT( !closed() );
-  GEOSX_LAI_CHECK_ERROR( m_matrix->GlobalAssemble( *m_src_map, *m_dst_map ) );
+  GEOSX_LAI_CHECK_ERROR( m_matrix->GlobalAssemble( *m_srcMap, *m_dstMap ) );
   m_assembled = true;
   m_closed = true;
 }
@@ -410,8 +410,8 @@ void EpetraMatrix::create( Epetra_CrsMatrix const & src )
 
   m_matrix = std::make_unique< Epetra_FECrsMatrix >( Copy, src.Graph() );
   GEOSX_LAI_CHECK_ERROR( m_matrix->FillComplete( src.DomainMap(), src.RangeMap(), true ) );
-  m_src_map = std::make_unique< Epetra_Map >( m_matrix->DomainMap() );
-  m_dst_map = std::make_unique< Epetra_Map >( m_matrix->RangeMap() );
+  m_srcMap = std::make_unique< Epetra_Map >( m_matrix->DomainMap() );
+  m_dstMap = std::make_unique< Epetra_Map >( m_matrix->RangeMap() );
 
   // We have to copy the data using the "expert" interface,
   // since there is no direct way to convert CrsMatrix to FECrsMatrix.
@@ -437,8 +437,8 @@ void EpetraMatrix::create( Epetra_CrsMatrix const & src )
   m_assembled = true;
 }
 
-void EpetraMatrix::multiplyRAP( EpetraMatrix const & R,
-                                EpetraMatrix const & P,
+void EpetraMatrix::multiplyRAP( EpetraMatrix const & r,
+                                EpetraMatrix const & p,
                                 EpetraMatrix & dst ) const
 {
   // TODO: ML_Epetra_RAP does not work with long long indices, find a workaround?
@@ -455,11 +455,11 @@ void EpetraMatrix::multiplyRAP( EpetraMatrix const & R,
   dst.create( *result );
   delete result;
 #else
-  MatrixBase::multiplyRAP( R, P, dst );
+  MatrixBase::multiplyRAP( r, p, dst );
 #endif
 }
 
-void EpetraMatrix::multiplyPtAP( EpetraMatrix const & P,
+void EpetraMatrix::multiplyPtAP( EpetraMatrix const & p,
                                  EpetraMatrix & dst ) const
 {
   // TODO: ML_Epetra_PtAP does not work with long long indices, find a workaround?
@@ -475,7 +475,7 @@ void EpetraMatrix::multiplyPtAP( EpetraMatrix const & P,
   dst.create( *result );
   delete result;
 #else
-  MatrixBase::multiplyPtAP( P, dst );
+  MatrixBase::multiplyPtAP( p, dst );
 #endif
 }
 
@@ -528,7 +528,7 @@ void EpetraMatrix::transpose( EpetraMatrix & dst ) const
 
   // XXX: Transposer always creates a CrsMatrix, but doesn't expose this fact in the API:
   // https://docs.trilinos.org/dev/packages/epetraext/doc/html/EpetraExt__Transpose__RowMatrix_8cpp_source.html#l00248
-  EpetraExt::RowMatrix_Transpose transposer( m_src_map.get() );
+  EpetraExt::RowMatrix_Transpose transposer( m_srcMap.get() );
   Epetra_CrsMatrix & trans = dynamic_cast< Epetra_CrsMatrix & >( transposer( *m_matrix ) );
   dst.create( trans );
 }
@@ -585,7 +585,7 @@ void EpetraMatrix::addDiagonal( EpetraVector const & src )
   GEOSX_LAI_ASSERT( numLocalRows() == src.localSize() );
 
   // XXX: It's not clear if this is better or worse than element-wise add()
-  Epetra_Vector diag( *m_dst_map, false );
+  Epetra_Vector diag( *m_dstMap, false );
   GEOSX_LAI_CHECK_ERROR( m_matrix->ExtractDiagonalCopy( diag ) );
   GEOSX_LAI_CHECK_ERROR( diag.Update( 1.0, src.unwrapped(), 1.0 ) );
   GEOSX_LAI_CHECK_ERROR( m_matrix->ReplaceDiagonalValues( diag ) );
@@ -702,37 +702,37 @@ Epetra_FECrsMatrix & EpetraMatrix::unwrapped()
 globalIndex EpetraMatrix::numGlobalRows() const
 {
   GEOSX_LAI_ASSERT( created() );
-  return m_dst_map->NumGlobalElements64();
+  return m_dstMap->NumGlobalElements64();
 }
 
 globalIndex EpetraMatrix::numGlobalCols() const
 {
   GEOSX_LAI_ASSERT( created() );
-  return m_src_map->NumGlobalElements64();
+  return m_srcMap->NumGlobalElements64();
 }
 
 globalIndex EpetraMatrix::ilower() const
 {
   GEOSX_LAI_ASSERT( created() );
-  return m_dst_map->MinMyGID64();
+  return m_dstMap->MinMyGID64();
 }
 
 globalIndex EpetraMatrix::iupper() const
 {
   GEOSX_LAI_ASSERT( created() );
-  return m_dst_map->MaxMyGID64() + 1;
+  return m_dstMap->MaxMyGID64() + 1;
 }
 
 globalIndex EpetraMatrix::jlower() const
 {
   GEOSX_LAI_ASSERT( created() );
-  return m_src_map->MinMyGID64();
+  return m_srcMap->MinMyGID64();
 }
 
 globalIndex EpetraMatrix::jupper() const
 {
   GEOSX_LAI_ASSERT( created() );
-  return m_src_map->MaxMyGID64() + 1;
+  return m_srcMap->MaxMyGID64() + 1;
 }
 
 localIndex EpetraMatrix::numLocalNonzeros() const
@@ -782,7 +782,7 @@ globalIndex EpetraMatrix::getGlobalRowID( localIndex const index ) const
 localIndex EpetraMatrix::numLocalCols() const
 {
   GEOSX_LAI_ASSERT( created() );
-  return m_src_map->NumMyElements();
+  return m_srcMap->NumMyElements();
 }
 
 localIndex EpetraMatrix::numLocalRows() const
@@ -835,25 +835,25 @@ void EpetraMatrix::write( string const & filename,
 }
 
 void EpetraMatrix::multiply( bool const transA,
-                             EpetraMatrix const & B,
+                             EpetraMatrix const & b,
                              bool const transB,
-                             EpetraMatrix & C ) const
+                             EpetraMatrix & c ) const
 {
   GEOSX_LAI_ASSERT( ready() );
-  GEOSX_LAI_ASSERT( B.ready() );
+  GEOSX_LAI_ASSERT( b.ready() );
 
-  C.createWithLocalSize( transA ? numLocalCols() : numLocalRows(),
-                         transB ? B.numLocalRows() : B.numLocalCols(),
+  c.createWithLocalSize( transA ? numLocalCols() : numLocalRows(),
+                         transB ? b.numLocalRows() : b.numLocalCols(),
                          1, // TODO: estimate entries per row?
                          getComm() );
 
   GEOSX_LAI_CHECK_ERROR( EpetraExt::MatrixMatrix::Multiply( unwrapped(),
                                                             transA,
-                                                            B.unwrapped(),
+                                                            b.unwrapped(),
                                                             transB,
-                                                            C.unwrapped(),
+                                                            c.unwrapped(),
                                                             true ) );
-  C.m_assembled = true;
+  c.m_assembled = true;
 }
 
 } // end geosx namespace

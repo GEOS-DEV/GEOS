@@ -58,11 +58,11 @@ protected:
   RelativePermeabilityBaseUpdate( arrayView1d< integer const > const & phaseTypes,
                                   arrayView1d< integer const > const & phaseOrder,
                                   arrayView3d< real64 > const & phaseRelPerm,
-                                  arrayView4d< real64 > const & dPhaseRelPerm_dPhaseVolFrac )
+                                  arrayView4d< real64 > const & dPhaseRelPermDPhaseVolFrac )
     : m_phaseTypes( phaseTypes ),
     m_phaseOrder( phaseOrder ),
     m_phaseRelPerm( phaseRelPerm ),
-    m_dPhaseRelPerm_dPhaseVolFrac( dPhaseRelPerm_dPhaseVolFrac )
+    m_dPhaseRelPerm_dPhaseVolFrac( dPhaseRelPermDPhaseVolFrac )
   {}
 
   /// Default copy constructor
@@ -88,7 +88,7 @@ private:
   GEOSX_HOST_DEVICE
   virtual void Compute( arraySlice1d< real64 const > const & phaseVolFraction,
                         arraySlice1d< real64 > const & phaseRelPerm,
-                        arraySlice2d< real64 > const & dPhaseRelPerm_dPhaseVolFrac ) const = 0;
+                        arraySlice2d< real64 > const & dPhaseRelPermDPhaseVolFrac ) const = 0;
 
   GEOSX_HOST_DEVICE
   virtual void Update( localIndex const k,

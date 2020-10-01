@@ -80,7 +80,7 @@ protected:
 
   /// @copydoc geosx::HistoryCollection::collect
   virtual void collect( Group * domain,
-                        real64 const time_n,
+                        real64 const timeN,
                         real64 const dt,
                         localIndex const collectionIdx,
                         buffer_unit_type * & buffer ) override;

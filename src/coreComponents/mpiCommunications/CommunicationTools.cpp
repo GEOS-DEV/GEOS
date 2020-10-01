@@ -70,16 +70,16 @@ int CommunicationTools::reserveCommID()
   return rval;
 }
 
-void CommunicationTools::releaseCommID( int & ID )
+void CommunicationTools::releaseCommID( int & id )
 {
   std::set< int > & commIDs = getFreeCommIDs();
 
-  if( commIDs.count( ID ) > 0 )
+  if( commIDs.count( id ) > 0 )
   {
     GEOSX_ERROR( "Attempting to release commID that is already free" );
   }
-  commIDs.insert( ID );
-  ID = -1;
+  commIDs.insert( id );
+  id = -1;
 }
 
 void CommunicationTools::AssignGlobalIndices( ObjectManagerBase & object,
@@ -768,7 +768,7 @@ void CommunicationTools::SynchronizePackSendRecvSizes( const std::map< string, s
                                                        MeshLevel * const mesh,
                                                        std::vector< NeighborCommunicator > & neighbors,
                                                        MPI_iCommData & icomm,
-                                                       bool on_device )
+                                                       bool onDevice )
 {
   GEOSX_MARK_FUNCTION;
   icomm.fieldNames.insert( fieldNames.begin(), fieldNames.end() );
@@ -777,7 +777,7 @@ void CommunicationTools::SynchronizePackSendRecvSizes( const std::map< string, s
   for( std::size_t neighborIndex=0; neighborIndex<neighbors.size(); ++neighborIndex )
   {
     NeighborCommunicator & neighbor = neighbors[neighborIndex];
-    int const bufferSize = neighbor.PackCommSizeForSync( fieldNames, *mesh, icomm.commID, on_device );
+    int const bufferSize = neighbor.PackCommSizeForSync( fieldNames, *mesh, icomm.commID, onDevice );
 
     neighbor.MPI_iSendReceiveBufferSizes( icomm.commID,
                                           icomm.mpiSizeSendBufferRequest[neighborIndex],
@@ -793,14 +793,14 @@ void CommunicationTools::SynchronizePackSendRecv( const std::map< string, string
                                                   MeshLevel * const mesh,
                                                   std::vector< NeighborCommunicator > & neighbors,
                                                   MPI_iCommData & icomm,
-                                                  bool on_device )
+                                                  bool onDevice )
 {
   GEOSX_MARK_FUNCTION;
 
   MPI_iCommData sizeComm;
   for( NeighborCommunicator & neighbor : neighbors )
   {
-    neighbor.PackCommBufferForSync( fieldNames, *mesh, icomm.commID, on_device );
+    neighbor.PackCommBufferForSync( fieldNames, *mesh, icomm.commID, onDevice );
   }
 
   for( std::size_t count=0; count<neighbors.size(); ++count )
@@ -825,7 +825,7 @@ void CommunicationTools::SynchronizePackSendRecv( const std::map< string, string
 void CommunicationTools::SynchronizeUnpack( MeshLevel * const mesh,
                                             std::vector< NeighborCommunicator > & neighbors,
                                             MPI_iCommData & icomm,
-                                            bool on_device )
+                                            bool onDevice )
 {
   GEOSX_MARK_FUNCTION;
 
@@ -839,7 +839,7 @@ void CommunicationTools::SynchronizeUnpack( MeshLevel * const mesh,
                          icomm.mpiRecvBufferStatus.data() );
 
     NeighborCommunicator & neighbor = neighbors[neighborIndex];
-    neighbor.UnpackBufferForSync( icomm.fieldNames, mesh, icomm.commID, on_device );
+    neighbor.UnpackBufferForSync( icomm.fieldNames, mesh, icomm.commID, onDevice );
   }
 
   MpiWrapper::Waitall( icomm.size,
@@ -855,12 +855,12 @@ void CommunicationTools::SynchronizeUnpack( MeshLevel * const mesh,
 void CommunicationTools::SynchronizeFields( const std::map< string, string_array > & fieldNames,
                                             MeshLevel * const mesh,
                                             std::vector< NeighborCommunicator > & neighbors,
-                                            bool on_device )
+                                            bool onDevice )
 {
   MPI_iCommData icomm;
-  SynchronizePackSendRecvSizes( fieldNames, mesh, neighbors, icomm, on_device );
-  SynchronizePackSendRecv( fieldNames, mesh, neighbors, icomm, on_device );
-  SynchronizeUnpack( mesh, neighbors, icomm, on_device );
+  SynchronizePackSendRecvSizes( fieldNames, mesh, neighbors, icomm, onDevice );
+  SynchronizePackSendRecv( fieldNames, mesh, neighbors, icomm, onDevice );
+  SynchronizeUnpack( mesh, neighbors, icomm, onDevice );
 }
 
 

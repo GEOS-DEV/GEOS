@@ -78,14 +78,14 @@ void checkDerivative( ArraySlice< real64 const, DIM > const & valueEps,
                       string const & name,
                       string const & var,
                       arrayView1d< string const > const & labels,
-                      Args ... label_lists )
+                      Args ... labelLists )
 {
   localIndex const size = labels.size( 0 );
 
   for( localIndex i = 0; i < size; ++i )
   {
     checkDerivative( valueEps[i], value[i], deriv[i], eps, relTol, absTol,
-                     name + "[" + labels[i] + "]", var, label_lists ... );
+                     name + "[" + labels[i] + "]", var, labelLists ... );
   }
 }
 
@@ -98,16 +98,16 @@ void checkDerivative( ArraySlice< real64 const, DIM > const & valueEps,
                       string const & name,
                       string const & var,
                       arrayView1d< string const > const & labels,
-                      Args ... label_lists )
-{ return checkDerivative( valueEps, value, deriv, eps, relTol, DEFAULT_ABS_TOL, name, var, labels, label_lists ... ); }
+                      Args ... labelLists )
+{ return checkDerivative( valueEps, value, deriv, eps, relTol, DEFAULT_ABS_TOL, name, var, labels, labelLists ... ); }
 
 // invert compositional derivative array layout to move innermost slice on the top
 // (this is needed so we can use checkDerivative() to check derivative w.r.t. for each compositional var)
 array1d< real64 > invertLayout( arraySlice1d< real64 const > const & input,
-                                localIndex N )
+                                localIndex n )
 {
-  array1d< real64 > output( N );
-  for( int i = 0; i < N; ++i )
+  array1d< real64 > output( n );
+  for( int i = 0; i < n; ++i )
   {
     output[i] = input[i];
   }
@@ -116,14 +116,14 @@ array1d< real64 > invertLayout( arraySlice1d< real64 const > const & input,
 }
 
 array2d< real64 > invertLayout( arraySlice2d< real64 const > const & input,
-                                localIndex N1,
-                                localIndex N2 )
+                                localIndex n1,
+                                localIndex n2 )
 {
-  array2d< real64 > output( N2, N1 );
+  array2d< real64 > output( n2, n1 );
 
-  for( localIndex i = 0; i < N1; ++i )
+  for( localIndex i = 0; i < n1; ++i )
   {
-    for( localIndex j = 0; j < N2; ++j )
+    for( localIndex j = 0; j < n2; ++j )
     {
       output( j, i ) = input( i, j );
     }
@@ -133,17 +133,17 @@ array2d< real64 > invertLayout( arraySlice2d< real64 const > const & input,
 }
 
 array3d< real64 > invertLayout( arraySlice3d< real64 const > const & input,
-                                localIndex N1,
-                                localIndex N2,
-                                localIndex N3 )
+                                localIndex n1,
+                                localIndex n2,
+                                localIndex n3 )
 {
-  array3d< real64 > output( N3, N1, N2 );
+  array3d< real64 > output( n3, n1, n2 );
 
-  for( localIndex i = 0; i < N1; ++i )
+  for( localIndex i = 0; i < n1; ++i )
   {
-    for( localIndex j = 0; j < N2; ++j )
+    for( localIndex j = 0; j < n2; ++j )
     {
-      for( localIndex k = 0; k < N3; ++k )
+      for( localIndex k = 0; k < n3; ++k )
       {
         output( k, i, j ) = input( i, j, k );
       }

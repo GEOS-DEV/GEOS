@@ -215,7 +215,7 @@ public:
     GEOSX_HOST_DEVICE
     GEOSX_FORCE_INLINE
     static void value( const real64 (& coords)[3],
-                       real64 (& N)[numSupportPoints] )
+                       real64 (& n)[numSupportPoints] )
     {
       for( int a=0; a<2; ++a )
       {
@@ -224,7 +224,7 @@ public:
           for( int c=0; c<2; ++c )
           {
             const int lindex = LagrangeBasis1::TensorProduct3D::linearIndex( a, b, c );
-            N[ lindex ] = LagrangeBasis1::value( a, coords[0] ) *
+            n[ lindex ] = LagrangeBasis1::value( a, coords[0] ) *
                           LagrangeBasis1::value( b, coords[1] ) *
                           LagrangeBasis1::value( c, coords[2] );
           }

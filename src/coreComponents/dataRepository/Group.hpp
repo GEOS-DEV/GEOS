@@ -959,7 +959,7 @@ public:
    */
   virtual localIndex PackSize( string_array const & wrapperNames,
                                integer const recursive,
-                               bool on_device = false ) const;
+                               bool onDevice = false ) const;
 
   /**
    * @brief Get the size required to pack a list of indices within a list of wrappers.
@@ -973,7 +973,7 @@ public:
   virtual localIndex PackSize( string_array const & wrapperNames,
                                arrayView1d< localIndex const > const & packList,
                                integer const recursive,
-                               bool on_device = false ) const;
+                               bool onDevice = false ) const;
 
   /**
    * @brief Pack a list of wrappers to a buffer.
@@ -993,7 +993,7 @@ public:
   virtual localIndex Pack( buffer_unit_type * & buffer,
                            string_array const & wrapperNames,
                            integer const recursive,
-                           bool on_device = false ) const;
+                           bool onDevice = false ) const;
 
   /**
    * @brief Pack a list of indices within a list of wrappers.
@@ -1014,7 +1014,7 @@ public:
                            string_array const & wrapperNames,
                            arrayView1d< localIndex const > const & packList,
                            integer const recursive,
-                           bool on_device = false ) const;
+                           bool onDevice = false ) const;
 
   /**
    * @brief Unpack a buffer.
@@ -1034,7 +1034,7 @@ public:
   virtual localIndex Unpack( buffer_unit_type const * & buffer,
                              arrayView1d< localIndex > & packList,
                              integer const recursive,
-                             bool on_device = false );
+                             bool onDevice = false );
 
   ///@}
 
@@ -1362,25 +1362,25 @@ public:
    * @brief Get flags that control restart output of this group.
    * @return the current value of restart flags
    */
-  RestartFlags getRestartFlags() const { return m_restart_flags; }
+  RestartFlags getRestartFlags() const { return m_restartFlags; }
 
   /**
    * @brief Set flags that control restart output of this group.
    * @param flags the new value of restart flags
    */
-  void setRestartFlags( RestartFlags flags ) { m_restart_flags = flags; }
+  void setRestartFlags( RestartFlags flags ) { m_restartFlags = flags; }
 
   /**
    * @brief Get input flags for schema generation.
    * @return the current value of input flags
    */
-  InputFlags getInputFlags() const { return m_input_flags; }
+  InputFlags getInputFlags() const { return m_inputFlags; }
 
   /**
    * @brief Set input flags for schema generation.
    * @param flags the new value of input flags
    */
-  void setInputFlags( InputFlags flags ) { m_input_flags = flags; }
+  void setInputFlags( InputFlags flags ) { m_inputFlags = flags; }
 
   ///@}
 
@@ -1524,10 +1524,10 @@ private:
   //END_SPHINX_INCLUDE_02
 
   /// Restart flag for this group... and subsequently all wrappers in this group.
-  RestartFlags m_restart_flags;
+  RestartFlags m_restartFlags;
 
   /// Input flag for this group.
-  InputFlags m_input_flags;
+  InputFlags m_inputFlags;
 
   /// Reference to the conduit::Node that mirrors this group
   conduit::Node & m_conduitNode;

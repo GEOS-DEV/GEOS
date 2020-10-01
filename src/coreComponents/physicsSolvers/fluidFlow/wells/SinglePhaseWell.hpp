@@ -159,7 +159,7 @@ public:
    * @param matrix the system matrix
    * @param rhs the system right-hand side vector
    */
-  void AssembleFluxTerms( real64 const time_n,
+  void AssembleFluxTerms( real64 const timeN,
                           real64 const dt,
                           DomainPartition const & domain,
                           DofManager const & dofManager,
@@ -175,7 +175,7 @@ public:
    * @param matrix the system matrix
    * @param rhs the system right-hand side vector
    */
-  virtual void AssembleVolumeBalanceTerms( real64 const time_n,
+  virtual void AssembleVolumeBalanceTerms( real64 const timeN,
                                            real64 const dt,
                                            DomainPartition const & domain,
                                            DofManager const & dofManager,
@@ -249,10 +249,10 @@ private:
   /// views into reservoir material fields
 
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_resDensity;
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_dResDens_dPres;
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_dResDensDPres;
 
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_resViscosity;
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_dResVisc_dPres;
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_dResViscDPres;
 
 };
 

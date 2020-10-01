@@ -278,7 +278,7 @@ SinglePhaseFVM< BASE >::ApplyBoundaryConditions( real64 const time_n,
 }
 
 template< typename BASE >
-void SinglePhaseFVM< BASE >::ApplyFaceDirichletBC( real64 const time_n,
+void SinglePhaseFVM< BASE >::ApplyFaceDirichletBC( real64 const timeN,
                                                    real64 const dt,
                                                    DofManager const & dofManager,
                                                    DomainPartition & domain,
@@ -317,7 +317,7 @@ void SinglePhaseFVM< BASE >::ApplyFaceDirichletBC( real64 const time_n,
   elemDofNumber.setName( this->getName() + "/accessors/" + dofKey );
 
   // Take BCs defined for "pressure" field and apply values to "facePressure"
-  fsManager.Apply( time_n + dt,
+  fsManager.Apply( timeN + dt,
                    &domain,
                    "faceManager",
                    viewKeyStruct::pressureString,
@@ -335,7 +335,7 @@ void SinglePhaseFVM< BASE >::ApplyFaceDirichletBC( real64 const time_n,
 
     // first, evaluate BC to get primary field values (pressure)
     fs->ApplyFieldValue< FieldSpecificationEqual, parallelDevicePolicy<> >( targetSet,
-                                                                            time_n + dt,
+                                                                            timeN + dt,
                                                                             targetGroup,
                                                                             viewKeyStruct::facePressureString );
 

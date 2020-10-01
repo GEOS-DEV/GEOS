@@ -33,11 +33,11 @@ void testKernelDriver()
 {
   constexpr int numNodes = 5;
   constexpr int numQuadraturePoints = 5;
-  constexpr static real64 weight = 81.0 / 100.0;
-  constexpr static real64 weightDelta  = 125.0 / 27.0 - weight;
-  constexpr static real64 quadratureCrossSectionCoord = 0.584237394672177;
-  constexpr static real64 quadratureLongitudinalCoordNeg = -2.0 / 3.0;
-  constexpr static real64 quadratureLongitudinalCoordDelta = 16.0 / 15.0;
+  constexpr static real64 WEIGHT = 81.0 / 100.0;
+  constexpr static real64 WEIGHT_DELTA  = 125.0 / 27.0 - WEIGHT;
+  constexpr static real64 QUADRATURE_CROSS_SECTION_COORD = 0.584237394672177;
+  constexpr static real64 QUADRATURE_LONGITUDINAL_COORD_NEG = -2.0 / 3.0;
+  constexpr static real64 QUADRATURE_LONGITUDINAL_COORD_DELTA = 16.0 / 15.0;
 
   array1d< real64 > arrDetJ( numQuadraturePoints );
   array2d< real64 > arrN( numQuadraturePoints, numNodes );
@@ -104,9 +104,9 @@ void testKernelDriver()
   {
     for( localIndex q=0; q<numQuadraturePoints; ++q )
     {
-      real64 const xi[3] = { quadratureCrossSectionCoord *parentCoords[0][q],
-                             quadratureCrossSectionCoord*parentCoords[1][q],
-                             quadratureLongitudinalCoordNeg + quadratureLongitudinalCoordDelta*0.5*( 1 + parentCoords[2][q] ) };
+      real64 const xi[3] = { QUADRATURE_CROSS_SECTION_COORD *parentCoords[0][q],
+                             QUADRATURE_CROSS_SECTION_COORD*parentCoords[1][q],
+                             QUADRATURE_LONGITUDINAL_COORD_NEG + QUADRATURE_LONGITUDINAL_COORD_DELTA*0.5*( 1 + parentCoords[2][q] ) };
 
       for( localIndex a=0; a<numNodes-1; ++a )
       {
@@ -138,7 +138,7 @@ void testKernelDriver()
         }
       }
       real64 const detJ = LvArray::tensorOps::invert< 3 >( J );
-      EXPECT_FLOAT_EQ( detJ*( weight + 0.25 * ( q & 4 ) * weightDelta ), viewDetJ[q] );
+      EXPECT_FLOAT_EQ( detJ*( WEIGHT + 0.25 * ( q & 4 ) * WEIGHT_DELTA ), viewDetJ[q] );
 
       for( localIndex a=0; a<numNodes; ++a )
       {

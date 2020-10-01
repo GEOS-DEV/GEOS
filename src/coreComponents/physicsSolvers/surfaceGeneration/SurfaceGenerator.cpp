@@ -224,9 +224,9 @@ SurfaceGenerator::~SurfaceGenerator()
   // TODO Auto-generated destructor stub
 }
 
-void SurfaceGenerator::RegisterDataOnMesh( Group * const MeshBodies )
+void SurfaceGenerator::RegisterDataOnMesh( Group * const meshBodies )
 {
-  for( auto & mesh : MeshBodies->GetSubGroups() )
+  for( auto & mesh : meshBodies->GetSubGroups() )
   {
     MeshLevel * const meshLevel = mesh.second->group_cast< MeshBody * >()->getMeshLevel( 0 );
 
@@ -442,7 +442,7 @@ void SurfaceGenerator::postRestartInitialization( Group * const domain0 )
 }
 
 
-real64 SurfaceGenerator::SolverStep( real64 const & time_n,
+real64 SurfaceGenerator::SolverStep( real64 const & timeN,
                                      real64 const & dt,
                                      const int GEOSX_UNUSED_PARAM( cycleNumber ),
                                      DomainPartition & domain )
@@ -462,7 +462,7 @@ real64 SurfaceGenerator::SolverStep( real64 const & time_n,
                                partition.GetColor(),
                                partition.NumColor(),
                                0,
-                               time_n + dt );
+                               timeN + dt );
     }
   }
 
@@ -506,7 +506,7 @@ int SurfaceGenerator::SeparationDriver( DomainPartition & domain,
                                         int const tileColor,
                                         int const numTileColors,
                                         bool const prefrac,
-                                        real64 const time_np1 )
+                                        real64 const timeNp1 )
 {
   GEOSX_MARK_FUNCTION;
 
@@ -583,7 +583,7 @@ int SurfaceGenerator::SeparationDriver( DomainPartition & domain,
             nodeToElementMap.sizeOfArray( a )>1 )
         {
           didSplit += ProcessNode( a,
-                                   time_np1,
+                                   timeNp1,
                                    nodeManager,
                                    edgeManager,
                                    faceManager,
@@ -860,7 +860,7 @@ void SurfaceGenerator::SynchronizeTipSets ( FaceManager & faceManager,
 //**********************************************************************************************************************
 //**********************************************************************************************************************
 bool SurfaceGenerator::ProcessNode( const localIndex nodeID,
-                                    real64 const time_np1,
+                                    real64 const timeNp1,
                                     NodeManager & nodeManager,
                                     EdgeManager & edgeManager,
                                     FaceManager & faceManager,
@@ -898,7 +898,7 @@ bool SurfaceGenerator::ProcessNode( const localIndex nodeID,
 
       didSplit = true;
       PerformFracture( nodeID,
-                       time_np1,
+                       timeNp1,
                        nodeManager,
                        edgeManager,
                        faceManager,
@@ -1590,7 +1590,7 @@ bool SurfaceGenerator::SetElemLocations( const int location,
 //**********************************************************************************************************************
 //**********************************************************************************************************************
 void SurfaceGenerator::PerformFracture( const localIndex nodeID,
-                                        real64 const time_np1,
+                                        real64 const timeNp1,
                                         NodeManager & nodeManager,
                                         EdgeManager & edgeManager,
                                         FaceManager & faceManager,
@@ -1674,8 +1674,8 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
   degreeFromCrack[newNodeIndex] = 0;
   m_tipNodes.remove( nodeID );
   nodeDegreeFromCrackTip( nodeID ) = 1;
-  nodeRuptureTime( nodeID ) = time_np1;
-  nodeRuptureTime( newNodeIndex ) = time_np1;
+  nodeRuptureTime( nodeID ) = timeNp1;
+  nodeRuptureTime( newNodeIndex ) = timeNp1;
 
   //TODO HACK...should recalculate mass
 //  const real64 newMass = 0.5 * (*nodeManager.m_mass)[nodeID];
@@ -1790,8 +1790,8 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
         ruptureState[faceIndex] = 2;
         ruptureState[newFaceIndex] = 2;
 
-        faceRuptureTime( faceIndex ) = time_np1;
-        faceRuptureTime( newFaceIndex ) = time_np1;
+        faceRuptureTime( faceIndex ) = timeNp1;
+        faceRuptureTime( newFaceIndex ) = timeNp1;
 
 
         m_trailingFaces.insert( faceIndex );
@@ -1861,7 +1861,7 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
         {
           localIndex faceIndices[2] = {faceIndex, newFaceIndex};
           localIndex const
-          newFaceElement = fractureElementRegion->AddToFractureMesh( time_np1,
+          newFaceElement = fractureElementRegion->AddToFractureMesh( timeNp1,
                                                                      &edgeManager,
                                                                      &faceManager,
                                                                      this->m_originalFaceToEdges.toViewConst(),
@@ -3635,9 +3635,9 @@ int SurfaceGenerator::CalculateElementForcesOnEdge( DomainPartition & domain,
                                                     ElementRegionManager & elementManager,
                                                     R1Tensor & vecTipNorm,
                                                     R1Tensor & fNode,
-                                                    realT & GdivBeta,
+                                                    realT & gdivBeta,
                                                     bool threeNodesPinched,
-                                                    bool calculatef_u )
+                                                    bool calculatefU )
 {
   ArrayOfArraysView< localIndex const > const & nodeToRegionMap = nodeManager.elementRegionList().toViewConst();
   ArrayOfArraysView< localIndex const > const & nodeToSubRegionMap = nodeManager.elementSubRegionList().toViewConst();
@@ -3681,7 +3681,7 @@ int SurfaceGenerator::CalculateElementForcesOnEdge( DomainPartition & domain,
 
   R1Tensor xEdge;
 
-  if( !calculatef_u )
+  if( !calculatefU )
   {
     xEdge = edgeManager.calculateCenter( edgeID, X );
   }
@@ -3745,7 +3745,7 @@ int SurfaceGenerator::CalculateElementForcesOnEdge( DomainPartition & domain,
             temp *= youngsModulus;
             temp /= (1 - poissonRatio * poissonRatio);
 
-            if( !calculatef_u )
+            if( !calculatefU )
             {
               xEle -= xEdge;
               if( Dot( xEle, vecTipNorm ) > 0 )
@@ -3784,9 +3784,9 @@ int SurfaceGenerator::CalculateElementForcesOnEdge( DomainPartition & domain,
           }
         }
 
-        if( !calculatef_u )
+        if( !calculatefU )
         {
-          GdivBeta += G /2/(1-poissonRatio);
+          gdivBeta += G /2/(1-poissonRatio);
         }
       }
 
@@ -3794,13 +3794,13 @@ int SurfaceGenerator::CalculateElementForcesOnEdge( DomainPartition & domain,
 
     //If we only find one node behind the tip for the non-threeNodesPinched scenario, we do the following as a rough
     // compensation for f_u.
-    if( calculatef_u && nodeIndices.size() == 1 && !threeNodesPinched )
+    if( calculatefU && nodeIndices.size() == 1 && !threeNodesPinched )
     {
       fNode *= 2.0;
     }
   }
 
-  if( !calculatef_u )
+  if( !calculatefU )
   {
     if( nElemEachSide[0]>=1 && nElemEachSide[1]>=1 )
       fNode /= 2.0;
@@ -3808,7 +3808,7 @@ int SurfaceGenerator::CalculateElementForcesOnEdge( DomainPartition & domain,
     // face
     // is on domain boundary, it's possible to have just one side.
     if( nElemEachSide[0] + nElemEachSide[1] >= 1 )
-      GdivBeta /= (nElemEachSide[0] + nElemEachSide[1]);
+      gdivBeta /= (nElemEachSide[0] + nElemEachSide[1]);
   }
 
   return 0;

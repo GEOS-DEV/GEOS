@@ -57,8 +57,8 @@ public:
    * @param [in] maxIterations maximum number of Krylov iterations.
    * @param [in] verbosity solver verbosity level.
    */
-  BiCGSTABsolver( LinearOperator< Vector > const & A,
-                  LinearOperator< Vector > const & M,
+  BiCGSTABsolver( LinearOperator< Vector > const & a,
+                  LinearOperator< Vector > const & m,
                   real64 const tolerance,
                   localIndex const maxIterations,
                   integer const verbosity = 0 );

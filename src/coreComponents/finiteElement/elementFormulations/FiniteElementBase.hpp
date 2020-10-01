@@ -106,7 +106,7 @@ public:
   GEOSX_HOST_DEVICE
   real64 getGradN( localIndex const k,
                    localIndex const q,
-                   real64 const (&X)[LEAF::numNodes][3],
+                   real64 const (&x)[LEAF::numNodes][3],
                    real64 ( &gradN )[LEAF::numNodes][3] ) const;
 
 
@@ -125,7 +125,7 @@ public:
   GEOSX_HOST_DEVICE
   real64 getGradN( localIndex const k,
                    localIndex const q,
-                   int const X,
+                   int const x,
                    real64 ( &gradN )[LEAF::numNodes][3] ) const;
 
   /**
@@ -155,7 +155,7 @@ public:
   template< int NUM_SUPPORT_POINTS >
   GEOSX_HOST_DEVICE
   static
-  void value( real64 const (&N)[NUM_SUPPORT_POINTS],
+  void value( real64 const (&n)[NUM_SUPPORT_POINTS],
               real64 const (&var)[NUM_SUPPORT_POINTS],
               real64 & value );
 
@@ -168,7 +168,7 @@ public:
             int NUM_COMPONENTS >
   GEOSX_HOST_DEVICE
   static
-  void value( real64 const (&N)[NUM_SUPPORT_POINTS],
+  void value( real64 const (&n)[NUM_SUPPORT_POINTS],
               real64 const (&var)[NUM_SUPPORT_POINTS][NUM_COMPONENTS],
               real64 ( &value )[NUM_COMPONENTS] );
 
@@ -266,7 +266,7 @@ public:
   template< int NUM_SUPPORT_POINTS,
             typename GRADIENT_TYPE >
   GEOSX_HOST_DEVICE
-  static void valueAndGradient( real64 const (&N)[NUM_SUPPORT_POINTS],
+  static void valueAndGradient( real64 const (&n)[NUM_SUPPORT_POINTS],
                                 GRADIENT_TYPE const & gradN,
                                 real64 const (&var)[NUM_SUPPORT_POINTS],
                                 real64 & value,
@@ -306,8 +306,8 @@ public:
             typename GRADIENT_TYPE >
   GEOSX_HOST_DEVICE
   static void plus_gradNajAij( GRADIENT_TYPE const & gradN,
-                               real64 const (&var_detJxW)[6],
-                               real64 ( &R )[NUM_SUPPORT_POINTS][3] );
+                               real64 const (&varDetJxW)[6],
+                               real64 ( &r )[NUM_SUPPORT_POINTS][3] );
 
   /**
    * @copydoc plus_gradNajAij
@@ -318,8 +318,8 @@ public:
             typename GRADIENT_TYPE >
   GEOSX_HOST_DEVICE
   static void plus_gradNajAij( GRADIENT_TYPE const & gradN,
-                               real64 const (&var_detJxW)[3][3],
-                               real64 ( &R )[NUM_SUPPORT_POINTS][3] );
+                               real64 const (&varDetJxW)[3][3],
+                               real64 ( &r )[NUM_SUPPORT_POINTS][3] );
 
   /**
    * @brief Product of each shape function with a vector forcing term.
@@ -331,9 +331,9 @@ public:
    */
   template< int NUM_SUPPORT_POINTS >
   GEOSX_HOST_DEVICE
-  static void plus_NaFi( real64 const (&N)[NUM_SUPPORT_POINTS],
-                         real64 const (&forcingTerm_detJxW)[3],
-                         real64 ( &R )[NUM_SUPPORT_POINTS][3] );
+  static void plus_NaFi( real64 const (&n)[NUM_SUPPORT_POINTS],
+                         real64 const (&forcingTermDetJxW)[3],
+                         real64 ( &r )[NUM_SUPPORT_POINTS][3] );
 
   /**
    * @brief Inner product of each basis function gradient with a rank-2
@@ -356,10 +356,10 @@ public:
             typename GRADIENT_TYPE >
   GEOSX_HOST_DEVICE
   static void plus_gradNajAij_plus_NaFi( GRADIENT_TYPE const & gradN,
-                                         real64 const (&var_detJxW)[3][3],
-                                         real64 const (&N)[NUM_SUPPORT_POINTS],
-                                         real64 const (&forcingTerm_detJxW)[3],
-                                         real64 ( &R )[NUM_SUPPORT_POINTS][3] );
+                                         real64 const (&varDetJxW)[3][3],
+                                         real64 const (&n)[NUM_SUPPORT_POINTS],
+                                         real64 const (&forcingTermDetJxW)[3],
+                                         real64 ( &r )[NUM_SUPPORT_POINTS][3] );
 
   /**
    * @brief Inner product of each basis function gradient with a rank-2
@@ -370,10 +370,10 @@ public:
             typename GRADIENT_TYPE >
   GEOSX_HOST_DEVICE
   static void plus_gradNajAij_plus_NaFi( GRADIENT_TYPE const & gradN,
-                                         real64 const (&var_detJxW)[6],
-                                         real64 const (&N)[NUM_SUPPORT_POINTS],
-                                         real64 const (&forcingTerm_detJxW)[3],
-                                         real64 ( &R )[NUM_SUPPORT_POINTS][3] );
+                                         real64 const (&varDetJxW)[6],
+                                         real64 const (&n)[NUM_SUPPORT_POINTS],
+                                         real64 const (&forcingTermDetJxW)[3],
+                                         real64 ( &r )[NUM_SUPPORT_POINTS][3] );
 
 
   /**
@@ -447,11 +447,11 @@ GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 real64 FiniteElementBase::getGradN( localIndex const k,
                                     localIndex const q,
-                                    real64 const (&X)[LEAF::numNodes][3],
+                                    real64 const (&x)[LEAF::numNodes][3],
                                     real64 (& gradN)[LEAF::numNodes][3] ) const
 {
   GEOSX_UNUSED_VAR( k );
-  return LEAF::calcGradN( q, X, gradN );
+  return LEAF::calcGradN( q, x, gradN );
 }
 
 template< typename LEAF >
@@ -459,10 +459,10 @@ GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 real64 FiniteElementBase::getGradN( localIndex const k,
                                     localIndex const q,
-                                    int const X,
+                                    int const x,
                                     real64 (& gradN)[LEAF::numNodes][3] ) const
 {
-  GEOSX_UNUSED_VAR( X );
+  GEOSX_UNUSED_VAR( x );
 
   LvArray::tensorOps::copy< LEAF::numNodes, 3 >( gradN, m_viewGradN[ k ][ q ] );
 
@@ -476,23 +476,23 @@ real64 FiniteElementBase::getGradN( localIndex const k,
 template< int NUM_SUPPORT_POINTS >
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-void FiniteElementBase::value( real64 const (&N)[NUM_SUPPORT_POINTS],
+void FiniteElementBase::value( real64 const (&n)[NUM_SUPPORT_POINTS],
                                real64 const (&var)[NUM_SUPPORT_POINTS],
                                real64 & value )
 {
-  value = LvArray::tensorOps::AiBi< NUM_SUPPORT_POINTS >( N, var );
+  value = LvArray::tensorOps::AiBi< NUM_SUPPORT_POINTS >( n, var );
 }
 
 template< int NUM_SUPPORT_POINTS,
           int NUM_COMPONENTS >
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-void FiniteElementBase::value( real64 const (&N)[NUM_SUPPORT_POINTS],
+void FiniteElementBase::value( real64 const (&n)[NUM_SUPPORT_POINTS],
                                real64 const (&var)[NUM_SUPPORT_POINTS][NUM_COMPONENTS],
                                real64 (& value)[NUM_COMPONENTS] )
 {
 
-  LvArray::tensorOps::AjiBj< 3, NUM_SUPPORT_POINTS >( value, var, N );
+  LvArray::tensorOps::AjiBj< 3, NUM_SUPPORT_POINTS >( value, var, n );
 }
 
 
@@ -554,13 +554,13 @@ template< int NUM_SUPPORT_POINTS,
           typename GRADIENT_TYPE >
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-void FiniteElementBase::valueAndGradient( real64 const (&N)[NUM_SUPPORT_POINTS],
+void FiniteElementBase::valueAndGradient( real64 const (&n)[NUM_SUPPORT_POINTS],
                                           GRADIENT_TYPE const & gradN,
                                           real64 const (&var)[NUM_SUPPORT_POINTS],
                                           real64 & value,
                                           real64 (& gradVar)[3] )
 {
-  value = N[0] * var[0];
+  value = n[0] * var[0];
   for( int i = 0; i < 3; ++i )
   {
     gradVar[i] = var[0] * gradN[0][i];
@@ -568,7 +568,7 @@ void FiniteElementBase::valueAndGradient( real64 const (&N)[NUM_SUPPORT_POINTS],
 
   for( int a=1; a<NUM_SUPPORT_POINTS; ++a )
   {
-    value = value + N[a] * var[a];
+    value = value + n[a] * var[a];
     for( int i = 0; i < 3; ++i )
     {
       gradVar[i] = gradVar[i] + var[ a ] * gradN[a][i];
@@ -583,14 +583,14 @@ template< int NUM_SUPPORT_POINTS,
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void FiniteElementBase::plus_gradNajAij( GRADIENT_TYPE const & gradN,
-                                         real64 const (&var_detJxW)[6],
-                                         real64 (& R)[NUM_SUPPORT_POINTS][3] )
+                                         real64 const (&varDetJxW)[6],
+                                         real64 (& r)[NUM_SUPPORT_POINTS][3] )
 {
   for( int a=0; a<NUM_SUPPORT_POINTS; ++a )
   {
-    R[a][0] = R[a][0] + var_detJxW[0] * gradN[a][0] + var_detJxW[5] * gradN[a][1] + var_detJxW[4] * gradN[a][2];
-    R[a][1] = R[a][1] + var_detJxW[5] * gradN[a][0] + var_detJxW[1] * gradN[a][1] + var_detJxW[3] * gradN[a][2];
-    R[a][2] = R[a][2] + var_detJxW[4] * gradN[a][0] + var_detJxW[3] * gradN[a][1] + var_detJxW[2] * gradN[a][2];
+    r[a][0] = r[a][0] + varDetJxW[0] * gradN[a][0] + varDetJxW[5] * gradN[a][1] + varDetJxW[4] * gradN[a][2];
+    r[a][1] = r[a][1] + varDetJxW[5] * gradN[a][0] + varDetJxW[1] * gradN[a][1] + varDetJxW[3] * gradN[a][2];
+    r[a][2] = r[a][2] + varDetJxW[4] * gradN[a][0] + varDetJxW[3] * gradN[a][1] + varDetJxW[2] * gradN[a][2];
   }
 }
 
@@ -600,25 +600,25 @@ template< int NUM_SUPPORT_POINTS,
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void FiniteElementBase::plus_gradNajAij( GRADIENT_TYPE const & gradN,
-                                         real64 const (&var_detJxW)[3][3],
-                                         real64 (& R)[NUM_SUPPORT_POINTS][3] )
+                                         real64 const (&varDetJxW)[3][3],
+                                         real64 (& r)[NUM_SUPPORT_POINTS][3] )
 {
   for( int a=0; a<NUM_SUPPORT_POINTS; ++a )
   {
-    LvArray::tensorOps::plusAijBj< 3, 3 >( R[a], var_detJxW, gradN[a] );
+    LvArray::tensorOps::plusAijBj< 3, 3 >( r[a], varDetJxW, gradN[a] );
   }
 }
 
 template< int NUM_SUPPORT_POINTS >
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-void FiniteElementBase::plus_NaFi( real64 const (&N)[NUM_SUPPORT_POINTS],
-                                   real64 const (&var_detJxW)[3],
-                                   real64 ( & R )[NUM_SUPPORT_POINTS][3] )
+void FiniteElementBase::plus_NaFi( real64 const (&n)[NUM_SUPPORT_POINTS],
+                                   real64 const (&varDetJxW)[3],
+                                   real64 ( & r )[NUM_SUPPORT_POINTS][3] )
 {
   for( int a=0; a<NUM_SUPPORT_POINTS; ++a )
   {
-    LvArray::tensorOps::scaledAdd< 3 >( R[a], var_detJxW, N[a] );
+    LvArray::tensorOps::scaledAdd< 3 >( r[a], varDetJxW, n[a] );
   }
 }
 
@@ -628,16 +628,16 @@ template< int NUM_SUPPORT_POINTS,
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void FiniteElementBase::plus_gradNajAij_plus_NaFi( GRADIENT_TYPE const & gradN,
-                                                   real64 const (&var_detJxW)[6],
-                                                   real64 const (&N)[NUM_SUPPORT_POINTS],
-                                                   real64 const (&forcingTerm_detJxW)[3],
-                                                   real64 (& R)[NUM_SUPPORT_POINTS][3] )
+                                                   real64 const (&varDetJxW)[6],
+                                                   real64 const (&n)[NUM_SUPPORT_POINTS],
+                                                   real64 const (&forcingTermDetJxW)[3],
+                                                   real64 (& r)[NUM_SUPPORT_POINTS][3] )
 {
   for( int a=0; a<NUM_SUPPORT_POINTS; ++a )
   {
-    R[a][0] = R[a][0] + var_detJxW[0] * gradN[a][0] + var_detJxW[5] * gradN[a][1] + var_detJxW[4] * gradN[a][2] + forcingTerm_detJxW[0] * N[a];
-    R[a][1] = R[a][1] + var_detJxW[5] * gradN[a][0] + var_detJxW[1] * gradN[a][1] + var_detJxW[3] * gradN[a][2] + forcingTerm_detJxW[1] * N[a];
-    R[a][2] = R[a][2] + var_detJxW[4] * gradN[a][0] + var_detJxW[3] * gradN[a][1] + var_detJxW[2] * gradN[a][2] + forcingTerm_detJxW[2] * N[a];
+    r[a][0] = r[a][0] + varDetJxW[0] * gradN[a][0] + varDetJxW[5] * gradN[a][1] + varDetJxW[4] * gradN[a][2] + forcingTermDetJxW[0] * n[a];
+    r[a][1] = r[a][1] + varDetJxW[5] * gradN[a][0] + varDetJxW[1] * gradN[a][1] + varDetJxW[3] * gradN[a][2] + forcingTermDetJxW[1] * n[a];
+    r[a][2] = r[a][2] + varDetJxW[4] * gradN[a][0] + varDetJxW[3] * gradN[a][1] + varDetJxW[2] * gradN[a][2] + forcingTermDetJxW[2] * n[a];
   }
 }
 
@@ -646,16 +646,16 @@ template< int NUM_SUPPORT_POINTS,
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void FiniteElementBase::plus_gradNajAij_plus_NaFi( GRADIENT_TYPE const & gradN,
-                                                   real64 const (&var_detJxW)[3][3],
-                                                   real64 const (&N)[NUM_SUPPORT_POINTS],
-                                                   real64 const (&forcingTerm_detJxW)[3],
-                                                   real64 (& R)[NUM_SUPPORT_POINTS][3] )
+                                                   real64 const (&varDetJxW)[3][3],
+                                                   real64 const (&n)[NUM_SUPPORT_POINTS],
+                                                   real64 const (&forcingTermDetJxW)[3],
+                                                   real64 (& r)[NUM_SUPPORT_POINTS][3] )
 {
   for( int a=0; a<NUM_SUPPORT_POINTS; ++a )
   {
-    R[a][0] = R[a][0] + var_detJxW[0][0] * gradN[a][0] + var_detJxW[0][1] * gradN[a][1] + var_detJxW[0][2] * gradN[a][2] + forcingTerm_detJxW[0] * N[a];
-    R[a][1] = R[a][1] + var_detJxW[1][0] * gradN[a][0] + var_detJxW[1][1] * gradN[a][1] + var_detJxW[1][2] * gradN[a][2] + forcingTerm_detJxW[1] * N[a];
-    R[a][2] = R[a][2] + var_detJxW[2][0] * gradN[a][0] + var_detJxW[2][1] * gradN[a][1] + var_detJxW[2][2] * gradN[a][2] + forcingTerm_detJxW[2] * N[a];
+    r[a][0] = r[a][0] + varDetJxW[0][0] * gradN[a][0] + varDetJxW[0][1] * gradN[a][1] + varDetJxW[0][2] * gradN[a][2] + forcingTermDetJxW[0] * n[a];
+    r[a][1] = r[a][1] + varDetJxW[1][0] * gradN[a][0] + varDetJxW[1][1] * gradN[a][1] + varDetJxW[1][2] * gradN[a][2] + forcingTermDetJxW[1] * n[a];
+    r[a][2] = r[a][2] + varDetJxW[2][0] * gradN[a][0] + varDetJxW[2][1] * gradN[a][1] + varDetJxW[2][2] * gradN[a][2] + forcingTermDetJxW[2] * n[a];
   }
 }
 /// @endcond

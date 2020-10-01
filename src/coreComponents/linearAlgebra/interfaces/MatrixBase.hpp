@@ -606,19 +606,19 @@ protected:
    * @param P the "prolongation" matrix
    * @param dst the resulting product matrix (will be re-created as needed)
    */
-  virtual void multiplyRAP( Matrix const & R,
-                            Matrix const & P,
+  virtual void multiplyRAP( Matrix const & r,
+                            Matrix const & p,
                             Matrix & dst ) const
   {
     GEOSX_LAI_ASSERT( ready() );
-    GEOSX_LAI_ASSERT( R.ready() );
-    GEOSX_LAI_ASSERT( P.ready() );
-    GEOSX_LAI_ASSERT_EQ( numGlobalRows(), R.numGlobalCols() );
-    GEOSX_LAI_ASSERT_EQ( numGlobalCols(), P.numGlobalRows() );
+    GEOSX_LAI_ASSERT( r.ready() );
+    GEOSX_LAI_ASSERT( p.ready() );
+    GEOSX_LAI_ASSERT_EQ( numGlobalRows(), r.numGlobalCols() );
+    GEOSX_LAI_ASSERT_EQ( numGlobalCols(), p.numGlobalRows() );
 
     Matrix AP;
-    multiply( P, AP );
-    R.multiply( AP, dst );
+    multiply( p, AP );
+    r.multiply( AP, dst );
   }
 
   /**
@@ -626,17 +626,17 @@ protected:
    * @param P the "prolongation" matrix
    * @param dst the resulting product matrix (will be re-created as needed)
    */
-  virtual void multiplyPtAP( Matrix const & P,
+  virtual void multiplyPtAP( Matrix const & p,
                              Matrix & dst ) const
   {
     GEOSX_LAI_ASSERT( ready() );
-    GEOSX_LAI_ASSERT( P.ready() );
-    GEOSX_LAI_ASSERT_EQ( numGlobalRows(), P.numGlobalRows() );
-    GEOSX_LAI_ASSERT_EQ( numGlobalCols(), P.numGlobalRows() );
+    GEOSX_LAI_ASSERT( p.ready() );
+    GEOSX_LAI_ASSERT_EQ( numGlobalRows(), p.numGlobalRows() );
+    GEOSX_LAI_ASSERT_EQ( numGlobalCols(), p.numGlobalRows() );
 
     Matrix AP;
-    multiply( P, AP );
-    P.leftMultiplyTranspose( AP, dst );
+    multiply( p, AP );
+    p.leftMultiplyTranspose( AP, dst );
   }
 
   /**

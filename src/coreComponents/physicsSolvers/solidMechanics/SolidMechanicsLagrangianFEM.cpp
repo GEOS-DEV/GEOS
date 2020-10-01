@@ -154,9 +154,9 @@ SolidMechanicsLagrangianFEM::~SolidMechanicsLagrangianFEM()
 }
 
 
-void SolidMechanicsLagrangianFEM::RegisterDataOnMesh( Group * const MeshBodies )
+void SolidMechanicsLagrangianFEM::RegisterDataOnMesh( Group * const meshBodies )
 {
-  for( auto & mesh : MeshBodies->GetSubGroups() )
+  for( auto & mesh : meshBodies->GetSubGroups() )
   {
     NodeManager * const nodes = mesh.second->group_cast< MeshBody * >()->getMeshLevel( 0 )->getNodeManager();
 
@@ -457,7 +457,7 @@ void SolidMechanicsLagrangianFEM::InitializePostInitialConditions_PreSubGroups( 
 
 
 
-real64 SolidMechanicsLagrangianFEM::SolverStep( real64 const & time_n,
+real64 SolidMechanicsLagrangianFEM::SolverStep( real64 const & timeN,
                                                 real64 const & dt,
                                                 const int cycleNumber,
                                                 DomainPartition & domain )
@@ -469,11 +469,11 @@ real64 SolidMechanicsLagrangianFEM::SolverStep( real64 const & time_n,
 
   if( m_timeIntegrationOption == TimeIntegrationOption::ExplicitDynamic )
   {
-    dtReturn = ExplicitStep( time_n, dt, cycleNumber, domain );
+    dtReturn = ExplicitStep( timeN, dt, cycleNumber, domain );
 
     if( surfaceGenerator!=nullptr )
     {
-      surfaceGenerator->SolverStep( time_n, dt, cycleNumber, domain );
+      surfaceGenerator->SolverStep( timeN, dt, cycleNumber, domain );
     }
   }
   else if( m_timeIntegrationOption == TimeIntegrationOption::ImplicitDynamic ||
@@ -482,7 +482,7 @@ real64 SolidMechanicsLagrangianFEM::SolverStep( real64 const & time_n,
     int const maxNumResolves = m_maxNumResolves;
     int locallyFractured = 0;
     int globallyFractured = 0;
-    ImplicitStepSetup( time_n, dt, domain );
+    ImplicitStepSetup( timeN, dt, domain );
     for( int solveIter=0; solveIter<maxNumResolves; ++solveIter )
     {
       SetupSystem( domain, m_dofManager, m_localMatrix, m_localRhs, m_localSolution );
@@ -492,7 +492,7 @@ real64 SolidMechanicsLagrangianFEM::SolverStep( real64 const & time_n,
         ResetStressToBeginningOfStep( domain );
       }
 
-      dtReturn = NonlinearImplicitStep( time_n,
+      dtReturn = NonlinearImplicitStep( timeN,
                                         dt,
                                         cycleNumber,
                                         domain );
@@ -500,7 +500,7 @@ real64 SolidMechanicsLagrangianFEM::SolverStep( real64 const & time_n,
 //      updateStress( domain );
       if( surfaceGenerator!=nullptr )
       {
-        if( surfaceGenerator->SolverStep( time_n, dt, cycleNumber, domain ) > 0 )
+        if( surfaceGenerator->SolverStep( timeN, dt, cycleNumber, domain ) > 0 )
         {
           locallyFractured = 1;
         }
@@ -519,13 +519,13 @@ real64 SolidMechanicsLagrangianFEM::SolverStep( real64 const & time_n,
         GEOSX_LOG_RANK_0( "Fracture Occurred. Resolve" );
       }
     }
-    ImplicitStepComplete( time_n, dt, domain );
+    ImplicitStepComplete( timeN, dt, domain );
   }
 
   return dtReturn;
 }
 
-real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const & time_n,
+real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const & timeN,
                                                   real64 const & dt,
                                                   const int GEOSX_UNUSED_PARAM( cycleNumber ),
                                                   DomainPartition & domain )
@@ -554,17 +554,17 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const & time_n,
 
   CommunicationTools::SynchronizePackSendRecvSizes( fieldNames, &mesh, domain.getNeighbors(), m_iComm, true );
 
-  fsManager.ApplyFieldValue< parallelDevicePolicy< 1024 > >( time_n, &domain, "nodeManager", keys::Acceleration );
+  fsManager.ApplyFieldValue< parallelDevicePolicy< 1024 > >( timeN, &domain, "nodeManager", keys::Acceleration );
 
   //3: v^{n+1/2} = v^{n} + a^{n} dt/2
   SolidMechanicsLagrangianFEMKernels::velocityUpdate( acc, vel, dt/2 );
 
-  fsManager.ApplyFieldValue< parallelDevicePolicy< 1024 > >( time_n, &domain, "nodeManager", keys::Velocity );
+  fsManager.ApplyFieldValue< parallelDevicePolicy< 1024 > >( timeN, &domain, "nodeManager", keys::Velocity );
 
   //4. x^{n+1} = x^{n} + v^{n+{1}/{2}} dt (x is displacement)
   SolidMechanicsLagrangianFEMKernels::displacementUpdate( vel, uhat, u, dt );
 
-  fsManager.ApplyFieldValue( time_n + dt,
+  fsManager.ApplyFieldValue( timeN + dt,
                              &domain, "nodeManager",
                              NodeManager::viewKeyStruct::totalDisplacementString,
                              [&]( FieldSpecificationBase const * const bc,
@@ -603,7 +603,7 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const & time_n,
   // apply this over a set
   SolidMechanicsLagrangianFEMKernels::velocityUpdate( acc, mass, vel, dt / 2, m_sendOrReceiveNodes.toViewConst() );
 
-  fsManager.ApplyFieldValue< parallelDevicePolicy< 1024 > >( time_n, &domain, "nodeManager", keys::Velocity );
+  fsManager.ApplyFieldValue< parallelDevicePolicy< 1024 > >( timeN, &domain, "nodeManager", keys::Velocity );
 
   CommunicationTools::SynchronizePackSendRecv( fieldNames, &mesh, domain.getNeighbors(), m_iComm, true );
 
@@ -617,7 +617,7 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const & time_n,
   // apply this over a set
   SolidMechanicsLagrangianFEMKernels::velocityUpdate( acc, mass, vel, dt / 2, m_nonSendOrReceiveNodes.toViewConst() );
 
-  fsManager.ApplyFieldValue< parallelDevicePolicy< 1024 > >( time_n, &domain, "nodeManager", keys::Velocity );
+  fsManager.ApplyFieldValue< parallelDevicePolicy< 1024 > >( timeN, &domain, "nodeManager", keys::Velocity );
 
   CommunicationTools::SynchronizeUnpack( &mesh, domain.getNeighbors(), m_iComm, true );
 
@@ -1043,7 +1043,7 @@ void SolidMechanicsLagrangianFEM::AssembleSystem( real64 const GEOSX_UNUSED_PARA
 
 void
 SolidMechanicsLagrangianFEM::
-  ApplyBoundaryConditions( real64 const time_n,
+  ApplyBoundaryConditions( real64 const timeN,
                            real64 const dt,
                            DomainPartition & domain,
                            DofManager const & dofManager,
@@ -1058,7 +1058,7 @@ SolidMechanicsLagrangianFEM::
 
   string const dofKey = dofManager.getKey( keys::TotalDisplacement );
 
-  fsManager.Apply( time_n + dt,
+  fsManager.Apply( timeN + dt,
                    &domain,
                    "nodeManager",
                    keys::Force,
@@ -1070,7 +1070,7 @@ SolidMechanicsLagrangianFEM::
   {
     bc->ApplyBoundaryConditionToSystem< FieldSpecificationAdd,
                                         parallelDevicePolicy< 32 > >( targetSet,
-                                                                      time_n + dt,
+                                                                      timeN + dt,
                                                                       targetGroup,
                                                                       keys::TotalDisplacement, // TODO fix use of dummy
                                                                                                // name
@@ -1080,15 +1080,15 @@ SolidMechanicsLagrangianFEM::
                                                                       localRhs );
   } );
 
-  CRSApplyTractionBC( time_n + dt, dofManager, domain, localRhs );
+  CRSApplyTractionBC( timeN + dt, dofManager, domain, localRhs );
 
   if( faceManager.hasWrapper( "ChomboPressure" ) )
   {
-    fsManager.ApplyFieldValue( time_n, &domain, "faceManager", "ChomboPressure" );
+    fsManager.ApplyFieldValue( timeN, &domain, "faceManager", "ChomboPressure" );
     ApplyChomboPressure( dofManager, domain, m_localRhs );
   }
 
-  ApplyDisplacementBC_implicit( time_n + dt, dofManager, domain, localMatrix, localRhs );
+  ApplyDisplacementBC_implicit( timeN + dt, dofManager, domain, localMatrix, localRhs );
 }
 
 real64

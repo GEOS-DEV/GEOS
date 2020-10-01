@@ -49,10 +49,10 @@ public:
    * @param[in] stress The ArrayView holding the stress data for each quadrature
    *                   point.
    */
-  LinearElasticAnisotropicUpdates( arrayView3d< real64 const, solid::STIFFNESS_USD > const & C,
+  LinearElasticAnisotropicUpdates( arrayView3d< real64 const, solid::STIFFNESS_USD > const & c,
                                    arrayView3d< real64, solid::STRESS_USD > const & stress ):
     SolidBaseUpdates( stress ),
-    m_stiffnessView( C )
+    m_stiffnessView( c )
   {}
 
   /// Deleted default constructor
@@ -84,18 +84,18 @@ public:
   GEOSX_HOST_DEVICE
   virtual void HypoElastic( localIndex const k,
                             localIndex const q,
-                            real64 const ( &Ddt )[ 6 ],
-                            real64 const ( &Rot )[ 3 ][ 3 ] ) const override final;
+                            real64 const ( &ddt )[ 6 ],
+                            real64 const ( &rot )[ 3 ][ 3 ] ) const override final;
 
   GEOSX_HOST_DEVICE
   virtual void HyperElastic( localIndex const k,
-                             real64 const (&FmI)[3][3],
+                             real64 const (&fmI)[3][3],
                              real64 ( &stress )[ 6 ] ) const override final;
 
   GEOSX_HOST_DEVICE
   virtual void HyperElastic( localIndex const k,
                              localIndex const q,
-                             real64 const (&FmI)[3][3] ) const override final;
+                             real64 const (&fmI)[3][3] ) const override final;
 
   GEOSX_HOST_DEVICE
   virtual real64 calculateStrainEnergyDensity( localIndex const k,
@@ -171,31 +171,31 @@ void
 LinearElasticAnisotropicUpdates::
   HypoElastic( localIndex const k,
                localIndex const q,
-               real64 const ( &Ddt )[ 6 ],
-               real64 const ( &Rot )[ 3 ][ 3 ] ) const
+               real64 const ( &ddt )[ 6 ],
+               real64 const ( &rot )[ 3 ][ 3 ] ) const
 {
   for( localIndex j=0; j<3; ++j )
   {
-    m_stress( k, q, 0 ) = m_stress( k, q, 0 ) + m_stiffnessView( k, 0, j ) * Ddt[ j ];
-    m_stress( k, q, 1 ) = m_stress( k, q, 1 ) + m_stiffnessView( k, 1, j ) * Ddt[ j ];
-    m_stress( k, q, 2 ) = m_stress( k, q, 2 ) + m_stiffnessView( k, 2, j ) * Ddt[ j ];
-    m_stress( k, q, 3 ) = m_stress( k, q, 3 ) + m_stiffnessView( k, 3, j ) * Ddt[ j ];
-    m_stress( k, q, 4 ) = m_stress( k, q, 4 ) + m_stiffnessView( k, 4, j ) * Ddt[ j ];
-    m_stress( k, q, 5 ) = m_stress( k, q, 5 ) + m_stiffnessView( k, 5, j ) * Ddt[ j ];
+    m_stress( k, q, 0 ) = m_stress( k, q, 0 ) + m_stiffnessView( k, 0, j ) * ddt[ j ];
+    m_stress( k, q, 1 ) = m_stress( k, q, 1 ) + m_stiffnessView( k, 1, j ) * ddt[ j ];
+    m_stress( k, q, 2 ) = m_stress( k, q, 2 ) + m_stiffnessView( k, 2, j ) * ddt[ j ];
+    m_stress( k, q, 3 ) = m_stress( k, q, 3 ) + m_stiffnessView( k, 3, j ) * ddt[ j ];
+    m_stress( k, q, 4 ) = m_stress( k, q, 4 ) + m_stiffnessView( k, 4, j ) * ddt[ j ];
+    m_stress( k, q, 5 ) = m_stress( k, q, 5 ) + m_stiffnessView( k, 5, j ) * ddt[ j ];
   }
 
   for( localIndex j=3; j<6; ++j )
   {
-    m_stress( k, q, 0 ) = m_stress( k, q, 0 ) + m_stiffnessView( k, 0, j ) * 2 * Ddt[ j ];
-    m_stress( k, q, 1 ) = m_stress( k, q, 1 ) + m_stiffnessView( k, 1, j ) * 2 * Ddt[ j ];
-    m_stress( k, q, 2 ) = m_stress( k, q, 2 ) + m_stiffnessView( k, 2, j ) * 2 * Ddt[ j ];
-    m_stress( k, q, 3 ) = m_stress( k, q, 3 ) + m_stiffnessView( k, 3, j ) * 2 * Ddt[ j ];
-    m_stress( k, q, 4 ) = m_stress( k, q, 4 ) + m_stiffnessView( k, 4, j ) * 2 * Ddt[ j ];
-    m_stress( k, q, 5 ) = m_stress( k, q, 5 ) + m_stiffnessView( k, 5, j ) * 2 * Ddt[ j ];
+    m_stress( k, q, 0 ) = m_stress( k, q, 0 ) + m_stiffnessView( k, 0, j ) * 2 * ddt[ j ];
+    m_stress( k, q, 1 ) = m_stress( k, q, 1 ) + m_stiffnessView( k, 1, j ) * 2 * ddt[ j ];
+    m_stress( k, q, 2 ) = m_stress( k, q, 2 ) + m_stiffnessView( k, 2, j ) * 2 * ddt[ j ];
+    m_stress( k, q, 3 ) = m_stress( k, q, 3 ) + m_stiffnessView( k, 3, j ) * 2 * ddt[ j ];
+    m_stress( k, q, 4 ) = m_stress( k, q, 4 ) + m_stiffnessView( k, 4, j ) * 2 * ddt[ j ];
+    m_stress( k, q, 5 ) = m_stress( k, q, 5 ) + m_stiffnessView( k, 5, j ) * 2 * ddt[ j ];
   }
 
   real64 temp[ 6 ];
-  LvArray::tensorOps::AikSymBklAjl< 3 >( temp, Rot, m_stress[ k ][ q ] );
+  LvArray::tensorOps::AikSymBklAjl< 3 >( temp, rot, m_stress[ k ][ q ] );
   LvArray::tensorOps::copy< 6 >( m_stress[ k ][ q ], temp );
 }
 

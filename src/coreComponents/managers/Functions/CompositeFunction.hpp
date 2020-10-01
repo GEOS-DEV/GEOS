@@ -82,8 +82,8 @@ private:
   string m_expression;
 
 #ifdef GEOSX_USE_MATHPRESSO
-  mathpresso::Context parserContext;
-  mathpresso::Expression parserExpression;
+  mathpresso::Context m_parserContext;
+  mathpresso::Expression m_parserExpression;
 #endif
 
   localIndex m_numSubFunctions;

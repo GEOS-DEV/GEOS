@@ -29,10 +29,10 @@ ChomboCoupler::ChomboCoupler( MPI_Comm const comm, const std::string & outputPat
   m_comm( comm ),
   m_outputPath( outputPath ),
   m_inputPath( inputPath ),
-  m_face_offset( -1 ),
-  m_n_faces_written( -1 ),
-  m_node_offset( -1 ),
-  m_n_nodes_written( -1 ),
+  m_faceOffset( -1 ),
+  m_nFacesWritten( -1 ),
+  m_nodeOffset( -1 ),
+  m_nNodesWritten( -1 ),
   m_mesh( mesh ),
   m_counter( 0 )
 {
@@ -100,8 +100,8 @@ void ChomboCoupler::write( double dt )
   node_fields["velocity"] = std::make_tuple( H5T_NATIVE_DOUBLE, 3, m_velocityCopy.data() );
 
   writeBoundaryFile( m_comm, m_outputPath.data(), dt, faceMask,
-                     m_face_offset, m_n_faces_written, n_faces, connectivity_array, face_fields,
-                     m_node_offset, m_n_nodes_written, m_referencePositionCopy.size( 0 ), node_fields );
+                     m_faceOffset, m_nFacesWritten, n_faces, connectivity_array, face_fields,
+                     m_nodeOffset, m_nNodesWritten, m_referencePositionCopy.size( 0 ), node_fields );
 
   delete[] connectivity_array;
   delete[] faceMask;
@@ -133,8 +133,8 @@ void ChomboCoupler::read( bool usePressures )
     node_fields["position"] = std::make_tuple( H5T_NATIVE_DOUBLE, 3, m_referencePositionCopy.data() );
 
     readBoundaryFile( m_comm, m_inputPath.data(),
-                      m_face_offset, m_n_faces_written, n_faces, face_fields,
-                      m_node_offset, m_n_nodes_written, n_nodes, node_fields );
+                      m_faceOffset, m_nFacesWritten, n_faces, face_fields,
+                      m_nodeOffset, m_nNodesWritten, n_nodes, node_fields );
 
     arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const & reference_pos = nodes->referencePosition();
     for( localIndex i = 0; i < n_nodes; ++i )

@@ -62,9 +62,9 @@ LaplaceFEM::~LaplaceFEM()
 
 
 //START_SPHINX_INCLUDE_02
-void LaplaceFEM::RegisterDataOnMesh( Group * const MeshBodies )
+void LaplaceFEM::RegisterDataOnMesh( Group * const meshBodies )
 {
-  for( auto & mesh : MeshBodies->GetSubGroups() )
+  for( auto & mesh : meshBodies->GetSubGroups() )
   {
     NodeManager * const nodes = mesh.second->group_cast< MeshBody * >()->getMeshLevel( 0 )->getNodeManager();
 
@@ -76,7 +76,7 @@ void LaplaceFEM::RegisterDataOnMesh( Group * const MeshBodies )
 }
 //END_SPHINX_INCLUDE_02
 
-real64 LaplaceFEM::SolverStep( real64 const & time_n,
+real64 LaplaceFEM::SolverStep( real64 const & timeN,
                                real64 const & dt,
                                const int cycleNumber,
                                DomainPartition & domain )
@@ -84,12 +84,12 @@ real64 LaplaceFEM::SolverStep( real64 const & time_n,
   real64 dtReturn = dt;
   if( m_timeIntegrationOption == TimeIntegrationOption::ExplicitTransient )
   {
-    dtReturn = ExplicitStep( time_n, dt, cycleNumber, domain );
+    dtReturn = ExplicitStep( timeN, dt, cycleNumber, domain );
   }
   else if( m_timeIntegrationOption == TimeIntegrationOption::ImplicitTransient ||
            m_timeIntegrationOption == TimeIntegrationOption::SteadyState )
   {
-    dtReturn = this->LinearImplicitStep( time_n, dt, cycleNumber, domain );
+    dtReturn = this->LinearImplicitStep( timeN, dt, cycleNumber, domain );
   }
   return dtReturn;
 }
@@ -205,14 +205,14 @@ void LaplaceFEM::ApplySystemSolution( DofManager const & dofManager,
                                          true );
 }
 
-void LaplaceFEM::ApplyBoundaryConditions( real64 const time_n,
+void LaplaceFEM::ApplyBoundaryConditions( real64 const timeN,
                                           real64 const dt,
                                           DomainPartition & domain,
                                           DofManager const & dofManager,
                                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                           arrayView1d< real64 > const & localRhs )
 {
-  ApplyDirichletBC_implicit( time_n + dt, dofManager, domain, localMatrix, localRhs );
+  ApplyDirichletBC_implicit( timeN + dt, dofManager, domain, localMatrix, localRhs );
 }
 
 void LaplaceFEM::SolveSystem( DofManager const & dofManager,

@@ -45,13 +45,13 @@ public:
   CompressibleSinglePhaseUpdate( DensRelationType const & densRelation,
                                  ViscRelationType const & viscRelation,
                                  arrayView2d< real64 > const & density,
-                                 arrayView2d< real64 > const & dDens_dPres,
+                                 arrayView2d< real64 > const & dDensDPres,
                                  arrayView2d< real64 > const & viscosity,
-                                 arrayView2d< real64 > const & dVisc_dPres )
+                                 arrayView2d< real64 > const & dViscDPres )
     : SingleFluidBaseUpdate( density,
-                             dDens_dPres,
+                             dDensDPres,
                              viscosity,
-                             dVisc_dPres ),
+                             dViscDPres ),
     m_densRelation( densRelation ),
     m_viscRelation( viscRelation )
   {}
@@ -82,12 +82,12 @@ public:
   GEOSX_FORCE_INLINE
   virtual void Compute( real64 const pressure,
                         real64 & density,
-                        real64 & dDensity_dPressure,
+                        real64 & dDensityDPressure,
                         real64 & viscosity,
-                        real64 & dViscosity_dPressure ) const override
+                        real64 & dViscosityDPressure ) const override
   {
-    m_densRelation.Compute( pressure, density, dDensity_dPressure );
-    m_viscRelation.Compute( pressure, viscosity, dViscosity_dPressure );
+    m_densRelation.Compute( pressure, density, dDensityDPressure );
+    m_viscRelation.Compute( pressure, viscosity, dViscosityDPressure );
   }
 
   GEOSX_HOST_DEVICE

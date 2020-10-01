@@ -105,13 +105,13 @@ void HydrofractureSolver::RegisterDataOnMesh( dataRepository::Group * const Mesh
 }
 #endif
 
-void HydrofractureSolver::ImplicitStepSetup( real64 const & time_n,
+void HydrofractureSolver::ImplicitStepSetup( real64 const & timeN,
                                              real64 const & dt,
                                              DomainPartition & domain )
 {
   UpdateDeformationForCoupling( domain );
-  m_solidSolver->ImplicitStepSetup( time_n, dt, domain );
-  m_flowSolver->ImplicitStepSetup( time_n, dt, domain );
+  m_solidSolver->ImplicitStepSetup( timeN, dt, domain );
+  m_flowSolver->ImplicitStepSetup( timeN, dt, domain );
 
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
   MeshLevel & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
@@ -134,12 +134,12 @@ void HydrofractureSolver::ImplicitStepSetup( real64 const & time_n,
 
 }
 
-void HydrofractureSolver::ImplicitStepComplete( real64 const & time_n,
+void HydrofractureSolver::ImplicitStepComplete( real64 const & timeN,
                                                 real64 const & dt,
                                                 DomainPartition & domain )
 {
-  m_flowSolver->ImplicitStepComplete( time_n, dt, domain );
-  m_solidSolver->ImplicitStepComplete( time_n, dt, domain );
+  m_flowSolver->ImplicitStepComplete( timeN, dt, domain );
+  m_solidSolver->ImplicitStepComplete( timeN, dt, domain );
 }
 
 void HydrofractureSolver::PostProcessInput()
@@ -165,7 +165,7 @@ void HydrofractureSolver::ResetStateToBeginningOfStep( DomainPartition & domain 
   m_solidSolver->ResetStateToBeginningOfStep( domain );
 }
 
-real64 HydrofractureSolver::SolverStep( real64 const & time_n,
+real64 HydrofractureSolver::SolverStep( real64 const & timeN,
                                         real64 const & dt,
                                         int const cycleNumber,
                                         DomainPartition & domain )
@@ -176,12 +176,12 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
 
   if( m_couplingTypeOption == CouplingTypeOption::SIM_FixedStress )
   {
-    dtReturn = SplitOperatorStep( time_n, dt, cycleNumber, domain );
+    dtReturn = SplitOperatorStep( timeN, dt, cycleNumber, domain );
   }
   else if( m_couplingTypeOption == CouplingTypeOption::FIM )
   {
 
-    ImplicitStepSetup( time_n, dt, domain );
+    ImplicitStepSetup( timeN, dt, domain );
 
     int const maxIter = m_maxNumResolves + 1;
     m_numResolves[1] = m_numResolves[0];
@@ -203,14 +203,14 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
       }
 
       // currently the only method is implicit time integration
-      dtReturn = NonlinearImplicitStep( time_n, dt, cycleNumber, domain );
+      dtReturn = NonlinearImplicitStep( timeN, dt, cycleNumber, domain );
 
 
 //      m_solidSolver->updateStress( domain );
 
       if( surfaceGenerator!=nullptr )
       {
-        if( surfaceGenerator->SolverStep( time_n, dt, cycleNumber, domain ) > 0 )
+        if( surfaceGenerator->SolverStep( timeN, dt, cycleNumber, domain ) > 0 )
         {
           locallyFractured = 1;
         }
@@ -247,7 +247,7 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
     }
 
     // final step for completion of timestep. typically secondary variable updates and cleanup.
-    ImplicitStepComplete( time_n, dtReturn, domain );
+    ImplicitStepComplete( timeN, dtReturn, domain );
     m_numResolves[1] = solveIter;
   }
 
@@ -452,14 +452,14 @@ real64 HydrofractureSolver::SplitOperatorStep( real64 const & GEOSX_UNUSED_PARAM
   return dtReturn;
 }
 
-real64 HydrofractureSolver::ExplicitStep( real64 const & time_n,
+real64 HydrofractureSolver::ExplicitStep( real64 const & timeN,
                                           real64 const & dt,
                                           const int cycleNumber,
                                           DomainPartition & domain )
 {
   GEOSX_MARK_FUNCTION;
-  m_solidSolver->ExplicitStep( time_n, dt, cycleNumber, domain );
-  m_flowSolver->SolverStep( time_n, dt, cycleNumber, domain );
+  m_solidSolver->ExplicitStep( timeN, dt, cycleNumber, domain );
+  m_flowSolver->SolverStep( timeN, dt, cycleNumber, domain );
 
   return dt;
 }

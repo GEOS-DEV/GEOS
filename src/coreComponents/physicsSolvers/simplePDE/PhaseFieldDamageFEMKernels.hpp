@@ -97,7 +97,7 @@ public:
                           CRSMatrixView< real64, globalIndex const > const & inputMatrix,
                           arrayView1d< real64 > const & inputRhs,
                           string const & fieldName,
-                          real64 const Gc,
+                          real64 const gc,
                           real64 const lengthScale,
                           int const localDissipationOption ):
     Base( nodeManager,
@@ -112,7 +112,7 @@ public:
           inputRhs ),
     m_X( nodeManager.referencePosition()),
     m_nodalDamage( nodeManager.template getReference< array1d< real64 > >( fieldName )),
-    m_Gc( Gc ),
+    m_Gc( gc ),
     m_lengthScale( lengthScale ),
     m_localDissipationOption( localDissipationOption )
   {}

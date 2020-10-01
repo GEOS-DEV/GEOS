@@ -132,7 +132,7 @@ real64 SolverBase::SolverStep( real64 const & GEOSX_UNUSED_PARAM( time_n ),
   return 0;
 }
 
-void SolverBase::Execute( real64 const time_n,
+void SolverBase::Execute( real64 const timeN,
                           real64 const dt,
                           integer const cycleNumber,
                           integer const GEOSX_UNUSED_PARAM( eventCounter ),
@@ -148,7 +148,7 @@ void SolverBase::Execute( real64 const time_n,
 
   for(; subStep < maxSubSteps && dtRemaining > 0.0; ++subStep )
   {
-    real64 const dtAccepted = SolverStep( time_n + (dt - dtRemaining),
+    real64 const dtAccepted = SolverStep( timeN + (dt - dtRemaining),
                                           nextDt,
                                           cycleNumber,
                                           *domain->group_cast< DomainPartition * >() );
@@ -210,21 +210,21 @@ void SolverBase::SetNextDtBasedOnNewtonIter( real64 const & currentDt,
   }
 }
 
-real64 SolverBase::LinearImplicitStep( real64 const & time_n,
+real64 SolverBase::LinearImplicitStep( real64 const & timeN,
                                        real64 const & dt,
                                        integer const GEOSX_UNUSED_PARAM( cycleNumber ),
                                        DomainPartition & domain )
 {
   // call setup for physics solver. Pre step allocations etc.
   // TODO: Nonlinear step does not call its own setup, need to decide on consistent behavior
-  ImplicitStepSetup( time_n, dt, domain );
+  ImplicitStepSetup( timeN, dt, domain );
 
   // zero out matrix/rhs before assembly
   m_localMatrix.setValues< parallelDevicePolicy<> >( 0.0 );
   m_localRhs.setValues< parallelDevicePolicy<> >( 0.0 );
 
   // call assemble to fill the matrix and the rhs
-  AssembleSystem( time_n,
+  AssembleSystem( timeN,
                   dt,
                   domain,
                   m_dofManager,
@@ -232,7 +232,7 @@ real64 SolverBase::LinearImplicitStep( real64 const & time_n,
                   m_localRhs.toView() );
 
   // apply boundary conditions to system
-  ApplyBoundaryConditions( time_n,
+  ApplyBoundaryConditions( timeN,
                            dt,
                            domain,
                            m_dofManager,
@@ -261,14 +261,14 @@ real64 SolverBase::LinearImplicitStep( real64 const & time_n,
   ApplySystemSolution( m_dofManager, m_localSolution, 1.0, domain );
 
   // final step for completion of timestep. typically secondary variable updates and cleanup.
-  ImplicitStepComplete( time_n, dt, domain );
+  ImplicitStepComplete( timeN, dt, domain );
 
   // return the achieved timestep
   return dt;
 }
 
 
-bool SolverBase::LineSearch( real64 const & time_n,
+bool SolverBase::LineSearch( real64 const & timeN,
                              real64 const & dt,
                              integer const GEOSX_UNUSED_PARAM( cycleNumber ),
                              DomainPartition & domain,
@@ -312,10 +312,10 @@ bool SolverBase::LineSearch( real64 const & time_n,
     // re-assemble system
     localMatrix.setValues< parallelDevicePolicy<> >( 0.0 );
     localRhs.setValues< parallelDevicePolicy<> >( 0.0 );
-    AssembleSystem( time_n, dt, domain, dofManager, localMatrix, localRhs );
+    AssembleSystem( timeN, dt, domain, dofManager, localMatrix, localRhs );
 
     // apply boundary conditions to system
-    ApplyBoundaryConditions( time_n, dt, domain, dofManager, localMatrix, localRhs );
+    ApplyBoundaryConditions( timeN, dt, domain, dofManager, localMatrix, localRhs );
 
     if( getLogLevel() >= 1 && logger::internal::rank==0 )
     {
@@ -392,7 +392,7 @@ real64 SolverBase::EisenstatWalker( real64 const newNewtonNorm,
   return krylovTol;
 }
 
-real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
+real64 SolverBase::NonlinearImplicitStep( real64 const & timeN,
                                           real64 const & dt,
                                           integer const cycleNumber,
                                           DomainPartition & domain )
@@ -446,7 +446,7 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
       m_localRhs.setValues< parallelDevicePolicy<> >( 0.0 );
 
       // call assemble to fill the matrix and the rhs
-      AssembleSystem( time_n,
+      AssembleSystem( timeN,
                       stepDt,
                       domain,
                       m_dofManager,
@@ -454,7 +454,7 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
                       m_localRhs.toView() );
 
       // apply boundary conditions to system
-      ApplyBoundaryConditions( time_n,
+      ApplyBoundaryConditions( timeN,
                                stepDt,
                                domain,
                                m_dofManager,
@@ -501,7 +501,7 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
           && residualNorm > lastResidual )
       {
         residualNorm = lastResidual;
-        bool lineSearchSuccess = LineSearch( time_n,
+        bool lineSearchSuccess = LineSearch( timeN,
                                              stepDt,
                                              cycleNumber,
                                              domain,
@@ -540,13 +540,13 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
       m_solution.createWithLocalSize( m_matrix.numLocalCols(), MPI_COMM_GEOSX );
 
       // Output the linear system matrix/rhs for debugging purposes
-      DebugOutputSystem( time_n, cycleNumber, newtonIter, m_matrix, m_rhs );
+      DebugOutputSystem( timeN, cycleNumber, newtonIter, m_matrix, m_rhs );
 
       // Solve the linear system
       SolveSystem( m_dofManager, m_matrix, m_rhs, m_solution );
 
       // Output the linear system solution for debugging purposes
-      DebugOutputSolution( time_n, cycleNumber, newtonIter, m_solution );
+      DebugOutputSolution( timeN, cycleNumber, newtonIter, m_solution );
 
       // Copy solution from parallel vector back to local
       // TODO: This step will not be needed when we teach LA vectors to wrap our pointers

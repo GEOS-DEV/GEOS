@@ -61,11 +61,11 @@ public:
                             bool const setSparsity = true ) override;
 
   virtual void
-  ImplicitStepSetup( real64 const & time_n,
+  ImplicitStepSetup( real64 const & timeN,
                      real64 const & dt,
                      DomainPartition & domain ) override final;
 
-  virtual void ImplicitStepComplete( real64 const & time_n,
+  virtual void ImplicitStepComplete( real64 const & timeN,
                                      real64 const & dt,
                                      DomainPartition & domain ) override final;
 
@@ -106,7 +106,7 @@ public:
 
   virtual void ResetStateToBeginningOfStep( DomainPartition & domain ) override;
 
-  virtual real64 SolverStep( real64 const & time_n,
+  virtual real64 SolverStep( real64 const & timeN,
                              real64 const & dt,
                              int const cycleNumber,
                              DomainPartition & domain ) override;
@@ -115,7 +115,7 @@ public:
                           real64 & nextDt ) override;
 
 
-  virtual real64 ExplicitStep( real64 const & time_n,
+  virtual real64 ExplicitStep( real64 const & timeN,
                                real64 const & dt,
                                integer const cycleNumber,
                                DomainPartition & domain ) override;
@@ -133,7 +133,7 @@ public:
                                                            ParallelMatrix * const matrix10 );
 
 
-  real64 SplitOperatorStep( real64 const & time_n,
+  real64 SplitOperatorStep( real64 const & timeN,
                             real64 const & dt,
                             integer const cycleNumber,
                             DomainPartition & domain );

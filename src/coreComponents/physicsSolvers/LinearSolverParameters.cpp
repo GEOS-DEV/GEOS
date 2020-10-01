@@ -146,13 +146,13 @@ void LinearSolverParametersInput::PostProcessInput()
 {
   m_parameters.logLevel = getLogLevel();
 
-  static const std::set< integer > binaryOptions = { 0, 1 };
+  static const std::set< integer > BINARY_OPTIONS = { 0, 1 };
 
-  GEOSX_ERROR_IF( binaryOptions.count( m_parameters.stopIfError ) == 0, viewKeyStruct::stopIfErrorString << " option can be either 0 (false) or 1 (true)" );
-  GEOSX_ERROR_IF( binaryOptions.count( m_parameters.direct.equilibrate ) == 0, viewKeyStruct::directEquilString << " option can be either 0 (false) or 1 (true)" );
-  GEOSX_ERROR_IF( binaryOptions.count( m_parameters.direct.replaceTinyPivot ) == 0, viewKeyStruct::directReplTinyPivotString << " option can be either 0 (false) or 1 (true)" );
-  GEOSX_ERROR_IF( binaryOptions.count( m_parameters.direct.iterativeRefine ) == 0, viewKeyStruct::directIterRefString << " option can be either 0 (false) or 1 (true)" );
-  GEOSX_ERROR_IF( binaryOptions.count( m_parameters.direct.parallel ) == 0, viewKeyStruct::directParallelString << " option can be either 0 (false) or 1 (true)" );
+  GEOSX_ERROR_IF( BINARY_OPTIONS.count( m_parameters.stopIfError ) == 0, viewKeyStruct::stopIfErrorString << " option can be either 0 (false) or 1 (true)" );
+  GEOSX_ERROR_IF( BINARY_OPTIONS.count( m_parameters.direct.equilibrate ) == 0, viewKeyStruct::directEquilString << " option can be either 0 (false) or 1 (true)" );
+  GEOSX_ERROR_IF( BINARY_OPTIONS.count( m_parameters.direct.replaceTinyPivot ) == 0, viewKeyStruct::directReplTinyPivotString << " option can be either 0 (false) or 1 (true)" );
+  GEOSX_ERROR_IF( BINARY_OPTIONS.count( m_parameters.direct.iterativeRefine ) == 0, viewKeyStruct::directIterRefString << " option can be either 0 (false) or 1 (true)" );
+  GEOSX_ERROR_IF( BINARY_OPTIONS.count( m_parameters.direct.parallel ) == 0, viewKeyStruct::directParallelString << " option can be either 0 (false) or 1 (true)" );
 
   GEOSX_ERROR_IF_LT_MSG( m_parameters.direct.checkResidualTolerance, 0.0, "Invalid value of " << viewKeyStruct::krylovTolString );
   GEOSX_ERROR_IF_GT_MSG( m_parameters.direct.checkResidualTolerance, 1.0, "Invalid value of " << viewKeyStruct::krylovTolString );

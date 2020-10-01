@@ -104,7 +104,7 @@ private:
 
     dataRepository::ViewKey xmin = { "xMin" };
     dataRepository::ViewKey xmax = { "xMax" };
-  } viewKeys;
+  } m_viewKeys;
 
   /// @endcond
 

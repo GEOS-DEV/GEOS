@@ -117,7 +117,7 @@ private:
   int m_isZReverse;
 
   /// Map from PAMELA enumeration element type to string
-  const std::unordered_map< PAMELA::ELEMENTS::TYPE, string, PAMELA::ELEMENTS::EnumClassHash > ElementToLabel
+  const std::unordered_map< PAMELA::ELEMENTS::TYPE, string, PAMELA::ELEMENTS::EnumClassHash > m_elementToLabel
     =
     {
     { PAMELA::ELEMENTS::TYPE::VTK_VERTEX, "VERTEX"},

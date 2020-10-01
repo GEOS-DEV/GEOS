@@ -154,20 +154,20 @@ TEST( FiniteElementBase, test_capture )
 //***** TEST value() ******************************************************************************
 
 template< int NUM_SUPPORT_POINTS >
-static void value( real64 const (&N)[NUM_SUPPORT_POINTS],
+static void value( real64 const (&n)[NUM_SUPPORT_POINTS],
                    real64 const (&var)[NUM_SUPPORT_POINTS],
                    real64 & value )
 {
   value = 0;
   for( int a=0; a<NUM_SUPPORT_POINTS; ++a )
   {
-    value += N[a] * var[a];
+    value += n[a] * var[a];
   }
 }
 
 template< int NUM_SUPPORT_POINTS,
           int NUM_COMPONENTS >
-static void value( real64 const (&N)[NUM_SUPPORT_POINTS],
+static void value( real64 const (&n)[NUM_SUPPORT_POINTS],
                    real64 const (&var)[NUM_SUPPORT_POINTS][NUM_COMPONENTS],
                    real64 (& value)[NUM_COMPONENTS] )
 {
@@ -179,7 +179,7 @@ static void value( real64 const (&N)[NUM_SUPPORT_POINTS],
   {
     for( int i=0; i<NUM_COMPONENTS; ++i )
     {
-      value[i] += N[a] * var[a][i];
+      value[i] += n[a] * var[a][i];
     }
   }
 }
@@ -348,7 +348,7 @@ TEST( FiniteElementBase, test_gradient )
 //***** TEST valueAndGradient() *******************************************************************
 
 template< int NUM_SUPPORT_POINTS >
-static void valueAndGradient( real64 const (&N)[NUM_SUPPORT_POINTS],
+static void valueAndGradient( real64 const (&n)[NUM_SUPPORT_POINTS],
                               real64 const (&gradN)[NUM_SUPPORT_POINTS][3],
                               real64 const (&var)[NUM_SUPPORT_POINTS],
                               real64 & value,
@@ -362,7 +362,7 @@ static void valueAndGradient( real64 const (&N)[NUM_SUPPORT_POINTS],
 
   for( int a=0; a<NUM_SUPPORT_POINTS; ++a )
   {
-    value += N[a] * var[a];
+    value += n[a] * var[a];
     for( int i = 0; i < 3; ++i )
     {
       gradVar[i] +=  var[ a ] * gradN[a][i];
@@ -427,14 +427,14 @@ TEST( FiniteElementBase, test_valueAndGradient )
 
 template< int NUM_SUPPORT_POINTS >
 static void plus_gradNajAij( real64 const (&gradN)[NUM_SUPPORT_POINTS][3],
-                             real64 const (&var_detJxW)[6],
-                             real64 (& R)[NUM_SUPPORT_POINTS][3] )
+                             real64 const (&varDetJxW)[6],
+                             real64 (& r)[NUM_SUPPORT_POINTS][3] )
 {
   for( int a=0; a<NUM_SUPPORT_POINTS; ++a )
   {
-    R[a][0] += var_detJxW[0] * gradN[a][0] + var_detJxW[5] * gradN[a][1] + var_detJxW[4] * gradN[a][2];
-    R[a][1] += var_detJxW[5] * gradN[a][0] + var_detJxW[1] * gradN[a][1] + var_detJxW[3] * gradN[a][2];
-    R[a][2] += var_detJxW[4] * gradN[a][0] + var_detJxW[3] * gradN[a][1] + var_detJxW[2] * gradN[a][2];
+    r[a][0] += varDetJxW[0] * gradN[a][0] + varDetJxW[5] * gradN[a][1] + varDetJxW[4] * gradN[a][2];
+    r[a][1] += varDetJxW[5] * gradN[a][0] + varDetJxW[1] * gradN[a][1] + varDetJxW[3] * gradN[a][2];
+    r[a][2] += varDetJxW[4] * gradN[a][0] + varDetJxW[3] * gradN[a][1] + varDetJxW[2] * gradN[a][2];
   }
 }
 
@@ -443,14 +443,14 @@ template< int NUM_SUPPORT_POINTS >
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void plus_gradNajAij( real64 const (&gradN)[NUM_SUPPORT_POINTS][3],
-                      real64 const (&var_detJxW)[3][3],
-                      real64 (& R)[NUM_SUPPORT_POINTS][3] )
+                      real64 const (&varDetJxW)[3][3],
+                      real64 (& r)[NUM_SUPPORT_POINTS][3] )
 {
   for( int a=0; a<NUM_SUPPORT_POINTS; ++a )
   {
-    R[a][0] += var_detJxW[0][0] * gradN[a][0] + var_detJxW[0][1] * gradN[a][1] + var_detJxW[0][2] * gradN[a][2];
-    R[a][1] += var_detJxW[1][0] * gradN[a][0] + var_detJxW[1][1] * gradN[a][1] + var_detJxW[1][2] * gradN[a][2];
-    R[a][2] += var_detJxW[2][0] * gradN[a][0] + var_detJxW[2][1] * gradN[a][1] + var_detJxW[2][2] * gradN[a][2];
+    r[a][0] += varDetJxW[0][0] * gradN[a][0] + varDetJxW[0][1] * gradN[a][1] + varDetJxW[0][2] * gradN[a][2];
+    r[a][1] += varDetJxW[1][0] * gradN[a][0] + varDetJxW[1][1] * gradN[a][1] + varDetJxW[1][2] * gradN[a][2];
+    r[a][2] += varDetJxW[2][0] * gradN[a][0] + varDetJxW[2][1] * gradN[a][1] + varDetJxW[2][2] * gradN[a][2];
   }
 }
 
@@ -496,15 +496,15 @@ TEST( FiniteElementBase, test_plus_gradNajAij )
 //***** TEST plus_NaFi() ********************************************************************
 
 template< int NUM_SUPPORT_POINTS >
-static void plus_NaFi( real64 const (&N)[NUM_SUPPORT_POINTS],
-                       real64 const (&var_detJxW)[3],
-                       real64 ( & R )[NUM_SUPPORT_POINTS][3] )
+static void plus_NaFi( real64 const (&n)[NUM_SUPPORT_POINTS],
+                       real64 const (&varDetJxW)[3],
+                       real64 ( & r )[NUM_SUPPORT_POINTS][3] )
 {
   for( int a=0; a<NUM_SUPPORT_POINTS; ++a )
   {
-    R[a][0] += var_detJxW[0] * N[a];
-    R[a][1] += var_detJxW[1] * N[a];
-    R[a][2] += var_detJxW[2] * N[a];
+    r[a][0] += varDetJxW[0] * n[a];
+    r[a][1] += varDetJxW[1] * n[a];
+    r[a][2] += varDetJxW[2] * n[a];
   }
 }
 
@@ -543,31 +543,31 @@ TEST( FiniteElementBase, test_plus_NaFi )
 
 template< int NUM_SUPPORT_POINTS >
 static void plus_gradNajAij_plus_NaFi( real64 const (&gradN)[NUM_SUPPORT_POINTS][3],
-                                       real64 const (&var_detJxW)[6],
-                                       real64 const (&N)[NUM_SUPPORT_POINTS],
-                                       real64 const (&forcingTerm_detJxW)[3],
-                                       real64 (& R)[NUM_SUPPORT_POINTS][3] )
+                                       real64 const (&varDetJxW)[6],
+                                       real64 const (&n)[NUM_SUPPORT_POINTS],
+                                       real64 const (&forcingTermDetJxW)[3],
+                                       real64 (& r)[NUM_SUPPORT_POINTS][3] )
 {
   for( int a=0; a<NUM_SUPPORT_POINTS; ++a )
   {
-    R[a][0] += var_detJxW[0] * gradN[a][0] + var_detJxW[5] * gradN[a][1] + var_detJxW[4] * gradN[a][2] + forcingTerm_detJxW[0] * N[a];
-    R[a][1] += var_detJxW[5] * gradN[a][0] + var_detJxW[1] * gradN[a][1] + var_detJxW[3] * gradN[a][2] + forcingTerm_detJxW[1] * N[a];
-    R[a][2] += var_detJxW[4] * gradN[a][0] + var_detJxW[3] * gradN[a][1] + var_detJxW[2] * gradN[a][2] + forcingTerm_detJxW[2] * N[a];
+    r[a][0] += varDetJxW[0] * gradN[a][0] + varDetJxW[5] * gradN[a][1] + varDetJxW[4] * gradN[a][2] + forcingTermDetJxW[0] * n[a];
+    r[a][1] += varDetJxW[5] * gradN[a][0] + varDetJxW[1] * gradN[a][1] + varDetJxW[3] * gradN[a][2] + forcingTermDetJxW[1] * n[a];
+    r[a][2] += varDetJxW[4] * gradN[a][0] + varDetJxW[3] * gradN[a][1] + varDetJxW[2] * gradN[a][2] + forcingTermDetJxW[2] * n[a];
   }
 }
 
 template< int NUM_SUPPORT_POINTS >
 static void plus_gradNajAij_plus_NaFi( real64 const (&gradN)[NUM_SUPPORT_POINTS][3],
-                                       real64 const (&var_detJxW)[3][3],
-                                       real64 const (&N)[NUM_SUPPORT_POINTS],
-                                       real64 const (&forcingTerm_detJxW)[3],
-                                       real64 (& R)[NUM_SUPPORT_POINTS][3] )
+                                       real64 const (&varDetJxW)[3][3],
+                                       real64 const (&n)[NUM_SUPPORT_POINTS],
+                                       real64 const (&forcingTermDetJxW)[3],
+                                       real64 (& r)[NUM_SUPPORT_POINTS][3] )
 {
   for( int a=0; a<NUM_SUPPORT_POINTS; ++a )
   {
-    R[a][0] += var_detJxW[0][0] * gradN[a][0] + var_detJxW[0][1] * gradN[a][1] + var_detJxW[0][2] * gradN[a][2] + forcingTerm_detJxW[0] * N[a];
-    R[a][1] += var_detJxW[1][0] * gradN[a][0] + var_detJxW[1][1] * gradN[a][1] + var_detJxW[1][2] * gradN[a][2] + forcingTerm_detJxW[1] * N[a];
-    R[a][2] += var_detJxW[2][0] * gradN[a][0] + var_detJxW[2][1] * gradN[a][1] + var_detJxW[2][2] * gradN[a][2] + forcingTerm_detJxW[2] * N[a];
+    r[a][0] += varDetJxW[0][0] * gradN[a][0] + varDetJxW[0][1] * gradN[a][1] + varDetJxW[0][2] * gradN[a][2] + forcingTermDetJxW[0] * n[a];
+    r[a][1] += varDetJxW[1][0] * gradN[a][0] + varDetJxW[1][1] * gradN[a][1] + varDetJxW[1][2] * gradN[a][2] + forcingTermDetJxW[1] * n[a];
+    r[a][2] += varDetJxW[2][0] * gradN[a][0] + varDetJxW[2][1] * gradN[a][1] + varDetJxW[2][2] * gradN[a][2] + forcingTermDetJxW[2] * n[a];
   }
 }
 

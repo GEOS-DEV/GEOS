@@ -107,7 +107,7 @@ public:
    * @param[in] num_dims number of dimensions in T
    * @param[in] dims pointer to the new dims
    */
-  virtual void resize( int num_dims, localIndex const * const dims ) = 0;
+  virtual void resize( int numDims, localIndex const * const dims ) = 0;
 
   /**
    * @brief Calls T::reserve( newCapacity ) if it exists, otherwise a no-op.

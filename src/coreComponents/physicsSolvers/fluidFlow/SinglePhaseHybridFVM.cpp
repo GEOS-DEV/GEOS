@@ -46,14 +46,14 @@ SinglePhaseHybridFVM::SinglePhaseHybridFVM( const std::string & name,
 }
 
 
-void SinglePhaseHybridFVM::RegisterDataOnMesh( Group * const MeshBodies )
+void SinglePhaseHybridFVM::RegisterDataOnMesh( Group * const meshBodies )
 {
 
   // 1) Register the cell-centered data
-  SinglePhaseBase::RegisterDataOnMesh( MeshBodies );
+  SinglePhaseBase::RegisterDataOnMesh( meshBodies );
 
   // 2) Register the face data
-  for( auto & mesh : MeshBodies->GetSubGroups() )
+  for( auto & mesh : meshBodies->GetSubGroups() )
   {
     MeshLevel * const meshLevel = Group::group_cast< MeshBody * >( mesh.second )->getMeshLevel( 0 );
     FaceManager * const faceManager = meshLevel->getFaceManager();
@@ -87,14 +87,14 @@ void SinglePhaseHybridFVM::InitializePostInitialConditions_PreSubGroups( Group *
 
 }
 
-void SinglePhaseHybridFVM::ImplicitStepSetup( real64 const & time_n,
+void SinglePhaseHybridFVM::ImplicitStepSetup( real64 const & timeN,
                                               real64 const & dt,
                                               DomainPartition & domain )
 {
   GEOSX_MARK_FUNCTION;
 
   // setup the cell-centered fields
-  SinglePhaseBase::ImplicitStepSetup( time_n, dt, domain );
+  SinglePhaseBase::ImplicitStepSetup( timeN, dt, domain );
 
   // setup the face fields
   MeshLevel & meshLevel     = *domain.getMeshBodies()->GetGroup< MeshBody >( 0 )->getMeshLevel( 0 );
@@ -108,14 +108,14 @@ void SinglePhaseHybridFVM::ImplicitStepSetup( real64 const & time_n,
   dFacePres.setValues< parallelDevicePolicy<> >( 0.0 );
 }
 
-void SinglePhaseHybridFVM::ImplicitStepComplete( real64 const & time_n,
+void SinglePhaseHybridFVM::ImplicitStepComplete( real64 const & timeN,
                                                  real64 const & dt,
                                                  DomainPartition & domain )
 {
   GEOSX_MARK_FUNCTION;
 
   // increment the cell-centered fields
-  SinglePhaseBase::ImplicitStepComplete( time_n, dt, domain );
+  SinglePhaseBase::ImplicitStepComplete( timeN, dt, domain );
 
   // increment the face fields
   MeshLevel & meshLevel     = *domain.getMeshBody( 0 )->getMeshLevel( 0 );

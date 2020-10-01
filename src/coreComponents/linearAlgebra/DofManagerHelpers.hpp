@@ -385,12 +385,12 @@ bool LocationSwitch( DofManager::Location const loc1,
 {
   bool ret2;
   bool const ret1 =
-    LocationSwitch( loc1, [&]( auto const loc_type1 )
+    LocationSwitch( loc1, [&]( auto const locType1 )
   {
     ret2 =
-      LocationSwitch( loc2, [&]( auto const loc_type2 )
+      LocationSwitch( loc2, [&]( auto const locType2 )
     {
-      lambda( loc_type1, loc_type2 );
+      lambda( locType1, locType2 );
     } );
   } );
   return ret1 && ret2;

@@ -263,24 +263,24 @@ public:
    *  completed (retrieve the request using GetRecvRequest)
    */
   void UnpackAndRebuildSyncLists( MeshLevel & meshLevel,
-                                  int const CommID );
+                                  int const commId );
 
   void PackCommBufferForSync( std::map< string, string_array > const & fieldNames,
                               MeshLevel const & meshLevel,
                               int const commID,
-                              bool on_device = false );
+                              bool onDevice = false );
 
   int PackCommSizeForSync( std::map< string, string_array > const & fieldNames,
                            MeshLevel const & meshLevel,
                            int const commID,
-                           bool on_device = false );
+                           bool onDevice = false );
 
   void SendRecvBuffers( int const commID );
 
   void UnpackBufferForSync( std::map< string, string_array > const & fieldNames,
                             MeshLevel * const meshLevel,
                             int const commID,
-                            bool on_device = false );
+                            bool onDevice = false );
 
   void SetNeighborRank( int const rank ) { m_neighborRank = rank; }
   int NeighborRank() const { return m_neighborRank; }

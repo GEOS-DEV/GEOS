@@ -77,7 +77,7 @@ public:
                                            DofManager const & dofManager,
                                            SparsityPatternView< globalIndex > const & pattern ) const override;
 
-  virtual void AssembleCouplingTerms( real64 const time_n,
+  virtual void AssembleCouplingTerms( real64 const timeN,
                                       real64 const dt,
                                       DomainPartition const & domain,
                                       DofManager const & dofManager,

@@ -58,13 +58,13 @@ protected:
    * @param dVisc_dPres derivative of viscosity w.r.t. pressure
    */
   SingleFluidBaseUpdate( arrayView2d< real64 > const & density,
-                         arrayView2d< real64 > const & dDens_dPres,
+                         arrayView2d< real64 > const & dDensDPres,
                          arrayView2d< real64 > const & viscosity,
-                         arrayView2d< real64 > const & dVisc_dPres )
+                         arrayView2d< real64 > const & dViscDPres )
     : m_density( density ),
-    m_dDens_dPres( dDens_dPres ),
+    m_dDens_dPres( dDensDPres ),
     m_viscosity( viscosity ),
-    m_dVisc_dPres( dVisc_dPres )
+    m_dVisc_dPres( dViscDPres )
   {}
 
   /**
@@ -125,9 +125,9 @@ private:
   GEOSX_HOST_DEVICE
   virtual void Compute( real64 const pressure,
                         real64 & density,
-                        real64 & dDensity_dPressure,
+                        real64 & dDensityDPressure,
                         real64 & viscosity,
-                        real64 & dViscosity_dPressure ) const = 0;
+                        real64 & dViscosityDPressure ) const = 0;
 
   /**
    * @brief Update fluid state at a single point.

@@ -176,7 +176,7 @@ struct FluxKernel
           arrayView1d< real64 const > const & connRate,
           arrayView1d< real64 const > const & dConnRate,
           arrayView2d< real64 const > const & wellElemCompFrac,
-          arrayView3d< real64 const > const & dWellElemCompFrac_dCompDens,
+          arrayView3d< real64 const > const & dWellElemCompFracDCompDens,
           real64 const & dt,
           CRSMatrixView< real64, globalIndex const > const & localMatrix,
           arrayView1d< real64 > const & localRhs )
@@ -248,7 +248,7 @@ struct FluxKernel
           compFracUp[ic] = wellElemCompFrac[iwelemUp][ic];
           for( localIndex jc = 0; jc < NC; ++jc )
           {
-            dCompFrac_dCompDensUp[ic][jc] = dWellElemCompFrac_dCompDens[iwelemUp][ic][jc];
+            dCompFrac_dCompDensUp[ic][jc] = dWellElemCompFracDCompDens[iwelemUp][ic][jc];
           }
         }
       }
@@ -617,7 +617,7 @@ struct PerforationKernel
           arrayView1d< localIndex const > const & resElementIndex,
           arrayView2d< real64 > const & compPerfRate,
           arrayView3d< real64 > const & dCompPerfRate_dPres,
-          arrayView4d< real64 > const & dCompPerfRate_dComp )
+          arrayView4d< real64 > const & dCompPerfRateDComp )
   {
     localIndex const NC = numComponents;
     localIndex const NP = numPhases;
@@ -664,7 +664,7 @@ struct PerforationKernel
           dCompPerfRate_dPres[iperf][ke][ic] = 0.0;
           for( localIndex jc = 0; jc < NC; ++jc )
           {
-            dCompPerfRate_dComp[iperf][ke][ic][jc] = 0.0;
+            dCompPerfRateDComp[iperf][ke][ic][jc] = 0.0;
           }
         }
       }
@@ -779,14 +779,14 @@ struct PerforationKernel
 
             for( localIndex jc = 0; jc < NC; ++jc )
             {
-              dCompPerfRate_dComp[iperf][CompositionalMultiphaseWell::SubRegionTag::RES][ic][jc] +=
+              dCompPerfRateDComp[iperf][CompositionalMultiphaseWell::SubRegionTag::RES][ic][jc] +=
                 dFlux_dC[CompositionalMultiphaseWell::SubRegionTag::RES][jc]
                 * resPhaseCompFrac[er][esr][ei][0][ip][ic];
 
-              dCompPerfRate_dComp[iperf][CompositionalMultiphaseWell::SubRegionTag::RES][ic][jc] +=
+              dCompPerfRateDComp[iperf][CompositionalMultiphaseWell::SubRegionTag::RES][ic][jc] +=
                 flux * dPhaseCompFrac_dCompDens[jc];
 
-              dCompPerfRate_dComp[iperf][CompositionalMultiphaseWell::SubRegionTag::WELL][ic][jc] +=
+              dCompPerfRateDComp[iperf][CompositionalMultiphaseWell::SubRegionTag::WELL][ic][jc] +=
                 dFlux_dC[CompositionalMultiphaseWell::SubRegionTag::WELL][jc]
                 * resPhaseCompFrac[er][esr][ei][0][ip][ic];
             }
@@ -887,13 +887,13 @@ struct PerforationKernel
 
           for( localIndex jc = 0; jc < NC; ++jc )
           {
-            dCompPerfRate_dComp[iperf][CompositionalMultiphaseWell::SubRegionTag::RES][ic][jc]  +=
+            dCompPerfRateDComp[iperf][CompositionalMultiphaseWell::SubRegionTag::RES][ic][jc]  +=
               wellElemCompFrac[iwelem][ic] * dFlux_dC[CompositionalMultiphaseWell::SubRegionTag::RES][jc];
 
-            dCompPerfRate_dComp[iperf][CompositionalMultiphaseWell::SubRegionTag::WELL][ic][jc] +=
+            dCompPerfRateDComp[iperf][CompositionalMultiphaseWell::SubRegionTag::WELL][ic][jc] +=
               wellElemCompFrac[iwelem][ic] * dFlux_dC[CompositionalMultiphaseWell::SubRegionTag::WELL][jc];
 
-            dCompPerfRate_dComp[iperf][CompositionalMultiphaseWell::SubRegionTag::WELL][ic][jc] +=
+            dCompPerfRateDComp[iperf][CompositionalMultiphaseWell::SubRegionTag::WELL][ic][jc] +=
               dWellElemCompFrac_dCompDens[iwelem][ic][jc] * flux;
           }
         }

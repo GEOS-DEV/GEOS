@@ -156,18 +156,18 @@ public:
   GEOSX_HOST_DEVICE
   virtual void HypoElastic( localIndex const k,
                             localIndex const q,
-                            real64 const ( &Ddt )[ 6 ],
-                            real64 const ( &Rot )[ 3 ][ 3 ] ) const override final;
+                            real64 const ( &ddt )[ 6 ],
+                            real64 const ( &rot )[ 3 ][ 3 ] ) const override final;
 
   GEOSX_HOST_DEVICE
   virtual void HyperElastic( localIndex const k,
-                             real64 const (&FmI)[3][3],
+                             real64 const (&fmI)[3][3],
                              real64 ( &stress )[ 6 ] ) const override final;
 
   GEOSX_HOST_DEVICE
   virtual void HyperElastic( localIndex const k,
                              localIndex const q,
-                             real64 const (&FmI)[3][3] ) const override final;
+                             real64 const (&fmI)[3][3] ) const override final;
 
   GEOSX_HOST_DEVICE
   virtual real64 calculateStrainEnergyDensity( localIndex const k,
@@ -226,53 +226,53 @@ GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void LinearElasticIsotropicUpdates::HypoElastic( localIndex const k,
                                                  localIndex const q,
-                                                 real64 const ( &Ddt )[ 6 ],
-                                                 real64 const ( &Rot )[ 3 ][ 3 ] ) const
+                                                 real64 const ( &ddt )[ 6 ],
+                                                 real64 const ( &rot )[ 3 ][ 3 ] ) const
 {
   real64 const lambda = m_bulkModulus[ k ] - 2.0 / 3.0 * m_shearModulus[ k ];
-  real64 const volStrain = ( Ddt[ 0 ] + Ddt[ 1 ] + Ddt[ 2 ] );
+  real64 const volStrain = ( ddt[ 0 ] + ddt[ 1 ] + ddt[ 2 ] );
   real64 const TwoG = 2.0 * m_shearModulus[ k ];
 
-  m_stress( k, q, 0 ) =  m_stress( k, q, 0 ) + TwoG * Ddt[ 0 ] + lambda * volStrain;
-  m_stress( k, q, 1 ) =  m_stress( k, q, 1 ) + TwoG * Ddt[ 1 ] + lambda * volStrain;
-  m_stress( k, q, 2 ) =  m_stress( k, q, 2 ) + TwoG * Ddt[ 2 ] + lambda * volStrain;
-  m_stress( k, q, 3 ) =  m_stress( k, q, 3 ) + TwoG * Ddt[ 3 ];
-  m_stress( k, q, 4 ) =  m_stress( k, q, 4 ) + TwoG * Ddt[ 4 ];
-  m_stress( k, q, 5 ) =  m_stress( k, q, 5 ) + TwoG * Ddt[ 5 ];
+  m_stress( k, q, 0 ) =  m_stress( k, q, 0 ) + TwoG * ddt[ 0 ] + lambda * volStrain;
+  m_stress( k, q, 1 ) =  m_stress( k, q, 1 ) + TwoG * ddt[ 1 ] + lambda * volStrain;
+  m_stress( k, q, 2 ) =  m_stress( k, q, 2 ) + TwoG * ddt[ 2 ] + lambda * volStrain;
+  m_stress( k, q, 3 ) =  m_stress( k, q, 3 ) + TwoG * ddt[ 3 ];
+  m_stress( k, q, 4 ) =  m_stress( k, q, 4 ) + TwoG * ddt[ 4 ];
+  m_stress( k, q, 5 ) =  m_stress( k, q, 5 ) + TwoG * ddt[ 5 ];
 
   real64 temp[ 6 ] = { 0 };
-  LvArray::tensorOps::AikSymBklAjl< 3 >( temp, Rot, m_stress[ k ][ q ] );
+  LvArray::tensorOps::AikSymBklAjl< 3 >( temp, rot, m_stress[ k ][ q ] );
   LvArray::tensorOps::copy< 6 >( m_stress[ k ][ q ], temp );
 }
 
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void LinearElasticIsotropicUpdates::HyperElastic( localIndex const k,
-                                                  real64 const (&FmI)[3][3],
+                                                  real64 const (&fmI)[3][3],
                                                   real64 ( & stress )[ 6 ] ) const
 {
   real64 const C1 = 0.5 * m_shearModulus[k];
   real64 const D1 = 0.5 * m_bulkModulus[k];
-  real64 const detFm1 = FmI[0][0] + FmI[1][1] + FmI[2][2]
-                        - FmI[1][2]*FmI[2][1] + FmI[1][1]*FmI[2][2]
-                        + FmI[0][2]*(-FmI[2][0] - FmI[1][1]*FmI[2][0] + FmI[1][0]*FmI[2][1])
-                        + FmI[0][1]*(-FmI[1][0] + FmI[1][2]*FmI[2][0] - FmI[1][0]*FmI[2][2])
-                        + FmI[0][0]*( FmI[1][1] - FmI[1][2]*FmI[2][1] + FmI[2][2] + FmI[1][1]*FmI[2][2]);
+  real64 const detFm1 = fmI[0][0] + fmI[1][1] + fmI[2][2]
+                        - fmI[1][2]*fmI[2][1] + fmI[1][1]*fmI[2][2]
+                        + fmI[0][2]*(-fmI[2][0] - fmI[1][1]*fmI[2][0] + fmI[1][0]*fmI[2][1])
+                        + fmI[0][1]*(-fmI[1][0] + fmI[1][2]*fmI[2][0] - fmI[1][0]*fmI[2][2])
+                        + fmI[0][0]*( fmI[1][1] - fmI[1][2]*fmI[2][1] + fmI[2][2] + fmI[1][1]*fmI[2][2]);
 
 
   real64 const p = -2 * D1 * ( detFm1 + 1.0 ) * detFm1;
-  real64 devB[6] = { 1/3 * (2 * FmI[0][0] * (2 + FmI[0][0]) - FmI[1][1] * (2 + FmI[1][1]) - FmI[2][2] * (2 + FmI[2][2]) +
-                            2 * FmI[0][1]*FmI[0][1] + 2 * FmI[0][2] * FmI[0][2] - FmI[1][0] * FmI[1][0] - FmI[1][2] * FmI[1][2] -
-                            FmI[2][0] * FmI[2][0] - FmI[2][1] * FmI[2][1]),
-                     1/3 * (-FmI[0][0] * (2 + FmI[0][0]) + 2 * FmI[1][1] * ( 2 + FmI[1][1]) - FmI[2][2] * (2 + FmI[2][2]) -
-                            FmI[0][1]*FmI[0][1] - FmI[0][2]*FmI[0][2] + 2 * FmI[1][0]*FmI[1][0] + 2 * FmI[1][2]*FmI[1][2] - FmI[2][0]*FmI[2][0] - FmI[2][1]*
-                            FmI[2][1]),
-                     1/3 *(-FmI[0][0] * (2 + FmI[0][0]) - FmI[1][1] * (2 + FmI[1][1]) + 2 * FmI[2][2] * (2 + FmI[2][2]) -
-                           FmI[0][1]*FmI[0][1] - FmI[0][2]*FmI[0][2] - FmI[1][0]*FmI[1][0] - FmI[1][2]*FmI[1][2] + 2 * FmI[2][0]*FmI[2][0] + 2 * FmI[2][1]*
-                           FmI[2][1]),
-                     FmI[1][2] + FmI[1][0] * FmI[2][0] + FmI[2][1] + FmI[1][1]*FmI[2][1] + FmI[1][2]*FmI[2][2],
-                     FmI[0][2] + FmI[2][0] + FmI[0][0] * FmI[2][0] + FmI[0][1]*FmI[2][1] + FmI[0][2]*FmI[2][2],
-                     FmI[0][1] + FmI[1][0] + FmI[0][0] * FmI[1][0] + FmI[0][1]*FmI[1][1] + FmI[0][2]*FmI[1][2]
+  real64 devB[6] = { 1/3 * (2 * fmI[0][0] * (2 + fmI[0][0]) - fmI[1][1] * (2 + fmI[1][1]) - fmI[2][2] * (2 + fmI[2][2]) +
+                            2 * fmI[0][1]*fmI[0][1] + 2 * fmI[0][2] * fmI[0][2] - fmI[1][0] * fmI[1][0] - fmI[1][2] * fmI[1][2] -
+                            fmI[2][0] * fmI[2][0] - fmI[2][1] * fmI[2][1]),
+                     1/3 * (-fmI[0][0] * (2 + fmI[0][0]) + 2 * fmI[1][1] * ( 2 + fmI[1][1]) - fmI[2][2] * (2 + fmI[2][2]) -
+                            fmI[0][1]*fmI[0][1] - fmI[0][2]*fmI[0][2] + 2 * fmI[1][0]*fmI[1][0] + 2 * fmI[1][2]*fmI[1][2] - fmI[2][0]*fmI[2][0] - fmI[2][1]*
+                            fmI[2][1]),
+                     1/3 *(-fmI[0][0] * (2 + fmI[0][0]) - fmI[1][1] * (2 + fmI[1][1]) + 2 * fmI[2][2] * (2 + fmI[2][2]) -
+                           fmI[0][1]*fmI[0][1] - fmI[0][2]*fmI[0][2] - fmI[1][0]*fmI[1][0] - fmI[1][2]*fmI[1][2] + 2 * fmI[2][0]*fmI[2][0] + 2 * fmI[2][1]*
+                           fmI[2][1]),
+                     fmI[1][2] + fmI[1][0] * fmI[2][0] + fmI[2][1] + fmI[1][1]*fmI[2][1] + fmI[1][2]*fmI[2][2],
+                     fmI[0][2] + fmI[2][0] + fmI[0][0] * fmI[2][0] + fmI[0][1]*fmI[2][1] + fmI[0][2]*fmI[2][2],
+                     fmI[0][1] + fmI[1][0] + fmI[0][0] * fmI[1][0] + fmI[0][1]*fmI[1][1] + fmI[0][2]*fmI[1][2]
   };
 
   real64 const C = 2 * C1 / pow( detFm1 + 1, 2.0/3.0 );
@@ -288,10 +288,10 @@ GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void LinearElasticIsotropicUpdates::HyperElastic( localIndex const k,
                                                   localIndex const q,
-                                                  real64 const (&FmI)[3][3] ) const
+                                                  real64 const (&fmI)[3][3] ) const
 {
   real64 stress[ 6 ];
-  HyperElastic( k, FmI, stress );
+  HyperElastic( k, fmI, stress );
   LvArray::tensorOps::copy< 6 >( m_stress[ k ][ q ], stress );
 }
 

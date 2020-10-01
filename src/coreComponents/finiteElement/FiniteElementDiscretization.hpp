@@ -68,7 +68,7 @@ public:
 
   template< typename SUBREGION_TYPE,
             typename FE_TYPE >
-  void CalculateShapeFunctionGradients( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X,
+  void CalculateShapeFunctionGradients( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & x,
                                         SUBREGION_TYPE * const elementSubRegion,
                                         FE_TYPE & fe ) const;
 
@@ -105,7 +105,7 @@ template< typename SUBREGION_TYPE,
           typename FE_TYPE >
 void
 FiniteElementDiscretization::
-  CalculateShapeFunctionGradients( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X,
+  CalculateShapeFunctionGradients( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & x,
                                    SUBREGION_TYPE * const elementSubRegion,
                                    FE_TYPE & finiteElement ) const
 {
@@ -133,7 +133,7 @@ FiniteElementDiscretization::
       localIndex const nodeIndex = elemsToNodes[ k][ a ];
       for( int i=0; i<3; ++i )
       {
-        xLocal[ a ][ i ] = X[ nodeIndex ][ i ];
+        xLocal[ a ][ i ] = x[ nodeIndex ][ i ];
       }
     }
 

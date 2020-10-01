@@ -55,7 +55,7 @@ struct SuperLU_DistData
  */
 void SuperLU_DistCreate( HypreMatrix const & matrix,
                          LinearSolverParameters const & params,
-                         SuperLU_DistData & SLUDData );
+                         SuperLU_DistData & sludData );
 
 /**
  * @brief Factorizes a linear system with SuperLU_Dist
@@ -63,7 +63,7 @@ void SuperLU_DistCreate( HypreMatrix const & matrix,
  * @param[out] time time spent in the factorization phase
  * @return info error code
  */
-int SuperLU_DistSetup( SuperLU_DistData & SLUDData,
+int SuperLU_DistSetup( SuperLU_DistData & sludData,
                        real64 & time );
 
 /**
@@ -74,7 +74,7 @@ int SuperLU_DistSetup( SuperLU_DistData & SLUDData,
  * @param[out] time time spent in the solution phase
  * @return info error code
  */
-int SuperLU_DistSolve( SuperLU_DistData & SLUDData,
+int SuperLU_DistSolve( SuperLU_DistData & sludData,
                        HypreVector const & b,
                        HypreVector & x,
                        real64 & time );
@@ -83,7 +83,7 @@ int SuperLU_DistSolve( SuperLU_DistData & SLUDData,
  * @brief Deallocates a SuperLU_Dist data structure
  * @param[in,out] SLUDData the structure containing the matrix in SuperLU_Dist format
  */
-void SuperLU_DistDestroy( SuperLU_DistData & SLUDData );
+void SuperLU_DistDestroy( SuperLU_DistData & sludData );
 
 }
 

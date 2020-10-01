@@ -52,7 +52,7 @@ void FaceElementRegion::InitializePreSubGroups( Group * const )
 
 
 
-localIndex FaceElementRegion::AddToFractureMesh( real64 const time_np1,
+localIndex FaceElementRegion::AddToFractureMesh( real64 const timeNp1,
                                                  EdgeManager * const edgeManager,
                                                  FaceManager const * const faceManager,
                                                  ArrayOfArraysView< localIndex const >  const & originalFaceToEdgeMap,
@@ -94,7 +94,7 @@ localIndex FaceElementRegion::AddToFractureMesh( real64 const time_np1,
   ArrayOfArraysView< localIndex const > const faceToNodeMap = faceManager->nodeList().toViewConst();
 
   localIndex const kfe = subRegion->size() - 1;
-  ruptureTime( kfe ) = time_np1;
+  ruptureTime( kfe ) = timeNp1;
 
   LvArray::tensorOps::copy< 3 >( elemCenter[ kfe ], faceCenter[ faceIndices[ 0 ] ] );
 

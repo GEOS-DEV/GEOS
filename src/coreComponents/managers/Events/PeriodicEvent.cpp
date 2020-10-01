@@ -209,26 +209,26 @@ real64 PeriodicEvent::GetEventTypeDtRequest( real64 const time )
   return requestedDt;
 }
 
-void PeriodicEvent::Cleanup( real64 const time_n,
+void PeriodicEvent::Cleanup( real64 const timeN,
                              integer const cycleNumber,
                              integer const GEOSX_UNUSED_PARAM( eventCounter ),
                              real64 const GEOSX_UNUSED_PARAM( eventProgress ),
                              Group * domain )
 {
   // Only call the cleanup method of the target/children if it is within its application time
-  if( isActive( time_n ) )
+  if( isActive( timeN ) )
   {
     ExecutableGroup * target = GetEventTarget();
     if( target != nullptr )
     {
       // Cleanup the target
-      target->Cleanup( time_n, cycleNumber, 0, 0, domain );
+      target->Cleanup( timeN, cycleNumber, 0, 0, domain );
     }
 
     // Cleanup any sub-events
     this->forSubGroups< EventBase >( [&]( EventBase & subEvent )
     {
-      subEvent.Cleanup( time_n, cycleNumber, 0, 0, domain );
+      subEvent.Cleanup( timeN, cycleNumber, 0, 0, domain );
     } );
   }
 }

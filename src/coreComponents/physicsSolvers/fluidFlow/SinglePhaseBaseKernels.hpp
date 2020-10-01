@@ -38,14 +38,14 @@ struct MobilityKernel
   GEOSX_FORCE_INLINE
   static void
   Compute( real64 const & dens,
-           real64 const & dDens_dPres,
+           real64 const & dDensDPres,
            real64 const & visc,
-           real64 const & dVisc_dPres,
+           real64 const & dViscDPres,
            real64 & mob,
-           real64 & dMob_dPres )
+           real64 & dMobDPres )
   {
     mob = dens / visc;
-    dMob_dPres = dDens_dPres / visc - mob / visc * dVisc_dPres;
+    dMobDPres = dDensDPres / visc - mob / visc * dViscDPres;
   }
 
   GEOSX_HOST_DEVICE
@@ -61,41 +61,41 @@ struct MobilityKernel
   template< typename POLICY >
   static void Launch( localIndex const size,
                       arrayView2d< real64 const > const & dens,
-                      arrayView2d< real64 const > const & dDens_dPres,
+                      arrayView2d< real64 const > const & dDensDPres,
                       arrayView2d< real64 const > const & visc,
-                      arrayView2d< real64 const > const & dVisc_dPres,
+                      arrayView2d< real64 const > const & dViscDPres,
                       arrayView1d< real64 > const & mob,
-                      arrayView1d< real64 > const & dMob_dPres )
+                      arrayView1d< real64 > const & dMobDPres )
   {
     forAll< POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const a )
     {
       Compute( dens[a][0],
-               dDens_dPres[a][0],
+               dDensDPres[a][0],
                visc[a][0],
-               dVisc_dPres[a][0],
+               dViscDPres[a][0],
                mob[a],
-               dMob_dPres[a] );
+               dMobDPres[a] );
     } );
   }
 
   template< typename POLICY >
   static void Launch( SortedArrayView< localIndex const > targetSet,
                       arrayView2d< real64 const > const & dens,
-                      arrayView2d< real64 const > const & dDens_dPres,
+                      arrayView2d< real64 const > const & dDensDPres,
                       arrayView2d< real64 const > const & visc,
-                      arrayView2d< real64 const > const & dVisc_dPres,
+                      arrayView2d< real64 const > const & dViscDPres,
                       arrayView1d< real64 > const & mob,
-                      arrayView1d< real64 > const & dMob_dPres )
+                      arrayView1d< real64 > const & dMobDPres )
   {
     forAll< POLICY >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const i )
     {
       localIndex const a = targetSet[ i ];
       Compute( dens[a][0],
-               dDens_dPres[a][0],
+               dDensDPres[a][0],
                visc[a][0],
-               dVisc_dPres[a][0],
+               dViscDPres[a][0],
                mob[a],
-               dMob_dPres[a] );
+               dMobDPres[a] );
     } );
   }
 
@@ -141,7 +141,7 @@ struct AssembleAccumulationTermsHelper< true >
   GEOSX_FORCE_INLINE
   static void
   porosityUpdate( real64 & poro,
-                  real64 & dPoro_dPres,
+                  real64 & dPoroDPres,
                   real64 const biotCoefficient,
                   real64 const poroOld,
                   real64 const bulkModulus,
@@ -152,8 +152,8 @@ struct AssembleAccumulationTermsHelper< true >
                   real64 const GEOSX_UNUSED_PARAM( pvmult ),
                   real64 const GEOSX_UNUSED_PARAM( dPVMult_dPres ) )
   {
-    dPoro_dPres = (biotCoefficient - poroOld) / bulkModulus;
-    poro = poroOld + dPoro_dPres * (totalMeanStress - oldTotalMeanStress + dPres);
+    dPoroDPres = (biotCoefficient - poroOld) / bulkModulus;
+    poro = poroOld + dPoroDPres * (totalMeanStress - oldTotalMeanStress + dPres);
   }
 };
 
@@ -164,7 +164,7 @@ struct AssembleAccumulationTermsHelper< false >
   GEOSX_FORCE_INLINE
   static void
   porosityUpdate( real64 & poro,
-                  real64 & dPoro_dPres,
+                  real64 & dPoroDPres,
                   real64 const GEOSX_UNUSED_PARAM( biotCoefficient ),
                   real64 const GEOSX_UNUSED_PARAM( poroOld ),
                   real64 const GEOSX_UNUSED_PARAM( bulkModulus ),
@@ -173,10 +173,10 @@ struct AssembleAccumulationTermsHelper< false >
                   real64 const GEOSX_UNUSED_PARAM( dPres ),
                   real64 const poroRef,
                   real64 const pvmult,
-                  real64 const dPVMult_dPres )
+                  real64 const dPvMultDPres )
   {
     poro = poroRef * pvmult;
-    dPoro_dPres = dPVMult_dPres * poroRef;
+    dPoroDPres = dPvMultDPres * poroRef;
   }
 };
 
@@ -195,13 +195,13 @@ struct AccumulationKernel< CellElementSubRegion >
   Compute( real64 const & dPres,
            real64 const & densNew,
            real64 const & densOld,
-           real64 const & dDens_dPres,
+           real64 const & dDensDPres,
            real64 const & volume,
            real64 const & dVol,
            real64 const & poroRef,
            real64 const & poroOld,
            real64 const & pvMult,
-           real64 const & dPVMult_dPres,
+           real64 const & dPvMultDPres,
            real64 const & biotCoefficient,
            real64 const & bulkModulus,
            real64 const & totalMeanStress,
@@ -224,13 +224,13 @@ struct AccumulationKernel< CellElementSubRegion >
                                                                 dPres,
                                                                 poroRef,
                                                                 pvMult,
-                                                                dPVMult_dPres );
+                                                                dPvMultDPres );
 
     // Residual contribution is mass conservation in the cell
     localAccum = poroNew * densNew * volNew - poroOld * densOld * volume;
 
     // Derivative of residual wrt to pressure in the cell
-    localAccumJacobian = (dPoro_dPres * densNew + dDens_dPres * poroNew) * volNew;
+    localAccumJacobian = (dPoro_dPres * densNew + dDensDPres * poroNew) * volNew;
   }
 
   template< bool COUPLED, typename POLICY >
@@ -246,9 +246,9 @@ struct AccumulationKernel< CellElementSubRegion >
                       arrayView1d< real64 const > const & volume,
                       arrayView1d< real64 const > const & dVol,
                       arrayView2d< real64 const > const & dens,
-                      arrayView2d< real64 const > const & dDens_dPres,
+                      arrayView2d< real64 const > const & dDensDPres,
                       arrayView2d< real64 const > const & pvmult,
-                      arrayView2d< real64 const > const & dPVMult_dPres,
+                      arrayView2d< real64 const > const & dPvMultDPres,
                       arrayView1d< real64 const > const & oldTotalMeanStress,
                       arrayView1d< real64 const > const & totalMeanStress,
                       arrayView1d< real64 const > const & bulkModulus,
@@ -265,13 +265,13 @@ struct AccumulationKernel< CellElementSubRegion >
         Compute< COUPLED >( dPres[ei],
                             dens[ei][0],
                             densOld[ei],
-                            dDens_dPres[ei][0],
+                            dDensDPres[ei][0],
                             volume[ei],
                             dVol[ei],
                             poroRef[ei],
                             poroOld[ei],
                             pvmult[ei][0],
-                            dPVMult_dPres[ei][0],
+                            dPvMultDPres[ei][0],
                             biotCoefficient,
                             bulkModulus[ei],
                             totalMeanStress[ei],
@@ -300,7 +300,7 @@ struct AccumulationKernel< FaceElementSubRegion >
   static void
   Compute( real64 const & densNew,
            real64 const & densOld,
-           real64 const & dDens_dPres,
+           real64 const & dDensDPres,
            real64 const & volume,
            real64 const & dVol,
            real64 & localAccum,
@@ -312,7 +312,7 @@ struct AccumulationKernel< FaceElementSubRegion >
     localAccum = densNew * volNew - densOld * volume;
 
     // Derivative of residual wrt to pressure in the cell
-    localAccumJacobian =  dDens_dPres * volNew;
+    localAccumJacobian =  dDensDPres * volNew;
   }
 
   template< bool COUPLED, typename POLICY >
@@ -324,7 +324,7 @@ struct AccumulationKernel< FaceElementSubRegion >
                       arrayView1d< real64 const > const & volume,
                       arrayView1d< real64 const > const & dVol,
                       arrayView2d< real64 const > const & dens,
-                      arrayView2d< real64 const > const & dDens_dPres,
+                      arrayView2d< real64 const > const & dDensDPres,
                       arrayView1d< real64 const > const & poroMultiplier,
 #if ALLOW_CREATION_MASS
                       arrayView1d< real64 const > const & creationMass,
@@ -342,7 +342,7 @@ struct AccumulationKernel< FaceElementSubRegion >
 
         Compute( dens[ei][0],
                  densOld[ei],
-                 dDens_dPres[ei][0],
+                 dDensDPres[ei][0],
                  effectiveVolume,
                  dVol[ei],
                  localAccum,
@@ -374,7 +374,7 @@ struct AccumulationKernel< EmbeddedSurfaceSubRegion >
   static void
   Compute( real64 const & densNew,
            real64 const & densOld,
-           real64 const & dDens_dPres,
+           real64 const & dDensDPres,
            real64 const & volume,
            real64 const & dVol,
            real64 & localAccum,
@@ -386,7 +386,7 @@ struct AccumulationKernel< EmbeddedSurfaceSubRegion >
     localAccum = densNew * volNew - densOld * volume;
 
     // Derivative of residual wrt to pressure in the cell
-    localAccumJacobian =  dDens_dPres * volNew;
+    localAccumJacobian =  dDensDPres * volNew;
   }
 
   template< bool COUPLED, typename POLICY >
@@ -398,7 +398,7 @@ struct AccumulationKernel< EmbeddedSurfaceSubRegion >
                       arrayView1d< real64 const > const & volume,
                       arrayView1d< real64 const > const & dVol,
                       arrayView2d< real64 const > const & dens,
-                      arrayView2d< real64 const > const & dDens_dPres,
+                      arrayView2d< real64 const > const & dDensDPres,
                       arrayView1d< real64 const > const & poroMultiplier,
                       CRSMatrixView< real64, globalIndex const > const & localMatrix,
                       arrayView1d< real64 > const & localRhs )
@@ -413,7 +413,7 @@ struct AccumulationKernel< EmbeddedSurfaceSubRegion >
 
         Compute( dens[ei][0],
                  densOld[ei],
-                 dDens_dPres[ei][0],
+                 dDensDPres[ei][0],
                  effectiveVolume,
                  dVol[ei],
                  localAccum,

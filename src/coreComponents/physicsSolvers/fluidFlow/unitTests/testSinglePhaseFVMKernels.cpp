@@ -30,12 +30,12 @@ void computeFlux( arraySlice1d< real64 const > const & weight,
                   real64 const * dPres,
                   real64 const * gravCoef,
                   real64 const * mob,
-                  real64 const * dMob_dPres,
+                  real64 const * dMobDPres,
                   real64 const * dens,
-                  real64 const * dDens_dPres,
+                  real64 const * dDensDPres,
                   real64 const dt,
                   real64 & flux,
-                  real64 (& dFlux_dP)[stencilSize] )
+                  real64 (& dFluxDP)[stencilSize] )
 {
   localIndex constexpr numElems = 2;
 
@@ -44,7 +44,7 @@ void computeFlux( arraySlice1d< real64 const > const & weight,
   for( localIndex i = 0; i < numElems; ++i )
   {
     densMean += 0.5 * dens[i];
-    dDensMean_dP[i] = 0.5 * dDens_dPres[i];
+    dDensMean_dP[i] = 0.5 * dDensDPres[i];
   }
   real64 potDif = 0.0;
   real64 sumWeightGrav = 0;
@@ -57,9 +57,9 @@ void computeFlux( arraySlice1d< real64 const > const & weight,
   flux = dt * potDif * mob[k_up];
   for( localIndex i = 0; i < stencilSize; ++i )
   {
-    dFlux_dP[i] = dt * ( weight[i] - sumWeightGrav * dDensMean_dP[i] ) * mob[k_up];
+    dFluxDP[i] = dt * ( weight[i] - sumWeightGrav * dDensMean_dP[i] ) * mob[k_up];
   }
-  dFlux_dP[k_up] += dt * potDif * dMob_dPres[k_up];
+  dFluxDP[k_up] += dt * potDif * dMobDPres[k_up];
 }
 
 template< bool FULL, localIndex stencilSize >
@@ -68,9 +68,9 @@ void testFluxKernel( CellElementStencilTPFA const & stencil,
                      real64 const * dPres,
                      real64 const * gravCoef,
                      real64 const * mob,
-                     real64 const * dMob_dPres,
+                     real64 const * dMobDPres,
                      real64 const * dens,
-                     real64 const * dDens_dPres,
+                     real64 const * dDensDPres,
                      real64 const dt )
 {
   localIndex constexpr numElems = CellElementStencilTPFA::NUM_POINT_IN_FLUX;
@@ -100,7 +100,7 @@ void testFluxKernel( CellElementStencilTPFA const & stencil,
                                                                                     seri[0],
                                                                                     sesri[0],
                                                                                     sei[0] );
-  auto dMob_dPresView  = AccessorHelper< FULL >::template makeElementAccessor< 1 >( dMob_dPres,
+  auto dMob_dPresView  = AccessorHelper< FULL >::template makeElementAccessor< 1 >( dMobDPres,
                                                                                     stencilSize,
                                                                                     seri[0],
                                                                                     sesri[0],
@@ -111,7 +111,7 @@ void testFluxKernel( CellElementStencilTPFA const & stencil,
                                                                                     sesri[0],
                                                                                     sei[0],
                                                                                     1 );
-  auto dDens_dPresView = AccessorHelper< FULL >::template makeElementAccessor< 2 >( dDens_dPres,
+  auto dDens_dPresView = AccessorHelper< FULL >::template makeElementAccessor< 2 >( dDensDPres,
                                                                                     stencilSize,
                                                                                     seri[0],
                                                                                     sesri[0],
@@ -148,9 +148,9 @@ void testFluxKernel( CellElementStencilTPFA const & stencil,
                dPres,
                gravCoef,
                mob,
-               dMob_dPres,
+               dMobDPres,
                dens,
-               dDens_dPres,
+               dDensDPres,
                dt,
                flux_et,
                dFlux_dP_et );

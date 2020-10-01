@@ -75,11 +75,11 @@ FlowSolverBase::FlowSolverBase( std::string const & name,
 
 }
 
-void FlowSolverBase::RegisterDataOnMesh( Group * const MeshBodies )
+void FlowSolverBase::RegisterDataOnMesh( Group * const meshBodies )
 {
-  SolverBase::RegisterDataOnMesh( MeshBodies );
+  SolverBase::RegisterDataOnMesh( meshBodies );
 
-  for( auto & subgroup : MeshBodies->GetSubGroups() )
+  for( auto & subgroup : meshBodies->GetSubGroups() )
   {
     MeshBody & meshBody = *subgroup.second->group_cast< MeshBody * >();
     MeshLevel & mesh = *meshBody.getMeshLevel( 0 );

@@ -61,7 +61,7 @@ struct BlasLapackLA
    * @param [in] X GEOSX array1d.
    * @return the vector 1-norm.
    */
-  static real64 vectorNorm1( Vec< real64 const > const & X );
+  static real64 vectorNorm1( Vec< real64 const > const & x );
 
   /**
    * @brief Returns the two norm of the vector.
@@ -69,7 +69,7 @@ struct BlasLapackLA
    * @param [in] X GEOSX array1d.
    * @return the vector 2-norm.
    */
-  static real64 vectorNorm2( Vec< real64 const > const & X );
+  static real64 vectorNorm2( Vec< real64 const > const & x );
 
   /**
    * @brief Returns the infinity-norm of the vector.
@@ -77,7 +77,7 @@ struct BlasLapackLA
    * @param [in] X GEOSX array1d.
    * @return the vector inf-norm.
    */
-  static real64 vectorNormInf( Vec< real64 const > const & X );
+  static real64 vectorNormInf( Vec< real64 const > const & x );
 
   /**
    * @brief Returns the determinant of a square matrix.
@@ -93,12 +93,12 @@ struct BlasLapackLA
    * is computed for the transpose matrix, i.e. assuming column major
    * ordering, for best performance.
    */
-  static real64 determinant( MatRowMajor< real64 const > const & A );
+  static real64 determinant( MatRowMajor< real64 const > const & a );
 
   /**
    * @copydoc determinant(MatRowMajor< real64 const > const &)
    */
-  static real64 determinant( MatColMajor< real64 const > const & A );
+  static real64 determinant( MatColMajor< real64 const > const & a );
 
   /**
    * @brief Returns the infinity norm of the matrix.
@@ -112,12 +112,12 @@ struct BlasLapackLA
    * norm is computed as the one norm of the transpose matrix, i.e. assuming
    * column major ordering, for best performance.
    */
-  static real64 matrixNormInf( MatRowMajor< real64 const > const & A );
+  static real64 matrixNormInf( MatRowMajor< real64 const > const & a );
 
   /**
    * @copydoc matrixNormInf
    */
-  static real64 matrixNormInf( MatColMajor< real64 const > const & A );
+  static real64 matrixNormInf( MatColMajor< real64 const > const & a );
 
   /**
    * @brief Returns the one norm of the matrix.
@@ -131,12 +131,12 @@ struct BlasLapackLA
    * is computed as the infinity norm of the transpose matrix, i.e. assuming
    * column major ordering, for best performance.
    */
-  static real64 matrixNorm1( MatRowMajor< real64 const > const & A );
+  static real64 matrixNorm1( MatRowMajor< real64 const > const & a );
 
   /**
    * @copydoc matrixNorm1
    */
-  static real64 matrixNorm1( MatColMajor< real64 const > const & A );
+  static real64 matrixNorm1( MatColMajor< real64 const > const & a );
 
   /**
    * @brief Returns the Frobenius norm of the matrix.
@@ -150,12 +150,12 @@ struct BlasLapackLA
    * is computed for the transpose matrix, i.e. assuming column major
    * ordering, for best performance.
    */
-  static real64 matrixNormFrobenius( MatRowMajor< real64 const > const & A );
+  static real64 matrixNormFrobenius( MatRowMajor< real64 const > const & a );
 
   /**
    * @copydoc matrixNormFrobenius
    */
-  static real64 matrixNormFrobenius( MatColMajor< real64 const > const & A );
+  static real64 matrixNormFrobenius( MatColMajor< real64 const > const & a );
 
   /**
    * @brief Vector-Vector sum;
@@ -171,8 +171,8 @@ struct BlasLapackLA
    * @warning
    * Assumes that \p X and \p Y have the same size.
    */
-  static void vectorVectorAdd( Vec< real64 const > const & X,
-                               Vec< real64 > const & Y,
+  static void vectorVectorAdd( Vec< real64 const > const & x,
+                               Vec< real64 > const & y,
                                real64 const alpha = 1. );
 
   /**
@@ -189,15 +189,15 @@ struct BlasLapackLA
    * @warning
    * Assumes that \p A and \p B have the same size.
    */
-  static void matrixMatrixAdd( MatRowMajor< real64 const > const & A,
-                               MatRowMajor< real64 > const & B,
+  static void matrixMatrixAdd( MatRowMajor< real64 const > const & a,
+                               MatRowMajor< real64 > const & b,
                                real64 const alpha = 1. );
 
   /**
    * @copydoc matrixMatrixAdd
    */
-  static void matrixMatrixAdd( MatColMajor< real64 const > const & A,
-                               MatColMajor< real64 > const & B,
+  static void matrixMatrixAdd( MatColMajor< real64 const > const & a,
+                               MatColMajor< real64 > const & b,
                                real64 const alpha = 1. );
 
   /**
@@ -208,7 +208,7 @@ struct BlasLapackLA
    * @param [in,out] X     GEOSX array1d.
    */
   static void vectorScale( real64 const alpha,
-                           Vec< real64 > const & X );
+                           Vec< real64 > const & x );
 
   /**
    * @brief In-place scalar-matrix product;
@@ -218,13 +218,13 @@ struct BlasLapackLA
    * @param [in,out] A     GEOSX array2d.
    */
   static void matrixScale( real64 const alpha,
-                           MatRowMajor< real64 > const & A );
+                           MatRowMajor< real64 > const & a );
 
   /**
    * @copydoc matrixScale( real64 const, MatRowMajor< real64 > const & )
    */
   static void matrixScale( real64 const alpha,
-                           MatColMajor< real64 > const & A );
+                           MatColMajor< real64 > const & a );
 
   /**
    * @brief Returns the dot product of two vectors.
@@ -233,8 +233,8 @@ struct BlasLapackLA
    * @param [in] Y GEOSX array1d.
    * @return the dot product of the two vectors.
    */
-  static real64 vectorDot( Vec< real64 const > const & X,
-                           Vec< real64 const > const & Y );
+  static real64 vectorDot( Vec< real64 const > const & x,
+                           Vec< real64 const > const & y );
 
   /**
    * @brief Matrix-Vector product;
@@ -251,9 +251,9 @@ struct BlasLapackLA
    * @warning
    * Assumes that \p X and \p Y have compatible sizes with \p A.
    */
-  static void matrixVectorMultiply( MatRowMajor< real64 const > const & A,
-                                    Vec< real64 const > const & X,
-                                    Vec< real64 > const & Y,
+  static void matrixVectorMultiply( MatRowMajor< real64 const > const & a,
+                                    Vec< real64 const > const & x,
+                                    Vec< real64 > const & y,
                                     real64 const alpha = 1.0,
                                     real64 const beta = 0.0 );
 
@@ -274,9 +274,9 @@ struct BlasLapackLA
    * @warning
    * Assumes that \p X and \p Y have compatible sizes with \p transpose(A).
    */
-  static void matrixTVectorMultiply( MatRowMajor< real64 const > const & A,
-                                     Vec< real64 const > const & X,
-                                     Vec< real64 > const & Y,
+  static void matrixTVectorMultiply( MatRowMajor< real64 const > const & a,
+                                     Vec< real64 const > const & x,
+                                     Vec< real64 > const & y,
                                      real64 const alpha = 1.0,
                                      real64 const beta = 0.0 );
 
@@ -297,9 +297,9 @@ struct BlasLapackLA
    * has the right size.
    *
    */
-  static void matrixMatrixMultiply( MatRowMajor< real64 const > const & A,
-                                    MatRowMajor< real64 const > const & B,
-                                    MatRowMajor< real64 > const & C,
+  static void matrixMatrixMultiply( MatRowMajor< real64 const > const & a,
+                                    MatRowMajor< real64 const > const & b,
+                                    MatRowMajor< real64 > const & c,
                                     real64 const alpha = 1.0,
                                     real64 const beta = 0.0 );
 
@@ -322,9 +322,9 @@ struct BlasLapackLA
    * \p C already has the right size.
    *
    */
-  static void matrixTMatrixMultiply( MatRowMajor< real64 const > const & A,
-                                     MatRowMajor< real64 const > const & B,
-                                     MatRowMajor< real64 > const & C,
+  static void matrixTMatrixMultiply( MatRowMajor< real64 const > const & a,
+                                     MatRowMajor< real64 const > const & b,
+                                     MatRowMajor< real64 > const & c,
                                      real64 const alpha = 1.0,
                                      real64 const beta = 0.0 );
 
@@ -347,9 +347,9 @@ struct BlasLapackLA
    * \p C already has the right size.
    *
    */
-  static void matrixMatrixTMultiply( MatRowMajor< real64 const > const & A,
-                                     MatRowMajor< real64 const > const & B,
-                                     MatRowMajor< real64 > const & C,
+  static void matrixMatrixTMultiply( MatRowMajor< real64 const > const & a,
+                                     MatRowMajor< real64 const > const & b,
+                                     MatRowMajor< real64 > const & c,
                                      real64 const alpha = 1.0,
                                      real64 const beta = 0.0 );
 
@@ -372,9 +372,9 @@ struct BlasLapackLA
    * and that \p C already has the right size.
    *
    */
-  static void matrixTMatrixTMultiply( MatRowMajor< real64 const > const & A,
-                                      MatRowMajor< real64 const > const & B,
-                                      MatRowMajor< real64 > const & C,
+  static void matrixTMatrixTMultiply( MatRowMajor< real64 const > const & a,
+                                      MatRowMajor< real64 const > const & b,
+                                      MatRowMajor< real64 > const & c,
                                       real64 const alpha = 1.0,
                                       real64 const beta = 0.0 );
 
@@ -401,15 +401,15 @@ struct BlasLapackLA
    * for any copy/transposition that would be required operating with the
    * row-major layout.
    */
-  static void matrixInverse( MatRowMajor< real64 const > const & A,
-                             MatRowMajor< real64 > const & Ainv,
+  static void matrixInverse( MatRowMajor< real64 const > const & a,
+                             MatRowMajor< real64 > const & ainv,
                              real64 & detA );
 
   /**
    * @copydoc matrixInverse( MatRowMajor<real64 const> const &, MatRowMajor<real64> const &, real64 & )
    */
-  static void matrixInverse( MatColMajor< real64 const > const & A,
-                             MatColMajor< real64 > const & Ainv,
+  static void matrixInverse( MatColMajor< real64 const > const & a,
+                             MatColMajor< real64 > const & ainv,
                              real64 & detA );
 
   /**
@@ -433,14 +433,14 @@ struct BlasLapackLA
    * for any copy/transposition that would be required operating with the
    * row-major layout.
    */
-  static void matrixInverse( MatRowMajor< real64 const > const & A,
-                             MatRowMajor< real64 > const & Ainv );
+  static void matrixInverse( MatRowMajor< real64 const > const & a,
+                             MatRowMajor< real64 > const & ainv );
 
   /**
    * @copydoc matrixInverse( MatRowMajor<real64 const> const &, MatRowMajor<real64> const & )
    */
-  static void matrixInverse( MatColMajor< real64 const > const & A,
-                             MatColMajor< real64 > const & Ainv );
+  static void matrixInverse( MatColMajor< real64 const > const & a,
+                             MatColMajor< real64 > const & ainv );
 
   /**
    * @brief Vector copy;
@@ -453,8 +453,8 @@ struct BlasLapackLA
    * Assumes that \p X and \p Y have the same size.
    *
    */
-  static void vectorCopy( Vec< real64 const > const & X,
-                          Vec< real64 > const & Y );
+  static void vectorCopy( Vec< real64 const > const & x,
+                          Vec< real64 > const & y );
 
   /**
    * @brief Matrix copy;
@@ -467,14 +467,14 @@ struct BlasLapackLA
    * Assumes that \p A and \p B have the same size.
    *
    */
-  static void matrixCopy( MatRowMajor< real64 const > const & A,
-                          MatRowMajor< real64 > const & B );
+  static void matrixCopy( MatRowMajor< real64 const > const & a,
+                          MatRowMajor< real64 > const & b );
 
   /**
    * @copydoc matrixCopy( MatRowMajor< real64 const > const &, MatRowMajor< real64 > const & )
    */
-  static void matrixCopy( MatColMajor< real64 const > const & A,
-                          MatColMajor< real64 > const & B );
+  static void matrixCopy( MatColMajor< real64 const > const & a,
+                          MatColMajor< real64 > const & b );
 
   /**
    * @brief Set the random number generator seed.
@@ -501,7 +501,7 @@ struct BlasLapackLA
    * @param [in]     idist Optional RandomNumberDistribution enum value
    *                       specifying the distribution of the random numbers.
    */
-  static void vectorRand( Vec< real64 > const & X,
+  static void vectorRand( Vec< real64 > const & x,
                           RandomNumberDistribution const & idist = RandomNumberDistribution::UNIFORM_01 );
 
   /**
@@ -514,13 +514,13 @@ struct BlasLapackLA
    * @param [in]     idist Optional RandomNumberDistribution enum value
    *                       specifying the distribution of the random numbers.
    */
-  static void matrixRand( MatRowMajor< real64 > const & A,
+  static void matrixRand( MatRowMajor< real64 > const & a,
                           RandomNumberDistribution const & idist = RandomNumberDistribution::UNIFORM_01 );
 
   /**
    * @copydoc matrixRand( MatRowMajor< real64 > const & A, RandomNumberDistribution const & )
    */
-  static void matrixRand( MatColMajor< real64 > const & A,
+  static void matrixRand( MatColMajor< real64 > const & a,
                           RandomNumberDistribution const & idist = RandomNumberDistribution::UNIFORM_01 );
 
 
@@ -539,18 +539,18 @@ struct BlasLapackLA
    * @param [out]   S GEOSX array1d.
    * @param [out]   VT GEOSX array2d.
    */
-  static void matrixSVD( MatRowMajor< real64 const > const & A,
-                         MatRowMajor< real64 > const & U,
-                         Vec< real64 > const & S,
-                         MatRowMajor< real64 > const & VT );
+  static void matrixSVD( MatRowMajor< real64 const > const & a,
+                         MatRowMajor< real64 > const & u,
+                         Vec< real64 > const & s,
+                         MatRowMajor< real64 > const & vt );
 
   /**
    * @copydoc matrixSVD
    */
-  static void matrixSVD( MatColMajor< real64 const > const & A,
-                         MatColMajor< real64 > const & U,
-                         Vec< real64 > const & S,
-                         MatColMajor< real64 > const & VT );
+  static void matrixSVD( MatColMajor< real64 const > const & a,
+                         MatColMajor< real64 > const & u,
+                         Vec< real64 > const & s,
+                         MatColMajor< real64 > const & vt );
 
 };
 

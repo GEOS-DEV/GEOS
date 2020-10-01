@@ -243,7 +243,7 @@ public:
    * @return coordinate of the edge center
    */
   R1Tensor calculateCenter( localIndex const edgeIndex,
-                            arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X ) const;
+                            arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & x ) const;
 
   /**
    * @brief Calculate the length of an edge.
@@ -252,7 +252,7 @@ public:
    * @return length of the edge
    */
   R1Tensor calculateLength( localIndex const edgeIndex,
-                            arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X ) const;
+                            arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & x ) const;
 
   /**
    * @name viewKeyStruct/groupKeyStruct
@@ -396,19 +396,19 @@ private:
 };
 
 inline R1Tensor EdgeManager::calculateCenter( localIndex const edgeIndex,
-                                              arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X ) const
+                                              arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & x ) const
 {
-  R1Tensor center = X[m_toNodesRelation[edgeIndex][0]];
-  center += X[m_toNodesRelation[edgeIndex][1]];
+  R1Tensor center = x[m_toNodesRelation[edgeIndex][0]];
+  center += x[m_toNodesRelation[edgeIndex][1]];
   center *= 0.5;
   return center;
 }
 
 inline R1Tensor EdgeManager::calculateLength( localIndex const edgeIndex,
-                                              arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X ) const
+                                              arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & x ) const
 {
-  R1Tensor length = X[m_toNodesRelation[edgeIndex][1]];
-  length -= X[m_toNodesRelation[edgeIndex][0]];
+  R1Tensor length = x[m_toNodesRelation[edgeIndex][1]];
+  length -= x[m_toNodesRelation[edgeIndex][0]];
   return length;
 }
 

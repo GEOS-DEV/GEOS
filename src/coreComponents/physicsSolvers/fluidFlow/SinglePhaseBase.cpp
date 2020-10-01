@@ -43,11 +43,11 @@ SinglePhaseBase::SinglePhaseBase( const std::string & name,
 }
 
 
-void SinglePhaseBase::RegisterDataOnMesh( Group * const MeshBodies )
+void SinglePhaseBase::RegisterDataOnMesh( Group * const meshBodies )
 {
-  FlowSolverBase::RegisterDataOnMesh( MeshBodies );
+  FlowSolverBase::RegisterDataOnMesh( meshBodies );
 
-  for( auto & mesh : MeshBodies->GetSubGroups() )
+  for( auto & mesh : meshBodies->GetSubGroups() )
   {
     MeshLevel * meshLevel = Group::group_cast< MeshBody * >( mesh.second )->getMeshLevel( 0 );
 
@@ -286,7 +286,7 @@ void SinglePhaseBase::InitializePostInitialConditions_PreSubGroups( Group * cons
   BackupFields( mesh );
 }
 
-real64 SinglePhaseBase::SolverStep( real64 const & time_n,
+real64 SinglePhaseBase::SolverStep( real64 const & timeN,
                                     real64 const & dt,
                                     const int cycleNumber,
                                     DomainPartition & domain )
@@ -298,13 +298,13 @@ real64 SinglePhaseBase::SolverStep( real64 const & time_n,
   // setup dof numbers and linear system
   SetupSystem( domain, m_dofManager, m_localMatrix, m_localRhs, m_localSolution );
 
-  ImplicitStepSetup( time_n, dt, domain );
+  ImplicitStepSetup( timeN, dt, domain );
 
   // currently the only method is implicit time integration
-  dt_return = NonlinearImplicitStep( time_n, dt, cycleNumber, domain );
+  dt_return = NonlinearImplicitStep( timeN, dt, cycleNumber, domain );
 
   // final step for completion of timestep. typically secondary variable updates and cleanup.
-  ImplicitStepComplete( time_n, dt_return, domain );
+  ImplicitStepComplete( timeN, dt_return, domain );
 
   return dt_return;
 }
@@ -413,7 +413,7 @@ void SinglePhaseBase::ImplicitStepComplete( real64 const & GEOSX_UNUSED_PARAM( t
 }
 
 
-void SinglePhaseBase::AssembleSystem( real64 const time_n,
+void SinglePhaseBase::AssembleSystem( real64 const timeN,
                                       real64 const dt,
                                       DomainPartition & domain,
                                       DofManager const & dofManager,
@@ -437,7 +437,7 @@ void SinglePhaseBase::AssembleSystem( real64 const time_n,
                                                                 localRhs );
   }
 
-  AssembleFluxTerms( time_n,
+  AssembleFluxTerms( timeN,
                      dt,
                      domain,
                      dofManager,
@@ -622,7 +622,7 @@ void SinglePhaseBase::AssembleAccumulationTerms( DomainPartition & domain,
   } );
 }
 
-void SinglePhaseBase::ApplyBoundaryConditions( real64 time_n,
+void SinglePhaseBase::ApplyBoundaryConditions( real64 timeN,
                                                real64 dt,
                                                DomainPartition & domain,
                                                DofManager const & dofManager,
@@ -631,11 +631,11 @@ void SinglePhaseBase::ApplyBoundaryConditions( real64 time_n,
 {
   GEOSX_MARK_FUNCTION;
 
-  ApplySourceFluxBC( time_n, dt, domain, dofManager, localMatrix, localRhs );
-  ApplyDiricletBC( time_n, dt, domain, dofManager, localMatrix, localRhs );
+  ApplySourceFluxBC( timeN, dt, domain, dofManager, localMatrix, localRhs );
+  ApplyDiricletBC( timeN, dt, domain, dofManager, localMatrix, localRhs );
 }
 
-void SinglePhaseBase::ApplyDiricletBC( real64 const time_n,
+void SinglePhaseBase::ApplyDiricletBC( real64 const timeN,
                                        real64 const dt,
                                        DomainPartition & domain,
                                        DofManager const & dofManager,
@@ -647,7 +647,7 @@ void SinglePhaseBase::ApplyDiricletBC( real64 const time_n,
   FieldSpecificationManager & fsManager = FieldSpecificationManager::get();
   string const dofKey = dofManager.getKey( viewKeyStruct::pressureString );
 
-  fsManager.Apply( time_n + dt,
+  fsManager.Apply( timeN + dt,
                    &domain,
                    "ElementRegions",
                    viewKeyStruct::pressureString,
@@ -669,7 +669,7 @@ void SinglePhaseBase::ApplyDiricletBC( real64 const time_n,
     // call the application of the boundary condition to alter the matrix and rhs
     fs->ApplyBoundaryConditionToSystem< FieldSpecificationEqual,
                                         parallelDevicePolicy<> >( lset,
-                                                                  time_n + dt,
+                                                                  timeN + dt,
                                                                   subRegion,
                                                                   dofNumber,
                                                                   dofManager.rankOffset(),
@@ -682,7 +682,7 @@ void SinglePhaseBase::ApplyDiricletBC( real64 const time_n,
   } );
 }
 
-void SinglePhaseBase::ApplySourceFluxBC( real64 const time_n,
+void SinglePhaseBase::ApplySourceFluxBC( real64 const timeN,
                                          real64 const dt,
                                          DomainPartition & domain,
                                          DofManager const & dofManager,
@@ -694,7 +694,7 @@ void SinglePhaseBase::ApplySourceFluxBC( real64 const time_n,
   FieldSpecificationManager & fsManager = FieldSpecificationManager::get();
   string const dofKey = dofManager.getKey( viewKeyStruct::pressureString );
 
-  fsManager.Apply( time_n + dt, &domain,
+  fsManager.Apply( timeN + dt, &domain,
                    "ElementRegions",
                    FieldSpecificationBase::viewKeyStruct::fluxBoundaryConditionString,
                    [&]( FieldSpecificationBase const * const fs,
@@ -720,7 +720,7 @@ void SinglePhaseBase::ApplySourceFluxBC( real64 const time_n,
 
     fs->ApplyBoundaryConditionToSystem< FieldSpecificationAdd,
                                         parallelDevicePolicy<> >( localSet.toViewConst(),
-                                                                  time_n + dt,
+                                                                  timeN + dt,
                                                                   dt,
                                                                   subRegion,
                                                                   dofNumber,

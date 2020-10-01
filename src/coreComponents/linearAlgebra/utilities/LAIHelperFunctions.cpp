@@ -67,7 +67,7 @@ void CreatePermutationMatrix( ElementRegionManager const * const elemManager,
                               localIndex const nRows,
                               localIndex const nCols,
                               int const nDofPerCell,
-                              string const DofKey,
+                              string const dofKey,
                               ParallelMatrix & permutationMatrix )
 {
   /* Crates a permutation matrix for a given cell centered variable specified by the DofKey. It consider that
@@ -86,7 +86,7 @@ void CreatePermutationMatrix( ElementRegionManager const * const elemManager,
   {
     localIndex const numElems = elementSubRegion.size();
     arrayView1d< globalIndex const > const &
-    DofNumber = elementSubRegion.getReference< array1d< globalIndex > >( DofKey );
+    DofNumber = elementSubRegion.getReference< array1d< globalIndex > >( dofKey );
 
     arrayView1d< globalIndex const > const & localToGlobal = elementSubRegion.localToGlobalMap();
 

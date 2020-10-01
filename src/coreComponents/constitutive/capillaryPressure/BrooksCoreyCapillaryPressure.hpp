@@ -39,11 +39,11 @@ public:
                                       arrayView1d< integer const > const & phaseTypes,
                                       arrayView1d< integer const > const & phaseOrder,
                                       arrayView3d< real64 > const & phaseCapPressure,
-                                      arrayView4d< real64 > const & dPhaseCapPressure_dPhaseVolFrac )
+                                      arrayView4d< real64 > const & dPhaseCapPressureDPhaseVolFrac )
     : CapillaryPressureBaseUpdate( phaseTypes,
                                    phaseOrder,
                                    phaseCapPressure,
-                                   dPhaseCapPressure_dPhaseVolFrac ),
+                                   dPhaseCapPressureDPhaseVolFrac ),
     m_phaseMinVolumeFraction( phaseMinVolumeFraction ),
     m_phaseCapPressureExponentInv( phaseCapPressureExponentInv ),
     m_phaseEntryPressure( phaseEntryPressure ),
@@ -67,7 +67,7 @@ public:
   GEOSX_FORCE_INLINE
   virtual void Compute( arraySlice1d< real64 const > const & phaseVolFraction,
                         arraySlice1d< real64 > const & phaseCapPres,
-                        arraySlice2d< real64 > const & dPhaseCapPres_dPhaseVolFrac ) const override;
+                        arraySlice2d< real64 > const & dPhaseCapPresDPhaseVolFrac ) const override;
 
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
@@ -86,12 +86,12 @@ private:
   GEOSX_FORCE_INLINE
   static void
   EvaluateBrooksCoreyFunction( real64 const scaledWettingVolFrac,
-                               real64 const dScaledWettingPhaseVolFrac_dVolFrac,
+                               real64 const dScaledWettingPhaseVolFracDVolFrac,
                                real64 const exponentInv,
                                real64 const entryPressure,
                                real64 const eps,
                                real64 & phaseCapPressure,
-                               real64 & dPhaseCapPressure_dVolFrac );
+                               real64 & dPhaseCapPressureDVolFrac );
 
   arrayView1d< real64 const > m_phaseMinVolumeFraction;
   arrayView1d< real64 const > m_phaseCapPressureExponentInv;
@@ -151,7 +151,7 @@ void
 BrooksCoreyCapillaryPressureUpdate::
   Compute( arraySlice1d< real64 const > const & phaseVolFraction,
            arraySlice1d< real64 > const & phaseCapPres,
-           arraySlice2d< real64 > const & dPhaseCapPres_dPhaseVolFrac ) const
+           arraySlice2d< real64 > const & dPhaseCapPresDPhaseVolFrac ) const
 {
   localIndex const NP = numPhases();
 
@@ -159,7 +159,7 @@ BrooksCoreyCapillaryPressureUpdate::
   {
     for( localIndex jp = 0; jp < NP; ++jp )
     {
-      dPhaseCapPres_dPhaseVolFrac[ip][jp] = 0.0;
+      dPhaseCapPresDPhaseVolFrac[ip][jp] = 0.0;
     }
   }
 
@@ -188,7 +188,7 @@ BrooksCoreyCapillaryPressureUpdate::
                                  entryPressure,
                                  eps,
                                  phaseCapPres[ip_water],
-                                 dPhaseCapPres_dPhaseVolFrac[ip_water][ip_water] );
+                                 dPhaseCapPresDPhaseVolFrac[ip_water][ip_water] );
 
   }
 
@@ -211,7 +211,7 @@ BrooksCoreyCapillaryPressureUpdate::
                                  entryPressure,
                                  eps,
                                  phaseCapPres[ip_gas],
-                                 dPhaseCapPres_dPhaseVolFrac[ip_gas][ip_gas] );
+                                 dPhaseCapPresDPhaseVolFrac[ip_gas][ip_gas] );
   }
 }
 
@@ -220,17 +220,17 @@ GEOSX_FORCE_INLINE
 void
 BrooksCoreyCapillaryPressureUpdate::
   EvaluateBrooksCoreyFunction( real64 const scaledWettingVolFrac,
-                               real64 const dScaledWettingPhaseVolFrac_dVolFrac,
+                               real64 const dScaledWettingPhaseVolFracDVolFrac,
                                real64 const exponentInv,
                                real64 const entryPressure,
                                real64 const eps,
                                real64 & phaseCapPressure,
-                               real64 & dPhaseCapPressure_dVolFrac )
+                               real64 & dPhaseCapPressureDVolFrac )
 {
   real64 const exponent = 1.0 / exponentInv; // div by 0 taken care of by initialization check
 
   phaseCapPressure           = 0.0;
-  dPhaseCapPressure_dVolFrac = 0.0;
+  dPhaseCapPressureDVolFrac = 0.0;
 
   if( scaledWettingVolFrac >= eps && scaledWettingVolFrac < 1.0 )
   {
@@ -238,7 +238,7 @@ BrooksCoreyCapillaryPressureUpdate::
     real64 const val = entryPressure / pow( scaledWettingVolFrac, exponent + 1 );
 
     phaseCapPressure           = val * scaledWettingVolFrac; // entryPressure * (S_w)^( - 1 / exponentInv )
-    dPhaseCapPressure_dVolFrac = -dScaledWettingPhaseVolFrac_dVolFrac * val * exponent;
+    dPhaseCapPressureDVolFrac = -dScaledWettingPhaseVolFracDVolFrac * val * exponent;
   }
   else // enforce a constant and bounded capillary pressure
   {

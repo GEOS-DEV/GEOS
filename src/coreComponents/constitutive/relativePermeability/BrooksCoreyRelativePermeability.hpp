@@ -37,11 +37,11 @@ public:
                                          arrayView1d< integer const > const & phaseTypes,
                                          arrayView1d< integer const > const & phaseOrder,
                                          arrayView3d< real64 > const & phaseRelPerm,
-                                         arrayView4d< real64 > const & dPhaseRelPerm_dPhaseVolFrac )
+                                         arrayView4d< real64 > const & dPhaseRelPermDPhaseVolFrac )
     : RelativePermeabilityBaseUpdate( phaseTypes,
                                       phaseOrder,
                                       phaseRelPerm,
-                                      dPhaseRelPerm_dPhaseVolFrac ),
+                                      dPhaseRelPermDPhaseVolFrac ),
     m_phaseMinVolumeFraction( phaseMinVolumeFraction ),
     m_phaseRelPermExponent( phaseRelPermExponent ),
     m_phaseRelPermMaxValue( phaseRelPermMaxValue ),
@@ -64,7 +64,7 @@ public:
   GEOSX_FORCE_INLINE
   virtual void Compute( arraySlice1d< real64 const > const & phaseVolFraction,
                         arraySlice1d< real64 > const & phaseRelPerm,
-                        arraySlice2d< real64 > const & dPhaseRelPerm_dPhaseVolFrac ) const override;
+                        arraySlice2d< real64 > const & dPhaseRelPermDPhaseVolFrac ) const override;
 
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
@@ -142,7 +142,7 @@ void
 BrooksCoreyRelativePermeabilityUpdate::
   Compute( arraySlice1d< real64 const > const & phaseVolFraction,
            arraySlice1d< real64 > const & phaseRelPerm,
-           arraySlice2d< real64 > const & dPhaseRelPerm_dPhaseVolFrac ) const
+           arraySlice2d< real64 > const & dPhaseRelPermDPhaseVolFrac ) const
 {
   localIndex const NP = numPhases();
 
@@ -150,7 +150,7 @@ BrooksCoreyRelativePermeabilityUpdate::
   {
     for( localIndex jp = 0; jp < NP; ++jp )
     {
-      dPhaseRelPerm_dPhaseVolFrac[ip][jp] = 0.0;
+      dPhaseRelPermDPhaseVolFrac[ip][jp] = 0.0;
     }
   }
   real64 const satScaleInv = 1.0 / m_volFracScale;
@@ -167,7 +167,7 @@ BrooksCoreyRelativePermeabilityUpdate::
       real64 const v = scale * pow( satScaled, exponent - 1.0 );
 
       phaseRelPerm[ip] = v * satScaled;
-      dPhaseRelPerm_dPhaseVolFrac[ip][ip] = v * exponent * satScaleInv;
+      dPhaseRelPermDPhaseVolFrac[ip][ip] = v * exponent * satScaleInv;
     }
     else
     {

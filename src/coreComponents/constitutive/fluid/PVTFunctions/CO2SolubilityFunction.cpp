@@ -42,56 +42,56 @@ constexpr real64 acoef[] =
  8.93353441e-5, 7.88998563e-5, -1.66727022e-2, 1.398, 2.96e-2};
 
 
-real64 ff( real64 const & T, real64 const & P, real64 const & V_r )
+real64 ff( real64 const & t, real64 const & p, real64 const & vR )
 {
-  real64 const P_r = P*P_Pa_f/P_c;
-  real64 const T_r = (T_K_f+T)/T_c;
+  real64 const P_r = p*P_Pa_f/P_c;
+  real64 const T_r = (T_K_f+t)/T_c;
 
-  real64 const f_Z = 1.0 + (acoef[0] + acoef[1]/(T_r * T_r) + acoef[2]/(T_r*T_r*T_r))/V_r + (acoef[3] + acoef[4]/(T_r*T_r) + acoef[5]/(T_r*T_r*T_r))/(V_r*V_r) +
-                     (acoef[6] + acoef[7]/(T_r*T_r) + acoef[8]/(T_r*T_r*T_r))/(V_r*V_r*V_r*V_r) + (acoef[9] + acoef[10]/(T_r*T_r) + acoef[11]/(T_r*T_r*T_r))/
-                     (V_r*V_r*V_r*V_r*V_r) + acoef[12]/(T_r*T_r*T_r)/(V_r*V_r) * (acoef[13] + acoef[14]/(V_r*V_r)) * exp( -acoef[14]/(V_r*V_r)) - P_r * V_r /
+  real64 const f_Z = 1.0 + (acoef[0] + acoef[1]/(T_r * T_r) + acoef[2]/(T_r*T_r*T_r))/vR + (acoef[3] + acoef[4]/(T_r*T_r) + acoef[5]/(T_r*T_r*T_r))/(vR*vR) +
+                     (acoef[6] + acoef[7]/(T_r*T_r) + acoef[8]/(T_r*T_r*T_r))/(vR*vR*vR*vR) + (acoef[9] + acoef[10]/(T_r*T_r) + acoef[11]/(T_r*T_r*T_r))/
+                     (vR*vR*vR*vR*vR) + acoef[12]/(T_r*T_r*T_r)/(vR*vR) * (acoef[13] + acoef[14]/(vR*vR)) * exp( -acoef[14]/(vR*vR)) - P_r * vR /
                      T_r;
 
   return f_Z;
 }
 
-real64 PWater( real64 const & T )
+real64 PWater( real64 const & t )
 {
   constexpr real64 ccoef[] = {-38.640844, 5.8948420, 59.876516, 26.654627, 10.637097};
 
   real64 const P_c_w = 220.85;       // H2O critical pressure (bars)
   real64 const T_c_w = 647.29;     // H2O critical temperature (K)
-  real64 const tt = ((T+T_K_f)-T_c_w)/T_c_w;
-  real64 const x = (P_c_w*(T+T_K_f)/T_c_w) * (1 + ccoef[0]*pow( -tt, 1.9 ) + ccoef[1]*tt + ccoef[2]*tt*tt + ccoef[3]*tt*tt*tt + ccoef[4]*tt*tt*tt*tt);
+  real64 const tt = ((t+T_K_f)-T_c_w)/T_c_w;
+  real64 const x = (P_c_w*(t+T_K_f)/T_c_w) * (1 + ccoef[0]*pow( -tt, 1.9 ) + ccoef[1]*tt + ccoef[2]*tt*tt + ccoef[3]*tt*tt*tt + ccoef[4]*tt*tt*tt*tt);
 
   return x;
 }
 
-real64 logF( real64 const & T, real64 const & P, real64 const & V_r )
+real64 logF( real64 const & t, real64 const & p, real64 const & vR )
 {
-  real64 const P_r = P*P_Pa_f/P_c;
-  real64 const T_r = (T_K_f+T)/T_c;
+  real64 const P_r = p*P_Pa_f/P_c;
+  real64 const T_r = (T_K_f+t)/T_c;
 
-  real64 const Z=P_r * V_r/T_r;
+  real64 const Z=P_r * vR/T_r;
 
-  real64 const log_f = Z - 1 - log( Z ) + (acoef[0] + acoef[1]/T_r/T_r + acoef[2]/T_r/T_r/T_r)/V_r + (acoef[3] + acoef[4]/T_r/T_r + acoef[5]/T_r/T_r/T_r)/2.0/
-                       V_r/V_r + (acoef[6] + acoef[7]/T_r/T_r + acoef[8]/T_r/T_r/T_r)/4.0/V_r/V_r/V_r/V_r +
-                       (acoef[9] + acoef[10]/T_r/T_r + acoef[11]/T_r/T_r/T_r)/5.0/V_r/V_r/
-                       V_r/V_r/V_r + acoef[12]/2.0/T_r/T_r/T_r/acoef[14] *
-                       (acoef[13] + 1.0 - (acoef[13] + 1.0 + acoef[14]/V_r/V_r) * exp( -acoef[14]/V_r/V_r ));
+  real64 const log_f = Z - 1 - log( Z ) + (acoef[0] + acoef[1]/T_r/T_r + acoef[2]/T_r/T_r/T_r)/vR + (acoef[3] + acoef[4]/T_r/T_r + acoef[5]/T_r/T_r/T_r)/2.0/
+                       vR/vR + (acoef[6] + acoef[7]/T_r/T_r + acoef[8]/T_r/T_r/T_r)/4.0/vR/vR/vR/vR +
+                       (acoef[9] + acoef[10]/T_r/T_r + acoef[11]/T_r/T_r/T_r)/5.0/vR/vR/
+                       vR/vR/vR + acoef[12]/2.0/T_r/T_r/T_r/acoef[14] *
+                       (acoef[13] + 1.0 - (acoef[13] + 1.0 + acoef[14]/vR/vR) * exp( -acoef[14]/vR/vR ));
 
   return log_f;
 }
 
-real64 Par( real64 const & T, real64 const & P, real64 const * cc )
+real64 Par( real64 const & t, real64 const & p, real64 const * cc )
 {
-  real64 x = cc[0] + cc[1]*T +cc[2]/T + cc[3]*T*T + cc[4]/(630.0-T) + cc[5]*P + cc[6] *P *log( T ) + cc[7]*P/T + cc[8]*P/(630.0-T) + cc[9]*P*P/(630.0-T)/
-             (630.0-T) + cc[10] *T *log( P );
+  real64 x = cc[0] + cc[1]*t +cc[2]/t + cc[3]*t*t + cc[4]/(630.0-t) + cc[5]*p + cc[6] *p *log( t ) + cc[7]*p/t + cc[8]*p/(630.0-t) + cc[9]*p*p/(630.0-t)/
+             (630.0-t) + cc[10] *t *log( p );
 
   return x;
 }
 
-void CO2Solubility( real64 const & T, real64 const & P, real64 & V_r, real64 (*f)( real64 const & x1, real64 const & x2, real64 const & x3 ))
+void CO2Solubility( real64 const & t, real64 const & p, real64 & vR, real64 (*f)( real64 const & x1, real64 const & x2, real64 const & x3 ))
 {
 
   constexpr real64 eps = 1e-9;
@@ -101,21 +101,21 @@ void CO2Solubility( real64 const & T, real64 const & P, real64 & V_r, real64 (*f
   real64 dre;
   real64 Vr_int = 0.05;
 
-  V_r = 0.75*Rgas*(T_K_f+T)/(P*P_Pa_f)*(1/V_c);
+  vR = 0.75*Rgas*(T_K_f+t)/(p*P_Pa_f)*(1/V_c);
 
   real64 v1, v0;
 
   for(;; )
   {
 
-    if( V_r < 0.0 )
+    if( vR < 0.0 )
     {
-      V_r = Vr_int;
+      vR = Vr_int;
       Vr_int += 0.05;
     }
 
-    v0 = (*f)( T, P, V_r );
-    v1 = (*f)( T, P, V_r+dx );
+    v0 = (*f)( t, p, vR );
+    v1 = (*f)( t, p, vR+dx );
     dre = -v0/((v1-v0)/dx);
 
     if( fabs( dre ) < eps )
@@ -125,7 +125,7 @@ void CO2Solubility( real64 const & T, real64 const & P, real64 & V_r, real64 (*f
 
     count++;
 
-    V_r += dre;
+    vR += dre;
   }
 }
 
@@ -347,7 +347,7 @@ void CO2SolubilityFunction::Partition( EvalVarArgs const & pressure, EvalVarArgs
   }
   else
   {
-    Y = compFraction[m_CO2Index] / (1.0 - compFraction[m_CO2Index]);
+    Y = compFraction[m_CO2Index] / ( 1.0 - compFraction[m_CO2Index]);
   }
 
   if( Y < X )
@@ -373,7 +373,7 @@ void CO2SolubilityFunction::Partition( EvalVarArgs const & pressure, EvalVarArgs
 
     //liquid phase composition  CO2 = Csat / (Csat + W) = (Csat/W) / (Csat/W + 1)
 
-    phaseCompFraction[m_phaseLiquidIndex][m_CO2Index] = X / (X + 1.0);
+    phaseCompFraction[m_phaseLiquidIndex][m_CO2Index] = X / ( X + 1.0);
     phaseCompFraction[m_phaseLiquidIndex][m_waterIndex] = 1.0 - phaseCompFraction[m_phaseLiquidIndex][m_CO2Index];
 
     //gas phase composition  CO2 = 1.0

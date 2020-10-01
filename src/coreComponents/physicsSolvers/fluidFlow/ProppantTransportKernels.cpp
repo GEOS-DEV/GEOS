@@ -34,13 +34,13 @@ GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void
 AccumulationKernel::
-  Compute( localIndex const NC,
+  Compute( localIndex const nc,
            real64 const proppantConcOld,
            real64 const proppantConcNew,
            arraySlice1d< real64 const > const & componentDensOld,
            arraySlice1d< real64 const > const & componentDensNew,
            arraySlice1d< real64 const > const & GEOSX_UNUSED_PARAM( dCompDens_dPres ),
-           arraySlice2d< real64 const > const & dCompDens_dCompConc,
+           arraySlice2d< real64 const > const & dCompDensDCompConc,
            real64 const volume,
            real64 const packPoreVolume,
            real64 const proppantLiftVolume,
@@ -51,9 +51,9 @@ AccumulationKernel::
   // proppant mass conservation
   localAccum[0] = (proppantConcNew - proppantConcOld) * volume - proppantLiftVolume;
 
-  for( localIndex c1 = 0; c1 < NC; ++c1 )
+  for( localIndex c1 = 0; c1 < nc; ++c1 )
   {
-    for( localIndex c2 = 0; c2 < NC; ++c2 )
+    for( localIndex c2 = 0; c2 < nc; ++c2 )
     {
       localAccumJacobian[c1][c2] = 0.0;
     }
@@ -62,16 +62,16 @@ AccumulationKernel::
   localAccumJacobian[0][0] = volume;
 
   // component mass conservation
-  for( localIndex c1 = 0; c1 < NC; ++c1 )
+  for( localIndex c1 = 0; c1 < nc; ++c1 )
   {
 
     localAccum[c1+1] = ( componentDensNew[c1] * (1.0 - proppantConcNew) - componentDensOld[c1] * (1.0 - proppantConcOld) ) * volume +
                        (componentDensNew[c1] - componentDensOld[c1]) * packPoreVolume;
 
-    for( localIndex c2 = 0; c2 < NC; ++c2 )
+    for( localIndex c2 = 0; c2 < nc; ++c2 )
     {
-      localAccumJacobian[c1 + 1][c2 + 1] = dCompDens_dCompConc[c1][c2] * ( 1.0 - proppantConcNew ) * volume
-                                           + dCompDens_dCompConc[c1][c2] * packPoreVolume;
+      localAccumJacobian[c1 + 1][c2 + 1] = dCompDensDCompConc[c1][c2] * ( 1.0 - proppantConcNew ) * volume
+                                           + dCompDensDCompConc[c1][c2] * packPoreVolume;
     }
 
     localAccumJacobian[c1+1][0] = -componentDensNew[c1] * volume;
@@ -91,7 +91,7 @@ AccumulationKernel::
           arrayView2d< real64 const > const & componentDensOld,
           arrayView3d< real64 const > const & componentDens,
           arrayView3d< real64 const > const & dCompDens_dPres,
-          arrayView4d< real64 const > const & dCompDens_dCompConc,
+          arrayView4d< real64 const > const & dCompDensDCompConc,
           arrayView1d< real64 const > const & volume,
           arrayView1d< real64 const > const & proppantPackVf,
           arrayView1d< real64 const > const & proppantLiftFlux,
@@ -126,7 +126,7 @@ AccumulationKernel::
                componentDensOld[ei],
                componentDens[ei][0],
                dCompDens_dPres[ei][0],
-               dCompDens_dCompConc[ei][0],
+               dCompDensDCompConc[ei][0],
                effectiveVolume,
                packPoreVolume,
                proppantLiftVolume,
@@ -168,26 +168,26 @@ FluxKernel::
                    arrayView1d< real64 const > const & proppantConc,
                    arrayView1d< real64 const > const & dProppantConc,
                    arrayView3d< real64 const > const & componentDens,
-                   arrayView3d< real64 const > const & dComponentDens_dPres,
-                   arrayView4d< real64 const > const & dComponentDens_dComponentConc,
+                   arrayView3d< real64 const > const & dComponentDensDPres,
+                   arrayView4d< real64 const > const & dComponentDensDComponentConc,
                    arrayView1d< real64 const > const & gravDepth,
                    arrayView2d< real64 const > const & dens,
-                   arrayView2d< real64 const > const & dDens_dPres,
-                   arrayView2d< real64 const > const & dDens_dProppantConc,
-                   arrayView3d< real64 const > const & dDens_dComponentConc,
+                   arrayView2d< real64 const > const & dDensDPres,
+                   arrayView2d< real64 const > const & dDensDProppantConc,
+                   arrayView3d< real64 const > const & dDensDComponentConc,
                    arrayView2d< real64 const > const & visc,
-                   arrayView2d< real64 const > const & dVisc_dPres,
-                   arrayView2d< real64 const > const & dVisc_dProppantConc,
-                   arrayView3d< real64 const > const & dVisc_dComponentConc,
+                   arrayView2d< real64 const > const & dViscDPres,
+                   arrayView2d< real64 const > const & dViscDProppantConc,
+                   arrayView3d< real64 const > const & dViscDComponentConc,
                    arrayView2d< real64 const > const & fluidDensity,
                    arrayView2d< real64 const > const & GEOSX_UNUSED_PARAM( dFluidDens_dPres ),
                    arrayView3d< real64 const > const & GEOSX_UNUSED_PARAM( dFluidDens_dComponentConc ),
                    arrayView1d< real64 const > const & settlingFactor,
                    arrayView1d< real64 const > const & GEOSX_UNUSED_PARAM( dSettlingFactor_dPres ),
-                   arrayView1d< real64 const > const & dSettlingFactor_dProppantConc,
+                   arrayView1d< real64 const > const & dSettlingFactorDProppantConc,
                    arrayView2d< real64 const > const & GEOSX_UNUSED_PARAM( dSettlingFactor_dComponentConc ),
                    arrayView1d< real64 const > const & collisionFactor,
-                   arrayView1d< real64 const > const & dCollisionFactor_dProppantConc,
+                   arrayView1d< real64 const > const & dCollisionFactorDProppantConc,
                    arrayView1d< integer const > const & isProppantMobile,
                    arrayView1d< real64 const > const & GEOSX_UNUSED_PARAM( proppantPackVf ),
                    arrayView1d< real64 const > const & aperture,
@@ -294,12 +294,12 @@ FluxKernel::
     localIndex const ei  = stencilElementIndices[i];
 
     edgeDensity += weight[i] * dens[ei][0];
-    dEdgeDens_dP[i] = weight[i] * dDens_dPres[ei][0];
-    dEdgeDens_dProppantC[i] = weight[i] * dDens_dProppantConc[ei][0];
+    dEdgeDens_dP[i] = weight[i] * dDensDPres[ei][0];
+    dEdgeDens_dProppantC[i] = weight[i] * dDensDProppantConc[ei][0];
 
     edgeViscosity += weight[i] * visc[ei][0];
-    dEdgeVisc_dP[i] = weight[i] * dVisc_dPres[ei][0];
-    dEdgeVisc_dProppantC[i] = weight[i] * dVisc_dProppantConc[ei][0];
+    dEdgeVisc_dP[i] = weight[i] * dViscDPres[ei][0];
+    dEdgeVisc_dProppantC[i] = weight[i] * dViscDProppantConc[ei][0];
 
     proppantC[i] = proppantConc[ei] + dProppantConc[ei];
 
@@ -313,8 +313,8 @@ FluxKernel::
 
     for( localIndex c = 0; c < NC; ++c )
     {
-      dEdgeDens_dComponentC[i][c] = weight[i] * dDens_dComponentConc[ei][0][c];
-      dEdgeVisc_dComponentC[i][c] = weight[i] * dVisc_dComponentConc[ei][0][c];
+      dEdgeDens_dComponentC[i][c] = weight[i] * dDensDComponentConc[ei][0][c];
+      dEdgeVisc_dComponentC[i][c] = weight[i] * dViscDComponentConc[ei][0][c];
     }
   }
 
@@ -400,7 +400,7 @@ FluxKernel::
       // vertical
       edgeToFaceProppantFlux[i] = (1.0 - proppantC[i]) * settlingFactor[ei] * coefs[i] * fluidDens[i] / mixDens[i];
 
-      dEdgeToFaceProppantFlux_dProppantC[i][i] = (-settlingFactor[ei] + (1 - proppantC[i]) * dSettlingFactor_dProppantConc[ei]) *
+      dEdgeToFaceProppantFlux_dProppantC[i][i] = (-settlingFactor[ei] + (1 - proppantC[i]) * dSettlingFactorDProppantConc[ei]) *
                                                  coefs[i] * fluidDens[i] / mixDens[i];
 
       edgeToFaceProppantFlux[i] += proppantFluxCoef * edgeToFaceFlux[i];
@@ -420,7 +420,7 @@ FluxKernel::
       // horizontal
       edgeToFaceProppantFlux[i] = (1.0 + fluidDens[i] / mixDens[i] * (1.0 - proppantC[i]) * collisionFactor[ei]) * proppantFluxCoef * edgeToFaceFlux[i];
 
-      dEdgeToFaceProppantFlux_dProppantC[i][i] = -fluidDens[i] / mixDens[i] * (collisionFactor[ei] - (1.0 - proppantC[i]) * dCollisionFactor_dProppantConc[ei]) *
+      dEdgeToFaceProppantFlux_dProppantC[i][i] = -fluidDens[i] / mixDens[i] * (collisionFactor[ei] - (1.0 - proppantC[i]) * dCollisionFactorDProppantConc[ei]) *
                                                  proppantFluxCoef * edgeToFaceFlux[i];
 
       for( localIndex j = 0; j < numElems; ++j )
@@ -616,11 +616,11 @@ FluxKernel::
       for( localIndex c1 = 0; c1 < NC; ++c1 )
       {
         componentCe[c1] += -edgeToFaceFluidFlux[i] * componentDens[ei][0][c1];
-        dComponentCe_dP[i][c1] += -edgeToFaceFluidFlux[i] * dComponentDens_dPres[ei][0][c1];
+        dComponentCe_dP[i][c1] += -edgeToFaceFluidFlux[i] * dComponentDensDPres[ei][0][c1];
 
         for( localIndex c2 = 0; c2 < NC; ++c2 )
         {
-          dComponentCe_dComponentC[i][c1][c2] += -edgeToFaceFluidFlux[i] * dComponentDens_dComponentConc[ei][0][c1][c2];
+          dComponentCe_dComponentC[i][c1][c2] += -edgeToFaceFluidFlux[i] * dComponentDensDComponentConc[ei][0][c1][c2];
         }
 
         for( localIndex j = 0; j < numElems; ++j )
@@ -669,11 +669,11 @@ FluxKernel::
         localIndex const ei = stencilElementIndices[i];
 
         componentCe[c] += componentDens[ei][0][c] * weight[i];
-        dComponentCe_dP[i][c] = dComponentDens_dPres[ei][0][c] * weight[i];
+        dComponentCe_dP[i][c] = dComponentDensDPres[ei][0][c] * weight[i];
 
         for( localIndex c2 = 0; c2 < NC; ++c2 )
         {
-          dComponentCe_dComponentC[i][c][c2] = dComponentDens_dComponentConc[ei][0][c][c2] * weight[i];
+          dComponentCe_dComponentC[i][c][c2] = dComponentDensDComponentConc[ei][0][c][c2] * weight[i];
         }
       }
     }
@@ -766,7 +766,7 @@ FluxKernel::
             {
               for( localIndex c2 = 0; c2 < NC; ++c2 )
               {
-                localFluxJacobian[idx1][idx2 + 1 + c2] += -dComponentDens_dComponentConc[ei][0][c1][c2] * edgeToFaceFluidFlux[i] * dt;
+                localFluxJacobian[idx1][idx2 + 1 + c2] += -dComponentDensDComponentConc[ei][0][c1][c2] * edgeToFaceFluidFlux[i] * dt;
               }
             }
           }

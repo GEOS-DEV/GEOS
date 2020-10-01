@@ -164,7 +164,7 @@ void PAMELAMeshGenerator::GenerateMesh( DomainPartition * const domain )
     {
       auto const cellBlockPAMELA = subPart.second;
       auto const cellBlockType = cellBlockPAMELA->ElementType;
-      auto const cellBlockName = ElementToLabel.at( cellBlockType );
+      auto const cellBlockName = m_elementToLabel.at( cellBlockType );
       CellBlock * cellBlock = nullptr;
       if( cellBlockName == "HEX" )
       {
@@ -374,7 +374,7 @@ void PAMELAMeshGenerator::GenerateMesh( DomainPartition * const domain )
     {
       auto const cellBlockPAMELA = subPart.second;
       auto const cellBlockType = cellBlockPAMELA->ElementType;
-      auto const cellBlockName = ElementToLabel.at( cellBlockType );
+      auto const cellBlockName = m_elementToLabel.at( cellBlockType );
       if( cellBlockName == "TRIANGLE"  || cellBlockName == "QUAD" )
       {
         for( auto cellItr = cellBlockPAMELA->SubCollection.begin_owned();

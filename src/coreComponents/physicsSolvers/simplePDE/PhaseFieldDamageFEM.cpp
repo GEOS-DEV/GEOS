@@ -102,9 +102,9 @@ PhaseFieldDamageFEM::~PhaseFieldDamageFEM()
   // TODO Auto-generated destructor stub
 }
 
-void PhaseFieldDamageFEM::RegisterDataOnMesh( Group * const MeshBodies )
+void PhaseFieldDamageFEM::RegisterDataOnMesh( Group * const meshBodies )
 {
-  for( auto & mesh : MeshBodies->GetSubGroups() )
+  for( auto & mesh : meshBodies->GetSubGroups() )
   {
 
     MeshLevel *meshLevel = Group::group_cast< MeshBody * >( mesh.second )->getMeshLevel( 0 );
@@ -169,7 +169,7 @@ void PhaseFieldDamageFEM::PostProcessInput()
   // m_linearSolverParameters.amg.coarseType = "direct";
 }
 
-real64 PhaseFieldDamageFEM::SolverStep( real64 const & time_n,
+real64 PhaseFieldDamageFEM::SolverStep( real64 const & timeN,
                                         real64 const & dt,
                                         const int cycleNumber,
                                         DomainPartition & domain )
@@ -177,7 +177,7 @@ real64 PhaseFieldDamageFEM::SolverStep( real64 const & time_n,
   real64 dtReturn = dt;
   if( m_timeIntegrationOption == timeIntegrationOption::ExplicitTransient )
   {
-    dtReturn = ExplicitStep( time_n, dt, cycleNumber, domain );
+    dtReturn = ExplicitStep( timeN, dt, cycleNumber, domain );
   }
   else if( m_timeIntegrationOption ==
            timeIntegrationOption::ImplicitTransient ||
@@ -185,7 +185,7 @@ real64 PhaseFieldDamageFEM::SolverStep( real64 const & time_n,
   {
     this->SetupSystem( domain, m_dofManager, m_localMatrix, m_localRhs, m_localSolution, false );
 
-    dtReturn = this->NonlinearImplicitStep( time_n,
+    dtReturn = this->NonlinearImplicitStep( timeN,
                                             dt,
                                             cycleNumber,
                                             domain );
@@ -289,13 +289,13 @@ void PhaseFieldDamageFEM::ApplySystemSolution( DofManager const & dofManager,
 }
 
 void PhaseFieldDamageFEM::ApplyBoundaryConditions(
-  real64 const time_n,
+  real64 const timeN,
   real64 const dt, DomainPartition & domain,
   DofManager const & dofManager,
   CRSMatrixView< real64, globalIndex const > const & localMatrix,
   arrayView1d< real64 > const & localRhs )
 {
-  ApplyDirichletBC_implicit( time_n + dt, dofManager, domain, localMatrix, localRhs );
+  ApplyDirichletBC_implicit( timeN + dt, dofManager, domain, localMatrix, localRhs );
 
   if( getLogLevel() == 2 )
   {

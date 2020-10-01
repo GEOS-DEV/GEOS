@@ -112,17 +112,17 @@ public:
    * @brief Compute the center of each element in the subregion.
    * @param[in] X an arrayView of (const) node positions
    */
-  void calculateElementCenters( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X ) const
+  void calculateElementCenters( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & x ) const
   {
     arrayView2d< real64 > const & elementCenters = m_elementCenter;
     localIndex nNodes = numNodesPerElement();
 
     forAll< parallelHostPolicy >( size(), [=]( localIndex const k )
     {
-      LvArray::tensorOps::copy< 3 >( elementCenters[ k ], X[ m_toNodesRelation( k, 0 ) ] );
+      LvArray::tensorOps::copy< 3 >( elementCenters[ k ], x[ m_toNodesRelation( k, 0 ) ] );
       for( localIndex a = 1; a < nNodes; ++a )
       {
-        LvArray::tensorOps::add< 3 >( elementCenters[ k ], X[ m_toNodesRelation( k, a ) ] );
+        LvArray::tensorOps::add< 3 >( elementCenters[ k ], x[ m_toNodesRelation( k, a ) ] );
       }
 
       LvArray::tensorOps::scale< 3 >( elementCenters[ k ], 1.0 / nNodes );
@@ -135,7 +135,7 @@ public:
    * @param[in] X an arrayView of (const) node positions
    */
   inline void CalculateCellVolumesKernel( localIndex const k,
-                                          arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X ) const
+                                          arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & x ) const
   {
     LvArray::tensorOps::fill< 3 >( m_elementCenter[ k ], 0 );
 
@@ -143,8 +143,8 @@ public:
 
     for( localIndex a = 0; a < m_numNodesPerElement; ++a )
     {
-      Xlocal[ a ] = X[ m_toNodesRelation( k, a ) ];
-      LvArray::tensorOps::add< 3 >( m_elementCenter[ k ], X[ m_toNodesRelation( k, a ) ] );
+      Xlocal[ a ] = x[ m_toNodesRelation( k, a ) ];
+      LvArray::tensorOps::add< 3 >( m_elementCenter[ k ], x[ m_toNodesRelation( k, a ) ] );
     }
     LvArray::tensorOps::scale< 3 >( m_elementCenter[ k ], 1.0 / m_numNodesPerElement );
 

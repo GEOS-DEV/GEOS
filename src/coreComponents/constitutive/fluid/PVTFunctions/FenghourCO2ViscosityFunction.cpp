@@ -120,7 +120,7 @@ void FenghourCO2ViscosityFunction::Evaluation( EvalVarArgs const & pressure, Eva
   value.m_der[0] = viscosity.m_der[0];
 }
 
-void FenghourCO2ViscosityFunction::FenghourCO2Viscosity( real64 const & Tcent, real64 const & den, real64 & vis )
+void FenghourCO2ViscosityFunction::FenghourCO2Viscosity( real64 const & tCent, real64 const & den, real64 & vis )
 {
   constexpr real64 espar = 251.196;
   constexpr real64 esparInv = 1.0 / espar;
@@ -132,7 +132,7 @@ void FenghourCO2ViscosityFunction::FenghourCO2Viscosity( real64 const & Tcent, r
   constexpr real64 d82 = -0.1627888e-22;
 
   // temperature in Kelvin
-  const real64 Tkelvin = Tcent + 273.15;
+  const real64 Tkelvin = tCent + 273.15;
   // evaluate vlimit from eqns 3-5
   const real64 Tred   = Tkelvin * esparInv;
   const real64 x = log( Tred );

@@ -69,7 +69,7 @@ public:
    */
   virtual ~SinglePhaseBase() override = default;
 
-  virtual void RegisterDataOnMesh( Group * const MeshBodies ) override;
+  virtual void RegisterDataOnMesh( Group * const meshBodies ) override;
 
   virtual void SetupSystem( DomainPartition & domain,
                             DofManager & dofManager,
@@ -79,7 +79,7 @@ public:
                             bool const setSparsity = true ) override;
 
   virtual real64
-  SolverStep( real64 const & time_n,
+  SolverStep( real64 const & timeN,
               real64 const & dt,
               integer const cycleNumber,
               DomainPartition & domain ) override;
@@ -92,12 +92,12 @@ public:
   ///@{
 
   virtual void
-  ImplicitStepSetup( real64 const & time_n,
+  ImplicitStepSetup( real64 const & timeN,
                      real64 const & dt,
                      DomainPartition & domain ) override;
 
   virtual void
-  AssembleSystem( real64 const time_n,
+  AssembleSystem( real64 const timeN,
                   real64 const dt,
                   DomainPartition & domain,
                   DofManager const & dofManager,
@@ -105,7 +105,7 @@ public:
                   arrayView1d< real64 > const & localRhs ) override;
 
   virtual void
-  ApplyBoundaryConditions( real64 const time_n,
+  ApplyBoundaryConditions( real64 const timeN,
                            real64 const dt,
                            DomainPartition & domain,
                            DofManager const & dofManager,
@@ -174,7 +174,7 @@ public:
    * @param localRhs the system right-hand side vector
    */
   virtual void
-  AssembleFluxTerms( real64 const time_n,
+  AssembleFluxTerms( real64 const timeN,
                      real64 const dt,
                      DomainPartition const & domain,
                      DofManager const & dofManager,
@@ -182,7 +182,7 @@ public:
                      arrayView1d< real64 > const & localRhs ) = 0;
 
   void
-  ApplyDiricletBC( real64 const time_n,
+  ApplyDiricletBC( real64 const timeN,
                    real64 const dt,
                    DomainPartition & domain,
                    DofManager const & dofManager,
@@ -190,7 +190,7 @@ public:
                    arrayView1d< real64 > const & localRhs ) const;
 
   void
-  ApplySourceFluxBC( real64 const time_n,
+  ApplySourceFluxBC( real64 const timeN,
                      real64 const dt,
                      DomainPartition & domain,
                      DofManager const & dofManager,

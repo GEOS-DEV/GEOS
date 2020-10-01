@@ -112,7 +112,7 @@ struct HypreSolverFuncs
 
   /// Alias for get number of iterations function type
   using GetNumIter = HYPRE_Int ( * )( HYPRE_Solver solver,
-                                      HYPRE_Int * num_iterations );
+                                      HYPRE_Int * numIterations );
 
   /// Alias for get final residual norm function type
   using GetFinalNorm = HYPRE_Int ( * )( HYPRE_Solver solver,

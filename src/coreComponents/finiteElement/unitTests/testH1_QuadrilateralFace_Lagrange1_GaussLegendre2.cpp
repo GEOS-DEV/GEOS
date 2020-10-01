@@ -78,16 +78,16 @@ void testKernelDriver()
     { -1, -1, 1, 1 }
   };
 
-  constexpr static real64 quadratureFactor = 1.0 / 1.732050807568877293528;
-  constexpr static real64 weight = 1.0;
+  constexpr static real64 QUADRATURE_FACTOR = 1.0 / 1.732050807568877293528;
+  constexpr static real64 WEIGHT = 1.0;
 
   forAll< serialPolicy >( 1,
                           [=] ( localIndex const )
   {
     for( localIndex q=0; q<numQuadraturePoints; ++q )
     {
-      real64 const xi[2] = { quadratureFactor *pCoords[0][q],
-                             quadratureFactor*pCoords[1][q] };
+      real64 const xi[2] = { QUADRATURE_FACTOR *pCoords[0][q],
+                             QUADRATURE_FACTOR*pCoords[1][q] };
 
       for( localIndex a=0; a<numNodes; ++a )
       {
@@ -116,7 +116,7 @@ void testKernelDriver()
                       dXdXi[2][0] * dXdXi[0][1] - dXdXi[0][0] * dXdXi[2][1],
                       dXdXi[0][0] * dXdXi[1][1] - dXdXi[1][0] * dXdXi[0][1] };
       real64 const detJ = sqrt( n[0]*n[0] + n[1]*n[1] + n[2]*n[2] );
-      EXPECT_FLOAT_EQ( detJ * weight, viewDetJ[q] );
+      EXPECT_FLOAT_EQ( detJ * WEIGHT, viewDetJ[q] );
 
     }
   } );

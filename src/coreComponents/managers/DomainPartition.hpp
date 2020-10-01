@@ -104,7 +104,7 @@ public:
    * @brief Constructs the communications between this DomainPartition and its neighbors.
    * @param use_nonblocking If true complete the communications of each phase in the order they are received.
    */
-  void SetupCommunications( bool use_nonblocking );
+  void SetupCommunications( bool useNonblocking );
 
   /**
    * @brief Recursively builds neighbors if an MPI cartesian topology is used (i.e. not metis).

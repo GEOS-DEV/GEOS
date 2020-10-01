@@ -41,10 +41,10 @@ public:
    */
   static string CatalogName() { return "FlowProppantTransport"; }
 
-  virtual void RegisterDataOnMesh( dataRepository::Group * const MeshBodies ) override final;
+  virtual void RegisterDataOnMesh( dataRepository::Group * const meshBodies ) override final;
 
   virtual real64
-  SolverStep( real64 const & time_n,
+  SolverStep( real64 const & timeN,
               real64 const & dt,
               int const cycleNumber,
               DomainPartition & domain ) override;
@@ -60,11 +60,11 @@ public:
   } flowProppantTransportSolverViewKeys;
 
 
-  void PreStepUpdate( real64 const & time_n,
+  void PreStepUpdate( real64 const & timeN,
                       real64 const & dt,
                       DomainPartition & domain );
 
-  void PostStepUpdate( real64 const & time_n,
+  void PostStepUpdate( real64 const & timeN,
                        real64 const & dt,
                        DomainPartition & domain );
 

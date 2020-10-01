@@ -547,7 +547,7 @@ public:
    * @todo Verify: documentation missing / incomplete
    * @param MatDir
    */
-  void WriteStressVarDefinition( string const & MatDir );
+  void WriteStressVarDefinition( string const & matDir );
 
   /**
    * @todo Verify: documentation missing / incomplete
@@ -575,7 +575,7 @@ public:
    * @param optlist the option list assocaited with the multiXXXX
    */
   template< typename CBF >
-  void WriteMultiXXXX( const DBObjectType type, CBF DBPutMultiCB,
+  void WriteMultiXXXX( const DBObjectType type, CBF dbPutMultiCb,
                        int const centering, string const name, int const cycleNumber,
                        string const & multiRoot, const DBoptlist * optlist = nullptr );
 

@@ -43,7 +43,7 @@ public:
    */
   static string CatalogName() { return "Poroelastic"; }
 
-  virtual void RegisterDataOnMesh( dataRepository::Group * const MeshBodies ) override final;
+  virtual void RegisterDataOnMesh( dataRepository::Group * const meshBodies ) override final;
 
 
   virtual void SetupSystem( DomainPartition & domain,
@@ -58,7 +58,7 @@ public:
              DofManager & dofManager ) const override;
 
   virtual void
-  ImplicitStepSetup( real64 const & time_n,
+  ImplicitStepSetup( real64 const & timeN,
                      real64 const & dt,
                      DomainPartition & domain ) override final;
 
@@ -77,7 +77,7 @@ public:
                          arrayView1d< real64 > const & localRhs );
 
   virtual void
-  ApplyBoundaryConditions( real64 const time_n,
+  ApplyBoundaryConditions( real64 const timeN,
                            real64 const dt,
                            DomainPartition & domain,
                            DofManager const & dofManager,
@@ -102,7 +102,7 @@ public:
                        DomainPartition & domain ) override;
 
   virtual void
-  ImplicitStepComplete( real64 const & time_n,
+  ImplicitStepComplete( real64 const & timeN,
                         real64 const & dt,
                         DomainPartition & domain ) override final;
 
@@ -110,14 +110,14 @@ public:
   ResetStateToBeginningOfStep( DomainPartition & domain ) override;
 
   virtual real64
-  SolverStep( real64 const & time_n,
+  SolverStep( real64 const & timeN,
               real64 const & dt,
               int const cycleNumber,
               DomainPartition & domain ) override;
 
   void UpdateDeformationForCoupling( DomainPartition & domain );
 
-  real64 SplitOperatorStep( real64 const & time_n,
+  real64 SplitOperatorStep( real64 const & timeN,
                             real64 const & dt,
                             integer const cycleNumber,
                             DomainPartition & domain );

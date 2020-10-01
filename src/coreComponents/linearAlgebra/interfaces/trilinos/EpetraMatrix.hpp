@@ -202,11 +202,11 @@ public:
   virtual void rightMultiplyTranspose( EpetraMatrix const & src,
                                        EpetraMatrix & dst ) const override;
 
-  virtual void multiplyRAP( EpetraMatrix const & R,
-                            EpetraMatrix const & P,
+  virtual void multiplyRAP( EpetraMatrix const & r,
+                            EpetraMatrix const & p,
                             EpetraMatrix & dst ) const override;
 
-  virtual void multiplyPtAP( EpetraMatrix const & P,
+  virtual void multiplyPtAP( EpetraMatrix const & p,
                              EpetraMatrix & dst ) const override;
 
   virtual void gemv( real64 const alpha,
@@ -305,9 +305,9 @@ private:
    * @brief Perform a matrix matrix product with Parallel Matrix
    */
   void multiply( bool const transA,
-                 EpetraMatrix const & B,
+                 EpetraMatrix const & b,
                  bool const transB,
-                 EpetraMatrix & C ) const;
+                 EpetraMatrix & c ) const;
 
   /**
    * @brief Create the matrix by copying data from an Epetra_CrsMatrix
@@ -319,10 +319,10 @@ private:
   std::unique_ptr< Epetra_FECrsMatrix > m_matrix;
 
   /// Map representing the parallel partitioning of a source vector (x in y=Ax)
-  std::unique_ptr< Epetra_Map > m_src_map;
+  std::unique_ptr< Epetra_Map > m_srcMap;
 
   /// Map representing the parallel partitioning of a destination vector (y in y=Ax)
-  std::unique_ptr< Epetra_Map > m_dst_map;
+  std::unique_ptr< Epetra_Map > m_dstMap;
 };
 
 } // namespace geosx

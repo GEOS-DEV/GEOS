@@ -62,9 +62,9 @@ PhaseFieldFractureSolver::PhaseFieldFractureSolver( const std::string & name,
 
 }
 
-void PhaseFieldFractureSolver::RegisterDataOnMesh( dataRepository::Group * const MeshBodies )
+void PhaseFieldFractureSolver::RegisterDataOnMesh( dataRepository::Group * const meshBodies )
 {
-  for( auto & mesh : MeshBodies->GetSubGroups() )
+  for( auto & mesh : meshBodies->GetSubGroups() )
   {
     ElementRegionManager * const elemManager = mesh.second->group_cast< MeshBody * >()->getMeshLevel( 0 )->getElemManager();
 
@@ -153,7 +153,7 @@ void PhaseFieldFractureSolver::ResetStateToBeginningOfStep( DomainPartition & do
   } );
 }
 
-real64 PhaseFieldFractureSolver::SolverStep( real64 const & time_n,
+real64 PhaseFieldFractureSolver::SolverStep( real64 const & timeN,
                                              real64 const & dt,
                                              int const cycleNumber,
                                              DomainPartition & domain )
@@ -161,7 +161,7 @@ real64 PhaseFieldFractureSolver::SolverStep( real64 const & time_n,
   real64 dtReturn = dt;
   if( m_couplingTypeOption == CouplingTypeOption::FixedStress )
   {
-    dtReturn = SplitOperatorStep( time_n, dt, cycleNumber, domain );
+    dtReturn = SplitOperatorStep( timeN, dt, cycleNumber, domain );
   }
   else if( m_couplingTypeOption == CouplingTypeOption::TightlyCoupled )
   {
@@ -170,7 +170,7 @@ real64 PhaseFieldFractureSolver::SolverStep( real64 const & time_n,
   return dtReturn;
 }
 
-real64 PhaseFieldFractureSolver::SplitOperatorStep( real64 const & time_n,
+real64 PhaseFieldFractureSolver::SplitOperatorStep( real64 const & timeN,
                                                     real64 const & dt,
                                                     integer const cycleNumber,
                                                     DomainPartition & domain )
@@ -197,11 +197,11 @@ real64 PhaseFieldFractureSolver::SplitOperatorStep( real64 const & time_n,
                            solidSolver.getLocalRhs(),
                            solidSolver.getLocalSolution() );
 
-  damageSolver.ImplicitStepSetup( time_n, dt, domain );
+  damageSolver.ImplicitStepSetup( timeN, dt, domain );
 
-  solidSolver.ImplicitStepSetup( time_n, dt, domain );
+  solidSolver.ImplicitStepSetup( timeN, dt, domain );
 
-  this->ImplicitStepSetup( time_n, dt, domain );
+  this->ImplicitStepSetup( timeN, dt, domain );
 
   NonlinearSolverParameters & solverParams = getNonlinearSolverParameters();
   integer & iter = solverParams.m_numNewtonIterations;
@@ -220,7 +220,7 @@ real64 PhaseFieldFractureSolver::SplitOperatorStep( real64 const & time_n,
     GEOSX_LOG_LEVEL_RANK_0( 1, "\tIteration: " << iter+1 << ", MechanicsSolver: " );
 
     solidSolver.ResetStressToBeginningOfStep( domain );
-    dtReturnTemporary = solidSolver.NonlinearImplicitStep( time_n,
+    dtReturnTemporary = solidSolver.NonlinearImplicitStep( timeN,
                                                            dtReturn,
                                                            cycleNumber,
                                                            domain );
@@ -249,7 +249,7 @@ real64 PhaseFieldFractureSolver::SplitOperatorStep( real64 const & time_n,
 
     GEOSX_LOG_LEVEL_RANK_0( 1, "\tIteration: " << iter+1 << ", DamageSolver: " );
 
-    dtReturnTemporary = damageSolver.NonlinearImplicitStep( time_n,
+    dtReturnTemporary = damageSolver.NonlinearImplicitStep( timeN,
                                                             dtReturn,
                                                             cycleNumber,
                                                             domain );
@@ -269,9 +269,9 @@ real64 PhaseFieldFractureSolver::SplitOperatorStep( real64 const & time_n,
 
   GEOSX_ERROR_IF( !isConverged, "PhaseFieldFractureSolver::SplitOperatorStep() did not converge" );
 
-  damageSolver.ImplicitStepComplete( time_n, dt, domain );
-  solidSolver.ImplicitStepComplete( time_n, dt, domain );
-  this->ImplicitStepComplete( time_n, dt, domain );
+  damageSolver.ImplicitStepComplete( timeN, dt, domain );
+  solidSolver.ImplicitStepComplete( timeN, dt, domain );
+  this->ImplicitStepComplete( timeN, dt, domain );
 
   return dtReturn;
 }

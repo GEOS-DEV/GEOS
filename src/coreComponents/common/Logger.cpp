@@ -44,11 +44,11 @@ MPI_Comm comm;
 
 #ifdef GEOSX_USE_MPI
 
-void InitializeLogger( MPI_Comm mpi_comm, const std::string & rankOutputDir )
+void InitializeLogger( MPI_Comm mpiComm, const std::string & rankOutputDir )
 {
-  internal::comm = mpi_comm;
-  MPI_Comm_rank( mpi_comm, &internal::rank );
-  MPI_Comm_size( mpi_comm, &internal::n_ranks );
+  internal::comm = mpiComm;
+  MPI_Comm_rank( mpiComm, &internal::rank );
+  MPI_Comm_size( mpiComm, &internal::n_ranks );
 
   internal::rankString = std::to_string( internal::rank );
 
@@ -59,7 +59,7 @@ void InitializeLogger( MPI_Comm mpi_comm, const std::string & rankOutputDir )
       makeDirsForPath( rankOutputDir );
     }
 
-    MPI_Barrier( mpi_comm );
+    MPI_Barrier( mpiComm );
     std::string outputFilePath = rankOutputDir + "/rank_" + internal::rankString + ".out";
     internal::rankStream = new std::ofstream( outputFilePath );
   }

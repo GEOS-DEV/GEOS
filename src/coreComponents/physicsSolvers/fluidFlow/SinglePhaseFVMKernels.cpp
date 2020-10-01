@@ -35,9 +35,9 @@ FluxKernel::Compute( localIndex const stencilSize,
                      ElementViewConst< arrayView1d< real64 const > > const & dPres,
                      ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
                      ElementViewConst< arrayView2d< real64 const > > const & dens,
-                     ElementViewConst< arrayView2d< real64 const > > const & dDens_dPres,
+                     ElementViewConst< arrayView2d< real64 const > > const & dDensDPres,
                      ElementViewConst< arrayView1d< real64 const > > const & mob,
-                     ElementViewConst< arrayView1d< real64 const > > const & dMob_dPres,
+                     ElementViewConst< arrayView1d< real64 const > > const & dMobDPres,
                      real64 const dt,
                      arraySlice1d< real64 > const & flux,
                      arraySlice2d< real64 > const & fluxJacobian )
@@ -51,7 +51,7 @@ FluxKernel::Compute( localIndex const stencilSize,
   for( localIndex ke = 0; ke < 2; ++ke )
   {
     densMean        += 0.5 * dens[seri[ke]][sesri[ke]][sei[ke]][0];
-    dDensMean_dP[ke] = 0.5 * dDens_dPres[seri[ke]][sesri[ke]][sei[ke]][0];
+    dDensMean_dP[ke] = 0.5 * dDensDPres[seri[ke]][sesri[ke]][sei[ke]][0];
   }
 
   // compute potential difference
@@ -89,7 +89,7 @@ FluxKernel::Compute( localIndex const stencilSize,
     // happy path: single upwind direction
     localIndex const ke = 1 - localIndex( fmax( fmin( alpha, 1.0 ), 0.0 ) );
     mobility = mob[seri[ke]][sesri[ke]][sei[ke]];
-    dMobility_dP[ke] = dMob_dPres[seri[ke]][sesri[ke]][sei[ke]];
+    dMobility_dP[ke] = dMobDPres[seri[ke]][sesri[ke]][sei[ke]];
   }
   else
   {
@@ -98,7 +98,7 @@ FluxKernel::Compute( localIndex const stencilSize,
     for( localIndex ke = 0; ke < 2; ++ke )
     {
       mobility += mobWeights[ke] * mob[seri[ke]][sesri[ke]][sei[ke]];
-      dMobility_dP[ke] = mobWeights[ke] * dMob_dPres[seri[ke]][sesri[ke]][sei[ke]];
+      dMobility_dP[ke] = mobWeights[ke] * dMobDPres[seri[ke]][sesri[ke]][sei[ke]];
     }
   }
 
@@ -131,9 +131,9 @@ FluxKernel::Compute( localIndex const stencilSize,
                      arrayView1d< real64 const > const & dPres,
                      arrayView1d< real64 const > const & gravCoef,
                      arrayView2d< real64 const > const & dens,
-                     arrayView2d< real64 const > const & dDens_dPres,
+                     arrayView2d< real64 const > const & dDensDPres,
                      arrayView1d< real64 const > const & mob,
-                     arrayView1d< real64 const > const & dMob_dPres,
+                     arrayView1d< real64 const > const & dMobDPres,
                      real64 const dt,
                      arraySlice1d< real64 > const & flux,
                      arraySlice2d< real64 > const & fluxJacobian )
@@ -148,7 +148,7 @@ FluxKernel::Compute( localIndex const stencilSize,
   for( localIndex i = 0; i < 2; ++i )
   {
     densMean += 0.5 * dens[sei[i]][0];
-    dDensMean_dP[i] = 0.5 * dDens_dPres[sei[i]][0];
+    dDensMean_dP[i] = 0.5 * dDensDPres[sei[i]][0];
   }
 
   // compute potential difference MPFA-style
@@ -183,7 +183,7 @@ FluxKernel::Compute( localIndex const stencilSize,
     // happy path: single upwind direction
     localIndex const ke = 1 - localIndex( fmax( fmin( alpha, 1.0 ), 0.0 ) );
     mobility = mob[sei[ke]];
-    dMobility_dP[ke] = dMob_dPres[sei[ke]];
+    dMobility_dP[ke] = dMobDPres[sei[ke]];
   }
   else
   {
@@ -192,7 +192,7 @@ FluxKernel::Compute( localIndex const stencilSize,
     for( localIndex ke = 0; ke < 2; ++ke )
     {
       mobility += mobWeights[ke] * mob[sei[ke]];
-      dMobility_dP[ke] = mobWeights[ke] * dMob_dPres[sei[ke]];
+      dMobility_dP[ke] = mobWeights[ke] * dMobDPres[sei[ke]];
     }
   }
 
@@ -223,9 +223,9 @@ FluxKernel::ComputeJunction( localIndex const numFluxElems,
                              arrayView1d< real64 const > const & dPres,
                              arrayView1d< real64 const > const & gravCoef,
                              arrayView2d< real64 const > const & dens,
-                             arrayView2d< real64 const > const & dDens_dPres,
+                             arrayView2d< real64 const > const & dDensDPres,
                              arrayView1d< real64 const > const & mob,
-                             arrayView1d< real64 const > const & dMob_dPres,
+                             arrayView1d< real64 const > const & dMobDPres,
                              arrayView1d< real64 const > const & aperture0,
                              arrayView1d< real64 const > const & aperture,
                              real64 const meanPermCoeff,
@@ -236,7 +236,7 @@ FluxKernel::ComputeJunction( localIndex const numFluxElems,
                              real64 const dt,
                              arraySlice1d< real64 > const & flux,
                              arraySlice2d< real64 > const & fluxJacobian,
-                             arraySlice2d< real64 > const & dFlux_dAperture )
+                             arraySlice2d< real64 > const & dFluxDAperture )
 {
   real64 sumOfWeights = 0;
   real64 aperTerm[10];
@@ -316,8 +316,8 @@ FluxKernel::ComputeJunction( localIndex const numFluxElems,
       // average density
       real64 const densMean = 0.5 * ( dens[ei[0]][0] + dens[ei[1]][0] );
 
-      real64 const dDensMean_dP[2] = { 0.5 * dDens_dPres[ei[0]][0],
-                                       0.5 * dDens_dPres[ei[1]][0] };
+      real64 const dDensMean_dP[2] = { 0.5 * dDensDPres[ei[0]][0],
+                                       0.5 * dDensDPres[ei[1]][0] };
 
       real64 const potDif =  ( ( pres[ei[0]] + dPres[ei[0]] ) - ( pres[ei[1]] + dPres[ei[1]] ) -
                                densMean * ( gravCoef[ei[0]] - gravCoef[ei[1]] ) );
@@ -329,7 +329,7 @@ FluxKernel::ComputeJunction( localIndex const numFluxElems,
       localIndex ei_up  = stencilElementIndices[k[k_up]];
 
       real64 const mobility     = mob[ei_up];
-      real64 const dMobility_dP = dMob_dPres[ei_up];
+      real64 const dMobility_dP = dMobDPres[ei_up];
 
       // Compute flux and fill flux rval
       real64 const fluxVal = mobility * weight * potDif * dt;
@@ -349,10 +349,10 @@ FluxKernel::ComputeJunction( localIndex const numFluxElems,
 
       real64 const dFlux_dAper[2] = { mobility * dWeight_dAper[0] * potDif * dt,
                                       mobility * dWeight_dAper[1] * potDif * dt };
-      dFlux_dAperture[k[0]][k[0]] += dFlux_dAper[0];
-      dFlux_dAperture[k[0]][k[1]] += dFlux_dAper[1];
-      dFlux_dAperture[k[1]][k[0]] -= dFlux_dAper[0];
-      dFlux_dAperture[k[1]][k[1]] -= dFlux_dAper[1];
+      dFluxDAperture[k[0]][k[0]] += dFlux_dAper[0];
+      dFluxDAperture[k[0]][k[1]] += dFlux_dAper[1];
+      dFluxDAperture[k[1]][k[0]] -= dFlux_dAper[0];
+      dFluxDAperture[k[1]][k[1]] -= dFlux_dAper[1];
     }
   }
 }
@@ -368,7 +368,7 @@ void FluxKernel::
                                     ElementViewConst< arrayView1d< real64 const > > const & dPres,
                                     ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
                                     ElementViewConst< arrayView2d< real64 const > > const & dens,
-                                    ElementViewConst< arrayView2d< real64 const > > const & dDens_dPres,
+                                    ElementViewConst< arrayView2d< real64 const > > const & dDensDPres,
                                     ElementViewConst< arrayView1d< real64 const > > const & mob,
                                     ElementViewConst< arrayView1d< real64 const > > const & dMob_dPres,
                                     ElementViewConst< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM( aperture0 ),
@@ -410,7 +410,7 @@ void FluxKernel::
              dPres,
              gravCoef,
              dens,
-             dDens_dPres,
+             dDensDPres,
              mob,
              dMob_dPres,
              dt,
@@ -453,7 +453,7 @@ void FluxKernel::
                                 ElementViewConst< arrayView1d< real64 const > > const & dPres,
                                 ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
                                 ElementViewConst< arrayView2d< real64 const > > const & dens,
-                                ElementViewConst< arrayView2d< real64 const > > const & dDens_dPres,
+                                ElementViewConst< arrayView2d< real64 const > > const & dDensDPres,
                                 ElementViewConst< arrayView1d< real64 const > > const & mob,
                                 ElementViewConst< arrayView1d< real64 const > > const & dMob_dPres,
                                 ElementViewConst< arrayView1d< real64 const > > const & aperture0,
@@ -531,7 +531,7 @@ void FluxKernel::
                        dPres[er][esr],
                        gravCoef[er][esr],
                        dens[er][esr],
-                       dDens_dPres[er][esr],
+                       dDensDPres[er][esr],
                        mob[er][esr],
                        dMob_dPres[er][esr],
                        aperture0[er][esr],

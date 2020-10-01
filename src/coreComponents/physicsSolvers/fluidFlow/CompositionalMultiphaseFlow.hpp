@@ -89,7 +89,7 @@ public:
   static string CatalogName() { return dataRepository::keys::compositionalMultiphaseFlow; }
 
   virtual void
-  RegisterDataOnMesh( Group * const MeshBodies ) override;
+  RegisterDataOnMesh( Group * const meshBodies ) override;
 
   /**
    * @defgroup Solver Interface Functions
@@ -99,13 +99,13 @@ public:
   /**@{*/
 
   virtual real64
-  SolverStep( real64 const & time_n,
+  SolverStep( real64 const & timeN,
               real64 const & dt,
               integer const cycleNumber,
               DomainPartition & domain ) override;
 
   virtual void
-  ImplicitStepSetup( real64 const & time_n,
+  ImplicitStepSetup( real64 const & timeN,
                      real64 const & dt,
                      DomainPartition & domain ) override;
 
@@ -114,7 +114,7 @@ public:
              DofManager & dofManager ) const override;
 
   virtual void
-  AssembleSystem( real64 const time_n,
+  AssembleSystem( real64 const timeN,
                   real64 const dt,
                   DomainPartition & domain,
                   DofManager const & dofManager,
@@ -122,7 +122,7 @@ public:
                   arrayView1d< real64 > const & localRhs ) override;
 
   virtual void
-  ApplyBoundaryConditions( real64 const time_n,
+  ApplyBoundaryConditions( real64 const timeN,
                            real64 const dt,
                            DomainPartition & domain,
                            DofManager const & dofManager,
@@ -442,25 +442,25 @@ private:
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_pressure;
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_deltaPressure;
 
-  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > m_dCompFrac_dCompDens;
+  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > m_dCompFracDCompDens;
 
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_dPhaseVolFrac_dPres;
-  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > m_dPhaseVolFrac_dCompDens;
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_dPhaseVolFracDPres;
+  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > m_dPhaseVolFracDCompDens;
 
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_phaseMob;
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_dPhaseMob_dPres;
-  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > m_dPhaseMob_dCompDens;
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_dPhaseMobDPres;
+  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > m_dPhaseMobDCompDens;
 
   ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > m_phaseDens;
-  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > m_dPhaseDens_dPres;
-  ElementRegionManager::ElementViewAccessor< arrayView4d< real64 const > > m_dPhaseDens_dComp;
+  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > m_dPhaseDensDPres;
+  ElementRegionManager::ElementViewAccessor< arrayView4d< real64 const > > m_dPhaseDensDComp;
 
   ElementRegionManager::ElementViewAccessor< arrayView4d< real64 const > > m_phaseCompFrac;
-  ElementRegionManager::ElementViewAccessor< arrayView4d< real64 const > > m_dPhaseCompFrac_dPres;
-  ElementRegionManager::ElementViewAccessor< arrayView5d< real64 const > > m_dPhaseCompFrac_dComp;
+  ElementRegionManager::ElementViewAccessor< arrayView4d< real64 const > > m_dPhaseCompFracDPres;
+  ElementRegionManager::ElementViewAccessor< arrayView5d< real64 const > > m_dPhaseCompFracDComp;
 
   ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > m_phaseCapPressure;
-  ElementRegionManager::ElementViewAccessor< arrayView4d< real64 const > > m_dPhaseCapPressure_dPhaseVolFrac;
+  ElementRegionManager::ElementViewAccessor< arrayView4d< real64 const > > m_dPhaseCapPressureDPhaseVolFrac;
 
 };
 

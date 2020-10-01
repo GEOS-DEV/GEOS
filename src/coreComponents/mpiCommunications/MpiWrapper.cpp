@@ -54,11 +54,11 @@ int MpiWrapper::Cart_coords( MPI_Comm comm, int rank, int maxdims, int coords[] 
 #endif
 }
 
-int MpiWrapper::Cart_create( MPI_Comm comm_old, int ndims, const int dims[], const int periods[],
-                             int reorder, MPI_Comm * comm_cart )
+int MpiWrapper::Cart_create( MPI_Comm commOld, int ndims, const int dims[], const int periods[],
+                             int reorder, MPI_Comm * commCart )
 {
 #ifdef GEOSX_USE_MPI
-  return MPI_Cart_create( comm_old, ndims, dims, periods, reorder, comm_cart );
+  return MPI_Cart_create( commOld, ndims, dims, periods, reorder, commCart );
 #else
   return 0;
 #endif
@@ -172,27 +172,27 @@ int MpiWrapper::Wait( MPI_Request * request, MPI_Status * status )
   return 0;
 }
 
-int MpiWrapper::Waitany( int count, MPI_Request array_of_requests[], int * indx, MPI_Status * status )
+int MpiWrapper::Waitany( int count, MPI_Request arrayOfRequests[], int * indx, MPI_Status * status )
 {
 #ifdef GEOSX_USE_MPI
-  return MPI_Waitany( count, array_of_requests, indx, status );
+  return MPI_Waitany( count, arrayOfRequests, indx, status );
 #endif
   return 0;
 }
 
-int MpiWrapper::Waitsome( int count, MPI_Request array_of_requests[], int * outcount, int array_of_indices[], MPI_Status array_of_statuses[] )
+int MpiWrapper::Waitsome( int count, MPI_Request arrayOfRequests[], int * outcount, int arrayOfIndices[], MPI_Status arrayOfStatuses[] )
 {
 #ifdef GEOSX_USE_MPI
-  return MPI_Waitsome( count, array_of_requests, outcount, array_of_indices, array_of_statuses );
+  return MPI_Waitsome( count, arrayOfRequests, outcount, arrayOfIndices, arrayOfStatuses );
 #endif
   // *outcount = 0;
   return 0;
 }
 
-int MpiWrapper::Waitall( int count, MPI_Request array_of_requests[], MPI_Status array_of_statuses[] )
+int MpiWrapper::Waitall( int count, MPI_Request arrayOfRequests[], MPI_Status arrayOfStatuses[] )
 {
 #ifdef GEOSX_USE_MPI
-  return MPI_Waitall( count, array_of_requests, array_of_statuses );
+  return MPI_Waitall( count, arrayOfRequests, arrayOfStatuses );
 #endif
   return 0;
 }
@@ -207,14 +207,14 @@ double MpiWrapper::Wtime( void )
 
 }
 
-int MpiWrapper::ActiveWaitAny( const int count, MPI_Request array_of_requests[], std::function< void ( int ) > func )
+int MpiWrapper::ActiveWaitAny( const int count, MPI_Request arrayOfRequests[], std::function< void ( int ) > func )
 {
   int cmp = 0;
   while( cmp < count )
   {
     int idx = 0;
     MPI_Status stat;
-    int err = Waitany( count, array_of_requests, &idx, &stat );
+    int err = Waitany( count, arrayOfRequests, &idx, &stat );
     if( err != MPI_SUCCESS )
       return err;
     if( idx != MPI_UNDEFINED )   // only if all(requests == MPI_REQUEST_NULL)
@@ -226,7 +226,7 @@ int MpiWrapper::ActiveWaitAny( const int count, MPI_Request array_of_requests[],
   return MPI_SUCCESS;
 }
 
-int MpiWrapper::ActiveWaitSome( const int count, MPI_Request array_of_requests[], std::function< void ( int ) > func )
+int MpiWrapper::ActiveWaitSome( const int count, MPI_Request arrayOfRequests[], std::function< void ( int ) > func )
 {
   int cmp = 0;
   while( cmp < count )
@@ -234,7 +234,7 @@ int MpiWrapper::ActiveWaitSome( const int count, MPI_Request array_of_requests[]
     int rcvd = 0;
     std::vector< int > indices( count, -1 );
     std::vector< MPI_Status > stats( count );
-    int err = Waitsome( count, array_of_requests, &rcvd, &indices[0], &stats[0] );
+    int err = Waitsome( count, arrayOfRequests, &rcvd, &indices[0], &stats[0] );
     if( err != MPI_SUCCESS )
       return err;
     if( rcvd > 0 )

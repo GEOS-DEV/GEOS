@@ -112,7 +112,7 @@ void WellSolverBase::SetupDofs( DomainPartition const & domain,
                           DofManager::Connector::Node );
 }
 
-void WellSolverBase::ImplicitStepSetup( real64 const & time_n,
+void WellSolverBase::ImplicitStepSetup( real64 const & timeN,
                                         real64 const & GEOSX_UNUSED_PARAM( dt ),
                                         DomainPartition & domain )
 {
@@ -120,7 +120,7 @@ void WellSolverBase::ImplicitStepSetup( real64 const & time_n,
   ResetViews( domain );
 
   // Initialize the primary and secondary variables for the first time step
-  if( time_n <= 0.0 )
+  if( timeN <= 0.0 )
   {
     InitializeWells( domain );
   }

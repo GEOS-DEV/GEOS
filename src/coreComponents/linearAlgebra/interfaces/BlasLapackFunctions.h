@@ -31,109 +31,109 @@ extern "C"
 {
 
 #define GEOSX_dasum FORTRAN_MANGLE( dasum )
-double GEOSX_dasum( int const * N,
-                    double const * DX,
-                    int const * INCX );
+double GEOSX_dasum( int const * n,
+                    double const * dx,
+                    int const * incx );
 
 #define GEOSX_daxpy FORTRAN_MANGLE( daxpy )
-void GEOSX_daxpy( int const * N,
-                  double const * DA,
-                  double const * DX,
-                  int const * INCX,
-                  double * DY,
-                  int const * INCY );
+void GEOSX_daxpy( int const * n,
+                  double const * da,
+                  double const * dx,
+                  int const * incx,
+                  double * dy,
+                  int const * incy );
 
 #define GEOSX_dcopy FORTRAN_MANGLE( dcopy )
-void GEOSX_dcopy( int const * N,
-                  double const * DX,
-                  int const * INCX,
-                  double * DY,
-                  int const * INCY );
+void GEOSX_dcopy( int const * n,
+                  double const * dx,
+                  int const * incx,
+                  double * dy,
+                  int const * incy );
 
 #define GEOSX_ddot FORTRAN_MANGLE( ddot )
-double GEOSX_ddot( int const * N,
-                   double const * DX,
-                   int const * INCX,
-                   double const * DY,
-                   int const * INCY );
+double GEOSX_ddot( int const * n,
+                   double const * dx,
+                   int const * incx,
+                   double const * dy,
+                   int const * incy );
 
 #define GEOSX_idamax FORTRAN_MANGLE( idamax )
-int GEOSX_idamax( int const * N,
-                  double const * DX,
-                  int const * INCX );
+int GEOSX_idamax( int const * n,
+                  double const * dx,
+                  int const * incx );
 
 #define GEOSX_dgemm FORTRAN_MANGLE( dgemm )
-void GEOSX_dgemm( char const * TRANSA,
-                  char const * TRANSB,
-                  int const * M,
-                  int const * N,
-                  int const * K,
-                  double const * ALPHA,
-                  double const * A,
-                  int const * LDA,
-                  double const * B,
-                  int const * LDB,
-                  double const * BETA,
-                  double * C,
-                  int const * LDC );
+void GEOSX_dgemm( char const * transa,
+                  char const * transb,
+                  int const * m,
+                  int const * n,
+                  int const * k,
+                  double const * alpha,
+                  double const * a,
+                  int const * lda,
+                  double const * b,
+                  int const * ldb,
+                  double const * beta,
+                  double * c,
+                  int const * ldc );
 
 #define GEOSX_dgetrf FORTRAN_MANGLE( dgetrf )
-void GEOSX_dgetrf( int const * M,
-                   int const * N,
-                   double * A,
-                   int const * LDA,
-                   int * IPIV,
-                   int * INFO );
+void GEOSX_dgetrf( int const * m,
+                   int const * n,
+                   double * a,
+                   int const * lda,
+                   int * ipiv,
+                   int * info );
 
 #define GEOSX_dgetri FORTRAN_MANGLE( dgetri )
-void GEOSX_dgetri( int const * N,
-                   double * A,
-                   int const * LDA,
-                   int const * IPIV,
-                   double * WORK,
-                   int const * LWORK,
-                   int * INFO );
+void GEOSX_dgetri( int const * n,
+                   double * a,
+                   int const * lda,
+                   int const * ipiv,
+                   double * work,
+                   int const * lwork,
+                   int * info );
 
 #define GEOSX_dlange FORTRAN_MANGLE( dlange )
-double GEOSX_dlange( char const * NORM,
-                     int const * M,
-                     int const * N,
-                     double const * A,
-                     int const * LDA,
-                     double * WORK );
+double GEOSX_dlange( char const * norm,
+                     int const * m,
+                     int const * n,
+                     double const * a,
+                     int const * lda,
+                     double * work );
 
 #define GEOSX_dlarnv FORTRAN_MANGLE( dlarnv )
-void GEOSX_dlarnv( int const * IDIST,
-                   int * ISEED,
-                   int const * N,
-                   double * X );
+void GEOSX_dlarnv( int const * idist,
+                   int * iseed,
+                   int const * n,
+                   double * x );
 
 #define GEOSX_dnrm2 FORTRAN_MANGLE( dnrm2 )
-double GEOSX_dnrm2( int const * N,
-                    double const * X,
-                    int const * INCX );
+double GEOSX_dnrm2( int const * n,
+                    double const * x,
+                    int const * incx );
 
 #define GEOSX_dscal FORTRAN_MANGLE( dscal )
-void GEOSX_dscal( int const * N,
-                  double const * DA,
-                  double * DX,
-                  int const * INCX );
+void GEOSX_dscal( int const * n,
+                  double const * da,
+                  double * dx,
+                  int const * incx );
 
 #define GEOSX_dgesvd FORTRAN_MANGLE( dgesvd )
-void GEOSX_dgesvd( char const * JOBU,
-                   char const * JOBVT,
-                   int const * M,
-                   int const * N,
-                   double * A,
-                   int const * LDA,
-                   double * S,
-                   double * U,
-                   int const * LDU,
-                   double * VT,
-                   int const * LDVT,
-                   double * WKOPT,
-                   int const * LWORK,
-                   int * INFO );
+void GEOSX_dgesvd( char const * jobu,
+                   char const * jobvt,
+                   int const * m,
+                   int const * n,
+                   double * a,
+                   int const * lda,
+                   double * s,
+                   double * u,
+                   int const * ldu,
+                   double * vt,
+                   int const * ldvt,
+                   double * wkopt,
+                   int const * lwork,
+                   int * info );
 
 }
 #endif

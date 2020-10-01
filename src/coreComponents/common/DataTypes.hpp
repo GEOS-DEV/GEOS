@@ -653,25 +653,25 @@ public:
      * @brief Get an iterator to the beginning of regex map.
      * @return
      */
-    regexMapType::iterator begin(){return regexMap.begin();}
+    regexMapType::iterator begin(){return m_regexMap.begin();}
 
     /**
      * @brief Get an iterator to the end of regex map.
      * @return
      */
-    regexMapType::iterator end(){return regexMap.end();}
+    regexMapType::iterator end(){return m_regexMap.end();}
 
     /**
      * @brief Get a const iterator to the beginning of regex map.
      * @return
      */
-    regexMapType::const_iterator begin() const {return regexMap.begin();}
+    regexMapType::const_iterator begin() const {return m_regexMap.begin();}
 
     /**
      * @brief Get a const iterator to the end of regex map.
      * @return
      */
-    regexMapType::const_iterator end() const {return regexMap.end();}
+    regexMapType::const_iterator end() const {return m_regexMap.end();}
 
 private:
 
@@ -709,10 +709,10 @@ private:
 
     // Define the component regexes:
     // Regex to match an unsigned int (123, etc.)
-    std::string ru = "[\\d]+";
+    std::string m_ru = "[\\d]+";
 
     // Regex to match an signed int (-123, 455, +789, etc.)
-    std::string ri = "[+-]?[\\d]+";
+    std::string m_ri = "[+-]?[\\d]+";
 
     // Regex to match a float (1, +2.3, -.4, 5.6e7, 8E-9, etc.)
     // Explanation of parts:
@@ -721,47 +721,47 @@ private:
     // [\\d]*  matches any number of numbers following the decimal
     // ([eE][-+]?[\\d]+|\\s*)  matches an optional scientific notation number
     // Note: the xsd regex implementation does not allow an empty branch, so use allow whitespace at the end
-    std::string rr = "[+-]?[\\d]*([\\d]\\.?|\\.[\\d])[\\d]*([eE][-+]?[\\d]+|\\s*)";
+    std::string m_rr = "[+-]?[\\d]*([\\d]\\.?|\\.[\\d])[\\d]*([eE][-+]?[\\d]+|\\s*)";
 
     // Regex to match a string that does not contain the characters  ,{}
-    std::string rs = "[^,\\{\\}]*";
+    std::string m_rs = "[^,\\{\\}]*";
 
     // Regex to match a R1Tensor
-    std::string r1 = "\\s*(" + rr + ",\\s*){2}" + rr;
+    std::string m_r1 = "\\s*(" + m_rr + ",\\s*){2}" + m_rr;
 
     // Build master list of regexes
-    regexMapType regexMap =
+    regexMapType m_regexMap =
     {
-      {"integer", ri},
-      {"localIndex", ri},
-      {"globalIndex", ri},
-      {"real32", rr},
-      {"real64", rr},
-      {"R1Tensor", r1},
-      {"integer_array", constructArrayRegex( ri, 1 )},
-      {"localIndex_array", constructArrayRegex( ri, 1 )},
-      {"globalIndex_array", constructArrayRegex( ri, 1 )},
-      {"real32_array", constructArrayRegex( rr, 1 )},
-      {"real64_array", constructArrayRegex( rr, 1 )},
-      {"r1_array", constructArrayRegex( r1, 1 )},
-      {"integer_array2d", constructArrayRegex( ri, 2 )},
-      {"localIndex_array2d", constructArrayRegex( ri, 2 )},
-      {"globalIndex_array2d", constructArrayRegex( ri, 2 )},
-      {"real32_array2d", constructArrayRegex( rr, 2 )},
-      {"real64_array2d", constructArrayRegex( rr, 2 )},
-      {"r1_array2d", constructArrayRegex( r1, 2 )},
-      {"integer_array3d", constructArrayRegex( ri, 3 )},
-      {"localIndex_array3d", constructArrayRegex( ri, 3 )},
-      {"globalIndex_array3d", constructArrayRegex( ri, 3 )},
-      {"real32_array3d", constructArrayRegex( rr, 3 )},
-      {"real64_array3d", constructArrayRegex( rr, 3 )},
-      {"string", rs},
-      {"path", rs},
-      {"string_array", constructArrayRegex( rs, 1 )},
-      {"path_array", constructArrayRegex( rs, 1 )},
-      {"mapPair", rs},
-      {"mapPair_array", constructArrayRegex( rs, 1 )},
-      {"geosx_dataRepository_PlotLevel", ri}
+      {"integer", m_ri},
+      {"localIndex", m_ri},
+      {"globalIndex", m_ri},
+      {"real32", m_rr},
+      {"real64", m_rr},
+      {"R1Tensor", m_r1},
+      {"integer_array", constructArrayRegex( m_ri, 1 )},
+      {"localIndex_array", constructArrayRegex( m_ri, 1 )},
+      {"globalIndex_array", constructArrayRegex( m_ri, 1 )},
+      {"real32_array", constructArrayRegex( m_rr, 1 )},
+      {"real64_array", constructArrayRegex( m_rr, 1 )},
+      {"r1_array", constructArrayRegex( m_r1, 1 )},
+      {"integer_array2d", constructArrayRegex( m_ri, 2 )},
+      {"localIndex_array2d", constructArrayRegex( m_ri, 2 )},
+      {"globalIndex_array2d", constructArrayRegex( m_ri, 2 )},
+      {"real32_array2d", constructArrayRegex( m_rr, 2 )},
+      {"real64_array2d", constructArrayRegex( m_rr, 2 )},
+      {"r1_array2d", constructArrayRegex( m_r1, 2 )},
+      {"integer_array3d", constructArrayRegex( m_ri, 3 )},
+      {"localIndex_array3d", constructArrayRegex( m_ri, 3 )},
+      {"globalIndex_array3d", constructArrayRegex( m_ri, 3 )},
+      {"real32_array3d", constructArrayRegex( m_rr, 3 )},
+      {"real64_array3d", constructArrayRegex( m_rr, 3 )},
+      {"string", m_rs},
+      {"path", m_rs},
+      {"string_array", constructArrayRegex( m_rs, 1 )},
+      {"path_array", constructArrayRegex( m_rs, 1 )},
+      {"mapPair", m_rs},
+      {"mapPair_array", constructArrayRegex( m_rs, 1 )},
+      {"geosx_dataRepository_PlotLevel", m_ri}
     };
   };
 

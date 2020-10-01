@@ -40,8 +40,8 @@ CompositeFunction::CompositeFunction( const std::string & name,
                                       Group * const parent ):
   FunctionBase( name, parent ),
 #ifdef GEOSX_USE_MATHPRESSO
-  parserContext(),
-  parserExpression(),
+  m_parserContext(),
+  m_parserExpression(),
 #endif
   m_numSubFunctions(),
   m_subFunctions()
@@ -70,13 +70,13 @@ void CompositeFunction::InitializeFunction()
   // Register variables
   for( localIndex ii=0; ii<m_variableNames.size(); ++ii )
   {
-    parserContext.addVariable( m_variableNames[ii].c_str(), static_cast< int >(ii * sizeof(double)));
+    m_parserContext.addVariable( m_variableNames[ii].c_str(), static_cast< int >(ii * sizeof(double)));
   }
 
   // Add built in constants/functions (PI, E, sin, cos, ceil, exp, etc.),
   // compile
-  parserContext.addBuiltIns();
-  mathpresso::Error err = parserExpression.compile( parserContext, m_expression.c_str(), mathpresso::kNoOptions );
+  m_parserContext.addBuiltIns();
+  mathpresso::Error err = m_parserExpression.compile( m_parserContext, m_expression.c_str(), mathpresso::kNoOptions );
   GEOSX_ERROR_IF( err != mathpresso::kErrorOk, "JIT Compiler Error" );
 
   // Grab pointers to sub functions
@@ -117,7 +117,7 @@ void CompositeFunction::Evaluate( dataRepository::Group const * const group,
     {
       functionResults[jj] = subFunctionResults[jj][ii];
     }
-    result[ii] = parserExpression.evaluate( reinterpret_cast< void * >( functionResults ));
+    result[ii] = m_parserExpression.evaluate( reinterpret_cast< void * >( functionResults ));
   } );
 #else
   GEOSX_ERROR( "GEOSX was not configured with mathpresso!" );
@@ -135,7 +135,7 @@ real64 CompositeFunction::Evaluate( real64 const * const input ) const
     functionResults[ii] = m_subFunctions[ii]->Evaluate( input );
   }
 
-  return parserExpression.evaluate( reinterpret_cast< void * >( functionResults ));
+  return m_parserExpression.evaluate( reinterpret_cast< void * >( functionResults ));
 #else
   GEOSX_ERROR( "GEOSX was not configured with mathpresso!" );
   return 0;

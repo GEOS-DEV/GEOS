@@ -50,7 +50,7 @@ public:
    * If the start criteria are satisfied, then the event manager
    * will call this method.
    */
-  virtual void Execute( real64 const time_n,
+  virtual void Execute( real64 const timeN,
                         real64 const dt,
                         integer const cycleNumber,
                         integer const eventCounter,
@@ -64,7 +64,7 @@ public:
    * @param[in] cycle         global cycle number
    * @param[in,out] domain    the physical domain
    */
-  virtual void SignalToPrepareForExecution( real64 const time_n,
+  virtual void SignalToPrepareForExecution( real64 const timeN,
                                             real64 const dt,
                                             integer const cycle,
                                             dataRepository::Group * domain );
@@ -76,7 +76,7 @@ public:
    * @param[in] eventProgress fractional progress in current cycle
    * @param[in,out] domain    the physical domain
    */
-  virtual void Cleanup( real64 const time_n,
+  virtual void Cleanup( real64 const timeN,
                         integer const cycleNumber,
                         integer const eventCounter,
                         real64 const eventProgress,

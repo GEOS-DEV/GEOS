@@ -222,11 +222,11 @@ public:
   virtual void rightMultiplyTranspose( HypreMatrix const & src,
                                        HypreMatrix & dst ) const override;
 
-  virtual void multiplyRAP( HypreMatrix const & R,
-                            HypreMatrix const & P,
+  virtual void multiplyRAP( HypreMatrix const & r,
+                            HypreMatrix const & p,
                             HypreMatrix & dst ) const override;
 
-  virtual void multiplyPtAP( HypreMatrix const & P,
+  virtual void multiplyPtAP( HypreMatrix const & p,
                              HypreMatrix & dst ) const override;
 
   virtual void gemv( real64 const alpha,
@@ -329,12 +329,12 @@ private:
   /**
    * Pointer to underlying HYPRE_IJMatrix type.
    */
-  HYPRE_IJMatrix m_ij_mat = nullptr;
+  HYPRE_IJMatrix m_ijMat = nullptr;
 
   /**
    * Pointer to underlying HYPRE_ParCSRMatrix type.
    */
-  HYPRE_ParCSRMatrix m_parcsr_mat = nullptr;
+  HYPRE_ParCSRMatrix m_parcsrMat = nullptr;
 
 };
 

@@ -157,7 +157,7 @@ public:
   realT ProductOfSquares() const;
 
   /// Hadamard product between two Rank1 tensors
-  void AiBi( const R1TensorT< T_dim > & A, const R1TensorT< T_dim > & B );
+  void AiBi( const R1TensorT< T_dim > & a, const R1TensorT< T_dim > & b );
 
   /// cross product of 2 rank1 tensors
   GEOSX_HOST_DEVICE
@@ -311,10 +311,10 @@ inline realT R1TensorT< T_dim >::Sum( void ) const
  * @return none
  */
 template< int T_dim >
-inline void R1TensorT< T_dim >::AiBi( const R1TensorT< T_dim > & A, const R1TensorT< T_dim > & B )
+inline void R1TensorT< T_dim >::AiBi( const R1TensorT< T_dim > & a, const R1TensorT< T_dim > & b )
 {
   for( int i = 0; i < T_dim; i++ )
-    this->t_data[i] = A.t_data[i] * B.t_data[i];
+    this->t_data[i] = a.t_data[i] * b.t_data[i];
 }
 
 /**

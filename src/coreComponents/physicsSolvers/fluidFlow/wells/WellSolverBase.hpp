@@ -164,7 +164,7 @@ public:
   virtual void SetupDofs( DomainPartition const & domain,
                           DofManager & dofManager ) const override;
 
-  virtual void ImplicitStepSetup( real64 const & time_n,
+  virtual void ImplicitStepSetup( real64 const & timeN,
                                   real64 const & dt,
                                   DomainPartition & domain ) override;
 
@@ -195,7 +195,7 @@ public:
    * @param matrix the system matrix
    * @param rhs the system right-hand side vector
    */
-  virtual void AssembleFluxTerms( real64 const time_n,
+  virtual void AssembleFluxTerms( real64 const timeN,
                                   real64 const dt,
                                   DomainPartition const & domain,
                                   DofManager const & dofManager,
@@ -211,7 +211,7 @@ public:
    * @param matrix the system matrix
    * @param rhs the system right-hand side vector
    */
-  virtual void AssembleVolumeBalanceTerms( real64 const time_n,
+  virtual void AssembleVolumeBalanceTerms( real64 const timeN,
                                            real64 const dt,
                                            DomainPartition const & domain,
                                            DofManager const & dofManager,

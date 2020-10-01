@@ -65,10 +65,10 @@ SolidMechanicsEmbeddedFractures::~SolidMechanicsEmbeddedFractures()
   // TODO Auto-generated destructor stub
 }
 
-void SolidMechanicsEmbeddedFractures::RegisterDataOnMesh( dataRepository::Group * const MeshBodies )
+void SolidMechanicsEmbeddedFractures::RegisterDataOnMesh( dataRepository::Group * const meshBodies )
 {
 
-  for( auto & mesh : MeshBodies->GetSubGroups() )
+  for( auto & mesh : meshBodies->GetSubGroups() )
   {
     MeshLevel * meshLevel = Group::group_cast< MeshBody * >( mesh.second )->getMeshLevel( 0 );
 
@@ -95,30 +95,30 @@ void SolidMechanicsEmbeddedFractures::ResetStateToBeginningOfStep( DomainPartiti
   m_solidSolver->ResetStateToBeginningOfStep( domain );
 }
 
-void SolidMechanicsEmbeddedFractures::ImplicitStepSetup( real64 const & time_n,
+void SolidMechanicsEmbeddedFractures::ImplicitStepSetup( real64 const & timeN,
                                                          real64 const & dt,
                                                          DomainPartition & domain )
 {
   m_solidSolver = this->getParent()->GetGroup< SolidMechanicsLagrangianFEM >( m_solidSolverName );
 
-  m_solidSolver->ImplicitStepSetup( time_n, dt, domain );
+  m_solidSolver->ImplicitStepSetup( timeN, dt, domain );
 }
 
-void SolidMechanicsEmbeddedFractures::ImplicitStepComplete( real64 const & time_n,
+void SolidMechanicsEmbeddedFractures::ImplicitStepComplete( real64 const & timeN,
                                                             real64 const & dt,
                                                             DomainPartition & domain )
 {
-  m_solidSolver->ImplicitStepComplete( time_n, dt, domain );
+  m_solidSolver->ImplicitStepComplete( timeN, dt, domain );
 }
 
-real64 SolidMechanicsEmbeddedFractures::SolverStep( real64 const & time_n,
+real64 SolidMechanicsEmbeddedFractures::SolverStep( real64 const & timeN,
                                                     real64 const & dt,
                                                     int const cycleNumber,
                                                     DomainPartition & domain )
 {
   real64 dtReturn = dt;
 
-  ImplicitStepSetup( time_n,
+  ImplicitStepSetup( timeN,
                      dt,
                      domain );
 
@@ -129,7 +129,7 @@ real64 SolidMechanicsEmbeddedFractures::SolverStep( real64 const & time_n,
                m_localSolution );
 
   // currently the only method is implicit time integration
-  dtReturn = this->NonlinearImplicitStep( time_n,
+  dtReturn = this->NonlinearImplicitStep( timeN,
                                           dt,
                                           cycleNumber,
                                           domain );
@@ -137,7 +137,7 @@ real64 SolidMechanicsEmbeddedFractures::SolverStep( real64 const & time_n,
   // m_solidSolver->updateStress( domain );
 
   // final step for completion of timestep. typically secondary variable updates and cleanup.
-  ImplicitStepComplete( time_n, dtReturn, domain );
+  ImplicitStepComplete( timeN, dtReturn, domain );
 
   return dtReturn;
 }
@@ -270,19 +270,19 @@ void SolidMechanicsEmbeddedFractures::AssembleSystem( real64 const time,
   globalIndex const rankOffset = dofManager.rankOffset();
 
   constexpr int dim = 3;
-  static constexpr int maxNumUdof = dim * 8; // this is hard-coded for now.
+  static constexpr int MAX_NUM_UDOF = dim * 8; // this is hard-coded for now.
 
   // Initialise local matrices and vectors
-  array1d< globalIndex >       dispEqnRowIndices ( maxNumUdof );
+  array1d< globalIndex >       dispEqnRowIndices ( MAX_NUM_UDOF );
   array1d< globalIndex >       jumpEqnRowIndices    ( 3 );
-  array1d< globalIndex >       dispColIndices ( maxNumUdof );
+  array1d< globalIndex >       dispColIndices ( MAX_NUM_UDOF );
   array1d< globalIndex >       jumpColIndices ( 3 );
 
-  array2d< real64 >            Kwu_elem( 3, maxNumUdof );
-  array2d< real64 >            Kuw_elem( maxNumUdof, 3 );
+  array2d< real64 >            Kwu_elem( 3, MAX_NUM_UDOF );
+  array2d< real64 >            Kuw_elem( MAX_NUM_UDOF, 3 );
   array2d< real64 >            Kww_elem( 3, 3 );
   array1d< real64 >            R1( 3 );
-  array1d< real64 >            R0( maxNumUdof );
+  array1d< real64 >            R0( MAX_NUM_UDOF );
   array1d< real64 >            tractionVec( 3 );
   array2d< real64 >            dTdw( 3, 3 );
 
@@ -291,21 +291,21 @@ void SolidMechanicsEmbeddedFractures::AssembleSystem( real64 const time,
   // at each Gauss point.
   array2d< real64 >       eqMatrix( 3, 6 );
   array2d< real64 >       compMatrix( 6, 3 );
-  array2d< real64 >       strainMatrix( 6, maxNumUdof );
+  array2d< real64 >       strainMatrix( 6, MAX_NUM_UDOF );
 
   // local storage of contribution of each gauss point
-  array2d< real64 >            Kwu_gauss( 3, maxNumUdof );
-  array2d< real64 >            Kuw_gauss( maxNumUdof, 3 );
+  array2d< real64 >            Kwu_gauss( 3, MAX_NUM_UDOF );
+  array2d< real64 >            Kuw_gauss( MAX_NUM_UDOF, 3 );
   array2d< real64 >            Kww_gauss( 3, 3 );
 
   // intermediate objects to do BDC, EDB, EDC
-  array2d< real64 >            matBD( maxNumUdof, 6 );
+  array2d< real64 >            matBD( MAX_NUM_UDOF, 6 );
   array2d< real64 >            matED( 3, 6 );
 
   array1d< R1Tensor > u_local( 8 );
   array1d< R1Tensor > du_local( 8 );
 
-  array1d< real64 >       u( maxNumUdof );
+  array1d< real64 >       u( MAX_NUM_UDOF );
   array1d< real64 >       w( 3 );
 
   array2d< real64 > dMatrix( 6, 6 );
@@ -600,7 +600,7 @@ void SolidMechanicsEmbeddedFractures::AddCouplingSparsityPattern( DomainPartitio
 
   globalIndex const rankOffset = dofManager.rankOffset();
 
-  static constexpr int maxNumDispDof = 3 * 8; // this is hard-coded for now.
+  static constexpr int MAX_NUM_DISP_DOF = 3 * 8; // this is hard-coded for now.
 
   elemManager.forElementSubRegions< EmbeddedSurfaceSubRegion >( [&]( EmbeddedSurfaceSubRegion const & embeddedSurfaceSubRegion )
   {
@@ -619,9 +619,9 @@ void SolidMechanicsEmbeddedFractures::AddCouplingSparsityPattern( DomainPartitio
                                                                                               GetSubRegion( embeddedSurfaceToSubRegion[k] ));
 
       // working arrays
-      stackArray1d< globalIndex, maxNumDispDof > eqnRowIndicesDisp ( 3*elemSubRegion->numNodesPerElement() );
+      stackArray1d< globalIndex, MAX_NUM_DISP_DOF > eqnRowIndicesDisp ( 3*elemSubRegion->numNodesPerElement() );
       stackArray1d< globalIndex, 3 > eqnRowIndicesJump( embeddedSurfaceSubRegion.numOfJumpEnrichments() );
-      stackArray1d< globalIndex, maxNumDispDof > dofColIndicesDisp ( 3*elemSubRegion->numNodesPerElement() );
+      stackArray1d< globalIndex, MAX_NUM_DISP_DOF > dofColIndicesDisp ( 3*elemSubRegion->numNodesPerElement() );
       stackArray1d< globalIndex, 3 > dofColIndicesJump( embeddedSurfaceSubRegion.numOfJumpEnrichments() );
 
 
