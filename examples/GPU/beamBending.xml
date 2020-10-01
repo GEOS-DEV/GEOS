@@ -33,15 +33,15 @@
       xCoords="{ 0, 80 }"
       yCoords="{ 0, 8 }"
       zCoords="{ 0, 4 }"
-      nx="{ 160 }"
-      ny="{ 16 }"
-      nz="{ 8 }"
+      nx="{ 320 }"
+      ny="{ 32 }"
+      nz="{ 16 }"
       cellBlockNames="{ cb1 }"/>
   </Mesh>
 
   <!-- SPHINX_BeamBendingMeshEnd -->
   <Events
-    maxTime="10.0">
+    maxTime="2.0">
     <!-- This event is applied every cycle, and overrides the
     solver time-step request -->
     <!-- SPHINX_Execution -->
@@ -54,17 +54,17 @@
     <!-- This event is applied every 5.0e-5s.  The targetExactTimestep
     flag allows this event to request a dt modification to match an
     integer multiple of the timeFrequency. -->
-    <PeriodicEvent
+    <!--PeriodicEvent
       name="outputs"
       timeFrequency="1.0"
       targetExactTimestep="1"
-      target="/Outputs/siloOutput"/>
+      target="/Outputs/siloOutput"/-->
 
-    <PeriodicEvent
+    <!--PeriodicEvent
       name="restarts"
       timeFrequency="1e99"
       targetExactTimestep="0"
-      target="/Outputs/restartOutput"/>
+      target="/Outputs/restartOutput"/-->
   </Events>
 
   <!-- SPHINX_FEDiscretization -->

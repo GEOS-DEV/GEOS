@@ -34,4 +34,4 @@ set(ESSL_LIBRARIES /usr/tcetmp/packages/essl/essl-6.2/lib64/libesslsmpcuda.so
 # PETSc doesn't seem to work correctly with clang.
 set(ENABLE_PETSC OFF CACHE BOOL "" FORCE )
 #set(PETSC_OMP_DIR ${GEOSX_TPL_ROOT_DIR}/omp-links-for-petsc CACHE STRING "")
-set(ENABLE_HYPRE OFF CACHE BOOL "" FORCE )
+set(ENABLE_HYPRE ON CACHE BOOL "" FORCE )

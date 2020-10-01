@@ -118,6 +118,9 @@ public:
 
   virtual void close() override;
 
+//  virtual void create( CRSMatrixView< real64 const, globalIndex const > const & localMatrix,
+//                       MPI_Comm const & comm ) override;
+
   virtual bool created() const override;
 
   virtual void reset() override;
@@ -335,6 +338,9 @@ private:
    * Pointer to underlying HYPRE_ParCSRMatrix type.
    */
   HYPRE_ParCSRMatrix m_parcsr_mat = nullptr;
+
+//  CRSMatrix< real64, globalIndex > & m_diagCRS;
+//  CRSMatrix< real64, globalIndex > & m_offDiagCRS;
 
 };
 

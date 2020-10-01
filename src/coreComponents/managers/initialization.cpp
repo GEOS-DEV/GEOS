@@ -445,6 +445,8 @@ void basicSetup( int argc, char * argv[], bool const parseCommandLine )
   setupMKL();
   setupLAI( argc, argv );
 
+
+
   if( parseCommandLine )
   {
     internal::parseCommandLineOptions( argc, argv );

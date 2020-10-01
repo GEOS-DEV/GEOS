@@ -18,16 +18,27 @@
 
 #include "HypreInterface.hpp"
 #include "linearAlgebra/interfaces/hypre/HyprePreconditioner.hpp"
+#include "HYPRE_utilities.h"
+#include "_hypre_utilities.h"
 
 namespace geosx
 {
 
 void HypreInterface::initialize( int & GEOSX_UNUSED_PARAM( argc ),
                                  char * * & GEOSX_UNUSED_PARAM( argv ) )
-{}
+{
+  HYPRE_Init();
+#if defined(USE_CUDA)
+  HYPRE_ExecutionPolicy default_exec_policy = HYPRE_EXEC_DEVICE;
+  hypre_HandleDefaultExecPolicy(hypre_handle()) = HYPRE_EXEC_DEVICE;
+  hypre_HandleSpgemmUseCusparse(hypre_handle()) = 1;
+#endif
+}
 
 void HypreInterface::finalize()
-{}
+{
+  HYPRE_Finalize();
+}
 
 std::unique_ptr< PreconditionerBase< HypreInterface > >
 geosx::HypreInterface::createPreconditioner( LinearSolverParameters params )

@@ -267,6 +267,85 @@ void HypreMatrix::close()
   m_assembled = true;
 }
 
+//void HypreMatrix::create( CRSMatrixView< real64 const, globalIndex const > const & localMatrix,
+//                          MPI_Comm const & comm )
+//{
+//
+//
+//
+//  HYPRE_BigInt *row_starts;
+//  HYPRE_BigInt *col_starts;
+//  HYPRE_Int num_cols_offd;
+//  HYPRE_Int num_nonzeros_diag;
+//  HYPRE_Int num_nonzeros_offd;
+//
+//  HYPRE_Int *diag_i;
+//  HYPRE_Int *diag_j;
+//  double *diag_data;
+//  HYPRE_Int *offd_i;
+//  HYPRE_Int *offd_j;
+//  double *offd_data;
+//  HYPRE_Int offd_num_cols;
+//  HYPRE_Int *offd_col_map;
+//
+//
+//
+//  m_parcsr_mat = hypre_ParCSRMatrixCreate( comm,
+//                                           localMatrix.numRows(),
+//                                           localMatrix.numRows(),
+//                                           row_starts,
+//                                           col_starts,
+//                                           num_cols_offd,
+//                                           num_nonzeros_diag,
+//                                           num_nonzeros_offd);
+//
+//
+//
+//
+//
+//     hypre_ParCSRMatrixSetDataOwner(m_parcsr_mat,1);
+//     hypre_ParCSRMatrixSetRowStartsOwner(m_parcsr_mat,0);
+//     hypre_ParCSRMatrixSetColStartsOwner(m_parcsr_mat,0);
+//
+//     HYPRE_Int local_num_rows = hypre_CSRMatrixNumRows(m_parcsr_mat->diag);
+//
+//     hypre_CSRMatrixSetDataOwner(m_parcsr_mat->diag,0);
+//     hypre_CSRMatrixI(m_parcsr_mat->diag) = diag_i;
+//     hypre_CSRMatrixJ(m_parcsr_mat->diag) = diag_j;
+//     hypre_CSRMatrixData(m_parcsr_mat->diag) = diag_data;
+//     hypre_CSRMatrixNumNonzeros(m_parcsr_mat->diag) = diag_i[local_num_rows];
+//     hypre_CSRMatrixSetRownnz(m_parcsr_mat->diag);
+//     // Prevent hypre from destroying m_parcsr_mat->diag->{i,j,data}, own m_parcsr_mat->diag->{i,j,data}
+//     //diagOwner = 3;
+//
+//     hypre_CSRMatrixSetDataOwner(m_parcsr_mat->offd,0);
+//     hypre_CSRMatrixI(m_parcsr_mat->offd) = offd_i;
+//     hypre_CSRMatrixJ(m_parcsr_mat->offd) = offd_j;
+//     hypre_CSRMatrixData(m_parcsr_mat->offd) = offd_data;
+//     hypre_CSRMatrixNumNonzeros(m_parcsr_mat->offd) = offd_i[local_num_rows];
+//     hypre_CSRMatrixSetRownnz(m_parcsr_mat->offd);
+//     // Prevent hypre from destroying m_parcsr_mat->offd->{i,j,data}, own m_parcsr_mat->offd->{i,j,data}
+//     //offdOwner = 3;
+//
+//     hypre_ParCSRMatrixColMapOffd(m_parcsr_mat) = offd_col_map;
+//     // Prevent hypre from destroying m_parcsr_mat->col_map_offd, own m_parcsr_mat->col_map_offd
+//     //colMapOwner = 1;
+//
+//     hypre_ParCSRMatrixSetNumNonzeros(m_parcsr_mat);
+//
+//     /* Make sure that the first entry in each row is the diagonal one. */
+//     if (row_starts == col_starts)
+//     {
+//        hypre_CSRMatrixReorder(hypre_ParCSRMatrixDiag(m_parcsr_mat));
+//     }
+//
+//     hypre_MatvecCommPkgCreate(m_parcsr_mat);
+//
+//     height = GetNumRows();
+//     width = GetNumCols();
+//}
+
+
 bool HypreMatrix::created() const
 {
   return m_ij_mat != nullptr;
