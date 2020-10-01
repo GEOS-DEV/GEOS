@@ -181,7 +181,7 @@ void setupCaliper()
   std::int64_t const numThreads = 1;
   adiak::value( "OpenMP", "Off" );
 #endif
-  pushStatsIntoAdiak( "numThreads", static_cast<int>(numThreads) );
+  pushStatsIntoAdiak( "numThreads", static_cast< int >(numThreads) );
 
   // CUDA info
   int cudaRuntimeVersion = 0;
