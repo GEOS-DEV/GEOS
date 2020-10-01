@@ -24,7 +24,6 @@ set(mesh_headers
     GraphManager.hpp
     GraphVertex.hpp
     GraphEdge.hpp
-    GraphEdge2.hpp
     GraphVertexFace.hpp
     GraphVertexPoint.hpp
     MeshBody.hpp
@@ -58,7 +57,6 @@ set(mesh_sources
     GraphVertex.cpp
     GraphVertexFace.cpp
     GraphEdge.cpp
-    GraphEdge2.cpp
     MeshBody.cpp
     MeshLevel.cpp
     NodeManager.cpp
@@ -88,5 +86,7 @@ blt_add_library( NAME                  mesh
                )
                
 target_include_directories( mesh PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)
+
+add_subdirectory( unitTests )
 
 geosx_add_code_checks(PREFIX mesh )

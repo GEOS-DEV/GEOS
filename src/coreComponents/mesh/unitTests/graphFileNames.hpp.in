@@ -1,0 +1,4 @@
+#include <string>
+
+static const std::string txtFilePath = "@TXT_FILE_PATH@";
+
