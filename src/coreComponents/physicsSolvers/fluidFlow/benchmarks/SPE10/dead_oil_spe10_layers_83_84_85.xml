@@ -191,15 +191,11 @@
         distanceFromHead="2.13"/>
     </InternalWell>
   </Mesh>
-
   <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_MESH_END -->
+
   <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_EVENTS -->
   <Events
-    maxTime="1.4e7">
-    <PeriodicEvent
-      name="solverApplications"
-      maxEventDt="2e5"  
-      target="/Solvers/coupledFlowAndWells"/>
+    maxTime="1.5e7">
 
     <PeriodicEvent
       name="vtk"
@@ -212,9 +208,63 @@
       timeFrequency="5529600"
       targetExactTimestep="1"
       target="/Outputs/restartOutput"/>
-  </Events>
 
+    <PeriodicEvent
+      name="timeHistoryCollection1"
+      timeFrequency="2e6"
+      targetExactTimestep="1"
+      target="/Tasks/wellRateCollection1" />
+
+    <PeriodicEvent
+      name="timeHistoryCollection2"
+      timeFrequency="2e6"
+      targetExactTimestep="1"
+      target="/Tasks/wellRateCollection2" />
+
+    <PeriodicEvent
+      name="timeHistoryCollection3"
+      timeFrequency="2e6"
+      targetExactTimestep="1"
+      target="/Tasks/wellRateCollection3" />
+
+    <PeriodicEvent
+      name="timeHistoryCollection4"
+      timeFrequency="2e6"
+      targetExactTimestep="1"
+      target="/Tasks/wellRateCollection4" />
+    
+    <PeriodicEvent
+      name="timeHistoryOutput1"
+      timeFrequency="1.5e7"
+      targetExactTimestep="1"
+      target="/Outputs/timeHistoryOutput1" />
+
+    <PeriodicEvent
+      name="timeHistoryOutput2"
+      timeFrequency="1.5e7"
+      targetExactTimestep="1"
+      target="/Outputs/timeHistoryOutput2" />
+
+    <PeriodicEvent
+      name="timeHistoryOutput3"
+      timeFrequency="1.5e7"
+      targetExactTimestep="1"
+      target="/Outputs/timeHistoryOutput3" />
+    
+    <PeriodicEvent
+      name="timeHistoryOutput4"
+      timeFrequency="1.5e7"
+      targetExactTimestep="1"
+      target="/Outputs/timeHistoryOutput4" />
+
+    <PeriodicEvent
+      name="solverApplications"
+      maxEventDt="2e5"  
+      target="/Solvers/coupledFlowAndWells"/>
+    
+  </Events>
   <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_EVENTS_END -->
+  
   <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_NUMERICAL_METHODS -->
   <NumericalMethods>
     <FiniteVolume>
@@ -224,8 +274,8 @@
         coefficientName="permeability"/>
     </FiniteVolume>
   </NumericalMethods>
-
   <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_NUMERICAL_METHODS_END -->
+  
   <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_ELEMENT_REGIONS -->
   <ElementRegions>
     <CellElementRegion
@@ -253,8 +303,8 @@
       name="wellRegion5"
       materialList="{ fluid, relperm }"/>
   </ElementRegions>
-
   <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_ELEMENT_REGIONS_END -->
+  
   <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_CONSTITUTIVE -->
   <Constitutive>
     <BlackOilFluid
@@ -277,8 +327,8 @@
       referencePressure="1e7"
       compressibility="1e-10"/>
   </Constitutive>
-
   <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_CONSTITUTIVE_END -->
+  
   <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_FIELD_SPECS -->
   <FieldSpecifications>
 
@@ -317,8 +367,9 @@
       component="2"
       scale="0.0"/>
   </FieldSpecifications>
-
   <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_FIELD_SPECS_END -->
+
+  
   <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_OUTPUT -->
   <Outputs>
     <VTK
@@ -326,8 +377,51 @@
 
     <Restart
       name="restartOutput"/>
-  </Outputs>
 
+    <TimeHistory
+      name="timeHistoryOutput1"
+      sources="{/Tasks/wellRateCollection1}"
+      filename="wellRateHistory1" />
+
+    <TimeHistory
+      name="timeHistoryOutput2"
+      sources="{/Tasks/wellRateCollection2}"
+      filename="wellRateHistory2" />
+
+    <TimeHistory
+      name="timeHistoryOutput3"
+      sources="{/Tasks/wellRateCollection3}"
+      filename="wellRateHistory3" />
+
+    <TimeHistory
+      name="timeHistoryOutput4"
+      sources="{/Tasks/wellRateCollection4}"
+      filename="wellRateHistory4" />
+   
+  </Outputs>
   <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_OUTPUT_END -->
+  
+  <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_TASKS -->
+  <Tasks>
+    <PackCollection
+      name="wellRateCollection1"
+      objectPath="ElementRegions/elementRegionsGroup/wellRegion1/elementSubRegions/wellRegion1uniqueSubRegion"
+      fieldName="wellElementMixtureConnectionRate" />
+    <PackCollection
+      name="wellRateCollection2"
+      objectPath="ElementRegions/elementRegionsGroup/wellRegion2/elementSubRegions/wellRegion2uniqueSubRegion"
+      fieldName="wellElementMixtureConnectionRate" />
+    <PackCollection
+      name="wellRateCollection3"
+      objectPath="ElementRegions/elementRegionsGroup/wellRegion3/elementSubRegions/wellRegion3uniqueSubRegion"
+      fieldName="wellElementMixtureConnectionRate" />
+    <PackCollection
+      name="wellRateCollection4"
+      objectPath="ElementRegions/elementRegionsGroup/wellRegion4/elementSubRegions/wellRegion4uniqueSubRegion"
+      fieldName="wellElementMixtureConnectionRate" />
+    
+  </Tasks>
+  <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_TASKS_END -->
+  
 </Problem>
 
