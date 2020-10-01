@@ -30,7 +30,6 @@
 #include "LvArray/src/tensorOps.hpp"
 #include "mesh/GraphFromText.hpp"
 #include "mesh/GraphEdge.hpp"
-#include "mesh/GraphEdge2.hpp"
 
 #include "mesh/GraphVertexFace.hpp"
 
@@ -61,8 +60,8 @@ void TwoPointFluxApproximationWithGraph::computeCellStencil( MeshLevel & mesh) c
   CellElementStencilTPFA & stencil = getStencil< CellElementStencilTPFA >( mesh, viewKeyStruct::cellStencilString );
 
   
-  std::vector<GraphEdge*> edges = graph->getEdges();
-  std::vector<std::shared_ptr<GraphVertex>> vertices = graph->getVertices();
+  array1d<GraphEdge*> edges = graph->getEdges();
+  array1d<std::shared_ptr<GraphVertex>> vertices = graph->getVertices();
   stencil.reserve( edges.size() );
 
   ElementRegionManager::ElementViewAccessor< arrayView1d< integer const > > const elemGhostRank =
@@ -70,7 +69,7 @@ void TwoPointFluxApproximationWithGraph::computeCellStencil( MeshLevel & mesh) c
   ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > const localToGlobalMap =
     elemManager.ConstructArrayViewAccessor< globalIndex, 1 >( ObjectManagerBase::viewKeyStruct::localToGlobalMapString );
    
-  for( long unsigned int i=0; i<edges.size(); i++)
+  for( localIndex i=0; i<edges.size(); i++)
   {
     //std::cout<<localToGlobalMap[0][0][edges[i]->getVertex1()->getIndice()]<<"\n";
 
@@ -119,8 +118,8 @@ const Group * tmp = this->GetGroupByPath( m_graphString );
 
   BoundaryStencil & stencil = getStencil< BoundaryStencil >( mesh, setName );
   
-  std::vector<GraphEdge2*> edges = graph->getBoundaryEdges();
-  std::vector<std::shared_ptr<GraphVertex>> vertices = graph->getVertices();
+  array1d<GraphEdge*> edges = graph->getBoundaryEdges();
+  array1d<std::shared_ptr<GraphVertex>> vertices = graph->getVertices();
   stencil.reserve( faceSet.size() );
 
   constexpr localIndex numPts = BoundaryStencil::NUM_POINT_IN_FLUX;
@@ -135,25 +134,19 @@ const Group * tmp = this->GetGroupByPath( m_graphString );
     elemManager.ConstructArrayViewAccessor< integer, 1 >( ObjectManagerBase::viewKeyStruct::ghostRankString );
   ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > const localToGlobalMap =
     elemManager.ConstructArrayViewAccessor< globalIndex, 1 >( ObjectManagerBase::viewKeyStruct::localToGlobalMapString );
-  for (long unsigned int i = 0; i < edges.size(); i++)
-  {
-    std::shared_ptr<GraphVertex> face;
-    face =  edges[i]->getVertex2();
-
-    std::cout << face->getCorrespondingId()<<" "<<edges[i]->getVertex1()->getLocalVertexIndex()<<"\n";
-  }
-
+  
   for( localIndex kf : faceSet )
   {
-    for( long unsigned int i=0; i<edges.size(); i++)
+    for( localIndex i=0; i<edges.size(); i++)
     {
-      std::shared_ptr<GraphVertexFace> face = edges[i]->getVertex2();
+      std::shared_ptr<GraphVertexFace> face = std::dynamic_pointer_cast<GraphVertexFace>(edges[i]->getVertex2());
       if( edges[i]->getVertex1()->getGhostIndex() >= 0 || kf != face->getCorrespondingId())
       {
         //std::cout<<"Ghosted\n";
       }
       else
       {
+        //std::cout << kf <<" "<<edges[i]->getVertex1()->getLocalVertexIndex()<<"\n";
         stencilRegionIndices[BoundaryStencil::Order::ELEM] = LvArray::integerConversion< localIndex >(edges[i]->getVertex1()->getRegionIndex());
         stencilSubRegionIndices[BoundaryStencil::Order::ELEM] = LvArray::integerConversion< localIndex >(edges[i]->getVertex1()->getSubRegionIndex());
         stencilElemOrFaceIndices[BoundaryStencil::Order::ELEM] = LvArray::integerConversion< localIndex >(edges[i]->getVertex1()->getLocalVertexIndex());

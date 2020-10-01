@@ -179,7 +179,7 @@
   <!-- SPHINX_TUT_INT_HEX_BLANKS_END -->
   <!-- SPHINX_TUT_INT_HEX_OUTPUTS -->
   <Outputs>
-    <Silo
+    <VTK
       name="siloOutput"/>
   </Outputs>
 

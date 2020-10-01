@@ -34,7 +34,7 @@ GraphEdge::GraphEdge( int const index, std::shared_ptr<GraphVertex> neighbour1, 
 
 GraphEdge::~GraphEdge()
   {
-    //std::cout<<"Destructing edge "<<m_EdgeIndex<<" between vertices "<<m_vertex1->getIndice()<<" and "<<m_vertex2->getIndice()<<"\n";
+    //std::cout<<"Destructing edge "<<m_EdgeIndex<<" between vertices "<<m_vertex1->getGlobalVertexIndex()<<" and "<<m_vertex2->getGlobalVertexIndex()<<"\n";
   }
 
 } /* namespace geosx */

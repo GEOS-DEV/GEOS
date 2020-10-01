@@ -75,37 +75,37 @@ public:
   * @brief Getter of edge list from the graph
   * @return edge list from the graph
   */ 
-  std::vector<GraphEdge*> getEdges() { return m_edges; }
+  array1d<GraphEdge*> getEdges() { return m_edges; }
 
   /**
   * @brief Constant getter of edge list from the graph
   * @return constant edge list from the graph
   */ 
-  std::vector<GraphEdge*> getEdges() const { return m_edges; }
+  array1d<GraphEdge*> getEdges() const { return m_edges; }
 
   /**
   * @brief Getter of vertex list from the graph
   * @return vertex list from the graph
   */
-  std::vector<std::shared_ptr<GraphVertex>> getVertices() { return m_vertices; }
+  array1d<std::shared_ptr<GraphVertex>> getVertices() { return m_vertices; }
 
   /**
   * @brief Constant getter of vertex list from the graph
   * @return constant vertex list from the graph
   */
-  std::vector<std::shared_ptr<GraphVertex>> getVertices() const { return m_vertices; }
+  array1d<std::shared_ptr<GraphVertex>> getVertices() const { return m_vertices; }
 
   /**
   * @brief Getter of association map between vertex and edge from the graph
   * @return association map between vertex and edge from the graph
   */
-  std::map<std::shared_ptr<GraphVertex>, std::vector<GraphEdge*>> getVertexWithEdgesMap() { return m_vertexWithEdgesMap; }
+  std::map<std::shared_ptr<GraphVertex>, array1d<GraphEdge*>> getVertexWithEdgesMap() { return m_vertexWithEdgesMap; }
 
   /**
   * @brief Constant getter of association map between vertex and edge from the graph
   * @return constant association map between vertex and edge from the graph
   */
-  std::map<std::shared_ptr<GraphVertex>, std::vector<GraphEdge*>> getVertexWithEdgesMap() const { return m_vertexWithEdgesMap; }
+  std::map<std::shared_ptr<GraphVertex>, array1d<GraphEdge*>> getVertexWithEdgesMap() const { return m_vertexWithEdgesMap; }
 
   /**
    * @brief Return the name of the Graph in object catalog.
@@ -124,9 +124,9 @@ public:
  */
   static CatalogInterface::CatalogType & GetCatalog();
 protected:
-  std::vector<GraphEdge*> m_edges;
-  std::vector<std::shared_ptr<GraphVertex>> m_vertices;
-  std::map<std::shared_ptr<GraphVertex>, std::vector<GraphEdge*>> m_vertexWithEdgesMap;
+  array1d<GraphEdge*> m_edges;
+  array1d<std::shared_ptr<GraphVertex>> m_vertices;
+  std::map<std::shared_ptr<GraphVertex>, array1d<GraphEdge*>> m_vertexWithEdgesMap;
 };
 }
 

@@ -23,7 +23,6 @@
 #include "common/Path.hpp"
 #include "mesh/GraphBase.hpp"
 #include "mesh/GraphEdge.hpp"
-#include "mesh/GraphEdge2.hpp"
 #include "mesh/GraphVertex.hpp"
 #include "mesh/MeshLevel.hpp"
 
@@ -123,13 +122,13 @@ public:
 
   Path getFile() const { return m_file; }
 
-  std::vector<GraphEdge2*> getBoundaryEdges() const { return m_boundaryEdges; }
+  array1d<GraphEdge*> getBoundaryEdges() const { return m_boundaryEdges; }
   
 
 private:
   Path m_file;
   string m_meshString;
-  std::vector<GraphEdge2*> m_boundaryEdges;
+  array1d<GraphEdge*> m_boundaryEdges;
   
 
 };

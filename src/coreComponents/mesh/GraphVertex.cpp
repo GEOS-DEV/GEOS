@@ -36,7 +36,7 @@ GraphVertex::GraphVertex( const int regionInd, const int subRegionInd, const int
 
 GraphVertex::~GraphVertex()
   {
-    //std::cout<<"Destructing vertex "<<ind<<"\n";
+    //std::cout<<"Destructing vertex "<<m_globalVertexIndex<<"\n";
   }
 
 } /* namespace geosx */
