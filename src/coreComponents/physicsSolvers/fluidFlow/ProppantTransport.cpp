@@ -108,6 +108,8 @@ void ProppantTransport::RegisterDataOnMesh( Group * const MeshBodies )
       subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::cellBasedFluxString )->setDefaultValue( 0.0 );
       subRegion.registerWrapper< array1d< integer > >( viewKeyStruct::isProppantBoundaryString )->setDefaultValue( 0 );
       subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::bcComponentConcentrationString )->setDefaultValue( 0.0 );
+
+      subRegion.getReference< array2d< real64 > >( viewKeyStruct::cellBasedFluxString ).resizeDimension< 1 >( 3 );
     } );
 
 
@@ -128,6 +130,9 @@ void ProppantTransport::RegisterDataOnMesh( Group * const MeshBodies )
       subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::poroMultiplierString )->setDefaultValue( 1.0 );
       subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::transTMultiplierString )->setDefaultValue( 1.0 );
       subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::bcComponentConcentrationString )->setDefaultValue( 0.0 );
+
+      subRegion.getReference< array2d< real64 > >( viewKeyStruct::cellBasedFluxString ).resizeDimension< 1 >( 3 );
+      subRegion.getReference< array2d< real64 > >( viewKeyStruct::transTMultiplierString ).resizeDimension< 1 >( 3 );
     } );
 
   }
