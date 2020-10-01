@@ -101,38 +101,50 @@ void ProppantTransport::RegisterDataOnMesh( Group * const MeshBodies )
     forTargetSubRegions< CellElementSubRegion >( meshLevel, [&]( localIndex const,
                                                                  CellElementSubRegion & subRegion )
     {
-      subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::proppantConcentrationString )->setDefaultValue( 0.0 )->setPlotLevel( PlotLevel::LEVEL_0 );
-      subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::deltaProppantConcentrationString )->setDefaultValue( 0.0 );
-      subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::componentConcentrationString )->setDefaultValue( 0.0 )->setPlotLevel( PlotLevel::LEVEL_0 );
-      subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::deltaComponentConcentrationString )->setDefaultValue( 0.0 );
-      subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::cellBasedFluxString )->setDefaultValue( 0.0 );
-      subRegion.registerWrapper< array1d< integer > >( viewKeyStruct::isProppantBoundaryString )->setDefaultValue( 0 );
-      subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::bcComponentConcentrationString )->setDefaultValue( 0.0 );
-
-      subRegion.getReference< array2d< real64 > >( viewKeyStruct::cellBasedFluxString ).resizeDimension< 1 >( 3 );
+      subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::proppantConcentrationString )->
+        setDefaultValue( 0.0 )->
+        setPlotLevel( PlotLevel::LEVEL_0 );
+      subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::deltaProppantConcentrationString )->
+        setDefaultValue( 0.0 );
+      subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::componentConcentrationString )->
+        setDefaultValue( 0.0 )->
+        setPlotLevel( PlotLevel::LEVEL_0 );
+      subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::deltaComponentConcentrationString )->
+        setDefaultValue( 0.0 );
+      subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::cellBasedFluxString )->
+        setDefaultValue( 0.0 )->
+        reference().resizeDimension< 1 >( 3 );
+      subRegion.registerWrapper< array1d< integer > >( viewKeyStruct::isProppantBoundaryString )->
+        setDefaultValue( 0 );
+      subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::bcComponentConcentrationString )->
+        setDefaultValue( 0.0 );
     } );
 
 
     forTargetSubRegions< FaceElementSubRegion >( meshLevel, [&]( localIndex const,
                                                                  FaceElementSubRegion & subRegion )
     {
-      subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::proppantConcentrationString )->setPlotLevel( PlotLevel::LEVEL_0 );
+      subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::proppantConcentrationString )->
+        setPlotLevel( PlotLevel::LEVEL_0 );
       subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::deltaProppantConcentrationString );
-      subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::componentConcentrationString )->setPlotLevel( PlotLevel::LEVEL_0 );
+      subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::componentConcentrationString )->
+        setPlotLevel( PlotLevel::LEVEL_0 );
       subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::deltaComponentConcentrationString );
       subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::oldComponentDensityString );
-      subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::cellBasedFluxString );
+      subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::cellBasedFluxString )->
+        reference().resizeDimension< 1 >( 3 );
       subRegion.registerWrapper< array1d< integer > >( viewKeyStruct::isProppantBoundaryString );
       subRegion.registerWrapper< array1d< integer > >( viewKeyStruct::isProppantMobileString );
-      subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::proppantPackVolumeFractionString )->setPlotLevel( PlotLevel::LEVEL_0 );
+      subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::proppantPackVolumeFractionString )->
+        setPlotLevel( PlotLevel::LEVEL_0 );
       subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::proppantExcessPackVolumeString );
       subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::proppantLiftFluxString );
-      subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::poroMultiplierString )->setDefaultValue( 1.0 );
-      subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::transTMultiplierString )->setDefaultValue( 1.0 );
-      subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::bcComponentConcentrationString )->setDefaultValue( 0.0 );
-
-      subRegion.getReference< array2d< real64 > >( viewKeyStruct::cellBasedFluxString ).resizeDimension< 1 >( 3 );
-      subRegion.getReference< array2d< real64 > >( viewKeyStruct::transTMultiplierString ).resizeDimension< 1 >( 3 );
+      subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::poroMultiplierString )->
+        setDefaultValue( 1.0 );
+      subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::transTMultiplierString )->
+        setDefaultValue( 1.0 )->reference().resizeDimension< 1 >( 3 );
+      subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::bcComponentConcentrationString )->
+        setDefaultValue( 0.0 );
     } );
 
   }

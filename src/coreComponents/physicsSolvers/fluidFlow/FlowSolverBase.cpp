@@ -87,11 +87,13 @@ void FlowSolverBase::RegisterDataOnMesh( Group * const MeshBodies )
     forTargetSubRegions( mesh, [&]( localIndex const,
                                     ElementSubRegionBase & subRegion )
     {
-      subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::referencePorosityString )->setPlotLevel( PlotLevel::LEVEL_0 );
-      subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::permeabilityString )->setPlotLevel( PlotLevel::LEVEL_0 );
-      subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::gravityCoefString )->setApplyDefaultValue( 0.0 );
-
-      subRegion.getReference< array2d< real64 > >( viewKeyStruct::permeabilityString ).resizeDimension< 1 >( 3 );
+      subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::referencePorosityString )->
+        setPlotLevel( PlotLevel::LEVEL_0 );
+      subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::permeabilityString )->
+        setPlotLevel( PlotLevel::LEVEL_0 )->
+        reference().resizeDimension< 1 >( 3 );
+      subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::gravityCoefString )->
+        setApplyDefaultValue( 0.0 );
     } );
 
     ElementRegionManager * const elemManager = mesh.getElemManager();
@@ -106,8 +108,11 @@ void FlowSolverBase::RegisterDataOnMesh( Group * const MeshBodies )
       subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::referencePorosityString )->
         setApplyDefaultValue( 1.0 );
 
-      subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::permeabilityString )->setPlotLevel( PlotLevel::LEVEL_0 );
-      subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::gravityCoefString )->setApplyDefaultValue( 0.0 );
+      subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::permeabilityString )->
+        setPlotLevel( PlotLevel::LEVEL_0 )->
+        reference().resizeDimension< 1 >( 3 );
+      subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::gravityCoefString )->
+        setApplyDefaultValue( 0.0 );
       subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::aperture0String )->
         setDefaultValue( faceRegion.getDefaultAperture() );
       subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::effectiveApertureString )->
@@ -115,8 +120,6 @@ void FlowSolverBase::RegisterDataOnMesh( Group * const MeshBodies )
                                                                            viewKeyStruct::
                                                                            elementApertureString )->getDefaultValue() )->
         setPlotLevel( PlotLevel::LEVEL_0 );
-
-      subRegion.getReference< array2d< real64 > >( viewKeyStruct::permeabilityString ).resizeDimension< 1 >( 3 );
     } );
 
     //TODO: I think these 2 subregions should be treated in the same way. Need to unify the region

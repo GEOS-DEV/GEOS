@@ -327,12 +327,12 @@ public:
    * @param k index of the embedded surface element
    * @return the normal vector of a specific embedded surface element
    */
-  R1Tensor & getNormalVector( localIndex k ) { return m_normalVector[k];}
+  R1Tensor & getNormalVector( localIndex k ) { return m_normalVector[k]; }
 
   /**
    * @copydoc getNormalVector( localIndex k )
    */
-  R1Tensor const & getNormalVector( localIndex k ) const { return m_normalVector[k];}
+  R1Tensor const & getNormalVector( localIndex k ) const { return m_normalVector[k]; }
 
   /**
    * @brief Get an array of the first tangent vector of the embedded surface elements.

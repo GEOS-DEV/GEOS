@@ -197,20 +197,23 @@ void SolidMechanicsLagrangianFEM::RegisterDataOnMesh( Group * const MeshBodies )
       setRegisteringObjects( this->getName())->
       setDescription( "An array that holds the mass on the nodes." );
 
-    nodes->registerWrapper< array1d< R1Tensor > >( viewKeyStruct::vTildeString )->
+    nodes->registerWrapper< array2d< real64 > >( viewKeyStruct::vTildeString )->
       setPlotLevel( PlotLevel::NOPLOT )->
       setRegisteringObjects( this->getName())->
-      setDescription( "An array that holds the velocity predictors on the nodes." );
+      setDescription( "An array that holds the velocity predictors on the nodes." )->
+      reference().resizeDimension< 1 >( 3 );
 
-    nodes->registerWrapper< array1d< R1Tensor > >( viewKeyStruct::uhatTildeString )->
+    nodes->registerWrapper< array2d< real64 > >( viewKeyStruct::uhatTildeString )->
       setPlotLevel( PlotLevel::NOPLOT )->
       setRegisteringObjects( this->getName())->
-      setDescription( "An array that holds the incremental displacement predictors on the nodes." );
+      setDescription( "An array that holds the incremental displacement predictors on the nodes." )->
+      reference().resizeDimension< 1 >( 3 );
 
-    nodes->registerWrapper< array1d< R1Tensor > >( viewKeyStruct::contactForceString )->
+    nodes->registerWrapper< array2d< real64 > >( viewKeyStruct::contactForceString )->
       setPlotLevel( PlotLevel::LEVEL_0 )->
       setRegisteringObjects( this->getName())->
-      setDescription( "An array that holds the contact force." );
+      setDescription( "An array that holds the contact force." )->
+      reference().resizeDimension< 1 >( 3 );
 
     ElementRegionManager * const
     elementRegionManager = mesh.second->group_cast< MeshBody * >()->getMeshLevel( 0 )->getElemManager();
@@ -797,8 +800,8 @@ SolidMechanicsLagrangianFEM::
   if( this->m_timeIntegrationOption == TimeIntegrationOption::ImplicitDynamic )
   {
     arrayView2d< real64 const, nodes::ACCELERATION_USD > const & a_n = nodeManager.acceleration();
-    arrayView1d< R1Tensor > const & vtilde   = nodeManager.getReference< array1d< R1Tensor > >( solidMechanicsViewKeys.vTilde );
-    arrayView1d< R1Tensor > const & uhatTilde   = nodeManager.getReference< array1d< R1Tensor > >( solidMechanicsViewKeys.uhatTilde );
+    arrayView2d< real64 > const & vtilde = nodeManager.getReference< array2d< real64 > >( solidMechanicsViewKeys.vTilde );
+    arrayView2d< real64 > const & uhatTilde = nodeManager.getReference< array2d< real64 > >( solidMechanicsViewKeys.uhatTilde );
 
     real64 const newmarkGamma = this->getReference< real64 >( solidMechanicsViewKeys.newmarkGamma );
     real64 const newmarkBeta = this->getReference< real64 >( solidMechanicsViewKeys.newmarkBeta );
@@ -888,8 +891,8 @@ void SolidMechanicsLagrangianFEM::ImplicitStepComplete( real64 const & GEOSX_UNU
   if( this->m_timeIntegrationOption == TimeIntegrationOption::ImplicitDynamic )
   {
     arrayView2d< real64, nodes::ACCELERATION_USD > const & a_n = nodeManager.acceleration();
-    arrayView1d< R1Tensor const > const & vtilde    = nodeManager.getReference< r1_array >( solidMechanicsViewKeys.vTilde );
-    arrayView1d< R1Tensor const > const & uhatTilde = nodeManager.getReference< r1_array >( solidMechanicsViewKeys.uhatTilde );
+    arrayView2d< real64 const > const vtilde    = nodeManager.getReference< array2d< real64 > >( solidMechanicsViewKeys.vTilde );
+    arrayView2d< real64 const > const uhatTilde = nodeManager.getReference< array2d< real64 > >( solidMechanicsViewKeys.uhatTilde );
     real64 const newmarkGamma = this->getReference< real64 >( solidMechanicsViewKeys.newmarkGamma );
     real64 const newmarkBeta = this->getReference< real64 >( solidMechanicsViewKeys.newmarkBeta );
 
@@ -1283,8 +1286,8 @@ void SolidMechanicsLagrangianFEM::ApplyContactConstraint( DofManager const & dof
     real64 const contactStiffness = contactRelation->stiffness();
 
     arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const & u = nodeManager->totalDisplacement();
-    arrayView1d< R1Tensor > const & fc = nodeManager->getReference< array1d< R1Tensor > >( viewKeyStruct::contactForceString );
-    fc.setValues< serialPolicy >( {0, 0, 0} );
+    arrayView2d< real64 > const & fc = nodeManager->getReference< array2d< real64 > >( viewKeyStruct::contactForceString );
+    fc.setValues< serialPolicy >( 0.0 );
 
     arrayView2d< real64 const > const & faceNormal = faceManager->faceNormal();
     ArrayOfArraysView< localIndex const > const & facesToNodes = faceManager->nodeList().toViewConst();

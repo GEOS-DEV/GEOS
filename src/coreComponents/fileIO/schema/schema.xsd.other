@@ -1247,7 +1247,7 @@
 		<!--childIndex => Index of child within the mesh object it is registered on. => SurfaceGenerator-->
 		<xsd:attribute name="childIndex" type="localIndex_array" />
 		<!--contactForce => An array that holds the contact force. => SolidMechanicsLagrangianSSLE, SolidMechanics_LagrangianFEM-->
-		<xsd:attribute name="contactForce" type="r1_array" />
+		<xsd:attribute name="contactForce" type="real64_array2d" />
 		<!--degreeFromCrack => Distance to the crack in terms of topological distance. (i.e. how many nodes are along the path to the closest node that is on the crack surface. => SurfaceGenerator-->
 		<xsd:attribute name="degreeFromCrack" type="integer_array" />
 		<!--degreeFromCrackTip => Distance to the crack tip in terms of topological distance. (i.e. how many nodes are along the path to the closest node that is on the crack surface. => SurfaceGenerator-->
@@ -1281,9 +1281,9 @@
 		<!--ruptureTime => Time that the object was ruptured/split. => SurfaceGenerator-->
 		<xsd:attribute name="ruptureTime" type="real64_array" />
 		<!--uhatTilde => An array that holds the incremental displacement predictors on the nodes. => SolidMechanicsLagrangianSSLE, SolidMechanics_LagrangianFEM-->
-		<xsd:attribute name="uhatTilde" type="r1_array" />
+		<xsd:attribute name="uhatTilde" type="real64_array2d" />
 		<!--velocityTilde => An array that holds the velocity predictors on the nodes. => SolidMechanicsLagrangianSSLE, SolidMechanics_LagrangianFEM-->
-		<xsd:attribute name="velocityTilde" type="r1_array" />
+		<xsd:attribute name="velocityTilde" type="real64_array2d" />
 	</xsd:complexType>
 	<xsd:complexType name="cellManagerType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">

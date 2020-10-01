@@ -103,11 +103,10 @@ void SinglePhaseBase::RegisterDataOnMesh( Group * const MeshBodies )
         setRestartFlags( RestartFlags::NO_WRITE );
 
       subRegion.template registerWrapper< array2d< real64 > >( viewKeyStruct::transTMultString )->
-        setDefaultValue( 1.0 );
+        setDefaultValue( 1.0 )->
+        reference().template resizeDimension< 1 >( 3 );
       subRegion.template registerWrapper< array1d< real64 > >( viewKeyStruct::poroMultString )->
         setDefaultValue( 1.0 );
-
-      subRegion.template getReference< array2d< real64 > >( viewKeyStruct::transTMultString ).template resizeDimension< 1 >( 3 );
     } );
 
     FaceManager * const faceManager = meshLevel->getFaceManager();
