@@ -686,12 +686,12 @@ void SolidMechanicsEmbeddedFractures::AssembleEquilibriumOperator( array2d< real
   LvArray::tensorOps::AiAj< 3 >( nDn, nVec );
 
   // sym(n dyadic t1) and sym (n dyadic t2)
-  LvArray::tensorOps::AiBj< 3, 3 >( t1DnSym, nVec, tVec1 );
-  LvArray::tensorOps::plusAiBj< 3, 3 >( t1DnSym, tVec1, nVec );
+  LvArray::tensorOps::Rij_eq_AiBj< 3, 3 >( t1DnSym, nVec, tVec1 );
+  LvArray::tensorOps::Rij_add_AiBj< 3, 3 >( t1DnSym, tVec1, nVec );
   LvArray::tensorOps::scale< 3, 3 >( t1DnSym, 0.5 );
 
-  LvArray::tensorOps::AiBj< 3, 3 >( t2DnSym, nVec, tVec2 );
-  LvArray::tensorOps::plusAiBj< 3, 3 >( t2DnSym, tVec2, nVec );
+  LvArray::tensorOps::Rij_eq_AiBj< 3, 3 >( t2DnSym, nVec, tVec2 );
+  LvArray::tensorOps::Rij_add_AiBj< 3, 3 >( t2DnSym, tVec2, nVec );
   LvArray::tensorOps::scale< 3, 3 >( t2DnSym, 0.5 );
 
   int VoigtIndex;
@@ -754,17 +754,17 @@ SolidMechanicsEmbeddedFractures::
   real64 nDmSym[3][3], t1DmSym[3][3], t2DmSym[3][3];
 
   // sym(n dyadic m)
-  LvArray::tensorOps::AiBj< 3, 3 >( nDmSym, mVec, nVec );
-  LvArray::tensorOps::plusAiBj< 3, 3 >( nDmSym, nVec, mVec );
+  LvArray::tensorOps::Rij_eq_AiBj< 3, 3 >( nDmSym, mVec, nVec );
+  LvArray::tensorOps::Rij_add_AiBj< 3, 3 >( nDmSym, nVec, mVec );
   LvArray::tensorOps::scale< 3, 3 >( nDmSym, 0.5 );
 
   // sym(n dyadic t1) and sym (n dyadic t2)
-  LvArray::tensorOps::AiBj< 3, 3 >( t1DmSym, mVec, tVec1 );
-  LvArray::tensorOps::plusAiBj< 3, 3 >( t1DmSym, tVec1, mVec );
+  LvArray::tensorOps::Rij_eq_AiBj< 3, 3 >( t1DmSym, mVec, tVec1 );
+  LvArray::tensorOps::Rij_add_AiBj< 3, 3 >( t1DmSym, tVec1, mVec );
   LvArray::tensorOps::scale< 3, 3 >( t1DmSym, 0.5 );
 
-  LvArray::tensorOps::AiBj< 3, 3 >( t2DmSym, mVec, tVec2 );
-  LvArray::tensorOps::plusAiBj< 3, 3 >( t2DmSym, tVec2, mVec );
+  LvArray::tensorOps::Rij_eq_AiBj< 3, 3 >( t2DmSym, mVec, tVec2 );
+  LvArray::tensorOps::Rij_add_AiBj< 3, 3 >( t2DmSym, tVec2, mVec );
   LvArray::tensorOps::scale< 3, 3 >( t2DmSym, 0.5 );
 
   int VoigtIndex;

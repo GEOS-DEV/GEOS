@@ -18,6 +18,8 @@
 
 #include "PAMELAMeshGenerator.hpp"
 
+#include "Elements/Element.hpp"
+#include "MeshDataWriters/Variable.hpp"
 #include "managers/DomainPartition.hpp"
 
 #include <math.h>
@@ -159,14 +161,12 @@ void PAMELAMeshGenerator::GenerateMesh( DomainPartition * const domain )
     for( auto const & subPart : regionPtr->SubParts )
     {
       auto const cellBlockPAMELA = subPart.second;
-      auto const cellBlockType = cellBlockPAMELA->ElementType;
-      auto const cellBlockName = ElementToLabel.at( cellBlockType );
+      PAMELA::ELEMENTS::TYPE const cellBlockType = cellBlockPAMELA->ElementType;
+      string const & cellBlockName = ElementToLabel.at( cellBlockType );
       CellBlock * cellBlock = nullptr;
       if( cellBlockName == "HEX" )
       {
-        auto const nbCells = cellBlockPAMELA->SubCollection.size_owned();
-        if( nbCells == 0 )
-          continue;
+        localIndex const nbCells = cellBlockPAMELA->SubCollection.size_owned();
         cellBlock =
           cellBlockManager->GetGroup( keys::cellBlocks )->RegisterGroup< CellBlock >( DecodePAMELALabels::MakeRegionLabel( regionName, cellBlockName ) );
         cellBlock->SetElementType( "C3D8" );
@@ -207,9 +207,7 @@ void PAMELAMeshGenerator::GenerateMesh( DomainPartition * const domain )
       }
       else if( cellBlockName == "TETRA" )
       {
-        auto const nbCells = cellBlockPAMELA->SubCollection.size_owned();
-        if( nbCells == 0 )
-          continue;
+        localIndex const nbCells = cellBlockPAMELA->SubCollection.size_owned();
         cellBlock =
           cellBlockManager->GetGroup( keys::cellBlocks )->RegisterGroup< CellBlock >( DecodePAMELALabels::MakeRegionLabel( regionName, cellBlockName ) );
         cellBlock->SetElementType( "C3D4" );
@@ -242,9 +240,7 @@ void PAMELAMeshGenerator::GenerateMesh( DomainPartition * const domain )
       }
       else if( cellBlockName == "WEDGE" )
       {
-        auto const nbCells = cellBlockPAMELA->SubCollection.size_owned();
-        if( nbCells == 0 )
-          continue;
+        localIndex const nbCells = cellBlockPAMELA->SubCollection.size_owned();
         cellBlock =
           cellBlockManager->GetGroup( keys::cellBlocks )->RegisterGroup< CellBlock >( DecodePAMELALabels::MakeRegionLabel( regionName, cellBlockName ) );
         cellBlock->SetElementType( "C3D6" );
@@ -281,9 +277,7 @@ void PAMELAMeshGenerator::GenerateMesh( DomainPartition * const domain )
       }
       else if( cellBlockName == "PYRAMID" )
       {
-        auto const nbCells = cellBlockPAMELA->SubCollection.size_owned();
-        if( nbCells == 0 )
-          continue;
+        localIndex const nbCells = cellBlockPAMELA->SubCollection.size_owned();
         cellBlock =
           cellBlockManager->GetGroup( keys::cellBlocks )->RegisterGroup< CellBlock >( DecodePAMELALabels::MakeRegionLabel( regionName, cellBlockName ) );
         cellBlock->SetElementType( "C3D5" );
@@ -318,12 +312,12 @@ void PAMELAMeshGenerator::GenerateMesh( DomainPartition * const domain )
       }
 
       /// Import ppt
-      if( cellBlock != nullptr )
+      if( cellBlock != nullptr && cellBlock->size() > 0 )
       {
         for( localIndex fieldIndex = 0; fieldIndex < m_fieldNamesInGEOSX.size(); fieldIndex++ )
         {
           auto const meshProperty = regionPtr->FindVariableByName( m_fieldsToImport[fieldIndex] );
-          auto const dimension = meshProperty->Dimension;
+          PAMELA::VARIABLE_DIMENSION const dimension = meshProperty->Dimension;
           if( dimension == PAMELA::VARIABLE_DIMENSION::SCALAR )
           {
             real64_array & property = cellBlock->AddProperty< real64_array >( m_fieldNamesInGEOSX[fieldIndex] );
@@ -370,8 +364,8 @@ void PAMELAMeshGenerator::GenerateMesh( DomainPartition * const domain )
     for( auto const & subPart : surfacePtr->SubParts )
     {
       auto const cellBlockPAMELA = subPart.second;
-      auto const cellBlockType = cellBlockPAMELA->ElementType;
-      auto const cellBlockName = ElementToLabel.at( cellBlockType );
+      PAMELA::ELEMENTS::TYPE const cellBlockType = cellBlockPAMELA->ElementType;
+      string const cellBlockName = ElementToLabel.at( cellBlockType );
       if( cellBlockName == "TRIANGLE"  || cellBlockName == "QUAD" )
       {
         for( auto cellItr = cellBlockPAMELA->SubCollection.begin_owned();
