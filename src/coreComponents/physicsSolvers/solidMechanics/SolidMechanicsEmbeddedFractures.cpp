@@ -683,7 +683,7 @@ void SolidMechanicsEmbeddedFractures::AssembleEquilibriumOperator( array2d< real
   real64 nDn[3][3], t1DnSym[3][3], t2DnSym[3][3];
 
   // n dyadic n
-  LvArray::tensorOps::AiAj< 3 >( nDn, nVec );
+  LvArray::tensorOps::Rij_eq_AiAj< 3 >( nDn, nVec );
 
   // sym(n dyadic t1) and sym (n dyadic t2)
   LvArray::tensorOps::Rij_eq_AiBj< 3, 3 >( t1DnSym, nVec, tVec1 );
