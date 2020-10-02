@@ -471,26 +471,21 @@ void GraphFromText::RemapFace(const MeshLevel & mesh)
 {
   FaceManager const & faceManager = *mesh.getFaceManager();
   arrayView2d< localIndex const > const & elemList = faceManager.elementList();
-  for(localIndex h = 0; h < faceManager.size(); h++)
+  //arrayView1d< integer const > const & faceGhostRank = faceManager.ghostRank(); 
+
+  for(localIndex h = 0; h < elemList.size(); h++)
   {
+
+  
+
     // Filter in boundary faces
     if( elemList[h][1] < 0)
     {
       bool found = false;
+      std::cout<<h<<" "<<elemList[h][0]<<"\n";
       for (localIndex i = 0; i < m_boundaryEdges.size(); i++)
       { 
-        /*
-        localIndex calcul_nul;
-        if (m_boundaryEdges[i]->getVertex1()->getLocalVertexIndex()<500)
-        {
-          calcul_nul = m_boundaryEdges[i]->getVertex1()->getLocalVertexIndex() - (m_boundaryEdges[i]->getVertex1()->getLocalVertexIndex()%(100))*2+99;
-        }
-        else
-        {
-          calcul_nul = m_boundaryEdges[i]->getVertex1()->getLocalVertexIndex();
-        }
-        */
-        if (elemList[h][0] == m_boundaryEdges[i]->getVertex1()->getLocalVertexIndex() && !found)
+                if (elemList[h][0] == m_boundaryEdges[i]->getVertex1()->getLocalVertexIndex() && !found)
         { 
           std::shared_ptr<GraphVertexFace> face;
           face = std::dynamic_pointer_cast<GraphVertexFace>(m_boundaryEdges[i]->getVertex2());

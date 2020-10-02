@@ -76,8 +76,8 @@ void TwoPointFluxApproximationWithGraph::computeCellStencil( MeshLevel & mesh) c
         //std::cout<< elemGhostRank[edges[i]->getVertex1()->getRegionIndex()][edges[i]->getVertex1()->getSubRegionIndex()][edges[i]->getVertex1()->getIndice()] << " " << elemGhostRank[edges[i]->getVertex2()->getRegionIndex()][edges[i]->getVertex2()->getSubRegionIndex()][edges[i]->getVertex2()->getIndice()] << "\n";
     //std::cout<< edges[i]->getVertex1()->getIndice() << " " << edges[i]->getVertex2()->getIndice() << "\n\n";
 
-    if( edges[i]->getVertex1()->getGhostIndex() >= 0 &&
-        edges[i]->getVertex2()->getGhostIndex() >= 0 )
+    if( edges[i]->getVertex1()->getGhostIndex() >= 0 && 
+        edges[i]->getVertex2()->getGhostIndex() >= 0)
     {
       //std::cout<<"Ghosted\n";
     }
@@ -140,7 +140,9 @@ const Group * tmp = this->GetGroupByPath( m_graphString );
     for( localIndex i=0; i<edges.size(); i++)
     {
       std::shared_ptr<GraphVertexFace> face = std::dynamic_pointer_cast<GraphVertexFace>(edges[i]->getVertex2());
-      if( edges[i]->getVertex1()->getGhostIndex() >= 0 || kf != face->getCorrespondingId())
+      //std::cout<<edges[i]->getVertex1()->getGlobalVertexIndex() << " " << face->getCorrespondingId() << "\n";
+
+      if( (edges[i]->getVertex1()->getGhostIndex() >= 0) || kf != face->getCorrespondingId())
       {
         //std::cout<<"Ghosted\n";
       }
