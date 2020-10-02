@@ -35,13 +35,13 @@ void CalculateGradients( real64 ( & gradient0 )[ 3 ][ 3 ],
                          real64 const ( &var1 )[ N ][ 3 ],
                          ARRAY_2D const & dNdX )
 {
-  LvArray::tensorOps::AiBj< 3, 3 >( gradient0, var0[ 0 ], dNdX[ 0 ] );
-  LvArray::tensorOps::AiBj< 3, 3 >( gradient1, var1[ 0 ], dNdX[ 0 ] );
+  LvArray::tensorOps::Rij_eq_AiBj< 3, 3 >( gradient0, var0[ 0 ], dNdX[ 0 ] );
+  LvArray::tensorOps::Rij_eq_AiBj< 3, 3 >( gradient1, var1[ 0 ], dNdX[ 0 ] );
 
   for( int a = 1; a < N; ++a )
   {
-    LvArray::tensorOps::plusAiBj< 3, 3 >( gradient0, var0[ a ], dNdX[ a ] );
-    LvArray::tensorOps::plusAiBj< 3, 3 >( gradient1, var1[ a ], dNdX[ a ] );
+    LvArray::tensorOps::Rij_add_AiBj< 3, 3 >( gradient0, var0[ a ], dNdX[ a ] );
+    LvArray::tensorOps::Rij_add_AiBj< 3, 3 >( gradient1, var1[ a ], dNdX[ a ] );
   }
 }
 
