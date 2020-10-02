@@ -102,9 +102,12 @@ public:
       //  function pointer is actually assigned (an error would be thrown on the call attempt even so)
       GEOSX_ERROR_IF( m_bufferCalls[collectionIdx] == nullptr,
                       "History collection buffer retrieval function is unassigned, did you declare a related TimeHistoryOutput event?" );
-      // using GEOSX_ERROR_IF_EQ causes type issues since the values are used in iostreams
+      // using GEOSX_ERROR_IF_EQ caused type issues since the values are used in streams
+      // TODO : grab the metadata again, determine if the size has changed, update the buffer call if so...
       buffer_unit_type * buffer = m_bufferCalls[collectionIdx]();
-      collect( domain, time_n, dt, collectionIdx, buffer );
+      DomainPartition & domainPart = dynamicCast< DomainPartition & >( *domain );
+      updateSetsIndices( domainPart );
+      collect( domainPart, time_n, dt, collectionIdx, buffer );
     }
     int rank = MpiWrapper::Comm_rank();
     if( rank == 0 && m_timeBufferCall )
@@ -171,17 +174,23 @@ public:
     return std::unique_ptr< HistoryCollection >( nullptr );
   }
 
+  /**
+   * @brief Update the indices from the sets being collected.
+   * @param domain The DomainPartition of the problem.
+   */
+  virtual void updateSetsIndices ( DomainPartition & domain ) = 0;
+
 protected:
 
   /**
    * @brief Collect history information into the provided buffer. Typically called from HistoryCollection::Execute .
-   * @param domain The ProblemDomain cast to a group.
+   * @param domain The DomainPartition to collect time history on.
    * @param time_n The current simulation time.
    * @param dt The current simulation time delta.
    * @param collectionIdx The index of the collection operation to collect from the targeted collection event.
    * @param buffer A properly-sized buffer to serialize history data into.
    */
-  virtual void collect( Group * domain, real64 const time_n, real64 const dt, localIndex const collectionIdx, buffer_unit_type * & buffer ) = 0;
+  virtual void collect( DomainPartition & domain, real64 const time_n, real64 const dt, localIndex const collectionIdx, buffer_unit_type * & buffer ) = 0;
 
 protected:
   /// The number of discrete collection operations described by metadata this collection collects.
