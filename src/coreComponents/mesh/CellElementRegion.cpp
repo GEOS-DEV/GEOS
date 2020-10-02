@@ -123,7 +123,7 @@ void CellElementRegion::GenerateAggregates( FaceManager const * const faceManage
                             &nparts, nullptr, nullptr, options, &objval, parts.data() );
 
   // Compute Aggregate barycenters
-  array1d< R1Tensor > aggregateBarycenters( nparts );
+  array2d< real64 > aggregateBarycenters( nparts, 3 );
   array1d< real64 > aggregateVolumes( nparts );
   array1d< real64 > normalizeVolumes( nbCellElements );
 
@@ -167,15 +167,9 @@ void CellElementRegion::GenerateAggregates( FaceManager const * const faceManage
         continue;
 
       // TODO Change the rest of this to
-      // LvArray::tensorOps::scaledAdd< 3 >( aggregateBarycenters[ parts[ cellIndex + offsetSubRegions[ subRegionIndex ]
-      // ] ],
-      //                                     elemCenter[ cellIndex ],
-      //                                     normalizeVolumes[ cellIndex + offsetSubRegions[ subRegionIndex ] ] )
-      real64 const center[ 3 ] =
-        LVARRAY_TENSOROPS_INIT_LOCAL_3( normalizeVolumes[ cellIndex + offsetSubRegions[ subRegionIndex ] ] * elemCenter[ cellIndex ] );
-      aggregateBarycenters[ parts[ cellIndex + offsetSubRegions[ subRegionIndex ] ] ][ 0 ] += center[ 0 ];
-      aggregateBarycenters[ parts[ cellIndex + offsetSubRegions[ subRegionIndex ] ] ][ 1 ] += center[ 1 ];
-      aggregateBarycenters[ parts[ cellIndex + offsetSubRegions[ subRegionIndex ] ] ][ 2 ] += center[ 2 ];
+      LvArray::tensorOps::scaledAdd< 3 >( aggregateBarycenters[ parts[ cellIndex + offsetSubRegions[ subRegionIndex ] ] ],
+                                          elemCenter[ cellIndex ],
+                                          normalizeVolumes[ cellIndex + offsetSubRegions[ subRegionIndex ] ] );
     }
   } );
 

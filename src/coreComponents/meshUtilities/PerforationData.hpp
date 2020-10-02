@@ -155,14 +155,14 @@ public:
    * @brief Get perforation locations.
    * @return list of perforation locations
    */
-  arrayView1d< R1Tensor > GetLocation() { return m_location; }
+  arrayView2d< real64 > GetLocation() { return m_location; }
 
 
   /**
    * @brief Provide an immutable accessor to a const perforation location arrayView.
    * @return list of perforation locations
    */
-  arrayView1d< R1Tensor const > GetLocation() const { return m_location; }
+  arrayView2d< real64 const > GetLocation() const { return m_location; }
 
 
   /**
@@ -329,7 +329,7 @@ private:
   array1d< localIndex > m_wellElementIndex;
 
   /// Location of the perforations
-  array1d< R1Tensor > m_location;
+  array2d< real64 > m_location;
 
   /// Well transmissibility at the perforations
   array1d< real64 > m_wellTransmissibility;

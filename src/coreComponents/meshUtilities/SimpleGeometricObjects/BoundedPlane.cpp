@@ -50,7 +50,7 @@ BoundedPlane::BoundedPlane( const std::string & name, Group * const parent ):
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "Length and width of the bounded plane" );
 
-  m_points.resize( 4 );
+  m_points.resize( 4, 3 );
 }
 
 BoundedPlane::~BoundedPlane()

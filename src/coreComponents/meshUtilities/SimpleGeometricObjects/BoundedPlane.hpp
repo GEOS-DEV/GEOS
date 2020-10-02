@@ -143,7 +143,7 @@ private:
   /// Dimensions of the bounded plane
   array1d< real64 >   m_dimensions;
   /// Length and width of the bounded plane
-  array1d< R1Tensor > m_points;
+  array2d< real64 > m_points;
 
   /// @cond DO_NOT_DOCUMENT
 

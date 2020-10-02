@@ -773,6 +773,8 @@ void WellElementSubRegion::ConnectPerforationsToMeshElements( MeshLevel & mesh,
   m_perforationData.resize( perfCoordsGlobal.size( 0 ) );
   localIndex iperfLocal = 0;
 
+  arrayView2d< real64 > const perfLocation = m_perforationData.GetLocation();
+
   // loop over all the perforations
   for( globalIndex iperfGlobal = 0; iperfGlobal < perfCoordsGlobal.size( 0 ); ++iperfGlobal )
   {
@@ -822,7 +824,7 @@ void WellElementSubRegion::ConnectPerforationsToMeshElements( MeshLevel & mesh,
 
       // construct the local wellTransmissibility and location maps
       m_perforationData.GetWellTransmissibility()[iperfLocal] = perfWellTransmissibilityGlobal[iperfGlobal];
-      LvArray::tensorOps::copy< 3 >( m_perforationData.GetLocation()[iperfLocal], location );
+      LvArray::tensorOps::copy< 3 >( perfLocation[iperfLocal], location );
 
       // increment the local to global map
       m_perforationData.localToGlobalMap()[iperfLocal++] = iperfGlobal;

@@ -32,7 +32,8 @@ using namespace dataRepository;
 
 PerforationData::PerforationData( string const & name, Group * const parent )
   : ObjectManagerBase( name, parent ),
-  m_numPerforationsGlobal( 0 )
+  m_numPerforationsGlobal( 0 ),
+  m_location( 0, 3 )
 {
   registerWrapper( viewKeyStruct::numPerforationsGlobalString, &m_numPerforationsGlobal );
   registerWrapper( viewKeyStruct::reservoirElementRegionString, &m_toMeshElements.m_toElementRegion );

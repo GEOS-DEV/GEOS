@@ -255,8 +255,6 @@ void SolidMechanicsEmbeddedFractures::AssembleSystem( real64 const time,
   arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const & dDisp = nodeManager.incrementalDisplacement();
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodesCoord = nodeManager.referencePosition();
 
-  r1_array const uhattilde;
-
   string const dofKey     = dofManager.getKey( keys::TotalDisplacement );
   string const jumpDofKey = dofManager.getKey( viewKeyStruct::dispJumpString );
 

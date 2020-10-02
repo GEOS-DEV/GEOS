@@ -337,15 +337,16 @@ void PAMELAMeshGenerator::GenerateMesh( DomainPartition * const domain )
           }
           else if( dimension == PAMELA::VARIABLE_DIMENSION::VECTOR )
           {
-            array1d< R1Tensor > & property = cellBlock->AddProperty< array1d< R1Tensor > >( m_fieldNamesInGEOSX[fieldIndex] );
-            GEOSX_ERROR_IF( property.size() * 3 != LvArray::integerConversion< localIndex >( meshProperty->size() ),
-                            "Viewer size (" << property.size() * 3<< ") mismatch with property size in PAMELA ("
-                                            << meshProperty->size() << ") on " <<cellBlock->getName() );
+            array2d< real64 > & property = cellBlock->AddProperty< array2d< real64 > >( m_fieldNamesInGEOSX[fieldIndex] );
+            property.resizeDimension< 1 >( 3 );
+            GEOSX_ERROR_IF( property.size() != LvArray::integerConversion< localIndex >( meshProperty->size() ),
+                            "Viewer size (" << property.size() << ") mismatch with property size in PAMELA ("
+                                            << meshProperty->size() << ") on " << cellBlock->getName() );
             for( int cellIndex = 0; cellIndex < cellBlock->size(); cellIndex++ )
             {
               for( int dim = 0; dim < 3; dim++ )
               {
-                property[cellIndex][dim] = meshProperty->get_data( cellIndex )[dim];
+                property( cellIndex, dim ) = meshProperty->get_data( cellIndex )[dim];
               }
             }
           }
