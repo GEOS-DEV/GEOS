@@ -57,6 +57,18 @@ if( ENABLE_MPI )
     list( APPEND dependencyList mpi )
 endif()
 
+if( ENABLE_SUITESPARSE )
+
+    list( APPEND linearAlgebra_headers
+          interfaces/direct/SuiteSparse.hpp )
+
+    list( APPEND linearAlgebra_sources
+          interfaces/direct/SuiteSparse.cpp )
+
+    list( APPEND dependencyList suitesparse )
+
+endif()
+
 if( ENABLE_TRILINOS )
 
     list( APPEND linearAlgebra_headers
@@ -75,6 +87,17 @@ if( ENABLE_TRILINOS )
           interfaces/trilinos/TrilinosInterface.cpp )
 
     list( APPEND dependencyList trilinos )
+
+    if( ENABLE_SUITESPARSE )
+
+        list( APPEND linearAlgebra_headers
+              interfaces/trilinos/EpetraSuiteSparse.hpp )
+
+        list( APPEND linearAlgebra_sources
+              interfaces/trilinos/EpetraSuiteSparse.cpp )
+
+    endif()
+
 
 endif()
 
@@ -108,8 +131,6 @@ if( ENABLE_HYPRE )
         list( APPEND linearAlgebra_sources
               interfaces/hypre/HypreSuiteSparse.cpp )
 
-        list( APPEND dependencyList suitesparse )
-
     endif()
 
 endif()
@@ -142,8 +163,6 @@ if( ENABLE_PETSC )
 
         list( APPEND linearAlgebra_sources
               interfaces/petsc/PetscSuiteSparse.cpp )
-
-        list( APPEND dependencyList suitesparse )
 
     endif()
 

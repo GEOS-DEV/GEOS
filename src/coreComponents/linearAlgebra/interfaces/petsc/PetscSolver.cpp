@@ -141,100 +141,39 @@ void solve_serialDirect( LinearSolverParameters const & parameters,
   // To be able to use UMFPACK direct solver we need to disable floating point exceptions
   LvArray::system::FloatingPointExceptionGuard guard;
 
-  MPI_Comm const comm = mat.getComm();
+  SuiteSparseData SSData;
+  SuiteSparseCreate( parameters, SSData );
+  ConvertPetscToSuiteSparseMatrix( mat, SSData );
 
-  int const rank = MpiWrapper::Comm_rank( comm );
+  int info = 0;
+  real64 timeSetup;
+  info = SuiteSparseSetup( SSData, timeSetup );
 
-  SuiteSparseSetFromOptions( mat, parameters );
+  real64 timeSolve;
+  info += SuiteSparseSolve( SSData, rhs, sol, timeSolve );
 
-  Mat * localMatrix;
-  IS set;
-  if( rank == 0 )
-  {
-    GEOSX_LAI_CHECK_ERROR( ISCreateStride( PETSC_COMM_SELF, mat.numGlobalRows(), 0, 1, &set ) );
-  }
-  GEOSX_LAI_CHECK_ERROR( MatCreateSubMatrices( mat.unwrapped(), rank==0, &set, &set, MAT_INITIAL_MATRIX, &localMatrix ) );
+  // Save setup and solution times
+  result.setupTime = timeSetup;
+  result.solveTime = timeSolve;
 
-  VecScatter rhsScatter;
-  Vec localRhs;
-  GEOSX_LAI_CHECK_ERROR( VecScatterCreateToZero( rhs.unwrapped(), &rhsScatter, &localRhs ) );
-  GEOSX_LAI_CHECK_ERROR( VecScatterBegin( rhsScatter, rhs.unwrapped(), localRhs, INSERT_VALUES, SCATTER_FORWARD ) );
-  GEOSX_LAI_CHECK_ERROR( VecScatterEnd( rhsScatter, rhs.unwrapped(), localRhs, INSERT_VALUES, SCATTER_FORWARD ) );
-
-  VecScatter solScatter;
-  Vec localSol;
-  GEOSX_LAI_CHECK_ERROR( VecScatterCreateToZero( sol.unwrapped(), &solScatter, &localSol ) );
-
-  localIndex status = 0;
-
-  if( rank == 0 )
-  {
-    // create linear solver
-    KSP ksp;
-    GEOSX_LAI_CHECK_ERROR( KSPCreate( PETSC_COMM_SELF, &ksp ) );
-    GEOSX_LAI_CHECK_ERROR( KSPSetOperators( ksp, localMatrix[0], localMatrix[0] ) );
-    GEOSX_LAI_CHECK_ERROR( KSPSetType( ksp, KSPPREONLY ) );
-
-    // use direct solve preconditioner UMFPACK
-    Stopwatch watch;
-    PC prec;
-    GEOSX_LAI_CHECK_ERROR( KSPGetPC( ksp, &prec ) );
-    GEOSX_LAI_CHECK_ERROR( PCSetType( prec, PCLU ) );
-    GEOSX_LAI_CHECK_ERROR( PCFactorSetMatSolverType( prec, MATSOLVERUMFPACK ) );
-    GEOSX_LAI_CHECK_ERROR( PCSetUp( prec ) );
-    result.setupTime = watch.elapsedTime();
-
-    // solve system
-    watch.zero();
-    GEOSX_LAI_CHECK_ERROR( KSPSolve( ksp, localRhs, localSol ) );
-    result.solveTime = watch.elapsedTime();
-
-    KSPConvergedReason reason;
-    GEOSX_LAI_CHECK_ERROR( KSPGetConvergedReason( ksp, &reason ) );
-
-    // save status
-    status = !( reason >= 0 );
-
-    // destroy solver
-    GEOSX_LAI_CHECK_ERROR( KSPDestroy( &ksp ) );
-  }
-
-  // broadcast status and times
-  MpiWrapper::bcast( &status, 1, 0, comm );
-  MpiWrapper::bcast( &result.setupTime, 1, 0, comm );
-  MpiWrapper::bcast( &result.solveTime, 1, 0, comm );
-
-  GEOSX_LAI_CHECK_ERROR( VecScatterBegin( solScatter, localSol, sol.unwrapped(), INSERT_VALUES, SCATTER_REVERSE ) );
-  GEOSX_LAI_CHECK_ERROR( VecScatterEnd( solScatter, localSol, sol.unwrapped(), INSERT_VALUES, SCATTER_REVERSE ) );
-  GEOSX_LAI_CHECK_ERROR( VecDestroy( &localRhs ) );
-  GEOSX_LAI_CHECK_ERROR( VecScatterDestroy( &rhsScatter ) );
-  GEOSX_LAI_CHECK_ERROR( VecDestroy( &localSol ) );
-  GEOSX_LAI_CHECK_ERROR( VecScatterDestroy( &solScatter ) );
-  GEOSX_LAI_CHECK_ERROR( MatDestroySubMatrices( rank==0, &localMatrix ) );
-
-  result.status = status == 0 ? LinearSolverResult::Status::Success : LinearSolverResult::Status::Breakdown;
-
-  if( result.status == LinearSolverResult::Status::Success )
+  if( info == 0 )
   {
     PetscVector res( rhs );
     mat.gemv( -1.0, sol, 1.0, res );
     result.residualReduction = res.norm2() / rhs.norm2();
-
-    // check for nan or inf
-    if( std::isnan( result.residualReduction ) || std::isinf( result.residualReduction ) )
-    {
-      result.status = LinearSolverResult::Status::Breakdown;
-    }
-    else if( result.residualReduction < parameters.direct.checkResidualTolerance )
-    {
-      result.status = LinearSolverResult::Status::Success;
-      result.numIterations = 1;
-    }
-    else
-    {
-      result.status = LinearSolverResult::Status::Breakdown;
-    }
   }
+
+  if( info == 0 && result.residualReduction < machinePrecision * SuiteSparseCondEst( SSData ) )
+  {
+    result.status = LinearSolverResult::Status::Success;
+    result.numIterations = 1;
+  }
+  else
+  {
+    result.status = LinearSolverResult::Status::Breakdown;
+  }
+
+  SuiteSparseDestroy( SSData );
 }
 #endif
 

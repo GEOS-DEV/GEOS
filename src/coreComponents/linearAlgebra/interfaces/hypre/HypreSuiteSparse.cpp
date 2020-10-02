@@ -13,12 +13,8 @@
  */
 
 /**
- * @file HypreSuperlu.cpp
+ * @file HypreSuiteSparse.cpp
  */
-
-#if !defined(DLONG)
-#define DLONG
-#endif
 
 #include <numeric>
 
@@ -32,30 +28,8 @@
 namespace geosx
 {
 
-// Check matching requirements on index/value types between GEOSX and SuiteSparse
-
-static_assert( sizeof( Int ) == sizeof( globalIndex ),
-               "SuiteSparse Int and geosx::globalIndex must have the same size" );
-
-static_assert( std::is_signed< Int >::value == std::is_signed< globalIndex >::value,
-               "SuiteSparse Int and geosx::globalIndex must both be signed or unsigned" );
-
-static_assert( std::is_same< double, real64 >::value,
-               "SuiteSparse real and geosx::real64 must be the same type" );
-
 namespace
 {
-
-/**
- * @brief Convert GEOSX globalIndex value to SuiteSparse Int
- * @param index the input value
- * @return the converted value
- */
-inline Int toSuiteSparse_Int( globalIndex const index )
-{
-  return LvArray::integerConversion< Int >( index );
-}
-
 void sortIntReal64( Int * arrayInt, real64 * arrayReal64, localIndex const size )
 {
   array1d< localIndex > indices( size );
@@ -80,23 +54,19 @@ void sortIntReal64( Int * arrayInt, real64 * arrayReal64, localIndex const size 
     }
   }
 }
+}
 
-/**
- * @brief Converts a matrix from Hypre to SuiteSparse format
- * @param[in] matrix the HypreMatrix object
- * @param[out] SSData the structure containing the matrix in SuiteSparse format
- */
-void ConvertToSuiteSparseMatrix( HypreMatrix const & matrix,
-                                 SuiteSparseData & SSData )
+void ConvertHypreToSuiteSparseMatrix( HypreMatrix const & matrix,
+                                      SuiteSparseData & SSData )
 {
   // Copy distributed parcsr matrix in a local CSR matrix on every process
   // with at least one row
   // Warning: works for a parcsr matrix that is smaller than 2^31-1
-  SSData.CSRmatrix = hypre_ParCSRMatrixToCSRMatrixAll( matrix.unwrapped() );
+  hypre_CSRMatrix * CSRmatrix = hypre_ParCSRMatrixToCSRMatrixAll( matrix.unwrapped() );
 
   // Identify the smallest process where CSRmatrix exists
   int rank = MpiWrapper::Comm_rank( matrix.getComm() );
-  if( SSData.CSRmatrix == 0 )
+  if( CSRmatrix == 0 )
   {
     rank = MpiWrapper::Comm_size( matrix.getComm() );
   }
@@ -107,8 +77,8 @@ void ConvertToSuiteSparseMatrix( HypreMatrix const & matrix,
   {
     SSData.numRows = toSuiteSparse_Int( matrix.numGlobalRows() );
     SSData.numCols = toSuiteSparse_Int( matrix.numGlobalCols() );
-    SSData.nonZeros = toSuiteSparse_Int( hypre_CSRMatrixNumNonzeros( SSData.CSRmatrix ) );
-    HYPRE_Int const * const hypreI = hypre_CSRMatrixI( SSData.CSRmatrix );
+    SSData.nonZeros = toSuiteSparse_Int( hypre_CSRMatrixNumNonzeros( CSRmatrix ) );
+    HYPRE_Int const * const hypreI = hypre_CSRMatrixI( CSRmatrix );
     SSData.rowPtr = new Int[SSData.numRows+1];
     for( localIndex i = 0; i <= SSData.numRows; ++i )
     {
@@ -116,13 +86,13 @@ void ConvertToSuiteSparseMatrix( HypreMatrix const & matrix,
     }
     SSData.colIndices = new Int[SSData.nonZeros];
     SSData.data = new real64[SSData.nonZeros];
-    HYPRE_Int const * const hypreJ = hypre_CSRMatrixJ( SSData.CSRmatrix );
+    HYPRE_Int const * const hypreJ = hypre_CSRMatrixJ( CSRmatrix );
     for( localIndex i = 0; i < SSData.nonZeros; ++i )
     {
       SSData.colIndices[i] = LvArray::integerConversion< Int >( hypreJ[i] );
     }
-    std::copy( hypre_CSRMatrixData( SSData.CSRmatrix ),
-               hypre_CSRMatrixData( SSData.CSRmatrix ) + SSData.nonZeros,
+    std::copy( hypre_CSRMatrixData( CSRmatrix ),
+               hypre_CSRMatrixData( CSRmatrix ) + SSData.nonZeros,
                SSData.data );
     for( localIndex i = 0; i < SSData.numRows; ++i )
     {
@@ -130,92 +100,15 @@ void ConvertToSuiteSparseMatrix( HypreMatrix const & matrix,
       sortIntReal64( &( SSData.colIndices[SSData.rowPtr[i]] ), &( SSData.data[SSData.rowPtr[i]] ), rowLength );
     }
   }
-  else
+
+  // Destroy CSRmatrix
+  if( CSRmatrix )
   {
-    // Destroy CSRmatrix
-    if( SSData.CSRmatrix )
-    {
-      GEOSX_LAI_CHECK_ERROR( hypre_CSRMatrixDestroy( SSData.CSRmatrix ) );
-    }
+    GEOSX_LAI_CHECK_ERROR( hypre_CSRMatrixDestroy( CSRmatrix ) );
   }
 
   // Save communicator
   SSData.comm = matrix.getComm();
-}
-}
-
-void SuiteSparseCreate( HypreMatrix const & matrix,
-                        LinearSolverParameters const & params,
-                        SuiteSparseData & SSData )
-{
-  // Get the default control parameters
-  umfpack_dl_defaults( SSData.Control );
-  SSData.Control[UMFPACK_PRL] = params.logLevel > 1 ? 6 : 1;
-  SSData.Control[UMFPACK_ORDERING] = UMFPACK_ORDERING_BEST;
-
-  // Convert matrix from Hypre to SuiteSparse format
-  ConvertToSuiteSparseMatrix( matrix, SSData );
-}
-
-int SuiteSparseSetup( SuiteSparseData & SSData,
-                      real64 & time )
-{
-  Stopwatch watch;
-
-  int status = 0;
-
-  int const rank = MpiWrapper::Comm_rank( SSData.comm );
-  if( rank == SSData.workingRank )
-  {
-    // symbolic factorization
-    status = umfpack_dl_symbolic( SSData.numCols,
-                                  SSData.numRows,
-                                  SSData.rowPtr,
-                                  SSData.colIndices,
-                                  SSData.data,
-                                  &SSData.Symbolic,
-                                  SSData.Control,
-                                  SSData.Info );
-    if( status < 0 )
-    {
-      umfpack_dl_report_info( SSData.Control, SSData.Info );
-      umfpack_dl_report_status( SSData.Control, status );
-      GEOSX_ERROR( "Hypre SuiteSparse interface: umfpack_dl_symbolic failed." );
-    }
-
-    // print the symbolic factorization
-    if( SSData.logLevel > 1 )
-    {
-      umfpack_dl_report_symbolic( SSData.Symbolic, SSData.Control );
-    }
-
-    // numeric factorization
-    status = umfpack_dl_numeric( SSData.rowPtr,
-                                 SSData.colIndices,
-                                 SSData.data,
-                                 SSData.Symbolic,
-                                 &SSData.Numeric,
-                                 SSData.Control,
-                                 SSData.Info );
-
-    if( status < 0 )
-    {
-      umfpack_dl_report_info( SSData.Control, SSData.Info );
-      umfpack_dl_report_status( SSData.Control, status );
-      GEOSX_ERROR( "Hypre SuiteSparse interface: umfpack_dl_numeric failed." );
-    }
-
-    // print the numeric factorization
-    if( SSData.logLevel > 1 )
-    {
-      umfpack_dl_report_numeric( SSData.Symbolic, SSData.Control );
-    }
-  }
-
-  time = watch.elapsedTime();
-  MpiWrapper::bcast( &time, 1, SSData.workingRank, SSData.comm );
-
-  return status;
 }
 
 int SuiteSparseSolve( SuiteSparseData & SSData,
@@ -223,8 +116,6 @@ int SuiteSparseSolve( SuiteSparseData & SSData,
                       HypreVector & x,
                       real64 & time )
 {
-  Stopwatch watch;
-
   int status = 0;
 
   hypre_Vector * b_vector = hypre_ParVectorToVectorAll( b.unwrapped() );
@@ -239,22 +130,11 @@ int SuiteSparseSolve( SuiteSparseData & SSData,
     hypre_SeqVectorInitialize( sol_vector );
 
     // solve Ax=b
-    status = umfpack_dl_solve( UMFPACK_At,
-                               SSData.rowPtr,
-                               SSData.colIndices,
-                               SSData.data,
-                               hypre_VectorData( sol_vector ),
-                               hypre_VectorData( b_vector ),
-                               SSData.Numeric,
-                               SSData.Control,
-                               SSData.Info );
+    status = SuiteSparseSolveWorkingRank( SSData,
+                                          hypre_VectorData( sol_vector ),
+                                          hypre_VectorData( b_vector ),
+                                          time );
 
-    if( status < 0 )
-    {
-      umfpack_dl_report_info( SSData.Control, SSData.Info );
-      umfpack_dl_report_status( SSData.Control, status );
-      GEOSX_ERROR( "Hypre SuiteSparse interface: umfpack_dl_solve failed." );
-    }
     sol_Vector = ( HYPRE_Vector ) sol_vector;
   }
 
@@ -275,29 +155,10 @@ int SuiteSparseSolve( SuiteSparseData & SSData,
   GEOSX_LAI_CHECK_ERROR( hypre_ParVectorDestroy( sol_ParVector ) );
   GEOSX_LAI_CHECK_ERROR( hypre_SeqVectorDestroy( b_vector ) );
 
-  time = watch.elapsedTime();
   MpiWrapper::bcast( &time, 1, SSData.workingRank, SSData.comm );
+  MpiWrapper::bcast( &status, 1, SSData.workingRank, SSData.comm );
 
   return status;
-}
-
-real64 SuiteSparseCondEst( SuiteSparseData const & SSData )
-{
-  return 1.0 / SSData.Info[UMFPACK_RCOND];
-}
-
-void SuiteSparseDestroy( SuiteSparseData & SSData )
-{
-  int const rank = MpiWrapper::Comm_rank( SSData.comm );
-  if( rank == SSData.workingRank )
-  {
-    umfpack_dl_free_symbolic( &SSData.Symbolic );
-    umfpack_dl_free_numeric( &SSData.Numeric );
-    delete [] SSData.rowPtr;
-    delete [] SSData.colIndices;
-    delete [] SSData.data;
-    GEOSX_LAI_CHECK_ERROR( hypre_CSRMatrixDestroy( SSData.CSRmatrix ) );
-  }
 }
 
 }

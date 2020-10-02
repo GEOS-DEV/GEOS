@@ -24,6 +24,7 @@
 #include "linearAlgebra/interfaces/hypre/HypreVector.hpp"
 #include "linearAlgebra/interfaces/hypre/HyprePreconditioner.hpp"
 #include "linearAlgebra/interfaces/hypre/HypreUtils.hpp"
+#include "linearAlgebra/interfaces/direct/SuiteSparse.hpp"
 #include "linearAlgebra/utilities/LinearSolverParameters.hpp"
 #include "linearAlgebra/utilities/LAIHelperFunctions.hpp"
 
@@ -38,9 +39,6 @@
 
 namespace geosx
 {
-
-// Add two orders of magnitude to allow small error in condition number estimate
-static real64 const machinePrecision = 100.0 * std::numeric_limits< real64 >::epsilon();
 
 typedef HYPRE_Int (* HYPRE_PtrToSolverDestroyFcn)( HYPRE_Solver );
 
@@ -130,7 +128,8 @@ void solve_serialDirect( LinearSolverParameters const & parameters,
   LvArray::system::FloatingPointExceptionGuard guard;
 
   SuiteSparseData SSData;
-  SuiteSparseCreate( mat, parameters, SSData );
+  SuiteSparseCreate( parameters, SSData );
+  ConvertHypreToSuiteSparseMatrix( mat, SSData );
 
   int info = 0;
   real64 timeSetup;

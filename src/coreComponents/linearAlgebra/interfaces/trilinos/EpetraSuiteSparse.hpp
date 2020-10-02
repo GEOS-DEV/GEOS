@@ -13,41 +13,50 @@
  */
 
 /**
- * @file PetscSuiteSparse.hpp
+ * @file EpetraSuiteSparse.hpp
  */
 
-#ifndef GEOSX_LINEARALGEBRA_INTERFACES_PETSCSUITESPARSE_HPP_
-#define GEOSX_LINEARALGEBRA_INTERFACES_PETSCSUITESPARSE_HPP_
+#ifndef GEOSX_LINEARALGEBRA_INTERFACES_EPETRASUITESPARSE_HPP_
+#define GEOSX_LINEARALGEBRA_INTERFACES_EPETRASUITESPARSE_HPP_
 
 #include "common/DataTypes.hpp"
-#include "linearAlgebra/interfaces/petsc/PetscMatrix.hpp"
+#include "linearAlgebra/interfaces/trilinos/EpetraMatrix.hpp"
 #include "linearAlgebra/utilities/LinearSolverParameters.hpp"
 #include "linearAlgebra/interfaces/direct/SuiteSparse.hpp"
+
+#include <Epetra_Map.h>
+#include <Epetra_FECrsGraph.h>
+#include <Epetra_FECrsMatrix.h>
+#include <Epetra_FEVector.h>
 
 namespace geosx
 {
 
 /**
- * @brief Converts a matrix from Petsc to SuiteSparse format
- * @param[in] matrix the PetscMatrix object
+ * @brief Converts a matrix from Epetra to SuiteSparse format
+ * @param[in] matrix the EpetraMatrix object
  * @param[out] SSData the structure containing the matrix in SuiteSparse format
  */
-void ConvertPetscToSuiteSparseMatrix( PetscMatrix const & matrix,
-                                      SuiteSparseData & SSData );
+void ConvertEpetraToSuiteSparseMatrix( EpetraMatrix const & matrix,
+                                       SuiteSparseData & SSData,
+                                       Epetra_Map * SerialMap,
+                                       Epetra_Import * ImportToSerial );
 
 /**
  * @brief Solves a linear system with SuiteSparse (matrix has already been factorized)
  * @param[in,out] SSData the structure containing the matrix in SuiteSparse format
- * @param[in] b the right-hand side in Petsc format
- * @param[out] x the solution in Petsc format
+ * @param[in] b the right-hand side in Epetra format
+ * @param[out] x the solution in Epetra format
  * @param[out] time time spent in the solution phase
  * @return info error code
  */
 int SuiteSparseSolve( SuiteSparseData & SSData,
-                      PetscVector const & b,
-                      PetscVector & x,
+                      Epetra_Map const * SerialMap,
+                      Epetra_Import const * ImportToSerial,
+                      EpetraVector const & b,
+                      EpetraVector & x,
                       real64 & time );
 
 }
 
-#endif /*GEOSX_LINEARALGEBRA_INTERFACES_PETSCSUITESPARSE_HPP_*/
+#endif /*GEOSX_LINEARALGEBRA_INTERFACES_EPETRASUITESPARSE_HPP_*/
