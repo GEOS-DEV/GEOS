@@ -52,12 +52,13 @@ R1Tensor LinePlaneIntersection( R1Tensor lineDir,
 }
 
 //*************************************************************************************************
-real64 ComputeSurfaceArea( array1d< R1Tensor > const & points,
-                           R1Tensor const & normal )
+real64 ComputeSurfaceArea( array1d< R1Tensor > & points,
+                           arraySlice1d< real64 const > normal )
 {
   real64 surfaceArea = 0.0;
 
-  array1d< R1Tensor > orderedPoints ( points.size());
+  array1d< R1Tensor > orderedPoints( points.size() );
+
   for( localIndex a = 0; a < points.size(); a++ )
   {
     LvArray::tensorOps::copy< 3 >( orderedPoints[a], points[a] );
@@ -83,7 +84,7 @@ real64 ComputeSurfaceArea( array1d< R1Tensor > const & points,
 
 //*************************************************************************************************
 void orderPointsCCW( array1d< R1Tensor > & points,
-                     R1Tensor const & normal )
+                     arraySlice1d< real64 const > normal )
 {
   localIndex numPoints = points.size();
 

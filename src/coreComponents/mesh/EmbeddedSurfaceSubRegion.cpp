@@ -87,6 +87,10 @@ EmbeddedSurfaceSubRegion::EmbeddedSurfaceSubRegion( string const & name,
   registerWrapper( viewKeyStruct::connectivityIndexString, &m_connectivityIndex )->
     setApplyDefaultValue( 1 )->
     setDescription( "Connectivity index of each EmbeddedSurface." );
+
+  m_normalVector.resizeDimension< 1 >(3);
+  m_tangentVector1.resizeDimension< 1 >(3);
+  m_tangentVector2.resizeDimension< 1 >(3);
 }
 
 
