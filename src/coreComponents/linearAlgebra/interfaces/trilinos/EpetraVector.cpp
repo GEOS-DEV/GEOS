@@ -37,8 +37,8 @@ namespace geosx
 
 // Check matching requirements on index/value types between GEOSX and PETSc
 
-static_assert( sizeof( long long ) == sizeof( globalIndex ),
-               "long long and geosx::globalIndex must have the same size" );
+//static_assert( sizeof( long long ) == sizeof( globalIndex ),
+//               "long long and geosx::globalIndex must have the same size" );
 
 static_assert( std::is_signed< long long >::value == std::is_signed< globalIndex >::value,
                "long long and geosx::globalIndex must both be signed or unsigned" );

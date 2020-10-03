@@ -122,10 +122,10 @@ using size_t      = std::size_t;
 using integer     = std::int32_t;
 
 /// Local index type (for indexing objects within an MPI partition).
-using localIndex  = std::ptrdiff_t;
+using localIndex  = int;//std::ptrdiff_t;
 
 /// Global index type (for indexing objects across MPI partitions).
-using globalIndex = long long int;//std::int64_t;
+using globalIndex = int;//std::int64_t;
 
 /// String type.
 using string      = std::string;

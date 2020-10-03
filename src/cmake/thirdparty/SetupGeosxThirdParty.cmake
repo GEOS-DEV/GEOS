@@ -550,10 +550,15 @@ if( ENABLE_HYPRE )
         list( APPEND HYPRE_DEPENDS "superlu_dist" )
     endif()
 
+    
+    #blt_list_append( TO hypre ELEMENTS ${CUDA_cusparse_LIBRARY} IF ENABLE_CUDA ) 
+    message( "CUDA_cusparse_LIBRARY=${CUDA_cusparse_LIBRARY}")
+    message( "CUDA_curand_LIBRARY=${CUDA_curand_LIBRARY}")
+
     blt_register_library( NAME hypre
                           DEPENDS_ON ${HYPRE_DEPENDS}
                           INCLUDES ${HYPRE_INCLUDE_DIRS}
-                          LIBRARIES ${HYPRE_LIBRARY}
+                          LIBRARIES ${HYPRE_LIBRARY} ${CUDA_cusparse_LIBRARY} ${CUDA_curand_LIBRARY}
                           TREAT_INCLUDES_AS_SYSTEM ON )
 
     set( thirdPartyLibs ${thirdPartyLibs} hypre )

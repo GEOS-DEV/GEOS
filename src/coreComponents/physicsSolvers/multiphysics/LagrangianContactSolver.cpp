@@ -1980,7 +1980,7 @@ void LagrangianContactSolver::ComputeFractureStateStatistics( DomainPartition co
   char output[108] = {0};
   sprintf( output,
            " Number of element for each fracture state:"
-           " stick: %12lli | slip:  %12lli | open:  %12lli",
+           " stick: %12i | slip:  %12i | open:  %12i",
            numStick,
            numSlip,
            numOpen );

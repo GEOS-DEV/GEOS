@@ -273,8 +273,8 @@ UnpackByIndexDevice ( buffer_unit_type const * & buffer,
   DECLARE_PACK_UNPACK( TYPE, 5, 4 )
 
 DECLARE_PACK_UNPACK_UP_TO_3D( int );
-DECLARE_PACK_UNPACK_UP_TO_3D( localIndex );
-DECLARE_PACK_UNPACK_UP_TO_3D( globalIndex );
+//DECLARE_PACK_UNPACK_UP_TO_3D( localIndex );
+//DECLARE_PACK_UNPACK_UP_TO_3D( globalIndex );
 DECLARE_PACK_UNPACK_UP_TO_3D( real32 );
 DECLARE_PACK_UNPACK_UP_TO_5D( real64 );
 DECLARE_PACK_UNPACK_UP_TO_3D( R1Tensor );

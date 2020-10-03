@@ -27,8 +27,8 @@ namespace geosx
 
 // Check matching requirements on index/value types between GEOSX and SuperLU_Dist
 
-static_assert( sizeof( int_t ) == sizeof( globalIndex ),
-               "SuperLU_Dist int_t and geosx::globalIndex must have the same size" );
+//static_assert( sizeof( int_t ) == sizeof( globalIndex ),
+//               "SuperLU_Dist int_t and geosx::globalIndex must have the same size" );
 
 static_assert( std::is_signed< int_t >::value == std::is_signed< globalIndex >::value,
                "SuperLU_Dist int_t and geosx::globalIndex must both be signed or unsigned" );

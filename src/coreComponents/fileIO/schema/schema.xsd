@@ -521,7 +521,7 @@
 		<!--polylineNodeCoords => Physical coordinates of the well polyline nodes-->
 		<xsd:attribute name="polylineNodeCoords" type="real64_array2d" use="required" />
 		<!--polylineSegmentConn => Connectivity of the polyline segments-->
-		<xsd:attribute name="polylineSegmentConn" type="globalIndex_array2d" use="required" />
+		<xsd:attribute name="polylineSegmentConn" type="integer_array2d" use="required" />
 		<!--radius => Radius of the well-->
 		<xsd:attribute name="radius" type="real64" use="required" />
 		<!--wellControlsName => Name of the set of constraints associated with this well-->

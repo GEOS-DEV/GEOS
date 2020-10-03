@@ -32,6 +32,7 @@ if (ENABLE_CUDA)
 
   set(BLT_CUDA_LIBRARIES "${_cuda_libraries}" CACHE STRING "" FORCE)
   set(BLT_CUDA_RUNTIME_LIBRARIES "${_cuda_libraries}" CACHE STRING "" FORCE)
+    
 endif()
 
 ################################
@@ -151,3 +152,4 @@ install( DIRECTORY ../examples/
 install( DIRECTORY ../scripts/ 
      DESTINATION scripts
      )
+     

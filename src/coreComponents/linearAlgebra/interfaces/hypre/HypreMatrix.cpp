@@ -1303,7 +1303,7 @@ void HypreMatrix::print( std::ostream & os ) const
         {
 
           sprintf( str,
-                   "%11i%20lli%20lli%24.10e\n",
+                   "%i%20i%20i%24.10e\n",
                    iRank,
                    firstRowID + LvArray::integerConversion< globalIndex >( i ),
                    firstDiagColID + LvArray::integerConversion< globalIndex >( diag_JA[j] ),
@@ -1313,7 +1313,7 @@ void HypreMatrix::print( std::ostream & os ) const
         for( HYPRE_Int j = offdiag_IA[i]; j < offdiag_IA[i + 1]; ++j )
         {
           sprintf( str,
-                   "%11i%20lli%20lli%24.10e\n",
+                   "%i%20i%20i%24.10e\n",
                    iRank,
                    firstRowID + LvArray::integerConversion< globalIndex >( i ),
                    col_map_offdiag[ offdiag_JA[j] ],

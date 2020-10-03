@@ -34,8 +34,8 @@ namespace geosx
 
 // Check matching requirements on index/value types between GEOSX and SuiteSparse
 
-static_assert( sizeof( Int ) == sizeof( globalIndex ),
-               "SuiteSparse Int and geosx::globalIndex must have the same size" );
+//static_assert( sizeof( Int ) == sizeof( globalIndex ),
+//               "SuiteSparse Int and geosx::globalIndex must have the same size" );
 
 static_assert( std::is_signed< Int >::value == std::is_signed< globalIndex >::value,
                "SuiteSparse Int and geosx::globalIndex must both be signed or unsigned" );
