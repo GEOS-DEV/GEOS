@@ -2024,6 +2024,7 @@ PREDEFINED             =
 # This tag requires that the tag ENABLE_PREPROCESSING is set to YES.
 
 EXPAND_AS_DEFINED      = LVARRAY_HOST_DEVICE \
+                         CONSTEXPR_WITHOUT_BOUNDS_CHECK \
                          GEOSX_HOST_DEVICE \
                          DISABLE_HD_WARNING \
                          EXTRINSIC_MESH_DATA_TRAIT \
