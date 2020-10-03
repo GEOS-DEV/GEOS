@@ -25,10 +25,11 @@ namespace geosx
 {
 
 void ConvertPetscToSuiteSparseMatrix( PetscMatrix const & matrix,
-                                      SuiteSparseData & SSData )
+                                      SuiteSparse & SSData )
 {
   // Perform everything on rank 0
-  SSData.workingRank = 0;
+  int const workingRank = 0;
+  SSData.setWorkingRank( workingRank );
 
   MPI_Comm const comm = matrix.getComm();
 
@@ -36,13 +37,13 @@ void ConvertPetscToSuiteSparseMatrix( PetscMatrix const & matrix,
 
   Mat * localMatrix;
   IS set;
-  if( rank == SSData.workingRank )
+  if( rank == workingRank )
   {
     GEOSX_LAI_CHECK_ERROR( ISCreateStride( PETSC_COMM_SELF, matrix.numGlobalRows(), 0, 1, &set ) );
   }
-  GEOSX_LAI_CHECK_ERROR( MatCreateSubMatrices( matrix.unwrapped(), rank==SSData.workingRank, &set, &set, MAT_INITIAL_MATRIX, &localMatrix ) );
+  GEOSX_LAI_CHECK_ERROR( MatCreateSubMatrices( matrix.unwrapped(), rank==workingRank, &set, &set, MAT_INITIAL_MATRIX, &localMatrix ) );
 
-  if( rank == SSData.workingRank )
+  if( rank == workingRank )
   {
     PetscInt numRows;
     const PetscInt * ia;
@@ -60,21 +61,20 @@ void ConvertPetscToSuiteSparseMatrix( PetscMatrix const & matrix,
     MatInfo info;
     GEOSX_LAI_CHECK_ERROR( MatGetInfo( localMatrix[0], MAT_LOCAL, &info ) );
 
-    SSData.numRows = toSuiteSparse_Int( matrix.numGlobalRows() );
-    SSData.numCols = toSuiteSparse_Int( matrix.numGlobalCols() );
-    SSData.nonZeros = toSuiteSparse_Int( info.nz_used );
-    SSData.rowPtr = new Int[SSData.numRows+1];
-    for( localIndex i = 0; i <= SSData.numRows; ++i )
+    SSData.setNumRows( toSuiteSparse_Int( matrix.numGlobalRows() ) );
+    SSData.setNumCols( toSuiteSparse_Int( matrix.numGlobalCols() ) );
+    SSData.setNonZeros( toSuiteSparse_Int( info.nz_used ) );
+    SSData.createInternalStorage();
+
+    for( localIndex i = 0; i <= SSData.numRows(); ++i )
     {
-      SSData.rowPtr[i] = LvArray::integerConversion< Int >( ia[i] );
+      SSData.rowPtr()[i] = LvArray::integerConversion< Int >( ia[i] );
     }
-    SSData.colIndices = new Int[SSData.nonZeros];
-    SSData.data = new real64[SSData.nonZeros];
-    for( localIndex i = 0; i < SSData.nonZeros; ++i )
+    for( localIndex i = 0; i < SSData.nonZeros(); ++i )
     {
-      SSData.colIndices[i] = LvArray::integerConversion< Int >( ja[i] );
+      SSData.colIndices()[i] = LvArray::integerConversion< Int >( ja[i] );
     }
-    std::copy( array, array + SSData.nonZeros, SSData.data );
+    std::copy( array, array + SSData.nonZeros(), SSData.values().data() );
 
     GEOSX_LAI_CHECK_ERROR( MatRestoreRowIJ( localMatrix[0], 0, PETSC_FALSE, PETSC_FALSE, &numRows, &ia, &ja, &status ) );
     if( !status )
@@ -85,16 +85,15 @@ void ConvertPetscToSuiteSparseMatrix( PetscMatrix const & matrix,
   }
 
   // Destroy localMatrix
-  GEOSX_LAI_CHECK_ERROR( MatDestroySubMatrices( rank==0, &localMatrix ) );
+  GEOSX_LAI_CHECK_ERROR( MatDestroySubMatrices( rank==workingRank, &localMatrix ) );
 
   // Save communicator
-  SSData.comm = matrix.getComm();
+  SSData.setComm( matrix.getComm() );
 }
 
-int SuiteSparseSolve( SuiteSparseData & SSData,
+int SuiteSparseSolve( SuiteSparse & SSData,
                       PetscVector const & b,
-                      PetscVector & x,
-                      real64 & time )
+                      PetscVector & x )
 {
   int status = 0;
 
@@ -108,8 +107,8 @@ int SuiteSparseSolve( SuiteSparseData & SSData,
   Vec localSol;
   GEOSX_LAI_CHECK_ERROR( VecScatterCreateToZero( x.unwrapped(), &solScatter, &localSol ) );
 
-  int const rank = MpiWrapper::Comm_rank( SSData.comm );
-  if( rank == SSData.workingRank )
+  int const rank = MpiWrapper::Comm_rank( SSData.getComm() );
+  if( rank == SSData.workingRank() )
   {
     real64 * dataRhs;
     real64 * dataSol;
@@ -117,10 +116,7 @@ int SuiteSparseSolve( SuiteSparseData & SSData,
     GEOSX_LAI_CHECK_ERROR( VecGetArray( localSol, &dataSol ) );
 
     // solve Ax=b
-    status = SuiteSparseSolveWorkingRank( SSData,
-                                          dataSol,
-                                          dataRhs,
-                                          time );
+    status = SSData.solveWorkingRank( dataSol, dataRhs );
 
     GEOSX_LAI_CHECK_ERROR( VecRestoreArray( localRhs, &dataRhs ) );
     GEOSX_LAI_CHECK_ERROR( VecRestoreArray( localSol, &dataSol ) );
@@ -134,8 +130,8 @@ int SuiteSparseSolve( SuiteSparseData & SSData,
   GEOSX_LAI_CHECK_ERROR( VecScatterDestroy( &solScatter ) );
 
   // broadcast status and times
-  MpiWrapper::bcast( &time, 1, SSData.workingRank, SSData.comm );
-  MpiWrapper::bcast( &status, 1, SSData.workingRank, SSData.comm );
+  SSData.syncTimes();
+  MpiWrapper::bcast( &status, 1, SSData.workingRank(), SSData.getComm() );
 
   return status;
 }

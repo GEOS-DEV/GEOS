@@ -36,20 +36,18 @@ namespace geosx
  * @param[out] SSData the structure containing the matrix in SuiteSparse format
  */
 void ConvertHypreToSuiteSparseMatrix( HypreMatrix const & matrix,
-                                      SuiteSparseData & SSData );
+                                      SuiteSparse & SSData );
 
 /**
  * @brief Solves a linear system with SuiteSparse (matrix has already been factorized)
  * @param[in,out] SSData the structure containing the matrix in SuiteSparse format
  * @param[in] b the right-hand side in Hypre format
  * @param[out] x the solution in Hypre format
- * @param[out] time time spent in the solution phase
  * @return info error code
  */
-int SuiteSparseSolve( SuiteSparseData & SSData,
+int SuiteSparseSolve( SuiteSparse & SSData,
                       HypreVector const & b,
-                      HypreVector & x,
-                      real64 & time );
+                      HypreVector & x );
 
 }
 

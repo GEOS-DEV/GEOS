@@ -41,127 +41,233 @@ static_assert( std::is_signed< Int >::value == std::is_signed< globalIndex >::va
 static_assert( std::is_same< double, real64 >::value,
                "SuiteSparse real and geosx::real64 must be the same type" );
 
-void SuiteSparseCreate( LinearSolverParameters const & params,
-                        SuiteSparseData & SSData )
+SuiteSparse::SuiteSparse():
+  m_numRows( 0 ),
+  m_numCols( 0 ),
+  m_nonZeros( 0 ),
+  m_setupTime( 0 ),
+  m_solveTime( 0 )
+{}
+
+SuiteSparse::SuiteSparse( LinearSolverParameters const & params ):
+  m_numRows( 0 ),
+  m_numCols( 0 ),
+  m_nonZeros( 0 ),
+  m_setupTime( 0 ),
+  m_solveTime( 0 )
 {
-  // Get the default control parameters
-  umfpack_dl_defaults( SSData.Control );
-  SSData.Control[UMFPACK_PRL] = params.logLevel > 1 ? 6 : 1;
-  SSData.Control[UMFPACK_ORDERING] = UMFPACK_ORDERING_BEST;
+  create( params );
 }
 
-int SuiteSparseSetup( SuiteSparseData & SSData,
-                      real64 & time )
+SuiteSparse::~SuiteSparse()
+{
+  destroy();
+}
+
+void SuiteSparse::create( LinearSolverParameters const & params )
+{
+  // Get the default control parameters
+  umfpack_dl_defaults( m_Control );
+  m_Control[UMFPACK_PRL] = params.logLevel > 1 ? 6 : 1;
+  m_Control[UMFPACK_ORDERING] = UMFPACK_ORDERING_BEST;
+}
+
+int SuiteSparse::setup()
 {
   Stopwatch watch;
 
   int status = 0;
 
-  int const rank = MpiWrapper::Comm_rank( SSData.comm );
-  if( rank == SSData.workingRank )
+  int const rank = MpiWrapper::Comm_rank( m_comm );
+  if( rank == m_workingRank )
   {
     // symbolic factorization
-    status = umfpack_dl_symbolic( SSData.numCols,
-                                  SSData.numRows,
-                                  SSData.rowPtr,
-                                  SSData.colIndices,
-                                  SSData.data,
-                                  &SSData.Symbolic,
-                                  SSData.Control,
-                                  SSData.Info );
+    status = umfpack_dl_symbolic( m_numCols,
+                                  m_numRows,
+                                  m_rowPtr.data(),
+                                  m_colIndices.data(),
+                                  m_values.data(),
+                                  &m_Symbolic,
+                                  m_Control,
+                                  m_Info );
     if( status < 0 )
     {
-      umfpack_dl_report_info( SSData.Control, SSData.Info );
-      umfpack_dl_report_status( SSData.Control, status );
+      umfpack_dl_report_info( m_Control, m_Info );
+      umfpack_dl_report_status( m_Control, status );
       GEOSX_ERROR( "SuiteSparse interface: umfpack_dl_symbolic failed." );
     }
 
     // print the symbolic factorization
-    if( SSData.logLevel > 1 )
+    if( m_logLevel > 1 )
     {
-      umfpack_dl_report_symbolic( SSData.Symbolic, SSData.Control );
+      umfpack_dl_report_symbolic( m_Symbolic, m_Control );
     }
 
     // numeric factorization
-    status = umfpack_dl_numeric( SSData.rowPtr,
-                                 SSData.colIndices,
-                                 SSData.data,
-                                 SSData.Symbolic,
-                                 &SSData.Numeric,
-                                 SSData.Control,
-                                 SSData.Info );
+    status = umfpack_dl_numeric( m_rowPtr.data(),
+                                 m_colIndices.data(),
+                                 m_values.data(),
+                                 m_Symbolic,
+                                 &m_Numeric,
+                                 m_Control,
+                                 m_Info );
 
     if( status < 0 )
     {
-      umfpack_dl_report_info( SSData.Control, SSData.Info );
-      umfpack_dl_report_status( SSData.Control, status );
+      umfpack_dl_report_info( m_Control, m_Info );
+      umfpack_dl_report_status( m_Control, status );
       GEOSX_ERROR( "SuiteSparse interface: umfpack_dl_numeric failed." );
     }
 
     // print the numeric factorization
-    if( SSData.logLevel > 1 )
+    if( m_logLevel > 1 )
     {
-      umfpack_dl_report_numeric( SSData.Symbolic, SSData.Control );
+      umfpack_dl_report_numeric( m_Symbolic, m_Control );
     }
-  }
 
-  time = watch.elapsedTime();
+    // save condition number
+    m_condEst = 1.0 / m_Info[UMFPACK_RCOND];
+  }
+  MpiWrapper::bcast( &m_condEst, 1, m_workingRank, m_comm );
+
+  m_setupTime = watch.elapsedTime();
 
   return status;
 }
 
-int SuiteSparseSolveWorkingRank( SuiteSparseData & SSData,
-                                 real64 * b,
-                                 real64 * x,
-                                 real64 & time )
+int SuiteSparse::solveWorkingRank( real64 * b, real64 * x )
 {
   Stopwatch watch;
 
   int status = 0;
   // solve Ax=b
   status = umfpack_dl_solve( UMFPACK_At,
-                             SSData.rowPtr,
-                             SSData.colIndices,
-                             SSData.data,
+                             m_rowPtr.data(),
+                             m_colIndices.data(),
+                             m_values.data(),
                              b,
                              x,
-                             SSData.Numeric,
-                             SSData.Control,
-                             SSData.Info );
+                             m_Numeric,
+                             m_Control,
+                             m_Info );
 
   if( status < 0 )
   {
-    umfpack_dl_report_info( SSData.Control, SSData.Info );
-    umfpack_dl_report_status( SSData.Control, status );
+    umfpack_dl_report_info( m_Control, m_Info );
+    umfpack_dl_report_status( m_Control, status );
     GEOSX_ERROR( "SuiteSparse interface: umfpack_dl_solve failed." );
   }
 
-  time = watch.elapsedTime();
+  m_solveTime = watch.elapsedTime();
 
   return status;
 }
 
-real64 SuiteSparseCondEst( SuiteSparseData const & SSData )
+void SuiteSparse::syncTimes()
 {
-  return 1.0 / SSData.Info[UMFPACK_RCOND];
+  MpiWrapper::bcast( &m_solveTime, 1, m_workingRank, m_comm );
 }
 
-real64 SuiteSparseRelativeTolerance( SuiteSparseData const & SSData )
+real64 SuiteSparse::condEst() const
 {
-  return SuiteSparseCondEst( SSData ) * machinePrecision;
+  return m_condEst;
 }
 
-void SuiteSparseDestroy( SuiteSparseData & SSData )
+real64 SuiteSparse::relativeTolerance() const
 {
-  int const rank = MpiWrapper::Comm_rank( SSData.comm );
-  if( rank == SSData.workingRank )
+  return m_condEst * machinePrecision;
+}
+
+void SuiteSparse::destroy()
+{
+  int const rank = MpiWrapper::Comm_rank( m_comm );
+  if( rank == m_workingRank )
   {
-    umfpack_dl_free_symbolic( &SSData.Symbolic );
-    umfpack_dl_free_numeric( &SSData.Numeric );
-    delete [] SSData.rowPtr;
-    delete [] SSData.colIndices;
-    delete [] SSData.data;
+    umfpack_dl_free_symbolic( &m_Symbolic );
+    umfpack_dl_free_numeric( &m_Numeric );
   }
+}
+
+void SuiteSparse::setWorkingRank( int const workingRank )
+{
+  m_workingRank = workingRank;
+}
+
+int SuiteSparse::workingRank() const
+{
+  return m_workingRank;
+}
+
+void SuiteSparse::setComm( MPI_Comm const comm )
+{
+  m_comm = comm;
+}
+
+MPI_Comm SuiteSparse::getComm() const
+{
+  return m_comm;
+}
+
+void SuiteSparse::setNumRows( Int const numRows )
+{
+  m_numRows = numRows;
+}
+
+Int SuiteSparse::numRows() const
+{
+  return m_numRows;
+}
+
+void SuiteSparse::setNumCols( Int const numCols )
+{
+  m_numCols = numCols;
+}
+
+Int SuiteSparse::numCols() const
+{
+  return m_numCols;
+}
+
+void SuiteSparse::setNonZeros( Int const nonZeros )
+{
+  m_nonZeros = nonZeros;
+}
+
+Int SuiteSparse::nonZeros() const
+{
+  return m_nonZeros;
+}
+
+void SuiteSparse::createInternalStorage()
+{
+  m_rowPtr.resize( m_numRows + 1 );
+  m_colIndices.resize( m_nonZeros );
+  m_values.resize( m_nonZeros );
+}
+
+array1d< Int > & SuiteSparse::rowPtr()
+{
+  return m_rowPtr;
+}
+
+array1d< Int > & SuiteSparse::colIndices()
+{
+  return m_colIndices;
+}
+
+array1d< real64 > & SuiteSparse::values()
+{
+  return m_values;
+}
+
+real64 SuiteSparse::setupTime() const
+{
+  return m_setupTime;
+}
+
+real64 SuiteSparse::solveTime() const
+{
+  return m_solveTime;
 }
 
 }

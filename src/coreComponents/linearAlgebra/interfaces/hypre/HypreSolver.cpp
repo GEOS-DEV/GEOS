@@ -128,20 +128,16 @@ void solve_serialDirect( LinearSolverParameters const & parameters,
   // To be able to use UMFPACK direct solver we need to disable floating point exceptions
   LvArray::system::FloatingPointExceptionGuard guard;
 
-  SuiteSparseData SSData;
-  SuiteSparseCreate( parameters, SSData );
+  SuiteSparse SSData( parameters );
   ConvertHypreToSuiteSparseMatrix( mat, SSData );
 
   int info = 0;
-  real64 timeSetup;
-  info = SuiteSparseSetup( SSData, timeSetup );
-
-  real64 timeSolve;
-  info += SuiteSparseSolve( SSData, rhs, sol, timeSolve );
+  info = SSData.setup();
+  info += SuiteSparseSolve( SSData, rhs, sol );
 
   // Save setup and solution times
-  result.setupTime = timeSetup;
-  result.solveTime = timeSolve;
+  result.setupTime = SSData.setupTime();
+  result.solveTime = SSData.solveTime();
 
   if( info == 0 )
   {
@@ -150,7 +146,7 @@ void solve_serialDirect( LinearSolverParameters const & parameters,
     result.residualReduction = res.norm2() / rhs.norm2();
   }
 
-  if( info == 0 && result.residualReduction < SuiteSparseRelativeTolerance( SSData ) )
+  if( info == 0 && result.residualReduction < SSData.relativeTolerance() )
   {
     result.status = LinearSolverResult::Status::Success;
     result.numIterations = 1;
@@ -159,8 +155,6 @@ void solve_serialDirect( LinearSolverParameters const & parameters,
   {
     result.status = LinearSolverResult::Status::Breakdown;
   }
-
-  SuiteSparseDestroy( SSData );
 }
 #endif
 

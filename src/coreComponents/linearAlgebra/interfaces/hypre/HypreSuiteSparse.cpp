@@ -57,7 +57,7 @@ void sortIntReal64( Int * arrayInt, real64 * arrayReal64, localIndex const size 
 }
 
 void ConvertHypreToSuiteSparseMatrix( HypreMatrix const & matrix,
-                                      SuiteSparseData & SSData )
+                                      SuiteSparse & SSData )
 {
   // Copy distributed parcsr matrix in a local CSR matrix on every process
   // with at least one row
@@ -70,34 +70,32 @@ void ConvertHypreToSuiteSparseMatrix( HypreMatrix const & matrix,
   {
     rank = MpiWrapper::Comm_size( matrix.getComm() );
   }
-  SSData.workingRank = MpiWrapper::Min( rank, matrix.getComm() );
+  SSData.setWorkingRank( MpiWrapper::Min( rank, matrix.getComm() ) );
 
   rank = MpiWrapper::Comm_rank( matrix.getComm() );
-  if( rank == SSData.workingRank )
+  if( rank == SSData.workingRank() )
   {
-    SSData.numRows = toSuiteSparse_Int( matrix.numGlobalRows() );
-    SSData.numCols = toSuiteSparse_Int( matrix.numGlobalCols() );
-    SSData.nonZeros = toSuiteSparse_Int( hypre_CSRMatrixNumNonzeros( CSRmatrix ) );
+    SSData.setNumRows( toSuiteSparse_Int( matrix.numGlobalRows() ) );
+    SSData.setNumCols( toSuiteSparse_Int( matrix.numGlobalCols() ) );
+    SSData.setNonZeros( toSuiteSparse_Int( hypre_CSRMatrixNumNonzeros( CSRmatrix ) ) );
+    SSData.createInternalStorage();
     HYPRE_Int const * const hypreI = hypre_CSRMatrixI( CSRmatrix );
-    SSData.rowPtr = new Int[SSData.numRows+1];
-    for( localIndex i = 0; i <= SSData.numRows; ++i )
+    for( localIndex i = 0; i <= SSData.numRows(); ++i )
     {
-      SSData.rowPtr[i] = LvArray::integerConversion< Int >( hypreI[i] );
+      SSData.rowPtr()[i] = LvArray::integerConversion< Int >( hypreI[i] );
     }
-    SSData.colIndices = new Int[SSData.nonZeros];
-    SSData.data = new real64[SSData.nonZeros];
     HYPRE_Int const * const hypreJ = hypre_CSRMatrixJ( CSRmatrix );
-    for( localIndex i = 0; i < SSData.nonZeros; ++i )
+    for( localIndex i = 0; i < SSData.nonZeros(); ++i )
     {
-      SSData.colIndices[i] = LvArray::integerConversion< Int >( hypreJ[i] );
+      SSData.colIndices()[i] = LvArray::integerConversion< Int >( hypreJ[i] );
     }
     std::copy( hypre_CSRMatrixData( CSRmatrix ),
-               hypre_CSRMatrixData( CSRmatrix ) + SSData.nonZeros,
-               SSData.data );
-    for( localIndex i = 0; i < SSData.numRows; ++i )
+               hypre_CSRMatrixData( CSRmatrix ) + SSData.nonZeros(),
+               SSData.values().data() );
+    for( localIndex i = 0; i < SSData.numRows(); ++i )
     {
-      localIndex rowLength = LvArray::integerConversion< localIndex >( SSData.rowPtr[i+1] - SSData.rowPtr[i] );
-      sortIntReal64( &( SSData.colIndices[SSData.rowPtr[i]] ), &( SSData.data[SSData.rowPtr[i]] ), rowLength );
+      localIndex rowLength = LvArray::integerConversion< localIndex >( SSData.rowPtr()[i+1] - SSData.rowPtr()[i] );
+      sortIntReal64( &( SSData.colIndices()[SSData.rowPtr()[i]] ), &( SSData.values()[SSData.rowPtr()[i]] ), rowLength );
     }
   }
 
@@ -108,32 +106,28 @@ void ConvertHypreToSuiteSparseMatrix( HypreMatrix const & matrix,
   }
 
   // Save communicator
-  SSData.comm = matrix.getComm();
+  SSData.setComm( matrix.getComm() );
 }
 
-int SuiteSparseSolve( SuiteSparseData & SSData,
+int SuiteSparseSolve( SuiteSparse & SSData,
                       HypreVector const & b,
-                      HypreVector & x,
-                      real64 & time )
+                      HypreVector & x )
 {
   int status = 0;
 
   hypre_Vector * b_vector = hypre_ParVectorToVectorAll( b.unwrapped() );
   HYPRE_Vector sol_Vector = nullptr;
 
-  int const rank = MpiWrapper::Comm_rank( SSData.comm );
-  if( rank == SSData.workingRank )
+  int const rank = MpiWrapper::Comm_rank( SSData.getComm() );
+  if( rank == SSData.workingRank() )
   {
     // Create local vector to store the solution
-    hypre_Vector * sol_vector = hypre_SeqVectorCreate( SSData.numRows );
+    hypre_Vector * sol_vector = hypre_SeqVectorCreate( SSData.numRows() );
     hypre_VectorMemoryLocation( sol_vector ) = HYPRE_MEMORY_HOST;
     hypre_SeqVectorInitialize( sol_vector );
 
     // solve Ax=b
-    status = SuiteSparseSolveWorkingRank( SSData,
-                                          hypre_VectorData( sol_vector ),
-                                          hypre_VectorData( b_vector ),
-                                          time );
+    status = SSData.solveWorkingRank( hypre_VectorData( sol_vector ), hypre_VectorData( b_vector ) );
 
     sol_Vector = ( HYPRE_Vector ) sol_vector;
   }
@@ -155,8 +149,8 @@ int SuiteSparseSolve( SuiteSparseData & SSData,
   GEOSX_LAI_CHECK_ERROR( hypre_ParVectorDestroy( sol_ParVector ) );
   GEOSX_LAI_CHECK_ERROR( hypre_SeqVectorDestroy( b_vector ) );
 
-  MpiWrapper::bcast( &time, 1, SSData.workingRank, SSData.comm );
-  MpiWrapper::bcast( &status, 1, SSData.workingRank, SSData.comm );
+  SSData.syncTimes();
+  MpiWrapper::bcast( &status, 1, SSData.workingRank(), SSData.getComm() );
 
   return status;
 }

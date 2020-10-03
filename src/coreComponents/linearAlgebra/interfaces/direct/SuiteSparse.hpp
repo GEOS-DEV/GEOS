@@ -43,74 +43,219 @@ inline Int toSuiteSparse_Int( globalIndex const index )
 }
 
 /**
- * SuiteSparse data
+ * @class SuiteSparse
+ * @brief This class provides an interface for UMFPACK direct solver from
+ *        SuiteSparse linear algebra package.
  */
-struct SuiteSparseData
+class SuiteSparse
 {
-  integer logLevel;                   //!< log level
-  Int numRows;                        //!< number of rows
-  Int numCols;                        //!< number of columns
-  Int nonZeros;                       //!< number of entries
-  Int * rowPtr;                       //!< row pointers
-  Int * colIndices;                   //!< column indices
-  real64 * data;                      //!< values
-  real64 Info[UMFPACK_INFO];          //!< data structure to gather various info
-  real64 Control[UMFPACK_CONTROL];    //!< SuiteSparse options
-  void * Symbolic;                    //!< pointer to the symbolic factorization
-  void * Numeric;                     //!< pointer to the numeric factorization
-  MPI_Comm comm;                      //!< MPI communicator
-  int workingRank;                    //!< MPI rank carring out the solution
+
+public:
+
+  /**
+   * @brief Constructor
+   */
+  SuiteSparse();
+
+  /**
+   * @brief Constructor with parameters
+   * @param[in] params the linear solver parameters
+   */
+  SuiteSparse( LinearSolverParameters const & params );
+
+  /**
+   * @brief Destructor
+   */
+  ~SuiteSparse();
+
+  /**
+   * @brief Creates the SuiteSparse data structure
+   * @param[in] params the linear solver parameters
+   */
+  void create( LinearSolverParameters const & params );
+
+  /**
+   * @brief Factorizes a linear system with SuiteSparse
+   * @return info error code
+   */
+  int setup();
+
+  /**
+   * @brief Solves a linear system with SuiteSparse (matrix has already been factorized)
+   * @param[in] b the right-hand side
+   * @param[out] x the solution
+   * @return info error code
+   */
+  int solveWorkingRank( real64 * b, real64 * x );
+
+  /**
+   * @brief Sycronizes times across ranks
+   */
+  void syncTimes();
+
+  /**
+   * @brief Estimates the condition number of the matrix
+   * @return the estimated condition number
+   */
+  real64 condEst() const;
+
+  /**
+   * @brief Estimates the relative tolerance for the matrix
+   * @return the relative tolerance (condEst * eps)
+   */
+  real64 relativeTolerance() const;
+
+  /**
+   * @brief Deallocates a SuiteSparse data structure
+   */
+  void destroy();
+
+  /**
+   * @brief Sets the working rank
+   * @param[in] workingRank the working rank
+   */
+  void setWorkingRank( int const workingRank );
+
+  /**
+   * @brief Returns the working rank
+   * @return the working rank
+   */
+  int workingRank() const;
+
+  /**
+   * @brief Sets the communicator
+   * @param[in] comm the MPI communicator
+   */
+  void setComm( MPI_Comm const comm );
+
+  /**
+   * @brief Returns the communicator
+   * @return the communicator
+   */
+  MPI_Comm getComm() const;
+
+  /**
+   * @brief Sets the number of rows
+   * @param[in] numRows the number of rows
+   */
+  void setNumRows( Int const numRows );
+
+  /**
+   * @brief Returns the number of rows
+   * @returns the number of rows
+   */
+  Int numRows() const;
+
+  /**
+   * @brief Sets the number of columns
+   * @param[in] numCols the number of columns
+   */
+  void setNumCols( Int const numCols );
+
+  /**
+   * @brief Returns the number of columns
+   * @return the number of columns
+   */
+  Int numCols() const;
+
+  /**
+   * @brief Sets the number of non zeros
+   * @param[in] nonZeros the number of non zeros
+   */
+  void setNonZeros( Int const nonZeros );
+
+  /**
+   * @brief Returns the number of non zeros
+   * @return the number of non zeros
+   */
+  Int nonZeros() const;
+
+  /**
+   * @brief Allocate the internal data storage arrays
+   */
+  void createInternalStorage();
+
+  /**
+   * @brief Returns the array with the row pointers
+   * @return the array with the row pointers
+   */
+  array1d< Int > & rowPtr();
+
+  /**
+   * @brief Returns the array with the column indices
+   * @return the array with the column indices
+   */
+  array1d< Int > & colIndices();
+
+  /**
+   * @brief Returns the array with the matrix values
+   * @return the array with the matrix values
+   */
+  array1d< real64 > & values();
+
+  /**
+   * @brief Provides the setup time
+   * @return the setup time
+   */
+  real64 setupTime() const;
+
+  /**
+   * @brief Provides the solve time
+   * @return the solve time
+   */
+  real64 solveTime() const;
+
+private:
+
+  /// log level
+  integer m_logLevel;
+
+  /// number of rows
+  Int m_numRows;
+
+  /// number of columns
+  Int m_numCols;
+
+  /// number of entries
+  Int m_nonZeros;
+
+  /// row pointers
+  array1d< Int > m_rowPtr;
+
+  /// column indices
+  array1d< Int > m_colIndices;
+
+  /// values
+  array1d< real64 > m_values;
+
+  /// data structure to gather various info
+  real64 m_Info[UMFPACK_INFO];
+
+  /// SuiteSparse options
+  real64 m_Control[UMFPACK_CONTROL];
+
+  /// pointer to the symbolic factorization
+  void * m_Symbolic;
+
+  /// pointer to the numeric factorization
+  void * m_Numeric;
+
+  /// MPI communicator
+  MPI_Comm m_comm;
+
+  /// MPI rank carring out the solution
+  int m_workingRank;
+
+  /// condition number estimation
+  real64 m_condEst;
+
+  /// setup time
+  real64 m_setupTime;
+
+  /// solve time
+  real64 m_solveTime;
+
 };
-
-/**
- * @brief Creates the SuiteSparse data structure
- * @param[in] params the linear solver parameters
- * @param[out] SSData the structure containing the matrix in SuiteSparse format
- */
-void SuiteSparseCreate( LinearSolverParameters const & params,
-                        SuiteSparseData & SSData );
-
-/**
- * @brief Factorizes a linear system with SuiteSparse
- * @param[in,out] SSData the structure containing the matrix in SuiteSparse format
- * @param[out] time time spent in the factorization phase
- * @return info error code
- */
-int SuiteSparseSetup( SuiteSparseData & SSData,
-                      real64 & time );
-
-/**
- * @brief Solves a linear system with SuiteSparse (matrix has already been factorized)
- * @param[in,out] SSData the structure containing the matrix in SuiteSparse format
- * @param[in] b the right-hand side
- * @param[out] x the solution
- * @param[out] time time spent in the solution phase
- * @return info error code
- */
-int SuiteSparseSolveWorkingRank( SuiteSparseData & SSData,
-                                 real64 * b,
-                                 real64 * x,
-                                 real64 & time );
-
-/**
- * @brief Estimates the condition number of the matrix
- * @param[in] SSData the structure containing the matrix in SuiteSparse format
- * @return the estimated condition number
- */
-real64 SuiteSparseCondEst( SuiteSparseData const & SSData );
-
-/**
- * @brief Estimates the relative tolerance for the matrix
- * @param[in] SSData the structure containing the matrix in SuiteSparse format
- * @return the relative tolerance (condEst * eps)
- */
-real64 SuiteSparseRelativeTolerance( SuiteSparseData const & SSData );
-
-/**
- * @brief Deallocates a SuiteSparse data structure
- * @param[in,out] SSData the structure containing the matrix in SuiteSparse format
- */
-void SuiteSparseDestroy( SuiteSparseData & SSData );
 
 }
 

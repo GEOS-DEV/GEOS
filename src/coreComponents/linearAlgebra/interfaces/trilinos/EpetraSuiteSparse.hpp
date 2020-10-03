@@ -40,7 +40,7 @@ namespace geosx
  * @param[out] importToSerial Epetra import to convert from parallel to serial matrix
  */
 void ConvertEpetraToSuiteSparseMatrix( EpetraMatrix const & matrix,
-                                       SuiteSparseData & SSData,
+                                       SuiteSparse & SSData,
                                        Epetra_Map * & serialMap,
                                        Epetra_Import * & importToSerial );
 
@@ -51,15 +51,13 @@ void ConvertEpetraToSuiteSparseMatrix( EpetraMatrix const & matrix,
  * @param[in] importToSerial Epetra import to convert from parallel to serial matrix
  * @param[in] b the right-hand side in Epetra format
  * @param[out] x the solution in Epetra format
- * @param[out] time time spent in the solution phase
  * @return info error code
  */
-int SuiteSparseSolve( SuiteSparseData & SSData,
+int SuiteSparseSolve( SuiteSparse & SSData,
                       Epetra_Map const * serialMap,
                       Epetra_Import const * importToSerial,
                       EpetraVector const & b,
-                      EpetraVector & x,
-                      real64 & time );
+                      EpetraVector & x );
 
 }
 

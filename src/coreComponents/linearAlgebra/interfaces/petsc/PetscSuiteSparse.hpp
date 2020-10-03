@@ -33,20 +33,18 @@ namespace geosx
  * @param[out] SSData the structure containing the matrix in SuiteSparse format
  */
 void ConvertPetscToSuiteSparseMatrix( PetscMatrix const & matrix,
-                                      SuiteSparseData & SSData );
+                                      SuiteSparse & SSData );
 
 /**
  * @brief Solves a linear system with SuiteSparse (matrix has already been factorized)
  * @param[in,out] SSData the structure containing the matrix in SuiteSparse format
  * @param[in] b the right-hand side in Petsc format
  * @param[out] x the solution in Petsc format
- * @param[out] time time spent in the solution phase
  * @return info error code
  */
-int SuiteSparseSolve( SuiteSparseData & SSData,
+int SuiteSparseSolve( SuiteSparse & SSData,
                       PetscVector const & b,
-                      PetscVector & x,
-                      real64 & time );
+                      PetscVector & x );
 
 }
 
