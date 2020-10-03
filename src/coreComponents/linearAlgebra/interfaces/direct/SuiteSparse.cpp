@@ -27,6 +27,9 @@
 namespace geosx
 {
 
+// Add two orders of magnitude to allow small error in condition number estimate
+static real64 const machinePrecision = 100.0 * std::numeric_limits< real64 >::epsilon();
+
 // Check matching requirements on index/value types between GEOSX and SuiteSparse
 
 static_assert( sizeof( Int ) == sizeof( globalIndex ),
@@ -141,6 +144,11 @@ int SuiteSparseSolveWorkingRank( SuiteSparseData & SSData,
 real64 SuiteSparseCondEst( SuiteSparseData const & SSData )
 {
   return 1.0 / SSData.Info[UMFPACK_RCOND];
+}
+
+real64 SuiteSparseRelativeTolerance( SuiteSparseData const & SSData )
+{
+  return SuiteSparseCondEst( SSData ) * machinePrecision;
 }
 
 void SuiteSparseDestroy( SuiteSparseData & SSData )

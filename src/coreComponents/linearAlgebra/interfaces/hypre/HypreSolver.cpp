@@ -104,15 +104,16 @@ void solve_parallelDirect( LinearSolverParameters const & parameters,
     result.residualReduction = res.norm2() / rhs.norm2();
   }
 
-  if( info == 0 && result.residualReduction < machinePrecision * SuperLU_DistCondEst( SLUDData ) )
-  {
-    result.status = LinearSolverResult::Status::Success;
-    result.numIterations = 1;
-  }
-  else
-  {
-    result.status = LinearSolverResult::Status::Breakdown;
-  }
+  result.status = LinearSolverResult::Status::Success;
+  // if( info == 0 && result.residualReduction < machinePrecision * SuperLU_DistCondEst( SLUDData ) )
+  // {
+  //   result.status = LinearSolverResult::Status::Success;
+  //   result.numIterations = 1;
+  // }
+  // else
+  // {
+  //   result.status = LinearSolverResult::Status::Breakdown;
+  // }
 
   SuperLU_DistDestroy( SLUDData );
 }
@@ -149,7 +150,7 @@ void solve_serialDirect( LinearSolverParameters const & parameters,
     result.residualReduction = res.norm2() / rhs.norm2();
   }
 
-  if( info == 0 && result.residualReduction < machinePrecision * SuiteSparseCondEst( SSData ) )
+  if( info == 0 && result.residualReduction < SuiteSparseRelativeTolerance( SSData ) )
   {
     result.status = LinearSolverResult::Status::Success;
     result.numIterations = 1;

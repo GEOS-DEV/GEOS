@@ -27,9 +27,6 @@
 namespace geosx
 {
 
-// Add two orders of magnitude to allow small error in condition number estimate
-static real64 const machinePrecision = 100.0 * std::numeric_limits< real64 >::epsilon();
-
 /**
  * SuiteSparse integer definition
  */
@@ -101,6 +98,13 @@ int SuiteSparseSolveWorkingRank( SuiteSparseData & SSData,
  * @return the estimated condition number
  */
 real64 SuiteSparseCondEst( SuiteSparseData const & SSData );
+
+/**
+ * @brief Estimates the relative tolerance for the matrix
+ * @param[in] SSData the structure containing the matrix in SuiteSparse format
+ * @return the relative tolerance (condEst * eps)
+ */
+real64 SuiteSparseRelativeTolerance( SuiteSparseData const & SSData );
 
 /**
  * @brief Deallocates a SuiteSparse data structure

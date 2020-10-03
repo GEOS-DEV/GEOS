@@ -166,19 +166,19 @@ void solve_serialDirect( LinearSolverParameters const & parameters,
   SuiteSparseData SSData;
   SuiteSparseCreate( parameters, SSData );
 
-  Epetra_Map * SerialMap = NULL;
-  Epetra_Import * ImportToSerial = NULL;
-  ConvertEpetraToSuiteSparseMatrix( mat, SSData, SerialMap, ImportToSerial );
+  Epetra_Map * serialMap = NULL;
+  Epetra_Import * importToSerial = NULL;
+  ConvertEpetraToSuiteSparseMatrix( mat, SSData, serialMap, importToSerial );
 
   int info = 0;
   real64 timeSetup;
   info = SuiteSparseSetup( SSData, timeSetup );
 
   real64 timeSolve;
-  info += SuiteSparseSolve( SSData, SerialMap, ImportToSerial, rhs, sol, timeSolve );
+  info += SuiteSparseSolve( SSData, serialMap, importToSerial, rhs, sol, timeSolve );
 
-  delete SerialMap;
-  delete ImportToSerial;
+  delete serialMap;
+  delete importToSerial;
 
   // Save setup and solution times
   result.setupTime = timeSetup;
@@ -191,7 +191,7 @@ void solve_serialDirect( LinearSolverParameters const & parameters,
     result.residualReduction = res.norm2() / rhs.norm2();
   }
 
-  if( info == 0 && result.residualReduction < machinePrecision * SuiteSparseCondEst( SSData ) )
+  if( info == 0 && result.residualReduction < SuiteSparseRelativeTolerance( SSData ) )
   {
     result.status = LinearSolverResult::Status::Success;
     result.numIterations = 1;
@@ -265,6 +265,7 @@ void TrilinosSolver::solve_direct( EpetraMatrix & mat,
   if( m_parameters.direct.parallel )
   {
     solve_parallelDirect( m_parameters, mat, sol, rhs, m_result );
+    solve_serialDirect( m_parameters, mat, sol, rhs, m_result );
   }
   else
   {

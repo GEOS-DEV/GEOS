@@ -36,23 +36,27 @@ namespace geosx
  * @brief Converts a matrix from Epetra to SuiteSparse format
  * @param[in] matrix the EpetraMatrix object
  * @param[out] SSData the structure containing the matrix in SuiteSparse format
+ * @param[out] serialMap Epetra map for the serial matrix
+ * @param[out] importToSerial Epetra import to convert from parallel to serial matrix
  */
 void ConvertEpetraToSuiteSparseMatrix( EpetraMatrix const & matrix,
                                        SuiteSparseData & SSData,
-                                       Epetra_Map * SerialMap,
-                                       Epetra_Import * ImportToSerial );
+                                       Epetra_Map * & serialMap,
+                                       Epetra_Import * & importToSerial );
 
 /**
  * @brief Solves a linear system with SuiteSparse (matrix has already been factorized)
  * @param[in,out] SSData the structure containing the matrix in SuiteSparse format
+ * @param[in] serialMap Epetra map for the serial matrix
+ * @param[in] importToSerial Epetra import to convert from parallel to serial matrix
  * @param[in] b the right-hand side in Epetra format
  * @param[out] x the solution in Epetra format
  * @param[out] time time spent in the solution phase
  * @return info error code
  */
 int SuiteSparseSolve( SuiteSparseData & SSData,
-                      Epetra_Map const * SerialMap,
-                      Epetra_Import const * ImportToSerial,
+                      Epetra_Map const * serialMap,
+                      Epetra_Import const * importToSerial,
                       EpetraVector const & b,
                       EpetraVector & x,
                       real64 & time );

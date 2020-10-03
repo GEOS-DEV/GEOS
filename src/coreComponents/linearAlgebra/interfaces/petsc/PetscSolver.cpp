@@ -163,7 +163,7 @@ void solve_serialDirect( LinearSolverParameters const & parameters,
     result.residualReduction = res.norm2() / rhs.norm2();
   }
 
-  if( info == 0 && result.residualReduction < machinePrecision * SuiteSparseCondEst( SSData ) )
+  if( info == 0 && result.residualReduction < SuiteSparseRelativeTolerance( SSData ) )
   {
     result.status = LinearSolverResult::Status::Success;
     result.numIterations = 1;

@@ -33,32 +33,31 @@ namespace geosx
 
 void ConvertEpetraToSuiteSparseMatrix( EpetraMatrix const & matrix,
                                        SuiteSparseData & SSData,
-                                       Epetra_Map * SerialMap,
-                                       Epetra_Import * ImportToSerial )
+                                       Epetra_Map * & serialMap,
+                                       Epetra_Import * & importToSerial )
 {
   // Perform everything on rank 0
   SSData.workingRank = 0;
 
   MPI_Comm const comm = matrix.getComm();
 
-  //const Epetra_Map &OriginalMap = matrix.unwrapped().RowMatrixRowMap();
-  const Epetra_Map & OriginalMap = matrix.unwrapped().DomainMap();
-  int const NumGlobalElements_ = LvArray::integerConversion< int >( matrix.numGlobalRows() );
+  const Epetra_Map & originalMap = matrix.unwrapped().DomainMap();
+  globalIndex const numGlobalElements = matrix.numGlobalRows();
 
   int const rank = MpiWrapper::Comm_rank( matrix.getComm() );
 
-  int NumMyElements_ = 0;
+  globalIndex numMyElements = 0;
   if( rank == SSData.workingRank )
-    NumMyElements_ = NumGlobalElements_;
+  {
+    numMyElements = numGlobalElements;
+  }
 
   //  Convert Original Matrix to Serial
-  SerialMap = new Epetra_Map( NumGlobalElements_, NumMyElements_, 0, Epetra_MpiComm( MPI_PARAM( comm ) ));
-  std::cout << "DOES NOT WORK!!!\n";
-  ImportToSerial = new Epetra_Import( *SerialMap, OriginalMap );
-  std::cout << "DOES NOT WORK!!! (int excpetion)\n";
-  Epetra_CrsMatrix SerialCrsMatrix( Copy, *SerialMap, 0 );
-  SerialCrsMatrix.Import( matrix.unwrapped(), *ImportToSerial, Insert );
-  SerialCrsMatrix.FillComplete();
+  serialMap = new Epetra_Map( numGlobalElements, numMyElements, 0, Epetra_MpiComm( MPI_PARAM( comm ) ));
+  importToSerial = new Epetra_Import( *serialMap, originalMap );
+  Epetra_CrsMatrix serialCrsMatrix( Copy, *serialMap, 0 );
+  serialCrsMatrix.Import( matrix.unwrapped(), *importToSerial, Insert );
+  serialCrsMatrix.FillComplete();
 
   if( rank == SSData.workingRank )
   {
@@ -72,22 +71,22 @@ void ConvertEpetraToSuiteSparseMatrix( EpetraMatrix const & matrix,
     SSData.colIndices = new Int[SSData.nonZeros];
     SSData.data = new real64[SSData.nonZeros];
 
-    array1d< int > Ai( SSData.nonZeros );
+    array1d< int > ai( SSData.nonZeros );
 
-    int const NumEntries = SerialCrsMatrix.MaxNumEntries();
-    int NumEntriesThisRow;
-    int Ai_index = 0;
+    int const numEntries = serialCrsMatrix.MaxNumEntries();
+    int numEntriesThisRow;
+    int aiIndex = 0;
     for( localIndex i = 0; i < SSData.numRows; ++i )
     {
-      SSData.rowPtr[i] = LvArray::integerConversion< Int >( Ai_index );
-      GEOSX_LAI_CHECK_ERROR( SerialCrsMatrix.ExtractMyRowCopy( i, NumEntries, NumEntriesThisRow, &SSData.data[Ai_index], &Ai[Ai_index] ) );
-      Ai_index += NumEntriesThisRow;
+      SSData.rowPtr[i] = LvArray::integerConversion< Int >( aiIndex );
+      GEOSX_LAI_CHECK_ERROR( serialCrsMatrix.ExtractMyRowCopy( i, numEntries, numEntriesThisRow, &SSData.data[aiIndex], &ai[aiIndex] ) );
+      aiIndex += numEntriesThisRow;
     }
-    SSData.rowPtr[SSData.numRows] = LvArray::integerConversion< Int >( Ai_index );
+    SSData.rowPtr[SSData.numRows] = LvArray::integerConversion< Int >( aiIndex );
 
     for( localIndex i = 0; i < SSData.nonZeros; ++i )
     {
-      SSData.colIndices[i] = LvArray::integerConversion< Int >( Ai[i] );
+      SSData.colIndices[i] = LvArray::integerConversion< Int >( ai[i] );
     }
   }
 
@@ -96,43 +95,41 @@ void ConvertEpetraToSuiteSparseMatrix( EpetraMatrix const & matrix,
 }
 
 int SuiteSparseSolve( SuiteSparseData & SSData,
-                      Epetra_Map const * SerialMap,
-                      Epetra_Import const * ImportToSerial,
+                      Epetra_Map const * serialMap,
+                      Epetra_Import const * importToSerial,
                       EpetraVector const & b,
                       EpetraVector & x,
                       real64 & time )
 {
   int status = 0;
 
-  Epetra_MultiVector SerialX( *SerialMap, 1 );
-  Epetra_MultiVector SerialB( *SerialMap, 1 );
+  Epetra_MultiVector serialX( *serialMap, 1 );
+  Epetra_MultiVector serialB( *serialMap, 1 );
 
-  SerialB.Import( b.unwrapped(), *ImportToSerial, Insert );
-
-  int SerialBlda, SerialXlda;
-  std::cout << "HERE\n";
+  serialB.Import( b.unwrapped(), *importToSerial, Insert );
 
   int const rank = MpiWrapper::Comm_rank( SSData.comm );
   if( rank == SSData.workingRank )
   {
-    //  Extract Serial versions of X and B
-    real64 *SerialXvalues;
-    real64 *SerialBvalues;
+    // Extract Serial versions of X and B
+    real64 *serialXvalues;
+    real64 *serialBvalues;
 
-    GEOSX_LAI_CHECK_ERROR( SerialB.ExtractView( &SerialBvalues, &SerialBlda ) );
-    GEOSX_LAI_CHECK_ERROR( SerialX.ExtractView( &SerialXvalues, &SerialXlda ) );
-    GEOSX_ASSERT( SerialBlda == LvArray::integerConversion< int >( SSData.nonZeros ) );
-    GEOSX_ASSERT( SerialXlda == LvArray::integerConversion< int >( SSData.nonZeros ) );
+    int serialBlda, serialXlda;
+    GEOSX_LAI_CHECK_ERROR( serialB.ExtractView( &serialBvalues, &serialBlda ) );
+    GEOSX_LAI_CHECK_ERROR( serialX.ExtractView( &serialXvalues, &serialXlda ) );
+    GEOSX_ASSERT( serialBlda == LvArray::integerConversion< int >( SSData.numRows ) );
+    GEOSX_ASSERT( serialXlda == LvArray::integerConversion< int >( SSData.numCols ) );
 
     // solve Ax=b
     status = SuiteSparseSolveWorkingRank( SSData,
-                                          SerialXvalues,
-                                          SerialBvalues,
+                                          serialXvalues,
+                                          serialBvalues,
                                           time );
 
   }
 
-  x.unwrapped().Export( SerialX, *ImportToSerial, Insert );
+  x.unwrapped().Export( serialX, *importToSerial, Insert );
 
   MpiWrapper::bcast( &time, 1, SSData.workingRank, SSData.comm );
   MpiWrapper::bcast( &status, 1, SSData.workingRank, SSData.comm );
