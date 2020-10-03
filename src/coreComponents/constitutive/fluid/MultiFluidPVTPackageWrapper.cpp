@@ -130,12 +130,12 @@ void MultiFluidPVTPackageWrapperUpdate::Compute( real64 pressure,
   GEOSX_WARNING_IF( m_fluid.getState() != PVTPackage::MultiphaseSystem::State::SUCCESS,
                     "Phase equilibrium calculations not converged" );
 
-  PVTPackage::MultiphaseSystemProperties const & split = m_fluid.get_MultiphaseSystemProperties();
+  PVTPackage::MultiphaseSystemProperties const & split = m_fluid.getMultiphaseSystemProperties();
 
   // 3. Extract phase split and phase properties from PVTPackage
   for( localIndex ip = 0; ip < NP; ++ip )
   {
-    PVTPackage::PhaseProperties const & props = m_fluid.get_PhaseProperties( m_phaseTypes[ip] );
+    PVTPackage::PhaseProperties const & props = m_fluid.getPhaseProperties( m_phaseTypes[ip] );
     auto const & frac = split.PhaseMoleFraction.at( m_phaseTypes[ip] );
     auto const & comp = props.MoleComposition;
     auto const & dens = m_useMass ? props.MassDensity : props.MoleDensity;
@@ -158,7 +158,7 @@ void MultiFluidPVTPackageWrapperUpdate::Compute( real64 pressure,
     // 4.1.1. Compute mass of each phase and total mass (on a 1-mole basis)
     for( localIndex ip = 0; ip < NP; ++ip )
     {
-      PVTPackage::PhaseProperties const & props = m_fluid.get_PhaseProperties( m_phaseTypes[ip] );
+      PVTPackage::PhaseProperties const & props = m_fluid.getPhaseProperties( m_phaseTypes[ip] );
       auto const & phaseMW = props.MolecularWeight;
       phaseFrac[ip] *= phaseMW.value;
       totalMass += phaseFrac[ip];
@@ -174,7 +174,7 @@ void MultiFluidPVTPackageWrapperUpdate::Compute( real64 pressure,
     // 4.2. Convert phase compositions
     for( localIndex ip = 0; ip < NP; ++ip )
     {
-      PVTPackage::PhaseProperties const & props = m_fluid.get_PhaseProperties( m_phaseTypes[ip] );
+      PVTPackage::PhaseProperties const & props = m_fluid.getPhaseProperties( m_phaseTypes[ip] );
       real64 const phaseMWInv = 1.0 / props.MolecularWeight.value;
 
       for( localIndex ic = 0; ic < NC; ++ic )
@@ -313,12 +313,12 @@ void MultiFluidPVTPackageWrapperUpdate::Compute( real64 pressure,
   GEOSX_WARNING_IF( m_fluid.getState() != PVTPackage::MultiphaseSystem::State::SUCCESS,
                     "Phase equilibrium calculations not converged" );
 
-  PVTPackage::MultiphaseSystemProperties const & split = m_fluid.get_MultiphaseSystemProperties();
+  PVTPackage::MultiphaseSystemProperties const & split = m_fluid.getMultiphaseSystemProperties();
 
   // 3. Extract phase split, phase properties and derivatives from PVTPackage
   for( localIndex ip = 0; ip < NP; ++ip )
   {
-    PVTPackage::PhaseProperties const & props = m_fluid.get_PhaseProperties( m_phaseTypes[ip] );
+    PVTPackage::PhaseProperties const & props = m_fluid.getPhaseProperties( m_phaseTypes[ip] );
 
     auto const & frac = split.PhaseMoleFraction.at( m_phaseTypes[ip] );
     auto const & comp = props.MoleComposition;
@@ -364,7 +364,7 @@ void MultiFluidPVTPackageWrapperUpdate::Compute( real64 pressure,
     // 4.1.1. Compute mass of each phase and total mass (on a 1-mole basis)
     for( localIndex ip = 0; ip < NP; ++ip )
     {
-      PVTPackage::PhaseProperties const & props = m_fluid.get_PhaseProperties( m_phaseTypes[ip] );
+      PVTPackage::PhaseProperties const & props = m_fluid.getPhaseProperties( m_phaseTypes[ip] );
 
       auto const & phaseMW = props.MolecularWeight;
       real64 const nu = phaseFrac.value[ip];
@@ -401,7 +401,7 @@ void MultiFluidPVTPackageWrapperUpdate::Compute( real64 pressure,
     // 4.2. Convert phase compositions
     for( localIndex ip = 0; ip < NP; ++ip )
     {
-      PVTPackage::PhaseProperties const & props = m_fluid.get_PhaseProperties( m_phaseTypes[ip] );
+      PVTPackage::PhaseProperties const & props = m_fluid.getPhaseProperties( m_phaseTypes[ip] );
 
       auto const & phaseMW = props.MolecularWeight;
       real64 const phaseMWInv = 1.0 / phaseMW.value;
