@@ -75,8 +75,7 @@ list( APPEND linearAlgebra_headers
 list( APPEND linearAlgebra_sources
       interfaces/direct/SuperLU_Dist.cpp )
 
-# Need to specify this?
-#list( APPEND dependencyList superludist )
+list( APPEND dependencyList superlu_dist )
 
 if( ENABLE_TRILINOS )
 

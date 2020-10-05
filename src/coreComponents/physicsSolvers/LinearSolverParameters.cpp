@@ -45,11 +45,6 @@ LinearSolverParametersInput::LinearSolverParametersInput( std::string const & na
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Whether to stop the simulation if the linear solver reports an error" );
 
-  registerWrapper( viewKeyStruct::directCheckResTolString, &m_parameters.direct.checkResidualTolerance )->
-    setApplyDefaultValue( m_parameters.direct.checkResidualTolerance )->
-    setInputFlag( InputFlags::OPTIONAL )->
-    setDescription( "Tolerance used to check a direct solver solution" );
-
   registerWrapper( viewKeyStruct::directEquilString, &m_parameters.direct.equilibrate )->
     setApplyDefaultValue( m_parameters.direct.equilibrate )->
     setInputFlag( InputFlags::OPTIONAL )->
