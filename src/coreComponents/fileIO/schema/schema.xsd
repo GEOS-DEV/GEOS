@@ -708,8 +708,23 @@ the relative residual norm satisfies:
 	</xsd:simpleType>
 	<xsd:complexType name="FiniteVolumeType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="HybridMimeticDiscretization" type="HybridMimeticDiscretizationType" />
 			<xsd:element name="TwoPointFluxApproximation" type="TwoPointFluxApproximationType" />
 		</xsd:choice>
+	</xsd:complexType>
+	<xsd:complexType name="HybridMimeticDiscretizationType">
+		<!--areaRelTol => Relative tolerance for area calculations.-->
+		<xsd:attribute name="areaRelTol" type="real64" default="1e-08" />
+		<!--coefficientName => Name of coefficient field-->
+		<xsd:attribute name="coefficientName" type="string" use="required" />
+		<!--fieldName => Name of primary solution field-->
+		<xsd:attribute name="fieldName" type="string" use="required" />
+		<!--innerProductType => Type of inner product used in the hybrid FVM solver-->
+		<xsd:attribute name="innerProductType" type="string" use="required" />
+		<!--targetRegions => List of regions to build the stencil for-->
+		<xsd:attribute name="targetRegions" type="string_array" default="{}" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="TwoPointFluxApproximationType">
 		<!--areaRelTol => Relative tolerance for area calculations.-->

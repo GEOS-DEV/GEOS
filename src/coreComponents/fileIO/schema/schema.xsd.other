@@ -353,9 +353,11 @@
 	</xsd:complexType>
 	<xsd:complexType name="FiniteVolumeType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="HybridMimeticDiscretization" type="HybridMimeticDiscretizationType" />
 			<xsd:element name="TwoPointFluxApproximation" type="TwoPointFluxApproximationType" />
 		</xsd:choice>
 	</xsd:complexType>
+	<xsd:complexType name="HybridMimeticDiscretizationType" />
 	<xsd:complexType name="TwoPointFluxApproximationType">
 		<!--cellStencil => (no description available)-->
 		<xsd:attribute name="cellStencil" type="geosx_CellElementStencilTPFA" />
@@ -1220,6 +1222,7 @@
 	</xsd:complexType>
 	<xsd:complexType name="finiteVolumeStencilsType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="HybridMimeticDiscretization" type="HybridMimeticDiscretizationType" />
 			<xsd:element name="TwoPointFluxApproximation" type="TwoPointFluxApproximationType" />
 		</xsd:choice>
 	</xsd:complexType>

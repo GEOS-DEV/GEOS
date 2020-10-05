@@ -19,7 +19,7 @@
     <SinglePhaseHybridFVM
       name="SinglePhaseFlow"
       logLevel="1"
-      discretization="singlePhaseTPFA"
+      discretization="singlePhaseHybridMimetic"
       fluidNames="{ water }"
       solidNames="{ rock }"
       targetRegions="{ Channel }"/>
@@ -129,10 +129,10 @@
 
   <NumericalMethods>
     <FiniteVolume>
-      <TwoPointFluxApproximation
-        name="singlePhaseTPFA"
+      <HybridMimeticDiscretization
+        name="singlePhaseHybridMimetic"
+        innerProductType="Simple"  
         fieldName="pressure"
-        targetRegions="{ Channel }"
         coefficientName="permeability"/>
     </FiniteVolume>
   </NumericalMethods>

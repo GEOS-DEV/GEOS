@@ -13,18 +13,21 @@
  */
 
 // Source includes
-#include "managers/initialization.hpp"
+#include "codingUtilities/UnitTestUtilities.hpp"
 #include "common/Logger.hpp"
+#include "finiteVolume/mimeticInnerProducts/MimeticInnerProductBase.hpp"
+#include "finiteVolume/mimeticInnerProducts/TPFAInnerProduct.hpp"
+#include "finiteVolume/mimeticInnerProducts/QuasiTPFAInnerProduct.hpp"
+#include "finiteVolume/mimeticInnerProducts/SimpleInnerProduct.hpp"
+#include "managers/initialization.hpp"
 #include "mesh/FaceManager.hpp"
 #include "meshUtilities/ComputationalGeometry.hpp"
-#include "finiteVolume/HybridFVMInnerProduct.hpp"
-#include "codingUtilities/UnitTestUtilities.hpp"
 
 // TPL includes
 #include <gtest/gtest.h>
 
 using namespace geosx;
-using namespace geosx::HybridFVMInnerProduct;
+using namespace geosx::mimeticInnerProduct;
 using namespace geosx::computationalGeometry;
 using namespace geosx::testing;
 
@@ -32,6 +35,7 @@ struct InnerProductType
 {
   static constexpr integer TPFA = 0;
   static constexpr integer QUASI_TPFA = 1;
+  static constexpr integer SIMPLE = 2;
 };
 
 void compareTransmissibilityMatrices( arraySlice2d< real64 const > const & transMatrix,
@@ -215,6 +219,34 @@ void makeHexa( array2d< real64, nodes::REFERENCE_POSITION_PERM > & nodePosition,
     transMatrixRef( 5, 5 ) = 6e-12;
     transMatrixRef( 5, 3 ) = -2.25e-12;
   }
+  else if( ipType == InnerProductType::SIMPLE )
+  {
+    transMatrixRef( 0, 0 ) = 8e-12;
+    transMatrixRef( 0, 4 ) = 4e-12;
+
+    transMatrixRef( 1, 1 ) = 9e-12;
+    transMatrixRef( 1, 2 ) = -2.250e-12;
+    transMatrixRef( 1, 3 ) = 2.250e-12;
+    transMatrixRef( 1, 5 ) = 3.e-12;
+
+    transMatrixRef( 2, 1 ) = -2.225e-12;
+    transMatrixRef( 2, 2 ) = 12.06e-12;
+    transMatrixRef( 2, 3 ) = 6.69e-12;
+    transMatrixRef( 2, 5 ) = 2.25e-12;
+
+    transMatrixRef( 3, 1 ) = 2.25e-12;
+    transMatrixRef( 3, 2 ) = 6.69e-12,
+    transMatrixRef( 3, 3 ) = 12.06e-12;
+    transMatrixRef( 3, 5 ) = -2.25e-12;
+
+    transMatrixRef( 4, 4 ) = 8e-12;
+    transMatrixRef( 4, 0 ) = 4e-12;
+
+    transMatrixRef( 5, 1 ) = 3e-12;
+    transMatrixRef( 5, 2 ) = 2.25e-12;
+    transMatrixRef( 5, 5 ) = 9e-12;
+    transMatrixRef( 5, 3 ) = -2.25e-12;
+  }
 }
 
 
@@ -311,6 +343,7 @@ void makeTetra( array2d< real64, nodes::REFERENCE_POSITION_PERM > & nodePosition
     transMatrixRef( 1, 1 ) =  12.75e-12;
     transMatrixRef( 1, 2 ) = -5.25e-12;
     transMatrixRef( 1, 3 ) =  3.75e-12;
+
     transMatrixRef( 2, 0 ) =  2.25e-12;
     transMatrixRef( 2, 1 ) = -5.25e-12;
     transMatrixRef( 2, 2 ) =  18.75e-12;
@@ -321,10 +354,32 @@ void makeTetra( array2d< real64, nodes::REFERENCE_POSITION_PERM > & nodePosition
     transMatrixRef( 3, 2 ) = -0.75e-12;
     transMatrixRef( 3, 3 ) =  8.25e-12;
   }
+  else if( ipType == InnerProductType::SIMPLE )
+  {
+    transMatrixRef( 0, 0 ) =  6.21e-12;
+    transMatrixRef( 0, 1 ) =  4.71e-12;
+    transMatrixRef( 0, 2 ) =  3.21e-12;
+    transMatrixRef( 0, 3 ) =  4.71e-12;
+
+    transMatrixRef( 1, 0 ) =  4.71e-12;
+    transMatrixRef( 1, 1 ) =  13.71e-12;
+    transMatrixRef( 1, 2 ) = -4.29e-12;
+    transMatrixRef( 1, 3 ) =  4.71e-12;
+
+    transMatrixRef( 2, 0 ) =  3.21e-12;
+    transMatrixRef( 2, 1 ) = -4.29e-12;
+    transMatrixRef( 2, 2 ) =  19.71e-12;
+    transMatrixRef( 2, 3 ) =  0.21e-12;
+
+    transMatrixRef( 3, 0 ) =  4.71e-12;
+    transMatrixRef( 3, 1 ) =  4.71e-12;
+    transMatrixRef( 3, 2 ) =  0.21e-12;
+    transMatrixRef( 3, 3 ) =  9.21e-12;
+  }
 }
 
 
-TEST( testHybridFVMInnerProducts, TPFA_hexa )
+TEST( testMimeticInnerProducts, TPFA_hexa )
 {
   localIndex constexpr NF = 6;
 
@@ -355,19 +410,20 @@ TEST( testHybridFVMInnerProducts, TPFA_hexa )
   center[2] = elemCenter[2];
   real64 const perm[ 3 ] = { elemPerm[0], elemPerm[1], elemPerm[2] };
 
-  TPFACellInnerProductKernel::Compute< NF >( nodePosition.toViewConst(),
-                                             faceToNodes.toViewConst(),
-                                             elemToFaces.toSliceConst(),
-                                             center,
-                                             perm,
-                                             lengthTolerance,
-                                             transMatrix.toSlice() );
+  TPFAInnerProduct::Compute< NF >( nodePosition.toViewConst(),
+                                   faceToNodes.toViewConst(),
+                                   elemToFaces.toSliceConst(),
+                                   center,
+                                   elemVolume,
+                                   perm,
+                                   lengthTolerance,
+                                   transMatrix.toSlice() );
 
   compareTransmissibilityMatrices( transMatrix, transMatrixRef );
 }
 
 
-TEST( testHybridFVMInnerProducts, QTPFA_hexa )
+TEST( testMimeticInnerProducts, QTPFA_hexa )
 {
   localIndex constexpr NF = 6;
 
@@ -379,8 +435,6 @@ TEST( testHybridFVMInnerProducts, QTPFA_hexa )
   real64 elemVolume = 0;
   real64 lengthTolerance = 0;
   stackArray2d< real64, NF *NF > transMatrixRef( NF, NF );
-
-  real64 const tParam = 2;
 
   makeHexa( nodePosition,
             faceToNodes,
@@ -401,20 +455,63 @@ TEST( testHybridFVMInnerProducts, QTPFA_hexa )
   center[2] = elemCenter[2];
   real64 const perm[ 3 ] = { elemPerm[0], elemPerm[1], elemPerm[2] };
 
-  QTPFACellInnerProductKernel::Compute< NF >( nodePosition.toViewConst(),
-                                              faceToNodes.toViewConst(),
-                                              elemToFaces.toSliceConst(),
-                                              center,
-                                              elemVolume,
-                                              perm,
-                                              tParam,
-                                              lengthTolerance,
-                                              transMatrix.toSlice() );
+  QuasiTPFAInnerProduct::Compute< NF >( nodePosition.toViewConst(),
+                                        faceToNodes.toViewConst(),
+                                        elemToFaces.toSliceConst(),
+                                        center,
+                                        elemVolume,
+                                        perm,
+                                        lengthTolerance,
+                                        transMatrix.toSlice() );
 
   compareTransmissibilityMatrices( transMatrix, transMatrixRef );
 }
 
-TEST( testHybridFVMInnerProducts, TPFA_tetra )
+TEST( testMimeticInnerProducts, Simple_hexa )
+{
+  localIndex constexpr NF = 6;
+
+  array2d< real64, nodes::REFERENCE_POSITION_PERM > nodePosition;
+  FaceManager::NodeMapType faceToNodes;
+  array1d< localIndex > elemToFaces;
+  R1Tensor elemCenter;
+  R1Tensor elemPerm;
+  real64 elemVolume = 0;
+  real64 lengthTolerance = 0;
+  stackArray2d< real64, NF *NF > transMatrixRef( NF, NF );
+
+  makeHexa( nodePosition,
+            faceToNodes,
+            elemToFaces,
+            elemCenter,
+            elemVolume,
+            elemPerm,
+            lengthTolerance,
+            InnerProductType::SIMPLE,
+            transMatrixRef );
+
+  stackArray2d< real64, NF *NF > transMatrix( NF, NF );
+
+
+  stackArray1d< real64, 3 > center( 3 );
+  center[0] = elemCenter[0];
+  center[1] = elemCenter[1];
+  center[2] = elemCenter[2];
+  real64 const perm[ 3 ] = { elemPerm[0], elemPerm[1], elemPerm[2] };
+
+  SimpleInnerProduct::Compute< NF >( nodePosition.toViewConst(),
+                                     faceToNodes.toViewConst(),
+                                     elemToFaces.toSliceConst(),
+                                     center,
+                                     elemVolume,
+                                     perm,
+                                     lengthTolerance,
+                                     transMatrix.toSlice() );
+
+  compareTransmissibilityMatrices( transMatrix, transMatrixRef );
+}
+
+TEST( testMimeticInnerProducts, TPFA_tetra )
 {
   localIndex constexpr NF = 4;
 
@@ -445,19 +542,20 @@ TEST( testHybridFVMInnerProducts, TPFA_tetra )
   center[2] = elemCenter[2];
   real64 const perm[ 3 ] = { elemPerm[0], elemPerm[1], elemPerm[2] };
 
-  TPFACellInnerProductKernel::Compute< NF >( nodePosition.toViewConst(),
-                                             faceToNodes.toViewConst(),
-                                             elemToFaces.toSliceConst(),
-                                             center,
-                                             perm,
-                                             lengthTolerance,
-                                             transMatrix.toSlice() );
+  TPFAInnerProduct::Compute< NF >( nodePosition.toViewConst(),
+                                   faceToNodes.toViewConst(),
+                                   elemToFaces.toSliceConst(),
+                                   center,
+                                   elemVolume,
+                                   perm,
+                                   lengthTolerance,
+                                   transMatrix.toSlice() );
 
   compareTransmissibilityMatrices( transMatrix, transMatrixRef );
 }
 
 
-TEST( testHybridFVMInnerProducts, QTPFA_tetra )
+TEST( testMimeticInnerProducts, QTPFA_tetra )
 {
   localIndex constexpr NF = 4;
 
@@ -469,8 +567,6 @@ TEST( testHybridFVMInnerProducts, QTPFA_tetra )
   real64 elemVolume = 0;
   real64 lengthTolerance = 0;
   stackArray2d< real64, NF *NF > transMatrixRef( NF, NF );
-
-  real64 const tParam = 2;
 
   makeTetra( nodePosition,
              faceToNodes,
@@ -490,15 +586,57 @@ TEST( testHybridFVMInnerProducts, QTPFA_tetra )
   center[2] = elemCenter[2];
   real64 const perm[ 3 ] = { elemPerm[0], elemPerm[1], elemPerm[2] };
 
-  QTPFACellInnerProductKernel::Compute< NF >( nodePosition.toViewConst(),
-                                              faceToNodes.toViewConst(),
-                                              elemToFaces.toSliceConst(),
-                                              center,
-                                              elemVolume,
-                                              perm,
-                                              tParam,
-                                              lengthTolerance,
-                                              transMatrix.toSlice() );
+  QuasiTPFAInnerProduct::Compute< NF >( nodePosition.toViewConst(),
+                                        faceToNodes.toViewConst(),
+                                        elemToFaces.toSliceConst(),
+                                        center,
+                                        elemVolume,
+                                        perm,
+                                        lengthTolerance,
+                                        transMatrix.toSlice() );
+
+  compareTransmissibilityMatrices( transMatrix, transMatrixRef );
+}
+
+TEST( testMimeticInnerProducts, Simple_tetra )
+{
+  localIndex constexpr NF = 4;
+
+  array2d< real64, nodes::REFERENCE_POSITION_PERM > nodePosition;
+  FaceManager::NodeMapType faceToNodes;
+  array1d< localIndex > elemToFaces;
+  R1Tensor elemCenter;
+  R1Tensor elemPerm;
+  real64 elemVolume = 0;
+  real64 lengthTolerance = 0;
+  stackArray2d< real64, NF *NF > transMatrixRef( NF, NF );
+
+  makeTetra( nodePosition,
+             faceToNodes,
+             elemToFaces,
+             elemCenter,
+             elemVolume,
+             elemPerm,
+             lengthTolerance,
+             InnerProductType::SIMPLE,
+             transMatrixRef );
+
+  stackArray2d< real64, NF *NF > transMatrix( NF, NF );
+
+  stackArray1d< real64, 3 > center( 3 );
+  center[0] = elemCenter[0];
+  center[1] = elemCenter[1];
+  center[2] = elemCenter[2];
+  real64 const perm[ 3 ] = { elemPerm[0], elemPerm[1], elemPerm[2] };
+
+  SimpleInnerProduct::Compute< NF >( nodePosition.toViewConst(),
+                                     faceToNodes.toViewConst(),
+                                     elemToFaces.toSliceConst(),
+                                     center,
+                                     elemVolume,
+                                     perm,
+                                     lengthTolerance,
+                                     transMatrix.toSlice() );
 
   compareTransmissibilityMatrices( transMatrix, transMatrixRef );
 }
