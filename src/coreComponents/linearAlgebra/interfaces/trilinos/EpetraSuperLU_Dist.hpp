@@ -13,27 +13,29 @@
  */
 
 /**
- * @file PetscSuperlu.hpp
+ * @file EpetraSuperLU_Dist.hpp
  */
 
-#ifndef GEOSX_LINEARALGEBRA_INTERFACES_PETSCSUPERLU_HPP_
-#define GEOSX_LINEARALGEBRA_INTERFACES_PETSCSUPERLU_HPP_
+#ifndef GEOSX_LINEARALGEBRA_INTERFACES_EPETRASUPERLU_DIST_HPP_
+#define GEOSX_LINEARALGEBRA_INTERFACES_EPETRASUPERLU_DIST_HPP_
 
 #include "common/DataTypes.hpp"
-#include "linearAlgebra/interfaces/petsc/PetscMatrix.hpp"
-#include "linearAlgebra/utilities/LinearSolverParameters.hpp"
+#include "linearAlgebra/interfaces/trilinos/EpetraMatrix.hpp"
+#include "linearAlgebra/interfaces/direct/SuperLU_Dist.hpp"
+
+//#include <seq_mv.h>
 
 namespace geosx
 {
 
 /**
- * @brief Sets SuperLU_Dist options
- * @param[in] matrix the PetscMatrix object
- * @param[in] params the linear solver parameters
+ * @brief Converts a matrix from Epetra to SuperLU_Dist format
+ * @param[in] matrix the EpetraMatrix object
+ * @param[out] SLUDData the structure containing the matrix in SuperLU_Dist format
  */
-void SuperLU_DistSetFromOptions( PetscMatrix const & matrix,
-                                 LinearSolverParameters const & params );
+void EpetraConvertToSuperMatrix( EpetraMatrix const & matrix,
+                                 SuperLU_Dist & SLUDData );
 
 }
 
-#endif /*GEOSX_LINEARALGEBRA_INTERFACES_PETSCSUPERLU_HPP_*/
+#endif /*GEOSX_LINEARALGEBRA_INTERFACES_EPETRASUPERLU_DIST_HPP_*/

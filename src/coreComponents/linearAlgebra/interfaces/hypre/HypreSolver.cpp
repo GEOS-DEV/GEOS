@@ -28,7 +28,7 @@
 #include "linearAlgebra/utilities/LinearSolverParameters.hpp"
 #include "linearAlgebra/utilities/LAIHelperFunctions.hpp"
 
-#include "HypreSuperlu.hpp"
+#include "HypreSuperLU_Dist.hpp"
 #include <_hypre_utilities.h>
 #include <_hypre_parcsr_ls.h>
 #include <_hypre_IJ_mv.h>
@@ -83,39 +83,34 @@ void solve_parallelDirect( LinearSolverParameters const & parameters,
   // To be able to use SuperLU_Dist solver we need to disable floating point exceptions
   LvArray::system::FloatingPointExceptionGuard guard;
 
-  SuperLU_DistData SLUDData;
-  SuperLU_DistCreate( mat, parameters, SLUDData );
+  SuperLU_Dist SLUDData( parameters );
+  hypre_CSRMatrix * localMatrix;
+  HypreConvertToSuperMatrix( mat, localMatrix, SLUDData );
 
-  int info = 0;
-  real64 timeSetup;
-  info = SuperLU_DistSetup( SLUDData, timeSetup );
-
-  real64 timeSolve;
-  info += SuperLU_DistSolve( SLUDData, rhs, sol, timeSolve );
+  GEOSX_LAI_CHECK_ERROR( SLUDData.setup() );
+  sol.copy( rhs );
+  GEOSX_LAI_CHECK_ERROR( SLUDData.solve( sol.localSize(), sol.extractLocalVector() ) );
 
   // Save setup and solution times
-  result.setupTime = timeSetup;
-  result.solveTime = timeSolve;
+  result.setupTime = SLUDData.setupTime();
+  result.solveTime = SLUDData.solveTime();
 
-  if( info == 0 )
-  {
-    HypreVector res( rhs );
-    mat.gemv( -1.0, sol, 1.0, res );
-    result.residualReduction = res.norm2() / rhs.norm2();
-  }
+  HypreVector res( rhs );
+  mat.gemv( -1.0, sol, 1.0, res );
+  result.residualReduction = res.norm2() / rhs.norm2();
 
   result.status = LinearSolverResult::Status::Success;
-  // if( info == 0 && result.residualReduction < machinePrecision * SuperLU_DistCondEst( SLUDData ) )
-  // {
-  //   result.status = LinearSolverResult::Status::Success;
-  //   result.numIterations = 1;
-  // }
-  // else
-  // {
-  //   result.status = LinearSolverResult::Status::Breakdown;
-  // }
+  if( result.residualReduction < SLUDData.relativeTolerance() )
+  {
+    result.status = LinearSolverResult::Status::Success;
+    result.numIterations = 1;
+  }
+  else
+  {
+    result.status = LinearSolverResult::Status::Breakdown;
+  }
 
-  SuperLU_DistDestroy( SLUDData );
+  HypreDestroyAdditionalData( localMatrix );
 }
 
 #ifdef GEOSX_USE_SUITESPARSE
@@ -131,22 +126,18 @@ void solve_serialDirect( LinearSolverParameters const & parameters,
   SuiteSparse SSData( parameters );
   ConvertHypreToSuiteSparseMatrix( mat, SSData );
 
-  int info = 0;
-  info = SSData.setup();
-  info += SuiteSparseSolve( SSData, rhs, sol );
+  GEOSX_LAI_CHECK_ERROR( SSData.setup() );
+  GEOSX_LAI_CHECK_ERROR( SuiteSparseSolve( SSData, rhs, sol ) );
 
   // Save setup and solution times
   result.setupTime = SSData.setupTime();
   result.solveTime = SSData.solveTime();
 
-  if( info == 0 )
-  {
-    HypreVector res( rhs );
-    mat.gemv( -1.0, sol, 1.0, res );
-    result.residualReduction = res.norm2() / rhs.norm2();
-  }
+  HypreVector res( rhs );
+  mat.gemv( -1.0, sol, 1.0, res );
+  result.residualReduction = res.norm2() / rhs.norm2();
 
-  if( info == 0 && result.residualReduction < SSData.relativeTolerance() )
+  if( result.residualReduction < SSData.relativeTolerance() )
   {
     result.status = LinearSolverResult::Status::Success;
     result.numIterations = 1;

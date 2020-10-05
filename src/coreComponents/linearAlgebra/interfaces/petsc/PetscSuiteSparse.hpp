@@ -21,7 +21,6 @@
 
 #include "common/DataTypes.hpp"
 #include "linearAlgebra/interfaces/petsc/PetscMatrix.hpp"
-#include "linearAlgebra/utilities/LinearSolverParameters.hpp"
 #include "linearAlgebra/interfaces/direct/SuiteSparse.hpp"
 
 namespace geosx

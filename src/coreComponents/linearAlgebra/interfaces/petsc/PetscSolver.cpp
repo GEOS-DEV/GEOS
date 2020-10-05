@@ -26,7 +26,7 @@
 #include "linearAlgebra/utilities/LinearSolverParameters.hpp"
 #include "linearAlgebra/utilities/LAIHelperFunctions.hpp"
 
-#include "PetscSuperlu.hpp"
+#include "PetscSuperLU_Dist.hpp"
 #include <petscvec.h>
 #include <petscmat.h>
 #include <petscksp.h>
@@ -76,59 +76,34 @@ void solve_parallelDirect( LinearSolverParameters const & parameters,
   // To be able to use SuperLU_Dist solver we need to disable floating point exceptions
   LvArray::system::FloatingPointExceptionGuard guard;
 
-  MPI_Comm const comm = mat.getComm();
+  SuperLU_Dist SLUDData( parameters );
+  Mat localMatrix;
+  PetscConvertToSuperMatrix( mat, localMatrix, SLUDData );
 
-  // create linear solver
-  KSP ksp;
-  GEOSX_LAI_CHECK_ERROR( KSPCreate( comm, &ksp ) );
-  GEOSX_LAI_CHECK_ERROR( KSPSetOperators( ksp, mat.unwrapped(), mat.unwrapped() ) );
-  GEOSX_LAI_CHECK_ERROR( KSPSetType( ksp, KSPPREONLY ) );
+  GEOSX_LAI_CHECK_ERROR( SLUDData.setup() );
+  sol.copy( rhs );
+  GEOSX_LAI_CHECK_ERROR( SLUDData.solve( sol.localSize(), sol.extractLocalVector() ) );
 
-  SuperLU_DistSetFromOptions( mat, parameters );
+  // Save setup and solution times
+  result.setupTime = SLUDData.setupTime();
+  result.solveTime = SLUDData.solveTime();
 
-  // use direct solve preconditioner SUPERLU DIST
-  Stopwatch watch;
-  PC prec;
-  GEOSX_LAI_CHECK_ERROR( KSPGetPC( ksp, &prec ) );
-  GEOSX_LAI_CHECK_ERROR( PCSetType( prec, PCLU ) );
-  GEOSX_LAI_CHECK_ERROR( PCFactorSetMatSolverType( prec, MATSOLVERSUPERLU_DIST ) );
-  GEOSX_LAI_CHECK_ERROR( PCSetUp( prec ) );
-  result.setupTime = watch.elapsedTime();
+  PetscVector res( rhs );
+  mat.gemv( -1.0, sol, 1.0, res );
+  result.residualReduction = res.norm2() / rhs.norm2();
 
-  // solve system
-  watch.zero();
-  GEOSX_LAI_CHECK_ERROR( KSPSolve( ksp, rhs.unwrapped(), sol.unwrapped() ) );
-  result.solveTime = watch.elapsedTime();
-
-  KSPConvergedReason reason;
-  GEOSX_LAI_CHECK_ERROR( KSPGetConvergedReason( ksp, &reason ) );
-
-  result.status = reason >= 0 ? LinearSolverResult::Status::Success : LinearSolverResult::Status::Breakdown;
-
-  if( result.status == LinearSolverResult::Status::Success )
+  result.status = LinearSolverResult::Status::Success;
+  if( result.residualReduction < SLUDData.relativeTolerance() )
   {
-    PetscVector res( rhs );
-    mat.gemv( -1.0, sol, 1.0, res );
-    result.residualReduction = res.norm2() / rhs.norm2();
-
-    // check for nan or inf
-    if( std::isnan( result.residualReduction ) || std::isinf( result.residualReduction ) )
-    {
-      result.status = LinearSolverResult::Status::Breakdown;
-    }
-    else if( result.residualReduction < parameters.direct.checkResidualTolerance )
-    {
-      result.status = LinearSolverResult::Status::Success;
-      result.numIterations = 1;
-    }
-    else
-    {
-      result.status = LinearSolverResult::Status::Breakdown;
-    }
+    result.status = LinearSolverResult::Status::Success;
+    result.numIterations = 1;
+  }
+  else
+  {
+    result.status = LinearSolverResult::Status::Breakdown;
   }
 
-  // destroy solver
-  GEOSX_LAI_CHECK_ERROR( KSPDestroy( &ksp ) );
+  PetscDestroyAdditionalData( localMatrix );
 }
 
 #ifdef GEOSX_USE_SUITESPARSE
@@ -144,22 +119,18 @@ void solve_serialDirect( LinearSolverParameters const & parameters,
   SuiteSparse SSData( parameters );
   ConvertPetscToSuiteSparseMatrix( mat, SSData );
 
-  int info = 0;
-  info = SSData.setup();
-  info += SuiteSparseSolve( SSData, rhs, sol );
+  GEOSX_LAI_CHECK_ERROR( SSData.setup() );
+  GEOSX_LAI_CHECK_ERROR( SuiteSparseSolve( SSData, rhs, sol ) );
 
   // Save setup and solution times
   result.setupTime = SSData.setupTime();
   result.solveTime = SSData.solveTime();
 
-  if( info == 0 )
-  {
-    PetscVector res( rhs );
-    mat.gemv( -1.0, sol, 1.0, res );
-    result.residualReduction = res.norm2() / rhs.norm2();
-  }
+  PetscVector res( rhs );
+  mat.gemv( -1.0, sol, 1.0, res );
+  result.residualReduction = res.norm2() / rhs.norm2();
 
-  if( info == 0 && result.residualReduction < SSData.relativeTolerance() )
+  if( result.residualReduction < SSData.relativeTolerance() )
   {
     result.status = LinearSolverResult::Status::Success;
     result.numIterations = 1;

@@ -21,7 +21,6 @@
 
 #include "common/DataTypes.hpp"
 #include "linearAlgebra/interfaces/trilinos/EpetraMatrix.hpp"
-#include "linearAlgebra/utilities/LinearSolverParameters.hpp"
 #include "linearAlgebra/interfaces/direct/SuiteSparse.hpp"
 
 #include <Epetra_Map.h>

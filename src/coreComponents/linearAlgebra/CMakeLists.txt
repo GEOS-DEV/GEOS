@@ -69,6 +69,15 @@ if( ENABLE_SUITESPARSE )
 
 endif()
 
+list( APPEND linearAlgebra_headers
+      interfaces/direct/SuperLU_Dist.hpp )
+
+list( APPEND linearAlgebra_sources
+      interfaces/direct/SuperLU_Dist.cpp )
+
+# Need to specify this?
+#list( APPEND dependencyList superludist )
+
 if( ENABLE_TRILINOS )
 
     list( APPEND linearAlgebra_headers
@@ -77,14 +86,16 @@ if( ENABLE_TRILINOS )
           interfaces/trilinos/EpetraUtils.hpp
           interfaces/trilinos/TrilinosPreconditioner.hpp
           interfaces/trilinos/TrilinosSolver.hpp
-          interfaces/trilinos/TrilinosInterface.hpp )
+          interfaces/trilinos/TrilinosInterface.hpp
+          interfaces/trilinos/EpetraSuperLU_Dist.hpp )
 
     list( APPEND linearAlgebra_sources
           interfaces/trilinos/EpetraMatrix.cpp
           interfaces/trilinos/EpetraVector.cpp
           interfaces/trilinos/TrilinosPreconditioner.cpp
           interfaces/trilinos/TrilinosSolver.cpp
-          interfaces/trilinos/TrilinosInterface.cpp )
+          interfaces/trilinos/TrilinosInterface.cpp
+          interfaces/trilinos/EpetraSuperLU_Dist.cpp )
 
     list( APPEND dependencyList trilinos )
 
@@ -111,7 +122,7 @@ if( ENABLE_HYPRE )
           interfaces/hypre/HypreSolver.hpp
           interfaces/hypre/HypreInterface.hpp
           interfaces/hypre/HypreUtils.hpp
-          interfaces/hypre/HypreSuperlu.hpp )
+          interfaces/hypre/HypreSuperLU_Dist.hpp )
 
     list( APPEND linearAlgebra_sources
           interfaces/hypre/HypreMatrix.cpp
@@ -119,7 +130,7 @@ if( ENABLE_HYPRE )
           interfaces/hypre/HyprePreconditioner.cpp
           interfaces/hypre/HypreSolver.cpp
           interfaces/hypre/HypreInterface.cpp
-          interfaces/hypre/HypreSuperlu.cpp )
+          interfaces/hypre/HypreSuperLU_Dist.cpp )
 
     list( APPEND dependencyList hypre )
 
@@ -144,7 +155,7 @@ if( ENABLE_PETSC )
           interfaces/petsc/PetscSolver.hpp
           interfaces/petsc/PetscInterface.hpp
           interfaces/petsc/PetscUtils.hpp
-          interfaces/petsc/PetscSuperlu.hpp )
+          interfaces/petsc/PetscSuperLU_Dist.hpp )
 
     list( APPEND linearAlgebra_sources
           interfaces/petsc/PetscVector.cpp
@@ -152,7 +163,7 @@ if( ENABLE_PETSC )
           interfaces/petsc/PetscPreconditioner.cpp
           interfaces/petsc/PetscSolver.cpp
           interfaces/petsc/PetscInterface.cpp
-          interfaces/petsc/PetscSuperlu.cpp )
+          interfaces/petsc/PetscSuperLU_Dist.cpp )
 
     list( APPEND dependencyList petsc )
 

@@ -21,7 +21,6 @@
 
 #include "common/DataTypes.hpp"
 #include "linearAlgebra/interfaces/hypre/HypreMatrix.hpp"
-#include "linearAlgebra/utilities/LinearSolverParameters.hpp"
 #include "linearAlgebra/interfaces/direct/SuiteSparse.hpp"
 
 #include <HYPRE_utilities.h>
