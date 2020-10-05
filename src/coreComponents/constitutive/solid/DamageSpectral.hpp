@@ -56,35 +56,59 @@ public:
   using DamageUpdates< UPDATE_BASE >::m_criticalFractureEnergy;
   using DamageUpdates< UPDATE_BASE >::m_lengthScale;
 
+  //Quadratic Degradation
+
+    GEOSX_FORCE_INLINE
+  GEOSX_HOST_DEVICE
+  real64 GetDegradationValue( localIndex const k,
+                              localIndex const q ) const override
+  {
+    return (1 - m_damage( k, q ))*(1 - m_damage( k, q ));
+  }
+
+  GEOSX_FORCE_INLINE
+  GEOSX_HOST_DEVICE
+  real64 GetDegradationDerivative( real64 const d ) const override
+  {
+    return -2*(1 - d);
+  }
+
+  GEOSX_FORCE_INLINE
+  GEOSX_HOST_DEVICE
+  real64 GetDegradationSecondDerivative( real64 const d ) const override
+  {
+    return 2 * (d - d + 1);
+  }
+  
   //Lorentz type Degradation Function
+  
+  // GEOSX_FORCE_INLINE
+  // GEOSX_HOST_DEVICE
+  // virtual real64 GetDegradationValue( localIndex const k,
+  //                                     localIndex const q ) const override
+  // {
+  //   real64 m = 3*m_criticalFractureEnergy/(8*m_lengthScale*m_criticalStrainEnergy);
+  //   real64 p = 1;
+  //   return pow( 1 - m_damage( k, q ), 2 ) /( pow( 1 - m_damage( k, q ), 2 ) + m * m_damage( k, q ) * (1 + p*m_damage( k, q )) );
+  // }
 
-  GEOSX_FORCE_INLINE
-  GEOSX_HOST_DEVICE
-  virtual real64 GetDegradationValue( localIndex const k,
-                                      localIndex const q ) const override
-  {
-    real64 m = 3*m_criticalFractureEnergy/(8*m_lengthScale*m_criticalStrainEnergy);
-    real64 p = 1;
-    return pow( 1 - m_damage( k, q ), 2 ) /( pow( 1 - m_damage( k, q ), 2 ) + m * m_damage( k, q ) * (1 + p*m_damage( k, q )) );
-  }
+  // GEOSX_FORCE_INLINE
+  // GEOSX_HOST_DEVICE
+  // virtual real64 GetDegradationDerivative( real64 const d ) const override
+  // {
+  //   real64 m = 3*m_criticalFractureEnergy/(8*m_lengthScale*m_criticalStrainEnergy);
+  //   real64 p = 1;
+  //   return -m*(1 - d)*(1 + (2*p + 1)*d) / pow( pow( 1-d, 2 ) + m*d*(1+p*d), 2 );
+  // }
 
-  GEOSX_FORCE_INLINE
-  GEOSX_HOST_DEVICE
-  virtual real64 GetDegradationDerivative( real64 const d ) const override
-  {
-    real64 m = 3*m_criticalFractureEnergy/(8*m_lengthScale*m_criticalStrainEnergy);
-    real64 p = 1;
-    return -m*(1 - d)*(1 + (2*p + 1)*d) / pow( pow( 1-d, 2 ) + m*d*(1+p*d), 2 );
-  }
-
-  GEOSX_FORCE_INLINE
-  GEOSX_HOST_DEVICE
-  virtual real64 GetDegradationSecondDerivative( real64 const d ) const override
-  {
-    real64 m = 3*m_criticalFractureEnergy/(8*m_lengthScale*m_criticalStrainEnergy);
-    real64 p = 1;
-    return -2*m*( pow( d, 3 )*(2*m*p*p + m*p + 2*p + 1) + pow( d, 2 )*(-3*m*p*p -3*p) + d*(-3*m*p - 3) + (-m+p+2) )/pow( pow( 1-d, 2 ) + m*d*(1+p*d), 3 );
-  }
+  // GEOSX_FORCE_INLINE
+  // GEOSX_HOST_DEVICE
+  // virtual real64 GetDegradationSecondDerivative( real64 const d ) const override
+  // {
+  //   real64 m = 3*m_criticalFractureEnergy/(8*m_lengthScale*m_criticalStrainEnergy);
+  //   real64 p = 1;
+  //   return -2*m*( pow( d, 3 )*(2*m*p*p + m*p + 2*p + 1) + pow( d, 2 )*(-3*m*p*p -3*p) + d*(-3*m*p - 3) + (-m+p+2) )/pow( pow( 1-d, 2 ) + m*d*(1+p*d), 3 );
+  // }
 
   GEOSX_HOST_DEVICE inline
   virtual void GetStiffness( localIndex const k,
@@ -151,15 +175,20 @@ public:
     //get strain tensor in voigt form
     real64 strain[6] = {};
     recoverStrainFromStress(this->m_stress[k][q], strain, K, mu);
+    // for (int i=0; i<6; i++)
+    //   {
+    // 	std::cout<<"At qp "<<q<<" of element "<<k<<std::endl;
+    // 	std::cout<<"strain["<<i<<"] = "<<strain[i]<<std::endl;
+    //   }
     real64 traceOfStrain = strain[0] + strain[1] + strain[2];
     //get eigenvalues and eigenvectors
-    real64 eigenValues[3] = {};
+    real64 eigenValues[3] = {0};
     real64 eigenVectors[3][3] = {};
     LvArray::tensorOps::symEigenvectors<3>(eigenValues, eigenVectors, strain);
     //transpose eigenValues matrix
-    // real64 temp[3][3] = {};
-    // LvArray::tensorOps::transpose<3,3>(temp, eigenVectors);
-    // LvArray::tensorOps::copy<3,3>(eigenVectors, temp);
+    real64 temp[3][3] = {};
+    LvArray::tensorOps::transpose<3,3>(temp, eigenVectors);
+    LvArray::tensorOps::copy<3,3>(eigenVectors, temp);
     real64 tracePlus = std::max(traceOfStrain, 0.0);
     //build symmetric matrices of positive and negative eigenvalues
     real64 eigenPlus[6] = {0};
@@ -168,17 +197,23 @@ public:
 	eigenPlus[i] = std::max(eigenValues[i], 0.0);
       }
     real64 positivePartOfStrain[6] = {0};
-    for (int i = 0; i < 3; i++)
-      {
-	eigenPlus[i] = std::max(eigenValues[i], 0.0);
-      }
     LvArray::tensorOps::AikSymBklAjl<3>(positivePartOfStrain, eigenVectors, eigenPlus);
-    real64 const sed = 0.5 * lambda * tracePlus * tracePlus + mu * LvArray::tensorOps::l2Norm<6>(positivePartOfStrain)*LvArray::tensorOps::l2Norm<6>(positivePartOfStrain); // the l2Norm should work as a double contraction bc the strain tensor is in voigt notation
+    
+    real64 const sed = 0.5 * lambda * tracePlus * tracePlus + mu * doubleContraction(positivePartOfStrain, positivePartOfStrain);
+    // for (int i=0; i<6; i++)
+    //   {
+    // 	std::cout<<"At qp "<<q<<" of element "<<k<<std::endl;
+    // 	std::cout<<"positiveStrain["<<i<<"] = "<<positivePartOfStrain[i]<<std::endl;
+    // 	std::cout<<"tracePlus = "<<tracePlus<<std::endl;
+    //   }
+
+    //std::cout<<"At qp "<<q<<" of element "<<k<<std::endl;
+    //std::cout<<"sed is "<<sed<<std::endl;
     //enforce irreversibility using history field for the strain energy density
-    if( sed > m_strainEnergyDensity( k, q ) )
-    {
-      m_strainEnergyDensity( k, q ) = sed;
-    }
+    //if( sed > m_strainEnergyDensity( k, q ) )
+    //{
+    m_strainEnergyDensity( k, q ) = sed;
+      //}
     return m_strainEnergyDensity( k, q );
   }
 
@@ -235,8 +270,10 @@ public:
   GEOSX_HOST_DEVICE
   virtual real64 getEnergyThreshold() const override
   {
+        return 3*m_criticalFractureEnergy/(16 * m_lengthScale);
+
     //required for Lorentz-type degradation functions
-    return m_criticalStrainEnergy;
+	//    return m_criticalStrainEnergy;
   }
 
 };

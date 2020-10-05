@@ -51,6 +51,24 @@ void NegativePartOfTensor( real64 (&eigs)[3], real64 (&eigvecs)[3][3], real64 (&
 }
 
 GEOSX_HOST_DEVICE inline
+real64 doubleContraction(real64 (&A)[6], real64 (&B)[6])
+{
+  real64 ans = 0;
+  for (int i=0; i < 6; i++)
+    {
+      if (i < 3)
+	{
+	  ans = ans + A[i]*B[i];
+	}
+      else
+	{
+	  ans = ans + 2*A[i]*B[i];
+	}
+    }
+  return ans;
+}
+
+GEOSX_HOST_DEVICE inline
 void recoverStrainFromStress(arraySlice1d<real64> const stress, real64 (&strain)[6], real64 const K, real64 const mu)
 {
   real64 E = 9*K*mu / (3*K + mu);
@@ -127,14 +145,10 @@ int voigt(int voigtIndex, int pairIndex)
 GEOSX_HOST_DEVICE inline
 real64 heaviside(real64 x)
 {
-  real64 tol = 1e-12;
-  if (std::abs(x) < tol) {
-    return 0.5;
-  }
   if (x > 0) {
     return 1;
   }
-  if (x < 0) {
+  if (x <= 0) {
     return 0;
   }
   GEOSX_ERROR("This function was not supposed to reach this line");

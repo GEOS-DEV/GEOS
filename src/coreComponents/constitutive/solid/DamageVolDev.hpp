@@ -85,7 +85,7 @@ public:
   {
 
     //Volumetric/Deviatoric Split
-
+    std::cout<<"Vol Dev GetStiffness"<< std::endl;
     DamageUpdates< UPDATE_BASE >::GetStiffness( k, q, c );
     real64 const damageFactor = GetDegradationValue( k, q );
     real64 const K = UPDATE_BASE::getBulkModulus( k );
@@ -118,6 +118,7 @@ public:
                                                      localIndex const q ) const override final
   {
     real64 const K = UPDATE_BASE::getBulkModulus( k );
+    std::cout<<"Vol Dev Strain Energy"<<std::endl;
     real64 traceOfStress = this->m_stress( k, q, 0 ) + this->m_stress( k, q, 1 ) + this->m_stress( k, q, 2 );
     real64 compressionIndicator = 0;
     if( traceOfStress < 0.0 )
@@ -128,10 +129,10 @@ public:
     }
     real64 const sed = UPDATE_BASE::calculateStrainEnergyDensity( k, q ) - compressionIndicator*(traceOfStress/3.0)*(traceOfStress/3.0)/(2*K);
     //enforce irreversibility using history field for the strain energy density
-    if( sed > m_strainEnergyDensity( k, q ) )
-    {
-      m_strainEnergyDensity( k, q ) = sed;
-    }
+    //if( sed > m_strainEnergyDensity( k, q ) )
+    //{
+    m_strainEnergyDensity( k, q ) = sed;
+      //}
     return m_strainEnergyDensity( k, q );
   }
 
@@ -142,7 +143,7 @@ public:
   {
 
     //volumetric-deviatoric split
-
+    std::cout<<"Vol Dev getStress"<< std::endl;
     real64 const damageFactor = GetDegradationValue( k, q );
 
     real64 traceOfStress = this->m_stress( k, q, 0 ) + this->m_stress( k, q, 1 ) + this->m_stress( k, q, 2 );

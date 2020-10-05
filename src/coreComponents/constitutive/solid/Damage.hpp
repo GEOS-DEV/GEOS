@@ -19,7 +19,7 @@
 
 #ifndef GEOSX_CONSTITUTIVE_SOLID_DAMAGE_HPP_
 #define GEOSX_CONSTITUTIVE_SOLID_DAMAGE_HPP_
-#define LORENTZ 1
+#define LORENTZ 0
 #include "constitutive/solid/SolidBase.hpp"
 
 namespace geosx
@@ -114,6 +114,7 @@ public:
                              real64 (& c)[6][6] ) const override
   {
     UPDATE_BASE::GetStiffness( k, q, c );
+    std::cout<<"Std GetStiffness"<<std::endl;
     real64 const damageFactor = ( 1.0 - m_damage( k, q ) )*( 1.0 - m_damage( k, q ) );
     for( localIndex i=0; i<6; ++i )
     {
@@ -131,10 +132,10 @@ public:
   {
     real64 const sed = UPDATE_BASE::calculateStrainEnergyDensity( k, q );
 
-    if( sed > m_strainEnergyDensity( k, q ) )
-    {
-      m_strainEnergyDensity( k, q ) = sed;
-    }
+    //if( sed > m_strainEnergyDensity( k, q ) )
+    //{
+    m_strainEnergyDensity( k, q ) = sed;
+      //}
 
     return m_strainEnergyDensity( k, q );
   }
@@ -145,7 +146,7 @@ public:
                           real64 (& stress)[6] ) const override
   {
     //no tension-compression asymmetry
-
+    std::cout<<"Std getStress"<<std::endl;
     real64 const damageFactor = GetDegradationValue( k, q );
 
     stress[0] = this->m_stress( k, q, 0 ) * damageFactor;
