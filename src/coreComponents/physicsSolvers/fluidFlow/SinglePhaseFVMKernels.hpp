@@ -24,6 +24,16 @@
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
 
+//TJ
+#include "physicsSolvers/surfaceGeneration/SurfaceGenerator.hpp"
+#include "physicsSolvers/PhysicsSolverManager.hpp"
+#include "managers/ProblemManager.hpp"
+#include "dataRepository/Group.hpp"
+#include "managers/FieldSpecification/SourceFluxBoundaryCondition.hpp"
+#include "physicsSolvers/multiphysics/HydrofractureSolver.hpp"
+#include "managers/FieldSpecification/FieldSpecificationManager.hpp"
+#include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
+
 namespace geosx
 {
 
@@ -177,7 +187,8 @@ struct FluxKernel
 #endif
             ParallelMatrix * const jacobian,
             ParallelVector * const residual,
-            CRSMatrixView< real64, localIndex > const & dR_dAper );
+            CRSMatrixView< real64, localIndex > const & dR_dAper,
+	    DomainPartition const * const domain);
 
 
   /**
@@ -402,14 +413,158 @@ struct FluxKernel
                    real64 const dt,
                    arraySlice1d< real64 > const & flux,
                    arraySlice2d< real64 > const & fluxJacobian,
-                   arraySlice2d< real64 > const & dFlux_dAperture )
+                   arraySlice2d< real64 > const & dFlux_dAperture,
+		   DomainPartition const * const domain,
+		   localIndex const iconn)
   {
     real64 sumOfWeights = 0;
     real64 aperTerm[10];
     real64 dAperTerm_dAper[10];
 
+    std::cout << iconn << std::endl;
+
+    MeshLevel const * mesh = domain->getMeshBodies()->GetGroup< MeshBody >( 0 )->getMeshLevel( 0 );
+    NodeManager const * myNodeManager = mesh->getNodeManager();
+    arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const & disp = myNodeManager->totalDisplacement();
+
+    dataRepository::Group const * myProblemManager = domain->getParent();
+    PhysicsSolverManager const * myPhysicsSolverManager = myProblemManager->GetGroup< PhysicsSolverManager >("Solvers");
+    SurfaceGenerator const * mySurface = myPhysicsSolverManager
+				       ->GetGroup< SurfaceGenerator >( "SurfaceGen" );
+
+    HydrofractureSolver const * myHydroSolver = myPhysicsSolverManager
+	                               ->GetGroup< HydrofractureSolver >( "hydrofracture" );
+    real64 const meshSize = myHydroSolver->getMeshSize();
+
+
+    SortedArray< localIndex > const trailingFaces = mySurface->getTrailingFaces();
+    SortedArray< localIndex > const tipNodes = mySurface->getTipNodes();
+
+
+    dataRepository::Group const * elementSubRegions = domain->GetGroup("MeshBodies")
+					->GetGroup<MeshBody>("mesh1")
+					->GetGroup<MeshLevel>("Level0")
+					->GetGroup<ElementRegionManager>("ElementRegions")
+					->GetRegion< FaceElementRegion >( "Fracture" )
+					->GetGroup("elementSubRegions");
+
+    FaceElementSubRegion const * subRegion = elementSubRegions->GetGroup< FaceElementSubRegion >( "default" );
+    FaceElementSubRegion::FaceMapType const & faceMap = subRegion->faceList();
+
+    FaceManager const * myFaceManager = mesh->getFaceManager();
+    arrayView1d< R1Tensor const > const & faceNormal = myFaceManager->faceNormal();
+    arrayView2d< localIndex const > const & elemsToFaces = subRegion->faceList();
+    ArrayOfArraysView< localIndex const > const & faceToNodeMap = myFaceManager->nodeList().toViewConst();
+
+
+    real64 const shearModulus = domain->GetGroup("Constitutive")
+			                  ->GetGroup("rock")
+			                  ->getReference<real64>("defaultShearModulus");
+    real64 const bulkModulus = domain->GetGroup("Constitutive")
+		                         ->GetGroup("rock")
+				         ->getReference<real64>("defaultBulkModulus");
+    real64 const toughness = mySurface->getReference<real64>("rockToughness");
+    real64 const viscosity = domain->GetGroup("Constitutive")
+                                   ->GetGroup("water")
+				       ->getReference<real64>("defaultViscosity");
+
+
+    // The unit of injectionRate is kg per second
+    real64 const injectionRate = domain->getParent()
+                                       ->GetGroup<FieldSpecificationManager>("FieldSpecifications")
+                                       ->GetGroup<SourceFluxBoundaryCondition>("sourceTerm")
+					   ->getReference<real64>("scale");
+
+    // The injectionRate is only for half domain of the KGD problem,
+    // to retrieve the full injection rate, we need to multiply it by 2.0
+    real64 const q0 = 2.0 * std::abs(injectionRate) /1.0e3;
+    real64 const totalTime = myHydroSolver->getTotalTime();
+
+    real64 const nu = ( 1.5 * bulkModulus - shearModulus ) / ( 3.0 * bulkModulus + shearModulus );
+    real64 const E = ( 9.0 * bulkModulus * shearModulus )/ ( 3.0 * bulkModulus + shearModulus );
+    real64 const Eprime = E/(1.0-nu*nu);
+    real64 const PI = 2 * acos(0.0);
+    real64 const Kprime = 4.0*sqrt(2.0/PI)*toughness;
+    real64 const mup = 12.0 * viscosity;
+
+
+
+    SortedArray< localIndex > tipElements;
+    for(auto const & trailingFace : trailingFaces)
+    {
+      bool found = false;
+      // loop over all the face element
+      for(localIndex i=0; i<faceMap.size(0); i++)
+      {
+	// loop over all the (TWO) faces in a face element
+	for(localIndex j=0; j<faceMap.size(1); j++)
+	{
+	  // if the trailingFace is one of the two faces in a face element,
+	  // we find it
+	  if (faceMap[i][j] == trailingFace)
+	  {
+	    tipElements.insert(i);
+	    found = true;
+	    break;
+	  }
+	} // for localIndex j
+	if (found)
+	  break;
+      } // for localIndex i
+    }  // for(auto const & trailingFace : trailingFaces)
+
+
+    real64 tipLength = -1.0;
+    real64 lEr = -1.0;
+    localIndex tipElmt = -1;
+
     for( localIndex k=0; k<numFluxElems; ++k )
     {
+      localIndex elmtIndex = stencilElementIndices[k];
+
+      if( std::find( tipElements.begin(), tipElements.end(), elmtIndex ) != tipElements.end() )
+      {
+        tipElmt = elmtIndex;
+      }
+
+      if (tipElmt > -1)
+      {
+	localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( elemsToFaces[tipElmt][0] );
+
+	R1Tensor NbarTip = faceNormal[elemsToFaces[tipElmt][0]];
+	NbarTip -= faceNormal[elemsToFaces[tipElmt][1]];
+	NbarTip.Normalize();
+
+	real64 averageGap = 0.0;
+
+	for (localIndex kf = 0; kf < 2; ++kf)
+	{
+	  for( localIndex a = 0; a < numNodesPerFace; ++a )
+	  {
+	    localIndex node = faceToNodeMap( elemsToFaces[tipElmt][kf], a );
+	    if ( std::find( tipNodes.begin(), tipNodes.end(), node ) == tipNodes.end() )
+	    {
+	      R1Tensor temp = disp[node];
+	      averageGap += (-pow(-1,kf)) * Dot( temp, NbarTip)/2 ;
+	    }
+	  }
+	}
+
+	if (viscosity < 2.0e-3) // Toughness-dominated case
+	{
+	  //TJ: the tip asymptote w = Kprime / Eprime * x^(1/2)
+	  tipLength = (averageGap * Eprime / Kprime) * (averageGap * Eprime / Kprime);
+	}
+	else // Viscosity-dominated case
+	{
+	  real64 Lm = pow( Eprime*pow(q0,3.0)*pow(totalTime,4.0)/mup, 1.0/6.0 );
+	  real64 gamma_m0 = 0.616;
+	  real64 velocity = 2.0/3.0 * Lm * gamma_m0 / totalTime;
+	  real64 Betam = pow(2.0, 1.0/3.0) * pow(3.0, 5.0/6.0);
+	  tipLength = sqrt( Eprime/(mup*velocity) * pow( averageGap/Betam, 3.0) );
+	}
+      } // if (tipElmt > -1), we have a tip elmt here
+
 
 #define PERM_CALC 1
 //      real64 const aperAdd = aperture0[stencilElementIndices[k]] < 0.09e-3 ? ( 0.09e-3 -
@@ -437,8 +592,17 @@ struct FluxKernel
 #endif
 //      aperTerm[k] += aperAdd*aperAdd*aperAdd;
 
-
-      sumOfWeights += aperTerm[k] * stencilWeights[k];
+      if (tipElmt > -1) // k is a tip elmt
+      {
+	//TJ: the real length for pressure gradient
+	lEr = 0.5 * tipLength;
+	GEOSX_ASSERT_MSG( lEr > 0.0, "tipLength is wrong!");
+        sumOfWeights += aperTerm[k] * stencilWeights[k] * 0.5 * meshSize/lEr;
+      }
+      else  // k is not a tip elmt
+      {
+        sumOfWeights += aperTerm[k] * stencilWeights[k];
+      }
     }
 
     localIndex k[2];
@@ -461,21 +625,138 @@ struct FluxKernel
 #else
         real64 const c = meanPermCoeff;
 
-        real64 const harmonicWeight = ( stencilWeights[k[0]]*aperTerm[k[0]] ) *
-                                      ( stencilWeights[k[1]]*aperTerm[k[1]] ) / sumOfWeights;
+        real64 harmonicWeight = ( stencilWeights[k[0]]*aperTerm[k[0]] ) *
+                                ( stencilWeights[k[1]]*aperTerm[k[1]] ) / sumOfWeights;
 
-        real64 const weight = c * harmonicWeight
-                              + (1.0 - c) * 0.25 * ( stencilWeights[k[0]]*aperTerm[k[0]] + stencilWeights[k[1]]*aperTerm[k[1]] );
+        //TJ: we have a tip elmt in the pair, use the real distance for pressure gradient
+        if (tipElmt > -1)
+        {
+          harmonicWeight = ( stencilWeights[k[0]]*aperTerm[k[0]] ) *
+                           ( stencilWeights[k[1]]*aperTerm[k[1]] ) *
+			   0.5*meshSize/lEr
+			   / sumOfWeights;
+        }
 
-        real64 const
+        real64 weight = c * harmonicWeight
+                     + (1.0 - c) * 0.25 * ( stencilWeights[k[0]]*aperTerm[k[0]] + stencilWeights[k[1]]*aperTerm[k[1]] );
+
+        if (tipElmt > -1)
+        {
+          if (ei[0] == tipElmt)
+          {
+            weight = c * harmonicWeight
+                  + (1.0 - c) * 0.25 * ( stencilWeights[k[0]]*aperTerm[k[0]] * 0.5*meshSize/lEr
+                                       + stencilWeights[k[1]]*aperTerm[k[1]] );
+          }
+          else
+          {
+            weight = c * harmonicWeight
+                  + (1.0 - c) * 0.25 * ( stencilWeights[k[0]]*aperTerm[k[0]]
+				       + stencilWeights[k[1]]*aperTerm[k[1]] * 0.5*meshSize/lEr );
+          }
+        }
+
+        real64
         dHarmonicWeight_dAper[2] =
         { ( 1 / aperTerm[k[0]]  - stencilWeights[k[0]] / sumOfWeights ) * harmonicWeight * dAperTerm_dAper[k[0]],
           ( 1 / aperTerm[k[1]]  - stencilWeights[k[1]] / sumOfWeights ) * harmonicWeight * dAperTerm_dAper[k[1]]};
 
-        real64 const
+        if (tipElmt > -1)
+        {
+          real64 dExtraTerm;
+	  if (viscosity < 2.0e-3) // Toughness-dominated case
+	  {
+	    dExtraTerm = -2.0 * 0.5*meshSize / lEr / aperture[tipElmt];
+	  }
+	  else // Viscosity-dominated case
+	  {
+	    dExtraTerm = -3.0/2.0 * 0.5*meshSize / lEr / aperture[tipElmt];
+	  }
+
+          if (ei[0] == tipElmt)
+          {
+            real64 term1;
+            real64 term2;
+            term1 = ( stencilWeights[k[0]] * dAperTerm_dAper[k[0]] * 0.5*meshSize/lEr * stencilWeights[k[1]] * aperTerm[k[1]]
+                  +   stencilWeights[k[0]] * aperTerm[k[0]] * dExtraTerm * stencilWeights[k[1]] * aperTerm[k[1]] )
+		  / sumOfWeights;
+
+            term2 = -( stencilWeights[k[0]] * dAperTerm_dAper[k[0]] * 0.5*meshSize/lEr
+        	  +    stencilWeights[k[0]] * aperTerm[k[0]] * dExtraTerm ) / pow(sumOfWeights, 2.0)
+		  * stencilWeights[k[0]] * aperTerm[k[0]] * 0.5*meshSize/lEr * stencilWeights[k[1]] * aperTerm[k[1]];
+
+            dHarmonicWeight_dAper[0] = term1 + term2;
+
+            term1 = stencilWeights[k[0]] * aperTerm[k[0]] * 0.5*meshSize/lEr * stencilWeights[k[1]] * dAperTerm_dAper[k[1]]
+		  / sumOfWeights;
+
+            term2 = -stencilWeights[k[1]] * dAperTerm_dAper[k[1]] / pow(sumOfWeights, 2.0)
+		  * stencilWeights[k[0]] * aperTerm[k[0]] * 0.5*meshSize/lEr * stencilWeights[k[1]] * aperTerm[k[1]];
+
+            dHarmonicWeight_dAper[1] = term1 + term2;
+          }
+          else
+          {
+            real64 term1;
+            real64 term2;
+
+            term1 = stencilWeights[k[0]] * dAperTerm_dAper[k[0]] * 0.5*meshSize/lEr * stencilWeights[k[1]] * aperTerm[k[1]]
+                  / sumOfWeights;
+
+            term2 = -stencilWeights[k[0]] * dAperTerm_dAper[k[0]] / pow(sumOfWeights, 2.0)
+            	  * stencilWeights[k[0]] * aperTerm[k[0]] * 0.5*meshSize/lEr * stencilWeights[k[1]] * aperTerm[k[1]];
+
+            dHarmonicWeight_dAper[0] = term1 + term2;
+
+            term1 = ( stencilWeights[k[0]] * aperTerm[k[0]] * 0.5*meshSize/lEr * stencilWeights[k[1]] * dAperTerm_dAper[k[1]]
+                  +   stencilWeights[k[0]] * aperTerm[k[0]] * dExtraTerm * stencilWeights[k[1]] * aperTerm[k[1]] )
+		  / sumOfWeights;
+
+            term2 = -( stencilWeights[k[1]] * dAperTerm_dAper[k[1]] * 0.5*meshSize/lEr
+                  +    stencilWeights[k[1]] * aperTerm[k[1]] * dExtraTerm ) / pow(sumOfWeights, 2.0)
+             	  * stencilWeights[k[0]] * aperTerm[k[0]] * 0.5*meshSize/lEr * stencilWeights[k[1]] * aperTerm[k[1]];
+
+            dHarmonicWeight_dAper[1] = term1 + term2;
+          }
+        } //  if (tipElmt > -1)
+
+        real64
         dWeight_dAper[2] =
         { c * dHarmonicWeight_dAper[0] + 0.25 * ( 1.0 - c )*stencilWeights[k[0]]*dAperTerm_dAper[k[0]],
           c * dHarmonicWeight_dAper[1] + 0.25 * ( 1.0 - c )*stencilWeights[k[1]]*dAperTerm_dAper[k[1]] };
+
+        if (tipElmt > -1)
+        {
+          real64 dExtraTerm;
+	  if (viscosity < 2.0e-3) // Toughness-dominated case
+	  {
+	    dExtraTerm = -2.0 * 0.5*meshSize / lEr / aperture[tipElmt];
+	  }
+	  else // Viscosity-dominated case
+	  {
+	    dExtraTerm = -3.0/2.0 * 0.5*meshSize / lEr / aperture[tipElmt];
+	  }
+
+          if (ei[0] == tipElmt)
+          {
+            dWeight_dAper[0] = c * dHarmonicWeight_dAper[0]
+			     + 0.25 * ( 1.0 - c )*stencilWeights[k[0]]*dAperTerm_dAper[k[0]]*0.5*meshSize/lEr
+			     + 0.25 * ( 1.0 - c )*stencilWeights[k[0]]*aperTerm[k[0]]*dExtraTerm;
+
+            dWeight_dAper[1] = c * dHarmonicWeight_dAper[1]
+			     + 0.25 * ( 1.0 - c )*stencilWeights[k[1]]*dAperTerm_dAper[k[1]];
+          }
+          else
+          {
+            dWeight_dAper[0] = c * dHarmonicWeight_dAper[0]
+			     + 0.25 * ( 1.0 - c )*stencilWeights[k[0]]*dAperTerm_dAper[k[0]];
+
+            dWeight_dAper[1] = c * dHarmonicWeight_dAper[1]
+            		     + 0.25 * ( 1.0 - c )*stencilWeights[k[1]]*dAperTerm_dAper[k[1]]*0.5*meshSize/lEr
+            		     + 0.25 * ( 1.0 - c )*stencilWeights[k[1]]*aperTerm[k[1]]*dExtraTerm;
+          }
+        }
+
 
 #endif
         // average density
@@ -511,7 +792,7 @@ struct FluxKernel
         fluxJacobian[k[1]][k[1]] -= dFlux_dP[1];
 
         real64 const dFlux_dAper[2] = { mobility * dWeight_dAper[0] * potDif * dt,
-                     mobility * dWeight_dAper[1] * potDif * dt };
+                                        mobility * dWeight_dAper[1] * potDif * dt };
         dFlux_dAperture[k[0]][k[0]] += dFlux_dAper[0];
         dFlux_dAperture[k[0]][k[1]] += dFlux_dAper[1];
         dFlux_dAperture[k[1]][k[0]] -= dFlux_dAper[0];

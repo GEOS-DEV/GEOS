@@ -152,6 +152,12 @@ public:
   //TJ: getter for the tip location after each time step
   inline real64 getConvergedTipLoc() const {return m_convergedTipLoc;}
 
+  //TJ: getter for the total time
+  inline real64 getTotalTime() const {return m_totalTime;}
+
+  //TJ: getter for the mesh size
+  inline real64 getMeshSize() const {return m_meshSize;}
+
   void initializeNewFaceElements( DomainPartition const & domain );
 
   enum class couplingTypeOption : int
@@ -226,6 +232,9 @@ private:
 
   //TJ: total_time, needed for evaluating velocity
   real64 m_totalTime;
+
+  //TJ: hard-coded meshSize
+  real64 m_meshSize;
 
 #ifdef USING_TRILINOS
   real64 m_densityScaling;

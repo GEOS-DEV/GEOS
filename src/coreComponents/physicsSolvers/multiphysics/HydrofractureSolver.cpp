@@ -228,6 +228,9 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
 
   m_totalTime = time_n + dt;
 
+  m_meshSize = 1.0;  //hard-coded mesh size, the only place needs to be changed
+
+
   SolverBase * const surfaceGenerator =  this->getParent()->GetGroup< SolverBase >( "SurfaceGen" );
 
   if( m_couplingTypeOption == couplingTypeOption::SIM_FixedStress )
@@ -253,7 +256,7 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
     int const rank = MpiWrapper::Comm_rank( MPI_COMM_WORLD );
 
     //TJ the hard coded elmt length
-    real64 const meshSize = 1.0;  // this value needs to be changed for a mesh-refinement
+    real64 const meshSize = m_meshSize;  // this value needs to be changed for a mesh-refinement
     GEOSX_LOG_RANK_0( "Mesh size = " << meshSize );
 
     //TJ: We use this global flag to ensure that the MPI processes are either ALL in
@@ -1601,7 +1604,7 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
 void HydrofractureSolver::UpdateDeformationForCoupling( DomainPartition * const domain )
 {
   //TJ the hard coded elmt length
-  real64 const meshSize = 1.0;  // this value needs to be changed for a mesh-refinement
+  real64 const meshSize = m_meshSize;  // this value needs to be changed for a mesh-refinement
   GEOSX_LOG_RANK_0( "Mesh size = " << meshSize );
 
   MeshLevel * const meshLevel = domain->getMeshBody( 0 )->getMeshLevel( 0 );
@@ -1748,7 +1751,7 @@ void HydrofractureSolver::UpdateDeformationForCoupling( DomainPartition * const 
 
       //TJ: if nodes cross they symmetric plane, do not terminate.
       //    instead, change the displacement to zero
-      if (u(refNodeIndex,0) > 1.0e-12)
+      if (u(refNodeIndex,0) > 0.0)
       {
 	for(localIndex i=0; i<nodeMap[m_tipElement].size(); i++)
 	{
@@ -1757,10 +1760,10 @@ void HydrofractureSolver::UpdateDeformationForCoupling( DomainPartition * const 
 	  {
 	    std::cout << "Nodes cross symmetric plane, zero the displacement of node "
 		      << node << " and " << myChildIndex[node] << std::endl;
-	    disp(node,0)=0.0;
-	    dispIncre(node,0)=0.0;
-	    disp(myChildIndex[node],0)=0.0;
-	    dispIncre(myChildIndex[node],0)=0.0;
+	    disp(node,0)=-1.0e-4;
+	    dispIncre(node,0)=-1.0e-4;
+	    disp(myChildIndex[node],0)=1.0e-4;
+	    dispIncre(myChildIndex[node],0)=1.0e-4;
 	  }
 	}
       }
@@ -1809,6 +1812,9 @@ void HydrofractureSolver::UpdateDeformationForCoupling( DomainPartition * const 
       {
 	//TJ: the tip asymptote w = Kprime / Eprime * x^(1/2)
 	vTip = 2.0/3.0 * pow(Eprime/Kprime, 2.0) * pow(refDisp, 3.0);
+	// average aperture
+	aperTip = vTip/meshSize;
+	aperTip = 2.0/3.0 * refDisp;
       }
       else // Viscosity-dominated case
       {
@@ -1818,14 +1824,16 @@ void HydrofractureSolver::UpdateDeformationForCoupling( DomainPartition * const 
 	real64 Betam = pow(2.0, 1.0/3.0) * pow(3.0, 5.0/6.0);
 	vTip = 3.0/5.0 * pow(Betam, -3.0/2.0) * pow( Eprime/mup/velocity, 1.0/2.0)
 	               * pow(refDisp, 5.0/2.0);
+	// average aperture
+	aperTip = vTip/meshSize;
+	aperTip = 3.0/5.0 * refDisp;
       }
-      // average aperture
-      aperTip = vTip/meshSize;
+
 
       aperture[m_tipElement] = aperTip;
       effectiveAperture[m_tipElement] = contactRelation->effectiveAperture( aperture[m_tipElement] );
 
-      deltaVolume[m_tipElement] = effectiveAperture[m_tipElement] * area[m_tipElement]
+      deltaVolume[m_tipElement] = vTip/meshSize * area[m_tipElement]
 				- volume[m_tipElement];
 //      std::cout << "Tip element " << m_tipElement
 //	        << " : delta volume = " << deltaVolume[m_tipElement] << std::endl;
@@ -2738,7 +2746,7 @@ HydrofractureSolver::
   GEOSX_MARK_FUNCTION;
 
   //TJ the hard coded elmt length
-  real64 const meshSize = 1.0;  // this value needs to be changed for a mesh-refinement
+  real64 const meshSize = m_meshSize;  // this value needs to be changed for a mesh-refinement
   GEOSX_LOG_RANK_0( "Mesh size = " << meshSize );
 
   MeshLevel const & mesh = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
@@ -2902,7 +2910,7 @@ HydrofractureSolver::
 
               real64 coeff;
               real64 dGap_dU_tip;
-              real64 dAper_dU_tip;
+              //real64 dAper_dU_tip;
               if (viscosity < 2.0e-3) // Toughness-dominated case
               {
         	//TJ: the tip asymptote w = Kprime / Eprime * x^(1/2)
@@ -2917,8 +2925,8 @@ HydrofractureSolver::
   	              for (int i = 0; i < 3; ++i)
   	              {
   	                dGap_dU_tip = 3.0/2.0 * coeff * pow(averageGap, 2.0) * (-pow(-1, kf)) *Nbar[i];
-  	                dAper_dU_tip = contactRelation->dEffectiveAperture_dAperture( aperture[ei] ) * dGap_dU_tip;
-  	                dRdU( kf * 3 * numNodesPerFace + 3 * a + i ) = dAccumulationResidualdAperture * dAper_dU_tip;
+  	                //dAper_dU_tip = contactRelation->dEffectiveAperture_dAperture( aperture[ei] ) * dGap_dU_tip;
+  	                dRdU( kf * 3 * numNodesPerFace + 3 * a + i ) = dAccumulationResidualdAperture * dGap_dU_tip;
   	              }
   	            }
   	            else
@@ -2948,8 +2956,8 @@ HydrofractureSolver::
   	              for (int i = 0; i < 3; ++i)
   	              {
   	                dGap_dU_tip = 5.0/4.0 * coeff * pow(averageGap, 3.0/2.0) * (-pow(-1, kf)) * Nbar[i];
-  	                dAper_dU_tip = contactRelation->dEffectiveAperture_dAperture( aperture[ei] ) * dGap_dU_tip;
-  	                dRdU( kf * 3 * numNodesPerFace + 3 * a + i ) = dAccumulationResidualdAperture * dAper_dU_tip;
+  	                //dAper_dU_tip = contactRelation->dEffectiveAperture_dAperture( aperture[ei] ) * dGap_dU_tip;
+  	                dRdU( kf * 3 * numNodesPerFace + 3 * a + i ) = dAccumulationResidualdAperture * dGap_dU_tip;
   	              }
   	            }
   	            else
@@ -3028,7 +3036,7 @@ HydrofractureSolver::
 
               real64 coeff;
               real64 dGap_dU_tip;
-              real64 dAper_dU_tip;
+              //real64 dAper_dU_tip;
               if (viscosity < 2.0e-3) // Toughness-dominated case
               {
         	//TJ: the tip asymptote w = Kprime / Eprime * x^(1/2)
@@ -3043,8 +3051,9 @@ HydrofractureSolver::
   	              for (int i = 0; i < 3; ++i)
   	              {
   	                dGap_dU_tip = 3.0/2.0 * coeff * pow(averageGap, 2.0) * (-pow(-1, kf)) *Nbar[i];
-  	                dAper_dU_tip = contactRelation->dEffectiveAperture_dAperture( aperture[ei2] ) * dGap_dU_tip;
-  	                dRdU( kf * 3 * numNodesPerFace + 3 * a + i ) = dRdAper * dAper_dU_tip;
+  	                dGap_dU_tip = 2.0/3.0 * (-pow(-1, kf)) *Nbar[i]/2;
+  	                //dAper_dU_tip = contactRelation->dEffectiveAperture_dAperture( aperture[ei2] ) * dGap_dU_tip;
+  	                dRdU( kf * 3 * numNodesPerFace + 3 * a + i ) = dRdAper * dGap_dU_tip;
   	              }
   	            }
   	            else
@@ -3074,8 +3083,9 @@ HydrofractureSolver::
   	              for (int i = 0; i < 3; ++i)
   	              {
   	                dGap_dU_tip = 5.0/4.0 * coeff * pow(averageGap, 3.0/2.0) * (-pow(-1, kf)) * Nbar[i];
-  	                dAper_dU_tip = contactRelation->dEffectiveAperture_dAperture( aperture[ei2] ) * dGap_dU_tip;
-  	                dRdU( kf * 3 * numNodesPerFace + 3 * a + i ) = dRdAper * dAper_dU_tip;
+  	                dGap_dU_tip = 3.0/5.0 * (-pow(-1, kf)) *Nbar[i]/2;
+  	                //dAper_dU_tip = contactRelation->dEffectiveAperture_dAperture( aperture[ei2] ) * dGap_dU_tip;
+  	                dRdU( kf * 3 * numNodesPerFace + 3 * a + i ) = dRdAper * dGap_dU_tip;
   	              }
   	            }
   	            else
