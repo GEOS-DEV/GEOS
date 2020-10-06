@@ -472,21 +472,11 @@ void GraphFromText::RemapFace(const MeshLevel & mesh)
   FaceManager const & faceManager = *mesh.getFaceManager();
   arrayView2d< localIndex const > const & elemList = faceManager.elementList();
   //arrayView1d< integer const > const & faceGhostRank = faceManager.ghostRank(); 
-
-  for(localIndex h = 0; h < elemList.size(); h++)
-  {
-
-  
-    //GEOSX_ERROR_IF_GT( elemList[ h ][ 0 ], 1e9 );
-    if (h>=2000)
-    {
-      std::cout<<"Error "<<h<<" "<<elemList[h][0]<<" "<<"\n";
-    }
-    if (h==0)
-    {
-      std::cout<<h<<" "<<elemList[h][0]<<"\n";
-    }
-
+  std::cout<<elemList[ faceManager.size() ][ 0 ]<<"\n";  
+  for(localIndex h = 0; h < faceManager.size(); h++)
+  { 
+    GEOSX_ERROR_IF_GT( elemList[ h ][ 0 ], 1e9 );
+    
     // Filter in boundary faces
     if( elemList[h][1] < 0 && elemList[h][0]< 1e9)
     {
