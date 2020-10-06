@@ -115,7 +115,7 @@ protected:
   GEOSX_FORCE_INLINE
   void saveStress( localIndex const k,
                    localIndex const q,
-                   real64 ( & stress )[6]) const
+                   real64 const ( & stress )[6]) const
   {
     LvArray::tensorOps::copy< 6 >( m_newStress[k][q], stress );
   }
