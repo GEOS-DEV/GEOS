@@ -117,7 +117,6 @@ void solve_parallelDirect( LinearSolverParameters const & parameters,
   mat.gemv( -1.0, sol, 1.0, res );
   result.residualReduction = res.norm2() / rhs.norm2();
 
-  result.status = LinearSolverResult::Status::Success;
   if( result.residualReduction < SLUDData.relativeTolerance() )
   {
     result.status = LinearSolverResult::Status::Success;
