@@ -123,6 +123,18 @@ public:
   int workingRank() const;
 
   /**
+   * @brief Sets the working rank in the sub-communicator
+   * @param[in] subCommWorkingRank the working rank in the sub-communicator
+   */
+  void setSubCommWorkingRank( int const subCommWorkingRank );
+
+  /**
+   * @brief Returns the working rank in the sub-communicator
+   * @return the working rank in the sub-communicator
+   */
+  int subCommWorkingRank() const;
+
+  /**
    * @brief Sets the communicator
    * @param[in] comm the MPI communicator
    */
@@ -133,6 +145,18 @@ public:
    * @return the communicator
    */
   MPI_Comm getComm() const;
+
+  /**
+   * @brief Sets the subcommunicator
+   * @param[in] subComm the MPI subcommunicator
+   */
+  void setSubComm( MPI_Comm const subComm );
+
+  /**
+   * @brief Returns the subcommunicator
+   * @return the subcommunicator
+   */
+  MPI_Comm getSubComm() const;
 
   /**
    * @brief Sets the number of rows
@@ -243,8 +267,17 @@ private:
   /// MPI communicator
   MPI_Comm m_comm;
 
+  /// MPI sub-communicator for ranks that have parts of the matrix
+  MPI_Comm m_subComm;
+
+  /// flag to check if the sub-communicator is used
+  bool m_usingSubComm;
+
   /// MPI rank carring out the solution
   int m_workingRank;
+
+  /// MPI rank carring out the solution in the sub-communicator
+  int m_subCommWorkingRank;
 
   /// condition number estimation
   real64 m_condEst;

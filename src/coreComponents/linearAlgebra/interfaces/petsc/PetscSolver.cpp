@@ -54,13 +54,23 @@ void PetscSolver::solve( PetscMatrix & mat,
 
   GEOSX_UNUSED_VAR( dofManager );
 
-  if( m_parameters.solverType == LinearSolverParameters::SolverType::direct )
+  if( rhs.norm2() > 0.0 )
   {
-    solve_direct( mat, sol, rhs );
+    if( m_parameters.solverType == LinearSolverParameters::SolverType::direct )
+    {
+      solve_direct( mat, sol, rhs );
+    }
+    else
+    {
+      solve_krylov( mat, sol, rhs );
+    }
   }
   else
   {
-    solve_krylov( mat, sol, rhs );
+    sol.zero();
+    m_result.status = LinearSolverResult::Status::Success;
+    m_result.setupTime = 0.0;
+    m_result.solveTime = 0.0;
   }
 }
 

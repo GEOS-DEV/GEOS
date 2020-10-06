@@ -61,13 +61,23 @@ void HypreSolver::solve( HypreMatrix & mat,
   GEOSX_LAI_ASSERT( sol.ready() );
   GEOSX_LAI_ASSERT( rhs.ready() );
 
-  if( m_parameters.solverType == LinearSolverParameters::SolverType::direct )
+  if( rhs.norm2() > 0.0 )
   {
-    solve_direct( mat, sol, rhs );
+    if( m_parameters.solverType == LinearSolverParameters::SolverType::direct )
+    {
+      solve_direct( mat, sol, rhs );
+    }
+    else
+    {
+      solve_krylov( mat, sol, rhs, dofManager );
+    }
   }
   else
   {
-    solve_krylov( mat, sol, rhs, dofManager );
+    sol.zero();
+    m_result.status = LinearSolverResult::Status::Success;
+    m_result.setupTime = 0.0;
+    m_result.solveTime = 0.0;
   }
 }
 
@@ -136,6 +146,8 @@ void solve_serialDirect( LinearSolverParameters const & parameters,
   HypreVector res( rhs );
   mat.gemv( -1.0, sol, 1.0, res );
   result.residualReduction = res.norm2() / rhs.norm2();
+
+  GEOSX_LOG_RANK( SSData.relativeTolerance() << " " << result.residualReduction );
 
   if( result.residualReduction < SSData.relativeTolerance() )
   {

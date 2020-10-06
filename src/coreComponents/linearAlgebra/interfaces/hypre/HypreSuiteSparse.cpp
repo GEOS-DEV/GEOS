@@ -65,48 +65,64 @@ void ConvertHypreToSuiteSparseMatrix( HypreMatrix const & matrix,
   hypre_CSRMatrix * CSRmatrix = hypre_ParCSRMatrixToCSRMatrixAll( matrix.unwrapped() );
 
   // Identify the smallest process where CSRmatrix exists
-  int rank = MpiWrapper::Comm_rank( matrix.getComm() );
-  if( CSRmatrix == 0 )
   {
-    rank = MpiWrapper::Comm_size( matrix.getComm() );
-  }
-  SSData.setWorkingRank( MpiWrapper::Min( rank, matrix.getComm() ) );
-
-  rank = MpiWrapper::Comm_rank( matrix.getComm() );
-  if( rank == SSData.workingRank() )
-  {
-    SSData.setNumRows( toSuiteSparse_Int( matrix.numGlobalRows() ) );
-    SSData.setNumCols( toSuiteSparse_Int( matrix.numGlobalCols() ) );
-    SSData.setNonZeros( toSuiteSparse_Int( hypre_CSRMatrixNumNonzeros( CSRmatrix ) ) );
-    SSData.createInternalStorage();
-    HYPRE_Int const * const hypreI = hypre_CSRMatrixI( CSRmatrix );
-    for( localIndex i = 0; i <= SSData.numRows(); ++i )
+    int rank = MpiWrapper::Comm_rank( matrix.getComm() );
+    if( CSRmatrix == 0 )
     {
-      SSData.rowPtr()[i] = LvArray::integerConversion< Int >( hypreI[i] );
+      rank = MpiWrapper::Comm_size( matrix.getComm() );
     }
-    HYPRE_Int const * const hypreJ = hypre_CSRMatrixJ( CSRmatrix );
-    for( localIndex i = 0; i < SSData.nonZeros(); ++i )
-    {
-      SSData.colIndices()[i] = LvArray::integerConversion< Int >( hypreJ[i] );
-    }
-    std::copy( hypre_CSRMatrixData( CSRmatrix ),
-               hypre_CSRMatrixData( CSRmatrix ) + SSData.nonZeros(),
-               SSData.values().data() );
-    for( localIndex i = 0; i < SSData.numRows(); ++i )
-    {
-      localIndex rowLength = LvArray::integerConversion< localIndex >( SSData.rowPtr()[i+1] - SSData.rowPtr()[i] );
-      sortIntReal64( &( SSData.colIndices()[SSData.rowPtr()[i]] ), &( SSData.values()[SSData.rowPtr()[i]] ), rowLength );
-    }
+    SSData.setWorkingRank( MpiWrapper::Min( rank, matrix.getComm() ) );
   }
 
-  // Destroy CSRmatrix
-  if( CSRmatrix )
+  // Define a new communicator restricted to ranks with at least one matrix row
+  int const rank = MpiWrapper::Comm_rank( matrix.getComm() );
+  int const color = ( CSRmatrix == 0 ) ? MPI_UNDEFINED : 0;
+  MPI_Comm const subComm = MpiWrapper::Comm_split( matrix.getComm(), color, rank );
+
+  // Working rank in the new communicator. Index 0 is required by hypre's function
+  // HYPRE_VectorToParVector
+  int const workingRank = 0;
+  SSData.setSubCommWorkingRank( workingRank );
+
+  if( subComm != MPI_COMM_NULL )
   {
-    GEOSX_LAI_CHECK_ERROR( hypre_CSRMatrixDestroy( CSRmatrix ) );
+    if( MpiWrapper::Comm_rank( subComm ) == workingRank )
+    {
+      SSData.setNumRows( toSuiteSparse_Int( matrix.numGlobalRows() ) );
+      SSData.setNumCols( toSuiteSparse_Int( matrix.numGlobalCols() ) );
+      SSData.setNonZeros( toSuiteSparse_Int( hypre_CSRMatrixNumNonzeros( CSRmatrix ) ) );
+      SSData.createInternalStorage();
+      HYPRE_Int const * const hypreI = hypre_CSRMatrixI( CSRmatrix );
+      for( localIndex i = 0; i <= SSData.numRows(); ++i )
+      {
+        SSData.rowPtr()[i] = LvArray::integerConversion< Int >( hypreI[i] );
+      }
+      HYPRE_Int const * const hypreJ = hypre_CSRMatrixJ( CSRmatrix );
+      for( localIndex i = 0; i < SSData.nonZeros(); ++i )
+      {
+        SSData.colIndices()[i] = LvArray::integerConversion< Int >( hypreJ[i] );
+      }
+      std::copy( hypre_CSRMatrixData( CSRmatrix ),
+                 hypre_CSRMatrixData( CSRmatrix ) + SSData.nonZeros(),
+                 SSData.values().data() );
+      for( localIndex i = 0; i < SSData.numRows(); ++i )
+      {
+        localIndex rowLength = LvArray::integerConversion< localIndex >( SSData.rowPtr()[i+1] - SSData.rowPtr()[i] );
+        sortIntReal64( &( SSData.colIndices()[SSData.rowPtr()[i]] ), &( SSData.values()[SSData.rowPtr()[i]] ), rowLength );
+      }
+    }
+
+    // Destroy CSRmatrix
+    if( CSRmatrix )
+    {
+      GEOSX_LAI_CHECK_ERROR( hypre_CSRMatrixDestroy( CSRmatrix ) );
+    }
   }
 
-  // Save communicator
+  // Save global communicator
   SSData.setComm( matrix.getComm() );
+  // Save sub-communicator
+  SSData.setSubComm( subComm );
 }
 
 int SuiteSparseSolve( SuiteSparse & SSData,
@@ -118,18 +134,21 @@ int SuiteSparseSolve( SuiteSparse & SSData,
   hypre_Vector * b_vector = hypre_ParVectorToVectorAll( b.unwrapped() );
   HYPRE_Vector sol_Vector = nullptr;
 
-  int const rank = MpiWrapper::Comm_rank( SSData.getComm() );
-  if( rank == SSData.workingRank() )
+  if( SSData.getSubComm() != MPI_COMM_NULL )
   {
-    // Create local vector to store the solution
-    hypre_Vector * sol_vector = hypre_SeqVectorCreate( SSData.numRows() );
-    hypre_VectorMemoryLocation( sol_vector ) = HYPRE_MEMORY_HOST;
-    hypre_SeqVectorInitialize( sol_vector );
+    int const rank = MpiWrapper::Comm_rank( SSData.getSubComm() );
+    if( rank == SSData.subCommWorkingRank() )
+    {
+      // Create local vector to store the solution
+      hypre_Vector * sol_vector = hypre_SeqVectorCreate( SSData.numRows() );
+      hypre_VectorMemoryLocation( sol_vector ) = HYPRE_MEMORY_HOST;
+      hypre_SeqVectorInitialize( sol_vector );
 
-    // solve Ax=b
-    status = SSData.solveWorkingRank( hypre_VectorData( sol_vector ), hypre_VectorData( b_vector ) );
+      // solve Ax=b
+      status = SSData.solveWorkingRank( hypre_VectorData( sol_vector ), hypre_VectorData( b_vector ) );
 
-    sol_Vector = ( HYPRE_Vector ) sol_vector;
+      sol_Vector = ( HYPRE_Vector ) sol_vector;
+    }
   }
 
   // Copy partitioning otherwise hypre would point to data in x (issues with deallocation!!!)
@@ -137,16 +156,20 @@ int SuiteSparseSolve( SuiteSparse & SSData,
   partitioning[0] = hypre_ParVectorPartitioning( x.unwrapped() )[0];
   partitioning[1] = hypre_ParVectorPartitioning( x.unwrapped() )[1];
 
-  HYPRE_ParVector sol_ParVector;
-  GEOSX_LAI_CHECK_ERROR( HYPRE_VectorToParVector( x.getComm(),
-                                                  sol_Vector,
-                                                  partitioning,
-                                                  &sol_ParVector ) );
-  std::copy( hypre_VectorData( hypre_ParVectorLocalVector( sol_ParVector ) ),
-             hypre_VectorData( hypre_ParVectorLocalVector( sol_ParVector ) ) + x.localSize(),
-             x.extractLocalVector() );
+  if( SSData.getSubComm() != MPI_COMM_NULL )
+  {
+    HYPRE_ParVector sol_ParVector;
+    GEOSX_LAI_CHECK_ERROR( HYPRE_VectorToParVector( SSData.getSubComm(),
+                                                    sol_Vector,
+                                                    partitioning,
+                                                    &sol_ParVector ) );
+    std::copy( hypre_VectorData( hypre_ParVectorLocalVector( sol_ParVector ) ),
+               hypre_VectorData( hypre_ParVectorLocalVector( sol_ParVector ) ) + x.localSize(),
+               x.extractLocalVector() );
+    GEOSX_LAI_CHECK_ERROR( hypre_ParVectorDestroy( sol_ParVector ) );
+  }
+
   GEOSX_LAI_CHECK_ERROR( HYPRE_VectorDestroy( sol_Vector ) );
-  GEOSX_LAI_CHECK_ERROR( hypre_ParVectorDestroy( sol_ParVector ) );
   GEOSX_LAI_CHECK_ERROR( hypre_SeqVectorDestroy( b_vector ) );
 
   SSData.syncTimes();

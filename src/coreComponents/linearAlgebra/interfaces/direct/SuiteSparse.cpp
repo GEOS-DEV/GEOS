@@ -45,6 +45,8 @@ SuiteSparse::SuiteSparse():
   m_numRows( 0 ),
   m_numCols( 0 ),
   m_nonZeros( 0 ),
+  m_subComm( MPI_COMM_NULL ),
+  m_usingSubComm( false ),
   m_setupTime( 0 ),
   m_solveTime( 0 )
 {}
@@ -53,6 +55,8 @@ SuiteSparse::SuiteSparse( LinearSolverParameters const & params ):
   m_numRows( 0 ),
   m_numCols( 0 ),
   m_nonZeros( 0 ),
+  m_subComm( MPI_COMM_NULL ),
+  m_usingSubComm( false ),
   m_setupTime( 0 ),
   m_solveTime( 0 )
 {
@@ -74,59 +78,68 @@ void SuiteSparse::create( LinearSolverParameters const & params )
 
 int SuiteSparse::setup()
 {
+  // No need of subcommunicator: just point to the global communicator
+  if( !m_usingSubComm )
+  {
+    m_subComm = m_comm;
+  }
+
   Stopwatch watch;
 
   int status = 0;
 
-  int const rank = MpiWrapper::Comm_rank( m_comm );
-  if( rank == m_workingRank )
+  if( m_subComm != MPI_COMM_NULL )
   {
-    // symbolic factorization
-    status = umfpack_dl_symbolic( m_numCols,
-                                  m_numRows,
-                                  m_rowPtr.data(),
-                                  m_colIndices.data(),
-                                  m_values.data(),
-                                  &m_Symbolic,
-                                  m_Control,
-                                  m_Info );
-    if( status < 0 )
+    int const rank = MpiWrapper::Comm_rank( m_subComm );
+    if( rank == m_subCommWorkingRank )
     {
-      umfpack_dl_report_info( m_Control, m_Info );
-      umfpack_dl_report_status( m_Control, status );
-      GEOSX_ERROR( "SuiteSparse interface: umfpack_dl_symbolic failed." );
+      // symbolic factorization
+      status = umfpack_dl_symbolic( m_numCols,
+                                    m_numRows,
+                                    m_rowPtr.data(),
+                                    m_colIndices.data(),
+                                    m_values.data(),
+                                    &m_Symbolic,
+                                    m_Control,
+                                    m_Info );
+      if( status < 0 )
+      {
+        umfpack_dl_report_info( m_Control, m_Info );
+        umfpack_dl_report_status( m_Control, status );
+        GEOSX_ERROR( "SuiteSparse interface: umfpack_dl_symbolic failed." );
+      }
+
+      // print the symbolic factorization
+      if( m_logLevel > 1 )
+      {
+        umfpack_dl_report_symbolic( m_Symbolic, m_Control );
+      }
+
+      // numeric factorization
+      status = umfpack_dl_numeric( m_rowPtr.data(),
+                                   m_colIndices.data(),
+                                   m_values.data(),
+                                   m_Symbolic,
+                                   &m_Numeric,
+                                   m_Control,
+                                   m_Info );
+
+      if( status < 0 )
+      {
+        umfpack_dl_report_info( m_Control, m_Info );
+        umfpack_dl_report_status( m_Control, status );
+        GEOSX_ERROR( "SuiteSparse interface: umfpack_dl_numeric failed." );
+      }
+
+      // print the numeric factorization
+      if( m_logLevel > 1 )
+      {
+        umfpack_dl_report_numeric( m_Symbolic, m_Control );
+      }
+
+      // save condition number
+      m_condEst = 1.0 / m_Info[UMFPACK_RCOND];
     }
-
-    // print the symbolic factorization
-    if( m_logLevel > 1 )
-    {
-      umfpack_dl_report_symbolic( m_Symbolic, m_Control );
-    }
-
-    // numeric factorization
-    status = umfpack_dl_numeric( m_rowPtr.data(),
-                                 m_colIndices.data(),
-                                 m_values.data(),
-                                 m_Symbolic,
-                                 &m_Numeric,
-                                 m_Control,
-                                 m_Info );
-
-    if( status < 0 )
-    {
-      umfpack_dl_report_info( m_Control, m_Info );
-      umfpack_dl_report_status( m_Control, status );
-      GEOSX_ERROR( "SuiteSparse interface: umfpack_dl_numeric failed." );
-    }
-
-    // print the numeric factorization
-    if( m_logLevel > 1 )
-    {
-      umfpack_dl_report_numeric( m_Symbolic, m_Control );
-    }
-
-    // save condition number
-    m_condEst = 1.0 / m_Info[UMFPACK_RCOND];
   }
   MpiWrapper::bcast( &m_condEst, 1, m_workingRank, m_comm );
 
@@ -180,22 +193,43 @@ real64 SuiteSparse::relativeTolerance() const
 
 void SuiteSparse::destroy()
 {
-  int const rank = MpiWrapper::Comm_rank( m_comm );
-  if( rank == m_workingRank )
+  if( m_subComm != MPI_COMM_NULL )
   {
-    umfpack_dl_free_symbolic( &m_Symbolic );
-    umfpack_dl_free_numeric( &m_Numeric );
+    int const rank = MpiWrapper::Comm_rank( m_subComm );
+    if( rank == m_subCommWorkingRank )
+    {
+      umfpack_dl_free_symbolic( &m_Symbolic );
+      umfpack_dl_free_numeric( &m_Numeric );
+    }
+    if( m_subComm != m_comm )
+    {
+      MpiWrapper::Comm_free( m_subComm );
+    }
   }
 }
 
 void SuiteSparse::setWorkingRank( int const workingRank )
 {
   m_workingRank = workingRank;
+  if( !m_usingSubComm )
+  {
+    m_subCommWorkingRank = workingRank;
+  }
 }
 
 int SuiteSparse::workingRank() const
 {
   return m_workingRank;
+}
+
+void SuiteSparse::setSubCommWorkingRank( int const subCommWorkingRank )
+{
+  m_subCommWorkingRank = subCommWorkingRank;
+}
+
+int SuiteSparse::subCommWorkingRank() const
+{
+  return m_subCommWorkingRank;
 }
 
 void SuiteSparse::setComm( MPI_Comm const comm )
@@ -206,6 +240,17 @@ void SuiteSparse::setComm( MPI_Comm const comm )
 MPI_Comm SuiteSparse::getComm() const
 {
   return m_comm;
+}
+
+void SuiteSparse::setSubComm( MPI_Comm const subComm )
+{
+  m_subComm = subComm;
+  m_usingSubComm = true;
+}
+
+MPI_Comm SuiteSparse::getSubComm() const
+{
+  return m_subComm;
 }
 
 void SuiteSparse::setNumRows( Int const numRows )

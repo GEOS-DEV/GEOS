@@ -57,26 +57,36 @@ void TrilinosSolver::solve( EpetraMatrix & mat,
 
   GEOSX_UNUSED_VAR( dofManager );
 
-  if( m_parameters.scaling.useRowScaling )
+  if( rhs.norm2() > 0.0 )
   {
-    Epetra_FECrsMatrix & mat_raw = mat.unwrapped();
-    Epetra_MultiVector & rhs_raw = rhs.unwrapped();
+    if( m_parameters.scaling.useRowScaling )
+    {
+      Epetra_FECrsMatrix & mat_raw = mat.unwrapped();
+      Epetra_MultiVector & rhs_raw = rhs.unwrapped();
 
-    Epetra_Vector scaling( mat_raw.RowMap() );
-    mat_raw.InvRowSums( scaling );
-    mat_raw.LeftScale( scaling );
+      Epetra_Vector scaling( mat_raw.RowMap() );
+      mat_raw.InvRowSums( scaling );
+      mat_raw.LeftScale( scaling );
 
-    Epetra_MultiVector tmp( rhs_raw );
-    rhs_raw.Multiply( 1.0, scaling, tmp, 0.0 );
-  }
+      Epetra_MultiVector tmp( rhs_raw );
+      rhs_raw.Multiply( 1.0, scaling, tmp, 0.0 );
+    }
 
-  if( m_parameters.solverType == LinearSolverParameters::SolverType::direct )
-  {
-    solve_direct( mat, sol, rhs );
+    if( m_parameters.solverType == LinearSolverParameters::SolverType::direct )
+    {
+      solve_direct( mat, sol, rhs );
+    }
+    else
+    {
+      solve_krylov( mat, sol, rhs );
+    }
   }
   else
   {
-    solve_krylov( mat, sol, rhs );
+    sol.zero();
+    m_result.status = LinearSolverResult::Status::Success;
+    m_result.setupTime = 0.0;
+    m_result.solveTime = 0.0;
   }
 }
 
