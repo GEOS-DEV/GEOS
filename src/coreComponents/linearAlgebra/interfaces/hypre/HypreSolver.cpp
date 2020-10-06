@@ -147,8 +147,6 @@ void solve_serialDirect( LinearSolverParameters const & parameters,
   mat.gemv( -1.0, sol, 1.0, res );
   result.residualReduction = res.norm2() / rhs.norm2();
 
-  GEOSX_LOG_RANK( SSData.relativeTolerance() << " " << result.residualReduction );
-
   if( result.residualReduction < SSData.relativeTolerance() )
   {
     result.status = LinearSolverResult::Status::Success;
