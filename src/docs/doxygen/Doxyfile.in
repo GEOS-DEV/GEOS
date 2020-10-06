@@ -848,7 +848,8 @@ EXCLUDE_SYMBOLS        = internal \
                          detail \
                          wrapperHelpers \
                          wrapperDefaultValue \
-                         bufferOps \
+                         bufferOps*
+                         BufferOps* \
                          timingHelpers \
                          *_HPP *_HPP_
 
