@@ -477,15 +477,23 @@ void GraphFromText::RemapFace(const MeshLevel & mesh)
   {
 
   
+    //GEOSX_ERROR_IF_GT( elemList[ h ][ 0 ], 1e9 );
+    if (h>=2000)
+    {
+      std::cout<<"Error "<<h<<" "<<elemList[h][0]<<" "<<"\n";
+    }
+    if (h==0)
+    {
+      std::cout<<h<<" "<<elemList[h][0]<<"\n";
+    }
 
     // Filter in boundary faces
-    if( elemList[h][1] < 0)
+    if( elemList[h][1] < 0 && elemList[h][0]< 1e9)
     {
       bool found = false;
-      std::cout<<h<<" "<<elemList[h][0]<<"\n";
-      for (localIndex i = 0; i < m_boundaryEdges.size(); i++)
+            for (localIndex i = 0; i < m_boundaryEdges.size(); i++)
       { 
-                if (elemList[h][0] == m_boundaryEdges[i]->getVertex1()->getLocalVertexIndex() && !found)
+        if (elemList[h][0] == m_boundaryEdges[i]->getVertex1()->getLocalVertexIndex() && !found)
         { 
           std::shared_ptr<GraphVertexFace> face;
           face = std::dynamic_pointer_cast<GraphVertexFace>(m_boundaryEdges[i]->getVertex2());
