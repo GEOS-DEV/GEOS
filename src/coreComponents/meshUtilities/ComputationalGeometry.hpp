@@ -52,7 +52,7 @@ void LinePlaneIntersection( LINEDIR_TYPE const & lineDir,
                             POINT_TYPE const & linePoint,
                             NORMAL_TYPE const & planeNormal,
                             ORIGIN_TYPE const & planeOrigin,
-                            INTPOINT_TYPE & intersectionPoint)
+                            INTPOINT_TYPE & intersectionPoint )
 {
   /* Find intersection line plane
    * line equation: p - (d*lineDir + linePoing) = 0;
@@ -65,7 +65,7 @@ void LinePlaneIntersection( LINEDIR_TYPE const & lineDir,
   real64 const d = LvArray::tensorOps::AiBi< 3 >( dummy, planeNormal ) /
                    LvArray::tensorOps::AiBi< 3 >( lineDir, planeNormal );
 
-  LvArray::tensorOps::copy< 3 > ( intersectionPoint, linePoint);
+  LvArray::tensorOps::copy< 3 >( intersectionPoint, linePoint );
   LvArray::tensorOps::scaledAdd< 3 >( intersectionPoint, lineDir, d );
 }
 
@@ -80,7 +80,7 @@ template< typename NORMAL_TYPE >
 void orderPointsCCW( array2d< real64 > & points,
                      NORMAL_TYPE const & normal )
 {
-  localIndex numPoints = points.size();
+  localIndex numPoints = points.size( 0 );
 
   array2d< real64 > orderedPoints( numPoints, 3 );
 
@@ -88,7 +88,8 @@ void orderPointsCCW( array2d< real64 > & points,
   std::vector< real64 > angle( numPoints );
 
   // compute centroid of the set of points
-  R1Tensor centroid;
+  real64 centroid[3];
+  LvArray::tensorOps::fill< 3 >( centroid, 0 );
   for( localIndex a = 0; a < numPoints; ++a )
   {
     LvArray::tensorOps::add< 3 >( centroid, points[ a ] );
@@ -97,7 +98,7 @@ void orderPointsCCW( array2d< real64 > & points,
 
   LvArray::tensorOps::scale< 3 >( centroid, 1.0 / numPoints );
 
-  R1Tensor v0 = LVARRAY_TENSOROPS_INIT_LOCAL_3( centroid );
+  real64 v0[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( centroid );
   LvArray::tensorOps::subtract< 3 >( v0, points[ 0 ] );
   LvArray::tensorOps::normalize< 3 >( v0 );
 
@@ -105,7 +106,7 @@ void orderPointsCCW( array2d< real64 > & points,
   angle[ 0 ] = 0;
   for( localIndex a = 1; a < numPoints; ++a )
   {
-    R1Tensor v = LVARRAY_TENSOROPS_INIT_LOCAL_3( centroid );
+    real64 v[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( centroid );
     LvArray::tensorOps::subtract< 3 >( v, points[ a ] );
     real64 const dot = LvArray::tensorOps::AiBi< 3 >( v, v0 );
 
@@ -145,16 +146,16 @@ real64 ComputeSurfaceArea( arrayView2d< real64 const > const & points,
 {
   real64 surfaceArea = 0.0;
 
-  array2d< real64 > orderedPoints( points.size(0), 3 );
+  array2d< real64 > orderedPoints( points.size( 0 ), 3 );
 
-  for( localIndex a = 0; a < points.size(0); a++ )
+  for( localIndex a = 0; a < points.size( 0 ); a++ )
   {
     LvArray::tensorOps::copy< 3 >( orderedPoints[a], points[a] );
   }
 
   orderPointsCCW( orderedPoints, normal );
 
-  for( localIndex a = 0; a < points.size(0) - 2; ++a )
+  for( localIndex a = 0; a < points.size( 0 ) - 2; ++a )
   {
     real64 v1[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( orderedPoints[ a + 1 ] );
     real64 v2[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( orderedPoints[ a + 2 ] );

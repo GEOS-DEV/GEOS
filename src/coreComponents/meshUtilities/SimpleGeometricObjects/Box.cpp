@@ -106,11 +106,11 @@ void Box::PostProcessInput()
 //
 // }
 
-bool Box::IsCoordInObject( real64 const ( &  coord ) [3] ) const
+bool Box::IsCoordInObject( real64 const ( &coord ) [3] ) const
 {
   bool rval = false;
   R1Tensor coord0;
-  LvArray::tensorOps::copy< 3 >( coord0, coord);
+  LvArray::tensorOps::copy< 3 >( coord0, coord );
   if( std::fabs( m_strikeAngle ) < 1e-20 )
   {
     if( coord0 <= m_max && coord0 >= m_min )

@@ -57,7 +57,7 @@ void ThickPlane::PostProcessInput()
 }
 
 
-bool ThickPlane::IsCoordInObject( real64 const ( &  coord ) [3]) const
+bool ThickPlane::IsCoordInObject( real64 const ( &coord ) [3] ) const
 {
   real64 normalDistance = 0.0;
   for( int i=0; i<3; ++i )

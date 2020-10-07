@@ -88,9 +88,9 @@ EmbeddedSurfaceSubRegion::EmbeddedSurfaceSubRegion( string const & name,
     setApplyDefaultValue( 1 )->
     setDescription( "Connectivity index of each EmbeddedSurface." );
 
-  m_normalVector.resizeDimension< 1 >(3);
-  m_tangentVector1.resizeDimension< 1 >(3);
-  m_tangentVector2.resizeDimension< 1 >(3);
+  m_normalVector.resizeDimension< 1 >( 3 );
+  m_tangentVector1.resizeDimension< 1 >( 3 );
+  m_tangentVector2.resizeDimension< 1 >( 3 );
 }
 
 
@@ -110,7 +110,7 @@ void EmbeddedSurfaceSubRegion::CalculateElementGeometricQuantities( NodeManager 
 void EmbeddedSurfaceSubRegion::CalculateElementGeometricQuantities( arrayView2d< real64 const > const intersectionPoints,
                                                                     localIndex const k )
 {
-  for( localIndex p = 0; p < intersectionPoints.size(); p++ )
+  for( localIndex p = 0; p < intersectionPoints.size( 0 ); p++ )
   {
     LvArray::tensorOps::add< 3 >( m_elementCenter[k], intersectionPoints[ p ] );
   }
@@ -160,7 +160,7 @@ bool EmbeddedSurfaceSubRegion::AddNewEmbeddedSurface ( localIndex const cellInde
   localIndex edgeIndex;
   real64 lineDir[3], dist[3], point[3], distance[3], prodScalarProd;
 
-  array2d< real64 > intersectionPoints(0, 3);
+  array2d< real64 > intersectionPoints( 0, 3 );
   localIndex numPoints = 0;
   for( localIndex ke = 0; ke < cellToEdges.size( 1 ); ke++ )
   {
@@ -175,7 +175,7 @@ bool EmbeddedSurfaceSubRegion::AddNewEmbeddedSurface ( localIndex const cellInde
     // check if the plane intersects the edge
     if( prodScalarProd < 0 )
     {
-      LvArray::tensorOps::copy< 3 >(lineDir, nodesCoord[edgeToNodes[edgeIndex][0]] );
+      LvArray::tensorOps::copy< 3 >( lineDir, nodesCoord[edgeToNodes[edgeIndex][0]] );
       LvArray::tensorOps::subtract< 3 >( lineDir, nodesCoord[edgeToNodes[edgeIndex][1]] );
       LvArray::tensorOps::normalize< 3 >( lineDir );
       //find the intersection point
@@ -190,8 +190,8 @@ bool EmbeddedSurfaceSubRegion::AddNewEmbeddedSurface ( localIndex const cellInde
       {
         addEmbeddedElem = false;
       }
-      intersectionPoints.resizeDimension< 0 >(numPoints+1);
-      LvArray::tensorOps::copy< 3 >( intersectionPoints[numPoints],  point );
+      intersectionPoints.resizeDimension< 0 >( numPoints+1 );
+      LvArray::tensorOps::copy< 3 >( intersectionPoints[numPoints], point );
       numPoints++;
     }
   } //end of edge loop
@@ -209,7 +209,7 @@ bool EmbeddedSurfaceSubRegion::AddNewEmbeddedSurface ( localIndex const cellInde
 
     bool isNew;
     localIndex nodeIndex;
-    array1d< localIndex > elemNodes( intersectionPoints.size() );
+    array1d< localIndex > elemNodes( intersectionPoints.size( 0 ) );
 
     for( localIndex j=0; j < intersectionPoints.size( 0 ); j++ )
     {
@@ -236,7 +236,7 @@ bool EmbeddedSurfaceSubRegion::AddNewEmbeddedSurface ( localIndex const cellInde
     }
 
     m_toNodesRelation.resizeArray( surfaceIndex, intersectionPoints.size( 0 ));
-    for( localIndex inode = 0; inode <  intersectionPoints.size(); inode++ )
+    for( localIndex inode = 0; inode <  intersectionPoints.size( 0 ); inode++ )
     {
       m_toNodesRelation( surfaceIndex, inode ) = elemNodes[inode];
     }
@@ -269,8 +269,7 @@ void EmbeddedSurfaceSubRegion::setupRelatedObjectsInRelations( MeshLevel const *
 real64 EmbeddedSurfaceSubRegion::ComputeHeavisideFunction( ArraySlice< real64 const, 1, nodes::REFERENCE_POSITION_USD - 1 > const nodeCoord,
                                                            localIndex const k ) const
 {
-  real64 heaviside;
-  R1Tensor distanceVector;
+  real64 heaviside, distanceVector[3];
   LvArray::tensorOps::copy< 3 >( distanceVector, nodeCoord );
   LvArray::tensorOps::subtract< 3 >( distanceVector, m_elementCenter[k] );
 

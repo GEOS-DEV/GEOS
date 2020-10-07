@@ -66,7 +66,7 @@ public:
 
   ///@}
 
-  bool IsCoordInObject( real64 const ( &  coord ) [3] ) const override final;
+  bool IsCoordInObject( real64 const ( &coord ) [3] ) const override final;
 
 
 private:

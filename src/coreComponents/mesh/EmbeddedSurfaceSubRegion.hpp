@@ -355,7 +355,7 @@ public:
   /**
    * @copydoc getTangentVector1( localIndex k )
    */
-  arraySlice1d< real64 const  > getTangentVector1( localIndex k ) const { return m_tangentVector1[k]; }
+  arraySlice1d< real64 const > getTangentVector1( localIndex k ) const { return m_tangentVector1[k]; }
 
   /**
    * @brief Get an array of the second tangent vector of the embedded surface elements.

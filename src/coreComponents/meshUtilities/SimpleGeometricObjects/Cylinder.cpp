@@ -51,7 +51,7 @@ Cylinder::~Cylinder()
 {}
 
 
-bool Cylinder::IsCoordInObject( real64 const ( &  coord ) [3] ) const
+bool Cylinder::IsCoordInObject( real64 const ( &coord ) [3] ) const
 {
   bool rval = false;
 
