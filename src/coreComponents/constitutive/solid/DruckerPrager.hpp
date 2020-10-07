@@ -210,7 +210,7 @@ void DruckerPragerUpdates::smallStrainUpdate( localIndex const k,
     jacobian[2][2] = cohesionDeriv;
     
     LvArray::tensorOps::invert<3>(jacobianInv,jacobian);
-    LvArray::tensorOps::AijBj<3,3>(delta,jacobianInv,residual);
+    LvArray::tensorOps::Ri_eq_AijBj<3,3>(delta,jacobianInv,residual);
    
     for(localIndex i=0; i<3; ++i)
     {

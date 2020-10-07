@@ -8,11 +8,6 @@
 			<xsd:pattern value=".*[\[\]`$].*|\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)" />
 		</xsd:restriction>
 	</xsd:simpleType>
-	<xsd:simpleType name="geosx_TimeIntegrationOption">
-		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|[^,\{\}]*" />
-		</xsd:restriction>
-	</xsd:simpleType>
 	<xsd:simpleType name="geosx_dataRepository_PlotLevel">
 		<xsd:restriction base="xsd:string">
 			<xsd:pattern value=".*[\[\]`$].*|[+-]?[\d]+" />
@@ -410,8 +405,12 @@
 		<xsd:attribute name="coordinates" type="real64_array" default="{0}" />
 		<!--inputVarNames => Name of fields are input to function.-->
 		<xsd:attribute name="inputVarNames" type="string_array" default="{}" />
-		<!--interpolation => Interpolation method (options = linear, nearest, upper, lower)-->
-		<xsd:attribute name="interpolation" type="string" default="linear" />
+		<!--interpolation => Interpolation method. Valid options:
+* linear
+* nearest
+* upper
+* lower-->
+		<xsd:attribute name="interpolation" type="geosx_TableFunction_InterpolationType" default="linear" />
 		<!--values => Values for 1D tables-->
 		<xsd:attribute name="values" type="real64_array" default="{0}" />
 		<!--voxelFile => Voxel file name for ND Table-->
@@ -419,6 +418,11 @@
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
+	<xsd:simpleType name="geosx_TableFunction_InterpolationType">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|linear|nearest|upper|lower" />
+		</xsd:restriction>
+	</xsd:simpleType>
 	<xsd:complexType name="GeometryType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="BoundedPlane" type="BoundedPlaneType" />
@@ -581,6 +585,28 @@ Available options are: jacobi, blockJacobi, gaussSeidel, blockGaussSeidel, cheby
 		<xsd:attribute name="amgSmootherType" type="string" default="gaussSeidel" />
 		<!--amgThreshold => AMG strength-of-connection threshold-->
 		<xsd:attribute name="amgThreshold" type="real64" default="0" />
+		<!--directCheckResTol => Tolerance used to check a direct solver solution-->
+		<xsd:attribute name="directCheckResTol" type="real64" default="1e-12" />
+		<!--directColPerm => How to permute the columns. Available options are:
+* none
+* MMD_AtplusA
+* MMD_AtA
+* colAMD
+* metis
+* parmetis-->
+		<xsd:attribute name="directColPerm" type="geosx_LinearSolverParameters_Direct_ColPerm" default="metis" />
+		<!--directEquil => Whether to scale the rows and columns of the matrix-->
+		<xsd:attribute name="directEquil" type="integer" default="1" />
+		<!--directIterRef => Whether to perform iterative refinement-->
+		<xsd:attribute name="directIterRef" type="integer" default="1" />
+		<!--directParallel => Whether to use a parallel solver (instead of a serial one)-->
+		<xsd:attribute name="directParallel" type="integer" default="1" />
+		<!--directReplTinyPivot => Whether to replace tiny pivots by sqrt(epsilon)*norm(A)-->
+		<xsd:attribute name="directReplTinyPivot" type="integer" default="1" />
+		<!--directRowPerm => How to permute the rows. Available options are:
+* none
+* mc64-->
+		<xsd:attribute name="directRowPerm" type="geosx_LinearSolverParameters_Direct_RowPerm" default="mc64" />
 		<!--iluFill => ILU(K) fill factor-->
 		<xsd:attribute name="iluFill" type="integer" default="0" />
 		<!--iluThreshold => ILU(T) threshold factor-->
@@ -594,19 +620,56 @@ Available options are: jacobi, blockJacobi, gaussSeidel, blockGaussSeidel, cheby
 		<!--krylovTol => Relative convergence tolerance of the iterative method
 If the method converges, the iterative solution :math:`\mathsf{x}_k` is such that
 the relative residual norm satisfies:
-:math:`|| \mathsf{b} - `\mathsf{A} \mathsf{x}_k ||_2` < ``tolerance`` * :math:`|| \mathsf{b} ||_2`|-->
+:math:`\left\lVert \mathsf{b} - \mathsf{A} \mathsf{x}_k \right\rVert_2` < ``krylovTol`` * :math:`\left\lVert\mathsf{b}\right\rVert_2`-->
 		<xsd:attribute name="krylovTol" type="real64" default="1e-06" />
 		<!--krylovWeakestTol => Weakest-allowed tolerance for adaptive method-->
 		<xsd:attribute name="krylovWeakestTol" type="real64" default="0.001" />
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
-		<!--preconditionerType => Preconditioner type
-Available options are: none, jacobi, iluk, ilut, icc, amg, mgr, block-->
-		<xsd:attribute name="preconditionerType" type="string" default="iluk" />
-		<!--solverType => Linear solver type
-Available options are: direct, cg, gmres, fgmres, bicgstab, preconditioner-->
-		<xsd:attribute name="solverType" type="string" default="direct" />
+		<!--preconditionerType => Preconditioner type. Available options are:
+* none
+* jacobi
+* gs
+* sgs
+* iluk
+* ilut
+* icc
+* ict
+* amg
+* mgr
+* block-->
+		<xsd:attribute name="preconditionerType" type="geosx_LinearSolverParameters_PreconditionerType" default="iluk" />
+		<!--solverType => Linear solver type. Available options are:
+* direct
+* cg
+* gmres
+* fgmres
+* bicgstab
+* preconditioner-->
+		<xsd:attribute name="solverType" type="geosx_LinearSolverParameters_SolverType" default="direct" />
+		<!--stopIfError => Whether to stop the simulation if the linear solver reports an error-->
+		<xsd:attribute name="stopIfError" type="integer" default="1" />
 	</xsd:complexType>
+	<xsd:simpleType name="geosx_LinearSolverParameters_Direct_ColPerm">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|none|MMD_AtplusA|MMD_AtA|colAMD|metis|parmetis" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="geosx_LinearSolverParameters_Direct_RowPerm">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|none|mc64" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="geosx_LinearSolverParameters_PreconditionerType">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|none|jacobi|gs|sgs|iluk|ilut|icc|ict|amg|mgr|block" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="geosx_LinearSolverParameters_SolverType">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|direct|cg|gmres|fgmres|bicgstab|preconditioner" />
+		</xsd:restriction>
+	</xsd:simpleType>
 	<xsd:complexType name="NonlinearSolverParametersType">
 		<!--allowNonConverged => Allow non-converged solution to be accepted. (i.e. exit from the Newton loop without achieving the desired tolerance)-->
 		<xsd:attribute name="allowNonConverged" type="integer" default="0" />
@@ -615,11 +678,10 @@ Available options are: direct, cg, gmres, fgmres, bicgstab, preconditioner-->
 		<!--dtIncIterLimit => Fraction of the Max Newton iterations below which the solver asks for the time-step to be doubled for the next dt.-->
 		<xsd:attribute name="dtIncIterLimit" type="real64" default="0.4" />
 		<!--lineSearchAction => How the line search is to be used. Options are: 
- 0 - Do not use line search.
-1 - Use line search. Allow exit from line search without achieving smaller residual than starting residual.
-2 - Use line search. If smaller residual than starting resdual is not achieved, cut time step.
--->
-		<xsd:attribute name="lineSearchAction" type="integer" default="1" />
+ * None    - Do not use line search.
+* Attempt - Use line search. Allow exit from line search without achieving smaller residual than starting residual.
+* Require - Use line search. If smaller residual than starting resdual is not achieved, cut time step.-->
+		<xsd:attribute name="lineSearchAction" type="geosx_NonlinearSolverParameters_LineSearchAction" default="Attempt" />
 		<!--lineSearchCutFactor => Line search cut factor. For instance, a value of 0.5 will result in the effective application of the last solution by a factor of (0.5, 0.25, 0.125, ...)-->
 		<xsd:attribute name="lineSearchCutFactor" type="real64" default="0.5" />
 		<!--lineSearchMaxCuts => Maximum number of line search cuts.-->
@@ -639,6 +701,11 @@ Available options are: direct, cg, gmres, fgmres, bicgstab, preconditioner-->
 		<!--timestepCutFactor => Factor by which the time step will be cut if a timestep cut is required.-->
 		<xsd:attribute name="timestepCutFactor" type="real64" default="0.5" />
 	</xsd:complexType>
+	<xsd:simpleType name="geosx_NonlinearSolverParameters_LineSearchAction">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|None|Attempt|Require" />
+		</xsd:restriction>
+	</xsd:simpleType>
 	<xsd:complexType name="FiniteVolumeType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="TwoPointFluxApproximation" type="TwoPointFluxApproximationType" />
@@ -764,6 +831,8 @@ Available options are: direct, cg, gmres, fgmres, bicgstab, preconditioner-->
 			<xsd:element name="Hydrofracture" type="HydrofractureType" />
 			<xsd:element name="LagrangianContact" type="LagrangianContactType" />
 			<xsd:element name="LaplaceFEM" type="LaplaceFEMType" />
+			<xsd:element name="PhaseFieldDamageFEM" type="PhaseFieldDamageFEMType" />
+			<xsd:element name="PhaseFieldFracture" type="PhaseFieldFractureType" />
 			<xsd:element name="Poroelastic" type="PoroelasticType" />
 			<xsd:element name="ProppantTransport" type="ProppantTransportType" />
 			<xsd:element name="SinglePhaseFVM" type="SinglePhaseFVMType" />
@@ -824,8 +893,6 @@ Available options are: direct, cg, gmres, fgmres, bicgstab, preconditioner-->
 		</xsd:choice>
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
-		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
-		<xsd:attribute name="discretization" type="string" default="none" />
 		<!--flowSolverName => Name of the flow solver to use in the reservoir-well system solver-->
 		<xsd:attribute name="flowSolverName" type="string" use="required" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
@@ -849,8 +916,6 @@ Available options are: direct, cg, gmres, fgmres, bicgstab, preconditioner-->
 		<xsd:attribute name="allowLocalCompDensityChopping" type="integer" default="1" />
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
-		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
-		<xsd:attribute name="discretization" type="string" default="none" />
 		<!--fluidNames => Name of fluid constitutive object to use for this solver.-->
 		<xsd:attribute name="fluidNames" type="string_array" use="required" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
@@ -871,19 +936,36 @@ Available options are: direct, cg, gmres, fgmres, bicgstab, preconditioner-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="WellControlsType">
-		<!--control => Well control (BHP/gasRate/oilRate/waterRate)-->
-		<xsd:attribute name="control" type="string" use="required" />
+		<!--control => Well control. Valid options:
+* BHP
+* gasRate
+* oilRate
+* waterRate
+* liquidRate-->
+		<xsd:attribute name="control" type="geosx_WellControls_Control" use="required" />
 		<!--injectionStream => Global component densities for the injection stream-->
 		<xsd:attribute name="injectionStream" type="real64_array" default="{-1}" />
 		<!--targetBHP => Target bottom-hole pressure-->
 		<xsd:attribute name="targetBHP" type="real64" use="required" />
 		<!--targetRate => Target rate-->
 		<xsd:attribute name="targetRate" type="real64" use="required" />
-		<!--type => Well type (producer/injector)-->
-		<xsd:attribute name="type" type="string" use="required" />
+		<!--type => Well type. Valid options:
+* producer
+* injector-->
+		<xsd:attribute name="type" type="geosx_WellControls_Type" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
+	<xsd:simpleType name="geosx_WellControls_Control">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|BHP|gasRate|oilRate|waterRate|liquidRate" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="geosx_WellControls_Type">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|producer|injector" />
+		</xsd:restriction>
+	</xsd:simpleType>
 	<xsd:complexType name="EmbeddedSurfaceGeneratorType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
@@ -891,8 +973,6 @@ Available options are: direct, cg, gmres, fgmres, bicgstab, preconditioner-->
 		</xsd:choice>
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
-		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
-		<xsd:attribute name="discretization" type="string" default="none" />
 		<!--fractureRegion => (no description available)-->
 		<xsd:attribute name="fractureRegion" type="string" default="FractureRegion" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
@@ -913,8 +993,6 @@ Available options are: direct, cg, gmres, fgmres, bicgstab, preconditioner-->
 		</xsd:choice>
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
-		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
-		<xsd:attribute name="discretization" type="string" default="none" />
 		<!--flowSolverName => Name of the flow solver to use in the flowProppantTransport solver-->
 		<xsd:attribute name="flowSolverName" type="string" use="required" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
@@ -937,10 +1015,12 @@ Available options are: direct, cg, gmres, fgmres, bicgstab, preconditioner-->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
 		<!--contactRelationName => Name of contact relation to enforce constraints on fracture boundary.-->
 		<xsd:attribute name="contactRelationName" type="string" use="required" />
-		<!--couplingTypeOption => Coupling option: (FIM, SIM_FixedStress)-->
-		<xsd:attribute name="couplingTypeOption" type="string" use="required" />
+		<!--couplingTypeOption => Coupling method. Valid options:
+* FIM
+* SIM_FixedStress-->
+		<xsd:attribute name="couplingTypeOption" type="geosx_HydrofractureSolver_CouplingTypeOption" use="required" />
 		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
-		<xsd:attribute name="discretization" type="string" default="none" />
+		<xsd:attribute name="discretization" type="string" use="required" />
 		<!--fluidSolverName => Name of the fluid mechanics solver to use in the poroelastic solver-->
 		<xsd:attribute name="fluidSolverName" type="string" use="required" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
@@ -956,6 +1036,11 @@ Available options are: direct, cg, gmres, fgmres, bicgstab, preconditioner-->
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
+	<xsd:simpleType name="geosx_HydrofractureSolver_CouplingTypeOption">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|FIM|SIM_FixedStress" />
+		</xsd:restriction>
+	</xsd:simpleType>
 	<xsd:complexType name="LagrangianContactType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
@@ -967,8 +1052,6 @@ Available options are: direct, cg, gmres, fgmres, bicgstab, preconditioner-->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
 		<!--contactRelationName => Name of the constitutive law used for fracture elements-->
 		<xsd:attribute name="contactRelationName" type="string" use="required" />
-		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
-		<xsd:attribute name="discretization" type="string" default="none" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
 		<!--logLevel => Log level-->
@@ -990,8 +1073,8 @@ Available options are: direct, cg, gmres, fgmres, bicgstab, preconditioner-->
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
 		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
-		<xsd:attribute name="discretization" type="string" default="none" />
-		<!--fieldName => name of field variable-->
+		<xsd:attribute name="discretization" type="string" use="required" />
+		<!--fieldName => Name of field variable-->
 		<xsd:attribute name="fieldName" type="string" use="required" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
@@ -999,11 +1082,82 @@ Available options are: direct, cg, gmres, fgmres, bicgstab, preconditioner-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
+		<!--timeIntegrationOption => Time integration method. Options are:
+* SteadyState
+* ImplicitTransient
+* ExplicitTransient-->
+		<xsd:attribute name="timeIntegrationOption" type="geosx_LaplaceFEM_TimeIntegrationOption" use="required" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:simpleType name="geosx_LaplaceFEM_TimeIntegrationOption">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|SteadyState|ImplicitTransient|ExplicitTransient" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:complexType name="PhaseFieldDamageFEMType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
+			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
+		</xsd:choice>
+		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
+		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
+		<!--criticalFractureEnergy => critical fracture energy-->
+		<xsd:attribute name="criticalFractureEnergy" type="real64" use="required" />
+		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
+		<xsd:attribute name="discretization" type="string" use="required" />
+		<!--fieldName => name of field variable-->
+		<xsd:attribute name="fieldName" type="string" use="required" />
+		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
+		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
+		<!--lengthScale => lenght scale l in the phase-field equation-->
+		<xsd:attribute name="lengthScale" type="real64" use="required" />
+		<!--localDissipation => Type of local dissipation function. Can be Linear or Quadratic-->
+		<xsd:attribute name="localDissipation" type="string" use="required" />
+		<!--logLevel => Log level-->
+		<xsd:attribute name="logLevel" type="integer" default="0" />
+		<!--solidMaterialNames => name of solid constitutive model-->
+		<xsd:attribute name="solidMaterialNames" type="string_array" use="required" />
+		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
+		<xsd:attribute name="targetRegions" type="string_array" use="required" />
 		<!--timeIntegrationOption => option for default time integration method-->
 		<xsd:attribute name="timeIntegrationOption" type="string" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
+	<xsd:complexType name="PhaseFieldFractureType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
+			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
+		</xsd:choice>
+		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
+		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
+		<!--couplingTypeOption => Coupling option. Valid options:
+* FixedStress
+* TightlyCoupled-->
+		<xsd:attribute name="couplingTypeOption" type="geosx_PhaseFieldFractureSolver_CouplingTypeOption" use="required" />
+		<!--damageSolverName => Name of the damage mechanics solver to use in the PhaseFieldFracture solver-->
+		<xsd:attribute name="damageSolverName" type="string" use="required" />
+		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
+		<xsd:attribute name="discretization" type="string" use="required" />
+		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
+		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
+		<!--logLevel => Log level-->
+		<xsd:attribute name="logLevel" type="integer" default="0" />
+		<!--solidSolverName => Name of the solid mechanics solver to use in the PhaseFieldFracture solver-->
+		<xsd:attribute name="solidSolverName" type="string" use="required" />
+		<!--subcycling => turn on subcycling on each load step-->
+		<xsd:attribute name="subcycling" type="integer" use="required" />
+		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
+		<xsd:attribute name="targetRegions" type="string_array" use="required" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:simpleType name="geosx_PhaseFieldFractureSolver_CouplingTypeOption">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|FixedStress|TightlyCoupled" />
+		</xsd:restriction>
+	</xsd:simpleType>
 	<xsd:complexType name="PoroelasticType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
@@ -1011,10 +1165,12 @@ Available options are: direct, cg, gmres, fgmres, bicgstab, preconditioner-->
 		</xsd:choice>
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
-		<!--couplingTypeOption => Coupling option: (FIM, SIM_FixedStress)-->
-		<xsd:attribute name="couplingTypeOption" type="string" use="required" />
+		<!--couplingTypeOption => Coupling method. Valid options:
+* FIM
+* SIM_FixedStress-->
+		<xsd:attribute name="couplingTypeOption" type="geosx_PoroelasticSolver_CouplingTypeOption" use="required" />
 		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
-		<xsd:attribute name="discretization" type="string" default="none" />
+		<xsd:attribute name="discretization" type="string" use="required" />
 		<!--fluidSolverName => Name of the fluid mechanics solver to use in the poroelastic solver-->
 		<xsd:attribute name="fluidSolverName" type="string" use="required" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
@@ -1028,6 +1184,11 @@ Available options are: direct, cg, gmres, fgmres, bicgstab, preconditioner-->
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
+	<xsd:simpleType name="geosx_PoroelasticSolver_CouplingTypeOption">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|FIM|SIM_FixedStress" />
+		</xsd:restriction>
+	</xsd:simpleType>
 	<xsd:complexType name="ProppantTransportType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
@@ -1155,8 +1316,6 @@ Available options are: direct, cg, gmres, fgmres, bicgstab, preconditioner-->
 		</xsd:choice>
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
-		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
-		<xsd:attribute name="discretization" type="string" default="none" />
 		<!--flowSolverName => Name of the flow solver to use in the reservoir-well system solver-->
 		<xsd:attribute name="flowSolverName" type="string" use="required" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
@@ -1178,8 +1337,6 @@ Available options are: direct, cg, gmres, fgmres, bicgstab, preconditioner-->
 		</xsd:choice>
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
-		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
-		<xsd:attribute name="discretization" type="string" default="none" />
 		<!--fluidNames => Name of fluid constitutive object to use for this solver.-->
 		<xsd:attribute name="fluidNames" type="string_array" use="required" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
@@ -1200,8 +1357,6 @@ Available options are: direct, cg, gmres, fgmres, bicgstab, preconditioner-->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
 		<!--contactRelationName => Name of contact relation to enforce constraints on fracture boundary.-->
 		<xsd:attribute name="contactRelationName" type="string" use="required" />
-		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
-		<xsd:attribute name="discretization" type="string" default="none" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
 		<!--logLevel => Log level-->
@@ -1223,7 +1378,7 @@ Available options are: direct, cg, gmres, fgmres, bicgstab, preconditioner-->
 		<!--contactRelationName => Name of contact relation to enforce constraints on fracture boundary.-->
 		<xsd:attribute name="contactRelationName" type="string" default="NOCONTACT" />
 		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
-		<xsd:attribute name="discretization" type="string" default="none" />
+		<xsd:attribute name="discretization" type="string" use="required" />
 		<!--effectiveStress => Apply fluid pressure to produce effective stress when integrating stress.-->
 		<xsd:attribute name="effectiveStress" type="integer" default="0" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
@@ -1248,16 +1403,21 @@ Available options are: direct, cg, gmres, fgmres, bicgstab, preconditioner-->
 		<xsd:attribute name="strainTheory" type="integer" default="0" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
-		<!--timeIntegrationOption => Time integration method. Options are: 
- QuasiStatic 
- ImplicitDynamic 
- ExplicitDynamic-->
-		<xsd:attribute name="timeIntegrationOption" type="geosx_TimeIntegrationOption" default="TimeIntegrationOption::ExplicitDynamic" />
+		<!--timeIntegrationOption => Time integration method. Options are:
+* QuasiStatic
+* ImplicitDynamic
+* ExplicitDynamic-->
+		<xsd:attribute name="timeIntegrationOption" type="geosx_SolidMechanicsLagrangianFEM_TimeIntegrationOption" default="ExplicitDynamic" />
 		<!--useVelocityForQS => Flag to indicate the use of the incremental displacement from the previous step as an initial estimate for the incremental displacement of the current step.-->
 		<xsd:attribute name="useVelocityForQS" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
+	<xsd:simpleType name="geosx_SolidMechanicsLagrangianFEM_TimeIntegrationOption">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|QuasiStatic|ImplicitDynamic|ExplicitDynamic" />
+		</xsd:restriction>
+	</xsd:simpleType>
 	<xsd:complexType name="SolidMechanics_LagrangianFEMType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
@@ -1268,7 +1428,7 @@ Available options are: direct, cg, gmres, fgmres, bicgstab, preconditioner-->
 		<!--contactRelationName => Name of contact relation to enforce constraints on fracture boundary.-->
 		<xsd:attribute name="contactRelationName" type="string" default="NOCONTACT" />
 		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
-		<xsd:attribute name="discretization" type="string" default="none" />
+		<xsd:attribute name="discretization" type="string" use="required" />
 		<!--effectiveStress => Apply fluid pressure to produce effective stress when integrating stress.-->
 		<xsd:attribute name="effectiveStress" type="integer" default="0" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
@@ -1293,11 +1453,11 @@ Available options are: direct, cg, gmres, fgmres, bicgstab, preconditioner-->
 		<xsd:attribute name="strainTheory" type="integer" default="0" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
-		<!--timeIntegrationOption => Time integration method. Options are: 
- QuasiStatic 
- ImplicitDynamic 
- ExplicitDynamic-->
-		<xsd:attribute name="timeIntegrationOption" type="geosx_TimeIntegrationOption" default="TimeIntegrationOption::ExplicitDynamic" />
+		<!--timeIntegrationOption => Time integration method. Options are:
+* QuasiStatic
+* ImplicitDynamic
+* ExplicitDynamic-->
+		<xsd:attribute name="timeIntegrationOption" type="geosx_SolidMechanicsLagrangianFEM_TimeIntegrationOption" default="ExplicitDynamic" />
 		<!--useVelocityForQS => Flag to indicate the use of the incremental displacement from the previous step as an initial estimate for the incremental displacement of the current step.-->
 		<xsd:attribute name="useVelocityForQS" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
@@ -1310,10 +1470,8 @@ Available options are: direct, cg, gmres, fgmres, bicgstab, preconditioner-->
 		</xsd:choice>
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
-		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
-		<xsd:attribute name="discretization" type="string" default="none" />
 		<!--fractureRegion => (no description available)-->
-		<xsd:attribute name="fractureRegion" type="string" default="FractureRegion" />
+		<xsd:attribute name="fractureRegion" type="string" default="Fracture" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
 		<!--logLevel => Log level-->
@@ -1339,6 +1497,8 @@ Available options are: direct, cg, gmres, fgmres, bicgstab, preconditioner-->
 	<xsd:complexType name="PackCollectionType">
 		<!--fieldName => The name of the (packable) field associated with the specified object to retrieve data from-->
 		<xsd:attribute name="fieldName" type="string" use="required" />
+		<!--minSetSize => The minimum size of the set(s) to be collected (use for sets that expand during the simulation).-->
+		<xsd:attribute name="minSetSize" type="localIndex" default="-1" />
 		<!--objectPath => The name of the object from which to retrieve field values.-->
 		<xsd:attribute name="objectPath" type="string" use="required" />
 		<!--setNames => The set(s) for which to retrieve data.-->
@@ -1355,16 +1515,18 @@ Available options are: direct, cg, gmres, fgmres, bicgstab, preconditioner-->
 			<xsd:element name="CompositionalMultiphaseFluid" type="CompositionalMultiphaseFluidType" />
 			<xsd:element name="CompressibleSinglePhaseFluid" type="CompressibleSinglePhaseFluidType" />
 			<xsd:element name="Contact" type="ContactType" />
-			<xsd:element name="DruckerPrager" type="DruckerPragerType" />
-			<xsd:element name="ElasticIsotropic" type="ElasticIsotropicType" />
-			<xsd:element name="ElasticTransverseIsotropic" type="ElasticTransverseIsotropicType" />
+			<xsd:element name="DamageLinearElasticIsotropic" type="DamageLinearElasticIsotropicType" />
+			<xsd:element name="LinearElasticAnisotropic" type="LinearElasticAnisotropicType" />
+			<xsd:element name="LinearElasticIsotropic" type="LinearElasticIsotropicType" />
+			<xsd:element name="LinearElasticTransverseIsotropic" type="LinearElasticTransverseIsotropicType" />
 			<xsd:element name="MohrCoulomb" type="MohrCoulombType" />
 			<xsd:element name="MultiPhaseMultiComponentFluid" type="MultiPhaseMultiComponentFluidType" />
 			<xsd:element name="NullModel" type="NullModelType" />
 			<xsd:element name="ParticleFluid" type="ParticleFluidType" />
 			<xsd:element name="PoreVolumeCompressibleSolid" type="PoreVolumeCompressibleSolidType" />
-			<xsd:element name="PoroElasticIsotropic" type="PoroElasticIsotropicType" />
-			<xsd:element name="PoroElasticTransverseIsotropic" type="PoroElasticTransverseIsotropicType" />
+			<xsd:element name="PoroLinearElasticAnisotropic" type="PoroLinearElasticAnisotropicType" />
+			<xsd:element name="PoroLinearElasticIsotropic" type="PoroLinearElasticIsotropicType" />
+			<xsd:element name="PoroLinearElasticTransverseIsotropic" type="PoroLinearElasticTransverseIsotropicType" />
 			<xsd:element name="ProppantSlurryFluid" type="ProppantSlurryFluidType" />
 			<xsd:element name="VanGenuchtenBakerRelativePermeability" type="VanGenuchtenBakerRelativePermeabilityType" />
 			<xsd:element name="VanGenuchtenCapillaryPressure" type="VanGenuchtenCapillaryPressureType" />
@@ -1375,8 +1537,10 @@ Available options are: direct, cg, gmres, fgmres, bicgstab, preconditioner-->
 		<xsd:attribute name="componentMolarWeight" type="real64_array" use="required" />
 		<!--componentNames => List of component names-->
 		<xsd:attribute name="componentNames" type="string_array" default="{}" />
-		<!--fluidType => Type of black-oil fluid (LiveOil/DeadOil)-->
-		<xsd:attribute name="fluidType" type="string" use="required" />
+		<!--fluidType => Type of black-oil fluid. Valid options:
+* DeadOil
+* LiveOil-->
+		<xsd:attribute name="fluidType" type="geosx_constitutive_BlackOilFluid_FluidType" use="required" />
 		<!--phaseNames => List of fluid phases-->
 		<xsd:attribute name="phaseNames" type="string_array" use="required" />
 		<!--surfaceDensities => List of surface densities for each phase-->
@@ -1386,6 +1550,11 @@ Available options are: direct, cg, gmres, fgmres, bicgstab, preconditioner-->
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
+	<xsd:simpleType name="geosx_constitutive_BlackOilFluid_FluidType">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|DeadOil|LiveOil" />
+		</xsd:restriction>
+	</xsd:simpleType>
 	<xsd:complexType name="BrooksCoreyBakerRelativePermeabilityType">
 		<!--gasOilRelPermExponent => Rel perm power law exponent for the pair (gas phase, oil phase) at residual water saturation-->
 		<xsd:attribute name="gasOilRelPermExponent" type="real64_array" default="{1}" />
@@ -1457,8 +1626,11 @@ Available options are: direct, cg, gmres, fgmres, bicgstab, preconditioner-->
 		<xsd:attribute name="defaultDensity" type="real64" use="required" />
 		<!--defaultViscosity => Default value for viscosity.-->
 		<xsd:attribute name="defaultViscosity" type="real64" use="required" />
-		<!--densityModelString => Type of density model (linear, quadratic, exponential)-->
-		<xsd:attribute name="densityModelString" type="string" default="linear" />
+		<!--densityModelType => Type of density model. Valid options:
+* exponential
+* linear
+* quadratic-->
+		<xsd:attribute name="densityModelType" type="geosx_constitutive_ExponentApproximationType" default="linear" />
 		<!--referenceDensity => Reference fluid density-->
 		<xsd:attribute name="referenceDensity" type="real64" default="1000" />
 		<!--referencePressure => Reference pressure-->
@@ -1467,11 +1639,19 @@ Available options are: direct, cg, gmres, fgmres, bicgstab, preconditioner-->
 		<xsd:attribute name="referenceViscosity" type="real64" default="0.001" />
 		<!--viscosibility => Fluid viscosity exponential coefficient-->
 		<xsd:attribute name="viscosibility" type="real64" default="0" />
-		<!--viscosityModelString => Type of viscosity model (linear, quadratic, exponential)-->
-		<xsd:attribute name="viscosityModelString" type="string" default="linear" />
+		<!--viscosityModelType => Type of viscosity model. Valid options:
+* exponential
+* linear
+* quadratic-->
+		<xsd:attribute name="viscosityModelType" type="geosx_constitutive_ExponentApproximationType" default="linear" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
+	<xsd:simpleType name="geosx_constitutive_ExponentApproximationType">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|exponential|linear|quadratic" />
+		</xsd:restriction>
+	</xsd:simpleType>
 	<xsd:complexType name="ContactType">
 		<xsd:choice minOccurs="0" maxOccurs="1">
 			<xsd:element name="TableFunction" type="TableFunctionType" />
@@ -1483,29 +1663,7 @@ Available options are: direct, cg, gmres, fgmres, bicgstab, preconditioner-->
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
-	<xsd:complexType name="DruckerPragerType">
-		<!--defaultBulkModulus => Elastic Bulk Modulus Parameter-->
-		<xsd:attribute name="defaultBulkModulus" type="real64" default="-1" />
-		<!--defaultCohesion => Initial cohesion-->
-		<xsd:attribute name="defaultCohesion" type="real64" default="0" />
-		<!--defaultDensity => Default Material Density-->
-		<xsd:attribute name="defaultDensity" type="real64" use="required" />
-		<!--defaultDilationAngle => Dilation angle (degrees)-->
-		<xsd:attribute name="defaultDilationAngle" type="real64" default="30" />
-		<!--defaultFrictionAngle => Friction angle (degrees)-->
-		<xsd:attribute name="defaultFrictionAngle" type="real64" default="30" />
-		<!--defaultHardeningRate => Cohesion hardening/softening rate-->
-		<xsd:attribute name="defaultHardeningRate" type="real64" default="0" />
-		<!--defaultPoissonRatio => Poisson's ratio-->
-		<xsd:attribute name="defaultPoissonRatio" type="real64" default="-1" />
-		<!--defaultShearModulus => Elastic Shear Modulus Parameter-->
-		<xsd:attribute name="defaultShearModulus" type="real64" default="-1" />
-		<!--defaultYoungsModulus => Elastic Young's Modulus.-->
-		<xsd:attribute name="defaultYoungsModulus" type="real64" default="-1" />
-		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
-	</xsd:complexType>
-	<xsd:complexType name="ElasticIsotropicType">
+	<xsd:complexType name="DamageLinearElasticIsotropicType">
 		<!--defaultBulkModulus => Elastic Bulk Modulus Parameter-->
 		<xsd:attribute name="defaultBulkModulus" type="real64" default="-1" />
 		<!--defaultDensity => Default Material Density-->
@@ -1519,7 +1677,29 @@ Available options are: direct, cg, gmres, fgmres, bicgstab, preconditioner-->
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
-	<xsd:complexType name="ElasticTransverseIsotropicType">
+	<xsd:complexType name="LinearElasticAnisotropicType">
+		<!--defaultDensity => Default Material Density-->
+		<xsd:attribute name="defaultDensity" type="real64" use="required" />
+		<!--defaultStiffness => Default Elastic Stiffness Tensor in Voigt notation (6x6 matrix)-->
+		<xsd:attribute name="defaultStiffness" type="real64_array2d" use="required" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="LinearElasticIsotropicType">
+		<!--defaultBulkModulus => Elastic Bulk Modulus Parameter-->
+		<xsd:attribute name="defaultBulkModulus" type="real64" default="-1" />
+		<!--defaultDensity => Default Material Density-->
+		<xsd:attribute name="defaultDensity" type="real64" use="required" />
+		<!--defaultPoissonRatio => Poisson's ratio-->
+		<xsd:attribute name="defaultPoissonRatio" type="real64" default="-1" />
+		<!--defaultShearModulus => Elastic Shear Modulus Parameter-->
+		<xsd:attribute name="defaultShearModulus" type="real64" default="-1" />
+		<!--defaultYoungsModulus => Elastic Young's Modulus.-->
+		<xsd:attribute name="defaultYoungsModulus" type="real64" default="-1" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="LinearElasticTransverseIsotropicType">
 		<!--defaultDensity => Default Material Density-->
 		<xsd:attribute name="defaultDensity" type="real64" use="required" />
 		<!--defaultPoissonRatioAxialTransverse => Elastic Shear Modulus Parameter-->
@@ -1558,7 +1738,7 @@ Available options are: direct, cg, gmres, fgmres, bicgstab, preconditioner-->
 		<!--componentNames => List of component names-->
 		<xsd:attribute name="componentNames" type="string_array" default="{}" />
 		<!--flashModelParaFile => name of the filen including flash calculation function parameters-->
-		<xsd:attribute name="flashModelParaFile" type="string" use="required" />
+		<xsd:attribute name="flashModelParaFile" type="path" use="required" />
 		<!--phaseNames => List of fluid phases-->
 		<xsd:attribute name="phaseNames" type="string_array" default="{}" />
 		<!--phasePVTParaFiles => List of the names of the files including PVT function parameters-->
@@ -1583,8 +1763,11 @@ Available options are: direct, cg, gmres, fgmres, bicgstab, preconditioner-->
 		<xsd:attribute name="isCollisionalSlip" type="integer" default="0" />
 		<!--maxProppantConcentration => Max proppant concentration-->
 		<xsd:attribute name="maxProppantConcentration" type="real64" default="0.6" />
-		<!--particleSettlingModel => Particle settling velocity model-->
-		<xsd:attribute name="particleSettlingModel" type="string" use="required" />
+		<!--particleSettlingModel => Particle settling velocity model. Valid options:
+* Stokes
+* Intermediate
+* Turbulence-->
+		<xsd:attribute name="particleSettlingModel" type="geosx_constitutive_ParticleSettlingModel" use="required" />
 		<!--proppantDensity => Proppant density-->
 		<xsd:attribute name="proppantDensity" type="real64" default="1400" />
 		<!--proppantDiameter => Proppant diameter-->
@@ -1596,6 +1779,11 @@ Available options are: direct, cg, gmres, fgmres, bicgstab, preconditioner-->
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
+	<xsd:simpleType name="geosx_constitutive_ParticleSettlingModel">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|Stokes|Intermediate|Turbulence" />
+		</xsd:restriction>
+	</xsd:simpleType>
 	<xsd:complexType name="PoreVolumeCompressibleSolidType">
 		<!--compressibility => Solid compressibility-->
 		<xsd:attribute name="compressibility" type="real64" use="required" />
@@ -1604,7 +1792,21 @@ Available options are: direct, cg, gmres, fgmres, bicgstab, preconditioner-->
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
-	<xsd:complexType name="PoroElasticIsotropicType">
+	<xsd:complexType name="PoroLinearElasticAnisotropicType">
+		<!--BiotCoefficient => Biot's coefficient-->
+		<xsd:attribute name="BiotCoefficient" type="real64" default="1" />
+		<!--compressibility => Pore volume compressibilty-->
+		<xsd:attribute name="compressibility" type="real64" default="0" />
+		<!--defaultDensity => Default Material Density-->
+		<xsd:attribute name="defaultDensity" type="real64" use="required" />
+		<!--defaultStiffness => Default Elastic Stiffness Tensor in Voigt notation (6x6 matrix)-->
+		<xsd:attribute name="defaultStiffness" type="real64_array2d" use="required" />
+		<!--referencePressure => ReferencePressure-->
+		<xsd:attribute name="referencePressure" type="real64" default="0" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="PoroLinearElasticIsotropicType">
 		<!--BiotCoefficient => Biot's coefficient-->
 		<xsd:attribute name="BiotCoefficient" type="real64" default="1" />
 		<!--compressibility => Pore volume compressibilty-->
@@ -1624,7 +1826,7 @@ Available options are: direct, cg, gmres, fgmres, bicgstab, preconditioner-->
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
-	<xsd:complexType name="PoroElasticTransverseIsotropicType">
+	<xsd:complexType name="PoroLinearElasticTransverseIsotropicType">
 		<!--BiotCoefficient => Biot's coefficient-->
 		<xsd:attribute name="BiotCoefficient" type="real64" default="1" />
 		<!--compressibility => Pore volume compressibilty-->

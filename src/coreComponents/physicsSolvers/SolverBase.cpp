@@ -56,8 +56,7 @@ SolverBase::SolverBase( std::string const & name,
     setDescription( "Value of the Maximum Stable Timestep for this solver." );
 
   this->registerWrapper( viewKeyStruct::discretizationString, &m_discretizationName )->
-    setApplyDefaultValue( "none" )->
-    setInputFlag( InputFlags::OPTIONAL )->
+    setInputFlag( InputFlags::REQUIRED )->
     setDescription( "Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this "
                     "solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` "
                     "should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` "
@@ -73,6 +72,7 @@ SolverBase::SolverBase( std::string const & name,
   registerWrapper( viewKeyStruct::initialDtString, &m_nextDt )->
     setApplyDefaultValue( 1e99 )->
     setInputFlag( InputFlags::OPTIONAL )->
+    setRestartFlags( RestartFlags::WRITE_AND_READ )->
     setDescription( "Initial time-step value required by the solver to the event manager." );
 
   RegisterGroup( groupKeyStruct::linearSolverParametersString, &m_linearSolverParameters );
@@ -497,7 +497,8 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
       }
 
       // do line search in case residual has increased
-      if( m_nonlinearSolverParameters.m_lineSearchAction>0 && residualNorm > lastResidual )
+      if( m_nonlinearSolverParameters.m_lineSearchAction != NonlinearSolverParameters::LineSearchAction::None
+          && residualNorm > lastResidual )
       {
         residualNorm = lastResidual;
         bool lineSearchSuccess = LineSearch( time_n,
@@ -513,11 +514,11 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
 
         if( !lineSearchSuccess )
         {
-          if( m_nonlinearSolverParameters.m_lineSearchAction==1 )
+          if( m_nonlinearSolverParameters.m_lineSearchAction == NonlinearSolverParameters::LineSearchAction::Attempt )
           {
             GEOSX_LOG_LEVEL_RANK_0( 1, "        Line search failed to produce reduced residual. Accepting iteration." );
           }
-          else if( m_nonlinearSolverParameters.m_lineSearchAction==2 )
+          else if( m_nonlinearSolverParameters.m_lineSearchAction == NonlinearSolverParameters::LineSearchAction::Require )
           {
             // if line search failed, then break out of the main Newton loop. Timestep will be cut.
             GEOSX_LOG_LEVEL_RANK_0( 1, "        Line search failed to produce reduced residual. Exiting Newton Loop." );
@@ -783,7 +784,7 @@ void SolverBase::SolveSystem( DofManager const & dofManager,
   //       so we can have constant access to last solve statistics, convergence history, etc.
   //       This requires unifying "LAI interface" solvers with "native" Krylov solvers somehow.
 
-  if( params.solverType == "direct" || !m_precond )
+  if( params.solverType == LinearSolverParameters::SolverType::direct || !m_precond )
   {
     LinearSolver solver( params );
     solver.solve( matrix, solution, rhs, &dofManager );
@@ -806,7 +807,14 @@ void SolverBase::SolveSystem( DofManager const & dofManager,
 //  ++count;
 
 
-  GEOSX_WARNING_IF( !m_linearSolverResult.success(), "Linear solution failed" );
+  if( params.stopIfError )
+  {
+    GEOSX_ERROR_IF( m_linearSolverResult.breakdown(), "Linear solution breakdown -> simulation STOP" );
+  }
+  else
+  {
+    GEOSX_WARNING_IF( !m_linearSolverResult.success(), "Linear solution failed" );
+  }
 }
 
 bool SolverBase::CheckSystemSolution( DomainPartition const & GEOSX_UNUSED_PARAM( domain ),

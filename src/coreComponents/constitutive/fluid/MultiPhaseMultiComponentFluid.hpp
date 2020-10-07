@@ -218,7 +218,7 @@ public:
     return KernelWrapper( m_phaseDensityFuns,
                           m_phaseViscosityFuns,
                           m_flashModel,
-                          m_componentMolarWeight,
+                          m_componentMolarWeight.toViewConst(),
                           m_useMass,
                           m_phaseFraction,
                           m_dPhaseFraction_dPressure,
@@ -261,7 +261,7 @@ private:
   // phase PVT parameter filenames
   path_array m_phasePVTParaFiles;
 
-  string m_flashModelParaFile;
+  Path m_flashModelParaFile;
 
   // number of entries corrosponds to number of phases
   std::vector< std::shared_ptr< PVTProps::PVTFunction const > > m_phaseDensityFuns;

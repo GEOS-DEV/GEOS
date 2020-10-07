@@ -121,6 +121,18 @@ protected:
   }
   
 public:
+  GEOSX_HOST_DEVICE
+  virtual void getStress( localIndex const k,
+                          localIndex const q,
+                          real64 (& stress)[6] ) const
+  {
+    stress[0] = this->m_newStress( k, q, 0 );
+    stress[1] = this->m_newStress( k, q, 1 );
+    stress[2] = this->m_newStress( k, q, 2 );
+    stress[3] = this->m_newStress( k, q, 3 );
+    stress[4] = this->m_newStress( k, q, 4 );
+    stress[5] = this->m_newStress( k, q, 5 );
+  }
 
   /// A reference the current material stress at quadrature points.
   arrayView3d< real64, solid::STRESS_USD > const m_newStress;
@@ -227,8 +239,8 @@ public:
   {
     smallStrainUpdate( k, q, Ddt, stress, stiffness );
     
-    real64 temp[6];
-    LvArray::tensorOps::AikSymBklAjl< 3 >( temp, Rot, m_newStress[ k ][ q ] );
+    real64 temp[6] = { 0 };
+    LvArray::tensorOps::Rij_eq_AikSymBklAjl< 3 >( temp, Rot, m_newStress[ k ][ q ] );
     LvArray::tensorOps::copy< 6 >( stress, temp );
     saveStress( k, q, stress);
   }
@@ -411,9 +423,10 @@ public:
   //////////////// "LEGACY" INTERFACE BELOW -- TO REVISIT ////////////////////////
   
   /**
-   * accessor to return the stiffness at a given element
-   * @param k the element number
-   * @param c the stiffness array
+   * Return the stiffness at a given element and quadrature point.
+   * @param k The element index.
+   * @param q The quadrature point index.
+   * @param c The stiffness array in Voigt notation.
    */
   GEOSX_HOST_DEVICE
   virtual void GetStiffness( localIndex const k, real64 ( &c )[6][6] ) const
@@ -516,7 +529,10 @@ public:
     GEOSX_ERROR("SolidBase::HyperElastic() not implemented");
   }
   
-  
+
+  GEOSX_HOST_DEVICE
+  virtual real64 calculateStrainEnergyDensity( localIndex const k,
+                                               localIndex const q ) const = 0;
   ///////////////////// end "legacy" interface //////////////////////////////
 
 };
@@ -544,7 +560,7 @@ public:
 
   virtual void allocateConstitutiveData( dataRepository::Group * const parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
-  
+
   struct viewKeyStruct : public ConstitutiveBase::viewKeyStruct
   {
     static constexpr auto stressString = "stress";
@@ -559,25 +575,25 @@ public:
   ///@{
 
   /// Non-const/mutable accessor for stress
-  arrayView3d< real64, solid::STRESS_USD > const & getStress()
+  arrayView3d< real64, solid::STRESS_USD > const getStress()
   {
     return m_newStress;
   }
 
   /// Const/non-mutable accessor for stress
-  arrayView3d< real64 const, solid::STRESS_USD > const & getStress() const
+  arrayView3d< real64 const, solid::STRESS_USD > const getStress() const
   {
     return m_newStress;
   }
 
   /// Non-const/Mutable accessor for density.
-  arrayView2d< real64 > const & getDensity()
+  arrayView2d< real64 > const getDensity()
   {
     return m_density;
   }
 
   /// Const/non-mutable accessor for density
-  arrayView2d< real64 const > const & getDensity() const
+  arrayView2d< real64 const > const getDensity() const
   {
     return m_density;
   }

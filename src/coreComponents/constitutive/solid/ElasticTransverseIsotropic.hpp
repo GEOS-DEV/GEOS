@@ -22,6 +22,7 @@
 #include "SolidBase.hpp"
 #include "constitutive/ExponentialRelation.hpp"
 #include "LvArray/src/tensorOps.hpp"
+#include "SolidModelDiscretizationOpsTransverseIsotropic.hpp"
 
 namespace geosx
 {
@@ -40,6 +41,7 @@ namespace constitutive
 class ElasticTransverseIsotropicUpdates : public SolidBaseUpdates
 {
 public:
+  using DiscretizationOps = SolidModelDiscretizationOpsTransverseIsotropic;
 
   /**
    * @brief Constructor
@@ -142,7 +144,41 @@ public:
                             real64 const ( &Ddt )[ 6 ],
                             real64 const ( &Rot )[ 3 ][ 3 ] ) const override final;
 
-protected:
+  GEOSX_HOST_DEVICE
+  virtual void HyperElastic( localIndex const k,
+                             real64 const (&FmI)[3][3],
+                             real64 ( &stress )[ 6 ] ) const override final;
+
+  GEOSX_HOST_DEVICE
+  virtual void HyperElastic( localIndex const k,
+                             localIndex const q,
+                             real64 const (&FmI)[3][3] ) const override final;
+
+  GEOSX_FORCE_INLINE
+  GEOSX_HOST_DEVICE
+  void setDiscretizationOps( localIndex const k,
+                             localIndex const q,
+                             DiscretizationOps & discOps ) const
+  {
+    GEOSX_UNUSED_VAR( q )
+    discOps.m_c11 = m_c11[k];
+    discOps.m_c13 = m_c13[k];
+    discOps.m_c33 = m_c33[k];
+    discOps.m_c44 = m_c44[k];
+    discOps.m_c66 = m_c66[k];
+  }
+
+
+  GEOSX_HOST_DEVICE
+  virtual real64 calculateStrainEnergyDensity( localIndex const k,
+                                               localIndex const q ) const override final
+  {
+    GEOSX_UNUSED_VAR( k, q );
+    GEOSX_ERROR( "Not implemented" );
+    return 0;
+  }
+
+private:
 
   /// A reference to the ArrayView holding c11 for each element.
   arrayView1d< real64 const > const m_c11;
@@ -161,10 +197,10 @@ protected:
 };
 
 
-GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
+GEOSX_HOST_DEVICE
 void ElasticTransverseIsotropicUpdates::getElasticStiffness( localIndex const k,
-                                                      real64 ( & stiffness )[6][6] ) const
+                                                             real64 ( & stiffness )[6][6] ) const
 {
   LvArray::tensorOps::fill< 6, 6 >( stiffness, 0 );
   
@@ -203,8 +239,8 @@ void ElasticTransverseIsotropicUpdates::smallStrainNoStateUpdate( localIndex con
   stress[5] = m_c66[k]*totalStrain[5];
 }
 
-GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
+GEOSX_HOST_DEVICE
 void ElasticTransverseIsotropicUpdates::smallStrainUpdate( localIndex const k,
                                                            localIndex const q,
                                                            real64 const ( & strainIncrement )[6],
@@ -216,8 +252,8 @@ void ElasticTransverseIsotropicUpdates::smallStrainUpdate( localIndex const k,
 }
 
 
-GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
+GEOSX_HOST_DEVICE
 void ElasticTransverseIsotropicUpdates::smallStrainNoStateUpdate( localIndex const k,
                                                                   localIndex const q,
                                                                   real64 const ( & totalStrain )[6],
@@ -229,8 +265,8 @@ void ElasticTransverseIsotropicUpdates::smallStrainNoStateUpdate( localIndex con
 }
 
 
-GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
+GEOSX_HOST_DEVICE
 void ElasticTransverseIsotropicUpdates::smallStrainUpdate( localIndex const k,
                                                            localIndex const q,
                                                            real64 const ( & strainIncrement )[6],
@@ -242,8 +278,8 @@ void ElasticTransverseIsotropicUpdates::smallStrainUpdate( localIndex const k,
 }
 
 
-GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
+GEOSX_HOST_DEVICE
 void ElasticTransverseIsotropicUpdates::hypoUpdate( localIndex const k,
                                                     localIndex const q,
                                                     real64 const ( &Ddt )[6],
@@ -309,8 +345,30 @@ ElasticTransverseIsotropicUpdates::
 {
   SmallStrain( k, q, Ddt );
   real64 temp[ 6 ];
-  LvArray::tensorOps::AikSymBklAjl< 3 >( temp, Rot, m_newStress[ k ][ q ] );
+  LvArray::tensorOps::Rij_eq_AikSymBklAjl< 3 >( temp, Rot, m_newStress[ k ][ q ] );
   LvArray::tensorOps::copy< 6 >( m_newStress[ k ][ q ], temp );
+}
+
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void
+ElasticTransverseIsotropicUpdates::
+  HyperElastic( localIndex const GEOSX_UNUSED_PARAM( k ),
+                real64 const (&GEOSX_UNUSED_PARAM( FmI ))[3][3],
+                real64 ( & )[ 6 ] ) const
+{
+  GEOSX_ERROR( "LinearElasticTransverseIsotropicKernelWrapper::HyperElastic() is not implemented!" );
+}
+
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void
+ElasticTransverseIsotropicUpdates::
+  HyperElastic( localIndex const GEOSX_UNUSED_PARAM( k ),
+                localIndex const GEOSX_UNUSED_PARAM( q ),
+                real64 const (&GEOSX_UNUSED_PARAM( FmI ))[3][3] ) const
+{
+  GEOSX_ERROR( "LinearElasticTransverseIsotropicKernelWrapper::HyperElastic() is not implemented!" );
 }
 
 
@@ -489,62 +547,62 @@ public:
    * @brief Const-Getter for 11 component of Voigt stiffness tensor.
    * @return reference to immutable 11 component of Voigt stiffness tensor.
    */
-  arrayView1d< real64 const > const & getC11() const { return m_c11; }
+  arrayView1d< real64 const > getC11() const { return m_c11; }
 
   /**
    * @brief Getter for 11 component of Voigt stiffness tensor.
    * @return reference to mutable 11 component of Voigt stiffness tensor.
    */
-  arrayView1d< real64 >       const & getC11()       { return m_c11; }
+  arrayView1d< real64 > getC11() { return m_c11; }
 
 
   /**
    * @brief Const-Getter for 13 component of Voigt stiffness tensor.
    * @return reference to immutable 13 component of Voigt stiffness tensor.
    */
-  arrayView1d< real64 const > const & getC13() const { return m_c13; }
+  arrayView1d< real64 const > getC13() const { return m_c13; }
 
   /**
    * @brief Getter for 13 component of Voigt stiffness tensor.
    * @return reference to mutable 13 component of Voigt stiffness tensor.
    */
-  arrayView1d< real64 >       const & getC13()       { return m_c13; }
+  arrayView1d< real64 > getC13() { return m_c13; }
 
   /**
    * @brief Const-Getter for 33 component of Voigt stiffness tensor.
    * @return reference to immutable 33 component of Voigt stiffness tensor.
    */
-  arrayView1d< real64 const > const & getC33() const { return m_c33; }
+  arrayView1d< real64 const > getC33() const { return m_c33; }
 
   /**
    * @brief Getter for 33 component of Voigt stiffness tensor.
    * @return reference to mutable 33 component of Voigt stiffness tensor.
    */
-  arrayView1d< real64 >       const & getC33()       { return m_c33; }
+  arrayView1d< real64 > getC33() { return m_c33; }
 
   /**
    * @brief Const-Getter for 44 component of Voigt stiffness tensor.
    * @return reference to immutable 44 component of Voigt stiffness tensor.
    */
-  arrayView1d< real64 const > const & getC44() const { return m_c44; }
+  arrayView1d< real64 const > getC44() const { return m_c44; }
 
   /**
    * @brief Getter for 44 component of Voigt stiffness tensor.
    * @return reference to mutable 44 component of Voigt stiffness tensor.
    */
-  arrayView1d< real64 >       const & getC44()       { return m_c44; }
+  arrayView1d< real64 > getC44() { return m_c44; }
 
   /**
    * @brief Const-Getter for 66 component of Voigt stiffness tensor.
    * @return reference to immutable 66 component of Voigt stiffness tensor.
    */
-  arrayView1d< real64 const > const & getC66() const { return m_c66; }
+  arrayView1d< real64 const > getC66() const { return m_c66; }
 
   /**
    * @brief Getter for 66 component of Voigt stiffness tensor.
    * @return reference to mutable 66 component of Voigt stiffness tensor.
    */
-  arrayView1d< real64 >       const & getC66()       { return m_c66; }
+  arrayView1d< real64 > getC66() { return m_c66; }
 
   /**
    * @brief Create a instantiation of the

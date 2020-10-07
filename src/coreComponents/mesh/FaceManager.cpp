@@ -187,10 +187,10 @@ void findSmallestThreeValues( arrayView1d< localIndex const > const & values, lo
  * @brief Populate the facesByLowestNode map.
  * @param [in] elementManager the ElementRegionManager associated with this mesh level.
  * @param [inout] facesByLowestNode of size numNodes, where each sub array has been preallocated to hold
- *        *enough* space.
- * For each face of each element, this function gets the three lowest nodes in the face {n0, n1, n2}, creates
- * an EdgeBuilder associated with the face from n1 and n2 and then appends the EdgeBuilder to facesByLowestNode[ n0 ].
- * Finally it sorts the contents of each sub-array of facesByLowestNode from least to greatest.
+ *   *enough* space.
+ * @details For each face of each element, this function gets the three lowest nodes in the face {n0, n1, n2},
+ *   appends a FaceBuilder to @c facesByLowestNode[ n0 ]. Finally it sorts the contents of each sub-array of
+ *   facesByLowestNode from least to greatest.
  */
 void createFacesByLowestNode( ElementRegionManager const & elementManager,
                               ArrayOfArraysView< FaceBuilder > const & facesByLowestNode )
@@ -619,10 +619,10 @@ void FaceManager::SetDomainBoundaryObjects( NodeManager * const nodeManager )
 {
   // Set value of domainBounaryIndicator to one if it is found to have only one elements that it
   // is connected to.
-  integer_array & faceDomainBoundaryIndicator = this->getReference< integer_array >( viewKeys.domainBoundaryIndicator );
+  arrayView1d< integer > const & faceDomainBoundaryIndicator = this->getDomainBoundaryIndicator();
   faceDomainBoundaryIndicator.setValues< serialPolicy >( 0 );
 
-  arrayView2d< localIndex const > const & elemRegionList = this->elementRegionList();
+  arrayView2d< localIndex const > const elemRegionList = this->elementRegionList();
 
   forAll< parallelHostPolicy >( size(), [&]( localIndex const kf )
   {
@@ -632,10 +632,10 @@ void FaceManager::SetDomainBoundaryObjects( NodeManager * const nodeManager )
     }
   } );
 
-  integer_array & nodeDomainBoundaryIndicator = nodeManager->getReference< integer_array >( nodeManager->viewKeys.domainBoundaryIndicator );
+  arrayView1d< integer > const & nodeDomainBoundaryIndicator = nodeManager->getDomainBoundaryIndicator();
   nodeDomainBoundaryIndicator.setValues< serialPolicy >( 0 );
 
-  ArrayOfArraysView< localIndex const > const & faceToNodesMap = this->nodeList().toViewConst();
+  ArrayOfArraysView< localIndex const > const faceToNodesMap = this->nodeList().toViewConst();
 
   forAll< parallelHostPolicy >( size(), [&]( localIndex const k )
   {
@@ -653,8 +653,7 @@ void FaceManager::SetDomainBoundaryObjects( NodeManager * const nodeManager )
 
 void FaceManager::SetIsExternal()
 {
-  integer_array const &
-  isDomainBoundary = this->getReference< integer_array >( viewKeys.domainBoundaryIndicator );
+  arrayView1d< integer const > const & isDomainBoundary = this->getDomainBoundaryIndicator();
 
   m_isExternal.setValues< serialPolicy >( 0 );
   for( localIndex k=0; k<size(); ++k )
@@ -684,9 +683,9 @@ void FaceManager::SortAllFaceNodes( NodeManager const * const nodeManager,
 {
   GEOSX_MARK_FUNCTION;
 
-  arrayView2d< localIndex const > const & elemRegionList = elementRegionList();
-  arrayView2d< localIndex const > const & elemSubRegionList = elementSubRegionList();
-  arrayView2d< localIndex const > const & elemList = elementList();
+  arrayView2d< localIndex const > const elemRegionList = elementRegionList();
+  arrayView2d< localIndex const > const elemSubRegionList = elementSubRegionList();
+  arrayView2d< localIndex const > const elemList = elementList();
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X = nodeManager->referencePosition();
 
   const indexType max_face_nodes = getMaxFaceNodes();
@@ -701,8 +700,9 @@ void FaceManager::SortAllFaceNodes( NodeManager const * const nodeManager,
   {
     ElementRegionBase const * const elemRegion = elemManager->GetRegion( elemRegionList[kf][0] );
     CellElementSubRegion const * const subRegion = elemRegion->GetSubRegion< CellElementSubRegion >( elemSubRegionList[kf][0] );
-    const localIndex numFaceNodes = faceToNodeMap.sizeOfArray( kf );
-    SortFaceNodes( X, subRegion->getElementCenter()[ elemList( kf, 0 ) ], faceToNodeMap[ kf ], numFaceNodes );
+    localIndex const numFaceNodes = faceToNodeMap.sizeOfArray( kf );
+    arrayView2d< real64 const > const elemCenter = subRegion->getElementCenter();
+    SortFaceNodes( X, elemCenter[ elemList( kf, 0 ) ], faceToNodeMap[ kf ], numFaceNodes );
   } );
 }
 
@@ -803,8 +803,8 @@ void FaceManager::ExtractMapFromObjectForAssignGlobalIndexNumbers( ObjectManager
 
   localIndex const numFaces = size();
 
-  ArrayOfArraysView< localIndex const > const & faceToNodeMap = this->nodeList().toViewConst();
-  arrayView1d< integer const > const & isDomainBoundary = this->getReference< integer_array >( viewKeys.domainBoundaryIndicator );
+  ArrayOfArraysView< localIndex const > const faceToNodeMap = this->nodeList().toViewConst();
+  arrayView1d< integer const > const isDomainBoundary = this->getDomainBoundaryIndicator();
 
   globalFaceNodes.resize( numFaces );
 
@@ -959,7 +959,7 @@ void FaceManager::compressRelationMaps()
 
 void FaceManager::enforceStateFieldConsistencyPostTopologyChange( std::set< localIndex > const & targetIndices )
 {
-  arrayView1d< localIndex const > const & childFaceIndices = getExtrinsicData< extrinsicMeshData::ChildIndex >();
+  arrayView1d< localIndex const > const childFaceIndices = getExtrinsicData< extrinsicMeshData::ChildIndex >();
 
   ObjectManagerBase::enforceStateFieldConsistencyPostTopologyChange ( targetIndices );
 

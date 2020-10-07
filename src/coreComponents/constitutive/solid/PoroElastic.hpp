@@ -46,6 +46,7 @@ public:
   using UPDATE_BASE::hyperUpdate;
   
   // legacy interface
+  using UPDATE_BASE::setDiscretizationOps;
   using UPDATE_BASE::GetStiffness;
   using UPDATE_BASE::SmallStrainNoState;
   using UPDATE_BASE::SmallStrain;
@@ -107,8 +108,7 @@ public:
     return BASE::template createDerivedKernelUpdates< KernelWrapper >( m_biotCoefficient );
   }
 
-
-  struct viewKeyStruct : public ConstitutiveBase::viewKeyStruct
+  struct viewKeyStruct : public BASE::viewKeyStruct
   {
 
     static constexpr auto compressibilityString =  "compressibility";

@@ -271,12 +271,12 @@ struct QTPFACellInnerProductKernel
     HybridFVMInnerProductHelper::MakeFullTensor( elemPerm, permMat );
 
     // 3) compute N K N'
-    LvArray::tensorOps::AikBjk< 3, NF, 3 >( work_dimByNumFaces,
-                                            permMat,
-                                            normalsMat );
-    LvArray::tensorOps::AikBkj< NF, NF, 3 >( transMatrix,
-                                             normalsMat,
-                                             work_dimByNumFaces );
+    LvArray::tensorOps::Rij_eq_AikBjk< 3, NF, 3 >( work_dimByNumFaces,
+                                                   permMat,
+                                                   normalsMat );
+    LvArray::tensorOps::Rij_eq_AikBkj< NF, NF, 3 >( transMatrix,
+                                                    normalsMat,
+                                                    work_dimByNumFaces );
 
     // 4) compute the orthonormalization of the matrix cellToFaceVec
     HybridFVMInnerProductHelper::Orthonormalize< NF >( q0, q1, q2, cellToFaceMat );
@@ -284,8 +284,8 @@ struct QTPFACellInnerProductKernel
     // 5) compute P_Q = I - QQ'
     // note: we compute -P_Q and then at 6) ( - P_Q ) D ( - P_Q )
     LvArray::tensorOps::addIdentity< NF >( worka_numFacesByNumFaces, -1 );
-    LvArray::tensorOps::plusAikAjk< NF, 3 >( worka_numFacesByNumFaces,
-                                             cellToFaceMat );
+    LvArray::tensorOps::Rij_add_AikAjk< NF, 3 >( worka_numFacesByNumFaces,
+                                                 cellToFaceMat );
 
     // 6) compute P_Q D P_Q where D = diag(diag(N K N'))
     // 7) compute T = ( N K N' + t U diag(diag(N K N')) U ) / elemVolume
@@ -295,13 +295,13 @@ struct QTPFACellInnerProductKernel
       workb_numFacesByNumFaces[ i ][ i ] = scale * transMatrix[ i ][ i ];
     }
 
-    LvArray::tensorOps::AikBkj< NF, NF, NF >( workc_numFacesByNumFaces,
-                                              workb_numFacesByNumFaces,
-                                              worka_numFacesByNumFaces );
+    LvArray::tensorOps::Rij_eq_AikBkj< NF, NF, NF >( workc_numFacesByNumFaces,
+                                                     workb_numFacesByNumFaces,
+                                                     worka_numFacesByNumFaces );
     LvArray::tensorOps::scale< NF, NF >( transMatrix, 1 / elemVolume );
-    LvArray::tensorOps::plusAikBkj< NF, NF, NF >( transMatrix,
-                                                  worka_numFacesByNumFaces,
-                                                  workc_numFacesByNumFaces );
+    LvArray::tensorOps::Rij_add_AikBkj< NF, NF, NF >( transMatrix,
+                                                      worka_numFacesByNumFaces,
+                                                      workc_numFacesByNumFaces );
   }
 
 };

@@ -13,8 +13,8 @@
       <NonlinearSolverParameters
         newtonTol="1.0e-4"
         dtIncIterLimit="0.4"
-        maxTimeStepCuts="10"    
-        lineSearchAction="0"
+        maxTimeStepCuts="10"
+        lineSearchAction="None"
         newtonMaxIter="20"/>
       <!-- Note that the direct solver is quite slow -->
       <!-- This block will be updated when Hypre becomes the default  -->
@@ -40,7 +40,7 @@
       fluidNames="{ fluid }"
       relPermNames="{ relperm }"
       wellTemperature="297.15"
-      maxCompFractionChange="0.3"      
+      maxCompFractionChange="0.3"
       logLevel="1"
       useMass="1">
       <WellControls
@@ -198,7 +198,7 @@
     maxTime="1.4e7">
     <PeriodicEvent
       name="solverApplications"
-      maxEventDt="2e5"  
+      maxEventDt="2e5"
       target="/Solvers/coupledFlowAndWells"/>
 
     <PeriodicEvent
@@ -281,7 +281,6 @@
   <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_CONSTITUTIVE_END -->
   <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_FIELD_SPECS -->
   <FieldSpecifications>
-
     <FieldSpecification
       name="initialPressure"
       initialCondition="1"
@@ -330,4 +329,3 @@
 
   <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_OUTPUT_END -->
 </Problem>
-

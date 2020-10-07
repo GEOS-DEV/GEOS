@@ -23,7 +23,6 @@
       solidMaterialNames="{ granite }"
       rockToughness="0.5e100"
       nodeBasedSIF="1"
-      discretization="FE1"
       fractureRegion="Fracture"
       logLevel="1"
       targetRegions="{ Region2 }"

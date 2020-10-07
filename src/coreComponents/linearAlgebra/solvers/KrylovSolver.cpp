@@ -49,37 +49,40 @@ KrylovSolver< VECTOR >::Create( LinearSolverParameters const & parameters,
                                 LinearOperator< VECTOR > const & matrix,
                                 LinearOperator< VECTOR > const & precond )
 {
-  if( parameters.solverType == "cg" )
+  switch( parameters.solverType )
   {
-    GEOSX_ERROR_IF( !parameters.isSymmetric, "Cannot use CG solver with a non-symmetric system" );
-    return std::make_unique< CGsolver< Vector > >( matrix,
-                                                   precond,
-                                                   parameters.krylov.relTolerance,
-                                                   parameters.krylov.maxIterations,
-                                                   parameters.logLevel );
+    case LinearSolverParameters::SolverType::cg:
+    {
+      GEOSX_ERROR_IF( !parameters.isSymmetric, "Cannot use CG solver with a non-symmetric system" );
+      return std::make_unique< CGsolver< Vector > >( matrix,
+                                                     precond,
+                                                     parameters.krylov.relTolerance,
+                                                     parameters.krylov.maxIterations,
+                                                     parameters.logLevel );
+    }
+    case LinearSolverParameters::SolverType::bicgstab:
+    {
+      return std::make_unique< BiCGSTABsolver< Vector > >( matrix,
+                                                           precond,
+                                                           parameters.krylov.relTolerance,
+                                                           parameters.krylov.maxIterations,
+                                                           parameters.logLevel );
+    }
+    case LinearSolverParameters::SolverType::gmres:
+    {
+      return std::make_unique< GMRESsolver< Vector > >( matrix,
+                                                        precond,
+                                                        parameters.krylov.relTolerance,
+                                                        parameters.krylov.maxIterations,
+                                                        parameters.logLevel,
+                                                        parameters.krylov.maxRestart );
+    }
+    default:
+    {
+      GEOSX_ERROR( "Unsupported linear solver type: " << parameters.solverType );
+    }
   }
-  else if( parameters.solverType == "bicgstab" )
-  {
-    return std::make_unique< BiCGSTABsolver< Vector > >( matrix,
-                                                         precond,
-                                                         parameters.krylov.relTolerance,
-                                                         parameters.krylov.maxIterations,
-                                                         parameters.logLevel );
-  }
-  else if( parameters.solverType == "gmres" )
-  {
-    return std::make_unique< GMRESsolver< Vector > >( matrix,
-                                                      precond,
-                                                      parameters.krylov.relTolerance,
-                                                      parameters.krylov.maxIterations,
-                                                      parameters.logLevel,
-                                                      parameters.krylov.maxRestart );
-  }
-  else
-  {
-    GEOSX_ERROR( "Unsupported linear solver type: " << parameters.solverType );
-    return {};
-  }
+  return {};
 }
 
 // -----------------------

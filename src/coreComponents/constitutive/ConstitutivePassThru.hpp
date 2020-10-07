@@ -21,9 +21,10 @@
 #define GEOSX_CONSTITUTIVE_CONSTITUTIVEPASSTHRU_HPP_
 
 #include "NullModel.hpp"
+#include "solid/Damage.hpp"
+#include "solid/DruckerPrager.hpp"
 #include "solid/ElasticIsotropic.hpp"
 #include "solid/ElasticTransverseIsotropic.hpp"
-#include "solid/DruckerPrager.hpp"
 #include "solid/PoroElastic.hpp"
 
 namespace geosx
@@ -57,7 +58,11 @@ struct ConstitutivePassThru< SolidBase >
   {
     GEOSX_ERROR_IF( constitutiveRelation == nullptr, "ConstitutiveBase* == nullptr" );
 
-    if( dynamic_cast< ElasticIsotropic * >( constitutiveRelation ) )
+    if( dynamic_cast< Damage< ElasticIsotropic > * >( constitutiveRelation ) )
+    {
+      lambda( static_cast< Damage< ElasticIsotropic > * >( constitutiveRelation) );
+    }
+    else if( dynamic_cast< ElasticIsotropic * >( constitutiveRelation ) )
     {
       lambda( static_cast< ElasticIsotropic * >( constitutiveRelation) );
     }
@@ -152,6 +157,36 @@ struct ConstitutivePassThru< PoroElasticBase >
   }
 };
 
+/**
+ * Specialization for the Damage models.
+ */
+template<>
+struct ConstitutivePassThru< DamageBase >
+{
+  template< typename LAMBDA >
+  static
+  void Execute( ConstitutiveBase * const constitutiveRelation,
+                LAMBDA && lambda )
+  {
+    GEOSX_ERROR_IF( constitutiveRelation == nullptr, "ConstitutiveBase* == nullptr" );
+
+    if( dynamic_cast< Damage< ElasticIsotropic > * >( constitutiveRelation ) )
+    {
+      lambda( static_cast< Damage< ElasticIsotropic > * >( constitutiveRelation) );
+    }
+    else
+    {
+      string name;
+      if( constitutiveRelation !=nullptr )
+      {
+        name = constitutiveRelation->getName();
+      }
+      GEOSX_ERROR( "ConstitutivePassThru<DamageBase>::Execute( "<<
+                   constitutiveRelation<<" ) failed. ( "<<
+                   constitutiveRelation<<" ) is named "<<name );
+    }
+  }
+};
 
 }
 }

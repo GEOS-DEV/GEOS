@@ -113,6 +113,8 @@ protected:
 
 private:
 
+  void addToFractureStencil( DomainPartition & domain );
+
   /**
    * @struct viewKeyStruct holds char strings and viewKeys for fast lookup
    */
@@ -125,7 +127,6 @@ private:
     constexpr static auto rockToughnessString = "rockToughness";
   }; //SurfaceGenViewKeys;
 
-private:
   // solid solver name
   array1d< string > m_solidMaterialNames;
   // fracture region name

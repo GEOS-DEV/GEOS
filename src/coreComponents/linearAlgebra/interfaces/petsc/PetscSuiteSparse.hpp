@@ -13,22 +13,27 @@
  */
 
 /**
- * @file SolidMechanicsLagrangianSSLEKernels.hpp
+ * @file PetscSuiteSparse.hpp
  */
 
-#pragma once
+#ifndef GEOSX_LINEARALGEBRA_INTERFACES_PETSCSUITESPARSE_HPP_
+#define GEOSX_LINEARALGEBRA_INTERFACES_PETSCSUITESPARSE_HPP_
 
 #include "common/DataTypes.hpp"
-#include "common/TimingMacros.hpp"
-#include "constitutive/ConstitutiveBase.hpp"
-#include "finiteElement/Kinematics.h"
-#include "rajaInterface/GEOS_RAJA_Interface.hpp"
+#include "linearAlgebra/interfaces/petsc/PetscMatrix.hpp"
+#include "linearAlgebra/utilities/LinearSolverParameters.hpp"
 
 namespace geosx
 {
 
-namespace SolidMechanicsLagrangianSSLEKernels
-{} // namespace SolidMechanicsLagrangianSSLEKernels
+/**
+ * @brief Sets SuiteSparse options
+ * @param[in] matrix the PetscMatrix object
+ * @param[in] params the linear solver parameters
+ */
+void SuiteSparseSetFromOptions( PetscMatrix const & matrix,
+                                LinearSolverParameters const & params );
 
+}
 
-} // namespace geosx
+#endif /*GEOSX_LINEARALGEBRA_INTERFACES_PETSCSUITESPARSE_HPP_*/

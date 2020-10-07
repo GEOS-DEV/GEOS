@@ -39,6 +39,9 @@ WellSolverBase::WellSolverBase( std::string const & name,
   this->registerWrapper( viewKeyStruct::fluidNamesString, &m_fluidModelNames )->
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "Name of fluid constitutive object to use for this solver." );
+
+  this->getWrapper< string >( viewKeyStruct::discretizationString )->
+    setInputFlag( InputFlags::FALSE );
 }
 
 Group * WellSolverBase::CreateChild( string const & childKey, string const & childName )
@@ -203,15 +206,15 @@ void WellSolverBase::PrecomputeData( DomainPartition & domain )
   {
     PerforationData * const perforationData = subRegion.GetPerforationData();
 
-    arrayView2d< real64 const > const & wellElemLocation = subRegion.getElementCenter();
+    arrayView2d< real64 const > const wellElemLocation = subRegion.getElementCenter();
 
-    arrayView1d< real64 > const & wellElemGravCoef =
+    arrayView1d< real64 > const wellElemGravCoef =
       subRegion.getReference< array1d< real64 > >( viewKeyStruct::gravityCoefString );
 
-    arrayView1d< R1Tensor const > const & perfLocation =
+    arrayView1d< R1Tensor const > const perfLocation =
       perforationData->getReference< array1d< R1Tensor > >( PerforationData::viewKeyStruct::locationString );
 
-    arrayView1d< real64 > const & perfGravCoef =
+    arrayView1d< real64 > const perfGravCoef =
       perforationData->getReference< array1d< real64 > >( viewKeyStruct::gravityCoefString );
 
     for( localIndex iwelem = 0; iwelem < subRegion.size(); ++iwelem )

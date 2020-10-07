@@ -45,6 +45,8 @@
 #include <cuda.h>
 #endif
 
+#include <fenv.h>
+
 namespace geosx
 {
 namespace internal
@@ -159,7 +161,7 @@ void setupCaliper()
   adiak::value( "compiler version", adiak::version( "clang" __clang_version__ ) );
 #elif defined( __INTEL_COMPILER )
   adiak::value( "compiler", "intel" );
-  adiak::value( "compiler version", adiak::version( "intel" __INTEL_COMPILER ) );
+  adiak::value( "compiler version", adiak::version( "intel" STRINGIZE( __INTEL_COMPILER ) ) );
 #elif defined( __GNUC__ )
   adiak::value( "compiler", "gcc" );
   adiak::value( "compiler version", adiak::version( "gcc" __VERSION__ ) );
@@ -179,7 +181,7 @@ void setupCaliper()
   std::int64_t const numThreads = 1;
   adiak::value( "OpenMP", "Off" );
 #endif
-  pushStatsIntoAdiak( "numThreads", numThreads );
+  pushStatsIntoAdiak( "numThreads", static_cast< int >(numThreads) );
 
   // CUDA info
   int cudaRuntimeVersion = 0;
@@ -490,7 +492,12 @@ void finalizeLogger()
 void setupCXXUtils()
 {
   LvArray::system::setSignalHandling( []( int const signal ) { LvArray::system::stackTraceHandler( signal, true ); } );
+
+#if defined(GEOSX_USE_FPE)
   LvArray::system::setFPE();
+#else
+  LvArray::system::disableFloatingPointExceptions( FE_ALL_EXCEPT );
+#endif
 }
 
 ///////////////////////////////////////////////////////////////////////////////

@@ -145,6 +145,12 @@ public:
    */
   virtual void move( LvArray::MemorySpace const space, bool const touch ) const = 0;
 
+  /**
+   * @brief Calls TypeRegex< T >::get().
+   * @return regex used to validate inputs of wrapped type
+   */
+  virtual string typeRegex() const = 0;
+
   ///@}
 
   /**
@@ -390,6 +396,7 @@ public:
     if( input == InputFlags::OPTIONAL || input == InputFlags::REQUIRED )
     {
       this->setSizedFromParent( 0 );
+      m_restart_flags = RestartFlags::WRITE;
     }
     m_inputFlag = input;
     return this;

@@ -121,10 +121,10 @@ public:
 
   localIndex numFluidPhases() const { return m_phaseNames.size(); }
 
-  arrayView1d< string const > const & phaseNames() const { return m_phaseNames; }
+  arrayView1d< string const > phaseNames() const { return m_phaseNames; }
 
-  arrayView3d< real64 const > const & phaseCapPressure() const { return m_phaseCapPressure; }
-  arrayView4d< real64 const > const & dPhaseCapPressure_dPhaseVolFraction() const { return m_dPhaseCapPressure_dPhaseVolFrac; }
+  arrayView3d< real64 const > phaseCapPressure() const { return m_phaseCapPressure; }
+  arrayView4d< real64 const > dPhaseCapPressure_dPhaseVolFraction() const { return m_dPhaseCapPressure_dPhaseVolFrac; }
 
   struct viewKeyStruct : ConstitutiveBase::viewKeyStruct
   {

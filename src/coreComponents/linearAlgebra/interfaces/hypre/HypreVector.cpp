@@ -36,7 +36,7 @@ static_assert( sizeof( HYPRE_BigInt ) == sizeof( globalIndex ),
                "HYPRE_BigInt and geosx::globalIndex must have the same size" );
 
 static_assert( std::is_signed< HYPRE_BigInt >::value == std::is_signed< globalIndex >::value,
-               "HYPRE_BigInt and geoex::globalIndex must both be signed or unsigned" );
+               "HYPRE_BigInt and geosx::globalIndex must both be signed or unsigned" );
 
 static_assert( std::is_same< HYPRE_Real, real64 >::value,
                "HYPRE_Real and geosx::real64 must be the same type" );

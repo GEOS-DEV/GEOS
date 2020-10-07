@@ -25,10 +25,9 @@
       forceDt="1.0e-5"
       target="/Solvers/lagsolve"/>
 
-<!-- This event is applied every 5e-4s.  The targetExactTimestep
+    <!-- This event is applied every 5e-4s.  The targetExactTimestep
     flag allows this event to request a dt modification to match an
     integer multiple of the timeFrequency. -->
-
     <PeriodicEvent
       name="blueprint"
       timeFrequency="1.0e-4"
@@ -47,23 +46,23 @@
       targetExactTimestep="0"
       target="/Outputs/restartOutput"/>
 
-    <PeriodicEvent name="timeHistoryCollection"
+    <PeriodicEvent
+      name="timeHistoryCollection"
       timeFrequency="1.0e-5"
       targetExactTimestep="1"
-      target="/Tasks/velocityCollection" />
+      target="/Tasks/velocityCollection"/>
 
-    <PeriodicEvent name="timeHistoryOutput"
+    <PeriodicEvent
+      name="timeHistoryOutput"
       timeFrequency="5.0e-4"
       targetExactTimestep="0"
-      target="/Outputs/timeHistoryOutput" />
-
+      target="/Outputs/timeHistoryOutput"/>
   </Events>
 
   <NumericalMethods>
     <FiniteElements>
       <FiniteElementSpace
         name="FE1"
-
         order="1"/>
     </FiniteElements>
   </NumericalMethods>
@@ -96,7 +95,6 @@
   </Constitutive>
 
   <FieldSpecifications>
-
     <FieldSpecification
       name="source0"
       initialCondition="1"
@@ -163,18 +161,17 @@
 
     <TimeHistory
       name="timeHistoryOutput"
-      sources="{/Tasks/velocityCollection}"
-      filename="veloc_history" />
+      sources="{ /Tasks/velocityCollection }"
+      filename="veloc_history"/>
   </Outputs>
 
   <Tasks>
     <PackCollection
       name="velocityCollection"
       objectPath="nodeManager"
-      setNames="{source}"
-      fieldName="Velocity" />
+      setNames="{ source }"
+      fieldName="Velocity"/>
   </Tasks>
-
 
   <Geometry>
     <Box

@@ -24,7 +24,6 @@
 #include "finiteElement/Kinematics.h"
 #include "finiteElement/kernelInterface/ImplicitKernelBase.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
-#include "TimeIntegrationOption.hpp"
 
 namespace geosx
 {
@@ -79,76 +78,10 @@ inline void displacementUpdate( arrayView2d< real64 const, nodes::VELOCITY_USD >
 
 
 /**
- * @brief Function to select which templated kernel function to call.
- * @tparam KERNELWRAPPER A struct or class that contains the following method
- *  "Launch<NUM_NODES_PER_ELEM, NUM_QUADRATURE_POINTS, CONSTITUTIVE_TYPE>( CONSTITUTIVE_TYPE *, PARAMS... )"
- * @tparam PARAMS Variadic parameter pack to pass arguments to Launch function.
- * @param NUM_NODES_PER_ELEM The number of nodes in an element.
- * @param NUM_QUADRATURE_POINTS The number of quadrature points in an element.
- * @param params Variadic parameter list to hold all parameters that are forwarded to the kernel function.
- * @return Depends on the kernel.
- */
-//template< typename KERNELWRAPPER, typename ... PARAMS >
-//inline real64
-//ElementKernelLaunchSelector( localIndex NUM_NODES_PER_ELEM,
-//                             localIndex NUM_QUADRATURE_POINTS,
-//                             constitutive::ConstitutiveBase * const constitutiveRelation,
-//                             PARAMS && ... params )
-//{
-//  real64 rval = 0;
-//
-//  using namespace constitutive;
-//
-//  ConstitutivePassThru< SolidBase >::Execute( constitutiveRelation,
-//                                              [&]( auto * const constitutive )
-//  {
-//    rval = finiteElementLaunchDispatch< KERNELWRAPPER >( NUM_NODES_PER_ELEM, NUM_QUADRATURE_POINTS, &constitutive, std::forward< PARAMS >(
-// params )... );
-//  } );
-//  return rval;
-//}
-
-/**
  * @struct Structure to wrap templated function that implements the explicit time integration kernel.
  */
 struct ExplicitKernel
 {
-
-#if defined(GEOSX_USE_CUDA)
-  #define CALCFEMSHAPE
-#endif
-
-
-  template< int N, int USD >
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  static
-  void Integrate( arraySlice1d< real64 const, USD > const & fieldVar,
-  #if defined(CALCFEMSHAPE)
-                  real64 const (&dNdX)[ N ][ 3 ],
-  #else
-                  arraySlice2d< real64 const > const & dNdX,
-  #endif
-                  real64 const detJ,
-                  real64 const detF,
-                  real64 const ( &fInv )[ 3 ][ 3 ],
-                  real64 ( & result )[ N ][ 3 ] )
-  {
-    GEOSX_ASSERT_EQ( fieldVar.size(), 6 );
-
-    real64 const integrationFactor = -detJ * detF;
-
-    real64 P[ 3 ][ 3 ];
-    LvArray::tensorOps::symAikBjk< 3 >( P, fieldVar, fInv );
-    LvArray::tensorOps::scale< 3, 3 >( P, integrationFactor );
-
-    for( int a = 0; a < N; ++a )    // loop through all shape functions in element
-    {
-      LvArray::tensorOps::plusAijBj< 3, 3 >( result[ a ], P, dNdX[ a ] );
-    }
-  }
-
-
 
   static inline real64
   CalculateSingleNodalForce( localIndex const k,

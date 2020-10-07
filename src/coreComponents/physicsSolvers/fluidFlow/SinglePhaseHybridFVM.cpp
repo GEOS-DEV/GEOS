@@ -242,9 +242,9 @@ void SinglePhaseHybridFVM::AssembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( t
                                         facePres,
                                         dFacePres,
                                         faceGravCoef,
-                                        m_mobility.toViewConst(),
-                                        m_dMobility_dPres.toViewConst(),
-                                        elemDofNumber.toViewConst(),
+                                        m_mobility.toNestedViewConst(),
+                                        m_dMobility_dPres.toNestedViewConst(),
+                                        elemDofNumber.toNestedViewConst(),
                                         dofManager.rankOffset(),
                                         lengthTolerance,
                                         dt,
@@ -318,8 +318,7 @@ real64 SinglePhaseHybridFVM::CalculateResidualNorm( DomainPartition const & doma
     subRegionCounter++;
   } );
 
-  arrayView1d< integer const > const & faceGhostRank =
-    faceManager.getReference< array1d< integer > >( ObjectManagerBase::viewKeyStruct::ghostRankString );
+  arrayView1d< integer const > const & faceGhostRank = faceManager.ghostRank();
   arrayView1d< globalIndex const > const & faceDofNumber =
     faceManager.getReference< array1d< globalIndex > >( faceDofKey );
 
@@ -333,12 +332,12 @@ real64 SinglePhaseHybridFVM::CalculateResidualNorm( DomainPartition const & doma
   SinglePhaseHybridFVMKernels::ResidualNormKernel::Launch< parallelDevicePolicy<>,
                                                            parallelDeviceReduce >( localRhs,
                                                                                    rankOffset,
-                                                                                   faceDofNumber.toViewConst(),
-                                                                                   faceGhostRank.toViewConst(),
-                                                                                   elemRegionList.toViewConst(),
-                                                                                   elemSubRegionList.toViewConst(),
-                                                                                   elemList.toViewConst(),
-                                                                                   m_volume.toViewConst(),
+                                                                                   faceDofNumber.toNestedViewConst(),
+                                                                                   faceGhostRank.toNestedViewConst(),
+                                                                                   elemRegionList.toNestedViewConst(),
+                                                                                   elemSubRegionList.toNestedViewConst(),
+                                                                                   elemList.toNestedViewConst(),
+                                                                                   m_volume.toNestedViewConst(),
                                                                                    defaultViscosity,
                                                                                    &localResidualNorm[3] );
 
@@ -410,8 +409,7 @@ SinglePhaseHybridFVM::CheckSystemSolution( DomainPartition const & domain,
 
   } );
 
-  arrayView1d< integer const > const & faceGhostRank =
-    faceManager.getReference< array1d< integer > >( ObjectManagerBase::viewKeyStruct::ghostRankString );
+  arrayView1d< integer const > const & faceGhostRank = faceManager.ghostRank();
   arrayView1d< globalIndex const > const & faceDofNumber =
     faceManager.getReference< array1d< globalIndex > >( faceDofKey );
 

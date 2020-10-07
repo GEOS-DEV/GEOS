@@ -21,6 +21,7 @@
 
 #include "SolidBase.hpp"
 #include "PropertyConversions.hpp"
+#include "SolidModelDiscretizationOpsIsotropic.hpp"
 #include "constitutive/ExponentialRelation.hpp"
 #include "LvArray/src/tensorOps.hpp"
 
@@ -39,6 +40,7 @@ namespace constitutive
 class ElasticIsotropicUpdates : public SolidBaseUpdates
 {
 public:
+  using DiscretizationOps = SolidModelDiscretizationOpsIsotropic;
 
   /**
    * @brief Constructor
@@ -131,7 +133,20 @@ public:
   */
   
   ///////////////////// LEGACY INTERFACE /////////////////////////////////
-  
+
+  GEOSX_FORCE_INLINE
+  GEOSX_HOST_DEVICE
+  void setDiscretizationOps( localIndex const k,
+                             localIndex const q,
+                             DiscretizationOps & discOps ) const
+  {
+    GEOSX_UNUSED_VAR( q )
+    real64 const G = m_shearModulus[k];
+    real64 const Lame = m_bulkModulus[k] - 2.0/3.0 * G;
+    discOps.m_lambda = Lame;
+    discOps.m_shearModulus = G;
+  }
+
   GEOSX_HOST_DEVICE
   virtual void SmallStrainNoState( localIndex const k,
                                    real64 const ( &voigtStrain )[ 6 ],
@@ -158,7 +173,26 @@ public:
                              localIndex const q,
                              real64 const (&FmI)[3][3] ) const override final;
 
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  virtual real64 calculateStrainEnergyDensity( localIndex const k,
+                                               localIndex const q ) const override 
+  {
+    real64 const invE = ( 3.0 * m_bulkModulus[k] + m_shearModulus[k] ) / ( 9.0 * m_bulkModulus[k] * m_shearModulus[k] );
+    real64 const nu = ( 1.5 * m_bulkModulus[k] - m_shearModulus[k] ) / ( 3.0 * m_bulkModulus[k] + m_shearModulus[k] );
 
+    auto const & stress = m_newStress[k][q];
+    real64 const newStrainEnergyDensity = ( stress[0]*stress[0] + stress[1]*stress[1] + stress[2]*stress[2] -
+                                            2 * ( nu       * ( stress[1]*stress[2] + stress[0]*stress[1] + stress[0]*stress[2] ) -
+                                                  (1 + nu) * ( stress[3]*stress[3] + stress[4]*stress[4] + stress[5]*stress[5] )
+                                                )
+                                            ) * invE * 0.5;
+    // Make sure strain energy is always non-negative
+    GEOSX_ASSERT_MSG( newStrainEnergyDensity >= 0.0,
+                      "negative strain energy density" );
+
+    return newStrainEnergyDensity;
+  }
                          
 
 protected:
@@ -386,7 +420,7 @@ void ElasticIsotropicUpdates::HypoElastic( localIndex const k,
   m_newStress( k, q, 5 ) =  m_newStress( k, q, 5 ) + G * Ddt[ 5 ];
 
   real64 temp[ 6 ] = { 0 };
-  LvArray::tensorOps::AikSymBklAjl< 3 >( temp, Rot, m_newStress[ k ][ q ] );
+  LvArray::tensorOps::Rij_eq_AikSymBklAjl< 3 >( temp, Rot, m_newStress[ k ][ q ] );
   LvArray::tensorOps::copy< 6 >( m_newStress[ k ][ q ], temp );
 }
 
@@ -509,28 +543,28 @@ public:
    * @return A const reference to arrayView1d<real64> containing the bulk
    *         modulus (at every element).
    */
-  arrayView1d< real64 > const & bulkModulus()       { return m_bulkModulus; }
+  arrayView1d< real64 > const bulkModulus()       { return m_bulkModulus; }
 
   /**
    * @brief Const accessor for bulk modulus
    * @return A const reference to arrayView1d<real64 const> containing the bulk
    *         modulus (at every element).
    */
-  arrayView1d< real64 const > const & bulkModulus() const { return m_bulkModulus; }
+  arrayView1d< real64 const > const bulkModulus() const { return m_bulkModulus; }
 
   /**
    * @brief Accessor for shear modulus
    * @return A const reference to arrayView1d<real64> containing the shear
    *         modulus (at every element).
    */
-  arrayView1d< real64 > const & shearModulus()       { return m_shearModulus; }
+  arrayView1d< real64 > const shearModulus()       { return m_shearModulus; }
 
   /**
    * @brief Const accessor for shear modulus
    * @return A const reference to arrayView1d<real64 const> containing the
    *         shear modulus (at every element).
    */
-  arrayView1d< real64 const > const & shearModulus() const { return m_shearModulus; }
+  arrayView1d< real64 const > const shearModulus() const { return m_shearModulus; }
 
   /**
    * @brief Create a instantiation of the ElasticIsotropicUpdate class
@@ -546,12 +580,12 @@ public:
                                       m_newStress,
                                       m_oldStress );
     }
-    else
+    else // for "no state" updates, pass empty views to avoid transfer of stress data to device
     {
       return ElasticIsotropicUpdates( m_bulkModulus,
                                       m_shearModulus,
-                                      typename decltype(m_newStress)::ViewType{},
-                                      typename decltype(m_oldStress)::ViewType{} );
+                                      arrayView3d< real64, solid::STRESS_USD >(),
+                                      arrayView3d< real64, solid::STRESS_USD >() );
     }
   }
 

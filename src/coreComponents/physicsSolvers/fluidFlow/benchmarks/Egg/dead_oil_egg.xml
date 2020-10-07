@@ -18,7 +18,7 @@
         dtIncIterLimit="0.6"
         timestepCutFactor="0.1"
         maxTimeStepCuts="10"
-        lineSearchAction="0"/>
+        lineSearchAction="None"/>
       <!-- Note that the direct solver is going to be quite slow -->
       <!-- This block will be updated when Hypre becomes the default  -->
       <LinearSolverParameters
@@ -44,7 +44,7 @@
       fluidNames="{ fluid }"
       relPermNames="{ relperm }"
       wellTemperature="297.15"
-      maxCompFractionChange="0.5"      
+      maxCompFractionChange="0.5"
       logLevel="1"
       useMass="1">
       <WellControls
@@ -629,7 +629,7 @@
       surfaceDensities="{ 848.9, 0.9907, 1025.2 }"
       componentMolarWeight="{ 114e-3, 16e-3, 18e-3 }"
       tableFiles="{ pvdo.txt, pvdg.txt, pvtw.txt }"/>
-    
+
     <BrooksCoreyRelativePermeability
       name="relperm"
       phaseNames="{ oil, gas, water }"

@@ -17,6 +17,9 @@
 /// GEOSX full version number string
 #define GEOSX_VERSION_FULL  "@GEOSX_VERSION_FULL@"
 
+/// Enables floating point execptions
+#cmakedefine GEOSX_USE_FPE
+
 /// Enables bounds check in LvArray classes (CMake option ARRAY_BOUNDS_CHECK)
 #cmakedefine GEOSX_USE_ARRAY_BOUNDS_CHECK
 
@@ -64,6 +67,9 @@
 
 /// Enables use of PETSc library (CMake option ENABLE_PETSC)
 #cmakedefine GEOSX_USE_PETSC
+
+/// Enables use of SuiteSparse library (CMake option ENABLE_SUITESPARSE)
+#cmakedefine GEOSX_USE_SUITESPARSE
 
 /// Choice of global linear algebra interface (CMake option GEOSX_LA_INTERFACE)
 #cmakedefine GEOSX_LA_INTERFACE @GEOSX_LA_INTERFACE@

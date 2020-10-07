@@ -30,19 +30,55 @@ LinearSolverParametersInput::LinearSolverParametersInput( std::string const & na
   setInputFlags( InputFlags::OPTIONAL );
   enableLogLevelInput();
 
-  // note: default parameter values preset by base class
-
   registerWrapper( viewKeyStruct::solverTypeString, &m_parameters.solverType )->
     setApplyDefaultValue( m_parameters.solverType )->
     setInputFlag( InputFlags::OPTIONAL )->
-    setDescription( "Linear solver type\n"
-                    "Available options are: direct, cg, gmres, fgmres, bicgstab, preconditioner" );
+    setDescription( "Linear solver type. Available options are:\n* " + EnumStrings< LinearSolverParameters::SolverType >::concat( "\n* " ) );
 
   registerWrapper( viewKeyStruct::preconditionerTypeString, &m_parameters.preconditionerType )->
     setApplyDefaultValue( m_parameters.preconditionerType )->
     setInputFlag( InputFlags::OPTIONAL )->
-    setDescription( "Preconditioner type\n"
-                    "Available options are: none, jacobi, iluk, ilut, icc, amg, mgr, block" );
+    setDescription( "Preconditioner type. Available options are:\n* " + EnumStrings< LinearSolverParameters::PreconditionerType >::concat( "\n* " ) );
+
+  registerWrapper( viewKeyStruct::stopIfErrorString, &m_parameters.stopIfError )->
+    setApplyDefaultValue( m_parameters.stopIfError )->
+    setInputFlag( InputFlags::OPTIONAL )->
+    setDescription( "Whether to stop the simulation if the linear solver reports an error" );
+
+  registerWrapper( viewKeyStruct::directCheckResTolString, &m_parameters.direct.checkResidualTolerance )->
+    setApplyDefaultValue( m_parameters.direct.checkResidualTolerance )->
+    setInputFlag( InputFlags::OPTIONAL )->
+    setDescription( "Tolerance used to check a direct solver solution" );
+
+  registerWrapper( viewKeyStruct::directEquilString, &m_parameters.direct.equilibrate )->
+    setApplyDefaultValue( m_parameters.direct.equilibrate )->
+    setInputFlag( InputFlags::OPTIONAL )->
+    setDescription( "Whether to scale the rows and columns of the matrix" );
+
+  registerWrapper( viewKeyStruct::directColPermString, &m_parameters.direct.colPerm )->
+    setApplyDefaultValue( m_parameters.direct.colPerm )->
+    setInputFlag( InputFlags::OPTIONAL )->
+    setDescription( "How to permute the columns. Available options are:\n* " + EnumStrings< LinearSolverParameters::Direct::ColPerm >::concat( "\n* " ) );
+
+  registerWrapper( viewKeyStruct::directRowPermString, &m_parameters.direct.rowPerm )->
+    setApplyDefaultValue( m_parameters.direct.rowPerm )->
+    setInputFlag( InputFlags::OPTIONAL )->
+    setDescription( "How to permute the rows. Available options are:\n* " + EnumStrings< LinearSolverParameters::Direct::RowPerm >::concat( "\n* " ) );
+
+  registerWrapper( viewKeyStruct::directReplTinyPivotString, &m_parameters.direct.replaceTinyPivot )->
+    setApplyDefaultValue( m_parameters.direct.replaceTinyPivot )->
+    setInputFlag( InputFlags::OPTIONAL )->
+    setDescription( "Whether to replace tiny pivots by sqrt(epsilon)*norm(A)" );
+
+  registerWrapper( viewKeyStruct::directIterRefString, &m_parameters.direct.iterativeRefine )->
+    setApplyDefaultValue( m_parameters.direct.iterativeRefine )->
+    setInputFlag( InputFlags::OPTIONAL )->
+    setDescription( "Whether to perform iterative refinement" );
+
+  registerWrapper( viewKeyStruct::directParallelString, &m_parameters.direct.parallel )->
+    setApplyDefaultValue( m_parameters.direct.parallel )->
+    setInputFlag( InputFlags::OPTIONAL )->
+    setDescription( "Whether to use a parallel solver (instead of a serial one)" );
 
   registerWrapper( viewKeyStruct::krylovMaxIterString, &m_parameters.krylov.maxIterations )->
     setApplyDefaultValue( m_parameters.krylov.maxIterations )->
@@ -110,11 +146,16 @@ void LinearSolverParametersInput::PostProcessInput()
 {
   m_parameters.logLevel = getLogLevel();
 
-  static const std::set< string > solverOptions = { "direct", "cg", "gmres", "fgmres", "bicgstab", "preconditioner" };
-  GEOSX_ERROR_IF( solverOptions.count( m_parameters.solverType ) == 0, "Unsupported solver type: " << m_parameters.solverType );
+  static const std::set< integer > binaryOptions = { 0, 1 };
 
-  static const std::set< string > precondOptions = { "none", "jacobi", "iluk", "ilut", "icc", "amg", "mgr", "block" };
-  GEOSX_ERROR_IF( precondOptions.count( m_parameters.preconditionerType ) == 0, "Unsupported preconditioner type: " << m_parameters.preconditionerType );
+  GEOSX_ERROR_IF( binaryOptions.count( m_parameters.stopIfError ) == 0, viewKeyStruct::stopIfErrorString << " option can be either 0 (false) or 1 (true)" );
+  GEOSX_ERROR_IF( binaryOptions.count( m_parameters.direct.equilibrate ) == 0, viewKeyStruct::directEquilString << " option can be either 0 (false) or 1 (true)" );
+  GEOSX_ERROR_IF( binaryOptions.count( m_parameters.direct.replaceTinyPivot ) == 0, viewKeyStruct::directReplTinyPivotString << " option can be either 0 (false) or 1 (true)" );
+  GEOSX_ERROR_IF( binaryOptions.count( m_parameters.direct.iterativeRefine ) == 0, viewKeyStruct::directIterRefString << " option can be either 0 (false) or 1 (true)" );
+  GEOSX_ERROR_IF( binaryOptions.count( m_parameters.direct.parallel ) == 0, viewKeyStruct::directParallelString << " option can be either 0 (false) or 1 (true)" );
+
+  GEOSX_ERROR_IF_LT_MSG( m_parameters.direct.checkResidualTolerance, 0.0, "Invalid value of " << viewKeyStruct::krylovTolString );
+  GEOSX_ERROR_IF_GT_MSG( m_parameters.direct.checkResidualTolerance, 1.0, "Invalid value of " << viewKeyStruct::krylovTolString );
 
   GEOSX_ERROR_IF_LT_MSG( m_parameters.krylov.maxIterations, 0, "Invalid value of " << viewKeyStruct::krylovMaxIterString );
   GEOSX_ERROR_IF_LT_MSG( m_parameters.krylov.maxRestart, 0, "Invalid value of " << viewKeyStruct::krylovMaxRestartString );

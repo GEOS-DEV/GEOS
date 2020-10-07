@@ -4,6 +4,7 @@ message("CMAKE_SYSTEM_NAME = ${CMAKE_SYSTEM_NAME}")
 message("CMAKE_HOST_APPLE = ${CMAKE_HOST_APPLE}")
 
 ### OPTIONS ###
+option( GEOSX_ENABLE_FPE "" ON)
 
 option( ENABLE_CALIPER "" OFF )
 
@@ -40,6 +41,7 @@ option( ENABLE_SUPERLU_DIST "Enables SUPERLU_DIST" ON )
 option( ENABLE_TRILINOS "Enables TRILINOS" ON )
 option( ENABLE_HYPRE "Enables HYPRE" ON )
 option( ENABLE_PETSC "Enables PETSC" OFF )
+option( ENABLE_SUITESPARSE "Enables SUITESPARSE" ON )
 
 #if ( "${CMAKE_HOST_APPLE}" )
 #  option( ENABLE_PETSC "Enables PETSC" OFF )

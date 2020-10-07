@@ -19,7 +19,8 @@
 #ifndef GEOSX_CONSITUTIVE_EXPONENTIALRELATION_HPP_
 #define GEOSX_CONSITUTIVE_EXPONENTIALRELATION_HPP_
 
-#include <common/DataTypes.hpp>
+#include "common/DataTypes.hpp"
+#include "common/EnumStrings.hpp"
 
 #include <cmath>
 
@@ -32,12 +33,14 @@ namespace constitutive
 /**
  * @enum Enumeration describing available approximations of the exponent
  */
-enum class ExponentApproximationType
+enum class ExponentApproximationType : integer
 {
   Full,
   Linear,
   Quadratic
 };
+
+ENUM_STRINGS( ExponentApproximationType, "exponential", "linear", "quadratic" )
 
 namespace detail
 {
@@ -298,39 +301,6 @@ private:
   T m_alpha;
 
 };
-
-inline ExponentApproximationType stringToExponentType( string const & model )
-{
-  static std::map< string, ExponentApproximationType > const approxTypes =
-  {
-    { "linear", ExponentApproximationType::Linear },
-    { "quadratic", ExponentApproximationType::Quadratic },
-    { "exponential", ExponentApproximationType::Full },
-  };
-  auto const it = approxTypes.find( model );
-  GEOSX_ERROR_IF( it == approxTypes.end(), "Model type not supported: " << model );
-  return it->second;
-}
-
-inline string exponentTypeToString( ExponentApproximationType const & model )
-{
-  static std::map< ExponentApproximationType, string > const approxTypes =
-  {
-    { ExponentApproximationType::Linear, "linear"      },
-    { ExponentApproximationType::Quadratic, "quadratic"   },
-    { ExponentApproximationType::Full, "exponential" },
-  };
-  auto const it = approxTypes.find( model );
-  GEOSX_ERROR_IF( it == approxTypes.end(), "Model type not supported" );
-  return it->second;
-}
-
-inline std::ostream &
-operator<<( std::ostream & stream, ExponentApproximationType const & value )
-{
-  return stream << exponentTypeToString( value );
-}
-
 
 template< ExponentApproximationType EAT >
 struct ExponentApproximationTypeWrapper
