@@ -102,14 +102,11 @@ void solve_parallelDirect( LinearSolverParameters const & parameters,
   mat.gemv( -1.0, sol, 1.0, res );
   result.residualReduction = res.norm2() / rhs.norm2();
 
-  if( result.residualReduction < SLUDData.relativeTolerance() )
+  result.status = parameters.direct.checkResidual == 0 ? LinearSolverResult::Status::Success : LinearSolverResult::Status::Breakdown;
+  result.numIterations = 1;
+  if( !parameters.direct.checkResidual && result.residualReduction < SLUDData.relativeTolerance() )
   {
     result.status = LinearSolverResult::Status::Success;
-    result.numIterations = 1;
-  }
-  else
-  {
-    result.status = LinearSolverResult::Status::Breakdown;
   }
 
   PetscDestroyAdditionalData( localMatrix );
@@ -139,14 +136,11 @@ void solve_serialDirect( LinearSolverParameters const & parameters,
   mat.gemv( -1.0, sol, 1.0, res );
   result.residualReduction = res.norm2() / rhs.norm2();
 
-  if( result.residualReduction < SSData.relativeTolerance() )
+  result.status = parameters.direct.checkResidual == 0 ? LinearSolverResult::Status::Success : LinearSolverResult::Status::Breakdown;
+  result.numIterations = 1;
+  if( !parameters.direct.checkResidual && result.residualReduction < SSData.relativeTolerance() )
   {
     result.status = LinearSolverResult::Status::Success;
-    result.numIterations = 1;
-  }
-  else
-  {
-    result.status = LinearSolverResult::Status::Breakdown;
   }
 }
 #endif

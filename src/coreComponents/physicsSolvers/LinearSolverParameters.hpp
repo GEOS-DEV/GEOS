@@ -72,6 +72,7 @@ public:
     static constexpr auto preconditionerTypeString = "preconditionerType"; ///< Preconditioner type key
     static constexpr auto stopIfErrorString        = "stopIfError";        ///< stop if error key
 
+    static constexpr auto directCheckResidualString = "directCheckResidual";  ///< direct solver check residual key
     static constexpr auto directEquilString         = "directEquil";          ///< direct solver equilibrate key
     static constexpr auto directColPermString       = "directColPerm";        ///< direct solver columns permutation key
     static constexpr auto directRowPermString       = "directRowPerm";        ///< direct solver rows permutation key

@@ -585,6 +585,8 @@ Available options are: jacobi, blockJacobi, gaussSeidel, blockGaussSeidel, cheby
 		<xsd:attribute name="amgSmootherType" type="string" default="gaussSeidel" />
 		<!--amgThreshold => AMG strength-of-connection threshold-->
 		<xsd:attribute name="amgThreshold" type="real64" default="0" />
+		<!--directCheckResidual => Whether to check the linear system solution residual-->
+		<xsd:attribute name="directCheckResidual" type="integer" default="0" />
 		<!--directColPerm => How to permute the columns. Available options are:
 * none
 * MMD_AtplusA

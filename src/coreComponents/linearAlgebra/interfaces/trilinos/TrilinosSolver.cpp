@@ -117,14 +117,11 @@ void solve_parallelDirect( LinearSolverParameters const & parameters,
   mat.gemv( -1.0, sol, 1.0, res );
   result.residualReduction = res.norm2() / rhs.norm2();
 
-  if( result.residualReduction < SLUDData.relativeTolerance() )
+  result.status = parameters.direct.checkResidual == 0 ? LinearSolverResult::Status::Success : LinearSolverResult::Status::Breakdown;
+  result.numIterations = 1;
+  if( !parameters.direct.checkResidual && result.residualReduction < SLUDData.relativeTolerance() )
   {
     result.status = LinearSolverResult::Status::Success;
-    result.numIterations = 1;
-  }
-  else
-  {
-    result.status = LinearSolverResult::Status::Breakdown;
   }
 }
 
@@ -144,10 +141,8 @@ void solve_serialDirect( LinearSolverParameters const & parameters,
   Epetra_Import * importToSerial = NULL;
   ConvertEpetraToSuiteSparseMatrix( mat, SSData, serialMap, importToSerial );
 
-  int info = 0;
-  info = SSData.setup();
-
-  info += SuiteSparseSolve( SSData, serialMap, importToSerial, rhs, sol );
+  GEOSX_LAI_CHECK_ERROR( SSData.setup() );
+  GEOSX_LAI_CHECK_ERROR( SuiteSparseSolve( SSData, serialMap, importToSerial, rhs, sol ) );
 
   delete serialMap;
   delete importToSerial;
@@ -156,21 +151,15 @@ void solve_serialDirect( LinearSolverParameters const & parameters,
   result.setupTime = SSData.setupTime();
   result.solveTime = SSData.solveTime();
 
-  if( info == 0 )
-  {
-    EpetraVector res( rhs );
-    mat.gemv( -1.0, sol, 1.0, res );
-    result.residualReduction = res.norm2() / rhs.norm2();
-  }
+  EpetraVector res( rhs );
+  mat.gemv( -1.0, sol, 1.0, res );
+  result.residualReduction = res.norm2() / rhs.norm2();
 
-  if( info == 0 && result.residualReduction < SSData.relativeTolerance() )
+  result.status = parameters.direct.checkResidual == 0 ? LinearSolverResult::Status::Success : LinearSolverResult::Status::Breakdown;
+  result.numIterations = 1;
+  if( !parameters.direct.checkResidual && result.residualReduction < SSData.relativeTolerance() )
   {
     result.status = LinearSolverResult::Status::Success;
-    result.numIterations = 1;
-  }
-  else
-  {
-    result.status = LinearSolverResult::Status::Breakdown;
   }
 }
 #endif
