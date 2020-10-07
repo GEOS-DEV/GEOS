@@ -18,12 +18,12 @@ globalToLocalMap                 geosx_mapBase< long long, long, std_integral_co
 isExternal                       integer_array                                                                        (no description available)                                           
 localToGlobalMap                 globalIndex_array                                                                    Array that contains a map from localIndex to globalIndex.            
 nodeList                         geosx_InterObjectRelation< LvArray_ArrayOfArrays< long, long, LvArray_ChaiBuffer > > Map to the nodes attached to each EmbeddedSurface.                   
-normalVector                     r1_array                                                                             Unit normal vector to the embedded surface.                          
+normalVector                     real64_array2d                                                                       Unit normal vector to the embedded surface.                          
 numEdgesPerElement               localIndex                                                                           (no description available)                                           
 numFacesPerElement               localIndex                                                                           (no description available)                                           
 numNodesPerElement               localIndex                                                                           (no description available)                                           
-tangentVector1                   r1_array                                                                             Unit vector in the first tangent direction to the embedded surface.  
-tangentVector2                   r1_array                                                                             Unit vector in the second tangent direction to the embedded surface. 
+tangentVector1                   real64_array2d                                                                       Unit vector in the first tangent direction to the embedded surface.  
+tangentVector2                   real64_array2d                                                                       Unit vector in the second tangent direction to the embedded surface. 
 ConstitutiveModels               node                                                                                 :ref:`DATASTRUCTURE_ConstitutiveModels`                              
 neighborData                     node                                                                                 :ref:`DATASTRUCTURE_neighborData`                                    
 sets                             node                                                                                 :ref:`DATASTRUCTURE_sets`                                            

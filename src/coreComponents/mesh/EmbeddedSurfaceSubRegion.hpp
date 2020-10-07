@@ -102,7 +102,7 @@ public:
    * @param intersectionPoints array containing the nodes defining the embedded surface elements
    * @param k index of the face element
    */
-  void CalculateElementGeometricQuantities( array1d< R1Tensor > const intersectionPoints,
+  void CalculateElementGeometricQuantities( arrayView2d< real64 const > const intersectionPoints,
                                             localIndex k );
 
   /**

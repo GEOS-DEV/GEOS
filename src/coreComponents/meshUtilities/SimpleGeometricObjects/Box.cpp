@@ -106,19 +106,21 @@ void Box::PostProcessInput()
 //
 // }
 
-bool Box::IsCoordInObject( const R1Tensor & coord ) const
+bool Box::IsCoordInObject( real64 const ( &  coord ) [3] ) const
 {
   bool rval = false;
+  R1Tensor coord0;
+  LvArray::tensorOps::copy< 3 >( coord0, coord);
   if( std::fabs( m_strikeAngle ) < 1e-20 )
   {
-    if( coord <= m_max && coord >= m_min )
+    if( coord0 <= m_max && coord0 >= m_min )
     {
       rval = true;
     }
   }
   else
   {
-    R1Tensor coordR, coord0( coord );
+    R1Tensor coordR;
     LvArray::tensorOps::subtract< 3 >( coord0, m_boxCenter );
     coordR[0] = coord0[0] * m_cosStrike + coord0[1] * m_sinStrike;
     coordR[1] = -coord0[0] * m_sinStrike + coord0[1] * m_cosStrike;

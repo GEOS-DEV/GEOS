@@ -32,34 +32,143 @@ namespace computationalGeometry
 
 /**
  * @brief Calculate the intersection between a line and a plane.
+ * @tparam LINEDIR_TYPE the type of @p lineDir
+ * @tparam POINT_TYPE the type of @p linePoint
+ * @tparam NORMAL_TYPE the type of @p planeNormal
+ * @tparam ORIGIN_TYPE the type of @p planeOrigin
+ * @tparam INTPOINT_TYPE the type of @p instersectionPoint
  * @param[in] lineDir vector defining direction of the line
  * @param[in] linePoint one point of the line
  * @param[in] planeNormal normal to plane
  * @param[in] planeOrigin plane origin
- * @return the area of the convex 3D polygon
+ * @param[out] instersectionPoint the intersection point
  */
-R1Tensor LinePlaneIntersection( R1Tensor lineDir,
-                                R1Tensor linePoint,
-                                R1Tensor planeNormal,
-                                R1Tensor planeOrigin );
+template< typename LINEDIR_TYPE,
+          typename POINT_TYPE,
+          typename NORMAL_TYPE,
+          typename ORIGIN_TYPE,
+          typename INTPOINT_TYPE >
+void LinePlaneIntersection( LINEDIR_TYPE const & lineDir,
+                            POINT_TYPE const & linePoint,
+                            NORMAL_TYPE const & planeNormal,
+                            ORIGIN_TYPE const & planeOrigin,
+                            INTPOINT_TYPE & intersectionPoint)
+{
+  /* Find intersection line plane
+   * line equation: p - (d*lineDir + linePoing) = 0;
+   * plane equation: ( p - planeOrigin) * planeNormal = 0;
+   * d = (planeOrigin - linePoint) * planeNormal / (lineDir * planeNormal )
+   * pInt = d*lineDir+linePoint;
+   */
+  real64 dummy[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( planeOrigin );
+  LvArray::tensorOps::subtract< 3 >( dummy, linePoint );
+  real64 const d = LvArray::tensorOps::AiBi< 3 >( dummy, planeNormal ) /
+                   LvArray::tensorOps::AiBi< 3 >( lineDir, planeNormal );
+
+  LvArray::tensorOps::copy< 3 > ( intersectionPoint, linePoint);
+  LvArray::tensorOps::scaledAdd< 3 >( intersectionPoint, lineDir, d );
+}
+
+
+/**
+ * @brief Reorder a set of points counter-clockwise.
+ * @tparam NORMAL_TYPE the type of @p normal
+ * @param[in] points coordinates of the points
+ * @param[in] normal vector normal to the plane
+ */
+template< typename NORMAL_TYPE >
+void orderPointsCCW( array2d< real64 > & points,
+                     NORMAL_TYPE const & normal )
+{
+  localIndex numPoints = points.size();
+
+  array2d< real64 > orderedPoints( numPoints, 3 );
+
+  std::vector< int > indices( numPoints );
+  std::vector< real64 > angle( numPoints );
+
+  // compute centroid of the set of points
+  R1Tensor centroid;
+  for( localIndex a = 0; a < numPoints; ++a )
+  {
+    LvArray::tensorOps::add< 3 >( centroid, points[ a ] );
+    indices[ a ] = a;
+  }
+
+  LvArray::tensorOps::scale< 3 >( centroid, 1.0 / numPoints );
+
+  R1Tensor v0 = LVARRAY_TENSOROPS_INIT_LOCAL_3( centroid );
+  LvArray::tensorOps::subtract< 3 >( v0, points[ 0 ] );
+  LvArray::tensorOps::normalize< 3 >( v0 );
+
+  // compute angles
+  angle[ 0 ] = 0;
+  for( localIndex a = 1; a < numPoints; ++a )
+  {
+    R1Tensor v = LVARRAY_TENSOROPS_INIT_LOCAL_3( centroid );
+    LvArray::tensorOps::subtract< 3 >( v, points[ a ] );
+    real64 const dot = LvArray::tensorOps::AiBi< 3 >( v, v0 );
+
+    real64 crossProduct[ 3 ];
+    LvArray::tensorOps::crossProduct( crossProduct, v, v0 );
+    real64 const det = LvArray::tensorOps::AiBi< 3 >( normal, crossProduct );
+
+    angle[ a ] = std::atan2( det, dot );
+  }
+
+  // sort the indices
+  std::sort( indices.begin(), indices.end(), [&]( int i, int j ) { return angle[ i ] < angle[ j ]; } );
+
+  // copy the points in the reorderedPoints array.
+  for( localIndex a=0; a < numPoints; a++ )
+  {
+    // fill in with ordered
+    LvArray::tensorOps::copy< 3 >( orderedPoints[ a ], points[ indices[ a ] ] );
+  }
+
+  for( localIndex a = 0; a < numPoints; a++ )
+  {
+    LvArray::tensorOps::copy< 3 >( points[a], orderedPoints[a] );
+  }
+}
 
 /**
  * @brief Calculate the area of a polygon given the set of points in ccw order defining it.
+ * @tparam NORMAL_TYPE the type of @p normal
  * @param[in] points coordinates of the points
  * @param[in] normal vector normal to the plane
  * @return the area of the polygon
  */
-real64 ComputeSurfaceArea( array1d< R1Tensor > & points,
-                           arraySlice1d< real64 const > normal );
+template< typename NORMAL_TYPE >
+real64 ComputeSurfaceArea( arrayView2d< real64 const > const & points,
+                           NORMAL_TYPE const && normal )
+{
+  real64 surfaceArea = 0.0;
 
-/**
- * @brief Reorder a set of points counter-clockwise.
- * @param[in] points coordinates of the points
- * @param[in] normal unit normal vector to the surface
- * @return the reordered set of points
- */
-void orderPointsCCW( array1d< R1Tensor > & points,
-                     R1Tensor const & normal );
+  array2d< real64 > orderedPoints( points.size(0), 3 );
+
+  for( localIndex a = 0; a < points.size(0); a++ )
+  {
+    LvArray::tensorOps::copy< 3 >( orderedPoints[a], points[a] );
+  }
+
+  orderPointsCCW( orderedPoints, normal );
+
+  for( localIndex a = 0; a < points.size(0) - 2; ++a )
+  {
+    real64 v1[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( orderedPoints[ a + 1 ] );
+    real64 v2[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( orderedPoints[ a + 2 ] );
+
+    LvArray::tensorOps::subtract< 3 >( v1, orderedPoints[ 0 ] );
+    LvArray::tensorOps::subtract< 3 >( v2, orderedPoints[ 0 ] );
+
+    real64 triangleNormal[ 3 ];
+    LvArray::tensorOps::crossProduct( triangleNormal, v1, v2 );
+    surfaceArea += LvArray::tensorOps::l2Norm< 3 >( triangleNormal );
+  }
+
+  return surfaceArea * 0.5;
+}
 
 /**
  * @brief Calculate the centroid of a convex 3D polygon as well as the normal and the rotation matrix.
