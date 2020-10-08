@@ -41,7 +41,7 @@ namespace computationalGeometry
  * @param[in] linePoint one point of the line
  * @param[in] planeNormal normal to plane
  * @param[in] planeOrigin plane origin
- * @param[out] instersectionPoint the intersection point
+ * @param[out] intersectionPoint the intersection point
  */
 template< typename LINEDIR_TYPE,
           typename POINT_TYPE,

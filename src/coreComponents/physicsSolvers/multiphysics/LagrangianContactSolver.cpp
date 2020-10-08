@@ -304,7 +304,7 @@ void LagrangianContactSolver::ComputeTolerances( DomainPartition & domain ) cons
         if( ghostRank[kfe] < 0 )
         {
           real64 const area = faceArea[kfe];
-          R1Tensor stiffApprox[ 2 ];
+          real64 stiffApprox[ 2 ][ 3 ];
           real64 averageYoungModulus = 0.0;
           real64 averageConstrainedModulus = 0.0;
           real64 averageBoxSize0 = 0.0;
@@ -354,7 +354,7 @@ void LagrangianContactSolver::ComputeTolerances( DomainPartition & domain ) cons
 
             for( localIndex j = 0; j < 3; ++j )
             {
-              stiffApprox[i]( j ) = E / ( ( 1.0 + nu )*( 1.0 - 2.0*nu ) ) * 8.0 / 9.0 * ( 2.0 - 3.0 * nu ) * volume / ( boxSize[j]*boxSize[j] );
+              stiffApprox[i][j] = E / ( ( 1.0 + nu )*( 1.0 - 2.0*nu ) ) * 8.0 / 9.0 * ( 2.0 - 3.0 * nu ) * volume / ( boxSize[j]*boxSize[j] );
             }
 
             averageYoungModulus += 0.5*E;
@@ -365,7 +365,7 @@ void LagrangianContactSolver::ComputeTolerances( DomainPartition & domain ) cons
           real64 invStiffApprox[ 3 ][ 3 ] = { { 0 } };
           for( localIndex j = 0; j < 3; ++j )
           {
-            invStiffApprox[ j ][ j ] = ( stiffApprox[0]( j ) + stiffApprox[1]( j ) ) / ( stiffApprox[0]( j ) * stiffApprox[1]( j ) );
+            invStiffApprox[ j ][ j ] = ( stiffApprox[0][j] + stiffApprox[1][j] ) / ( stiffApprox[0][j] * stiffApprox[1][j] );
           }
 
           // Compute R^T * (invK) * R
@@ -1242,8 +1242,8 @@ void LagrangianContactSolver::
                 }
 
                 real64 const limitTau = contactRelation->limitTangentialTractionNorm( traction[kfe][0] );
-                R1TensorT< 2 > sliding( localJump[kfe][1] - previousLocalJump[kfe][1], localJump[kfe][2] - previousLocalJump[kfe][2] );
-                real64 slidingNorm = sqrt( sliding( 0 ) * sliding( 0 ) + sliding( 1 ) * sliding( 1 ) );
+                real64 const sliding[2] = { localJump[kfe][1] - previousLocalJump[kfe][1], localJump[kfe][2] - previousLocalJump[kfe][2] };
+                real64 const slidingNorm = LvArray::tensorOps::l2Norm< 2 >( sliding );
 
 //                GEOSX_LOG_LEVEL_BY_RANK( 3, "element: " << kfe << " sliding: " << sliding );
 
@@ -1252,7 +1252,7 @@ void LagrangianContactSolver::
                 {
                   for( localIndex i = 1; i < 3; ++i )
                   {
-                    elemRHS[i] = +Ja * ( traction[kfe][i] - limitTau * sliding( i - 1 ) / slidingNorm );
+                    elemRHS[i] = +Ja * ( traction[kfe][i] - limitTau * sliding[i-1] / slidingNorm );
                   }
 
                   // A symmetric 2x2 matrix.
@@ -1278,19 +1278,19 @@ void LagrangianContactSolver::
                   }
                   for( localIndex i = 1; i < 3; ++i )
                   {
-                    dRdT( i, 0 ) = Ja * contactRelation->dLimitTangentialTractionNorm_dNormalTraction( traction[kfe][0] ) * sliding( i - 1 ) / slidingNorm;
+                    dRdT( i, 0 ) = Ja * contactRelation->dLimitTangentialTractionNorm_dNormalTraction( traction[kfe][0] ) * sliding[i-1] / slidingNorm;
                     dRdT( i, i ) = Ja;
                   }
                 }
                 else
                 {
-                  R1TensorT< 2 > vaux( traction[kfe][1], traction[kfe][2] );
-                  real64 vauxNorm = sqrt( vaux( 0 ) * vaux( 0 ) + vaux( 1 ) * vaux( 1 ) );
+                  real64 const vaux[2] = { traction[kfe][1], traction[kfe][2] };
+                  real64 const vauxNorm = LvArray::tensorOps::l2Norm< 2 >( vaux );
                   if( vauxNorm > 0.0 )
                   {
                     for( localIndex i = 1; i < 3; ++i )
                     {
-                      elemRHS[i] = +Ja * ( traction[kfe][i] - limitTau * vaux( i - 1 ) / vauxNorm );
+                      elemRHS[i] = +Ja * ( traction[kfe][i] - limitTau * vaux[i-1] / vauxNorm );
                     }
                     for( localIndex i = 1; i < 3; ++i )
                     {

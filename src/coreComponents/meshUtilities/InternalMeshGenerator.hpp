@@ -207,7 +207,7 @@ private:
   /// skew angle in radians for skewed mesh generation
   real64 m_skewAngle = 0;
   /// skew center for skew mesh generation
-  R1Tensor m_skewCenter = {0, 0, 0};
+  real64 m_skewCenter[3] = { 0, 0, 0 };
 
 
   ///@cond DO_NOT_DOCUMENT
@@ -241,15 +241,16 @@ private:
 
   /**
    * @brief Construct the node position for a spatially indexed node.
+   * @tparam OUT_VECTOR type of output vector X
    * @param[in] a ndim spatial index for the considered node
    * @param[in] trianglePattern triangle pattern identifier
-   * @return coordinate of the input node
+   * @param[out] X the node coordinates
    *
    * @note In pattern 0, half nodes have 4 edges and the other half have 8; for Pattern 1, every node has 6.
    */
-  inline R1Tensor NodePosition( const int a[3], int trianglePattern )
+  template< typename OUT_VECTOR >
+  inline void getNodePosition( int const * a, int trianglePattern, OUT_VECTOR && X )
   {
-    R1Tensor X;
     real64 xInterval( 0 );
 
     int xPosIndex = 0;
@@ -310,25 +311,21 @@ private:
       if( trianglePattern == 1 && i == 1 && a[1] % 2 == 1 && a[0] != 0 && a[0] != xPosIndex )
         X[0] -= xInterval * 0.5;
     }
-
-    return X;
   }
 
   /**
    * @brief
-   * @param[in]
-   * @return an array of the element center coordinates
+   * @tparam OUT_VECTOR type of output vector X
+   * @param[in] k the ijk-index of the element
+   * @param[out] X the element center coordinates
    */
-  inline R1Tensor ElemCenterPosition( const int k[3] )
+  template< typename OUT_VECTOR >
+  inline void getElemCenterPosition( const int k[3], OUT_VECTOR && X )
   {
-    R1Tensor X;
-
     for( int i=0; i<3; ++i )
     {
       X[i] = m_min[i] + (m_max[i]-m_min[i]) * ( ( k[i] + 0.5 ) / m_numElemsTotal[i] );
     }
-
-    return X;
   }
 
 public:

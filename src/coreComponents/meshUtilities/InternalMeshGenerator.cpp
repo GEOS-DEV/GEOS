@@ -375,12 +375,11 @@ void InternalMeshGenerator::GenerateMesh( DomainPartition * const domain )
     m_max[1] = m_vertices[1].back();
     m_max[2] = m_vertices[2].back();
 
-    R1Tensor temp1( m_min );
-    R1Tensor temp2( m_max );
+    partition.setSizes( m_min, m_max );
 
-    partition.setSizes( temp1, temp2 );
-    LvArray::tensorOps::subtract< 3 >( temp2, temp1 );
-    meshBody->setGlobalLengthScale( LvArray::tensorOps::l2Norm< 3 >( temp2 ) );
+    real64 size[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( m_max );
+    LvArray::tensorOps::subtract< 3 >( size, m_min );
+    meshBody->setGlobalLengthScale( LvArray::tensorOps::l2Norm< 3 >( size ) );
   }
 
   // find elemCenters for even uniform element sizes
@@ -557,11 +556,7 @@ void InternalMeshGenerator::GenerateMesh( DomainPartition * const domain )
             index[a] += firstElemIndexInPartition[a];
           }
 
-          R1Tensor const pos = NodePosition( index, m_trianglePattern );
-          for( int a = 0; a < 3; ++a )
-          {
-            X( localNodeIndex, a ) = pos[ a ];
-          }
+          getNodePosition( index, m_trianglePattern, X[localNodeIndex] );
 
           // alter global node map for radial mesh
           if( m_mapToRadial > 0 )

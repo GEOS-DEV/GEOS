@@ -239,21 +239,27 @@ public:
 
   /**
    * @brief Calculate the center of an edge given its index.
+   * @tparam OUT_VECTOR type of output
    * @param edgeIndex index of the edge
    * @param X array view of nodes associated with the edge
-   * @return coordinate of the edge center
+   * @param edgeCenter output vector containing coordinate of the edge center
    */
-  R1Tensor calculateCenter( localIndex const edgeIndex,
-                            arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X ) const;
+  template< typename OUT_VECTOR >
+  void calculateCenter( localIndex const edgeIndex,
+                        arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X,
+                        OUT_VECTOR && edgeCenter ) const;
 
   /**
-   * @brief Calculate the length of an edge.
+   * @brief Calculate the edge segment.
+   * @tparam OUT_VECTOR type of output
    * @param edgeIndex index of the edge
    * @param X array view of the nodes associated with the NodeManager of current domain
-   * @return length of the edge
+   * @param edgeVector output vector containing edge segment
    */
-  R1Tensor calculateLength( localIndex const edgeIndex,
-                            arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X ) const;
+  template< typename OUT_VECTOR >
+  void calculateLength( localIndex const edgeIndex,
+                        arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X,
+                        OUT_VECTOR && edgeVector ) const;
 
   /**
    * @name viewKeyStruct/groupKeyStruct
@@ -396,21 +402,23 @@ private:
 
 };
 
-inline R1Tensor EdgeManager::calculateCenter( localIndex const edgeIndex,
-                                              arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X ) const
+template< typename OUT_VECTOR >
+inline void EdgeManager::calculateCenter( localIndex const edgeIndex,
+                                          arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X,
+                                          OUT_VECTOR && edgeCenter ) const
 {
-  R1Tensor center = LVARRAY_TENSOROPS_INIT_LOCAL_3( X[m_toNodesRelation[edgeIndex][0]] );
-  LvArray::tensorOps::add< 3 >( center, X[m_toNodesRelation[edgeIndex][1]] );
-  LvArray::tensorOps::scale< 3 >( center, 0.5 );
-  return center;
+  LvArray::tensorOps::copy< 3 >( edgeCenter, X[m_toNodesRelation[edgeIndex][0]] );
+  LvArray::tensorOps::add< 3 >( edgeCenter, X[m_toNodesRelation[edgeIndex][1]] );
+  LvArray::tensorOps::scale< 3 >( edgeCenter, 0.5 );
 }
 
-inline R1Tensor EdgeManager::calculateLength( localIndex const edgeIndex,
-                                              arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X ) const
+template< typename OUT_VECTOR >
+inline void EdgeManager::calculateLength( localIndex const edgeIndex,
+                                          arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X,
+                                          OUT_VECTOR && edgeSegment ) const
 {
-  R1Tensor length = LVARRAY_TENSOROPS_INIT_LOCAL_3( X[m_toNodesRelation[edgeIndex][1]] );
-  LvArray::tensorOps::subtract< 3 >( length, X[m_toNodesRelation[edgeIndex][0]] );
-  return length;
+  LvArray::tensorOps::copy< 3 >( edgeSegment, X[m_toNodesRelation[edgeIndex][1]] );
+  LvArray::tensorOps::subtract< 3 >( edgeSegment, X[m_toNodesRelation[edgeIndex][0]] );
 }
 
 }

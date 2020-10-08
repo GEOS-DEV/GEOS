@@ -48,42 +48,42 @@ public:
    */
   void AddNeighborsMetis( SortedArray< globalIndex > & neighborList );
   virtual bool IsCoordInPartition( const real64 & coord, const int dir );
-  virtual bool IsCoordInPartition( const R1Tensor & elemCenter );
-  virtual bool IsCoordInPartition( const R1Tensor & elemCenter,
+  virtual bool IsCoordInPartition( real64 const ( &coordinates )[ 3 ] );
+  virtual bool IsCoordInPartition( real64 const ( &coordinates )[ 3 ],
                                    const int numDistPartition );
   /**
    * @brief Variant of IsCoordInPartition with intervals closed at both ends
-   * @param elemCenter The point coordinates.
+   * @param coordinates The point coordinates.
    * @return The predicate result.
    *
    * @note Unused.
    */
-  virtual bool IsCoordInPartitionClosed( const R1Tensor & elemCenter );
+  virtual bool IsCoordInPartitionClosed( real64 const ( &coordinates )[ 3 ] );
 
   /**
    * @brief Checks if the point located inside the current partition bouding box.
-   * @param elemCenter The element center coordinates.
+   * @param coordinates The element center coordinates.
    * @return The predicate result.
    *
    * @note Unused.
    */
-  virtual bool IsCoordInPartitionBoundingBox( const R1Tensor & elemCenter );
+  virtual bool IsCoordInPartitionBoundingBox( real64 const ( &coordinates )[ 3 ] );
 
-  virtual bool IsCoordInContactGhostRange( const R1Tensor & elemCenter );
+  virtual bool IsCoordInContactGhostRange( real64 const ( &coordinates )[ 3 ] );
 
-  void setSizes( const R1Tensor & min, const R1Tensor & max );
-//  void setGlobalDomainSizes( const R1Tensor & min, const R1Tensor & max );
-//  void getSizes( R1Tensor & min, R1Tensor & max ) const;
-//  void getPartitionSizes( R1Tensor & min, R1Tensor & max ) const;
-//  void getPartitionGeometricalBoundary( R1Tensor & min, R1Tensor & max ) const;
-//  void UpdatePartitionBoundingBox(NodeManager& nodeManager);
-//  void GetPartitionBoundingBox( R1Tensor & xmin, R1Tensor & xmax );
+  void setSizes( real64 const ( &min )[ 3 ],
+                 real64 const ( &max )[ 3 ] );
+
+//  void setGlobalDomainSizes( real64 const ( & min )[ 3 ],
+//                             real64 const ( & max )[ 3 ] );
+
   /**
    * @brief Defines the boundaries of the partition
    * @param min The minimum.
    * @param max The maximum.
    */
-  void SetPartitionGeometricalBoundary( R1Tensor & min, R1Tensor & max );
+  void SetPartitionGeometricalBoundary( real64 const ( &min )[ 3 ],
+                                        real64 const ( &max )[ 3 ] );
 
   void setPartitions( unsigned int xPartitions, unsigned int yPartitions,
                       unsigned int zPartitions )
@@ -112,13 +112,6 @@ public:
     m_Periodic( 2 ) = zPeriodic;
   }
 
-//  void setRadialPeriodic( unsigned int rPeriodic )
-//  {
-//    m_Periodic( 1 ) = rPeriodic;
-//  }
-
-//  virtual void ReadXMLInput(TICPP::HierarchicalDataNsode& hdn);
-
   virtual void SetContactGhostRange( const real64 bufferSize );
 
 //  virtual void ResetSinglePartitionGlobalToLocalMap(PhysicalDomainT& domain);
@@ -132,34 +125,6 @@ public:
 //  void SetSinglePartitionGhostArrays(PhysicalDomainT& domain);
 
   int GetColor();
-
-//  const array1d< integer > & GetPartitions() const
-//  {
-//    return m_Partitions;
-//  }
-//
-//  const array1d< integer > & GetCoords() const
-//  {
-//    return m_coords;
-//  }
-//
-//  const R1Tensor & xMin() const
-//  {
-//    return m_min;
-//  }
-//  const R1Tensor & xMax() const
-//  {
-//    return m_max;
-//  }
-//
-//  real64 xMin( const int i ) const
-//  {
-//    return m_min[i];
-//  }
-//  real64 xMax( const int i ) const
-//  {
-//    return m_max[i];
-//  }
 
 protected:
   void InitializePostSubGroups( dataRepository::Group * const );

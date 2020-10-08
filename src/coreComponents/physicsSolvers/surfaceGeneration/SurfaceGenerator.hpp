@@ -167,8 +167,8 @@ private:
                             EdgeManager & edgeManager,
                             FaceManager & faceManager,
                             ElementRegionManager & elementManager,
-                            R1Tensor & vecTipNorm,
-                            R1Tensor & vecTip );
+                            real64 ( &vecTipNorm )[ 3 ],
+                            real64 ( &vecTip )[ 3 ] );
 
   /**
    * @brief
@@ -205,8 +205,8 @@ private:
                                      NodeManager & nodeManager,
                                      EdgeManager & edgeManager,
                                      ElementRegionManager & elementManager,
-                                     R1Tensor & vecTipNorm,
-                                     R1Tensor & fNode,
+                                     real64 ( &vecTipNorm )[3],
+                                     real64 ( &fNode )[3],
                                      real64 & GdivBeta,
                                      bool threeNodesPinched,
                                      bool calculatef_u );
@@ -229,14 +229,15 @@ private:
                                  EdgeManager & edgeManager,
                                  FaceManager & faceManager,
                                  ElementRegionManager & elementManager,
-                                 R1Tensor & vecTipNorm,
-                                 R1Tensor & vecTip,
+                                 real64 ( &vecTipNorm )[ 3 ],
+                                 real64 ( &vecTip )[ 3 ],
                                  ModifiedObjectLists & modifiedObjects,
                                  const int edgeMode );
 
   /**
    * @brief
-   *    * @param nodeManager
+   * @param nodeIndex
+   * @param nodeManager
    * @param nodeManager
    * @param edgeManager
    * @param faceManager

@@ -230,7 +230,7 @@ void TwoPointFluxApproximation::addToFractureStencil( MeshLevel & mesh,
   localIndex const fractureRegionIndex = fractureRegion->getIndexInParent();
 
   FaceElementSubRegion * const fractureSubRegion = fractureRegion->GetSubRegion< FaceElementSubRegion >( "default" );
-  FaceElementSubRegion::FaceMapType const & faceMap = fractureSubRegion->faceList();
+  FaceElementSubRegion::FaceMapType::NestedViewTypeConst const & faceMap = fractureSubRegion->faceList().toViewConst();
 
   arrayView1d< localIndex const > const & fractureConnectorsToEdges =
     edgeManager->getReference< array1d< localIndex > >( EdgeManager::viewKeyStruct::fractureConnectorEdgesToEdgesString );
@@ -250,7 +250,7 @@ void TwoPointFluxApproximation::addToFractureStencil( MeshLevel & mesh,
   static_assert( true, "must have SET_CREATION_DISPLACEMENT defined" );
 #endif
 #if SET_CREATION_DISPLACEMENT==1
-  ArrayOfArraysView< localIndex const > const & faceToNodesMap = faceManager->nodeList();
+  ArrayOfArraysView< localIndex const > const faceToNodesMap = faceManager->nodeList().toViewConst();
   arrayView2d< real64, nodes::INCR_DISPLACEMENT_USD > const & incrementalDisplacement = nodeManager->incrementalDisplacement();
   arrayView2d< real64, nodes::TOTAL_DISPLACEMENT_USD > const & totalDisplacement = nodeManager->totalDisplacement();
   arrayView1d< real64 > const & aperture = fractureSubRegion->getReference< array1d< real64 > >( "elementAperture" );
@@ -321,6 +321,11 @@ void TwoPointFluxApproximation::addToFractureStencil( MeshLevel & mesh,
                             elemGhostRank,
                             fluidPressure,
                             fractureSubRegion,
+#if SET_CREATION_DISPLACEMENT==1
+                            faceToNodesMap,
+                            totalDisplacement,
+                            aperture,
+#endif
                             initFlag,
                             &fractureStencil]
                             ( localIndex const k )
@@ -341,8 +346,9 @@ void TwoPointFluxApproximation::addToFractureStencil( MeshLevel & mesh,
       stackArray1d< integer, maxElems > isGhostConnectors( numElems );
 
       // get edge geometry
-      R1Tensor const edgeCenter = edgeManager->calculateCenter( edgeIndex, X );
-      R1Tensor const edgeSegment = edgeManager->calculateLength( edgeIndex, X );
+      real64 edgeCenter[3], edgeSegment[3];
+      edgeManager->calculateCenter( edgeIndex, X, edgeCenter );
+      edgeManager->calculateLength( edgeIndex, X, edgeSegment );
       real64 const edgeLength = LvArray::tensorOps::l2Norm< 3 >( edgeSegment );
 
       real64 initialPressure = 1.0e99;
@@ -426,8 +432,8 @@ void TwoPointFluxApproximation::addToFractureStencil( MeshLevel & mesh,
           {
             localIndex const node0 = faceToNodesMap( faceIndex0, a );
             localIndex const node1 = faceToNodesMap( faceIndex1, a==0 ? a : numNodesPerFace-a );
-            if( fabs( LvArray::tensorOps::norm2( totalDisplacement[node0] ) ) > 1.0e-99 &&
-                fabs( LvArray::tensorOps::norm2( totalDisplacement[node1] ) ) > 1.0e-99 )
+            if( fabs( LvArray::tensorOps::l2Norm< 3 >( totalDisplacement[node0] ) ) > 1.0e-99 &&
+                fabs( LvArray::tensorOps::l2Norm< 3 >( totalDisplacement[node1] ) ) > 1.0e-99 )
             {
               zeroDisp = false;
             }
@@ -458,8 +464,19 @@ void TwoPointFluxApproximation::addToFractureStencil( MeshLevel & mesh,
   {
     SortedArray< localIndex > touchedNodes;
     forAll< serialPolicy >( allNewElems.size(),
-                            [ &allNewElems,
-                              fluidPressure ]( localIndex const k )
+                            [ &allNewElems
+                              , fluidPressure
+#if SET_CREATION_DISPLACEMENT==1
+                              , aperture
+                              , faceMap
+                              , faceNormal
+                              , faceToNodesMap
+                              , &touchedNodes
+                              , incrementalDisplacement
+                              , totalDisplacement
+                              , this
+#endif
+                            ]( localIndex const k )
     {
       localIndex const newElemIndex = allNewElems[k];
       // if the value of pressure was not set, then set it to zero and punt.
@@ -485,8 +502,8 @@ void TwoPointFluxApproximation::addToFractureStencil( MeshLevel & mesh,
         localIndex const faceIndex0 = faceMap( newElemIndex, 0 );
         localIndex const faceIndex1 = faceMap( newElemIndex, 1 );
 
-        R1Tensor newDisp = faceNormal( faceIndex0 );
-        newDisp *= -aperture[newElemIndex];
+        real64 newDisp[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( faceNormal[ faceIndex0 ] );
+        LvArray::tensorOps::scale< 3 >( newDisp, -aperture[newElemIndex] );
         localIndex const numNodesPerFace = faceToNodesMap.sizeOfArray( faceIndex0 );
         for( localIndex a=0; a<numNodesPerFace; ++a )
         {
@@ -498,10 +515,10 @@ void TwoPointFluxApproximation::addToFractureStencil( MeshLevel & mesh,
 
           if( node0 != node1 && touchedNodes.count( node0 )==0 )
           {
-            incrementalDisplacement[node0] += newDisp;
-            totalDisplacement[node0] += newDisp;
-            incrementalDisplacement[node1] -= newDisp;
-            totalDisplacement[node1] -= newDisp;
+            LvArray::tensorOps::add< 3 >( incrementalDisplacement[node0], newDisp );
+            LvArray::tensorOps::add< 3 >( totalDisplacement[node0], newDisp );
+            LvArray::tensorOps::subtract< 3 >( incrementalDisplacement[node1], newDisp );
+            LvArray::tensorOps::subtract< 3 >( totalDisplacement[node1], newDisp );
           }
         }
       }
@@ -650,9 +667,10 @@ void TwoPointFluxApproximation::addEDFracToFractureStencil( MeshLevel & mesh,
       stackArray1d< integer, maxElems > isGhostConnectors( numElems );
 
       //TODO get edge geometry
-      R1Tensor const edgeCenter = embSurfEdgeManager.calculateCenter( ke, X );
-      R1Tensor const edgeSegment = embSurfEdgeManager.calculateLength( ke, X );
-      real64 const edgeLength   = LvArray::tensorOps::l2Norm< 3 >( edgeSegment );
+      real64 edgeCenter[3], edgeSegment[3];
+      embSurfEdgeManager.calculateCenter( ke, X, edgeCenter );
+      embSurfEdgeManager.calculateLength( ke, X, edgeSegment );
+      real64 const edgeLength  = LvArray::tensorOps::l2Norm< 3 >( edgeSegment );
 
       // loop over all embedded surface elements attached to the connector and add them to the stencil
       for( localIndex kes = 0; kes < numElems; kes++ )

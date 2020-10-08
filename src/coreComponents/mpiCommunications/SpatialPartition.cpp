@@ -230,13 +230,8 @@ void SpatialPartition::AddNeighborsMetis( SortedArray< globalIndex > & neighborL
 }
 
 
-//void SpatialPartition::GetPartitionBoundingBox( R1Tensor & xmin, R1Tensor & xmax )
-//{
-//  xmin = m_xBoundingBoxMin;
-//  xmax = m_xBoundingBoxMax;
-//}
-
-void SpatialPartition::setSizes( const R1Tensor & min, const R1Tensor & max )
+void SpatialPartition::setSizes( real64 const ( &min )[ 3 ],
+                                 real64 const ( &max )[ 3 ] )
 {
 
   {
@@ -275,18 +270,16 @@ void SpatialPartition::setSizes( const R1Tensor & min, const R1Tensor & max )
     MpiWrapper::Comm_free( cartcomm );
   }
 
-
-
   // global values
-  m_gridMin = min;
-  m_gridMax = max;
-  m_gridSize = max;
+  LvArray::tensorOps::copy< 3 >( m_gridMin, min );
+  LvArray::tensorOps::copy< 3 >( m_gridMax, max );
+  LvArray::tensorOps::copy< 3 >( m_gridSize, max );
   LvArray::tensorOps::subtract< 3 >( m_gridSize, min );
 
   // block values
   m_blockSize = m_gridSize;
 
-  m_min = min;
+  LvArray::tensorOps::copy< 3 >( m_min, min );
   for( int i=0; i<nsdof; ++i )
   {
     const int nloc = m_Partitions( i ) - 1;
@@ -296,7 +289,7 @@ void SpatialPartition::setSizes( const R1Tensor & min, const R1Tensor & max )
       // the default "even" spacing
       m_blockSize( i ) /= m_Partitions( i );
       m_min( i ) += m_coords( i ) * m_blockSize( i );
-      m_max( i ) = min( i ) + (m_coords( i ) + 1) * m_blockSize( i );
+      m_max( i ) = min[ i ] + (m_coords( i ) + 1) * m_blockSize( i );
 
       m_PartitionLocations[i].resize( nlocl );
       for( localIndex j = 0; j < m_PartitionLocations[ i ].size(); ++j )
@@ -330,22 +323,24 @@ void SpatialPartition::setSizes( const R1Tensor & min, const R1Tensor & max )
   }
 }
 
-//void SpatialPartition::setGlobalDomainSizes( const R1Tensor & min, const R1Tensor & max )
+//void SpatialPartition::setGlobalDomainSizes( real64 const ( & min )[ 3 ],
+//                                             real64 const ( & max )[ 3 ] )
 //{
 //  // global values
 //  // without updating partition sizes.  We need this in mesh generator when we
 //  // have extension zones.
-//  m_gridMin = min;
-//  m_gridMax = max;
-//  m_gridSize = max;
-//  m_gridSize -= min;
+//  LvArray::tensorOps::copy< 3 >( m_gridMin, min );
+//  LvArray::tensorOps::copy< 3 >( m_gridMax, max );
+//  LvArray::tensorOps::copy< 3 >( m_gridSize, max );
+//  LvArray::tensorOps::subtract< 3 >( m_gridSize, min );
 //}
 
-void SpatialPartition::SetPartitionGeometricalBoundary( R1Tensor & min, R1Tensor & max )
+void SpatialPartition::SetPartitionGeometricalBoundary( real64 const ( &min )[ 3 ],
+                                                        real64 const ( &max )[ 3 ] )
 {
   // We need this in mesh generator when we have extension zones.
-  m_min = min;
-  m_max = max;
+  LvArray::tensorOps::copy< 3 >( m_min, min );
+  LvArray::tensorOps::copy< 3 >( m_max, max );
 }
 
 
@@ -370,7 +365,7 @@ bool SpatialPartition::IsCoordInPartition( const real64 & coord, const int dir )
   return rval;
 }
 
-bool SpatialPartition::IsCoordInPartition( const R1Tensor & elemCenter )
+bool SpatialPartition::IsCoordInPartition( real64 const ( &coordinates )[ 3 ] )
 {
   bool rval = true;
   for( int i = 0; i < nsdof; i++ )
@@ -380,20 +375,20 @@ bool SpatialPartition::IsCoordInPartition( const R1Tensor & elemCenter )
 
       if( m_Partitions( i ) != 1 )
       {
-        real64 localCenter = MapValueToRange( elemCenter( i ), m_gridMin( i ), m_gridMax( i ));
+        real64 localCenter = MapValueToRange( coordinates[ i ], m_gridMin( i ), m_gridMax( i ));
         rval = rval && localCenter >= m_min( i ) && localCenter < m_max( i );
       }
 
     }
     else
     {
-      rval = rval && (m_Partitions( i )==1 || (elemCenter( i ) >= m_min( i ) && elemCenter( i ) < m_max( i )));
+      rval = rval && (m_Partitions( i )==1 || (coordinates[ i ] >= m_min( i ) && coordinates[ i ] < m_max( i )));
     }
   }
   return rval;
 }
 
-bool SpatialPartition::IsCoordInPartition( const R1Tensor & elemCenter, const int numDistPartition )
+bool SpatialPartition::IsCoordInPartition( real64 const ( &coordinates )[ 3 ], const int numDistPartition )
 {
   bool rval = true;
   R1Tensor m_xBoundingBoxMinTemp, m_xBoundingBoxMaxTemp;
@@ -410,7 +405,7 @@ bool SpatialPartition::IsCoordInPartition( const R1Tensor & elemCenter, const in
 
       if( m_Partitions( i ) != 1 )
       {
-        real64 localCenter = MapValueToRange( elemCenter( i ), m_gridMin( i ), m_gridMax( i ));
+        real64 localCenter = MapValueToRange( coordinates[ i ], m_gridMin( i ), m_gridMax( i ));
         rval = rval && localCenter >= m_xBoundingBoxMinTemp( i ) && localCenter <= m_xBoundingBoxMaxTemp( i );
       }
 
@@ -418,13 +413,13 @@ bool SpatialPartition::IsCoordInPartition( const R1Tensor & elemCenter, const in
     else
     {
 
-      rval = rval && (m_Partitions( i )==1 || (elemCenter( i ) >= m_xBoundingBoxMinTemp( i ) && elemCenter( i ) <= m_xBoundingBoxMaxTemp( i )));
+      rval = rval && (m_Partitions( i )==1 || (coordinates[ i ] >= m_xBoundingBoxMinTemp( i ) && coordinates[ i ] <= m_xBoundingBoxMaxTemp( i )));
     }
   }
   return rval;
 }
 
-bool SpatialPartition::IsCoordInPartitionClosed( const R1Tensor & elemCenter )
+bool SpatialPartition::IsCoordInPartitionClosed( real64 const ( &coordinates )[ 3 ] )
 // A variant with intervals closed at both ends
 {
   bool rval = true;
@@ -435,20 +430,20 @@ bool SpatialPartition::IsCoordInPartitionClosed( const R1Tensor & elemCenter )
 
       if( m_Partitions( i ) != 1 )
       {
-        real64 localCenter = MapValueToRange( elemCenter( i ), m_gridMin( i ), m_gridMax( i ));
+        real64 localCenter = MapValueToRange( coordinates[ i ], m_gridMin( i ), m_gridMax( i ));
         rval = rval && localCenter >= m_min( i ) && localCenter < m_max( i );
       }
 
     }
     else
     {
-      rval = rval && (m_Partitions( i )==1 || (elemCenter( i ) >= m_min( i ) && elemCenter( i ) <= m_max( i )));
+      rval = rval && (m_Partitions( i )==1 || (coordinates[ i ] >= m_min( i ) && coordinates[ i ] <= m_max( i )));
     }
   }
   return rval;
 }
 
-bool SpatialPartition::IsCoordInPartitionBoundingBox( const R1Tensor & elemCenter )
+bool SpatialPartition::IsCoordInPartitionBoundingBox( real64 const ( &coordinates )[ 3 ] )
 
 {
   bool rval = true;
@@ -459,14 +454,14 @@ bool SpatialPartition::IsCoordInPartitionBoundingBox( const R1Tensor & elemCente
 
       if( m_Partitions( i ) != 1 )
       {
-        real64 localCenter = MapValueToRange( elemCenter( i ), m_gridMin( i ), m_gridMax( i ));
+        real64 localCenter = MapValueToRange( coordinates[ i ], m_gridMin( i ), m_gridMax( i ));
         rval = rval && localCenter >= m_xBoundingBoxMin( i ) && localCenter <= m_xBoundingBoxMax( i );
       }
 
     }
     else
     {
-      rval = rval && (m_Partitions( i )==1 || (elemCenter( i ) >= m_xBoundingBoxMin( i ) && elemCenter( i ) <= m_xBoundingBoxMax( i )));
+      rval = rval && (m_Partitions( i )==1 || (coordinates[ i ] >= m_xBoundingBoxMin( i ) && coordinates[ i ] <= m_xBoundingBoxMax( i )));
     }
   }
   return rval;
@@ -483,7 +478,7 @@ void SpatialPartition::SetContactGhostRange( const real64 bufferSize )
   LvArray::tensorOps::addScalar< 3 >( m_contactGhostMax, bufferSize );
 }
 
-bool SpatialPartition::IsCoordInContactGhostRange( const R1Tensor & elemCenter )
+bool SpatialPartition::IsCoordInContactGhostRange( real64 const ( &coordinates )[ 3 ] )
 {
   bool rval = true;
   for( int i = 0; i < nsdof; i++ )
@@ -495,15 +490,15 @@ bool SpatialPartition::IsCoordInContactGhostRange( const R1Tensor & elemCenter )
 
         real64 minBuffer = m_min( i )-m_contactGhostMin( i );
         real64 maxBuffer = m_contactGhostMax( i )-m_max( i );
-        real64 localCenterA = MapValueToRange( elemCenter( i ), m_gridMin( i )-minBuffer, m_gridMax( i )-minBuffer );
-        real64 localCenterB = MapValueToRange( elemCenter( i ), m_gridMin( i )+maxBuffer, m_gridMax( i )+maxBuffer );
+        real64 localCenterA = MapValueToRange( coordinates[ i ], m_gridMin( i )-minBuffer, m_gridMax( i )-minBuffer );
+        real64 localCenterB = MapValueToRange( coordinates[ i ], m_gridMin( i )+maxBuffer, m_gridMax( i )+maxBuffer );
 
         rval = rval && (m_Partitions( i )==1 || (localCenterA >= m_contactGhostMin( i ) && localCenterB < m_contactGhostMax( i )));
       }
     }
     else
     {
-      rval = rval && (m_Partitions( i )==1 || (elemCenter( i ) >= m_contactGhostMin( i ) && elemCenter( i ) < m_contactGhostMax( i )));
+      rval = rval && (m_Partitions( i )==1 || (coordinates[ i ] >= m_contactGhostMin( i ) && coordinates[ i ] < m_contactGhostMax( i )));
     }
   }
   return rval;

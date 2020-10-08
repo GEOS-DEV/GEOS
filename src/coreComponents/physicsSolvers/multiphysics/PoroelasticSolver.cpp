@@ -291,7 +291,6 @@ void PoroelasticSolver::UpdateDeformationForCoupling( DomainPartition & domain )
     fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( m_solidSolver->getDiscretizationName() );
     localIndex const numQuadraturePoints = fe.getNumQuadraturePoints();
 
-    // TODO: remove use of R1Tensor and use device policy
     forAll< parallelDevicePolicy< 32 > >( elementSubRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
     {
       real64 effectiveMeanStress = 0.0;
@@ -410,7 +409,6 @@ void PoroelasticSolver::AssembleCouplingTerms( DomainPartition const & domain,
     localIndex const nPDof = m_flowSolver->numDofPerCell();
     GEOSX_ERROR_IF_GT( nPDof, maxNumPDof );
 
-    // TODO: remove use of R1Tensor and use device policy
     forAll< parallelDevicePolicy< 32 > >( elementSubRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const k )
     {
       stackArray2d< real64, maxNumUDof * maxNumPDof > dRsdP( nUDof, nPDof );

@@ -1163,7 +1163,7 @@
 			<xsd:element name="sets" type="setsType" />
 		</xsd:choice>
 		<!--K_IC => Critical Stress Intensity Factor :math:`K_{IC}` in the plane of the face. => SurfaceGenerator-->
-		<xsd:attribute name="K_IC" type="r1_array" />
+		<xsd:attribute name="K_IC" type="real64_array2d" />
 		<!--SIFonFace => Calculated Stress Intensity Factor on the face. => SurfaceGenerator-->
 		<xsd:attribute name="SIFonFace" type="real64_array" />
 		<!--childIndex => Index of child within the mesh object it is registered on. => SurfaceGenerator-->

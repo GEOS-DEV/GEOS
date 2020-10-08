@@ -60,17 +60,17 @@ public:
 
   /**
    * @brief Checks if the point located inside the current partition.
-   * @param elemCenter The point coordinates.
+   * @param coordinates The point coordinates.
    * @return The predicate result.
    */
-  virtual bool IsCoordInPartition( const R1Tensor & elemCenter ) = 0;
+  virtual bool IsCoordInPartition( real64 const ( &coordinates )[ 3 ] ) = 0;
   /**
    * @brief Checks if the point located inside the current partition, taking in to account the distant partition.
-   * @param elemCenter The point coordinates.
+   * @param coordinates The point coordinates.
    * @param numDistPartition The number of distant partitions.
    * @return The predicate result.
    */
-  virtual bool IsCoordInPartition( const R1Tensor & elemCenter,
+  virtual bool IsCoordInPartition( real64 const ( &coordinates )[ 3 ],
                                    const int numDistPartition ) = 0;
   /**
    * @brief Checks if the point located inside the current partition in the given direction dir.
@@ -85,7 +85,8 @@ public:
    * @param min Global minimum spatial dimensions.
    * @param max Global maximum spatial dimensions.
    */
-  virtual void setSizes( const R1Tensor & min, const R1Tensor & max ) = 0;
+  virtual void setSizes( real64 const ( &min )[ 3 ],
+                         real64 const ( &max )[ 3 ] ) = 0;
 
   /**
    * @brief Defines the number of partitions along the three (x, y, z) axis.
@@ -99,10 +100,10 @@ public:
 
   /**
    * @brief Checks if the point (as an element center) is in contact of a ghost.
-   * @param elemCenter The position of an element center.
+   * @param coordinates The position of an element center.
    * @return The predicate result.
    */
-  virtual bool IsCoordInContactGhostRange( const R1Tensor & elemCenter ) = 0;
+  virtual bool IsCoordInContactGhostRange( real64 const ( &coordinates )[ 3 ] ) = 0;
 
 //  virtual void ReadXML( xmlWrapper::xmlNode const & targetNode ) = 0;
 
