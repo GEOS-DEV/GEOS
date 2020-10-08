@@ -35,7 +35,7 @@
       timeIntegrationOption="QuasiStatic"
       logLevel="0"
       discretization="FE1"
-      targetRegions="{ Region2 }"
+      targetRegions="{ Region2, Fracture }"
       solidMaterialNames="{ rock }"
       contactRelationName="fractureContact">
       <NonlinearSolverParameters
@@ -46,6 +46,7 @@
         krylovTol="1.0e-10"
         logLevel="0"/>
     </SolidMechanicsLagrangianSSLE>
+
     <SinglePhaseFVM
       name="SinglePhaseFlow"
       logLevel="0"
@@ -110,7 +111,7 @@
         name="aperTable"
         coordinates="{ -0.01, -1.0e-3, 0.0 }"
         values="{ 0.005, 0.01e-3, 0.02e-3 }"/>
-    </Contact>    
+    </Contact>
   </Constitutive>
 
   <Outputs>

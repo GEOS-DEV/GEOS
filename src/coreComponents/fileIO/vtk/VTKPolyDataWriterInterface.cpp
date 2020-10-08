@@ -73,6 +73,15 @@ int ToVTKCellType( const string & elementType )
   return vtkIdentifier;
 }
 
+void VTKPolyDataWriterInterface::gatherNbElementsInRegion( ElementRegionBase const & er,
+                                                           array1d< localIndex > & nbElemsInRegion ) const
+{
+  localIndex nbElems = er.getNumberOfElements();
+  int const mpiSize = MpiWrapper::Comm_size( MPI_COMM_GEOSX );
+  nbElemsInRegion.resize( mpiSize );
+  MpiWrapper::gather( &nbElems, 1, nbElemsInRegion.data(), 1, 0, MPI_COMM_GEOSX );
+}
+
 VTKPolyDataWriterInterface::VTKPolyDataWriterInterface( string const & outputName ):
   m_outputFolder( outputName ),
   m_pvd( outputName + ".pvd" ),
@@ -345,14 +354,17 @@ void VTKPolyDataWriterInterface::WriteCellElementRegions( real64 time,
 {
   elemManager.forElementRegions< CellElementRegion >( [&]( CellElementRegion const & er )->void
   {
-    vtkSmartPointer< vtkUnstructuredGrid > ug = vtkUnstructuredGrid::New();
-    auto VTKPoints = GetVTKPoints( nodeManager );
-    ug->SetPoints( VTKPoints );
-    auto VTKCells = GetVTKCells( er );
-    ug->SetCells( VTKCells.first.data(), VTKCells.second );
-    WriteElementFields< CellElementSubRegion >( ug->GetCellData(), er );
-    WriteNodeFields( ug->GetPointData(), nodeManager );
-    WriteUnstructuredGrid( ug, time, er.getName() );
+    if( er.getNumberOfElements< CellElementSubRegion >() != 0 )
+    {
+      vtkSmartPointer< vtkUnstructuredGrid > ug = vtkUnstructuredGrid::New();
+      auto VTKPoints = GetVTKPoints( nodeManager );
+      ug->SetPoints( VTKPoints );
+      auto VTKCells = GetVTKCells( er );
+      ug->SetCells( VTKCells.first.data(), VTKCells.second );
+      WriteElementFields< CellElementSubRegion >( ug->GetCellData(), er );
+      WriteNodeFields( ug->GetPointData(), nodeManager );
+      WriteUnstructuredGrid( ug, time, er.getName() );
+    }
   } );
 }
 
@@ -420,28 +432,36 @@ void VTKPolyDataWriterInterface::WriteVTMFile( real64 time,
 {
   int const mpiRank = MpiWrapper::Comm_rank( MPI_COMM_GEOSX );
   int const mpiSize = MpiWrapper::Comm_size( MPI_COMM_GEOSX );
+  auto writeSubBlocks = [&]( ElementRegionBase const & er )
+  {
+    array1d< localIndex > nbElemsInRegion;
+    gatherNbElementsInRegion( er, nbElemsInRegion );
+    vtmWriter.AddSubBlock( er.getCatalogName(), er.getName() );
+    for( int i = 0; i < mpiSize; i++ )
+    {
+      string const dataSetFile = GetDataSetFilePath( er, time, i );
+      if( nbElemsInRegion[i] > 0 )
+      {
+        if( mpiRank == 0 )
+        {
+          vtmWriter.AddDataToSubBlock( er.getCatalogName(), er.getName(), dataSetFile, i );
+        }
+      }
+    }
+  };
   if( mpiRank == 0 )
   {
-    auto writeSubBlocks = [&]( ElementRegionBase const & er ) {
-      vtmWriter.AddSubBlock( er.getCatalogName(), er.getName() );
-      for( int i = 0; i < mpiSize; i++ )
-      {
-        string const dataSetFile = GetDataSetFilePath( er, time, i );
-        vtmWriter.AddDataToSubBlock( er.getCatalogName(), er.getName(), dataSetFile, i );
-      }
-    };
-    // Cells
     vtmWriter.AddBlock( CellElementRegion::CatalogName() );
-    elemManager.forElementRegions< CellElementRegion >( writeSubBlocks );
-
-    // Wells
     vtmWriter.AddBlock( WellElementRegion::CatalogName() );
-    elemManager.forElementRegions< WellElementRegion >( writeSubBlocks );
-
-    // Surfaces
     vtmWriter.AddBlock( SurfaceElementRegion::CatalogName() );
-    elemManager.forElementRegions< SurfaceElementRegion >( writeSubBlocks );
+  }
 
+  elemManager.forElementRegions< CellElementRegion >( writeSubBlocks );
+  elemManager.forElementRegions< WellElementRegion >( writeSubBlocks );
+  elemManager.forElementRegions< SurfaceElementRegion >( writeSubBlocks );
+
+  if( mpiRank == 0 )
+  {
     vtmWriter.Save();
   }
 }
