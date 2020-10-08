@@ -119,10 +119,17 @@ public:
   }
 
   template< int USD >
-  GEOSX_HOST_DEVICE constexpr inline
+  GEOSX_HOST_DEVICE inline
   R1TensorT & operator+=( LvArray::ArraySlice< realT, 1, USD, std::ptrdiff_t > const & src )
   {
-    return (*this) += reinterpret_cast< LvArray::ArraySlice< realT const, 1, USD, std::ptrdiff_t > const & >( src );
+    GEOSX_ASSERT_EQ( src.size(), T_dim );
+
+    for( int i = 0; i < T_dim; ++i )
+    {
+      this->t_data[ i ] += src[ i ];
+    }
+
+    return *this;
   }
 
   using TensorBaseT< T_dim >::operator-=;
