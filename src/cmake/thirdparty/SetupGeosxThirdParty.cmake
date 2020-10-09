@@ -104,21 +104,41 @@ else()
     set(RAJA_DIR ${GEOSX_TPL_DIR}/raja)
 endif()
 
-include(${CMAKE_SOURCE_DIR}/cmake/thirdparty/FindRAJA.cmake)
-if (NOT RAJA_FOUND)
-    message(FATAL_ERROR "RAJA not found in ${RAJA_DIR}. Maybe you need to build it")
-endif()    
-blt_register_library( NAME raja
-                      INCLUDES ${RAJA_INCLUDE_DIRS}
-                      LIBRARIES ${RAJA_LIBRARY}
-                      TREAT_INCLUDES_AS_SYSTEM ON )
+find_package(RAJA REQUIRED PATHS ${RAJA_DIR})
 
-set( thirdPartyLibs ${thirdPartyLibs} raja )
+get_target_property(RAJA_INCLUDE_DIRS RAJA INTERFACE_INCLUDE_DIRECTORIES)
+set_target_properties(RAJA
+                      PROPERTIES INTERFACE_SYSTEM_INCLUDE_DIRECTORIES "${RAJA_INCLUDE_DIRS}")
+
+set( thirdPartyLibs ${thirdPartyLibs} RAJA )
 
 ################################
 # CHAI
 ################################
-include(${CMAKE_SOURCE_DIR}/cmake/thirdparty/FindCHAI.cmake)
+if( EXISTS ${CHAI_DIR})
+    message(STATUS "Using system CHAI found at ${CHAI_DIR}")
+else()
+    message(STATUS "Using CHAI from thirdPartyLibs")
+    set(CHAI_DIR ${GEOSX_TPL_DIR}/chai)
+endif()
+
+find_package(umpire REQUIRED
+             PATHS ${CHAI_DIR})
+
+find_package(chai REQUIRED
+             PATHS ${CHAI_DIR})
+
+# If this isn't done chai will add -lRAJA to the link line, but we don't link to RAJA like that.
+get_target_property(CHAI_LINK_LIBRARIES chai INTERFACE_LINK_LIBRARIES)
+list(REMOVE_ITEM CHAI_LINK_LIBRARIES RAJA)
+set_target_properties(chai
+                      PROPERTIES INTERFACE_LINK_LIBRARIES "${CHAI_LINK_LIBRARIES}")
+
+get_target_property(CHAI_INCLUDE_DIRS chai INTERFACE_INCLUDE_DIRECTORIES)
+set_target_properties(chai
+                      PROPERTIES INTERFACE_SYSTEM_INCLUDE_DIRECTORIES "${CHAI_INCLUDE_DIRS}")
+
+set( thirdPartyLibs ${thirdPartyLibs} chai )
 
 ################################
 # FPARSER
