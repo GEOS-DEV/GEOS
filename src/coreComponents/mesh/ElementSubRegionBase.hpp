@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -173,20 +173,20 @@ public:
    * @brief Get the center of each element in this subregion.
    * @return an arrayView1d of const element centers
    */
-  arrayView2d< real64 const > const & getElementCenter() const
+  arrayView2d< real64 const > getElementCenter() const
   { return m_elementCenter; }
 
   /**
    * @copydoc getElementCenter() const
    */
-  arrayView2d< real64 > const & getElementCenter()
+  arrayView2d< real64 > getElementCenter()
   { return m_elementCenter; }
 
   /**
    * @brief Get the volume of each element in this subregion.
    * @return an arrayView1d of const element volumes
    */
-  arrayView1d< real64 const > const & getElementVolume() const
+  arrayView1d< real64 const > getElementVolume() const
   { return m_elementVolume; }
 
   /**

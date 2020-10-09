@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -41,6 +41,7 @@ public:
   {}
 
 
+  using UPDATE_BASE::setDiscretizationOps;
   using UPDATE_BASE::GetStiffness;
   using UPDATE_BASE::SmallStrainNoState;
   using UPDATE_BASE::SmallStrain;
@@ -75,16 +76,15 @@ public:
 
 
   static std::string CatalogName() { return string( "Poro" ) + BASE::m_catalogNameString; }
-  virtual string GetCatalogName() override { return CatalogName(); }
+  virtual string getCatalogName() const override { return CatalogName(); }
 
   virtual void PostProcessInput() override;
 
-  virtual void
-  DeliverClone( string const & name,
-                dataRepository::Group * const parent,
-                std::unique_ptr< ConstitutiveBase > & clone ) const override;
+  std::unique_ptr< ConstitutiveBase >
+  deliverClone( string const & name,
+                dataRepository::Group * const parent ) const override;
 
-  virtual void AllocateConstitutiveData( dataRepository::Group * const parent,
+  virtual void allocateConstitutiveData( dataRepository::Group * const parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
   inline virtual void
@@ -103,8 +103,7 @@ public:
     return BASE::template createDerivedKernelUpdates< KernelWrapper >( m_biotCoefficient );
   }
 
-
-  struct viewKeyStruct : public ConstitutiveBase::viewKeyStruct
+  struct viewKeyStruct : public BASE::viewKeyStruct
   {
 
     static constexpr auto compressibilityString =  "compressibility";

@@ -22,7 +22,7 @@ where the scaled volume fraction of phase :math:`\ell` is computed as:
 
 The minimum phase volume fractions :math:`S_{\ell,\textit{min}}` are model parameters specified by the user.
 
-Usage
+Parameters
 ======================
 
 The relative permeability constitutive model is listed in
@@ -56,7 +56,7 @@ water Water phase
 * ``phaseMaxValue`` - The list of maximum values :math:`k_{\textit{r} \ell,\textit{max}}` for each phase is specified in the same order as in ``phaseNames``.
 
 
-Input example
+Example
 =======================
 
 .. code-block:: xml

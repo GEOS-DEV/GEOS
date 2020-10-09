@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -65,7 +65,7 @@ public:
   { return m_matchedPartitionBoundary; }
 
   /// @copydoc matchedPartitionBoundary()
-  arrayView1d< localIndex const > const & matchedPartitionBoundary() const
+  arrayView1d< localIndex const > matchedPartitionBoundary() const
   { return m_matchedPartitionBoundary; }
 
   /**
@@ -75,7 +75,7 @@ public:
   { return m_ghostsToSend; }
 
   /// @copydoc ghostsToSend()
-  arrayView1d< localIndex const > const & ghostsToSend() const
+  arrayView1d< localIndex const > ghostsToSend() const
   { return m_ghostsToSend; }
 
   /**
@@ -85,7 +85,7 @@ public:
   { return m_ghostsToReceive; }
 
   /// @copydoc ghostsToReceive()
-  arrayView1d< localIndex const > const & ghostsToReceive() const
+  arrayView1d< localIndex const > ghostsToReceive() const
   { return m_ghostsToReceive; }
 
   /**
@@ -95,7 +95,7 @@ public:
   { return m_adjacencyList; }
 
   /// @copydoc adjacencyList()
-  arrayView1d< localIndex const > const & adjacencyList() const
+  arrayView1d< localIndex const > adjacencyList() const
   { return m_adjacencyList; }
 
   /**
@@ -106,7 +106,7 @@ public:
   { return m_nonLocalGhosts; }
 
   /// @copydoc nonLocalGhosts()
-  arrayView1d< std::pair< globalIndex, int > const > const & nonLocalGhosts() const
+  arrayView1d< std::pair< globalIndex, int > const > nonLocalGhosts() const
   { return m_nonLocalGhosts; }
 
 private:

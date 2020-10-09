@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -16,8 +16,8 @@
  * @file H1_Wedge_Lagrange1_Gauss6.hpp
  */
 
-#ifndef GEOSX_CORE_FINITEELEMENT_H1WEDGELAGRANGE1GAUSS6
-#define GEOSX_CORE_FINITEELEMENT_H1WEDGELAGRANGE1GAUSS6
+#ifndef GEOSX_FINITEELEMENT_ELEMENTFORMULATIONS_H1WEDGELAGRANGE1GAUSS6
+#define GEOSX_FINITEELEMENT_ELEMENTFORMULATIONS_H1WEDGELAGRANGE1GAUSS6
 
 #include "FiniteElementBase.hpp"
 
@@ -80,23 +80,22 @@ public:
    *
    */
   GEOSX_HOST_DEVICE
-  static void shapeFunctionValues( localIndex const q,
-                                   real64 ( &N )[numNodes] );
+  static void calcN( localIndex const q,
+                     real64 ( &N )[numNodes] );
 
   /**
    * @brief Calculate the shape functions derivatives wrt the physical
    *   coordinates.
    * @param q Index of the quadrature point.
    * @param X Array containing the coordinates of the support points.
-   * @param dNdX Array to contain the shape function derivatives for all
+   * @param gradN Array to contain the shape function derivatives for all
    *   support points at the coordinates of the quadrature point @p q.
    * @return The determinant of the parent/physical transformation matrix.
    */
   GEOSX_HOST_DEVICE
-  static real64 shapeFunctionDerivatives( localIndex const q,
-                                          real64 const (&X)[numNodes][3],
-                                          real64 ( &dNdX )[numNodes][3] );
-
+  static real64 calcGradN( localIndex const q,
+                           real64 const (&X)[numNodes][3],
+                           real64 ( &gradN )[numNodes][3] );
 
   /**
    * @brief Calculate the integration weights for a quadrature point.
@@ -235,14 +234,14 @@ private:
    *   shape function derivatives in the physical space.
    * @param q The linear index of quadrature point
    * @param invJ The Jacobian transformation from parent->physical space.
-   * @param dNdX Array to contain the shape function derivatives for all
+   * @param gradN Array to contain the shape function derivatives for all
    *             support points at the coordinates of the quadrature point @p q.
    */
   GEOSX_HOST_DEVICE
   static void
     applyJacobianTransformationToShapeFunctionsDerivatives( int const q,
                                                             real64 const ( &invJ )[3][3],
-                                                            real64 ( &dNdX )[numNodes][3] );
+                                                            real64 ( &gradN )[numNodes][3] );
 
 };
 
@@ -290,7 +289,7 @@ void
 H1_Wedge_Lagrange1_Gauss6::
   applyJacobianTransformationToShapeFunctionsDerivatives( int const q,
                                                           real64 const ( &invJ )[3][3],
-                                                          real64 (& dNdX)[numNodes][3] )
+                                                          real64 (& gradN)[numNodes][3] )
 {
   real64 const r  = quadratureParentCoords0( q );
   real64 const s  = quadratureParentCoords1( q );
@@ -311,10 +310,10 @@ H1_Wedge_Lagrange1_Gauss6::
       localIndex const nodeIndex = linearMap( a, b );
       for( int i = 0; i < 3; ++i )
       {
-        dNdX[nodeIndex][i] = 0.0;
+        gradN[nodeIndex][i] = 0.0;
         for( int j = 0; j < 3; ++j )
         {
-          dNdX[nodeIndex][i] = dNdX[nodeIndex][i] + dNdXi[ j ] * invJ[j][i];
+          gradN[nodeIndex][i] = gradN[nodeIndex][i] + dNdXi[ j ] * invJ[j][i];
         }
       }
     }
@@ -327,8 +326,8 @@ GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void
 H1_Wedge_Lagrange1_Gauss6::
-  shapeFunctionValues( localIndex const q,
-                       real64 (& N)[numNodes] )
+  calcN( localIndex const q,
+         real64 (& N)[numNodes] )
 {
   real64 const r  = quadratureParentCoords0( q );
   real64 const s  = quadratureParentCoords1( q );
@@ -348,17 +347,17 @@ GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 real64
 H1_Wedge_Lagrange1_Gauss6::
-  shapeFunctionDerivatives( localIndex const q,
-                            real64 const (&X)[numNodes][3],
-                            real64 (& dNdX)[numNodes][3] )
+  calcGradN( localIndex const q,
+             real64 const (&X)[numNodes][3],
+             real64 (& gradN)[numNodes][3] )
 {
   real64 J[3][3] = {{0}};
 
   jacobianTransformation( q, X, J );
 
-  real64 const detJ = inverse( J );
+  real64 const detJ = LvArray::tensorOps::invert< 3 >( J );
 
-  applyJacobianTransformationToShapeFunctionsDerivatives( q, J, dNdX );
+  applyJacobianTransformationToShapeFunctionsDerivatives( q, J, gradN );
 
   return detJ * weight;
 }
@@ -376,10 +375,10 @@ H1_Wedge_Lagrange1_Gauss6::
 
   jacobianTransformation( q, X, J );
 
-  return detJ( J ) * weight;
+  return LvArray::tensorOps::determinant< 3 >( J ) * weight;
 }
 
 }
 }
 
-#endif //GEOSX_CORE_FINITEELEMENT_H1WEDGELAGRANGE1GAUSS6
+#endif //GEOSX_FINITEELEMENT_ELEMENTFORMULATIONS_H1WEDGELAGRANGE1GAUSS6

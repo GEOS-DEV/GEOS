@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -36,7 +36,7 @@ static_assert( sizeof( HYPRE_BigInt ) == sizeof( globalIndex ),
                "HYPRE_BigInt and geosx::globalIndex must have the same size" );
 
 static_assert( std::is_signed< HYPRE_BigInt >::value == std::is_signed< globalIndex >::value,
-               "HYPRE_BigInt and geoex::globalIndex must both be signed or unsigned" );
+               "HYPRE_BigInt and geosx::globalIndex must both be signed or unsigned" );
 
 static_assert( std::is_same< HYPRE_Real, real64 >::value,
                "HYPRE_Real and geosx::real64 must be the same type" );

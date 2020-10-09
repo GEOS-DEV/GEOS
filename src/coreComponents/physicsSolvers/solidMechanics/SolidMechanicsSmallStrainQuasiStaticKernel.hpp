@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -80,6 +80,7 @@ public:
   using Base::m_rhs;
   using Base::m_elemsToNodes;
   using Base::m_constitutiveUpdate;
+  using Base::m_finiteElementSpace;
 
 
   /**
@@ -108,10 +109,9 @@ public:
           rankOffset,
           inputMatrix,
           inputRhs ),
+    m_X( nodeManager.referencePosition()),
     m_disp( nodeManager.totalDisplacement()),
     m_uhat( nodeManager.incrementalDisplacement()),
-    m_dNdX( elementSubRegion.dNdX() ),
-    m_detJ( elementSubRegion.detJ() ),
     m_gravityVector{ inputGravityVector[0], inputGravityVector[1], inputGravityVector[2] },
     m_density( inputConstitutiveType->getDensity())
   {}
@@ -133,10 +133,19 @@ public:
     GEOSX_HOST_DEVICE
     StackVariables():
       Base::StackVariables(),
+                                       xLocal(),
                                        u_local(),
                                        uhat_local(),
-                                       constitutiveStiffness{ {0.0} }
+                                       constitutiveStiffness()
     {}
+
+#if !defined(CALC_FEM_SHAPE_IN_KERNEL)
+    /// Dummy
+    int xLocal;
+#else
+    /// C-array stack storage for element local the nodal positions.
+    real64 xLocal[ numNodesPerElem ][ 3 ];
+#endif
 
     /// Stack storage for the element local nodal displacement
     real64 u_local[numNodesPerElem][numDofPerTrialSupportPoint];
@@ -168,6 +177,9 @@ public:
 
       for( int i=0; i<3; ++i )
       {
+#if defined(CALC_FEM_SHAPE_IN_KERNEL)
+        stack.xLocal[ a ][ i ] = m_X[ localNodeIndex ][ i ];
+#endif
         stack.u_local[ a ][i] = m_disp[ localNodeIndex ][i];
         stack.uhat_local[ a ][i] = m_uhat[ localNodeIndex ][i];
         stack.localRowDofIndex[a*3+i] = m_dofNumber[localNodeIndex]+i;
@@ -175,41 +187,6 @@ public:
       }
     }
 
-  }
-
-  /**
-   * @copydoc geosx::finiteElement::KernelBase::quadraturePointStateUpdate
-   *
-   * For solid mechanics kernels, the strain increment is calculated, and the
-   * constitutive update is called. In addition, the constitutive stiffness
-   * stack variable is filled by the constitutive model.
-   */
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  void quadraturePointStateUpdate( localIndex const k,
-                                   localIndex const q,
-                                   StackVariables & stack ) const
-  {
-    real64 strainInc[6] = {0};
-    for( localIndex a = 0; a < numNodesPerElem; ++a )
-    {
-      strainInc[0] = strainInc[0] + m_dNdX( k, q, a, 0 ) * stack.uhat_local[a][0];
-      strainInc[1] = strainInc[1] + m_dNdX( k, q, a, 1 ) * stack.uhat_local[a][1];
-      strainInc[2] = strainInc[2] + m_dNdX( k, q, a, 2 ) * stack.uhat_local[a][2];
-      strainInc[3] = strainInc[3] + m_dNdX( k, q, a, 2 ) * stack.uhat_local[a][1] +
-                     m_dNdX( k, q, a, 1 ) * stack.uhat_local[a][2];
-
-      strainInc[4] = strainInc[4] + m_dNdX( k, q, a, 2 ) * stack.uhat_local[a][0] +
-                     m_dNdX( k, q, a, 0 ) * stack.uhat_local[a][2];
-
-      strainInc[5] = strainInc[5] + m_dNdX( k, q, a, 1 ) * stack.uhat_local[a][0] +
-                     m_dNdX( k, q, a, 0 ) * stack.uhat_local[a][1];
-    }
-
-    m_constitutiveUpdate.SmallStrain( k, q, strainInc );
-
-    GEOSX_UNUSED_VAR( q )
-    m_constitutiveUpdate.GetStiffness( k, stack.constitutiveStiffness );
   }
 
 
@@ -246,108 +223,58 @@ public:
   };
 
   /**
-   * @copydoc geosx::finiteElement::KernelBase::quadraturePointJacobianContribution
-   * @tparam DYNAMICS_LAMBDA The type of the lambda that will generate dynamics
-   *   terms inside the Jacobian loop.
-   * @param dynamicsTerms The lambda that generates dynamics terms.
-   * For solid mechanics kernels, the derivative of the force residual wrt
-   * the incremental displacement is filled into the local element jacobian.
-   */
-  template< typename DYNAMICS_LAMBDA = NoOpFunctors >
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  void quadraturePointJacobianContribution( localIndex const k,
-                                            localIndex const q,
-                                            StackVariables & stack,
-                                            DYNAMICS_LAMBDA && dynamicsTerms = NoOpFunctors{} ) const
-  {
-    for( localIndex a=0; a<numNodesPerElem; ++a )
-    {
-      for( localIndex b=0; b<numNodesPerElem; ++b )
-      {
-        real64 const (&c)[6][6] = stack.constitutiveStiffness;
-        stack.localJacobian[ a*3+0 ][ b*3+0 ] -= ( c[0][0]*m_dNdX( k, q, a, 0 )*m_dNdX( k, q, b, 0 ) +
-                                                   c[5][5]*m_dNdX( k, q, a, 1 )*m_dNdX( k, q, b, 1 ) +
-                                                   c[4][4]*m_dNdX( k, q, a, 2 )*m_dNdX( k, q, b, 2 ) ) * m_detJ( k, q );
-
-        stack.localJacobian[ a*3+0 ][ b*3+1 ] -= ( c[5][5]*m_dNdX( k, q, a, 1 )*m_dNdX( k, q, b, 0 ) +
-                                                   c[0][1]*m_dNdX( k, q, a, 0 )*m_dNdX( k, q, b, 1 ) ) * m_detJ( k, q );
-
-        stack.localJacobian[ a*3+0 ][ b*3+2 ] -= ( c[4][4]*m_dNdX( k, q, a, 2 )*m_dNdX( k, q, b, 0 ) +
-                                                   c[0][2]*m_dNdX( k, q, a, 0 )*m_dNdX( k, q, b, 2 ) ) * m_detJ( k, q );
-
-        stack.localJacobian[ a*3+1 ][ b*3+1 ] -= ( c[5][5]*m_dNdX( k, q, a, 0 )*m_dNdX( k, q, b, 0 ) +
-                                                   c[1][1]*m_dNdX( k, q, a, 1 )*m_dNdX( k, q, b, 1 ) +
-                                                   c[3][3]*m_dNdX( k, q, a, 2 )*m_dNdX( k, q, b, 2 ) ) * m_detJ( k, q );
-
-        stack.localJacobian[ a*3+1 ][ b*3+0 ] -= ( c[0][1]*m_dNdX( k, q, a, 1 )*m_dNdX( k, q, b, 0 ) +
-                                                   c[5][5]*m_dNdX( k, q, a, 0 )*m_dNdX( k, q, b, 1 ) ) * m_detJ( k, q );
-
-        stack.localJacobian[ a*3+1 ][ b*3+2 ] -= ( c[3][3]*m_dNdX( k, q, a, 2 )*m_dNdX( k, q, b, 1 ) +
-                                                   c[1][2]*m_dNdX( k, q, a, 1 )*m_dNdX( k, q, b, 2 ) ) * m_detJ( k, q );
-
-        stack.localJacobian[ a*3+2 ][ b*3+0 ] -= ( c[0][2]*m_dNdX( k, q, a, 2 )*m_dNdX( k, q, b, 0 ) +
-                                                   c[4][4]*m_dNdX( k, q, a, 0 )*m_dNdX( k, q, b, 2 ) ) * m_detJ( k, q );
-
-        stack.localJacobian[ a*3+2 ][ b*3+1 ] -= ( c[1][2]*m_dNdX( k, q, a, 2 )*m_dNdX( k, q, b, 1 ) +
-                                                   c[3][3]*m_dNdX( k, q, a, 1 )*m_dNdX( k, q, b, 2 ) ) * m_detJ( k, q );
-
-        stack.localJacobian[ a*3+2 ][ b*3+2 ] -= ( c[4][4]*m_dNdX( k, q, a, 0 )*m_dNdX( k, q, b, 0 ) +
-                                                   c[3][3]*m_dNdX( k, q, a, 1 )*m_dNdX( k, q, b, 1 ) +
-                                                   c[2][2]*m_dNdX( k, q, a, 2 )*m_dNdX( k, q, b, 2 ) ) * m_detJ( k, q );
-
-        dynamicsTerms( a, b );
-      }
-    }
-  }
-
-  /**
-   * @copydoc geosx::finiteElement::KernelBase::quadraturePointResidualContribution
-   * @tparam STRESS_MODIFIER The type of the function to modify the stress
-   *   prior to integration.
-   * @param stressModifier The stress modifier functor/lambda.
-   *
-   * The divergence of the stress is integrated over the volume of the element,
-   * yielding the nodal force (residual) contributions.
+   * @copydoc geosx::finiteElement::KernelBase::quadraturePointKernel
+   * @tparam STRESS_MODIFIER Type of optional functor to allow for the
+   * modification of stress prior to integration.
+   * @param stressModifier An optional functor to allow for the modification
+   *  of stress prior to integration.
+   * For solid mechanics kernels, the strain increment is calculated, and the
+   * constitutive update is called. In addition, the constitutive stiffness
+   * stack variable is filled by the constitutive model.
    */
   template< typename STRESS_MODIFIER = NoOpFunctors >
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  void quadraturePointResidualContribution( localIndex const k,
-                                            localIndex const q,
-                                            StackVariables & stack,
-                                            STRESS_MODIFIER && stressModifier = NoOpFunctors{} ) const
+  void quadraturePointKernel( localIndex const k,
+                              localIndex const q,
+                              StackVariables & stack,
+                              STRESS_MODIFIER && stressModifier = NoOpFunctors{} ) const
   {
-    real64 stress[6] = { m_constitutiveUpdate.m_stress( k, q, 0 ),
-                         m_constitutiveUpdate.m_stress( k, q, 1 ),
-                         m_constitutiveUpdate.m_stress( k, q, 2 ),
-                         m_constitutiveUpdate.m_stress( k, q, 3 ),
-                         m_constitutiveUpdate.m_stress( k, q, 4 ),
-                         m_constitutiveUpdate.m_stress( k, q, 5 ) };
+    real64 dNdX[ numNodesPerElem ][ 3 ];
+    real64 const detJ = m_finiteElementSpace.template getGradN< FE_TYPE >( k, q, stack.xLocal, dNdX );
+
+    real64 strainInc[6] = {0};
+    FE_TYPE::symmetricGradient( dNdX, stack.uhat_local, strainInc );
+
+    m_constitutiveUpdate.SmallStrain( k, q, strainInc );
+
+    typename CONSTITUTIVE_TYPE::KernelWrapper::DiscretizationOps stiffnessHelper;
+    m_constitutiveUpdate.setDiscretizationOps( k, q, stiffnessHelper );
+
+    stiffnessHelper.template upperBTDB< numNodesPerElem >( dNdX, -detJ, stack.localJacobian );
+
+    real64 stress[6];
+
+    m_constitutiveUpdate.getStress( k, q, stress );
 
     stressModifier( stress );
 
-    real64 const gravityForce[3] = { m_gravityVector[0] * m_density( k, q ),
-                                     m_gravityVector[1] * m_density( k, q ),
-                                     m_gravityVector[2] * m_density( k, q ) };
+    real64 const gravityForce[3] = { m_gravityVector[0] * m_density( k, q )* detJ,
+                                     m_gravityVector[1] * m_density( k, q )* detJ,
+                                     m_gravityVector[2] * m_density( k, q )* detJ };
+
+    for( localIndex i=0; i<6; ++i )
+    {
+      stress[i] *= -detJ;
+    }
 
     real64 N[numNodesPerElem];
-    FE_TYPE::shapeFunctionValues( q, N );
-    for( localIndex a = 0; a < numNodesPerElem; ++a )
-    {
-      stack.localResidual[ a * 3 + 0 ] -= ( stress[ 0 ] * m_dNdX( k, q, a, 0 ) +
-                                            stress[ 5 ] * m_dNdX( k, q, a, 1 ) +
-                                            stress[ 4 ] * m_dNdX( k, q, a, 2 ) -
-                                            gravityForce[0] * N[a] ) * m_detJ( k, q );
-      stack.localResidual[ a * 3 + 1 ] -= ( stress[ 5 ] * m_dNdX( k, q, a, 0 ) +
-                                            stress[ 1 ] * m_dNdX( k, q, a, 1 ) +
-                                            stress[ 3 ] * m_dNdX( k, q, a, 2 ) -
-                                            gravityForce[1] * N[a] ) * m_detJ( k, q );
-      stack.localResidual[ a * 3 + 2 ] -= ( stress[ 4 ] * m_dNdX( k, q, a, 0 ) +
-                                            stress[ 3 ] * m_dNdX( k, q, a, 1 ) +
-                                            stress[ 2 ] * m_dNdX( k, q, a, 2 ) -
-                                            gravityForce[2] * N[a] ) * m_detJ( k, q );
-    }
+    FE_TYPE::calcN( q, N );
+    FE_TYPE::plus_gradNajAij_plus_NaFi( dNdX,
+                                        stress,
+                                        N,
+                                        gravityForce,
+                                        reinterpret_cast< real64 (&)[numNodesPerElem][3] >(stack.localResidual) );
   }
 
   /**
@@ -360,6 +287,8 @@ public:
   {
     GEOSX_UNUSED_VAR( k );
     real64 maxForce = 0;
+
+    CONSTITUTIVE_TYPE::KernelWrapper::DiscretizationOps::template fillLowerBTDB< numNodesPerElem >( stack.localJacobian );
 
     for( int localNode = 0; localNode < numNodesPerElem; ++localNode )
     {
@@ -384,17 +313,14 @@ public:
 
 
 protected:
+  /// The array containing the nodal position array.
+  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const m_X;
+
   /// The rank-global displacement array.
   arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const m_disp;
 
   /// The rank-global incremental displacement array.
   arrayView2d< real64 const, nodes::INCR_DISPLACEMENT_USD > const m_uhat;
-
-  /// The shape function derivative for each quadrature point.
-  arrayView4d< real64 const > const m_dNdX;
-
-  /// The parent->physical jacobian determinant for each quadrature point.
-  arrayView2d< real64 const > const m_detJ;
 
   /// The gravity vector.
   real64 const m_gravityVector[3];

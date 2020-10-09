@@ -101,8 +101,7 @@
       setNames="{ all }"
       objectPath="ElementRegions/Reservoir/Reservoir_TETRA"
       fieldName="permeability"
-      scale="1e-12"
-      functionName="permxFunc"/>
+      scale="1e-14"/>
 
     <FieldSpecification
       name="permy"
@@ -111,8 +110,7 @@
       setNames="{ all }"
       objectPath="ElementRegions/Reservoir/Reservoir_TETRA"
       fieldName="permeability"
-      scale="1e-12"
-      functionName="permyFunc"/>
+      scale="1e-14"/>
 
     <FieldSpecification
       name="permz"
@@ -121,8 +119,7 @@
       setNames="{ all }"
       objectPath="ElementRegions/Reservoir/Reservoir_TETRA"
       fieldName="permeability"
-      scale="1e-15"
-      functionName="permzFunc"/>
+      scale="1e-14"/>
 
     <FieldSpecification
       name="referencePorosity"
@@ -187,8 +184,8 @@
     <TableFunction
       name="timeInj"
       inputVarNames="{ time }"
-      coordinates="{ 40e6, 100e6, 300e6 }"
-      values="{ 1, 0.01, 0.0001 }"/>
+      coordinates="{ 200e6, 250e6, 500e6 }"
+      values="{ 1, 0.01, 0.00001 }"/>
 
     <TableFunction
       name="initialPressureFunc"
@@ -196,27 +193,6 @@
       coordinateFiles="{ tables_FieldCaseTuto/xlin.geos, tables_FieldCaseTuto/ylin.geos, tables_FieldCaseTuto/zlin.geos }"
       voxelFile="tables_FieldCaseTuto/pressure.geos"
       interpolation="linear"/>
-
-    <TableFunction
-      name="permxFunc"
-      inputVarNames="{ elementCenter }"
-      coordinateFiles="{ tables_FieldCaseTuto/xlin.geos, tables_FieldCaseTuto/ylin.geos, tables_FieldCaseTuto/zlin.geos }"
-      voxelFile="tables_FieldCaseTuto/permx.geos"
-      interpolation="nearest"/>
-
-    <TableFunction
-      name="permyFunc"
-      inputVarNames="{ elementCenter }"
-      coordinateFiles="{ tables_FieldCaseTuto/xlin.geos, tables_FieldCaseTuto/ylin.geos, tables_FieldCaseTuto/zlin.geos }"
-      voxelFile="tables_FieldCaseTuto/permy.geos"
-      interpolation="nearest"/>
-
-    <TableFunction
-      name="permzFunc"
-      inputVarNames="{ elementCenter }"
-      coordinateFiles="{ tables_FieldCaseTuto/xlin.geos, tables_FieldCaseTuto/ylin.geos, tables_FieldCaseTuto/zlin.geos }"
-      voxelFile="tables_FieldCaseTuto/permz.geos"
-      interpolation="nearest"/>
   </Functions>
 
   <!-- SPHINX_FIELD_CASE_TFUNC_END -->

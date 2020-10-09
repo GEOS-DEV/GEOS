@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -36,16 +36,15 @@ void testNumericalDerivatives( RelativePermeabilityBase & relPerm,
   auto const & phases = relPerm.phaseNames();
 
   // create a clone of the rel perm to run updates on
-  std::unique_ptr< ConstitutiveBase > relPermCopyPtr;
-  relPerm.DeliverClone( "fluidCopy", nullptr, relPermCopyPtr );
+  std::unique_ptr< ConstitutiveBase > relPermCopyPtr = relPerm.deliverClone( "fluidCopy", nullptr );
   RelativePermeabilityBase & relPermCopy = *relPermCopyPtr->group_cast< RelativePermeabilityBase * >();
 
-  relPerm.AllocateConstitutiveData( relPerm.getParent(), 1 );
-  relPermCopy.AllocateConstitutiveData( relPerm.getParent(), 1 );
+  relPerm.allocateConstitutiveData( relPerm.getParent(), 1 );
+  relPermCopy.allocateConstitutiveData( relPerm.getParent(), 1 );
 
-  arraySlice1d< real64 const > phaseRelPerm = relPerm.phaseRelPerm()[0][0];
-  arraySlice2d< real64 const > dPhaseRelPerm_dSat = relPerm.dPhaseRelPerm_dPhaseVolFraction()[0][0];
-  arraySlice1d< real64 const > phaseRelPermCopy = relPermCopy.phaseRelPerm()[0][0];
+  arrayView3d< real64 const > const phaseRelPerm = relPerm.phaseRelPerm();
+  arrayView4d< real64 const > const dPhaseRelPerm_dSat = relPerm.dPhaseRelPerm_dPhaseVolFraction();
+  arrayView3d< real64 const > const phaseRelPermCopy = relPermCopy.phaseRelPerm();
 
   // set the fluid state to current
   constitutive::constitutiveUpdatePassThru( relPerm, [&] ( auto & castedRelPerm )
@@ -55,7 +54,7 @@ void testNumericalDerivatives( RelativePermeabilityBase & relPerm,
   } );
 
   // update saturation and check derivatives
-  auto dPhaseRelPerm_dS = invertLayout( dPhaseRelPerm_dSat, NP, NP );
+  auto dPhaseRelPerm_dS = invertLayout( dPhaseRelPerm_dSat[ 0 ][ 0 ], NP, NP );
 
   array1d< real64 > satNew( NP );
   for( localIndex jp = 0; jp < NP; ++jp )
@@ -74,9 +73,9 @@ void testNumericalDerivatives( RelativePermeabilityBase & relPerm,
     } );
 
     string const var = "phaseVolFrac[" + phases[jp] + "]";
-    checkDerivative( phaseRelPermCopy.toSliceConst(),
-                     phaseRelPerm.toSliceConst(),
-                     dPhaseRelPerm_dS[jp].toSliceConst(),
+    checkDerivative( phaseRelPermCopy[ 0 ][ 0 ],
+                     phaseRelPerm[ 0 ][ 0 ],
+                     dPhaseRelPerm_dS[ jp ].toSliceConst(),
                      dS,
                      relTol,
                      "phaseRelPerm",

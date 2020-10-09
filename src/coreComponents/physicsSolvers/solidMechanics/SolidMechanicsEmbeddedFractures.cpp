@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -54,6 +54,9 @@ SolidMechanicsEmbeddedFractures::SolidMechanicsEmbeddedFractures( const std::str
   registerWrapper( viewKeyStruct::contactRelationNameString, &m_contactRelationName )->
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "Name of contact relation to enforce constraints on fracture boundary." );
+
+  this->getWrapper< string >( viewKeyStruct::discretizationString )->
+    setInputFlag( InputFlags::FALSE );
 
 }
 
@@ -681,15 +684,15 @@ void SolidMechanicsEmbeddedFractures::AssembleEquilibriumOperator( array2d< real
   real64 nDn[3][3], t1DnSym[3][3], t2DnSym[3][3];
 
   // n dyadic n
-  LvArray::tensorOps::AiBj< 3, 3 >( nDn, nVec, nVec );
+  LvArray::tensorOps::Rij_eq_AiBj< 3, 3 >( nDn, nVec, nVec );
 
   // sym(n dyadic t1) and sym (n dyadic t2)
-  LvArray::tensorOps::AiBj< 3, 3 >( t1DnSym, nVec, tVec1 );
-  LvArray::tensorOps::plusAiBj< 3, 3 >( t1DnSym, tVec1, nVec );
+  LvArray::tensorOps::Rij_eq_AiBj< 3, 3 >( t1DnSym, nVec, tVec1 );
+  LvArray::tensorOps::Rij_add_AiBj< 3, 3 >( t1DnSym, tVec1, nVec );
   LvArray::tensorOps::scale< 3, 3 >( t1DnSym, 0.5 );
 
-  LvArray::tensorOps::AiBj< 3, 3 >( t2DnSym, nVec, tVec2 );
-  LvArray::tensorOps::plusAiBj< 3, 3 >( t2DnSym, tVec2, nVec );
+  LvArray::tensorOps::Rij_eq_AiBj< 3, 3 >( t2DnSym, nVec, tVec2 );
+  LvArray::tensorOps::Rij_add_AiBj< 3, 3 >( t2DnSym, tVec2, nVec );
   LvArray::tensorOps::scale< 3, 3 >( t2DnSym, 0.5 );
 
   int VoigtIndex;
@@ -757,17 +760,17 @@ SolidMechanicsEmbeddedFractures::
   real64 nDmSym[3][3], t1DmSym[3][3], t2DmSym[3][3];
 
   // sym(n dyadic m)
-  LvArray::tensorOps::AiBj< 3, 3 >( nDmSym, mVec, nVec );
-  LvArray::tensorOps::plusAiBj< 3, 3 >( nDmSym, nVec, mVec );
+  LvArray::tensorOps::Rij_eq_AiBj< 3, 3 >( nDmSym, mVec, nVec );
+  LvArray::tensorOps::Rij_add_AiBj< 3, 3 >( nDmSym, nVec, mVec );
   LvArray::tensorOps::scale< 3, 3 >( nDmSym, 0.5 );
 
   // sym(n dyadic t1) and sym (n dyadic t2)
-  LvArray::tensorOps::AiBj< 3, 3 >( t1DmSym, mVec, tVec1 );
-  LvArray::tensorOps::plusAiBj< 3, 3 >( t1DmSym, tVec1, mVec );
+  LvArray::tensorOps::Rij_eq_AiBj< 3, 3 >( t1DmSym, mVec, tVec1 );
+  LvArray::tensorOps::Rij_add_AiBj< 3, 3 >( t1DmSym, tVec1, mVec );
   LvArray::tensorOps::scale< 3, 3 >( t1DmSym, 0.5 );
 
-  LvArray::tensorOps::AiBj< 3, 3 >( t2DmSym, mVec, tVec2 );
-  LvArray::tensorOps::plusAiBj< 3, 3 >( t2DmSym, tVec2, mVec );
+  LvArray::tensorOps::Rij_eq_AiBj< 3, 3 >( t2DmSym, mVec, tVec2 );
+  LvArray::tensorOps::Rij_add_AiBj< 3, 3 >( t2DmSym, tVec2, mVec );
   LvArray::tensorOps::scale< 3, 3 >( t2DmSym, 0.5 );
 
   int VoigtIndex;

@@ -9,7 +9,7 @@
       logLevel="1"
       targetRegions="{ Region1, wellRegion1, wellRegion2, wellRegion3 }">
       <NonlinearSolverParameters
-        lineSearchAction="0"
+        lineSearchAction="None"
         newtonMaxIter="40"/>
       <LinearSolverParameters
         solverType="direct"

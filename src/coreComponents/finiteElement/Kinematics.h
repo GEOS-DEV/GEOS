@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -35,13 +35,13 @@ void CalculateGradients( real64 ( & gradient0 )[ 3 ][ 3 ],
                          real64 const ( &var1 )[ N ][ 3 ],
                          ARRAY_2D const & dNdX )
 {
-  LvArray::tensorOps::AiBj< 3, 3 >( gradient0, var0[ 0 ], dNdX[ 0 ] );
-  LvArray::tensorOps::AiBj< 3, 3 >( gradient1, var1[ 0 ], dNdX[ 0 ] );
+  LvArray::tensorOps::Rij_eq_AiBj< 3, 3 >( gradient0, var0[ 0 ], dNdX[ 0 ] );
+  LvArray::tensorOps::Rij_eq_AiBj< 3, 3 >( gradient1, var1[ 0 ], dNdX[ 0 ] );
 
   for( int a = 1; a < N; ++a )
   {
-    LvArray::tensorOps::plusAiBj< 3, 3 >( gradient0, var0[ a ], dNdX[ a ] );
-    LvArray::tensorOps::plusAiBj< 3, 3 >( gradient1, var1[ a ], dNdX[ a ] );
+    LvArray::tensorOps::Rij_add_AiBj< 3, 3 >( gradient0, var0[ a ], dNdX[ a ] );
+    LvArray::tensorOps::Rij_add_AiBj< 3, 3 >( gradient1, var1[ a ], dNdX[ a ] );
   }
 }
 

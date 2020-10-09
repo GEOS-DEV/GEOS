@@ -15,7 +15,7 @@
         newtonTol="1.0e-6"
         logLevel="2"
         newtonMaxIter="10"
-        lineSearchAction="2"
+        lineSearchAction="Require"
         lineSearchMaxCuts="2"
         maxTimeStepCuts="2"/>
       <LinearSolverParameters
@@ -28,7 +28,7 @@
       timeIntegrationOption="QuasiStatic"
       logLevel="0"
       discretization="FE1"
-      targetRegions="{ Region }"
+      targetRegions="{ Region, Fracture }"
       solidMaterialNames="{ rock }">
       <NonlinearSolverParameters
         newtonTol="1.0e-6"
@@ -41,7 +41,6 @@
     <SurfaceGenerator
       name="SurfaceGen"
       logLevel="0"
-      discretization="FE1"
       fractureRegion="Fracture"
       targetRegions="{ Region }"
       solidMaterialNames="{ rock }"
@@ -151,7 +150,7 @@
     <FaceElementRegion
       name="Fracture"
       defaultAperture="0.0"
-      materialList="{ fractureMaterial }"/>
+      materialList="{ fractureMaterial, rock }"/>
   </ElementRegions>
 
   <Constitutive>

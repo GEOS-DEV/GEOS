@@ -45,13 +45,24 @@
       timeFrequency="5.0e-4"
       targetExactTimestep="0"
       target="/Outputs/restartOutput"/>
+
+    <PeriodicEvent
+      name="timeHistoryCollection"
+      timeFrequency="1.0e-5"
+      targetExactTimestep="1"
+      target="/Tasks/velocityCollection"/>
+
+    <PeriodicEvent
+      name="timeHistoryOutput"
+      timeFrequency="5.0e-4"
+      targetExactTimestep="0"
+      target="/Outputs/timeHistoryOutput"/>
   </Events>
 
   <NumericalMethods>
     <FiniteElements>
       <FiniteElementSpace
         name="FE1"
-
         order="1"/>
     </FiniteElements>
   </NumericalMethods>
@@ -147,7 +158,20 @@
 
     <Restart
       name="restartOutput"/>
+
+    <TimeHistory
+      name="timeHistoryOutput"
+      sources="{ /Tasks/velocityCollection }"
+      filename="veloc_history"/>
   </Outputs>
+
+  <Tasks>
+    <PackCollection
+      name="velocityCollection"
+      objectPath="nodeManager"
+      setNames="{ source }"
+      fieldName="Velocity"/>
+  </Tasks>
 
   <Geometry>
     <Box

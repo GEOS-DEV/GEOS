@@ -1,14 +1,21 @@
 #!/bin/bash
 
 # Submodules not checking for
-declare -ar exclusion_list=( "blt" )
+declare -ar exclusion_list=( "blt" "integratedTests" )
 echo "Submodules that are excluded from sync test : ${exclusion_list[@]}"
 
 # Do not pull large files
 git lfs uninstall &> /dev/null
 
 # Pull submodule to get .git files.
-git submodule update --quiet --init
+#git submodule update --init integratedTests
+git submodule update --init src/cmake/blt
+git submodule update --init src/coreComponents/LvArray
+git submodule update --init src/externalComponents/PVTPackage
+git submodule update --init src/externalComponents/PAMELA
+git submodule update --init src/coreComponents/fileIO/coupling/hdf5_interface
+git submodule update --init src/coreComponents/physicsSolvers/GEOSX_PTP
+
 
 # Initialize PR submodule hashes
 declare -ar pr_hashes_array=( $(git submodule status | awk '{print $1}') )
@@ -30,10 +37,13 @@ declare -Ar main_branches=(
   ["PVTPackage"]="origin/master"
 )
 
+
 length=${#paths_array[@]}
 
 # Returns exit code 0 if the hash for every submodule in the PR is equal
 # to the hash of each submodule's main branch (develop or master).
+# Note: For LvArray submodule only, checks if the PR hash is in the
+#       main branch's commit history.
 # Note: See "exclusion_list" for submodules that are exempted.
 exit_code=0
 unsync_submodules=()
@@ -69,7 +79,22 @@ do
   # PR hash with prefixed character removed
   pr_hash="$( echo ${pr_hashes_array[$i]} | tr -cd [:alnum:] )"
 
-  if [ $pr_hash == $main_hash ]
+  if [ $module_name == "LvArray" ]
+  then
+    lv_array_commits="$(git -C ${paths_array[$i]} log $main_branch --pretty=%H)"
+    if grep -q "$pr_hash" <<< "$lv_array_commits"
+    then
+      echo "Submodule LvArray's main branch $main_branch contains"\
+            "PR branch's latest commit : $pr_hash"
+    else
+      echo "Submodule LvArray's main branch $main_branch does not contain"\
+            "PR branch's latest commit : $pr_hash"
+      echo "---- PR branch has latest hash $pr_hash"
+      echo "---- $module_name/$main_branch has latest hash $main_hash"
+      unsync_submodules+=( "$module_name" )
+      exit_code=1
+    fi
+  elif [ $pr_hash == $main_hash ]
   then
     echo "PR branch and $main_branch have the same hashes for submodule"\
          "$module_name : $pr_hash"

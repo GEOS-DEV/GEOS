@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -31,13 +31,13 @@ FluxKernel::Compute( localIndex const stencilSize,
                      arraySlice1d< localIndex const > const & sesri,
                      arraySlice1d< localIndex const > const & sei,
                      arraySlice1d< real64 const > const & stencilWeights,
-                     ElementView< arrayView1d< real64 const > > const & pres,
-                     ElementView< arrayView1d< real64 const > > const & dPres,
-                     ElementView< arrayView1d< real64 const > > const & gravCoef,
-                     ElementView< arrayView2d< real64 const > > const & dens,
-                     ElementView< arrayView2d< real64 const > > const & dDens_dPres,
-                     ElementView< arrayView1d< real64 const > > const & mob,
-                     ElementView< arrayView1d< real64 const > > const & dMob_dPres,
+                     ElementViewConst< arrayView1d< real64 const > > const & pres,
+                     ElementViewConst< arrayView1d< real64 const > > const & dPres,
+                     ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
+                     ElementViewConst< arrayView2d< real64 const > > const & dens,
+                     ElementViewConst< arrayView2d< real64 const > > const & dDens_dPres,
+                     ElementViewConst< arrayView1d< real64 const > > const & mob,
+                     ElementViewConst< arrayView1d< real64 const > > const & dMob_dPres,
                      real64 const dt,
                      arraySlice1d< real64 > const & flux,
                      arraySlice2d< real64 > const & fluxJacobian )
@@ -362,23 +362,23 @@ void FluxKernel::
   Launch< CellElementStencilTPFA >( CellElementStencilTPFA const & stencil,
                                     real64 const dt,
                                     globalIndex const rankOffset,
-                                    ElementView< arrayView1d< globalIndex > > const & dofNumber,
-                                    ElementView< arrayView1d< integer const > > const & ghostRank,
-                                    ElementView< arrayView1d< real64 const > > const & pres,
-                                    ElementView< arrayView1d< real64 const > > const & dPres,
-                                    ElementView< arrayView1d< real64 const > > const & gravCoef,
-                                    ElementView< arrayView2d< real64 const > > const & dens,
-                                    ElementView< arrayView2d< real64 const > > const & dDens_dPres,
-                                    ElementView< arrayView1d< real64 const > > const & mob,
-                                    ElementView< arrayView1d< real64 const > > const & dMob_dPres,
-                                    ElementView< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM( aperture0 ),
-                                    ElementView< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM( aperture ),
-                                    ElementView< arrayView1d< R1Tensor const > > const & GEOSX_UNUSED_PARAM( transTMultiplier ),
+                                    ElementViewConst< arrayView1d< globalIndex > > const & dofNumber,
+                                    ElementViewConst< arrayView1d< integer const > > const & ghostRank,
+                                    ElementViewConst< arrayView1d< real64 const > > const & pres,
+                                    ElementViewConst< arrayView1d< real64 const > > const & dPres,
+                                    ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
+                                    ElementViewConst< arrayView2d< real64 const > > const & dens,
+                                    ElementViewConst< arrayView2d< real64 const > > const & dDens_dPres,
+                                    ElementViewConst< arrayView1d< real64 const > > const & mob,
+                                    ElementViewConst< arrayView1d< real64 const > > const & dMob_dPres,
+                                    ElementViewConst< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM( aperture0 ),
+                                    ElementViewConst< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM( aperture ),
+                                    ElementViewConst< arrayView1d< R1Tensor const > > const & GEOSX_UNUSED_PARAM( transTMultiplier ),
                                     R1Tensor const,
                                     real64 const,
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
-                                    ElementView< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM( s ),
-                                    ElementView< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM( dSdAper ),
+                                    ElementViewConst< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM( s ),
+                                    ElementViewConst< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM( dSdAper ),
 #endif
                                     CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                     arrayView1d< real64 > const & localRhs,
@@ -447,23 +447,23 @@ void FluxKernel::
   Launch< FaceElementStencil >( FaceElementStencil const & stencil,
                                 real64 const dt,
                                 globalIndex const rankOffset,
-                                ElementView< arrayView1d< globalIndex const > > const & dofNumber,
-                                ElementView< arrayView1d< integer const > > const & ghostRank,
-                                ElementView< arrayView1d< real64 const > > const & pres,
-                                ElementView< arrayView1d< real64 const > > const & dPres,
-                                ElementView< arrayView1d< real64 const > > const & gravCoef,
-                                ElementView< arrayView2d< real64 const > > const & dens,
-                                ElementView< arrayView2d< real64 const > > const & dDens_dPres,
-                                ElementView< arrayView1d< real64 const > > const & mob,
-                                ElementView< arrayView1d< real64 const > > const & dMob_dPres,
-                                ElementView< arrayView1d< real64 const > > const & aperture0,
-                                ElementView< arrayView1d< real64 const > > const & aperture,
-                                ElementView< arrayView1d< R1Tensor const > > const & transTMultiplier,
+                                ElementViewConst< arrayView1d< globalIndex const > > const & dofNumber,
+                                ElementViewConst< arrayView1d< integer const > > const & ghostRank,
+                                ElementViewConst< arrayView1d< real64 const > > const & pres,
+                                ElementViewConst< arrayView1d< real64 const > > const & dPres,
+                                ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
+                                ElementViewConst< arrayView2d< real64 const > > const & dens,
+                                ElementViewConst< arrayView2d< real64 const > > const & dDens_dPres,
+                                ElementViewConst< arrayView1d< real64 const > > const & mob,
+                                ElementViewConst< arrayView1d< real64 const > > const & dMob_dPres,
+                                ElementViewConst< arrayView1d< real64 const > > const & aperture0,
+                                ElementViewConst< arrayView1d< real64 const > > const & aperture,
+                                ElementViewConst< arrayView1d< R1Tensor const > > const & transTMultiplier,
                                 R1Tensor const gravityVector,
                                 real64 const meanPermCoeff,
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
-                                ElementView< arrayView1d< real64 const > > const & s,
-                                ElementView< arrayView1d< real64 const > > const & dSdAper,
+                                ElementViewConst< arrayView1d< real64 const > > const & s,
+                                ElementViewConst< arrayView1d< real64 const > > const & dSdAper,
 #endif
                                 CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                 arrayView1d< real64 > const & localRhs,

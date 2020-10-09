@@ -1,13 +1,13 @@
 .. _SinglePhaseFlow:
 
 #####################################
-Single-Phase Flow Solver
+Singlephase Flow Solver
 #####################################
 
 Introduction
 =============
 
-Here, we describe the single-phase flow solver. 
+Here, we describe the single-phase flow solver.
 The role of this solver is to implement the fully implicit finite-volume discretization (mainly, accumulation and source terms, boundary conditions) of the equations governing compressible single-phase flow in porous media.
 This solver can be combined with the SinglePhaseWell class which handles the discrete multi-segment well model and provides source/sink terms for the fluid flow solver.
 
@@ -17,7 +17,7 @@ Theory
 
 .. _singlephase_equations:
 
-Governing equations
+Governing Equations
 -------------------
 
 This is a cell-centered Finite Volume solver for compressible single-phase flow in porous media.
@@ -82,8 +82,8 @@ Let :math:`t_0 < t_1 < \cdots < t_N=T` be a grid discretization of the time inte
 
 where :math:`\Delta t = t_{n+1}-t_n` is the time-step. The expression of this residual equation and its derivative are used to form a linear system, which is solved via the solver package.
 
-Usage
-======
+Parameters
+===================
 
 The solver is enabled by adding a ``<SinglePhaseFVM>`` node in the Solvers section.
 Like any solver, time stepping is driven by events, see :ref:`EventManager`.
@@ -104,7 +104,7 @@ Initial conditions must be prescribed on this field in every region, and boundar
 must be prescribed on this field on cell or face sets of interest.
 
 
-Input example
+Example
 =========================
 
 .. literalinclude:: ../integratedTests/singlePhaseFlow/3D_10x10x10_compressible.xml

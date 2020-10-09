@@ -191,7 +191,7 @@ if(ENABLE_CALIPER)
                  PATHS ${CALIPER_DIR}/share/cmake/caliper)
  
     if(ENABLE_MPI)
-        set(caliper_LIBRARIES caliper-mpi)
+        set(caliper_LIBRARIES caliper)
     else()
         set(caliper_LIBRARIES caliper)
     endif()
@@ -512,7 +512,7 @@ if( ENABLE_SUPERLU_DIST)
 endif()
 
 ################################
-# HYPRE
+# SUITESPARSE
 ################################
 if( ENABLE_HYPRE )
     message( STATUS "setting up HYPRE" )
@@ -633,6 +633,51 @@ if( ENABLE_VTK )
                         LIBRARIES ${VTK_LIBRARIES}
                         TREAT_INCLUDES_AS_SYSTEM ON )
   set( thirdPartyLibs ${thirdPartyLibs} vtk )  
+endif()
+
+################################
+# SUITESPARSE
+################################
+if( ENABLE_SUITESPARSE )
+    message( STATUS "setting up SUITESPARSE" )
+
+    set(SUITESPARSE_DIR ${GEOSX_TPL_DIR}/suitesparse)
+
+    find_path( SUITESPARSE_INCLUDE_DIRS umfpack.h
+               PATHS  ${SUITESPARSE_DIR}/include
+               NO_DEFAULT_PATH
+               NO_CMAKE_ENVIRONMENT_PATH
+               NO_CMAKE_PATH
+               NO_SYSTEM_ENVIRONMENT_PATH
+               NO_CMAKE_SYSTEM_PATH)
+
+    find_library( SUITESPARSE_LIBRARY NAMES umfpack
+                  PATHS ${SUITESPARSE_DIR}/lib
+                  NO_DEFAULT_PATH
+                  NO_CMAKE_ENVIRONMENT_PATH
+                  NO_CMAKE_PATH
+                  NO_SYSTEM_ENVIRONMENT_PATH
+                  NO_CMAKE_SYSTEM_PATH)
+
+    message(STATUS "SUITESPARSE_INCLUDE_DIRS = ${SUITESPARSE_INCLUDE_DIRS}" )
+    message(STATUS "SUITESPARSE_LIBRARY = ${SUITESPARSE_LIBRARY}" )
+    include(FindPackageHandleStandardArgs)
+    find_package_handle_standard_args(SUITESPARSE DEFAULT_MSG
+                                      SUITESPARSE_INCLUDE_DIRS
+                                      SUITESPARSE_LIBRARY )
+    if (NOT SUITESPARSE_FOUND)
+        message(FATAL_ERROR "SUITESPARSE not found in ${SUITESPARSE_DIR}. Maybe you need to build it")
+    endif()
+    
+    set( SUITESPARSE_DEPENDS "blas;lapack" )
+
+    blt_register_library( NAME suitesparse
+                          DEPENDS_ON ${SUITESPARSE_DEPENDS}
+                          INCLUDES ${SUITESPARSE_INCLUDE_DIRS}
+                          LIBRARIES ${SUITESPARSE_LIBRARY}
+                          TREAT_INCLUDES_AS_SYSTEM ON )
+
+    set( thirdPartyLibs ${thirdPartyLibs} suitesparse )
 endif()
 
 message(STATUS "thirdPartyLibs = ${thirdPartyLibs}")

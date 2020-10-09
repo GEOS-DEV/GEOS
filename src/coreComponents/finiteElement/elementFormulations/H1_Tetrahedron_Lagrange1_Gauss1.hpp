@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -16,8 +16,8 @@
  * @file H1_Tetrahedron_Lagrange1_Gauss1.hpp
  */
 
-#ifndef GEOSX_CORE_FINITEELEMENT_H1TETRAHEDRONLAGRANGE1GAUSS1
-#define GEOSX_CORE_FINITEELEMENT_H1TETRAHEDRONLAGRANGE1GAUSS1
+#ifndef GEOSX_FINITEELEMENT_ELEMENTFORMULATIONS_H1TETRAHEDRONLAGRANGE1GAUSS1
+#define GEOSX_FINITEELEMENT_ELEMENTFORMULATIONS_H1TETRAHEDRONLAGRANGE1GAUSS1
 
 #include "FiniteElementBase.hpp"
 
@@ -74,22 +74,22 @@ public:
    *   point.
    */
   GEOSX_HOST_DEVICE
-  static void shapeFunctionValues( localIndex const q,
-                                   real64 ( &N )[numNodes] );
+  static void calcN( localIndex const q,
+                     real64 ( &N )[numNodes] );
 
   /**
    * @brief Calculate the shape functions derivatives wrt the physical
    *   coordinates.
    * @param q Index of the quadrature point.
    * @param X Array containing the coordinates of the support points.
-   * @param dNdX Array to contain the shape function derivatives for all
+   * @param gradN Array to contain the shape function derivatives for all
    *   support points at the coordinates of the quadrature point @p q.
    * @return The determinant of the parent/physical transformation matrix.
    */
   GEOSX_HOST_DEVICE
-  static real64 shapeFunctionDerivatives( localIndex const q,
-                                          real64 const (&X)[numNodes][3],
-                                          real64 ( &dNdX )[numNodes][3] );
+  static real64 calcGradN( localIndex const q,
+                           real64 const (&X)[numNodes][3],
+                           real64 ( &gradN )[numNodes][3] );
 
   /**
    * @brief Calculate the integration weights for a quadrature point.
@@ -137,8 +137,8 @@ GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void
 H1_Tetrahedron_Lagrange1_Gauss1::
-  shapeFunctionValues( localIndex const q,
-                       real64 (& N)[numNodes] )
+  calcN( localIndex const q,
+         real64 (& N)[numNodes] )
 {
   GEOSX_UNUSED_VAR( q );
 
@@ -155,27 +155,27 @@ GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 real64
 H1_Tetrahedron_Lagrange1_Gauss1::
-  shapeFunctionDerivatives( localIndex const q,
-                            real64 const (&X)[numNodes][3],
-                            real64 (& dNdX)[numNodes][3] )
+  calcGradN( localIndex const q,
+             real64 const (&X)[numNodes][3],
+             real64 (& gradN)[numNodes][3] )
 {
   GEOSX_UNUSED_VAR( q );
 
-  dNdX[0][0] =  X[1][1]*( X[3][2] - X[2][2] ) - X[2][1]*( X[3][2] - X[1][2] ) + X[3][1]*( X[2][2] - X[1][2] );
-  dNdX[0][1] = -X[1][0]*( X[3][2] - X[2][2] ) + X[2][0]*( X[3][2] - X[1][2] ) - X[3][0]*( X[2][2] - X[1][2] );
-  dNdX[0][2] =  X[1][0]*( X[3][1] - X[2][1] ) - X[2][0]*( X[3][1] - X[1][1] ) + X[3][0]*( X[2][1] - X[1][1] );
+  gradN[0][0] =  X[1][1]*( X[3][2] - X[2][2] ) - X[2][1]*( X[3][2] - X[1][2] ) + X[3][1]*( X[2][2] - X[1][2] );
+  gradN[0][1] = -X[1][0]*( X[3][2] - X[2][2] ) + X[2][0]*( X[3][2] - X[1][2] ) - X[3][0]*( X[2][2] - X[1][2] );
+  gradN[0][2] =  X[1][0]*( X[3][1] - X[2][1] ) - X[2][0]*( X[3][1] - X[1][1] ) + X[3][0]*( X[2][1] - X[1][1] );
 
-  dNdX[1][0] = -X[0][1]*( X[3][2] - X[2][2] ) + X[2][1]*( X[3][2] - X[0][2] ) - X[3][1]*( X[2][2] - X[0][2] );
-  dNdX[1][1] =  X[0][0]*( X[3][2] - X[2][2] ) - X[2][0]*( X[3][2] - X[0][2] ) + X[3][0]*( X[2][2] - X[0][2] );
-  dNdX[1][2] = -X[0][0]*( X[3][1] - X[2][1] ) + X[2][0]*( X[3][1] - X[0][1] ) - X[3][0]*( X[2][1] - X[0][1] );
+  gradN[1][0] = -X[0][1]*( X[3][2] - X[2][2] ) + X[2][1]*( X[3][2] - X[0][2] ) - X[3][1]*( X[2][2] - X[0][2] );
+  gradN[1][1] =  X[0][0]*( X[3][2] - X[2][2] ) - X[2][0]*( X[3][2] - X[0][2] ) + X[3][0]*( X[2][2] - X[0][2] );
+  gradN[1][2] = -X[0][0]*( X[3][1] - X[2][1] ) + X[2][0]*( X[3][1] - X[0][1] ) - X[3][0]*( X[2][1] - X[0][1] );
 
-  dNdX[2][0] =  X[0][1]*( X[3][2] - X[1][2] ) - X[1][1]*( X[3][2] - X[0][2] ) + X[3][1]*( X[1][2] - X[0][2] );
-  dNdX[2][1] = -X[0][0]*( X[3][2] - X[1][2] ) + X[1][0]*( X[3][2] - X[0][2] ) - X[3][0]*( X[1][2] - X[0][2] );
-  dNdX[2][2] =  X[0][0]*( X[3][1] - X[1][1] ) - X[1][0]*( X[3][1] - X[0][1] ) + X[3][0]*( X[1][1] - X[0][1] );
+  gradN[2][0] =  X[0][1]*( X[3][2] - X[1][2] ) - X[1][1]*( X[3][2] - X[0][2] ) + X[3][1]*( X[1][2] - X[0][2] );
+  gradN[2][1] = -X[0][0]*( X[3][2] - X[1][2] ) + X[1][0]*( X[3][2] - X[0][2] ) - X[3][0]*( X[1][2] - X[0][2] );
+  gradN[2][2] =  X[0][0]*( X[3][1] - X[1][1] ) - X[1][0]*( X[3][1] - X[0][1] ) + X[3][0]*( X[1][1] - X[0][1] );
 
-  dNdX[3][0] = -X[0][1]*( X[2][2] - X[1][2] ) + X[1][1]*( X[2][2] - X[0][2] ) - X[2][1]*( X[1][2] - X[0][2] );
-  dNdX[3][1] =  X[0][0]*( X[2][2] - X[1][2] ) - X[1][0]*( X[2][2] - X[0][2] ) + X[2][0]*( X[1][2] - X[0][2] );
-  dNdX[3][2] = -X[0][0]*( X[2][1] - X[1][1] ) + X[1][0]*( X[2][1] - X[0][1] ) - X[2][0]*( X[1][1] - X[0][1] );
+  gradN[3][0] = -X[0][1]*( X[2][2] - X[1][2] ) + X[1][1]*( X[2][2] - X[0][2] ) - X[2][1]*( X[1][2] - X[0][2] );
+  gradN[3][1] =  X[0][0]*( X[2][2] - X[1][2] ) - X[1][0]*( X[2][2] - X[0][2] ) + X[2][0]*( X[1][2] - X[0][2] );
+  gradN[3][2] = -X[0][0]*( X[2][1] - X[1][1] ) + X[1][0]*( X[2][1] - X[0][1] ) - X[2][0]*( X[1][1] - X[0][1] );
 
   real64 detJ = determinantJacobianTransformation( X );
   real64 factor = 1.0 / ( detJ );
@@ -184,7 +184,7 @@ H1_Tetrahedron_Lagrange1_Gauss1::
   {
     for( int j = 0; j < 3; ++j )
     {
-      dNdX[i][j] *= factor;
+      gradN[i][j] *= factor;
     }
   }
 
@@ -210,4 +210,4 @@ H1_Tetrahedron_Lagrange1_Gauss1::
 }
 }
 
-#endif //GEOSX_CORE_FINITEELEMENT_H1TETRAHEDRONLAGRANGE1GAUSS1
+#endif //GEOSX_FINITEELEMENT_ELEMENTFORMULATIONS_H1TETRAHEDRONLAGRANGE1GAUSS1

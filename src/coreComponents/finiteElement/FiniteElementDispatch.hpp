@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -26,6 +26,7 @@
 #include "elementFormulations/H1_Tetrahedron_Lagrange1_Gauss1.hpp"
 #include "elementFormulations/H1_TriangleFace_Lagrange1_Gauss1.hpp"
 #include "elementFormulations/H1_Wedge_Lagrange1_Gauss6.hpp"
+#include "LvArray/src/system.hpp"
 
 
 
@@ -73,6 +74,34 @@ dispatch3D( FiniteElementBase const & input,
   }
 }
 
+
+template< typename LAMBDA >
+void
+dispatch3D( FiniteElementBase & input,
+            LAMBDA && lambda )
+{
+  if( auto * const ptr1 = dynamic_cast< H1_Hexahedron_Lagrange1_GaussLegendre2 * >(&input) )
+  {
+    lambda( *ptr1 );
+  }
+  else if( auto * const ptr2 = dynamic_cast< H1_Wedge_Lagrange1_Gauss6 * >(&input) )
+  {
+    lambda( *ptr2 );
+  }
+  else if( auto * const ptr3 = dynamic_cast< H1_Tetrahedron_Lagrange1_Gauss1 * >(&input) )
+  {
+    lambda( *ptr3 );
+  }
+  else if( auto * const ptr4 = dynamic_cast< H1_Pyramid_Lagrange1_Gauss5 * >(&input) )
+  {
+    lambda( *ptr4 );
+  }
+  else
+  {
+    GEOSX_ERROR( "finiteElement::dispatch3D() is not implemented for input of "<<LvArray::system::demangleType( &input ) );
+  }
+}
+
 template< typename LAMBDA >
 void
 dispatch2D( FiniteElementBase const & input,
@@ -88,7 +117,7 @@ dispatch2D( FiniteElementBase const & input,
   }
   else
   {
-    GEOSX_ERROR( "finiteElement::dispatch2D() is not implemented for input of: "<<typeid(input).name() );
+    GEOSX_ERROR( "finiteElement::dispatch2D() is not implemented for input of: "<<LvArray::system::demangleType( &input ) );
   }
 }
 

@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -62,7 +62,7 @@ void testKernelDriver()
     for( localIndex q=0; q<numQuadraturePoints; ++q )
     {
       real64 N[numNodes] = {0};
-      H1_Pyramid_Lagrange1_Gauss5::shapeFunctionValues( q, N );
+      H1_Pyramid_Lagrange1_Gauss5::calcN( q, N );
       for( localIndex a=0; a<numNodes; ++a )
       {
         viewN( q, a ) = N[a];
@@ -77,9 +77,9 @@ void testKernelDriver()
     for( localIndex q=0; q<numQuadraturePoints; ++q )
     {
       real64 dNdX[numNodes][3] = {{0}};
-      viewDetJ[q] = H1_Pyramid_Lagrange1_Gauss5::shapeFunctionDerivatives( q,
-                                                                           xCoords,
-                                                                           dNdX );
+      viewDetJ[q] = H1_Pyramid_Lagrange1_Gauss5::calcGradN( q,
+                                                            xCoords,
+                                                            dNdX );
 
 
       for( localIndex a=0; a<numNodes; ++a )
@@ -137,7 +137,7 @@ void testKernelDriver()
           }
         }
       }
-      real64 const detJ = FiniteElementBase::inverse( J );
+      real64 const detJ = LvArray::tensorOps::invert< 3 >( J );
       EXPECT_FLOAT_EQ( detJ*( weight + 0.25 * ( q & 4 ) * weightDelta ), viewDetJ[q] );
 
       for( localIndex a=0; a<numNodes; ++a )

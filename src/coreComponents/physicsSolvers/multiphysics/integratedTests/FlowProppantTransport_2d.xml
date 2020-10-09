@@ -4,6 +4,7 @@
 <Problem>
   <Solvers
     gravityVector="0.0, 0.0, -9.81">
+    <!-- SPHINX_PROPPANT_TRANSPORT_SOLVER_BEGIN -->
     <ProppantTransport
       name="ProppantTransport"
       logLevel="1"
@@ -15,13 +16,15 @@
       <NonlinearSolverParameters
         newtonTol="1.0e-8"
         newtonMaxIter="8"
-        lineSearchAction="0"
+        lineSearchAction="None"
         newtonMinIter="1"/>
       <LinearSolverParameters
         solverType="gmres"
         krylovTol="1.0e-12"/>
     </ProppantTransport>
 
+    <!-- SPHINX_PROPPANT_TRANSPORT_SOLVER_END -->
+    <!-- SPHINX_PROPPANT_COUPLED_SOLVER_BEGIN -->
     <FlowProppantTransport
       name="FlowProppantTransport"
       proppantSolverName="ProppantTransport"
@@ -34,6 +37,8 @@
       <LinearSolverParameters/>
     </FlowProppantTransport>
 
+    <!-- SPHINX_PROPPANT_COUPLED_SOLVER_END -->
+    <!-- SPHINX_PROPPANT_FLOW_SOLVER_BEGIN -->
     <SinglePhaseProppantFVM
       name="SinglePhaseFVM"
       logLevel="1"
@@ -44,13 +49,14 @@
       <NonlinearSolverParameters
         newtonTol="1.0e-8"
         newtonMaxIter="8"
-        lineSearchAction="0"
+        lineSearchAction="None"
         newtonMinIter="1"/>
       <LinearSolverParameters
         solverType="gmres"
         krylovTol="1.0e-12"/>
     </SinglePhaseProppantFVM>
 
+    <!-- SPHINX_PROPPANT_FLOW_SOLVER_END -->
     <SurfaceGenerator
       name="SurfaceGen"
       logLevel="0"

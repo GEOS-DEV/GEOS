@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -73,7 +73,6 @@ public:
    * @param inputDofNumber The dof number for the primary field.
    * @param rankOffset dof index offset of current rank
    * @param inputSparsity The sparsity pattern to fill.
-   * @param rowSizes The array that will be filled with row sizes.
    * @copydoc geosx::finiteElement::KernelBase::KernelBase
    */
   SparsityKernelBase( NodeManager const & nodeManager,
@@ -84,8 +83,7 @@ public:
                       CONSTITUTIVE_TYPE * const inputConstitutiveType,
                       arrayView1d< globalIndex const > const & inputDofNumber,
                       globalIndex const rankOffset,
-                      SparsityPattern< globalIndex > & inputSparsity,
-                      arrayView1d< localIndex > const & rowSizes ):
+                      SparsityPattern< globalIndex > & inputSparsity ):
     Base( nodeManager,
           edgeManager,
           faceManager,
@@ -96,8 +94,7 @@ public:
           rankOffset,
           CRSMatrix< real64, globalIndex >().toViewConstSizes(),
           array1d< real64 >().toView() ),
-    m_sparsity( inputSparsity ),
-    m_rowSizes( rowSizes )
+    m_sparsity( inputSparsity )
   {}
 
 
@@ -125,10 +122,46 @@ public:
     }
     return 0;
   }
+
+
+
+  /**
+   * @brief Kernel Launcher.
+   * @tparam POLICY The RAJA policy to use for the launch.
+   * @tparam NUM_QUADRATURE_POINTS The number of quadrature points per element.
+   * @tparam KERNEL_TYPE The type of Kernel to execute.
+   * @param numElems The number of elements to process in this launch.
+   * @param kernelComponent The instantiation of KERNEL_TYPE to execute.
+   * @return The maximum residual.
+   *
+   * This is a generic launching function for all of the finite element kernels
+   * that follow the interface set by KernelBase.
+   */
+  template< typename POLICY,
+            typename KERNEL_TYPE >
+  static
+  real64
+  kernelLaunch( localIndex const numElems,
+                KERNEL_TYPE const & kernelComponent )
+  {
+    GEOSX_MARK_FUNCTION;
+
+    // launch the kernel
+    forAll< POLICY >( numElems,
+                      [=] ( localIndex const k )
+    {
+      // allocate the stack variables
+      typename KERNEL_TYPE::StackVariables stack;
+
+      kernelComponent.setup( k, stack );
+
+      kernelComponent.complete( k, stack );
+
+    } );
+    return 0;
+  }
 private:
   SparsityPattern< globalIndex > & m_sparsity;
-
-  arrayView1d< localIndex > const & m_rowSizes;
 };
 
 
@@ -175,7 +208,6 @@ struct SparsityHelper
 //*****************************************************************************
 /**
  * @brief Fills matrix sparsity.
- * @tparam POLICY The RAJA launch policy to pass to the kernel launch.
  * @tparam REGION_TYPE The type of region to loop over. TODO make this a
  *                     parameter pack?
  * @tparam KERNEL_TEMPLATE The type of template for the physics kernel, which
@@ -187,7 +219,6 @@ struct SparsityHelper
  * @param inputDofNumber The global degree of freedom numbers.
  * @param rankOffset Offset of dof indices on curren rank.
  * @param inputSparsityPattern The local sparsity pattern to fill.
- * @param rowSizes The array of local row sizes to be populated
  * @return 0
  *
  * Fills matrix sparsity using information from physics specific implementation
@@ -196,8 +227,7 @@ struct SparsityHelper
  * #geosx::finiteElement::SparsityKernelBase to conform with the template
  * pattern specified in the physics kernels.
  */
-template< typename POLICY,
-          typename REGION_TYPE,
+template< typename REGION_TYPE,
           template< typename SUBREGION_TYPE,
                     typename CONSTITUTIVE_TYPE,
                     typename FE_TYPE > class KERNEL_TEMPLATE >
@@ -207,10 +237,10 @@ real64 fillSparsity( MeshLevel & mesh,
                      string const & discretizationName,
                      arrayView1d< globalIndex const > const & inputDofNumber,
                      globalIndex const rankOffset,
-                     SparsityPattern< globalIndex > & inputSparsityPattern,
-                     arrayView1d< localIndex > const & rowSizes )
+                     SparsityPattern< globalIndex > & inputSparsityPattern )
 {
-  regionBasedKernelApplication< POLICY,
+  GEOSX_MARK_FUNCTION;
+  regionBasedKernelApplication< serialPolicy,
                                 constitutive::NullModel,
                                 REGION_TYPE,
                                 SparsityHelper< KERNEL_TEMPLATE >::template Kernel
@@ -220,8 +250,7 @@ real64 fillSparsity( MeshLevel & mesh,
                                    array1d< string >(),
                                    inputDofNumber,
                                    rankOffset,
-                                   inputSparsityPattern,
-                                   rowSizes );
+                                   inputSparsityPattern );
 
   return 0;
 }

@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -93,14 +93,10 @@ public:
 
   virtual ~BrooksCoreyRelativePermeability() override;
 
-  void DeliverClone( string const & name,
-                     Group * const parent,
-                     std::unique_ptr< ConstitutiveBase > & clone ) const override;
-
 //START_SPHINX_INCLUDE_00
   static std::string CatalogName() { return "BrooksCoreyRelativePermeability"; }
 
-  virtual string GetCatalogName() override { return CatalogName(); }
+  virtual string getCatalogName() const override { return CatalogName(); }
 
   /// Type of kernel wrapper for in-kernel update
   using KernelWrapper = BrooksCoreyRelativePermeabilityUpdate;
@@ -117,6 +113,8 @@ public:
     static constexpr auto phaseMinVolumeFractionString = "phaseMinVolumeFraction";
     static constexpr auto phaseRelPermExponentString   = "phaseRelPermExponent";
     static constexpr auto phaseRelPermMaxValueString   = "phaseRelPermMaxValue";
+    static constexpr auto volFracScaleString                = "volFracScale";
+
 
     using ViewKey = dataRepository::ViewKey;
 

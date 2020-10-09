@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -96,19 +96,19 @@ public:
 
 
   /**
-   * @copydoc geosx::finiteElement::KernelBase::quadraturePointResidualContribution
+   * @copydoc geosx::finiteElement::KernelBase::quadraturePointKernel
    *
    * The divergence of the effective stress is integrated over the volume of
    * the element, yielding the nodal force (residual) contributions.
    */
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  void quadraturePointResidualContribution( localIndex const k,
-                                            localIndex const q,
-                                            StackVariables & stack ) const
+  void quadraturePointKernel( localIndex const k,
+                              localIndex const q,
+                              StackVariables & stack ) const
   {
     real64 const biotCoefficient = m_constitutiveUpdate.getBiotCoefficient();
-    Base::quadraturePointResidualContribution( k, q, stack, [=] GEOSX_HOST_DEVICE ( real64 (& stress)[6] )
+    Base::quadraturePointKernel( k, q, stack, [=] GEOSX_HOST_DEVICE ( real64 (& stress)[6] )
     {
       real64 const pressure = biotCoefficient * ( m_fluidPressure[k] + m_deltaFluidPressure[k] );
       stress[0] -= pressure;

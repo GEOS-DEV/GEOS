@@ -17,6 +17,9 @@
 /// GEOSX full version number string
 #define GEOSX_VERSION_FULL  "0.0.31"
 
+/// Enables floating point execptions
+#define GEOSX_USE_FPE
+
 /// Enables bounds check in LvArray classes (CMake option ARRAY_BOUNDS_CHECK)
 #define GEOSX_USE_ARRAY_BOUNDS_CHECK
 
@@ -64,6 +67,9 @@
 
 /// Enables use of PETSc library (CMake option ENABLE_PETSC)
 #define GEOSX_USE_PETSC
+
+/// Enables use of SuiteSparse library (CMake option ENABLE_SUITESPARSE)
+#define GEOSX_USE_SUITESPARSE
 
 /// Choice of global linear algebra interface (CMake option GEOSX_LA_INTERFACE)
 #define GEOSX_LA_INTERFACE Trilinos

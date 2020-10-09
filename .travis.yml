@@ -2,7 +2,8 @@ language: minimal
 
 env:
   global:
-  - GEOSX_TPL_TAG=119-434
+  - GEOSX_TPL_TAG=131-527
+  - secure: CGs2uH6efq1Me6xJWRr0BnwtwxoujzlowC4FHXHdWbNOkPsXf7nCgdaW5vthfD3bhnOeEUQSrfxdhTRtyU/NfcKLmKgGBnZOdUG4/JJK4gDSJ2Wp8LZ/mB0QEoODKVxbh+YtoAiHe3y4M9PGCs+wkNDw/3eEU00cK12DZ6gad0RbLjI3xkhEr/ZEZDZkcYg9yHAhl5bmpqoh/6QGnIg8mxIqdAtGDw+6tT0EgUqjeqc5bG5WwsamKzJItHSXD5zx8IJAlgDk4EzEGjZe0m56YnNfb9iwqqUsmL3Cuwgs7ByVDYw78JC5Kv42YqoxA5BxMT2mFsEe37TpYNXlzofU7ma2Duw9DGXWQd4IkTCcBxlyR0I0bfo0TmgO+y7PYG9lIyHPUkENemdozsZcWamqqkqegiEdRhDVYlSRo3mu7iCwTS6ZTALliVyEYjYxYb7oAnR3cNywXjblTCI8oKfgLSY+8WijM9SRl57JruIHLkLMCjmRI+cZBfv5tS2tYQTBPkygGrigrrN77ZiC7/TGyfggSN0+y0oYtOAgqEnBcKcreiibMW7tKcV2Z1RFD9ZvIkSc1EXLUPDP8FX1oyhmqBMqVo8LksrYLDJHQ05+F3YNgl2taSt7uMjQ4e8iZ3/IjFeMnbylDw+cj/RbS520HXsFPbWFm2Pb9pceA9n6GnY=
 
 # The integrated test repository contains large data (using git lfs) and we do not use them here.
 # To save time (and money) we do not let travis automatically clone all our (lfs) subrepositories and do it by hand.
@@ -10,15 +11,15 @@ git:
   submodules: false
 geosx_before_script: &geosx_before_script
   before_script:
-  - git submodule update --init --recursive src/coreComponents/LvArray
   - git submodule update --init --recursive src/cmake/blt
+  - git submodule update --init --recursive src/coreComponents/LvArray
   - git submodule update --init --recursive src/externalComponents/PVTPackage
   - git submodule update --init src/externalComponents/PAMELA
   - git submodule update --init --recursive src/coreComponents/fileIO/coupling/hdf5_interface
   - git submodule update --init --recursive src/coreComponents/physicsSolvers/GEOSX_PTP
+  
 
 geosx_linux_build: &geosx_linux_build
-  stage: build
   services: docker
   <<: *geosx_before_script
   script:
@@ -47,7 +48,6 @@ geosx_linux_build: &geosx_linux_build
     ${TRAVIS_BUILD_DIR_MOUNT_POINT}/scripts/travis_build_and_test.sh ${BUILD_AND_TEST_ARGS};
 
 geosx_osx_build: &geosx_osx_build
-  stage: build
   os: osx
   osx_image: xcode11.2
   install:
@@ -62,7 +62,10 @@ geosx_osx_build: &geosx_osx_build
     # Now let's deal with Homebrew third parties
   - BREW_HASH=$(echo -n ${METADATA} | python3 -c "import sys, json; print(json.load(sys.stdin)['metadata']['BREW_HASH'], end='')")
   - BREW_URL=https://raw.github.com/Homebrew/homebrew-core/${BREW_HASH}
-  - brew install ${BREW_URL}/Formula/open-mpi.rb
+  - wget ${BREW_URL}/Formula/open-mpi.rb
+  - brew update
+  - HOMEBREW_NO_AUTO_UPDATE=1 brew install ./open-mpi.rb
+  - for dep in `brew deps open-mpi.rb`; do brew install $dep; done
   <<: *geosx_before_script
   script:
   - python ${TRAVIS_BUILD_DIR}/scripts/config-build.py
@@ -72,7 +75,7 @@ geosx_osx_build: &geosx_osx_build
     -DENABLE_GEOSX_PTP:BOOL=ON -DENABLE_DOXYGEN:BOOL=OFF
   - cd build-darwin-clang-debug
   - make -j $(nproc) VERBOSE=1
-  - ctest -V
+  - ctest -V -E "testUncrustifyCheck|testDoxygenCheck"
 
 geosx_pangea_build: &geosx_pangea_build
   <<: *geosx_linux_build
@@ -101,39 +104,110 @@ geosx_pangea_build: &geosx_pangea_build
   - gcloud auth activate-service-account --key-file=${GEOSX_GCLOUD_KEY}
   - gsutil cp -a public-read ${GEOSX_BUNDLE} gs://geosx/Pangea2/
 
+draft_script: &draft_script
+  script:
+  # TRAVIS_PULL_REQUEST is false if job is not from a PR
+  - if [[ $TRAVIS_PULL_REQUEST == false ]]; then exit 0; fi;
+  - |
+    is_draft=$(curl -H "Accept: application/vnd.github.v3+json" \
+        https://api.github.com/repos/$TRAVIS_PULL_REQUEST_SLUG/pulls/$TRAVIS_PULL_REQUEST | \
+        jq ".draft")
+
+  # CI jobs will be cancelled if PR is a draft.
+  # PR status must be "Open" to run CI.
+  - |
+    if [[ $is_draft == true ]]; then
+      curl -sS -H "Travis-API-Version: 3" \
+      -H "Authorization: token $AUTH_VAR" \
+      -X POST https://api.travis-ci.com/build/$TRAVIS_BUILD_ID/cancel
+      exit 1
+    else
+      exit 0
+    fi
+
+return_script: &return_script
+  script:
+  # Verifies if all the "checks" jobs passed
+  - |
+    states=$(curl -sS -H "Travis-API-Version: 3" \
+             -X GET https://api.travis-ci.com/build/$TRAVIS_BUILD_ID/jobs | \
+             jq -r '.jobs[] | select( (.stage.name == "checks") and
+             (.allow_failure == true)) | .state ')
+  - num_states=$(echo $states | wc -w)
+  - num_passed=$(echo $states | grep -o "passed" | wc -w)
+  - if [[ $num_states == $num_passed ]]; then exit 0; else exit 1; fi
+
 stages:
-  - build
-  - check_submodules
+- checks
+- builds
+- return_status
 
 jobs:
+  allow_failures:
+  - name: code_style
+  - name: documentation
+  - name: check_submodules
   include:
-  - <<: *geosx_linux_build
+  - stage: checks
+    name: check_pr_is_not_a_draft
+    <<: *draft_script
+  - stage: checks
+    name: code_style
+    <<: *geosx_linux_build
+    env:
+    - DOCKER_REPOSITORY=geosx/ubuntu18.04-gcc8
+    - CMAKE_BUILD_TYPE=Release
+    - BUILD_AND_TEST_ARGS=--test-code-style
+  - stage: checks
+    name: documentation
+    <<: *geosx_linux_build
+    env:
+    - DOCKER_REPOSITORY=geosx/ubuntu18.04-gcc8
+    - CMAKE_BUILD_TYPE=Release
+    - BUILD_AND_TEST_ARGS=--test-documentation
+  - stage: checks
+    name: check_submodules
+    script: scripts/test_submodule_updated.sh
+  - stage: builds
+    name: Ubuntu18.04_clang8.0.0_cuda10.1.243_release
+    <<: *geosx_linux_build
     env:
     - DOCKER_REPOSITORY=geosx/ubuntu18.04-clang8.0.0-cuda10.1.243
     - CMAKE_BUILD_TYPE=Release
     - BUILD_AND_TEST_ARGS=--disable-unit-tests
-  - <<: *geosx_linux_build
+  - stage: builds
+    name: Centos7.6_gcc8.3.1_cuda10.1.243_release
+    <<: *geosx_linux_build
     env:
     - DOCKER_REPOSITORY=geosx/centos7.6.1810-gcc8.3.1-cuda10.1.243
     - CMAKE_BUILD_TYPE=Release
     - BUILD_AND_TEST_ARGS=--disable-unit-tests
-  - <<: *geosx_pangea_build
+  - stage: builds
+    name: Pangea2_gcc8.3.0_release
+    <<: *geosx_pangea_build
     env:
     - DOCKER_REPOSITORY=geosx/pangea2-gcc8.3.0-openmpi2.1.5-mkl2019.3
     - CMAKE_BUILD_TYPE=Release
-    - BUILD_AND_TEST_ARGS=--disable-unit-tests
-  - <<: *geosx_osx_build
-  - <<: *geosx_linux_build
+  - stage: builds
+    name: Mac_OSX
+    <<: *geosx_osx_build
+  - stage: builds
+    name: Centos7.7_clang9.0.0_release
+    <<: *geosx_linux_build
     env:
     - DOCKER_REPOSITORY=geosx/centos7.7.1908-clang9.0.0
     - CMAKE_BUILD_TYPE=Release
-  - <<: *geosx_linux_build
+  - stage: builds
+    name: Ubuntu18.04_gcc8_release
+    <<: *geosx_linux_build
     env:
     - DOCKER_REPOSITORY=geosx/ubuntu18.04-gcc8
     - CMAKE_BUILD_TYPE=Release
-  - <<: *geosx_linux_build
+  - stage: builds
+    name: Ubuntu18.04_gcc8_debug
+    <<: *geosx_linux_build
     env:
     - DOCKER_REPOSITORY=geosx/ubuntu18.04-gcc8
     - CMAKE_BUILD_TYPE=Debug
-  - stage: check_submodules
-    script: scripts/test_submodule_updated.sh
+  - stage: return_status
+    <<: *return_script

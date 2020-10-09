@@ -13,15 +13,15 @@ set( constitutive_headers
      capillaryPressure/VanGenuchtenCapillaryPressure.hpp
      contact/ContactRelationBase.hpp
      contact/MohrCoulomb.hpp
-     fluid/MultiPhaseMultiComponentFluid.hpp     
+     fluid/MultiPhaseMultiComponentFluid.hpp
      fluid/PVTFunctions/BrineCO2DensityFunction.hpp
      fluid/PVTFunctions/BrineViscosityFunction.hpp
-     fluid/PVTFunctions/CO2SolubilityFunction.hpp     
+     fluid/PVTFunctions/CO2SolubilityFunction.hpp
      fluid/PVTFunctions/FenghourCO2ViscosityFunction.hpp
      fluid/PVTFunctions/FlashModelBase.hpp
      fluid/PVTFunctions/PVTFunctionBase.hpp
-     fluid/PVTFunctions/SpanWagnerCO2DensityFunction.hpp    
-     fluid/PVTFunctions/UtilityFunctions.hpp     
+     fluid/PVTFunctions/SpanWagnerCO2DensityFunction.hpp
+     fluid/PVTFunctions/UtilityFunctions.hpp
      fluid/SingleFluidBase.hpp
      fluid/singleFluidSelector.hpp
      fluid/MultiFluidBase.hpp
@@ -33,13 +33,17 @@ set( constitutive_headers
      fluid/ProppantSlurryFluid.hpp
      fluid/ParticleFluidBase.hpp
      fluid/particleFluidSelector.hpp
-     fluid/ParticleFluid.hpp          
+     solid/Damage.hpp
      solid/LinearElasticAnisotropic.hpp
      solid/LinearElasticIsotropic.hpp
      solid/LinearElasticTransverseIsotropic.hpp
      solid/PoroElastic.hpp
      solid/PoreVolumeCompressibleSolid.hpp
      solid/SolidBase.hpp
+     solid/SolidModelDiscretizationOps.hpp
+     solid/SolidModelDiscretizationOpsFullyAnisotroipic.hpp
+     solid/SolidModelDiscretizationOpsIsotropic.hpp
+     solid/SolidModelDiscretizationOpsTransverseIsotropic.hpp
      relativePermeability/RelativePermeabilityBase.hpp
      relativePermeability/BrooksCoreyRelativePermeability.hpp
      relativePermeability/BrooksCoreyBakerRelativePermeability.hpp
@@ -76,6 +80,7 @@ set( constitutive_sources
      fluid/ProppantSlurryFluid.cpp
      fluid/ParticleFluidBase.cpp
      fluid/ParticleFluid.cpp               
+     solid/Damage.cpp
      solid/LinearElasticAnisotropic.cpp
      solid/LinearElasticIsotropic.cpp
      solid/LinearElasticTransverseIsotropic.cpp

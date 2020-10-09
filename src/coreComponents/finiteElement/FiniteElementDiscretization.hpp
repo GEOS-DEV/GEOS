@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -122,6 +122,9 @@ FiniteElementDiscretization::
   dNdX.resizeWithoutInitializationOrDestruction( elementSubRegion->size(), numQuadraturePointsPerElem, numNodesPerElem, 3 );
   detJ.resize( elementSubRegion->size(), numQuadraturePointsPerElem );
 
+  finiteElement.setGradNView( dNdX.toViewConst() );
+  finiteElement.setDetJView( detJ.toViewConst() );
+
   for( localIndex k = 0; k < elementSubRegion->size(); ++k )
   {
     real64 xLocal[numNodesPerElem][3];
@@ -139,7 +142,7 @@ FiniteElementDiscretization::
     for( localIndex q = 0; q < numQuadraturePointsPerElem; ++q )
     {
       real64 dNdXLocal[numNodesPerElem][3];
-      detJ( k, q ) = finiteElement.shapeFunctionDerivatives( q, xLocal, dNdXLocal );
+      detJ( k, q ) = finiteElement.calcGradN( q, xLocal, dNdXLocal );
 
       for( localIndex b = 0; b < numNodesPerElem; ++b )
       {

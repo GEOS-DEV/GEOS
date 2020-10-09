@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -56,10 +56,10 @@ void SingleFluidBase::PostProcessInput()
 
 }
 
-void SingleFluidBase::AllocateConstitutiveData( Group * const parent,
+void SingleFluidBase::allocateConstitutiveData( Group * const parent,
                                                 localIndex const numConstitutivePointsPerParentIndex )
 {
-  ConstitutiveBase::AllocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+  ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 
   this->resize( parent->size() );
 
@@ -70,24 +70,6 @@ void SingleFluidBase::AllocateConstitutiveData( Group * const parent,
   m_dViscosity_dPressure.resize( parent->size(), numConstitutivePointsPerParentIndex );
 }
 
-
-void
-SingleFluidBase::DeliverClone( string const & name,
-                               Group * const parent,
-                               std::unique_ptr< ConstitutiveBase > & clone ) const
-{
-  GEOSX_ERROR_IF( !clone, "clone not allocated" );
-
-  ConstitutiveBase::DeliverClone( name, parent, clone );
-  SingleFluidBase & newConstitutiveRelation = dynamicCast< SingleFluidBase & >( *clone );
-
-  newConstitutiveRelation.m_defaultDensity = m_defaultDensity;
-  newConstitutiveRelation.m_defaultViscosity = m_defaultViscosity;
-  newConstitutiveRelation.m_density = m_density;
-  newConstitutiveRelation.m_viscosity = m_viscosity;
-  newConstitutiveRelation.m_dDensity_dPressure = m_dDensity_dPressure;
-  newConstitutiveRelation.m_dViscosity_dPressure = m_dViscosity_dPressure;
-}
 } //namespace constitutive
 
 } //namespace geosx

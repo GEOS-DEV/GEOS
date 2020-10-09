@@ -2,18 +2,18 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef GEOSX_FINITEELEMENT_ELEMENTFORMULATIONS_LAGRANGEBASIS1_HPP_
-#define GEOSX_FINITEELEMENT_ELEMENTFORMULATIONS_LAGRANGEBASIS1_HPP_
+#ifndef GEOSX_FINITEELEMENT_ELEMENTFORMULATIONS_ELEMENTFORMULATIONS_LAGRANGEBASIS1_HPP_
+#define GEOSX_FINITEELEMENT_ELEMENTFORMULATIONS_ELEMENTFORMULATIONS_LAGRANGEBASIS1_HPP_
 
 /**
  * @file LagrangeBasis1.hpp
@@ -44,7 +44,7 @@ public:
   /**
    * @brief Calculate the parent coordinates for the xi0 direction, given the
    *   linear index of a support point.
-   * @param a The linear index of support point
+   * @param supportPointIndex The linear index of support point
    * @return parent coordinate in the xi0 direction.
    */
   GEOSX_HOST_DEVICE
@@ -187,7 +187,7 @@ public:
     /**
      * @brief Calculate the Cartesian/TensorProduct index given the linear index
      *   of a support point.
-     * @param a The linear index of support point
+     * @param linearIndex The linear index of support point
      * @param i0 The Cartesian index of the support point in the xi0 direction.
      * @param i1 The Cartesian index of the support point in the xi1 direction.
      * @param i2 The Cartesian index of the support point in the xi2 direction.
@@ -276,4 +276,4 @@ public:
 }
 
 
-#endif /* GEOSX_FINITEELEMENT_ELEMENTFORMULATIONS_LAGRANGEBASIS1_HPP_ */
+#endif /* GEOSX_FINITEELEMENT_ELEMENTFORMULATIONS_ELEMENTFORMULATIONS_LAGRANGEBASIS1_HPP_ */

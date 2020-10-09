@@ -23,6 +23,7 @@ phaseDensity                           real64_array3d                           
 phaseFraction                          real64_array3d                                                                                 (no description available) 
 phaseViscosity                         real64_array3d                                                                                 (no description available) 
 totalDensity                           real64_array2d                                                                                 (no description available) 
+useMass                                integer                                                                                        (no description available) 
 ====================================== ============================================================================================== ========================== 
 
 

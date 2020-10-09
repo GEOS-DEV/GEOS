@@ -27,7 +27,7 @@
       timeIntegrationOption="QuasiStatic"
       logLevel="0"
       discretization="FE1"
-      targetRegions="{ Region2 }"
+      targetRegions="{ Region2, Fracture }"
       solidMaterialNames="{ rock }"
       contactRelationName="fractureContact">
       <NonlinearSolverParameters
@@ -58,7 +58,6 @@
     <SurfaceGenerator
       name="SurfaceGen"
       logLevel="0"
-      discretization="FE1"
       fractureRegion="Fracture"
       targetRegions="{ Region2 }"
       solidMaterialNames="{ rock }"
@@ -139,7 +138,6 @@
     <FiniteElements>
       <FiniteElementSpace
         name="FE1"
-
         order="1"/>
     </FiniteElements>
 

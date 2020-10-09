@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -579,29 +579,29 @@ struct PerforationKernel
    * by calling .toView() or .toViewConst() on an accessor instance
    */
   template< typename VIEWTYPE >
-  using ElementView = typename ElementRegionManager::ElementViewAccessor< VIEWTYPE >::ViewTypeConst;
+  using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
 
   template< typename POLICY >
   static void
   Launch( localIndex const size,
           localIndex const numComponents,
           localIndex const numPhases,
-          ElementView< arrayView1d< real64 const > > const & resPressure,
-          ElementView< arrayView1d< real64 const > > const & dResPressure,
-          ElementView< arrayView2d< real64 const > > const & resPhaseMob,
-          ElementView< arrayView2d< real64 const > > const & dResPhaseMob_dPres,
-          ElementView< arrayView3d< real64 const > > const & dResPhaseMob_dComp,
-          ElementView< arrayView2d< real64 const > > const & dResPhaseVolFrac_dPres,
-          ElementView< arrayView3d< real64 const > > const & dResPhaseVolFrac_dComp,
-          ElementView< arrayView3d< real64 const > > const & dResCompFrac_dCompDens,
-          ElementView< arrayView3d< real64 const > > const & resPhaseVisc,
-          ElementView< arrayView3d< real64 const > > const & dResPhaseVisc_dPres,
-          ElementView< arrayView4d< real64 const > > const & dResPhaseVisc_dComp,
-          ElementView< arrayView4d< real64 const > > const & resPhaseCompFrac,
-          ElementView< arrayView4d< real64 const > > const & dResPhaseCompFrac_dPres,
-          ElementView< arrayView5d< real64 const > > const & dResPhaseCompFrac_dComp,
-          ElementView< arrayView3d< real64 const > > const & resPhaseRelPerm,
-          ElementView< arrayView4d< real64 const > > const & dResPhaseRelPerm_dPhaseVolFrac,
+          ElementViewConst< arrayView1d< real64 const > > const & resPressure,
+          ElementViewConst< arrayView1d< real64 const > > const & dResPressure,
+          ElementViewConst< arrayView2d< real64 const > > const & resPhaseMob,
+          ElementViewConst< arrayView2d< real64 const > > const & dResPhaseMob_dPres,
+          ElementViewConst< arrayView3d< real64 const > > const & dResPhaseMob_dComp,
+          ElementViewConst< arrayView2d< real64 const > > const & dResPhaseVolFrac_dPres,
+          ElementViewConst< arrayView3d< real64 const > > const & dResPhaseVolFrac_dComp,
+          ElementViewConst< arrayView3d< real64 const > > const & dResCompFrac_dCompDens,
+          ElementViewConst< arrayView3d< real64 const > > const & resPhaseVisc,
+          ElementViewConst< arrayView3d< real64 const > > const & dResPhaseVisc_dPres,
+          ElementViewConst< arrayView4d< real64 const > > const & dResPhaseVisc_dComp,
+          ElementViewConst< arrayView4d< real64 const > > const & resPhaseCompFrac,
+          ElementViewConst< arrayView4d< real64 const > > const & dResPhaseCompFrac_dPres,
+          ElementViewConst< arrayView5d< real64 const > > const & dResPhaseCompFrac_dComp,
+          ElementViewConst< arrayView3d< real64 const > > const & resPhaseRelPerm,
+          ElementViewConst< arrayView4d< real64 const > > const & dResPhaseRelPerm_dPhaseVolFrac,
           arrayView1d< real64 const > const & wellElemGravCoef,
           arrayView1d< real64 const > const & wellElemPressure,
           arrayView1d< real64 const > const & dWellElemPressure,
@@ -995,7 +995,7 @@ struct PresCompFracInitializationKernel
    * by calling .toView() or .toViewConst() on an accessor instance
    */
   template< typename VIEWTYPE >
-  using ElementView = typename ElementRegionManager::ElementViewAccessor< VIEWTYPE >::ViewTypeConst;
+  using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
 
   template< typename POLICY >
   static void
@@ -1006,8 +1006,8 @@ struct PresCompFracInitializationKernel
           int const topRank,
           localIndex const numPerforations,
           WellControls const & wellControls,
-          ElementView< arrayView1d< real64 const > > const & resPressure,
-          ElementView< arrayView2d< real64 const > > const & resCompDens,
+          ElementViewConst< arrayView1d< real64 const > > const & resPressure,
+          ElementViewConst< arrayView2d< real64 const > > const & resCompDens,
           arrayView1d< localIndex const > const & resElementRegion,
           arrayView1d< localIndex const > const & resElementSubRegion,
           arrayView1d< localIndex const > const & resElementIndex,

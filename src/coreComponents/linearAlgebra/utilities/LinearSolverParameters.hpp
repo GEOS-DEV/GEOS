@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -19,7 +19,7 @@
 #ifndef GEOSX_LINEARALGEBRA_UTILITIES_LINEARSOLVERPARAMETERS_HPP_
 #define GEOSX_LINEARALGEBRA_UTILITIES_LINEARSOLVERPARAMETERS_HPP_
 
-#include "dataRepository/Group.hpp"
+#include "common/EnumStrings.hpp"
 
 namespace geosx
 {
@@ -30,15 +30,81 @@ namespace geosx
  * This class holds a simple tree of linear solver options.
  * They are set to default values, but can be overwritten as needed.
  */
-class LinearSolverParameters
+struct LinearSolverParameters
 {
-public:
+  /**
+   * @brief Linear solver type.
+   */
+  enum class SolverType : integer
+  {
+    direct,        ///< Direct solver
+    cg,            ///< CG
+    gmres,         ///< GMRES
+    fgmres,        ///< Flexible GMRES
+    bicgstab,      ///< BiCGStab
+    preconditioner ///< Preconditioner only
+  };
 
-  integer logLevel = 0;                ///< Output level [0=none, 1=basic, 2=everything]
-  string solverType = "direct";        ///< Solver type [direct, cg, gmres, bicgstab, preconditioner]
-  string preconditionerType = "iluk";  ///< Preconditioner type [none, iluk, ilut, amg, mgr, block]
-  integer dofsPerNode = 1;             ///< Dofs per node (or support location) for non-scalar problems
-  bool isSymmetric = false;            ///< Whether input matrix is symmetric (may affect choice of scheme)
+  /**
+   * @brief Preconditioner type.
+   */
+  enum class PreconditionerType : integer
+  {
+    none,   ///< No preconditioner
+    jacobi, ///< Jacobi smoothing
+    gs,     ///< Gauss-Seidel smoothing
+    sgs,    ///< Symmetric Gauss-Seidel smoothing
+    iluk,   ///< Incomplete LU with k-level of fill
+    ilut,   ///< Incomplete LU with thresholding
+    icc,    ///< Incomplete Cholesky
+    ict,    ///< Incomplete Cholesky with thresholding
+    amg,    ///< Algebraic Multigrid
+    mgr,    ///< Multigrid reduction (Hypre only)
+    block   ///< Block preconditioner
+  };
+
+  integer logLevel = 0;     ///< Output level [0=none, 1=basic, 2=everything]
+  integer dofsPerNode = 1;  ///< Dofs per node (or support location) for non-scalar problems
+  bool isSymmetric = false; ///< Whether input matrix is symmetric (may affect choice of scheme)
+  integer stopIfError = 1;  ///< Whether to stop the simulation if the linear solver reports an error
+
+  SolverType solverType = SolverType::direct;                        ///< Solver type
+  PreconditionerType preconditionerType = PreconditionerType::iluk;  ///< Preconditioner type
+
+  /// Direct solver parameters: used for SuperLU_Dist interface through hypre and PETSc
+  struct Direct
+  {
+    /**
+     * @brief How to permute the columns
+     */
+    enum class ColPerm : integer
+    {
+      none,        ///< natural
+      MMD_AtplusA, ///< multiple minimum degree on At+A
+      MMD_AtA,     ///< multiple minimum degree on At*A (heavy)
+      colAMD,      ///< approximate minimum degree on columns
+      metis,       ///< using METIS
+      parmetis     ///< using ParMETIS
+    };
+
+    /**
+     * @brief How to permute the rows
+     */
+    enum class RowPerm : integer
+    {
+      none, ///< natural
+      mc64  ///< using HSL routine MC64
+    };
+
+    real64 checkResidualTolerance = 1.e-12; ///< Tolerance used to check a direct solver solution
+    integer equilibrate = 1;                ///< Whether to scale the rows and columns of the matrix
+    ColPerm colPerm = ColPerm::metis;       ///< Columns permutation
+    RowPerm rowPerm = RowPerm::mc64;        ///< Rows permutation
+    integer replaceTinyPivot = 1;           ///< Whether to replace tiny pivots by sqrt(epsilon)*norm(A)
+    integer iterativeRefine = 1;            ///< Whether to perform iterative refinement
+    integer parallel = 1;                   ///< Whether to use a parallel solver (instead of a serial one)
+  }
+  direct;                           ///< direct solver parameter struct
 
   /// Krylov-method parameters
   struct Krylov
@@ -99,6 +165,39 @@ public:
   }
   dd;                      ///< Domain decomposition parameter struct
 };
+
+ENUM_STRINGS( LinearSolverParameters::SolverType,
+              "direct",
+              "cg",
+              "gmres",
+              "fgmres",
+              "bicgstab",
+              "preconditioner" )
+
+ENUM_STRINGS( LinearSolverParameters::PreconditionerType,
+              "none",
+              "jacobi",
+              "gs",
+              "sgs",
+              "iluk",
+              "ilut",
+              "icc",
+              "ict",
+              "amg",
+              "mgr",
+              "block" )
+
+ENUM_STRINGS( LinearSolverParameters::Direct::ColPerm,
+              "none",
+              "MMD_AtplusA",
+              "MMD_AtA",
+              "colAMD",
+              "metis",
+              "parmetis" )
+
+ENUM_STRINGS( LinearSolverParameters::Direct::RowPerm,
+              "none",
+              "mc64" )
 
 } /* namespace geosx */
 

@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -113,6 +113,14 @@ public:
   void Write( real64 time, integer cycle, DomainPartition const & domain );
 
 private:
+  /*!
+   * @brief Ask rank \p rank for the number of elements in its ElementRegionBase \p er.
+   * @param[in] er the ElementRegionBase for which we want to know the number of elements
+   * @param[in] rank the rank we want to ask
+   * @return the number of elements in the region for the asked rank
+   */
+  void gatherNbElementsInRegion( ElementRegionBase const & er,
+                                 array1d< localIndex > & nbElemsInRegion ) const;
 
   /*!
    * @brief Create a folder at the given time-step \p time
@@ -207,9 +215,7 @@ private:
    * and a VTKCellArray (with the cell connectivities).
    */
   std::pair< vtkSmartPointer< vtkPoints >, vtkSmartPointer< vtkCellArray > >GetEmbeddedSurface( EmbeddedSurfaceSubRegion const & esr,
-                                                                                                ElementRegionManager const & elemManager,
-                                                                                                NodeManager const & nodeManager,
-                                                                                                EdgeManager const & edgeManager ) const;
+                                                                                                NodeManager const & nodeManager ) const;
 
   /*!
    * @brief Writes the files containing the faces elements
@@ -221,8 +227,7 @@ private:
    */
   void WriteEmbeddedSurfaceElementRegions( real64 time,
                                            ElementRegionManager const & elemManager,
-                                           NodeManager const & nodeManager,
-                                           EdgeManager const & edgeManager ) const;
+                                           NodeManager const & nodeManager ) const;
 
   /*!
    * @brief Writes a VTM file for the time-step \p time.

@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -16,8 +16,8 @@
  * @file H1_QuadrilateralFace_Lagrange1_GaussLegendre2.hpp
  */
 
-#ifndef GEOSX_CORE_FINITEELEMENT_H1QUADRILATERALFACELAGRANGE1GAUSSLEGENDRE2
-#define GEOSX_CORE_FINITEELEMENT_H1QUADRILATERALFACELAGRANGE1GAUSSLEGENDRE2
+#ifndef GEOSX_FINITEELEMENT_ELEMENTFORMULATIONS_H1QUADRILATERALFACELAGRANGE1GAUSSLEGENDRE2
+#define GEOSX_FINITEELEMENT_ELEMENTFORMULATIONS_H1QUADRILATERALFACELAGRANGE1GAUSSLEGENDRE2
 
 #include "FiniteElementBase.hpp"
 
@@ -76,8 +76,8 @@ public:
    *
    */
   GEOSX_HOST_DEVICE
-  static void shapeFunctionValues( localIndex const q,
-                                   real64 ( &N )[numNodes] );
+  static void calcN( localIndex const q,
+                     real64 ( &N )[numNodes] );
 
   /**
    * @brief Calculate the integration weights for a quadrature point.
@@ -149,8 +149,8 @@ GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void
 H1_QuadrilateralFace_Lagrange1_GaussLegendre2::
-  shapeFunctionValues( localIndex const q,
-                       real64 (& N)[numNodes] )
+  calcN( localIndex const q,
+         real64 (& N)[numNodes] )
 {
   for( localIndex a=0; a<numNodes; ++a )
   {
@@ -208,4 +208,4 @@ H1_QuadrilateralFace_Lagrange1_GaussLegendre2::
 
 }
 }
-#endif //GEOSX_CORE_FINITEELEMENT_H1QUADRILATERALFACELAGRANGE1GAUSSLEGENDRE2
+#endif //GEOSX_FINITEELEMENT_ELEMENTFORMULATIONS_H1QUADRILATERALFACELAGRANGE1GAUSSLEGENDRE2
