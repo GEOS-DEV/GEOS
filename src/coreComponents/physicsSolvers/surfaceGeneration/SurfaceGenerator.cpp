@@ -3073,6 +3073,16 @@ void SurfaceGenerator::CalculateNodeAndFaceSIF( DomainPartition & domain,
           tipNodeSIF = pow( (fabs( tipNodeForce[0] * trailingNodeDisp[0] / 2.0 / tipArea ) + fabs( tipNodeForce[1] * trailingNodeDisp[1] / 2.0 / tipArea )
                              + fabs( tipNodeForce[2] * trailingNodeDisp[2] / 2.0 / tipArea )), 0.5 );
 
+          R1Tensor vecTipNorm;
+          vecTipNorm = faceNormal[trailingFaceIndex];
+          vecTipNorm -= faceNormal[childFaceIndices[trailingFaceIndex]];
+          vecTipNorm.Normalize();
+
+          if (Dot(trailingNodeDisp, vecTipNorm) < 0.0)  //In case the aperture is negative with the presence of confining stress.
+          {
+            tipNodeSIF *= -1;
+          }
+
           SIFNode_All[nodeIndex].emplace_back( tipNodeSIF );
 
 
@@ -3082,10 +3092,7 @@ void SurfaceGenerator::CalculateNodeAndFaceSIF( DomainPartition & domain,
             if( edgeToNodeMap[edgeIndex][0] == nodeIndex || edgeToNodeMap[edgeIndex][1] == nodeIndex )
             {
               realT SIF_I = 0, SIF_II = 0, /*SIF_III,*/ SIF_Face;
-              R1Tensor vecTipNorm, vecTip, tipForce, tipOpening;
-              vecTipNorm = faceNormal[trailingFaceIndex];
-              vecTipNorm -= faceNormal[childFaceIndices[trailingFaceIndex]];
-              vecTipNorm.Normalize();
+              R1Tensor vecTip, tipForce, tipOpening;
 
               R1Tensor vecEdge = edgeManager.calculateLength( edgeIndex, X );
               vecEdge.Normalize();
