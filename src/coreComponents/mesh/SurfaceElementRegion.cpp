@@ -60,9 +60,9 @@ void SurfaceElementRegion::GenerateMesh( Group * const cellBlocks )
 
 void SurfaceElementRegion::InitializePreSubGroups( Group * const )
 {
-  this->forElementSubRegions< FaceElementSubRegion >( [&] ( FaceElementSubRegion & subRegion )
+  this->forElementSubRegions< SurfaceElementSubRegion >( [&] ( SurfaceElementSubRegion & subRegion )
   {
-    subRegion.getWrapper< array1d< real64 > >( FaceElementSubRegion::viewKeyStruct::elementApertureString )->
+    subRegion.getWrapper< array1d< real64 > >( SurfaceElementSubRegion::viewKeyStruct::elementApertureString )->
       setApplyDefaultValue( m_defaultAperture );
   } );
 }

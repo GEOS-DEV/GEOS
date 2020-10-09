@@ -57,7 +57,7 @@ SurfaceElementSubRegion::SurfaceElementSubRegion( string const & name,
     setDescription( "A map of face element local indices to the cell local indices" );
 
   registerWrapper( viewKeyStruct::elementApertureString, &m_elementAperture )->
-    setApplyDefaultValue( -1.0 )->
+    setApplyDefaultValue( 1.0e-5 )->
     setPlotLevel( dataRepository::PlotLevel::LEVEL_0 )->
     setDescription( "The aperture of each SurfaceElement." );
 

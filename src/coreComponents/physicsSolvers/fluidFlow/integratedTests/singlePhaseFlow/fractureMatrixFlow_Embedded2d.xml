@@ -101,7 +101,7 @@
 
     <SurfaceElementRegion
       name="Fracture"
-      defaultAperture = "1e-3"
+      defaultAperture = "1e-5"
       materialList="{ water, rock }"
       subRegionType="embeddedElement"/>
   </ElementRegions>
