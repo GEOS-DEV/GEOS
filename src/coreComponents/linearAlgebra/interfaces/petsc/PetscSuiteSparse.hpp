@@ -39,11 +39,21 @@ void ConvertPetscToSuiteSparseMatrix( PetscMatrix const & matrix,
  * @param[in,out] SSData the structure containing the matrix in SuiteSparse format
  * @param[in] b the right-hand side in Petsc format
  * @param[out] x the solution in Petsc format
+ * @param[in] transpose whether to solve for the original or the transpose matrix
  * @return info error code
  */
 int SuiteSparseSolve( SuiteSparse & SSData,
                       PetscVector const & b,
-                      PetscVector & x );
+                      PetscVector & x,
+                      bool transpose = false );
+
+/**
+ * @brief Computes an accurate condition number (time consuming function!!!)
+ * @param[in] matrix the PetscMatrix object
+ * @param[in] SSData the structure containing the matrix in SuiteSparse format
+ * @return the condition number
+ */
+real64 PetscSuiteSparseCond( PetscMatrix const & matrix, SuiteSparse & SSData );
 
 }
 

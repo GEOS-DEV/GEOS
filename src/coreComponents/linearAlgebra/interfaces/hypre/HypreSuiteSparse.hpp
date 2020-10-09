@@ -42,11 +42,21 @@ void ConvertHypreToSuiteSparseMatrix( HypreMatrix const & matrix,
  * @param[in,out] SSData the structure containing the matrix in SuiteSparse format
  * @param[in] b the right-hand side in Hypre format
  * @param[out] x the solution in Hypre format
+ * @param[in] transpose whether to solve for the original or the transpose matrix
  * @return info error code
  */
 int SuiteSparseSolve( SuiteSparse & SSData,
                       HypreVector const & b,
-                      HypreVector & x );
+                      HypreVector & x,
+                      bool transpose = false );
+
+/**
+ * @brief Computes an accurate condition number (time consuming function!!!)
+ * @param[in] matrix the HypreMatrix object
+ * @param[in] SSData the structure containing the matrix in SuiteSparse format
+ * @return the condition number
+ */
+real64 HypreSuiteSparseCond( HypreMatrix const & matrix, SuiteSparse & SSData );
 
 }
 

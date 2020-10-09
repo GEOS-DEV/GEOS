@@ -20,6 +20,7 @@
 
 #include "HypreSuiteSparse.hpp"
 #include "common/Stopwatch.hpp"
+#include "linearAlgebra/interfaces/direct/Arnoldi.hpp"
 
 #include "HYPRE.h"
 #include "_hypre_parcsr_mv.h"
@@ -127,7 +128,8 @@ void ConvertHypreToSuiteSparseMatrix( HypreMatrix const & matrix,
 
 int SuiteSparseSolve( SuiteSparse & SSData,
                       HypreVector const & b,
-                      HypreVector & x )
+                      HypreVector & x,
+                      bool transpose )
 {
   int status = 0;
 
@@ -145,7 +147,7 @@ int SuiteSparseSolve( SuiteSparse & SSData,
       hypre_SeqVectorInitialize( sol_vector );
 
       // solve Ax=b
-      status = SSData.solveWorkingRank( hypre_VectorData( sol_vector ), hypre_VectorData( b_vector ) );
+      status = SSData.solveWorkingRank( hypre_VectorData( sol_vector ), hypre_VectorData( b_vector ), transpose );
 
       sol_Vector = ( HYPRE_Vector ) sol_vector;
     }
@@ -176,6 +178,69 @@ int SuiteSparseSolve( SuiteSparse & SSData,
   MpiWrapper::bcast( &status, 1, SSData.workingRank(), SSData.getComm() );
 
   return status;
+}
+
+namespace
+{
+class InverseOperator
+{
+public:
+
+  void set( HypreMatrix const & matrix, SuiteSparse & SSData )
+  {
+    m_SSData = &SSData;
+    m_comm = SSData.getComm();
+    m_numGlobalRows = matrix.numGlobalRows();
+    m_numLocalRows = matrix.numLocalRows();
+  }
+
+  globalIndex globalSize() const
+  {
+    return m_numGlobalRows;
+  }
+
+  localIndex localSize() const
+  {
+    return m_numLocalRows;
+  }
+
+  MPI_Comm const & getComm() const
+  {
+    return m_comm;
+  }
+
+  void apply( HypreVector const & x, HypreVector & y ) const
+  {
+    SuiteSparseSolve( *m_SSData, x, y, false );
+    SuiteSparseSolve( *m_SSData, y, y, true );
+  }
+
+private:
+
+  SuiteSparse * m_SSData;
+
+  MPI_Comm m_comm;
+
+  globalIndex m_numGlobalRows;
+
+  localIndex m_numLocalRows;
+};
+}
+
+real64 HypreSuiteSparseCond( HypreMatrix const & matrix, SuiteSparse & SSData )
+{
+  localIndex const numIterations = 4;
+
+  using DirectOperator = DirectOperator< HypreMatrix, HypreVector >;
+  DirectOperator directOperator;
+  directOperator.set( matrix );
+  real64 const lambdaDirect = ArnoldiLargestEigenvalue< HypreVector, DirectOperator >( directOperator, numIterations );
+
+  InverseOperator inverseOperator;
+  inverseOperator.set( matrix, SSData );
+  real64 const lambdaInverse = ArnoldiLargestEigenvalue< HypreVector, InverseOperator >( inverseOperator, numIterations );
+
+  return sqrt( lambdaDirect * lambdaInverse );
 }
 
 }

@@ -44,6 +44,14 @@ void HypreConvertToSuperMatrix( HypreMatrix const & matrix,
  */
 void HypreDestroyAdditionalData( hypre_CSRMatrix * & localMatrix );
 
+/**
+ * @brief Computes an accurate condition number (time consuming function!!!)
+ * @param[in] matrix the HypreMatrix object
+ * @param[in] SLUDData the structure containing the matrix in SuperLU_Dist format
+ * @return the condition number
+ */
+real64 HypreSuperLU_DistCond( HypreMatrix const & matrix, SuperLU_Dist & SLUDData );
+
 }
 
 #endif /*GEOSX_LINEARALGEBRA_INTERFACES_HYPRESUPERLU_DIST_HPP_*/

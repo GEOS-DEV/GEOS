@@ -18,6 +18,7 @@
 
 #include "EpetraSuperLU_Dist.hpp"
 #include "common/Stopwatch.hpp"
+#include "linearAlgebra/interfaces/direct/Arnoldi.hpp"
 
 #include <Epetra_FECrsMatrix.h>
 
@@ -38,6 +39,9 @@ void EpetraConvertToSuperMatrix( EpetraMatrix const & matrix,
   globalIndex const numGlobalRows = matrix.numGlobalRows();
   localIndex const numLocalRows = matrix.numLocalRows();
   localIndex const numLocalNonzeros = matrix.numLocalNonzeros();
+
+  SLUDData.setNumGlobalRows( LvArray::integerConversion< int_t >( numGlobalRows ) );
+  SLUDData.setNumLocalRows( LvArray::integerConversion< int_t >( numLocalRows ) );
 
   SLUDData.createRowPtr( numLocalRows );
   for( localIndex i = 0; i <= numLocalRows; ++i )
@@ -66,6 +70,72 @@ void EpetraConvertToSuperMatrix( EpetraMatrix const & matrix,
                                   SLU_GE );
 
   SLUDData.setComm( matrix.getComm() );
+}
+
+namespace
+{
+class InverseOperator
+{
+public:
+
+  void set( EpetraMatrix const & matrix, SuperLU_Dist & SLUDData )
+  {
+    m_SLUDData = &SLUDData;
+    m_comm = SLUDData.getComm();
+
+    matrix.transpose( m_transposeMatrix );
+    m_SLUDDataTransp.create( SLUDData.getParameters() );
+    EpetraConvertToSuperMatrix( m_transposeMatrix, m_SLUDDataTransp );
+    m_SLUDDataTransp.setup();
+  }
+
+  globalIndex globalSize() const
+  {
+    return LvArray::integerConversion< globalIndex >( m_SLUDData->numGlobalRows() );
+  }
+
+  localIndex localSize() const
+  {
+    return LvArray::integerConversion< localIndex >( m_SLUDData->numLocalRows() );
+  }
+
+  MPI_Comm const & getComm() const
+  {
+    return m_comm;
+  }
+
+  void apply( EpetraVector const & x, EpetraVector & y ) const
+  {
+    m_SLUDData->solve( x.extractLocalVector(), y.extractLocalVector() );
+    m_SLUDDataTransp.solve( y.extractLocalVector(), y.extractLocalVector() );
+  }
+
+private:
+
+  SuperLU_Dist * m_SLUDData;
+
+  MPI_Comm m_comm;
+
+  EpetraMatrix m_transposeMatrix;
+
+  mutable SuperLU_Dist m_SLUDDataTransp;
+};
+}
+
+real64 EpetraSuperLU_DistCond( EpetraMatrix const & matrix, SuperLU_Dist & SLUDData )
+{
+  localIndex const numIterations = 4;
+
+  using DirectOperator = DirectOperator< EpetraMatrix, EpetraVector >;
+  DirectOperator directOperator;
+  directOperator.set( matrix );
+  real64 const lambdaDirect = ArnoldiLargestEigenvalue< EpetraVector, DirectOperator >( directOperator, numIterations );
+
+  InverseOperator inverseOperator;
+  inverseOperator.set( matrix, SLUDData );
+  real64 const lambdaInverse = ArnoldiLargestEigenvalue< EpetraVector, InverseOperator >( inverseOperator, numIterations );
+
+  return sqrt( lambdaDirect * lambdaInverse );
 }
 
 }

@@ -106,8 +106,7 @@ void solve_parallelDirect( LinearSolverParameters const & parameters,
   EpetraConvertToSuperMatrix( mat, SLUDData );
 
   GEOSX_LAI_CHECK_ERROR( SLUDData.setup() );
-  sol.copy( rhs );
-  GEOSX_LAI_CHECK_ERROR( SLUDData.solve( sol.localSize(), sol.extractLocalVector() ) );
+  GEOSX_LAI_CHECK_ERROR( SLUDData.solve( rhs.extractLocalVector(), sol.extractLocalVector() ) );
 
   // Save setup and solution times
   result.setupTime = SLUDData.setupTime();
@@ -119,9 +118,25 @@ void solve_parallelDirect( LinearSolverParameters const & parameters,
 
   result.status = parameters.direct.checkResidual == 0 ? LinearSolverResult::Status::Success : LinearSolverResult::Status::Breakdown;
   result.numIterations = 1;
-  if( !parameters.direct.checkResidual && result.residualReduction < SLUDData.relativeTolerance() )
+  if( parameters.direct.checkResidual )
   {
-    result.status = LinearSolverResult::Status::Success;
+    if( result.residualReduction < SLUDData.relativeTolerance() )
+    {
+      result.status = LinearSolverResult::Status::Success;
+    }
+    else
+    {
+      real64 const cond = EpetraSuperLU_DistCond( mat, SLUDData );
+      if( parameters.logLevel > 0 )
+      {
+        GEOSX_LOG_RANK_0( "Using a more accurate estimate of the number of conditions" );
+        GEOSX_LOG_RANK_0( "Condition number is " << cond );
+      }
+      if( result.residualReduction < SLUDData.machinePrecision() * cond )
+      {
+        result.status = LinearSolverResult::Status::Success;
+      }
+    }
   }
 }
 
@@ -144,9 +159,6 @@ void solve_serialDirect( LinearSolverParameters const & parameters,
   GEOSX_LAI_CHECK_ERROR( SSData.setup() );
   GEOSX_LAI_CHECK_ERROR( SuiteSparseSolve( SSData, serialMap, importToSerial, rhs, sol ) );
 
-  delete serialMap;
-  delete importToSerial;
-
   // Save setup and solution times
   result.setupTime = SSData.setupTime();
   result.solveTime = SSData.solveTime();
@@ -157,10 +169,29 @@ void solve_serialDirect( LinearSolverParameters const & parameters,
 
   result.status = parameters.direct.checkResidual == 0 ? LinearSolverResult::Status::Success : LinearSolverResult::Status::Breakdown;
   result.numIterations = 1;
-  if( !parameters.direct.checkResidual && result.residualReduction < SSData.relativeTolerance() )
+  if( parameters.direct.checkResidual )
   {
-    result.status = LinearSolverResult::Status::Success;
+    if( result.residualReduction < SSData.relativeTolerance() )
+    {
+      result.status = LinearSolverResult::Status::Success;
+    }
+    else
+    {
+      real64 const cond = EpetraSuiteSparseCond( mat, serialMap, importToSerial, SSData );
+      if( parameters.logLevel > 0 )
+      {
+        GEOSX_LOG_RANK_0( "Using a more accurate estimate of the number of conditions" );
+        GEOSX_LOG_RANK_0( "Condition number is " << cond );
+      }
+      if( result.residualReduction < SSData.machinePrecision() * cond )
+      {
+        result.status = LinearSolverResult::Status::Success;
+      }
+    }
   }
+
+  delete serialMap;
+  delete importToSerial;
 }
 #endif
 

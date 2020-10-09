@@ -85,11 +85,11 @@ public:
 
   /**
    * @brief Solves a linear system with SuperLU_Dist (matrix has already been factorized)
-   * @param[in] localSize the size of the local portion of the vectors
-   * @param[inout] x the right-hand side and the solution vectors
+   * @param[in] b the right-hand side
+   * @param[out] x the solution vector
    * @return info error code
    */
-  int solve( localIndex const localSize, real64 * x );
+  int solve( real64 const * b, real64 * x );
 
   /**
    * @brief Estimates the condition number of the matrix
@@ -107,6 +107,30 @@ public:
    * @brief Deallocates a SuperLU_Dist data structure
    */
   void destroy();
+
+  /**
+   * @brief Sets the global number of rows
+   * @param numGlobalRows the global number of rows
+   */
+  void setNumGlobalRows( int_t const numGlobalRows );
+
+  /**
+   * @brief Returns the global number of rows
+   * @return the global number of rows
+   */
+  int_t numGlobalRows() const;
+
+  /**
+   * @brief Sets the local number of rows
+   * @param numLocalRows the local number of rows
+   */
+  void setNumLocalRows( int_t const numLocalRows );
+
+  /**
+   * @brief Returns the local number of rows
+   * @return the local number of rows
+   */
+  int_t numLocalRows() const;
 
   /**
    * @brief Sets the communicator
@@ -192,7 +216,25 @@ public:
    */
   real64 solveTime() const;
 
+  /**
+   * @brief Returns the parameters used to initialize this object
+   * @return the parameters used to initialize this object
+   */
+  LinearSolverParameters getParameters() const;
+
+  /**
+   * @brief Returns the machine precision used in SuperLU_Dist class
+   * @return the machine precision used in SuperLU_Dist class
+   */
+  real64 machinePrecision() const;
+
 private:
+
+  /// number of global rows
+  int_t m_numGlobalRows;
+
+  /// number of local rows
+  int_t m_numLocalRows;
 
   /// row pointers
   int_t * m_rowPtr;
@@ -236,6 +278,11 @@ private:
   /// solve time
   real64 m_solveTime;
 
+  /// linear solver parameters
+  LinearSolverParameters m_params;
+
+  /// Add two orders of magnitude to allow small error in condition number estimate
+  real64 const m_machinePrecision = 100.0 * std::numeric_limits< real64 >::epsilon();
 };
 
 }

@@ -18,6 +18,7 @@
 
 #include "EpetraSuiteSparse.hpp"
 #include "common/Stopwatch.hpp"
+#include "linearAlgebra/interfaces/direct/Arnoldi.hpp"
 
 #include <Epetra_Import.h>
 
@@ -96,7 +97,8 @@ int SuiteSparseSolve( SuiteSparse & SSData,
                       Epetra_Map const * serialMap,
                       Epetra_Import const * importToSerial,
                       EpetraVector const & b,
-                      EpetraVector & x )
+                      EpetraVector & x,
+                      bool transpose )
 {
   int status = 0;
 
@@ -119,7 +121,7 @@ int SuiteSparseSolve( SuiteSparse & SSData,
     GEOSX_ASSERT( serialXlda == LvArray::integerConversion< int >( SSData.numCols() ) );
 
     // solve Ax=b
-    status = SSData.solveWorkingRank( serialXvalues, serialBvalues );
+    status = SSData.solveWorkingRank( serialXvalues, serialBvalues, transpose );
   }
 
   x.unwrapped().Export( serialX, *importToSerial, Insert );
@@ -128,6 +130,81 @@ int SuiteSparseSolve( SuiteSparse & SSData,
   MpiWrapper::bcast( &status, 1, SSData.workingRank(), SSData.getComm() );
 
   return status;
+}
+
+namespace
+{
+class InverseOperator
+{
+public:
+
+  void set( EpetraMatrix const & matrix,
+            Epetra_Map const * serialMap,
+            Epetra_Import const * importToSerial,
+            SuiteSparse & SSData )
+  {
+    m_SSData = &SSData;
+    m_comm = SSData.getComm();
+    m_serialMap = serialMap;
+    m_importToSerial = importToSerial;
+    m_numGlobalRows = matrix.numGlobalRows();
+    m_numLocalRows = matrix.numLocalRows();
+  }
+
+  globalIndex globalSize() const
+  {
+    return m_numGlobalRows;
+  }
+
+  localIndex localSize() const
+  {
+    return m_numLocalRows;
+  }
+
+  MPI_Comm const & getComm() const
+  {
+    return m_comm;
+  }
+
+  void apply( EpetraVector const & x, EpetraVector & y ) const
+  {
+    SuiteSparseSolve( *m_SSData, m_serialMap, m_importToSerial, x, y, false );
+    SuiteSparseSolve( *m_SSData, m_serialMap, m_importToSerial, y, y, true );
+  }
+
+private:
+
+  SuiteSparse * m_SSData;
+
+  Epetra_Map const * m_serialMap;
+
+  Epetra_Import const * m_importToSerial;
+
+  MPI_Comm m_comm;
+
+  globalIndex m_numGlobalRows;
+
+  localIndex m_numLocalRows;
+};
+}
+
+real64 EpetraSuiteSparseCond( EpetraMatrix const & matrix,
+                              Epetra_Map const * serialMap,
+                              Epetra_Import const * importToSerial,
+                              SuiteSparse & SSData )
+{
+  localIndex const numIterations = 4;
+
+  using DirectOperator = DirectOperator< EpetraMatrix, EpetraVector >;
+  DirectOperator directOperator;
+  directOperator.set( matrix );
+  real64 const lambdaDirect = ArnoldiLargestEigenvalue< EpetraVector, DirectOperator >( directOperator, numIterations );
+
+  InverseOperator inverseOperator;
+  inverseOperator.set( matrix, serialMap, importToSerial, SSData );
+  real64 const lambdaInverse = ArnoldiLargestEigenvalue< EpetraVector, InverseOperator >( inverseOperator, numIterations );
+
+  return sqrt( lambdaDirect * lambdaInverse );
 }
 
 }

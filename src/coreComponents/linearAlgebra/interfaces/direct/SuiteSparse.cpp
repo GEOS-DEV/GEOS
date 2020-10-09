@@ -27,9 +27,6 @@
 namespace geosx
 {
 
-// Add two orders of magnitude to allow small error in condition number estimate
-static real64 const machinePrecision = 100.0 * std::numeric_limits< real64 >::epsilon();
-
 // Check matching requirements on index/value types between GEOSX and SuiteSparse
 
 static_assert( sizeof( Int ) == sizeof( globalIndex ),
@@ -148,21 +145,36 @@ int SuiteSparse::setup()
   return status;
 }
 
-int SuiteSparse::solveWorkingRank( real64 * b, real64 * x )
+int SuiteSparse::solveWorkingRank( real64 * b, real64 * x, bool transpose )
 {
   Stopwatch watch;
 
   int status = 0;
   // solve Ax=b
-  status = umfpack_dl_solve( UMFPACK_At,
-                             m_rowPtr.data(),
-                             m_colIndices.data(),
-                             m_values.data(),
-                             b,
-                             x,
-                             m_Numeric,
-                             m_Control,
-                             m_Info );
+  if( !transpose )
+  {
+    status = umfpack_dl_solve( UMFPACK_At,
+                               m_rowPtr.data(),
+                               m_colIndices.data(),
+                               m_values.data(),
+                               b,
+                               x,
+                               m_Numeric,
+                               m_Control,
+                               m_Info );
+  }
+  else
+  {
+    status = umfpack_dl_solve( UMFPACK_A,
+                               m_rowPtr.data(),
+                               m_colIndices.data(),
+                               m_values.data(),
+                               b,
+                               x,
+                               m_Numeric,
+                               m_Control,
+                               m_Info );
+  }
 
   if( status < 0 )
   {
@@ -188,7 +200,7 @@ real64 SuiteSparse::condEst() const
 
 real64 SuiteSparse::relativeTolerance() const
 {
-  return m_condEst * machinePrecision;
+  return m_condEst * m_machinePrecision;
 }
 
 void SuiteSparse::destroy()
@@ -313,6 +325,11 @@ real64 SuiteSparse::setupTime() const
 real64 SuiteSparse::solveTime() const
 {
   return m_solveTime;
+}
+
+real64 SuiteSparse::machinePrecision() const
+{
+  return m_machinePrecision;
 }
 
 }

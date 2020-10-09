@@ -789,4 +789,82 @@ void BlasLapackLA::matrixSVD( arraySlice2d< real64 const, MatrixLayout::ROW_MAJO
   }
 }
 
+void BlasLapackLA::matrixEigenvalues( MatColMajor< real64 const > const & A,
+                                      Vec< std::complex< real64 > > const & lambda )
+{
+  GEOSX_ASSERT_MSG( A.size( 0 ) == A.size( 1 ),
+                    "The matrix A must be square" );
+
+  GEOSX_ASSERT_MSG( A.size( 0 ) == lambda.size(),
+                    "The matrix A and lambda have incompatible sizes" );
+
+  // make a copy of A, since dgeev destroys contents
+  array2d< real64, MatrixLayout::COL_MAJOR_PERM > ACOPY( A.size( 0 ), A.size( 1 ) );
+  for( int i = 0; i < A.size( 0 ); ++i )
+  {
+    for( int j = 0; j < A.size( 1 ); ++j )
+    {
+      ACOPY( i, j ) = A( i, j );
+    }
+  }
+
+  // define the arguments of dgesvd
+  int const N    = LvArray::integerConversion< int >( A.size( 0 ) );
+  int const LDA  = N;
+  int const LDVL = 1;
+  int const LDVR = 1;
+  int LWORK = 0;
+  int INFO  = 0;
+  double WKOPT = 0.0;
+  double VL = 0.0;
+  double VR = 0.0;
+
+  array1d< real64 > WR( N );
+  array1d< real64 > WI( N );
+
+  // 1) query and allocate the optimal workspace
+  LWORK = -1;
+  GEOSX_dgeev( "N", "N",
+               &N, ACOPY.data(), &LDA,
+               WR.data(), WI.data(),
+               &VL, &LDVL,
+               &VR, &LDVR,
+               &WKOPT, &LWORK, &INFO );
+
+  LWORK = static_cast< int >( WKOPT );
+  array1d< real64 > WORK( LWORK );
+
+  // 2) compute eigenvalues
+  GEOSX_dgeev( "N", "N",
+               &N, ACOPY.data(), &LDA,
+               WR.data(), WI.data(),
+               &VL, &LDVL,
+               &VR, &LDVR,
+               WORK.data(), &LWORK, &INFO );
+
+  for( int i = 0; i < N; ++i )
+  {
+    lambda[i] = std::complex< real64 >( WR[i], WI[i] );
+  }
+
+  GEOSX_ASSERT_MSG( INFO == 0, "The algorithm computing eigenvalues failed to converge." );
+}
+
+void BlasLapackLA::matrixEigenvalues( MatRowMajor< real64 const > const & A,
+                                      Vec< std::complex< real64 > > const & lambda )
+{
+  array2d< real64, MatrixLayout::COL_MAJOR_PERM > AT( A.size( 0 ), A.size( 1 ) );
+
+  // convert A to a column major format
+  for( int i = 0; i < A.size( 0 ); ++i )
+  {
+    for( int j = 0; j < A.size( 1 ); ++j )
+    {
+      AT( i, j ) = A( i, j );
+    }
+  }
+
+  matrixEigenvalues( AT.toSliceConst(), lambda );
+}
+
 } // end geosx namespace

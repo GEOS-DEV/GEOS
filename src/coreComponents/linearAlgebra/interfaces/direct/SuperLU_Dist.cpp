@@ -24,9 +24,6 @@
 namespace geosx
 {
 
-// Add two orders of magnitude to allow small error in condition number estimate
-static real64 const machinePrecision = 100.0 * std::numeric_limits< real64 >::epsilon();
-
 // Check matching requirements on index/value types between GEOSX and SuperLU_Dist
 
 static_assert( sizeof( int_t ) == sizeof( globalIndex ),
@@ -116,6 +113,9 @@ void SuperLU_Dist::create( LinearSolverParameters const & params )
     print_sp_ienv_dist( &m_options );
     print_options_dist( &m_options );
   }
+
+  // Save parameters
+  m_params = params;
 }
 
 int SuperLU_Dist::setup()
@@ -141,7 +141,7 @@ int SuperLU_Dist::setup()
   {
     --prows;
   }
-  int pcols = num_procs/prows;
+  int pcols = num_procs / prows;
   std::tie( prows, pcols ) = std::minmax( prows, pcols );
 
   superlu_gridinit( m_comm, prows, pcols, &m_grid );
@@ -175,7 +175,7 @@ int SuperLU_Dist::setup()
   return info;
 }
 
-int SuperLU_Dist::solve( localIndex const localSize, real64 * x )
+int SuperLU_Dist::solve( real64 const * b, real64 * x )
 {
   Stopwatch watch;
 
@@ -184,12 +184,15 @@ int SuperLU_Dist::solve( localIndex const localSize, real64 * x )
   array1d< real64 > berr( nrhs );
   int info = 0;
 
+  // Copy rhs in solution vector (SuperLU_Dist works in place)
+  std::copy( b, b+m_numLocalRows, x );
+
   m_options.Fact = FACTORED;
   pdgssvx( &m_options,
            &m_mat,
            &m_ScalePermstruct,
            x,
-           localSize,
+           m_numLocalRows,
            nrhs,
            &m_grid,
            &m_LUstruct,
@@ -265,7 +268,7 @@ real64 SuperLU_Dist::relativeTolerance()
   {
     condEst();
   }
-  return m_condEst * machinePrecision;
+  return m_condEst * m_machinePrecision;
 }
 
 void SuperLU_Dist::destroy()
@@ -281,6 +284,26 @@ void SuperLU_Dist::destroy()
     dSolveFinalize( &m_options, &m_SOLVEstruct );
   }
   Destroy_CompRowLoc_Matrix_dist( &m_mat );
+}
+
+void SuperLU_Dist::setNumGlobalRows( int_t const numGlobalRows )
+{
+  m_numGlobalRows = numGlobalRows;
+}
+
+int_t SuperLU_Dist::numGlobalRows() const
+{
+  return m_numGlobalRows;
+}
+
+void SuperLU_Dist::setNumLocalRows( int_t const numLocalRows )
+{
+  m_numLocalRows = numLocalRows;
+}
+
+int_t SuperLU_Dist::numLocalRows() const
+{
+  return m_numLocalRows;
 }
 
 void SuperLU_Dist::setComm( MPI_Comm const comm )
@@ -357,6 +380,16 @@ real64 SuperLU_Dist::setupTime() const
 real64 SuperLU_Dist::solveTime() const
 {
   return m_solveTime;
+}
+
+LinearSolverParameters SuperLU_Dist::getParameters() const
+{
+  return m_params;
+}
+
+real64 SuperLU_Dist::machinePrecision() const
+{
+  return m_machinePrecision;
 }
 
 }

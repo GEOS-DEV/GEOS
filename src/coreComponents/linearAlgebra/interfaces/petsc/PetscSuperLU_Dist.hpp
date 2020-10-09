@@ -43,6 +43,15 @@ void PetscConvertToSuperMatrix( PetscMatrix const & matrix,
  * @param[inout] localMatrix local matrix in Petsc format
  */
 void PetscDestroyAdditionalData( Mat & localMatrix );
+
+/**
+ * @brief Computes an accurate condition number (time consuming function!!!)
+ * @param[in] matrix the PetscMatrix object
+ * @param[in] SLUDData the structure containing the matrix in SuperLU_Dist format
+ * @return the condition number
+ */
+real64 PetscSuperLU_DistCond( PetscMatrix const & matrix, SuperLU_Dist & SLUDData );
+
 }
 
 #endif /*GEOSX_LINEARALGEBRA_INTERFACES_PETSCSUPERLU_DIST_HPP_*/

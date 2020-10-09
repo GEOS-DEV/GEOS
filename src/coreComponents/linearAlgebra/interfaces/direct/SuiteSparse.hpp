@@ -84,9 +84,10 @@ public:
    * @brief Solves a linear system with SuiteSparse (matrix has already been factorized)
    * @param[in] b the right-hand side
    * @param[out] x the solution
+   * @param[in] transpose whether to solve for the original or the transpose matrix
    * @return info error code
    */
-  int solveWorkingRank( real64 * b, real64 * x );
+  int solveWorkingRank( real64 * b, real64 * x, bool transpose = false );
 
   /**
    * @brief Sycronizes times across ranks
@@ -229,6 +230,12 @@ public:
    */
   real64 solveTime() const;
 
+  /**
+   * @brief Returns the machine precision used in SuiteSparse class
+   * @return the machine precision used in SuiteSparse class
+   */
+  real64 machinePrecision() const;
+
 private:
 
   /// log level
@@ -287,6 +294,9 @@ private:
 
   /// solve time
   real64 m_solveTime;
+
+  /// Add two orders of magnitude to allow small error in condition number estimate
+  real64 const m_machinePrecision = 100.0 * std::numeric_limits< real64 >::epsilon();
 
 };
 

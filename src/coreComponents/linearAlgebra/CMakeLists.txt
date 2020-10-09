@@ -11,6 +11,7 @@ set( linearAlgebra_headers
      interfaces/LinearOperator.hpp
      interfaces/MatrixBase.hpp
      interfaces/VectorBase.hpp
+     interfaces/direct/Arnoldi.hpp
      solvers/BiCGSTABsolver.hpp
      solvers/BlockPreconditioner.hpp
      solvers/CGsolver.hpp
