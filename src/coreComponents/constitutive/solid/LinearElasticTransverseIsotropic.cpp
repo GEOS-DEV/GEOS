@@ -64,6 +64,14 @@ LinearElasticTransverseIsotropic::LinearElasticTransverseIsotropic( std::string 
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Elastic Shear Modulus Parameter" );
 
+  registerWrapper( viewKeyStruct::bulkModulusString, &m_bulkModulus )->
+    setApplyDefaultValue( -1 )->
+    setDescription( "Average elastic Bulk Modulus Field" );
+
+  registerWrapper( viewKeyStruct::shearModulusString, &m_shearModulus )->
+    setApplyDefaultValue( -1 )->
+    setDescription( "Average elastic Shear Modulus" );
+
 
   registerWrapper( viewKeyStruct::c11, &m_c11 )->
     setApplyDefaultValue( -1 )->
@@ -109,6 +117,12 @@ void LinearElasticTransverseIsotropic::PostProcessInput()
   real64 const c44Default = Gat;
   real64 const c66Default = 0.5 * Et / ( 1 + Nut );
 
+  //wu40: Use arithmetic average for bulk and shear moduli, which are further used in surface generator for nodal force calculation.
+  real64 arithmeticPoissonRatio = (m_defaultPoissonTransverse + m_defaultPoissonAxialTransverse) / 2;
+  real64 arithmeticYoungsModulus = (m_defaultYoungsModulusTransverse + m_defaultYoungsModulusAxial + 2 * m_defaultShearModulusAxialTransverse * (1 + arithmeticPoissonRatio)) / 3;
+
+  real64 const averageBulkModulus = arithmeticYoungsModulus / 3 / (1 - 2 * arithmeticPoissonRatio);
+  real64 const averageShearModulus = arithmeticYoungsModulus / 2 / (1 + arithmeticPoissonRatio);
 
   this->getWrapper< array1d< real64 > >( viewKeyStruct::c11 )->
     setApplyDefaultValue( c11Default );
@@ -124,6 +138,12 @@ void LinearElasticTransverseIsotropic::PostProcessInput()
 
   this->getWrapper< array1d< real64 > >( viewKeyStruct::c66 )->
     setApplyDefaultValue( c66Default );
+
+  this->getWrapper< array1d< real64 > >( viewKeyStruct::bulkModulusString )->
+    setApplyDefaultValue( averageBulkModulus );
+
+  this->getWrapper< array1d< real64 > >( viewKeyStruct::shearModulusString )->
+    setApplyDefaultValue( averageShearModulus );
 }
 
 
