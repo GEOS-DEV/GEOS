@@ -75,6 +75,29 @@ public:
 
   void setReservoirWellsCoupling() { m_coupledWellsFlag = 1; }
 
+  virtual void CalculateAndApplyMassFlux( real64 const & GEOSX_UNUSED_PARAM( time_n ),
+                                          real64 const & GEOSX_UNUSED_PARAM( dt ),
+                                          DomainPartition & GEOSX_UNUSED_PARAM( domain )) {}
+
+  virtual void UpdateEOSExplicit( real64 const & GEOSX_UNUSED_PARAM( time_n ),
+                                  real64 const & GEOSX_UNUSED_PARAM( dt ),
+                                  DomainPartition & GEOSX_UNUSED_PARAM( domain )) {}
+
+  virtual void UpdateStencil( DomainPartition & GEOSX_UNUSED_PARAM( domain )) {}
+
+  /**
+   * @enum TimeIntegrationOption
+   *
+   * The options for time integration
+   */
+  enum class TimeIntegrationOption : integer
+  {
+    ImplicitTransient,
+    ExplicitTransient,
+    InertialTransient,
+    SteadyState
+  };
+
   arrayView1d< string const > fluidModelNames() const { return m_fluidModelNames; }
 
   arrayView1d< string const > solidModelNames() const { return m_solidModelNames; }
@@ -106,6 +129,17 @@ public:
 
     static constexpr auto inputFluxEstimateString  = "inputFluxEstimate";
     static constexpr auto meanPermCoeffString  = "meanPermCoeff";
+
+    // explicit solver inputs
+    static constexpr auto pressureInitializationString = "pressureInitialization";
+    static constexpr auto timeIntegrationOptionString = "timeIntegrationOption";
+    static constexpr auto maximumApertureString      = "maximumAperture";
+
+    static constexpr auto totalCompressibilityString = "totalCompressibility";
+    static constexpr auto referencePressureString = "referencePressure";
+
+    static constexpr auto fluidMassString = "fluidMass";
+
   } viewKeysFlowSolverBase;
 
   struct groupKeyStruct : SolverBase::groupKeyStruct
@@ -165,6 +199,9 @@ protected:
   /// the number of Degrees of Freedom per cell
   localIndex m_numDofPerCell;
 
+  /// option for time integration
+  TimeIntegrationOption m_timeIntegrationOption;
+
   std::unique_ptr< CRSMatrix< real64, localIndex > > m_derivativeFluxResidual_dAperture;
 
   real64 m_fluxEstimate;
@@ -175,6 +212,7 @@ protected:
   ElementRegionManager::ElementViewAccessor< arrayView1d< integer const > > m_elemGhostRank;
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > >  m_volume;
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > >  m_gravCoef;
+  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > >  m_porosity;
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > >  m_porosityRef;
 
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > >  m_elementArea;
@@ -188,6 +226,8 @@ protected:
 #endif
 
 };
+
+ENUM_STRINGS( FlowSolverBase::TimeIntegrationOption, "ImplicitTransient", "ExplicitTransient", "InertialTransient", "SteadyState" )
 
 }
 

@@ -37,6 +37,7 @@ FlowSolverBase::FlowSolverBase( std::string const & name,
   m_poroElasticFlag( 0 ),
   m_coupledWellsFlag( 0 ),
   m_numDofPerCell( 0 ),
+  m_timeIntegrationOption( TimeIntegrationOption::ImplicitTransient ),
   m_derivativeFluxResidual_dAperture(),
   m_fluxEstimate(),
   m_elemGhostRank(),
@@ -60,6 +61,11 @@ FlowSolverBase::FlowSolverBase( std::string const & name,
     setInputFlag( InputFlags::REQUIRED )->
     setSizedFromParent( 0 )->
     setDescription( "Names of solid constitutive models for each region." );
+
+  registerWrapper( viewKeyStruct::timeIntegrationOptionString, &m_timeIntegrationOption )->
+    setInputFlag( InputFlags::OPTIONAL )->
+    setApplyDefaultValue( m_timeIntegrationOption )->
+    setDescription( "Time integration method. Options are:\n* " + EnumStrings< TimeIntegrationOption >::concat( "\n* " ) );
 
   this->registerWrapper( viewKeyStruct::inputFluxEstimateString, &m_fluxEstimate )->
     setApplyDefaultValue( 1.0 )->

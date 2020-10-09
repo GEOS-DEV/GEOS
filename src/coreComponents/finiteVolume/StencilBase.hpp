@@ -134,6 +134,11 @@ public:
    * @return A view to const
    */
   typename LEAFCLASSTRAITS::WeightContainerViewConstType getWeights() const { return m_weights.toViewConst(); }
+  /**
+   * @brief Const access to the stencil weights for element center to connector center.
+   * @return A view to const
+   */
+  typename LEAFCLASSTRAITS::WeightContainerViewConstType getweightedElementCenterToConnectorCenter() const { return m_weightedElementCenterToConnectorCenter.toViewConst(); }
 
 protected:
   /// The container for the element region indices for each point in each stencil
@@ -147,6 +152,9 @@ protected:
 
   /// The container for the weights for each point in each stencil
   typename LEAFCLASSTRAITS::WeightContainerType m_weights;
+
+  /// The container for the weights for each point in each stencil
+  typename LEAFCLASSTRAITS::WeightContainerType m_weightedElementCenterToConnectorCenter;
 
   /// The map that provides the stencil index given the index of the underlying connector object.
   map< localIndex, localIndex > m_connectorIndices;

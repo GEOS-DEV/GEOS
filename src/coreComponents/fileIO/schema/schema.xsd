@@ -881,11 +881,22 @@ the relative residual norm satisfies:
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
 		<!--temperature => Temperature-->
 		<xsd:attribute name="temperature" type="real64" use="required" />
+		<!--timeIntegrationOption => Time integration method. Options are:
+* ImplicitTransient
+* ExplicitTransient
+* InertialTransient
+* SteadyState-->
+		<xsd:attribute name="timeIntegrationOption" type="geosx_FlowSolverBase_TimeIntegrationOption" default="ImplicitTransient" />
 		<!--useMass => Use mass formulation instead of molar-->
 		<xsd:attribute name="useMass" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
+	<xsd:simpleType name="geosx_FlowSolverBase_TimeIntegrationOption">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|ImplicitTransient|ExplicitTransient|InertialTransient|SteadyState" />
+		</xsd:restriction>
+	</xsd:simpleType>
 	<xsd:complexType name="CompositionalMultiphaseReservoirType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
@@ -1017,7 +1028,8 @@ the relative residual norm satisfies:
 		<xsd:attribute name="contactRelationName" type="string" use="required" />
 		<!--couplingTypeOption => Coupling method. Valid options:
 * FIM
-* SIM_FixedStress-->
+* SIM_FixedStress
+* FEM-->
 		<xsd:attribute name="couplingTypeOption" type="geosx_HydrofractureSolver_CouplingTypeOption" use="required" />
 		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
 		<xsd:attribute name="discretization" type="string" use="required" />
@@ -1031,6 +1043,8 @@ the relative residual norm satisfies:
 		<xsd:attribute name="maxNumResolves" type="integer" default="10" />
 		<!--solidSolverName => Name of the solid mechanics solver to use in the poroelastic solver-->
 		<xsd:attribute name="solidSolverName" type="string" use="required" />
+		<!--stencilUpdateFrequency => Value to indicate how frequent to update stencil. -->
+		<xsd:attribute name="stencilUpdateFrequency" type="integer" default="100000000" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
@@ -1038,7 +1052,7 @@ the relative residual norm satisfies:
 	</xsd:complexType>
 	<xsd:simpleType name="geosx_HydrofractureSolver_CouplingTypeOption">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|FIM|SIM_FixedStress" />
+			<xsd:pattern value=".*[\[\]`$].*|FIM|SIM_FixedStress|FEM" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:complexType name="LagrangianContactType">
@@ -1226,6 +1240,12 @@ the relative residual norm satisfies:
 		<xsd:attribute name="solidNames" type="string_array" use="required" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
+		<!--timeIntegrationOption => Time integration method. Options are:
+* ImplicitTransient
+* ExplicitTransient
+* InertialTransient
+* SteadyState-->
+		<xsd:attribute name="timeIntegrationOption" type="geosx_FlowSolverBase_TimeIntegrationOption" default="ImplicitTransient" />
 		<!--updateProppantPacking => Flag that enables/disables proppant-packing update-->
 		<xsd:attribute name="updateProppantPacking" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
@@ -1254,6 +1274,12 @@ the relative residual norm satisfies:
 		<xsd:attribute name="solidNames" type="string_array" use="required" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
+		<!--timeIntegrationOption => Time integration method. Options are:
+* ImplicitTransient
+* ExplicitTransient
+* InertialTransient
+* SteadyState-->
+		<xsd:attribute name="timeIntegrationOption" type="geosx_FlowSolverBase_TimeIntegrationOption" default="ImplicitTransient" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
@@ -1280,6 +1306,12 @@ the relative residual norm satisfies:
 		<xsd:attribute name="solidNames" type="string_array" use="required" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
+		<!--timeIntegrationOption => Time integration method. Options are:
+* ImplicitTransient
+* ExplicitTransient
+* InertialTransient
+* SteadyState-->
+		<xsd:attribute name="timeIntegrationOption" type="geosx_FlowSolverBase_TimeIntegrationOption" default="ImplicitTransient" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
@@ -1306,6 +1338,12 @@ the relative residual norm satisfies:
 		<xsd:attribute name="solidNames" type="string_array" use="required" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
+		<!--timeIntegrationOption => Time integration method. Options are:
+* ImplicitTransient
+* ExplicitTransient
+* InertialTransient
+* SteadyState-->
+		<xsd:attribute name="timeIntegrationOption" type="geosx_FlowSolverBase_TimeIntegrationOption" default="ImplicitTransient" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>

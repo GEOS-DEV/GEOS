@@ -793,6 +793,18 @@ public:
   ConstructArrayViewAccessor( string const & name, string const & neighborName = string() ) const;
 
   /**
+   * @brief This is a function to construct a ElementViewAccessor to access array data registered on the mesh.
+   * @tparam T data type
+   * @tparam NDIM number of array dimensions
+   * @param name view name of the data
+   * @param neighborName neighbor data name
+   * @return ElementViewAccessor that contains ArrayView<T const, NDIM> of data
+   */
+  template< typename T, int NDIM >
+  ElementViewAccessor< ArrayView< T, NDIM > >
+  ConstructArrayViewAccessor1( string const & name, string const & neighborName = string() );
+
+  /**
    * @brief This is a const function to construct a ElementViewAccessor to access the data registered on the mesh.
    * @tparam VIEWTYPE data type
    * @param viewName view name of the data
@@ -1164,6 +1176,14 @@ ElementRegionManager::
   ConstructArrayViewAccessor( string const & name, string const & neighborName ) const
 {
   return ConstructViewAccessor< Array< T, NDIM >, ArrayView< T const, NDIM > >( name, neighborName );
+}
+
+template< typename T, int NDIM >
+ElementRegionManager::ElementViewAccessor< ArrayView< T, NDIM > >
+ElementRegionManager::
+  ConstructArrayViewAccessor1( string const & name, string const & neighborName )
+{
+  return ConstructViewAccessor< Array< T, NDIM >, ArrayView< T, NDIM > >( name, neighborName );
 }
 
 template< typename VIEWTYPE >

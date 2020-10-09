@@ -80,6 +80,10 @@ public:
 
   virtual void RegisterDataOnMesh( Group * const MeshBody ) override final;
 
+  virtual void SetInitialTimeStep( Group * const domain ) override;
+
+  virtual real64 GetTimestepRequest( real64 const time ) override;
+
   void updateIntrinsicNodalData( DomainPartition * const domain );
 
 
@@ -94,6 +98,18 @@ public:
                      real64 const & dt,
                      integer const cycleNumber,
                      DomainPartition & domain ) override;
+
+  virtual
+  void ExplicitStepDisplacementUpdate( real64 const & time_n,
+                                       real64 const & dt,
+                                       integer const cycleNumber,
+                                       DomainPartition & domain );
+
+  virtual
+  real64 ExplicitStepVelocityUpdate( real64 const & time_n,
+                                     real64 const & dt,
+                                     integer const cycleNumber,
+                                     DomainPartition & domain );
 
   virtual
   real64 ExplicitStep( real64 const & time_n,
@@ -195,6 +211,9 @@ public:
                            DofManager const & dofManager,
                            DomainPartition & domain,
                            arrayView1d< real64 > const & localRhs );
+
+  void ApplyTractionBCExplicit( real64 const time,
+                                DomainPartition & domain );
 
   void ApplyChomboPressure( DofManager const & dofManager,
                             DomainPartition & domain,

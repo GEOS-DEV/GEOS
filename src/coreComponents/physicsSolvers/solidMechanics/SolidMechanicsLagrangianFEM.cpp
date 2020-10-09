@@ -259,7 +259,28 @@ void SolidMechanicsLagrangianFEM::InitializePreSubGroups( Group * const rootGrou
   GEOSX_ERROR_IF( feDiscretization == nullptr, getName() << ": FE discretization not found: " << m_discretizationName );
 }
 
+void SolidMechanicsLagrangianFEM::SetInitialTimeStep( Group * const domain0 )
+{
+  static int setMechanicsSolverTimeStep = 0;
+  DomainPartition * domain = domain0->group_cast<DomainPartition *>();
+  if( setMechanicsSolverTimeStep == 0 && m_timeIntegrationOption == TimeIntegrationOption::ExplicitDynamic )
+  {
+    updateIntrinsicNodalData( domain );
+    ExplicitStepDisplacementUpdate( 0, 0, 0, *domain );
+    ExplicitStepVelocityUpdate( 0, 0, 0, *domain );
+    setMechanicsSolverTimeStep = 1;
+  }
+}
 
+real64 SolidMechanicsLagrangianFEM::GetTimestepRequest( real64 const time )
+{
+  if( m_timeIntegrationOption == TimeIntegrationOption::ExplicitDynamic )
+  {
+    return m_maxStableDt * m_cflFactor;
+  }
+  else
+    return SolverBase::GetTimestepRequest( time );
+}
 
 template< typename ... PARAMS >
 real64 SolidMechanicsLagrangianFEM::explicitKernelDispatch( PARAMS && ... params )
@@ -525,17 +546,16 @@ real64 SolidMechanicsLagrangianFEM::SolverStep( real64 const & time_n,
   return dtReturn;
 }
 
-real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const & time_n,
-                                                  real64 const & dt,
-                                                  const int GEOSX_UNUSED_PARAM( cycleNumber ),
-                                                  DomainPartition & domain )
+void SolidMechanicsLagrangianFEM::ExplicitStepDisplacementUpdate( real64 const& time_n,
+                                                                  real64 const& dt,
+                                                                  integer const GEOSX_UNUSED_PARAM( cycleNumber ),
+                                                                  DomainPartition & domain )
 {
-  GEOSX_MARK_FUNCTION;
-
   #define USE_PHYSICS_LOOP
 
   // updateIntrinsicNodalData(domain);
 
+  m_maxStableDt = std::numeric_limits< real64 >::max();
   MeshLevel & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
   NodeManager & nodes = *mesh.getNodeManager();
 
@@ -557,7 +577,7 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const & time_n,
   fsManager.ApplyFieldValue< parallelDevicePolicy< 1024 > >( time_n, &domain, "nodeManager", keys::Acceleration );
 
   //3: v^{n+1/2} = v^{n} + a^{n} dt/2
-  SolidMechanicsLagrangianFEMKernels::velocityUpdate( acc, vel, dt/2 );
+  SolidMechanicsLagrangianFEMKernels::velocityUpdate( acc, mass, vel, gravityVector(), dt/2 );
 
   fsManager.ApplyFieldValue< parallelDevicePolicy< 1024 > >( time_n, &domain, "nodeManager", keys::Velocity );
 
@@ -590,6 +610,26 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const & time_n,
       vel( a, component )  = uhat( a, component ) / dt;
     } );
   } );
+}
+
+real64 SolidMechanicsLagrangianFEM::ExplicitStepVelocityUpdate( real64 const & time_n,
+                                                                real64 const & dt,
+                                                                integer const GEOSX_UNUSED_PARAM( cycleNumber ),
+                                                                DomainPartition & domain )
+{
+  m_maxStableDt = std::numeric_limits< real64 >::max();
+  MeshLevel & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
+  NodeManager & nodes = *mesh.getNodeManager();
+
+  FieldSpecificationManager & fsManager = FieldSpecificationManager::get();
+
+  arrayView1d< real64 const > const & mass = nodes.getReference< array1d< real64 > >( keys::Mass );
+  arrayView2d< real64, nodes::VELOCITY_USD > const & vel = nodes.velocity();
+  arrayView2d< real64, nodes::ACCELERATION_USD > const & acc = nodes.acceleration();
+
+  std::map< string, string_array > fieldNames;
+  fieldNames["node"].emplace_back( keys::Velocity );
+  fieldNames["node"].emplace_back( keys::Acceleration );
 
   //Step 5. Calculate deformation input to constitutive model and update state to
   // Q^{n+1}
@@ -600,8 +640,26 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const & time_n,
                           dt,
                           string( viewKeyStruct::elemsAttachedToSendOrReceiveNodes ) );
 
+  // apply traction BC
+  ApplyTractionBCExplicit( time_n + dt, domain );
+
+   // apply acceleration BC (convert to force BC)
+  fsManager.ApplyFieldValue( time_n + dt, &domain, "nodeManager", keys::Acceleration,
+    [&]( FieldSpecificationBase const * const bc, SortedArrayView<localIndex const> const & targetSet )
+    {
+      integer const component = bc->GetComponent();
+      forAll< parallelDevicePolicy< 1024 > >( targetSet.size(),
+                                              [=] GEOSX_DEVICE ( localIndex const i )
+        {
+          localIndex const a = targetSet[ i ];
+          acc[a][component] = bc->GetScale() * mass[a];
+        }
+      );
+    }
+  );
+
   // apply this over a set
-  SolidMechanicsLagrangianFEMKernels::velocityUpdate( acc, mass, vel, dt / 2, m_sendOrReceiveNodes.toViewConst() );
+  SolidMechanicsLagrangianFEMKernels::velocityUpdate( acc, mass, vel, dt / 2, m_massDamping, m_sendOrReceiveNodes.toViewConst() );
 
   fsManager.ApplyFieldValue< parallelDevicePolicy< 1024 > >( time_n, &domain, "nodeManager", keys::Velocity );
 
@@ -615,13 +673,25 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const & time_n,
                           string( viewKeyStruct::elemsNotAttachedToSendOrReceiveNodes ) );
 
   // apply this over a set
-  SolidMechanicsLagrangianFEMKernels::velocityUpdate( acc, mass, vel, dt / 2, m_nonSendOrReceiveNodes.toViewConst() );
+  SolidMechanicsLagrangianFEMKernels::velocityUpdate( acc, mass, vel, dt / 2, m_massDamping, m_nonSendOrReceiveNodes.toViewConst() );
 
   fsManager.ApplyFieldValue< parallelDevicePolicy< 1024 > >( time_n, &domain, "nodeManager", keys::Velocity );
 
   CommunicationTools::SynchronizeUnpack( &mesh, domain.getNeighbors(), m_iComm, true );
 
   return dt;
+}
+
+real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const & time_n,
+                                                  real64 const & dt,
+                                                  const int cycleNumber,
+                                                  DomainPartition & domain )
+{
+  GEOSX_MARK_FUNCTION;
+
+  ExplicitStepDisplacementUpdate( time_n, dt, cycleNumber, domain );
+
+  return ExplicitStepVelocityUpdate( time_n, dt, cycleNumber, domain );
 }
 
 
@@ -736,6 +806,75 @@ void SolidMechanicsLagrangianFEM::CRSApplyTractionBC( real64 const time,
           if( dof < 0 || dof >= localRhs.size() )
             continue;
           RAJA::atomicAdd< parallelDeviceAtomic >( &localRhs[ dof ], results[ kf ] * faceArea[kf] / numNodes );
+        }
+      } );
+    }
+  } );
+}
+
+void SolidMechanicsLagrangianFEM::ApplyTractionBCExplicit( real64 const time,
+                                                           DomainPartition & domain)
+{
+  GEOSX_MARK_FUNCTION;
+  FieldSpecificationManager & fsManager = FieldSpecificationManager::get();
+  FunctionManager const & functionManager = FunctionManager::Instance();
+
+  FaceManager const & faceManager = *domain.getMeshBody( 0 )->getMeshLevel( 0 )->getFaceManager();
+  NodeManager & nodeManager = *domain.getMeshBody( 0 )->getMeshLevel( 0 )->getNodeManager();
+
+  arrayView1d< real64 const > const & faceArea  = faceManager.getReference< real64_array >( "faceArea" );
+  ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager.nodeList().toViewConst();
+
+  arrayView2d<real64, nodes::ACCELERATION_USD> const & acc = nodeManager.acceleration();
+
+  fsManager.Apply( time,
+                   &domain,
+                   "faceManager",
+                   string( "Traction" ),
+                   [&]( FieldSpecificationBase const * const bc,
+                        string const &,
+                        SortedArrayView< localIndex const > const & targetSet,
+                        Group * const,
+                        string const & )
+  {
+    string const & functionName = bc->GetFunctionName();
+
+    integer const component = bc->GetComponent();
+
+    if( functionName.empty() || functionManager.getGroupReference< FunctionBase >( functionName ).isFunctionOfTime() == 2 )
+    {
+      real64 value = bc->GetScale();
+      if( !functionName.empty() )
+      {
+        FunctionBase const & function = functionManager.getGroupReference< FunctionBase >( functionName );
+        value *= function.Evaluate( &time );
+      }
+
+      forAll< parallelDevicePolicy< 32 > >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const i )
+      {
+        localIndex const kf = targetSet[ i ];
+        localIndex const numNodes = faceToNodeMap.sizeOfArray( kf );
+        for( localIndex a=0; a<numNodes; ++a )
+        {
+          acc( faceToNodeMap( kf, a ), component ) += value * faceArea[kf] / numNodes;
+        }
+      } );
+    }
+    else
+    {
+      FunctionBase const & function = functionManager.getGroupReference< FunctionBase >( functionName );
+      array1d< real64 > resultsArray( targetSet.size() );
+      resultsArray.setName( "SolidMechanicsLagrangianFEM::TractionBC function results" );
+      function.Evaluate( &faceManager, time, targetSet, resultsArray );
+      arrayView1d< real64 const > const & results = resultsArray.toView();
+
+      forAll< parallelDevicePolicy< 32 > >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const i )
+      {
+        localIndex const kf = targetSet[ i ];
+        localIndex const numNodes = faceToNodeMap.sizeOfArray( kf );
+        for( localIndex a=0; a<numNodes; ++a )
+        {
+          acc( faceToNodeMap( kf, a ), component ) += results[ kf ] * faceArea[kf] / numNodes;
         }
       } );
     }

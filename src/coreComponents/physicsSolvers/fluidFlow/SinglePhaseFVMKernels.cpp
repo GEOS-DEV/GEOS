@@ -16,6 +16,7 @@
  * @file SinglePhaseFVMKernels.cpp
  */
 
+#include <math.h>
 #include "SinglePhaseFVMKernels.hpp"
 
 namespace geosx
@@ -216,6 +217,101 @@ FluxKernel::Compute( localIndex const stencilSize,
 
 GEOSX_HOST_DEVICE
 void
+FluxKernel::Compute( localIndex const stencilSize,
+                     arraySlice1d< localIndex const > const & seri,
+                     arraySlice1d< localIndex const > const & sesri,
+                     arraySlice1d< localIndex const > const & sei,
+                     arraySlice1d< real64 const > const & stencilWeights,
+                     arraySlice1d< real64 const > const & stencilWeightedElementCenterToConnectorCenter,
+                     ElementViewConst< arrayView1d< real64 const > > const & pres,
+                     ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
+                     ElementViewConst< arrayView2d< real64 const > > const & dens,
+                     ElementViewConst< arrayView1d< real64 const > > const & mob,
+                     real64 const dt,
+                     ElementViewConst< arrayView2d< real64 const > > const & visc,
+                     ElementViewConst< arrayView1d< real64 const > > const & poro,
+                     ElementViewConst< arrayView1d< real64 const > > const & totalCompressibility,
+                     ElementViewConst< arrayView1d< real64 const > > const & referencePressure,
+                     ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > * const fluidMass,
+                     real64 * const maxStableDt )
+{
+  // average density
+  real64 densMean = 0.0;
+  for( localIndex ke = 0; ke < 2; ++ke )
+  {
+    densMean        += 0.5 * dens[seri[ke]][sesri[ke]][sei[ke]][0];
+  }
+
+  // compute potential difference
+  real64 potDif = 0.0, weightedSum = 0.0;
+  real64 sumWeightGrav = 0.0;
+  real64 potScale = 0.0;
+  bool faceToCellConnector = false;
+  bool hasMassTransfer = false;
+
+  for( localIndex ke = 0; ke < stencilSize; ++ke )
+  {
+    localIndex const er  = seri[ke];
+    localIndex const esr = sesri[ke];
+    localIndex const ei  = sei[ke];
+
+    real64 const weight = stencilWeights[ke];
+    real64 const gravD = gravCoef[er][esr][ei];
+    real64 const pot = weight * ( pres[er][esr][ei] - densMean * gravD );
+
+    potDif += pot;
+    sumWeightGrav += weight * gravD;
+    potScale = fmax( potScale, fabs( pot ) );
+
+    weightedSum += stencilWeightedElementCenterToConnectorCenter[ke];
+
+    if ( stencilWeightedElementCenterToConnectorCenter[ke] < 1e-30 )
+      faceToCellConnector = true;
+
+    if ( pres[er][esr][ei] > referencePressure[er][esr][ei] )
+      hasMassTransfer = true;
+  }
+
+  // compute upwinding tolerance
+  real64 constexpr upwRelTol = 1e-8;
+  real64 const upwAbsTol = fmax( potScale * upwRelTol, NumericTraits< real64 >::eps );
+
+  // decide mobility coefficients - smooth variation in [-upwAbsTol; upwAbsTol]
+  real64 const alpha = ( potDif + upwAbsTol ) / ( 2 * upwAbsTol );
+
+  real64 mobility{}, stableDt{};
+  if( alpha <= 0.0 || alpha >= 1.0 )
+  {
+    // happy path: single upwind direction
+    localIndex const ke = 1 - localIndex( fmax( fmin( alpha, 1.0 ), 0.0 ) );
+    mobility = mob[seri[ke]][sesri[ke]][sei[ke]];
+    stableDt = totalCompressibility[seri[ke]][sesri[ke]][sei[ke]] * visc[seri[ke]][sesri[ke]][sei[ke]][0] * poro[seri[ke]][sesri[ke]][sei[ke]] / 2.0 * weightedSum * weightedSum;
+  }
+  else
+  {
+    // sad path: weighted averaging
+    real64 const mobWeights[2] = { alpha, 1.0 - alpha };
+    for( localIndex ke = 0; ke < 2; ++ke )
+    {
+      mobility += mobWeights[ke] * mob[seri[ke]][sesri[ke]][sei[ke]];
+      stableDt += mobWeights[ke] * totalCompressibility[seri[ke]][sesri[ke]][sei[ke]] * visc[seri[ke]][sesri[ke]][sei[ke]][0] * poro[seri[ke]][sesri[ke]][sei[ke]] / 2.0 * weightedSum * weightedSum;
+    }
+  }
+
+  // currently ignore the critical time dictated by faceToCellConnector
+  if ( !faceToCellConnector )
+    *maxStableDt = std::min( stableDt, *maxStableDt );
+
+  // populate local flux
+  if (std::abs(potDif) > std::numeric_limits<real64>::min() && hasMassTransfer)
+  {
+    (*fluidMass)[seri[0]][sesri[0]][sei[0]] -= dt * mobility * potDif;
+    (*fluidMass)[seri[1]][sesri[1]][sei[1]] += dt * mobility * potDif;
+ }
+}
+
+GEOSX_HOST_DEVICE
+void
 FluxKernel::ComputeJunction( localIndex const numFluxElems,
                              arraySlice1d< localIndex const > const & stencilElementIndices,
                              arraySlice1d< real64 const > const & stencilWeights,
@@ -357,6 +453,120 @@ FluxKernel::ComputeJunction( localIndex const numFluxElems,
   }
 }
 
+GEOSX_HOST_DEVICE
+void
+FluxKernel::ComputeJunction( localIndex const numFluxElems,
+                             arraySlice1d< localIndex const > const & stencilElementIndices,
+                             arraySlice1d< real64 const > const & stencilWeights,
+                             arraySlice1d< real64 const > const & cellCenterToEdgeCenterDistance,
+                             arrayView1d< real64 const > const & pres,
+                             arrayView1d< real64 const > const & gravCoef,
+                             arrayView2d< real64 const > const & dens,
+                             arrayView1d< real64 const > const & mob,
+                             arrayView1d< real64 const > const & aperture0,
+                             arrayView1d< real64 const > const & aperture,
+                             real64 const meanPermCoeff,
+#ifdef GEOSX_USE_SEPARATION_COEFFICIENT
+                             arrayView1d< real64 const > const & GEOSX_GEOSX_UNUSED_PARAM( s ),
+#endif
+                             real64 const dt,
+                             arrayView2d< real64 const > const & visc,
+                             arrayView1d< real64 const > const & totalCompressibility,
+                             arrayView1d< real64 const > const & referencePressure,
+                             arrayView1d< real64 > * const fluidMass,
+                             real64 * const maxStableDt )
+{
+  real64 sumOfWeights = 0;
+  real64 aperTerm[10];
+  real64 dAperTerm_dAper[10];
+  real64 maxApertureForPermeablity = 0.05;
+
+  for( localIndex k=0; k<numFluxElems; ++k )
+  {
+
+    #define PERM_CALC 1
+//      real64 const aperAdd = aperture0[stencilElementIndices[k]] < 0.09e-3 ? ( 0.09e-3 -
+// aperture0[stencilElementIndices[k]] ) : 0.0;
+#if PERM_CALC==1
+    FluxKernelHelper::
+      apertureForPermeablityCalculation< 1 >( std::min( aperture0[stencilElementIndices[k]], maxApertureForPermeablity ),
+                                              std::min( aperture[stencilElementIndices[k]], maxApertureForPermeablity ),
+                                              aperTerm[k],
+                                              dAperTerm_dAper[k] );
+
+#elif PERM_CALC==2
+
+    if( s[k] >= 1.0 )
+    {
+      aperTerm[k] = aperture[stencilElementIndices[k]] * aperture[stencilElementIndices[k]] * aperture[stencilElementIndices[k]];
+      dAperTerm_dAper[k] = 3*aperture[stencilElementIndices[k]]*aperture[stencilElementIndices[k]];
+    }
+    else
+    {
+      aperTerm[k] = aperture[stencilElementIndices[k]] * aperture[stencilElementIndices[k]] * aperture[stencilElementIndices[k]]/s[k];
+      dAperTerm_dAper[k] = 3*aperture[stencilElementIndices[k]]*aperture[stencilElementIndices[k]]/s[k]
+                           - aperture[stencilElementIndices[k]] * aperture[stencilElementIndices[k]] * aperture[stencilElementIndices[k]]/(s[k]*s[k]) *
+                           dSdAper[k];
+    }
+#endif
+//      aperTerm[k] += aperAdd*aperAdd*aperAdd;
+
+
+    sumOfWeights += aperTerm[k] * stencilWeights[k];
+  }
+
+  localIndex k[2];
+  for( k[0]=0; k[0]<numFluxElems; ++k[0] )
+  {
+    for( k[1]=k[0]+1; k[1]<numFluxElems; ++k[1] )
+    {
+      localIndex const ei[2] = { stencilElementIndices[k[0]],
+                                 stencilElementIndices[k[1]] };
+#if 0
+      real64 const weight = ( stencilWeights[k[0]]*aperTerm[k[0]] ) *
+                            ( stencilWeights[k[1]]*aperTerm[k[1]] ) / sumOfWeights;
+#else
+      real64 const c = meanPermCoeff;
+
+      real64 const harmonicWeight = ( stencilWeights[k[0]]*aperTerm[k[0]] ) *
+                                    ( stencilWeights[k[1]]*aperTerm[k[1]] ) / sumOfWeights;
+
+      real64 const weight = c * harmonicWeight
+                            + (1.0 - c) * 0.25 * ( stencilWeights[k[0]]*aperTerm[k[0]] + stencilWeights[k[1]]*aperTerm[k[1]] );
+#endif
+      // average density
+      real64 const densMean = 0.5 * ( dens[ei[0]][0] + dens[ei[1]][0] );
+
+      real64 const potDif =  std::max( pres[ei[0]], referencePressure[ei[0]] ) - std::max( pres[ei[1]], referencePressure[ei[1]] ) -
+                             densMean * ( gravCoef[ei[0]] - gravCoef[ei[1]] ) ;
+
+      // upwinding of fluid properties (make this an option?)
+      localIndex const k_up = (potDif >= 0) ? 0 : 1;
+
+      localIndex ei_up  = stencilElementIndices[k[k_up]];
+
+      real64 const edgeLength = 12 * cellCenterToEdgeCenterDistance[k[0]] * stencilWeights[k[0]];
+
+      real64 const areaAlongFlowDirection = cellCenterToEdgeCenterDistance[k[0]] * std::min( aperture[stencilElementIndices[k[0]]], maxApertureForPermeablity )
+                                          + cellCenterToEdgeCenterDistance[k[1]] * std::min( aperture[stencilElementIndices[k[1]]], maxApertureForPermeablity );
+
+      real64 weightedSum = edgeLength * areaAlongFlowDirection / weight;
+
+      *maxStableDt = std::min( totalCompressibility[ei_up] * visc[ei_up][0] / 2.0 * weightedSum, *maxStableDt );
+
+//        if ((stencilElementIndices[k[0]] == 0 || stencilElementIndices[k[1]] == 0) && (*maxStableDt) < 1e-5)
+//          std::cout << "\n Critical Time: maxStableDt = " << *maxStableDt << ", totalCompressibility = " << totalCompressibility[ei_up] << ", weightedSum = " << weightedSum;
+
+      // populate local flux
+      if ( std::abs( potDif ) > std::numeric_limits<real64>::min() && ( pres[ei[0]] > referencePressure[ei[0]] || pres[ei[1]] > referencePressure[ei[1]] ) )
+      {
+        (*fluidMass)[stencilElementIndices[k[0]]] -= mob[ei_up] * weight * potDif * dt;
+        (*fluidMass)[stencilElementIndices[k[1]]] += mob[ei_up] * weight * potDif * dt;
+      }
+    }
+  }
+}
+
 template<>
 void FluxKernel::
   Launch< CellElementStencilTPFA >( CellElementStencilTPFA const & stencil,
@@ -439,6 +649,59 @@ void FluxKernel::
                                                                           stencilSize );
       }
     }
+  } );
+}
+
+template<>
+void FluxKernel::
+Launch< CellElementStencilTPFA >( CellElementStencilTPFA & stencil,
+                                    real64 const dt,
+                                    ElementViewConst< arrayView1d< real64 const > > const & pres,
+                                    ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
+                                    ElementViewConst< arrayView2d< real64 const > > const & dens,
+                                    ElementViewConst< arrayView1d< real64 const > > const & mob,
+                                    ElementViewConst< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM( aperture0 ),
+                                    ElementViewConst< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM( aperture ),
+                                    ElementViewConst< arrayView1d< R1Tensor const > > const & GEOSX_UNUSED_PARAM( transTMultiplier ),
+                                    R1Tensor const,
+                                    real64 const,
+#ifdef GEOSX_USE_SEPARATION_COEFFICIENT
+                                    ElementViewConst< arrayView1d< real64 const > > const & s,
+#endif
+                                    ElementViewConst< arrayView2d< real64 const > > const & visc,
+                                    ElementViewConst< arrayView1d< real64 const > > const & poro,
+                                    ElementViewConst< arrayView1d< real64 const > > const & totalCompressibility,
+                                    ElementViewConst< arrayView1d< real64 const > > const & referencePressure,
+                                    ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > * const fluidMass,
+                                    real64 * const maxStableDt)
+{
+  constexpr localIndex stencilSize  = CellElementStencilTPFA::MAX_STENCIL_SIZE;
+
+  typename CellElementStencilTPFA::IndexContainerViewConstType const & seri = stencil.getElementRegionIndices();
+  typename CellElementStencilTPFA::IndexContainerViewConstType const & sesri = stencil.getElementSubRegionIndices();
+  typename CellElementStencilTPFA::IndexContainerViewConstType const & sei = stencil.getElementIndices();
+  typename CellElementStencilTPFA::WeightContainerViewConstType const & weights = stencil.getWeights();
+  typename CellElementStencilTPFA::WeightContainerViewConstType const & weightedElementCenterToConnectorCenter = stencil.getweightedElementCenterToConnectorCenter();
+
+  forAll< parallelDevicePolicy<> >( stencil.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iconn )
+  {
+    Compute( stencilSize,
+             seri[iconn],
+             sesri[iconn],
+             sei[iconn],
+             weights[iconn],
+             weightedElementCenterToConnectorCenter[iconn],
+             pres,
+             gravCoef,
+             dens,
+             mob,
+             dt,
+             visc,
+             poro,
+             totalCompressibility,
+             referencePressure,
+             fluidMass,
+             maxStableDt );
   } );
 }
 
@@ -579,6 +842,101 @@ void FluxKernel::
 
 }
 
+template<>
+void FluxKernel::
+Launch< FaceElementStencil >( FaceElementStencil & stencil,
+                                real64 const dt,
+                                ElementViewConst< arrayView1d< real64 const > > const & pres,
+                                ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
+                                ElementViewConst< arrayView2d< real64 const > > const & dens,
+                                ElementViewConst< arrayView1d< real64 const > > const & mob,
+                                ElementViewConst< arrayView1d< real64 const > > const & aperture0,
+                                ElementViewConst< arrayView1d< real64 const > > const & aperture,
+                                ElementViewConst< arrayView1d< R1Tensor const > > const & transTMultiplier,
+                                R1Tensor const gravityVector,
+                                real64 const meanPermCoeff,
+#ifdef GEOSX_USE_SEPARATION_COEFFICIENT
+                                ElementViewConst< arrayView1d< real64 const > > const & s,
+#endif
+                                ElementViewConst< arrayView2d< real64 const > > const & visc,
+                                ElementViewConst< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM( poro ),
+                                ElementViewConst< arrayView1d< real64 const > > const & totalCompressibility,
+                                ElementViewConst< arrayView1d< real64 const > > const & referencePressure,
+                                ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > * const fluidMass,
+                                real64 * const maxStableDt)
+{
+  constexpr localIndex maxNumFluxElems = FaceElementStencil::NUM_POINT_IN_FLUX;
+
+  typename FaceElementStencil::IndexContainerViewConstType const & seri = stencil.getElementRegionIndices();
+  typename FaceElementStencil::IndexContainerViewConstType const & sesri = stencil.getElementSubRegionIndices();
+  typename FaceElementStencil::IndexContainerViewConstType const & sei = stencil.getElementIndices();
+  typename FaceElementStencil::WeightContainerViewConstType const & weights = stencil.getWeights();
+
+  ArrayOfArraysView< R1Tensor const > const & cellCenterToEdgeCenters = stencil.getCellCenterToEdgeCenters();
+
+  static constexpr real64 TINY = 1e-10;
+
+  forAll< parallelDevicePolicy< 32 > >( stencil.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iconn )
+  {
+    localIndex const numFluxElems = seri.sizeOfArray( iconn );
+
+    if( numFluxElems > 1 )
+    {
+      localIndex const er = seri[iconn][0];
+      localIndex const esr = sesri[iconn][0];
+
+      // check if connection is vertical or horizontal
+      stackArray1d< real64, maxNumFluxElems > effectiveWeights( numFluxElems );
+      stackArray1d< real64, maxNumFluxElems > cellCenterToEdgeCenterDistance( numFluxElems );
+
+      for( localIndex k = 0; k < numFluxElems; ++k )
+      {
+        cellCenterToEdgeCenterDistance[k] = 0;
+        for( localIndex i = 0; i < 3; ++i )
+        {
+          cellCenterToEdgeCenterDistance[k] += cellCenterToEdgeCenters[iconn][k][i] * cellCenterToEdgeCenters[iconn][k][i];
+        }
+        cellCenterToEdgeCenterDistance[k] = std::pow( cellCenterToEdgeCenterDistance[k], 0.5 );
+
+        effectiveWeights[k] = weights[iconn][k];
+
+        localIndex const ei = sei[iconn][k];
+
+        if( fabs( Dot( cellCenterToEdgeCenters[iconn][k], gravityVector )) > TINY )
+        {
+          effectiveWeights[k] *= transTMultiplier[er][esr][ei][1];
+        }
+        else
+        {
+          effectiveWeights[k] *= transTMultiplier[er][esr][ei][0];
+        }
+
+      }
+
+      ComputeJunction( numFluxElems,
+                       sei[iconn],
+                       effectiveWeights,
+                       cellCenterToEdgeCenterDistance,
+                       pres[er][esr],
+                       gravCoef[er][esr],
+                       dens[er][esr],
+                       mob[er][esr],
+                       aperture0[er][esr],
+                       aperture[er][esr],
+                       meanPermCoeff,
+#ifdef GEOSX_USE_SEPARATION_COEFFICIENT
+                       s[er][esr],
+#endif
+                       dt,
+                       visc[er][esr],
+                       totalCompressibility[er][esr],
+                       referencePressure[er][esr],
+                       &((*fluidMass)[er][esr]),
+                       maxStableDt );
+    }
+  } );
+
+}
 
 } // namespace SinglePhaseFVMKernels
 

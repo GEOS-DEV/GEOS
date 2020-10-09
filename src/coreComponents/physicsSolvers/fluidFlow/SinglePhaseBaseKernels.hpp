@@ -448,6 +448,19 @@ struct FluidUpdateKernel
       }
     } );
   }
+
+  template< typename FLUID_WRAPPER >
+  static void Launch( FLUID_WRAPPER const & fluidWrapper,
+                      arrayView1d< real64 const > const & pres)
+  {
+    forAll< parallelDevicePolicy<> >( fluidWrapper.numElems(), [=] GEOSX_HOST_DEVICE ( localIndex const k )
+    {
+      for( localIndex q = 0; q < fluidWrapper.numGauss(); ++q )
+      {
+        fluidWrapper.UpdateViscosity( k, q, pres[k] );
+      }
+    } );
+  }
 };
 
 /******************************** ResidualNormKernel ********************************/

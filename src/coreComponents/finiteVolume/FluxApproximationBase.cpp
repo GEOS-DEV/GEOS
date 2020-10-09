@@ -94,6 +94,40 @@ void FluxApproximationBase::RegisterDataOnMesh( Group * const meshBodies )
   } );
 }
 
+void FluxApproximationBase::update( DomainPartition & domain )
+{
+  GEOSX_MARK_FUNCTION;
+
+  FieldSpecificationManager & fsManager = FieldSpecificationManager::get();
+
+  domain.getMeshBodies()->forSubGroups< MeshBody >( [&]( MeshBody & meshBody )
+  {
+    m_lengthScale = meshBody.getGlobalLengthScale();
+
+    meshBody.forSubGroups< MeshLevel >( [&]( MeshLevel & mesh )
+    {
+      // Compute the main cell-based stencil
+      updateCellStencil( mesh );
+
+      updateFractureStencil( mesh );
+
+      // For each face-based boundary condition on target field, create a boundary stencil
+      fsManager.Apply( 0.0,
+                       &domain,
+                       "faceManager",
+                       m_fieldName,
+                       [&] ( FieldSpecificationBase const *,
+                             string const & setName,
+                             SortedArrayView< localIndex const > const & faceSet,
+                             Group const *,
+                             string const & )
+      {
+        updateBoundaryStencil( mesh, setName, faceSet );
+      } );
+    } );
+  } );
+}
+
 void FluxApproximationBase::InitializePostInitialConditions_PreSubGroups( Group * const rootGroup )
 {
   GEOSX_MARK_FUNCTION;

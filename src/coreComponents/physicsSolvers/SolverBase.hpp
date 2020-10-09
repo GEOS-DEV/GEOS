@@ -67,6 +67,11 @@ public:
                         dataRepository::Group * const domain ) override;
 
   /**
+   * This method is to initial time step size for explicit solver
+   */
+  virtual void SetInitialTimeStep( Group * domain ) override;
+
+  /**
    * @brief Getter for system matrix
    * @return a reference to linear system matrix of this solver
    */
@@ -162,6 +167,22 @@ public:
   void SetNextDtBasedOnNewtonIter( real64 const & currentDt,
                                    real64 & nextDt );
 
+  /**
+   * @brief function to perform setup for explicit timestep
+   * @param time_n the time at the beginning of the step
+   * @param dt the desired timestep
+   * @param domain the domain partition
+   *
+   * This function should contain any step level initialization required to perform an explicit
+   * step.
+   *
+   * @note This function must be overridden in the derived physics solver in order to use an explict
+   * solution method.
+   */
+  virtual void
+  ExplicitStepSetup( real64 const & time_n,
+                     real64 const & dt,
+                     DomainPartition & domain );
 
   /**
    * @brief Entry function for an explicit time integration step

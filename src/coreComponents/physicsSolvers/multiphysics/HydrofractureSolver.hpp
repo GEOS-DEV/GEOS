@@ -46,9 +46,7 @@ public:
     return "Hydrofracture";
   }
 
-#ifdef GEOSX_USE_SEPARATION_COEFFICIENT
   virtual void RegisterDataOnMesh( dataRepository::Group * const MeshBodies ) override final;
-#endif
 
   virtual void SetupDofs( DomainPartition const & domain,
                           DofManager & dofManager ) const override;
@@ -59,6 +57,13 @@ public:
                             array1d< real64 > & localRhs,
                             array1d< real64 > & localSolution,
                             bool const setSparsity = true ) override;
+
+  virtual real64 GetTimestepRequest(real64 const time) override;
+
+  virtual void
+  ExplicitStepSetup( real64 const & time_n,
+                     real64 const & dt,
+                     DomainPartition & domain) override final;
 
   virtual void
   ImplicitStepSetup( real64 const & time_n,
@@ -106,6 +111,8 @@ public:
 
   virtual void ResetStateToBeginningOfStep( DomainPartition & domain ) override;
 
+  virtual void SetInitialTimeStep( Group * const domain ) override;
+
   virtual real64 SolverStep( real64 const & time_n,
                              real64 const & dt,
                              int const cycleNumber,
@@ -125,6 +132,8 @@ public:
 //  void ApplyFractureFluidCoupling( DomainPartition * const domain,
 //                                   systemSolverInterface::EpetraBlockSystem & blockSystem );
 
+  void ApplyContactAndPressureToFacesInExplicitSolver( DomainPartition & domain );
+
   void AssembleForceResidualDerivativeWrtPressure( DomainPartition & domain,
                                                    ParallelMatrix * const matrix01,
                                                    arrayView1d< real64 > const & rhs0 );
@@ -143,7 +152,8 @@ public:
   enum class CouplingTypeOption : integer
   {
     FIM,
-    SIM_FixedStress
+    SIM_FixedStress,
+    FEM
   };
 
   struct viewKeyStruct : SolverBase::viewKeyStruct
@@ -159,6 +169,11 @@ public:
 
     constexpr static auto contactRelationNameString = "contactRelationName";
     constexpr static auto maxNumResolvesString = "maxNumResolves";
+    constexpr static auto stencilUpdateFrequencyString = "stencilUpdateFrequency";
+
+    constexpr static auto relaxationCoefficientString = "relaxationCoefficient";
+    constexpr static auto contactStressString = "contactStress";
+    constexpr static auto appliedFacePressureString = "appliedFacePressure";
 
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
     constexpr static auto separationCoeff0String = "separationCoeff0";
@@ -199,9 +214,10 @@ private:
 
   integer m_maxNumResolves;
   integer m_numResolves[2];
+  integer m_stencilUpdateFrequency;
 };
 
-ENUM_STRINGS( HydrofractureSolver::CouplingTypeOption, "FIM", "SIM_FixedStress" )
+ENUM_STRINGS( HydrofractureSolver::CouplingTypeOption, "FIM", "SIM_FixedStress", "FEM" )
 
 } /* namespace geosx */
 

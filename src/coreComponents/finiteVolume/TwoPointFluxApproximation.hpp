@@ -70,6 +70,13 @@ protected:
   virtual void addEDFracToFractureStencil( MeshLevel & mesh,
                                            string const & embeddedSurfaceRegionName ) const override;
 
+  virtual void updateCellStencil( MeshLevel & mesh ) const override;
+
+  virtual void updateBoundaryStencil( MeshLevel & mesh,
+                                       string const & setName,
+                                       SortedArrayView< localIndex const > const & faceSet ) const override;
+
+  virtual void updateFractureStencil( MeshLevel & mesh ) const override;
 
 };
 

@@ -95,6 +95,10 @@ public:
   using BASE::m_viscosity;
   using BASE::m_dVisc_dPres;
   using BASE::m_transTMultiplier;
+  using BASE::m_porosity;
+  using BASE::m_totalCompressibility;
+  using BASE::m_referencePressure;
+  using BASE::m_fluidMass;
 
   /**
    * @brief main constructor for Group Objects
@@ -199,6 +203,29 @@ public:
                      DofManager const & dofManager,
                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
                      arrayView1d< real64 > const & localRhs ) override;
+
+  /**
+   * @brief assembles the flux terms for all cells
+   * @param time_n previous time value
+   * @param dt time step
+   * @param domain the physical domain object
+   */
+  virtual void
+  AssembleFluxTermsExplicit( real64 const time_n,
+                             real64 const dt,
+                             DomainPartition & domain ) override;
+
+  /**
+   * @brief assemble the flux terms for all cells and then apply flux BC in the explicit solver
+   * @param time_n previous time value
+   * @param dt time step
+   * @param domain the physical domain object
+   * @param dofManager degree-of-freedom manager associated with the linear system
+   */
+  virtual void
+  CalculateAndApplyMassFlux( real64 const & time_n,
+                             real64 const & dt,
+                             DomainPartition & domain ) override;
 
   /**@}*/
 

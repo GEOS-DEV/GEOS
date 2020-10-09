@@ -135,7 +135,14 @@ void EventManager::Run( dataRepository::Group * domain )
       for(; m_currentSubEvent<this->numSubGroups(); ++m_currentSubEvent )
       {
         EventBase * subEvent = static_cast< EventBase * >( this->GetSubGroups()[m_currentSubEvent] );
-        m_dt = std::min( subEvent->GetTimestepRequest( m_time ), m_dt );
+        // For explicit solver's initial dt forecasts
+        subEvent->CheckEvents( m_time, m_dt, m_cycle, domain );
+        integer eventForecast = subEvent->getForecast();
+        if( eventForecast <= 0 )
+        {
+          subEvent->GetEventTarget()->SetInitialTimeStep( domain );
+          m_dt = std::min( subEvent->GetTimestepRequest( m_time ), m_dt );
+        }
       }
       m_currentSubEvent = 0;
 

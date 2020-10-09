@@ -282,6 +282,19 @@ public:
    */
   void setDefaultStiffness( real64 const c[6][6] );
 
+  /**
+   * @brief Const constrained modulus
+   * @return A const of the constrained modulus
+   */
+  /// TODO: ad hoc; to be fixed later
+  real64 getConstrainedModulus( localIndex const k ) const { return m_stiffness( k, 2, 2 ); }
+
+  /**
+   * @brief Const compressibility
+   * @return A const of the compressibility (inverse of default bulk modulus)
+   */
+  /// TODO: ad hoc; to be fixed later
+  virtual real64 getCompressibility() const override { return 1 / m_defaultStiffness[2][2]; }
 
   /**
    * @brief Create a instantiation of the LinearElasticAnisotropicUpdate class

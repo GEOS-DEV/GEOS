@@ -422,6 +422,18 @@ public:
   arrayView1d< real64 const > shearModulus() const { return m_shearModulus; }
 
   /**
+   * @brief Const constrained modulus
+   * @return A const of the constrained modulus
+   */
+  real64 getConstrainedModulus( localIndex const k ) const { return ( m_bulkModulus[k] + 4 / 3.0 * m_shearModulus[k] ); }
+
+  /**
+   * @brief Const compressibility
+   * @return A const of the compressibility (inverse of default bulk modulus)
+   */
+  virtual real64 getCompressibility() const override { return 1 / m_defaultBulkModulus; }
+
+  /**
    * @brief Create a instantiation of the LinearElasticIsotropicUpdate class
    *        that refers to the data in this.
    * @return An instantiation of LinearElasticIsotropicUpdate.

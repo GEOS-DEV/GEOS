@@ -65,6 +65,11 @@ FaceElementSubRegion::FaceElementSubRegion( string const & name,
     setPlotLevel( dataRepository::PlotLevel::LEVEL_0 )->
     setDescription( "The aperture of each FaceElement." );
 
+  registerWrapper( viewKeyStruct::elementApertureOffsetString, &m_elementApertureOffset )->
+    setApplyDefaultValue( 0.0 )->
+    setPlotLevel( dataRepository::PlotLevel::LEVEL_0 )->
+    setDescription("The aperture offset of each FaceElement.");
+
   registerWrapper( viewKeyStruct::elementAreaString, &m_elementArea )->
     setApplyDefaultValue( -1.0 )->
     setPlotLevel( dataRepository::PlotLevel::LEVEL_2 )->
@@ -123,7 +128,7 @@ void FaceElementSubRegion::CalculateElementGeometricQuantities( localIndex const
                                                                 arrayView1d< real64 const > const & faceArea )
 {
   m_elementArea[k] = faceArea[ m_toFacesRelation[k][0] ];
-  m_elementVolume[k] = m_elementAperture[k] * faceArea[m_toFacesRelation[k][0]];
+  m_elementVolume[k] = ( m_elementAperture[k] + m_elementApertureOffset[k] ) * faceArea[m_toFacesRelation[k][0]];
 }
 
 void FaceElementSubRegion::CalculateElementGeometricQuantities( localIndex const k,
@@ -132,7 +137,7 @@ void FaceElementSubRegion::CalculateElementGeometricQuantities( localIndex const
 {
   localIndex const faceID = m_toFacesRelation( k, 0 );
   m_elementArea[ k ] = faceArea[ faceID ];
-  m_elementVolume[ k ] = m_elementAperture[ k ] * faceArea[ faceID ];
+  m_elementVolume[ k ] = ( m_elementAperture[k] + m_elementApertureOffset[k] ) * faceArea[ faceID ];
   LvArray::tensorOps::copy< 3, 3 >( m_elementRotationMatrix[ k ], faceRotationMatrix[ faceID ] );
 }
 

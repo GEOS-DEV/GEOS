@@ -106,6 +106,12 @@ public:
    */
   integer GetTimestepBehavior() { return m_timestepType; }
 
+  /**
+   * This method will set the initial time-step size for explicit solver based on requests from its
+   * targets and/or children.
+   */
+  virtual void SetInitialTimeStep( dataRepository::Group * GEOSX_UNUSED_PARAM( domain ) ) {}
+
 
 private:
   integer m_timestepType = 0;

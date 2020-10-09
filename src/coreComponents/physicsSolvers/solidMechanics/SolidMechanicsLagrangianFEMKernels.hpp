@@ -32,7 +32,9 @@ namespace SolidMechanicsLagrangianFEMKernels
 {
 
 inline void velocityUpdate( arrayView2d< real64, nodes::ACCELERATION_USD > const & acceleration,
+                            arrayView1d< real64 const > const & mass,
                             arrayView2d< real64, nodes::VELOCITY_USD > const & velocity,
+                            R1Tensor const & gravityVector,
                             real64 const dt )
 {
   GEOSX_MARK_FUNCTION;
@@ -42,6 +44,7 @@ inline void velocityUpdate( arrayView2d< real64, nodes::ACCELERATION_USD > const
   {
     LvArray::tensorOps::scaledAdd< 3 >( velocity[ i ], acceleration[ i ], dt );
     LvArray::tensorOps::fill< 3 >( acceleration[ i ], 0 );
+    LvArray::tensorOps::scaledAdd< 3 >( acceleration[ i ], gravityVector, mass[ i ] );
   } );
 }
 
@@ -49,6 +52,7 @@ inline void velocityUpdate( arrayView2d< real64, nodes::ACCELERATION_USD > const
                             arrayView1d< real64 const > const & mass,
                             arrayView2d< real64, nodes::VELOCITY_USD > const & velocity,
                             real64 const dt,
+                            real64 const massDamping,
                             SortedArrayView< localIndex const > const & indices )
 {
   GEOSX_MARK_FUNCTION;
@@ -56,7 +60,8 @@ inline void velocityUpdate( arrayView2d< real64, nodes::ACCELERATION_USD > const
   forAll< parallelDevicePolicy<> >( indices.size(), [=] GEOSX_DEVICE ( localIndex const i )
   {
     localIndex const a = indices[ i ];
-    LvArray::tensorOps::scale< 3 >( acceleration[ a ], 1.0 / mass[ a ] );
+    LvArray::tensorOps::scaledAdd< 3 >( acceleration[ a ], velocity[ a ], - massDamping * mass[ a ] );
+    LvArray::tensorOps::scale< 3 >( acceleration[ a ], 1.0 / ( mass[ a ] * ( 1 + 0.5 * dt * massDamping ) ) );
     LvArray::tensorOps::scaledAdd< 3 >( velocity[ a ], acceleration[ a ], dt );
   } );
 }

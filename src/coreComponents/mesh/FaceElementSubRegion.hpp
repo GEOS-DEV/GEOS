@@ -153,6 +153,9 @@ public:
     /// String key for the element aperture
     static constexpr auto elementApertureString        = "elementAperture";
 
+    /// String key for the element aperture
+    static constexpr auto elementApertureOffsetString        = "elementApertureOffset";
+
     /// Face element area string.
     static constexpr auto elementAreaString            = "elementArea";
 
@@ -268,6 +271,17 @@ public:
   arrayView1d< real64 const > getElementAperture() const { return m_elementAperture; }
 
   /**
+   * @brief Get face element aperture.
+   * @return the aperture of the face elements
+   */
+  arrayView1d< real64 > getElementApertureOffset() { return m_elementApertureOffset; }
+
+  /**
+   * @copydoc getElementAperture()
+   */
+  arrayView1d< real64 const > getElementApertureOffset() const { return m_elementApertureOffset; }
+
+  /**
    * @brief Get face element surface area.
    * @return the surface area of the face element
    */
@@ -372,6 +386,9 @@ private:
 
   /// Member level field for the element center
   array1d< real64 > m_elementAperture;
+
+  /// Member level field for the element center
+  array1d< real64 > m_elementApertureOffset;
 
   /// Member level field for the element center
   array1d< real64 > m_elementArea;

@@ -135,7 +135,27 @@ public:
    * @param[in] lambda The LAMBDA function
    */
   template< typename LAMBDA >
+  void forAllStencils( MeshLevel & mesh, LAMBDA && lambda );
+
+  /**
+   * @brief Call a user-provided function for each stencil.
+   * @tparam LAMBDA The type of lambda function passed into the parameter list.
+   * @param[in] mesh the mesh level containing the stencils
+   * @param[in] lambda The LAMBDA function
+   */
+  template< typename LAMBDA >
   void forAllStencils( MeshLevel const & mesh, LAMBDA && lambda ) const;
+
+  /**
+   * @brief Call a user-provided function for the each stencil according to the provided TYPE.
+   * @tparam TYPE The type to be passed to forWrappers
+   * @tparam TYPES Other types to be passed to forWrappers
+   * @tparam LAMBDA The type of lambda function passed into the parameter list.
+   * @param[in] mesh the mesh level containing the stencils
+   * @param[in] lambda The LAMBDA function
+   */
+  template< typename TYPE, typename ... TYPES, typename LAMBDA >
+  void forStencils( MeshLevel & mesh, LAMBDA && lambda );
 
   /**
    * @brief Call a user-provided function for the each stencil according to the provided TYPE.
@@ -165,6 +185,10 @@ public:
    */
   virtual void addEDFracToFractureStencil( MeshLevel & mesh,
                                            string const & embeddedSurfaceRegionName ) const = 0;
+
+
+  /// triggers update of the stencil, implemented in derived classes
+  void update( DomainPartition & domain );
 
   /**
    * @brief View keys.
@@ -249,6 +273,30 @@ protected:
                                        string const & setName,
                                        SortedArrayView< localIndex const > const & faceSet ) const = 0;
 
+  /**
+   * @brief Update of the cell-to-cell stencil, to be overridden by implementations.
+   * @param[in] mesh the mesh on which to perform the computation
+   */
+  virtual void updateCellStencil( MeshLevel & mesh ) const = 0;
+
+  /**
+   * @brief Update a stencil to be used in boundary condition application
+   * @param mesh the target mesh level
+   * @param setName name of the face set, to be used as wrapper name for the produced stencil
+   * @param faceSet set of face indices to use
+   */
+  virtual void updateBoundaryStencil( MeshLevel & mesh,
+                                       string const & setName,
+                                       SortedArrayView< localIndex const > const & faceSet ) const = 0;
+
+  /**
+   * @brief Update a fracture stencil.
+   * @param[in,out] mesh the mesh on which to add the fracture stencil
+   * @param[in] faceElementRegionName the face element region name
+   * @param[in] initFlag if true initialize physical fields, like pressure
+   */
+  virtual void updateFractureStencil( MeshLevel & mesh ) const = 0;
+
   /// name of the primary solution field
   string m_fieldName;
 
@@ -281,10 +329,27 @@ TYPE & FluxApproximationBase::getStencil( MeshLevel & mesh, string const & name 
 }
 
 template< typename LAMBDA >
+void FluxApproximationBase::forAllStencils( MeshLevel & mesh, LAMBDA && lambda )
+{
+  //TODO remove dependence on CellElementStencilTPFA and FaceElementStencil
+  forStencils< CellElementStencilTPFA, FaceElementStencil >( mesh, std::forward< LAMBDA >( lambda ) );
+}
+
+template< typename LAMBDA >
 void FluxApproximationBase::forAllStencils( MeshLevel const & mesh, LAMBDA && lambda ) const
 {
   //TODO remove dependence on CellElementStencilTPFA and FaceElementStencil
   forStencils< CellElementStencilTPFA, FaceElementStencil >( mesh, std::forward< LAMBDA >( lambda ) );
+}
+
+template< typename TYPE, typename ... TYPES, typename LAMBDA >
+void FluxApproximationBase::forStencils( MeshLevel & mesh, LAMBDA && lambda )
+{
+  Group & stencilGroup = mesh.getGroupReference( groupKeyStruct::stencilMeshGroupString ).getGroupReference( getName() );
+  stencilGroup.forWrappers< TYPE, TYPES... >( [&] ( auto & wrapper )
+  {
+    lambda( wrapper.reference() );
+  } );
 }
 
 template< typename TYPE, typename ... TYPES, typename LAMBDA >

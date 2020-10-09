@@ -29,6 +29,10 @@
 #include "physicsSolvers/fluidFlow/SinglePhaseBaseKernels.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseFVMKernels.hpp"
 
+#include "mesh/FaceElementRegion.hpp"
+#include "constitutive/solid/PoreVolumeCompressibleSolid.hpp"
+#include "constitutive/solid/LinearElasticAnisotropic.hpp"
+
 /**
  * @namespace the geosx namespace that encapsulates the majority of the code
  */
@@ -263,6 +267,46 @@ void SinglePhaseFVM< BASE >::AssembleFluxTerms( real64 const GEOSX_UNUSED_PARAM(
 }
 
 template< typename BASE >
+void SinglePhaseFVM< BASE >::AssembleFluxTermsExplicit( real64 const GEOSX_UNUSED_PARAM( time_n ),
+                                                        real64 const dt,
+                                                        DomainPartition & domain)
+{
+  GEOSX_MARK_FUNCTION;
+
+  MeshLevel & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
+
+  NumericalMethodsManager & numericalMethodManager = domain.getNumericalMethodManager();
+  FiniteVolumeManager & fvManager = numericalMethodManager.getFiniteVolumeManager();
+  FluxApproximationBase & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
+
+  m_maxStableDt = std::numeric_limits<real64>::max();
+
+  fluxApprox.forAllStencils( mesh, [&]( auto & stencil )
+  {
+    FluxKernel::Launch( stencil,
+                        dt,
+                        m_pressure.toNestedViewConst(),
+                        m_gravCoef.toNestedViewConst(),
+                        m_density.toNestedViewConst(),
+                        m_mobility.toNestedViewConst(),
+                        m_elementAperture0.toNestedViewConst(),
+                        m_effectiveAperture.toNestedViewConst(),
+                        m_transTMultiplier.toNestedViewConst(),
+                        this->gravityVector(),
+                        this->m_meanPermCoeff,
+#ifdef GEOSX_USE_SEPARATION_COEFFICIENT
+                        m_elementSeparationCoefficient.toNestedViewConst(),
+#endif
+                        m_viscosity.toNestedViewConst(),
+                        m_porosity.toNestedViewConst(),
+                        m_totalCompressibility.toNestedViewConst(),
+                        m_referencePressure.toNestedViewConst(),
+                        &m_fluidMass,
+                        &m_maxStableDt );
+  } );
+}
+
+template< typename BASE >
 void
 SinglePhaseFVM< BASE >::ApplyBoundaryConditions( real64 const time_n,
                                                  real64 const dt,
@@ -375,6 +419,54 @@ void SinglePhaseFVM< BASE >::ApplyFaceDirichletBC( real64 const time_n,
                                      localRhs );
     } );
   } );
+}
+
+template< typename BASE >
+void
+SinglePhaseFVM< BASE >::CalculateAndApplyMassFlux( real64 const & time_n,
+                                                   real64 const & dt,
+                                                   DomainPartition & domain )
+{
+  MeshLevel & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
+
+  AssembleFluxTermsExplicit( time_n, dt, domain );
+
+  // apply mass flux boundary condition
+  FieldSpecificationManager & fsManager = FieldSpecificationManager::get();
+
+  fsManager.Apply( time_n + dt, &domain,
+                   "ElementRegions",
+                   FieldSpecificationBase::viewKeyStruct::fluxBoundaryConditionString,
+                   [&]( FieldSpecificationBase const * const fs,
+                        string const &,
+                        SortedArrayView< localIndex const > const & lset,
+                        Group * subRegion,
+                        string const & ) -> void
+  {
+    arrayView1d< integer const > const
+    ghostRank = subRegion->getReference< array1d< integer > >( ObjectManagerBase::viewKeyStruct::ghostRankString );
+
+    SortedArray< localIndex > localSet;
+    for( localIndex const a : lset )
+    {
+      if( ghostRank[a] < 0 )
+      {
+        localSet.insert( a );
+      }
+    }
+
+    fs->ApplyFieldValue< FieldSpecificationAdd, parallelDevicePolicy<> >( localSet.toViewConst(),
+                                                                          time_n + dt,
+                                                                          -dt,
+                                                                          subRegion,
+                                                                          viewKeyStruct::fluidMassString );
+  } );
+
+  // synchronize element fields
+  std::map< string, string_array > fieldNames;
+  fieldNames["elems"].emplace_back( viewKeyStruct::fluidMassString );
+
+  CommunicationTools::SynchronizeFields( fieldNames, &mesh, domain.getNeighbors(), true );
 }
 
 namespace

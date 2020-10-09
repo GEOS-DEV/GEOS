@@ -71,6 +71,10 @@ public:
 
   virtual void RegisterDataOnMesh( Group * const MeshBodies ) override;
 
+  virtual void SetInitialTimeStep( Group * const domain ) override;
+
+  virtual real64 GetTimestepRequest( real64 const time ) override;
+
   virtual void SetupSystem( DomainPartition & domain,
                             DofManager & dofManager,
                             CRSMatrix< real64, globalIndex > & localMatrix,
@@ -90,6 +94,17 @@ public:
    * These functions provide the primary interface that is required for derived classes
    */
   ///@{
+
+  virtual void
+  ExplicitStepSetup( real64 const & time_n,
+                     real64 const & dt,
+                     DomainPartition & domain ) override;
+
+  virtual real64
+  ExplicitStep( real64 const & time_n,
+                real64 const & dt,
+                integer const cycleNumber,
+                DomainPartition & domain ) override;
 
   virtual void
   ImplicitStepSetup( real64 const & time_n,
@@ -181,6 +196,17 @@ public:
                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
                      arrayView1d< real64 > const & localRhs ) = 0;
 
+  /**
+   * @brief assembles the flux terms for all cells
+   * @param time_n previous time value
+   * @param dt time step
+   * @param domain the physical domain object
+   */
+  virtual void
+  AssembleFluxTermsExplicit( real64 const GEOSX_UNUSED_PARAM( time_n ),
+                             real64 const GEOSX_UNUSED_PARAM( dt ),
+                             DomainPartition & GEOSX_UNUSED_PARAM( domain ) ) {};
+
   void
   ApplyDiricletBC( real64 const time_n,
                    real64 const dt,
@@ -203,6 +229,12 @@ public:
    */
   virtual void UpdateState( Group & dataGroup, localIndex const targetIndex ) const;
 
+  /**
+   * @brief Function to update the stencil
+   * @param domain the physical domain object
+   */
+  virtual void UpdateStencil( DomainPartition & domain ) override;
+
   struct viewKeyStruct : FlowSolverBase::viewKeyStruct
   {
     // used for face-based BC
@@ -212,6 +244,7 @@ public:
     static constexpr auto mobilityString = "mobility";
     static constexpr auto dMobility_dPressureString = "dMobility_dPressure";
     static constexpr auto porosityString = "porosity";
+    static constexpr auto densityString = "density";
 
     // backup fields
     static constexpr auto porosityOldString = "porosityOld";
@@ -299,6 +332,16 @@ protected:
   virtual void UpdateFluidModel( Group & dataGroup, localIndex const targetIndex ) const;
 
   /**
+   * @brief Function to update all constitutive state and dependent variables in the explicit solver
+   * @param time_n previous time value
+   * @param dt time step
+   * @param domain the physical domain object
+   */
+  virtual void UpdateEOSExplicit( real64 const & time_n,
+                                  real64 const & dt,
+                                  DomainPartition & domain ) override;
+
+  /**
    * @brief Function to update all constitutive models
    * @param dataGroup group that contains the fields
    */
@@ -324,6 +367,10 @@ protected:
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_dVisc_dPres;
 
   ElementRegionManager::ElementViewAccessor< arrayView1d< R1Tensor const > > m_transTMultiplier;
+
+  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > m_fluidMass;
+  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_referencePressure;
+  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_totalCompressibility;
 
 private:
 

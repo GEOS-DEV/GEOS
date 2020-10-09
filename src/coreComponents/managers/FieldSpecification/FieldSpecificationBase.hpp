@@ -110,7 +110,24 @@ public:
                               Group * dataGroup ) const;
 
   /**
-   * @tparam FIELD_OP type that contains static functions to apply the value to the field
+   * @tparam FIELD_OP type that contains static functions to apply the rate to the field
+   * @param[in] field the field to apply the value to.
+   * @param[in] targetSet the set of indices which the value will be applied.
+   * @param[in] time The time at which any time dependent functions are to be evaluated as part of the
+   *             application of the value.
+   * @param[in] dt time step size which is applied as a factor to bc values
+   * @param[in] dataGroup the Group that contains the field to apply the value to.
+   *
+   * This function applies the value to a field variable.
+   */
+  template< typename FIELD_OP, typename POLICY, typename T, int N, int USD >
+  void ApplyFieldValueKernel( ArrayView< T, N, USD > const & field,
+                              SortedArrayView< localIndex const > const & targetSet,
+                              real64 const time,
+                              real64 const dt,
+                              Group * dataGroup ) const;
+  /**
+   * @tparam FIELD_OP type that contains static functions to apply the rate to the field
    * @param[in] targetSet the set of indices which the value will be applied.
    * @param[in] time The time at which any time dependent functions are to be evaluated as part of the
    *             application of the value.
@@ -123,6 +140,25 @@ public:
   template< typename FIELD_OP, typename POLICY=parallelHostPolicy >
   void ApplyFieldValue( SortedArrayView< localIndex const > const & targetSet,
                         real64 const time,
+                        dataRepository::Group * dataGroup,
+                        string const & fieldname ) const;
+
+  /**
+   * @tparam FIELD_OP type that contains static functions to apply the value to the field
+   * @param[in] targetSet the set of indices which the value will be applied.
+   * @param[in] time The time at which any time dependent functions are to be evaluated as part of the
+   *             application of the value.
+   * @param[in] dt time step size which is applied as a factor to bc values
+   * @param[in] dataGroup the Group that contains the field to apply the value to.
+   * @param[in] fieldname the name of the field to apply the value to.
+   *
+   * This function applies the rate to a field variable. This function is typically
+   * called from within the lambda to a call to FieldSpecificationManager::ApplyFieldValue().
+   */
+  template< typename FIELD_OP, typename POLICY=parallelHostPolicy >
+  void ApplyFieldValue( SortedArrayView< localIndex const > const & targetSet,
+                        real64 const time,
+                        real64 const dt,
                         dataRepository::Group * dataGroup,
                         string const & fieldname ) const;
 
@@ -664,6 +700,75 @@ void FieldSpecificationBase::ApplyFieldValueKernel( ArrayView< T, N, USD > const
 }
 
 
+template< typename FIELD_OP, typename POLICY, typename T, int N, int USD >
+void FieldSpecificationBase::ApplyFieldValueKernel( ArrayView< T, N, USD > const & field,
+                                                    SortedArrayView< localIndex const > const & targetSet,
+                                                    real64 const time,
+                                                    real64 const dt,
+                                                    Group * dataGroup ) const
+{
+  integer const component = GetComponent();
+  FunctionManager & functionManager = FunctionManager::Instance();
+
+  real64 sizeScalingFactor = 0.0;
+  if( m_normalizeBySetSize )
+  {
+    // note: this assumes that the ghost elements have been filtered out
+
+    // recompute the set size here to make sure that topology changes are accounted for
+    integer const localSetSize = targetSet.size();
+    integer globalSetSize = 0;
+
+    // synchronize
+    MpiWrapper::allReduce( &localSetSize, &globalSetSize, 1, MPI_SUM, MPI_COMM_GEOSX );
+
+    // set the scaling factor
+    sizeScalingFactor = globalSetSize >= 1 ? 1.0 / globalSetSize : 1;
+  }
+  else
+  {
+    sizeScalingFactor = 1;
+  }
+
+  if( m_functionName.empty() )
+  {
+    real64 const value = m_scale;
+    forAll< POLICY >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const i )
+    {
+      localIndex const a = targetSet[ i ];
+      FIELD_OP::SpecifyFieldValue( field, a, component, value  * dt * sizeScalingFactor );
+    } );
+  }
+  else
+  {
+    FunctionBase const * const function  = functionManager.GetGroup< FunctionBase >( m_functionName );
+
+    GEOSX_ERROR_IF( function == nullptr, "Function '" << m_functionName << "' not found" );
+
+    if( function->isFunctionOfTime()==2 )
+    {
+      real64 const value = m_scale * function->Evaluate( &time );
+      forAll< POLICY >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const i )
+      {
+        localIndex const a = targetSet[ i ];
+        FIELD_OP::SpecifyFieldValue( field, a, component, value * dt * sizeScalingFactor );
+      } );
+    }
+    else
+    {
+      real64_array result( static_cast< localIndex >( targetSet.size() ) );
+      function->Evaluate( dataGroup, time, targetSet, result );
+      arrayView1d< real64 const > const & resultView = result.toViewConst();
+      real64 const scale = m_scale;
+      forAll< POLICY >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const i )
+      {
+        localIndex const a = targetSet[ i ];
+        FIELD_OP::SpecifyFieldValue( field, a, component, scale * resultView[i] * dt * sizeScalingFactor );
+      } );
+    }
+  }
+}
+
 template< typename FIELD_OP, typename POLICY >
 void FieldSpecificationBase::ApplyFieldValue( SortedArrayView< localIndex const > const & targetSet,
                                               real64 const time,
@@ -682,6 +787,28 @@ void FieldSpecificationBase::ApplyFieldValue( SortedArrayView< localIndex const 
 
     auto const & field = view.reference().toView();
     ApplyFieldValueKernel< FIELD_OP, POLICY >( field, targetSet, time, dataGroup );
+  } );
+}
+
+template< typename FIELD_OP, typename POLICY >
+void FieldSpecificationBase::ApplyFieldValue( SortedArrayView< localIndex const > const & targetSet,
+                                              real64 const time,
+                                              real64 const dt,
+                                              dataRepository::Group * dataGroup,
+                                              string const & fieldName ) const
+{
+  dataRepository::WrapperBase * wrapper = dataGroup->getWrapperBase( fieldName );
+  std::type_index typeIndex = std::type_index( wrapper->get_typeid());
+
+  rtTypes::ApplyArrayTypeLambda2( rtTypes::typeID( typeIndex ),
+                                  true,
+                                  [&]( auto arrayInstance, auto GEOSX_UNUSED_PARAM( dataTypeInstance ) )
+  {
+    using ArrayType = decltype(arrayInstance);
+    dataRepository::Wrapper< ArrayType > & view = dataRepository::Wrapper< ArrayType >::cast( *wrapper );
+
+    auto const & field = view.reference().toView();
+    ApplyFieldValueKernel< FIELD_OP, POLICY >( field, targetSet, time, dt, dataGroup );
   } );
 }
 

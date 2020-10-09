@@ -194,6 +194,7 @@ public:
     static constexpr auto defaultViscosityString = "defaultViscosity";
     static constexpr auto viscosityString        = "viscosity";
     static constexpr auto dVisc_dPresString      = "dViscosity_dPressure";
+
   } viewKeysSingleFluidBase;
 
 protected:

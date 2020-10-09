@@ -95,6 +95,10 @@ SolverBase::CatalogInterface::CatalogType & SolverBase::GetCatalog()
   return catalog;
 }
 
+void SolverBase::SetInitialTimeStep( Group *  GEOSX_UNUSED_PARAM( domain ) )
+{
+}
+
 bool SolverBase::CheckModelNames( array1d< string > & modelNames,
                                   string const & attribute,
                                   bool const allowEmpty ) const
@@ -595,6 +599,13 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
 
   // return the achieved timestep
   return stepDt;
+}
+
+void SolverBase::ExplicitStepSetup( real64 const & GEOSX_UNUSED_PARAM( time_n ),
+                                    real64 const & GEOSX_UNUSED_PARAM( dt ),
+                                    DomainPartition & GEOSX_UNUSED_PARAM( domain ) )
+{
+  GEOSX_ERROR( "SolverBase::ExplicitStepSetup called!. Should be overridden." );
 }
 
 real64 SolverBase::ExplicitStep( real64 const & GEOSX_UNUSED_PARAM( time_n ),
