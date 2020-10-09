@@ -216,6 +216,8 @@ public:
 
   };
 
+  /// Map between the face elements and the cells
+  FixedToManyElementRelation m_surfaceElementsToCells;
 
 protected:
 
@@ -224,9 +226,6 @@ protected:
 
   /// list of edges
   EdgeMapType m_toEdgesRelation;
-
-  /// Map between the face elements and the cells
-  FixedToManyElementRelation m_surfaceElementsToCells;
 
   /// Member level field for the element center
   array1d< real64 > m_elementAperture;

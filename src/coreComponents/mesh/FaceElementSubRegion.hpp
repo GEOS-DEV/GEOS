@@ -276,12 +276,6 @@ private:
   /// The array of jacobian determinantes.
   array2d< real64 > m_detJ;
 
-  /// Element-to-node relation
-  NodeMapType m_toNodesRelation;
-
-  /// Element-to-edge relation
-  EdgeMapType m_toEdgesRelation;
-
   /// Element-to-face relation
   FaceMapType m_toFacesRelation;
 

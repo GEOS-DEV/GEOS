@@ -28,9 +28,9 @@ using namespace dataRepository;
 SurfaceElementSubRegion::SurfaceElementSubRegion( string const & name,
                                                   dataRepository::Group * const parent ):
   ElementSubRegionBase( name, parent ),
+  m_surfaceElementsToCells(),
   m_toNodesRelation(),
   m_toEdgesRelation(),
-  m_surfaceElementsToCells(),
   m_elementAperture(),
   m_elementArea()
 {

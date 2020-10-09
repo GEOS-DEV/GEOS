@@ -23,6 +23,7 @@
 #include "MeshLevel.hpp"
 #include "BufferOps.hpp"
 #include "LvArray/src/tensorOps.hpp"
+#include "mpiCommunications/MpiWrapper.hpp"
 
 namespace geosx
 {
@@ -155,7 +156,6 @@ localIndex FaceElementSubRegion::PackUpDownMapsPrivate( buffer_unit_type * & buf
                                            localToGlobal,
                                            faceLocalToGlobal );
 
-
   packedSize += bufferOps::Pack< DOPACK >( buffer, string( viewKeyStruct::surfaceElementsToCellRegionsString ) );
   packedSize += bufferOps::Pack< DOPACK >( buffer,
                                            this->m_surfaceElementsToCells,
@@ -217,8 +217,6 @@ localIndex FaceElementSubRegion::UnpackUpDownMaps( buffer_unit_type const * & bu
                                      packList.toViewConst(),
                                      m_surfaceElementsToCells.getElementRegionManager(),
                                      overwriteUpMaps );
-
-
 
   return unPackedSize;
 }
