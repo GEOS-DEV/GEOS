@@ -404,6 +404,7 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
 
         this->UpdateDeformationForCoupling( domain );
 
+        if(subRegion->size() > 0)
         {
 	  std::cout << "Rank "<< rank
 	            << " Face element info (after manipulating disp, after "
