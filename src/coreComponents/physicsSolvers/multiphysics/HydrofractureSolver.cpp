@@ -39,6 +39,10 @@
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
 #include "linearAlgebra/utilities/LAIHelperFunctions.hpp"
 
+
+#include "physicsSolvers/surfaceGeneration/SurfaceGenerator.hpp"
+#include "managers/FieldSpecification/SourceFluxBoundaryCondition.hpp"
+
 namespace geosx
 {
 
@@ -205,6 +209,42 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
       // currently the only method is implicit time integration
       dtReturn = NonlinearImplicitStep( time_n, dt, cycleNumber, domain );
 
+      Group * elementSubRegions = domain.GetGroup("MeshBodies")
+ 					->GetGroup<MeshBody>("mesh1")
+ 					->GetGroup<MeshLevel>("Level0")
+ 					->GetGroup<ElementRegionManager>("ElementRegions")
+ 					->GetRegion< FaceElementRegion >( "Fracture" )
+ 					->GetGroup("elementSubRegions");
+      FaceElementSubRegion * subRegion = elementSubRegions->GetGroup< FaceElementSubRegion >( "default" );
+      FaceElementSubRegion::NodeMapType & nodeMap = subRegion->nodeList();
+      FaceElementSubRegion::FaceMapType & faceMap = subRegion->faceList();
+      int const rank = MpiWrapper::Comm_rank( MPI_COMM_WORLD );
+
+      {
+	if (subRegion->size() > 0)
+	{
+	  std::cout << "Rank " << rank << ": Inside initial guess solver, "
+		    << "after Newton solve: "
+		    << std::endl;
+	  std::cout << "Rank " << rank << ": Face element info: " << std::endl;
+	  for(localIndex i=0; i<nodeMap.size(); i++)
+	  {
+	    std::cout << "Rank " << rank << ": Face (node) " << i << ": ";
+	    for(localIndex j=0; j<nodeMap[i].size(); j++)
+	      std::cout << nodeMap[i][j] << " ";
+	    std::cout << "\n";
+	  }
+	  for(localIndex i=0; i<subRegion->getElementAperture().size(); i++)
+	  {
+	    std::cout << "Rank " << rank << ": Face (aperture) " << i << ": "
+		      << subRegion->getElementAperture()[i]
+		      << std::endl;
+	  }
+	}
+
+      } // print statements
+
+
 
 //      m_solidSolver->updateStress( domain );
 
@@ -213,7 +253,133 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
         if( surfaceGenerator->SolverStep( time_n, dt, cycleNumber, domain ) > 0 )
         {
           locallyFractured = 1;
+
+	  SurfaceGenerator * const mySurface = this->getParent()->GetGroup< SurfaceGenerator >( "SurfaceGen" );
+	  SortedArray< localIndex > const tipNodes = mySurface->getTipNodes();
+	  SortedArray< localIndex > const trailingFaces = mySurface->getTrailingFaces();
+
+	  MeshLevel * mesh = domain.getMeshBody( 0 )->getMeshLevel( 0 );
+	  NodeManager * nodeManager = mesh->getNodeManager();
+	  FaceManager * faceManager = mesh->getFaceManager();
+	  array2d< real64 > & faceNormal = faceManager->getReference< array2d< real64 > >( FaceManager::viewKeyStruct::faceNormalString );
+	  array2d< real64, nodes::TOTAL_DISPLACEMENT_PERM > & disp = nodeManager->totalDisplacement();
+	  array2d< real64, nodes::TOTAL_DISPLACEMENT_PERM > & dispIncre = nodeManager->incrementalDisplacement();
+
+	  real64 const shearModulus = domain.GetGroup("Constitutive")
+					    ->GetGroup("rock")
+					    ->getReference<real64>("defaultShearModulus");
+	  real64 const bulkModulus = domain.GetGroup("Constitutive")
+					   ->GetGroup("rock")
+					   ->getReference<real64>("defaultBulkModulus");
+	  real64 const toughness = mySurface->getReference<real64>("rockToughness");
+
+	  real64 const viscosity = domain.GetGroup("Constitutive")
+					 ->GetGroup("water")
+					 ->getReference<real64>("defaultViscosity");
+
+	  // The unit of injectionRate is kg per second
+	  real64 const injectionRate = domain.getParent()
+					     ->GetGroup<FieldSpecificationManager>("FieldSpecifications")
+					     ->GetGroup<SourceFluxBoundaryCondition>("sourceTerm")
+					     ->getReference<real64>("scale");
+
+	  real64 const q0 = 2.0 * std::abs(injectionRate) /1.0e3;
+	  real64 total_time = dt + time_n;
+
+	  real64 const nu = ( 1.5 * bulkModulus - shearModulus ) / ( 3.0 * bulkModulus + shearModulus );
+	  real64 const E = ( 9.0 * bulkModulus * shearModulus )/ ( 3.0 * bulkModulus + shearModulus );
+	  real64 const Eprime = E/(1.0-nu*nu);
+	  real64 const PI = 2 * acos(0.0);
+	  real64 const Kprime = 4.0*sqrt(2.0/PI)*toughness;
+	  real64 const mup = 12.0 * viscosity;
+
+	  if (viscosity < 2.0e-3) // Toughness-dominated case
+	  {
+	    //TJ: the tip asymptote w = Kprime / Eprime * x^(1/2)
+	    // 0.5 is used to get the magnitude of the displacement from the node to the fracture plan
+	    // based on symmetry
+	    std::cout << "For mesh size = 1.0, gap = " << Kprime/(1.0*Eprime) * sqrt(1.0) << std::endl;
+	  }
+	  else // Viscosity-dominated case
+	  {
+/*		real64 em = pow( mup/(Eprime*total_time), 1.0/3.0 );
+	    real64 Lm = pow( Eprime*pow(q0,3.0)*pow(total_time,4.0)/mup, 1.0/6.0 );
+	    real64 gamma_m0 = 0.616;
+	    real64 coeff_viscous = em * Lm * gamma_m0 * sqrt(3.0) * pow(2.0, 2.0/3.0);
+	    // 0.5 is used to get the magnitude of the displacement from the node to the fracture plan
+	    // based on symmetry
+	    refValue = 0.5 * coeff_viscous * pow(relativeDist/m_convergedTipLoc, 2.0/3.0);
+*/
+	    real64 Lm = pow( Eprime*pow(q0,3.0)*pow(total_time,4.0)/mup, 1.0/6.0 );
+	    real64 gamma_m0 = 0.616;
+	    real64 velocity = 2.0/3.0 * Lm * gamma_m0 / total_time;
+	    real64 Betam = pow(2.0, 1.0/3.0) * pow(3.0, 5.0/6.0);
+	    std::cout << "For mesh size = 1.0, gap = "
+		      << Betam * pow( mup*velocity*1.0*1.0/Eprime, 1.0/3.0) << std::endl;
+	  }
+
+
+
+	  localIndex m_tipElement = -1;
+	  for(auto const & trailingFace : trailingFaces)
+	  {
+	    bool found = false;
+	    // loop over all the face element
+	    for(localIndex i=0; i<faceMap.size(0); i++)
+	    {
+	      // loop over all the (TWO) faces in a face element
+	      for(localIndex j=0; j<faceMap.size(1); j++)
+	      {
+		// if the trailingFace is one of the two faces in a face element,
+		// we find it
+		if (faceMap[i][j] == trailingFace)
+		{
+		  m_tipElement = i;
+		  found = true;
+		  break;
+		}
+	      } // for localIndex j
+	      if (found)
+		break;
+	    } // for localIndex i
+	    GEOSX_ASSERT_MSG( found == true,
+			  "Trailing face is not found among the fracture face elements" );
+
+	    std::cout << "m_tipElement = " << m_tipElement << std::endl;
+
+
+	    real64 refValue = 0.0;
+
+	    //TJ: We can try to give different magnitude of refValue as initial guess
+	    //    to test whether different initial guess will lead to different converged
+	    //    solution
+	    refValue = 1.0e-6;
+
+	    //Find which nodes' displacement need to be manipulated
+	    for (auto const & node : nodeMap[m_tipElement])
+	    {
+	      if ( std::find( tipNodes.begin(), tipNodes.end(), node ) == tipNodes.end() )
+	      {
+		for (localIndex i=0; i<faceMap[m_tipElement].size(); i++)
+		{
+		  auto const & face = faceMap[m_tipElement][i];
+		  for (localIndex j=0; j<faceManager->nodeList()[face].size(); j++)
+		  {
+		    auto const & nodeOnFace = faceManager->nodeList()(face,j);
+		    if (node == nodeOnFace)
+		    {
+		      disp(node, 0) = faceNormal[face][0] > 0 ? -refValue : refValue;
+		      dispIncre(node,0) = disp(node,0) - 0.0;
+		      std::cout << "Node " << node << ": " << disp(node,0) << std::endl;
+		    }
+		  } // for localIndex j
+		} // for localIndex i
+	      } // if (not found)
+	    }  // for auto node
+	  } // for auto trailingFace
         }
+
+
         MpiWrapper::allReduce( &locallyFractured,
                                &globallyFractured,
                                1,
@@ -237,6 +403,30 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
                                                domain.getNeighbors() );
 
         this->UpdateDeformationForCoupling( domain );
+
+        {
+	  std::cout << "Rank "<< rank
+	            << " Face element info (after manipulating disp, after "
+		       "UpdateDeformationForCoupling): " << std::endl;
+	  for(localIndex i=0; i<nodeMap.size(); i++)
+	  {
+	    std::cout << "Face (node) " << i << ": ";
+	    for(localIndex j=0; j<nodeMap[i].size(); j++)
+	      std::cout << nodeMap[i][j] << " ";
+	    std::cout << "\n";
+	  }
+
+	  for(localIndex i=0; i<subRegion->getElementAperture().size(); i++)
+	  {
+	    std::cout << "Face (aperture) " << i << ": "
+		      << subRegion->getElementAperture()[i]
+		      << std::endl;
+	  }
+        }
+
+
+
+
 
         if( getLogLevel() >= 1 )
         {
