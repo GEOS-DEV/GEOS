@@ -248,7 +248,7 @@ public:
   struct groupKeyStruct
   {} solidMechanicsGroupKeys;
 
-  arrayView1d< string const > const & solidMaterialNames() const { return m_solidMaterialNames; }
+  arrayView1d< string const > solidMaterialNames() const { return m_solidMaterialNames; }
 
   SortedArray< localIndex > & getElemsAttachedToSendOrReceiveNodes( ElementSubRegionBase & subRegion )
   {
@@ -286,6 +286,7 @@ protected:
   string m_contactRelationName;
   SortedArray< localIndex > m_sendOrReceiveNodes;
   SortedArray< localIndex > m_nonSendOrReceiveNodes;
+  SortedArray< localIndex > m_targetNodes;
   MPI_iCommData m_iComm;
 
   /// Indicates whether or not to use effective stress when integrating the

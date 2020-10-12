@@ -21,6 +21,7 @@
 #include "SolidBase.hpp"
 #include "constitutive/ExponentialRelation.hpp"
 #include "LvArray/src/tensorOps.hpp"
+#include "SolidModelDiscretizationOpsFullyAnisotroipic.hpp"
 
 namespace geosx
 {
@@ -40,6 +41,7 @@ namespace constitutive
 class LinearElasticAnisotropicUpdates : public SolidBaseUpdates
 {
 public:
+  using DiscretizationOps = SolidModelDiscretizationOpsFullyAnisotroipic;
 
   /**
    * @brief Constructor
@@ -117,6 +119,17 @@ public:
     LvArray::tensorOps::copy< 6, 6 >( c, m_stiffnessView[ k ] );
   }
 
+  GEOSX_FORCE_INLINE
+  GEOSX_HOST_DEVICE
+  void setDiscretizationOps( localIndex const k,
+                             localIndex const q,
+                             DiscretizationOps & discOps ) const
+  {
+    GEOSX_UNUSED_VAR( q )
+    LvArray::tensorOps::copy< 6, 6 >( discOps.m_c, m_stiffnessView[ k ] );
+  }
+
+
   /// A reference to the ArrayView holding the Voigt Stiffness tensor in each
   /// element.
   arrayView3d< real64 const, solid::STIFFNESS_USD > const m_stiffnessView;
@@ -149,7 +162,7 @@ LinearElasticAnisotropicUpdates::
                localIndex const q,
                real64 const ( &voigtStrainInc )[ 6 ] ) const
 {
-  LvArray::tensorOps::plusAijBj< 6, 6 >( m_stress[ k ][ q ], m_stiffnessView[ k ], voigtStrainInc );
+  LvArray::tensorOps::Ri_add_AijBj< 6, 6 >( m_stress[ k ][ q ], m_stiffnessView[ k ], voigtStrainInc );
 }
 
 GEOSX_HOST_DEVICE
@@ -182,7 +195,7 @@ LinearElasticAnisotropicUpdates::
   }
 
   real64 temp[ 6 ];
-  LvArray::tensorOps::AikSymBklAjl< 3 >( temp, Rot, m_stress[ k ][ q ] );
+  LvArray::tensorOps::Rij_eq_AikSymBklAjl< 3 >( temp, Rot, m_stress[ k ][ q ] );
   LvArray::tensorOps::copy< 6 >( m_stress[ k ][ q ], temp );
 }
 
@@ -301,7 +314,7 @@ public:
    * @brief Const Getter for stiffness tensor
    * @return ArrayView to the stiffness tensor
    */
-  arrayView3d< real64 const, solid::STIFFNESS_USD > const & getStiffness() const
+  arrayView3d< real64 const, solid::STIFFNESS_USD > getStiffness() const
   {
     return m_stiffness;
   }
@@ -310,7 +323,7 @@ public:
    * @brief Non-const Getter for stiffness tensor
    * @return ArrayView to the stiffness tensor
    */
-  arrayView3d< real64, solid::STIFFNESS_USD > const & getStiffness()
+  arrayView3d< real64, solid::STIFFNESS_USD > getStiffness()
   {
     return m_stiffness;
   }

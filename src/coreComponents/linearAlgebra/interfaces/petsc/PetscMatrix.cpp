@@ -883,7 +883,7 @@ localIndex PetscMatrix::numLocalCols() const
 {
   GEOSX_LAI_ASSERT( created() );
   PetscInt cols;
-  GEOSX_LAI_CHECK_ERROR( MatGetSize( m_mat, nullptr, &cols ) );
+  GEOSX_LAI_CHECK_ERROR( MatGetLocalSize( m_mat, nullptr, &cols ) );
   return LvArray::integerConversion< localIndex >( cols );
 }
 

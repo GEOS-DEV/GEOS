@@ -125,7 +125,7 @@ public:
    * @param recursive Boolean like integer for sub-groups packing.
    * @return The packed size.
    */
-  virtual localIndex PackGlobalMapsSize( arrayView1d< localIndex > const & packList,
+  virtual localIndex PackGlobalMapsSize( arrayView1d< localIndex const > const & packList,
                                          integer const recursive ) const;
 
   /**
@@ -136,7 +136,7 @@ public:
    * @return The packed size.
    */
   virtual localIndex PackGlobalMaps( buffer_unit_type * & buffer,
-                                     arrayView1d< localIndex > const & packList,
+                                     arrayView1d< localIndex const > const & packList,
                                      integer const recursive ) const;
 
   /**
@@ -375,7 +375,7 @@ public:
    */
   void SetGhostRankForSenders( int const neighborRank )
   {
-    arrayView1d< localIndex const > const & ghostsToSend = getNeighborData( neighborRank ).ghostsToSend();
+    arrayView1d< localIndex const > const ghostsToSend = getNeighborData( neighborRank ).ghostsToSend();
     array1d< std::pair< globalIndex, int > > & nonLocalGhosts = getNeighborData( neighborRank ).nonLocalGhosts();
     nonLocalGhosts.clear();
 
@@ -610,22 +610,21 @@ public:
    * @return A const reference to a view to const data.
    */
   template< typename MESH_DATA_TRAIT >
-  auto const & getExtrinsicData() const
+  GEOSX_DECLTYPE_AUTO_RETURN getExtrinsicData() const
   {
-    return this->getWrapper< typename MESH_DATA_TRAIT::type >( MESH_DATA_TRAIT::key )->referenceAsView();
+    return this->getWrapper< typename MESH_DATA_TRAIT::type >( MESH_DATA_TRAIT::key )->reference();
   }
 
   /**
-   * @brief Get a view to the data associated with a trait from this
-   *   ObjectManagerBase.
+   * @brief Get the data associated with a trait from this ObjectManagerBase.
    * @tparam MESH_DATA_TRAIT The trait that holds the type and key of the data
    *   to be retrieved from this ObjectManagerBase.
-   * @return A reference to a view to the data.
+   * @return A reference to the data.
    */
   template< typename MESH_DATA_TRAIT >
-  auto & getExtrinsicData()
+  GEOSX_DECLTYPE_AUTO_RETURN getExtrinsicData()
   {
-    return this->getWrapper< typename MESH_DATA_TRAIT::type >( MESH_DATA_TRAIT::key )->referenceAsView();
+    return this->getWrapper< typename MESH_DATA_TRAIT::type >( MESH_DATA_TRAIT::key )->reference();
   }
 
   /**
@@ -793,7 +792,7 @@ public:
    * @brief Get the external set, const version.
    * @return Sorted array indices.
    */
-  SortedArrayView< localIndex const > const & externalSet() const
+  SortedArrayView< localIndex const > externalSet() const
   { return m_sets.getReference< SortedArray< localIndex > >( m_ObjectManagerBaseViewKeys.externalSet ); }
 
   /**
@@ -811,14 +810,14 @@ public:
    * @brief Get local to global map.
    * @return The mapping relationship as a array.
    */
-  arrayView1d< globalIndex > const & localToGlobalMap()
+  arrayView1d< globalIndex > localToGlobalMap()
   { return m_localToGlobalMap; }
 
   /**
    * @brief Get local to global map, const version.
    * @return The mapping relationship as a array.
    */
-  arrayView1d< globalIndex const > const & localToGlobalMap() const
+  arrayView1d< globalIndex const > localToGlobalMap() const
   { return m_localToGlobalMap; }
 
   /**
@@ -840,28 +839,28 @@ public:
    * @brief Get the locality information of the objects.
    * @return The information is stored as an array of integers, see #m_isExternal
    */
-  arrayView1d< integer > const & isExternal()
+  array1d< integer > const & isExternal()
   { return this->m_isExternal; }
 
   /**
    * @brief Get the locality information of the objects.
    * @return The information is stored as an array of integers, see #m_isExternal
    */
-  arrayView1d< integer const > const & isExternal() const
+  arrayView1d< integer const > isExternal() const
   { return this->m_isExternal; }
 
   /**
    * @brief Get the ghost information of each object.
    * @return See @see #m_ghostRank
    */
-  arrayView1d< integer > const & ghostRank()
+  array1d< integer > const & ghostRank()
   { return this->m_ghostRank; }
 
   /**
    * @brief Get the ghost information of each object, const version.
    * @return See @see #m_ghostRank
    */
-  arrayView1d< integer const > const & ghostRank() const
+  arrayView1d< integer const > ghostRank() const
   { return this->m_ghostRank; }
 
   /**
@@ -913,13 +912,13 @@ public:
    * @return The information in an array of integers, mainly treated as booleans
    *         (1 meaning the "index" is on the boundary).
    */
-  arrayView1d< integer > const & getDomainBoundaryIndicator()
+  arrayView1d< integer > getDomainBoundaryIndicator()
   {
     return m_domainBoundaryIndicator.toView();
   }
 
   /// @copydoc getDomainBoundaryIndicator()
-  arrayView1d< integer const > const & getDomainBoundaryIndicator() const
+  arrayView1d< integer const > getDomainBoundaryIndicator() const
   {
     return m_domainBoundaryIndicator.toViewConst();
   }
