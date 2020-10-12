@@ -191,7 +191,7 @@ FluxKernel::
                    arrayView1d< integer const > const & isProppantMobile,
                    arrayView1d< real64 const > const & GEOSX_UNUSED_PARAM( proppantPackVf ),
                    arrayView1d< real64 const > const & aperture,
-                   real64 const ( &unitGravityVector )[3],
+                   R1Tensor const & unitGravityVector,
                    arrayView2d< real64 const > const & transTMultiplier,
                    real64 const dt,
                    arraySlice1d< real64 > const & localFlux,
@@ -785,7 +785,7 @@ void FluxKernel::
                                     globalIndex const GEOSX_UNUSED_PARAM( rankOffset ),
                                     ElementViewConst< arrayView2d< real64 const > > const & GEOSX_UNUSED_PARAM( transTMultiplier ),
                                     integer const GEOSX_UNUSED_PARAM( updateProppantPacking ),
-                                    real64 const ( &GEOSX_UNUSED_PARAM( unitGravityVector ) )[3],
+                                    R1Tensor const & GEOSX_UNUSED_PARAM( unitGravityVector ),
                                     ElementViewConst< arrayView1d< globalIndex const > > const & GEOSX_UNUSED_PARAM( dofNumber ),
                                     ElementViewConst< arrayView1d< integer const > > const & GEOSX_UNUSED_PARAM( ghostRank ),
                                     ElementViewConst< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM( pres ),
@@ -830,7 +830,7 @@ void FluxKernel::
                                 globalIndex const rankOffset,
                                 ElementViewConst< arrayView2d< real64 const > > const & transTMultiplier,
                                 integer const updateProppantPacking,
-                                real64 const ( &unitGravityVector )[3],
+                                R1Tensor const & unitGravityVector,
                                 ElementViewConst< arrayView1d< globalIndex const > > const & dofNumber,
                                 ElementViewConst< arrayView1d< integer const > > const & ghostRank,
                                 ElementViewConst< arrayView1d< real64 const > > const & pres,
@@ -974,7 +974,7 @@ FluxKernel::
                         arraySlice1d< real64 const > const & stencilWeights,
                         arraySlice1d< R1Tensor const > const & stencilCellCenterToEdgeCenters,
                         arrayView2d< real64 const > const & transMultiplier,
-                        real64 const ( &unitGravityVector )[3],
+                        R1Tensor const & unitGravityVector,
                         arrayView1d< real64 const > const & pres,
                         arrayView1d< real64 const > const & gravDepth,
                         arrayView2d< real64 const > const & dens,
@@ -1078,7 +1078,7 @@ template<>
 void FluxKernel::
   LaunchCellBasedFluxCalculation< CellElementStencilTPFA >( CellElementStencilTPFA const & GEOSX_UNUSED_PARAM( stencil ),
                                                             ElementViewConst< arrayView2d< real64 const > > const & GEOSX_UNUSED_PARAM( transTMultiplier ),
-                                                            real64 const ( &GEOSX_UNUSED_PARAM( unitGravityVector ) )[3],
+                                                            R1Tensor const & GEOSX_UNUSED_PARAM( unitGravityVector ),
                                                             ElementViewConst< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM( pres ),
                                                             ElementViewConst< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM( gravDepth ),
                                                             ElementViewConst< arrayView2d< real64 const > > const & GEOSX_UNUSED_PARAM( dens ),
@@ -1092,7 +1092,7 @@ template<>
 void FluxKernel::
   LaunchCellBasedFluxCalculation< FaceElementStencil >( FaceElementStencil const & stencil,
                                                         FluxKernel::ElementViewConst< arrayView2d< real64 const > > const & transTMultiplier,
-                                                        real64 const ( &unitGravityVector )[3],
+                                                        R1Tensor const & unitGravityVector,
                                                         FluxKernel::ElementViewConst< arrayView1d< real64 const > > const & pres,
                                                         FluxKernel::ElementViewConst< arrayView1d< real64 const > > const & gravDepth,
                                                         FluxKernel::ElementViewConst< arrayView2d< real64 const > > const & dens,
@@ -1140,7 +1140,7 @@ void ProppantPackVolumeKernel::
                                                                  real64 const GEOSX_UNUSED_PARAM( proppantDensity ),
                                                                  real64 const GEOSX_UNUSED_PARAM( proppantDiameter ),
                                                                  real64 const GEOSX_UNUSED_PARAM( maxProppantConcentration ),
-                                                                 real64 const ( &GEOSX_UNUSED_PARAM( unitGravityVector ) )[3],
+                                                                 R1Tensor const & GEOSX_UNUSED_PARAM( unitGravityVector ),
                                                                  real64 const GEOSX_UNUSED_PARAM( criticalShieldsNumber ),
                                                                  real64 const GEOSX_UNUSED_PARAM( frictionCoefficient ),
                                                                  ElementView< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM( settlingFactor ),
@@ -1168,7 +1168,7 @@ ProppantPackVolumeKernel::
                              real64 const proppantDensity,
                              real64 const proppantDiameter,
                              real64 const maxProppantConcentration,
-                             real64 const ( &unitGravityVector )[3],
+                             R1Tensor const & unitGravityVector,
                              real64 const criticalShieldsNumber,
                              real64 const frictionCoefficient,
                              arraySlice1d< localIndex const > const & stencilElementIndices,
@@ -1249,10 +1249,7 @@ ProppantPackVolumeKernel::
 
       real64 const downVelocity = LvArray::tensorOps::AiBi< 3 >( cellBasedFlux[ei], unitGravityVector );
 
-      for( localIndex idx = 0; idx < 3; ++idx )
-      {
-        velocity[idx] -= downVelocity * unitGravityVector[idx];
-      }
+      LvArray::tensorOps::scaledAdd< 3 >( velocity, unitGravityVector, -downVelocity );
 
       real64 const velocityMag = LvArray::tensorOps::l2Norm< 3 >( velocity ) / volume[ei];
 
@@ -1308,7 +1305,7 @@ void ProppantPackVolumeKernel::
                                                              real64 const proppantDensity,
                                                              real64 const proppantDiameter,
                                                              real64 const maxProppantConcentration,
-                                                             real64 const ( &unitGravityVector )[3],
+                                                             R1Tensor const & unitGravityVector,
                                                              real64 const criticalShieldsNumber,
                                                              real64 const frictionCoefficient,
                                                              ElementView< arrayView1d< real64 const > > const & settlingFactor,
@@ -1377,7 +1374,7 @@ ProppantPackVolumeKernel::
                             arraySlice1d< localIndex const > const & stencilElementIndices,
                             arraySlice1d< real64 const > const & stencilWeights,
                             arraySlice1d< R1Tensor const > const & stencilCellCenterToEdgeCenters,
-                            real64 const ( &unitGravityVector )[3],
+                            R1Tensor const & unitGravityVector,
                             real64 const maxProppantConcentration,
                             arrayView1d< integer const > const & isProppantMobile,
                             arrayView1d< real64 const > const & proppantExcessPackV,
@@ -1445,7 +1442,7 @@ ProppantPackVolumeKernel::
 template<>
 void ProppantPackVolumeKernel::
   LaunchProppantPackVolumeUpdate< CellElementStencilTPFA >( CellElementStencilTPFA const & GEOSX_UNUSED_PARAM( stencil ),
-                                                            real64 const ( &GEOSX_UNUSED_PARAM( unitGravityVector ) )[3],
+                                                            R1Tensor const & GEOSX_UNUSED_PARAM( unitGravityVector ),
                                                             real64 const GEOSX_UNUSED_PARAM( maxProppantConcentration ),
                                                             ElementView< arrayView1d< integer const > > const & GEOSX_UNUSED_PARAM( isProppantMobile ),
                                                             ElementView< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM( proppantExcessPackV ),
@@ -1456,7 +1453,7 @@ void ProppantPackVolumeKernel::
 template<>
 void ProppantPackVolumeKernel::
   LaunchProppantPackVolumeUpdate< FaceElementStencil >( FaceElementStencil const & stencil,
-                                                        real64 const ( &unitGravityVector )[3],
+                                                        R1Tensor const & unitGravityVector,
                                                         real64 const maxProppantConcentration,
                                                         ElementView< arrayView1d< integer const > > const & isProppantMobile,
                                                         ElementView< arrayView1d< real64 const > > const & proppantExcessPackV,

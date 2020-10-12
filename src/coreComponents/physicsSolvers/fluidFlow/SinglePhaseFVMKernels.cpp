@@ -77,7 +77,7 @@ FluxKernel::Compute( localIndex const stencilSize,
 
   // compute upwinding tolerance
   real64 constexpr upwRelTol = 1e-8;
-  real64 const upwAbsTol = fmax( potScale * upwRelTol, NumericTraits< real64 >::eps );
+  real64 const upwAbsTol = fmax( potScale * upwRelTol, LvArray::NumericLimits< real64 >::epsilon );
 
   // decide mobility coefficients - smooth variation in [-upwAbsTol; upwAbsTol]
   real64 const alpha = ( potDif + upwAbsTol ) / ( 2 * upwAbsTol );
@@ -171,7 +171,7 @@ FluxKernel::Compute( localIndex const stencilSize,
 
   // compute upwinding tolerance
   real64 constexpr upwRelTol = 1e-8;
-  real64 const upwAbsTol = fmax( potScale * upwRelTol, NumericTraits< real64 >::eps );
+  real64 const upwAbsTol = fmax( potScale * upwRelTol, LvArray::NumericLimits< real64 >::epsilon );
 
   // decide mobility coefficients - smooth variation in [-upwAbsTol; upwAbsTol]
   real64 const alpha = ( potDif + upwAbsTol ) / ( 2 * upwAbsTol );
@@ -374,7 +374,7 @@ void FluxKernel::
                                     ElementViewConst< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM( aperture0 ),
                                     ElementViewConst< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM( aperture ),
                                     ElementViewConst< arrayView2d< real64 const > > const & GEOSX_UNUSED_PARAM( transTMultiplier ),
-                                    real64 const ( &GEOSX_UNUSED_PARAM( gravityVector ) )[3],
+                                    R1Tensor const & GEOSX_UNUSED_PARAM( gravityVector ),
                                     real64 const GEOSX_UNUSED_PARAM( meanPermCoeff ),
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
                                     ElementViewConst< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM( s ),
@@ -459,7 +459,7 @@ void FluxKernel::
                                 ElementViewConst< arrayView1d< real64 const > > const & aperture0,
                                 ElementViewConst< arrayView1d< real64 const > > const & aperture,
                                 ElementViewConst< arrayView2d< real64 const > > const & transTMultiplier,
-                                real64 const ( &gravityVector )[3],
+                                R1Tensor const & gravityVector,
                                 real64 const meanPermCoeff,
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
                                 ElementViewConst< arrayView1d< real64 const > > const & s,

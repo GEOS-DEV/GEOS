@@ -114,7 +114,7 @@ void TrilinosSolver::solve_direct( EpetraMatrix & mat,
 
   m_result.status = LinearSolverResult::Status::Success;
   m_result.numIterations = 1;
-  m_result.residualReduction = NumericTraits< real64 >::eps;
+  m_result.residualReduction = LvArray::NumericLimits< real64 >::epsilon;
 }
 
 namespace

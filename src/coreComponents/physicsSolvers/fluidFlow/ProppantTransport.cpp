@@ -645,7 +645,7 @@ void ProppantTransport::AssembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( time
 {
   GEOSX_MARK_FUNCTION;
 
-  real64 downVector[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( gravityVector() );
+  R1Tensor downVector = gravityVector();
   LvArray::tensorOps::normalize< 3 >( downVector );
 
   MeshLevel const & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
@@ -1232,7 +1232,7 @@ void ProppantTransport::UpdateCellBasedFlux( real64 const GEOSX_UNUSED_PARAM( ti
 {
   GEOSX_MARK_FUNCTION;
 
-  real64 downVector[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( gravityVector() );
+  R1Tensor downVector = gravityVector();
   LvArray::tensorOps::normalize< 3 >( downVector );
 
   MeshLevel & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
@@ -1282,7 +1282,7 @@ void ProppantTransport::UpdateProppantPackVolume( real64 const GEOSX_UNUSED_PARA
 
   GEOSX_MARK_FUNCTION;
 
-  real64 downVector[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( gravityVector() );
+  R1Tensor downVector = gravityVector();
   LvArray::tensorOps::normalize< 3 >( downVector );
 
   MeshLevel & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );

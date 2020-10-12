@@ -141,7 +141,7 @@ private:
   /// Width vector in the orthonormal basis along with the normal
   R1Tensor m_widthVector;
   /// Dimensions of the bounded plane
-  array1d< real64 >   m_dimensions;
+  array1d< real64 > m_dimensions;
   /// Length and width of the bounded plane
   array2d< real64 > m_points;
 

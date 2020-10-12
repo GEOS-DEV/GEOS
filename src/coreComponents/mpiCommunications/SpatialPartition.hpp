@@ -61,7 +61,7 @@ public:
   virtual bool IsCoordInPartitionClosed( real64 const ( &coordinates )[ 3 ] );
 
   /**
-   * @brief Checks if the point located inside the current partition bouding box.
+   * @brief Checks if the point located inside the current partition bounding box.
    * @param coordinates The element center coordinates.
    * @return The predicate result.
    *
@@ -85,7 +85,8 @@ public:
   void SetPartitionGeometricalBoundary( real64 const ( &min )[ 3 ],
                                         real64 const ( &max )[ 3 ] );
 
-  void setPartitions( unsigned int xPartitions, unsigned int yPartitions,
+  void setPartitions( unsigned int xPartitions,
+                      unsigned int yPartitions,
                       unsigned int zPartitions )
   {
     m_Partitions.resize( 3 );
@@ -104,7 +105,8 @@ public:
    * @param yPeriodic Periodicity in y.
    * @param zPeriodic Periodicity in z.
    */
-  void setPeriodic( unsigned int xPeriodic, unsigned int yPeriodic,
+  void setPeriodic( unsigned int xPeriodic,
+                    unsigned int yPeriodic,
                     unsigned int zPeriodic )
   {
     m_Periodic( 0 ) = xPeriodic;
@@ -142,33 +144,33 @@ public:
   array1d< int > m_coords;
 
   /// Minimum extent of partition dimensions (excluding ghost objects)
-  R1Tensor m_min;
+  real64 m_min[3];
   /// Maximum extent of partition dimensions (excluding ghost objects)
-  R1Tensor m_max;
+  real64 m_max[3];
 
   /**
    * @brief Bounding box (minimum value) along the x direction.
    * @note Probably unused.
    */
-  R1Tensor m_xBoundingBoxMin;
+  real64 m_xBoundingBoxMin[3];
   /**
    * @brief Bounding box (maximum value) along the x direction.
    * @note Probably unused.
    */
-  R1Tensor m_xBoundingBoxMax;
+  real64 m_xBoundingBoxMax[3];
 
   /// Locations of partition boundaries
   array1d< real64 > m_PartitionLocations[3];
 
   /// Length of partition dimensions (excluding ghost objects).
-  R1Tensor m_blockSize;
+  real64 m_blockSize[3];
 
   /// Total length of problem dimensions (excluding ghost objects).
-  R1Tensor m_gridSize;
+  real64 m_gridSize[3];
   /// Minimum extent of problem dimensions (excluding ghost objects).
-  R1Tensor m_gridMin;
+  real64 m_gridMin[3];
   /// Maximum extent of problem dimensions (excluding ghost objects).
-  R1Tensor m_gridMax;
+  real64 m_gridMax[3];
 
   /**
    * @brief Recursively builds neighbors if an MPI cartesian topology is used (i.e. not metis).

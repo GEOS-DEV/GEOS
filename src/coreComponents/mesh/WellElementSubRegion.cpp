@@ -120,7 +120,7 @@ void CollectLocalAndBoundaryNodes( InternalWellGenerator const & wellGeometry,
  * @return true if "location" is contained in reservoir element ei, false otherwise
  */
 bool IsPointInsideElement( NodeManager const * const nodeManager,
-                           real64 const ( &location )[3],
+                           R1Tensor const & location,
                            CellBlock const * subRegion,
                            localIndex ei )
 {
@@ -180,7 +180,7 @@ void CollectElementNodes( CellBlock const *         subRegion,
  * @param[inout] eiMatched the element index of the reservoir element that contains "location", if any
  */
 bool VisitNeighborElements( MeshLevel const & mesh,
-                            real64 const ( &location )[3],
+                            R1Tensor const & location,
                             SortedArray< localIndex > & nodes,
                             SortedArray< globalIndex > & elements,
                             localIndex & erMatched,
@@ -267,7 +267,7 @@ bool VisitNeighborElements( MeshLevel const & mesh,
  * @param[inout] eiInit the element index of the reservoir element from which we start the search
  */
 void InitializeLocalSearch( MeshLevel const & mesh,
-                            real64 const ( &location )[ 3 ],
+                            R1Tensor const & location,
                             localIndex & erInit,
                             localIndex & esrInit,
                             localIndex & eiInit )
@@ -281,7 +281,7 @@ void InitializeLocalSearch( MeshLevel const & mesh,
                                                  localIndex const esr,
                                                  localIndex const ei ) -> real64
   {
-    real64 v[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( location );
+    R1Tensor v = location;
     LvArray::tensorOps::subtract< 3 >( v, resElemCenter[er][esr][ei] );
     return LvArray::tensorOps::l2Norm< 3 >( v );
   } );
@@ -306,7 +306,7 @@ void InitializeLocalSearch( MeshLevel const & mesh,
  * @param[inout] eiMatched the element index of the reservoir element that contains "location", if any
  */
 bool SearchLocalElements( MeshLevel const & mesh,
-                          real64 const ( &location )[3],
+                          R1Tensor const & location,
                           localIndex const & searchDepth,
                           localIndex const & erInit,
                           localIndex const & esrInit,
@@ -468,7 +468,7 @@ void WellElementSubRegion::AssignUnownedElementsInReservoir( MeshLevel & mesh,
   // then the well element is assigned to rank k
   for( globalIndex currGlobal : unownedElems )
   {
-    real64 const location[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( wellElemCoordsGlobal[currGlobal] );
+    R1Tensor const location = LVARRAY_TENSOROPS_INIT_LOCAL_3( wellElemCoordsGlobal[currGlobal] );
 
     // this will contain the indices of the reservoir element
     // in which the center of the well element is located
@@ -778,7 +778,7 @@ void WellElementSubRegion::ConnectPerforationsToMeshElements( MeshLevel & mesh,
   // loop over all the perforations
   for( globalIndex iperfGlobal = 0; iperfGlobal < perfCoordsGlobal.size( 0 ); ++iperfGlobal )
   {
-    real64 const location[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( perfCoordsGlobal[iperfGlobal] );
+    R1Tensor const location = LVARRAY_TENSOROPS_INIT_LOCAL_3( perfCoordsGlobal[iperfGlobal] );
 
     localIndex erMatched  = -1;
     localIndex esrMatched = -1;

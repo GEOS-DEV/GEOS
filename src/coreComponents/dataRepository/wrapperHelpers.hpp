@@ -89,7 +89,7 @@ inline
 real64 const * getPointerToComponent( R1Tensor const & var, int const component )
 {
   GEOSX_ERROR_IF_GE( component, 3 );
-  return &var.Data()[ component ];
+  return &var[ component ];
 }
 
 } // namespace internal

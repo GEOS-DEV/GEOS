@@ -214,11 +214,11 @@ protected:
   /**
    * @brief Ghost position (min).
    */
-  R1Tensor m_contactGhostMin;
+  real64 m_contactGhostMin[3];
   /**
    * @brief Ghost position (max).
    */
-  R1Tensor m_contactGhostMax;
+  real64 m_contactGhostMax[3];
 
   /**
    * @brief Associated color

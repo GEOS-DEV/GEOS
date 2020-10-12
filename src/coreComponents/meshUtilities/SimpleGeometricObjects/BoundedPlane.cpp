@@ -83,8 +83,10 @@ void BoundedPlane::findRectangleLimits()
   LvArray::tensorOps::scale< 3 >( lengthVec, 0.5 * m_dimensions[0] );
   LvArray::tensorOps::scale< 3 >( widthVec, 0.5 * m_dimensions[1] );
 
-  for( int i=0; i < 4; i++ )
+  for( int i = 0; i < 4; i++ )
+  {
     LvArray::tensorOps::copy< 3 >( m_points[i], m_origin );
+  }
 
   LvArray::tensorOps::subtract< 3 >( m_points[0], lengthVec );
   LvArray::tensorOps::subtract< 3 >( m_points[0], widthVec );

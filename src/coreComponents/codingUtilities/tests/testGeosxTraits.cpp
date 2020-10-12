@@ -73,16 +73,16 @@ TEST( testGeosxTraits, HasMemberFunction_insert )
 }
 
 
-TEST( testGeosxTraits, HasAlias_value_type )
+TEST( testGeosxTraits, HasMemberType_value_type )
 {
-  static_assert( HasAlias_value_type< array1d< double > >, "Should be true." );
-  static_assert( HasAlias_value_type< array5d< array1d< R1Tensor > > >, "Should be true." );
-  static_assert( HasAlias_value_type< SortedArray< string > >, "Should be true." );
-  static_assert( HasAlias_value_type< std::vector< int > >, "Should be true." );
-  static_assert( HasAlias_value_type< std::map< string, string > >, "Should be true." );
+  static_assert( HasMemberType_value_type< array1d< double > >, "Should be true." );
+  static_assert( HasMemberType_value_type< array5d< array1d< R1Tensor > > >, "Should be true." );
+  static_assert( HasMemberType_value_type< SortedArray< string > >, "Should be true." );
+  static_assert( HasMemberType_value_type< std::vector< int > >, "Should be true." );
+  static_assert( HasMemberType_value_type< std::map< string, string > >, "Should be true." );
 
-  static_assert( !HasAlias_value_type< int >, "Should be false." );
-  static_assert( !HasAlias_value_type< double >, "Should be false." );
+  static_assert( !HasMemberType_value_type< int >, "Should be false." );
+  static_assert( !HasMemberType_value_type< double >, "Should be false." );
 }
 
 TEST( testGeosxTraits, Pointer )

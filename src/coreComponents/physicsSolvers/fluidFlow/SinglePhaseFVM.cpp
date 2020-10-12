@@ -233,8 +233,6 @@ void SinglePhaseFVM< BASE >::AssembleFluxTerms( real64 const GEOSX_UNUSED_PARAM(
   elemDofNumber = mesh.getElemManager()->ConstructArrayViewAccessor< globalIndex, 1 >( dofKey );
   elemDofNumber.setName( this->getName() + "/accessors/" + dofKey );
 
-  real64 const gravVector[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( this->gravityVector() );
-
   fluxApprox.forAllStencils( mesh, [&]( auto const & stencil )
   {
     FluxKernel::Launch( stencil,
@@ -252,7 +250,7 @@ void SinglePhaseFVM< BASE >::AssembleFluxTerms( real64 const GEOSX_UNUSED_PARAM(
                         m_elementAperture0.toNestedViewConst(),
                         m_effectiveAperture.toNestedViewConst(),
                         m_transTMultiplier.toNestedViewConst(),
-                        gravVector,
+                        this->gravityVector(),
                         this->m_meanPermCoeff,
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
                         m_elementSeparationCoefficient.toNestedViewConst(),

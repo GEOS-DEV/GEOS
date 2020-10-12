@@ -145,7 +145,7 @@ template<> int GetNumberOfVariablesInField< long long int >()
 }
 template<> int GetNumberOfVariablesInField< R1Tensor >()
 {
-  return R1Tensor::Length();
+  return R1Tensor::SIZE;
 }
 template<> int GetNumberOfVariablesInField< string >()
 {
@@ -1642,9 +1642,6 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
   array1d< real64 > zcoords( numNodes );
   for( localIndex a = 0; a < numNodes; ++a )
   {
-    R1Tensor nodePosition;
-    nodePosition = referencePosition[a];
-
     xcoords[a] = referencePosition( a, 0 );
     ycoords[a] = referencePosition( a, 1 );
     zcoords[a] = referencePosition( a, 2 );

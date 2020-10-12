@@ -101,11 +101,11 @@ static constexpr bool HasMemberFunction_toView = LvArray::typeManipulation::HasM
 IS_VALID_EXPRESSION_2( CanStreamInto, SRC, DST, std::declval< SRC & >() >> std::declval< DST & >() );
 
 /**
- * @brief Defines a static constexpr bool HasAlias_value_type< @p CLASS >
+ * @brief Defines a static constexpr bool HasMemberType_value_type< @p CLASS >
  *        that is true iff @p CLASS ::value_type is valid and not an enum.
  * @tparam CLASS The type to test.
  */
-HAS_ALIAS( value_type );
+HAS_MEMBER_TYPE( value_type );
 
 namespace internal
 {
