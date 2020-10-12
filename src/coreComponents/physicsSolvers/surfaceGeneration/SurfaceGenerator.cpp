@@ -2907,7 +2907,7 @@ void SurfaceGenerator::CalculateNodeAndFaceSIF( DomainPartition & domain,
       {
         if( isNodeGhost[nodeIndex] < 0 )
         {
-          real64 nodeDisconnectForce[3];
+          real64 nodeDisconnectForce[3]{};
           real64 const nodePosition[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( X[nodeIndex] );
           localIndex tralingNodeID = std::numeric_limits< localIndex >::max();
           localIndex nElemEachSide[2];
