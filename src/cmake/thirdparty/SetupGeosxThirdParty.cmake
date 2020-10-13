@@ -128,17 +128,12 @@ find_package(umpire REQUIRED
 find_package(chai REQUIRED
              PATHS ${CHAI_DIR})
 
-# If this isn't done chai will add -lRAJA to the link line, but we don't link to RAJA like that.
-get_target_property(CHAI_LINK_LIBRARIES chai INTERFACE_LINK_LIBRARIES)
-list(REMOVE_ITEM CHAI_LINK_LIBRARIES RAJA)
-set_target_properties(chai
-                      PROPERTIES INTERFACE_LINK_LIBRARIES "${CHAI_LINK_LIBRARIES}")
 
 get_target_property(CHAI_INCLUDE_DIRS chai INTERFACE_INCLUDE_DIRECTORIES)
 set_target_properties(chai
                       PROPERTIES INTERFACE_SYSTEM_INCLUDE_DIRECTORIES "${CHAI_INCLUDE_DIRS}")
 
-set( thirdPartyLibs ${thirdPartyLibs} chai )
+set( thirdPartyLibs ${thirdPartyLibs} chai umpire )
 
 ################################
 # FPARSER
