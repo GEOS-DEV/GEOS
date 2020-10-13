@@ -602,7 +602,7 @@ void SolidMechanicsEmbeddedFractures::AssembleSystem2( real64 const time,
 
 
   AssemblyLaunch< constitutive::SolidBase,
-                  SolidMechanicsLagrangianFEMKernels::QuasiStatic >( domain,
+                  SolidMechanicsEFEMKernels::AssumedEnhancedStrain >( domain,
                                                                      dofManager,
                                                                      localMatrix,
                                                                      localRhs );
