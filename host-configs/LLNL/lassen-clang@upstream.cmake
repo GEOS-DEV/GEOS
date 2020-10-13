@@ -1,7 +1,7 @@
 include(${CMAKE_CURRENT_LIST_DIR}/../../src/coreComponents/LvArray/host-configs/LLNL/lassen-clang@upstream.cmake)
 
-#set(GEOSX_TPL_DIR ${GEOSX_TPL_ROOT_DIR}/TPLs_boomerAMG-for-elasticity/install-${CONFIG_NAME}-release CACHE PATH "" FORCE )
-set(GEOSX_TPL_DIR ${GEOSX_TPL_ROOT_DIR}/TPLs_boomerAMG-for-elasticity-cusparse-cublas/install-${CONFIG_NAME}-release CACHE PATH "" FORCE )
+set(GEOSX_TPL_DIR ${GEOSX_TPL_ROOT_DIR}/TPLs_boomerAMG-for-elasticity/install-${CONFIG_NAME}-release CACHE PATH "" FORCE )
+#set(GEOSX_TPL_DIR ${GEOSX_TPL_ROOT_DIR}/TPLs_boomerAMG-for-elasticity-cusparse-cublas/install-${CONFIG_NAME}-release CACHE PATH "" FORCE )
 
 
 # asmjit doesn't work on PowerPC

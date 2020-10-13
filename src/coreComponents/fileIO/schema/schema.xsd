@@ -578,6 +578,12 @@
 		<!--amgCoarseSolver => AMG coarsest level solver/smoother type
 Available options are: jacobi, gaussSeidel, blockGaussSeidel, chebyshev, direct-->
 		<xsd:attribute name="amgCoarseSolver" type="string" default="direct" />
+		<!--amgCoarseningType => AMG coarsening algorithm
+Available options are: TODO-->
+		<xsd:attribute name="amgCoarseningType" type="string" default="PMIS" />
+		<!--amgInterpolationType => AMG interpolation algorithm
+Available options are: TODO-->
+		<xsd:attribute name="amgInterpolationType" type="integer" default="0" />
 		<!--amgNumSweeps => AMG smoother sweeps-->
 		<xsd:attribute name="amgNumSweeps" type="integer" default="2" />
 		<!--amgSmootherType => AMG smoother type

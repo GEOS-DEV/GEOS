@@ -20,5 +20,5 @@ set(MKL_LIBRARIES ${MKL_ROOT}/lib/libmkl_intel_lp64.so
 
 include(${CMAKE_CURRENT_LIST_DIR}/../../host-configs/LLNL/quartz-base.cmake)
 
-unset( GEOSX_TPL_ROOT_DIR CACHE )
-unset( GEOSX_TPL_DIR CACHE )
+#unset( GEOSX_TPL_ROOT_DIR CACHE )
+#unset( GEOSX_TPL_DIR CACHE )

@@ -22,11 +22,12 @@ set(MPI_Fortran_COMPILER ${MPI_HOME}/bin/mpifort CACHE PATH "")
 set(MPIEXEC              /usr/bin/srun CACHE PATH "")
 set(MPIEXEC_NUMPROC_FLAG "-n" CACHE STRING "")
 
-set(GEOSX_TPL_ROOT_DIR /usr/gapps/GEOSX/thirdPartyLibs CACHE PATH "")
-set(GEOSX_TPL_DIR ${GEOSX_TPL_ROOT_DIR}/2020-09-18/install-${CONFIG_NAME}-release CACHE PATH "")
+
+set(GEOSX_TPL_ROOT_DIR /usr/WS1/GEOS/GEOSX/TPLs_boomerAMG-for-elasticity CACHE PATH "" FORCE)
+set(GEOSX_TPL_DIR /usr/WS1/GEOS/GEOSX/TPLs_boomerAMG-for-elasticity/install-${CONFIG_NAME}-release CACHE PATH "" FORCE)
 
 set(SPHINX_EXECUTABLE /collab/usr/gapps/python/build/spack-toss3.2/opt/spack/linux-rhel7-x86_64/gcc-4.9.3/python-2.7.14-7rci3jkmuht2uiwp433afigveuf4ocnu/bin/sphinx-build CACHE PATH "")
-set(DOXYGEN_EXECUTABLE ${GEOSX_TPL_ROOT_DIR}/doxygen/bin/doxygen CACHE PATH "")
+set(DOXYGEN_EXECUTABLE ${GEOSX_TPL_DIR}/doxygen/bin/doxygen CACHE PATH "")
 
 set(ENABLE_GTEST_DEATH_TESTS ON CACHE BOOL "")
 

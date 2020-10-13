@@ -126,6 +126,18 @@ LinearSolverParametersInput::LinearSolverParametersInput( std::string const & na
     setDescription( "AMG coarsest level solver/smoother type\n"
                     "Available options are: jacobi, gaussSeidel, blockGaussSeidel, chebyshev, direct" );
 
+  registerWrapper( viewKeyStruct::amgCoarseningString, &m_parameters.amg.coarseningType )->
+    setApplyDefaultValue( m_parameters.amg.coarseningType )->
+    setInputFlag( InputFlags::OPTIONAL )->
+    setDescription( "AMG coarsening algorithm\n"
+                    "Available options are: TODO" );
+
+  registerWrapper( viewKeyStruct::amgInterpolationString, &m_parameters.amg.interpolationType )->
+    setApplyDefaultValue( m_parameters.amg.interpolationType )->
+    setInputFlag( InputFlags::OPTIONAL )->
+    setDescription( "AMG interpolation algorithm\n"
+                    "Available options are: TODO" );
+
   registerWrapper( viewKeyStruct::amgThresholdString, &m_parameters.amg.threshold )->
     setApplyDefaultValue( m_parameters.amg.threshold )->
     setInputFlag( InputFlags::OPTIONAL )->

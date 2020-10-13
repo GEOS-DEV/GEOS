@@ -86,10 +86,12 @@ public:
     static constexpr auto krylovAdaptiveTolString = "krylovAdaptiveTol"; ///< Krylov adaptive tolerance key
     static constexpr auto krylovWeakTolString     = "krylovWeakestTol";  ///< Krylov weakest tolerance key
 
-    static constexpr auto amgNumSweepsString = "amgNumSweeps";             ///< AMG number of sweeps key
-    static constexpr auto amgSmootherString  = "amgSmootherType";          ///< AMG smoother type key
-    static constexpr auto amgCoarseString    = "amgCoarseSolver";          ///< AMG coarse solver key
-    static constexpr auto amgThresholdString = "amgThreshold";             ///< AMG threshold key
+    static constexpr auto amgNumSweepsString  = "amgNumSweeps";             ///< AMG number of sweeps key
+    static constexpr auto amgSmootherString   = "amgSmootherType";          ///< AMG smoother type key
+    static constexpr auto amgCoarseString     = "amgCoarseSolver";          ///< AMG coarse solver key
+    static constexpr auto amgCoarseningString = "amgCoarseningType";        ///< AMG coarsening key
+    static constexpr auto amgInterpolationString = "amgInterpolationType";        ///< AMG interpolation key
+    static constexpr auto amgThresholdString  = "amgThreshold";             ///< AMG threshold key
 
     static constexpr auto iluFillString      = "iluFill";       ///< ILU fill key
     static constexpr auto iluThresholdString = "iluThreshold";  ///< ILU threshold key

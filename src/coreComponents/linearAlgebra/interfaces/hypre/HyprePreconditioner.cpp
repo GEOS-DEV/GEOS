@@ -111,12 +111,32 @@ HYPRE_Int getHypreAMGRelaxationType( string const & type )
     { "hybridBackwardGaussSeidel", 4 },
     { "hybridSymmetricGaussSeidel", 6 },
     { "gaussSeidel", 6 },
+    { "GPUjacobi", 7 },
     { "L1hybridSymmetricGaussSeidel", 8 },
     { "chebyshev", 16 },
     { "L1jacobi", 18 },
   };
 
   GEOSX_LAI_ASSERT_MSG( typeMap.count( type ) > 0, "Unsupported Hypre AMG relaxation option: " << type );
+  return typeMap.at( type );
+}
+
+HYPRE_Int getHypreAMGCoarsenType( string const & type )
+{
+  static std::map< string, HYPRE_Int > const typeMap =
+  {
+    { "CLJP"        ,  0 },
+    { "Ruge-Stueben",  3 },
+    { "Falgout"     ,  6 },
+    { "CLJP"        ,  7 },
+    { "PMIS"        ,  8 },
+    { "PMISD"       ,  9 },
+    { "HMIS"        , 10 },
+    { "CGC"         , 21 },
+    { "CGC-E"       , 22 }
+  };
+
+  GEOSX_LAI_ASSERT_MSG( typeMap.count( type ) > 0, "Unsupported Hypre AMG coarsen option: " << type );
   return typeMap.at( type );
 }
 
@@ -152,6 +172,15 @@ void HyprePreconditioner::createAMG()
   else
   {
     GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetRelaxType( m_precond, getHypreAMGRelaxationType( m_parameters.amg.smootherType ) ) );
+
+    // Coarsening options: Only PMIS is supported on GPU
+    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetCoarsenType( m_precond, getHypreAMGCoarsenType( m_parameters.amg.coarseningType ) ) );
+
+    // Interpolation options: Use options 3, 6, 14 or 15.
+    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetInterpType( m_precond, m_parameters.amg.interpolationType ) );
+
+//    HYPRE_BoomerAMGSetAggNumLevels( m_precond, 1 ); // agg_num_levels = 1
+//    HYPRE_BoomerAMGSetAggInterpType( m_precond, 5 ); // agg_interp_type = 5,7
 
     if( m_parameters.amg.smootherType == "chebyshev" )
     {
