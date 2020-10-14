@@ -491,6 +491,19 @@ void finalizeLogger()
 ///////////////////////////////////////////////////////////////////////////////
 void setupCXXUtils()
 {
+  LvArray::system::setErrorHandler( []()
+  {
+  #if defined( GEOSX_USE_MPI )
+    int mpi = 0;
+    MPI_Initialized( &mpi );
+    if( mpi )
+    {
+      MPI_Abort( MPI_COMM_WORLD, EXIT_FAILURE );
+    }
+  #endif
+    std::abort();
+  } );
+
   LvArray::system::setSignalHandling( []( int const signal ) { LvArray::system::stackTraceHandler( signal, true ); } );
 
 #if defined(GEOSX_USE_FPE)
