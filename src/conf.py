@@ -99,8 +99,19 @@ release = u''
 extensions = [
 #    'sphinx.ext.mathjax'
     'sphinx.ext.imgmath',
-    'sphinx.ext.todo'
+    'sphinx.ext.todo',
+    'matplotlib.sphinxext.only_directives',
+    'matplotlib.sphinxext.plot_directive',
+    'IPython.sphinxext.ipython_directive',
+    'IPython.sphinxext.ipython_console_highlighting',
+    'sphinx.ext.mathjax',
+    'sphinx.ext.autodoc',
+    'sphinx.ext.doctest',
+    'sphinx.ext.inheritance_diagram',
+    'numpydoc'
 ]
+plot_html_show_source_link = True
+plot_html_show_formats = False
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
