@@ -57,15 +57,25 @@ public:
 
   /**
    * @brief Update the indices related to the sets being collected.
-   * @param problemManager The problem manager cast to a group.
+   * @param domain The domain partition.
    * @note This is only required because we don't want to copy/move the
-   *       indices each collection execution, becuase that causes data movement
+   *       indices each collection execution, because that causes data movement
    *       when collecting data from the device.
    * @note Refactoring the packing functions to allow direct usage of set indices
    *       from SortedArrayView instead of only ArrayViews will remove this
    *       duplication.
    */
-  void updateSetsIndices( ProblemManager & problemManager );
+  virtual void updateSetsIndices( DomainPartition & domain ) override final;
+
+  /**
+   * @brief Filters out ghost rank indices from setIndices to be collected.
+   * @param setIndex which set (collection item) needs to be filtered
+   * @param set the set of indices without the ghost ones
+   * @param ghostRank the ghost rank of each index for the target object
+   */
+  void filterGhostIndices( localIndex const setIndex,
+                           array1d< localIndex > & set,
+                           arrayView1d< integer const > const & ghostRank );
 
   /// @cond DO_NOT_DOCUMENT
   struct viewKeysStruct
@@ -73,13 +83,20 @@ public:
     static constexpr auto objectPath = "objectPath";
     static constexpr auto fieldName = "fieldName";
     static constexpr auto setNames = "setNames";
+    static constexpr auto minSetSize = "minSetSize";
   } keys;
   /// @endcond
 
 protected:
+  /**
+   * @brief Get the target object from which to collect time history data.
+   * @param domain The problem domain.
+   * @return The target object as an ObjectManager.
+   */
+  ObjectManagerBase const * getTargetObject( DomainPartition & domain );
 
   /// @copydoc geosx::HistoryCollection::collect
-  virtual void collect( Group * domain,
+  virtual void collect( DomainPartition & domain,
                         real64 const time_n,
                         real64 const dt,
                         localIndex const collectionIdx,
@@ -96,6 +113,8 @@ private:
   string m_fieldName;
   /// The names of the sets to collect history info from
   string_array m_setNames;
+  /// Set the minimum size of all the sets being collected on each process
+  localIndex m_minimumSetSize;
 };
 
 }
