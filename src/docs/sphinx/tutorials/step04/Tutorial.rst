@@ -471,7 +471,7 @@ Visualization of results
 
 A file compatible with Paraview is produced in this tutorial.
 It is found in the output folder, and usually has the extension `.pvd`.
-More details about this file format can be found here
+More details about this file format can be found
 `here <https://www.paraview.org/Wiki/ParaView/Data_formats#PVD_File_Format>`_.
 We can load this file into Paraview directly and visualize results:
 

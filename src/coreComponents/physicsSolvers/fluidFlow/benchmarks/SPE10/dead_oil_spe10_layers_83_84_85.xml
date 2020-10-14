@@ -19,8 +19,7 @@
       <!-- Note that the direct solver is quite slow -->
       <!-- This block will be updated when Hypre becomes the default  -->
       <LinearSolverParameters
-        solverType="direct"
-        logLevel="0"/>
+        solverType="direct"/>
     </CompositionalMultiphaseReservoir>
 
     <CompositionalMultiphaseFlow
@@ -404,19 +403,19 @@
   <Tasks>
     <PackCollection
       name="wellRateCollection1"
-      objectPath="ElementRegions/elementRegionsGroup/wellRegion1/elementSubRegions/wellRegion1uniqueSubRegion"
+      objectPath="ElementRegions/wellRegion1/wellRegion1uniqueSubRegion"
       fieldName="wellElementMixtureConnectionRate" />
     <PackCollection
       name="wellRateCollection2"
-      objectPath="ElementRegions/elementRegionsGroup/wellRegion2/elementSubRegions/wellRegion2uniqueSubRegion"
+      objectPath="ElementRegions/wellRegion2/wellRegion2uniqueSubRegion"
       fieldName="wellElementMixtureConnectionRate" />
     <PackCollection
       name="wellRateCollection3"
-      objectPath="ElementRegions/elementRegionsGroup/wellRegion3/elementSubRegions/wellRegion3uniqueSubRegion"
+      objectPath="ElementRegions/wellRegion3/wellRegion3uniqueSubRegion"
       fieldName="wellElementMixtureConnectionRate" />
     <PackCollection
       name="wellRateCollection4"
-      objectPath="ElementRegions/elementRegionsGroup/wellRegion4/elementSubRegions/wellRegion4uniqueSubRegion"
+      objectPath="ElementRegions/wellRegion4/wellRegion4uniqueSubRegion"
       fieldName="wellElementMixtureConnectionRate" />
     
   </Tasks>
