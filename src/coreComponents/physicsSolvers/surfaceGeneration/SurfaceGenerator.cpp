@@ -3751,7 +3751,7 @@ int SurfaceGenerator::CalculateElementForcesOnEdge( DomainPartition & domain,
         {
           if( elementsToNodes( ei, n ) == nodeID )
           {
-            real64 temp[3];
+            real64 temp[3]{};
             LvArray::tensorOps::copy< 3 >( xEle, elemCenter[er][esr][ei] ); //For C3D6 element type, elementsToNodes map may include
             // repeated indices and the following may run multiple
             // times for the same element.
