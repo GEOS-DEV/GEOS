@@ -483,8 +483,8 @@ real64 regionBasedKernelApplication( MeshLevel & mesh,
                                             elementSubRegion,
                                             finiteElement,
                                             castedConstitutiveRelation );
-        auto fullKernelComponentConstructorArgs = camp::tuple_cat_pair_forward( temp,
-                                                                                kernelConstructorParamsTuple );
+        auto fullKernelComponentConstructorArgs = camp::tuple_cat_pair( temp,
+                                                                        kernelConstructorParamsTuple );
         KERNEL_TYPE kernelComponent = camp::make_from_tuple< KERNEL_TYPE >( fullKernelComponentConstructorArgs );
 
 #endif
