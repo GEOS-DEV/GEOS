@@ -120,10 +120,15 @@ public:
        */
       GEOSX_HOST_DEVICE
       StackVariables():
-        localRowDofIndex{ 0 },
-        localColDofIndex{ 0 },
-        localResidual{ 0.0 },
-        localJacobian{ {0.0} }
+	  dispEqnRowIndices{ 0 },
+	  dispColIndices{ 0 },
+	  jumpEqnRowIndices{ 0 },
+	  jumpColIndices{ 0 },
+	  localRu{ 0.0 },
+	  localRw{ 0.0 },
+	  localKww{ { 0.0 } },
+	  localKwu{ { 0.0 } },
+	  localKuw{ { 0.0 } }
       {}
 
       /// C-array storage for the element local row degrees of freedom.
@@ -179,14 +184,12 @@ public:
       }
     }
 
-    for (int k=0; k<numFracturedElems; ++k)
+    localIndex const embSurfIndex = m_cellsToEmbSurfaces[k];
+    for (int i=0; i<3; ++i)
     {
-    	for (int i=0; i<3; ++i)
-    	{
-    		// need to grab the index.
-    		stack.jumpEqnRowIndices = m_wDofNumber[k] + i - m_dofRankOffset;
-    		stack.jumpColIndices    = m_wDofNumber[k] + i;
-    	}
+    	// need to grab the index.
+    	stack.jumpEqnRowIndices = m_wDofNumber[embSurfIndex] + i - m_dofRankOffset;
+    	stack.jumpColIndices    = m_wDofNumber[embSurfIndex] + i;
     }
   }
 
@@ -212,9 +215,53 @@ public:
      real64 dNdX[ numNodesPerElem ][ 3 ];
      real64 const detJ = m_finiteElementSpace.template getGradN< FE_TYPE >( k, q, stack.xLocal, dNdX );
 
-     real64 strainInc[6] = {0};
-     FE_TYPE::symmetricGradient( dNdX, stack.uhat_local, strainInc );
+     constexpr int nUdof = numNodesPerElem*3;
 
+     real64 Kww_gauss[3][3], Kwu_gauss[3][nUdof], Kuw_gauss[nUdof][3];
+     real64 compMatrix[6][3], strainMatrix[6][nUdof], eqMatrix[3][6];
+     real64 matBD[nUdof][6], matED[3][6];
+
+     // create a helper for this
+     AssembleCompatibilityOperator( compMatrix,
+    		 embeddedSurfaceSubRegion,
+			 k,
+			 q,
+			 elemsToNodes,
+			 nodesCoord,
+			 embeddedSurfaceToCell,
+			 numNodesPerElement,
+			 dNdX );
+
+     // create a helper for this
+     AssembleStrainOperator( strainMatrix,
+    		 embeddedSurfaceToCell[k],
+			 q,
+			 numNodesPerElement,
+			 dNdX );
+
+     // transp(B)D
+     LvArray::tensorOps::Rij_eq_AkiBkj< nUdof, 6, nUdof>(matBD, strainMatrix, dMatrix);
+     // EDC
+     LvArray::tensorOps::Rij_eq_AikBkj<3, 3, 6>(Kww_gauss, matED, compMatrix);
+     // EDB
+     LvArray::tensorOps::Rij_eq_AikBkj<3, nUdof, 6>(Kwu_gauss, matED, strainMatrix);
+     // transp(B)DB
+	 LvArray::tensorOps::Rij_eq_AikBkj<nUdof, 3, 6>(Kuw_gauss, matBD, compMatrix);
+
+     // multiply by determinant
+	 LvArray::tensorOps::scale<3, 3>(Kww_gauss, -detJ);
+	 LvArray::tensorOps::scale<3, nUdof>(Kwu_gauss, -detJ);
+	 LvArray::tensorOps::scale<nUdof, 3>(Kuw_gauss, -detJ);
+
+	 // TODO add a scale add for matrices to the tensorOps.
+     // Add Gauss point contribution to element matrix
+	 LvArray::tensorOps::add<3, 3>(stack.localKww, Kww_gauss);
+	 LvArray::tensorOps::add<3, nUdof>(stack.localKwu, Kwu_gauss);
+	 LvArray::tensorOps::add<nUdof, 3>(stack.localKuw, Kuw_gauss);
+
+     real64 strainInc[6] = {0};
+     // compute strainInc due to the fracture jump;
+     LvArray::tensorOps::Ri_add_AijBj(strainInc, compMatrix, stack.wlocal);
      m_constitutiveUpdate.SmallStrain( k, q, strainInc );
 
      typename CONSTITUTIVE_TYPE::KernelWrapper::DiscretizationOps stiffnessHelper;

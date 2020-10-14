@@ -120,6 +120,8 @@ public:
 
     constexpr static auto deltaDispJumpString = "deltaDisplacementJump";
 
+    constexpr static auto fractureRegionNameString = "fractureRegionName";
+
   } SolidMechanicsEmbeddedFracturesViewKeys;
 
 protected:
@@ -202,6 +204,9 @@ private:
   /// Solid mechanics solver name
   string m_solidSolverName;
 
+  /// fracture region name
+  string m_fractureRegionName;
+
   /// pointer to the solid mechanics solver
   SolidMechanicsLagrangianFEM * m_solidSolver;
 
@@ -231,9 +236,15 @@ void SolidMechanicsEmbeddedFractures::AssemblyLaunch( DomainPartition & domain,
   MeshLevel & mesh = *(domain.getMeshBodies()->GetGroup< MeshBody >( 0 )->getMeshLevel( 0 ));
 
   NodeManager const & nodeManager = *(mesh.getNodeManager());
+  ElementRegionManager const & elemManager = *(mesh.getElemManager());
+  EmbeddedSurfaceRegion * const region = elemManager.GetRegion< EmbeddedSurfaceRegion >( m_fractureRegionName );
+  EmbeddedSurfaceSubRegion * const subRegion = region->GetSubRegion< EmbeddedSurfaceSubRegion >( 0 );
 
-  string const dofKey = dofManager.getKey( dataRepository::keys::TotalDisplacement );
-  arrayView1d< globalIndex const > const & dofNumber = nodeManager.getReference< globalIndex_array >( dofKey );
+  string const dispDofKey = dofManager.getKey( dataRepository::keys::TotalDisplacement );
+  string const jumpDofKey = dofManager.getKey( viewKeyStruct::dispJumpString );
+
+  arrayView1d< globalIndex const > const & dispDofNumber = nodeManager.getReference< globalIndex_array >( dispDofKey );
+  arrayView1d< globalIndex const > const & jumpDofNumber = subRegion->getReference< globalIndex_array >( jumpDofKey );
 
   ResetStressToBeginningOfStep( domain );
 
@@ -241,26 +252,21 @@ void SolidMechanicsEmbeddedFractures::AssemblyLaunch( DomainPartition & domain,
                                         gravityVector().Data()[1],
                                         gravityVector().Data()[2] };
 
-  m_maxForce = finiteElement::
-                 regionBasedKernelApplication< parallelDevicePolicy< 32 >,
-                                               CONSTITUTIVE_BASE,
-                                               CellElementSubRegion,
-                                               KERNEL_TEMPLATE >( mesh,
-                                                                  targetRegionNames(),
-                                                                  this->getDiscretizationName(),
-                                                                  m_solidMaterialNames,
-                                                                  dofNumber,
-                                                                  dofManager.rankOffset(),
-                                                                  localMatrix,
-                                                                  localRhs,
-                                                                  gravityVectorData,
-                                                                  std::forward< PARAMS >( params )... );
-
-
-  ApplyContactConstraint( dofManager,
-                          domain,
-                          localMatrix,
-                          localRhs );
+  real64 maxTraction = finiteElement::
+		  regionBasedKernelApplication< parallelDevicePolicy< 32 >,
+		                                CONSTITUTIVE_BASE,
+		  		                        CellElementSubRegion,
+		  		                        KERNEL_TEMPLATE >( mesh,
+		  				                targetRegionNames(),
+		  				                this->getDiscretizationName(),
+		  				                m_solidMaterialNames,
+		  				                dispDofNumber,
+		  				                jumpDofNumber,
+		  				                dofManager.rankOffset(),
+		  				                localMatrix,
+		  				                localRhs,
+		  				                gravityVectorData,
+		  				                std::forward< PARAMS >( params )... );
 
 }
 
