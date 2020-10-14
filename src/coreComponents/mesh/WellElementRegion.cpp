@@ -101,10 +101,10 @@ void WellElementRegion::GenerateWell( MeshLevel & mesh,
 
 
   // 4) find out which rank is the owner of the top segment
-  localIndex const refElemIdLocal = subRegion->GetTopWellElementIndex();
+  localIndex const topElemIdLocal = subRegion->GetTopWellElementIndex();
 
   array1d< localIndex > allRankTopElem;
-  MpiWrapper::allGather( refElemIdLocal, allRankTopElem );
+  MpiWrapper::allGather( topElemIdLocal, allRankTopElem );
   int topRank = -1;
   for( int irank = 0; irank < allRankTopElem.size(); ++irank )
   {

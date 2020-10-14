@@ -938,15 +938,18 @@ the relative residual norm satisfies:
 	<xsd:complexType name="WellControlsType">
 		<!--control => Well control. Valid options:
 * BHP
-* gasRate
-* oilRate
-* waterRate
-* liquidRate-->
+* oilVolRate
+* totalVolRate
+* totalMassRate-->
 		<xsd:attribute name="control" type="geosx_WellControls_Control" use="required" />
 		<!--injectionStream => Global component densities for the injection stream-->
 		<xsd:attribute name="injectionStream" type="real64_array" default="{-1}" />
+		<!--referenceElevation => Reference elevation where BHP control is enforced-->
+		<xsd:attribute name="referenceElevation" type="real64" use="required" />
 		<!--targetBHP => Target bottom-hole pressure-->
 		<xsd:attribute name="targetBHP" type="real64" use="required" />
+		<!--targetOilRate => Target oil rate-->
+		<xsd:attribute name="targetOilRate" type="real64" default="1e+09" />
 		<!--targetRate => Target rate-->
 		<xsd:attribute name="targetRate" type="real64" use="required" />
 		<!--type => Well type. Valid options:
@@ -958,7 +961,7 @@ the relative residual norm satisfies:
 	</xsd:complexType>
 	<xsd:simpleType name="geosx_WellControls_Control">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|BHP|gasRate|oilRate|waterRate|liquidRate" />
+			<xsd:pattern value=".*[\[\]`$].*|BHP|oilVolRate|totalVolRate|totalMassRate" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="geosx_WellControls_Type">

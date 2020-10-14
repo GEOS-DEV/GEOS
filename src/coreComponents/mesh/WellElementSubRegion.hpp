@@ -209,15 +209,6 @@ public:
   }
 
   /**
-   * @brief Get the MPI rank that owns this well (i.e. the top segment).
-   * @return MPI rank of the owner process
-   */
-  int GetTopRank() const
-  {
-    return m_topRank;
-  }
-
-  /**
    * @brief Check if well is owned by current rank
    * @return true if the well is owned by current rank, false otherwise
    */

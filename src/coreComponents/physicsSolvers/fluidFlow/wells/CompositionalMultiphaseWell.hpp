@@ -145,20 +145,31 @@ public:
   void UpdateComponentFraction( WellElementSubRegion & subRegion ) const;
 
   /**
+   * @brief Recompute the reference pressure and volumetric rates that are used in the well constraints
+   * @param subRegion the well subregion containing all the primary and dependent fields
+   * @param targetIndex the targetIndex of the subRegion
+   */
+  void UpdateBHPAndVolRatesForConstraints( WellElementSubRegion & subRegion,
+                                           localIndex const targetIndex );
+
+  /**
    * @brief Update all relevant fluid models using current values of pressure and composition
    * @param subRegion the well subregion containing all the primary and dependent fields
+   * @param targetIndex the targetIndex of the subRegion
    */
   void UpdateFluidModel( WellElementSubRegion & subRegion, localIndex const targetIndex );
 
   /**
    * @brief Recompute phase volume fractions (saturations) from constitutive and primary variables
    * @param subRegion the well subregion containing all the primary and dependent fields
+   * @param targetIndex the targetIndex of the subRegion
    */
   void UpdatePhaseVolumeFraction( WellElementSubRegion & subRegion, localIndex const targetIndex ) const;
 
   /**
    * @brief Recompute all dependent quantities from primary variables (including constitutive models)
    * @param subRegion the well subregion containing all the primary and dependent fields
+   * @param targetIndex the targetIndex of the subRegion
    */
   virtual void UpdateState( WellElementSubRegion & subRegion, localIndex const targetIndex ) override;
 
@@ -234,6 +245,7 @@ public:
     static constexpr auto relPermNamesString  = CompositionalMultiphaseFlow::viewKeyStruct::relPermNamesString;
 
     static constexpr auto maxCompFracChangeString = CompositionalMultiphaseFlow::viewKeyStruct::maxCompFracChangeString;
+    static constexpr auto maxRelativePresChangeString = "maxRelativePressureChange";
     static constexpr auto allowLocalCompDensChoppingString = CompositionalMultiphaseFlow::viewKeyStruct::allowLocalCompDensChoppingString;
 
     // primary solution field
@@ -259,6 +271,21 @@ public:
     static constexpr auto compPerforationRateString = "compPerforationRate";
     static constexpr auto dCompPerforationRate_dPresString = "dCompPerforationRate_dPres";
     static constexpr auto dCompPerforationRate_dCompString = "dCompPerforationRate_dComp";
+
+    // control data
+    static constexpr auto currentBHPString = "currentBHP";
+    static constexpr auto dCurrentBHP_dPresString = "dCurrentBHP_dPres";
+    static constexpr auto dCurrentBHP_dCompDensString = "dCurrentBHP_dCompDens";
+
+    static constexpr auto currentPhaseVolRateString = "currentPhaseVolumetricRate";
+    static constexpr auto dCurrentPhaseVolRate_dPresString = "dCurrentPhaseVolumetricRate_dPres";
+    static constexpr auto dCurrentPhaseVolRate_dCompDensString = "dCurrentPhaseVolumetricRate_dCompDens";
+    static constexpr auto dCurrentPhaseVolRate_dRateString = "dCurrentPhaseVolumetricRate_dRate";
+
+    static constexpr auto currentTotalVolRateString = "currentTotalVolumetricRate";
+    static constexpr auto dCurrentTotalVolRate_dPresString = "dCurrentTotalVolumetricRate_dPres";
+    static constexpr auto dCurrentTotalVolRate_dCompDensString = "dCurrentTotalVolumetricRate_dCompDens";
+    static constexpr auto dCurrentTotalVolRate_dRateString = "dCurrentTotalVolumetricRate_dRate";
 
   } viewKeysCompMultiphaseWell;
 
@@ -333,11 +360,17 @@ private:
   /// maximum (absolute) change in a component fraction between two Newton iterations
   real64 m_maxCompFracChange;
 
+  /// maximum (relative) change in pressure between two Newton iterations
+  real64 m_maxRelativePresChange;
+
   /// minimum value of the scaling factor obtained by enforcing maxCompFracChange
   real64 m_minScalingFactor;
 
   /// flag indicating whether local (cell-wise) chopping of negative compositions is allowed
   integer m_allowCompDensChopping;
+
+  /// index of the oil phase, used to impose the oil phase constraint
+  localIndex m_oilPhaseIndex;
 
   /// views into reservoir primary variable fields
 

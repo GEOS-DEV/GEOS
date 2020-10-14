@@ -27,10 +27,12 @@ using namespace dataRepository;
 WellControls::WellControls( string const & name, Group * const parent )
   : Group( name, parent ),
   m_type( Type::PRODUCER ),
-  m_refWellElemIndex( -1 ),
+  m_refElevation( 0.0 ),
+  m_refGravCoef( 0.0 ),
   m_currentControl( Control::BHP ),
   m_targetBHP( 0.0 ),
-  m_targetRate( 0.0 )
+  m_targetRate( 0.0 ),
+  m_targetOilRate( 0.0 )
 {
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 
@@ -51,6 +53,16 @@ WellControls::WellControls( string const & name, Group * const parent )
     setDefaultValue( -1 )->
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "Target rate" );
+
+  registerWrapper( viewKeyStruct::targetOilRateString, &m_targetOilRate )->
+    setDefaultValue( 1e9 )->
+    setInputFlag( InputFlags::OPTIONAL )->
+    setDescription( "Target oil rate" );
+
+  registerWrapper( viewKeyStruct::refElevString, &m_refElevation )->
+    setDefaultValue( -1 )->
+    setInputFlag( InputFlags::REQUIRED )->
+    setDescription( "Reference elevation where BHP control is enforced" );
 
   registerWrapper( viewKeyStruct::injectionStreamString, &m_injectionStream )->
     setDefaultValue( -1 )->
@@ -88,10 +100,14 @@ void WellControls::PostProcessInput()
     GEOSX_ERROR( "Target bottom-hole pressure for well "<< getName() << " is negative" );
   }
 
-  // 3.b) check target rate
-  if( m_targetRate < 0 ) // choose a default value if negative
+  // 3.b) check target rates
+  if( m_targetRate < 0 )
   {
     GEOSX_ERROR( "Target rate for well "<< getName() << " is negative" );
+  }
+  if( m_targetOilRate < 0 )
+  {
+    GEOSX_ERROR( "Target oil rate for well "<< getName() << " is negative" );
   }
 
   // 4) check injection stream
@@ -113,23 +129,11 @@ void WellControls::PostProcessInput()
 void WellControls::InitializePostInitialConditions_PreSubGroups( Group * const GEOSX_UNUSED_PARAM( rootGroup ) )
 {
   // for a producer, the solvers compute negative rates, so we adjust the input here
-  if( GetType() == Type::PRODUCER && m_targetRate > 0.0 )
+  if( GetType() == Type::PRODUCER
+      && (m_targetOilRate > 0.0 || m_targetRate > 0.0) )
   {
+    m_targetOilRate *= -1;
     m_targetRate *= -1;
-  }
-}
-
-
-void WellControls::Debug() const
-{
-  std::cout << "Name = " << getName() << std::endl;
-  std::cout << "Type = " << static_cast< integer >(m_type) << std::endl;
-  std::cout << "Current control = " << static_cast< integer >(m_currentControl) << std::endl;
-  std::cout << "Target BHP = " << m_targetBHP << std::endl;
-  std::cout << "Target rate = " << m_targetRate << std::endl;
-  for( localIndex ic = 0; ic < m_injectionStream.size(); ++ic )
-  {
-    std::cout << "Injection composition: injectionStream[" << ic << "] = " << m_injectionStream[ic] << std::endl;
   }
 }
 

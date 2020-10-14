@@ -58,10 +58,8 @@ public:
   enum class Control : integer
   {
     BHP,  /**< The well operates at a specified bottom hole pressure (BHP) */
-    GASRATE, /**< The well operates at a specified gas flow rate */
-    OILRATE, /**< The well operates at a specified oil flow rate */
-    WATERRATE, /**< The well operates at a specified water flow rate */
-    LIQUIDRATE /**< The well operates at a specified liquid flow rate (oil + water) */
+    OILVOLRATE, /**< The well operates at a specified oil volumetric flow rate */
+    TOTALVOLRATE, /**< The well operates at a specified total volumetric flow rate */
   };
 
 
@@ -118,24 +116,6 @@ public:
   ///@{
 
   /**
-   * @brief Set the reference well elem index where the control will be enforced.
-   * @param[in] refIndex reference well element index where the control will be enforced
-   */
-  void SetReferenceWellElementIndex( localIndex refIndex )
-  {
-    m_refWellElemIndex = refIndex;
-  }
-
-  /**
-   * @brief Get the reference well element index where the control will be enforced.
-   * @return a localIndex value representing the reference well element index where the control will be enforced
-   */
-  localIndex const & GetReferenceWellElementIndex() const
-  {
-    return m_refWellElemIndex;
-  }
-
-  /**
    * @brief Get the well type (injector or producer).
    * @return a well Type enum
    */
@@ -157,6 +137,23 @@ public:
    */
   Control GetControl() const { return m_currentControl; }
 
+  /**
+   * @brief Getter for the reference elevation where the BHP control is enforced
+   * @return the reference elevation
+   */
+  real64 GetReferenceElevation() const { return m_refElevation; }
+
+  /**
+   * @brief Getter for the reference gravity coefficient
+   * @return the reference gravity coefficient
+   */
+  real64 GetReferenceGravityCoef() const { return m_refGravCoef; }
+
+  /**
+   * @brief Setter for the reference gravity
+   */
+  void SetReferenceGravityCoef( real64 const & refGravCoef ) { m_refGravCoef = refGravCoef; }
+
 
   /**
    * @brief Get the target Bottom Hole Pressure value.
@@ -171,6 +168,11 @@ public:
    */
   const real64 & GetTargetRate() const { return m_targetRate; }
 
+  /**
+   * @brief Get the target oil rate
+   * @return the target oil rate
+   */
+  const real64 & GetTargetOilRate() const { return m_targetOilRate; }
 
   /**
    * @brief Const accessor for the composition of the injection rate
@@ -178,11 +180,8 @@ public:
    */
   arrayView1d< real64 const > GetInjectionStream() const { return m_injectionStream; }
 
-  ///@}
 
-  /// @cond DO_NOT_DOCUMENT
-  void Debug() const;
-  /// @endcond
+  ///@}
 
   /**
    * @brief Struct to serve as a container for variable strings and keys.
@@ -190,8 +189,8 @@ public:
    */
   struct viewKeyStruct
   {
-    /// String key for the reference index (currently unused)
-    static constexpr auto refWellElemIndexString = "referenceWellElementIndex";
+    /// String key for the well reference elevation (for BHP control)
+    static constexpr auto refElevString          = "referenceElevation";
     /// String key for the well type
     static constexpr auto typeString             = "type";
     /// String key for the well control
@@ -200,20 +199,24 @@ public:
     static constexpr auto targetBHPString        = "targetBHP";
     /// String key for the well target rate
     static constexpr auto targetRateString       = "targetRate";
+    /// String key for the well target oil rate for producers
+    static constexpr auto targetOilRateString    = "targetOilRate";
     /// String key for the well injection stream
     static constexpr auto injectionStreamString  = "injectionStream";
-    /// ViewKey for the reference index (currently unused)
-    dataRepository::ViewKey referenceIndex  = { refWellElemIndexString };
+    /// ViewKey for the reference elevation
+    dataRepository::ViewKey referenceElevation = { refElevString };
     /// ViewKey for the well type
-    dataRepository::ViewKey type            = { typeString };
+    dataRepository::ViewKey type               = { typeString };
     /// ViewKey for the well control
-    dataRepository::ViewKey control         = { controlString };
+    dataRepository::ViewKey control            = { controlString };
     /// ViewKey for the well target BHP
-    dataRepository::ViewKey targetBHP       = { targetBHPString };
+    dataRepository::ViewKey targetBHP          = { targetBHPString };
     /// ViewKey for the well target rate
-    dataRepository::ViewKey targetRate      = { targetRateString };
+    dataRepository::ViewKey targetRate         = { targetRateString };
+    /// ViewKey for the well target oil rate
+    dataRepository::ViewKey targetOilRate      = { targetOilRateString };
     /// ViewKey for the well injection stream
-    dataRepository::ViewKey injectionStream = { injectionStreamString };
+    dataRepository::ViewKey injectionStream    = { injectionStreamString };
   }
   /// ViewKey struct for the WellControls class
   viewKeysWellControls;
@@ -238,8 +241,11 @@ private:
   /// Well type (as Type enum)
   Type m_type;
 
-  /// Reference index (currently unused)
-  localIndex m_refWellElemIndex;
+  /// Reference elevation
+  real64 m_refElevation;
+
+  /// Gravity coefficient of the reference elevation
+  real64 m_refGravCoef;
 
   /// Well controls as a Control enum
   Control m_currentControl;
@@ -250,6 +256,9 @@ private:
   /// Target rate value
   real64 m_targetRate;
 
+  /// Target oil rate value
+  real64 m_targetOilRate;
+
   /// Vector with global component fractions at the injector
   array1d< real64 >  m_injectionStream;
 
@@ -257,7 +266,7 @@ private:
 
 ENUM_STRINGS( WellControls::Type, "producer", "injector" )
 
-ENUM_STRINGS( WellControls::Control, "BHP", "gasRate", "oilRate", "waterRate", "liquidRate" )
+ENUM_STRINGS( WellControls::Control, "BHP", "oilVolRate", "totalVolRate" )
 
 } //namespace geosx
 

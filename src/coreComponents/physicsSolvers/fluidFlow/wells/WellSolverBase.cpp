@@ -34,7 +34,8 @@ WellSolverBase::WellSolverBase( std::string const & name,
                                 Group * const parent )
   : SolverBase( name, parent ),
   m_numDofPerWellElement( 0 ),
-  m_numDofPerResElement( 0 )
+  m_numDofPerResElement( 0 ),
+  m_currentDt( 0 )
 {
   this->registerWrapper( viewKeyStruct::fluidNamesString, &m_fluidModelNames )->
     setInputFlag( InputFlags::REQUIRED )->
@@ -204,48 +205,35 @@ void WellSolverBase::PrecomputeData( DomainPartition & domain )
   forTargetSubRegions< WellElementSubRegion >( meshLevel, [&]( localIndex const,
                                                                WellElementSubRegion & subRegion )
   {
-    PerforationData * const perforationData = subRegion.GetPerforationData();
+    PerforationData & perforationData = *subRegion.GetPerforationData();
+    WellControls & wellControls = GetWellControls( subRegion );
+    real64 const refElev = wellControls.GetReferenceElevation();
 
     arrayView2d< real64 const > const wellElemLocation = subRegion.getElementCenter();
-
     arrayView1d< real64 > const wellElemGravCoef =
       subRegion.getReference< array1d< real64 > >( viewKeyStruct::gravityCoefString );
 
     arrayView1d< R1Tensor const > const perfLocation =
-      perforationData->getReference< array1d< R1Tensor > >( PerforationData::viewKeyStruct::locationString );
-
+      perforationData.getReference< array1d< R1Tensor > >( PerforationData::viewKeyStruct::locationString );
     arrayView1d< real64 > const perfGravCoef =
-      perforationData->getReference< array1d< real64 > >( viewKeyStruct::gravityCoefString );
+      perforationData.getReference< array1d< real64 > >( viewKeyStruct::gravityCoefString );
 
-    for( localIndex iwelem = 0; iwelem < subRegion.size(); ++iwelem )
+    forAll< serialPolicy >( perforationData.size(), [=]( localIndex const iperf )
     {
-      // precompute the depth of the well elements
-      wellElemGravCoef[iwelem] = wellElemLocation( iwelem, 0 ) * gravVector[ 0 ] + wellElemLocation( iwelem, 1 ) * gravVector[ 1 ] + wellElemLocation( iwelem,
-                                                                                                                                                       2 ) *
-                                 gravVector[ 2 ];
-    }
-
-    forAll< serialPolicy >( perforationData->size(), [=]( localIndex const iperf )
-    {
-      // precompute the depth of the perforations
       perfGravCoef[iperf] = Dot( perfLocation[iperf], gravVector );
     } );
 
-
-    // set the first well element of the well
-    if( subRegion.IsLocallyOwned() )
+    forAll< serialPolicy >( subRegion.size(), [=]( localIndex const iwelem )
     {
+      // precompute the depth of the well elements
+      wellElemGravCoef[iwelem] = wellElemLocation( iwelem, 0 ) * gravVector[ 0 ]
+                                 + wellElemLocation( iwelem, 1 ) * gravVector[ 1 ]
+                                 + wellElemLocation( iwelem, 2 ) * gravVector[ 2 ];
+    } );
 
-      localIndex const iwelemControl = subRegion.GetTopWellElementIndex();
+    // set the reference well element where the BHP control is applied
+    wellControls.SetReferenceGravityCoef( refElev * gravVector[ 2 ] );
 
-      GEOSX_ERROR_IF( iwelemControl < 0,
-                      "Invalid well definition: well " << subRegion.getName()
-                                                       << " has no well head" );
-
-      // save the index of reference well element (used to enforce constraints)
-      WellControls & wellControls = GetWellControls( subRegion );
-      wellControls.SetReferenceWellElementIndex( iwelemControl );
-    }
   } );
 }
 

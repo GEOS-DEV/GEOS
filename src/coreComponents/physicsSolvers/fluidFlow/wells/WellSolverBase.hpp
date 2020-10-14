@@ -303,6 +303,9 @@ protected:
   /// the number of Degrees of Freedom per reservoir element
   localIndex m_numDofPerResElement;
 
+  /// copy of the time step size saved in this class for residual normalization
+  real64 m_currentDt;
+
   /// views into reservoir constant data fields
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > >  m_resGravCoef;
 };
