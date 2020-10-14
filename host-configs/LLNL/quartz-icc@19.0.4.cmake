@@ -1,19 +1,17 @@
-set(CONFIG_NAME "quartz-icc@19.0.4" CACHE PATH "")
+include(${CMAKE_CURRENT_LIST_DIR}/../../src/coreComponents/LvArray/host-configs/LLNL/quartz-icc@19.0.4.cmake)
 
-set(COMPILER_DIR /usr/tce/packages/intel/intel-19.0.4/compilers_and_libraries_2019.4.227/linux )
-set(CMAKE_C_COMPILER ${COMPILER_DIR}/bin/intel64/icc CACHE PATH "")
-set(CMAKE_CXX_COMPILER ${COMPILER_DIR}/bin/intel64/icpc CACHE PATH "")
+# Fortran
 set(CMAKE_Fortran_COMPILER ${COMPILER_DIR}/bin/intel64/ifort CACHE PATH "")
+set(CMAKE_Fortran_FLAGS_RELEASE "-DNDEBUG -march=native -mtune=native -qoverride-limits" CACHE STRING "")
+set(CMAKE_Fortran_FLAGS_RELWITHDEBINFO "-g ${CMAKE_Fortran_FLAGS_RELEASE}" CACHE STRING "")
 
-set(CMAKE_C_FLAGS_DEBUG "-g -O0" CACHE STRING "" FORCE)
-set(CMAKE_C_FLAGS_RELEASE "-DNDEBUG -qoverride-limits" CACHE STRING "" FORCE)
-set(CMAKE_CXX_FLAGS_DEBUG "-g -O0" CACHE STRING "" FORCE)
-set(CMAKE_CXX_FLAGS_RELEASE "-DNDEBUG -qoverride-limits" CACHE STRING "" FORCE)
+# MPI
+set(MPI_HOME /usr/tce/packages/mvapich2/mvapich2-2.3-intel-19.0.4 CACHE PATH "")
 
-set(MPI_HOME             /usr/tce/packages/mvapich2/mvapich2-2.3-intel-19.0.4 CACHE PATH "")
-
+# GEOSX specific options
 set(ENABLE_XML_UPDATES OFF CACHE BOOL "")
 
+# MKL
 set(ENABLE_MKL ON CACHE BOOL "")
 set(MKL_ROOT /usr/tce/packages/mkl/mkl-2019.0)
 set(MKL_INCLUDE_DIRS ${MKL_ROOT}/include CACHE STRING "")
@@ -23,4 +21,4 @@ set(MKL_LIBRARIES ${MKL_ROOT}/lib/libmkl_intel_lp64.so
                   ${COMPILER_DIR}/compiler/lib/intel64/libiomp5.so
                   CACHE STRING "")
 
-include(${CMAKE_CURRENT_LIST_DIR}/../../host-configs/LLNL/quartz-base.cmake)
+include(${CMAKE_CURRENT_LIST_DIR}/quartz-base.cmake)
