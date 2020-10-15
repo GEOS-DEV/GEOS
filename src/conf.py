@@ -104,11 +104,11 @@ extensions = [
     'matplotlib.sphinxext.plot_directive',
     'IPython.sphinxext.ipython_directive',
     'IPython.sphinxext.ipython_console_highlighting',
-    'sphinx.ext.mathjax',
+#    'sphinx.ext.mathjax',
     'sphinx.ext.autodoc',
     'sphinx.ext.doctest',
     'sphinx.ext.inheritance_diagram',
-    'numpydoc'
+#    'numpydoc'
 ]
 plot_html_show_source_link = True
 plot_html_show_formats = False

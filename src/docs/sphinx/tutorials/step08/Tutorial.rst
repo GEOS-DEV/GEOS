@@ -8,10 +8,9 @@ Tutorial 8: Terzaghi's poroelastic problem
 
 **Context**
 
-In this tutorial, we use a coupled solver to solve
-a poroelastic Terzaghi-type problem, a classic benchmark in poroelasticity.
-We do so by coupling a single phase flow solver
-with a small-strain Lagrangian mechanics solver.
+In this tutorial, we use a coupled solver to solve a poroelastic Terzaghi-type
+problem, a classic benchmark in poroelasticity.
+We do so by coupling a single phase flow solver with a small-strain Lagrangian mechanics solver.
 
 
 **Objectives**
@@ -33,34 +32,48 @@ The xml input file for this test case is located at:
   PoroElastic_Terzaghi_FIM.xml
 
 
-
-
 ------------------------------------------------------------------
 Description of the case
 ------------------------------------------------------------------
 
-We simulate the consolidation of a poroelastic
-fluid-saturated column of height :math:`L` having unit cross-section.
-The column is instantaneously loaded at time :math:`t` = 0 s with a constant compressive traction :math:`w` applied on the face highlighted in red in the figure below.
+We simulate the consolidation of a poroelastic fluid-saturated column of height
+:math:`L` having unit cross-section.
+The column is instantaneously loaded at time :math:`t` = 0 s with a constant
+compressive traction :math:`w` applied on the face highlighted in red in the
+figure below.
+Only the loaded face if permeable to fluid flow, with the remaining parts of
+the boundary subject to roller constraints and impervious.
+
 
 .. _problemSketchFig:
 .. figure:: terzaghi_sketch.svg
    :align: center
-   :width: 400
+   :width: 500
    :figclass: align-center
 
    Sketch of the the setup for Terzaghi's problem.
 
-GEOSX will calculate the local deformation and pressure changes along the column as a function of time.
-We will use the analytical solution for pressure to check the accuracy of the solution obtained with GEOSX, namely
+GEOSX will calculate displacement and pressure fields along the column as a
+function of time.
+We will use the analytical solution for pressure to check the accuracy of the
+solution obtained with GEOSX, namely
 
 .. math::
    p(x,t) = \frac{4}{\pi} p_0 \sum_{m=0}^{\infty}
             \frac{1}{2m + 1}
             \text{exp} \left[ -\frac{(2m + 1)^2 \pi^2 c_c t}{4 L^2} \right]
-            \text{sin} \left[ \frac{(2m+1)\pi x}{2L} \right]
+            \text{sin} \left[ \frac{(2m+1)\pi x}{2L} \right],
 
-TODO: complete description of symbols (utilized also later in the script that compares numerical and analytical solutions)
+where :math:`p_0 = \frac{b}{K_vS_{\epsilon} + b^2} |w|` is the initial pressure, constant throughout the column, and :math:`c_c = \frac{\kappa}{\mu} \frac{K_v}{K_v S_{\epsilon} + b^2}` is the consolidation coefficient (or diffusion coefficient), with
+
+- :math:`b` Biot's coefficient
+- :math:`K_v = \frac{E(1-\nu)}{(1+\nu)(1-2\nu)}` the uniaxial bulk modulus, :math:`E` Young's modulus, and :math:`\nu` Poisson'r ratio
+- :math:`S_{\epsilon}=\frac{(b - \phi)(1 - b)}{K} + \phi c_f` the constrained specific storage coefficient, :math:`\phi` porosity, :math:`K = \frac{E}{3(1-2\nu)}` the bulk modulus, and :math:`c_f` the fluid compressibility
+- :math:`\kappa` the isotropic permeability
+- :math:`\mu` the fluid viscosity
+
+The characteristic consolidation time of the system is defined as :math:`t_c = \frac{L^2}{c_c}`.
+Knowledge of :math:`t_c` is useful for choosing appropriately the  timestep sizes that are used in the discrete model.
 
 ------------------------------------------------------------------
 Preparing the input files
@@ -93,9 +106,9 @@ will be used to recognize them and create the coupling.
 
 To define a poroelastic coupling, we will effectively define three solvers:
 
- - the single-physics flow solver, a solver of type ``SinglePhaseFVM`` called here ``SinglePhaseFlow`` (more information on these solvers at :ref:`SinglePhaseFlow`),
- - the small-stress Lagrangian mechanics solver, a solver of type ``SolidMechanicsLagrangianSSLE`` called here ``lagsolve`` for Lagrangian Solver (more information here: :ref:`SolidMechanicsLagrangianFEM`),
- - the coupling solver that will bind the two single-physics solvers above, an object of type ``Poroelastic`` called here ``poroSolve`` (more information at :ref:`PoroelasticSolver`).
+ - the single-physics flow solver, a solver of type ``SinglePhaseFVM`` called here ``SinglePhaseFlowSolver`` (more information on these solvers at :ref:`SinglePhaseFlow`),
+ - the small-stress Lagrangian mechanics solver, a solver of type ``SolidMechanicsLagrangianSSLE`` called here ``LinearElasticitySolver`` (more information here: :ref:`SolidMechanicsLagrangianFEM`),
+ - the coupling solver that will bind the two single-physics solvers above, an object of type ``Poroelastic`` called here ``PoroelasticitySolver`` (more information at :ref:`PoroelasticSolver`).
 
 Note that the ``name`` attribute of these solvers is
 chosen by the user and is not imposed by GEOSX.
@@ -106,15 +119,14 @@ verbosity levels, target regions,
 and other solver-specific attributes.
 
 Let us focus our attention on the coupling solver.
-This solver (``poroSolve``) uses a set of attributes that specifically describe the
-coupling for a poroelastic framework.
-For instance, we must point this solver to the correct fluid solver (here: ``SinglePhaseFlow``), the correct solid solver (here: ``lagsolve``).
+This solver (``PoroelasticitySolver``) uses a set of attributes that specifically describe the coupling for a poroelastic framework.
+For instance, we must point this solver to the correct fluid solver (here: ``SinglePhaseFlowSolver``), the correct solid solver (here: ``LinearElasticitySolver``).
 Now that these two solvers are tied together inside the coupling solver,
 we have a coupled multiphysics problem defined.
 More parameters are required to characterize a coupling.
 Here, we specify the coupling type (``FIM``, fully implicit method; a choice among several possible options),
 the discretization method (``FE1``, defined further in the input file),
-and the target regions (here, we only have one, ``Region2``).
+and the target regions (here, we only have one, ``Region1``).
 
 
 .. literalinclude:: PoroElastic_Terzaghi_FIM.xml
@@ -145,32 +157,49 @@ Here, we use a two-point flux approximation as described in the dedicated docume
   :end-before: <!-- SPHINX_POROELASTIC_NUMERICAL_METHODS_END -->
 
 
-Setting up the mesh
----------------------------------
+Setting up mesh, material properties and boundary conditions
+--------------------------------------------------------------------
 
 Last, let us take a closer look at the geometry of this simple problem.
 We use the internal mesh generator to create a beam-like mesh,
 with one single element along the Y and Z axes, and 21 elements along the X axis.
-All the elements are hexahedral elements (C3D8) of the same dimension (2x1x1 meters).
-
-We also define a pair of geometric boxes that will help us
-locate and specify our boundary conditions. These boundary conditions are defined under the ``FieldSpecifications`` tag.
+All the elements are hexahedral elements (C3D8) of the same dimension (1x1x1 meters).
 
 .. literalinclude:: PoroElastic_Terzaghi_FIM.xml
   :language: xml
   :start-after: <!-- SPHINX_POROELASTIC_MESH -->
   :end-before: <!-- SPHINX_POROELASTIC_MESH_END -->
 
+The simulation parameters used in the simulation are summarized in the following table.
 
++----------------+-----------------------+------------------+-------------------+
+| Symbol         | Parameter             | Units            | Value             |
++================+=======================+==================+===================+
+| :math:`E`      | Young's modulus       | [Pa]             | 1.0               |
++----------------+-----------------------+------------------+-------------------+
+| :math:`\nu`    | Poisson's ration      | [-]              | 0.2               |
++----------------+-----------------------+------------------+-------------------+
+| :math:`b`      | Biot's coefficient    | [-]              | 1.0               |
++----------------+-----------------------+------------------+-------------------+
+| :math:`\phi`   | Porosity              | [-]              | 0.3               |
++----------------+-----------------------+------------------+-------------------+
+| :math:`\rho_f` | Fluid density         | [kg/m\ :sup:`3`] | 1.0               |
++----------------+-----------------------+------------------+-------------------+
+| :math:`c_f`    | Fluid compressibility | [Pa\ :sup:`-1`]  | 0.0               |
++----------------+-----------------------+------------------+-------------------+
+| :math:`\kappa` | Permeability          | [m\ :sup:`2`]    | 1.0               |
++----------------+-----------------------+------------------+-------------------+
+| :math:`\mu`    | Fluid viscosity       | [Pa s]           | 1.0               |
++----------------+-----------------------+------------------+-------------------+
+| :math:`|w|`    | Applied compression   | [Pa]             | 1.0               |
++----------------+-----------------------+------------------+-------------------+
+| :math:`L`      | Column length         | [m]              | 10.0              |
++----------------+-----------------------+------------------+-------------------+
 
-To give some physical meaningfulness to our problem,
-we specify the material properties of our beam domain in the
+Material properties and boundary conditions are defined are specified in the
 ``Constitutive`` and ``FieldSpecifications`` sections.
-Here, we have a homogeneous shaly material with a 0.3 porosity and an isotropic permeability of about 50mD, completely saturated with water.
-The shale has a bulk modulus of 61.9 MPa, and a density of 2,700 kg/m3. Our beam is subject to compression forces exerted at one if its extremities.
-
-As shown in the ``Events`` section, we run this simulation for 2,000 seconds. We use a function specification to change our constraints in time. For more on functions, see :ref:`FunctionManager`.
-
+For such set of parameters we have :math:`p_0` = 1.0 Pa, :math:`c_c` = 1.111 m\ :sup:`2` s\ :sup:`-1`, and :math:`t_c` = 90 s.
+Therefore, as shown in the ``Events`` section, we run this simulation for 90 seconds.
 
 
 ------------------------------------------------------------------
@@ -184,24 +213,9 @@ To run the case, use the following command:
 
 ``path/to/geosx -i src/coreComponents/physicsSolvers/multiphysics/integratedTests/PoroElastic_Terzaghi_FIM.xml``
 
-When it is finished, if successful, you should see something like this:
-
-.. code-block:: sh
-
-  Cleaning up events
-  Rank 0: Writing out restart file at PoroElastic_Terzaghi_FIM_restart_000000014/rank_0000000.hdf5
-
-  init time = 0.015293s, run time = 0.44605s
-  Umpire            HOST high water mark:  540.6 KB
-
 
 Inspecting the console output
 ---------------------------------
-
-Depending on the individual level of log verbosity,
-coupled solvers may display information about the Newton
-convergence of each single-physics solver.
-
 
 Here, we see for instance the ``RSolid`` and ``RFluid`` at a representative timestep
 (residual values for solid and fluid mechanics solvers, respectively)
@@ -406,7 +420,7 @@ times with the numerical solution (markers).
        plt.grid()
        plt.xlabel('time [s]')
        plt.ylabel('pressure [Pa]')
-       plt.legend(bbox_to_anchor=(0.05, 0.5), loc='lower left', borderaxespad=0.)
+       plt.legend(bbox_to_anchor=(0.1, 0.55), loc='lower left', borderaxespad=0.)
        plt.show()
 
    if __name__ == "__main__":

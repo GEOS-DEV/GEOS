@@ -5,9 +5,9 @@
     gravityVector="0.0, 0.0, 0.0">
     <!-- SPHINX_POROELASTIC_SOLVER -->
     <Poroelastic
-      name="poroSolve"
-      solidSolverName="lagsolve"
-      fluidSolverName="SinglePhaseFlow"
+      name="PoroelasticitySolver"
+      solidSolverName="LinearElasticitySolver"
+      fluidSolverName="SinglePhaseFlowSolver"
       couplingTypeOption="FIM"
       logLevel="1"
       discretization="FE1"
@@ -20,21 +20,21 @@
     </Poroelastic>
 
     <SolidMechanicsLagrangianSSLE
-      name="lagsolve"
+      name="LinearElasticitySolver"
       timeIntegrationOption="QuasiStatic"
       logLevel="1"
       discretization="FE1"
       targetRegions="{ Region1 }"
-      solidMaterialNames="{ shale }">
+      solidMaterialNames="{ skeleton }">
     </SolidMechanicsLagrangianSSLE>
 
     <SinglePhaseFVM
-      name="SinglePhaseFlow"
+      name="SinglePhaseFlowSolver"
       logLevel="1"
       discretization="singlePhaseTPFA"
       targetRegions="{ Region1 }"
-      fluidNames="{ water }"
-      solidNames="{ shale }">
+      fluidNames="{ fluid }"
+      solidNames="{ skeleton }">
     </SinglePhaseFVM>
   </Solvers>
   <!-- SPHINX_POROELASTIC_SOLVER_END -->
@@ -56,28 +56,44 @@
   <!-- SPHINX_POROELASTIC_MESH_END -->
 
   <Events
-    maxTime="1.0">
+    maxTime="90.0">
     <!--This event is applied every 1.0s.  The targetExactTimestep
     flag allows this event to request a dt modification to match an
     integer multiple of the timeFrequency. -->
     <PeriodicEvent
       name="outputs"
-      timeFrequency="1.0e-1"
+      timeFrequency="10.0"
       targetExactTimestep="1"
       target="/Outputs/siloOutput"/>
 
     <PeriodicEvent
       name="solverApplication0"
-      forceDt="1.0e-2"
-      target="/Solvers/poroSolve"/>
+      beginTime="0"
+      endTime="1.e-5"
+      forceDt="1.e-5"
+      target="/Solvers/PoroelasticitySolver"/>
+
+    <PeriodicEvent
+      name="solverApplication1"
+      beginTime="1.e-5"
+      endTime="1.0"
+      forceDt="0.99999"
+      target="/Solvers/PoroelasticitySolver"/>
+
+    <PeriodicEvent
+      name="solverApplication2"
+      beginTime="1.0"
+      endTime="90.0"
+      forceDt="1.0"
+      target="/Solvers/PoroelasticitySolver"/>
 
     <PeriodicEvent name="timeHistoryCollection"
-      timeFrequency="1.0e-1"
+      timeFrequency="10.0"
       targetExactTimestep="1"
       target="/Tasks/pressureCollection" />
 
     <PeriodicEvent name="timeHistoryOutput"
-      timeFrequency="5.0e-1"
+      timeFrequency="10.0"
       targetExactTimestep="0"
       target="/Outputs/timeHistoryOutput" />
 
@@ -104,20 +120,20 @@
     <CellElementRegion
       name="Region1"
       cellBlocks="{ cb1 }"
-      materialList="{ shale, water }"/>
+      materialList="{ skeleton, fluid }"/>
   </ElementRegions>
 
   <!-- SPHINX_POROELASTIC_CONSTITUTIVE -->
   <Constitutive>
     <PoroLinearElasticIsotropic
-      name="shale"
+      name="skeleton"
       defaultDensity="0"
       defaultYoungsModulus="1.0e4"
-      defaultPoissonRatio="0.0"
+      defaultPoissonRatio="0.2"
       BiotCoefficient="1.0"/>
 
     <CompressibleSinglePhaseFluid
-      name="water"
+      name="fluid"
       defaultDensity="1"
       defaultViscosity="1.0"
       referencePressure="0.0"
@@ -129,6 +145,41 @@
 
   <!-- SPHINX_POROELASTIC_CONSTITUTIVE_END -->
   <FieldSpecifications>
+    <FieldSpecification
+      name="initialPressure"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Region1/cb1"
+      fieldName="pressure"
+      scale="0.0"/>
+
+    <FieldSpecification
+      name="xInitialDisplacement"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="nodeManager"
+      fieldName="TotalDisplacement"
+      component="0"
+      scale="0.0"/>
+
+    <FieldSpecification
+      name="xInitialDisplacement"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="nodeManager"
+      fieldName="TotalDisplacement"
+      component="1"
+      scale="0.0"/>
+
+    <FieldSpecification
+      name="xInitialDisplacement"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="nodeManager"
+      fieldName="TotalDisplacement"
+      component="2"
+      scale="0.0"/>
+
     <FieldSpecification
       name="permx"
       component="0"
@@ -160,17 +211,9 @@
       name="referencePorosity"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions/Region2/cb1"
+      objectPath="ElementRegions/Region1/cb1"
       fieldName="referencePorosity"
       scale="0.3"/>
-
-    <FieldSpecification
-      name="initialPressure"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/Region1/cb1"
-      fieldName="pressure"
-      scale="1.0"/>
 
     <FieldSpecification
       name="xnegconstraint"
@@ -211,14 +254,6 @@
       fieldName="pressure"
       scale="0.0"/>
   </FieldSpecifications>
-
-  <Functions>
-    <TableFunction
-      name="timeFunction"
-      inputVarNames="{ time }"
-      coordinates="{ 1.0, 2.0, 6e4 }"
-      values="{ 1.0, 1.0, 1.0 }"/>
-  </Functions>
 
   <Outputs>
     <Silo
