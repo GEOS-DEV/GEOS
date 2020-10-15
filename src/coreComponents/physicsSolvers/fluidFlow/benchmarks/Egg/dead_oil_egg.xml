@@ -545,31 +545,7 @@
       timeFrequency="2e6"
       targetExactTimestep="1"
       target="/Outputs/vtkOutput"/>
-    
-    <PeriodicEvent
-      name="timeHistoryCollection1"
-      timeFrequency="2e6"
-      targetExactTimestep="1"
-      target="/Tasks/wellRateCollection1" />
-
-    <PeriodicEvent
-      name="timeHistoryCollection2"
-      timeFrequency="2e6"
-      targetExactTimestep="1"
-      target="/Tasks/wellRateCollection2" />
-
-    <PeriodicEvent
-      name="timeHistoryCollection3"
-      timeFrequency="2e6"
-      targetExactTimestep="1"
-      target="/Tasks/wellRateCollection3" />
-
-    <PeriodicEvent
-      name="timeHistoryCollection4"
-      timeFrequency="2e6"
-      targetExactTimestep="1"
-      target="/Tasks/wellRateCollection4" />
-    
+   
     <PeriodicEvent
       name="timeHistoryOutput1"
       timeFrequency="1.5e7"
@@ -598,6 +574,30 @@
       name="solverApplications"
       target="/Solvers/coupledFlowAndWells"/>
 
+    <PeriodicEvent
+      name="timeHistoryCollection1"
+      timeFrequency="4e5"
+      targetExactTimestep="1"
+      target="/Tasks/wellRateCollection1" />
+
+    <PeriodicEvent
+      name="timeHistoryCollection2"
+      timeFrequency="4e5"
+      targetExactTimestep="1"
+      target="/Tasks/wellRateCollection2" />
+
+    <PeriodicEvent
+      name="timeHistoryCollection3"
+      timeFrequency="4e5"
+      targetExactTimestep="1"
+      target="/Tasks/wellRateCollection3" />
+
+    <PeriodicEvent
+      name="timeHistoryCollection4"
+      timeFrequency="4e5"
+      targetExactTimestep="1"
+      target="/Tasks/wellRateCollection4" />
+    
   </Events>
   <!-- SPHINX_TUT_DEAD_OIL_EGG_EVENTS_END -->
   
