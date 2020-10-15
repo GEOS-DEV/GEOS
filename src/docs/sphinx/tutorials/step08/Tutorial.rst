@@ -418,7 +418,7 @@ times with the numerical solution (markers).
            plt.plot(x, pressure[k, :], 'o', color=cmap(iplt))
 
        plt.grid()
-       plt.xlabel('time [s]')
+       plt.xlabel('$x$ [m]')
        plt.ylabel('pressure [Pa]')
        plt.legend(bbox_to_anchor=(0.1, 0.55), loc='lower left', borderaxespad=0.)
        plt.show()
