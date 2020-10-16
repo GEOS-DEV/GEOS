@@ -111,7 +111,7 @@ The output event triggers a vtk output  every 10^7 seconds, constraining the sol
 The output path to data is specified as a ``target`` of this **PeriodicEvent**.
 
 An other periodic event is defined under the name ``restarts``.
-It consists of saved checkpoints every 5 x 10^6 seconds, whose physical output folder name are defined under the **Output** tag.
+It consists of saved checkpoints every 5 x 10^6 seconds, whose physical output folder name is defined under the **Output** tag.
 
 Finally, the time history collection and output events are used to trigger the mechanisms involved in the generation of a time series of well pressure (see the procedure outlined in :ref:`TasksManager`).
 
