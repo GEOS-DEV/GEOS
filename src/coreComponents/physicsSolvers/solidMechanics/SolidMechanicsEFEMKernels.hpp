@@ -82,6 +82,7 @@ public:
                          FaceManager const & faceManager,
                          SUBREGION_TYPE const & elementSubRegion,
                          FE_TYPE const & finiteElementSpace,
+						 EmbeddedSurfaceSubRegion const & embeddedSurfSubRegion,
                          CONSTITUTIVE_TYPE * const inputConstitutiveType,
                          arrayView1d< globalIndex const > const & uDofNumber,
 						 arrayView1d< globalIndex const > const & wDofNumber,
@@ -100,14 +101,17 @@ public:
             inputMatrix,
             inputRhs,
 			inputGravityVector ),
-    m_wDofNumber( wDofNumber )
+    m_wDofNumber( wDofNumber ),
+    m_nVec(embeddedSurfSubRegion.getNormalVector()),
+	m_tVec1(embeddedSurfSubRegion.getTangentVector1()),
+	m_tVec2(embeddedSurfSubRegion.getTangentVector2())
     {}
 
   //***************************************************************************
     /**
      * @copydoc finiteElement::KernelBase::StackVariables
      */
-    struct StackVariables
+    struct StackVariables : public Base::StackVariables
     {
       /// The number of displacement dofs per element.
       static constexpr int numUdofs = numTestSupportPointsPerElem * numDofPerTestSupportPoint;
@@ -120,15 +124,17 @@ public:
        */
       GEOSX_HOST_DEVICE
       StackVariables():
-	  dispEqnRowIndices{ 0 },
-	  dispColIndices{ 0 },
-	  jumpEqnRowIndices{ 0 },
-	  jumpColIndices{ 0 },
-	  localRu{ 0.0 },
-	  localRw{ 0.0 },
-	  localKww{ { 0.0 } },
-	  localKwu{ { 0.0 } },
-	  localKuw{ { 0.0 } }
+	    Base::StackVariables(),
+	    dispEqnRowIndices{ 0 },
+	    dispColIndices{ 0 },
+	    jumpEqnRowIndices{ 0 },
+	    jumpColIndices{ 0 },
+	    localRu{ 0.0 },
+	    localRw{ 0.0 },
+	    localKww{ { 0.0 } },
+	    localKwu{ { 0.0 } },
+	    localKuw{ { 0.0 } },
+	    w_local()
       {}
 
       /// C-array storage for the element local row degrees of freedom.
@@ -157,6 +163,9 @@ public:
 
       /// C-array storage for the element local Kuw matrix.
       real64 localKuw[numUdofs][numWdofs];
+
+      /// Stack storage for the element local jump vector
+      real64 w_local[3];
     };
     //***************************************************************************
 
@@ -181,6 +190,7 @@ public:
       {
         stack.dispEqnRowIndices[a*3+i] = m_dofNumber[localNodeIndex]+i-m_dofRankOffset;
         stack.dispColIndices[a*3+i]    = m_dofNumber[localNodeIndex]+i;
+        stack.xLocal[ a ][ i ] = m_X[ localNodeIndex ][ i ];
       }
     }
 
@@ -221,23 +231,25 @@ public:
      real64 compMatrix[6][3], strainMatrix[6][nUdof], eqMatrix[3][6];
      real64 matBD[nUdof][6], matED[3][6];
 
-     // create a helper for this
-     AssembleCompatibilityOperator( compMatrix,
-    		 embeddedSurfaceSubRegion,
-			 k,
-			 q,
-			 elemsToNodes,
-			 nodesCoord,
-			 embeddedSurfaceToCell,
-			 numNodesPerElement,
-			 dNdX );
+     int Heaviside[ numNodesPerElem ];
 
-     // create a helper for this
-     AssembleStrainOperator( strainMatrix,
-    		 embeddedSurfaceToCell[k],
-			 q,
-			 numNodesPerElement,
-			 dNdX );
+     EFEMKernelsHelper::ComputeHeavisideFunction<numNodesPerElem>(Heaviside, stack.xLocal, m_nVec[k], m_surfaceCenter[k]);
+
+
+     EFEMKernelsHelper::AssembleEquilibriumOperator( eqMatrix,
+                                                     m_nVec[k],
+			                                         m_tVec1[k],
+			                                         m_tVec2[k],
+			                                         m_hInv[k]);
+
+     EFEMKernelsHelper::AssembleCompatibilityOperator<numNodesPerElem>( compMatrix,
+    		                                                           m_nVec[k],
+																	   m_tVec1[k],
+																	   m_tVec2[k],
+																	   Heaviside,
+																	   dNdX );
+
+     EFEMKernelsHelper::AssembleStrainOperator<6, nUdof, numNodesPerElem >( strainMatrix, dNdX );
 
      // transp(B)D
      LvArray::tensorOps::Rij_eq_AkiBkj< nUdof, 6, nUdof>(matBD, strainMatrix, dMatrix);
@@ -321,6 +333,14 @@ public:
 protected:
 
    arrayView1d< globalIndex const > const m_wDofNumber;
+
+   arrayView2d< real64 const > const m_nVec;
+
+   arrayView2d< real64 const > const m_tVec1;
+
+   arrayView2d< real64 const > const m_tVec2;
+
+   arrayView2d< real64 const> const m_surfaceCenter;
 };
 
 } // namespace SolidMechanicsEFEMKernels
