@@ -416,9 +416,9 @@ void LagrangianContactSolver::ComputeTolerances( DomainPartition & domain ) cons
 
           // Rotate in the local reference system, computing R^T * (invK) * R
           real64 temp[ 3 ][ 3 ];
-          LvArray::tensorOps::AkiBkj< 3, 3, 3 >( temp, faceRotationMatrix[ kfe ], invStiffApprox );
+          LvArray::tensorOps::Rij_eq_AkiBkj< 3, 3, 3 >( temp, faceRotationMatrix[ kfe ], invStiffApprox );
           real64 rotatedInvStiffApprox[ 3 ][ 3 ];
-          LvArray::tensorOps::AikBkj< 3, 3, 3 >( rotatedInvStiffApprox, temp, faceRotationMatrix[ kfe ] );
+          LvArray::tensorOps::Rij_eq_AikBkj< 3, 3, 3 >( rotatedInvStiffApprox, temp, faceRotationMatrix[ kfe ] );
           LvArray::tensorOps::scale< 3, 3 >( rotatedInvStiffApprox, area );
 
           // Finally, compute tolerances for the given fracture element
@@ -538,7 +538,7 @@ void LagrangianContactSolver::ComputeFaceDisplacementJump( DomainPartition & dom
         }
 
         real64 localJumpTemp[ 3 ];
-        LvArray::tensorOps::AjiBj< 3, 3 >( localJumpTemp, rotationMatrix[ kfe ], globalJumpTemp );
+        LvArray::tensorOps::Ri_eq_AjiBj< 3, 3 >( localJumpTemp, rotationMatrix[ kfe ], globalJumpTemp );
         LvArray::tensorOps::copy< 3 >( localJump[ kfe ], localJumpTemp );
       } );
     }
@@ -1389,7 +1389,7 @@ void LagrangianContactSolver::
                                                     traction( kfe, 1 ) * NaDetJxQ,
                                                     traction( kfe, 2 ) * NaDetJxQ };
               real64 globalNodalForce[ 3 ];
-              LvArray::tensorOps::AijBj< 3, 3 >( globalNodalForce, rotationMatrix[ kfe ], localNodalForce );
+              LvArray::tensorOps::Ri_eq_AijBj< 3, 3 >( globalNodalForce, rotationMatrix[ kfe ], localNodalForce );
 
               for( localIndex i = 0; i < 3; ++i )
               {
@@ -1582,7 +1582,7 @@ void LagrangianContactSolver::
                       {
                         real64 const localRowB[ 2 ] = { rotationMatrix( kfe, i, 1 ), rotationMatrix( kfe, i, 2 ) };
                         real64 localRowE[ 2 ];
-                        LvArray::tensorOps::symAijBj< 2 >( localRowE, dUdgT, localRowB );
+                        LvArray::tensorOps::Ri_eq_symAijBj< 2 >( localRowE, dUdgT, localRowB );
 
                         dRdU( 1, kf * 3 * numNodesPerFace + 3 * a + i ) = nodalArea[a] * localRowE[ 0 ] * pow( -1, kf );
                         dRdU( 2, kf * 3 * numNodesPerFace + 3 * a + i ) = nodalArea[a] * localRowE[ 1 ] * pow( -1, kf );
@@ -1926,8 +1926,8 @@ void LagrangianContactSolver::AssembleStabilization( DomainPartition const & dom
         // Compute R^T * (invK) * R
         real64 temp[ 3 ][ 3 ];
         real64 rotatedInvStiffApprox[ 3 ][ 3 ];
-        LvArray::tensorOps::AkiBkj< 3, 3, 3 >( temp, avgRotationMatrix, invTotStiffApprox );
-        LvArray::tensorOps::AikBkj< 3, 3, 3 >( rotatedInvStiffApprox, temp, avgRotationMatrix );
+        LvArray::tensorOps::Rij_eq_AkiBkj< 3, 3, 3 >( temp, avgRotationMatrix, invTotStiffApprox );
+        LvArray::tensorOps::Rij_eq_AikBkj< 3, 3, 3 >( rotatedInvStiffApprox, temp, avgRotationMatrix );
 
         // Add nodal area contribution
         stackArray2d< real64, 3*3 > totalInvStiffApprox( 3, 3 );

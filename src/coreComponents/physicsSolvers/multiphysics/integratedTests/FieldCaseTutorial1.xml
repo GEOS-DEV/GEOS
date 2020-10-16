@@ -185,7 +185,7 @@
       name="timeInj"
       inputVarNames="{ time }"
       coordinates="{ 200e6, 250e6, 500e6 }"
-      values="{ 1, 0.01, 0.00001}"/>
+      values="{ 1, 0.01, 0.00001 }"/>
 
     <TableFunction
       name="initialPressureFunc"
