@@ -59,12 +59,6 @@ if( NOT ( GEOSX_LA_INTERFACE IN_LIST supported_LAI ) )
   message( FATAL_ERROR "GEOSX_LA_INTERFACE must be one of: ${supported_LAI}" )
 endif()
 
-string( TOUPPER "${GEOSX_LA_INTERFACE}" upper_LAI )
-if( NOT ENABLE_${upper_LAI} )
-  message( FATAL_ERROR "${GEOSX_LA_INTERFACE} LA interface is selected, but ENABLE_${upper_LAI} is OFF" )
-endif()
-option( GEOSX_LA_INTERFACE_${upper_LAI} "${upper_LAI} LA interface is selected" ON )
-
 ### MPI/OMP/CUDA SETUP ###
 
 option( ENABLE_MPI "" ON )

@@ -13,6 +13,8 @@ from os import environ as env
 from os.path import join as pjoin
 
 
+# ./scripts/uberenv/uberenv.py --spec="%gcc@8.3.1 +mkl lai=trilinos ^chai@master ^conduit@0.5.0"
+
 def cmake_cache_entry(name, value, comment=""):
     """Generate a string for a cmake cache variable"""
 
@@ -43,7 +45,8 @@ class Geosx(CMakePackage, CudaPackage):
     variant('shared', default=True, description='Build Shared Libs')
     variant('caliper', default=False, description='Build Caliper support')
     variant('mkl', default=False, description='Use the Intel MKL library.')
-
+    variant('lai', default='trilinos', description='Linear algebra packages to build',
+            values=('trilinos', 'hypre', 'petsc'), multi=True)
     # variant('tests', default=True, description='Build tests')
     # variant('benchmarks', default=False, description='Build benchmarks')
     # variant('examples', default=False, description='Build examples')
@@ -64,7 +67,7 @@ class Geosx(CMakePackage, CudaPackage):
     depends_on('umpire +cuda', when='+cuda')
 
     depends_on('chai +raja~benchmarks~examples')
-    depends_on('chai +raja+cuda', when='+cuda')
+    depends_on('chai +cuda', when='+cuda')
 
     #
     # IO
@@ -88,7 +91,13 @@ class Geosx(CMakePackage, CudaPackage):
     depends_on('parmetis@4.0.3:')
     depends_on('superlu-dist@6.3.1: +openmp+int64')
 
-    # trilinos
+
+    trilinos_build_options = '+openmp ~fortran'
+    trilinos_tpls = '+mpi ~boost~cgns~adios2~glm~gtest~hdf5~hypre~matio~metis~mumps~netcdf~pnetcdf~suite-sparse~superlu-dist~superlu~x11~zlib'
+    trilinos_packages = '+amesos+aztec+epetra+epetraext+ifpack+kokkos+ml+stk+stratimikos+teuchos+tpetra ~amesos2~anasazi~belos~chaco~exodus~ifpack2~intrepid~intrepid2~isorropia~minitensor~muelu~nox~piro~phalanx~rol~rythmos~sacado~shards~shylu~teko~tempus~zoltan~zoltan2'
+    depends_on('trilinos@12.18.1: ' + trilinos_build_options + trilinos_tpls + trilinos_packages, when='lai=trilinos')
+
+ 
     # hypre
     # suitesparse
     # petsc
@@ -145,10 +154,7 @@ class Geosx(CMakePackage, CudaPackage):
     def hostconfig(self, spec, prefix, py_site_pkgs_dir=None):
         """
         This method creates a 'host-config' file that specifies
-        all of the options used to configure and build Umpire.
-
-        For more details about 'host-config' files see:
-            http://software.llnl.gov/conduit/building.html
+        all of the options used to configure and build GEOSX.
 
         Note:
           The `py_site_pkgs_dir` arg exists to allow a package that
@@ -202,31 +208,30 @@ class Geosx(CMakePackage, CudaPackage):
         cfg.write("# Compilers\n")
         cfg.write("#{0}\n\n".format("-" * 80))
         cfg.write(cmake_cache_entry("CMAKE_C_COMPILER", c_compiler))
-        cfg.write(cmake_cache_entry("CMAKE_CXX_COMPILER", cpp_compiler))
-
-        # use global spack compiler flags
         cflags = ' '.join(spec.compiler_flags['cflags'])
         if cflags:
             cfg.write(cmake_cache_entry("CMAKE_C_FLAGS", cflags))
 
+        cfg.write(cmake_cache_entry("CMAKE_CXX_COMPILER", cpp_compiler))
         cxxflags = ' '.join(spec.compiler_flags['cxxflags'])
         if cxxflags:
             cfg.write(cmake_cache_entry("CMAKE_CXX_FLAGS", cxxflags))
 
         release_flags = "-O3 -DNDEBUG"
-        cfg.write(cmake_cache_string("CMAKE_CXX_FLAGS_RELEASE",
-                                     release_flags))
+        cfg.write(cmake_cache_string("CMAKE_CXX_FLAGS_RELEASE", release_flags))
         reldebinf_flags = "-O3 -g -DNDEBUG"
-        cfg.write(cmake_cache_string("CMAKE_CXX_FLAGS_RELWITHDEBINFO",
-                                     reldebinf_flags))
+        cfg.write(cmake_cache_string("CMAKE_CXX_FLAGS_RELWITHDEBINFO", reldebinf_flags))
         debug_flags = "-O0 -g"
         cfg.write(cmake_cache_string("CMAKE_CXX_FLAGS_DEBUG", debug_flags))
 
-        if "+cuda" in spec:
-            cfg.write("#{0}\n".format("-" * 80))
-            cfg.write("# Cuda\n")
-            cfg.write("#{0}\n\n".format("-" * 80))
+        cfg.write(cmake_cache_option("ENABLE_MPI", True))
+        cfg.write(cmake_cache_entry("MPI_C_COMPILER", spec['mpi'].mpicc))
+        cfg.write(cmake_cache_entry("MPI_CXX_COMPILER", spec['mpi'].mpicxx))
 
+        cfg.write("#{0}\n".format("-" * 80))
+        cfg.write("# Cuda\n")
+        cfg.write("#{0}\n\n".format("-" * 80))
+        if "+cuda" in spec:
             cfg.write(cmake_cache_option("ENABLE_CUDA", True))
             cfg.write(cmake_cache_entry("CMAKE_CUDA_STANDARD", 14))
 
@@ -240,7 +245,7 @@ class Geosx(CMakePackage, CudaPackage):
                                 'cross-execution-space-call,reorder,'
                                 'deprecated-declarations')
 
-            archSpecifiers = ("-mtune", "-mcpu", "-march", "-qtune", "-qarch")
+            archSpecifiers = ('-mtune', '-mcpu', '-march', '-qtune', '-qarch')
             for archSpecifier in archSpecifiers:
                 for compilerArg in spec.compiler_flags['cxxflags']:
                     if compilerArg.startswith(archSpecifier):
@@ -250,111 +255,122 @@ class Geosx(CMakePackage, CudaPackage):
                 cuda_arch = spec.variants['cuda_arch'].value
                 cmake_cuda_flags += ' -arch sm_{0}'.format(cuda_arch[0])
 
-            cfg.write(cmake_cache_string("CMAKE_CUDA_FLAGS", cmake_cuda_flags))
+            cfg.write(cmake_cache_string('CMAKE_CUDA_FLAGS', cmake_cuda_flags))
 
-            cfg.write(cmake_cache_string("CMAKE_CUDA_FLAGS_RELEASE",
-                                         "-O3 -Xcompiler -O3 -DNDEBUG"))
-            cfg.write(cmake_cache_string("CMAKE_CUDA_FLAGS_RELWITHDEBINFO",
-                                         "-O3 -g -lineinfo -Xcompiler -O3"))
-            cfg.write(cmake_cache_string("CMAKE_CUDA_FLAGS_DEBUG",
-                                         "-O0 -Xcompiler -O0 -g -G"))
+            cfg.write(cmake_cache_string('CMAKE_CUDA_FLAGS_RELEASE',
+                                         '-O3 -Xcompiler -O3 -DNDEBUG'))
+            cfg.write(cmake_cache_string('CMAKE_CUDA_FLAGS_RELWITHDEBINFO',
+                                         '-O3 -g -lineinfo -Xcompiler -O3'))
+            cfg.write(cmake_cache_string('CMAKE_CUDA_FLAGS_DEBUG',
+                                         '-O0 -Xcompiler -O0 -g -G'))
 
         else:
-            cfg.write(cmake_cache_option("ENABLE_CUDA", False))
+            cfg.write(cmake_cache_option('ENABLE_CUDA', False))
 
-        cfg.write("#{0}\n".format("-" * 80))
-        cfg.write("# RAJA\n")
-        cfg.write("#{0}\n\n".format("-" * 80))
+        performance_portability_tpls = (('raja', 'RAJA', True),
+                                        ('umpire', 'UMPIRE', True),
+                                        ('chai', 'CHAI', True))
+        cfg.write('#{0}\n'.format('-' * 80))
+        cfg.write('# Performance Portability TPLs\n')
+        cfg.write('#{0}\n\n'.format('-' * 80))
+        for tpl, cmake_name, enable in performance_portability_tpls:
+            if enable:
+                cfg.write(cmake_cache_entry('{}_DIR'.format(cmake_name), spec[tpl].prefix))
+            else:
+                cfg.write(cmake_cache_option('ENABLE_{}'.format(cmake_name), False))
 
-        raja_dir = spec['raja'].prefix
-        cfg.write(cmake_cache_entry("RAJA_DIR", raja_dir))
+        io_tpls = (('hdf5', 'HDF5', True),
+                   ('conduit', 'CONDUIT', True),
+                   ('silo', 'SILO', True),
+                   ('adiak', 'ADIAK', '+caliper' in spec),
+                   ('caliper', 'CALIPER', '+caliper' in spec),
+                   ('pugixml', 'PUGIXML', True))
+        cfg.write('#{0}\n'.format('-' * 80))
+        cfg.write('# IO TPLs\n')
+        cfg.write('#{0}\n\n'.format('-' * 80))
+        for tpl, cmake_name, enable in io_tpls:
+            if enable:
+                cfg.write(cmake_cache_entry('{}_DIR'.format(cmake_name), spec[tpl].prefix))
+            else:
+                cfg.write(cmake_cache_option('ENABLE_{}'.format(cmake_name), False))
 
-        cfg.write("#{0}\n".format("-" * 80))
-        cfg.write("# Umpire\n")
-        cfg.write("#{0}\n\n".format("-" * 80))
+        math_tpls = (('metis', 'METIS', True),
+                     ('parmetis', 'PARMETIS', True),
+                     ('superlu-dist', 'SUPERLU_DIST', True),
+                     ('suitesparse', 'SUITESPARSE', False),
+                     ('trilinos', 'TRILINOS', 'lai=trilinos' in spec),
+                     ('hypre', 'HYPRE', False),
+                     ('petsc', 'PETSC', False))
+        cfg.write('#{0}\n'.format('-' * 80))
+        cfg.write('# Math TPLs\n')
+        cfg.write('#{0}\n\n'.format('-' * 80))
+        for tpl, cmake_name, enable in math_tpls:
+            if enable:
+                cfg.write(cmake_cache_entry('{}_DIR'.format(cmake_name), spec[tpl].prefix))
+            else:
+                cfg.write(cmake_cache_option('ENABLE_{}'.format(cmake_name), False))
 
-        if "+umpire" in spec:
-            cfg.write(cmake_cache_option("ENABLE_UMPIRE", True))
-            umpire_dir = spec['umpire'].prefix
-            cfg.write(cmake_cache_entry("UMPIRE_DIR", umpire_dir))
-        else:
-            cfg.write(cmake_cache_option("ENABLE_UMPIRE", False))
-
-        cfg.write("#{0}\n".format("-" * 80))
-        cfg.write("# CHAI\n")
-        cfg.write("#{0}\n\n".format("-" * 80))
-
-        if "+chai" in spec:
-            cfg.write(cmake_cache_option("ENABLE_CHAI", True))
-            chai_dir = spec['chai'].prefix
-            cfg.write(cmake_cache_entry("CHAI_DIR", chai_dir))
-        else:
-            cfg.write(cmake_cache_option("ENABLE_CHAI", False))
-
-        cfg.write("#{0}\n".format("-" * 80))
-        cfg.write("# Caliper\n")
-        cfg.write("#{0}\n\n".format("-" * 80))
-
-        if "+caliper" in spec:
-            cfg.write("#{0}\n".format("-" * 80))
-            cfg.write("# Caliper\n")
-            cfg.write("#{0}\n\n".format("-" * 80))
-
-            cfg.write(cmake_cache_option("ENABLE_CALIPER", True))
-            caliper_dir = spec['caliper'].prefix
-            cfg.write(cmake_cache_entry("CALIPER_DIR", caliper_dir))
-        else:
-            cfg.write(cmake_cache_option("ENABLE_CALIPER", False))
-
-        cfg.write("#{0}\n".format("-" * 80))
-        cfg.write("# Documentation\n")
-        cfg.write("#{0}\n\n".format("-" * 80))
-        if "+docs" in spec:
+        cfg.write('#{0}\n'.format('-' * 80))
+        cfg.write('# Documentation\n')
+        cfg.write('#{0}\n\n'.format('-' * 80))
+        if '+docs' in spec:
             sphinx_dir = spec['py-sphinx'].prefix
-            cfg.write(cmake_cache_string('SPHINX_EXECUTABLE',
-                                         os.path.join(sphinx_dir,
-                                                      'bin',
-                                                      'sphinx-build')))
+            cfg.write(cmake_cache_entry('SPHINX_EXECUTABLE',
+                                        os.path.join(sphinx_dir,
+                                                     'bin',
+                                                     'sphinx-build')))
 
             doxygen_dir = spec['doxygen'].prefix
-            cfg.write(cmake_cache_string('DOXYGEN_EXECUTABLE',
-                                         os.path.join(doxygen_dir,
-                                                      'bin',
-                                                      'doxygen')))
+            cfg.write(cmake_cache_entry('DOXYGEN_EXECUTABLE',
+                                        os.path.join(doxygen_dir,
+                                                     'bin',
+                                                     'doxygen')))
+        else:
+            cfg.write(cmake_cache_option('ENABLE_DOCS', False))
+        
+        cfg.write('#{0}\n'.format('-' * 80))
+        cfg.write('# Development tools\n')
+        cfg.write('#{0}\n\n'.format('-' * 80))
+        if '+uncrustify' in spec:
+            cfg.write(cmake_cache_entry('UNCRUSTIFY_EXECUTABLE',
+                                        os.path.join(spec['uncrustify'].prefix, 'bin', 'uncrustify')))
+        else:
+            cfg.write(cmake_cache_option('ENABLE_UNCRUSTIFY', False))
 
-        cfg.write("#{0}\n".format("-" * 80))
-        cfg.write("# addr2line\n")
-        cfg.write("#{0}\n\n".format("-" * 80))
-        cfg.write(cmake_cache_option('ENABLE_ADDR2LINE', '+addr2line' in spec))
+        # cfg.write("#{0}\n".format("-" * 80))
+        # cfg.write("# addr2line\n")
+        # cfg.write("#{0}\n\n".format("-" * 80))
+        # cfg.write(cmake_cache_option('ENABLE_ADDR2LINE', '+addr2line' in spec))
 
-        cfg.write("#{0}\n".format("-" * 80))
-        cfg.write("# Other\n")
-        cfg.write("#{0}\n\n".format("-" * 80))
+        # cfg.write("#{0}\n".format("-" * 80))
+        # cfg.write("# Other\n")
+        # cfg.write("#{0}\n\n".format("-" * 80))
 
     def cmake_args(self):
-        spec = self.spec
-        host_config_path = self._get_host_config_path(spec)
+        pass
+        # spec = self.spec
+        # host_config_path = self._get_host_config_path(spec)
 
-        options = []
-        options.extend(['-C', host_config_path])
+        # options = []
+        # options.extend(['-C', host_config_path])
 
-        # Shared libs
-        options.append(self.define_from_variant('BUILD_SHARED_LIBS', 'shared'))
+        # # Shared libs
+        # options.append(self.define_from_variant('BUILD_SHARED_LIBS', 'shared'))
 
-        if '~tests~examples~benchmarks' in spec:
-            options.append('-DENABLE_TESTS=OFF')
-        else:
-            options.append('-DENABLE_TESTS=ON')
+        # if '~tests~examples~benchmarks' in spec:
+        #     options.append('-DENABLE_TESTS=OFF')
+        # else:
+        #     options.append('-DENABLE_TESTS=ON')
 
-        if '~test' in spec:
-            options.append('-DDISABLE_UNIT_TESTS=ON')
-        elif "+tests" in spec and ('%intel' in spec or '%xl' in spec):
-            warnings.warn('The LvArray unit tests take an excessive amount of'
-                          ' time to build with the Intel or IBM compilers.')
+        # if '~test' in spec:
+        #     options.append('-DDISABLE_UNIT_TESTS=ON')
+        # elif "+tests" in spec and ('%intel' in spec or '%xl' in spec):
+        #     warnings.warn('The LvArray unit tests take an excessive amount of'
+        #                   ' time to build with the Intel or IBM compilers.')
 
-        options.append(self.define_from_variant('ENABLE_EXAMPLES', 'examples'))
-        options.append(self.define_from_variant('ENABLE_BENCHMARKS',
-                                                'benchmarks'))
-        options.append(self.define_from_variant('ENABLE_DOCS', 'docs'))
+        # options.append(self.define_from_variant('ENABLE_EXAMPLES', 'examples'))
+        # options.append(self.define_from_variant('ENABLE_BENCHMARKS',
+        #                                         'benchmarks'))
+        # options.append(self.define_from_variant('ENABLE_DOCS', 'docs'))
 
-        return options
+        # return options
