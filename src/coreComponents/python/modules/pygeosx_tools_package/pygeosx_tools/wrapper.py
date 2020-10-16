@@ -3,6 +3,7 @@ import sys
 import numpy as np
 from mpi4py import MPI
 import matplotlib.pyplot as plt
+import pylvarray
 
 
 # Get the MPI rank
@@ -11,7 +12,13 @@ rank = comm.Get_rank()
 
 
 def get_wrapper(problem, key, write_flag=False):
-  local_values = problem.get_wrapper(key).value(write_flag)
+  local_values = problem.get_wrapper(key).value()
+  if write_flag:
+    local_values.set_access_level(pylvarray.MODIFIABLE,
+                                  pylvarray.CPU)
+  else:
+    local_values.set_access_level(pylvarray.CPU)
+
   if not isinstance(local_values, np.ndarray):
     local_values = local_values.to_numpy()
   return local_values
