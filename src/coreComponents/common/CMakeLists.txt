@@ -25,7 +25,7 @@ set(common_sources
     Path.cpp
    )
 
-set( dependencyList lvarray pugixml )
+set( dependencyList lvarray pugixml RAJA chai conduit::conduit )
 
 if( ENABLE_OPENMP )
   set( dependencyList ${dependencyList} openmp )
@@ -34,18 +34,6 @@ endif( )
 if( ENABLE_CUDA )
   set( dependencyList ${dependencyList} cuda )
 endif( )
-
-if( ENABLE_CHAI )
-  set( dependencyList ${dependencyList} chai umpire )
-endif( )
-
-if( ENABLE_RAJA )
-  set( dependencyList ${dependencyList} RAJA )
-endif( )
-
-if( ATK_FOUND )
-  set( dependencyList ${dependencyList} conduit )
-endif()
 
 if( ENABLE_MPI )
   set( dependencyList ${dependencyList} mpi )

@@ -342,9 +342,12 @@ class Geosx(CMakePackage, CudaPackage):
         # cfg.write("#{0}\n\n".format("-" * 80))
         # cfg.write(cmake_cache_option('ENABLE_ADDR2LINE', '+addr2line' in spec))
 
-        # cfg.write("#{0}\n".format("-" * 80))
-        # cfg.write("# Other\n")
-        # cfg.write("#{0}\n\n".format("-" * 80))
+        cfg.write("#{0}\n".format("-" * 80))
+        cfg.write("# Other\n")
+        cfg.write("#{0}\n\n".format("-" * 80))
+
+        cfg.write(cmake_cache_option('ENABLE_MATHPRESSO', False))
+
 
     def cmake_args(self):
         pass

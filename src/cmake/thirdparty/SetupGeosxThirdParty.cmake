@@ -74,33 +74,12 @@ endif()
 # Conduit
 ################################
 if(DEFINED CONDUIT_DIR)
-    message(STATUS "CONDUIT_DIR = ${CONDUIT_DIR}" )
-    include(cmake/thirdparty/FindConduit.cmake )
-    blt_register_library(NAME conduit
-                         INCLUDES ${CONDUIT_INCLUDE_DIRS} 
-                         LIBRARIES conduit
-                         TREAT_INCLUDES_AS_SYSTEM ON)
+    message(STATUS "CONDUIT_DIR = ${CONDUIT_DIR}")
 
-    blt_register_library(NAME conduit_blueprint
-                         INCLUDES ${CONDUIT_INCLUDE_DIRS}
-                         LIBRARIES conduit_blueprint
-                         TREAT_INCLUDES_AS_SYSTEM ON)
+    find_package(Conduit REQUIRED
+                 PATHS ${CONDUIT_DIR}/lib/cmake)
 
-    blt_register_library(NAME conduit_relay
-                         INCLUDES ${CONDUIT_INCLUDE_DIRS}
-                         LIBRARIES conduit_relay
-                         TREAT_INCLUDES_AS_SYSTEM ON)
-
-    # Removes link to Thread library (removes "-pthread" when linking to relay)
-    get_target_property(_relay_libraries conduit_relay INTERFACE_LINK_LIBRARIES)
-    set(_new_relay_libraries)
-    string(REPLACE "Threads::Threads;" "" _new_relay_libraries "${_relay_libraries}")
-    set_target_properties(conduit_relay
-                          PROPERTIES INTERFACE_LINK_LIBRARIES 
-                          "${_new_relay_libraries}")
-
-    set(ENABLE_CONDUIT ON CACHE BOOL "" FORCE)
-    set(thirdPartyLibs ${thirdPartyLibs} conduit conduit_blueprint conduit_relay)
+    set(thirdPartyLibs ${thirdPartyLibs} conduit::conduit )
 else()
     message(FATAL_ERROR "GEOSX requires conduit, set CONDUIT_DIR to the conduit installation directory.")
 endif()
@@ -115,11 +94,11 @@ if(DEFINED SILO_DIR)
         message(FATAL_ERROR "SILO not found in ${SILO_DIR}. Maybe you need to build it")
     endif()
 
-    blt_register_library( NAME silo
-                        INCLUDES ${SILO_INCLUDE_DIRS}
-                        LIBRARIES ${SILO_LIBRARY}
-                        TREAT_INCLUDES_AS_SYSTEM ON
-                        DEPENDS_ON hdf5 )
+    blt_register_library(NAME silo
+                         INCLUDES ${SILO_INCLUDE_DIRS}
+                         LIBRARIES ${SILO_LIBRARY}
+                         TREAT_INCLUDES_AS_SYSTEM ON
+                         DEPENDS_ON hdf5)
 
     set(ENABLE_SILO ON CACHE BOOL "" FORCE)
     set(thirdPartyLibs ${thirdPartyLibs} silo)
@@ -133,46 +112,8 @@ endif()
 if(DEFINED PUGIXML_DIR)
     message(STATUS "PUGIXML_DIR = ${PUGIXML_DIR}")
 
-    find_path(PUGIXML_INCLUDE_DIRS NAMES pugixml.hpp
-              PATHS ${PUGIXML_DIR}/include
-              NO_DEFAULT_PATH
-              NO_CMAKE_ENVIRONMENT_PATH
-              NO_CMAKE_PATH
-              NO_SYSTEM_ENVIRONMENT_PATH
-              NO_CMAKE_SYSTEM_PATH)
-
-    if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-        find_library(PUGIXML_LIBRARY NAMES pugixml
-                     PATHS ${PUGIXML_DIR}/lib
-                     NO_DEFAULT_PATH
-                     NO_CMAKE_ENVIRONMENT_PATH
-                     NO_CMAKE_PATH
-                     NO_SYSTEM_ENVIRONMENT_PATH
-                     NO_CMAKE_SYSTEM_PATH)
-
-    else()
-        find_library(PUGIXML_LIBRARY NAMES pugixml
-                     PATHS ${PUGIXML_DIR}/lib64 ${PUGIXML_DIR}/lib
-                     NO_DEFAULT_PATH
-                     NO_CMAKE_ENVIRONMENT_PATH
-                     NO_CMAKE_PATH
-                     NO_SYSTEM_ENVIRONMENT_PATH
-                     NO_CMAKE_SYSTEM_PATH)
-    endif()
-
-    find_package_handle_standard_args(PUGIXML DEFAULT_MSG
-                                      PUGIXML_INCLUDE_DIRS
-                                      PUGIXML_LIBRARY )
-
-
-    if (NOT PUGIXML_FOUND)
-        message(FATAL_ERROR "PUGIXML not found in ${PUGIXML_DIR}. Maybe you need to build it")
-    endif()
-
-    blt_register_library(NAME pugixml
-                         INCLUDES ${PUGIXML_INCLUDE_DIRS}
-                         LIBRARIES ${PUGIXML_LIBRARY}
-                         TREAT_INCLUDES_AS_SYSTEM ON)
+    find_package(pugixml REQUIRED
+                 PATHS ${PUGIXML_DIR})
 
     set(thirdPartyLibs ${thirdPartyLibs} pugixml)
 else()
@@ -185,7 +126,8 @@ endif()
 if(DEFINED RAJA_DIR)
     message(STATUS "RAJA_DIR = ${RAJA_DIR}")
 
-    find_package(RAJA REQUIRED PATHS ${RAJA_DIR})
+    find_package(RAJA REQUIRED
+                 PATHS ${RAJA_DIR})
 
     get_target_property(RAJA_INCLUDE_DIRS RAJA INTERFACE_INCLUDE_DIRECTORIES)
     set_target_properties(RAJA
@@ -330,7 +272,7 @@ endif()
 #     set( thirdPartyLibs ${thirdPartyLibs} mathpresso )
 # else()
     set(MATHPRESSO_FOUND OFF CACHE BOOL "")
-    set(ENABLE_MATHPRESSO OFF CACHE BOOL "")
+    set(ENABLE_MATHPRESSO OFF CACHE BOOL "" FORCE)
     message(STATUS "Not using mathpresso")
 # endif()
 
@@ -356,8 +298,6 @@ if(DEFINED METIS_DIR)
                  NO_SYSTEM_ENVIRONMENT_PATH
                  NO_CMAKE_SYSTEM_PATH)
 
-    message(STATUS "METIS_INCLUDE_DIRS = ${METIS_INCLUDE_DIRS}")
-    message(STATUS "METIS_LIBRARY = ${METIS_LIBRARY}")
     include(FindPackageHandleStandardArgs)
     find_package_handle_standard_args(METIS DEFAULT_MSG METIS_INCLUDE_DIRS METIS_LIBRARY )
     if (NOT METIS_FOUND)
@@ -402,8 +342,6 @@ if(DEFINED PARMETIS_DIR)
                 NO_SYSTEM_ENVIRONMENT_PATH
                 NO_CMAKE_SYSTEM_PATH)
 
-    message(STATUS "PARMETIS_INCLUDE_DIRS = ${PARMETIS_INCLUDE_DIRS}" )
-    message(STATUS "PARMETIS_LIBRARY = ${PARMETIS_LIBRARY}" )
     include(FindPackageHandleStandardArgs)
     find_package_handle_standard_args(PARMETIS DEFAULT_MSG PARMETIS_INCLUDE_DIRS PARMETIS_LIBRARY )
     if (NOT PARMETIS_FOUND)
@@ -448,8 +386,6 @@ if(DEFINED SUPERLU_DIST_DIR)
                 NO_SYSTEM_ENVIRONMENT_PATH
                 NO_CMAKE_SYSTEM_PATH)
 
-    message(STATUS "SUPERLU_DIST_INCLUDE_DIRS = ${SUPERLU_DIST_INCLUDE_DIRS}" )
-    message(STATUS "SUPERLU_DIST_LIBRARY = ${SUPERLU_DIST_LIBRARY}" )
     include(FindPackageHandleStandardArgs)
     find_package_handle_standard_args(SUPERLU_DIST DEFAULT_MSG SUPERLU_DIST_INCLUDE_DIRS SUPERLU_DIST_LIBRARY)
     if(NOT SUPERLU_DIST_FOUND)
@@ -458,8 +394,8 @@ if(DEFINED SUPERLU_DIST_DIR)
 
     blt_register_library(NAME superlu_dist
                          DEPENDS_ON parmetis metis lapack blas
-                         INCLUDES ${SUPERLU_DIST_INCLUDE_DIRS} 
-                         LIBRARIES ${SUPERLU_DIST_LIBRARY}
+                         INCLUDES ${SUPERLU_DIST_DIR}/include 
+                         LIBRARIES ${SUPERLU_DIST_DIR}/lib/libsuperlu_dist.so
                          TREAT_INCLUDES_AS_SYSTEM ON)
 
     set(ENABLE_SUPERLU_DIST ON CACHE BOOL "" FORCE)
@@ -652,6 +588,7 @@ endif()
 #                         TREAT_INCLUDES_AS_SYSTEM ON )
 #   set( thirdPartyLibs ${thirdPartyLibs} vtk )  
 # endif()
+set(ENABLE_VTK OFF CACHE BOOL "" FORCE)
 
 ################################
 # uncrustify (This is here instead of SetupGeosxThirdParty.cmake so that BLT will see it)
