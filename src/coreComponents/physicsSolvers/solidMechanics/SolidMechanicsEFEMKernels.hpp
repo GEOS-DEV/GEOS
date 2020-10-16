@@ -46,17 +46,13 @@ template< typename SUBREGION_TYPE,
 class AssumedEnhancedStrain :
   public SolidMechanicsLagrangianFEMKernels::QuasiStatic< SUBREGION_TYPE,
                                                           CONSTITUTIVE_TYPE,
-                                                          FE_TYPE,
-                                                          3,
-                                                          3 >
+                                                          FE_TYPE >
 {
 public:
   /// Alias for the base class;
   using Base = SolidMechanicsLagrangianFEMKernels::QuasiStatic< SUBREGION_TYPE,
                                                                 CONSTITUTIVE_TYPE,
-                                                                FE_TYPE,
-                                                                3,
-                                                                3 >;
+                                                                FE_TYPE >;
 
   /// Number of nodes per element...which is equal to the
   /// numTestSupportPointPerElem and numTrialSupportPointPerElem by definition.
@@ -82,8 +78,8 @@ public:
                          FaceManager const & faceManager,
                          SUBREGION_TYPE const & elementSubRegion,
                          FE_TYPE const & finiteElementSpace,
-						 EmbeddedSurfaceSubRegion const & embeddedSurfSubRegion,
                          CONSTITUTIVE_TYPE * const inputConstitutiveType,
+						 EmbeddedSurfaceSubRegion const & embeddedSurfSubRegion,
                          arrayView1d< globalIndex const > const & uDofNumber,
 						 arrayView1d< globalIndex const > const & wDofNumber,
                          globalIndex const rankOffset,
@@ -104,7 +100,10 @@ public:
     m_wDofNumber( wDofNumber ),
     m_nVec(embeddedSurfSubRegion.getNormalVector()),
 	m_tVec1(embeddedSurfSubRegion.getTangentVector1()),
-	m_tVec2(embeddedSurfSubRegion.getTangentVector2())
+	m_tVec2(embeddedSurfSubRegion.getTangentVector2()),
+	m_surfaceCenter(embeddedSurfSubRegion.getElementCenter()),
+	m_surfaceArea(embeddedSurfSubRegion.getElementArea()),
+	m_elementVolume(elmentSubRegion.getElementVolume())
     {}
 
   //***************************************************************************
@@ -113,6 +112,7 @@ public:
      */
     struct StackVariables : public Base::StackVariables
     {
+    public:
       /// The number of displacement dofs per element.
       static constexpr int numUdofs = numTestSupportPointsPerElem * numDofPerTestSupportPoint;
 
@@ -134,7 +134,8 @@ public:
 	    localKww{ { 0.0 } },
 	    localKwu{ { 0.0 } },
 	    localKuw{ { 0.0 } },
-	    w_local()
+	    w_local(),
+		hInv()
       {}
 
       /// C-array storage for the element local row degrees of freedom.
@@ -166,6 +167,9 @@ public:
 
       /// Stack storage for the element local jump vector
       real64 w_local[3];
+
+      /// Stack storage for Area/Volume
+      real64 hInv;
     };
     //***************************************************************************
 
@@ -182,6 +186,8 @@ public:
   void setup( localIndex const k,
               StackVariables & stack ) const
   {
+
+	stack.hInv = m_surfaceArea[k] / m_elementVolume[k];
     for( localIndex a=0; a<numNodesPerElem; ++a )
     {
       localIndex const localNodeIndex = m_elemsToNodes( k, a );
@@ -240,7 +246,7 @@ public:
                                                      m_nVec[k],
 			                                         m_tVec1[k],
 			                                         m_tVec2[k],
-			                                         m_hInv[k]);
+			                                         stack.hInv);
 
      EFEMKernelsHelper::AssembleCompatibilityOperator<numNodesPerElem>( compMatrix,
     		                                                           m_nVec[k],
@@ -340,7 +346,11 @@ protected:
 
    arrayView2d< real64 const > const m_tVec2;
 
-   arrayView2d< real64 const> const m_surfaceCenter;
+   arrayView2d< real64 const > const m_surfaceCenter;
+
+   arrayView1d< real64 const > const m_surfaceArea;
+
+   arrayView1d< real64 const > const m_elementVolume;
 };
 
 } // namespace SolidMechanicsEFEMKernels
