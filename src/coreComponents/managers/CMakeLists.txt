@@ -82,9 +82,9 @@ if( ENABLE_VTK )
 endif()
 
 if( BUILD_OBJ_LIBS )
-  set( dependencyList dataRepository fileIO optionparser RAJA linearAlgebra conduit conduit_relay conduit_blueprint )
+  set( dependencyList dataRepository fileIO optionparser RAJA linearAlgebra conduit )
 else()
-  set( dependencyList common fileIO linearAlgebra optionparser RAJA mpiCommunications conduit conduit_relay conduit_blueprint )
+  set( dependencyList common fileIO linearAlgebra optionparser RAJA mpiCommunications conduit )
 endif()
 
 if( ENABLE_MATHPRESSO )
@@ -101,6 +101,10 @@ endif()
 
 if ( ENABLE_CALIPER )
   set( dependencyList ${dependencyList} caliper adiak )
+endif()
+
+if ( ENABLE_MKL )
+  set( dependencyList ${dependencyList} mkl )
 endif()
 
 blt_add_library( NAME                  managers

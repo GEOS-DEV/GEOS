@@ -42,8 +42,8 @@ CompositeFunction::CompositeFunction( const std::string & name,
 #ifdef GEOSX_USE_MATHPRESSO
   parserContext(),
   parserExpression(),
-#endif
   m_numSubFunctions(),
+#endif
   m_subFunctions()
 {
   registerWrapper( keys::functionNames, &m_functionNames )->
@@ -120,6 +120,10 @@ void CompositeFunction::Evaluate( dataRepository::Group const * const group,
     result[ii] = parserExpression.evaluate( reinterpret_cast< void * >( functionResults ));
   } );
 #else
+  GEOSX_UNUSED_VAR( group );
+  GEOSX_UNUSED_VAR( time );
+  GEOSX_UNUSED_VAR( set );
+  GEOSX_UNUSED_VAR( result );
   GEOSX_ERROR( "GEOSX was not configured with mathpresso!" );
 #endif
 }
@@ -137,6 +141,7 @@ real64 CompositeFunction::Evaluate( real64 const * const input ) const
 
   return parserExpression.evaluate( reinterpret_cast< void * >( functionResults ));
 #else
+  GEOSX_UNUSED_VAR( input );
   GEOSX_ERROR( "GEOSX was not configured with mathpresso!" );
   return 0;
 #endif
