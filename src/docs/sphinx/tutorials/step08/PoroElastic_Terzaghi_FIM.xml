@@ -268,7 +268,7 @@
   <Tasks>
     <PackCollection
       name="pressureCollection"
-      objectPath="ElementRegions/elementRegionsGroup/Region1/elementSubRegions/cb1"
+      objectPath="ElementRegions/Region1/cb1"
       fieldName="pressure"/>
   </Tasks>
 

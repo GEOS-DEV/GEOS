@@ -109,7 +109,7 @@ public:
                        DomainPartition & domain ) override;
 
   virtual void
-  ResetStateToBeginningOfStep( DomainPartition & GEOSX_UNUSED_PARAM( domain ) ) override;
+    ResetStateToBeginningOfStep( DomainPartition & GEOSX_UNUSED_PARAM( domain ) ) override;
 
   virtual void
   ImplicitStepComplete( real64 const & time,
@@ -138,7 +138,7 @@ public:
   };
   //END_SPHINX_INCLUDE_01
 
-  
+
   // This structure stores ``dataRepository::ViewKey`` objects
   // used as binding between the input XML tags and source
   // code variables (here, timeIntegrationOption and fieldVarName)
@@ -161,12 +161,12 @@ private:
 
 
 /* REGISTERING NEW ENUMS:
---------------------------
-In order to register an enumeration type with the Data Repository and have its value read from input,
-we must define stream insertion/extraction operators. This is a common task, so GEOSX provides
-a facility for automating it. Upon including ``common/EnumStrings.hpp``, we can call the following macro
-at the namespace scope (in this case, right after the ``LaplaceFEM`` class definition is complete):
-*/
+   --------------------------
+   In order to register an enumeration type with the Data Repository and have its value read from input,
+   we must define stream insertion/extraction operators. This is a common task, so GEOSX provides
+   a facility for automating it. Upon including ``common/EnumStrings.hpp``, we can call the following macro
+   at the namespace scope (in this case, right after the ``LaplaceFEM`` class definition is complete):
+ */
 //START_SPHINX_INCLUDE_05
 ENUM_STRINGS( LaplaceFEM::TimeIntegrationOption, "SteadyState", "ImplicitTransient", "ExplicitTransient" )
 //END_SPHINX_INCLUDE_05
