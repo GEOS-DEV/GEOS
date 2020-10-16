@@ -47,9 +47,9 @@ set( linearAlgebra_sources
      DofManager.cpp )
 
 if( BUILD_OBJ_LIBS )
-  set( dependencyList common blas lapack raja managers)
+  set( dependencyList common blas lapack RAJA managers)
 else()
-  set( dependencyList common blas lapack raja )
+  set( dependencyList common blas lapack RAJA )
 endif()
 
 
