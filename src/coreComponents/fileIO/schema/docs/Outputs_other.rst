@@ -8,7 +8,6 @@ ChomboIO    node :ref:`DATASTRUCTURE_ChomboIO`
 Restart     node :ref:`DATASTRUCTURE_Restart`     
 Silo        node :ref:`DATASTRUCTURE_Silo`        
 TimeHistory node :ref:`DATASTRUCTURE_TimeHistory` 
-VTK         node :ref:`DATASTRUCTURE_VTK`         
 =========== ==== ================================ 
 
 

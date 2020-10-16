@@ -103,6 +103,10 @@ if ( ENABLE_CALIPER )
   set( dependencyList ${dependencyList} caliper adiak )
 endif()
 
+if ( ENABLE_MKL )
+  set( dependencyList ${dependencyList} mkl )
+endif()
+
 blt_add_library( NAME                  managers
                  SOURCES               ${managers_sources}
                  HEADERS               ${managers_headers}

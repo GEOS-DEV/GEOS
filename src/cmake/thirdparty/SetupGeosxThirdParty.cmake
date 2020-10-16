@@ -2,6 +2,59 @@
 # 3rd Party Dependencies
 ####################################
 
+macro(find_and_register)
+    set(singleValueArgs NAME HEADER)
+    set(multiValueArgs INCLUDE_DIRECTORIES LIBRARY_DIRECTORIES LIBRARIES)
+
+    ## parse the arguments
+    cmake_parse_arguments(arg
+        "${options}" "${singleValueArgs}" "${multiValueArgs}" ${ARGN} )
+
+    if( NOT DEFINED arg_NAME )
+        message(FATAL_ERROR "The find_and_register required parameter NAME specifies the name of the library to register.")
+    endif()
+
+    if ( NOT DEFINED arg_INCLUDE_DIRECTORIES )
+        message(FATAL_ERROR "The find_and_register required parameter INCLUDE_DIRECTORIES specifies the directories to search for the given header.")
+    endif()
+
+    if ( NOT DEFINED arg_LIBRARY_DIRECTORIES )
+        message(FATAL_ERROR "The find_and_register required parameter LIBRARY_DIRECTORIES specifies the directories to search for the given libraries.")
+    endif()
+
+    if ( NOT DEFINED arg_HEADER )
+        message(FATAL_ERROR "The find_and_register required parameter HEADER specifies the header to search for.")
+    endif()
+
+    if ( NOT DEFINED arg_LIBRARIES )
+        message(FATAL_ERROR "The find_and_register required parameter LIBRARIES specifies the libraries to search for.")
+    endif()
+
+    find_path(FOUND_INCLUDE_DIR ${arg_HEADER}
+              PATHS ${arg_INCLUDE_DIRECTORIES}
+              NO_DEFAULT_PATH
+              NO_CMAKE_ENVIRONMENT_PATH
+              NO_CMAKE_PATH
+              NO_SYSTEM_ENVIRONMENT_PATH
+              NO_CMAKE_SYSTEM_PATH)
+
+    if(FOUND_INCLUDE_DIR STREQUAL FOUND_INCLUDE_DIR-NOTFOUND)
+        message(FATAL_ERROR "Could not find '${arg_HEADER}' in '${arg_INCLUDE_DIRECTORIES}'")
+    endif()
+
+    blt_find_libraries(FOUND_LIBS FOUND_LIBRARIES
+                       NAMES ${arg_LIBRARIES}
+                       PATHS ${arg_LIBRARY_DIRECTORIES}
+                       REQUIRED ON)
+
+    blt_register_library(NAME ${arg_NAME}
+                         INCLUDES ${FOUND_INCLUDE_DIR}
+                         LIBRARIES ${FOUND_LIBRARIES}
+                         TREAT_INCLUDES_AS_SYSTEM ON)
+
+endmacro(find_and_register)
+
+
 set( thirdPartyLibs "")
 
 ################################
@@ -282,32 +335,11 @@ endif()
 if(DEFINED METIS_DIR)
     message(STATUS "METIS_DIR = ${METIS_DIR}")
 
-    find_path(METIS_INCLUDE_DIRS metis.h
-              PATHS ${METIS_DIR}/include
-              NO_DEFAULT_PATH
-              NO_CMAKE_ENVIRONMENT_PATH
-              NO_CMAKE_PATH
-              NO_SYSTEM_ENVIRONMENT_PATH
-              NO_CMAKE_SYSTEM_PATH)
-
-    find_library(METIS_LIBRARY NAMES metis
-                 PATHS ${METIS_DIR}/lib
-                 NO_DEFAULT_PATH
-                 NO_CMAKE_ENVIRONMENT_PATH
-                 NO_CMAKE_PATH
-                 NO_SYSTEM_ENVIRONMENT_PATH
-                 NO_CMAKE_SYSTEM_PATH)
-
-    include(FindPackageHandleStandardArgs)
-    find_package_handle_standard_args(METIS DEFAULT_MSG METIS_INCLUDE_DIRS METIS_LIBRARY )
-    if (NOT METIS_FOUND)
-        message(FATAL_ERROR "METIS not found in ${METIS_DIR}. Maybe you need to build it")
-    endif()
-
-    blt_register_library(NAME metis
-                         INCLUDES ${METIS_INCLUDE_DIRS}
-                         LIBRARIES ${METIS_LIBRARY}
-                         TREAT_INCLUDES_AS_SYSTEM ON)
+    find_and_register(NAME metis
+                      INCLUDE_DIRECTORIES ${METIS_DIR}/include
+                      LIBRARY_DIRECTORIES ${METIS_DIR}/lib
+                      HEADER metis.h
+                      LIBRARIES metis)
 
     set(ENABLE_METIS ON CACHE BOOL "" FORCE)
     set(thirdPartyLibs ${thirdPartyLibs} metis)
@@ -326,32 +358,11 @@ endif()
 if(DEFINED PARMETIS_DIR)
     message(STATUS "PARMETIS_DIR = ${PARMETIS_DIR}")
 
-    find_path(PARMETIS_INCLUDE_DIRS parmetis.h
-              PATHS ${PARMETIS_DIR}/include
-              NO_DEFAULT_PATH
-              NO_CMAKE_ENVIRONMENT_PATH
-              NO_CMAKE_PATH
-              NO_SYSTEM_ENVIRONMENT_PATH
-              NO_CMAKE_SYSTEM_PATH)
-
-   find_library(PARMETIS_LIBRARY NAMES parmetis
-                PATHS ${PARMETIS_DIR}/lib
-                NO_DEFAULT_PATH
-                NO_CMAKE_ENVIRONMENT_PATH
-                NO_CMAKE_PATH
-                NO_SYSTEM_ENVIRONMENT_PATH
-                NO_CMAKE_SYSTEM_PATH)
-
-    include(FindPackageHandleStandardArgs)
-    find_package_handle_standard_args(PARMETIS DEFAULT_MSG PARMETIS_INCLUDE_DIRS PARMETIS_LIBRARY )
-    if (NOT PARMETIS_FOUND)
-        message(FATAL_ERROR "PARMETIS not found in ${PARMETIS_DIR}. Maybe you need to build it")
-    endif()
-
-    blt_register_library(NAME parmetis
-                         INCLUDES ${PARMETIS_INCLUDE_DIRS} 
-                         LIBRARIES ${PARMETIS_LIBRARY}
-                         TREAT_INCLUDES_AS_SYSTEM ON)
+    find_and_register(NAME parmetis
+                      INCLUDE_DIRECTORIES ${PARMETIS_DIR}/include
+                      LIBRARY_DIRECTORIES ${PARMETIS_DIR}/lib
+                      HEADER parmetis.h
+                      LIBRARIES parmetis)
 
     set(ENABLE_PARMETIS ON CACHE BOOL "" FORCE)
     set(thirdPartyLibs ${thirdPartyLibs} parmetis)
@@ -370,33 +381,11 @@ endif()
 if(DEFINED SUPERLU_DIST_DIR)
     message(STATUS "SUPERLU_DIST_DIR = ${SUPERLU_DIST_DIR}")
 
-    find_path(SUPERLU_DIST_INCLUDE_DIRS superlu_defs.h
-              PATHS ${SUPERLU_DIST_DIR}/include
-              NO_DEFAULT_PATH
-              NO_CMAKE_ENVIRONMENT_PATH
-              NO_CMAKE_PATH
-              NO_SYSTEM_ENVIRONMENT_PATH
-              NO_CMAKE_SYSTEM_PATH)
-
-   find_library(SUPERLU_DIST_LIBRARY NAMES superlu_dist
-                PATHS ${SUPERLU_DIST_DIR}/lib PATHS ${SUPERLU_DIST_DIR}/lib64
-                NO_DEFAULT_PATH
-                NO_CMAKE_ENVIRONMENT_PATH
-                NO_CMAKE_PATH
-                NO_SYSTEM_ENVIRONMENT_PATH
-                NO_CMAKE_SYSTEM_PATH)
-
-    include(FindPackageHandleStandardArgs)
-    find_package_handle_standard_args(SUPERLU_DIST DEFAULT_MSG SUPERLU_DIST_INCLUDE_DIRS SUPERLU_DIST_LIBRARY)
-    if(NOT SUPERLU_DIST_FOUND)
-        message(FATAL_ERROR "SUPERLU_DIST not found in ${SUPERLU_DIST_DIR}. Maybe you need to build it")
-    endif()
-
-    blt_register_library(NAME superlu_dist
-                         DEPENDS_ON parmetis metis lapack blas
-                         INCLUDES ${SUPERLU_DIST_DIR}/include 
-                         LIBRARIES ${SUPERLU_DIST_DIR}/lib/libsuperlu_dist.so
-                         TREAT_INCLUDES_AS_SYSTEM ON)
+    find_and_register(NAME superlus_dist
+                      INCLUDE_DIRECTORIES ${SUPERLU_DIST_DIR}/include
+                      LIBRARY_DIRECTORIES ${SUPERLU_DIST_DIR}/lib PATHS ${SUPERLU_DIST_DIR}/lib64
+                      HEADER superlu_defs.h
+                      LIBRARIES superlu_dist)
 
     set(ENABLE_SUPERLU_DIST ON CACHE BOOL "" FORCE)
     set(thirdPartyLibs ${thirdPartyLibs} superlu_dist)

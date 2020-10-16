@@ -645,13 +645,6 @@ Element: TwoPointFluxApproximation
 .. include:: ../../coreComponents/fileIO/schema/docs/TwoPointFluxApproximation.rst
 
 
-.. _XML_VTK:
-
-Element: VTK
-============
-.. include:: ../../coreComponents/fileIO/schema/docs/VTK.rst
-
-
 .. _XML_VanGenuchtenBakerRelativePermeability:
 
 Element: VanGenuchtenBakerRelativePermeability
@@ -1361,13 +1354,6 @@ Datastructure: TimeHistory
 Datastructure: TwoPointFluxApproximation
 ========================================
 .. include:: ../../coreComponents/fileIO/schema/docs/TwoPointFluxApproximation_other.rst
-
-
-.. _DATASTRUCTURE_VTK:
-
-Datastructure: VTK
-==================
-.. include:: ../../coreComponents/fileIO/schema/docs/VTK_other.rst
 
 
 .. _DATASTRUCTURE_VanGenuchtenBakerRelativePermeability:

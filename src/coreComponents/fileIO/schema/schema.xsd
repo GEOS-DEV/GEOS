@@ -730,7 +730,6 @@ the relative residual norm satisfies:
 			<xsd:element name="Restart" type="RestartType" />
 			<xsd:element name="Silo" type="SiloType" />
 			<xsd:element name="TimeHistory" type="TimeHistoryType" />
-			<xsd:element name="VTK" type="VTKType" />
 		</xsd:choice>
 	</xsd:complexType>
 	<xsd:complexType name="BlueprintType">
@@ -802,22 +801,6 @@ the relative residual norm satisfies:
 		<xsd:attribute name="parallelThreads" type="integer" default="1" />
 		<!--sources => A list of collectors from which to collect and output time history information.-->
 		<xsd:attribute name="sources" type="string_array" use="required" />
-		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
-	</xsd:complexType>
-	<xsd:complexType name="VTKType">
-		<!--childDirectory => Child directory path-->
-		<xsd:attribute name="childDirectory" type="string" default="" />
-		<!--parallelThreads => Number of plot files.-->
-		<xsd:attribute name="parallelThreads" type="integer" default="1" />
-		<!--plotFileRoot => (no description available)-->
-		<xsd:attribute name="plotFileRoot" type="string" default="" />
-		<!--plotLevel => (no description available)-->
-		<xsd:attribute name="plotLevel" type="integer" default="1" />
-		<!--writeBinaryData => Output the data in binary format-->
-		<xsd:attribute name="writeBinaryData" type="integer" default="1" />
-		<!--writeFEMFaces => (no description available)-->
-		<xsd:attribute name="writeFEMFaces" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
