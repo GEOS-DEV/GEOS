@@ -13,7 +13,8 @@ from os import environ as env
 from os.path import join as pjoin
 
 
-# ./scripts/uberenv/uberenv.py --spec="%gcc@8.3.1 +mkl lai=trilinos ^chai@master ^conduit@0.5.0"
+# reset; ./scripts/uberenv/uberenv.py --spec="%gcc@8.3.1 +mkl ^chai@master"
+# reset; ./scripts/uberenv/uberenv.py --spec="%clang@10.0.1 +mkl ^chai@master"
 
 def cmake_cache_entry(name, value, comment=""):
     """Generate a string for a cmake cache variable"""
@@ -49,11 +50,15 @@ class Geosx(CMakePackage, CudaPackage):
 
     version('develop', branch='develop', submodules='True')
 
-    variant('shared', default=True, description='Build Shared Libs')
-    variant('caliper', default=False, description='Build Caliper support')
+    variant('shared', default=True, description='Build Shared Libs.')
+    variant('caliper', default=False, description='Build Caliper support.')
     variant('mkl', default=False, description='Use the Intel MKL library.')
-    variant('lai', default='trilinos', description='Linear algebra packages to build',
-            values=('trilinos', 'hypre', 'petsc'), multi=True)
+    variant('suite-sparse', default=True, description='Build SuiteSparse support.')
+    variant('trilinos', default=True, description='Build Trilinos support.')
+    variant('hypre', default=True, description='Build HYPRE support.')
+    variant('petsc', default=True, description='Build PETSc support.')
+    variant('lai', default='trilinos', description='Linear algebra interface.',
+            values=('trilinos', 'hypre', 'petsc'), multi=False)
     # variant('tests', default=True, description='Build tests')
     # variant('benchmarks', default=False, description='Build benchmarks')
     # variant('examples', default=False, description='Build examples')
@@ -67,52 +72,54 @@ class Geosx(CMakePackage, CudaPackage):
     #
     # Performance portability
     #
-    depends_on('raja@0.12.1: ~examples~exercises')
+    depends_on('raja@0.12.1: +openmp +shared ~examples ~exercises')
     depends_on('raja +cuda', when='+cuda')
 
-    depends_on('umpire@4.0.1: ~examples')
+    depends_on('umpire@4.0.1: ~c +shared +openmp ~examples')
     depends_on('umpire +cuda', when='+cuda')
 
-    depends_on('chai +raja~benchmarks~examples')
+    depends_on('chai +shared +raja ~benchmarks ~examples')
     depends_on('chai +cuda', when='+cuda')
 
     #
     # IO
     #
-    depends_on('hdf5@1.10.5: +mpi', when='~vtk')
+    depends_on('hdf5@1.10.5: +shared +pic +mpi', when='~vtk')
 
-    depends_on('conduit@0.5: ~test~fortran+mpi+hdf5~hdf5_compat')
+    depends_on('conduit@0.5: +shared ~test ~fortran +mpi +hdf5 ~hdf5_compat')
 
-    depends_on('silo@4.10: ~fortran~silex+mpi~zlib')
+    depends_on('silo@4.10: ~fortran +shared ~silex +pic +mpi ~zlib')
 
-    depends_on('adiak@0.2: +mpi', when='+caliper')
-    depends_on('caliper@2.4: +adiak+mpi~dyninst~callpath~papi~libpfm~gotcha~sampler~sosflow', when='+caliper')
+    depends_on('adiak@0.2: +mpi +shared', when='+caliper')
+    depends_on('caliper@2.4: +shared +adiak +mpi ~callpath ~papi ~libpfm ~gotcha ~sampler', when='+caliper')
 
-    depends_on('pugixml@1.8:')
+    depends_on('pugixml@1.8: +shared')
 
     #
     # Math
     #
-    depends_on('intel-mkl', when='+mkl')
+    depends_on('intel-mkl +shared ~ilp64', when='+mkl')
 
-    depends_on('parmetis@4.0.3:')
-    depends_on('superlu-dist@6.3.1: +openmp+int64')
+    depends_on('parmetis@4.0.3: +shared +int64')
+    depends_on('superlu-dist@6.3.1: +int64 +openmp +shared')
 
+    depends_on('suite-sparse@5.7.2: +pic +openmp', when='+suite-sparse')
 
-    trilinos_build_options = '+openmp ~fortran'
-    trilinos_tpls = '+mpi ~boost~cgns~adios2~glm~gtest~hdf5~hypre~matio~metis~mumps~netcdf~pnetcdf~suite-sparse~superlu-dist~superlu~x11~zlib'
-    trilinos_packages = '+amesos+aztec+epetra+epetraext+ifpack+kokkos+ml+stk+stratimikos+teuchos+tpetra ~amesos2~anasazi~belos~chaco~exodus~ifpack2~intrepid~intrepid2~isorropia~minitensor~muelu~nox~piro~phalanx~rol~rythmos~sacado~shards~shylu~teko~tempus~zoltan~zoltan2'
-    depends_on('trilinos@12.18.1: ' + trilinos_build_options + trilinos_tpls + trilinos_packages, when='lai=trilinos')
+    trilinos_build_options = '~fortran +openmp +shared'
+    trilinos_tpls = '~boost ~glm ~gtest ~hdf5 ~hypre ~matio ~metis +mpi ~mumps ~netcdf ~suite-sparse'
+    trilinos_packages = '+amesos +aztec +epetra +epetraext +ifpack +kokkos +ml +stk +stratimikos +teuchos +tpetra ~amesos2 ~anasazi ~belos ~exodus ~ifpack2 ~muelu ~sacado ~zoltan ~zoltan2'
+    depends_on('trilinos@12.18.1: ' + trilinos_build_options + trilinos_tpls + trilinos_packages, when='+trilinos')
 
+    depends_on('hypre@2.20.0: +shared +superlu-dist +mixedint +mpi +openmp', when='+hypre')
  
-    # hypre
-    # suitesparse
-    # petsc
+    petsc_build_options = '+shared +mpi'
+    petsc_tpls = '+metis ~hdf5 ~hypre ~superlu-dist +int64'
+    depends_on('petsc@3.13.0: ' + petsc_build_options + petsc_tpls, when='+petsc')
 
     #
     # Dev tools
     #
-    depends_on('uncrustify@0.67')
+    depends_on('uncrustify@0.71:')
 
     #
     # Documentation
@@ -304,10 +311,10 @@ class Geosx(CMakePackage, CudaPackage):
             math_tpls = (('metis', 'METIS', True),
                         ('parmetis', 'PARMETIS', True),
                         ('superlu-dist', 'SUPERLU_DIST', True),
-                        ('suitesparse', 'SUITESPARSE', False),
-                        ('trilinos', 'TRILINOS', 'lai=trilinos' in spec),
-                        ('hypre', 'HYPRE', False),
-                        ('petsc', 'PETSC', False))
+                        ('suite-sparse', 'SUITESPARSE', '+suite-sparse' in spec),
+                        ('trilinos', 'TRILINOS', '+trilinos' in spec),
+                        ('hypre', 'HYPRE', '+hypre' in spec),
+                        ('petsc', 'PETSC', '+petsc' in spec))
             cfg.write('#{0}\n'.format('-' * 80))
             cfg.write('# Math TPLs\n')
             cfg.write('#{0}\n\n'.format('-' * 80))
@@ -363,6 +370,7 @@ class Geosx(CMakePackage, CudaPackage):
             cfg.write("#{0}\n\n".format("-" * 80))
 
             cfg.write(cmake_cache_option('ENABLE_MATHPRESSO', False))
+            cfg.write(cmake_cache_option('ENABLE_XML_UPDATES', False))
 
 
     def cmake_args(self):

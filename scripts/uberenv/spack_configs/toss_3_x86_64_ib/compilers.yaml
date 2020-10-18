@@ -41,7 +41,7 @@ compilers:
     flags:
       cflags: -gcc-name=/usr/tce/packages/gcc/gcc-8.3.1/bin/gcc -march=native -mtune=native
       cxxflags: -gxx-name=/usr/tce/packages/gcc/gcc-8.3.1/bin/g++ -march=native -mtune=native
-      fflags: -march=native -mtune=native
+      fflags: -gcc-name=/usr/tce/packages/gcc/gcc-8.3.1/bin/gcc -march=native -mtune=native
     operating_system: rhel7
     target: x86_64
     modules: []
