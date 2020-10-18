@@ -109,6 +109,9 @@ public:
   using VectorBase::ready;
   using VectorBase::extract;
 
+  /**
+   * @copydoc VectorBase<HypreVector>::created
+   */
   virtual bool created() const override;
 
   virtual void createWithLocalSize( localIndex const localSize,
@@ -167,18 +170,39 @@ public:
                       HypreVector const & x,
                       real64 const beta ) override;
 
+  /**
+   * @copydoc VectorBase<HypreVector>::norm1
+   */
   virtual real64 norm1() const override;
 
+  /**
+   * @copydoc VectorBase<HypreVector>::norm2
+   */
   virtual real64 norm2() const override;
 
+  /**
+   * @copydoc VectorBase<HypreVector>::normInf
+   */
   virtual real64 normInf() const override;
 
+  /**
+   * @copydoc VectorBase<HypreVector>::globalSize
+   */
   virtual globalIndex globalSize() const override;
 
+  /**
+   * @copydoc VectorBase<HypreVector>::localSize
+   */
   virtual localIndex localSize() const override;
 
+  /**
+   * @copydoc VectorBase<HypreVector>::ilower
+   */
   virtual globalIndex ilower() const override;
 
+  /**
+   * @copydoc VectorBase<HypreVector>::iupper
+   */
   virtual globalIndex iupper() const override;
 
   virtual real64 get( globalIndex globalRow ) const override;
@@ -190,10 +214,19 @@ public:
 
   virtual globalIndex getGlobalRowID( localIndex const localRowIndex ) const override;
 
+  /**
+   * @copydoc VectorBase<HypreVector>::extractLocalVector
+   */
   virtual real64 const * extractLocalVector() const override;
 
+  /**
+   * @copydoc VectorBase<HypreVector>::extractLocalVector
+   */
   virtual real64 * extractLocalVector() override;
 
+  /**
+   * @copydoc VectorBase<HypreVector>::getComm
+   */
   virtual MPI_Comm getComm() const override;
 
   virtual void print( std::ostream & os = std::cout ) const override;

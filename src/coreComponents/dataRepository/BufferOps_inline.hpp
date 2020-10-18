@@ -12,8 +12,8 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef DATAREPOSITORY_BUFFEROPS_INLINE_H_
-#define DATAREPOSITORY_BUFFEROPS_INLINE_H_
+#ifndef DATAREPOSITORY_BUFFEROPS_INLINE_HPP_
+#define DATAREPOSITORY_BUFFEROPS_INLINE_HPP_
 
 #include "common/DataTypes.hpp"
 #include "common/TimingMacros.hpp"

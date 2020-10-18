@@ -98,6 +98,9 @@ public:
 
   virtual void close() override;
 
+  /**
+   * @copydoc MatrixBase<EpetraMatrix,EpetraVector>::created
+   */
   virtual bool created() const override;
 
   virtual void reset() override;
@@ -234,6 +237,9 @@ public:
 
   virtual void addDiagonal( EpetraVector const & src ) override;
 
+  /**
+   * @copydoc MatrixBase<EpetraMatrix,EpetraVector>::maxRowLength
+   */
   virtual localIndex maxRowLength() const override;
 
   virtual localIndex localRowLength( localIndex localRowIndex ) const override;
@@ -248,36 +254,78 @@ public:
 
   virtual void extractDiagonal( EpetraVector & dst ) const override;
 
+  /**
+   * @copydoc MatrixBase<EpetraMatrix,EpetraVector>::numGlobalRows
+   */
   virtual globalIndex numGlobalRows() const override;
 
+  /**
+   * @copydoc MatrixBase<EpetraMatrix,EpetraVector>::numGlobalCols
+   */
   virtual globalIndex numGlobalCols() const override;
 
+  /**
+   * @copydoc MatrixBase<EpetraMatrix,EpetraVector>::numLocalRows
+   */
   virtual localIndex numLocalRows() const override;
 
+  /**
+   * @copydoc MatrixBase<EpetraMatrix,EpetraVector>::numLocalCols
+   */
   virtual localIndex numLocalCols() const override;
 
+  /**
+   * @copydoc MatrixBase<EpetraMatrix,EpetraVector>::ilower
+   */
   virtual globalIndex ilower() const override;
 
+  /**
+   * @copydoc MatrixBase<EpetraMatrix,EpetraVector>::iupper
+   */
   virtual globalIndex iupper() const override;
 
+  /**
+   * @copydoc MatrixBase<EpetraMatrix,EpetraVector>::jlower
+   */
   virtual globalIndex jlower() const override;
 
+  /**
+   * @copydoc MatrixBase<EpetraMatrix,EpetraVector>::jupper
+   */
   virtual globalIndex jupper() const override;
 
+  /**
+   * @copydoc MatrixBase<EpetraMatrix,EpetraVector>::numLocalNonzeros
+   */
   virtual localIndex numLocalNonzeros() const override;
 
+  /**
+   * @copydoc MatrixBase<EpetraMatrix,EpetraVector>::numGlobalNonzeros
+   */
   virtual globalIndex numGlobalNonzeros() const override;
 
+  /**
+   * @copydoc MatrixBase<EpetraMatrix,EpetraVector>::normInf
+   */
   virtual real64 normInf() const override;
 
+  /**
+   * @copydoc MatrixBase<EpetraMatrix,EpetraVector>::norm1
+   */
   virtual real64 norm1() const override;
 
+  /**
+   * @copydoc MatrixBase<EpetraMatrix,EpetraVector>::normFrobenius
+   */
   virtual real64 normFrobenius() const override;
 
   virtual localIndex getLocalRowID( globalIndex const index ) const override;
 
   virtual globalIndex getGlobalRowID( localIndex const index ) const override;
 
+  /**
+   * @copydoc MatrixBase<EpetraMatrix,EpetraVector>::getComm
+   */
   virtual MPI_Comm getComm() const override;
 
   virtual void print( std::ostream & os = std::cout ) const override;
