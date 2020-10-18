@@ -493,7 +493,6 @@ public:
   /**
    * @brief Copies the contents of a Wrapper into *this.
    * @param[in] source The wrapper to copy
-   * @return
    */
   virtual void copyWrapper( WrapperBase const & source ) = 0;
 
