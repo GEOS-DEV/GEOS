@@ -33,6 +33,8 @@ protected:
 
   static void SetUpTestCase()
   {
+    // Sphinx start after input XML
+
     string const inputStream =
       "<Problem>"
       "  <Solvers>"
@@ -56,16 +58,9 @@ protected:
       "                  cellBlockNames=\"cb1\" />"
       "  </Mesh>"
       "  <Events maxTime=\"1.0\">"
-      "    <!-- This event is applied every cycle, and overrides the solver time-step request -->"
       "    <PeriodicEvent name=\"solverApplications\""
       "                   forceDt=\"1.0\""
       "                   target=\"/Solvers/laplace\" />"
-      "    <!-- This event is applied every 1.0s.  The targetExactTimestep flag allows this event"
-      "    to request a dt modification to match an integer multiple of the timeFrequency. -->"
-      "    <PeriodicEvent name=\"outputs\""
-      "                   timeFrequency=\"1.0\""
-      "                   targetExactTimestep=\"1\""
-      "                   target=\"/Outputs/siloOutput\" />"
       "  </Events>"
       "  <NumericalMethods>"
       "    <BasisFunctions>"
@@ -82,10 +77,6 @@ protected:
       "    <ElementRegion name=\"Region1\" cellBlocks=\"cb1\" materialList=\"shale\" />"
       "  </ElementRegions>"
       "  <Constitutive>"
-      "    <LinearElasticIsotropic name=\"granite\""
-      "                            defaultDensity=\"2700\""
-      "                            defaultBulkModulus=\"5.5556e9\""
-      "                            defaultShearModulus=\"4.16667e9\" />"
       "    <LinearElasticIsotropic name=\"shale\""
       "                            defaultDensity=\"2700\""
       "                            defaultBulkModulus=\"5.5556e9\""
@@ -103,14 +94,13 @@ protected:
       "                        scale=\"0.0\""
       "                        setNames=\"sink\" />"
       "  </FieldSpecifications>"
-      "  <Outputs>"
-      "    <Silo name=\"siloOutput\" parallelThreads=\"32\" plotFileRoot=\"plot\" />"
-      "  </Outputs>"
       "  <Geometry>"
       "    <Box name=\"source\" xMin=\"-0.01, -0.01, -0.01\" xMax=\"+0.01, +1.01, +1.01\" />"
       "    <Box name=\"sink\"   xMin=\"+0.99, -0.01, -0.01\" xMax=\"+1.01, +1.01, +1.01\" />"
       "  </Geometry>"
       "</Problem>";
+
+    // Sphinx end before input XML
 
     xmlWrapper::xmlDocument xmlDocument;
     xmlWrapper::xmlResult xmlResult = xmlDocument.load_buffer( inputStream.c_str(), inputStream.size() );

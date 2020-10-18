@@ -84,8 +84,15 @@ public:
    */
   ///@{
 
-  virtual void apply( BlockVectorView< VECTOR > const & src,
-                      BlockVectorView< VECTOR > & dst ) const override
+  /**
+   * @brief Apply operator to a vector
+   * @param src Input vector (x).
+   * @param dst Output vector (b).
+   *
+   * @warning @p src and @p dst cannot alias the same vector (some implementations may allow this).
+   */
+  virtual void apply( Vector const & src,
+                      Vector & dst ) const override
   {
     for( localIndex i = 0; i < numBlockRows(); i++ )
     {
@@ -102,6 +109,15 @@ public:
     }
   }
 
+  /**
+   * @brief Apply the transpose of block operator to a block vector.
+   * @tparam OP dummy template parameter to enable SFINAE, do not provide
+   * @param src source vector (rhs)
+   * @param dst target vector (lhs)
+   * @return nothing
+   *
+   * @note This method only exists if the underlying operator type has it.
+   */
   template< typename OP = OPERATOR >
   std::enable_if_t< HasMemberFunction_applyTranspose< OP > >
   applyTranspose( BlockVectorView< VECTOR > const & src,
@@ -122,16 +138,29 @@ public:
     }
   }
 
+  /**
+   * @brief Get the number of global rows.
+   * @return Number of global rows in the operator.
+   */
   virtual globalIndex numGlobalRows() const override
   {
     return computeRowSize( []( OPERATOR const & block ) { return block.numGlobalRows(); } );
   }
 
+  /**
+   * @brief Get the number of global columns.
+   * @return Number of global columns in the operator.
+   */
   virtual globalIndex numGlobalCols() const override
   {
     return computeColSize( []( OPERATOR const & block ) { return block.numGlobalCols(); } );
   }
 
+  /**
+   * @brief Get the number of local rows.
+   * @return Number of local rows in the operator.
+   * @note Method only exists if the underlying operator type has it.
+   */
   template< typename OP = OPERATOR >
   std::enable_if_t< HasMemberFunction_numLocalRows< OP >, localIndex >
   numLocalRows() const
@@ -139,6 +168,11 @@ public:
     return computeRowSize( []( OPERATOR const & block ) { return block.numLocalRows(); } );
   }
 
+  /**
+   * @brief Get the number of local columns.
+   * @return Number of local columns in the operator.
+   * @note Method only exists if the underlying operator type has it.
+   */
   template< typename OP = OPERATOR >
   std::enable_if_t< HasMemberFunction_numLocalCols< OP >, localIndex >
   numLocalCols() const

@@ -28,18 +28,12 @@
 namespace geosx
 {
 
-/**
- * @brief Forward declaration of InterObjectRelation
- */
 template< typename T >
 class InterObjectRelation;
 
 namespace bufferOps
 {
 
-/**
- * @brief Forward declaration of is_packable
- */
 template< typename T >
 struct is_packable_helper;
 

@@ -147,9 +147,21 @@ public:
 
   using PreconditionerBase< LAI >::compute;
 
+  /**
+   * @brief Compute the preconditioner from a matrix
+   * @param mat the matrix to precondition
+   * @param dofManager the Degree-of-Freedom manager associated with matrix
+   */
   virtual void compute( Matrix const & mat,
                         DofManager const & dofManager ) override;
 
+  /**
+   * @brief Apply operator to a vector
+   * @param src Input vector (x).
+   * @param dst Output vector (b).
+   *
+   * @warning @p src and @p dst cannot alias the same vector (some implementations may allow this).
+   */
   virtual void apply( Vector const & src, Vector & dst ) const override;
 
   virtual void clear() override;

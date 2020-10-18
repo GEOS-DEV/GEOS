@@ -54,9 +54,8 @@ real64 ComputeSurfaceArea( array1d< R1Tensor > const & points,
 
 /**
  * @brief Reorder a set of points counter-clockwise.
- * @param[in] points coordinates of the points
+ * @param[in,out] points coordinates of the points
  * @param[in] normal unit normal vector to the surface
- * @return the reordered set of points
  */
 void orderPointsCCW( array1d< R1Tensor > & points,
                      R1Tensor const & normal );
