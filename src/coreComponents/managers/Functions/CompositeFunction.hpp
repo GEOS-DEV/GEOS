@@ -84,9 +84,9 @@ private:
 #ifdef GEOSX_USE_MATHPRESSO
   mathpresso::Context parserContext;
   mathpresso::Expression parserExpression;
+  localIndex m_numSubFunctions;
 #endif
 
-  localIndex m_numSubFunctions;
   static constexpr localIndex m_maxNumSubFunctions = 10;
   std::vector< FunctionBase * > m_subFunctions;
 

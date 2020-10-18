@@ -82,9 +82,9 @@ if( ENABLE_VTK )
 endif()
 
 if( BUILD_OBJ_LIBS )
-  set( dependencyList dataRepository fileIO optionparser RAJA linearAlgebra conduit::conduit )
+  set( dependencyList dataRepository fileIO optionparser RAJA linearAlgebra conduit )
 else()
-  set( dependencyList common fileIO linearAlgebra optionparser RAJA mpiCommunications conduit::conduit )
+  set( dependencyList common fileIO linearAlgebra optionparser RAJA mpiCommunications conduit )
 endif()
 
 if( ENABLE_MATHPRESSO )

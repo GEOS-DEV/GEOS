@@ -4,33 +4,33 @@
 
 macro(find_and_register)
     set(singleValueArgs NAME HEADER)
-    set(multiValueArgs INCLUDE_DIRECTORIES LIBRARY_DIRECTORIES LIBRARIES)
+    set(multiValueArgs INCLUDE_DIRECTORIES LIBRARY_DIRECTORIES LIBRARIES DEPENDS)
 
     ## parse the arguments
     cmake_parse_arguments(arg
-        "${options}" "${singleValueArgs}" "${multiValueArgs}" ${ARGN} )
+                          "${options}" "${singleValueArgs}" "${multiValueArgs}" ${ARGN})
 
-    if( NOT DEFINED arg_NAME )
+    if(NOT DEFINED arg_NAME)
         message(FATAL_ERROR "The find_and_register required parameter NAME specifies the name of the library to register.")
     endif()
 
-    if ( NOT DEFINED arg_INCLUDE_DIRECTORIES )
+    if(NOT DEFINED arg_INCLUDE_DIRECTORIES)
         message(FATAL_ERROR "The find_and_register required parameter INCLUDE_DIRECTORIES specifies the directories to search for the given header.")
     endif()
 
-    if ( NOT DEFINED arg_LIBRARY_DIRECTORIES )
+    if(NOT DEFINED arg_LIBRARY_DIRECTORIES)
         message(FATAL_ERROR "The find_and_register required parameter LIBRARY_DIRECTORIES specifies the directories to search for the given libraries.")
     endif()
 
-    if ( NOT DEFINED arg_HEADER )
+    if(NOT DEFINED arg_HEADER)
         message(FATAL_ERROR "The find_and_register required parameter HEADER specifies the header to search for.")
     endif()
 
-    if ( NOT DEFINED arg_LIBRARIES )
+    if(NOT DEFINED arg_LIBRARIES)
         message(FATAL_ERROR "The find_and_register required parameter LIBRARIES specifies the libraries to search for.")
     endif()
 
-    find_path(FOUND_INCLUDE_DIR ${arg_HEADER}
+    find_path(${arg_NAME}_INCLUDE_DIR ${arg_HEADER}
               PATHS ${arg_INCLUDE_DIRECTORIES}
               NO_DEFAULT_PATH
               NO_CMAKE_ENVIRONMENT_PATH
@@ -38,24 +38,25 @@ macro(find_and_register)
               NO_SYSTEM_ENVIRONMENT_PATH
               NO_CMAKE_SYSTEM_PATH)
 
-    if(FOUND_INCLUDE_DIR STREQUAL FOUND_INCLUDE_DIR-NOTFOUND)
+    if(${arg_NAME}_INCLUDE_DIR STREQUAL ${arg_NAME}_INCLUDE_DIR-NOTFOUND)
         message(FATAL_ERROR "Could not find '${arg_HEADER}' in '${arg_INCLUDE_DIRECTORIES}'")
     endif()
 
-    blt_find_libraries(FOUND_LIBS FOUND_LIBRARIES
+    blt_find_libraries(FOUND_LIBS ${arg_NAME}_LIBRARIES
                        NAMES ${arg_LIBRARIES}
                        PATHS ${arg_LIBRARY_DIRECTORIES}
                        REQUIRED ON)
 
     blt_register_library(NAME ${arg_NAME}
-                         INCLUDES ${FOUND_INCLUDE_DIR}
-                         LIBRARIES ${FOUND_LIBRARIES}
-                         TREAT_INCLUDES_AS_SYSTEM ON)
+                         INCLUDES ${${arg_NAME}_INCLUDE_DIR}
+                         LIBRARIES ${${arg_NAME}_LIBRARIES}
+                         TREAT_INCLUDES_AS_SYSTEM ON
+                         DEPENDS_ON ${arg_DEPENDS})
 
 endmacro(find_and_register)
 
 
-set( thirdPartyLibs "")
+set(thirdPartyLibs "")
 
 ################################
 # BLAS/LAPACK
@@ -111,11 +112,15 @@ endif()
 if(DEFINED HDF5_DIR)
     message(STATUS "HDF5_DIR = ${HDF5_DIR}")
 
-    include(cmake/thirdparty/FindHDF5.cmake)
+    set(HDF5_ROOT ${HDF5_DIR})
+    set(HDF5_USE_STATIC_LIBRARIES FALSE)
+    set(HDF5_NO_FIND_PACKAGE_CONFIG_FILE ON)
+    include(FindHDF5)
+
     blt_register_library(NAME hdf5
-                        INCLUDES ${HDF5_INCLUDE_DIRS}
-                        LIBRARIES ${HDF5_LIBRARIES} dl
-                        TREAT_INCLUDES_AS_SYSTEM ON )
+                         INCLUDES ${HDF5_INCLUDE_DIRS}
+                         LIBRARIES ${HDF5_LIBRARIES}
+                         TREAT_INCLUDES_AS_SYSTEM ON)
 
     set(ENABLE_HDF5 ON CACHE BOOL "" FORCE)
     set(thirdPartyLibs ${thirdPartyLibs} hdf5)
@@ -142,16 +147,13 @@ endif()
 ################################
 if(DEFINED SILO_DIR)
     message(STATUS "SILO_DIR = ${SILO_DIR}")
-    include(${CMAKE_SOURCE_DIR}/cmake/thirdparty/FindSilo.cmake)
-    if (NOT SILO_FOUND)
-        message(FATAL_ERROR "SILO not found in ${SILO_DIR}. Maybe you need to build it")
-    endif()
 
-    blt_register_library(NAME silo
-                         INCLUDES ${SILO_INCLUDE_DIRS}
-                         LIBRARIES ${SILO_LIBRARY}
-                         TREAT_INCLUDES_AS_SYSTEM ON
-                         DEPENDS_ON hdf5)
+    find_and_register(NAME silo
+                      INCLUDE_DIRECTORIES ${SILO_DIR}/include
+                      LIBRARY_DIRECTORIES ${SILO_DIR}/lib
+                      HEADER silo.h
+                      LIBRARIES siloh5
+                      DEPENDS hdf5)
 
     set(ENABLE_SILO ON CACHE BOOL "" FORCE)
     set(thirdPartyLibs ${thirdPartyLibs} silo)
@@ -168,6 +170,7 @@ if(DEFINED PUGIXML_DIR)
     find_package(pugixml REQUIRED
                  PATHS ${PUGIXML_DIR})
 
+    set(ENABLE_PUGIXML ON CACHE BOOL "" FORCE)
     set(thirdPartyLibs ${thirdPartyLibs} pugixml)
 else()
     message(FATAL_ERROR "GEOSX requires pugixml, set PUGIXML_DIR to the pugixml installation directory.")
@@ -248,7 +251,7 @@ else()
     endif()
 
     set(ENABLE_ADIAK OFF CACHE BOOL "" FORCE)
-    message(STATUS "Not using Adiak")
+    message(STATUS "Not using Adiak.")
 endif()
 
 ################################
@@ -273,7 +276,7 @@ else()
     endif()
 
     set(ENABLE_CALIPER OFF CACHE BOOL "" FORCE)
-    message(STATUS "Not using Caliper")
+    message(STATUS "Not using Caliper.")
 endif()
 
 ################################
@@ -326,7 +329,7 @@ endif()
 # else()
     set(MATHPRESSO_FOUND OFF CACHE BOOL "")
     set(ENABLE_MATHPRESSO OFF CACHE BOOL "" FORCE)
-    message(STATUS "Not using mathpresso")
+    message(STATUS "Not using mathpresso.")
 # endif()
 
 ################################
@@ -349,7 +352,7 @@ else()
     endif()
 
     set(ENABLE_METIS OFF CACHE BOOL "" FORCE)
-    message(STATUS "Not using Metis")
+    message(STATUS "Not using METIS.")
 endif()
 
 ################################
@@ -372,7 +375,7 @@ else()
     endif()
 
     set(ENABLE_PARMETIS OFF CACHE BOOL "" FORCE)
-    message(STATUS "Not using Metis")
+    message(STATUS "Not using ParMETIS.")
 endif()
 
 ################################
@@ -381,7 +384,7 @@ endif()
 if(DEFINED SUPERLU_DIST_DIR)
     message(STATUS "SUPERLU_DIST_DIR = ${SUPERLU_DIST_DIR}")
 
-    find_and_register(NAME superlus_dist
+    find_and_register(NAME superlu_dist
                       INCLUDE_DIRECTORIES ${SUPERLU_DIST_DIR}/include
                       LIBRARY_DIRECTORIES ${SUPERLU_DIST_DIR}/lib PATHS ${SUPERLU_DIST_DIR}/lib64
                       HEADER superlu_defs.h
@@ -395,101 +398,56 @@ else()
     endif()
 
     set(ENABLE_SUPERLU_DIST OFF CACHE BOOL "" FORCE)
-    message(STATUS "Not using superlu_dist")
+    message(STATUS "Not using superlu_dist.")
 endif()
 
 ################################
 # SUITESPARSE
 ################################
-# if( ENABLE_SUITESPARSE )
-#     message( STATUS "setting up SUITESPARSE" )
+if(DEFINED SUITESPARSE_DIR)
+    message(STATUS "SUITESPARSE_DIR = ${SUITESPARSE_DIR}")
 
-#     set(SUITESPARSE_DIR ${GEOSX_TPL_DIR}/suitesparse)
+    find_and_register(NAME suitesparse
+                      INCLUDE_DIRECTORIES ${SUITESPARSE_DIR}/include
+                      LIBRARY_DIRECTORIES ${SUITESPARSE_DIR}/lib ${SUITESPARSE_DIR}/lib64
+                      HEADER umfpack.h
+                      LIBRARIES umfpack
+                      DEPENDS blas lapack)
 
-#     find_path( SUITESPARSE_INCLUDE_DIRS umfpack.h
-#                PATHS  ${SUITESPARSE_DIR}/include
-#                NO_DEFAULT_PATH
-#                NO_CMAKE_ENVIRONMENT_PATH
-#                NO_CMAKE_PATH
-#                NO_SYSTEM_ENVIRONMENT_PATH
-#                NO_CMAKE_SYSTEM_PATH)
+    set(ENABLE_SUITESPARSE ON CACHE BOOL "" FORCE)
+    set(thirdPartyLibs ${thirdPartyLibs} suitesparse)
+else()
+    if(ENABLE_SUITESPARSE)
+        message(WARNING "ENABLE_SUITESPARSE is ON but SUITESPARSE_DIR isn't defined.")
+    endif()
 
-#     find_library( SUITESPARSE_LIBRARY NAMES umfpack
-#                   PATHS ${SUITESPARSE_DIR}/lib
-#                   NO_DEFAULT_PATH
-#                   NO_CMAKE_ENVIRONMENT_PATH
-#                   NO_CMAKE_PATH
-#                   NO_SYSTEM_ENVIRONMENT_PATH
-#                   NO_CMAKE_SYSTEM_PATH)
-
-#     message(STATUS "SUITESPARSE_INCLUDE_DIRS = ${SUITESPARSE_INCLUDE_DIRS}" )
-#     message(STATUS "SUITESPARSE_LIBRARY = ${SUITESPARSE_LIBRARY}" )
-#     include(FindPackageHandleStandardArgs)
-#     find_package_handle_standard_args(SUITESPARSE DEFAULT_MSG
-#                                       SUITESPARSE_INCLUDE_DIRS
-#                                       SUITESPARSE_LIBRARY )
-#     if (NOT SUITESPARSE_FOUND)
-#         message(FATAL_ERROR "SUITESPARSE not found in ${SUITESPARSE_DIR}. Maybe you need to build it")
-#     endif()
-    
-#     set( SUITESPARSE_DEPENDS "blas;lapack" )
-
-#     blt_register_library( NAME suitesparse
-#                           DEPENDS_ON ${SUITESPARSE_DEPENDS}
-#                           INCLUDES ${SUITESPARSE_INCLUDE_DIRS}
-#                           LIBRARIES ${SUITESPARSE_LIBRARY}
-#                           TREAT_INCLUDES_AS_SYSTEM ON )
-
-#     set( thirdPartyLibs ${thirdPartyLibs} suitesparse )
-# endif()
+    set(ENABLE_SUITESPARSE OFF CACHE BOOL "" FORCE)
+    message(STATUS "Not using SuiteSparse.")
+endif()
 
 ################################
 # HYPRE
 ################################
-# if( ENABLE_HYPRE )
-#     message( STATUS "setting up HYPRE" )
+if(DEFINED HYPRE_DIR)
+    message(STATUS "HYPRE_DIR = ${HYPRE_DIR}")
 
-#     set(HYPRE_DIR ${GEOSX_TPL_DIR}/hypre)
+    find_and_register(NAME hypre
+                      INCLUDE_DIRECTORIES ${HYPRE_DIR}/include
+                      LIBRARY_DIRECTORIES ${HYPRE_DIR}/lib
+                      HEADER HYPRE.h
+                      LIBRARIES HYPRE
+                      DEPENDS blas lapack superlu_dist)
 
-#     find_path( HYPRE_INCLUDE_DIRS HYPRE.h
-#             PATHS  ${HYPRE_DIR}/include
-#             NO_DEFAULT_PATH
-#             NO_CMAKE_ENVIRONMENT_PATH
-#             NO_CMAKE_PATH
-#             NO_SYSTEM_ENVIRONMENT_PATH
-#             NO_CMAKE_SYSTEM_PATH)
+    set(ENABLE_HYPRE ON CACHE BOOL "" FORCE)
+    set(thirdPartyLibs ${thirdPartyLibs} hypre)
+else()
+    if(ENABLE_HYPRE)
+        message(WARNING "ENABLE_HYPRE is ON but HYPRE_DIR isn't defined.")
+    endif()
 
-#     find_library( HYPRE_LIBRARY NAMES HYPRE
-#                 PATHS ${HYPRE_DIR}/lib
-#                 NO_DEFAULT_PATH
-#                 NO_CMAKE_ENVIRONMENT_PATH
-#                 NO_CMAKE_PATH
-#                 NO_SYSTEM_ENVIRONMENT_PATH
-#                 NO_CMAKE_SYSTEM_PATH)
-
-#     message(STATUS "HYPRE_INCLUDE_DIRS = ${HYPRE_INCLUDE_DIRS}" )
-#     message(STATUS "HYPRE_LIBRARY = ${HYPRE_LIBRARY}" )
-#     include(FindPackageHandleStandardArgs)
-#     find_package_handle_standard_args(HYPRE  DEFAULT_MSG
-#                                     HYPRE_INCLUDE_DIRS
-#                                     HYPRE_LIBRARY )
-#     if (NOT HYPRE_FOUND)
-#         message(FATAL_ERROR "HYPRE not found in ${HYPRE_DIR}. Maybe you need to build it")
-#     endif()
-    
-#     set( HYPRE_DEPENDS "blas;lapack" )
-#     if( ENABLE_SUPERLU_DIST )
-#         list( APPEND HYPRE_DEPENDS "superlu_dist" )
-#     endif()
-
-#     blt_register_library( NAME hypre
-#                           DEPENDS_ON ${HYPRE_DEPENDS}
-#                           INCLUDES ${HYPRE_INCLUDE_DIRS}
-#                           LIBRARIES ${HYPRE_LIBRARY}
-#                           TREAT_INCLUDES_AS_SYSTEM ON )
-
-#     set( thirdPartyLibs ${thirdPartyLibs} hypre )
-# endif()
+    set(ENABLE_HYPRE OFF CACHE BOOL "" FORCE)
+    message(STATUS "Not using HYPRE.")
+endif()
 
 ################################
 # TRILINOS
@@ -501,14 +459,12 @@ if(DEFINED TRILINOS_DIR)
   
     list(REMOVE_ITEM Trilinos_LIBRARIES "gtest")
     list(REMOVE_DUPLICATES Trilinos_LIBRARIES)
-    message(STATUS "Trilinos_LIBRARIES = ${Trilinos_LIBRARIES}")
-    message(STATUS "Trilinos_INCLUDE_DIRS = ${Trilinos_INCLUDE_DIRS}")
 
     blt_register_library(NAME trilinos
                          DEPENDS_ON ${TRILINOS_DEPENDS}
                          INCLUDES ${Trilinos_INCLUDE_DIRS} 
                          LIBRARIES ${Trilinos_LIBRARIES}
-                         TREAT_INCLUDES_AS_SYSTEM ON )
+                         TREAT_INCLUDES_AS_SYSTEM ON)
 
     set(ENABLE_TRILINOS ON CACHE BOOL "" FORCE)
     set(thirdPartyLibs ${thirdPartyLibs} trilinos)
@@ -610,10 +566,13 @@ else()
     message(STATUS "Not using uncrustify.")
 endif()
 
-string( TOUPPER "${GEOSX_LA_INTERFACE}" upper_LAI )
-if( NOT ENABLE_${upper_LAI} )
-  message( FATAL_ERROR "${GEOSX_LA_INTERFACE} LA interface is selected, but ENABLE_${upper_LAI} is OFF" )
+################################
+# LAI
+################################
+string(TOUPPER "${GEOSX_LA_INTERFACE}" upper_LAI)
+if(NOT ENABLE_${upper_LAI})
+  message(FATAL_ERROR "${GEOSX_LA_INTERFACE} LA interface is selected, but ENABLE_${upper_LAI} is OFF")
 endif()
-option( GEOSX_LA_INTERFACE_${upper_LAI} "${upper_LAI} LA interface is selected" ON )
+option(GEOSX_LA_INTERFACE_${upper_LAI} "${upper_LAI} LA interface is selected" ON)
 
 message(STATUS "thirdPartyLibs = ${thirdPartyLibs}")

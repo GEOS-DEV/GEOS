@@ -42,8 +42,8 @@ CompositeFunction::CompositeFunction( const std::string & name,
 #ifdef GEOSX_USE_MATHPRESSO
   parserContext(),
   parserExpression(),
-#endif
   m_numSubFunctions(),
+#endif
   m_subFunctions()
 {
   registerWrapper( keys::functionNames, &m_functionNames )->
