@@ -99,17 +99,6 @@ public:
                              int const cycleNumber,
                              DomainPartition & domain ) override;
 
-  template< typename CONSTITUTIVE_BASE,
-            template< typename SUBREGION_TYPE,
-                      typename CONSTITUTIVE_TYPE,
-                      typename FE_TYPE > class KERNEL_TEMPLATE,
-            typename ... PARAMS >
-  void AssemblyLaunch( DomainPartition & domain,
-                       DofManager const & dofManager,
-                       CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                       arrayView1d< real64 > const & localRhs,
-                       PARAMS && ... params );
-
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
     constexpr static auto solidSolverNameString = "solidSolverName";
@@ -140,52 +129,7 @@ protected:
                                    DofManager const & dofManager,
                                    SparsityPatternView< globalIndex > const & pattern ) const;
 
-  /*
-   * @brief Assemble Equilibrium operator
-   * @param eqMatrix Equilibrium operator
-   * @param embeddedSurfaceSubRegion subRegion
-   * @param k cell index
-   * @param hInv scaling coefficient
-   */
-  void AssembleEquilibriumOperator( array2d< real64 > & eqMatrix,
-                                    EmbeddedSurfaceSubRegion const & embeddedSurfaceSubRegion,
-                                    const localIndex k,
-                                    const real64 hInv );
-  /*
-   * @brief Assemble Compatibility operator
-   * @param compMatrix
-   * @param embeddedSurfaceSubRegion
-   * @param k cell index
-   * @param q quadrature point index
-   * @param elemsToNodes element to node map
-   * @param nodesCoord nodes coordinates
-   * @param embeddedSurfaceToCell embedded surface to cell maps
-   * @param numNodesPerElement number of nodes per element
-   * @param dNdX shape functions derivatives
-   */
-  void AssembleCompatibilityOperator( array2d< real64 > & compMatrix,
-                                      EmbeddedSurfaceSubRegion const & embeddedSurfaceSubRegion,
-                                      localIndex const k,
-                                      localIndex const q,
-                                      CellBlock::NodeMapType const & elemsToNodes,
-                                      arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodesCoord,
-                                      arrayView1d< localIndex const > const & embeddedSurfaceToCell,
-                                      localIndex const numNodesPerElement,
-                                      arrayView4d< real64 const > const & dNdX );
 
-  /*
-   * @brief Assemble Compatibility operator
-   * @param strainMatrix strain matrix (B)
-   * @param elIndex element index
-   * @param q quadrature point index
-   * @param numNodesPerElement number of nodes per element
-   * @param dNdX shape functions derivatives
-   */
-  void AssembleStrainOperator( array2d< real64 > & strainMatrix,
-                               localIndex const elIndex,
-                               localIndex const q,
-                               localIndex const numNodesPerElement,
-                               arrayView4d< real64 const > const & dNdX );
   /*
    * @brief Computes traction and derivative on each fracture segment.
    * @param constitutiveManager constant pointer to the constitutive mamanger
@@ -215,61 +159,6 @@ private:
 
 };
 
-
-//**********************************************************************************************************************
-//**********************************************************************************************************************
-//**********************************************************************************************************************
-
-
-template< typename CONSTITUTIVE_BASE,
-          template< typename SUBREGION_TYPE,
-                    typename CONSTITUTIVE_TYPE,
-                    typename FE_TYPE > class KERNEL_TEMPLATE,
-          typename ... PARAMS >
-void SolidMechanicsEmbeddedFractures::AssemblyLaunch( DomainPartition & domain,
-                                                      DofManager const & dofManager,
-                                                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                      arrayView1d< real64 > const & localRhs,
-                                                      PARAMS && ... params )
-{
-  GEOSX_MARK_FUNCTION;
-  MeshLevel & mesh = *(domain.getMeshBodies()->GetGroup< MeshBody >( 0 )->getMeshLevel( 0 ));
-
-  NodeManager const & nodeManager = *(mesh.getNodeManager());
-  ElementRegionManager const & elemManager = *(mesh.getElemManager());
-  EmbeddedSurfaceRegion * const region = elemManager.GetRegion< EmbeddedSurfaceRegion >( m_fractureRegionName );
-  EmbeddedSurfaceSubRegion * const subRegion = region->GetSubRegion< EmbeddedSurfaceSubRegion >( 0 );
-
-  string const dispDofKey = dofManager.getKey( dataRepository::keys::TotalDisplacement );
-  string const jumpDofKey = dofManager.getKey( viewKeyStruct::dispJumpString );
-
-  arrayView1d< globalIndex const > const & dispDofNumber = nodeManager.getReference< globalIndex_array >( dispDofKey );
-  arrayView1d< globalIndex const > const & jumpDofNumber = subRegion->getReference< globalIndex_array >( jumpDofKey );
-
-  ResetStressToBeginningOfStep( domain );
-
-  real64 const gravityVectorData[3] = { gravityVector().Data()[0],
-                                        gravityVector().Data()[1],
-                                        gravityVector().Data()[2] };
-
-  real64 maxTraction = finiteElement::
-		  regionBasedKernelApplication< parallelDevicePolicy< 32 >,
-		                                CONSTITUTIVE_BASE,
-		  		                        CellElementSubRegion,
-		  		                        KERNEL_TEMPLATE >( mesh,
-		  				                targetRegionNames(),
-		  				                this->getDiscretizationName(),
-		  				                m_solidMaterialNames,
-										subRegion,
-		  				                dispDofNumber,
-		  				                jumpDofNumber,
-		  				                dofManager.rankOffset(),
-		  				                localMatrix,
-		  				                localRhs,
-		  				                gravityVectorData,
-		  				                std::forward< PARAMS >( params )... );
-
-}
 
 } /* namespace geosx */
 

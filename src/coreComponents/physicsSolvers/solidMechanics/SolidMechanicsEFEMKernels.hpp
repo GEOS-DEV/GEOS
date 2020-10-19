@@ -176,10 +176,6 @@ public:
   /**
    * @brief Copy global values from primary field to a local stack array.
    * @copydoc ::geosx::finiteElement::ImplicitKernelBase::setup
-   *
-   * For the QuasiStatic implementation, global values from the displacement,
-   * incremental displacement, and degree of freedom numbers are placed into
-   * element local stack storage.
    */
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
@@ -209,16 +205,12 @@ public:
     }
   }
 
-
   /**
     * @copydoc geosx::finiteElement::KernelBase::quadraturePointKernel
     * @tparam STRESS_MODIFIER Type of optional functor to allow for the
     * modification of stress prior to integration.
     * @param stressModifier An optional functor to allow for the modification
     *  of stress prior to integration.
-    * For solid mechanics kernels, the strain increment is calculated, and the
-    * constitutive update is called. In addition, the constitutive stiffness
-    * stack variable is filled by the constitutive model.
     */
    template< typename STRESS_MODIFIER = NoOpFunctors >
    GEOSX_HOST_DEVICE
@@ -258,7 +250,9 @@ public:
      EFEMKernelsHelper::AssembleStrainOperator<6, nUdof, numNodesPerElem >( strainMatrix, dNdX );
 
      // transp(B)D
-     LvArray::tensorOps::Rij_eq_AkiBkj< nUdof, 6, nUdof>(matBD, strainMatrix, dMatrix);
+     LvArray::tensorOps::Rij_eq_AkiBkj< nUdof, 6, nUdof>(matBD, strainMatrix, stack.constitutiveStiffness);
+     // ED
+     LvArray::tensorOps::Rij_eq_AikBkj<3, 6, 3>(matED, eqMatrix, stack.constitutiveStiffness);
      // EDC
      LvArray::tensorOps::Rij_eq_AikBkj<3, 3, 6>(Kww_gauss, matED, compMatrix);
      // EDB
@@ -277,17 +271,17 @@ public:
 	 LvArray::tensorOps::add<3, nUdof>(stack.localKwu, Kwu_gauss);
 	 LvArray::tensorOps::add<nUdof, 3>(stack.localKuw, Kuw_gauss);
 
-     real64 strainInc[6] = {0};
-     // compute strainInc due to the fracture jump;
-     LvArray::tensorOps::Ri_add_AijBj(strainInc, compMatrix, stack.wlocal);
-     m_constitutiveUpdate.SmallStrain( k, q, strainInc );
-
-     typename CONSTITUTIVE_TYPE::KernelWrapper::DiscretizationOps stiffnessHelper;
-     m_constitutiveUpdate.setDiscretizationOps( k, q, stiffnessHelper );
-
-     stiffnessHelper.template upperBTDB< numNodesPerElem >( dNdX, -detJ, stack.localJacobian );
-
-     real64 stress[6];
+//     real64 strainInc[6] = {0};
+//     // compute strainInc due to the fracture jump;
+//     LvArray::tensorOps::Ri_add_AijBj(strainInc, compMatrix, stack.wlocal);
+//     m_constitutiveUpdate.SmallStrain( k, q, strainInc );
+//
+//     typename CONSTITUTIVE_TYPE::KernelWrapper::DiscretizationOps stiffnessHelper;
+//     m_constitutiveUpdate.setDiscretizationOps( k, q, stiffnessHelper );
+//
+//     stiffnessHelper.template upperBTDB< numNodesPerElem >( dNdX, -detJ, stack.localJacobian );
+//
+//     real64 stress[6];
 
    }
 
@@ -301,8 +295,14 @@ public:
    {
      GEOSX_UNUSED_VAR( k );
      real64 maxForce = 0;
+     constexpr int nUdof = numNodesPerElem*3;
 
-     for( localIndex i = 0; i < numNodesPerElem*3; ++i )
+     // Compute the local residuals
+     LvArray::tensorOps::Ri_add_AijBj<3, 3>(stack.localRw, stack.localKww, stack.w_local);
+     LvArray::tensorOps::Ri_add_AijBj<3, nUdof>(stack.localRw, stack.localKwu, stack.u_local);
+     LvArray::tensorOps::Ri_add_AijBj<nUdof, 3>(stack.localRu, stack.localKuw, stack.w_local);
+
+     for( localIndex i = 0; i < nUdof; ++i )
      {
     	 if( dispEqnRowIndices[i] >= 0 && dispEqnRowIndices[i] < m_matrix.numRows() )
     	 {
