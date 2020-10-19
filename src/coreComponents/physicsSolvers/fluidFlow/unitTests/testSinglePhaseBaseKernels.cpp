@@ -22,6 +22,7 @@
 using namespace geosx;
 using namespace geosx::SinglePhaseBaseKernels;
 
+// Sphinx start after test mobility
 
 TEST( SinglePhaseBaseKernels, mobility )
 {
@@ -49,6 +50,8 @@ TEST( SinglePhaseBaseKernels, mobility )
     EXPECT_DOUBLE_EQ( dMob_dPres, dMob_dPres_et );
   }
 }
+
+// Sphinx end before test mobility
 
 /**
  * @brief Test the assembly of accumulation contribution
