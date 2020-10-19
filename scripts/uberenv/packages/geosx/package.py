@@ -238,22 +238,32 @@ class Geosx(CMakePackage, CudaPackage):
             debug_flags = "-O0 -g"
             cfg.write(cmake_cache_string("CMAKE_CXX_FLAGS_DEBUG", debug_flags))
 
-            cfg.write(cmake_cache_option("ENABLE_MPI", True))
-            cfg.write(cmake_cache_entry("MPI_C_COMPILER", spec['mpi'].mpicc))
-            cfg.write(cmake_cache_entry("MPI_CXX_COMPILER", spec['mpi'].mpicxx))
+            cfg.write("#{0}\n".format("-" * 80))
+            cfg.write("# MPI\n")
+            cfg.write("#{0}\n\n".format("-" * 80))
+
+            cfg.write(cmake_cache_option('ENABLE_MPI', True))
+            cfg.write(cmake_cache_entry('MPI_C_COMPILER', spec['mpi'].mpicc))
+            cfg.write(cmake_cache_entry('MPI_CXX_COMPILER', spec['mpi'].mpicxx))
 
             cfg.write("#{0}\n".format("-" * 80))
-            cfg.write("# Cuda\n")
+            cfg.write("# OpenMP\n")
             cfg.write("#{0}\n\n".format("-" * 80))
-            if "+cuda" in spec:
-                cfg.write(cmake_cache_option("ENABLE_CUDA", True))
-                cfg.write(cmake_cache_entry("CMAKE_CUDA_STANDARD", 14))
+
+            cfg.write(cmake_cache_option('ENABLE_OPENMP', True))
+
+            cfg.write('#{0}\n'.format('-' * 80))
+            cfg.write('# Cuda\n')
+            cfg.write('#{0}\n\n'.format('-' * 80))
+            if '+cuda' in spec:
+                cfg.write(cmake_cache_option('ENABLE_CUDA', True))
+                cfg.write(cmake_cache_entry('CMAKE_CUDA_STANDARD', 14))
 
                 cudatoolkitdir = spec['cuda'].prefix
-                cfg.write(cmake_cache_entry("CUDA_TOOLKIT_ROOT_DIR",
+                cfg.write(cmake_cache_entry('CUDA_TOOLKIT_ROOT_DIR',
                                             cudatoolkitdir))
-                cudacompiler = "${CUDA_TOOLKIT_ROOT_DIR}/bin/nvcc"
-                cfg.write(cmake_cache_entry("CMAKE_CUDA_COMPILER", cudacompiler))
+                cudacompiler = '${CUDA_TOOLKIT_ROOT_DIR}/bin/nvcc'
+                cfg.write(cmake_cache_entry('CMAKE_CUDA_COMPILER', cudacompiler))
 
                 cmake_cuda_flags = ('-restrict --expt-extended-lambda -Werror '
                                     'cross-execution-space-call,reorder,'
@@ -360,14 +370,14 @@ class Geosx(CMakePackage, CudaPackage):
             else:
                 cfg.write(cmake_cache_option('ENABLE_UNCRUSTIFY', False))
 
-            # cfg.write("#{0}\n".format("-" * 80))
-            # cfg.write("# addr2line\n")
-            # cfg.write("#{0}\n\n".format("-" * 80))
+            # cfg.write('#{0}\n'.format('-' * 80))
+            # cfg.write('# addr2line\n')
+            # cfg.write('#{0}\n\n'.format('-' * 80))
             # cfg.write(cmake_cache_option('ENABLE_ADDR2LINE', '+addr2line' in spec))
 
-            cfg.write("#{0}\n".format("-" * 80))
-            cfg.write("# Other\n")
-            cfg.write("#{0}\n\n".format("-" * 80))
+            cfg.write('#{0}\n'.format('-' * 80))
+            cfg.write('# Other\n')
+            cfg.write('#{0}\n\n'.format('-' * 80))
 
             cfg.write(cmake_cache_option('ENABLE_MATHPRESSO', False))
             cfg.write(cmake_cache_option('ENABLE_XML_UPDATES', False))

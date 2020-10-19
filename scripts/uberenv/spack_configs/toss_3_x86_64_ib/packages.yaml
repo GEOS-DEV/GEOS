@@ -18,11 +18,7 @@ packages:
   intel-mkl:
     buildable: False
     externals:
-      - spec: intel-mkl@2020.0.166 threads=openmp %gcc
-        prefix: /usr/tce/packages/mkl/mkl-2020.0/
-      - spec: intel-mkl@2020.0.166 threads=openmp %clang
-        prefix: /usr/tce/packages/mkl/mkl-2020.0/
-      - spec: intel-mkl@2020.0.166 threads=tbb %intel
+      - spec: intel-mkl@2020.0.166 threads=openmp
         prefix: /usr/tce/packages/mkl/mkl-2020.0/
 
   cmake:
