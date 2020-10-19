@@ -24,6 +24,68 @@ def get_wrapper(problem, key, write_flag=False):
   return local_values
 
 
+def get_wrapper_par(problem, key, allgather=False):
+  if (comm.size == 1):
+    # This is a serial problem
+    return get_wrapper(problem, key)
+
+  else:
+    # This is a parallel problem
+    # Get the local wrapper size, shape
+    local_values = get_wrapper(problem, key)
+    N = np.shape(local_values)
+    M = np.prod(N)
+
+    # Find buffer size
+    all_M = []
+    max_M = 0
+    if allgather:
+      all_M = comm.allgather(M)
+      max_M = np.amax(all_M)
+    else:
+      all_M = comm.gather(M, root=0)
+      if (rank == 0):
+        max_M = np.amax(all_M)
+      max_M = comm.bcast(max_M, root=0)
+
+    # Pack the array into a buffer
+    send_buff = np.zeros(max_M)
+    send_buff[:M] = np.reshape(local_values, (-1))
+    receive_buff = np.zeros((comm.size, max_M))
+
+    # Gather the buffers
+    if allgather:
+      comm.Allgather([send_buff, MPI.DOUBLE],
+                     [receive_buff, MPI.DOUBLE])
+    else:
+      comm.Gather([send_buff, MPI.DOUBLE],
+                  [receive_buff, MPI.DOUBLE],
+                  root=0)
+
+    # Unpack the buffers
+    all_values = []
+    R = list(N)
+    R[0] = -1
+    if ((rank == 0) | allgather):
+      # Reshape each rank's contribution
+      for ii in range(comm.size):
+        if (all_M[ii] > 0):
+          tmp = np.reshape(receive_buff[ii, :all_M[ii]], R)
+          all_values.append(tmp)
+
+      # Concatenate into a single array
+      all_values = np.concatenate(all_values, axis=0)
+    return all_values
+
+
+def gather_wrapper(problem, key):
+  return get_wrapper_par(problem, key)
+
+
+def allgather_wrapper(problem, key):
+  return get_wrapper_par(problem, key, allgather=True)
+
+
 def get_global_value_range(problem, key):
   """
   @brief get the range of a target value across all processes
