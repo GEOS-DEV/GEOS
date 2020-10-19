@@ -4,6 +4,16 @@ from scipy import stats, interpolate
 
 
 def apply_to_bins(fn, position, value, bins, collapse_edges=True):
+  """
+  @brief apply a function to values that are located within a series of bins
+  @param fn a function that takes a single scalar or array input
+  @param position an array describing the location of each sample
+  @param value an array of values at each location
+  @param bins the bin edges for the position data
+  @param collapse_edges a flag that controls the behavior of edge-data (default=True)
+  @return binned_values an array of function results for each bin
+          Note: if a bin is empty, this function will fill a nan value
+  """
   # Sort values into bins
   Nr = len(bins) + 1
   Ibin = np.digitize(position, bins)
@@ -27,18 +37,36 @@ def apply_to_bins(fn, position, value, bins, collapse_edges=True):
   return binned_values
 
 
-def extrapolate_nan_values(x, y, slope_scale):
+def extrapolate_nan_values(x, y, slope_scale=0.0):
+  """
+  @brief fill in any nan values in two 1D arrays by extrapolating
+  @param x the position array
+  @param y the value array
+  @param slope_scale the value to scale the extrapolation slope (default=0.0)
+  @return y the value array with nan values replaced by extrapolated data
+  """
   Inan = np.isnan(y)
   reg = stats.linregress(x[~Inan], y[~Inan])
   y[Inan] = reg[0] * x[Inan] * slope_scale + reg[1]
   return y
 
 
-def bin_extrapolate_values(x, x_mid, bins, value=0.0, rand_fill=0, rand_scale=0, slope_scale=0):
+def get_random_realization(x, bins, value=0.0, rand_fill=0, rand_scale=0, slope_scale=0):
+  """
+  @brief get a random realization for a noisy signal with a set of bins
+  @param x the location of data samples
+  @param bins the bin edges for the position data
+  @param value the value of the data samples
+  @param rand_fill the expected standard deviation for missing bins (default=0)
+  @param rand_scale the value to scale the standard deviation for the realization (default=0)
+  @param slope_scale the value to scale the extrapolation slope (default=0.0)
+  @return y_final an ndarary containing the random realization
+  """
   y_mean = apply_to_bins(np.mean, x, value, bins)
   y_std = apply_to_bins(np.std, x, value, bins)
 
   # Extrapolate to fill the upper/lower bounds
+  x_mid = bins[:-1] + 0.5 * (bins[1] - bins[0])
   y_mean = extrapolate_nan_values(x_mid, y_mean, slope_scale)
   y_std[np.isnan(y_std)] = rand_fill
 
@@ -47,24 +75,28 @@ def bin_extrapolate_values(x, x_mid, bins, value=0.0, rand_fill=0, rand_scale=0,
   return y_final
 
 
-def mesh_bin_values(z,
-                    bins,
-                    targets):
+def get_realizations(z, bins, targets):
   """
-  @brief Bin values onto the target mesh
-  @param z location of the grid nodes
-  @param targets dict of target values to conform
+  @brief get random realizations for noisy signals on target bins
+  @param z position information
+  @param targets dict of target values to get realizations
   """
-  z_mid = bins[:-1] + 0.5 * (bins[1] - bins[0])
   results = {}
   for ka in targets.keys():
-    results[ka] = bin_extrapolate_values(z, z_mid, bins,
-                                         **targets[ka])
+    results[ka] = get_random_realization(z, bins, **targets[ka])
   return results
 
 
-def get_surface_interpolator(fname,
-                             z_origin=2700.0):
+def get_surface_interpolator(fname, z_origin=2700.0):
+  """
+  @brief parse a surface definition file
+  @param fname the path of the target file
+  @param z_origin the vertical offset of the file (default=2700.0)
+  @return interp_a a linear interpolator for depth
+  @return interp_b a nearest-neighbor interpolator for depth
+  @return interp_c a nearest-neighbor interpolator for x
+  @return interp_d a nearest-neighbor interpolator for y
+  """
   nodes = []
   with open(fname, 'r') as f:
     for line in f:
@@ -88,7 +120,17 @@ def get_surface_interpolator(fname,
   return interp_a, interp_b, interp_c, interp_d
 
 
-def build_conforming_tables(property_interps, surface_interps, x_grid, y_grid, z_grid, extrapolate_surfaces=True):
+def build_conforming_tables(property_interps, surface_interps, axes, extrapolate_surfaces=True):
+  """
+  @brief build a set of conforming tables property, surface interpolators
+  @param property_interps a dict of 1D property interpolators with depth
+  @param surface_interps a dict of interpolators for surfaces
+  @param axes a list of x,y,z axis definitions
+  @param extrapolate_surfaces a flag to indicate whether surface elevations should be extrapolated (default=True)
+  @return conforming_tables a dict containing tables that conform to the surfaces
+  @return surface_elevations a dict containing surface elevations in the xy plane
+  @return grid the table grid
+  """
   # Sort the surfaces by depth at the origin
   surfaces = list(surface_interps.keys())
   z_pilot = [surface_interps[ka][1](0.0, 0.0) for ka in surfaces]
@@ -97,6 +139,7 @@ def build_conforming_tables(property_interps, surface_interps, x_grid, y_grid, z
   surfaces = np.array(surfaces)[Ia]
 
   # Interpolate values onto a new grid
+  x_grid, y_grid, z_grid = axes
   zo = np.concatenate([[-1e6], z_pilot, [0.0]], axis=0)
   X, Y, Z = np.meshgrid(x_grid, y_grid, z_grid, indexing='ij')
   conforming_tables = {k: np.zeros(np.shape(X)) for k in property_interps.keys()}

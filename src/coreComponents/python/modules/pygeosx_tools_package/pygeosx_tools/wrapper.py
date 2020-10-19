@@ -11,8 +11,15 @@ comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
 
 
-def get_wrapper(problem, key, write_flag=False):
-  local_values = problem.get_wrapper(key).value()
+def get_wrapper(problem, target_key, write_flag=False):
+  """
+  @brief get a local copy of a wrapper as a numpy ndarray
+  @param problem the GEOSX problem handle
+  @param target_key the path of the target wrapper
+  @param write_flag indicates whether the array should be editable (default=False)
+  @return local_values the wraper as a numpy array
+  """
+  local_values = problem.get_wrapper(target_key).value()
   if write_flag:
     local_values.set_access_level(pylvarray.MODIFIABLE,
                                   pylvarray.CPU)
@@ -24,15 +31,23 @@ def get_wrapper(problem, key, write_flag=False):
   return local_values
 
 
-def get_wrapper_par(problem, key, allgather=False):
+def get_wrapper_par(problem, target_key, allgather=False):
+  """
+  @brief get a global copy of a wrapper as a numpy ndarray
+  @param problem the GEOSX problem handle
+  @param target_key the path of the target wrapper
+  @param allgather indicates whether the array should be gathered
+         onto the root rank (False, default) or all ranks (True)
+  @return global_values the wraper as a numpy array
+  """
   if (comm.size == 1):
     # This is a serial problem
-    return get_wrapper(problem, key)
+    return get_wrapper(problem, target_key)
 
   else:
     # This is a parallel problem
     # Get the local wrapper size, shape
-    local_values = get_wrapper(problem, key)
+    local_values = get_wrapper(problem, target_key)
     N = np.shape(local_values)
     M = np.prod(N)
 
@@ -79,10 +94,22 @@ def get_wrapper_par(problem, key, allgather=False):
 
 
 def gather_wrapper(problem, key):
+  """
+  @brief get a global copy of a wrapper as a numpy ndarray on rank 0
+  @param problem the GEOSX problem handle
+  @param target_key the path of the target wrapper
+  @return global_values the wraper as a numpy array
+  """
   return get_wrapper_par(problem, key)
 
 
 def allgather_wrapper(problem, key):
+  """
+  @brief get a global copy of a wrapper as a numpy ndarray on all ranks
+  @param problem the GEOSX problem handle
+  @param target_key the path of the target wrapper
+  @return global_values the wraper as a numpy array
+  """
   return get_wrapper_par(problem, key, allgather=True)
 
 

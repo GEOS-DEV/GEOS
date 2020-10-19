@@ -10,7 +10,7 @@ rank = comm.Get_rank()
 
 def apply_xml_preprocessor():
   """
-  @brief modify the input file before handing it to GEOSX
+  @brief apply the xml preprocessor to the input file before handing it to GEOSX
   """
   new_input_file = ''
   file_index = sys.argv.index('-i') + 1
