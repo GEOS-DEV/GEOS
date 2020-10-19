@@ -261,11 +261,11 @@ if(DEFINED CALIPER_DIR)
     message(STATUS "CALIPER_DIR = ${CALIPER_DIR}")
 
     find_package(caliper REQUIRED
-                 PATHS ${CALIPER_DIR}/share/cmake/caliper)
+                 PATHS ${CALIPER_DIR})
 
     blt_register_library(NAME caliper
                          INCLUDES ${caliper_INCLUDE_PATH}
-                         LIBRARIES ${caliper_LIBRARIES}
+                         LIBRARIES caliper
                          TREAT_INCLUDES_AS_SYSTEM ON)
 
     set(ENABLE_CALIPER ON CACHE BOOL "" FORCE)

@@ -20,6 +20,12 @@ packages:
     externals:
       - spec: intel-mkl@2020.0.166 threads=openmp
         prefix: /usr/tce/packages/mkl/mkl-2020.0/
+  
+  papi:
+    buildable: False
+    externals:
+      - spec: papi@5.5.1
+        prefix: /usr/tce/packages/papi/papi-5.5.1/
 
   cmake:
     buildable: False

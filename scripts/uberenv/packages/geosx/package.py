@@ -51,7 +51,7 @@ class Geosx(CMakePackage, CudaPackage):
     version('develop', branch='develop', submodules='True')
 
     variant('shared', default=True, description='Build Shared Libs.')
-    variant('caliper', default=False, description='Build Caliper support.')
+    variant('caliper', default=True, description='Build Caliper support.')
     variant('mkl', default=False, description='Use the Intel MKL library.')
     variant('suite-sparse', default=True, description='Build SuiteSparse support.')
     variant('trilinos', default=True, description='Build Trilinos support.')
@@ -91,7 +91,7 @@ class Geosx(CMakePackage, CudaPackage):
     depends_on('silo@4.10: ~fortran +shared ~silex +pic +mpi ~zlib')
 
     depends_on('adiak@0.2: +mpi +shared', when='+caliper')
-    depends_on('caliper@2.4: +shared +adiak +mpi ~callpath ~papi ~libpfm ~gotcha ~sampler', when='+caliper')
+    depends_on('caliper@2.4: +shared +adiak +mpi ~callpath +papi ~libpfm ~gotcha ~sampler', when='+caliper')
 
     depends_on('pugixml@1.8: +shared')
 
@@ -360,6 +360,8 @@ class Geosx(CMakePackage, CudaPackage):
                                                         'doxygen')))
             else:
                 cfg.write(cmake_cache_option('ENABLE_DOCS', False))
+                cfg.writne(cmake_cache_option('ENABLE_DOXYGEN', False))
+                cfg.writne(cmake_cache_option('ENABLE_SPHYNX', False))
             
             cfg.write('#{0}\n'.format('-' * 80))
             cfg.write('# Development tools\n')
