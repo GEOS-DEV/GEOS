@@ -86,12 +86,11 @@ if(ENABLE_MKL)
 
     set(TRILINOS_DEPENDS mkl)
     set(thirdPartyLibs ${thirdPartyLibs} mkl)
-endif()
 
 ################################
 # IBM ESSL
 ################################
-if(ENABLE_ESSL)
+elseif(ENABLE_ESSL)
     message(STATUS "Using up IBM ESSL")
 
     blt_register_library(NAME essl
@@ -246,7 +245,7 @@ if(DEFINED ADIAK_DIR)
     set(ENABLE_ADIAK ON CACHE BOOL "" FORCE)
     set(thirdPartyLibs ${thirdPartyLibs} adiak)
 else()
-    if( ENABLE_ADIAK )
+    if(ENABLE_ADIAK)
         message(WARNING "ENABLE_ADIAK is ON but ADIAK_DIR isn't defined.")
     endif()
 
@@ -271,7 +270,7 @@ if(DEFINED CALIPER_DIR)
     set(ENABLE_CALIPER ON CACHE BOOL "" FORCE)
     set(thirdPartyLibs ${thirdPartyLibs} caliper)
 else()
-    if( ENABLE_CALIPER )
+    if(ENABLE_CALIPER)
         message(WARNING "ENABLE_CALIPER is ON but CALIPER_DIR isn't defined.")
     endif()
 
@@ -347,7 +346,7 @@ if(DEFINED METIS_DIR)
     set(ENABLE_METIS ON CACHE BOOL "" FORCE)
     set(thirdPartyLibs ${thirdPartyLibs} metis)
 else()
-    if( ENABLE_METIS )
+    if(ENABLE_METIS)
         message(WARNING "ENABLE_METIS is ON but METIS_DIR isn't defined.")
     endif()
 
@@ -365,12 +364,13 @@ if(DEFINED PARMETIS_DIR)
                       INCLUDE_DIRECTORIES ${PARMETIS_DIR}/include
                       LIBRARY_DIRECTORIES ${PARMETIS_DIR}/lib
                       HEADER parmetis.h
-                      LIBRARIES parmetis)
+                      LIBRARIES parmetis
+                      DEPENDS metis)
 
     set(ENABLE_PARMETIS ON CACHE BOOL "" FORCE)
     set(thirdPartyLibs ${thirdPartyLibs} parmetis)
 else()
-    if( ENABLE_PARMETIS )
+    if(ENABLE_PARMETIS)
         message(WARNING "ENABLE_PARMETIS is ON but PARMETIS_DIR isn't defined.")
     endif()
 
@@ -388,12 +388,13 @@ if(DEFINED SUPERLU_DIST_DIR)
                       INCLUDE_DIRECTORIES ${SUPERLU_DIST_DIR}/include
                       LIBRARY_DIRECTORIES ${SUPERLU_DIST_DIR}/lib PATHS ${SUPERLU_DIST_DIR}/lib64
                       HEADER superlu_defs.h
-                      LIBRARIES superlu_dist)
+                      LIBRARIES superlu_dist
+                      DEPENDS parmetis blas lapack)
 
     set(ENABLE_SUPERLU_DIST ON CACHE BOOL "" FORCE)
     set(thirdPartyLibs ${thirdPartyLibs} superlu_dist)
 else()
-    if( ENABLE_SUPERLU_DIST )
+    if(ENABLE_SUPERLU_DIST)
         message(WARNING "ENABLE_SUPERLU_DIST is ON but SUPERLU_DIST_DIR isn't defined.")
     endif()
 
@@ -469,7 +470,7 @@ if(DEFINED TRILINOS_DIR)
     set(ENABLE_TRILINOS ON CACHE BOOL "" FORCE)
     set(thirdPartyLibs ${thirdPartyLibs} trilinos)
 else()
-    if( ENABLE_TRILINOS )
+    if(ENABLE_TRILINOS)
         message(WARNING "ENABLE_TRILINOS is ON but TRILINOS_DIR isn't defined.")
     endif()
 
@@ -477,46 +478,29 @@ else()
     message(STATUS "Not using Trilinos")
 endif()
 
-################################
+###############################
 # PETSC
-################################
-# if( ENABLE_PETSC )
-#     message( STATUS "setting up PETSC" )
+###############################
+if(DEFINED PETSC_DIR)
+    message(STATUS "PETSC_DIR = ${PETSC_DIR}")
 
-#     if( EXISTS ${PETSC_DIR} )
-  
-#     else()
-#         set(PETSC_DIR ${GEOSX_TPL_DIR}/petsc)
-#     endif()
+    find_and_register(NAME petsc
+                      INCLUDE_DIRECTORIES ${PETSC_DIR}/include
+                      LIBRARY_DIRECTORIES ${PETSC_DIR}/lib
+                      HEADER petscvec.h
+                      LIBRARIES petsc
+                      DEPENDS metis superlu_dist blas lapack)
 
-#     find_path( Petsc_INCLUDE_DIRS petscvec.h
-#                PATHS  ${PETSC_DIR}/include
-#                NO_DEFAULT_PATH
-#                NO_CMAKE_ENVIRONMENT_PATH
-#                NO_CMAKE_PATH
-#                NO_SYSTEM_ENVIRONMENT_PATH
-#                NO_CMAKE_SYSTEM_PATH)
+    set(ENABLE_PETSC ON CACHE BOOL "" FORCE)
+    set(thirdPartyLibs ${thirdPartyLibs} petsc)
+else()
+    if(ENABLE_PETSC)
+    message(WARNING "ENABLE_PETSC is ON but PETSC_DIR isn't defined.")
+    endif()
 
-#     find_library( Petsc_LIBRARIES NAMES petsc
-#                   PATHS ${PETSC_DIR}/lib
-#                   NO_DEFAULT_PATH
-#                   NO_CMAKE_ENVIRONMENT_PATH
-#                   NO_CMAKE_PATH
-#                   NO_SYSTEM_ENVIRONMENT_PATH
-#                   NO_CMAKE_SYSTEM_PATH)
-
-#     message( STATUS "Petsc_INCLUDE_DIRS = ${Petsc_INCLUDE_DIRS}" )
-#     message( STATUS "Petsc_LIBRARIES = ${Petsc_LIBRARIES}" )
-  
-  
-#     blt_register_library( NAME petsc
-#                           INCLUDES ${Petsc_INCLUDE_DIRS} 
-#                           LIBRARIES ${Petsc_LIBRARIES}
-#                           TREAT_INCLUDES_AS_SYSTEM ON )
-#     set( thirdPartyLibs ${thirdPartyLibs} petsc )  
-
-# endif()
-
+    set(ENABLE_PETSC OFF CACHE BOOL "" FORCE)
+    message(STATUS "Not using PETSc")
+endif()
 
 ################################
 # VTK
@@ -534,16 +518,6 @@ endif()
 #   set( thirdPartyLibs ${thirdPartyLibs} vtk )  
 # endif()
 set(ENABLE_VTK OFF CACHE BOOL "" FORCE)
-
-################################
-# uncrustify (This is here instead of SetupGeosxThirdParty.cmake so that BLT will see it)
-################################
-if(DEFINED UNCRUSTIFY_EXECUTABLE)
-    message( STATUS "Using system uncrustify found at ${UNCRUSTIFY_EXECUTABLE}" )
-else()
-    set( UNCRUSTIFY_EXECUTABLE "${GEOSX_TPL_DIR}/uncrustify/bin/uncrustify" CACHE PATH "" )
-    message( STATUS "Using uncrustify from thirdPartyLibs at ${UNCRUSTIFY_EXECUTABLE}" )
-endif()
 
 ################################
 # unsrustify

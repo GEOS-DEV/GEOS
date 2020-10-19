@@ -101,7 +101,8 @@ class Geosx(CMakePackage, CudaPackage):
     depends_on('intel-mkl +shared ~ilp64', when='+mkl')
 
     depends_on('parmetis@4.0.3: +shared +int64')
-    depends_on('superlu-dist@6.3.1: +int64 +openmp +shared')
+    depends_on('superlu-dist@6.3: +int64 +openmp +shared', when='~petsc')
+    depends_on('superlu-dist@6.3.0 +int64 +openmp +shared', when='+petsc')
 
     depends_on('suite-sparse@5.7.2: +pic +openmp', when='+suite-sparse')
 
@@ -113,7 +114,7 @@ class Geosx(CMakePackage, CudaPackage):
     depends_on('hypre@2.20.0: +shared +superlu-dist +mixedint +mpi +openmp', when='+hypre')
  
     petsc_build_options = '+shared +mpi'
-    petsc_tpls = '+metis ~hdf5 ~hypre ~superlu-dist +int64'
+    petsc_tpls = '+metis ~hdf5 ~hypre +superlu-dist +int64'
     depends_on('petsc@3.13.0: ' + petsc_build_options + petsc_tpls, when='+petsc')
 
     #
@@ -360,17 +361,14 @@ class Geosx(CMakePackage, CudaPackage):
                                                         'doxygen')))
             else:
                 cfg.write(cmake_cache_option('ENABLE_DOCS', False))
-                cfg.writne(cmake_cache_option('ENABLE_DOXYGEN', False))
-                cfg.writne(cmake_cache_option('ENABLE_SPHYNX', False))
+                cfg.write(cmake_cache_option('ENABLE_DOXYGEN', False))
+                cfg.write(cmake_cache_option('ENABLE_SPHYNX', False))
             
             cfg.write('#{0}\n'.format('-' * 80))
             cfg.write('# Development tools\n')
             cfg.write('#{0}\n\n'.format('-' * 80))
-            if '+uncrustify' in spec:
-                cfg.write(cmake_cache_entry('UNCRUSTIFY_EXECUTABLE',
-                                            os.path.join(spec['uncrustify'].prefix, 'bin', 'uncrustify')))
-            else:
-                cfg.write(cmake_cache_option('ENABLE_UNCRUSTIFY', False))
+            cfg.write(cmake_cache_entry('UNCRUSTIFY_EXECUTABLE',
+                                        os.path.join(spec['uncrustify'].prefix, 'bin', 'uncrustify')))
 
             # cfg.write('#{0}\n'.format('-' * 80))
             # cfg.write('# addr2line\n')
