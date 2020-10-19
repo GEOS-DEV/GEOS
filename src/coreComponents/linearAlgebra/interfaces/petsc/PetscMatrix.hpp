@@ -103,6 +103,9 @@ public:
                                      localIndex const maxEntriesPerRow,
                                      MPI_Comm const & comm ) override;
 
+  /**
+   * @copydoc MatrixBase<PetscMatrix,PetscVector>::numGlobalRows
+   */
   virtual bool created() const override;
 
   virtual void reset() override;
@@ -245,6 +248,9 @@ public:
 
   virtual void addDiagonal( PetscVector const & src ) override;
 
+  /**
+   * @copydoc MatrixBase<PetscMatrix,PetscVector>::maxRowLength
+   */
   virtual localIndex maxRowLength() const override;
 
   virtual localIndex localRowLength( localIndex localRowIndex ) const override;
@@ -259,36 +265,78 @@ public:
                            arraySlice1d< globalIndex > const & colIndices,
                            arraySlice1d< real64 > const & values ) const override;
 
+  /**
+   * @copydoc MatrixBase<PetscMatrix,PetscVector>::numGlobalRows
+   */
   virtual globalIndex numGlobalRows() const override;
 
+  /**
+   * @copydoc MatrixBase<PetscMatrix,PetscVector>::numGlobalCols
+   */
   virtual globalIndex numGlobalCols() const override;
 
+  /**
+   * @copydoc MatrixBase<PetscMatrix,PetscVector>::numLocalRows
+   */
   virtual localIndex numLocalRows() const override;
 
+  /**
+   * @copydoc MatrixBase<PetscMatrix,PetscVector>::numLocalCols
+   */
   virtual localIndex numLocalCols() const override;
 
+  /**
+   * @copydoc MatrixBase<PetscMatrix,PetscVector>::ilower
+   */
   virtual globalIndex ilower() const override;
 
+  /**
+   * @copydoc MatrixBase<PetscMatrix,PetscVector>::iupper
+   */
   virtual globalIndex iupper() const override;
 
+  /**
+   * @copydoc MatrixBase<PetscMatrix,PetscVector>::jlower
+   */
   virtual globalIndex jlower() const override;
 
+  /**
+   * @copydoc MatrixBase<PetscMatrix,PetscVector>::jupper
+   */
   virtual globalIndex jupper() const override;
 
+  /**
+   * @copydoc MatrixBase<PetscMatrix,PetscVector>::numLocalNonzeros
+   */
   virtual localIndex numLocalNonzeros() const override;
 
+  /**
+   * @copydoc MatrixBase<PetscMatrix,PetscVector>::numGlobalNonzeros
+   */
   virtual globalIndex numGlobalNonzeros() const override;
 
+  /**
+   * @copydoc MatrixBase<PetscMatrix,PetscVector>::normInf
+   */
   virtual real64 normInf() const override;
 
+  /**
+   * @copydoc MatrixBase<PetscMatrix,PetscVector>::norm1
+   */
   virtual real64 norm1() const override;
 
+  /**
+   * @copydoc MatrixBase<PetscMatrix,PetscVector>::normFrobenius
+   */
   virtual real64 normFrobenius() const override;
 
   virtual localIndex getLocalRowID( globalIndex const index ) const override;
 
   virtual globalIndex getGlobalRowID( localIndex const index ) const override;
 
+  /**
+   * @copydoc MatrixBase<PetscMatrix,PetscVector>::getComm
+   */
   virtual MPI_Comm getComm() const override;
 
   virtual void print( std::ostream & os = std::cout ) const override;

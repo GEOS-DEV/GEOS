@@ -88,6 +88,9 @@ public:
   using VectorBase::ready;
   using VectorBase::extract;
 
+  /**
+   * @copydoc VectorBase<EpetraVector>::created
+   */
   virtual bool created() const override;
 
   virtual void createWithLocalSize( localIndex const localSize,
@@ -149,18 +152,39 @@ public:
   virtual void pointwiseProduct( EpetraVector const & x,
                                  EpetraVector & y ) const override;
 
+  /**
+   * @copydoc VectorBase<EpetraVector>::norm1
+   */
   virtual real64 norm1() const override;
 
+  /**
+   * @copydoc VectorBase<EpetraVector>::norm2
+   */
   virtual real64 norm2() const override;
 
+  /**
+   * @copydoc VectorBase<EpetraVector>::normInf
+   */
   virtual real64 normInf() const override;
 
+  /**
+   * @copydoc VectorBase<EpetraVector>::globalSize
+   */
   virtual globalIndex globalSize() const override;
 
+  /**
+   * @copydoc VectorBase<EpetraVector>::localSize
+   */
   virtual localIndex localSize() const override;
 
+  /**
+   * @copydoc VectorBase<EpetraVector>::ilower
+   */
   virtual globalIndex ilower() const override;
 
+  /**
+   * @copydoc VectorBase<EpetraVector>::iupper
+   */
   virtual globalIndex iupper() const override;
 
   virtual real64 get( globalIndex globalRow ) const override;
@@ -172,10 +196,19 @@ public:
 
   virtual globalIndex getGlobalRowID( localIndex const localRow ) const override;
 
+  /**
+   * @copydoc VectorBase<EpetraVector>::extractLocalVector
+   */
   virtual real64 const * extractLocalVector() const override;
 
+  /**
+   * @copydoc VectorBase<EpetraVector>::extractLocalVector
+   */
   virtual real64 * extractLocalVector() override;
 
+  /**
+   * @copydoc VectorBase<EpetraVector>::getComm
+   */
   virtual MPI_Comm getComm() const override;
 
   virtual void print( std::ostream & os = std::cout ) const override;
