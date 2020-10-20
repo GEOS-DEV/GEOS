@@ -21,6 +21,8 @@
 #include "linearAlgebra/interfaces/direct/Arnoldi.hpp"
 
 #include <Epetra_Import.h>
+#include <Epetra_FECrsMatrix.h>
+#include <Epetra_FEVector.h>
 
 #ifdef GEOSX_USE_MPI
 #include <Epetra_MpiComm.h>

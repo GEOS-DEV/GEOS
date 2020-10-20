@@ -23,10 +23,7 @@
 #include "linearAlgebra/interfaces/trilinos/EpetraMatrix.hpp"
 #include "linearAlgebra/interfaces/direct/SuiteSparse.hpp"
 
-#include <Epetra_Map.h>
 #include <Epetra_FECrsGraph.h>
-#include <Epetra_FECrsMatrix.h>
-#include <Epetra_FEVector.h>
 
 namespace geosx
 {

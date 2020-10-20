@@ -23,9 +23,6 @@
 #include "linearAlgebra/interfaces/hypre/HypreMatrix.hpp"
 #include "linearAlgebra/interfaces/direct/SuiteSparse.hpp"
 
-#include <HYPRE_utilities.h>
-#include <seq_mv.h>
-
 namespace geosx
 {
 

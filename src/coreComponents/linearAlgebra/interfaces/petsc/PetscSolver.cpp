@@ -30,9 +30,7 @@
 #include <petscvec.h>
 #include <petscmat.h>
 #include <petscksp.h>
-#ifdef GEOSX_USE_SUITESPARSE
 #include "PetscSuiteSparse.hpp"
-#endif
 
 // Put everything under the geosx namespace.
 namespace geosx
@@ -127,7 +125,6 @@ void solve_parallelDirect( LinearSolverParameters const & parameters,
   PetscDestroyAdditionalData( localMatrix );
 }
 
-#ifdef GEOSX_USE_SUITESPARSE
 void solve_serialDirect( LinearSolverParameters const & parameters,
                          PetscMatrix & mat,
                          PetscVector & sol,
@@ -174,7 +171,6 @@ void solve_serialDirect( LinearSolverParameters const & parameters,
     }
   }
 }
-#endif
 
 void CreatePetscKrylovSolver( LinearSolverParameters const & params,
                               MPI_Comm const comm,
@@ -223,11 +219,7 @@ void PetscSolver::solve_direct( PetscMatrix & mat,
   }
   else
   {
-#ifdef GEOSX_USE_SUITESPARSE
     solve_serialDirect( m_parameters, mat, sol, rhs, m_result );
-#else
-    GEOSX_ERROR( "Petsc direct solver interface: serial direct solver not available (try to compile GEOSX TPLs with SuiteSparse)." );
-#endif
   }
 }
 

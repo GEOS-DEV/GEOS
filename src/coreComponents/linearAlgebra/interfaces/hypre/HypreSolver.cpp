@@ -33,9 +33,7 @@
 #include <_hypre_parcsr_ls.h>
 #include <_hypre_IJ_mv.h>
 #include <krylov.h>
-#ifdef GEOSX_USE_SUITESPARSE
 #include "HypreSuiteSparse.hpp"
-#endif
 
 namespace geosx
 {
@@ -134,7 +132,6 @@ void solve_parallelDirect( LinearSolverParameters const & parameters,
   HypreDestroyAdditionalData( localMatrix );
 }
 
-#ifdef GEOSX_USE_SUITESPARSE
 void solve_serialDirect( LinearSolverParameters const & parameters,
                          HypreMatrix & mat,
                          HypreVector & sol,
@@ -181,7 +178,6 @@ void solve_serialDirect( LinearSolverParameters const & parameters,
     }
   }
 }
-#endif
 
 void CreateHypreGMRES( LinearSolverParameters const & params,
                        MPI_Comm const comm,
@@ -318,11 +314,7 @@ void HypreSolver::solve_direct( HypreMatrix & mat,
   }
   else
   {
-#ifdef GEOSX_USE_SUITESPARSE
     solve_serialDirect( m_parameters, mat, sol, rhs, m_result );
-#else
-    GEOSX_ERROR( "Hypre direct solver interface: serial direct solver not available (try to compile GEOSX TPLs with SuiteSparse)." );
-#endif
   }
 }
 

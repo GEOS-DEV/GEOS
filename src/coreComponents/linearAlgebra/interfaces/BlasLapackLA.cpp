@@ -715,13 +715,7 @@ void BlasLapackLA::matrixSVD( arraySlice2d< real64 const, MatrixLayout::COL_MAJO
 
   // make a copy of A, since dgesvd destroys contents
   array2d< real64, MatrixLayout::COL_MAJOR_PERM > ACOPY( A.size( 0 ), A.size( 1 ) );
-  for( int i = 0; i < A.size( 0 ); ++i )
-  {
-    for( int j = 0; j < A.size( 1 ); ++j )
-    {
-      ACOPY( i, j ) = A( i, j );
-    }
-  }
+  BlasLapackLA::matrixCopy( A, ACOPY );
 
   // define the arguments of dgesvd
   int const M     = LvArray::integerConversion< int >( A.size( 0 ) );
@@ -800,13 +794,7 @@ void BlasLapackLA::matrixEigenvalues( MatColMajor< real64 const > const & A,
 
   // make a copy of A, since dgeev destroys contents
   array2d< real64, MatrixLayout::COL_MAJOR_PERM > ACOPY( A.size( 0 ), A.size( 1 ) );
-  for( int i = 0; i < A.size( 0 ); ++i )
-  {
-    for( int j = 0; j < A.size( 1 ); ++j )
-    {
-      ACOPY( i, j ) = A( i, j );
-    }
-  }
+  BlasLapackLA::matrixCopy( A, ACOPY );
 
   // define the arguments of dgesvd
   int const N    = LvArray::integerConversion< int >( A.size( 0 ) );

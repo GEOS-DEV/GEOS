@@ -140,7 +140,6 @@ void solve_parallelDirect( LinearSolverParameters const & parameters,
   }
 }
 
-#ifdef GEOSX_USE_SUITESPARSE
 void solve_serialDirect( LinearSolverParameters const & parameters,
                          EpetraMatrix & mat,
                          EpetraVector & sol,
@@ -193,7 +192,6 @@ void solve_serialDirect( LinearSolverParameters const & parameters,
   delete serialMap;
   delete importToSerial;
 }
-#endif
 
 void CreateTrilinosKrylovSolver( LinearSolverParameters const & params, AztecOO & solver )
 {
@@ -258,11 +256,7 @@ void TrilinosSolver::solve_direct( EpetraMatrix & mat,
   }
   else
   {
-#ifdef GEOSX_USE_SUITESPARSE
     solve_serialDirect( m_parameters, mat, sol, rhs, m_result );
-#else
-    GEOSX_ERROR( "Trilinos direct solver interface: serial direct solver not available (try to compile GEOSX TPLs with SuiteSparse)." );
-#endif
   }
 }
 
