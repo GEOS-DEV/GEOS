@@ -53,6 +53,7 @@ class Geosx(CMakePackage, CudaPackage):
     variant('shared', default=True, description='Build Shared Libs.')
     variant('caliper', default=True, description='Build Caliper support.')
     variant('mkl', default=False, description='Use the Intel MKL library.')
+    variant('essl', default=False, description='Use the IBM ESSL library.')
     variant('suite-sparse', default=True, description='Build SuiteSparse support.')
     variant('trilinos', default=True, description='Build Trilinos support.')
     variant('hypre', default=True, description='Build HYPRE support.')
@@ -72,14 +73,14 @@ class Geosx(CMakePackage, CudaPackage):
     #
     # Performance portability
     #
-    depends_on('raja@0.12.1: +openmp +shared ~examples ~exercises')
-    depends_on('raja +cuda', when='+cuda')
+    depends_on('raja@0.12.1: +openmp +shared ~examples ~exercises', when='~cuda')
+    depends_on('raja@0.12.1: +cuda +openmp +shared ~examples ~exercises', when='+cuda')
 
     depends_on('umpire@4.0.1: ~c +shared +openmp ~examples')
-    depends_on('umpire +cuda', when='+cuda')
+    depends_on('umpire@4.0.1: +cuda ~c +shared +openmp ~examples', when='+cuda')
 
     depends_on('chai +shared +raja ~benchmarks ~examples')
-    depends_on('chai +cuda', when='+cuda')
+    depends_on('chai +cuda +shared +raja ~benchmarks ~examples', when='+cuda')
 
     #
     # IO
@@ -99,6 +100,9 @@ class Geosx(CMakePackage, CudaPackage):
     # Math
     #
     depends_on('intel-mkl +shared ~ilp64', when='+mkl')
+
+    depends_on('essl ~ilp64 threads=openmp +lapack', when='+essl')
+    depends_on('essl +cuda', when='+essl+cuda')
 
     depends_on('parmetis@4.0.3: +shared +int64')
     depends_on('superlu-dist@6.3: +int64 +openmp +shared', when='~petsc')
@@ -127,6 +131,12 @@ class Geosx(CMakePackage, CudaPackage):
     #
     depends_on('doxygen@1.8.13:', when='+docs', type='build')
     depends_on('py-sphinx@1.6.3:', when='+docs', type='build')
+
+    #
+    # Conflicts
+    #
+    conflicts('+mkl +essl', msg='Cannot use both MKL and ESSL.')
+    conflicts('+essl ~cuda', msg='Cannot use ESSL without CUDA.')
 
     phases = ['hostconfig', 'cmake', 'build', 'install']
 
@@ -342,6 +352,10 @@ class Geosx(CMakePackage, CudaPackage):
                 cfg.write(cmake_cache_option('ENABLE_MKL', True))
                 cfg.write(cmake_cache_entry('MKL_INCLUDE_DIRS', spec['intel-mkl'].prefix.include))
                 cfg.write(cmake_cache_list('MKL_LIBRARIES', spec['intel-mkl'].libs))
+            if '+essl' in spec:
+                cfg.write(cmake_cache_option('ENABLE_ESSL', True))
+                cfg.write(cmake_cache_entry('ESSL_INCLUDE_DIRS', spec['essl'].prefix.include))
+                cfg.write(cmake_cache_list('ESSL_LIBRARIES', spec['essl'].libs + spec['cuda'].libs))
 
 
             cfg.write('#{0}\n'.format('-' * 80))
