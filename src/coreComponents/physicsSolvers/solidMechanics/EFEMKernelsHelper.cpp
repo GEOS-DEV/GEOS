@@ -28,15 +28,15 @@ namespace geosx
 namespace EFEMKernelsHelper
 {
 
-void EFEMKernelsHelper::AssembleEquilibriumOperator( real64 ( & eqMatrix )[3][6],
-                                                     arraySlice1d<real64 const> const & nVec,
-													 arraySlice1d<real64 const> const & tVec1,
-													 arraySlice1d<real64 const> const & tVec2,
-                                                     real64 const hInv )
+void AssembleEquilibriumOperator( real64 ( & eqMatrix )[3][6],
+                                  arraySlice1d< real64 const > const & nVec,
+                                  arraySlice1d< real64 const > const & tVec1,
+                                  arraySlice1d< real64 const > const & tVec2,
+                                  real64 const hInv )
 {
   GEOSX_MARK_FUNCTION;
 
-  LvArray::tensorOps::fill<3, 6>( eqMatrix, 0 );
+  LvArray::tensorOps::fill< 3, 6 >( eqMatrix, 0 );
 
   real64 nDn[3][3], t1DnSym[3][3], t2DnSym[3][3];
 
@@ -66,17 +66,16 @@ void EFEMKernelsHelper::AssembleEquilibriumOperator( real64 ( & eqMatrix )[3][6]
       {
         VoigtIndex = 6 - i - j;
       }
-      eqMatrix( 0, VoigtIndex ) += nDn     [i][j];
-      eqMatrix( 1, VoigtIndex ) += t1DnSym [i][j];
-      eqMatrix( 2, VoigtIndex ) += t2DnSym [i][j];
+      eqMatrix[0][VoigtIndex] += nDn     [i][j];
+      eqMatrix[1][VoigtIndex] += t1DnSym [i][j];
+      eqMatrix[2][VoigtIndex] += t2DnSym [i][j];
     }
   }
-  BlasLapackLA::matrixScale( -hInv, eqMatrix );
+  LvArray::tensorOps::scale<3, 6>( eqMatrix, -hInv );
 }
 
 } // namespace EFEMKernelsHelper
 } // namespace geosx
-
 
 
 

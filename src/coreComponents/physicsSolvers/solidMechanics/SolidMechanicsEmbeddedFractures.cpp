@@ -32,7 +32,7 @@
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
 #include "linearAlgebra/utilities/LAIHelperFunctions.hpp"
-#include "linearAlgebra/interfaces/BlasLapackLA.hpp"
+#include "SolidMechanicsEFEMKernels.hpp"
 
 
 namespace geosx
@@ -53,8 +53,8 @@ SolidMechanicsEmbeddedFractures::SolidMechanicsEmbeddedFractures( const std::str
     setDescription( "Name of the solid mechanics solver in the rock matrix" );
 
   registerWrapper( viewKeyStruct::fractureRegionNameString, &m_fractureRegionName )->
-      setInputFlag( InputFlags::REQUIRED )->
-      setDescription( "Name of the fracture region." );
+    setInputFlag( InputFlags::REQUIRED )->
+    setDescription( "Name of the fracture region." );
 
   registerWrapper( viewKeyStruct::contactRelationNameString, &m_contactRelationName )->
     setInputFlag( InputFlags::REQUIRED )->
@@ -262,25 +262,25 @@ void SolidMechanicsEmbeddedFractures::AssembleSystem( real64 const time,
   arrayView1d< globalIndex const > const & jumpDofNumber = subRegion->getReference< globalIndex_array >( jumpDofKey );
 
   real64 const gravityVectorData[3] = { gravityVector().Data()[0],
-		                                gravityVector().Data()[1],
-		                                gravityVector().Data()[2] };
+                                        gravityVector().Data()[1],
+                                        gravityVector().Data()[2] };
 
   real64 maxTraction = finiteElement::
-  		  regionBasedKernelApplication< parallelDevicePolicy< 32 >,
-		                                constitutive::SolidBase,
-  		  		                        CellElementSubRegion,
-										SolidMechanicsEFEMKernels::AssumedEnhancedStrain >( mesh,
-  		  				                targetRegionNames(),
-  		  				                this->getDiscretizationName(),
-  		  				                m_solidMaterialNames,
-  										subRegion,
-  		  				                dispDofNumber,
-  		  				                jumpDofNumber,
-  		  				                dofManager.rankOffset(),
-  		  				                localMatrix,
-  		  				                localRhs,
-  		  				                gravityVectorData,
-  		  				                std::forward< PARAMS >( params )... );
+                         regionBasedKernelApplication< parallelDevicePolicy< 32 >,
+                                                       constitutive::SolidBase,
+                                                       CellElementSubRegion,
+                                                       SolidMechanicsEFEMKernels::AssumedEnhancedStrain >(
+    *mesh,
+    targetRegionNames(),
+    this->getDiscretizationName(),
+    m_solidMaterialNames,
+    subRegion,
+    dispDofNumber,
+    jumpDofNumber,
+    dofManager.rankOffset(),
+    localMatrix,
+    localRhs,
+    gravityVectorData );
 
 }
 

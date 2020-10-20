@@ -185,7 +185,7 @@ public:
   /**
    * @brief @return The sorted array view of fractured elements.
    */
-  SortedArrayView< localIndex const > const & fracturedElementsList() const
+  SortedArrayView< localIndex const > const fracturedElementsList() const
   { return m_fracturedCells.toViewConst(); }
 
   /**
