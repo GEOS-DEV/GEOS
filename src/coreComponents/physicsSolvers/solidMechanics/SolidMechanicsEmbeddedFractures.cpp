@@ -269,18 +269,17 @@ void SolidMechanicsEmbeddedFractures::AssembleSystem( real64 const time,
                          regionBasedKernelApplication< parallelDevicePolicy< 32 >,
                                                        constitutive::SolidBase,
                                                        CellElementSubRegion,
-                                                       SolidMechanicsEFEMKernels::AssumedEnhancedStrain >(
-    *mesh,
-    targetRegionNames(),
-    this->getDiscretizationName(),
-    m_solidMaterialNames,
-    subRegion,
-    dispDofNumber,
-    jumpDofNumber,
-    dofManager.rankOffset(),
-    localMatrix,
-    localRhs,
-    gravityVectorData );
+                                                       SolidMechanicsEFEMKernels::QuasiStatic >( *mesh,
+                                                                                                 targetRegionNames(),
+                                                                                                 this->getDiscretizationName(),
+                                                                                                 m_solidMaterialNames,
+                                                                                                 subRegion,
+                                                                                                 dispDofNumber,
+                                                                                                 jumpDofNumber,
+                                                                                                 dofManager.rankOffset(),
+                                                                                                 localMatrix,
+                                                                                                 localRhs,
+                                                                                                 gravityVectorData );
 
 }
 
@@ -558,42 +557,6 @@ void SolidMechanicsEmbeddedFractures::ApplySystemSolution( DofManager const & do
                                          domain.getNeighbors(),
                                          true );
 
-}
-
-void SolidMechanicsEmbeddedFractures::ComputeTraction( ConstitutiveManager const * const constitutiveManager,
-                                                       array1d< real64 >  const & dispJump,
-                                                       array1d< real64 > & tractionVector,
-                                                       array2d< real64 > & dTdw )
-{
-  // Compute traction vector on the fracture element
-  ContactRelationBase const * const
-  contactRelation = constitutiveManager->GetGroup< ContactRelationBase >( m_contactRelationName );
-
-  // check if fracture is open
-  bool open = dispJump[0] >= 0 ? true : false;
-
-  if( open )
-  {
-    tractionVector[0] = 1e5;
-    tractionVector[1] = 0.0;
-    tractionVector[2] = 0.0;
-    dTdw( 0, 0 ) = 0.0;
-    dTdw( 0, 1 ) = 0.0;
-    dTdw( 0, 2 ) = 0.0;
-    dTdw( 1, 0 ) = 0.0;
-    dTdw( 1, 1 ) = 0.0;
-    dTdw( 1, 2 ) = 0.0;
-    dTdw( 2, 0 ) = 0.0;
-    dTdw( 2, 1 ) = 0.0;
-    dTdw( 2, 2 ) = 0.0;
-  }
-  else
-  {
-    // Contact through penalty condition.
-    tractionVector[0] = contactRelation->stiffness() * dispJump[0];
-    tractionVector[1] = 0;
-    tractionVector[2] = 0;
-  }
 }
 
 REGISTER_CATALOG_ENTRY( SolverBase, SolidMechanicsEmbeddedFractures, std::string const &, Group * const )

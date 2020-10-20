@@ -17,18 +17,18 @@
  * @file EFEMKernelsHelper.cpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_EFEMKERNELSHELPER_CPP_
-#define GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_EFEMKERNELSHELPER_CPP_
+#ifndef GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_SOLIDMECHANICSEFEMKERNELSHELPER_CPP_
+#define GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_SOLIDMECHANICSEFEMKERNELSHELPER_CPP_
 
-#include "EFEMKernelsHelper.hpp"
+#include "SolidMechanicsEFEMKernelsHelper.hpp"
 
 namespace geosx
 {
 
-namespace EFEMKernelsHelper
+namespace SolidMechanicsEFEMKernelsHelper
 {
 
-void AssembleEquilibriumOperator( real64 ( & eqMatrix )[3][6],
+void assembleEquilibriumOperator( real64 ( & eqMatrix )[3][6],
                                   arraySlice1d< real64 const > const & nVec,
                                   arraySlice1d< real64 const > const & tVec1,
                                   arraySlice1d< real64 const > const & tVec2,
@@ -38,6 +38,10 @@ void AssembleEquilibriumOperator( real64 ( & eqMatrix )[3][6],
 
   LvArray::tensorOps::fill< 3, 6 >( eqMatrix, 0 );
 
+  // Define the dyadic producs
+  // nDn := nVec_dyadic_nVec,
+  // t1DnSym:= sym(tVec1_dyadic_nVec)
+  // t2DnSym:= sym(tVec2_dyadic_nVec)
   real64 nDn[3][3], t1DnSym[3][3], t2DnSym[3][3];
 
   // n dyadic n
@@ -71,7 +75,32 @@ void AssembleEquilibriumOperator( real64 ( & eqMatrix )[3][6],
       eqMatrix[2][VoigtIndex] += t2DnSym [i][j];
     }
   }
-  LvArray::tensorOps::scale<3, 6>( eqMatrix, -hInv );
+  LvArray::tensorOps::scale< 3, 6 >( eqMatrix, -hInv );
+}
+
+
+void computeTraction( real64 ( & dispJump )[3],
+		              real64 contactCoeff,
+					  real64 ( & tractionVector )[3],
+					  real64 ( & dTractiondw )[3][3] )
+{
+// check if fracture is open
+  bool open = dispJump[0] >= 0 ? true : false;
+
+  LvArray::tensorOps::fill<3>(tractionVector, 0);
+  LvArray::tensorOps::fill<3, 3>(dTractiondw, 0);
+
+  if( open )
+  {
+    tractionVector[0] = 1e5;
+  }
+  else
+  {
+    // Contact through penalty condition.
+    tractionVector[0] = contactCoeff * dispJump[0];
+    dTractiondw[0][0] = contactCoeff;
+  }
+
 }
 
 } // namespace EFEMKernelsHelper

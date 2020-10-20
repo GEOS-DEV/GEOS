@@ -21,7 +21,7 @@
 #define GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_SOLIDMECHANICSEFEMKERNELS_HPP_
 
 #include "SolidMechanicsSmallStrainQuasiStaticKernel.hpp"
-#include "EFEMKernelsHelper.hpp"
+#include "SolidMechanicsEFEMKernelsHelper.hpp"
 
 namespace geosx
 {
@@ -37,13 +37,11 @@ namespace SolidMechanicsEFEMKernels
  * @tparam UNUSED An unused parameter since we are assuming that the test and
  *                trial space have the same number of support points.
  *
- * ### QuasiStatic Description
- *
  */
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
-class AssumedEnhancedStrain :
+class QuasiStatic :
   public SolidMechanicsLagrangianFEMKernels::QuasiStatic< SUBREGION_TYPE,
                                                           CONSTITUTIVE_TYPE,
                                                           FE_TYPE >
@@ -73,19 +71,19 @@ public:
    * @copydoc geosx::finiteElement::ImplicitKernelBase::ImplicitKernelBase
    * @param inputGravityVector The gravity vector.
    */
-  AssumedEnhancedStrain( NodeManager const & nodeManager,
-                         EdgeManager const & edgeManager,
-                         FaceManager const & faceManager,
-                         SUBREGION_TYPE const & elementSubRegion,
-                         FE_TYPE const & finiteElementSpace,
-                         CONSTITUTIVE_TYPE * const inputConstitutiveType,
-                         EmbeddedSurfaceSubRegion const & embeddedSurfSubRegion,
-                         arrayView1d< globalIndex const > const & uDofNumber,
-                         arrayView1d< globalIndex const > const & wDofNumber,
-                         globalIndex const rankOffset,
-                         CRSMatrixView< real64, globalIndex const > const & inputMatrix,
-                         arrayView1d< real64 > const & inputRhs,
-                         real64 const (&inputGravityVector)[3] ):
+  QuasiStatic( NodeManager const & nodeManager,
+               EdgeManager const & edgeManager,
+               FaceManager const & faceManager,
+               SUBREGION_TYPE const & elementSubRegion,
+               FE_TYPE const & finiteElementSpace,
+               CONSTITUTIVE_TYPE * const inputConstitutiveType,
+               EmbeddedSurfaceSubRegion const & embeddedSurfSubRegion,
+               arrayView1d< globalIndex const > const & uDofNumber,
+               arrayView1d< globalIndex const > const & wDofNumber,
+               globalIndex const rankOffset,
+               CRSMatrixView< real64, globalIndex const > const & inputMatrix,
+               arrayView1d< real64 > const & inputRhs,
+               real64 const (&inputGravityVector)[3] ):
     Base( nodeManager,
           edgeManager,
           faceManager,
@@ -137,7 +135,7 @@ public:
       localKwu{ { 0.0 } },
       localKuw{ { 0.0 } },
       wLocal(),
-	  uLocal(),
+      uLocal(),
       hInv()
     {}
 
@@ -283,23 +281,26 @@ public:
 
     m_constitutiveUpdate.GetStiffness( k, q, stack.constitutiveStiffness );
 
-    EFEMKernelsHelper::ComputeHeavisideFunction< numNodesPerElem >( Heaviside, stack.xLocal, m_nVec[k], m_surfaceCenter[k] );
+    SolidMechanicsEFEMKernelsHelper::ComputeHeavisideFunction< numNodesPerElem >( Heaviside,
+                                                                                  stack.xLocal,
+                                                                                  m_nVec[k],
+                                                                                  m_surfaceCenter[k] );
 
 
-    EFEMKernelsHelper::AssembleEquilibriumOperator( eqMatrix,
-                                                    m_nVec[k],
-                                                    m_tVec1[k],
-                                                    m_tVec2[k],
-                                                    stack.hInv );
+    SolidMechanicsEFEMKernelsHelper::AssembleEquilibriumOperator( eqMatrix,
+                                                                  m_nVec[k],
+                                                                  m_tVec1[k],
+                                                                  m_tVec2[k],
+                                                                  stack.hInv );
 
-    EFEMKernelsHelper::AssembleCompatibilityOperator< numNodesPerElem >( compMatrix,
-                                                                         m_nVec[k],
-                                                                         m_tVec1[k],
-                                                                         m_tVec2[k],
-                                                                         Heaviside,
-                                                                         dNdX );
+    SolidMechanicsEFEMKernelsHelper::AssembleCompatibilityOperator< numNodesPerElem >( compMatrix,
+                                                                                       m_nVec[k],
+                                                                                       m_tVec1[k],
+                                                                                       m_tVec2[k],
+                                                                                       Heaviside,
+                                                                                       dNdX );
 
-    EFEMKernelsHelper::AssembleStrainOperator< 6, nUdof, numNodesPerElem >( strainMatrix, dNdX );
+    SolidMechanicsEFEMKernelsHelper::AssembleStrainOperator< 6, nUdof, numNodesPerElem >( strainMatrix, dNdX );
 
     // transp(B)D
     LvArray::tensorOps::Rij_eq_AkiBkj< nUdof, 6, nUdof >( matBD, strainMatrix, stack.constitutiveStiffness );
@@ -322,14 +323,6 @@ public:
     LvArray::tensorOps::add< 3, 3 >( stack.localKww, Kww_gauss );
     LvArray::tensorOps::add< 3, nUdof >( stack.localKwu, Kwu_gauss );
     LvArray::tensorOps::add< nUdof, 3 >( stack.localKuw, Kuw_gauss );
-
-//     real64 strainInc[6] = {0};
-//     // compute strainInc due to the fracture jump;
-//     LvArray::tensorOps::Ri_add_AijBj(strainInc, compMatrix, stack.wlocal);
-//     m_constitutiveUpdate.SmallStrain( k, q, strainInc );
-//
-//     typename CONSTITUTIVE_TYPE::KernelWrapper::DiscretizationOps stiffnessHelper;
-//     m_constitutiveUpdate.setDiscretizationOps( k, q, stiffnessHelper );
   }
 
   /**
@@ -348,6 +341,13 @@ public:
     LvArray::tensorOps::Ri_add_AijBj< 3, 3 >( stack.localRw, stack.localKww, stack.wLocal );
     LvArray::tensorOps::Ri_add_AijBj< 3, nUdof >( stack.localRw, stack.localKwu, stack.uLocal );
     LvArray::tensorOps::Ri_add_AijBj< nUdof, 3 >( stack.localRu, stack.localKuw, stack.wLocal );
+
+    // Evaluate tranction
+    real64 tractionVec[3], dTractiondw[3][3], contactCoeff = 1.0e15;
+    SolidMechanicsEFEMKernelsHelper::computeTraction(stack.wLocal, contactCoeff, tractionVec, dTractiondw);
+    LvArray::tensorOps::add<3>(stack.localRw, tractionVec);
+    LvArray::tensorOps::scale<3,3>(dTractiondw, -1);
+    LvArray::tensorOps::add<3,3>(stack.localKww, dTractiondw);
 
     for( localIndex i = 0; i < nUdof; ++i )
     {

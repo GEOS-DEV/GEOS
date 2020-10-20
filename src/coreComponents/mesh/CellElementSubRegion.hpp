@@ -74,7 +74,7 @@ public:
   ///@}
 
   /*
-   * @brief Add fractured eleme to list and relative entries to the map.
+   * @brief Add fractured element to list and relative entries to the map.
    * @param cellElemIndex cell element index
    * @param embSurfIndex embedded surface element index
    */

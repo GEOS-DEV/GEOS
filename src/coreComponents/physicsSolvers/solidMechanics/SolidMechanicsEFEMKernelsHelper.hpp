@@ -17,8 +17,8 @@
  * @file EFEMKernelsHelper.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_EFEMKERNELSHELPER_HPP_
-#define GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_EFEMKERNELSHELPER_HPP_
+#ifndef GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_SOLIDMECHANICSEFEMKERNELSHELPER_HPP_
+#define GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_SOLIDMECHANICSEFEMKERNELSHELPER_HPP_
 
 
 #include "common/DataTypes.hpp"
@@ -31,11 +31,11 @@
 namespace geosx
 {
 
-namespace EFEMKernelsHelper
+namespace SolidMechanicsEFEMKernelsHelper
 {
 
 template< int NUM_NODES >
-void ComputeHeavisideFunction( integer (& heaviside)[NUM_NODES],
+void computeHeavisideFunction( integer (& heaviside)[NUM_NODES],
                                real64 (& X)[NUM_NODES][3],
                                arraySlice1d< real64 const > const & normalVector,
                                arraySlice1d< real64 const > const & elementCenter )
@@ -56,7 +56,7 @@ void ComputeHeavisideFunction( integer (& heaviside)[NUM_NODES],
 template< int I_SIZE,
           int J_SIZE,
           int NUM_NODES >
-void AssembleStrainOperator( real64 ( & strainMatrix )[I_SIZE][J_SIZE],
+void assembleStrainOperator( real64 ( & strainMatrix )[I_SIZE][J_SIZE],
                              real64 ( & dNdX )[NUM_NODES][3] )
 {
   GEOSX_MARK_FUNCTION;
@@ -80,7 +80,7 @@ void AssembleStrainOperator( real64 ( & strainMatrix )[I_SIZE][J_SIZE],
 }
 
 template< int NUM_NODES >
-void AssembleCompatibilityOperator( real64 ( & compMatrix )[6][3],
+void assembleCompatibilityOperator( real64 ( & compMatrix )[6][3],
                                     real64 ( & nVec )[3],
                                     real64 ( & tVec1 )[3],
                                     real64 ( & tVec2 )[3],
@@ -142,11 +142,23 @@ void AssembleCompatibilityOperator( real64 ( & compMatrix )[6][3],
   }
 }
 
-void AssembleEquilibriumOperator( real64 ( &eqMatrix )[3][6],
+void assembleEquilibriumOperator( real64 ( &eqMatrix )[3][6],
                                   arraySlice1d< real64 const > const &  nVec,
                                   arraySlice1d< real64 const > const &  tVec1,
                                   arraySlice1d< real64 const > const &  tVec2,
                                   real64 const hInv );
+
+/*
+ * @brief Computes traction and derivative on each fracture segment.
+ * @param constitutiveManager constant pointer to the constitutive mamanger
+ * @param dispJump displacement jump
+ * @param tractionVector traction vector
+ * @param dTdw Derivative of the traction w.r.t. the jump.
+ */
+void computeTraction( real64 ( & dispJump )[3],
+		              real64 contactCoeff,
+					  real64 ( & tractionVector )[3],
+					  real64 ( & dTractiondw )[3][3] );
 
 }
 } // geosx
