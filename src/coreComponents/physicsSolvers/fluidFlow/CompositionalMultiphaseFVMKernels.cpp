@@ -541,12 +541,12 @@ FluxKernel::
 
   localIndex constexpr NUM_ELEMS   = STENCIL_TYPE::NUM_POINT_IN_FLUX;
   localIndex constexpr MAX_STENCIL = STENCIL_TYPE::MAX_STENCIL_SIZE;
-  localIndex constexpr NDOF = NC + 1;
 
   forAll< parallelDevicePolicy<> >( stencil.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iconn )
   {
     // TODO: hack! for MPFA, etc. must obtain proper size from e.g. seri
     localIndex const stencilSize = MAX_STENCIL;
+    localIndex constexpr NDOF = NC + 1;
 
     stackArray1d< real64, NUM_ELEMS * NC >                      localFlux( NUM_ELEMS * NC );
     stackArray2d< real64, NUM_ELEMS * NC * MAX_STENCIL * NDOF > localFluxJacobian( NUM_ELEMS * NC, stencilSize * NDOF );
