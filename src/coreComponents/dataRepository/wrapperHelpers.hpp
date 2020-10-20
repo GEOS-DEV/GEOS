@@ -603,7 +603,7 @@ averageOverSecondDim( ArrayView< T const, NDIM, USD > const & var )
     } );
   } );
 
-  return std::move( ret );
+  return ret;
 }
 
 template< typename T >
