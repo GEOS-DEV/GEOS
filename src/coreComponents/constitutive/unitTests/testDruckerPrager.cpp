@@ -101,10 +101,8 @@ TEST( DruckerPragerTests, testModel )
                                     deviator);
 
   real64 phi = friction * M_PI / 180;
-  real64 slope = -6 * cos(phi) / ( 3 + sin(phi) );
-  
-  EXPECT_DOUBLE_EQ( invariantQ / invariantP , slope );
-
+  real64 slope = -6 * sin(phi) / ( 3 + sin(phi) );
+  EXPECT_TRUE( fabs(invariantQ / invariantP / slope - 1) < 1e-8 );
     
   // we now use a finite-difference check of tangent stiffness to confirm
   // the analytical form is working properly.

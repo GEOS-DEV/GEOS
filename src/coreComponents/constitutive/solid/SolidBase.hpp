@@ -121,25 +121,13 @@ protected:
   }
   
 public:
-  GEOSX_HOST_DEVICE
-  virtual void getStress( localIndex const k,
-                          localIndex const q,
-                          real64 (& stress)[6] ) const
-  {
-    stress[0] = this->m_newStress( k, q, 0 );
-    stress[1] = this->m_newStress( k, q, 1 );
-    stress[2] = this->m_newStress( k, q, 2 );
-    stress[3] = this->m_newStress( k, q, 3 );
-    stress[4] = this->m_newStress( k, q, 4 );
-    stress[5] = this->m_newStress( k, q, 5 );
-  }
 
   /// A reference the current material stress at quadrature points.
   arrayView3d< real64, solid::STRESS_USD > const m_newStress;
   
   /// A reference the previous material stress at quadrature points.
   arrayView3d< real64, solid::STRESS_USD > const m_oldStress;
-    
+   
   /**
    * @name Update Interfaces: Stress and Stiffness
    *
@@ -377,7 +365,70 @@ public:
   
   ///@}
   
-
+   
+  /**
+   * @brief Return the current stress at a given material point
+   *
+   * @param[in] k The element index.
+   * @param[in] q The quadrature point index.
+   * @param[out] stress Current stress value
+   */
+  GEOSX_HOST_DEVICE
+  virtual void getStress( localIndex const k,
+                          localIndex const q,
+                          real64 ( & stress )[6] ) const
+  {
+    for(localIndex i=0; i<6; ++i)
+    {
+      stress[i] = this->m_newStress( k, q, i );
+    }
+  }
+  
+  /**
+   * @brief Return the current elastic strain at a given material point (small-strain interface)
+   *
+   * @param k the element inex
+   * @param q the quadrature index
+   * @param elasticStrain Current elastic strain
+   */
+  GEOSX_HOST_DEVICE
+  virtual void getElasticStrain( localIndex const k,
+                                 localIndex const q,
+                                 real64 ( & elasticStrain )[6] ) const
+  {
+    GEOSX_UNUSED_VAR(k);
+    GEOSX_UNUSED_VAR(q);
+    GEOSX_UNUSED_VAR(elasticStrain);
+    GEOSX_ERROR("getElasticStrain() not implemented for this model");
+  }
+  
+  /**
+   * @brief Return the strain energy density at a given material point
+   *
+   * @param k the element inex
+   * @param q the quadrature index
+   * @return Strain energy density
+   */
+   GEOSX_HOST_DEVICE
+   virtual real64 getStrainEnergyDensity( localIndex const k,
+                                          localIndex const q)
+   {
+     real64 stress[6],strain[6];
+     
+     getStress(k,q,stress);
+     getElasticStrain(k,q,strain);
+     
+     real64 energy = 0;
+     
+     for(localIndex i=0; i<3; ++i)
+     {
+       energy += stress[i]*strain[i];
+       energy += 2*stress[i+3]*strain[i+3];
+     }
+          
+     return 0.5*energy;
+   }
+   
   /**
    * @brief Return the stiffness at a given element (small-strain interface)
    *
@@ -401,27 +452,14 @@ public:
     GEOSX_ERROR("getElasticStiffness() not implemented for this model");
   }
 
-  /**
-   * @brief Return the current elastic strain at a given material point (small-strain interface)
-   *
-   * @param k the element inex
-   * @param q the quadrature index
-   * @param elasticStrain the current elastic strain
-   */
-  GEOSX_HOST_DEVICE
-  virtual void getElasticStrain( localIndex const k,
-                                 localIndex const q,
-                                 real64 ( & elasticStrain )[6] ) const
-  {
-    GEOSX_UNUSED_VAR(k);
-    GEOSX_UNUSED_VAR(q);
-    GEOSX_UNUSED_VAR(elasticStrain);
-    GEOSX_ERROR("getElasticStrain() not implemented for this model");
-  }
-  
-  
+
   //////////////// "LEGACY" INTERFACE BELOW -- TO REVISIT ////////////////////////
   
+  
+  GEOSX_HOST_DEVICE
+  virtual real64 calculateStrainEnergyDensity( localIndex const k,
+                                               localIndex const q ) const = 0;
+                                               
   /**
    * Return the stiffness at a given element and quadrature point.
    * @param k The element index.
@@ -530,9 +568,7 @@ public:
   }
   
 
-  GEOSX_HOST_DEVICE
-  virtual real64 calculateStrainEnergyDensity( localIndex const k,
-                                               localIndex const q ) const = 0;
+
   ///////////////////// end "legacy" interface //////////////////////////////
 
 };
