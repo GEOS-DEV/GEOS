@@ -119,10 +119,10 @@ void solve_parallelDirect( LinearSolverParameters const & parameters,
       real64 const cond = HypreSuperLU_DistCond( mat, SLUDData );
       if( parameters.logLevel > 0 )
       {
-        GEOSX_LOG_RANK_0( "Using a more accurate estimate of the number of conditions" );
+        GEOSX_LOG_RANK_0( "Using a more accurate estimate of the condition number" );
         GEOSX_LOG_RANK_0( "Condition number is " << cond );
       }
-      if( result.residualReduction < SLUDData.machinePrecision() * cond )
+      if( result.residualReduction < SLUDData.precisionTolerance() * cond )
       {
         result.status = LinearSolverResult::Status::Success;
       }
@@ -168,10 +168,10 @@ void solve_serialDirect( LinearSolverParameters const & parameters,
       real64 const cond = HypreSuiteSparseCond( mat, SSData );
       if( parameters.logLevel > 0 )
       {
-        GEOSX_LOG_RANK_0( "Using a more accurate estimate of the number of conditions" );
+        GEOSX_LOG_RANK_0( "Using a more accurate estimate of the condition number" );
         GEOSX_LOG_RANK_0( "Condition number is " << cond );
       }
-      if( result.residualReduction < SSData.machinePrecision() * cond )
+      if( result.residualReduction < SSData.precisionTolerance() * cond )
       {
         result.status = LinearSolverResult::Status::Success;
       }

@@ -268,7 +268,7 @@ real64 SuperLU_Dist::relativeTolerance()
   {
     condEst();
   }
-  return m_condEst * m_machinePrecision;
+  return m_condEst * m_precisionTolerance;
 }
 
 void SuperLU_Dist::destroy()
@@ -387,9 +387,9 @@ LinearSolverParameters SuperLU_Dist::getParameters() const
   return m_params;
 }
 
-real64 SuperLU_Dist::machinePrecision() const
+real64 SuperLU_Dist::precisionTolerance() const
 {
-  return m_machinePrecision;
+  return m_precisionTolerance;
 }
 
 }

@@ -231,10 +231,10 @@ public:
   real64 solveTime() const;
 
   /**
-   * @brief Returns the machine precision used in SuiteSparse class
-   * @return the machine precision used in SuiteSparse class
+   * @brief Returns the precision tolarance used in SuiteSparse class
+   * @return the precision tolerance used in SuiteSparse class
    */
-  real64 machinePrecision() const;
+  real64 precisionTolerance() const;
 
 private:
 
@@ -296,7 +296,7 @@ private:
   real64 m_solveTime;
 
   /// Add two orders of magnitude to allow small error in condition number estimate
-  real64 const m_machinePrecision = 100.0 * std::numeric_limits< real64 >::epsilon();
+  real64 const m_precisionTolerance = 100.0 * std::numeric_limits< real64 >::epsilon();
 
 };
 

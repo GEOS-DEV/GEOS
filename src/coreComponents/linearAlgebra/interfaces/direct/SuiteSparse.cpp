@@ -200,7 +200,7 @@ real64 SuiteSparse::condEst() const
 
 real64 SuiteSparse::relativeTolerance() const
 {
-  return m_condEst * m_machinePrecision;
+  return m_condEst * m_precisionTolerance;
 }
 
 void SuiteSparse::destroy()
@@ -327,9 +327,9 @@ real64 SuiteSparse::solveTime() const
   return m_solveTime;
 }
 
-real64 SuiteSparse::machinePrecision() const
+real64 SuiteSparse::precisionTolerance() const
 {
-  return m_machinePrecision;
+  return m_precisionTolerance;
 }
 
 }
