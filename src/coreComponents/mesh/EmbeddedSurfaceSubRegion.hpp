@@ -175,7 +175,16 @@ public:
 
     /// Connectivity index string
     static constexpr auto connectivityIndexString     = "connectivityIndex";
-  };
+
+    static constexpr auto dispJumpString             = "displacementJump";
+
+    static constexpr auto deltaDispJumpString        = "deltaDisplacementJump";
+
+    dataRepository::ViewKey dispJump                  = {dispJumpString};
+
+    dataRepository::ViewKey deltaDispJump             = {deltaDispJumpString};
+
+  } viewKeys;
 
   virtual void setupRelatedObjectsInRelations( MeshLevel const * const mesh ) override;
 
@@ -392,8 +401,40 @@ public:
    */
   array1d< real64 > const & getConnectivityIndex() const { return m_connectivityIndex;}
 
-  ///@}
 
+  /**
+   * @brief Get a mutable total displacement array.
+   * @return the total displacement array if it exists, or an error is thrown if it does not exist
+   * @note An error is thrown if the displacement jump does not exist
+   */
+  array1d< R1Tensor > & displacementJump()
+  { return getReference< array1d< R1Tensor > >( viewKeys.dispJump ); }
+
+  /**
+   * @brief Provide an immutable arrayView to the total displacement array.
+   * @return immutable arrayView of the total displacement array if it exists, or an error is thrown if it does not exist
+   * @note An error is thrown if the displacement jump does not exist
+   */
+  arrayView1d< R1Tensor const > displacementJump() const
+  {return getReference< array1d< R1Tensor > >( viewKeys.dispJump ); }
+
+  /**
+   * @brief Get a mutable incremental displacement array.
+   * @return the incremental displacement array if it exists, or an error is thrown if it does not exist
+   * @note An error is thrown if the incremental displacement jump does not exist
+   */
+  array1d< R1Tensor > & incrementalDisplacementJump()
+  { return getReference< array1d< R1Tensor > >( viewKeys.deltaDispJump ); }
+
+  /**
+   * @brief Provide an immutable arrayView to the incremental displacement jump array.
+   * @return immutable arrayView of the incremental displacement array if it exists, or an error is thrown if it does not exist
+   * @note An error is thrown if the incremental displacement jump does not exist
+   */
+  arrayView1d< R1Tensor const > incrementalDisplacementJump() const
+  { return getReference< array1d< R1Tensor > >( viewKeys.deltaDispJump ); }
+
+  ///@}
 
 private:
 

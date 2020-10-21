@@ -6,6 +6,7 @@
     <SolidMechanicsEmbeddedFractures
       name="mechSolve"
       targetRegions="{ Region1, Fracture }"
+      fractureRegionName="Fracture"
       initialDt="10"
       solidSolverName="matrixSolver"
       contactRelationName="fractureContact"

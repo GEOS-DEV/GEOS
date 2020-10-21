@@ -83,10 +83,8 @@ void SolidMechanicsEmbeddedFractures::RegisterDataOnMesh( dataRepository::Group 
       {
         region.forElementSubRegions< EmbeddedSurfaceSubRegion >( [&]( EmbeddedSurfaceSubRegion & subRegion )
         {
-          //subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::dispJumpString
-          // )->setPlotLevel(PlotLevel::LEVEL_0);
-          // subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::deltaDispJumpString );
-          subRegion.registerWrapper< array1d< R1Tensor > >( viewKeyStruct::dispJumpString )->setPlotLevel( PlotLevel::LEVEL_0 );
+          subRegion.registerWrapper< array1d< R1Tensor > >( viewKeyStruct::dispJumpString )
+            ->setPlotLevel( PlotLevel::LEVEL_0 );
           subRegion.registerWrapper< array1d< R1Tensor > >( viewKeyStruct::deltaDispJumpString );
         } );
       } );
@@ -252,34 +250,37 @@ void SolidMechanicsEmbeddedFractures::AssembleSystem( real64 const time,
 
   NodeManager const & nodeManager = *(mesh.getNodeManager());
   ElementRegionManager const & elemManager = *(mesh.getElemManager());
-  EmbeddedSurfaceRegion * const region = elemManager.GetRegion< EmbeddedSurfaceRegion >( m_fractureRegionName );
-  EmbeddedSurfaceSubRegion * const subRegion = region->GetSubRegion< EmbeddedSurfaceSubRegion >( 0 );
+  EmbeddedSurfaceRegion const & region = *(elemManager.GetRegion< EmbeddedSurfaceRegion >( m_fractureRegionName ));
+  EmbeddedSurfaceSubRegion const & subRegion = *(region.GetSubRegion< EmbeddedSurfaceSubRegion >( 0 ));
 
   string const dispDofKey = dofManager.getKey( dataRepository::keys::TotalDisplacement );
   string const jumpDofKey = dofManager.getKey( viewKeyStruct::dispJumpString );
 
   arrayView1d< globalIndex const > const & dispDofNumber = nodeManager.getReference< globalIndex_array >( dispDofKey );
-  arrayView1d< globalIndex const > const & jumpDofNumber = subRegion->getReference< globalIndex_array >( jumpDofKey );
+  arrayView1d< globalIndex const > const & jumpDofNumber = subRegion.getReference< globalIndex_array >( jumpDofKey );
 
   real64 const gravityVectorData[3] = { gravityVector().Data()[0],
                                         gravityVector().Data()[1],
                                         gravityVector().Data()[2] };
 
   real64 maxTraction = finiteElement::
-                         regionBasedKernelApplication< parallelDevicePolicy< 32 >,
-                                                       constitutive::SolidBase,
-                                                       CellElementSubRegion,
-                                                       SolidMechanicsEFEMKernels::QuasiStatic >( *mesh,
-                                                                                                 targetRegionNames(),
-                                                                                                 this->getDiscretizationName(),
-                                                                                                 m_solidMaterialNames,
-                                                                                                 subRegion,
-                                                                                                 dispDofNumber,
-                                                                                                 jumpDofNumber,
-                                                                                                 dofManager.rankOffset(),
-                                                                                                 localMatrix,
-                                                                                                 localRhs,
-                                                                                                 gravityVectorData );
+                         regionBasedKernelApplication
+                       < parallelDevicePolicy< 32 >,
+                         constitutive::SolidBase,
+                         CellElementSubRegion,
+                         SolidMechanicsEFEMKernels::QuasiStatic >( mesh,
+                                                                   targetRegionNames(),
+                                                                   this->getDiscretizationName(),
+                                                                   m_solidSolver->solidMaterialNames(),
+                                                                   subRegion,
+                                                                   dispDofNumber,
+                                                                   jumpDofNumber,
+                                                                   dofManager.rankOffset(),
+                                                                   localMatrix,
+                                                                   localRhs,
+                                                                   gravityVectorData );
+
+  GEOSX_UNUSED_VAR( maxTraction );
 
 }
 

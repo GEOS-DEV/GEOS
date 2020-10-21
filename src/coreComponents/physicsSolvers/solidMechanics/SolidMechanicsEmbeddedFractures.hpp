@@ -130,19 +130,6 @@ protected:
                                    SparsityPatternView< globalIndex > const & pattern ) const;
 
 
-  /*
-   * @brief Computes traction and derivative on each fracture segment.
-   * @param constitutiveManager constant pointer to the constitutive mamanger
-   * @param dispJump displacement jump
-   * @param tractionVector traction vector
-   * @param dTdw Derivative of the traction w.r.t. the jump.
-   */
-  void ComputeTraction( ConstitutiveManager const * const constitutiveManager,
-                        array1d< real64 >  const & dispJump,
-                        array1d< real64 > & tractionVector,
-                        array2d< real64 > & dTdw );
-
-
 private:
 
   /// Solid mechanics solver name

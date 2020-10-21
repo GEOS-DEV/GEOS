@@ -29,9 +29,9 @@ namespace SolidMechanicsEFEMKernelsHelper
 {
 
 void assembleEquilibriumOperator( real64 ( & eqMatrix )[3][6],
-                                  arraySlice1d< real64 const > const & nVec,
-                                  arraySlice1d< real64 const > const & tVec1,
-                                  arraySlice1d< real64 const > const & tVec2,
+                                  R1Tensor const & nVec,
+                                  R1Tensor const & tVec1,
+                                  R1Tensor const & tVec2,
                                   real64 const hInv )
 {
   GEOSX_MARK_FUNCTION;
@@ -80,15 +80,15 @@ void assembleEquilibriumOperator( real64 ( & eqMatrix )[3][6],
 
 
 void computeTraction( real64 ( & dispJump )[3],
-		              real64 contactCoeff,
-					  real64 ( & tractionVector )[3],
-					  real64 ( & dTractiondw )[3][3] )
+                      real64 contactCoeff,
+                      real64 ( & tractionVector )[3],
+                      real64 ( & dTractiondw )[3][3] )
 {
 // check if fracture is open
   bool open = dispJump[0] >= 0 ? true : false;
 
-  LvArray::tensorOps::fill<3>(tractionVector, 0);
-  LvArray::tensorOps::fill<3, 3>(dTractiondw, 0);
+  LvArray::tensorOps::fill< 3 >( tractionVector, 0 );
+  LvArray::tensorOps::fill< 3, 3 >( dTractiondw, 0 );
 
   if( open )
   {
