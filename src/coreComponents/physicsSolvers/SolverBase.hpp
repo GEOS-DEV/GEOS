@@ -57,7 +57,7 @@ public:
 
 
   /**
-   * This method is called when it's host event is triggered
+   * This method is called when its host event is triggered
    */
   virtual void Execute( real64 const time_n,
                         real64 const dt,
