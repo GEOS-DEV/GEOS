@@ -86,6 +86,9 @@ public:
                     real64 const * const weights,
                     localIndex const connectorIndex ) override final;
 
+  /**
+   * @copydoc StencilBase<BoundaryStencil_Traits,BoundaryStencil>::size
+   */
   virtual localIndex size() const override final
   { return m_elementRegionIndices.size( 0 ); }
 
