@@ -51,6 +51,7 @@ The XML file considered here follows the typical structure of the GEOSX input fi
  #. :ref:`Constitutive <Constitutive_tag_dead_oil_egg_model>`
  #. :ref:`FieldSpecifications <FieldSpecifications_tag_dead_oil_egg_model>`
  #. :ref:`Outputs <Outputs_tag_dead_oil_egg_model>`
+ #. :ref:`Tasks <Tasks_tag_dead_oil_egg_model>`    
 
 .. _Solver_tag_dead_oil_egg_model:
 
@@ -153,7 +154,7 @@ block is not needed.
 Specifying events
 ------------------------
 
-In the **Events** XML block, we specify two types of **PeriodicEvents**.
+In the **Events** XML block, we specify four types of **PeriodicEvents**.
 
 The periodic event named ``solverApplications`` notifies GEOSX that the
 coupled solver ``coupledFlowAndWells`` has to be applied to its target
@@ -167,6 +168,10 @@ instructing GEOSX to write out ``.vtk`` files at the time frequency specified
 by the attribute ``timeFrequency``.
 The ``target`` attribute must point to the **VTK** sub-block of the **Outputs**
 block (defined at the end of the XML file) by name (here, ``vtkOutput``).
+
+We define the events involved in the collection and output of the well production rates following the procedure defined in :ref:`TasksManager`.
+The time history collection events trigger the collection of the well rates at the desired frequency, while the time history output events trigger the output of the HDF5 files containing the time series.
+These events point by name to the corresponding blocks of the **Tasks** and **Outputs** XML blocks, respectively. Here, these names are ``wellRateCollection1`` and ``timeHistoryOutput1``.
 
 .. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/benchmarks/Egg/dead_oil_egg.xml
   :language: xml
@@ -280,7 +285,7 @@ imported by the **PAMELAMeshGenerator**.
 Specifying the output formats
 ----------------------------------
 
-In this section, we request an output of the results in VTK format.
+In this section, we request an output of the results in VTK format and an output of the rates for each producing well.
 Note that the name defined here must match the name used in the **Events** XML block to define the output frequency.
 
 .. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/benchmarks/Egg/dead_oil_egg.xml
@@ -288,6 +293,22 @@ Note that the name defined here must match the name used in the **Events** XML b
   :start-after: <!-- SPHINX_TUT_DEAD_OIL_EGG_OUTPUT -->
   :end-before: <!-- SPHINX_TUT_DEAD_OIL_EGG_OUTPUT_END -->
 
+.. _Tasks_tag_dead_oil_egg_model:
+
+Specifying tasks
+----------------------------------
+
+In the **Events** block, we have defined four events requesting that a task periodically collects the rate for each producing well.
+This task is defined here, in the **PackCollection** XML sub-block of the **Tasks** block.
+The task contains the path to the object on which the field to collect is registered (here, a ``WellElementSubRegion``) and the name of the field (here, ``wellElementMixtureConnectionRate``).
+The details of the history collection mechanism can be found in :ref:`TasksManager`. 
+
+
+.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/benchmarks/Egg/dead_oil_egg.xml
+  :language: xml
+  :start-after: <!-- SPHINX_TUT_DEAD_OIL_EGG_TASKS -->
+  :end-before: <!-- SPHINX_TUT_DEAD_OIL_EGG_TASKS_END -->
+	       
 
 All elements are now in place to run GEOSX.
 
@@ -317,8 +338,6 @@ The first few lines appearing to the console are indicating that the XML element
   Adding Mesh: InternalWell, wellInjector8
   Adding Event: PeriodicEvent, solverApplications
   Adding Event: PeriodicEvent, vtk
-  Adding Event: PeriodicEvent, silo
-  Adding Output: Silo, siloOutput
   Adding Output: VTK, vtkOutput
   Adding Object CellElementRegion named reservoir from ObjectManager::Catalog.
   Adding Object WellElementRegion named wellRegion1 from ObjectManager::Catalog.
@@ -410,6 +429,61 @@ We can load this file into Paraview directly and visualize results:
 .. |pic2| image:: saturation.gif
    :width: 45%
 
+We have instructed GEOSX to output the time series of rates for each producer.
+The data contained in the corresponding hdf5 files can be extracted and plotted
+as shown below.
+
+.. plot::
+
+   import matplotlib
+   import matplotlib.pyplot as plt
+   import numpy as np
+   import h5py
+
+   def main():
+
+       numWells = 4
+       iplt = -1
+       cmap = plt.get_cmap("tab10")
+    
+       # Loop over the four producers 
+       for iw in range(1,numWells+1):
+
+           # File path
+           hdf5FilePath = 'wellRateHistory'+str(iw)+'.hdf5'    
+
+           # Read HDF5
+           hf = h5py.File(hdf5FilePath, 'r')
+           time = hf.get('Time')
+           time = np.array(time)
+           massRate = hf.get('wellElementMixtureConnectionRate')
+           massRate = np.array(massRate)
+
+           # Some comments about the computation of the volumetric rate here:
+           # A proper oil rate constraint for individual wells is currently being implemented
+           # In the meantime, the volume rate is (wrongly) computed by dividing
+           # the total mass rate by the surface oil density 
+        
+           # Conversions
+           inCubicMeters = 1/848.9
+           inDays = 1.0 / (24 * 3600)
+        
+           # Plot HDF5 content (here, the rate at the well)
+           iplt += 1
+           plt.plot(time[:,0]*inDays, abs(massRate[:,0])*inCubicMeters/inDays, '-o', color=cmap(iplt), label='Producer #'+str(iw))
+
+       plt.xlim( -1, 175)
+       plt.ylim( 0, 3800)        
+       plt.grid()
+       plt.xlabel('time [days]')
+       plt.ylabel('total rate [cubic meters per day]')
+       plt.legend(bbox_to_anchor=(0.025, 0.975), loc='upper left', borderaxespad=0.)
+       plt.show()
+
+   if __name__ == "__main__":
+       main()
+
+	   
 ------------------------------------
 To go further
 ------------------------------------
