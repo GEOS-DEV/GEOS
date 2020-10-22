@@ -14,8 +14,6 @@
       targetRegions="{ Region1 }">
       <LinearSolverParameters
 	solverType="direct"
-	directParallel="0"
-        directCheckResTol="1.e-9"
         logLevel="0"/>
     </Poroelastic>
 
@@ -87,15 +85,25 @@
       forceDt="1.0"
       target="/Solvers/PoroelasticitySolver"/>
 
-    <PeriodicEvent name="timeHistoryCollection"
+    <PeriodicEvent
+      name="timeHistoryCollection"
       timeFrequency="10.0"
       targetExactTimestep="1"
       target="/Tasks/pressureCollection" />
 
-    <PeriodicEvent name="timeHistoryOutput"
+    <PeriodicEvent
+      name="timeHistoryOutput"
       timeFrequency="10.0"
       targetExactTimestep="0"
       target="/Outputs/timeHistoryOutput" />
+
+    <SoloEvent
+      name="cellCentersCollection" 
+      target="/Tasks/cellCentersCollection" />
+
+    <SoloEvent
+      name="cellCentersOutput" 
+      target="/Outputs/cellCentersOutput" />
 
   </Events>
 
@@ -263,6 +271,11 @@
       name="timeHistoryOutput"
       sources="{/Tasks/pressureCollection}"
       filename="pressure_history" />
+
+    <TimeHistory
+      name="cellCentersOutput"
+      sources="{/Tasks/cellCentersCollection}"
+      filename="cell_centers" />
   </Outputs>
 
   <Tasks>
@@ -270,6 +283,12 @@
       name="pressureCollection"
       objectPath="ElementRegions/Region1/cb1"
       fieldName="pressure"/>
+
+    <PackCollection
+      name="cellCentersCollection"
+      objectPath="ElementRegions/Region1/cb1"
+      fieldName="elementCenter"/>
   </Tasks>
 
 </Problem>
+

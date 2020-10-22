@@ -29,7 +29,7 @@ The xml input file for this test case is located at:
 
 .. code-block:: console
 
-  PoroElastic_Terzaghi_FIM.xml
+  src/coreComponents/physicsSolvers/multiphysics/integratedTests/PoroElastic_Terzaghi_FIM.xml
 
 
 ------------------------------------------------------------------
@@ -129,7 +129,7 @@ the discretization method (``FE1``, defined further in the input file),
 and the target regions (here, we only have one, ``Region1``).
 
 
-.. literalinclude:: PoroElastic_Terzaghi_FIM.xml
+.. literalinclude:: ../../../../coreComponents/physicsSolvers/multiphysics/integratedTests/PoroElastic_Terzaghi_FIM.xml
   :language: xml
   :start-after: <!-- SPHINX_POROELASTIC_SOLVER -->
   :end-before: <!-- SPHINX_POROELASTIC_SOLVER_END -->
@@ -151,7 +151,7 @@ please see the dedicated :ref:`FiniteElementDiscretization` section.
 The finite volume method requires the specification of a discretization scheme.
 Here, we use a two-point flux approximation as described in the dedicated documentation (found here: :ref:`FiniteVolumeDiscretization`).
 
-.. literalinclude:: PoroElastic_Terzaghi_FIM.xml
+.. literalinclude:: ../../../../coreComponents/physicsSolvers/multiphysics/integratedTests/PoroElastic_Terzaghi_FIM.xml
   :language: xml
   :start-after: <!-- SPHINX_POROELASTIC_NUMERICAL_METHODS -->
   :end-before: <!-- SPHINX_POROELASTIC_NUMERICAL_METHODS_END -->
@@ -165,7 +165,7 @@ We use the internal mesh generator to create a beam-like mesh,
 with one single element along the Y and Z axes, and 21 elements along the X axis.
 All the elements are hexahedral elements (C3D8) of the same dimension (1x1x1 meters).
 
-.. literalinclude:: PoroElastic_Terzaghi_FIM.xml
+.. literalinclude:: ../../../../coreComponents/physicsSolvers/multiphysics/integratedTests/PoroElastic_Terzaghi_FIM.xml
   :language: xml
   :start-after: <!-- SPHINX_POROELASTIC_MESH -->
   :end-before: <!-- SPHINX_POROELASTIC_MESH_END -->
@@ -237,8 +237,6 @@ the fully implicit solver coverges in a single iteration.
 
 Inspecting results
 ---------------------------------
-
-TODO: Description to be added.
 
 This plot compares the analytical pressure solution (continuous lines) at selected
 times with the numerical solution (markers).
@@ -354,38 +352,21 @@ times with the numerical solution (markers).
        return xMin, xMax
 
 
-   def reconstructCellCentroidXCoordsFromXML(xmlFilePath):
-       # Reconstruct cell centroid list
-       # (temporary solution -- centroids should be available in the hdf5)
-       tree = ElementTree.parse(xmlFilePath)
-       meshElement = tree.find('Mesh/InternalMesh')
-       nodeXCoords = meshElement.get("xCoords")
-       nCellX = meshElement.get("nx")
-       nCellX = [int(i) for i in nCellX[1:-1].split(",")]
-       nodeXCoords = [float(i) for i in nodeXCoords[1:-1].split(",")]
-
-       cellCentroidXCoords = np.empty(sum(nCellX)) # cell centroid in x-direction
-       istr = 0
-       for i in range(len(nCellX)):
-           iend = istr + nCellX[i]
-           tmp = np.linspace(nodeXCoords[i], nodeXCoords[i+1], nCellX[i] + 1)
-           cellCentroidXCoords[istr:iend] = (tmp[1:] + tmp[:-1]) / 2.
-           istr = iend
-
-       return cellCentroidXCoords
-
-
    def main():
        # File path
-       hdf5FilePath = "pressure_history.hdf5"
-       xmlFilePath = "PoroElastic_Terzaghi_FIM.xml"
+       hdf5File1Path = "pressure_history.hdf5"
+       hdf5File2Path = "cell_centers.hdf5"
+       xmlFilePath = "../../../../coreComponents/physicsSolvers/multiphysics/integratedTests/PoroElastic_Terzaghi_FIM.xml"
 
        # Read HDF5
-       hf = h5py.File(hdf5FilePath, 'r')
+       hf = h5py.File(hdf5File1Path, 'r')
        time = hf.get('Time')
        time = np.array(time)
        pressure = hf.get('pressure')
        pressure = np.array(pressure)
+       hf = h5py.File(hdf5File2Path, 'r')
+       x = hf.get('elementCenter')
+       x = x[0,:,0]
 
        # Extract info from XML
        hydromechanicalParameters = getHydromechanicalParametersFromXML(xmlFilePath)
@@ -393,9 +374,6 @@ times with the numerical solution (markers).
 
        # Get domain min/max coordinate in the x-direction
        xMin, xMax =getDomainMaxMinXCoordFromXML(xmlFilePath)
-
-       # (temporary solution -- centroids will be read in the hdf5)
-       x = reconstructCellCentroidXCoordsFromXML(xmlFilePath)
 
        # Initialize Terzaghi's analytical solution
        terzaghiAnalyticalSolution = terzaghi(hydromechanicalParameters, xMin, xMax, appliedTraction)
