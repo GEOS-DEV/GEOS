@@ -80,69 +80,82 @@ void GraphFromText::AddEdge(localIndex ind, std::shared_ptr<GraphVertex> v1, std
   m_vertexWithEdgesMap[v2].emplace(m_vertexWithEdgesMap[v2].size(), e);
 }
 
+void GraphFromText::RemoveFromEdgeList(localIndex ind, array1d<GraphEdge*> edgeList)
+{
+  int EdgeIndex = -1;
+
+  for(int i=0; i< edgeList.size(0); i++)
+  {
+    //std::cout<<i<<"size\n";
+    if (edgeList[i]->getEdgeIndex()==ind)
+    {
+    std::cout<<edgeList.size(0);
+
+      std::cout<<"D";
+      std::cout<<"test";
+
+      GraphEdge* edge = edgeList[i];
+      std::cout<<edge->getEdgeIndex();
+
+      std::cout<<"test";
+
+      int EdgeinVertexIndex = -1;
+      std::cout<<m_vertexWithEdgesMap[edge->getVertex1()].size(0)<<"\n";
+      std::cout<<"test";
+      //Delete the edge from the edges linked to the Vertex1
+      for( localIndex j = 0; j < m_vertexWithEdgesMap[edge->getVertex1()].size(0); j++)
+      {
+        std::cout<<j<<"\n";
+        if (m_vertexWithEdgesMap[edge->getVertex1()][j]->getEdgeIndex()==ind)
+        {
+          std::cout<<"D";
+
+          EdgeinVertexIndex = j;
+        }
+      }
+      if (EdgeinVertexIndex!=-1)
+      {
+        std::cout<<"D";
+        
+        m_vertexWithEdgesMap[edge->getVertex1()].erase(EdgeinVertexIndex);
+      }
+      std::cout<<"D";
+
+      EdgeinVertexIndex=-1;
+      
+
+      //Delete the edge from the edges linked to the Vertex2
+      for( localIndex j = 0; j < m_vertexWithEdgesMap[edge->getVertex2()].size(); j++)
+      {
+        if (m_vertexWithEdgesMap[edge->getVertex2()][j]->getEdgeIndex()==ind)
+        {
+          EdgeinVertexIndex = j;
+        }
+      }
+      if (EdgeinVertexIndex!=-1)
+      {
+        m_vertexWithEdgesMap[edge->getVertex2()].erase(EdgeinVertexIndex);
+      }
+      //Delete the edge from the edge list
+      EdgeIndex = i;
+    }
+  }
+  if (EdgeIndex!= -1)
+  {
+  edgeList.erase(EdgeIndex);
+  GraphEdge* edgedel = edgeList[EdgeIndex];
+
+  delete(edgedel);
+  }
+
+}
+
 void GraphFromText::RemoveEdge(localIndex ind)
 {
-  forAll< serialPolicy >( m_edges.size(), [=]( localIndex const i )
-  {
-    if (m_edges[i]->getEdgeIndex()==ind)
-    {
-      GraphEdge* edge = m_edges[i];
-      //Delete the edge from the edges linked to the Vertex1
-      forAll< serialPolicy >( m_vertexWithEdgesMap[edge->getVertex1()].size(), [=]( localIndex const j )
-      {
-        if (m_vertexWithEdgesMap[edge->getVertex1()][j]->getEdgeIndex()==ind)
-        {
-          int convertedJ = LvArray::integerConversion< int >(j);
-          m_vertexWithEdgesMap[edge->getVertex1()].erase(convertedJ);
-        }
-      });
-      //Delete the edge from the edges linked to the Vertex2
-      forAll< serialPolicy >( m_vertexWithEdgesMap[edge->getVertex2()].size(), [=]( localIndex const j )
-      {
-        if (m_vertexWithEdgesMap[edge->getVertex2()][j]->getEdgeIndex()==ind)
-        {
-          int convertedJ = LvArray::integerConversion< int >(j);
-          m_vertexWithEdgesMap[edge->getVertex2()].erase(convertedJ);
-        }
-      });
-      //Delete the edge from the edge list
-      int convertedI = LvArray::integerConversion< int >(i);
-      m_edges.erase(convertedI);
-      delete(edge);
-    }
-  });
-
-
-  forAll< serialPolicy >( m_boundaryEdges.size(), [=]( localIndex const i )
-  {
-    if (m_boundaryEdges[i]->getEdgeIndex()==ind)
-    {
-      GraphEdge* edge = m_boundaryEdges[i];
-      //Delete the edge from the edges linked to the Vertex1
-      forAll< serialPolicy >( m_vertexWithEdgesMap[edge->getVertex1()].size(), [=]( localIndex const j )
-      {
-        if (m_vertexWithEdgesMap[edge->getVertex1()][j]->getEdgeIndex()==ind)
-        {
-          int convertedJ = LvArray::integerConversion< int >(j);
-          m_vertexWithEdgesMap[edge->getVertex1()].erase(convertedJ);
-        }
-      });
-      //Delete the edge from the edges linked to the Vertex2
-      forAll< serialPolicy >( m_vertexWithEdgesMap[edge->getVertex2()].size(), [=]( localIndex const j )
-      {
-        if (m_vertexWithEdgesMap[edge->getVertex2()][j]->getEdgeIndex()==ind)
-        {
-          int convertedJ = LvArray::integerConversion< int >(j);
-          m_vertexWithEdgesMap[edge->getVertex2()].erase(convertedJ);
-        }
-      });
-      //Delete the edge from the edge list
-      int convertedI = LvArray::integerConversion< int >(i);
-      m_boundaryEdges.erase(convertedI);
-      delete(edge);
-    }
-  });
-
+  RemoveFromEdgeList(ind, m_edges);
+  std::cout<<"E";
+  RemoveFromEdgeList(ind, m_boundaryEdges);
+  std::cout<<"C";
 
 }
 
@@ -157,33 +170,7 @@ void GraphFromText::AddVertex(localIndex er, localIndex esr, globalIndex ei)
 void GraphFromText::RemoveVertex(localIndex er, localIndex esr, globalIndex ei)
 {
   std::shared_ptr<GraphVertex> v = getVertexWithGlobalIndex(er,esr,ei);
-  array1d<localIndex> indexes;
-  localIndex loc = -1;
-  for(localIndex i = 0; i<m_vertices.size(); i++)
-  {
-    if (m_vertices[i]->getRegionIndex()==er && m_vertices[i]->getSubRegionIndex()==esr && m_vertices[i]->getGlobalVertexIndex()==ei)
-    {
-      loc = i;
-    }
-  }
-  if (loc != -1)
-  {
-    m_vertices.erase(loc);    
-  }
-  for(localIndex i = 0; i<m_vertexWithEdgesMap[v].size(); i++)
-  {
-    indexes.emplace(indexes.size(), m_vertexWithEdgesMap[v][i]->getEdgeIndex());
-  }
-
-  forAll< serialPolicy >( indexes.size(), [=]( localIndex const i )
-  {
-    //Deleting all edges linked to the vertex to delete (as they will have a void target on one extremity)
-    //std::cout<<indexes[i]<<"\n";
-    RemoveEdge(indexes[i]);
-  });
-  m_vertexWithEdgesMap.erase(v);
-  //delete(v);
-  
+  RemoveVertex(v);  
 }
 
 void GraphFromText::RemoveVertex(std::shared_ptr<GraphVertex> vertex)
@@ -211,7 +198,6 @@ void GraphFromText::RemoveVertex(std::shared_ptr<GraphVertex> vertex)
   forAll< serialPolicy >( indexes.size(), [=]( localIndex const i )
   {
     //Deleting all edges linked to the vertex to delete (as they will have a void target on one extremity)
-    //std::cout<<indexes[i]<<"\n";
     RemoveEdge(indexes[i]);
   });
   m_vertexWithEdgesMap.erase(vertex);
@@ -308,7 +294,6 @@ void GraphFromText::GenerateGraph()
   std::getline(infile, line);
   count = 0;
   //array1d<GraphEdge*> edges;
-  std::cout<<"test"<<std::endl;
   while (std::getline(infile, line) && count< size)
   {
     std::istringstream iss(line);
@@ -433,7 +418,7 @@ void GraphFromText::PartitionGraph(const MeshLevel & mesh)
   }
 
   //Every point that have not been removed from the list is not present in the partition and is deleted
-  std::cout<<vertexToDelete.size()<<std::endl;
+  //std::cout<<vertexToDelete.size()<<std::endl;
   for ( localIndex i=0; i<vertexToDelete.size(); i++)
   {
     int to_delete = -1;
@@ -446,9 +431,12 @@ void GraphFromText::PartitionGraph(const MeshLevel & mesh)
     }
     if (to_delete != -1)
     {
+      std::cout<<"A";
       RemoveVertex(m_vertices[to_delete]);
+      std::cout<<"B\n";
     }
   }
+  std::cout<<"Test\n";
   
   RemapFace(mesh);
   FaceManager const & faceManager = *mesh.getFaceManager();
@@ -471,9 +459,9 @@ void GraphFromText::RemapFace(const MeshLevel & mesh)
 {
   FaceManager const & faceManager = *mesh.getFaceManager();
   arrayView2d< localIndex const > const & elemList = faceManager.elementList();
-  //arrayView1d< integer const > const & faceGhostRank = faceManager.ghostRank(); 
-  std::cout<<elemList[ faceManager.size() ][ 0 ]<<"\n";  
-  for(localIndex h = 0; h < faceManager.size(); h++)
+  //arrayView1d< integer const > const & faceGhostRank = faceManager.ghostRank();  
+  std::cout<<"Test\n";
+  for(localIndex h = 0; h < elemList.size(0); h++)
   { 
     GEOSX_ERROR_IF_GT( elemList[ h ][ 0 ], 1e9 );
     
@@ -491,7 +479,6 @@ void GraphFromText::RemapFace(const MeshLevel & mesh)
           
           if (face->getCorrespondingId() == -1)
           {
-            //std::cout<< h << " " << m_boundaryEdges[i]->getEdgeIndex() << "\n";
             //std::cout<< elemList[h][0] << " " << m_boundaryEdges[i]->getVertex1()->getLocalVertexIndex() << " " << m_boundaryEdges[i]->getVertex2()->getLocalVertexIndex() << " " << m_boundaryEdges[i]->getVertex2()->getSubRegionIndex() << " " << m_boundaryEdges[i]->getVertex2()->getRegionIndex() << "\n\n";
             face->setCorrespondingId(h);
             found = true;

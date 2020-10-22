@@ -97,7 +97,9 @@ public:
   * @return the vertex with given indexes, provided it exists
   */ 
   std::shared_ptr<GraphVertex> getVertexWithGlobalIndex(localIndex er, localIndex esr, globalIndex ei);
-  
+
+  void RemoveFromEdgeList(localIndex ind, array1d<GraphEdge*> edgeList);
+
   /**
    * @brief Function called to construct the graphs
   */
