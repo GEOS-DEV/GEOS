@@ -142,7 +142,8 @@ public:
       localKuw{ { 0.0 } },
       wLocal(),
       uLocal(),
-      hInv()
+      hInv(),
+	  X()
     {}
 
     /// C-array storage for the element local row degrees of freedom.
@@ -180,6 +181,9 @@ public:
 
     /// Stack storage for Area/Volume
     real64 hInv;
+
+    /// local nodal coordinates
+    real64 X[ numNodesPerElem ][ 3 ];
   };
   //***************************************************************************
 
@@ -244,9 +248,8 @@ public:
       {
         stack.dispEqnRowIndices[a*3+i] = m_dofNumber[localNodeIndex]+i-m_dofRankOffset;
         stack.dispColIndices[a*3+i]    = m_dofNumber[localNodeIndex]+i;
-        stack.xLocal[ a ][ i ] = m_X[ localNodeIndex ][ i ];
+        stack.X[ a ][ i ] = m_X[ localNodeIndex ][ i ];
         stack.uLocal[ a*3 + i ] = m_disp[localNodeIndex][i];
-
       }
     }
 
@@ -256,6 +259,7 @@ public:
       stack.jumpEqnRowIndices[i] = m_wDofNumber[embSurfIndex] + i - m_dofRankOffset;
       stack.jumpColIndices[i]    = m_wDofNumber[embSurfIndex] + i;
       stack.wLocal[ i ] = m_w[ m_wDofNumber[embSurfIndex] ][i];
+      std::cout << "w" << m_w[ m_wDofNumber[embSurfIndex] ][i] << std::endl;
     }
   }
 
@@ -308,6 +312,8 @@ public:
   {
     GEOSX_UNUSED_VAR( stressModifier );
 
+    localIndex const embSurfIndex = m_cellsToEmbeddedSurfaces[k][0];
+
     real64 dNdX[ numNodesPerElem ][ 3 ];
     real64 const detJ = m_finiteElementSpace.template getGradN< FE_TYPE >( k, q, stack.xLocal, dNdX );
 
@@ -322,21 +328,21 @@ public:
     m_constitutiveUpdate.GetStiffness( k, q, stack.constitutiveStiffness );
 
     SolidMechanicsEFEMKernelsHelper::computeHeavisideFunction< numNodesPerElem >( Heaviside,
-                                                                                  stack.xLocal,
-                                                                                  m_nVec[k],
-                                                                                  m_surfaceCenter[k] );
+                                                                                  stack.X,
+                                                                                  m_nVec[embSurfIndex],
+                                                                                  m_surfaceCenter[embSurfIndex] );
 
 
     SolidMechanicsEFEMKernelsHelper::assembleEquilibriumOperator( eqMatrix,
-                                                                  m_nVec[k],
-                                                                  m_tVec1[k],
-                                                                  m_tVec2[k],
+                                                                  m_nVec[embSurfIndex],
+                                                                  m_tVec1[embSurfIndex],
+                                                                  m_tVec2[embSurfIndex],
                                                                   stack.hInv );
 
     SolidMechanicsEFEMKernelsHelper::assembleCompatibilityOperator< numNodesPerElem >( compMatrix,
-                                                                                       m_nVec[k],
-                                                                                       m_tVec1[k],
-                                                                                       m_tVec2[k],
+                                                                                       m_nVec[embSurfIndex],
+                                                                                       m_tVec1[embSurfIndex],
+                                                                                       m_tVec2[embSurfIndex],
                                                                                        Heaviside,
                                                                                        dNdX );
 
@@ -354,13 +360,13 @@ public:
     LvArray::tensorOps::Rij_eq_AikBkj< nUdof, 3, 6 >( Kuw_gauss, matBD, compMatrix );
 
     // multiply by determinant
-    LvArray::tensorOps::scale< 3, 3 >( Kww_gauss, -detJ );
+    LvArray::tensorOps::scale< 3, 3     >( Kww_gauss, -detJ );
     LvArray::tensorOps::scale< 3, nUdof >( Kwu_gauss, -detJ );
     LvArray::tensorOps::scale< nUdof, 3 >( Kuw_gauss, -detJ );
 
     // TODO add a scale add for matrices to the tensorOps.
     // Add Gauss point contribution to element matrix
-    LvArray::tensorOps::add< 3, 3 >( stack.localKww, Kww_gauss );
+    LvArray::tensorOps::add< 3, 3     >( stack.localKww, Kww_gauss );
     LvArray::tensorOps::add< 3, nUdof >( stack.localKwu, Kwu_gauss );
     LvArray::tensorOps::add< nUdof, 3 >( stack.localKuw, Kuw_gauss );
   }
@@ -382,6 +388,8 @@ public:
     LvArray::tensorOps::Ri_add_AijBj< 3, nUdof >( stack.localRw, stack.localKwu, stack.uLocal );
     LvArray::tensorOps::Ri_add_AijBj< nUdof, 3 >( stack.localRu, stack.localKuw, stack.wLocal );
 
+    std::cout << "wLocal " << stack.wLocal[0] << "  " <<  stack.wLocal[1] << "   " << stack.wLocal[2] << std::endl;
+
     // Evaluate tranction
     real64 tractionVec[3], dTractiondw[3][3], contactCoeff = 1.0e15;
     SolidMechanicsEFEMKernelsHelper::computeTraction( stack.wLocal, contactCoeff, tractionVec, dTractiondw );
@@ -391,34 +399,34 @@ public:
 
     for( localIndex i = 0; i < nUdof; ++i )
     {
-      if( stack.dispEqnRowIndices[i] >= 0 && stack.dispEqnRowIndices[i] < m_matrix.numRows() )
-      {
-        RAJA::atomicAdd< parallelDeviceAtomic >( &m_rhs[stack.dispEqnRowIndices[i]], stack.localRu[i] );
+    	localIndex const dof = LvArray::integerConversion< localIndex >( stack.dispEqnRowIndices[ i ] );
+    	if( dof < 0 || dof >= m_matrix.numRows() ) continue;
 
-        m_matrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( stack.dispEqnRowIndices[i],
-                                                                                stack.jumpColIndices,
-                                                                                stack.localKuw[i],
-                                                                                3 );
-      }
+    	RAJA::atomicAdd< parallelDeviceAtomic >( &m_rhs[dof], stack.localRu[i] );
+
+    	m_matrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( dof,
+    			stack.jumpColIndices,
+				stack.localKuw[i],
+				3 );
+
     }
 
     for( localIndex i=0; i < 3; ++i )
     {
-      if( stack.jumpEqnRowIndices[i] >= 0 && stack.jumpEqnRowIndices[i] < m_matrix.numRows() )
-      {
-        RAJA::atomicAdd< parallelDeviceAtomic >( &m_rhs[stack.jumpEqnRowIndices[i]], stack.localRw[i] );
+      localIndex const dof = LvArray::integerConversion< localIndex >( stack.jumpEqnRowIndices[ i ] );
+      if( dof < 0 || dof >= m_matrix.numRows() ) continue;
+      RAJA::atomicAdd< parallelDeviceAtomic >( &m_rhs[dof], stack.localRw[i] );
 
-        // fill in matrix
-        m_matrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( stack.jumpEqnRowIndices[i],
-                                                                                stack.jumpColIndices,
-                                                                                stack.localKww[i],
-                                                                                3 );
+      // fill in matrix
+      m_matrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( dof,
+    		  stack.jumpColIndices,
+			  stack.localKww[i],
+			  3 );
 
-        m_matrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( stack.jumpEqnRowIndices[i],
-                                                                                stack.dispColIndices,
-                                                                                stack.localKwu[i],
-                                                                                numNodesPerElem*3 );
-      }
+      m_matrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( dof,
+    		  stack.dispColIndices,
+			  stack.localKwu[i],
+			  numNodesPerElem*3 );
     }
 
 

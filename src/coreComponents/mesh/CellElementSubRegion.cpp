@@ -33,6 +33,8 @@ CellElementSubRegion::CellElementSubRegion( string const & name, Group * const p
   registerWrapper( viewKeyStruct::dNdXString, &m_dNdX )->setSizedFromParent( 1 )->reference().resizeDimension< 3 >( 3 );
 
   registerWrapper( viewKeyStruct::detJString, &m_detJ )->setSizedFromParent( 1 )->reference();
+
+  registerWrapper(viewKeyStruct::toEmbSurfString, &m_toEmbeddedSurfaces)->setSizedFromParent( 1 );
 }
 
 CellElementSubRegion::~CellElementSubRegion()
@@ -86,10 +88,10 @@ void CellElementSubRegion::ConstructSubRegionFromFaceSet( FaceManager const * co
 void CellElementSubRegion::addFracturedElement( localIndex const cellElemIndex,
                                                 localIndex const embSurfIndex )
 {
-  // add the element to the fractured elements list
-  m_fracturedCells.insert( cellElemIndex );
-  // add the connection between the element and the embedded surface to the map
-  m_toEmbeddedSurfaces.emplaceBack( cellElemIndex, embSurfIndex );
+	// add the connection between the element and the embedded surface to the map
+	m_toEmbeddedSurfaces.emplaceBack( cellElemIndex, embSurfIndex );
+	// add the element to the fractured elements list
+	m_fracturedCells.insert( cellElemIndex );
 }
 
 void CellElementSubRegion::ViewPackingExclusionList( SortedArray< localIndex > & exclusionList ) const

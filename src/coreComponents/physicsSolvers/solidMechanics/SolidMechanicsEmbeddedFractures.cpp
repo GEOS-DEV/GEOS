@@ -263,6 +263,11 @@ void SolidMechanicsEmbeddedFractures::AssembleSystem( real64 const time,
                                         gravityVector().Data()[1],
                                         gravityVector().Data()[2] };
 
+
+  arrayView1d< R1Tensor const > const w = subRegion.displacementJump();
+
+  std::cout << "jump: "  << w[0] << std::endl;
+
   real64 maxTraction = finiteElement::
                          regionBasedKernelApplication
                        < parallelDevicePolicy< 32 >,
@@ -270,7 +275,7 @@ void SolidMechanicsEmbeddedFractures::AssembleSystem( real64 const time,
                          CellElementSubRegion,
                          SolidMechanicsEFEMKernels::QuasiStatic >( mesh,
                                                                    targetRegionNames(),
-                                                                   this->getDiscretizationName(),
+																   m_solidSolver->getDiscretizationName(),
                                                                    m_solidSolver->solidMaterialNames(),
                                                                    subRegion,
                                                                    dispDofNumber,

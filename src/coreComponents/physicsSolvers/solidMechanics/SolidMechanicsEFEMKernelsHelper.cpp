@@ -75,6 +75,7 @@ void assembleEquilibriumOperator( real64 ( & eqMatrix )[3][6],
       eqMatrix[2][VoigtIndex] += t2DnSym [i][j];
     }
   }
+
   LvArray::tensorOps::scale< 3, 6 >( eqMatrix, -hInv );
 }
 

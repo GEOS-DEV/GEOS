@@ -97,9 +97,11 @@ void assembleCompatibilityOperator( real64 ( & compMatrix )[6][3],
   LvArray::tensorOps::fill< 3 >( mVec, 0 );
   for( integer a=0; a<NUM_NODES; ++a )
   {
-    LvArray::tensorOps::subtract< 3 >( mVec, dNdX[a] );
-    LvArray::tensorOps::scale< 3 >( mVec, heavisideFun[a] );
+	mVec[0] -= dNdX[a][0] * heavisideFun[a];
+	mVec[1] -= dNdX[a][1] * heavisideFun[a];
+	mVec[2] -= dNdX[a][2] * heavisideFun[a];
   }
+
 
   // 2. fill in the operator itself
 
