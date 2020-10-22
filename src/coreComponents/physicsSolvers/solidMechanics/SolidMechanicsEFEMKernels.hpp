@@ -258,8 +258,7 @@ public:
       // need to grab the index.
       stack.jumpEqnRowIndices[i] = m_wDofNumber[embSurfIndex] + i - m_dofRankOffset;
       stack.jumpColIndices[i]    = m_wDofNumber[embSurfIndex] + i;
-      stack.wLocal[ i ] = m_w[ m_wDofNumber[embSurfIndex] ][i];
-      std::cout << "w" << m_w[ m_wDofNumber[embSurfIndex] ][i] << std::endl;
+      stack.wLocal[ i ] = m_w[ embSurfIndex ][i];
     }
   }
 
