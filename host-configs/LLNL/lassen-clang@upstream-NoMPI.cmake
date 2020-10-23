@@ -4,10 +4,6 @@ set(CONFIG_NAME "lassen-clang@upstream-NoMPI" CACHE PATH "" FORCE)
 set(GEOSX_TPL_ROOT_DIR /usr/gapps/GEOSX/thirdPartyLibs CACHE PATH "" FORCE)
 set(GEOSX_TPL_DIR ${GEOSX_TPL_ROOT_DIR}/2020-09-18/install-${CONFIG_NAME}-release CACHE PATH "" FORCE)
 
-set(DOXYGEN_EXECUTABLE /usr/bin/doxygen CACHE PATH "")
-
-set(DOXYGEN_EXECUTABLE /usr/bin/doxygen CACHE PATH "")
-
 set(ENABLE_MPI OFF CACHE BOOL "" FORCE)
 unset(MPI_ROOT CACHE )
 unset(MPI_C_COMPILER     CACHE )
