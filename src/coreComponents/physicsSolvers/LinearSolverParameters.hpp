@@ -92,6 +92,10 @@ public:
     static constexpr auto amgCoarseningString = "amgCoarseningType";        ///< AMG coarsening key
     static constexpr auto amgInterpolationString = "amgInterpolationType";        ///< AMG interpolation key
     static constexpr auto amgThresholdString  = "amgThreshold";             ///< AMG threshold key
+    static constexpr auto amgNumFunctionsString  = "amgNumFunctions";             ///< AMG threshold key
+    static constexpr auto amgAggresiveNumLevelsString  = "amgAggresiveCoarseningLevels";             ///< AMG threshold key
+
+
 
     static constexpr auto iluFillString      = "iluFill";       ///< ILU fill key
     static constexpr auto iluThresholdString = "iluThreshold";  ///< ILU threshold key

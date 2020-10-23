@@ -20,6 +20,9 @@
 #include "linearAlgebra/interfaces/hypre/HyprePreconditioner.hpp"
 #include "HYPRE_utilities.h"
 #include "_hypre_utilities.h"
+#include "_hypre_utilities.hpp"
+
+#include "HypreMatrix.hpp"
 
 namespace geosx
 {
@@ -28,10 +31,11 @@ void HypreInterface::initialize( int & GEOSX_UNUSED_PARAM( argc ),
                                  char * * & GEOSX_UNUSED_PARAM( argv ) )
 {
   HYPRE_Init();
-#if defined(USE_CUDA)
-  HYPRE_ExecutionPolicy default_exec_policy = HYPRE_EXEC_DEVICE;
+#if defined(OVERRIDE_CREATE)
+#if defined(GEOSX_USE_CUDA)
   hypre_HandleDefaultExecPolicy(hypre_handle()) = HYPRE_EXEC_DEVICE;
-  hypre_HandleSpgemmUseCusparse(hypre_handle()) = 1;
+  hypre_HandleSpgemmUseCusparse(hypre_handle()) = 0;
+#endif
 #endif
 }
 

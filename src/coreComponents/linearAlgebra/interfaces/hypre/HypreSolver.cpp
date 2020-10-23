@@ -36,6 +36,9 @@
 #include "HypreSuiteSparse.hpp"
 #endif
 
+#include "_hypre_utilities.h"
+#include "_hypre_utilities.hpp"
+
 namespace geosx
 {
 
@@ -60,6 +63,12 @@ void HypreSolver::solve( HypreMatrix & mat,
   GEOSX_LAI_ASSERT( sol.ready() );
   GEOSX_LAI_ASSERT( rhs.ready() );
 
+#if !defined(OVERRIDE_CREATE)
+#if defined(GEOSX_USE_CUDA)
+  hypre_HandleDefaultExecPolicy(hypre_handle()) = HYPRE_EXEC_DEVICE;
+#endif
+#endif
+
   if( m_parameters.solverType == LinearSolverParameters::SolverType::direct )
   {
     solve_direct( mat, sol, rhs );
@@ -68,6 +77,13 @@ void HypreSolver::solve( HypreMatrix & mat,
   {
     solve_krylov( mat, sol, rhs, dofManager );
   }
+
+#if !defined(OVERRIDE_CREATE)
+#if defined(GEOSX_USE_CUDA)
+  hypre_HandleDefaultExecPolicy(hypre_handle()) = HYPRE_EXEC_HOST;
+#endif
+#endif
+
 }
 
 namespace
@@ -310,12 +326,6 @@ void HypreSolver::solve_krylov( HypreMatrix & mat,
                                 DofManager const * const dofManager )
 {
   Stopwatch watch;
-
-#if defined(USE_CUDA)
-  HYPRE_ExecutionPolicy default_exec_policy = HYPRE_EXEC_DEVICE;
-  hypre_HandleDefaultExecPolicy(hypre_handle()) = HYPRE_EXEC_DEVICE;
-  hypre_HandleSpgemmUseCusparse(hypre_handle()) = 1;
-#endif
 
   // Create the preconditioner, but don't compute (this is done by solver setup)
   HyprePreconditioner precond( m_parameters, dofManager );

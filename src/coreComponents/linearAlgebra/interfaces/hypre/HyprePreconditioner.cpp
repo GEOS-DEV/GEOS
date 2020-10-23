@@ -106,6 +106,7 @@ HYPRE_Int getHypreAMGRelaxationType( string const & type )
 {
   static std::map< string, HYPRE_Int > const typeMap =
   {
+    { "default", -1 },
     { "jacobi", 0 },
     { "hybridForwardGaussSeidel", 3 },
     { "hybridBackwardGaussSeidel", 4 },
@@ -171,7 +172,12 @@ void HyprePreconditioner::createAMG()
   }
   else
   {
-    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetRelaxType( m_precond, getHypreAMGRelaxationType( m_parameters.amg.smootherType ) ) );
+
+    HYPRE_Int const relaxType = getHypreAMGRelaxationType( m_parameters.amg.smootherType );
+    if( relaxType>-1 )
+    {
+      GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetRelaxType( m_precond, getHypreAMGRelaxationType( m_parameters.amg.smootherType ) ) );
+    }
 
     // Coarsening options: Only PMIS is supported on GPU
     GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetCoarsenType( m_precond, getHypreAMGCoarsenType( m_parameters.amg.coarseningType ) ) );
@@ -179,7 +185,12 @@ void HyprePreconditioner::createAMG()
     // Interpolation options: Use options 3, 6, 14 or 15.
     GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetInterpType( m_precond, m_parameters.amg.interpolationType ) );
 
-//    HYPRE_BoomerAMGSetAggNumLevels( m_precond, 1 ); // agg_num_levels = 1
+    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetNumFunctions( m_precond, m_parameters.amg.numFunctions ) );
+
+    if( m_parameters.amg.aggresiveNumLevels )
+    {
+      HYPRE_BoomerAMGSetAggNumLevels( m_precond, m_parameters.amg.aggresiveNumLevels ); // agg_num_levels = 1
+    }
 //    HYPRE_BoomerAMGSetAggInterpType( m_precond, 5 ); // agg_interp_type = 5,7
 
     if( m_parameters.amg.smootherType == "chebyshev" )

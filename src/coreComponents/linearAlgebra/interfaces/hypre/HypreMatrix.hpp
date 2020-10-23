@@ -104,6 +104,12 @@ public:
   using MatrixBase::ready;
   using MatrixBase::residual;
 
+#define OVERRIDE_CREATE
+#if defined(OVERRIDE_CREATE)
+  virtual void create( CRSMatrixView< real64 const, globalIndex const > const & localMatrix,
+                       MPI_Comm const & comm ) override final;
+#endif
+
   virtual void createWithLocalSize( localIndex const localRows,
                                     localIndex const localCols,
                                     localIndex const maxEntriesPerRow,
@@ -117,9 +123,6 @@ public:
   virtual void open() override;
 
   virtual void close() override;
-
-//  virtual void create( CRSMatrixView< real64 const, globalIndex const > const & localMatrix,
-//                       MPI_Comm const & comm ) override;
 
   virtual bool created() const override;
 

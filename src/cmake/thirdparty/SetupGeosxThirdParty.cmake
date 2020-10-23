@@ -113,6 +113,8 @@ blt_register_library( NAME raja
                       LIBRARIES ${RAJA_LIBRARY}
                       TREAT_INCLUDES_AS_SYSTEM ON )
 
+include("${RAJA_DIR}/lib/cmake/camp/campTargets.cmake")
+
 set( thirdPartyLibs ${thirdPartyLibs} raja )
 
 ################################

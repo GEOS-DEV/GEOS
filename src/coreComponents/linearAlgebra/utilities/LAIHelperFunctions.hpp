@@ -132,6 +132,13 @@ void SeparateComponentFilter( MATRIX const & src,
   array1d< globalIndex > srcIndices;
   array1d< globalIndex > dstIndices( maxDstEntries );
 
+#if defined(OVERRIDE_CREATE)
+#if defined(GEOSX_USE_CUDA)
+  srcIndices.move( LvArray::MemorySpace::GPU, false );
+  srcValues.move( LvArray::MemorySpace::GPU, false );
+#endif
+#endif
+
   for( globalIndex row=src.ilower(); row<src.iupper(); ++row )
   {
     const globalIndex rowComponent = row % dofsPerNode;
@@ -140,6 +147,26 @@ void SeparateComponentFilter( MATRIX const & src,
     srcValues.resize( rowLength );
 
     src.getRowCopy( row, srcIndices, srcValues );
+    globalIndex const * indicesPtr = srcIndices.data();
+    real64 const * valuesPtr = srcValues.data();
+
+//    forAll< parallelDevicePolicy<> >( 1, [=] GEOSX_DEVICE ( localIndex const )
+//    {
+//      printf( "srcIndices = { " ); for( localIndex i=0 ; i<rowLength ; ++i ) { printf( "%4d, ",indicesPtr[i] ); }  printf( " }\n" );
+//      printf( "srcValues  = { " ); for( localIndex i=0 ; i<rowLength ; ++i ) { printf( "%4.1g, ",valuesPtr[i] ); }  printf( " }\n" );
+//    });
+
+#if defined(OVERRIDE_CREATE)
+#if defined(GEOSX_USE_CUDA)
+  srcIndices.move( LvArray::MemorySpace::CPU, false );
+  srcValues.move( LvArray::MemorySpace::CPU, false );
+  dstIndices.move( LvArray::MemorySpace::CPU, false );
+  dstValues.move( LvArray::MemorySpace::CPU, false );
+#endif
+#endif
+
+//  printf( "srcIndices = { " ); for( localIndex i=0 ; i<rowLength ; ++i ) { printf( "%4d, ",srcIndices[i] ); }  printf( " }\n" );
+//  printf( "srcValues  = { " ); for( localIndex i=0 ; i<rowLength ; ++i ) { printf( "%4.1g, ",srcValues[i] ); }  printf( " }\n" );
 
     localIndex k=0;
     for( localIndex col=0; col<rowLength; ++col )
@@ -149,9 +176,25 @@ void SeparateComponentFilter( MATRIX const & src,
       {
         dstValues[k] = srcValues[col];
         dstIndices[k] = srcIndices[col];
-        k++;
+        ++k;
       }
     }
+#if defined(OVERRIDE_CREATE)
+#if defined(GEOSX_USE_CUDA)
+  dstIndices.move( LvArray::MemorySpace::GPU, false );
+  dstValues.move( LvArray::MemorySpace::GPU, false );
+#endif
+#endif
+  indicesPtr = dstIndices.data();
+  valuesPtr = dstValues.data();
+
+//  printf( "k = %d \n", k );
+//  forAll< parallelDevicePolicy<> >( 1, [=] GEOSX_DEVICE ( localIndex const )
+//  {
+//    printf( "dstIndices = { " ); for( localIndex i=0 ; i<k ; ++i ) { printf( "%6d, ",indicesPtr[i] ); }  printf( " }\n" );
+//    printf( "dstValues  = { " ); for( localIndex i=0 ; i<k ; ++i ) { printf( "%6.1g, ",valuesPtr[i] ); }  printf( " }\n" );
+//  });
+
     dst.insert( row, dstIndices.data(), dstValues.data(), k );
   }
   dst.close();

@@ -135,6 +135,8 @@ struct LinearSolverParameters
     string coarseningType = "PMIS";          ///< Coarsening algorithm
     integer interpolationType = 0;           ///< Coarsening algorithm
     integer numSweeps = 2;                   ///< Number of smoother sweeps
+    integer numFunctions = 1;
+    integer aggresiveNumLevels = 0;
     string preOrPostSmoothing = "both";      ///< Pre and/or post smoothing [pre,post,both]
     real64 threshold = 0.0;                  ///< Threshold for "strong connections" (for classical and
                                              ///< smoothed-aggregation AMG)

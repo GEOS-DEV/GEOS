@@ -176,6 +176,100 @@ void HypreMatrix::createWithGlobalSize( globalIndex const globalRows,
               m_ij_mat );
 }
 
+#if defined(OVERRIDE_CREATE)
+
+#define cudaCheckErrors(msg) \
+    do { \
+        cudaError_t __err = cudaGetLastError(); \
+        if (__err != cudaSuccess) { \
+            fprintf(stderr, "Fatal error: %s (%s at %s:%d)\n", \
+                msg, cudaGetErrorString(__err), \
+                __FILE__, __LINE__); \
+            fprintf(stderr, "*** FAILED - ABORTING\n"); \
+            exit(1); \
+        } \
+    } while (0)
+
+void HypreMatrix::create( CRSMatrixView< real64 const, globalIndex const > const & localMatrix,
+                          MPI_Comm const & comm )
+{
+  localIndex maxEntriesPerRow = 0;
+  for( localIndex i = 0; i < localMatrix.numRows(); ++i )
+  {
+    maxEntriesPerRow = std::max( maxEntriesPerRow, localMatrix.numNonZeros( i ) );
+  }
+
+  createWithLocalSize( localMatrix.numRows(),
+                       localMatrix.numRows(),
+                       maxEntriesPerRow,
+                       comm );
+
+  globalIndex const rankOffset = ilower();
+
+  array1d<globalIndex> rows( localMatrix.numRows() );
+  for( localIndex row=0; row<localMatrix.numRows(); ++row )
+  {
+    rows[row] = row + rankOffset;
+  }
+
+#if defined(GEOSX_USE_CUDA)
+  localMatrix.move( LvArray::MemorySpace::GPU, false );
+  rows.move( LvArray::MemorySpace::GPU, false );
+#endif
+  open();
+
+  int const numRows = localMatrix.numRows();
+  HYPRE_Int           *ncols = const_cast<localIndex * >(localMatrix.getSizes());
+  const HYPRE_BigInt  *rows2 = rows.data();
+  const HYPRE_Int     *row_indexes = localMatrix.getOffsets();
+  const HYPRE_BigInt  *cols = localMatrix.getColumns();
+  const HYPRE_Complex *values = localMatrix.getEntries();
+
+#if 0
+  printf( "numRows = %d \n", numRows );
+  forAll< parallelDevicePolicy<> >( 1, [=] GEOSX_DEVICE ( localIndex const )
+  {
+    printf( "ncols       = { " ); for( localIndex i=0 ; i<24 ; ++i ) { printf( "%4d, ",ncols[i] ); }        printf( " }\n" );
+    printf( "rows        = { " ); for( localIndex i=0 ; i<24 ; ++i ) { printf( "%4d, ",rows2[i] ); }        printf( " }\n" );
+    printf( "row_indexes = { " ); for( localIndex i=0 ; i<25 ; ++i ) { printf( "%4d, ",row_indexes[i] ); }  printf( " }\n" );
+
+
+    for( localIndex i=0 ; i<24 ; ++i )
+    {
+      printf( "row %4d \n", i );
+      printf( "  cols   = {" );
+      for( localIndex j=0 ; j<ncols[i] ; ++j )
+      {
+        printf( "%9d, ",cols[row_indexes[i] + j] );
+      }
+      printf( " }\n" );
+
+      printf( "  values = {" );
+      for( localIndex j=0 ; j<ncols[i] ; ++j )
+      {
+        printf( "%9.2g, ", values[row_indexes[i] + j] );
+      }
+      printf( " }\n" );
+    }
+    printf( " }\n" );
+
+  });
+#endif
+
+
+  cudaCheckErrors( "you have a cuda error");
+    GEOSX_LAI_CHECK_ERROR( HYPRE_IJMatrixAddToValues2( m_ij_mat,
+                                                      localMatrix.numRows(),
+                                                      const_cast<localIndex * >(localMatrix.getSizes()),
+                                                      rows.data(),
+                                                      localMatrix.getOffsets(),
+                                                      localMatrix.getColumns(),
+                                                      localMatrix.getEntries() ) );
+
+  close();
+}
+#endif
+
 void HypreMatrix::createWithLocalSize( localIndex const localRows,
                                        localIndex const localCols,
                                        localIndex const maxEntriesPerRow,
@@ -267,83 +361,6 @@ void HypreMatrix::close()
   m_assembled = true;
 }
 
-//void HypreMatrix::create( CRSMatrixView< real64 const, globalIndex const > const & localMatrix,
-//                          MPI_Comm const & comm )
-//{
-//
-//
-//
-//  HYPRE_BigInt *row_starts;
-//  HYPRE_BigInt *col_starts;
-//  HYPRE_Int num_cols_offd;
-//  HYPRE_Int num_nonzeros_diag;
-//  HYPRE_Int num_nonzeros_offd;
-//
-//  HYPRE_Int *diag_i;
-//  HYPRE_Int *diag_j;
-//  double *diag_data;
-//  HYPRE_Int *offd_i;
-//  HYPRE_Int *offd_j;
-//  double *offd_data;
-//  HYPRE_Int offd_num_cols;
-//  HYPRE_Int *offd_col_map;
-//
-//
-//
-//  m_parcsr_mat = hypre_ParCSRMatrixCreate( comm,
-//                                           localMatrix.numRows(),
-//                                           localMatrix.numRows(),
-//                                           row_starts,
-//                                           col_starts,
-//                                           num_cols_offd,
-//                                           num_nonzeros_diag,
-//                                           num_nonzeros_offd);
-//
-//
-//
-//
-//
-//     hypre_ParCSRMatrixSetDataOwner(m_parcsr_mat,1);
-//     hypre_ParCSRMatrixSetRowStartsOwner(m_parcsr_mat,0);
-//     hypre_ParCSRMatrixSetColStartsOwner(m_parcsr_mat,0);
-//
-//     HYPRE_Int local_num_rows = hypre_CSRMatrixNumRows(m_parcsr_mat->diag);
-//
-//     hypre_CSRMatrixSetDataOwner(m_parcsr_mat->diag,0);
-//     hypre_CSRMatrixI(m_parcsr_mat->diag) = diag_i;
-//     hypre_CSRMatrixJ(m_parcsr_mat->diag) = diag_j;
-//     hypre_CSRMatrixData(m_parcsr_mat->diag) = diag_data;
-//     hypre_CSRMatrixNumNonzeros(m_parcsr_mat->diag) = diag_i[local_num_rows];
-//     hypre_CSRMatrixSetRownnz(m_parcsr_mat->diag);
-//     // Prevent hypre from destroying m_parcsr_mat->diag->{i,j,data}, own m_parcsr_mat->diag->{i,j,data}
-//     //diagOwner = 3;
-//
-//     hypre_CSRMatrixSetDataOwner(m_parcsr_mat->offd,0);
-//     hypre_CSRMatrixI(m_parcsr_mat->offd) = offd_i;
-//     hypre_CSRMatrixJ(m_parcsr_mat->offd) = offd_j;
-//     hypre_CSRMatrixData(m_parcsr_mat->offd) = offd_data;
-//     hypre_CSRMatrixNumNonzeros(m_parcsr_mat->offd) = offd_i[local_num_rows];
-//     hypre_CSRMatrixSetRownnz(m_parcsr_mat->offd);
-//     // Prevent hypre from destroying m_parcsr_mat->offd->{i,j,data}, own m_parcsr_mat->offd->{i,j,data}
-//     //offdOwner = 3;
-//
-//     hypre_ParCSRMatrixColMapOffd(m_parcsr_mat) = offd_col_map;
-//     // Prevent hypre from destroying m_parcsr_mat->col_map_offd, own m_parcsr_mat->col_map_offd
-//     //colMapOwner = 1;
-//
-//     hypre_ParCSRMatrixSetNumNonzeros(m_parcsr_mat);
-//
-//     /* Make sure that the first entry in each row is the diagonal one. */
-//     if (row_starts == col_starts)
-//     {
-//        hypre_CSRMatrixReorder(hypre_ParCSRMatrixDiag(m_parcsr_mat));
-//     }
-//
-//     hypre_MatvecCommPkgCreate(m_parcsr_mat);
-//
-//     height = GetNumRows();
-//     width = GetNumCols();
-//}
 
 
 bool HypreMatrix::created() const
@@ -433,18 +450,37 @@ void HypreMatrix::set( globalIndex const rowIndex,
                                                   values ) );
 }
 
-void HypreMatrix::insert( globalIndex const rowIndex,
+void HypreMatrix::insert( globalIndex const rowIndex0,
                           globalIndex const * colIndices,
                           real64 const * values,
                           localIndex size )
 {
   GEOSX_LAI_ASSERT( insertable() );
 
-  HYPRE_Int ncols = LvArray::integerConversion< HYPRE_Int >( size );
+#if defined(OVERRIDE_CREATE)
+#if defined(GEOSX_USE_CUDA)
+  array1d< globalIndex > rowIndexDevice(1);
+  array1d< HYPRE_Int > ncolsDevice(1);
+
+  rowIndexDevice[0] = rowIndex0;
+  ncolsDevice[0] = LvArray::integerConversion< HYPRE_Int >( size );
+
+  rowIndexDevice.move( LvArray::MemorySpace::GPU, false );
+  ncolsDevice.move( LvArray::MemorySpace::GPU, false );
+
+  globalIndex const * const rowIndex = rowIndexDevice.data();
+  HYPRE_Int * const ncols = ncolsDevice.data();
+#else
+  globalIndex const * const rowIndex = &rowIndex0;
+  HYPRE_Int * const ncols = &size;
+#endif
+
+#endif
+
   GEOSX_LAI_CHECK_ERROR( HYPRE_IJMatrixAddToValues( m_ij_mat,
                                                     1,
-                                                    &ncols,
-                                                    toHYPRE_BigInt( &rowIndex ),
+                                                    ncols,
+                                                    rowIndex,
                                                     toHYPRE_BigInt( colIndices ),
                                                     values ) );
 }
