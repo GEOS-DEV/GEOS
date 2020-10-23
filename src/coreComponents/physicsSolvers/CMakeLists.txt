@@ -16,6 +16,8 @@ set( physicsSolvers_headers
      fluidFlow/GeochemicalModel.hpp     
      fluidFlow/ProppantTransport.hpp
      fluidFlow/ProppantTransportKernels.hpp
+     fluidFlow/ReactiveTransport.hpp
+     fluidFlow/ReactiveTransportKernels.hpp
      fluidFlow/SinglePhaseBase.hpp
      fluidFlow/SinglePhaseFVM.hpp
      fluidFlow/SinglePhaseHybridFVM.hpp     
@@ -32,6 +34,7 @@ set( physicsSolvers_headers
      fluidFlow/wells/CompositionalMultiphaseWellKernels.hpp
      fluidFlow/wells/WellControls.hpp
      multiphysics/FlowProppantTransportSolver.hpp
+     multiphysics/FlowReactiveTransportSolver.hpp     
      multiphysics/HydrofractureSolver.hpp
      multiphysics/LagrangianContactSolver.hpp
      multiphysics/PhaseFieldFractureSolver.hpp
@@ -69,6 +72,8 @@ set( physicsSolvers_sources
      fluidFlow/GeochemicalModel.cpp          
      fluidFlow/ProppantTransport.cpp
      fluidFlow/ProppantTransportKernels.cpp
+     fluidFlow/ReactiveTransport.cpp
+     fluidFlow/ReactiveTransportKernels.cpp     
      fluidFlow/SinglePhaseBase.cpp
      fluidFlow/SinglePhaseBaseKernels.cpp
      fluidFlow/SinglePhaseFVM.cpp
@@ -81,6 +86,7 @@ set( physicsSolvers_sources
      fluidFlow/wells/CompositionalMultiphaseWell.cpp     
      fluidFlow/wells/WellControls.cpp     
      multiphysics/FlowProppantTransportSolver.cpp
+     multiphysics/FlowReactiveTransportSolver.cpp     
      multiphysics/HydrofractureSolver.cpp
      multiphysics/LagrangianContactSolver.cpp
      multiphysics/PhaseFieldFractureSolver.cpp

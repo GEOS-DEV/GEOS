@@ -153,7 +153,8 @@ public:
   void AssembleAccumulationTerms( DomainPartition & domain,
                                   DofManager const & dofManager,
                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                  arrayView1d< real64 > const & localRhs );
+                                  arrayView1d< real64 > const & localRhs,
+                                  bool isInitialization );
 
   /**
    * @brief assembles the flux terms for all cells
@@ -172,8 +173,9 @@ public:
 
   void ResizeFields( MeshLevel * const meshLevel );
 
-  void WriteSpeciesToFile( DomainPartition * const domain );
+  void WriteSpeciesToFile( DomainPartition * const domain, real64 const & time );
 
+  void CalculateTotalConcentration( DomainPartition & domain );
 
   /**@}*/
 
@@ -187,6 +189,7 @@ public:
     static constexpr auto deltaTemperatureString = "deltaTemperature";
 
     static constexpr auto concentrationString      = "concentration";
+    static constexpr auto concentrationOutString      = "concentrationOut";
     static constexpr auto deltaConcentrationString      = "deltaConcentration";
 
     static constexpr auto totalConcentrationString      = "totalConcentration";
@@ -227,9 +230,14 @@ private:
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > m_deltaTemperature;
 
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 > > m_concentration;
+
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 > > m_concentrationOut;
+
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 > > m_deltaConcentration;
 
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 > > m_totalConcentration;
+
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 > > m_totalConcentrationOut;
 
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 > > m_concentrationNew;
 

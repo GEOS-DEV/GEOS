@@ -84,8 +84,11 @@ void GeochemicalModel::RegisterDataOnMesh( Group * const MeshBodies )
       subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::temperatureString )->setPlotLevel( PlotLevel::LEVEL_0 );
       subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::deltaTemperatureString );
       subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::concentrationString )->setPlotLevel( PlotLevel::LEVEL_0 );
+
+      subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::concentrationOutString )->setPlotLevel( PlotLevel::LEVEL_0 );
+
       subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::deltaConcentrationString );
-      subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::totalConcentrationString );
+      subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::totalConcentrationString )->setPlotLevel( PlotLevel::LEVEL_0 );
       subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::concentrationNewString );
 
     } );
@@ -134,6 +137,9 @@ void GeochemicalModel::ResizeFields( MeshLevel * const meshLevel )
   {
     localIndex const NC = m_numBasisSpecies[targetRegionIndex];
     subRegion.getReference< array2d< real64 > >( viewKeyStruct::concentrationString ).resizeDimension< 1 >( NC );
+
+    subRegion.getReference< array2d< real64 > >( viewKeyStruct::concentrationOutString ).resizeDimension< 1 >( NC );
+
     subRegion.getReference< array2d< real64 > >( viewKeyStruct::deltaConcentrationString ).resizeDimension< 1 >( NC );
     subRegion.getReference< array2d< real64 > >( viewKeyStruct::totalConcentrationString ).resizeDimension< 1 >( NC );
     subRegion.getReference< array2d< real64 > >( viewKeyStruct::concentrationNewString ).resizeDimension< 1 >( NC );
@@ -281,7 +287,7 @@ void GeochemicalModel::ImplicitStepSetup( real64 const & time_n,
 
 }
 
-void GeochemicalModel::ImplicitStepComplete( real64 const & GEOSX_UNUSED_PARAM( time_n ),
+void GeochemicalModel::ImplicitStepComplete( real64 const & time_n,
                                              real64 const & GEOSX_UNUSED_PARAM( dt ),
                                              DomainPartition & domain )
 {
@@ -297,10 +303,18 @@ void GeochemicalModel::ImplicitStepComplete( real64 const & GEOSX_UNUSED_PARAM( 
                                  ElementRegionBase & GEOSX_UNUSED_PARAM( region ),
                                  ElementSubRegionBase & subRegion )
   {
+
+
+    ReactiveFluidBase const & reactiveFluid  = GetConstitutiveModel< ReactiveFluidBase >( subRegion, m_reactiveFluidNames[targetRegionIndex] );
+
+    arrayView1d< bool > const isHplus = reactiveFluid.IsHplus();
+
     arrayView1d< real64 > const & pres = m_pressure[er][esr];
     arrayView1d< real64 > const & temp = m_temperature[er][esr];
 
     arrayView2d< real64 > const & conc = m_concentration[er][esr];
+
+    arrayView2d< real64 > const & concOut = m_concentrationOut[er][esr];
 
     arrayView1d< real64 const > const & dPres = m_deltaPressure[er][esr];
     arrayView1d< real64 const > const & dTemp = m_deltaTemperature[er][esr];
@@ -315,12 +329,21 @@ void GeochemicalModel::ImplicitStepComplete( real64 const & GEOSX_UNUSED_PARAM( 
       for( localIndex ic = 0; ic < m_numBasisSpecies[targetRegionIndex]; ++ic )
       {
         conc[ei][ic] += dConc[ei][ic];
+
+        if( isHplus[ic] )
+          concOut[ei][ic] = -conc[ei][ic];
+        else
+          concOut[ei][ic] = pow( 10.0, conc[ei][ic] );
+
       }
     } );
 
   } );
 
-  WriteSpeciesToFile( &domain );
+
+  //  CalculateTotalConcentration( domain);
+
+  WriteSpeciesToFile( &domain, time_n );
 
 }
 
@@ -348,7 +371,11 @@ void GeochemicalModel::AssembleSystem( real64 const time,
 {
   GEOSX_MARK_FUNCTION;
 
-  AssembleAccumulationTerms( domain, dofManager, localMatrix, localRhs );
+  bool isInitialization = time <= 0.0 ? 1 : 0;
+
+  isInitialization = 0;
+
+  AssembleAccumulationTerms( domain, dofManager, localMatrix, localRhs, isInitialization );
 
   AssembleFluxTerms( time,
                      dt,
@@ -373,8 +400,10 @@ void GeochemicalModel::AssembleSystem( real64 const time,
 void GeochemicalModel::AssembleAccumulationTerms( DomainPartition & domain,
                                                   DofManager const & dofManager,
                                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                  arrayView1d< real64 > const & localRhs )
+                                                  arrayView1d< real64 > const & localRhs,
+                                                  bool isInitialization )
 {
+
   GEOSX_MARK_FUNCTION;
 
 
@@ -436,7 +465,7 @@ void GeochemicalModel::AssembleAccumulationTerms( DomainPartition & domain,
 
           localAccumJacobian[ic][ic] = log( 10.0 ) * concBasis;
 
-          if( isHplus[ic] )
+          if( isHplus[ic] && isInitialization )
           {
             localAccum[ic] = 0.0;
             localAccumJacobian[ic][ic] = 1.0;
@@ -476,6 +505,67 @@ void GeochemicalModel::AssembleAccumulationTerms( DomainPartition & domain,
                                                 localAccumDOF.data(),
                                                 localAccumJacobian[i],
                                                 m_numDofPerCell );
+        }
+
+      }
+
+    } );
+  } );
+
+}
+
+
+void GeochemicalModel::CalculateTotalConcentration( DomainPartition & domain )
+{
+
+  GEOSX_MARK_FUNCTION;
+
+
+  MeshLevel const & mesh = *(domain.getMeshBody( 0 )->getMeshLevel( 0 ));
+  forTargetSubRegionsComplete( mesh,
+                               [&]
+                                 ( localIndex const targetRegionIndex,
+                                 localIndex const er,
+                                 localIndex const esr,
+                                 ElementRegionBase const & GEOSX_UNUSED_PARAM( region ),
+                                 ElementSubRegionBase const & subRegion )
+  {
+
+    ReactiveFluidBase const & reactiveFluid  = GetConstitutiveModel< ReactiveFluidBase >( subRegion,
+                                                                                          m_reactiveFluidNames[targetRegionIndex] );
+
+    arrayView2d< real64 > const stochMatrix = reactiveFluid.StochMatrix();
+    arrayView1d< bool > const isHplus = reactiveFluid.IsHplus();
+
+    arrayView1d< integer const >     const & elemGhostRank = m_elemGhostRank[er][esr];
+
+    arrayView2d< real64 const > const & conc          = m_concentration[er][esr];
+    arrayView2d< real64 > const & totalConc     = m_totalConcentration[er][esr];
+
+    arrayView2d< real64 const > const & dependentConc     = m_dependentConc[er][esr];
+
+    forAll< serialPolicy >( subRegion.size(), [=] ( localIndex const ei )
+    {
+      if( elemGhostRank[ei] < 0 )
+      {
+
+        for( localIndex ic = 0; ic < m_numBasisSpecies[targetRegionIndex]; ++ic )
+        {
+
+
+          real64 concBasis = pow( 10.0, conc[ei][ic] );
+
+          real64 totalConcNew = concBasis;
+
+          for( localIndex id = 0; id < m_numDependentSpecies[targetRegionIndex]; ++id )
+          {
+            real64 concDependent = pow( 10.0, dependentConc[ei][id] );
+            totalConcNew -= stochMatrix[ic][id] * concDependent;
+
+          }
+
+          totalConc[ei][ic] = totalConcNew;
+
         }
 
       }
@@ -648,6 +738,8 @@ void GeochemicalModel::ResetViews( MeshLevel & mesh )
   m_concentrationNew =
     elemManager->ConstructViewAccessor< array2d< real64 >, arrayView2d< real64 > >( viewKeyStruct::concentrationNewString );
 
+  m_concentrationOut =
+    elemManager->ConstructViewAccessor< array2d< real64 >, arrayView2d< real64 > >( viewKeyStruct::concentrationOutString );
 
   m_dependentConc =
     elemManager->ConstructMaterialArrayViewAccessor< real64, 2 >( ReactiveFluidBase::viewKeyStruct::dependentConcString,
@@ -661,7 +753,7 @@ void GeochemicalModel::ResetViews( MeshLevel & mesh )
 
 }
 
-void GeochemicalModel::WriteSpeciesToFile( DomainPartition * const domain )
+void GeochemicalModel::WriteSpeciesToFile( DomainPartition * const domain, real64 const & time )
 {
 
   GEOSX_MARK_FUNCTION;
@@ -671,6 +763,13 @@ void GeochemicalModel::WriteSpeciesToFile( DomainPartition * const domain )
 
   std::ofstream os( m_outputSpeciesFileName );
   GEOSX_ERROR_IF( !os.is_open(), "Cannot open the species-output file" );
+
+  os << "==============================================" << std::endl;
+
+  os << "time  =" << time << std::endl;
+
+  os << "==============================================" << std::endl;
+
 
   MeshLevel const * const mesh = domain->getMeshBodies()->GetGroup< MeshBody >( 0 )->getMeshLevel( 0 );
 
@@ -685,6 +784,8 @@ void GeochemicalModel::WriteSpeciesToFile( DomainPartition * const domain )
     arrayView1d< integer const > const & elemGhostRank = m_elemGhostRank[er][esr];
 
     arrayView2d< real64 const > const & conc          = m_concentration[er][esr];
+
+    arrayView2d< real64 const > const & totalConc          = m_totalConcentration[er][esr];
 
     arrayView2d< real64 const > const & dependentConc     = m_dependentConc[er][esr];
 
@@ -761,6 +862,42 @@ void GeochemicalModel::WriteSpeciesToFile( DomainPartition * const domain )
           os <<  std::left << std::setw( 25 ) << spName << std::setw( 10 ) << std::scientific << std::setprecision( 4 )<< std::right << spC << std::fixed << std::setw( 20 ) << spLogC << std::endl;
 
         }
+
+        os << std::endl;
+        os << std::endl;
+
+
+        os << "            --- Total Conc ---" << std::endl;
+
+
+        os << std::endl;
+        os << std::endl;
+
+
+        for( localIndex ic = 0; ic < indices.size(); ic++ )
+        {
+
+          localIndex idx = indices[ic];
+          real64 spC;
+          string spName;
+
+          if( idx < m_numBasisSpecies[targetRegionIndex] )
+          {
+            spName = basisSpeciesNames[idx];
+            spC = totalConc[ei][idx];
+          }
+          else
+          {
+            continue;
+          }
+
+          os <<  std::left << std::setw( 25 ) << spName << std::setw( 10 ) << std::scientific << std::setprecision( 4 )<< std::right << spC << std::endl;
+
+        }
+
+        os << std::endl;
+        os << std::endl;
+
 
         os << std::endl;
         os << std::endl;
