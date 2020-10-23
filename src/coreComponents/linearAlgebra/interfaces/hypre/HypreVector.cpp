@@ -162,7 +162,9 @@ void HypreVector::create( arrayView1d< real64 const > const & localValues,
 {
   GEOSX_LAI_ASSERT( closed() );
 
-#if defined(GEOSX_USE_CUDA)
+#if !defined(GEOSX_USE_CUDA)
+  localValues.move( LvArray::MemorySpace::CPU, false );
+#endif
   HYPRE_BigInt const localSize = LvArray::integerConversion< HYPRE_BigInt >( localValues.size() );
   HYPRE_BigInt const jlower = MpiWrapper::PrefixSum< HYPRE_BigInt >( localSize );
   HYPRE_BigInt const jupper = jlower + localSize - 1;
@@ -171,23 +173,13 @@ void HypreVector::create( arrayView1d< real64 const > const & localValues,
   finalize( m_ij_vector, m_par_vector );
 
   HYPRE_Real * const local_data = extractLocalVector();
+
+#if defined(GEOSX_USE_CUDA)
   forAll< parallelDevicePolicy<> >( localValues.size(), [=] GEOSX_HOST_DEVICE ( localIndex const i )
   {
     local_data[i] = localValues[i];
   } );
-
 #else
-  localValues.move( LvArray::MemorySpace::CPU, false );
-
-  HYPRE_BigInt const localSize = LvArray::integerConversion< HYPRE_BigInt >( localValues.size() );
-
-  HYPRE_BigInt const jlower = MpiWrapper::PrefixSum< HYPRE_BigInt >( localSize );
-  HYPRE_BigInt const jupper = jlower + localSize - 1;
-
-  initialize( comm, jlower, jupper, m_ij_vector );
-  finalize( m_ij_vector, m_par_vector );
-
-  HYPRE_Real * const local_data = extractLocalVector();
   for( localIndex i = 0; i < localValues.size(); ++i )
   {
     local_data[i] = localValues[i];

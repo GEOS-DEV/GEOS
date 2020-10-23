@@ -1098,8 +1098,9 @@ struct PresCompFracInitializationKernel
       }
     }
 
+    GEOSX_UNUSED_VAR( wellElemCompFrac, avgCompFrac );
     // set the global component fractions to avgCompFrac
-    forAll< POLICY >( subRegionSize, [=] GEOSX_HOST_DEVICE ( localIndex const iwelem )
+    forAll< POLICY >( subRegionSize, [=] GEOSX_HOST_DEVICE ( localIndex const )//iwelem )
     {
 //      for( localIndex ic = 0; ic < NC; ++ic )
 //      {

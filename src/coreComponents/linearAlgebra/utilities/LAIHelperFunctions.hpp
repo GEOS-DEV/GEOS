@@ -123,9 +123,10 @@ void SeparateComponentFilter( MATRIX const & src,
   const localIndex maxEntries = src.maxRowLength();
   const localIndex maxDstEntries = maxEntries / dofsPerNode;
 
+
+#if 0
   dst.createWithLocalSize( localRows, maxEntries, MPI_COMM_WORLD );
   dst.open();
-
   array1d< real64 > srcValues;
   array1d< real64 > dstValues( maxDstEntries );
 
@@ -198,6 +199,35 @@ void SeparateComponentFilter( MATRIX const & src,
     dst.insert( row, dstIndices.data(), dstValues.data(), k );
   }
   dst.close();
+
+#else
+
+  array2d< globalIndex > srcIndices( localRows, maxEntries);;
+  array2d< real64 > srcValues( localRows, maxEntries);
+
+  CRSMatrix< real64 > tempMat;
+  tempMat.resize( localRows, src.numLocalCols(), maxDstEntries );
+
+  for( globalIndex row=src.ilower(); row<src.iupper(); ++row )
+  {
+    const globalIndex rowComponent = row % dofsPerNode;
+    const localIndex rowLength = src.globalRowLength( row );
+
+    src.getRowCopy( row, srcIndices[row], srcValues[row] );
+
+    for( localIndex col=0; col<rowLength; ++col )
+    {
+      const globalIndex colComponent = srcIndices(row,col) % dofsPerNode;
+      if( rowComponent == colComponent )
+      {
+        tempMat.insertNonZero( row, col, srcValues(row,col) );
+      }
+    }
+  }
+
+  dst.create( tempMat.toViewConst(), MPI_COMM_GEOSX );
+
+#endif
 }
 
 } // LAIHelperFunctions namespace

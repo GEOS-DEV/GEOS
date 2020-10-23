@@ -178,6 +178,7 @@ void HypreMatrix::createWithGlobalSize( globalIndex const globalRows,
 
 #if defined(OVERRIDE_CREATE)
 
+#if defined(GEOSX_USE_CUDA)
 #define cudaCheckErrors(msg) \
     do { \
         cudaError_t __err = cudaGetLastError(); \
@@ -189,7 +190,9 @@ void HypreMatrix::createWithGlobalSize( globalIndex const globalRows,
             exit(1); \
         } \
     } while (0)
-
+#else
+#define cudaCheckErrors(msg)
+#endif
 void HypreMatrix::create( CRSMatrixView< real64 const, globalIndex const > const & localMatrix,
                           MPI_Comm const & comm )
 {
@@ -218,14 +221,14 @@ void HypreMatrix::create( CRSMatrixView< real64 const, globalIndex const > const
 #endif
   open();
 
+
+#if 0
   int const numRows = localMatrix.numRows();
   HYPRE_Int           *ncols = const_cast<localIndex * >(localMatrix.getSizes());
   const HYPRE_BigInt  *rows2 = rows.data();
   const HYPRE_Int     *row_indexes = localMatrix.getOffsets();
   const HYPRE_BigInt  *cols = localMatrix.getColumns();
   const HYPRE_Complex *values = localMatrix.getEntries();
-
-#if 0
   printf( "numRows = %d \n", numRows );
   forAll< parallelDevicePolicy<> >( 1, [=] GEOSX_DEVICE ( localIndex const )
   {
