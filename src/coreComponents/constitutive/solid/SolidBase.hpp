@@ -425,8 +425,11 @@ public:
        energy += stress[i]*strain[i];
        energy += 2*stress[i+3]*strain[i+3];
      }
-          
-     return 0.5*energy;
+     energy *= 0.5;
+     
+     GEOSX_ASSERT_MSG( energy >= 0.0, "negative strain energy density detected" );
+                            
+     return energy;
    }
    
   /**

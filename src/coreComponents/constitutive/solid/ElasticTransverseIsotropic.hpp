@@ -41,8 +41,6 @@ namespace constitutive
 class ElasticTransverseIsotropicUpdates : public SolidBaseUpdates
 {
 public:
-  using DiscretizationOps = SolidModelDiscretizationOpsTransverseIsotropic;
-
   /**
    * @brief Constructor
    * @param[in] c11 The 11 component of the Voigt stiffness tensor.
@@ -82,15 +80,18 @@ public:
 
   /// Deleted move assignment operator
   ElasticTransverseIsotropicUpdates & operator=( ElasticTransverseIsotropicUpdates && ) =  delete;
-  
+
+
+  // Use transverse isotropic form of inner product compression
+  using DiscretizationOps = SolidModelDiscretizationOpsTransverseIsotropic;
+
   // bring in base implementations for any not defined here
-  using SolidBaseUpdates::smallStrainUpdate;
-  using SolidBaseUpdates::smallStrainNoStateUpdate;
-  using SolidBaseUpdates::hypoUpdate;
-  using SolidBaseUpdates::hyperUpdate;
+  //using SolidBaseUpdates::smallStrainUpdate;
+  //using SolidBaseUpdates::smallStrainNoStateUpdate;
+  //using SolidBaseUpdates::hypoUpdate;
+  //using SolidBaseUpdates::hyperUpdate;
   
-  GEOSX_HOST_DEVICE
-  virtual void getElasticStiffness( localIndex const k, real64 ( & stiffness )[6][6] ) const override final;
+  // total strain interfaces
   
   GEOSX_HOST_DEVICE
   virtual void smallStrainNoStateUpdate( localIndex const k,
@@ -104,7 +105,16 @@ public:
                                          real64 const ( & totalStrain )[6],
                                          real64 ( & stress )[6],
                                          real64 ( & stiffness )[6][6] ) const override final;
-                                         
+    
+  GEOSX_HOST_DEVICE
+  virtual void smallStrainNoStateUpdate( localIndex const k,
+                                         localIndex const q,
+                                         real64 const ( & totalStrain )[6],
+                                         real64 ( & stress )[6],
+                                         DiscretizationOps & stiffness ) const final;
+                                           
+  // incremental strain interfaces
+  
   GEOSX_HOST_DEVICE
   virtual void smallStrainUpdate( localIndex const k,
                                   localIndex const q,
@@ -119,13 +129,28 @@ public:
                                   real64 ( & stiffness )[6][6] ) const override final;
    
   GEOSX_HOST_DEVICE
+  virtual void smallStrainUpdate( localIndex const k,
+                                  localIndex const q,
+                                  real64 const ( & strainIncrement )[6],
+                                  real64 ( & stress )[6],
+                                  DiscretizationOps & stiffness ) const final;
+                                  
+  // hypo interface
+  
+  GEOSX_HOST_DEVICE
   virtual void hypoUpdate( localIndex const k,
                            localIndex const q,
                            real64 const ( &Ddt )[6],
                            real64 const ( &Rot )[3][3],
                            real64 ( & stress )[6],
                            real64 ( & stiffness )[6][6] ) const override final;
-                           
+
+  // miscellaneous getters
+  
+  GEOSX_HOST_DEVICE
+  virtual void getElasticStiffness( localIndex const k, real64 ( & stiffness )[6][6] ) const override final;
+  
+                          
   ///// LEGACY
   
   GEOSX_HOST_DEVICE
@@ -265,6 +290,23 @@ void ElasticTransverseIsotropicUpdates::smallStrainNoStateUpdate( localIndex con
 }
 
 
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void ElasticTransverseIsotropicUpdates::smallStrainNoStateUpdate( localIndex const k,
+                                                                  localIndex const q,
+                                                                  real64 const ( & totalStrain )[6],
+                                                                  real64 ( & stress )[6],
+                                                                  DiscretizationOps & stiffness ) const
+{
+  smallStrainNoStateUpdate( k, q, totalStrain, stress);
+  stiffness.m_c11 = m_c11[k];
+  stiffness.m_c13 = m_c13[k];
+  stiffness.m_c33 = m_c33[k];
+  stiffness.m_c44 = m_c44[k];
+  stiffness.m_c66 = m_c66[k];
+}
+
+
 GEOSX_FORCE_INLINE
 GEOSX_HOST_DEVICE
 void ElasticTransverseIsotropicUpdates::smallStrainUpdate( localIndex const k,
@@ -275,6 +317,23 @@ void ElasticTransverseIsotropicUpdates::smallStrainUpdate( localIndex const k,
 {
   smallStrainUpdate( k, q, strainIncrement, stress);
   getElasticStiffness( k, stiffness );
+}
+
+
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void ElasticTransverseIsotropicUpdates::smallStrainUpdate( localIndex const k,
+                                                           localIndex const q,
+                                                           real64 const ( & strainIncrement )[6],
+                                                           real64 ( & stress )[6],
+                                                           DiscretizationOps & stiffness ) const
+{
+  smallStrainUpdate( k, q, strainIncrement, stress);
+  stiffness.m_c11 = m_c11[k];
+  stiffness.m_c13 = m_c13[k];
+  stiffness.m_c33 = m_c33[k];
+  stiffness.m_c44 = m_c44[k];
+  stiffness.m_c66 = m_c66[k];
 }
 
 

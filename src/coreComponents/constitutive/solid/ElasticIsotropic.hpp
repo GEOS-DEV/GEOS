@@ -40,8 +40,6 @@ namespace constitutive
 class ElasticIsotropicUpdates : public SolidBaseUpdates
 {
 public:
-  using DiscretizationOps = SolidModelDiscretizationOpsIsotropic;
-
   /**
    * @brief Constructor
    * @param[in] bulkModulus The ArrayView holding the bulk modulus data for each
@@ -75,11 +73,17 @@ public:
   /// Deleted move assignment operator
   ElasticIsotropicUpdates & operator=( ElasticIsotropicUpdates && ) =  delete;
 
+
+  // Use the "isotropic" form of inner product compression
+  using DiscretizationOps = SolidModelDiscretizationOpsIsotropic;
+  
   // bring in base implementations for any not defined here
-  using SolidBaseUpdates::smallStrainUpdate;
-  using SolidBaseUpdates::smallStrainNoStateUpdate;
-  using SolidBaseUpdates::hypoUpdate;
-  using SolidBaseUpdates::hyperUpdate;
+  //using SolidBaseUpdates::smallStrainUpdate;
+  //using SolidBaseUpdates::smallStrainNoStateUpdate;
+  //using SolidBaseUpdates::hypoUpdate;
+  //using SolidBaseUpdates::hyperUpdate;
+  
+  // total strain interfaces
   
   GEOSX_HOST_DEVICE
   virtual void smallStrainNoStateUpdate( localIndex const k,
@@ -95,6 +99,15 @@ public:
                                          real64 ( & stiffness )[6][6] ) const override final;
   
   GEOSX_HOST_DEVICE
+  virtual void smallStrainNoStateUpdate( localIndex const k,
+                                         localIndex const q,
+                                         real64 const ( & totalStrain )[6],
+                                         real64 ( & stress )[6],
+                                         DiscretizationOps & stiffness ) const final;
+                       
+  // incremental strain interfaces
+  
+  GEOSX_HOST_DEVICE
   virtual void smallStrainUpdate( localIndex const k,
                                   localIndex const q,
                                   real64 const ( & strainIncrement )[6],
@@ -108,6 +121,15 @@ public:
                                   real64 ( & stiffness )[6][6] ) const override; // not final (see druckerPrager)
   
   GEOSX_HOST_DEVICE
+  virtual void smallStrainUpdate( localIndex const k,
+                                  localIndex const q,
+                                  real64 const ( & strainIncrement )[6],
+                                  real64 ( & stress )[6],
+                                  DiscretizationOps & stiffness ) const final;
+                    
+  // miscellaneous getters
+  
+  GEOSX_HOST_DEVICE
   virtual void getElasticStiffness( localIndex const k,
                                     real64 ( & stiffness )[6][6] ) const override final;
                                     
@@ -116,7 +138,7 @@ public:
                                  localIndex const q,
                                  real64 ( & elasticStrain )[6]) const override final;
                            
-  // TODO: need to confirm hyper stress/strain measures before activatiing
+  // TODO: confirm hyper stress/strain measures before activatiing
   /*
   GEOSX_HOST_DEVICE
   virtual void hyperUpdate( localIndex const k,
@@ -138,13 +160,13 @@ public:
   GEOSX_HOST_DEVICE
   void setDiscretizationOps( localIndex const k,
                              localIndex const q,
-                             DiscretizationOps & discOps ) const
+                             DiscretizationOps & stiffness ) const
   {
     GEOSX_UNUSED_VAR( q )
     real64 const G = m_shearModulus[k];
     real64 const Lame = m_bulkModulus[k] - 2.0/3.0 * G;
-    discOps.m_lambda = Lame;
-    discOps.m_shearModulus = G;
+    stiffness.m_lambda = Lame;
+    stiffness.m_shearModulus = G;
   }
 
   GEOSX_HOST_DEVICE
@@ -202,7 +224,6 @@ protected:
 
   /// A reference to the ArrayView holding the shear modulus for each element.
   arrayView1d< real64 const > const m_shearModulus;
-
 };
 
 
@@ -233,6 +254,25 @@ void ElasticIsotropicUpdates::getElasticStiffness( localIndex const k,
    stiffness[5][5] = G;
 }
  
+ 
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void ElasticIsotropicUpdates::getElasticStrain( localIndex const k,
+                                                localIndex const q,
+                                                real64 ( & elasticStrain)[6] ) const
+{
+  real64 const E = conversions::BulkModAndShearMod::toYoungsMod( m_bulkModulus[k], m_shearModulus[k] );
+  real64 const nu = conversions::BulkModAndShearMod::toPoissonRatio( m_bulkModulus[k], m_shearModulus[k] );
+  
+  elasticStrain[0] = (    m_newStress[k][q][0] - nu*m_newStress[k][q][1] - nu*m_newStress[k][q][2])/E;
+  elasticStrain[1] = (-nu*m_newStress[k][q][0] +    m_newStress[k][q][1] - nu*m_newStress[k][q][2])/E;
+  elasticStrain[2] = (-nu*m_newStress[k][q][0] - nu*m_newStress[k][q][1] +    m_newStress[k][q][2])/E;
+  
+  elasticStrain[3] = m_newStress[k][q][3] / m_shearModulus[k];
+  elasticStrain[4] = m_newStress[k][q][3] / m_shearModulus[k];
+  elasticStrain[5] = m_newStress[k][q][3] / m_shearModulus[k];
+}
+
 
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
@@ -259,33 +299,14 @@ void ElasticIsotropicUpdates::smallStrainNoStateUpdate( localIndex const k,
 
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-void ElasticIsotropicUpdates::getElasticStrain( localIndex const k,
-                                                localIndex const q,
-                                                real64 ( & elasticStrain)[6] ) const
+void ElasticIsotropicUpdates::smallStrainNoStateUpdate( localIndex const k,
+                                                        localIndex const q,
+                                                        real64 const ( & totalStrain )[6],
+                                                        real64 ( & stress )[6],
+                                                        real64 ( & stiffness )[6][6] ) const
 {
-  real64 const E = conversions::BulkModAndShearMod::toYoungsMod( m_bulkModulus[k], m_shearModulus[k] );
-  real64 const nu = conversions::BulkModAndShearMod::toPoissonRatio( m_bulkModulus[k], m_shearModulus[k] );
-  
-  elasticStrain[0] = (    m_newStress[k][q][0] - nu*m_newStress[k][q][1] - nu*m_newStress[k][q][2])/E;
-  elasticStrain[1] = (-nu*m_newStress[k][q][0] +    m_newStress[k][q][1] - nu*m_newStress[k][q][2])/E;
-  elasticStrain[2] = (-nu*m_newStress[k][q][0] - nu*m_newStress[k][q][1] +    m_newStress[k][q][2])/E;
-  
-  elasticStrain[3] = m_newStress[k][q][3] / m_shearModulus[k];
-  elasticStrain[4] = m_newStress[k][q][3] / m_shearModulus[k];
-  elasticStrain[5] = m_newStress[k][q][3] / m_shearModulus[k];
-}
-
-
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
-void ElasticIsotropicUpdates::smallStrainUpdate( localIndex const k,
-                                                 localIndex const q,
-                                                 real64 const ( & strainIncrement )[6],
-                                                 real64 ( & stress )[6]) const
-{ 
-  smallStrainNoStateUpdate( k, q, strainIncrement, stress); // stress  = incrementalStress
-  LvArray::tensorOps::add< 6 >( stress, m_oldStress[k][q]); // stress += m_oldStress
-  saveStress( k, q, stress);                                // m_newStress = stress
+  smallStrainNoStateUpdate( k, q, totalStrain, stress);
+  getElasticStiffness( k, stiffness );
 }
 
 
@@ -295,10 +316,24 @@ void ElasticIsotropicUpdates::smallStrainNoStateUpdate( localIndex const k,
                                                         localIndex const q,
                                                         real64 const ( & totalStrain )[6],
                                                         real64 ( & stress )[6],
-                                                        real64 ( & stiffness )[6][6] ) const
+                                                        DiscretizationOps & stiffness ) const
 {
   smallStrainNoStateUpdate( k, q, totalStrain, stress);
-  getElasticStiffness( k, stiffness );
+  stiffness.m_lambda = conversions::BulkModAndShearMod::toFirstLame( m_bulkModulus[k] , m_shearModulus[k] );
+  stiffness.m_shearModulus = m_shearModulus[k];
+}
+
+
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void ElasticIsotropicUpdates::smallStrainUpdate( localIndex const k,
+                                                 localIndex const q,
+                                                 real64 const ( & strainIncrement )[6],
+                                                 real64 ( & stress )[6]) const
+{
+  smallStrainNoStateUpdate( k, q, strainIncrement, stress); // stress  = incrementalStress
+  LvArray::tensorOps::add< 6 >( stress, m_oldStress[k][q]); // stress += m_oldStress
+  saveStress( k, q, stress);                                // m_newStress = stress
 }
 
 
@@ -313,6 +348,21 @@ void ElasticIsotropicUpdates::smallStrainUpdate( localIndex const k,
   smallStrainUpdate( k, q, strainIncrement, stress);
   getElasticStiffness( k, stiffness );
 }
+
+
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void ElasticIsotropicUpdates::smallStrainUpdate( localIndex const k,
+                                                 localIndex const q,
+                                                 real64 const ( & strainIncrement )[6],
+                                                 real64 ( & stress )[6],
+                                                 DiscretizationOps & stiffness ) const
+{
+  smallStrainUpdate( k, q, strainIncrement, stress);
+  stiffness.m_lambda = conversions::BulkModAndShearMod::toFirstLame( m_bulkModulus[k] , m_shearModulus[k] );
+  stiffness.m_shearModulus = m_shearModulus[k];
+}
+
 
 // TODO: need to confirm stress / strain measures before activating hyper inferfaceh
 /*
@@ -533,9 +583,9 @@ public:
     static constexpr auto defaultYoungsModulusString =  "defaultYoungsModulus";
 
     /// string/key for bulk modulus
-    static constexpr auto bulkModulusString  = "BulkModulus";
+    static constexpr auto bulkModulusString  = "bulkModulus";
     /// string/key for shear modulus
-    static constexpr auto shearModulusString = "ShearModulus";
+    static constexpr auto shearModulusString = "shearModulus";
   };
 
   /**

@@ -39,6 +39,7 @@ namespace constitutive
 class DruckerPragerUpdates : public ElasticIsotropicUpdates
 {
 public:
+  
   /**
    * @brief Constructor
    * @param[in] bulkModulus The ArrayView holding the bulk modulus data for each element.
@@ -346,7 +347,7 @@ public:
     static constexpr auto hardeningString  = "hardening";
     
     /// string/key for cohesion
-    static constexpr auto newCohesionString  = "newCohesion";
+    static constexpr auto newCohesionString  = "cohesion";
     
         /// string/key for cohesion
     static constexpr auto oldCohesionString  = "oldCohesion";
