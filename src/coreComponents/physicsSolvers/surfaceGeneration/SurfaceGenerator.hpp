@@ -185,6 +185,21 @@ private:
                                  ElementRegionManager & elementManager );
 
   /**
+   * @brief
+   * @param nodeManager
+   * @param edgeManager
+   * @param faceManager
+   * @param elementManager
+   * @return
+   */
+  realT CalculateTipNodeElasticModulus ( NodeManager & nodeManager,
+                                 EdgeManager & edgeManager,
+                                 FaceManager & faceManager,
+                                 ElementRegionManager & elementManager,
+                                 localIndex const & trailingFaceIndex,
+                                 localIndex const & nodeIndex);
+
+  /**
    * @brief Function to calculate f_disconnect and f_u.
    * @param edgeID
    * @param edgeLength
@@ -521,6 +536,8 @@ private:
 //    //TODO: Once the node-based SIF criterion becomes mature and robust, remove the edge-based criterion.
     constexpr static auto nodeBasedSIFString = "nodeBasedSIF";
 
+    constexpr static auto testString = "test";
+
   }; //SurfaceGenViewKeys;
 
 
@@ -537,6 +554,8 @@ private:
   localIndex m_solidMaterialFullIndex;
 
   int m_nodeBasedSIF;
+
+  int m_test;
 
   realT m_rockToughness;
 

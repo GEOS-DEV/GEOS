@@ -193,6 +193,10 @@ SurfaceGenerator::SurfaceGenerator( const std::string & name,
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Rock toughness of the solid material" );
 
+  registerWrapper( viewKeyStruct::testString, &m_test )->
+    setInputFlag( InputFlags::OPTIONAL )->
+    setDescription( "Test mechanical anisotropy" );
+
   registerWrapper( viewKeyStruct::mpiCommOrderString, &m_mpiCommOrder )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Flag to enable MPI consistent communication ordering" );
@@ -2783,6 +2787,132 @@ void SurfaceGenerator::IdentifyRupturedFaces( DomainPartition & domain,
 
 }
 
+
+realT SurfaceGenerator::CalculateTipNodeElasticModulus( NodeManager & nodeManager,
+                                                EdgeManager & edgeManager,
+                                                FaceManager & faceManager,
+                                                ElementRegionManager & elementManager,
+                                                localIndex const & trailingFaceIndex,
+                                                localIndex const & nodeIndex)
+{
+  ArrayOfSetsView< localIndex const > const & nodeToEdgeMap = nodeManager.edgeList().toViewConst();
+  ArrayOfArraysView< localIndex const > const & nodeToRegionMap = nodeManager.elementRegionList().toViewConst();
+  ArrayOfArraysView< localIndex const > const & nodeToSubRegionMap = nodeManager.elementSubRegionList().toViewConst();
+  ArrayOfArraysView< localIndex const > const & nodeToElementMap = nodeManager.elementList().toViewConst();
+  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X = nodeManager.referencePosition();
+
+  arrayView2d< real64 const > const & faceNormal = faceManager.faceNormal();
+  arrayView2d< real64 const > const & faceCenter = faceManager.faceCenter();
+
+  arrayView1d< localIndex const > const & childFaceIndices = faceManager.getExtrinsicData< extrinsicMeshData::ChildIndex >();
+
+  R1Tensor vecTipNorm;
+  vecTipNorm = faceNormal[trailingFaceIndex];
+  vecTipNorm -= faceNormal[childFaceIndices[trailingFaceIndex]];
+  vecTipNorm.Normalize();
+
+  //wu40: we need to decide the propagation direction of the tip node as under the transverse isotropic or anisotropic conditions, the elastic modulus is different at different directions.
+  //Here we use the tip edges connected to the tip node to decide the propagation direction.
+  localIndex_array tipEdgesConnected;  //Get the tip edges connected to this tip node.
+  real64 propagationDirection; //Angle between the propagation direction and the Z axis. TODO: If we are going to specify direction of the transverse plane, or use anisotropy material, we will need a more rigorous treatment.
+  R1Tensor verticalDirection = {0.0, 0.0, 1.0};
+
+  for( localIndex const edgeID : nodeToEdgeMap[ nodeIndex ] )
+  {
+    if( m_tipEdges.contains( edgeID ))
+    {
+      tipEdgesConnected.emplace_back( edgeID );
+    }
+  }
+
+  if (tipEdgesConnected.size() == 1)
+  {
+    R1Tensor vecTip;
+    R1Tensor vecEdge = edgeManager.calculateLength( tipEdgesConnected[0], X );
+    vecEdge.Normalize();
+
+    vecTip.Cross( vecTipNorm, vecEdge );
+    vecTip.Normalize();
+
+    R1Tensor v0 = edgeManager.calculateCenter( tipEdgesConnected[0], X );
+    v0 -= faceCenter[ trailingFaceIndex ];
+
+    if( Dot( v0, vecTip ) < 0 )
+      vecTip *= -1.0;
+
+    propagationDirection = acos( Dot( vecTip, verticalDirection )*0.999999 );
+  }
+  else if (tipEdgesConnected.size() == 2)
+  {
+    R1Tensor vecTip[2];
+    for (localIndex k=0; k<tipEdgesConnected.size(); ++k)
+    {
+      R1Tensor vecEdge = edgeManager.calculateLength( tipEdgesConnected[k], X );
+      real64 egdeLength = vecEdge.Normalize();
+      vecEdge.Normalize();
+
+      vecTip[k].Cross( vecTipNorm, vecEdge );
+      vecTip[k].Normalize();
+
+      R1Tensor v0 = edgeManager.calculateCenter( tipEdgesConnected[k], X );
+      v0 -= faceCenter[ trailingFaceIndex ];
+
+      if( Dot( v0, vecTip[k] ) < 0 )
+        vecTip[k] *= -1.0;
+
+      vecTip[k] /= egdeLength;
+    }
+
+    R1Tensor propagationVector = vecTip[0];
+    propagationVector += vecTip[1];
+    propagationVector.Normalize();
+
+    propagationDirection = acos( Dot( propagationVector, verticalDirection )*0.999999 );
+  }
+  else
+  {
+    char msg[200];
+    sprintf( msg, "Error! Tip node %d connects to more than two tip edges.", int(nodeIndex));
+    GEOSX_ERROR( msg );
+  }
+
+
+  realT tipNodeElasticModulus = 0;
+  for( localIndex k=0; k<nodeToRegionMap.sizeOfArray( nodeIndex ); ++k )
+  {
+    localIndex const er  = nodeToRegionMap[nodeIndex][k];
+    localIndex const esr = nodeToSubRegionMap[nodeIndex][k];
+    localIndex const ei  = nodeToElementMap[nodeIndex][k];
+
+    CellElementSubRegion * const elementSubRegion = elementManager.GetRegion( er )->GetSubRegion< CellElementSubRegion >( esr );
+
+    LinearElasticIsotropic const * constitutiveRelation = elementSubRegion->getConstitutiveModel< LinearElasticIsotropic >( m_solidMaterialNames[0] );
+    LinearElasticIsotropic::KernelWrapper const & solidConstitutive = constitutiveRelation->createKernelUpdates();
+
+    //Wu40: The following method to calculate near-tip elastic modulus assumes: 1) The fracture plane is perpendicular to one of the three axis (x, y or z). Therefore we do not need to rotate the stiffness matrix.
+    //2) The solid material is isotropic or transverse isotropic (TI). For the latter case, we assume that the fracture is vertical.
+    //One can refer to Moukhtari et al. (2020). "Planar hydraulic fracture growth perpendicular to the isotropy plane in a transversely isotropic material" for details of the method.
+    array2d< real64 > stiffness( 6, 6 );
+    solidConstitutive.GetStiffness( ei, stiffness );
+
+    real64 c11 = stiffness[0][0];
+    real64 c12 = stiffness[0][1];
+    real64 c13 = stiffness[0][2];
+    real64 c33 = stiffness[2][2];
+    real64 c44 = stiffness[3][3];
+
+    real64 ElasticModulus1 = (c11*c11 - c12*c12) / c11;
+    real64 ElasticModulus3 =  2 * pow(c33/c11, 0.5)*(c11*c33-c13*c13)/c33/pow((c11*(c33+2*c44*pow(c33/c11,0.5))-c13*c13-2*c13*c44)/c11/c44,0.5); //wu40: In Moukhtari et al. (2020), the formulation for E3 is wrong. Refer to Laubie and Ulm (2014) for the correct answer.
+
+    tipNodeElasticModulus += ElasticModulus1 * sin(propagationDirection) * sin(propagationDirection) + ElasticModulus3 * cos(propagationDirection) * cos(propagationDirection);
+  }
+
+  tipNodeElasticModulus /= nodeToRegionMap.sizeOfArray( nodeIndex );
+
+  return tipNodeElasticModulus;
+}
+
+
 void SurfaceGenerator::CalculateNodeAndFaceSIF( DomainPartition & domain,
                                                 NodeManager & nodeManager,
                                                 EdgeManager & edgeManager,
@@ -2871,9 +3001,11 @@ void SurfaceGenerator::CalculateNodeAndFaceSIF( DomainPartition & domain,
 //                                      [=] GEOSX_HOST_DEVICE ( localIndex const trailingFacesCounter )
   {
 //    localIndex const trailingFaceIndex = m_trailingFaces[ trailingFacesCounter ];
-    R1Tensor faceNormalVector = faceNormal[trailingFaceIndex];//TODO: check if a ghost face still has the correct
-                                                              // attributes such as normal vector, face center, face
-                                                              // index.
+    R1Tensor vecTipNorm;
+    vecTipNorm = faceNormal[trailingFaceIndex];
+    vecTipNorm -= faceNormal[childFaceIndices[trailingFaceIndex]];
+    vecTipNorm.Normalize();
+
     localIndex_array unpinchedNodeID;
     localIndex_array pinchedNodeID;
     localIndex_array tipEdgesID;
@@ -2911,6 +3043,8 @@ void SurfaceGenerator::CalculateNodeAndFaceSIF( DomainPartition & domain,
           nElemEachSide[0] = 0;
           nElemEachSide[1] = 0;
 
+          realT tipNodeElasticModulus = CalculateTipNodeElasticModulus(nodeManager, edgeManager, faceManager, elementManager, trailingFaceIndex, nodeIndex);
+
           for( localIndex k=0; k<nodeToRegionMap.sizeOfArray( nodeIndex ); ++k )
           {
             localIndex const er  = nodeToRegionMap[nodeIndex][k];
@@ -2921,6 +3055,7 @@ void SurfaceGenerator::CalculateNodeAndFaceSIF( DomainPartition & domain,
 
             arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elementsToNodes = elementSubRegion->nodeList();
             arrayView2d< real64 const > const & elementCenter = elementSubRegion->getElementCenter().toViewConst();
+
             realT K = bulkModulus[er][esr][m_solidMaterialFullIndex][ei];
             realT G = shearModulus[er][esr][m_solidMaterialFullIndex][ei];
             realT youngsModulus = 9 * K * G / ( 3 * K + G );
@@ -2945,11 +3080,19 @@ void SurfaceGenerator::CalculateNodeAndFaceSIF( DomainPartition & domain,
                                              temp );
 
                 //wu40: the nodal force need to be weighted by Young's modulus and possion's ratio.
-                temp *= youngsModulus;
-                temp /= (1 - poissonRatio * poissonRatio);
+                if (m_test)
+                {
+                  temp *= youngsModulus;
+                  temp /= (1 - poissonRatio * poissonRatio);
+                }
+                else
+                {
+                  temp *= tipNodeElasticModulus;
+                }
+
 
                 xEle -= nodePosition;
-                if( Dot( xEle, faceNormalVector ) > 0 ) //TODO: check the sign.
+                if( Dot( xEle, vecTipNorm ) > 0 ) //TODO: check the sign.
                 {
                   nElemEachSide[0] += 1;
                   nodeDisconnectForce += temp;
@@ -3051,7 +3194,15 @@ void SurfaceGenerator::CalculateNodeAndFaceSIF( DomainPartition & domain,
             averagePoissonRatio /= nodeToRegionMap.sizeOfArray( nodeID );
 
             fExternal[i] = fext[nodeID];
-            fExternal[i] *= averageYoungsModulus / (1 - averagePoissonRatio * averagePoissonRatio);
+
+            if (m_test)
+            {
+              fExternal[i] *= averageYoungsModulus / (1 - averagePoissonRatio * averagePoissonRatio);
+            }
+            else
+            {
+              fExternal[i] *= tipNodeElasticModulus;
+            }
           }
 
           //TODO: The sign of fext here is opposite to the sign of fFaceA in function "CalculateEdgeSIF".
@@ -3072,11 +3223,6 @@ void SurfaceGenerator::CalculateNodeAndFaceSIF( DomainPartition & domain,
 
           tipNodeSIF = pow( (fabs( tipNodeForce[0] * trailingNodeDisp[0] / 2.0 / tipArea ) + fabs( tipNodeForce[1] * trailingNodeDisp[1] / 2.0 / tipArea )
                              + fabs( tipNodeForce[2] * trailingNodeDisp[2] / 2.0 / tipArea )), 0.5 );
-
-          R1Tensor vecTipNorm;
-          vecTipNorm = faceNormal[trailingFaceIndex];
-          vecTipNorm -= faceNormal[childFaceIndices[trailingFaceIndex]];
-          vecTipNorm.Normalize();
 
           if (Dot(trailingNodeDisp, vecTipNorm) < 0.0)  //In case the aperture is negative with the presence of confining stress.
           {
