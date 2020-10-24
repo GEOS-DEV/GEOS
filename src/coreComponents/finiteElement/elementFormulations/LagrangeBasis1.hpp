@@ -191,7 +191,6 @@ public:
      * @param i0 The Cartesian index of the support point in the xi0 direction.
      * @param i1 The Cartesian index of the support point in the xi1 direction.
      * @param i2 The Cartesian index of the support point in the xi2 direction.
-     * @return
      */
     GEOSX_HOST_DEVICE
     GEOSX_FORCE_INLINE
