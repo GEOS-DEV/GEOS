@@ -4,8 +4,10 @@ packages:
     compiler: [gcc, clang]
     providers:
       mpi: [spectrum-mpi]
-      blas: [essl]
-      lapack: [essl]
+      blas: [netlib-lapack]
+      lapack: [netlib-lapack]
+      # blas: [essl]
+      # lapack: [essl]
 
   cuda:
     buildable: False
@@ -25,11 +27,17 @@ packages:
       - spec: spectrum-mpi@10.3.1.03rtm0 %clang@10.0.1
         prefix: /usr/tce/packages/spectrum-mpi/spectrum-mpi-rolling-release-clang-ibm-10.0.1-gcc-8.3.1/
 
-  essl:
-    buildable: False
+  netlib-lapack:
+    buildable: false
     externals:
-      - spec: essl@6.2.1 ~ilp64 threads=openmp +cuda +lapack
-        prefix: /usr/tcetmp/packages/essl/essl-6.2.1/
+    - spec: netlib-lapack@3.6.1
+      prefix: /usr/lib64
+
+  # essl:
+  #   buildable: False
+  #   externals:
+  #     - spec: essl@6.2.1 ~ilp64 threads=openmp +cuda +lapack
+  #       prefix: /usr/tcetmp/packages/essl/essl-6.2.1/
 
   cmake:
     buildable: False

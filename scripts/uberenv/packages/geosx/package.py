@@ -60,6 +60,8 @@ class Geosx(CMakePackage, CudaPackage):
     variant('petsc', default=True, description='Build PETSc support.')
     variant('lai', default='trilinos', description='Linear algebra interface.',
             values=('trilinos', 'hypre', 'petsc'), multi=False)
+    variant('pygeosx', default=False, description='Build the GEOSX python interface.')
+
     # variant('tests', default=True, description='Build tests')
     # variant('benchmarks', default=False, description='Build benchmarks')
     # variant('examples', default=False, description='Build examples')
@@ -71,10 +73,17 @@ class Geosx(CMakePackage, CudaPackage):
     depends_on('cmake@3.9:', when='+cuda', type='build')
 
     #
+    # Virtual packages
+    #
+    depends_on('mpi')
+    depends_on('blas')
+    depends_on('lapack')
+
+    #
     # Performance portability
     #
-    depends_on('raja@0.12.1: +openmp +shared ~examples ~exercises', when='~cuda')
-    depends_on('raja@0.12.1: +cuda +openmp +shared ~examples ~exercises', when='+cuda')
+    depends_on('raja@0.12.1: +openmp +shared ~examples ~exercises')
+    depends_on('raja +cuda', when='+cuda')
 
     depends_on('umpire@4.0.1: ~c +shared +openmp ~examples')
     depends_on('umpire@4.0.1: +cuda ~c +shared +openmp ~examples', when='+cuda')
@@ -92,7 +101,7 @@ class Geosx(CMakePackage, CudaPackage):
     depends_on('silo@4.10: ~fortran +shared ~silex +pic +mpi ~zlib')
 
     depends_on('adiak@0.2: +mpi +shared', when='+caliper')
-    depends_on('caliper@2.4: +shared +adiak +mpi ~callpath +papi ~libpfm ~gotcha ~sampler', when='+caliper')
+    depends_on('caliper@2.4: +shared +adiak +mpi ~callpath ~papi ~libpfm ~gotcha ~sampler', when='+caliper')
 
     depends_on('pugixml@1.8: +shared')
 
@@ -122,6 +131,14 @@ class Geosx(CMakePackage, CudaPackage):
     depends_on('petsc@3.13.0: ' + petsc_build_options + petsc_tpls, when='+petsc')
 
     #
+    # Python
+    #
+    depends_on('python +shared +pic ~sqlite3', when='+pygeosx')
+    depends_on('py-numpy@1.19: +blas +lapack +force-parallel-build', when='+pygeosx')
+    depends_on('py-scipy@1.5.2: +force-parallel-build', when='+pygeosx')
+    depends_on('py-mpi4py@3.0.3:', when='+pygeosx')
+
+    #
     # Dev tools
     #
     depends_on('uncrustify@0.71:')
@@ -137,6 +154,10 @@ class Geosx(CMakePackage, CudaPackage):
     #
     conflicts('+mkl +essl', msg='Cannot use both MKL and ESSL.')
     conflicts('+essl ~cuda', msg='Cannot use ESSL without CUDA.')
+
+    conflicts('~trilinos lai=trilinos', msg='To use Trilinos as the Linear Algebra Interface you must build it.')
+    conflicts('~hypre lai=hypre', msg='To use HYPRE as the Linear Algebra Interface you must build it.')
+    conflicts('~petsc lai=petsc', msg='To use PETSc as the Linear Algebra Interface you must build it.')
 
     phases = ['hostconfig', 'cmake', 'build', 'install']
 
@@ -329,6 +350,21 @@ class Geosx(CMakePackage, CudaPackage):
                 else:
                     cfg.write(cmake_cache_option('ENABLE_{}'.format(cmake_name), False))
 
+            cfg.write('#{0}\n'.format('-' * 80))
+            cfg.write('# System Math Libraries\n')
+            cfg.write('#{0}\n\n'.format('-' * 80))
+            if '+mkl' in spec:
+                cfg.write(cmake_cache_option('ENABLE_MKL', True))
+                cfg.write(cmake_cache_entry('MKL_INCLUDE_DIRS', spec['intel-mkl'].prefix.include))
+                cfg.write(cmake_cache_list('MKL_LIBRARIES', spec['intel-mkl'].libs))
+            elif '+essl' in spec:
+                cfg.write(cmake_cache_option('ENABLE_ESSL', True))
+                cfg.write(cmake_cache_entry('ESSL_INCLUDE_DIRS', spec['essl'].prefix.include))
+                cfg.write(cmake_cache_list('ESSL_LIBRARIES', spec['essl'].libs + spec['cuda'].libs))
+            else:
+                cfg.write(cmake_cache_list('BLAS_LIBRARIES', spec['blas'].libs))
+                cfg.write(cmake_cache_list('LAPACK_LIBRARIES', spec['lapack'].libs))
+
             math_tpls = (('metis', 'METIS', True),
                         ('parmetis', 'PARMETIS', True),
                         ('superlu-dist', 'SUPERLU_DIST', True),
@@ -345,44 +381,43 @@ class Geosx(CMakePackage, CudaPackage):
                 else:
                     cfg.write(cmake_cache_option('ENABLE_{}'.format(cmake_name), False))
 
-            cfg.write('#{0}\n'.format('-' * 80))
-            cfg.write('# System Math Libraries\n')
-            cfg.write('#{0}\n\n'.format('-' * 80))
-            if '+mkl' in spec:
-                cfg.write(cmake_cache_option('ENABLE_MKL', True))
-                cfg.write(cmake_cache_entry('MKL_INCLUDE_DIRS', spec['intel-mkl'].prefix.include))
-                cfg.write(cmake_cache_list('MKL_LIBRARIES', spec['intel-mkl'].libs))
-            if '+essl' in spec:
-                cfg.write(cmake_cache_option('ENABLE_ESSL', True))
-                cfg.write(cmake_cache_entry('ESSL_INCLUDE_DIRS', spec['essl'].prefix.include))
-                cfg.write(cmake_cache_list('ESSL_LIBRARIES', spec['essl'].libs + spec['cuda'].libs))
+            if 'lai=trilinos' in spec:
+                cfg.write(cmake_cache_entry('GEOSX_LA_INTERFACE', 'Trilinos'))
+            if 'lai=hypre' in spec:
+                cfg.write(cmake_cache_entry('GEOSX_LA_INTERFACE', 'Hypre'))
+            if 'lai=petsc' in spec:
+                cfg.write(cmake_cache_entry('GEOSX_LA_INTERFACE', 'Petsc'))
 
+            cfg.write('#{0}\n'.format('-' * 80))
+            cfg.write('# Python\n')
+            cfg.write('#{0}\n\n'.format('-' * 80))
+            if '+pygeosx' in spec:
+                cfg.write(cmake_cache_option('ENABLE_PYTHON', True))
+                cfg.write(cmake_cache_entry('Python3_EXECUTABLE', os.path.join(spec['python'].prefix.bin, 'python3')))
+            else:
+                cfg.write(cmake_cache_option('ENABLE_PYTHON', False))
 
             cfg.write('#{0}\n'.format('-' * 80))
             cfg.write('# Documentation\n')
             cfg.write('#{0}\n\n'.format('-' * 80))
             if '+docs' in spec:
-                sphinx_dir = spec['py-sphinx'].prefix
+                sphinx_bin_dir = spec['py-sphinx'].prefix.bin
                 cfg.write(cmake_cache_entry('SPHINX_EXECUTABLE',
-                                            os.path.join(sphinx_dir,
-                                                        'bin',
-                                                        'sphinx-build')))
+                                            os.path.join(sphinx_bin_dir, 'sphinx-build')))
 
-                doxygen_dir = spec['doxygen'].prefix
+                doxygen_bin_dir = spec['doxygen'].prefix.bin
                 cfg.write(cmake_cache_entry('DOXYGEN_EXECUTABLE',
-                                            os.path.join(doxygen_dir,
-                                                        'bin',
-                                                        'doxygen')))
+                                            os.path.join(doxygen_bin_dir, 'doxygen')))
             else:
                 cfg.write(cmake_cache_option('ENABLE_DOCS', False))
                 cfg.write(cmake_cache_option('ENABLE_DOXYGEN', False))
                 cfg.write(cmake_cache_option('ENABLE_SPHYNX', False))
-            
+
             cfg.write('#{0}\n'.format('-' * 80))
             cfg.write('# Development tools\n')
             cfg.write('#{0}\n\n'.format('-' * 80))
             cfg.write(cmake_cache_entry('UNCRUSTIFY_EXECUTABLE',
-                                        os.path.join(spec['uncrustify'].prefix, 'bin', 'uncrustify')))
+                                        os.path.join(spec['uncrustify'].prefix.bin, 'uncrustify')))
 
             # cfg.write('#{0}\n'.format('-' * 80))
             # cfg.write('# addr2line\n')
