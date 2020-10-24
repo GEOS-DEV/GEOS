@@ -78,10 +78,19 @@ class PyScipy(PythonPackage):
     patch('https://git.sagemath.org/sage.git/plain/build/pkgs/scipy/patches/extern_decls.patch?id=711fe05025795e44b84233e065d240859ccae5bd',
           sha256='5433f60831cb554101520a8f8871ac5a32c95f7a971ccd68b69049535b106780', when='@1.2:1.5')
 
+    patch('scipy-clang.patch', when='%clang')
+
     def setup_build_environment(self, env):
         # https://github.com/scipy/scipy/issues/11611
         if self.spec.satisfies('@:1.4 %gcc@10:'):
             env.set('FFLAGS', '-fallow-argument-mismatch')
+
+        # Build in parallel
+        # Known problems with Python 3.5+
+        # https://github.com/spack/spack/issues/7927
+        # https://github.com/scipy/scipy/issues/7112
+        if not self.spec.satisfies('^python@3.5:') or '+force-parallel-build' in self.spec:
+            env.set('NPY_NUM_BUILD_JOBS', str(make_jobs))
 
     def build_args(self, spec, prefix):
         args = []
