@@ -193,10 +193,6 @@ SurfaceGenerator::SurfaceGenerator( const std::string & name,
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Rock toughness of the solid material" );
 
-  registerWrapper( viewKeyStruct::testString, &m_test )->
-    setInputFlag( InputFlags::OPTIONAL )->
-    setDescription( "Test mechanical anisotropy" );
-
   registerWrapper( viewKeyStruct::mpiCommOrderString, &m_mpiCommOrder )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Flag to enable MPI consistent communication ordering" );
@@ -2886,8 +2882,8 @@ realT SurfaceGenerator::CalculateTipNodeElasticModulus( NodeManager & nodeManage
 
     CellElementSubRegion * const elementSubRegion = elementManager.GetRegion( er )->GetSubRegion< CellElementSubRegion >( esr );
 
-    LinearElasticIsotropic const * constitutiveRelation = elementSubRegion->getConstitutiveModel< LinearElasticIsotropic >( m_solidMaterialNames[0] );
-    LinearElasticIsotropic::KernelWrapper const & solidConstitutive = constitutiveRelation->createKernelUpdates();
+    LinearElasticTransverseIsotropic const * constitutiveRelation = elementSubRegion->getConstitutiveModel< LinearElasticTransverseIsotropic >( m_solidMaterialNames[0] );
+    LinearElasticTransverseIsotropic::KernelWrapper const & solidConstitutive = constitutiveRelation->createKernelUpdates();
 
     //Wu40: The following method to calculate near-tip elastic modulus assumes: 1) The fracture plane is perpendicular to one of the three axis (x, y or z). Therefore we do not need to rotate the stiffness matrix.
     //2) The solid material is isotropic or transverse isotropic (TI). For the latter case, we assume that the fracture is vertical.
@@ -2963,24 +2959,16 @@ void SurfaceGenerator::CalculateNodeAndFaceSIF( DomainPartition & domain,
   ConstitutiveManager * const constitutiveManager =
     domain.GetGroup< ConstitutiveManager >( keys::ConstitutiveManager );
 
-  ElementRegionManager::MaterialViewAccessor< arrayView1d< real64 const > > const shearModulus =
-    elementManager.ConstructFullMaterialViewAccessor< array1d< real64 >, arrayView1d< real64 const > >( "ShearModulus", constitutiveManager );
-
-  ElementRegionManager::MaterialViewAccessor< arrayView1d< real64 const > > const bulkModulus =
-    elementManager.ConstructFullMaterialViewAccessor< array1d< real64 >, arrayView1d< real64 const > >( "BulkModulus", constitutiveManager );
-
   ElementRegionManager::MaterialViewAccessor< arrayView3d< real64 const, solid::STRESS_USD > > const
   stress = elementManager.ConstructFullMaterialViewAccessor< array3d< real64, solid::STRESS_PERMUTATION >,
                                                              arrayView3d< real64 const, solid::STRESS_USD > >( SolidBase::viewKeyStruct::stressString,
                                                                                                                constitutiveManager );
-
 
   ElementRegionManager::ElementViewAccessor< arrayView4d< real64 const > > const
   dNdX = elementManager.ConstructViewAccessor< array4d< real64 >, arrayView4d< real64 const > >( keys::dNdX );
 
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > const
   detJ = elementManager.ConstructViewAccessor< array2d< real64 >, arrayView2d< real64 const > >( keys::detJ );
-
 
 
   nodeManager.totalDisplacement().move( LvArray::MemorySpace::CPU, false );
@@ -3056,11 +3044,6 @@ void SurfaceGenerator::CalculateNodeAndFaceSIF( DomainPartition & domain,
             arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elementsToNodes = elementSubRegion->nodeList();
             arrayView2d< real64 const > const & elementCenter = elementSubRegion->getElementCenter().toViewConst();
 
-            realT K = bulkModulus[er][esr][m_solidMaterialFullIndex][ei];
-            realT G = shearModulus[er][esr][m_solidMaterialFullIndex][ei];
-            realT youngsModulus = 9 * K * G / ( 3 * K + G );
-            realT poissonRatio = ( 3 * K - 2 * G ) / ( 2 * ( 3 * K + G ) );
-
             localIndex const numQuadraturePoints = detJ[er][esr].size( 1 );
 
             for( localIndex n=0; n<elementsToNodes.size( 1 ); ++n )
@@ -3079,17 +3062,8 @@ void SurfaceGenerator::CalculateNodeAndFaceSIF( DomainPartition & domain,
                                              stress[er][esr][m_solidMaterialFullIndex],
                                              temp );
 
-                //wu40: the nodal force need to be weighted by Young's modulus and possion's ratio.
-                if (m_test)
-                {
-                  temp *= youngsModulus;
-                  temp /= (1 - poissonRatio * poissonRatio);
-                }
-                else
-                {
-                  temp *= tipNodeElasticModulus;
-                }
-
+                //wu40: the nodal force need to be weighted by elastic modulus at fracture tip.
+                temp *= tipNodeElasticModulus;
 
                 xEle -= nodePosition;
                 if( Dot( xEle, vecTipNorm ) > 0 ) //TODO: check the sign.
@@ -3172,37 +3146,13 @@ void SurfaceGenerator::CalculateNodeAndFaceSIF( DomainPartition & domain,
           trailingNodeDisp = displacement[theOtherTrailingNodeID];
           trailingNodeDisp -= displacement[tralingNodeID];
 
-          //Calculate average young's modulus and poisson ratio for fext.
           R1Tensor fExternal[2];
           for( localIndex i=0; i<2; ++i )
           {
-            realT averageYoungsModulus( 0 ), averagePoissonRatio( 0 );
             localIndex nodeID = i == 0 ? tralingNodeID : theOtherTrailingNodeID;
-            for( localIndex k=0; k<nodeToRegionMap.sizeOfArray( nodeID ); ++k )
-            {
-              localIndex const er  = nodeToRegionMap[nodeIndex][k];
-              localIndex const esr = nodeToSubRegionMap[nodeIndex][k];
-              localIndex const ei  = nodeToElementMap[nodeIndex][k];
-
-              realT K = bulkModulus[er][esr][m_solidMaterialFullIndex][ei];
-              realT G = shearModulus[er][esr][m_solidMaterialFullIndex][ei];
-              averageYoungsModulus += 9 * K * G / ( 3 * K + G );
-              averagePoissonRatio += ( 3 * K - 2 * G ) / ( 2 * ( 3 * K + G ) );
-            }
-
-            averageYoungsModulus /= nodeToRegionMap.sizeOfArray( nodeID );
-            averagePoissonRatio /= nodeToRegionMap.sizeOfArray( nodeID );
 
             fExternal[i] = fext[nodeID];
-
-            if (m_test)
-            {
-              fExternal[i] *= averageYoungsModulus / (1 - averagePoissonRatio * averagePoissonRatio);
-            }
-            else
-            {
-              fExternal[i] *= tipNodeElasticModulus;
-            }
+            fExternal[i] *= tipNodeElasticModulus;
           }
 
           //TODO: The sign of fext here is opposite to the sign of fFaceA in function "CalculateEdgeSIF".
@@ -3842,11 +3792,6 @@ int SurfaceGenerator::CalculateElementForcesOnEdge( DomainPartition & domain,
   for( localIndex i=0; i < nodeIndices.size(); ++i )
   {
     localIndex nodeID = nodeIndices( i );
-//    localIndex_array temp11;
-//    for (int ii = 0; ii < nodeToElementMap.sizeOfArray(nodeID); ii++)
-//    {
-//      temp11.emplace_back(nodeToElementMap[nodeID][ii]);
-//    }
 
     for( localIndex k=0; k<nodeToRegionMap.sizeOfArray( nodeID ); ++k )
     {

@@ -536,8 +536,6 @@ private:
 //    //TODO: Once the node-based SIF criterion becomes mature and robust, remove the edge-based criterion.
     constexpr static auto nodeBasedSIFString = "nodeBasedSIF";
 
-    constexpr static auto testString = "test";
-
   }; //SurfaceGenViewKeys;
 
 
@@ -554,8 +552,6 @@ private:
   localIndex m_solidMaterialFullIndex;
 
   int m_nodeBasedSIF;
-
-  int m_test;
 
   realT m_rockToughness;
 

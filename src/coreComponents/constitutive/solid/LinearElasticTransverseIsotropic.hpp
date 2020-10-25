@@ -323,11 +323,6 @@ public:
     /// string/key for transverse shear modulus
     static constexpr auto defaultShearModulusAxialTransverse = "defaultShearModulusAxialTransverse";
 
-    /// string/key for bulk modulus
-    static constexpr auto bulkModulusString  = "BulkModulus";
-    /// string/key for shear modulus
-    static constexpr auto shearModulusString = "ShearModulus";
-
     /// string/key for c11 component of Voigt stiffness tensor
     static constexpr auto c11 = "c11";
 
@@ -560,12 +555,6 @@ private:
   /// The default value of the axial/transverse Shear modulus for any new
   /// allocations.
   real64 m_defaultShearModulusAxialTransverse;
-
-  /// The bulk modulus
-  array1d< real64 > m_bulkModulus;
-
-  /// The shear modulus
-  array1d< real64 > m_shearModulus;
 
   /// The 11 component of the Voigt stiffness tensor.
   array1d< real64 > m_c11;
