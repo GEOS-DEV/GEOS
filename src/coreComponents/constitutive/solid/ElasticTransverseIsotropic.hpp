@@ -264,18 +264,6 @@ void ElasticTransverseIsotropicUpdates::smallStrainNoStateUpdate( localIndex con
   stress[5] = m_c66[k]*totalStrain[5];
 }
 
-GEOSX_FORCE_INLINE
-GEOSX_HOST_DEVICE
-void ElasticTransverseIsotropicUpdates::smallStrainUpdate( localIndex const k,
-                                                           localIndex const q,
-                                                           real64 const ( & strainIncrement )[6],
-                                                           real64 ( & stress )[6]) const
-{
-  smallStrainNoStateUpdate( k, q, strainIncrement, stress); // stress  = incrementalStress
-  LvArray::tensorOps::add< 6 >( stress, m_oldStress[k][q]); // stress += m_oldStress
-  saveStress( k, q, stress);                                // m_newStress = stress
-}
-
 
 GEOSX_FORCE_INLINE
 GEOSX_HOST_DEVICE
@@ -304,6 +292,19 @@ void ElasticTransverseIsotropicUpdates::smallStrainNoStateUpdate( localIndex con
   stiffness.m_c33 = m_c33[k];
   stiffness.m_c44 = m_c44[k];
   stiffness.m_c66 = m_c66[k];
+}
+
+
+GEOSX_FORCE_INLINE
+GEOSX_HOST_DEVICE
+void ElasticTransverseIsotropicUpdates::smallStrainUpdate( localIndex const k,
+                                                           localIndex const q,
+                                                           real64 const ( & strainIncrement )[6],
+                                                           real64 ( & stress )[6]) const
+{
+  smallStrainNoStateUpdate( k, q, strainIncrement, stress); // stress  = incrementalStress
+  LvArray::tensorOps::add< 6 >( stress, m_oldStress[k][q]); // stress += m_oldStress
+  saveStress( k, q, stress);                                // m_newStress = stress
 }
 
 

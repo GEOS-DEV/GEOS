@@ -22,6 +22,7 @@
 #include "ElasticIsotropic.hpp"
 #include "InvariantDecompositions.hpp"
 #include "PropertyConversions.hpp"
+#include "SolidModelDiscretizationOpsFullyAnisotroipic.hpp"
 #include "LvArray/src/tensorOps.hpp"
 
 namespace geosx
@@ -78,12 +79,16 @@ public:
   /// Deleted move assignment operator
   DruckerPragerUpdates & operator=( DruckerPragerUpdates && ) =  delete;
   
-  // bring in base implementations for any not defined here
-  using SolidBaseUpdates::smallStrainUpdate;
-  using SolidBaseUpdates::smallStrainNoStateUpdate;
-  using SolidBaseUpdates::hypoUpdate;
-  using SolidBaseUpdates::hyperUpdate;
+  // Use the uncompressed version of the stiffness bilinear form
+  using DiscretizationOps = SolidModelDiscretizationOpsFullyAnisotroipic;
   
+  // bring in base implementations for any not defined here
+  //using SolidBaseUpdates::smallStrainUpdate;
+  //using SolidBaseUpdates::smallStrainNoStateUpdate;
+  //using SolidBaseUpdates::hypoUpdate;
+  //using SolidBaseUpdates::hyperUpdate;
+  using ElasticIsotropicUpdates::smallStrainUpdate;
+    
   GEOSX_HOST_DEVICE
   virtual void smallStrainUpdate( localIndex const k,
                                   localIndex const q,
@@ -91,6 +96,14 @@ public:
                                   real64 ( & stress )[6],
                                   real64 ( & stiffness )[6][6] ) const override final;
   
+  GEOSX_HOST_DEVICE
+  virtual void smallStrainUpdate( localIndex const k,
+                                  localIndex const q,
+                                  real64 const ( & strainIncrement )[6],
+                                  real64 ( & stress )[6],
+                                  DiscretizationOps & stiffness ) const final;
+                                  
+                                  
   GEOSX_HOST_DEVICE
   virtual void saveConvergedState() const override final;
     
@@ -263,6 +276,18 @@ void DruckerPragerUpdates::smallStrainUpdate( localIndex const k,
   
   saveStress( k, q, stress );
   return;
+}
+
+
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void DruckerPragerUpdates::smallStrainUpdate( localIndex const k,
+                                                 localIndex const q,
+                                                 real64 const ( & strainIncrement )[6],
+                                                 real64 ( & stress )[6],
+                                                 DiscretizationOps & stiffness ) const
+{
+  smallStrainUpdate( k, q, strainIncrement, stress, stiffness.m_c );
 }
 
 
