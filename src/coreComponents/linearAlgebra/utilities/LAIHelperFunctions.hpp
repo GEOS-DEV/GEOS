@@ -117,6 +117,7 @@ void SeparateComponentFilter( MATRIX const & src,
                               MATRIX & dst,
                               const localIndex dofsPerNode )
 {
+  GEOSX_MARK_FUNCTION;
   GEOSX_ERROR_IF( dofsPerNode < 2, "Function requires dofsPerNode > 1" );
 
   const localIndex localRows  = src.numLocalRows();
@@ -127,18 +128,12 @@ void SeparateComponentFilter( MATRIX const & src,
 #if 0
   dst.createWithLocalSize( localRows, maxEntries, MPI_COMM_WORLD );
   dst.open();
+
   array1d< real64 > srcValues;
   array1d< real64 > dstValues( maxDstEntries );
 
   array1d< globalIndex > srcIndices;
   array1d< globalIndex > dstIndices( maxDstEntries );
-
-#if defined(OVERRIDE_CREATE)
-#if defined(GEOSX_USE_CUDA)
-  srcIndices.move( LvArray::MemorySpace::GPU, false );
-  srcValues.move( LvArray::MemorySpace::GPU, false );
-#endif
-#endif
 
   for( globalIndex row=src.ilower(); row<src.iupper(); ++row )
   {
@@ -148,26 +143,6 @@ void SeparateComponentFilter( MATRIX const & src,
     srcValues.resize( rowLength );
 
     src.getRowCopy( row, srcIndices, srcValues );
-    globalIndex const * indicesPtr = srcIndices.data();
-    real64 const * valuesPtr = srcValues.data();
-
-//    forAll< parallelDevicePolicy<> >( 1, [=] GEOSX_DEVICE ( localIndex const )
-//    {
-//      printf( "srcIndices = { " ); for( localIndex i=0 ; i<rowLength ; ++i ) { printf( "%4d, ",indicesPtr[i] ); }  printf( " }\n" );
-//      printf( "srcValues  = { " ); for( localIndex i=0 ; i<rowLength ; ++i ) { printf( "%4.1g, ",valuesPtr[i] ); }  printf( " }\n" );
-//    });
-
-#if defined(OVERRIDE_CREATE)
-#if defined(GEOSX_USE_CUDA)
-  srcIndices.move( LvArray::MemorySpace::CPU, false );
-  srcValues.move( LvArray::MemorySpace::CPU, false );
-  dstIndices.move( LvArray::MemorySpace::CPU, false );
-  dstValues.move( LvArray::MemorySpace::CPU, false );
-#endif
-#endif
-
-//  printf( "srcIndices = { " ); for( localIndex i=0 ; i<rowLength ; ++i ) { printf( "%4d, ",srcIndices[i] ); }  printf( " }\n" );
-//  printf( "srcValues  = { " ); for( localIndex i=0 ; i<rowLength ; ++i ) { printf( "%4.1g, ",srcValues[i] ); }  printf( " }\n" );
 
     localIndex k=0;
     for( localIndex col=0; col<rowLength; ++col )
@@ -177,50 +152,34 @@ void SeparateComponentFilter( MATRIX const & src,
       {
         dstValues[k] = srcValues[col];
         dstIndices[k] = srcIndices[col];
-        ++k;
+        k++;
       }
     }
-#if defined(OVERRIDE_CREATE)
-#if defined(GEOSX_USE_CUDA)
-  dstIndices.move( LvArray::MemorySpace::GPU, false );
-  dstValues.move( LvArray::MemorySpace::GPU, false );
-#endif
-#endif
-  indicesPtr = dstIndices.data();
-  valuesPtr = dstValues.data();
-
-//  printf( "k = %d \n", k );
-//  forAll< parallelDevicePolicy<> >( 1, [=] GEOSX_DEVICE ( localIndex const )
-//  {
-//    printf( "dstIndices = { " ); for( localIndex i=0 ; i<k ; ++i ) { printf( "%6d, ",indicesPtr[i] ); }  printf( " }\n" );
-//    printf( "dstValues  = { " ); for( localIndex i=0 ; i<k ; ++i ) { printf( "%6.1g, ",valuesPtr[i] ); }  printf( " }\n" );
-//  });
-
     dst.insert( row, dstIndices.data(), dstValues.data(), k );
   }
   dst.close();
-
 #else
 
   array2d< globalIndex > srcIndices( localRows, maxEntries);;
   array2d< real64 > srcValues( localRows, maxEntries);
 
   CRSMatrix< real64 > tempMat;
-  tempMat.resize( localRows, src.numLocalCols(), maxDstEntries );
+  tempMat.resize( localRows, src.numGlobalCols(), maxDstEntries );
 
-  for( globalIndex row=src.ilower(); row<src.iupper(); ++row )
+  for( globalIndex r=0; r<localRows; ++r )
   {
+    globalIndex const row = r + src.ilower();
     const globalIndex rowComponent = row % dofsPerNode;
     const localIndex rowLength = src.globalRowLength( row );
 
-    src.getRowCopy( row, srcIndices[row], srcValues[row] );
+    src.getRowCopy( row, srcIndices[r], srcValues[r] );
 
     for( localIndex col=0; col<rowLength; ++col )
     {
-      const globalIndex colComponent = srcIndices(row,col) % dofsPerNode;
+      const globalIndex colComponent = srcIndices(r,col) % dofsPerNode;
       if( rowComponent == colComponent )
       {
-        tempMat.insertNonZero( row, col, srcValues(row,col) );
+        tempMat.insertNonZero( r, srcIndices(r,col), srcValues(r,col) );
       }
     }
   }
@@ -228,6 +187,8 @@ void SeparateComponentFilter( MATRIX const & src,
   dst.create( tempMat.toViewConst(), MPI_COMM_GEOSX );
 
 #endif
+
+//  dst.print(std::cout);
 }
 
 } // LAIHelperFunctions namespace

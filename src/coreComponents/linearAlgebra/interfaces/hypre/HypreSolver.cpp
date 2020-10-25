@@ -325,8 +325,8 @@ void HypreSolver::solve_krylov( HypreMatrix & mat,
                                 HypreVector & rhs,
                                 DofManager const * const dofManager )
 {
-  Stopwatch watch;
 
+  Stopwatch watch;
   // Create the preconditioner, but don't compute (this is done by solver setup)
   HyprePreconditioner precond( m_parameters, dofManager );
 
@@ -369,6 +369,9 @@ void HypreSolver::solve_krylov( HypreMatrix & mat,
 
   }
   HypreMatrix & precondMat = m_parameters.amg.separateComponents ? separateComponentMatrix : mat;
+
+  real64 const componentFilterTime = watch.elapsedTime();
+  watch.zero();
 
   // Instantiate the solver
   HYPRE_Solver solver{};
@@ -416,6 +419,7 @@ void HypreSolver::solve_krylov( HypreMatrix & mat,
   {
     GEOSX_LOG_RANK_0( "\t\tLinear Solver | Iter = " << numIter <<
                       " | Final Relative Tol " << finalNorm <<
+                      " | ComponentFilterTime " << componentFilterTime <<
                       " | SetupTime " << m_result.setupTime <<
                       " | SolveTime " << m_result.solveTime );
   }
