@@ -488,9 +488,9 @@ void HydrofractureSolver::SetupDofs( DomainPartition const & domain,
 
 void HydrofractureSolver::SetupSystem( DomainPartition & domain,
                                        DofManager & dofManager,
-                                       CRSMatrix< real64, globalIndex > & GEOSX_UNUSED_PARAM( localMatrix ),
-                                       array1d< real64 > & GEOSX_UNUSED_PARAM( localRhs ),
-                                       array1d< real64 > & GEOSX_UNUSED_PARAM( localSolution ),
+                                       CRSMatrix< real64, globalIndex > &  localMatrix,
+                                       array1d< real64 > & localRhs,
+                                       array1d< real64 > & localSolution,
                                        bool const setSparsity )
 {
   GEOSX_MARK_FUNCTION;
@@ -498,453 +498,84 @@ void HydrofractureSolver::SetupSystem( DomainPartition & domain,
   MeshLevel & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
   m_flowSolver->ResetViews( mesh );
 
-  m_solidSolver->SetupSystem( domain,
-                              m_solidSolver->getDofManager(),
-                              m_solidSolver->getLocalMatrix(),
-                              m_solidSolver->getLocalRhs(),
-                              m_solidSolver->getLocalSolution() );
-
-  m_flowSolver->SetupSystem( domain,
-                             m_flowSolver->getDofManager(),
-                             m_flowSolver->getLocalMatrix(),
-                             m_flowSolver->getLocalRhs(),
-                             m_flowSolver->getLocalSolution(),
-                             setSparsity );
-
-  // setup coupled DofManager
-  m_dofManager.setMesh( domain, 0, 0 );
-  SetupDofs( domain, dofManager );
-
-  // By not calling dofManager.reorderByRank(), we keep separate dof numbering for each field,
-  // which allows constructing separate sparsity patterns for off-diagonal blocks of the matrix.
-  // Once the solver moves to monolithic matrix, we can remove this method and just use SolverBase::SetupSystem.
-  m_matrix01.createWithLocalSize( m_solidSolver->getLocalMatrix().numRows(),
-                                  m_flowSolver->getLocalMatrix().numRows(),
-                                  9,
-                                  MPI_COMM_GEOSX );
-  m_matrix10.createWithLocalSize( m_flowSolver->getLocalMatrix().numRows(),
-                                  m_solidSolver->getLocalMatrix().numRows(),
-                                  24,
-                                  MPI_COMM_GEOSX );
-
-#if 0
-  dofManager.setSparsityPattern( m_matrix01, keys::TotalDisplacement, FlowSolverBase::viewKeyStruct::pressureString );
-  dofManager.setSparsityPattern( m_matrix10, FlowSolverBase::viewKeyStruct::pressureString, keys::TotalDisplacement );
-#else
-
-  NodeManager const & nodeManager = *mesh.getNodeManager();
-  ElementRegionManager const & elemManager = *mesh.getElemManager();
-
-  string const presDofKey = m_flowSolver->getDofManager().getKey( FlowSolverBase::viewKeyStruct::pressureString );
-  string const dispDofKey = m_solidSolver->getDofManager().getKey( keys::TotalDisplacement );
-
-  arrayView1d< globalIndex const > const & dispDofNumber = nodeManager.getReference< globalIndex_array >( dispDofKey );
-
-  m_matrix01.open();
-  m_matrix10.open();
-
-  elemManager.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion const & elementSubRegion )
-  {
-    localIndex const numElems = elementSubRegion.size();
-    ArrayOfArraysView< localIndex const > const elemsToNodes = elementSubRegion.nodeList().toViewConst();
-    arrayView1d< globalIndex const > const
-    faceElementDofNumber = elementSubRegion.getReference< array1d< globalIndex > >( presDofKey );
-
-    for( localIndex k=0; k<numElems; ++k )
-    {
-      globalIndex const activeFlowDOF = faceElementDofNumber[k];
-      localIndex const numNodesPerElement = elemsToNodes[k].size();
-      array1d< globalIndex > activeDisplacementDOF( 3 * numNodesPerElement );
-      array1d< real64 > values( 3*numNodesPerElement );
-      values.setValues< serialPolicy >( 1 );
-
-      for( localIndex a=0; a<numNodesPerElement; ++a )
-      {
-        for( int d=0; d<3; ++d )
-        {
-          activeDisplacementDOF[a * 3 + d] = dispDofNumber[elemsToNodes[k][a]] + d;
-        }
-      }
-
-      m_matrix01.insert( activeDisplacementDOF.data(),
-                         &activeFlowDOF,
-                         values.data(),
-                         activeDisplacementDOF.size(),
-                         1 );
-
-      m_matrix10.insert( &activeFlowDOF,
-                         activeDisplacementDOF.data(),
-                         values.data(),
-                         1,
-                         activeDisplacementDOF.size() );
-    }
-  } );
-
-  NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
-  FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
-  FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_flowSolver->getDiscretization() );
-
-
-  fluxApprox.forStencils< FaceElementStencil >( mesh, [&]( FaceElementStencil const & stencil )
-  {
-    for( localIndex iconn=0; iconn<stencil.size(); ++iconn )
-    {
-      localIndex const numFluxElems = stencil.stencilSize( iconn );
-      typename FaceElementStencil::IndexContainerViewConstType const & seri = stencil.getElementRegionIndices();
-      typename FaceElementStencil::IndexContainerViewConstType const & sesri = stencil.getElementSubRegionIndices();
-      typename FaceElementStencil::IndexContainerViewConstType const & sei = stencil.getElementIndices();
-
-      FaceElementSubRegion const & elementSubRegion =
-        *elemManager.GetRegion( seri[iconn][0] )->GetSubRegion< FaceElementSubRegion >( sesri[iconn][0] );
-
-      ArrayOfArraysView< localIndex const > const elemsToNodes = elementSubRegion.nodeList().toViewConst();
-
-      arrayView1d< globalIndex const > const faceElementDofNumber =
-        elementSubRegion.getReference< array1d< globalIndex > >( presDofKey );
-
-      for( localIndex k0=0; k0<numFluxElems; ++k0 )
-      {
-        globalIndex const activeFlowDOF = faceElementDofNumber[sei[iconn][k0]];
-
-        for( localIndex k1=0; k1<numFluxElems; ++k1 )
-        {
-          localIndex const numNodesPerElement = elemsToNodes[sei[iconn][k1]].size();
-          array1d< globalIndex > activeDisplacementDOF( 3 * numNodesPerElement );
-          array1d< real64 > values( 3*numNodesPerElement );
-          values.setValues< serialPolicy >( 1 );
-
-          for( localIndex a=0; a<numNodesPerElement; ++a )
-          {
-            for( int d=0; d<3; ++d )
-            {
-              activeDisplacementDOF[a * 3 + d] = dispDofNumber[elemsToNodes[sei[iconn][k1]][a]] + d;
-            }
-          }
-
-          m_matrix10.insert( &activeFlowDOF,
-                             activeDisplacementDOF.data(),
-                             values.data(),
-                             1,
-                             activeDisplacementDOF.size() );
-        }
-      }
-    }//);
-  } );
-
-  m_matrix01.close();
-  m_matrix10.close();
-#endif
+  SolverBase::SetupSystem(domain, dofManager, localMatrix, localRhs, localSolution, setSparsity);
 }
 
 void HydrofractureSolver::AssembleSystem( real64 const time,
                                           real64 const dt,
                                           DomainPartition & domain,
-                                          DofManager const & GEOSX_UNUSED_PARAM( dofManager ),
-                                          CRSMatrixView< real64, globalIndex const > const & GEOSX_UNUSED_PARAM( localMatrix ),
-                                          arrayView1d< real64 > const & GEOSX_UNUSED_PARAM( localRhs ) )
+                                          DofManager const & dofManager,
+                                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                          arrayView1d< real64 > const &  localRhs )
 {
   GEOSX_MARK_FUNCTION;
-  m_solidSolver->getLocalMatrix().setValues< parallelDevicePolicy<> >( 0.0 );
-  m_solidSolver->getLocalRhs().setValues< parallelDevicePolicy<> >( 0.0 );
 
   m_solidSolver->AssembleSystem( time,
                                  dt,
                                  domain,
-                                 m_solidSolver->getDofManager(),
-                                 m_solidSolver->getLocalMatrix().toViewConstSizes(),
-                                 m_solidSolver->getLocalRhs().toView() );
+                                 dofManager,
+                                 localMatrix,
+                                 localRhs );
 
-
-  m_flowSolver->getLocalMatrix().setValues< parallelDevicePolicy<> >( 0.0 );
-  m_flowSolver->getLocalRhs().setValues< parallelDevicePolicy<> >( 0.0 );
-
-//  CRSMatrixView< real64 const, globalIndex const > const & matrix11 = m_flowSolver->getLocalMatrix().toViewConst();
-//  GEOSX_LOG_RANK_0( "***********************************************************" );
-//  GEOSX_LOG_RANK_0( "matrix11" );
-//  GEOSX_LOG_RANK_0( "***********************************************************" );
-//  matrix11.move( LvArray::MemorySpace::CPU );
-//  std::cout<<matrix11<<std::endl;
-//
-//  arrayView1d< real64 const > const & rhs1 = m_flowSolver->getLocalRhs().toView();
-//  GEOSX_LOG_RANK_0( "***********************************************************" );
-//  GEOSX_LOG_RANK_0( "rhs1" );
-//  GEOSX_LOG_RANK_0( "***********************************************************" );
-//  rhs1.move( LvArray::MemorySpace::CPU );
-//  std::cout<<rhs1<<std::endl;
 
   m_flowSolver->ResetViews( *(domain.getMeshBody( 0 )->getMeshLevel( 0 ) ) );
 
   m_flowSolver->AssembleSystem( time,
                                 dt,
                                 domain,
-                                m_flowSolver->getDofManager(),
-                                m_flowSolver->getLocalMatrix().toViewConstSizes(),
-                                m_flowSolver->getLocalRhs().toView() );
+                                dofManager,
+                                localMatrix,
+                                localRhs );
 
 
+  AssembleForceResidualDerivativeWrtPressure( domain, localMatrix, localRhs );
 
-//  GEOSX_LOG_RANK_0( "***********************************************************" );
-//  GEOSX_LOG_RANK_0( "matrix11" );
-//  GEOSX_LOG_RANK_0( "***********************************************************" );
-//  matrix11.move( LvArray::MemorySpace::CPU );
-//  std::cout<<matrix11<<std::endl;
-//
-//  GEOSX_LOG_RANK_0( "***********************************************************" );
-//  GEOSX_LOG_RANK_0( "rhs1" );
-//  GEOSX_LOG_RANK_0( "***********************************************************" );
-//  rhs1.move( LvArray::MemorySpace::CPU );
-//  std::cout<<rhs1<<std::endl;
-
-
-
-  m_matrix01.zero();
-  AssembleForceResidualDerivativeWrtPressure( domain, &m_matrix01, m_solidSolver->getLocalRhs() );
-
-
-  m_matrix10.zero();
-  AssembleFluidMassResidualDerivativeWrtDisplacement( domain, &m_matrix10 );
+  AssembleFluidMassResidualDerivativeWrtDisplacement( domain, localMatrix );
 
 }
 
 void HydrofractureSolver::ApplyBoundaryConditions( real64 const time,
                                                    real64 const dt,
                                                    DomainPartition & domain,
-                                                   DofManager const & GEOSX_UNUSED_PARAM( dofManager ),
-                                                   CRSMatrixView< real64, globalIndex const > const & GEOSX_UNUSED_PARAM( localMatrix ),
-                                                   arrayView1d< real64 > const & GEOSX_UNUSED_PARAM( localRhs ) )
+                                                   DofManager const & dofManager,
+                                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                   arrayView1d< real64 > const & localRhs )
 {
   GEOSX_MARK_FUNCTION;
-
-
-//  arrayView1d< real64 const > const & rhs0 = m_solidSolver->getLocalRhs().toView();
-//  arrayView1d< real64 const > const & rhs1 = m_flowSolver->getLocalRhs().toView();
-//  CRSMatrixView< real64 const, globalIndex const > const & matrix11 = m_flowSolver->getLocalMatrix().toViewConst();
-//
-//
-//  GEOSX_LOG_RANK_0( "***********************************************************" );
-//  GEOSX_LOG_RANK_0( "matrix10" );
-//  GEOSX_LOG_RANK_0( "***********************************************************" );
-//  m_matrix10.print( std::cout );
-//
-//  GEOSX_LOG_RANK_0( "***********************************************************" );
-//  GEOSX_LOG_RANK_0( "matrix11" );
-//  GEOSX_LOG_RANK_0( "***********************************************************" );
-//  matrix11.move( LvArray::MemorySpace::CPU );
-//  std::cout<<matrix11<<std::endl;
-//
-//  GEOSX_LOG_RANK_0("***********************************************************");
-//  GEOSX_LOG_RANK_0("residual0");
-//  GEOSX_LOG_RANK_0("***********************************************************");
-//  std::cout<<rhs0<<std::endl;
-//
-//  GEOSX_LOG_RANK_0( "***********************************************************" );
-//  GEOSX_LOG_RANK_0( "residual1" );
-//  GEOSX_LOG_RANK_0( "***********************************************************" );
-//  std::cout<<rhs1<<std::endl;
-
 
   m_solidSolver->ApplyBoundaryConditions( time,
                                           dt,
                                           domain,
-                                          m_solidSolver->getDofManager(),
-                                          m_solidSolver->getLocalMatrix().toViewConstSizes(),
-                                          m_solidSolver->getLocalRhs().toView() );
+                                          dofManager,
+                                          localMatrix,
+                                          localRhs );
 
   MeshLevel * const mesh = domain.getMeshBody( 0 )->getMeshLevel( 0 );
 
-  FieldSpecificationManager const & fsManager = FieldSpecificationManager::get();
-  string const dispDofKey = m_solidSolver->getDofManager().getKey( keys::TotalDisplacement );
-  NodeManager const * const nodeManager = mesh->getNodeManager();
-  arrayView1d< globalIndex const > const & dispDofNumber = nodeManager->getReference< globalIndex_array >( dispDofKey );
-  arrayView1d< integer const > const & nodeGhostRank = nodeManager->ghostRank();
-
-  m_matrix01.open();
-  fsManager.Apply( time + dt,
-                   &domain,
-                   "nodeManager",
-                   keys::TotalDisplacement,
-                   [&]( FieldSpecificationBase const * const bc,
-                        string const &,
-                        SortedArrayView< localIndex const > const & targetSet,
-                        Group * const,
-                        string const & )
-  {
-    SortedArray< localIndex > localSet;
-    for( auto const & a : targetSet )
-    {
-      if( nodeGhostRank[a]<0 )
-      {
-        localSet.insert( a );
-      }
-    }
-    bc->ZeroSystemRowsForBoundaryCondition< LAInterface >( localSet.toViewConst(),
-                                                           dispDofNumber,
-                                                           m_matrix01 );
-  } );
-  m_matrix01.close();
 
   m_flowSolver->ApplyBoundaryConditions( time,
                                          dt,
                                          domain,
-                                         m_flowSolver->getDofManager(),
-                                         m_flowSolver->getLocalMatrix().toViewConstSizes(),
-                                         m_flowSolver->getLocalRhs().toView() );
-
-  string const presDofKey = m_flowSolver->getDofManager().getKey( FlowSolverBase::viewKeyStruct::pressureString );
-
-  m_matrix10.open();
-  fsManager.Apply( time + dt,
-                   &domain,
-                   "ElementRegions",
-                   FlowSolverBase::viewKeyStruct::pressureString,
-                   [&]( FieldSpecificationBase const * const fs,
-                        string const &,
-                        SortedArrayView< localIndex const > const & lset,
-                        Group * subRegion,
-                        string const & )
-  {
-    arrayView1d< globalIndex const > const &
-    dofNumber = subRegion->getReference< array1d< globalIndex > >( presDofKey );
-    arrayView1d< integer const > const & ghostRank = subRegion->group_cast< ObjectManagerBase * >()->ghostRank();
-
-    SortedArray< localIndex > localSet;
-    for( auto const & a : lset )
-    {
-      if( ghostRank[a]<0 )
-      {
-        localSet.insert( a );
-      }
-    }
-
-    fs->ZeroSystemRowsForBoundaryCondition< LAInterface >( localSet.toViewConst(),
-                                                           dofNumber,
-                                                           m_matrix10 );
-  } );
-  m_matrix10.close();
-
-  // debugging info.  can be trimmed once everything is working.
-  if( getLogLevel()==2 )
-  {
-    // Before outputting anything generate permuation matrix and permute.
-//    ElementRegionManager * const elemManager = mesh->getElemManager();
-
-//    LAIHelperFunctions::CreatePermutationMatrix(nodeManager,
-//                                                m_solidSolver->getSystemMatrix().numGlobalRows(),
-//                                                m_solidSolver->getSystemMatrix().numGlobalCols(),
-//                                                3,
-//                                                m_solidSolver->getDofManager().getKey( keys::TotalDisplacement ),
-//                                                m_permutationMatrix0);
-//
-//    LAIHelperFunctions::CreatePermutationMatrix(elemManager,
-//                                                m_flowSolver->getSystemMatrix().numGlobalRows(),
-//                                                m_flowSolver->getSystemMatrix().numGlobalCols(),
-//                                                1,
-//                                                m_flowSolver->getDofManager().getKey(
-// FlowSolverBase::viewKeyStruct::pressureString ),
-//                                                m_permutationMatrix1);
-
-
-
-    m_solidSolver->getSystemMatrix().create( m_solidSolver->getLocalMatrix().toViewConst(), MPI_COMM_GEOSX );
-    m_solidSolver->getSystemRhs().create( m_solidSolver->getLocalRhs().toViewConst(), MPI_COMM_GEOSX );
-    m_flowSolver->getSystemMatrix().create( m_flowSolver->getLocalMatrix().toViewConst(), MPI_COMM_GEOSX );
-    m_flowSolver->getSystemRhs().create( m_flowSolver->getLocalRhs().toViewConst(), MPI_COMM_GEOSX );
-
-//    GEOSX_LOG_RANK_0("***********************************************************");
-//    GEOSX_LOG_RANK_0("matrix00");
-//    GEOSX_LOG_RANK_0("***********************************************************");
-//    LAIHelperFunctions::PrintPermutedMatrix(m_solidSolver->getSystemMatrix(), m_permutationMatrix0, std::cout);
-//    m_solidSolver->getSystemMatrix().print(std::cout);
-    MpiWrapper::Barrier();
-
-    GEOSX_LOG_RANK_0( "***********************************************************" );
-    GEOSX_LOG_RANK_0( "matrix01" );
-    GEOSX_LOG_RANK_0( "***********************************************************" );
-//    LAIHelperFunctions::PrintPermutedMatrix(m_matrix01, m_permutationMatrix0, m_permutationMatrix1, std::cout);
-    m_matrix01.print( std::cout );
-    MpiWrapper::Barrier();
-
-    GEOSX_LOG_RANK_0( "***********************************************************" );
-    GEOSX_LOG_RANK_0( "matrix10" );
-    GEOSX_LOG_RANK_0( "***********************************************************" );
-//    LAIHelperFunctions::PrintPermutedMatrix(m_matrix10, m_permutationMatrix1, m_permutationMatrix0, std::cout);
-    m_matrix10.print( std::cout );
-    MpiWrapper::Barrier();
-
-    GEOSX_LOG_RANK_0( "***********************************************************" );
-    GEOSX_LOG_RANK_0( "matrix11" );
-    GEOSX_LOG_RANK_0( "***********************************************************" );
-//    LAIHelperFunctions::PrintPermutedMatrix(m_flowSolver->getSystemMatrix(), m_permutationMatrix1, std::cout);
-    m_flowSolver->getSystemMatrix().print( std::cout );
-    MpiWrapper::Barrier();
-
-    GEOSX_LOG_RANK_0( "***********************************************************" );
-    GEOSX_LOG_RANK_0( "residual0" );
-    GEOSX_LOG_RANK_0( "***********************************************************" );
-//    LAIHelperFunctions::PrintPermutedVector(m_solidSolver->getSystemRhs(), m_permutationMatrix0, std::cout);
-    m_solidSolver->getSystemRhs().print( std::cout );
-    MpiWrapper::Barrier();
-
-    GEOSX_LOG_RANK_0( "***********************************************************" );
-    GEOSX_LOG_RANK_0( "residual1" );
-    GEOSX_LOG_RANK_0( "***********************************************************" );
-//    LAIHelperFunctions::PrintPermutedVector(m_flowSolver->getSystemRhs(), m_permutationMatrix1, std::cout);
-    m_flowSolver->getSystemRhs().print( std::cout );
-    MpiWrapper::Barrier();
-  }
-
-  if( getLogLevel() >= 10 )
-  {
-    integer newtonIter = m_nonlinearSolverParameters.m_numNewtonIterations;
-
-    {
-      string filename = "matrix00_" + std::to_string( time ) + "_" + std::to_string( newtonIter ) + ".mtx";
-      m_solidSolver->getSystemMatrix().write( filename, LAIOutputFormat::MATRIX_MARKET );
-      GEOSX_LOG_RANK_0( "matrix00: written to " << filename );
-    }
-    {
-      string filename = "matrix01_" + std::to_string( time ) + "_" + std::to_string( newtonIter ) + ".mtx";
-      m_matrix01.write( filename, LAIOutputFormat::MATRIX_MARKET );
-      GEOSX_LOG_RANK_0( "matrix01: written to " << filename );
-    }
-    {
-      string filename = "matrix10_" + std::to_string( time ) + "_" + std::to_string( newtonIter ) + ".mtx";
-      m_matrix10.write( filename, LAIOutputFormat::MATRIX_MARKET );
-      GEOSX_LOG_RANK_0( "matrix10: written to " << filename );
-    }
-    {
-      string filename = "matrix11_" + std::to_string( time ) + "_" + std::to_string( newtonIter ) + ".mtx";
-      m_flowSolver->getSystemMatrix().write( filename, LAIOutputFormat::MATRIX_MARKET );
-      GEOSX_LOG_RANK_0( "matrix11: written to " << filename );
-    }
-    {
-      string filename = "residual0_" + std::to_string( time ) + "_" + std::to_string( newtonIter ) + ".mtx";
-      m_solidSolver->getSystemRhs().write( filename, LAIOutputFormat::MATRIX_MARKET );
-      GEOSX_LOG_RANK_0( "residual0: written to " << filename );
-    }
-    {
-      string filename = "residual1_" + std::to_string( time ) + "_" + std::to_string( newtonIter ) + ".mtx";
-      m_flowSolver->getSystemRhs().write( filename, LAIOutputFormat::MATRIX_MARKET );
-      GEOSX_LOG_RANK_0( "residual1: written to " << filename );
-    }
-  }
+                                         dofManager,
+                                         localMatrix,
+                                         localRhs );
 }
 
 real64
 HydrofractureSolver::
   CalculateResidualNorm( DomainPartition const & domain,
-                         DofManager const & GEOSX_UNUSED_PARAM( dofManager ),
-                         arrayView1d< real64 const > const & GEOSX_UNUSED_PARAM( localRhs ) )
+                         DofManager const & dofManager,
+                         arrayView1d< real64 const > const & localRhs )
 {
   GEOSX_MARK_FUNCTION;
 
   real64 const fluidResidual = m_flowSolver->CalculateResidualNorm( domain,
-                                                                    m_flowSolver->getDofManager(),
-                                                                    m_flowSolver->getLocalRhs() );
+                                                                    dofManager,
+                                                                    localRhs );
 
   real64 const solidResidual = m_solidSolver->CalculateResidualNorm( domain,
-                                                                     m_solidSolver->getDofManager(),
-                                                                     m_solidSolver->getLocalRhs() );
+                                                                     dofManager,
+                                                                     localRhs );
 
   if( getLogLevel() >= 1 && logger::internal::rank==0 )
   {
@@ -1220,441 +851,6 @@ HydrofractureSolver::
   UpdateDeformationForCoupling( domain );
 }
 
-}
-
-#ifdef GEOSX_LA_INTERFACE_TRILINOS
-
-// For some reason this needs to be defined when using cuda
-#if defined( __CUDACC__)
-#define KOKKOS_ENABLE_SERIAL_ATOMICS
-#endif
-
-#include "Epetra_FEVector.h"
-#include "Epetra_FECrsMatrix.h"
-#include "EpetraExt_MatrixMatrix.h"
-#include "Thyra_OperatorVectorClientSupport.hpp"
-#include "Thyra_AztecOOLinearOpWithSolveFactory.hpp"
-#include "Thyra_AztecOOLinearOpWithSolve.hpp"
-#include "Thyra_EpetraThyraWrappers.hpp"
-#include "Thyra_EpetraLinearOp.hpp"
-#include "Thyra_EpetraLinearOpBase.hpp"
-#include "Thyra_LinearOpBase.hpp"
-#include "Thyra_LinearOpWithSolveBase.hpp"
-#include "Thyra_LinearOpWithSolveFactoryHelpers.hpp"
-#include "Thyra_DefaultBlockedLinearOp.hpp"
-#include "Thyra_DefaultIdentityLinearOp.hpp"
-#include "Thyra_DefaultZeroLinearOp.hpp"
-#include "Thyra_DefaultLinearOpSource.hpp"
-#include "Thyra_DefaultPreconditioner.hpp"
-#include "Thyra_EpetraThyraWrappers.hpp"
-#include "Thyra_PreconditionerFactoryHelpers.hpp"
-#include "Thyra_VectorStdOps.hpp"
-#include "Thyra_PreconditionerFactoryHelpers.hpp"
-#include "Thyra_DefaultInverseLinearOp.hpp"
-#include "Thyra_PreconditionerFactoryBase.hpp"
-#include "Thyra_get_Epetra_Operator.hpp"
-#include "Thyra_MLPreconditionerFactory.hpp"
-#include "Teuchos_ParameterList.hpp"
-#include "Teuchos_RCP.hpp"
-#include "Teuchos_Time.hpp"
-#include "Stratimikos_DefaultLinearSolverBuilder.hpp"
-#endif
-
-namespace geosx
-{
-
-void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_PARAM( dofManager ),
-                                       ParallelMatrix &,
-                                       ParallelVector &,
-                                       ParallelVector & )
-{
-  GEOSX_MARK_FUNCTION;
-
-
-#if defined( GEOSX_LA_INTERFACE_TRILINOS )
-  /*
-     globalIndex numU = m_solidSolver->getSystemRhs().globalSize();
-     globalIndex numP = m_flowSolver->getSystemRhs().globalSize();
-     GEOSX_LOG_RANK_0("size = " << numU << " + " << numP);
-   */
-
-  integer const newtonIter = m_nonlinearSolverParameters.m_numNewtonIterations;
-
-  using namespace Teuchos;
-  using namespace Thyra;
-
-  Teuchos::Time clock( "solveClock" );
-
-  GEOSX_MARK_BEGIN( Setup );
-  Epetra_FECrsMatrix * p_matrix[2][2];
-  Epetra_FEVector * p_rhs[2];
-  Epetra_FEVector * p_solution[2];
-
-  m_solidSolver->getSystemRhs().create( m_solidSolver->getLocalRhs(), MPI_COMM_GEOSX );
-  m_flowSolver->getSystemRhs().create( m_flowSolver->getLocalRhs(), MPI_COMM_GEOSX );
-
-  p_rhs[0] = &m_solidSolver->getSystemRhs().unwrapped();
-  p_rhs[1] = &m_flowSolver->getSystemRhs().unwrapped();
-
-  m_solidSolver->getSystemSolution().create( m_solidSolver->getLocalSolution(), MPI_COMM_GEOSX );
-  m_flowSolver->getSystemSolution().create( m_flowSolver->getLocalSolution(), MPI_COMM_GEOSX );
-
-  p_solution[0] = &m_solidSolver->getSystemSolution().unwrapped();
-  p_solution[1] = &m_flowSolver->getSystemSolution().unwrapped();
-
-  m_solidSolver->getSystemMatrix().create( m_solidSolver->getLocalMatrix().toViewConst(), MPI_COMM_GEOSX );
-  m_flowSolver->getSystemMatrix().create( m_flowSolver->getLocalMatrix().toViewConst(), MPI_COMM_GEOSX );
-
-  p_matrix[0][0] = &m_solidSolver->getSystemMatrix().unwrapped();
-  p_matrix[0][1] = &m_matrix01.unwrapped();
-  p_matrix[1][0] = &m_matrix10.unwrapped();
-  p_matrix[1][1] = &m_flowSolver->getSystemMatrix().unwrapped();
-
-  // scale and symmetrize
-
-  m_densityScaling = 1e-3;
-  m_pressureScaling = 1e9;
-
-  p_matrix[0][1]->Scale( m_pressureScaling );
-  p_matrix[1][0]->Scale( m_pressureScaling*m_densityScaling );
-  p_matrix[1][1]->Scale( m_pressureScaling*m_pressureScaling*m_densityScaling );
-  p_rhs[1]->Scale( m_pressureScaling*m_densityScaling );
-
-  // SCHEME CHOICES
-  //
-  // there are several flags to control solver behavior.
-  // these should be compared in a scaling study.
-  //
-  // -- whether to use a block diagonal or a
-  //    block triangular preconditioner.
-  // -- whether to use BiCGstab or GMRES for the
-  //    krylov solver.  GMRES is generally more robust,
-  //    BiCGstab sometimes shows better parallel performance.
-  //    false is probably better.
-
-  LinearSolverParameters const & linParams = m_linearSolverParameters.get();
-
-  const bool use_diagonal_prec = true;
-  const bool use_bicgstab      = (linParams.solverType == LinearSolverParameters::SolverType::bicgstab);
-
-  // set initial guess to zero
-
-  p_solution[0]->PutScalar( 0.0 );
-  p_solution[1]->PutScalar( 0.0 );
-
-  // create separate displacement component matrix
-
-  clock.start( true );
-  if( newtonIter==0 )
-  {
-    m_blockDiagUU.reset( new ParallelMatrix() );
-    LAIHelperFunctions::SeparateComponentFilter( m_solidSolver->getSystemMatrix(), *m_blockDiagUU, 3 );
-  }
-
-  // create schur complement approximation matrix
-
-  Epetra_CrsMatrix * schurApproxPP = NULL; // confirm we delete this at end of function!
-  {
-    Epetra_Vector diag( p_matrix[0][0]->RowMap());
-    Epetra_Vector diagInv( p_matrix[0][0]->RowMap());
-
-    p_matrix[0][0]->ExtractDiagonalCopy( diag );
-    diagInv.Reciprocal( diag );
-
-    Epetra_FECrsMatrix DB( *p_matrix[0][1] );
-    DB.LeftScale( diagInv );
-    DB.FillComplete();
-
-    Epetra_FECrsMatrix BtDB( Epetra_DataAccess::Copy, p_matrix[1][1]->RowMap(), 1 );
-    EpetraExt::MatrixMatrix::Multiply( *p_matrix[1][0], false, DB, false, BtDB );
-    EpetraExt::MatrixMatrix::Add( BtDB, false, -1.0, *p_matrix[1][1], false, 1.0, schurApproxPP );
-
-    schurApproxPP->FillComplete();
-  }
-  double auxTime = clock.stop();
-  GEOSX_MARK_END( Setup );
-
-  // we want to use thyra to wrap epetra operators and vectors
-  // for individual blocks.  this is an ugly conversion, but
-  // it is basically just window dressing.
-  //
-  // note the use of Teuchos::RCP reference counted pointers.
-  // The general syntax is usually one of:
-  //
-  //   RCP<T> Tptr = rcp(new T)
-  //   RCP<T> Tptr = nonMemberConstructor();
-  //   RCP<T> Tptr (t_ptr,false)
-  //
-  // where "false" implies the RCP does not own the object and
-  // should not attempt to delete it when finished.
-
-  GEOSX_MARK_BEGIN( THYRA_SETUP );
-
-  RCP< const Thyra::LinearOpBase< double > >  matrix_block[2][2];
-  RCP< Thyra::MultiVectorBase< double > >     lhs_block[2];
-  RCP< Thyra::MultiVectorBase< double > >     rhs_block[2];
-
-  for( unsigned i=0; i<2; ++i )
-    for( unsigned j=0; j<2; ++j )
-    {
-      RCP< Epetra_Operator > mmm ( &*p_matrix[i][j], false );
-      matrix_block[i][j] = Thyra::epetraLinearOp( mmm );
-    }
-
-  RCP< Epetra_Operator > bbb( &m_blockDiagUU->unwrapped(), false );
-  RCP< Epetra_Operator > ppp( schurApproxPP, false );
-
-  RCP< const Thyra::LinearOpBase< double > >  blockDiagOp = Thyra::epetraLinearOp( bbb );
-  RCP< const Thyra::LinearOpBase< double > >  schurOp = Thyra::epetraLinearOp( ppp );
-
-  for( unsigned i=0; i<2; ++i )
-  {
-    RCP< Epetra_MultiVector > lll ( &*p_solution[i], false );
-    RCP< Epetra_MultiVector > rrr ( &*p_rhs[i], false );
-
-    lhs_block[i] = Thyra::create_MultiVector( lll, matrix_block[i][i]->domain());
-    rhs_block[i] = Thyra::create_MultiVector( rrr, matrix_block[i][i]->range());
-  }
-
-  // now use thyra to create an operator representing
-  // the full block 2x2 system
-
-  RCP< const Thyra::LinearOpBase< double > > matrix = Thyra::block2x2( matrix_block[0][0],
-                                                                       matrix_block[0][1],
-                                                                       matrix_block[1][0],
-                                                                       matrix_block[1][1] );
-
-  // creating a representation of the blocked
-  // rhs and lhs is a little uglier.
-
-  RCP< Thyra::ProductMultiVectorBase< double > > rhs;
-  {
-    Teuchos::Array< RCP< Thyra::MultiVectorBase< double > > > mva;
-    Teuchos::Array< RCP< const Thyra::VectorSpaceBase< double > > > mvs;
-
-    for( unsigned i=0; i<2; ++i )
-    {
-      mva.push_back( rhs_block[i] );
-      mvs.push_back( rhs_block[i]->range());
-    }
-
-    RCP< const Thyra::DefaultProductVectorSpace< double > > vs = Thyra::productVectorSpace< double >( mvs );
-
-    rhs = Thyra::defaultProductMultiVector< double >( vs, mva );
-  }
-
-  RCP< Thyra::ProductMultiVectorBase< double > > lhs;
-
-  {
-    Teuchos::Array< RCP< Thyra::MultiVectorBase< double > > > mva;
-    Teuchos::Array< RCP< const Thyra::VectorSpaceBase< double > > > mvs;
-
-    for( unsigned i=0; i<2; ++i )
-    {
-      mva.push_back( lhs_block[i] );
-      mvs.push_back( lhs_block[i]->range());
-    }
-
-    RCP< const Thyra::DefaultProductVectorSpace< double > > vs = Thyra::productVectorSpace< double >( mvs );
-
-    lhs = Thyra::defaultProductMultiVector< double >( vs, mva );
-  }
-
-  GEOSX_MARK_END( THYRA_SETUP );
-
-  // for the preconditioner, we need two approximate inverses,
-  // we store both "sub operators" in a 1x2 array:
-
-  RCP< const Thyra::LinearOpBase< double > > sub_op[2];
-
-  clock.start( true );
-  GEOSX_MARK_BEGIN( PRECONDITIONER );
-
-  for( unsigned i=0; i<2; ++i ) // loop over diagonal blocks
-  {
-    RCP< Teuchos::ParameterList > list = rcp( new Teuchos::ParameterList( "precond_list" ), true );
-
-    if( linParams.preconditionerType == LinearSolverParameters::PreconditionerType::amg )
-    {
-      list->set( "Preconditioner Type", "ML" );
-      list->sublist( "Preconditioner Types" ).sublist( "ML" ).set( "Base Method Defaults", "SA" );
-      list->sublist( "Preconditioner Types" ).sublist( "ML" ).sublist( "ML Settings" ).set( "PDE equations", (i==0?3:1));
-      list->sublist( "Preconditioner Types" ).sublist( "ML" ).sublist( "ML Settings" ).set( "ML output", 0 );
-      list->sublist( "Preconditioner Types" ).sublist( "ML" ).sublist( "ML Settings" ).set( "aggregation: type", "Uncoupled" );
-      list->sublist( "Preconditioner Types" ).sublist( "ML" ).sublist( "ML Settings" ).set( "aggregation: threshold", 1e-3 );
-
-      if( i==0 ) // smoother for mechanics block
-      {
-        list->sublist( "Preconditioner Types" ).sublist( "ML" ).sublist( "ML Settings" ).set( "smoother: type", "Chebyshev" );
-        list->sublist( "Preconditioner Types" ).sublist( "ML" ).sublist( "ML Settings" ).set( "smoother: sweeps", 3 );
-        list->sublist( "Preconditioner Types" ).sublist( "ML" ).sublist( "ML Settings" ).set( "coarse: type", "Chebyshev" );
-        list->sublist( "Preconditioner Types" ).sublist( "ML" ).sublist( "ML Settings" ).set( "coarse: sweeps", 3 );
-      }
-      else // smoother for flow block
-      {
-        list->sublist( "Preconditioner Types" ).sublist( "ML" ).sublist( "ML Settings" ).set( "smoother: type", "Chebyshev" );
-        list->sublist( "Preconditioner Types" ).sublist( "ML" ).sublist( "ML Settings" ).set( "smoother: sweeps", 3 );
-      }
-
-    }
-    else // use ILU for both blocks
-    {
-      list->set( "Preconditioner Type", "Ifpack" );
-      list->sublist( "Preconditioner Types" ).sublist( "Ifpack" ).set( "Prec Type", "ILU" );
-    }
-
-    Stratimikos::DefaultLinearSolverBuilder builder;
-    builder.setParameterList( list );
-
-    RCP< const Thyra::PreconditionerFactoryBase< double > > strategy = createPreconditioningStrategy( builder );
-    RCP< Thyra::PreconditionerBase< double > > tmp;
-
-    if( i==0 )
-      tmp = prec( *strategy, blockDiagOp );
-    else
-      tmp = prec( *strategy, schurOp );
-    //tmp = prec(*strategy,matrix_block[i][i]);
-
-    sub_op[i] = tmp->getUnspecifiedPrecOp();
-  }
-
-
-  // create zero operators for off diagonal blocks
-
-  RCP< const Thyra::LinearOpBase< double > > zero_01
-    = rcp( new Thyra::DefaultZeroLinearOp< double >( matrix_block[0][0]->range(),
-                                                     matrix_block[1][1]->domain()));
-
-  RCP< const Thyra::LinearOpBase< double > > zero_10
-    = rcp( new Thyra::DefaultZeroLinearOp< double >( matrix_block[1][1]->range(),
-                                                     matrix_block[0][0]->domain()));
-
-  // now build the block preconditioner
-
-  RCP< const Thyra::LinearOpBase< double > > preconditioner;
-
-  if( use_diagonal_prec )
-  {
-    preconditioner = Thyra::block2x2( sub_op[0], zero_01, zero_10, sub_op[1] );
-  }
-  else
-  {
-    RCP< const Thyra::LinearOpBase< double > > eye_00
-      = Teuchos::rcp( new Thyra::DefaultIdentityLinearOp< double >( matrix_block[0][0]->range()));
-
-    RCP< const Thyra::LinearOpBase< double > > eye_11
-      = Teuchos::rcp( new Thyra::DefaultIdentityLinearOp< double >( matrix_block[1][1]->range()));
-
-    RCP< const Thyra::LinearOpBase< double > > mAinvB1, mB2Ainv;
-
-    mAinvB1 = Thyra::scale( -1.0, Thyra::multiply( sub_op[0], matrix_block[0][1] ) );
-    mB2Ainv = Thyra::scale( -1.0, Thyra::multiply( matrix_block[1][0], sub_op[0] ) );
-
-    RCP< const Thyra::LinearOpBase< double > > Linv, Dinv, Uinv, Eye;
-
-    Linv = Thyra::block2x2( eye_00, zero_01, mB2Ainv, eye_11 );
-    Dinv = Thyra::block2x2( sub_op[0], zero_01, zero_10, sub_op[1] );
-    Uinv = Thyra::block2x2( eye_00, mAinvB1, zero_10, eye_11 );
-
-    //preconditioner = Thyra::multiply(Uinv,Dinv);
-    //preconditioner = Thyra::multiply(Dinv,Linv);
-    preconditioner = Thyra::multiply( Uinv, Dinv, Linv );
-  }
-
-  GEOSX_MARK_END( PRECONDITIONER );
-  double setupTime = clock.stop();
-
-  // define solver strategy for blocked system. this is
-  // similar but slightly different from the sub operator
-  // construction, since now we have a user defined preconditioner
-
-  {
-    RCP< Teuchos::ParameterList > list = rcp( new Teuchos::ParameterList( "list" ));
-
-    list->set( "Linear Solver Type", "AztecOO" );
-    list->set( "Preconditioner Type", "None" ); // will use user-defined P
-    list->sublist( "Linear Solver Types" ).sublist( "AztecOO" ).sublist( "Forward Solve" ).set( "Max Iterations",
-                                                                                                linParams.krylov.maxIterations );
-    list->sublist( "Linear Solver Types" ).sublist( "AztecOO" ).sublist( "Forward Solve" ).set( "Tolerance", linParams.krylov.relTolerance );
-
-    if( use_bicgstab )
-      list->sublist( "Linear Solver Types" ).sublist( "AztecOO" ).sublist( "Forward Solve" ).sublist( "AztecOO Settings" ).set( "Aztec Solver", "BiCGStab" );
-    else
-      list->sublist( "Linear Solver Types" ).sublist( "AztecOO" ).sublist( "Forward Solve" ).sublist( "AztecOO Settings" ).set( "Aztec Solver", "GMRES" );
-
-    if( linParams.logLevel > 1 )
-      list->sublist( "Linear Solver Types" ).sublist( "AztecOO" ).sublist( "Forward Solve" ).sublist( "AztecOO Settings" ).set( "Output Frequency", 1 );
-
-    Stratimikos::DefaultLinearSolverBuilder builder;
-    builder.setParameterList( list );
-
-    RCP< const Thyra::LinearOpWithSolveFactoryBase< double > > strategy = createLinearSolveStrategy( builder );
-    RCP< Thyra::LinearOpWithSolveBase< double > > solver = strategy->createOp();
-
-    Thyra::initializePreconditionedOp< double >( *strategy,
-                                                 matrix,
-                                                 Thyra::rightPrec< double >( preconditioner ),
-                                                 solver.ptr());
-
-    clock.start( true );
-    GEOSX_MARK_BEGIN( SOLVER );
-
-    // !!!! Actual Solve !!!!
-    Thyra::SolveStatus< double > status = solver->solve( Thyra::NOTRANS, *rhs, lhs.ptr());
-
-    GEOSX_MARK_END( SOLVER );
-    double solveTime = clock.stop();
-
-    /* TODO: replace with SolverBase status output */
-
-    integer numKrylovIter = status.extraParameters->get< int >( "Iteration Count" );
-    if( getLogLevel()>=2 )
-    {
-      GEOSX_LOG_RANK_0( "\t\tLinear Solver | Iter = " << numKrylovIter <<
-                        " | TargetReduction " << linParams.krylov.relTolerance <<
-                        " | AuxTime " << auxTime <<
-                        " | SetupTime " << setupTime <<
-                        " | SolveTime " << solveTime );
-    }
-
-
-    p_solution[1]->Scale( m_pressureScaling );
-    p_rhs[1]->Scale( 1/(m_pressureScaling*m_densityScaling));
-  }
-
-  delete schurApproxPP;
-
-  //TODO: remove all this once everything is working
-  if( getLogLevel() == 2 )
-  {
-    /*
-       ParallelVector permutedSol;
-       ParallelVector const & solution = m_solidSolver->getSystemSolution();
-       permutedSol.createWithLocalSize(m_solidSolver->getSystemMatrix().numLocalRows(), MPI_COMM_GEOSX);
-       m_permutationMatrix0.multiply(solution, permutedSol);
-       permutedSol.close();
-     */
-
-    GEOSX_LOG_RANK_0( "***********************************************************" );
-    GEOSX_LOG_RANK_0( "solution0" );
-    GEOSX_LOG_RANK_0( "***********************************************************" );
-    p_solution[0]->Print( std::cout );
-    std::cout<<std::endl;
-    MPI_Barrier( MPI_COMM_GEOSX );
-
-    GEOSX_LOG_RANK_0( "***********************************************************" );
-    GEOSX_LOG_RANK_0( "solution1" );
-    GEOSX_LOG_RANK_0( "***********************************************************" );
-    p_solution[1]->Print( std::cout );
-
-  }
-
-  m_solidSolver->getSystemSolution().extract( m_solidSolver->getLocalSolution() );
-  m_flowSolver->getSystemSolution().extract( m_flowSolver->getLocalSolution() );
-#else
-  GEOSX_ERROR( "Only implemented for trilinos." );
-#endif
-}
 
 real64
 HydrofractureSolver::ScalingForSystemSolution( DomainPartition const & domain,
