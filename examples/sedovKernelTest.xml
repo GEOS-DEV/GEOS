@@ -23,13 +23,13 @@
       yCoords="{ 0, 10 }"
       zCoords="{ 0, 10 }"
       nx="{ 200 }"
-      ny="{ 200 }"
-      nz="{ 200 }"
+      ny="{ 400 }"
+      nz="{ 400 }"
       cellBlockNames="{ cb1 }"/>
   </Mesh>
 
   <Events
-    maxTime="1.0e-2">
+    maxTime="2.0e-2">
     <!-- This event is applied every cycle, and overrides the
     solver time-step request -->
     <PeriodicEvent

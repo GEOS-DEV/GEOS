@@ -842,13 +842,13 @@ void CommunicationTools::SynchronizeUnpack( MeshLevel * const mesh,
     neighbor.UnpackBufferForSync( icomm.fieldNames, mesh, icomm.commID, on_device );
   }
 
-  MpiWrapper::Waitall( icomm.size,
-                       icomm.mpiSizeSendBufferRequest.data(),
-                       icomm.mpiSizeSendBufferStatus.data() );
-
-  MpiWrapper::Waitall( icomm.size,
-                       icomm.mpiSendBufferRequest.data(),
-                       icomm.mpiSendBufferStatus.data() );
+//  MpiWrapper::Waitall( icomm.size,
+//                       icomm.mpiSizeSendBufferRequest.data(),
+//                       icomm.mpiSizeSendBufferStatus.data() );
+//
+//  MpiWrapper::Waitall( icomm.size,
+//                       icomm.mpiSendBufferRequest.data(),
+//                       icomm.mpiSendBufferStatus.data() );
 
 }
 

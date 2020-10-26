@@ -594,6 +594,13 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const & time_n,
 
   fsManager.ApplyFieldValue< parallelDevicePolicy< 1024 > >( time_n, &domain, "nodeManager", keys::Acceleration );
 
+
+#if defined(GEOSX_USE_CUDA)
+  acc.move( LvArray::MemorySpace::GPU, false );
+  vel.move( LvArray::MemorySpace::GPU, false );
+  mass.move( LvArray::MemorySpace::GPU, false );
+#endif
+
   //3: v^{n+1/2} = v^{n} + a^{n} dt/2
   SolidMechanicsLagrangianFEMKernels::velocityUpdate( acc, vel, dt/2 );
 
@@ -639,7 +646,7 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const & time_n,
                           string( viewKeyStruct::elemsAttachedToSendOrReceiveNodes ) );
 
   // apply this over a set
-  SolidMechanicsLagrangianFEMKernels::velocityUpdate( acc, mass, vel, dt / 2, m_sendOrReceiveNodes.toViewConst() );
+  SolidMechanicsLagrangianFEMKernels::velocityUpdate2( acc, mass, vel, dt / 2, m_sendOrReceiveNodes.toViewConst() );
 
   fsManager.ApplyFieldValue< parallelDevicePolicy< 1024 > >( time_n, &domain, "nodeManager", keys::Velocity );
 
@@ -653,7 +660,7 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const & time_n,
                           string( viewKeyStruct::elemsNotAttachedToSendOrReceiveNodes ) );
 
   // apply this over a set
-  SolidMechanicsLagrangianFEMKernels::velocityUpdate( acc, mass, vel, dt / 2, m_nonSendOrReceiveNodes.toViewConst() );
+  SolidMechanicsLagrangianFEMKernels::velocityUpdate2( acc, mass, vel, dt / 2, m_nonSendOrReceiveNodes.toViewConst() );
 
   fsManager.ApplyFieldValue< parallelDevicePolicy< 1024 > >( time_n, &domain, "nodeManager", keys::Velocity );
 

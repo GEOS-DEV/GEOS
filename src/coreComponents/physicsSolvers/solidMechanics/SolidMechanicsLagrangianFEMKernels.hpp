@@ -45,7 +45,7 @@ inline void velocityUpdate( arrayView2d< real64, nodes::ACCELERATION_USD > const
   } );
 }
 
-inline void velocityUpdate( arrayView2d< real64, nodes::ACCELERATION_USD > const & acceleration,
+inline void velocityUpdate2( arrayView2d< real64, nodes::ACCELERATION_USD > const & acceleration,
                             arrayView1d< real64 const > const & mass,
                             arrayView2d< real64, nodes::VELOCITY_USD > const & velocity,
                             real64 const dt,
