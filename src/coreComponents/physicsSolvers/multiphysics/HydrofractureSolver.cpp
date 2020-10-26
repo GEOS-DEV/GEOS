@@ -488,7 +488,7 @@ void HydrofractureSolver::SetupDofs( DomainPartition const & domain,
 
 void HydrofractureSolver::SetupSystem( DomainPartition & domain,
                                        DofManager & dofManager,
-                                       CRSMatrix< real64, globalIndex > &  localMatrix,
+                                       CRSMatrix< real64, globalIndex > & localMatrix,
                                        array1d< real64 > & localRhs,
                                        array1d< real64 > & localSolution,
                                        bool const setSparsity )
@@ -498,7 +498,7 @@ void HydrofractureSolver::SetupSystem( DomainPartition & domain,
   MeshLevel & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
   m_flowSolver->ResetViews( mesh );
 
-  SolverBase::SetupSystem(domain, dofManager, localMatrix, localRhs, localSolution, setSparsity);
+  SolverBase::SetupSystem( domain, dofManager, localMatrix, localRhs, localSolution, setSparsity );
 }
 
 void HydrofractureSolver::AssembleSystem( real64 const time,
@@ -506,7 +506,7 @@ void HydrofractureSolver::AssembleSystem( real64 const time,
                                           DomainPartition & domain,
                                           DofManager const & dofManager,
                                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                          arrayView1d< real64 > const &  localRhs )
+                                          arrayView1d< real64 > const & localRhs )
 {
   GEOSX_MARK_FUNCTION;
 
@@ -549,9 +549,6 @@ void HydrofractureSolver::ApplyBoundaryConditions( real64 const time,
                                           dofManager,
                                           localMatrix,
                                           localRhs );
-
-  MeshLevel * const mesh = domain.getMeshBody( 0 )->getMeshLevel( 0 );
-
 
   m_flowSolver->ApplyBoundaryConditions( time,
                                          dt,
@@ -673,7 +670,7 @@ HydrofractureSolver::
           for( localIndex a=0; a<numNodesPerFace; ++a )
           {
             localIndex const localRow = LvArray::integerConversion< localIndex >( rowDOF[3*a] - rankOffset );
-            if( localRow >= 0 && localRow < localMatrixnumRows() )
+            if( localRow >= 0 && localRow < localMatrix.numRows() )
             {
               for( int i=0; i<3; ++i )
               {
@@ -683,8 +680,8 @@ HydrofractureSolver::
                 if( ghostRank[kfe] < 0 )
                 {
                   localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( localRow + i,
-                                                                                    colDOF,
-                                                                                    dRdP(3*a+i, 0),
+                                                                                    &colDOF,
+                                                                                    &dRdP[3*a+i][0],
                                                                                     1 );
                 }
               }
@@ -785,10 +782,10 @@ HydrofractureSolver::
               }
             }
           }
-          localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >(elemDOF - rankOffset,
-                                                                           nodeDOF,
-                                                                           dRdU,
-                                                                           2 * numNodesPerFace * 3);
+          localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( elemDOF - rankOffset,
+                                                                            nodeDOF,
+                                                                            dRdU.data(),
+                                                                            2 * numNodesPerFace * 3 );
         }
 
         // flux derivative
@@ -816,10 +813,10 @@ HydrofractureSolver::
               }
             }
           }
-          localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >(elemDOF - rankOffset,
-                                                                           nodeDOF,
-                                                                           dRdU,
-                                                                           2 * numNodesPerFace * 3);
+          localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( elemDOF - rankOffset,
+                                                                            nodeDOF,
+                                                                            dRdU.data(),
+                                                                            2 * numNodesPerFace * 3 );
         }
       }
     } );
@@ -829,7 +826,7 @@ HydrofractureSolver::
 void
 HydrofractureSolver::
   ApplySystemSolution( DofManager const & dofManager,
-                       arrayView1d< real64 const > const &  localSolution,
+                       arrayView1d< real64 const > const & localSolution,
                        real64 const scalingFactor,
                        DomainPartition & domain )
 {

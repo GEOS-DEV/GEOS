@@ -88,11 +88,6 @@ public:
                          DofManager const & dofManager,
                          arrayView1d< real64 const > const & localRhs ) override;
 
-  virtual void SolveSystem( DofManager const & dofManager,
-                            ParallelMatrix & matrix,
-                            ParallelVector & rhs,
-                            ParallelVector & solution ) override;
-
   virtual real64
   ScalingForSystemSolution( DomainPartition const & domain,
                             DofManager const & dofManager,
@@ -184,15 +179,7 @@ private:
   SolidMechanicsLagrangianFEM * m_solidSolver;
   FlowSolverBase * m_flowSolver;
 
-#ifdef GEOSX_LA_INTERFACE_TRILINOS
-  real64 m_densityScaling;
-  real64 m_pressureScaling;
-#endif
-
   std::unique_ptr< ParallelMatrix > m_blockDiagUU;
-
-  ParallelMatrix m_permutationMatrix0; // it's used to have the output based on global ordering
-  ParallelMatrix m_permutationMatrix1; // it's used to have the output based on global ordering
 
   integer m_maxNumResolves;
   integer m_numResolves[2];
