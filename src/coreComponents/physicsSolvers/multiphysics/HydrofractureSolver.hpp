@@ -126,11 +126,11 @@ public:
 //                                   systemSolverInterface::EpetraBlockSystem & blockSystem );
 
   void AssembleForceResidualDerivativeWrtPressure( DomainPartition & domain,
-                                                   ParallelMatrix * const matrix01,
-                                                   arrayView1d< real64 > const & rhs0 );
+                                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                   arrayView1d< real64 > const & localRhs );
 
   void AssembleFluidMassResidualDerivativeWrtDisplacement( DomainPartition const & domain,
-                                                           ParallelMatrix * const matrix10 );
+                                                           CRSMatrixView< real64, globalIndex const > const & localMatrix );
 
 
   real64 SplitOperatorStep( real64 const & time_n,
