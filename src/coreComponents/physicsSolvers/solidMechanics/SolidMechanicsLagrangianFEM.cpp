@@ -507,6 +507,25 @@ real64 SolidMechanicsLagrangianFEM::SolverStep( real64 const & time_n,
 
   if( m_timeIntegrationOption == TimeIntegrationOption::ExplicitDynamic )
   {
+#if defined(GEOSX_USE_CUDA)
+    MeshLevel & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
+    NodeManager & nodes = *mesh.getNodeManager();
+
+    arrayView1d< real64 const > const & mass = nodes.getReference< array1d< real64 > >( keys::Mass );
+    arrayView2d< real64, nodes::VELOCITY_USD > const & vel = nodes.velocity();
+    arrayView2d< real64, nodes::TOTAL_DISPLACEMENT_USD > const & u = nodes.totalDisplacement();
+    arrayView2d< real64, nodes::INCR_DISPLACEMENT_USD > const & uhat = nodes.incrementalDisplacement();
+    arrayView2d< real64, nodes::ACCELERATION_USD > const & acc = nodes.acceleration();
+    arrayView2d< real64, nodes::ACCELERATION_USD > const & X = nodes.referencePosition();
+
+    X.move( LvArray::MemorySpace::GPU, false );
+    mass.move( LvArray::MemorySpace::GPU, false );
+    vel.move( LvArray::MemorySpace::GPU, false );
+    u.move( LvArray::MemorySpace::GPU, false );
+    uhat.move( LvArray::MemorySpace::GPU, false );
+    acc.move( LvArray::MemorySpace::GPU, false );
+#endif
+
     dtReturn = ExplicitStep( time_n, dt, cycleNumber, domain );
 
     if( surfaceGenerator!=nullptr )
@@ -590,16 +609,8 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const & time_n,
   fieldNames["node"].emplace_back( keys::Velocity );
   fieldNames["node"].emplace_back( keys::Acceleration );
 
-  CommunicationTools::SynchronizePackSendRecvSizes( fieldNames, &mesh, domain.getNeighbors(), m_iComm, true );
 
   fsManager.ApplyFieldValue< parallelDevicePolicy< 1024 > >( time_n, &domain, "nodeManager", keys::Acceleration );
-
-
-#if defined(GEOSX_USE_CUDA)
-  acc.move( LvArray::MemorySpace::GPU, false );
-  vel.move( LvArray::MemorySpace::GPU, false );
-  mass.move( LvArray::MemorySpace::GPU, false );
-#endif
 
   //3: v^{n+1/2} = v^{n} + a^{n} dt/2
   SolidMechanicsLagrangianFEMKernels::velocityUpdate( acc, vel, dt/2 );
@@ -635,6 +646,8 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const & time_n,
       vel( a, component )  = uhat( a, component ) / dt;
     } );
   } );
+
+  CommunicationTools::SynchronizePackSendRecvSizes( fieldNames, &mesh, domain.getNeighbors(), m_iComm, true );
 
   //Step 5. Calculate deformation input to constitutive model and update state to
   // Q^{n+1}
