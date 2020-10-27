@@ -288,8 +288,8 @@ void LagrangianContactSolver::ComputeTolerances( DomainPartition & domain ) cons
     if( subRegion.hasWrapper( m_tractionKey ) )
     {
       arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
-      arrayView1d< real64 const > const & faceArea = subRegion.getElementArea();
-      arrayView3d< real64 const > const & faceRotationMatrix = subRegion.getElementRotationMatrix();
+      arrayView1d< real64 const > const & faceArea = subRegion.getElementArea().toViewConst();
+      arrayView3d< real64 const > const & faceRotationMatrix = subRegion.getElementRotationMatrix().toViewConst();
       arrayView2d< localIndex const > const & elemsToFaces = subRegion.faceList();
 
       arrayView1d< real64 > const & normalTractionTolerance =
@@ -462,7 +462,7 @@ void LagrangianContactSolver::UpdateDeformationForCoupling( DomainPartition & do
   {
     if( subRegion.hasWrapper( m_tractionKey ) )
     {
-      arrayView3d< real64 const > const & rotationMatrix = subRegion.getElementRotationMatrix();
+      arrayView3d< real64 const > const & rotationMatrix = subRegion.getElementRotationMatrix().toViewConst();
       arrayView2d< localIndex const > const & elemsToFaces = subRegion.faceList();
       arrayView2d< real64 > const & localJump = subRegion.getReference< array2d< real64 > >( viewKeyStruct::localJumpString );
 

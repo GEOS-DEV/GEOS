@@ -215,7 +215,8 @@ void DofManagerIndicesTest::test( std::vector< FieldDesc > fields )
 {
   for( FieldDesc & f : fields )
   {
-    dofManager.addField( f.name, f.location, f.components, getRegions( mesh, f.regions ) );
+    string_array const regions = getRegions( mesh, f.regions );
+    dofManager.addField( f.name, f.location, f.components, regions );
   }
   dofManager.reorderByRank();
 
@@ -427,14 +428,16 @@ protected:
   {
     for( FieldDesc const & f : fields )
     {
-      dofManager.addField( f.name, f.location, f.components, getRegions( mesh, f.regions ) );
+      string_array const regions = getRegions( mesh, f.regions );
+      dofManager.addField( f.name, f.location, f.components, regions );
       dofManager.addCoupling( f.name, f.name, f.connectivity );
     }
     for( auto const & entry : couplings )
     {
       std::pair< string, string > const & fieldNames = entry.first;
       CouplingDesc const & c = entry.second;
-      dofManager.addCoupling( fieldNames.first, fieldNames.second, c.connectivity, getRegions( mesh, c.regions ), c.symmetric );
+      string_array const regions = getRegions( mesh, c.regions );
+      dofManager.addCoupling( fieldNames.first, fieldNames.second, c.connectivity, regions, c.symmetric );
     }
     dofManager.reorderByRank();
   }

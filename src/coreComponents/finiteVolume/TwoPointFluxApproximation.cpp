@@ -619,12 +619,12 @@ void TwoPointFluxApproximation::addEDFracToFractureStencil( MeshLevel & mesh,
                                                       EmbeddedSurfaceSubRegion >( "default" ) );
 
   // arrayView1d< real64 const > const & fractureElemArea   = fractureSubRegion->getElementArea();
-  arrayView2d< real64 const > const & fractureElemCenter = fractureSubRegion.getElementCenter();
-  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X = nodeManager.embSurfNodesPosition();
+  arrayView2d< real64 const > const fractureElemCenter = fractureSubRegion.getElementCenter().toViewConst();
+  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X = nodeManager.embSurfNodesPosition();
 
   EdgeManager::FaceMapType const & edgeToEmbSurfacesMap = embSurfEdgeManager.faceList();
 
-  arrayView1d< integer const > const & ghostRank = fractureSubRegion.ghostRank();
+  arrayView1d< integer const > const ghostRank = fractureSubRegion.ghostRank();
 
   localIndex constexpr maxElems = FaceElementStencil::MAX_STENCIL_SIZE;
 
@@ -689,10 +689,10 @@ void TwoPointFluxApproximation::addEDFracToFractureStencil( MeshLevel & mesh,
   }
 
   // Add connections EmbeddedSurface to/from CellElements.
-  arrayView1d< localIndex const > const & elemRegionList    = fractureSubRegion.getSurfaceToRegionList();
-  arrayView1d< localIndex const > const & elemSubRegionList = fractureSubRegion.getSurfaceToSubRegionList();
-  arrayView1d< localIndex const > const & elemList          = fractureSubRegion.getSurfaceToCellList();
-  arrayView1d< real64 const >     const & connectivityIndex = fractureSubRegion.getConnectivityIndex();
+  arrayView1d< localIndex const > const elemRegionList    = fractureSubRegion.getSurfaceToRegionList().toViewConst();
+  arrayView1d< localIndex const > const elemSubRegionList = fractureSubRegion.getSurfaceToSubRegionList().toViewConst();
+  arrayView1d< localIndex const > const elemList          = fractureSubRegion.getSurfaceToCellList().toViewConst();
+  arrayView1d< real64 const >     const connectivityIndex = fractureSubRegion.getConnectivityIndex();
 
   ElementRegionManager::ElementViewAccessor< arrayView1d< R1Tensor const > > const permeabilityTensor =
     elemManager.ConstructArrayViewAccessor< R1Tensor, 1 >( m_coeffName );

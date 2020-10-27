@@ -86,7 +86,7 @@ TEST( FunctionTests, 1DTable )
   testExpected[4] = 3.0;
   testExpected[5] = 7.0;
   table_a->setInterpolationMethod( TableFunction::InterpolationType::Linear );
-  evaluate1DFunction( table_a, testCoordinates.toView(), testExpected.toView() );
+  evaluate1DFunction( table_a, testCoordinates, testExpected );
 
   // Upper
   testExpected[0] = 1.0;
@@ -96,7 +96,7 @@ TEST( FunctionTests, 1DTable )
   testExpected[4] = 7.0;
   testExpected[5] = 7.0;
   table_a->setInterpolationMethod( TableFunction::InterpolationType::Upper );
-  evaluate1DFunction( table_a, testCoordinates.toView(), testExpected.toView() );
+  evaluate1DFunction( table_a, testCoordinates, testExpected );
 
   // Lower
   testExpected[0] = 1.0;
@@ -106,7 +106,7 @@ TEST( FunctionTests, 1DTable )
   testExpected[4] = -5.0;
   testExpected[5] = 7.0;
   table_a->setInterpolationMethod( TableFunction::InterpolationType::Lower );
-  evaluate1DFunction( table_a, testCoordinates.toView(), testExpected.toView() );
+  evaluate1DFunction( table_a, testCoordinates, testExpected );
 
   // Nearest
   testExpected[0] = 1.0;
@@ -116,7 +116,7 @@ TEST( FunctionTests, 1DTable )
   testExpected[4] = 7.0;
   testExpected[5] = 7.0;
   table_a->setInterpolationMethod( TableFunction::InterpolationType::Nearest );
-  evaluate1DFunction( table_a, testCoordinates.toView(), testExpected.toView() );
+  evaluate1DFunction( table_a, testCoordinates, testExpected );
 
 }
 
