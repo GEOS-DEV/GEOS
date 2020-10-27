@@ -40,7 +40,7 @@ TEST( LinearElasticAnisotropicTests, testAllocation )
 //  arrayView1d<LinearElasticAnisotropic::StiffnessTensor const> const &
 //  stiffness = cm.stiffness() ;
 
-  arrayView3d< real64 const, solid::STRESS_USD > const & stress = cm.getStress();
+  arrayView3d< real64 const, solid::STRESS_USD > const & stress = cm.getStress().toViewConst();
 
 //  EXPECT_EQ( stiffness.size(), numElems );
   EXPECT_EQ( stress.size( 0 ), numElems );
@@ -48,7 +48,7 @@ TEST( LinearElasticAnisotropicTests, testAllocation )
   EXPECT_EQ( stress.size( 2 ), 6 );
 }
 
-void stressCalc( real64 const c[6][6], real64 const ( &Ddt )[ 6 ], real64 stressVoigt[6] )
+void stressCalc( real64 const ( &c )[6][6], real64 const ( &Ddt )[ 6 ], real64 ( & stressVoigt )[6] )
 {
   real64 const DdtVoigt[6] = { Ddt[ 0 ], Ddt[ 1 ], Ddt[ 2 ], 2 * Ddt[ 3 ], 2 * Ddt[ 4 ], 2 * Ddt[ 5 ] };
 

@@ -48,7 +48,7 @@ void CellElementSubRegion::CopyFromCellBlock( CellBlock * source )
   this->resize( source->size());
   this->nodeList() = source->nodeList();
 
-  arrayView1d< globalIndex const > const sourceLocalToGlobal = source->localToGlobalMap();
+  arrayView1d< globalIndex const > const sourceLocalToGlobal = source->localToGlobalMap().toViewConst();
   this->m_localToGlobalMap.resize( sourceLocalToGlobal.size() );
   for( localIndex i = 0; i < localToGlobalMap().size(); ++i )
   {

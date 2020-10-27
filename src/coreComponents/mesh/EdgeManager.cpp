@@ -646,7 +646,7 @@ void EdgeManager::ExtractMapFromObjectForAssignGlobalIndexNumbers( ObjectManager
   localIndex const numEdges = size();
 
   arrayView2d< localIndex const > const edgeNodes = this->nodeList();
-  arrayView1d< integer const > const isDomainBoundary = this->getDomainBoundaryIndicator();
+  arrayView1d< integer const > const isDomainBoundary = this->getDomainBoundaryIndicator().toViewConst();
 
   globalEdgeNodes.resize( numEdges );
 
