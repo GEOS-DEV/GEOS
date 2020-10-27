@@ -497,60 +497,182 @@ void HydrofractureSolver::SetupSystem( DomainPartition & domain,
 {
   GEOSX_MARK_FUNCTION;
 
+  GEOSX_UNUSED_VAR( setSparsity );
+
   MeshLevel & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
   m_flowSolver->ResetViews( mesh );
 
-  SolverBase::SetupSystem( domain, dofManager, localMatrix, localRhs, localSolution, setSparsity );
+  dofManager.setMesh( domain, 0, 0 );
 
-  std::unique_ptr< CRSMatrix< real64, localIndex > > &
-  derivativeFluxResidual_dAperture = m_flowSolver->getRefDerivativeFluxResidual_dAperture();
+  SetupDofs( domain, dofManager );
+  dofManager.reorderByRank();
 
+  localIndex const numLocalRows = dofManager.numLocalDofs();
+
+  SparsityPattern< globalIndex > patternOriginal;
+  dofManager.setSparsityPattern( patternOriginal );
+
+  // Get the original row lengths (diagonal blocks only)
+  array1d< localIndex > rowLengths( patternOriginal.numRows() );
+  for( localIndex localRow = 0; localRow < patternOriginal.numRows(); ++localRow )
   {
-    localIndex numRows = 0;
-    this->template forTargetSubRegions< FaceElementSubRegion, EmbeddedSurfaceSubRegion >( mesh, [&]( localIndex const,
-                                                                                                     auto const & elementSubRegion )
-    {
-      numRows += elementSubRegion.size();
-    } );
-
-    derivativeFluxResidual_dAperture = std::make_unique< CRSMatrix< real64, localIndex > >( numRows, numRows );
-    derivativeFluxResidual_dAperture->setName( this->getName() + "/derivativeFluxResidual_dAperture" );
-
-    derivativeFluxResidual_dAperture->reserveNonZeros( localMatrix.numNonZeros() );
-    localIndex maxRowSize = -1;
-    for( localIndex row = 0; row < localMatrix.numRows(); ++row )
-    {
-      localIndex const rowSize = localMatrix.numNonZeros( row );
-      maxRowSize = maxRowSize > rowSize ? maxRowSize : rowSize;
-    }
-    for( localIndex row = localMatrix.numRows(); row < numRows; ++row )
-    {
-      derivativeFluxResidual_dAperture->reserveNonZeros( row, maxRowSize );
-    }
+    rowLengths[localRow] = patternOriginal.numNonZeros( localRow );
   }
+
+  // Add the number of nonzeros induced by coupling
+  addFluxApertureCouplingNNZ( domain, dofManager, rowLengths.toView() );
+
+  // Create a new pattern with enough capacity for coupled matrix
+  SparsityPattern< globalIndex > pattern;
+  pattern.resizeFromRowCapacities< parallelHostPolicy >( patternOriginal.numRows(),
+                                                         patternOriginal.numColumns(),
+                                                         rowLengths.data() );
+
+  // Copy the original nonzeros
+  for( localIndex localRow = 0; localRow < patternOriginal.numRows(); ++localRow )
+  {
+    globalIndex const * cols = patternOriginal.getColumns( localRow ).dataIfContiguous();
+    pattern.insertNonZeros( localRow, cols, cols + patternOriginal.numNonZeros( localRow ) );
+  }
+
+  // Add the nonzeros from coupling
+  addFluxApertureCouplingSparsityPattern( domain, dofManager, pattern.toView() );
+
+  localMatrix.assimilate< parallelDevicePolicy<> >( std::move( pattern ) );
+
+  localRhs.resize( numLocalRows );
+  localSolution.resize( numLocalRows );
+
+  localMatrix.setName( this->getName() + "/localMatrix" );
+  localRhs.setName( this->getName() + "/localRhs" );
+  localSolution.setName( this->getName() + "/localSolution" );
+
+  setUpDfluxDapertureMatrix(domain, dofManager, localMatrix);
+
+}
+
+void HydrofractureSolver::addFluxApertureCouplingNNZ( DomainPartition & domain,
+                                                      DofManager & dofManager,
+                                                      arrayView1d< localIndex > const & rowLengths ) const
+{
+  GEOSX_MARK_FUNCTION;
+
+  MeshLevel & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
+
+  ElementRegionManager const & elemManager = *mesh.getElemManager();
 
   string const presDofKey = dofManager.getKey( FlowSolverBase::viewKeyStruct::pressureString );
 
+  globalIndex const rankOffset = dofManager.rankOffset();
+
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
-  FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( this->getDiscretization() );
+  FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_flowSolver->getDiscretization() );
 
   fluxApprox.forStencils< FaceElementStencil >( mesh, [&]( FaceElementStencil const & stencil )
   {
-    for( localIndex iconn = 0; iconn < stencil.size(); ++iconn )
+    for( localIndex iconn=0; iconn<stencil.size(); ++iconn )
     {
       localIndex const numFluxElems = stencil.stencilSize( iconn );
+      typename FaceElementStencil::IndexContainerViewConstType const & seri = stencil.getElementRegionIndices();
+      typename FaceElementStencil::IndexContainerViewConstType const & sesri = stencil.getElementSubRegionIndices();
       typename FaceElementStencil::IndexContainerViewConstType const & sei = stencil.getElementIndices();
 
-      for( localIndex k0 = 0; k0 < numFluxElems; ++k0 )
+      FaceElementSubRegion const & elementSubRegion =
+        *elemManager.GetRegion( seri[iconn][0] )->GetSubRegion< FaceElementSubRegion >( sesri[iconn][0] );
+
+      ArrayOfArraysView< localIndex const > const elemsToNodes = elementSubRegion.nodeList().toViewConst();
+
+      arrayView1d< globalIndex const > const faceElementDofNumber =
+        elementSubRegion.getReference< array1d< globalIndex > >( presDofKey );
+
+      for( localIndex k0=0; k0<numFluxElems; ++k0 )
       {
-        for( localIndex k1 = 0; k1 < numFluxElems; ++k1 )
+        globalIndex const activeFlowDOF = faceElementDofNumber[sei[iconn][k0]];
+        globalIndex const rowNumber = activeFlowDOF - rankOffset;
+
+        for (localIndex k1=0; k1<numFluxElems; ++k1)
         {
-          derivativeFluxResidual_dAperture->insertNonZero( sei[iconn][k0], sei[iconn][k1], 0.0 );
+          // The coupling with the nodal displacements of the cell itself have already been added by the dofManager
+          // so I only add the coupling with the nodal displacements of the neighbours.
+          if (k1 != k0)
+          {
+            localIndex const numNodesPerElement = elemsToNodes[sei[iconn][k1]].size();
+            rowLengths[rowNumber] += 3*numNodesPerElement;
+          }
         }
       }
-    }
+    }//);
   } );
+
+}
+
+void HydrofractureSolver::addFluxApertureCouplingSparsityPattern( DomainPartition & domain,
+                                                                  DofManager & dofManager,
+                                                                  SparsityPatternView< globalIndex > const & pattern ) const
+{
+  GEOSX_MARK_FUNCTION;
+
+    MeshLevel & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
+
+    NodeManager const & nodeManager = *mesh.getNodeManager();
+    ElementRegionManager const & elemManager = *mesh.getElemManager();
+
+    string const presDofKey = dofManager.getKey( FlowSolverBase::viewKeyStruct::pressureString );
+    string const dispDofKey = dofManager.getKey( keys::TotalDisplacement );
+
+    globalIndex const rankOffset = dofManager.rankOffset();
+
+    arrayView1d< globalIndex const > const & dispDofNumber = nodeManager.getReference< globalIndex_array >( dispDofKey );
+
+    NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
+    FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
+    FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_flowSolver->getDiscretization() );
+
+    fluxApprox.forStencils< FaceElementStencil >( mesh, [&]( FaceElementStencil const & stencil )
+    {
+      for( localIndex iconn=0; iconn<stencil.size(); ++iconn )
+      {
+        localIndex const numFluxElems = stencil.stencilSize( iconn );
+        typename FaceElementStencil::IndexContainerViewConstType const & seri = stencil.getElementRegionIndices();
+        typename FaceElementStencil::IndexContainerViewConstType const & sesri = stencil.getElementSubRegionIndices();
+        typename FaceElementStencil::IndexContainerViewConstType const & sei = stencil.getElementIndices();
+
+        FaceElementSubRegion const & elementSubRegion =
+          *elemManager.GetRegion( seri[iconn][0] )->GetSubRegion< FaceElementSubRegion >( sesri[iconn][0] );
+
+        ArrayOfArraysView< localIndex const > const elemsToNodes = elementSubRegion.nodeList().toViewConst();
+
+        arrayView1d< globalIndex const > const faceElementDofNumber =
+          elementSubRegion.getReference< array1d< globalIndex > >( presDofKey );
+
+        for( localIndex k0=0; k0<numFluxElems; ++k0 )
+        {
+          globalIndex const activeFlowDOF = faceElementDofNumber[sei[iconn][k0]];
+
+          globalIndex const rowIndex = activeFlowDOF - rankOffset;
+
+          for( localIndex k1=0; k1<numFluxElems; ++k1 )
+          {
+            // The coupling with the nodal displacements of the cell itself have already been added by the dofManager
+            // so I only add the coupling with the nodal displacements of the neighbours.
+            if( k1 != k0 )
+            {
+              localIndex const numNodesPerElement = elemsToNodes[sei[iconn][k1]].size();
+
+              for( localIndex a=0; a<numNodesPerElement; ++a )
+              {
+                for( int d=0; d<3; ++d )
+                {
+                  globalIndex const  colIndex = dispDofNumber[elemsToNodes[sei[iconn][k1]][a]] + d;
+                  pattern.insertNonZero(rowIndex, colIndex);
+                }
+              }
+            }
+          }
+        }
+      }//);
+    } );
 }
 
 void HydrofractureSolver::AssembleSystem( real64 const time,
@@ -569,8 +691,6 @@ void HydrofractureSolver::AssembleSystem( real64 const time,
                                  localMatrix,
                                  localRhs );
 
-  std::cout << "assembled solidSolver" << std::endl;
-
   m_flowSolver->ResetViews( *(domain.getMeshBody( 0 )->getMeshLevel( 0 ) ) );
 
   m_flowSolver->AssembleSystem( time,
@@ -581,16 +701,9 @@ void HydrofractureSolver::AssembleSystem( real64 const time,
                                 localRhs );
 
 
-  std::cout << "Assembled two solvers just fine" << std::endl;
-
   AssembleForceResidualDerivativeWrtPressure( domain, localMatrix, localRhs );
 
-  std::cout << "Assembled dRuDP" << std::endl;
-
   AssembleFluidMassResidualDerivativeWrtDisplacement( domain, localMatrix );
-
-  std::cout << "Assembled dRpDu" << std::endl;
-
 }
 
 void HydrofractureSolver::ApplyBoundaryConditions( real64 const time,
@@ -934,5 +1047,62 @@ void HydrofractureSolver::initializeNewFaceElements( DomainPartition const & )
 //  m_flowSolver->
 }
 
+void HydrofractureSolver::setUpDfluxDapertureMatrix( DomainPartition & domain,
+                                                     DofManager const & dofManager,
+                                                     CRSMatrix< real64, globalIndex > & localMatrix)
+{
+  MeshLevel & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
+
+  std::unique_ptr< CRSMatrix< real64, localIndex > > &
+   derivativeFluxResidual_dAperture = m_flowSolver->getRefDerivativeFluxResidual_dAperture();
+
+   {
+     localIndex numRows = 0;
+     this->template forTargetSubRegions< FaceElementSubRegion, EmbeddedSurfaceSubRegion >( mesh, [&]( localIndex const,
+                                                                                                      auto const & elementSubRegion )
+     {
+       numRows += elementSubRegion.size();
+     } );
+
+     derivativeFluxResidual_dAperture = std::make_unique< CRSMatrix< real64, localIndex > >( numRows, numRows );
+     derivativeFluxResidual_dAperture->setName( this->getName() + "/derivativeFluxResidual_dAperture" );
+
+     derivativeFluxResidual_dAperture->reserveNonZeros( localMatrix.numNonZeros() );
+     localIndex maxRowSize = -1;
+     for( localIndex row = 0; row < localMatrix.numRows(); ++row )
+     {
+       localIndex const rowSize = localMatrix.numNonZeros( row );
+       maxRowSize = maxRowSize > rowSize ? maxRowSize : rowSize;
+     }
+     // TODO This is way too much. The With the full system rowSize is not a good estimate for this.
+     for( localIndex row = localMatrix.numRows(); row < numRows; ++row )
+     {
+       derivativeFluxResidual_dAperture->reserveNonZeros( row, maxRowSize );
+     }
+   }
+
+   string const presDofKey = dofManager.getKey( FlowSolverBase::viewKeyStruct::pressureString );
+
+   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
+   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
+   FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_flowSolver->getDiscretization() );
+
+   fluxApprox.forStencils< FaceElementStencil >( mesh, [&]( FaceElementStencil const & stencil )
+   {
+     for( localIndex iconn = 0; iconn < stencil.size(); ++iconn )
+     {
+       localIndex const numFluxElems = stencil.stencilSize( iconn );
+       typename FaceElementStencil::IndexContainerViewConstType const & sei = stencil.getElementIndices();
+
+       for( localIndex k0 = 0; k0 < numFluxElems; ++k0 )
+       {
+         for( localIndex k1 = 0; k1 < numFluxElems; ++k1 )
+         {
+           derivativeFluxResidual_dAperture->insertNonZero( sei[iconn][k0], sei[iconn][k1], 0.0 );
+         }
+       }
+     }
+   } );
+}
 REGISTER_CATALOG_ENTRY( SolverBase, HydrofractureSolver, std::string const &, Group * const )
 } /* namespace geosx */

@@ -135,6 +135,8 @@ public:
 
   void initializeNewFaceElements( DomainPartition const & domain );
 
+
+
   enum class CouplingTypeOption : integer
   {
     FIM,
@@ -167,6 +169,31 @@ protected:
 
   virtual void
   InitializePostInitialConditions_PreSubGroups( dataRepository::Group * const problemManager ) override final;
+
+  /**
+   * @Brief add the nnz induced by the flux-aperture coupling
+   * @param domain the physical domain object
+   * @param dofManager degree-of-freedom manager associated with the linear system
+   * @param rowLenghts the nnz in each row
+   */
+  void addFluxApertureCouplingNNZ( DomainPartition & domain,
+                                   DofManager & dofManager,
+                                   arrayView1d< localIndex > const & rowLengths ) const;
+
+
+  /**
+   * @Brief add the sparsity pattern induced by the flux-aperture coupling
+   * @param domain the physical domain object
+   * @param dofManager degree-of-freedom manager associated with the linear system
+   * @param pattern the sparsity pattern
+   */
+  void addFluxApertureCouplingSparsityPattern( DomainPartition & domain,
+                                               DofManager & dofManager,
+                                               SparsityPatternView< globalIndex > const & pattern ) const;
+
+  void setUpDfluxDapertureMatrix( DomainPartition & domain,
+                                  DofManager const & dofManager,
+                                  CRSMatrix< real64, globalIndex > & localMatrix);
 
 private:
 
