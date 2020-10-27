@@ -191,10 +191,6 @@ protected:
                                                DofManager & dofManager,
                                                SparsityPatternView< globalIndex > const & pattern ) const;
 
-  void setUpDfluxDapertureMatrix( DomainPartition & domain,
-                                  DofManager const & dofManager,
-                                  CRSMatrix< real64, globalIndex > & localMatrix);
-
 private:
 
   string m_solidSolverName;
