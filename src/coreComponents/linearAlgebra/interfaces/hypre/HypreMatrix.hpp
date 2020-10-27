@@ -124,6 +124,9 @@ public:
 
   virtual void close() override;
 
+  /**
+   * @copydoc MatrixBase<HypreMatrix,HypreMatrix>::created
+   */
   virtual bool created() const override;
 
   virtual void reset() override;
@@ -260,6 +263,9 @@ public:
 
   virtual void addDiagonal( HypreVector const & src ) override;
 
+  /**
+   * @copydoc MatrixBase<HypreMatrix,HypreMatrix>::maxRowLength
+   */
   virtual localIndex maxRowLength() const override;
 
   virtual localIndex localRowLength( localIndex localRowIndex ) const override;
@@ -274,36 +280,78 @@ public:
 
   virtual void extractDiagonal( HypreVector & dst ) const override;
 
+  /**
+   * @copydoc MatrixBase<HypreMatrix,HypreMatrix>::numGlobalRows
+   */
   virtual globalIndex numGlobalRows() const override;
 
+  /**
+   * @copydoc MatrixBase<HypreMatrix,HypreMatrix>::numGlobalCols
+   */
   virtual globalIndex numGlobalCols() const override;
 
+  /**
+   * @copydoc MatrixBase<HypreMatrix,HypreMatrix>::numLocalRows
+   */
   virtual localIndex numLocalRows() const override;
 
+  /**
+   * @copydoc MatrixBase<HypreMatrix,HypreMatrix>::numLocalCols
+   */
   virtual localIndex numLocalCols() const override;
 
+  /**
+   * @copydoc MatrixBase<HypreMatrix,HypreMatrix>::ilower
+   */
   virtual globalIndex ilower() const override;
 
+  /**
+   * @copydoc MatrixBase<HypreMatrix,HypreMatrix>::iupper
+   */
   virtual globalIndex iupper() const override;
 
+  /**
+   * @copydoc MatrixBase<HypreMatrix,HypreMatrix>::jlower
+   */
   virtual globalIndex jlower() const override;
 
+  /**
+   * @copydoc MatrixBase<HypreMatrix,HypreMatrix>::jupper
+   */
   virtual globalIndex jupper() const override;
 
+  /**
+   * @copydoc MatrixBase<HypreMatrix,HypreMatrix>::numLocalNonzeros
+   */
   virtual localIndex numLocalNonzeros() const override;
 
+  /**
+   * @copydoc MatrixBase<HypreMatrix,HypreMatrix>::numGlobalNonzeros
+   */
   virtual globalIndex numGlobalNonzeros() const override;
 
+  /**
+   * @copydoc MatrixBase<HypreMatrix,HypreMatrix>::normInf
+   */
   virtual real64 normInf() const override;
 
+  /**
+   * @copydoc MatrixBase<HypreMatrix,HypreMatrix>::norm1
+   */
   virtual real64 norm1() const override;
 
+  /**
+   * @copydoc MatrixBase<HypreMatrix,HypreMatrix>::normFrobenius
+   */
   virtual real64 normFrobenius() const override;
 
   virtual localIndex getLocalRowID( globalIndex const index ) const override;
 
   virtual globalIndex getGlobalRowID( localIndex const index ) const override;
 
+  /**
+   * @copydoc MatrixBase<HypreMatrix,HypreMatrix>::getComm
+   */
   virtual MPI_Comm getComm() const override;
 
   virtual void print( std::ostream & os = std::cout ) const override;

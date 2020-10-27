@@ -94,8 +94,8 @@ public:
           inputConstitutiveType,
           inputDofNumber,
           rankOffset,
-          dummyMatrix.toViewConstSizes(),
-          dummyArray.toView() ),
+          CRSMatrixView< real64, globalIndex const >(),
+          arrayView1d< real64 >() ),
     m_sparsity( inputSparsity )
   {}
 
@@ -253,7 +253,7 @@ real64 fillSparsity( MeshLevel & mesh,
                                 >( mesh,
                                    targetRegions,
                                    discretizationName,
-                                   array1d< string >(),
+                                   arrayView1d< string const >(),
                                    inputDofNumber,
                                    rankOffset,
                                    inputSparsityPattern,

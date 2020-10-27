@@ -203,7 +203,7 @@ void FlowSolverBase::PrecomputeData( MeshLevel & mesh )
   forTargetSubRegions( mesh, [&]( localIndex const,
                                   ElementSubRegionBase & subRegion )
   {
-    arrayView2d< real64 const > const elemCenter = subRegion.getElementCenter();
+    arrayView2d< real64 const > const elemCenter = subRegion.getElementCenter().toViewConst();
 
     arrayView1d< real64 > const gravityCoef =
       subRegion.getReference< array1d< real64 > >( viewKeyStruct::gravityCoefString );

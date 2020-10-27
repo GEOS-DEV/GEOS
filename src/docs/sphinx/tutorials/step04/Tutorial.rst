@@ -51,6 +51,7 @@ The XML file considered here follows the typical structure of the GEOSX input fi
  #. :ref:`Constitutive <Constitutive_tag_dead_oil_bottom_layers_spe10>`
  #. :ref:`FieldSpecifications <FieldSpecifications_tag_dead_oil_bottom_layers_spe10>`
  #. :ref:`Outputs <Outputs_tag_dead_oil_bottom_layers_spe10>`
+ #. :ref:`Tasks <Tasks_tag_dead_oil_bottom_layers_spe10>`    
 
 .. _Solver_tag_dead_oil_bottom_layers_spe10:
 
@@ -154,8 +155,8 @@ block is not needed.
 Specifying events
 ------------------------
 
-In the **Events** XML block of this tutorial, we specify three types of **PeriodicEvents**
-serving different purposes: solver application, result output, and restart file generation.
+In the **Events** XML block of this tutorial, we specify five types of **PeriodicEvents**
+serving different purposes: solver application, result output, restart file generation, time history collection and output.
 
 The periodic event named ``solverApplications`` triggers the application of the solvers
 on their target regions. 
@@ -185,6 +186,10 @@ variables to their exact state at the chosen time, and continue the simulation f
 Here, the ``target`` attribute must contain the name defined in the **Restart** XML sub-block 
 of the **Output** XML block (here, ``restartOutput``).
 
+The time history collection events instruct GEOSX to collect the rates of each producing well at a given frequency.
+Using the ``target`` attribute, each collection event must point by name to a specific task defined in the **PackCollection** XML sub-block of the **Tasks** XML block discussed later (here, ``timeHistoryCollection1`` for the first well).
+
+Finally, the time history output events instruct GEOSX when to output (i.e., write to an HDF5 file) the data collected by the task mentioned above. The ``target`` attribute points to the **TimeHistory** sub-block of the **Outputs** block  (here, ``timeHistoryOutput1`` for the first well). 
 
 More information about events can be found at :ref:`EventManager`.
 
@@ -343,9 +348,9 @@ properties are initialized internally using the reservoir initial conditions.
 .. _Outputs_tag_dead_oil_bottom_layers_spe10:
 
 Specifying the output formats
-----------------------------------
+-------------------------------------
 
-In this section, we request an output of the results in VTK format and an output of the restart file.
+In this section, we request an output of the results in VTK format, an output of the restart file, and the output of the well rate history to four HDF5 files (one for each producer).
 Note that the names defined here must match the names used in the **Events** XML block to define the output frequency.
 
 .. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/benchmarks/SPE10/dead_oil_spe10_layers_83_84_85.xml
@@ -354,6 +359,22 @@ Note that the names defined here must match the names used in the **Events** XML
   :end-before: <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_OUTPUT_END -->
 
 
+.. _Tasks_tag_dead_oil_bottom_layers_spe10:
+
+Specifying tasks
+----------------------
+
+In the **Events** block, we have defined four events requesting that a task periodically collects the rate for each producing well.
+This task is defined here, in the **PackCollection** XML sub-block of the **Tasks** block.
+The task contains the path to the object on which the field to collect is registered (here, a ``WellElementSubRegion``) and the name of the field (here, ``wellElementMixtureConnectionRate``).
+The details of the history collection mechanism can be found in :ref:`TasksManager`. 
+
+.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/benchmarks/SPE10/dead_oil_spe10_layers_83_84_85.xml
+  :language: xml
+  :start-after: <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_TASKS -->
+  :end-before: <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_TASKS_END -->
+       
+	       
 All elements are now in place to run GEOSX.
 
 
@@ -450,7 +471,7 @@ Visualization of results
 
 A file compatible with Paraview is produced in this tutorial.
 It is found in the output folder, and usually has the extension `.pvd`.
-More details about this file format can be found here
+More details about this file format can be found
 `here <https://www.paraview.org/Wiki/ParaView/Data_formats#PVD_File_Format>`_.
 We can load this file into Paraview directly and visualize results:
 
@@ -461,6 +482,64 @@ We can load this file into Paraview directly and visualize results:
 
 .. |pic2| image:: saturation.gif
    :width: 45%
+
+Using the time series output by GEOSX, we can extract the well rates. The script
+and image below illustrate how to post-process the hdf5 file to extract and plot
+useful information. Note that the difference in rates shown below can be explained
+by the fact that two producers are located in high-permeability regions, while the
+two other producers are located in very low permeability regions. 
+
+.. plot::
+
+   import matplotlib
+   import matplotlib.pyplot as plt
+   import numpy as np
+   import h5py
+
+   def main():
+
+       numWells = 4
+       iplt = -1
+       cmap = plt.get_cmap("tab10")
+
+       # Loop over the four producers 
+       for iw in range(1,numWells+1):
+
+           # File path
+           hdf5FilePath = "wellRateHistory"+str(iw)+".hdf5"    
+
+           # Read HDF5
+           hf = h5py.File(hdf5FilePath, 'r')
+           time = hf.get('Time')
+           time = np.array(time)
+           massRate = hf.get('wellElementMixtureConnectionRate')
+           massRate = np.array(massRate)
+        
+           # Some comments about the computation of the volumetric rate here:
+           # A proper oil rate constraint for individual wells is currently being implemented
+           # In the meantime, the volume rate is (wrongly) computed by dividing
+           # the total mass rate by the surface oil density 
+        
+           # Conversions
+           inCubicMeters = 1/848.9
+           inDays = 1.0 / (24 * 3600)
+        
+           # Plot HDF5 content (here, the rate at the well)
+           iplt += 1
+           plt.semilogy(time[:,0]*inDays, abs(massRate[:,0])*inCubicMeters/inDays, '-o', color=cmap(iplt), label='Producer #'+str(iw))
+
+       plt.xlim( -1, 175)
+       plt.ylim( 0.01, 1000 )
+    
+       plt.grid()
+       plt.xlabel('time [days]')
+       plt.ylabel('total rate [cubic meters per day]')
+       plt.legend(bbox_to_anchor=(0.71, 0.975), loc='upper left', borderaxespad=0.)
+       plt.show()
+
+   if __name__ == "__main__":
+       main()
+
 
 ------------------------------------
 To go further

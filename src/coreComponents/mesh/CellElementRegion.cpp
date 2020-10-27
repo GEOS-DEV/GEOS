@@ -159,7 +159,7 @@ void CellElementRegion::GenerateAggregates( FaceManager const * const faceManage
   {
     arrayView1d< integer const > const ghostRank = elementSubRegion.ghostRank().toViewConst();
     localIndex const subRegionIndex = elementSubRegion.getIndexInParent();
-    arrayView2d< real64 const > const elemCenter = elementSubRegion.getElementCenter();
+    arrayView2d< real64 const > const elemCenter = elementSubRegion.getElementCenter().toViewConst();
 
     for( localIndex cellIndex = 0; cellIndex< elementSubRegion.size(); cellIndex++ )
     {
