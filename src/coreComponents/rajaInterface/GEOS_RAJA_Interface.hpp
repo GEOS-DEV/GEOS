@@ -43,6 +43,8 @@ using parallelHostAtomic = serialAtomic;
 
 #endif
 
+using parallelDeviceEvent = RAJA::resources::Event;
+
 #if defined(GEOSX_USE_CUDA)
 
 template< unsigned long BLOCK_SIZE = 256 >
@@ -114,11 +116,11 @@ RAJA_INLINE void forAll( const localIndex end, LAMBDA && body )
 }
 
 template< typename POLICY, typename RESOURCE, typename LAMBDA >
-RAJA_INLINE void forAll( RESOURCE && stream, const localIndex end, LAMBDA && body )
+RAJA_INLINE parallelDeviceEvent forAll( RESOURCE && stream, const localIndex end, LAMBDA && body )
 {
-  RAJA::forall< POLICY >( std::forward< RESOURCE >( stream ),
-                          RAJA::TypedRangeSegment< localIndex >( 0, end ),
-                          std::forward< LAMBDA >( body ) );
+  return RAJA::forall< POLICY >( std::forward< RESOURCE >( stream ),
+                                 RAJA::TypedRangeSegment< localIndex >( 0, end ),
+                                 std::forward< LAMBDA >( body ) );
 }
 
 } // namespace geosx

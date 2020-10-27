@@ -106,7 +106,7 @@ UnpackDataDevice( buffer_unit_type const * & buffer,
                   ArrayView< T, NDIM, USD > const & var )
 {
   parallelDeviceStream stream;
-  forAll< parallelDeviceAsync<> >( stream, var.size(), [=] GEOSX_DEVICE ( localIndex ii )
+  parallelDeviceEvent unpackEvent = forAll< parallelDeviceAsync<> >( stream, var.size(), [=] GEOSX_DEVICE ( localIndex ii )
   {
     var.data()[ ii ] = reinterpret_cast< const T * >( buffer )[ ii ];
   } );
@@ -181,7 +181,7 @@ UnpackDataByIndexDevice ( buffer_unit_type const * & buffer,
   buffer_unit_type const * devBuffer = buffer;
   localIndex unitSize = var.size() / var.size( 0 ) * sizeof(T);
   parallelDeviceStream stream;
-  forAll< parallelDeviceAsync<> >( stream, numIndices, [=] GEOSX_DEVICE ( localIndex const i )
+  parallelDeviceEvent unpackEvent = forAll< parallelDeviceAsync<> >( stream, numIndices, [=] GEOSX_DEVICE ( localIndex const i )
   {
     buffer_unit_type const * threadBuffer = devBuffer + i * unitSize;
     LvArray::forValuesInSlice( var[ indices[ i ] ], [&threadBuffer] GEOSX_DEVICE ( T & value )
