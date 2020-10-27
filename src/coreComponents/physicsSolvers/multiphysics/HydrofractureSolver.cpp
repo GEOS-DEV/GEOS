@@ -469,6 +469,7 @@ void HydrofractureSolver::SetupDofs( DomainPartition const & domain,
                                      DofManager & dofManager ) const
 {
   GEOSX_MARK_FUNCTION;
+
   m_solidSolver->SetupDofs( domain, dofManager );
   m_flowSolver->SetupDofs( domain, dofManager );
 
@@ -484,6 +485,7 @@ void HydrofractureSolver::SetupDofs( DomainPartition const & domain,
                           FlowSolverBase::viewKeyStruct::pressureString,
                           DofManager::Connector::Elem,
                           fractureRegions );
+
 }
 
 void HydrofractureSolver::SetupSystem( DomainPartition & domain,
@@ -499,6 +501,56 @@ void HydrofractureSolver::SetupSystem( DomainPartition & domain,
   m_flowSolver->ResetViews( mesh );
 
   SolverBase::SetupSystem( domain, dofManager, localMatrix, localRhs, localSolution, setSparsity );
+
+  std::unique_ptr< CRSMatrix< real64, localIndex > > &
+  derivativeFluxResidual_dAperture = m_flowSolver->getRefDerivativeFluxResidual_dAperture();
+
+  {
+    localIndex numRows = 0;
+    this->template forTargetSubRegions< FaceElementSubRegion, EmbeddedSurfaceSubRegion >( mesh, [&]( localIndex const,
+                                                                                                     auto const & elementSubRegion )
+    {
+      numRows += elementSubRegion.size();
+    } );
+
+    derivativeFluxResidual_dAperture = std::make_unique< CRSMatrix< real64, localIndex > >( numRows, numRows );
+    derivativeFluxResidual_dAperture->setName( this->getName() + "/derivativeFluxResidual_dAperture" );
+
+    derivativeFluxResidual_dAperture->reserveNonZeros( localMatrix.numNonZeros() );
+    localIndex maxRowSize = -1;
+    for( localIndex row = 0; row < localMatrix.numRows(); ++row )
+    {
+      localIndex const rowSize = localMatrix.numNonZeros( row );
+      maxRowSize = maxRowSize > rowSize ? maxRowSize : rowSize;
+    }
+    for( localIndex row = localMatrix.numRows(); row < numRows; ++row )
+    {
+      derivativeFluxResidual_dAperture->reserveNonZeros( row, maxRowSize );
+    }
+  }
+
+  string const presDofKey = dofManager.getKey( FlowSolverBase::viewKeyStruct::pressureString );
+
+  NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
+  FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
+  FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( this->getDiscretization() );
+
+  fluxApprox.forStencils< FaceElementStencil >( mesh, [&]( FaceElementStencil const & stencil )
+  {
+    for( localIndex iconn = 0; iconn < stencil.size(); ++iconn )
+    {
+      localIndex const numFluxElems = stencil.stencilSize( iconn );
+      typename FaceElementStencil::IndexContainerViewConstType const & sei = stencil.getElementIndices();
+
+      for( localIndex k0 = 0; k0 < numFluxElems; ++k0 )
+      {
+        for( localIndex k1 = 0; k1 < numFluxElems; ++k1 )
+        {
+          derivativeFluxResidual_dAperture->insertNonZero( sei[iconn][k0], sei[iconn][k1], 0.0 );
+        }
+      }
+    }
+  } );
 }
 
 void HydrofractureSolver::AssembleSystem( real64 const time,
@@ -517,6 +569,7 @@ void HydrofractureSolver::AssembleSystem( real64 const time,
                                  localMatrix,
                                  localRhs );
 
+  std::cout << "assembled solidSolver" << std::endl;
 
   m_flowSolver->ResetViews( *(domain.getMeshBody( 0 )->getMeshLevel( 0 ) ) );
 
@@ -528,9 +581,15 @@ void HydrofractureSolver::AssembleSystem( real64 const time,
                                 localRhs );
 
 
+  std::cout << "Assembled two solvers just fine" << std::endl;
+
   AssembleForceResidualDerivativeWrtPressure( domain, localMatrix, localRhs );
 
+  std::cout << "Assembled dRuDP" << std::endl;
+
   AssembleFluidMassResidualDerivativeWrtDisplacement( domain, localMatrix );
+
+  std::cout << "Assembled dRpDu" << std::endl;
 
 }
 
