@@ -525,9 +525,6 @@ void HyprePreconditioner::createMGR( DofManager const * const dofManager )
     // 2nd level: eliminate the rest of the densities
     // 3rd level: eliminate the cell-centered pressure
     // The coarse grid is the interface pressure system and is solved with BoomerAMG
-    //
-    // TODO:
-    // - Understand what I am doing
 
 
     HYPRE_Int numCellCenteredLabels = LvArray::integerConversion< HYPRE_Int >( numComponentsPerField[0] );
@@ -538,8 +535,8 @@ void HyprePreconditioner::createMGR( DofManager const * const dofManager )
     mgr_nlevels = 3;
 
     /* options for solvers at each level */
-    HYPRE_Int mgr_gsmooth_type = 16; // ILU(0)
-    HYPRE_Int mgr_num_gsmooth_sweeps = 1;
+    HYPRE_Int mgr_gsmooth_type = 16;
+    HYPRE_Int mgr_num_gsmooth_sweeps = 0;
 
     mgr_level_interp_type.resize( mgr_nlevels );
     mgr_level_interp_type[0] = 2;
@@ -549,17 +546,12 @@ void HyprePreconditioner::createMGR( DofManager const * const dofManager )
     mgr_level_frelax_method.resize( mgr_nlevels );
     mgr_level_frelax_method[0] = 0; // Jacobi
     mgr_level_frelax_method[1] = 0; // Jacobi
-    mgr_level_frelax_method[2] = 2; // TODO: understand the different possibilities here. Should I use an AMG V-cycle?
+    mgr_level_frelax_method[2] = 0; // Jacobi
 
     mgr_num_cindexes.resize( mgr_nlevels );
     mgr_num_cindexes[0] = mgr_bsize - 1; // eliminate the last density
     mgr_num_cindexes[1] = 2;             // eliminate all other densities
     mgr_num_cindexes[2] = 1;             // eliminate cell centered pressure
-
-    mgr_coarse_grid_method.resize( mgr_nlevels );
-    mgr_coarse_grid_method[0] = 1; //diagonal sparsification
-    mgr_coarse_grid_method[1] = 1; //diagonal sparsification
-    mgr_coarse_grid_method[2] = 0; //diagonal sparsification
 
     lv_cindexes.resize( mgr_nlevels );
     for( int cid=0; cid < mgr_bsize; cid++ )
@@ -607,10 +599,8 @@ void HyprePreconditioner::createMGR( DofManager const * const dofManager )
 
     GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetLevelFRelaxMethod( m_precond, mgr_level_frelax_method.data() ) );
     GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetNonCpointsToFpoints( m_precond, 1 ));
-    GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetPMaxElmts( m_precond, 15 ));
     GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetLevelInterpType( m_precond, mgr_level_interp_type.data() ) );
     GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetGlobalsmoothType( m_precond, mgr_gsmooth_type ) );
-    GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetCoarseGridMethod( m_precond, mgr_coarse_grid_method.data() ) );
     GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetMaxGlobalsmoothIters( m_precond, mgr_num_gsmooth_sweeps ) );
     GEOSX_LAI_CHECK_ERROR(
       HYPRE_MGRSetCoarseSolver( m_precond,
