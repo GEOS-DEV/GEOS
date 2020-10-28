@@ -762,7 +762,7 @@ void SolidMechanicsLagrangianFEM::CRSApplyTractionBC( real64 const time,
       array1d< real64 > resultsArray( targetSet.size() );
       resultsArray.setName( "SolidMechanicsLagrangianFEM::TractionBC function results" );
       function.Evaluate( &faceManager, time, targetSet, resultsArray );
-      arrayView1d< real64 const > const & results = resultsArray.toView();
+      arrayView1d< real64 const > const results = resultsArray.toViewConst();
 
       forAll< parallelDevicePolicy< 32 > >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const i )
       {
