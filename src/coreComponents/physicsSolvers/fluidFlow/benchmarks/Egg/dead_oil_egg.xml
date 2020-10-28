@@ -22,8 +22,7 @@
       <!-- Note that the direct solver is going to be quite slow -->
       <!-- This block will be updated when Hypre becomes the default  -->
       <LinearSolverParameters
-        solverType="direct"
-        logLevel="0"/>
+        solverType="direct"/>
     </CompositionalMultiphaseReservoir>
 
     <CompositionalMultiphaseFVM
@@ -535,23 +534,73 @@
         distanceFromHead="30"/>
     </InternalWell>
   </Mesh>
-
   <!-- SPHINX_TUT_DEAD_OIL_EGG_MESH_END -->
+
   <!-- SPHINX_TUT_DEAD_OIL_EGG_EVENTS -->
   <Events
     maxTime="1.5e7">
-    <PeriodicEvent
-      name="solverApplications"
-      target="/Solvers/coupledFlowAndWells"/>
 
     <PeriodicEvent
       name="vtk"
       timeFrequency="2e6"
       targetExactTimestep="1"
       target="/Outputs/vtkOutput"/>
-  </Events>
+   
+    <PeriodicEvent
+      name="timeHistoryOutput1"
+      timeFrequency="1.5e7"
+      targetExactTimestep="1"
+      target="/Outputs/timeHistoryOutput1" />
 
+    <PeriodicEvent
+      name="timeHistoryOutput2"
+      timeFrequency="1.5e7"
+      targetExactTimestep="1"
+      target="/Outputs/timeHistoryOutput2" />
+
+    <PeriodicEvent
+      name="timeHistoryOutput3"
+      timeFrequency="1.5e7"
+      targetExactTimestep="1"
+      target="/Outputs/timeHistoryOutput3" />
+    
+    <PeriodicEvent
+      name="timeHistoryOutput4"
+      timeFrequency="1.5e7"
+      targetExactTimestep="1"
+      target="/Outputs/timeHistoryOutput4" />
+
+    <PeriodicEvent
+      name="solverApplications"
+      target="/Solvers/coupledFlowAndWells"/>
+
+    <PeriodicEvent
+      name="timeHistoryCollection1"
+      timeFrequency="4e5"
+      targetExactTimestep="1"
+      target="/Tasks/wellRateCollection1" />
+
+    <PeriodicEvent
+      name="timeHistoryCollection2"
+      timeFrequency="4e5"
+      targetExactTimestep="1"
+      target="/Tasks/wellRateCollection2" />
+
+    <PeriodicEvent
+      name="timeHistoryCollection3"
+      timeFrequency="4e5"
+      targetExactTimestep="1"
+      target="/Tasks/wellRateCollection3" />
+
+    <PeriodicEvent
+      name="timeHistoryCollection4"
+      timeFrequency="4e5"
+      targetExactTimestep="1"
+      target="/Tasks/wellRateCollection4" />
+    
+  </Events>
   <!-- SPHINX_TUT_DEAD_OIL_EGG_EVENTS_END -->
+  
   <!-- SPHINX_TUT_DEAD_OIL_EGG_NUMERICAL_METHODS -->
   <NumericalMethods>
     <FiniteVolume>
@@ -618,8 +667,8 @@
       name="wellRegion12"
       materialList="{ fluid, relperm }"/>
   </ElementRegions>
-
   <!-- SPHINX_TUT_DEAD_OIL_EGG_ELEMENT_REGIONS_END -->
+  
   <!-- SPHINX_TUT_DEAD_OIL_EGG_CONSTITUTIVE -->
   <Constitutive>
     <BlackOilFluid
@@ -642,8 +691,8 @@
       referencePressure="0"
       compressibility="1e-13"/>
   </Constitutive>
-
   <!-- SPHINX_TUT_DEAD_OIL_EGG_CONSTITUTIVE_END -->
+  
   <!-- SPHINX_TUT_DEAD_OIL_EGG_FIELD_SPECS -->
   <FieldSpecifications>
     <FieldSpecification
@@ -689,13 +738,57 @@
       component="2"
       scale="0.0"/>
   </FieldSpecifications>
-
   <!-- SPHINX_TUT_DEAD_OIL_EGG_FIELD_SPECS_END -->
+  
   <!-- SPHINX_TUT_DEAD_OIL_EGG_OUTPUT -->
   <Outputs>
     <VTK
       name="vtkOutput"/>
-  </Outputs>
 
+    <TimeHistory
+      name="timeHistoryOutput1"
+      sources="{/Tasks/wellRateCollection1}"
+      filename="wellRateHistory1" />
+
+    <TimeHistory
+      name="timeHistoryOutput2"
+      sources="{/Tasks/wellRateCollection2}"
+      filename="wellRateHistory2" />
+
+    <TimeHistory
+      name="timeHistoryOutput3"
+      sources="{/Tasks/wellRateCollection3}"
+      filename="wellRateHistory3" />
+
+    <TimeHistory
+      name="timeHistoryOutput4"
+      sources="{/Tasks/wellRateCollection4}"
+      filename="wellRateHistory4" />
+    
+  </Outputs>
   <!-- SPHINX_TUT_DEAD_OIL_EGG_OUTPUT_END -->
+  
+  <!-- SPHINX_TUT_DEAD_OIL_EGG_TASKS -->
+  <Tasks>
+    
+    <PackCollection
+      name="wellRateCollection1"
+      objectPath="ElementRegions/wellRegion1/wellRegion1uniqueSubRegion"
+      fieldName="wellElementMixtureConnectionRate" />
+    <PackCollection
+      name="wellRateCollection2"
+      objectPath="ElementRegions/wellRegion2/wellRegion2uniqueSubRegion"
+      fieldName="wellElementMixtureConnectionRate" />
+    <PackCollection
+      name="wellRateCollection3"
+      objectPath="ElementRegions/wellRegion3/wellRegion3uniqueSubRegion"
+      fieldName="wellElementMixtureConnectionRate" />
+    <PackCollection
+      name="wellRateCollection4"
+      objectPath="ElementRegions/wellRegion4/wellRegion4uniqueSubRegion"
+      fieldName="wellElementMixtureConnectionRate" />
+    
+  </Tasks>
+  <!-- SPHINX_TUT_DEAD_OIL_EGG_TASKS_END -->
+  
 </Problem>
