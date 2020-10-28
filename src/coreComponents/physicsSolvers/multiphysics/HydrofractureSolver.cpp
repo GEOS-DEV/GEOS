@@ -591,14 +591,17 @@ void HydrofractureSolver::addFluxApertureCouplingNNZ( DomainPartition & domain,
         globalIndex const activeFlowDOF = faceElementDofNumber[sei[iconn][k0]];
         globalIndex const rowNumber = activeFlowDOF - rankOffset;
 
-        for( localIndex k1=0; k1<numFluxElems; ++k1 )
+        if( rowNumber >= 0 && rowNumber < rowLengths.size() )
         {
-          // The coupling with the nodal displacements of the cell itself have already been added by the dofManager
-          // so I only add the coupling with the nodal displacements of the neighbours.
-          if( k1 != k0 )
+          for( localIndex k1=0; k1<numFluxElems; ++k1 )
           {
-            localIndex const numNodesPerElement = elemsToNodes[sei[iconn][k1]].size();
-            rowLengths[rowNumber] += 3*numNodesPerElement;
+            // The coupling with the nodal displacements of the cell itself have already been added by the dofManager
+            // so I only add the coupling with the nodal displacements of the neighbours.
+            if( k1 != k0 )
+            {
+              localIndex const numNodesPerElement = elemsToNodes[sei[iconn][k1]].size();
+              rowLengths[rowNumber] += 3*numNodesPerElement;
+            }
           }
         }
       }
@@ -652,20 +655,23 @@ void HydrofractureSolver::addFluxApertureCouplingSparsityPattern( DomainPartitio
 
         globalIndex const rowIndex = activeFlowDOF - rankOffset;
 
-        for( localIndex k1=0; k1<numFluxElems; ++k1 )
+        if( rowIndex >= 0 && rowIndex < pattern.numRows() )
         {
-          // The coupling with the nodal displacements of the cell itself have already been added by the dofManager
-          // so I only add the coupling with the nodal displacements of the neighbours.
-          if( k1 != k0 )
+          for( localIndex k1=0; k1<numFluxElems; ++k1 )
           {
-            localIndex const numNodesPerElement = elemsToNodes[sei[iconn][k1]].size();
-
-            for( localIndex a=0; a<numNodesPerElement; ++a )
+            // The coupling with the nodal displacements of the cell itself have already been added by the dofManager
+            // so I only add the coupling with the nodal displacements of the neighbours.
+            if( k1 != k0 )
             {
-              for( int d=0; d<3; ++d )
+              localIndex const numNodesPerElement = elemsToNodes[sei[iconn][k1]].size();
+
+              for( localIndex a=0; a<numNodesPerElement; ++a )
               {
-                globalIndex const colIndex = dispDofNumber[elemsToNodes[sei[iconn][k1]][a]] + d;
-                pattern.insertNonZero( rowIndex, colIndex );
+                for( int d=0; d<3; ++d )
+                {
+                  globalIndex const colIndex = dispDofNumber[elemsToNodes[sei[iconn][k1]][a]] + d;
+                  pattern.insertNonZero( rowIndex, colIndex );
+                }
               }
             }
           }
@@ -954,10 +960,14 @@ HydrofractureSolver::
               }
             }
           }
-          localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( elemDOF - rankOffset,
-                                                                            nodeDOF,
-                                                                            dRdU.data(),
-                                                                            2 * numNodesPerFace * 3 );
+          globalIndex rowNumber = elemDOF - rankOffset;
+          if( rowNumber >= 0  && rowNumber < localMatrix.numRows() )
+          {
+            localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( rowNumber,
+                                                                              nodeDOF,
+                                                                              dRdU.data(),
+                                                                              2 * numNodesPerFace * 3 );
+          }
         }
 
         // flux derivative
@@ -985,10 +995,14 @@ HydrofractureSolver::
               }
             }
           }
-          localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( elemDOF - rankOffset,
-                                                                            nodeDOF,
-                                                                            dRdU.data(),
-                                                                            2 * numNodesPerFace * 3 );
+          globalIndex rowNumber = elemDOF - rankOffset;
+          if( rowNumber >= 0 && rowNumber < localMatrix.numRows() )
+          {
+            localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( rowNumber,
+                                                                              nodeDOF,
+                                                                              dRdU.data(),
+                                                                              2 * numNodesPerFace * 3 );
+          }
         }
       }
     } );
