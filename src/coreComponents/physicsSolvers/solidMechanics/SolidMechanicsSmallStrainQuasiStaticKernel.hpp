@@ -18,7 +18,6 @@
 
 #ifndef GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_SOLIDMECHANICSSMALLSTRAINQUASISTATIC_HPP_
 #define GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_SOLIDMECHANICSSMALLSTRAINQUASISTATIC_HPP_
-
 #include "finiteElement/kernelInterface/ImplicitKernelBase.hpp"
 
 namespace geosx
@@ -266,39 +265,53 @@ public:
       for( localIndex b=0; b<numNodesPerElem; ++b )
       {
         real64 const (&c)[6][6] = stack.constitutiveStiffness;
-        stack.localJacobian[ a*3+0 ][ b*3+0 ] -= ( c[0][0]*m_dNdX( k, q, a, 0 )*m_dNdX( k, q, b, 0 ) +
-                                                   c[5][5]*m_dNdX( k, q, a, 1 )*m_dNdX( k, q, b, 1 ) +
-                                                   c[4][4]*m_dNdX( k, q, a, 2 )*m_dNdX( k, q, b, 2 ) ) * m_detJ( k, q );
 
-        stack.localJacobian[ a*3+0 ][ b*3+1 ] -= ( c[5][5]*m_dNdX( k, q, a, 1 )*m_dNdX( k, q, b, 0 ) +
-                                                   c[0][1]*m_dNdX( k, q, a, 0 )*m_dNdX( k, q, b, 1 ) ) * m_detJ( k, q );
+	real64 const gradNa_gradNb[3][3] =
+	  { { m_dNdX( k, q, a, 0 ) * m_dNdX( k, q, b, 0 ), m_dNdX( k, q, a, 0 ) * m_dNdX( k, q, b, 1 ), m_dNdX( k, q, a, 0 ) * m_dNdX( k, q, b, 2 ) },
+	    { m_dNdX( k, q, a, 1 ) * m_dNdX( k, q, b, 0 ), m_dNdX( k, q, a, 1 ) * m_dNdX( k, q, b, 1 ), m_dNdX( k, q, a, 1 ) * m_dNdX( k, q, b, 2 ) },
+	    { m_dNdX( k, q, a, 2 ) * m_dNdX( k, q, b, 0 ), m_dNdX( k, q, a, 2 ) * m_dNdX( k, q, b, 1 ), m_dNdX( k, q, a, 2 ) * m_dNdX( k, q, b, 2 ) } };
+	
+        stack.localJacobian[a*3+0][b*3+0] = stack.localJacobian[a*3+0][b*3+0] -
+                                       (c[0][0] * gradNa_gradNb[0][0] + c[0][5] * gradNa_gradNb[0][1] + c[0][4] * gradNa_gradNb[0][2] +
+                                        c[5][0] * gradNa_gradNb[1][0] + c[5][5] * gradNa_gradNb[1][1] + c[5][4] * gradNa_gradNb[1][2] +
+                                        c[4][0] * gradNa_gradNb[2][0] + c[4][5] * gradNa_gradNb[2][1] + c[4][4] * gradNa_gradNb[2][2] ) * m_detJ( k,q );
+        stack.localJacobian[a*3+0][b*3+1] = stack.localJacobian[a*3+0][b*3+1] -
+                                       (c[0][5] * gradNa_gradNb[0][0] + c[0][1] * gradNa_gradNb[0][1] + c[0][3] * gradNa_gradNb[0][2] +
+                                        c[5][5] * gradNa_gradNb[1][0] + c[5][1] * gradNa_gradNb[1][1] + c[5][3] * gradNa_gradNb[1][2] +
+                                        c[4][5] * gradNa_gradNb[2][0] + c[4][1] * gradNa_gradNb[2][1] + c[4][3] * gradNa_gradNb[2][2] ) * m_detJ( k,q );
+	stack.localJacobian[a*3+0][b*3+2] = stack.localJacobian[a*3+0][b*3+2] -
+                                       (c[0][4] * gradNa_gradNb[0][0] + c[0][3] * gradNa_gradNb[0][1] + c[0][2] * gradNa_gradNb[0][2] +
+                                        c[5][4] * gradNa_gradNb[1][0] + c[5][3] * gradNa_gradNb[1][1] + c[5][2] * gradNa_gradNb[1][2] +
+                                        c[4][4] * gradNa_gradNb[2][0] + c[4][3] * gradNa_gradNb[2][1] + c[4][2] * gradNa_gradNb[2][2] ) * m_detJ( k,q );
+	stack.localJacobian[a*3+1][b*3+0] = stack.localJacobian[a*3+1][b*3+0] -
+                                       (c[5][0] * gradNa_gradNb[0][0] + c[5][5] * gradNa_gradNb[0][1] + c[5][4] * gradNa_gradNb[0][2] +
+                                        c[1][0] * gradNa_gradNb[1][0] + c[1][5] * gradNa_gradNb[1][1] + c[1][4] * gradNa_gradNb[1][2] +
+                                        c[3][0] * gradNa_gradNb[2][0] + c[3][5] * gradNa_gradNb[2][1] + c[3][4] * gradNa_gradNb[2][2] ) * m_detJ( k,q );
+	stack.localJacobian[a*3+1][b*3+1] = stack.localJacobian[a*3+1][b*3+1] -
+                                       (c[5][5] * gradNa_gradNb[0][0] + c[5][1] * gradNa_gradNb[0][1] + c[5][3] * gradNa_gradNb[0][2] +
+                                        c[1][5] * gradNa_gradNb[1][0] + c[1][1] * gradNa_gradNb[1][1] + c[1][3] * gradNa_gradNb[1][2] +
+                                        c[3][5] * gradNa_gradNb[2][0] + c[3][1] * gradNa_gradNb[2][1] + c[3][3] * gradNa_gradNb[2][2] ) * m_detJ( k,q );
+	stack.localJacobian[a*3+1][b*3+2] = stack.localJacobian[a*3+1][b*3+2] -
+                                       (c[5][4] * gradNa_gradNb[0][0] + c[5][3] * gradNa_gradNb[0][1] + c[5][2] * gradNa_gradNb[0][2] +
+                                        c[1][4] * gradNa_gradNb[1][0] + c[1][3] * gradNa_gradNb[1][1] + c[1][2] * gradNa_gradNb[1][2] +
+                                        c[3][4] * gradNa_gradNb[2][0] + c[3][3] * gradNa_gradNb[2][1] + c[3][2] * gradNa_gradNb[2][2] ) * m_detJ( k,q );
+	stack.localJacobian[a*3+2][b*3+0] = stack.localJacobian[a*3+2][b*3+0] -
+                                       (c[4][0] * gradNa_gradNb[0][0] + c[4][5] * gradNa_gradNb[0][1] + c[4][4] * gradNa_gradNb[0][2] +
+                                        c[3][0] * gradNa_gradNb[1][0] + c[3][5] * gradNa_gradNb[1][1] + c[3][4] * gradNa_gradNb[1][2] +
+                                        c[2][0] * gradNa_gradNb[2][0] + c[2][5] * gradNa_gradNb[2][1] + c[2][4] * gradNa_gradNb[2][2] ) * m_detJ( k,q );
+	stack.localJacobian[a*3+2][b*3+1] = stack.localJacobian[a*3+2][b*3+1] -
+                                       (c[4][5] * gradNa_gradNb[0][0] + c[4][1] * gradNa_gradNb[0][1] + c[4][3] * gradNa_gradNb[0][2] +
+                                        c[3][5] * gradNa_gradNb[1][0] + c[3][1] * gradNa_gradNb[1][1] + c[3][3] * gradNa_gradNb[1][2] +
+                                        c[2][5] * gradNa_gradNb[2][0] + c[2][1] * gradNa_gradNb[2][1] + c[2][3] * gradNa_gradNb[2][2] ) * m_detJ( k,q );
+	stack.localJacobian[a*3+2][b*3+2] = stack.localJacobian[a*3+2][b*3+2] -
+                                       (c[4][4] * gradNa_gradNb[0][0] + c[4][3] * gradNa_gradNb[0][1] + c[4][2] * gradNa_gradNb[0][2] +
+                                        c[3][4] * gradNa_gradNb[1][0] + c[3][3] * gradNa_gradNb[1][1] + c[3][2] * gradNa_gradNb[1][2] +
+                                        c[2][4] * gradNa_gradNb[2][0] + c[2][3] * gradNa_gradNb[2][1] + c[2][2] * gradNa_gradNb[2][2] ) * m_detJ( k,q );
 
-        stack.localJacobian[ a*3+0 ][ b*3+2 ] -= ( c[4][4]*m_dNdX( k, q, a, 2 )*m_dNdX( k, q, b, 0 ) +
-                                                   c[0][2]*m_dNdX( k, q, a, 0 )*m_dNdX( k, q, b, 2 ) ) * m_detJ( k, q );
-
-        stack.localJacobian[ a*3+1 ][ b*3+1 ] -= ( c[5][5]*m_dNdX( k, q, a, 0 )*m_dNdX( k, q, b, 0 ) +
-                                                   c[1][1]*m_dNdX( k, q, a, 1 )*m_dNdX( k, q, b, 1 ) +
-                                                   c[3][3]*m_dNdX( k, q, a, 2 )*m_dNdX( k, q, b, 2 ) ) * m_detJ( k, q );
-
-        stack.localJacobian[ a*3+1 ][ b*3+0 ] -= ( c[0][1]*m_dNdX( k, q, a, 1 )*m_dNdX( k, q, b, 0 ) +
-                                                   c[5][5]*m_dNdX( k, q, a, 0 )*m_dNdX( k, q, b, 1 ) ) * m_detJ( k, q );
-
-        stack.localJacobian[ a*3+1 ][ b*3+2 ] -= ( c[3][3]*m_dNdX( k, q, a, 2 )*m_dNdX( k, q, b, 1 ) +
-                                                   c[1][2]*m_dNdX( k, q, a, 1 )*m_dNdX( k, q, b, 2 ) ) * m_detJ( k, q );
-
-        stack.localJacobian[ a*3+2 ][ b*3+0 ] -= ( c[0][2]*m_dNdX( k, q, a, 2 )*m_dNdX( k, q, b, 0 ) +
-                                                   c[4][4]*m_dNdX( k, q, a, 0 )*m_dNdX( k, q, b, 2 ) ) * m_detJ( k, q );
-
-        stack.localJacobian[ a*3+2 ][ b*3+1 ] -= ( c[1][2]*m_dNdX( k, q, a, 2 )*m_dNdX( k, q, b, 1 ) +
-                                                   c[3][3]*m_dNdX( k, q, a, 1 )*m_dNdX( k, q, b, 2 ) ) * m_detJ( k, q );
-
-        stack.localJacobian[ a*3+2 ][ b*3+2 ] -= ( c[4][4]*m_dNdX( k, q, a, 0 )*m_dNdX( k, q, b, 0 ) +
-                                                   c[3][3]*m_dNdX( k, q, a, 1 )*m_dNdX( k, q, b, 1 ) +
-                                                   c[2][2]*m_dNdX( k, q, a, 2 )*m_dNdX( k, q, b, 2 ) ) * m_detJ( k, q );
-
-        dynamicsTerms( a, b );
+	dynamicsTerms( a, b );
       }
     }
+    
   }
 
   /**

@@ -1,5 +1,5 @@
 /*
- * ------------------------------------------------------------------------------------------------------------
+0;10;1c * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
@@ -31,7 +31,7 @@ namespace geosx
 GEOSX_HOST_DEVICE inline
 void PositivePartOfTensor( real64 (&eigs)[3], real64 (&eigvecs)[3][3], real64 (&positivePart)[6] )
 {
-  real64 positiveEigs[6];
+  real64 positiveEigs[6]={};
   for (int i=0; i < 3; i++)
     {
       positiveEigs[i] = std::max(0.0, eigs[i]); 
@@ -42,7 +42,7 @@ void PositivePartOfTensor( real64 (&eigs)[3], real64 (&eigvecs)[3][3], real64 (&
 GEOSX_HOST_DEVICE inline
 void NegativePartOfTensor( real64 (&eigs)[3], real64 (&eigvecs)[3][3], real64 (&negativePart)[6] )
 {
-  real64 negativeEigs[6];
+  real64 negativeEigs[6]={};
   for (int i=0; i < 3; i++)
     {
       negativeEigs[i] = std::min(0.0, eigs[i]); 
@@ -145,6 +145,9 @@ int voigt(int voigtIndex, int pairIndex)
 GEOSX_HOST_DEVICE inline
 real64 heaviside(real64 x)
 {
+  if (std::abs(x) < 1e-12) {
+    return 0.5;
+  }
   if (x > 0) {
     return 1;
   }
@@ -158,7 +161,7 @@ real64 heaviside(real64 x)
 GEOSX_HOST_DEVICE inline
 void QTensor( real64 (&eigvector)[3], real64 (&Q)[6][6] )
 {
-  real64 M[3][3];
+  real64 M[3][3]={};
   LvArray::tensorOps::AiBj<3,3>(M, eigvector, eigvector);
   for (int i = 0; i<6; i++)
   {
@@ -172,8 +175,8 @@ void QTensor( real64 (&eigvector)[3], real64 (&Q)[6][6] )
 GEOSX_HOST_DEVICE inline
 void GTensor( real64 (&eigvec1)[3], real64 (&eigvec2)[3], real64 (&G)[6][6] )
 {
-  real64 M1[3][3];
-  real64 M2[3][3];
+  real64 M1[3][3]={};
+  real64 M2[3][3]={};
   LvArray::tensorOps::AiBj<3,3>(M1, eigvec1, eigvec1);
   LvArray::tensorOps::AiBj<3,3>(M2, eigvec2, eigvec2);
   for (int i = 0; i<6; i++)
@@ -190,20 +193,20 @@ void PositiveProjectorTensor( real64 (&eigs)[3], real64 (&eigvecs)[3][3], real64
 {
   //test for repeated eigenvalues
   bool repeatedEigenvalues = false;
-  real64 tol = 1e-8;
+  real64 tol = 1e-12;
   if ( std::abs(eigs[0] - eigs[1]) < tol || std::abs(eigs[0]-eigs[2]) < tol || std::abs(eigs[1]-eigs[2]) < tol ) {
     repeatedEigenvalues = true;
   }
 
   //init QVoigt
-  real64 Qi[6][6];
+  real64 Qi[6][6] = {};
   //init GVoigt
-  real64 Gsym[6][6];
-  real64 Gji[6][6];
+  real64 Gsym[6][6] = {};
+  real64 Gji[6][6] = {};
 
   //compute projector
   for (int i = 0; i < 3; i++){
-    real64 ithEigenVector[3];
+    real64 ithEigenVector[3] = {};
     ithEigenVector[0]=eigvecs[0][i];
     ithEigenVector[1]=eigvecs[1][i];
     ithEigenVector[2]=eigvecs[2][i];
@@ -216,7 +219,7 @@ void PositiveProjectorTensor( real64 (&eigs)[3], real64 (&eigvecs)[3][3], real64
     if (!repeatedEigenvalues) { 
 
       for(int j = 0; j < 3; j++){
-	real64 jthEigenVector[3];
+	real64 jthEigenVector[3]={};
 	jthEigenVector[0]=eigvecs[0][j];
         jthEigenVector[1]=eigvecs[1][j];
         jthEigenVector[2]=eigvecs[2][j];
@@ -234,7 +237,7 @@ void PositiveProjectorTensor( real64 (&eigs)[3], real64 (&eigvecs)[3][3], real64
     }
     else {
       for(int j = 0; j < 3; j++){
-	real64 jthEigenVector[3];
+	real64 jthEigenVector[3]={};
 	jthEigenVector[0]=eigvecs[0][j];
         jthEigenVector[1]=eigvecs[1][j];
         jthEigenVector[2]=eigvecs[2][j];
@@ -259,20 +262,20 @@ void NegativeProjectorTensor( real64 (&eigs)[3], real64 (&eigvecs)[3][3], real64
 {
   //test for repeated eigenvalues
   bool repeatedEigenvalues = false;
-  real64 tol = 1e-8;
+  real64 tol = 1e-12;
   if ( std::abs(eigs[0] - eigs[1]) < tol || std::abs(eigs[0]-eigs[2]) < tol || std::abs(eigs[1]-eigs[2]) < tol ) {
     repeatedEigenvalues = true;
   }
 
   //init QVoigt
-  real64 Qi[6][6];
+  real64 Qi[6][6] = {};
   //init GVoigt
-  real64 Gsym[6][6];
-  real64 Gji[6][6];
+  real64 Gsym[6][6] = {};
+  real64 Gji[6][6] = {};
 
   //compute projector
   for (int i = 0; i < 3; i++){
-    real64 ithEigenVector[3];
+    real64 ithEigenVector[3] = {};
     ithEigenVector[0]=eigvecs[0][i];
     ithEigenVector[1]=eigvecs[1][i];
     ithEigenVector[2]=eigvecs[2][i];
@@ -285,7 +288,7 @@ void NegativeProjectorTensor( real64 (&eigs)[3], real64 (&eigvecs)[3][3], real64
     if (!repeatedEigenvalues) { 
 
       for(int j = 0; j < 3; j++){
-	real64 jthEigenVector[3];
+	real64 jthEigenVector[3] = {};
 	jthEigenVector[0]=eigvecs[0][j];
         jthEigenVector[1]=eigvecs[1][j];
         jthEigenVector[2]=eigvecs[2][j];
@@ -303,7 +306,7 @@ void NegativeProjectorTensor( real64 (&eigs)[3], real64 (&eigvecs)[3][3], real64
     }
     else {
       for(int j = 0; j < 3; j++){
-	real64 jthEigenVector[3];
+	real64 jthEigenVector[3] = {};
 	jthEigenVector[0]=eigvecs[0][j];
         jthEigenVector[1]=eigvecs[1][j];
         jthEigenVector[2]=eigvecs[2][j];

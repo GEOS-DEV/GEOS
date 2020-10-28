@@ -147,15 +147,11 @@
     <!-- These are example mathpresso functions.  In order to use them, you need to specify the order that the
     symbolic math function should expect the variables to be given, and an expression that it will compile.
     A list of available functions is given here: https://github.com/kobalicek/mathpresso -->
-    <!-- <SymbolicFunction name="f_b" -->
-    <!--                   inputVarNames="{time}" -->
-    <!--                   variableNames="{t}" -->
-    <!--                   expression="t-0.5"/> -->
 
     <TableFunction name="f_b"
 		   inputVarNames="{time}"
-		   coordinates="0 885"
-		   values = "-0.5 884.5"/>
+		   coordinates="{0, 130}"
+		   values = "{-0.5, 129.5}"/>
   </Functions>
   <Outputs>
     <Silo name="DamageAndLoad_SiloOutput" parallelThreads="1" plotFileRoot="plot"/>

@@ -89,6 +89,7 @@ public:
   virtual real64 GetDegradationValue( localIndex const k,
                                       localIndex const q ) const
   {
+    //std::cout<<"Quadratic degradation"<<std::endl;
     return (1 - m_damage( k, q ))*(1 - m_damage( k, q ));
   }
 
@@ -96,6 +97,7 @@ public:
   GEOSX_HOST_DEVICE
   virtual real64 GetDegradationDerivative( real64 const d ) const
   {
+    //std::cout<<"Quadratic derivative"<<std::endl;
     return -2*(1 - d);
   }
 
@@ -103,6 +105,7 @@ public:
   GEOSX_HOST_DEVICE
   virtual real64 GetDegradationSecondDerivative( real64 const d ) const
   {
+    //std::cout<<"Quadratic 2nd derivative"<<std::endl;
     return 2 * (d - d + 1);
   }
   #endif
@@ -132,10 +135,10 @@ public:
   {
     real64 const sed = UPDATE_BASE::calculateStrainEnergyDensity( k, q );
 
-    //if( sed > m_strainEnergyDensity( k, q ) )
-    //{
-    m_strainEnergyDensity( k, q ) = sed;
-      //}
+    if( sed > m_strainEnergyDensity( k, q ) )
+    {
+      m_strainEnergyDensity( k, q ) = sed;
+    }
 
     return m_strainEnergyDensity( k, q );
   }
