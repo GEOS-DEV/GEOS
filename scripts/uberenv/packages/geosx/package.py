@@ -101,7 +101,7 @@ class Geosx(CMakePackage, CudaPackage):
     depends_on('silo@4.10: ~fortran +shared ~silex +pic +mpi ~zlib')
 
     depends_on('adiak@0.2: +mpi +shared', when='+caliper')
-    depends_on('caliper@2.4: +shared +adiak +mpi ~callpath ~papi ~libpfm ~gotcha ~sampler', when='+caliper')
+    depends_on('caliper@2.4: +shared +adiak +mpi ~callpath ~libpfm ~gotcha ~sampler', when='+caliper')
 
     depends_on('pugixml@1.8: +shared')
 
