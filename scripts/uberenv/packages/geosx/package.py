@@ -366,8 +366,7 @@ class Geosx(CMakePackage, CudaPackage):
                 cfg.write(cmake_cache_entry('ESSL_INCLUDE_DIRS', spec['essl'].prefix.include))
                 cfg.write(cmake_cache_list('ESSL_LIBRARIES', spec['essl'].libs + spec['cuda'].libs))
 
-                if spack_f77.endswith('xlf') or spack_f77.endswith('xlf_r'):
-                    cfg.write(cmake_cache_option('FORTRAN_MANGLE_NO_UNDERSCORE', True))
+                cfg.write(cmake_cache_option('FORTRAN_MANGLE_NO_UNDERSCORE', True))
             else:
                 cfg.write(cmake_cache_list('BLAS_LIBRARIES', spec['blas'].libs))
                 cfg.write(cmake_cache_list('LAPACK_LIBRARIES', spec['lapack'].libs))
