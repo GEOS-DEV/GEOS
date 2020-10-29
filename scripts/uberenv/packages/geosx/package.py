@@ -13,8 +13,10 @@ from os import environ as env
 from os.path import join as pjoin
 
 
-# reset; ./scripts/uberenv/uberenv.py --spec="%gcc@8.3.1 +mkl ^chai@master"
-# reset; ./scripts/uberenv/uberenv.py --spec="%clang@10.0.1 +mkl ^chai@master"
+# ./scripts/uberenv/uberenv.py --spec="%clang@10.0.1 +mkl ^chai@master"
+
+# PETSC doesn't compile on Lassen
+# ./scripts/uberenv/uberenv.py --spec="%gcc +essl ~petsc +cuda cuda_arch=70 ^cuda@10.1.243 ^raja cuda_arch=70 ^umpire cuda_arch=70 ^chai@master cuda_arch=70 ^caliper~papi"
 
 def cmake_cache_entry(name, value, comment=""):
     """Generate a string for a cmake cache variable"""
@@ -110,14 +112,15 @@ class Geosx(CMakePackage, CudaPackage):
     #
     depends_on('intel-mkl +shared ~ilp64', when='+mkl')
 
-    depends_on('essl ~ilp64 threads=openmp +lapack', when='+essl')
-    depends_on('essl +cuda', when='+essl+cuda')
+    # depends_on('essl ~ilp64 threads=openmp +lapack +cuda', when='+essl')
 
     depends_on('parmetis@4.0.3: +shared +int64')
-    depends_on('superlu-dist@6.3: +int64 +openmp +shared', when='~petsc')
+
+    depends_on('superlu-dist +int64 +openmp +shared', when='~petsc')
     depends_on('superlu-dist@6.3.0 +int64 +openmp +shared', when='+petsc')
 
-    depends_on('suite-sparse@5.7.2: +pic +openmp', when='+suite-sparse')
+    depends_on('suite-sparse@5.8.1: +pic +openmp +amd +camd +colamd +ccolamd +cholmod +umfpack', when='+suite-sparse')
+    depends_on('suite-sparse@5.8.1: +blas-no-underscore', when='%gcc +suite-sparse +essl')
 
     trilinos_build_options = '~fortran +openmp +shared'
     trilinos_tpls = '~boost ~glm ~gtest ~hdf5 ~hypre ~matio ~metis +mpi ~mumps ~netcdf ~suite-sparse'
@@ -361,6 +364,9 @@ class Geosx(CMakePackage, CudaPackage):
                 cfg.write(cmake_cache_option('ENABLE_ESSL', True))
                 cfg.write(cmake_cache_entry('ESSL_INCLUDE_DIRS', spec['essl'].prefix.include))
                 cfg.write(cmake_cache_list('ESSL_LIBRARIES', spec['essl'].libs + spec['cuda'].libs))
+
+                if spack_f77.endswith('xlf') or spack_f77.endswith('xlf_r'):
+                    cfg.write(cmake_cache_option('FORTRAN_MANGLE_NO_UNDERSCORE', True))
             else:
                 cfg.write(cmake_cache_list('BLAS_LIBRARIES', spec['blas'].libs))
                 cfg.write(cmake_cache_list('LAPACK_LIBRARIES', spec['lapack'].libs))
