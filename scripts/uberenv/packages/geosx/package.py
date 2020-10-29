@@ -120,12 +120,13 @@ class Geosx(CMakePackage, CudaPackage):
     depends_on('superlu-dist@6.3.0 +int64 +openmp +shared', when='+petsc')
 
     depends_on('suite-sparse@5.8.1: +pic +openmp +amd +camd +colamd +ccolamd +cholmod +umfpack', when='+suite-sparse')
-    depends_on('suite-sparse@5.8.1: +blas-no-underscore', when='%gcc +suite-sparse +essl')
+    depends_on('suite-sparse +blas-no-underscore', when='%gcc +suite-sparse +essl')
 
     trilinos_build_options = '~fortran +openmp +shared'
     trilinos_tpls = '~boost ~glm ~gtest ~hdf5 ~hypre ~matio ~metis +mpi ~mumps ~netcdf ~suite-sparse'
     trilinos_packages = '+amesos +aztec +epetra +epetraext +ifpack +kokkos +ml +stk +stratimikos +teuchos +tpetra ~amesos2 ~anasazi ~belos ~exodus ~ifpack2 ~muelu ~sacado ~zoltan ~zoltan2'
     depends_on('trilinos@12.18.1: ' + trilinos_build_options + trilinos_tpls + trilinos_packages, when='+trilinos')
+    depends_on('trilinos +blas_lowercase_no_underscore', when='+trilinos +essl')
 
     depends_on('hypre@2.20.0: +shared +superlu-dist +mixedint +mpi +openmp', when='+hypre')
  
@@ -365,8 +366,7 @@ class Geosx(CMakePackage, CudaPackage):
                 cfg.write(cmake_cache_entry('ESSL_INCLUDE_DIRS', spec['essl'].prefix.include))
                 cfg.write(cmake_cache_list('ESSL_LIBRARIES', spec['essl'].libs + spec['cuda'].libs))
 
-                if spack_f77.endswith('xlf') or spack_f77.endswith('xlf_r'):
-                    cfg.write(cmake_cache_option('FORTRAN_MANGLE_NO_UNDERSCORE', True))
+                cfg.write(cmake_cache_option('FORTRAN_MANGLE_NO_UNDERSCORE', True))
             else:
                 cfg.write(cmake_cache_list('BLAS_LIBRARIES', spec['blas'].libs))
                 cfg.write(cmake_cache_list('LAPACK_LIBRARIES', spec['lapack'].libs))
