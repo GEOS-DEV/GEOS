@@ -60,9 +60,23 @@ class Essl(Package):
         )
 
         if '+cuda' in spec:
-            essl_libs += spec['cuda'].libs
+            essl_libs += ['/usr/tce/packages/cuda/cuda-10.1.243/lib64/libcublas.so',
+                          '/usr/tce/packages/cuda/cuda-10.1.243/lib64/libcudart.so']
+            # essl_libs += spec['cuda'].libs
 
-        raise RuntimeError("%s" % essl_libs)
+        if spec.satisfies('threads=openmp'):
+            if '%gcc' in self.spec:
+                gcc = Executable(self.compiler.cc)
+                omp_lib_path = gcc('--print-file-name', 'libgomp.so', output=str)
+                omp_libs = LibraryList(omp_lib_path.strip())
+
+            elif '%clang' in self.spec:
+                clang = Executable(self.compiler.cc)
+                omp_lib_path = clang('--print-file-name', 'libomp.so', output=str)
+                omp_libs = LibraryList(omp_lib_path.strip())
+
+            essl_libs += omp_libs
+
         return essl_libs
 
     @property
@@ -75,7 +89,7 @@ class Essl(Package):
         )
 
         return essl_libs
-    
+
     @property
     def libs(self):
         result = self.blas_libs

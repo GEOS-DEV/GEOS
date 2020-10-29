@@ -4,10 +4,8 @@ packages:
     compiler: [gcc, clang]
     providers:
       mpi: [spectrum-mpi]
-      blas: [netlib-lapack]
-      lapack: [netlib-lapack]
-      # blas: [essl]
-      # lapack: [essl]
+      blas: [essl]
+      lapack: [essl]
 
   cuda:
     buildable: False
@@ -33,11 +31,11 @@ packages:
     - spec: netlib-lapack@3.6.1
       prefix: /usr/lib64
 
-  # essl:
-  #   buildable: False
-  #   externals:
-  #     - spec: essl@6.2.1 ~ilp64 threads=openmp +cuda +lapack
-  #       prefix: /usr/tcetmp/packages/essl/essl-6.2.1/
+  essl:
+    buildable: False
+    externals:
+      - spec: essl@6.2.1 ~ilp64 threads=openmp +cuda +lapack
+        prefix: /usr/tcetmp/packages/essl/essl-6.2.1/
 
   cmake:
     buildable: False
