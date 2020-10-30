@@ -18,7 +18,6 @@
         lineSearchMaxCuts="10"/>
       <LinearSolverParameters
         solverType="direct"
-        preconditionerType="amg"
         logLevel="0"/>
     </Hydrofracture>
 
@@ -30,13 +29,6 @@
       targetRegions="{ Region2, Fracture }"
       solidMaterialNames="{ rock }"
       contactRelationName="fractureContact">
-      <NonlinearSolverParameters
-        newtonTol="1.0e-6"
-        newtonMaxIter="5"/>
-      <LinearSolverParameters
-        solverType="direct"
-        krylovTol="1.0e-10"
-        logLevel="0"/>
     </SolidMechanicsLagrangianSSLE>
 
     <SinglePhaseFVM
@@ -46,13 +38,6 @@
       targetRegions="{ Fracture }"
       fluidNames="{ water }"
       solidNames="{ rock }">
-      <NonlinearSolverParameters
-        newtonTol="1.0e-5"
-        newtonMaxIter="10"/>
-      <LinearSolverParameters
-        solverType="direct"
-        krylovTol="1.0e-12"
-        logLevel="0"/>
     </SinglePhaseFVM>
 
     <SurfaceGenerator
