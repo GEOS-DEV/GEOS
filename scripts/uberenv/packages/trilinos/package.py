@@ -551,6 +551,11 @@ class Trilinos(CMakePackage):
             define_trilinos_enable('Gtest', 'gtest'),
         ])
 
+        if '^intel-mkl' in spec:
+            options.extend([define('TPL_ENABLE_MKL', True),
+                            define('TPL_MKL_INCLUDE_DIRS', spec['intel-mkl'].prefix.include),
+                            define('TPL_MKL_LIBRARIES', ';'.join(spec['intel-mkl'].libs))])
+
         options.append(define_tpl_enable('Netcdf'))
         if '+netcdf' in spec:
             options.append(define('NetCDF_ROOT', spec['netcdf-c'].prefix))
