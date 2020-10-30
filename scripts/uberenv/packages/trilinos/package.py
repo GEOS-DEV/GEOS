@@ -83,6 +83,8 @@ class Trilinos(CMakePackage):
             description='Compile using the default xSDK configuration')
     variant('blas_lowercase_no_underscore', default=False,
             description='Override the default F77_BLAS_MANGLE scheme.')
+    variant('force-new-lapack', default=False,
+            description='Override the auto detection of the LAPACK API.')
 
     # TPLs (alphabet order)
     variant('boost',        default=True,
@@ -438,6 +440,9 @@ class Trilinos(CMakePackage):
 
         if '+blas_lowercase_no_underscore' in spec:
             options.extend([define('F77_BLAS_MANGLE', '(lcase,UCASE) lcase')])
+
+        if '+force-new-lapack' in spec:
+            options.extend([define('HAVE_dggsvd3', 'ON')])
 
         # ################## Trilinos Packages #####################
 

@@ -13,9 +13,6 @@ packages:
     - spec: cuda@10.1.243
       modules:
       - cuda/10.1.243
-    - spec: cuda@11.0.2
-      modules:
-      - cuda/11.0.2
 
   spectrum-mpi:
     buildable: False
