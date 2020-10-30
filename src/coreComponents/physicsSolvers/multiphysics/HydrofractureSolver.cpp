@@ -595,8 +595,8 @@ void HydrofractureSolver::addFluxApertureCouplingNNZ( DomainPartition & domain,
         {
           for( localIndex k1=0; k1<numFluxElems; ++k1 )
           {
-            // The coupling with the nodal displacements of the cell itself have already been added by the dofManager
-            // so I only add the coupling with the nodal displacements of the neighbours.
+            // The coupling with the nodal displacements of the cell itself has already been added by the dofManager
+            // so we only add the coupling with the nodal displacements of the neighbours.
             if( k1 != k0 )
             {
               localIndex const numNodesPerElement = elemsToNodes[sei[iconn][k1]].size();
@@ -659,8 +659,8 @@ void HydrofractureSolver::addFluxApertureCouplingSparsityPattern( DomainPartitio
         {
           for( localIndex k1=0; k1<numFluxElems; ++k1 )
           {
-            // The coupling with the nodal displacements of the cell itself have already been added by the dofManager
-            // so I only add the coupling with the nodal displacements of the neighbours.
+            // The coupling with the nodal displacements of the cell itself has already been added by the dofManager
+            // so we only add the coupling with the nodal displacements of the neighbours.
             if( k1 != k0 )
             {
               localIndex const numNodesPerElement = elemsToNodes[sei[iconn][k1]].size();
@@ -800,7 +800,6 @@ HydrofractureSolver::
     {
       arrayView1d< real64 const > const & fluidPressure = subRegion.getReference< array1d< real64 > >( "pressure" );
       arrayView1d< real64 const > const & deltaFluidPressure = subRegion.getReference< array1d< real64 > >( "deltaPressure" );
-      arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
       arrayView1d< real64 const > const & area = subRegion.getElementArea();
       arrayView2d< localIndex const > const & elemsToFaces = subRegion.faceList();
 
@@ -854,14 +853,10 @@ HydrofractureSolver::
               {
                 // TODO: use parallel atomic when loop is parallel
                 RAJA::atomicAdd( serialAtomic{}, &localRhs[localRow + i], nodeRHS[3*a+i] );
-
-                if( ghostRank[kfe] < 0 )
-                {
-                  localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( localRow + i,
-                                                                                    &colDOF,
-                                                                                    &dRdP[3*a+i][0],
-                                                                                    1 );
-                }
+                localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( localRow + i,
+                                                                                  &colDOF,
+                                                                                  &dRdP[3*a+i][0],
+                                                                                  1 );
               }
             }
           }
@@ -905,7 +900,7 @@ HydrofractureSolver::
     string const & fluidName = m_flowSolver->fluidModelNames()[m_flowSolver->targetRegionIndex( region.getName() )];
     SingleFluidBase const & fluid = GetConstitutiveModel< SingleFluidBase >( subRegion, fluidName );
 
-    arrayView1d< integer const > const elemGhostRank = subRegion.ghostRank();
+    //arrayView1d< integer const > const elemGhostRank = subRegion.ghostRank();
     arrayView1d< globalIndex const > const presDofNumber = subRegion.getReference< array1d< globalIndex > >( presDofKey );
     arrayView1d< globalIndex const > const dispDofNumber = nodeManager.getReference< array1d< globalIndex > >( dispDofKey );
 
@@ -919,90 +914,77 @@ HydrofractureSolver::
 
     arrayView2d< real64 const > const faceNormal = faceManager.faceNormal();
 
-//    arrayView1d< real64 const > const & separationCoeff = subRegion.getSeparationCoefficient();
-//    arrayView1d<real64 const> const & dseparationCoeff_dAper  =
-//      subRegion.getReference<array1d<real64>>(FaceElementSubRegion::viewKeyStruct::dSeparationCoeffdAperString);
-
-
     forAll< serialPolicy >( subRegion.size(), [=]( localIndex ei )
     {
-      //if (elemGhostRank[ei] < 0)
+      constexpr int kfSign[2] = { -1, 1 };
+
+      globalIndex const elemDOF = presDofNumber[ei];
+      localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( elemsToFaces[ei][0] );
+      real64 const dAccumulationResidualdAperture = dens[ei][0] * area[ei];
+
+      globalIndex nodeDOF[8 * 3];
+
+      R1Tensor Nbar = faceNormal[elemsToFaces[ei][0]];
+      Nbar -= faceNormal[elemsToFaces[ei][1]];
+      Nbar.Normalize();
+
+      stackArray1d< real64, 24 > dRdU( 2 * numNodesPerFace * 3 );
+
+      // Accumulation derivative
+      for( localIndex kf = 0; kf < 2; ++kf )
       {
-        constexpr int kfSign[2] = { -1, 1 };
-
-        globalIndex const elemDOF = presDofNumber[ei];
-        localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( elemsToFaces[ei][0] );
-        real64 const dAccumulationResidualdAperture = dens[ei][0] * area[ei];
-        //* ( separationCoeff[ei] + aperture[ei] * dseparationCoeff_dAper[ei] );
-
-
-        globalIndex nodeDOF[8 * 3];
-
-        R1Tensor Nbar = faceNormal[elemsToFaces[ei][0]];
-        Nbar -= faceNormal[elemsToFaces[ei][1]];
-        Nbar.Normalize();
-
-        stackArray1d< real64, 24 > dRdU( 2 * numNodesPerFace * 3 );
-
-        // Accumulation derivative
-        if( elemGhostRank[ei] < 0 )
+        for( localIndex a = 0; a < numNodesPerFace; ++a )
         {
-          for( localIndex kf = 0; kf < 2; ++kf )
+          for( int i = 0; i < 3; ++i )
           {
-            for( localIndex a = 0; a < numNodesPerFace; ++a )
-            {
-              for( int i = 0; i < 3; ++i )
-              {
-                nodeDOF[kf * 3 * numNodesPerFace + 3 * a + i] = dispDofNumber[faceToNodeMap( elemsToFaces[ei][kf], a )] + i;
-                real64 const dGap_dU = kfSign[kf] * Nbar[i] / numNodesPerFace;
-                real64 const dAper_dU = contactRelation->dEffectiveAperture_dAperture( aperture[ei] ) * dGap_dU;
-                dRdU( kf * 3 * numNodesPerFace + 3 * a + i ) = dAccumulationResidualdAperture * dAper_dU;
-              }
-            }
-          }
-          globalIndex rowNumber = elemDOF - rankOffset;
-          if( rowNumber >= 0  && rowNumber < localMatrix.numRows() )
-          {
-            localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( rowNumber,
-                                                                              nodeDOF,
-                                                                              dRdU.data(),
-                                                                              2 * numNodesPerFace * 3 );
+            nodeDOF[kf * 3 * numNodesPerFace + 3 * a + i] = dispDofNumber[faceToNodeMap( elemsToFaces[ei][kf], a )] + i;
+            real64 const dGap_dU = kfSign[kf] * Nbar[i] / numNodesPerFace;
+            real64 const dAper_dU = contactRelation->dEffectiveAperture_dAperture( aperture[ei] ) * dGap_dU;
+            dRdU( kf * 3 * numNodesPerFace + 3 * a + i ) = dAccumulationResidualdAperture * dAper_dU;
           }
         }
+      }
+      globalIndex rowNumber = elemDOF - rankOffset;
+      if( rowNumber >= 0  && rowNumber < localMatrix.numRows() )
+      {
+        localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( rowNumber,
+                                                                          nodeDOF,
+                                                                          dRdU.data(),
+                                                                          2 * numNodesPerFace * 3 );
+      }
 
-        // flux derivative
-        localIndex const numColumns = dFluxResidual_dAperture.numNonZeros( ei );
-        arraySlice1d< localIndex const > const & columns = dFluxResidual_dAperture.getColumns( ei );
-        arraySlice1d< real64 const > const & values = dFluxResidual_dAperture.getEntries( ei );
+      // flux derivative
+      localIndex const numColumns = dFluxResidual_dAperture.numNonZeros( ei );
+      arraySlice1d< localIndex const > const & columns = dFluxResidual_dAperture.getColumns( ei );
+      arraySlice1d< real64 const > const & values = dFluxResidual_dAperture.getEntries( ei );
 
-        for( localIndex kfe2 = 0; kfe2 < numColumns; ++kfe2 )
+      for( localIndex kfe2 = 0; kfe2 < numColumns; ++kfe2 )
+      {
+        real64 dRdAper = values[kfe2];
+        localIndex const ei2 = columns[kfe2];
+
+        for( localIndex kf = 0; kf < 2; ++kf )
         {
-          real64 dRdAper = values[kfe2];
-          localIndex const ei2 = columns[kfe2];
-
-          for( localIndex kf = 0; kf < 2; ++kf )
+          for( localIndex a = 0; a < numNodesPerFace; ++a )
           {
-            for( localIndex a = 0; a < numNodesPerFace; ++a )
+            for( int i = 0; i < 3; ++i )
             {
-              for( int i = 0; i < 3; ++i )
-              {
-                nodeDOF[kf * 3 * numNodesPerFace + 3 * a + i] =
-                  dispDofNumber[faceToNodeMap( elemsToFaces[ei2][kf], a )] + i;
-                real64 const dGap_dU = kfSign[kf] * Nbar[i] / numNodesPerFace;
-                real64 const
-                dAper_dU = contactRelation->dEffectiveAperture_dAperture( aperture[ei2] ) * dGap_dU;
-                dRdU( kf * 3 * numNodesPerFace + 3 * a + i ) = dRdAper * dAper_dU;
-              }
+              nodeDOF[kf * 3 * numNodesPerFace + 3 * a + i] =
+                dispDofNumber[faceToNodeMap( elemsToFaces[ei2][kf], a )] + i;
+              real64 const dGap_dU = kfSign[kf] * Nbar[i] / numNodesPerFace;
+              real64 const
+              dAper_dU = contactRelation->dEffectiveAperture_dAperture( aperture[ei2] ) * dGap_dU;
+              dRdU( kf * 3 * numNodesPerFace + 3 * a + i ) = dRdAper * dAper_dU;
             }
           }
-          globalIndex rowNumber = elemDOF - rankOffset;
-          if( rowNumber >= 0 && rowNumber < localMatrix.numRows() )
-          {
-            localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( rowNumber,
-                                                                              nodeDOF,
-                                                                              dRdU.data(),
-                                                                              2 * numNodesPerFace * 3 );
-          }
+        }
+        globalIndex rowNumber = elemDOF - rankOffset;
+        if( rowNumber >= 0 && rowNumber < localMatrix.numRows() )
+        {
+          localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( rowNumber,
+                                                                            nodeDOF,
+                                                                            dRdU.data(),
+                                                                            2 * numNodesPerFace * 3 );
         }
       }
     } );
