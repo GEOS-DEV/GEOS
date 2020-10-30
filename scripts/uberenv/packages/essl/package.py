@@ -84,6 +84,7 @@ class Essl(Package):
         essl_libs = self.blas_libs
         essl_libs += find_libraries(
               ['liblapackforessl'],
+            #   ['liblapackforessl', 'liblapackforessl_'],
               root=self.prefix.lib64,
               shared=True
         )

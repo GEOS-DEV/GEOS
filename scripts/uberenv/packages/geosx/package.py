@@ -13,7 +13,7 @@ from os import environ as env
 from os.path import join as pjoin
 
 
-# ./scripts/uberenv/uberenv.py --spec="%clang@10.0.1 +mkl ^chai@master"
+# ./scripts/uberenv/uberenv.py --spec="%clang@10.0.1 +mkl ^chai@master ^caliper+papi"
 
 # PETSC doesn't compile on Lassen
 # ./scripts/uberenv/uberenv.py --spec="%gcc +essl ~petsc +cuda cuda_arch=70 ^cuda@10.1.243 ^raja cuda_arch=70 ^umpire cuda_arch=70 ^chai@master cuda_arch=70 ^caliper~papi"
@@ -127,6 +127,7 @@ class Geosx(CMakePackage, CudaPackage):
     trilinos_packages = '+amesos +aztec +epetra +epetraext +ifpack +kokkos +ml +stk +stratimikos +teuchos +tpetra ~amesos2 ~anasazi ~belos ~exodus ~ifpack2 ~muelu ~sacado ~zoltan ~zoltan2'
     depends_on('trilinos@12.18.1: ' + trilinos_build_options + trilinos_tpls + trilinos_packages, when='+trilinos')
     depends_on('trilinos +blas_lowercase_no_underscore', when='+trilinos +essl')
+    # depends_on('trilinos +force-new-lapack', when='+trilinos +essl')
 
     depends_on('hypre@2.20.0: +shared +superlu-dist +mixedint +mpi +openmp', when='+hypre')
  
