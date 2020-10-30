@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import os
 import glob
 import xml.etree.ElementTree as ElementTree
@@ -8,15 +10,6 @@ import shutil
 import subprocess
 import sys
 import argparse
-
-
-class Status:
-    """ Represents the status of a job. """
-
-    NOT_SUBMITTED = "NOT_SUBMITTED"
-    SUBMITTED = "SUBMITTED"
-    SUCCESS = "SUCCESS"
-    FAILURE = "FAILURE"
 
 
 def getMostCubeLikeRepresentation( n ):
@@ -39,7 +32,7 @@ def getMostCubeLikeRepresentation( n ):
         for j in range( 1, n_over_i + 1 ):
             if n_over_i % j != 0:
                 continue
-            
+
             k = int( n_over_i / j )
             surfaceArea = 2 * i * j + 2 * i * k + 2 * j * k
             if surfaceArea < minSurfaceArea:
@@ -60,7 +53,7 @@ def parseListFromString( listString ):
         A list of strings.
     """
     newList = listString.strip(" {}").split(",")
-    return map( lambda x: x.strip(), newList )
+    return list( map( lambda x: x.strip(), newList ) )
 
 
 def createDirectory( dirPath, clean=False ):
@@ -102,6 +95,8 @@ class Machine:
             name: The name of the Machine.
         """
         self.name = name
+        self.profilers = {}
+        self.activeProfilers = []
 
     def getSumbissionCommand( self, nodes, tasks, threadsPerTask, timeLimit ):
         """
@@ -115,7 +110,7 @@ class Machine:
             tasks: The number of tasks in the job.
             threadsPerTask: The threads per task, may be None if not specified.
             timeLimit: The time limit of the job in minutes.
-        
+
         Returns:
             A list containing the submission commands.
         """
@@ -131,6 +126,11 @@ class Machine:
             self: The Machine to get the status of.
         """
         raise NotImplementedError( "This method must be overridden in the derived class." )
+
+    def tryActivateProfiler( self, profiler ):
+        if profiler not in self.profilers.keys():
+            print( f"WARNING: profiler {profiler} not available on {self.name}." )
+        self.activeProfilers.append( profiler )
 
     def hasCudaGPU( self ):
         """ Return True if this Machine has a CUDA GPU available."""
@@ -150,7 +150,7 @@ class SlurmMachine( Machine ):
             tasks: The number of tasks in the job.
             threadsPerTask: The threads per task, may be None if not specified.
             timeLimit: The time limit of the job in minutes, may be None if not specified.
-        
+
         Returns:
             A list containing the submission commands.
         """
@@ -174,6 +174,9 @@ class SlurmMachine( Machine ):
 
 class LallocMachine( Machine ):
     """ A class that implements a machine that uses Lalloc. """
+    def __init__( self, name ):
+        super( ).__init__( name )
+        self.profilers[ "nsys" ] = [ "nsys", "profile", "-o", "nsysprof_%q{OMPI_COMM_WORLD_RANK}", "--stats=true" ]
 
     def getSumbissionCommand( self, nodes, tasks, threadsPerTask, timeLimit ):
         """
@@ -185,7 +188,7 @@ class LallocMachine( Machine ):
             tasks: The number of tasks in the job.
             threadsPerTask: The threads per task, may be None if not specified.
             timeLimit: The time limit of the job in minutes, may be None if not specified.
-        
+
         Returns:
             A list containing the submission commands.
         """
@@ -195,7 +198,7 @@ class LallocMachine( Machine ):
             command += ["--threadsPerTask", threadsPerTask ]
         if timeLimit is not None:
             command += ["-W", timeLimit]
-        
+
         return command
 
     def printProgress( self ):
@@ -206,11 +209,16 @@ class LallocMachine( Machine ):
             self: The Machine to get the status of.
         """
         print( subprocess.check_output( [ "bjobs" ], stderr=subprocess.STDOUT ) )
-    
+
     def hasCudaGPU( self ):
         """ Return True."""
         return True
 
+    def getProfilerPrepend( self ):
+        command = []
+        for profiler in self.activeProfilers:
+            command.extend( self.profilers.get(profiler, [] ) )
+        return command
 
 def getMachine():
     """ Return a Machine object corresponding to the current machine. """
@@ -285,7 +293,6 @@ class Benchmark:
             self.runCommand += ["-x", pX, "-y", pY, "-z", pZ]
 
         self.process = None
-        self.status = Status.NOT_SUBMITTED
 
     def submit( self, machine ):
         """
@@ -298,6 +305,8 @@ class Benchmark:
         createDirectory( self.outputDir )
 
         submissionCommand = machine.getSumbissionCommand( self.nodes, self.tasks, self.threadsPerTask, self.timeLimit )
+
+        # submissionCommand += machine.getProfilerPrepend()
 
         submissionCommand += self.runCommand
 
@@ -313,7 +322,6 @@ class Benchmark:
             outputFile.write( "{}\n\n".format( " ".join( submissionCommand ) ) )
             self.process = subprocess.Popen( submissionCommand, cwd=self.outputDir, stdout=outputFile, stderr=subprocess.STDOUT )
 
-        self.status = Status.SUBMITTED
 
         print( "Submitted {}".format( self ) )
 
@@ -341,23 +349,6 @@ class Benchmark:
         else:
             return None
 
-    def hasCompleted( self ):
-        """
-        Return True iff the Benchmark has completed.
-
-        Arguments:
-            self: The Benchmark to check.
-        """
-        jobExited = self.status == Status.SUBMITTED and self.process.poll() is not None
-        if self.getTimingFile() is not None:
-            self.status = Status.SUCCESS
-            print( "Completed {}".format( self ) )
-        elif jobExited:
-            self.status = Status.FAILURE
-            print( "Failed {}".format( self ) )
-
-        return self.status == Status.SUCCESS or self.status == Status.FAILURE
-
     def kill( self ):
         """
         Kill the Benchmark.
@@ -378,33 +369,6 @@ class Benchmark:
         """
         return "Benchmark( OutputDir: {}, nodes: {}, tasks: {}, threadsPerTask: {}, timeLimit {} )".format( self.outputDir, self.nodes, self.tasks, self.threadsPerTask, self.timeLimit )
 
-
-def printProgress( machine, benchmarks, startTime ):
-    """
-    Print the status of the submitted benchmarks.
-
-    Arguments:
-        machine: The Machine the benchmarks were submitted on.
-        benchmarks: A list of the submitted Benchmarks.
-        startTime: The time of the benchmarks were submitted at.
-    """
-    print("")
-
-    runTime = int( time.time() - startTime )
-    print( "Running for {}".format( datetime.timedelta( seconds=runTime ) ) )
-
-    statusCount = { Status.NOT_SUBMITTED: 0, Status.SUBMITTED: 0, Status.SUCCESS: 0, Status.FAILURE: 0 }
-    for benchmark in benchmarks:
-        statusCount[ benchmark.status ] += 1
-
-    for status_count in statusCount.items():
-        print( "{}: {}".format( status_count[0], status_count[1] ) )
-
-    machine.printProgress()
-    sys.stdout.flush()
-    print("")
-
-
 def allCompleted( benchmarks ):
     """
     Return True if all the benchmarks have completed.
@@ -415,33 +379,16 @@ def allCompleted( benchmarks ):
     return functools.reduce( lambda result, benchmark : result and benchmark.hasCompleted(), benchmarks, True )
 
 
-def submitAllAndWait( machine, benchmarks, timeLimit ):
+def submitAll( machine, benchmarks ):
     """
     Submit all of the benchmarks and wait until the complete or the time limit expires.
 
     Arguments:
         machine: The Machine to submit the benchmarks to.
         benchmarks: A list of the Benchmarks to submit.
-        timeLimit: The number of minutes to wait after submitting the benchmarks.
     """
-    startTime = time.time()
     for benchmark in benchmarks:
         benchmark.submit( machine )
-
-    # while not allCompleted( benchmarks ):
-    #     for _ in range( 60 ):
-    #         time.sleep( 1 )
-    #         if allCompleted( benchmarks ):
-    #             break
-
-    #     printProgress( machine, benchmarks, startTime )
-
-    #     minutesRun = ( time.time() - startTime ) / 60
-    #     if minutesRun > timeLimit:
-    #         print( "The time limit of {} minutes has been exceeded, killing all unfinished jobs.".format( timeLimit ) )
-    #         for benchmark in benchmarks:
-    #             benchmark.kill()
-
 
 def getBenchmarksFromXML( xmlFilePath, machine, outputDir, geosxPath ):
     """
@@ -457,6 +404,8 @@ def getBenchmarksFromXML( xmlFilePath, machine, outputDir, geosxPath ):
 
     tree = ElementTree.parse( xmlFilePath )
     mesh = tree.find("./Mesh/InternalMesh")
+    if mesh is None:
+        raise Exception( "Scaling needs a pre-existing internalMesh to modify per scale!" )
     matchingElements = tree.findall( "./Benchmarks/{}/Run".format( machine.name ) )
 
     for elem in matchingElements:
@@ -496,37 +445,41 @@ def getBenchmarksFromXML( xmlFilePath, machine, outputDir, geosxPath ):
         else:
             raise Exception( "Option for autoPartition not recognized: {}. Valid options are 'On' and 'Off'.".format( autoPartition ) )
 
-        millionElementTarget = elem.get( "millionElementTarget" )
-        if millionElementTarget is not None:
-            elementTargets = parseListFromString( millionElementTarget )
-            for target in elementTargets:
-                targetNum = int( target ) * ( 10 ** 6 )
-                perDim = int( targetNum ** ( 1. / 3 ) ) + 1
-                if mesh is not None:
-                    mesh.set("nx", "{{ {} }}".format( perDim ) )
-                    mesh.set("ny", "{{ {} }}".format( perDim ) )
-                    mesh.set("nz", "{{ {} }}".format( perDim ) )
+        problemSizes = elem.get( "problemSizes" )
+        if problemSizes is None:
+            raise Exception( "Expected XML element to have an attribute 'problemSizes'" )
+        problemSizes = parseListFromString( problemSizes )
 
-                    oldXmlFilePath = xmlFilePath
-                    xmlFilePathTuple = os.path.splitext( xmlFilePath )
-                    xmlFilePath = xmlFilePathTuple[0] + "_{}M_elem.xml".format( target )
+        scaleList = elem.get( "scales" )
+        if scaleList is None:
+            scaleList = [ 1 ]
+        else:
+            scaleList = parseListFromString( scaleList )
 
-                    tree.write( open( xmlFilePath, 'wb' ) )
+        scalingType = elem.get( "scaling" )
+        if scalingType is None:
+            scalingType = "weak"
 
-                    strongScaling = elem.get( "strongScaling" )
-                    if strongScaling is None:
-                        benchmarks.append( Benchmark( outputDir, geosxPath, xmlFilePath, name, nodes, nodes * tasksPerNode, threadsPerTask, timeLimit, args, autoPartition ) )
-                    else:
-                        strongScaling = parseListFromString( strongScaling )
-                        for scale in strongScaling:
-                            totalNodes = nodes * int( scale )
-                            totalTasks = totalNodes * tasksPerNode
-                            millionElemsPerNode = float( target ) / totalTasks
-                            if millionElemsPerNode < 8:
-                                benchmarks.append( Benchmark( outputDir, geosxPath, xmlFilePath, name, totalNodes, totalTasks, threadsPerTask, timeLimit, args, autoPartition ) )
-                    xmlFilePath = oldXmlFilePath
+        elementTargetCalc = { "weak" : lambda scale, target : scale * nodes * tasksPerNode * target,
+                              "strong" : lambda scale, target : target }
+
+        for problemSize in problemSizes:
+            problemSize = int( problemSize )
+            for scale in scaleList:
+                scale = int( scale )
+                elementTarget = elementTargetCalc[scalingType]( scale, problemSize )
+                perDim = int( elementTarget ** ( 1. / 3 ) ) + 1
+                mesh.set("nx", "{{ {} }}".format( perDim ) )
+                mesh.set("ny", "{{ {} }}".format( perDim ) )
+                mesh.set("nz", "{{ {} }}".format( perDim ) )
+                xmlFilePathTuple = os.path.splitext( xmlFilePath )
+                newXmlFilePath = xmlFilePathTuple[0] + "_{}M_elem.xml".format( elementTarget // 1000000  )
+                tree.write( open( newXmlFilePath, 'wb' ) )
+                benchmarks.append( Benchmark( outputDir, geosxPath, newXmlFilePath, name, nodes, nodes * tasksPerNode, threadsPerTask, timeLimit, args, autoPartition ) )
 
     return benchmarks
+
+
 
 
 def getBenchmarksFromDirectory( benchmarkDir, machine, outputDir, geosxPath ):
@@ -550,17 +503,14 @@ def getBenchmarksFromDirectory( benchmarkDir, machine, outputDir, geosxPath ):
 
 
 def main():
-    """ Parse the command line arguments, submit all found benchmarks and wait for them to finish. """
+    """ Parse the command line arguments, submit all found benchmarks. """
 
     benchmarkDir = os.path.dirname( os.path.realpath( __file__ ) )
 
-    timeLimit = 60
     parser = argparse.ArgumentParser()
     parser.add_argument( "geosxPath", help="The path to the GEOSX executable to benchmark.")
     parser.add_argument( "outputDirectory", help="The parent directory to run the benchmarks in.")
-    parser.add_argument( "-t", "--timeLimit", type=int, help="Time limit for the entire script in minutes, the default is {}.". format( timeLimit ), default=timeLimit )
-    parser.add_argument( "-o", "--timingCollectionDir", help="Directory to copy the timing files to." )
-    parser.add_argument( "-e", "--errorCollectionDir", help="Directory to copy the output from any failed runs to." )
+    parser.add_argument( "-p", "--profiler", help="Use a profiler available on the machine (machine-specific argument)." )
     args = parser.parse_args()
 
     geosxPath = os.path.abspath( args.geosxPath )
@@ -568,55 +518,20 @@ def main():
         raise ValueError( "geosxPath is not an executable!" )
 
     outputDir = os.path.abspath( args.outputDirectory )
-    
-    timeLimit = args.timeLimit
-    
-    timingCollectionDir = args.timingCollectionDir
-    if timingCollectionDir is not None:
-        timingCollectionDir = os.path.abspath( timingCollectionDir )
 
-    errorCollectionDir = args.errorCollectionDir
-    if errorCollectionDir is not None:
-        errorCollectionDir = os.path.abspath( errorCollectionDir )
+    machine = getMachine( )
 
-    machine = getMachine()
+    if args.profiler is not None:
+        machine.tryActivateProfiler( args.profiler )
 
     benchmarks = getBenchmarksFromDirectory( benchmarkDir, machine, outputDir, geosxPath )
 
     print( "Benchmarking GEOSX found at {}".format( geosxPath ) )
     print( "Results will be written to {}".format( outputDir ) )
-    if timingCollectionDir is not None:
-        print( "Timing files will be added to {}".format( timingCollectionDir ) )
-    if errorCollectionDir is not None:
-        print( "Output from failed benchmarks will be put in {}".format( errorCollectionDir ) )
-    print( "The time limit is {} minutes.".format( timeLimit) )
     print( "Found {} benchmarks.".format( len( benchmarks ) ) )
     print( "" )
 
-    submitAllAndWait( machine, benchmarks, timeLimit )
-
-    # Copy the timing files from successful benchmarks to a new directory if asked.
-    if timingCollectionDir is not None:
-        createDirectory( timingCollectionDir )
-        for benchmark in benchmarks:
-            if benchmark.status == Status.SUCCESS:
-                shutil.copy2( benchmark.getTimingFile(), timingCollectionDir )
-
-    # Copy the output from the failed benchmarks to a new directory if asked.
-    if errorCollectionDir is not None:
-        createDirectory( errorCollectionDir, True )
-        for benchmark in benchmarks:
-            if benchmark.status != Status.SUCCESS and os.path.isfile( benchmark.getOutputFile() ):
-                outputFile = benchmark.getOutputFile()
-                newLocation = os.path.join( errorCollectionDir, os.path.relpath( outputFile, outputDir ) )
-                shutil.copy2( outputFile, newLocation )
-    
-    success = True
-    for benchmark in benchmarks:
-        success = success and benchmark.status == Status.SUCCESS
-    
-    return not success
-
+    submitAll( machine, benchmarks )
 
 if __name__ == "__main__" and not sys.flags.interactive:
     sys.exit(main())

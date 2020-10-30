@@ -111,6 +111,18 @@ blt_add_executable(NAME geosx
                               ${externalComponentsLinkList}
                   )
 
+execute_process( COMMAND git log -1 --format=%h
+                 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+                 OUTPUT_VARIABLE GEOSX_GIT_HASH
+                 OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+
+if ( GEOSX_VERSION_NAMING )
+   set_target_properties( geosx PROPERTIES RELWITHDEBINFO_POSTFIX _${GEOSX_GIT_HASH}
+                                           RELEASE_POSTFIX _${GEOSX_GIT_HASH}
+                                           DEBUG_POSTFIX _${GEOSX_GIT_HASH})
+endif()
+
 # Removing all transitive link dependencies from geosx_core target to circumvent
 # the BLT behavior which imposes all dependencies to be public
 #set_target_properties(geosx_core PROPERTIES INTERFACE_LINK_LIBRARIES "")
