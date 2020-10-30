@@ -472,7 +472,7 @@ bool SpatialPartition::IsCoordInPartitionBoundingBox( real64 const ( &coordinate
 void SpatialPartition::SetContactGhostRange( const real64 bufferSize )
 {
   LvArray::tensorOps::copy< 3 >( m_contactGhostMin, m_min );
-  LvArray::tensorOps::subtractScalar< 3 >( m_contactGhostMin, bufferSize );
+  LvArray::tensorOps::addScalar< 3 >( m_contactGhostMin, -bufferSize );
 
   LvArray::tensorOps::copy< 3 >( m_contactGhostMax, m_max );
   LvArray::tensorOps::addScalar< 3 >( m_contactGhostMax, bufferSize );
