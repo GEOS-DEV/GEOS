@@ -39,7 +39,8 @@ namespace geosx
       virtual ~VirtualElementBase() = default;
 
       /// @brief Compute VEM projectors on the geometry.
-      virtual void computeProjectors( MeshLevel const & , localIndex const &) = 0;
+      virtual void computeProjectors( MeshLevel const &, localIndex const &,
+                                      localIndex const &, localIndex const &) = 0;
 
       /**
        * @brief Virtual getter for the number of quadrature points per element.
