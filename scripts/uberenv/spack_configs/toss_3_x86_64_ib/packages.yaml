@@ -57,11 +57,11 @@ packages:
       - spec: diffutils@3.3
         prefix: /usr/bin
 
-  # python:
-  #   buildable: False
-  #   externals:
-  #   - spec: python@3.8.2
-  #     prefix: /usr/tce/packages/python/python-3.8.2/
+  python:
+    buildable: False
+    externals:
+    - spec: python@3.8.2
+      prefix: /usr/tce/packages/python/python-3.8.2/
 
   py-sphinx:
     buildable: False
