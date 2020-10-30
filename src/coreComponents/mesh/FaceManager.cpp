@@ -653,7 +653,7 @@ void FaceManager::SetDomainBoundaryObjects( NodeManager * const nodeManager )
 
 void FaceManager::SetIsExternal()
 {
-  arrayView1d< integer const > const & isDomainBoundary = this->getDomainBoundaryIndicator();
+  arrayView1d< integer const > const isDomainBoundary = this->getDomainBoundaryIndicator().toViewConst();
 
   m_isExternal.setValues< serialPolicy >( 0 );
   for( localIndex k=0; k<size(); ++k )
@@ -804,7 +804,7 @@ void FaceManager::ExtractMapFromObjectForAssignGlobalIndexNumbers( ObjectManager
   localIndex const numFaces = size();
 
   ArrayOfArraysView< localIndex const > const faceToNodeMap = this->nodeList().toViewConst();
-  arrayView1d< integer const > const isDomainBoundary = this->getDomainBoundaryIndicator();
+  arrayView1d< integer const > const isDomainBoundary = this->getDomainBoundaryIndicator().toViewConst();
 
   globalFaceNodes.resize( numFaces );
 
