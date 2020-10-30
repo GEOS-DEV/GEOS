@@ -12,7 +12,8 @@ class style():
     RESET = '\033[0m'
 
 resultRegex = r"init time = (.*)s, run time = (.*)s"
-caliQueryBin = "/usr/gapps/GEOSX/thirdPartyLibs/2020-10-15/install-lassen-clang@upstream-release/caliper/bin/cali-query"
+#caliQueryBin = "/usr/gapps/GEOSX/thirdPartyLibs/2020-10-15/install-lassen-clang@upstream-release/caliper/bin/cali-query"
+caliQueryBin = "/usr/gapps/GEOSX/thirdPartyLibs/2020-10-15/install-quartz-clang@10.0.0-release/caliper/bin/cali-query"
 caliQueryFString = ' {} -q "SELECT * GROUP BY function FORMAT json ORDER BY time.duration" '
 #caliQueryString = ' {} -q "SELECT * WHERE function={} GROUP BY function FORMAT json ORDER BY time.duration" '
 
