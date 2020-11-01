@@ -19,6 +19,7 @@
 
 #ifndef GEOSX_CONSTITUTIVE_SOLID_DAMAGE_HPP_
 #define GEOSX_CONSTITUTIVE_SOLID_DAMAGE_HPP_
+#define QUADRATIC_DISSIPATION 0
 #define LORENTZ 0
 #include "constitutive/solid/SolidBase.hpp"
 
@@ -55,28 +56,45 @@ public:
 
   //Quasi-Quadratic Lorentz Degradation Function
   #if LORENTZ
-
+  
+  //Lorentz type Degradation Function
+  
+  GEOSX_FORCE_INLINE
   GEOSX_HOST_DEVICE
   virtual real64 GetDegradationValue( localIndex const k,
-                                      localIndex const q ) const
+                                      localIndex const q ) const override
   {
+    #if QUADRATIC_DISSIPATION
+    real64 m = m_criticalFractureEnergy/(2*m_lengthScale*m_criticalStrainEnergy);
+    #else
     real64 m = 3*m_criticalFractureEnergy/(8*m_lengthScale*m_criticalStrainEnergy);
+    #endif
     real64 p = 1;
     return pow( 1 - m_damage( k, q ), 2 ) /( pow( 1 - m_damage( k, q ), 2 ) + m * m_damage( k, q ) * (1 + p*m_damage( k, q )) );
   }
 
+  GEOSX_FORCE_INLINE
   GEOSX_HOST_DEVICE
-  virtual real64 GetDegradationDerivative( real64 const d ) const
+  virtual real64 GetDegradationDerivative( real64 const d ) const override
   {
+    #if QUADRATIC_DISSIPATION
+    real64 m = m_criticalFractureEnergy/(2*m_lengthScale*m_criticalStrainEnergy);
+    #else
     real64 m = 3*m_criticalFractureEnergy/(8*m_lengthScale*m_criticalStrainEnergy);
+    #endif
     real64 p = 1;
     return -m*(1 - d)*(1 + (2*p + 1)*d) / pow( pow( 1-d, 2 ) + m*d*(1+p*d), 2 );
   }
 
+  GEOSX_FORCE_INLINE
   GEOSX_HOST_DEVICE
-  virtual real64 GetDegradationSecondDerivative( real64 const d ) const
+  virtual real64 GetDegradationSecondDerivative( real64 const d ) const override
   {
+    #if QUADRATIC_DISSIPATION
+    real64 m = m_criticalFractureEnergy/(2*m_lengthScale*m_criticalStrainEnergy);
+    #else
     real64 m = 3*m_criticalFractureEnergy/(8*m_lengthScale*m_criticalStrainEnergy);
+    #endif
     real64 p = 1;
     return -2*m*( pow( d, 3 )*(2*m*p*p + m*p + 2*p + 1) + pow( d, 2 )*(-3*m*p*p -3*p) + d*(-3*m*p - 3) + (-m+p+2) )/pow( pow( 1-d, 2 ) + m*d*(1+p*d), 3 );
   }
@@ -89,7 +107,6 @@ public:
   virtual real64 GetDegradationValue( localIndex const k,
                                       localIndex const q ) const
   {
-    //std::cout<<"Quadratic degradation"<<std::endl;
     return (1 - m_damage( k, q ))*(1 - m_damage( k, q ));
   }
 
@@ -97,7 +114,6 @@ public:
   GEOSX_HOST_DEVICE
   virtual real64 GetDegradationDerivative( real64 const d ) const
   {
-    //std::cout<<"Quadratic derivative"<<std::endl;
     return -2*(1 - d);
   }
 
@@ -105,8 +121,8 @@ public:
   GEOSX_HOST_DEVICE
   virtual real64 GetDegradationSecondDerivative( real64 const d ) const
   {
-    //std::cout<<"Quadratic 2nd derivative"<<std::endl;
-    return 2 * (d - d + 1);
+    GEOSX_UNUSED_VAR(d)
+    return 2.0;
   }
   #endif
 
@@ -117,8 +133,7 @@ public:
                              real64 (& c)[6][6] ) const override
   {
     UPDATE_BASE::GetStiffness( k, q, c );
-    std::cout<<"Std GetStiffness"<<std::endl;
-    real64 const damageFactor = ( 1.0 - m_damage( k, q ) )*( 1.0 - m_damage( k, q ) );
+    real64 const damageFactor = GetDegradationValue( k, q );
     for( localIndex i=0; i<6; ++i )
     {
       for( localIndex j=0; j<6; ++j )
@@ -148,8 +163,7 @@ public:
                           localIndex const q,
                           real64 (& stress)[6] ) const override
   {
-    //no tension-compression asymmetry
-    std::cout<<"Std getStress"<<std::endl;
+    //no tension-compression assymmetry
     real64 const damageFactor = GetDegradationValue( k, q );
 
     stress[0] = this->m_stress( k, q, 0 ) * damageFactor;
