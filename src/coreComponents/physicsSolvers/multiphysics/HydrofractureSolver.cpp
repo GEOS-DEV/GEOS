@@ -30,7 +30,7 @@
 #include "managers/DomainPartition.hpp"
 #include "managers/FieldSpecification/FieldSpecificationManager.hpp"
 #include "managers/NumericalMethodsManager.hpp"
-#include "mesh/FaceElementRegion.hpp"
+#include "mesh/SurfaceElementRegion.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
 #include "meshUtilities/ComputationalGeometry.hpp"
 #include "mpiCommunications/NeighborCommunicator.hpp"
@@ -87,7 +87,7 @@ void HydrofractureSolver::RegisterDataOnMesh( dataRepository::Group * const Mesh
     MeshLevel * meshLevel = Group::group_cast< MeshBody * >( mesh.second )->getMeshLevel( 0 );
 
     ElementRegionManager * const elemManager = meshLevel->getElemManager();
-    elemManager->forElementRegions< FaceElementRegion >( [&] ( FaceElementRegion * const region )
+    elemManager->forElementRegions< SurfaceElementRegion >( [&] ( SurfaceElementRegion * const region )
     {
       region->forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion * const subRegion )
       {
@@ -116,7 +116,7 @@ void HydrofractureSolver::ImplicitStepSetup( real64 const & time_n,
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
   MeshLevel & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
 
-  mesh.getElemManager()->forElementRegions< FaceElementRegion >( [&]( FaceElementRegion & faceElemRegion )
+  mesh.getElemManager()->forElementRegions< SurfaceElementRegion >( [&]( SurfaceElementRegion & faceElemRegion )
   {
     faceElemRegion.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
     {
@@ -277,7 +277,7 @@ void HydrofractureSolver::UpdateDeformationForCoupling( DomainPartition & domain
     arrayView1d< real64 > const effectiveAperture = subRegion.getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::effectiveApertureString );
     arrayView1d< real64 const > const volume = subRegion.getElementVolume();
     arrayView1d< real64 > const deltaVolume = subRegion.getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::deltaVolumeString );
-    arrayView1d< real64 const > const area = subRegion.getElementArea();
+    arrayView1d< real64 const > const area = subRegion.getElementArea().toViewConst();
     arrayView2d< localIndex const > const elemsToFaces = subRegion.faceList();
 
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
@@ -476,7 +476,7 @@ void HydrofractureSolver::SetupDofs( DomainPartition const & domain,
   // restrict coupling to fracture regions only (as done originally in SetupSystem)
   ElementRegionManager const & elemManager = *domain.getMeshBody( 0 )->getMeshLevel( 0 )->getElemManager();
   string_array fractureRegions;
-  elemManager.forElementRegions< FaceElementRegion >( [&]( FaceElementRegion const & elementRegion )
+  elemManager.forElementRegions< SurfaceElementRegion >( [&]( SurfaceElementRegion const & elementRegion )
   {
     fractureRegions.emplace_back( elementRegion.getName() );
   } );
