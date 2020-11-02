@@ -13,6 +13,7 @@
  */
 
 // Source includes
+#include "managers/initialization.hpp"
 #include "managers/ProblemManager.hpp"
 #include "virtualElement/VirtualElementBase.hpp"
 #include "virtualElement/ConformingVirtualElement_1.hpp"
@@ -33,11 +34,11 @@ TEST( VirtualElementBase, compilation )
     "      name=\"cube\""
     "      elementTypes=\"{C3D8}\""
     "      xCoords=\"{0.0, 1.0}\""
-    "      yCoords=\"{0.0, 2.0}\""
-    "      zCoords=\"{0.0, 3.0}\""
-    "      nx=\"{10}\""
-    "      ny=\"{11}\""
-    "      nz=\"{12}\""
+    "      yCoords=\"{0.0, 1.0}\""
+    "      zCoords=\"{0.0, 1.0}\""
+    "      nx=\"{1}\""
+    "      ny=\"{1}\""
+    "      nz=\"{1}\""
     "      cellBlockNames=\"{cb1}\""
     "    />"
     "  </Mesh>"
@@ -69,9 +70,20 @@ TEST( VirtualElementBase, compilation )
   xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child( elementManager->getName().c_str() );
   elementManager->ProcessInputFileRecursive( topLevelNode );
   elementManager->PostProcessInputRecursive();
-  std::cout << elementManager->getNumberOfElements() << std::endl << std::endl;
-  std::cout << mesh.getNodeManager()->referencePosition() << std::endl << std::endl;
   problemManager->ProblemSetup();
 
   delete problemManager;
+}
+
+int main( int argc, char * * argv )
+{
+  ::testing::InitGoogleTest( &argc, argv );
+
+  geosx::basicSetup( argc, argv );
+
+  int const result = RUN_ALL_TESTS();
+
+  geosx::basicCleanup();
+
+  return result;
 }
