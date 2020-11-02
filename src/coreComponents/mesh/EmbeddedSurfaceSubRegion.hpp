@@ -19,7 +19,7 @@
 #ifndef GEOSX_MESH_EMBEDDEDSURFACESUBREGION_HPP_
 #define GEOSX_MESH_EMBEDDEDSURFACESUBREGION_HPP_
 
-#include "ElementSubRegionBase.hpp"
+#include "SurfaceElementSubRegion.hpp"
 #include "InterObjectRelation.hpp"
 #include "ToElementRelation.hpp"
 #include "EdgeManager.hpp"
@@ -35,15 +35,9 @@ namespace geosx
  * The EmbeddedSurfaceSubRegion class contains the functionality to support the concept of an embedded
  * surface element. It consists of a 2D surface that cuts a 3D matrix cell.
  */
-class EmbeddedSurfaceSubRegion : public ElementSubRegionBase
+class EmbeddedSurfaceSubRegion : public SurfaceElementSubRegion
 {
 public:
-
-  /// Embedded surface element to nodes map type
-  using NodeMapType = InterObjectRelation< ArrayOfArrays< localIndex > >;
-
-  /// Embedded surface element to edges map type
-  using EdgeMapType = InterObjectRelation< ArrayOfArrays< localIndex > >;
 
   /// Embedded surface element to faces map type
   using FaceMapType = FixedOneToManyRelation;
@@ -147,23 +141,8 @@ public:
    * @brief Struct containing the keys to all embedded surface element views.
    * @struct viewKeyStruct
    */
-  struct viewKeyStruct : ElementSubRegionBase::viewKeyStruct
+  struct viewKeyStruct : SurfaceElementSubRegion::viewKeyStruct
   {
-    /// Embedded surface element aperture string
-    static constexpr auto elementApertureString        = "elementAperture";
-
-    /// Embedded surface element surface are string
-    static constexpr auto elementAreaString            = "elementArea";
-
-    /// Embedded surface element cell list string
-    static constexpr auto cellListString               = "fractureElementsToCellIndices";
-
-    /// Embedded surface element region list string
-    static constexpr auto regionListString             = "fractureElementsToRegionIndex";
-
-    /// Embedded surface element subregion list string
-    static constexpr auto subregionListString          = "fractureElementsToSubRegionIndex";
-
     /// Embedded surface element normal vector string
     static constexpr auto normalVectorString           = "normalVector";
 
@@ -179,96 +158,7 @@ public:
 
   virtual void setupRelatedObjectsInRelations( MeshLevel const * const mesh ) override;
 
-  virtual string GetElementTypeString() const override { return "Embedded"; }
-
-
-  /**
-   * @name Relation Accessors
-   * @brief Accessor function for the various inter-object relations
-   */
-  ///@{
-
-  /**
-   * @brief Get the embedded surface element to nodes map.
-   * @return the embedded surface element to node map
-   */
-  NodeMapType const & nodeList() const
-  {
-    return m_toNodesRelation;
-  }
-  /**
-   * @copydoc nodeList() const
-   */
-  NodeMapType & nodeList()
-  {
-    return m_toNodesRelation;
-  }
-
-  /**
-   * @brief Get the local index of the a-th node of the k-th element.
-   * @param[in] k the index of the element
-   * @param[in] a the index of the node in the element
-   * @return a reference to the local index of the node
-   */
-  localIndex & nodeList( localIndex const k, localIndex a ) { return m_toNodesRelation( k, a ); }
-
-  /**
-   * @copydoc nodeList( localIndex const k, localIndex a )
-   */
-  localIndex const & nodeList( localIndex const k, localIndex a ) const { return m_toNodesRelation( k, a ); }
-
-
-  /**
-   * @brief Get the embedded surface element to edges map.
-   * @return the embedded surface element to node map
-   */
-  EdgeMapType & edgeList()
-  {
-    return m_toEdgesRelation;
-  }
-
-  /**
-   * @copydoc edgeList()
-   */
-  EdgeMapType const & edgeList() const
-  {
-    return m_toEdgesRelation;
-  }
-
-
-  /**
-   * @brief Get the embedded surface element to region map (background grid nodes).
-   * @return the embedded surface element to region map
-   */
-  arrayView1d< localIndex > getSurfaceToRegionList() { return m_embeddedSurfaceToRegion; }
-
-  /**
-   * @copydoc getSurfaceToRegionList()
-   */
-  arrayView1d< localIndex const > getSurfaceToRegionList() const { return m_embeddedSurfaceToRegion; }
-
-  /**
-   * @brief Get the embedded surface element to subregion map (of cell elemtns being cut).
-   * @return the embedded surface element to subregion map
-   */
-  arrayView1d< localIndex > getSurfaceToSubRegionList() { return m_embeddedSurfaceToSubRegion; }
-
-  /**
-   * @copydoc getSurfaceToSubRegionList()
-   */
-  arrayView1d< localIndex const > getSurfaceToSubRegionList() const { return m_embeddedSurfaceToSubRegion; }
-
-  /**
-   * @brief Get the embedded surface element to cell element map
-   * @return the embedded surface element to cell element map
-   */
-  arrayView1d< localIndex > getSurfaceToCellList() { return m_embeddedSurfaceToCell; }
-
-  /**
-   * @copydoc getSurfaceToCellList()
-   */
-  arrayView1d< localIndex const > getSurfaceToCellList() const { return m_embeddedSurfaceToCell; }
-  ///@}
+  virtual string GetElementTypeString() const override final { return "Embedded"; }
 
   /**
    * @name Properties Getters
@@ -287,29 +177,6 @@ public:
    * @return  a constant reference to the number of jump enrichments
    */
   localIndex const & numOfJumpEnrichments() const {return m_numOfJumpEnrichments;}
-
-  /**
-   * @brief Get face element aperture.
-   * @return the aperture of the embedded surface elements
-   */
-  arrayView1d< real64 > getElementAperture() { return m_elementAperture; }
-
-  /**
-   * @copydoc getElementAperture()
-   */
-  arrayView1d< real64 const > getElementAperture() const { return m_elementAperture; }
-
-  /**
-   * @brief Get the embedded surface elements surface area.
-   * @return the surface area of the embedded surface elements
-   */
-  arrayView1d< real64 > getElementArea() { return m_elementArea; }
-
-  /**
-   * @copydoc getElementArea()
-   */
-  arrayView1d< real64 const > getElementArea() const { return m_elementArea; }
-
 
   /**
    * @brief Get normal vectors.
@@ -405,27 +272,6 @@ private:
 
   // tangential direction 2
   array1d< R1Tensor > m_tangentVector2;
-
-  /// list of regions
-  array1d< localIndex > m_embeddedSurfaceToRegion;
-
-  /// list of subregions
-  array1d< localIndex > m_embeddedSurfaceToSubRegion;
-
-  /// list of elements cut by the embedded surface elem
-  array1d< localIndex > m_embeddedSurfaceToCell;
-
-  /// list of nodes
-  NodeMapType m_toNodesRelation;
-
-  /// list of edges
-  EdgeMapType m_toEdgesRelation;
-
-  /// The member level field for the element center
-  array1d< real64 > m_elementAperture;
-
-  /// The member level field for the element center
-  array1d< real64 > m_elementArea;
 
   /// The number of jump enrichments
   localIndex m_numOfJumpEnrichments;

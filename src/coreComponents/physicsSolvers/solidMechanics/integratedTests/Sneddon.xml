@@ -126,8 +126,9 @@
       cellBlocks="{ cb1 }"
       materialList="{ rock }"/>
 
-    <EmbeddedSurfaceElementRegion
+    <SurfaceElementRegion
       name="Fracture"
+      subRegionType="embeddedElement"
       materialList="{ rock }"
       defaultAperture="1e-3"/>
   </ElementRegions>

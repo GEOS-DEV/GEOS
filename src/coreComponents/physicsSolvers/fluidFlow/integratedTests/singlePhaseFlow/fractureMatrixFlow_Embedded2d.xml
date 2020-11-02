@@ -99,10 +99,11 @@
       cellBlocks="{ cb1 }"
       materialList="{ water, rock }"/>
 
-    <EmbeddedSurfaceElementRegion
+    <SurfaceElementRegion
       name="Fracture"
-      defaultAperture="1e-3"
-      materialList="{ water, rock }"/>
+      defaultAperture = "1e-3"
+      materialList="{ water, rock }"
+      subRegionType="embeddedElement"/>
   </ElementRegions>
 
   <Constitutive>
