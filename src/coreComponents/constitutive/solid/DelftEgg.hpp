@@ -337,7 +337,7 @@ if(eps_s_trial < 1e-15)
   
   if(yield > 1e-9) // plasticity branch
   {
-    //std::cout << "plastic " <<  "\n " << std::endl;
+    std::cout << "plastic " <<  "\n " << std::endl;
     // the return mapping can in general be written as a newton iteration.
     // here we have a linear problem, so the algorithm will converge in one
     // iteration, but this is a template for more general models with either
@@ -387,7 +387,7 @@ if(eps_s_trial < 1e-15)
       
       norm = LvArray::tensorOps::l2Norm<3>(residual);
       
-     std::cout << "iter= " << iter << ", norm =  " << norm << std::endl;
+     //std::cout << "iter= " << iter << ", norm =  " << norm << std::endl;
       
       if(iter==0)
       {

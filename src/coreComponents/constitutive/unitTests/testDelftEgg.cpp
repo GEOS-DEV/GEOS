@@ -78,7 +78,7 @@ TEST( DelftEggTests, testModel )
   //                  strainIncrement.setValues< serialPolicy >( 0 );
   //                  strainIncrement[0][0] = inc;
 
-  real64 strainIncrement[6] = {inc, inc, inc, 0, 0, 0};
+  real64 strainIncrement[6] = {inc, inc, 0, inc, 0, inc};
   real64 stress[6] = {0, 0, 0, 0, 0, 0};
   real64 stiffness[6][6];
 
@@ -147,7 +147,7 @@ TEST( DelftEggTests, testModel )
     {
       strainIncrement[i-1] -= eps;
     }
-    std::cout<<"Calculating finite difference tangent ..."<<std::endl;
+    //std::cout<<"Calculating finite difference tangent ..."<<std::endl;
     cmw.SmallStrainUpdate(0,0,strainIncrement,pstress,pstiffness);
     
     for(localIndex j=0; j<6; ++j)
@@ -160,7 +160,7 @@ TEST( DelftEggTests, testModel )
   {
     for(localIndex j=0; j<6; ++j)
     {
-      std::cout << fd_stiffness[i][j] << " ";
+      //std::cout << fd_stiffness[i][j] << " ";
     }
     std::cout << "\n";
   }
