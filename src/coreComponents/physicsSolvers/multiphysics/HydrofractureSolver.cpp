@@ -77,6 +77,11 @@ HydrofractureSolver::HydrofractureSolver( const std::string & name,
     setDescription( "Value to indicate how many resolves may be executed to perform surface generation after the execution of flow and mechanics solver. " );
 
   m_numResolves[0] = 0;
+
+  m_linearSolverParameters.get().mgr.strategy = "Hydrofracture";
+  m_linearSolverParameters.get().mgr.separateComponents = true;
+  m_linearSolverParameters.get().mgr.displacementFieldName = keys::TotalDisplacement;
+  m_linearSolverParameters.get().dofsPerNode = 3;
 }
 
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
