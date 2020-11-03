@@ -5,7 +5,6 @@ in the subsurface.  The code provides advanced solvers for a number of target ap
 including
   - carbon sequestration,
   - geothermal energy,
-  - unconventional oil and gas,
   - and similar systems.  
 
 A key focus of the project is achieving scalable performance on current and next-generation

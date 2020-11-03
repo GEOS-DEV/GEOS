@@ -129,7 +129,6 @@ protected:
                                    DofManager const & dofManager,
                                    SparsityPatternView< globalIndex > const & pattern ) const;
 
-
 private:
 
   /// Solid mechanics solver name

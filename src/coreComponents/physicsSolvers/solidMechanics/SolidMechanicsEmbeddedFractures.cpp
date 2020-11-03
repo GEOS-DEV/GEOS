@@ -26,7 +26,7 @@
 #include "managers/DomainPartition.hpp"
 #include "managers/NumericalMethodsManager.hpp"
 #include "mesh/NodeManager.hpp"
-#include "mesh/EmbeddedSurfaceRegion.hpp"
+#include "mesh/SurfaceElementRegion.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
 #include "meshUtilities/ComputationalGeometry.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
@@ -79,7 +79,7 @@ void SolidMechanicsEmbeddedFractures::RegisterDataOnMesh( dataRepository::Group 
 
     ElementRegionManager * const elemManager = meshLevel->getElemManager();
     {
-      elemManager->forElementRegions< EmbeddedSurfaceRegion >( [&] ( EmbeddedSurfaceRegion & region )
+      elemManager->forElementRegions< SurfaceElementRegion >( [&] ( SurfaceElementRegion & region )
       {
         region.forElementSubRegions< EmbeddedSurfaceSubRegion >( [&]( EmbeddedSurfaceSubRegion & subRegion )
         {
@@ -155,7 +155,7 @@ void SolidMechanicsEmbeddedFractures::SetupDofs( DomainPartition const & domain,
   ElementRegionManager const & elemManager = *meshLevel.getElemManager();
 
   array1d< string > regions;
-  elemManager.forElementRegions< EmbeddedSurfaceRegion >( [&]( EmbeddedSurfaceRegion const & region ) {
+  elemManager.forElementRegions< SurfaceElementRegion >( [&]( SurfaceElementRegion const & region ) {
     regions.emplace_back( region.getName() );
   } );
 
@@ -259,14 +259,11 @@ void SolidMechanicsEmbeddedFractures::AssembleSystem( real64 const time,
   arrayView1d< globalIndex const > const & dispDofNumber = nodeManager.getReference< globalIndex_array >( dispDofKey );
   arrayView1d< globalIndex const > const & jumpDofNumber = subRegion.getReference< globalIndex_array >( jumpDofKey );
 
+
   real64 const gravityVectorData[3] = { gravityVector().Data()[0],
                                         gravityVector().Data()[1],
                                         gravityVector().Data()[2] };
 
-
-  arrayView1d< R1Tensor const > const w = subRegion.displacementJump();
-
-  std::cout << "jump: "  << w[0] << std::endl;
 
   real64 maxTraction = finiteElement::
                          regionBasedKernelApplication
@@ -308,9 +305,8 @@ void SolidMechanicsEmbeddedFractures::AddCouplingNumNonzeros( DomainPartition & 
   elemManager.forElementSubRegions< EmbeddedSurfaceSubRegion >( [&]( EmbeddedSurfaceSubRegion const & embeddedSurfaceSubRegion )
   {
     localIndex const numEmbeddedElems = embeddedSurfaceSubRegion.size();
-    arrayView1d< localIndex const >  const & embeddedSurfaceToRegion    = embeddedSurfaceSubRegion.getSurfaceToRegionList();
-    arrayView1d< localIndex const >  const & embeddedSurfaceToSubRegion = embeddedSurfaceSubRegion.getSurfaceToSubRegionList();
-    arrayView1d< localIndex const >  const & embeddedSurfaceToCell      = embeddedSurfaceSubRegion.getSurfaceToCellList();
+
+    FixedToManyElementRelation const & embeddedSurfacesToCells = embeddedSurfaceSubRegion.getToCellRelation();
 
     arrayView1d< globalIndex const > const &
     embeddedElementDofNumber = embeddedSurfaceSubRegion.getReference< array1d< globalIndex > >( jumpDofKey );
@@ -318,8 +314,13 @@ void SolidMechanicsEmbeddedFractures::AddCouplingNumNonzeros( DomainPartition & 
 
     for( localIndex k=0; k<numEmbeddedElems; ++k )
     {
-      CellBlock const * const subRegion = Group::group_cast< CellBlock const * const >( elemManager.GetRegion( embeddedSurfaceToRegion[k] )->
-                                                                                          GetSubRegion( embeddedSurfaceToSubRegion[k] ));
+      // Get rock matrix element subregion
+      CellElementSubRegion const * const subRegion =
+        Group::group_cast< CellElementSubRegion const * const >
+          ( elemManager.GetRegion( embeddedSurfacesToCells.m_toElementRegion[k][0] )->
+            GetSubRegion( embeddedSurfacesToCells.m_toElementSubRegion[k][0] ));
+
+      localIndex cellElementIndex = embeddedSurfacesToCells.m_toElementIndex[k][0];
 
       if( ghostRank[k] < 0 )
       {
@@ -334,7 +335,7 @@ void SolidMechanicsEmbeddedFractures::AddCouplingNumNonzeros( DomainPartition & 
 
         for( localIndex a=0; a<subRegion->numNodesPerElement(); ++a )
         {
-          const localIndex & node = subRegion->nodeList( embeddedSurfaceToCell[k], a );
+          const localIndex & node = subRegion->nodeList( cellElementIndex, a );
           localIndex const localDispRow = LvArray::integerConversion< localIndex >( dispDofNumber[node] - rankOffset );
           GEOSX_ASSERT_GE( localDispRow, 0 );
           GEOSX_ASSERT_GE( rowLengths.size(), localDispRow + 3*subRegion->numNodesPerElement() );
@@ -369,9 +370,8 @@ void SolidMechanicsEmbeddedFractures::AddCouplingSparsityPattern( DomainPartitio
 
   elemManager.forElementSubRegions< EmbeddedSurfaceSubRegion >( [&]( EmbeddedSurfaceSubRegion const & embeddedSurfaceSubRegion )
   {
-    arrayView1d< localIndex const >  const & embeddedSurfaceToRegion    = embeddedSurfaceSubRegion.getSurfaceToRegionList();
-    arrayView1d< localIndex const >  const & embeddedSurfaceToSubRegion = embeddedSurfaceSubRegion.getSurfaceToSubRegionList();
-    arrayView1d< localIndex const >  const & embeddedSurfaceToCell      = embeddedSurfaceSubRegion.getSurfaceToCellList();
+
+    FixedToManyElementRelation const & embeddedSurfacesToCells = embeddedSurfaceSubRegion.getToCellRelation();
 
     arrayView1d< globalIndex const > const &
     embeddedElementDofNumber = embeddedSurfaceSubRegion.getReference< array1d< globalIndex > >( jumpDofKey );
@@ -380,8 +380,11 @@ void SolidMechanicsEmbeddedFractures::AddCouplingSparsityPattern( DomainPartitio
     // This will fill K_wu, and K_uw
     for( localIndex k=0; k<embeddedSurfaceSubRegion.size(); ++k )
     {
-      CellBlock const * const elemSubRegion = Group::group_cast< CellBlock const * const >( elemManager.GetRegion( embeddedSurfaceToRegion[k] )->
-                                                                                              GetSubRegion( embeddedSurfaceToSubRegion[k] ));
+      CellBlock const * const elemSubRegion = Group::group_cast< CellBlock const * const >( elemManager.GetRegion( embeddedSurfacesToCells.m_toElementRegion[k][0] )->
+                                                                                              GetSubRegion( embeddedSurfacesToCells.m_toElementSubRegion[k][0] ));
+
+
+      localIndex cellElementIndex = embeddedSurfacesToCells.m_toElementIndex[k][0];
 
       // working arrays
       stackArray1d< globalIndex, maxNumDispDof > eqnRowIndicesDisp ( 3*elemSubRegion->numNodesPerElement() );
@@ -398,7 +401,7 @@ void SolidMechanicsEmbeddedFractures::AddCouplingSparsityPattern( DomainPartitio
 
       for( localIndex a=0; a<elemSubRegion->numNodesPerElement(); ++a )
       {
-        const localIndex & node = elemSubRegion->nodeList( embeddedSurfaceToCell[k], a );
+        const localIndex & node = elemSubRegion->nodeList( cellElementIndex, a );
         for( localIndex idof = 0; idof < 3; ++idof )
         {
           eqnRowIndicesDisp[3*a + idof] = dispDofNumber[node] + idof - rankOffset;
@@ -432,6 +435,7 @@ void SolidMechanicsEmbeddedFractures::AddCouplingSparsityPattern( DomainPartitio
 
   } );
 }
+
 
 void SolidMechanicsEmbeddedFractures::ApplyBoundaryConditions( real64 const time,
                                                                real64 const dt,
