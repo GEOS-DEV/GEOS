@@ -1,5 +1,4 @@
 matplotlib
-IPython
 numpy
 h5py
 mpmath
