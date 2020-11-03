@@ -1,2 +1,4 @@
 matplotlib
 IPython
+numpy
+hdf5
