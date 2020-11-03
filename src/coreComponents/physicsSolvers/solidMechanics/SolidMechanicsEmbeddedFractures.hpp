@@ -156,7 +156,7 @@ protected:
                                       localIndex const q,
                                       CellBlock::NodeMapType const & elemsToNodes,
                                       arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodesCoord,
-                                      arrayView1d< localIndex const > const & embeddedSurfaceToCell,
+                                      localIndex const cellElementIndex,
                                       localIndex const numNodesPerElement,
                                       arrayView4d< real64 const > const & dNdX );
 
