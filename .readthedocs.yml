@@ -21,7 +21,7 @@ formats: all
 python:
   version: 3.7
   install:
-    - requirements: docs/sphinx/requirements.txt
+    - requirements: src/docs/sphinx/requirements.txt
     
 submodules:
   include: 
