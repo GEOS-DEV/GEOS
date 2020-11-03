@@ -48,7 +48,6 @@ if read_the_docs_build:
                   "coreComponents/mesh",
                   "coreComponents/managers",
                   "coreComponents/meshUtilities",
-                  "coreComponents/wells",
                   "coreComponents/finiteElement/kernelInterface",
                   "coreComponents/mesh/ExtrinsicMeshData.hpp",
                   "coreComponents/physicsSolvers/simplePDE/LaplaceFEMKernels.hpp",
