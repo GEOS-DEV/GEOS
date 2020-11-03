@@ -1,4 +1,4 @@
 matplotlib
 IPython
 numpy
-hdf5
+h5py
