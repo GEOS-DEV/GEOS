@@ -250,7 +250,7 @@ void SolidMechanicsEmbeddedFractures::AssembleSystem( real64 const time,
 
   NodeManager const & nodeManager = *(mesh.getNodeManager());
   ElementRegionManager const & elemManager = *(mesh.getElemManager());
-  EmbeddedSurfaceRegion const & region = *(elemManager.GetRegion< EmbeddedSurfaceRegion >( m_fractureRegionName ));
+  SurfaceElementRegion const & region = *(elemManager.GetRegion< SurfaceElementRegion >( m_fractureRegionName ));
   EmbeddedSurfaceSubRegion const & subRegion = *(region.GetSubRegion< EmbeddedSurfaceSubRegion >( 0 ));
 
   string const dispDofKey = dofManager.getKey( dataRepository::keys::TotalDisplacement );
