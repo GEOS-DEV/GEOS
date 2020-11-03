@@ -80,7 +80,7 @@ void SinglePhaseFVM< BASE >::SetupSystem( DomainPartition & domain,
                      localSolution,
                      setSparsity );
 
-  setUpDfluxDapertureMatrix( domain, dofManager, localMatrix );
+  setUpDflux_dApertureMatrix( domain, dofManager, localMatrix );
 
 }
 
@@ -329,9 +329,9 @@ void SinglePhaseFVM< BASE >::ApplyFaceDirichletBC( real64 const time_n,
 }
 
 template< typename BASE >
-void SinglePhaseFVM< BASE >::setUpDfluxDapertureMatrix( DomainPartition & domain,
-                                                        DofManager const & dofManager,
-                                                        CRSMatrix< real64, globalIndex > & localMatrix )
+void SinglePhaseFVM< BASE >::setUpDflux_dApertureMatrix( DomainPartition & domain,
+                                                         DofManager const & dofManager,
+                                                         CRSMatrix< real64, globalIndex > & localMatrix )
 {
   MeshLevel & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
 

@@ -547,7 +547,7 @@ void HydrofractureSolver::SetupSystem( DomainPartition & domain,
   localRhs.setName( this->getName() + "/localRhs" );
   localSolution.setName( this->getName() + "/localSolution" );
 
-  m_flowSolver->setUpDfluxDapertureMatrix( domain, dofManager, localMatrix );
+  m_flowSolver->setUpDflux_dApertureMatrix( domain, dofManager, localMatrix );
 
 }
 

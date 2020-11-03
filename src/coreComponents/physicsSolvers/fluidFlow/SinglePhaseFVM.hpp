@@ -200,9 +200,9 @@ public:
                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
                      arrayView1d< real64 > const & localRhs ) override;
 
-  virtual void setUpDfluxDapertureMatrix( DomainPartition & domain,
-                                          DofManager const & dofManager,
-                                          CRSMatrix< real64, globalIndex > & localMatrix ) override final;
+  virtual void setUpDflux_dApertureMatrix( DomainPartition & domain,
+                                           DofManager const & dofManager,
+                                           CRSMatrix< real64, globalIndex > & localMatrix ) override final;
 
 
   /**@}*/
