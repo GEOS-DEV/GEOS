@@ -1074,8 +1074,7 @@
 			<xsd:element name="neighborData" type="neighborDataType" />
 			<xsd:element name="sets" type="setsType" />
 			<xsd:element name="CellElementRegion" type="CellElementRegionType" />
-			<xsd:element name="EmbeddedSurfaceElementRegion" type="EmbeddedSurfaceElementRegionType" />
-			<xsd:element name="FaceElementRegion" type="FaceElementRegionType" />
+			<xsd:element name="SurfaceElementRegion" type="SurfaceElementRegionType" />
 			<xsd:element name="WellElementRegion" type="WellElementRegionType" />
 		</xsd:choice>
 		<!--domainBoundaryIndicator => (no description available)-->
@@ -1322,10 +1321,10 @@
 	</xsd:complexType>
 	<xsd:complexType name="elementSubRegionsType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
-			<xsd:element name="default" type="defaultType" />
 			<xsd:element name="WellElementRegionuniqueSubRegion" type="WellElementRegionuniqueSubRegionType" />
 		</xsd:choice>
 	</xsd:complexType>
+<<<<<<< HEAD
 	<xsd:complexType name="EmbeddedSurfaceElementRegionType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="elementSubRegions" type="elementSubRegionsType" />
@@ -1394,6 +1393,9 @@
 	</xsd:complexType>
 	<xsd:complexType name="ConstitutiveModelsType" />
 	<xsd:complexType name="FaceElementRegionType">
+=======
+	<xsd:complexType name="SurfaceElementRegionType">
+>>>>>>> origin/develop
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="elementSubRegions" type="elementSubRegionsType" />
 			<xsd:element name="neighborData" type="neighborDataType" />
@@ -1473,6 +1475,7 @@
 		<!--wellControlsName => (no description available)-->
 		<xsd:attribute name="wellControlsName" type="string" />
 	</xsd:complexType>
+	<xsd:complexType name="ConstitutiveModelsType" />
 	<xsd:complexType name="wellElementSubRegionType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="neighborData" type="neighborDataType" />

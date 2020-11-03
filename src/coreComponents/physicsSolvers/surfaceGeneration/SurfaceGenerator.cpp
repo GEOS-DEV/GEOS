@@ -25,7 +25,7 @@
 #include "finiteVolume/FiniteVolumeManager.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "managers/NumericalMethodsManager.hpp"
-#include "mesh/FaceElementRegion.hpp"
+#include "mesh/SurfaceElementRegion.hpp"
 #include "mesh/ExtrinsicMeshData.hpp"
 #include "meshUtilities/ComputationalGeometry.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEMKernels.hpp"
@@ -375,15 +375,15 @@ void SurfaceGenerator::InitializePostInitialConditions_PreSubGroups( Group * con
             //          localIndex const er = elementManager->GetRegions().getIndex( elementRegionName );
             //          localIndex const esr = elementRegion->GetSubRegions().getIndex( elementSubRegion->getName() );
 
-            arrayView1d< real64 const > const & K_IC_00 = elementSubRegion->getExtrinsicData< extrinsicMeshData::K_IC_00 >();
-            arrayView1d< real64 const > const & K_IC_01 = elementSubRegion->getExtrinsicData< extrinsicMeshData::K_IC_01 >();
-            arrayView1d< real64 const > const & K_IC_02 = elementSubRegion->getExtrinsicData< extrinsicMeshData::K_IC_02 >();
-            arrayView1d< real64 const > const & K_IC_10 = elementSubRegion->getExtrinsicData< extrinsicMeshData::K_IC_10 >();
-            arrayView1d< real64 const > const & K_IC_11 = elementSubRegion->getExtrinsicData< extrinsicMeshData::K_IC_11 >();
-            arrayView1d< real64 const > const & K_IC_12 = elementSubRegion->getExtrinsicData< extrinsicMeshData::K_IC_12 >();
-            arrayView1d< real64 const > const & K_IC_20 = elementSubRegion->getExtrinsicData< extrinsicMeshData::K_IC_20 >();
-            arrayView1d< real64 const > const & K_IC_21 = elementSubRegion->getExtrinsicData< extrinsicMeshData::K_IC_21 >();
-            arrayView1d< real64 const > const & K_IC_22 = elementSubRegion->getExtrinsicData< extrinsicMeshData::K_IC_22 >();
+            arrayView1d< real64 const > const K_IC_00 = elementSubRegion->getExtrinsicData< extrinsicMeshData::K_IC_00 >();
+            arrayView1d< real64 const > const K_IC_01 = elementSubRegion->getExtrinsicData< extrinsicMeshData::K_IC_01 >();
+            arrayView1d< real64 const > const K_IC_02 = elementSubRegion->getExtrinsicData< extrinsicMeshData::K_IC_02 >();
+            arrayView1d< real64 const > const K_IC_10 = elementSubRegion->getExtrinsicData< extrinsicMeshData::K_IC_10 >();
+            arrayView1d< real64 const > const K_IC_11 = elementSubRegion->getExtrinsicData< extrinsicMeshData::K_IC_11 >();
+            arrayView1d< real64 const > const K_IC_12 = elementSubRegion->getExtrinsicData< extrinsicMeshData::K_IC_12 >();
+            arrayView1d< real64 const > const K_IC_20 = elementSubRegion->getExtrinsicData< extrinsicMeshData::K_IC_20 >();
+            arrayView1d< real64 const > const K_IC_21 = elementSubRegion->getExtrinsicData< extrinsicMeshData::K_IC_21 >();
+            arrayView1d< real64 const > const K_IC_22 = elementSubRegion->getExtrinsicData< extrinsicMeshData::K_IC_22 >();
 
             real64 k0[3];
             k0[0] = K_IC_00[iEle]*faceNormals[kf][0] + K_IC_10[iEle]*faceNormals[kf][1] + K_IC_20[iEle]*faceNormals[kf][2];
@@ -416,7 +416,7 @@ void SurfaceGenerator::postRestartInitialization( Group * const domain0 )
 
     EdgeManager * const edgeManager = meshLevel->getEdgeManager();
     ElementRegionManager * const elemManager = meshLevel->getElemManager();
-    FaceElementRegion * const fractureRegion = elemManager->GetRegion< FaceElementRegion >( this->m_fractureRegionName );
+    SurfaceElementRegion * const fractureRegion = elemManager->GetRegion< SurfaceElementRegion >( this->m_fractureRegionName );
     FaceElementSubRegion * const fractureSubRegion = fractureRegion->GetSubRegion< FaceElementSubRegion >( 0 );
 
     for( localIndex fce=0; fce<edgeManager->m_fractureConnectorEdgesToFaceElements.size(); ++fce )
@@ -480,7 +480,7 @@ real64 SurfaceGenerator::SolverStep( real64 const & time_n,
     {
       ElementRegionManager * const elemManager = meshLevel->getElemManager();
       EdgeManager * const edgeManager = meshLevel->getEdgeManager();
-      FaceElementRegion * const fractureRegion = elemManager->GetRegion< FaceElementRegion >( this->m_fractureRegionName );
+      SurfaceElementRegion * const fractureRegion = elemManager->GetRegion< SurfaceElementRegion >( this->m_fractureRegionName );
 
       for( localIndex a=0; a<fvManager.numSubGroups(); ++a )
       {
@@ -631,6 +631,7 @@ int SurfaceGenerator::SeparationDriver( DomainPartition & domain,
 
 
 #else
+
     GEOSX_UNUSED_VAR( neighbors );
     AssignNewGlobalIndicesSerial( nodeManager, modifiedObjects.newNodes );
     AssignNewGlobalIndicesSerial( edgeManager, modifiedObjects.newEdges );
@@ -684,7 +685,7 @@ int SurfaceGenerator::SeparationDriver( DomainPartition & domain,
   }
 
 
-  real64 ruptureRate = calculateRuptureRate( *(elementManager.GetRegion< FaceElementRegion >( this->m_fractureRegionName )), edgeManager );
+  real64 ruptureRate = calculateRuptureRate( *(elementManager.GetRegion< SurfaceElementRegion >( this->m_fractureRegionName )), edgeManager );
 
   GEOSX_LOG_LEVEL_RANK_0( 3, "rupture rate is " << ruptureRate );
   if( ruptureRate > 0 )
@@ -1628,7 +1629,7 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
   array1d< integer > const & edgeIsExternal = edgeManager.isExternal();
   array1d< integer > const & nodeIsExternal = nodeManager.isExternal();
 
-  FaceElementRegion * const fractureElementRegion = elementManager.GetRegion< FaceElementRegion >( "Fracture" );
+  SurfaceElementRegion * const fractureElementRegion = elementManager.GetRegion< SurfaceElementRegion >( "Fracture" );
   array1d< integer > const & isFaceSeparable = faceManager.getExtrinsicData< extrinsicMeshData::IsFaceSeparable >();
 
   array2d< real64 > const & faceNormals = faceManager.faceNormal();
@@ -1868,7 +1869,7 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
                                                                      &edgeManager,
                                                                      &faceManager,
                                                                      this->m_originalFaceToEdges.toViewConst(),
-                                                                     "default",
+                                                                     "faceElementSubRegion",
                                                                      faceIndices );
           m_faceElemsRupturedThisSolve.insert( newFaceElement );
           modifiedObjects.newElements[ {fractureElementRegion->getIndexInParent(), 0} ].insert( newFaceElement );
@@ -2081,7 +2082,7 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
             localIndex elementIndex = faceToElementMap[iFace][0];
             CellElementSubRegion * elementSubRegion = elementManager.GetRegion( faceToRegionMap[iFace][0] )->
                                                         GetSubRegion< CellElementSubRegion >( faceToSubRegionMap[iFace][0] );
-            arrayView2d< real64 const > const subRegionElemCenter = elementSubRegion->getElementCenter();
+            arrayView2d< real64 const > const subRegionElemCenter = elementSubRegion->getElementCenter().toViewConst();
 
             faceManager.SortFaceNodes( X, subRegionElemCenter[ elementIndex ], faceToNodeMap[ iFace ], faceToNodeMap.sizeOfArray( iFace ) );
 
@@ -4476,7 +4477,7 @@ void SurfaceGenerator::
 }
 
 real64
-SurfaceGenerator::calculateRuptureRate( FaceElementRegion & faceElementRegion,
+SurfaceGenerator::calculateRuptureRate( SurfaceElementRegion & faceElementRegion,
                                         EdgeManager const & edgeManager )
 {
   real64 maxRuptureRate = 0;
@@ -4492,7 +4493,7 @@ SurfaceGenerator::calculateRuptureRate( FaceElementRegion & faceElementRegion,
   ruptureRate = subRegion->getExtrinsicData< extrinsicMeshData::RuptureRate >();
 
 
-  arrayView2d< real64 const > const & elemCenter = subRegion->getElementCenter();
+  arrayView2d< real64 const > const & elemCenter = subRegion->getElementCenter().toViewConst();
 
   for( localIndex kfc=0; kfc<fractureConnectorEdgesToFaceElements.size(); ++kfc )
   {

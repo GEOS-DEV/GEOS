@@ -21,7 +21,7 @@
 #include "finiteVolume/BoundaryStencil.hpp"
 #include "finiteVolume/CellElementStencilTPFA.hpp"
 #include "finiteVolume/FaceElementStencil.hpp"
-#include "mesh/FaceElementRegion.hpp"
+#include "mesh/SurfaceElementRegion.hpp"
 #include "meshUtilities/ComputationalGeometry.hpp"
 #include "LvArray/src/tensorOps.hpp"
 
@@ -226,11 +226,16 @@ void TwoPointFluxApproximation::addToFractureStencil( MeshLevel & mesh,
   cellStencil.move( LvArray::MemorySpace::CPU );
 
 
-  FaceElementRegion * const fractureRegion = elemManager->GetRegion< FaceElementRegion >( faceElementRegionName );
+  SurfaceElementRegion * const fractureRegion = elemManager->GetRegion< SurfaceElementRegion >( faceElementRegionName );
   localIndex const fractureRegionIndex = fractureRegion->getIndexInParent();
 
+<<<<<<< HEAD
   FaceElementSubRegion * const fractureSubRegion = fractureRegion->GetSubRegion< FaceElementSubRegion >( "default" );
   FaceElementSubRegion::FaceMapType::NestedViewTypeConst const & faceMap = fractureSubRegion->faceList().toViewConst();
+=======
+  FaceElementSubRegion * const fractureSubRegion = fractureRegion->GetSubRegion< FaceElementSubRegion >( "faceElementSubRegion" );
+  FaceElementSubRegion::FaceMapType const & faceMap = fractureSubRegion->faceList();
+>>>>>>> origin/develop
 
   arrayView1d< localIndex const > const & fractureConnectorsToEdges =
     edgeManager->getReference< array1d< localIndex > >( EdgeManager::viewKeyStruct::fractureConnectorEdgesToEdgesString );
@@ -238,7 +243,7 @@ void TwoPointFluxApproximation::addToFractureStencil( MeshLevel & mesh,
   ArrayOfArraysView< localIndex const > const & fractureConnectorsToFaceElements =
     edgeManager->getReference< ArrayOfArrays< localIndex > >( EdgeManager::viewKeyStruct::fractureConnectorsEdgesToFaceElementsIndexString );
 
-  FixedToManyElementRelation const & faceElementsToCells = fractureSubRegion->m_faceElementsToCells;
+  FixedToManyElementRelation const & faceElementsToCells = fractureSubRegion->getToCellRelation();
 
   localIndex constexpr maxElems = FaceElementStencil::MAX_STENCIL_SIZE;
 
@@ -629,20 +634,20 @@ void TwoPointFluxApproximation::addEDFracToFractureStencil( MeshLevel & mesh,
   fractureStencil.move( LvArray::MemorySpace::CPU );
   cellStencil.move( LvArray::MemorySpace::CPU );
 
-  EmbeddedSurfaceRegion & fractureRegion = *( elemManager.GetRegion<
-                                                EmbeddedSurfaceRegion >( embeddedSurfaceRegionName ) );
+  SurfaceElementRegion & fractureRegion = *( elemManager.GetRegion<
+                                               SurfaceElementRegion >( embeddedSurfaceRegionName ) );
   localIndex const fractureRegionIndex = fractureRegion.getIndexInParent();
 
   EmbeddedSurfaceSubRegion & fractureSubRegion = *( fractureRegion.GetSubRegion<
-                                                      EmbeddedSurfaceSubRegion >( "default" ) );
+                                                      EmbeddedSurfaceSubRegion >( "embeddedSurfaceSubRegion" ) );
 
   // arrayView1d< real64 const > const & fractureElemArea   = fractureSubRegion->getElementArea();
-  arrayView2d< real64 const > const & fractureElemCenter = fractureSubRegion.getElementCenter();
-  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X = nodeManager.embSurfNodesPosition();
+  arrayView2d< real64 const > const fractureElemCenter = fractureSubRegion.getElementCenter().toViewConst();
+  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X = nodeManager.embSurfNodesPosition();
 
   EdgeManager::FaceMapType const & edgeToEmbSurfacesMap = embSurfEdgeManager.faceList();
 
-  arrayView1d< integer const > const & ghostRank = fractureSubRegion.ghostRank();
+  arrayView1d< integer const > const ghostRank = fractureSubRegion.ghostRank();
 
   localIndex constexpr maxElems = FaceElementStencil::MAX_STENCIL_SIZE;
 
@@ -710,9 +715,9 @@ void TwoPointFluxApproximation::addEDFracToFractureStencil( MeshLevel & mesh,
   }
 
   // Add connections EmbeddedSurface to/from CellElements.
-  arrayView1d< localIndex const > const & elemRegionList    = fractureSubRegion.getSurfaceToRegionList();
-  arrayView1d< localIndex const > const & elemSubRegionList = fractureSubRegion.getSurfaceToSubRegionList();
-  arrayView1d< localIndex const > const & elemList          = fractureSubRegion.getSurfaceToCellList();
+
+  FixedToManyElementRelation const & surfaceElementsToCells = fractureSubRegion.getToCellRelation();
+
   arrayView1d< real64 const >     const & connectivityIndex = fractureSubRegion.getConnectivityIndex();
 
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > const coeffTensor =
@@ -735,9 +740,9 @@ void TwoPointFluxApproximation::addEDFracToFractureStencil( MeshLevel & mesh,
       stackArray1d< localIndex, maxElems > stencilCellsIndex( numElems );
       stackArray1d< real64, maxElems > stencilWeights( numElems );
 
-      localIndex const er  = elemRegionList[kes];
-      localIndex const esr = elemSubRegionList[kes];
-      localIndex const ei  = elemList[kes];
+      localIndex const er  = surfaceElementsToCells.m_toElementRegion[kes][0];
+      localIndex const esr = surfaceElementsToCells.m_toElementSubRegion[kes][0];
+      localIndex const ei  = surfaceElementsToCells.m_toElementIndex[kes][0];
 
       // Here goes EDFM transmissibility computation.
       real64 const avPerm = LvArray::tensorOps::l2Norm< 3 >( coeffTensor[er][esr][ei] );

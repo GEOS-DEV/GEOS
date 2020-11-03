@@ -497,7 +497,7 @@ private:
                                  FaceManager & faceManager );
 
 
-  real64 calculateRuptureRate( FaceElementRegion & faceElementRegion,
+  real64 calculateRuptureRate( SurfaceElementRegion & faceElementRegion,
                                EdgeManager const & edgeManager );
 
   /**

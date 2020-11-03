@@ -135,17 +135,11 @@ public:
 
   template< bool ISPORO, typename POLICY >
   void AccumulationLaunch( localIndex const targetIndex,
-                           FaceElementSubRegion const & subRegion,
+                           SurfaceElementSubRegion const & subRegion,
                            DofManager const & dofManager,
                            CRSMatrixView< real64, globalIndex const > const & localMatrix,
                            arrayView1d< real64 > const & localRhs );
 
-  template< bool ISPORO, typename POLICY >
-  void AccumulationLaunch( localIndex const targetIndex,
-                           EmbeddedSurfaceSubRegion const & subRegion,
-                           DofManager const & dofManager,
-                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                           arrayView1d< real64 > const & localRhs );
 
   ///@}
 

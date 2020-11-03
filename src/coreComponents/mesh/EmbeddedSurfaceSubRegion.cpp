@@ -30,34 +30,13 @@ using namespace dataRepository;
 
 EmbeddedSurfaceSubRegion::EmbeddedSurfaceSubRegion( string const & name,
                                                     dataRepository::Group * const parent ):
-  ElementSubRegionBase( name, parent ),
+  SurfaceElementSubRegion( name, parent ),
   m_normalVector(),
   m_tangentVector1(),
   m_tangentVector2(),
-  m_embeddedSurfaceToRegion(),
-  m_embeddedSurfaceToSubRegion(),
-  m_embeddedSurfaceToCell(),
-  m_toNodesRelation(),
-  m_elementAperture(),
-  m_elementArea(),
   m_numOfJumpEnrichments( 3 ),
   m_connectivityIndex()
 {
-  registerWrapper( viewKeyStruct::regionListString, &m_embeddedSurfaceToRegion )->
-    setDescription( "Map to the region cut by each EmbeddedSurface." );
-
-  registerWrapper( viewKeyStruct::subregionListString, &m_embeddedSurfaceToSubRegion )->
-    setDescription( "Map to the subregion cut by each EmbeddedSurface." );
-
-  registerWrapper( viewKeyStruct::nodeListString, &m_toNodesRelation )->
-    setDescription( "Map to the nodes attached to each EmbeddedSurface." );
-
-  registerWrapper( viewKeyStruct::edgeListString, &m_toEdgesRelation )->
-    setDescription( "Map to the edges." );
-
-  registerWrapper( viewKeyStruct::cellListString, &m_embeddedSurfaceToCell )->
-    setDescription( "Map to the cell elements." );
-
   registerWrapper( viewKeyStruct::normalVectorString, &m_normalVector )->
     setDescription( "Unit normal vector to the embedded surface." );
 
@@ -66,15 +45,6 @@ EmbeddedSurfaceSubRegion::EmbeddedSurfaceSubRegion( string const & name,
 
   registerWrapper( viewKeyStruct::t2VectorString, &m_tangentVector2 )->
     setDescription( "Unit vector in the second tangent direction to the embedded surface." );
-
-  registerWrapper( viewKeyStruct::elementApertureString, &m_elementAperture )->
-    setApplyDefaultValue( 1.0e-5 )->
-    setPlotLevel( dataRepository::PlotLevel::LEVEL_0 )->
-    setDescription( "The aperture of each EmbeddedSurface." );
-
-  registerWrapper( viewKeyStruct::elementAreaString, &m_elementArea )->
-    setApplyDefaultValue( -1.0 )->
-    setDescription( "The area of each EmbeddedSurface element." );
 
   registerWrapper( viewKeyStruct::elementCenterString, &m_elementCenter )->
     setDescription( "The center of each EmbeddedSurface element." );
@@ -91,6 +61,7 @@ EmbeddedSurfaceSubRegion::EmbeddedSurfaceSubRegion( string const & name,
   m_normalVector.resizeDimension< 1 >( 3 );
   m_tangentVector1.resizeDimension< 1 >( 3 );
   m_tangentVector2.resizeDimension< 1 >( 3 );
+  m_surfaceElementsToCells.resize( 0, 1 );
 }
 
 
@@ -125,8 +96,8 @@ void EmbeddedSurfaceSubRegion::CalculateElementGeometricQuantities( arrayView2d<
 }
 
 bool EmbeddedSurfaceSubRegion::AddNewEmbeddedSurface ( localIndex const cellIndex,
-                                                       localIndex const regionIndex,
                                                        localIndex const subRegionIndex,
+                                                       localIndex const regionIndex,
                                                        NodeManager & nodeManager,
                                                        EdgeManager const & edgeManager,
                                                        FixedOneToManyRelation const & cellToEdges,
@@ -241,9 +212,9 @@ bool EmbeddedSurfaceSubRegion::AddNewEmbeddedSurface ( localIndex const cellInde
       m_toNodesRelation( surfaceIndex, inode ) = elemNodes[inode];
     }
 
-    m_embeddedSurfaceToCell[ surfaceIndex ]      = cellIndex;
-    m_embeddedSurfaceToRegion[ surfaceIndex ]    =  regionIndex;
-    m_embeddedSurfaceToSubRegion[ surfaceIndex ] =  subRegionIndex;
+    m_surfaceElementsToCells.m_toElementIndex[ surfaceIndex ][0]        = cellIndex;
+    m_surfaceElementsToCells.m_toElementSubRegion[ surfaceIndex ][0]    =  subRegionIndex;
+    m_surfaceElementsToCells.m_toElementRegion[ surfaceIndex ][0]       =  regionIndex;
     LvArray::tensorOps::copy< 3 >( m_normalVector[ surfaceIndex ], normalVector );
     LvArray::tensorOps::copy< 3 >( m_tangentVector1[ surfaceIndex ], fracture->getWidthVector());
     LvArray::tensorOps::copy< 3 >( m_tangentVector2[ surfaceIndex ], fracture->getLengthVector());
@@ -257,7 +228,11 @@ void EmbeddedSurfaceSubRegion::inheritGhostRank( array1d< array1d< arrayView1d< 
   arrayView1d< integer > const & ghostRank = this->ghostRank();
   for( localIndex k=0; k < size(); ++k )
   {
-    ghostRank[k] = cellGhostRank[m_embeddedSurfaceToRegion[k]][m_embeddedSurfaceToSubRegion[k]][m_embeddedSurfaceToCell[k]];
+    localIndex regionIndex    = m_surfaceElementsToCells.m_toElementRegion[k][0];
+    localIndex subRegionIndex = m_surfaceElementsToCells.m_toElementSubRegion[k][0];
+    localIndex cellIndex      = m_surfaceElementsToCells.m_toElementIndex[k][0];
+
+    ghostRank[k] = cellGhostRank[regionIndex][subRegionIndex][cellIndex];
   }
 }
 

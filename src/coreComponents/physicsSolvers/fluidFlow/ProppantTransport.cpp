@@ -33,7 +33,7 @@
 #include "meshUtilities/ComputationalGeometry.hpp"
 #include "mpiCommunications/CommunicationTools.hpp"
 #include "mpiCommunications/NeighborCommunicator.hpp"
-#include "mesh/FaceElementRegion.hpp"
+#include "mesh/SurfaceElementRegion.hpp"
 
 #include "physicsSolvers/fluidFlow/ProppantTransportKernels.hpp"
 
