@@ -16,7 +16,7 @@
 #include "managers/initialization.hpp"
 #include "managers/ProblemManager.hpp"
 #include "virtualElement/VirtualElementBase.hpp"
-#include "virtualElement/ConformingVirtualElement_1.hpp"
+#include "virtualElement/ConformingVirtualElementOrder1.hpp"
 #include "managers/DomainPartition.hpp"
 #include "meshUtilities/MeshManager.hpp"
 
@@ -24,6 +24,7 @@
 #include "gtest/gtest.h"
 
 using namespace geosx;
+using namespace virtualElement;
 
 TEST( VirtualElementBase, compilation )
 {
@@ -71,6 +72,9 @@ TEST( VirtualElementBase, compilation )
   elementManager->ProcessInputFileRecursive( topLevelNode );
   elementManager->PostProcessInputRecursive();
   problemManager->ProblemSetup();
+
+  ConformingVirtualElementOrder1 vemElement;
+  vemElement.ComputeProjectors(mesh, 0, 0, 0);
 
   delete problemManager;
 }

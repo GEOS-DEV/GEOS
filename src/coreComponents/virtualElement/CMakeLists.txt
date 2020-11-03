@@ -2,14 +2,14 @@
 # Specify all headers
 #
 set( virtualElement_headers
-  ConformingVirtualElement_1.hpp
+  ConformingVirtualElementOrder1.hpp
   VirtualElementBase.hpp
   )
 #
 # Specify all sources
 #
 set( virtualElement_sources
-  dummy.cpp
+  ConformingVirtualElementOrder1.cpp
   )
 
 if( BUILD_OBJ_LIBS)
