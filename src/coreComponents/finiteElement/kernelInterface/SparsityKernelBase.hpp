@@ -83,9 +83,7 @@ public:
                       CONSTITUTIVE_TYPE * const inputConstitutiveType,
                       arrayView1d< globalIndex const > const & inputDofNumber,
                       globalIndex const rankOffset,
-                      SparsityPattern< globalIndex > & inputSparsity,
-                      CRSMatrix< real64, globalIndex > & dummyMatrix,
-                      array1d< real64 > & dummyArray ):
+                      SparsityPattern< globalIndex > & inputSparsity ):
     Base( nodeManager,
           edgeManager,
           faceManager,
@@ -243,9 +241,6 @@ real64 fillSparsity( MeshLevel & mesh,
 {
   GEOSX_MARK_FUNCTION;
 
-  CRSMatrix< real64, globalIndex > dummyMatrix;
-  array1d< real64 > dummyArray;
-
   regionBasedKernelApplication< serialPolicy,
                                 constitutive::NullModel,
                                 REGION_TYPE,
@@ -256,9 +251,7 @@ real64 fillSparsity( MeshLevel & mesh,
                                    arrayView1d< string const >(),
                                    inputDofNumber,
                                    rankOffset,
-                                   inputSparsityPattern,
-                                   dummyMatrix,
-                                   dummyArray );
+                                   inputSparsityPattern );
 
   return 0;
 }

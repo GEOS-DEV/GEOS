@@ -120,7 +120,7 @@ public:
 
   template< int USD >
   GEOSX_HOST_DEVICE inline
-  R1TensorT & operator+=( LvArray::ArraySlice< realT, 1, USD, std::ptrdiff_t > const & src )
+  R1TensorT & operator+=( LvArray::ArraySlice< realT, 1, USD, int > const & src )
   {
     GEOSX_ASSERT_EQ( src.size(), T_dim );
 
