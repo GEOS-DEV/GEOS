@@ -143,7 +143,7 @@ public:
       wLocal(),
       uLocal(),
       hInv(),
-	  X()
+      X()
     {}
 
     /// C-array storage for the element local row degrees of freedom.
@@ -359,13 +359,13 @@ public:
     LvArray::tensorOps::Rij_eq_AikBkj< nUdof, 3, 6 >( Kuw_gauss, matBD, compMatrix );
 
     // multiply by determinant
-    LvArray::tensorOps::scale< 3, 3     >( Kww_gauss, -detJ );
+    LvArray::tensorOps::scale< 3, 3 >( Kww_gauss, -detJ );
     LvArray::tensorOps::scale< 3, nUdof >( Kwu_gauss, -detJ );
     LvArray::tensorOps::scale< nUdof, 3 >( Kuw_gauss, -detJ );
 
     // TODO add a scale add for matrices to the tensorOps.
     // Add Gauss point contribution to element matrix
-    LvArray::tensorOps::add< 3, 3     >( stack.localKww, Kww_gauss );
+    LvArray::tensorOps::add< 3, 3 >( stack.localKww, Kww_gauss );
     LvArray::tensorOps::add< 3, nUdof >( stack.localKwu, Kwu_gauss );
     LvArray::tensorOps::add< nUdof, 3 >( stack.localKuw, Kuw_gauss );
   }
@@ -398,15 +398,15 @@ public:
 
     for( localIndex i = 0; i < nUdof; ++i )
     {
-    	localIndex const dof = LvArray::integerConversion< localIndex >( stack.dispEqnRowIndices[ i ] );
-    	if( dof < 0 || dof >= m_matrix.numRows() ) continue;
+      localIndex const dof = LvArray::integerConversion< localIndex >( stack.dispEqnRowIndices[ i ] );
+      if( dof < 0 || dof >= m_matrix.numRows() ) continue;
 
-    	RAJA::atomicAdd< parallelDeviceAtomic >( &m_rhs[dof], stack.localRu[i] );
+      RAJA::atomicAdd< parallelDeviceAtomic >( &m_rhs[dof], stack.localRu[i] );
 
-    	m_matrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( dof,
-    			stack.jumpColIndices,
-				stack.localKuw[i],
-				3 );
+      m_matrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( dof,
+                                                                              stack.jumpColIndices,
+                                                                              stack.localKuw[i],
+                                                                              3 );
 
     }
 
@@ -418,14 +418,14 @@ public:
 
       // fill in matrix
       m_matrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( dof,
-    		  stack.jumpColIndices,
-			  stack.localKww[i],
-			  3 );
+                                                                              stack.jumpColIndices,
+                                                                              stack.localKww[i],
+                                                                              3 );
 
       m_matrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( dof,
-    		  stack.dispColIndices,
-			  stack.localKwu[i],
-			  numNodesPerElem*3 );
+                                                                              stack.dispColIndices,
+                                                                              stack.localKwu[i],
+                                                                              numNodesPerElem*3 );
     }
 
 

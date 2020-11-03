@@ -82,8 +82,8 @@ void assembleStrainOperator( real64 ( & strainMatrix )[I_SIZE][J_SIZE],
 template< int NUM_NODES >
 void assembleCompatibilityOperator( real64 ( & compMatrix )[6][3],
                                     R1Tensor const & nVec,
-									R1Tensor const & tVec1,
-									R1Tensor const & tVec2,
+                                    R1Tensor const & tVec1,
+                                    R1Tensor const & tVec2,
                                     integer ( & heavisideFun )[NUM_NODES],
                                     real64 ( & dNdX )[NUM_NODES][3] )
 {
@@ -97,9 +97,9 @@ void assembleCompatibilityOperator( real64 ( & compMatrix )[6][3],
   LvArray::tensorOps::fill< 3 >( mVec, 0 );
   for( integer a=0; a<NUM_NODES; ++a )
   {
-	mVec[0] -= dNdX[a][0] * heavisideFun[a];
-	mVec[1] -= dNdX[a][1] * heavisideFun[a];
-	mVec[2] -= dNdX[a][2] * heavisideFun[a];
+    mVec[0] -= dNdX[a][0] * heavisideFun[a];
+    mVec[1] -= dNdX[a][1] * heavisideFun[a];
+    mVec[2] -= dNdX[a][2] * heavisideFun[a];
   }
 
 
