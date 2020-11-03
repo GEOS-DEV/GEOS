@@ -100,8 +100,8 @@ extensions = [
 #    'sphinx.ext.mathjax'
     'sphinx.ext.imgmath',
     'sphinx.ext.todo',
-    'matplotlib.sphinxext.only_directives',
-    'matplotlib.sphinxext.plot_directive',
+#    'matplotlib.sphinxext.only_directives',
+#    'matplotlib.sphinxext.plot_directive',
     'IPython.sphinxext.ipython_directive',
     'IPython.sphinxext.ipython_console_highlighting',
 #    'sphinx.ext.mathjax',
