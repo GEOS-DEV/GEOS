@@ -900,7 +900,6 @@ HydrofractureSolver::
     string const & fluidName = m_flowSolver->fluidModelNames()[m_flowSolver->targetRegionIndex( region.getName() )];
     SingleFluidBase const & fluid = GetConstitutiveModel< SingleFluidBase >( subRegion, fluidName );
 
-    //arrayView1d< integer const > const elemGhostRank = subRegion.ghostRank();
     arrayView1d< globalIndex const > const presDofNumber = subRegion.getReference< array1d< globalIndex > >( presDofKey );
     arrayView1d< globalIndex const > const dispDofNumber = nodeManager.getReference< array1d< globalIndex > >( dispDofKey );
 
@@ -919,6 +918,8 @@ HydrofractureSolver::
       constexpr int kfSign[2] = { -1, 1 };
 
       globalIndex const elemDOF = presDofNumber[ei];
+      // row number associated to the pressure dof
+      globalIndex rowNumber = elemDOF - rankOffset;
       localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( elemsToFaces[ei][0] );
       real64 const dAccumulationResidualdAperture = dens[ei][0] * area[ei];
 
@@ -944,7 +945,7 @@ HydrofractureSolver::
           }
         }
       }
-      globalIndex rowNumber = elemDOF - rankOffset;
+
       if( rowNumber >= 0  && rowNumber < localMatrix.numRows() )
       {
         localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( rowNumber,
@@ -978,7 +979,7 @@ HydrofractureSolver::
             }
           }
         }
-        globalIndex rowNumber = elemDOF - rankOffset;
+
         if( rowNumber >= 0 && rowNumber < localMatrix.numRows() )
         {
           localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( rowNumber,
