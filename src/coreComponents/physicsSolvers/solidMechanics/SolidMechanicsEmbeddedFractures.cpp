@@ -405,15 +405,9 @@ void SolidMechanicsEmbeddedFractures::AssembleSystem( real64 const time,
 
           for( localIndex i = 0; i < numNodesPerElement; ++i )
           {
-<<<<<<< HEAD
-            localIndex const nodeID = elemsToNodes( embeddedSurfaceToCell[k], i );
+            localIndex const nodeID = elemsToNodes( cellElementIndex, i );
             LvArray::tensorOps::copy< 3 >( u_local[ i ], disp[ nodeID ] );
             LvArray::tensorOps::copy< 3 >( du_local[ i ], dDisp[ nodeID ] );
-=======
-            localIndex const nodeID = elemsToNodes( cellElementIndex, i );
-            u_local[ i ] = disp[ nodeID ];
-            du_local[ i ] = dDisp[ nodeID ];
->>>>>>> origin/develop
           }
 
           // Dof number of jump enrichment
@@ -448,11 +442,9 @@ void SolidMechanicsEmbeddedFractures::AssembleSystem( real64 const time,
 
           for( integer q=0; q<fe.getNumQuadraturePoints(); ++q )
           {
-<<<<<<< HEAD
-            const real64 detJq = detJ[embeddedSurfaceToCell[k]][q];
-=======
-            const realT detJq = detJ[cellElementIndex][q];
->>>>>>> origin/develop
+
+            const real64 detJq = detJ[cellElementIndex][q];
+
             AssembleCompatibilityOperator( compMatrix,
                                            embeddedSurfaceSubRegion,
                                            k,
@@ -762,18 +754,12 @@ SolidMechanicsEmbeddedFractures::
   for( integer a=0; a<numNodesPerElement; ++a )
   {
     // Heaviside
-<<<<<<< HEAD
-    real64 const heavisideFun = embeddedSurfaceSubRegion.ComputeHeavisideFunction( nodesCoord[ elemsToNodes[embeddedSurfaceToCell[k]][a] ], k );
-    // sum contribution of each node
-    LvArray::tensorOps::scaledAdd< 3 >( mVec, dNdX[ embeddedSurfaceToCell[k] ][ q ][ a ], -heavisideFun );
-=======
-    heavisideFun = embeddedSurfaceSubRegion.
-                     ComputeHeavisideFunction( nodesCoord[ elemsToNodes[cellElementIndex][a] ], k );
+    real64 heavisideFun = embeddedSurfaceSubRegion.
+                            ComputeHeavisideFunction( nodesCoord[ elemsToNodes[cellElementIndex][a] ], k );
     // sum contribution of each node
     mVec[0] -= dNdX( cellElementIndex, q, a, 0 ) * heavisideFun;
     mVec[1] -= dNdX( cellElementIndex, q, a, 1 ) * heavisideFun;
     mVec[2] -= dNdX( cellElementIndex, q, a, 2 ) * heavisideFun;
->>>>>>> origin/develop
   }
 
   BlasLapackLA::matrixScale( 0, compMatrix );

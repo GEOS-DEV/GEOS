@@ -229,13 +229,8 @@ void TwoPointFluxApproximation::addToFractureStencil( MeshLevel & mesh,
   SurfaceElementRegion * const fractureRegion = elemManager->GetRegion< SurfaceElementRegion >( faceElementRegionName );
   localIndex const fractureRegionIndex = fractureRegion->getIndexInParent();
 
-<<<<<<< HEAD
-  FaceElementSubRegion * const fractureSubRegion = fractureRegion->GetSubRegion< FaceElementSubRegion >( "default" );
-  FaceElementSubRegion::FaceMapType::NestedViewTypeConst const & faceMap = fractureSubRegion->faceList().toViewConst();
-=======
   FaceElementSubRegion * const fractureSubRegion = fractureRegion->GetSubRegion< FaceElementSubRegion >( "faceElementSubRegion" );
   FaceElementSubRegion::FaceMapType const & faceMap = fractureSubRegion->faceList();
->>>>>>> origin/develop
 
   arrayView1d< localIndex const > const & fractureConnectorsToEdges =
     edgeManager->getReference< array1d< localIndex > >( EdgeManager::viewKeyStruct::fractureConnectorEdgesToEdgesString );
