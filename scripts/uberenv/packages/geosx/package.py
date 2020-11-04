@@ -13,10 +13,15 @@ from os import environ as env
 from os.path import join as pjoin
 
 
-# ./scripts/uberenv/uberenv.py --spec="%clang@10.0.1 +mkl ^chai@master ^caliper+papi"
+# ./scripts/uberenv/uberenv.py --spec="%clang +mkl ^chai ^caliper+papi"
+
+# ./scripts/uberenv/uberenv.py --spec="%clang +mkl ^raja build_type=Release ^umpire build_type=Release ^chai build_type=Release ^adiak build_type=Release ^caliper+papi build_type=Release ^pugixml build_type=Release ^parmetis build_type=Release ^superlu-dist build_type=Release ^trilinos build_type=Release"
+
+# ./scripts/uberenv/uberenv.py --spec="%clang +essl +cuda ~petsc cuda_arch=70 ^raja build_type=Release cuda_arch=70 ^umpire build_type=Release cuda_arch=70 ^chai build_type=Release cuda_arch=70 ^adiak build_type=Release ^caliper~papi build_type=Release ^pugixml build_type=Release ^parmetis build_type=Release ^superlu-dist build_type=Release ^trilinos build_type=Release"
+
 
 # PETSC doesn't compile on Lassen
-# ./scripts/uberenv/uberenv.py --spec="%gcc +essl ~petsc +cuda cuda_arch=70 ^cuda@10.1.243 ^raja cuda_arch=70 ^umpire cuda_arch=70 ^chai@master cuda_arch=70 ^caliper~papi"
+# ./scripts/uberenv/uberenv.py --spec="%gcc +essl ~petsc +cuda cuda_arch=70 ^cuda@10.1.243 ^raja cuda_arch=70 ^umpire cuda_arch=70 ^chai cuda_arch=70 ^caliper~papi"
 
 def cmake_cache_entry(name, value, comment=""):
     """Generate a string for a cmake cache variable"""
@@ -84,14 +89,14 @@ class Geosx(CMakePackage, CudaPackage):
     #
     # Performance portability
     #
-    depends_on('raja@0.12.1: +openmp +shared ~examples ~exercises')
+    depends_on('raja@0.12.1 +openmp +shared ~examples ~exercises')
     depends_on('raja +cuda', when='+cuda')
 
-    depends_on('umpire@4.0.1: ~c +shared +openmp ~examples')
+    depends_on('umpire@4.1.2 ~c +shared +openmp ~examples')
     depends_on('umpire +cuda', when='+cuda')
 
-    depends_on('chai +shared +raja ~benchmarks ~examples')
-    depends_on('chai +cuda', when='+cuda')
+    depends_on('chai@2.2.2 +shared +raja ~benchmarks ~examples')
+    depends_on('chai@2.2.2 +cuda', when='+cuda')
 
     #
     # IO
