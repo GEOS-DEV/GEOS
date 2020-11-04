@@ -52,6 +52,7 @@ TimeHistory Output
 The TimeHistory output is defined through the ``<TimeHistory>`` XML node (subnode of ``<Outputs> XML block``) as shown here:
 
 .. code-block:: xml
+
   <Outputs>
     <TimeHistory name="timeHistoryOutput" sources="{/Tasks/collectionTask}" filename="timeHistory" />
   </Outputs>
