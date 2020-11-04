@@ -59,9 +59,14 @@ CompositionalMultiphaseFlow::CompositionalMultiphaseFlow( const string & name,
   m_allowCompDensChopping( 1 )
 {
 //START_SPHINX_INCLUDE_00
-  this->registerWrapper( viewKeyStruct::temperatureString, &m_temperature )->
+  this->registerWrapper( viewKeyStruct::temperatureString, &m_uniformTemperature )->
     setInputFlag( InputFlags::REQUIRED )->
-    setDescription( "Temperature" );
+    setDescription( "Uniform temperature for isothermal simulations." );
+
+  this->registerWrapper(viewKeyStruct::isothermalFlagString, &m_isothermalFlag)->
+		  setApplyDefaultValue( 1 )->
+		  setInputFlag( InputFlags::OPTIONAL )->
+		  setDescription("Flag indicating whether the problem  is isothermal or not.");
 
   this->registerWrapper( viewKeyStruct::useMassFlagString, &m_useMass )->
     setApplyDefaultValue( 0 )->
@@ -154,6 +159,14 @@ void CompositionalMultiphaseFlow::RegisterDataOnMesh( Group * const MeshBodies )
       elementSubRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::phaseDensityOldString );
       elementSubRegion.registerWrapper< array3d< real64 > >( viewKeyStruct::phaseComponentFractionOldString );
       elementSubRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::porosityOldString );
+
+      if (m_isothermalFlag == 0)
+      {
+    	  elementSubRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::temperatureString )->setPlotLevel( PlotLevel::LEVEL_0 );
+
+    	  elementSubRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::deltaTemperatureString )->
+    			  setRestartFlags( RestartFlags::NO_WRITE );
+      }
     } );
   }
 }

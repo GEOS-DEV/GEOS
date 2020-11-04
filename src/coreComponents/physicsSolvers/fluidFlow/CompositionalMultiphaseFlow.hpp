@@ -278,8 +278,13 @@ public:
   {
     static constexpr auto dofFieldString = "compositionalVariables";
 
-    // inputs
     static constexpr auto temperatureString = "temperature";
+    static constexpr auto deltaTemperatureString = "deltaTemperature";
+
+    // inputs
+    static constexpr auto uniformTemperatureString = "uniformTemperature";
+    static constexpr auto isothermalFlagString = "isothermal";
+
     static constexpr auto useMassFlagString = "useMass";
 
     static constexpr auto relPermNamesString  = "relPermNames";
@@ -415,7 +420,7 @@ private:
   localIndex m_numComponents;
 
   /// the (uniform) temperature
-  real64 m_temperature;
+  real64 m_uniformTemperature;
 
   /// flag indicating whether mass or molar formulation should be used
   integer m_useMass;
@@ -441,6 +446,9 @@ private:
 
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_pressure;
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_deltaPressure;
+
+  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_temperature;
+  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_deltaTemperature;
 
   ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > m_dCompFrac_dCompDens;
 
