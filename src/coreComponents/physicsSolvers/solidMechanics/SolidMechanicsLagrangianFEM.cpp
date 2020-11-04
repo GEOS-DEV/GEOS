@@ -992,7 +992,7 @@ void SolidMechanicsLagrangianFEM::SetupSystem( DomainPartition & domain,
   {
     ElementRegionManager const & elemManager = *mesh.getElemManager();
     array1d< string > allFaceElementRegions;
-    elemManager.forElementRegions< FaceElementRegion >( [&]( FaceElementRegion const & elemRegion )
+    elemManager.forElementRegions< SurfaceElementRegion >( [&]( SurfaceElementRegion const & elemRegion )
     {
       allFaceElementRegions.emplace_back( elemRegion.getName() );
     } );
