@@ -1,19 +1,20 @@
 <?xml version="1.0" ?>
 
 <Problem>
-  <Solvers gravityVector="0.0, 0.0, 0.0">
+  <Solvers gravityVector="0.0, 0.0, -9.81">
     <CompositionalMultiphaseReservoir
       name="reservoirSystem"
       flowSolverName="compositionalMultiphaseFlow"
       wellSolverName="compositionalMultiphaseWell"
       logLevel="1"
+      initialDt="1e2"
       targetRegions="{ Channel, wellRegion1, wellRegion2 }">
       <NonlinearSolverParameters
-        newtonTol="1.0e-8"
+        newtonTol="1.0e-6"
         lineSearchAction="None"
         newtonMaxIter="40"/>
       <LinearSolverParameters
-        solverType="direct"
+        solverType="direct"  
         logLevel="0"/>
     </CompositionalMultiphaseReservoir>
 
@@ -91,7 +92,7 @@
   </Mesh>
 
   <Events
-    maxTime="2.5e5">
+    maxTime="5e6">
     <PeriodicEvent
       name="outputs"
       timeFrequency="5e4"
@@ -100,7 +101,7 @@
 
     <PeriodicEvent
       name="solverApplications"
-      forceDt="5e4"
+      maxEventDt="5e4"
       target="/Solvers/reservoirSystem"/>
 
     <PeriodicEvent

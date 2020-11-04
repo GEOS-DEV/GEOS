@@ -110,6 +110,10 @@ public:
                          DofManager const & dofManager,
                          arrayView1d< real64 const > const & localRhs ) override;
 
+  virtual real64
+  ScalingForSystemSolution( DomainPartition const & domain,
+                            DofManager const & dofManager,
+                            arrayView1d< real64 const > const & localSolution ) override;
 
   virtual bool
   CheckSystemSolution( DomainPartition const & domain,
@@ -160,8 +164,15 @@ public:
   {
     static constexpr auto faceDofFieldString = "faceCenteredVariables";
 
+    // inputs
+    static constexpr auto maxRelativePresChangeString = "maxRelativePressureChange";
+
     // primary face-based field
     static constexpr auto deltaFacePressureString = "deltaFacePressure";
+
+    // auxiliary data for the buoyancy term
+    // TODO: change the name
+    static constexpr auto mimGravityCoefString = "mimGravityCoefficient";
 
   } viewKeysCompMultiphaseHybridFVM;
 
@@ -170,10 +181,18 @@ public:
 
   virtual void InitializePostInitialConditions_PreSubGroups( dataRepository::Group * const rootGroup ) override;
 
+protected:
+
+  /// precompute the minGravityCoefficient for the buoyancy term
+  void PrecomputeData( MeshLevel & mesh ) override;
+
 private:
 
-  /// relative tolerance (redundant with FluxApproximationBase)
-  real64 const m_areaRelTol;
+  /// maximum relative face pressure change between two Newton iterations
+  real64 m_maxRelativePresChange;
+
+  /// tolerance used in the  computation of the transmissibility matrix
+  real64 m_lengthTolerance;
 
   /// region filter used in flux assembly
   SortedArray< localIndex > m_regionFilter;

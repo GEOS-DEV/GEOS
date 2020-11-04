@@ -142,7 +142,7 @@ private:
 
 protected:
 
-  void PrecomputeData( MeshLevel & mesh );
+  virtual void PrecomputeData( MeshLevel & mesh );
 
   virtual void PostProcessInput() override;
 

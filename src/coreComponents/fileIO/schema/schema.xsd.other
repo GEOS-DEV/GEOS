@@ -1213,6 +1213,8 @@
 		<xsd:attribute name="isFaceSeparable" type="integer_array" />
 		<!--localToGlobalMap => Array that contains a map from localIndex to globalIndex.-->
 		<xsd:attribute name="localToGlobalMap" type="globalIndex_array" />
+		<!--mimGravityCoefficient => (no description available)-->
+		<xsd:attribute name="mimGravityCoefficient" type="real64_array" />
 		<!--nodeList => (no description available)-->
 		<xsd:attribute name="nodeList" type="geosx_InterObjectRelation&lt;LvArray_ArrayOfArrays&lt;long, long, LvArray_ChaiBuffer&gt; &gt;" />
 		<!--parentIndex => Index of parent within the mesh object it is registered on. => SurfaceGenerator-->

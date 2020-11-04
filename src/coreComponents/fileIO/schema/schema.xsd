@@ -910,6 +910,8 @@ the relative residual norm satisfies:
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--maxCompFractionChange => Maximum (absolute) change in a component fraction between two Newton iterations-->
 		<xsd:attribute name="maxCompFractionChange" type="real64" default="1" />
+		<!--maxRelativePressureChange => Maximum (relative) change in (face) pressure between two Newton iterations-->
+		<xsd:attribute name="maxRelativePressureChange" type="real64" default="1" />
 		<!--meanPermCoeff => Coefficient to move between harmonic mean (1.0) and arithmetic mean (0.0) for the calculation of permeability between elements.-->
 		<xsd:attribute name="meanPermCoeff" type="real64" default="1" />
 		<!--relPermNames => Name of the relative permeability constitutive model to use-->
