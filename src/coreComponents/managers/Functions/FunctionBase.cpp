@@ -87,7 +87,7 @@ real64_array FunctionBase::EvaluateStats( dataRepository::Group const * const gr
   {
     result[0] = std::min( result[0], sub[ii] );
     result[1] += sub[ii];
-    result[2] = std::max( result[0], sub[ii] );
+    result[2] = std::max( result[2], sub[ii] );
   }
   result[1] /= N;
 
