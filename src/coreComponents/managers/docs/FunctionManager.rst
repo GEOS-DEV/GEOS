@@ -7,21 +7,10 @@ Functions are the primary avenue for specifying values that change in space, tim
 These are specified in the ``Functions`` block, and may be referenced by name throughout the rest of the .xml file.
 For example:
 
-.. code-block:: xml
-
-  <Functions>
-    <TableFunction name="q"
-                   inputVarNames="time"
-                   coordinates="0 60 1000"
-                   values="0 1 1" />
-  </Functions>
-  <FieldSpecifications>
-    <SourceFlux name="sourceTerm"
-                objectPath="ElementRegions/Region1/block1"
-                scale="0.001"
-                functionName="q"
-                setNames="{source}"/>
-  </FieldSpecifications>
+.. literalinclude:: ../../../../coreComponents/physicsSolvers/solidMechanics/integratedTests/SSLE-QS-beamBending.xml
+  :language: xml
+  :start-after: <!-- SPHINX_TableFunction -->
+  :end-before:  <!-- SPHINX_TableFunctionEnd --> 
 
 
 
@@ -77,9 +66,9 @@ For example, the following function defines a simple ramp function with a rise-t
 .. code-block:: xml
 
   <TableFunction name="q"
-                 inputVarNames="time"
-                 coordinates="0 60 1000"
-                 values="0 1 1" />
+                 inputVarNames="{time}"
+                 coordinates="{0, 60, 1000}"
+                 values="{0, 1, 1}" />
 
 
 ND Table
@@ -97,8 +86,8 @@ The following would define a simple 2D function ``c = a + 2*b``:
 .. code-block:: xml
 
   <TableFunction name="c"
-                 inputVarNames="a b"
-                 coordinateFiles="a.csv b.csv"
+                 inputVarNames="{a, b}"
+                 coordinateFiles="{a.csv, b.csv}"
                  voxelFile="c.csv" />
 
 - a.csv: "0, 1"
@@ -161,7 +150,7 @@ These functions are processed using an x86-64 JIT compiler, so are nearly as eff
 
 The ``variableNames`` attribute defines a set of single-character names for the inputs to the symbolic function.
 There should be a definition for each scalar input and for each component of a vector input.
-For example if ``inputVarName="time, ReferencePosition"``, then ``variableNames="t, x, y, z"``.
+For example if ``inputVarName="time, ReferencePosition"``, then ``variableNames="{t, x, y, z}"``.
 The ``expression`` attribute defines the symbolic expression to be executed.
 Aside from the following exceptions, the syntax mirrors python:
 
@@ -174,8 +163,8 @@ The following would define a simple 2D function ``c = a + 2*b``:
 .. code-block:: xml
 
   <SymbolicFunction name="c"
-                    inputVarNames="a b"
-                    variableNames="x y"
+                    inputVarNames="{a, b}"
+                    variableNames="{x, y}"
                     expression="x+(2*y)"/>
 
 
@@ -204,19 +193,19 @@ The following would define a simple 1D table function ``f(t) = 1 + t``, a 3D sym
 
   <Functions>
     <TableFunction name="f"
-                   inputVarNames="time"
-                   coordinates="0 1000"
-                   values="1 1001" />
+                   inputVarNames="{time}"
+                   coordinates="{0, 1000}"
+                   values="{1, 1001}" />
 
     <SymbolicFunction name="g"
-                      inputVarNames="ReferencePosition"
-                      variableNames="x y z"
+                      inputVarNames="{ReferencePosition}"
+                      variableNames="{x, y, z}"
                       expression="pow(x,2)+pow(y,2)+pow(z,2)"/>
 
     <CompositeFunction name="h"
-                       inputVarNames="ignored"
-                       functionNames="f g"
-                       variableNames="x y"
+                       inputVarNames="{ignored}"
+                       functionNames="{f, g}"
+                       variableNames="{x, y}"
                        expression="sin(x)+y"/>
   </Events>
 
