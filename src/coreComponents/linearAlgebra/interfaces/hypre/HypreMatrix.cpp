@@ -460,8 +460,7 @@ void HypreMatrix::insert( globalIndex const rowIndex0,
 {
   GEOSX_LAI_ASSERT( insertable() );
 
-#if defined(OVERRIDE_CREATE)
-#if defined(GEOSX_USE_CUDA)
+#if defined(GEOSX_USE_CUDA) && defined(OVERRIDE_CREATE)
   array1d< globalIndex > rowIndexDevice(1);
   array1d< HYPRE_Int > ncolsDevice(1);
 
@@ -475,9 +474,7 @@ void HypreMatrix::insert( globalIndex const rowIndex0,
   HYPRE_Int * const ncols = ncolsDevice.data();
 #else
   globalIndex const * const rowIndex = &rowIndex0;
-  HYPRE_Int * const ncols = &size;
-#endif
-
+  HYPRE_Int * const ncols = reinterpret_cast<HYPRE_Int *>(&size);
 #endif
 
   GEOSX_LAI_CHECK_ERROR( HYPRE_IJMatrixAddToValues( m_ij_mat,
@@ -1342,7 +1339,11 @@ void HypreMatrix::print( std::ostream & os ) const
         {
 
           sprintf( str,
+#if defined(GEOSX_USE_CUDA) && defined(GEOSX_LA_INTERFACE_HYPRE)
                    "%i%20i%20i%24.10e\n",
+#else
+                   "%i%20lli%20lli%24.10e\n",
+#endif
                    iRank,
                    firstRowID + LvArray::integerConversion< globalIndex >( i ),
                    firstDiagColID + LvArray::integerConversion< globalIndex >( diag_JA[j] ),
@@ -1352,7 +1353,11 @@ void HypreMatrix::print( std::ostream & os ) const
         for( HYPRE_Int j = offdiag_IA[i]; j < offdiag_IA[i + 1]; ++j )
         {
           sprintf( str,
+#if defined(GEOSX_USE_CUDA) && defined(GEOSX_LA_INTERFACE_HYPRE)
                    "%i%20i%20i%24.10e\n",
+#else
+                   "%i%20lli%20lli%24.10e\n",
+#endif
                    iRank,
                    firstRowID + LvArray::integerConversion< globalIndex >( i ),
                    col_map_offdiag[ offdiag_JA[j] ],

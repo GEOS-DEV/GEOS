@@ -104,7 +104,10 @@ public:
   using MatrixBase::ready;
   using MatrixBase::residual;
 
+#if defined(GEOSX_LA_INTERFACE_HYPRE)
 #define OVERRIDE_CREATE
+#endif
+
 #if defined(OVERRIDE_CREATE)
   virtual void create( CRSMatrixView< real64 const, globalIndex const > const & localMatrix,
                        MPI_Comm const & comm ) override final;

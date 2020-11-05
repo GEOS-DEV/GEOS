@@ -404,7 +404,11 @@ void HypreVector::print( std::ostream & os ) const
       for( localIndex i = 0; i < localSize(); ++i )
       {
         sprintf( str,
+#if defined(GEOSX_USE_CUDA)
                  "%i%20i%24.10e\n",
+#else
+                 "%i%20lli%24.10e\n",
+#endif
                  iRank,
                  firstRowID + LvArray::integerConversion< globalIndex >( i ),
                  local_data[i] );

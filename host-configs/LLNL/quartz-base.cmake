@@ -18,8 +18,8 @@ set(MPI_Fortran_COMPILER ${MPI_HOME}/bin/mpifort CACHE PATH "")
 set(MPIEXEC /usr/bin/srun CACHE PATH "")
 set(MPIEXEC_NUMPROC_FLAG "-n" CACHE STRING "")
 
-set(GEOSX_TPL_ROOT_DIR /usr/WS1/GEOS/GEOSX/TPLs_boomerAMG-for-elasticity-2020-10-22 CACHE PATH "" FORCE)
-set(GEOSX_TPL_DIR /usr/WS1/GEOS/GEOSX/TPLs_boomerAMG-for-elasticity/install-${CONFIG_NAME}-release CACHE PATH "" FORCE)
+#set(GEOSX_TPL_ROOT_DIR /usr/WS1/GEOS/GEOSX/TPLs_boomerAMG-for-elasticity-2020-10-22 CACHE PATH "" FORCE)
+#set(GEOSX_TPL_DIR /usr/WS1/GEOS/GEOSX/TPLs_boomerAMG-for-elasticity/install-${CONFIG_NAME}-release CACHE PATH "" FORCE)
 
 # PAPI (For TPL caliper builds)
 set(ENABLE_PAPI ON CACHE BOOL "")
