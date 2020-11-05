@@ -59,8 +59,8 @@ public:
    */
   explicit R1TensorT( const int data ): TensorBaseT< T_dim >( realT( data ) ) {}
 
-  template< int USD >
-  R1TensorT( LvArray::ArraySlice< realT const, 1, USD, int > const & src ):
+  template< int USD, typename INDEX_TYPE >
+  R1TensorT( LvArray::ArraySlice< realT const, 1, USD, INDEX_TYPE > const & src ):
     TensorBaseT< T_dim >()
   { *this = src; }
 
@@ -88,9 +88,9 @@ public:
   R1TensorT & operator=( const R1TensorT & rhs ) = default;
 
 
-  template< int USD >
+  template< int USD, typename INDEX_TYPE >
   GEOSX_HOST_DEVICE inline
-  R1TensorT & operator=( LvArray::ArraySlice< realT const, 1, USD, int > const & src )
+  R1TensorT & operator=( LvArray::ArraySlice< realT const, 1, USD, INDEX_TYPE > const & src )
   {
     GEOSX_ASSERT_EQ( src.size(), T_dim );
 
@@ -104,9 +104,9 @@ public:
 
   using TensorBaseT< T_dim >::operator+=;
 
-  template< int USD >
+  template< int USD, typename INDEX_TYPE >
   GEOSX_HOST_DEVICE inline
-  R1TensorT & operator+=( LvArray::ArraySlice< realT const, 1, USD, int > const & src )
+  R1TensorT & operator+=( LvArray::ArraySlice< realT const, 1, USD, INDEX_TYPE > const & src )
   {
     GEOSX_ASSERT_EQ( src.size(), T_dim );
 
@@ -118,9 +118,9 @@ public:
     return *this;
   }
 
-  template< int USD >
+  template< int USD, typename INDEX_TYPE >
   GEOSX_HOST_DEVICE inline
-  R1TensorT & operator+=( LvArray::ArraySlice< realT, 1, USD, int > const & src )
+  R1TensorT & operator+=( LvArray::ArraySlice< realT, 1, USD, INDEX_TYPE > const & src )
   {
     GEOSX_ASSERT_EQ( src.size(), T_dim );
 
@@ -134,9 +134,9 @@ public:
 
   using TensorBaseT< T_dim >::operator-=;
 
-  template< int USD >
+  template< int USD, typename INDEX_TYPE >
   GEOSX_HOST_DEVICE inline
-  R1TensorT & operator-=( LvArray::ArraySlice< realT const, 1, USD, int > const & src )
+  R1TensorT & operator-=( LvArray::ArraySlice< realT const, 1, USD, INDEX_TYPE > const & src )
   {
     GEOSX_ASSERT_EQ( src.size(), T_dim );
 
