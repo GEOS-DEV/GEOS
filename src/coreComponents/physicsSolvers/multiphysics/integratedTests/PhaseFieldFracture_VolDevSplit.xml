@@ -47,7 +47,7 @@
 
   <Mesh>
     <PAMELAMeshGenerator name = "Mode2Notched"
-                         file = "mesh/geo.msh"/>
+                         file = "Mode2CrackMesh/geo.msh"/>
   </Mesh>
 
   <Events maxTime="30.0">
