@@ -75,7 +75,7 @@ AssemblerKernelHelper::ApplyGradient( arrayView1d< real64 const > const & facePr
 
       // depth difference between element center and face center
       real64 const ccGravCoef = elemGravCoef;
-      real64 const fGravCoef = faceGravCoef[elemToFaces[ifaceLoc]];
+      real64 const fGravCoef = faceGravCoef[elemToFaces[jfaceLoc]];
       real64 const gravCoefDif = ccGravCoef - fGravCoef;
 
       for( localIndex ip = 0; ip < NP; ++ip )
