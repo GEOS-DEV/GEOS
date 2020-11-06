@@ -13,11 +13,11 @@
  */
 
 /**
- * @file CompositionalMultiphaseFlowKernels.hpp
+ * @file IsothermalCompositionalMultiphaseFlowKernels.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_FINITEVOLUME_COMPOSITIONALMULTIPHASEFLOWKERNELS_HPP
-#define GEOSX_PHYSICSSOLVERS_FINITEVOLUME_COMPOSITIONALMULTIPHASEFLOWKERNELS_HPP
+#ifndef GEOSX_PHYSICSSOLVERS_FINITEVOLUME_ISOTHERMALCOMPOSITIONALMULTIPHASEFLOWKERNELS_HPP
+#define GEOSX_PHYSICSSOLVERS_FINITEVOLUME_ISOTHERMALCOMPOSITIONALMULTIPHASEFLOWKERNELS_HPP
 
 #include "common/DataTypes.hpp"
 #include "mesh/ElementRegionManager.hpp"
@@ -26,7 +26,7 @@
 namespace geosx
 {
 
-namespace CompositionalMultiphaseFlowKernels
+namespace IsothermalCompositionalMultiphaseFlowKernels
 {
 
 /******************************** ComponentFractionKernel ********************************/
@@ -191,14 +191,14 @@ struct FluidUpdateKernel
   Launch( localIndex const size,
           FLUID_WRAPPER const & fluidWrapper,
           arrayView1d< real64 const > const & pres,
-          arrayView1d< real64 const > const & temp,
+          real64 const temp,
           arrayView2d< real64 const > const & compFrac )
   {
     forAll< POLICY >( size, [=] ( localIndex const k )
     {
       for( localIndex q = 0; q < fluidWrapper.numGauss(); ++q )
       {
-        fluidWrapper.Update( k, q, pres[k], temp[k], compFrac[k] );
+        fluidWrapper.Update( k, q, pres[k], temp, compFrac[k] );
       }
     } );
   }
@@ -209,15 +209,14 @@ struct FluidUpdateKernel
           FLUID_WRAPPER const & fluidWrapper,
           arrayView1d< real64 const > const & pres,
           arrayView1d< real64 const > const & dPres,
-          arrayView1d< real64 const > const & temp,
-          arrayView1d< real64 const > const & dTemp,
+          real64 const temp,
           arrayView2d< real64 const > const & compFrac )
   {
     forAll< POLICY >( size, [=] ( localIndex const k )
     {
       for( localIndex q = 0; q < fluidWrapper.numGauss(); ++q )
       {
-        fluidWrapper.Update( k, q, pres[k] + dPres[k], temp[k] + dTemp[k], compFrac[k] );
+        fluidWrapper.Update( k, q, pres[k] + dPres[k], temp, compFrac[k] );
       }
     } );
   }
@@ -228,8 +227,7 @@ struct FluidUpdateKernel
           FLUID_WRAPPER const & fluidWrapper,
           arrayView1d< real64 const > const & pres,
           arrayView1d< real64 const > const & dPres,
-          arrayView1d< real64 const > const & temp,
-          arrayView1d< real64 const > const & dTemp,
+          real64 const temp,
           arrayView2d< real64 const > const & compFrac )
   {
     forAll< POLICY >( targetSet.size(), [=] ( localIndex const a )
@@ -237,7 +235,7 @@ struct FluidUpdateKernel
       localIndex const k = targetSet[a];
       for( localIndex q = 0; q < fluidWrapper.numGauss(); ++q )
       {
-        fluidWrapper.Update( k, q, pres[k] + dPres[k], temp[k] + dTemp[k], compFrac[k] );
+        fluidWrapper.Update( k, q, pres[k] + dPres[k], temp, compFrac[k] );
       }
     } );
   }
@@ -247,7 +245,7 @@ struct FluidUpdateKernel
   Launch( SortedArrayView< localIndex const > const & targetSet,
           FLUID_WRAPPER const & fluidWrapper,
           arrayView1d< real64 const > const & pres,
-          arrayView1d< real64 const > const & temp,
+          real64 const temp,
           arrayView2d< real64 const > const & compFrac )
   {
     forAll< POLICY >( targetSet.size(), [=] ( localIndex const a )
@@ -255,79 +253,7 @@ struct FluidUpdateKernel
       localIndex const k = targetSet[a];
       for( localIndex q = 0; q < fluidWrapper.numGauss(); ++q )
       {
-        fluidWrapper.Update( k, q, pres[k], temp[k], compFrac[k] );
-      }
-    } );
-  }
-};
-
-/******************************** RelativePermeabilityUpdateKernel ********************************/
-
-struct RelativePermeabilityUpdateKernel
-{
-  template< typename POLICY, typename RELPERM_WRAPPER >
-  static void
-  Launch( localIndex const size,
-          RELPERM_WRAPPER const & relPermWrapper,
-          arrayView2d< real64 const > const & phaseVolFrac )
-  {
-    forAll< POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const k )
-    {
-      for( localIndex q = 0; q < relPermWrapper.numGauss(); ++q )
-      {
-        relPermWrapper.Update( k, q, phaseVolFrac[k] );
-      }
-    } );
-  }
-
-  template< typename POLICY, typename RELPERM_WRAPPER >
-  static void
-  Launch( SortedArrayView< localIndex const > const & targetSet,
-          RELPERM_WRAPPER const & relPermWrapper,
-          arrayView2d< real64 const > const & phaseVolFrac )
-  {
-    forAll< POLICY >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const a )
-    {
-      localIndex const k = targetSet[a];
-      for( localIndex q = 0; q < relPermWrapper.numGauss(); ++q )
-      {
-        relPermWrapper.Update( k, q, phaseVolFrac[k] );
-      }
-    } );
-  }
-};
-
-/******************************** CapillaryPressureUpdateKernel ********************************/
-
-struct CapillaryPressureUpdateKernel
-{
-  template< typename POLICY, typename CAPPRES_WRAPPER >
-  static void
-  Launch( localIndex const size,
-          CAPPRES_WRAPPER const & capPresWrapper,
-          arrayView2d< real64 const > const & phaseVolFrac )
-  {
-    forAll< POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const k )
-    {
-      for( localIndex q = 0; q < capPresWrapper.numGauss(); ++q )
-      {
-        capPresWrapper.Update( k, q, phaseVolFrac[k] );
-      }
-    } );
-  }
-
-  template< typename POLICY, typename CAPPRES_WRAPPER >
-  static void
-  Launch( SortedArrayView< localIndex const > const & targetSet,
-          CAPPRES_WRAPPER const & capPresWrapper,
-          arrayView2d< real64 const > const & phaseVolFrac )
-  {
-    forAll< POLICY >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const a )
-    {
-      localIndex const k = targetSet[a];
-      for( localIndex q = 0; q < capPresWrapper.numGauss(); ++q )
-      {
-        capPresWrapper.Update( k, q, phaseVolFrac[k] );
+        fluidWrapper.Update( k, q, pres[k], temp, compFrac[k] );
       }
     } );
   }
@@ -512,64 +438,10 @@ struct VolumeBalanceKernel
           arrayView1d< real64 > const & localRhs );
 };
 
-/******************************** Kernel launch machinery ********************************/
 
-namespace internal
-{
-
-template< typename T, typename LAMBDA >
-void KernelLaunchSelectorCompSwitch( T value, LAMBDA && lambda )
-{
-  static_assert( std::is_integral< T >::value, "KernelLaunchSelectorCompSwitch: type should be integral" );
-
-  switch( value )
-  {
-    case 1:
-    { lambda( std::integral_constant< T, 1 >() ); return; }
-    case 2:
-    { lambda( std::integral_constant< T, 2 >() ); return; }
-    case 3:
-    { lambda( std::integral_constant< T, 3 >() ); return; }
-    case 4:
-    { lambda( std::integral_constant< T, 4 >() ); return; }
-    case 5:
-    { lambda( std::integral_constant< T, 5 >() ); return; }
-    default:
-    { GEOSX_ERROR( "Unsupported number of components: " << value ); }
-  }
-}
-
-} // namespace helpers
-
-template< typename KERNELWRAPPER, typename ... ARGS >
-void KernelLaunchSelector1( localIndex numComp, ARGS && ... args )
-{
-  internal::KernelLaunchSelectorCompSwitch( numComp, [&] ( auto NC )
-  {
-    KERNELWRAPPER::template Launch< NC() >( std::forward< ARGS >( args )... );
-  } );
-}
-
-template< typename KERNELWRAPPER, typename ... ARGS >
-void KernelLaunchSelector2( localIndex numComp, localIndex numPhase, ARGS && ... args )
-{
-  internal::KernelLaunchSelectorCompSwitch( numComp, [&] ( auto NC )
-  {
-    switch( numPhase )
-    {
-      case 2:
-        { KERNELWRAPPER::template Launch< NC(), 2 >( std::forward< ARGS >( args )... ); return; }
-      case 3:
-        { KERNELWRAPPER::template Launch< NC(), 3 >( std::forward< ARGS >( args )... ); return; }
-      default:
-        { GEOSX_ERROR( "Unsupported number of phases: " << numPhase ); }
-    }
-  } );
-}
-
-} // namespace CompositionalMultiphaseFlowKernels
+} // namespace IsotherCompositionalMultiphaseFlowKernels
 
 } // namespace geosx
 
 
-#endif //GEOSX_PHYSICSSOLVERS_FINITEVOLUME_COMPOSITIONALMULTIPHASEFLOWKERNELS_HPP
+#endif //GEOSX_PHYSICSSOLVERS_FINITEVOLUME_ISOTHERMALCOMPOSITIONALMULTIPHASEFLOWKERNELS_HPP
