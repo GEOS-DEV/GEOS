@@ -38,6 +38,7 @@ public:
   /**
    * @brief In a given element, recompute the transmissibility matrix using the quasi Raviart-Thomas inner product.
    * @param[in] nodePosition the position of the nodes
+   * @param[in] transMultiplier the transmissibility multipliers at the mesh faces
    * @param[in] faceToNodes the map from the face to their nodes
    * @param[in] elemToFaces the maps from the one-sided face to the corresponding face
    * @param[in] elemCenter the center of the element
@@ -52,6 +53,7 @@ public:
   GEOSX_HOST_DEVICE
   static void
   Compute( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition,
+           arrayView1d< real64 const > const & transMultiplier,
            ArrayOfArraysView< localIndex const > const & faceToNodes,
            arraySlice1d< localIndex const > const & elemToFaces,
            arraySlice1d< real64 const > const & elemCenter,
@@ -66,6 +68,7 @@ template< localIndex NF >
 GEOSX_HOST_DEVICE
 void
 QuasiRTInnerProduct::Compute( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition,
+                              arrayView1d< real64 const > const & transMultiplier,
                               ArrayOfArraysView< localIndex const > const & faceToNodes,
                               arraySlice1d< localIndex const > const & elemToFaces,
                               arraySlice1d< real64 const > const & elemCenter,
@@ -75,6 +78,7 @@ QuasiRTInnerProduct::Compute( arrayView2d< real64 const, nodes::REFERENCE_POSITI
                               arraySlice2d< real64 > const & transMatrix )
 {
   MimeticInnerProductBase::ComputeParametricInnerProduct< NF >( nodePosition,
+                                                                transMultiplier,
                                                                 faceToNodes,
                                                                 elemToFaces,
                                                                 elemCenter,

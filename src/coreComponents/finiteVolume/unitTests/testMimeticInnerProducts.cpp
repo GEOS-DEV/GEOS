@@ -35,7 +35,9 @@ struct InnerProductType
 {
   static constexpr integer TPFA = 0;
   static constexpr integer QUASI_TPFA = 1;
-  static constexpr integer SIMPLE = 2;
+  static constexpr integer QUASI_TPFA_WITH_MULTIPLIERS = 2;
+  static constexpr integer SIMPLE = 3;
+  static constexpr integer SIMPLE_WITH_MULTIPLIERS = 4;
 };
 
 void compareTransmissibilityMatrices( arraySlice2d< real64 const > const & transMatrix,
@@ -47,7 +49,7 @@ void compareTransmissibilityMatrices( arraySlice2d< real64 const > const & trans
     {
       checkRelativeError( transMatrix( ifaceLoc, jfaceLoc ),
                           transMatrixRef( ifaceLoc, jfaceLoc ),
-                          1e-10 );
+                          1e-15 );
     }
   }
 }
@@ -219,6 +221,32 @@ void makeHexa( array2d< real64, nodes::REFERENCE_POSITION_PERM > & nodePosition,
     transMatrixRef( 5, 5 ) = 6e-12;
     transMatrixRef( 5, 3 ) = -2.25e-12;
   }
+  else if( ipType == InnerProductType::QUASI_TPFA_WITH_MULTIPLIERS )
+  {
+    transMatrixRef( 0, 0 ) = 4.00e-12;
+
+    transMatrixRef( 1, 1 ) = 4.817e-12;
+    transMatrixRef( 1, 2 ) = -1.829e-12;
+    transMatrixRef( 1, 3 ) = 0.094e-12;
+    transMatrixRef( 1, 5 ) = 0.851e-12;
+
+    transMatrixRef( 2, 1 ) = -1.829e-12;
+    transMatrixRef( 2, 2 ) = 3.991e-12;
+    transMatrixRef( 2, 3 ) = 0.008e-12;
+    transMatrixRef( 2, 5 ) = 1.315e-12;
+
+    transMatrixRef( 3, 1 ) = 0.094e-12;
+    transMatrixRef( 3, 2 ) = 0.008e-12;
+    transMatrixRef( 3, 3 ) = 0.213e-12;
+    transMatrixRef( 3, 5 ) = -0.068e-12;
+
+    transMatrixRef( 4, 4 ) = 4e-12;
+
+    transMatrixRef( 5, 1 ) = 0.851e-12;
+    transMatrixRef( 5, 2 ) = 1.315e-12;
+    transMatrixRef( 5, 5 ) = 3.703e-12;
+    transMatrixRef( 5, 3 ) = -0.068e-12;
+  }
   else if( ipType == InnerProductType::SIMPLE )
   {
     transMatrixRef( 0, 0 ) = 8e-12;
@@ -246,6 +274,35 @@ void makeHexa( array2d< real64, nodes::REFERENCE_POSITION_PERM > & nodePosition,
     transMatrixRef( 5, 2 ) = 2.25e-12;
     transMatrixRef( 5, 5 ) = 9e-12;
     transMatrixRef( 5, 3 ) = -2.25e-12;
+  }
+  else if( ipType == InnerProductType::SIMPLE_WITH_MULTIPLIERS )
+  {
+
+    transMatrixRef( 0, 0 ) = 8e-12;
+    transMatrixRef( 0, 4 ) = 4e-12;
+
+    transMatrixRef( 1, 1 ) = 7.494e-12;
+    transMatrixRef( 1, 2 ) = -2.757e-12;
+    transMatrixRef( 1, 3 ) = 0.066e-12;
+    transMatrixRef( 1, 5 ) = 2.530e-12;
+
+    transMatrixRef( 2, 1 ) = -2.757e-12;
+    transMatrixRef( 2, 2 ) = 5.499e-12;
+    transMatrixRef( 2, 3 ) = 0.088e-12;
+    transMatrixRef( 2, 5 ) = 1.548e-12;
+
+    transMatrixRef( 3, 1 ) = 0.066e-12;
+    transMatrixRef( 3, 2 ) = 0.088e-12;
+    transMatrixRef( 3, 3 ) = 0.218e-12;
+    transMatrixRef( 3, 5 ) = -0.037e-12;
+
+    transMatrixRef( 4, 4 ) = 8e-12;
+    transMatrixRef( 4, 0 ) = 4e-12;
+
+    transMatrixRef( 5, 1 ) = 2.53e-12;
+    transMatrixRef( 5, 2 ) = 1.548e-12;
+    transMatrixRef( 5, 5 ) = 5.317e-12;
+    transMatrixRef( 5, 3 ) = -0.037e-12;
   }
 }
 
@@ -403,6 +460,8 @@ TEST( testMimeticInnerProducts, TPFA_hexa )
             transMatrixRef );
 
   stackArray2d< real64, NF *NF > transMatrix( NF, NF );
+  array1d< real64 > transMultiplier( NF );
+  transMultiplier.setValues< parallelHostPolicy >( 1.0 );
 
   stackArray1d< real64, 3 > center( 3 );
   center[0] = elemCenter[0];
@@ -411,6 +470,7 @@ TEST( testMimeticInnerProducts, TPFA_hexa )
   real64 const perm[ 3 ] = { elemPerm[0], elemPerm[1], elemPerm[2] };
 
   TPFAInnerProduct::Compute< NF >( nodePosition.toViewConst(),
+                                   transMultiplier.toViewConst(),
                                    faceToNodes.toViewConst(),
                                    elemToFaces.toSliceConst(),
                                    center,
@@ -443,11 +503,15 @@ TEST( testMimeticInnerProducts, QTPFA_hexa )
             elemVolume,
             elemPerm,
             lengthTolerance,
-            InnerProductType::QUASI_TPFA,
+            InnerProductType::QUASI_TPFA_WITH_MULTIPLIERS,
             transMatrixRef );
 
   stackArray2d< real64, NF *NF > transMatrix( NF, NF );
-
+  array1d< real64 > transMultiplier( NF );
+  transMultiplier.setValues< parallelHostPolicy >( 1.0 );
+  transMultiplier[0] = 0.9;
+  transMultiplier[5] = 0.1;
+  transMultiplier[3] = 0.8;
 
   stackArray1d< real64, 3 > center( 3 );
   center[0] = elemCenter[0];
@@ -456,6 +520,7 @@ TEST( testMimeticInnerProducts, QTPFA_hexa )
   real64 const perm[ 3 ] = { elemPerm[0], elemPerm[1], elemPerm[2] };
 
   QuasiTPFAInnerProduct::Compute< NF >( nodePosition.toViewConst(),
+                                        transMultiplier.toViewConst(),
                                         faceToNodes.toViewConst(),
                                         elemToFaces.toSliceConst(),
                                         center,
@@ -487,11 +552,15 @@ TEST( testMimeticInnerProducts, Simple_hexa )
             elemVolume,
             elemPerm,
             lengthTolerance,
-            InnerProductType::SIMPLE,
+            InnerProductType::SIMPLE_WITH_MULTIPLIERS,
             transMatrixRef );
 
   stackArray2d< real64, NF *NF > transMatrix( NF, NF );
-
+  array1d< real64 > transMultiplier( NF );
+  transMultiplier.setValues< parallelHostPolicy >( 1.0 );
+  transMultiplier[0] = 0.9;
+  transMultiplier[5] = 0.1;
+  transMultiplier[3] = 0.8;
 
   stackArray1d< real64, 3 > center( 3 );
   center[0] = elemCenter[0];
@@ -500,6 +569,7 @@ TEST( testMimeticInnerProducts, Simple_hexa )
   real64 const perm[ 3 ] = { elemPerm[0], elemPerm[1], elemPerm[2] };
 
   SimpleInnerProduct::Compute< NF >( nodePosition.toViewConst(),
+                                     transMultiplier.toViewConst(),
                                      faceToNodes.toViewConst(),
                                      elemToFaces.toSliceConst(),
                                      center,
@@ -535,6 +605,8 @@ TEST( testMimeticInnerProducts, TPFA_tetra )
              transMatrixRef );
 
   stackArray2d< real64, NF *NF > transMatrix( NF, NF );
+  array1d< real64 > transMultiplier( NF );
+  transMultiplier.setValues< parallelHostPolicy >( 1.0 );
 
   stackArray1d< real64, 3 > center( 3 );
   center[0] = elemCenter[0];
@@ -543,6 +615,7 @@ TEST( testMimeticInnerProducts, TPFA_tetra )
   real64 const perm[ 3 ] = { elemPerm[0], elemPerm[1], elemPerm[2] };
 
   TPFAInnerProduct::Compute< NF >( nodePosition.toViewConst(),
+                                   transMultiplier.toViewConst(),
                                    faceToNodes.toViewConst(),
                                    elemToFaces.toSliceConst(),
                                    center,
@@ -579,6 +652,8 @@ TEST( testMimeticInnerProducts, QTPFA_tetra )
              transMatrixRef );
 
   stackArray2d< real64, NF *NF > transMatrix( NF, NF );
+  array1d< real64 > transMultiplier( NF );
+  transMultiplier.setValues< parallelHostPolicy >( 1.0 );
 
   stackArray1d< real64, 3 > center( 3 );
   center[0] = elemCenter[0];
@@ -587,6 +662,7 @@ TEST( testMimeticInnerProducts, QTPFA_tetra )
   real64 const perm[ 3 ] = { elemPerm[0], elemPerm[1], elemPerm[2] };
 
   QuasiTPFAInnerProduct::Compute< NF >( nodePosition.toViewConst(),
+                                        transMultiplier.toViewConst(),
                                         faceToNodes.toViewConst(),
                                         elemToFaces.toSliceConst(),
                                         center,
@@ -622,6 +698,8 @@ TEST( testMimeticInnerProducts, Simple_tetra )
              transMatrixRef );
 
   stackArray2d< real64, NF *NF > transMatrix( NF, NF );
+  array1d< real64 > transMultiplier( NF );
+  transMultiplier.setValues< parallelHostPolicy >( 1.0 );
 
   stackArray1d< real64, 3 > center( 3 );
   center[0] = elemCenter[0];
@@ -630,6 +708,7 @@ TEST( testMimeticInnerProducts, Simple_tetra )
   real64 const perm[ 3 ] = { elemPerm[0], elemPerm[1], elemPerm[2] };
 
   SimpleInnerProduct::Compute< NF >( nodePosition.toViewConst(),
+                                     transMultiplier.toViewConst(),
                                      faceToNodes.toViewConst(),
                                      elemToFaces.toSliceConst(),
                                      center,
