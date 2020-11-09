@@ -1690,9 +1690,9 @@ void LagrangianContactSolver::AssembleStabilization( DomainPartition const & dom
 
   // Get the "face to element" map (valid for the entire mesh)
   FaceManager::ElemMapType const & faceToElem = faceManager.toElementRelation();
-  arrayView2d< localIndex const > const & faceToElemRegion = faceToElem.m_toElementRegion;
-  arrayView2d< localIndex const > const & faceToElemSubRegion = faceToElem.m_toElementSubRegion;
-  arrayView2d< localIndex const > const & faceToElemIndex = faceToElem.m_toElementIndex;
+  arrayView2d< localIndex const > const & faceToElemRegion = faceToElem.m_toElementRegion.toViewConst();
+  arrayView2d< localIndex const > const & faceToElemSubRegion = faceToElem.m_toElementSubRegion.toViewConst();
+  arrayView2d< localIndex const > const & faceToElemIndex = faceToElem.m_toElementIndex.toViewConst();
 
   // Form the SurfaceGenerator, get the fracture name and use it to retrieve the faceMap (from fracture element to face)
   SurfaceGenerator const * const
