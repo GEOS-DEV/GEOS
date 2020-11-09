@@ -48,7 +48,6 @@ if read_the_docs_build:
                   "coreComponents/mesh",
                   "coreComponents/managers",
                   "coreComponents/meshUtilities",
-                  "coreComponents/wells",
                   "coreComponents/finiteElement/kernelInterface",
                   "coreComponents/mesh/ExtrinsicMeshData.hpp",
                   "coreComponents/physicsSolvers/simplePDE/LaplaceFEMKernels.hpp",
@@ -97,10 +96,15 @@ release = u''
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-#    'sphinx.ext.mathjax'
     'sphinx.ext.imgmath',
-    'sphinx.ext.todo'
+    'sphinx.ext.todo',
+    'sphinx.ext.autodoc',
+    'sphinx.ext.doctest',
+    'sphinx.ext.inheritance_diagram',
+    'matplotlib.sphinxext.plot_directive'
 ]
+plot_html_show_source_link = True
+plot_html_show_formats = False
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
