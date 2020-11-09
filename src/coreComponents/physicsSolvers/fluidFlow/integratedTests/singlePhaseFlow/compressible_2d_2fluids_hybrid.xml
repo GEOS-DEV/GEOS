@@ -3,7 +3,7 @@
 <Problem>
   <Solvers
     gravityVector="0.0, 0.0, -9.81">
-    <SinglePhaseFVM
+    <SinglePhaseHybridFVM
       name="flowSolver"
       logLevel="0"
       discretization="tpfaFlow"
@@ -14,10 +14,8 @@
         newtonTol="1.0e-6"
         newtonMaxIter="8"/>
       <LinearSolverParameters
-        solverType="direct"
-        directParallel="0"
-        logLevel="0"/>
-    </SinglePhaseFVM>
+        solverType="direct"/>
+    </SinglePhaseHybridFVM>
   </Solvers>
 
   <Mesh>
@@ -25,10 +23,10 @@
       name="mesh1"
       elementTypes="{ C3D8 }"
       xCoords="{ 0, 5, 10 }"
-      yCoords="{ 0, 1 }"
+      yCoords="{ 0, 3 }"
       zCoords="{ 0, 1 }"
       nx="{ 5, 5 }"
-      ny="{ 1 }"
+      ny="{ 3 }"
       nz="{ 1 }"
       cellBlockNames="{ block1, block2 }"/>
   </Mesh>
@@ -36,13 +34,29 @@
   <Geometry>
     <Box
       name="source"
-      xMin="-0.01, -0.01, -0.01"
-      xMax=" 1.01, 1.01, 1.01"/>
+      xMin="-0.01, 0.99, -0.01"
+      xMax=" 1.01, 2.01, 1.01"/>
 
     <Box
       name="sink"
-      xMin=" 8.99, -0.01, -0.01"
-      xMax="10.01, 1.01, 1.01"/>
+      xMin=" 8.99, 0.99, -0.01"
+      xMax="10.01, 2.01, 1.01"/>
+
+    <Box
+      name="impermeableBarrier1"
+      xMin=" 1.99, -0.01, -0.01"
+      xMax=" 2.01, 2.01, 1.01"/>
+
+    <Box
+      name="impermeableBarrier2"
+      xMin=" 1.99, 1.99, -0.01"
+      xMax=" 4.01, 2.01, 1.01"/>
+
+    <Box
+      name="lowPermBarrier"
+      xMin=" 3.99, 1.99, -0.01"
+      xMax=" 4.01, 3.01, 1.01"/>
+    
   </Geometry>
 
   <Events
@@ -155,21 +169,41 @@
       setNames="{ all }"
       objectPath="ElementRegions"
       fieldName="pressure"
-      scale="0.0"/>
+      scale="5e6"/>
+
+    <!-- Note that with the HybridFVM solver, it is not possible to -->
+    <!-- set a transMultiplier to 0, since it makes the system singular -->
+    <!-- This happens because then one of the face constraints becomes 0 = 0...  -->
+    <FieldSpecification
+      name="impermeableBarrierTransMult"
+      initialCondition="1"
+      setNames="{ impermeableBarrier1, impermeableBarrier2 }"
+      objectPath="faceManager"
+      fieldName="permeabilityTransMultiplier"
+      scale="0.1"/>
+
+    <FieldSpecification
+      name="lowPermBarrierTransMult"
+      initialCondition="1"
+      objectPath="faceManager"
+      fieldName="permeabilityTransMultiplier"
+      scale="0.9"
+      setNames="{ lowPermBarrier }"/>
 
     <FieldSpecification
       name="sourceTerm"
       objectPath="ElementRegions"
       fieldName="pressure"
-      scale="5e6"
+      scale="5e7"
       setNames="{ source }"/>
 
     <FieldSpecification
       name="sinkTerm"
       objectPath="ElementRegions"
       fieldName="pressure"
-      scale="-5e6"
+      scale="5e5"
       setNames="{ sink }"/>
+
   </FieldSpecifications>
 
   <Outputs>

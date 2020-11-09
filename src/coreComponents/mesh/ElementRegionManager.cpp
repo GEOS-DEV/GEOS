@@ -19,7 +19,7 @@
 
 #include "common/TimingMacros.hpp"
 #include "mpiCommunications/CommunicationTools.hpp"
-#include "FaceElementRegion.hpp"
+#include "SurfaceElementRegion.hpp"
 #include "FaceManager.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 #include "CellBlockManager.hpp"
@@ -133,7 +133,7 @@ void ElementRegionManager::SetSchemaDeviations( xmlWrapper::xmlNode schemaRoot,
 
 void ElementRegionManager::GenerateMesh( Group * const cellBlockManager )
 {
-  this->forElementRegions< CellElementRegion >( [&]( CellElementRegion & elemRegion )
+  this->forElementRegions< CellElementRegion, SurfaceElementRegion >( [&]( auto & elemRegion )
   {
     elemRegion.GenerateMesh( cellBlockManager->GetGroup( keys::cellBlocks ) );
   } );

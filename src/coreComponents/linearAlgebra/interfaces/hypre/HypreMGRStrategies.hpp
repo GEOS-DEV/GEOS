@@ -65,7 +65,7 @@ inline array1d< HYPRE_Int > computeLocalDofComponentLabels( arraySlice1d< localI
       {
         vectorLabels[k] = k + firstLabel;
       }
-      iend = istr + LvArray::integerConversion< HYPRE_Int >( numLocalDofsPerField[iFld] );;
+      iend = istr + LvArray::integerConversion< HYPRE_Int >( numLocalDofsPerField[iFld] );
       for( localIndex i = istr; i < iend; i += numComp )
       {
         for( integer k = 0; k < numComp; ++k )
@@ -73,7 +73,7 @@ inline array1d< HYPRE_Int > computeLocalDofComponentLabels( arraySlice1d< localI
           ret[i+k] = vectorLabels[k];
         }
       }
-      istr += iend;
+      istr = iend;
       firstLabel += numComp;
     }
   }
