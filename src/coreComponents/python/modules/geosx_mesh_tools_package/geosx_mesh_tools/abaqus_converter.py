@@ -15,69 +15,76 @@ def convert_abaqus_to_gmsh(input_mesh, output_mesh):
     print('Reading abaqus mesh...')
     mesh = meshio.Mesh.read(input_mesh, "abaqus")
 
-    # Add a default region tag
+    # Convert the element regions to tags
     print('Converting region tags...')
     region_list = list(mesh.cell_sets.keys())
-    Nregion = len(region_list)
-    cell_ids = np.zeros(len(mesh.cells[0][1]), dtype=int)
-    for ii, ka in zip(range(Nregion), region_list):
-        mesh.field_data[ka] = [ii + 1, 3]
-        cell_ids[mesh.cell_sets[ka][0]] = ii + 1
+    n_regions = len(region_list)
+    cell_ids = np.zeros(len(mesh.cells[0][1]), dtype=int) - 1
+    for ii, region in enumerate(region_list):
+        mesh.field_data[region] = [ii + 1, 3]
+        cell_ids[mesh.cell_sets[region][0]] = ii + 1
+
+    # Add to the meshio datastructure
     mesh.cell_data['gmsh:physical'] = [cell_ids]
     mesh.cell_data['gmsh:geometrical'] = [cell_ids]
+    if (-1 in cell_ids):
+        raise Exception('Element regions did not convert correctly to tags!')
 
     # Build the face elements
-    new_tris = []
-    tri_nodeset = []
-    tri_region = []
-    new_quads = []
-    quad_nodeset = []
-    quad_region = []
-    print('Converting nodesets to face elements...')
-    for ii, ka in zip(range(len(mesh.point_sets)), mesh.point_sets.keys()):
-        print('  %s' % (ka))
-        nodeset = mesh.point_sets[ka]
+    print('Converting nodesets to face elements, tags...')
+    new_tris, tri_nodeset, tri_region = [], [], []
+    new_quads, quad_nodeset, quad_region = [], [], []
+
+    for nodeset_id, nodeset_name in enumerate(mesh.point_sets):
+        print('  %s' % (nodeset_name))
+        mesh.field_data[nodeset_name] = [nodeset_id + n_regions + 1, 2]
+        nodeset = mesh.point_sets[nodeset_name]
 
         # Search the elements
-        for jj in range(len(mesh.cells[0][1])):
+        for element_id in range(len(mesh.cells[0][1])):
             # Find any matching nodes
             matching_nodes = []
-            for kk in mesh.cells[0][1][jj]:
-                if kk in nodeset:
-                    matching_nodes.append(kk)
+            for node_id in mesh.cells[0][1][element_id]:
+                if node_id in nodeset:
+                    matching_nodes.append(node_id)
 
             # Find the region
             region_id = -1
             if (len(matching_nodes) >= 3):
-                for kb in region_list:
-                    if (jj in mesh.cell_sets[kb][0]):
-                        region_id = mesh.field_data[kb][0]
+                for region in region_list:
+                    if (element_id in mesh.cell_sets[region][0]):
+                        region_id = mesh.field_data[region][0]
 
             # Test to see if they match a quad or triangle
-            if (len(matching_nodes) == 3):
+            tag_id = mesh.field_data[nodeset_name][0]
+            n_matching = len(matching_nodes)
+            if (n_matching == 3):
                 new_tris.append(matching_nodes)
-                tri_nodeset.append(ii + Nregion + 1)
+                tri_nodeset.append(tag_id)
                 tri_region.append(region_id)
 
-            elif (len(matching_nodes) == 4):
+            elif (n_matching == 4):
                 new_quads.append(matching_nodes)
-                quad_nodeset.append(ii + Nregion + 1)
+                quad_nodeset.append(tag_id)
                 quad_region.append(region_id)
 
-    # Add the nodeset tags
-    for ii, ka in zip(range(len(mesh.point_sets)), mesh.point_sets.keys()):
-        mesh.field_data[ka] = [ii + Nregion + 1, 2]
+            elif (n_matching > 4):
+                raise Exception('Unexpected number of nodes (%i) for element %i in set: %s' % (n_matching, element_id, nodeset_name))
 
     # Add new tris
-    if len(new_tris):
+    if new_tris:
         print('  Adding %i new triangles...' % (len(new_tris)))
+        if (-1 in tri_region):
+            raise Exception('Traingles with empty region information found!')
         mesh.cells.append(CellBlock('triangle', np.array(new_tris)))
         mesh.cell_data['gmsh:geometrical'].append(np.array(tri_region))
         mesh.cell_data['gmsh:physical'].append(np.array(tri_nodeset))
 
     # Add  new quads
-    if len(new_quads):
+    if new_quads:
         print('  Adding %i new quads...' % (len(new_quads)))
+        if (-1 in quad_region):
+            raise Exception('Quads with empty region information found!')
         mesh.cells.append(CellBlock('quad', np.array(new_quads)))
         mesh.cell_data['gmsh:geometrical'].append(np.array(quad_region))
         mesh.cell_data['gmsh:physical'].append(np.array(quad_nodeset))
@@ -102,6 +109,6 @@ def main():
     parser.add_argument('output', type=str, help='Output gmsh mesh file name')
     args = parser.parse_args()
 
-    convert_abaqus_to_gmsh(args.input_mesh, args.output_mesh)
+    convert_abaqus_to_gmsh(args.input, args.output)
 
 
