@@ -3,20 +3,27 @@ import meshio
 from meshio._mesh import CellBlock
 import numpy as np
 import argparse
+import logging
 
 
-def convert_abaqus_to_gmsh(input_mesh, output_mesh):
+def convert_abaqus_to_gmsh(input_mesh, output_mesh, verbose=False):
     """
     @brief Convert an abaqus mesh to gmsh 2 format, preserving nodeset information
     @param input_mesh path of the input abaqus file
     @param output_mesh path of the output gmsh file
     """
+    # Open the logger
+    logging.basicConfig(level=logging.WARNING)
+    logger = logging.getLogger(__name__)
+    if verbose:
+      logger.setLevel(logging.INFO)
+
     # Load the mesh
-    print('Reading abaqus mesh...')
+    logger.info('Reading abaqus mesh...')
     mesh = meshio.Mesh.read(input_mesh, "abaqus")
 
     # Convert the element regions to tags
-    print('Converting region tags...')
+    logger.info('Converting region tags...')
     region_list = list(mesh.cell_sets.keys())
     n_regions = len(region_list)
     cell_ids = np.zeros(len(mesh.cells[0][1]), dtype=int) - 1
@@ -28,15 +35,15 @@ def convert_abaqus_to_gmsh(input_mesh, output_mesh):
     mesh.cell_data['gmsh:physical'] = [cell_ids]
     mesh.cell_data['gmsh:geometrical'] = [cell_ids]
     if (-1 in cell_ids):
-        raise Exception('Element regions did not convert correctly to tags!')
+        logger.warning('Some element regions did not convert correctly to tags!')
 
     # Build the face elements
-    print('Converting nodesets to face elements, tags...')
+    logger.info('Converting nodesets to face elements, tags...')
     new_tris, tri_nodeset, tri_region = [], [], []
     new_quads, quad_nodeset, quad_region = [], [], []
 
     for nodeset_id, nodeset_name in enumerate(mesh.point_sets):
-        print('  %s' % (nodeset_name))
+        logger.info('  %s' % (nodeset_name))
         mesh.field_data[nodeset_name] = [nodeset_id + n_regions + 1, 2]
         nodeset = mesh.point_sets[nodeset_name]
 
@@ -69,31 +76,32 @@ def convert_abaqus_to_gmsh(input_mesh, output_mesh):
                 quad_region.append(region_id)
 
             elif (n_matching > 4):
-                raise Exception('Unexpected number of nodes (%i) for element %i in set: %s' % (n_matching, element_id, nodeset_name))
+                logger.warning('  Discarding an element with an unexpected number of nodes')
+                logger.warning('    n_nodes=%i, element=%i, set=%s' % (n_matching, element_id, nodeset_name))
 
     # Add new tris
     if new_tris:
-        print('  Adding %i new triangles...' % (len(new_tris)))
+        logger.info('  Adding %i new triangles...' % (len(new_tris)))
         if (-1 in tri_region):
-            raise Exception('Traingles with empty region information found!')
+            logger.warning('Traingles with empty region information found!')
         mesh.cells.append(CellBlock('triangle', np.array(new_tris)))
         mesh.cell_data['gmsh:geometrical'].append(np.array(tri_region))
         mesh.cell_data['gmsh:physical'].append(np.array(tri_nodeset))
 
     # Add  new quads
     if new_quads:
-        print('  Adding %i new quads...' % (len(new_quads)))
+        logger.info('  Adding %i new quads...' % (len(new_quads)))
         if (-1 in quad_region):
-            raise Exception('Quads with empty region information found!')
+            logger.warning('Quads with empty region information found!')
         mesh.cells.append(CellBlock('quad', np.array(new_quads)))
         mesh.cell_data['gmsh:geometrical'].append(np.array(quad_region))
         mesh.cell_data['gmsh:physical'].append(np.array(quad_nodeset))
 
     # Write the final mesh
-    print('Writing gmsh mesh...')
+    logger.info('Writing gmsh mesh...')
     meshio.write(output_mesh, mesh, file_format="gmsh22", binary=False)
 
-    print('Done!')
+    logger.info('Done!')
 
 
 def main():
@@ -107,8 +115,9 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('input', type=str, help='Input abaqus mesh file name')
     parser.add_argument('output', type=str, help='Output gmsh mesh file name')
+    parser.add_argument('-v', '--verbose', help='Increase verbosity level', action="store_true")
     args = parser.parse_args()
 
-    convert_abaqus_to_gmsh(args.input, args.output)
+    convert_abaqus_to_gmsh(args.input, args.output, args.verbose)
 
 
