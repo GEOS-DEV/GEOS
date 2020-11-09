@@ -11,6 +11,7 @@ def convert_abaqus_to_gmsh(input_mesh, output_mesh, verbose=False):
     @brief Convert an abaqus mesh to gmsh 2 format, preserving nodeset information
     @param input_mesh path of the input abaqus file
     @param output_mesh path of the output gmsh file
+    @param verbosity flag to display optional logging information
     """
     # Open the logger
     logging.basicConfig(level=logging.WARNING)
