@@ -95,12 +95,12 @@ void FlowSolverBase::RegisterDataOnMesh( Group * const MeshBodies )
 
     ElementRegionManager * const elemManager = mesh.getElemManager();
 
-    elemManager->forElementSubRegionsComplete< FaceElementSubRegion >( [&]( localIndex const,
-                                                                            localIndex const,
-                                                                            ElementRegionBase & region,
-                                                                            FaceElementSubRegion & subRegion )
+    elemManager->forElementSubRegionsComplete< SurfaceElementSubRegion >( [&]( localIndex const,
+                                                                               localIndex const,
+                                                                               ElementRegionBase & region,
+                                                                               SurfaceElementSubRegion & subRegion )
     {
-      FaceElementRegion & faceRegion = dynamicCast< FaceElementRegion & >( region );
+      SurfaceElementRegion & faceRegion = dynamicCast< SurfaceElementRegion & >( region );
 
       subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::referencePorosityString )->
         setApplyDefaultValue( 1.0 );
@@ -110,12 +110,12 @@ void FlowSolverBase::RegisterDataOnMesh( Group * const MeshBodies )
       subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::aperture0String )->
         setDefaultValue( faceRegion.getDefaultAperture() );
       subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::effectiveApertureString )->
-        setApplyDefaultValue( subRegion.getWrapper< array1d< real64 > >( FaceElementSubRegion::
+        setApplyDefaultValue( subRegion.getWrapper< array1d< real64 > >( SurfaceElementSubRegion::
                                                                            viewKeyStruct::
                                                                            elementApertureString )->getDefaultValue() )->
         setPlotLevel( PlotLevel::LEVEL_0 );
       subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::conductivity0String )->
-        setApplyDefaultValue( subRegion.getWrapper< array1d< real64 > >( FaceElementSubRegion::
+        setApplyDefaultValue( subRegion.getWrapper< array1d< real64 > >( SurfaceElementSubRegion::
                                                                            viewKeyStruct::
                                                                            elementDefaultConductivityString )->getDefaultValue() )->
         setPlotLevel( PlotLevel::LEVEL_0 );
@@ -127,7 +127,7 @@ void FlowSolverBase::RegisterDataOnMesh( Group * const MeshBodies )
                                                                                 ElementRegionBase & region,
                                                                                 EmbeddedSurfaceSubRegion & subRegion )
     {
-      EmbeddedSurfaceRegion & embSurfRegion = dynamicCast< EmbeddedSurfaceRegion & >( region );
+      SurfaceElementRegion & embSurfRegion = dynamicCast< SurfaceElementRegion & >( region );
 
       subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::referencePorosityString )->
         setApplyDefaultValue( 1.0 );
@@ -209,7 +209,7 @@ void FlowSolverBase::PrecomputeData( MeshLevel & mesh )
   forTargetSubRegions( mesh, [&]( localIndex const,
                                   ElementSubRegionBase & subRegion )
   {
-    arrayView2d< real64 const > const elemCenter = subRegion.getElementCenter();
+    arrayView2d< real64 const > const elemCenter = subRegion.getElementCenter().toViewConst();
 
     arrayView1d< real64 > const gravityCoef =
       subRegion.getReference< array1d< real64 > >( viewKeyStruct::gravityCoefString );
@@ -298,6 +298,13 @@ std::vector< string > FlowSolverBase::getConstitutiveRelations( string const & r
   std::vector< string > rval{ m_solidModelNames[regionIndex], m_fluidModelNames[regionIndex] };
 
   return rval;
+}
+
+void FlowSolverBase::setUpDflux_dApertureMatrix( DomainPartition & GEOSX_UNUSED_PARAM( domain ),
+                                                 DofManager const & GEOSX_UNUSED_PARAM( dofManager ),
+                                                 CRSMatrix< real64, globalIndex > & GEOSX_UNUSED_PARAM( localMatrix ) )
+{
+  GEOSX_ERROR( "FlowSolverBase::setUpDfluxDapertureMatrix. Should be overridden." );
 }
 
 

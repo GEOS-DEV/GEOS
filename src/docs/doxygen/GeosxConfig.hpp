@@ -72,13 +72,13 @@
 #define GEOSX_USE_SUITESPARSE
 
 /// Choice of global linear algebra interface (CMake option GEOSX_LA_INTERFACE)
-#define GEOSX_LA_INTERFACE Trilinos
+#define GEOSX_LA_INTERFACE Petsc
 /// Macro defined when Trilinos interface is selected
-#define GEOSX_LA_INTERFACE_TRILINOS
+/* #undef GEOSX_LA_INTERFACE_TRILINOS */
 /// Macro defined when Hypre interface is selected
 /* #undef GEOSX_LA_INTERFACE_HYPRE */
 /// Macro defined when PETSc interface is selected
-/* #undef GEOSX_LA_INTERFACE_PETSC */
+#define GEOSX_LA_INTERFACE_PETSC
 
 /// Platform-dependent mangling of fortran function names (CMake option FORTRAN_MANGLE_NO_UNDERSCORE)
 #define FORTRAN_MANGLE_NO_UNDERSCORE

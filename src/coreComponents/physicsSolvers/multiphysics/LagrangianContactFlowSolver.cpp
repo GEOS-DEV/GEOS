@@ -29,7 +29,7 @@
 #include "managers/DomainPartition.hpp"
 #include "managers/FieldSpecification/FieldSpecificationManager.hpp"
 #include "managers/NumericalMethodsManager.hpp"
-#include "mesh/FaceElementRegion.hpp"
+#include "mesh/SurfaceElementRegion.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
 #include "meshUtilities/ComputationalGeometry.hpp"
 #include "mpiCommunications/NeighborCommunicator.hpp"
@@ -184,7 +184,7 @@ void LagrangianContactFlowSolver::UpdateOpeningForFlow( DomainPartition & domain
     {
       arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
       arrayView2d< real64 const > const & localJump = subRegion.getReference< array2d< real64 > >( m_localJumpKey );
-      arrayView1d< real64 const > const & area = subRegion.getElementArea();
+      arrayView1d< real64 const > const & area = subRegion.getElementArea().toViewConst();
       arrayView1d< real64 const > const & volume = subRegion.getElementVolume();
       arrayView1d< real64 > const &
       aperture = subRegion.getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::effectiveApertureString );
@@ -625,7 +625,7 @@ void LagrangianContactFlowSolver::SetupDofs( DomainPartition const & domain,
   // restrict coupling to fracture regions only
   ElementRegionManager const & elemManager = *domain.getMeshBody( 0 )->getMeshLevel( 0 )->getElemManager();
   string_array fractureRegions;
-  elemManager.forElementRegions< FaceElementRegion >( [&]( FaceElementRegion const & elementRegion )
+  elemManager.forElementRegions< SurfaceElementRegion >( [&]( SurfaceElementRegion const & elementRegion )
   {
     fractureRegions.emplace_back( elementRegion.getName() );
   } );
@@ -1091,8 +1091,8 @@ void LagrangianContactFlowSolver::AssembleStabilization( DomainPartition const &
   // Form the SurfaceGenerator, get the fracture name and use it to retrieve the faceMap (from fracture element to face)
   SurfaceGenerator const * const
   surfaceGenerator = this->getParent()->GetGroup< SolverBase >( "SurfaceGen" )->group_cast< SurfaceGenerator const * >();
-  FaceElementRegion const * const fractureRegion = elemManager.GetRegion< FaceElementRegion >( surfaceGenerator->getFractureRegionName() );
-  FaceElementSubRegion const * const fractureSubRegion = fractureRegion->GetSubRegion< FaceElementSubRegion >( "default" );
+  SurfaceElementRegion const * const fractureRegion = elemManager.GetRegion< SurfaceElementRegion >( surfaceGenerator->getFractureRegionName() );
+  FaceElementSubRegion const * const fractureSubRegion = fractureRegion->GetSubRegion< FaceElementSubRegion >( "faceElementSubRegion" );
   GEOSX_ERROR_IF( !fractureSubRegion->hasWrapper( m_pressureKey ), "The fracture subregion must contain pressure field." );
   arrayView2d< localIndex const > const faceMap = fractureSubRegion->faceList().toViewConst();
   GEOSX_ERROR_IF( faceMap.size( 1 ) != 2, "A fracture face has to be shared by two cells." );
@@ -1315,7 +1315,7 @@ void LagrangianContactFlowSolver::AssembleStabilization( DomainPartition const &
 
         // Compute n^T * (invK) * n
         real64 temp[ 3 ];
-        LvArray::tensorOps::AijBj< 3, 3 >( temp, invTotStiffApprox, avgNbar );
+        LvArray::tensorOps::Ri_eq_AijBj< 3, 3 >( temp, invTotStiffApprox, avgNbar );
         real64 const rotatedInvStiffApprox = LvArray::tensorOps::AiBi< 3 >( temp, avgNbar );
 
         // Add nodal area contribution

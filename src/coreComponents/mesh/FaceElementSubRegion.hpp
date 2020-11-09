@@ -19,9 +19,7 @@
 #ifndef GEOSX_MESH_FACEELEMENTSUBREGION_HPP_
 #define GEOSX_MESH_FACEELEMENTSUBREGION_HPP_
 
-#include "ElementSubRegionBase.hpp"
-#include "InterObjectRelation.hpp"
-#include "ToElementRelation.hpp"
+#include "SurfaceElementSubRegion.hpp"
 
 namespace geosx
 {
@@ -34,15 +32,9 @@ namespace geosx
  * and methods to support the specific geometry of an element comprised of a reduced dimensionality face element (i.e.
  * face area and aperture = volume)
  */
-class FaceElementSubRegion : public ElementSubRegionBase
+class FaceElementSubRegion : public SurfaceElementSubRegion
 {
 public:
-
-  /// Face element to nodes map type
-  using NodeMapType = InterObjectRelation< ArrayOfArrays< localIndex > >;
-
-  /// Face element to edges map type
-  using EdgeMapType = InterObjectRelation< ArrayOfArrays< localIndex > >;
 
   /// Face element to faces map type
   using FaceMapType = InterObjectRelation< array2d< localIndex > >;
@@ -132,34 +124,13 @@ public:
    * @brief Struct containing the keys to all face element views.
    * @struct viewKeyStruct
    */
-  struct viewKeyStruct : ElementSubRegionBase::viewKeyStruct
+  struct viewKeyStruct : SurfaceElementSubRegion::viewKeyStruct
   {
     /// String key for the derivatives of the shape functions with respect to the reference configuration
     static constexpr auto dNdXString = "dNdX";
 
     /// String key for the derivative of the jacobian.
     static constexpr auto detJString = "detJ";
-
-    /// String key for the element aperture
-    static constexpr auto elementApertureString        = "elementAperture";
-
-    /// Face element area string.
-    static constexpr auto elementAreaString            = "elementArea";
-
-    /// Face element to cell regions map string.
-    static constexpr auto faceElementsToCellRegionsString    = "fractureElementsToCellRegions";
-
-    /// Face element to cell subregions map string.
-    static constexpr auto faceElementsToCellSubRegionsString    = "fractureElementsToCellSubRegions";
-
-    /// Face element to cell indices map string.
-    static constexpr auto faceElementsToCellIndexString    = "fractureElementsToCellIndices";
-
-    /// Mass creation string.
-    constexpr static auto creationMassString = "creationMass";
-
-    /// Element default conductivity string.
-    static constexpr auto elementDefaultConductivityString = "elementDefaultConductivity";
 
 #if GEOSX_USE_SEPARATION_COEFFICIENT
 
@@ -180,40 +151,6 @@ public:
    * @brief Getter functions for the various inter-object relations
    */
   ///@{
-
-  /**
-   * @brief Get the face element to nodes map.
-   * @return the face element to node map
-   */
-  NodeMapType const & nodeList() const
-  {
-    return m_toNodesRelation;
-  }
-
-  /**
-   * @copydoc nodeList() const
-   */
-  NodeMapType & nodeList()
-  {
-    return m_toNodesRelation;
-  }
-
-  /**
-   * @brief Get the face element to edges map.
-   * @return The face element to edge map
-   */
-  EdgeMapType const & edgeList() const
-  {
-    return m_toEdgesRelation;
-  }
-
-  /**
-   * @copydoc edgeList() const
-   */
-  EdgeMapType & edgeList()
-  {
-    return m_toEdgesRelation;
-  }
 
   /**
    * @brief Get the face element to faces map.
@@ -246,39 +183,6 @@ public:
    */
   //virtual localIndex numNodesPerElement( localIndex const k ) const override { return m_toNodesRelation[k].size(); }
 
-  /**
-   * @brief Get face element aperture.
-   * @return the aperture of the face elements
-   */
-  arrayView1d< real64 > getElementAperture() { return m_elementAperture; }
-
-  /**
-   * @copydoc getElementAperture()
-   */
-  arrayView1d< real64 const > getElementAperture() const { return m_elementAperture; }
-
-  /**
-   * @brief Get face element surface area.
-   * @return the surface area of the face element
-   */
-  arrayView1d< real64 > getElementArea() { return m_elementArea; }
-
-  /**
-   * @copydoc getElementArea()
-   */
-  arrayView1d< real64 const > getElementArea() const { return m_elementArea; }
-
-  /**
-   * @brief Get element default conductivity.
-   * @return the element default conductivity
-   */
-  arrayView1d< real64 > const getElementDefaultConductivity() { return m_elementDefaultConductivity; }
-
-  /**
-   * @copydoc getElementDefaultConductivity()
-   */
-  arrayView1d< real64 const > const getElementDefaultConductivity() const { return m_elementDefaultConductivity; }
-
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
   /**
    * @brief Get separation coefficient.
@@ -301,9 +205,6 @@ public:
 
   /// Unmapped face elements to faces map
   map< localIndex, array1d< globalIndex > > m_unmappedGlobalIndicesInToFaces;
-
-  /// Map between the face elements and the cells
-  FixedToManyElementRelation m_faceElementsToCells;
 
   /// List of the new face elements that have been generated
   SortedArray< localIndex > m_newFaceElements;
@@ -351,23 +252,8 @@ private:
   /// The array of jacobian determinantes.
   array2d< real64 > m_detJ;
 
-  /// Element-to-node relation
-  NodeMapType m_toNodesRelation;
-
-  /// Element-to-edge relation
-  EdgeMapType m_toEdgesRelation;
-
   /// Element-to-face relation
   FaceMapType m_toFacesRelation;
-
-  /// Member level field for the element center
-  array1d< real64 > m_elementAperture;
-
-  /// Member level field for the element center
-  array1d< real64 > m_elementArea;
-
-  /// The member level field for the default conductivity
-  array1d< real64 > m_elementDefaultConductivity;
 
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
   /// Separation coefficient
