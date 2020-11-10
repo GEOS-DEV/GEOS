@@ -39,6 +39,8 @@ namespace geosx
       void ComputeProjectors( MeshLevel const & mesh, localIndex const & regionIndex,
                               localIndex const & subRegionIndex,
                               localIndex const & cellIndex) override;
+      void ComputeFaceProjectors( MeshLevel const & mesh, localIndex const & faceId ) override;
+      
       localIndex getNumQuadraturePoints() const override { return numQuadraturePoints; }
       localIndex getNumSupportPoints() const override { return numSupportPoints; }
     };

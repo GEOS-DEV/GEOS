@@ -42,6 +42,8 @@ namespace geosx
       virtual void ComputeProjectors( MeshLevel const &, localIndex const &,
                                       localIndex const &, localIndex const &) = 0;
 
+      virtual void ComputeFaceProjectors( MeshLevel const & mesh, localIndex const & faceId ) = 0;
+
       /**
        * @brief Virtual getter for the number of quadrature points per element.
        * @return The number of quadrature points per element.
