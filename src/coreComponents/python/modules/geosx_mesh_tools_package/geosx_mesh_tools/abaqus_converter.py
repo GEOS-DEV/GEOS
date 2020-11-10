@@ -8,11 +8,15 @@ import logging
 
 def convert_abaqus_to_gmsh(input_mesh, output_mesh, logger=None):
     """
-    @brief Convert an abaqus mesh to gmsh 2 format, preserving nodeset information
+    @brief Convert an abaqus mesh to gmsh 2 format, preserving nodeset information.
+    @details If the code encounters any issues with region/element indices,
+             the conversion will attempt to continue, with errors
+             indicated by -1 values in the output file.
     @param input_mesh path of the input abaqus file
     @param output_mesh path of the output gmsh file
     @param logger an instance of logging.Logger
     """
+    # Initialize the logger if it is empty
     if not logger:
       logging.basicConfig(level=logging.WARNING)
       logger = logging.getLogger(__name__)
@@ -35,6 +39,7 @@ def convert_abaqus_to_gmsh(input_mesh, output_mesh, logger=None):
     mesh.cell_data['gmsh:geometrical'] = [cell_ids]
     if (-1 in cell_ids):
         logger.warning('Some element regions did not convert correctly to tags!')
+        logger.warning('Note: These will be indicated by a -1 in the output file.')
 
     # Build the face elements
     logger.info('Converting nodesets to face elements, tags...')
@@ -54,35 +59,37 @@ def convert_abaqus_to_gmsh(input_mesh, output_mesh, logger=None):
                 if node_id in nodeset:
                     matching_nodes.append(node_id)
 
-            # Find the region
-            region_id = -1
-            if (len(matching_nodes) >= 3):
+            # Add a new face element if there are enough nodes
+            n_matching = len(matching_nodes)
+            if (n_matching >= 3):
+                # Find the region
+                region_id = -1
                 for region in region_list:
                     if (element_id in mesh.cell_sets[region][0]):
                         region_id = mesh.field_data[region][0]
 
-            # Test to see if they match a quad or triangle
-            tag_id = mesh.field_data[nodeset_name][0]
-            n_matching = len(matching_nodes)
-            if (n_matching == 3):
-                new_tris.append(matching_nodes)
-                tri_nodeset.append(tag_id)
-                tri_region.append(region_id)
+                # Test to see if the element is a quad or triangle
+                tag_id = mesh.field_data[nodeset_name][0]
+                if (n_matching == 3):
+                    new_tris.append(matching_nodes)
+                    tri_nodeset.append(tag_id)
+                    tri_region.append(region_id)
 
-            elif (n_matching == 4):
-                new_quads.append(matching_nodes)
-                quad_nodeset.append(tag_id)
-                quad_region.append(region_id)
+                elif (n_matching == 4):
+                    new_quads.append(matching_nodes)
+                    quad_nodeset.append(tag_id)
+                    quad_region.append(region_id)
 
-            elif (n_matching > 4):
-                logger.warning('  Discarding an element with an unexpected number of nodes')
-                logger.warning('    n_nodes=%i, element=%i, set=%s' % (n_matching, element_id, nodeset_name))
+                else:
+                    logger.warning('  Discarding an element with an unexpected number of nodes')
+                    logger.warning('    n_nodes=%i, element=%i, set=%s' % (n_matching, element_id, nodeset_name))
 
     # Add new tris
     if new_tris:
         logger.info('  Adding %i new triangles...' % (len(new_tris)))
         if (-1 in tri_region):
             logger.warning('Traingles with empty region information found!')
+            logger.warning('Note: These will be indicated by a -1 in the output file.')
         mesh.cells.append(CellBlock('triangle', np.array(new_tris)))
         mesh.cell_data['gmsh:geometrical'].append(np.array(tri_region))
         mesh.cell_data['gmsh:physical'].append(np.array(tri_nodeset))
@@ -92,6 +99,7 @@ def convert_abaqus_to_gmsh(input_mesh, output_mesh, logger=None):
         logger.info('  Adding %i new quads...' % (len(new_quads)))
         if (-1 in quad_region):
             logger.warning('Quads with empty region information found!')
+            logger.warning('Note: These will be indicated by a -1 in the output file.')
         mesh.cells.append(CellBlock('quad', np.array(new_quads)))
         mesh.cell_data['gmsh:geometrical'].append(np.array(quad_region))
         mesh.cell_data['gmsh:physical'].append(np.array(quad_nodeset))
