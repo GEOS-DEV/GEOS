@@ -6,18 +6,16 @@ import argparse
 import logging
 
 
-def convert_abaqus_to_gmsh(input_mesh, output_mesh, verbose=False):
+def convert_abaqus_to_gmsh(input_mesh, output_mesh, logger=None):
     """
     @brief Convert an abaqus mesh to gmsh 2 format, preserving nodeset information
     @param input_mesh path of the input abaqus file
     @param output_mesh path of the output gmsh file
-    @param verbosity flag to display optional logging information
+    @param logger an instance of logging.Logger
     """
-    # Open the logger
-    logging.basicConfig(level=logging.WARNING)
-    logger = logging.getLogger(__name__)
-    if verbose:
-      logger.setLevel(logging.INFO)
+    if not logger:
+      logging.basicConfig(level=logging.WARNING)
+      logger = logging.getLogger(__name__)
 
     # Load the mesh
     logger.info('Reading abaqus mesh...')
@@ -119,6 +117,12 @@ def main():
     parser.add_argument('-v', '--verbose', help='Increase verbosity level', action="store_true")
     args = parser.parse_args()
 
-    convert_abaqus_to_gmsh(args.input, args.output, args.verbose)
+    # Set up a logger
+    logging.basicConfig(level=logging.WARNING)
+    logger = logging.getLogger(__name__)
+    if args.verbose:
+      logger.setLevel(logging.INFO)
+
+    convert_abaqus_to_gmsh(args.input, args.output, logger)
 
 
