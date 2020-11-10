@@ -118,7 +118,7 @@ protected:
                                arrayView1d< localIndex > const & rowLengths ) const;
 
   /**
-   * @Brief add the sparsity pattern induced by the perforations
+   * @Brief add the sparsity pattern induced by the coupling
    * @param domain the physical domain object
    * @param dofManager degree-of-freedom manager associated with the linear system
    * @param pattern the sparsity pattern
