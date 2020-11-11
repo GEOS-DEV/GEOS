@@ -64,11 +64,11 @@ namespace geosx
           faceRotationMatrices(faceId, 0, 2)*nodesCoords(faceToNodes(numVertex), 0) +
           faceRotationMatrices(faceId, 1, 2)*nodesCoords(faceToNodes(numVertex), 1) +
           faceRotationMatrices(faceId, 2, 2)*nodesCoords(faceToNodes(numVertex), 2);
-        for(unsigned int numOthVertex = numVertex+1; numOthVertex < numFaceVertices; ++numOthVertex)
+        for(localIndex numOthVertex = 0; numOthVertex < numVertex; ++numOthVertex)
         {
           array1d<real64> vertDiff(2);
-          vertDiff(0) = nodesCoords(faceToNodes(numVertex), 0) - nodesCoords(faceToNodes(numOthVertex), 0);
-          vertDiff(1) = nodesCoords(faceToNodes(numVertex), 1) - nodesCoords(faceToNodes(numOthVertex), 1);
+          vertDiff(0) = faceRotatedVertices(numVertex, 0) - faceRotatedVertices(numOthVertex, 0);
+          vertDiff(1) = faceRotatedVertices(numVertex, 1) - faceRotatedVertices(numOthVertex, 1);
           real64 const candidateDiameter = LvArray::tensorOps::l2NormSquared< 2 >(vertDiff);
           if(faceDiameter < candidateDiameter)
             faceDiameter = candidateDiameter;
