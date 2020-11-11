@@ -34,7 +34,7 @@ namespace geosx
       NodeManager const & nodeManager = *mesh.getNodeManager();
       EdgeManager const & edgeManager = *mesh.getEdgeManager();
 
-      // Get pre-compute maps.
+      // Get pre-computed maps.
       arraySlice1d< localIndex const > faceToNodes = faceManager.nodeList()[faceId];
       FaceManager::EdgeMapType faceToEdges = faceManager.edgeList();
       EdgeManager::NodeMapType edgeToNodes = edgeManager.nodeList();
@@ -75,6 +75,7 @@ namespace geosx
         }
       }
       faceDiameter = LvArray::math::sqrt<real64>(faceDiameter);
+      real64 const invFaceDiameter = 1.0/faceDiameter;
       // rotate the face centroid as done for the vertices.
       faceRotatedCentroid(0) =
         faceRotationMatrices(faceId, 0, 1)*faceCenters(faceId, 0) +
@@ -84,8 +85,27 @@ namespace geosx
         faceRotationMatrices(faceId, 0, 2)*faceCenters(faceId, 0) +
         faceRotationMatrices(faceId, 1, 2)*faceCenters(faceId, 1) +
         faceRotationMatrices(faceId, 2, 2)*faceCenters(faceId, 2);
+      // compute edges' lengths.
+      array1d<real64> edgeLengths(numFaceVertices);
+      for(unsigned int numEdge = 0; numEdge < numFaceVertices; ++numEdge)
+        edgeLengths[numEdge] = edgeManager.calculateLength(faceToEdges[faceId][numEdge], nodesCoords).L2_Norm();
 
+      // Compute boundary quadrature weights.
+      array1d<real64> boundaryQuadratureWeights(numFaceVertices);
+      for(unsigned int numVertex = 0; numVertex < numFaceVertices; ++numVertex)
+        boundaryQuadratureWeights[numVertex] = 0.5*(edgeLengths[numVertex] + edgeLengths[(numVertex+1)%numFaceVertices]);
 
+      // Compute scaled monomials' boundary integrals.
+      array1d<real64> monomBoundaryIntegrals(3);
+      monomBoundaryIntegrals(0) = 0;
+      monomBoundaryIntegrals(1) = 0;
+      monomBoundaryIntegrals(2) = 0;
+      for(unsigned int numVertex = 0; numVertex < numFaceVertices; ++numVertex)
+      {
+        monomBoundaryIntegrals(0) += boundaryQuadratureWeights(numVertex);
+        monomBoundaryIntegrals(1) += (faceRotatedVertices(numVertex, 0) - faceRotatedCentroid(0))*invFaceDiameter*boundaryQuadratureWeights(numVertex);
+        monomBoundaryIntegrals(2) += (faceRotatedVertices(numVertex, 1) - faceRotatedCentroid(1))*invFaceDiameter*boundaryQuadratureWeights(numVertex);
+      }
 
       //
       GEOSX_UNUSED_VAR(faceAreas);
