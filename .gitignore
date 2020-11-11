@@ -13,5 +13,5 @@ install-*
 *.out
 *.core
 /build/
-/Default/
+/Default/   
 /Debug/
