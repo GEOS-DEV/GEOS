@@ -47,10 +47,10 @@ def convert_abaqus_to_gmsh(input_mesh, output_mesh, logger=None):
             n_warnings += 1
 
     # Add to the meshio datastructure
-    # Note: the slice here is required, so that later appends
+    # Note: the copy here is required, so that later appends
     #       do not break these dicts
-    mesh.cell_data['gmsh:physical'] = cell_ids[:]
-    mesh.cell_data['gmsh:geometrical'] = cell_ids[:]
+    mesh.cell_data['gmsh:physical'] = cell_ids.copy()
+    mesh.cell_data['gmsh:geometrical'] = cell_ids.copy()
 
     # Build the face elements
     logger.info('Converting nodesets to face elements, tags...')
@@ -98,7 +98,7 @@ def convert_abaqus_to_gmsh(input_mesh, output_mesh, logger=None):
     if new_tris:
         logger.info('  Adding %i new triangles...' % (len(new_tris)))
         if (-1 in tri_region):
-            logger.warning('Traingles with empty region information found!')
+            logger.warning('Triangles with empty region information found!')
             logger.warning('Note: These will be indicated by a -1 in the output file.')
             n_warnings += 1
         mesh.cells.append(CellBlock('triangle', np.array(new_tris)))
