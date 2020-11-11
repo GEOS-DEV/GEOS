@@ -1,3 +1,4 @@
+// Gmsh project created on Wed Nov 11 14:32:31 2020
 ta = 1.0; //0.1;
 a = 0.5;
 c = 0.005;
@@ -28,9 +29,9 @@ Line(11) = {8, 10};
 Line(12) = {8, 9};
 Line(13) = {8, 3};
 
-Transfinite Line {1, 8, 9, 6} = 3 Using Progression 1;
-Transfinite Line {7, 10, 11, 12, 3, 4} = 3 Using Progression 1;
-Transfinite Line {2, 5, 13} = 3 Using Progression 1;
+Transfinite Line {1, 8, 9, 6} = 4 Using Progression 1;
+Transfinite Line {7, 10, 11, 12, 3, 4} = 4 Using Progression 1;
+Transfinite Line {2, 5, 13} = 4 Using Progression 1;
 
 Line Loop(14) = {1, -12, 9, 10};
 Ruled Surface(15) = {14};
@@ -58,7 +59,7 @@ Extrude {0, 0, 0.1} {Surface{15, 17, 19, 21}; Layers{1}; Recombine;}
 //Compound Volume(5) = {1, 2, 3, 4};
 Physical Volume("all") = {1, 2, 3, 4};
 Physical Surface("top") = {60, 104};
-Physical Surface("bottom") = {30, 74}; 
+Physical Surface("bottom") = {30, 74};
 Physical Surface("left") = {42, 64};
 Physical Surface("right") = {78, 100};
 //Physical Line(22) = {6, 7, 8, 10, 11, 1, 2, 3, 4, 5};

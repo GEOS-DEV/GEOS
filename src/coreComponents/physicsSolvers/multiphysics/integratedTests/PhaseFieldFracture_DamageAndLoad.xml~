@@ -9,7 +9,7 @@
                  subcycling = "0"
                  discretization="FE1"
                  targetRegions="{Region1}">
-    <NonlinearSolverParameters newtonMaxIter="100"/>
+    <NonlinearSolverParameters newtonMaxIter="50"/>
     <LinearSolverParameters logLevel="0"/>
     </PhaseFieldFracture>
 
@@ -20,11 +20,9 @@
                                   targetRegions="{Region1}"
                                   solidMaterialNames="{shale}"
                                   >
-          <NonlinearSolverParameters newtonMaxIter="200"
-                                     newtonTol="1.0e-12"/>
-          <LinearSolverParameters solverType="direct"
-				  preconditionerType="amg"
-	                          krylovTol="1.0e-14"
+          <NonlinearSolverParameters newtonMaxIter="50"
+                                     newtonTol="1.0e-6"/>
+          <LinearSolverParameters krylovTol="1.0e-10"
                                   logLevel="0"/>
     </SolidMechanicsLagrangianSSLE>
 
@@ -33,33 +31,30 @@
                 timeIntegrationOption="SteadyState"
                 fieldName="Damage"
                 solidMaterialNames="{shale}"
-                localDissipation = "Linear"
+                localDissipation = "Quadratic"
                 logLevel="1"
                 targetRegions="{Region1}">
-          <NonlinearSolverParameters newtonMaxIter="200"
-                                     newtonTol="1.0e-12"/>
-          <LinearSolverParameters solverType="direct"
-				  preconditionerType="amg"
-	                          krylovTol="1.0e-14"
-                                  logLevel="0"/>
     </PhaseFieldDamageFEM>
   </Solvers>
 
+  <!-- <Mesh>
+    <PAMELAMeshGenerator name="MyMeshName"
+                         file="/usr/workspace/macieira/GEOSX/debugTests/geo.msh"/>
+  </Mesh> -->
+
   <Mesh>
-    <PAMELAMeshGenerator name = "Mode2Notched"
-                         file = "Mode2CrackMesh/geo.msh"/>
-    <!-- <InternalMesh name="mesh1" -->
-    <!--               elementTypes="{C3D8}" -->
-    <!--               xCoords="{0, 1}" -->
-    <!--               yCoords="{0, 1}" -->
-    <!--               zCoords="{0, 0.1}" -->
-    <!--               nx="{5}" -->
-    <!--               ny="{5}" -->
-    <!--               nz="{1}" -->
-    <!--               cellBlockNames="{all_HEX}"/> -->
+    <InternalMesh name="mesh1"
+                  elementTypes="{C3D8}"
+                  xCoords="{-1, 1}"
+                  yCoords="{-1, 1}"
+                  zCoords="{-1, 1}"
+                  nx="{3}"
+                  ny="{3}"
+                  nz="{3}"
+                  cellBlockNames="{cb1}"/>
   </Mesh>
 
-  <Events maxTime="30.0">
+  <Events maxTime="130.0">
     <!-- <SoloEvent name="siloOutput0"
                target="/Outputs/SiloOutput"/> -->
     <!-- This event is applied every cycle, and overrides the
@@ -74,15 +69,15 @@
     <PeriodicEvent name="vtkOutput"
                    timeFrequency="1.0"
                    targetExactTimestep="1"
-                   target="/Outputs/Mode2Spectral_VTKOutput" />
+                   target="/Outputs/DamageAndLoad_VTKOutput" />
 
     <PeriodicEvent name="siloOutputs"
                    timeFrequency="1.0"
                    targetExactTimestep="1"
-                   target="/Outputs/Mode2Spectral_SiloOutput"/>
+                   target="/Outputs/DamageAndLoad_SiloOutput"/>
 
     <PeriodicEvent name="restarts"
-                   timeFrequency="15.0"
+                   timeFrequency="65.0"
                    targetExactTimestep="0"
                    target="/Outputs/restartOutput" />
   </Events>
@@ -94,79 +89,78 @@
   </NumericalMethods>
 
   <ElementRegions>
-    <CellElementRegion name="Region1" cellBlocks="{all_HEX}" materialList="{shale}" />
+    <CellElementRegion name="Region1" cellBlocks="{cb1}" materialList="{shale}" />
   </ElementRegions>
 
   <Constitutive>
     <DamageSpectralLinearElasticIsotropic name="shale"
                                   defaultDensity="2700"
-                                  defaultBulkModulus="1.750e5"
-                                  defaultShearModulus="8.077e4"
-				  lengthScale = "0.25"
-				  criticalFractureEnergy = "54.0"
-				  criticalStrainEnergy = "14.88"
+                                  defaultBulkModulus="2.00e5"
+                                  defaultShearModulus="3.00e5"
+                                  lengthScale="0.2"
+                                  criticalFractureEnergy="2.7"
+                                  criticalStrainEnergy="0"
                                   />
   </Constitutive>
 
   <FieldSpecifications>
-    <FieldSpecification name="shearLoad"
+    <FieldSpecification name="xtraction"
                         fieldName="TotalDisplacement"
                         component="0"
                         objectPath="nodeManager"
-                        scale="1.00e-3"
+                        scale="1e-4"
                         functionName = "f_b"
-                        setNames="{top}"/>
+                        setNames="{xpos}"/>
 
-    <FieldSpecification name="fixedY"
+    <FieldSpecification name="xfix"
+                        fieldName="TotalDisplacement"
+                        component="0"
+                        objectPath="nodeManager"
+                        scale="0"
+                        setNames="{xneg}"/>
+
+    <FieldSpecification name="yfix"
                         fieldName="TotalDisplacement"
                         component="1"
                         objectPath="nodeManager"
                         scale="0"
-                        setNames="{top, bottom, left, right}"/>
+                        setNames="{all}"/>
 
-    <FieldSpecification name="fixedX"
-                        fieldName="TotalDisplacement"
-                        component="0"
-                        objectPath="nodeManager"
-                        scale="0"
-                        setNames="{bottom}"/>
-
-    <FieldSpecification name="fixedZ"
+    <FieldSpecification name="zfix"
                         fieldName="TotalDisplacement"
                         component="2"
                         objectPath="nodeManager"
                         scale="0"
-                        setNames="{top, bottom, left, right}"/>
+                        setNames="{all}"/>
 
-    <!-- <FieldSpecification name="initialCrack" -->
-    <!--                     fieldName="Damage" -->
-    <!--                     component="0" -->
-    <!--                     objectPath="nodeManager" -->
-    <!--                     scale="1" -->
-    <!--                     setNames="{crack}"/> -->
+    <FieldSpecification name="pointSource"
+                        fieldName="Damage"
+                        initialCondition="0"
+                        objectPath="nodeManager"
+                        scale="1"
+                        setNames="{middle}"/>
 
   </FieldSpecifications>
 
 
   <Functions>
-     <TableFunction name="f_b"
-     		   inputVarNames="{time}"
-		   coordinates="{0, 101}"
-		   values = "{-1, 100}"/>
-  </Functions>
+    <!-- These are example mathpresso functions.  In order to use them, you need to specify the order that the
+    symbolic math function should expect the variables to be given, and an expression that it will compile.
+    A list of available functions is given here: https://github.com/kobalicek/mathpresso -->
 
+    <TableFunction name="f_b"
+		   inputVarNames="{time}"
+		   coordinates="{0, 130}"
+		   values = "{-0.5, 129.5}"/>
+  </Functions>
   <Outputs>
-    <Silo name="Mode2Spectral_SiloOutput" parallelThreads="1" plotFileRoot="plot"/>
-    <VTK name="Mode2Spectral_VTKOutput" parallelThreads="1" plotFileRoot="plot"/>
-    <Restart name="restartOutput"/> 
+    <Silo name="DamageAndLoad_SiloOutput" parallelThreads="1" plotFileRoot="plot"/>
+    <VTK name="DamageAndLoad_VTKOutput" parallelThreads="1" plotFileRoot="plot"/>
+    <Restart name="restartOutput"/>
   </Outputs>
 
-  <!-- <Geometry> -->
-  <!--   <Box name="bottom" xMin="-0.01, -0.01, -0.01" xMax="1.01, 0.01, +0.11"/> -->
-  <!--   <Box name="top" xMin="-0.01, 0.99, -0.01" xMax="1.01, 1.01, +0.11"/> -->
-  <!--   <Box name="left" xMin="-0.01, -0.01, -0.01" xMax="0.01, 1.01, +0.11"/> -->
-  <!--   <Box name="right" xMin="0.99, -0.01, -0.01" xMax="1.01, 1.01, +0.11"/> -->
-  <!--   <Box name="crack" xMin="-0.01, 0.39, -0.01" xMax="0.51, 0.61, +0.11"/> -->
-  <!-- </Geometry> -->
+  <Geometry>
+    <Box name="middle" xMin="-0.334, -1.001, -1.001" xMax="+0.334, +0.001, +1.001"/>
+  </Geometry>
 
 </Problem>

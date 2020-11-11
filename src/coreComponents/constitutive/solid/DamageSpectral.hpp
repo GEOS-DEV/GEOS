@@ -22,7 +22,6 @@
 #include "constitutive/solid/SolidBase.hpp"
 #include "constitutive/solid/Damage.hpp"
 #include "constitutive/solid/AuxiliaryFunctionsSpectral.hpp"
-#include "LvArray/src/carrayOutput.hpp"
 #include <cstdio>
 #define QUADRATIC_DISSIPATION_SPECTRAL 0
 #define LORENTZ_SPECTRAL 1
