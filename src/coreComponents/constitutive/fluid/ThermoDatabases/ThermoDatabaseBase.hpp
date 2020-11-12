@@ -71,13 +71,13 @@ class ThermoDatabaseBase
 {
 public:
 
-  ThermoDatabaseBase( const string & fileName ):
+  ThermoDatabaseBase( const Path & fileName ):
     m_fileName( fileName )
   {}
 
   virtual ~ThermoDatabaseBase(){}
 
-  using CatalogInterface = dataRepository::CatalogInterface< ThermoDatabaseBase, string const &, string_array const & >;
+  using CatalogInterface = dataRepository::CatalogInterface< ThermoDatabaseBase, Path const &, string_array const & >;
 
   static typename CatalogInterface::CatalogType & GetCatalog()
   {
@@ -96,7 +96,7 @@ public:
   virtual const ActCoefParameters & GetActCoefParameters() const = 0;
 
 protected:
-  string m_fileName;
+  Path m_fileName;
 
 };
 

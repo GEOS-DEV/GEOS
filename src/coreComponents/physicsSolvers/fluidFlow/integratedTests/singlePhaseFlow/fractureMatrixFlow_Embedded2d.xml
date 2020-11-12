@@ -1,4 +1,5 @@
 <?xml version="1.0" ?>
+
 <Problem>
   <Solvers
     gravityVector="0.0, 0.0, -9.81">
@@ -42,11 +43,11 @@
     <Box
       name="source"
       xMin="-0.01, -0.01, -0.01"
-      xMax=" 1.1,  0.1, 1.01"/>
-      
-      <Box
+      xMax=" 1.1, 0.1, 1.01"/>
+
+    <Box
       name="sink"
-      xMin="  -0.01,  0.9, -0.01"
+      xMin=" -0.01, 0.9, -0.01"
       xMax=" 1.01, 1.01, 1.01"/>
 
     <BoundedPlane
@@ -98,10 +99,11 @@
       cellBlocks="{ cb1 }"
       materialList="{ water, rock }"/>
 
-    <EmbeddedSurfaceElementRegion
+    <SurfaceElementRegion
       name="Fracture"
       defaultAperture = "1e-3"
-      materialList="{ water, rock }"/>
+      materialList="{ water, rock }"
+      subRegionType="embeddedElement"/>
   </ElementRegions>
 
   <Constitutive>
@@ -164,8 +166,8 @@
       objectPath="ElementRegions/Region2/cb1"
       fieldName="pressure"
       scale="0.0"/>
-      
-     <FieldSpecification
+
+    <FieldSpecification
       name="sourceTerm"
       objectPath="ElementRegions/Region2/cb1"
       fieldName="pressure"
@@ -183,11 +185,12 @@
   <Functions/>
 
   <Outputs>
-     <VTK
+    <VTK
       name="vtkOutput"
       plotFileRoot="fractureMatrixFlow"
       plotLevel="2"
       writeBinaryData="0"/>
+
     <Restart
       name="sidreRestart"/>
   </Outputs>

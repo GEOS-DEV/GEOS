@@ -91,71 +91,6 @@ namespace geosx
 namespace finiteElement
 {
 
-
-/**
- * @brief Call a lambda function (callback) with an integral_constant
- *        conversion of the input integral type to allow for static
- *        dispatch.
- * @tparam INTEGRAL_TYPE The type of integer passed in @p input.
- * @tparam LAMBDA The type of @p lambda to execute.
- * @param input The integer to convert to an integral_constant.
- * @param lambda The generic lambda function (takes the integral_constant as
- *               a parameter) that will be executed.
- *
- * Implements a switchyard to convert the value of @p input to an
- * integral_constant<@p INTEGRAL_TYPE, @p input>, and pass that to @p lambda.
- * This allows a runtime @p input to be dispatched as a compile time constant.
- * Note that @p LAMBDA must be a generic lambda that takes in a single `auto`
- * parameter and then converts the value to an INTEGRAL_TYPE. For instance:
- *
- *     int value = 1;
- *     integralTypeDispatch( 1, [&]( auto const constValueType )
- *     {
- *       static constexpr int constValue = decltype( constValueType )::value;
- *
- *       func< constValue >(...);
- *     };
- */
-template< typename INTEGRAL_TYPE, typename LAMBDA >
-void
-integralTypeDispatch( INTEGRAL_TYPE const input,
-                      LAMBDA && lambda )
-{
-  switch( input )
-  {
-    case 1:
-    {
-      lambda( std::integral_constant< INTEGRAL_TYPE, 1 >() );
-      break;
-    }
-    case 4:
-    {
-      lambda( std::integral_constant< INTEGRAL_TYPE, 4 >() );
-      break;
-    }
-//    case 5:
-//    {
-//      lambda( std::integral_constant< INTEGRAL_TYPE, 5 >() );
-//      break;
-//    }
-    case 6:
-    {
-      lambda( std::integral_constant< INTEGRAL_TYPE, 6 >() );
-      break;
-    }
-    case 8:
-    {
-      lambda( std::integral_constant< INTEGRAL_TYPE, 8 >() );
-      break;
-    }
-    default:
-      GEOSX_ERROR( "integralTypeDispatch() is not implemented for value of: "<<input );
-  }
-}
-
-//*****************************************************************************
-//*****************************************************************************
-//*****************************************************************************
 /**
  * @class KernelBase
  * @brief Define the base interface for finite element kernels.
@@ -278,7 +213,7 @@ public:
    * @param q The quadrature point index.
    * @param stack The StackVariable object that hold the stack variables.
    *
-   * ### KernelBase::quadraturePointStateUpdate() Description
+   * ### KernelBase::quadraturePointKernel() Description
    *
    * The operations found here are the mapping from the support points to the
    * quadrature point, calculation of gradients, etc. From this data the
@@ -287,59 +222,9 @@ public:
    */
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  void quadraturePointStateUpdate( localIndex const k,
-                                   localIndex const q,
-                                   StackVariables & stack ) const
-  {
-    GEOSX_UNUSED_VAR( k );
-    GEOSX_UNUSED_VAR( q );
-    GEOSX_UNUSED_VAR( stack );
-  }
-
-  /**
-   * @brief Form the element local Jacobian matrix.
-   * @tparam STACK_VARIABLE_TYPE The type of StackVariable that holds the stack
-   *                             variables. This is most likely a defined in a
-   *                             type that derives from KernelBase.
-   * @param k The element index.
-   * @param q The quadrature point index.
-   * @param stack The StackVariable object that hold the stack variables.
-   *
-   * ### KernelBase::quadraturePointJacobianContribution() Description
-   *
-   * The results of quadraturePointStateUpdate are used to form the local
-   * element Jacobian matrix.
-   */
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  void quadraturePointJacobianContribution( localIndex const k,
-                                            localIndex const q,
-                                            StackVariables & stack ) const
-  {
-    GEOSX_UNUSED_VAR( k );
-    GEOSX_UNUSED_VAR( q );
-    GEOSX_UNUSED_VAR( stack );
-  }
-
-  /**
-   * @brief Calculates the element local Residual vector.
-   * @tparam STACK_VARIABLE_TYPE The type of StackVariable that holds the stack
-   *                             variables. This is most likely a defined in a
-   *                             type that derives from KernelBase.
-   * @param k The element index.
-   * @param q The quadrature point index.
-   * @param stack The StackVariable object that hold the stack variables.
-   *
-   * ### KernelBase::quadraturePointResidualContribution() Description
-   *
-   * The results of quadraturePointStateUpdate are used to form the local
-   * element residual vector.
-   */
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  void quadraturePointResidualContribution( localIndex const k,
-                                            localIndex const q,
-                                            StackVariables & stack ) const
+  void quadraturePointKernel( localIndex const k,
+                              localIndex const q,
+                              StackVariables & stack ) const
   {
     GEOSX_UNUSED_VAR( k );
     GEOSX_UNUSED_VAR( q );
@@ -383,56 +268,11 @@ public:
    * This is a generic launching function for all of the finite element kernels
    * that follow the interface set by KernelBase.
    */
-  template< typename POLICY,
-            typename KERNEL_TYPE >
-  static
-  typename std::enable_if< std::is_same< POLICY, serialPolicy >::value ||
-                           std::is_same< POLICY, parallelHostPolicy >::value, real64 >::type
-  kernelLaunch( localIndex const numElems,
-                KERNEL_TYPE const & kernelComponent )
-  {
-    GEOSX_MARK_FUNCTION;
-
-    // Define a RAJA reduction variable to get the maximum residual contribution.
-    RAJA::ReduceMax< ReducePolicy< POLICY >, real64 > maxResidual( 0 );
-
-    forAll< POLICY >( numElems,
-                      [=] ( localIndex const k )
-    {
-      typename KERNEL_TYPE::StackVariables stack;
-
-      kernelComponent.setup( k, stack );
-      for( integer q=0; q<numQuadraturePointsPerElem; ++q )
-      {
-        kernelComponent.quadraturePointStateUpdate( k, q, stack );
-
-        kernelComponent.quadraturePointJacobianContribution( k, q, stack );
-
-        kernelComponent.quadraturePointResidualContribution( k, q, stack );
-      }
-      maxResidual.max( kernelComponent.complete( k, stack ) );
-    } );
-    return maxResidual.get();
-  }
-
   //START_kernelLauncher
-  /**
-   * @brief Kernel Launcher.
-   * @tparam POLICY The RAJA policy to use for the launch.
-   * @tparam NUM_QUADRATURE_POINTS The number of quadrature points per element.
-   * @tparam KERNEL_TYPE The type of Kernel to execute.
-   * @param numElems The number of elements to process in this launch.
-   * @param kernelComponent The instantiation of KERNEL_TYPE to execute.
-   * @return The maximum residual.
-   *
-   * This is a generic launching function for all of the finite element kernels
-   * that follow the interface set by KernelBase.
-   */
   template< typename POLICY,
             typename KERNEL_TYPE >
   static
-  typename std::enable_if< !( std::is_same< POLICY, serialPolicy >::value ||
-                              std::is_same< POLICY, parallelHostPolicy >::value ), real64 >::type
+  real64
   kernelLaunch( localIndex const numElems,
                 KERNEL_TYPE const & kernelComponent )
   {
@@ -441,25 +281,17 @@ public:
     // Define a RAJA reduction variable to get the maximum residual contribution.
     RAJA::ReduceMax< ReducePolicy< POLICY >, real64 > maxResidual( 0 );
 
-    // launch the kernel
     forAll< POLICY >( numElems,
-                      [=] GEOSX_DEVICE ( localIndex const k )
+                      [=] GEOSX_HOST_DEVICE ( localIndex const k )
     {
-      // allocate the stack variables
       typename KERNEL_TYPE::StackVariables stack;
 
       kernelComponent.setup( k, stack );
-
       for( integer q=0; q<numQuadraturePointsPerElem; ++q )
       {
-        kernelComponent.quadraturePointStateUpdate( k, q, stack );
-
-        kernelComponent.quadraturePointJacobianContribution( k, q, stack );
-
-        kernelComponent.quadraturePointResidualContribution( k, q, stack );
+        kernelComponent.quadraturePointKernel( k, q, stack );
       }
       maxResidual.max( kernelComponent.complete( k, stack ) );
-
     } );
     return maxResidual.get();
   }
@@ -651,8 +483,8 @@ real64 regionBasedKernelApplication( MeshLevel & mesh,
                                             elementSubRegion,
                                             finiteElement,
                                             castedConstitutiveRelation );
-        auto fullKernelComponentConstructorArgs = camp::tuple_cat_pair_forward( temp,
-                                                                                kernelConstructorParamsTuple );
+        auto fullKernelComponentConstructorArgs = camp::tuple_cat_pair( temp,
+                                                                        kernelConstructorParamsTuple );
         KERNEL_TYPE kernelComponent = camp::make_from_tuple< KERNEL_TYPE >( fullKernelComponentConstructorArgs );
 
 #endif

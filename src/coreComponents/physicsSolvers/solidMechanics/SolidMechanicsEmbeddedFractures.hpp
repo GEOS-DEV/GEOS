@@ -118,7 +118,7 @@ protected:
                                arrayView1d< localIndex > const & rowLengths ) const;
 
   /**
-   * @Brief add the sparsity pattern induced by the perforations
+   * @Brief add the sparsity pattern induced by the coupling
    * @param domain the physical domain object
    * @param dofManager degree-of-freedom manager associated with the linear system
    * @param pattern the sparsity pattern
@@ -156,7 +156,7 @@ protected:
                                       localIndex const q,
                                       CellBlock::NodeMapType const & elemsToNodes,
                                       arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodesCoord,
-                                      arrayView1d< localIndex const > const & embeddedSurfaceToCell,
+                                      localIndex const cellElementIndex,
                                       localIndex const numNodesPerElement,
                                       arrayView4d< real64 const > const & dNdX );
 

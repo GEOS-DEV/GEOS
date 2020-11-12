@@ -36,7 +36,7 @@ class EQ36Database : public ThermoDatabaseBase
 {
 public:
 
-  EQ36Database( const string & fileName,
+  EQ36Database( const Path & fileName,
                 const string_array & basisSpeciesNames );
 
   ~EQ36Database() override

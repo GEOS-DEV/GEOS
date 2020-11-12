@@ -27,7 +27,7 @@
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "managers/DomainPartition.hpp"
 #include "managers/NumericalMethodsManager.hpp"
-#include "mesh/FaceElementRegion.hpp"
+#include "mesh/SurfaceElementRegion.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
 #include "mpiCommunications/NeighborCommunicator.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
@@ -90,7 +90,7 @@ void LagrangianContactSolver::RegisterDataOnMesh( dataRepository::Group * const 
     MeshLevel & meshLevel = *Group::group_cast< MeshBody * >( mesh.second )->getMeshLevel( 0 );
 
     ElementRegionManager * const elemManager = meshLevel.getElemManager();
-    elemManager->forElementRegions< FaceElementRegion >( [&] ( FaceElementRegion & region )
+    elemManager->forElementRegions< SurfaceElementRegion >( [&] ( SurfaceElementRegion & region )
     {
       region.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
       {
@@ -288,8 +288,8 @@ void LagrangianContactSolver::ComputeTolerances( DomainPartition & domain ) cons
     if( subRegion.hasWrapper( m_tractionKey ) )
     {
       arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
-      arrayView1d< real64 const > const & faceArea = subRegion.getElementArea();
-      arrayView3d< real64 const > const & faceRotationMatrix = subRegion.getElementRotationMatrix();
+      arrayView1d< real64 const > const & faceArea = subRegion.getElementArea().toViewConst();
+      arrayView3d< real64 const > const & faceRotationMatrix = subRegion.getElementRotationMatrix().toViewConst();
       arrayView2d< localIndex const > const & elemsToFaces = subRegion.faceList();
 
       arrayView1d< real64 > const & normalTractionTolerance =
@@ -370,9 +370,9 @@ void LagrangianContactSolver::ComputeTolerances( DomainPartition & domain ) cons
 
           // Compute R^T * (invK) * R
           real64 temp[ 3 ][ 3 ];
-          LvArray::tensorOps::AkiBkj< 3, 3, 3 >( temp, faceRotationMatrix[ kfe ], invStiffApprox );
+          LvArray::tensorOps::Rij_eq_AkiBkj< 3, 3, 3 >( temp, faceRotationMatrix[ kfe ], invStiffApprox );
           real64 rotatedInvStiffApprox[ 3 ][ 3 ];
-          LvArray::tensorOps::AikBkj< 3, 3, 3 >( rotatedInvStiffApprox, temp, faceRotationMatrix[ kfe ] );
+          LvArray::tensorOps::Rij_eq_AikBkj< 3, 3, 3 >( rotatedInvStiffApprox, temp, faceRotationMatrix[ kfe ] );
           LvArray::tensorOps::scale< 3, 3 >( rotatedInvStiffApprox, area );
 
           normalDisplacementTolerance[kfe] = rotatedInvStiffApprox[ 0 ][ 0 ] * averageYoungModulus / 2.e+7;
@@ -462,7 +462,7 @@ void LagrangianContactSolver::UpdateDeformationForCoupling( DomainPartition & do
   {
     if( subRegion.hasWrapper( m_tractionKey ) )
     {
-      arrayView3d< real64 const > const & rotationMatrix = subRegion.getElementRotationMatrix();
+      arrayView3d< real64 const > const & rotationMatrix = subRegion.getElementRotationMatrix().toViewConst();
       arrayView2d< localIndex const > const & elemsToFaces = subRegion.faceList();
       arrayView2d< real64 > const & localJump = subRegion.getReference< array2d< real64 > >( viewKeyStruct::localJumpString );
 
@@ -482,7 +482,7 @@ void LagrangianContactSolver::UpdateDeformationForCoupling( DomainPartition & do
         }
 
         real64 localJumpTemp[ 3 ];
-        LvArray::tensorOps::AjiBj< 3, 3 >( localJumpTemp, rotationMatrix[ kfe ], globalJumpTemp );
+        LvArray::tensorOps::Ri_eq_AjiBj< 3, 3 >( localJumpTemp, rotationMatrix[ kfe ], globalJumpTemp );
         LvArray::tensorOps::copy< 3 >( localJump[ kfe ], localJumpTemp );
       } );
     }
@@ -891,7 +891,7 @@ void LagrangianContactSolver::SetupDofs( DomainPartition const & domain,
   // restrict coupling to fracture regions only
   ElementRegionManager const & elemManager = *domain.getMeshBody( 0 )->getMeshLevel( 0 )->getElemManager();
   string_array fractureRegions;
-  elemManager.forElementRegions< FaceElementRegion >( [&]( FaceElementRegion const & elementRegion )
+  elemManager.forElementRegions< SurfaceElementRegion >( [&]( SurfaceElementRegion const & elementRegion )
   {
     fractureRegions.emplace_back( elementRegion.getName() );
   } );
@@ -1093,7 +1093,7 @@ void LagrangianContactSolver::
         real64 const localNodalForce[ 3 ] = { traction( kfe, 0 ) * nodalArea, traction( kfe, 1 ) * nodalArea, traction( kfe, 2 ) * nodalArea };
 
         real64 globalNodalForce[ 3 ];
-        LvArray::tensorOps::AijBj< 3, 3 >( globalNodalForce, rotationMatrix[ kfe ], localNodalForce );
+        LvArray::tensorOps::Ri_eq_AijBj< 3, 3 >( globalNodalForce, rotationMatrix[ kfe ], localNodalForce );
 
         for( localIndex kf = 0; kf < 2; ++kf )
         {
@@ -1269,7 +1269,7 @@ void LagrangianContactSolver::
                       {
                         real64 const localRowB[ 2 ] = { rotationMatrix( kfe, i, 1 ), rotationMatrix( kfe, i, 2 ) };
                         real64 localRowE[ 2 ];
-                        LvArray::tensorOps::symAijBj< 2 >( localRowE, dUdgT, localRowB );
+                        LvArray::tensorOps::Ri_eq_symAijBj< 2 >( localRowE, dUdgT, localRowB );
 
                         dRdU( 1, kf * 3 * numNodesPerFace + 3 * a + i ) = nodalArea * localRowE[ 0 ] * pow( -1, kf );
                         dRdU( 2, kf * 3 * numNodesPerFace + 3 * a + i ) = nodalArea * localRowE[ 1 ] * pow( -1, kf );
@@ -1386,8 +1386,8 @@ void LagrangianContactSolver::AssembleStabilization( DomainPartition const & dom
   // Form the SurfaceGenerator, get the fracture name and use it to retrieve the faceMap (from fracture element to face)
   SurfaceGenerator const * const
   surfaceGenerator = this->getParent()->GetGroup< SolverBase >( "SurfaceGen" )->group_cast< SurfaceGenerator const * >();
-  FaceElementRegion const * const fractureRegion = elemManager.GetRegion< FaceElementRegion >( surfaceGenerator->getFractureRegionName() );
-  FaceElementSubRegion const * const fractureSubRegion = fractureRegion->GetSubRegion< FaceElementSubRegion >( "default" );
+  SurfaceElementRegion const * const fractureRegion = elemManager.GetRegion< SurfaceElementRegion >( surfaceGenerator->getFractureRegionName() );
+  FaceElementSubRegion const * const fractureSubRegion = fractureRegion->GetSubRegion< FaceElementSubRegion >( "faceElementSubRegion" );
   GEOSX_ERROR_IF( !fractureSubRegion->hasWrapper( m_tractionKey ), "The fracture subregion must contain traction field." );
   arrayView2d< localIndex const > const faceMap = fractureSubRegion->faceList();
   GEOSX_ERROR_IF( faceMap.size( 1 ) != 2, "A fracture face has to be shared by two cells." );
@@ -1518,8 +1518,8 @@ void LagrangianContactSolver::AssembleStabilization( DomainPartition const & dom
 
           // Compute R^T * (invK) * R
           real64 temp[ 3 ][ 3 ];
-          LvArray::tensorOps::AkiBkj< 3, 3, 3 >( temp, faceRotationMatrix[ faceIndexRef ], invStiffApproxTotal );
-          LvArray::tensorOps::AikBkj< 3, 3, 3 >( rotatedInvStiffApprox[ kf ], temp, faceRotationMatrix[ faceIndexRef ] );
+          LvArray::tensorOps::Rij_eq_AkiBkj< 3, 3, 3 >( temp, faceRotationMatrix[ faceIndexRef ], invStiffApproxTotal );
+          LvArray::tensorOps::Rij_eq_AikBkj< 3, 3, 3 >( rotatedInvStiffApprox[ kf ], temp, faceRotationMatrix[ faceIndexRef ] );
         }
 
         // Compose local nodal-based local stiffness matrices

@@ -61,11 +61,13 @@ SolidMechanicsLagrangianFEM::SolidMechanicsLagrangianFEM( const std::string & na
 //  m_elemsNotAttachedToSendOrReceiveNodes(),
   m_sendOrReceiveNodes(),
   m_nonSendOrReceiveNodes(),
+  m_targetNodes(),
   m_iComm(),
   m_effectiveStress( 0 )
 {
   m_sendOrReceiveNodes.setName( "SolidMechanicsLagrangianFEM::m_sendOrReceiveNodes" );
   m_nonSendOrReceiveNodes.setName( "SolidMechanicsLagrangianFEM::m_nonSendOrReceiveNodes" );
+  m_targetNodes.setName( "SolidMechanicsLagrangianFEM::m_targetNodes" );
 
   registerWrapper( viewKeyStruct::newmarkGammaString, &m_newmarkGamma )->
     setApplyDefaultValue( 0.5 )->
@@ -305,6 +307,13 @@ void SolidMechanicsLagrangianFEM::updateIntrinsicNodalData( DomainPartition * co
 
   arrayView1d< integer const > const & nodeGhostRank = nodes.ghostRank();
 
+  // to fill m_sendOrReceiveNodes and m_nonSendOrReceiveNodes, we first insert
+  // the nodes one-by-one in the following std::sets. Then, when all the nodes
+  // have been collected, we do a batch insertion into m_sendOrReceiveNodes and
+  // m_nonSendOrReceiveNodes
+  std::set< localIndex > tmpSendOrReceiveNodes;
+  std::set< localIndex > tmpNonSendOrReceiveNodes;
+
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > >
   rho = elementRegionManager.ConstructMaterialViewAccessor< array2d< real64 >, arrayView2d< real64 const > >( "density",
                                                                                                               targetRegionNames(),
@@ -337,7 +346,7 @@ void SolidMechanicsLagrangianFEM::updateIntrinsicNodalData( DomainPartition * co
           for( localIndex q=0; q<numQuadraturePointsPerElem; ++q )
           {
             elemMass += rho[er][esr][k][q] * detJ[k][q];
-            FE_TYPE::shapeFunctionValues( q, N );
+            FE_TYPE::calcN( q, N );
 
             for( localIndex a=0; a< numNodesPerElem; ++a )
             {
@@ -350,17 +359,24 @@ void SolidMechanicsLagrangianFEM::updateIntrinsicNodalData( DomainPartition * co
           {
             if( nodeGhostRank[elemsToNodes[k][a]] >= -1 )
             {
-              m_sendOrReceiveNodes.insert( elemsToNodes[k][a] );
+              tmpSendOrReceiveNodes.insert( elemsToNodes[k][a] );
             }
             else
             {
-              m_nonSendOrReceiveNodes.insert( elemsToNodes[k][a] );
+              tmpNonSendOrReceiveNodes.insert( elemsToNodes[k][a] );
             }
           }
         }
       } );
     } );
   } );
+  m_sendOrReceiveNodes.insert( tmpSendOrReceiveNodes.begin(),
+                               tmpSendOrReceiveNodes.end() );
+  m_nonSendOrReceiveNodes.insert( tmpNonSendOrReceiveNodes.begin(),
+                                  tmpNonSendOrReceiveNodes.end() );
+  m_targetNodes = m_sendOrReceiveNodes;
+  m_targetNodes.insert( m_nonSendOrReceiveNodes.begin(),
+                        m_nonSendOrReceiveNodes.end() );
 }
 
 void SolidMechanicsLagrangianFEM::InitializePostInitialConditions_PreSubGroups( Group * const problemManager )
@@ -369,13 +385,19 @@ void SolidMechanicsLagrangianFEM::InitializePostInitialConditions_PreSubGroups( 
   MeshLevel & mesh = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
 
   NodeManager & nodes = *mesh.getNodeManager();
-  //FaceManager * const faceManager = mesh.getFaceManager();
 
   ElementRegionManager & elementRegionManager = *mesh.getElemManager();
 
   arrayView1d< real64 > & mass = nodes.getReference< array1d< real64 > >( keys::Mass );
 
   arrayView1d< integer const > const & nodeGhostRank = nodes.ghostRank();
+
+  // to fill m_sendOrReceiveNodes and m_nonSendOrReceiveNodes, we first insert
+  // the nodes one-by-one in the following std::sets. Then, when all the nodes
+  // have been collected, we do a batch insertion into m_sendOrReceiveNodes and
+  // m_nonSendOrReceiveNodes
+  std::set< localIndex > tmpSendOrReceiveNodes;
+  std::set< localIndex > tmpNonSendOrReceiveNodes;
 
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > >
   rho = elementRegionManager.ConstructMaterialViewAccessor< array2d< real64 >, arrayView2d< real64 const > >( "density",
@@ -390,6 +412,9 @@ void SolidMechanicsLagrangianFEM::InitializePostInitialConditions_PreSubGroups( 
     {
       SortedArray< localIndex > & elemsAttachedToSendOrReceiveNodes = getElemsAttachedToSendOrReceiveNodes( elementSubRegion );
       SortedArray< localIndex > & elemsNotAttachedToSendOrReceiveNodes = getElemsNotAttachedToSendOrReceiveNodes( elementSubRegion );
+
+      std::set< localIndex > tmpElemsAttachedToSendOrReceiveNodes;
+      std::set< localIndex > tmpElemsNotAttachedToSendOrReceiveNodes;
 
       elemsAttachedToSendOrReceiveNodes.setName(
         "SolidMechanicsLagrangianFEM::m_elemsAttachedToSendOrReceiveNodes["
@@ -419,7 +444,7 @@ void SolidMechanicsLagrangianFEM::InitializePostInitialConditions_PreSubGroups( 
           for( localIndex q=0; q<numQuadraturePointsPerElem; ++q )
           {
             elemMass += rho[er][esr][k][q] * detJ[k][q];
-            FE_TYPE::shapeFunctionValues( q, N );
+            FE_TYPE::calcN( q, N );
 
             for( localIndex a=0; a< numNodesPerElem; ++a )
             {
@@ -433,26 +458,39 @@ void SolidMechanicsLagrangianFEM::InitializePostInitialConditions_PreSubGroups( 
             if( nodeGhostRank[elemsToNodes[k][a]] >= -1 )
             {
               isAttachedToGhostNode = true;
-              m_sendOrReceiveNodes.insert( elemsToNodes[k][a] );
+              tmpSendOrReceiveNodes.insert( elemsToNodes[k][a] );
             }
             else
             {
-              m_nonSendOrReceiveNodes.insert( elemsToNodes[k][a] );
+              tmpNonSendOrReceiveNodes.insert( elemsToNodes[k][a] );
             }
           }
 
           if( isAttachedToGhostNode )
           {
-            elemsAttachedToSendOrReceiveNodes.insert( k );
+            tmpElemsAttachedToSendOrReceiveNodes.insert( k );
           }
           else
           {
-            elemsNotAttachedToSendOrReceiveNodes.insert( k );
+            tmpElemsNotAttachedToSendOrReceiveNodes.insert( k );
           }
         }
       } );
+      elemsAttachedToSendOrReceiveNodes.insert( tmpElemsAttachedToSendOrReceiveNodes.begin(),
+                                                tmpElemsAttachedToSendOrReceiveNodes.end() );
+      elemsNotAttachedToSendOrReceiveNodes.insert( tmpElemsNotAttachedToSendOrReceiveNodes.begin(),
+                                                   tmpElemsNotAttachedToSendOrReceiveNodes.end() );
+
     } );
   } );
+
+  m_sendOrReceiveNodes.insert( tmpSendOrReceiveNodes.begin(),
+                               tmpSendOrReceiveNodes.end() );
+  m_nonSendOrReceiveNodes.insert( tmpNonSendOrReceiveNodes.begin(),
+                                  tmpNonSendOrReceiveNodes.end() );
+  m_targetNodes = m_sendOrReceiveNodes;
+  m_targetNodes.insert( m_nonSendOrReceiveNodes.begin(),
+                        m_nonSendOrReceiveNodes.end() );
 }
 
 
@@ -724,7 +762,7 @@ void SolidMechanicsLagrangianFEM::CRSApplyTractionBC( real64 const time,
       array1d< real64 > resultsArray( targetSet.size() );
       resultsArray.setName( "SolidMechanicsLagrangianFEM::TractionBC function results" );
       function.Evaluate( &faceManager, time, targetSet, resultsArray );
-      arrayView1d< real64 const > const & results = resultsArray.toView();
+      arrayView1d< real64 const > const results = resultsArray.toViewConst();
 
       forAll< parallelDevicePolicy< 32 > >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const i )
       {
@@ -922,7 +960,8 @@ void SolidMechanicsLagrangianFEM::SetupDofs( DomainPartition const & GEOSX_UNUSE
   GEOSX_MARK_FUNCTION;
   dofManager.addField( keys::TotalDisplacement,
                        DofManager::Location::Node,
-                       3 );
+                       3,
+                       targetRegionNames() );
 
   dofManager.addCoupling( keys::TotalDisplacement,
                           keys::TotalDisplacement,
@@ -953,7 +992,7 @@ void SolidMechanicsLagrangianFEM::SetupSystem( DomainPartition & domain,
   {
     ElementRegionManager const & elemManager = *mesh.getElemManager();
     array1d< string > allFaceElementRegions;
-    elemManager.forElementRegions< FaceElementRegion >( [&]( FaceElementRegion const & elemRegion )
+    elemManager.forElementRegions< SurfaceElementRegion >( [&]( SurfaceElementRegion const & elemRegion )
     {
       allFaceElementRegions.emplace_back( elemRegion.getName() );
     } );
@@ -1110,12 +1149,16 @@ SolidMechanicsLagrangianFEM::
 
   RAJA::ReduceSum< parallelDeviceReduce, real64 > localSum( 0.0 );
 
-  forAll< parallelDevicePolicy<> >( nodeManager.size(),
-                                    [localRhs, localSum, dofNumber, rankOffset, ghostRank] GEOSX_HOST_DEVICE ( localIndex const k )
+  SortedArrayView< localIndex const > const & targetNodes = m_targetNodes.toViewConst();
+
+  forAll< parallelDevicePolicy<> >( targetNodes.size(),
+                                    [localRhs, localSum, dofNumber, rankOffset, ghostRank, targetNodes] GEOSX_HOST_DEVICE ( localIndex const k )
   {
-    if( ghostRank[k] < 0 )
+    localIndex const nodeIndex = targetNodes[k];
+    if( ghostRank[nodeIndex] < 0 )
     {
-      localIndex const localRow = LvArray::integerConversion< localIndex >( dofNumber[k] - rankOffset );
+      localIndex const localRow = LvArray::integerConversion< localIndex >( dofNumber[nodeIndex] - rankOffset );
+
       for( localIndex dim = 0; dim < 3; ++dim )
       {
         localSum += localRhs[localRow + dim] * localRhs[localRow + dim];

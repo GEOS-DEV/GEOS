@@ -47,9 +47,9 @@ set( linearAlgebra_sources
      DofManager.cpp )
 
 if( BUILD_OBJ_LIBS )
-  set( dependencyList common blas lapack raja managers)
+  set( dependencyList common blas lapack RAJA managers)
 else()
-  set( dependencyList common blas lapack raja )
+  set( dependencyList common blas lapack RAJA )
 endif()
 
 
@@ -87,16 +87,30 @@ if( ENABLE_HYPRE )
           interfaces/hypre/HyprePreconditioner.hpp
           interfaces/hypre/HypreSolver.hpp
           interfaces/hypre/HypreInterface.hpp
-          interfaces/hypre/HypreUtils.hpp )
+          interfaces/hypre/HypreUtils.hpp
+          interfaces/hypre/HypreSuperlu.hpp )
 
     list( APPEND linearAlgebra_sources
           interfaces/hypre/HypreMatrix.cpp
           interfaces/hypre/HypreVector.cpp
           interfaces/hypre/HyprePreconditioner.cpp
           interfaces/hypre/HypreSolver.cpp
-          interfaces/hypre/HypreInterface.cpp )
+          interfaces/hypre/HypreInterface.cpp
+          interfaces/hypre/HypreSuperlu.cpp )
 
     list( APPEND dependencyList hypre )
+
+    if( ENABLE_SUITESPARSE )
+
+        list( APPEND linearAlgebra_headers
+              interfaces/hypre/HypreSuiteSparse.hpp )
+
+        list( APPEND linearAlgebra_sources
+              interfaces/hypre/HypreSuiteSparse.cpp )
+
+        list( APPEND dependencyList suitesparse )
+
+    endif()
 
 endif()
 
@@ -108,16 +122,30 @@ if( ENABLE_PETSC )
           interfaces/petsc/PetscPreconditioner.hpp
           interfaces/petsc/PetscSolver.hpp
           interfaces/petsc/PetscInterface.hpp
-          interfaces/petsc/PetscUtils.hpp )
+          interfaces/petsc/PetscUtils.hpp
+          interfaces/petsc/PetscSuperlu.hpp )
 
     list( APPEND linearAlgebra_sources
           interfaces/petsc/PetscVector.cpp
           interfaces/petsc/PetscMatrix.cpp
           interfaces/petsc/PetscPreconditioner.cpp
           interfaces/petsc/PetscSolver.cpp
-          interfaces/petsc/PetscInterface.cpp )
+          interfaces/petsc/PetscInterface.cpp
+          interfaces/petsc/PetscSuperlu.cpp )
 
     list( APPEND dependencyList petsc )
+
+    if( ENABLE_SUITESPARSE )
+
+        list( APPEND linearAlgebra_headers
+              interfaces/petsc/PetscSuiteSparse.hpp )
+
+        list( APPEND linearAlgebra_sources
+              interfaces/petsc/PetscSuiteSparse.cpp )
+
+        list( APPEND dependencyList suitesparse )
+
+    endif()
 
 endif()
 

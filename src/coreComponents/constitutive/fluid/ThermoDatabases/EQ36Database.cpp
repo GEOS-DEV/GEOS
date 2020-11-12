@@ -33,7 +33,7 @@ using namespace stringutilities;
 namespace constitutive
 {
 
-EQ36Database::EQ36Database( const string & fileName,
+EQ36Database::EQ36Database( const Path & fileName,
                             const string_array & basisSpeciesNames ):
   ThermoDatabaseBase( fileName )
 {
@@ -1171,7 +1171,7 @@ void EQ36Database::CreateChemicalSystem( const string_array & basisSpeciesNames 
 
 REGISTER_CATALOG_ENTRY( ThermoDatabaseBase,
                         EQ36Database,
-                        const string &, const string_array & )
+                        const Path &, const string_array & )
 
 }
 

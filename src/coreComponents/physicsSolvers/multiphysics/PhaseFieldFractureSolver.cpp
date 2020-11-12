@@ -330,7 +330,7 @@ void PhaseFieldFractureSolver::mapDamageToQuadrature( DomainPartition & domain )
           for( localIndex q = 0; q < n_q_points; ++q )
           {
             real64 N[ numNodesPerElement ];
-            FE_TYPE::shapeFunctionValues( q, N );
+            FE_TYPE::calcN( q, N );
 
             damageFieldOnMaterial( k, q ) = 0;
             for( localIndex a = 0; a < numNodesPerElement; ++a )

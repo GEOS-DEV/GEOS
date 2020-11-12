@@ -97,7 +97,7 @@ private:
 
   string m_databaseTypeString;
 
-  string m_databaseFileName;
+  Path m_databaseFileName;
 
   string m_activityCoefModelString;
 
