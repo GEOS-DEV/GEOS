@@ -99,20 +99,6 @@ public:
                              int const cycleNumber,
                              DomainPartition & domain ) override;
 
-  struct viewKeyStruct : SolverBase::viewKeyStruct
-  {
-    constexpr static auto solidSolverNameString = "solidSolverName";
-
-    constexpr static auto contactRelationNameString = "contactRelationName";
-
-    constexpr static auto dispJumpString = "displacementJump";
-
-    constexpr static auto deltaDispJumpString = "deltaDisplacementJump";
-
-  } SolidMechanicsEmbeddedFracturesViewKeys;
-
-protected:
-
   void AddCouplingNumNonzeros( DomainPartition & domain,
                                DofManager & dofManager,
                                arrayView1d< localIndex > const & rowLengths ) const;
@@ -126,6 +112,20 @@ protected:
   void AddCouplingSparsityPattern( DomainPartition const & domain,
                                    DofManager const & dofManager,
                                    SparsityPatternView< globalIndex > const & pattern ) const;
+
+  struct viewKeyStruct : SolverBase::viewKeyStruct
+  {
+    constexpr static auto solidSolverNameString = "solidSolverName";
+
+    constexpr static auto contactRelationNameString = "contactRelationName";
+
+    constexpr static auto dispJumpString = "displacementJump";
+
+    constexpr static auto deltaDispJumpString = "deltaDisplacementJump";
+
+  } SolidMechanicsEmbeddedFracturesViewKeys;
+
+protected:
 
   /*
    * @brief Assemble Equilibrium operator

@@ -111,10 +111,27 @@ public:
 
   void UpdateDeformationForCoupling( DomainPartition & domain );
 
-  real64 SplitOperatorStep( real64 const & time_n,
-                            real64 const & dt,
-                            integer const cycleNumber,
-                            DomainPartition & domain );
+
+  /**
+   * @Brief add extra nnz to each row induced by the coupling
+   * @param domain the physical domain object
+   * @param dofManager degree-of-freedom manager associated with the linear system
+   * @param rowLengths the number of NNZ of each row
+   */
+  void addCouplingNumNonzeros( DomainPartition & domain,
+                               DofManager & dofManager,
+                               arrayView1d< localIndex > const & rowLengths ) const;
+
+  /**
+   * @Brief add the sparsity pattern induced by the coupling
+   * @param domain the physical domain object
+   * @param dofManager degree-of-freedom manager associated with the linear system
+   * @param pattern the sparsity pattern
+   */
+  void addCouplingSparsityPattern( DomainPartition const & domain,
+                                   DofManager const & dofManager,
+                                   SparsityPatternView< globalIndex > const & pattern ) const;
+
 
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
