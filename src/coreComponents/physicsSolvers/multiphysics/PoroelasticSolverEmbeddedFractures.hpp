@@ -31,7 +31,7 @@ class PoroelasticSolverEmbeddedFractures : public PoroelasticSolver
 {
 public:
   PoroelasticSolverEmbeddedFractures( const std::string & name,
-                     Group * const parent );
+                                      Group * const parent );
   ~PoroelasticSolverEmbeddedFractures() override;
 
   /**
@@ -139,7 +139,7 @@ public:
     return this->getParent()->GetGroup( m_fracturesSolverName )->group_cast< SolidMechanicsEmbeddedFractures const * >();
   }
 
- protected:
+protected:
 
   virtual void PostProcessInput() override final;
 

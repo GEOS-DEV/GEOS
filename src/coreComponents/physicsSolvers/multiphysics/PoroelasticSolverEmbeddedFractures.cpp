@@ -43,7 +43,7 @@ using namespace dataRepository;
 using namespace constitutive;
 
 PoroelasticSolverEmbeddedFractures::PoroelasticSolverEmbeddedFractures( const std::string & name,
-                                                        Group * const parent ):
+                                                                        Group * const parent ):
   PoroelasticSolver( name, parent ),
   m_fracturesSolverName()
 {
@@ -62,14 +62,14 @@ void PoroelasticSolverEmbeddedFractures::PostProcessInput()
   PoroelasticSolver::PostProcessInput();
 
   m_fracturesSolver  = this->getParent()->GetGroup< SolidMechanicsEmbeddedFractures >
-  ( m_fracturesSolverName );
+                         ( m_fracturesSolverName );
 
   GEOSX_ERROR_IF( m_fracturesSolver == nullptr,
                   "Fractures solver not found or invalid type: " << m_fracturesSolverName );
 }
 
 void PoroelasticSolverEmbeddedFractures::SetupDofs( DomainPartition const & domain,
-                                            DofManager & dofManager ) const
+                                                    DofManager & dofManager ) const
 {
   GEOSX_MARK_FUNCTION;
   m_fracturesSolver->SetupDofs( domain, dofManager );
@@ -96,11 +96,11 @@ void PoroelasticSolverEmbeddedFractures::SetupDofs( DomainPartition const & doma
 }
 
 void PoroelasticSolverEmbeddedFractures::SetupSystem( DomainPartition & domain,
-                                              DofManager & dofManager,
-                                              CRSMatrix< real64, globalIndex > & localMatrix,
-                                              array1d< real64 > & localRhs,
-                                              array1d< real64 > & localSolution,
-                                              bool const setSparsity )
+                                                      DofManager & dofManager,
+                                                      CRSMatrix< real64, globalIndex > & localMatrix,
+                                                      array1d< real64 > & localRhs,
+                                                      array1d< real64 > & localSolution,
+                                                      bool const setSparsity )
 {
   // Add missing couplings ( matrix pressure with displacement jump and jump - displacement )
 
@@ -155,9 +155,9 @@ void PoroelasticSolverEmbeddedFractures::SetupSystem( DomainPartition & domain,
   m_flowSolver->setUpDflux_dApertureMatrix( domain, dofManager, localMatrix );
 }
 
-void PoroelasticSolverEmbeddedFractures::addCouplingNumNonZeros(DomainPartition & domain,
-                                                        DofManager & dofManager,
-                                                        arrayView1d< localIndex > const & rowLengths ) const
+void PoroelasticSolverEmbeddedFractures::addCouplingNumNonZeros( DomainPartition & domain,
+                                                                 DofManager & dofManager,
+                                                                 arrayView1d< localIndex > const & rowLengths ) const
 {
   // Add the nonzeros from coupling jump-displacement
   m_fracturesSolver->AddCouplingNumNonzeros( domain, dofManager, rowLengths );
@@ -187,12 +187,12 @@ void PoroelasticSolverEmbeddedFractures::addCouplingNumNonZeros(DomainPartition 
     {
       // Get rock matrix element subregion
       CellElementSubRegion const * const subRegion =
-          Group::group_cast< CellElementSubRegion const * const >
-      ( elemManager.GetRegion( embeddedSurfacesToCells.m_toElementRegion[k][0] )->
-          GetSubRegion( embeddedSurfacesToCells.m_toElementSubRegion[k][0] ));
+        Group::group_cast< CellElementSubRegion const * const >
+          ( elemManager.GetRegion( embeddedSurfacesToCells.m_toElementRegion[k][0] )->
+            GetSubRegion( embeddedSurfacesToCells.m_toElementSubRegion[k][0] ));
 
       arrayView1d< globalIndex const > const &
-            pressureDofNumber =  subRegion.getReference< globalIndex_array >( pressureDofKey );
+      pressureDofNumber =  subRegion.getReference< globalIndex_array >( pressureDofKey );
 
       localIndex cellElementIndex = embeddedSurfacesToCells.m_toElementIndex[k][0];
 
@@ -216,7 +216,7 @@ void PoroelasticSolverEmbeddedFractures::addCouplingNumNonZeros(DomainPartition 
 
     }
 
- } );
+  } );
 
   // Coupling jump (aperture) - fracture pressure due to flux term
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
@@ -233,10 +233,10 @@ void PoroelasticSolverEmbeddedFractures::addCouplingNumNonZeros(DomainPartition 
       typename FaceElementStencil::IndexContainerViewConstType const & sei = stencil.getElementIndices();
 
       EmbeddedSurfaceSubRegion const & embeddedSurfaceSubRegion =
-          *elemManager.GetRegion( seri[iconn][0] )->GetSubRegion< EmbeddedSurfaceSubRegion >( sesri[iconn][0] );
+        *elemManager.GetRegion( seri[iconn][0] )->GetSubRegion< EmbeddedSurfaceSubRegion >( sesri[iconn][0] );
 
       arrayView1d< globalIndex const > const &
-                 pressureDofNumber =  embeddedSurfaceSubRegion.getReference< globalIndex_array >( pressureDofKey );
+      pressureDofNumber =  embeddedSurfaceSubRegion.getReference< globalIndex_array >( pressureDofKey );
 
       for( localIndex k0=0; k0<numFluxElems; ++k0 )
       {
@@ -262,8 +262,8 @@ void PoroelasticSolverEmbeddedFractures::addCouplingNumNonZeros(DomainPartition 
 }
 
 void PoroelasticSolverEmbeddedFractures::addCouplingSparsityPattern( DomainPartition const & domain,
-                                                             DofManager const & dofManager,
-                                                             SparsityPatternView< globalIndex > const & pattern ) const
+                                                                     DofManager const & dofManager,
+                                                                     SparsityPatternView< globalIndex > const & pattern ) const
 {
   m_fracturesSolver->AddCouplingSparsityPattern( domain, dofManager, pattern );
 
@@ -291,12 +291,12 @@ void PoroelasticSolverEmbeddedFractures::addCouplingSparsityPattern( DomainParti
     {
       // Get rock matrix element subregion
       CellElementSubRegion const * const subRegion =
-          Group::group_cast< CellElementSubRegion const * const >
-      ( elemManager.GetRegion( embeddedSurfacesToCells.m_toElementRegion[k][0] )->
-          GetSubRegion( embeddedSurfacesToCells.m_toElementSubRegion[k][0] ));
+        Group::group_cast< CellElementSubRegion const * const >
+          ( elemManager.GetRegion( embeddedSurfacesToCells.m_toElementRegion[k][0] )->
+            GetSubRegion( embeddedSurfacesToCells.m_toElementSubRegion[k][0] ));
 
       arrayView1d< globalIndex const > const &
-            pressureDofNumber =  subRegion.getReference< globalIndex_array >( pressureDofKey );
+      pressureDofNumber =  subRegion.getReference< globalIndex_array >( pressureDofKey );
 
       localIndex cellElementIndex = embeddedSurfacesToCells.m_toElementIndex[k][0];
 
@@ -310,13 +310,13 @@ void PoroelasticSolverEmbeddedFractures::addCouplingSparsityPattern( DomainParti
           if( localJumpRow + i >= 0 && localJumpRow + i < pattern.numRows() )
             pattern.insertNonZero( localJumpRow + i, pressureDofNumber[cellElementIndex] );
           if( localPressureRow >= 0 && localPressureRow < pattern.numRows() )
-            pattern.insertNonZero( localPressureRow , embeddedElementDofNumber[k] + i );
+            pattern.insertNonZero( localPressureRow, embeddedElementDofNumber[k] + i );
         }
       }
 
     }
 
- } );
+  } );
 
   // Coupling fracture pressure - jump (aperture) due to flux term
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
@@ -333,12 +333,12 @@ void PoroelasticSolverEmbeddedFractures::addCouplingSparsityPattern( DomainParti
       typename FaceElementStencil::IndexContainerViewConstType const & sei = stencil.getElementIndices();
 
       EmbeddedSurfaceSubRegion const & embeddedSurfaceSubRegion =
-          *elemManager.GetRegion( seri[iconn][0] )->GetSubRegion< EmbeddedSurfaceSubRegion >( sesri[iconn][0] );
+        *elemManager.GetRegion( seri[iconn][0] )->GetSubRegion< EmbeddedSurfaceSubRegion >( sesri[iconn][0] );
 
       arrayView1d< globalIndex const > const &
-                 pressureDofNumber =  embeddedSurfaceSubRegion.getReference< globalIndex_array >( pressureDofKey );
+      pressureDofNumber =  embeddedSurfaceSubRegion.getReference< globalIndex_array >( pressureDofKey );
       arrayView1d< globalIndex const > const &
-                 jumpDofNumber =  embeddedSurfaceSubRegion.getReference< globalIndex_array >( jumpDofKey );
+      jumpDofNumber =  embeddedSurfaceSubRegion.getReference< globalIndex_array >( jumpDofKey );
 
       for( localIndex k0=0; k0<numFluxElems; ++k0 )
       {
@@ -354,7 +354,7 @@ void PoroelasticSolverEmbeddedFractures::addCouplingSparsityPattern( DomainParti
             if( k1 != k0 )
             {
               globalIndex const colIndex = jumpDofNumber[sei[iconn][k1]];
-              pattern.insertNonZero( rowIndex,  colIndex );
+              pattern.insertNonZero( rowIndex, colIndex );
             }
           }
         }
@@ -365,11 +365,11 @@ void PoroelasticSolverEmbeddedFractures::addCouplingSparsityPattern( DomainParti
 }
 
 void PoroelasticSolverEmbeddedFractures::AssembleSystem( real64 const time_n,
-                                                 real64 const dt,
-                                                 DomainPartition & domain,
-                                                 DofManager const & dofManager,
-                                                 CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                 arrayView1d< real64 > const & localRhs )
+                                                         real64 const dt,
+                                                         DomainPartition & domain,
+                                                         DofManager const & dofManager,
+                                                         CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                         arrayView1d< real64 > const & localRhs )
 {
 
   // assemble Kuu, Kuw, Kww, Kwu
@@ -394,31 +394,31 @@ void PoroelasticSolverEmbeddedFractures::AssembleSystem( real64 const time_n,
 }
 
 void PoroelasticSolverEmbeddedFractures::AssembleCouplingTerms( DomainPartition const & domain,
-                                                        DofManager const & dofManager,
-                                                        CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                        arrayView1d< real64 > const & localRhs )
+                                                                DofManager const & dofManager,
+                                                                CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                                arrayView1d< real64 > const & localRhs )
 {
   GEOSX_MARK_FUNCTION;
 
   // poroelatic coupling
-  PoroelasticSolver::AssembleCouplingTerms(domain, dofManager, localMatrix, localRhs);
+  PoroelasticSolver::AssembleCouplingTerms( domain, dofManager, localMatrix, localRhs );
 
   // Fractures
 
 }
 
 void PoroelasticSolverEmbeddedFractures::ApplyBoundaryConditions( real64 const time_n,
-                                                          real64 const dt,
-                                                          DomainPartition & domain,
-                                                          DofManager const & dofManager,
-                                                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                          arrayView1d< real64 > const & localRhs )
+                                                                  real64 const dt,
+                                                                  DomainPartition & domain,
+                                                                  DofManager const & dofManager,
+                                                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                                  arrayView1d< real64 > const & localRhs )
 {
   m_fracturesSolver->ApplyBoundaryConditions( time_n, dt,
-                                          domain,
-                                          dofManager,
-                                          localMatrix,
-                                          localRhs );
+                                              domain,
+                                              dofManager,
+                                              localMatrix,
+                                              localRhs );
 
   m_flowSolver->ApplyBoundaryConditions( time_n, dt,
                                          domain,
@@ -428,8 +428,8 @@ void PoroelasticSolverEmbeddedFractures::ApplyBoundaryConditions( real64 const t
 }
 
 void PoroelasticSolverEmbeddedFractures::ImplicitStepSetup( real64 const & time_n,
-                                                    real64 const & dt,
-                                                    DomainPartition & domain )
+                                                            real64 const & dt,
+                                                            DomainPartition & domain )
 {
   m_flowSolver->ImplicitStepSetup( time_n, dt, domain );
   m_fracturesSolver->ImplicitStepSetup( time_n, dt, domain );
@@ -437,8 +437,8 @@ void PoroelasticSolverEmbeddedFractures::ImplicitStepSetup( real64 const & time_
 }
 
 void PoroelasticSolverEmbeddedFractures::ImplicitStepComplete( real64 const & time_n,
-                                                       real64 const & dt,
-                                                       DomainPartition & domain )
+                                                               real64 const & dt,
+                                                               DomainPartition & domain )
 {
   m_fracturesSolver->ImplicitStepComplete( time_n, dt, domain );
   m_flowSolver->ImplicitStepComplete( time_n, dt, domain );
@@ -468,14 +468,14 @@ void PoroelasticSolverEmbeddedFractures::ResetStateToBeginningOfStep( DomainPart
 }
 
 real64 PoroelasticSolverEmbeddedFractures::SolverStep( real64 const & time_n,
-                                               real64 const & dt,
-                                               int const cycleNumber,
-                                               DomainPartition & domain )
+                                                       real64 const & dt,
+                                                       int const cycleNumber,
+                                                       DomainPartition & domain )
 {
   real64 dt_return = dt;
   if( m_couplingTypeOption == CouplingTypeOption::SIM_FixedStress )
   {
-    GEOSX_ERROR("No sequential coupling for fractured media.");
+    GEOSX_ERROR( "No sequential coupling for fractured media." );
   }
   else if( m_couplingTypeOption == CouplingTypeOption::FIM )
   {
@@ -495,8 +495,8 @@ real64 PoroelasticSolverEmbeddedFractures::SolverStep( real64 const & time_n,
 }
 
 real64 PoroelasticSolverEmbeddedFractures::CalculateResidualNorm( DomainPartition const & domain,
-                                                          DofManager const & dofManager,
-                                                          arrayView1d< real64 const > const & localRhs )
+                                                                  DofManager const & dofManager,
+                                                                  arrayView1d< real64 const > const & localRhs )
 {
   // compute norm of momentum balance residual equations
   real64 const momementumResidualNorm = m_fracturesSolver->CalculateResidualNorm( domain, dofManager, localRhs );
@@ -515,9 +515,9 @@ real64 PoroelasticSolverEmbeddedFractures::CalculateResidualNorm( DomainPartitio
 }
 
 void PoroelasticSolverEmbeddedFractures::ApplySystemSolution( DofManager const & dofManager,
-                                                      arrayView1d< real64 const > const & localSolution,
-                                                      real64 const scalingFactor,
-                                                      DomainPartition & domain )
+                                                              arrayView1d< real64 const > const & localSolution,
+                                                              real64 const scalingFactor,
+                                                              DomainPartition & domain )
 {
   // update displacement field
   m_fracturesSolver->ApplySystemSolution( dofManager, localSolution, scalingFactor, domain );
@@ -536,13 +536,13 @@ void PoroelasticSolverEmbeddedFractures::ApplySystemSolution( DofManager const &
   elemManager->forElementSubRegions< EmbeddedSurfaceSubRegion >( [&]( EmbeddedSurfaceSubRegion & subRegion )
   {
     arrayView1d< R1Tensor > const jump =
-        subRegion.getReference< array1d< R1Tensor > >( SolidMechanicsEmbeddedFractures::viewKeyStruct::dispJumpString );
+      subRegion.getReference< array1d< R1Tensor > >( SolidMechanicsEmbeddedFractures::viewKeyStruct::dispJumpString );
     arrayView1d< real64 > const aperture = subRegion.getElementAperture();
     arrayView1d< real64 > const effectiveAperture =
-        subRegion.getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::effectiveApertureString );
+      subRegion.getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::effectiveApertureString );
     arrayView1d< real64 const > const volume = subRegion.getElementVolume();
     arrayView1d< real64 > const deltaVolume =
-        subRegion.getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::deltaVolumeString );
+      subRegion.getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::deltaVolumeString );
     arrayView1d< real64 const > const area = subRegion.getElementArea().toViewConst();
 
     forAll< serialPolicy >( subRegion.size(), [=] ( localIndex const k )
