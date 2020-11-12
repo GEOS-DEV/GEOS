@@ -125,6 +125,10 @@ public:
 
   } SolidMechanicsEmbeddedFracturesViewKeys;
 
+  string & getContactRelationName() { return m_contactRelationName; };
+
+  string const & getContactRelationName() const { return m_contactRelationName; };
+
 protected:
 
   /*

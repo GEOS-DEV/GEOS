@@ -328,17 +328,11 @@ void PoroelasticSolver::AssembleSystem( real64 const time_n,
 {
 
   // assemble J_SS
-//  m_solidSolver->AssembleSystem( time_n, dt,
-//                                 domain,
-//                                 dofManager,
-//                                 localMatrix,
-//                                 localRhs );
-
-  m_solidSolver->AssemblyLaunch< constitutive::PoroElasticBase,
-                                 SolidMechanicsLagrangianFEMKernels::QuasiStaticPoroElastic >( domain,
-                                                                                               dofManager,
-                                                                                               localMatrix,
-                                                                                               localRhs );
+  m_solidSolver->AssembleSystem( time_n, dt,
+                                 domain,
+                                 dofManager,
+                                 localMatrix,
+                                 localRhs );
 
   // assemble J_FF
   m_flowSolver->AssembleSystem( time_n, dt,

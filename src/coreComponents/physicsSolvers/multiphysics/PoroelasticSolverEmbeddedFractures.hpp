@@ -13,12 +13,12 @@
  */
 
 /**
- * @file FracturedPoroelasticSolver.hpp
+ * @file PoroelasticSolverEmbeddedFractures.hpp
  *
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_COUPLEDSOLVERS_POROELASTICSOLVER_HPP_
-#define GEOSX_PHYSICSSOLVERS_COUPLEDSOLVERS_POROELASTICSOLVER_HPP_
+#ifndef GEOSX_PHYSICSSOLVERS_COUPLEDSOLVERS_POROELASTICSOLVEREMBEDDEDFRACTURES_HPP_
+#define GEOSX_PHYSICSSOLVERS_COUPLEDSOLVERS_POROELASTICSOLVEREMBEDDEDFRACTURES_HPP_
 
 #include "physicsSolvers/multiphysics/PoroelasticSolver.hpp"
 
@@ -27,12 +27,12 @@ namespace geosx
 
 class SolidMechanicsEmbeddedFractures;
 
-class FracturedPoroelasticSolver : public PoroelasticSolver
+class PoroelasticSolverEmbeddedFractures : public PoroelasticSolver
 {
 public:
-  FracturedPoroelasticSolver( const std::string & name,
+  PoroelasticSolverEmbeddedFractures( const std::string & name,
                      Group * const parent );
-  ~FracturedPoroelasticSolver() override;
+  ~PoroelasticSolverEmbeddedFractures() override;
 
   /**
    * @brief name of the node manager in the object catalog
@@ -84,12 +84,6 @@ public:
                          arrayView1d< real64 const > const & localRhs ) override;
 
   virtual void
-  SolveSystem( DofManager const & dofManager,
-               ParallelMatrix & matrix,
-               ParallelVector & rhs,
-               ParallelVector & solution ) override;
-
-  virtual void
   ApplySystemSolution( DofManager const & dofManager,
                        arrayView1d< real64 const > const & localSolution,
                        real64 const scalingFactor,
@@ -108,9 +102,6 @@ public:
               real64 const & dt,
               int const cycleNumber,
               DomainPartition & domain ) override;
-
-  void UpdateDeformationForCoupling( DomainPartition & domain );
-
 
   /**
    * @Brief add extra nnz to each row induced by the coupling
@@ -155,8 +146,6 @@ public:
   virtual void InitializePostInitialConditions_PreSubGroups( dataRepository::Group * const problemManager ) override final;
 
 private:
-
-  void CreatePreconditioner();
 
   string m_fracturesSolverName;
 
