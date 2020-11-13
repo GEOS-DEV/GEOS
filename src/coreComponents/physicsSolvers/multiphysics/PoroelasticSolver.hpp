@@ -60,7 +60,7 @@ public:
   virtual void
   ImplicitStepSetup( real64 const & time_n,
                      real64 const & dt,
-                     DomainPartition & domain ) override final;
+                     DomainPartition & domain ) override;
 
   virtual void
   AssembleSystem( real64 const time,
@@ -104,7 +104,7 @@ public:
   virtual void
   ImplicitStepComplete( real64 const & time_n,
                         real64 const & dt,
-                        DomainPartition & domain ) override final;
+                        DomainPartition & domain ) override;
 
   virtual void
   ResetStateToBeginningOfStep( DomainPartition & domain ) override;
@@ -158,13 +158,9 @@ public:
 
 protected:
 
-  virtual void PostProcessInput() override final;
+  virtual void PostProcessInput() override;
 
-  virtual void InitializePostInitialConditions_PreSubGroups( dataRepository::Group * const problemManager ) override final;
-
-private:
-
-  void CreatePreconditioner();
+  virtual void InitializePostInitialConditions_PreSubGroups( dataRepository::Group * const problemManager ) override;
 
   string m_solidSolverName;
   string m_flowSolverName;
@@ -176,6 +172,10 @@ private:
 
   // pointer to the solid mechanics sub-solver
   SolidMechanicsLagrangianFEM * m_solidSolver;
+
+private:
+
+  void CreatePreconditioner();
 
 };
 

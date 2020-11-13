@@ -23,6 +23,7 @@
 #include "../solidMechanics/SolidMechanicsPoroElasticKernel.hpp"
 #include "common/DataLayouts.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
+#include "constitutive/contact/ContactRelationBase.hpp"
 #include "constitutive/solid/PoroElastic.hpp"
 #include "constitutive/fluid/SingleFluidBase.hpp"
 #include "managers/NumericalMethodsManager.hpp"
@@ -34,6 +35,7 @@
 #include "meshUtilities/ComputationalGeometry.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
+#include "physicsSolvers/solidMechanics/SolidMechanicsEmbeddedFractures.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
 
 namespace geosx
@@ -123,8 +125,6 @@ void PoroelasticSolverEmbeddedFractures::SetupSystem( DomainPartition & domain,
     rowLengths[localRow] = patternDiag.numNonZeros( localRow );
   }
 
-
-
   // Add the number of nonzeros induced by coupling jump-pm
   addCouplingNumNonzeros( domain, dofManager, rowLengths.toView() );
 
@@ -155,7 +155,7 @@ void PoroelasticSolverEmbeddedFractures::SetupSystem( DomainPartition & domain,
   m_flowSolver->setUpDflux_dApertureMatrix( domain, dofManager, localMatrix );
 }
 
-void PoroelasticSolverEmbeddedFractures::addCouplingNumNonZeros( DomainPartition & domain,
+void PoroelasticSolverEmbeddedFractures::addCouplingNumNonzeros( DomainPartition & domain,
                                                                  DofManager & dofManager,
                                                                  arrayView1d< localIndex > const & rowLengths ) const
 {
@@ -164,10 +164,9 @@ void PoroelasticSolverEmbeddedFractures::addCouplingNumNonZeros( DomainPartition
 
   // Add the number of nonzeros induced by coupling jump-displacement
   MeshLevel const & mesh                   = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
-  NodeManager const & nodeManager          = *mesh.getNodeManager();
   ElementRegionManager const & elemManager = *mesh.getElemManager();
 
-  string const jumpDofKey = dofManager.getKey( viewKeyStruct::dispJumpString );
+  string const jumpDofKey = dofManager.getKey( SolidMechanicsEmbeddedFractures::viewKeyStruct::dispJumpString );
   string const pressureDofKey = dofManager.getKey( FlowSolverBase::viewKeyStruct::pressureString );
 
   globalIndex const rankOffset = dofManager.rankOffset();
@@ -192,7 +191,7 @@ void PoroelasticSolverEmbeddedFractures::addCouplingNumNonZeros( DomainPartition
             GetSubRegion( embeddedSurfacesToCells.m_toElementSubRegion[k][0] ));
 
       arrayView1d< globalIndex const > const &
-      pressureDofNumber =  subRegion.getReference< globalIndex_array >( pressureDofKey );
+      pressureDofNumber =  subRegion->getReference< globalIndex_array >( pressureDofKey );
 
       localIndex cellElementIndex = embeddedSurfacesToCells.m_toElementIndex[k][0];
 
@@ -213,9 +212,7 @@ void PoroelasticSolverEmbeddedFractures::addCouplingNumNonZeros( DomainPartition
 
         rowLengths[ localPressureRow ] += embeddedSurfaceSubRegion.numOfJumpEnrichments();
       }
-
     }
-
   } );
 
   // Coupling jump (aperture) - fracture pressure due to flux term
@@ -268,10 +265,9 @@ void PoroelasticSolverEmbeddedFractures::addCouplingSparsityPattern( DomainParti
   m_fracturesSolver->AddCouplingSparsityPattern( domain, dofManager, pattern );
 
   MeshLevel const & mesh                   = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
-  NodeManager const & nodeManager          = *mesh.getNodeManager();
   ElementRegionManager const & elemManager = *mesh.getElemManager();
 
-  string const jumpDofKey = dofManager.getKey( viewKeyStruct::dispJumpString );
+  string const jumpDofKey = dofManager.getKey( SolidMechanicsEmbeddedFractures::viewKeyStruct::dispJumpString );
   string const pressureDofKey = dofManager.getKey( FlowSolverBase::viewKeyStruct::pressureString );
 
   globalIndex const rankOffset = dofManager.rankOffset();
@@ -296,7 +292,7 @@ void PoroelasticSolverEmbeddedFractures::addCouplingSparsityPattern( DomainParti
             GetSubRegion( embeddedSurfacesToCells.m_toElementSubRegion[k][0] ));
 
       arrayView1d< globalIndex const > const &
-      pressureDofNumber =  subRegion.getReference< globalIndex_array >( pressureDofKey );
+      pressureDofNumber =  subRegion->getReference< globalIndex_array >( pressureDofKey );
 
       localIndex cellElementIndex = embeddedSurfacesToCells.m_toElementIndex[k][0];
 
@@ -310,12 +306,10 @@ void PoroelasticSolverEmbeddedFractures::addCouplingSparsityPattern( DomainParti
           if( localJumpRow + i >= 0 && localJumpRow + i < pattern.numRows() )
             pattern.insertNonZero( localJumpRow + i, pressureDofNumber[cellElementIndex] );
           if( localPressureRow >= 0 && localPressureRow < pattern.numRows() )
-            pattern.insertNonZero( localPressureRow, embeddedElementDofNumber[k] + i );
+            pattern.insertNonZero( localPressureRow, jumpDofNumber[k] + i );
         }
       }
-
     }
-
   } );
 
   // Coupling fracture pressure - jump (aperture) due to flux term
@@ -373,7 +367,8 @@ void PoroelasticSolverEmbeddedFractures::AssembleSystem( real64 const time_n,
 {
 
   // assemble Kuu, Kuw, Kww, Kwu
-  m_fracturesSolver->AssembleSystem( domain,
+  m_fracturesSolver->AssembleSystem( time_n, dt,
+                                     domain,
                                      dofManager,
                                      localMatrix,
                                      localRhs );
@@ -449,7 +444,7 @@ void PoroelasticSolverEmbeddedFractures::ImplicitStepComplete( real64 const & ti
 void PoroelasticSolverEmbeddedFractures::ResetStateToBeginningOfStep( DomainPartition & domain )
 {
   m_flowSolver->ResetStateToBeginningOfStep( domain );
-  m_solidSolver->ResetStateToBeginningOfStep( domain );
+  m_fracturesSolver->ResetStateToBeginningOfStep( domain );
 
   MeshLevel & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
 
@@ -535,7 +530,7 @@ void PoroelasticSolverEmbeddedFractures::ApplySystemSolution( DofManager const &
 
   elemManager->forElementSubRegions< EmbeddedSurfaceSubRegion >( [&]( EmbeddedSurfaceSubRegion & subRegion )
   {
-    arrayView1d< R1Tensor > const jump =
+    arrayView1d< R1Tensor > const dispJump =
       subRegion.getReference< array1d< R1Tensor > >( SolidMechanicsEmbeddedFractures::viewKeyStruct::dispJumpString );
     arrayView1d< real64 > const aperture = subRegion.getElementAperture();
     arrayView1d< real64 > const effectiveAperture =
@@ -547,7 +542,7 @@ void PoroelasticSolverEmbeddedFractures::ApplySystemSolution( DofManager const &
 
     forAll< serialPolicy >( subRegion.size(), [=] ( localIndex const k )
     {
-      aperture[k] = jump[k][0];
+      aperture[k] = dispJump[k][0]; // the first component of the jump is the normal one.
 
       effectiveAperture[k] = contactRelation->effectiveAperture( aperture[k] );
 

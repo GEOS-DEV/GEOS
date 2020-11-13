@@ -124,7 +124,7 @@ public:
                                    SparsityPatternView< globalIndex > const & pattern ) const;
 
 
-  struct viewKeyStruct : SolverBase::viewKeyStruct
+  struct viewKeyStruct : PoroelasticSolver::viewKeyStruct
   {
     constexpr static auto fracturesSolverNameString = "fracturesSolverName";
   } poroElasticSolverViewKeys;
@@ -153,8 +153,7 @@ private:
 
 };
 
-ENUM_STRINGS( PoroelasticSolver::CouplingTypeOption, "FIM", "SIM_FixedStress" )
 
 } /* namespace geosx */
 
-#endif /* GEOSX_PHYSICSSOLVERS_COUPLEDSOLVERS_POROELASTICSOLVER_HPP_ */
+#endif /* GEOSX_PHYSICSSOLVERS_COUPLEDSOLVERS_POROELASTICSOLVEREMBEDDEDFRACTURES_HPP_ */

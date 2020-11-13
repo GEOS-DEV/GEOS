@@ -93,6 +93,8 @@ void SolidMechanicsEmbeddedFractures::RegisterDataOnMesh( dataRepository::Group 
 void SolidMechanicsEmbeddedFractures::ResetStateToBeginningOfStep( DomainPartition & domain )
 {
   m_solidSolver->ResetStateToBeginningOfStep( domain );
+
+
 }
 
 void SolidMechanicsEmbeddedFractures::ImplicitStepSetup( real64 const & time_n,
