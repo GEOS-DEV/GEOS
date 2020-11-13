@@ -160,7 +160,7 @@ protected:
 
   virtual void PostProcessInput() override;
 
-  virtual void InitializePostInitialConditions_PreSubGroups( dataRepository::Group * const problemManager ) override;
+  virtual void InitializePostInitialConditions_PreSubGroups( dataRepository::Group * const problemManager ) override final;
 
   string m_solidSolverName;
   string m_flowSolverName;
