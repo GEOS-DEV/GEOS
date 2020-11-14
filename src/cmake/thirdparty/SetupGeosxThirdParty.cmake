@@ -220,7 +220,7 @@ if(DEFINED CHAI_DIR)
 
     get_target_property(CHAI_INCLUDE_DIRS chai INTERFACE_INCLUDE_DIRECTORIES)
     set_target_properties(chai
-                        PROPERTIES INTERFACE_SYSTEM_INCLUDE_DIRECTORIES "${CHAI_INCLUDE_DIRS}")
+                          PROPERTIES INTERFACE_SYSTEM_INCLUDE_DIRECTORIES "${CHAI_INCLUDE_DIRS}")
 
     set(ENABLE_CHAI ON CACHE BOOL "" FORCE)
     set(thirdPartyLibs ${thirdPartyLibs} chai)
@@ -291,7 +291,7 @@ if(DEFINED MATHPRESSO_DIR)
                       LIBRARIES mathpresso)
 
     set(ENABLE_MATHPRESSO ON CACHE BOOL "" FORCE)
-    set(thirdPartyLibs ${thirdPartyLibs} metis)
+    set(thirdPartyLibs ${thirdPartyLibs} mathpresso)
 else()
     if(ENABLE_MATHPRESSO)
         message(WARNING "ENABLE_MATHPRESSO is ON but MATHPRESSO_DIR isn't defined.")

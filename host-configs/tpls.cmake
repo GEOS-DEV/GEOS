@@ -1,4 +1,16 @@
 #
+# Performance portability
+#
+if(EXISTS ${GEOSX_TPL_DIR}/raja)
+  set(RAJA_DIR ${GEOSX_TPL_DIR}/raja CACHE PATH "" FORCE)
+endif()
+
+if(EXISTS ${GEOSX_TPL_DIR}/chai)
+  set(UMPIRE_DIR ${GEOSX_TPL_DIR}/chai CACHE PATH "" FORCE)
+  set(CHAI_DIR ${GEOSX_TPL_DIR}/chai CACHE PATH "" FORCE)
+endif()
+
+#
 # IO TPLs
 #
 if(EXISTS ${GEOSX_TPL_DIR}/hdf5)
