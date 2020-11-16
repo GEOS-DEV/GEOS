@@ -70,10 +70,10 @@ struct ConstitutivePassThru< SolidBase >
     {
       lambda( static_cast< ElasticTransverseIsotropic * >( constitutiveRelation) );
     }
-    else if( dynamic_cast< DruckerPrager * >( constitutiveRelation ) )
-    {
-      lambda( static_cast< DruckerPrager * >( constitutiveRelation) );
-    }
+    //else if( dynamic_cast< DruckerPrager * >( constitutiveRelation ) )
+    //{
+    //  lambda( static_cast< DruckerPrager * >( constitutiveRelation) );
+    //}
     else
     {
       string name;

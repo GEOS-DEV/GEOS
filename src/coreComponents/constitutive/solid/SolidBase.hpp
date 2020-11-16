@@ -599,6 +599,8 @@ public:
   virtual void allocateConstitutiveData( dataRepository::Group * const parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
+  virtual void saveConvergedState();
+  
   struct viewKeyStruct : public ConstitutiveBase::viewKeyStruct
   {
     static constexpr auto stressString = "stress";
@@ -607,6 +609,19 @@ public:
     static constexpr auto defaultDensityString  = "defaultDensity";
   };
 
+
+  /// Number of elements storing solid data
+  localIndex numElem() const
+  {
+    return m_newStress.size( 0 );
+  }
+  
+  /// Number of quadrature points per element storing solid data
+  localIndex numQuad() const
+  {
+    return m_newStress.size( 1 );
+  }
+  
   /**
    * @name Accessors
    */

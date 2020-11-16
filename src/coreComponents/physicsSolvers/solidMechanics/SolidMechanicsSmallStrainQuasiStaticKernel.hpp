@@ -250,14 +250,14 @@ public:
             
     FE_TYPE::symmetricGradient( dNdX, stack.uhat_local, strainInc );
 
+    // NEW CALL
     m_constitutiveUpdate.smallStrainUpdate( k, q, strainInc, stress, stiffness );
     
-    /*
-    m_constitutiveUpdate.SmallStrain( k, q, strainInc );
-    m_constitutiveUpdate.setDiscretizationOps( k, q, stiffnessHelper );
-    m_constitutiveUpdate.getStress( k, q, stress );
-    */
-
+    // OLD CALL
+    //m_constitutiveUpdate.SmallStrain( k, q, strainInc );
+    //m_constitutiveUpdate.setDiscretizationOps( k, q, stiffness );
+    //m_constitutiveUpdate.getStress( k, q, stress );
+    
     stressModifier( stress );
     for( localIndex i=0; i<6; ++i )
     {
@@ -290,6 +290,7 @@ public:
     GEOSX_UNUSED_VAR( k );
     real64 maxForce = 0;
 
+    // TODO: Does this work if BTDB is non-symmetric?
     CONSTITUTIVE_TYPE::KernelWrapper::DiscretizationOps::template fillLowerBTDB< numNodesPerElem >( stack.localJacobian );
 
     for( int localNode = 0; localNode < numNodesPerElem; ++localNode )

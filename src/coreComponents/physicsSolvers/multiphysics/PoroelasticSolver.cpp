@@ -620,7 +620,7 @@ real64 PoroelasticSolver::SplitOperatorStep( real64 const & time_n,
 
     GEOSX_LOG_LEVEL_RANK_0( 1, "\tIteration: " << iter+1  << ", MechanicsSolver: " );
 
-    m_solidSolver->ResetStressToBeginningOfStep( domain );
+    //m_solidSolver->ResetStressToBeginningOfStep( domain );
     dtReturnTemporary = m_solidSolver->NonlinearImplicitStep( time_n, dtReturn, cycleNumber, domain );
 
     if( dtReturnTemporary < dtReturn )

@@ -73,5 +73,27 @@ void SolidBase::allocateConstitutiveData( dataRepository::Group * const parent,
 }
 
 
+void SolidBase::saveConvergedState()
+{
+
+ localIndex const numE = numElem();
+ localIndex const numQ = numQuad();
+
+ arrayView3d< real64 const, solid::STRESS_USD > newStress = m_newStress;
+ arrayView3d< real64,       solid::STRESS_USD > oldStress = m_oldStress;
+
+ forAll< parallelDevicePolicy<> >( numE, [=] GEOSX_HOST_DEVICE ( localIndex const k )
+ {
+   for( localIndex q = 0; q < numQ; ++q )
+   {
+     for( localIndex i = 0; i < 6; ++i )
+     {
+       oldStress( k, q, i ) = newStress( k, q, i );
+     }
+   }
+ } );
+}
+
+
 } /* namespace constitutive */
 } /* namespace geosx */

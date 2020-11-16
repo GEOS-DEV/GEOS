@@ -525,10 +525,10 @@ real64 SolidMechanicsLagrangianFEM::SolverStep( real64 const & time_n,
     {
       SetupSystem( domain, m_dofManager, m_localMatrix, m_localRhs, m_localSolution );
 
-      if( solveIter>0 )
-      {
-        ResetStressToBeginningOfStep( domain );
-      }
+      //if( solveIter>0 )
+      //{
+      //  ResetStressToBeginningOfStep( domain );
+      //}
 
       dtReturn = NonlinearImplicitStep( time_n,
                                         dt,
@@ -952,6 +952,15 @@ void SolidMechanicsLagrangianFEM::ImplicitStepComplete( real64 const & GEOSX_UNU
       }
     } );
   }
+  
+  // save (converged) constitutive state data
+  forTargetSubRegions< CellElementSubRegion >( mesh, [&]( localIndex const targetIndex,
+                                                          CellElementSubRegion & subRegion )
+  {
+    SolidBase & constitutiveRelation = GetConstitutiveModel< SolidBase >( subRegion, m_solidMaterialNames[targetIndex] );
+    constitutiveRelation.saveConvergedState();
+  } );
+  
 }
 
 void SolidMechanicsLagrangianFEM::SetupDofs( DomainPartition const & GEOSX_UNUSED_PARAM( domain ),
@@ -1270,9 +1279,11 @@ void SolidMechanicsLagrangianFEM::ResetStateToBeginningOfStep( DomainPartition &
     }
   } );
 
-  ResetStressToBeginningOfStep( domain );
+  //ResetStressToBeginningOfStep( domain );
 }
 
+// TODO: confirm not needed and delete
+/*
 void SolidMechanicsLagrangianFEM::ResetStressToBeginningOfStep( DomainPartition & domain )
 {
   GEOSX_MARK_FUNCTION;
@@ -1300,7 +1311,7 @@ void SolidMechanicsLagrangianFEM::ResetStressToBeginningOfStep( DomainPartition 
     } );
   } );
 }
-
+*/
 
 void SolidMechanicsLagrangianFEM::ApplyContactConstraint( DofManager const & dofManager,
                                                           DomainPartition & domain,

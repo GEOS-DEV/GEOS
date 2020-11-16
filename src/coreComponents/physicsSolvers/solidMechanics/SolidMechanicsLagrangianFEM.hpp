@@ -152,7 +152,7 @@ public:
 
   virtual void ResetStateToBeginningOfStep( DomainPartition & domain ) override;
 
-  void ResetStressToBeginningOfStep( DomainPartition & domain );
+  //void ResetStressToBeginningOfStep( DomainPartition & domain );
 
   virtual void ImplicitStepComplete( real64 const & time,
                                      real64 const & dt,
@@ -324,7 +324,7 @@ void SolidMechanicsLagrangianFEM::AssemblyLaunch( DomainPartition & domain,
   string const dofKey = dofManager.getKey( dataRepository::keys::TotalDisplacement );
   arrayView1d< globalIndex const > const & dofNumber = nodeManager.getReference< globalIndex_array >( dofKey );
 
-  ResetStressToBeginningOfStep( domain );
+  //ResetStressToBeginningOfStep( domain );
 
   real64 const gravityVectorData[3] = { gravityVector().Data()[0],
                                         gravityVector().Data()[1],
