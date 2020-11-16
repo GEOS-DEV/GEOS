@@ -104,9 +104,6 @@ public:
                                   DiscretizationOps & stiffness ) const final;
                                   
                                   
-  GEOSX_HOST_DEVICE
-  virtual void saveConvergedState() const override final;
-    
 private:
   /// A reference to the ArrayView holding the friction angle for each element.
   arrayView1d< real64 const > const m_friction;
@@ -291,14 +288,6 @@ void DruckerPragerUpdates::smallStrainUpdate( localIndex const k,
 }
 
 
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
-void DruckerPragerUpdates::saveConvergedState() const
-{
-  ElasticIsotropicUpdates::saveConvergedState();
-  m_oldCohesion.setValues< serialPolicy >( m_newCohesion );
-}
-
 
 /**
  * @class DruckerPrager
@@ -327,6 +316,8 @@ public:
 
   virtual void allocateConstitutiveData( dataRepository::Group * const parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
+  
+  virtual void saveConvergedState() override;
   
   /**
    * @name Static Factory Catalog members and functions

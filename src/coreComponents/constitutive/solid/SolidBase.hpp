@@ -79,28 +79,6 @@ protected:
 
   /// Deleted move assignment operator
   SolidBaseUpdates & operator=( SolidBaseUpdates && ) =  delete;
-
-  /**
-   * @brief Save history variables in preparation for next timestep.
-   *
-   * Most nonlinear models use state variables at the previous
-   * timestep in the stress integration.  The newly computed state, however, is
-   * not "correct" until the global Newton iterations in the solid solver converge,
-   * so that all quadrature points are jointly in equilibrium. Once this occurs, we
-   * can save the correct state in preparation for a new timestep.
-   *
-   * As a side benefit, in the event convergence fails and we need to do a rewind,
-   * no action is required to reset the state as long as this function has not been called.
-   *
-   * @param[in] k Element index.
-   * @param[in] q Quadrature point index.
-   */
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  virtual void saveConvergedState() const
-  {
-    m_oldStress.setValues< serialPolicy >( m_newStress );
-  }
   
   /**
    * @brief Helper to save point stress back to m_newStress array

@@ -96,6 +96,7 @@ void DruckerPrager::allocateConstitutiveData( dataRepository::Group * const pare
   ElasticIsotropic::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 }
 
+
 void DruckerPrager::PostProcessInput()
 {
   ElasticIsotropic::PostProcessInput();
@@ -129,6 +130,26 @@ void DruckerPrager::PostProcessInput()
   this->getWrapper< array1d< real64 > >( viewKeyStruct::hardeningString )->
     setApplyDefaultValue( m_defaultHardening );
 
+}
+
+
+void DruckerPrager::saveConvergedState()
+{
+  SolidBase::saveConvergedState(); // TODO: not ideal, as we have separate loops for base and derived data
+  
+  localIndex const numE = numElem();
+  localIndex const numQ = numQuad();
+
+  arrayView2d< real64 const> newCohesion = m_newCohesion;
+  arrayView2d< real64      > oldCohesion = m_oldCohesion;
+  
+  forAll< parallelDevicePolicy<> >( numE, [=] GEOSX_HOST_DEVICE ( localIndex const k )
+  {
+    for( localIndex q = 0; q < numQ; ++q )
+    {
+      oldCohesion( k, q ) = newCohesion( k, q );
+    }
+  } );
 }
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, DruckerPrager, std::string const &, Group * const )

@@ -75,7 +75,6 @@ void SolidBase::allocateConstitutiveData( dataRepository::Group * const parent,
 
 void SolidBase::saveConvergedState()
 {
-
  localIndex const numE = numElem();
  localIndex const numQ = numQuad();
 
@@ -86,10 +85,7 @@ void SolidBase::saveConvergedState()
  {
    for( localIndex q = 0; q < numQ; ++q )
    {
-     for( localIndex i = 0; i < 6; ++i )
-     {
-       oldStress( k, q, i ) = newStress( k, q, i );
-     }
+     LvArray::tensorOps::copy< 6 >( oldStress[k][q], newStress[k][q] );
    }
  } );
 }

@@ -86,7 +86,7 @@ TEST( DruckerPragerTests, testModel )
   for(localIndex loadstep=0; loadstep < 30; ++loadstep)
   {
     cmw.smallStrainUpdate(0,0,strainIncrement,stress,stiffness);
-    cmw.saveConvergedState();
+    cm.saveConvergedState();
   }
   
   // loading was set up to drive to total cohesion loss (c=0), at which
