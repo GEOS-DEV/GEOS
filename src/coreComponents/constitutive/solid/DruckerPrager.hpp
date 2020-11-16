@@ -80,7 +80,7 @@ public:
   DruckerPragerUpdates & operator=( DruckerPragerUpdates && ) =  delete;
   
   // Use the uncompressed version of the stiffness bilinear form
-  using DiscretizationOps = SolidModelDiscretizationOpsFullyAnisotroipic;
+  using DiscretizationOps = SolidModelDiscretizationOpsFullyAnisotroipic; // TODO: typo in anistropic
   
   // bring in base implementations for any not defined here
   //using SolidBaseUpdates::smallStrainUpdate;
@@ -102,7 +102,6 @@ public:
                                   real64 const ( & strainIncrement )[6],
                                   real64 ( & stress )[6],
                                   DiscretizationOps & stiffness ) const final;
-                                  
                                   
 private:
   /// A reference to the ArrayView holding the friction angle for each element.
@@ -270,7 +269,6 @@ void DruckerPragerUpdates::smallStrainUpdate( localIndex const k,
   }
   
   // save new stress and return
-  
   saveStress( k, q, stress );
   return;
 }
