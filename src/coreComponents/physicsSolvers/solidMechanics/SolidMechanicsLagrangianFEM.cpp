@@ -29,6 +29,7 @@
 #include "constitutive/contact/ContactRelationBase.hpp"
 #include "finiteElement/FiniteElementDiscretizationManager.hpp"
 #include "finiteElement/Kinematics.h"
+#include "LvArray/src/output.hpp"
 #include "managers/DomainPartition.hpp"
 #include "managers/FieldSpecification/FieldSpecificationManager.hpp"
 #include "managers/NumericalMethodsManager.hpp"
@@ -1070,14 +1071,21 @@ void SolidMechanicsLagrangianFEM::AssembleSystem( real64 const GEOSX_UNUSED_PARA
     }
   }
 
-  if( getLogLevel() >= 2 )
-  {
-    GEOSX_LOG_RANK_0( "After SolidMechanicsLagrangianFEM::AssembleSystem" );
-    GEOSX_LOG_RANK_0( "\nJacobian:\n" );
-//    std::cout<< matrix;
-    GEOSX_LOG_RANK_0( "\nResidual:\n" );
+//  if( getLogLevel() >= 2 )
+//  int const numRanks = MpiWrapper::Comm_size();
+//  int const rank = MpiWrapper::Comm_rank();
+//  for( int kRank = 0; kRank<numRanks; ++kRank )
+//  {
+//    if( rank==kRank )
+//    {
+//      GEOSX_LOG_RANK_0( "After SolidMechanicsLagrangianFEM::AssembleSystem" );
+//      GEOSX_LOG_RANK_0( "\nJacobian:\n" );
+//      LvArray::print< parallelDevicePolicy<32> >( localMatrix.toViewConst() );
+//    GEOSX_LOG_RANK_0( "\nResidual:\n" );
 //    std::cout<< rhs;
-  }
+//    }
+//    MpiWrapper::Barrier();
+//  }
 }
 
 void

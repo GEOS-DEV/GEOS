@@ -23,6 +23,7 @@
 #include "_hypre_IJ_mv.h"
 #include "_hypre_parcsr_mv.h"
 #include "HypreUtils.hpp"
+#include "LvArray/src/output.hpp"
 
 #include <iomanip>
 
@@ -223,40 +224,17 @@ void HypreMatrix::create( CRSMatrixView< real64 const, globalIndex const > const
 
 
 #if 0
-  int const numRows = localMatrix.numRows();
-  HYPRE_Int           *ncols = const_cast<localIndex * >(localMatrix.getSizes());
-  const HYPRE_BigInt  *rows2 = rows.data();
-  const HYPRE_Int     *row_indexes = localMatrix.getOffsets();
-  const HYPRE_BigInt  *cols = localMatrix.getColumns();
-  const HYPRE_Complex *values = localMatrix.getEntries();
-  printf( "numRows = %d \n", numRows );
-  forAll< parallelDevicePolicy<> >( 1, [=] GEOSX_DEVICE ( localIndex const )
+  int const numRanks = MpiWrapper::Comm_size();
+  int const rank = MpiWrapper::Comm_rank();
+  for( int kRank = 0; kRank<numRanks; ++kRank )
   {
-    printf( "ncols       = { " ); for( localIndex i=0 ; i<24 ; ++i ) { printf( "%4d, ",ncols[i] ); }        printf( " }\n" );
-    printf( "rows        = { " ); for( localIndex i=0 ; i<24 ; ++i ) { printf( "%4d, ",rows2[i] ); }        printf( " }\n" );
-    printf( "row_indexes = { " ); for( localIndex i=0 ; i<25 ; ++i ) { printf( "%4d, ",row_indexes[i] ); }  printf( " }\n" );
-
-
-    for( localIndex i=0 ; i<24 ; ++i )
+    if( rank==kRank )
     {
-      printf( "row %4d \n", i );
-      printf( "  cols   = {" );
-      for( localIndex j=0 ; j<ncols[i] ; ++j )
-      {
-        printf( "%9d, ",cols[row_indexes[i] + j] );
-      }
-      printf( " }\n" );
-
-      printf( "  values = {" );
-      for( localIndex j=0 ; j<ncols[i] ; ++j )
-      {
-        printf( "%9.2g, ", values[row_indexes[i] + j] );
-      }
-      printf( " }\n" );
+      LvArray::print< parallelDevicePolicy<32> >( localMatrix.toViewConst() );
     }
-    printf( " }\n" );
+    MpiWrapper::Barrier();
+  }
 
-  });
 #endif
 
 

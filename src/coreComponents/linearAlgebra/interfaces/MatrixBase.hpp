@@ -21,7 +21,7 @@
 
 #include "linearAlgebra/common.hpp"
 #include "linearAlgebra/interfaces/LinearOperator.hpp"
-//#include "LvArray/src/streamIO.hpp"
+#include "LvArray/src/output.hpp"
 
 namespace geosx
 {
@@ -226,6 +226,20 @@ protected:
                        MPI_Comm const & comm )
   {
     localMatrix.move( LvArray::MemorySpace::CPU, false );
+
+#if 0
+  int const numRanks = MpiWrapper::Comm_size();
+  int const rank = MpiWrapper::Comm_rank();
+  for( int kRank = 0; kRank<numRanks; ++kRank )
+  {
+    if( rank==kRank )
+    {
+      LvArray::print< parallelDevicePolicy<32> >( localMatrix.toViewConst() );
+    }
+    MpiWrapper::Barrier();
+  }
+
+#endif
 
     localIndex maxEntriesPerRow = 0;
     for( localIndex i = 0; i < localMatrix.numRows(); ++i )

@@ -1,9 +1,8 @@
 include(${CMAKE_CURRENT_LIST_DIR}/../../src/coreComponents/LvArray/host-configs/LLNL/lassen-clang@upstream.cmake)
 
-set(GEOSX_TPL_DIR ${GEOSX_TPL_ROOT_DIR}/TPLs_boomerAMG-for-elasticity-2020-10-22/install-${CONFIG_NAME}-release CACHE PATH "" FORCE )
+#set(GEOSX_TPL_DIR ${GEOSX_TPL_ROOT_DIR}/TPLs_boomerAMG-for-elasticity-2020-10-22/install-${CONFIG_NAME}-release CACHE PATH "" FORCE )
 #set(GEOSX_TPL_DIR ${GEOSX_TPL_ROOT_DIR}/TPLs_boomerAMG-for-elasticity-hypredebug/install-${CONFIG_NAME}-release CACHE PATH "" FORCE )
-#set(GEOSX_TPL_DIR ${GEOSX_TPL_ROOT_DIR}/TPLs_boomerAMG-for-elasticity-cusparse-cublas/install-${CONFIG_NAME}-release CACHE PATH "" FORCE )
-
+#set(GEOSX_TPL_DIR /usr/workspace/GEOS/GEOSX/geosx_hypre/thirdPartyLibs/install-${CONFIG_NAME}-debug CACHE PATH "" FORCE )
 
 # Fortran
 set(CMAKE_Fortran_COMPILER /usr/tce/packages/xl/xl-beta-2019.06.20/bin/xlf_r CACHE PATH "")
