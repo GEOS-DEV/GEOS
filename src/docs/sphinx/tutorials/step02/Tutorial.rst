@@ -89,7 +89,7 @@ The differences are worth pointing out here. In GEOSX:
    the advantages
    of conformal grids used in GEOSX are worth the extra meshing effort:
    by using conformal grids,
-   GEOSX can run finite elements and finite volume simulations on the same mesh
+   GEOSX can run finite element and finite volume simulations on the same mesh
    without problems, going seamlessly from one numerical method to the other.
    This is key to enabling multiphysics simulation.
  - **there is no assumption of overall structure**: GEOSX does not need to know
@@ -137,7 +137,7 @@ of 100 seconds.
    :width: 250px
 
 
-To see how import such a mesh,
+To see how to import such a mesh,
 we inspect the following XML file:
 
 
@@ -166,7 +166,7 @@ Here are the first few lines of the msh file :
    :caption: cube_10x10x10_hex.msh
    :lines: 1-20
 
-GEOSX can run different physical solver on different regions of the mesh at different times.
+GEOSX can run different physical solvers on different regions of the mesh at different times.
 Here, to keep things simple, we run one solver (single-phase flow)
 on the entire domain throughout the simulation.
 Even this is trivial, we need to define and name a region encompassing the entire domain

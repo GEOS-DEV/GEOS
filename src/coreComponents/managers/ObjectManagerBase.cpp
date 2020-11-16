@@ -472,10 +472,11 @@ localIndex ObjectManagerBase::PackSets( buffer_unit_type * & buffer,
     string const & setName = wrapperIter.first;
     SortedArrayView< localIndex const > const & currentSet = m_sets.getReference< SortedArray< localIndex > >( setName );
     packedSize += bufferOps::Pack< DOPACK >( buffer, setName );
+    SortedArray< globalIndex > emptySet;
     packedSize += bufferOps::Pack< DOPACK >( buffer,
                                              currentSet,
                                              packList,
-                                             SortedArray< globalIndex >().toViewConst(),
+                                             emptySet.toViewConst(),
                                              m_localToGlobalMap );
   }
   return packedSize;

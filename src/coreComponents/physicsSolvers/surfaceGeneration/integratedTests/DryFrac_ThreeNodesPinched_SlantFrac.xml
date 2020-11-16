@@ -96,7 +96,7 @@
       cellBlocks="{ cb1 }"
       materialList="{ granite }"/>
 
-    <FaceElementRegion
+    <SurfaceElementRegion
       name="Fracture"
       defaultAperture="1.0e-4"
       materialList="{ granite }"/>

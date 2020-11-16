@@ -183,13 +183,6 @@ Element: ElementRegions
 .. include:: ../../coreComponents/fileIO/schema/docs/ElementRegions.rst
 
 
-.. _XML_EmbeddedSurfaceElementRegion:
-
-Element: EmbeddedSurfaceElementRegion
-=====================================
-.. include:: ../../coreComponents/fileIO/schema/docs/EmbeddedSurfaceElementRegion.rst
-
-
 .. _XML_EmbeddedSurfaceGenerator:
 
 Element: EmbeddedSurfaceGenerator
@@ -202,13 +195,6 @@ Element: EmbeddedSurfaceGenerator
 Element: Events
 ===============
 .. include:: ../../coreComponents/fileIO/schema/docs/Events.rst
-
-
-.. _XML_FaceElementRegion:
-
-Element: FaceElementRegion
-==========================
-.. include:: ../../coreComponents/fileIO/schema/docs/FaceElementRegion.rst
 
 
 .. _XML_FieldSpecification:
@@ -589,6 +575,13 @@ Element: SourceFlux
 .. include:: ../../coreComponents/fileIO/schema/docs/SourceFlux.rst
 
 
+.. _XML_SurfaceElementRegion:
+
+Element: SurfaceElementRegion
+=============================
+.. include:: ../../coreComponents/fileIO/schema/docs/SurfaceElementRegion.rst
+
+
 .. _XML_SurfaceGenerator:
 
 Element: SurfaceGenerator
@@ -873,13 +866,6 @@ Datastructure: ElementRegions
 .. include:: ../../coreComponents/fileIO/schema/docs/ElementRegions_other.rst
 
 
-.. _DATASTRUCTURE_EmbeddedSurfaceElementRegion:
-
-Datastructure: EmbeddedSurfaceElementRegion
-===========================================
-.. include:: ../../coreComponents/fileIO/schema/docs/EmbeddedSurfaceElementRegion_other.rst
-
-
 .. _DATASTRUCTURE_EmbeddedSurfaceGenerator:
 
 Datastructure: EmbeddedSurfaceGenerator
@@ -892,13 +878,6 @@ Datastructure: EmbeddedSurfaceGenerator
 Datastructure: Events
 =====================
 .. include:: ../../coreComponents/fileIO/schema/docs/Events_other.rst
-
-
-.. _DATASTRUCTURE_FaceElementRegion:
-
-Datastructure: FaceElementRegion
-================================
-.. include:: ../../coreComponents/fileIO/schema/docs/FaceElementRegion_other.rst
 
 
 .. _DATASTRUCTURE_FaceManager:
@@ -1300,6 +1279,13 @@ Datastructure: SourceFlux
 .. include:: ../../coreComponents/fileIO/schema/docs/SourceFlux_other.rst
 
 
+.. _DATASTRUCTURE_SurfaceElementRegion:
+
+Datastructure: SurfaceElementRegion
+===================================
+.. include:: ../../coreComponents/fileIO/schema/docs/SurfaceElementRegion_other.rst
+
+
 .. _DATASTRUCTURE_SurfaceGenerator:
 
 Datastructure: SurfaceGenerator
@@ -1410,13 +1396,6 @@ Datastructure: cellManager
 Datastructure: commandLine
 ==========================
 .. include:: ../../coreComponents/fileIO/schema/docs/commandLine_other.rst
-
-
-.. _DATASTRUCTURE_default:
-
-Datastructure: default
-======================
-.. include:: ../../coreComponents/fileIO/schema/docs/default_other.rst
 
 
 .. _DATASTRUCTURE_domain:
