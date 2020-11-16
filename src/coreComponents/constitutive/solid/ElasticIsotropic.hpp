@@ -305,7 +305,7 @@ void ElasticIsotropicUpdates::smallStrainNoStateUpdate( localIndex const k,
                                                         real64 ( & stress )[6],
                                                         real64 ( & stiffness )[6][6] ) const
 {
-  smallStrainNoStateUpdate( k, q, totalStrain, stress);
+  smallStrainNoStateUpdate( k, q, totalStrain, stress);  // call stress-only update
   getElasticStiffness( k, stiffness );
 }
 

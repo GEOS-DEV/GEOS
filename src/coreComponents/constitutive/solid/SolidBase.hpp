@@ -420,10 +420,9 @@ public:
      
      real64 energy = 0;
      
-     for(localIndex i=0; i<3; ++i)
+     for(localIndex i=0; i<6; ++i)
      {
-       energy += stress[i]*strain[i];
-       energy += 2*stress[i+3]*strain[i+3];
+       energy += stress[i]*strain[i]; // contraction sigma:epsilon
      }
      energy *= 0.5;
      
