@@ -607,13 +607,13 @@
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
 		<!--tipEdges => Set containing all the tip edges-->
-		<xsd:attribute name="tipEdges" type="LvArray_SortedArray&lt;long, long, LvArray_ChaiBuffer&gt;" />
+		<xsd:attribute name="tipEdges" type="LvArray_SortedArray&lt;int, int, LvArray_ChaiBuffer&gt;" />
 		<!--tipFaces => Set containing all the tip faces-->
-		<xsd:attribute name="tipFaces" type="LvArray_SortedArray&lt;long, long, LvArray_ChaiBuffer&gt;" />
+		<xsd:attribute name="tipFaces" type="LvArray_SortedArray&lt;int, int, LvArray_ChaiBuffer&gt;" />
 		<!--tipNodes => Set containing all the nodes at the fracture tip-->
-		<xsd:attribute name="tipNodes" type="LvArray_SortedArray&lt;long, long, LvArray_ChaiBuffer&gt;" />
+		<xsd:attribute name="tipNodes" type="LvArray_SortedArray&lt;int, int, LvArray_ChaiBuffer&gt;" />
 		<!--trailingFaces => Set containing all the trailing faces-->
-		<xsd:attribute name="trailingFaces" type="LvArray_SortedArray&lt;long, long, LvArray_ChaiBuffer&gt;" />
+		<xsd:attribute name="trailingFaces" type="LvArray_SortedArray&lt;int, int, LvArray_ChaiBuffer&gt;" />
 	</xsd:complexType>
 	<xsd:complexType name="TasksType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -686,25 +686,25 @@
 	</xsd:complexType>
 	<xsd:complexType name="BlackOilFluidType">
 		<!--dPhaseCompFraction_dGlobalCompFraction => (no description available)-->
-		<xsd:attribute name="dPhaseCompFraction_dGlobalCompFraction" type="LvArray_Array&lt;double, 5, camp_int_seq&lt;long, 0l, 1l, 2l, 3l, 4l&gt;, long, LvArray_ChaiBuffer&gt;" />
+		<xsd:attribute name="dPhaseCompFraction_dGlobalCompFraction" type="LvArray_Array&lt;double, 5, camp_int_seq&lt;long, 0l, 1l, 2l, 3l, 4l&gt;, int, LvArray_ChaiBuffer&gt;" />
 		<!--dPhaseCompFraction_dPressure => (no description available)-->
-		<xsd:attribute name="dPhaseCompFraction_dPressure" type="LvArray_Array&lt;double, 4, camp_int_seq&lt;long, 0l, 1l, 2l, 3l&gt;, long, LvArray_ChaiBuffer&gt;" />
+		<xsd:attribute name="dPhaseCompFraction_dPressure" type="LvArray_Array&lt;double, 4, camp_int_seq&lt;long, 0l, 1l, 2l, 3l&gt;, int, LvArray_ChaiBuffer&gt;" />
 		<!--dPhaseCompFraction_dTemperature => (no description available)-->
-		<xsd:attribute name="dPhaseCompFraction_dTemperature" type="LvArray_Array&lt;double, 4, camp_int_seq&lt;long, 0l, 1l, 2l, 3l&gt;, long, LvArray_ChaiBuffer&gt;" />
+		<xsd:attribute name="dPhaseCompFraction_dTemperature" type="LvArray_Array&lt;double, 4, camp_int_seq&lt;long, 0l, 1l, 2l, 3l&gt;, int, LvArray_ChaiBuffer&gt;" />
 		<!--dPhaseDensity_dGlobalCompFraction => (no description available)-->
-		<xsd:attribute name="dPhaseDensity_dGlobalCompFraction" type="LvArray_Array&lt;double, 4, camp_int_seq&lt;long, 0l, 1l, 2l, 3l&gt;, long, LvArray_ChaiBuffer&gt;" />
+		<xsd:attribute name="dPhaseDensity_dGlobalCompFraction" type="LvArray_Array&lt;double, 4, camp_int_seq&lt;long, 0l, 1l, 2l, 3l&gt;, int, LvArray_ChaiBuffer&gt;" />
 		<!--dPhaseDensity_dPressure => (no description available)-->
 		<xsd:attribute name="dPhaseDensity_dPressure" type="real64_array3d" />
 		<!--dPhaseDensity_dTemperature => (no description available)-->
 		<xsd:attribute name="dPhaseDensity_dTemperature" type="real64_array3d" />
 		<!--dPhaseFraction_dGlobalCompFraction => (no description available)-->
-		<xsd:attribute name="dPhaseFraction_dGlobalCompFraction" type="LvArray_Array&lt;double, 4, camp_int_seq&lt;long, 0l, 1l, 2l, 3l&gt;, long, LvArray_ChaiBuffer&gt;" />
+		<xsd:attribute name="dPhaseFraction_dGlobalCompFraction" type="LvArray_Array&lt;double, 4, camp_int_seq&lt;long, 0l, 1l, 2l, 3l&gt;, int, LvArray_ChaiBuffer&gt;" />
 		<!--dPhaseFraction_dPressure => (no description available)-->
 		<xsd:attribute name="dPhaseFraction_dPressure" type="real64_array3d" />
 		<!--dPhaseFraction_dTemperature => (no description available)-->
 		<xsd:attribute name="dPhaseFraction_dTemperature" type="real64_array3d" />
 		<!--dPhaseViscosity_dGlobalCompFraction => (no description available)-->
-		<xsd:attribute name="dPhaseViscosity_dGlobalCompFraction" type="LvArray_Array&lt;double, 4, camp_int_seq&lt;long, 0l, 1l, 2l, 3l&gt;, long, LvArray_ChaiBuffer&gt;" />
+		<xsd:attribute name="dPhaseViscosity_dGlobalCompFraction" type="LvArray_Array&lt;double, 4, camp_int_seq&lt;long, 0l, 1l, 2l, 3l&gt;, int, LvArray_ChaiBuffer&gt;" />
 		<!--dPhaseViscosity_dPressure => (no description available)-->
 		<xsd:attribute name="dPhaseViscosity_dPressure" type="real64_array3d" />
 		<!--dPhaseViscosity_dTemperature => (no description available)-->
@@ -716,7 +716,7 @@
 		<!--dTotalDensity_dTemperature => (no description available)-->
 		<xsd:attribute name="dTotalDensity_dTemperature" type="real64_array2d" />
 		<!--phaseCompFraction => (no description available)-->
-		<xsd:attribute name="phaseCompFraction" type="LvArray_Array&lt;double, 4, camp_int_seq&lt;long, 0l, 1l, 2l, 3l&gt;, long, LvArray_ChaiBuffer&gt;" />
+		<xsd:attribute name="phaseCompFraction" type="LvArray_Array&lt;double, 4, camp_int_seq&lt;long, 0l, 1l, 2l, 3l&gt;, int, LvArray_ChaiBuffer&gt;" />
 		<!--phaseDensity => (no description available)-->
 		<xsd:attribute name="phaseDensity" type="real64_array3d" />
 		<!--phaseFraction => (no description available)-->
@@ -730,7 +730,7 @@
 	</xsd:complexType>
 	<xsd:complexType name="BrooksCoreyBakerRelativePermeabilityType">
 		<!--dPhaseRelPerm_dPhaseVolFraction => (no description available)-->
-		<xsd:attribute name="dPhaseRelPerm_dPhaseVolFraction" type="LvArray_Array&lt;double, 4, camp_int_seq&lt;long, 0l, 1l, 2l, 3l&gt;, long, LvArray_ChaiBuffer&gt;" />
+		<xsd:attribute name="dPhaseRelPerm_dPhaseVolFraction" type="LvArray_Array&lt;double, 4, camp_int_seq&lt;long, 0l, 1l, 2l, 3l&gt;, int, LvArray_ChaiBuffer&gt;" />
 		<!--phaseOrder => (no description available)-->
 		<xsd:attribute name="phaseOrder" type="integer_array" />
 		<!--phaseRelPerm => (no description available)-->
@@ -742,7 +742,7 @@
 	</xsd:complexType>
 	<xsd:complexType name="BrooksCoreyCapillaryPressureType">
 		<!--dPhaseCapPressure_dPhaseVolFraction => (no description available)-->
-		<xsd:attribute name="dPhaseCapPressure_dPhaseVolFraction" type="LvArray_Array&lt;double, 4, camp_int_seq&lt;long, 0l, 1l, 2l, 3l&gt;, long, LvArray_ChaiBuffer&gt;" />
+		<xsd:attribute name="dPhaseCapPressure_dPhaseVolFraction" type="LvArray_Array&lt;double, 4, camp_int_seq&lt;long, 0l, 1l, 2l, 3l&gt;, int, LvArray_ChaiBuffer&gt;" />
 		<!--phaseCapPressure => (no description available)-->
 		<xsd:attribute name="phaseCapPressure" type="real64_array3d" />
 		<!--phaseOrder => (no description available)-->
@@ -754,7 +754,7 @@
 	</xsd:complexType>
 	<xsd:complexType name="BrooksCoreyRelativePermeabilityType">
 		<!--dPhaseRelPerm_dPhaseVolFraction => (no description available)-->
-		<xsd:attribute name="dPhaseRelPerm_dPhaseVolFraction" type="LvArray_Array&lt;double, 4, camp_int_seq&lt;long, 0l, 1l, 2l, 3l&gt;, long, LvArray_ChaiBuffer&gt;" />
+		<xsd:attribute name="dPhaseRelPerm_dPhaseVolFraction" type="LvArray_Array&lt;double, 4, camp_int_seq&lt;long, 0l, 1l, 2l, 3l&gt;, int, LvArray_ChaiBuffer&gt;" />
 		<!--phaseOrder => (no description available)-->
 		<xsd:attribute name="phaseOrder" type="integer_array" />
 		<!--phaseRelPerm => (no description available)-->
@@ -766,25 +766,25 @@
 	</xsd:complexType>
 	<xsd:complexType name="CompositionalMultiphaseFluidType">
 		<!--dPhaseCompFraction_dGlobalCompFraction => (no description available)-->
-		<xsd:attribute name="dPhaseCompFraction_dGlobalCompFraction" type="LvArray_Array&lt;double, 5, camp_int_seq&lt;long, 0l, 1l, 2l, 3l, 4l&gt;, long, LvArray_ChaiBuffer&gt;" />
+		<xsd:attribute name="dPhaseCompFraction_dGlobalCompFraction" type="LvArray_Array&lt;double, 5, camp_int_seq&lt;long, 0l, 1l, 2l, 3l, 4l&gt;, int, LvArray_ChaiBuffer&gt;" />
 		<!--dPhaseCompFraction_dPressure => (no description available)-->
-		<xsd:attribute name="dPhaseCompFraction_dPressure" type="LvArray_Array&lt;double, 4, camp_int_seq&lt;long, 0l, 1l, 2l, 3l&gt;, long, LvArray_ChaiBuffer&gt;" />
+		<xsd:attribute name="dPhaseCompFraction_dPressure" type="LvArray_Array&lt;double, 4, camp_int_seq&lt;long, 0l, 1l, 2l, 3l&gt;, int, LvArray_ChaiBuffer&gt;" />
 		<!--dPhaseCompFraction_dTemperature => (no description available)-->
-		<xsd:attribute name="dPhaseCompFraction_dTemperature" type="LvArray_Array&lt;double, 4, camp_int_seq&lt;long, 0l, 1l, 2l, 3l&gt;, long, LvArray_ChaiBuffer&gt;" />
+		<xsd:attribute name="dPhaseCompFraction_dTemperature" type="LvArray_Array&lt;double, 4, camp_int_seq&lt;long, 0l, 1l, 2l, 3l&gt;, int, LvArray_ChaiBuffer&gt;" />
 		<!--dPhaseDensity_dGlobalCompFraction => (no description available)-->
-		<xsd:attribute name="dPhaseDensity_dGlobalCompFraction" type="LvArray_Array&lt;double, 4, camp_int_seq&lt;long, 0l, 1l, 2l, 3l&gt;, long, LvArray_ChaiBuffer&gt;" />
+		<xsd:attribute name="dPhaseDensity_dGlobalCompFraction" type="LvArray_Array&lt;double, 4, camp_int_seq&lt;long, 0l, 1l, 2l, 3l&gt;, int, LvArray_ChaiBuffer&gt;" />
 		<!--dPhaseDensity_dPressure => (no description available)-->
 		<xsd:attribute name="dPhaseDensity_dPressure" type="real64_array3d" />
 		<!--dPhaseDensity_dTemperature => (no description available)-->
 		<xsd:attribute name="dPhaseDensity_dTemperature" type="real64_array3d" />
 		<!--dPhaseFraction_dGlobalCompFraction => (no description available)-->
-		<xsd:attribute name="dPhaseFraction_dGlobalCompFraction" type="LvArray_Array&lt;double, 4, camp_int_seq&lt;long, 0l, 1l, 2l, 3l&gt;, long, LvArray_ChaiBuffer&gt;" />
+		<xsd:attribute name="dPhaseFraction_dGlobalCompFraction" type="LvArray_Array&lt;double, 4, camp_int_seq&lt;long, 0l, 1l, 2l, 3l&gt;, int, LvArray_ChaiBuffer&gt;" />
 		<!--dPhaseFraction_dPressure => (no description available)-->
 		<xsd:attribute name="dPhaseFraction_dPressure" type="real64_array3d" />
 		<!--dPhaseFraction_dTemperature => (no description available)-->
 		<xsd:attribute name="dPhaseFraction_dTemperature" type="real64_array3d" />
 		<!--dPhaseViscosity_dGlobalCompFraction => (no description available)-->
-		<xsd:attribute name="dPhaseViscosity_dGlobalCompFraction" type="LvArray_Array&lt;double, 4, camp_int_seq&lt;long, 0l, 1l, 2l, 3l&gt;, long, LvArray_ChaiBuffer&gt;" />
+		<xsd:attribute name="dPhaseViscosity_dGlobalCompFraction" type="LvArray_Array&lt;double, 4, camp_int_seq&lt;long, 0l, 1l, 2l, 3l&gt;, int, LvArray_ChaiBuffer&gt;" />
 		<!--dPhaseViscosity_dPressure => (no description available)-->
 		<xsd:attribute name="dPhaseViscosity_dPressure" type="real64_array3d" />
 		<!--dPhaseViscosity_dTemperature => (no description available)-->
@@ -796,7 +796,7 @@
 		<!--dTotalDensity_dTemperature => (no description available)-->
 		<xsd:attribute name="dTotalDensity_dTemperature" type="real64_array2d" />
 		<!--phaseCompFraction => (no description available)-->
-		<xsd:attribute name="phaseCompFraction" type="LvArray_Array&lt;double, 4, camp_int_seq&lt;long, 0l, 1l, 2l, 3l&gt;, long, LvArray_ChaiBuffer&gt;" />
+		<xsd:attribute name="phaseCompFraction" type="LvArray_Array&lt;double, 4, camp_int_seq&lt;long, 0l, 1l, 2l, 3l&gt;, int, LvArray_ChaiBuffer&gt;" />
 		<!--phaseDensity => (no description available)-->
 		<xsd:attribute name="phaseDensity" type="real64_array3d" />
 		<!--phaseFraction => (no description available)-->
@@ -878,25 +878,25 @@
 	</xsd:complexType>
 	<xsd:complexType name="MultiPhaseMultiComponentFluidType">
 		<!--dPhaseCompFraction_dGlobalCompFraction => (no description available)-->
-		<xsd:attribute name="dPhaseCompFraction_dGlobalCompFraction" type="LvArray_Array&lt;double, 5, camp_int_seq&lt;long, 0l, 1l, 2l, 3l, 4l&gt;, long, LvArray_ChaiBuffer&gt;" />
+		<xsd:attribute name="dPhaseCompFraction_dGlobalCompFraction" type="LvArray_Array&lt;double, 5, camp_int_seq&lt;long, 0l, 1l, 2l, 3l, 4l&gt;, int, LvArray_ChaiBuffer&gt;" />
 		<!--dPhaseCompFraction_dPressure => (no description available)-->
-		<xsd:attribute name="dPhaseCompFraction_dPressure" type="LvArray_Array&lt;double, 4, camp_int_seq&lt;long, 0l, 1l, 2l, 3l&gt;, long, LvArray_ChaiBuffer&gt;" />
+		<xsd:attribute name="dPhaseCompFraction_dPressure" type="LvArray_Array&lt;double, 4, camp_int_seq&lt;long, 0l, 1l, 2l, 3l&gt;, int, LvArray_ChaiBuffer&gt;" />
 		<!--dPhaseCompFraction_dTemperature => (no description available)-->
-		<xsd:attribute name="dPhaseCompFraction_dTemperature" type="LvArray_Array&lt;double, 4, camp_int_seq&lt;long, 0l, 1l, 2l, 3l&gt;, long, LvArray_ChaiBuffer&gt;" />
+		<xsd:attribute name="dPhaseCompFraction_dTemperature" type="LvArray_Array&lt;double, 4, camp_int_seq&lt;long, 0l, 1l, 2l, 3l&gt;, int, LvArray_ChaiBuffer&gt;" />
 		<!--dPhaseDensity_dGlobalCompFraction => (no description available)-->
-		<xsd:attribute name="dPhaseDensity_dGlobalCompFraction" type="LvArray_Array&lt;double, 4, camp_int_seq&lt;long, 0l, 1l, 2l, 3l&gt;, long, LvArray_ChaiBuffer&gt;" />
+		<xsd:attribute name="dPhaseDensity_dGlobalCompFraction" type="LvArray_Array&lt;double, 4, camp_int_seq&lt;long, 0l, 1l, 2l, 3l&gt;, int, LvArray_ChaiBuffer&gt;" />
 		<!--dPhaseDensity_dPressure => (no description available)-->
 		<xsd:attribute name="dPhaseDensity_dPressure" type="real64_array3d" />
 		<!--dPhaseDensity_dTemperature => (no description available)-->
 		<xsd:attribute name="dPhaseDensity_dTemperature" type="real64_array3d" />
 		<!--dPhaseFraction_dGlobalCompFraction => (no description available)-->
-		<xsd:attribute name="dPhaseFraction_dGlobalCompFraction" type="LvArray_Array&lt;double, 4, camp_int_seq&lt;long, 0l, 1l, 2l, 3l&gt;, long, LvArray_ChaiBuffer&gt;" />
+		<xsd:attribute name="dPhaseFraction_dGlobalCompFraction" type="LvArray_Array&lt;double, 4, camp_int_seq&lt;long, 0l, 1l, 2l, 3l&gt;, int, LvArray_ChaiBuffer&gt;" />
 		<!--dPhaseFraction_dPressure => (no description available)-->
 		<xsd:attribute name="dPhaseFraction_dPressure" type="real64_array3d" />
 		<!--dPhaseFraction_dTemperature => (no description available)-->
 		<xsd:attribute name="dPhaseFraction_dTemperature" type="real64_array3d" />
 		<!--dPhaseViscosity_dGlobalCompFraction => (no description available)-->
-		<xsd:attribute name="dPhaseViscosity_dGlobalCompFraction" type="LvArray_Array&lt;double, 4, camp_int_seq&lt;long, 0l, 1l, 2l, 3l&gt;, long, LvArray_ChaiBuffer&gt;" />
+		<xsd:attribute name="dPhaseViscosity_dGlobalCompFraction" type="LvArray_Array&lt;double, 4, camp_int_seq&lt;long, 0l, 1l, 2l, 3l&gt;, int, LvArray_ChaiBuffer&gt;" />
 		<!--dPhaseViscosity_dPressure => (no description available)-->
 		<xsd:attribute name="dPhaseViscosity_dPressure" type="real64_array3d" />
 		<!--dPhaseViscosity_dTemperature => (no description available)-->
@@ -908,7 +908,7 @@
 		<!--dTotalDensity_dTemperature => (no description available)-->
 		<xsd:attribute name="dTotalDensity_dTemperature" type="real64_array2d" />
 		<!--phaseCompFraction => (no description available)-->
-		<xsd:attribute name="phaseCompFraction" type="LvArray_Array&lt;double, 4, camp_int_seq&lt;long, 0l, 1l, 2l, 3l&gt;, long, LvArray_ChaiBuffer&gt;" />
+		<xsd:attribute name="phaseCompFraction" type="LvArray_Array&lt;double, 4, camp_int_seq&lt;long, 0l, 1l, 2l, 3l&gt;, int, LvArray_ChaiBuffer&gt;" />
 		<!--phaseDensity => (no description available)-->
 		<xsd:attribute name="phaseDensity" type="real64_array3d" />
 		<!--phaseFraction => (no description available)-->
@@ -997,7 +997,7 @@
 		<!--componentDensity => (no description available)-->
 		<xsd:attribute name="componentDensity" type="real64_array3d" />
 		<!--dCompDens_dCompConc => (no description available)-->
-		<xsd:attribute name="dCompDens_dCompConc" type="LvArray_Array&lt;double, 4, camp_int_seq&lt;long, 0l, 1l, 2l, 3l&gt;, long, LvArray_ChaiBuffer&gt;" />
+		<xsd:attribute name="dCompDens_dCompConc" type="LvArray_Array&lt;double, 4, camp_int_seq&lt;long, 0l, 1l, 2l, 3l&gt;, int, LvArray_ChaiBuffer&gt;" />
 		<!--dCompDens_dPres => (no description available)-->
 		<xsd:attribute name="dCompDens_dPres" type="real64_array3d" />
 		<!--dDens_dCompConc => (no description available)-->
@@ -1027,7 +1027,7 @@
 	</xsd:complexType>
 	<xsd:complexType name="VanGenuchtenBakerRelativePermeabilityType">
 		<!--dPhaseRelPerm_dPhaseVolFraction => (no description available)-->
-		<xsd:attribute name="dPhaseRelPerm_dPhaseVolFraction" type="LvArray_Array&lt;double, 4, camp_int_seq&lt;long, 0l, 1l, 2l, 3l&gt;, long, LvArray_ChaiBuffer&gt;" />
+		<xsd:attribute name="dPhaseRelPerm_dPhaseVolFraction" type="LvArray_Array&lt;double, 4, camp_int_seq&lt;long, 0l, 1l, 2l, 3l&gt;, int, LvArray_ChaiBuffer&gt;" />
 		<!--phaseOrder => (no description available)-->
 		<xsd:attribute name="phaseOrder" type="integer_array" />
 		<!--phaseRelPerm => (no description available)-->
@@ -1039,7 +1039,7 @@
 	</xsd:complexType>
 	<xsd:complexType name="VanGenuchtenCapillaryPressureType">
 		<!--dPhaseCapPressure_dPhaseVolFraction => (no description available)-->
-		<xsd:attribute name="dPhaseCapPressure_dPhaseVolFraction" type="LvArray_Array&lt;double, 4, camp_int_seq&lt;long, 0l, 1l, 2l, 3l&gt;, long, LvArray_ChaiBuffer&gt;" />
+		<xsd:attribute name="dPhaseCapPressure_dPhaseVolFraction" type="LvArray_Array&lt;double, 4, camp_int_seq&lt;long, 0l, 1l, 2l, 3l&gt;, int, LvArray_ChaiBuffer&gt;" />
 		<!--phaseCapPressure => (no description available)-->
 		<xsd:attribute name="phaseCapPressure" type="real64_array3d" />
 		<!--phaseOrder => (no description available)-->
@@ -1083,7 +1083,7 @@
 		<!--ghostRank => (no description available)-->
 		<xsd:attribute name="ghostRank" type="integer_array" />
 		<!--globalToLocalMap => (no description available)-->
-		<xsd:attribute name="globalToLocalMap" type="geosx_mapBase&lt;long long, long, std_integral_constant&lt;bool, false&gt; &gt;" />
+		<xsd:attribute name="globalToLocalMap" type="geosx_mapBase&lt;long long, int, std_integral_constant&lt;bool, false&gt; &gt;" />
 		<!--isExternal => (no description available)-->
 		<xsd:attribute name="isExternal" type="integer_array" />
 		<!--localToGlobalMap => Array that contains a map from localIndex to globalIndex.-->
@@ -1093,7 +1093,7 @@
 	<xsd:complexType name="neighborDataType" />
 	<xsd:complexType name="setsType">
 		<!--externalSet => (no description available)-->
-		<xsd:attribute name="externalSet" type="LvArray_SortedArray&lt;long, long, LvArray_ChaiBuffer&gt;" />
+		<xsd:attribute name="externalSet" type="LvArray_SortedArray&lt;int, int, LvArray_ChaiBuffer&gt;" />
 	</xsd:complexType>
 	<xsd:complexType name="edgeManagerType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -1107,29 +1107,29 @@
 		<!--SIF_III => Calculated mode 3 Stress Intensity Factor on the node. => SurfaceGenerator-->
 		<xsd:attribute name="SIF_III" type="real64_array" />
 		<!--childIndex => Index of child within the mesh object it is registered on. => SurfaceGenerator-->
-		<xsd:attribute name="childIndex" type="localIndex_array" />
+		<xsd:attribute name="childIndex" type="integer_array" />
 		<!--domainBoundaryIndicator => (no description available)-->
 		<xsd:attribute name="domainBoundaryIndicator" type="integer_array" />
 		<!--edgesToFractureConnectors => A map of edge local indices to the fracture connector local indices.-->
-		<xsd:attribute name="edgesToFractureConnectors" type="geosx_mapBase&lt;long, long, std_integral_constant&lt;bool, true&gt; &gt;" />
+		<xsd:attribute name="edgesToFractureConnectors" type="geosx_mapBase&lt;int, int, std_integral_constant&lt;bool, true&gt; &gt;" />
 		<!--faceList => (no description available)-->
-		<xsd:attribute name="faceList" type="geosx_InterObjectRelation&lt;LvArray_ArrayOfSets&lt;long, long, LvArray_ChaiBuffer&gt; &gt;" />
+		<xsd:attribute name="faceList" type="geosx_InterObjectRelation&lt;LvArray_ArrayOfSets&lt;int, int, LvArray_ChaiBuffer&gt; &gt;" />
 		<!--fractureConnectorsToEdges => A map of fracture connector local indices to edge local indices.-->
-		<xsd:attribute name="fractureConnectorsToEdges" type="localIndex_array" />
+		<xsd:attribute name="fractureConnectorsToEdges" type="integer_array" />
 		<!--fractureConnectorsToElementIndex => A map of fracture connector local indices face element local indices-->
-		<xsd:attribute name="fractureConnectorsToElementIndex" type="LvArray_ArrayOfArrays&lt;long, long, LvArray_ChaiBuffer&gt;" />
+		<xsd:attribute name="fractureConnectorsToElementIndex" type="LvArray_ArrayOfArrays&lt;int, int, LvArray_ChaiBuffer&gt;" />
 		<!--ghostRank => (no description available)-->
 		<xsd:attribute name="ghostRank" type="integer_array" />
 		<!--globalToLocalMap => (no description available)-->
-		<xsd:attribute name="globalToLocalMap" type="geosx_mapBase&lt;long long, long, std_integral_constant&lt;bool, false&gt; &gt;" />
+		<xsd:attribute name="globalToLocalMap" type="geosx_mapBase&lt;long long, int, std_integral_constant&lt;bool, false&gt; &gt;" />
 		<!--isExternal => (no description available)-->
 		<xsd:attribute name="isExternal" type="integer_array" />
 		<!--localToGlobalMap => Array that contains a map from localIndex to globalIndex.-->
 		<xsd:attribute name="localToGlobalMap" type="globalIndex_array" />
 		<!--nodeList => (no description available)-->
-		<xsd:attribute name="nodeList" type="geosx_InterObjectRelation&lt;LvArray_Array&lt;long, 2, camp_int_seq&lt;long, 0l, 1l&gt;, long, LvArray_ChaiBuffer&gt; &gt;" />
+		<xsd:attribute name="nodeList" type="geosx_InterObjectRelation&lt;LvArray_Array&lt;int, 2, camp_int_seq&lt;long, 0l, 1l&gt;, int, LvArray_ChaiBuffer&gt; &gt;" />
 		<!--parentIndex => Index of parent within the mesh object it is registered on. => SurfaceGenerator-->
-		<xsd:attribute name="parentIndex" type="localIndex_array" />
+		<xsd:attribute name="parentIndex" type="integer_array" />
 	</xsd:complexType>
 	<xsd:complexType name="embeddedSurfacesEdgeManagerType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -1139,23 +1139,23 @@
 		<!--domainBoundaryIndicator => (no description available)-->
 		<xsd:attribute name="domainBoundaryIndicator" type="integer_array" />
 		<!--edgesToFractureConnectors => A map of edge local indices to the fracture connector local indices.-->
-		<xsd:attribute name="edgesToFractureConnectors" type="geosx_mapBase&lt;long, long, std_integral_constant&lt;bool, true&gt; &gt;" />
+		<xsd:attribute name="edgesToFractureConnectors" type="geosx_mapBase&lt;int, int, std_integral_constant&lt;bool, true&gt; &gt;" />
 		<!--faceList => (no description available)-->
-		<xsd:attribute name="faceList" type="geosx_InterObjectRelation&lt;LvArray_ArrayOfSets&lt;long, long, LvArray_ChaiBuffer&gt; &gt;" />
+		<xsd:attribute name="faceList" type="geosx_InterObjectRelation&lt;LvArray_ArrayOfSets&lt;int, int, LvArray_ChaiBuffer&gt; &gt;" />
 		<!--fractureConnectorsToEdges => A map of fracture connector local indices to edge local indices.-->
-		<xsd:attribute name="fractureConnectorsToEdges" type="localIndex_array" />
+		<xsd:attribute name="fractureConnectorsToEdges" type="integer_array" />
 		<!--fractureConnectorsToElementIndex => A map of fracture connector local indices face element local indices-->
-		<xsd:attribute name="fractureConnectorsToElementIndex" type="LvArray_ArrayOfArrays&lt;long, long, LvArray_ChaiBuffer&gt;" />
+		<xsd:attribute name="fractureConnectorsToElementIndex" type="LvArray_ArrayOfArrays&lt;int, int, LvArray_ChaiBuffer&gt;" />
 		<!--ghostRank => (no description available)-->
 		<xsd:attribute name="ghostRank" type="integer_array" />
 		<!--globalToLocalMap => (no description available)-->
-		<xsd:attribute name="globalToLocalMap" type="geosx_mapBase&lt;long long, long, std_integral_constant&lt;bool, false&gt; &gt;" />
+		<xsd:attribute name="globalToLocalMap" type="geosx_mapBase&lt;long long, int, std_integral_constant&lt;bool, false&gt; &gt;" />
 		<!--isExternal => (no description available)-->
 		<xsd:attribute name="isExternal" type="integer_array" />
 		<!--localToGlobalMap => Array that contains a map from localIndex to globalIndex.-->
 		<xsd:attribute name="localToGlobalMap" type="globalIndex_array" />
 		<!--nodeList => (no description available)-->
-		<xsd:attribute name="nodeList" type="geosx_InterObjectRelation&lt;LvArray_Array&lt;long, 2, camp_int_seq&lt;long, 0l, 1l&gt;, long, LvArray_ChaiBuffer&gt; &gt;" />
+		<xsd:attribute name="nodeList" type="geosx_InterObjectRelation&lt;LvArray_Array&lt;int, 2, camp_int_seq&lt;long, 0l, 1l&gt;, int, LvArray_ChaiBuffer&gt; &gt;" />
 	</xsd:complexType>
 	<xsd:complexType name="FaceManagerType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -1167,7 +1167,7 @@
 		<!--SIFonFace => Calculated Stress Intensity Factor on the face. => SurfaceGenerator-->
 		<xsd:attribute name="SIFonFace" type="real64_array" />
 		<!--childIndex => Index of child within the mesh object it is registered on. => SurfaceGenerator-->
-		<xsd:attribute name="childIndex" type="localIndex_array" />
+		<xsd:attribute name="childIndex" type="integer_array" />
 		<!--degreeFromCrackTip => Distance to the crack tip in terms of topological distance. (i.e. how many nodes are along the path to the closest node that is on the crack surface. => SurfaceGenerator-->
 		<xsd:attribute name="degreeFromCrackTip" type="integer_array" />
 		<!--deltaFacePressure => An array that holds the accumulated pressure updates at the faces. => SinglePhaseHybridFVM-->
@@ -1175,13 +1175,13 @@
 		<!--domainBoundaryIndicator => (no description available)-->
 		<xsd:attribute name="domainBoundaryIndicator" type="integer_array" />
 		<!--edgeList => (no description available)-->
-		<xsd:attribute name="edgeList" type="geosx_InterObjectRelation&lt;LvArray_ArrayOfArrays&lt;long, long, LvArray_ChaiBuffer&gt; &gt;" />
+		<xsd:attribute name="edgeList" type="geosx_InterObjectRelation&lt;LvArray_ArrayOfArrays&lt;int, int, LvArray_ChaiBuffer&gt; &gt;" />
 		<!--elemList => (no description available)-->
-		<xsd:attribute name="elemList" type="localIndex_array2d" />
+		<xsd:attribute name="elemList" type="integer_array2d" />
 		<!--elemRegionList => (no description available)-->
-		<xsd:attribute name="elemRegionList" type="localIndex_array2d" />
+		<xsd:attribute name="elemRegionList" type="integer_array2d" />
 		<!--elemSubRegionList => (no description available)-->
-		<xsd:attribute name="elemSubRegionList" type="localIndex_array2d" />
+		<xsd:attribute name="elemSubRegionList" type="integer_array2d" />
 		<!--faceArea => (no description available)-->
 		<xsd:attribute name="faceArea" type="real64_array" />
 		<!--faceCenter => (no description available)-->
@@ -1195,7 +1195,7 @@
 		<!--ghostRank => (no description available)-->
 		<xsd:attribute name="ghostRank" type="integer_array" />
 		<!--globalToLocalMap => (no description available)-->
-		<xsd:attribute name="globalToLocalMap" type="geosx_mapBase&lt;long long, long, std_integral_constant&lt;bool, false&gt; &gt;" />
+		<xsd:attribute name="globalToLocalMap" type="geosx_mapBase&lt;long long, int, std_integral_constant&lt;bool, false&gt; &gt;" />
 		<!--gravityCoefficient => (no description available)-->
 		<xsd:attribute name="gravityCoefficient" type="real64_array" />
 		<!--isExternal => (no description available)-->
@@ -1205,11 +1205,11 @@
 		<!--localToGlobalMap => Array that contains a map from localIndex to globalIndex.-->
 		<xsd:attribute name="localToGlobalMap" type="globalIndex_array" />
 		<!--nodeList => (no description available)-->
-		<xsd:attribute name="nodeList" type="geosx_InterObjectRelation&lt;LvArray_ArrayOfArrays&lt;long, long, LvArray_ChaiBuffer&gt; &gt;" />
+		<xsd:attribute name="nodeList" type="geosx_InterObjectRelation&lt;LvArray_ArrayOfArrays&lt;int, int, LvArray_ChaiBuffer&gt; &gt;" />
 		<!--parentIndex => Index of parent within the mesh object it is registered on. => SurfaceGenerator-->
-		<xsd:attribute name="parentIndex" type="localIndex_array" />
+		<xsd:attribute name="parentIndex" type="integer_array" />
 		<!--primaryCandidateFace => ?? => SurfaceGenerator-->
-		<xsd:attribute name="primaryCandidateFace" type="localIndex_array" />
+		<xsd:attribute name="primaryCandidateFace" type="integer_array" />
 		<!--ruptureState => Rupture state of the face: 
  0=not ready for rupture 
  1=ready for rupture 
@@ -1245,7 +1245,7 @@
 		<!--Velocity => An array that holds the current velocity on the nodes. => SolidMechanicsLagrangianSSLE, SolidMechanics_LagrangianFEM-->
 		<xsd:attribute name="Velocity" type="real64_array2d" />
 		<!--childIndex => Index of child within the mesh object it is registered on. => SurfaceGenerator-->
-		<xsd:attribute name="childIndex" type="localIndex_array" />
+		<xsd:attribute name="childIndex" type="integer_array" />
 		<!--contactForce => An array that holds the contact force. => SolidMechanicsLagrangianSSLE, SolidMechanics_LagrangianFEM-->
 		<xsd:attribute name="contactForce" type="r1_array" />
 		<!--degreeFromCrack => Distance to the crack in terms of topological distance. (i.e. how many nodes are along the path to the closest node that is on the crack surface. => SurfaceGenerator-->
@@ -1255,27 +1255,27 @@
 		<!--domainBoundaryIndicator => (no description available)-->
 		<xsd:attribute name="domainBoundaryIndicator" type="integer_array" />
 		<!--edgeList => (no description available)-->
-		<xsd:attribute name="edgeList" type="geosx_InterObjectRelation&lt;LvArray_ArrayOfSets&lt;long, long, LvArray_ChaiBuffer&gt; &gt;" />
+		<xsd:attribute name="edgeList" type="geosx_InterObjectRelation&lt;LvArray_ArrayOfSets&lt;int, int, LvArray_ChaiBuffer&gt; &gt;" />
 		<!--elemList => (no description available)-->
-		<xsd:attribute name="elemList" type="LvArray_ArrayOfArrays&lt;long, long, LvArray_ChaiBuffer&gt;" />
+		<xsd:attribute name="elemList" type="LvArray_ArrayOfArrays&lt;int, int, LvArray_ChaiBuffer&gt;" />
 		<!--elemRegionList => (no description available)-->
-		<xsd:attribute name="elemRegionList" type="LvArray_ArrayOfArrays&lt;long, long, LvArray_ChaiBuffer&gt;" />
+		<xsd:attribute name="elemRegionList" type="LvArray_ArrayOfArrays&lt;int, int, LvArray_ChaiBuffer&gt;" />
 		<!--elemSubRegionList => (no description available)-->
-		<xsd:attribute name="elemSubRegionList" type="LvArray_ArrayOfArrays&lt;long, long, LvArray_ChaiBuffer&gt;" />
+		<xsd:attribute name="elemSubRegionList" type="LvArray_ArrayOfArrays&lt;int, int, LvArray_ChaiBuffer&gt;" />
 		<!--externalForce => An array that holds the external forces on the nodes. This includes any boundary conditions as well as coupling forces such as hydraulic forces. => SolidMechanicsLagrangianSSLE, SolidMechanics_LagrangianFEM-->
 		<xsd:attribute name="externalForce" type="real64_array2d" />
 		<!--faceList => (no description available)-->
-		<xsd:attribute name="faceList" type="geosx_InterObjectRelation&lt;LvArray_ArrayOfSets&lt;long, long, LvArray_ChaiBuffer&gt; &gt;" />
+		<xsd:attribute name="faceList" type="geosx_InterObjectRelation&lt;LvArray_ArrayOfSets&lt;int, int, LvArray_ChaiBuffer&gt; &gt;" />
 		<!--ghostRank => (no description available)-->
 		<xsd:attribute name="ghostRank" type="integer_array" />
 		<!--globalToLocalMap => (no description available)-->
-		<xsd:attribute name="globalToLocalMap" type="geosx_mapBase&lt;long long, long, std_integral_constant&lt;bool, false&gt; &gt;" />
+		<xsd:attribute name="globalToLocalMap" type="geosx_mapBase&lt;long long, int, std_integral_constant&lt;bool, false&gt; &gt;" />
 		<!--isExternal => (no description available)-->
 		<xsd:attribute name="isExternal" type="integer_array" />
 		<!--localToGlobalMap => Array that contains a map from localIndex to globalIndex.-->
 		<xsd:attribute name="localToGlobalMap" type="globalIndex_array" />
 		<!--parentIndex => Index of parent within the mesh object it is registered on. => SurfaceGenerator-->
-		<xsd:attribute name="parentIndex" type="localIndex_array" />
+		<xsd:attribute name="parentIndex" type="integer_array" />
 		<!--primaryField => Primary field variable-->
 		<xsd:attribute name="primaryField" type="real64_array" />
 		<!--ruptureTime => Time that the object was ruptured/split. => SurfaceGenerator-->
@@ -1296,7 +1296,7 @@
 		<!--ghostRank => (no description available)-->
 		<xsd:attribute name="ghostRank" type="integer_array" />
 		<!--globalToLocalMap => (no description available)-->
-		<xsd:attribute name="globalToLocalMap" type="geosx_mapBase&lt;long long, long, std_integral_constant&lt;bool, false&gt; &gt;" />
+		<xsd:attribute name="globalToLocalMap" type="geosx_mapBase&lt;long long, int, std_integral_constant&lt;bool, false&gt; &gt;" />
 		<!--isExternal => (no description available)-->
 		<xsd:attribute name="isExternal" type="integer_array" />
 		<!--localToGlobalMap => Array that contains a map from localIndex to globalIndex.-->
@@ -1314,7 +1314,7 @@
 		<!--ghostRank => (no description available)-->
 		<xsd:attribute name="ghostRank" type="integer_array" />
 		<!--globalToLocalMap => (no description available)-->
-		<xsd:attribute name="globalToLocalMap" type="geosx_mapBase&lt;long long, long, std_integral_constant&lt;bool, false&gt; &gt;" />
+		<xsd:attribute name="globalToLocalMap" type="geosx_mapBase&lt;long long, int, std_integral_constant&lt;bool, false&gt; &gt;" />
 		<!--isExternal => (no description available)-->
 		<xsd:attribute name="isExternal" type="integer_array" />
 		<!--localToGlobalMap => Array that contains a map from localIndex to globalIndex.-->
@@ -1337,7 +1337,7 @@
 		<!--ghostRank => (no description available)-->
 		<xsd:attribute name="ghostRank" type="integer_array" />
 		<!--globalToLocalMap => (no description available)-->
-		<xsd:attribute name="globalToLocalMap" type="geosx_mapBase&lt;long long, long, std_integral_constant&lt;bool, false&gt; &gt;" />
+		<xsd:attribute name="globalToLocalMap" type="geosx_mapBase&lt;long long, int, std_integral_constant&lt;bool, false&gt; &gt;" />
 		<!--isExternal => (no description available)-->
 		<xsd:attribute name="isExternal" type="integer_array" />
 		<!--localToGlobalMap => Array that contains a map from localIndex to globalIndex.-->
@@ -1354,7 +1354,7 @@
 		<!--domainBoundaryIndicator => (no description available)-->
 		<xsd:attribute name="domainBoundaryIndicator" type="integer_array" />
 		<!--edgeList => Map to the edges.-->
-		<xsd:attribute name="edgeList" type="geosx_InterObjectRelation&lt;LvArray_ArrayOfArrays&lt;long, long, LvArray_ChaiBuffer&gt; &gt;" />
+		<xsd:attribute name="edgeList" type="geosx_InterObjectRelation&lt;LvArray_ArrayOfArrays&lt;int, int, LvArray_ChaiBuffer&gt; &gt;" />
 		<!--elementAperture => The aperture of each EmbeddedSurface.-->
 		<xsd:attribute name="elementAperture" type="real64_array" />
 		<!--elementArea => The area of each EmbeddedSurface element.-->
@@ -1364,29 +1364,29 @@
 		<!--elementVolume => The volume of each EmbeddedSurface element.-->
 		<xsd:attribute name="elementVolume" type="real64_array" />
 		<!--fractureElementsToCellIndices => Map to the cell elements.-->
-		<xsd:attribute name="fractureElementsToCellIndices" type="localIndex_array" />
+		<xsd:attribute name="fractureElementsToCellIndices" type="integer_array" />
 		<!--fractureElementsToRegionIndex => Map to the region cut by each EmbeddedSurface.-->
-		<xsd:attribute name="fractureElementsToRegionIndex" type="localIndex_array" />
+		<xsd:attribute name="fractureElementsToRegionIndex" type="integer_array" />
 		<!--fractureElementsToSubRegionIndex => Map to the subregion cut by each EmbeddedSurface.-->
-		<xsd:attribute name="fractureElementsToSubRegionIndex" type="localIndex_array" />
+		<xsd:attribute name="fractureElementsToSubRegionIndex" type="integer_array" />
 		<!--ghostRank => (no description available)-->
 		<xsd:attribute name="ghostRank" type="integer_array" />
 		<!--globalToLocalMap => (no description available)-->
-		<xsd:attribute name="globalToLocalMap" type="geosx_mapBase&lt;long long, long, std_integral_constant&lt;bool, false&gt; &gt;" />
+		<xsd:attribute name="globalToLocalMap" type="geosx_mapBase&lt;long long, int, std_integral_constant&lt;bool, false&gt; &gt;" />
 		<!--isExternal => (no description available)-->
 		<xsd:attribute name="isExternal" type="integer_array" />
 		<!--localToGlobalMap => Array that contains a map from localIndex to globalIndex.-->
 		<xsd:attribute name="localToGlobalMap" type="globalIndex_array" />
 		<!--nodeList => Map to the nodes attached to each EmbeddedSurface.-->
-		<xsd:attribute name="nodeList" type="geosx_InterObjectRelation&lt;LvArray_ArrayOfArrays&lt;long, long, LvArray_ChaiBuffer&gt; &gt;" />
+		<xsd:attribute name="nodeList" type="geosx_InterObjectRelation&lt;LvArray_ArrayOfArrays&lt;int, int, LvArray_ChaiBuffer&gt; &gt;" />
 		<!--normalVector => Unit normal vector to the embedded surface.-->
 		<xsd:attribute name="normalVector" type="r1_array" />
 		<!--numEdgesPerElement => (no description available)-->
-		<xsd:attribute name="numEdgesPerElement" type="localIndex" />
+		<xsd:attribute name="numEdgesPerElement" type="integer" />
 		<!--numFacesPerElement => (no description available)-->
-		<xsd:attribute name="numFacesPerElement" type="localIndex" />
+		<xsd:attribute name="numFacesPerElement" type="integer" />
 		<!--numNodesPerElement => (no description available)-->
-		<xsd:attribute name="numNodesPerElement" type="localIndex" />
+		<xsd:attribute name="numNodesPerElement" type="integer" />
 		<!--tangentVector1 => Unit vector in the first tangent direction to the embedded surface.-->
 		<xsd:attribute name="tangentVector1" type="r1_array" />
 		<!--tangentVector2 => Unit vector in the second tangent direction to the embedded surface.-->
@@ -1404,7 +1404,7 @@
 		<!--ghostRank => (no description available)-->
 		<xsd:attribute name="ghostRank" type="integer_array" />
 		<!--globalToLocalMap => (no description available)-->
-		<xsd:attribute name="globalToLocalMap" type="geosx_mapBase&lt;long long, long, std_integral_constant&lt;bool, false&gt; &gt;" />
+		<xsd:attribute name="globalToLocalMap" type="geosx_mapBase&lt;long long, int, std_integral_constant&lt;bool, false&gt; &gt;" />
 		<!--isExternal => (no description available)-->
 		<xsd:attribute name="isExternal" type="integer_array" />
 		<!--localToGlobalMap => Array that contains a map from localIndex to globalIndex.-->
@@ -1421,7 +1421,7 @@
 		<!--ghostRank => (no description available)-->
 		<xsd:attribute name="ghostRank" type="integer_array" />
 		<!--globalToLocalMap => (no description available)-->
-		<xsd:attribute name="globalToLocalMap" type="geosx_mapBase&lt;long long, long, std_integral_constant&lt;bool, false&gt; &gt;" />
+		<xsd:attribute name="globalToLocalMap" type="geosx_mapBase&lt;long long, int, std_integral_constant&lt;bool, false&gt; &gt;" />
 		<!--isExternal => (no description available)-->
 		<xsd:attribute name="isExternal" type="integer_array" />
 		<!--localToGlobalMap => Array that contains a map from localIndex to globalIndex.-->
@@ -1447,29 +1447,29 @@
 		<!--ghostRank => (no description available)-->
 		<xsd:attribute name="ghostRank" type="integer_array" />
 		<!--globalToLocalMap => (no description available)-->
-		<xsd:attribute name="globalToLocalMap" type="geosx_mapBase&lt;long long, long, std_integral_constant&lt;bool, false&gt; &gt;" />
+		<xsd:attribute name="globalToLocalMap" type="geosx_mapBase&lt;long long, int, std_integral_constant&lt;bool, false&gt; &gt;" />
 		<!--isExternal => (no description available)-->
 		<xsd:attribute name="isExternal" type="integer_array" />
 		<!--localToGlobalMap => Array that contains a map from localIndex to globalIndex.-->
 		<xsd:attribute name="localToGlobalMap" type="globalIndex_array" />
 		<!--nextWellElementIndex => (no description available)-->
-		<xsd:attribute name="nextWellElementIndex" type="localIndex_array" />
+		<xsd:attribute name="nextWellElementIndex" type="integer_array" />
 		<!--nextWellElementIndexGlobal => (no description available)-->
-		<xsd:attribute name="nextWellElementIndexGlobal" type="localIndex_array" />
+		<xsd:attribute name="nextWellElementIndexGlobal" type="integer_array" />
 		<!--nodeList => (no description available)-->
-		<xsd:attribute name="nodeList" type="geosx_InterObjectRelation&lt;LvArray_Array&lt;long, 2, camp_int_seq&lt;long, 0l, 1l&gt;, long, LvArray_ChaiBuffer&gt; &gt;" />
+		<xsd:attribute name="nodeList" type="geosx_InterObjectRelation&lt;LvArray_Array&lt;int, 2, camp_int_seq&lt;long, 0l, 1l&gt;, int, LvArray_ChaiBuffer&gt; &gt;" />
 		<!--numEdgesPerElement => (no description available)-->
-		<xsd:attribute name="numEdgesPerElement" type="localIndex" />
+		<xsd:attribute name="numEdgesPerElement" type="integer" />
 		<!--numFacesPerElement => (no description available)-->
-		<xsd:attribute name="numFacesPerElement" type="localIndex" />
+		<xsd:attribute name="numFacesPerElement" type="integer" />
 		<!--numNodesPerElement => (no description available)-->
-		<xsd:attribute name="numNodesPerElement" type="localIndex" />
+		<xsd:attribute name="numNodesPerElement" type="integer" />
 		<!--radius => (no description available)-->
 		<xsd:attribute name="radius" type="real64_array" />
 		<!--topRank => (no description available)-->
 		<xsd:attribute name="topRank" type="integer" />
 		<!--topWellElementIndex => (no description available)-->
-		<xsd:attribute name="topWellElementIndex" type="localIndex" />
+		<xsd:attribute name="topWellElementIndex" type="integer" />
 		<!--wellControlsName => (no description available)-->
 		<xsd:attribute name="wellControlsName" type="string" />
 	</xsd:complexType>
@@ -1483,7 +1483,7 @@
 		<!--ghostRank => (no description available)-->
 		<xsd:attribute name="ghostRank" type="integer_array" />
 		<!--globalToLocalMap => (no description available)-->
-		<xsd:attribute name="globalToLocalMap" type="geosx_mapBase&lt;long long, long, std_integral_constant&lt;bool, false&gt; &gt;" />
+		<xsd:attribute name="globalToLocalMap" type="geosx_mapBase&lt;long long, int, std_integral_constant&lt;bool, false&gt; &gt;" />
 		<!--isExternal => (no description available)-->
 		<xsd:attribute name="isExternal" type="integer_array" />
 		<!--localToGlobalMap => Array that contains a map from localIndex to globalIndex.-->
@@ -1493,13 +1493,13 @@
 		<!--numPerforationsGlobal => (no description available)-->
 		<xsd:attribute name="numPerforationsGlobal" type="globalIndex" />
 		<!--reservoirElementIndex => (no description available)-->
-		<xsd:attribute name="reservoirElementIndex" type="localIndex_array" />
+		<xsd:attribute name="reservoirElementIndex" type="integer_array" />
 		<!--reservoirElementRegion => (no description available)-->
-		<xsd:attribute name="reservoirElementRegion" type="localIndex_array" />
+		<xsd:attribute name="reservoirElementRegion" type="integer_array" />
 		<!--reservoirElementSubregion => (no description available)-->
-		<xsd:attribute name="reservoirElementSubregion" type="localIndex_array" />
+		<xsd:attribute name="reservoirElementSubregion" type="integer_array" />
 		<!--wellElementIndex => (no description available)-->
-		<xsd:attribute name="wellElementIndex" type="localIndex_array" />
+		<xsd:attribute name="wellElementIndex" type="integer_array" />
 		<!--wellTransmissibility => (no description available)-->
 		<xsd:attribute name="wellTransmissibility" type="real64_array" />
 	</xsd:complexType>
