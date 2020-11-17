@@ -18,13 +18,27 @@ namespace geosx
       CellElementSubRegion::NodeMapType const & elementToNodeMap = cellSubRegion.nodeList();
       FixedOneToManyRelation const & elementToFaceMap = cellSubRegion.faceList();
       localIndex const numCellFaces = elementToFaceMap[cellIndex].size();
+      localIndex const numCellPoints = elementToNodeMap[cellIndex].size();
       numSupportPoints = elementToNodeMap[cellIndex].size();
       numQuadraturePoints = 0;
+      map<localIndex, localIndex> cellPointsPosition;
+      for(unsigned int numVertex = 0; numVertex < numCellPoints; ++numVertex)
+        cellPointsPosition.insert(std::pair<localIndex, localIndex>(elementToNodeMap[cellIndex][numVertex], numVertex));
+      array1d<real64> basisBoundaryIntegrals(numCellPoints);
+      for(localIndex numBasisFunction = 0; numBasisFunction < numCellPoints; ++numBasisFunction)
+        basisBoundaryIntegrals[numBasisFunction] = 0;
       for(localIndex numFace = 0; numFace < numCellFaces; ++numFace)
       {
+        localIndex const faceIndex = elementToFaceMap[cellIndex][numFace];
         numQuadraturePoints += faceManager.nodeList()[elementToFaceMap[cellIndex][numFace]].size();
         array1d<real64> faceBasisProjections;
-        ComputeFaceProjectors(mesh, elementToFaceMap[cellIndex][numFace], faceBasisProjections);
+        ComputeFaceProjectors(mesh, faceIndex, faceBasisProjections);
+        arraySlice1d< localIndex const > faceToNodes = faceManager.nodeList()[faceIndex];
+        for(localIndex numFaceBasisFunctions = 0; numFaceBasisFunctions < faceToNodes.size(); ++numFaceBasisFunctions)
+        {
+          localIndex basisFunctionIndex = cellPointsPosition.find(faceToNodes[numFaceBasisFunctions])->second;
+          basisBoundaryIntegrals[basisFunctionIndex] += faceManager.faceArea()[faceIndex] * faceBasisProjections[numFaceBasisFunctions];
+        }
       }
     }
 
