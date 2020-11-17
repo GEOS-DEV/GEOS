@@ -296,9 +296,14 @@ int_t SuperLU_Dist::numGlobalRows() const
   return m_numGlobalRows;
 }
 
-void SuperLU_Dist::setNumLocalRows( int_t const numLocalRows )
+void SuperLU_Dist::setNumGlobalCols( int_t const numGlobalCols )
 {
-  m_numLocalRows = numLocalRows;
+  m_numGlobalCols = numGlobalCols;
+}
+
+int_t SuperLU_Dist::numGlobalCols() const
+{
+  return m_numGlobalCols;
 }
 
 int_t SuperLU_Dist::numLocalRows() const
@@ -316,21 +321,31 @@ MPI_Comm SuperLU_Dist::getComm() const
   return m_comm;
 }
 
-SuperMatrix & SuperLU_Dist::mat()
+void SuperLU_Dist::resize( localIndex const numLocalRows, localIndex const numLocalNonzeros )
 {
-  return m_mat;
-}
-
-void SuperLU_Dist::createRowPtr( localIndex const numRows )
-{
+  m_numLocalRows = numLocalRows;
+  m_numLocalNonzeros = numLocalNonzeros;
   // This will be deleted by Destroy_CompRowLoc_Matrix_dist.
   // No need for explicit call to delete!!!
-  m_rowPtr = new int_t[numRows+1];
+  m_rowPtr = intMalloc_dist( numLocalRows+1 );
+  m_colIndices = intMalloc_dist( numLocalNonzeros );
+  m_values = doubleMalloc_dist( numLocalNonzeros );
 }
 
-void SuperLU_Dist::setRowPtr( int_t * const rowPtr )
+void SuperLU_Dist::createSuperMatrix( globalIndex const ilower )
 {
-  m_rowPtr = rowPtr;
+  dCreate_CompRowLoc_Matrix_dist( &m_mat,
+                                  toSuperLU_intT( m_numGlobalRows ),
+                                  toSuperLU_intT( m_numGlobalRows ),
+                                  toSuperLU_intT( m_numLocalNonzeros ),
+                                  toSuperLU_intT( m_numLocalRows ),
+                                  toSuperLU_intT( ilower ),
+                                  m_values,
+                                  m_colIndices,
+                                  m_rowPtr,
+                                  SLU_NR_loc,
+                                  SLU_D,
+                                  SLU_GE );
 }
 
 int_t * SuperLU_Dist::rowPtr()
@@ -338,33 +353,9 @@ int_t * SuperLU_Dist::rowPtr()
   return m_rowPtr;
 }
 
-void SuperLU_Dist::createColIndices( localIndex const numNonzeros )
-{
-  // This will be deleted by Destroy_CompRowLoc_Matrix_dist.
-  // No need for explicit call to delete!!!
-  m_colIndices = new int_t[numNonzeros];
-}
-
-void SuperLU_Dist::setColIndices( int_t * const colIndices )
-{
-  m_colIndices = colIndices;
-}
-
 int_t * SuperLU_Dist::colIndices()
 {
   return m_colIndices;
-}
-
-void SuperLU_Dist::createValues( localIndex const numNonzeros )
-{
-  // This will be deleted by Destroy_CompRowLoc_Matrix_dist.
-  // No need for explicit call to delete!!!
-  m_values = new real64[numNonzeros];
-}
-
-void SuperLU_Dist::setValues( real64 * const values )
-{
-  m_values = values;
 }
 
 real64 * SuperLU_Dist::values()

@@ -31,7 +31,7 @@ namespace geosx
 
 namespace
 {
-void sortIntReal64( Int * arrayInt, real64 * arrayReal64, localIndex const size )
+void sortIntReal64( SSInt * arrayInt, real64 * arrayReal64, localIndex const size )
 {
   array1d< localIndex > indices( size );
   std::iota( indices.begin(), indices.end(), 0 );
@@ -89,19 +89,18 @@ void ConvertHypreToSuiteSparseMatrix( HypreMatrix const & matrix,
   {
     if( MpiWrapper::Comm_rank( subComm ) == workingRank )
     {
-      SSData.setNumRows( toSuiteSparse_Int( matrix.numGlobalRows() ) );
-      SSData.setNumCols( toSuiteSparse_Int( matrix.numGlobalCols() ) );
-      SSData.setNonZeros( toSuiteSparse_Int( hypre_CSRMatrixNumNonzeros( CSRmatrix ) ) );
-      SSData.createInternalStorage();
+      SSData.resize( toSuiteSparse_Int( matrix.numGlobalRows() ),
+                     toSuiteSparse_Int( matrix.numGlobalCols() ),
+                     toSuiteSparse_Int( hypre_CSRMatrixNumNonzeros( CSRmatrix ) ) );
       HYPRE_Int const * const hypreI = hypre_CSRMatrixI( CSRmatrix );
       for( localIndex i = 0; i <= SSData.numRows(); ++i )
       {
-        SSData.rowPtr()[i] = LvArray::integerConversion< Int >( hypreI[i] );
+        SSData.rowPtr()[i] = LvArray::integerConversion< SSInt >( hypreI[i] );
       }
       HYPRE_Int const * const hypreJ = hypre_CSRMatrixJ( CSRmatrix );
       for( localIndex i = 0; i < SSData.nonZeros(); ++i )
       {
-        SSData.colIndices()[i] = LvArray::integerConversion< Int >( hypreJ[i] );
+        SSData.colIndices()[i] = LvArray::integerConversion< SSInt >( hypreJ[i] );
       }
       std::copy( hypre_CSRMatrixData( CSRmatrix ),
                  hypre_CSRMatrixData( CSRmatrix ) + SSData.nonZeros(),
@@ -182,7 +181,7 @@ int SuiteSparseSolve( SuiteSparse & SSData,
 
 namespace
 {
-class InverseOperator
+class InverseOperator : public LinearOperator< HypreVector >
 {
 public:
 
@@ -191,15 +190,21 @@ public:
     m_SSData = &SSData;
     m_comm = SSData.getComm();
     m_numGlobalRows = matrix.numGlobalRows();
+    m_numGlobalCols = matrix.numGlobalCols();
     m_numLocalRows = matrix.numLocalRows();
   }
 
-  globalIndex globalSize() const
+  globalIndex numGlobalRows() const override
   {
     return m_numGlobalRows;
   }
 
-  localIndex localSize() const
+  globalIndex numGlobalCols() const override
+  {
+    return m_numGlobalCols;
+  }
+
+  localIndex numLocalRows() const
   {
     return m_numLocalRows;
   }
@@ -209,7 +214,7 @@ public:
     return m_comm;
   }
 
-  void apply( HypreVector const & x, HypreVector & y ) const
+  void apply( HypreVector const & x, HypreVector & y ) const override
   {
     SuiteSparseSolve( *m_SSData, x, y, false );
     SuiteSparseSolve( *m_SSData, y, y, true );
@@ -223,6 +228,8 @@ private:
 
   globalIndex m_numGlobalRows;
 
+  globalIndex m_numGlobalCols;
+
   localIndex m_numLocalRows;
 };
 }
@@ -233,12 +240,12 @@ real64 HypreSuiteSparseCond( HypreMatrix const & matrix, SuiteSparse & SSData )
 
   using DirectOperator = DirectOperator< HypreMatrix, HypreVector >;
   DirectOperator directOperator;
-  directOperator.set( matrix );
-  real64 const lambdaDirect = ArnoldiLargestEigenvalue< HypreVector, DirectOperator >( directOperator, numIterations );
+  directOperator.set( matrix, matrix.getComm() );
+  real64 const lambdaDirect = ArnoldiLargestEigenvalue( directOperator, numIterations );
 
   InverseOperator inverseOperator;
   inverseOperator.set( matrix, SSData );
-  real64 const lambdaInverse = ArnoldiLargestEigenvalue< HypreVector, InverseOperator >( inverseOperator, numIterations );
+  real64 const lambdaInverse = ArnoldiLargestEigenvalue( inverseOperator, numIterations );
 
   return sqrt( lambdaDirect * lambdaInverse );
 }

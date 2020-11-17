@@ -121,6 +121,18 @@ public:
   int_t numGlobalRows() const;
 
   /**
+   * @brief Sets the global number of columns
+   * @param numGlobalCols the global number of columns
+   */
+  void setNumGlobalCols( int_t const numGlobalCols );
+
+  /**
+   * @brief Returns the global number of columns
+   * @return the global number of columns
+   */
+  int_t numGlobalCols() const;
+
+  /**
    * @brief Sets the local number of rows
    * @param numLocalRows the local number of rows
    */
@@ -145,22 +157,17 @@ public:
   MPI_Comm getComm() const;
 
   /**
-   * @brief Returns the matrix in SuperLU_Dist SuperMatrix format
-   * @return the matrix in SuperLU_Dist SuperMatrix format
+   * @brief Allocate the internal memory
+   * @param numLocalRows the number of local rows
+   * @param numLocalNonzeros the number of local entries
    */
-  SuperMatrix & mat();
+  void resize( localIndex const numLocalRows, localIndex const numLocalNonzeros );
 
   /**
-   * @brief Allocates the row pointers array
-   * @param numRows the number of rows
+   * @brief Create the matrix in SuperLU_Dist format (SuperMatrix)
+   * @param ilower the first row on each process
    */
-  void createRowPtr( localIndex const numRows );
-
-  /**
-   * @brief Sets the row pointers array
-   * @param rowPtr the row pointers array
-   */
-  void setRowPtr( int_t * const rowPtr );
+  void createSuperMatrix( globalIndex const ilower );
 
   /**
    * @brief Returns the array with the row pointers
@@ -169,34 +176,10 @@ public:
   int_t * rowPtr();
 
   /**
-   * @brief Allocates the column indices array
-   * @param numNonzeros the number of entries
-   */
-  void createColIndices( localIndex const numNonzeros );
-
-  /**
-   * @brief Sets the column indices array
-   * @param colIndices the column indices array
-   */
-  void setColIndices( int_t * const colIndices );
-
-  /**
    * @brief Returns the array with the column indices
    * @return the array with the column indices
    */
   int_t * colIndices();
-
-  /**
-   * @brief Allocates the values array
-   * @param numNonzeros the number of entries
-   */
-  void createValues( localIndex const numNonzeros );
-
-  /**
-   * @brief Sets the values array
-   * @param values the values array
-   */
-  void setValues( real64 * const values );
 
   /**
    * @brief Returns the array with the values
@@ -233,8 +216,14 @@ private:
   /// number of global rows
   int_t m_numGlobalRows;
 
+  /// number of global columns
+  int_t m_numGlobalCols;
+
   /// number of local rows
   int_t m_numLocalRows;
+
+  /// number of local non zeros
+  int_t m_numLocalNonzeros;
 
   /// row pointers
   int_t * m_rowPtr;

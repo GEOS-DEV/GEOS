@@ -92,8 +92,7 @@ void solve_parallelDirect( LinearSolverParameters const & parameters,
   LvArray::system::FloatingPointExceptionGuard guard;
 
   SuperLU_Dist SLUDData( parameters );
-  hypre_CSRMatrix * localMatrix;
-  HypreConvertToSuperMatrix( mat, localMatrix, SLUDData );
+  HypreConvertToSuperMatrix( mat, SLUDData );
 
   GEOSX_LAI_CHECK_ERROR( SLUDData.setup() );
   GEOSX_LAI_CHECK_ERROR( SLUDData.solve( rhs.extractLocalVector(), sol.extractLocalVector() ) );
@@ -128,8 +127,6 @@ void solve_parallelDirect( LinearSolverParameters const & parameters,
       }
     }
   }
-
-  HypreDestroyAdditionalData( localMatrix );
 }
 
 void solve_serialDirect( LinearSolverParameters const & parameters,

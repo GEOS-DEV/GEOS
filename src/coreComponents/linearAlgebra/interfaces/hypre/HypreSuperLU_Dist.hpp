@@ -31,18 +31,10 @@ namespace geosx
 /**
  * @brief Converts a matrix from Hypre to SuperLU_Dist format
  * @param[in] matrix the HypreMatrix object
- * @param[out] localMatrix local matrix in Hypre format
  * @param[out] SLUDData the structure containing the matrix in SuperLU_Dist format
  */
 void HypreConvertToSuperMatrix( HypreMatrix const & matrix,
-                                hypre_CSRMatrix * & localMatrix,
                                 SuperLU_Dist & SLUDData );
-
-/**
- * @brief Destroys data needed to convert a matrix from Hypre to SuperLU_Dist format
- * @param[inout] localMatrix local matrix in Hypre format
- */
-void HypreDestroyAdditionalData( hypre_CSRMatrix * & localMatrix );
 
 /**
  * @brief Computes an accurate condition number (time consuming function!!!)

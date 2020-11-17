@@ -743,7 +743,7 @@ void BlasLapackLA::matrixSVD( arraySlice2d< real64 const, MatrixLayout::COL_MAJO
                 S.dataIfContiguous(), U.dataIfContiguous(), &LDU, VT.dataIfContiguous(), &LDVT,
                 WORK.data(), &LWORK, &INFO );
 
-  GEOSX_ASSERT_MSG( INFO == 0, "The algorithm computing SVD failed to converge." );
+  GEOSX_ERROR_IF( INFO != 0, "The algorithm computing SVD failed to converge." );
 }
 
 void BlasLapackLA::matrixSVD( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & A,
@@ -835,7 +835,7 @@ void BlasLapackLA::matrixEigenvalues( MatColMajor< real64 const > const & A,
     lambda[i] = std::complex< real64 >( WR[i], WI[i] );
   }
 
-  GEOSX_ASSERT_MSG( INFO == 0, "The algorithm computing eigenvalues failed to converge." );
+  GEOSX_ERROR_IF( INFO != 0, "The algorithm computing eigenvalues failed to converge." );
 }
 
 void BlasLapackLA::matrixEigenvalues( MatRowMajor< real64 const > const & A,

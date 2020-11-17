@@ -67,11 +67,9 @@ void ConvertEpetraToSuiteSparseMatrix( EpetraMatrix const & matrix,
   {
     globalIndex const nonZeros = matrix.numGlobalNonzeros();
 
-    SSData.setNumRows( toSuiteSparse_Int( matrix.numGlobalRows() ) );
-    SSData.setNumCols( toSuiteSparse_Int( matrix.numGlobalCols() ) );
-    SSData.setNonZeros( toSuiteSparse_Int( nonZeros ) );
-
-    SSData.createInternalStorage();
+    SSData.resize( toSuiteSparse_Int( matrix.numGlobalRows() ),
+                   toSuiteSparse_Int( matrix.numGlobalCols() ),
+                   toSuiteSparse_Int( nonZeros ) );
 
     int const numEntries = serialCrsMatrix.MaxNumEntries();
     int numEntriesThisRow;
@@ -79,15 +77,15 @@ void ConvertEpetraToSuiteSparseMatrix( EpetraMatrix const & matrix,
     array1d< int > ai( SSData.nonZeros() );
     for( localIndex i = 0; i < SSData.numRows(); ++i )
     {
-      SSData.rowPtr()[i] = LvArray::integerConversion< Int >( aiIndex );
+      SSData.rowPtr()[i] = LvArray::integerConversion< SSInt >( aiIndex );
       GEOSX_LAI_CHECK_ERROR( serialCrsMatrix.ExtractMyRowCopy( i, numEntries, numEntriesThisRow, &SSData.values()[aiIndex], &ai[aiIndex] ) );
       aiIndex += numEntriesThisRow;
     }
-    SSData.rowPtr()[SSData.numRows()] = LvArray::integerConversion< Int >( aiIndex );
+    SSData.rowPtr()[SSData.numRows()] = LvArray::integerConversion< SSInt >( aiIndex );
 
     for( localIndex i = 0; i < SSData.nonZeros(); ++i )
     {
-      SSData.colIndices()[i] = LvArray::integerConversion< Int >( ai[i] );
+      SSData.colIndices()[i] = LvArray::integerConversion< SSInt >( ai[i] );
     }
   }
 
@@ -136,7 +134,7 @@ int SuiteSparseSolve( SuiteSparse & SSData,
 
 namespace
 {
-class InverseOperator
+class InverseOperator : public LinearOperator< EpetraVector >
 {
 public:
 
@@ -150,15 +148,21 @@ public:
     m_serialMap = serialMap;
     m_importToSerial = importToSerial;
     m_numGlobalRows = matrix.numGlobalRows();
+    m_numGlobalCols = matrix.numGlobalCols();
     m_numLocalRows = matrix.numLocalRows();
   }
 
-  globalIndex globalSize() const
+  globalIndex numGlobalRows() const override
   {
     return m_numGlobalRows;
   }
 
-  localIndex localSize() const
+  globalIndex numGlobalCols() const override
+  {
+    return m_numGlobalCols;
+  }
+
+  localIndex numLocalRows() const
   {
     return m_numLocalRows;
   }
@@ -168,7 +172,7 @@ public:
     return m_comm;
   }
 
-  void apply( EpetraVector const & x, EpetraVector & y ) const
+  void apply( EpetraVector const & x, EpetraVector & y ) const override
   {
     SuiteSparseSolve( *m_SSData, m_serialMap, m_importToSerial, x, y, false );
     SuiteSparseSolve( *m_SSData, m_serialMap, m_importToSerial, y, y, true );
@@ -186,6 +190,8 @@ private:
 
   globalIndex m_numGlobalRows;
 
+  globalIndex m_numGlobalCols;
+
   localIndex m_numLocalRows;
 };
 }
@@ -199,12 +205,12 @@ real64 EpetraSuiteSparseCond( EpetraMatrix const & matrix,
 
   using DirectOperator = DirectOperator< EpetraMatrix, EpetraVector >;
   DirectOperator directOperator;
-  directOperator.set( matrix );
-  real64 const lambdaDirect = ArnoldiLargestEigenvalue< EpetraVector, DirectOperator >( directOperator, numIterations );
+  directOperator.set( matrix, matrix.getComm() );
+  real64 const lambdaDirect = ArnoldiLargestEigenvalue( directOperator, numIterations );
 
   InverseOperator inverseOperator;
   inverseOperator.set( matrix, serialMap, importToSerial, SSData );
-  real64 const lambdaInverse = ArnoldiLargestEigenvalue< EpetraVector, InverseOperator >( inverseOperator, numIterations );
+  real64 const lambdaInverse = ArnoldiLargestEigenvalue( inverseOperator, numIterations );
 
   return sqrt( lambdaDirect * lambdaInverse );
 }

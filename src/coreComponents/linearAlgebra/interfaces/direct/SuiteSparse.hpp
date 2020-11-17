@@ -30,16 +30,16 @@ namespace geosx
 /**
  * SuiteSparse integer definition
  */
-typedef SuiteSparse_long Int;
+using SSInt = SuiteSparse_long;
 
 /**
- * @brief Convert GEOSX globalIndex value to SuiteSparse Int
+ * @brief Convert GEOSX globalIndex value to SuiteSparse int
  * @param index the input value
  * @return the converted value
  */
-inline Int toSuiteSparse_Int( globalIndex const index )
+inline SSInt toSuiteSparse_Int( globalIndex const index )
 {
-  return LvArray::integerConversion< Int >( index );
+  return LvArray::integerConversion< SSInt >( index );
 }
 
 /**
@@ -160,63 +160,48 @@ public:
   MPI_Comm getSubComm() const;
 
   /**
-   * @brief Sets the number of rows
-   * @param[in] numRows the number of rows
-   */
-  void setNumRows( Int const numRows );
-
-  /**
    * @brief Returns the number of rows
    * @returns the number of rows
    */
-  Int numRows() const;
-
-  /**
-   * @brief Sets the number of columns
-   * @param[in] numCols the number of columns
-   */
-  void setNumCols( Int const numCols );
+  SSInt numRows() const;
 
   /**
    * @brief Returns the number of columns
    * @return the number of columns
    */
-  Int numCols() const;
-
-  /**
-   * @brief Sets the number of non zeros
-   * @param[in] nonZeros the number of non zeros
-   */
-  void setNonZeros( Int const nonZeros );
+  SSInt numCols() const;
 
   /**
    * @brief Returns the number of non zeros
    * @return the number of non zeros
    */
-  Int nonZeros() const;
+  SSInt nonZeros() const;
 
   /**
    * @brief Allocate the internal data storage arrays
+   * @param[in] numRows the number of rows
+   * @param[in] numCols the number of columns
+   * @param[in] nonZeros the number of non zeros
    */
-  void createInternalStorage();
+  void resize( SSInt const numRows, SSInt const numCols, SSInt const nonZeros );
 
   /**
    * @brief Returns the array with the row pointers
    * @return the array with the row pointers
    */
-  array1d< Int > & rowPtr();
+  arrayView1d< SSInt > rowPtr();
 
   /**
    * @brief Returns the array with the column indices
    * @return the array with the column indices
    */
-  array1d< Int > & colIndices();
+  arrayView1d< SSInt > colIndices();
 
   /**
    * @brief Returns the array with the matrix values
    * @return the array with the matrix values
    */
-  array1d< real64 > & values();
+  arrayView1d< real64 > values();
 
   /**
    * @brief Provides the setup time
@@ -242,19 +227,19 @@ private:
   integer m_logLevel;
 
   /// number of rows
-  Int m_numRows;
+  SSInt m_numRows;
 
   /// number of columns
-  Int m_numCols;
+  SSInt m_numCols;
 
   /// number of entries
-  Int m_nonZeros;
+  SSInt m_nonZeros;
 
   /// row pointers
-  array1d< Int > m_rowPtr;
+  array1d< SSInt > m_rowPtr;
 
   /// column indices
-  array1d< Int > m_colIndices;
+  array1d< SSInt > m_colIndices;
 
   /// values
   array1d< real64 > m_values;

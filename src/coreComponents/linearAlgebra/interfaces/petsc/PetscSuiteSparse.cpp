@@ -62,18 +62,17 @@ void ConvertPetscToSuiteSparseMatrix( PetscMatrix const & matrix,
     MatInfo info;
     GEOSX_LAI_CHECK_ERROR( MatGetInfo( localMatrix[0], MAT_LOCAL, &info ) );
 
-    SSData.setNumRows( toSuiteSparse_Int( matrix.numGlobalRows() ) );
-    SSData.setNumCols( toSuiteSparse_Int( matrix.numGlobalCols() ) );
-    SSData.setNonZeros( toSuiteSparse_Int( info.nz_used ) );
-    SSData.createInternalStorage();
+    SSData.resize( toSuiteSparse_Int( matrix.numGlobalRows() ),
+                   toSuiteSparse_Int( matrix.numGlobalCols() ),
+                   toSuiteSparse_Int( info.nz_used ) );
 
     for( localIndex i = 0; i <= SSData.numRows(); ++i )
     {
-      SSData.rowPtr()[i] = LvArray::integerConversion< Int >( ia[i] );
+      SSData.rowPtr()[i] = LvArray::integerConversion< SSInt >( ia[i] );
     }
     for( localIndex i = 0; i < SSData.nonZeros(); ++i )
     {
-      SSData.colIndices()[i] = LvArray::integerConversion< Int >( ja[i] );
+      SSData.colIndices()[i] = LvArray::integerConversion< SSInt >( ja[i] );
     }
     std::copy( array, array + SSData.nonZeros(), SSData.values().data() );
 
@@ -140,7 +139,7 @@ int SuiteSparseSolve( SuiteSparse & SSData,
 
 namespace
 {
-class InverseOperator
+class InverseOperator : public LinearOperator< PetscVector >
 {
 public:
 
@@ -149,15 +148,21 @@ public:
     m_SSData = &SSData;
     m_comm = SSData.getComm();
     m_numGlobalRows = matrix.numGlobalRows();
+    m_numGlobalCols = matrix.numGlobalCols();
     m_numLocalRows = matrix.numLocalRows();
   }
 
-  globalIndex globalSize() const
+  globalIndex numGlobalRows() const override
   {
     return m_numGlobalRows;
   }
 
-  localIndex localSize() const
+  globalIndex numGlobalCols() const override
+  {
+    return m_numGlobalCols;
+  }
+
+  localIndex numLocalRows() const
   {
     return m_numLocalRows;
   }
@@ -167,7 +172,7 @@ public:
     return m_comm;
   }
 
-  void apply( PetscVector const & x, PetscVector & y ) const
+  void apply( PetscVector const & x, PetscVector & y ) const override
   {
     SuiteSparseSolve( *m_SSData, x, y, false );
     SuiteSparseSolve( *m_SSData, y, y, true );
@@ -181,6 +186,8 @@ private:
 
   globalIndex m_numGlobalRows;
 
+  globalIndex m_numGlobalCols;
+
   localIndex m_numLocalRows;
 };
 }
@@ -191,12 +198,12 @@ real64 PetscSuiteSparseCond( PetscMatrix const & matrix, SuiteSparse & SSData )
 
   using DirectOperator = DirectOperator< PetscMatrix, PetscVector >;
   DirectOperator directOperator;
-  directOperator.set( matrix );
-  real64 const lambdaDirect = ArnoldiLargestEigenvalue< PetscVector, DirectOperator >( directOperator, numIterations );
+  directOperator.set( matrix, matrix.getComm() );
+  real64 const lambdaDirect = ArnoldiLargestEigenvalue( directOperator, numIterations );
 
   InverseOperator inverseOperator;
   inverseOperator.set( matrix, SSData );
-  real64 const lambdaInverse = ArnoldiLargestEigenvalue< PetscVector, InverseOperator >( inverseOperator, numIterations );
+  real64 const lambdaInverse = ArnoldiLargestEigenvalue( inverseOperator, numIterations );
 
   return sqrt( lambdaDirect * lambdaInverse );
 }

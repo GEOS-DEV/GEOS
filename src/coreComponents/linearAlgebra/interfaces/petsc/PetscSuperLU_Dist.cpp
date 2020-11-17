@@ -47,15 +47,13 @@ void PetscConvertToSuperMatrix( PetscMatrix const & matrix,
   localIndex const numLocalNonzeros = matrix.numLocalNonzeros();
 
   SLUDData.setNumGlobalRows( LvArray::integerConversion< int_t >( numGlobalRows ) );
-  SLUDData.setNumLocalRows( LvArray::integerConversion< int_t >( numLocalRows ) );
+  SLUDData.setNumGlobalCols( LvArray::integerConversion< int_t >( matrix.numGlobalCols() ) );
 
-  SLUDData.createRowPtr( numLocalRows );
+  SLUDData.resize( numLocalRows, numLocalNonzeros );
   for( localIndex i = 0; i <= numLocalRows; ++i )
   {
     SLUDData.rowPtr()[i] = LvArray::integerConversion< int_t >( ia[i] );
   }
-  SLUDData.createColIndices( numLocalNonzeros );
-  SLUDData.createValues( numLocalNonzeros );
   for( localIndex i = 0; i < numLocalNonzeros; ++i )
   {
     SLUDData.colIndices()[i] = LvArray::integerConversion< int_t >( ja[i] );
@@ -68,19 +66,7 @@ void PetscConvertToSuperMatrix( PetscMatrix const & matrix,
   }
   GEOSX_LAI_CHECK_ERROR( MatSeqAIJRestoreArray( localMatrix, &array ) );
 
-  dCreate_CompRowLoc_Matrix_dist( &SLUDData.mat(),
-                                  toSuperLU_intT( numGlobalRows ),
-                                  toSuperLU_intT( numGlobalRows ),
-                                  toSuperLU_intT( numLocalNonzeros ),
-                                  toSuperLU_intT( numLocalRows ),
-                                  toSuperLU_intT( matrix.ilower() ),
-                                  SLUDData.values(),
-                                  SLUDData.colIndices(),
-                                  SLUDData.rowPtr(),
-                                  SLU_NR_loc,
-                                  SLU_D,
-                                  SLU_GE );
-
+  SLUDData.createSuperMatrix( matrix.ilower() );
   SLUDData.setComm( matrix.getComm() );
 }
 
@@ -91,7 +77,7 @@ void PetscDestroyAdditionalData( Mat & localMatrix )
 
 namespace
 {
-class InverseOperator
+class InverseOperator : public LinearOperator< PetscVector >
 {
 public:
 
@@ -111,12 +97,17 @@ public:
     m_SLUDDataTransp.setup();
   }
 
-  globalIndex globalSize() const
+  globalIndex numGlobalRows() const override
   {
     return LvArray::integerConversion< globalIndex >( m_SLUDData->numGlobalRows() );
   }
 
-  localIndex localSize() const
+  globalIndex numGlobalCols() const override
+  {
+    return LvArray::integerConversion< globalIndex >( m_SLUDData->numGlobalCols() );
+  }
+
+  localIndex numLocalRows() const
   {
     return LvArray::integerConversion< localIndex >( m_SLUDData->numLocalRows() );
   }
@@ -126,7 +117,7 @@ public:
     return m_comm;
   }
 
-  void apply( PetscVector const & x, PetscVector & y ) const
+  void apply( PetscVector const & x, PetscVector & y ) const override
   {
     m_SLUDData->solve( x.extractLocalVector(), y.extractLocalVector() );
     m_SLUDDataTransp.solve( y.extractLocalVector(), y.extractLocalVector() );
@@ -152,12 +143,12 @@ real64 PetscSuperLU_DistCond( PetscMatrix const & matrix, SuperLU_Dist & SLUDDat
 
   using DirectOperator = DirectOperator< PetscMatrix, PetscVector >;
   DirectOperator directOperator;
-  directOperator.set( matrix );
-  real64 const lambdaDirect = ArnoldiLargestEigenvalue< PetscVector, DirectOperator >( directOperator, numIterations );
+  directOperator.set( matrix, matrix.getComm() );
+  real64 const lambdaDirect = ArnoldiLargestEigenvalue( directOperator, numIterations );
 
   InverseOperator inverseOperator;
   inverseOperator.set( matrix, SLUDData );
-  real64 const lambdaInverse = ArnoldiLargestEigenvalue< PetscVector, InverseOperator >( inverseOperator, numIterations );
+  real64 const lambdaInverse = ArnoldiLargestEigenvalue( inverseOperator, numIterations );
 
   return sqrt( lambdaDirect * lambdaInverse );
 }

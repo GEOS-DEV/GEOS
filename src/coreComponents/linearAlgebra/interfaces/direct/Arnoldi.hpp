@@ -21,6 +21,7 @@
 
 #include "linearAlgebra/interfaces/VectorBase.hpp"
 #include "linearAlgebra/interfaces/BlasLapackLA.hpp"
+#include "linearAlgebra/interfaces/LinearOperator.hpp"
 
 namespace geosx
 {
@@ -29,34 +30,44 @@ namespace geosx
  * @brief DirectOperator Simple class to apply the operator A^T * A to a vector
  */
 template< typename MATRIX, typename VECTOR >
-class DirectOperator
+class DirectOperator : public LinearOperator< VECTOR >
 {
 public:
 
   /**
    * @brief Sets the matrix
    * @param matrix the matrix
+   * @param comm the MPI communicator
    */
-  void set( MATRIX const & matrix )
+  void set( MATRIX const & matrix, MPI_Comm const comm )
   {
     m_matrix = &matrix;
-    m_comm = matrix.getComm();
+    m_comm = comm;
   }
 
   /**
-   * @brief Returns the global size
-   * @return the global size
+   * @brief Returns the global number of rows
+   * @return the global number of rows
    */
-  globalIndex globalSize() const
+  globalIndex numGlobalRows() const override
   {
     return m_matrix->numGlobalRows();
   }
 
   /**
-   * @brief Returns the local size
-   * @return the local size
+   * @brief Returns the global number of columns
+   * @return the global number of columns
    */
-  localIndex localSize() const
+  globalIndex numGlobalCols() const override
+  {
+    return m_matrix->numGlobalCols();
+  }
+
+  /**
+   * @brief Returns the local number of rows
+   * @return the local number of rows
+   */
+  localIndex numLocalRows() const
   {
     return m_matrix->numLocalRows();
   }
@@ -75,7 +86,7 @@ public:
    * @param x the input vector
    * @param y the output vector
    */
-  void apply( VECTOR const & x, VECTOR & y ) const
+  void apply( VECTOR const & x, VECTOR & y ) const override
   {
     m_matrix->gemv( 1.0, x, 0.0, y, false );
     m_matrix->gemv( 1.0, y, 0.0, y, true );
@@ -96,25 +107,27 @@ private:
  * @param m the number of iterations (size of the Krylov subspace)
  * @return the largest eigenvalue
  */
-template< typename VECTOR, typename Operator >
+template< typename Operator >
 real64 ArnoldiLargestEigenvalue( Operator const & op, localIndex const m = 4 )
 {
-  localIndex const globalSize = LvArray::integerConversion< localIndex >( op.globalSize() );
-  localIndex const localSize = op.localSize();
-  localIndex const mInternal = ( m > globalSize ) ? globalSize : m;
+  using Vector = typename Operator::Vector;
+
+  localIndex const numGlobalRows = LvArray::integerConversion< localIndex >( op.numGlobalRows() );
+  localIndex const numLocalRows = op.numLocalRows();
+  localIndex const mInternal = ( m > numGlobalRows ) ? numGlobalRows : m;
 
   // Initialize data structure (Hessenberg matrix and Krylov subspace)
   array2d< real64, MatrixLayout::ROW_MAJOR_PERM > H( mInternal+1, mInternal );
-  array1d< VECTOR > V( mInternal+1 );
+  array1d< Vector > V( mInternal+1 );
 
   // Initial unitary vector
-  V[0].createWithLocalSize( localSize, op.getComm() );
-  V[0].set( 1.0 / sqrt( static_cast< real64 >( globalSize ) ) );
+  V[0].createWithLocalSize( numLocalRows, op.getComm() );
+  V[0].set( 1.0 / sqrt( static_cast< real64 >( numGlobalRows ) ) );
 
   for( localIndex j = 0; j < mInternal; ++j )
   {
     // Apply operator
-    V[j+1].createWithLocalSize( localSize, op.getComm() );
+    V[j+1].createWithLocalSize( numLocalRows, op.getComm() );
     op.apply( V[j], V[j+1] );
     // Arnoldi process
     for( localIndex i = 0; i <= j; ++i )

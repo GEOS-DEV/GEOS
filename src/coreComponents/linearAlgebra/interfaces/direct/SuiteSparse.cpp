@@ -29,10 +29,10 @@ namespace geosx
 
 // Check matching requirements on index/value types between GEOSX and SuiteSparse
 
-static_assert( sizeof( Int ) == sizeof( globalIndex ),
+static_assert( sizeof( SSInt ) == sizeof( globalIndex ),
                "SuiteSparse Int and geosx::globalIndex must have the same size" );
 
-static_assert( std::is_signed< Int >::value == std::is_signed< globalIndex >::value,
+static_assert( std::is_signed< SSInt >::value == std::is_signed< globalIndex >::value,
                "SuiteSparse Int and geosx::globalIndex must both be signed or unsigned" );
 
 static_assert( std::is_same< double, real64 >::value,
@@ -265,54 +265,42 @@ MPI_Comm SuiteSparse::getSubComm() const
   return m_subComm;
 }
 
-void SuiteSparse::setNumRows( Int const numRows )
-{
-  m_numRows = numRows;
-}
-
-Int SuiteSparse::numRows() const
+SSInt SuiteSparse::numRows() const
 {
   return m_numRows;
 }
 
-void SuiteSparse::setNumCols( Int const numCols )
-{
-  m_numCols = numCols;
-}
-
-Int SuiteSparse::numCols() const
+SSInt SuiteSparse::numCols() const
 {
   return m_numCols;
 }
 
-void SuiteSparse::setNonZeros( Int const nonZeros )
-{
-  m_nonZeros = nonZeros;
-}
-
-Int SuiteSparse::nonZeros() const
+SSInt SuiteSparse::nonZeros() const
 {
   return m_nonZeros;
 }
 
-void SuiteSparse::createInternalStorage()
+void SuiteSparse::resize( SSInt const numRows, SSInt const numCols, SSInt const nonZeros )
 {
+  m_numRows = numRows;
+  m_numCols = numCols;
+  m_nonZeros = nonZeros;
   m_rowPtr.resize( m_numRows + 1 );
   m_colIndices.resize( m_nonZeros );
   m_values.resize( m_nonZeros );
 }
 
-array1d< Int > & SuiteSparse::rowPtr()
+arrayView1d< SSInt > SuiteSparse::rowPtr()
 {
   return m_rowPtr;
 }
 
-array1d< Int > & SuiteSparse::colIndices()
+arrayView1d< SSInt > SuiteSparse::colIndices()
 {
   return m_colIndices;
 }
 
-array1d< real64 > & SuiteSparse::values()
+arrayView1d< real64 > SuiteSparse::values()
 {
   return m_values;
 }

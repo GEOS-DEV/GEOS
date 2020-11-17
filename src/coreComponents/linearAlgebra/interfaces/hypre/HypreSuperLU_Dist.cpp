@@ -26,46 +26,36 @@ namespace geosx
 {
 
 void HypreConvertToSuperMatrix( HypreMatrix const & matrix,
-                                hypre_CSRMatrix * & localMatrix,
                                 SuperLU_Dist & SLUDData )
 {
   // Merge diag and offd into one matrix (global ids)
-  localMatrix = hypre_MergeDiagAndOffd( matrix.unwrapped() );
+  hypre_CSRMatrix * localMatrix = hypre_MergeDiagAndOffd( matrix.unwrapped() );
 
   globalIndex const numGlobalRows = matrix.numGlobalRows();
   localIndex const numLocalRows = matrix.numLocalRows();
   localIndex const numLocalNonzeros = matrix.numLocalNonzeros();
 
   SLUDData.setNumGlobalRows( LvArray::integerConversion< int_t >( numGlobalRows ) );
-  SLUDData.setNumLocalRows( LvArray::integerConversion< int_t >( numLocalRows ) );
+  SLUDData.setNumGlobalCols( LvArray::integerConversion< int_t >( matrix.numGlobalCols() ) );
 
   HYPRE_Int const * const hypreI = hypre_CSRMatrixI( localMatrix );
-  SLUDData.createRowPtr( numLocalRows );
+  HYPRE_BigInt const * const hypreJ = hypre_CSRMatrixBigJ( localMatrix );
+  real64 const * const hypreData = hypre_CSRMatrixData( localMatrix );
+
+  SLUDData.resize( numLocalRows, numLocalNonzeros );
   for( localIndex i = 0; i <= numLocalRows; ++i )
   {
     SLUDData.rowPtr()[i] = LvArray::integerConversion< int_t >( hypreI[i] );
   }
-  SLUDData.setColIndices( toSuperLU_intT( hypre_CSRMatrixBigJ( localMatrix ) ) );
-  SLUDData.setValues( hypre_CSRMatrixData( localMatrix ) );
+  for( localIndex i = 0; i < numLocalNonzeros; ++i )
+  {
+    SLUDData.colIndices()[i] = LvArray::integerConversion< int_t >( hypreJ[i] );
+    SLUDData.values()[i] = hypreData[i];
+  }
 
-  dCreate_CompRowLoc_Matrix_dist( &SLUDData.mat(),
-                                  toSuperLU_intT( numGlobalRows ),
-                                  toSuperLU_intT( numGlobalRows ),
-                                  toSuperLU_intT( numLocalNonzeros ),
-                                  toSuperLU_intT( numLocalRows ),
-                                  toSuperLU_intT( matrix.ilower() ),
-                                  SLUDData.values(),
-                                  SLUDData.colIndices(),
-                                  SLUDData.rowPtr(),
-                                  SLU_NR_loc,
-                                  SLU_D,
-                                  SLU_GE );
-
+  SLUDData.createSuperMatrix( matrix.ilower() );
   SLUDData.setComm( matrix.getComm() );
-}
 
-void HypreDestroyAdditionalData( hypre_CSRMatrix * & localMatrix )
-{
   // From HYPRE SuperLU_Dist interfaces (superlu.c)
   // SuperLU frees assigned data, so set them to null before
   // calling hypre_CSRMatrixdestroy on localMatrix to avoid memory errors.
@@ -76,14 +66,9 @@ void HypreDestroyAdditionalData( hypre_CSRMatrix * & localMatrix )
 
 namespace
 {
-class InverseOperator
+class InverseOperator : public LinearOperator< HypreVector >
 {
 public:
-
-  ~InverseOperator()
-  {
-    HypreDestroyAdditionalData( m_localMatrix );
-  }
 
   void set( HypreMatrix const & matrix, SuperLU_Dist & SLUDData )
   {
@@ -92,16 +77,21 @@ public:
 
     matrix.transpose( m_transposeMatrix );
     m_SLUDDataTransp.create( SLUDData.getParameters() );
-    HypreConvertToSuperMatrix( m_transposeMatrix, m_localMatrix, m_SLUDDataTransp );
+    HypreConvertToSuperMatrix( m_transposeMatrix, m_SLUDDataTransp );
     m_SLUDDataTransp.setup();
   }
 
-  globalIndex globalSize() const
+  globalIndex numGlobalRows() const override
   {
     return LvArray::integerConversion< globalIndex >( m_SLUDData->numGlobalRows() );
   }
 
-  localIndex localSize() const
+  globalIndex numGlobalCols() const override
+  {
+    return LvArray::integerConversion< globalIndex >( m_SLUDData->numGlobalCols() );
+  }
+
+  localIndex numLocalRows() const
   {
     return LvArray::integerConversion< localIndex >( m_SLUDData->numLocalRows() );
   }
@@ -111,7 +101,7 @@ public:
     return m_comm;
   }
 
-  void apply( HypreVector const & x, HypreVector & y ) const
+  void apply( HypreVector const & x, HypreVector & y ) const override
   {
     m_SLUDData->solve( x.extractLocalVector(), y.extractLocalVector() );
     m_SLUDDataTransp.solve( y.extractLocalVector(), y.extractLocalVector() );
@@ -125,8 +115,6 @@ private:
 
   HypreMatrix m_transposeMatrix;
 
-  hypre_CSRMatrix * m_localMatrix;
-
   mutable SuperLU_Dist m_SLUDDataTransp;
 };
 }
@@ -137,12 +125,12 @@ real64 HypreSuperLU_DistCond( HypreMatrix const & matrix, SuperLU_Dist & SLUDDat
 
   using DirectOperator = DirectOperator< HypreMatrix, HypreVector >;
   DirectOperator directOperator;
-  directOperator.set( matrix );
-  real64 const lambdaDirect = ArnoldiLargestEigenvalue< HypreVector, DirectOperator >( directOperator, numIterations );
+  directOperator.set( matrix, matrix.getComm() );
+  real64 const lambdaDirect = ArnoldiLargestEigenvalue( directOperator, numIterations );
 
   InverseOperator inverseOperator;
   inverseOperator.set( matrix, SLUDData );
-  real64 const lambdaInverse = ArnoldiLargestEigenvalue< HypreVector, InverseOperator >( inverseOperator, numIterations );
+  real64 const lambdaInverse = ArnoldiLargestEigenvalue( inverseOperator, numIterations );
 
   return sqrt( lambdaDirect * lambdaInverse );
 }
