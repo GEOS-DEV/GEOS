@@ -36,11 +36,15 @@ namespace geosx
       ConformingVirtualElementOrder1() {}
       ~ConformingVirtualElementOrder1() {}
 
-      void ComputeProjectors( MeshLevel const & mesh, localIndex const & regionIndex,
+      void ComputeProjectors( MeshLevel const & mesh,
+                              localIndex const & regionIndex,
                               localIndex const & subRegionIndex,
                               localIndex const & cellIndex) override;
-      void ComputeFaceProjectors( MeshLevel const & mesh, localIndex const & faceId ) override;
-      
+
+      void ComputeFaceProjectors( MeshLevel const & mesh,
+                                  localIndex const & faceId,
+                                  array1d<real64> & basisProjections ) override;
+
       localIndex getNumQuadraturePoints() const override { return numQuadraturePoints; }
       localIndex getNumSupportPoints() const override { return numSupportPoints; }
     };
