@@ -123,7 +123,8 @@ First, using a terminal, create the ``codes`` directory wherever you like.
   mkdir codes
   cd codes
 
-Inside this directory, we can clone the GEOSX repository.  We will also use some Git commands to download submodules (e.g. PAMELA).
+Inside this directory, we can clone the GEOSX repository.  We will also use some Git commands to download submodules (e.g. PAMELA). Also note that most users will not have access to our integrated tests repository, and so we
+deactivate this submodule.  Developers who will be working with the integratedTests repository should skip this line.
 
 .. code-block:: sh
 
@@ -131,6 +132,7 @@ Inside this directory, we can clone the GEOSX repository.  We will also use some
    cd GEOSX
    git lfs install
    git submodule init
+   git submodule deinit integratedTests
    git submodule update
    cd ..
 
