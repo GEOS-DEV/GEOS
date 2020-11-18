@@ -22,6 +22,7 @@
 #include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/contact/ContactRelationBase.hpp"
 #include "constitutive/solid/LinearElasticIsotropic.hpp"
+#include "constitutive/solid/PoroElastic.hpp"
 #include "finiteElement/elementFormulations/FiniteElementBase.hpp"
 #include "managers/DomainPartition.hpp"
 #include "managers/NumericalMethodsManager.hpp"
@@ -30,6 +31,7 @@
 #include "mesh/MeshForLoopInterface.hpp"
 #include "meshUtilities/ComputationalGeometry.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
+#include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
 #include "linearAlgebra/utilities/LAIHelperFunctions.hpp"
 #include "linearAlgebra/interfaces/BlasLapackLA.hpp"
@@ -45,7 +47,8 @@ SolidMechanicsEmbeddedFractures::SolidMechanicsEmbeddedFractures( const std::str
                                                                   Group * const parent ):
   SolverBase( name, parent ),
   m_solidSolverName(),
-  m_solidSolver( nullptr )
+  m_solidSolver( nullptr ),
+  m_effectiveStress( 0 )
 {
   registerWrapper( viewKeyStruct::solidSolverNameString, &m_solidSolverName )->
     setInputFlag( InputFlags::REQUIRED )->
@@ -255,13 +258,15 @@ void SolidMechanicsEmbeddedFractures::AssembleSystem( real64 const time,
 
   r1_array const uhattilde;
 
-  string const dofKey     = dofManager.getKey( keys::TotalDisplacement );
-  string const jumpDofKey = dofManager.getKey( viewKeyStruct::dispJumpString );
+  string const dispDofKey     = dofManager.getKey( keys::TotalDisplacement );
+  string const jumpDofKey     = dofManager.getKey( viewKeyStruct::dispJumpString );
 
-  arrayView1d< globalIndex const > const & globalDofNumber = nodeManager.getReference< globalIndex_array >( dofKey );
+  if (m_effectiveStress)
+  {
+    pressureDofKey = dofManager.getKey(FlowSolverBase::viewKeyStruct::pressureString);
+  }
 
-//  ElementRegionManager::ConstitutiveRelationAccessor< ConstitutiveBase const >
-//  constitutiveRelations = elemManager.ConstructFullConstitutiveAccessor< ConstitutiveBase const >( constitutiveManager );
+  arrayView1d< globalIndex const > const & dispDofNumber = nodeManager.getReference< globalIndex_array >( dispDofKey );
 
   ElementRegionManager::MaterialViewAccessor< real64 > const
   density = elemManager.ConstructFullMaterialViewAccessor< real64 >( "density0",
@@ -308,6 +313,19 @@ void SolidMechanicsEmbeddedFractures::AssembleSystem( real64 const time,
   array1d< real64 >       w( 3 );
 
   array2d< real64 > dMatrix( 6, 6 );
+
+  if ( m_effectiveStress )
+  {
+    array2d< real64 > Kwpm_elem(1, 3);
+    array2d< real64 > Kwpm_gauss(1, 3);
+    array2d< real64 > identityVec(6, 1);
+    identityVec.setValues<serialPolicy>(0);
+    identityVec[0][0] = 1;
+    identityVec[1][0] = 1;
+    identityVec[2][0] = 1;
+    array1d< real64 > pm(1); // matrix pressure (it's a scalar but let's keep it like this in case we wanted more unknowns)
+    array1d< real64 > Rwpm(3);
+  }
 
   // begin region loop
   elemManager.forElementRegions< SurfaceElementRegion >( [&]( SurfaceElementRegion const & embeddedRegion )->void
@@ -375,11 +393,6 @@ void SolidMechanicsEmbeddedFractures::AssembleSystem( real64 const time,
           u_local.resize( numNodesPerElement );
           du_local.resize( numNodesPerElement );
 
-          // Get mechanical moduli tensor
-          LinearElasticIsotropic const * constitutiveRelation = elementSubRegion->getConstitutiveModel< LinearElasticIsotropic >( m_solidSolver->solidMaterialNames()[0] );
-          LinearElasticIsotropic::KernelWrapper const & solidConstitutive = constitutiveRelation->createKernelUpdates();
-          solidConstitutive.GetStiffness( cellElementIndex, dMatrix );
-
           // Basis functions derivatives
           arrayView4d< real64 const > const & dNdX = elementSubRegion->dNdX();
 
@@ -398,8 +411,8 @@ void SolidMechanicsEmbeddedFractures::AssembleSystem( real64 const time,
 
             for( int i=0; i < dim; ++i )
             {
-              dispEqnRowIndices[static_cast< int >(a)*dim+i] = globalDofNumber[localNodeIndex] + i - rankOffset;
-              dispColIndices[static_cast< int >(a)*dim+i]    = globalDofNumber[localNodeIndex] + i;
+              dispEqnRowIndices[static_cast< int >(a)*dim+i] = dispDofNumber[localNodeIndex] + i - rankOffset;
+              dispColIndices[static_cast< int >(a)*dim+i]    = dispDofNumber[localNodeIndex] + i;
             }
           }
 
@@ -427,6 +440,30 @@ void SolidMechanicsEmbeddedFractures::AssembleSystem( real64 const time,
             }
           }
 
+          if ( m_effectiveStress )
+          {
+            arrayView1d< globalIndex const > const matrixPresDofNumber =
+                elementSubRegion.getReference< array1d< globalIndex > >( presDofKey );
+
+            globalIndex matrixPressureColIndex = matrixPresDofNumber[cellElementIndex];
+
+            arrayView1d< real64 const > const & matrixPres =
+                elementSubRegion.getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::pressureString );
+            pm = matrixPres[cellElementIndex];
+
+            PoroElastic< LinearElasticIsotropic > const * constitutiveRelation =
+                elementSubRegion->getConstitutiveModel< PoroElastic< LinearElasticIsotropic > >( m_solidSolver->solidMaterialNames()[0] );
+            PoroElastic< LinearElasticIsotropic >::KernelWrapper const & solidConstitutive = constitutiveRelation->createKernelUpdates();
+
+            real64 const biotCoefficient = solidConstitutive.getBiotCoefficient();
+          }else
+          {
+            // Get mechanical moduli tensor
+            LinearElasticIsotropic const * constitutiveRelation = elementSubRegion->getConstitutiveModel< LinearElasticIsotropic >( m_solidSolver->solidMaterialNames()[0] );
+            LinearElasticIsotropic::KernelWrapper const & solidConstitutive = constitutiveRelation->createKernelUpdates();
+          }
+          solidConstitutive.GetStiffness( cellElementIndex, dMatrix );
+
           // 1. Assembly of element matrices
 
           // Resize local storages.
@@ -436,6 +473,13 @@ void SolidMechanicsEmbeddedFractures::AssembleSystem( real64 const time,
           strainMatrix.resizeDimension< 1 >( nUdof );
 
           BlasLapackLA::matrixMatrixMultiply( eqMatrix, dMatrix, matED );
+
+          if (m_effectiveStress)
+          {
+            Kwpm_elem.setValues< serialPolicy >(0);
+            Kwpm_gauss.setValues< serialPolicy >(0);
+            BlasLapackLA::matrixTMatrixMultiply(identityVec, eqMatrix, Kwpm_gauss);
+          }
 
           // Compute traction
           ComputeTraction( constitutiveManager, w, tractionVec, dTdw );
@@ -476,6 +520,12 @@ void SolidMechanicsEmbeddedFractures::AssembleSystem( real64 const time,
             BlasLapackLA::matrixMatrixAdd( Kww_gauss, Kww_elem, -1 );
             BlasLapackLA::matrixMatrixAdd( Kwu_gauss, Kwu_elem, -1 );
             BlasLapackLA::matrixMatrixAdd( Kuw_gauss, Kuw_elem, -1 );
+
+            if (m_effectiveStress)
+            {
+              BlasLapackLA::matrixScale( biotCoefficient * detJq, Kwpm_gauss );
+              BlasLapackLA::matrixMatrixAdd( Kwpm_gauss, Kwpm_elem, -1 );
+            }
           }
 
           BlasLapackLA::matrixMatrixAdd( dTdw, Kww_elem, -1 );
@@ -486,6 +536,13 @@ void SolidMechanicsEmbeddedFractures::AssembleSystem( real64 const time,
           BlasLapackLA::matrixVectorMultiply( Kuw_elem, w, R0, 1, 1 );
 
           BlasLapackLA::vectorVectorAdd( tractionVec, R1, 1 );
+
+          if (m_effectiveStress)
+          {
+            // Negative sign is important coz the effective stress is total stress - porePressure
+            BlasLapackLA::matrixVectorMultiply(Kwpm_elem, pm, Rwpm, -1, 1);
+          }
+
 
           // 2. Assembly into global system
           // fill in residual vector
@@ -518,6 +575,17 @@ void SolidMechanicsEmbeddedFractures::AssembleSystem( real64 const time,
                                                                                 dispColIndices.data(),
                                                                                 Kwu_elem[i],
                                                                                 numNodesPerElement * dim );
+
+              if ( m_effectiveStress )
+              {
+                RAJA::atomicAdd< parallelDeviceAtomic >( &localRhs[jumpEqnRowIndices[i]], Rwpm[i] );
+
+                // fill in matrix
+                localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( jumpEqnRowIndices[i],
+                                                                                  matrixPressureColIndex,
+                                                                                  Kwpm_elem[i],
+                                                                                  1 );
+              }
             }
 
           }
@@ -978,7 +1046,7 @@ void SolidMechanicsEmbeddedFractures::ComputeTraction( ConstitutiveManager const
 
   if( open )
   {
-    tractionVector[0] = 1e5;
+    tractionVector[0] = pf;
     tractionVector[1] = 0.0;
     tractionVector[2] = 0.0;
     dTdw( 0, 0 ) = 0.0;

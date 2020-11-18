@@ -190,6 +190,12 @@ protected:
                         array2d< real64 > & dTdw );
 
 
+  void setEffectiveStress( integer const input )
+   {
+     m_effectiveStress = input;
+     m_solidSolver->setEffectiveStress( input );
+   }
+
 private:
 
   /// Solid mechanics solver name
@@ -201,6 +207,10 @@ private:
   /// contact relation name string
   string m_contactRelationName;
 
+  /// Indicates whether or not to use effective stress when integrating the
+  /// stress divergence in the kernels. This means adding the contribution of the
+  /// matrix pressure to the fracture traction balance.
+  integer m_effectiveStress;
 };
 
 } /* namespace geosx */

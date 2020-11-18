@@ -143,6 +143,16 @@ protected:
 
   virtual void PostProcessInput() override final;
 
+  void assembleTractionBalanceResidualWrtPressure( DomainPartition const & domain,
+                                                   DofManager const & dofManager,
+                                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                   arrayView1d< real64 > const & localRhs );
+
+  void assembleFractureFlowResidualWrtJump( DomainPartition const & domain,
+                                            DofManager const & dofManager,
+                                            CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                            arrayView1d< real64 > const & localRhs );
+
   // virtual void InitializePostInitialConditions_PreSubGroups( dataRepository::Group * const problemManager ) override final;
 
 private:
