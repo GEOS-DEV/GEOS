@@ -27,10 +27,10 @@ namespace geosx
 {
 
 /**
- * @brief DirectOperator Simple class to apply the operator A^T * A to a vector
+ * @brief NormalOperator Simple class to apply the operator A^T * A to a vector
  */
 template< typename MATRIX, typename VECTOR >
-class DirectOperator : public LinearOperator< VECTOR >
+class NormalOperator : public LinearOperator< VECTOR >
 {
 public:
 

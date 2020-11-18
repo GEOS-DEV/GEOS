@@ -66,7 +66,7 @@ void HypreConvertToSuperMatrix( HypreMatrix const & matrix,
 
 namespace
 {
-class InverseOperator : public LinearOperator< HypreVector >
+class InverseNormalOperator : public LinearOperator< HypreVector >
 {
 public:
 
@@ -123,14 +123,14 @@ real64 HypreSuperLU_DistCond( HypreMatrix const & matrix, SuperLU_Dist & SLUDDat
 {
   localIndex const numIterations = 4;
 
-  using DirectOperator = DirectOperator< HypreMatrix, HypreVector >;
-  DirectOperator directOperator;
-  directOperator.set( matrix, matrix.getComm() );
-  real64 const lambdaDirect = ArnoldiLargestEigenvalue( directOperator, numIterations );
+  using NormalOperator = NormalOperator< HypreMatrix, HypreVector >;
+  NormalOperator normalOperator;
+  normalOperator.set( matrix, matrix.getComm() );
+  real64 const lambdaDirect = ArnoldiLargestEigenvalue( normalOperator, numIterations );
 
-  InverseOperator inverseOperator;
-  inverseOperator.set( matrix, SLUDData );
-  real64 const lambdaInverse = ArnoldiLargestEigenvalue( inverseOperator, numIterations );
+  InverseNormalOperator inverseNormalOperator;
+  inverseNormalOperator.set( matrix, SLUDData );
+  real64 const lambdaInverse = ArnoldiLargestEigenvalue( inverseNormalOperator, numIterations );
 
   return sqrt( lambdaDirect * lambdaInverse );
 }

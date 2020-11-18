@@ -60,7 +60,7 @@ void EpetraConvertToSuperMatrix( EpetraMatrix const & matrix,
 
 namespace
 {
-class InverseOperator : public LinearOperator< EpetraVector >
+class InverseNormalOperator : public LinearOperator< EpetraVector >
 {
 public:
 
@@ -117,14 +117,14 @@ real64 EpetraSuperLU_DistCond( EpetraMatrix const & matrix, SuperLU_Dist & SLUDD
 {
   localIndex const numIterations = 4;
 
-  using DirectOperator = DirectOperator< EpetraMatrix, EpetraVector >;
-  DirectOperator directOperator;
-  directOperator.set( matrix, matrix.getComm() );
-  real64 const lambdaDirect = ArnoldiLargestEigenvalue( directOperator, numIterations );
+  using NormalOperator = NormalOperator< EpetraMatrix, EpetraVector >;
+  NormalOperator normalOperator;
+  normalOperator.set( matrix, matrix.getComm() );
+  real64 const lambdaDirect = ArnoldiLargestEigenvalue( normalOperator, numIterations );
 
-  InverseOperator inverseOperator;
-  inverseOperator.set( matrix, SLUDData );
-  real64 const lambdaInverse = ArnoldiLargestEigenvalue( inverseOperator, numIterations );
+  InverseNormalOperator inverseNormalOperator;
+  inverseNormalOperator.set( matrix, SLUDData );
+  real64 const lambdaInverse = ArnoldiLargestEigenvalue( inverseNormalOperator, numIterations );
 
   return sqrt( lambdaDirect * lambdaInverse );
 }

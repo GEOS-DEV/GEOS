@@ -77,11 +77,11 @@ void PetscDestroyAdditionalData( Mat & localMatrix )
 
 namespace
 {
-class InverseOperator : public LinearOperator< PetscVector >
+class InverseNormalOperator : public LinearOperator< PetscVector >
 {
 public:
 
-  ~InverseOperator()
+  ~InverseNormalOperator()
   {
     PetscDestroyAdditionalData( m_localMatrix );
   }
@@ -141,14 +141,14 @@ real64 PetscSuperLU_DistCond( PetscMatrix const & matrix, SuperLU_Dist & SLUDDat
 {
   localIndex const numIterations = 4;
 
-  using DirectOperator = DirectOperator< PetscMatrix, PetscVector >;
-  DirectOperator directOperator;
-  directOperator.set( matrix, matrix.getComm() );
-  real64 const lambdaDirect = ArnoldiLargestEigenvalue( directOperator, numIterations );
+  using NormalOperator = NormalOperator< PetscMatrix, PetscVector >;
+  NormalOperator normalOperator;
+  normalOperator.set( matrix, matrix.getComm() );
+  real64 const lambdaDirect = ArnoldiLargestEigenvalue( normalOperator, numIterations );
 
-  InverseOperator inverseOperator;
-  inverseOperator.set( matrix, SLUDData );
-  real64 const lambdaInverse = ArnoldiLargestEigenvalue( inverseOperator, numIterations );
+  InverseNormalOperator inverseNormalOperator;
+  inverseNormalOperator.set( matrix, SLUDData );
+  real64 const lambdaInverse = ArnoldiLargestEigenvalue( inverseNormalOperator, numIterations );
 
   return sqrt( lambdaDirect * lambdaInverse );
 }
