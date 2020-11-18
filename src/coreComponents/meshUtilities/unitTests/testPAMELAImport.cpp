@@ -72,7 +72,7 @@ void TestMeshImport( string const & inputStringMesh,
       [&]( localIndex const er, localIndex const esr, ElementRegionBase &, ElementSubRegionBase & elemSubRegion )
     {
       elemSubRegion.CalculateElementGeometricQuantities( nodeManager, faceManager );
-      arrayView2d< real64 const > const elemCenter = elemSubRegion.getElementCenter().toViewConst();
+      arrayView2d< real64 const > const elemCenter = elemSubRegion.getElementCenter();
       for( localIndex ei = 0; ei < elemSubRegion.size(); ei++ )
       {
         real64 center[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( elemCenter[ ei ] );

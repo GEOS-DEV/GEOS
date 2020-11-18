@@ -157,9 +157,9 @@ void CellElementRegion::GenerateAggregates( FaceManager const * const faceManage
   // Third, normalize the centers
   this->forElementSubRegions< CellElementSubRegion, FaceElementSubRegion >( [&]( ElementSubRegionBase & elementSubRegion )
   {
-    arrayView1d< integer const > const ghostRank = elementSubRegion.ghostRank().toViewConst();
+    arrayView1d< integer const > const ghostRank = elementSubRegion.ghostRank();
     localIndex const subRegionIndex = elementSubRegion.getIndexInParent();
-    arrayView2d< real64 const > const elemCenter = elementSubRegion.getElementCenter().toViewConst();
+    arrayView2d< real64 const > const elemCenter = elementSubRegion.getElementCenter();
 
     for( localIndex cellIndex = 0; cellIndex< elementSubRegion.size(); cellIndex++ )
     {
