@@ -1,9 +1,9 @@
-.. _TasksManager
+.. _TasksManager:
 
 Tasks Manager
 =============
 
-The GEOSX tasks manager allows a user to specify tasks to be executed. These tasks are compatible targets for the EventManager_.
+The GEOSX tasks manager allows a user to specify tasks to be executed. These tasks are compatible targets for the :ref:`EventManager`.
 
 The tasks manager is configured via the ``Tasks`` block in an input .xml file, i.e.:
 
@@ -19,7 +19,7 @@ Tasks Manager Configuration
 
 Task
 ***************************
-The children of the Tasks block define different Tasks to be triggered by events specified in the ref:`EventManager` during the execution of the simulation. At present the only supported task is the ``PackCollection`` used to collect time history data for output by a TimeHistory output.
+The children of the Tasks block define different Tasks to be triggered by events specified in the :ref:`EventManager` during the execution of the simulation. At present the only supported task is the ``PackCollection`` used to collect time history data for output by a TimeHistory output.
 
 .. include:: ../../../coreComponents/fileIO/schema/docs/Tasks.rst
 
@@ -29,7 +29,7 @@ The ``PackCollection`` Task is used to collect time history information from fie
 
 .. include:: ../../../coreComponents/fileIO/schema/docs/PackCollection.rst
 
-Note: The time history information collected via this task is buffered internally until it is output by a linked :ref:`TimeHistory Output`.
+Note: The time history information collected via this task is buffered internally until it is output by a linked TimeHistory Output.
 
 
 ***************************

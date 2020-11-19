@@ -178,10 +178,7 @@ void SolidMechanicsEmbeddedFractures::SetupSystem( DomainPartition & domain,
   GEOSX_MARK_FUNCTION;
 
   GEOSX_UNUSED_VAR( setSparsity );
-  // By not calling dofManager.reorderByRank(), we keep separate dof numbering for each field,
-  // which allows constructing separate sparsity patterns for off-diagonal blocks of the matrix.
-  // Once the solver moves to monolithic matrix, we can remove this method and just use SolverBase::SetupSystem.
-  // setup coupled DofManager
+
   dofManager.setMesh( domain, 0, 0 );
   SetupDofs( domain, dofManager );
   dofManager.reorderByRank();

@@ -179,6 +179,8 @@ public:
     static constexpr auto targetRegionsString         = "targetRegions";
     /// The key for areaRelTol
     static constexpr auto areaRelativeToleranceString = "areaRelTol";
+    /// The key for transMultiplier
+    static constexpr auto transMultiplierString       = "TransMultiplier";
 
     // Keys below are for wrappers registered on MeshLevel, not the current object
 

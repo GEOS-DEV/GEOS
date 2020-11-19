@@ -272,5 +272,12 @@ std::vector< string > FlowSolverBase::getConstitutiveRelations( string const & r
   return rval;
 }
 
+void FlowSolverBase::setUpDflux_dApertureMatrix( DomainPartition & GEOSX_UNUSED_PARAM( domain ),
+                                                 DofManager const & GEOSX_UNUSED_PARAM( dofManager ),
+                                                 CRSMatrix< real64, globalIndex > & GEOSX_UNUSED_PARAM( localMatrix ) )
+{
+  GEOSX_ERROR( "FlowSolverBase::setUpDfluxDapertureMatrix. Should be overridden." );
+}
+
 
 } // namespace geosx
