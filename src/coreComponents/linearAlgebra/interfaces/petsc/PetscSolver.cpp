@@ -26,13 +26,11 @@
 #include "linearAlgebra/utilities/LinearSolverParameters.hpp"
 #include "linearAlgebra/utilities/LAIHelperFunctions.hpp"
 
-#include "PetscSuperlu.hpp"
+#include "PetscSuperLU_Dist.hpp"
 #include <petscvec.h>
 #include <petscmat.h>
 #include <petscksp.h>
-#ifdef GEOSX_USE_SUITESPARSE
 #include "PetscSuiteSparse.hpp"
-#endif
 
 // Put everything under the geosx namespace.
 namespace geosx
@@ -54,13 +52,23 @@ void PetscSolver::solve( PetscMatrix & mat,
 
   GEOSX_UNUSED_VAR( dofManager );
 
-  if( m_parameters.solverType == LinearSolverParameters::SolverType::direct )
+  if( rhs.norm2() > 0.0 )
   {
-    solve_direct( mat, sol, rhs );
+    if( m_parameters.solverType == LinearSolverParameters::SolverType::direct )
+    {
+      solve_direct( mat, sol, rhs );
+    }
+    else
+    {
+      solve_krylov( mat, sol, rhs );
+    }
   }
   else
   {
-    solve_krylov( mat, sol, rhs );
+    sol.zero();
+    m_result.status = LinearSolverResult::Status::Success;
+    m_result.setupTime = 0.0;
+    m_result.solveTime = 0.0;
   }
 }
 
@@ -76,62 +84,47 @@ void solve_parallelDirect( LinearSolverParameters const & parameters,
   // To be able to use SuperLU_Dist solver we need to disable floating point exceptions
   LvArray::system::FloatingPointExceptionGuard guard;
 
-  MPI_Comm const comm = mat.getComm();
+  SuperLU_Dist SLUDData( parameters );
+  Mat localMatrix;
+  PetscConvertToSuperMatrix( mat, localMatrix, SLUDData );
 
-  // create linear solver
-  KSP ksp;
-  GEOSX_LAI_CHECK_ERROR( KSPCreate( comm, &ksp ) );
-  GEOSX_LAI_CHECK_ERROR( KSPSetOperators( ksp, mat.unwrapped(), mat.unwrapped() ) );
-  GEOSX_LAI_CHECK_ERROR( KSPSetType( ksp, KSPPREONLY ) );
+  GEOSX_LAI_CHECK_ERROR( SLUDData.setup() );
+  GEOSX_LAI_CHECK_ERROR( SLUDData.solve( rhs.extractLocalVector(), sol.extractLocalVector() ) );
 
-  SuperLU_DistSetFromOptions( mat, parameters );
+  // Save setup and solution times
+  result.setupTime = SLUDData.setupTime();
+  result.solveTime = SLUDData.solveTime();
 
-  // use direct solve preconditioner SUPERLU DIST
-  Stopwatch watch;
-  PC prec;
-  GEOSX_LAI_CHECK_ERROR( KSPGetPC( ksp, &prec ) );
-  GEOSX_LAI_CHECK_ERROR( PCSetType( prec, PCLU ) );
-  GEOSX_LAI_CHECK_ERROR( PCFactorSetMatSolverType( prec, MATSOLVERSUPERLU_DIST ) );
-  GEOSX_LAI_CHECK_ERROR( PCSetUp( prec ) );
-  result.setupTime = watch.elapsedTime();
+  PetscVector res( rhs );
+  mat.gemv( -1.0, sol, 1.0, res );
+  result.residualReduction = res.norm2() / rhs.norm2();
 
-  // solve system
-  watch.zero();
-  GEOSX_LAI_CHECK_ERROR( KSPSolve( ksp, rhs.unwrapped(), sol.unwrapped() ) );
-  result.solveTime = watch.elapsedTime();
-
-  KSPConvergedReason reason;
-  GEOSX_LAI_CHECK_ERROR( KSPGetConvergedReason( ksp, &reason ) );
-
-  result.status = reason >= 0 ? LinearSolverResult::Status::Success : LinearSolverResult::Status::Breakdown;
-
-  if( result.status == LinearSolverResult::Status::Success )
+  result.status = parameters.direct.checkResidual == 0 ? LinearSolverResult::Status::Success : LinearSolverResult::Status::Breakdown;
+  result.numIterations = 1;
+  if( parameters.direct.checkResidual )
   {
-    PetscVector res( rhs );
-    mat.gemv( -1.0, sol, 1.0, res );
-    result.residualReduction = res.norm2() / rhs.norm2();
-
-    // check for nan or inf
-    if( std::isnan( result.residualReduction ) || std::isinf( result.residualReduction ) )
-    {
-      result.status = LinearSolverResult::Status::Breakdown;
-    }
-    else if( result.residualReduction < parameters.direct.checkResidualTolerance )
+    if( result.residualReduction < SLUDData.relativeTolerance() )
     {
       result.status = LinearSolverResult::Status::Success;
-      result.numIterations = 1;
     }
     else
     {
-      result.status = LinearSolverResult::Status::Breakdown;
+      real64 const cond = PetscSuperLU_DistCond( mat, SLUDData );
+      if( parameters.logLevel > 0 )
+      {
+        GEOSX_LOG_RANK_0( "Using a more accurate estimate of the condition number" );
+        GEOSX_LOG_RANK_0( "Condition number is " << cond );
+      }
+      if( result.residualReduction < SLUDData.precisionTolerance() * cond )
+      {
+        result.status = LinearSolverResult::Status::Success;
+      }
     }
   }
 
-  // destroy solver
-  GEOSX_LAI_CHECK_ERROR( KSPDestroy( &ksp ) );
+  PetscDestroyAdditionalData( localMatrix );
 }
 
-#ifdef GEOSX_USE_SUITESPARSE
 void solve_serialDirect( LinearSolverParameters const & parameters,
                          PetscMatrix & mat,
                          PetscVector & sol,
@@ -141,102 +134,43 @@ void solve_serialDirect( LinearSolverParameters const & parameters,
   // To be able to use UMFPACK direct solver we need to disable floating point exceptions
   LvArray::system::FloatingPointExceptionGuard guard;
 
-  MPI_Comm const comm = mat.getComm();
+  SuiteSparse SSData( parameters );
+  ConvertPetscToSuiteSparseMatrix( mat, SSData );
 
-  int const rank = MpiWrapper::Comm_rank( comm );
+  GEOSX_LAI_CHECK_ERROR( SSData.setup() );
+  GEOSX_LAI_CHECK_ERROR( SuiteSparseSolve( SSData, rhs, sol ) );
 
-  SuiteSparseSetFromOptions( mat, parameters );
+  // Save setup and solution times
+  result.setupTime = SSData.setupTime();
+  result.solveTime = SSData.solveTime();
 
-  Mat * localMatrix;
-  IS set;
-  if( rank == 0 )
+  PetscVector res( rhs );
+  mat.gemv( -1.0, sol, 1.0, res );
+  result.residualReduction = res.norm2() / rhs.norm2();
+
+  result.status = parameters.direct.checkResidual == 0 ? LinearSolverResult::Status::Success : LinearSolverResult::Status::Breakdown;
+  result.numIterations = 1;
+  if( parameters.direct.checkResidual )
   {
-    GEOSX_LAI_CHECK_ERROR( ISCreateStride( PETSC_COMM_SELF, mat.numGlobalRows(), 0, 1, &set ) );
-  }
-  GEOSX_LAI_CHECK_ERROR( MatCreateSubMatrices( mat.unwrapped(), rank==0, &set, &set, MAT_INITIAL_MATRIX, &localMatrix ) );
-
-  VecScatter rhsScatter;
-  Vec localRhs;
-  GEOSX_LAI_CHECK_ERROR( VecScatterCreateToZero( rhs.unwrapped(), &rhsScatter, &localRhs ) );
-  GEOSX_LAI_CHECK_ERROR( VecScatterBegin( rhsScatter, rhs.unwrapped(), localRhs, INSERT_VALUES, SCATTER_FORWARD ) );
-  GEOSX_LAI_CHECK_ERROR( VecScatterEnd( rhsScatter, rhs.unwrapped(), localRhs, INSERT_VALUES, SCATTER_FORWARD ) );
-
-  VecScatter solScatter;
-  Vec localSol;
-  GEOSX_LAI_CHECK_ERROR( VecScatterCreateToZero( sol.unwrapped(), &solScatter, &localSol ) );
-
-  localIndex status = 0;
-
-  if( rank == 0 )
-  {
-    // create linear solver
-    KSP ksp;
-    GEOSX_LAI_CHECK_ERROR( KSPCreate( PETSC_COMM_SELF, &ksp ) );
-    GEOSX_LAI_CHECK_ERROR( KSPSetOperators( ksp, localMatrix[0], localMatrix[0] ) );
-    GEOSX_LAI_CHECK_ERROR( KSPSetType( ksp, KSPPREONLY ) );
-
-    // use direct solve preconditioner UMFPACK
-    Stopwatch watch;
-    PC prec;
-    GEOSX_LAI_CHECK_ERROR( KSPGetPC( ksp, &prec ) );
-    GEOSX_LAI_CHECK_ERROR( PCSetType( prec, PCLU ) );
-    GEOSX_LAI_CHECK_ERROR( PCFactorSetMatSolverType( prec, MATSOLVERUMFPACK ) );
-    GEOSX_LAI_CHECK_ERROR( PCSetUp( prec ) );
-    result.setupTime = watch.elapsedTime();
-
-    // solve system
-    watch.zero();
-    GEOSX_LAI_CHECK_ERROR( KSPSolve( ksp, localRhs, localSol ) );
-    result.solveTime = watch.elapsedTime();
-
-    KSPConvergedReason reason;
-    GEOSX_LAI_CHECK_ERROR( KSPGetConvergedReason( ksp, &reason ) );
-
-    // save status
-    status = !( reason >= 0 );
-
-    // destroy solver
-    GEOSX_LAI_CHECK_ERROR( KSPDestroy( &ksp ) );
-  }
-
-  // broadcast status and times
-  MpiWrapper::bcast( &status, 1, 0, comm );
-  MpiWrapper::bcast( &result.setupTime, 1, 0, comm );
-  MpiWrapper::bcast( &result.solveTime, 1, 0, comm );
-
-  GEOSX_LAI_CHECK_ERROR( VecScatterBegin( solScatter, localSol, sol.unwrapped(), INSERT_VALUES, SCATTER_REVERSE ) );
-  GEOSX_LAI_CHECK_ERROR( VecScatterEnd( solScatter, localSol, sol.unwrapped(), INSERT_VALUES, SCATTER_REVERSE ) );
-  GEOSX_LAI_CHECK_ERROR( VecDestroy( &localRhs ) );
-  GEOSX_LAI_CHECK_ERROR( VecScatterDestroy( &rhsScatter ) );
-  GEOSX_LAI_CHECK_ERROR( VecDestroy( &localSol ) );
-  GEOSX_LAI_CHECK_ERROR( VecScatterDestroy( &solScatter ) );
-  GEOSX_LAI_CHECK_ERROR( MatDestroySubMatrices( rank==0, &localMatrix ) );
-
-  result.status = status == 0 ? LinearSolverResult::Status::Success : LinearSolverResult::Status::Breakdown;
-
-  if( result.status == LinearSolverResult::Status::Success )
-  {
-    PetscVector res( rhs );
-    mat.gemv( -1.0, sol, 1.0, res );
-    result.residualReduction = res.norm2() / rhs.norm2();
-
-    // check for nan or inf
-    if( std::isnan( result.residualReduction ) || std::isinf( result.residualReduction ) )
-    {
-      result.status = LinearSolverResult::Status::Breakdown;
-    }
-    else if( result.residualReduction < parameters.direct.checkResidualTolerance )
+    if( result.residualReduction < SSData.relativeTolerance() )
     {
       result.status = LinearSolverResult::Status::Success;
-      result.numIterations = 1;
     }
     else
     {
-      result.status = LinearSolverResult::Status::Breakdown;
+      real64 const cond = PetscSuiteSparseCond( mat, SSData );
+      if( parameters.logLevel > 0 )
+      {
+        GEOSX_LOG_RANK_0( "Using a more accurate estimate of the condition number" );
+        GEOSX_LOG_RANK_0( "Condition number is " << cond );
+      }
+      if( result.residualReduction < SSData.precisionTolerance() * cond )
+      {
+        result.status = LinearSolverResult::Status::Success;
+      }
     }
   }
 }
-#endif
 
 void CreatePetscKrylovSolver( LinearSolverParameters const & params,
                               MPI_Comm const comm,
@@ -285,11 +219,7 @@ void PetscSolver::solve_direct( PetscMatrix & mat,
   }
   else
   {
-#ifdef GEOSX_USE_SUITESPARSE
     solve_serialDirect( m_parameters, mat, sol, rhs, m_result );
-#else
-    GEOSX_ERROR( "Petsc direct solver interface: serial direct solver not available (try to compile GEOSX TPLs with SuiteSparse)." );
-#endif
   }
 }
 

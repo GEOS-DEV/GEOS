@@ -17,7 +17,7 @@
         newtonMaxIter="5"/>
       <LinearSolverParameters
         solverType="direct"
-        krylovTol="1.0e-10"
+        directParallel="0"
         logLevel="0"/>
     </Hydrofracture>
 

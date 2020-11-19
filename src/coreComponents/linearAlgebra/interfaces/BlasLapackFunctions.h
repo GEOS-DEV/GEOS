@@ -135,6 +135,22 @@ void GEOSX_dgesvd( char const * JOBU,
                    int const * LWORK,
                    int * INFO );
 
+#define GEOSX_dgeev FORTRAN_MANGLE( dgeev )
+void GEOSX_dgeev( char const * JOBVL,
+                  char const * JOBVR,
+                  int const * N,
+                  double * A,
+                  int const * LDA,
+                  double * WR,
+                  double * WI,
+                  double * VL,
+                  int const * LDVL,
+                  double * VR,
+                  int const * LDVR,
+                  double * WORK,
+                  int * LWORK,
+                  int * INFO );
+
 }
 #endif
 

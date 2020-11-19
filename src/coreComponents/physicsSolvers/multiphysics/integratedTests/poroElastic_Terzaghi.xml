@@ -15,6 +15,8 @@
       <NonlinearSolverParameters
         newtonMaxIter="40"/>
       <LinearSolverParameters
+        solverType="direct"
+        directParallel="0"
         logLevel="0"/>
     </Poroelastic>
 
@@ -29,8 +31,8 @@
         newtonTol="1.0e-6"
         newtonMaxIter="5"/>
       <LinearSolverParameters
-        solverType="gmres"
-        krylovTol="1.0e-10"
+        solverType="direct"
+        directParallel="0"
         logLevel="0"/>
     </SolidMechanicsLagrangianSSLE>
 
@@ -45,8 +47,8 @@
         newtonTol="1.0e-6"
         newtonMaxIter="8"/>
       <LinearSolverParameters
-        solverType="gmres"
-        krylovTol="1.0e-10"
+        solverType="direct"
+        directParallel="0"
         logLevel="0"/>
     </SinglePhaseFVM>
   </Solvers>

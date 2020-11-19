@@ -15,8 +15,9 @@
         newtonMaxIter="8"
         allowNonConverged="1"/>
       <LinearSolverParameters
-        solverType="gmres"
-        krylovTol="1.0e-12"/>
+        solverType="direct"
+        directParallel="0"
+        logLevel="0"/>
     </SinglePhaseFVM>
 
     <SurfaceGenerator

@@ -21,18 +21,39 @@
 
 #include "common/DataTypes.hpp"
 #include "linearAlgebra/interfaces/petsc/PetscMatrix.hpp"
-#include "linearAlgebra/utilities/LinearSolverParameters.hpp"
+#include "linearAlgebra/interfaces/direct/SuiteSparse.hpp"
 
 namespace geosx
 {
 
 /**
- * @brief Sets SuiteSparse options
+ * @brief Converts a matrix from Petsc to SuiteSparse format
  * @param[in] matrix the PetscMatrix object
- * @param[in] params the linear solver parameters
+ * @param[out] SSData the structure containing the matrix in SuiteSparse format
  */
-void SuiteSparseSetFromOptions( PetscMatrix const & matrix,
-                                LinearSolverParameters const & params );
+void ConvertPetscToSuiteSparseMatrix( PetscMatrix const & matrix,
+                                      SuiteSparse & SSData );
+
+/**
+ * @brief Solves a linear system with SuiteSparse (matrix has already been factorized)
+ * @param[in,out] SSData the structure containing the matrix in SuiteSparse format
+ * @param[in] b the right-hand side in Petsc format
+ * @param[out] x the solution in Petsc format
+ * @param[in] transpose whether to solve for the original or the transpose matrix
+ * @return info error code
+ */
+int SuiteSparseSolve( SuiteSparse & SSData,
+                      PetscVector const & b,
+                      PetscVector & x,
+                      bool transpose = false );
+
+/**
+ * @brief Computes an accurate condition number (time consuming function!!!)
+ * @param[in] matrix the PetscMatrix object
+ * @param[in] SSData the structure containing the matrix in SuiteSparse format
+ * @return the condition number
+ */
+real64 PetscSuiteSparseCond( PetscMatrix const & matrix, SuiteSparse & SSData );
 
 }
 

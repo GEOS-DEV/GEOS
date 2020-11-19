@@ -24,7 +24,7 @@
 #include "linearAlgebra/utilities/LinearSolverParameters.hpp"
 
 /**
- * @name Hypre forward declarations.
+ * @name PETSc forward declarations.
  *
  * Forward declare PETSc's solver structs and pointer aliases in order
  * to avoid including PETSc headers and leaking into the rest of GEOSX.
