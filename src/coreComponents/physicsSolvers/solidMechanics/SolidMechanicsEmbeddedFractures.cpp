@@ -30,8 +30,6 @@
 #include "mesh/SurfaceElementRegion.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
 #include "meshUtilities/ComputationalGeometry.hpp"
-#include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
-#include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
 #include "linearAlgebra/utilities/LAIHelperFunctions.hpp"
 #include "linearAlgebra/interfaces/BlasLapackLA.hpp"
@@ -261,11 +259,6 @@ void SolidMechanicsEmbeddedFractures::AssembleSystem( real64 const time,
   string const dispDofKey     = dofManager.getKey( keys::TotalDisplacement );
   string const jumpDofKey     = dofManager.getKey( viewKeyStruct::dispJumpString );
 
-  if (m_effectiveStress)
-  {
-    pressureDofKey = dofManager.getKey(FlowSolverBase::viewKeyStruct::pressureString);
-  }
-
   arrayView1d< globalIndex const > const & dispDofNumber = nodeManager.getReference< globalIndex_array >( dispDofKey );
 
   ElementRegionManager::MaterialViewAccessor< real64 > const
@@ -314,19 +307,6 @@ void SolidMechanicsEmbeddedFractures::AssembleSystem( real64 const time,
 
   array2d< real64 > dMatrix( 6, 6 );
 
-  if ( m_effectiveStress )
-  {
-    array2d< real64 > Kwpm_elem(1, 3);
-    array2d< real64 > Kwpm_gauss(1, 3);
-    array2d< real64 > identityVec(6, 1);
-    identityVec.setValues<serialPolicy>(0);
-    identityVec[0][0] = 1;
-    identityVec[1][0] = 1;
-    identityVec[2][0] = 1;
-    array1d< real64 > pm(1); // matrix pressure (it's a scalar but let's keep it like this in case we wanted more unknowns)
-    array1d< real64 > Rwpm(3);
-  }
-
   // begin region loop
   elemManager.forElementRegions< SurfaceElementRegion >( [&]( SurfaceElementRegion const & embeddedRegion )->void
   {
@@ -338,9 +318,11 @@ void SolidMechanicsEmbeddedFractures::AssembleSystem( real64 const time,
       FixedToManyElementRelation const & embeddedSurfacesToCells = embeddedSurfaceSubRegion.getToCellRelation();
 
       arrayView1d< globalIndex const > const &
-      embeddedElementDofNumber = embeddedSurfaceSubRegion.getReference< array1d< globalIndex > >( jumpDofKey );
-      arrayView1d< R1Tensor const > const & w_global  = embeddedSurfaceSubRegion.getReference< array1d< R1Tensor > >( viewKeyStruct::dispJumpString );
-      arrayView1d< R1Tensor const > const & dw_global = embeddedSurfaceSubRegion.getReference< array1d< R1Tensor > >( viewKeyStruct::deltaDispJumpString );
+      jumpDofNumber = embeddedSurfaceSubRegion.getReference< array1d< globalIndex > >( jumpDofKey );
+      arrayView1d< R1Tensor const > const & w_global  =
+        embeddedSurfaceSubRegion.getReference< array1d< R1Tensor > >( viewKeyStruct::dispJumpString );
+      arrayView1d< R1Tensor const > const & dw_global =
+        embeddedSurfaceSubRegion.getReference< array1d< R1Tensor > >( viewKeyStruct::deltaDispJumpString );
 
       arrayView1d< real64 const > const & fractureSurfaceArea = embeddedSurfaceSubRegion.getElementArea();
 
@@ -426,8 +408,8 @@ void SolidMechanicsEmbeddedFractures::AssembleSystem( real64 const time,
           // Dof number of jump enrichment
           for( int i= 0; i < embeddedSurfaceSubRegion.numOfJumpEnrichments(); i++ )
           {
-            jumpEqnRowIndices[i] = embeddedElementDofNumber[k] + i - rankOffset;
-            jumpColIndices[i]    = embeddedElementDofNumber[k] + i;
+            jumpEqnRowIndices[i] = jumpDofNumber[k] + i - rankOffset;
+            jumpColIndices[i]    = jumpDofNumber[k] + i;
             w( i ) = w_global[k][i] + 0*dw_global[k][i];
           }
 
@@ -440,32 +422,15 @@ void SolidMechanicsEmbeddedFractures::AssembleSystem( real64 const time,
             }
           }
 
-          if ( m_effectiveStress )
-          {
-            arrayView1d< globalIndex const > const matrixPresDofNumber =
-                elementSubRegion.getReference< array1d< globalIndex > >( presDofKey );
+          string const & solidName = m_solidSolver->solidMaterialNames()[embeddedSurfacesToCells.m_toElementRegion[k][0]];
+          SolidBase const & solid = GetConstitutiveModel< SolidBase >( *elementSubRegion, solidName );
 
-            globalIndex matrixPressureColIndex = matrixPresDofNumber[cellElementIndex];
+          arrayView1d < real64 const > const &  bulkModulus  = solid.getReference< array1d< real64 > >( "BulkModulus" );
+          arrayView1d < real64 const > const &  shearModulus = solid.getReference< array1d< real64 > >( "ShearModulus" );
 
-            arrayView1d< real64 const > const & matrixPres =
-                elementSubRegion.getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::pressureString );
-            pm = matrixPres[cellElementIndex];
-
-            PoroElastic< LinearElasticIsotropic > const * constitutiveRelation =
-                elementSubRegion->getConstitutiveModel< PoroElastic< LinearElasticIsotropic > >( m_solidSolver->solidMaterialNames()[0] );
-            PoroElastic< LinearElasticIsotropic >::KernelWrapper const & solidConstitutive = constitutiveRelation->createKernelUpdates();
-
-            real64 const biotCoefficient = solidConstitutive.getBiotCoefficient();
-          }else
-          {
-            // Get mechanical moduli tensor
-            LinearElasticIsotropic const * constitutiveRelation = elementSubRegion->getConstitutiveModel< LinearElasticIsotropic >( m_solidSolver->solidMaterialNames()[0] );
-            LinearElasticIsotropic::KernelWrapper const & solidConstitutive = constitutiveRelation->createKernelUpdates();
-          }
-          solidConstitutive.GetStiffness( cellElementIndex, dMatrix );
+          fillElementStiffness( bulkModulus[cellElementIndex], shearModulus[cellElementIndex], dMatrix );
 
           // 1. Assembly of element matrices
-
           // Resize local storages.
           Kwu_gauss.resizeDimension< 1 >( nUdof );
           Kuw_gauss.resizeDimension< 0 >( nUdof );
@@ -474,15 +439,16 @@ void SolidMechanicsEmbeddedFractures::AssembleSystem( real64 const time,
 
           BlasLapackLA::matrixMatrixMultiply( eqMatrix, dMatrix, matED );
 
-          if (m_effectiveStress)
-          {
-            Kwpm_elem.setValues< serialPolicy >(0);
-            Kwpm_gauss.setValues< serialPolicy >(0);
-            BlasLapackLA::matrixTMatrixMultiply(identityVec, eqMatrix, Kwpm_gauss);
-          }
-
           // Compute traction
-          ComputeTraction( constitutiveManager, w, tractionVec, dTdw );
+          ContactRelationBase const * const
+          contactRelation = constitutiveManager->GetGroup< ContactRelationBase >( m_contactRelationName );
+
+          // check if fracture element is open
+          bool open = w[0] >= 0 ? true : false;
+
+          contactRelation->computeTraction( 0, w, fractureSurfaceArea[k], tractionVec, open );
+
+          contactRelation->dTraction_dJump( fractureSurfaceArea[k], dTdw, open );
 
           for( integer q=0; q<fe.getNumQuadraturePoints(); ++q )
           {
@@ -517,15 +483,10 @@ void SolidMechanicsEmbeddedFractures::AssembleSystem( real64 const time,
             BlasLapackLA::matrixScale( detJq, Kww_gauss );
 
             // Add Gauss point contribution to element matrix
+            // stiffness matrix has a negative diagonal thus the -1
             BlasLapackLA::matrixMatrixAdd( Kww_gauss, Kww_elem, -1 );
             BlasLapackLA::matrixMatrixAdd( Kwu_gauss, Kwu_elem, -1 );
             BlasLapackLA::matrixMatrixAdd( Kuw_gauss, Kuw_elem, -1 );
-
-            if (m_effectiveStress)
-            {
-              BlasLapackLA::matrixScale( biotCoefficient * detJq, Kwpm_gauss );
-              BlasLapackLA::matrixMatrixAdd( Kwpm_gauss, Kwpm_elem, -1 );
-            }
           }
 
           BlasLapackLA::matrixMatrixAdd( dTdw, Kww_elem, -1 );
@@ -536,12 +497,6 @@ void SolidMechanicsEmbeddedFractures::AssembleSystem( real64 const time,
           BlasLapackLA::matrixVectorMultiply( Kuw_elem, w, R0, 1, 1 );
 
           BlasLapackLA::vectorVectorAdd( tractionVec, R1, 1 );
-
-          if (m_effectiveStress)
-          {
-            // Negative sign is important coz the effective stress is total stress - porePressure
-            BlasLapackLA::matrixVectorMultiply(Kwpm_elem, pm, Rwpm, -1, 1);
-          }
 
 
           // 2. Assembly into global system
@@ -575,19 +530,7 @@ void SolidMechanicsEmbeddedFractures::AssembleSystem( real64 const time,
                                                                                 dispColIndices.data(),
                                                                                 Kwu_elem[i],
                                                                                 numNodesPerElement * dim );
-
-              if ( m_effectiveStress )
-              {
-                RAJA::atomicAdd< parallelDeviceAtomic >( &localRhs[jumpEqnRowIndices[i]], Rwpm[i] );
-
-                // fill in matrix
-                localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( jumpEqnRowIndices[i],
-                                                                                  matrixPressureColIndex,
-                                                                                  Kwpm_elem[i],
-                                                                                  1 );
-              }
             }
-
           }
         }
       } // loop over embedded surfaces
@@ -618,7 +561,7 @@ void SolidMechanicsEmbeddedFractures::AddCouplingNumNonzeros( DomainPartition & 
     FixedToManyElementRelation const & embeddedSurfacesToCells = embeddedSurfaceSubRegion.getToCellRelation();
 
     arrayView1d< globalIndex const > const &
-    embeddedElementDofNumber = embeddedSurfaceSubRegion.getReference< array1d< globalIndex > >( jumpDofKey );
+    jumpDofNumber = embeddedSurfaceSubRegion.getReference< array1d< globalIndex > >( jumpDofKey );
     arrayView1d< integer const > const & ghostRank = embeddedSurfaceSubRegion.ghostRank();
 
     for( localIndex k=0; k<numEmbeddedElems; ++k )
@@ -633,7 +576,7 @@ void SolidMechanicsEmbeddedFractures::AddCouplingNumNonzeros( DomainPartition & 
 
       if( ghostRank[k] < 0 )
       {
-        localIndex const localRow = LvArray::integerConversion< localIndex >( embeddedElementDofNumber[k] - rankOffset );
+        localIndex const localRow = LvArray::integerConversion< localIndex >( jumpDofNumber[k] - rankOffset );
         GEOSX_ASSERT_GE( localRow, 0 );
         GEOSX_ASSERT_GE( rowLengths.size(), localRow + embeddedSurfaceSubRegion.numOfJumpEnrichments()  );
 
@@ -683,7 +626,7 @@ void SolidMechanicsEmbeddedFractures::AddCouplingSparsityPattern( DomainPartitio
     FixedToManyElementRelation const & embeddedSurfacesToCells = embeddedSurfaceSubRegion.getToCellRelation();
 
     arrayView1d< globalIndex const > const &
-    embeddedElementDofNumber = embeddedSurfaceSubRegion.getReference< array1d< globalIndex > >( jumpDofKey );
+    jumpDofNumber = embeddedSurfaceSubRegion.getReference< array1d< globalIndex > >( jumpDofKey );
 
     // Insert the entries corresponding to jump-disp coupling
     // This will fill K_wu, and K_uw
@@ -704,8 +647,8 @@ void SolidMechanicsEmbeddedFractures::AddCouplingSparsityPattern( DomainPartitio
 
       for( localIndex idof = 0; idof < embeddedSurfaceSubRegion.numOfJumpEnrichments(); ++idof )
       {
-        eqnRowIndicesJump[idof] = embeddedElementDofNumber[k] + idof - rankOffset;
-        dofColIndicesJump[idof] = embeddedElementDofNumber[k] + idof;
+        eqnRowIndicesJump[idof] = jumpDofNumber[k] + idof - rankOffset;
+        dofColIndicesJump[idof] = jumpDofNumber[k] + idof;
       }
 
       for( localIndex a=0; a<elemSubRegion->numNodesPerElement(); ++a )
@@ -1032,40 +975,32 @@ void SolidMechanicsEmbeddedFractures::ApplySystemSolution( DofManager const & do
 
 }
 
-void SolidMechanicsEmbeddedFractures::ComputeTraction( ConstitutiveManager const * const constitutiveManager,
-                                                       array1d< real64 >  const & dispJump,
-                                                       array1d< real64 > & tractionVector,
-                                                       array2d< real64 > & dTdw )
+void SolidMechanicsEmbeddedFractures::fillElementStiffness( real64 const & bulkModulus,
+                                                            real64 const & shearModulus,
+                                                            array2d< real64 > & dMatrix )
 {
-  // Compute traction vector on the fracture element
-  ContactRelationBase const * const
-  contactRelation = constitutiveManager->GetGroup< ContactRelationBase >( m_contactRelationName );
 
-  // check if fracture is open
-  bool open = dispJump[0] >= 0 ? true : false;
 
-  if( open )
-  {
-    tractionVector[0] = pf;
-    tractionVector[1] = 0.0;
-    tractionVector[2] = 0.0;
-    dTdw( 0, 0 ) = 0.0;
-    dTdw( 0, 1 ) = 0.0;
-    dTdw( 0, 2 ) = 0.0;
-    dTdw( 1, 0 ) = 0.0;
-    dTdw( 1, 1 ) = 0.0;
-    dTdw( 1, 2 ) = 0.0;
-    dTdw( 2, 0 ) = 0.0;
-    dTdw( 2, 1 ) = 0.0;
-    dTdw( 2, 2 ) = 0.0;
-  }
-  else
-  {
-    // Contact through penalty condition.
-    tractionVector[0] = contactRelation->stiffness() * dispJump[0];
-    tractionVector[1] = 0;
-    tractionVector[2] = 0;
-  }
+  real64 const Lame = bulkModulus - 2.0/3.0 * shearModulus;
+
+  dMatrix[0][0] = Lame + 2 * shearModulus;
+  dMatrix[0][1] = Lame;
+  dMatrix[0][2] = Lame;
+
+  dMatrix[1][0] = Lame;
+  dMatrix[1][1] = Lame + 2 * shearModulus;
+  dMatrix[1][2] = Lame;
+
+  dMatrix[2][0] = Lame;
+  dMatrix[2][1] = Lame;
+  dMatrix[2][2] = Lame + 2 * shearModulus;
+
+  dMatrix[3][3] = shearModulus;
+
+  dMatrix[4][4] = shearModulus;
+
+  dMatrix[5][5] = shearModulus;
+
 }
 
 REGISTER_CATALOG_ENTRY( SolverBase, SolidMechanicsEmbeddedFractures, std::string const &, Group * const )

@@ -21,12 +21,11 @@
 #define SRC_CORECOMPONENTS_PHYSICSSOLVERS_SOLIDMECHANICS_SOLIDMECHANICSEMBEDDEDFRACTURES_HPP_
 
 #include "physicsSolvers/SolverBase.hpp"
+#include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 
 namespace geosx
 {
 using namespace constitutive;
-
-class SolidMechanicsLagrangianFEM;
 
 class SolidMechanicsEmbeddedFractures : public SolverBase
 {
@@ -129,7 +128,11 @@ public:
 
   string const & getContactRelationName() const { return m_contactRelationName; };
 
-protected:
+  void setEffectiveStress( integer const input )
+  {
+    m_effectiveStress = input;
+    m_solidSolver->setEffectiveStress( input );
+  }
 
   /*
    * @brief Assemble Equilibrium operator
@@ -142,6 +145,10 @@ protected:
                                     EmbeddedSurfaceSubRegion const & embeddedSurfaceSubRegion,
                                     const localIndex k,
                                     const real64 hInv );
+
+protected:
+
+
   /*
    * @brief Assemble Compatibility operator
    * @param compMatrix
@@ -181,20 +188,24 @@ protected:
    * @brief Computes traction and derivative on each fracture segment.
    * @param constitutiveManager constant pointer to the constitutive mamanger
    * @param dispJump displacement jump
+   * @param pf pressure in the fracture element
+   * @surfaceArea area of the fracture element
    * @param tractionVector traction vector
-   * @param dTdw Derivative of the traction w.r.t. the jump.
+   * @param dTdw derivative of the traction w.r.t. the jump
+   * @param dTdpf derivative of the traction w.r.t the fracture pressure
    */
   void ComputeTraction( ConstitutiveManager const * const constitutiveManager,
                         array1d< real64 >  const & dispJump,
+                        real64 const & pf,
+                        real64 const & surfaceArea,
                         array1d< real64 > & tractionVector,
-                        array2d< real64 > & dTdw );
+                        array2d< real64 > & dTdw,
+                        real64 & dTdpf );
 
+  void fillElementStiffness( real64 const & bulkModulus,
+                             real64 const & shearModulus,
+                             array2d< real64 > & dMatrix );
 
-  void setEffectiveStress( integer const input )
-   {
-     m_effectiveStress = input;
-     m_solidSolver->setEffectiveStress( input );
-   }
 
 private:
 

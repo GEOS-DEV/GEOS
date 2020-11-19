@@ -106,6 +106,54 @@ public:
 
   inline real64 apertureTolerance() const { return m_apertureTolerance; }
 
+  virtual void computeTraction( real64 const & pressure,
+                                arrayView1d< real64 const > const & dispJump,
+                                real64 const & surfaceArea,
+                                array1d< real64 > & tractionVector,
+                                bool const open ) const;
+
+  void dTraction_dPressure( real64 const & surfaceArea,
+                            bool open,
+                            real64 & dTdpf ) const
+  {
+    if ( open )
+      dTdpf = surfaceArea;
+    else
+      dTdpf = 0.0;
+  }
+
+  void dTraction_dPressure( real64 const & surfaceArea,
+                            real64 & dTdpf,
+                            bool const open) const
+  {
+    if ( open )
+      dTdpf = surfaceArea;
+    else
+      dTdpf = 0.0;
+  }
+
+  virtual void dTraction_dJump( real64 const & surfaceArea,
+                                array2d< real64 > & dTdw,
+                                bool const open ) const
+  {
+    GEOSX_UNUSED_VAR( surfaceArea );
+
+    if ( open )
+      dTdw( 0, 0 ) = 0.0;
+    else
+      dTdw( 0, 0 ) = m_penaltyStiffness;
+
+    // all the others are zeros
+    dTdw( 0, 1 ) = 0.0;
+    dTdw( 0, 2 ) = 0.0;
+    dTdw( 1, 0 ) = 0.0;
+    dTdw( 1, 1 ) = 0.0;
+    dTdw( 1, 2 ) = 0.0;
+    dTdw( 2, 0 ) = 0.0;
+    dTdw( 2, 1 ) = 0.0;
+    dTdw( 2, 2 ) = 0.0;
+  }
+
   /**
    * @struct Structure to hold scoped key names
    */
