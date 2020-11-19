@@ -21,78 +21,39 @@
 
 #include "common/DataTypes.hpp"
 #include "linearAlgebra/interfaces/hypre/HypreMatrix.hpp"
-#include "linearAlgebra/utilities/LinearSolverParameters.hpp"
-
-#include <HYPRE_utilities.h>
-#include <seq_mv.h>
-#include <umfpack.h>
+#include "linearAlgebra/interfaces/direct/SuiteSparse.hpp"
 
 namespace geosx
 {
 
 /**
- * SuiteSparse integer definition
- */
-typedef SuiteSparse_long Int;
-
-/**
- * SuiteSparse data
- */
-struct SuiteSparseData
-{
-  hypre_CSRMatrix * CSRmatrix;        //!< global matrix in HypreMatrix format
-  integer logLevel;                   //!< log level
-  Int numRows;                        //!< number of rows
-  Int numCols;                        //!< number of columns
-  Int nonZeros;                       //!< number of entries
-  Int * rowPtr;                       //!< row pointers
-  Int * colIndices;                   //!< column indices
-  real64 * data;                      //!< values
-  real64 Info[UMFPACK_INFO];          //!< data structure to gather various info
-  real64 Control[UMFPACK_CONTROL];    //!< SuiteSparse options
-  void * Symbolic;                    //!< pointer to the symbolic factorization
-  void * Numeric;                     //!< pointer to the numeric factorization
-  MPI_Comm comm;                      //!< MPI communicator
-  int workingRank;                    //!< MPI rank carring out the solution
-};
-
-/**
- * @brief Creates the SuiteSparse data structure
+ * @brief Converts a matrix from Hypre to SuiteSparse format
  * @param[in] matrix the HypreMatrix object
- * @param[in] params the linear solver parameters
  * @param[out] SSData the structure containing the matrix in SuiteSparse format
  */
-void SuiteSparseCreate( HypreMatrix const & matrix,
-                        LinearSolverParameters const & params,
-                        SuiteSparseData & SSData );
-
-/**
- * @brief Factorizes a linear system with SuiteSparse
- * @param[in,out] SSData the structure containing the matrix in SuiteSparse format
- * @param[out] time time spent in the factorization phase
- * @return info error code
- */
-int SuiteSparseSetup( SuiteSparseData & SSData,
-                      real64 & time );
+void ConvertHypreToSuiteSparseMatrix( HypreMatrix const & matrix,
+                                      SuiteSparse & SSData );
 
 /**
  * @brief Solves a linear system with SuiteSparse (matrix has already been factorized)
  * @param[in,out] SSData the structure containing the matrix in SuiteSparse format
  * @param[in] b the right-hand side in Hypre format
  * @param[out] x the solution in Hypre format
- * @param[out] time time spent in the solution phase
+ * @param[in] transpose whether to solve for the original or the transpose matrix
  * @return info error code
  */
-int SuiteSparseSolve( SuiteSparseData & SSData,
+int SuiteSparseSolve( SuiteSparse & SSData,
                       HypreVector const & b,
                       HypreVector & x,
-                      real64 & time );
+                      bool transpose = false );
 
 /**
- * @brief Deallocates a SuiteSparse data structure
- * @param[in,out] SSData the structure containing the matrix in SuiteSparse format
+ * @brief Computes an accurate condition number (time consuming function!!!)
+ * @param[in] matrix the HypreMatrix object
+ * @param[in] SSData the structure containing the matrix in SuiteSparse format
+ * @return the condition number
  */
-void SuiteSparseDestroy( SuiteSparseData & SSData );
+real64 HypreSuiteSparseCond( HypreMatrix const & matrix, SuiteSparse & SSData );
 
 }
 
