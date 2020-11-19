@@ -457,8 +457,8 @@ void PoroelasticSolverEmbeddedFractures::
 
       FixedToManyElementRelation const & embeddedSurfacesToCells = embeddedSurfaceSubRegion.getToCellRelation();
 
-      arrayView1d< globalIndex const > const &
-      jumpDofNumber = embeddedSurfaceSubRegion.getReference< array1d< globalIndex > >( jumpDofKey );
+      arrayView1d< globalIndex const > const & jumpDofNumber =
+          embeddedSurfaceSubRegion.getReference< array1d< globalIndex > >( jumpDofKey );
 
       arrayView1d< R1Tensor const > const & w_global  =
         embeddedSurfaceSubRegion.getReference< array1d< R1Tensor > >( SolidMechanicsEmbeddedFractures::viewKeyStruct::dispJumpString );
@@ -469,8 +469,8 @@ void PoroelasticSolverEmbeddedFractures::
       arrayView1d< real64 const > const & fracturePres =
         embeddedSurfaceSubRegion.getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::pressureString );
 
-      arrayView1d< globalIndex const > const &
-      fracturePresDofNumber = embeddedSurfaceSubRegion.getReference< array1d< globalIndex > >( pressureDofKey );
+      arrayView1d< globalIndex const > const & fracturePresDofNumber =
+          embeddedSurfaceSubRegion.getReference< array1d< globalIndex > >( pressureDofKey );
 
       arrayView1d< real64 const > const & fractureSurfaceArea = embeddedSurfaceSubRegion.getElementArea();
 
