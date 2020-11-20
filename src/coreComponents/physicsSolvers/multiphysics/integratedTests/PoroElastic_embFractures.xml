@@ -173,6 +173,15 @@
       compressibility="0.0e0"
       referenceViscosity="1e-3"
       viscosibility="0.0"/>
+      
+     <Contact
+      name="fractureContact"
+      penaltyStiffness="0.0e8">
+      <TableFunction
+        name="aperTable"
+        coordinates="{ -1.0e-3, 0.0 }"
+        values="{ 1.0e-6, 1.0e-4 }"/>
+    </Contact>
   </Constitutive>
   
 <FieldSpecifications>
