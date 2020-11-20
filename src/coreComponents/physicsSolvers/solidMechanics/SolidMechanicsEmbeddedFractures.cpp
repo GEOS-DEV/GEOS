@@ -66,6 +66,12 @@ SolidMechanicsEmbeddedFractures::~SolidMechanicsEmbeddedFractures()
   // TODO Auto-generated destructor stub
 }
 
+void SolidMechanicsEmbeddedFractures::PostProcessInput()
+{
+  m_solidSolver = this->getParent()->GetGroup< SolidMechanicsLagrangianFEM >( m_solidSolverName );
+}
+
+
 void SolidMechanicsEmbeddedFractures::RegisterDataOnMesh( dataRepository::Group * const MeshBodies )
 {
 
@@ -102,8 +108,6 @@ void SolidMechanicsEmbeddedFractures::ImplicitStepSetup( real64 const & time_n,
                                                          real64 const & dt,
                                                          DomainPartition & domain )
 {
-  m_solidSolver = this->getParent()->GetGroup< SolidMechanicsLagrangianFEM >( m_solidSolverName );
-
   m_solidSolver->ImplicitStepSetup( time_n, dt, domain );
 }
 
@@ -425,8 +429,8 @@ void SolidMechanicsEmbeddedFractures::AssembleSystem( real64 const time,
           string const & solidName = m_solidSolver->solidMaterialNames()[embeddedSurfacesToCells.m_toElementRegion[k][0]];
           SolidBase const & solid = GetConstitutiveModel< SolidBase >( *elementSubRegion, solidName );
 
-          arrayView1d < real64 const > const &  bulkModulus  = solid.getReference< array1d< real64 > >( "BulkModulus" );
-          arrayView1d < real64 const > const &  shearModulus = solid.getReference< array1d< real64 > >( "ShearModulus" );
+          arrayView1d< real64 const > const & bulkModulus  = solid.getReference< array1d< real64 > >( "BulkModulus" );
+          arrayView1d< real64 const > const & shearModulus = solid.getReference< array1d< real64 > >( "ShearModulus" );
 
           fillElementStiffness( bulkModulus[cellElementIndex], shearModulus[cellElementIndex], dMatrix );
 

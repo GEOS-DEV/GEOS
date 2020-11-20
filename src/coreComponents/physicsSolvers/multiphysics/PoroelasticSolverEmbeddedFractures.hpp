@@ -38,7 +38,7 @@ public:
    * @brief name of the node manager in the object catalog
    * @return string that contains the catalog name to generate a new NodeManager object through the object catalog.
    */
-  static string CatalogName() { return "FracturedPoroelastic"; }
+  static string CatalogName() { return "PoroelasticEmbeddedFractures"; }
 
   virtual void SetupSystem( DomainPartition & domain,
                             DofManager & dofManager,

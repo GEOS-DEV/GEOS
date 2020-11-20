@@ -54,6 +54,9 @@ PoroelasticSolverEmbeddedFractures::PoroelasticSolverEmbeddedFractures( const st
   registerWrapper( viewKeyStruct::fracturesSolverNameString, &m_fracturesSolverName )->
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "Name of the fractures solver to use in the fractured poroelastic solver" );
+
+  this->getWrapper< string >( viewKeyStruct::discretizationString )->
+    setInputFlag( InputFlags::FALSE );
 }
 
 PoroelasticSolverEmbeddedFractures::~PoroelasticSolverEmbeddedFractures()
@@ -66,6 +69,8 @@ void PoroelasticSolverEmbeddedFractures::PostProcessInput()
   m_flowSolver  = this->getParent()->GetGroup< SinglePhaseBase >( m_flowSolverName );
   m_fracturesSolver  = this->getParent()->GetGroup< SolidMechanicsEmbeddedFractures >
                          ( m_fracturesSolverName );
+
+  PoroelasticSolver::PostProcessInput();
 
   m_fracturesSolver->setEffectiveStress( 1 );
 
@@ -411,6 +416,8 @@ void PoroelasticSolverEmbeddedFractures::
                                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                               arrayView1d< real64 > const & localRhs )
 {
+  GEOSX_MARK_FUNCTION;
+
   MeshLevel const & mesh                   = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
   ElementRegionManager const & elemManager = *mesh.getElemManager();
 
@@ -458,7 +465,7 @@ void PoroelasticSolverEmbeddedFractures::
       FixedToManyElementRelation const & embeddedSurfacesToCells = embeddedSurfaceSubRegion.getToCellRelation();
 
       arrayView1d< globalIndex const > const & jumpDofNumber =
-          embeddedSurfaceSubRegion.getReference< array1d< globalIndex > >( jumpDofKey );
+        embeddedSurfaceSubRegion.getReference< array1d< globalIndex > >( jumpDofKey );
 
       arrayView1d< R1Tensor const > const & w_global  =
         embeddedSurfaceSubRegion.getReference< array1d< R1Tensor > >( SolidMechanicsEmbeddedFractures::viewKeyStruct::dispJumpString );
@@ -470,7 +477,7 @@ void PoroelasticSolverEmbeddedFractures::
         embeddedSurfaceSubRegion.getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::pressureString );
 
       arrayView1d< globalIndex const > const & fracturePresDofNumber =
-          embeddedSurfaceSubRegion.getReference< array1d< globalIndex > >( pressureDofKey );
+        embeddedSurfaceSubRegion.getReference< array1d< globalIndex > >( pressureDofKey );
 
       arrayView1d< real64 const > const & fractureSurfaceArea = embeddedSurfaceSubRegion.getElementArea();
 
@@ -537,7 +544,7 @@ void PoroelasticSolverEmbeddedFractures::
 
           // Compute traction
           ContactRelationBase const * const
-            contactRelation = constitutiveManager->GetGroup< ContactRelationBase >( m_fracturesSolver->getContactRelationName() );
+          contactRelation = constitutiveManager->GetGroup< ContactRelationBase >( m_fracturesSolver->getContactRelationName() );
 
           // check if fracture element is open
           bool open = w[0] >= 0 ? true : false;

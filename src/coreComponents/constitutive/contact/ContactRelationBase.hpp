@@ -116,7 +116,7 @@ public:
                             bool open,
                             real64 & dTdpf ) const
   {
-    if ( open )
+    if( open )
       dTdpf = surfaceArea;
     else
       dTdpf = 0.0;
@@ -124,9 +124,9 @@ public:
 
   void dTraction_dPressure( real64 const & surfaceArea,
                             real64 & dTdpf,
-                            bool const open) const
+                            bool const open ) const
   {
-    if ( open )
+    if( open )
       dTdpf = surfaceArea;
     else
       dTdpf = 0.0;
@@ -138,7 +138,7 @@ public:
   {
     GEOSX_UNUSED_VAR( surfaceArea );
 
-    if ( open )
+    if( open )
       dTdw( 0, 0 ) = 0.0;
     else
       dTdw( 0, 0 ) = m_penaltyStiffness;

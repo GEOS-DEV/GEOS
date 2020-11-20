@@ -131,7 +131,6 @@ public:
   void setEffectiveStress( integer const input )
   {
     m_effectiveStress = input;
-    m_solidSolver->setEffectiveStress( input );
   }
 
   /*
@@ -147,6 +146,9 @@ public:
                                     const real64 hInv );
 
 protected:
+
+
+  virtual void PostProcessInput() override final;
 
 
   /*

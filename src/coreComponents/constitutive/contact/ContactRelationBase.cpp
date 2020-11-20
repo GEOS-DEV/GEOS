@@ -152,12 +152,13 @@ void ContactRelationBase::computeTraction( real64 const & pressure,
                                            array1d< real64 > & tractionVector,
                                            bool const open ) const
 {
-  if ( open )
+  if( open )
   {
     tractionVector[0] = pressure * surfaceArea; // integral ;
     tractionVector[1] = 0.0;
     tractionVector[2] = 0.0;
-  }else
+  }
+  else
   {
     // Contact through penalty condition. Frictionless case
     tractionVector[0] = m_penaltyStiffness * dispJump[0];
