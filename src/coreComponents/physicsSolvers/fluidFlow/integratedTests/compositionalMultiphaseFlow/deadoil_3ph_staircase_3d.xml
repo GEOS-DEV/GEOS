@@ -19,7 +19,9 @@
         maxTimeStepCuts="2"
         lineSearchMaxCuts="2"/>
       <LinearSolverParameters
-        solverType="direct"/>
+        solverType="direct"
+        directParallel="0"
+        logLevel="0"/>
     </CompositionalMultiphaseFlow>
   </Solvers>
 
