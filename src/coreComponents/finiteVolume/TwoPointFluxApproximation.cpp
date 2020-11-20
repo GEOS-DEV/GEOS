@@ -81,7 +81,7 @@ void TwoPointFluxApproximation::computeCellStencil( MeshLevel & mesh ) const
   ElementRegionManager::ElementViewAccessor< arrayView1d< integer const > > const elemGhostRank =
     elemManager.ConstructArrayViewAccessor< integer, 1 >( ObjectManagerBase::viewKeyStruct::ghostRankString );
 
-  ArrayOfArraysView< localIndex const > const & faceToNodes = faceManager.nodeList().toViewConst();
+  ArrayOfArraysView< localIndex const > const faceToNodes = faceManager.nodeList().toViewConst();
 
   // make a list of region indices to be included
   SortedArray< localIndex > regionFilter;
@@ -258,28 +258,28 @@ void TwoPointFluxApproximation::addToFractureStencil( MeshLevel & mesh,
 #endif
 #if SET_CREATION_DISPLACEMENT==1
   ArrayOfArraysView< localIndex const > const & faceToNodesMap = faceManager->nodeList();
-  arrayView2d< real64, nodes::INCR_DISPLACEMENT_USD > const & incrementalDisplacement = nodeManager->incrementalDisplacement();
-  arrayView2d< real64, nodes::TOTAL_DISPLACEMENT_USD > const & totalDisplacement = nodeManager->totalDisplacement();
-  arrayView1d< real64 > const & aperture = fractureSubRegion->getReference< array1d< real64 > >( "elementAperture" );
+  arrayView2d< real64, nodes::INCR_DISPLACEMENT_USD > const incrementalDisplacement = nodeManager->incrementalDisplacement();
+  arrayView2d< real64, nodes::TOTAL_DISPLACEMENT_USD > const totalDisplacement = nodeManager->totalDisplacement();
+  arrayView1d< real64 > const aperture = fractureSubRegion->getReference< array1d< real64 > >( "elementAperture" );
 #endif
 
 
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
-  arrayView1d< real64 > const & apertureF = fractureSubRegion->getReference< array1d< real64 > >( "apertureAtFailure" );
+  arrayView1d< real64 > const apertureF = fractureSubRegion->getReference< array1d< real64 > >( "apertureAtFailure" );
 #endif
 
 #if !defined(ALLOW_CREATION_MASS)
   static_assert( true, "must have ALLOW_CREATION_MASS defined" );
 #endif
 #if ALLOW_CREATION_MASS==0
-  arrayView1d< real64 > const & dens = fractureSubRegion->getReference< array1d< real64 > >( "densityOld" );
+  arrayView1d< real64 > const dens = fractureSubRegion->getReference< array1d< real64 > >( "densityOld" );
 #endif
 
 
 #if SET_CREATION_PRESSURE==1
-  arrayView1d< real64 > const & fluidPressure = fractureSubRegion->getReference< array1d< real64 > >( "pressure" );
+  arrayView1d< real64 > const fluidPressure = fractureSubRegion->getReference< array1d< real64 > >( "pressure" );
   // Set the new face elements to some unphysical numbers to make sure they get set by the following routines.
-  SortedArrayView< localIndex const > const & newFaceElements = fractureSubRegion->m_newFaceElements.toViewConst();
+  SortedArrayView< localIndex const > const newFaceElements = fractureSubRegion->m_newFaceElements.toViewConst();
   forAll< serialPolicy >( fractureSubRegion->m_newFaceElements.size(), [=]( localIndex const k )
   {
     localIndex const kfe = newFaceElements[k];
@@ -310,7 +310,7 @@ void TwoPointFluxApproximation::addToFractureStencil( MeshLevel & mesh,
   SortedArray< localIndex > allNewElems;
   allNewElems.insert( fractureSubRegion->m_newFaceElements.begin(),
                       fractureSubRegion->m_newFaceElements.end() );
-  SortedArrayView< localIndex const > const &
+  SortedArrayView< localIndex const > const
   recalculateFractureConnectorEdges = edgeManager->m_recalculateFractureConnectorEdges.toViewConst();
 
   // add new connectors/connections between face elements to the fracture stencil
@@ -631,7 +631,7 @@ void TwoPointFluxApproximation::addEDFracToFractureStencil( MeshLevel & mesh,
                                                       EmbeddedSurfaceSubRegion >( "embeddedSurfaceSubRegion" ) );
 
   // arrayView1d< real64 const > const & fractureElemArea   = fractureSubRegion->getElementArea();
-  arrayView2d< real64 const > const fractureElemCenter = fractureSubRegion.getElementCenter().toViewConst();
+  arrayView2d< real64 const > const fractureElemCenter = fractureSubRegion.getElementCenter();
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X = nodeManager.embSurfNodesPosition();
 
   EdgeManager::FaceMapType const & edgeToEmbSurfacesMap = embSurfEdgeManager.faceList();
@@ -704,7 +704,7 @@ void TwoPointFluxApproximation::addEDFracToFractureStencil( MeshLevel & mesh,
 
   FixedToManyElementRelation const & surfaceElementsToCells = fractureSubRegion.getToCellRelation();
 
-  arrayView1d< real64 const >     const & connectivityIndex = fractureSubRegion.getConnectivityIndex();
+  arrayView1d< real64 const > const connectivityIndex = fractureSubRegion.getConnectivityIndex();
 
   ElementRegionManager::ElementViewAccessor< arrayView1d< R1Tensor const > > const permeabilityTensor =
     elemManager.ConstructArrayViewAccessor< R1Tensor, 1 >( m_coeffName );
@@ -788,7 +788,7 @@ void TwoPointFluxApproximation::computeBoundaryStencil( MeshLevel & mesh,
   ElementRegionManager::ElementViewAccessor< arrayView1d< R1Tensor const > > const coefficient =
     elemManager.ConstructArrayViewAccessor< R1Tensor, 1 >( m_coeffName );
 
-  ArrayOfArraysView< localIndex const > const & faceToNodes = faceManager.nodeList().toViewConst();
+  ArrayOfArraysView< localIndex const > const faceToNodes = faceManager.nodeList().toViewConst();
 
   // make a list of region indices to be included
   SortedArray< localIndex > regionFilter;
