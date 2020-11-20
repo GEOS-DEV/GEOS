@@ -20,8 +20,7 @@
 
 #include "codingUtilities/Utilities.hpp"
 
-// PVTPackage includes
-#include "MultiphaseSystem/CompositionalMultiphaseSystem.hpp"
+#include "pvt/pvt.hpp"
 
 #include <map>
 
@@ -36,12 +35,12 @@ namespace constitutive
 namespace
 {
 
-PVTPackage::EOS_TYPE getCompositionalEosType( string const & name )
+pvt::EOS_TYPE getCompositionalEosType( string const & name )
 {
-  static std::map< string, PVTPackage::EOS_TYPE > const eosTypes =
+  static std::map< string, pvt::EOS_TYPE > const eosTypes =
   {
-    { "PR", PVTPackage::EOS_TYPE::PENG_ROBINSON },
-    { "SRK", PVTPackage::EOS_TYPE::REDLICH_KWONG_SOAVE }
+    { "PR", pvt::EOS_TYPE::PENG_ROBINSON },
+    { "SRK", pvt::EOS_TYPE::REDLICH_KWONG_SOAVE }
   };
   auto const it = eosTypes.find( name );
   GEOSX_ERROR_IF( it == eosTypes.end(), "Compositional EOS type not supported by PVTPackage: " << name );
@@ -137,26 +136,18 @@ void CompositionalMultiphaseFluid::PostProcessInput()
 
 void CompositionalMultiphaseFluid::createFluid()
 {
-  localIndex const NC = numFluidComponents();
-  localIndex const NP = numFluidPhases();
+  std::vector< pvt::EOS_TYPE > eos( numFluidPhases() );
+  std::transform( m_equationsOfState.begin(), m_equationsOfState.end(), eos.begin(), getCompositionalEosType );
 
-  std::vector< PVTPackage::EOS_TYPE > eos( NP );
-  std::transform( m_equationsOfState.begin(), m_equationsOfState.end(), eos.begin(),
-                  []( string const & name ){ return getCompositionalEosType( name ); } );
-
-  std::vector< PVTPackage::PHASE_TYPE > phases( m_phaseTypes.begin(), m_phaseTypes.end() );
+  std::vector< pvt::PHASE_TYPE > phases( m_phaseTypes.begin(), m_phaseTypes.end() );
   std::vector< std::string > const components( m_componentNames.begin(), m_componentNames.end() );
-  std::vector< double > const Pc( m_componentCriticalPressure.begin(), m_componentCriticalPressure.end() );
-  std::vector< double > const Tc( m_componentCriticalTemperature.begin(), m_componentCriticalTemperature.end() );
   std::vector< double > const Mw( m_componentMolarWeight.begin(), m_componentMolarWeight.end() );
+  std::vector< double > const Tc( m_componentCriticalTemperature.begin(), m_componentCriticalTemperature.end() );
+  std::vector< double > const Pc( m_componentCriticalPressure.begin(), m_componentCriticalPressure.end() );
   std::vector< double > const Omega( m_componentAcentricFactor.begin(), m_componentAcentricFactor.end() );
 
-  PVTPackage::ComponentProperties const compProps( NC, components, Mw, Tc, Pc, Omega );
-
-  m_fluid = std::make_unique< PVTPackage::CompositionalMultiphaseSystem >( phases,
-                                                                           eos,
-                                                                           PVTPackage::COMPOSITIONAL_FLASH_TYPE::NEGATIVE_OIL_GAS,
-                                                                           compProps );
+  m_fluid = pvt::MultiphaseSystemBuilder::buildCompositional( pvt::COMPOSITIONAL_FLASH_TYPE::NEGATIVE_OIL_GAS, phases, eos,
+                                                              components, Mw, Tc, Pc, Omega );
 
 }
 
