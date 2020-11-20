@@ -709,12 +709,12 @@ void SolidMechanicsLagrangianFEM::CRSApplyTractionBC( real64 const time,
   FaceManager const & faceManager = *domain.getMeshBody( 0 )->getMeshLevel( 0 )->getFaceManager();
   NodeManager const & nodeManager = *domain.getMeshBody( 0 )->getMeshLevel( 0 )->getNodeManager();
 
-  arrayView1d< real64 const > const & faceArea  = faceManager.getReference< real64_array >( "faceArea" );
-  ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager.nodeList().toViewConst();
+  arrayView1d< real64 const > const faceArea  = faceManager.getReference< real64_array >( "faceArea" );
+  ArrayOfArraysView< localIndex const > const faceToNodeMap = faceManager.nodeList().toViewConst();
 
   string const dofKey = dofManager.getKey( keys::TotalDisplacement );
 
-  arrayView1d< globalIndex const > const & blockLocalDofNumber = nodeManager.getReference< globalIndex_array >( dofKey );
+  arrayView1d< globalIndex const > const blockLocalDofNumber = nodeManager.getReference< globalIndex_array >( dofKey );
   globalIndex const dofRankOffset = dofManager.rankOffset();
 
   fsManager.Apply( time,
@@ -762,7 +762,7 @@ void SolidMechanicsLagrangianFEM::CRSApplyTractionBC( real64 const time,
       array1d< real64 > resultsArray( targetSet.size() );
       resultsArray.setName( "SolidMechanicsLagrangianFEM::TractionBC function results" );
       function.Evaluate( &faceManager, time, targetSet, resultsArray );
-      arrayView1d< real64 const > const results = resultsArray.toViewConst();
+      arrayView1d< real64 const > const results = resultsArray;
 
       forAll< parallelDevicePolicy< 32 > >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const i )
       {
@@ -788,14 +788,14 @@ void SolidMechanicsLagrangianFEM::ApplyChomboPressure( DofManager const & dofMan
   FaceManager & faceManager = *mesh.getFaceManager();
   NodeManager & nodeManager = *mesh.getNodeManager();
 
-  arrayView1d< real64 const > const & faceArea  = faceManager.faceArea();
-  arrayView2d< real64 const > const & faceNormal  = faceManager.faceNormal();
-  ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager.nodeList().toViewConst();
+  arrayView1d< real64 const > const faceArea  = faceManager.faceArea();
+  arrayView2d< real64 const > const faceNormal  = faceManager.faceNormal();
+  ArrayOfArraysView< localIndex const > const faceToNodeMap = faceManager.nodeList().toViewConst();
 
   string const dofKey = dofManager.getKey( keys::TotalDisplacement );
 
-  arrayView1d< globalIndex const > const & dofNumber = nodeManager.getReference< globalIndex_array >( dofKey );
-  arrayView1d< real64 const > const & facePressure = faceManager.getReference< array1d< real64 > >( "ChomboPressure" );
+  arrayView1d< globalIndex const > const dofNumber = nodeManager.getReference< globalIndex_array >( dofKey );
+  arrayView1d< real64 const > const facePressure = faceManager.getReference< array1d< real64 > >( "ChomboPressure" );
 
   forAll< serialPolicy >( faceManager.size(), [=] ( localIndex const kf )
   {
@@ -826,17 +826,17 @@ SolidMechanicsLagrangianFEM::
   MeshLevel & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
   NodeManager & nodeManager = *mesh.getNodeManager();
 
-  arrayView2d< real64 const, nodes::VELOCITY_USD > const & v_n = nodeManager.velocity();
-  arrayView2d< real64, nodes::INCR_DISPLACEMENT_USD > const & uhat = nodeManager.incrementalDisplacement();
-  arrayView2d< real64, nodes::TOTAL_DISPLACEMENT_USD > const & disp = nodeManager.totalDisplacement();
+  arrayView2d< real64 const, nodes::VELOCITY_USD > const v_n = nodeManager.velocity();
+  arrayView2d< real64, nodes::INCR_DISPLACEMENT_USD > const uhat = nodeManager.incrementalDisplacement();
+  arrayView2d< real64, nodes::TOTAL_DISPLACEMENT_USD > const disp = nodeManager.totalDisplacement();
 
   localIndex const numNodes = nodeManager.size();
 
   if( this->m_timeIntegrationOption == TimeIntegrationOption::ImplicitDynamic )
   {
-    arrayView2d< real64 const, nodes::ACCELERATION_USD > const & a_n = nodeManager.acceleration();
-    arrayView1d< R1Tensor > const & vtilde   = nodeManager.getReference< array1d< R1Tensor > >( solidMechanicsViewKeys.vTilde );
-    arrayView1d< R1Tensor > const & uhatTilde   = nodeManager.getReference< array1d< R1Tensor > >( solidMechanicsViewKeys.uhatTilde );
+    arrayView2d< real64 const, nodes::ACCELERATION_USD > const a_n = nodeManager.acceleration();
+    arrayView1d< R1Tensor > const vtilde = nodeManager.getReference< array1d< R1Tensor > >( solidMechanicsViewKeys.vTilde );
+    arrayView1d< R1Tensor > const uhatTilde = nodeManager.getReference< array1d< R1Tensor > >( solidMechanicsViewKeys.uhatTilde );
 
     real64 const newmarkGamma = this->getReference< real64 >( solidMechanicsViewKeys.newmarkGamma );
     real64 const newmarkBeta = this->getReference< real64 >( solidMechanicsViewKeys.newmarkBeta );
@@ -887,14 +887,14 @@ SolidMechanicsLagrangianFEM::
   {
     SolidBase const & constitutiveRelation = GetConstitutiveModel< SolidBase >( subRegion, m_solidMaterialNames[targetIndex] );
 
-    arrayView3d< real64 const, solid::STRESS_USD > const & stress = constitutiveRelation.getStress();
+    arrayView3d< real64 const, solid::STRESS_USD > const stress = constitutiveRelation.getStress();
 
     array3d< real64, solid::STRESS_PERMUTATION > &
     stress_n = subRegion.getReference< array3d< real64, solid::STRESS_PERMUTATION > >( viewKeyStruct::stress_n );
     // TODO: eliminate
     stress_n.resize( stress.size( 0 ), stress.size( 1 ), 6 );
 
-    arrayView3d< real64, solid::STRESS_USD > const & vstress_n = stress_n.toView();
+    arrayView3d< real64, solid::STRESS_USD > const vstress_n = stress_n;
 
     forAll< parallelDevicePolicy<> >( stress.size( 0 ), [=] GEOSX_HOST_DEVICE ( localIndex const k )
     {
@@ -920,14 +920,14 @@ void SolidMechanicsLagrangianFEM::ImplicitStepComplete( real64 const & GEOSX_UNU
   NodeManager & nodeManager = *mesh.getNodeManager();
   localIndex const numNodes = nodeManager.size();
 
-  arrayView2d< real64, nodes::VELOCITY_USD > const & v_n = nodeManager.velocity();
-  arrayView2d< real64 const, nodes::INCR_DISPLACEMENT_USD > const & uhat  = nodeManager.incrementalDisplacement();
+  arrayView2d< real64, nodes::VELOCITY_USD > const v_n = nodeManager.velocity();
+  arrayView2d< real64 const, nodes::INCR_DISPLACEMENT_USD > const uhat  = nodeManager.incrementalDisplacement();
 
   if( this->m_timeIntegrationOption == TimeIntegrationOption::ImplicitDynamic )
   {
-    arrayView2d< real64, nodes::ACCELERATION_USD > const & a_n = nodeManager.acceleration();
-    arrayView1d< R1Tensor const > const & vtilde    = nodeManager.getReference< r1_array >( solidMechanicsViewKeys.vTilde );
-    arrayView1d< R1Tensor const > const & uhatTilde = nodeManager.getReference< r1_array >( solidMechanicsViewKeys.uhatTilde );
+    arrayView2d< real64, nodes::ACCELERATION_USD > const a_n = nodeManager.acceleration();
+    arrayView1d< R1Tensor const > const vtilde    = nodeManager.getReference< r1_array >( solidMechanicsViewKeys.vTilde );
+    arrayView1d< R1Tensor const > const uhatTilde = nodeManager.getReference< r1_array >( solidMechanicsViewKeys.uhatTilde );
     real64 const newmarkGamma = this->getReference< real64 >( solidMechanicsViewKeys.newmarkGamma );
     real64 const newmarkBeta = this->getReference< real64 >( solidMechanicsViewKeys.newmarkBeta );
 
@@ -981,7 +981,7 @@ void SolidMechanicsLagrangianFEM::SetupSystem( DomainPartition & domain,
 
   MeshLevel & mesh = *(domain.getMeshBodies()->GetGroup< MeshBody >( 0 )->getMeshLevel( 0 ));
   NodeManager const & nodeManager = *(mesh.getNodeManager());
-  arrayView1d< globalIndex const > const &
+  arrayView1d< globalIndex const > const
   dofNumber = nodeManager.getReference< globalIndex_array >( dofManager.getKey( keys::TotalDisplacement ) );
 
   SparsityPattern< globalIndex > sparsityPattern( dofManager.numLocalDofs(),
@@ -1141,15 +1141,15 @@ SolidMechanicsLagrangianFEM::
   MeshLevel const & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
   NodeManager const & nodeManager = *mesh.getNodeManager();
 
-  arrayView1d< globalIndex const > const & dofNumber =
+  arrayView1d< globalIndex const > const dofNumber =
     nodeManager.getReference< array1d< globalIndex > >( dofManager.getKey( keys::TotalDisplacement ) );
   globalIndex const rankOffset = dofManager.rankOffset();
 
-  arrayView1d< integer const > const & ghostRank = nodeManager.ghostRank();
+  arrayView1d< integer const > const ghostRank = nodeManager.ghostRank();
 
   RAJA::ReduceSum< parallelDeviceReduce, real64 > localSum( 0.0 );
 
-  SortedArrayView< localIndex const > const & targetNodes = m_targetNodes.toViewConst();
+  SortedArrayView< localIndex const > const targetNodes = m_targetNodes.toViewConst();
 
   forAll< parallelDevicePolicy<> >( targetNodes.size(),
                                     [localRhs, localSum, dofNumber, rankOffset, ghostRank, targetNodes] GEOSX_HOST_DEVICE ( localIndex const k )
@@ -1325,15 +1325,15 @@ void SolidMechanicsLagrangianFEM::ApplyContactConstraint( DofManager const & dof
 
     real64 const contactStiffness = contactRelation->stiffness();
 
-    arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const & u = nodeManager->totalDisplacement();
+    arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const u = nodeManager->totalDisplacement();
     arrayView1d< R1Tensor > const & fc = nodeManager->getReference< array1d< R1Tensor > >( viewKeyStruct::contactForceString );
     fc.setValues< serialPolicy >( {0, 0, 0} );
 
-    arrayView2d< real64 const > const & faceNormal = faceManager->faceNormal();
-    ArrayOfArraysView< localIndex const > const & facesToNodes = faceManager->nodeList().toViewConst();
+    arrayView2d< real64 const > const faceNormal = faceManager->faceNormal();
+    ArrayOfArraysView< localIndex const > const facesToNodes = faceManager->nodeList().toViewConst();
 
     string const dofKey = dofManager.getKey( keys::TotalDisplacement );
-    arrayView1d< globalIndex > const & nodeDofNumber = nodeManager->getReference< globalIndex_array >( dofKey );
+    arrayView1d< globalIndex > const nodeDofNumber = nodeManager->getReference< globalIndex_array >( dofKey );
     globalIndex const rankOffset = dofManager.rankOffset();
 
     // TODO: this bound may need to change
@@ -1342,8 +1342,8 @@ void SolidMechanicsLagrangianFEM::ApplyContactConstraint( DofManager const & dof
 
     elemManager->forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
     {
-      arrayView1d< real64 > const & area = subRegion.getElementArea();
-      arrayView2d< localIndex const > const & elemsToFaces = subRegion.faceList();
+      arrayView1d< real64 > const area = subRegion.getElementArea();
+      arrayView2d< localIndex const > const elemsToFaces = subRegion.faceList();
 
       // TODO: use parallel policy?
       forAll< serialPolicy >( subRegion.size(), [=] ( localIndex const kfe )
