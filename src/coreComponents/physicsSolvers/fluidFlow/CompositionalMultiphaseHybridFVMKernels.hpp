@@ -193,6 +193,7 @@ struct FluxKernel
           arrayView1d< real64 const > const & dFacePres,
           arrayView1d< real64 const > const & faceGravCoef,
           arrayView1d< real64 const > const & mimFaceGravCoef,
+          arrayView1d< real64 const > const & transMultiplier,
           ElementViewConst< arrayView3d< real64 const > > const & phaseDens,
           ElementViewConst< arrayView3d< real64 const > > const & dPhaseDens_dPres,
           ElementViewConst< arrayView4d< real64 const > > const & dPhaseDens_dCompFrac,
@@ -383,6 +384,7 @@ struct PrecomputeKernel
           arrayView1d< R1Tensor const > const & elemPerm,
           arrayView1d< real64 const > const & elemGravCoef,
           arrayView2d< localIndex const > const & elemToFaces,
+          arrayView1d< real64 const > const & transMultiplier,
           real64 const & lengthTolerance,
           arrayView1d< RAJA::ReduceSum< parallelDeviceReduce, real64 > > const & mimFaceGravCoefNumerator,
           arrayView1d< RAJA::ReduceSum< parallelDeviceReduce, real64 > > const & mimFaceGravCoefDenominator,
@@ -395,6 +397,7 @@ struct PrecomputeKernel
       real64 const perm[ 3 ] = { elemPerm[ei][0], elemPerm[ei][1], elemPerm[ei][2] };
 
       HybridFVMInnerProduct::TPFACellInnerProductKernel::Compute< NF >( nodePosition,
+                                                                        transMultiplier,
                                                                         faceToNodes,
                                                                         elemToFaces[ei],
                                                                         elemCenter[ei],

@@ -21,6 +21,7 @@
 #include "common/TimingMacros.hpp"
 #include "constitutive/fluid/MultiFluidBase.hpp"
 #include "constitutive/relativePermeability/RelativePermeabilityBase.hpp"
+#include "finiteVolume/FluxApproximationBase.hpp"
 #include "mpiCommunications/CommunicationTools.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseKernels.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseHybridFVMKernels.hpp"
@@ -86,7 +87,14 @@ void CompositionalMultiphaseHybridFVM::InitializePostInitialConditions_PreSubGro
   DomainPartition & domain = *rootGroup->GetGroup< DomainPartition >( keys::domain );
   MeshLevel const & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
   ElementRegionManager const & elemManager = *mesh.getElemManager();
+  FaceManager const & faceManager = *mesh.getFaceManager();
+  NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
+  FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
+  FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
+
   m_lengthTolerance = domain.getMeshBody( 0 )->getGlobalLengthScale() * 1e-8;
+  string const & coeffName = fluxApprox.template getReference< string >( FluxApproximationBase::viewKeyStruct::coeffNameString );
+  m_transMultName = coeffName + FluxApproximationBase::viewKeyStruct::transMultiplierString;
 
   CompositionalMultiphaseBase::InitializePostInitialConditions_PreSubGroups( rootGroup );
 
@@ -96,6 +104,21 @@ void CompositionalMultiphaseHybridFVM::InitializePostInitialConditions_PreSubGro
   {
     m_regionFilter.insert( elemManager.GetRegions().getIndex( regionName ) );
   }
+
+  // check that multipliers are stricly larger than 0, which would work with SinglePhaseFVM, but not with SinglePhaseHybridFVM.
+  // To deal with a 0 multiplier, we would just have to skip the corresponding face in the FluxKernel
+  arrayView1d< real64 const > const & transMultiplier =
+    faceManager.getReference< array1d< real64 > >( m_transMultName );
+
+  RAJA::ReduceMin< parallelDeviceReduce, real64 > minVal( 1.0 );
+  forAll< parallelDevicePolicy<> >( faceManager.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iface )
+  {
+    minVal.min( transMultiplier[iface] );
+  } );
+
+  GEOSX_ERROR_IF_LE_MSG( minVal.get(), 0.0,
+                         "The transmissibility multipliers used in SinglePhaseHybridFVM must strictly larger than 0.0" );
+
 }
 
 void CompositionalMultiphaseHybridFVM::PrecomputeData( MeshLevel & mesh )
@@ -115,6 +138,9 @@ void CompositionalMultiphaseHybridFVM::PrecomputeData( MeshLevel & mesh )
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition = nodeManager.referencePosition();
 
   // face data
+
+  arrayView1d< real64 const > const & transMultiplier =
+    faceManager.getReference< array1d< real64 > >( m_transMultName );
 
   arrayView1d< real64 > const mimFaceGravCoef =
     faceManager.getReference< array1d< real64 > >( viewKeyStruct::mimGravityCoefString );
@@ -147,6 +173,7 @@ void CompositionalMultiphaseHybridFVM::PrecomputeData( MeshLevel & mesh )
                                                                            elemPerm,
                                                                            elemGravCoef,
                                                                            elemToFaces,
+                                                                           transMultiplier,
                                                                            lengthTolerance,
                                                                            mimFaceGravCoefNumerator.toView(),
                                                                            mimFaceGravCoefDenominator.toView(),
@@ -282,6 +309,11 @@ void CompositionalMultiphaseHybridFVM::AssembleFluxTerms( real64 const dt,
   arrayView1d< real64 const > const & mimFaceGravCoef =
     faceManager.getReference< array1d< real64 > >( viewKeyStruct::mimGravityCoefString );
 
+  // get the face-centered transMultiplier
+  // TODO: implement some kind of HybridFVMApprox that inherits from FluxApproximationBase
+  arrayView1d< real64 const > const & transMultiplier =
+    faceManager.getReference< array1d< real64 > >( m_transMultName );
+
   // get the face-to-nodes connectivity for the transmissibility calculation
   ArrayOfArraysView< localIndex const > const & faceToNodes = faceManager.nodeList().toViewConst();
 
@@ -314,6 +346,7 @@ void CompositionalMultiphaseHybridFVM::AssembleFluxTerms( real64 const dt,
                                         dFacePres,
                                         faceGravCoef,
                                         mimFaceGravCoef,
+                                        transMultiplier,
                                         m_phaseDens.toNestedViewConst(),
                                         m_dPhaseDens_dPres.toNestedViewConst(),
                                         m_dPhaseDens_dComp.toNestedViewConst(),

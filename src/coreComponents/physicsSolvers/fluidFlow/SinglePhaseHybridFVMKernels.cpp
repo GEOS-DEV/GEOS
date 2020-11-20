@@ -47,6 +47,7 @@ AssemblerKernelHelper::ComputeOneSidedVolFluxes( arrayView1d< real64 const > con
 {
   for( localIndex ifaceLoc = 0; ifaceLoc < NF; ++ifaceLoc )
   {
+
     // now in the following nested loop,
     // we compute the contribution of face jfaceLoc to the one sided total volumetric flux at face iface
     for( localIndex jfaceLoc = 0; jfaceLoc < NF; ++jfaceLoc )
@@ -77,7 +78,7 @@ AssemblerKernelHelper::ComputeOneSidedVolFluxes( arrayView1d< real64 const > con
       real64 const dPotDif_dp  = dPresDif_dp - dGravTerm_dp;
       real64 const dPotDif_dfp = dPresDif_dfp;
 
-      // this is going to store T \sum_p \lambda_p (\nabla p - \rho_p g \nabla d)
+      // this is going to store T (\nabla - \rho g \nabla d)
       oneSidedVolFlux[ifaceLoc]                = oneSidedVolFlux[ifaceLoc]
                                                  + transMatrix[ifaceLoc][jfaceLoc] * potDif;
       dOneSidedVolFlux_dp[ifaceLoc]            = dOneSidedVolFlux_dp[ifaceLoc]
@@ -312,7 +313,6 @@ AssemblerKernel::Compute( localIndex const er,
                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
                           arrayView1d< real64 > const & localRhs )
 {
-
   // one sided flux
   real64 oneSidedVolFlux[ NF ] = { 0.0 };
   real64 dOneSidedVolFlux_dp[ NF ] = { 0.0 };
@@ -421,6 +421,7 @@ FluxKernel::Launch( localIndex er,
                     arrayView1d< real64 const > const & facePres,
                     arrayView1d< real64 const > const & dFacePres,
                     arrayView1d< real64 const > const & faceGravCoef,
+                    arrayView1d< real64 const > const & transMultiplier,
                     ElementViewConst< arrayView1d< real64 const > > const & mobility,
                     ElementViewConst< arrayView1d< real64 const > > const & dMobility_dp,
                     ElementViewConst< arrayView1d< globalIndex const > > const & elemDofNumber,
@@ -463,7 +464,6 @@ FluxKernel::Launch( localIndex er,
   using KERNEL_POLICY = parallelDevicePolicy< 32 >;
   forAll< KERNEL_POLICY >( subRegion.size(), [=] GEOSX_DEVICE ( localIndex const ei )
   {
-
     // transmissibility matrix
     stackArray2d< real64, NF *NF > transMatrix( NF, NF );
 
@@ -472,6 +472,7 @@ FluxKernel::Launch( localIndex er,
     // recompute the local transmissibility matrix at each iteration
     // we can decide later to precompute transMatrix if needed
     HybridFVMInnerProduct::QTPFACellInnerProductKernel::Compute< NF >( nodePosition,
+                                                                       transMultiplier,
                                                                        faceToNodes,
                                                                        elemToFaces[ei],
                                                                        elemCenter[ei],
@@ -579,6 +580,7 @@ INST_AssembleKernelHelper( 6 );
                                  arrayView1d< real64 const > const & facePres, \
                                  arrayView1d< real64 const > const & dFacePres, \
                                  arrayView1d< real64 const > const & faceGravCoef, \
+                                 arrayView1d< real64 const > const & transMultiplier, \
                                  ElementViewConst< arrayView1d< real64 const > > const & mobility, \
                                  ElementViewConst< arrayView1d< real64 const > > const & dMobility_dp, \
                                  ElementViewConst< arrayView1d< globalIndex const > > const & elemDofNumber, \

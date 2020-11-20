@@ -17,8 +17,11 @@
         newtonTol="1.0e-6"
         newtonMaxIter="15"/>
       <LinearSolverParameters
-        solverType="direct"/>
+        solverType="direct"
+        directParallel="0"
+        logLevel="0"/>
     </CompositionalMultiphaseFVM>
+
   </Solvers>
 
   <Mesh>

@@ -181,6 +181,7 @@ FluxKernel::Launch( localIndex er,
                     arrayView1d< real64 const > const & dFacePres,
                     arrayView1d< real64 const > const & faceGravCoef,
                     arrayView1d< real64 const > const & mimFaceGravCoef,
+                    arrayView1d< real64 const > const & transMultiplier,
                     ElementViewConst< arrayView3d< real64 const > > const & phaseDens,
                     ElementViewConst< arrayView3d< real64 const > > const & dPhaseDens_dPres,
                     ElementViewConst< arrayView4d< real64 const > > const & dPhaseDens_dCompFrac,
@@ -236,6 +237,7 @@ FluxKernel::Launch( localIndex er,
     // recompute the local transmissibility matrix at each iteration
     // we can decide later to precompute transMatrix if needed
     HybridFVMInnerProduct::QTPFACellInnerProductKernel::Compute< NF >( nodePosition,
+                                                                       transMultiplier,
                                                                        faceToNodes,
                                                                        elemToFaces[ei],
                                                                        elemCenter[ei],
@@ -246,6 +248,7 @@ FluxKernel::Launch( localIndex er,
                                                                        transMatrix );
 
     HybridFVMInnerProduct::TPFACellInnerProductKernel::Compute< NF >( nodePosition,
+                                                                      transMultiplier,
                                                                       faceToNodes,
                                                                       elemToFaces[ei],
                                                                       elemCenter[ei],
@@ -485,6 +488,7 @@ INST_PhaseMobilityKernel( 5, 3 );
                                     arrayView1d< real64 const > const & dFacePres, \
                                     arrayView1d< real64 const > const & faceGravCoef, \
                                     arrayView1d< real64 const > const & mimFaceGravCoef, \
+                                    arrayView1d< real64 const > const & transMultiplier, \
                                     ElementViewConst< arrayView3d< real64 const > > const & phaseDens, \
                                     ElementViewConst< arrayView3d< real64 const > > const & dPhaseDens_dPres, \
                                     ElementViewConst< arrayView4d< real64 const > > const & dPhaseDens_dCompFrac, \
