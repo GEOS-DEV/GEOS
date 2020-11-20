@@ -26,6 +26,7 @@
         lineSearchMaxCuts="3"/>
       <LinearSolverParameters
         solverType="direct"
+        directParallel="0"
         logLevel="0"/>
     </Hydrofracture>
 
