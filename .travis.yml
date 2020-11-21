@@ -44,6 +44,7 @@ geosx_linux_build: &geosx_linux_build
     --volume=${TRAVIS_BUILD_DIR}:${TRAVIS_BUILD_DIR_MOUNT_POINT}
     -e CMAKE_BUILD_TYPE
     -e GEOSX_DIR=${GEOSX_DIR}
+    -e OMPI_MCA_btl_vader_single_copy_mechanism=none
     ${DOCKER_REPOSITORY}:${GEOSX_TPL_TAG}
     ${TRAVIS_BUILD_DIR_MOUNT_POINT}/scripts/travis_build_and_test.sh ${BUILD_AND_TEST_ARGS};
 
@@ -182,12 +183,12 @@ jobs:
     - DOCKER_REPOSITORY=geosx/centos7.6.1810-gcc8.3.1-cuda10.1.243
     - CMAKE_BUILD_TYPE=Release
     - BUILD_AND_TEST_ARGS=--disable-unit-tests
-  - stage: builds
-    name: Pangea2_gcc8.3.0_release
-    <<: *geosx_pangea_build
-    env:
-    - DOCKER_REPOSITORY=geosx/pangea2-gcc8.3.0-openmpi2.1.5-mkl2019.3
-    - CMAKE_BUILD_TYPE=Release
+#  - stage: builds
+#    name: Pangea2_gcc8.3.0_release
+#    <<: *geosx_pangea_build
+#    env:
+#    - DOCKER_REPOSITORY=geosx/pangea2-gcc8.3.0-openmpi2.1.5-mkl2019.3
+#    - CMAKE_BUILD_TYPE=Release
   - stage: builds
     name: Mac_OSX
     <<: *geosx_osx_build
