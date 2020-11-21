@@ -159,11 +159,6 @@ int SuiteSparseSolve( SuiteSparse & SSData,
 
   if( SSData.getSubComm() != MPI_COMM_NULL )
   {
-    ///////////////////////////////////////
-    GEOSX_LOG_RANK_VAR( partitioning[0] );
-    GEOSX_LOG_RANK_VAR( partitioning[1] );
-    GEOSX_LOG_RANK_VAR( SSData.workingRank() );
-    ///////////////////////////////////////
     HYPRE_ParVector sol_ParVector;
     GEOSX_LAI_CHECK_ERROR( HYPRE_VectorToParVector( SSData.getSubComm(),
                                                     sol_Vector,
