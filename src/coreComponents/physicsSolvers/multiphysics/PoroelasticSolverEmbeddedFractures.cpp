@@ -420,6 +420,9 @@ void PoroelasticSolverEmbeddedFractures::
   ElementRegionManager const & elemManager = *mesh.getElemManager();
 
   ConstitutiveManager const * const constitutiveManager = domain.getConstitutiveManager();
+  ContactRelationBase const * const
+            contactRelation = constitutiveManager->GetGroup< ContactRelationBase >( m_fracturesSolver->getContactRelationName() );
+
 
   string const jumpDofKey     = dofManager.getKey( SolidMechanicsEmbeddedFractures::viewKeyStruct::dispJumpString );
   string const pressureDofKey = dofManager.getKey( FlowSolverBase::viewKeyStruct::pressureString );
@@ -541,8 +544,6 @@ void PoroelasticSolverEmbeddedFractures::
           BlasLapackLA::matrixTMatrixMultiply( identityVec, eqMatrix, Kwpm_gauss );
 
           // Compute traction
-          ContactRelationBase const * const
-          contactRelation = constitutiveManager->GetGroup< ContactRelationBase >( m_fracturesSolver->getContactRelationName() );
 
           // check if fracture element is open
           bool open = w[0] >= 0 ? true : false;

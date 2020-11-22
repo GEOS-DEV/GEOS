@@ -113,23 +113,10 @@ public:
                                 bool const open ) const;
 
   void dTraction_dPressure( real64 const & surfaceArea,
-                            bool open,
-                            real64 & dTdpf ) const
-  {
-    if( open )
-      dTdpf = surfaceArea;
-    else
-      dTdpf = 0.0;
-  }
-
-  void dTraction_dPressure( real64 const & surfaceArea,
                             real64 & dTdpf,
                             bool const open ) const
   {
-    if( open )
-      dTdpf = surfaceArea;
-    else
-      dTdpf = 0.0;
+    dTdpf = open ? surfaceArea : 0.0;
   }
 
   virtual void dTraction_dJump( real64 const & surfaceArea,
