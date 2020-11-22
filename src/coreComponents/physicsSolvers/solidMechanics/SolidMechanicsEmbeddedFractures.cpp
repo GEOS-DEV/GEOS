@@ -69,6 +69,8 @@ SolidMechanicsEmbeddedFractures::~SolidMechanicsEmbeddedFractures()
 void SolidMechanicsEmbeddedFractures::PostProcessInput()
 {
   m_solidSolver = this->getParent()->GetGroup< SolidMechanicsLagrangianFEM >( m_solidSolverName );
+
+  GEOSX_ERROR_IF( m_solidSolver == nullptr, "Solid solver not found or invalid type: " << m_solidSolverName );
 }
 
 
@@ -253,6 +255,8 @@ void SolidMechanicsEmbeddedFractures::AssembleSystem( real64 const time,
   ElementRegionManager const & elemManager = *mesh.getElemManager();
 
   ConstitutiveManager const * const constitutiveManager = domain.getConstitutiveManager();
+  ContactRelationBase const * const
+            contactRelation = constitutiveManager->GetGroup< ContactRelationBase >( m_contactRelationName );
 
   arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const & disp  = nodeManager.totalDisplacement();
   arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const & dDisp = nodeManager.incrementalDisplacement();
@@ -444,8 +448,6 @@ void SolidMechanicsEmbeddedFractures::AssembleSystem( real64 const time,
           BlasLapackLA::matrixMatrixMultiply( eqMatrix, dMatrix, matED );
 
           // Compute traction
-          ContactRelationBase const * const
-          contactRelation = constitutiveManager->GetGroup< ContactRelationBase >( m_contactRelationName );
 
           // check if fracture element is open
           bool open = w[0] >= 0 ? true : false;

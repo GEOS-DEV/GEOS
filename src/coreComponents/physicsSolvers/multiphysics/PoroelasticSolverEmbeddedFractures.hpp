@@ -130,15 +130,6 @@ public:
   } poroElasticSolverViewKeys;
 
 
-  SolidMechanicsEmbeddedFractures * getFracturesSolver()
-  {
-    return this->getParent()->GetGroup( m_fracturesSolverName )->group_cast< SolidMechanicsEmbeddedFractures * >();
-  }
-  SolidMechanicsEmbeddedFractures const * getFracturesSolver() const
-  {
-    return this->getParent()->GetGroup( m_fracturesSolverName )->group_cast< SolidMechanicsEmbeddedFractures const * >();
-  }
-
 protected:
 
   virtual void PostProcessInput() override final;

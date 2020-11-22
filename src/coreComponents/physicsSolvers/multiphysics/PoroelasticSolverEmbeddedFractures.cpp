@@ -66,17 +66,15 @@ PoroelasticSolverEmbeddedFractures::~PoroelasticSolverEmbeddedFractures()
 
 void PoroelasticSolverEmbeddedFractures::PostProcessInput()
 {
-  m_flowSolver  = this->getParent()->GetGroup< SinglePhaseBase >( m_flowSolverName );
+  PoroelasticSolver::PostProcessInput();
+
   m_fracturesSolver  = this->getParent()->GetGroup< SolidMechanicsEmbeddedFractures >
                          ( m_fracturesSolverName );
 
-  PoroelasticSolver::PostProcessInput();
+  GEOSX_ERROR_IF( m_fracturesSolver == nullptr,
+                    "Fractures solver not found or invalid type: " << m_fracturesSolverName );
 
   m_fracturesSolver->setEffectiveStress( 1 );
-
-  GEOSX_ERROR_IF( m_fracturesSolver == nullptr,
-                  "Fractures solver not found or invalid type: " << m_fracturesSolverName );
-  GEOSX_ERROR_IF( m_flowSolver == nullptr, "Flow solver not found or invalid type: " << m_flowSolverName );
 }
 
 void PoroelasticSolverEmbeddedFractures::SetupDofs( DomainPartition const & domain,
@@ -632,7 +630,7 @@ void PoroelasticSolverEmbeddedFractures::
 
     arrayView1d< real64 const > const area = subRegion.getElementArea();
 
-    forAll< serialPolicy >( subRegion.size(), [=]( localIndex ei )
+    forAll< parallelDevicePolicy<> >( subRegion.size(), [=]( localIndex ei )
     {
       globalIndex const elemDOF = presDofNumber[ei];
       // row number associated to the pressure dof
