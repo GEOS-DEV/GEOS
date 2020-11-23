@@ -21,11 +21,12 @@
 #define SRC_CORECOMPONENTS_PHYSICSSOLVERS_SOLIDMECHANICS_SOLIDMECHANICSEMBEDDEDFRACTURES_HPP_
 
 #include "physicsSolvers/SolverBase.hpp"
-#include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 
 namespace geosx
 {
 using namespace constitutive;
+
+class SolidMechanicsLagrangianFEM;
 
 class SolidMechanicsEmbeddedFractures : public SolverBase
 {
@@ -128,11 +129,6 @@ public:
 
   string const & getContactRelationName() const { return m_contactRelationName; };
 
-  void setEffectiveStress( integer const input )
-  {
-    m_effectiveStress = input;
-  }
-
   /*
    * @brief Assemble Equilibrium operator
    * @param eqMatrix Equilibrium operator
@@ -186,28 +182,6 @@ protected:
                                localIndex const q,
                                localIndex const numNodesPerElement,
                                arrayView4d< real64 const > const & dNdX );
-  /*
-   * @brief Computes traction and derivative on each fracture segment.
-   * @param constitutiveManager constant pointer to the constitutive mamanger
-   * @param dispJump displacement jump
-   * @param pf pressure in the fracture element
-   * @surfaceArea area of the fracture element
-   * @param tractionVector traction vector
-   * @param dTdw derivative of the traction w.r.t. the jump
-   * @param dTdpf derivative of the traction w.r.t the fracture pressure
-   */
-  void ComputeTraction( ConstitutiveManager const * const constitutiveManager,
-                        array1d< real64 >  const & dispJump,
-                        real64 const & pf,
-                        real64 const & surfaceArea,
-                        array1d< real64 > & tractionVector,
-                        array2d< real64 > & dTdw,
-                        real64 & dTdpf );
-
-  void fillElementStiffness( real64 const & bulkModulus,
-                             real64 const & shearModulus,
-                             array2d< real64 > & dMatrix );
-
 
 private:
 
@@ -219,11 +193,6 @@ private:
 
   /// contact relation name string
   string m_contactRelationName;
-
-  /// Indicates whether or not to use effective stress when integrating the
-  /// stress divergence in the kernels. This means adding the contribution of the
-  /// matrix pressure to the fracture traction balance.
-  integer m_effectiveStress;
 };
 
 } /* namespace geosx */

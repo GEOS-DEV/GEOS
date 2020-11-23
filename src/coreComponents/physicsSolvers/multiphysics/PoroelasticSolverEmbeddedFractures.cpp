@@ -72,9 +72,8 @@ void PoroelasticSolverEmbeddedFractures::PostProcessInput()
                          ( m_fracturesSolverName );
 
   GEOSX_ERROR_IF( m_fracturesSolver == nullptr,
-                    "Fractures solver not found or invalid type: " << m_fracturesSolverName );
+                  "Fractures solver not found or invalid type: " << m_fracturesSolverName );
 
-  m_fracturesSolver->setEffectiveStress( 1 );
 }
 
 void PoroelasticSolverEmbeddedFractures::SetupDofs( DomainPartition const & domain,
@@ -421,7 +420,7 @@ void PoroelasticSolverEmbeddedFractures::
 
   ConstitutiveManager const * const constitutiveManager = domain.getConstitutiveManager();
   ContactRelationBase const * const
-            contactRelation = constitutiveManager->GetGroup< ContactRelationBase >( m_fracturesSolver->getContactRelationName() );
+  contactRelation = constitutiveManager->GetGroup< ContactRelationBase >( m_fracturesSolver->getContactRelationName() );
 
 
   string const jumpDofKey     = dofManager.getKey( SolidMechanicsEmbeddedFractures::viewKeyStruct::dispJumpString );

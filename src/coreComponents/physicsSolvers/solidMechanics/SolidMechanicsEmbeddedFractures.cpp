@@ -23,6 +23,7 @@
 #include "constitutive/contact/ContactRelationBase.hpp"
 #include "constitutive/solid/LinearElasticIsotropic.hpp"
 #include "constitutive/solid/PoroElastic.hpp"
+#include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 #include "finiteElement/elementFormulations/FiniteElementBase.hpp"
 #include "managers/DomainPartition.hpp"
 #include "managers/NumericalMethodsManager.hpp"
@@ -45,8 +46,7 @@ SolidMechanicsEmbeddedFractures::SolidMechanicsEmbeddedFractures( const std::str
                                                                   Group * const parent ):
   SolverBase( name, parent ),
   m_solidSolverName(),
-  m_solidSolver( nullptr ),
-  m_effectiveStress( 0 )
+  m_solidSolver( nullptr )
 {
   registerWrapper( viewKeyStruct::solidSolverNameString, &m_solidSolverName )->
     setInputFlag( InputFlags::REQUIRED )->
@@ -233,6 +233,36 @@ void SolidMechanicsEmbeddedFractures::SetupSystem( DomainPartition & domain,
 
 }
 
+namespace
+{
+void fillElementStiffness( real64 const & bulkModulus,
+                           real64 const & shearModulus,
+                           array2d< real64 > & dMatrix )
+{
+  real64 const Lame = bulkModulus - 2.0/3.0 * shearModulus;
+
+  dMatrix[0][0] = Lame + 2 * shearModulus;
+  dMatrix[0][1] = Lame;
+  dMatrix[0][2] = Lame;
+
+  dMatrix[1][0] = Lame;
+  dMatrix[1][1] = Lame + 2 * shearModulus;
+  dMatrix[1][2] = Lame;
+
+  dMatrix[2][0] = Lame;
+  dMatrix[2][1] = Lame;
+  dMatrix[2][2] = Lame + 2 * shearModulus;
+
+  dMatrix[3][3] = shearModulus;
+
+  dMatrix[4][4] = shearModulus;
+
+  dMatrix[5][5] = shearModulus;
+
+}
+
+}
+
 void SolidMechanicsEmbeddedFractures::AssembleSystem( real64 const time,
                                                       real64 const dt,
                                                       DomainPartition & domain,
@@ -256,7 +286,7 @@ void SolidMechanicsEmbeddedFractures::AssembleSystem( real64 const time,
 
   ConstitutiveManager const * const constitutiveManager = domain.getConstitutiveManager();
   ContactRelationBase const * const
-            contactRelation = constitutiveManager->GetGroup< ContactRelationBase >( m_contactRelationName );
+  contactRelation = constitutiveManager->GetGroup< ContactRelationBase >( m_contactRelationName );
 
   arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const & disp  = nodeManager.totalDisplacement();
   arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const & dDisp = nodeManager.incrementalDisplacement();
@@ -401,8 +431,8 @@ void SolidMechanicsEmbeddedFractures::AssembleSystem( real64 const time,
 
             for( int i=0; i < dim; ++i )
             {
-              dispEqnRowIndices[static_cast< int >(a)*dim+i] = dispDofNumber[localNodeIndex] + i - rankOffset;
-              dispColIndices[static_cast< int >(a)*dim+i]    = dispDofNumber[localNodeIndex] + i;
+              dispEqnRowIndices[a*dim+i] = dispDofNumber[localNodeIndex] + i - rankOffset;
+              dispColIndices[a*dim+i]    = dispDofNumber[localNodeIndex] + i;
             }
           }
 
@@ -978,34 +1008,6 @@ void SolidMechanicsEmbeddedFractures::ApplySystemSolution( DofManager const & do
                                          domain.getMeshBody( 0 )->getMeshLevel( 0 ),
                                          domain.getNeighbors(),
                                          true );
-
-}
-
-void SolidMechanicsEmbeddedFractures::fillElementStiffness( real64 const & bulkModulus,
-                                                            real64 const & shearModulus,
-                                                            array2d< real64 > & dMatrix )
-{
-
-
-  real64 const Lame = bulkModulus - 2.0/3.0 * shearModulus;
-
-  dMatrix[0][0] = Lame + 2 * shearModulus;
-  dMatrix[0][1] = Lame;
-  dMatrix[0][2] = Lame;
-
-  dMatrix[1][0] = Lame;
-  dMatrix[1][1] = Lame + 2 * shearModulus;
-  dMatrix[1][2] = Lame;
-
-  dMatrix[2][0] = Lame;
-  dMatrix[2][1] = Lame;
-  dMatrix[2][2] = Lame + 2 * shearModulus;
-
-  dMatrix[3][3] = shearModulus;
-
-  dMatrix[4][4] = shearModulus;
-
-  dMatrix[5][5] = shearModulus;
 
 }
 
