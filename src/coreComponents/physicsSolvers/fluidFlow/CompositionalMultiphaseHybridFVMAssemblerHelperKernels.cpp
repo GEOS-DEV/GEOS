@@ -449,7 +449,7 @@ AssemblerKernelHelper::AssembleBuoyancyFlux( localIndex const ifaceLoc,
 
         // neighbor derivatives
         dDivMassFluxes_dElemVars[ic][elemVarsOffset] = dDivMassFluxes_dElemVars[ic][elemVarsOffset]
-                                                       + dt * dUpwPhaseGravCoef_dPres[ip][ic][ic][Pos::NEIGHBOR] * phaseGravTerm[ip][jp];
+                                                       + dt * dUpwPhaseGravCoef_dPres[ip][jp][ic][Pos::NEIGHBOR] * phaseGravTerm[ip][jp];
         dDivMassFluxes_dElemVars[ic][elemVarsOffset] = dDivMassFluxes_dElemVars[ic][elemVarsOffset]
                                                        + dt_upwPhaseGravCoef * dPhaseGravTerm_dPres[ip][jp][Pos::NEIGHBOR];
 
