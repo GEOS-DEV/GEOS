@@ -40,11 +40,11 @@ struct MimeticInnerProductTypeStrings
   /// string for the TPFA inner product
   static constexpr auto TPFA      = "TPFA";
   /// string for the quasi-TPFA inner product
-  static constexpr auto QuasiTPFA = "QuasiTPFA";
+  static constexpr auto QuasiTPFA = "quasiTPFA";
   /// string for the quasi-RT inner product
-  static constexpr auto QuasiRT   = "QuasiRT";
+  static constexpr auto QuasiRT   = "quasiRT";
   /// string for the Simple inner product
-  static constexpr auto Simple    = "Simple";
+  static constexpr auto Simple    = "simple";
 };
 
 /**
@@ -76,7 +76,7 @@ mimeticInnerProductDispatch( MimeticInnerProductBase const & input,
   }
   else
   {
-    GEOSX_ERROR( "mimeticInnerProductDispatch() is not implemented for input of "<<typeid(input).name() );
+    GEOSX_ERROR( "mimeticInnerProductDispatch() is not implemented for input of " << LvArray::system::demangleType( input ) );
   }
 }
 
@@ -109,7 +109,7 @@ mimeticInnerProductDispatch( MimeticInnerProductBase & input,
   }
   else
   {
-    GEOSX_ERROR( "mimeticInnerProductDispatch() is not implemented for input of "<<LvArray::system::demangleType( &input ) );
+    GEOSX_ERROR( "mimeticInnerProductDispatch() is not implemented for input of " << LvArray::system::demangleType( input ) );
   }
 }
 
