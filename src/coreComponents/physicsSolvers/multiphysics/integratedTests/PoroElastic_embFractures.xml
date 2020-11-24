@@ -97,11 +97,11 @@
 
     <BoundedPlane
       name="FracturePlane"
-      normal="0, 1, 0"
+      normal="1, 0, 0"
       origin="1.5, 1.5, 1.5"
-      lengthVector="1, 0, 0"
+      lengthVector="0, 1, 0"
       widthVector="0, 0, 1"
-      dimensions="{ 1.1, 4 }"/>
+      dimensions="{3,  4 }"/>
   </Geometry>
 
   <Events
@@ -199,7 +199,7 @@
       setNames="{ all }"
       objectPath="ElementRegions/Fracture/embeddedSurfaceSubRegion"
       fieldName="pressure"
-      scale="0"/>
+      scale="1.0e5"/>
       
     <FieldSpecification
       name="xnegconstraint"
@@ -264,14 +264,14 @@
       name="leftPressure"
       objectPath="faceManager"
       fieldName="pressure"
-      scale="100"
+      scale="0.0"
       setNames="{ xneg }"/>
 
      <FieldSpecification
       name="rightPressure"
       objectPath="faceManager"
       fieldName="pressure"
-      scale="0"
+      scale="0.0"
       setNames="{ xpos }"/>
   </FieldSpecifications>
 

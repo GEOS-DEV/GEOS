@@ -462,7 +462,7 @@ void SolidMechanicsEmbeddedFractures::AssembleSystem( real64 const time,
           }
 
           // Dof number of jump enrichment
-//          std::cout << "traction in assembly: " << fractureTraction[k] << std::endl;
+          std::cout << "traction in assembly: " << fractureTraction[k] << std::endl;
           for( int i= 0; i < embeddedSurfaceSubRegion.numOfJumpEnrichments(); i++ )
           {
             jumpEqnRowIndices[i] = jumpDofNumber[k] + i - rankOffset;

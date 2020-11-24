@@ -398,6 +398,8 @@ void PoroelasticSolverEmbeddedFractures::AssembleSystem( real64 const time_n,
                                                          arrayView1d< real64 > const & localRhs )
 {
 
+  updateState( domain );
+
   // assemble Kuu, Kuw, Kww, Kwu
   m_fracturesSolver->AssembleSystem( time_n, dt,
                                      domain,
@@ -490,12 +492,6 @@ void PoroelasticSolverEmbeddedFractures::
       arrayView1d< globalIndex const > const & jumpDofNumber =
         embeddedSurfaceSubRegion.getReference< array1d< globalIndex > >( jumpDofKey );
 
-      arrayView1d< R1Tensor const > const & w_global  =
-        embeddedSurfaceSubRegion.getReference< array1d< R1Tensor > >( SolidMechanicsEmbeddedFractures::viewKeyStruct::dispJumpString );
-
-      arrayView1d< R1Tensor const > const & dw_global =
-        embeddedSurfaceSubRegion.getReference< array1d< R1Tensor > >( SolidMechanicsEmbeddedFractures::viewKeyStruct::deltaDispJumpString );
-
       arrayView1d< globalIndex const > const & fracturePresDofNumber =
         embeddedSurfaceSubRegion.getReference< array1d< globalIndex > >( pressureDofKey );
 
@@ -543,7 +539,6 @@ void PoroelasticSolverEmbeddedFractures::
           {
             jumpEqnRowIndices[i] = jumpDofNumber[k] + i - rankOffset;
             jumpColIndices[i]    = jumpDofNumber[k] + i;
-            w( i ) = w_global[k][i] + 0*dw_global[k][i];
           }
 
           arrayView1d< globalIndex const > const matrixPresDofNumber =
@@ -553,7 +548,9 @@ void PoroelasticSolverEmbeddedFractures::
 
           arrayView1d< real64 const > const & matrixPres =
             elementSubRegion->getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::pressureString );
-          pm[0] = matrixPres[cellElementIndex];
+          arrayView1d< real64 const > const & matrixDeltaPres =
+                      elementSubRegion->getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::deltaPressureString );
+          pm[0] = matrixPres[cellElementIndex] + matrixDeltaPres[cellElementIndex];
 
           string const & solidName = m_solidSolver->solidMaterialNames()[embeddedSurfacesToCells.m_toElementRegion[k][0]];
           SolidBase const & solid = GetConstitutiveModel< SolidBase >( *elementSubRegion, solidName );
@@ -859,6 +856,11 @@ void PoroelasticSolverEmbeddedFractures::updateState( DomainPartition & domain )
         effectiveAperture[k] = contactRelation->effectiveAperture( aperture[k] );
 
         deltaVolume[k] = effectiveAperture[k] * area[k] - volume[k];
+        std::cout << "pressure: " << pressure[k] << std::endl;
+        std::cout << "deltaPressure: " << deltaPressure[k] << std::endl;
+        std::cout << "aperture: " << aperture[k] << std::endl;
+        std::cout << "effectiveAperture: " << effectiveAperture[k] << std::endl;
+
 
         contactRelation->addPressureToTraction( pressure[k] + deltaPressure[k], fractureTraction[k] );
 
