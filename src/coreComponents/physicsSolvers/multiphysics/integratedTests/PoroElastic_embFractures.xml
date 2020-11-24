@@ -11,9 +11,9 @@
       fluidSolverName = "flowSolver"
       solidSolverName = "matrixMechSolver"
       couplingTypeOption="FIM"
-      logLevel="1">
+      logLevel="3">
       <NonlinearSolverParameters
-        newtonMaxIter="15"
+        newtonMaxIter="5"
         maxTimeStepCuts="1"/>
       <LinearSolverParameters
         solverType="direct"
@@ -30,7 +30,7 @@
     <SolidMechanicsLagrangianSSLE
       name="matrixMechSolver"
       timeIntegrationOption="QuasiStatic"
-      logLevel="1"
+      logLevel="0"
       discretization="FE1"
       targetRegions="{ Domain }"
       solidMaterialNames="{ rock }"/>
@@ -57,7 +57,7 @@
       elementTypes="{ C3D8 }"
       xCoords="{ 0, 3 }"
       yCoords="{ 0, 3 }"
-      zCoords="{ 0, 3 }"
+      zCoords="{ 0, 1 }"
       nx="{ 3 }"
       ny="{ 3 }"
       nz="{ 1 }"
@@ -112,7 +112,7 @@
 
     <PeriodicEvent
       name="solverApplications"
-      forceDt="1e-3"
+      forceDt="10"
       target="/Solvers/poroSolver"/>
 
     <PeriodicEvent
@@ -159,9 +159,9 @@
 <Constitutive>
     <PoroLinearElasticIsotropic
       name="rock"
-      defaultDensity="2700"
-      defaultBulkModulus="5.55555555555555555556e9"
-      defaultShearModulus="4.16666666666666666667e9"
+      defaultDensity="1"
+      defaultBulkModulus="5555555555.5556"
+      defaultShearModulus="4166666666.6667"
       BiotCoefficient="1.0"/>
 
     <CompressibleSinglePhaseFluid
@@ -180,7 +180,7 @@
       <TableFunction
         name="aperTable"
         coordinates="{ -1.0e-3, 0.0 }"
-        values="{ 1.0e-6, 1.0e-4 }"/>
+        values="{ 1.0e-6, 1.0e-3 }"/>
     </Contact>
   </Constitutive>
   
@@ -241,7 +241,7 @@
       setNames="{ all }"
       objectPath="ElementRegions/Domain/cb1"
       fieldName="permeability"
-      scale="1e-12"/>
+      scale="1.000e-12"/>
 
     <FieldSpecification
       name="permz"

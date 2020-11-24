@@ -81,20 +81,20 @@ void PoroelasticSolverEmbeddedFractures::RegisterDataOnMesh( dataRepository::Gro
   PoroelasticSolver::RegisterDataOnMesh( meshBodies );
 
   for( auto & mesh : meshBodies->GetSubGroups() )
-    {
-      MeshLevel * meshLevel = Group::group_cast< MeshBody * >( mesh.second )->getMeshLevel( 0 );
+  {
+    MeshLevel * meshLevel = Group::group_cast< MeshBody * >( mesh.second )->getMeshLevel( 0 );
 
-      ElementRegionManager * const elemManager = meshLevel->getElemManager();
+    ElementRegionManager * const elemManager = meshLevel->getElemManager();
+    {
+      elemManager->forElementRegions< SurfaceElementRegion >( [&] ( SurfaceElementRegion & region )
       {
-        elemManager->forElementRegions< SurfaceElementRegion >( [&] ( SurfaceElementRegion & region )
+        region.forElementSubRegions< EmbeddedSurfaceSubRegion >( [&]( EmbeddedSurfaceSubRegion & subRegion )
         {
-          region.forElementSubRegions< EmbeddedSurfaceSubRegion >( [&]( EmbeddedSurfaceSubRegion & subRegion )
-          {
-            subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::dTraction_dPressureString );
-          } );
+          subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::dTraction_dPressureString );
         } );
-      }
+      } );
     }
+  }
 }
 
 void PoroelasticSolverEmbeddedFractures::InitializePostInitialConditions_PreSubGroups( Group * const problemManager )
@@ -433,6 +433,8 @@ void PoroelasticSolverEmbeddedFractures::AssembleCouplingTerms( DomainPartition 
   PoroelasticSolver::AssembleCouplingTerms( domain, dofManager, localMatrix, localRhs );
 
   assembleFractureFlowResidualWrtJump( domain, dofManager, localMatrix, localRhs );
+
+  assembleTractionBalanceResidualWrtPressure( domain, dofManager, localMatrix, localRhs );
 }
 
 void PoroelasticSolverEmbeddedFractures::
@@ -470,14 +472,9 @@ void PoroelasticSolverEmbeddedFractures::
 
   real64 dTdpf = 0;
 
-  array2d< real64 > Kwpm_elem( 1, 3 );
-  array2d< real64 > Kwpm_gauss( 1, 3 );
-  array2d< real64 > identityVec( 6, 1 );
-  identityVec.setValues< serialPolicy >( 0 );
-  identityVec[0][0] = 1;
-  identityVec[1][0] = 1;
-  identityVec[2][0] = 1;
-  array1d< real64 > pm( 1 ); // matrix pressure (it's a scalar but let's keep it like this in case we wanted more unknowns)
+  array1d< real64 > Kwpm_elem( 3 );
+  array1d< real64 > Kwpm_gauss( 3 );
+  real64 pm;
 
   // begin region loop
   elemManager.forElementRegions< SurfaceElementRegion >( [&]( SurfaceElementRegion const & embeddedRegion )->void
@@ -498,7 +495,7 @@ void PoroelasticSolverEmbeddedFractures::
       arrayView1d< real64 const > const & fractureSurfaceArea = embeddedSurfaceSubRegion.getElementArea();
 
       arrayView1d< real64 const > const & dTraction_dPressure =
-          embeddedSurfaceSubRegion.getReference< array1d< real64 > >( viewKeyStruct::dTraction_dPressureString );
+        embeddedSurfaceSubRegion.getReference< array1d< real64 > >( viewKeyStruct::dTraction_dPressureString );
 
       arrayView1d< integer const > const & ghostRank = embeddedSurfaceSubRegion.ghostRank();
 
@@ -549,8 +546,8 @@ void PoroelasticSolverEmbeddedFractures::
           arrayView1d< real64 const > const & matrixPres =
             elementSubRegion->getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::pressureString );
           arrayView1d< real64 const > const & matrixDeltaPres =
-                      elementSubRegion->getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::deltaPressureString );
-          pm[0] = matrixPres[cellElementIndex] + matrixDeltaPres[cellElementIndex];
+            elementSubRegion->getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::deltaPressureString );
+          pm = matrixPres[cellElementIndex] + matrixDeltaPres[cellElementIndex];
 
           string const & solidName = m_solidSolver->solidMaterialNames()[embeddedSurfacesToCells.m_toElementRegion[k][0]];
           SolidBase const & solid = GetConstitutiveModel< SolidBase >( *elementSubRegion, solidName );
@@ -560,7 +557,13 @@ void PoroelasticSolverEmbeddedFractures::
           // 1. Assembly of element matrices
           Kwpm_elem.setValues< serialPolicy >( 0 );
           Kwpm_gauss.setValues< serialPolicy >( 0 );
-          BlasLapackLA::matrixTMatrixMultiply( identityVec, eqMatrix, Kwpm_gauss );
+
+          for( int i=0; i < 3; ++i )
+          {
+            Kwpm_gauss[0] += eqMatrix( 0, i );
+            Kwpm_gauss[1] += eqMatrix( 1, i );
+            Kwpm_gauss[2] += eqMatrix( 2, i );
+          }
 
           // dTdpf
           dTdpf = dTraction_dPressure[k] * fractureSurfaceArea[k];
@@ -571,11 +574,14 @@ void PoroelasticSolverEmbeddedFractures::
 
             // No neg coz the effective stress is total stress - porePressure
             // and all signs are flipped here.
-            BlasLapackLA::matrixScale( biotCoefficient * detJq, Kwpm_gauss );
-            BlasLapackLA::matrixMatrixAdd( Kwpm_gauss, Kwpm_elem, 1 );
+            Kwpm_elem[0] += Kwpm_gauss[0] * biotCoefficient * detJq;
+            Kwpm_elem[1] += Kwpm_gauss[1] * biotCoefficient * detJq;
+            Kwpm_elem[2] += Kwpm_gauss[2] * biotCoefficient * detJq;
           }
 
-          BlasLapackLA::matrixVectorMultiply( Kwpm_elem, pm, Rfrac, 1, 1 );
+          Rfrac[0] = Kwpm_elem[0] * pm;
+          Rfrac[1] = Kwpm_elem[1] * pm;
+          Rfrac[2] = Kwpm_elem[2] * pm;
 
           /// add derivatives for and residual contribution for porelastic case.
           for( localIndex i=0; i < jumpEqnRowIndices.size(); ++i )
@@ -587,7 +593,7 @@ void PoroelasticSolverEmbeddedFractures::
               // fill in matrix
               localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( jumpEqnRowIndices[i],
                                                                                 &matrixPressureColIndex,
-                                                                                Kwpm_elem[i],
+                                                                                &Kwpm_elem[i],
                                                                                 1 );
             }
           }
@@ -813,61 +819,56 @@ void PoroelasticSolverEmbeddedFractures::ApplySystemSolution( DofManager const &
 void PoroelasticSolverEmbeddedFractures::updateState( DomainPartition & domain )
 {
   // update aperture to be equal to the normal displacement jump and traction on the fracture to include the pressure contribution
-    MeshLevel * const meshLevel = domain.getMeshBody( 0 )->getMeshLevel( 0 );
-    ElementRegionManager * const elemManager = meshLevel->getElemManager();
+  MeshLevel * const meshLevel = domain.getMeshBody( 0 )->getMeshLevel( 0 );
+  ElementRegionManager * const elemManager = meshLevel->getElemManager();
 
-    ConstitutiveManager const * const constitutiveManager = domain.getConstitutiveManager();
+  ConstitutiveManager const * const constitutiveManager = domain.getConstitutiveManager();
 
-    ContactRelationBase const * const
-    contactRelation = constitutiveManager->GetGroup< ContactRelationBase >( m_fracturesSolver->getContactRelationName() );
+  ContactRelationBase const * const
+  contactRelation = constitutiveManager->GetGroup< ContactRelationBase >( m_fracturesSolver->getContactRelationName() );
 
-    elemManager->forElementSubRegions< EmbeddedSurfaceSubRegion >( [&]( EmbeddedSurfaceSubRegion & subRegion )
+  elemManager->forElementSubRegions< EmbeddedSurfaceSubRegion >( [&]( EmbeddedSurfaceSubRegion & subRegion )
+  {
+    arrayView1d< R1Tensor const > const dispJump =
+      subRegion.getReference< array1d< R1Tensor > >( SolidMechanicsEmbeddedFractures::viewKeyStruct::dispJumpString );
+
+    arrayView1d< real64 > const aperture = subRegion.getElementAperture();
+
+    arrayView1d< real64 > const effectiveAperture =
+      subRegion.getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::effectiveApertureString );
+
+    arrayView1d< real64 const > const volume = subRegion.getElementVolume();
+
+    arrayView1d< real64 > const deltaVolume =
+      subRegion.getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::deltaVolumeString );
+    arrayView1d< real64 const > const area = subRegion.getElementArea().toViewConst();
+
+    arrayView1d< R1Tensor > const & fractureTraction =
+      subRegion.getReference< array1d< R1Tensor > >( SolidMechanicsEmbeddedFractures::viewKeyStruct::fractureTractionString );
+
+    arrayView1d< real64 >  const & dTdpf =
+      subRegion.getReference< array1d< real64 > >( viewKeyStruct::dTraction_dPressureString );
+
+    arrayView1d< real64 const > const & pressure =
+      subRegion.getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::pressureString );
+
+    arrayView1d< real64 const > const & deltaPressure =
+      subRegion.getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::deltaPressureString );
+
+    forAll< serialPolicy >( subRegion.size(), [=] ( localIndex const k )
     {
-      arrayView1d< R1Tensor const > const dispJump =
-        subRegion.getReference< array1d< R1Tensor > >( SolidMechanicsEmbeddedFractures::viewKeyStruct::dispJumpString );
+      aperture[k] = dispJump[k][0];   // the first component of the jump is the normal one.
 
-      arrayView1d< real64 > const aperture = subRegion.getElementAperture();
+      effectiveAperture[k] = contactRelation->effectiveAperture( aperture[k] );
 
-      arrayView1d< real64 > const effectiveAperture =
-        subRegion.getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::effectiveApertureString );
+      deltaVolume[k] = effectiveAperture[k] * area[k] - volume[k];
 
-      arrayView1d< real64 const > const volume = subRegion.getElementVolume();
+      contactRelation->addPressureToTraction( pressure[k] + deltaPressure[k], fractureTraction[k] );
 
-      arrayView1d< real64 > const deltaVolume =
-        subRegion.getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::deltaVolumeString );
-      arrayView1d< real64 const > const area = subRegion.getElementArea().toViewConst();
-
-      arrayView1d< R1Tensor > const  & fractureTraction =
-          subRegion.getReference< array1d< R1Tensor > >( SolidMechanicsEmbeddedFractures::viewKeyStruct::fractureTractionString );
-
-      arrayView1d< real64 >  const & dTdpf =
-             subRegion.getReference< array1d< real64 > >( viewKeyStruct::dTraction_dPressureString );
-
-      arrayView1d< real64 const > const  & pressure =
-          subRegion.getReference<array1d< real64 > >( FlowSolverBase::viewKeyStruct::pressureString );
-
-      arrayView1d< real64 const > const  & deltaPressure =
-                subRegion.getReference<array1d< real64 > >( FlowSolverBase::viewKeyStruct::deltaPressureString );
-
-      forAll< serialPolicy >( subRegion.size(), [=] ( localIndex const k )
-      {
-        aperture[k] = dispJump[k][0]; // the first component of the jump is the normal one.
-
-        effectiveAperture[k] = contactRelation->effectiveAperture( aperture[k] );
-
-        deltaVolume[k] = effectiveAperture[k] * area[k] - volume[k];
-        std::cout << "pressure: " << pressure[k] << std::endl;
-        std::cout << "deltaPressure: " << deltaPressure[k] << std::endl;
-        std::cout << "aperture: " << aperture[k] << std::endl;
-        std::cout << "effectiveAperture: " << effectiveAperture[k] << std::endl;
-
-
-        contactRelation->addPressureToTraction( pressure[k] + deltaPressure[k], fractureTraction[k] );
-
-        bool open = aperture[k] >= 0 ? true : false;
-        contactRelation->dTraction_dPressure( dTdpf[k] , open);
-      } );
+      bool open = aperture[k] >= 0 ? true : false;
+      contactRelation->dTraction_dPressure( dTdpf[k], open );
     } );
+  } );
 }
 
 REGISTER_CATALOG_ENTRY( SolverBase, PoroelasticSolverEmbeddedFractures, std::string const &, Group * const )

@@ -125,7 +125,7 @@ public:
                                 arraySlice2d< real64 > const & dTdw ) const
   {
 
-    dTdw(0, 0) = dispJump[0] >=0 ? 0.0 : m_penaltyStiffness;
+    dTdw( 0, 0 ) = dispJump[0] >=0 ? 0.0 : m_penaltyStiffness;
 
     // all the others are zeros
     dTdw( 0, 1 ) = 0.0;
