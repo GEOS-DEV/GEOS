@@ -403,7 +403,7 @@ void EdgeManager::BuildEdges( FaceManager * const faceManager, NodeManager * con
 
   localIndex const numNodes = nodeManager->size();
 
-  ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager->nodeList().toViewConst();
+  ArrayOfArraysView< localIndex const > const faceToNodeMap = faceManager->nodeList().toViewConst();
 
   faceManager->edgeList().SetRelatedObject( this );
   ArrayOfArrays< localIndex > & faceToEdgeMap = faceManager->edgeList();
@@ -444,7 +444,7 @@ void EdgeManager::BuildEdges( FaceManager * const faceManager, NodeManager * con
   {
     auto const & setWrapper = nodeSets[i];
     std::string const & setName = setWrapper->getName();
-    SortedArrayView< localIndex const > const & targetSet = nodeManager->sets().getReference< SortedArray< localIndex > >( setName ).toViewConst();
+    SortedArrayView< localIndex const > const targetSet = nodeManager->sets().getReference< SortedArray< localIndex > >( setName ).toViewConst();
     ConstructSetFromSetAndMap( targetSet, m_toNodesRelation, setName );
   } );
 
@@ -569,7 +569,7 @@ void EdgeManager::ExtractMapFromObjectForAssignGlobalIndexNumbers( ObjectManager
   localIndex const numEdges = size();
 
   arrayView2d< localIndex const > const edgeNodes = this->nodeList();
-  arrayView1d< integer const > const isDomainBoundary = this->getDomainBoundaryIndicator().toViewConst();
+  arrayView1d< integer const > const isDomainBoundary = this->getDomainBoundaryIndicator();
 
   globalEdgeNodes.resize( numEdges );
 
@@ -640,7 +640,7 @@ void EdgeManager::ConnectivityFromGlobalToLocal( const SortedArray< localIndex >
 void EdgeManager::AddToEdgeToFaceMap( FaceManager const * const faceManager,
                                       arrayView1d< localIndex const > const & newFaceIndices )
 {
-  ArrayOfArraysView< localIndex const > const & faceToEdgeMap = faceManager->edgeList().toViewConst();
+  ArrayOfArraysView< localIndex const > const faceToEdgeMap = faceManager->edgeList().toViewConst();
 
   // loop over all faces in list
   for( localIndex const newFaceIndex : newFaceIndices )

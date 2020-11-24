@@ -72,7 +72,7 @@ namespace extrinsicMeshData
 
 namespace internal
 {
-template< typename TYPE, bool HAS_TYPE = std::enable_if_t< traits::HasMemberType_value_type< TYPE >, std::true_type >::value >
+template< typename TYPE, bool HAS_TYPE = std::enable_if_t< traits::HasAlias_value_type< TYPE >, std::true_type >::value >
 struct typeHelper
 {
   using type = typename TYPE::value_type;

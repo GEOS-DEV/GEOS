@@ -2082,7 +2082,7 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
             localIndex elementIndex = faceToElementMap[iFace][0];
             CellElementSubRegion * elementSubRegion = elementManager.GetRegion( faceToRegionMap[iFace][0] )->
                                                         GetSubRegion< CellElementSubRegion >( faceToSubRegionMap[iFace][0] );
-            arrayView2d< real64 const > const subRegionElemCenter = elementSubRegion->getElementCenter().toViewConst();
+            arrayView2d< real64 const > const subRegionElemCenter = elementSubRegion->getElementCenter();
 
             faceManager.SortFaceNodes( X, subRegionElemCenter[ elementIndex ], faceToNodeMap[ iFace ], faceToNodeMap.sizeOfArray( iFace ) );
 
@@ -4492,8 +4492,7 @@ SurfaceGenerator::calculateRuptureRate( SurfaceElementRegion & faceElementRegion
   arrayView1d< real64 > const &
   ruptureRate = subRegion->getExtrinsicData< extrinsicMeshData::RuptureRate >();
 
-
-  arrayView2d< real64 const > const & elemCenter = subRegion->getElementCenter().toViewConst();
+  arrayView2d< real64 const > const & elemCenter = subRegion->getElementCenter();
 
   for( localIndex kfc=0; kfc<fractureConnectorEdgesToFaceElements.size(); ++kfc )
   {

@@ -105,7 +105,7 @@ IS_VALID_EXPRESSION_2( CanStreamInto, SRC, DST, std::declval< SRC & >() >> std::
  *        that is true iff @p CLASS ::value_type is valid and not an enum.
  * @tparam CLASS The type to test.
  */
-HAS_MEMBER_TYPE( value_type );
+HAS_ALIAS( value_type );
 
 namespace internal
 {

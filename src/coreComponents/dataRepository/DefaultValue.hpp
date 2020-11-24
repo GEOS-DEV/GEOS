@@ -94,7 +94,7 @@ struct Helper< T, std::enable_if_t< is_defaultable< T >::value > >
  * containers.
  */
 template< typename T >
-struct Helper< T, std::enable_if_t< traits::HasMemberType_value_type< T > &&
+struct Helper< T, std::enable_if_t< traits::HasAlias_value_type< T > &&
                                     is_defaultable< typename T::value_type >::value &&
                                     !traits::is_string< T > &&
                                     !traits::is_tensorT< T > > >

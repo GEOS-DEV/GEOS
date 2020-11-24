@@ -50,4 +50,13 @@
   IS_VALID_EXPRESSION( HasMemberFunction_ ## NAME, CLASS, \
                        std::is_convertible< decltype( std::declval< CLASS >().NAME( __VA_ARGS__ ) ), RTYPE >::value )
 
+
+/**
+ * @brief Macro that expands to a static constexpr bool templated on a type that is only true when
+ *        the type has a an alias @p NAME. The name of the boolean variable is HasAlias_ ## @p NAME.
+ */
+#define HAS_ALIAS( NAME ) \
+  IS_VALID_EXPRESSION( HasAlias_ ## NAME, CLASS, !std::is_enum< typename CLASS::NAME >::value )
+
+
 #endif /* GEOSX_CODINGUTILITIES_SFINAE_MACROS_HPP_ */

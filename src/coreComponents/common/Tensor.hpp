@@ -38,6 +38,8 @@ public:
   /// Alias for size template parameter
   static constexpr int SIZE = SIZE_TPARAM;
 
+//  static constexpr int NDIM = 1;
+
   /**
    * @brief Const element access.
    * @param i element index
@@ -106,6 +108,13 @@ public:
       }
     }
     return true;
+  }
+
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  constexpr int size( int ) const
+  {
+    return SIZE;
   }
 
   /// Underlying array

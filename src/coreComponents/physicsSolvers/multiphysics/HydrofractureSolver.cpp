@@ -282,7 +282,7 @@ void HydrofractureSolver::UpdateDeformationForCoupling( DomainPartition & domain
     arrayView1d< real64 > const effectiveAperture = subRegion.getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::effectiveApertureString );
     arrayView1d< real64 const > const volume = subRegion.getElementVolume();
     arrayView1d< real64 > const deltaVolume = subRegion.getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::deltaVolumeString );
-    arrayView1d< real64 const > const area = subRegion.getElementArea().toViewConst();
+    arrayView1d< real64 const > const area = subRegion.getElementArea();
     arrayView2d< localIndex const > const elemsToFaces = subRegion.faceList();
 
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
@@ -889,7 +889,7 @@ HydrofractureSolver::
 
   globalIndex const rankOffset = m_dofManager.rankOffset();
 
-  CRSMatrixView< real64 const, localIndex const > const &
+  CRSMatrixView< real64 const, localIndex const > const
   dFluxResidual_dAperture = m_flowSolver->getDerivativeFluxResidual_dAperture().toViewConst();
 
   ContactRelationBase const * const
