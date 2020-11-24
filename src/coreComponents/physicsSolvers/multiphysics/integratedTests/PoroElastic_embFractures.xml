@@ -6,7 +6,7 @@
     <PoroelasticEmbeddedFractures
       name = "poroSolver"
       targetRegions="{Domain, Fracture}"
-      initialDt="10"
+      initialDt="1e-3"
       fracturesSolverName = "fractureMechSolver"
       fluidSolverName = "flowSolver"
       solidSolverName = "matrixMechSolver"
@@ -112,7 +112,7 @@
 
     <PeriodicEvent
       name="solverApplications"
-      forceDt="10"
+      forceDt="1e-3"
       target="/Solvers/poroSolver"/>
 
     <PeriodicEvent
@@ -191,15 +191,15 @@
       setNames="{ all }"
       objectPath="ElementRegions/Domain/cb1"
       fieldName="pressure"
-      scale="1.00e6"/>
+      scale="0"/>
       
    <FieldSpecification
-      name="initialPressure"
+      name="initialPressureFracture"
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/Fracture/embeddedSurfaceSubRegion"
       fieldName="pressure"
-      scale="1.00e6"/>
+      scale="0"/>
       
     <FieldSpecification
       name="xnegconstraint"
@@ -264,14 +264,14 @@
       name="leftPressure"
       objectPath="faceManager"
       fieldName="pressure"
-      scale="2e6"
+      scale="100"
       setNames="{ xneg }"/>
 
      <FieldSpecification
       name="rightPressure"
       objectPath="faceManager"
       fieldName="pressure"
-      scale="1e6"
+      scale="0"
       setNames="{ xpos }"/>
   </FieldSpecifications>
 

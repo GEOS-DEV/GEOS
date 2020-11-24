@@ -34,6 +34,8 @@
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
 #include "linearAlgebra/utilities/LAIHelperFunctions.hpp"
 #include "linearAlgebra/interfaces/BlasLapackLA.hpp"
+#include "managers/FieldSpecification/FieldSpecificationManager.hpp"
+
 
 
 namespace geosx
@@ -287,6 +289,8 @@ void SolidMechanicsEmbeddedFractures::AssembleSystem( real64 const time,
                                  localMatrix,
                                  localRhs );
 
+  // If specified as a b.c. apply traction
+  applyTractionBC( time, dt, domain );
 
   MeshLevel const & mesh                   = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
   NodeManager const & nodeManager          = *mesh.getNodeManager();
@@ -458,7 +462,7 @@ void SolidMechanicsEmbeddedFractures::AssembleSystem( real64 const time,
           }
 
           // Dof number of jump enrichment
-          std::cout << "traction in assembly: " << fractureTraction[k] << std::endl;
+//          std::cout << "traction in assembly: " << fractureTraction[k] << std::endl;
           for( int i= 0; i < embeddedSurfaceSubRegion.numOfJumpEnrichments(); i++ )
           {
             jumpEqnRowIndices[i] = jumpDofNumber[k] + i - rankOffset;
@@ -904,7 +908,41 @@ void SolidMechanicsEmbeddedFractures::ApplyBoundaryConditions( real64 const time
                                           dofManager,
                                           localMatrix,
                                           localRhs );
+
+
 }
+
+void SolidMechanicsEmbeddedFractures::applyTractionBC( real64 const time_n,
+                                                       real64 const dt,
+                                                       DomainPartition & domain )
+{
+  FieldSpecificationManager & fsManager = FieldSpecificationManager::get();
+  // MeshLevel & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
+
+  fsManager.Apply( time_n+ dt,
+                   &domain,
+                   "ElementRegions",
+                   viewKeyStruct::fractureTractionString,
+                   [&] ( FieldSpecificationBase const * const fs,
+                         string const & ,
+                         SortedArrayView< localIndex const > const & targetSet,
+                         Group * subRegion,
+                         string const &  )
+  {
+    GEOSX_UNUSED_VAR( targetSet );
+    SortedArray< localIndex > dummySet;
+    for (localIndex i=0; i < subRegion->size(); ++i)
+    {
+      dummySet.insert( i );
+    }
+    fs->ApplyFieldValue < FieldSpecificationEqual, parallelHostPolicy>( dummySet.toViewConst(),
+                                                                        time_n+dt,
+                                                                        subRegion,
+                                                                        viewKeyStruct::fractureTractionString);
+  });
+
+}
+
 
 real64 SolidMechanicsEmbeddedFractures::CalculateResidualNorm( DomainPartition const & domain,
                                                                DofManager const & dofManager,
@@ -1046,8 +1084,6 @@ void SolidMechanicsEmbeddedFractures::updateState( DomainPartition & domain )
 
     for ( localIndex k=0; k< subRegion.size(); ++k )
     {
-      std::cout << "jump: " << jump[k] << std::endl;
-      std::cout << "traction: " << fractureTraction[k] << std::endl;
       contactRelation->computeTraction( jump[k], fractureTraction[k] );
 
       contactRelation->dTraction_dJump( jump[k], dTraction_dJump[k] );

@@ -32,7 +32,7 @@
       solidMaterialNames="{ rock }"
       targetRegions="{ Region1, Fracture }"
       fractureRegion="Fracture"
-      logLevel="2"/>
+      logLevel="0"/>
   </Solvers>
 
   <Mesh>
@@ -42,9 +42,9 @@
       xCoords="{ 0, 3 }"
       yCoords="{ 0, 3 }"
       zCoords="{ 0, 3 }"
-      nx="{ 3 }"
-      ny="{ 3 }"
-      nz="{ 1 }"
+      nx="{ 11 }"
+      ny="{ 11 }"
+      nz="{ 11 }"
       cellBlockNames="{ cb1 }"/>
   </Mesh>
 

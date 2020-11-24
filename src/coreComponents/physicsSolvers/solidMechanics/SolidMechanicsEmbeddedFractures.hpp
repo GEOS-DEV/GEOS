@@ -147,6 +147,10 @@ public:
                                     const localIndex k,
                                     const real64 hInv );
 
+  void applyTractionBC( real64 const time_n,
+                        real64 const dt,
+                        DomainPartition & domain );
+
 protected:
 
   virtual void InitializePostInitialConditions_PreSubGroups( Group * const problemManager ) override final;
