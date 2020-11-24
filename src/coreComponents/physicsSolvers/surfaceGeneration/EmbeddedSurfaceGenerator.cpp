@@ -158,6 +158,16 @@ void EmbeddedSurfaceGenerator::InitializePostSubGroups( Group * const problemMan
 
   embeddedSurfaceSubRegion->inheritGhostRank( cellElemGhostRank );
 
+  dataRepository::Wrapper< SortedArray< localIndex > > * setWrapper =
+      embeddedSurfaceSubRegion->GetGroup( ObjectManagerBase::groupKeyStruct::setsString )->
+      getWrapper< SortedArray< localIndex > >( "all" );
+
+  SortedArray< localIndex > & targetSet = setWrapper->reference();
+  for (localIndex i=0; i < embeddedSurfaceSubRegion->size(); ++i)
+  {
+    targetSet.insert( i );
+  }
+
   // Sum across all ranks
   localIndex localNum = embeddedSurfaceSubRegion->size();
   localIndex totalNum = 0;

@@ -929,13 +929,7 @@ void SolidMechanicsEmbeddedFractures::applyTractionBC( real64 const time_n,
                          Group * subRegion,
                          string const &  )
   {
-    GEOSX_UNUSED_VAR( targetSet );
-    SortedArray< localIndex > dummySet;
-    for (localIndex i=0; i < subRegion->size(); ++i)
-    {
-      dummySet.insert( i );
-    }
-    fs->ApplyFieldValue < FieldSpecificationEqual, parallelHostPolicy>( dummySet.toViewConst(),
+    fs->ApplyFieldValue < FieldSpecificationEqual, parallelHostPolicy>( targetSet,
                                                                         time_n+dt,
                                                                         subRegion,
                                                                         viewKeyStruct::fractureTractionString);

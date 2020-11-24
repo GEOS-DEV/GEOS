@@ -32,7 +32,7 @@
       solidMaterialNames="{ rock }"
       targetRegions="{ Region1, Fracture }"
       fractureRegion="Fracture"
-      logLevel="0"/>
+      logLevel="1"/>
   </Solvers>
 
   <Mesh>
