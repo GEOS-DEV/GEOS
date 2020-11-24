@@ -9,43 +9,128 @@ namespace geosx
                                                             localIndex const & subRegionIndex,
                                                             localIndex const & cellIndex)
     {
+      // Get geometry managers
+      NodeManager const & nodeManager = *mesh.getNodeManager();
       FaceManager const & faceManager = *mesh.getFaceManager();
       ElementRegionManager const & elementManager = *mesh.getElemManager();
+
+      // Get pre-computed maps
       CellElementRegion const & cellRegion =
         *elementManager.GetRegion<CellElementRegion>(regionIndex);
       CellElementSubRegion const & cellSubRegion =
         *cellRegion.GetSubRegion<CellElementSubRegion>(subRegionIndex);
-      CellElementSubRegion::NodeMapType const & elementToNodeMap = cellSubRegion.nodeList();
+      arraySlice1d< localIndex const> cellToNodes = cellSubRegion.nodeList()[cellIndex];
       FixedOneToManyRelation const & elementToFaceMap = cellSubRegion.faceList();
-      localIndex const numCellFaces = elementToFaceMap[cellIndex].size();
-      localIndex const numCellPoints = elementToNodeMap[cellIndex].size();
-      numSupportPoints = elementToNodeMap[cellIndex].size();
-      numQuadraturePoints = 0;
+      arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > nodesCoords =
+        nodeManager.referencePosition();
+
+      // Get pre-computed geometrical properties.
+      arrayView2d< real64 const > faceCenters = faceManager.faceCenter();
+      arrayView2d< real64 const > faceNormals = faceManager.faceNormal();
+      arrayView2d< real64 const > cellCenters = cellSubRegion.getElementCenter();
+      arrayView1d< real64 const > cellVolumes =	cellSubRegion.getElementVolume();
+      arraySlice1d< real64 const > cellCenter = cellCenters[cellIndex];
+      localIndex const numCellFaces = elementToFaceMap[cellIndex].size(
+);
+      localIndex const numCellPoints = cellToNodes.size();
+      numSupportPoints = numCellPoints;
+
+      // Compute other geometrical properties.
+      //  - compute map used to locate local point position by global id (used in the computation of
+      //    basis functions boundary integrals.
       map<localIndex, localIndex> cellPointsPosition;
       for(unsigned int numVertex = 0; numVertex < numCellPoints; ++numVertex)
-        cellPointsPosition.insert(std::pair<localIndex, localIndex>(elementToNodeMap[cellIndex][numVertex], numVertex));
+        cellPointsPosition.insert(std::pair<localIndex, localIndex>
+                                  (cellToNodes[numVertex], numVertex));
+      // - compute cell diameter.
+      real64 cellDiameter = 0;
+      for(unsigned int numVertex = 0; numVertex < numCellPoints; ++numVertex)
+      {
+        for(localIndex numOthVertex = 0; numOthVertex < numVertex; ++numOthVertex)
+        {
+          array1d<real64> vertDiff(3);
+          LvArray::tensorOps::copy<3>(vertDiff, nodesCoords[cellToNodes(numVertex)]);
+          LvArray::tensorOps::subtract<3>(vertDiff, nodesCoords[cellToNodes(numOthVertex)]);
+          real64 const candidateDiameter = LvArray::tensorOps::l2NormSquared<3>(vertDiff);
+          if(cellDiameter < candidateDiameter)
+            cellDiameter = candidateDiameter;
+        }
+      }
+      cellDiameter = LvArray::math::sqrt<real64>(cellDiameter);
+      real64 const invCellDiameter = 1.0/cellDiameter;
+
+      // Compute basis functions and scaled monomials integrals on the boundary.
       array1d<real64> basisBoundaryIntegrals(numCellPoints);
+      array2d<real64> basisNormalBoundaryInt(numCellPoints, 3);
+      array1d<real64> monomBoundaryIntegrals(4);
+      // - initialize vectors
+      LvArray::tensorOps::fill<4>(monomBoundaryIntegrals, 0.0);
       for(localIndex numBasisFunction = 0; numBasisFunction < numCellPoints; ++numBasisFunction)
+      {
         basisBoundaryIntegrals[numBasisFunction] = 0;
+        LvArray::tensorOps::fill<3>(basisNormalBoundaryInt[numBasisFunction], 0.0);
+      }
       for(localIndex numFace = 0; numFace < numCellFaces; ++numFace)
       {
         localIndex const faceIndex = elementToFaceMap[cellIndex][numFace];
-        numQuadraturePoints += faceManager.nodeList()[elementToFaceMap[cellIndex][numFace]].size();
-        array1d<real64> faceBasisProjections;
-        ComputeFaceProjectors(mesh, faceIndex, faceBasisProjections);
         arraySlice1d< localIndex const > faceToNodes = faceManager.nodeList()[faceIndex];
-        for(localIndex numFaceBasisFunctions = 0; numFaceBasisFunctions < faceToNodes.size(); ++numFaceBasisFunctions)
+        // - compute integrals calling auxiliary method
+        array1d<real64> faceBasisIntegrals;
+        real64 faceDiameter;
+        array1d<real64> threeDMonomialIntegrals;
+        ComputeFaceIntegrals(mesh, faceIndex, invCellDiameter, cellCenter,
+                             faceDiameter, faceBasisIntegrals, threeDMonomialIntegrals);
+        // - get outward face normal
+        array1d<real64> faceNormal(3);
+        LvArray::tensorOps::copy<3>(faceNormal, faceNormals[faceIndex]);
+        array1d<real64> signTestVector(3);
+        LvArray::tensorOps::copy<3>(signTestVector, faceCenters[faceIndex]);
+        LvArray::tensorOps::subtract<3>(signTestVector, cellCenter);
+        if(LvArray::tensorOps::AiBi<3>(signTestVector, faceNormal) < 0)
+          LvArray::tensorOps::scale<3>(faceNormal, -1.0);
+        // - add contributions to integrals of monomials
+        monomBoundaryIntegrals[0] += faceManager.faceArea()[faceIndex];
+        for(localIndex monomInd = 1; monomInd < 4; ++monomInd)
+          monomBoundaryIntegrals[monomInd] += threeDMonomialIntegrals[monomInd-1];
+        // - add contributions to integrals of basis functions
+        real64 const invFaceDiameter = 1.0/faceDiameter; // derivative of monomials
+        for(localIndex numFaceBasisFunction = 0; numFaceBasisFunction < faceToNodes.size();
+            ++numFaceBasisFunction)
         {
-          localIndex basisFunctionIndex = cellPointsPosition.find(faceToNodes[numFaceBasisFunctions])->second;
-          basisBoundaryIntegrals[basisFunctionIndex] += faceManager.faceArea()[faceIndex] * faceBasisProjections[numFaceBasisFunctions];
+          localIndex basisFunctionIndex = cellPointsPosition
+            .find(faceToNodes[numFaceBasisFunction])->second;
+          basisBoundaryIntegrals[basisFunctionIndex] += faceBasisIntegrals[numFaceBasisFunction];
+          array1d<real64> normalIntegralContribution = faceNormal;
+          LvArray::tensorOps::scale<3>(normalIntegralContribution,
+                                       faceBasisIntegrals[numFaceBasisFunction]*invFaceDiameter);
+          LvArray::tensorOps::add<3>(basisNormalBoundaryInt[basisFunctionIndex],
+                                     normalIntegralContribution);
         }
+      }
+
+      // Compute integral mean of basis functions.
+      real64 const monomialDerivativeInverse = cellDiameter*cellDiameter/cellVolumes[cellIndex];
+      for(localIndex numVertex = 0; numVertex < numCellPoints; ++numVertex)
+      {
+        array1d<real64> piNablaDofs(4);
+        piNablaDofs[1] = monomialDerivativeInverse * basisNormalBoundaryInt(numVertex, 0);
+        piNablaDofs[2] = monomialDerivativeInverse * basisNormalBoundaryInt(numVertex, 1);
+        piNablaDofs[3] = monomialDerivativeInverse * basisNormalBoundaryInt(numVertex, 2);
+        piNablaDofs[0] = (basisBoundaryIntegrals[numVertex] -
+                          piNablaDofs[1]*monomBoundaryIntegrals[1] -
+                          piNablaDofs[2]*monomBoundaryIntegrals[2] -
+                          piNablaDofs[3]*monomBoundaryIntegrals[3] )/monomBoundaryIntegrals[0];
       }
     }
 
     void
-    ConformingVirtualElementOrder1::ComputeFaceProjectors( MeshLevel const & mesh,
-                                                           localIndex const & faceId,
-                                                           array1d<real64> & basisProjections)
+    ConformingVirtualElementOrder1::ComputeFaceIntegrals( MeshLevel const & mesh,
+                                                          localIndex const & faceId,
+                                                          real64 const & invCellDiameter,
+                                                          arraySlice1d<real64 const> const & cellCenter,
+                                                          real64 & faceDiameter,
+                                                          array1d<real64> & basisIntegrals,
+                                                          array1d<real64> & threeDMonomialIntegrals )
     {
       // Get geometry managers.
       FaceManager const & faceManager = *mesh.getFaceManager();
@@ -62,6 +147,7 @@ namespace geosx
       // Get pre-computed geometrical properties.
       arrayView3d< real64 const > faceRotationMatrices = faceManager.faceRotationMatrix();
       arrayView2d< real64 const > faceCenters = faceManager.faceCenter();
+      arrayView2d< real64 const > faceNormals = faceManager.faceNormal();
       arrayView1d< real64 const > faceAreas = faceManager.faceArea();
       localIndex const numFaceVertices = faceToNodes.size(); // also equal to n. face's edges.
 
@@ -69,7 +155,7 @@ namespace geosx
       //  - below we compute the diameter, the rotated vertices and the rotated center.
       array2d<real64> faceRotatedVertices(numFaceVertices, 2);
       array1d<real64> faceRotatedCentroid(2);
-      real64 faceDiameter = 0;
+      faceDiameter = 0;
       for(unsigned int numVertex = 0; numVertex < numFaceVertices; ++numVertex)
       {
         // apply the transpose (that is the inverse) of the rotation matrix to face vertices.
@@ -137,16 +223,17 @@ namespace geosx
       // Compute boundary quadrature weights (also equal to the integrals of basis functions on the
       // boundary).
       array1d<real64> boundaryQuadratureWeights(numFaceVertices);
-      for(unsigned int numVertex = 0; numVertex < numFaceVertices; ++numVertex)
+      boundaryQuadratureWeights.setValues<serialPolicy>(0.0);
+      for(localIndex numEdge = 0; numEdge < numFaceVertices; ++numEdge)
       {
-        boundaryQuadratureWeights[numVertex] =
-          0.5*(edgeLengths[numVertex] + edgeLengths[(numVertex+1)%numFaceVertices]);
+        boundaryQuadratureWeights[localEdgeToNodes(numEdge, 0)] += 0.5*edgeLengths[numEdge];
+        boundaryQuadratureWeights[localEdgeToNodes(numEdge, 1)] += 0.5*edgeLengths[numEdge];
       }
 
-      // Compute scaled monomials' boundary integrals.
+      // Compute scaled monomials' integrals on edges.
       array1d<real64> monomBoundaryIntegrals(3);
       LvArray::tensorOps::fill<3>(monomBoundaryIntegrals, 0.0);
-      for(unsigned int numVertex = 0; numVertex < numFaceVertices; ++numVertex)
+      for(localIndex numVertex = 0; numVertex < numFaceVertices; ++numVertex)
       {
         monomBoundaryIntegrals(0) += boundaryQuadratureWeights(numVertex);
         monomBoundaryIntegrals(1) += (faceRotatedVertices(numVertex, 0) - faceRotatedCentroid(0)) *
@@ -155,42 +242,62 @@ namespace geosx
           invFaceDiameter*boundaryQuadratureWeights(numVertex);
       }
 
-      // Compute non constant scaled monomials' integrals on the face.
+      // Compute non constant 2D and 3D scaled monomials' integrals on the face.
       array1d<real64> monomInternalIntegrals(2);
+      threeDMonomialIntegrals.resize(3);
       LvArray::tensorOps::fill<2>(monomInternalIntegrals, 0.0);
-      for(unsigned int numSubTriangle = 0; numSubTriangle < numFaceVertices; ++numSubTriangle)
+      LvArray::tensorOps::fill<3>(threeDMonomialIntegrals, 0.0);
+      for(localIndex numSubTriangle = 0; numSubTriangle < numFaceVertices; ++numSubTriangle)
       {
-        // compute value of monomials at the quadrature point on the sub-triangle (the barycenter)
-        // the result is (v(0) + v(1) + center)/3 - center = (v(0) + v(1) - 2*center)/3
+        // compute value of monomials at the quadrature point on the sub-triangle (the barycenter).
+        // The result is (v(0) + v(1) - 2*faceCenter)/(3*faceDiameter).
         array1d<real64> monomialValues(2);
-        LvArray::tensorOps::copy<2>(monomialValues, faceRotatedCentroid); // val = center
-        LvArray::tensorOps::scale<2>(monomialValues, -2.0); // val = -2*center
-        LvArray::tensorOps::add<2>(monomialValues, // val = v(0) - 2*center
-                                   faceRotatedVertices[localEdgeToNodes(numSubTriangle, 0)]);
-        LvArray::tensorOps::add<2>(monomialValues, // val = v(0) + v(1) - 2*center
-                                   faceRotatedVertices[localEdgeToNodes(numSubTriangle, 1)]);
-        LvArray::tensorOps::scale<2>(monomialValues, 1.0/3.0); // val = (v(0) + v(1) - 2*center)/3
+        LvArray::tensorOps::copy<2>(monomialValues, faceRotatedCentroid); // val = faceCenter
+        LvArray::tensorOps::scale<2>(monomialValues, -2.0); // val = -2*faceCenter
+        LvArray::tensorOps::add<2>(monomialValues, // val = v(0) - 2*faceCenter
+                                   faceRotatedVertices[numSubTriangle]);
+        LvArray::tensorOps::add<2>(monomialValues, // val = v(0) + v(1) - 2*faceCenter
+                                   faceRotatedVertices[(numSubTriangle+1)%numFaceVertices]);
+        // val = (v(0) + v(1) - 2*faceCenter)/(3*faceDiameter)
+        LvArray::tensorOps::scale<2>(monomialValues, 1.0/(3.0*faceDiameter));
+        // compute value of 3D monomials at the quadrature point on the sub-triangle (the
+        // barycenter).  The result is
+        // ((v(0) + v(1) + faceCenter)/3 - cellCenter)/cellDiameter.
+        array1d<real64> threeDMonomialValues(3);
+        LvArray::tensorOps::copy<3>(threeDMonomialValues, faceCenters[faceId]); // val = faceCenter
+        LvArray::tensorOps::add<3>(threeDMonomialValues, // val = v(0) + faceCenter
+                                   nodesCoords[faceToNodes(numSubTriangle)]);
+        LvArray::tensorOps::add<3>(threeDMonomialValues, // val = v(0) + v(1) + faceCenter
+                                   nodesCoords[faceToNodes((numSubTriangle+1)%numFaceVertices)]);
+        // val = (v(0) + v(1) + faceCenter)/3
+        LvArray::tensorOps::scale<3>(threeDMonomialValues, 1.0/3.0);
+        // val = (v(0) + v(1) + faceCenter)/3 - cellCenter
+        LvArray::tensorOps::subtract<3>(threeDMonomialValues, cellCenter);
+        // val = ((v(0) + v(1) + faceCenter)/3 - cellCenter)/cellDiameter
+        LvArray::tensorOps::scale<3>(threeDMonomialValues, invCellDiameter);
         // compute quadrature weight associated to the quadrature point (the area of the
         // sub-triangle).
         array2d<real64> edgesTangents(2,2); // used to compute the area of the sub-triangle
         LvArray::tensorOps::copy<2>(edgesTangents[0],
-                                    faceRotatedVertices[localEdgeToNodes(numSubTriangle, 0)]);
+                                    faceRotatedVertices[numSubTriangle]);
         LvArray::tensorOps::subtract<2>(edgesTangents[0], faceRotatedCentroid);
         LvArray::tensorOps::copy<2>(edgesTangents[1],
-                                    faceRotatedVertices[localEdgeToNodes(numSubTriangle, 1)]);
+                                    faceRotatedVertices[(numSubTriangle+1)%numFaceVertices]);
         LvArray::tensorOps::subtract<2>(edgesTangents[1], faceRotatedCentroid);
         real64 subTriangleArea = 0.5*LvArray::math::abs
           (LvArray::tensorOps::determinant<2>(edgesTangents));
-        // compute the integrals on the sub-triangle and add it to the global integral
+        // compute the integrals on the sub-triangle and add it to the global integrals
         LvArray::tensorOps::scale<2>(monomialValues, subTriangleArea);
         LvArray::tensorOps::add<2>(monomInternalIntegrals, monomialValues);
+        LvArray::tensorOps::scale<3>(threeDMonomialValues, subTriangleArea);
+        LvArray::tensorOps::add<3>(threeDMonomialIntegrals, threeDMonomialValues);
       }
 
       // Compute integral of basis functions times normal derivative of monomials on the boundary.
       array2d<real64> basisNormalBoundaryInt(numFaceVertices, 2);
-      for(unsigned int numVertex = 0; numVertex < numFaceVertices; ++numVertex)
+      for(localIndex numVertex = 0; numVertex < numFaceVertices; ++numVertex)
         LvArray::tensorOps::fill<2>(basisNormalBoundaryInt[numVertex], 0.0);
-      for(unsigned int numVertex = 0; numVertex < numFaceVertices; ++numVertex)
+      for(localIndex numVertex = 0; numVertex < numFaceVertices; ++numVertex)
       {
         array1d<real64> thisEdgeIntTimesNormal(2);
         LvArray::tensorOps::copy<2>(thisEdgeIntTimesNormal, edgeOutwardNormals[numVertex]);
@@ -200,14 +307,14 @@ namespace geosx
         LvArray::tensorOps::add<2>
           (basisNormalBoundaryInt[localEdgeToNodes(numVertex, 1)], thisEdgeIntTimesNormal);
       }
-      for(unsigned int numVertex = 0; numVertex < numFaceVertices; ++numVertex)
+      for(localIndex numVertex = 0; numVertex < numFaceVertices; ++numVertex)
         LvArray::tensorOps::scale<2>(basisNormalBoundaryInt[numVertex], 0.5*invFaceDiameter);
 
       // Compute integral mean of basis functions on this face.
       real64 invFaceArea = 1.0/faceAreas[faceId];
       real64 monomialDerivativeInverse = (faceDiameter*faceDiameter)*invFaceArea;
-      basisProjections.resize(numFaceVertices);
-      for(unsigned int numVertex = 0; numVertex < numFaceVertices; ++numVertex)
+      basisIntegrals.resize(numFaceVertices);
+      for(localIndex numVertex = 0; numVertex < numFaceVertices; ++numVertex)
       {
         array1d<real64> piNablaDofs(3);
         piNablaDofs[1] = monomialDerivativeInverse * basisNormalBoundaryInt(numVertex, 0);
@@ -215,7 +322,7 @@ namespace geosx
         piNablaDofs[0] = (boundaryQuadratureWeights[numVertex] -
                           piNablaDofs[1]*monomBoundaryIntegrals[1] -
                           piNablaDofs[2]*monomBoundaryIntegrals[2])/monomBoundaryIntegrals[0];
-        basisProjections[numVertex] = piNablaDofs[0] + invFaceArea *
+        basisIntegrals[numVertex] = piNablaDofs[0]*faceAreas[faceId] +
           (piNablaDofs[1]*monomInternalIntegrals[0] + piNablaDofs[2]*monomInternalIntegrals[1]);
       }
     }

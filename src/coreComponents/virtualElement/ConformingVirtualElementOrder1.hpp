@@ -32,6 +32,14 @@ namespace geosx
       localIndex numQuadraturePoints;
       localIndex numSupportPoints;
 
+      void ComputeFaceIntegrals( MeshLevel const & mesh,
+                                 localIndex const & faceId,
+                                 real64 const & invCellDiameter,
+                                 arraySlice1d<real64 const> const & cellCenter,
+                                 real64 & faceDiameter,
+                                 array1d<real64> & basisIntegrals,
+                                 array1d<real64> & threeDMonomialIntegrals);
+
       public:
       ConformingVirtualElementOrder1() {}
       ~ConformingVirtualElementOrder1() {}
@@ -40,10 +48,6 @@ namespace geosx
                               localIndex const & regionIndex,
                               localIndex const & subRegionIndex,
                               localIndex const & cellIndex) override;
-
-      void ComputeFaceProjectors( MeshLevel const & mesh,
-                                  localIndex const & faceId,
-                                  array1d<real64> & basisProjections ) override;
 
       localIndex getNumQuadraturePoints() const override { return numQuadraturePoints; }
       localIndex getNumSupportPoints() const override { return numSupportPoints; }
