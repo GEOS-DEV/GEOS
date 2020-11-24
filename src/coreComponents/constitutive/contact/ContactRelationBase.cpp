@@ -146,26 +146,12 @@ void ContactRelationBase::InitializePreSubGroups( Group * const )
 
 }
 
-void ContactRelationBase::computeTraction( real64 const & pressure,
-                                           arrayView1d< real64 const > const & dispJump,
-                                           real64 const & surfaceArea,
-                                           array1d< real64 > & tractionVector,
-                                           bool const open ) const
+void ContactRelationBase::computeTraction( R1Tensor const & dispJump,
+                                           R1Tensor & tractionVector ) const
 {
-  if( open )
-  {
-    tractionVector[0] = pressure * surfaceArea; // integral ;
-    tractionVector[1] = 0.0;
-    tractionVector[2] = 0.0;
-  }
-  else
-  {
-    // Contact through penalty condition. Frictionless case
-    tractionVector[0] = m_penaltyStiffness * dispJump[0];
-    tractionVector[1] = 0;
-    tractionVector[2] = 0;
-  }
-
+  tractionVector[0] = dispJump[0] >= 0 ? 0.0 : m_penaltyStiffness * dispJump[0];
+  tractionVector[1] = 0.0;
+  tractionVector[2] = 0.0;
 }
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, ContactRelationBase, string const &, Group * const )

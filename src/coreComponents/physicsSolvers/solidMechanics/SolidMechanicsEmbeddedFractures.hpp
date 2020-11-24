@@ -94,6 +94,8 @@ public:
 
   virtual void ResetStateToBeginningOfStep( DomainPartition & domain ) override final;
 
+  void updateState( DomainPartition & domain );
+
   virtual real64 SolverStep( real64 const & time_n,
                              real64 const & dt,
                              int const cycleNumber,
@@ -123,6 +125,10 @@ public:
 
     constexpr static auto deltaDispJumpString = "deltaDisplacementJump";
 
+    constexpr static auto fractureTractionString = "fractureTraction";
+
+    constexpr static auto dTraction_dJumpString = "dTraction_dJump";
+
   } SolidMechanicsEmbeddedFracturesViewKeys;
 
   string & getContactRelationName() { return m_contactRelationName; };
@@ -143,6 +149,7 @@ public:
 
 protected:
 
+  virtual void InitializePostInitialConditions_PreSubGroups( Group * const problemManager ) override final;
 
   virtual void PostProcessInput() override final;
 

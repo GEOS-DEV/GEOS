@@ -43,7 +43,7 @@ public:
    */
   static string CatalogName() { return "Poroelastic"; }
 
-  virtual void RegisterDataOnMesh( dataRepository::Group * const MeshBodies ) override final;
+  virtual void RegisterDataOnMesh( dataRepository::Group * const MeshBodies ) override;
 
 
   virtual void SetupSystem( DomainPartition & domain,
@@ -160,7 +160,7 @@ protected:
 
   virtual void PostProcessInput() override;
 
-  virtual void InitializePostInitialConditions_PreSubGroups( dataRepository::Group * const problemManager ) override final;
+  virtual void InitializePostInitialConditions_PreSubGroups( dataRepository::Group * const problemManager ) override;
 
   string m_solidSolverName;
   string m_flowSolverName;

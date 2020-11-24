@@ -87,15 +87,22 @@ void SolidMechanicsEmbeddedFractures::RegisterDataOnMesh( dataRepository::Group 
       {
         region.forElementSubRegions< EmbeddedSurfaceSubRegion >( [&]( EmbeddedSurfaceSubRegion & subRegion )
         {
-          //subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::dispJumpString
-          // )->setPlotLevel(PlotLevel::LEVEL_0);
-          // subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::deltaDispJumpString );
           subRegion.registerWrapper< array1d< R1Tensor > >( viewKeyStruct::dispJumpString )->setPlotLevel( PlotLevel::LEVEL_0 );
           subRegion.registerWrapper< array1d< R1Tensor > >( viewKeyStruct::deltaDispJumpString );
+          subRegion.registerWrapper< array1d< R1Tensor > >( viewKeyStruct::fractureTractionString );
+          subRegion.registerWrapper< array3d< real64 > >( viewKeyStruct::dTraction_dJumpString )->
+              reference().resizeDimension< 1, 2 >( 3, 3 );
         } );
       } );
     }
   }
+}
+
+void SolidMechanicsEmbeddedFractures::InitializePostInitialConditions_PreSubGroups( Group * const problemManager )
+{
+  DomainPartition & domain = *problemManager->GetGroup< DomainPartition >( keys::domain );
+
+  updateState( domain );
 }
 
 
@@ -103,6 +110,7 @@ void SolidMechanicsEmbeddedFractures::ResetStateToBeginningOfStep( DomainPartiti
 {
   m_solidSolver->ResetStateToBeginningOfStep( domain );
 
+  updateState( domain );
 
 }
 
@@ -285,8 +293,6 @@ void SolidMechanicsEmbeddedFractures::AssembleSystem( real64 const time,
   ElementRegionManager const & elemManager = *mesh.getElemManager();
 
   ConstitutiveManager const * const constitutiveManager = domain.getConstitutiveManager();
-  ContactRelationBase const * const
-  contactRelation = constitutiveManager->GetGroup< ContactRelationBase >( m_contactRelationName );
 
   arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const & disp  = nodeManager.totalDisplacement();
   arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const & dDisp = nodeManager.incrementalDisplacement();
@@ -357,10 +363,18 @@ void SolidMechanicsEmbeddedFractures::AssembleSystem( real64 const time,
 
       arrayView1d< globalIndex const > const &
       jumpDofNumber = embeddedSurfaceSubRegion.getReference< array1d< globalIndex > >( jumpDofKey );
+
       arrayView1d< R1Tensor const > const & w_global  =
         embeddedSurfaceSubRegion.getReference< array1d< R1Tensor > >( viewKeyStruct::dispJumpString );
+
       arrayView1d< R1Tensor const > const & dw_global =
         embeddedSurfaceSubRegion.getReference< array1d< R1Tensor > >( viewKeyStruct::deltaDispJumpString );
+
+      arrayView1d< R1Tensor const > const & fractureTraction =
+          embeddedSurfaceSubRegion.getReference< array1d< R1Tensor > >( viewKeyStruct::fractureTractionString );
+
+      arrayView3d< real64 const > const & dTraction_dJump =
+          embeddedSurfaceSubRegion.getReference< array3d< real64 > >( viewKeyStruct::dTraction_dJumpString );
 
       arrayView1d< real64 const > const & fractureSurfaceArea = embeddedSurfaceSubRegion.getElementArea();
 
@@ -444,14 +458,19 @@ void SolidMechanicsEmbeddedFractures::AssembleSystem( real64 const time,
           }
 
           // Dof number of jump enrichment
+          std::cout << "traction in assembly: " << fractureTraction[k] << std::endl;
           for( int i= 0; i < embeddedSurfaceSubRegion.numOfJumpEnrichments(); i++ )
           {
             jumpEqnRowIndices[i] = jumpDofNumber[k] + i - rankOffset;
             jumpColIndices[i]    = jumpDofNumber[k] + i;
             w( i ) = w_global[k][i] + 0*dw_global[k][i];
+            tractionVec(i) = fractureTraction[k][i] * fractureSurfaceArea[k];
+            for ( int ii=0; ii < 3; ++ii )
+            {
+              dTdw( i, ii ) = dTraction_dJump[k][i][ii] * fractureSurfaceArea[k];
+            }
           }
 
-          // copy values in the R1Tensor object to use in BlasLapack interface
           for( localIndex j=0; j < numNodesPerElement; ++j )
           {
             for( int i=0; i<dim; ++i )
@@ -476,15 +495,6 @@ void SolidMechanicsEmbeddedFractures::AssembleSystem( real64 const time,
           strainMatrix.resizeDimension< 1 >( nUdof );
 
           BlasLapackLA::matrixMatrixMultiply( eqMatrix, dMatrix, matED );
-
-          // Compute traction
-
-          // check if fracture element is open
-          bool open = w[0] >= 0 ? true : false;
-
-          contactRelation->computeTraction( 0, w, fractureSurfaceArea[k], tractionVec, open );
-
-          contactRelation->dTraction_dJump( fractureSurfaceArea[k], dTdw, open );
 
           for( integer q=0; q<fe.getNumQuadraturePoints(); ++q )
           {
@@ -1009,6 +1019,40 @@ void SolidMechanicsEmbeddedFractures::ApplySystemSolution( DofManager const & do
                                          domain.getNeighbors(),
                                          true );
 
+  updateState( domain );
+
+}
+
+void SolidMechanicsEmbeddedFractures::updateState( DomainPartition & domain )
+{
+
+  MeshLevel * const meshLevel = domain.getMeshBody( 0 )->getMeshLevel( 0 );
+  ElementRegionManager * const elemManager = meshLevel->getElemManager();
+
+  ConstitutiveManager const * const constitutiveManager = domain.getConstitutiveManager();
+    ContactRelationBase const * const
+    contactRelation = constitutiveManager->GetGroup< ContactRelationBase >( m_contactRelationName );
+
+  elemManager->forElementSubRegions< EmbeddedSurfaceSubRegion >( [&]( EmbeddedSurfaceSubRegion & subRegion )
+  {
+    arrayView1d< R1Tensor const > const & jump  =
+        subRegion.getReference< array1d< R1Tensor > >( viewKeyStruct::dispJumpString );
+
+    arrayView1d< R1Tensor > const & fractureTraction =
+        subRegion.getReference< array1d< R1Tensor > >( viewKeyStruct::fractureTractionString );
+
+    arrayView3d< real64 > const & dTraction_dJump =
+        subRegion.getReference< array3d< real64 > >( viewKeyStruct::dTraction_dJumpString );
+
+    for ( localIndex k=0; k< subRegion.size(); ++k )
+    {
+      std::cout << "jump: " << jump[k] << std::endl;
+      std::cout << "traction: " << fractureTraction[k] << std::endl;
+      contactRelation->computeTraction( jump[k], fractureTraction[k] );
+
+      contactRelation->dTraction_dJump( jump[k], dTraction_dJump[k] );
+    }
+  });
 }
 
 REGISTER_CATALOG_ENTRY( SolverBase, SolidMechanicsEmbeddedFractures, std::string const &, Group * const )

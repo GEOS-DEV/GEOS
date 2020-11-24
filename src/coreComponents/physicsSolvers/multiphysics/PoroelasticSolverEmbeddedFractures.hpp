@@ -40,6 +40,8 @@ public:
    */
   static string CatalogName() { return "PoroelasticEmbeddedFractures"; }
 
+  virtual void RegisterDataOnMesh( dataRepository::Group * const MeshBodies ) override final;
+
   virtual void SetupSystem( DomainPartition & domain,
                             DofManager & dofManager,
                             CRSMatrix< real64, globalIndex > & localMatrix,
@@ -124,15 +126,22 @@ public:
                                    SparsityPatternView< globalIndex > const & pattern ) const;
 
 
+  void updateState( DomainPartition & domain );
+
+
   struct viewKeyStruct : PoroelasticSolver::viewKeyStruct
   {
     constexpr static auto fracturesSolverNameString = "fracturesSolverName";
+
+    constexpr static auto dTraction_dPressureString = "dTraction_dPressure";
   } poroElasticSolverViewKeys;
 
 
 protected:
 
   virtual void PostProcessInput() override final;
+
+  virtual void InitializePostInitialConditions_PreSubGroups( Group * const problemManager ) override final;
 
   void assembleTractionBalanceResidualWrtPressure( DomainPartition const & domain,
                                                    DofManager const & dofManager,

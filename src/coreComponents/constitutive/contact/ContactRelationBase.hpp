@@ -106,29 +106,26 @@ public:
 
   inline real64 apertureTolerance() const { return m_apertureTolerance; }
 
-  virtual void computeTraction( real64 const & pressure,
-                                arrayView1d< real64 const > const & dispJump,
-                                real64 const & surfaceArea,
-                                array1d< real64 > & tractionVector,
-                                bool const open ) const;
+  virtual void computeTraction( R1Tensor const & dispJump,
+                                R1Tensor & tractionVector ) const;
 
-  void dTraction_dPressure( real64 const & surfaceArea,
-                            real64 & dTdpf,
-                            bool const open ) const
+  void addPressureToTraction ( real64 const & pressure,
+                               R1Tensor & tractionVector ) const
   {
-    dTdpf = open ? surfaceArea : 0.0;
+    tractionVector[0] += pressure;
   }
 
-  virtual void dTraction_dJump( real64 const & surfaceArea,
-                                array2d< real64 > & dTdw,
-                                bool const open ) const
+  void dTraction_dPressure( real64 & dTdpf,
+                            bool const open ) const
   {
-    GEOSX_UNUSED_VAR( surfaceArea );
+    dTdpf = open ? 1.0 : 0.0;
+  }
 
-    if( open )
-      dTdw( 0, 0 ) = 0.0;
-    else
-      dTdw( 0, 0 ) = m_penaltyStiffness;
+  virtual void dTraction_dJump( R1Tensor const & dispJump,
+                                arraySlice2d< real64 > const & dTdw ) const
+  {
+
+    dTdw(0, 0) = dispJump[0] >=0 ? 0.0 : m_penaltyStiffness;
 
     // all the others are zeros
     dTdw( 0, 1 ) = 0.0;
