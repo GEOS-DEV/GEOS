@@ -339,6 +339,9 @@ private:
   /// flag indicating whether local (cell-wise) chopping of negative compositions is allowed
   integer m_allowCompDensChopping;
 
+  /// current time step size (used in the normalizer of the well residual)
+  real64 m_currentDt;
+
   /// views into reservoir primary variable fields
 
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_resPressure;

@@ -521,6 +521,9 @@ void CompositionalMultiphaseWell::AssembleFluxTerms( real64 const GEOSX_UNUSED_P
 {
   GEOSX_MARK_FUNCTION;
 
+  // saved current dt for residual normalization
+  m_currentDt = dt;
+
   MeshLevel const & meshLevel = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
 
   // loop over the wells
@@ -637,15 +640,19 @@ CompositionalMultiphaseWell::CalculateResidualNorm( DomainPartition const & doma
     MultiFluidBase const & fluid = GetConstitutiveModel< MultiFluidBase >( subRegion, m_fluidModelNames[targetIndex] );
     arrayView2d< real64 const > const & totalDens = fluid.totalDensity();
 
+    WellControls & wellControls = GetWellControls( subRegion );
+
     ResidualNormKernel::Launch< parallelDevicePolicy<>,
                                 parallelDeviceReduce >( localRhs,
                                                         dofManager.rankOffset(),
                                                         NumFluidComponents(),
                                                         NumDofPerWellElement(),
+                                                        wellControls,
                                                         wellElemDofNumber,
                                                         wellElemGhostRank,
                                                         wellElemVolume,
                                                         totalDens,
+                                                        m_currentDt,
                                                         &localResidualNorm );
   } );
   return sqrt( MpiWrapper::Sum( localResidualNorm, MPI_COMM_GEOSX ) );

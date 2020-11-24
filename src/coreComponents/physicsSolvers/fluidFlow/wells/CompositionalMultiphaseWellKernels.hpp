@@ -118,14 +118,11 @@ struct ControlEquationHelper
 
       // get the pressure and compute normalizer
       real64 const currentBHP = wellElemPressure + dWellElemPressure;
-      real64 const normalizer = targetBHP > 1e-13
-                                ? 1.0 / targetBHP
-                                : 1.0;
 
       // control equation is a normalized difference
       // between current pressure and target pressure
-      controlEqn = ( currentBHP - targetBHP ) * normalizer;
-      dControlEqn_dX = normalizer;
+      controlEqn = ( currentBHP - targetBHP );
+      dControlEqn_dX = 1.0;
       dofColIndex = wellElemDofNumber + CompositionalMultiphaseWell::ColOffset::DPRES;
       eqnRowIndex = wellElemDofNumber + CompositionalMultiphaseWell::RowOffset::CONTROL - rankOffset;
     }
@@ -133,14 +130,11 @@ struct ControlEquationHelper
     {
       // get rates and compute normalizer
       real64 const currentConnRate = connRate + dConnRate;
-      real64 const normalizer = targetConnRate > 1e-13
-                                ? 1.0 / ( 1e-2 * targetConnRate ) // hard-coded value comes from AD-GPRS
-                                : 1.0;
 
       // control equation is a normalized difference
       // between current rate and target rate
-      controlEqn = ( currentConnRate - targetConnRate ) * normalizer;
-      dControlEqn_dX = normalizer;
+      controlEqn = ( currentConnRate - targetConnRate );
+      dControlEqn_dX = 1.0;
       dofColIndex = wellElemDofNumber + CompositionalMultiphaseWell::ColOffset::DCOMP + numComponents;
       eqnRowIndex = wellElemDofNumber + CompositionalMultiphaseWell::RowOffset::CONTROL - rankOffset;
     }
@@ -446,12 +440,6 @@ struct PressureRelationKernel
     WellControls::Type const wellType = wellControls.GetType();
     localIndex const iwelemControl = wellControls.GetReferenceWellElementIndex();
 
-    // compute a coefficient to normalize the momentum equation
-    //real64 const targetBHP = wellControls.GetTargetBHP();
-    real64 const normalizer = targetBHP > 1e-15
-                              ? 1.0 / targetBHP
-                              : 1.0;
-
     RAJA::ReduceMax< REDUCE_POLICY, localIndex > switchControl( 0 );
 
     // loop over the well elements to compute the pressure relations between well elements
@@ -532,10 +520,10 @@ struct PressureRelationKernel
         dofColIndices[localDofIndexPresNext] = offsetNext + CompositionalMultiphaseWell::ColOffset::DPRES;
         dofColIndices[localDofIndexPresCurrent] = offsetCurrent + CompositionalMultiphaseWell::ColOffset::DPRES;
 
-        real64 const localPresRel = ( pressureNext - pressureCurrent - avgDensity * gravD ) * normalizer;
+        real64 const localPresRel = ( pressureNext - pressureCurrent - avgDensity * gravD );
 
-        localPresRelJacobian[localDofIndexPresNext] = ( 1 - dAvgDensity_dPresNext * gravD ) * normalizer;
-        localPresRelJacobian[localDofIndexPresCurrent] = ( -1 - dAvgDensity_dPresCurrent * gravD ) * normalizer;
+        localPresRelJacobian[localDofIndexPresNext] = ( 1 - dAvgDensity_dPresNext * gravD );
+        localPresRelJacobian[localDofIndexPresCurrent] = ( -1 - dAvgDensity_dPresCurrent * gravD );
 
         for( localIndex ic = 0; ic < NC; ++ic )
         {
@@ -545,8 +533,8 @@ struct PressureRelationKernel
           dofColIndices[localDofIndexCompNext] = offsetNext + CompositionalMultiphaseWell::ColOffset::DCOMP + ic;
           dofColIndices[localDofIndexCompCurrent] = offsetCurrent + CompositionalMultiphaseWell::ColOffset::DCOMP + ic;
 
-          localPresRelJacobian[localDofIndexCompNext] = -dAvgDensity_dCompNext[ic] * gravD * normalizer;
-          localPresRelJacobian[localDofIndexCompCurrent] = -dAvgDensity_dCompCurrent[ic] * gravD * normalizer;
+          localPresRelJacobian[localDofIndexCompNext] = -dAvgDensity_dCompNext[ic] * gravD;
+          localPresRelJacobian[localDofIndexCompCurrent] = -dAvgDensity_dCompCurrent[ic] * gravD;
         }
 
         // TODO: add friction and acceleration terms
@@ -1180,13 +1168,20 @@ struct ResidualNormKernel
           globalIndex const rankOffset,
           localIndex const numComponents,
           localIndex const numDofPerWellElement,
+          WellControls const & wellControls,
           arrayView1d< globalIndex const > const & wellElemDofNumber,
           arrayView1d< integer const > const & wellElemGhostRank,
           arrayView1d< real64 const > const & wellElemVolume,
           arrayView2d< real64 const > const & wellElemTotalDensity,
+          real64 const dt,
           real64 * localResidualNorm )
   {
     localIndex const NC = numComponents;
+
+    real64 const targetBHP = wellControls.GetTargetBHP();
+    real64 const targetRate = wellControls.GetTargetRate();
+    WellControls::Control const currentControl = wellControls.GetControl();
+    localIndex const iwelemControl = wellControls.GetReferenceWellElementIndex();
 
     RAJA::ReduceSum< REDUCE_POLICY, real64 > sumScaled( 0.0 );
 
@@ -1194,12 +1189,30 @@ struct ResidualNormKernel
     {
       if( wellElemGhostRank[iwelem] < 0 )
       {
+        real64 normalizer = 0.0;
         for( localIndex idof = 0; idof < numDofPerWellElement; ++idof )
         {
-          real64 const normalizer = ( idof >= CompositionalMultiphaseWell::RowOffset::MASSBAL
-                                      && idof < CompositionalMultiphaseWell::RowOffset::MASSBAL + NC )
-                                    ? wellElemTotalDensity[iwelem][0] * wellElemVolume[iwelem]
-                                    : 1;
+          if( idof == CompositionalMultiphaseWell::RowOffset::CONTROL )
+          {
+            if( iwelem == iwelemControl )
+            {
+              normalizer = ( currentControl == WellControls::Control::BHP )
+    ? targetBHP : targetRate;
+            }
+            else
+            {
+              normalizer = targetBHP;
+            }
+          }
+          else if( idof >= CompositionalMultiphaseWell::RowOffset::MASSBAL
+                   && idof < CompositionalMultiphaseWell::RowOffset::MASSBAL + NC )
+          {
+            normalizer = dt * targetRate;
+          }
+          else
+          {
+            normalizer = wellElemTotalDensity[iwelem][0] * wellElemVolume[iwelem];
+          }
           localIndex const lid = wellElemDofNumber[iwelem] + idof - rankOffset;
           real64 const val = localResidual[lid] / normalizer;
           sumScaled += val * val;
