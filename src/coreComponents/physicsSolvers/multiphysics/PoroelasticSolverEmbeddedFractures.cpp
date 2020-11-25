@@ -505,7 +505,7 @@ void PoroelasticSolverEmbeddedFractures::
           fe = elementSubRegion->getReference< finiteElement::FiniteElementBase >( m_solidSolver->getDiscretizationName() );
 
           // Initialize
-          LvArray::tensorOps::fill<3>(Rfrac, 0);
+          LvArray::tensorOps::fill< 3 >( Rfrac, 0 );
           eqMatrix.setValues< serialPolicy >( 0 ); /// TODO should be a c-array as well eventually
 
           // transformation determinant
@@ -539,8 +539,8 @@ void PoroelasticSolverEmbeddedFractures::
           real64 const biotCoefficient = solid.getReference< real64 >( "BiotCoefficient" );
 
           // 1. Assembly of element matrices
-          LvArray::tensorOps::fill<3>(Kwpm_elem, 0);
-          LvArray::tensorOps::fill<3>(Kwpm_gauss, 0);
+          LvArray::tensorOps::fill< 3 >( Kwpm_elem, 0 );
+          LvArray::tensorOps::fill< 3 >( Kwpm_gauss, 0 );
 
           for( int i=0; i < 3; ++i )
           {
@@ -550,7 +550,7 @@ void PoroelasticSolverEmbeddedFractures::
           }
 
           // dTdpf
-          real64 dTdpf = dTraction_dPressure[k] * fractureSurfaceArea[k];
+          real64 dTdpf = -dTraction_dPressure[k] * fractureSurfaceArea[k];  // signs for the mechanics are flipped.
 
           for( integer q=0; q<fe.getNumQuadraturePoints(); ++q )
           {
@@ -848,8 +848,6 @@ void PoroelasticSolverEmbeddedFractures::updateState( DomainPartition & domain )
       deltaVolume[k] = effectiveAperture[k] * area[k] - volume[k];
 
       contactRelation->addPressureToTraction( pressure[k] + deltaPressure[k], fractureTraction[k] );
-
-      std::cout << "pressure" << pressure[k] << std::endl;
 
       bool open = aperture[k] >= 0 ? true : false;
       contactRelation->dTraction_dPressure( dTdpf[k], open );

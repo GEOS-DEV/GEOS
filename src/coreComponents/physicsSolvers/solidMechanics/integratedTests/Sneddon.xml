@@ -190,7 +190,7 @@
       objectPath="ElementRegions/Fracture/embeddedSurfaceSubRegion"
       fieldName="fractureTraction"
       component="0"
-      scale="1.00e5"/>
+      scale="-1.00e5"/>
       
   </FieldSpecifications>
 

@@ -112,13 +112,13 @@ public:
   void addPressureToTraction ( real64 const & pressure,
                                R1Tensor & tractionVector ) const
   {
-    tractionVector[0] += pressure;
+    tractionVector[0] -= pressure;
   }
 
   void dTraction_dPressure( real64 & dTdpf,
                             bool const open ) const
   {
-    dTdpf = open ? 1.0 : 0.0;
+    dTdpf = open ? -1.0 : 0.0;
   }
 
   virtual void dTraction_dJump( R1Tensor const & dispJump,

@@ -538,14 +538,14 @@ void SolidMechanicsEmbeddedFractures::AssembleSystem( real64 const time,
             BlasLapackLA::matrixMatrixAdd( Kuw_gauss, Kuw_elem, -1 );
           }
 
-          BlasLapackLA::matrixMatrixAdd( dTdw, Kww_elem, -1 );
+          BlasLapackLA::matrixMatrixAdd( dTdw, Kww_elem, -1 ); // all signs are flipped so it has to be coherent
 
           BlasLapackLA::matrixVectorMultiply( Kww_elem, w, R1 );
           BlasLapackLA::matrixVectorMultiply( Kwu_elem, u, R1, 1, 1 );
 
           BlasLapackLA::matrixVectorMultiply( Kuw_elem, w, R0, 1, 1 );
 
-          BlasLapackLA::vectorVectorAdd( tractionVec, R1, 1 );
+          BlasLapackLA::vectorVectorAdd( tractionVec, R1, -1 ); // all signs are flipped
 
           // 2. Assembly into global system
           // fill in residual vector
