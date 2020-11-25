@@ -80,57 +80,8 @@ void SinglePhaseFVM< BASE >::SetupSystem( DomainPartition & domain,
                      localSolution,
                      setSparsity );
 
-  MeshLevel & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
+  setUpDflux_dApertureMatrix( domain, dofManager, localMatrix );
 
-  std::unique_ptr< CRSMatrix< real64, localIndex > > &
-  derivativeFluxResidual_dAperture = this->getRefDerivativeFluxResidual_dAperture();
-
-  {
-    localIndex numRows = 0;
-    this->template forTargetSubRegions< FaceElementSubRegion, EmbeddedSurfaceSubRegion >( mesh, [&]( localIndex const,
-                                                                                                     auto const & elementSubRegion )
-    {
-      numRows += elementSubRegion.size();
-    } );
-
-    derivativeFluxResidual_dAperture = std::make_unique< CRSMatrix< real64, localIndex > >( numRows, numRows );
-    derivativeFluxResidual_dAperture->setName( this->getName() + "/derivativeFluxResidual_dAperture" );
-
-    derivativeFluxResidual_dAperture->reserveNonZeros( localMatrix.numNonZeros() );
-    localIndex maxRowSize = -1;
-    for( localIndex row = 0; row < localMatrix.numRows(); ++row )
-    {
-      localIndex const rowSize = localMatrix.numNonZeros( row );
-      maxRowSize = maxRowSize > rowSize ? maxRowSize : rowSize;
-    }
-    for( localIndex row = localMatrix.numRows(); row < numRows; ++row )
-    {
-      derivativeFluxResidual_dAperture->reserveNonZeros( row, maxRowSize );
-    }
-  }
-
-  string const presDofKey = dofManager.getKey( FlowSolverBase::viewKeyStruct::pressureString );
-
-  NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
-  FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
-  FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( this->getDiscretization() );
-
-  fluxApprox.forStencils< FaceElementStencil >( mesh, [&]( FaceElementStencil const & stencil )
-  {
-    for( localIndex iconn = 0; iconn < stencil.size(); ++iconn )
-    {
-      localIndex const numFluxElems = stencil.stencilSize( iconn );
-      typename FaceElementStencil::IndexContainerViewConstType const & sei = stencil.getElementIndices();
-
-      for( localIndex k0 = 0; k0 < numFluxElems; ++k0 )
-      {
-        for( localIndex k1 = 0; k1 < numFluxElems; ++k1 )
-        {
-          derivativeFluxResidual_dAperture->insertNonZero( sei[iconn][k0], sei[iconn][k1], 0.0 );
-        }
-      }
-    }
-  } );
 }
 
 template< typename BASE >
@@ -374,6 +325,65 @@ void SinglePhaseFVM< BASE >::ApplyFaceDirichletBC( real64 const time_n,
                                      localMatrix,
                                      localRhs );
     } );
+  } );
+}
+
+template< typename BASE >
+void SinglePhaseFVM< BASE >::setUpDflux_dApertureMatrix( DomainPartition & domain,
+                                                         DofManager const & dofManager,
+                                                         CRSMatrix< real64, globalIndex > & localMatrix )
+{
+  MeshLevel & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
+
+  std::unique_ptr< CRSMatrix< real64, localIndex > > &
+  derivativeFluxResidual_dAperture = this->getRefDerivativeFluxResidual_dAperture();
+
+  {
+    localIndex numRows = 0;
+    this->template forTargetSubRegions< FaceElementSubRegion, EmbeddedSurfaceSubRegion >( mesh, [&]( localIndex const,
+                                                                                                     auto const & elementSubRegion )
+    {
+      numRows += elementSubRegion.size();
+    } );
+
+    derivativeFluxResidual_dAperture = std::make_unique< CRSMatrix< real64, localIndex > >( numRows, numRows );
+    derivativeFluxResidual_dAperture->setName( this->getName() + "/derivativeFluxResidual_dAperture" );
+
+    derivativeFluxResidual_dAperture->reserveNonZeros( localMatrix.numNonZeros() );
+    localIndex maxRowSize = -1;
+    for( localIndex row = 0; row < localMatrix.numRows(); ++row )
+    {
+      localIndex const rowSize = localMatrix.numNonZeros( row );
+      maxRowSize = maxRowSize > rowSize ? maxRowSize : rowSize;
+    }
+    // TODO This is way too much. The With the full system rowSize is not a good estimate for this.
+    for( localIndex row = localMatrix.numRows(); row < numRows; ++row )
+    {
+      derivativeFluxResidual_dAperture->reserveNonZeros( row, maxRowSize );
+    }
+  }
+
+  string const presDofKey = dofManager.getKey( FlowSolverBase::viewKeyStruct::pressureString );
+
+  NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
+  FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
+  FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( this->getDiscretization() );
+
+  fluxApprox.forStencils< FaceElementStencil >( mesh, [&]( FaceElementStencil const & stencil )
+  {
+    for( localIndex iconn = 0; iconn < stencil.size(); ++iconn )
+    {
+      localIndex const numFluxElems = stencil.stencilSize( iconn );
+      typename FaceElementStencil::IndexContainerViewConstType const & sei = stencil.getElementIndices();
+
+      for( localIndex k0 = 0; k0 < numFluxElems; ++k0 )
+      {
+        for( localIndex k1 = 0; k1 < numFluxElems; ++k1 )
+        {
+          derivativeFluxResidual_dAperture->insertNonZero( sei[iconn][k0], sei[iconn][k1], 0.0 );
+        }
+      }
+    }
   } );
 }
 

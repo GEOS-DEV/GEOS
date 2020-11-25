@@ -181,7 +181,7 @@ void FlowSolverBase::PrecomputeData( MeshLevel & mesh )
   forTargetSubRegions( mesh, [&]( localIndex const,
                                   ElementSubRegionBase & subRegion )
   {
-    arrayView2d< real64 const > const elemCenter = subRegion.getElementCenter().toViewConst();
+    arrayView2d< real64 const > const elemCenter = subRegion.getElementCenter();
 
     arrayView1d< real64 > const gravityCoef =
       subRegion.getReference< array1d< real64 > >( viewKeyStruct::gravityCoefString );
@@ -266,6 +266,13 @@ std::vector< string > FlowSolverBase::getConstitutiveRelations( string const & r
   std::vector< string > rval{ m_solidModelNames[regionIndex], m_fluidModelNames[regionIndex] };
 
   return rval;
+}
+
+void FlowSolverBase::setUpDflux_dApertureMatrix( DomainPartition & GEOSX_UNUSED_PARAM( domain ),
+                                                 DofManager const & GEOSX_UNUSED_PARAM( dofManager ),
+                                                 CRSMatrix< real64, globalIndex > & GEOSX_UNUSED_PARAM( localMatrix ) )
+{
+  GEOSX_ERROR( "FlowSolverBase::setUpDfluxDapertureMatrix. Should be overridden." );
 }
 
 
