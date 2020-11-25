@@ -195,7 +195,7 @@
       
    <FieldSpecification
       name="initialPressureFracture"
-      initialCondition="1"
+      initialCondition="0"
       setNames="{ all }"
       objectPath="ElementRegions/Fracture/embeddedSurfaceSubRegion"
       fieldName="pressure"

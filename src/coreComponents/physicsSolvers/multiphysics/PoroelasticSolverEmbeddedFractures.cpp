@@ -458,23 +458,8 @@ void PoroelasticSolverEmbeddedFractures::
                                                                      constitutiveManager );
   globalIndex const rankOffset = dofManager.rankOffset();
 
-  // Initialise local matrices and vectors
-  array1d< globalIndex >       jumpEqnRowIndices    ( 3 );
-  array1d< globalIndex >       jumpColIndices ( 3 );
-
-  array1d< real64 >            Rfrac( 3 );
-  array1d< real64 >            tractionVec( 3 );
-
-  // Equilibrium matrix
+  // Initialize Equilibrium matrix
   array2d< real64 >       eqMatrix( 3, 6 );
-
-  array1d< real64 >       w( 3 );
-
-  real64 dTdpf = 0;
-
-  array1d< real64 > Kwpm_elem( 3 );
-  array1d< real64 > Kwpm_gauss( 3 );
-  real64 pm;
 
   // begin region loop
   elemManager.forElementRegions< SurfaceElementRegion >( [&]( SurfaceElementRegion const & embeddedRegion )->void
@@ -499,12 +484,12 @@ void PoroelasticSolverEmbeddedFractures::
 
       arrayView1d< integer const > const & ghostRank = embeddedSurfaceSubRegion.ghostRank();
 
-      jumpEqnRowIndices.resize( embeddedSurfaceSubRegion.numOfJumpEnrichments() );
-      jumpColIndices.resize( embeddedSurfaceSubRegion.numOfJumpEnrichments() );
-
       // loop over embedded surfaces
       for( localIndex k=0; k<numEmbeddedElems; ++k )
       {
+        // Initialize local variables
+        real64 jumpEqnRowIndices[3], Rfrac[3], Kwpm_gauss[3], Kwpm_elem[3];
+
         if( ghostRank[k] < 0 )
         {
           // Get rock matrix element subregion
@@ -520,8 +505,8 @@ void PoroelasticSolverEmbeddedFractures::
           fe = elementSubRegion->getReference< finiteElement::FiniteElementBase >( m_solidSolver->getDiscretizationName() );
 
           // Initialize
-          Rfrac.setValues< serialPolicy >( 0 );
-          eqMatrix.setValues< serialPolicy >( 0 );
+          LvArray::tensorOps::fill<3>(Rfrac, 0);
+          eqMatrix.setValues< serialPolicy >( 0 ); /// TODO should be a c-array as well eventually
 
           // transformation determinant
           arrayView2d< real64 const > const & detJ = elementSubRegion->detJ();
@@ -535,7 +520,6 @@ void PoroelasticSolverEmbeddedFractures::
           for( int i= 0; i < embeddedSurfaceSubRegion.numOfJumpEnrichments(); i++ )
           {
             jumpEqnRowIndices[i] = jumpDofNumber[k] + i - rankOffset;
-            jumpColIndices[i]    = jumpDofNumber[k] + i;
           }
 
           arrayView1d< globalIndex const > const matrixPresDofNumber =
@@ -547,7 +531,7 @@ void PoroelasticSolverEmbeddedFractures::
             elementSubRegion->getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::pressureString );
           arrayView1d< real64 const > const & matrixDeltaPres =
             elementSubRegion->getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::deltaPressureString );
-          pm = matrixPres[cellElementIndex] + matrixDeltaPres[cellElementIndex];
+          real64 const pm = matrixPres[cellElementIndex] + matrixDeltaPres[cellElementIndex];
 
           string const & solidName = m_solidSolver->solidMaterialNames()[embeddedSurfacesToCells.m_toElementRegion[k][0]];
           SolidBase const & solid = GetConstitutiveModel< SolidBase >( *elementSubRegion, solidName );
@@ -555,8 +539,8 @@ void PoroelasticSolverEmbeddedFractures::
           real64 const biotCoefficient = solid.getReference< real64 >( "BiotCoefficient" );
 
           // 1. Assembly of element matrices
-          Kwpm_elem.setValues< serialPolicy >( 0 );
-          Kwpm_gauss.setValues< serialPolicy >( 0 );
+          LvArray::tensorOps::fill<3>(Kwpm_elem, 0);
+          LvArray::tensorOps::fill<3>(Kwpm_gauss, 0);
 
           for( int i=0; i < 3; ++i )
           {
@@ -566,7 +550,7 @@ void PoroelasticSolverEmbeddedFractures::
           }
 
           // dTdpf
-          dTdpf = dTraction_dPressure[k] * fractureSurfaceArea[k];
+          real64 dTdpf = dTraction_dPressure[k] * fractureSurfaceArea[k];
 
           for( integer q=0; q<fe.getNumQuadraturePoints(); ++q )
           {
@@ -584,7 +568,7 @@ void PoroelasticSolverEmbeddedFractures::
           Rfrac[2] = Kwpm_elem[2] * pm;
 
           /// add derivatives for and residual contribution for porelastic case.
-          for( localIndex i=0; i < jumpEqnRowIndices.size(); ++i )
+          for( localIndex i=0; i < 3; ++i )
           {
             if( jumpEqnRowIndices[i] >= 0 && jumpEqnRowIndices[i] < localMatrix.numRows() )
             {
@@ -864,6 +848,8 @@ void PoroelasticSolverEmbeddedFractures::updateState( DomainPartition & domain )
       deltaVolume[k] = effectiveAperture[k] * area[k] - volume[k];
 
       contactRelation->addPressureToTraction( pressure[k] + deltaPressure[k], fractureTraction[k] );
+
+      std::cout << "pressure" << pressure[k] << std::endl;
 
       bool open = aperture[k] >= 0 ? true : false;
       contactRelation->dTraction_dPressure( dTdpf[k], open );
