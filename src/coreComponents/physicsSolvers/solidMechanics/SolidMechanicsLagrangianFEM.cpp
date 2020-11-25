@@ -1351,8 +1351,10 @@ void SolidMechanicsLagrangianFEM::ApplyContactConstraint( DofManager const & dof
       // TODO: use parallel policy?
       forAll< serialPolicy >( subRegion.size(), [=] ( localIndex const kfe )
       {
-        real64 Nbar[ 3 ];
-        TENSOR_OP( 3, i, Nbar[i] = faceNormal[elemsToFaces[kfe][0]][i] - faceNormal[elemsToFaces[kfe][1]][i] )
+        real64 Nbar[ 3 ] = { faceNormal[elemsToFaces[kfe][0]][0] - faceNormal[elemsToFaces[kfe][1]][0],
+                             faceNormal[elemsToFaces[kfe][0]][1] - faceNormal[elemsToFaces[kfe][1]][1],
+                             faceNormal[elemsToFaces[kfe][0]][2] - faceNormal[elemsToFaces[kfe][1]][2] };
+
         LvArray::tensorOps::normalize< 3 >( Nbar );
 
 
