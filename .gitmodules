@@ -6,7 +6,7 @@
 	url = ../../LLNL/blt.git
 [submodule "src/externalComponents/PVTPackage"]
 	path = src/externalComponents/PVTPackage
-	url = ../GEOSX/PVTPackage.git
+	url = ../PVTPackage.git
 [submodule "integratedTests"]
 	path = integratedTests
 	url = ../integratedTests.git
