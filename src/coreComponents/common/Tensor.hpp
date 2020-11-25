@@ -38,8 +38,6 @@ public:
   /// Alias for size template parameter
   static constexpr int SIZE = SIZE_TPARAM;
 
-//  static constexpr int NDIM = 1;
-
   /**
    * @brief Const element access.
    * @param i element index
@@ -110,10 +108,16 @@ public:
     return true;
   }
 
+  /**
+   * @brief Returns the size of the tensor
+   * @param junk Unused
+   * @return The value of the template parameter SIZE.
+   */
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  constexpr int size( int ) const
+  constexpr int size( int junk ) const
   {
+    GEOSX_UNUSED_VAR( junk )
     return SIZE;
   }
 
