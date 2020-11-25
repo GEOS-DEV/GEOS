@@ -1329,8 +1329,8 @@ void SolidMechanicsLagrangianFEM::ApplyContactConstraint( DofManager const & dof
     real64 const contactStiffness = contactRelation->stiffness();
 
     arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const u = nodeManager->totalDisplacement();
-    arrayView1d< R1Tensor > const & fc = nodeManager->getReference< array1d< R1Tensor > >( viewKeyStruct::contactForceString );
-    fc.setValues< serialPolicy >( {0, 0, 0} );
+    arrayView2d< real64 > const fc = nodeManager->getReference< array2d< real64 > >( viewKeyStruct::contactForceString );
+    fc.setValues< serialPolicy >( 0 );
 
     arrayView2d< real64 const > const faceNormal = faceManager->faceNormal();
     ArrayOfArraysView< localIndex const > const facesToNodes = faceManager->nodeList().toViewConst();
@@ -1351,9 +1351,10 @@ void SolidMechanicsLagrangianFEM::ApplyContactConstraint( DofManager const & dof
       // TODO: use parallel policy?
       forAll< serialPolicy >( subRegion.size(), [=] ( localIndex const kfe )
       {
-        real64 Nbar[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( faceNormal[elemsToFaces[kfe][0]] );
-        LvArray::tensorOps::subtract< 3 >( Nbar, faceNormal[elemsToFaces[kfe][1]] );
+        real64 Nbar[ 3 ];
+        TENSOR_OP( 3, i, Nbar[i] = faceNormal[elemsToFaces[kfe][0]][i] - faceNormal[elemsToFaces[kfe][1]][i] )
         LvArray::tensorOps::normalize< 3 >( Nbar );
+
 
         localIndex const kf0 = elemsToFaces[kfe][0];
         localIndex const kf1 = elemsToFaces[kfe][1];

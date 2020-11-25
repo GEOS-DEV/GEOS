@@ -2908,7 +2908,7 @@ void SurfaceGenerator::CalculateNodeAndFaceSIF( DomainPartition & domain,
       {
         if( isNodeGhost[nodeIndex] < 0 )
         {
-          real64 nodeDisconnectForce[3]{};
+          real64 nodeDisconnectForce[3] = { 0 };
           real64 const nodePosition[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( X[nodeIndex] );
           localIndex tralingNodeID = std::numeric_limits< localIndex >::max();
           localIndex nElemEachSide[2];
@@ -2936,7 +2936,7 @@ void SurfaceGenerator::CalculateNodeAndFaceSIF( DomainPartition & domain,
             {
               if( elementsToNodes( ei, n ) == nodeIndex )
               {
-                real64 temp[ 3 ];
+                real64 temp[ 3 ] = {0};
                 real64 xEle[ 3 ]  = LVARRAY_TENSOROPS_INIT_LOCAL_3 ( elementCenter[ei] );
 
                 SolidMechanicsLagrangianFEMKernels::ExplicitKernel::
@@ -3105,13 +3105,12 @@ void SurfaceGenerator::CalculateNodeAndFaceSIF( DomainPartition & domain,
               if( LvArray::tensorOps::AiBi< 3 >( v0, vecTip ) < 0 )
                 LvArray::tensorOps::scale< 3 >( vecTip, -1.0 );
 
-              tipForce[0] =
-                LvArray::tensorOps::AiBi< 3 >( nodeDisconnectForce, vecTipNorm ) - (LvArray::tensorOps::AiBi< 3 >( fExternal[0], vecTipNorm ) - LvArray::tensorOps::AiBi< 3 >( fExternal[1],
-                                                                                                                                                                               vecTipNorm ))/2.0;
-              tipForce[1] = LvArray::tensorOps::AiBi< 3 >( nodeDisconnectForce, vecTip ) - (LvArray::tensorOps::AiBi< 3 >( fExternal[0], vecTip ) - LvArray::tensorOps::AiBi< 3 >( fExternal[1],
-                                                                                                                                                                                   vecTip ))/2.0;
-              tipForce[2] =
-                LvArray::tensorOps::AiBi< 3 >( nodeDisconnectForce, vecEdge ) - (LvArray::tensorOps::AiBi< 3 >( fExternal[0], vecEdge ) - LvArray::tensorOps::AiBi< 3 >( fExternal[1], vecEdge )) /2.0;
+              tipForce[0] = LvArray::tensorOps::AiBi< 3 >( nodeDisconnectForce, vecTipNorm ) -
+                            ( LvArray::tensorOps::AiBi< 3 >( fExternal[0], vecTipNorm ) - LvArray::tensorOps::AiBi< 3 >( fExternal[1], vecTipNorm ) ) / 2.0;
+              tipForce[1] = LvArray::tensorOps::AiBi< 3 >( nodeDisconnectForce, vecTip ) -
+                            ( LvArray::tensorOps::AiBi< 3 >( fExternal[0], vecTip ) - LvArray::tensorOps::AiBi< 3 >( fExternal[1], vecTip ) ) / 2.0;
+              tipForce[2] = LvArray::tensorOps::AiBi< 3 >( nodeDisconnectForce, vecEdge ) -
+                            ( LvArray::tensorOps::AiBi< 3 >( fExternal[0], vecEdge ) - LvArray::tensorOps::AiBi< 3 >( fExternal[1], vecEdge ) ) / 2.0;
 
 //              tipForce[0] = LvArray::tensorOps::AiBi< 3 >( nodeDisconnectForce, vecTipNorm );
 //              tipForce[1] = LvArray::tensorOps::AiBi< 3 >( nodeDisconnectForce, vecTip );
@@ -3407,7 +3406,7 @@ real64 SurfaceGenerator::CalculateEdgeSIF( DomainPartition & domain,
   //An element has to be within the range of this edge to be included.
   //For the threeNodesPinched case, we only use the force on the node at the convex point, not the concave point.  The
   // force at the former is usually greater, so we just pick the great one instead of doing a geometrical check.
-  real64 fNodeO[3] = { 0.0 };
+  real64 fNodeO[3] = { 0.0, 0.0, 0.0 };
   real64 GdivBeta = 0.0;  // Need this for opening-based SIF
 
   localIndex_array nodeIndices;
