@@ -632,7 +632,7 @@ void PoroelasticSolverEmbeddedFractures::
 
     arrayView1d< real64 const > const area = subRegion.getElementArea();
 
-    forAll< parallelDevicePolicy<> >( subRegion.size(), [=]( localIndex ei )
+    forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_DEVICE ( localIndex ei )
     {
       globalIndex const elemDOF = presDofNumber[ei];
       // row number associated to the pressure dof
