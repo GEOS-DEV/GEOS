@@ -28,7 +28,6 @@ TEST( testGeosxTraits, HasOperatorPlusEquals )
 {
   static_assert( HasOperatorPlusEquals< int >, "Should be true." );
   static_assert( HasOperatorPlusEquals< std::string >, "Should be true." );
-  static_assert( HasOperatorPlusEquals< R1Tensor >, "Should be true." );
 
   static_assert( !HasOperatorPlusEquals< int const >, "Should be false." );
   static_assert( !HasOperatorPlusEquals< std::vector< int > >, "Should be false." );
@@ -39,8 +38,6 @@ TEST( testGeosxTraits, HasOperatorPlusEquals2 )
 {
   static_assert( HasOperatorPlusEquals2< double, int >, "Should be true." );
   static_assert( HasOperatorPlusEquals2< double, int const >, "Should be true." );
-  static_assert( HasOperatorPlusEquals2< R1Tensor, int >, "Should be true." );
-  static_assert( HasOperatorPlusEquals2< R1Tensor, R1Tensor >, "Should be true." );
   static_assert( HasOperatorPlusEquals2< std::string, std::string >, "Should be true." );
 
   static_assert( !HasOperatorPlusEquals2< double const, int >, "Should be false." );
