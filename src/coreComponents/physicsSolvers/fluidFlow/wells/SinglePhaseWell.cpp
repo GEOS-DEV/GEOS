@@ -73,7 +73,8 @@ void SinglePhaseWell::RegisterDataOnMesh( Group * const meshBodies )
 
     PerforationData * const perforationData = subRegion.GetPerforationData();
     perforationData->registerWrapper< array1d< real64 > >( viewKeyStruct::perforationRateString );
-    perforationData->registerWrapper< array2d< real64 > >( viewKeyStruct::dPerforationRate_dPresString );
+    perforationData->registerWrapper< array2d< real64 > >( viewKeyStruct::dPerforationRate_dPresString )->
+      reference().resizeDimension< 1 >( 2 );
   } );
 }
 
@@ -86,14 +87,6 @@ void SinglePhaseWell::InitializePreSubGroups( Group * const rootGroup )
   MeshLevel & meshLevel = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
 
   ValidateModelMapping< SingleFluidBase >( *meshLevel.getElemManager(), m_fluidModelNames );
-
-  // loop over the wells
-  forTargetSubRegions< WellElementSubRegion >( meshLevel, [&]( localIndex const,
-                                                               WellElementSubRegion & subRegion )
-  {
-    PerforationData & perforationData = *subRegion.GetPerforationData();
-    perforationData.getReference< array2d< real64 > >( viewKeyStruct::dPerforationRate_dPresString ).resizeDimension< 1 >( 2 );
-  } );
 }
 
 void SinglePhaseWell::UpdateFluidModel( WellElementSubRegion & subRegion, localIndex const targetIndex ) const

@@ -102,8 +102,9 @@ void SinglePhaseBase::RegisterDataOnMesh( Group * const MeshBodies )
       subRegion.template registerWrapper< array1d< real64 > >( viewKeyStruct::densityOldString )->
         setRestartFlags( RestartFlags::NO_WRITE );
 
-      subRegion.template registerWrapper< array1d< R1Tensor > >( viewKeyStruct::transTMultString )->
-        setDefaultValue( {1.0, 1.0, 1.0} );
+      subRegion.template registerWrapper< array2d< real64 > >( viewKeyStruct::transTMultString )->
+        setDefaultValue( 1.0 )->
+        reference().template resizeDimension< 1 >( 3 );
       subRegion.template registerWrapper< array1d< real64 > >( viewKeyStruct::poroMultString )->
         setDefaultValue( 1.0 );
     } );
@@ -805,7 +806,7 @@ void SinglePhaseBase::ResetViewsPrivate( ElementRegionManager const & elemManage
   m_dVisc_dPres.setName( getName() + "/accessors/" + SingleFluidBase::viewKeyStruct::dVisc_dPresString );
 
   m_transTMultiplier.clear();
-  m_transTMultiplier = elemManager.ConstructArrayViewAccessor< R1Tensor, 1 >( viewKeyStruct::transTMultString );
+  m_transTMultiplier = elemManager.ConstructArrayViewAccessor< real64, 2 >( viewKeyStruct::transTMultString );
   m_transTMultiplier.setName( getName() + "/accessors/" + viewKeyStruct::transTMultString );
 }
 

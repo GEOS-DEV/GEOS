@@ -83,8 +83,8 @@ void SinglePhaseProppantBase::UpdateFluidModel( Group & dataGroup, localIndex co
   arrayView2d< real64 const > const componentConcentration =
     dataGroup.getReference< array2d< real64 > >( ProppantTransport::viewKeyStruct::componentConcentrationString );
 
-  arrayView1d< R1Tensor const > const cellBasedFlux =
-    dataGroup.getReference< array1d< R1Tensor > >( ProppantTransport::viewKeyStruct::cellBasedFluxString );
+  arrayView2d< real64 const > const cellBasedFlux =
+    dataGroup.getReference< array2d< real64 > >( ProppantTransport::viewKeyStruct::cellBasedFluxString );
 
   arrayView1d< integer const > const isProppantBoundaryElement =
     dataGroup.getReference< array1d< integer > >( ProppantTransport::viewKeyStruct::isProppantBoundaryString );
@@ -132,7 +132,7 @@ void SinglePhaseProppantBase::ResetViewsPrivate( ElementRegionManager const & el
   m_dVisc_dPres.setName( getName() + "/accessors/" + SlurryFluidBase::viewKeyStruct::dVisc_dPresString );
 
   m_transTMultiplier.clear();
-  m_transTMultiplier = elemManager.ConstructArrayViewAccessor< R1Tensor, 1 >( ProppantTransport::viewKeyStruct::transTMultiplierString );
+  m_transTMultiplier = elemManager.ConstructArrayViewAccessor< real64, 2 >( ProppantTransport::viewKeyStruct::transTMultiplierString );
   m_transTMultiplier.setName( getName() + "/accessors/" + ProppantTransport::viewKeyStruct::transTMultiplierString );
 }
 

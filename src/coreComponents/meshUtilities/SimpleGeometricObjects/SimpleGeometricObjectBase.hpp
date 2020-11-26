@@ -92,7 +92,7 @@ public:
    * @param[in] coord the coordinates to test
    * @return true if the coordinates are in the object, false otherwise
    */
-  virtual bool IsCoordInObject( const R1Tensor & coord ) const = 0;
+  virtual bool IsCoordInObject( real64 const ( &coord ) [3] ) const = 0;
 
 };
 

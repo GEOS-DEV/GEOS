@@ -812,9 +812,9 @@ HydrofractureSolver::
       {
         constexpr int kfSign[2] = { -1, 1 };
 
-        R1Tensor Nbar = faceNormal[elemsToFaces[kfe][0]];
-        Nbar -= faceNormal[elemsToFaces[kfe][1]];
-        Nbar.Normalize();
+        real64 Nbar[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( faceNormal[elemsToFaces[kfe][0]] );
+        LvArray::tensorOps::subtract< 3 >( Nbar, faceNormal[elemsToFaces[kfe][1]] );
+        LvArray::tensorOps::normalize< 3 >( Nbar );
 
         localIndex const kf0 = elemsToFaces[kfe][0];
         localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( kf0 );
@@ -828,8 +828,8 @@ HydrofractureSolver::
         real64 const Ja = area[kfe] / numNodesPerFace;
 
         real64 nodalForceMag = ( fluidPressure[kfe]+deltaFluidPressure[kfe] ) * Ja;
-        R1Tensor nodalForce( Nbar );
-        nodalForce *= nodalForceMag;
+        real64 nodalForce[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( Nbar );
+        LvArray::tensorOps::scale< 3 >( nodalForce, nodalForceMag );
 
         for( localIndex kf=0; kf<2; ++kf )
         {
@@ -930,9 +930,9 @@ HydrofractureSolver::
 
       globalIndex nodeDOF[8 * 3];
 
-      R1Tensor Nbar = faceNormal[elemsToFaces[ei][0]];
-      Nbar -= faceNormal[elemsToFaces[ei][1]];
-      Nbar.Normalize();
+      real64 Nbar[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( faceNormal[elemsToFaces[ei][0]] );
+      LvArray::tensorOps::subtract< 3 >( Nbar, faceNormal[elemsToFaces[ei][1]] );
+      LvArray::tensorOps::normalize< 3 >( Nbar );
 
       stackArray1d< real64, 24 > dRdU( 2 * numNodesPerFace * 3 );
 

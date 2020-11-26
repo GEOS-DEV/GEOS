@@ -65,7 +65,7 @@ public:
 
   ///@}
 
-  bool IsCoordInObject( const R1Tensor & coord ) const override final;
+  bool IsCoordInObject( real64 const ( &coord ) [3] ) const override final;
 
   /**
    * @name Getters

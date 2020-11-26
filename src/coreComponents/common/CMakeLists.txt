@@ -13,6 +13,7 @@ set(common_headers
     TimingMacros.hpp
     Logger.hpp
     DataLayouts.hpp
+    Tensor.hpp
    )
 
 #

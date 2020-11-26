@@ -466,7 +466,7 @@ public:
    * @param[in] time Time
    * @return const reference to m_direction
    */
-  virtual const R1Tensor & GetDirection( realT time )
+  virtual const R1Tensor & GetDirection( real64 time )
   {
     GEOSX_UNUSED_VAR( time );
     return m_direction;

@@ -89,7 +89,7 @@ inline
 real64 const * getPointerToComponent( R1Tensor const & var, int const component )
 {
   GEOSX_ERROR_IF_GE( component, 3 );
-  return &var.Data()[ component ];
+  return &var[ component ];
 }
 
 } // namespace internal
@@ -575,7 +575,7 @@ void populateMCArray( T const &,
 
 template< typename T, int NDIM, int USD >
 std::enable_if_t< ( NDIM > 1 ) &&
-                  ( std::is_arithmetic< T >::value || traits::is_tensorT< T > ),
+                  ( std::is_arithmetic< T >::value ), // || traits::is_tensorT< T > ),
                   std::unique_ptr< Array< T, NDIM - 1 > > >
 averageOverSecondDim( ArrayView< T const, NDIM, USD > const & var )
 {

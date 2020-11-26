@@ -139,11 +139,11 @@ public:
   {
     LvArray::tensorOps::fill< 3 >( m_elementCenter[ k ], 0 );
 
-    R1Tensor Xlocal[10];
+    real64 Xlocal[10][3];
 
     for( localIndex a = 0; a < m_numNodesPerElement; ++a )
     {
-      Xlocal[ a ] = X[ m_toNodesRelation( k, a ) ];
+      LvArray::tensorOps::copy< 3 >( Xlocal[ a ], X[ m_toNodesRelation( k, a ) ] );
       LvArray::tensorOps::add< 3 >( m_elementCenter[ k ], X[ m_toNodesRelation( k, a ) ] );
     }
     LvArray::tensorOps::scale< 3 >( m_elementCenter[ k ], 1.0 / m_numNodesPerElement );

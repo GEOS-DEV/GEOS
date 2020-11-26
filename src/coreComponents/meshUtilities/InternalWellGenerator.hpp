@@ -150,7 +150,7 @@ public:
    * @brief Get the physical location of the centers of well elements.
    * @return list of center locations of the well elements
    */
-  arrayView1d< R1Tensor const > GetElemCoords() const { return m_elemCenterCoords; }
+  arrayView2d< real64 const > GetElemCoords() const { return m_elemCenterCoords; }
 
   /**
    * @brief Get the global indices mapping an element to the next.
@@ -194,7 +194,7 @@ public:
    * @brief Get the physical location of the centers of well elements.
    * @return list of center locations of the well elements
    */
-  arrayView1d< R1Tensor const > GetNodeCoords() const { return m_nodeCoords; }
+  arrayView2d< real64 const > GetNodeCoords() const { return m_nodeCoords; }
 
 
 
@@ -210,7 +210,7 @@ public:
    * @brief Get the locations of the perforations.
    * @return list of locations of all the perforations on the well
    */
-  arrayView1d< R1Tensor const > GetPerfCoords() const { return m_perfCoords; }
+  arrayView2d< real64 const > GetPerfCoords() const { return m_perfCoords; }
 
   /**
    * @brief Get the well transmissibility at the perforations.
@@ -282,9 +282,6 @@ private:
 
   // XML Input
 
-  /// Coordinates of the polyline
-  array2d< real64 > m_inputPolyNodeCoords;
-
   /// Connectivity between the polyline nodes
   array2d< globalIndex > m_segmentToPolyNodeMap;
 
@@ -313,7 +310,7 @@ private:
   globalIndex m_numElems;
 
   /// Physical location of the center of the well element
-  array1d< R1Tensor > m_elemCenterCoords;
+  array2d< real64 > m_elemCenterCoords;
 
   /// Global index of the next well element
   array1d< globalIndex > m_nextElemId;
@@ -337,7 +334,7 @@ private:
   globalIndex m_numNodes;
 
   /// Physical location of the nodes
-  array1d< R1Tensor > m_nodeCoords;
+  array2d< real64 > m_nodeCoords;
 
   // perforation data
 
@@ -345,7 +342,7 @@ private:
   globalIndex m_numPerforations;
 
   /// Absolute physical location of the perforation
-  array1d< R1Tensor > m_perfCoords;
+  array2d< real64 > m_perfCoords;
 
   /// Well Peaceman index at the perforation
   array1d< real64 > m_perfTransmissibility;
@@ -360,8 +357,8 @@ private:
   // Number of physical dimensions
   const int m_nDims;
 
-  /// Coordinates of the polyline nodes in R1Tensor format
-  array1d< R1Tensor > m_polyNodeCoords;
+  /// Coordinates of the polyline nodes
+  array2d< real64 > m_polyNodeCoords;
 
   /// Map from the polyline nodes to the polyline nodes
   array1d< SortedArray< globalIndex > > m_polyNodeToSegmentMap;

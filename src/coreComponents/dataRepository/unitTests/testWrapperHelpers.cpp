@@ -131,7 +131,6 @@ using ArrayTypes = ::testing::Types<
   , array2d< double, RAJA::PERM_JI >
   , array3d< double, RAJA::PERM_IJK >
   , array3d< int, RAJA::PERM_KJI >
-  , array3d< R1Tensor, RAJA::PERM_JIK >
   , array4d< int, RAJA::PERM_IJKL >
   , array4d< int, RAJA::PERM_LKJI >
   , array4d< int, RAJA::PERM_KJLI >
