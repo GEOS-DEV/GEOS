@@ -399,7 +399,7 @@ TEST( testRestartExtended, testRestartExtended )
     {
       for( localIndex k = 0; k < 3; k++ )
       {
-        view_r1t2d_arr[i][j] = i * i / 3.0 + j + i * j * k / 7.0;
+        view_r1t2d_arr[i][j][k] = i * i / 3.0 + j + i * j * k / 7.0;
       }
     }
   }
