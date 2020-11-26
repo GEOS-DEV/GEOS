@@ -199,20 +199,23 @@ void SolidMechanicsLagrangianFEM::RegisterDataOnMesh( Group * const MeshBodies )
       setRegisteringObjects( this->getName())->
       setDescription( "An array that holds the mass on the nodes." );
 
-    nodes->registerWrapper< array1d< R1Tensor > >( viewKeyStruct::vTildeString )->
+    nodes->registerWrapper< array2d< real64 > >( viewKeyStruct::vTildeString )->
       setPlotLevel( PlotLevel::NOPLOT )->
       setRegisteringObjects( this->getName())->
-      setDescription( "An array that holds the velocity predictors on the nodes." );
+      setDescription( "An array that holds the velocity predictors on the nodes." )->
+      reference().resizeDimension< 1 >( 3 );
 
-    nodes->registerWrapper< array1d< R1Tensor > >( viewKeyStruct::uhatTildeString )->
+    nodes->registerWrapper< array2d< real64 > >( viewKeyStruct::uhatTildeString )->
       setPlotLevel( PlotLevel::NOPLOT )->
       setRegisteringObjects( this->getName())->
-      setDescription( "An array that holds the incremental displacement predictors on the nodes." );
+      setDescription( "An array that holds the incremental displacement predictors on the nodes." )->
+      reference().resizeDimension< 1 >( 3 );
 
-    nodes->registerWrapper< array1d< R1Tensor > >( viewKeyStruct::contactForceString )->
+    nodes->registerWrapper< array2d< real64 > >( viewKeyStruct::contactForceString )->
       setPlotLevel( PlotLevel::LEVEL_0 )->
       setRegisteringObjects( this->getName())->
-      setDescription( "An array that holds the contact force." );
+      setDescription( "An array that holds the contact force." )->
+      reference().resizeDimension< 1 >( 3 );
 
     ElementRegionManager * const
     elementRegionManager = mesh.second->group_cast< MeshBody * >()->getMeshLevel( 0 )->getElemManager();
@@ -1326,8 +1329,8 @@ void SolidMechanicsLagrangianFEM::ApplyContactConstraint( DofManager const & dof
     real64 const contactStiffness = contactRelation->stiffness();
 
     arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const u = nodeManager->totalDisplacement();
-    arrayView1d< R1Tensor > const & fc = nodeManager->getReference< array1d< R1Tensor > >( viewKeyStruct::contactForceString );
-    fc.setValues< serialPolicy >( {0, 0, 0} );
+    arrayView2d< real64 > const fc = nodeManager->getReference< array2d< real64 > >( viewKeyStruct::contactForceString );
+    fc.setValues< serialPolicy >( 0 );
 
     arrayView2d< real64 const > const faceNormal = faceManager->faceNormal();
     ArrayOfArraysView< localIndex const > const facesToNodes = faceManager->nodeList().toViewConst();
@@ -1348,9 +1351,12 @@ void SolidMechanicsLagrangianFEM::ApplyContactConstraint( DofManager const & dof
       // TODO: use parallel policy?
       forAll< serialPolicy >( subRegion.size(), [=] ( localIndex const kfe )
       {
-        R1Tensor Nbar = faceNormal[elemsToFaces[kfe][0]];
-        Nbar -= faceNormal[elemsToFaces[kfe][1]];
-        Nbar.Normalize();
+        real64 Nbar[ 3 ] = { faceNormal[elemsToFaces[kfe][0]][0] - faceNormal[elemsToFaces[kfe][1]][0],
+                             faceNormal[elemsToFaces[kfe][0]][1] - faceNormal[elemsToFaces[kfe][1]][1],
+                             faceNormal[elemsToFaces[kfe][0]][2] - faceNormal[elemsToFaces[kfe][1]][2] };
+
+        LvArray::tensorOps::normalize< 3 >( Nbar );
+
 
         localIndex const kf0 = elemsToFaces[kfe][0];
         localIndex const kf1 = elemsToFaces[kfe][1];
@@ -1363,12 +1369,12 @@ void SolidMechanicsLagrangianFEM::ApplyContactConstraint( DofManager const & dof
 
         for( localIndex a=0; a<numNodesPerFace; ++a )
         {
-          R1Tensor penaltyForce = Nbar;
+          real64 penaltyForce[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( Nbar );
           localIndex const node0 = facesToNodes[kf0][a];
           localIndex const node1 = facesToNodes[kf1][ a==0 ? a : numNodesPerFace-a ];
-          R1Tensor gap = u[node1];
-          gap -= u[node0];
-          real64 const gapNormal = Dot( gap, Nbar );
+          real64 gap[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( u[node1] );
+          LvArray::tensorOps::subtract< 3 >( gap, u[node0] );
+          real64 const gapNormal = LvArray::tensorOps::AiBi< 3 >( gap, Nbar );
 
           for( int i=0; i<3; ++i )
           {
@@ -1378,11 +1384,11 @@ void SolidMechanicsLagrangianFEM::ApplyContactConstraint( DofManager const & dof
 
           if( gapNormal < 0 )
           {
-            penaltyForce *= -contactStiffness * gapNormal * Ja;
+            LvArray::tensorOps::scale< 3 >( penaltyForce, -contactStiffness * gapNormal * Ja );
             for( int i=0; i<3; ++i )
             {
-              fc[node0] -= penaltyForce;
-              fc[node1] += penaltyForce;
+              LvArray::tensorOps::subtract< 3 >( fc[node0], penaltyForce );
+              LvArray::tensorOps::add< 3 >( fc[node1], penaltyForce );
               nodeRHS[3*a+i]                     -= penaltyForce[i];
               nodeRHS[3*(numNodesPerFace + a)+i] += penaltyForce[i];
 

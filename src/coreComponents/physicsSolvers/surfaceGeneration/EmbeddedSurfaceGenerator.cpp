@@ -103,33 +103,33 @@ void EmbeddedSurfaceGenerator::InitializePostSubGroups( Group * const problemMan
      * vector defining the plane. If two scalar products have different signs the plane cuts the
      * cell. If a nodes gives a 0 dot product it has to be neglected or the method won't work.
      */
-    R1Tensor planeCenter  = fracture.getCenter();
-    R1Tensor normalVector = fracture.getNormal();
+    real64 const planeCenter[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( fracture.getCenter() );
+    real64 const normalVector[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( fracture.getNormal() );
     // Initialize variables
     globalIndex nodeIndex;
     integer isPositive, isNegative;
-    R1Tensor distVec;
+    real64 distVec[ 3 ];
 
     elemManager->forElementSubRegionsComplete< CellElementSubRegion >(
       [&]( localIndex const er, localIndex const esr, ElementRegionBase &, CellElementSubRegion & subRegion )
     {
       arrayView2d< localIndex const, cells::NODE_MAP_USD > const cellToNodes = subRegion.nodeList();
       FixedOneToManyRelation const & cellToEdges = subRegion.edgeList();
-      for( localIndex cellIndex =0; cellIndex<subRegion.size(); cellIndex++ )
+      for( localIndex cellIndex = 0; cellIndex < subRegion.size(); cellIndex++ )
       {
         isPositive = 0;
         isNegative = 0;
-        for( localIndex kn =0; kn<subRegion.numNodesPerElement(); kn++ )
+        for( localIndex kn = 0; kn < subRegion.numNodesPerElement(); kn++ )
         {
           nodeIndex = cellToNodes[cellIndex][kn];
-          distVec  = nodesCoord[nodeIndex];
-          distVec -= planeCenter;
+          LvArray::tensorOps::copy< 3 >( distVec, nodesCoord[nodeIndex] );
+          LvArray::tensorOps::subtract< 3 >( distVec, planeCenter );
           // check if the dot product is zero
-          if( Dot( distVec, normalVector ) > 0 )
+          if( LvArray::tensorOps::AiBi< 3 >( distVec, normalVector ) > 0 )
           {
             isPositive = 1;
           }
-          else if( Dot( distVec, normalVector ) < 0 )
+          else if( LvArray::tensorOps::AiBi< 3 >( distVec, normalVector ) < 0 )
           {
             isNegative = 1;
           }

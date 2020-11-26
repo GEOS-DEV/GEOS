@@ -38,7 +38,7 @@ struct FluidUpdateKernel
                       arrayView1d< real64 const > const & proppantConcentration,
                       arrayView1d< real64 const > const & dProppantConcentration,
                       arrayView2d< real64 const > const & componentConcentration,
-                      arrayView1d< R1Tensor const > const & cellBasedFlux,
+                      arrayView2d< real64 const > const & cellBasedFlux,
                       arrayView1d< integer const > const & isProppantBoundaryElement )
   {
     forAll< parallelDevicePolicy<> >( fluidWrapper.numElems(), [=] GEOSX_HOST_DEVICE ( localIndex const a )
@@ -49,7 +49,7 @@ struct FluidUpdateKernel
                              pres[a] + dPres[a],
                              proppantConcentration[a] + dProppantConcentration[a],
                              componentConcentration[a],
-                             cellBasedFlux[a].L2_Norm(),
+                             LvArray::tensorOps::l2Norm< 3 >( cellBasedFlux[a] ),
                              isProppantBoundaryElement[a] );
       }
     } );

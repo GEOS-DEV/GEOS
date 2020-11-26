@@ -96,7 +96,7 @@ public:
    * @param intersectionPoints array containing the nodes defining the embedded surface elements
    * @param k index of the face element
    */
-  void CalculateElementGeometricQuantities( array1d< R1Tensor > const intersectionPoints,
+  void CalculateElementGeometricQuantities( arrayView2d< real64 const > const intersectionPoints,
                                             localIndex k );
 
   /**
@@ -182,70 +182,70 @@ public:
    * @brief Get normal vectors.
    * @return an array of normal vectors.
    */
-  array1d< R1Tensor > & getNormalVector() { return m_normalVector; }
+  array2d< real64 > & getNormalVector() { return m_normalVector; }
 
   /**
    * @copydoc getNormalVector()
    */
-  arrayView1d< R1Tensor const > getNormalVector() const { return m_normalVector; }
+  arrayView2d< real64 const > getNormalVector() const { return m_normalVector; }
 
   /**
    * @brief Get normal vector of a specific embedded surface element.
    * @param k index of the embedded surface element
    * @return the normal vector of a specific embedded surface element
    */
-  R1Tensor & getNormalVector( localIndex k ) { return m_normalVector[k];}
+  arraySlice1d< real64 > getNormalVector( localIndex k ) { return m_normalVector[k]; }
 
   /**
    * @copydoc getNormalVector( localIndex k )
    */
-  R1Tensor const & getNormalVector( localIndex k ) const { return m_normalVector[k];}
+  arraySlice1d< real64 const > getNormalVector( localIndex k ) const { return m_normalVector[k]; }
 
   /**
    * @brief Get an array of the first tangent vector of the embedded surface elements.
    * @return an array of the first tangent vector of the embedded surface elements
    */
-  array1d< R1Tensor > & getTangentVector1() { return m_tangentVector1; }
+  array2d< real64 > & getTangentVector1() { return m_tangentVector1; }
 
   /**
    * @copydoc getTangentVector1()
    */
-  arrayView1d< R1Tensor const > getTangentVector1() const { return m_tangentVector1; }
+  arrayView2d< real64 const > getTangentVector1() const { return m_tangentVector1; }
 
   /**
    * @brief Get the first tangent vector of a specific embedded surface element.
    * @param k index of the embedded surface element
    * @return the first tangent vector of a specific embedded surface element
    */
-  R1Tensor & getTangentVector1( localIndex k ) { return m_tangentVector1[k];}
+  arraySlice1d< real64 > getTangentVector1( localIndex k ) { return m_tangentVector1[k];}
 
   /**
    * @copydoc getTangentVector1( localIndex k )
    */
-  R1Tensor const & getTangentVector1( localIndex k ) const { return m_tangentVector1[k]; }
+  arraySlice1d< real64 const > getTangentVector1( localIndex k ) const { return m_tangentVector1[k]; }
 
   /**
    * @brief Get an array of the second tangent vector of the embedded surface elements.
    * @return an array of the second tangent vector of the embedded surface elements
    */
-  array1d< R1Tensor > & getTangentVector2() { return m_tangentVector2; }
+  array2d< real64 > & getTangentVector2() { return m_tangentVector2; }
 
   /**
    * @copydoc getTangentVector2()
    */
-  arrayView1d< R1Tensor const > getTangentVector2() const { return m_tangentVector2; }
+  arrayView2d< real64 const > getTangentVector2() const { return m_tangentVector2; }
 
   /**
    * @brief Get the second tangent vector of a specific embedded surface element.
    * @param k index of the embedded surface element
    * @return the second tangent vector of a specific embedded surface element
    */
-  R1Tensor & getTangentVector2( localIndex k ) { return m_tangentVector2[k];}
+  arraySlice1d< real64 > getTangentVector2( localIndex k ) { return m_tangentVector2[k];}
 
   /**
    * @copydoc getTangentVector2( localIndex k )
    */
-  R1Tensor const & getTangentVector2( localIndex k ) const { return m_tangentVector2[k];}
+  arraySlice1d< real64 const > getTangentVector2( localIndex k ) const { return m_tangentVector2[k];}
 
 
   /**
@@ -265,13 +265,13 @@ public:
 private:
 
   /// normal vector to the embedded surface element
-  array1d< R1Tensor > m_normalVector;
+  array2d< real64 > m_normalVector;
 
   // tangential direction 1
-  array1d< R1Tensor > m_tangentVector1;
+  array2d< real64 > m_tangentVector1;
 
   // tangential direction 2
-  array1d< R1Tensor > m_tangentVector2;
+  array2d< real64 > m_tangentVector2;
 
   /// The number of jump enrichments
   localIndex m_numOfJumpEnrichments;

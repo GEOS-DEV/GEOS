@@ -21,7 +21,7 @@
 #include "codingUtilities/Utilities.hpp"
 
 /// Tolerance for division by zero in Krylov solvers
-#define GEOSX_KRYLOV_MIN_DIV ::geosx::NumericTraits< real64 >::eps
+#define GEOSX_KRYLOV_MIN_DIV ::LvArray::NumericLimits< real64 >::epsilon
 
 #ifndef GEOSX_KRYLOV_BREAKDOWN_IF_ZERO
 /**

@@ -66,7 +66,7 @@ public:
 
   ///@}
 
-  bool IsCoordInObject( const R1Tensor & coord ) const override final;
+  bool IsCoordInObject( real64 const ( &coord ) [3] ) const override final;
 
 
 private:
@@ -76,7 +76,7 @@ private:
   /// Center point of the other face of the cylinder
   R1Tensor m_point2;
   /// Radius of the cylinder
-  realT m_radius = 0.0;
+  real64 m_radius = 0.0;
 
   /// @cond DO_NOT_DOCUMENT
 
