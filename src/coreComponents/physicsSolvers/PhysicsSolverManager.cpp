@@ -28,12 +28,12 @@ using namespace dataRepository;
 PhysicsSolverManager::PhysicsSolverManager( std::string const & name,
                                             Group * const parent ):
   Group( name, parent ),
-  m_gravityVector( R1Tensor( 0.0 ) )
+  m_gravityVector( { 0.0, 0.0, -9.81 } )
 {
   setInputFlags( InputFlags::REQUIRED );
 
   this->registerWrapper( viewKeyStruct::gravityVectorString, &m_gravityVector )->
-    setApplyDefaultValue( {0.0, 0.0, -9.81} )->
+    setDefaultValue( m_gravityVector )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Gravity vector used in the physics solvers" );
 }

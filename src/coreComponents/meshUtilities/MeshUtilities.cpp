@@ -57,7 +57,8 @@ void MeshUtilities::GenerateNodesets( dataRepository::Group const * geometries,
       SortedArray< localIndex > & targetSet = sets.registerWrapper< SortedArray< localIndex > >( name )->reference();
       for( localIndex a=0; a<numNodes; ++a )
       {
-        if( object->IsCoordInObject( X[a] ))
+        real64 nodeCoord[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( X[a] );
+        if( object->IsCoordInObject( nodeCoord ))
         {
           targetSet.insert( a );
         }
