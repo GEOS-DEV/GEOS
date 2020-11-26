@@ -167,8 +167,8 @@ struct FluxKernel
             ElementViewConst< arrayView1d< real64 const > > const & aperture0,
             ElementViewConst< arrayView1d< real64 const > > const & conductivity0,
             ElementViewConst< arrayView1d< real64 const > > const & aperture,
-            ElementViewConst< arrayView1d< R1Tensor const > > const & transTMultiplier,
-            R1Tensor const gravityVector,
+            ElementViewConst< arrayView2d< real64 const > > const & transTMultiplier,
+            R1Tensor const & gravityVector,
             real64 const meanPermCoeff,
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
             ElementViewConst< arrayView1d< real64 const > > const & s,

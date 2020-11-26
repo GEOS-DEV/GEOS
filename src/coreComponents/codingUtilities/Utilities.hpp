@@ -20,21 +20,10 @@
 #define GEOSX_CODINGUTILITIES_UTILITIES_H_
 
 #include "common/DataTypes.hpp"
+#include "LvArray/src/limits.hpp"
 
 namespace geosx
 {
-
-/**
- * @brief GPU-friendly analogue of std::numeric_limits
- * @tparam T type of numeric value
- */
-template< typename T >
-struct NumericTraits
-{
-  static constexpr T min = std::numeric_limits< T >::lowest();
-  static constexpr T max = std::numeric_limits< T >::max();
-  static constexpr T eps = std::numeric_limits< T >::epsilon();
-};
 
 /**
  * @brief Compare two real values with a tolerance.
@@ -48,7 +37,7 @@ template< typename T >
 GEOSX_FORCE_INLINE GEOSX_HOST_DEVICE constexpr
 bool isEqual( T const val1, T const val2, T const relTol = 0.0 )
 {
-  T const absTol = ( relTol > 10 * NumericTraits< T >::eps ) ? relTol * ( fabs( val1 ) + fabs( val2 ) ) * 0.5 : 0.0;
+  T const absTol = ( relTol > 10 * LvArray::NumericLimits< T >::epsilon ) ? relTol * ( fabs( val1 ) + fabs( val2 ) ) * 0.5 : 0.0;
   return ( val2 - absTol ) <= val1 && val1 <= ( val2 + absTol );
 }
 
@@ -61,7 +50,7 @@ bool isEqual( T const val1, T const val2, T const relTol = 0.0 )
  */
 template< typename T >
 GEOSX_FORCE_INLINE GEOSX_HOST_DEVICE constexpr
-bool isZero( T const val, T const tol = NumericTraits< T >::eps )
+bool isZero( T const val, T const tol = LvArray::NumericLimits< T >::epsilon )
 {
   return -tol <= val && val <= tol;
 }
