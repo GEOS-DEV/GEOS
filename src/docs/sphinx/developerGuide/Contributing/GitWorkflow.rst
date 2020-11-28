@@ -87,7 +87,27 @@ appropriate commands would be:
   git push -u origin feature/freeYourMind
   
 When ``feature`` branches are ready to be merged into ``develop``, a ``Pull Request``
-should be created to perform the review and merging process. 
+should be created to perform the review and merging process.
+
+An example lifecycle diagram for a feature branch:
+
+.. code-block:: sh
+
+   create new feature branch:
+   git checkout -b feature/neo/freeYourMind
+   
+   A-------B-------C (develop)
+            \
+             \
+             BA      (feature/neo/freeYourMind)
+
+   Add commits to 'feature/neo/freeYourMind' and merge back into develop:
+
+   A-------B--------C-------D--------E (develop)
+            \              /   
+             \            /
+             BA----BB----BC            (feature/neo/freeYourMind)
+
 See below for details about :ref:`Submitting_a_Pull_Request`.
 
 Bugfix Branches
@@ -107,7 +127,7 @@ See below for details about :ref:`Submitting_a_Pull_Request`.
 Release Branches
 ----------------
 When ``develop`` has progressed to a point where we would like to create a new 
-``release``, we will create a ``release candidate`` branch with the name consisting 
+``release``, we will create a ``release`` branch with the name consisting 
 of ``major.minor.x`` number, where the ``x`` represents the sequence of patch tags that
 will be applied to the branch.
 For instance if we were releasing version ``1.2.0``, we would name the branch
@@ -122,11 +142,22 @@ Each patch on the branch is tagged using an increment in the patch number,
 resulting in a sequence of tags like ``release/1.2.0, release/1.2.1, release/1.2.2``, etc. 
 
 .. note::
+
    In our git workflow, we do not close the release loop by merging the final 
    release commit into ``develop``. 
    Once the initial ``release/x.y.z`` branch is tagged ``release/x.y.0`` and merged 
    into ``develop``, no further efforts are made to merge subsequent modifications 
    in the ``release`` branch into ``develop``.
+
+An example lifecycle diagram for a release branch:
+
+.. code-block:: sh
+
+   A----B----C----D----E----F   (develop)
+         \            / \
+          \          /   \
+          BA--------BB    EA     (release/1.2.x)
+                        (1.2.0)
 
 Hotfix Branches
 ---------------
@@ -138,6 +169,21 @@ As a soft policy, merging a ``hotfix`` into a ``release`` branch should result i
 a patch increment for the release sequence of tags.
 So if a ``hotfix`` was merged into ``release/1.2.z`` with a most recent tag of
 ``1.2.1``, the merged commit would be tagged with ``1.2.2``.
+
+An example lifecycle diagram for release/hotfix branchs:
+
+.. code-block:: sh
+
+   A----B----C----D----E----F          (develop)
+         \            /|
+          \          / |
+           \        /  | EAA---EAB     (hotfix)
+            \      /   | /      \
+             \    /    |/        \
+            BA---BB    EA         EB   (release/1.2.x)
+                       (1.2.0)    (1.2.1)
+
+
 In addition to merging into the ``release`` branch, the ``hotfix`` may also target 
 ``develop`` if it is appropriate.
 If the bug exists in ``develop`` and there are no plans to fix the bug prior 
@@ -149,18 +195,34 @@ the ``hotfix`` branch may need further revisions for successful integration into
 As such, the procedure for integration of a hotfix would be to create a new ``bugfix`` 
 branch that "cherry-picks" the ``hotfix`` commit/s used to patch ``release``, and 
 apply appropriate revisions for a successful merge into ``develop``.
-For example if a ``hotfix`` was contained into commit ``A``, then the following
+For example if a ``hotfix`` was contained into commit ``BBB``, then the following
 commands would create the appropriate ``bugfix`` branch:
 
 .. code-block:: sh
 
   git checkout develop
   git checkout -b bugfix/neo/freeYourMind
-  git cherry-pick A
+  git cherry-pick BBB
   git push -u origin bugfix/neo/freeYourMind
 
 Additional commits to this ``bugfix`` branch may then be added prior to merging 
 into ``develop``.
+
+An example lifecycle diagram for release/hotfix/bugfix branchs:
+
+.. code-block:: sh
+             
+   A----B-----C-----D-----E-------F---G---H--  (develop)
+         \               /|        \     /
+          \             / |        FA---FB     (bugfix/neo/freeYourMind)
+           \           /  |        /
+            \         /   | EAA---EAB          (hotfix)
+             \       /    | /      \
+              \     /     |/        \
+              BA---BB     EA         EB        (release/1.2.x)
+                          (1.2.0)    (1.2.1)
+
+
 Some useful links for use of ``git cherry-pick`` are given here:
 
 `Documentation for git cherry-pick <https://git-scm.com/docs/git-cherry-pick>`_
