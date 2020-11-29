@@ -83,9 +83,12 @@ void SolidMechanicsEmbeddedFractures::RegisterDataOnMesh( dataRepository::Group 
       {
         region.forElementSubRegions< EmbeddedSurfaceSubRegion >( [&]( EmbeddedSurfaceSubRegion & subRegion )
         {
-          subRegion.registerWrapper< array1d< R1Tensor > >( viewKeyStruct::dispJumpString )
-            ->setPlotLevel( PlotLevel::LEVEL_0 );
-          subRegion.registerWrapper< array1d< R1Tensor > >( viewKeyStruct::deltaDispJumpString );
+          subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::dispJumpString )->
+            setPlotLevel( PlotLevel::LEVEL_0 )->
+            reference().resizeDimension< 1 >( 3 );
+
+          subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::deltaDispJumpString )->
+            reference().resizeDimension< 1 >( 3 );
         } );
       } );
     }
@@ -221,9 +224,6 @@ void SolidMechanicsEmbeddedFractures::SetupSystem( DomainPartition & domain,
   localMatrix.setName( this->getName() + "/localMatrix" );
   localRhs.setName( this->getName() + "/localRhs" );
   localSolution.setName( this->getName() + "/localSolution" );
-
-  ///
-
 
 }
 
@@ -432,7 +432,6 @@ void SolidMechanicsEmbeddedFractures::AddCouplingSparsityPattern( DomainPartitio
 
   } );
 }
-
 
 void SolidMechanicsEmbeddedFractures::ApplyBoundaryConditions( real64 const time,
                                                                real64 const dt,
