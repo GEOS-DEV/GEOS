@@ -56,22 +56,20 @@ void compareTransmissibilityMatrices( arraySlice2d< real64 const > const & trans
 
 void computeVolumeAndCenter( array2d< real64, nodes::REFERENCE_POSITION_PERM > const & nodePosition,
                              array1d< localIndex > const & toNodes,
-                             R1Tensor & elemCenter,
+                             real64 ( & elemCenter )[3],
                              real64 & elemVolume )
 {
   localIndex const numNodes = toNodes.size();
-  R1Tensor Xlocal[10];
-  elemCenter( 0 ) = 0;
-  elemCenter( 1 ) = 0;
-  elemCenter( 2 ) = 0;
+  real64 Xlocal[10][3];
+  LvArray::tensorOps::fill< 3 >( elemCenter, 0.0 );
   for( localIndex a = 0; a < numNodes; ++a )
   {
     Xlocal[a][0] = nodePosition( toNodes( a ), 0 );
     Xlocal[a][1] = nodePosition( toNodes( a ), 1 );
     Xlocal[a][2] = nodePosition( toNodes( a ), 2 );
-    elemCenter += Xlocal[a];
+    LvArray::tensorOps::add< 3 >( elemCenter, Xlocal[a] );
   }
-  elemCenter /= numNodes;
+  LvArray::tensorOps::scale< 3 >( elemCenter, 1.0 / numNodes );
 
   GEOSX_ERROR_IF( numNodes != 8 && numNodes != 4,
                   "This number of nodes is not supported in the test yet" );
@@ -89,9 +87,9 @@ void computeVolumeAndCenter( array2d< real64, nodes::REFERENCE_POSITION_PERM > c
 void makeHexa( array2d< real64, nodes::REFERENCE_POSITION_PERM > & nodePosition,
                FaceManager::NodeMapType & faceToNodes,
                array1d< localIndex > & elemToFaces,
-               R1Tensor & elemCenter,
+               real64 ( & elemCenter )[3],
                real64 & elemVolume,
-               R1Tensor & elemPerm,
+               real64 ( & elemPerm )[3],
                real64 & lengthTolerance,
                integer const ipType,
                arraySlice2d< real64 > const & transMatrixRef )
@@ -102,9 +100,9 @@ void makeHexa( array2d< real64, nodes::REFERENCE_POSITION_PERM > & nodePosition,
 
   lengthTolerance = 1.73205e-8;
 
-  elemPerm( 0 ) = 1e-12;
-  elemPerm( 1 ) = 2e-12;
-  elemPerm( 2 ) = 3e-12;
+  elemPerm[ 0 ] = 1e-12;
+  elemPerm[ 1 ] = 2e-12;
+  elemPerm[ 2 ] = 3e-12;
 
   // elem-to-faces map
   elemToFaces.resize( numFaces );
@@ -310,9 +308,9 @@ void makeHexa( array2d< real64, nodes::REFERENCE_POSITION_PERM > & nodePosition,
 void makeTetra( array2d< real64, nodes::REFERENCE_POSITION_PERM > & nodePosition,
                 FaceManager::NodeMapType & faceToNodes,
                 array1d< localIndex > & elemToFaces,
-                R1Tensor & elemCenter,
+                real64 ( & elemCenter )[3],
                 real64 & elemVolume,
-                R1Tensor & elemPerm,
+                real64 ( & elemPerm )[3],
                 real64 & lengthTolerance,
                 integer const ipType,
                 arraySlice2d< real64 > const & transMatrixRef )
@@ -323,9 +321,9 @@ void makeTetra( array2d< real64, nodes::REFERENCE_POSITION_PERM > & nodePosition
 
   lengthTolerance = 1.73205e-8;
 
-  elemPerm( 0 ) = 1e-12;
-  elemPerm( 1 ) = 2e-12;
-  elemPerm( 2 ) = 3e-12;
+  elemPerm[ 0 ] = 1e-12;
+  elemPerm[ 1 ] = 2e-12;
+  elemPerm[ 2 ] = 3e-12;
 
   // elem-to-faces map
   elemToFaces.resize( numFaces );
@@ -443,8 +441,8 @@ TEST( testMimeticInnerProducts, TPFA_hexa )
   array2d< real64, nodes::REFERENCE_POSITION_PERM > nodePosition;
   FaceManager::NodeMapType faceToNodes;
   array1d< localIndex > elemToFaces;
-  R1Tensor elemCenter;
-  R1Tensor elemPerm;
+  real64 elemCenter[3];
+  real64 elemPerm[3];
   real64 elemVolume = 0;
   real64 lengthTolerance = 0;
   stackArray2d< real64, NF *NF > transMatrixRef( NF, NF );
@@ -490,8 +488,8 @@ TEST( testMimeticInnerProducts, QTPFA_hexa )
   array2d< real64, nodes::REFERENCE_POSITION_PERM > nodePosition;
   FaceManager::NodeMapType faceToNodes;
   array1d< localIndex > elemToFaces;
-  R1Tensor elemCenter;
-  R1Tensor elemPerm;
+  real64 elemCenter[3];
+  real64 elemPerm[3];
   real64 elemVolume = 0;
   real64 lengthTolerance = 0;
   stackArray2d< real64, NF *NF > transMatrixRef( NF, NF );
@@ -539,8 +537,8 @@ TEST( testMimeticInnerProducts, Simple_hexa )
   array2d< real64, nodes::REFERENCE_POSITION_PERM > nodePosition;
   FaceManager::NodeMapType faceToNodes;
   array1d< localIndex > elemToFaces;
-  R1Tensor elemCenter;
-  R1Tensor elemPerm;
+  real64 elemCenter[3] = { 0.0 };
+  real64 elemPerm[3] = { 0.0 };
   real64 elemVolume = 0;
   real64 lengthTolerance = 0;
   stackArray2d< real64, NF *NF > transMatrixRef( NF, NF );
@@ -588,8 +586,8 @@ TEST( testMimeticInnerProducts, TPFA_tetra )
   array2d< real64, nodes::REFERENCE_POSITION_PERM > nodePosition;
   FaceManager::NodeMapType faceToNodes;
   array1d< localIndex > elemToFaces;
-  R1Tensor elemCenter;
-  R1Tensor elemPerm;
+  real64 elemCenter[3];
+  real64 elemPerm[3];
   real64 elemVolume = 0;
   real64 lengthTolerance = 0;
   stackArray2d< real64, NF *NF > transMatrixRef( NF, NF );
@@ -635,8 +633,8 @@ TEST( testMimeticInnerProducts, QTPFA_tetra )
   array2d< real64, nodes::REFERENCE_POSITION_PERM > nodePosition;
   FaceManager::NodeMapType faceToNodes;
   array1d< localIndex > elemToFaces;
-  R1Tensor elemCenter;
-  R1Tensor elemPerm;
+  real64 elemCenter[3];
+  real64 elemPerm[3];
   real64 elemVolume = 0;
   real64 lengthTolerance = 0;
   stackArray2d< real64, NF *NF > transMatrixRef( NF, NF );
@@ -681,8 +679,8 @@ TEST( testMimeticInnerProducts, Simple_tetra )
   array2d< real64, nodes::REFERENCE_POSITION_PERM > nodePosition;
   FaceManager::NodeMapType faceToNodes;
   array1d< localIndex > elemToFaces;
-  R1Tensor elemCenter;
-  R1Tensor elemPerm;
+  real64 elemCenter[3] = { 0.0 };
+  real64 elemPerm[3] = { 0.0 };
   real64 elemVolume = 0;
   real64 lengthTolerance = 0;
   stackArray2d< real64, NF *NF > transMatrixRef( NF, NF );

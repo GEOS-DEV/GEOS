@@ -287,12 +287,12 @@ private:
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_deltaPressure;
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_proppantConcentration;
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_deltaProppantConcentration;
-  ElementRegionManager::ElementViewAccessor< arrayView1d< R1Tensor const > > m_cellBasedFlux;
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_cellBasedFlux;
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_proppantLiftFlux;
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_proppantPackVolumeFraction;
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_proppantExcessPackVolume;
   ElementRegionManager::ElementViewAccessor< arrayView1d< integer const > > m_isProppantBoundaryElement;
-  ElementRegionManager::ElementViewAccessor< arrayView1d< R1Tensor const > > m_transTMultiplier;
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_transTMultiplier;
   ElementRegionManager::ElementViewAccessor< arrayView1d< integer const > > m_isProppantMobile;
 
   /// views into material fields

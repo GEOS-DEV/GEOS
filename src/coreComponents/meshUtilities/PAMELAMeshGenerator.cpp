@@ -116,13 +116,8 @@ void PAMELAMeshGenerator::GenerateMesh( DomainPartition * const domain )
   Group & nodeSets = nodeManager->sets();
   SortedArray< localIndex > & allNodes  = nodeSets.registerWrapper< SortedArray< localIndex > >( std::string( "all" ) )->reference();
 
-  R1Tensor xMax( std::numeric_limits< real64 >::min(),
-                 std::numeric_limits< real64 >::min(),
-                 std::numeric_limits< real64 >::min());
-
-  R1Tensor xMin( std::numeric_limits< real64 >::max(),
-                 std::numeric_limits< real64 >::max(),
-                 std::numeric_limits< real64 >::max());
+  real64 xMax[3] = { std::numeric_limits< real64 >::min() };
+  real64 xMin[3] = { std::numeric_limits< real64 >::max() };
 
   double zReverseFactor = 1.;
   if( m_isZReverse )
@@ -151,8 +146,9 @@ void PAMELAMeshGenerator::GenerateMesh( DomainPartition * const domain )
       }
     }
   }
-  xMax -= xMin;
-  meshBody->setGlobalLengthScale( std::fabs( xMax.L2_Norm() ) );
+
+  LvArray::tensorOps::subtract< 3 >( xMax, xMin );
+  meshBody->setGlobalLengthScale( LvArray::tensorOps::l2Norm< 3 >( xMax ) );
 
   // First loop which iterate on the regions
   array1d< globalIndex > globalIndexRegionOffset( polyhedronPartMap.size() +1 );
@@ -335,15 +331,16 @@ void PAMELAMeshGenerator::GenerateMesh( DomainPartition * const domain )
           }
           else if( dimension == PAMELA::VARIABLE_DIMENSION::VECTOR )
           {
-            array1d< R1Tensor > & property = cellBlock->AddProperty< array1d< R1Tensor > >( m_fieldNamesInGEOSX[fieldIndex] );
-            GEOSX_ERROR_IF( property.size() * 3 != LvArray::integerConversion< localIndex >( meshProperty->size() ),
-                            "Viewer size (" << property.size() * 3<< ") mismatch with property size in PAMELA ("
-                                            << meshProperty->size() << ") on " <<cellBlock->getName() );
+            array2d< real64 > & property = cellBlock->AddProperty< array2d< real64 > >( m_fieldNamesInGEOSX[fieldIndex] );
+            property.resizeDimension< 1 >( 3 );
+            GEOSX_ERROR_IF( property.size() != LvArray::integerConversion< localIndex >( meshProperty->size() ),
+                            "Viewer size (" << property.size() << ") mismatch with property size in PAMELA ("
+                                            << meshProperty->size() << ") on " << cellBlock->getName() );
             for( int cellIndex = 0; cellIndex < cellBlock->size(); cellIndex++ )
             {
               for( int dim = 0; dim < 3; dim++ )
               {
-                property[cellIndex][dim] = meshProperty->get_data( cellIndex )[dim];
+                property( cellIndex, dim ) = meshProperty->get_data( cellIndex )[dim];
               }
             }
           }
