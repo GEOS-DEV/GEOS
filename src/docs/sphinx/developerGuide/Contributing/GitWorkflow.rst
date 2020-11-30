@@ -38,15 +38,19 @@ their authentication settings.
 
 Branching Model
 ===============
-The current branching model used in GEOSX (starting with version 0.2) is essentially the 
-`Oneflow branching model and workflow <https://www.endoflineblog.com/oneflow-a-git-branching-model-and-workflow#when-not-to-use-oneflow/>`_
+The branching model used in GEOSX is a modified 
+`Gitflow <https://nvie.com/posts/a-successful-git-branching-model/>`_ approach,
 with some modifications to the merging strategy, and the treatment of release 
-branches. 
-In GEOSX, the ``develop`` branch serves as the main branch in the ``Oneflow`` model.
+branches, and hotfix branches.
+
+In GEOSX, there are two main branches, ``release`` and ``develop``. 
+The ``develop`` branch serves as the main branch for the development of new
+features.
+The ``release`` branch serves as the "stable release" branch.
 The remaining branch types are described in the following subsections.
 
 .. note::
-   The early commits in GEOSX (up to version 0.2) used a 
+   The early commits in GEOSX (up to version 0.2) used a pure
    `Gitflow <https://nvie.com/posts/a-successful-git-branching-model/>`_
    approach for merging feature branches into develop.
    This was done without cleaning the commit history in each feature
@@ -124,40 +128,31 @@ should be created to perform the review and merging process.
 See below for details about :ref:`Submitting_a_Pull_Request`.
 
 
-Release Branches
-----------------
+Release Candidate Branches
+--------------------------
 When ``develop`` has progressed to a point where we would like to create a new 
-``release``, we will create a ``release`` branch with the name consisting 
-of ``major.minor.x`` number, where the ``x`` represents the sequence of patch tags that
+``release``, we will create a release candidate branch with the name consisting 
+of ``release_major.minor.x`` number, where the ``x`` represents the sequence of patch tags that
 will be applied to the branch.
 For instance if we were releasing version ``1.2.0``, we would name the branch
-``release/1.2.x``.
-In contrast to the ``OneFlow`` approach, we do not delete the ``release`` branch.
-Once the release candidate is ready, it is tagged and merged back into ``develop``. 
+``release_1.2.x``.
+Once the release candidate is ready, it is merged back into ``develop`` and tagged. 
+Then the ``develop`` branch is merged into the ``release`` branch.
 From that point the ``release`` branch exists to provide a basis for maintaining 
-the major/minor release via the patching index.
-Once the ``release/major.minor.x`` branch is tagged, it only exists as a starting point 
-for patches. 
-Each patch on the branch is tagged using an increment in the patch number, 
-resulting in a sequence of tags like ``release/1.2.0, release/1.2.1, release/1.2.2``, etc. 
 
-.. note::
-
-   In our git workflow, we do not close the release loop by merging the final 
-   release commit into ``develop``. 
-   Once the initial ``release/x.y.z`` branch is tagged ``release/x.y.0`` and merged 
-   into ``develop``, no further efforts are made to merge subsequent modifications 
-   in the ``release`` branch into ``develop``.
-
-An example lifecycle diagram for a release branch:
+An example lifecycle diagram for a release candidate branch:
 
 .. code-block:: sh
 
-   A----B----C----D----E----F   (develop)
-         \            / \
-          \          /   \
-          BA--------BB    EA     (release/1.2.x)
-                        (1.2.0)
+   A----B----C----D----E----F-----G               (release)
+        ^                         ^
+        |                         |
+        |                         |
+   A----B----C----D----E----F-----G------------   (develop)
+         \            / \        / (tag v1.2.0)
+          \          /   \      /
+          BA--------BB    EA---EB                 (release_1.2.x)
+                        
 
 Hotfix Branches
 ---------------
@@ -167,69 +162,25 @@ The main difference with a ``bugfix`` branch is that the primary target branch i
 ``release`` branch instead of ``develop``.
 As a soft policy, merging a ``hotfix`` into a ``release`` branch should result in 
 a patch increment for the release sequence of tags.
-So if a ``hotfix`` was merged into ``release/1.2.z`` with a most recent tag of
+So if a ``hotfix`` was merged into ``release`` with a most recent tag of
 ``1.2.1``, the merged commit would be tagged with ``1.2.2``.
-
-An example lifecycle diagram for release/hotfix branchs:
-
-.. code-block:: sh
-
-   A----B----C----D----E----F          (develop)
-         \            /|
-          \          / |
-           \        /  | EAA---EAB     (hotfix)
-            \      /   | /      \
-             \    /    |/        \
-            BA---BB    EA         EB   (release/1.2.x)
-                       (1.2.0)    (1.2.1)
+Finally, at some point prior to the next minor release, the ``release`` branch
+should be merged back into ``develop`` to incorperate any hotfix changes into 
+``develop``.
 
 
-In addition to merging into the ``release`` branch, the ``hotfix`` may also target 
-``develop`` if it is appropriate.
-If the bug exists in ``develop`` and there are no plans to fix the bug prior 
-to the next ``major.minor`` release cycle, then the ``hotfix`` should be merged
-into ``develop``.
-As ``develop`` may have diverged significantly from the target ``release`` branch,
-the ``hotfix`` branch may need further revisions for successful integration into
-``develop``. 
-As such, the procedure for integration of a hotfix would be to create a new ``bugfix`` 
-branch that "cherry-picks" the ``hotfix`` commit/s used to patch ``release``, and 
-apply appropriate revisions for a successful merge into ``develop``.
-For example if a ``hotfix`` was contained into commit ``BBB``, then the following
-commands would create the appropriate ``bugfix`` branch:
+An example lifecycle diagram for hotfix branchs:
 
 .. code-block:: sh
 
-  git checkout develop
-  git checkout -b bugfix/neo/freeYourMind
-  git cherry-pick BBB
-  git push -u origin bugfix/neo/freeYourMind
-
-Additional commits to this ``bugfix`` branch may then be added prior to merging 
-into ``develop``.
-
-An example lifecycle diagram for release/hotfix/bugfix branchs:
-
-.. code-block:: sh
-             
-   A----B-----C-----D-----E-------F---G---H--  (develop)
-         \               /|        \     /
-          \             / |        FA---FB     (bugfix/neo/freeYourMind)
-           \           /  |        /
-            \         /   | EAA---EAB          (hotfix)
-             \       /    | /      \
-              \     /     |/        \
-              BA---BB     EA         EB        (release/1.2.x)
-                          (1.2.0)    (1.2.1)
-
-
-Some useful links for use of ``git cherry-pick`` are given here:
-
-`Documentation for git cherry-pick <https://git-scm.com/docs/git-cherry-pick>`_
-
-`Explanation of git cherry-pick <https://stackoverflow.com/questions/9339429/what-does-cherry-picking-a-commit-with-git-mean>`_
-
-`Example usage of git cherry-pick <https://stackoverflow.com/questions/1670970/how-to-cherry-pick-multiple-commits>`_
+                                        (tag v1.2.0)
+   A----B----C----D----E----F-----G---------H             (release)
+        ^                         ^\       / \
+        |                         | \     /   \
+        |                         |  GA--GB    \          (hotfix)
+        |                         |             \
+   A----B----C----D----E----F-----G--------------H---     (develop)
+                              (tag v1.2.0)
 
 Documentation Branches
 ----------------------
