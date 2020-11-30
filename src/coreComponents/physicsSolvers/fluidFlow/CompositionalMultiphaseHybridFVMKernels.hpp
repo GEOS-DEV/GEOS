@@ -381,7 +381,7 @@ struct PrecomputeKernel
           arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition,
           ArrayOfArraysView< localIndex const > const & faceToNodes,
           arrayView2d< real64 const > const & elemCenter,
-          arrayView1d< R1Tensor const > const & elemPerm,
+          arrayView2d< real64 const > const & elemPerm,
           arrayView1d< real64 const > const & elemGravCoef,
           arrayView2d< localIndex const > const & elemToFaces,
           arrayView1d< real64 const > const & transMultiplier,
@@ -414,7 +414,10 @@ struct PrecomputeKernel
 
     forAll< parallelDevicePolicy<> >( faceManagerSize, [=] GEOSX_HOST_DEVICE ( localIndex const iface )
     {
-      mimFaceGravCoef[iface] = mimFaceGravCoefNumerator[iface].get() / mimFaceGravCoefDenominator[iface].get();
+      if( !isZero( mimFaceGravCoefDenominator[iface].get() ) )
+      {
+        mimFaceGravCoef[iface] = mimFaceGravCoefNumerator[iface].get() / mimFaceGravCoefDenominator[iface].get();
+      }
     } );
   }
 };

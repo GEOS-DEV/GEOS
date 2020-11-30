@@ -216,8 +216,8 @@ FluxKernel::Launch( localIndex er,
     subRegion.getReference< array2d< real64 > >( CellBlock::viewKeyStruct::elementCenterString );
   arrayView1d< real64 const > const & elemVolume =
     subRegion.getReference< array1d< real64 > >( CellBlock::viewKeyStruct::elementVolumeString );
-  arrayView1d< R1Tensor const > const & elemPerm =
-    subRegion.getReference< array1d< R1Tensor > >( CompositionalMultiphaseBase::viewKeyStruct::permeabilityString );
+  arrayView2d< real64 const > const & elemPerm =
+    subRegion.getReference< array2d< real64 > >( CompositionalMultiphaseBase::viewKeyStruct::permeabilityString );
 
   // get the cell-centered depth
   arrayView1d< real64 const > const & elemGravCoef =

@@ -158,8 +158,8 @@ void CompositionalMultiphaseHybridFVM::PrecomputeData( MeshLevel & mesh )
   {
     arrayView2d< real64 const > const & elemCenter =
       subRegion.template getReference< array2d< real64 > >( CellBlock::viewKeyStruct::elementCenterString );
-    arrayView1d< R1Tensor const > const & elemPerm =
-      subRegion.template getReference< array1d< R1Tensor > >( CompositionalMultiphaseBase::viewKeyStruct::permeabilityString );
+    arrayView2d< real64 const > const & elemPerm =
+      subRegion.template getReference< array2d< real64 > >( CompositionalMultiphaseBase::viewKeyStruct::permeabilityString );
     arrayView1d< real64 const > const elemGravCoef =
       subRegion.template getReference< array1d< real64 > >( viewKeyStruct::gravityCoefString );
     arrayView2d< localIndex const > const & elemToFaces = subRegion.faceList();
@@ -178,6 +178,7 @@ void CompositionalMultiphaseHybridFVM::PrecomputeData( MeshLevel & mesh )
                                                                            mimFaceGravCoefNumerator.toView(),
                                                                            mimFaceGravCoefDenominator.toView(),
                                                                            mimFaceGravCoef );
+
   } );
 
 }

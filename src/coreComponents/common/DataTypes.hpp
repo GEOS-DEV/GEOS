@@ -27,7 +27,8 @@
 #include "common/GeosxMacros.hpp"
 #include "common/BufferAllocator.hpp"
 #include "common/DataLayouts.hpp"
-#include "Logger.hpp"
+#include "common/Tensor.hpp"
+#include "common/Logger.hpp"
 #include "LvArray/src/Macros.hpp"
 #include "LvArray/src/Array.hpp"
 #include "LvArray/src/ArrayOfArrays.hpp"
@@ -39,7 +40,6 @@
 #include "LvArray/src/StackBuffer.hpp"
 #include "LvArray/src/ChaiBuffer.hpp"
 
-#include "math/TensorT/TensorT.h"
 #include "Path.hpp"
 
 // TPL includes
@@ -188,6 +188,9 @@ using StackArray = LvArray::StackArray< T, NDIM, PERMUTATION, localIndex, MAXSIZ
  * @name Short-hand aliases for commonly used array types.
  */
 ///@{
+
+/// Alias for a local (stack-based) rank-1 tensor type
+using R1Tensor = Tensor< real64, 3 >;
 
 /// Alias for 1D array.
 template< typename T >

@@ -194,8 +194,8 @@ AssemblerKernelHelper::AssembleFluxDivergence( localIndex const (&localIds)[ 3 ]
   real64 dPhaseGravTerm_dCompDens[ NP ][ NP-1 ][ 2 ][ NC ] = {{{{ 0.0 }}}};
 
   // upwinding phase buoyancy transport coefficients
-  real64 upwPhaseGravCoef[ NP ][ NP-1 ][ NC ] = {{{{ 0.0 }}}};
-  real64 dUpwPhaseGravCoef_dPres[ NP ][ NP-1 ][ NC ][ 2 ] = {{{{{ 0.0 }}}}};
+  real64 upwPhaseGravCoef[ NP ][ NP-1 ][ NC ] = {{{ 0.0 }}};
+  real64 dUpwPhaseGravCoef_dPres[ NP ][ NP-1 ][ NC ][ 2 ] = {{{{ 0.0 }}}};
   real64 dUpwPhaseGravCoef_dCompDens[ NP ][ NP-1 ][ NC ][ 2 ][ NC ] = {{{{{ 0.0 }}}}};
 
   // for each element, loop over the one-sided faces
