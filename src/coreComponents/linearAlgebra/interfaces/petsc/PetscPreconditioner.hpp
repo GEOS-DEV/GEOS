@@ -37,6 +37,7 @@ extern "C" struct _p_MatNullSpace;
 
 /// Preconditioner pointer alias
 using PC = _p_PC *;
+/// Near null space pointer alias
 using MatNullSpace = _p_MatNullSpace *;
 
 ///@}
