@@ -191,7 +191,7 @@ public:
    */
   void WritePolygonMeshObject( const std::string & meshName,
                                const localIndex nnodes,
-                               realT * coords[3],
+                               real64 * coords[3],
                                const globalIndex * dummy1,
                                const int numRegions,
                                const int * shapecnt,
@@ -201,7 +201,7 @@ public:
                                const int * const shapetype,
                                const int * const shapesize,
                                const int cycleNumber,
-                               const realT problemTime,
+                               const real64 problemTime,
                                const int lnodelist );
 
 /**
@@ -740,11 +740,15 @@ int GetTensorRank();
 template< typename OUTTYPE, typename TYPE >
 OUTTYPE CastField( const TYPE & field, int const i = 0 );     // avoids compiler
                                                               // warning
-
-template< typename OUTTYPE, typename TYPE >
-OUTTYPE CastField( const TYPE & field, int const i )
+/**
+ * @brief Specialization for R1Tensor
+ * @param field the value to cast
+ * @param i the component of the variable to cast
+ * @return the casted value
+ */
+template<> inline real64 CastField( R1Tensor const & field, int const i )
 {
-  return field.Data()[i];
+  return field[i];
 }
 
 /**

@@ -286,7 +286,7 @@ void MultiPhaseMultiComponentFluidUpdate::Compute( real64 pressure,
       X[ic].m_var = composition[ic];
       X[ic].m_der[ic+1] = 1.0;
 
-      realT const mwInv = 1.0 / m_componentMolarWeight[ic];
+      real64 const mwInv = 1.0 / m_componentMolarWeight[ic];
       C[ic] = X[ic] * mwInv; // this is molality (units of mole/mass)
       totalMolality += C[ic];
     }
@@ -360,7 +360,7 @@ void MultiPhaseMultiComponentFluidUpdate::Compute( real64 pressure,
       for( localIndex ic = 0; ic < NC; ++ic )
       {
 
-        realT compMW = m_componentMolarWeight[ic];
+        real64 compMW = m_componentMolarWeight[ic];
 
         phaseCompFractionTemp[ip][ic] = phaseCompFractionTemp[ip][ic] * compMW /  phaseMW[ip];
 

@@ -100,7 +100,7 @@ public:
                         int const tileColor,
                         int const numTileColors,
                         const bool prefrac,
-                        const realT time_np1 );
+                        const real64 time_np1 );
 
   /**
    * @brief Function to generate new global indices of a simple object (node, edge, face)
@@ -160,15 +160,15 @@ private:
    * @param vecTip
    * @return
    */
-  realT CalculateEdgeSIF ( DomainPartition & domain,
-                           const localIndex edgeID,
-                           localIndex & trailFaceID,
-                           NodeManager & nodeManager,
-                           EdgeManager & edgeManager,
-                           FaceManager & faceManager,
-                           ElementRegionManager & elementManager,
-                           R1Tensor & vecTipNorm,
-                           R1Tensor & vecTip );
+  real64 CalculateEdgeSIF ( DomainPartition & domain,
+                            const localIndex edgeID,
+                            localIndex & trailFaceID,
+                            NodeManager & nodeManager,
+                            EdgeManager & edgeManager,
+                            FaceManager & faceManager,
+                            ElementRegionManager & elementManager,
+                            real64 ( &vecTipNorm )[ 3 ],
+                            real64 ( &vecTip )[ 3 ] );
 
   /**
    * @brief
@@ -200,14 +200,14 @@ private:
    */
   int CalculateElementForcesOnEdge ( DomainPartition & domain,
                                      const localIndex edgeID,
-                                     realT edgeLength,
+                                     real64 edgeLength,
                                      localIndex_array & nodeIndices,
                                      NodeManager & nodeManager,
                                      EdgeManager & edgeManager,
                                      ElementRegionManager & elementManager,
-                                     R1Tensor & vecTipNorm,
-                                     R1Tensor & fNode,
-                                     realT & GdivBeta,
+                                     real64 ( &vecTipNorm )[3],
+                                     real64 ( &fNode )[3],
+                                     real64 & GdivBeta,
                                      bool threeNodesPinched,
                                      bool calculatef_u );
 
@@ -229,14 +229,15 @@ private:
                                  EdgeManager & edgeManager,
                                  FaceManager & faceManager,
                                  ElementRegionManager & elementManager,
-                                 R1Tensor & vecTipNorm,
-                                 R1Tensor & vecTip,
+                                 real64 ( &vecTipNorm )[ 3 ],
+                                 real64 ( &vecTip )[ 3 ],
                                  ModifiedObjectLists & modifiedObjects,
                                  const int edgeMode );
 
   /**
    * @brief
-   *    * @param nodeManager
+   * @param nodeIndex
+   * @param nodeManager
    * @param nodeManager
    * @param edgeManager
    * @param faceManager
@@ -437,10 +438,10 @@ private:
    * @param faceManager
    * @return
    */
-  realT CalculateKinkAngle ( const localIndex nodeID,
-                             const NodeManager & nodeManager,
-                             EdgeManager & edgeManager,
-                             FaceManager & faceManager );
+  real64 CalculateKinkAngle ( const localIndex nodeID,
+                              const NodeManager & nodeManager,
+                              EdgeManager & edgeManager,
+                              FaceManager & faceManager );
 
   /**
    *
@@ -477,10 +478,10 @@ private:
    * @param faceManager
    * @return
    */
-  realT MinimumToughnessOnEdge( const localIndex edgeID,
-                                const NodeManager & nodeManager,
-                                EdgeManager & edgeManager,
-                                FaceManager & faceManager );
+  real64 MinimumToughnessOnEdge( const localIndex edgeID,
+                                 const NodeManager & nodeManager,
+                                 EdgeManager & edgeManager,
+                                 FaceManager & faceManager );
 
   /**
    *
@@ -490,10 +491,10 @@ private:
    * @param faceManager
    * @return
    */
-  realT MinimumToughnessOnNode( const localIndex nodeID,
-                                const NodeManager & nodeManager,
-                                EdgeManager & edgeManager,
-                                FaceManager & faceManager );
+  real64 MinimumToughnessOnNode( const localIndex nodeID,
+                                 const NodeManager & nodeManager,
+                                 EdgeManager & edgeManager,
+                                 FaceManager & faceManager );
 
 
   real64 calculateRuptureRate( SurfaceElementRegion & faceElementRegion,
@@ -538,7 +539,7 @@ private:
 
   int m_nodeBasedSIF;
 
-  realT m_rockToughness;
+  real64 m_rockToughness;
 
   // Flag for consistent communication ordering
   int m_mpiCommOrder;
