@@ -387,14 +387,12 @@ public:
     LvArray::tensorOps::Ri_add_AijBj< 3, nUdof >( stack.localRw, stack.localKwu, stack.uLocal );
     LvArray::tensorOps::Ri_add_AijBj< nUdof, 3 >( stack.localRu, stack.localKuw, stack.wLocal );
 
-    std::cout << "wLocal " << stack.wLocal[0] << "  " <<  stack.wLocal[1] << "   " << stack.wLocal[2] << std::endl;
-
-    // Evaluate tranction
-    real64 tractionVec[3], dTractiondw[3][3], contactCoeff = 1.0e15;
-    SolidMechanicsEFEMKernelsHelper::computeTraction( stack.wLocal, contactCoeff, tractionVec, dTractiondw );
-    LvArray::tensorOps::add< 3 >( stack.localRw, tractionVec );
-    LvArray::tensorOps::scale< 3, 3 >( dTractiondw, -1 );
-    LvArray::tensorOps::add< 3, 3 >( stack.localKww, dTractiondw );
+//    // Evaluate tranction
+//    real64 tractionVec[3], dTractiondw[3][3], contactCoeff = 1.0e15;
+//    SolidMechanicsEFEMKernelsHelper::computeTraction( stack.wLocal, contactCoeff, tractionVec, dTractiondw );
+//    LvArray::tensorOps::add< 3 >( stack.localRw, tractionVec );
+//    LvArray::tensorOps::scale< 3, 3 >( dTractiondw, -1 );
+//    LvArray::tensorOps::add< 3, 3 >( stack.localKww, dTractiondw );
 
     for( localIndex i = 0; i < nUdof; ++i )
     {
@@ -436,8 +434,6 @@ public:
 protected:
 
   arrayView1d< globalIndex const > const m_wDofNumber;
-
-  // Will become arrayView2d< real64 const > const
 
   arrayView2d< real64 const > const m_w;
 

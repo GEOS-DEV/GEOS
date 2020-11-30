@@ -35,10 +35,12 @@ namespace SolidMechanicsEFEMKernelsHelper
 {
 
 template< int NUM_NODES >
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
 void computeHeavisideFunction( integer (& heaviside)[NUM_NODES],
                                real64 (& X)[NUM_NODES][3],
-                               arraySlice1d< real64 const > const & normalVector,
-                               arraySlice1d< real64 const > const & elementCenter )
+                               arraySlice1d< real64 const > const normalVector,
+                               arraySlice1d< real64 const > const elementCenter )
 {
   for( int a=0; a < NUM_NODES; a++ )
   {
@@ -56,10 +58,11 @@ void computeHeavisideFunction( integer (& heaviside)[NUM_NODES],
 template< int I_SIZE,
           int J_SIZE,
           int NUM_NODES >
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
 void assembleStrainOperator( real64 ( & strainMatrix )[I_SIZE][J_SIZE],
                              real64 ( & dNdX )[NUM_NODES][3] )
 {
-  GEOSX_MARK_FUNCTION;
   LvArray::tensorOps::fill< I_SIZE, J_SIZE >( strainMatrix, 0 );  //make 0
   for( int a=0; a < NUM_NODES; ++a )
   {
@@ -80,6 +83,7 @@ void assembleStrainOperator( real64 ( & strainMatrix )[I_SIZE][J_SIZE],
 }
 
 template< int NUM_NODES >
+GEOSX_HOST_DEVICE
 void assembleCompatibilityOperator( real64 ( & compMatrix )[6][3],
                                     arraySlice1d< real64 const > const & nVec,
                                     arraySlice1d< real64 const > const & tVec1,
@@ -87,7 +91,7 @@ void assembleCompatibilityOperator( real64 ( & compMatrix )[6][3],
                                     integer ( & heavisideFun )[NUM_NODES],
                                     real64 ( & dNdX )[NUM_NODES][3] )
 {
-  GEOSX_MARK_FUNCTION;
+  //GEOSX_MARK_FUNCTION;
 
   // Fill in compatibility operator
 
@@ -144,13 +148,56 @@ void assembleCompatibilityOperator( real64 ( & compMatrix )[6][3],
   }
 }
 
-/// R1Tensor will become arraySlice1d< real64 const >
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void assembleEquilibriumOperator( real64 ( & eqMatrix )[3][6],
+                                  arraySlice1d< real64 const > const nVec,
+                                  arraySlice1d< real64 const > const tVec1,
+                                  arraySlice1d< real64 const > const tVec2,
+                                  real64 const hInv )
+{
+  LvArray::tensorOps::fill< 3, 6 >( eqMatrix, 0 );
 
-void assembleEquilibriumOperator( real64 ( &eqMatrix )[3][6],
-                                  arraySlice1d< real64 const > const &  nVec,
-                                  arraySlice1d< real64 const > const &  tVec1,
-                                  arraySlice1d< real64 const > const &  tVec2,
-                                  real64 const hInv );
+  // Define the dyadic producs
+  // nDn := nVec_dyadic_nVec,
+  // t1DnSym:= sym(tVec1_dyadic_nVec)
+  // t2DnSym:= sym(tVec2_dyadic_nVec)
+  real64 nDn[3][3], t1DnSym[3][3], t2DnSym[3][3];
+
+  // n dyadic n
+  LvArray::tensorOps::Rij_eq_AiBj< 3, 3 >( nDn, nVec, nVec );
+
+  // sym(n dyadic t1) and sym (n dyadic t2)
+  LvArray::tensorOps::Rij_eq_AiBj< 3, 3 >( t1DnSym, nVec, tVec1 );
+  LvArray::tensorOps::Rij_add_AiBj< 3, 3 >( t1DnSym, tVec1, nVec );
+  LvArray::tensorOps::scale< 3, 3 >( t1DnSym, 0.5 );
+
+  LvArray::tensorOps::Rij_eq_AiBj< 3, 3 >( t2DnSym, nVec, tVec2 );
+  LvArray::tensorOps::Rij_add_AiBj< 3, 3 >( t2DnSym, tVec2, nVec );
+  LvArray::tensorOps::scale< 3, 3 >( t2DnSym, 0.5 );
+
+  int VoigtIndex;
+
+  for( int i=0; i < 3; ++i )
+  {
+    for( int j=0; j < 3; ++j )
+    {
+      if( i == j )
+      {
+        VoigtIndex = 1;
+      }
+      else
+      {
+        VoigtIndex = 6 - i - j;
+      }
+      eqMatrix[0][VoigtIndex] += nDn     [i][j];
+      eqMatrix[1][VoigtIndex] += t1DnSym [i][j];
+      eqMatrix[2][VoigtIndex] += t2DnSym [i][j];
+    }
+  }
+
+  LvArray::tensorOps::scale< 3, 6 >( eqMatrix, -hInv );
+}
 
 /*
  * @brief Computes traction and derivative on each fracture segment.
@@ -159,10 +206,30 @@ void assembleEquilibriumOperator( real64 ( &eqMatrix )[3][6],
  * @param tractionVector traction vector
  * @param dTdw Derivative of the traction w.r.t. the jump.
  */
-void computeTraction( real64 ( &dispJump )[3],
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void computeTraction( real64 ( & dispJump )[3],
                       real64 contactCoeff,
-                      real64 ( &tractionVector )[3],
-                      real64 ( &dTractiondw )[3][3] );
+                      real64 ( & tractionVector )[3],
+                      real64 ( & dTractiondw )[3][3] )
+{
+  // check if fracture is open
+  bool open = dispJump[0] >= 0 ? true : false;
+
+  LvArray::tensorOps::fill< 3 >( tractionVector, 0 );
+  LvArray::tensorOps::fill< 3, 3 >( dTractiondw, 0 );
+
+  if( open )
+  {
+    tractionVector[0] = 1e5;
+  }
+  else
+  {
+    // Contact through penalty condition.
+    tractionVector[0] = contactCoeff * dispJump[0];
+    dTractiondw[0][0] = contactCoeff;
+  }
+}
 
 }
 } // geosx
