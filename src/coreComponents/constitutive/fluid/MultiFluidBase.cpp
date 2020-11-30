@@ -63,6 +63,15 @@ MultiFluidBase::MultiFluidBase( std::string const & name, Group * const parent )
   registerWrapper( viewKeyStruct::dPhaseDensity_dGlobalCompFractionString, &m_dPhaseDensity_dGlobalCompFraction )->
     setRestartFlags( RestartFlags::NO_WRITE );
 
+  registerWrapper( viewKeyStruct::phaseMassDensityString, &m_phaseMassDensity )->
+    setPlotLevel( PlotLevel::LEVEL_0 );
+  registerWrapper( viewKeyStruct::dPhaseMassDensity_dPressureString, &m_dPhaseMassDensity_dPressure )->
+    setRestartFlags( RestartFlags::NO_WRITE );
+  registerWrapper( viewKeyStruct::dPhaseMassDensity_dTemperatureString, &m_dPhaseMassDensity_dTemperature )->
+    setRestartFlags( RestartFlags::NO_WRITE );
+  registerWrapper( viewKeyStruct::dPhaseMassDensity_dGlobalCompFractionString, &m_dPhaseMassDensity_dGlobalCompFraction )->
+    setRestartFlags( RestartFlags::NO_WRITE );
+
   registerWrapper( viewKeyStruct::phaseViscosityString, &m_phaseViscosity )->
     setPlotLevel( PlotLevel::LEVEL_0 );
   registerWrapper( viewKeyStruct::dPhaseViscosity_dPressureString, &m_dPhaseViscosity_dPressure )->
@@ -107,6 +116,11 @@ void MultiFluidBase::ResizeFields( localIndex const size, localIndex const numPt
   m_dPhaseDensity_dPressure.resize( size, numPts, NP );
   m_dPhaseDensity_dTemperature.resize( size, numPts, NP );
   m_dPhaseDensity_dGlobalCompFraction.resize( size, numPts, NP, NC );
+
+  m_phaseMassDensity.resize( size, numPts, NP );
+  m_dPhaseMassDensity_dPressure.resize( size, numPts, NP );
+  m_dPhaseMassDensity_dTemperature.resize( size, numPts, NP );
+  m_dPhaseMassDensity_dGlobalCompFraction.resize( size, numPts, NP, NC );
 
   m_phaseViscosity.resize( size, numPts, NP );
   m_dPhaseViscosity_dPressure.resize( size, numPts, NP );
