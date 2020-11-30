@@ -71,6 +71,10 @@ protected:
                         arrayView3d< real64 > const & dPhaseDensity_dPressure,
                         arrayView3d< real64 > const & dPhaseDensity_dTemperature,
                         arrayView4d< real64 > const & dPhaseDensity_dGlobalCompFraction,
+                        arrayView3d< real64 > const & phaseMassDensity,
+                        arrayView3d< real64 > const & dPhaseMassDensity_dPressure,
+                        arrayView3d< real64 > const & dPhaseMassDensity_dTemperature,
+                        arrayView4d< real64 > const & dPhaseMassDensity_dGlobalCompFraction,
                         arrayView3d< real64 > const & phaseViscosity,
                         arrayView3d< real64 > const & dPhaseViscosity_dPressure,
                         arrayView3d< real64 > const & dPhaseViscosity_dTemperature,
@@ -93,6 +97,10 @@ protected:
     m_dPhaseDensity_dPressure( dPhaseDensity_dPressure ),
     m_dPhaseDensity_dTemperature( dPhaseDensity_dTemperature ),
     m_dPhaseDensity_dGlobalCompFraction( dPhaseDensity_dGlobalCompFraction ),
+    m_phaseMassDensity( phaseMassDensity ),
+    m_dPhaseMassDensity_dPressure( dPhaseMassDensity_dPressure ),
+    m_dPhaseMassDensity_dTemperature( dPhaseMassDensity_dTemperature ),
+    m_dPhaseMassDensity_dGlobalCompFraction( dPhaseMassDensity_dGlobalCompFraction ),
     m_phaseViscosity( phaseViscosity ),
     m_dPhaseViscosity_dPressure( dPhaseViscosity_dPressure ),
     m_dPhaseViscosity_dTemperature( dPhaseViscosity_dTemperature ),
@@ -133,6 +141,11 @@ protected:
   arrayView3d< real64 > m_dPhaseDensity_dTemperature;
   arrayView4d< real64 > m_dPhaseDensity_dGlobalCompFraction;
 
+  arrayView3d< real64 > m_phaseMassDensity;
+  arrayView3d< real64 > m_dPhaseMassDensity_dPressure;
+  arrayView3d< real64 > m_dPhaseMassDensity_dTemperature;
+  arrayView4d< real64 > m_dPhaseMassDensity_dGlobalCompFraction;
+
   arrayView3d< real64 > m_phaseViscosity;
   arrayView3d< real64 > m_dPhaseViscosity_dPressure;
   arrayView3d< real64 > m_dPhaseViscosity_dTemperature;
@@ -155,6 +168,7 @@ private:
                         arraySlice1d< real64 const > const & composition,
                         arraySlice1d< real64 > const & phaseFraction,
                         arraySlice1d< real64 > const & phaseDensity,
+                        arraySlice1d< real64 > const & phaseMassDensity,
                         arraySlice1d< real64 > const & phaseViscosity,
                         arraySlice2d< real64 > const & phaseCompFraction,
                         real64 & totalDensity ) const = 0;
@@ -170,6 +184,10 @@ private:
                         arraySlice1d< real64 > const & dPhaseDensity_dPressure,
                         arraySlice1d< real64 > const & dPhaseDensity_dTemperature,
                         arraySlice2d< real64 > const & dPhaseDensity_dGlobalCompFraction,
+                        arraySlice1d< real64 > const & phaseMassDensity,
+                        arraySlice1d< real64 > const & dPhaseMassDensity_dPressure,
+                        arraySlice1d< real64 > const & dPhaseMassDensity_dTemperature,
+                        arraySlice2d< real64 > const & dPhaseMassDensity_dGlobalCompFraction,
                         arraySlice1d< real64 > const & phaseViscosity,
                         arraySlice1d< real64 > const & dPhaseViscosity_dPressure,
                         arraySlice1d< real64 > const & dPhaseViscosity_dTemperature,
@@ -265,6 +283,11 @@ public:
   arrayView3d< real64 const > dPhaseDensity_dTemperature() const { return m_dPhaseDensity_dTemperature; }
   arrayView4d< real64 const > dPhaseDensity_dGlobalCompFraction() const { return m_dPhaseDensity_dGlobalCompFraction; }
 
+  arrayView3d< real64 const > phaseMassDensity() const { return m_phaseMassDensity; }
+  arrayView3d< real64 const > dPhaseMassDensity_dPressure() const { return m_dPhaseMassDensity_dPressure; }
+  arrayView3d< real64 const > dPhaseMassDensity_dTemperature() const { return m_dPhaseMassDensity_dTemperature; }
+  arrayView4d< real64 const > dPhaseMassDensity_dGlobalCompFraction() const { return m_dPhaseMassDensity_dGlobalCompFraction; }
+
   arrayView3d< real64 const > phaseViscosity() const { return m_phaseViscosity; }
   arrayView3d< real64 const > dPhaseViscosity_dPressure() const { return m_dPhaseViscosity_dPressure; }
   arrayView3d< real64 const > dPhaseViscosity_dTemperature() const { return m_dPhaseViscosity_dTemperature; }
@@ -296,6 +319,11 @@ public:
     static constexpr auto dPhaseDensity_dPressureString                  = "dPhaseDensity_dPressure";                // dRho_p/dP
     static constexpr auto dPhaseDensity_dTemperatureString               = "dPhaseDensity_dTemperature";             // dRho_p/dT
     static constexpr auto dPhaseDensity_dGlobalCompFractionString        = "dPhaseDensity_dGlobalCompFraction";      // dRho_p/dz
+
+    static constexpr auto phaseMassDensityString                         = "phaseMassDensity";                       // rho_p
+    static constexpr auto dPhaseMassDensity_dPressureString              = "dPhaseMassDensity_dPressure";            // dRho_p/dP
+    static constexpr auto dPhaseMassDensity_dTemperatureString           = "dPhaseMassDensity_dTemperature";         // dRho_p/dT
+    static constexpr auto dPhaseMassDensity_dGlobalCompFractionString    = "dPhaseMassDensity_dGlobalCompFraction";  // dRho_p/dz
 
     static constexpr auto phaseViscosityString                           = "phaseViscosity";                         // mu_p
     static constexpr auto dPhaseViscosity_dPressureString                = "dPhaseViscosity_dPressure";              // dMu_p/dP
@@ -346,6 +374,11 @@ protected:
   array3d< real64 > m_dPhaseDensity_dPressure;
   array3d< real64 > m_dPhaseDensity_dTemperature;
   array4d< real64 > m_dPhaseDensity_dGlobalCompFraction;
+
+  array3d< real64 > m_phaseMassDensity;
+  array3d< real64 > m_dPhaseMassDensity_dPressure;
+  array3d< real64 > m_dPhaseMassDensity_dTemperature;
+  array4d< real64 > m_dPhaseMassDensity_dGlobalCompFraction;
 
   array3d< real64 > m_phaseViscosity;
   array3d< real64 > m_dPhaseViscosity_dPressure;

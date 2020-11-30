@@ -703,6 +703,12 @@
 		<xsd:attribute name="dPhaseFraction_dPressure" type="real64_array3d" />
 		<!--dPhaseFraction_dTemperature => (no description available)-->
 		<xsd:attribute name="dPhaseFraction_dTemperature" type="real64_array3d" />
+		<!--dPhaseMassDensity_dGlobalCompFraction => (no description available)-->
+		<xsd:attribute name="dPhaseMassDensity_dGlobalCompFraction" type="LvArray_Array&lt;double, 4, camp_int_seq&lt;long, 0l, 1l, 2l, 3l&gt;, long, LvArray_ChaiBuffer&gt;" />
+		<!--dPhaseMassDensity_dPressure => (no description available)-->
+		<xsd:attribute name="dPhaseMassDensity_dPressure" type="real64_array3d" />
+		<!--dPhaseMassDensity_dTemperature => (no description available)-->
+		<xsd:attribute name="dPhaseMassDensity_dTemperature" type="real64_array3d" />
 		<!--dPhaseViscosity_dGlobalCompFraction => (no description available)-->
 		<xsd:attribute name="dPhaseViscosity_dGlobalCompFraction" type="LvArray_Array&lt;double, 4, camp_int_seq&lt;long, 0l, 1l, 2l, 3l&gt;, long, LvArray_ChaiBuffer&gt;" />
 		<!--dPhaseViscosity_dPressure => (no description available)-->
@@ -721,6 +727,8 @@
 		<xsd:attribute name="phaseDensity" type="real64_array3d" />
 		<!--phaseFraction => (no description available)-->
 		<xsd:attribute name="phaseFraction" type="real64_array3d" />
+		<!--phaseMassDensity => (no description available)-->
+		<xsd:attribute name="phaseMassDensity" type="real64_array3d" />
 		<!--phaseViscosity => (no description available)-->
 		<xsd:attribute name="phaseViscosity" type="real64_array3d" />
 		<!--totalDensity => (no description available)-->
@@ -783,6 +791,12 @@
 		<xsd:attribute name="dPhaseFraction_dPressure" type="real64_array3d" />
 		<!--dPhaseFraction_dTemperature => (no description available)-->
 		<xsd:attribute name="dPhaseFraction_dTemperature" type="real64_array3d" />
+		<!--dPhaseMassDensity_dGlobalCompFraction => (no description available)-->
+		<xsd:attribute name="dPhaseMassDensity_dGlobalCompFraction" type="LvArray_Array&lt;double, 4, camp_int_seq&lt;long, 0l, 1l, 2l, 3l&gt;, long, LvArray_ChaiBuffer&gt;" />
+		<!--dPhaseMassDensity_dPressure => (no description available)-->
+		<xsd:attribute name="dPhaseMassDensity_dPressure" type="real64_array3d" />
+		<!--dPhaseMassDensity_dTemperature => (no description available)-->
+		<xsd:attribute name="dPhaseMassDensity_dTemperature" type="real64_array3d" />
 		<!--dPhaseViscosity_dGlobalCompFraction => (no description available)-->
 		<xsd:attribute name="dPhaseViscosity_dGlobalCompFraction" type="LvArray_Array&lt;double, 4, camp_int_seq&lt;long, 0l, 1l, 2l, 3l&gt;, long, LvArray_ChaiBuffer&gt;" />
 		<!--dPhaseViscosity_dPressure => (no description available)-->
@@ -801,6 +815,8 @@
 		<xsd:attribute name="phaseDensity" type="real64_array3d" />
 		<!--phaseFraction => (no description available)-->
 		<xsd:attribute name="phaseFraction" type="real64_array3d" />
+		<!--phaseMassDensity => (no description available)-->
+		<xsd:attribute name="phaseMassDensity" type="real64_array3d" />
 		<!--phaseViscosity => (no description available)-->
 		<xsd:attribute name="phaseViscosity" type="real64_array3d" />
 		<!--totalDensity => (no description available)-->
@@ -895,6 +911,12 @@
 		<xsd:attribute name="dPhaseFraction_dPressure" type="real64_array3d" />
 		<!--dPhaseFraction_dTemperature => (no description available)-->
 		<xsd:attribute name="dPhaseFraction_dTemperature" type="real64_array3d" />
+		<!--dPhaseMassDensity_dGlobalCompFraction => (no description available)-->
+		<xsd:attribute name="dPhaseMassDensity_dGlobalCompFraction" type="LvArray_Array&lt;double, 4, camp_int_seq&lt;long, 0l, 1l, 2l, 3l&gt;, long, LvArray_ChaiBuffer&gt;" />
+		<!--dPhaseMassDensity_dPressure => (no description available)-->
+		<xsd:attribute name="dPhaseMassDensity_dPressure" type="real64_array3d" />
+		<!--dPhaseMassDensity_dTemperature => (no description available)-->
+		<xsd:attribute name="dPhaseMassDensity_dTemperature" type="real64_array3d" />
 		<!--dPhaseViscosity_dGlobalCompFraction => (no description available)-->
 		<xsd:attribute name="dPhaseViscosity_dGlobalCompFraction" type="LvArray_Array&lt;double, 4, camp_int_seq&lt;long, 0l, 1l, 2l, 3l&gt;, long, LvArray_ChaiBuffer&gt;" />
 		<!--dPhaseViscosity_dPressure => (no description available)-->
@@ -913,6 +935,8 @@
 		<xsd:attribute name="phaseDensity" type="real64_array3d" />
 		<!--phaseFraction => (no description available)-->
 		<xsd:attribute name="phaseFraction" type="real64_array3d" />
+		<!--phaseMassDensity => (no description available)-->
+		<xsd:attribute name="phaseMassDensity" type="real64_array3d" />
 		<!--phaseViscosity => (no description available)-->
 		<xsd:attribute name="phaseViscosity" type="real64_array3d" />
 		<!--totalDensity => (no description available)-->
