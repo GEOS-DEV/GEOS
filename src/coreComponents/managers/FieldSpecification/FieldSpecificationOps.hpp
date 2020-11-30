@@ -35,7 +35,6 @@ struct OpEqual
    * @tparam U type of the right-hand side
    * @param[in] lhs value to set
    * @param[in] rhs input value
-   * @return none
    */
   template< typename T, typename U >
   GEOSX_HOST_DEVICE static inline
@@ -56,7 +55,6 @@ struct OpAdd
    * @tparam U type of the right-hand side
    * @param[in] lhs value to update
    * @param[in] rhs input value
-   * @return none
    */
   template< typename T, typename U >
   GEOSX_HOST_DEVICE static inline
@@ -118,7 +116,7 @@ struct FieldSpecificationOp
                      integer const component,
                      real64 const value )
   {
-    OP::template apply( field( index ).Data()[component], value );
+    OP::template apply( field( index )[component], value );
   }
 
   /**
@@ -163,7 +161,7 @@ struct FieldSpecificationOp
                   integer const component,
                   real64 & value )
   {
-    OP::template apply( value, field( index ).Data()[component] );
+    OP::template apply( value, field( index )[component] );
   }
 
   /**
@@ -224,16 +222,16 @@ struct FieldSpecificationOp
     {
       for( localIndex a = 0; a < field.size( 1 ); ++a )
       {
-        OP::template apply( field( index, a ).Data()[component], value );
+        OP::template apply( field( index, a )[component], value );
       }
     }
     else
     {
       for( localIndex a = 0; a < field.size( 1 ); ++a )
       {
-        for( localIndex c = 0; c < T::Length(); ++c )
+        for( localIndex c = 0; c < T::SIZE; ++c )
         {
-          OP::template apply( field( index, a ).Data()[c], value );
+          OP::template apply( field( index, a )[c], value );
         }
       }
     }
@@ -354,7 +352,7 @@ struct FieldSpecificationOp
       {
         for( localIndex b = 0; b < field.size( 2 ); ++b )
         {
-          OP::template apply( field( index, a, b ).Data()[component], value );
+          OP::template apply( field( index, a, b )[component], value );
         }
       }
     }
@@ -364,9 +362,9 @@ struct FieldSpecificationOp
       {
         for( localIndex b = 0; b < field.size( 2 ); ++b )
         {
-          for( localIndex c = 0; c < T::Length(); ++c )
+          for( localIndex c = 0; c < T::size(); ++c )
           {
-            OP::template apply( field( index, a, b ).Data()[c], value );
+            OP::template apply( field( index, a, b )[c], value );
           }
         }
       }
@@ -381,7 +379,6 @@ struct FieldSpecificationOp
    * @param[in] index The index in field to read @p value from.
    * @param[in] component The index along second dimension of 2d array.
    * @param[out] value The value that is read from @p field.
-   * @return type of the input field value.
    */
   template< typename T, int USD >
   GEOSX_HOST_DEVICE
@@ -464,7 +461,8 @@ struct FieldSpecificationEqual : public FieldSpecificationOp< OpEqual >
    * negate the rhs vector upon assembly. Thus, it sets the value to negative of the desired
    * update for the field. For a linear problem, this may lead to unexpected results.
    */
-  static inline void GEOSX_HOST_DEVICE
+  GEOSX_HOST_DEVICE
+  static inline void
   SpecifyFieldValue( globalIndex const dof,
                      globalIndex const dofRankOffset,
                      CRSMatrixView< real64, globalIndex const > const & matrix,
@@ -564,12 +562,13 @@ struct FieldSpecificationAdd : public FieldSpecificationOp< OpAdd >
    *
    */
   GEOSX_HOST_DEVICE
-  static inline void SpecifyFieldValue( globalIndex const dof,
-                                        globalIndex const dofRankOffset,
-                                        CRSMatrixView< real64, globalIndex const > const & matrix,
-                                        real64 & rhs,
-                                        real64 const bcValue,
-                                        real64 const fieldValue )
+  static inline void
+  SpecifyFieldValue( globalIndex const dof,
+                     globalIndex const dofRankOffset,
+                     CRSMatrixView< real64, globalIndex const > const & matrix,
+                     real64 & rhs,
+                     real64 const bcValue,
+                     real64 const fieldValue )
   {
     GEOSX_UNUSED_VAR( dof );
     GEOSX_UNUSED_VAR( dofRankOffset );

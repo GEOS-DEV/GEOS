@@ -20,6 +20,7 @@
         maxTimeStepCuts="2"/>
       <LinearSolverParameters
         solverType="direct"
+        directParallel="0"
         logLevel="0"/>
     </LagrangianContact>
 
@@ -162,7 +163,7 @@
       cellBlocks="{ South_HEX, North_HEX }"
       materialList="{ rock }"/>
 
-    <FaceElementRegion
+    <SurfaceElementRegion
       name="Fracture"
       defaultAperture="0.0"
       materialList="{ fractureMaterial, rock }"/>

@@ -155,14 +155,14 @@ public:
    * @brief Get perforation locations.
    * @return list of perforation locations
    */
-  arrayView1d< R1Tensor > GetLocation() { return m_location; }
+  arrayView2d< real64 > GetLocation() { return m_location; }
 
 
   /**
    * @brief Provide an immutable accessor to a const perforation location arrayView.
    * @return list of perforation locations
    */
-  arrayView1d< R1Tensor const > GetLocation() const { return m_location; }
+  arrayView2d< real64 const > GetLocation() const { return m_location; }
 
 
   /**
@@ -294,25 +294,6 @@ private:
                                       localIndex const er, localIndex const esr, localIndex const ei,
                                       real64 & dx, real64 & dy, real64 & dz ) const;
 
-  /**
-   * @brief Check if the well is along the x-, y-, or z- directions.
-   * @param[in] vecWellElemCenterToPerf vector connecting the well element center to the perforation
-   * @param[in] dx dimension of the element in the x-direction
-   * @param[in] dy dimension of the element in the y-direction
-   * @param[in] dz dimension of the element in the z-direction
-   * @param[in] perm absolute permeability in the reservoir element
-   * @param[out] d1 dimension of the element in the first direction
-   * @param[out] d2 dimension of the element in the second direction
-   * @param[out] h dimension of the element in the third direction
-   * @param[out] k1 absolute permeability in the reservoir element (first direction)
-   * @param[out] k2 absolute permeability in the reservoir element (second direction)
-   */
-  void DecideWellDirection( R1Tensor const & vecWellElemCenterToPerf,
-                            real64 const & dx, real64 const & dy, real64 const & dz,
-                            R1Tensor const & perm,
-                            real64 & d1, real64 & d2, real64 & h,
-                            real64 & k1, real64 & k2 ) const;
-
   ///@}
 
   /// @cond DO_NOT_DOCUMENT
@@ -329,7 +310,7 @@ private:
   array1d< localIndex > m_wellElementIndex;
 
   /// Location of the perforations
-  array1d< R1Tensor > m_location;
+  array2d< real64 > m_location;
 
   /// Well transmissibility at the perforations
   array1d< real64 > m_wellTransmissibility;

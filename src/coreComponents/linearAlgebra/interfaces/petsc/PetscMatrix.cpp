@@ -843,23 +843,16 @@ localIndex PetscMatrix::numLocalNonzeros() const
   PetscInt firstrow, lastrow;
   GEOSX_LAI_CHECK_ERROR( MatGetOwnershipRange( m_mat, &firstrow, &lastrow ) );
 
-  PetscInt numEntries;
-  localIndex result = 0;
-
-  // loop over rows
-  for( PetscInt row = firstrow; row < lastrow; ++row )
-  {
-    GEOSX_LAI_CHECK_ERROR( MatGetRow( m_mat, row, &numEntries, nullptr, nullptr ) );
-    result += numEntries;
-    GEOSX_LAI_CHECK_ERROR( MatRestoreRow( m_mat, row, &numEntries, nullptr, nullptr ) );
-  }
-
-  return result;
+  MatInfo info;
+  GEOSX_LAI_CHECK_ERROR( MatGetInfo( m_mat, MAT_LOCAL, &info ) );
+  return static_cast< localIndex >( info.nz_used );
 }
 
 globalIndex PetscMatrix::numGlobalNonzeros() const
 {
-  return MpiWrapper::Sum( LvArray::integerConversion< globalIndex >( numLocalNonzeros() ), getComm() );
+  MatInfo info;
+  GEOSX_LAI_CHECK_ERROR( MatGetInfo( m_mat, MAT_GLOBAL_SUM, &info ) );
+  return static_cast< localIndex >( info.nz_used );
 }
 
 real64 PetscMatrix::normInf() const
