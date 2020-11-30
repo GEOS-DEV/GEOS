@@ -439,13 +439,13 @@ protected:
 
   // Will become arrayView2d< real64 const > const
 
-  arrayView1d< R1Tensor const > const m_w;
+  arrayView2d< real64 const > const m_w;
 
-  arrayView1d< R1Tensor const > const m_nVec;
+  arrayView2d< real64 const > const m_nVec;
 
-  arrayView1d< R1Tensor const > const m_tVec1;
+  arrayView2d< real64 const > const m_tVec1;
 
-  arrayView1d< R1Tensor const > const m_tVec2;
+  arrayView2d< real64 const > const m_tVec2;
 
   arrayView2d< real64 const > const m_surfaceCenter;
 

@@ -274,32 +274,32 @@ public:
    * @return the total displacement array if it exists, or an error is thrown if it does not exist
    * @note An error is thrown if the displacement jump does not exist
    */
-  array1d< R1Tensor > & displacementJump()
-  { return getReference< array1d< R1Tensor > >( viewKeys.dispJump ); }
+  array2d< real64 > & displacementJump()
+  { return getReference< array2d< real64 > >( viewKeys.dispJump ); }
 
   /**
    * @brief Provide an immutable arrayView to the total displacement array.
    * @return immutable arrayView of the total displacement array if it exists, or an error is thrown if it does not exist
    * @note An error is thrown if the displacement jump does not exist
    */
-  arrayView1d< R1Tensor const > displacementJump() const
-  {return getReference< array1d< R1Tensor > >( viewKeys.dispJump ); }
+  arrayView2d< real64 const > displacementJump() const
+  {return getReference< array2d< real64 > >( viewKeys.dispJump ); }
 
   /**
    * @brief Get a mutable incremental displacement array.
    * @return the incremental displacement array if it exists, or an error is thrown if it does not exist
    * @note An error is thrown if the incremental displacement jump does not exist
    */
-  array1d< R1Tensor > & incrementalDisplacementJump()
-  { return getReference< array1d< R1Tensor > >( viewKeys.deltaDispJump ); }
+  array2d< real64 > & incrementalDisplacementJump()
+  { return getReference< array2d< real64 > >( viewKeys.deltaDispJump ); }
 
   /**
    * @brief Provide an immutable arrayView to the incremental displacement jump array.
    * @return immutable arrayView of the incremental displacement array if it exists, or an error is thrown if it does not exist
    * @note An error is thrown if the incremental displacement jump does not exist
    */
-  arrayView1d< R1Tensor const > incrementalDisplacementJump() const
-  { return getReference< array1d< R1Tensor > >( viewKeys.deltaDispJump ); }
+  arrayView2d< real64 const > incrementalDisplacementJump() const
+  { return getReference< array2d< real64 > >( viewKeys.deltaDispJump ); }
 
   ///@}
 

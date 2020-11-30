@@ -257,9 +257,7 @@ void SolidMechanicsEmbeddedFractures::AssembleSystem( real64 const time,
   arrayView1d< globalIndex const > const & jumpDofNumber = subRegion.getReference< globalIndex_array >( jumpDofKey );
 
 
-  real64 const gravityVectorData[3] = { gravityVector().Data()[0],
-                                        gravityVector().Data()[1],
-                                        gravityVector().Data()[2] };
+  real64 const gravityVectorData[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( gravityVector() );
 
 
   real64 maxTraction = finiteElement::

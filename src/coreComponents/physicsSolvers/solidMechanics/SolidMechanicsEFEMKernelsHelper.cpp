@@ -29,9 +29,9 @@ namespace SolidMechanicsEFEMKernelsHelper
 {
 
 void assembleEquilibriumOperator( real64 ( & eqMatrix )[3][6],
-                                  R1Tensor const & nVec,
-                                  R1Tensor const & tVec1,
-                                  R1Tensor const & tVec2,
+                                  arraySlice1d< real64 const > const & nVec,
+                                  arraySlice1d< real64 const > const & tVec1,
+                                  arraySlice1d< real64 const > const & tVec2,
                                   real64 const hInv )
 {
   GEOSX_MARK_FUNCTION;

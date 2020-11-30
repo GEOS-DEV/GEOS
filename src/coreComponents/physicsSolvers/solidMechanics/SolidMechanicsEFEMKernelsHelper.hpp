@@ -37,8 +37,8 @@ namespace SolidMechanicsEFEMKernelsHelper
 template< int NUM_NODES >
 void computeHeavisideFunction( integer (& heaviside)[NUM_NODES],
                                real64 (& X)[NUM_NODES][3],
-                               R1Tensor const & normalVector,
-                               R1Tensor const & elementCenter )
+                               arraySlice1d< real64 const > const & normalVector,
+                               arraySlice1d< real64 const > const & elementCenter )
 {
   for( int a=0; a < NUM_NODES; a++ )
   {
@@ -81,9 +81,9 @@ void assembleStrainOperator( real64 ( & strainMatrix )[I_SIZE][J_SIZE],
 
 template< int NUM_NODES >
 void assembleCompatibilityOperator( real64 ( & compMatrix )[6][3],
-                                    R1Tensor const & nVec,
-                                    R1Tensor const & tVec1,
-                                    R1Tensor const & tVec2,
+                                    arraySlice1d< real64 const > const & nVec,
+                                    arraySlice1d< real64 const > const & tVec1,
+                                    arraySlice1d< real64 const > const & tVec2,
                                     integer ( & heavisideFun )[NUM_NODES],
                                     real64 ( & dNdX )[NUM_NODES][3] )
 {
@@ -147,9 +147,9 @@ void assembleCompatibilityOperator( real64 ( & compMatrix )[6][3],
 /// R1Tensor will become arraySlice1d< real64 const >
 
 void assembleEquilibriumOperator( real64 ( &eqMatrix )[3][6],
-                                  R1Tensor const &  nVec,
-                                  R1Tensor const &  tVec1,
-                                  R1Tensor const &  tVec2,
+                                  arraySlice1d< real64 const > const &  nVec,
+                                  arraySlice1d< real64 const > const &  tVec1,
+                                  arraySlice1d< real64 const > const &  tVec2,
                                   real64 const hInv );
 
 /*
