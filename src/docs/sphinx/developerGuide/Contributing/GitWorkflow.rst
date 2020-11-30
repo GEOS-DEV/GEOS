@@ -173,14 +173,19 @@ An example lifecycle diagram for hotfix branchs:
 
 .. code-block:: sh
 
-                                        (tag v1.2.0)
-   A----B----C----D----E----F-----G---------H             (release)
-        ^                         ^\       / \
-        |                         | \     /   \
-        |                         |  GA--GB    \          (hotfix)
-        |                         |             \
-   A----B----C----D----E----F-----G--------------H---     (develop)
-                              (tag v1.2.0)
+                        (tag v1.2.1)  (tag v1.3.0)
+   A----B'---...-----G---------H'-----------J'     (release)
+        ^            ^\       / \           ^
+        |            | \     /   \          |
+        |            |  GA--GB    \         |     (hotfix)
+        |            |             \        |
+   A----B----...-----G--------------H---I---J     (develop)
+                (tag v1.2.0)
+
+Note that this approach to hotfixing and merge-back into develop results in the 
+presense of merge commits in ``release`` and that the histories of ``develop`` 
+and ``release`` are not identical.
+
 
 Documentation Branches
 ----------------------
