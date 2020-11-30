@@ -89,37 +89,37 @@ void GraphFromText::RemoveFromEdgeList(localIndex ind, array1d<GraphEdge*> edgeL
     //std::cout<<i<<"size\n";
     if (edgeList[i]->getEdgeIndex()==ind)
     {
-    std::cout<<edgeList.size(0);
+    //std::cout<<edgeList.size(0);
 
-      std::cout<<"D";
-      std::cout<<"test";
+      //std::cout<<"D";
+      //std::cout<<"test";
 
       GraphEdge* edge = edgeList[i];
-      std::cout<<edge->getEdgeIndex();
+      //std::cout<<edge->getEdgeIndex();
 
-      std::cout<<"test";
+      //std::cout<<"test";
 
       int EdgeinVertexIndex = -1;
-      std::cout<<m_vertexWithEdgesMap[edge->getVertex1()].size(0)<<"\n";
-      std::cout<<"test";
+      //std::cout<<m_vertexWithEdgesMap[edge->getVertex1()].size(0)<<"\n";
+      //std::cout<<"test";
       //Delete the edge from the edges linked to the Vertex1
       for( localIndex j = 0; j < m_vertexWithEdgesMap[edge->getVertex1()].size(0); j++)
       {
-        std::cout<<j<<"\n";
+        //std::cout<<j<<"\n";
         if (m_vertexWithEdgesMap[edge->getVertex1()][j]->getEdgeIndex()==ind)
         {
-          std::cout<<"D";
+          //std::cout<<"D";
 
           EdgeinVertexIndex = j;
         }
       }
       if (EdgeinVertexIndex!=-1)
       {
-        std::cout<<"D";
+        //std::cout<<"D";
         
         m_vertexWithEdgesMap[edge->getVertex1()].erase(EdgeinVertexIndex);
       }
-      std::cout<<"D";
+      //std::cout<<"D";
 
       EdgeinVertexIndex=-1;
       
@@ -153,9 +153,9 @@ void GraphFromText::RemoveFromEdgeList(localIndex ind, array1d<GraphEdge*> edgeL
 void GraphFromText::RemoveEdge(localIndex ind)
 {
   RemoveFromEdgeList(ind, m_edges);
-  std::cout<<"E";
+  //std::cout<<"E";
   RemoveFromEdgeList(ind, m_boundaryEdges);
-  std::cout<<"C";
+  //std::cout<<"C";
 
 }
 
@@ -431,12 +431,12 @@ void GraphFromText::PartitionGraph(const MeshLevel & mesh)
     }
     if (to_delete != -1)
     {
-      std::cout<<"A";
+      //std::cout<<"A";
       RemoveVertex(m_vertices[to_delete]);
-      std::cout<<"B\n";
+      //std::cout<<"B\n";
     }
   }
-  std::cout<<"Test\n";
+  //std::cout<<"Test\n";
   
   RemapFace(mesh);
   FaceManager const & faceManager = *mesh.getFaceManager();
@@ -460,7 +460,7 @@ void GraphFromText::RemapFace(const MeshLevel & mesh)
   FaceManager const & faceManager = *mesh.getFaceManager();
   arrayView2d< localIndex const > const & elemList = faceManager.elementList();
   //arrayView1d< integer const > const & faceGhostRank = faceManager.ghostRank();  
-  std::cout<<"Test\n";
+  //std::cout<<"Test\n";
   for(localIndex h = 0; h < elemList.size(0); h++)
   { 
     GEOSX_ERROR_IF_GT( elemList[ h ][ 0 ], 1e9 );

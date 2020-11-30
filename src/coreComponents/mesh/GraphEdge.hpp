@@ -39,7 +39,7 @@ public:
   /**
    * @brief Constructor for GraphEdge object
    * @param [in] index of the edge
-   * @param [in] neighbour1 one of the two GraphVertexs forming the connection
+   * @param [in] neighbour1 one of the two GraphVertex forming the connection
    * @param [in] neighbour2 the other GraphVertex
    * 
    */   
