@@ -31,6 +31,7 @@ class CellElementSubRegion : public CellBlock
 {
 public:
 
+  /// Type of map between cell blocks and embedded elements
   using EmbSurfMapType = InterObjectRelation< ArrayOfArrays< localIndex > >;
 
   /**
@@ -73,7 +74,7 @@ public:
 
   ///@}
 
-  /*
+  /**
    * @brief Add fractured element to list and relative entries to the map.
    * @param cellElemIndex cell element index
    * @param embSurfIndex embedded surface element index

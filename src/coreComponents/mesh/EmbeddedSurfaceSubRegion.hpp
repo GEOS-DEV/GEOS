@@ -155,15 +155,21 @@ public:
     /// Connectivity index string
     static constexpr auto connectivityIndexString     = "connectivityIndex";
 
+    /// Displacement jump string
     static constexpr auto dispJumpString             = "displacementJump";
 
+    /// Delta displacement jump string
     static constexpr auto deltaDispJumpString        = "deltaDisplacementJump";
 
+    /// Displacement jump key
     dataRepository::ViewKey dispJump                  = {dispJumpString};
 
+    /// Delta displacement jump key
     dataRepository::ViewKey deltaDispJump             = {deltaDispJumpString};
 
-  } viewKeys;
+  }
+  /// viewKey struct for the EmbeddedSurfaceSubRegion class
+  viewKeys;
 
   virtual void setupRelatedObjectsInRelations( MeshLevel const * const mesh ) override;
 
