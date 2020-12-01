@@ -141,11 +141,11 @@ Element: Cylinder
 .. include:: ../../coreComponents/fileIO/schema/docs/Cylinder.rst
 
 
-.. _XML_DamageLinearElasticIsotropic:
+.. _XML_DamageElasticIsotropic:
 
-Element: DamageLinearElasticIsotropic
-=====================================
-.. include:: ../../coreComponents/fileIO/schema/docs/DamageLinearElasticIsotropic.rst
+Element: DamageElasticIsotropic
+===============================
+.. include:: ../../coreComponents/fileIO/schema/docs/DamageElasticIsotropic.rst
 
 
 .. _XML_Dirichlet:
@@ -824,11 +824,11 @@ Datastructure: Cylinder
 .. include:: ../../coreComponents/fileIO/schema/docs/Cylinder_other.rst
 
 
-.. _DATASTRUCTURE_DamageLinearElasticIsotropic:
+.. _DATASTRUCTURE_DamageElasticIsotropic:
 
-Datastructure: DamageLinearElasticIsotropic
-===========================================
-.. include:: ../../coreComponents/fileIO/schema/docs/DamageLinearElasticIsotropic_other.rst
+Datastructure: DamageElasticIsotropic
+=====================================
+.. include:: ../../coreComponents/fileIO/schema/docs/DamageElasticIsotropic_other.rst
 
 
 .. _DATASTRUCTURE_Dirichlet:
