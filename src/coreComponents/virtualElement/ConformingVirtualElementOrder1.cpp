@@ -30,8 +30,7 @@ namespace geosx
       arrayView2d< real64 const > cellCenters = cellSubRegion.getElementCenter();
       arrayView1d< real64 const > cellVolumes =	cellSubRegion.getElementVolume();
       arraySlice1d< real64 const > cellCenter = cellCenters[cellIndex];
-      localIndex const numCellFaces = elementToFaceMap[cellIndex].size(
-);
+      localIndex const numCellFaces = elementToFaceMap[cellIndex].size();
       localIndex const numCellPoints = cellToNodes.size();
       numSupportPoints = numCellPoints;
 
@@ -108,8 +107,48 @@ namespace geosx
         }
       }
 
+      // Compute non constant scaled monomials' integrals on the polyhedron.
+      array1d<real64> monomInternalIntegrals(3);
+      LvArray::tensorOps::fill<3>(monomInternalIntegrals, 0.0);
+      for(localIndex numFace = 0; numFace < numCellFaces; ++numFace)
+      {
+        localIndex const faceIndex = elementToFaceMap[cellIndex][numFace];
+        arraySlice1d< localIndex const > faceToNodes = faceManager.nodeList()[faceIndex];
+        arraySlice1d< real64 const > faceCenter = faceCenters[faceIndex];
+        localIndex const numFaceVertices = faceToNodes.size();
+        for(localIndex numVertex = 0; numVertex < numFaceVertices; ++numVertex)
+        {
+          localIndex numNextVertex = (numVertex+1)%numFaceVertices;
+          // compute value of 3D monomials at the quadrature point on the sub-tetrahedron (the
+          // barycenter).
+          // The result is ((v0 + v1 + faceCenter + cellCenter)/4 - cellCenter) / cellDiameter =
+          // = (v0 + v1 + faceCenter - 3*cellcenter)/(4*cellDiameter).
+          array1d<real64> monomialValues(3);
+          for(localIndex pos = 0; pos < 3; ++pos)
+          {
+            monomialValues(pos) = (nodesCoords(faceToNodes(numVertex), pos) +
+                                   nodesCoords(faceToNodes(numNextVertex), pos) +
+                                   faceCenter(pos) - 3*cellCenter(pos))*invCellDiameter/4.0;
+          }
+          // compute quadrature weight (the volume of the sub-tetrahedron).
+          array2d<real64> edgeTangentsMatrix(3, 3);
+          for(localIndex pos = 0; pos < 3; ++pos)
+          {
+            edgeTangentsMatrix(0, pos) = faceCenter(pos) - cellCenter(pos);
+            edgeTangentsMatrix(1, pos) = nodesCoords(faceToNodes(numVertex), pos) - cellCenter(pos);
+            edgeTangentsMatrix(2, pos) = nodesCoords(faceToNodes(numNextVertex), pos) -
+              cellCenter(pos);
+          }
+          real64 subTetVolume = LvArray::math::abs
+            (LvArray::tensorOps::determinant<3>(edgeTangentsMatrix)) / 6.0;
+          for(localIndex pos = 0; pos < 3; ++pos)
+            monomInternalIntegrals(pos) += monomialValues(pos)*subTetVolume;
+        }
+      }
+
       // Compute integral mean of basis functions.
       real64 const monomialDerivativeInverse = cellDiameter*cellDiameter/cellVolumes[cellIndex];
+      basisFunctionsIntegralMean.resize(numCellPoints);
       for(localIndex numVertex = 0; numVertex < numCellPoints; ++numVertex)
       {
         array1d<real64> piNablaDofs(4);
@@ -120,6 +159,9 @@ namespace geosx
                           piNablaDofs[1]*monomBoundaryIntegrals[1] -
                           piNablaDofs[2]*monomBoundaryIntegrals[2] -
                           piNablaDofs[3]*monomBoundaryIntegrals[3] )/monomBoundaryIntegrals[0];
+        basisFunctionsIntegralMean(numVertex) = piNablaDofs[0] + (1/cellVolumes[cellIndex]) *
+          (piNablaDofs[1]*monomInternalIntegrals[0] + piNablaDofs[2]*monomInternalIntegrals[1]
+           + piNablaDofs[3] * monomInternalIntegrals[2]);
       }
     }
 
@@ -249,8 +291,9 @@ namespace geosx
       LvArray::tensorOps::fill<3>(threeDMonomialIntegrals, 0.0);
       for(localIndex numSubTriangle = 0; numSubTriangle < numFaceVertices; ++numSubTriangle)
       {
-        // compute value of monomials at the quadrature point on the sub-triangle (the barycenter).
-        // The result is (v(0) + v(1) - 2*faceCenter)/(3*faceDiameter).
+        // compute value of 2D monomials at the quadrature point on the sub-triangle (the barycenter).
+        // The result is ((v(0)+v(1)+faceCenter)/3 - faceCenter) / faceDiameter =
+        //  = (v(0) + v(1) - 2*faceCenter)/(3*faceDiameter).
         array1d<real64> monomialValues(2);
         LvArray::tensorOps::copy<2>(monomialValues, faceRotatedCentroid); // val = faceCenter
         LvArray::tensorOps::scale<2>(monomialValues, -2.0); // val = -2*faceCenter

@@ -31,6 +31,7 @@ namespace geosx
 
       localIndex numQuadraturePoints;
       localIndex numSupportPoints;
+      array1d<real64> basisFunctionsIntegralMean;
 
       void ComputeFaceIntegrals( MeshLevel const & mesh,
                                  localIndex const & faceId,
