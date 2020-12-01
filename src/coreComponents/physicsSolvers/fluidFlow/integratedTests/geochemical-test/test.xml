@@ -14,6 +14,7 @@
       fluidNames="{water}"
       reactiveFluidNames="{chem}"
       solidNames="{rock}"
+      fixedHplus="1"
       outputSpeciesFileName="speciesOutput.txt">
 
       <NonlinearSolverParameters

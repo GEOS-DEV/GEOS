@@ -196,6 +196,7 @@ public:
     static constexpr auto concentrationNewString      = "concentrationNew";
     static constexpr auto outputSpeciesFileNameString      = "outputSpeciesFileName";
     static constexpr auto geochemicalModelString      = "geochemicalModel";
+    static constexpr auto fixedHplusString      = "fixedHplus";    
 
   } viewKeysGeochemicalModel;
 
@@ -252,6 +253,8 @@ private:
 
   string m_outputSpeciesFileName;
 
+  integer m_fixedHplus;
+  
   //Below is not used in GeochemicalModel model
 
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > m_porosity;

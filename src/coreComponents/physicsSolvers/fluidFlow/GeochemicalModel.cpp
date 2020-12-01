@@ -63,6 +63,11 @@ GeochemicalModel::GeochemicalModel( const std::string & name,
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Output species to file" );
 
+  this->registerWrapper( viewKeyStruct::fixedHplusString, &m_fixedHplus )->
+    setApplyDefaultValue( 0 )->
+    setInputFlag( InputFlags::OPTIONAL )->
+    setDescription( "Whether Hplus is fixed" );
+  
 }
 
 void GeochemicalModel::RegisterDataOnMesh( Group * const MeshBodies )
@@ -371,10 +376,14 @@ void GeochemicalModel::AssembleSystem( real64 const time,
 {
   GEOSX_MARK_FUNCTION;
 
+  /*
   bool isInitialization = time <= 0.0 ? 1 : 0;
 
   isInitialization = 0;
+  */
 
+  bool isInitialization = m_fixedHplus == 0 ? 0 : 1;
+  
   AssembleAccumulationTerms( domain, dofManager, localMatrix, localRhs, isInitialization );
 
   AssembleFluxTerms( time,
