@@ -26,8 +26,6 @@
 
 using namespace geosx;
 
-static real64 constexpr machinePrecision = 20.0 * std::numeric_limits< real64 >::epsilon();
-
 template< typename LAI >
 class LAOperationsTest : public ::testing::Test
 {};
@@ -508,7 +506,7 @@ LinearSolverParameters params_Direct()
 {
   LinearSolverParameters parameters;
   parameters.solverType = geosx::LinearSolverParameters::SolverType::direct;
-  parameters.krylov.relTolerance = machinePrecision;
+  parameters.direct.parallel = 0;
   return parameters;
 }
 
