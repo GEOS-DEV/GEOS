@@ -489,7 +489,7 @@ void SinglePhaseBase::AccumulationLaunch( localIndex const targetIndex,
   arrayView2d< real64 const > const dPvMult_dPres =
     solid.getReference< array2d< real64 > >( ConstitutiveBase::viewKeyStruct::dPVMult_dPresString );
   arrayView1d< real64 const > const bulkModulus =
-    ISPORO ? solid.getReference< array1d< real64 > >( "BulkModulus" ) : porosityOld;
+    ISPORO ? solid.getReference< array1d< real64 > >( "bulkModulus" ) : porosityOld;
   real64 const biotCoefficient = ISPORO ? solid.getReference< real64 >( "BiotCoefficient" ) : 0.0;
 
   using Kernel = AccumulationKernel< CellElementSubRegion >;

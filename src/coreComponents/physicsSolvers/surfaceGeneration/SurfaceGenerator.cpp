@@ -2838,10 +2838,10 @@ void SurfaceGenerator::CalculateNodeAndFaceSIF( DomainPartition & domain,
     domain.GetGroup< ConstitutiveManager >( keys::ConstitutiveManager );
 
   ElementRegionManager::MaterialViewAccessor< arrayView1d< real64 const > > const shearModulus =
-    elementManager.ConstructFullMaterialViewAccessor< array1d< real64 >, arrayView1d< real64 const > >( "ShearModulus", constitutiveManager );
+    elementManager.ConstructFullMaterialViewAccessor< array1d< real64 >, arrayView1d< real64 const > >( "shearModulus", constitutiveManager );
 
   ElementRegionManager::MaterialViewAccessor< arrayView1d< real64 const > > const bulkModulus =
-    elementManager.ConstructFullMaterialViewAccessor< array1d< real64 >, arrayView1d< real64 const > >( "BulkModulus", constitutiveManager );
+    elementManager.ConstructFullMaterialViewAccessor< array1d< real64 >, arrayView1d< real64 const > >( "bulkModulus", constitutiveManager );
 
   ElementRegionManager::MaterialViewAccessor< arrayView3d< real64 const, solid::STRESS_USD > > const
   stress = elementManager.ConstructFullMaterialViewAccessor< array3d< real64, solid::STRESS_PERMUTATION >,
