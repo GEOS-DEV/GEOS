@@ -18,9 +18,9 @@
         newtonTol="1.0e-6"
         newtonMaxIter="8"/>
       <LinearSolverParameters
-        solverType="gmres"
-        krylovTol="1.0e-12"
-        preconditionerType="amg"/>
+        solverType="direct"
+        directParallel="0"
+        logLevel="0"/>
     </SolidMechanicsLagrangianSSLE>
   </Solvers>
 

@@ -256,9 +256,9 @@ void LagrangianContactSolver::ComputeTolerances( DomainPartition & domain ) cons
 
   // Get the "face to element" map (valid for the entire mesh)
   FaceManager::ElemMapType const & faceToElem = faceManager.toElementRelation();
-  arrayView2d< localIndex const > const & faceToElemRegion = faceToElem.m_toElementRegion.toViewConst();
-  arrayView2d< localIndex const > const & faceToElemSubRegion = faceToElem.m_toElementSubRegion.toViewConst();
-  arrayView2d< localIndex const > const & faceToElemIndex = faceToElem.m_toElementIndex.toViewConst();
+  arrayView2d< localIndex const > const & faceToElemRegion = faceToElem.m_toElementRegion;
+  arrayView2d< localIndex const > const & faceToElemSubRegion = faceToElem.m_toElementSubRegion;
+  arrayView2d< localIndex const > const & faceToElemIndex = faceToElem.m_toElementIndex;
 
   // Get the volume for all elements
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > const elemVolume =
@@ -288,8 +288,8 @@ void LagrangianContactSolver::ComputeTolerances( DomainPartition & domain ) cons
     if( subRegion.hasWrapper( m_tractionKey ) )
     {
       arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
-      arrayView1d< real64 const > const & faceArea = subRegion.getElementArea().toViewConst();
-      arrayView3d< real64 const > const & faceRotationMatrix = subRegion.getElementRotationMatrix().toViewConst();
+      arrayView1d< real64 const > const & faceArea = subRegion.getElementArea();
+      arrayView3d< real64 const > const & faceRotationMatrix = subRegion.getElementRotationMatrix();
       arrayView2d< localIndex const > const & elemsToFaces = subRegion.faceList();
 
       arrayView1d< real64 > const & normalTractionTolerance =
@@ -304,7 +304,7 @@ void LagrangianContactSolver::ComputeTolerances( DomainPartition & domain ) cons
         if( ghostRank[kfe] < 0 )
         {
           real64 const area = faceArea[kfe];
-          R1Tensor stiffApprox[ 2 ];
+          real64 stiffApprox[ 2 ][ 3 ];
           real64 averageYoungModulus = 0.0;
           real64 averageConstrainedModulus = 0.0;
           real64 averageBoxSize0 = 0.0;
@@ -354,7 +354,7 @@ void LagrangianContactSolver::ComputeTolerances( DomainPartition & domain ) cons
 
             for( localIndex j = 0; j < 3; ++j )
             {
-              stiffApprox[i]( j ) = E / ( ( 1.0 + nu )*( 1.0 - 2.0*nu ) ) * 8.0 / 9.0 * ( 2.0 - 3.0 * nu ) * volume / ( boxSize[j]*boxSize[j] );
+              stiffApprox[i][j] = E / ( ( 1.0 + nu )*( 1.0 - 2.0*nu ) ) * 8.0 / 9.0 * ( 2.0 - 3.0 * nu ) * volume / ( boxSize[j]*boxSize[j] );
             }
 
             averageYoungModulus += 0.5*E;
@@ -365,7 +365,7 @@ void LagrangianContactSolver::ComputeTolerances( DomainPartition & domain ) cons
           real64 invStiffApprox[ 3 ][ 3 ] = { { 0 } };
           for( localIndex j = 0; j < 3; ++j )
           {
-            invStiffApprox[ j ][ j ] = ( stiffApprox[0]( j ) + stiffApprox[1]( j ) ) / ( stiffApprox[0]( j ) * stiffApprox[1]( j ) );
+            invStiffApprox[ j ][ j ] = ( stiffApprox[0][j] + stiffApprox[1][j] ) / ( stiffApprox[0][j] * stiffApprox[1][j] );
           }
 
           // Compute R^T * (invK) * R
@@ -454,7 +454,7 @@ void LagrangianContactSolver::UpdateDeformationForCoupling( DomainPartition & do
   FaceManager & faceManager = *meshLevel.getFaceManager();
   ElementRegionManager & elemManager = *meshLevel.getElemManager();
 
-  ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager.nodeList().toViewConst();
+  ArrayOfArraysView< localIndex const > const faceToNodeMap = faceManager.nodeList().toViewConst();
 
   arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const & u = nodeManager.totalDisplacement();
 
@@ -462,9 +462,9 @@ void LagrangianContactSolver::UpdateDeformationForCoupling( DomainPartition & do
   {
     if( subRegion.hasWrapper( m_tractionKey ) )
     {
-      arrayView3d< real64 const > const & rotationMatrix = subRegion.getElementRotationMatrix().toViewConst();
-      arrayView2d< localIndex const > const & elemsToFaces = subRegion.faceList();
-      arrayView2d< real64 > const & localJump = subRegion.getReference< array2d< real64 > >( viewKeyStruct::localJumpString );
+      arrayView3d< real64 const > const rotationMatrix = subRegion.getElementRotationMatrix();
+      arrayView2d< localIndex const > const elemsToFaces = subRegion.faceList();
+      arrayView2d< real64 > const localJump = subRegion.getReference< array2d< real64 > >( viewKeyStruct::localJumpString );
 
       forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const kfe )
       {
@@ -575,7 +575,7 @@ real64 LagrangianContactSolver::NonlinearImplicitStep( real64 const & time_n,
                         domain,
                         m_dofManager,
                         m_localMatrix.toViewConstSizes(),
-                        m_localRhs.toView() );
+                        m_localRhs );
 
         // apply boundary conditions to system
         ApplyBoundaryConditions( time_n,
@@ -583,7 +583,7 @@ real64 LagrangianContactSolver::NonlinearImplicitStep( real64 const & time_n,
                                  domain,
                                  m_dofManager,
                                  m_localMatrix.toViewConstSizes(),
-                                 m_localRhs.toView() );
+                                 m_localRhs );
 
         // TODO: maybe add scale function here?
         // Scale()
@@ -592,7 +592,7 @@ real64 LagrangianContactSolver::NonlinearImplicitStep( real64 const & time_n,
         // get residual norm
         if( computeResidual )
         {
-          residualNorm = CalculateResidualNorm( domain, m_dofManager, m_localRhs.toViewConst() );
+          residualNorm = CalculateResidualNorm( domain, m_dofManager, m_localRhs );
         }
         else
         {
@@ -630,7 +630,7 @@ real64 LagrangianContactSolver::NonlinearImplicitStep( real64 const & time_n,
 
         // Compose parallel LA matrix/rhs out of local LA matrix/rhs
         m_matrix.create( m_localMatrix.toViewConst(), MPI_COMM_GEOSX );
-        m_rhs.create( m_localRhs.toViewConst(), MPI_COMM_GEOSX );
+        m_rhs.create( m_localRhs, MPI_COMM_GEOSX );
         m_solution.createWithLocalSize( m_matrix.numLocalCols(), MPI_COMM_GEOSX );
 
         // Output the linear system matrix/rhs for debugging purposes
@@ -657,8 +657,8 @@ real64 LagrangianContactSolver::NonlinearImplicitStep( real64 const & time_n,
                                                domain,
                                                m_dofManager,
                                                m_localMatrix.toViewConstSizes(),
-                                               m_localRhs.toView(),
-                                               m_localSolution.toViewConst(),
+                                               m_localRhs,
+                                               m_localSolution,
                                                scaleFactor,
                                                residualNorm );
 
@@ -681,12 +681,12 @@ real64 LagrangianContactSolver::NonlinearImplicitStep( real64 const & time_n,
         else
         {
           // apply the system solution to the fields/variables
-          ApplySystemSolution( m_dofManager, m_localSolution.toViewConst(), scaleFactor, domain );
+          ApplySystemSolution( m_dofManager, m_localSolution, scaleFactor, domain );
           // Need to compute the residual norm
           computeResidual = true;
         }
 
-        if( !CheckSystemSolution( domain, m_dofManager, m_localSolution.toViewConst(), scaleFactor ) )
+        if( !CheckSystemSolution( domain, m_dofManager, m_localSolution, scaleFactor ) )
         {
           // TODO try chopping (similar to line search)
           GEOSX_LOG_RANK_0( "    Solution check failed. Newton loop terminated." );
@@ -1057,7 +1057,7 @@ void LagrangianContactSolver::
   NodeManager & nodeManager = *mesh.getNodeManager();
   ElementRegionManager const & elemManager = *mesh.getElemManager();
 
-  ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager.nodeList().toViewConst();
+  ArrayOfArraysView< localIndex const > const faceToNodeMap = faceManager.nodeList().toViewConst();
 
   string const tracDofKey = dofManager.getKey( viewKeyStruct::tractionString );
   string const dispDofKey = dofManager.getKey( keys::TotalDisplacement );
@@ -1149,7 +1149,7 @@ void LagrangianContactSolver::
   ConstitutiveManager const * const constitutiveManager = domain.getConstitutiveManager();
   ContactRelationBase const * const contactRelation = constitutiveManager->GetGroup< ContactRelationBase const >( m_contactRelationName );
 
-  ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager.nodeList().toViewConst();
+  ArrayOfArraysView< localIndex const > const faceToNodeMap = faceManager.nodeList().toViewConst();
 
   string const tracDofKey = dofManager.getKey( viewKeyStruct::tractionString );
   string const dispDofKey = dofManager.getKey( keys::TotalDisplacement );
@@ -1242,8 +1242,8 @@ void LagrangianContactSolver::
                 }
 
                 real64 const limitTau = contactRelation->limitTangentialTractionNorm( traction[kfe][0] );
-                R1TensorT< 2 > sliding( localJump[kfe][1] - previousLocalJump[kfe][1], localJump[kfe][2] - previousLocalJump[kfe][2] );
-                real64 slidingNorm = sqrt( sliding( 0 ) * sliding( 0 ) + sliding( 1 ) * sliding( 1 ) );
+                real64 const sliding[2] = { localJump[kfe][1] - previousLocalJump[kfe][1], localJump[kfe][2] - previousLocalJump[kfe][2] };
+                real64 const slidingNorm = LvArray::tensorOps::l2Norm< 2 >( sliding );
 
 //                GEOSX_LOG_LEVEL_BY_RANK( 3, "element: " << kfe << " sliding: " << sliding );
 
@@ -1252,7 +1252,7 @@ void LagrangianContactSolver::
                 {
                   for( localIndex i = 1; i < 3; ++i )
                   {
-                    elemRHS[i] = +Ja * ( traction[kfe][i] - limitTau * sliding( i - 1 ) / slidingNorm );
+                    elemRHS[i] = +Ja * ( traction[kfe][i] - limitTau * sliding[i-1] / slidingNorm );
                   }
 
                   // A symmetric 2x2 matrix.
@@ -1278,19 +1278,19 @@ void LagrangianContactSolver::
                   }
                   for( localIndex i = 1; i < 3; ++i )
                   {
-                    dRdT( i, 0 ) = Ja * contactRelation->dLimitTangentialTractionNorm_dNormalTraction( traction[kfe][0] ) * sliding( i - 1 ) / slidingNorm;
+                    dRdT( i, 0 ) = Ja * contactRelation->dLimitTangentialTractionNorm_dNormalTraction( traction[kfe][0] ) * sliding[i-1] / slidingNorm;
                     dRdT( i, i ) = Ja;
                   }
                 }
                 else
                 {
-                  R1TensorT< 2 > vaux( traction[kfe][1], traction[kfe][2] );
-                  real64 vauxNorm = sqrt( vaux( 0 ) * vaux( 0 ) + vaux( 1 ) * vaux( 1 ) );
+                  real64 const vaux[2] = { traction[kfe][1], traction[kfe][2] };
+                  real64 const vauxNorm = LvArray::tensorOps::l2Norm< 2 >( vaux );
                   if( vauxNorm > 0.0 )
                   {
                     for( localIndex i = 1; i < 3; ++i )
                     {
-                      elemRHS[i] = +Ja * ( traction[kfe][i] - limitTau * vaux( i - 1 ) / vauxNorm );
+                      elemRHS[i] = +Ja * ( traction[kfe][i] - limitTau * vaux[i-1] / vauxNorm );
                     }
                     for( localIndex i = 1; i < 3; ++i )
                     {

@@ -18,6 +18,7 @@
 #ifndef GEOSX_LINEARALGEBRA_INTERFACES_BLASLAPACKLA_HPP_
 #define GEOSX_LINEARALGEBRA_INTERFACES_BLASLAPACKLA_HPP_
 
+#include <complex>
 #include "common/DataTypes.hpp"
 #include "common/Logger.hpp"
 #include "linearAlgebra/common.hpp"
@@ -551,6 +552,25 @@ struct BlasLapackLA
                          MatColMajor< real64 > const & U,
                          Vec< real64 > const & S,
                          MatColMajor< real64 > const & VT );
+
+  /**
+   * @brief Computes the eigenvalues of A
+   *
+   * If size(A) = (N,N), this function expects:
+   * size(lambda) = N
+   * On exit, lambda contains the eigenvalues of A
+   *
+   * @param [in]    A GEOSX array2d.
+   * @param [out]   lambda GEOSX array1d.
+   */
+  static void matrixEigenvalues( MatRowMajor< real64 const > const & A,
+                                 Vec< std::complex< real64 > > const & lambda );
+
+  /**
+   * @copydoc matrixEigenvalues
+   */
+  static void matrixEigenvalues( MatColMajor< real64 const > const & A,
+                                 Vec< std::complex< real64 > > const & lambda );
 
 };
 
