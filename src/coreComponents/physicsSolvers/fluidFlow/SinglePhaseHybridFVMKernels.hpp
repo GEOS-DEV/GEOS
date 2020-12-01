@@ -622,8 +622,8 @@ struct FluxKernel
       subRegion.getReference< array2d< real64 > >( CellBlock::viewKeyStruct::elementCenterString );
     arrayView1d< real64 const > const elemVolume =
       subRegion.getReference< array1d< real64 > >( CellBlock::viewKeyStruct::elementVolumeString );
-    arrayView1d< R1Tensor const > const elemPerm =
-      subRegion.getReference< array1d< R1Tensor > >( SinglePhaseBase::viewKeyStruct::permeabilityString );
+    arrayView2d< real64 const > const elemPerm =
+      subRegion.getReference< array2d< real64 > >( SinglePhaseBase::viewKeyStruct::permeabilityString );
 
     // get the cell-centered depth
     arrayView1d< real64 const > const elemGravCoef =

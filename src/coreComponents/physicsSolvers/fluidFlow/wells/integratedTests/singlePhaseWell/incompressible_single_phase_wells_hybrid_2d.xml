@@ -157,7 +157,7 @@
     <FiniteVolume>
       <HybridMimeticDiscretization
         name="singlePhaseHybridMimetic"
-        innerProductType="quasiRT"  
+        innerProductType="quasiTPFA"  
         fieldName="pressure"
         coefficientName="permeability"/>
     </FiniteVolume>
