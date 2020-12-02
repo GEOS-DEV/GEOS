@@ -36,7 +36,8 @@ enum class SchurComplementOption
 {
   None,                  //!< No Schur complement - just block-GS/block-Jacobi preconditioner
   FirstBlockDiagonal,    //!< Approximate first block with its diagonal
-  RowsumDiagonalProbing  //!< Rowsum-preserving diagonal approximation constructed with probing
+  RowsumDiagonalProbing, //!< Rowsum-preserving diagonal approximation constructed with probing
+  FirstBlockUserDefined  //!< User defined preconditioner for the first block
 };
 
 /**

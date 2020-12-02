@@ -283,7 +283,6 @@ public:
     constexpr static auto faceAreaString = "faceArea";
     constexpr static auto faceCenterString = "faceCenter";
     constexpr static auto faceNormalString = "faceNormal";
-    constexpr static auto faceRotationMatrixString = "faceRotationMatrix";
 
     dataRepository::ViewKey nodeList              = { nodeListString };
     dataRepository::ViewKey edgeList              = { edgeListString };
@@ -352,12 +351,6 @@ public:
    * @return an immutable table containing all the face normals
    */
   arrayView2d< real64 const > faceNormal() const { return m_faceNormal; }
-
-  /**
-   * @brief Get an immutable accessor to a table containing all the face rotation matrix.
-   * @return constant reference to the list of all face rotation matrixes.
-   */
-  arrayView3d< real64 const > faceRotationMatrix() const { return m_faceRotationMatrix; }
 
   /**
    * @brief Get a mutable accessor to a map containing the list of each nodes for each faces.
@@ -473,8 +466,6 @@ private:
   array2d< real64 > m_faceCenter;
   /// list of faces normal
   array2d< real64 > m_faceNormal;
-  // list of the rotation matrix to switch from the fracture (n,t1,t2) to the element reference (x,y,z) system.
-  array3d< real64 > m_faceRotationMatrix;
 
   /// constant expression of the maximum number of nodes per faces
   constexpr static int MAX_FACE_NODES = 9;

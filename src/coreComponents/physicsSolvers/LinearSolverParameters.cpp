@@ -131,6 +131,11 @@ LinearSolverParametersInput::LinearSolverParametersInput( std::string const & na
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "AMG strength-of-connection threshold" );
 
+  registerWrapper( viewKeyStruct::amgNullSpaceTypeString, &m_parameters.amg.nullSpaceType )->
+    setApplyDefaultValue( m_parameters.amg.nullSpaceType )->
+    setInputFlag( InputFlags::OPTIONAL )->
+    setDescription( "AMG near null space approximation" );
+
   registerWrapper( viewKeyStruct::iluFillString, &m_parameters.ilu.fill )->
     setApplyDefaultValue( m_parameters.ilu.fill )->
     setInputFlag( InputFlags::OPTIONAL )->
@@ -167,6 +172,9 @@ void LinearSolverParametersInput::PostProcessInput()
   GEOSX_ERROR_IF_LT_MSG( m_parameters.amg.numSweeps, 0, "Invalid value of " << viewKeyStruct::amgNumSweepsString );
   GEOSX_ERROR_IF_LT_MSG( m_parameters.amg.threshold, 0.0, "Invalid value of " << viewKeyStruct::amgThresholdString );
   GEOSX_ERROR_IF_GT_MSG( m_parameters.amg.threshold, 1.0, "Invalid value of " << viewKeyStruct::amgThresholdString );
+
+  static const std::set< string > nullSpaceOptions = { "constantModes", "rigidBodyModes" };
+  GEOSX_ERROR_IF( nullSpaceOptions.count( m_parameters.amg.nullSpaceType ) == 0, "Unsupported null space type: " << m_parameters.amg.nullSpaceType );
 
   // TODO input validation for other AMG parameters ?
 }

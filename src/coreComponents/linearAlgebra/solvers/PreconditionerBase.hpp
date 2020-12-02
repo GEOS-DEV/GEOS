@@ -122,6 +122,27 @@ public:
     return *m_mat;
   }
 
+  /**
+   * @brief Check whether the preconditioner is available in matrix (explicit) form.
+   * @return if the preconditioner is available in explicit form
+   */
+  virtual bool hasPreconditionerMatrix() const
+  {
+    return false;
+  }
+
+  /**
+   * @brief Access the preconditioner in matrix form (whenever available). It must be
+   *        overridden by the specific preconditioner
+   * @return reference to the preconditioner matrix
+   */
+  virtual Matrix const & preconditionerMatrix() const
+  {
+    GEOSX_ERROR( "PreconditionerBase::preconditionerMatrix called!. Should be overridden." );
+    // This is here just to be able to compile ...
+    return *m_mat;
+  }
+
 private:
 
   /// Pointer to the matrix

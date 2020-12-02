@@ -291,6 +291,18 @@ void PetscVector::axpby( real64 const alpha,
   GEOSX_LAI_CHECK_ERROR( VecAXPY( m_vec, alpha, x.m_vec ) );
 }
 
+void PetscVector::pointwiseProduct( PetscVector const & x,
+                                    PetscVector & y ) const
+{
+  GEOSX_LAI_ASSERT( ready() );
+  GEOSX_LAI_ASSERT( x.ready() );
+  GEOSX_LAI_ASSERT( y.ready() );
+  GEOSX_LAI_ASSERT_EQ( globalSize(), x.globalSize() );
+  GEOSX_LAI_ASSERT_EQ( globalSize(), y.globalSize() );
+
+  GEOSX_LAI_CHECK_ERROR( VecPointwiseMult( y.m_vec, m_vec, x.m_vec ) );
+}
+
 real64 PetscVector::norm1() const
 {
   GEOSX_LAI_ASSERT( ready() );

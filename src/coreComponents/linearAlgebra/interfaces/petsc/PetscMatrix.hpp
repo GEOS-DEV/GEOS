@@ -242,7 +242,9 @@ public:
                            bool const keepDiag = false,
                            real64 const diagValue = 0.0 ) override;
 
-  virtual void addEntries( PetscMatrix const & src, real64 const scale = 1.0 ) override;
+  virtual void addEntries( PetscMatrix const & src,
+                           real64 const scale = 1.0,
+                           bool const samePattern = true ) override;
 
   virtual void addDiagonal( PetscVector const & src ) override;
 

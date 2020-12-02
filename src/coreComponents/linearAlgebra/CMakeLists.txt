@@ -20,6 +20,8 @@ set( linearAlgebra_headers
      solvers/KrylovUtils.hpp
      solvers/PreconditionerBase.hpp
      solvers/PreconditionerIdentity.hpp
+     solvers/PreconditionerJacobi.hpp
+     solvers/PreconditionerBlockJacobi.hpp
      solvers/SeparateComponentPreconditioner.hpp
      utilities/BlockOperatorView.hpp
      utilities/BlockOperatorWrapper.hpp
