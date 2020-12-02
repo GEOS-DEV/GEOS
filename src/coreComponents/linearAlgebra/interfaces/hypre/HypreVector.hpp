@@ -170,6 +170,9 @@ public:
                       HypreVector const & x,
                       real64 const beta ) override;
 
+  virtual void pointwiseProduct( HypreVector const & x,
+                                 HypreVector & y ) const override;
+
   /**
    * @copydoc VectorBase<HypreVector>::norm1
    */

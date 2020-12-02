@@ -35,4 +35,11 @@ TrilinosInterface::createPreconditioner( LinearSolverParameters params )
   return std::make_unique< TrilinosPreconditioner >( params );
 }
 
+std::unique_ptr< PreconditionerBase< TrilinosInterface > >
+TrilinosInterface::createPreconditioner( LinearSolverParameters params,
+                                         array1d< EpetraVector > const & nearNullKernel )
+{
+  return std::make_unique< TrilinosPreconditioner >( params, nearNullKernel );
+}
+
 }

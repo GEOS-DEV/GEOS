@@ -21,27 +21,88 @@
 #include "linearAlgebra/utilities/LAIHelperFunctions.hpp"
 
 #include <petscksp.h>
+#include <fenv.h>
 
 namespace geosx
 {
 
-
 PetscPreconditioner::PetscPreconditioner( LinearSolverParameters params )
   : Base{},
   m_parameters( std::move( params ) ),
-  m_precond{}
+  m_precond{},
+  m_nullsp{}
 { }
+
+void ConvertRigidBodyModes( LinearSolverParameters const & params,
+                            array1d< PetscVector > const & nearNullKernel,
+                            MatNullSpace & nullsp )
+{
+  if( nearNullKernel.empty() )
+  {
+    nullsp = nullptr;
+    return;
+  }
+  else
+  {
+    localIndex const numRBM = LvArray::integerConversion< localIndex >( nearNullKernel.size() );
+    array1d< Vec > nullvecs( numRBM );
+    for( localIndex i = 0; i < numRBM; ++i )
+    {
+      GEOSX_LAI_CHECK_ERROR( VecDuplicate( nearNullKernel[i].unwrapped(), &nullvecs[i] ) );
+      GEOSX_LAI_CHECK_ERROR( VecCopy( nearNullKernel[i].unwrapped(), nullvecs[i] ) );
+      GEOSX_LAI_CHECK_ERROR( VecSetBlockSize( nullvecs[i], params.dofsPerNode ) );
+      GEOSX_LAI_CHECK_ERROR( VecSetUp( nullvecs[i] ) );
+    }
+    GEOSX_LAI_CHECK_ERROR( MatNullSpaceCreate( MPI_COMM_GEOSX, PETSC_FALSE, numRBM, nullvecs.data(), &nullsp ) );
+    for( localIndex i = 0; i < numRBM; ++i )
+    {
+      GEOSX_LAI_CHECK_ERROR( VecDestroy( &nullvecs[i] ) );
+    }
+  }
+}
+
+PetscPreconditioner::PetscPreconditioner( LinearSolverParameters params, array1d< Vector > const & nearNullKernel )
+  : Base{},
+  m_parameters( std::move( params ) ),
+  m_precond{},
+  m_nullsp{}
+{
+  if( m_parameters.amg.nullSpaceType == "rigidBodyModes" )
+  {
+    ConvertRigidBodyModes( params, nearNullKernel, m_nullsp );
+  }
+}
 
 PetscPreconditioner::~PetscPreconditioner()
 {
   clear();
+  if( m_nullsp != nullptr )
+  {
+    MatNullSpaceDestroy( &m_nullsp );
+  }
 }
 
-void CreatePetscAMG( LinearSolverParameters const & params, PC precond )
+void CreatePetscAMG( LinearSolverParameters const & params,
+                     PC precond,
+                     PetscMatrix const & matrix,
+                     MatNullSpace & nullsp )
 {
   // Default options only for the moment
   GEOSX_LAI_CHECK_ERROR( PCSetType( precond, PCGAMG ) );
-  GEOSX_UNUSED_VAR( params )
+
+  if( !params.isSymmetric )
+  {
+    // Usually GEOSX matrix is not symmetric, but GAMG is designed for symmetric matrices
+    // In case of a general matrix, we need to compute a symmetric graph (slightly heavier
+    // than the default, but necessary in case of asymmetric matrices).
+    GEOSX_LAI_CHECK_ERROR( PCGAMGSetSymGraph( precond, PETSC_TRUE ) );
+  }
+
+  if( params.amg.nullSpaceType == "rigidBodyModes" && nullsp != nullptr )
+  {
+    // Add user-defined null space / rigid body mode support
+    GEOSX_LAI_CHECK_ERROR( MatSetNearNullSpace( matrix.unwrapped(), nullsp ) );
+  }
 
   // TODO: need someone familiar with PETSc to take a look at this
 #if 0
@@ -187,6 +248,9 @@ void PetscPreconditioner::compute( PetscMatrix const & mat )
 {
   Base::compute( mat );
 
+  // Set dofs per node (it can be done only at the matrix level ...)
+  GEOSX_LAI_CHECK_ERROR( MatSetBlockSize( mat.unwrapped(), m_parameters.dofsPerNode ) );
+
   bool const create = m_precond == nullptr;
 
   // Basic setup common for all preconditioners
@@ -213,7 +277,7 @@ void PetscPreconditioner::compute( PetscMatrix const & mat )
       }
       case LinearSolverParameters::PreconditionerType::amg:
       {
-        CreatePetscAMG( m_parameters, m_precond );
+        CreatePetscAMG( m_parameters, m_precond, mat, m_nullsp );
         break;
       }
       case LinearSolverParameters::PreconditionerType::iluk:
@@ -236,8 +300,8 @@ void PetscPreconditioner::compute( PetscMatrix const & mat )
   GEOSX_LAI_CHECK_ERROR( PCSetUpOnBlocks( m_precond ) );
 }
 
-void PetscPreconditioner::apply( PetscVector const & src,
-                                 PetscVector & dst ) const
+void PetscPreconditioner::apply( Vector const & src,
+                                 Vector & dst ) const
 {
   GEOSX_LAI_ASSERT( ready() );
   GEOSX_LAI_ASSERT( src.ready() );

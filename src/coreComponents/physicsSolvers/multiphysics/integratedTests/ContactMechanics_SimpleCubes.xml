@@ -7,7 +7,7 @@
       name="lagrangiancontact"
       solidSolverName="lagsolve"
       stabilizationName="TPFAstabilization"
-      logLevel="1"
+      logLevel="0"
       activeSetMaxIter="10"
       targetRegions="{ Region, Fracture }"
       contactRelationName="fractureMaterial">
@@ -95,7 +95,7 @@
   </Geometry>
 
   <Events
-    maxTime="20.0">
+    maxTime="10.0">
     <SoloEvent
       name="initialPlot"
       target="/Outputs/siloOutput"/>
@@ -107,13 +107,13 @@
     <PeriodicEvent
       name="solverApplications"
       beginTime="0.0"
-      endTime="20.0"
+      endTime="10.0"
       forceDt="1.0"
       target="/Solvers/lagrangiancontact"/>
 
     <PeriodicEvent
       name="restarts"
-      timeFrequency="10.0"
+      timeFrequency="5.0"
       targetExactTimestep="0"
       target="/Outputs/restartOutput"/>
 
@@ -164,10 +164,10 @@
       compressibility="1.6155088853e-18"
       referencePressure="2.125e6"/>
 
-    <MohrCoulomb
+    <Coulomb
       name="fractureMaterial"
       cohesion="0.0"
-      frictionCoefficient="0.577350269189626"/>
+      frictionCoefficient="0.577350269"/>
   </Constitutive>
 
   <FieldSpecifications>
@@ -240,6 +240,7 @@
       objectPath="faceManager"
       fieldName="Traction"
       component="0"
+      functionName="ForceTimeFunction"
       scale="-1.0e0"
       setNames="{ front }"/>
 
@@ -257,8 +258,8 @@
     <TableFunction
       name="ForceTimeFunction"
       inputVarNames="{ time }"
-      coordinates="{ 0.0, 10.0, 20.0 }"
-      values="{ 0.0, 5.e0, 0.e0 }"/>
+      coordinates="{ 0.0, 5.0, 10.0 }"
+      values="{ 0.0, 5.e0, -5.e0 }"/>
   </Functions>
 
   <Outputs>

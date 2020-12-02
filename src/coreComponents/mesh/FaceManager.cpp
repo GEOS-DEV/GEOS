@@ -55,9 +55,6 @@ FaceManager::FaceManager( string const &, Group * const parent ):
   this->registerWrapper( viewKeyStruct::faceNormalString, &m_faceNormal )->
     reference().resizeDimension< 1 >( 3 );
 
-  this->registerWrapper( viewKeyStruct::faceRotationMatrixString, &m_faceRotationMatrix )->
-    reference().resizeDimension< 1, 2 >( 3, 3 );
-
   m_toElements.resize( 0, 2 );
 
   //0-based; note that the following field is ALSO 0
@@ -609,9 +606,6 @@ void FaceManager::computeGeometry( NodeManager const * const nodeManager )
     // This needs to be done somewhere else, also we probably shouldn't be orienting the normals like this.
     // Set normal orientation according to a global criterion
     computationalGeometry::FixNormalOrientation_3D( m_faceNormal[ faceID ] );
-
-    // Compute the local rotation matrix according to the normal vector
-    computationalGeometry::RotationMatrix_3D( m_faceNormal[ faceID ], m_faceRotationMatrix[ faceID ] );
   } );
 }
 

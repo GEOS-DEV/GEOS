@@ -277,25 +277,29 @@ void compute2DElasticityOperator( MPI_Comm const comm,
   localIndex const rank  = LvArray::integerConversion< localIndex >( MpiWrapper::Comm_rank( comm ) );
   localIndex const nproc = LvArray::integerConversion< localIndex >( MpiWrapper::Comm_size( comm ) );
 
-  // Compute total number of grid nodes (nNodes) and elements (nCells)
-  globalIndex const nCells = nCellsX * nCellsY;
-  GEOSX_ERROR_IF( nCells < nproc, "less than one cell per processor" );
-  globalIndex const nNodes = ( nCellsX + 1 ) * ( nCellsY + 1);
+  GEOSX_ERROR_IF( nCellsY < nproc, "Less than one cell row per processor is not supported" );
+
   real64 const hx = domainSizeX / nCellsX;
   real64 const hy = domainSizeY / nCellsY;
 
   // Compute cell partitioning
-  localIndex const nLocalCells = LvArray::integerConversion< localIndex >( nCells / nproc );
+  globalIndex const nCells = nCellsX * nCellsY;
+  localIndex const nLocalCells = LvArray::integerConversion< localIndex >( nCellsY / nproc * nCellsX );
   localIndex const nExtraCells = LvArray::integerConversion< localIndex >( nCells ) - nLocalCells * nproc;
   globalIndex const iCellLower = rank * nLocalCells + ( rank == 0 ? 0 : nExtraCells );
-  globalIndex const iCellUpper = iCellLower + nLocalCells + ( rank == 0 ? 0 : nExtraCells ) - 1;
+  globalIndex const iCellUpper = iCellLower + nLocalCells + ( rank == 0 ? 0 : nExtraCells );
+
+  // Compute node partitioning
+  globalIndex const iNodeLower = iCellLower / nCellsX + iCellLower;
+  globalIndex const iNodeUpper = iCellUpper / nCellsX + iCellUpper + ( rank == nproc - 1 ? nCellsX + 1 : 0 );
+  localIndex const nLocalNodes = iNodeUpper - iNodeLower;
 
   // Construct local stiffness matrix (same for all cells)
   stackArray2d< real64, 8*8 > Ke( 8, 8 );
   Q12d_local( hx, hy, youngModulus, poissonRatio, Ke );
 
   // Create a matrix of global size N with at most 18 non-zeros per row
-  elasticity2D.createWithGlobalSize( nNodes*2, 18, comm );
+  elasticity2D.createWithLocalSize( nLocalNodes * 2, 18, comm );
 
   // Open the matrix
   elasticity2D.open();
@@ -304,11 +308,11 @@ void compute2DElasticityOperator( MPI_Comm const comm,
   stackArray1d< globalIndex, 4 > cellNodes( 4 );
   stackArray1d< globalIndex, 8 > localDofIndex( 8 );
 
-  for( localIndex iCell = iCellLower; iCell <= iCellUpper; ++iCell )
+  for( globalIndex iCell = iCellLower; iCell < iCellUpper; ++iCell )
   {
 
     // Compute local DOF global indeces
-    cellNodes( 0 ) = (iCell / nCellsX) + iCell;
+    cellNodes( 0 ) = iCell / nCellsX + iCell;
     cellNodes( 1 ) = cellNodes( 0 ) + 1;
     cellNodes( 3 ) = cellNodes( 1 ) + nCellsX;
     cellNodes( 2 ) = cellNodes( 3 ) + 1;
