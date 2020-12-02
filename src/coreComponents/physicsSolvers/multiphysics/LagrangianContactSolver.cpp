@@ -1040,22 +1040,22 @@ real64 LagrangianContactSolver::CalculateResidualNorm( DomainPartition const & d
   real64 contactR2 = 0.0;
   forTargetSubRegions< FaceElementSubRegion >( mesh, [&]( localIndex const, FaceElementSubRegion const & subRegion )
   {
-    arrayView1d< globalIndex const > const & tracDofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
+    arrayView1d< globalIndex const > const & dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
     arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
 
-    RAJA::ReduceSum< parallelHostReduce, real64 > localSum1( 0.0 );
+    RAJA::ReduceSum< parallelHostReduce, real64 > localSum( 0.0 );
     forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const k )
     {
       if( ghostRank[k] < 0 )
       {
-        localIndex const localRow = LvArray::integerConversion< localIndex >( tracDofNumber[k] - rankOffset );
+        localIndex const localRow = LvArray::integerConversion< localIndex >( dofNumber[k] - rankOffset );
         for( localIndex dim = 0; dim < 3; ++dim )
         {
-          localSum1 += localRhs[localRow + dim] * localRhs[localRow + dim];
+          localSum += localRhs[localRow + dim] * localRhs[localRow + dim];
         }
       }
     } );
-    contactR2 += localSum1.get();
+    contactR2 += localSum.get();
   } );
 
   real64 localR2[2] = { momentumR2, contactR2 };
@@ -1488,9 +1488,6 @@ void LagrangianContactSolver::
 
           stackArray2d< real64, 2 * 3 * 4 * 3 > dRdU( 3, 2 * 3 * numNodesPerFace );
           stackArray2d< real64, 3 * 3 > dRdT( 3, 3 );
-
-          dRdU.setValues< serialPolicy >( 0.0 );
-          dRdT.setValues< serialPolicy >( 0.0 );
 
           switch( fractureState[kfe] )
           {
