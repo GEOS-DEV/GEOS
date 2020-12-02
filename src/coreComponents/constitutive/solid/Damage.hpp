@@ -57,9 +57,9 @@ public:
 
   //Quasi-Quadratic Lorentz Degradation Function
   #if LORENTZ
-  
+
   //Lorentz type Degradation Function
-  
+
   GEOSX_FORCE_INLINE
   GEOSX_HOST_DEVICE
   virtual real64 GetDegradationValue( localIndex const k,
@@ -122,7 +122,7 @@ public:
   GEOSX_HOST_DEVICE
   virtual real64 GetDegradationSecondDerivative( real64 const d ) const
   {
-    GEOSX_UNUSED_VAR(d)
+    GEOSX_UNUSED_VAR( d )
     return 2.0;
   }
   #endif

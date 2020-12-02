@@ -218,7 +218,7 @@ public:
       {
         stack.localResidual[ a ] -= detJ * ( N[a] * qp_damage +
                                              (pow( ell, 2 ) * LvArray::tensorOps::AiBi< 3 >( qp_grad_damage, dNdX[a] ) +
-                                             N[a] * m_constitutiveUpdate.GetDegradationDerivative( qp_damage ) * (ell*strainEnergyDensity/Gc)) );
+                                              N[a] * m_constitutiveUpdate.GetDegradationDerivative( qp_damage ) * (ell*strainEnergyDensity/Gc)) );
 
       }
       for( localIndex b = 0; b < numNodesPerElem; ++b )

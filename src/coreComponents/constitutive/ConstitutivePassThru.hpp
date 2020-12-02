@@ -195,7 +195,6 @@ struct ConstitutivePassThru< DamageBase >
     {
       lambda( static_cast< Damage< LinearElasticIsotropic > * >( constitutiveRelation) );
     }
-    
     else
     {
       string name;

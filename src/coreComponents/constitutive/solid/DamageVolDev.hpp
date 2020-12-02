@@ -21,7 +21,7 @@
 #define GEOSX_CONSTITUTIVE_SOLID_DAMAGEVOLDEV_HPP_
 #include "constitutive/solid/SolidBase.hpp"
 #include "constitutive/solid/Damage.hpp"
-#define LORENTZ_VOLDEV 0 
+#define LORENTZ_VOLDEV 0
 #define QUADRATIC_DISSIPATION_VOLDEV 0
 
 namespace geosx
@@ -58,9 +58,9 @@ public:
   using DamageUpdates< UPDATE_BASE >::m_lengthScale;
 
   #if LORENTZ_VOLDEV
-  
+
   //Lorentz type Degradation Function
-  
+
   GEOSX_FORCE_INLINE
   GEOSX_HOST_DEVICE
   virtual real64 GetDegradationValue( localIndex const k,
@@ -123,7 +123,7 @@ public:
   GEOSX_HOST_DEVICE
   real64 GetDegradationSecondDerivative( real64 const d ) const override
   {
-    GEOSX_UNUSED_VAR(d);     
+    GEOSX_UNUSED_VAR( d );
     return 2.0;
   }
   #endif
@@ -154,9 +154,9 @@ public:
         {
           c[i][j] = damageFactor*c[i][j] + (1 - damageFactor)*K*compressionIndicator;
         }
-	else
-	{
-	  c[i][j]*=damageFactor;
+        else
+        {
+          c[i][j]*=damageFactor;
         }
       }
     }
@@ -219,7 +219,6 @@ public:
 
 
 
-  
 };
 
 template< typename BASE >
