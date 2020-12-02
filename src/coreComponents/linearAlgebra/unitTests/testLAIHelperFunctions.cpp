@@ -115,7 +115,7 @@ TEST_F( LAIHelperFunctionsTest, Test_NodalVectorPermutation )
   MeshLevel * const meshLevel = domain->getMeshBody( 0 )->getMeshLevel( 0 );
   NodeManager * const nodeManager = meshLevel->getNodeManager();
 
-  arrayView1d< globalIndex const > const & nodeLocalToGlobal = nodeManager->localToGlobalMap();
+  arrayView1d< globalIndex const > const nodeLocalToGlobal = nodeManager->localToGlobalMap();
 
   DofManager dofManager( "test" );
   dofManager.setMesh( *domain, 0, 0 );

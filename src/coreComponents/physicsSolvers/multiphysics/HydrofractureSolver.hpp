@@ -20,6 +20,7 @@
 #ifndef GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_HYDROFRACTURESOLVER_HPP_
 #define GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_HYDROFRACTURESOLVER_HPP_
 
+#include "common/EnumStrings.hpp"
 #include "physicsSolvers/SolverBase.hpp"
 
 namespace geosx
@@ -87,11 +88,6 @@ public:
                          DofManager const & dofManager,
                          arrayView1d< real64 const > const & localRhs ) override;
 
-  virtual void SolveSystem( DofManager const & dofManager,
-                            ParallelMatrix & matrix,
-                            ParallelVector & rhs,
-                            ParallelVector & solution ) override;
-
   virtual real64
   ScalingForSystemSolution( DomainPartition const & domain,
                             DofManager const & dofManager,
@@ -125,11 +121,11 @@ public:
 //                                   systemSolverInterface::EpetraBlockSystem & blockSystem );
 
   void AssembleForceResidualDerivativeWrtPressure( DomainPartition & domain,
-                                                   ParallelMatrix * const matrix01,
-                                                   arrayView1d< real64 > const & rhs0 );
+                                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                   arrayView1d< real64 > const & localRhs );
 
   void AssembleFluidMassResidualDerivativeWrtDisplacement( DomainPartition const & domain,
-                                                           ParallelMatrix * const matrix10 );
+                                                           CRSMatrixView< real64, globalIndex const > const & localMatrix );
 
 
   real64 SplitOperatorStep( real64 const & time_n,
@@ -139,7 +135,9 @@ public:
 
   void initializeNewFaceElements( DomainPartition const & domain );
 
-  enum class couplingTypeOption : int
+
+
+  enum class CouplingTypeOption : integer
   {
     FIM,
     SIM_FixedStress
@@ -172,34 +170,45 @@ protected:
   virtual void
   InitializePostInitialConditions_PreSubGroups( dataRepository::Group * const problemManager ) override final;
 
+  /**
+   * @Brief add the nnz induced by the flux-aperture coupling
+   * @param domain the physical domain object
+   * @param dofManager degree-of-freedom manager associated with the linear system
+   * @param rowLenghts the nnz in each row
+   */
+  void addFluxApertureCouplingNNZ( DomainPartition & domain,
+                                   DofManager & dofManager,
+                                   arrayView1d< localIndex > const & rowLengths ) const;
+
+
+  /**
+   * @Brief add the sparsity pattern induced by the flux-aperture coupling
+   * @param domain the physical domain object
+   * @param dofManager degree-of-freedom manager associated with the linear system
+   * @param pattern the sparsity pattern
+   */
+  void addFluxApertureCouplingSparsityPattern( DomainPartition & domain,
+                                               DofManager & dofManager,
+                                               SparsityPatternView< globalIndex > const & pattern ) const;
+
 private:
 
   string m_solidSolverName;
   string m_flowSolverName;
   string m_contactRelationName;
-  string m_couplingTypeOptionString;
 
-  couplingTypeOption m_couplingTypeOption;
+  CouplingTypeOption m_couplingTypeOption;
 
   SolidMechanicsLagrangianFEM * m_solidSolver;
   FlowSolverBase * m_flowSolver;
 
-#ifdef GEOSX_LA_INTERFACE_TRILINOS
-  real64 m_densityScaling;
-  real64 m_pressureScaling;
-#endif
-
   std::unique_ptr< ParallelMatrix > m_blockDiagUU;
-
-  ParallelMatrix m_matrix01;
-  ParallelMatrix m_matrix10;
-
-  ParallelMatrix m_permutationMatrix0; // it's used to have the output based on global ordering
-  ParallelMatrix m_permutationMatrix1; // it's used to have the output based on global ordering
 
   integer m_maxNumResolves;
   integer m_numResolves[2];
 };
+
+ENUM_STRINGS( HydrofractureSolver::CouplingTypeOption, "FIM", "SIM_FixedStress" )
 
 } /* namespace geosx */
 

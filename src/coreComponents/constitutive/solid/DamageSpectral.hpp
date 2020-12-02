@@ -216,7 +216,7 @@ public:
 	eigenPlus[i] = std::max(eigenValues[i], 0.0);
       }
     real64 positivePartOfStrain[6] = {0};
-    LvArray::tensorOps::AikSymBklAjl<3>(positivePartOfStrain, eigenVectors, eigenPlus);
+    LvArray::tensorOps::Rij_eq_AikSymBklAjl<3>(positivePartOfStrain, eigenVectors, eigenPlus);
     
     real64 const sed = 0.5 * lambda * tracePlus * tracePlus + mu * doubleContraction(positivePartOfStrain, positivePartOfStrain);
 
@@ -266,8 +266,8 @@ public:
       }
     real64 positivePartOfStrain[6] = {};
     real64 negativePartOfStrain[6] = {};
-    LvArray::tensorOps::AikSymBklAjl<3>(positivePartOfStrain, eigenVectors, eigenPlus);
-    LvArray::tensorOps::AikSymBklAjl<3>(negativePartOfStrain, eigenVectors, eigenMinus); 
+    LvArray::tensorOps::Rij_eq_AikSymBklAjl<3>(positivePartOfStrain, eigenVectors, eigenPlus);
+    LvArray::tensorOps::Rij_eq_AikSymBklAjl<3>(negativePartOfStrain, eigenVectors, eigenMinus);
     real64 positiveStress[6] = {}; 
     real64 negativeStress[6] = {};
     LvArray::tensorOps::scaledCopy<6>(positiveStress, Itensor, lambda*tracePlus);

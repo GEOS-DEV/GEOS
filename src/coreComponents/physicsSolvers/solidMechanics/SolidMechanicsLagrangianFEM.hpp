@@ -19,6 +19,7 @@
 #ifndef GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_SOLIDMECHANICSLAGRANGIANFEM_HPP_
 #define GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_SOLIDMECHANICSLAGRANGIANFEM_HPP_
 
+#include "common/EnumStrings.hpp"
 #include "common/TimingMacros.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
 #include "mpiCommunications/CommunicationTools.hpp"
@@ -26,17 +27,8 @@
 
 #include "SolidMechanicsLagrangianFEMKernels.hpp"
 
-
-
 namespace geosx
 {
-namespace dataRepository
-{
-class Group;
-}
-class FieldSpecificationBase;
-class FiniteElementBase;
-class DomainPartition;
 
 /**
  * @class SolidMechanicsLagrangianFEM
@@ -46,6 +38,18 @@ class DomainPartition;
 class SolidMechanicsLagrangianFEM : public SolverBase
 {
 public:
+
+  /**
+   * @enum TimeIntegrationOption
+   *
+   * The options for time integration
+   */
+  enum class TimeIntegrationOption : integer
+  {
+    QuasiStatic,      //!< QuasiStatic
+    ImplicitDynamic,  //!< ImplicitDynamic
+    ExplicitDynamic   //!< ExplicitDynamic
+  };
 
   /**
    * Constructor
@@ -244,7 +248,7 @@ public:
   struct groupKeyStruct
   {} solidMechanicsGroupKeys;
 
-  arrayView1d< string const > const & solidMaterialNames() const { return m_solidMaterialNames; }
+  arrayView1d< string const > solidMaterialNames() const { return m_solidMaterialNames; }
 
   SortedArray< localIndex > & getElemsAttachedToSendOrReceiveNodes( ElementSubRegionBase & subRegion )
   {
@@ -282,6 +286,7 @@ protected:
   string m_contactRelationName;
   SortedArray< localIndex > m_sendOrReceiveNodes;
   SortedArray< localIndex > m_nonSendOrReceiveNodes;
+  SortedArray< localIndex > m_targetNodes;
   MPI_iCommData m_iComm;
 
   /// Indicates whether or not to use effective stress when integrating the
@@ -292,6 +297,8 @@ protected:
   SolidMechanicsLagrangianFEM();
 
 };
+
+ENUM_STRINGS( SolidMechanicsLagrangianFEM::TimeIntegrationOption, "QuasiStatic", "ImplicitDynamic", "ExplicitDynamic" )
 
 //**********************************************************************************************************************
 //**********************************************************************************************************************
@@ -319,9 +326,7 @@ void SolidMechanicsLagrangianFEM::AssemblyLaunch( DomainPartition & domain,
 
   ResetStressToBeginningOfStep( domain );
 
-  real64 const gravityVectorData[3] = { gravityVector().Data()[0],
-                                        gravityVector().Data()[1],
-                                        gravityVector().Data()[2] };
+  real64 const gravityVectorData[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( gravityVector() );
 
   m_maxForce = finiteElement::
                  regionBasedKernelApplication< parallelDevicePolicy< 32 >,
@@ -345,7 +350,6 @@ void SolidMechanicsLagrangianFEM::AssemblyLaunch( DomainPartition & domain,
                           localRhs );
 
 }
-
 
 } /* namespace geosx */
 

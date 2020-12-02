@@ -26,7 +26,7 @@
 #include "managers/DomainPartition.hpp"
 #include "managers/NumericalMethodsManager.hpp"
 #include "mesh/NodeManager.hpp"
-#include "mesh/EmbeddedSurfaceRegion.hpp"
+#include "mesh/SurfaceElementRegion.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
 #include "meshUtilities/ComputationalGeometry.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
@@ -55,6 +55,9 @@ SolidMechanicsEmbeddedFractures::SolidMechanicsEmbeddedFractures( const std::str
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "Name of contact relation to enforce constraints on fracture boundary." );
 
+  this->getWrapper< string >( viewKeyStruct::discretizationString )->
+    setInputFlag( InputFlags::FALSE );
+
 }
 
 SolidMechanicsEmbeddedFractures::~SolidMechanicsEmbeddedFractures()
@@ -71,15 +74,16 @@ void SolidMechanicsEmbeddedFractures::RegisterDataOnMesh( dataRepository::Group 
 
     ElementRegionManager * const elemManager = meshLevel->getElemManager();
     {
-      elemManager->forElementRegions< EmbeddedSurfaceRegion >( [&] ( EmbeddedSurfaceRegion & region )
+      elemManager->forElementRegions< SurfaceElementRegion >( [&] ( SurfaceElementRegion & region )
       {
         region.forElementSubRegions< EmbeddedSurfaceSubRegion >( [&]( EmbeddedSurfaceSubRegion & subRegion )
         {
-          //subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::dispJumpString
-          // )->setPlotLevel(PlotLevel::LEVEL_0);
-          // subRegion->registerWrapper< array1d<real64> >( viewKeyStruct::deltaDispJumpString );
-          subRegion.registerWrapper< array1d< R1Tensor > >( viewKeyStruct::dispJumpString )->setPlotLevel( PlotLevel::LEVEL_0 );
-          subRegion.registerWrapper< array1d< R1Tensor > >( viewKeyStruct::deltaDispJumpString );
+          subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::dispJumpString )->
+            setPlotLevel( PlotLevel::LEVEL_0 )->
+            reference().resizeDimension< 1 >( 3 );
+
+          subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::deltaDispJumpString )->
+            reference().resizeDimension< 1 >( 3 );
         } );
       } );
     }
@@ -149,7 +153,7 @@ void SolidMechanicsEmbeddedFractures::SetupDofs( DomainPartition const & domain,
   ElementRegionManager const & elemManager = *meshLevel.getElemManager();
 
   array1d< string > regions;
-  elemManager.forElementRegions< EmbeddedSurfaceRegion >( [&]( EmbeddedSurfaceRegion const & region ) {
+  elemManager.forElementRegions< SurfaceElementRegion >( [&]( SurfaceElementRegion const & region ) {
     regions.emplace_back( region.getName() );
   } );
 
@@ -174,10 +178,7 @@ void SolidMechanicsEmbeddedFractures::SetupSystem( DomainPartition & domain,
   GEOSX_MARK_FUNCTION;
 
   GEOSX_UNUSED_VAR( setSparsity );
-  // By not calling dofManager.reorderByRank(), we keep separate dof numbering for each field,
-  // which allows constructing separate sparsity patterns for off-diagonal blocks of the matrix.
-  // Once the solver moves to monolithic matrix, we can remove this method and just use SolverBase::SetupSystem.
-  // setup coupled DofManager
+
   dofManager.setMesh( domain, 0, 0 );
   SetupDofs( domain, dofManager );
   dofManager.reorderByRank();
@@ -251,8 +252,6 @@ void SolidMechanicsEmbeddedFractures::AssembleSystem( real64 const time,
   arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const & dDisp = nodeManager.incrementalDisplacement();
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodesCoord = nodeManager.referencePosition();
 
-  r1_array const uhattilde;
-
   string const dofKey     = dofManager.getKey( keys::TotalDisplacement );
   string const jumpDofKey = dofManager.getKey( viewKeyStruct::dispJumpString );
 
@@ -299,8 +298,8 @@ void SolidMechanicsEmbeddedFractures::AssembleSystem( real64 const time,
   array2d< real64 >            matBD( maxNumUdof, 6 );
   array2d< real64 >            matED( 3, 6 );
 
-  array1d< R1Tensor > u_local( 8 );
-  array1d< R1Tensor > du_local( 8 );
+  array2d< real64 > u_local( 8, 3 );
+  array2d< real64 > du_local( 8, 3 );
 
   array1d< real64 >       u( maxNumUdof );
   array1d< real64 >       w( 3 );
@@ -308,20 +307,19 @@ void SolidMechanicsEmbeddedFractures::AssembleSystem( real64 const time,
   array2d< real64 > dMatrix( 6, 6 );
 
   // begin region loop
-  elemManager.forElementRegions< EmbeddedSurfaceRegion >( [&]( EmbeddedSurfaceRegion const & embeddedRegion )->void
+  elemManager.forElementRegions< SurfaceElementRegion >( [&]( SurfaceElementRegion const & embeddedRegion )->void
   {
     // loop of embeddeSubregions
     embeddedRegion.forElementSubRegions< EmbeddedSurfaceSubRegion >( [&]( EmbeddedSurfaceSubRegion const & embeddedSurfaceSubRegion )->void
     {
       localIndex const numEmbeddedElems = embeddedSurfaceSubRegion.size();
-      arrayView1d< localIndex const >  const & embeddedSurfaceToRegion    = embeddedSurfaceSubRegion.getSurfaceToRegionList();
-      arrayView1d< localIndex const >  const & embeddedSurfaceToSubRegion = embeddedSurfaceSubRegion.getSurfaceToSubRegionList();
-      arrayView1d< localIndex const >  const & embeddedSurfaceToCell      = embeddedSurfaceSubRegion.getSurfaceToCellList();
+
+      FixedToManyElementRelation const & embeddedSurfacesToCells = embeddedSurfaceSubRegion.getToCellRelation();
 
       arrayView1d< globalIndex const > const &
       embeddedElementDofNumber = embeddedSurfaceSubRegion.getReference< array1d< globalIndex > >( jumpDofKey );
-      arrayView1d< R1Tensor const > const & w_global  = embeddedSurfaceSubRegion.getReference< array1d< R1Tensor > >( viewKeyStruct::dispJumpString );
-      arrayView1d< R1Tensor const > const & dw_global = embeddedSurfaceSubRegion.getReference< array1d< R1Tensor > >( viewKeyStruct::deltaDispJumpString );
+      arrayView2d< real64 const > const & w_global  = embeddedSurfaceSubRegion.getReference< array2d< real64 > >( viewKeyStruct::dispJumpString );
+      arrayView2d< real64 const > const & dw_global = embeddedSurfaceSubRegion.getReference< array2d< real64 > >( viewKeyStruct::deltaDispJumpString );
 
       arrayView1d< real64 const > const & fractureSurfaceArea = embeddedSurfaceSubRegion.getElementArea();
 
@@ -336,8 +334,13 @@ void SolidMechanicsEmbeddedFractures::AssembleSystem( real64 const time,
         if( ghostRank[k] < 0 )
         {
           // Get rock matrix element subregion
-          CellElementSubRegion const * const elementSubRegion = Group::group_cast< CellElementSubRegion const * const >( elemManager.GetRegion( embeddedSurfaceToRegion[k] )->
-                                                                                                                           GetSubRegion( embeddedSurfaceToSubRegion[k] ));
+          CellElementSubRegion const * const elementSubRegion =
+            Group::group_cast< CellElementSubRegion const * const >
+              ( elemManager.GetRegion( embeddedSurfacesToCells.m_toElementRegion[k][0] )->
+                GetSubRegion( embeddedSurfacesToCells.m_toElementSubRegion[k][0] ));
+
+          localIndex cellElementIndex = embeddedSurfacesToCells.m_toElementIndex[k][0];
+
           CellBlock::NodeMapType const & elemsToNodes = elementSubRegion->nodeList();
           // Get the number of nodes per element
           localIndex const numNodesPerElement = elemsToNodes.size( 1 );
@@ -372,7 +375,7 @@ void SolidMechanicsEmbeddedFractures::AssembleSystem( real64 const time,
           // Get mechanical moduli tensor
           LinearElasticIsotropic const * constitutiveRelation = elementSubRegion->getConstitutiveModel< LinearElasticIsotropic >( m_solidSolver->solidMaterialNames()[0] );
           LinearElasticIsotropic::KernelWrapper const & solidConstitutive = constitutiveRelation->createKernelUpdates();
-          solidConstitutive.GetStiffness( embeddedSurfaceToCell[k], dMatrix );
+          solidConstitutive.GetStiffness( cellElementIndex, dMatrix );
 
           // Basis functions derivatives
           arrayView4d< real64 const > const & dNdX = elementSubRegion->dNdX();
@@ -382,13 +385,13 @@ void SolidMechanicsEmbeddedFractures::AssembleSystem( real64 const time,
 
           // Fill in equilibrium operator
           arrayView1d< real64 const > const & cellVolume = elementSubRegion->getElementVolume();
-          real64 hInv = fractureSurfaceArea[k] / cellVolume[embeddedSurfaceToCell[k]]; // AreaFrac / cellVolume
+          real64 hInv = fractureSurfaceArea[k] / cellVolume[cellElementIndex]; // AreaFrac / cellVolume
           AssembleEquilibriumOperator( eqMatrix, embeddedSurfaceSubRegion, k, hInv );
 
           // Dof index of nodal displacements and row indices
           for( localIndex a=0; a<numNodesPerElement; ++a )
           {
-            localIndex localNodeIndex = elemsToNodes[embeddedSurfaceToCell[k]][a];
+            localIndex localNodeIndex = elemsToNodes[cellElementIndex][a];
 
             for( int i=0; i < dim; ++i )
             {
@@ -399,9 +402,9 @@ void SolidMechanicsEmbeddedFractures::AssembleSystem( real64 const time,
 
           for( localIndex i = 0; i < numNodesPerElement; ++i )
           {
-            localIndex const nodeID = elemsToNodes( embeddedSurfaceToCell[k], i );
-            u_local[ i ] = disp[ nodeID ];
-            du_local[ i ] = dDisp[ nodeID ];
+            localIndex const nodeID = elemsToNodes( cellElementIndex, i );
+            LvArray::tensorOps::copy< 3 >( u_local[ i ], disp[ nodeID ] );
+            LvArray::tensorOps::copy< 3 >( du_local[ i ], dDisp[ nodeID ] );
           }
 
           // Dof number of jump enrichment
@@ -412,7 +415,7 @@ void SolidMechanicsEmbeddedFractures::AssembleSystem( real64 const time,
             w( i ) = w_global[k][i] + 0*dw_global[k][i];
           }
 
-          // copy values in the R1Tensor object to use in BlasLapack interface
+          // copy values in the from 2d to 1d array to use in BlasLapack interface
           for( localIndex j=0; j < numNodesPerElement; ++j )
           {
             for( int i=0; i<dim; ++i )
@@ -436,19 +439,21 @@ void SolidMechanicsEmbeddedFractures::AssembleSystem( real64 const time,
 
           for( integer q=0; q<fe.getNumQuadraturePoints(); ++q )
           {
-            const realT detJq = detJ[embeddedSurfaceToCell[k]][q];
+
+            const real64 detJq = detJ[cellElementIndex][q];
+
             AssembleCompatibilityOperator( compMatrix,
                                            embeddedSurfaceSubRegion,
                                            k,
                                            q,
                                            elemsToNodes,
                                            nodesCoord,
-                                           embeddedSurfaceToCell,
+                                           cellElementIndex,
                                            numNodesPerElement,
                                            dNdX );
 
             AssembleStrainOperator( strainMatrix,
-                                    embeddedSurfaceToCell[k],
+                                    cellElementIndex,
                                     q,
                                     numNodesPerElement,
                                     dNdX );
@@ -540,9 +545,8 @@ void SolidMechanicsEmbeddedFractures::AddCouplingNumNonzeros( DomainPartition & 
   elemManager.forElementSubRegions< EmbeddedSurfaceSubRegion >( [&]( EmbeddedSurfaceSubRegion const & embeddedSurfaceSubRegion )
   {
     localIndex const numEmbeddedElems = embeddedSurfaceSubRegion.size();
-    arrayView1d< localIndex const >  const & embeddedSurfaceToRegion    = embeddedSurfaceSubRegion.getSurfaceToRegionList();
-    arrayView1d< localIndex const >  const & embeddedSurfaceToSubRegion = embeddedSurfaceSubRegion.getSurfaceToSubRegionList();
-    arrayView1d< localIndex const >  const & embeddedSurfaceToCell      = embeddedSurfaceSubRegion.getSurfaceToCellList();
+
+    FixedToManyElementRelation const & embeddedSurfacesToCells = embeddedSurfaceSubRegion.getToCellRelation();
 
     arrayView1d< globalIndex const > const &
     embeddedElementDofNumber = embeddedSurfaceSubRegion.getReference< array1d< globalIndex > >( jumpDofKey );
@@ -550,8 +554,13 @@ void SolidMechanicsEmbeddedFractures::AddCouplingNumNonzeros( DomainPartition & 
 
     for( localIndex k=0; k<numEmbeddedElems; ++k )
     {
-      CellBlock const * const subRegion = Group::group_cast< CellBlock const * const >( elemManager.GetRegion( embeddedSurfaceToRegion[k] )->
-                                                                                          GetSubRegion( embeddedSurfaceToSubRegion[k] ));
+      // Get rock matrix element subregion
+      CellElementSubRegion const * const subRegion =
+        Group::group_cast< CellElementSubRegion const * const >
+          ( elemManager.GetRegion( embeddedSurfacesToCells.m_toElementRegion[k][0] )->
+            GetSubRegion( embeddedSurfacesToCells.m_toElementSubRegion[k][0] ));
+
+      localIndex cellElementIndex = embeddedSurfacesToCells.m_toElementIndex[k][0];
 
       if( ghostRank[k] < 0 )
       {
@@ -566,7 +575,7 @@ void SolidMechanicsEmbeddedFractures::AddCouplingNumNonzeros( DomainPartition & 
 
         for( localIndex a=0; a<subRegion->numNodesPerElement(); ++a )
         {
-          const localIndex & node = subRegion->nodeList( embeddedSurfaceToCell[k], a );
+          const localIndex & node = subRegion->nodeList( cellElementIndex, a );
           localIndex const localDispRow = LvArray::integerConversion< localIndex >( dispDofNumber[node] - rankOffset );
           GEOSX_ASSERT_GE( localDispRow, 0 );
           GEOSX_ASSERT_GE( rowLengths.size(), localDispRow + 3*subRegion->numNodesPerElement() );
@@ -601,9 +610,8 @@ void SolidMechanicsEmbeddedFractures::AddCouplingSparsityPattern( DomainPartitio
 
   elemManager.forElementSubRegions< EmbeddedSurfaceSubRegion >( [&]( EmbeddedSurfaceSubRegion const & embeddedSurfaceSubRegion )
   {
-    arrayView1d< localIndex const >  const & embeddedSurfaceToRegion    = embeddedSurfaceSubRegion.getSurfaceToRegionList();
-    arrayView1d< localIndex const >  const & embeddedSurfaceToSubRegion = embeddedSurfaceSubRegion.getSurfaceToSubRegionList();
-    arrayView1d< localIndex const >  const & embeddedSurfaceToCell      = embeddedSurfaceSubRegion.getSurfaceToCellList();
+
+    FixedToManyElementRelation const & embeddedSurfacesToCells = embeddedSurfaceSubRegion.getToCellRelation();
 
     arrayView1d< globalIndex const > const &
     embeddedElementDofNumber = embeddedSurfaceSubRegion.getReference< array1d< globalIndex > >( jumpDofKey );
@@ -612,8 +620,11 @@ void SolidMechanicsEmbeddedFractures::AddCouplingSparsityPattern( DomainPartitio
     // This will fill K_wu, and K_uw
     for( localIndex k=0; k<embeddedSurfaceSubRegion.size(); ++k )
     {
-      CellBlock const * const elemSubRegion = Group::group_cast< CellBlock const * const >( elemManager.GetRegion( embeddedSurfaceToRegion[k] )->
-                                                                                              GetSubRegion( embeddedSurfaceToSubRegion[k] ));
+      CellBlock const * const elemSubRegion = Group::group_cast< CellBlock const * const >( elemManager.GetRegion( embeddedSurfacesToCells.m_toElementRegion[k][0] )->
+                                                                                              GetSubRegion( embeddedSurfacesToCells.m_toElementSubRegion[k][0] ));
+
+
+      localIndex cellElementIndex = embeddedSurfacesToCells.m_toElementIndex[k][0];
 
       // working arrays
       stackArray1d< globalIndex, maxNumDispDof > eqnRowIndicesDisp ( 3*elemSubRegion->numNodesPerElement() );
@@ -630,7 +641,7 @@ void SolidMechanicsEmbeddedFractures::AddCouplingSparsityPattern( DomainPartitio
 
       for( localIndex a=0; a<elemSubRegion->numNodesPerElement(); ++a )
       {
-        const localIndex & node = elemSubRegion->nodeList( embeddedSurfaceToCell[k], a );
+        const localIndex & node = elemSubRegion->nodeList( cellElementIndex, a );
         for( localIndex idof = 0; idof < 3; ++idof )
         {
           eqnRowIndicesDisp[3*a + idof] = dispDofNumber[node] + idof - rankOffset;
@@ -672,24 +683,24 @@ void SolidMechanicsEmbeddedFractures::AssembleEquilibriumOperator( array2d< real
 {
   GEOSX_MARK_FUNCTION;
   // Normal and tangent unit vectors
-  R1Tensor const nVec  = embeddedSurfaceSubRegion.getNormalVector( k );
-  R1Tensor const tVec1 = embeddedSurfaceSubRegion.getTangentVector1( k );
-  R1Tensor const tVec2 = embeddedSurfaceSubRegion.getTangentVector2( k );
+  real64 const nVec[3]  = LVARRAY_TENSOROPS_INIT_LOCAL_3( embeddedSurfaceSubRegion.getNormalVector( k ) );
+  real64 const tVec1[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( embeddedSurfaceSubRegion.getTangentVector1( k ) );
+  real64 const tVec2[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( embeddedSurfaceSubRegion.getTangentVector2( k ) );
 
   BlasLapackLA::matrixScale( 0, eqMatrix );
 
   real64 nDn[3][3], t1DnSym[3][3], t2DnSym[3][3];
 
   // n dyadic n
-  LvArray::tensorOps::AiBj< 3, 3 >( nDn, nVec, nVec );
+  LvArray::tensorOps::Rij_eq_AiAj< 3 >( nDn, nVec );
 
   // sym(n dyadic t1) and sym (n dyadic t2)
-  LvArray::tensorOps::AiBj< 3, 3 >( t1DnSym, nVec, tVec1 );
-  LvArray::tensorOps::plusAiBj< 3, 3 >( t1DnSym, tVec1, nVec );
+  LvArray::tensorOps::Rij_eq_AiBj< 3, 3 >( t1DnSym, nVec, tVec1 );
+  LvArray::tensorOps::Rij_add_AiBj< 3, 3 >( t1DnSym, tVec1, nVec );
   LvArray::tensorOps::scale< 3, 3 >( t1DnSym, 0.5 );
 
-  LvArray::tensorOps::AiBj< 3, 3 >( t2DnSym, nVec, tVec2 );
-  LvArray::tensorOps::plusAiBj< 3, 3 >( t2DnSym, tVec2, nVec );
+  LvArray::tensorOps::Rij_eq_AiBj< 3, 3 >( t2DnSym, nVec, tVec2 );
+  LvArray::tensorOps::Rij_add_AiBj< 3, 3 >( t2DnSym, tVec2, nVec );
   LvArray::tensorOps::scale< 3, 3 >( t2DnSym, 0.5 );
 
   int VoigtIndex;
@@ -722,32 +733,30 @@ SolidMechanicsEmbeddedFractures::
                                  localIndex const q,
                                  CellBlock::NodeMapType const & elemsToNodes,
                                  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodesCoord,
-                                 arrayView1d< localIndex const > const & embeddedSurfaceToCell,
+                                 localIndex const cellElementIndex,
                                  localIndex const numNodesPerElement,
                                  arrayView4d< real64 const > const & dNdX )
 {
   GEOSX_MARK_FUNCTION;
 
   // Normal and tangent unit vectors
-  R1Tensor const nVec  = embeddedSurfaceSubRegion.getNormalVector( k );
-  R1Tensor const tVec1 = embeddedSurfaceSubRegion.getTangentVector1( k );
-  R1Tensor const tVec2 = embeddedSurfaceSubRegion.getTangentVector2( k );
+  real64 const nVec[3]  = LVARRAY_TENSOROPS_INIT_LOCAL_3( embeddedSurfaceSubRegion.getNormalVector( k ) );
+  real64 const tVec1[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( embeddedSurfaceSubRegion.getTangentVector1( k ) );
+  real64 const tVec2[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( embeddedSurfaceSubRegion.getTangentVector2( k ) );
 
   // Fill in compatibility operator
 
   // 1. construct mvector sum(dNdX(a) * H(a)) value for each Gauss point
-  R1Tensor mVec;
-  real64 heavisideFun;
-  mVec = 0.0;
+  real64 mVec[3] = { 0.0 };
   for( integer a=0; a<numNodesPerElement; ++a )
   {
     // Heaviside
-    heavisideFun = embeddedSurfaceSubRegion.
-                     ComputeHeavisideFunction( nodesCoord[ elemsToNodes[embeddedSurfaceToCell[k]][a] ], k );
+    real64 heavisideFun = embeddedSurfaceSubRegion.
+                            ComputeHeavisideFunction( nodesCoord[ elemsToNodes[cellElementIndex][a] ], k );
     // sum contribution of each node
-    mVec[0] -= dNdX( embeddedSurfaceToCell[k], q, a, 0 ) * heavisideFun;
-    mVec[1] -= dNdX( embeddedSurfaceToCell[k], q, a, 1 ) * heavisideFun;
-    mVec[2] -= dNdX( embeddedSurfaceToCell[k], q, a, 2 ) * heavisideFun;
+    mVec[0] -= dNdX( cellElementIndex, q, a, 0 ) * heavisideFun;
+    mVec[1] -= dNdX( cellElementIndex, q, a, 1 ) * heavisideFun;
+    mVec[2] -= dNdX( cellElementIndex, q, a, 2 ) * heavisideFun;
   }
 
   BlasLapackLA::matrixScale( 0, compMatrix );
@@ -757,17 +766,17 @@ SolidMechanicsEmbeddedFractures::
   real64 nDmSym[3][3], t1DmSym[3][3], t2DmSym[3][3];
 
   // sym(n dyadic m)
-  LvArray::tensorOps::AiBj< 3, 3 >( nDmSym, mVec, nVec );
-  LvArray::tensorOps::plusAiBj< 3, 3 >( nDmSym, nVec, mVec );
+  LvArray::tensorOps::Rij_eq_AiBj< 3, 3 >( nDmSym, mVec, nVec );
+  LvArray::tensorOps::Rij_add_AiBj< 3, 3 >( nDmSym, nVec, mVec );
   LvArray::tensorOps::scale< 3, 3 >( nDmSym, 0.5 );
 
   // sym(n dyadic t1) and sym (n dyadic t2)
-  LvArray::tensorOps::AiBj< 3, 3 >( t1DmSym, mVec, tVec1 );
-  LvArray::tensorOps::plusAiBj< 3, 3 >( t1DmSym, tVec1, mVec );
+  LvArray::tensorOps::Rij_eq_AiBj< 3, 3 >( t1DmSym, mVec, tVec1 );
+  LvArray::tensorOps::Rij_add_AiBj< 3, 3 >( t1DmSym, tVec1, mVec );
   LvArray::tensorOps::scale< 3, 3 >( t1DmSym, 0.5 );
 
-  LvArray::tensorOps::AiBj< 3, 3 >( t2DmSym, mVec, tVec2 );
-  LvArray::tensorOps::plusAiBj< 3, 3 >( t2DmSym, tVec2, mVec );
+  LvArray::tensorOps::Rij_eq_AiBj< 3, 3 >( t2DmSym, mVec, tVec2 );
+  LvArray::tensorOps::Rij_add_AiBj< 3, 3 >( t2DmSym, tVec2, mVec );
   LvArray::tensorOps::scale< 3, 3 >( t2DmSym, 0.5 );
 
   int VoigtIndex;

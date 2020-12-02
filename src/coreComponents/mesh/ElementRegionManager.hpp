@@ -25,11 +25,9 @@
 #include "CellElementSubRegion.hpp"
 #include "managers/ObjectManagerBase.hpp"
 #include "dataRepository/ReferenceWrapper.hpp"
-#include "FaceElementRegion.hpp"
-#include "EmbeddedSurfaceRegion.hpp"
+#include "SurfaceElementRegion.hpp"
 #include "fileIO/schema/schemaUtilities.hpp"
 #include "WellElementRegion.hpp"
-#include "EmbeddedSurfaceRegion.hpp"
 
 namespace geosx
 {
@@ -51,11 +49,27 @@ public:
   constexpr static int maxNumNodesPerElem = 8;
 
   /**
-   * @brief The ElementViewAccessor at the ElementRegionManager level is a 2D array of  VIEWTYPE.
+   * @brief The ElementViewAccessor at the ElementRegionManager level is an array of array of VIEWTYPE.
    * @tparam VIEWTYPE data type
    */
   template< typename VIEWTYPE >
   using ElementViewAccessor = array1d< array1d< VIEWTYPE > >;
+
+  /**
+   * @brief The ElementViewAccessor at the ElementRegionManager level is the
+   *   type resulting from ElementViewAccessor< VIEWTYPE >::toNestedView().
+   * @tparam VIEWTYPE data type
+   */
+  template< typename VIEWTYPE >
+  using ElementView = typename ElementViewAccessor< VIEWTYPE >::NestedViewType;
+
+  /**
+   * @brief The ElementViewAccessor at the ElementRegionManager level is the
+   *   type resulting from ElementViewAccessor< VIEWTYPE >::toNestedViewConst().
+   * @tparam VIEWTYPE data type
+   */
+  template< typename VIEWTYPE >
+  using ElementViewConst = typename ElementViewAccessor< VIEWTYPE >::NestedViewTypeConst;
 
   /**
    * @brief The ElementViewAccessor at the ElementRegionManager level is a 2D array of ReferenceWrapper around VIEWTYPE.
@@ -330,7 +344,7 @@ public:
   template< typename LAMBDA >
   void forElementRegionsComplete( LAMBDA lambda ) const
   {
-    forElementRegionsComplete< CellElementRegion, FaceElementRegion, EmbeddedSurfaceRegion,
+    forElementRegionsComplete< CellElementRegion, SurfaceElementRegion,
                                WellElementRegion >( std::forward< LAMBDA >( lambda ) );
   }
 
@@ -342,7 +356,7 @@ public:
   template< typename LAMBDA >
   void forElementRegionsComplete( LAMBDA lambda )
   {
-    forElementRegionsComplete< CellElementRegion, FaceElementRegion, EmbeddedSurfaceRegion,
+    forElementRegionsComplete< CellElementRegion, SurfaceElementRegion,
                                WellElementRegion >( std::forward< LAMBDA >( lambda ) );
   }
 
@@ -396,7 +410,7 @@ public:
   template< typename LOOKUP_CONTAINER, typename LAMBDA >
   void forElementRegionsComplete( LOOKUP_CONTAINER const & targetRegions, LAMBDA lambda ) const
   {
-    forElementRegionsComplete< CellElementRegion, FaceElementRegion, EmbeddedSurfaceRegion,
+    forElementRegionsComplete< CellElementRegion, SurfaceElementRegion,
                                WellElementRegion >( targetRegions, std::forward< LAMBDA >( lambda ) );
   }
 
@@ -410,7 +424,7 @@ public:
   template< typename LOOKUP_CONTAINER, typename LAMBDA >
   void forElementRegionsComplete( LOOKUP_CONTAINER const & targetRegions, LAMBDA lambda )
   {
-    forElementRegionsComplete< CellElementRegion, FaceElementRegion, EmbeddedSurfaceRegion,
+    forElementRegionsComplete< CellElementRegion, SurfaceElementRegion,
                                WellElementRegion >( targetRegions, std::forward< LAMBDA >( lambda ) );
   }
 

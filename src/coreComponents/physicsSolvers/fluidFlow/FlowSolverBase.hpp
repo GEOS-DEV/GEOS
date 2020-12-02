@@ -75,9 +75,9 @@ public:
 
   void setReservoirWellsCoupling() { m_coupledWellsFlag = 1; }
 
-  arrayView1d< string const > const & fluidModelNames() const { return m_fluidModelNames; }
+  arrayView1d< string const > fluidModelNames() const { return m_fluidModelNames; }
 
-  arrayView1d< string const > const & solidModelNames() const { return m_solidModelNames; }
+  arrayView1d< string const > solidModelNames() const { return m_solidModelNames; }
 
   virtual std::vector< string > getConstitutiveRelations( string const & regionName ) const override;
 
@@ -116,18 +116,22 @@ public:
    */
   virtual void ResetViews( MeshLevel & mesh );
 
+  virtual void setUpDflux_dApertureMatrix( DomainPartition & domain,
+                                           DofManager const & dofManager,
+                                           CRSMatrix< real64, globalIndex > & localMatrix );
+
 
   std::unique_ptr< CRSMatrix< real64, localIndex > > & getRefDerivativeFluxResidual_dAperture()
   {
     return m_derivativeFluxResidual_dAperture;
   }
 
-  CRSMatrixView< real64, localIndex const > const & getDerivativeFluxResidual_dAperture()
+  CRSMatrixView< real64, localIndex const > getDerivativeFluxResidual_dAperture()
   {
     return m_derivativeFluxResidual_dAperture->toViewConstSizes();
   }
 
-  CRSMatrixView< real64 const, localIndex const > const & getDerivativeFluxResidual_dAperture() const
+  CRSMatrixView< real64 const, localIndex const > getDerivativeFluxResidual_dAperture() const
   {
     return m_derivativeFluxResidual_dAperture->toViewConst();
   }

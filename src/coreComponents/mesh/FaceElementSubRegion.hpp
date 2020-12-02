@@ -19,9 +19,7 @@
 #ifndef GEOSX_MESH_FACEELEMENTSUBREGION_HPP_
 #define GEOSX_MESH_FACEELEMENTSUBREGION_HPP_
 
-#include "ElementSubRegionBase.hpp"
-#include "InterObjectRelation.hpp"
-#include "ToElementRelation.hpp"
+#include "SurfaceElementSubRegion.hpp"
 
 namespace geosx
 {
@@ -34,15 +32,9 @@ namespace geosx
  * and methods to support the specific geometry of an element comprised of a reduced dimensionality face element (i.e.
  * face area and aperture = volume)
  */
-class FaceElementSubRegion : public ElementSubRegionBase
+class FaceElementSubRegion : public SurfaceElementSubRegion
 {
 public:
-
-  /// Face element to nodes map type
-  using NodeMapType = InterObjectRelation< array1d< array1d< localIndex > > >;
-
-  /// Face element to edges map type
-  using EdgeMapType = InterObjectRelation< array1d< array1d< localIndex > > >;
 
   /// Face element to faces map type
   using FaceMapType = InterObjectRelation< array2d< localIndex > >;
@@ -142,7 +134,7 @@ public:
    * @brief Struct containing the keys to all face element views.
    * @struct viewKeyStruct
    */
-  struct viewKeyStruct : ElementSubRegionBase::viewKeyStruct
+  struct viewKeyStruct : SurfaceElementSubRegion::viewKeyStruct
   {
     /// String key for the derivatives of the shape functions with respect to the reference configuration
     static constexpr auto dNdXString = "dNdX";
@@ -150,26 +142,8 @@ public:
     /// String key for the derivative of the jacobian.
     static constexpr auto detJString = "detJ";
 
-    /// String key for the element aperture
-    static constexpr auto elementApertureString        = "elementAperture";
-
-    /// Face element area string.
-    static constexpr auto elementAreaString            = "elementArea";
-
     /// String for registering the elementRotationMatrix with the repository.
     static constexpr auto elementRotationMatrixString  = "elementRotationMatrix";
-
-    /// Face element to cell regions map string.
-    static constexpr auto faceElementsToCellRegionsString    = "fractureElementsToCellRegions";
-
-    /// Face element to cell subregions map string.
-    static constexpr auto faceElementsToCellSubRegionsString    = "fractureElementsToCellSubRegions";
-
-    /// Face element to cell indices map string.
-    static constexpr auto faceElementsToCellIndexString    = "fractureElementsToCellIndices";
-
-    /// Mass creation string.
-    constexpr static auto creationMassString = "creationMass";
 
 #if GEOSX_USE_SEPARATION_COEFFICIENT
 
@@ -190,40 +164,6 @@ public:
    * @brief Getter functions for the various inter-object relations
    */
   ///@{
-
-  /**
-   * @brief Get the face element to nodes map.
-   * @return the face element to node map
-   */
-  NodeMapType const & nodeList() const
-  {
-    return m_toNodesRelation;
-  }
-
-  /**
-   * @copydoc nodeList() const
-   */
-  NodeMapType & nodeList()
-  {
-    return m_toNodesRelation;
-  }
-
-  /**
-   * @brief Get the face element to edges map.
-   * @return The face element to edge map
-   */
-  EdgeMapType const & edgeList() const
-  {
-    return m_toEdgesRelation;
-  }
-
-  /**
-   * @copydoc edgeList() const
-   */
-  EdgeMapType & edgeList()
-  {
-    return m_toEdgesRelation;
-  }
 
   /**
    * @brief Get the face element to faces map.
@@ -257,48 +197,26 @@ public:
   //virtual localIndex numNodesPerElement( localIndex const k ) const override { return m_toNodesRelation[k].size(); }
 
   /**
-   * @brief Get face element aperture.
-   * @return the aperture of the face elements
-   */
-  arrayView1d< real64 > const & getElementAperture()       { return m_elementAperture; }
-
-  /**
-   * @copydoc getElementAperture()
-   */
-  arrayView1d< real64 const > const & getElementAperture() const { return m_elementAperture; }
-
-  /**
-   * @brief Get face element surface area.
-   * @return the surface area of the face element
-   */
-  arrayView1d< real64 > const & getElementArea()       { return m_elementArea; }
-
-  /**
-   * @copydoc getElementArea()
-   */
-  arrayView1d< real64 const > const & getElementArea() const { return m_elementArea; }
-
-  /**
    * @brief Get face element rotation matrix.
    * @return a list of all face element rotation matrixces.
    */
-  arrayView3d< real64 > const & getElementRotationMatrix()       { return m_elementRotationMatrix; }
+  arrayView3d< real64 > getElementRotationMatrix() { return m_elementRotationMatrix; }
 
   /**
    * @copydoc getElementRotationMatrix()
    */
-  arrayView3d< real64 const > const & getElementRotationMatrix() const { return m_elementRotationMatrix; }
+  arrayView3d< real64 const > getElementRotationMatrix() const { return m_elementRotationMatrix; }
 
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
   /**
    * @brief Get separation coefficient.
    * @return the separation coefficient
    */
-  arrayView1d< real64 > const & getSeparationCoefficient()       { return m_separationCoefficient; }
+  arrayView1d< real64 > getSeparationCoefficient() { return m_separationCoefficient; }
   /**
    * @copydoc getSeparationCoefficient()
    */
-  arrayView1d< real64 const > const & getSeparationCoefficient() const { return m_separationCoefficient; }
+  arrayView1d< real64 const > getSeparationCoefficient() const { return m_separationCoefficient; }
 #endif
 
   ///@}
@@ -312,9 +230,6 @@ public:
   /// Unmapped face elements to faces map
   map< localIndex, array1d< globalIndex > > m_unmappedGlobalIndicesInToFaces;
 
-  /// Map between the face elements and the cells
-  FixedToManyElementRelation m_faceElementsToCells;
-
   /// List of the new face elements that have been generated
   SortedArray< localIndex > m_newFaceElements;
 
@@ -327,7 +242,7 @@ public:
   /**
    * @brief @return The array of shape function derivatives.
    */
-  arrayView4d< real64 const > const & dNdX() const
+  arrayView4d< real64 const > dNdX() const
   { return m_dNdX.toViewConst(); }
 
   /**
@@ -339,8 +254,8 @@ public:
   /**
    * @brief @return The array of jacobian determinantes.
    */
-  arrayView2d< real64 const > const & detJ() const
-  { return m_detJ.toViewConst(); }
+  arrayView2d< real64 const > detJ() const
+  { return m_detJ; }
 
 private:
 
@@ -361,20 +276,8 @@ private:
   /// The array of jacobian determinantes.
   array2d< real64 > m_detJ;
 
-  /// Element-to-node relation
-  NodeMapType m_toNodesRelation;
-
-  /// Element-to-edge relation
-  EdgeMapType m_toEdgesRelation;
-
   /// Element-to-face relation
   FaceMapType m_toFacesRelation;
-
-  /// Member level field for the element center
-  array1d< real64 > m_elementAperture;
-
-  /// Member level field for the element center
-  array1d< real64 > m_elementArea;
 
   /// The member level field for the element rotation matrix
   array3d< real64 > m_elementRotationMatrix;

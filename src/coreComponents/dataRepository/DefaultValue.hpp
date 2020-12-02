@@ -96,7 +96,8 @@ struct Helper< T, std::enable_if_t< is_defaultable< T >::value > >
 template< typename T >
 struct Helper< T, std::enable_if_t< traits::HasAlias_value_type< T > &&
                                     is_defaultable< typename T::value_type >::value &&
-                                    !traits::is_string< T > > >
+                                    !traits::is_string< T > &&
+                                    !traits::is_tensorT< T > > >
 {
   /// attribute to indicate whether type @p T has a default value
   static constexpr bool has_default_value = true;

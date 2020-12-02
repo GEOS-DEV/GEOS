@@ -85,8 +85,8 @@ TEST( FunctionTests, 1DTable )
   testExpected[3] = -5.0;
   testExpected[4] = 3.0;
   testExpected[5] = 7.0;
-  table_a->setInterpolationMethod( "linear" );
-  evaluate1DFunction( table_a, testCoordinates.toView(), testExpected.toView() );
+  table_a->setInterpolationMethod( TableFunction::InterpolationType::Linear );
+  evaluate1DFunction( table_a, testCoordinates, testExpected );
 
   // Upper
   testExpected[0] = 1.0;
@@ -95,8 +95,8 @@ TEST( FunctionTests, 1DTable )
   testExpected[3] = -5.0;
   testExpected[4] = 7.0;
   testExpected[5] = 7.0;
-  table_a->setInterpolationMethod( "upper" );
-  evaluate1DFunction( table_a, testCoordinates.toView(), testExpected.toView() );
+  table_a->setInterpolationMethod( TableFunction::InterpolationType::Upper );
+  evaluate1DFunction( table_a, testCoordinates, testExpected );
 
   // Lower
   testExpected[0] = 1.0;
@@ -105,8 +105,8 @@ TEST( FunctionTests, 1DTable )
   testExpected[3] = 3.0;
   testExpected[4] = -5.0;
   testExpected[5] = 7.0;
-  table_a->setInterpolationMethod( "lower" );
-  evaluate1DFunction( table_a, testCoordinates.toView(), testExpected.toView() );
+  table_a->setInterpolationMethod( TableFunction::InterpolationType::Lower );
+  evaluate1DFunction( table_a, testCoordinates, testExpected );
 
   // Nearest
   testExpected[0] = 1.0;
@@ -115,8 +115,8 @@ TEST( FunctionTests, 1DTable )
   testExpected[3] = -5.0;
   testExpected[4] = 7.0;
   testExpected[5] = 7.0;
-  table_a->setInterpolationMethod( "nearest" );
-  evaluate1DFunction( table_a, testCoordinates.toView(), testExpected.toView() );
+  table_a->setInterpolationMethod( TableFunction::InterpolationType::Nearest );
+  evaluate1DFunction( table_a, testCoordinates, testExpected );
 
 }
 
@@ -168,7 +168,7 @@ TEST( FunctionTests, 2DTable )
   TableFunction * table_b = functionManager->CreateChild( "TableFunction", "table_b" )->group_cast< TableFunction * >();
   table_b->setTableCoordinates( coordinates );
   table_b->setTableValues( values );
-  table_b->setInterpolationMethod( "linear" );
+  table_b->setInterpolationMethod( TableFunction::InterpolationType::Linear );
   table_b->setInputVarNames( inputVarNames );
   table_b->reInitializeFunction();
 
@@ -290,7 +290,7 @@ TEST( FunctionTests, 4DTable_multipleInputs )
   TableFunction * table_c = functionManager->CreateChild( "TableFunction", "table_c" )->group_cast< TableFunction * >();
   table_c->setTableCoordinates( coordinates );
   table_c->setTableValues( values );
-  table_c->setInterpolationMethod( "linear" );
+  table_c->setInterpolationMethod( TableFunction::InterpolationType::Linear );
   table_c->setInputVarNames( inputVarNames );
   table_c->reInitializeFunction();
 

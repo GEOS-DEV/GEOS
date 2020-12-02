@@ -80,57 +80,8 @@ void SinglePhaseFVM< BASE >::SetupSystem( DomainPartition & domain,
                      localSolution,
                      setSparsity );
 
-  MeshLevel & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
+  setUpDflux_dApertureMatrix( domain, dofManager, localMatrix );
 
-  std::unique_ptr< CRSMatrix< real64, localIndex > > &
-  derivativeFluxResidual_dAperture = this->getRefDerivativeFluxResidual_dAperture();
-
-  {
-    localIndex numRows = 0;
-    this->template forTargetSubRegions< FaceElementSubRegion >( mesh, [&]( localIndex const,
-                                                                           FaceElementSubRegion const & elementSubRegion )
-    {
-      numRows += elementSubRegion.size();
-    } );
-
-    derivativeFluxResidual_dAperture = std::make_unique< CRSMatrix< real64, localIndex > >( numRows, numRows );
-    derivativeFluxResidual_dAperture->setName( this->getName() + "/derivativeFluxResidual_dAperture" );
-
-    derivativeFluxResidual_dAperture->reserveNonZeros( localMatrix.numNonZeros() );
-    localIndex maxRowSize = -1;
-    for( localIndex row = 0; row < localMatrix.numRows(); ++row )
-    {
-      localIndex const rowSize = localMatrix.numNonZeros( row );
-      maxRowSize = maxRowSize > rowSize ? maxRowSize : rowSize;
-    }
-    for( localIndex row = localMatrix.numRows(); row < numRows; ++row )
-    {
-      derivativeFluxResidual_dAperture->reserveNonZeros( row, maxRowSize );
-    }
-  }
-
-  string const presDofKey = dofManager.getKey( FlowSolverBase::viewKeyStruct::pressureString );
-
-  NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
-  FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
-  FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( this->getDiscretization() );
-
-  fluxApprox.forStencils< FaceElementStencil >( mesh, [&]( FaceElementStencil const & stencil )
-  {
-    for( localIndex iconn = 0; iconn < stencil.size(); ++iconn )
-    {
-      localIndex const numFluxElems = stencil.stencilSize( iconn );
-      typename FaceElementStencil::IndexContainerViewConstType const & sei = stencil.getElementIndices();
-
-      for( localIndex k0 = 0; k0 < numFluxElems; ++k0 )
-      {
-        for( localIndex k1 = 0; k1 < numFluxElems; ++k1 )
-        {
-          derivativeFluxResidual_dAperture->insertNonZero( sei[iconn][k0], sei[iconn][k1], 0.0 );
-        }
-      }
-    }
-  } );
 }
 
 template< typename BASE >
@@ -238,23 +189,23 @@ void SinglePhaseFVM< BASE >::AssembleFluxTerms( real64 const GEOSX_UNUSED_PARAM(
     FluxKernel::Launch( stencil,
                         dt,
                         dofManager.rankOffset(),
-                        elemDofNumber.toViewConst(),
-                        m_elemGhostRank.toViewConst(),
-                        m_pressure.toViewConst(),
-                        m_deltaPressure.toViewConst(),
-                        m_gravCoef.toViewConst(),
-                        m_density.toViewConst(),
-                        m_dDens_dPres.toViewConst(),
-                        m_mobility.toViewConst(),
-                        m_dMobility_dPres.toViewConst(),
-                        m_elementAperture0.toViewConst(),
-                        m_effectiveAperture.toViewConst(),
-                        m_transTMultiplier.toViewConst(),
+                        elemDofNumber.toNestedViewConst(),
+                        m_elemGhostRank.toNestedViewConst(),
+                        m_pressure.toNestedViewConst(),
+                        m_deltaPressure.toNestedViewConst(),
+                        m_gravCoef.toNestedViewConst(),
+                        m_density.toNestedViewConst(),
+                        m_dDens_dPres.toNestedViewConst(),
+                        m_mobility.toNestedViewConst(),
+                        m_dMobility_dPres.toNestedViewConst(),
+                        m_elementAperture0.toNestedViewConst(),
+                        m_effectiveAperture.toNestedViewConst(),
+                        m_transTMultiplier.toNestedViewConst(),
                         this->gravityVector(),
                         this->m_meanPermCoeff,
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
-                        m_elementSeparationCoefficient.toViewConst(),
-                        m_element_dSeparationCoefficient_dAperture.toViewConst(),
+                        m_elementSeparationCoefficient.toNestedViewConst(),
+                        m_element_dSeparationCoefficient_dAperture.toNestedViewConst(),
 #endif
                         localMatrix,
                         localRhs,
@@ -305,10 +256,10 @@ void SinglePhaseFVM< BASE >::ApplyFaceDirichletBC( real64 const time_n,
     regionFluidMap.emplace( er, modelIndex );
   } );
 
-  arrayView1d< real64 const > const & presFace =
+  arrayView1d< real64 const > const presFace =
     faceManager.getReference< array1d< real64 > >( viewKeyStruct::facePressureString );
 
-  arrayView1d< real64 const > const & gravCoefFace =
+  arrayView1d< real64 const > const gravCoefFace =
     faceManager.getReference< array1d< real64 > >( viewKeyStruct::gravityCoefString );
 
   string const & dofKey = dofManager.getKey( viewKeyStruct::pressureString );
@@ -357,16 +308,16 @@ void SinglePhaseFVM< BASE >::ApplyFaceDirichletBC( real64 const time_n,
       typename TYPEOFREF( fluid ) ::KernelWrapper fluidWrapper = fluid.createKernelWrapper();
 
       FaceDirichletBCKernel::Launch( seri, sesri, sefi, trans,
-                                     m_elemGhostRank.toViewConst(),
-                                     elemDofNumber.toViewConst(),
+                                     m_elemGhostRank.toNestedViewConst(),
+                                     elemDofNumber.toNestedViewConst(),
                                      dofManager.rankOffset(),
-                                     m_pressure.toViewConst(),
-                                     m_deltaPressure.toViewConst(),
-                                     m_gravCoef.toViewConst(),
-                                     m_density.toViewConst(),
-                                     m_dDens_dPres.toViewConst(),
-                                     m_mobility.toViewConst(),
-                                     m_dMobility_dPres.toViewConst(),
+                                     m_pressure.toNestedViewConst(),
+                                     m_deltaPressure.toNestedViewConst(),
+                                     m_gravCoef.toNestedViewConst(),
+                                     m_density.toNestedViewConst(),
+                                     m_dDens_dPres.toNestedViewConst(),
+                                     m_mobility.toNestedViewConst(),
+                                     m_dMobility_dPres.toNestedViewConst(),
                                      presFace,
                                      gravCoefFace,
                                      fluidWrapper,
@@ -374,6 +325,65 @@ void SinglePhaseFVM< BASE >::ApplyFaceDirichletBC( real64 const time_n,
                                      localMatrix,
                                      localRhs );
     } );
+  } );
+}
+
+template< typename BASE >
+void SinglePhaseFVM< BASE >::setUpDflux_dApertureMatrix( DomainPartition & domain,
+                                                         DofManager const & dofManager,
+                                                         CRSMatrix< real64, globalIndex > & localMatrix )
+{
+  MeshLevel & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
+
+  std::unique_ptr< CRSMatrix< real64, localIndex > > &
+  derivativeFluxResidual_dAperture = this->getRefDerivativeFluxResidual_dAperture();
+
+  {
+    localIndex numRows = 0;
+    this->template forTargetSubRegions< FaceElementSubRegion, EmbeddedSurfaceSubRegion >( mesh, [&]( localIndex const,
+                                                                                                     auto const & elementSubRegion )
+    {
+      numRows += elementSubRegion.size();
+    } );
+
+    derivativeFluxResidual_dAperture = std::make_unique< CRSMatrix< real64, localIndex > >( numRows, numRows );
+    derivativeFluxResidual_dAperture->setName( this->getName() + "/derivativeFluxResidual_dAperture" );
+
+    derivativeFluxResidual_dAperture->reserveNonZeros( localMatrix.numNonZeros() );
+    localIndex maxRowSize = -1;
+    for( localIndex row = 0; row < localMatrix.numRows(); ++row )
+    {
+      localIndex const rowSize = localMatrix.numNonZeros( row );
+      maxRowSize = maxRowSize > rowSize ? maxRowSize : rowSize;
+    }
+    // TODO This is way too much. The With the full system rowSize is not a good estimate for this.
+    for( localIndex row = localMatrix.numRows(); row < numRows; ++row )
+    {
+      derivativeFluxResidual_dAperture->reserveNonZeros( row, maxRowSize );
+    }
+  }
+
+  string const presDofKey = dofManager.getKey( FlowSolverBase::viewKeyStruct::pressureString );
+
+  NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
+  FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
+  FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( this->getDiscretization() );
+
+  fluxApprox.forStencils< FaceElementStencil >( mesh, [&]( FaceElementStencil const & stencil )
+  {
+    for( localIndex iconn = 0; iconn < stencil.size(); ++iconn )
+    {
+      localIndex const numFluxElems = stencil.stencilSize( iconn );
+      typename FaceElementStencil::IndexContainerViewConstType const & sei = stencil.getElementIndices();
+
+      for( localIndex k0 = 0; k0 < numFluxElems; ++k0 )
+      {
+        for( localIndex k1 = 0; k1 < numFluxElems; ++k1 )
+        {
+          derivativeFluxResidual_dAperture->insertNonZero( sei[iconn][k0], sei[iconn][k1], 0.0 );
+        }
+      }
+    }
   } );
 }
 

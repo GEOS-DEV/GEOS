@@ -28,7 +28,6 @@ TEST( testGeosxTraits, HasOperatorPlusEquals )
 {
   static_assert( HasOperatorPlusEquals< int >, "Should be true." );
   static_assert( HasOperatorPlusEquals< std::string >, "Should be true." );
-  static_assert( HasOperatorPlusEquals< R1Tensor >, "Should be true." );
 
   static_assert( !HasOperatorPlusEquals< int const >, "Should be false." );
   static_assert( !HasOperatorPlusEquals< std::vector< int > >, "Should be false." );
@@ -39,8 +38,6 @@ TEST( testGeosxTraits, HasOperatorPlusEquals2 )
 {
   static_assert( HasOperatorPlusEquals2< double, int >, "Should be true." );
   static_assert( HasOperatorPlusEquals2< double, int const >, "Should be true." );
-  static_assert( HasOperatorPlusEquals2< R1Tensor, int >, "Should be true." );
-  static_assert( HasOperatorPlusEquals2< R1Tensor, R1Tensor >, "Should be true." );
   static_assert( HasOperatorPlusEquals2< std::string, std::string >, "Should be true." );
 
   static_assert( !HasOperatorPlusEquals2< double const, int >, "Should be false." );
@@ -105,24 +102,6 @@ TEST( testGeosxTraits, Pointer )
   static_assert( std::is_same< ConstPointer< SortedArray< float > >, float const * >::value, "Should be true." );
 }
 
-TEST( testGeosxTraits, ViewType )
-{
-  static_assert( std::is_same< ViewType< int >, int & >::value, "Should be true." );
-  static_assert( std::is_same< ViewType< array2d< float, RAJA::PERM_JI > >, arrayView2d< float, 0 > const & >::value, "Should be true." );
-  static_assert( std::is_same< ViewType< SortedArray< double > >, SortedArrayView< double const > const & >::value, "Should be true." );
-  static_assert( std::is_same< ViewType< ArrayOfArrays< int > >, ArrayOfArraysView< int > const & >::value, "Should be true." );
-  static_assert( std::is_same< ViewType< ArrayOfSets< int > >, ArrayOfSetsView< int > const & >::value, "Should be true." );
-  static_assert( std::is_same< ViewType< CRSMatrix< int > >, CRSMatrixView< int > const & >::value, "Should be true." );
-
-  static_assert( std::is_same< ViewTypeConst< int >, int const & >::value, "Should be true." );
-  static_assert( std::is_same< ViewTypeConst< array2d< float, RAJA::PERM_JI > >, arrayView2d< float const, 0 > const & >::value, "Should be true." );
-  static_assert( std::is_same< ViewTypeConst< SortedArray< double > >, SortedArrayView< double const > const & >::value, "Should be true." );
-  static_assert( std::is_same< ViewTypeConst< ArrayOfArrays< int > >, ArrayOfArraysView< int const > const & >::value, "Should be true." );
-  static_assert( std::is_same< ViewTypeConst< ArrayOfSets< int > >, ArrayOfSetsView< int const > const & >::value, "Should be true." );
-  static_assert( std::is_same< ViewTypeConst< CRSMatrix< int, localIndex > >, CRSMatrixView< int const, localIndex const > const & >::value,
-                 "Should be true." );
-}
-
 TEST( testGeosxTraits, HasMemberFunction_data )
 {
   static_assert( HasMemberFunction_data< array1d< double > >, "Should be true." );
@@ -133,19 +112,6 @@ TEST( testGeosxTraits, HasMemberFunction_data )
   static_assert( !HasMemberFunction_data< std::map< string, string > >, "Should be false." );
   static_assert( !HasMemberFunction_data< int >, "Should be false." );
   static_assert( !HasMemberFunction_data< double >, "Should be false." );
-}
-
-TEST( testGeosxTraits, HasMemberFunction_move )
-{
-  static_assert( HasMemberFunction_move< array1d< double > >, "Should be true." );
-  static_assert( HasMemberFunction_move< array5d< array1d< R1Tensor > > >, "Should be true." );
-  static_assert( HasMemberFunction_move< SortedArray< string > >, "Should be true." );
-  static_assert( HasMemberFunction_move< ArrayOfArrays< int > >, "Should be true." );
-
-  static_assert( !HasMemberFunction_move< std::vector< int > >, "Should be true." );
-  static_assert( !HasMemberFunction_move< std::map< string, string > >, "Should be true." );
-  static_assert( !HasMemberFunction_move< int >, "Should be false." );
-  static_assert( !HasMemberFunction_move< double >, "Should be false." );
 }
 
 TEST( testGeosxTraits, HasMemberFunction_size )

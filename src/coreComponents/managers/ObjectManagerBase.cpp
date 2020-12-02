@@ -34,6 +34,7 @@ ObjectManagerBase::ObjectManagerBase( std::string const & name,
   m_localToGlobalMap(),
   m_globalToLocalMap(),
   m_isExternal(),
+  m_domainBoundaryIndicator(),
   m_ghostRank(),
   m_neighborData()
 {
@@ -52,7 +53,7 @@ ObjectManagerBase::ObjectManagerBase( std::string const & name,
     setApplyDefaultValue( -2 )->
     setPlotLevel( PlotLevel::LEVEL_0 );
 
-  registerWrapper< array1d< integer > >( viewKeyStruct::domainBoundaryIndicatorString );
+  registerWrapper< array1d< integer > >( viewKeyStruct::domainBoundaryIndicatorString, &m_domainBoundaryIndicator );
 
   m_sets.registerWrapper< SortedArray< localIndex > >( this->m_ObjectManagerBaseViewKeys.externalSet );
 }
@@ -171,7 +172,7 @@ void ObjectManagerBase::ConstructSetFromSetAndMap( SortedArrayView< localIndex c
 
 void ObjectManagerBase::ConstructLocalListOfBoundaryObjects( localIndex_array & objectList ) const
 {
-  arrayView1d< integer const > const & isDomainBoundary = this->getReference< integer_array >( m_ObjectManagerBaseViewKeys.domainBoundaryIndicator );
+  arrayView1d< integer const > const & isDomainBoundary = this->getDomainBoundaryIndicator();
   for( localIndex k=0; k<size(); ++k )
   {
     if( isDomainBoundary[k] == 1 )
@@ -183,7 +184,7 @@ void ObjectManagerBase::ConstructLocalListOfBoundaryObjects( localIndex_array & 
 
 void ObjectManagerBase::ConstructGlobalListOfBoundaryObjects( globalIndex_array & objectList ) const
 {
-  arrayView1d< integer const > const & isDomainBoundary = this->getReference< integer_array >( m_ObjectManagerBaseViewKeys.domainBoundaryIndicator );
+  arrayView1d< integer const > const & isDomainBoundary = this->getDomainBoundaryIndicator();
   for( localIndex k=0; k<size(); ++k )
   {
     if( isDomainBoundary[k] == 1 )
@@ -389,7 +390,7 @@ localIndex ObjectManagerBase::PackParentChildMapsPrivate( buffer_unit_type * & b
 
   if( this->hasExtrinsicData< extrinsicMeshData::ParentIndex >() )
   {
-    arrayView1d< localIndex const > const & parentIndex = this->getExtrinsicData< extrinsicMeshData::ParentIndex >();
+    arrayView1d< localIndex const > const parentIndex = this->getExtrinsicData< extrinsicMeshData::ParentIndex >();
     packedSize += bufferOps::Pack< DOPACK >( buffer, string( extrinsicMeshData::ParentIndex::key ) );
     packedSize += bufferOps::Pack< DOPACK >( buffer,
                                              parentIndex,
@@ -471,10 +472,11 @@ localIndex ObjectManagerBase::PackSets( buffer_unit_type * & buffer,
     string const & setName = wrapperIter.first;
     SortedArrayView< localIndex const > const & currentSet = m_sets.getReference< SortedArray< localIndex > >( setName );
     packedSize += bufferOps::Pack< DOPACK >( buffer, setName );
+    SortedArray< globalIndex > emptySet;
     packedSize += bufferOps::Pack< DOPACK >( buffer,
                                              currentSet,
                                              packList,
-                                             SortedArray< globalIndex >().toViewConst(),
+                                             emptySet.toViewConst(),
                                              m_localToGlobalMap );
   }
   return packedSize;
@@ -515,7 +517,7 @@ localIndex ObjectManagerBase::UnpackSets( buffer_unit_type const * & buffer )
 }
 
 
-localIndex ObjectManagerBase::PackGlobalMapsSize( arrayView1d< localIndex > const & packList,
+localIndex ObjectManagerBase::PackGlobalMapsSize( arrayView1d< localIndex const > const & packList,
                                                   integer const recursive ) const
 {
   buffer_unit_type * junk = nullptr;
@@ -523,7 +525,7 @@ localIndex ObjectManagerBase::PackGlobalMapsSize( arrayView1d< localIndex > cons
 }
 
 localIndex ObjectManagerBase::PackGlobalMaps( buffer_unit_type * & buffer,
-                                              arrayView1d< localIndex > const & packList,
+                                              arrayView1d< localIndex const > const & packList,
                                               integer const recursive ) const
 {
   return PackGlobalMapsPrivate< true >( buffer, packList, recursive );
@@ -825,7 +827,7 @@ integer ObjectManagerBase::SplitObject( localIndex const indexToSplit,
 
 void ObjectManagerBase::inheritGhostRankFromParent( std::set< localIndex > const & indices )
 {
-  arrayView1d< localIndex const > const & parentIndex = this->getExtrinsicData< extrinsicMeshData::ParentIndex >();
+  arrayView1d< localIndex const > const parentIndex = this->getExtrinsicData< extrinsicMeshData::ParentIndex >();
 
   for( auto const a : indices )
   {
@@ -1026,7 +1028,7 @@ void ObjectManagerBase::CleanUpMap( std::set< localIndex > const & targetIndices
 
 void ObjectManagerBase::enforceStateFieldConsistencyPostTopologyChange( std::set< localIndex > const & targetIndices )
 {
-  arrayView1d< localIndex const > const & childFaceIndices = getExtrinsicData< extrinsicMeshData::ChildIndex >();
+  arrayView1d< localIndex const > const childFaceIndices = getExtrinsicData< extrinsicMeshData::ChildIndex >();
 
   for( localIndex const targetIndex : targetIndices )
   {

@@ -22,7 +22,6 @@
 #include "linearAlgebra/DofManager.hpp"
 #include "linearAlgebra/interfaces/hypre/HypreUtils.hpp"
 #include "linearAlgebra/utilities/LinearSolverParameters.hpp"
-#include "linearAlgebra/utilities/LAIHelperFunctions.hpp"
 
 #include <_hypre_utilities.h>
 #include <_hypre_parcsr_ls.h>
@@ -41,35 +40,44 @@ HyprePreconditioner::HyprePreconditioner( LinearSolverParameters params,
 {
   if( m_precond == nullptr )
   {
-    if( m_parameters.preconditionerType == "none" )
+    switch( m_parameters.preconditionerType )
     {
-      m_functions->setup = (HYPRE_PtrToParSolverFcn) hypre_ParKrylovIdentitySetup;
-      m_functions->apply = (HYPRE_PtrToParSolverFcn) hypre_ParKrylovIdentity;
-    }
-    else if( m_parameters.preconditionerType == "jacobi" )
-    {
-      m_functions->setup = (HYPRE_PtrToParSolverFcn) HYPRE_ParCSRDiagScaleSetup;
-      m_functions->apply = (HYPRE_PtrToParSolverFcn) HYPRE_ParCSRDiagScale;
-    }
-    else if( m_parameters.preconditionerType == "amg" )
-    {
-      createAMG();
-    }
-    else if( m_parameters.preconditionerType == "mgr" )
-    {
-      createMGR( dofManager );
-    }
-    else if( m_parameters.preconditionerType == "iluk" )
-    {
-      createILU();
-    }
-    else if( m_parameters.preconditionerType == "ilut" )
-    {
-      createILUT();
-    }
-    else
-    {
-      GEOSX_ERROR( "Unsupported preconditioner type: " << m_parameters.preconditionerType );
+      case LinearSolverParameters::PreconditionerType::none:
+      {
+        m_functions->setup = (HYPRE_PtrToParSolverFcn) hypre_ParKrylovIdentitySetup;
+        m_functions->apply = (HYPRE_PtrToParSolverFcn) hypre_ParKrylovIdentity;
+        break;
+      }
+      case LinearSolverParameters::PreconditionerType::jacobi:
+      {
+        m_functions->setup = (HYPRE_PtrToParSolverFcn) HYPRE_ParCSRDiagScaleSetup;
+        m_functions->apply = (HYPRE_PtrToParSolverFcn) HYPRE_ParCSRDiagScale;
+        break;
+      }
+      case LinearSolverParameters::PreconditionerType::amg:
+      {
+        createAMG();
+        break;
+      }
+      case LinearSolverParameters::PreconditionerType::mgr:
+      {
+        createMGR( dofManager );
+        break;
+      }
+      case LinearSolverParameters::PreconditionerType::iluk:
+      {
+        createILU();
+        break;
+      }
+      case LinearSolverParameters::PreconditionerType::ilut:
+      {
+        createILUT();
+        break;
+      }
+      default:
+      {
+        GEOSX_ERROR( "Preconditioner type not supported in hypre interface: " << m_parameters.preconditionerType );
+      }
     }
   }
 }
@@ -251,7 +259,7 @@ void HyprePreconditioner::createMGR( DofManager const * const dofManager )
   std::vector< HYPRE_Int > mgr_level_interp_type;
   std::vector< HYPRE_Int > mgr_level_frelax_method;
 
-  if( m_parameters.mgr.strategy == "Poroelastic" )
+  if( ( m_parameters.mgr.strategy == "Poroelastic" ) | ( m_parameters.mgr.strategy == "Hydrofracture" ) )
   {
     // Note: at the moment we assume single-phase flow poroelasticity
     //
@@ -292,7 +300,14 @@ void HyprePreconditioner::createMGR( DofManager const * const dofManager )
     mgr_level_interp_type[0] = 2; //diagonal scaling (Jacobi)
 
     mgr_coarse_grid_method.resize( mgr_nlevels );
-    mgr_coarse_grid_method[0] = 1; //diagonal sparsification
+    if( m_parameters.mgr.strategy == "Poroelastic" )
+    {
+      mgr_coarse_grid_method[0] = 1; //diagonal sparsification
+    }
+    else
+    {
+      mgr_coarse_grid_method[0] = 0; //Galerkin coarse grid computation using RAP
+    }
 
     GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGCreate( &aux_precond ) );
     GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetPrintLevel( aux_precond, 0 ) );

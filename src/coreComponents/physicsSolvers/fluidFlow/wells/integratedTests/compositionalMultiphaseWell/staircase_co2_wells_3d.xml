@@ -10,10 +10,11 @@
       targetRegions="{ Channel, wellRegion1, wellRegion2 }">
       <NonlinearSolverParameters
         newtonTol="1.0e-8"
-        lineSearchAction="0"
+        lineSearchAction="None"
         newtonMaxIter="40"/>
       <LinearSolverParameters
         solverType="direct"
+        directParallel="0"
         logLevel="0"/>
     </CompositionalMultiphaseReservoir>
 
@@ -36,7 +37,7 @@
       fluidNames="{ fluid1 }"
       relPermNames="{ relperm }"
       wellTemperature="368.15"
-      maxCompFractionChange="0.2"      
+      maxCompFractionChange="0.2"
       useMass="1">
       <WellControls
         name="wellControls1"

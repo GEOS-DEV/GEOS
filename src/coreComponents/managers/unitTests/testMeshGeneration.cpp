@@ -190,8 +190,8 @@ TEST_F( MeshGenerationTest, nodePositions )
 
 TEST_F( MeshGenerationTest, elementCentersAndVolumes )
 {
-  arrayView2d< real64 const > const & centers = m_subRegion->getElementCenter();
-  arrayView1d< real64 const > const & volumes = m_subRegion->getElementVolume();
+  arrayView2d< real64 const > const centers = m_subRegion->getElementCenter();
+  arrayView1d< real64 const > const volumes = m_subRegion->getElementVolume();
 
   constexpr double VOLUME = dx * dy * dz;
 

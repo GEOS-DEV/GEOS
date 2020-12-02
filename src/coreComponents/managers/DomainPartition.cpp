@@ -89,21 +89,20 @@ void DomainPartition::GenerateSets()
   GEOSX_MARK_FUNCTION;
 
   MeshLevel * const mesh = this->getMeshBody( 0 )->getMeshLevel( 0 );
-  Group const * const nodeManager = mesh->getNodeManager();
+  NodeManager const * const nodeManager = mesh->getNodeManager();
 
-  dataRepository::Group const * const
-  nodeSets = nodeManager->GetGroup( ObjectManagerBase::groupKeyStruct::setsString );
+  dataRepository::Group const & nodeSets = nodeManager->sets();
 
   map< string, array1d< bool > > nodeInSet; // map to contain indicator of whether a node is in a set.
   string_array setNames; // just a holder for the names of the sets
 
   // loop over all wrappers and fill the nodeIndSet arrays for each set
-  for( auto & wrapper : nodeSets->wrappers() )
+  for( auto & wrapper : nodeSets.wrappers() )
   {
     string name = wrapper.second->getName();
     nodeInSet[name].resize( nodeManager->size() );
     nodeInSet[name].setValues< serialPolicy >( false );
-    Wrapper< SortedArray< localIndex > > const * const setPtr = nodeSets->getWrapper< SortedArray< localIndex > >( name );
+    Wrapper< SortedArray< localIndex > > const * const setPtr = nodeSets.getWrapper< SortedArray< localIndex > >( name );
     if( setPtr!=nullptr )
     {
       setNames.emplace_back( name );
@@ -125,7 +124,7 @@ void DomainPartition::GenerateSets()
 
     for( std::string const & setName : setNames )
     {
-      arrayView1d< bool const > const & nodeInCurSet = nodeInSet[setName];
+      arrayView1d< bool const > const nodeInCurSet = nodeInSet[setName];
 
       SortedArray< localIndex > & targetSet = elementSets.registerWrapper< SortedArray< localIndex > >( setName )->reference();
       for( localIndex k = 0; k < subRegion.size(); ++k )
@@ -194,7 +193,7 @@ void DomainPartition::SetupCommunications( bool use_nonblocking )
     firstNeighborRanks.emplace_back( neighbor.NeighborRank() );
   }
 
-  constexpr int neighborsTag = 43543;
+  int neighborsTag = 54;
 
   // Send this list of neighbors to all neighbors.
   std::vector< MPI_Request > requests( m_neighbors.size() );

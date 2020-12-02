@@ -65,7 +65,11 @@
 /// Mark an unused argument and silence compiler warnings.
 #define GEOSX_UNUSED_PARAM( X )
 
-/// Used to silence unused variable warnings, cuda doesn't respect casting to void.
+/**
+ * @brief Used to silence unused variable warnings, cuda doesn't respect casting to void.
+ * @tparam ARGS argument types
+ * @param ...
+ */
 template< typename ... ARGS >
 GEOSX_HOST_DEVICE inline constexpr
 void i_g_n_o_r_e( ARGS const & ... ) {}
@@ -92,5 +96,8 @@ void i_g_n_o_r_e( ARGS const & ... ) {}
 
 /// preprocessor variable for the C99 restrict keyword for use with the "this" pointer
 #define GEOSX_RESTRICT_THIS LVARRAY_RESTRICT_THIS
+
+/// Doxygen can't parse a `decltype( auto )` return type, using this gets around that.
+#define GEOSX_DECLTYPE_AUTO_RETURN decltype( auto )
 
 #endif // GEOSX_COMMON_GEOSXMACROS_HPP_

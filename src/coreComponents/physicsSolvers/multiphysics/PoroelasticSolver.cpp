@@ -47,8 +47,7 @@ PoroelasticSolver::PoroelasticSolver( const std::string & name,
   SolverBase( name, parent ),
   m_solidSolverName(),
   m_flowSolverName(),
-  m_couplingTypeOptionString(),
-  m_couplingTypeOption()
+  m_couplingTypeOption( CouplingTypeOption::FIM )
 
 {
   registerWrapper( viewKeyStruct::solidSolverNameString, &m_solidSolverName )->
@@ -59,9 +58,9 @@ PoroelasticSolver::PoroelasticSolver( const std::string & name,
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "Name of the fluid mechanics solver to use in the poroelastic solver" );
 
-  registerWrapper( viewKeyStruct::couplingTypeOptionStringString, &m_couplingTypeOptionString )->
+  registerWrapper( viewKeyStruct::couplingTypeOptionStringString, &m_couplingTypeOption )->
     setInputFlag( InputFlags::REQUIRED )->
-    setDescription( "Coupling option: (FIM, SIM_FixedStress)" );
+    setDescription( "Coupling method. Valid options:\n* " + EnumStrings< CouplingTypeOption >::concat( "\n* " ) );
 
   m_linearSolverParameters.get().mgr.strategy = "Poroelastic";
   m_linearSolverParameters.get().mgr.separateComponents = true;
@@ -112,7 +111,7 @@ void PoroelasticSolver::SetupSystem( DomainPartition & domain,
   // setup monolithic coupled system
   SolverBase::SetupSystem( domain, dofManager, localMatrix, localRhs, localSolution, setSparsity );
 
-  if( !m_precond && m_linearSolverParameters.get().solverType != "direct" )
+  if( !m_precond && m_linearSolverParameters.get().solverType != LinearSolverParameters::SolverType::direct )
   {
     CreatePreconditioner();
   }
@@ -125,7 +124,7 @@ void PoroelasticSolver::ImplicitStepSetup( real64 const & time_n,
   m_flowSolver->ImplicitStepSetup( time_n, dt, domain );
   m_solidSolver->ImplicitStepSetup( time_n, dt, domain );
 
-  if( m_couplingTypeOption == couplingTypeOption::SIM_FixedStress )
+  if( m_couplingTypeOption == CouplingTypeOption::SIM_FixedStress )
   {
     MeshLevel & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
 
@@ -162,33 +161,20 @@ void PoroelasticSolver::PostProcessInput()
   GEOSX_ERROR_IF( m_flowSolver == nullptr, "Flow solver not found or invalid type: " << m_flowSolverName );
   GEOSX_ERROR_IF( m_solidSolver == nullptr, "Solid solver not found or invalid type: " << m_solidSolverName );
 
-  string ctOption = this->getReference< string >( viewKeyStruct::couplingTypeOptionStringString );
-
   m_solidSolver->setEffectiveStress( 1 );
 
-  if( ctOption == "SIM_FixedStress" )
+  if( m_couplingTypeOption == CouplingTypeOption::SIM_FixedStress )
   {
-    m_couplingTypeOption = couplingTypeOption::SIM_FixedStress;
-
     // For this coupled solver the minimum number of Newton Iter should be 0 for both flow and solid solver,
     // otherwise it will never converge.
     m_flowSolver->getNonlinearSolverParameters().m_minIterNewton = 0;
     m_solidSolver->getNonlinearSolverParameters().m_minIterNewton = 0;
   }
-  else if( ctOption == "FIM" )
-  {
-    m_couplingTypeOption = couplingTypeOption::FIM;
-  }
-  else
-  {
-    GEOSX_ERROR( "invalid coupling type option: " + ctOption );
-  }
-
 }
 
 void PoroelasticSolver::InitializePostInitialConditions_PreSubGroups( Group * const problemManager )
 {
-  if( m_couplingTypeOption == couplingTypeOption::SIM_FixedStress )
+  if( m_couplingTypeOption == CouplingTypeOption::SIM_FixedStress )
   {
     m_flowSolver->setPoroElasticCoupling();
     // Calculate initial total mean stress
@@ -228,11 +214,11 @@ real64 PoroelasticSolver::SolverStep( real64 const & time_n,
                                       DomainPartition & domain )
 {
   real64 dt_return = dt;
-  if( m_couplingTypeOption == couplingTypeOption::SIM_FixedStress )
+  if( m_couplingTypeOption == CouplingTypeOption::SIM_FixedStress )
   {
     dt_return = SplitOperatorStep( time_n, dt, cycleNumber, domain );
   }
-  else if( m_couplingTypeOption == couplingTypeOption::FIM )
+  else if( m_couplingTypeOption == CouplingTypeOption::FIM )
   {
     SetupSystem( domain,
                  m_dofManager,
@@ -305,7 +291,6 @@ void PoroelasticSolver::UpdateDeformationForCoupling( DomainPartition & domain )
     fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( m_solidSolver->getDiscretizationName() );
     localIndex const numQuadraturePoints = fe.getNumQuadraturePoints();
 
-    // TODO: remove use of R1Tensor and use device policy
     forAll< parallelDevicePolicy< 32 > >( elementSubRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
     {
       real64 effectiveMeanStress = 0.0;
@@ -321,11 +306,11 @@ void PoroelasticSolver::UpdateDeformationForCoupling( DomainPartition & domain )
                  * (totalMeanStress[ei] - oldTotalMeanStress[ei] + dPres[ei]);
 
       // update element volume
-      R1Tensor Xlocal[ElementRegionManager::maxNumNodesPerElem];
+      real64 Xlocal[ElementRegionManager::maxNumNodesPerElem][3];
       for( localIndex a = 0; a < numNodesPerElement; ++a )
       {
-        Xlocal[a] = X[elemsToNodes[ei][a]];
-        Xlocal[a] += u[elemsToNodes[ei][a]];
+        LvArray::tensorOps::copy< 3 >( Xlocal[a], X[elemsToNodes[ei][a]] );
+        LvArray::tensorOps::add< 3 >( Xlocal[a], u[elemsToNodes[ei][a]] );
       }
 
       dVol[ei] = computationalGeometry::HexVolume( Xlocal ) - volume[ei];
@@ -424,7 +409,6 @@ void PoroelasticSolver::AssembleCouplingTerms( DomainPartition const & domain,
     localIndex const nPDof = m_flowSolver->numDofPerCell();
     GEOSX_ERROR_IF_GT( nPDof, maxNumPDof );
 
-    // TODO: remove use of R1Tensor and use device policy
     forAll< parallelDevicePolicy< 32 > >( elementSubRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const k )
     {
       stackArray2d< real64, maxNumUDof * maxNumPDof > dRsdP( nUDof, nPDof );
@@ -539,7 +523,7 @@ real64 PoroelasticSolver::CalculateResidualNorm( DomainPartition const & domain,
 
 void PoroelasticSolver::CreatePreconditioner()
 {
-  if( m_linearSolverParameters.get().preconditionerType == "block" )
+  if( m_linearSolverParameters.get().preconditionerType == LinearSolverParameters::PreconditionerType::block )
   {
     auto precond = std::make_unique< BlockPreconditioner< LAInterface > >( BlockShapeOption::UpperTriangular,
                                                                            SchurComplementOption::RowsumDiagonalProbing,

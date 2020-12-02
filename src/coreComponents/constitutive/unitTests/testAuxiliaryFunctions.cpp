@@ -68,7 +68,7 @@ TEST( AuxFunctions, PositiveAndNegative )
      eigenvaluesVoigt[i] = eigs[i]; 
     }
   real64 originalMatrix[6];
-  LvArray::tensorOps::AikSymBklAjl<3>(originalMatrix, eigvecs, eigenvaluesVoigt);
+  LvArray::tensorOps::Rij_eq_AikSymBklAjl<3>(originalMatrix, eigvecs, eigenvaluesVoigt);
   for (int i=0; i<6; i++)
     {
       std::cout << "original: "<<originalMatrix[i]<<"/computed: "<<positivePart[i]<<std::endl;

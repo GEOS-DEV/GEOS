@@ -27,7 +27,8 @@
 #include "common/GeosxMacros.hpp"
 #include "common/BufferAllocator.hpp"
 #include "common/DataLayouts.hpp"
-#include "Logger.hpp"
+#include "common/Tensor.hpp"
+#include "common/Logger.hpp"
 #include "LvArray/src/Macros.hpp"
 #include "LvArray/src/Array.hpp"
 #include "LvArray/src/ArrayOfArrays.hpp"
@@ -39,7 +40,6 @@
 #include "LvArray/src/StackBuffer.hpp"
 #include "LvArray/src/ChaiBuffer.hpp"
 
-#include "math/TensorT/TensorT.h"
 #include "Path.hpp"
 
 // TPL includes
@@ -188,6 +188,9 @@ using StackArray = LvArray::StackArray< T, NDIM, PERMUTATION, localIndex, MAXSIZ
  * @name Short-hand aliases for commonly used array types.
  */
 ///@{
+
+/// Alias for a local (stack-based) rank-1 tensor type
+using R1Tensor = Tensor< real64, 3 >;
 
 /// Alias for 1D array.
 template< typename T >
@@ -761,7 +764,6 @@ private:
       {"path_array", constructArrayRegex( rs, 1 )},
       {"mapPair", rs},
       {"mapPair_array", constructArrayRegex( rs, 1 )},
-      {"geosx_TimeIntegrationOption", rs},
       {"geosx_dataRepository_PlotLevel", ri}
     };
   };
@@ -923,6 +925,55 @@ private:
     }
   }
 
+};
+
+/**
+ * @brief Extension point for custom types to provide a validation regexp to schema.
+ * @tparam T the type for which the regex is defined
+ * @tparam ENABLE used to conditionally enable partial specializations
+ *
+ * Specializations should define the following method:
+ * \code{cpp}
+ *   static string get();
+ * \endcode
+ */
+template< typename T, typename ENABLE = void >
+struct TypeRegex
+{
+  /**
+   * @brief Get the type's regex (default implementation).
+   * @return empty string, indicating no custom regex
+   */
+  static string get() { return {}; }
+};
+
+/**
+ * @brief Utility class for querying type names at runtime.
+ * @tparam T the target type
+ *
+ * This relies on LvArray's demangling facilities and simply
+ * adds some convenience methods like getting the brief name.
+ */
+template< typename T >
+struct TypeName
+{
+  /**
+   * @brief @return Full name of the type.
+   */
+  static string full()
+  {
+    return ::LvArray::system::demangle( typeid( T ).name() );
+  }
+
+  /**
+   * @brief @return brief name of the type (ignoring namespaces).
+   */
+  static string brief()
+  {
+    string const full_name = full();
+    string::size_type const pos = full_name.find_last_of( "::" );
+    return ( pos == string::npos ) ? full_name : full_name.substr( pos );
+  }
 };
 
 }

@@ -250,6 +250,9 @@ public:
     /// String to access the reference position
     static constexpr auto referencePositionString       = "ReferencePosition";
 
+    /// String to access the location of the nodes
+    static constexpr auto EmbSurfNodesPositionString = "EmbSurfNodesPosition";
+
     /// String to access the displacement
     static constexpr auto totalDisplacementString       = "TotalDisplacement";
 
@@ -369,7 +372,7 @@ public:
    * @brief Provide an immutable arrayView to the nodes-to-elements-regions relation.
    * @return const reference to nodes-to-elements-regions relation
    */
-  ArrayOfArraysView< localIndex const > const & elementRegionList() const { return m_toElements.m_toElementRegion.toViewConst(); }
+  ArrayOfArraysView< localIndex const > elementRegionList() const { return m_toElements.m_toElementRegion.toViewConst(); }
 
   /**
    * @brief Get the mutable nodes-to-elements-subregions relation.
@@ -381,7 +384,7 @@ public:
    * @brief Provide an immutable arrayView to the nodes-to-elements-subregions relation.
    * @return const reference to nodes-to-elements-subregions relation
    */
-  ArrayOfArraysView< localIndex const > const & elementSubRegionList() const { return m_toElements.m_toElementSubRegion.toViewConst(); }
+  ArrayOfArraysView< localIndex const > elementSubRegionList() const { return m_toElements.m_toElementSubRegion.toViewConst(); }
 
   /**
    * @brief Get the mutable nodes-to-elements indices.
@@ -394,7 +397,7 @@ public:
    * @return const reference to nodes-to-elements indices
    */
 
-  ArrayOfArraysView< localIndex const > const & elementList() const
+  ArrayOfArraysView< localIndex const > elementList() const
   { return m_toElements.m_toElementIndex.toViewConst(); }
 
   //START_SPHINX_REFPOS_ACCESS
@@ -409,9 +412,23 @@ public:
    * @return an immutable arrayView of the reference position.
    */
 
-  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & referencePosition() const
+  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > referencePosition() const
   { return m_referencePosition; }
   //END_SPHINX_REFPOS_ACCESS
+
+  /**
+   * @brief Return the reference position array  of the nodes of the embedded surfaces.
+   * @return the location of the nodes of the embedded surfaces
+   */
+  array2d< real64, nodes::REFERENCE_POSITION_PERM > & embSurfNodesPosition()
+  { return m_embeddedSurfNodesPosition; }
+
+  /**
+   * @brief Return an immutable arrayView of the position.
+   * @return immutable arrayView of the location of the nodes of the embedded surfaces.
+   */
+  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > embSurfNodesPosition() const
+  { return m_embeddedSurfNodesPosition; }
 
   /**
    * @brief Get a mutable total displacement array.
@@ -419,19 +436,15 @@ public:
    * @note An error is thrown if the total displacement does not exist
    */
   array2d< real64, nodes::TOTAL_DISPLACEMENT_PERM > & totalDisplacement()
-  {
-    return getReference< array2d< real64, nodes::TOTAL_DISPLACEMENT_PERM > >( viewKeys.totalDisplacement );
-  }
+  { return getReference< array2d< real64, nodes::TOTAL_DISPLACEMENT_PERM > >( viewKeys.totalDisplacement ); }
 
   /**
    * @brief Provide an immutable arrayView to the total displacement array.
    * @return immutable arrayView of the total displacement array if it exists, or an error is thrown if it does not exist
    * @note An error is thrown if the total displacement does not exist
    */
-  arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const & totalDisplacement() const
-  {
-    return getReference< array2d< real64, nodes::TOTAL_DISPLACEMENT_PERM > >( viewKeys.totalDisplacement );
-  }
+  arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > totalDisplacement() const
+  {return getReference< array2d< real64, nodes::TOTAL_DISPLACEMENT_PERM > >( viewKeys.totalDisplacement ); }
 
   /**
    * @brief Get a mutable incremental displacement array.
@@ -439,19 +452,15 @@ public:
    * @note An error is thrown if the incremental displacement does not exist
    */
   array2d< real64, nodes::INCR_DISPLACEMENT_PERM > & incrementalDisplacement()
-  {
-    return getReference< array2d< real64, nodes::INCR_DISPLACEMENT_PERM > >( viewKeys.incrementalDisplacement );
-  }
+  { return getReference< array2d< real64, nodes::INCR_DISPLACEMENT_PERM > >( viewKeys.incrementalDisplacement ); }
 
   /**
    * @brief Provide an immutable arrayView to the incremental displacement array.
    * @return immutable arrayView of the incremental displacement array if it exists, or an error is thrown if it does not exist
    * @note An error is thrown if the total incremental does not exist
    */
-  arrayView2d< real64 const, nodes::INCR_DISPLACEMENT_USD > const & incrementalDisplacement() const
-  {
-    return getReference< array2d< real64, nodes::INCR_DISPLACEMENT_PERM > >( viewKeys.incrementalDisplacement );
-  }
+  arrayView2d< real64 const, nodes::INCR_DISPLACEMENT_USD > incrementalDisplacement() const
+  { return getReference< array2d< real64, nodes::INCR_DISPLACEMENT_PERM > >( viewKeys.incrementalDisplacement ); }
 
   /**
    * @brief Get a mutable velocity array.
@@ -459,19 +468,15 @@ public:
    * @note An error is thrown if the velocity array does not exist
    */
   array2d< real64, nodes::VELOCITY_PERM > & velocity()
-  {
-    return getReference< array2d< real64, nodes::VELOCITY_PERM > >( viewKeys.velocity );
-  }
+  { return getReference< array2d< real64, nodes::VELOCITY_PERM > >( viewKeys.velocity ); }
 
   /**
    * @brief Provide an immutable arrayView to the velocity array.
    * @return immutable arrayView of the velocity array if it exists, or an error is thrown if it does not exist
    * @note An error is thrown if the velocity array does not exist
    */
-  arrayView2d< real64 const, nodes::VELOCITY_USD > const & velocity() const
-  {
-    return getReference< array2d< real64, nodes::VELOCITY_PERM > >( viewKeys.velocity );
-  }
+  arrayView2d< real64 const, nodes::VELOCITY_USD > velocity() const
+  { return getReference< array2d< real64, nodes::VELOCITY_PERM > >( viewKeys.velocity ); }
 
   /**
    * @brief Get a mutable acceleration array.
@@ -479,19 +484,15 @@ public:
    * @note An error is thrown if the acceleration array does not exist
    */
   array2d< real64, nodes::ACCELERATION_PERM > & acceleration()
-  {
-    return getReference< array2d< real64, nodes::ACCELERATION_PERM > >( viewKeys.acceleration );
-  }
+  { return getReference< array2d< real64, nodes::ACCELERATION_PERM > >( viewKeys.acceleration ); }
 
   /**
    * @brief Provide an immutable arrayView to the acceleration array.
    * @return immutable arrayView of the acceleration array if it exists, or an error is thrown if it does not exist
    * @note An error is thrown if the acceleration array does not exist
    */
-  arrayView2d< real64 const, nodes::ACCELERATION_USD > const & acceleration() const
-  {
-    return getReference< array2d< real64, nodes::ACCELERATION_PERM > >( viewKeys.acceleration );
-  }
+  arrayView2d< real64 const, nodes::ACCELERATION_USD > acceleration() const
+  { return getReference< array2d< real64, nodes::ACCELERATION_PERM > >( viewKeys.acceleration ); }
 
   ///@}
 
@@ -515,6 +516,9 @@ private:
   /// reference position of the nodes
   array2d< real64, nodes::REFERENCE_POSITION_PERM > m_referencePosition;
   //END_SPHINX_REFPOS
+
+  /// reference position of the nodes defining the embedded surfaces
+  array2d< real64, nodes::REFERENCE_POSITION_PERM > m_embeddedSurfNodesPosition;
 
   /// nodes-to-edges relation
   EdgeMapType m_toEdgesRelation;

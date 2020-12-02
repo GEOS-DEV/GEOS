@@ -61,11 +61,13 @@ SolidMechanicsLagrangianFEM::SolidMechanicsLagrangianFEM( const std::string & na
 //  m_elemsNotAttachedToSendOrReceiveNodes(),
   m_sendOrReceiveNodes(),
   m_nonSendOrReceiveNodes(),
+  m_targetNodes(),
   m_iComm(),
   m_effectiveStress( 0 )
 {
   m_sendOrReceiveNodes.setName( "SolidMechanicsLagrangianFEM::m_sendOrReceiveNodes" );
   m_nonSendOrReceiveNodes.setName( "SolidMechanicsLagrangianFEM::m_nonSendOrReceiveNodes" );
+  m_targetNodes.setName( "SolidMechanicsLagrangianFEM::m_targetNodes" );
 
   registerWrapper( viewKeyStruct::newmarkGammaString, &m_newmarkGamma )->
     setApplyDefaultValue( 0.5 )->
@@ -91,7 +93,7 @@ SolidMechanicsLagrangianFEM::SolidMechanicsLagrangianFEM( const std::string & na
   registerWrapper( viewKeyStruct::timeIntegrationOptionString, &m_timeIntegrationOption )->
     setInputFlag( InputFlags::OPTIONAL )->
     setApplyDefaultValue( m_timeIntegrationOption )->
-    setDescription( "Time integration method. Options are: \n QuasiStatic \n ImplicitDynamic \n ExplicitDynamic" );
+    setDescription( "Time integration method. Options are:\n* " + EnumStrings< TimeIntegrationOption >::concat( "\n* " ) );
 
   registerWrapper( viewKeyStruct::useVelocityEstimateForQSString, &m_useVelocityEstimateForQS )->
     setApplyDefaultValue( 0 )->
@@ -197,20 +199,23 @@ void SolidMechanicsLagrangianFEM::RegisterDataOnMesh( Group * const MeshBodies )
       setRegisteringObjects( this->getName())->
       setDescription( "An array that holds the mass on the nodes." );
 
-    nodes->registerWrapper< array1d< R1Tensor > >( viewKeyStruct::vTildeString )->
+    nodes->registerWrapper< array2d< real64 > >( viewKeyStruct::vTildeString )->
       setPlotLevel( PlotLevel::NOPLOT )->
       setRegisteringObjects( this->getName())->
-      setDescription( "An array that holds the velocity predictors on the nodes." );
+      setDescription( "An array that holds the velocity predictors on the nodes." )->
+      reference().resizeDimension< 1 >( 3 );
 
-    nodes->registerWrapper< array1d< R1Tensor > >( viewKeyStruct::uhatTildeString )->
+    nodes->registerWrapper< array2d< real64 > >( viewKeyStruct::uhatTildeString )->
       setPlotLevel( PlotLevel::NOPLOT )->
       setRegisteringObjects( this->getName())->
-      setDescription( "An array that holds the incremental displacement predictors on the nodes." );
+      setDescription( "An array that holds the incremental displacement predictors on the nodes." )->
+      reference().resizeDimension< 1 >( 3 );
 
-    nodes->registerWrapper< array1d< R1Tensor > >( viewKeyStruct::contactForceString )->
+    nodes->registerWrapper< array2d< real64 > >( viewKeyStruct::contactForceString )->
       setPlotLevel( PlotLevel::LEVEL_0 )->
       setRegisteringObjects( this->getName())->
-      setDescription( "An array that holds the contact force." );
+      setDescription( "An array that holds the contact force." )->
+      reference().resizeDimension< 1 >( 3 );
 
     ElementRegionManager * const
     elementRegionManager = mesh.second->group_cast< MeshBody * >()->getMeshLevel( 0 )->getElemManager();
@@ -305,6 +310,13 @@ void SolidMechanicsLagrangianFEM::updateIntrinsicNodalData( DomainPartition * co
 
   arrayView1d< integer const > const & nodeGhostRank = nodes.ghostRank();
 
+  // to fill m_sendOrReceiveNodes and m_nonSendOrReceiveNodes, we first insert
+  // the nodes one-by-one in the following std::sets. Then, when all the nodes
+  // have been collected, we do a batch insertion into m_sendOrReceiveNodes and
+  // m_nonSendOrReceiveNodes
+  std::set< localIndex > tmpSendOrReceiveNodes;
+  std::set< localIndex > tmpNonSendOrReceiveNodes;
+
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > >
   rho = elementRegionManager.ConstructMaterialViewAccessor< array2d< real64 >, arrayView2d< real64 const > >( "density",
                                                                                                               targetRegionNames(),
@@ -337,7 +349,7 @@ void SolidMechanicsLagrangianFEM::updateIntrinsicNodalData( DomainPartition * co
           for( localIndex q=0; q<numQuadraturePointsPerElem; ++q )
           {
             elemMass += rho[er][esr][k][q] * detJ[k][q];
-            FE_TYPE::shapeFunctionValues( q, N );
+            FE_TYPE::calcN( q, N );
 
             for( localIndex a=0; a< numNodesPerElem; ++a )
             {
@@ -350,17 +362,24 @@ void SolidMechanicsLagrangianFEM::updateIntrinsicNodalData( DomainPartition * co
           {
             if( nodeGhostRank[elemsToNodes[k][a]] >= -1 )
             {
-              m_sendOrReceiveNodes.insert( elemsToNodes[k][a] );
+              tmpSendOrReceiveNodes.insert( elemsToNodes[k][a] );
             }
             else
             {
-              m_nonSendOrReceiveNodes.insert( elemsToNodes[k][a] );
+              tmpNonSendOrReceiveNodes.insert( elemsToNodes[k][a] );
             }
           }
         }
       } );
     } );
   } );
+  m_sendOrReceiveNodes.insert( tmpSendOrReceiveNodes.begin(),
+                               tmpSendOrReceiveNodes.end() );
+  m_nonSendOrReceiveNodes.insert( tmpNonSendOrReceiveNodes.begin(),
+                                  tmpNonSendOrReceiveNodes.end() );
+  m_targetNodes = m_sendOrReceiveNodes;
+  m_targetNodes.insert( m_nonSendOrReceiveNodes.begin(),
+                        m_nonSendOrReceiveNodes.end() );
 }
 
 void SolidMechanicsLagrangianFEM::InitializePostInitialConditions_PreSubGroups( Group * const problemManager )
@@ -369,13 +388,19 @@ void SolidMechanicsLagrangianFEM::InitializePostInitialConditions_PreSubGroups( 
   MeshLevel & mesh = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
 
   NodeManager & nodes = *mesh.getNodeManager();
-  //FaceManager * const faceManager = mesh.getFaceManager();
 
   ElementRegionManager & elementRegionManager = *mesh.getElemManager();
 
   arrayView1d< real64 > & mass = nodes.getReference< array1d< real64 > >( keys::Mass );
 
   arrayView1d< integer const > const & nodeGhostRank = nodes.ghostRank();
+
+  // to fill m_sendOrReceiveNodes and m_nonSendOrReceiveNodes, we first insert
+  // the nodes one-by-one in the following std::sets. Then, when all the nodes
+  // have been collected, we do a batch insertion into m_sendOrReceiveNodes and
+  // m_nonSendOrReceiveNodes
+  std::set< localIndex > tmpSendOrReceiveNodes;
+  std::set< localIndex > tmpNonSendOrReceiveNodes;
 
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > >
   rho = elementRegionManager.ConstructMaterialViewAccessor< array2d< real64 >, arrayView2d< real64 const > >( "density",
@@ -390,6 +415,9 @@ void SolidMechanicsLagrangianFEM::InitializePostInitialConditions_PreSubGroups( 
     {
       SortedArray< localIndex > & elemsAttachedToSendOrReceiveNodes = getElemsAttachedToSendOrReceiveNodes( elementSubRegion );
       SortedArray< localIndex > & elemsNotAttachedToSendOrReceiveNodes = getElemsNotAttachedToSendOrReceiveNodes( elementSubRegion );
+
+      std::set< localIndex > tmpElemsAttachedToSendOrReceiveNodes;
+      std::set< localIndex > tmpElemsNotAttachedToSendOrReceiveNodes;
 
       elemsAttachedToSendOrReceiveNodes.setName(
         "SolidMechanicsLagrangianFEM::m_elemsAttachedToSendOrReceiveNodes["
@@ -419,7 +447,7 @@ void SolidMechanicsLagrangianFEM::InitializePostInitialConditions_PreSubGroups( 
           for( localIndex q=0; q<numQuadraturePointsPerElem; ++q )
           {
             elemMass += rho[er][esr][k][q] * detJ[k][q];
-            FE_TYPE::shapeFunctionValues( q, N );
+            FE_TYPE::calcN( q, N );
 
             for( localIndex a=0; a< numNodesPerElem; ++a )
             {
@@ -433,26 +461,39 @@ void SolidMechanicsLagrangianFEM::InitializePostInitialConditions_PreSubGroups( 
             if( nodeGhostRank[elemsToNodes[k][a]] >= -1 )
             {
               isAttachedToGhostNode = true;
-              m_sendOrReceiveNodes.insert( elemsToNodes[k][a] );
+              tmpSendOrReceiveNodes.insert( elemsToNodes[k][a] );
             }
             else
             {
-              m_nonSendOrReceiveNodes.insert( elemsToNodes[k][a] );
+              tmpNonSendOrReceiveNodes.insert( elemsToNodes[k][a] );
             }
           }
 
           if( isAttachedToGhostNode )
           {
-            elemsAttachedToSendOrReceiveNodes.insert( k );
+            tmpElemsAttachedToSendOrReceiveNodes.insert( k );
           }
           else
           {
-            elemsNotAttachedToSendOrReceiveNodes.insert( k );
+            tmpElemsNotAttachedToSendOrReceiveNodes.insert( k );
           }
         }
       } );
+      elemsAttachedToSendOrReceiveNodes.insert( tmpElemsAttachedToSendOrReceiveNodes.begin(),
+                                                tmpElemsAttachedToSendOrReceiveNodes.end() );
+      elemsNotAttachedToSendOrReceiveNodes.insert( tmpElemsNotAttachedToSendOrReceiveNodes.begin(),
+                                                   tmpElemsNotAttachedToSendOrReceiveNodes.end() );
+
     } );
   } );
+
+  m_sendOrReceiveNodes.insert( tmpSendOrReceiveNodes.begin(),
+                               tmpSendOrReceiveNodes.end() );
+  m_nonSendOrReceiveNodes.insert( tmpNonSendOrReceiveNodes.begin(),
+                                  tmpNonSendOrReceiveNodes.end() );
+  m_targetNodes = m_sendOrReceiveNodes;
+  m_targetNodes.insert( m_nonSendOrReceiveNodes.begin(),
+                        m_nonSendOrReceiveNodes.end() );
 }
 
 
@@ -671,12 +712,12 @@ void SolidMechanicsLagrangianFEM::CRSApplyTractionBC( real64 const time,
   FaceManager const & faceManager = *domain.getMeshBody( 0 )->getMeshLevel( 0 )->getFaceManager();
   NodeManager const & nodeManager = *domain.getMeshBody( 0 )->getMeshLevel( 0 )->getNodeManager();
 
-  arrayView1d< real64 const > const & faceArea  = faceManager.getReference< real64_array >( "faceArea" );
-  ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager.nodeList().toViewConst();
+  arrayView1d< real64 const > const faceArea  = faceManager.getReference< real64_array >( "faceArea" );
+  ArrayOfArraysView< localIndex const > const faceToNodeMap = faceManager.nodeList().toViewConst();
 
   string const dofKey = dofManager.getKey( keys::TotalDisplacement );
 
-  arrayView1d< globalIndex const > const & blockLocalDofNumber = nodeManager.getReference< globalIndex_array >( dofKey );
+  arrayView1d< globalIndex const > const blockLocalDofNumber = nodeManager.getReference< globalIndex_array >( dofKey );
   globalIndex const dofRankOffset = dofManager.rankOffset();
 
   fsManager.Apply( time,
@@ -724,7 +765,7 @@ void SolidMechanicsLagrangianFEM::CRSApplyTractionBC( real64 const time,
       array1d< real64 > resultsArray( targetSet.size() );
       resultsArray.setName( "SolidMechanicsLagrangianFEM::TractionBC function results" );
       function.Evaluate( &faceManager, time, targetSet, resultsArray );
-      arrayView1d< real64 const > const & results = resultsArray.toView();
+      arrayView1d< real64 const > const results = resultsArray;
 
       forAll< parallelDevicePolicy< 32 > >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const i )
       {
@@ -750,25 +791,28 @@ void SolidMechanicsLagrangianFEM::ApplyChomboPressure( DofManager const & dofMan
   FaceManager & faceManager = *mesh.getFaceManager();
   NodeManager & nodeManager = *mesh.getNodeManager();
 
-  arrayView1d< real64 const > const & faceArea  = faceManager.faceArea();
-  arrayView2d< real64 const > const & faceNormal  = faceManager.faceNormal();
-  ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager.nodeList().toViewConst();
+  arrayView1d< real64 const > const faceArea  = faceManager.faceArea();
+  arrayView2d< real64 const > const faceNormal  = faceManager.faceNormal();
+  ArrayOfArraysView< localIndex const > const faceToNodeMap = faceManager.nodeList().toViewConst();
 
   string const dofKey = dofManager.getKey( keys::TotalDisplacement );
 
-  arrayView1d< globalIndex const > const & dofNumber = nodeManager.getReference< globalIndex_array >( dofKey );
-  arrayView1d< real64 const > const & facePressure = faceManager.getReference< array1d< real64 > >( "ChomboPressure" );
+  arrayView1d< globalIndex const > const dofNumber = nodeManager.getReference< globalIndex_array >( dofKey );
+  arrayView1d< real64 const > const facePressure = faceManager.getReference< array1d< real64 > >( "ChomboPressure" );
 
   forAll< serialPolicy >( faceManager.size(), [=] ( localIndex const kf )
   {
     int const numNodes = LvArray::integerConversion< int >( faceToNodeMap.sizeOfArray( kf ));
     for( int a=0; a<numNodes; ++a )
     {
+      localIndex const dof = dofNumber[ faceToNodeMap( kf, a ) ];
+      if( dof < 0 || dof >= localRhs.size() )
+        continue;
+
       for( int component=0; component<3; ++component )
       {
-        localIndex const dof = dofNumber[ faceToNodeMap( kf, a ) ] + component;
         real64 const value = -facePressure[ kf ] * faceNormal( kf, component ) * faceArea[kf] / numNodes;
-        localRhs[ dof ] += value;
+        localRhs[ dof + component ] += value;
       }
     }
   } );
@@ -785,17 +829,17 @@ SolidMechanicsLagrangianFEM::
   MeshLevel & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
   NodeManager & nodeManager = *mesh.getNodeManager();
 
-  arrayView2d< real64 const, nodes::VELOCITY_USD > const & v_n = nodeManager.velocity();
-  arrayView2d< real64, nodes::INCR_DISPLACEMENT_USD > const & uhat = nodeManager.incrementalDisplacement();
-  arrayView2d< real64, nodes::TOTAL_DISPLACEMENT_USD > const & disp = nodeManager.totalDisplacement();
+  arrayView2d< real64 const, nodes::VELOCITY_USD > const v_n = nodeManager.velocity();
+  arrayView2d< real64, nodes::INCR_DISPLACEMENT_USD > const uhat = nodeManager.incrementalDisplacement();
+  arrayView2d< real64, nodes::TOTAL_DISPLACEMENT_USD > const disp = nodeManager.totalDisplacement();
 
   localIndex const numNodes = nodeManager.size();
 
   if( this->m_timeIntegrationOption == TimeIntegrationOption::ImplicitDynamic )
   {
-    arrayView2d< real64 const, nodes::ACCELERATION_USD > const & a_n = nodeManager.acceleration();
-    arrayView1d< R1Tensor > const & vtilde   = nodeManager.getReference< array1d< R1Tensor > >( solidMechanicsViewKeys.vTilde );
-    arrayView1d< R1Tensor > const & uhatTilde   = nodeManager.getReference< array1d< R1Tensor > >( solidMechanicsViewKeys.uhatTilde );
+    arrayView2d< real64 const, nodes::ACCELERATION_USD > const a_n = nodeManager.acceleration();
+    arrayView1d< R1Tensor > const vtilde = nodeManager.getReference< array1d< R1Tensor > >( solidMechanicsViewKeys.vTilde );
+    arrayView1d< R1Tensor > const uhatTilde = nodeManager.getReference< array1d< R1Tensor > >( solidMechanicsViewKeys.uhatTilde );
 
     real64 const newmarkGamma = this->getReference< real64 >( solidMechanicsViewKeys.newmarkGamma );
     real64 const newmarkBeta = this->getReference< real64 >( solidMechanicsViewKeys.newmarkBeta );
@@ -846,14 +890,14 @@ SolidMechanicsLagrangianFEM::
   {
     SolidBase const & constitutiveRelation = GetConstitutiveModel< SolidBase >( subRegion, m_solidMaterialNames[targetIndex] );
 
-    arrayView3d< real64 const, solid::STRESS_USD > const & stress = constitutiveRelation.getStress();
+    arrayView3d< real64 const, solid::STRESS_USD > const stress = constitutiveRelation.getStress();
 
     array3d< real64, solid::STRESS_PERMUTATION > &
     stress_n = subRegion.getReference< array3d< real64, solid::STRESS_PERMUTATION > >( viewKeyStruct::stress_n );
     // TODO: eliminate
     stress_n.resize( stress.size( 0 ), stress.size( 1 ), 6 );
 
-    arrayView3d< real64, solid::STRESS_USD > const & vstress_n = stress_n.toView();
+    arrayView3d< real64, solid::STRESS_USD > const vstress_n = stress_n;
 
     forAll< parallelDevicePolicy<> >( stress.size( 0 ), [=] GEOSX_HOST_DEVICE ( localIndex const k )
     {
@@ -879,14 +923,14 @@ void SolidMechanicsLagrangianFEM::ImplicitStepComplete( real64 const & GEOSX_UNU
   NodeManager & nodeManager = *mesh.getNodeManager();
   localIndex const numNodes = nodeManager.size();
 
-  arrayView2d< real64, nodes::VELOCITY_USD > const & v_n = nodeManager.velocity();
-  arrayView2d< real64 const, nodes::INCR_DISPLACEMENT_USD > const & uhat  = nodeManager.incrementalDisplacement();
+  arrayView2d< real64, nodes::VELOCITY_USD > const v_n = nodeManager.velocity();
+  arrayView2d< real64 const, nodes::INCR_DISPLACEMENT_USD > const uhat  = nodeManager.incrementalDisplacement();
 
   if( this->m_timeIntegrationOption == TimeIntegrationOption::ImplicitDynamic )
   {
-    arrayView2d< real64, nodes::ACCELERATION_USD > const & a_n = nodeManager.acceleration();
-    arrayView1d< R1Tensor const > const & vtilde    = nodeManager.getReference< r1_array >( solidMechanicsViewKeys.vTilde );
-    arrayView1d< R1Tensor const > const & uhatTilde = nodeManager.getReference< r1_array >( solidMechanicsViewKeys.uhatTilde );
+    arrayView2d< real64, nodes::ACCELERATION_USD > const a_n = nodeManager.acceleration();
+    arrayView1d< R1Tensor const > const vtilde    = nodeManager.getReference< r1_array >( solidMechanicsViewKeys.vTilde );
+    arrayView1d< R1Tensor const > const uhatTilde = nodeManager.getReference< r1_array >( solidMechanicsViewKeys.uhatTilde );
     real64 const newmarkGamma = this->getReference< real64 >( solidMechanicsViewKeys.newmarkGamma );
     real64 const newmarkBeta = this->getReference< real64 >( solidMechanicsViewKeys.newmarkBeta );
 
@@ -919,7 +963,8 @@ void SolidMechanicsLagrangianFEM::SetupDofs( DomainPartition const & GEOSX_UNUSE
   GEOSX_MARK_FUNCTION;
   dofManager.addField( keys::TotalDisplacement,
                        DofManager::Location::Node,
-                       3 );
+                       3,
+                       targetRegionNames() );
 
   dofManager.addCoupling( keys::TotalDisplacement,
                           keys::TotalDisplacement,
@@ -939,7 +984,7 @@ void SolidMechanicsLagrangianFEM::SetupSystem( DomainPartition & domain,
 
   MeshLevel & mesh = *(domain.getMeshBodies()->GetGroup< MeshBody >( 0 )->getMeshLevel( 0 ));
   NodeManager const & nodeManager = *(mesh.getNodeManager());
-  arrayView1d< globalIndex const > const &
+  arrayView1d< globalIndex const > const
   dofNumber = nodeManager.getReference< globalIndex_array >( dofManager.getKey( keys::TotalDisplacement ) );
 
   SparsityPattern< globalIndex > sparsityPattern( dofManager.numLocalDofs(),
@@ -950,7 +995,7 @@ void SolidMechanicsLagrangianFEM::SetupSystem( DomainPartition & domain,
   {
     ElementRegionManager const & elemManager = *mesh.getElemManager();
     array1d< string > allFaceElementRegions;
-    elemManager.forElementRegions< FaceElementRegion >( [&]( FaceElementRegion const & elemRegion )
+    elemManager.forElementRegions< SurfaceElementRegion >( [&]( SurfaceElementRegion const & elemRegion )
     {
       allFaceElementRegions.emplace_back( elemRegion.getName() );
     } );
@@ -1099,20 +1144,24 @@ SolidMechanicsLagrangianFEM::
   MeshLevel const & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
   NodeManager const & nodeManager = *mesh.getNodeManager();
 
-  arrayView1d< globalIndex const > const & dofNumber =
+  arrayView1d< globalIndex const > const dofNumber =
     nodeManager.getReference< array1d< globalIndex > >( dofManager.getKey( keys::TotalDisplacement ) );
   globalIndex const rankOffset = dofManager.rankOffset();
 
-  arrayView1d< integer const > const & ghostRank = nodeManager.ghostRank();
+  arrayView1d< integer const > const ghostRank = nodeManager.ghostRank();
 
   RAJA::ReduceSum< parallelDeviceReduce, real64 > localSum( 0.0 );
 
-  forAll< parallelDevicePolicy<> >( nodeManager.size(),
-                                    [localRhs, localSum, dofNumber, rankOffset, ghostRank] GEOSX_HOST_DEVICE ( localIndex const k )
+  SortedArrayView< localIndex const > const targetNodes = m_targetNodes.toViewConst();
+
+  forAll< parallelDevicePolicy<> >( targetNodes.size(),
+                                    [localRhs, localSum, dofNumber, rankOffset, ghostRank, targetNodes] GEOSX_HOST_DEVICE ( localIndex const k )
   {
-    if( ghostRank[k] < 0 )
+    localIndex const nodeIndex = targetNodes[k];
+    if( ghostRank[nodeIndex] < 0 )
     {
-      localIndex const localRow = LvArray::integerConversion< localIndex >( dofNumber[k] - rankOffset );
+      localIndex const localRow = LvArray::integerConversion< localIndex >( dofNumber[nodeIndex] - rankOffset );
+
       for( localIndex dim = 0; dim < 3; ++dim )
       {
         localSum += localRhs[localRow + dim] * localRhs[localRow + dim];
@@ -1279,15 +1328,15 @@ void SolidMechanicsLagrangianFEM::ApplyContactConstraint( DofManager const & dof
 
     real64 const contactStiffness = contactRelation->stiffness();
 
-    arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const & u = nodeManager->totalDisplacement();
-    arrayView1d< R1Tensor > const & fc = nodeManager->getReference< array1d< R1Tensor > >( viewKeyStruct::contactForceString );
-    fc.setValues< serialPolicy >( {0, 0, 0} );
+    arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const u = nodeManager->totalDisplacement();
+    arrayView2d< real64 > const fc = nodeManager->getReference< array2d< real64 > >( viewKeyStruct::contactForceString );
+    fc.setValues< serialPolicy >( 0 );
 
-    arrayView2d< real64 const > const & faceNormal = faceManager->faceNormal();
-    ArrayOfArraysView< localIndex const > const & facesToNodes = faceManager->nodeList().toViewConst();
+    arrayView2d< real64 const > const faceNormal = faceManager->faceNormal();
+    ArrayOfArraysView< localIndex const > const facesToNodes = faceManager->nodeList().toViewConst();
 
     string const dofKey = dofManager.getKey( keys::TotalDisplacement );
-    arrayView1d< globalIndex > const & nodeDofNumber = nodeManager->getReference< globalIndex_array >( dofKey );
+    arrayView1d< globalIndex > const nodeDofNumber = nodeManager->getReference< globalIndex_array >( dofKey );
     globalIndex const rankOffset = dofManager.rankOffset();
 
     // TODO: this bound may need to change
@@ -1296,15 +1345,18 @@ void SolidMechanicsLagrangianFEM::ApplyContactConstraint( DofManager const & dof
 
     elemManager->forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
     {
-      arrayView1d< real64 > const & area = subRegion.getElementArea();
-      arrayView2d< localIndex const > const & elemsToFaces = subRegion.faceList();
+      arrayView1d< real64 > const area = subRegion.getElementArea();
+      arrayView2d< localIndex const > const elemsToFaces = subRegion.faceList();
 
       // TODO: use parallel policy?
       forAll< serialPolicy >( subRegion.size(), [=] ( localIndex const kfe )
       {
-        R1Tensor Nbar = faceNormal[elemsToFaces[kfe][0]];
-        Nbar -= faceNormal[elemsToFaces[kfe][1]];
-        Nbar.Normalize();
+        real64 Nbar[ 3 ] = { faceNormal[elemsToFaces[kfe][0]][0] - faceNormal[elemsToFaces[kfe][1]][0],
+                             faceNormal[elemsToFaces[kfe][0]][1] - faceNormal[elemsToFaces[kfe][1]][1],
+                             faceNormal[elemsToFaces[kfe][0]][2] - faceNormal[elemsToFaces[kfe][1]][2] };
+
+        LvArray::tensorOps::normalize< 3 >( Nbar );
+
 
         localIndex const kf0 = elemsToFaces[kfe][0];
         localIndex const kf1 = elemsToFaces[kfe][1];
@@ -1317,12 +1369,12 @@ void SolidMechanicsLagrangianFEM::ApplyContactConstraint( DofManager const & dof
 
         for( localIndex a=0; a<numNodesPerFace; ++a )
         {
-          R1Tensor penaltyForce = Nbar;
+          real64 penaltyForce[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( Nbar );
           localIndex const node0 = facesToNodes[kf0][a];
           localIndex const node1 = facesToNodes[kf1][ a==0 ? a : numNodesPerFace-a ];
-          R1Tensor gap = u[node1];
-          gap -= u[node0];
-          real64 const gapNormal = Dot( gap, Nbar );
+          real64 gap[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( u[node1] );
+          LvArray::tensorOps::subtract< 3 >( gap, u[node0] );
+          real64 const gapNormal = LvArray::tensorOps::AiBi< 3 >( gap, Nbar );
 
           for( int i=0; i<3; ++i )
           {
@@ -1332,11 +1384,11 @@ void SolidMechanicsLagrangianFEM::ApplyContactConstraint( DofManager const & dof
 
           if( gapNormal < 0 )
           {
-            penaltyForce *= -contactStiffness * gapNormal * Ja;
+            LvArray::tensorOps::scale< 3 >( penaltyForce, -contactStiffness * gapNormal * Ja );
             for( int i=0; i<3; ++i )
             {
-              fc[node0] -= penaltyForce;
-              fc[node1] += penaltyForce;
+              LvArray::tensorOps::subtract< 3 >( fc[node0], penaltyForce );
+              LvArray::tensorOps::add< 3 >( fc[node1], penaltyForce );
               nodeRHS[3*a+i]                     -= penaltyForce[i];
               nodeRHS[3*(numNodesPerFace + a)+i] += penaltyForce[i];
 

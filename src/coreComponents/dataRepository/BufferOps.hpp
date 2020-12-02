@@ -28,18 +28,12 @@
 namespace geosx
 {
 
-/**
- * @brief Forward declaration of InterObjectRelation
- */
 template< typename T >
 class InterObjectRelation;
 
 namespace bufferOps
 {
 
-/**
- * @brief Forward declaration of is_packable
- */
 template< typename T >
 struct is_packable_helper;
 
@@ -106,6 +100,7 @@ constexpr bool is_map_packable_by_index< mapBase< T_KEY, T_VAL, SORTED > > = is_
 
 template< typename T >
 constexpr bool can_memcpy_helper = std::is_arithmetic< T >::value ||
+                                   std::is_enum< T >::value ||
                                    traits::is_tensorT< T >;
 
 template< typename T >

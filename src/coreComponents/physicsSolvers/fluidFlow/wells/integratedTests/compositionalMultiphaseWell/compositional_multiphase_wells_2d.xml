@@ -10,10 +10,11 @@
       targetRegions="{ Region1, wellRegion1, wellRegion2, wellRegion3 }">
       <NonlinearSolverParameters
         newtonTol="1.0e-8"
-        lineSearchAction="0"
+        lineSearchAction="None"
         newtonMaxIter="40"/>
       <LinearSolverParameters
         solverType="direct"
+        directParallel="0"
         logLevel="0"/>
     </CompositionalMultiphaseReservoir>
 

@@ -187,10 +187,10 @@ void findSmallestThreeValues( arrayView1d< localIndex const > const & values, lo
  * @brief Populate the facesByLowestNode map.
  * @param [in] elementManager the ElementRegionManager associated with this mesh level.
  * @param [inout] facesByLowestNode of size numNodes, where each sub array has been preallocated to hold
- *        *enough* space.
- * For each face of each element, this function gets the three lowest nodes in the face {n0, n1, n2}, creates
- * an EdgeBuilder associated with the face from n1 and n2 and then appends the EdgeBuilder to facesByLowestNode[ n0 ].
- * Finally it sorts the contents of each sub-array of facesByLowestNode from least to greatest.
+ *   *enough* space.
+ * @details For each face of each element, this function gets the three lowest nodes in the face {n0, n1, n2},
+ *   appends a FaceBuilder to @c facesByLowestNode[ n0 ]. Finally it sorts the contents of each sub-array of
+ *   facesByLowestNode from least to greatest.
  */
 void createFacesByLowestNode( ElementRegionManager const & elementManager,
                               ArrayOfArraysView< FaceBuilder > const & facesByLowestNode )
@@ -619,10 +619,10 @@ void FaceManager::SetDomainBoundaryObjects( NodeManager * const nodeManager )
 {
   // Set value of domainBounaryIndicator to one if it is found to have only one elements that it
   // is connected to.
-  integer_array & faceDomainBoundaryIndicator = this->getReference< integer_array >( viewKeys.domainBoundaryIndicator );
+  arrayView1d< integer > const & faceDomainBoundaryIndicator = this->getDomainBoundaryIndicator();
   faceDomainBoundaryIndicator.setValues< serialPolicy >( 0 );
 
-  arrayView2d< localIndex const > const & elemRegionList = this->elementRegionList();
+  arrayView2d< localIndex const > const elemRegionList = this->elementRegionList();
 
   forAll< parallelHostPolicy >( size(), [&]( localIndex const kf )
   {
@@ -632,10 +632,10 @@ void FaceManager::SetDomainBoundaryObjects( NodeManager * const nodeManager )
     }
   } );
 
-  integer_array & nodeDomainBoundaryIndicator = nodeManager->getReference< integer_array >( nodeManager->viewKeys.domainBoundaryIndicator );
+  arrayView1d< integer > const & nodeDomainBoundaryIndicator = nodeManager->getDomainBoundaryIndicator();
   nodeDomainBoundaryIndicator.setValues< serialPolicy >( 0 );
 
-  ArrayOfArraysView< localIndex const > const & faceToNodesMap = this->nodeList().toViewConst();
+  ArrayOfArraysView< localIndex const > const faceToNodesMap = this->nodeList().toViewConst();
 
   forAll< parallelHostPolicy >( size(), [&]( localIndex const k )
   {
@@ -653,8 +653,7 @@ void FaceManager::SetDomainBoundaryObjects( NodeManager * const nodeManager )
 
 void FaceManager::SetIsExternal()
 {
-  integer_array const &
-  isDomainBoundary = this->getReference< integer_array >( viewKeys.domainBoundaryIndicator );
+  arrayView1d< integer const > const isDomainBoundary = this->getDomainBoundaryIndicator();
 
   m_isExternal.setValues< serialPolicy >( 0 );
   for( localIndex k=0; k<size(); ++k )
@@ -684,9 +683,9 @@ void FaceManager::SortAllFaceNodes( NodeManager const * const nodeManager,
 {
   GEOSX_MARK_FUNCTION;
 
-  arrayView2d< localIndex const > const & elemRegionList = elementRegionList();
-  arrayView2d< localIndex const > const & elemSubRegionList = elementSubRegionList();
-  arrayView2d< localIndex const > const & elemList = elementList();
+  arrayView2d< localIndex const > const elemRegionList = elementRegionList();
+  arrayView2d< localIndex const > const elemSubRegionList = elementSubRegionList();
+  arrayView2d< localIndex const > const elemList = elementList();
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X = nodeManager->referencePosition();
 
   const indexType max_face_nodes = getMaxFaceNodes();
@@ -701,8 +700,9 @@ void FaceManager::SortAllFaceNodes( NodeManager const * const nodeManager,
   {
     ElementRegionBase const * const elemRegion = elemManager->GetRegion( elemRegionList[kf][0] );
     CellElementSubRegion const * const subRegion = elemRegion->GetSubRegion< CellElementSubRegion >( elemSubRegionList[kf][0] );
-    const localIndex numFaceNodes = faceToNodeMap.sizeOfArray( kf );
-    SortFaceNodes( X, subRegion->getElementCenter()[ elemList( kf, 0 ) ], faceToNodeMap[ kf ], numFaceNodes );
+    localIndex const numFaceNodes = faceToNodeMap.sizeOfArray( kf );
+    arrayView2d< real64 const > const elemCenter = subRegion->getElementCenter();
+    SortFaceNodes( X, elemCenter[ elemList( kf, 0 ) ], faceToNodeMap[ kf ], numFaceNodes );
   } );
 }
 
@@ -714,24 +714,27 @@ void FaceManager::SortFaceNodes( arrayView2d< real64 const, nodes::REFERENCE_POS
   localIndex const firstNodeIndex = faceNodes[0];
 
   // get face center (average vertex location)
-  R1Tensor fc( 0 );
+  real64 fc[3] = { 0 };
   for( localIndex n =0; n < numFaceNodes; ++n )
   {
-    fc += X[faceNodes[n]];
+    LvArray::tensorOps::add< 3 >( fc, X[faceNodes[n]] );
   }
-  fc /= realT( numFaceNodes );
+  LvArray::tensorOps::scale< 3 >( fc, 1.0 / numFaceNodes );
 
-  R1Tensor ex, ey, ez;
+  //real64 ex[3], ey[3], ez[3];
   // Approximate face normal direction (unscaled)
 
   if( numFaceNodes == 2 )  //2D only.
   {
-    ex = X[faceNodes[1]];
-    ex -= X[faceNodes[0]];
-    ey = elementCenter;
-    ey -= fc;
+    real64 ex[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( X[faceNodes[1]] );
+    LvArray::tensorOps::subtract< 3 >( ex, X[faceNodes[0]] );
 
-    ez.Cross( ex, ey );
+    real64 ey[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( elementCenter );
+    LvArray::tensorOps::subtract< 3 >( ey, fc );
+
+    real64 ez[3];
+    LvArray::tensorOps::crossProduct( ez, ex, ey );
+
     // The element should be on the right hand side of the vector from node 0 to
     // node 1.
     // This ensure that the normal vector of an external face points to outside
@@ -745,25 +748,26 @@ void FaceManager::SortFaceNodes( arrayView2d< real64 const, nodes::REFERENCE_POS
   }
   else
   {
-    ez = fc;
-    ez -= elementCenter;
+    real64 ez[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( fc );
+    LvArray::tensorOps::subtract< 3 >( ez, elementCenter );
 
     /// Approximate in-plane axis
-    ex = X[faceNodes[0]];
-    ex -= fc;
+    real64 ex[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( X[faceNodes[0]] );
+    LvArray::tensorOps::subtract< 3 >( ex, fc );
+    LvArray::tensorOps::normalize< 3 >( ex );
 
-    ex /= ex.L2_Norm();
-    ey.Cross( ez, ex );
-    ey /= ey.L2_Norm();
+    real64 ey[3];
+    LvArray::tensorOps::crossProduct( ey, ez, ex );
+    LvArray::tensorOps::normalize< 3 >( ey );
 
-    std::pair< realT, localIndex > thetaOrder[MAX_FACE_NODES];
+    std::pair< real64, localIndex > thetaOrder[MAX_FACE_NODES];
 
     /// Sort nodes counterclockwise around face center
     for( localIndex n =0; n < numFaceNodes; ++n )
     {
-      R1Tensor v = X[faceNodes[n]];
-      v -= fc;
-      thetaOrder[n] = std::pair< realT, localIndex >( atan2( Dot( v, ey ), Dot( v, ex )), faceNodes[n] );
+      real64 v[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( X[faceNodes[n]] );
+      LvArray::tensorOps::subtract< 3 >( v, fc );
+      thetaOrder[n] = std::make_pair( atan2( LvArray::tensorOps::AiBi< 3 >( v, ey ), LvArray::tensorOps::AiBi< 3 >( v, ex ) ), faceNodes[n] );
     }
 
     std::sort( thetaOrder, thetaOrder + numFaceNodes );
@@ -803,8 +807,8 @@ void FaceManager::ExtractMapFromObjectForAssignGlobalIndexNumbers( ObjectManager
 
   localIndex const numFaces = size();
 
-  ArrayOfArraysView< localIndex const > const & faceToNodeMap = this->nodeList().toViewConst();
-  arrayView1d< integer const > const & isDomainBoundary = this->getReference< integer_array >( viewKeys.domainBoundaryIndicator );
+  ArrayOfArraysView< localIndex const > const faceToNodeMap = this->nodeList().toViewConst();
+  arrayView1d< integer const > const isDomainBoundary = this->getDomainBoundaryIndicator();
 
   globalFaceNodes.resize( numFaces );
 
@@ -959,7 +963,7 @@ void FaceManager::compressRelationMaps()
 
 void FaceManager::enforceStateFieldConsistencyPostTopologyChange( std::set< localIndex > const & targetIndices )
 {
-  arrayView1d< localIndex const > const & childFaceIndices = getExtrinsicData< extrinsicMeshData::ChildIndex >();
+  arrayView1d< localIndex const > const childFaceIndices = getExtrinsicData< extrinsicMeshData::ChildIndex >();
 
   ObjectManagerBase::enforceStateFieldConsistencyPostTopologyChange ( targetIndices );
 

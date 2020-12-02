@@ -4,14 +4,14 @@
   <Mesh>
     <InternalMesh
       name="mesh1"
-      cellBlockNames="{ cb1 }"
+      cellBlockNames="{ cb1, cb2 }"
       elementTypes="{ C3D8 }"
       nx="{ 1 }"
       ny="{ 1 }"
-      nz="{ 100 }"
+      nz="{ 10, 10 }"
       xCoords="{ 0, 100 }"
       yCoords="{ 0, 100 }"
-      zCoords="{ 0, 100 }"/>
+      zCoords="{ 0, 100, 200 }"/>
   </Mesh>
 
   <!-- With this value of g, the stress matches what we'd expect with the correct value: -12998.1 -->
@@ -20,16 +20,16 @@
     <SolidMechanicsLagrangianSSLE
       name="lagsolve"
       timeIntegrationOption="QuasiStatic"
-      logLevel="0"
+      logLevel="1"
       discretization="FE1"
-      targetRegions="{ Region2 }"
+      targetRegions="{ Region1 }"
       solidMaterialNames="{ rock }">
       <NonlinearSolverParameters
         newtonTol="1.0e-8"
         newtonMaxIter="5"/>
       <LinearSolverParameters
-        solverType="gmres"
-        krylovTol="1.0e-10"
+        solverType="direct"
+        directParallel="0"
         logLevel="0"/>
     </SolidMechanicsLagrangianSSLE>
   </Solvers>
@@ -63,9 +63,13 @@
 
   <ElementRegions>
     <CellElementRegion
-      name="Region2"
+      name="Region1"
       cellBlocks="{ cb1 }"
       materialList="{ water, rock }"/>
+    <CellElementRegion
+      name="Region2"
+      cellBlocks="{ cb2 }"
+      materialList="{ }"/>
   </ElementRegions>
 
   <Constitutive>

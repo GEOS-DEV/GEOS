@@ -135,10 +135,11 @@ public:
 
   template< bool ISPORO, typename POLICY >
   void AccumulationLaunch( localIndex const targetIndex,
-                           FaceElementSubRegion const & subRegion,
+                           SurfaceElementSubRegion const & subRegion,
                            DofManager const & dofManager,
                            CRSMatrixView< real64, globalIndex const > const & localMatrix,
                            arrayView1d< real64 > const & localRhs );
+
 
   ///@}
 
@@ -253,10 +254,10 @@ protected:
    */
   struct FluidPropViews
   {
-    arrayView2d< real64 const > const & dens;        ///< density
-    arrayView2d< real64 const > const & dDens_dPres; ///< derivative of density w.r.t. pressure
-    arrayView2d< real64 const > const & visc;        ///< viscosity
-    arrayView2d< real64 const > const & dVisc_dPres; ///< derivative of viscosity w.r.t. pressure
+    arrayView2d< real64 const > const dens;        ///< density
+    arrayView2d< real64 const > const dDens_dPres; ///< derivative of density w.r.t. pressure
+    arrayView2d< real64 const > const visc;        ///< viscosity
+    arrayView2d< real64 const > const dVisc_dPres; ///< derivative of viscosity w.r.t. pressure
     real64 const defaultDensity;                     ///< default density to use for new elements
     real64 const defaulViscosity;                    ///< default vi to use for new elements
   };
@@ -283,7 +284,7 @@ protected:
    * multiplier produced by ProppantTransport solver, which we otherwise don't know about.
    * This design should DEFINITELY be revisited.
    */
-  virtual arrayView1d< real64 const > const & getPoreVolumeMult( ElementSubRegionBase const & subRegion ) const;
+  virtual arrayView1d< real64 const > getPoreVolumeMult( ElementSubRegionBase const & subRegion ) const;
 
   /**
    * @brief Function to update all constitutive models
@@ -316,7 +317,7 @@ protected:
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_viscosity;
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_dVisc_dPres;
 
-  ElementRegionManager::ElementViewAccessor< arrayView1d< R1Tensor const > > m_transTMultiplier;
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_transTMultiplier;
 
 private:
 

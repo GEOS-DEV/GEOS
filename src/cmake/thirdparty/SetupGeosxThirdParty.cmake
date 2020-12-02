@@ -104,21 +104,36 @@ else()
     set(RAJA_DIR ${GEOSX_TPL_DIR}/raja)
 endif()
 
-include(${CMAKE_SOURCE_DIR}/cmake/thirdparty/FindRAJA.cmake)
-if (NOT RAJA_FOUND)
-    message(FATAL_ERROR "RAJA not found in ${RAJA_DIR}. Maybe you need to build it")
-endif()    
-blt_register_library( NAME raja
-                      INCLUDES ${RAJA_INCLUDE_DIRS}
-                      LIBRARIES ${RAJA_LIBRARY}
-                      TREAT_INCLUDES_AS_SYSTEM ON )
+find_package(RAJA REQUIRED PATHS ${RAJA_DIR})
 
-set( thirdPartyLibs ${thirdPartyLibs} raja )
+get_target_property(RAJA_INCLUDE_DIRS RAJA INTERFACE_INCLUDE_DIRECTORIES)
+set_target_properties(RAJA
+                      PROPERTIES INTERFACE_SYSTEM_INCLUDE_DIRECTORIES "${RAJA_INCLUDE_DIRS}")
+
+set( thirdPartyLibs ${thirdPartyLibs} RAJA )
 
 ################################
 # CHAI
 ################################
-include(${CMAKE_SOURCE_DIR}/cmake/thirdparty/FindCHAI.cmake)
+if( EXISTS ${CHAI_DIR})
+    message(STATUS "Using system CHAI found at ${CHAI_DIR}")
+else()
+    message(STATUS "Using CHAI from thirdPartyLibs")
+    set(CHAI_DIR ${GEOSX_TPL_DIR}/chai)
+endif()
+
+find_package(umpire REQUIRED
+             PATHS ${CHAI_DIR})
+
+find_package(chai REQUIRED
+             PATHS ${CHAI_DIR})
+
+
+get_target_property(CHAI_INCLUDE_DIRS chai INTERFACE_INCLUDE_DIRECTORIES)
+set_target_properties(chai
+                      PROPERTIES INTERFACE_SYSTEM_INCLUDE_DIRECTORIES "${CHAI_INCLUDE_DIRS}")
+
+set( thirdPartyLibs ${thirdPartyLibs} chai umpire )
 
 ################################
 # FPARSER
@@ -512,7 +527,7 @@ if( ENABLE_SUPERLU_DIST)
 endif()
 
 ################################
-# HYPRE
+# SUITESPARSE
 ################################
 if( ENABLE_HYPRE )
     message( STATUS "setting up HYPRE" )
@@ -633,6 +648,51 @@ if( ENABLE_VTK )
                         LIBRARIES ${VTK_LIBRARIES}
                         TREAT_INCLUDES_AS_SYSTEM ON )
   set( thirdPartyLibs ${thirdPartyLibs} vtk )  
+endif()
+
+################################
+# SUITESPARSE
+################################
+if( ENABLE_SUITESPARSE )
+    message( STATUS "setting up SUITESPARSE" )
+
+    set(SUITESPARSE_DIR ${GEOSX_TPL_DIR}/suitesparse)
+
+    find_path( SUITESPARSE_INCLUDE_DIRS umfpack.h
+               PATHS  ${SUITESPARSE_DIR}/include
+               NO_DEFAULT_PATH
+               NO_CMAKE_ENVIRONMENT_PATH
+               NO_CMAKE_PATH
+               NO_SYSTEM_ENVIRONMENT_PATH
+               NO_CMAKE_SYSTEM_PATH)
+
+    find_library( SUITESPARSE_LIBRARY NAMES umfpack
+                  PATHS ${SUITESPARSE_DIR}/lib
+                  NO_DEFAULT_PATH
+                  NO_CMAKE_ENVIRONMENT_PATH
+                  NO_CMAKE_PATH
+                  NO_SYSTEM_ENVIRONMENT_PATH
+                  NO_CMAKE_SYSTEM_PATH)
+
+    message(STATUS "SUITESPARSE_INCLUDE_DIRS = ${SUITESPARSE_INCLUDE_DIRS}" )
+    message(STATUS "SUITESPARSE_LIBRARY = ${SUITESPARSE_LIBRARY}" )
+    include(FindPackageHandleStandardArgs)
+    find_package_handle_standard_args(SUITESPARSE DEFAULT_MSG
+                                      SUITESPARSE_INCLUDE_DIRS
+                                      SUITESPARSE_LIBRARY )
+    if (NOT SUITESPARSE_FOUND)
+        message(FATAL_ERROR "SUITESPARSE not found in ${SUITESPARSE_DIR}. Maybe you need to build it")
+    endif()
+    
+    set( SUITESPARSE_DEPENDS "blas;lapack" )
+
+    blt_register_library( NAME suitesparse
+                          DEPENDS_ON ${SUITESPARSE_DEPENDS}
+                          INCLUDES ${SUITESPARSE_INCLUDE_DIRS}
+                          LIBRARIES ${SUITESPARSE_LIBRARY}
+                          TREAT_INCLUDES_AS_SYSTEM ON )
+
+    set( thirdPartyLibs ${thirdPartyLibs} suitesparse )
 endif()
 
 message(STATUS "thirdPartyLibs = ${thirdPartyLibs}")

@@ -36,7 +36,7 @@ void PositivePartOfTensor( real64 (&eigs)[3], real64 (&eigvecs)[3][3], real64 (&
     {
       positiveEigs[i] = std::max(0.0, eigs[i]); 
     }
-  LvArray::tensorOps::AikSymBklAjl<3>(positivePart, eigvecs, positiveEigs); 
+  LvArray::tensorOps::Rij_eq_AikSymBklAjl<3>(positivePart, eigvecs, positiveEigs);
 }
 
 GEOSX_HOST_DEVICE inline
@@ -47,7 +47,7 @@ void NegativePartOfTensor( real64 (&eigs)[3], real64 (&eigvecs)[3][3], real64 (&
     {
       negativeEigs[i] = std::min(0.0, eigs[i]); 
     }
-  LvArray::tensorOps::AikSymBklAjl<3>(negativePart, eigvecs, negativeEigs); 
+  LvArray::tensorOps::Rij_eq_AikSymBklAjl<3>(negativePart, eigvecs, negativeEigs);
 }
 
 GEOSX_HOST_DEVICE inline
@@ -162,7 +162,7 @@ GEOSX_HOST_DEVICE inline
 void QTensor( real64 (&eigvector)[3], real64 (&Q)[6][6] )
 {
   real64 M[3][3]={};
-  LvArray::tensorOps::AiBj<3,3>(M, eigvector, eigvector);
+  LvArray::tensorOps::Rij_eq_AiBj<3,3>(M, eigvector, eigvector);
   for (int i = 0; i<6; i++)
   {
     for (int j = 0; j<6; j++)
@@ -177,8 +177,8 @@ void GTensor( real64 (&eigvec1)[3], real64 (&eigvec2)[3], real64 (&G)[6][6] )
 {
   real64 M1[3][3]={};
   real64 M2[3][3]={};
-  LvArray::tensorOps::AiBj<3,3>(M1, eigvec1, eigvec1);
-  LvArray::tensorOps::AiBj<3,3>(M2, eigvec2, eigvec2);
+  LvArray::tensorOps::Rij_eq_AiBj<3,3>(M1, eigvec1, eigvec1);
+  LvArray::tensorOps::Rij_eq_AiBj<3,3>(M2, eigvec2, eigvec2);
   for (int i = 0; i<6; i++)
   {
     for (int j = 0; j<6; j++)

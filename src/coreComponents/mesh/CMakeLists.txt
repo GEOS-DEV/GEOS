@@ -10,10 +10,10 @@ set(mesh_headers
     ElementSubRegionBase.hpp
     ElementRegionBase.hpp
     ElementRegionManager.hpp
+    SurfaceElementSubRegion.hpp
     FaceElementSubRegion.hpp
-    FaceElementRegion.hpp
+    SurfaceElementRegion.hpp
     EmbeddedSurfaceSubRegion.hpp
-    EmbeddedSurfaceRegion.hpp
     WellElementSubRegion.hpp
     WellElementRegion.hpp
     ExtrinsicMeshData.hpp
@@ -37,9 +37,9 @@ set(mesh_sources
     ElementSubRegionBase.cpp
     ElementRegionBase.cpp
     ElementRegionManager.cpp
-    FaceElementRegion.cpp
+    SurfaceElementRegion.cpp
+    SurfaceElementSubRegion.cpp
     FaceElementSubRegion.cpp
-    EmbeddedSurfaceRegion.cpp
     EmbeddedSurfaceSubRegion.cpp
     WellElementRegion.cpp
     WellElementSubRegion.cpp

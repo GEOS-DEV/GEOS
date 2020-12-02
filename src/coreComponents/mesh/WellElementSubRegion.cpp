@@ -282,8 +282,8 @@ void InitializeLocalSearch( MeshLevel const & mesh,
                                                  localIndex const ei ) -> real64
   {
     R1Tensor v = location;
-    v -= resElemCenter[er][esr][ei];
-    return v.L2_Norm();
+    LvArray::tensorOps::subtract< 3 >( v, resElemCenter[er][esr][ei] );
+    return LvArray::tensorOps::l2Norm< 3 >( v );
   } );
 
   // save the region, subregion and index of the reservoir element
@@ -461,14 +461,14 @@ void WellElementSubRegion::AssignUnownedElementsInReservoir( MeshLevel & mesh,
                                                              arrayView1d< integer > & elemStatusGlobal ) const
 {
   // get the well and reservoir element coordinates
-  arrayView1d< R1Tensor const > const & wellElemCoordsGlobal = wellGeometry.GetElemCoords();
+  arrayView2d< real64 const > const & wellElemCoordsGlobal = wellGeometry.GetElemCoords();
 
   // assign the well elements based on location wrt the reservoir elements
   // if the center of the well element falls in the domain owned by rank k
   // then the well element is assigned to rank k
   for( globalIndex currGlobal : unownedElems )
   {
-    R1Tensor const & location = wellElemCoordsGlobal[currGlobal];
+    R1Tensor const location = LVARRAY_TENSOROPS_INIT_LOCAL_3( wellElemCoordsGlobal[currGlobal] );
 
     // this will contain the indices of the reservoir element
     // in which the center of the well element is located
@@ -612,12 +612,11 @@ void WellElementSubRegion::UpdateNodeManagerSize( MeshLevel & mesh,
   // resize nodeManager to account for the new well nodes and update the properties
   nodeManager->resize( oldNumNodesLocal + numWellNodesLocal );
 
-  array1d< integer > &
-  isDomainBoundary = nodeManager->getReference< integer_array >( m_ObjectManagerBaseViewKeys.domainBoundaryIndicator );
+  arrayView1d< integer > const & isDomainBoundary = nodeManager->getDomainBoundaryIndicator();
 
   arrayView1d< globalIndex > const & nodeLocalToGlobal = nodeManager->localToGlobalMap();
 
-  arrayView1d< R1Tensor const > const & nodeCoordsGlobal = wellGeometry.GetNodeCoords();
+  arrayView2d< real64 const > const & nodeCoordsGlobal = wellGeometry.GetNodeCoords();
 
   // local *well* index
   localIndex iwellNodeLocal = 0;
@@ -631,10 +630,7 @@ void WellElementSubRegion::UpdateNodeManagerSize( MeshLevel & mesh,
 
     // update node manager maps and position
     nodeLocalToGlobal[inodeLocal]  = nodeOffsetGlobal + iwellNodeGlobal; // global *nodeManager* index
-    for( localIndex i = 0; i < 3; ++i )
-    {
-      X( inodeLocal, i ) = nodeCoordsGlobal[ iwellNodeGlobal ][ i ];
-    }
+    LvArray::tensorOps::copy< 3 >( X[inodeLocal], nodeCoordsGlobal[ iwellNodeGlobal ] );
 
     // mark the boundary nodes for ghosting in DomainPartition::SetupCommunications
     if( boundaryNodes.contains( iwellNodeGlobal ) )
@@ -663,7 +659,7 @@ void WellElementSubRegion::ConstructSubRegionLocalElementMaps( MeshLevel & mesh,
 {
   // get the well geometry
   arrayView1d< globalIndex const > const & nextElemIdGlobal  = wellGeometry.GetNextElemIndex();
-  arrayView1d< R1Tensor const >    const & elemCoordsGlobal  = wellGeometry.GetElemCoords();
+  arrayView2d< real64 const >      const & elemCoordsGlobal  = wellGeometry.GetElemCoords();
   arrayView2d< globalIndex const > const & elemToNodesGlobal = wellGeometry.GetElemToNodesMap();
   arrayView1d< real64 const >      const & elemVolumeGlobal  = wellGeometry.GetElemVolume();
 
@@ -711,10 +707,7 @@ void WellElementSubRegion::ConstructSubRegionLocalElementMaps( MeshLevel & mesh,
       }
     }
 
-    // TODO Change to LvArray::tensorOps::copy
-    m_elementCenter[ iwelemLocal ][ 0 ] = elemCoordsGlobal[ iwelemGlobal ][ 0 ];
-    m_elementCenter[ iwelemLocal ][ 1 ] = elemCoordsGlobal[ iwelemGlobal ][ 1 ];
-    m_elementCenter[ iwelemLocal ][ 2 ] = elemCoordsGlobal[ iwelemGlobal ][ 2 ];
+    LvArray::tensorOps::copy< 3 >( m_elementCenter[ iwelemLocal ], elemCoordsGlobal[ iwelemGlobal ] );
 
     m_elementVolume[iwelemLocal] = elemVolumeGlobal[iwelemGlobal];
     m_radius[iwelemLocal] = wellGeometry.GetElementRadius();
@@ -774,16 +767,18 @@ void WellElementSubRegion::UpdateNodeManagerNodeToElementMap( MeshLevel & mesh )
 void WellElementSubRegion::ConnectPerforationsToMeshElements( MeshLevel & mesh,
                                                               InternalWellGenerator const & wellGeometry )
 {
-  arrayView1d< R1Tensor const > const & perfCoordsGlobal = wellGeometry.GetPerfCoords();
-  arrayView1d< real64 const >   const & perfWellTransmissibilityGlobal = wellGeometry.GetPerfTransmissibility();
+  arrayView2d< real64 const > const perfCoordsGlobal = wellGeometry.GetPerfCoords();
+  arrayView1d< real64 const > const perfWellTransmissibilityGlobal = wellGeometry.GetPerfTransmissibility();
 
-  m_perforationData.resize( perfCoordsGlobal.size() );
+  m_perforationData.resize( perfCoordsGlobal.size( 0 ) );
   localIndex iperfLocal = 0;
 
+  arrayView2d< real64 > const perfLocation = m_perforationData.GetLocation();
+
   // loop over all the perforations
-  for( globalIndex iperfGlobal = 0; iperfGlobal < perfCoordsGlobal.size(); ++iperfGlobal )
+  for( globalIndex iperfGlobal = 0; iperfGlobal < perfCoordsGlobal.size( 0 ); ++iperfGlobal )
   {
-    R1Tensor const & location = perfCoordsGlobal[iperfGlobal];
+    R1Tensor const location = LVARRAY_TENSOROPS_INIT_LOCAL_3( perfCoordsGlobal[iperfGlobal] );
 
     localIndex erMatched  = -1;
     localIndex esrMatched = -1;
@@ -829,7 +824,7 @@ void WellElementSubRegion::ConnectPerforationsToMeshElements( MeshLevel & mesh,
 
       // construct the local wellTransmissibility and location maps
       m_perforationData.GetWellTransmissibility()[iperfLocal] = perfWellTransmissibilityGlobal[iperfGlobal];
-      m_perforationData.GetLocation()[iperfLocal] = location;
+      LvArray::tensorOps::copy< 3 >( perfLocation[iperfLocal], location );
 
       // increment the local to global map
       m_perforationData.localToGlobalMap()[iperfLocal++] = iperfGlobal;
@@ -894,16 +889,14 @@ template< bool DOPACK >
 localIndex WellElementSubRegion::PackUpDownMapsPrivate( buffer_unit_type * & buffer,
                                                         arrayView1d< localIndex const > const & packList ) const
 {
-  localIndex packedSize = 0;
-
-  packedSize += bufferOps::Pack< DOPACK >( buffer,
-                                           nodeList().Base().toViewConst(),
-                                           m_unmappedGlobalIndicesInNodelist,
-                                           packList,
-                                           this->localToGlobalMap(),
-                                           nodeList().RelatedObjectLocalToGlobal() );
-
-  return packedSize;
+  arrayView1d< globalIndex const > const localToGlobal = this->localToGlobalMap();
+  arrayView1d< globalIndex const > const nodeLocalToGlobal = nodeList().RelatedObjectLocalToGlobal();
+  return bufferOps::Pack< DOPACK >( buffer,
+                                    nodeList().Base().toViewConst(),
+                                    m_unmappedGlobalIndicesInNodelist,
+                                    packList,
+                                    localToGlobal.toSliceConst(),
+                                    nodeLocalToGlobal );
 }
 
 localIndex WellElementSubRegion::UnpackUpDownMaps( buffer_unit_type const * & buffer,
@@ -911,16 +904,12 @@ localIndex WellElementSubRegion::UnpackUpDownMaps( buffer_unit_type const * & bu
                                                    bool const GEOSX_UNUSED_PARAM( overwriteUpMaps ),
                                                    bool const GEOSX_UNUSED_PARAM( overwriteDownMaps ) )
 {
-  localIndex unPackedSize = 0;
-
-  unPackedSize += bufferOps::Unpack( buffer,
-                                     nodeList().Base().toView(),
-                                     packList,
-                                     m_unmappedGlobalIndicesInNodelist,
-                                     this->globalToLocalMap(),
-                                     nodeList().RelatedObjectGlobalToLocal() );
-
-  return unPackedSize;
+  return bufferOps::Unpack( buffer,
+                            nodeList().Base().toView(),
+                            packList,
+                            m_unmappedGlobalIndicesInNodelist,
+                            this->globalToLocalMap(),
+                            nodeList().RelatedObjectGlobalToLocal() );
 }
 
 void WellElementSubRegion::FixUpDownMaps( bool const clearIfUnmapped )

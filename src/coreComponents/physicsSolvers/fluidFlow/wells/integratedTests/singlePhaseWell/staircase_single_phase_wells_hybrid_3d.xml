@@ -9,10 +9,11 @@
       logLevel="1"
       targetRegions="{ Channel, wellRegion1, wellRegion2 }">
       <NonlinearSolverParameters
-        lineSearchAction="0"
+        lineSearchAction="None"
         newtonMaxIter="40"/>
       <LinearSolverParameters
         solverType="direct"
+        directParallel="0"
         logLevel="0"/>
     </SinglePhaseReservoir>
 

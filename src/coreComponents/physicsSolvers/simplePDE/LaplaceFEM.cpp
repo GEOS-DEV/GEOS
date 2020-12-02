@@ -14,7 +14,6 @@
 
 /**
  * @file LaplaceFEM.cpp
- *
  */
 
 // Source includes
@@ -22,18 +21,10 @@
 #include "LaplaceFEMKernels.hpp"
 
 #include "mpiCommunications/CommunicationTools.hpp"
-#include "mpiCommunications/NeighborCommunicator.hpp"
-#include "codingUtilities/Utilities.hpp"
 #include "common/TimingMacros.hpp"
 #include "common/DataTypes.hpp"
-#include "constitutive/ConstitutiveManager.hpp"
-#include "finiteElement/FiniteElementDiscretization.hpp"
 #include "finiteElement/FiniteElementDiscretizationManager.hpp"
-#include "finiteElement/Kinematics.h"
-#include "managers/NumericalMethodsManager.hpp"
-#include "codingUtilities/Utilities.hpp"
 #include "managers/DomainPartition.hpp"
-#include "managers/NumericalMethodsManager.hpp"
 
 namespace geosx
 {
@@ -46,30 +37,86 @@ namespace keys
 
 using namespace dataRepository;
 
+/*----------------------------------------------------------------------------------
+ * LaplaceFEM: Solving Laplace's partial differential equation with finite elements
+ * ---------------------------------------------------------------------------------
+ *
+ * What does this solver do?
+ * --------------------------
+ *
+ * This solver finds a solution f(x,y,z) to the Laplace equation: div ( grad ( f )) = 0
+ * This common elliptic PDE represents the solution of a steady-state heat transfer, for instance.
+ *
+ * Where can I find an example of what it does?
+ * --------------------------------------------
+ *
+ * Integrated tests associated to this solver are found in the ./integratedTests/ folder
+ * These tests consist of computing the steady-state temperature profile in a simple cube-shaped domain
+ * with fixed temperatures applied on two opposite cube faces ("Dirichlet" boundary conditions: imposing a value).
+ * Feel free to run these tests cases, check out the XML input files, and inspect the output.
+ *
+ * Implementation: before we start:
+ * ---------------------------------
+ * In this implementation, the solution function (called above f) is called m_fieldName.
+ * The variable m_fieldName is a string that points to a data container (an array) that
+ * holds the numerical values of the PDE solution for each location at which f is evaluated.
+ *
+ * Let's take a look at the implementation step by step.
+ *
+ * ---------------------------------------------------------------------------------
+ */
+
+
+/* CONSTRUCTOR
+   First, let us inspect the constructor of a "LaplaceFEM" object.
+   This constructor does three important things:
+   1 - It constructs an instance of the LaplaceFEM class (here: using the SolverBase constructor and passing through the arguments).
+   2 - It sets some default values for the LaplaceFEM-specific private variables (here: m_fieldName and m_timeIntegrationOption).
+   3 - It creates and activates a "registerWrapper" for each private variable.
+   This is where the private variables are declared either as REQUIRED or OPTIONAL.
+   An error is thrown if a REQUIRED variable is not specified in the XML file,
+   along with the description of this variable and possible enum values if relevant.
+   The description that is set is used in auto-generated documentation and console error messages.
+ */
 
 //START_SPHINX_INCLUDE_01
 LaplaceFEM::LaplaceFEM( const std::string & name,
                         Group * const parent ):
   SolverBase( name, parent ),
   m_fieldName( "primaryField" ),
-  m_timeIntegrationOption( timeIntegrationOption::ImplicitTransient )
+  m_timeIntegrationOption( TimeIntegrationOption::ImplicitTransient )
 {
-  registerWrapper< string >( laplaceFEMViewKeys.timeIntegrationOption.Key())->
+  registerWrapper( laplaceFEMViewKeys.timeIntegrationOption.Key(), &m_timeIntegrationOption )->
     setInputFlag( InputFlags::REQUIRED )->
-    setDescription( "option for default time integration method" );
+    setDescription( "Time integration method. Options are:\n* " + EnumStrings< TimeIntegrationOption >::concat( "\n* " ) );
 
-  registerWrapper< string >( laplaceFEMViewKeys.fieldVarName.Key(), &m_fieldName )->
+  registerWrapper( laplaceFEMViewKeys.fieldVarName.Key(), &m_fieldName )->
     setInputFlag( InputFlags::REQUIRED )->
-    setDescription( "name of field variable" );
+    setDescription( "Name of field variable" );
 }
 //END_SPHINX_INCLUDE_01
 
+
+// Destructor
 LaplaceFEM::~LaplaceFEM()
 {
   // TODO Auto-generated destructor stub
 }
 
-
+/* REGISTER THE PDE SOLUTION DATA ON THE MESH
+   In the LaplaceFEM solver, we compute the solution of the partial differential equation "numerically".
+   This means that we are not solving this PDE everywhere,
+   we are computing the solution at specific locations in space.
+   To do that, we have to register the Laplace solver so that it works on nodes of a mesh.
+   This registration process is done here, in three steps:
+   1 - for each mesh body (if the mesh is split), we collect he "nodes" (nodes carry their location information),
+   2 - On nodes, we register a new property called m_fieldName and give it a type (here, the type is an array of real64)
+   3 - We set some information for this property on the nodes: what is their "PlotLevel"? how can they be described?
+     The PlotLevel is a flag that instructs GEOSX to export values of this property for instance so that they can be plotted.
+     All properties mounted on nodes carry a certain PlotLevel value. This way, every time GEOSX triggers an
+     output event (a request to "print out" data), all properties at or above a certain PlotLevel are automatically exported.
+     The description here is simply an additional metadata for the newly mounted property.
+ */
 //START_SPHINX_INCLUDE_02
 void LaplaceFEM::RegisterDataOnMesh( Group * const MeshBodies )
 {
@@ -85,31 +132,18 @@ void LaplaceFEM::RegisterDataOnMesh( Group * const MeshBodies )
 }
 //END_SPHINX_INCLUDE_02
 
-//START_SPHINX_INCLUDE_03
-void LaplaceFEM::PostProcessInput()
-{
-  SolverBase::PostProcessInput();
 
-  string tiOption = this->getReference< string >( laplaceFEMViewKeys.timeIntegrationOption );
-
-  if( tiOption == "SteadyState" )
-  {
-    this->m_timeIntegrationOption = timeIntegrationOption::SteadyState;
-  }
-  else if( tiOption == "ImplicitTransient" )
-  {
-    this->m_timeIntegrationOption = timeIntegrationOption::ImplicitTransient;
-  }
-  else if( tiOption == "ExplicitTransient" )
-  {
-    this->m_timeIntegrationOption = timeIntegrationOption::ExplicitTransient;
-  }
-  else
-  {
-    GEOSX_ERROR( "invalid time integration option" );
-  }
-}
-//END_SPHINX_INCLUDE_03
+/* STEPPING IN TIME
+   Here, we decide how we march in time in the resolutions based on the possible
+   three options set in the XML file (Steady state, Implicit transient, or Explicit transient).
+   Based on these options, we can either perform an Explicit Step (forward Euler),
+   or an Implicit Step (backward Euler).
+   The implementation of the Explicit or Implicit Steps are found in the SolverBase.
+   From now on, we oscillate between specific Laplace solver operations if implemented and more generic SolverBase operations.
+   The initial values of the solver step are all at time_n, and the solver attempts to advance by a time step of dt.
+   This dt time step size is specified initially by the user; and unfortunately, it can sometimes be too large for convergence.
+   The SolverStep method thus returns the time step value that is was actually capable of solving for with good convergence.
+ */
 
 real64 LaplaceFEM::SolverStep( real64 const & time_n,
                                real64 const & dt,
@@ -117,18 +151,23 @@ real64 LaplaceFEM::SolverStep( real64 const & time_n,
                                DomainPartition & domain )
 {
   real64 dtReturn = dt;
-  if( m_timeIntegrationOption == timeIntegrationOption::ExplicitTransient )
+  if( m_timeIntegrationOption == TimeIntegrationOption::ExplicitTransient )
   {
     dtReturn = ExplicitStep( time_n, dt, cycleNumber, domain );
   }
-  else if( m_timeIntegrationOption == timeIntegrationOption::ImplicitTransient ||
-           m_timeIntegrationOption == timeIntegrationOption::SteadyState )
+  else if( m_timeIntegrationOption == TimeIntegrationOption::ImplicitTransient ||
+           m_timeIntegrationOption == TimeIntegrationOption::SteadyState )
   {
     dtReturn = this->LinearImplicitStep( time_n, dt, cycleNumber, domain );
   }
   return dtReturn;
 }
 
+/*
+   IMPLICIT STEP SETUP
+   This method uses the system setup from LaplaceFEM (see below).
+   It "deactivates" the time variables (with the GEOSX_UNUSED_PARAM macro) and does a steady state system set-up.
+ */
 void LaplaceFEM::ImplicitStepSetup( real64 const & GEOSX_UNUSED_PARAM( time_n ),
                                     real64 const & GEOSX_UNUSED_PARAM( dt ),
                                     DomainPartition & domain )
@@ -153,15 +192,19 @@ void LaplaceFEM::SetupDofs( DomainPartition const & GEOSX_UNUSED_PARAM( domain )
                           DofManager::Connector::Elem );
 }
 
+/* SETUP SYSTEM
+   Setting up the system using the base class method
+ */
+
 void LaplaceFEM::SetupSystem( DomainPartition & domain,
                               DofManager & dofManager,
                               CRSMatrix< real64, globalIndex > & localMatrix,
                               array1d< real64 > & localRhs,
                               array1d< real64 > & localSolution,
-                              bool const setSparisty )
+                              bool const setSparsity )
 {
   GEOSX_MARK_FUNCTION;
-  SolverBase::SetupSystem( domain, dofManager, localMatrix, localRhs, localSolution, setSparisty );
+  SolverBase::SetupSystem( domain, dofManager, localMatrix, localRhs, localSolution, setSparsity );
 
   MeshLevel * const mesh = domain.getMeshBodies()->GetGroup< MeshBody >( 0 )->getMeshLevel( 0 );
   NodeManager const * const nodeManager = mesh->getNodeManager();
@@ -185,6 +228,23 @@ void LaplaceFEM::SetupSystem( DomainPartition & domain,
 
 }
 
+
+/*
+   ASSEMBLE SYSTEM
+   This is the most important method to assemble the matrices needed before sending them to our solver.
+   For a system A.x = B (with x the unknown), here, we use:
+   - A : "localMatrix" this represents a Compressed Row Storage (optimized for sparse) matrix of real64 values associated with their index,
+   - B : "localRhs" this represents a vector (1d array) of real64 numbers specified at the equation's right-hand side.
+   The "local" prefix indicates that we are working on a local problem here, and the parallelization is performed at a higher level.
+   This assembly step collects all the information needed to create the matrices localMatrix and localRhs, and the computation of values
+   is done in a specific Laplace kernel optimized for parallel performance. Here we:
+   1 - identify and point to the mesh of this domain,
+   2 - find the node manager of this mesh,
+   3 - extract the indices of the nodes that will be solved for (ie. the degrees of freedom or "dof")
+   4 - pass all this information to a Laplace-specific finite element computation kernel.
+   The call to the kernel is a templated call designed for performance (we will not explain the kernel here).
+   See the implementation in LaplaceFEMKernel.cpp.
+ */
 //START_SPHINX_INCLUDE_04
 void LaplaceFEM::AssembleSystem( real64 const GEOSX_UNUSED_PARAM( time_n ),
                                  real64 const GEOSX_UNUSED_PARAM( dt ),
@@ -208,7 +268,7 @@ void LaplaceFEM::AssembleSystem( real64 const GEOSX_UNUSED_PARAM( time_n ),
                                   LaplaceFEMKernel >( *mesh,
                                                       targetRegionNames(),
                                                       this->getDiscretizationName(),
-                                                      array1d< string >(),
+                                                      arrayView1d< string const >(),
                                                       dofIndex,
                                                       dofManager.rankOffset(),
                                                       localMatrix,
@@ -216,34 +276,6 @@ void LaplaceFEM::AssembleSystem( real64 const GEOSX_UNUSED_PARAM( time_n ),
                                                       m_fieldName );
 
 
-
-  //END_SPHINX_INCLUDE_04
-
-  if( getLogLevel() == 2 )
-  {
-    GEOSX_LOG_RANK_0( "After LaplaceFEM::AssembleSystem" );
-    GEOSX_LOG_RANK_0( "\nJacobian:\n" );
-//    std::cout << matrix;
-    GEOSX_LOG_RANK_0( "\nResidual:\n" );
-//    std::cout << rhs;
-  }
-
-//  if( getLogLevel() >= 3 )
-//  {
-//    integer newtonIter = m_nonlinearSolverParameters.m_numNewtonIterations;
-//>>>>>>> develop
-//
-//      finiteElementLaunchDispatch< LaplaceFEMKernels::ImplicitKernel >( numNodesPerElement,
-//                                                                        n_q_points,
-//                                                                        dNdX,
-//                                                                        detJ,
-//                                                                        elemNodes,
-//                                                                        dofIndex,
-//                                                                        dofManager.rankOffset(),
-//                                                                        localMatrix );
-//
-//    } );
-//  }
 
   //END_SPHINX_INCLUDE_04
 }
@@ -268,6 +300,11 @@ void LaplaceFEM::ApplySystemSolution( DofManager const & dofManager,
                                          true );
 }
 
+/*
+   APPLY BOUNDARY CONDITIONS
+   Here, this call is the generic call from SolverBase.
+   All it does is to call a specific Dirichlet boundary condition implemented for this solver
+ */
 void LaplaceFEM::ApplyBoundaryConditions( real64 const time_n,
                                           real64 const dt,
                                           DomainPartition & domain,
@@ -278,6 +315,11 @@ void LaplaceFEM::ApplyBoundaryConditions( real64 const time_n,
   ApplyDirichletBC_implicit( time_n + dt, dofManager, domain, localMatrix, localRhs );
 }
 
+/*
+   SOLVE SYSTEM
+   This method is simply initiating the solution and right-hand side
+   and pass is to the base class solver.
+ */
 void LaplaceFEM::SolveSystem( DofManager const & dofManager,
                               ParallelMatrix & matrix,
                               ParallelVector & rhs,
@@ -285,10 +327,14 @@ void LaplaceFEM::SolveSystem( DofManager const & dofManager,
 {
   rhs.scale( -1.0 ); // TODO decide if we want this here
   solution.zero();
-
   SolverBase::SolveSystem( dofManager, matrix, rhs, solution );
 }
 
+/*
+   DIRICHLET BOUNDARY CONDITIONS
+   This is the boundary condition method applied for this particular solver.
+   It is called by the more generic "ApplyBoundaryConditions" method.
+ */
 void LaplaceFEM::ApplyDirichletBC_implicit( real64 const time,
                                             DofManager const & dofManager,
                                             DomainPartition & domain,

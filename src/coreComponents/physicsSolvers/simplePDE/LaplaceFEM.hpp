@@ -15,36 +15,38 @@
 #ifndef GEOSX_PHYSICSSOLVERS_SIMPLEPDE_LAPLACE_FEM_HPP_
 #define GEOSX_PHYSICSSOLVERS_SIMPLEPDE_LAPLACE_FEM_HPP_
 
-#include "physicsSolvers/SolverBase.hpp"
-#include "managers/FieldSpecification/FieldSpecificationManager.hpp"
-#include "linearAlgebra/interfaces/InterfaceTypes.hpp"
-//START_SPHINX_INCLUDE_00
+#include "common/EnumStrings.hpp"   // facilities for enum-string conversion (for reading enum values from XML input)
+#include "physicsSolvers/SolverBase.hpp"  // an abstraction class shared by all physics solvers
+#include "managers/FieldSpecification/FieldSpecificationManager.hpp" // a manager that can access and set values on the discretized domain
+#include "linearAlgebra/interfaces/InterfaceTypes.hpp"  // interface to linear solvers and linear algebra libraries
 
 namespace geosx
 {
-namespace dataRepository
-{
-class Group;
-}
-class FieldSpecificationBase;
-class FiniteElementBase;
-class DomainPartition;
-//END_SPHINX_INCLUDE_00
+
+// Like most physics solvers, the Laplace solver derives from a generic SolverBase class.
+// The base class is densely Doxygen-commented and worth a look if you have not done so already.
+// Most important system assembly steps, linear and non-linear resolutions, and time-stepping mechanisms
+// are implemented at the SolverBase class level and can thus be used in Laplace without needing reimplementation.
 
 //START_SPHINX_INCLUDE_02
 class LaplaceFEM : public SolverBase
 {
 public:
-
+  // The default nullary constructor is disabled to avoid compiler auto-generation:
   LaplaceFEM() = delete;
 
+  // The constructor needs a user-defined "name" and a parent Group (to place this instance in the tree structure of classes)
   LaplaceFEM( const std::string & name,
               Group * const parent );
 
+  // Destructor
   virtual ~LaplaceFEM() override;
 
+  // "CatalogName()" return the string used as XML tag in the input file.
+  // It ties the XML tag with this C++ classes. This is important.
   static string CatalogName() { return "LaplaceFEM"; }
 
+  // This method ties properties with their supporting mesh
   virtual void RegisterDataOnMesh( Group * const MeshBodies ) override final;
 
 //END_SPHINX_INCLUDE_02
@@ -117,14 +119,18 @@ public:
   //END_SPHINX_INCLUDE_03
   /**@}*/
 
+  // This method is specific to this Laplace solver
+  // It is used to apply Dirichlet boundary condition
+  // and called when the base class ApplyBoundaryConditions() is called
   void ApplyDirichletBC_implicit( real64 const time,
                                   DofManager const & dofManager,
                                   DomainPartition & domain,
                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                   arrayView1d< real64 > const & localRhs );
 
+  // Choice of transient treatment options (steady, backward, forward Euler scheme):
   //START_SPHINX_INCLUDE_01
-  enum class timeIntegrationOption
+  enum class TimeIntegrationOption : integer
   {
     SteadyState,
     ImplicitTransient,
@@ -132,6 +138,10 @@ public:
   };
   //END_SPHINX_INCLUDE_01
 
+
+  // This structure stores ``dataRepository::ViewKey`` objects
+  // used as binding between the input XML tags and source
+  // code variables (here, timeIntegrationOption and fieldVarName)
   //START_SPHINX_INCLUDE_04
   struct viewKeyStruct : public SolverBase::viewKeyStruct
   {
@@ -141,16 +151,25 @@ public:
   } laplaceFEMViewKeys;
   //END_SPHINX_INCLUDE_04
 
-protected:
-
-  virtual void PostProcessInput() override final;
-
 private:
 
-  string m_fieldName;
-  timeIntegrationOption m_timeIntegrationOption;
+  // These two classes are specific to the Laplace solver:
+  string m_fieldName;  // User-defined name of the physical quantity we wish to solve for (such as "Temperature", etc.)
+  TimeIntegrationOption m_timeIntegrationOption;  // Choice of transient treatment (SteadyState, ImplicitTransient or ExplicitTransient)
 
 };
+
+
+/* REGISTERING NEW ENUMS:
+   --------------------------
+   In order to register an enumeration type with the Data Repository and have its value read from input,
+   we must define stream insertion/extraction operators. This is a common task, so GEOSX provides
+   a facility for automating it. Upon including ``common/EnumStrings.hpp``, we can call the following macro
+   at the namespace scope (in this case, right after the ``LaplaceFEM`` class definition is complete):
+ */
+//START_SPHINX_INCLUDE_05
+ENUM_STRINGS( LaplaceFEM::TimeIntegrationOption, "SteadyState", "ImplicitTransient", "ExplicitTransient" )
+//END_SPHINX_INCLUDE_05
 
 } /* namespace geosx */
 

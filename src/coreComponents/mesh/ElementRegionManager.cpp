@@ -19,7 +19,7 @@
 
 #include "common/TimingMacros.hpp"
 #include "mpiCommunications/CommunicationTools.hpp"
-#include "FaceElementRegion.hpp"
+#include "SurfaceElementRegion.hpp"
 #include "FaceManager.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 #include "CellBlockManager.hpp"
@@ -133,7 +133,7 @@ void ElementRegionManager::SetSchemaDeviations( xmlWrapper::xmlNode schemaRoot,
 
 void ElementRegionManager::GenerateMesh( Group * const cellBlockManager )
 {
-  this->forElementRegions< CellElementRegion >( [&]( CellElementRegion & elemRegion )
+  this->forElementRegions< CellElementRegion, SurfaceElementRegion >( [&]( auto & elemRegion )
   {
     elemRegion.GenerateMesh( cellBlockManager->GetGroup( keys::cellBlocks ) );
   } );
@@ -294,7 +294,7 @@ ElementRegionManager::PackPrivate( buffer_unit_type * & buffer,
     {
       packedSize += bufferOps::Pack< DOPACK >( buffer, subRegion.getName() );
 
-      arrayView1d< localIndex > const elemList = packList[kReg][esr];
+      arrayView1d< localIndex const > const elemList = packList[kReg][esr];
       if( DOPACK )
       {
         packedSize += subRegion.Pack( buffer, wrapperNames, elemList, 0 );
@@ -399,7 +399,7 @@ ElementRegionManager::PackGlobalMapsPrivate( buffer_unit_type * & buffer,
     {
       packedSize += bufferOps::Pack< DOPACK >( buffer, subRegion.getName() );
 
-      arrayView1d< localIndex > const & elemList = packList[kReg][esr];
+      arrayView1d< localIndex const > const elemList = packList[kReg][esr];
       if( DOPACK )
       {
         packedSize += subRegion.PackGlobalMaps( buffer, elemList, 0 );
@@ -496,7 +496,7 @@ ElementRegionManager::PackUpDownMapsPrivate( buffer_unit_type * & buffer,
     {
       packedSize += bufferOps::Pack< DOPACK >( buffer, subRegion.getName() );
 
-      arrayView1d< localIndex > const & elemList = packList[kReg][esr];
+      arrayView1d< localIndex > const elemList = packList[kReg][esr];
       if( DOPACK )
       {
         packedSize += subRegion.PackUpDownMaps( buffer, elemList );

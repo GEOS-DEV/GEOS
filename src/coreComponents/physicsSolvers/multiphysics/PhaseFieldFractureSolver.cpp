@@ -39,8 +39,7 @@ PhaseFieldFractureSolver::PhaseFieldFractureSolver( const std::string & name,
   SolverBase( name, parent ),
   m_solidSolverName(),
   m_damageSolverName(),
-  m_couplingTypeOptionString( "FixedStress" ),
-  m_couplingTypeOption()
+  m_couplingTypeOption( CouplingTypeOption::FixedStress )
 
 {
   registerWrapper( viewKeyStruct::solidSolverNameString, &m_solidSolverName )->
@@ -53,9 +52,9 @@ PhaseFieldFractureSolver::PhaseFieldFractureSolver( const std::string & name,
     setDescription(
     "Name of the damage mechanics solver to use in the PhaseFieldFracture solver" );
 
-  registerWrapper( viewKeyStruct::couplingTypeOptionStringString, &m_couplingTypeOptionString )->
+  registerWrapper( viewKeyStruct::couplingTypeOptionString, &m_couplingTypeOption )->
     setInputFlag( InputFlags::REQUIRED )->
-    setDescription( "Coupling option: (FixedStress, TightlyCoupled)" );
+    setDescription( "Coupling option. Valid options:\n* " + EnumStrings< CouplingTypeOption >::concat( "\n* " ) );
 
   registerWrapper( viewKeyStruct::subcyclingOptionString, &m_subcyclingOption )->
     setInputFlag( InputFlags::REQUIRED )->
@@ -111,12 +110,8 @@ void PhaseFieldFractureSolver::ImplicitStepComplete( real64 const & GEOSX_UNUSED
 
 void PhaseFieldFractureSolver::PostProcessInput()
 {
-  string ctOption = this->getReference< string >( viewKeyStruct::couplingTypeOptionStringString );
-
-  if( ctOption == "FixedStress" )
+  if( m_couplingTypeOption == CouplingTypeOption::FixedStress )
   {
-    this->m_couplingTypeOption = couplingTypeOption::FixedStress;
-
     // For this coupled solver the minimum number of Newton Iter should be 0 for both flow and solid solver otherwise it
     // will never converge.
     SolidMechanicsLagrangianFEM &
@@ -130,15 +125,6 @@ void PhaseFieldFractureSolver::PostProcessInput()
     minNewtonIterSolid = 0;
     minNewtonIterFluid = 0;
   }
-  else if( ctOption == "TightlyCoupled" )
-  {
-    this->m_couplingTypeOption = couplingTypeOption::TightlyCoupled;
-  }
-  else
-  {
-    GEOSX_ERROR( "invalid coupling type option" );
-  }
-
 }
 
 void PhaseFieldFractureSolver::InitializePostInitialConditions_PreSubGroups( Group * const )
@@ -176,13 +162,13 @@ real64 PhaseFieldFractureSolver::SolverStep( real64 const & time_n,
 {
   GEOSX_MARK_FUNCTION;
   real64 dtReturn = dt;
-  if( m_couplingTypeOption == couplingTypeOption::FixedStress )
+  if( m_couplingTypeOption == CouplingTypeOption::FixedStress )
   {
     dtReturn = SplitOperatorStep( time_n, dt, cycleNumber, domain );
   }
-  else if( m_couplingTypeOption == couplingTypeOption::TightlyCoupled )
+  else if( m_couplingTypeOption == CouplingTypeOption::TightlyCoupled )
   {
-    GEOSX_ERROR( "couplingTypeOption::FullyImplicit not yet implemented" );
+    GEOSX_ERROR( "CouplingTypeOption::FullyImplicit not yet implemented" );
   }
   return dtReturn;
 }
@@ -318,7 +304,7 @@ void PhaseFieldFractureSolver::mapDamageToQuadrature( DomainPartition & domain )
   string const & damageFieldName = damageSolver.getFieldName();
 
   //should get reference to damage field here.
-  arrayView1d< real64 > const & nodalDamage = nodeManager->getReference< array1d< real64 > >( damageFieldName );
+  arrayView1d< real64 const > const nodalDamage = nodeManager->getReference< array1d< real64 > >( damageFieldName );
 
   ElementRegionManager * const elemManager = mesh->getElemManager();
 
@@ -329,41 +315,35 @@ void PhaseFieldFractureSolver::mapDamageToQuadrature( DomainPartition & domain )
 
 
   // begin region loop
-  forTargetSubRegionsComplete< CellElementSubRegion >( *mesh, [&]( localIndex const targetIndex,
-                                                                   localIndex const,
-                                                                   localIndex const,
-                                                                   ElementRegionBase &,
-                                                                   CellElementSubRegion & elementSubRegion )
+  forTargetSubRegionsComplete< CellElementSubRegion >( *mesh, [this, &solidSolver, nodalDamage]
+                                                         ( localIndex const targetIndex, localIndex, localIndex, ElementRegionBase &, CellElementSubRegion & elementSubRegion )
   {
     constitutive::ConstitutiveBase * const
     solidModel = elementSubRegion.getConstitutiveModel< constitutive::ConstitutiveBase >( solidSolver.solidMaterialNames()[targetIndex] );
 
-    ConstitutivePassThru< DamageBase >::Execute( solidModel, [&]( auto * const damageModel )
+    ConstitutivePassThru< DamageBase >::Execute( solidModel, [this, &elementSubRegion, nodalDamage]( auto * const damageModel )
     {
       using CONSTITUTIVE_TYPE = TYPEOFPTR( damageModel );
       typename CONSTITUTIVE_TYPE::KernelWrapper constitutiveUpdate = damageModel->createKernelUpdates();
 
-      arrayView2d< real64 > const & damageFieldOnMaterial = constitutiveUpdate.m_damage;
-      arrayView2d< localIndex const, cells::NODE_MAP_USD > const &
-      elemNodes = elementSubRegion.nodeList();
-
+      arrayView2d< real64 > const damageFieldOnMaterial = constitutiveUpdate.m_damage;
+      arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemNodes = elementSubRegion.nodeList();
 
       finiteElement::FiniteElementBase const &
       fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( m_discretizationName );
 
-      finiteElement::dispatch3D( fe, [&]( auto & finiteElement )
+      finiteElement::dispatch3D( fe, [nodalDamage, &elementSubRegion, damageFieldOnMaterial, elemNodes]( auto & finiteElement )
       {
         using FE_TYPE = TYPEOFREF( finiteElement );
         constexpr localIndex numNodesPerElement = FE_TYPE::numNodes;
         constexpr localIndex n_q_points = FE_TYPE::numQuadraturePoints;
-        globalIndex_array elemDofIndex( numNodesPerElement );
 
-        for( localIndex k = 0; k < elementSubRegion.size(); ++k )
+        forAll< serialPolicy >( elementSubRegion.size(), [nodalDamage, damageFieldOnMaterial, elemNodes] ( localIndex const k )
         {
           for( localIndex q = 0; q < n_q_points; ++q )
           {
             real64 N[ numNodesPerElement ];
-            FE_TYPE::shapeFunctionValues( q, N );
+            FE_TYPE::calcN( q, N );
 
             damageFieldOnMaterial( k, q ) = 0;
             for( localIndex a = 0; a < numNodesPerElement; ++a )
@@ -377,8 +357,7 @@ void PhaseFieldFractureSolver::mapDamageToQuadrature( DomainPartition & domain )
             }
             //          std::cout<<"damage("<<k<<","<<q<<") = "<<damageFieldOnMaterial(k,q)<<std::endl;
           }
-        }
-
+        } );
       } );
     } );
   } );

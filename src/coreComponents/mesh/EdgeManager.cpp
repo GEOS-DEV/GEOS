@@ -384,14 +384,13 @@ void populateMaps( ArrayOfArraysView< EdgeBuilder const > const & edgesByLowestN
         if( j + numMatches == numEdges )
           break;
       }
-
       // Then add the edge.
       addEdge( edgesByLowestNode, faceToEdgeMap.toView(), edgeToFaceMap.toView(), edgeToNodeMap, curEdgeID, nodeID, j, numMatches );
       ++curEdgeID;
       j += numMatches;
     }
 
-    if( j == numFaces - 1 )
+    if( j == numEdges - 1 )
     {
       addEdge( edgesByLowestNode, faceToEdgeMap.toView(), edgeToFaceMap.toView(), edgeToNodeMap, curEdgeID, nodeID, j, 1 );
     }
@@ -404,7 +403,7 @@ void EdgeManager::BuildEdges( FaceManager * const faceManager, NodeManager * con
 
   localIndex const numNodes = nodeManager->size();
 
-  ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager->nodeList().toViewConst();
+  ArrayOfArraysView< localIndex const > const faceToNodeMap = faceManager->nodeList().toViewConst();
 
   faceManager->edgeList().SetRelatedObject( this );
   ArrayOfArrays< localIndex > & faceToEdgeMap = faceManager->edgeList();
@@ -445,89 +444,36 @@ void EdgeManager::BuildEdges( FaceManager * const faceManager, NodeManager * con
   {
     auto const & setWrapper = nodeSets[i];
     std::string const & setName = setWrapper->getName();
-    SortedArrayView< localIndex const > const & targetSet = nodeManager->sets().getReference< SortedArray< localIndex > >( setName ).toViewConst();
+    SortedArrayView< localIndex const > const targetSet = nodeManager->sets().getReference< SortedArray< localIndex > >( setName ).toViewConst();
     ConstructSetFromSetAndMap( targetSet, m_toNodesRelation, setName );
   } );
 
   SetDomainBoundaryObjects( faceManager );
 }
 
+void EdgeManager::BuildEdges( localIndex const numNodes,
+                              ArrayOfArraysView< localIndex const > const & faceToNodeMap,
+                              ArrayOfArrays< localIndex > & faceToEdgeMap )
+{
+  ArrayOfArrays< EdgeBuilder > edgesByLowestNode( numNodes, 2 * maxEdgesPerNode() );
+  createEdgesByLowestNode( faceToNodeMap, edgesByLowestNode.toView() );
 
-/// Calculates the midpoint of the edge
-//void EdgeManager::EdgeCenter(const NodeManager * nodeManager, localIndex edge,
-// R1Tensor& center) const
-//{
-//
-//  const array1d< R1Tensor >& refPosition =
-// nodeManager->GetFieldData<FieldInfo::referencePosition>();
-//  const array1d< R1Tensor >& displacement =
-// nodeManager->GetFieldData<FieldInfo::displacement>();
-//  FixedOneToManyRelation const & m_toNodesRelation =
-// this->getWrapper<FixedOneToManyRelation>(string("edgesToNodes")).reference();
-////  UnorderedVariableOneToManyRelation const & toFacesRelation =
-// this->getWrapper<UnorderedVariableOneToManyRelation>(string("edgesToFaces")).reference();
-//
-//  if (m_toNodesRelation.Dimension(1) >= 2)
-//  {
-//    const localIndex& node0 = m_toNodesRelation(edge,0);
-//    center =  refPosition[node0];
-//    center += displacement[node0];
-//    const localIndex& node1 = m_toNodesRelation(edge,1);
-//    center += refPosition[node1];
-//    center += displacement[node1];
-//    center *= 0.5;
-//  }
-//  else
-//  {
-//    const localIndex& node0 = m_toNodesRelation(edge,0);
-//    center =  refPosition[node0];
-//  }
-//}
+  array1d< localIndex > uniqueEdgeOffsets( numNodes + 1 );
+  localIndex const numEdges = calculateTotalNumberOfEdges( edgesByLowestNode.toViewConst(), uniqueEdgeOffsets );
 
-//
-///// Calculates the vector from node 0 to node 1
-//void EdgeManager::EdgeVector(const NodeManager * nodeManager, localIndex edge,
-// R1Tensor& v) const{
-//  const array1d< R1Tensor >& refPosition =
-// nodeManager->GetFieldData<FieldInfo::referencePosition>();
-//  const array1d< R1Tensor >& displacement =
-// nodeManager->GetFieldData<FieldInfo::displacement>();
-//  FixedOneToManyRelation const & m_toNodesRelation =
-// this->getWrapper<FixedOneToManyRelation>(string("edgesToNodes")).reference();
-//
-//  const localIndex& node1 = m_toNodesRelation(edge,1);
-//  v =  refPosition[node1];
-//  v += displacement[node1];
-//  const localIndex& node0 = m_toNodesRelation(edge,0);
-//  v -= refPosition[node0];
-//  v -= displacement[node0];
-//}
-//
-///// Returns the length of the edge
-//realT EdgeManager::EdgeLength(const NodeManager * nodeManager, localIndex
-// edge) const{
-//  const array1d< R1Tensor >& refPosition =
-// nodeManager->GetFieldData<FieldInfo::referencePosition>();
-//  const array1d< R1Tensor >& displacement =
-// nodeManager->GetFieldData<FieldInfo::displacement>();
-//  FixedOneToManyRelation const & m_toNodesRelation =
-// this->getWrapper<FixedOneToManyRelation>(string("edgesToNodes")).reference();
-//
-//  if (m_toNodesRelation.Dimension(1) >= 2)
-//  {
-//  const localIndex& node0 = m_toNodesRelation(edge,0);
-//  const localIndex& node1 = m_toNodesRelation(edge,1);
-//  R1Tensor v =  refPosition[node0];
-//  v += displacement[node0];
-//  v -= refPosition[node1];
-//  v -= displacement[node1];
-//  return v.L2_Norm();
-//  }
-//  else
-//  {
-//    return 1.0;
-//  }
-//}
+  resizeEdgeToFaceMap( edgesByLowestNode.toViewConst(),
+                       uniqueEdgeOffsets,
+                       m_toFacesRelation );
+
+  resize( numEdges );
+
+  populateMaps( edgesByLowestNode.toViewConst(),
+                uniqueEdgeOffsets,
+                faceToNodeMap,
+                faceToEdgeMap,
+                m_toFacesRelation,
+                m_toNodesRelation );
+}
 
 
 void EdgeManager::SetDomainBoundaryObjects( ObjectManagerBase const * const referenceObject )
@@ -539,11 +485,10 @@ void EdgeManager::SetDomainBoundaryObjects( ObjectManagerBase const * const refe
 
   // get the "isDomainBoundary" field from the faceManager. This should have
   // been set already!
-  arrayView1d< integer const > const & isFaceOnDomainBoundary =
-    faceManager->getReference< array1d< integer > >( faceManager->viewKeys.domainBoundaryIndicator );
+  arrayView1d< integer const > const & isFaceOnDomainBoundary = faceManager->getDomainBoundaryIndicator();
 
   // get the "isDomainBoundary" field from for *this, and set it to zero
-  array1d< integer > & isEdgeOnDomainBoundary = this->getReference< array1d< integer > >( viewKeys.domainBoundaryIndicatorString );
+  arrayView1d< integer > const & isEdgeOnDomainBoundary = this->getDomainBoundaryIndicator();
   isEdgeOnDomainBoundary.setValues< serialPolicy >( 0 );
 
   ArrayOfArraysView< localIndex const > const & faceToEdgeMap = faceManager->edgeList().toViewConst();
@@ -623,8 +568,8 @@ void EdgeManager::ExtractMapFromObjectForAssignGlobalIndexNumbers( ObjectManager
 
   localIndex const numEdges = size();
 
-  arrayView2d< localIndex const > const & edgeNodes = this->nodeList();
-  arrayView1d< integer const > const & isDomainBoundary = this->getReference< integer_array >( viewKeys.domainBoundaryIndicator );
+  arrayView2d< localIndex const > const edgeNodes = this->nodeList();
+  arrayView1d< integer const > const isDomainBoundary = this->getDomainBoundaryIndicator();
 
   globalEdgeNodes.resize( numEdges );
 
@@ -692,40 +637,10 @@ void EdgeManager::ConnectivityFromGlobalToLocal( const SortedArray< localIndex >
 
 }
 
-// Fu note on 20130416: Looks like this was temporary.  This function is now
-// taken care of by element region.
-// We will keep it here for a while and delete it later.
-//void EdgeManager::UpdateEdgeExternalityFromSplit( const FaceManager&
-// faceManager,
-//                                                 const SortedArray<localIndex>& newEdgeIndices,
-//                                                 const SortedArray<localIndex>&
-// modifiedEdgeIndices )
-//{
-//  SortedArray<localIndex> allEdges;
-//  allEdges.insert( newEdgeIndices.begin(), newEdgeIndices.end() );
-//  allEdges.insert( modifiedEdgeIndices.begin(), modifiedEdgeIndices.end() );
-//
-//
-//  for( SortedArray<localIndex>::const_iterator edgeIndex=allEdges.begin() ;
-// edgeIndex!=allEdges.end() ; ++edgeIndex )
-//  {
-//
-//    for( SortedArray<localIndex>::const_iterator iface=m_toFacesRelation[*edgeIndex].begin() ;
-//        iface!=m_toFacesRelation[*edgeIndex].end() ; ++iface )
-//    {
-//      if (faceManager->isExternal()[*iface] == 1)
-//      {
-//        isExternal()[*edgeIndex] =1;
-//      }
-//    }
-//
-//  }
-//}
-
 void EdgeManager::AddToEdgeToFaceMap( FaceManager const * const faceManager,
                                       arrayView1d< localIndex const > const & newFaceIndices )
 {
-  ArrayOfArraysView< localIndex const > const & faceToEdgeMap = faceManager->edgeList().toViewConst();
+  ArrayOfArraysView< localIndex const > const faceToEdgeMap = faceManager->edgeList().toViewConst();
 
   // loop over all faces in list
   for( localIndex const newFaceIndex : newFaceIndices )
@@ -741,30 +656,6 @@ void EdgeManager::AddToEdgeToFaceMap( FaceManager const * const faceManager,
     }
   }
 }
-
-//void EdgeManager::SetLayersFromDomainBoundary(const NodeManager * const nodeManager)
-//{
-//
-//  array1d<integer>& layersEdge = this->GetFieldData<int>("LayersFromDomainBoundary");
-//  const array1d<integer>& layersNode = nodeManager->GetFieldData<int>("LayersFromDomainBoundary");
-//
-//  for (localIndex ie = 0 ; ie!= this->size() ; ++ie)
-//  {
-//    for( unsigned int a=0 ; a<m_toNodesRelation.Dimension(1) ; ++a )
-//    {
-//      if (a==0)
-//      {
-//        layersEdge[ie] = layersNode[m_toNodesRelation(ie,a)];
-//      }
-//      else
-//      {
-//        layersEdge[ie] = std::max(layersNode[m_toNodesRelation(ie,a)], layersEdge[ie]);
-//      }
-//    }
-//  }
-//}
-
-
 
 localIndex EdgeManager::PackUpDownMapsSize( arrayView1d< localIndex const > const & packList ) const
 {
@@ -782,15 +673,17 @@ template< bool DOPACK >
 localIndex EdgeManager::PackUpDownMapsPrivate( buffer_unit_type * & buffer,
                                                arrayView1d< localIndex const > const & packList ) const
 {
-  localIndex packedSize = 0;
+  arrayView1d< globalIndex const > const localToGlobal = localToGlobalMap();
+  arrayView1d< globalIndex const > nodeLocalToGlobal = nodeList().RelatedObjectLocalToGlobal();
+  arrayView1d< globalIndex const > faceLocalToGlobal = faceList().RelatedObjectLocalToGlobal();
 
-  packedSize += bufferOps::Pack< DOPACK >( buffer, string( viewKeyStruct::nodeListString ) );
+  localIndex packedSize = bufferOps::Pack< DOPACK >( buffer, string( viewKeyStruct::nodeListString ) );
   packedSize += bufferOps::Pack< DOPACK >( buffer,
                                            m_toNodesRelation.Base().toViewConst(),
                                            m_unmappedGlobalIndicesInToNodes,
                                            packList,
-                                           localToGlobalMap(),
-                                           m_toNodesRelation.RelatedObjectLocalToGlobal() );
+                                           localToGlobal,
+                                           nodeLocalToGlobal );
 
 
   packedSize += bufferOps::Pack< DOPACK >( buffer, string( viewKeyStruct::faceListString ) );
@@ -798,8 +691,8 @@ localIndex EdgeManager::PackUpDownMapsPrivate( buffer_unit_type * & buffer,
                                            m_toFacesRelation.Base().toArrayOfArraysView(),
                                            m_unmappedGlobalIndicesInToFaces,
                                            packList,
-                                           localToGlobalMap(),
-                                           m_toFacesRelation.RelatedObjectLocalToGlobal() );
+                                           localToGlobal,
+                                           faceLocalToGlobal );
 
   return packedSize;
 }

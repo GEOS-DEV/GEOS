@@ -19,7 +19,7 @@
       <NonlinearSolverParameters
         newtonTol="1.0e-6"
         newtonMaxIter="8"
-        lineSearchAction="0"
+        lineSearchAction="None"
         maxTimeStepCuts="5"
         newtonMinIter="1"/>
       <LinearSolverParameters
@@ -44,7 +44,7 @@
       <NonlinearSolverParameters
         newtonTol="1.0e-6"
         newtonMaxIter="8"
-        lineSearchAction="0"
+        lineSearchAction="None"
         newtonMinIter="0"/>
       <LinearSolverParameters
         solverType="gmres"
@@ -151,7 +151,7 @@
       cellBlocks="{ cb1 }"
       materialList="{ water, rock, sand }"/>
 
-    <FaceElementRegion
+    <SurfaceElementRegion
       name="Fracture"
       defaultAperture="7.62e-3"
       materialList="{ water, rock, sand }"/>

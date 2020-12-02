@@ -107,31 +107,6 @@ void MultiPhaseMultiComponentFluid::InitializePostSubGroups( Group * const group
 
 void MultiPhaseMultiComponentFluid::CreatePVTModels()
 {
-  string flashModelParaFile;
-
-  ProblemManager const * const problemManager = this->GetGroupByPath< ProblemManager >( "/" );
-  if( problemManager != nullptr )
-  {
-    string inputFileName = problemManager->getInputFileName();
-    if( inputFileName.empty())
-    {
-      inputFileName = problemManager->getRestartFileName();
-    }
-    string inputFileDir;
-    splitPath( inputFileName, inputFileDir, inputFileName );
-
-    for( std::string & filename : m_phasePVTParaFiles )
-    {
-      if( !isAbsolutePath( filename ))
-      {
-        getAbsolutePath( inputFileDir + '/' + filename, filename );
-      }
-    }
-
-    flashModelParaFile = inputFileDir + '/' + m_flashModelParaFile;
-
-  }
-
   for( std::string & filename : m_phasePVTParaFiles )
   {
     std::ifstream is( filename );
@@ -141,40 +116,45 @@ void MultiPhaseMultiComponentFluid::CreatePVTModels()
 
     while( is.getline( buf, buf_size ))
     {
-      std::string str( buf );
-      string_array strs = Tokenize( str, " " );
+      std::string const str( buf );
+      string_array const strs = Tokenize( str, " " );
 
-      if( streq( strs[0], "DensityFun" ))
+      if( strs[0] == "DensityFun" )
       {
-        m_phaseDensityFuns.emplace_back( PVTFunction::CatalogInterface::Factory( strs[ 1 ], strs, m_componentNames, m_componentMolarWeight ) );
+        m_phaseDensityFuns.emplace_back( PVTFunction::CatalogInterface::Factory( strs[ 1 ],
+                                                                                 strs,
+                                                                                 m_componentNames,
+                                                                                 m_componentMolarWeight ) );
       }
-      else if( streq( strs[0], "ViscosityFun" ))
+      else if( strs[0] == "ViscosityFun" )
       {
-        m_phaseViscosityFuns.emplace_back( PVTFunction::CatalogInterface::Factory( strs[ 1 ], strs, m_componentNames, m_componentMolarWeight ) );
+        m_phaseViscosityFuns.emplace_back( PVTFunction::CatalogInterface::Factory( strs[ 1 ],
+                                                                                   strs,
+                                                                                   m_componentNames,
+                                                                                   m_componentMolarWeight ) );
       }
       else
+      {
         GEOSX_ERROR( "Error: Invalid PVT function: " << strs[0] << "." );
+      }
     }
 
     is.close();
-
   }
 
   {
-
-    std::ifstream is( flashModelParaFile );
+    std::ifstream is( m_flashModelParaFile );
 
     constexpr std::streamsize buf_size = 256;
     char buf[buf_size];
 
     while( is.getline( buf, buf_size ))
     {
-      std::string str( buf );
-      string_array strs = Tokenize( str, " " );
+      std::string const str( buf );
+      string_array const strs = Tokenize( str, " " );
 
-      if( streq( strs[0], "FlashModel" ))
+      if( strs[0] == "FlashModel" )
       {
-
         m_flashModel = FlashModel::CatalogInterface::Factory( strs[1],
                                                               strs,
                                                               m_phaseNames,
@@ -188,7 +168,6 @@ void MultiPhaseMultiComponentFluid::CreatePVTModels()
     }
 
     is.close();
-
   }
 }
 
@@ -199,6 +178,7 @@ void MultiPhaseMultiComponentFluidUpdate::Compute( real64 pressure,
                                                    arraySlice1d< real64 const > const & composition,
                                                    arraySlice1d< real64 > const & phaseFraction,
                                                    arraySlice1d< real64 > const & phaseDensity,
+                                                   arraySlice1d< real64 > const & phaseMassDensity,
                                                    arraySlice1d< real64 > const & phaseViscosity,
                                                    arraySlice2d< real64 > const & phaseCompFraction,
                                                    real64 & totalDensity ) const
@@ -208,6 +188,7 @@ void MultiPhaseMultiComponentFluidUpdate::Compute( real64 pressure,
   GEOSX_UNUSED_VAR( composition )
   GEOSX_UNUSED_VAR( phaseFraction )
   GEOSX_UNUSED_VAR( phaseDensity )
+  GEOSX_UNUSED_VAR( phaseMassDensity )
   GEOSX_UNUSED_VAR( phaseViscosity )
   GEOSX_UNUSED_VAR( phaseCompFraction )
   GEOSX_UNUSED_VAR( totalDensity )
@@ -225,6 +206,10 @@ void MultiPhaseMultiComponentFluidUpdate::Compute( real64 pressure,
                                                    arraySlice1d< real64 > const & dPhaseDensity_dPressure,
                                                    arraySlice1d< real64 > const & dPhaseDensity_dTemperature,
                                                    arraySlice2d< real64 > const & dPhaseDensity_dGlobalCompFraction,
+                                                   arraySlice1d< real64 > const & phaseMassDensity,
+                                                   arraySlice1d< real64 > const & dPhaseMassDensity_dPressure,
+                                                   arraySlice1d< real64 > const & dPhaseMassDensity_dTemperature,
+                                                   arraySlice2d< real64 > const & dPhaseMassDensity_dGlobalCompFraction,
                                                    arraySlice1d< real64 > const & phaseViscosity,
                                                    arraySlice1d< real64 > const & dPhaseViscosity_dPressure,
                                                    arraySlice1d< real64 > const & dPhaseViscosity_dTemperature,
@@ -252,6 +237,13 @@ void MultiPhaseMultiComponentFluidUpdate::Compute( real64 pressure,
     dPhaseDensity_dGlobalCompFraction
   };
 
+  CompositionalVarContainer< 1 > phaseMassDens {
+    phaseMassDensity,
+    dPhaseMassDensity_dPressure,
+    dPhaseMassDensity_dTemperature,
+    dPhaseMassDensity_dGlobalCompFraction
+  };
+
   CompositionalVarContainer< 1 > phaseVisc {
     phaseViscosity,
     dPhaseViscosity_dPressure,
@@ -275,7 +267,7 @@ void MultiPhaseMultiComponentFluidUpdate::Compute( real64 pressure,
 
 #if defined(__CUDACC__)
   // For some reason nvcc thinks these aren't used.
-  GEOSX_UNUSED_VAR( phaseFrac, phaseDens, phaseVisc, phaseCompFrac, totalDens );
+  GEOSX_UNUSED_VAR( phaseFrac, phaseDens, phaseMassDens, phaseVisc, phaseCompFrac, totalDens );
 #endif
 
   localIndex constexpr maxNumComp = MultiFluidBase::MAX_NUM_COMPONENTS;
@@ -294,7 +286,7 @@ void MultiPhaseMultiComponentFluidUpdate::Compute( real64 pressure,
       X[ic].m_var = composition[ic];
       X[ic].m_der[ic+1] = 1.0;
 
-      realT const mwInv = 1.0 / m_componentMolarWeight[ic];
+      real64 const mwInv = 1.0 / m_componentMolarWeight[ic];
       C[ic] = X[ic] * mwInv; // this is molality (units of mole/mass)
       totalMolality += C[ic];
     }
@@ -327,6 +319,7 @@ void MultiPhaseMultiComponentFluidUpdate::Compute( real64 pressure,
   m_flashModel->Partition( P, T, C, phaseFractionTemp, phaseCompFractionTemp );
 
   stackArray1d< EvalVarArgs, maxNumPhase > phaseDensityTemp( NP );
+  stackArray1d< EvalVarArgs, maxNumPhase > phaseMassDensityTemp( NP );
   stackArray1d< EvalVarArgs, maxNumPhase > phaseViscosityTemp( NP );
 
   for( localIndex ip = 0; ip < NP; ++ip )
@@ -341,9 +334,13 @@ void MultiPhaseMultiComponentFluidUpdate::Compute( real64 pressure,
     stackArray1d< EvalVarArgs, maxNumPhase > phaseMW( NP );
     for( localIndex ip = 0; ip < NP; ++ip )
     {
-      EvalVarArgs molarPhaseDensity;
-      m_phaseDensityFuns[ip]->Evaluation( P, T, phaseCompFractionTemp[ip], molarPhaseDensity, 0 );
-      phaseMW[ip] =  phaseDensityTemp[ip] /  molarPhaseDensity;
+      // copy phaseDens into phaseMassDens
+      phaseMassDensityTemp[ip] = phaseDensityTemp[ip];
+
+      // compute the molecular weight to get the mass phase (component) fractions
+      EvalVarArgs molarDens;
+      m_phaseDensityFuns[ip]->Evaluation( P, T, phaseCompFractionTemp[ip], molarDens, 0 );
+      phaseMW[ip] =  phaseDensityTemp[ip] /  molarDens;
     }
 
     EvalVarArgs totalMass = 0.0;
@@ -363,11 +360,23 @@ void MultiPhaseMultiComponentFluidUpdate::Compute( real64 pressure,
       for( localIndex ic = 0; ic < NC; ++ic )
       {
 
-        realT compMW = m_componentMolarWeight[ic];
+        real64 compMW = m_componentMolarWeight[ic];
 
         phaseCompFractionTemp[ip][ic] = phaseCompFractionTemp[ip][ic] * compMW /  phaseMW[ip];
 
       }
+    }
+  }
+  else
+  {
+    for( localIndex ip = 0; ip < NP; ++ip )
+    {
+      // recompute the mass density
+      EvalVarArgs massDens;
+      m_phaseDensityFuns[ip]->Evaluation( P, T, phaseCompFractionTemp[ip], massDens, 1 );
+
+      // copy phaseDens into phaseMassDens
+      phaseMassDensityTemp[ip] = massDens;
     }
   }
 
@@ -389,15 +398,20 @@ void MultiPhaseMultiComponentFluidUpdate::Compute( real64 pressure,
     phaseDens.dPres[ip] = phaseDensityTemp[ip].m_der[0];
     phaseDens.dTemp[ip] = 0.0;
 
+    phaseMassDens.value[ip] = phaseMassDensityTemp[ip].m_var;
+    phaseMassDens.dPres[ip] = phaseMassDensityTemp[ip].m_der[0];
+    phaseMassDens.dTemp[ip] = 0.0;
+
     phaseVisc.value[ip] = phaseViscosityTemp[ip].m_var;
     phaseVisc.dPres[ip] = phaseViscosityTemp[ip].m_der[0];
     phaseVisc.dTemp[ip] = 0.0;
 
     for( localIndex ic = 0; ic < NC; ++ic )
     {
-      phaseFrac.dComp[ip][ic] = phaseFractionTemp[ip].m_der[ic+1];
-      phaseDens.dComp[ip][ic] = phaseDensityTemp[ip].m_der[ic+1];
-      phaseVisc.dComp[ip][ic] = phaseViscosityTemp[ip].m_der[ic+1];
+      phaseFrac.dComp[ip][ic]     = phaseFractionTemp[ip].m_der[ic+1];
+      phaseDens.dComp[ip][ic]     = phaseDensityTemp[ip].m_der[ic+1];
+      phaseMassDens.dComp[ip][ic] = phaseMassDensityTemp[ip].m_der[ic+1];
+      phaseVisc.dComp[ip][ic]     = phaseViscosityTemp[ip].m_der[ic+1];
 
       phaseCompFrac.value[ip][ic] = phaseCompFractionTemp[ip][ic].m_var;
       phaseCompFrac.dPres[ip][ic] = phaseCompFractionTemp[ip][ic].m_der[0];

@@ -16,6 +16,7 @@ set( PREPROCESSOR_DEFINES ARRAY_BOUNDS_CHECK
                           CHAI
                           CUDA
                           FORTRAN_MANGLE_NO_UNDERSCORE
+                          FPE
                           HYPRE
                           MATHPRESSO
                           METIS
@@ -27,6 +28,7 @@ set( PREPROCESSOR_DEFINES ARRAY_BOUNDS_CHECK
                           PYTHON
                           RAJA 
                           SUPERLU_DIST
+                          SUITESPARSE
                           TIMERS
                           TOTALVIEW_OUTPUT
                           TRILINOS
@@ -36,7 +38,7 @@ set( PREPROCESSOR_DEFINES ARRAY_BOUNDS_CHECK
                           ${externalComponentsList} )
 
 foreach( DEP in ${PREPROCESSOR_DEFINES})
-    if( ${DEP}_FOUND OR ENABLE_${DEP} )
+    if( ${DEP}_FOUND OR ENABLE_${DEP} OR GEOSX_ENABLE_${DEP} )
         set(USE_${DEP} TRUE  )
         set(GEOSX_USE_${DEP} TRUE  )
     endif()

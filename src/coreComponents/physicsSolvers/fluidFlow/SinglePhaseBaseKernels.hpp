@@ -293,7 +293,7 @@ struct AccumulationKernel< CellElementSubRegion >
 
 
 template<>
-struct AccumulationKernel< FaceElementSubRegion >
+struct AccumulationKernel< SurfaceElementSubRegion >
 {
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE

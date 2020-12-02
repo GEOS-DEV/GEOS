@@ -65,8 +65,10 @@ public:
   using Base::m_elemsToNodes;
   using Base::m_disp;
   using Base::m_uhat;
-  using Base::m_detJ;
   using Base::m_density;
+  using Base::m_finiteElementSpace;
+
+
 
   /**
    * @brief Constructor
@@ -174,40 +176,45 @@ public:
   }
 
   /**
-   * @copydoc geosx::finiteElement::KernelBase::quadraturePointJacobianContribution
+   * @copydoc geosx::finiteElement::KernelBase::quadraturePointKernel
    *
    * The ImplcitNewmark kernel adds the calculation of the inertia damping,
    * jacobian and residual contributions.
    */
   GEOSX_DEVICE
   GEOSX_FORCE_INLINE
-  void quadraturePointJacobianContribution( localIndex const k,
-                                            localIndex const q,
-                                            StackVariables & stack ) const
+  void quadraturePointKernel( localIndex const k,
+                              localIndex const q,
+                              StackVariables & stack ) const
   {
 
+    Base::quadraturePointKernel( k, q, stack );
+    real64 detJ=0;
+
     real64 N[numNodesPerElem];
-    FE_TYPE::shapeFunctionValues( q, N );
+    FE_TYPE::calcN( q, N );
 
-    Base::quadraturePointJacobianContribution( k, q, stack, [&] GEOSX_DEVICE ( localIndex const a,
-                                                                               localIndex const b ) mutable
+    for( int a=0; a<numNodesPerElem; ++a )
     {
-      real64 const integrationFactor = m_density( k, q ) * N[a] * N[b] * m_detJ( k, q );
-      real64 const temp1 = ( m_massDamping * m_newmarkGamma/( m_newmarkBeta * m_dt )
-                             + 1.0 / ( m_newmarkBeta * m_dt * m_dt ) )* integrationFactor;
-
-      constexpr int nsdof = numDofPerTestSupportPoint;
-      for( int i=0; i<nsdof; ++i )
+      for( int b=a; b<numNodesPerElem; ++b )
       {
-        realT const acc = 1.0 / ( m_newmarkBeta * m_dt * m_dt ) * ( stack.uhat_local[b][i] - stack.uhattilde_local[b][i] );
-        realT const vel = stack.vtilde_local[b][i] +
-                          m_newmarkGamma/( m_newmarkBeta * m_dt ) *( stack.uhat_local[b][i]
-                                                                     - stack.uhattilde_local[b][i] );
+        real64 const integrationFactor = m_density( k, q ) * N[a] * N[b] * detJ;
+        real64 const temp1 = ( m_massDamping * m_newmarkGamma/( m_newmarkBeta * m_dt )
+                               + 1.0 / ( m_newmarkBeta * m_dt * m_dt ) )* integrationFactor;
 
-        stack.dRdU_InertiaMassDamping[ a*nsdof+i][ b*nsdof+i ] -= temp1;
-        stack.localResidual[ a*nsdof+i ] -= ( m_massDamping * vel + acc ) * integrationFactor;
+        constexpr int nsdof = numDofPerTestSupportPoint;
+        for( int i=0; i<nsdof; ++i )
+        {
+          real64 const acc = 1.0 / ( m_newmarkBeta * m_dt * m_dt ) * ( stack.uhat_local[b][i] - stack.uhattilde_local[b][i] );
+          real64 const vel = stack.vtilde_local[b][i] +
+                             m_newmarkGamma/( m_newmarkBeta * m_dt ) *( stack.uhat_local[b][i]
+                                                                        - stack.uhattilde_local[b][i] );
+
+          stack.dRdU_InertiaMassDamping[ a*nsdof+i][ b*nsdof+i ] -= temp1;
+          stack.localResidual[ a*nsdof+i ] -= ( m_massDamping * vel + acc ) * integrationFactor;
+        }
       }
-    } );
+    }
   }
 
   /**

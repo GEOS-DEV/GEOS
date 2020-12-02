@@ -5,7 +5,6 @@ in the subsurface.  The code provides advanced solvers for a number of target ap
 including
   - carbon sequestration,
   - geothermal energy,
-  - unconventional oil and gas,
   - and similar systems.  
 
 A key focus of the project is achieving scalable performance on current and next-generation
@@ -62,4 +61,4 @@ For acknowledgements, please read the [ACKNOWLEDGEMENTS](./ACKNOWLEDGEMENTS ) fi
 
 For notice, please read the [NOTICE](./NOTICE ) file.
 
-`LLNL-Code-746361`  `OCEC-18-021`
+`LLNL-CODE-812638`  `OCEC-18-021`

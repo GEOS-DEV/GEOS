@@ -26,8 +26,6 @@
 
 using namespace geosx;
 
-static real64 constexpr machinePrecision = 20.0 * std::numeric_limits< real64 >::epsilon();
-
 template< typename LAI >
 class LAOperationsTest : public ::testing::Test
 {};
@@ -507,8 +505,8 @@ INSTANTIATE_TYPED_TEST_SUITE_P( Petsc, LAOperationsTest, PetscInterface, );
 LinearSolverParameters params_Direct()
 {
   LinearSolverParameters parameters;
-  parameters.solverType = "direct";
-  parameters.krylov.relTolerance = machinePrecision;
+  parameters.solverType = geosx::LinearSolverParameters::SolverType::direct;
+  parameters.direct.parallel = 0;
   return parameters;
 }
 
@@ -517,8 +515,8 @@ LinearSolverParameters params_GMRES_ILU()
   LinearSolverParameters parameters;
   parameters.krylov.relTolerance = 1e-8;
   parameters.krylov.maxIterations = 300;
-  parameters.solverType = "gmres";
-  parameters.preconditionerType = "iluk";
+  parameters.solverType = geosx::LinearSolverParameters::SolverType::gmres;
+  parameters.preconditionerType = geosx::LinearSolverParameters::PreconditionerType::iluk;
   parameters.ilu.fill = 1;
   return parameters;
 }
@@ -528,8 +526,8 @@ LinearSolverParameters params_GMRES_AMG()
   LinearSolverParameters parameters;
   parameters.krylov.relTolerance = 1e-8;
   parameters.krylov.maxIterations = 300;
-  parameters.solverType = "gmres";
-  parameters.preconditionerType = "amg";
+  parameters.solverType = geosx::LinearSolverParameters::SolverType::gmres;
+  parameters.preconditionerType = geosx::LinearSolverParameters::PreconditionerType::amg;
   parameters.amg.smootherType = "gaussSeidel";
   parameters.amg.coarseType = "direct";
   return parameters;
@@ -540,9 +538,9 @@ LinearSolverParameters params_CG_AMG()
   LinearSolverParameters parameters;
   parameters.krylov.relTolerance = 1e-8;
   parameters.krylov.maxIterations = 300;
-  parameters.solverType = "cg";
+  parameters.solverType = geosx::LinearSolverParameters::SolverType::cg;
   parameters.isSymmetric = true;
-  parameters.preconditionerType = "amg";
+  parameters.preconditionerType = geosx::LinearSolverParameters::PreconditionerType::amg;
   parameters.amg.smootherType = "gaussSeidel";
   parameters.amg.coarseType = "direct";
   return parameters;
@@ -791,14 +789,7 @@ int main( int argc, char * * argv )
 {
   ::testing::InitGoogleTest( &argc, argv );
 
-  // Avoid setting up signal handlers, due to mysterious ML FPE crashes on Mac
-  //geosx::basicSetup( argc, argv );
-  setupMPI( argc, argv );
-  setupLogger();
-  setupOpenMP();
-  setupMKL();
-  setupLogger();
-  setupLAI( argc, argv );
+  geosx::basicSetup( argc, argv );
 
   int const result = RUN_ALL_TESTS();
   geosx::basicCleanup();

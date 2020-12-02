@@ -14,8 +14,9 @@
         newtonTol="1.0e-3"
         newtonMaxIter="8"/>
       <LinearSolverParameters
-        solverType="gmres"
-        krylovTol="1.0e-10"/>
+        solverType="direct"
+        directParallel="0"
+        logLevel="0"/>
     </SolidMechanicsLagrangianSSLE>
 
     <SurfaceGenerator
@@ -23,7 +24,6 @@
       solidMaterialNames="{ granite }"
       rockToughness="0.5e100"
       nodeBasedSIF="1"
-      discretization="FE1"
       fractureRegion="Fracture"
       logLevel="1"
       targetRegions="{ Region2 }"
@@ -96,7 +96,7 @@
       cellBlocks="{ cb1 }"
       materialList="{ granite }"/>
 
-    <FaceElementRegion
+    <SurfaceElementRegion
       name="Fracture"
       defaultAperture="1.0e-4"
       materialList="{ granite }"/>

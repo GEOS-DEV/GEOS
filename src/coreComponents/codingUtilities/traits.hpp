@@ -101,7 +101,7 @@ static constexpr bool HasMemberFunction_toView = LvArray::typeManipulation::HasM
 IS_VALID_EXPRESSION_2( CanStreamInto, SRC, DST, std::declval< SRC & >() >> std::declval< DST & >() );
 
 /**
- * @brief Defines a static constexpr bool HasAlias_value_type< @p CLASS >
+ * @brief Defines a static constexpr bool HasMemberType_value_type< @p CLASS >
  *        that is true iff @p CLASS ::value_type is valid and not an enum.
  * @tparam CLASS The type to test.
  */
@@ -136,11 +136,11 @@ using ConstPointer = typename internal::GetPointerType< T >::ConstPointer;
 
 /// Type aliased to whatever T::toView() returns or T & if that method doesn't exist.
 template< typename T >
-using ViewType = LvArray::typeManipulation::ViewType< T > &;
+using ViewType = LvArray::typeManipulation::ViewType< T >;
 
 /// Type aliased to whatever T::toViewConst() returns or T const & if that method doesn't exist.
 template< typename T >
-using ViewTypeConst = LvArray::typeManipulation::ViewTypeConst< T > &;
+using ViewTypeConst = LvArray::typeManipulation::ViewTypeConst< T >;
 
 /// True if T is or inherits from std::string.
 template< typename T >

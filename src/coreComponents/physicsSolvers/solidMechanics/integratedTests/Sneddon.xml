@@ -16,6 +16,7 @@
         maxTimeStepCuts="1"/>
       <LinearSolverParameters
         solverType="direct"
+        directParallel="0"
         logLevel="0"/>
     </SolidMechanicsEmbeddedFractures>
 
@@ -126,8 +127,9 @@
       cellBlocks="{ cb1 }"
       materialList="{ rock }"/>
 
-    <EmbeddedSurfaceElementRegion
+    <SurfaceElementRegion
       name="Fracture"
+      subRegionType="embeddedElement"
       materialList="{ rock }"
       defaultAperture="1e-3"/>
   </ElementRegions>

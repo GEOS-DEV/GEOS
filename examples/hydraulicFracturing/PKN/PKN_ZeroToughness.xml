@@ -13,8 +13,9 @@
       name="hydrofracture"
       solidSolverName="lagsolve"
       fluidSolverName="SinglePhaseFlow"
-      couplingTypeOption="TightlyCoupled"
+      couplingTypeOption="FIM"
       logLevel="1"
+      discretization="FE1"
       targetRegions="{ Region2, Fracture }"
       contactRelationName="fractureContact"
       maxNumResolves="5"
@@ -67,7 +68,6 @@
     <SurfaceGenerator
       name="SurfaceGen"
       logLevel="0"
-      discretization="FE1"
       fractureRegion="Fracture"
       targetRegions="{ Region2 }"
       nodeBasedSIF="1"
@@ -81,7 +81,7 @@
       cellBlocks="{ cb1 }"
       materialList="{ water, rock }"/>
 
-    <FaceElementRegion
+    <SurfaceElementRegion
       name="Fracture"
       defaultAperture="0.02e-3"
       materialList="{ water, rock }"/>

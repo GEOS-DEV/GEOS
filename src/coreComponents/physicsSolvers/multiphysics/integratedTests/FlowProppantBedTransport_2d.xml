@@ -16,12 +16,13 @@
       <NonlinearSolverParameters
         newtonTol="1.0e-6"
         newtonMaxIter="8"
-        lineSearchAction="0"
+        lineSearchAction="None"
         newtonMinIter="1"
         maxTimeStepCuts="5"/>
       <LinearSolverParameters
-        solverType="gmres"
-        krylovTol="1.0e-7"/>
+        solverType="direct"
+        directParallel="0"
+        logLevel="0"/>
     </ProppantTransport>
 
     <FlowProppantTransport
@@ -41,7 +42,7 @@
       <NonlinearSolverParameters
         newtonTol="1.0e-6"
         newtonMaxIter="8"
-        lineSearchAction="0"
+        lineSearchAction="None"
         newtonMinIter="0"
         maxTimeStepCuts="5"/>
       <LinearSolverParameters
@@ -132,7 +133,7 @@
       cellBlocks="{ cb1 }"
       materialList="{ water, rock, sand }"/>
 
-    <FaceElementRegion
+    <SurfaceElementRegion
       name="Fracture"
       defaultAperture="7.63e-3"
       materialList="{ water, rock, sand }"/>

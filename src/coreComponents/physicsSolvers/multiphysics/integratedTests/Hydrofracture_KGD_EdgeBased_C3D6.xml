@@ -18,7 +18,7 @@
         lineSearchMaxCuts="10"/>
       <LinearSolverParameters
         logLevel="0"
-        solverType="gmres"
+        solverType="direct"
         preconditionerType="amg"/>
     </Hydrofracture>
 
@@ -27,14 +27,14 @@
       timeIntegrationOption="QuasiStatic"
       logLevel="0"
       discretization="FE1"
-      targetRegions="{ Region2 }"
+      targetRegions="{ Region2, Fracture }"
       solidMaterialNames="{ rock }"
       contactRelationName="fractureContact">
       <NonlinearSolverParameters
         newtonTol="1.0e-6"
         newtonMaxIter="5"/>
       <LinearSolverParameters
-        solverType="gmres"
+        solverType="direct"
         krylovTol="1.0e-10"
         logLevel="0"/>
     </SolidMechanicsLagrangianSSLE>
@@ -50,7 +50,7 @@
         newtonTol="1.0e-5"
         newtonMaxIter="10"/>
       <LinearSolverParameters
-        solverType="gmres"
+        solverType="direct"
         krylovTol="1.0e-12"
         logLevel="0"/>
     </SinglePhaseFVM>
@@ -58,7 +58,6 @@
     <SurfaceGenerator
       name="SurfaceGen"
       logLevel="0"
-      discretization="FE1"
       fractureRegion="Fracture"
       targetRegions="{ Region2 }"
       solidMaterialNames="{ rock }"
@@ -139,7 +138,6 @@
     <FiniteElements>
       <FiniteElementSpace
         name="FE1"
-
         order="1"/>
     </FiniteElements>
 
@@ -157,7 +155,7 @@
       cellBlocks="{ cb1 }"
       materialList="{ water, rock }"/>
 
-    <FaceElementRegion
+    <SurfaceElementRegion
       name="Fracture"
       defaultAperture="1.0e-4"
       materialList="{ water, rock }"/>

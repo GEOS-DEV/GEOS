@@ -16,7 +16,8 @@ a specified material, as a starting point.
    \end{eqnarray*}
 
 It is advised to read :ref:`XML_and_classes` preliminary to this tutorial.
-The point here is to develop a new solver which will read constant diffusion coefficient from the XML input.
+The goal of this document is to explain how to develop a new solver that solves
+Laplace's equation with a constant diffusion coefficient that is specified by users in the XML input.
 
 For readability, member functions in the text will be referenced by their names but their
 arguments will be omitted.
@@ -31,22 +32,10 @@ Declaration file (reference)
 ----------------------------
 The four included headers are:
 
+ - ``common/EnumStrings.hpp`` which includes facilities for enum-string conversion (useful for reading enum values from input);
  - ``physicsSolver/SolverBase.hpp`` which declares the abstraction class shared by all physics solvers;
  - ``managers/FieldSpecification/FieldSpecificationManager.hpp`` which declares a manager used to access and to set field on the discretized domain;
  - ``linearAlgebra/interfaces/InterfaceTypes.hpp`` which declares an interface to linear solvers and linear algebra libraries.
-
-Right after that, a struct is designed to store the maximal stable timestep.
-
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/simplePDE/LaplaceFEM.hpp
-      :language: c++
-      :start-after: //START_SPHINX_INCLUDE_00
-      :end-before: //END_SPHINX_INCLUDE_00
-
-Some forward declarations are following :
-
- - ``FieldSpecificationBase`` is forward declared as we will use it to set the field on the boundary;
- - ``FiniteElementBase`` is forward declared as we will use finite element dicretization;
- - ``DomainPartition`` is forward declared as we will use MPI parallelism and its associated domain decomposition.
 
 Let us jump forward to the class enum and variable as they contain the data used
 specifically in the implementation of *LaplaceFEM*.
@@ -58,7 +47,7 @@ The class exhibits three member variables:
  - ``m_fieldName`` which stores the name of the diffused variable (*e.g.* the temperature) as a `string`;
  - ``m_timeIntegrationOption`` an `enum` value allowing to dispatch with respect to the transient treatment.
 
-``timeIntegrationOption`` is an `enum` specifying the transient treatment which can be chosen respectively
+``TimeIntegrationOption`` is an `enum` specifying the transient treatment which can be chosen respectively
 between *SteadyState*, *ImplicitTransient* and *ExplicitTransient* depending on whether we are interested
 in the transient state and whether we want it to be discretized as a backward or a forward Euler scheme.
 
@@ -67,6 +56,16 @@ in the transient state and whether we want it to be discretized as a backward or
    :start-after: //START_SPHINX_INCLUDE_01
    :end-before: //END_SPHINX_INCLUDE_01
 
+In order to register an enumeration type with the Data Repository and have its value read from input,
+we must define stream insertion/extraction operators. This is a common task, so GEOSX provides
+a facility for automating it. Upon including ``common/EnumStrings.hpp``, we can call the following macro
+at the namespace scope (in this case, right after the ``LaplaceFEM`` class definition is complete):
+
+.. literalinclude:: ../../../../coreComponents/physicsSolvers/simplePDE/LaplaceFEM.hpp
+   :language: c++
+   :start-after: //START_SPHINX_INCLUDE_05
+   :end-before: //END_SPHINX_INCLUDE_05
+
 Once explained the main variables and enum, let us start reading through the different member functions:
 
 .. literalinclude:: ../../../../coreComponents/physicsSolvers/simplePDE/LaplaceFEM.hpp
@@ -74,7 +73,7 @@ Once explained the main variables and enum, let us start reading through the dif
    :start-after: //START_SPHINX_INCLUDE_02
    :end-before: //END_SPHINX_INCLUDE_02
 
-Start looking at the class *LaplaceFEM* constructor and desctructor declarations
+Start looking at the class *LaplaceFEM* constructor and destructor declarations
 shows the usual `string` ``name`` and `Group*` pointer to ``parent`` that are required
 to build the global file-system like structure of GEOSX (see :ref:`GroupPar` for details).
 It can also be noted that the nullary constructor is deleted on purpose to avoid compiler
@@ -91,8 +90,8 @@ The next method ``CatalogName()`` is static and return the key to be added to th
 The following member function ``RegisterDataOnMesh()`` is used to assign fields onto the discretized mesh object and
 will be further discussed in the :ref:`Implementation` section.
 
-The next block consists in solver interface functions. These member functions are meant to set up
-and specialized every step towards the system matrix assembly and the solver stage.
+The next block consists in solver interface functions. These member functions set up
+and specialize every time step from the system matrix assembly to the solver stage.
 
 .. literalinclude:: ../../../../coreComponents/physicsSolvers/simplePDE/LaplaceFEM.hpp
    :language: c++
@@ -112,7 +111,7 @@ It will set and dispatch solver variables from the base class ``BaseSolver`` to 
 For *LaplaceFEM*, it will allow us to set the right time integration scheme based on the XML value
 as will be further explored in the next :ref:`Implementation` section.
 
-Let us jump back to focus on a ``struct`` which play also an important role: the *viewKeyStruct* structure.
+Let us focus on a ``struct`` that plays an important role: the *viewKeyStruct* structure.
 
 *viewKeyStruct* structure (reference)
 `````````````````````````````````````
@@ -170,16 +169,6 @@ for all nodes in the sub group:
 
 .. literalinclude:: ../../../../coreComponents/physicsSolvers/simplePDE/LaplaceFEM.cpp
    :language: c++
-   :start-after: //START_SPHINX_INCLUDE_03
-   :end-before: //END_SPHINX_INCLUDE_03
-
-``PostProcessInput()`` will ensure all dispatches and assignments of all read values from the base class defined
-to the deepest derived class. In the base class *BaseSolver*, it will set the gravity vector value and the linear solver parameters.
-In *LaplaceFEM* implementation, it will assign the ``m_timeIntegrationOption``
-to the read value and throw a runtime error if it not among the `enum` values.
-
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/simplePDE/LaplaceFEM.cpp
-   :language: c++
    :start-after: //START_SPHINX_INCLUDE_04
    :end-before: //END_SPHINX_INCLUDE_04
 
@@ -187,7 +176,7 @@ to the read value and throw a runtime error if it not among the `enum` values.
 hard coded value to a XML read user-defined value. One can see that this method is in charge of constructing
 in a parallel fashion the FEM system matrix. Bringing ``nodeManager`` and ``ElementRegionManager`` from domain local
 ``MeshLevel`` object together with ``FiniteElementDiscretizationManager`` from the ``NumericalMethodManager``, it uses
-nodes embedded loops on degrees of freedom in a local index embedded loops to fill a matrix and a rhs containers.
+nodes embedded loops on degrees of freedom in a local index embedded loops to fill a matrix and a rhs container.
 
 As we spotted the place to change in a code to get a user-defined diffusion coefficient into the game, let us jump
 to writing our new *LaplaceDiffFEM* solver.

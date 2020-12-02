@@ -16,10 +16,11 @@
         newtonTol="1.0e-5"
         newtonMaxIter="100"
         maxTimeStepCuts="5"
-        lineSearchAction="0"/>
+        lineSearchAction="None"/>
       <LinearSolverParameters
-        solverType="bicgstab"
-        krylovTol="1e-7"/>
+        solverType="direct"
+        directParallel="0"
+        logLevel="0"/>
     </CompositionalMultiphaseFlow>
   </Solvers>
 
@@ -39,18 +40,24 @@
   <Geometry>
     <Box
       name="source"
-      xMin="-0.01, 27.99, -0.01"
-      xMax="2.01, 30.01, 10.01"/>
+      xMin="-0.01, 26.99, -0.01"
+      xMax="3.01, 30.01, 10.01"/>
 
     <Box
       name="sink1"
-      xMin="27.99, -0.01, -0.01"
+      xMin="26.99, -0.01, -0.01"
       xMax="30.01, 30.01, 30.01"/>
 
     <Box
       name="sink2"
-      xMin="-0.01, -0.01, 27.99"
+      xMin="-0.01, -0.01, 26.99"
       xMax="30.01, 30.01, 30.01"/>
+
+    <Box
+      name="barrier"
+      xMin="-0.01, 20.99, 20.99"
+      xMax="12.01, 30.01, 21.01"/>
+    
   </Geometry>
 
   <Events
@@ -64,7 +71,7 @@
       name="outputs"
       timeFrequency="1e5"
       targetExactTimestep="1"
-      target="/Outputs/siloOutput"/>
+      target="/Outputs/vtkOutput"/>
 
     <PeriodicEvent
       name="restarts"
@@ -148,6 +155,14 @@
       scale="0.2"/>
 
     <FieldSpecification
+      name="barrierTransMult"
+      initialCondition="1"
+      setNames="{ barrier }"      
+      objectPath="faceManager"
+      fieldName="permeabilityTransMultiplier"
+      scale="0.0"/>
+    
+    <FieldSpecification
       name="initialPressure"
       initialCondition="1"
       setNames="{ all }"
@@ -174,11 +189,11 @@
       component="1"
       scale="0.995"/>
 
-    <!-- Injection rate: 0.1 kg/s -->
+    <!-- Injection rate: 0.03 kg/s -->
     <SourceFlux
       name="sourceTerm"
       objectPath="ElementRegions/Region1/cb1"
-      component="0"
+      component="0"      
       scale="-0.03"
       setNames="{ source }"/>
 
@@ -234,8 +249,8 @@
   <Functions/>
 
   <Outputs>
-    <Silo
-      name="siloOutput"/>
+    <VTK
+      name="vtkOutput"/>
 
     <Restart
       name="sidreRestart"/>
