@@ -13,11 +13,11 @@
  */
 
 /**
- *  @file MohrCoulomb.hpp
+ *  @file Coulomb.hpp
  */
 
-#ifndef GEOSX_CONSTITUTIVE_CONTACTRELATIONS_MOHRCOULOMB_HPP_
-#define GEOSX_CONSTITUTIVE_CONTACTRELATIONS_MOHRCOULOMB_HPP_
+#ifndef GEOSX_CONSTITUTIVE_CONTACTRELATIONS_COULOMB_HPP_
+#define GEOSX_CONSTITUTIVE_CONTACTRELATIONS_COULOMB_HPP_
 #include "ContactRelationBase.hpp"
 
 namespace geosx
@@ -31,7 +31,7 @@ namespace constitutive
  *
  * Class to provide a linear elastic isotropic material response.
  */
-class MohrCoulomb : public ContactRelationBase
+class Coulomb : public ContactRelationBase
 {
 public:
 
@@ -40,12 +40,12 @@ public:
    * @param[in] name name of the instance in the catalog
    * @param[in] parent the group which contains this instance
    */
-  MohrCoulomb( string const & name, Group * const parent );
+  Coulomb( string const & name, Group * const parent );
 
   /**
    * Default Destructor
    */
-  virtual ~MohrCoulomb() override;
+  virtual ~Coulomb() override;
 
   virtual real64 limitTangentialTractionNorm( real64 const normalTraction ) const override final;
 
@@ -57,7 +57,7 @@ public:
   ///@{
 
   /// string name to use for this class in the catalog
-  static constexpr auto m_catalogNameString = "MohrCoulomb";
+  static constexpr auto m_catalogNameString = "Coulomb";
 
   /**
    * @return A string that is used to register/lookup this class in the registry
@@ -138,4 +138,4 @@ private:
 
 } /* namespace geosx */
 
-#endif /* GEOSX_CONSTITUTIVE_CONTACTRELATIONS_MOHRCOULOMB_HPP_ */
+#endif /* GEOSX_CONSTITUTIVE_CONTACTRELATIONS_COULOMB_HPP_ */

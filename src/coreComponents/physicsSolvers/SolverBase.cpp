@@ -796,6 +796,10 @@ void SolverBase::SolveSystem( DofManager const & dofManager,
     std::unique_ptr< KrylovSolver< ParallelVector > > solver = KrylovSolver< ParallelVector >::Create( params, matrix, *m_precond );
     solver->solve( rhs, solution );
     m_linearSolverResult = solver->result();
+    // We need to destroy the preconditioner here, because some LAI (like Trilinos) needs some
+    // information from the original matrix to destroy the preconditioner and due to the natural
+    // order, matrix will be destroyed before, making the code crashing with a segmentation fault
+    m_precond->clear();
   }
 
   //  Keep for debugging comparisons

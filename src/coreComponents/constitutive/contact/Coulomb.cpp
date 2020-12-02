@@ -13,10 +13,10 @@
  */
 
 /**
- *  @file MohrCoulomb.cpp
+ *  @file Coulomb.cpp
  */
 
-#include "MohrCoulomb.hpp"
+#include "Coulomb.hpp"
 
 namespace geosx
 {
@@ -24,7 +24,7 @@ using namespace dataRepository;
 namespace constitutive
 {
 
-MohrCoulomb::MohrCoulomb( std::string const & name, Group * const parent ):
+Coulomb::Coulomb( std::string const & name, Group * const parent ):
   ContactRelationBase( name, parent ),
   m_postProcessed( false ),
   m_cohesion(),
@@ -49,22 +49,22 @@ MohrCoulomb::MohrCoulomb( std::string const & name, Group * const parent ):
 }
 
 
-MohrCoulomb::~MohrCoulomb()
+Coulomb::~Coulomb()
 {}
 
-real64 MohrCoulomb::limitTangentialTractionNorm( real64 const normalTraction ) const
+real64 Coulomb::limitTangentialTractionNorm( real64 const normalTraction ) const
 {
   return ( m_cohesion - normalTraction * m_frictionCoefficient );
 }
 
-real64 MohrCoulomb::dLimitTangentialTractionNorm_dNormalTraction( real64 const GEOSX_UNUSED_PARAM( normalTraction ) ) const
+real64 Coulomb::dLimitTangentialTractionNorm_dNormalTraction( real64 const GEOSX_UNUSED_PARAM( normalTraction ) ) const
 {
   return ( m_frictionCoefficient );
 }
 
 static real64 const machinePrecision = std::numeric_limits< real64 >::epsilon();
 
-void MohrCoulomb::PostProcessInput()
+void Coulomb::PostProcessInput()
 {
   if( !m_postProcessed )
   {
@@ -105,6 +105,6 @@ void MohrCoulomb::PostProcessInput()
   m_postProcessed = true;
 }
 
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, MohrCoulomb, std::string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, Coulomb, std::string const &, Group * const )
 }
 } /* namespace geosx */
