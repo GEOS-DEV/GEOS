@@ -21,9 +21,7 @@ set(managers_headers
     TimeHistory/HistoryDataSpec.hpp
     Outputs/BlueprintOutput.hpp
     Functions/FunctionBase.hpp
-    Functions/SymbolicFunction.hpp
     Functions/TableFunction.hpp
-    Functions/CompositeFunction.hpp
     Functions/FunctionManager.hpp
     ObjectManagerBase.hpp
     ProblemManager.hpp
@@ -57,9 +55,7 @@ set(managers_sources
     Tasks/TasksManager.cpp
     TimeHistory/PackCollection.cpp
     Functions/FunctionBase.cpp
-    Functions/SymbolicFunction.cpp
     Functions/TableFunction.cpp
-    Functions/CompositeFunction.cpp
     Functions/FunctionManager.cpp
     ObjectManagerBase.cpp
     ProblemManager.cpp
@@ -70,6 +66,15 @@ set(managers_sources
     FieldSpecification/SourceFluxBoundaryCondition.cpp
     initialization.cpp
    )
+
+if( ENABLE_MATHPRESSO )
+  list( APPEND managers_headers
+        Functions/SymbolicFunction.hpp
+        Functions/CompositeFunction.hpp )
+  list( APPEND managers_sources
+        Functions/SymbolicFunction.cpp
+        Functions/CompositeFunction.cpp )
+endif()
 
 if( ENABLE_MPI )
     list( APPEND managers_headers Outputs/ChomboIO.hpp )
