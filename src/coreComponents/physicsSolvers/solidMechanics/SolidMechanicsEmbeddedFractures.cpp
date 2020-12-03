@@ -479,8 +479,8 @@ real64 SolidMechanicsEmbeddedFractures::CalculateResidualNorm( DomainPartition c
     dofNumber = subRegion.getReference< array1d< globalIndex > >( jumpDofKey );
     arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
 
-    forAll< parallelDevicePolicy<> > ( subRegion.size(),
-    		[localRhs, localSum, dofNumber, rankOffset, ghostRank] GEOSX_HOST_DEVICE (localIndex const k)
+    forAll< parallelDevicePolicy<> >( subRegion.size(),
+                                      [localRhs, localSum, dofNumber, rankOffset, ghostRank] GEOSX_HOST_DEVICE ( localIndex const k )
     {
       if( ghostRank[k] < 0 )
       {
