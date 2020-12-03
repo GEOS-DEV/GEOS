@@ -50,6 +50,9 @@ AssemblerKernel::Compute( localIndex const er, localIndex const esr, localIndex 
                           ElementViewConst< arrayView3d< real64 const > > const & phaseDens,
                           ElementViewConst< arrayView3d< real64 const > > const & dPhaseDens_dPres,
                           ElementViewConst< arrayView4d< real64 const > > const & dPhaseDens_dCompFrac,
+                          ElementViewConst< arrayView3d< real64 const > > const & phaseMassDens,
+                          ElementViewConst< arrayView3d< real64 const > > const & dPhaseMassDens_dPres,
+                          ElementViewConst< arrayView4d< real64 const > > const & dPhaseMassDens_dCompFrac,
                           ElementViewConst< arrayView2d< real64 const > > const & phaseMob,
                           ElementViewConst< arrayView2d< real64 const > > const & dPhaseMob_dPres,
                           ElementViewConst< arrayView3d< real64 const > > const & dPhaseMob_dCompDens,
@@ -89,9 +92,9 @@ AssemblerKernel::Compute( localIndex const er, localIndex const esr, localIndex 
                                                       elemPres,
                                                       dElemPres,
                                                       elemGravCoef,
-                                                      phaseDens[er][esr][ei][0],
-                                                      dPhaseDens_dPres[er][esr][ei][0],
-                                                      dPhaseDens_dCompFrac[er][esr][ei][0],
+                                                      phaseMassDens[er][esr][ei][0],
+                                                      dPhaseMassDens_dPres[er][esr][ei][0],
+                                                      dPhaseMassDens_dCompFrac[er][esr][ei][0],
                                                       phaseMob[er][esr][ei],
                                                       dPhaseMob_dPres[er][esr][ei],
                                                       dPhaseMob_dCompDens[er][esr][ei],
@@ -128,6 +131,9 @@ AssemblerKernel::Compute( localIndex const er, localIndex const esr, localIndex 
                                                                  phaseDens,
                                                                  dPhaseDens_dPres,
                                                                  dPhaseDens_dCompFrac,
+                                                                 phaseMassDens,
+                                                                 dPhaseMassDens_dPres,
+                                                                 dPhaseMassDens_dCompFrac,
                                                                  phaseMob,
                                                                  dPhaseMob_dPres,
                                                                  dPhaseMob_dCompDens,
@@ -185,6 +191,9 @@ FluxKernel::Launch( localIndex er,
                     ElementViewConst< arrayView3d< real64 const > > const & phaseDens,
                     ElementViewConst< arrayView3d< real64 const > > const & dPhaseDens_dPres,
                     ElementViewConst< arrayView4d< real64 const > > const & dPhaseDens_dCompFrac,
+                    ElementViewConst< arrayView3d< real64 const > > const & phaseMassDens,
+                    ElementViewConst< arrayView3d< real64 const > > const & dPhaseMassDens_dPres,
+                    ElementViewConst< arrayView4d< real64 const > > const & dPhaseMassDens_dCompFrac,
                     ElementViewConst< arrayView2d< real64 const > > const & phaseMob,
                     ElementViewConst< arrayView2d< real64 const > > const & dPhaseMob_dPres,
                     ElementViewConst< arrayView3d< real64 const > > const & dPhaseMob_dCompDens,
@@ -276,6 +285,9 @@ FluxKernel::Launch( localIndex er,
                                                                                      phaseDens,
                                                                                      dPhaseDens_dPres,
                                                                                      dPhaseDens_dCompFrac,
+                                                                                     phaseMassDens,
+                                                                                     dPhaseMassDens_dPres,
+                                                                                     dPhaseMassDens_dCompFrac,
                                                                                      phaseMob,
                                                                                      dPhaseMob_dPres,
                                                                                      dPhaseMob_dCompDens,
@@ -492,6 +504,9 @@ INST_PhaseMobilityKernel( 5, 3 );
                                     ElementViewConst< arrayView3d< real64 const > > const & phaseDens, \
                                     ElementViewConst< arrayView3d< real64 const > > const & dPhaseDens_dPres, \
                                     ElementViewConst< arrayView4d< real64 const > > const & dPhaseDens_dCompFrac, \
+                                    ElementViewConst< arrayView3d< real64 const > > const & phaseMassDens, \
+                                    ElementViewConst< arrayView3d< real64 const > > const & dPhaseMassDens_dPres, \
+                                    ElementViewConst< arrayView4d< real64 const > > const & dPhaseMassDens_dCompFrac, \
                                     ElementViewConst< arrayView2d< real64 const > > const & phaseMob, \
                                     ElementViewConst< arrayView2d< real64 const > > const & dPhaseMob_dPres, \
                                     ElementViewConst< arrayView3d< real64 const > > const & dPhaseMob_dCompDens, \

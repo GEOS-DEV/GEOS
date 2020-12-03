@@ -61,6 +61,14 @@ public:
   explicit TrilinosPreconditioner( LinearSolverParameters params );
 
   /**
+   * @brief Constructor.
+   * @param params preconditioner parameters
+   * @param nearNullKernel the user-provided near null kernel
+   */
+  TrilinosPreconditioner( LinearSolverParameters params,
+                          array1d< Vector > const & nearNullKernel );
+
+  /**
    * @brief Destructor.
    */
   virtual ~TrilinosPreconditioner() override;
@@ -100,6 +108,9 @@ private:
 
   /// Pointer to the Trilinos implementation
   std::unique_ptr< Epetra_Operator > m_precond;
+
+  /// Trilinos pointer to the near null kernel
+  array2d< real64 > m_nullSpacePointer;
 };
 
 }

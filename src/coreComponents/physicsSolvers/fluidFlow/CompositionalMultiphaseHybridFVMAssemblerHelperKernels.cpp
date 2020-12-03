@@ -39,9 +39,9 @@ AssemblerKernelHelper::ApplyGradient( arrayView1d< real64 const > const & facePr
                                       real64 const & elemPres,
                                       real64 const & dElemPres,
                                       real64 const & elemGravCoef,
-                                      arraySlice1d< real64 const > const & elemPhaseDens,
-                                      arraySlice1d< real64 const > const & dElemPhaseDens_dPres,
-                                      arraySlice2d< real64 const > const & dElemPhaseDens_dCompFrac,
+                                      arraySlice1d< real64 const > const & elemPhaseMassDens,
+                                      arraySlice1d< real64 const > const & dElemPhaseMassDens_dPres,
+                                      arraySlice2d< real64 const > const & dElemPhaseMassDens_dCompFrac,
                                       arraySlice1d< real64 const > const & elemPhaseMob,
                                       arraySlice1d< real64 const > const & dElemPhaseMob_dPres,
                                       arraySlice2d< real64 const > const & dElemPhaseMob_dCompDens,
@@ -52,7 +52,7 @@ AssemblerKernelHelper::ApplyGradient( arrayView1d< real64 const > const & facePr
                                       real64 (& dOneSidedVolFlux_dFacePres)[ NF ][ NF ],
                                       real64 (& dOneSidedVolFlux_dCompDens)[ NF ][ NC ] )
 {
-  real64 dPhaseDens_dC[ NP ][ NC ] = {{ 0.0 }};
+  real64 dPhaseMassDens_dC[ NP ][ NC ] = {{ 0.0 }};
   real64 dPresDif_dCompDens[ NC ] = { 0.0 };
   real64 dPhaseGravDif_dCompDens[ NC ] = { 0.0 };
   real64 dPhaseMobPotDif_dCompDens[ NC ] = { 0.0 };
@@ -62,8 +62,8 @@ AssemblerKernelHelper::ApplyGradient( arrayView1d< real64 const > const & facePr
   {
     applyChainRule( NC,
                     dElemCompFrac_dCompDens,
-                    dElemPhaseDens_dCompFrac[ip],
-                    dPhaseDens_dC[ip] );
+                    dElemPhaseMassDens_dCompFrac[ip],
+                    dPhaseMassDens_dC[ip] );
   }
 
   for( localIndex ifaceLoc = 0; ifaceLoc < NF; ++ifaceLoc )
@@ -95,11 +95,11 @@ AssemblerKernelHelper::ApplyGradient( arrayView1d< real64 const > const & facePr
         }
 
         // gravity term
-        real64 const phaseGravDif = elemPhaseDens[ip] * gravCoefDif;
-        real64 const dPhaseGravDif_dPres = dElemPhaseDens_dPres[ip] * gravCoefDif;
+        real64 const phaseGravDif = elemPhaseMassDens[ip] * gravCoefDif;
+        real64 const dPhaseGravDif_dPres = dElemPhaseMassDens_dPres[ip] * gravCoefDif;
         for( localIndex ic = 0; ic < NC; ++ic )
         {
-          dPhaseGravDif_dCompDens[ic] = dPhaseDens_dC[ip][ic] * gravCoefDif;
+          dPhaseGravDif_dCompDens[ic] = dPhaseMassDens_dC[ip][ic] * gravCoefDif;
         }
         // no density evaluated at the face center
 
@@ -148,6 +148,9 @@ AssemblerKernelHelper::AssembleFluxDivergence( localIndex const (&localIds)[ 3 ]
                                                ElementViewConst< arrayView3d< real64 const > > const & phaseDens,
                                                ElementViewConst< arrayView3d< real64 const > > const & dPhaseDens_dPres,
                                                ElementViewConst< arrayView4d< real64 const > > const & dPhaseDens_dCompFrac,
+                                               ElementViewConst< arrayView3d< real64 const > > const & phaseMassDens,
+                                               ElementViewConst< arrayView3d< real64 const > > const & dPhaseMassDens_dPres,
+                                               ElementViewConst< arrayView4d< real64 const > > const & dPhaseMassDens_dCompFrac,
                                                ElementViewConst< arrayView2d< real64 const > > const & phaseMob,
                                                ElementViewConst< arrayView2d< real64 const > > const & dPhaseMob_dPres,
                                                ElementViewConst< arrayView3d< real64 const > > const & dPhaseMob_dCompDens,
@@ -270,6 +273,9 @@ AssemblerKernelHelper::AssembleFluxDivergence( localIndex const (&localIds)[ 3 ]
                                                           phaseDens,
                                                           dPhaseDens_dPres,
                                                           dPhaseDens_dCompFrac,
+                                                          phaseMassDens,
+                                                          dPhaseMassDens_dPres,
+                                                          dPhaseMassDens_dCompFrac,
                                                           phaseMob,
                                                           dPhaseMob_dPres,
                                                           dPhaseMob_dCompDens,
@@ -599,9 +605,9 @@ AssemblerKernelHelper::FindNeighbor( localIndex const (&localIds)[3],
                                                       real64 const & elemPres, \
                                                       real64 const & dElemPres, \
                                                       real64 const & elemGravCoef, \
-                                                      arraySlice1d< real64 const > const & elemPhaseDens, \
-                                                      arraySlice1d< real64 const > const & dElemPhaseDens_dPres, \
-                                                      arraySlice2d< real64 const > const & dElemPhaseDens_dCompFrac, \
+                                                      arraySlice1d< real64 const > const & elemPhaseMassDens, \
+                                                      arraySlice1d< real64 const > const & dElemPhaseMassDens_dPres, \
+                                                      arraySlice2d< real64 const > const & dElemPhaseMassDens_dCompFrac, \
                                                       arraySlice1d< real64 const > const & elemPhaseMob, \
                                                       arraySlice1d< real64 const > const & dElemPhaseMob_dPres, \
                                                       arraySlice2d< real64 const > const & dElemPhaseMob_dCompDens, \
@@ -626,6 +632,9 @@ AssemblerKernelHelper::FindNeighbor( localIndex const (&localIds)[3],
                                                                ElementViewConst< arrayView3d< real64 const > > const & phaseDens, \
                                                                ElementViewConst< arrayView3d< real64 const > > const & dPhaseDens_dPres, \
                                                                ElementViewConst< arrayView4d< real64 const > > const & dPhaseDens_dCompFrac, \
+                                                               ElementViewConst< arrayView3d< real64 const > > const & phaseMassDens, \
+                                                               ElementViewConst< arrayView3d< real64 const > > const & dPhaseMassDens_dPres, \
+                                                               ElementViewConst< arrayView4d< real64 const > > const & dPhaseMassDens_dCompFrac, \
                                                                ElementViewConst< arrayView2d< real64 const > > const & phaseMob, \
                                                                ElementViewConst< arrayView2d< real64 const > > const & dPhaseMob_dPres, \
                                                                ElementViewConst< arrayView3d< real64 const > > const & dPhaseMob_dCompDens, \

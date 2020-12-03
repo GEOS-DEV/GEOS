@@ -133,6 +133,9 @@ UpwindingHelper::UpwindBuoyancyCoefficient( localIndex const (&localIds)[ 3 ],
                                             ElementViewConst< arrayView3d< real64 const > > const & phaseDens,
                                             ElementViewConst< arrayView3d< real64 const > > const & dPhaseDens_dPres,
                                             ElementViewConst< arrayView4d< real64 const > > const & dPhaseDens_dCompFrac,
+                                            ElementViewConst< arrayView3d< real64 const > > const & phaseMassDens,
+                                            ElementViewConst< arrayView3d< real64 const > > const & dPhaseMassDens_dPres,
+                                            ElementViewConst< arrayView4d< real64 const > > const & dPhaseMassDens_dCompFrac,
                                             ElementViewConst< arrayView2d< real64 const > > const & phaseMob,
                                             ElementViewConst< arrayView2d< real64 const > > const & dPhaseMob_dPres,
                                             ElementViewConst< arrayView3d< real64 const > > const & dPhaseMob_dCompDens,
@@ -151,9 +154,9 @@ UpwindingHelper::UpwindBuoyancyCoefficient( localIndex const (&localIds)[ 3 ],
   ComputePhaseGravTerm( localIds,
                         neighborIds,
                         transGravCoef,
-                        phaseDens,
-                        dPhaseDens_dPres,
-                        dPhaseDens_dCompFrac,
+                        phaseMassDens,
+                        dPhaseMassDens_dPres,
+                        dPhaseMassDens_dCompFrac,
                         dCompFrac_dCompDens,
                         phaseGravTerm,
                         dPhaseGravTerm_dPres,
@@ -264,9 +267,9 @@ void
 UpwindingHelper::ComputePhaseGravTerm( localIndex const (&localIds)[ 3 ],
                                        localIndex const (&neighborIds)[ 3 ],
                                        real64 const & transGravCoef,
-                                       ElementViewConst< arrayView3d< real64 const > > const & phaseDens,
-                                       ElementViewConst< arrayView3d< real64 const > > const & dPhaseDens_dPres,
-                                       ElementViewConst< arrayView4d< real64 const > > const & dPhaseDens_dCompFrac,
+                                       ElementViewConst< arrayView3d< real64 const > > const & phaseMassDens,
+                                       ElementViewConst< arrayView3d< real64 const > > const & dPhaseMassDens_dPres,
+                                       ElementViewConst< arrayView4d< real64 const > > const & dPhaseMassDens_dCompFrac,
                                        ElementViewConst< arrayView3d< real64 const > > const & dCompFrac_dCompDens,
                                        real64 (& phaseGravTerm)[ NP ][ NP-1 ],
                                        real64 (& dPhaseGravTerm_dPres)[ NP ][ NP-1 ][ 2 ],
@@ -279,20 +282,20 @@ UpwindingHelper::ComputePhaseGravTerm( localIndex const (&localIds)[ 3 ],
   localIndex const esrn = neighborIds[1];
   localIndex const ein  = neighborIds[2];
 
-  real64 dPhaseDens_dCLoc[ NC ] = { 0.0 };
-  real64 dPhaseDens_dCNeighbor[ NC ] = { 0.0 };
-  real64 dPhaseDens_dC[ NC ] = { 0.0 };
+  real64 dPhaseMassDens_dCLoc[ NC ] = { 0.0 };
+  real64 dPhaseMassDens_dCNeighbor[ NC ] = { 0.0 };
+  real64 dPhaseMassDens_dC[ NC ] = { 0.0 };
 
   for( localIndex ip = 0; ip < NP; ++ip )
   {
     applyChainRule( NC,
                     dCompFrac_dCompDens[er][esr][ei],
-                    dPhaseDens_dCompFrac[er][esr][ei][0][ip],
-                    dPhaseDens_dCLoc );
+                    dPhaseMassDens_dCompFrac[er][esr][ei][0][ip],
+                    dPhaseMassDens_dCLoc );
     applyChainRule( NC,
                     dCompFrac_dCompDens[ern][esrn][ein],
-                    dPhaseDens_dCompFrac[ern][esrn][ein][0][ip],
-                    dPhaseDens_dCNeighbor );
+                    dPhaseMassDens_dCompFrac[ern][esrn][ein][0][ip],
+                    dPhaseMassDens_dCNeighbor );
 
     localIndex k = 0;
     for( localIndex jp = 0; jp < NP; ++jp )
@@ -302,36 +305,36 @@ UpwindingHelper::ComputePhaseGravTerm( localIndex const (&localIds)[ 3 ],
         continue;
       }
 
-      phaseGravTerm[ip][k] = -( phaseDens[er][esr][ei][0][ip] + phaseDens[ern][esrn][ein][0][ip] );
-      phaseGravTerm[ip][k] += ( phaseDens[er][esr][ei][0][jp] + phaseDens[ern][esrn][ein][0][jp] );
+      phaseGravTerm[ip][k] = -( phaseMassDens[er][esr][ei][0][ip] + phaseMassDens[ern][esrn][ein][0][ip] );
+      phaseGravTerm[ip][k] += ( phaseMassDens[er][esr][ei][0][jp] + phaseMassDens[ern][esrn][ein][0][jp] );
       phaseGravTerm[ip][k] *= 0.5 * transGravCoef;
 
-      dPhaseGravTerm_dPres[ip][k][Pos::LOCAL] = ( -dPhaseDens_dPres[er][esr][ei][0][ip] + dPhaseDens_dPres[er][esr][ei][0][jp] );
+      dPhaseGravTerm_dPres[ip][k][Pos::LOCAL] = ( -dPhaseMassDens_dPres[er][esr][ei][0][ip] + dPhaseMassDens_dPres[er][esr][ei][0][jp] );
       dPhaseGravTerm_dPres[ip][k][Pos::LOCAL] *= 0.5 * transGravCoef;
 
-      dPhaseGravTerm_dPres[ip][k][Pos::NEIGHBOR] = ( -dPhaseDens_dPres[ern][esrn][ein][0][ip] + dPhaseDens_dPres[ern][esrn][ein][0][jp] );
+      dPhaseGravTerm_dPres[ip][k][Pos::NEIGHBOR] = ( -dPhaseMassDens_dPres[ern][esrn][ein][0][ip] + dPhaseMassDens_dPres[ern][esrn][ein][0][jp] );
       dPhaseGravTerm_dPres[ip][k][Pos::NEIGHBOR] *= 0.5 * transGravCoef;
 
       for( localIndex ic = 0; ic < NC; ++ic )
       {
-        dPhaseGravTerm_dCompDens[ip][k][Pos::LOCAL][ic] = -0.5 * transGravCoef * dPhaseDens_dCLoc[ic];
-        dPhaseGravTerm_dCompDens[ip][k][Pos::NEIGHBOR][ic] = -0.5 * transGravCoef * dPhaseDens_dCNeighbor[ic];
+        dPhaseGravTerm_dCompDens[ip][k][Pos::LOCAL][ic] = -0.5 * transGravCoef * dPhaseMassDens_dCLoc[ic];
+        dPhaseGravTerm_dCompDens[ip][k][Pos::NEIGHBOR][ic] = -0.5 * transGravCoef * dPhaseMassDens_dCNeighbor[ic];
       }
       applyChainRule( NC,
                       dCompFrac_dCompDens[er][esr][ei],
-                      dPhaseDens_dCompFrac[er][esr][ei][0][jp],
-                      dPhaseDens_dC );
+                      dPhaseMassDens_dCompFrac[er][esr][ei][0][jp],
+                      dPhaseMassDens_dC );
       for( localIndex ic = 0; ic < NC; ++ic )
       {
-        dPhaseGravTerm_dCompDens[ip][k][Pos::LOCAL][ic] += 0.5 * transGravCoef * dPhaseDens_dC[ic];
+        dPhaseGravTerm_dCompDens[ip][k][Pos::LOCAL][ic] += 0.5 * transGravCoef * dPhaseMassDens_dC[ic];
       }
       applyChainRule( NC,
                       dCompFrac_dCompDens[ern][esrn][ein],
-                      dPhaseDens_dCompFrac[ern][esrn][ein][0][jp],
-                      dPhaseDens_dC );
+                      dPhaseMassDens_dCompFrac[ern][esrn][ein][0][jp],
+                      dPhaseMassDens_dC );
       for( localIndex ic = 0; ic < NC; ++ic )
       {
-        dPhaseGravTerm_dCompDens[ip][k][Pos::NEIGHBOR][ic] += 0.5 * transGravCoef * dPhaseDens_dC[ic];
+        dPhaseGravTerm_dCompDens[ip][k][Pos::NEIGHBOR][ic] += 0.5 * transGravCoef * dPhaseMassDens_dC[ic];
       }
       ++k;
     }
@@ -490,6 +493,9 @@ UpwindingHelper::SetIndicesForTotalMobilityUpwinding< 3 >( localIndex const (&lo
                                                         ElementViewConst< arrayView3d< real64 const > > const & phaseDens, \
                                                         ElementViewConst< arrayView3d< real64 const > > const & dPhaseDens_dPres, \
                                                         ElementViewConst< arrayView4d< real64 const > > const & dPhaseDens_dCompFrac, \
+                                                        ElementViewConst< arrayView3d< real64 const > > const & phaseMassDens, \
+                                                        ElementViewConst< arrayView3d< real64 const > > const & dPhaseMassDens_dPres, \
+                                                        ElementViewConst< arrayView4d< real64 const > > const & dPhaseMassDens_dCompFrac, \
                                                         ElementViewConst< arrayView2d< real64 const > > const & phaseMob, \
                                                         ElementViewConst< arrayView2d< real64 const > > const & dPhaseMob_dPres, \
                                                         ElementViewConst< arrayView3d< real64 const > > const & dPhaseMob_dCompDens, \
@@ -508,9 +514,9 @@ UpwindingHelper::SetIndicesForTotalMobilityUpwinding< 3 >( localIndex const (&lo
   UpwindingHelper::ComputePhaseGravTerm< NC, NP >( localIndex const (&localIds)[ 3 ], \
                                                    localIndex const (&neighborIds)[ 3 ], \
                                                    real64 const & transGravCoef, \
-                                                   ElementViewConst< arrayView3d< real64 const > > const & phaseDens, \
-                                                   ElementViewConst< arrayView3d< real64 const > > const & dPhaseDens_dPres, \
-                                                   ElementViewConst< arrayView4d< real64 const > > const & dPhaseDens_dCompFrac, \
+                                                   ElementViewConst< arrayView3d< real64 const > > const & phaseMassDens, \
+                                                   ElementViewConst< arrayView3d< real64 const > > const & dPhaseMassDens_dPres, \
+                                                   ElementViewConst< arrayView4d< real64 const > > const & dPhaseMassDens_dCompFrac, \
                                                    ElementViewConst< arrayView3d< real64 const > > const & dCompFrac_dCompDens, \
                                                    real64 ( &phaseGravTerm )[ NP ][ NP-1 ], \
                                                    real64 ( &dPhaseGravTerm_dPres )[ NP ][ NP-1 ][ 2 ], \

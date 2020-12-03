@@ -104,7 +104,7 @@ struct FluxKernel
   /**
    * @brief The type for element-based data. Consists entirely of ArrayView's.
    *
-   * Can be converted from ElementRegionManager::ElementViewAccessor
+   * Can be converted from ElementRegionManager::ElementViewConstAccessor
    * by calling .toView() or .toViewConst() on an accessor instance
    */
   template< typename VIEWTYPE >
@@ -129,9 +129,9 @@ struct FluxKernel
            ElementViewConst< arrayView2d< real64 const > > const & dPhaseVolFrac_dPres,
            ElementViewConst< arrayView3d< real64 const > > const & dPhaseVolFrac_dComp,
            ElementViewConst< arrayView3d< real64 const > > const & dCompFrac_dCompDens,
-           ElementViewConst< arrayView3d< real64 const > > const & phaseDens,
-           ElementViewConst< arrayView3d< real64 const > > const & dPhaseDens_dPres,
-           ElementViewConst< arrayView4d< real64 const > > const & dPhaseDens_dComp,
+           ElementViewConst< arrayView3d< real64 const > > const & phaseMassDens,
+           ElementViewConst< arrayView3d< real64 const > > const & dPhaseMassDens_dPres,
+           ElementViewConst< arrayView4d< real64 const > > const & dPhaseMassDens_dComp,
            ElementViewConst< arrayView4d< real64 const > > const & phaseCompFrac,
            ElementViewConst< arrayView4d< real64 const > > const & dPhaseCompFrac_dPres,
            ElementViewConst< arrayView5d< real64 const > > const & dPhaseCompFrac_dComp,
@@ -158,9 +158,9 @@ struct FluxKernel
           ElementViewConst< arrayView2d< real64 const > > const & dPhaseVolFrac_dPres,
           ElementViewConst< arrayView3d< real64 const > > const & dPhaseVolFrac_dComp,
           ElementViewConst< arrayView3d< real64 const > > const & dCompFrac_dCompDens,
-          ElementViewConst< arrayView3d< real64 const > > const & phaseDens,
-          ElementViewConst< arrayView3d< real64 const > > const & dPhaseDens_dPres,
-          ElementViewConst< arrayView4d< real64 const > > const & dPhaseDens_dComp,
+          ElementViewConst< arrayView3d< real64 const > > const & phaseMassDens,
+          ElementViewConst< arrayView3d< real64 const > > const & dPhaseMassDens_dPres,
+          ElementViewConst< arrayView4d< real64 const > > const & dPhaseMassDens_dComp,
           ElementViewConst< arrayView4d< real64 const > > const & phaseCompFrac,
           ElementViewConst< arrayView4d< real64 const > > const & dPhaseCompFrac_dPres,
           ElementViewConst< arrayView5d< real64 const > > const & dPhaseCompFrac_dComp,
