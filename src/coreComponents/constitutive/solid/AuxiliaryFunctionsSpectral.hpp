@@ -188,10 +188,10 @@ real64 heaviside( real64 x )
 }
 
 GEOSX_HOST_DEVICE inline
-void QTensor( real64 (& eigvector)[3], real64 (& Q)[6][6] )
+void QTensor( real64 const (&eigvector)[3], real64 (& Q)[6][6] )
 {
-  real64 M[3][3]={};
-  LvArray::tensorOps::Rij_eq_AiBj< 3, 3 >( M, eigvector, eigvector );
+  real64 M[3][3]={0};
+  LvArray::tensorOps::Rij_eq_AiAj< 3 >( M, eigvector );
   for( int i = 0; i<6; i++ )
   {
     for( int j = 0; j<6; j++ )
@@ -204,10 +204,10 @@ void QTensor( real64 (& eigvector)[3], real64 (& Q)[6][6] )
 GEOSX_HOST_DEVICE inline
 void GTensor( real64 (& eigvec1)[3], real64 (& eigvec2)[3], real64 (& G)[6][6] )
 {
-  real64 M1[3][3]={};
-  real64 M2[3][3]={};
-  LvArray::tensorOps::Rij_eq_AiBj< 3, 3 >( M1, eigvec1, eigvec1 );
-  LvArray::tensorOps::Rij_eq_AiBj< 3, 3 >( M2, eigvec2, eigvec2 );
+  real64 M1[3][3]={0};
+  real64 M2[3][3]={0};
+  LvArray::tensorOps::Rij_eq_AiAj< 3 >( M1, eigvec1 );
+  LvArray::tensorOps::Rij_eq_AiAj< 3 >( M2, eigvec2 );
   for( int i = 0; i<6; i++ )
   {
     for( int j = 0; j<6; j++ )
