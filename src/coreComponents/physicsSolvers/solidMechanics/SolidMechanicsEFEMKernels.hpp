@@ -314,7 +314,7 @@ public:
     localIndex const embSurfIndex = m_cellsToEmbeddedSurfaces[k][0];
 
     real64 dNdX[ numNodesPerElem ][ 3 ];
-    real64 const detJ = m_finiteElementSpace.template getGradN< FE_TYPE >( k, q, stack.xLocal, dNdX );
+    real64 const detJ = m_finiteElementSpace.template getGradN< FE_TYPE >( k, q, stack.X, dNdX );
 
     constexpr int nUdof = numNodesPerElem*3;
 
@@ -387,12 +387,12 @@ public:
     LvArray::tensorOps::Ri_add_AijBj< 3, nUdof >( stack.localRw, stack.localKwu, stack.uLocal );
     LvArray::tensorOps::Ri_add_AijBj< nUdof, 3 >( stack.localRu, stack.localKuw, stack.wLocal );
 
-//    // Evaluate tranction
-//    real64 tractionVec[3], dTractiondw[3][3], contactCoeff = 1.0e15;
-//    SolidMechanicsEFEMKernelsHelper::computeTraction( stack.wLocal, contactCoeff, tractionVec, dTractiondw );
-//    LvArray::tensorOps::add< 3 >( stack.localRw, tractionVec );
-//    LvArray::tensorOps::scale< 3, 3 >( dTractiondw, -1 );
-//    LvArray::tensorOps::add< 3, 3 >( stack.localKww, dTractiondw );
+    // Evaluate tranction
+    real64 tractionVec[3], dTractiondw[3][3], contactCoeff = 1.0e15;
+    SolidMechanicsEFEMKernelsHelper::computeTraction( stack.wLocal, contactCoeff, tractionVec, dTractiondw );
+    LvArray::tensorOps::add< 3 >( stack.localRw, tractionVec );
+    LvArray::tensorOps::scale< 3, 3 >( dTractiondw, -1 );
+    LvArray::tensorOps::add< 3, 3 >( stack.localKww, dTractiondw );
 
     for( localIndex i = 0; i < nUdof; ++i )
     {
@@ -411,7 +411,9 @@ public:
     for( localIndex i=0; i < 3; ++i )
     {
       localIndex const dof = LvArray::integerConversion< localIndex >( stack.jumpEqnRowIndices[ i ] );
+
       if( dof < 0 || dof >= m_matrix.numRows() ) continue;
+
       RAJA::atomicAdd< parallelDeviceAtomic >( &m_rhs[dof], stack.localRw[i] );
 
       // fill in matrix

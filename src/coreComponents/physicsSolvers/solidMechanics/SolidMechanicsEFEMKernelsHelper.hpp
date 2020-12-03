@@ -84,6 +84,7 @@ void assembleStrainOperator( real64 ( & strainMatrix )[I_SIZE][J_SIZE],
 
 template< int NUM_NODES >
 GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
 void assembleCompatibilityOperator( real64 ( & compMatrix )[6][3],
                                     arraySlice1d< real64 const > const & nVec,
                                     arraySlice1d< real64 const > const & tVec1,
@@ -221,7 +222,7 @@ void computeTraction( real64 ( & dispJump )[3],
 
   if( open )
   {
-    tractionVector[0] = 1e5;
+    tractionVector[0] = 1.0e5;
   }
   else
   {

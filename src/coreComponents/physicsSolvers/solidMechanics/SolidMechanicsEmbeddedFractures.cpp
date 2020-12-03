@@ -278,7 +278,6 @@ void SolidMechanicsEmbeddedFractures::AssembleSystem( real64 const time,
                                                                    gravityVectorData );
 
   GEOSX_UNUSED_VAR( maxTraction );
-
 }
 
 void SolidMechanicsEmbeddedFractures::AddCouplingNumNonzeros( DomainPartition & domain,
@@ -480,20 +479,20 @@ real64 SolidMechanicsEmbeddedFractures::CalculateResidualNorm( DomainPartition c
     dofNumber = subRegion.getReference< array1d< globalIndex > >( jumpDofKey );
     arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
 
-    for( localIndex k=0; k<subRegion.size(); ++k )
+    forAll< parallelDevicePolicy<> > ( subRegion.size(),
+    		[localRhs, localSum, dofNumber, rankOffset, ghostRank] GEOSX_HOST_DEVICE (localIndex const k)
     {
       if( ghostRank[k] < 0 )
       {
         localIndex const localRow = LvArray::integerConversion< localIndex >( dofNumber[k] - rankOffset );
-        for( localIndex i = 0; i < subRegion.numOfJumpEnrichments(); ++i )
+        for( localIndex i = 0; i < 3; ++i )
         {
           localSum += localRhs[localRow + i] * localRhs[localRow + i];
         }
       }
-    }
+    } );
 
     real64 const localResidualNorm[2] = { localSum.get(), m_solidSolver->getMaxForce() };
-
 
 
     int const rank     = MpiWrapper::Comm_rank( MPI_COMM_GEOSX );
