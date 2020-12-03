@@ -78,9 +78,24 @@ public:
                                 DofManager const * const dofManager = nullptr );
 
   /**
+   * @brief Constructor.
+   * @param params preconditioner parameters
+   * @param nearNullKernel the user-provided near null kernel
+   * @param dofManager the Degree-of-Freedom manager associated with matrix
+   */
+  HyprePreconditioner( LinearSolverParameters params,
+                       array1d< HypreVector > const & nearNullKernel,
+                       DofManager const * const dofManager = nullptr );
+
+  /**
    * @brief Destructor.
    */
   virtual ~HyprePreconditioner() override;
+
+  /**
+   * @brief Create the preconditioner from the input parameters.
+   */
+  void create();
 
   /**
    * @brief Compute the preconditioner from a matrix.
@@ -115,6 +130,8 @@ public:
 
 private:
 
+  void createHyprePreconditioner( DofManager const * const dofManager );
+
   void createAMG();
 
   void createMGR( DofManager const * const dofManager );
@@ -135,8 +152,17 @@ private:
   /// Pointers to hypre functions to setup/solve/destroy preconditioner
   std::unique_ptr< HyprePrecFuncs > m_functions;
 
-  // Pointer to preconditioner auxiliary data
+  /// Pointer to preconditioner auxiliary data
   std::unique_ptr< HyprePrecAuxData > m_auxData;
+
+  /// Pointer to Degrees of Freedom manager
+  DofManager const * const m_dofManager;
+
+  /// Bool to check if the preconditioner is ready to be computed
+  bool m_ready;
+
+  /// Pointer to external data structure storing the near null kernel
+  array1d< HypreVector > const * m_nearNullKernel;
 };
 
 }

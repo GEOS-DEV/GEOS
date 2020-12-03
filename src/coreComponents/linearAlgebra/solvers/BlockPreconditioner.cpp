@@ -113,17 +113,15 @@ void BlockPreconditioner< LAI >::computeSchurComplement()
     }
     case SchurComplementOption::FirstBlockDiagonal:
     {
-      // In this case, the sparsity pattern of triple product can be denser
-      // than that of (1,1)-block. Therefore, we have to add (1,1)-block to
-      // the triple product result, not the other way around.
-      // TODO: This is suboptimal, since we have to create multiple matrix copies.
       m_matBlocks( 0, 0 ).extractDiagonal( m_rhs( 0 ) );
       m_rhs( 0 ).reciprocal();
-      Matrix mat01 = m_matBlocks( 0, 1 ); // make a copy in order to scale
-      mat01.leftScale( m_rhs( 0 ) );
-      Matrix mat11 = m_matBlocks( 1, 1 ); // make a copy in order to add later
-      m_matBlocks( 1, 0 ).multiply( mat01, m_matBlocks( 1, 1 ) );
-      m_matBlocks( 1, 1 ).addEntries( mat11 );
+      m_matBlocks( 0, 1 ).leftScale( m_rhs( 0 ) );
+      Matrix mat11;
+      m_matBlocks( 1, 0 ).multiply( m_matBlocks( 0, 1 ), mat11 );
+      m_matBlocks( 1, 1 ).addEntries( mat11, -1.0 );
+      // Restore original scaling
+      m_rhs( 0 ).reciprocal();
+      m_matBlocks( 0, 1 ).leftScale( m_rhs( 0 ) );
       break;
     }
     case SchurComplementOption::RowsumDiagonalProbing:
@@ -133,6 +131,14 @@ void BlockPreconditioner< LAI >::computeSchurComplement()
       m_solvers[0]->apply( m_rhs( 0 ), m_sol( 0 ) );
       m_matBlocks( 1, 0 ).apply( m_sol( 0 ), m_rhs( 1 ) );
       m_matBlocks( 1, 1 ).addDiagonal( m_rhs( 1 ) );
+      break;
+    }
+    case SchurComplementOption::FirstBlockUserDefined:
+    {
+      Matrix const & prec00 = m_solvers[0]->preconditionerMatrix();
+      Matrix mat11;
+      prec00.multiplyRAP( m_matBlocks( 1, 0 ), m_matBlocks( 0, 1 ), mat11 );
+      m_matBlocks( 1, 1 ).addEntries( mat11, -1.0, false );
       break;
     }
     default:
