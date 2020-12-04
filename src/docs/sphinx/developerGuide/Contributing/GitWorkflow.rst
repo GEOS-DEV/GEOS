@@ -147,7 +147,7 @@ An example lifecycle diagram for a release candidate branch:
 
 .. code-block:: sh
 
-                                     (tag v1.2.0)
+                                     v1.2.0          (tag)
                                      G               (release)
                                      ^
                                      |
@@ -177,7 +177,7 @@ An example lifecycle diagram for hotfix branchs:
 .. code-block:: sh
 
 
-  (tag v1.2.0) (tag v1.2.1)    (tag v1.2.2)   (tag v1.3.0)
+        v1.2.0       v1.2.1       v1.2.2         v1.3.0 (tag)
         B------------H1-----------H2             I      (release)
         ^\          /| \         / \             ^
         | \        /  \ \       /   \            |
