@@ -136,22 +136,25 @@ of ``release_major.minor.x`` number, where the ``x`` represents the sequence of 
 will be applied to the branch.
 For instance if we were releasing version ``1.2.0``, we would name the branch
 ``release_1.2.x``.
-Once the release candidate is ready, it is merged back into ``develop`` and tagged. 
-Then the ``develop`` branch is merged into the ``release`` branch.
+Once the release candidate is ready, it is merged back into ``develop``. 
+Then the ``develop`` branch is merged into the ``release`` branch and tagged.
 From that point the ``release`` branch exists to provide a basis for maintaining 
+a stable release version of the code.
+Note that the absence of ``hotfix`` branches, the history for ``release`` and 
+``develop`` would be identical.
 
 An example lifecycle diagram for a release candidate branch:
 
 .. code-block:: sh
 
-   A----B----C----D----E----F-----G               (release)
-        ^                         ^
-        |                         |
-        |                         |
-   A----B----C----D----E----F-----G------------   (develop)
-         \            / \        / (tag v1.2.0)
-          \          /   \      /
-          BA--------BB    EA---EB                 (release_1.2.x)
+                                     (tag v1.2.0)
+                                     G               (release)
+                                     ^
+                                     |
+   A----B-----C----D-----E-----F-----G------------   (develop)
+         \          \         / 
+          \          \       /
+          BA----BB----BC----BD                       (release_1.2.x)
                         
 
 Hotfix Branches
@@ -164,27 +167,24 @@ As a soft policy, merging a ``hotfix`` into a ``release`` branch should result i
 a patch increment for the release sequence of tags.
 So if a ``hotfix`` was merged into ``release`` with a most recent tag of
 ``1.2.1``, the merged commit would be tagged with ``1.2.2``.
-Finally, at some point prior to the next minor release, the ``release`` branch
-should be merged back into ``develop`` to incorperate any hotfix changes into 
-``develop``.
+Finally, at some point prior to the next major/minor release, the ``release`` 
+branch should be merged back into ``develop`` to incorperate any hotfix changes 
+into ``develop``.
 
 
 An example lifecycle diagram for hotfix branchs:
 
 .. code-block:: sh
 
-                        (tag v1.2.1)  (tag v1.3.0)
-   A----B'---...-----G---------H'-----------J'     (release)
-        ^            ^\       / \           ^
-        |            | \     /   \          |
-        |            |  GA--GB    \         |     (hotfix)
-        |            |             \        |
-   A----B----...-----G--------------H---I---J     (develop)
-                (tag v1.2.0)
 
-Note that this approach to hotfixing and merge-back into develop results in the 
-presense of merge commits in ``release`` and that the histories of ``develop`` 
-and ``release`` are not identical.
+  (tag v1.2.0) (tag v1.2.1)    (tag v1.2.2)   (tag v1.3.0)
+        B------------H1-----------H2             I      (release)
+        ^\          /| \         / \             ^
+        | \        /  \ \       /   \            |
+        |  BA-----BB   \ H1A--H1B    \           |      (hotfix/xyz)
+        |               \             \          |
+   A----B-----C-----D----E------F------G----H----I---   (develop)
+
 
 
 Documentation Branches
