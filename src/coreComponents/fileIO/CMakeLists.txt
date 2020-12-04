@@ -43,7 +43,7 @@ if( ENABLE_VTK )
                vtk/VTKPolyDataWriterInterface.cpp )
 
 
-  list( APPEND dependencyList VTK::CommonCore VTK::IOXML )
+  list( APPEND dependencyList VTK::CommonCore VTK::CommonSystem VTK::CommonMisc VTK::IOCore VTK::IOXML VTK::expat VTK::doubleconversion VTK::lz4 VTK::lzma VTK::zlib VTK::loguru )
 endif()
 
 if( ENABLE_OPENMP )
