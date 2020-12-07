@@ -213,6 +213,9 @@ public:
     GEOSX_ASSERT_MSG( newStrainEnergyDensity >= 0.0,
                       "negative strain energy density" );
 
+    real64 tmp = SolidBaseUpdates::getStrainEnergyDensity(k,q);
+    printf("energy = %.3e %.3e\n",tmp,newStrainEnergyDensity);
+
     return newStrainEnergyDensity;
   }
                          
@@ -269,8 +272,8 @@ void ElasticIsotropicUpdates::getElasticStrain( localIndex const k,
   elasticStrain[2] = (-nu*m_newStress[k][q][0] - nu*m_newStress[k][q][1] +    m_newStress[k][q][2])/E;
   
   elasticStrain[3] = m_newStress[k][q][3] / m_shearModulus[k];
-  elasticStrain[4] = m_newStress[k][q][3] / m_shearModulus[k];
-  elasticStrain[5] = m_newStress[k][q][3] / m_shearModulus[k];
+  elasticStrain[4] = m_newStress[k][q][4] / m_shearModulus[k];
+  elasticStrain[5] = m_newStress[k][q][5] / m_shearModulus[k];
 }
 
 

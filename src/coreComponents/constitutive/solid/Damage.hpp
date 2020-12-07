@@ -40,6 +40,12 @@ public:
     m_strainEnergyDensity( inputStrainEnergyDensity )
   {}
 
+  using UPDATE_BASE::getStress;
+  using UPDATE_BASE::getElasticStiffness;
+  using UPDATE_BASE::smallStrainNoStateUpdate;
+  using UPDATE_BASE::smallStrainUpdate;
+  using UPDATE_BASE::hypoUpdate;
+  using UPDATE_BASE::hyperUpdate;
 
   using UPDATE_BASE::setDiscretizationOps;
   using UPDATE_BASE::GetStiffness;
@@ -126,7 +132,6 @@ public:
 
   Damage( string const & name, dataRepository::Group * const parent );
   virtual ~Damage() override;
-
 
   static std::string CatalogName() { return string( "Damage" ) + BASE::m_catalogNameString; }
   virtual string getCatalogName() const override { return CatalogName(); }

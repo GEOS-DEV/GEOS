@@ -389,13 +389,13 @@ public:
    */
    GEOSX_HOST_DEVICE
    virtual real64 getStrainEnergyDensity( localIndex const k,
-                                          localIndex const q)
+                                          localIndex const q) const
    {
      real64 stress[6],strain[6];
      
      getStress(k,q,stress);
      getElasticStrain(k,q,strain);
-     
+  
      real64 energy = 0;
      
      for(localIndex i=0; i<6; ++i)
