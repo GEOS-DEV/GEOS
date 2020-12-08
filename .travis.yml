@@ -45,7 +45,6 @@ geosx_linux_build: &geosx_linux_build
     --cap-add=ALL
     -e CMAKE_BUILD_TYPE
     -e GEOSX_DIR=${GEOSX_DIR}
-    -e OMPI_MCA_btl_vader_single_copy_mechanism=none
     ${DOCKER_REPOSITORY}:${GEOSX_TPL_TAG}
     ${TRAVIS_BUILD_DIR_MOUNT_POINT}/scripts/travis_build_and_test.sh ${BUILD_AND_TEST_ARGS};
 
