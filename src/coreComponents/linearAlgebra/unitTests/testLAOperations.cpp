@@ -506,6 +506,7 @@ LinearSolverParameters params_Direct()
 {
   LinearSolverParameters parameters;
   parameters.solverType = geosx::LinearSolverParameters::SolverType::direct;
+  parameters.direct.parallel = 0;
   return parameters;
 }
 
