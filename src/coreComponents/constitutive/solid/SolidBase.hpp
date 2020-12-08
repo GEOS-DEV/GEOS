@@ -391,9 +391,9 @@ public:
    virtual real64 getStrainEnergyDensity( localIndex const k,
                                           localIndex const q) const
    {
-     real64 stress[6],strain[6];
+     auto const & stress = m_newStress[k][q];
      
-     getStress(k,q,stress);
+     real64 strain[6];
      getElasticStrain(k,q,strain);
   
      real64 energy = 0;

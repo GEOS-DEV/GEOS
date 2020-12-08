@@ -27,6 +27,16 @@ namespace geosx
 namespace constitutive
 {
 
+// DAMAGE MODEL UPDATES
+//
+// NOTE: This model uses the m_newStress array to represent the stress in an
+//       undamaged "reference" configuration.  We then scale the results
+//       by a damage factor whenever the true stress is requested through a getter.
+//
+// TODO: This approach is probably error prone---e.g. when stress data is
+//       accessed directly through an array view.  We should maybe refactor so
+//       the true state is saved, similar to the plasticity models
+
 template< typename UPDATE_BASE >
 class DamageUpdates : public UPDATE_BASE
 {
@@ -40,38 +50,61 @@ public:
     m_strainEnergyDensity( inputStrainEnergyDensity )
   {}
 
-  using UPDATE_BASE::getStress;
-  using UPDATE_BASE::getElasticStiffness;
-  using UPDATE_BASE::smallStrainNoStateUpdate;
-  using UPDATE_BASE::smallStrainUpdate;
-  using UPDATE_BASE::hypoUpdate;
-  using UPDATE_BASE::hyperUpdate;
-
+  using DiscretizationOps = typename UPDATE_BASE::DiscretizationOps;
+  
+  GEOSX_HOST_DEVICE
+  real64 damageFactor( localIndex const k,
+                       localIndex const q ) const
+  {
+    return ( 1.0 - m_damage[k][q] )*( 1.0 - m_damage[k][q] );
+  }
+    
+  GEOSX_HOST_DEVICE
+  virtual void smallStrainUpdate( localIndex const k,
+                                  localIndex const q,
+                                  real64 const ( & strainIncrement )[6],
+                                  real64 ( & stress )[6]) const override final
+  {
+    UPDATE_BASE::smallStrainUpdate( k, q, strainIncrement, stress );
+    LvArray::tensorOps::scale< 6 >( stress, damageFactor( k, q ) );
+  }
+              
+  GEOSX_HOST_DEVICE
+  virtual void smallStrainUpdate( localIndex const k,
+                                  localIndex const q,
+                                  real64 const ( & strainIncrement )[6],
+                                  real64 ( & stress )[6],
+                                  DiscretizationOps & stiffness ) const final
+  {
+    UPDATE_BASE::smallStrainUpdate( k, q, strainIncrement, stress, stiffness );
+    
+    real64 factor = damageFactor( k, q );
+    LvArray::tensorOps::scale< 6 >( stress, factor );
+    stiffness.scaleParams( factor );
+  }
+  
+  // TODO: The code below assumes the strain energy density will never be
+  //       evaluated in a non-converged / garbage configuration.
+  GEOSX_HOST_DEVICE
+  virtual real64 getStrainEnergyDensity( localIndex const k,
+                                         localIndex const q ) const override
+  {
+    real64 sed = SolidBaseUpdates::getStrainEnergyDensity( k, q);
+    if( sed > m_strainEnergyDensity[k][q] )
+    {
+      m_strainEnergyDensity[k][q] = sed;
+    }
+    return m_strainEnergyDensity[k][q];
+  }
+  
+  
   using UPDATE_BASE::setDiscretizationOps;
   using UPDATE_BASE::GetStiffness;
   using UPDATE_BASE::SmallStrainNoState;
   using UPDATE_BASE::SmallStrain;
   using UPDATE_BASE::HypoElastic;
   using UPDATE_BASE::HyperElastic;
-
-/*
-  GEOSX_HOST_DEVICE inline
-  virtual void GetStiffness( localIndex const k,
-                             localIndex const q,
-                             real64 (& c)[6][6] ) const override final
-  {
-    UPDATE_BASE::GetStiffness( k, q, c );
-    real64 const damageFactor = ( 1.0 - m_damage( k, q ) )*( 1.0 - m_damage( k, q ) );
-    for( localIndex i=0; i<6; ++i )
-    {
-      for( localIndex j=0; j<6; ++j )
-      {
-        c[i][j] *= damageFactor;
-      }
-    }
-  }
-*/
-
+  
   GEOSX_FORCE_INLINE
   GEOSX_HOST_DEVICE
   void setDiscretizationOps( localIndex const k,
@@ -116,6 +149,7 @@ public:
   arrayView2d< real64 > const m_strainEnergyDensity;
 
 };
+
 
 
 

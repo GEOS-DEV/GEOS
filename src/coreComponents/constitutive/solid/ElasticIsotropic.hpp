@@ -111,27 +111,27 @@ public:
   virtual void smallStrainUpdate( localIndex const k,
                                   localIndex const q,
                                   real64 const ( & strainIncrement )[6],
-                                  real64 ( & stress )[6]) const override final;
+                                  real64 ( & stress )[6]) const override;
               
   GEOSX_HOST_DEVICE
   virtual void smallStrainUpdate( localIndex const k,
                                   localIndex const q,
                                   real64 const ( & strainIncrement )[6],
                                   real64 ( & stress )[6],
-                                  real64 ( & stiffness )[6][6] ) const override; // not final (see druckerPrager)
+                                  real64 ( & stiffness )[6][6] ) const override;
   
   GEOSX_HOST_DEVICE
   virtual void smallStrainUpdate( localIndex const k,
                                   localIndex const q,
                                   real64 const ( & strainIncrement )[6],
                                   real64 ( & stress )[6],
-                                  DiscretizationOps & stiffness ) const final;
+                                  DiscretizationOps & stiffness ) const;
                     
   // miscellaneous getters
   
   GEOSX_HOST_DEVICE
   virtual void getElasticStiffness( localIndex const k,
-                                    real64 ( & stiffness )[6][6] ) const override final;
+                                    real64 ( & stiffness )[6][6] ) const override;
                                     
   GEOSX_HOST_DEVICE
   virtual void getElasticStrain( localIndex const k,

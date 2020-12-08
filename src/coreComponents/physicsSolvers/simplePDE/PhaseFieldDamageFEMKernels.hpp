@@ -190,7 +190,7 @@ public:
     real64 dNdX[ numNodesPerElem ][ 3 ];
     real64 const detJ = m_finiteElementSpace.template getGradN< FE_TYPE >( k, q, stack.xLocal, dNdX );
 
-    real64 const strainEnergyDensity = m_constitutiveUpdate.calculateStrainEnergyDensity( k, q );
+    real64 const strainEnergyDensity = m_constitutiveUpdate.getStrainEnergyDensity( k, q );
 //    std::cout<<k<<", "<<q<<", "<< strainEnergyDensity<<std::endl;
     real64 D = 0;                                                                   //max between threshold and
                                                                                     // Elastic energy
