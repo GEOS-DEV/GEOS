@@ -110,43 +110,37 @@ void assembleCompatibilityOperator( real64 ( & compMatrix )[6][3],
 
   // 2. fill in the operator itself
 
-  LvArray::tensorOps::fill< 6, 3 >( compMatrix, 0 );
+  real64 nDmSym[6], t1DmSym[6], t2DmSym[6];
 
-  real64 nDmSym[3][3], t1DmSym[3][3], t2DmSym[3][3];
+  // sym(n dyadic m), sym(n dyadic t1) and sym (n dyadic t2)
+  LvArray::tensorOps::Rij_eq_AiBj_plus_AjBi< 3 >( nDmSym, mVec, nVec );
+  LvArray::tensorOps::Rij_eq_AiBj_plus_AjBi< 3 >( t1DmSym, mVec, tVec1 );
+  LvArray::tensorOps::Rij_eq_AiBj_plus_AjBi< 3 >( t2DmSym, mVec, tVec2 );
 
-  // sym(n dyadic m)
-  LvArray::tensorOps::Rij_eq_AiBj< 3, 3 >( nDmSym, mVec, nVec );
-  LvArray::tensorOps::Rij_add_AiBj< 3, 3 >( nDmSym, nVec, mVec );
-  LvArray::tensorOps::scale< 3, 3 >( nDmSym, 0.5 );
+  // if compMatrix was real64[3][6], then you could just pass
+  // compMatrix[0], compMatrix[1], compMatrix[2] instead of creating
+  // nDmSum, t1DmSum, t2DmSum.
 
-  // sym(n dyadic t1) and sym (n dyadic t2)
-  LvArray::tensorOps::Rij_eq_AiBj< 3, 3 >( t1DmSym, mVec, tVec1 );
-  LvArray::tensorOps::Rij_add_AiBj< 3, 3 >( t1DmSym, tVec1, mVec );
-  LvArray::tensorOps::scale< 3, 3 >( t1DmSym, 0.5 );
+  compMatrix[0][0] = 0.5 * nDmSym[0];
+  compMatrix[1][0] = 0.5 * nDmSym[1];
+  compMatrix[2][0] = 0.5 * nDmSym[2];
+  compMatrix[3][0] = nDmSym[3];
+  compMatrix[4][0] = nDmSym[4];
+  compMatrix[5][0] = nDmSym[5];
 
-  LvArray::tensorOps::Rij_eq_AiBj< 3, 3 >( t2DmSym, mVec, tVec2 );
-  LvArray::tensorOps::Rij_add_AiBj< 3, 3 >( t2DmSym, tVec2, mVec );
-  LvArray::tensorOps::scale< 3, 3 >( t2DmSym, 0.5 );
+  compMatrix[0][1] = 0.5 * t1DmSym[0];
+  compMatrix[1][1] = 0.5 * t1DmSym[1];
+  compMatrix[2][1] = 0.5 * t1DmSym[2];
+  compMatrix[3][1] = t1DmSym[3];
+  compMatrix[4][1] = t1DmSym[4];
+  compMatrix[5][1] = t1DmSym[5];
 
-  int VoigtIndex;
-
-  for( int i=0; i < 3; ++i )
-  {
-    for( int j=0; j < 3; ++j )
-    {
-      if( i == j )
-      {
-        VoigtIndex = 1;
-      }
-      else
-      {
-        VoigtIndex = 6 - i - j;
-      }
-      compMatrix[VoigtIndex][0] += nDmSym [i][j];
-      compMatrix[VoigtIndex][1] += t1DmSym[i][j];
-      compMatrix[VoigtIndex][2] += t2DmSym[i][j];
-    }
-  }
+  compMatrix[0][2] = 0.5 * t2DmSym[0];
+  compMatrix[1][2] = 0.5 * t2DmSym[1];
+  compMatrix[2][2] = 0.5 * t2DmSym[2];
+  compMatrix[3][2] = t2DmSym[3];
+  compMatrix[4][2] = t2DmSym[4];
+  compMatrix[5][2] = t2DmSym[5];
 }
 
 GEOSX_HOST_DEVICE
