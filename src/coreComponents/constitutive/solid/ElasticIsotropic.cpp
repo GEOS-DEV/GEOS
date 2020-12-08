@@ -53,12 +53,10 @@ ElasticIsotropic::ElasticIsotropic( std::string const & name, Group * const pare
 
   registerWrapper( viewKeyStruct::bulkModulusString, &m_bulkModulus )->
     setApplyDefaultValue( -1 )->
-    setPlotLevel( dataRepository::PlotLevel::LEVEL_1 )->
     setDescription( "Elastic Bulk Modulus Field" );
 
   registerWrapper( viewKeyStruct::shearModulusString, &m_shearModulus )->
     setApplyDefaultValue( -1 )->
-    setPlotLevel( dataRepository::PlotLevel::LEVEL_1 )->
     setDescription( "Elastic Shear Modulus" );
 }
 
