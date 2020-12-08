@@ -129,7 +129,6 @@ void DruckerPrager::PostProcessInput()
     setApplyDefaultValue( F );
   this->getWrapper< array1d< real64 > >( viewKeyStruct::hardeningString )->
     setApplyDefaultValue( m_defaultHardening );
-
 }
 
 

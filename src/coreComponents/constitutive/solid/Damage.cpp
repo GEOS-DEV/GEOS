@@ -42,8 +42,7 @@ Damage< BASE >::Damage( string const & name, Group * const parent ):
   this->registerWrapper( viewKeyStruct::strainEnergyDensityString, &m_strainEnergyDensity )->
     setApplyDefaultValue( 0.0 )->
     setPlotLevel( PlotLevel::LEVEL_0 )->
-    setDescription( "Stress Deviator" );
-
+    setDescription( "Strain Energy Density" );
 }
 
 template< typename BASE >

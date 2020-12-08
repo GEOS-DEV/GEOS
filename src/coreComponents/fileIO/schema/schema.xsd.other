@@ -849,7 +849,7 @@
 		<xsd:attribute name="oldStress" type="real64_array3d" />
 		<!--shearModulus => Elastic Shear Modulus-->
 		<xsd:attribute name="shearModulus" type="real64_array" />
-		<!--strainEnergyDensity => Stress Deviator-->
+		<!--strainEnergyDensity => Strain Energy Density-->
 		<xsd:attribute name="strainEnergyDensity" type="real64_array2d" />
 		<!--stress => Current Material Stress-->
 		<xsd:attribute name="stress" type="real64_array3d" />

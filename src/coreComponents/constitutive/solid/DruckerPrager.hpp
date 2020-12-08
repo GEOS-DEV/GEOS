@@ -102,6 +102,19 @@ public:
                                   real64 const ( & strainIncrement )[6],
                                   real64 ( & stress )[6],
                                   DiscretizationOps & stiffness ) const final;
+
+  GEOSX_FORCE_INLINE
+  GEOSX_HOST_DEVICE
+  void setDiscretizationOps( localIndex const k,
+                             localIndex const q,
+                             DiscretizationOps & discOps ) const
+  {
+    GEOSX_UNUSED_VAR(k);
+    GEOSX_UNUSED_VAR(q);
+    for(localIndex i=0; i<6; ++i)
+    for(localIndex j=0; j<6; ++j)
+      discOps.m_c[i][j] = 0;
+  }
                                   
 private:
   /// A reference to the ArrayView holding the friction angle for each element.
