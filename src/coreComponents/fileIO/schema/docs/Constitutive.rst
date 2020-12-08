@@ -10,11 +10,11 @@ BrooksCoreyRelativePermeability       node         :ref:`XML_BrooksCoreyRelative
 CompositionalMultiphaseFluid          node         :ref:`XML_CompositionalMultiphaseFluid`          
 CompressibleSinglePhaseFluid          node         :ref:`XML_CompressibleSinglePhaseFluid`          
 Contact                               node         :ref:`XML_Contact`                               
+Coulomb                               node         :ref:`XML_Coulomb`                               
 DamageElasticIsotropic                node         :ref:`XML_DamageElasticIsotropic`                
 DruckerPrager                         node         :ref:`XML_DruckerPrager`                         
 ElasticIsotropic                      node         :ref:`XML_ElasticIsotropic`                      
 ElasticTransverseIsotropic            node         :ref:`XML_ElasticTransverseIsotropic`            
-MohrCoulomb                           node         :ref:`XML_MohrCoulomb`                           
 MultiPhaseMultiComponentFluid         node         :ref:`XML_MultiPhaseMultiComponentFluid`         
 NullModel                             node         :ref:`XML_NullModel`                             
 ParticleFluid                         node         :ref:`XML_ParticleFluid`                         

@@ -10,11 +10,11 @@ BrooksCoreyRelativePermeability       node :ref:`DATASTRUCTURE_BrooksCoreyRelati
 CompositionalMultiphaseFluid          node :ref:`DATASTRUCTURE_CompositionalMultiphaseFluid`          
 CompressibleSinglePhaseFluid          node :ref:`DATASTRUCTURE_CompressibleSinglePhaseFluid`          
 Contact                               node :ref:`DATASTRUCTURE_Contact`                               
+Coulomb                               node :ref:`DATASTRUCTURE_Coulomb`                               
 DamageElasticIsotropic                node :ref:`DATASTRUCTURE_DamageElasticIsotropic`                
 DruckerPrager                         node :ref:`DATASTRUCTURE_DruckerPrager`                         
 ElasticIsotropic                      node :ref:`DATASTRUCTURE_ElasticIsotropic`                      
 ElasticTransverseIsotropic            node :ref:`DATASTRUCTURE_ElasticTransverseIsotropic`            
-MohrCoulomb                           node :ref:`DATASTRUCTURE_MohrCoulomb`                           
 MultiPhaseMultiComponentFluid         node :ref:`DATASTRUCTURE_MultiPhaseMultiComponentFluid`         
 NullModel                             node :ref:`DATASTRUCTURE_NullModel`                             
 ParticleFluid                         node :ref:`DATASTRUCTURE_ParticleFluid`                         
