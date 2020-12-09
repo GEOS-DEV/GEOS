@@ -24,17 +24,16 @@
 #include "linearAlgebra/interfaces/hypre/HypreVector.hpp"
 #include "linearAlgebra/interfaces/hypre/HyprePreconditioner.hpp"
 #include "linearAlgebra/interfaces/hypre/HypreUtils.hpp"
+#include "linearAlgebra/interfaces/direct/SuiteSparse.hpp"
 #include "linearAlgebra/utilities/LinearSolverParameters.hpp"
 #include "linearAlgebra/utilities/LAIHelperFunctions.hpp"
 
-#include "HypreSuperlu.hpp"
+#include "HypreSuperLU_Dist.hpp"
 #include <_hypre_utilities.h>
 #include <_hypre_parcsr_ls.h>
 #include <_hypre_IJ_mv.h>
 #include <krylov.h>
-#ifdef GEOSX_USE_SUITESPARSE
 #include "HypreSuiteSparse.hpp"
-#endif
 
 namespace geosx
 {
@@ -60,13 +59,23 @@ void HypreSolver::solve( HypreMatrix & mat,
   GEOSX_LAI_ASSERT( sol.ready() );
   GEOSX_LAI_ASSERT( rhs.ready() );
 
-  if( m_parameters.solverType == LinearSolverParameters::SolverType::direct )
+  if( rhs.norm2() > 0.0 )
   {
-    solve_direct( mat, sol, rhs );
+    if( m_parameters.solverType == LinearSolverParameters::SolverType::direct )
+    {
+      solve_direct( mat, sol, rhs );
+    }
+    else
+    {
+      solve_krylov( mat, sol, rhs, dofManager );
+    }
   }
   else
   {
-    solve_krylov( mat, sol, rhs, dofManager );
+    sol.zero();
+    m_result.status = LinearSolverResult::Status::Success;
+    m_result.setupTime = 0.0;
+    m_result.solveTime = 0.0;
   }
 }
 
@@ -82,41 +91,44 @@ void solve_parallelDirect( LinearSolverParameters const & parameters,
   // To be able to use SuperLU_Dist solver we need to disable floating point exceptions
   LvArray::system::FloatingPointExceptionGuard guard;
 
-  SuperLU_DistData SLUDData;
-  SuperLU_DistCreate( mat, parameters, SLUDData );
+  SuperLU_Dist SLUDData( parameters );
+  HypreConvertToSuperMatrix( mat, SLUDData );
 
-  int info = 0;
-  real64 timeSetup;
-  info = SuperLU_DistSetup( SLUDData, timeSetup );
-
-  real64 timeSolve;
-  info += SuperLU_DistSolve( SLUDData, rhs, sol, timeSolve );
+  GEOSX_LAI_CHECK_ERROR( SLUDData.setup() );
+  GEOSX_LAI_CHECK_ERROR( SLUDData.solve( rhs.extractLocalVector(), sol.extractLocalVector() ) );
 
   // Save setup and solution times
-  result.setupTime = timeSetup;
-  result.solveTime = timeSolve;
+  result.setupTime = SLUDData.setupTime();
+  result.solveTime = SLUDData.solveTime();
 
-  if( info == 0 )
-  {
-    HypreVector res( rhs );
-    mat.gemv( -1.0, sol, 1.0, res );
-    result.residualReduction = res.norm2() / rhs.norm2();
-  }
+  HypreVector res( rhs );
+  mat.gemv( -1.0, sol, 1.0, res );
+  result.residualReduction = res.norm2() / rhs.norm2();
 
-  if( info == 0 && result.residualReduction < parameters.direct.checkResidualTolerance )
+  result.status = parameters.direct.checkResidual == 0 ? LinearSolverResult::Status::Success : LinearSolverResult::Status::Breakdown;
+  result.numIterations = 1;
+  if( parameters.direct.checkResidual )
   {
-    result.status = LinearSolverResult::Status::Success;
-    result.numIterations = 1;
+    if( result.residualReduction < SLUDData.relativeTolerance() )
+    {
+      result.status = LinearSolverResult::Status::Success;
+    }
+    else
+    {
+      real64 const cond = HypreSuperLU_DistCond( mat, SLUDData );
+      if( parameters.logLevel > 0 )
+      {
+        GEOSX_LOG_RANK_0( "Using a more accurate estimate of the condition number" );
+        GEOSX_LOG_RANK_0( "Condition number is " << cond );
+      }
+      if( result.residualReduction < SLUDData.precisionTolerance() * cond )
+      {
+        result.status = LinearSolverResult::Status::Success;
+      }
+    }
   }
-  else
-  {
-    result.status = LinearSolverResult::Status::Breakdown;
-  }
-
-  SuperLU_DistDestroy( SLUDData );
 }
 
-#ifdef GEOSX_USE_SUITESPARSE
 void solve_serialDirect( LinearSolverParameters const & parameters,
                          HypreMatrix & mat,
                          HypreVector & sol,
@@ -126,40 +138,43 @@ void solve_serialDirect( LinearSolverParameters const & parameters,
   // To be able to use UMFPACK direct solver we need to disable floating point exceptions
   LvArray::system::FloatingPointExceptionGuard guard;
 
-  SuiteSparseData SSData;
-  SuiteSparseCreate( mat, parameters, SSData );
+  SuiteSparse SSData( parameters );
+  ConvertHypreToSuiteSparseMatrix( mat, SSData );
 
-  int info = 0;
-  real64 timeSetup;
-  info = SuiteSparseSetup( SSData, timeSetup );
-
-  real64 timeSolve;
-  info += SuiteSparseSolve( SSData, rhs, sol, timeSolve );
+  GEOSX_LAI_CHECK_ERROR( SSData.setup() );
+  GEOSX_LAI_CHECK_ERROR( SuiteSparseSolve( SSData, rhs, sol ) );
 
   // Save setup and solution times
-  result.setupTime = timeSetup;
-  result.solveTime = timeSolve;
+  result.setupTime = SSData.setupTime();
+  result.solveTime = SSData.solveTime();
 
-  if( info == 0 )
-  {
-    HypreVector res( rhs );
-    mat.gemv( -1.0, sol, 1.0, res );
-    result.residualReduction = res.norm2() / rhs.norm2();
-  }
+  HypreVector res( rhs );
+  mat.gemv( -1.0, sol, 1.0, res );
+  result.residualReduction = res.norm2() / rhs.norm2();
 
-  if( info == 0 && result.residualReduction < parameters.direct.checkResidualTolerance )
+  result.status = parameters.direct.checkResidual == 0 ? LinearSolverResult::Status::Success : LinearSolverResult::Status::Breakdown;
+  result.numIterations = 1;
+  if( parameters.direct.checkResidual )
   {
-    result.status = LinearSolverResult::Status::Success;
-    result.numIterations = 1;
+    if( result.residualReduction < SSData.relativeTolerance() )
+    {
+      result.status = LinearSolverResult::Status::Success;
+    }
+    else
+    {
+      real64 const cond = HypreSuiteSparseCond( mat, SSData );
+      if( parameters.logLevel > 0 )
+      {
+        GEOSX_LOG_RANK_0( "Using a more accurate estimate of the condition number" );
+        GEOSX_LOG_RANK_0( "Condition number is " << cond );
+      }
+      if( result.residualReduction < SSData.precisionTolerance() * cond )
+      {
+        result.status = LinearSolverResult::Status::Success;
+      }
+    }
   }
-  else
-  {
-    result.status = LinearSolverResult::Status::Breakdown;
-  }
-
-  SuiteSparseDestroy( SSData );
 }
-#endif
 
 void CreateHypreGMRES( LinearSolverParameters const & params,
                        MPI_Comm const comm,
@@ -296,11 +311,7 @@ void HypreSolver::solve_direct( HypreMatrix & mat,
   }
   else
   {
-#ifdef GEOSX_USE_SUITESPARSE
     solve_serialDirect( m_parameters, mat, sol, rhs, m_result );
-#else
-    GEOSX_ERROR( "Hypre direct solver interface: serial direct solver not available (try to compile GEOSX TPLs with SuiteSparse)." );
-#endif
   }
 }
 
@@ -313,6 +324,7 @@ void HypreSolver::solve_krylov( HypreMatrix & mat,
 
   // Create the preconditioner, but don't compute (this is done by solver setup)
   HyprePreconditioner precond( m_parameters, dofManager );
+  precond.create();
 
   // Deal with separate component approximation
   // TODO: preliminary version for separate displacement components

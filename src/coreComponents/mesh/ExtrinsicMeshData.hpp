@@ -192,35 +192,13 @@ EXTRINSIC_MESH_DATA_TRAIT( SIFonFace,
 
 /// The template type T for registration of a container<T>.
 
-
-/** @struct K_IC
- * @brief Trait struct for K_IC data
- */
-struct K_IC
-{
-  /// The key for registration with the data repository.
-  static constexpr auto key = "K_IC";
-
-  /// The template type T for registration of a container<T>.
-  using dataType = R1Tensor;
-
-  /// The actual type to be registered.
-  using type = array1d< dataType >;
-
-  /// The dataRepository::DefaultValue for K_IC.
-  static constexpr real64 defaultValue = 1e99;
-
-  /// The default dataRepository::PlotLevel for K_IC.
-  static constexpr auto plotLevel = dataRepository::PlotLevel::LEVEL_0;
-
-  /// The default dataRepository::RestartFlags for K_IC.
-  static constexpr auto restartFlag = dataRepository::RestartFlags::WRITE_AND_READ;
-
-  /// Description of the K_IC data for use in sphinx documentation
-  static constexpr auto
-    description = "Critical Stress Intensity Factor :math:`K_{IC}` in the plane of the face.";
-};
-
+EXTRINSIC_MESH_DATA_TRAIT( K_IC,
+                           "K_IC",
+                           array2d< real64 >,
+                           1e99,
+                           LEVEL_0,
+                           WRITE_AND_READ,
+                           "Critical Stress Intensity Factor :math:`K_{IC}` in the plane of the face." );
 
 EXTRINSIC_MESH_DATA_TRAIT( K_IC_00,
                            "K_IC_00",

@@ -169,10 +169,10 @@ struct BaseTypeHelper< T, true >
   using type = typename T::base_type;
 };
 
-HAS_ALIAS( base_type );
+HAS_MEMBER_TYPE( base_type );
 
 template< typename MAP >
-using BaseType = typename BaseTypeHelper< MAP, HasAlias_base_type< MAP > >::type;
+using BaseType = typename BaseTypeHelper< MAP, HasMemberType_base_type< MAP > >::type;
 
 /**
  * @brief Helper struct that specializes access to various map types

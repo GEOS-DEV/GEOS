@@ -17,7 +17,10 @@
 #include "managers/Functions/FunctionManager.hpp"
 #include "managers/Functions/FunctionBase.hpp"
 #include "managers/Functions/TableFunction.hpp"
+#ifdef GEOSX_USE_MATHPRESSO
 #include "managers/Functions/SymbolicFunction.hpp"
+#endif
+
 #include <random>
 
 using namespace geosx;

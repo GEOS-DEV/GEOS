@@ -667,11 +667,11 @@
 			<xsd:element name="CompositionalMultiphaseFluid" type="CompositionalMultiphaseFluidType" />
 			<xsd:element name="CompressibleSinglePhaseFluid" type="CompressibleSinglePhaseFluidType" />
 			<xsd:element name="Contact" type="ContactType" />
+			<xsd:element name="Coulomb" type="CoulombType" />
 			<xsd:element name="DamageLinearElasticIsotropic" type="DamageLinearElasticIsotropicType" />
 			<xsd:element name="LinearElasticAnisotropic" type="LinearElasticAnisotropicType" />
 			<xsd:element name="LinearElasticIsotropic" type="LinearElasticIsotropicType" />
 			<xsd:element name="LinearElasticTransverseIsotropic" type="LinearElasticTransverseIsotropicType" />
-			<xsd:element name="MohrCoulomb" type="MohrCoulombType" />
 			<xsd:element name="MultiPhaseMultiComponentFluid" type="MultiPhaseMultiComponentFluidType" />
 			<xsd:element name="NullModel" type="NullModelType" />
 			<xsd:element name="ParticleFluid" type="ParticleFluidType" />
@@ -703,6 +703,12 @@
 		<xsd:attribute name="dPhaseFraction_dPressure" type="real64_array3d" />
 		<!--dPhaseFraction_dTemperature => (no description available)-->
 		<xsd:attribute name="dPhaseFraction_dTemperature" type="real64_array3d" />
+		<!--dPhaseMassDensity_dGlobalCompFraction => (no description available)-->
+		<xsd:attribute name="dPhaseMassDensity_dGlobalCompFraction" type="LvArray_Array&lt;double, 4, camp_int_seq&lt;long, 0l, 1l, 2l, 3l&gt;, long, LvArray_ChaiBuffer&gt;" />
+		<!--dPhaseMassDensity_dPressure => (no description available)-->
+		<xsd:attribute name="dPhaseMassDensity_dPressure" type="real64_array3d" />
+		<!--dPhaseMassDensity_dTemperature => (no description available)-->
+		<xsd:attribute name="dPhaseMassDensity_dTemperature" type="real64_array3d" />
 		<!--dPhaseViscosity_dGlobalCompFraction => (no description available)-->
 		<xsd:attribute name="dPhaseViscosity_dGlobalCompFraction" type="LvArray_Array&lt;double, 4, camp_int_seq&lt;long, 0l, 1l, 2l, 3l&gt;, long, LvArray_ChaiBuffer&gt;" />
 		<!--dPhaseViscosity_dPressure => (no description available)-->
@@ -721,6 +727,8 @@
 		<xsd:attribute name="phaseDensity" type="real64_array3d" />
 		<!--phaseFraction => (no description available)-->
 		<xsd:attribute name="phaseFraction" type="real64_array3d" />
+		<!--phaseMassDensity => (no description available)-->
+		<xsd:attribute name="phaseMassDensity" type="real64_array3d" />
 		<!--phaseViscosity => (no description available)-->
 		<xsd:attribute name="phaseViscosity" type="real64_array3d" />
 		<!--totalDensity => (no description available)-->
@@ -783,6 +791,12 @@
 		<xsd:attribute name="dPhaseFraction_dPressure" type="real64_array3d" />
 		<!--dPhaseFraction_dTemperature => (no description available)-->
 		<xsd:attribute name="dPhaseFraction_dTemperature" type="real64_array3d" />
+		<!--dPhaseMassDensity_dGlobalCompFraction => (no description available)-->
+		<xsd:attribute name="dPhaseMassDensity_dGlobalCompFraction" type="LvArray_Array&lt;double, 4, camp_int_seq&lt;long, 0l, 1l, 2l, 3l&gt;, long, LvArray_ChaiBuffer&gt;" />
+		<!--dPhaseMassDensity_dPressure => (no description available)-->
+		<xsd:attribute name="dPhaseMassDensity_dPressure" type="real64_array3d" />
+		<!--dPhaseMassDensity_dTemperature => (no description available)-->
+		<xsd:attribute name="dPhaseMassDensity_dTemperature" type="real64_array3d" />
 		<!--dPhaseViscosity_dGlobalCompFraction => (no description available)-->
 		<xsd:attribute name="dPhaseViscosity_dGlobalCompFraction" type="LvArray_Array&lt;double, 4, camp_int_seq&lt;long, 0l, 1l, 2l, 3l&gt;, long, LvArray_ChaiBuffer&gt;" />
 		<!--dPhaseViscosity_dPressure => (no description available)-->
@@ -801,6 +815,8 @@
 		<xsd:attribute name="phaseDensity" type="real64_array3d" />
 		<!--phaseFraction => (no description available)-->
 		<xsd:attribute name="phaseFraction" type="real64_array3d" />
+		<!--phaseMassDensity => (no description available)-->
+		<xsd:attribute name="phaseMassDensity" type="real64_array3d" />
 		<!--phaseViscosity => (no description available)-->
 		<xsd:attribute name="phaseViscosity" type="real64_array3d" />
 		<!--totalDensity => (no description available)-->
@@ -819,6 +835,11 @@
 		<xsd:attribute name="viscosity" type="real64_array2d" />
 	</xsd:complexType>
 	<xsd:complexType name="ContactType">
+		<xsd:choice minOccurs="0" maxOccurs="1">
+			<xsd:element name="TableFunction" type="TableFunctionType" />
+		</xsd:choice>
+	</xsd:complexType>
+	<xsd:complexType name="CoulombType">
 		<xsd:choice minOccurs="0" maxOccurs="1">
 			<xsd:element name="TableFunction" type="TableFunctionType" />
 		</xsd:choice>
@@ -871,11 +892,6 @@
 		<!--stress => Material Stress-->
 		<xsd:attribute name="stress" type="real64_array3d" />
 	</xsd:complexType>
-	<xsd:complexType name="MohrCoulombType">
-		<xsd:choice minOccurs="0" maxOccurs="1">
-			<xsd:element name="TableFunction" type="TableFunctionType" />
-		</xsd:choice>
-	</xsd:complexType>
 	<xsd:complexType name="MultiPhaseMultiComponentFluidType">
 		<!--dPhaseCompFraction_dGlobalCompFraction => (no description available)-->
 		<xsd:attribute name="dPhaseCompFraction_dGlobalCompFraction" type="LvArray_Array&lt;double, 5, camp_int_seq&lt;long, 0l, 1l, 2l, 3l, 4l&gt;, long, LvArray_ChaiBuffer&gt;" />
@@ -895,6 +911,12 @@
 		<xsd:attribute name="dPhaseFraction_dPressure" type="real64_array3d" />
 		<!--dPhaseFraction_dTemperature => (no description available)-->
 		<xsd:attribute name="dPhaseFraction_dTemperature" type="real64_array3d" />
+		<!--dPhaseMassDensity_dGlobalCompFraction => (no description available)-->
+		<xsd:attribute name="dPhaseMassDensity_dGlobalCompFraction" type="LvArray_Array&lt;double, 4, camp_int_seq&lt;long, 0l, 1l, 2l, 3l&gt;, long, LvArray_ChaiBuffer&gt;" />
+		<!--dPhaseMassDensity_dPressure => (no description available)-->
+		<xsd:attribute name="dPhaseMassDensity_dPressure" type="real64_array3d" />
+		<!--dPhaseMassDensity_dTemperature => (no description available)-->
+		<xsd:attribute name="dPhaseMassDensity_dTemperature" type="real64_array3d" />
 		<!--dPhaseViscosity_dGlobalCompFraction => (no description available)-->
 		<xsd:attribute name="dPhaseViscosity_dGlobalCompFraction" type="LvArray_Array&lt;double, 4, camp_int_seq&lt;long, 0l, 1l, 2l, 3l&gt;, long, LvArray_ChaiBuffer&gt;" />
 		<!--dPhaseViscosity_dPressure => (no description available)-->
@@ -913,6 +935,8 @@
 		<xsd:attribute name="phaseDensity" type="real64_array3d" />
 		<!--phaseFraction => (no description available)-->
 		<xsd:attribute name="phaseFraction" type="real64_array3d" />
+		<!--phaseMassDensity => (no description available)-->
+		<xsd:attribute name="phaseMassDensity" type="real64_array3d" />
 		<!--phaseViscosity => (no description available)-->
 		<xsd:attribute name="phaseViscosity" type="real64_array3d" />
 		<!--totalDensity => (no description available)-->
@@ -1162,7 +1186,7 @@
 			<xsd:element name="sets" type="setsType" />
 		</xsd:choice>
 		<!--K_IC => Critical Stress Intensity Factor :math:`K_{IC}` in the plane of the face. => SurfaceGenerator-->
-		<xsd:attribute name="K_IC" type="r1_array" />
+		<xsd:attribute name="K_IC" type="real64_array2d" />
 		<!--SIFonFace => Calculated Stress Intensity Factor on the face. => SurfaceGenerator-->
 		<xsd:attribute name="SIFonFace" type="real64_array" />
 		<!--TransMultiplier => An array that holds the transmissibility multipliers => TwoPointFluxApproximation-->
@@ -1191,8 +1215,6 @@
 		<xsd:attribute name="faceNormal" type="real64_array2d" />
 		<!--facePressure => An array that holds the pressures at the faces. => SinglePhaseFVM, SinglePhaseHybridFVM, SinglePhaseProppantFVM-->
 		<xsd:attribute name="facePressure" type="real64_array" />
-		<!--faceRotationMatrix => (no description available)-->
-		<xsd:attribute name="faceRotationMatrix" type="real64_array3d" />
 		<!--ghostRank => (no description available)-->
 		<xsd:attribute name="ghostRank" type="integer_array" />
 		<!--globalToLocalMap => (no description available)-->
@@ -1248,7 +1270,7 @@
 		<!--childIndex => Index of child within the mesh object it is registered on. => SurfaceGenerator-->
 		<xsd:attribute name="childIndex" type="localIndex_array" />
 		<!--contactForce => An array that holds the contact force. => SolidMechanicsLagrangianSSLE, SolidMechanics_LagrangianFEM-->
-		<xsd:attribute name="contactForce" type="r1_array" />
+		<xsd:attribute name="contactForce" type="real64_array2d" />
 		<!--degreeFromCrack => Distance to the crack in terms of topological distance. (i.e. how many nodes are along the path to the closest node that is on the crack surface. => SurfaceGenerator-->
 		<xsd:attribute name="degreeFromCrack" type="integer_array" />
 		<!--degreeFromCrackTip => Distance to the crack tip in terms of topological distance. (i.e. how many nodes are along the path to the closest node that is on the crack surface. => SurfaceGenerator-->
@@ -1282,9 +1304,9 @@
 		<!--ruptureTime => Time that the object was ruptured/split. => SurfaceGenerator-->
 		<xsd:attribute name="ruptureTime" type="real64_array" />
 		<!--uhatTilde => An array that holds the incremental displacement predictors on the nodes. => SolidMechanicsLagrangianSSLE, SolidMechanics_LagrangianFEM-->
-		<xsd:attribute name="uhatTilde" type="r1_array" />
+		<xsd:attribute name="uhatTilde" type="real64_array2d" />
 		<!--velocityTilde => An array that holds the velocity predictors on the nodes. => SolidMechanicsLagrangianSSLE, SolidMechanics_LagrangianFEM-->
-		<xsd:attribute name="velocityTilde" type="r1_array" />
+		<xsd:attribute name="velocityTilde" type="real64_array2d" />
 	</xsd:complexType>
 	<xsd:complexType name="cellManagerType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -1423,7 +1445,7 @@
 		<!--localToGlobalMap => Array that contains a map from localIndex to globalIndex.-->
 		<xsd:attribute name="localToGlobalMap" type="globalIndex_array" />
 		<!--location => (no description available)-->
-		<xsd:attribute name="location" type="r1_array" />
+		<xsd:attribute name="location" type="real64_array2d" />
 		<!--numPerforationsGlobal => (no description available)-->
 		<xsd:attribute name="numPerforationsGlobal" type="globalIndex" />
 		<!--reservoirElementIndex => (no description available)-->
