@@ -78,10 +78,9 @@ namespace geosx
         arraySlice1d< localIndex const > faceToNodes = faceManager.nodeList()[faceIndex];
         // - compute integrals calling auxiliary method
         array1d<real64> faceBasisIntegrals;
-        real64 faceDiameter;
         array1d<real64> threeDMonomialIntegrals;
         ComputeFaceIntegrals(mesh, faceIndex, invCellDiameter, cellCenter,
-                             faceDiameter, faceBasisIntegrals, threeDMonomialIntegrals);
+                             faceBasisIntegrals, threeDMonomialIntegrals);
         // - get outward face normal
         array1d<real64> faceNormal(3);
         LvArray::tensorOps::copy<3>(faceNormal, faceNormals[faceIndex]);
@@ -95,7 +94,6 @@ namespace geosx
         for(localIndex monomInd = 1; monomInd < 4; ++monomInd)
           monomBoundaryIntegrals[monomInd] += threeDMonomialIntegrals[monomInd-1];
         // - add contributions to integrals of basis functions
-        real64 const invFaceDiameter = 1.0/faceDiameter; // derivative of monomials
         for(localIndex numFaceBasisFunction = 0; numFaceBasisFunction < faceToNodes.size();
             ++numFaceBasisFunction)
         {
@@ -103,13 +101,12 @@ namespace geosx
             .find(faceToNodes[numFaceBasisFunction])->second;
           basisBoundaryIntegrals[basisFunctionIndex] += faceBasisIntegrals[numFaceBasisFunction];
           for(localIndex pos = 0; pos < 3; ++pos)
+          {
             basisTimesNormalBoundaryInt(pos, basisFunctionIndex) +=
               faceNormal(pos)*faceBasisIntegrals(numFaceBasisFunction);
-          array1d<real64> normalIntegralContribution = faceNormal;
-          LvArray::tensorOps::scale<3>(normalIntegralContribution,
-                                       faceBasisIntegrals[numFaceBasisFunction]*invFaceDiameter);
-          LvArray::tensorOps::add<3>(basisTimesMonomNormalDerBoundaryInt[basisFunctionIndex],
-                                     normalIntegralContribution);
+            basisTimesMonomNormalDerBoundaryInt(basisFunctionIndex, pos) +=
+              faceNormal(pos)*faceBasisIntegrals(numFaceBasisFunction)*invCellDiameter;
+          }
         }
       }
 
@@ -213,7 +210,7 @@ namespace geosx
           real64 rowColProd = 0;
           for(localIndex k = 0; k < numCellPoints; ++k)
             rowColProd += piNablaVemDofsMinuxIdentity(k,i)*piNablaVemDofsMinuxIdentity(k,j);
-          stabilizationMatrix(i,j) = rowColProd;
+          stabilizationMatrix(i,j) = cellDiameter*rowColProd;
         }
       }
     }
@@ -224,7 +221,6 @@ namespace geosx
                           localIndex const & faceId,
                           real64 const & invCellDiameter,
                           arraySlice1d<real64 const> const & cellCenter,
-                          real64 & faceDiameter,
                           array1d<real64> & basisIntegrals,
                           array1d<real64> & threeDMonomialIntegrals )
     {
@@ -251,7 +247,7 @@ namespace geosx
       //  - below we compute the diameter, the rotated vertices and the rotated center.
       array2d<real64> faceRotatedVertices(numFaceVertices, 2);
       array1d<real64> faceRotatedCentroid(2);
-      faceDiameter = 0;
+      real64 faceDiameter = 0;
       for(unsigned int numVertex = 0; numVertex < numFaceVertices; ++numVertex)
       {
         // apply the transpose (that is the inverse) of the rotation matrix to face vertices.

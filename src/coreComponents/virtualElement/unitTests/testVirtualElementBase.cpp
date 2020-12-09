@@ -26,7 +26,33 @@
 using namespace geosx;
 using namespace virtualElement;
 
-TEST( VirtualElementBase, compilation )
+static void checkIntegralMeanConsistency( localIndex numBasisFunctions,
+                                     array1d< real64 > const & basisFunctionsIntegralMean )
+{
+  real64 sum = 0;
+  for(localIndex iBasisFun = 0; iBasisFun <  numBasisFunctions; ++iBasisFun)
+  {
+    sum += basisFunctionsIntegralMean(iBasisFun);
+  }
+  EXPECT_TRUE( abs(sum-1) < 1e-15 ) << "Sum of basis functions integral mean is not 1, but " << sum << ". The computed integral means are " << basisFunctionsIntegralMean;
+}
+
+static void checkIntegralMeanDerivativesConsistency( localIndex numBasisFunctions,
+                                     array2d< real64 > const & basisDerivativesIntegralMean )
+{
+  real64 sumX = 0, sumY = 0, sumZ = 0;
+  for(localIndex iBasisFun = 0; iBasisFun <  numBasisFunctions; ++iBasisFun)
+  {
+    sumX += basisDerivativesIntegralMean(0, iBasisFun);
+    sumY += basisDerivativesIntegralMean(1, iBasisFun);
+    sumZ += basisDerivativesIntegralMean(2, iBasisFun);
+  }
+  EXPECT_TRUE( abs(sumX) < 1e-15 ) << "Sum of the x-derivatives of basis functions integral mean is not 0, but " << sumX << ". The computed integral means are " << basisDerivativesIntegralMean[0];
+  EXPECT_TRUE( abs(sumY) < 1e-15 ) << "Sum of the y-derivatives of basis functions integral mean is not 0, but " << sumY << ". The computed integral means are " << basisDerivativesIntegralMean[1];
+  EXPECT_TRUE( abs(sumZ) < 1e-15 ) << "Sum of the z-derivatives of basis functions integral mean is not 0, but " << sumZ << ". The computed integral means are " << basisDerivativesIntegralMean[2];
+}
+
+TEST( VirtualElementBase, unitCube )
 {
   string const inputStream=
     "<Problem>"
@@ -76,6 +102,71 @@ TEST( VirtualElementBase, compilation )
   ConformingVirtualElementOrder1 vemElement;
   vemElement.ComputeProjectors(mesh, 0, 0, 0);
 
+  checkIntegralMeanConsistency( vemElement.getNumSupportPoints(), vemElement.basisFunctionsIntegralMean);
+  checkIntegralMeanDerivativesConsistency(vemElement.getNumSupportPoints(), vemElement.basisDerivativesIntegralMean);
+
+  delete problemManager;
+}
+
+TEST( VirtualElementBase, wedges )
+{
+  string const inputStream=
+    "<Problem>"
+    "  <Mesh>"
+    "    <InternalMesh"
+    "      name=\"wedges\""
+    "      elementTypes=\"{C3D6}\""
+    "      xCoords=\"{0.0, 1.0}\""
+    "      yCoords=\"{0.0, 1.0}\""
+    "      zCoords=\"{0.0, 1.0}\""
+    "      nx=\"{1}\""
+    "      ny=\"{1}\""
+    "      nz=\"{1}\""
+    "      cellBlockNames=\"{cb1}\""
+    "    />"
+    "  </Mesh>"
+    "  <ElementRegions>"
+    "    <CellElementRegion name=\"region1\" cellBlocks=\"{cb1}\""
+    "                       materialList=\"{dummy_material}\" />"
+    "  </ElementRegions>"
+    "</Problem>";
+  xmlWrapper::xmlDocument inputFile;
+  xmlWrapper::xmlResult xmlResult = inputFile.load_buffer(inputStream.c_str(), inputStream.size());
+  if( !xmlResult )
+  {
+    GEOSX_LOG_RANK_0( "XML parsed with errors!" );
+    GEOSX_LOG_RANK_0( "Error description: " << xmlResult.description());
+    GEOSX_LOG_RANK_0( "Error offset: " << xmlResult.offset );
+  }
+  xmlWrapper::xmlNode xmlProblemNode = inputFile.child( "Problem" );
+
+  ProblemManager * problemManager = new ProblemManager( "Problem", nullptr );
+  problemManager->InitializePythonInterpreter();
+  problemManager->ProcessInputFileRecursive( xmlProblemNode );
+
+  // Open mesh levels
+  DomainPartition * domain  = problemManager->getDomainPartition();
+  MeshManager * meshManager = problemManager->GetGroup< MeshManager >( problemManager->groupKeys.meshManager );
+  meshManager->GenerateMeshLevels( domain );
+  MeshLevel & mesh = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
+  ElementRegionManager * elementManager = mesh.getElemManager();
+  xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child( elementManager->getName().c_str() );
+  elementManager->ProcessInputFileRecursive( topLevelNode );
+  elementManager->PostProcessInputRecursive();
+  problemManager->ProblemSetup();
+
+  ConformingVirtualElementOrder1 vemElement;
+  CellElementRegion const & cellRegion =
+    *elementManager->GetRegion<CellElementRegion>(0);
+  CellElementSubRegion const & cellSubRegion =
+    *cellRegion.GetSubRegion<CellElementSubRegion>(0);
+  localIndex const numCells = cellSubRegion.getElementVolume().size();
+  for(localIndex cellId = 0; cellId < numCells; ++cellId)
+  {
+    vemElement.ComputeProjectors(mesh, 0, 0, cellId);
+    checkIntegralMeanConsistency( vemElement.getNumSupportPoints(), vemElement.basisFunctionsIntegralMean);
+    checkIntegralMeanDerivativesConsistency(vemElement.getNumSupportPoints(), vemElement.basisDerivativesIntegralMean);
+  }
   delete problemManager;
 }
 

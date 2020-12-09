@@ -27,7 +27,7 @@ namespace geosx
   {
     class ConformingVirtualElementOrder1 final : public VirtualElementBase
     {
-      protected:
+      public:
 
       localIndex numQuadraturePoints;
       localIndex numSupportPoints;
@@ -39,7 +39,6 @@ namespace geosx
                                  localIndex const & faceId,
                                  real64 const & invCellDiameter,
                                  arraySlice1d<real64 const> const & cellCenter,
-                                 real64 & faceDiameter,
                                  array1d<real64> & basisIntegrals,
                                  array1d<real64> & threeDMonomialIntegrals);
 
