@@ -42,7 +42,7 @@ geosx_linux_build: &geosx_linux_build
   - docker run
     --name=${CONTAINER_NAME}
     --volume=${TRAVIS_BUILD_DIR}:${TRAVIS_BUILD_DIR_MOUNT_POINT}
-    --cap-add=SYS_PTRACE
+    --cap-add=ALL
     -e CMAKE_BUILD_TYPE
     -e GEOSX_DIR=${GEOSX_DIR}
     ${DOCKER_REPOSITORY}:${GEOSX_TPL_TAG}
