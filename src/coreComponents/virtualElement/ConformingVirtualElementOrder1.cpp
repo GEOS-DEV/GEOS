@@ -38,12 +38,12 @@ namespace geosx
       //  - compute map used to locate local point position by global id (used in the computation of
       //    basis functions boundary integrals.
       map<localIndex, localIndex> cellPointsPosition;
-      for(unsigned int numVertex = 0; numVertex < numCellPoints; ++numVertex)
+      for(localIndex numVertex = 0; numVertex < numCellPoints; ++numVertex)
         cellPointsPosition.insert(std::pair<localIndex, localIndex>
                                   (cellToNodes[numVertex], numVertex));
       // - compute cell diameter.
       real64 cellDiameter = 0;
-      for(unsigned int numVertex = 0; numVertex < numCellPoints; ++numVertex)
+      for(localIndex numVertex = 0; numVertex < numCellPoints; ++numVertex)
       {
         for(localIndex numOthVertex = 0; numOthVertex < numVertex; ++numOthVertex)
         {
@@ -237,30 +237,32 @@ namespace geosx
         nodeManager.referencePosition();
 
       // Get pre-computed geometrical properties.
-      arrayView3d< real64 const > faceRotationMatrices = faceManager.faceRotationMatrix();
       arrayView2d< real64 const > faceCenters = faceManager.faceCenter();
       arrayView2d< real64 const > faceNormals = faceManager.faceNormal();
       arrayView1d< real64 const > faceAreas = faceManager.faceArea();
       localIndex const numFaceVertices = faceToNodes.size(); // also equal to n. face's edges.
 
       // Compute other geometrical properties.
+      //  - compute rotation matrix.
+      array2d<real64> faceRotationMatrix(3,3);
+      computationalGeometry::RotationMatrix_3D(faceNormals[faceId], faceRotationMatrix);
       //  - below we compute the diameter, the rotated vertices and the rotated center.
       array2d<real64> faceRotatedVertices(numFaceVertices, 2);
       array1d<real64> faceRotatedCentroid(2);
       real64 faceDiameter = 0;
-      for(unsigned int numVertex = 0; numVertex < numFaceVertices; ++numVertex)
+      for(localIndex numVertex = 0; numVertex < numFaceVertices; ++numVertex)
       {
         // apply the transpose (that is the inverse) of the rotation matrix to face vertices.
         // NOTE:
         // the second and third rows of the transpose of the rotation matrix rotate on the 2D face.
         faceRotatedVertices[numVertex][0] =
-          faceRotationMatrices(faceId, 0, 1)*nodesCoords(faceToNodes(numVertex), 0) +
-          faceRotationMatrices(faceId, 1, 1)*nodesCoords(faceToNodes(numVertex), 1) +
-          faceRotationMatrices(faceId, 2, 1)*nodesCoords(faceToNodes(numVertex), 2);
+          faceRotationMatrix(0, 1)*nodesCoords(faceToNodes(numVertex), 0) +
+          faceRotationMatrix(1, 1)*nodesCoords(faceToNodes(numVertex), 1) +
+          faceRotationMatrix(2, 1)*nodesCoords(faceToNodes(numVertex), 2);
         faceRotatedVertices[numVertex][1] =
-          faceRotationMatrices(faceId, 0, 2)*nodesCoords(faceToNodes(numVertex), 0) +
-          faceRotationMatrices(faceId, 1, 2)*nodesCoords(faceToNodes(numVertex), 1) +
-          faceRotationMatrices(faceId, 2, 2)*nodesCoords(faceToNodes(numVertex), 2);
+          faceRotationMatrix(0, 2)*nodesCoords(faceToNodes(numVertex), 0) +
+          faceRotationMatrix(1, 2)*nodesCoords(faceToNodes(numVertex), 1) +
+          faceRotationMatrix(2, 2)*nodesCoords(faceToNodes(numVertex), 2);
         for(localIndex numOthVertex = 0; numOthVertex < numVertex; ++numOthVertex)
         {
           array1d<real64> vertDiff(2);
@@ -275,18 +277,18 @@ namespace geosx
       real64 const invFaceDiameter = 1.0/faceDiameter;
       // - rotate the face centroid as done for the vertices.
       faceRotatedCentroid(0) =
-        faceRotationMatrices(faceId, 0, 1)*faceCenters(faceId, 0) +
-        faceRotationMatrices(faceId, 1, 1)*faceCenters(faceId, 1) +
-        faceRotationMatrices(faceId, 2, 1)*faceCenters(faceId, 2);
+        faceRotationMatrix(0, 1)*faceCenters(faceId, 0) +
+        faceRotationMatrix(1, 1)*faceCenters(faceId, 1) +
+        faceRotationMatrix(2, 1)*faceCenters(faceId, 2);
       faceRotatedCentroid(1) =
-        faceRotationMatrices(faceId, 0, 2)*faceCenters(faceId, 0) +
-        faceRotationMatrices(faceId, 1, 2)*faceCenters(faceId, 1) +
-        faceRotationMatrices(faceId, 2, 2)*faceCenters(faceId, 2);
+        faceRotationMatrix(0, 2)*faceCenters(faceId, 0) +
+        faceRotationMatrix(1, 2)*faceCenters(faceId, 1) +
+        faceRotationMatrix(2, 2)*faceCenters(faceId, 2);
       // - compute edges' lengths, outward pointing normals and local edge-to-nodes map.
       array2d<real64> edgeOutwardNormals(numFaceVertices, 2);
       array1d<real64> edgeLengths(numFaceVertices);
       array2d<localIndex> localEdgeToNodes(numFaceVertices, 2);
-      for(unsigned int numEdge = 0; numEdge < numFaceVertices; ++numEdge)
+      for(localIndex numEdge = 0; numEdge < numFaceVertices; ++numEdge)
       {
         if(edgeToNodes(faceToEdges(faceId, numEdge), 0) == faceToNodes(numEdge))
         {
