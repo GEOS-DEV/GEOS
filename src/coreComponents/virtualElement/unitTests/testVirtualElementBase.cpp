@@ -95,7 +95,7 @@ checkStabilizationMatrixConsistency
   }
 
   array1d<real64> stabTimeMonomialDofs(numCellPoints);
-  real64 stabTimeMonomialDofsNorm;
+  real64 stabTimeMonomialDofsNorm = 0;
   for(localIndex i = 0; i < numCellPoints; ++i)
   {
     stabTimeMonomialDofs(i) = 0;
