@@ -105,7 +105,7 @@ TEST( LinearElasticIsotropicTests, testStateUpdatePoint )
     Rot[ 2 ][ 2 ] = 1;
 
     //cmw.HypoElastic( 0, 0, Ddt, Rot );
-    cmw.hypoUpdate(0, 0, Ddt, Rot, pointStress);
+    cmw.hypoUpdate_StressOnly(0, 0, Ddt, Rot, pointStress);
     
     EXPECT_DOUBLE_EQ( stress( 0, 0, 0 ), (2.0/3.0*strain)*2*G + strain*K );
     EXPECT_DOUBLE_EQ( stress( 0, 0, 1 ), (-1.0/3.0*strain)*2*G + strain*K );
@@ -125,7 +125,7 @@ TEST( LinearElasticIsotropicTests, testStateUpdatePoint )
     Rot[ 2 ][ 2 ] = 1;
 
     //cmw.HypoElastic( 0, 0, Ddt, Rot );
-    cmw.hypoUpdate(0, 0, Ddt, Rot, pointStress);
+    cmw.hypoUpdate_StressOnly(0, 0, Ddt, Rot, pointStress);
 
     EXPECT_DOUBLE_EQ( stress( 0, 0, 0 ), (-1.0/3.0*strain)*2*G + strain*K );
     EXPECT_DOUBLE_EQ( stress( 0, 0, 1 ), (2.0/3.0*strain)*2*G + strain*K );
@@ -145,7 +145,7 @@ TEST( LinearElasticIsotropicTests, testStateUpdatePoint )
     Rot[ 2 ][ 2 ] = 1;
 
     //cmw.HypoElastic( 0, 0, Ddt, Rot );
-    cmw.hypoUpdate(0, 0, Ddt, Rot, pointStress);
+    cmw.hypoUpdate_StressOnly(0, 0, Ddt, Rot, pointStress);
 
     EXPECT_DOUBLE_EQ( stress( 0, 0, 0 ), (-1.0/3.0*strain)*2*G + strain*K );
     EXPECT_DOUBLE_EQ( stress( 0, 0, 1 ), (-1.0/3.0*strain)*2*G + strain*K );
@@ -165,7 +165,7 @@ TEST( LinearElasticIsotropicTests, testStateUpdatePoint )
     Rot[ 2 ][ 2 ] = 1;
 
     //cmw.HypoElastic( 0, 0, Ddt, Rot );
-    cmw.hypoUpdate(0, 0, Ddt, Rot, pointStress);
+    cmw.hypoUpdate_StressOnly(0, 0, Ddt, Rot, pointStress);
 
 
     EXPECT_DOUBLE_EQ( stress( 0, 0, 0 ), 0 );
@@ -186,7 +186,7 @@ TEST( LinearElasticIsotropicTests, testStateUpdatePoint )
     Rot[ 2 ][ 2 ] = 1;
 
     //cmw.HypoElastic( 0, 0, Ddt, Rot );
-    cmw.hypoUpdate(0, 0, Ddt, Rot, pointStress);
+    cmw.hypoUpdate_StressOnly(0, 0, Ddt, Rot, pointStress);
 
     EXPECT_DOUBLE_EQ( stress( 0, 0, 0 ), 0 );
     EXPECT_DOUBLE_EQ( stress( 0, 0, 1 ), 0 );
@@ -206,7 +206,7 @@ TEST( LinearElasticIsotropicTests, testStateUpdatePoint )
     Rot[ 2 ][ 2 ] = 1;
 
     //cmw.HypoElastic( 0, 0, Ddt, Rot );
-    cmw.hypoUpdate(0, 0, Ddt, Rot, pointStress);
+    cmw.hypoUpdate_StressOnly(0, 0, Ddt, Rot, pointStress);
 
     EXPECT_DOUBLE_EQ( stress( 0, 0, 0 ), 0 );
     EXPECT_DOUBLE_EQ( stress( 0, 0, 1 ), 0 );
