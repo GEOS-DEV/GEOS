@@ -51,7 +51,12 @@ public:
   {}
 
   using DiscretizationOps = typename UPDATE_BASE::DiscretizationOps;
- 
+  
+  using UPDATE_BASE::smallStrainNoStateUpdate;
+  using UPDATE_BASE::smallStrainNoStateUpdate_StressOnly;
+  using UPDATE_BASE::smallStrainUpdate;
+  using UPDATE_BASE::smallStrainUpdate_StressOnly;
+  
   GEOSX_HOST_DEVICE
   real64 damageFactor( localIndex const k,
                        localIndex const q ) const
@@ -59,6 +64,7 @@ public:
     return ( 1.0 - m_damage[k][q] )*( 1.0 - m_damage[k][q] );
   }
    
+  
   GEOSX_HOST_DEVICE
   virtual void smallStrainUpdate( localIndex const k,
                                   localIndex const q,
@@ -67,9 +73,7 @@ public:
                                   DiscretizationOps & stiffness ) const final
   {
     UPDATE_BASE::smallStrainUpdate( k, q, strainIncrement, stress, stiffness );
-    
     real64 factor = damageFactor( k, q );
-
     LvArray::tensorOps::scale< 6 >( stress, factor );
     stiffness.scaleParams( factor );
   }

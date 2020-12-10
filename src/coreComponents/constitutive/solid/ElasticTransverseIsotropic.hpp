@@ -94,10 +94,10 @@ public:
   // total strain interfaces
   
   GEOSX_HOST_DEVICE
-  virtual void smallStrainNoStateUpdate( localIndex const k,
-                                         localIndex const q,
-                                         real64 const ( & totalStrain )[6],
-                                         real64 ( & stress )[6]) const override final;
+  virtual void smallStrainNoStateUpdate_StressOnly( localIndex const k,
+                                                    localIndex const q,
+                                                    real64 const ( & totalStrain )[6],
+                                                    real64 ( & stress )[6]) const override final;
   
   GEOSX_HOST_DEVICE
   virtual void smallStrainNoStateUpdate( localIndex const k,
@@ -116,10 +116,10 @@ public:
   // incremental strain interfaces
   
   GEOSX_HOST_DEVICE
-  virtual void smallStrainUpdate( localIndex const k,
-                                  localIndex const q,
-                                  real64 const ( & strainIncrement )[6],
-                                  real64 ( & stress )[6]) const override final;
+  virtual void smallStrainUpdate_StressOnly( localIndex const k,
+                                             localIndex const q,
+                                             real64 const ( & strainIncrement )[6],
+                                             real64 ( & stress )[6]) const override final;
                                         
   GEOSX_HOST_DEVICE
   virtual void smallStrainUpdate( localIndex const k,
@@ -248,10 +248,10 @@ void ElasticTransverseIsotropicUpdates::getElasticStiffness( localIndex const k,
 
 GEOSX_FORCE_INLINE
 GEOSX_HOST_DEVICE
-void ElasticTransverseIsotropicUpdates::smallStrainNoStateUpdate( localIndex const k,
-                                                                  localIndex const q,
-                                                                  real64 const ( & totalStrain )[6],
-                                                                  real64 ( & stress )[6]) const
+void ElasticTransverseIsotropicUpdates::smallStrainNoStateUpdate_StressOnly( localIndex const k,
+                                                                             localIndex const q,
+                                                                             real64 const ( & totalStrain )[6],
+                                                                             real64 ( & stress )[6]) const
 {
   GEOSX_UNUSED_VAR(q);
   real64 const c12temp = ( m_c11[k] - 2.0 * m_c66[k] );
@@ -273,7 +273,7 @@ void ElasticTransverseIsotropicUpdates::smallStrainNoStateUpdate( localIndex con
                                                                   real64 ( & stress )[6],
                                                                   real64 ( & stiffness )[6][6] ) const
 {
-  smallStrainNoStateUpdate( k, q, totalStrain, stress);
+  smallStrainNoStateUpdate_StressOnly( k, q, totalStrain, stress);
   getElasticStiffness( k, stiffness );
 }
 
@@ -286,7 +286,7 @@ void ElasticTransverseIsotropicUpdates::smallStrainNoStateUpdate( localIndex con
                                                                   real64 ( & stress )[6],
                                                                   DiscretizationOps & stiffness ) const
 {
-  smallStrainNoStateUpdate( k, q, totalStrain, stress);
+  smallStrainNoStateUpdate_StressOnly( k, q, totalStrain, stress);
   stiffness.m_c11 = m_c11[k];
   stiffness.m_c13 = m_c13[k];
   stiffness.m_c33 = m_c33[k];
@@ -297,14 +297,14 @@ void ElasticTransverseIsotropicUpdates::smallStrainNoStateUpdate( localIndex con
 
 GEOSX_FORCE_INLINE
 GEOSX_HOST_DEVICE
-void ElasticTransverseIsotropicUpdates::smallStrainUpdate( localIndex const k,
-                                                           localIndex const q,
-                                                           real64 const ( & strainIncrement )[6],
-                                                           real64 ( & stress )[6]) const
+void ElasticTransverseIsotropicUpdates::smallStrainUpdate_StressOnly( localIndex const k,
+                                                                      localIndex const q,
+                                                                      real64 const ( & strainIncrement )[6],
+                                                                      real64 ( & stress )[6]) const
 {
-  smallStrainNoStateUpdate( k, q, strainIncrement, stress); // stress  = incrementalStress
-  LvArray::tensorOps::add< 6 >( stress, m_oldStress[k][q]); // stress += m_oldStress
-  saveStress( k, q, stress);                                // m_newStress = stress
+  smallStrainNoStateUpdate_StressOnly( k, q, strainIncrement, stress); // stress =  incrementalStress
+  LvArray::tensorOps::add< 6 >( stress, m_oldStress[k][q]);            // stress += m_oldStress
+  saveStress( k, q, stress);                                           // m_newStress = stress
 }
 
 
@@ -316,7 +316,7 @@ void ElasticTransverseIsotropicUpdates::smallStrainUpdate( localIndex const k,
                                                            real64 ( & stress )[6],
                                                            real64 ( & stiffness )[6][6] ) const
 {
-  smallStrainUpdate( k, q, strainIncrement, stress);
+  smallStrainUpdate_StressOnly( k, q, strainIncrement, stress);
   getElasticStiffness( k, stiffness );
 }
 
@@ -329,7 +329,7 @@ void ElasticTransverseIsotropicUpdates::smallStrainUpdate( localIndex const k,
                                                            real64 ( & stress )[6],
                                                            DiscretizationOps & stiffness ) const
 {
-  smallStrainUpdate( k, q, strainIncrement, stress);
+  smallStrainUpdate_StressOnly( k, q, strainIncrement, stress);
   stiffness.m_c11 = m_c11[k];
   stiffness.m_c13 = m_c13[k];
   stiffness.m_c33 = m_c33[k];

@@ -98,8 +98,19 @@ protected:
     LvArray::tensorOps::copy< 6 >( m_newStress[k][q], stress );
   }
   
+
+  
 public:
 
+  // temporary fix to remove
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  void saveState( localIndex const k,
+                  localIndex const q) const
+  {
+    LvArray::tensorOps::copy< 6 >( m_oldStress[k][q], m_newStress[k][q] );
+  }
+  
   /// A reference the current material stress at quadrature points.
   arrayView3d< real64, solid::STRESS_USD > const m_newStress;
   
@@ -274,10 +285,10 @@ public:
    * @param[out] stiffness New tangent stiffness value
    */
   GEOSX_HOST_DEVICE
-  virtual void smallStrainUpdate( localIndex const k,
-                                  localIndex const q,
-                                  real64 const ( & strainIncrement )[6],
-                                  real64 ( & stress )[6]) const
+  virtual void smallStrainUpdate_StressOnly( localIndex const k,
+                                             localIndex const q,
+                                             real64 const ( & strainIncrement )[6],
+                                             real64 ( & stress )[6]) const
   {
     real64 discard[6][6];
     smallStrainUpdate( k, q, strainIncrement, stress, discard );
@@ -294,10 +305,10 @@ public:
    * @param[out] stiffness New tangent stiffness value
    */
   GEOSX_HOST_DEVICE
-  virtual void smallStrainNoStateUpdate( localIndex const k,
-                                         localIndex const q,
-                                         real64 const ( & totalStrain )[6],
-                                         real64 ( & stress )[6]) const
+  virtual void smallStrainNoStateUpdate_StressOnly( localIndex const k,
+                                                    localIndex const q,
+                                                    real64 const ( & totalStrain )[6],
+                                                    real64 ( & stress )[6]) const
   {
     real64 discard[6][6];
     smallStrainNoStateUpdate( k, q, totalStrain, stress, discard );
@@ -313,11 +324,11 @@ public:
    * @param[out] stress New stress value (Cauchy stress)
    */
   GEOSX_HOST_DEVICE
-  virtual void hypoUpdate( localIndex const k,
-                           localIndex const q,
-                           real64 const ( &Ddt )[6],
-                           real64 const ( &Rot )[3][3],
-                           real64 ( & stress )[6]) const
+  virtual void hypoUpdate_StressOnly( localIndex const k,
+                                      localIndex const q,
+                                      real64 const ( &Ddt )[6],
+                                      real64 const ( &Rot )[3][3],
+                                      real64 ( & stress )[6]) const
   {
     real64 discard[6][6];
     hypoUpdate( k, q, Ddt, Rot, stress, discard );
@@ -332,10 +343,10 @@ public:
    * @param[out] stress New stress value (Cauchy stress)
    */
   GEOSX_HOST_DEVICE
-  virtual void hyperUpdate( localIndex const k,
-                            localIndex const q,
-                            real64 const ( & FminusI )[3][3],
-                            real64 ( & stress )[6] ) const
+  virtual void hyperUpdate_StressOnly( localIndex const k,
+                                       localIndex const q,
+                                       real64 const ( & FminusI )[3][3],
+                                       real64 ( & stress )[6] ) const
   {
     real64 discard[6][6];
     hyperUpdate( k, q, FminusI, stress, discard );

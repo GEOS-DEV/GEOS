@@ -42,6 +42,8 @@ public:
   using UPDATE_BASE::getElasticStiffness;
   using UPDATE_BASE::smallStrainNoStateUpdate;
   using UPDATE_BASE::smallStrainUpdate;
+  using UPDATE_BASE::smallStrainNoStateUpdate_StressOnly;
+  using UPDATE_BASE::smallStrainUpdate_StressOnly;
   using UPDATE_BASE::hypoUpdate;
   using UPDATE_BASE::hyperUpdate;
   

@@ -77,19 +77,13 @@ public:
   // Use the "isotropic" form of inner product compression
   using DiscretizationOps = SolidModelDiscretizationOpsIsotropic;
   
-  // bring in base implementations for any not defined here
-  //using SolidBaseUpdates::smallStrainUpdate;
-  //using SolidBaseUpdates::smallStrainNoStateUpdate;
-  //using SolidBaseUpdates::hypoUpdate;
-  //using SolidBaseUpdates::hyperUpdate;
-  
   // total strain interfaces
   
   GEOSX_HOST_DEVICE
-  virtual void smallStrainNoStateUpdate( localIndex const k,
-                                         localIndex const q,
-                                         real64 const ( & totalStrain )[6],
-                                         real64 ( & stress )[6]) const override final;
+  virtual void smallStrainNoStateUpdate_StressOnly( localIndex const k,
+                                                    localIndex const q,
+                                                    real64 const ( & totalStrain )[6],
+                                                    real64 ( & stress )[6]) const override final;
   
   GEOSX_HOST_DEVICE
   virtual void smallStrainNoStateUpdate( localIndex const k,
@@ -108,10 +102,10 @@ public:
   // incremental strain interfaces
   
   GEOSX_HOST_DEVICE
-  virtual void smallStrainUpdate( localIndex const k,
-                                  localIndex const q,
-                                  real64 const ( & strainIncrement )[6],
-                                  real64 ( & stress )[6]) const override;
+  virtual void smallStrainUpdate_StressOnly( localIndex const k,
+                                             localIndex const q,
+                                             real64 const ( & strainIncrement )[6],
+                                             real64 ( & stress )[6]) const override;
               
   GEOSX_HOST_DEVICE
   virtual void smallStrainUpdate( localIndex const k,
@@ -279,10 +273,10 @@ void ElasticIsotropicUpdates::getElasticStrain( localIndex const k,
 
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-void ElasticIsotropicUpdates::smallStrainNoStateUpdate( localIndex const k,
-                                                        localIndex const q,
-                                                        real64 const ( & totalStrain )[6],
-                                                        real64 ( & stress )[6]) const
+void ElasticIsotropicUpdates::smallStrainNoStateUpdate_StressOnly( localIndex const k,
+                                                                   localIndex const q,
+                                                                   real64 const ( & totalStrain )[6],
+                                                                   real64 ( & stress )[6]) const
 {
   GEOSX_UNUSED_VAR(q);
       
@@ -308,7 +302,7 @@ void ElasticIsotropicUpdates::smallStrainNoStateUpdate( localIndex const k,
                                                         real64 ( & stress )[6],
                                                         real64 ( & stiffness )[6][6] ) const
 {
-  smallStrainNoStateUpdate( k, q, totalStrain, stress);  // call stress-only update
+  smallStrainNoStateUpdate_StressOnly( k, q, totalStrain, stress);
   getElasticStiffness( k, stiffness );
 }
 
@@ -321,7 +315,7 @@ void ElasticIsotropicUpdates::smallStrainNoStateUpdate( localIndex const k,
                                                         real64 ( & stress )[6],
                                                         DiscretizationOps & stiffness ) const
 {
-  smallStrainNoStateUpdate( k, q, totalStrain, stress);
+  smallStrainNoStateUpdate_StressOnly( k, q, totalStrain, stress);
   stiffness.m_lambda = conversions::BulkModAndShearMod::toFirstLame( m_bulkModulus[k] , m_shearModulus[k] );
   stiffness.m_shearModulus = m_shearModulus[k];
 }
@@ -329,14 +323,14 @@ void ElasticIsotropicUpdates::smallStrainNoStateUpdate( localIndex const k,
 
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-void ElasticIsotropicUpdates::smallStrainUpdate( localIndex const k,
-                                                 localIndex const q,
-                                                 real64 const ( & strainIncrement )[6],
-                                                 real64 ( & stress )[6]) const
+void ElasticIsotropicUpdates::smallStrainUpdate_StressOnly( localIndex const k,
+                                                            localIndex const q,
+                                                            real64 const ( & strainIncrement )[6],
+                                                            real64 ( & stress )[6]) const
 {
-  smallStrainNoStateUpdate( k, q, strainIncrement, stress); // stress  = incrementalStress
-  LvArray::tensorOps::add< 6 >( stress, m_oldStress[k][q]); // stress += m_oldStress
-  saveStress( k, q, stress);                                // m_newStress = stress
+  smallStrainNoStateUpdate_StressOnly( k, q, strainIncrement, stress); // stress  = incrementalStress
+  LvArray::tensorOps::add< 6 >( stress, m_oldStress[k][q]);            // stress += m_oldStress
+  saveStress( k, q, stress);                                           // m_newStress = stress
 }
 
 
@@ -348,7 +342,7 @@ void ElasticIsotropicUpdates::smallStrainUpdate( localIndex const k,
                                                  real64 ( & stress )[6],
                                                  real64 ( & stiffness )[6][6] ) const
 {
-  smallStrainUpdate( k, q, strainIncrement, stress);
+  smallStrainUpdate_StressOnly( k, q, strainIncrement, stress);
   getElasticStiffness( k, stiffness );
 }
 
@@ -361,7 +355,7 @@ void ElasticIsotropicUpdates::smallStrainUpdate( localIndex const k,
                                                  real64 ( & stress )[6],
                                                  DiscretizationOps & stiffness ) const
 {
-  smallStrainUpdate( k, q, strainIncrement, stress);
+  smallStrainUpdate_StressOnly( k, q, strainIncrement, stress);
   stiffness.m_lambda = conversions::BulkModAndShearMod::toFirstLame( m_bulkModulus[k] , m_shearModulus[k] );
   stiffness.m_shearModulus = m_shearModulus[k];
 }

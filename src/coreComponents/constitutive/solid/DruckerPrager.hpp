@@ -82,13 +82,9 @@ public:
   // Use the uncompressed version of the stiffness bilinear form
   using DiscretizationOps = SolidModelDiscretizationOpsFullyAnisotroipic; // TODO: typo in anistropic
   
-  // bring in base implementations for any not defined here
-  //using SolidBaseUpdates::smallStrainUpdate;
-  //using SolidBaseUpdates::smallStrainNoStateUpdate;
-  //using SolidBaseUpdates::hypoUpdate;
-  //using SolidBaseUpdates::hyperUpdate;
-  using ElasticIsotropicUpdates::smallStrainUpdate;
-    
+  using ElasticIsotropicUpdates::smallStrainUpdate;// prevent hiding
+  using ElasticIsotropicUpdates::smallStrainUpdate_StressOnly;
+  
   GEOSX_HOST_DEVICE
   virtual void smallStrainUpdate( localIndex const k,
                                   localIndex const q,
@@ -103,8 +99,9 @@ public:
                                   real64 ( & stress )[6],
                                   DiscretizationOps & stiffness ) const final;
 
-  GEOSX_FORCE_INLINE
+
   GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   void setDiscretizationOps( localIndex const k,
                              localIndex const q,
                              DiscretizationOps & discOps ) const
@@ -290,10 +287,10 @@ void DruckerPragerUpdates::smallStrainUpdate( localIndex const k,
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void DruckerPragerUpdates::smallStrainUpdate( localIndex const k,
-                                                 localIndex const q,
-                                                 real64 const ( & strainIncrement )[6],
-                                                 real64 ( & stress )[6],
-                                                 DiscretizationOps & stiffness ) const
+                                              localIndex const q,
+                                              real64 const ( & strainIncrement )[6],
+                                              real64 ( & stress )[6],
+                                              DiscretizationOps & stiffness ) const
 {
   smallStrainUpdate( k, q, strainIncrement, stress, stiffness.m_c );
 }

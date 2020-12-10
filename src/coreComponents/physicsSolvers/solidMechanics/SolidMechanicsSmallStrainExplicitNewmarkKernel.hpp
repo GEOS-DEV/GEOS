@@ -35,7 +35,7 @@ namespace SolidMechanicsLagrangianFEMKernels
 /// state to integral for nodalforces.
 /// If UPDATE_STRESS 2 then velocity*dt is used to update material stress state
 #define UPDATE_STRESS 2
-
+#define NEW_INTERFACE
 
 /**
  * @brief Implements kernels for solving the equations of motion using the
@@ -204,7 +204,12 @@ public:
 
     real64 stressLocal[ 6 ] = {0};
 #if UPDATE_STRESS == 2
+#ifdef NEW_INTERFACE
+    m_constitutiveUpdate.smallStrainUpdate_StressOnly( k, q, strain, stressLocal );
+    m_constitutiveUpdate.saveState( k, q );
+#else
     m_constitutiveUpdate.SmallStrain( k, q, strain );
+#endif
 #else
     m_constitutiveUpdate.SmallStrainNoState( k, strain, stressLocal );
 #endif
@@ -212,7 +217,11 @@ public:
     for( localIndex c = 0; c < 6; ++c )
     {
 #if UPDATE_STRESS == 2
+#ifdef NEW_INTERFACE
+      stressLocal[ c ] *= -detJ;
+#else
       stressLocal[ c ] =  -m_constitutiveUpdate.m_newStress( k, q, c ) * detJ;
+#endif
 #elif UPDATE_STRESS == 1
       stressLocal[ c ] = -( stressLocal[ c ] + m_constitutiveUpdate.m_newStress( k, q, c ) ) * detJ;
 #else
