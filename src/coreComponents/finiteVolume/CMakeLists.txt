@@ -17,6 +17,7 @@ set( finiteVolume_headers
      mimeticInnerProducts/QuasiRTInnerProduct.hpp
      mimeticInnerProducts/TPFAInnerProduct.hpp
      mimeticInnerProducts/SimpleInnerProduct.hpp
+     mimeticInnerProducts/BdVLMInnerProduct.hpp
      mimeticInnerProducts/MimeticInnerProductHelpers.hpp
    )
 #

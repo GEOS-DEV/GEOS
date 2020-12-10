@@ -24,6 +24,7 @@
 #include "finiteVolume/mimeticInnerProducts/QuasiRTInnerProduct.hpp"
 #include "finiteVolume/mimeticInnerProducts/TPFAInnerProduct.hpp"
 #include "finiteVolume/mimeticInnerProducts/SimpleInnerProduct.hpp"
+#include "finiteVolume/mimeticInnerProducts/BdVLMInnerProduct.hpp"
 #include "LvArray/src/system.hpp"
 
 namespace geosx
@@ -45,6 +46,8 @@ struct MimeticInnerProductTypeStrings
   static constexpr auto QuasiRT   = "quasiRT";
   /// string for the Simple inner product
   static constexpr auto Simple    = "simple";
+  /// string for the inner product of Beirao da Veiga, Lipnikov, Manzini
+  static constexpr auto BdVLM     = "beiraoDaVeigaLipnikovManzini";
 };
 
 /**
@@ -73,6 +76,10 @@ mimeticInnerProductDispatch( MimeticInnerProductBase const & input,
   else if( auto const * const ptr4 = dynamic_cast< SimpleInnerProduct const * >(&input) )
   {
     lambda( *ptr4 );
+  }
+  else if( auto const * const ptr5 = dynamic_cast< BdVLMInnerProduct const * >(&input) )
+  {
+    lambda( *ptr5 );
   }
   else
   {
@@ -106,6 +113,10 @@ mimeticInnerProductDispatch( MimeticInnerProductBase & input,
   else if( auto * const ptr4 = dynamic_cast< SimpleInnerProduct * >(&input) )
   {
     lambda( *ptr4 );
+  }
+  else if( auto * const ptr5 = dynamic_cast< BdVLMInnerProduct * >(&input) )
+  {
+    lambda( *ptr5 );
   }
   else
   {

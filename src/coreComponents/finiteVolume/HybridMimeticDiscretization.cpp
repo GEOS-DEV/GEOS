@@ -24,6 +24,7 @@
 #include "finiteVolume/mimeticInnerProducts/QuasiTPFAInnerProduct.hpp"
 #include "finiteVolume/mimeticInnerProducts/QuasiRTInnerProduct.hpp"
 #include "finiteVolume/mimeticInnerProducts/SimpleInnerProduct.hpp"
+#include "finiteVolume/mimeticInnerProducts/BdVLMInnerProduct.hpp"
 
 namespace geosx
 {
@@ -69,6 +70,10 @@ HybridMimeticDiscretization::factory( string const & mimeticInnerProductType ) c
   else if( mimeticInnerProductType == MimeticInnerProductTypeStrings::Simple )
   {
     rval = std::make_unique< SimpleInnerProduct >();
+  }
+  else if( mimeticInnerProductType == MimeticInnerProductTypeStrings::BdVLM )
+  {
+    rval = std::make_unique< BdVLMInnerProduct >();
   }
   else
   {

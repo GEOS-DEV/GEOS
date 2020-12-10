@@ -19,6 +19,7 @@
 #include "finiteVolume/mimeticInnerProducts/TPFAInnerProduct.hpp"
 #include "finiteVolume/mimeticInnerProducts/QuasiTPFAInnerProduct.hpp"
 #include "finiteVolume/mimeticInnerProducts/SimpleInnerProduct.hpp"
+#include "finiteVolume/mimeticInnerProducts/BdVLMInnerProduct.hpp"
 #include "managers/initialization.hpp"
 #include "mesh/FaceManager.hpp"
 #include "meshUtilities/ComputationalGeometry.hpp"
@@ -38,6 +39,8 @@ struct InnerProductType
   static constexpr integer QUASI_TPFA_WITH_MULTIPLIERS = 2;
   static constexpr integer SIMPLE = 3;
   static constexpr integer SIMPLE_WITH_MULTIPLIERS = 4;
+  static constexpr integer BDVLM = 5;
+  static constexpr integer BDVLM_WITH_MULTIPLIERS = 6;
 };
 
 void compareTransmissibilityMatrices( arraySlice2d< real64 const > const & transMatrix,
@@ -275,7 +278,6 @@ void makeHexa( array2d< real64, nodes::REFERENCE_POSITION_PERM > & nodePosition,
   }
   else if( ipType == InnerProductType::SIMPLE_WITH_MULTIPLIERS )
   {
-
     transMatrixRef( 0, 0 ) = 8e-12;
     transMatrixRef( 0, 4 ) = 4e-12;
 
@@ -301,6 +303,63 @@ void makeHexa( array2d< real64, nodes::REFERENCE_POSITION_PERM > & nodePosition,
     transMatrixRef( 5, 2 ) = 1.548e-12;
     transMatrixRef( 5, 5 ) = 5.317e-12;
     transMatrixRef( 5, 3 ) = -0.037e-12;
+
+  }
+  else if( ipType == InnerProductType::BDVLM )
+  {
+    transMatrixRef( 0, 0 ) =  4.240e-12;
+    transMatrixRef( 0, 4 ) =  0.240e-12;
+
+    transMatrixRef( 1, 1 ) =  5.240e-12;
+    transMatrixRef( 1, 2 ) = -2.250e-12;
+    transMatrixRef( 1, 3 ) =  2.250e-12;
+    transMatrixRef( 1, 5 ) = -0.760e-12;
+
+    transMatrixRef( 2, 1 ) = -2.225e-12;
+    transMatrixRef( 2, 2 ) =  6.187e-12;
+    transMatrixRef( 2, 3 ) =  0.812e-12;
+    transMatrixRef( 2, 5 ) =  2.25e-12;
+
+    transMatrixRef( 3, 1 ) =  2.250e-12;
+    transMatrixRef( 3, 2 ) =  0.812e-12;
+    transMatrixRef( 3, 3 ) =  6.187e-12;
+    transMatrixRef( 3, 5 ) = -2.225e-12;
+
+    transMatrixRef( 4, 4 ) =  4.240e-12;
+    transMatrixRef( 4, 0 ) =  0.240e-12;
+
+    transMatrixRef( 5, 1 ) = -0.760e-12;
+    transMatrixRef( 5, 2 ) =  2.25e-12;
+    transMatrixRef( 5, 5 ) =  5.240e-12;
+    transMatrixRef( 5, 3 ) = -2.225e-12;
+  }
+  else if( ipType == InnerProductType::BDVLM_WITH_MULTIPLIERS )
+  {
+    transMatrixRef( 0, 0 ) =  4.240e-12;
+    transMatrixRef( 0, 4 ) =  0.240e-12;
+
+    transMatrixRef( 1, 1 ) =  4.179e-12;
+    transMatrixRef( 1, 2 ) = -1.924e-12;
+    transMatrixRef( 1, 3 ) =  0.082e-12;
+    transMatrixRef( 1, 5 ) =  0.233e-12;
+
+    transMatrixRef( 2, 1 ) = -1.924e-12;
+    transMatrixRef( 2, 2 ) =  4.364e-12;
+    transMatrixRef( 2, 3 ) =  0.029e-12;
+    transMatrixRef( 2, 5 ) =  1.489e-12;
+
+    transMatrixRef( 3, 1 ) =  0.082e-12;
+    transMatrixRef( 3, 2 ) =  0.029e-12;
+    transMatrixRef( 3, 3 ) =  0.214e-12;
+    transMatrixRef( 3, 5 ) = -0.064e-12;
+
+    transMatrixRef( 4, 4 ) =  4.240e-12;
+    transMatrixRef( 4, 0 ) =  0.240e-12;
+
+    transMatrixRef( 5, 1 ) =  0.233e-12;
+    transMatrixRef( 5, 2 ) =  1.489e-12;
+    transMatrixRef( 5, 5 ) =  3.288e-12;
+    transMatrixRef( 5, 3 ) = -0.064e-12;
   }
 }
 
@@ -430,6 +489,29 @@ void makeTetra( array2d< real64, nodes::REFERENCE_POSITION_PERM > & nodePosition
     transMatrixRef( 3, 1 ) =  4.71e-12;
     transMatrixRef( 3, 2 ) =  0.21e-12;
     transMatrixRef( 3, 3 ) =  9.21e-12;
+  }
+  else if( ipType == InnerProductType::BDVLM )
+  {
+    transMatrixRef( 0, 0 ) =  2.99e-12;
+    transMatrixRef( 0, 1 ) =  1.49e-12;
+    transMatrixRef( 0, 2 ) = -0.01e-12;
+    transMatrixRef( 0, 3 ) =  1.49e-12;
+
+    transMatrixRef( 1, 0 ) =  1.49e-12;
+    transMatrixRef( 1, 1 ) = 10.49e-12;
+    transMatrixRef( 1, 2 ) = -7.51e-12;
+    transMatrixRef( 1, 3 ) =  1.49e-12;
+
+    transMatrixRef( 2, 0 ) = -0.01e-12;
+    transMatrixRef( 2, 1 ) = -7.51e-12;
+    transMatrixRef( 2, 2 ) = 16.49e-12;
+    transMatrixRef( 2, 3 ) = -3.01e-12;
+
+    transMatrixRef( 3, 0 ) =  1.49e-12;
+    transMatrixRef( 3, 1 ) =  1.49e-12;
+    transMatrixRef( 3, 2 ) = -3.01e-12;
+    transMatrixRef( 3, 3 ) =  5.99e-12;
+
   }
 }
 
@@ -579,6 +661,57 @@ TEST( testMimeticInnerProducts, Simple_hexa )
   compareTransmissibilityMatrices( transMatrix, transMatrixRef );
 }
 
+TEST( testMimeticInnerProducts, BdVLM_hexa )
+{
+  localIndex constexpr NF = 6;
+
+  array2d< real64, nodes::REFERENCE_POSITION_PERM > nodePosition;
+  FaceManager::NodeMapType faceToNodes;
+  array1d< localIndex > elemToFaces;
+  real64 elemCenter[3] = { 0.0 };
+  real64 elemPerm[3] = { 0.0 };
+  real64 elemVolume = 0;
+  real64 lengthTolerance = 0;
+  stackArray2d< real64, NF *NF > transMatrixRef( NF, NF );
+
+  makeHexa( nodePosition,
+            faceToNodes,
+            elemToFaces,
+            elemCenter,
+            elemVolume,
+            elemPerm,
+            lengthTolerance,
+            InnerProductType::BDVLM_WITH_MULTIPLIERS,
+            transMatrixRef );
+
+  stackArray2d< real64, NF *NF > transMatrix( NF, NF );
+  array1d< real64 > transMultiplier( NF );
+  transMultiplier.setValues< parallelHostPolicy >( 1.0 );
+  transMultiplier[0] = 0.9;
+  transMultiplier[5] = 0.1;
+  transMultiplier[3] = 0.8;
+
+
+  stackArray1d< real64, 3 > center( 3 );
+  center[0] = elemCenter[0];
+  center[1] = elemCenter[1];
+  center[2] = elemCenter[2];
+  real64 const perm[ 3 ] = { elemPerm[0], elemPerm[1], elemPerm[2] };
+
+  BdVLMInnerProduct::Compute< NF >( nodePosition.toViewConst(),
+                                    transMultiplier.toViewConst(),
+                                    faceToNodes.toViewConst(),
+                                    elemToFaces.toSliceConst(),
+                                    center,
+                                    elemVolume,
+                                    perm,
+                                    lengthTolerance,
+                                    transMatrix.toSlice() );
+
+  compareTransmissibilityMatrices( transMatrix, transMatrixRef );
+}
+
+
 TEST( testMimeticInnerProducts, TPFA_tetra )
 {
   localIndex constexpr NF = 4;
@@ -714,6 +847,52 @@ TEST( testMimeticInnerProducts, Simple_tetra )
                                      perm,
                                      lengthTolerance,
                                      transMatrix.toSlice() );
+
+  compareTransmissibilityMatrices( transMatrix, transMatrixRef );
+}
+
+TEST( testMimeticInnerProducts, BdVLMtetra )
+{
+  localIndex constexpr NF = 4;
+
+  array2d< real64, nodes::REFERENCE_POSITION_PERM > nodePosition;
+  FaceManager::NodeMapType faceToNodes;
+  array1d< localIndex > elemToFaces;
+  real64 elemCenter[3] = { 0.0 };
+  real64 elemPerm[3] = { 0.0 };
+  real64 elemVolume = 0;
+  real64 lengthTolerance = 0;
+  stackArray2d< real64, NF *NF > transMatrixRef( NF, NF );
+
+  makeTetra( nodePosition,
+             faceToNodes,
+             elemToFaces,
+             elemCenter,
+             elemVolume,
+             elemPerm,
+             lengthTolerance,
+             InnerProductType::BDVLM,
+             transMatrixRef );
+
+  stackArray2d< real64, NF *NF > transMatrix( NF, NF );
+  array1d< real64 > transMultiplier( NF );
+  transMultiplier.setValues< parallelHostPolicy >( 1.0 );
+
+  stackArray1d< real64, 3 > center( 3 );
+  center[0] = elemCenter[0];
+  center[1] = elemCenter[1];
+  center[2] = elemCenter[2];
+  real64 const perm[ 3 ] = { elemPerm[0], elemPerm[1], elemPerm[2] };
+
+  BdVLMInnerProduct::Compute< NF >( nodePosition.toViewConst(),
+                                    transMultiplier.toViewConst(),
+                                    faceToNodes.toViewConst(),
+                                    elemToFaces.toSliceConst(),
+                                    center,
+                                    elemVolume,
+                                    perm,
+                                    lengthTolerance,
+                                    transMatrix.toSlice() );
 
   compareTransmissibilityMatrices( transMatrix, transMatrixRef );
 }
