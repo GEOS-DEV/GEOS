@@ -318,8 +318,12 @@ public:
 
     constexpr int nUdof = numNodesPerElem*3;
 
+    // Gauss contribution to Kww, Kwu and Kuw blocks
     real64 Kww_gauss[3][3], Kwu_gauss[3][nUdof], Kuw_gauss[nUdof][3];
-    real64 compMatrix[6][3], strainMatrix[6][nUdof], eqMatrix[3][6];
+
+    //  Compatibility, equilibrium and strain operators. The compatibility operator is constructed as
+    //  a 3 x 6 because it is more convenient for construction purposes (reduces number of local var).
+    real64 compMatrix[3][6], strainMatrix[6][nUdof], eqMatrix[3][6];
     real64 matBD[nUdof][6], matED[3][6];
 
     int Heaviside[ numNodesPerElem ];
@@ -352,22 +356,16 @@ public:
     // ED
     LvArray::tensorOps::Rij_eq_AikBkj< 3, 6, 6 >( matED, eqMatrix, stack.constitutiveStiffness );
     // EDC
-    LvArray::tensorOps::Rij_eq_AikBkj< 3, 3, 6 >( Kww_gauss, matED, compMatrix );
+    LvArray::tensorOps::Rij_eq_AikBjk< 3, 3, 6 >( Kww_gauss, matED, compMatrix );
     // EDB
     LvArray::tensorOps::Rij_eq_AikBkj< 3, nUdof, 6 >( Kwu_gauss, matED, strainMatrix );
     // transp(B)DB
-    LvArray::tensorOps::Rij_eq_AikBkj< nUdof, 3, 6 >( Kuw_gauss, matBD, compMatrix );
+    LvArray::tensorOps::Rij_eq_AikBjk< nUdof, 3, 6 >( Kuw_gauss, matBD, compMatrix );
 
-    // multiply by determinant
-    LvArray::tensorOps::scale< 3, 3 >( Kww_gauss, -detJ );
-    LvArray::tensorOps::scale< 3, nUdof >( Kwu_gauss, -detJ );
-    LvArray::tensorOps::scale< nUdof, 3 >( Kuw_gauss, -detJ );
-
-    // TODO add a scale add for matrices to the tensorOps.
-    // Add Gauss point contribution to element matrix
-    LvArray::tensorOps::add< 3, 3 >( stack.localKww, Kww_gauss );
-    LvArray::tensorOps::add< 3, nUdof >( stack.localKwu, Kwu_gauss );
-    LvArray::tensorOps::add< nUdof, 3 >( stack.localKuw, Kuw_gauss );
+    // multiply by determinant and add to element matrix
+    LvArray::tensorOps::scaledAdd< 3, 3 >( stack.localKww, Kww_gauss, -detJ );
+    LvArray::tensorOps::scaledAdd< 3, nUdof >( stack.localKwu, Kwu_gauss, -detJ );
+    LvArray::tensorOps::scaledAdd< nUdof, 3 >( stack.localKuw, Kuw_gauss, -detJ );
   }
 
   /**

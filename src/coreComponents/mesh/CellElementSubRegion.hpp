@@ -142,7 +142,7 @@ public:
     /// String key for the constitutive map
     static constexpr auto constitutiveMapString = "ConstitutiveMap";
     /// String key to embSurfMap
-    static constexpr auto toEmbSurfString = "ToEmbSurfaces";
+    static constexpr auto toEmbSurfString = "ToEmbeddedSurfaces";
 
     /// ViewKey for the constitutive grouping
     dataRepository::ViewKey constitutiveGrouping  = { constitutiveGroupingString };
