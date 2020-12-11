@@ -188,7 +188,7 @@ TEST( VirtualElementBase, unitCube )
     *elementManager->GetRegion<CellElementRegion>(0);
   CellElementSubRegion const & cellSubRegion =
     *cellRegion.GetSubRegion<CellElementSubRegion>(0);
-  arraySlice1d< localIndex const> cellToNodes = cellSubRegion.nodeList()[0];
+  arraySlice1d< localIndex const> cellToNodes = cellSubRegion.nodeList().Base()[0];
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > nodesCoords =
     nodeManager.referencePosition();
   arrayView2d< real64 const > cellCenters = cellSubRegion.getElementCenter();
@@ -265,7 +265,7 @@ TEST( VirtualElementBase, wedges )
     checkIntegralMeanDerivativesConsistency(vemElement.getNumSupportPoints(),
                                             vemElement.basisDerivativesIntegralMean);
 
-    arraySlice1d< localIndex const> cellToNodes = cellSubRegion.nodeList()[cellId];
+    arraySlice1d< localIndex const> cellToNodes = cellSubRegion.nodeList().Base()[cellId];
     arraySlice1d< real64 const > cellCenter = cellCenters[cellId];
     checkStabilizationMatrixConsistency(nodesCoords, cellToNodes, cellCenter,
                                         vemElement.stabilizationMatrix);
