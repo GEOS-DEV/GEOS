@@ -108,9 +108,9 @@ void assembleCompatibilityOperator( real64 ( & compMatrix )[3][6],
 
   // 2. fill in the operator itself
   // sym(n dyadic m), sym(m dyadic t1) and sym (m dyadic t2)
-  LvArray::tensorOps::Rij_eq_AiBj_plus_AjBi< 3 >( compMatrix[0], mVec, nVec );
-  LvArray::tensorOps::Rij_eq_AiBj_plus_AjBi< 3 >( compMatrix[1], mVec, tVec1 );
-  LvArray::tensorOps::Rij_eq_AiBj_plus_AjBi< 3 >( compMatrix[2], mVec, tVec2 );
+  LvArray::tensorOps::symRij_eq_AiBj_plus_AjBi< 3 >( compMatrix[0], mVec, nVec );
+  LvArray::tensorOps::symRij_eq_AiBj_plus_AjBi< 3 >( compMatrix[1], mVec, tVec1 );
+  LvArray::tensorOps::symRij_eq_AiBj_plus_AjBi< 3 >( compMatrix[2], mVec, tVec2 );
 
   // scale by 0.5 the diagonal entries (it's like a strain)
   for( int ii = 0; ii<3; ii++ )
@@ -132,9 +132,9 @@ void assembleEquilibriumOperator( real64 ( & eqMatrix )[3][6],
                                   real64 const hInv )
 {
   // (n dyadic n), sym(n dyadic t1) and sym (n dyadic t2)
-  LvArray::tensorOps::Rij_eq_AiBj_plus_AjBi< 3 >( eqMatrix[0], nVec, nVec );
-  LvArray::tensorOps::Rij_eq_AiBj_plus_AjBi< 3 >( eqMatrix[1], nVec, tVec1 );
-  LvArray::tensorOps::Rij_eq_AiBj_plus_AjBi< 3 >( eqMatrix[2], nVec, tVec2 );
+  LvArray::tensorOps::symRij_eq_AiBj_plus_AjBi< 3 >( eqMatrix[0], nVec, nVec );
+  LvArray::tensorOps::symRij_eq_AiBj_plus_AjBi< 3 >( eqMatrix[1], nVec, tVec1 );
+  LvArray::tensorOps::symRij_eq_AiBj_plus_AjBi< 3 >( eqMatrix[2], nVec, tVec2 );
 
   for( int ii = 0; ii<3; ii++ )
   {
