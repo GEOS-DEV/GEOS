@@ -21,13 +21,19 @@
 namespace geosx
 {
 
+class CellElementSubRegionABC: public CellBlockABC, public ElementSubRegionBaseABC
+{
+public:
+  virtual localIndex sizeMock() const = 0; // FIXME size of what?
+};
+
 /**
  * @class CellElementSubRegion
  * Class deriving from CellBlock further specializing the element subregion
  * for a cell element. This is the class used in the physics solvers to
  * represent a collection of mesh cell elements
  */
-class CellElementSubRegion : public CellBlock
+class CellElementSubRegion : public CellBlock, public CellElementSubRegionABC
 {
 public:
 
@@ -81,6 +87,10 @@ public:
    */
   void addFracturedElement( localIndex const cellElemIndex,
                             localIndex const embSurfIndex );
+
+  localIndex sizeMock() const override {
+    return size();
+  }
 
   /**
    * @name Overriding packing / Unpacking functions

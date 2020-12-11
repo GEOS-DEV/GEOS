@@ -29,13 +29,19 @@
 namespace geosx
 {
 
+class EmbeddedSurfaceSubRegionABC: public SurfaceElementSubRegionABC
+{
+public:
+
+};
+
 /**
  * @class EmbeddedSurfaceSubRegion
  *
  * The EmbeddedSurfaceSubRegion class contains the functionality to support the concept of an embedded
  * surface element. It consists of a 2D surface that cuts a 3D matrix cell.
  */
-class EmbeddedSurfaceSubRegion : public SurfaceElementSubRegion
+class EmbeddedSurfaceSubRegion : public SurfaceElementSubRegion, public EmbeddedSurfaceSubRegionABC
 {
 public:
 

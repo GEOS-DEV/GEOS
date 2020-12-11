@@ -34,12 +34,20 @@ namespace geosx
 
 class MeshManager;
 
+class ElementRegionManagerABC
+{
+public:
+  virtual std::list< std::reference_wrapper< const CellElementRegionABC > > getCellElementRegions() const = 0;
+  virtual std::list< std::reference_wrapper< const WellElementRegionABC > > getWellElementRegions() const = 0;
+  virtual std::list< std::reference_wrapper< const SurfaceElementRegionABC > > getSurfaceElementRegions() const = 0;
+};
+
 /**
  * @class ElementRegionManager
  * @brief The ElementRegionManager class provides an interface to ObjectManagerBase in order to manage ElementRegion
  * data
  */
-class ElementRegionManager : public ObjectManagerBase
+class ElementRegionManager : public ObjectManagerBase, public ElementRegionManagerABC
 {
 public:
 
@@ -738,6 +746,70 @@ public:
       }
     } );
   }
+
+private:
+
+  template< class ER >
+  std::list< std::reference_wrapper< const ER > > getElementRegions() const
+  {
+    std::list< std::reference_wrapper< const ER > > result;
+
+    auto append = [&result]( ER const & er ) {
+      result.push_back( er );
+    };
+
+    this->forElementRegions< ER >( append );
+
+    return result;
+  }
+
+public:
+
+  /**
+   * @brief Returns the CellElementRegion of the region manager.
+   * @return An iterable to these elements.
+   *
+   * @note virtual for testing reasons, we should have an ABC nevertheless
+   * @note Will become std::views with CXX20?
+   */
+  virtual std::list< std::reference_wrapper< const CellElementRegionABC > > getCellElementRegions() const override
+  {
+    const auto & derivs = this->getElementRegions< CellElementRegion >();
+    std::list< std::reference_wrapper< const CellElementRegionABC > > bases( derivs.cbegin(), derivs.cend() );
+    return bases;
+//    return this->getElementRegions< CellElementRegion >();
+  }
+
+  /**
+ * @brief Returns the CellElementRegion of the region manager.
+ * @return An iterable to these elements.
+ *
+ * @note virtual for testing reasons, we should have an ABC nevertheless
+ * @note Will become std::views with CXX20?
+ */
+  virtual std::list< std::reference_wrapper< const WellElementRegionABC > > getWellElementRegions() const override
+  {
+    const auto & derivs = this->getElementRegions< WellElementRegion >();
+    std::list< std::reference_wrapper< const WellElementRegionABC > > bases( derivs.cbegin(), derivs.cend() );
+    return bases;
+//    return this->getElementRegions< WellElementRegion >();
+  }
+
+  /**
+  * @brief Returns the CellElementRegion of the region manager.
+  * @return An iterable to these elements.
+  *
+  * @note virtual for testing reasons, we should have an ABC nevertheless
+  * @note Will become std::views with CXX20?
+  */
+  virtual std::list< std::reference_wrapper< const SurfaceElementRegionABC > > getSurfaceElementRegions() const override
+  {
+    const auto & derivs = this->getElementRegions< SurfaceElementRegion >();
+    std::list< std::reference_wrapper< const SurfaceElementRegionABC > > bases( derivs.cbegin(), derivs.cend() );
+    return bases;
+//    return this->getElementRegions< SurfaceElementRegion >();
+  }
+
 
   /**
    * @brief This is a const function to construct a ElementViewAccessor to access the data registered on the mesh.

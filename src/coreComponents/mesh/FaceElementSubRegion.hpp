@@ -24,6 +24,11 @@
 namespace geosx
 {
 
+class FaceElementSubRegionABC: public SurfaceElementSubRegionABC
+{
+public:
+};
+
 /**
  * @class FaceElementSubRegion
  *
@@ -32,7 +37,7 @@ namespace geosx
  * and methods to support the specific geometry of an element comprised of a reduced dimensionality face element (i.e.
  * face area and aperture = volume)
  */
-class FaceElementSubRegion : public SurfaceElementSubRegion
+class FaceElementSubRegion : public SurfaceElementSubRegion, public FaceElementSubRegionABC
 {
 public:
 

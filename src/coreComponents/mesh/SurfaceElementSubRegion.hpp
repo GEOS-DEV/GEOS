@@ -28,13 +28,20 @@
 namespace geosx
 {
 
+class SurfaceElementSubRegionABC: public ElementSubRegionBaseABC
+{
+public:
+  virtual InterObjectRelation< ArrayOfArrays< localIndex > > const & getNodeListMock() const = 0;
+  virtual localIndex const & getNodeListMock( localIndex const k, localIndex a ) const = 0;
+};
+
 /**
  * @class SurfaceElementSubRegion
  *
  * The SurfaceElementSubRegion class contains the functionality to support the concept of a
  * surface element that can be either and embedded surface element or a face element.
  */
-class SurfaceElementSubRegion : public ElementSubRegionBase
+class SurfaceElementSubRegion : public ElementSubRegionBase, public SurfaceElementSubRegionABC
 {
 public:
 
@@ -109,6 +116,11 @@ public:
     return m_toNodesRelation;
   }
 
+  NodeMapType const & getNodeListMock() const override
+  {
+    return m_toNodesRelation;
+  }
+
   /**
    * @brief Get the local index of the a-th node of the k-th element.
    * @param[in] k the index of the element
@@ -121,6 +133,10 @@ public:
    * @copydoc nodeList( localIndex const k, localIndex a )
    */
   localIndex const & nodeList( localIndex const k, localIndex a ) const { return m_toNodesRelation( k, a ); }
+
+  localIndex const & getNodeListMock( localIndex const k, localIndex a ) const override {
+    return nodeList(k, a);
+  }
 
   /**
    * @brief Get the surface element to edges map.

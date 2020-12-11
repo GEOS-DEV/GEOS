@@ -30,6 +30,11 @@ class StableTimeStep;
 namespace geosx
 {
 
+class CellBlockABC{
+public:
+  virtual localIndex const & getNodeListMock( localIndex const k, localIndex a ) const = 0;
+};
+
 /**
  * @class CellBlock
  * Class deriving from ElementSubRegionBase specializing the element subregion
@@ -37,7 +42,7 @@ namespace geosx
  * element-to-node map, element-to-face map, and element-to-edge map) and
  * and methods to compute the geometry of an element (cell center and volume)
  */
-class CellBlock : public ElementSubRegionBase
+class CellBlock : public CellBlockABC, public ElementSubRegionBase
 {
 public:
 
@@ -234,6 +239,7 @@ public:
    * @copydoc nodeList( localIndex const k, localIndex a )
    */
   localIndex const & nodeList( localIndex const k, localIndex a ) const { return m_toNodesRelation( k, a ); }
+  localIndex const & getNodeListMock(localIndex const k, localIndex a) const override { return nodeList(k, a); }
 
   /**
    * @brief Get the element-to-edge map.

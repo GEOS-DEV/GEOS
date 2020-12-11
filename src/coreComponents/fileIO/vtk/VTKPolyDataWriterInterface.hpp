@@ -124,8 +124,12 @@ public:
    */
   void write( real64 time, integer cycle, DomainPartition const & domain );
 
-private:
+  void write( real64 time,
+              integer cycle,
+              ElementRegionManagerABC const & elemManager,
+              NodeManagerABC const & nodeManager );
 
+private:
   /*!
    * @brief Given a time-step \p time, returns the relative path
    * to the subfolder containing the files concerning this time-step
@@ -142,8 +146,8 @@ private:
    * @param[in] nodeManager the NodeManager containing the nodes of the domain to be output
    */
   void writeCellElementRegions( real64 time,
-                                ElementRegionManager const & elemManager,
-                                NodeManager const & nodeManager ) const;
+                                ElementRegionManagerABC const & elemManager,
+                                NodeManagerABC const & nodeManager ) const;
 
   /*!
    * @brief Gets the cell connectivities as
@@ -154,14 +158,14 @@ private:
    * the second value is a VTK object containing the connectivity information
    * */
   std::pair< std::vector< int >, vtkSmartPointer< vtkCellArray > >
-  getVtkCells( CellElementRegion const & er ) const;
+  getVtkCells( CellElementRegionABC const & er ) const;
 
   /*!
    * @brief Gets the vertices coordinates
    * as a VTK Object for \p nodeManager
    * @param[in] nodeManager the NodeManager associated with the domain being written
    */
-  vtkSmartPointer< vtkPoints > getVtkPoints( NodeManager const & nodeManager ) const;
+  vtkSmartPointer< vtkPoints > getVtkPoints( NodeManagerABC const & nodeManager ) const;
 
   /*!
    * @brief Writes the files containing the well representation
@@ -170,8 +174,8 @@ private:
    * @param[in] elemManager the ElementRegionManager containing the WellElementRegions to be output
    * @param[in] nodeManager the NodeManager containing the nodes of the domain to be output
    */
-  void writeWellElementRegions( real64 time, ElementRegionManager const & elemManager,
-                                NodeManager const & nodeManager ) const;
+  void writeWellElementRegions( real64 time, ElementRegionManagerABC const & elemManager,
+                                NodeManagerABC const & nodeManager ) const;
 
   /*!
    * @brief Gets the cell connectivities and the vertices coordinates
@@ -181,9 +185,8 @@ private:
    * @return a pair containing a VTKPoints (with the information on the vertices and their coordinates)
    * and a VTKCellArray (with the cell connectivities).
    */
-  std::pair< vtkSmartPointer< vtkPoints >, vtkSmartPointer< vtkCellArray > >
-  getWell( WellElementSubRegion const & esr,
-           NodeManager const & nodeManager ) const;
+  std::pair< vtkSmartPointer< vtkPoints >, vtkSmartPointer< vtkCellArray > > getWell( WellElementSubRegionABC const & esr,
+           NodeManagerABC const & nodeManager ) const;
 
   /*!
    * @brief Gets the cell connectivities and the vertices coordinates
@@ -193,9 +196,8 @@ private:
    * @return a pair containing a VTKPoints (with the information on the vertices and their coordinates)
    * and a VTKCellArray (with the cell connectivities).
    */
-  std::pair< vtkSmartPointer< vtkPoints >, vtkSmartPointer< vtkCellArray > >
-  getSurface( FaceElementSubRegion const & esr,
-              NodeManager const & nodeManager ) const;
+  std::pair< vtkSmartPointer< vtkPoints >, vtkSmartPointer< vtkCellArray > > getSurface( FaceElementSubRegionABC const & esr,
+                                                                                         NodeManagerABC const & nodeManager ) const;
 
   /*!
    * @brief Gets the cell connectivities and the vertices coordinates
@@ -208,8 +210,8 @@ private:
    * and a VTKCellArray (with the cell connectivities).
    */
   std::pair< vtkSmartPointer< vtkPoints >, vtkSmartPointer< vtkCellArray > >
-  getEmbeddedSurface( EmbeddedSurfaceSubRegion const & esr,
-                      NodeManager const & nodeManager ) const;
+  getEmbeddedSurface( EmbeddedSurfaceSubRegionABC const & esr,
+                      NodeManagerABC const & nodeManager ) const;
 
   /*!
    * @brief Writes the files containing the faces elements
@@ -219,8 +221,8 @@ private:
    * @param[in] nodeManager the NodeManager containing the nodes of the domain to be output
    */
   void writeSurfaceElementRegions( real64 time,
-                                   ElementRegionManager const & elemManager,
-                                   NodeManager const & nodeManager ) const;
+                                   ElementRegionManagerABC const & elemManager,
+                                   NodeManagerABC const & nodeManager ) const;
 
   /*!
    * @brief Writes a VTM file for the time-step \p time.
@@ -230,7 +232,7 @@ private:
    * @param[in] vtmWrite a writer specialized for the VTM file format
    */
   void writeVtmFile( real64 time,
-                     ElementRegionManager const & elemManager,
+                     ElementRegionManagerABC const & elemManager,
                      VTKVTMWriter const & vtmWriter ) const;
 
   /*!
@@ -239,16 +241,22 @@ private:
    * @param[in] nodeManager the NodeManager associated with the domain being written
    */
   void writeNodeFields( vtkSmartPointer< vtkPointData > pointdata,
-                        NodeManager const & nodeManager ) const;
+                        NodeManagerABC const & nodeManager ) const;
 
   /*!
    * @brief Writes all the fields associated to the elements of \p er if their plotlevel is <= m_plotLevel
    * @param[in] celldata a VTK object containing all the fields associated with the elements
    * @param[in] er ElementRegion being written
    */
-  template< class SUBREGION >
-  void writeElementFields( vtkSmartPointer< vtkCellData > celldata,
-                           ElementRegionBase const & er ) const;
+//  template< class SUBREGION >
+//  void writeElementFields( vtkSmartPointer< vtkCellData > celldata,
+                           ElementRegionBaseABC const & er ) const;
+//
+//  template< class ELEMENT_REGION >
+//  void MyWriteElementFields( vtkSmartPointer< vtkCellData > const celldata, ELEMENT_REGION const & er ) const;
+
+  template< class PREDICATE >
+  void writeElementFieldsPredicate( vtkSmartPointer< vtkCellData > const celldata, ElementRegionBaseABC const & er, PREDICATE p ) const;
 
   /*!
    * @brief Writes a field from \p wrapperBase
@@ -260,10 +268,11 @@ private:
    * @param[in,out] a counter that is incremented each time a value is written. This is useful
    * for CellElementSubRegion.
    */
-  void writeField( dataRepository::WrapperBase const & wrapperBase,
+//  void writeField( dataRepository::WrapperBase const & wrapperBase,
                    vtkSmartPointer< VTKGEOSXData > data,
                    localIndex size,
                    localIndex & count ) const;
+  void writeField( FieldABC const & field, vtkSmartPointer< VTKGEOSXData > data, localIndex size, localIndex & count ) const;
 
   /*!
    * @brief Writes an unstructured grid

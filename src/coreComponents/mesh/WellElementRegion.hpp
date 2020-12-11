@@ -28,13 +28,20 @@ namespace geosx
 
 class MeshLevel;
 
+class WellElementRegionABC: public ElementRegionBaseABC
+{
+public:
+  virtual WellElementSubRegion const * getWellElementSubRegion() const = 0;
+  virtual std::list< std::reference_wrapper< const WellElementSubRegionABC > > getElementSubRegionsSpec() const = 0;
+};
+
 /**
  * @class WellElementRegion
  * @brief This class specializes the element region for the case
  *        of a well. This class is also in charge of starting the
  *        construction of the well data structure in GenerateWell.
  */
-class WellElementRegion : public ElementRegionBase
+class WellElementRegion : public ElementRegionBase, public WellElementRegionABC
 {
 public:
 
@@ -110,6 +117,12 @@ public:
    * @return the name of the subRegion object
    */
   string const & getSubRegionName() const { return m_subRegionName; }
+
+
+  virtual WellElementSubRegion const * getWellElementSubRegion() const override
+  {
+    return getSubRegion( 0 )->groupCast< WellElementSubRegion const * >();
+  }
 
   ///@}
 

@@ -27,6 +27,22 @@ namespace geosx
 class EdgeManager;
 class EmbeddedSurfaceGenerator;
 
+class CellElementRegionABC: public ElementRegionBaseABC
+{
+public:
+  virtual localIndex getNElementsInCellElementSubRegion() const = 0;
+  virtual std::list< std::reference_wrapper< const CellElementSubRegionABC > > getCellElementSubRegions() const = 0;
+  virtual std::list< std::reference_wrapper< const CellElementSubRegionABC > > getElementSubRegionsSpec() const
+  {
+    return getCellElementSubRegions();
+  }
+  virtual localIndex getCellElementNbr() const = 0;
+  virtual localIndex getSpecElementNbr() const
+  {
+    return getCellElementNbr();
+  }
+};
+
 /**
  * @class CellElementRegion
  *
@@ -35,7 +51,7 @@ class EmbeddedSurfaceGenerator;
  *
  *
  */
-class CellElementRegion : public ElementRegionBase
+class CellElementRegion : public ElementRegionBase, public CellElementRegionABC
 {
 public:
 
@@ -120,6 +136,36 @@ public:
     static constexpr char const * sourceCellBlockNamesString() {return "cellBlocks"; }
   };
 
+  /**
+   * @brief Returns the number of elements in all the cell elememts sub-regions.
+   * @return An integer
+   *
+   * @note virtual for testing reasons, we should have an ABC nevertheless.
+   */
+  virtual localIndex getNElementsInCellElementSubRegion() const override
+  {
+    return this->getNumberOfElements < CellElementSubRegion >();
+  }
+
+  /**
+   * @brief Returns the CellElementSubRegion of the region manager.
+   * @return An iterable to these elements.
+   *
+   * @note virtual for testing reasons, we should have an ABC nevertheless
+   * @note Will become std::views with CXX20?
+   */
+  virtual std::list< std::reference_wrapper< const CellElementSubRegionABC > > getCellElementSubRegions() const override
+  {
+    std::list< std::reference_wrapper< const CellElementSubRegionABC > > result;
+
+    auto append = [&result]( CellElementSubRegionABC const & er ) {
+      result.push_back( er );
+    };
+
+    this->forElementSubRegions< CellElementSubRegionABC >( append );
+
+    return result;
+  }
 
 private:
 

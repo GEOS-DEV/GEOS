@@ -29,6 +29,20 @@ namespace geosx
 
 class EdgeManager;
 
+class SurfaceElementRegionABC: public ElementRegionBaseABC
+{
+public:
+  enum class SurfaceSubRegionType : integer
+  {
+    faceElement,
+    embeddedElement
+  };
+
+  virtual EmbeddedSurfaceSubRegionABC const * getEmbeddedSurfaceSubRegion() const = 0;
+  virtual FaceElementSubRegionABC const * getFaceElementSubRegion() const = 0;
+  virtual SurfaceSubRegionType subRegionType() const = 0;
+};
+
 /**
  * @class SurfaceElementRegion
  *
@@ -36,7 +50,7 @@ class EdgeManager;
  * element hierarchy. SurfaceElementRegion derives from ElementRegion and has an entry in the ObjectManagerBase
  * catalog.
  */
-class SurfaceElementRegion : public ElementRegionBase
+class SurfaceElementRegion : public ElementRegionBase, public SurfaceElementRegionABC
 {
 public:
 
@@ -45,11 +59,11 @@ public:
    *
    * The options for the surface subregion type
    */
-  enum class SurfaceSubRegionType : integer
-  {
-    faceElement,
-    embeddedElement
-  };
+//  enum class SurfaceSubRegionType : integer
+//  {
+//    faceElement,
+//    embeddedElement
+//  };
 
   /**
    * @name Constructor / Destructor
@@ -135,9 +149,20 @@ public:
    * @brief Get subRegion type.
    * @return subRegion type
    */
-  SurfaceSubRegionType subRegionType() const { return m_subRegionType; }
+  SurfaceSubRegionType subRegionType() const override
+  {
+    return m_subRegionType;
+  }
 
+  EmbeddedSurfaceSubRegion const * getEmbeddedSurfaceSubRegion() const override
+  {
+    return this->getSubRegion( 0 )->groupCast< EmbeddedSurfaceSubRegion const * >();
+  }
 
+  FaceElementSubRegion const * getFaceElementSubRegion() const override
+  {
+    return this->getSubRegion( 0 )->groupCast< FaceElementSubRegion const * >();
+  }
   ///@}
 
   /**

@@ -28,6 +28,16 @@ class StableTimeStep;
 
 class FaceManager;
 
+class ElementRegionBaseABC
+{
+public:
+  virtual const string getNameMock() const = 0; // TODO preventing naming collision for now
+  virtual const string getCatalogNameMock() const = 0; // TODO preventing naming collision for now
+  virtual localIndex nElementsMock() const = 0; // TODO preventing naming collision for now
+  // FIXME use pointers instead of reference_wrapper ?
+  virtual std::list< std::reference_wrapper< const ElementSubRegionBaseABC > > getElementSubRegions() const = 0;
+};
+
 /**
  * @class ElementRegionBase
  * @brief The ElementRegionBase is the base class to manage the data stored at the element level.
@@ -35,7 +45,7 @@ class FaceManager;
  * The ElementRegion base is the base class for classes such as CellElementRegion, FaceElementRegion,
  * WellElementRegion, and EmbeddedSurfaceRegion.
  */
-class ElementRegionBase : public ObjectManagerBase
+class ElementRegionBase : public ObjectManagerBase, public ElementRegionBaseABC
 {
 public:
 
@@ -48,6 +58,16 @@ public:
    * @brief Deleted default constructor.
    */
   ElementRegionBase() = delete;
+
+  virtual const string getNameMock() const override
+  {
+    return this->getName();
+  }
+
+  virtual const string getCatalogNameMock() const override
+  {
+    return this->getCatalogName();
+  }
 
   /**
    * @brief Main constructor.
@@ -159,6 +179,11 @@ public:
       numElem += cellBlock.size();
     } );
     return numElem;
+  }
+
+  virtual localIndex nElementsMock() const override
+  {
+    return this->getNumberOfElements<>();
   }
 
   /**
