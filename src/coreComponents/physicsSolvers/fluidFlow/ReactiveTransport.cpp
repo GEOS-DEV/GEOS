@@ -155,6 +155,24 @@ real64 ReactiveTransport::SolverStep( real64 const & time_n,
 
     boundaryConditionManager.ApplyInitialConditions( &domain );
 
+    localIndex const NC = m_numComponents;
+
+    MeshLevel & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
+
+    forTargetSubRegions( mesh, [&]( localIndex const, ElementSubRegionBase & subRegion )
+    {
+
+      arrayView2d< real64 > const kineticSpeciesReactionRate = subRegion.getReference< array2d< real64 > >( GeochemicalModel::viewKeyStruct::kineticSpeciesReactionRateString );
+
+      forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
+      {
+        for( localIndex c = 0; c < NC; ++c )
+        {
+          kineticSpeciesReactionRate[ei][c] = 0.0;
+        }
+      } );
+    } );
+
   }
 
   PreStepUpdate( time_n, dt, domain );
@@ -238,6 +256,7 @@ void ReactiveTransport::ImplicitStepComplete( real64 const & GEOSX_UNUSED_PARAM(
       for( localIndex c = 0; c < NC; ++c )
       {
         componentConc[ei][c] += dComponentConc[ei][c];
+
       }
     } );
   } );
@@ -311,6 +330,8 @@ void ReactiveTransport::AssembleAccumulationTerms( real64 const dt,
 
     arrayView1d< real64 const > const & porosity = subRegion.getReference< array1d< real64 > >( viewKeyStruct::referencePorosityString );
 
+    arrayView2d< real64 const > const kineticSpeciesReactionRate = subRegion.getReference< array2d< real64 > >( GeochemicalModel::viewKeyStruct::kineticSpeciesReactionRateString );
+
     AccumulationKernel::Launch( subRegion.size(),
                                 m_numComponents,
                                 m_numDofPerCell,
@@ -319,6 +340,7 @@ void ReactiveTransport::AssembleAccumulationTerms( real64 const dt,
                                 elemGhostRank,
                                 componentConc,
                                 deltaComponentConc,
+                                kineticSpeciesReactionRate,
                                 porosity,
                                 volume,
                                 dt,

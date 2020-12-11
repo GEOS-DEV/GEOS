@@ -35,9 +35,11 @@ set( constitutive_headers
      fluid/ParticleFluidBase.hpp
      fluid/particleFluidSelector.hpp
      fluid/ParticleFluid.hpp
-     fluid/ReactiveFluidBase.hpp     
+     fluid/ReactiveFluidBase.hpp
+     fluid/ThermoDatabases/EQ36Database.hpp
+     fluid/ThermoDatabases/KineticReactionsBase.hpp     
+     fluid/ThermoDatabases/MineralReactions.hpp     
      fluid/ThermoDatabases/ThermoDatabaseBase.hpp
-     fluid/ThermoDatabases/EQ36Database.hpp     
      solid/Damage.hpp
      solid/LinearElasticAnisotropic.hpp
      solid/LinearElasticIsotropic.hpp
@@ -87,7 +89,8 @@ set( constitutive_sources
      fluid/ParticleFluidBase.cpp
      fluid/ParticleFluid.cpp               
      fluid/ReactiveFluidBase.cpp
-     fluid/ThermoDatabases/EQ36Database.cpp          
+     fluid/ThermoDatabases/EQ36Database.cpp
+     fluid/ThermoDatabases/MineralReactions.cpp          
      solid/Damage.cpp
      solid/LinearElasticAnisotropic.cpp
      solid/LinearElasticIsotropic.cpp

@@ -21,7 +21,6 @@
  */
 
 #include "EquilibratedChemicalFluid.hpp"
-#include "ThermoDatabases/ThermoDatabaseBase.hpp"
 
 namespace geosx
 {
@@ -92,6 +91,16 @@ EquilibratedChemicalFluid::EquilibratedChemicalFluid( std::string const & name, 
   registerWrapper( viewKeyStruct::activityCoefModelString, &m_activityCoefModelString )->
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "Activity coefficient model" );
+
+  registerWrapper( viewKeyStruct::kineticReactionTypeString, &m_kineticReactionTypeString )->
+    setInputFlag( InputFlags::OPTIONAL )->
+    setDescription( "Kinetic reaction" );
+
+  registerWrapper( viewKeyStruct::kineticReactionFileString, &m_kineticReactionFileName )->
+    setInputFlag( InputFlags::OPTIONAL )->
+    setDescription( "Kineitc reaction file name" );
+
+
 }
 
 EquilibratedChemicalFluid::~EquilibratedChemicalFluid() = default;
@@ -150,9 +159,13 @@ void EquilibratedChemicalFluid::ResizeFields( localIndex size )
 
   localIndex const NBasis = numBasisSpecies();
   localIndex const NDependent = numDependentSpecies();
+  localIndex const NReaction = numKineticReaction();
 
+  m_concentrationAct.resize( size, NBasis );
   m_dependentConc.resize( size, NDependent + 1 );
   m_dDependentConc_dConc.resize( size, NDependent + 1, NBasis + 1 );
+
+  m_kineticReactionRate.resize( size, NReaction );
 
 }
 
@@ -203,12 +216,17 @@ void EquilibratedChemicalFluid::ReadDatabase()
 
   }
 
+
+  if( !m_kineticReactions )
+    m_kineticReactions = ( KineticReactionsBase::CatalogInterface::Factory( m_kineticReactionTypeString, m_kineticReactionFileName, m_basisSpeciesNames ) );
+
+
 }
 
 void EquilibratedChemicalFluid::PointUpdate( real64 const & pressure, real64 const & temperature, arraySlice1d< real64 const > const & concentration, localIndex const k )
 {
 
-  Compute( pressure, temperature, concentration, m_dependentConc[k], m_dDependentConc_dConc[k], m_thermoDatabase );
+  Compute( pressure, temperature, concentration, m_dependentConc[k], m_dDependentConc_dConc[k], m_concentrationAct[k], m_thermoDatabase );
 
 }
 
@@ -313,6 +331,7 @@ void EquilibratedChemicalFluid::Compute( real64 const & pressure,
                                          arraySlice1d< real64 const > const & concentration,
                                          arraySlice1d< real64 > const & dependentConc,
                                          arraySlice2d< real64 > const & dDependentConc_dConc,
+                                         arraySlice1d< real64 > const & concentrationAct,
                                          ThermoDatabase & thermoDatabase )
 {
 
@@ -412,6 +431,59 @@ void EquilibratedChemicalFluid::Compute( real64 const & pressure,
 
   }
 
+  for( localIndex i = 0; i < NBasis; ++i )
+    concentrationAct[i] = concentration[i] + logActCoef1[i];
+
+}
+
+void EquilibratedChemicalFluid::PointUpdateKineticReactionRate( real64 const & temperature, arraySlice1d< real64 const > const & concentration, arraySlice1d< real64 const > const & surfaceArea0,
+                                                                arraySlice1d< real64 const > const & volumeFraction0, arraySlice1d< real64 const > const & volumeFraction, real64 const & porosity0,
+                                                                real64 const & porosity, localIndex const k )
+{
+
+  ComputeKineticReactionRate( temperature, concentration, surfaceArea0, volumeFraction0, volumeFraction, porosity0, porosity, m_kineticReactionRate[k], m_kineticReactions );
+
+}
+
+void EquilibratedChemicalFluid::ComputeKineticReactionRate( real64 const & temperature,
+                                                            arraySlice1d< real64 const > const & concentration,
+                                                            arraySlice1d< real64 const > const & surfaceArea0,
+                                                            arraySlice1d< real64 const > const & volumeFraction0,
+                                                            arraySlice1d< real64 const > const & volumeFraction,
+                                                            real64 const & porosity0,
+                                                            real64 const & porosity,
+                                                            arraySlice1d< real64 > const & kineticReactionRate,
+                                                            KineticReactions & kineticReactions )
+{
+
+  static const real64 RConst = 8.314;
+
+  const array1d< KineticReaction > & kineticReactionArray = kineticReactions->GetKineticReactions();
+
+  for( localIndex ir = 0; ir < kineticReactionArray.size(); ++ir )
+  {
+
+    const KineticReaction & kineticReaction = kineticReactionArray[ir];
+    const array1d< localIndex > & basisSpeciesIndices = kineticReaction.basisSpeciesIndices;
+
+    real64 SIndex = -kineticReaction.logK;
+
+    for( localIndex ic = 0; ic < kineticReaction.stochs.size(); ++ic )
+    {
+
+      SIndex += kineticReaction.stochs[ic] * concentration[basisSpeciesIndices[ic] ];
+
+    }
+
+    real64 S = surfaceArea0[ir] * pow( volumeFraction[ir] / volumeFraction0[ir], 2.0/3.0 ) * pow( porosity / porosity0, 2.0/3.0 );
+
+    real64 rateTemp = exp( -kineticReaction.E / RConst * (1.0 / (temperature + 273.15) - 1.0 / 298.15));
+
+    real64 SS = (pow( 10.0, SIndex ) - 1.0);
+
+    kineticReactionRate[ir] = S * kineticReaction.rateConst * rateTemp * SS;
+
+  }
 
 }
 

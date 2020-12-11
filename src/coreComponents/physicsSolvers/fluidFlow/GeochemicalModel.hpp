@@ -196,7 +196,17 @@ public:
     static constexpr auto concentrationNewString      = "concentrationNew";
     static constexpr auto outputSpeciesFileNameString      = "outputSpeciesFileName";
     static constexpr auto geochemicalModelString      = "geochemicalModel";
-    static constexpr auto fixedHplusString      = "fixedHplus";    
+    static constexpr auto fixedHplusString      = "fixedHplus";
+
+    static constexpr auto kineticSpeciesReactionRateString      = "kineticSpeciesReactionRate";
+
+    static constexpr auto initialMineralSurfaceAreaString      = "initialMineralSurfaceArea";
+
+    static constexpr auto initialMineralVolumeFractionString      = "initialMineralVolumeFraction";
+
+    static constexpr auto mineralVolumeFractionString      = "mineralVolumeFraction";
+
+    static constexpr auto initialPorosityString      = "initialPorosity";
 
   } viewKeysGeochemicalModel;
 
@@ -208,6 +218,10 @@ protected:
   virtual void InitializePostInitialConditions_PreSubGroups( dataRepository::Group * const rootGroup ) override;
 
 private:
+
+  void CalculateKineticReactionRates( DomainPartition & domain );
+
+  void UpdateRockProperties( real64 const & dt, DomainPartition & domain );
 
   /**
    * @brief Setup stored views into domain data for the current step
@@ -242,19 +256,33 @@ private:
 
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 > > m_concentrationNew;
 
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 > > m_kineticSpeciesReactionRate;
+
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 > > m_surfaceArea0;
+
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 > > m_theta0;
+
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 > > m_theta;
+
   /// views into material fields
 
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_dependentConc;
   ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > m_dDependentConc_dConc;
 
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_concentrationAct;
+
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_kineticReactionRate;
+
   array1d< string > m_reactiveFluidNames;
   array1d< localIndex > m_numBasisSpecies;
   array1d< localIndex > m_numDependentSpecies;
 
+  array1d< localIndex > m_numKineticReaction;
+
   string m_outputSpeciesFileName;
 
   integer m_fixedHplus;
-  
+
   //Below is not used in GeochemicalModel model
 
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > m_porosity;

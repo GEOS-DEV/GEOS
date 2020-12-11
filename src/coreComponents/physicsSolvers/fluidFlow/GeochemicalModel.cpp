@@ -40,6 +40,11 @@
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
 
+#include "Teuchos_SerialDenseSolver.hpp"
+#include "Teuchos_SerialDenseMatrix.hpp"
+#include "Teuchos_SerialDenseVector.hpp"
+
+#include "constitutive/fluid/ThermoDatabases/KineticReactionsBase.hpp"
 
 /**
  * @namespace the geosx namespace that encapsulates the majority of the code
@@ -67,7 +72,7 @@ GeochemicalModel::GeochemicalModel( const std::string & name,
     setApplyDefaultValue( 0 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Whether Hplus is fixed" );
-  
+
 }
 
 void GeochemicalModel::RegisterDataOnMesh( Group * const MeshBodies )
@@ -96,6 +101,16 @@ void GeochemicalModel::RegisterDataOnMesh( Group * const MeshBodies )
       subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::totalConcentrationString )->setPlotLevel( PlotLevel::LEVEL_0 );
       subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::concentrationNewString );
 
+      subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::initialPorosityString );
+
+      subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::kineticSpeciesReactionRateString )->setPlotLevel( PlotLevel::LEVEL_0 );
+
+      subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::initialMineralSurfaceAreaString );
+
+      subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::initialMineralVolumeFractionString );
+
+      subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::mineralVolumeFractionString )->setPlotLevel( PlotLevel::LEVEL_0 );
+
     } );
 
   }
@@ -112,6 +127,8 @@ void GeochemicalModel::InitializePreSubGroups( Group * const rootGroup )
 
   m_numBasisSpecies.resize( m_reactiveFluidNames.size() );
   m_numDependentSpecies.resize( m_reactiveFluidNames.size() );
+  m_numKineticReaction.resize( m_reactiveFluidNames.size() );
+
   this->forTargetSubRegions( meshLevel,
                              [&]
                                ( localIndex const targetRegionIndex,
@@ -126,6 +143,10 @@ void GeochemicalModel::InitializePreSubGroups( Group * const rootGroup )
                     "FlowSolverBase::m_numDofPerCell is set inconsistently. "
                     "Implementation not yet capable of having a different number of dof per cell across regions." );
     m_numDofPerCell = m_numBasisSpecies[targetRegionIndex];
+
+
+    m_numKineticReaction[targetRegionIndex]  = reactiveFluid.numKineticReaction();
+
   } );
 
 
@@ -148,6 +169,15 @@ void GeochemicalModel::ResizeFields( MeshLevel * const meshLevel )
     subRegion.getReference< array2d< real64 > >( viewKeyStruct::deltaConcentrationString ).resizeDimension< 1 >( NC );
     subRegion.getReference< array2d< real64 > >( viewKeyStruct::totalConcentrationString ).resizeDimension< 1 >( NC );
     subRegion.getReference< array2d< real64 > >( viewKeyStruct::concentrationNewString ).resizeDimension< 1 >( NC );
+
+    subRegion.getReference< array2d< real64 > >( viewKeyStruct::kineticSpeciesReactionRateString ).resizeDimension< 1 >( NC );
+
+    localIndex const NR = m_numKineticReaction[targetRegionIndex];
+
+    subRegion.getReference< array2d< real64 > >( viewKeyStruct::initialMineralSurfaceAreaString ).resizeDimension< 1 >( NR );
+    subRegion.getReference< array2d< real64 > >( viewKeyStruct::initialMineralVolumeFractionString ).resizeDimension< 1 >( NR );
+    subRegion.getReference< array2d< real64 > >( viewKeyStruct::mineralVolumeFractionString ).resizeDimension< 1 >( NR );
+
 
   } );
 
@@ -226,7 +256,7 @@ real64 GeochemicalModel::SolverStep( real64 const & time_n,
                      domain );
 
 
-  // currently the only method is implicit time integration
+
   dt_return= this->NonlinearImplicitStep( time_n,
                                           dt,
                                           cycleNumber,
@@ -266,6 +296,7 @@ void GeochemicalModel::ImplicitStepSetup( real64 const & time_n,
     arrayView2d< real64 > const & conc   = m_concentration[er][esr];
     arrayView2d< real64 > const & totalConc   = m_totalConcentration[er][esr];
 
+    //    arrayView2d< real64 > const & kineticSpeciesReactionRate = m_kineticSpeciesReactionRate[er][esr];
 
     forAll< serialPolicy >( subRegion.size(), [=] ( localIndex const ei )
     {
@@ -293,7 +324,7 @@ void GeochemicalModel::ImplicitStepSetup( real64 const & time_n,
 }
 
 void GeochemicalModel::ImplicitStepComplete( real64 const & time_n,
-                                             real64 const & GEOSX_UNUSED_PARAM( dt ),
+                                             real64 const & dt,
                                              DomainPartition & domain )
 {
   GEOSX_MARK_FUNCTION;
@@ -310,7 +341,7 @@ void GeochemicalModel::ImplicitStepComplete( real64 const & time_n,
   {
 
 
-    ReactiveFluidBase const & reactiveFluid  = GetConstitutiveModel< ReactiveFluidBase >( subRegion, m_reactiveFluidNames[targetRegionIndex] );
+    ReactiveFluidBase & reactiveFluid  = GetConstitutiveModel< ReactiveFluidBase >( subRegion, m_reactiveFluidNames[targetRegionIndex] );
 
     arrayView1d< bool > const isHplus = reactiveFluid.IsHplus();
 
@@ -350,6 +381,147 @@ void GeochemicalModel::ImplicitStepComplete( real64 const & time_n,
 
   WriteSpeciesToFile( &domain, time_n );
 
+
+  // Calculate reaction rates
+  CalculateKineticReactionRates( domain );
+
+  // Update rock properties
+  UpdateRockProperties( dt, domain );
+
+
+}
+
+void GeochemicalModel::UpdateRockProperties( real64 const & dt,
+                                             DomainPartition & domain )
+{
+  GEOSX_MARK_FUNCTION;
+
+  MeshLevel & mesh = *(domain.getMeshBody( 0 )->getMeshLevel( 0 ));
+
+  forTargetSubRegionsComplete( mesh,
+                               [&]
+                                 ( localIndex const targetRegionIndex,
+                                 localIndex const er,
+                                 localIndex const esr,
+                                 ElementRegionBase & GEOSX_UNUSED_PARAM( region ),
+                                 ElementSubRegionBase & subRegion )
+  {
+
+    ReactiveFluidBase & reactiveFluid  = GetConstitutiveModel< ReactiveFluidBase >( subRegion, m_reactiveFluidNames[targetRegionIndex] );
+
+    arrayView1d< real64 > const & porosity = subRegion.getReference< array1d< real64 > >( viewKeyStruct::referencePorosityString );
+
+    arrayView2d< real64 > const & theta = m_theta[er][esr];
+
+    arrayView2d< real64 const > const & kineticReactionRate = m_kineticReactionRate[er][esr];
+
+    const array1d< KineticReaction > & kineticReactions = reactiveFluid.GetKineticReactions();
+
+    forAll< serialPolicy >( subRegion.size(), [&] ( localIndex const a )
+    {
+
+      real64 totalChange = 0.0;
+      real64 dTheta;
+
+      for( localIndex ir = 0; ir < kineticReactions.size(); ++ir )
+      {
+
+        const KineticReaction & kineticReaction = kineticReactions[ir];
+
+        dTheta = kineticReactionRate[a][ir] * kineticReaction.MW / kineticReaction.density * dt;
+
+        totalChange += dTheta;
+        theta[a][ir] += dTheta;
+        if( theta[a][ir] < 0.0 )
+          theta[a][ir] = 0.0;
+
+      }
+
+      porosity[a] -= totalChange;
+      if( porosity[a] < 0.0 )
+        porosity[a] = 0.0;
+      if( porosity[a] > 1.0 )
+        porosity[a] = 1.0;
+
+
+    } );
+
+  } );
+
+}
+
+void GeochemicalModel::CalculateKineticReactionRates( DomainPartition & domain )
+{
+  GEOSX_MARK_FUNCTION;
+
+  MeshLevel & mesh = *(domain.getMeshBody( 0 )->getMeshLevel( 0 ));
+
+  forTargetSubRegionsComplete( mesh,
+                               [&]
+                                 ( localIndex const targetRegionIndex,
+                                 localIndex const er,
+                                 localIndex const esr,
+                                 ElementRegionBase & GEOSX_UNUSED_PARAM( region ),
+                                 ElementSubRegionBase & subRegion )
+  {
+
+    ReactiveFluidBase & reactiveFluid  = GetConstitutiveModel< ReactiveFluidBase >( subRegion, m_reactiveFluidNames[targetRegionIndex] );
+
+    arrayView1d< real64 const > const & temp = subRegion.getReference< array1d< real64 > >( viewKeyStruct::temperatureString );
+
+    arrayView1d< real64 const > const & porosity0 = subRegion.getReference< array1d< real64 > >( viewKeyStruct::initialPorosityString );
+
+    arrayView1d< real64 const > const & porosity = subRegion.getReference< array1d< real64 > >( viewKeyStruct::referencePorosityString );
+
+    arrayView2d< real64 const > const & conc = m_concentrationAct[er][esr];
+    //    arrayView2d< real64 const > const & conc2 = m_concentration[er][esr];
+
+    arrayView2d< real64 > const & kineticSpeciesReactionRate = m_kineticSpeciesReactionRate[er][esr];
+
+    arrayView2d< real64 const > const & surfaceArea0 = m_surfaceArea0[er][esr];
+
+    arrayView2d< real64 const > const & theta0 = m_theta0[er][esr];
+
+    arrayView2d< real64 const > const & theta = m_theta[er][esr];
+
+    forAll< serialPolicy >( subRegion.size(), [&] ( localIndex const a )
+    {
+      reactiveFluid.PointUpdateKineticReactionRate( temp[a], conc[a], surfaceArea0[a], theta0[a], theta[a], porosity0[a], porosity[a], a );
+    } );
+
+    const array1d< KineticReaction > & kineticReactions = reactiveFluid.GetKineticReactions();
+
+    arrayView2d< real64 const > const & kineticReactionRate = m_kineticReactionRate[er][esr];
+
+    localIndex NBasis = m_numBasisSpecies[targetRegionIndex];
+
+    forAll< serialPolicy >( subRegion.size(), [&] ( localIndex const a )
+    {
+
+      for( localIndex ic = 0; ic < NBasis; ++ic )
+        kineticSpeciesReactionRate[a][ic] = 0.0;
+
+      for( localIndex ir = 0; ir < kineticReactions.size(); ++ir )
+      {
+
+        const KineticReaction & kineticReaction = kineticReactions[ir];
+
+        for( localIndex i = 0; i < (kineticReaction.stochs).size(); ++i )
+        {
+
+          localIndex j = (kineticReaction.basisSpeciesIndices)[i];
+
+          kineticSpeciesReactionRate[a][j] += -(kineticReaction.stochs)[i] * kineticReactionRate[a][ir];
+
+        }
+
+      }
+
+    } );
+
+
+  } );
+
 }
 
 void GeochemicalModel::SetupDofs( DomainPartition const & GEOSX_UNUSED_PARAM( domain ),
@@ -376,14 +548,8 @@ void GeochemicalModel::AssembleSystem( real64 const time,
 {
   GEOSX_MARK_FUNCTION;
 
-  /*
-  bool isInitialization = time <= 0.0 ? 1 : 0;
-
-  isInitialization = 0;
-  */
-
   bool isInitialization = m_fixedHplus == 0 ? 0 : 1;
-  
+
   AssembleAccumulationTerms( domain, dofManager, localMatrix, localRhs, isInitialization );
 
   AssembleFluxTerms( time,
@@ -463,7 +629,7 @@ void GeochemicalModel::AssembleAccumulationTerms( DomainPartition & domain,
           localAccumDOF[idof] = elemDOF + idof;
         }
 
-//        localAccumJacobian = 0.0;
+        //        localAccumJacobian = 0.0;
 
         for( localIndex ic = 0; ic < m_numBasisSpecies[targetRegionIndex]; ++ic )
         {
@@ -750,6 +916,19 @@ void GeochemicalModel::ResetViews( MeshLevel & mesh )
   m_concentrationOut =
     elemManager->ConstructViewAccessor< array2d< real64 >, arrayView2d< real64 > >( viewKeyStruct::concentrationOutString );
 
+  m_kineticSpeciesReactionRate =
+    elemManager->ConstructViewAccessor< array2d< real64 >, arrayView2d< real64 > >( viewKeyStruct::kineticSpeciesReactionRateString );
+
+  m_surfaceArea0 =
+    elemManager->ConstructViewAccessor< array2d< real64 >, arrayView2d< real64 > >( viewKeyStruct::initialMineralSurfaceAreaString );
+
+  m_theta0 =
+    elemManager->ConstructViewAccessor< array2d< real64 >, arrayView2d< real64 > >( viewKeyStruct::initialMineralVolumeFractionString );
+
+  m_theta =
+    elemManager->ConstructViewAccessor< array2d< real64 >, arrayView2d< real64 > >( viewKeyStruct::mineralVolumeFractionString );
+
+
   m_dependentConc =
     elemManager->ConstructMaterialArrayViewAccessor< real64, 2 >( ReactiveFluidBase::viewKeyStruct::dependentConcString,
                                                                   targetRegionNames(),
@@ -757,6 +936,18 @@ void GeochemicalModel::ResetViews( MeshLevel & mesh )
 
   m_dDependentConc_dConc =
     elemManager->ConstructMaterialArrayViewAccessor< real64, 3 >( ReactiveFluidBase::viewKeyStruct::dDependentConc_dConcString,
+                                                                  targetRegionNames(),
+                                                                  m_reactiveFluidNames );
+
+
+  m_concentrationAct =
+    elemManager->ConstructMaterialArrayViewAccessor< real64, 2 >( ReactiveFluidBase::viewKeyStruct::concentrationActString,
+                                                                  targetRegionNames(),
+                                                                  m_reactiveFluidNames );
+
+
+  m_kineticReactionRate =
+    elemManager->ConstructMaterialArrayViewAccessor< real64, 2 >( ReactiveFluidBase::viewKeyStruct::kineticReactionRateString,
                                                                   targetRegionNames(),
                                                                   m_reactiveFluidNames );
 

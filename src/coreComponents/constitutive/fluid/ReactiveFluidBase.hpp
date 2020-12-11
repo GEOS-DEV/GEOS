@@ -25,6 +25,8 @@
 
 #include "constitutive/ConstitutiveBase.hpp"
 #include "ThermoDatabases/ThermoDatabaseBase.hpp"
+#include "ThermoDatabases/KineticReactionsBase.hpp"
+
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
 
 namespace geosx
@@ -68,6 +70,13 @@ public:
 
   virtual void PointUpdate( real64 const & pressure, real64 const & temperature, arraySlice1d< real64 const > const & concentration, localIndex const k ) = 0;
 
+  virtual void PointUpdateKineticReactionRate( real64 const & temperature, arraySlice1d< real64 const > const & concentration, arraySlice1d< real64 const > const & surfaceArea0,
+                                               arraySlice1d< real64 const > const & volumeFraction0, arraySlice1d< real64 const > const & volumeFraction, real64 const & porosity0,
+                                               real64 const & porosity, localIndex const k ) = 0;
+
+  virtual localIndex numKineticReaction() const = 0;
+
+  virtual const array1d< KineticReaction > & GetKineticReactions() const = 0;
 
   localIndex numBasisSpecies() const
   {
@@ -83,7 +92,6 @@ public:
   {
     return m_isHplus;
   }
-
 
   localIndex numDependentSpecies() const
   {
@@ -112,6 +120,9 @@ public:
     static constexpr auto dependentConcString      = "dependentConc";
     static constexpr auto dDependentConc_dConcString  = "dDependentConc_dConc";
 
+    static constexpr auto concentrationActString      = "concentrationAct";
+    static constexpr auto kineticReactionRateString      = "kineticReactionRate";
+
     using ViewKey = dataRepository::ViewKey;
 
     ViewKey basisSpeciesNames = { basisSpeciesNamesString };
@@ -120,6 +131,10 @@ public:
 
     ViewKey dependentConc = { dependentConcString };
     ViewKey dDependentConc_dConc = { dDependentConc_dConcString };
+
+    ViewKey concentrationAct = { concentrationActString };
+
+    ViewKey kineticRactionRate = { kineticReactionRateString };
 
   } viewKeysReactiveFluidBase;
 
@@ -134,6 +149,10 @@ protected:
 
   array2d< real64 > m_dependentConc;
   array3d< real64 > m_dDependentConc_dConc;
+
+  array2d< real64 > m_concentrationAct;
+
+  array2d< real64 > m_kineticReactionRate;
 
   real64 m_logFO2g;
   real64 m_logActH2O;

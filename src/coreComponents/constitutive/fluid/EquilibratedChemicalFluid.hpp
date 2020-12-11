@@ -56,6 +56,15 @@ public:
 
   virtual void PointUpdate( real64 const & pressure, real64 const & temperature, arraySlice1d< real64 const > const & concentration, localIndex const k ) override;
 
+  virtual void PointUpdateKineticReactionRate( real64 const & temperature, arraySlice1d< real64 const > const & concentration, arraySlice1d< real64 const > const & surfaceArea0,
+                                               arraySlice1d< real64 const > const & volumeFraction0, arraySlice1d< real64 const > const & volumeFraction, real64 const & porosity0,
+                                               real64 const & porosity, localIndex const k ) override;
+
+  virtual localIndex numKineticReaction() const override { return m_kineticReactions->numReaction(); }
+
+  virtual const array1d< KineticReaction > & GetKineticReactions() const override { return m_kineticReactions->GetKineticReactions(); }
+
+
   // *** Data repository keys
 
   struct viewKeyStruct : public ReactiveFluidBase::viewKeyStruct
@@ -63,10 +72,16 @@ public:
     static constexpr auto databaseTypeString    = "databaseType";
     static constexpr auto databaseFileString      = "databaseFile";
     static constexpr auto activityCoefModelString  = "activityCoefModel";
+    static constexpr auto kineticReactionTypeString    = "kineticReactionType";
+    static constexpr auto kineticReactionFileString      = "kineticReactionFile";
+
 
     dataRepository::ViewKey databaseType    = { databaseTypeString    };
-    dataRepository::ViewKey databaseFile      = { databaseFileString      };
+    dataRepository::ViewKey databaseFile      = { databaseFileString };
     dataRepository::ViewKey activityCoefModel  = { activityCoefModelString  };
+
+    dataRepository::ViewKey kineticReactionType    = { kineticReactionTypeString    };
+    dataRepository::ViewKey kineticReactionFile      = { kineticReactionFileString };
 
   } viewKeysEquilibratedChemicalFluid;
 
@@ -80,7 +95,20 @@ private:
                 arraySlice1d< const real64 > const & concentration,
                 arraySlice1d< real64 > const & dependentConc,
                 arraySlice2d< real64 > const & dDependentConc_dConc,
+                arraySlice1d< real64 > const & concentrationAct,
                 ThermoDatabase & thermoDatabase );
+
+
+  void ComputeKineticReactionRate( real64 const & temperature,
+                                   arraySlice1d< real64 const > const & concentration,
+                                   arraySlice1d< real64 const > const & surfaceArea0,
+                                   arraySlice1d< real64 const > const & volumeFraction0,
+                                   arraySlice1d< real64 const > const & volumeFraction,
+                                   real64 const & porosity0,
+                                   real64 const & porosity,
+                                   arraySlice1d< real64 > const & kineticreactionRate,
+                                   KineticReactions & kineticReactions );
+
 
   void ReadDatabase();
 
@@ -106,6 +134,12 @@ private:
   ActivityCoefModel m_activityCoefModel;
 
   ThermoDatabase m_thermoDatabase;
+
+  KineticReactions m_kineticReactions;
+
+  string m_kineticReactionTypeString;
+
+  Path m_kineticReactionFileName;
 
 };
 

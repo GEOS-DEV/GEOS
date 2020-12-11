@@ -52,6 +52,9 @@ ReactiveFluidBase::ReactiveFluidBase( std::string const & name, Group * const pa
 
   registerWrapper( viewKeyStruct::dDependentConc_dConcString, &m_dDependentConc_dConc );
 
+  registerWrapper( viewKeyStruct::kineticReactionRateString, &m_kineticReactionRate );
+
+  registerWrapper( viewKeyStruct::concentrationActString, &m_concentrationAct );
 
 }
 

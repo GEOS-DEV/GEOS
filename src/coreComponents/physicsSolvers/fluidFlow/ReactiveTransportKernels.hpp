@@ -39,6 +39,8 @@ struct AccumulationKernel
   Compute( localIndex const NC,
            arraySlice1d< real64 const > const & componentConc,
            arraySlice1d< real64 const > const & dComponentConc,
+           arraySlice1d< real64 const > const & kineticSpeciesReactionRate,
+           real64 const effectiveVolume,
            real64 const volume,
            arraySlice1d< real64 > const & localAccum,
            arraySlice2d< real64 > const & localAccumJacobian );
@@ -52,6 +54,7 @@ struct AccumulationKernel
           arrayView1d< integer const > const & elemGhostRank,
           arrayView2d< real64 const > const & componentConc,
           arrayView2d< real64 const > const & dComponentConc,
+          arrayView2d< real64 const > const & kineticSpeciesReactionRate,
           arrayView1d< real64 const > const & porosity,
           arrayView1d< real64 const > const & volume,
           real64 const dt,

@@ -34,6 +34,8 @@ AccumulationKernel::
   Compute( localIndex const NC,
            arraySlice1d< real64 const > const &,
            arraySlice1d< real64 const > const & dComponentConc,
+           arraySlice1d< real64 const > const & kineticSpeciesReactionRate,
+           real64 const effectiveVolume,
            real64 const volume,
            arraySlice1d< real64 > const & localAccum,
            arraySlice2d< real64 > const & localAccumJacobian )
@@ -43,8 +45,8 @@ AccumulationKernel::
   for( localIndex c = 0; c < NC; ++c )
   {
 
-    localAccum[c] = dComponentConc[c] * volume;
-    localAccumJacobian[c][c] = volume;
+    localAccum[c] = dComponentConc[c] * effectiveVolume - kineticSpeciesReactionRate[c] * volume / 1000.0;
+    localAccumJacobian[c][c] = effectiveVolume;
 
   }
 }
@@ -59,6 +61,7 @@ AccumulationKernel::
           arrayView1d< integer const > const & elemGhostRank,
           arrayView2d< real64 const > const & componentConc,
           arrayView2d< real64 const > const & dComponentConc,
+          arrayView2d< real64 const > const & kineticSpeciesReactionRate,
           arrayView1d< real64 const > const & porosity,
           arrayView1d< real64 const > const & volume,
           real64 const dt,
@@ -79,7 +82,9 @@ AccumulationKernel::
       Compute( NC,
                componentConc[ei],
                dComponentConc[ei],
+               kineticSpeciesReactionRate[ei],
                effectiveVolume,
+               volume[ei],
                localAccum,
                localAccumJacobian );
 

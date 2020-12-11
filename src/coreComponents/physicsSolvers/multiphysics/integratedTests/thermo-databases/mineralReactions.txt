@@ -1,0 +1,13 @@
++--------------------------------------------------------------------
+*    name =   Calcite
+*    mol.wt. =   100.087 g/mol
+*    logK = 1.4011
+*    rateConst = 5e-9
+*    Ea  =  23.5e3
+*    density = 2.710e3
+
+     4 species in aqueous dissociation reaction:
+    -1.0000  Calcite                     -1.0000  H+
+     1.0000  Ca++                         1.0000  HCO3-
+* End reaction
++--------------------------------------------------------------------
