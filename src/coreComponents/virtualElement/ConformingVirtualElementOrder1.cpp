@@ -19,7 +19,7 @@ namespace geosx
         *elementManager.GetRegion<CellElementRegion>(regionIndex);
       CellElementSubRegion const & cellSubRegion =
         *cellRegion.GetSubRegion<CellElementSubRegion>(subRegionIndex);
-      arraySlice1d< localIndex const> cellToNodes = cellSubRegion.nodeList()[cellIndex];
+      CellElementSubRegion::NodeMapType const & cellToNodes = cellSubRegion.nodeList();
       FixedOneToManyRelation const & elementToFaceMap = cellSubRegion.faceList();
       arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > nodesCoords =
         nodeManager.referencePosition();
@@ -31,7 +31,7 @@ namespace geosx
       arrayView1d< real64 const > cellVolumes =	cellSubRegion.getElementVolume();
       arraySlice1d< real64 const > cellCenter = cellCenters[cellIndex];
       localIndex const numCellFaces = elementToFaceMap[cellIndex].size();
-      localIndex const numCellPoints = cellToNodes.size();
+      localIndex const numCellPoints = cellToNodes[cellIndex].size();
       numSupportPoints = numCellPoints;
 
       // Compute other geometrical properties.
@@ -40,7 +40,7 @@ namespace geosx
       map<localIndex, localIndex> cellPointsPosition;
       for(localIndex numVertex = 0; numVertex < numCellPoints; ++numVertex)
         cellPointsPosition.insert(std::pair<localIndex, localIndex>
-                                  (cellToNodes[numVertex], numVertex));
+                                  (cellToNodes(cellIndex,numVertex), numVertex));
       // - compute cell diameter.
       real64 cellDiameter = 0;
       for(localIndex numVertex = 0; numVertex < numCellPoints; ++numVertex)
@@ -48,8 +48,9 @@ namespace geosx
         for(localIndex numOthVertex = 0; numOthVertex < numVertex; ++numOthVertex)
         {
           array1d<real64> vertDiff(3);
-          LvArray::tensorOps::copy<3>(vertDiff, nodesCoords[cellToNodes(numVertex)]);
-          LvArray::tensorOps::subtract<3>(vertDiff, nodesCoords[cellToNodes(numOthVertex)]);
+          LvArray::tensorOps::copy<3>(vertDiff, nodesCoords[cellToNodes(cellIndex,numVertex)]);
+          LvArray::tensorOps::subtract<3>(vertDiff,
+                                          nodesCoords[cellToNodes(cellIndex,numOthVertex)]);
           real64 const candidateDiameter = LvArray::tensorOps::l2NormSquared<3>(vertDiff);
           if(cellDiameter < candidateDiameter)
             cellDiameter = candidateDiameter;
@@ -165,7 +166,7 @@ namespace geosx
       {
         for(localIndex pos = 0; pos < 3; ++pos)
           monomialVemDofs(pos, numVertex) = invCellDiameter*
-            (nodesCoords(cellToNodes(numVertex), pos) - cellCenter(pos));
+            (nodesCoords(cellToNodes(cellIndex,numVertex), pos) - cellCenter(pos));
       }
       for(localIndex numBasisFunction = 0; numBasisFunction < numCellPoints; ++numBasisFunction)
       {
