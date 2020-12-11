@@ -30,11 +30,11 @@ static void checkIntegralMeanConsistency( localIndex numBasisFunctions,
                                           array1d< real64 > const & basisFunctionsIntegralMean )
 {
   real64 sum = 0;
-  for(localIndex iBasisFun = 0; iBasisFun <  numBasisFunctions; ++iBasisFun)
+  for( localIndex iBasisFun = 0; iBasisFun <  numBasisFunctions; ++iBasisFun )
   {
-    sum += basisFunctionsIntegralMean(iBasisFun);
+    sum += basisFunctionsIntegralMean( iBasisFun );
   }
-  EXPECT_TRUE( abs(sum-1) < 1e-15 )
+  EXPECT_TRUE( abs( sum-1 ) < 1e-15 )
     << "Sum of basis functions integral mean is not 1, but " << sum << ". "
     << "The computed integral means are " << basisFunctionsIntegralMean;
 }
@@ -44,85 +44,85 @@ checkIntegralMeanDerivativesConsistency( localIndex numBasisFunctions,
                                          array2d< real64 > const & basisDerivativesIntegralMean )
 {
   real64 sumX = 0, sumY = 0, sumZ = 0;
-  for(localIndex iBasisFun = 0; iBasisFun <  numBasisFunctions; ++iBasisFun)
+  for( localIndex iBasisFun = 0; iBasisFun <  numBasisFunctions; ++iBasisFun )
   {
-    sumX += basisDerivativesIntegralMean(0, iBasisFun);
-    sumY += basisDerivativesIntegralMean(1, iBasisFun);
-    sumZ += basisDerivativesIntegralMean(2, iBasisFun);
+    sumX += basisDerivativesIntegralMean( 0, iBasisFun );
+    sumY += basisDerivativesIntegralMean( 1, iBasisFun );
+    sumZ += basisDerivativesIntegralMean( 2, iBasisFun );
   }
-  EXPECT_TRUE( abs(sumX) < 1e-15 )
+  EXPECT_TRUE( abs( sumX ) < 1e-15 )
     << "Sum of the x-derivatives of basis functions integral mean is not 0, but " << sumX << ". "
     << "The computed integral means are " << basisDerivativesIntegralMean[0];
-  EXPECT_TRUE( abs(sumY) < 1e-15 )
+  EXPECT_TRUE( abs( sumY ) < 1e-15 )
     << "Sum of the y-derivatives of basis functions integral mean is not 0, but " << sumY << ". "
     << "The computed integral means are " << basisDerivativesIntegralMean[1];
-  EXPECT_TRUE( abs(sumZ) < 1e-15 )
+  EXPECT_TRUE( abs( sumZ ) < 1e-15 )
     << "Sum of the z-derivatives of basis functions integral mean is not 0, but " << sumZ << ". "
     << "The computed integral means are " << basisDerivativesIntegralMean[2];
 }
 
 static void
 checkStabilizationMatrixConsistency
-( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodesCoords,
+  ( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodesCoords,
   localIndex const & cellIndex,
   CellElementSubRegion::NodeMapType const & cellToNodes,
   arrayView2d< real64 const > const & cellCenters,
-  array2d< real64 > const & stabilizationMatrix)
+  array2d< real64 > const & stabilizationMatrix )
 {
   localIndex const numCellPoints = cellToNodes[cellIndex].size();
 
   real64 cellDiameter = 0;
-  for(localIndex numVertex = 0; numVertex < numCellPoints; ++numVertex)
+  for( localIndex numVertex = 0; numVertex < numCellPoints; ++numVertex )
   {
-    for(localIndex numOthVertex = 0; numOthVertex < numVertex; ++numOthVertex)
+    for( localIndex numOthVertex = 0; numOthVertex < numVertex; ++numOthVertex )
     {
-      array1d<real64> vertDiff(3);
-      LvArray::tensorOps::copy<3>(vertDiff, nodesCoords[cellToNodes(cellIndex, numVertex)]);
-      LvArray::tensorOps::subtract<3>(vertDiff, nodesCoords[cellToNodes(cellIndex, numOthVertex)]);
-      real64 const candidateDiameter = LvArray::tensorOps::l2NormSquared<3>(vertDiff);
-      if(cellDiameter < candidateDiameter)
+      array1d< real64 > vertDiff( 3 );
+      LvArray::tensorOps::copy< 3 >( vertDiff, nodesCoords[cellToNodes( cellIndex, numVertex )] );
+      LvArray::tensorOps::subtract< 3 >( vertDiff, nodesCoords[cellToNodes( cellIndex, numOthVertex )] );
+      real64 const candidateDiameter = LvArray::tensorOps::l2NormSquared< 3 >( vertDiff );
+      if( cellDiameter < candidateDiameter )
         cellDiameter = candidateDiameter;
     }
   }
-  cellDiameter = LvArray::math::sqrt<real64>(cellDiameter);
+  cellDiameter = LvArray::math::sqrt< real64 >( cellDiameter );
   real64 const invCellDiameter = 1.0/cellDiameter;
 
-  array2d< real64 > monomialVemDofs(3, numCellPoints);
-  for(localIndex numVertex = 0; numVertex < numCellPoints; ++numVertex)
+  array2d< real64 > monomialVemDofs( 3, numCellPoints );
+  for( localIndex numVertex = 0; numVertex < numCellPoints; ++numVertex )
   {
-    for(localIndex pos = 0; pos < 3; ++pos)
-      monomialVemDofs(pos, numVertex) = invCellDiameter*
-        (nodesCoords(cellToNodes(cellIndex, numVertex), pos) - cellCenters(cellIndex, pos));
+    for( localIndex pos = 0; pos < 3; ++pos )
+      monomialVemDofs( pos, numVertex ) = invCellDiameter*
+                                          (nodesCoords( cellToNodes( cellIndex, numVertex ), pos ) - cellCenters( cellIndex, pos ));
   }
 
-  array1d<real64> stabTimeMonomialDofs(numCellPoints);
+  array1d< real64 > stabTimeMonomialDofs( numCellPoints );
   real64 stabTimeMonomialDofsNorm = 0;
-  for(localIndex i = 0; i < numCellPoints; ++i)
+  for( localIndex i = 0; i < numCellPoints; ++i )
   {
-    stabTimeMonomialDofs(i) = 0;
+    stabTimeMonomialDofs( i ) = 0;
     stabTimeMonomialDofsNorm = 0;
-    for(localIndex j = 0; j < numCellPoints; ++j)
+    for( localIndex j = 0; j < numCellPoints; ++j )
     {
-      stabTimeMonomialDofs(i) += stabilizationMatrix(i,j);
+      stabTimeMonomialDofs( i ) += stabilizationMatrix( i, j );
     }
-    stabTimeMonomialDofsNorm += stabTimeMonomialDofs(i)*stabTimeMonomialDofs(i);
+    stabTimeMonomialDofsNorm += stabTimeMonomialDofs( i )*stabTimeMonomialDofs( i );
   }
-  EXPECT_TRUE( abs(stabTimeMonomialDofsNorm) < 1e-15 )
+  EXPECT_TRUE( abs( stabTimeMonomialDofsNorm ) < 1e-15 )
     << "Product of stabilization matrix and monomial degrees of freedom is not zero for "
     << "monomial number 0. The computed product is " << stabTimeMonomialDofs;
-  for(localIndex monomInd = 0; monomInd < 3; ++monomInd)
+  for( localIndex monomInd = 0; monomInd < 3; ++monomInd )
   {
     stabTimeMonomialDofsNorm = 0;
-    for(localIndex i = 0; i < numCellPoints; ++i)
+    for( localIndex i = 0; i < numCellPoints; ++i )
     {
-      stabTimeMonomialDofs(i) = 0;
-      for(localIndex j = 0; j < numCellPoints; ++j)
+      stabTimeMonomialDofs( i ) = 0;
+      for( localIndex j = 0; j < numCellPoints; ++j )
       {
-        stabTimeMonomialDofs(i) += stabilizationMatrix(i,j)*monomialVemDofs(monomInd, j);
+        stabTimeMonomialDofs( i ) += stabilizationMatrix( i, j )*monomialVemDofs( monomInd, j );
       }
-      stabTimeMonomialDofsNorm += stabTimeMonomialDofs(i)*stabTimeMonomialDofs(i);
+      stabTimeMonomialDofsNorm += stabTimeMonomialDofs( i )*stabTimeMonomialDofs( i );
     }
-    EXPECT_TRUE( abs(stabTimeMonomialDofsNorm) < 1e-15 )
+    EXPECT_TRUE( abs( stabTimeMonomialDofsNorm ) < 1e-15 )
       << "Product of stabilization matrix and monomial degrees of freedom is not zero for "
       << "monomial number " << monomInd+1 << ". The computed product is " << stabTimeMonomialDofs;
   }
@@ -151,7 +151,7 @@ TEST( VirtualElementBase, unitCube )
     "  </ElementRegions>"
     "</Problem>";
   xmlWrapper::xmlDocument inputFile;
-  xmlWrapper::xmlResult xmlResult = inputFile.load_buffer(inputStream.c_str(), inputStream.size());
+  xmlWrapper::xmlResult xmlResult = inputFile.load_buffer( inputStream.c_str(), inputStream.size());
   if( !xmlResult )
   {
     GEOSX_LOG_RANK_0( "XML parsed with errors!" );
@@ -167,7 +167,7 @@ TEST( VirtualElementBase, unitCube )
   // Open mesh levels
   DomainPartition * domain  = problemManager->getDomainPartition();
   MeshManager * meshManager = problemManager->GetGroup< MeshManager >
-    ( problemManager->groupKeys.meshManager );
+                                ( problemManager->groupKeys.meshManager );
   meshManager->GenerateMeshLevels( domain );
   MeshLevel & mesh = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
   ElementRegionManager * elementManager = mesh.getElemManager();
@@ -177,25 +177,25 @@ TEST( VirtualElementBase, unitCube )
   problemManager->ProblemSetup();
 
   ConformingVirtualElementOrder1 vemElement;
-  vemElement.ComputeProjectors(mesh, 0, 0, 0);
+  vemElement.ComputeProjectors( mesh, 0, 0, 0 );
 
   checkIntegralMeanConsistency( vemElement.getNumSupportPoints(),
-                                vemElement.basisFunctionsIntegralMean);
-  checkIntegralMeanDerivativesConsistency(vemElement.getNumSupportPoints(),
-                                          vemElement.basisDerivativesIntegralMean);
+                                vemElement.basisFunctionsIntegralMean );
+  checkIntegralMeanDerivativesConsistency( vemElement.getNumSupportPoints(),
+                                           vemElement.basisDerivativesIntegralMean );
 
   NodeManager const & nodeManager = *mesh.getNodeManager();
   CellElementRegion const & cellRegion =
-    *elementManager->GetRegion<CellElementRegion>(0);
+    *elementManager->GetRegion< CellElementRegion >( 0 );
   CellElementSubRegion const & cellSubRegion =
-    *cellRegion.GetSubRegion<CellElementSubRegion>(0);
+    *cellRegion.GetSubRegion< CellElementSubRegion >( 0 );
   CellElementSubRegion::NodeMapType const & cellToNodes = cellSubRegion.nodeList();
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > nodesCoords =
     nodeManager.referencePosition();
   arrayView2d< real64 const > cellCenters = cellSubRegion.getElementCenter();
   localIndex const cellIndex = 0;
-  checkStabilizationMatrixConsistency(nodesCoords, cellIndex, cellToNodes, cellCenters,
-                                      vemElement.stabilizationMatrix);
+  checkStabilizationMatrixConsistency( nodesCoords, cellIndex, cellToNodes, cellCenters,
+                                       vemElement.stabilizationMatrix );
 
   delete problemManager;
 }
@@ -223,7 +223,7 @@ TEST( VirtualElementBase, wedges )
     "  </ElementRegions>"
     "</Problem>";
   xmlWrapper::xmlDocument inputFile;
-  xmlWrapper::xmlResult xmlResult = inputFile.load_buffer(inputStream.c_str(), inputStream.size());
+  xmlWrapper::xmlResult xmlResult = inputFile.load_buffer( inputStream.c_str(), inputStream.size());
   if( !xmlResult )
   {
     GEOSX_LOG_RANK_0( "XML parsed with errors!" );
@@ -239,7 +239,7 @@ TEST( VirtualElementBase, wedges )
   // Open mesh levels
   DomainPartition * domain  = problemManager->getDomainPartition();
   MeshManager * meshManager = problemManager->GetGroup< MeshManager >
-    ( problemManager->groupKeys.meshManager );
+                                ( problemManager->groupKeys.meshManager );
   meshManager->GenerateMeshLevels( domain );
   MeshLevel & mesh = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
   ElementRegionManager * elementManager = mesh.getElemManager();
@@ -250,26 +250,26 @@ TEST( VirtualElementBase, wedges )
 
   ConformingVirtualElementOrder1 vemElement;
   CellElementRegion const & cellRegion =
-    *elementManager->GetRegion<CellElementRegion>(0);
+    *elementManager->GetRegion< CellElementRegion >( 0 );
   CellElementSubRegion const & cellSubRegion =
-    *cellRegion.GetSubRegion<CellElementSubRegion>(0);
+    *cellRegion.GetSubRegion< CellElementSubRegion >( 0 );
   NodeManager const & nodeManager = *mesh.getNodeManager();
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > nodesCoords =
     nodeManager.referencePosition();
   CellElementSubRegion::NodeMapType const & cellToNodes = cellSubRegion.nodeList();
   arrayView2d< real64 const > cellCenters = cellSubRegion.getElementCenter();
   localIndex const numCells = cellSubRegion.getElementVolume().size();
-  for(localIndex cellIndex = 0; cellIndex < numCells; ++cellIndex)
+  for( localIndex cellIndex = 0; cellIndex < numCells; ++cellIndex )
   {
-    vemElement.ComputeProjectors(mesh, 0, 0, cellIndex);
+    vemElement.ComputeProjectors( mesh, 0, 0, cellIndex );
     checkIntegralMeanConsistency( vemElement.getNumSupportPoints(),
-                                  vemElement.basisFunctionsIntegralMean);
-    checkIntegralMeanDerivativesConsistency(vemElement.getNumSupportPoints(),
-                                            vemElement.basisDerivativesIntegralMean);
+                                  vemElement.basisFunctionsIntegralMean );
+    checkIntegralMeanDerivativesConsistency( vemElement.getNumSupportPoints(),
+                                             vemElement.basisDerivativesIntegralMean );
 
 
-    checkStabilizationMatrixConsistency(nodesCoords, cellIndex, cellToNodes, cellCenters,
-                                        vemElement.stabilizationMatrix);
+    checkStabilizationMatrixConsistency( nodesCoords, cellIndex, cellToNodes, cellCenters,
+                                         vemElement.stabilizationMatrix );
   }
   delete problemManager;
 }
