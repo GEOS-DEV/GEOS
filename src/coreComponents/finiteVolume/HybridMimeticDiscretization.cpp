@@ -25,6 +25,7 @@
 #include "finiteVolume/mimeticInnerProducts/QuasiRTInnerProduct.hpp"
 #include "finiteVolume/mimeticInnerProducts/SimpleInnerProduct.hpp"
 #include "finiteVolume/mimeticInnerProducts/BdVLMInnerProduct.hpp"
+#include "managers/DomainPartition.hpp"
 
 namespace geosx
 {
@@ -34,8 +35,17 @@ using namespace mimeticInnerProduct;
 
 HybridMimeticDiscretization::HybridMimeticDiscretization( std::string const & name,
                                                           Group * const parent )
-  : FluxApproximationBase( name, parent )
+  : Group( name, parent )
 {
+  setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
+
+  // will need to add a fieldName when hybrid FVM can properly enforce (non-zero) face boundary conditions
+
+  // needed for the multiplier
+  registerWrapper( viewKeyStruct::coeffNameString, &m_coeffName )->
+    setInputFlag( InputFlags::REQUIRED )->
+    setDescription( "Name of coefficient field" );
+
   registerWrapper( viewKeyStruct::innerProductTypeString, &m_innerProductType )->
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "Type of inner product used in the hybrid FVM solver" );
@@ -43,12 +53,36 @@ HybridMimeticDiscretization::HybridMimeticDiscretization( std::string const & na
 
 void HybridMimeticDiscretization::InitializePostInitialConditions_PreSubGroups( Group * const rootGroup )
 {
-  FluxApproximationBase::InitializePostInitialConditions_PreSubGroups( rootGroup );
+  Group::InitializePostInitialConditions_PreSubGroups( rootGroup );
 
   std::unique_ptr< MimeticInnerProductBase > newMimeticIP = factory( m_innerProductType );
 
   registerWrapper< MimeticInnerProductBase >( viewKeyStruct::innerProductString, std::move( newMimeticIP ) )->
     setRestartFlags( dataRepository::RestartFlags::NO_WRITE );
+}
+
+void HybridMimeticDiscretization::RegisterDataOnMesh( Group * const meshBodies )
+{
+  meshBodies->forSubGroups< MeshBody >( [&]( MeshBody & meshBody )
+  {
+    meshBody.forSubGroups< MeshLevel >( [&]( MeshLevel & mesh )
+    {
+      FaceManager & faceManager = *mesh.getFaceManager();
+      faceManager.registerWrapper< array1d< real64 > >( m_coeffName + viewKeyStruct::transMultiplierString )->
+        setApplyDefaultValue( 1.0 )->
+        setPlotLevel( PlotLevel::LEVEL_0 )->
+        setRegisteringObjects( this->getName() )->
+        setDescription( "An array that holds the transmissibility multipliers" );
+
+    } );
+  } );
+}
+
+HybridMimeticDiscretization::CatalogInterface::CatalogType &
+HybridMimeticDiscretization::GetCatalog()
+{
+  static HybridMimeticDiscretization::CatalogInterface::CatalogType catalog;
+  return catalog;
 }
 
 std::unique_ptr< MimeticInnerProductBase >
@@ -82,56 +116,6 @@ HybridMimeticDiscretization::factory( string const & mimeticInnerProductType ) c
   return rval;
 }
 
-void HybridMimeticDiscretization::addToFractureStencil( MeshLevel & mesh,
-                                                        string const & faceElementRegionName,
-                                                        bool const initFlag ) const
-{
-  GEOSX_UNUSED_VAR( mesh );
-  GEOSX_UNUSED_VAR( faceElementRegionName );
-  GEOSX_UNUSED_VAR( initFlag );
-  GEOSX_ERROR( "addToFractureStencil: This function is not implemented for the hybrid mimetic discretization" );
-}
+REGISTER_CATALOG_ENTRY( HybridMimeticDiscretization, HybridMimeticDiscretization, std::string const &, Group * const )
 
-void HybridMimeticDiscretization::addEDFracToFractureStencil( MeshLevel & mesh,
-                                                              string const & embeddedSurfaceRegionName ) const
-{
-  GEOSX_UNUSED_VAR( mesh );
-  GEOSX_UNUSED_VAR( embeddedSurfaceRegionName );
-  GEOSX_ERROR( "addEDFracToFractureStencil: This function is not implemented for the hybrid mimetic discretization" );
-}
-
-
-void HybridMimeticDiscretization::registerCellStencil( Group & stencilGroup ) const
-{
-  GEOSX_UNUSED_VAR( stencilGroup );
-}
-
-void HybridMimeticDiscretization::computeCellStencil( MeshLevel & mesh ) const
-{
-  GEOSX_UNUSED_VAR( mesh );
-}
-
-void HybridMimeticDiscretization::registerFractureStencil( Group & stencilGroup ) const
-{
-  GEOSX_UNUSED_VAR( stencilGroup );
-}
-
-
-void HybridMimeticDiscretization::registerBoundaryStencil( Group & stencilGroup,
-                                                           string const & setName ) const
-{
-  GEOSX_UNUSED_VAR( stencilGroup );
-  GEOSX_UNUSED_VAR( setName );
-}
-
-void HybridMimeticDiscretization::computeBoundaryStencil( MeshLevel & mesh,
-                                                          string const & setName,
-                                                          SortedArrayView< localIndex const > const & faceSet ) const
-{
-  GEOSX_UNUSED_VAR( mesh );
-  GEOSX_UNUSED_VAR( setName );
-  GEOSX_UNUSED_VAR( faceSet );
-}
-
-REGISTER_CATALOG_ENTRY( FluxApproximationBase, HybridMimeticDiscretization, std::string const &, Group * const )
 }

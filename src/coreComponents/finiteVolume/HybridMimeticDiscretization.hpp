@@ -19,7 +19,7 @@
 #ifndef GEOSX_FINITEVOLUME_HYBRIDMIMETICDISCRETIZATION_HPP_
 #define GEOSX_FINITEVOLUME_HYBRIDMIMETICDISCRETIZATION_HPP_
 
-#include "finiteVolume/FluxApproximationBase.hpp"
+#include "dataRepository/Group.hpp"
 #include "finiteVolume/mimeticInnerProducts/MimeticInnerProductBase.hpp"
 
 namespace geosx
@@ -30,9 +30,18 @@ namespace geosx
  *
  * Provides management of the inner product when using a hybrid FVM solver
  */
-class HybridMimeticDiscretization : public FluxApproximationBase
+class HybridMimeticDiscretization : public dataRepository::Group
 {
 public:
+
+  /// Alias for CatalogInterface, necessary declarations for factory instantiation of derived classes
+  using CatalogInterface = dataRepository::CatalogInterface< HybridMimeticDiscretization, string const &, Group * const >;
+
+  /**
+   * @brief Return the data type in the data repository.
+   * @return the data type in the data repository
+   */
+  static typename CatalogInterface::CatalogType & GetCatalog();
 
   /**
    * @brief Static Factory Catalog Functions.
@@ -54,37 +63,26 @@ public:
    */
   struct viewKeyStruct
   {
+    /// The key for coefficientName
+    static constexpr auto coeffNameString        = "coefficientName";
+    /// The key for transMultiplier
+    static constexpr auto transMultiplierString  = "TransMultiplier";
     /// The key for the type of inner product
     static constexpr auto innerProductTypeString = "innerProductType";
     /// The key for the inner product
-    static constexpr auto innerProductString = "innerProduct";
+    static constexpr auto innerProductString     = "innerProduct";
   };
 
 protected:
 
+  virtual void RegisterDataOnMesh( Group * const meshBodies ) override;
+
   virtual void InitializePostInitialConditions_PreSubGroups( Group * const rootGroup ) override;
 
-  virtual void registerCellStencil( Group & stencilGroup ) const override;
-
-  virtual void computeCellStencil( MeshLevel & mesh ) const override;
-
-  virtual void registerFractureStencil( Group & stencilGroup ) const override;
-
-  virtual void addToFractureStencil( MeshLevel & mesh,
-                                     string const & faceElementRegionName,
-                                     bool const initFlag ) const override;
-
-  virtual void registerBoundaryStencil( Group & stencilGroup,
-                                        string const & setName ) const override;
-
-  virtual void computeBoundaryStencil( MeshLevel & mesh,
-                                       string const & setName,
-                                       SortedArrayView< localIndex const > const & faceSet ) const override;
-
-  virtual void addEDFracToFractureStencil( MeshLevel & mesh,
-                                           string const & embeddedSurfaceRegionName ) const override;
-
 private:
+
+  /// name of the coefficient field
+  string m_coeffName;
 
   /// type of of inner product used in the hybrid FVM solver
   string m_innerProductType;

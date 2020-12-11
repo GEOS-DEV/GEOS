@@ -1245,7 +1245,6 @@
 	</xsd:complexType>
 	<xsd:complexType name="finiteVolumeStencilsType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
-			<xsd:element name="HybridMimeticDiscretization" type="HybridMimeticDiscretizationType" />
 			<xsd:element name="TwoPointFluxApproximation" type="TwoPointFluxApproximationType" />
 		</xsd:choice>
 	</xsd:complexType>

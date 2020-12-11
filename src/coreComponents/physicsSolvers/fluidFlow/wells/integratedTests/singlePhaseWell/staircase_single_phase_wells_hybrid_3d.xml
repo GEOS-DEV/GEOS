@@ -133,7 +133,6 @@
       <HybridMimeticDiscretization
         name="singlePhaseHybridMimetic"
         innerProductType="simple"  
-        fieldName="pressure"
         coefficientName="permeability"/>
     </FiniteVolume>
   </NumericalMethods>
