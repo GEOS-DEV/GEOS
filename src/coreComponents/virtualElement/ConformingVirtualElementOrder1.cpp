@@ -219,7 +219,7 @@ namespace geosx
     void
     ConformingVirtualElementOrder1::
     ComputeFaceIntegrals( MeshLevel const & mesh,
-                          localIndex const & faceId,
+                          localIndex const & faceIndex,
                           real64 const & invCellDiameter,
                           arraySlice1d<real64 const> const & cellCenter,
                           array1d<real64> & basisIntegrals,
@@ -231,7 +231,7 @@ namespace geosx
       EdgeManager const & edgeManager = *mesh.getEdgeManager();
 
       // Get pre-computed maps.
-      arraySlice1d< localIndex const > faceToNodes = faceManager.nodeList()[faceId];
+      arraySlice1d< localIndex const > faceToNodes = faceManager.nodeList()[faceIndex];
       FaceManager::EdgeMapType faceToEdges = faceManager.edgeList();
       EdgeManager::NodeMapType edgeToNodes = edgeManager.nodeList();
       arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > nodesCoords =
@@ -246,7 +246,7 @@ namespace geosx
       // Compute other geometrical properties.
       //  - compute rotation matrix.
       array2d<real64> faceRotationMatrix(3,3);
-      computationalGeometry::RotationMatrix_3D(faceNormals[faceId], faceRotationMatrix);
+      computationalGeometry::RotationMatrix_3D(faceNormals[faceIndex], faceRotationMatrix);
       //  - below we compute the diameter, the rotated vertices and the rotated center.
       array2d<real64> faceRotatedVertices(numFaceVertices, 2);
       array1d<real64> faceRotatedCentroid(2);
@@ -278,20 +278,20 @@ namespace geosx
       real64 const invFaceDiameter = 1.0/faceDiameter;
       // - rotate the face centroid as done for the vertices.
       faceRotatedCentroid(0) =
-        faceRotationMatrix(0, 1)*faceCenters(faceId, 0) +
-        faceRotationMatrix(1, 1)*faceCenters(faceId, 1) +
-        faceRotationMatrix(2, 1)*faceCenters(faceId, 2);
+        faceRotationMatrix(0, 1)*faceCenters(faceIndex, 0) +
+        faceRotationMatrix(1, 1)*faceCenters(faceIndex, 1) +
+        faceRotationMatrix(2, 1)*faceCenters(faceIndex, 2);
       faceRotatedCentroid(1) =
-        faceRotationMatrix(0, 2)*faceCenters(faceId, 0) +
-        faceRotationMatrix(1, 2)*faceCenters(faceId, 1) +
-        faceRotationMatrix(2, 2)*faceCenters(faceId, 2);
+        faceRotationMatrix(0, 2)*faceCenters(faceIndex, 0) +
+        faceRotationMatrix(1, 2)*faceCenters(faceIndex, 1) +
+        faceRotationMatrix(2, 2)*faceCenters(faceIndex, 2);
       // - compute edges' lengths, outward pointing normals and local edge-to-nodes map.
       array2d<real64> edgeOutwardNormals(numFaceVertices, 2);
       array1d<real64> edgeLengths(numFaceVertices);
       array2d<localIndex> localEdgeToNodes(numFaceVertices, 2);
       for(localIndex numEdge = 0; numEdge < numFaceVertices; ++numEdge)
       {
-        if(edgeToNodes(faceToEdges(faceId, numEdge), 0) == faceToNodes(numEdge))
+        if(edgeToNodes(faceToEdges(faceIndex, numEdge), 0) == faceToNodes(numEdge))
         {
           localEdgeToNodes(numEdge, 0) = numEdge;
           localEdgeToNodes(numEdge, 1) = (numEdge+1)%numFaceVertices;
@@ -361,7 +361,8 @@ namespace geosx
         // barycenter).  The result is
         // ((v(0) + v(1) + faceCenter)/3 - cellCenter)/cellDiameter.
         array1d<real64> threeDMonomialValues(3);
-        LvArray::tensorOps::copy<3>(threeDMonomialValues, faceCenters[faceId]); // val = faceCenter
+        LvArray::tensorOps::copy<3>(threeDMonomialValues,
+                                    faceCenters[faceIndex]); // val = faceCenter
         LvArray::tensorOps::add<3>(threeDMonomialValues, // val = v(0) + faceCenter
                                    nodesCoords[faceToNodes(numSubTriangle)]);
         LvArray::tensorOps::add<3>(threeDMonomialValues, // val = v(0) + v(1) + faceCenter
@@ -411,7 +412,7 @@ namespace geosx
                                      0.5*invFaceDiameter);
 
       // Compute integral mean of basis functions on this face.
-      real64 invFaceArea = 1.0/faceAreas[faceId];
+      real64 invFaceArea = 1.0/faceAreas[faceIndex];
       real64 monomialDerivativeInverse = (faceDiameter*faceDiameter)*invFaceArea;
       basisIntegrals.resize(numFaceVertices);
       for(localIndex numVertex = 0; numVertex < numFaceVertices; ++numVertex)
@@ -424,7 +425,7 @@ namespace geosx
         piNablaDofs[0] = (boundaryQuadratureWeights[numVertex] -
                           piNablaDofs[1]*monomBoundaryIntegrals[1] -
                           piNablaDofs[2]*monomBoundaryIntegrals[2])/monomBoundaryIntegrals[0];
-        basisIntegrals[numVertex] = piNablaDofs[0]*faceAreas[faceId] +
+        basisIntegrals[numVertex] = piNablaDofs[0]*faceAreas[faceIndex] +
           (piNablaDofs[1]*monomInternalIntegrals[0] + piNablaDofs[2]*monomInternalIntegrals[1]);
       }
     }

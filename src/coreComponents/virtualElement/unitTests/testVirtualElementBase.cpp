@@ -64,11 +64,12 @@ checkIntegralMeanDerivativesConsistency( localIndex numBasisFunctions,
 static void
 checkStabilizationMatrixConsistency
 ( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodesCoords,
-  arraySlice1d< localIndex const> const & cellToNodes,
-  arraySlice1d< real64 const > const & cellCenter,
+  localIndex const & cellIndex,
+  CellElementSubRegion::NodeMapType const & cellToNodes,
+  arrayView2d< real64 const > const & cellCenters,
   array2d< real64 > const & stabilizationMatrix)
 {
-  localIndex const numCellPoints = cellToNodes.size();
+  localIndex const numCellPoints = cellToNodes[cellIndex].size();
 
   real64 cellDiameter = 0;
   for(localIndex numVertex = 0; numVertex < numCellPoints; ++numVertex)
@@ -76,8 +77,8 @@ checkStabilizationMatrixConsistency
     for(localIndex numOthVertex = 0; numOthVertex < numVertex; ++numOthVertex)
     {
       array1d<real64> vertDiff(3);
-      LvArray::tensorOps::copy<3>(vertDiff, nodesCoords[cellToNodes(numVertex)]);
-      LvArray::tensorOps::subtract<3>(vertDiff, nodesCoords[cellToNodes(numOthVertex)]);
+      LvArray::tensorOps::copy<3>(vertDiff, nodesCoords[cellToNodes(cellIndex, numVertex)]);
+      LvArray::tensorOps::subtract<3>(vertDiff, nodesCoords[cellToNodes(cellIndex, numOthVertex)]);
       real64 const candidateDiameter = LvArray::tensorOps::l2NormSquared<3>(vertDiff);
       if(cellDiameter < candidateDiameter)
         cellDiameter = candidateDiameter;
@@ -91,7 +92,7 @@ checkStabilizationMatrixConsistency
   {
     for(localIndex pos = 0; pos < 3; ++pos)
       monomialVemDofs(pos, numVertex) = invCellDiameter*
-        (nodesCoords(cellToNodes(numVertex), pos) - cellCenter(pos));
+        (nodesCoords(cellToNodes(cellIndex, numVertex), pos) - cellCenters(cellIndex, pos));
   }
 
   array1d<real64> stabTimeMonomialDofs(numCellPoints);
@@ -188,12 +189,12 @@ TEST( VirtualElementBase, unitCube )
     *elementManager->GetRegion<CellElementRegion>(0);
   CellElementSubRegion const & cellSubRegion =
     *cellRegion.GetSubRegion<CellElementSubRegion>(0);
-  arraySlice1d< localIndex const> cellToNodes = cellSubRegion.nodeList().Base()[0];
+  CellElementSubRegion::NodeMapType const & cellToNodes = cellSubRegion.nodeList();
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > nodesCoords =
     nodeManager.referencePosition();
   arrayView2d< real64 const > cellCenters = cellSubRegion.getElementCenter();
-  arraySlice1d< real64 const > cellCenter = cellCenters[0];
-  checkStabilizationMatrixConsistency(nodesCoords, cellToNodes, cellCenter,
+  localIndex const cellIndex = 0;
+  checkStabilizationMatrixConsistency(nodesCoords, cellIndex, cellToNodes, cellCenters,
                                       vemElement.stabilizationMatrix);
 
   delete problemManager;
@@ -255,19 +256,19 @@ TEST( VirtualElementBase, wedges )
   NodeManager const & nodeManager = *mesh.getNodeManager();
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > nodesCoords =
     nodeManager.referencePosition();
+  CellElementSubRegion::NodeMapType const & cellToNodes = cellSubRegion.nodeList();
   arrayView2d< real64 const > cellCenters = cellSubRegion.getElementCenter();
   localIndex const numCells = cellSubRegion.getElementVolume().size();
-  for(localIndex cellId = 0; cellId < numCells; ++cellId)
+  for(localIndex cellIndex = 0; cellIndex < numCells; ++cellIndex)
   {
-    vemElement.ComputeProjectors(mesh, 0, 0, cellId);
+    vemElement.ComputeProjectors(mesh, 0, 0, cellIndex);
     checkIntegralMeanConsistency( vemElement.getNumSupportPoints(),
                                   vemElement.basisFunctionsIntegralMean);
     checkIntegralMeanDerivativesConsistency(vemElement.getNumSupportPoints(),
                                             vemElement.basisDerivativesIntegralMean);
 
-    arraySlice1d< localIndex const> cellToNodes = cellSubRegion.nodeList().Base()[cellId];
-    arraySlice1d< real64 const > cellCenter = cellCenters[cellId];
-    checkStabilizationMatrixConsistency(nodesCoords, cellToNodes, cellCenter,
+
+    checkStabilizationMatrixConsistency(nodesCoords, cellIndex, cellToNodes, cellCenters,
                                         vemElement.stabilizationMatrix);
   }
   delete problemManager;
