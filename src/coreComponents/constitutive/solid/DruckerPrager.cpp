@@ -42,41 +42,41 @@ DruckerPrager::DruckerPrager( std::string const & name, Group * const parent ):
     setApplyDefaultValue( 30.0 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Friction angle (degrees)" );
-  
+
   registerWrapper( viewKeyStruct::defaultDilationAngleString, &m_defaultDilationAngle )->
     setApplyDefaultValue( 30.0 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Dilation angle (degrees)" );
-  
+
   registerWrapper( viewKeyStruct::defaultHardeningString, &m_defaultHardening )->
     setApplyDefaultValue( 0.0 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Cohesion hardening/softening rate" );
-  
+
   registerWrapper( viewKeyStruct::defaultCohesionString, &m_defaultCohesion )->
     setApplyDefaultValue( 0.0 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Initial cohesion" );
 
   // register fields
-  
+
   registerWrapper( viewKeyStruct::frictionString, &m_friction )->
     setApplyDefaultValue( -1 )->
     setDescription( "Yield surface slope" );
-  
+
   registerWrapper( viewKeyStruct::dilationString, &m_dilation )->
     setApplyDefaultValue( -1 )->
     setDescription( "Plastic potential slope" );
-  
+
   registerWrapper( viewKeyStruct::hardeningString, &m_hardening )->
     setApplyDefaultValue( -1 )->
     setDescription( "Hardening rate" );
-  
+
   registerWrapper( viewKeyStruct::newCohesionString, &m_newCohesion )->
     setApplyDefaultValue( -1 )->
-    setPlotLevel( dataRepository::PlotLevel::LEVEL_3)->
+    setPlotLevel( dataRepository::PlotLevel::LEVEL_3 )->
     setDescription( "New cohesion state" );
-  
+
   registerWrapper( viewKeyStruct::oldCohesionString, &m_oldCohesion )->
     setApplyDefaultValue( -1 )->
     setDescription( "Old cohesion state" );
@@ -92,7 +92,7 @@ void DruckerPrager::allocateConstitutiveData( dataRepository::Group * const pare
 {
   m_newCohesion.resize( 0, numConstitutivePointsPerParentIndex );
   m_oldCohesion.resize( 0, numConstitutivePointsPerParentIndex );
-  
+
   ElasticIsotropic::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 }
 
@@ -100,25 +100,25 @@ void DruckerPrager::allocateConstitutiveData( dataRepository::Group * const pare
 void DruckerPrager::PostProcessInput()
 {
   ElasticIsotropic::PostProcessInput();
-  
-  GEOSX_ASSERT_MSG(m_defaultCohesion >= 0, "Negative cohesion value detected");
-  GEOSX_ASSERT_MSG(m_defaultFrictionAngle >= 0, "Negative friction angle detected");
-  GEOSX_ASSERT_MSG(m_defaultDilationAngle >= 0, "Negative dilation angle detected");
-  GEOSX_ASSERT_MSG(m_defaultFrictionAngle >= m_defaultDilationAngle, "Dilation angle should not exceed friction angle");
-  
+
+  GEOSX_ASSERT_MSG( m_defaultCohesion >= 0, "Negative cohesion value detected" );
+  GEOSX_ASSERT_MSG( m_defaultFrictionAngle >= 0, "Negative friction angle detected" );
+  GEOSX_ASSERT_MSG( m_defaultDilationAngle >= 0, "Negative dilation angle detected" );
+  GEOSX_ASSERT_MSG( m_defaultFrictionAngle >= m_defaultDilationAngle, "Dilation angle should not exceed friction angle" );
+
   // convert from Mohr-Coulomb constants to Drucker-Prager constants, assuming DP
   // passes through the compression corners of the MC surface.
   // see Borja (2013) p. 75
-  
+
   real64 phi = m_defaultFrictionAngle * M_PI / 180;
   real64 psi = m_defaultDilationAngle * M_PI / 180;
-  
-  real64 C = 6 * m_defaultCohesion * cos(phi) / ( 3 + sin(phi) );
-  real64 F = 6 * sin(phi) / ( 3 + sin(phi) );
-  real64 D = 6 * sin(psi) / ( 3 + sin(psi) );
-    
+
+  real64 C = 6 * m_defaultCohesion * cos( phi ) / ( 3 + sin( phi ) );
+  real64 F = 6 * sin( phi ) / ( 3 + sin( phi ) );
+  real64 D = 6 * sin( psi ) / ( 3 + sin( psi ) );
+
   // set results as array default values
-  
+
   this->getWrapper< array2d< real64 > >( viewKeyStruct::oldCohesionString )->
     setApplyDefaultValue( C );
   this->getWrapper< array2d< real64 > >( viewKeyStruct::newCohesionString )->
@@ -135,20 +135,20 @@ void DruckerPrager::PostProcessInput()
 void DruckerPrager::saveConvergedState() const
 {
   SolidBase::saveConvergedState(); // TODO: not ideal, as we have separate loops for base and derived data
-  
+
   localIndex const numE = numElem();
   localIndex const numQ = numQuad();
 
-  arrayView2d< real64 const> newCohesion = m_newCohesion;
-  arrayView2d< real64      > oldCohesion = m_oldCohesion;
-  
+  arrayView2d< real64 const > newCohesion = m_newCohesion;
+  arrayView2d< real64 > oldCohesion = m_oldCohesion;
+
   forAll< parallelDevicePolicy<> >( numE, [=] GEOSX_HOST_DEVICE ( localIndex const k )
-  {
-    for( localIndex q = 0; q < numQ; ++q )
-    {
-      oldCohesion( k, q ) = newCohesion( k, q );
-    }
-  } );
+      {
+        for( localIndex q = 0; q < numQ; ++q )
+        {
+          oldCohesion( k, q ) = newCohesion( k, q );
+        }
+      } );
 }
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, DruckerPrager, std::string const &, Group * const )

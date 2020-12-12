@@ -54,7 +54,7 @@ protected:
    * @param[in] oldStress The old stress data from the constitutive model class.
    */
   SolidBaseUpdates( arrayView3d< real64, solid::STRESS_USD > const & newStress,
-                    arrayView3d< real64, solid::STRESS_USD > const & oldStress):
+                    arrayView3d< real64, solid::STRESS_USD > const & oldStress ):
     m_newStress( newStress ),
     m_oldStress( oldStress )
   {}
@@ -79,7 +79,7 @@ protected:
 
   /// Deleted move assignment operator
   SolidBaseUpdates & operator=( SolidBaseUpdates && ) =  delete;
-  
+
   /**
    * @brief Helper to save point stress back to m_newStress array
    *
@@ -93,20 +93,20 @@ protected:
   GEOSX_FORCE_INLINE
   void saveStress( localIndex const k,
                    localIndex const q,
-                   real64 const ( & stress )[6]) const
+                   real64 const ( &stress )[6] ) const
   {
     LvArray::tensorOps::copy< 6 >( m_newStress[k][q], stress );
   }
-  
+
 
 public:
-  
+
   /// A reference the current material stress at quadrature points.
   arrayView3d< real64, solid::STRESS_USD > const m_newStress;
-  
+
   /// A reference the previous material stress at quadrature points.
   arrayView3d< real64, solid::STRESS_USD > const m_oldStress;
-   
+
   /**
    * @name Update Interfaces: Stress and Stiffness
    *
@@ -118,7 +118,7 @@ public:
    * are most useful for implicit finite element formulations.
    */
   ///@{
-  
+
   /**
    * @brief Small strain update.
    *
@@ -131,18 +131,18 @@ public:
   GEOSX_HOST_DEVICE
   virtual void smallStrainUpdate( localIndex const k,
                                   localIndex const q,
-                                  real64 const ( & strainIncrement )[6],
+                                  real64 const ( &strainIncrement )[6],
                                   real64 ( & stress )[6],
                                   real64 ( & stiffness )[6][6] ) const
   {
-    GEOSX_UNUSED_VAR(k);
-    GEOSX_UNUSED_VAR(q);
-    GEOSX_UNUSED_VAR(strainIncrement);
-    GEOSX_UNUSED_VAR(stress);
-    GEOSX_UNUSED_VAR(stiffness);
-    GEOSX_ERROR("smallStrainUpdate() not implemented for this model");
+    GEOSX_UNUSED_VAR( k );
+    GEOSX_UNUSED_VAR( q );
+    GEOSX_UNUSED_VAR( strainIncrement );
+    GEOSX_UNUSED_VAR( stress );
+    GEOSX_UNUSED_VAR( stiffness );
+    GEOSX_ERROR( "smallStrainUpdate() not implemented for this model" );
   }
-  
+
   /**
    * @brief Small strain, stateless update.
    *
@@ -155,18 +155,18 @@ public:
   GEOSX_HOST_DEVICE
   virtual void smallStrainNoStateUpdate( localIndex const k,
                                          localIndex const q,
-                                         real64 const ( & totalStrain )[6],
+                                         real64 const ( &totalStrain )[6],
                                          real64 ( & stress )[6],
                                          real64 ( & stiffness )[6][6] ) const
   {
-    GEOSX_UNUSED_VAR(k);
-    GEOSX_UNUSED_VAR(q);
-    GEOSX_UNUSED_VAR(totalStrain);
-    GEOSX_UNUSED_VAR(stress);
-    GEOSX_UNUSED_VAR(stiffness);
-    GEOSX_ERROR("smallStrainNoStateUpdate() not implemented for this model");
+    GEOSX_UNUSED_VAR( k );
+    GEOSX_UNUSED_VAR( q );
+    GEOSX_UNUSED_VAR( totalStrain );
+    GEOSX_UNUSED_VAR( stress );
+    GEOSX_UNUSED_VAR( stiffness );
+    GEOSX_ERROR( "smallStrainNoStateUpdate() not implemented for this model" );
   }
-  
+
   /**
    * @brief Hypo update (small strain, large rotation).
    *
@@ -205,13 +205,13 @@ public:
                            real64 ( & stiffness )[6][6] ) const
   {
     smallStrainUpdate( k, q, Ddt, stress, stiffness );
-    
+
     real64 temp[6] = { 0 };
     LvArray::tensorOps::Rij_eq_AikSymBklAjl< 3 >( temp, Rot, m_newStress[ k ][ q ] );
     LvArray::tensorOps::copy< 6 >( stress, temp );
-    saveStress( k, q, stress);
+    saveStress( k, q, stress );
   }
-  
+
   /**
    * @brief Hyper update (large deformation).
    *
@@ -230,22 +230,22 @@ public:
    * @param[out] stress New stress value (Cauchy stress)
    * @param[out] stiffness New stiffness value
    */
-   // TODO: confirm stress and strain measures we want to use
+  // TODO: confirm stress and strain measures we want to use
   GEOSX_HOST_DEVICE
   virtual void hyperUpdate( localIndex const k,
                             localIndex const q,
-                            real64 const ( & FminusI )[3][3],
+                            real64 const ( &FminusI )[3][3],
                             real64 ( & stress )[6],
                             real64 ( & stiffness )[6][6] ) const
   {
-    GEOSX_UNUSED_VAR(k);
-    GEOSX_UNUSED_VAR(q);
-    GEOSX_UNUSED_VAR(FminusI);
-    GEOSX_UNUSED_VAR(stress);
-    GEOSX_UNUSED_VAR(stiffness);
-    GEOSX_ERROR("hyperUpdate() not implemented for this model");
+    GEOSX_UNUSED_VAR( k );
+    GEOSX_UNUSED_VAR( q );
+    GEOSX_UNUSED_VAR( FminusI );
+    GEOSX_UNUSED_VAR( stress );
+    GEOSX_UNUSED_VAR( stiffness );
+    GEOSX_ERROR( "hyperUpdate() not implemented for this model" );
   }
-  
+
   ///@}
   /**
    * @name Update Interfaces: Stress-Only
@@ -264,7 +264,7 @@ public:
    * avoid extranenous work, but we delegate this detail to them.
    */
   ///@{
-  
+
   /**
    * @brief Small strain update, returning only stress.
    *
@@ -277,14 +277,14 @@ public:
   GEOSX_HOST_DEVICE
   virtual void smallStrainUpdate_StressOnly( localIndex const k,
                                              localIndex const q,
-                                             real64 const ( & strainIncrement )[6],
-                                             real64 ( & stress )[6]) const
+                                             real64 const ( &strainIncrement )[6],
+                                             real64 ( & stress )[6] ) const
   {
     real64 discard[6][6];
     smallStrainUpdate( k, q, strainIncrement, stress, discard );
   }
 
-  
+
   /**
    * @brief Small strain, stateless update, returning only stress.
    *
@@ -297,13 +297,13 @@ public:
   GEOSX_HOST_DEVICE
   virtual void smallStrainNoStateUpdate_StressOnly( localIndex const k,
                                                     localIndex const q,
-                                                    real64 const ( & totalStrain )[6],
-                                                    real64 ( & stress )[6]) const
+                                                    real64 const ( &totalStrain )[6],
+                                                    real64 ( & stress )[6] ) const
   {
     real64 discard[6][6];
     smallStrainNoStateUpdate( k, q, totalStrain, stress, discard );
   }
-  
+
   /**
    * @brief Hypo update, returning only stress
    *
@@ -318,12 +318,12 @@ public:
                                       localIndex const q,
                                       real64 const ( &Ddt )[6],
                                       real64 const ( &Rot )[3][3],
-                                      real64 ( & stress )[6]) const
+                                      real64 ( & stress )[6] ) const
   {
     real64 discard[6][6];
     hypoUpdate( k, q, Ddt, Rot, stress, discard );
   }
-  
+
   /**
    * @brief Hyper update, returning only stresses.
    *
@@ -335,16 +335,16 @@ public:
   GEOSX_HOST_DEVICE
   virtual void hyperUpdate_StressOnly( localIndex const k,
                                        localIndex const q,
-                                       real64 const ( & FminusI )[3][3],
+                                       real64 const ( &FminusI )[3][3],
                                        real64 ( & stress )[6] ) const
   {
     real64 discard[6][6];
     hyperUpdate( k, q, FminusI, stress, discard );
   }
-  
+
   ///@}
-  
-   
+
+
   /**
    * @brief Return the current elastic strain at a given material point (small-strain interface)
    *
@@ -357,12 +357,12 @@ public:
                                  localIndex const q,
                                  real64 ( & elasticStrain )[6] ) const
   {
-    GEOSX_UNUSED_VAR(k);
-    GEOSX_UNUSED_VAR(q);
-    GEOSX_UNUSED_VAR(elasticStrain);
-    GEOSX_ERROR("getElasticStrain() not implemented for this model");
+    GEOSX_UNUSED_VAR( k );
+    GEOSX_UNUSED_VAR( q );
+    GEOSX_UNUSED_VAR( elasticStrain );
+    GEOSX_ERROR( "getElasticStrain() not implemented for this model" );
   }
-  
+
   /**
    * @brief Return the strain energy density at a given material point
    *
@@ -370,28 +370,28 @@ public:
    * @param q the quadrature index
    * @return Strain energy density
    */
-   GEOSX_HOST_DEVICE
-   virtual real64 getStrainEnergyDensity( localIndex const k,
-                                          localIndex const q) const
-   {
-     auto const & stress = m_newStress[k][q];
-     
-     real64 strain[6];
-     getElasticStrain(k,q,strain);
-  
-     real64 energy = 0;
-     
-     for(localIndex i=0; i<6; ++i)
-     {
-       energy += stress[i]*strain[i]; // contraction sigma:epsilon
-     }
-     energy *= 0.5;
-     
-     GEOSX_ASSERT_MSG( energy >= 0.0, "negative strain energy density detected" );
-                            
-     return energy;
-   }
-   
+  GEOSX_HOST_DEVICE
+  virtual real64 getStrainEnergyDensity( localIndex const k,
+                                         localIndex const q ) const
+  {
+    auto const & stress = m_newStress[k][q];
+
+    real64 strain[6];
+    getElasticStrain( k, q, strain );
+
+    real64 energy = 0;
+
+    for( localIndex i=0; i<6; ++i )
+    {
+      energy += stress[i]*strain[i];  // contraction sigma:epsilon
+    }
+    energy *= 0.5;
+
+    GEOSX_ASSERT_MSG( energy >= 0.0, "negative strain energy density detected" );
+
+    return energy;
+  }
+
   /**
    * @brief Return the stiffness at a given element (small-strain interface)
    *
@@ -410,9 +410,9 @@ public:
   GEOSX_HOST_DEVICE
   virtual void getElasticStiffness( localIndex const k, real64 ( & stiffness )[6][6] ) const
   {
-    GEOSX_UNUSED_VAR(k);
-    GEOSX_UNUSED_VAR(stiffness);
-    GEOSX_ERROR("getElasticStiffness() not implemented for this model");
+    GEOSX_UNUSED_VAR( k );
+    GEOSX_UNUSED_VAR( stiffness );
+    GEOSX_ERROR( "getElasticStiffness() not implemented for this model" );
   }
 
 };
@@ -442,7 +442,7 @@ public:
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
   virtual void saveConvergedState() const;
-  
+
   struct viewKeyStruct : public ConstitutiveBase::viewKeyStruct
   {
     static constexpr auto stressString = "stress";
@@ -457,13 +457,13 @@ public:
   {
     return m_oldStress.size( 0 );
   }
-  
+
   /// Number of quadrature points per element storing solid data
   localIndex numQuad() const
   {
     return m_oldStress.size( 1 );
   }
-  
+
   /**
    * @name Accessors
    */
@@ -492,7 +492,7 @@ public:
   {
     return m_density;
   }
-  
+
   ///@}
 
 protected:
@@ -501,16 +501,16 @@ protected:
 
   /// The current stress at a quadrature point (i.e. at timestep n, global newton iteration k)
   array3d< real64, solid::STRESS_PERMUTATION > m_newStress;
-  
+
   /// The previous stress at a quadrature point (i.e. at timestep (n-1))
   array3d< real64, solid::STRESS_PERMUTATION > m_oldStress;
-   
+
   /// The material density at a quadrature point.
   array2d< real64 > m_density;
-   
+
   /// The default density for new allocations.
   real64 m_defaultDensity = 0;
-   
+
   /// band-aid fix...going to have to remove this after we clean up
   /// initialization for constitutive models.
   bool m_postProcessed = false;

@@ -41,33 +41,33 @@ namespace BulkModAndShearMod
  */
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-real64 toYoungsMod(real64 const & K, real64 const & G)
+real64 toYoungsMod( real64 const & K, real64 const & G )
 {
   return 9 * K * G / ( 3 * K + G );
 }
 
 /**
-* @brief Compute Poisson's ratio
-* @param[in] K Bulk modulus
-* @param[in] G Shear modulus
-* @return Poisson's ratio
-*/
+ * @brief Compute Poisson's ratio
+ * @param[in] K Bulk modulus
+ * @param[in] G Shear modulus
+ * @return Poisson's ratio
+ */
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-real64 toPoissonRatio(real64 const & K, real64 const & G)
+real64 toPoissonRatio( real64 const & K, real64 const & G )
 {
   return ( 3 * K - 2 * G ) / ( 2 * ( 3 * K + G ) );
 }
 
 /**
-* @brief Compute First Lamé parameter
-* @param[in] K Bulk modulus
-* @param[in] G Shear modulus
-* @return First Lamé parameter
-*/
+ * @brief Compute First Lamé parameter
+ * @param[in] K Bulk modulus
+ * @param[in] G Shear modulus
+ * @return First Lamé parameter
+ */
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-real64 toFirstLame(real64 const & K, real64 const & G)
+real64 toFirstLame( real64 const & K, real64 const & G )
 {
   return K - 2 * G / 3;
 }
@@ -86,7 +86,7 @@ namespace YoungsModAndPoissonRatio
  */
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-real64 toBulkMod(real64 const & E, real64 const & nu)
+real64 toBulkMod( real64 const & E, real64 const & nu )
 {
   return E / (3 * ( 1 - 2*nu ) );
 }
@@ -99,7 +99,7 @@ real64 toBulkMod(real64 const & E, real64 const & nu)
  */
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-real64 toShearMod(real64 const & E, real64 const & nu)
+real64 toShearMod( real64 const & E, real64 const & nu )
 {
   return E / (2 * ( 1 + nu ) );
 }
@@ -118,7 +118,7 @@ namespace ShearModAndPoissonRatio
  */
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-real64 toBulkMod(real64 const & G, real64 const & nu)
+real64 toBulkMod( real64 const & G, real64 const & nu )
 {
   return 2 * G * ( 1 + nu ) / ( 3 * ( 1 - 2 * nu ) );
 }
@@ -131,7 +131,7 @@ real64 toBulkMod(real64 const & G, real64 const & nu)
  */
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-real64 toYoungsMod(real64 const & G, real64 const & nu)
+real64 toYoungsMod( real64 const & G, real64 const & nu )
 {
   return 2 * G * ( 1 + nu );
 }
@@ -150,7 +150,7 @@ namespace BulkModAndPoissonRatio
  */
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-real64 toYoungsMod(real64 const & K, real64 const & nu)
+real64 toYoungsMod( real64 const & K, real64 const & nu )
 {
   return 3 * K * ( 1 - 2 * nu );
 }
@@ -163,7 +163,7 @@ real64 toYoungsMod(real64 const & K, real64 const & nu)
  */
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-real64 toShearMod(real64 const & K, real64 const & nu)
+real64 toShearMod( real64 const & K, real64 const & nu )
 {
   return 3 * K * ( 1 - 2 * nu) / ( 2 * ( 1 + nu ) );
 }
@@ -182,7 +182,7 @@ namespace BulkModAndYoungsMod
  */
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-real64 toShearMod(real64 const & K, real64 const & E)
+real64 toShearMod( real64 const & K, real64 const & E )
 {
   return 3 * K * E / ( 9 * K - E );
 }
@@ -195,7 +195,7 @@ real64 toShearMod(real64 const & K, real64 const & E)
  */
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-real64 toPoissonRatio(real64 const & K, real64 const & E)
+real64 toPoissonRatio( real64 const & K, real64 const & E )
 {
   return ( 3 * K - E ) / ( 6 * K);
 }
@@ -213,7 +213,7 @@ namespace ShearModAndYoungsMod
  */
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-real64 toPoissonRatio(real64 const & G, real64 const & E)
+real64 toPoissonRatio( real64 const & G, real64 const & E )
 {
   return 0.5 * E / G - 1.0;
 }
@@ -226,7 +226,7 @@ real64 toPoissonRatio(real64 const & G, real64 const & E)
  */
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-real64 toBulkMod(real64 const & G, real64 const & E)
+real64 toBulkMod( real64 const & G, real64 const & E )
 {
   return E * G / ( 3 * ( 3 * G - E ) );
 }

@@ -213,7 +213,9 @@ public:
 #if UPDATE_STRESS == 2
       stressLocal[ c ] *= -detJ;
 #elif UPDATE_STRESS == 1
-      stressLocal[ c ] = -( stressLocal[ c ] + m_constitutiveUpdate.m_newStress( k, q, c ) ) * detJ; // TODO: decide on initial stress strategy
+      stressLocal[ c ] = -( stressLocal[ c ] + m_constitutiveUpdate.m_newStress( k, q, c ) ) * detJ; // TODO: decide on
+                                                                                                     // initial stress
+                                                                                                     // strategy
 #else
       stressLocal[ c ] *= -detJ;
 #endif
@@ -240,7 +242,9 @@ public:
 #if UPDATE_STRESS == 2
       stressLocal[ c ] *= detJ;
 #elif UPDATE_STRESS == 1
-      stressLocal[ c ] = ( stressLocal[ c ] + m_constitutiveUpdate.m_newStress( k, q, c ) ) * DETJ; // TODO: decide on initial stress strategy
+      stressLocal[ c ] = ( stressLocal[ c ] + m_constitutiveUpdate.m_newStress( k, q, c ) ) * DETJ; // TODO: decide on
+                                                                                                    // initial stress
+                                                                                                    // strategy
 #else
       stressLocal[ c ] *= DETJ;
 #endif
@@ -292,18 +296,18 @@ public:
     localIndex const numProcElems = kernelComponent.m_elementList.size();
     forAll< POLICY >( numProcElems,
                       [=] GEOSX_DEVICE ( localIndex const index )
-    {
-      localIndex const k = kernelComponent.m_elementList[ index ];
+        {
+          localIndex const k = kernelComponent.m_elementList[ index ];
 
-      typename KERNEL_TYPE::StackVariables stack;
+          typename KERNEL_TYPE::StackVariables stack;
 
-      kernelComponent.setup( k, stack );
-      for( integer q=0; q<KERNEL_TYPE::numQuadraturePointsPerElem; ++q )
-      {
-        kernelComponent.quadraturePointKernel( k, q, stack );
-      }
-      kernelComponent.complete( k, stack );
-    } );
+          kernelComponent.setup( k, stack );
+          for( integer q=0; q<KERNEL_TYPE::numQuadraturePointsPerElem; ++q )
+          {
+            kernelComponent.quadraturePointKernel( k, q, stack );
+          }
+          kernelComponent.complete( k, stack );
+        } );
     return 0;
   }
 

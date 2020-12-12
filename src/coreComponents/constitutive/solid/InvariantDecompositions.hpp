@@ -26,27 +26,27 @@ namespace constitutive
 {
 
 /**
-* @brief Namespace to collect two-invariant decomposition helper functions.
-*
-* Stress and strain invariants are typically used in constitutive modeling
-* to define a frame-indifferent response.
-*
-* @note
-* Care must be used in interpreting the decompositions, as Voight
-* notation uses a different convention for stress vs strain.  In particular,
-* the deviator (\f$\mathbf{n}\f$) is stored as a
-* stress-like quantity, such that it satisfies the relationship
-*        \f[
-*        \sigma = p \mathbf{I} + \sqrt{2/3} q \mathbf{n}
-*        \f]
-* when written in "unrolled" form.  It does not immediately satisfy
-*        \f[
-*        \epsilon = \frac{1}{3} \epsilon_v \mathbf{I} + \sqrt{3/2} \epsilon_d \mathbf{n}
-*        \f]
-* due to the engineering notation used for off-diagonal strains.  The stress and
-* strain recomposition functions account for this subtlety, so the user should
-* be safe when using these utilities directly.
-*/
+ * @brief Namespace to collect two-invariant decomposition helper functions.
+ *
+ * Stress and strain invariants are typically used in constitutive modeling
+ * to define a frame-indifferent response.
+ *
+ * @note
+ * Care must be used in interpreting the decompositions, as Voight
+ * notation uses a different convention for stress vs strain.  In particular,
+ * the deviator (\f$\mathbf{n}\f$) is stored as a
+ * stress-like quantity, such that it satisfies the relationship
+ *        \f[
+ *        \sigma = p \mathbf{I} + \sqrt{2/3} q \mathbf{n}
+ *        \f]
+ * when written in "unrolled" form.  It does not immediately satisfy
+ *        \f[
+ *        \epsilon = \frac{1}{3} \epsilon_v \mathbf{I} + \sqrt{3/2} \epsilon_d \mathbf{n}
+ *        \f]
+ * due to the engineering notation used for off-diagonal strains.  The stress and
+ * strain recomposition functions account for this subtlety, so the user should
+ * be safe when using these utilities directly.
+ */
 namespace twoInvariant
 {
 
@@ -60,36 +60,36 @@ namespace twoInvariant
  */
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-void strainDecomposition(real64 const ( & strain )[6],
-                         real64 & volStrain,
-                         real64 & devStrain,
-                         real64 ( & deviator )[6])
+void strainDecomposition( real64 const ( &strain )[6],
+                          real64 & volStrain,
+                          real64 & devStrain,
+                          real64 ( & deviator )[6] )
 {
   volStrain = 0;
-  for (localIndex i=0; i<3; ++i)
+  for( localIndex i=0; i<3; ++i )
   {
     volStrain += strain[i];
   }
- 
-  for (localIndex i=0; i<3; ++i)
+
+  for( localIndex i=0; i<3; ++i )
   {
     deviator[i] = strain[i] - volStrain/3.;
     deviator[i+3] = strain[i+3]/2.; // divide by two ("stress voight")
   }
 
   devStrain = 0;
-  for (localIndex i=0; i<3; ++i)
+  for( localIndex i=0; i<3; ++i )
   {
     devStrain += deviator[i] * deviator[i];
     devStrain += 2 * deviator[i+3] * deviator[i+3];
   }
-  devStrain = std::sqrt(devStrain);
+  devStrain = std::sqrt( devStrain );
 
-  for (localIndex i=0; i<6; ++i)
+  for( localIndex i=0; i<6; ++i )
   {
     deviator[i] /= (devStrain + 1e-15); // perturbed to avoid divide by zero
   }
-  devStrain *= sqrt(2./3.);
+  devStrain *= sqrt( 2./3. );
 
   return;
 }
@@ -105,37 +105,37 @@ void strainDecomposition(real64 const ( & strain )[6],
  */
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-void stressDecomposition(real64 const ( & stress )[6],
-                         real64 & volStress,
-                         real64 & devStress,
-                         real64 ( & deviator )[6])
+void stressDecomposition( real64 const ( &stress )[6],
+                          real64 & volStress,
+                          real64 & devStress,
+                          real64 ( & deviator )[6] )
 {
   volStress = 0;
-  for (localIndex i=0; i<3; ++i)
+  for( localIndex i=0; i<3; ++i )
   {
     volStress += stress[i];
   }
   volStress /= 3.;
- 
-  for (localIndex i=0; i<3; ++i)
+
+  for( localIndex i=0; i<3; ++i )
   {
     deviator[i] = stress[i] - volStress;
     deviator[i+3] = stress[i+3];
   }
 
   devStress = 0;
-  for (localIndex i=0; i<3; ++i)
+  for( localIndex i=0; i<3; ++i )
   {
     devStress += deviator[i] * deviator[i];
     devStress += 2 * deviator[i+3] * deviator[i+3];
   }
-  devStress = std::sqrt(devStress);
+  devStress = std::sqrt( devStress );
 
-  for (localIndex i=0; i<6; ++i)
+  for( localIndex i=0; i<6; ++i )
   {
     deviator[i] /= (devStress + 1e-15); // perturbed to avoid divide by zero
   }
-  devStress *= sqrt(3./2.);
+  devStress *= sqrt( 3./2. );
 
   return;
 }
@@ -151,19 +151,19 @@ void stressDecomposition(real64 const ( & stress )[6],
  */
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-void strainRecomposition(real64 const & volStrain,
-                         real64 const & devStrain,
-                         real64 const ( & deviator )[6],
-                         real64 ( & strain )[6])
+void strainRecomposition( real64 const & volStrain,
+                          real64 const & devStrain,
+                          real64 const ( &deviator )[6],
+                          real64 ( & strain )[6] )
 {
-  real64 const tmp = sqrt(1.5)*devStrain;
-  
-  for(localIndex i=0; i<3; ++i)
+  real64 const tmp = sqrt( 1.5 )*devStrain;
+
+  for( localIndex i=0; i<3; ++i )
   {
     strain[i]   = volStrain/3. + tmp * deviator[i];
     strain[i+3] = 2 * tmp * deviator[i+3]; // engineering strain
   }
-  
+
   return;
 }
 
@@ -178,19 +178,19 @@ void strainRecomposition(real64 const & volStrain,
  */
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-void stressRecomposition(real64 const & volStress,
-                         real64 const & devStress,
-                         real64 const ( & deviator )[6],
-                         real64 ( & stress )[6])
+void stressRecomposition( real64 const & volStress,
+                          real64 const & devStress,
+                          real64 const ( &deviator )[6],
+                          real64 ( & stress )[6] )
 {
-  real64 const tmp = sqrt(2./3.)*devStress;
-  
-  for(localIndex i=0; i<3; ++i)
+  real64 const tmp = sqrt( 2./3. )*devStress;
+
+  for( localIndex i=0; i<3; ++i )
   {
     stress[i]   = volStress + tmp * deviator[i];
     stress[i+3] = tmp * deviator[i+3];
   }
-  
+
   return;
 }
 
@@ -201,6 +201,3 @@ void stressRecomposition(real64 const & volStress,
 } /* namespace geosx */
 
 #endif /* GEOSX_CONSTITUTIVE_SOLID_INVARIANTDECOMPOSITIONS_HPP */
-
-
-

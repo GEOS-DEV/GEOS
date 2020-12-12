@@ -209,4 +209,3 @@ real64 PetscSuiteSparseCond( PetscMatrix const & matrix, SuiteSparse & SSData )
 }
 
 }
-

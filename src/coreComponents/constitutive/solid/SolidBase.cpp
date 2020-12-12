@@ -25,7 +25,7 @@ using namespace dataRepository;
 
 namespace constitutive
 {
-  
+
 SolidBase::SolidBase( string const & name, Group * const parent ):
   ConstitutiveBase( name, parent ),
   m_newStress( 0, 0, 6 ),
@@ -36,7 +36,7 @@ SolidBase::SolidBase( string const & name, Group * const parent ):
     setPlotLevel( PlotLevel::LEVEL_0 )->
     setApplyDefaultValue( 0 )-> // default to zero initial stress
     setDescription( "Current Material Stress" );
-    
+
   registerWrapper( viewKeyStruct::oldStressString, &m_oldStress )->
     setApplyDefaultValue( 0 )-> // default to zero initial stress
     setDescription( "Previous Material Stress" );
@@ -44,7 +44,7 @@ SolidBase::SolidBase( string const & name, Group * const parent ):
   registerWrapper( viewKeyStruct::densityString, &m_density )->
     setApplyDefaultValue( -1 )-> // will be overwritten
     setDescription( "Material Density" );
-  
+
   registerWrapper( viewKeyStruct::defaultDensityString, &m_defaultDensity )->
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "Default Material Density" );
@@ -68,26 +68,26 @@ void SolidBase::allocateConstitutiveData( dataRepository::Group * const parent,
   m_density.resize( 0, numConstitutivePointsPerParentIndex );
   m_newStress.resize( 0, numConstitutivePointsPerParentIndex, 6 );
   m_oldStress.resize( 0, numConstitutivePointsPerParentIndex, 6 );
-  
+
   ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 }
 
 
 void SolidBase::saveConvergedState() const
 {
- localIndex const numE = numElem();
- localIndex const numQ = numQuad();
+  localIndex const numE = numElem();
+  localIndex const numQ = numQuad();
 
- arrayView3d< real64 const, solid::STRESS_USD > newStress = m_newStress;
- arrayView3d< real64,       solid::STRESS_USD > oldStress = m_oldStress;
+  arrayView3d< real64 const, solid::STRESS_USD > newStress = m_newStress;
+  arrayView3d< real64, solid::STRESS_USD > oldStress = m_oldStress;
 
- forAll< parallelDevicePolicy<> >( numE, [=] GEOSX_HOST_DEVICE ( localIndex const k )
- {
-   for( localIndex q = 0; q < numQ; ++q )
-   {
-     LvArray::tensorOps::copy< 6 >( oldStress[k][q], newStress[k][q] );
-   }
- } );
+  forAll< parallelDevicePolicy<> >( numE, [=] GEOSX_HOST_DEVICE ( localIndex const k )
+      {
+        for( localIndex q = 0; q < numQ; ++q )
+        {
+          LvArray::tensorOps::copy< 6 >( oldStress[k][q], newStress[k][q] );
+        }
+      } );
 }
 
 

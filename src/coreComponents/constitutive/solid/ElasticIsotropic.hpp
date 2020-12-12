@@ -73,77 +73,77 @@ public:
 
   // Use the "isotropic" form of inner product compression
   using DiscretizationOps = SolidModelDiscretizationOpsIsotropic;
-  
+
   // total strain interfaces
-  
+
   GEOSX_HOST_DEVICE
   virtual void smallStrainNoStateUpdate_StressOnly( localIndex const k,
                                                     localIndex const q,
-                                                    real64 const ( & totalStrain )[6],
-                                                    real64 ( & stress )[6]) const override final;
-  
+                                                    real64 const ( &totalStrain )[6],
+                                                    real64 ( &stress )[6] ) const override final;
+
   GEOSX_HOST_DEVICE
   virtual void smallStrainNoStateUpdate( localIndex const k,
                                          localIndex const q,
-                                         real64 const ( & totalStrain )[6],
-                                         real64 ( & stress )[6],
-                                         real64 ( & stiffness )[6][6] ) const override final;
-  
+                                         real64 const ( &totalStrain )[6],
+                                         real64 ( &stress )[6],
+                                         real64 ( &stiffness )[6][6] ) const override final;
+
   GEOSX_HOST_DEVICE
   virtual void smallStrainNoStateUpdate( localIndex const k,
                                          localIndex const q,
-                                         real64 const ( & totalStrain )[6],
-                                         real64 ( & stress )[6],
+                                         real64 const ( &totalStrain )[6],
+                                         real64 ( &stress )[6],
                                          DiscretizationOps & stiffness ) const final;
-                       
+
   // incremental strain interfaces
-  
+
   GEOSX_HOST_DEVICE
   virtual void smallStrainUpdate_StressOnly( localIndex const k,
                                              localIndex const q,
-                                             real64 const ( & strainIncrement )[6],
-                                             real64 ( & stress )[6]) const override;
-              
+                                             real64 const ( &strainIncrement )[6],
+                                             real64 ( &stress )[6] ) const override;
+
   GEOSX_HOST_DEVICE
   virtual void smallStrainUpdate( localIndex const k,
                                   localIndex const q,
-                                  real64 const ( & strainIncrement )[6],
-                                  real64 ( & stress )[6],
-                                  real64 ( & stiffness )[6][6] ) const override;
-  
+                                  real64 const ( &strainIncrement )[6],
+                                  real64 ( &stress )[6],
+                                  real64 ( &stiffness )[6][6] ) const override;
+
   GEOSX_HOST_DEVICE
   virtual void smallStrainUpdate( localIndex const k,
                                   localIndex const q,
-                                  real64 const ( & strainIncrement )[6],
-                                  real64 ( & stress )[6],
+                                  real64 const ( &strainIncrement )[6],
+                                  real64 ( &stress )[6],
                                   DiscretizationOps & stiffness ) const;
-                    
+
   // miscellaneous getters
-  
+
   GEOSX_HOST_DEVICE
   virtual void getElasticStiffness( localIndex const k,
-                                    real64 ( & stiffness )[6][6] ) const override;
-                                    
+                                    real64 ( &stiffness )[6][6] ) const override;
+
   GEOSX_HOST_DEVICE
   virtual void getElasticStrain( localIndex const k,
                                  localIndex const q,
-                                 real64 ( & elasticStrain )[6]) const override final;
-                           
+                                 real64 ( &elasticStrain )[6] ) const override final;
+
   // TODO: confirm hyper stress/strain measures before activatiing
   /*
-  GEOSX_HOST_DEVICE
-  virtual void hyperUpdate( localIndex const k,
+     GEOSX_HOST_DEVICE
+     virtual void hyperUpdate( localIndex const k,
                             localIndex const q,
                             real64 const ( & FminusI )[3][3],
                             real64 ( & stress )[6] ) const override final;
-                            
-  GEOSX_HOST_DEVICE
-  virtual void hyperUpdate( localIndex const k,
+
+     GEOSX_HOST_DEVICE
+     virtual void hyperUpdate( localIndex const k,
                             localIndex const q,
                             real64 const ( & FminusI )[3][3],
                             real64 ( & stress )[6],
                             real64 ( & stiffness )[6][6] ) const override final;
-  */
+   */
 
 protected:
 
@@ -160,29 +160,29 @@ GEOSX_FORCE_INLINE
 void ElasticIsotropicUpdates::getElasticStiffness( localIndex const k,
                                                    real64 ( & stiffness )[6][6] ) const
 {
-   real64 const G = m_shearModulus[k];
-   real64 const lambda = conversions::BulkModAndShearMod::toFirstLame( m_bulkModulus[k] , G );
+  real64 const G = m_shearModulus[k];
+  real64 const lambda = conversions::BulkModAndShearMod::toFirstLame( m_bulkModulus[k], G );
 
-   LvArray::tensorOps::fill< 6, 6 >( stiffness, 0 );
+  LvArray::tensorOps::fill< 6, 6 >( stiffness, 0 );
 
-   stiffness[0][0] = lambda + 2*G;
-   stiffness[0][1] = lambda;
-   stiffness[0][2] = lambda;
-   
-   stiffness[1][0] = lambda;
-   stiffness[1][1] = lambda + 2*G;
-   stiffness[1][2] = lambda;
-   
-   stiffness[2][0] = lambda;
-   stiffness[2][1] = lambda;
-   stiffness[2][2] = lambda + 2*G;
-   
-   stiffness[3][3] = G;
-   stiffness[4][4] = G;
-   stiffness[5][5] = G;
+  stiffness[0][0] = lambda + 2*G;
+  stiffness[0][1] = lambda;
+  stiffness[0][2] = lambda;
+
+  stiffness[1][0] = lambda;
+  stiffness[1][1] = lambda + 2*G;
+  stiffness[1][2] = lambda;
+
+  stiffness[2][0] = lambda;
+  stiffness[2][1] = lambda;
+  stiffness[2][2] = lambda + 2*G;
+
+  stiffness[3][3] = G;
+  stiffness[4][4] = G;
+  stiffness[5][5] = G;
 }
- 
- 
+
+
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void ElasticIsotropicUpdates::getElasticStrain( localIndex const k,
@@ -191,11 +191,11 @@ void ElasticIsotropicUpdates::getElasticStrain( localIndex const k,
 {
   real64 const E = conversions::BulkModAndShearMod::toYoungsMod( m_bulkModulus[k], m_shearModulus[k] );
   real64 const nu = conversions::BulkModAndShearMod::toPoissonRatio( m_bulkModulus[k], m_shearModulus[k] );
-  
+
   elasticStrain[0] = (    m_newStress[k][q][0] - nu*m_newStress[k][q][1] - nu*m_newStress[k][q][2])/E;
   elasticStrain[1] = (-nu*m_newStress[k][q][0] +    m_newStress[k][q][1] - nu*m_newStress[k][q][2])/E;
   elasticStrain[2] = (-nu*m_newStress[k][q][0] - nu*m_newStress[k][q][1] +    m_newStress[k][q][2])/E;
-  
+
   elasticStrain[3] = m_newStress[k][q][3] / m_shearModulus[k];
   elasticStrain[4] = m_newStress[k][q][4] / m_shearModulus[k];
   elasticStrain[5] = m_newStress[k][q][5] / m_shearModulus[k];
@@ -206,11 +206,11 @@ GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void ElasticIsotropicUpdates::smallStrainNoStateUpdate_StressOnly( localIndex const k,
                                                                    localIndex const q,
-                                                                   real64 const ( & totalStrain )[6],
-                                                                   real64 ( & stress )[6]) const
+                                                                   real64 const ( &totalStrain )[6],
+                                                                   real64 ( & stress )[6] ) const
 {
-  GEOSX_UNUSED_VAR(q);
-      
+  GEOSX_UNUSED_VAR( q );
+
   real64 const twoG   = 2 * m_shearModulus[k];
   real64 const lambda = conversions::BulkModAndShearMod::toFirstLame( m_bulkModulus[k], m_shearModulus[k] );
   real64 const vol    = lambda * ( totalStrain[0] + totalStrain[1] + totalStrain[2] );
@@ -218,7 +218,7 @@ void ElasticIsotropicUpdates::smallStrainNoStateUpdate_StressOnly( localIndex co
   stress[0] = vol + twoG * totalStrain[0];
   stress[1] = vol + twoG * totalStrain[1];
   stress[2] = vol + twoG * totalStrain[2];
-  
+
   stress[3] = m_shearModulus[k] * totalStrain[3];
   stress[4] = m_shearModulus[k] * totalStrain[4];
   stress[5] = m_shearModulus[k] * totalStrain[5];
@@ -229,11 +229,11 @@ GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void ElasticIsotropicUpdates::smallStrainNoStateUpdate( localIndex const k,
                                                         localIndex const q,
-                                                        real64 const ( & totalStrain )[6],
+                                                        real64 const ( &totalStrain )[6],
                                                         real64 ( & stress )[6],
                                                         real64 ( & stiffness )[6][6] ) const
 {
-  smallStrainNoStateUpdate_StressOnly( k, q, totalStrain, stress);
+  smallStrainNoStateUpdate_StressOnly( k, q, totalStrain, stress );
   getElasticStiffness( k, stiffness );
 }
 
@@ -242,12 +242,12 @@ GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void ElasticIsotropicUpdates::smallStrainNoStateUpdate( localIndex const k,
                                                         localIndex const q,
-                                                        real64 const ( & totalStrain )[6],
+                                                        real64 const ( &totalStrain )[6],
                                                         real64 ( & stress )[6],
                                                         DiscretizationOps & stiffness ) const
 {
-  smallStrainNoStateUpdate_StressOnly( k, q, totalStrain, stress);
-  stiffness.m_lambda = conversions::BulkModAndShearMod::toFirstLame( m_bulkModulus[k] , m_shearModulus[k] );
+  smallStrainNoStateUpdate_StressOnly( k, q, totalStrain, stress );
+  stiffness.m_lambda = conversions::BulkModAndShearMod::toFirstLame( m_bulkModulus[k], m_shearModulus[k] );
   stiffness.m_shearModulus = m_shearModulus[k];
 }
 
@@ -256,12 +256,12 @@ GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void ElasticIsotropicUpdates::smallStrainUpdate_StressOnly( localIndex const k,
                                                             localIndex const q,
-                                                            real64 const ( & strainIncrement )[6],
-                                                            real64 ( & stress )[6]) const
+                                                            real64 const ( &strainIncrement )[6],
+                                                            real64 ( & stress )[6] ) const
 {
-  smallStrainNoStateUpdate_StressOnly( k, q, strainIncrement, stress); // stress  = incrementalStress
-  LvArray::tensorOps::add< 6 >( stress, m_oldStress[k][q]);            // stress += m_oldStress
-  saveStress( k, q, stress);                                           // m_newStress = stress
+  smallStrainNoStateUpdate_StressOnly( k, q, strainIncrement, stress ); // stress  = incrementalStress
+  LvArray::tensorOps::add< 6 >( stress, m_oldStress[k][q] );            // stress += m_oldStress
+  saveStress( k, q, stress );                                           // m_newStress = stress
 }
 
 
@@ -269,11 +269,11 @@ GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void ElasticIsotropicUpdates::smallStrainUpdate( localIndex const k,
                                                  localIndex const q,
-                                                 real64 const ( & strainIncrement )[6],
+                                                 real64 const ( &strainIncrement )[6],
                                                  real64 ( & stress )[6],
                                                  real64 ( & stiffness )[6][6] ) const
 {
-  smallStrainUpdate_StressOnly( k, q, strainIncrement, stress);
+  smallStrainUpdate_StressOnly( k, q, strainIncrement, stress );
   getElasticStiffness( k, stiffness );
 }
 
@@ -282,60 +282,66 @@ GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void ElasticIsotropicUpdates::smallStrainUpdate( localIndex const k,
                                                  localIndex const q,
-                                                 real64 const ( & strainIncrement )[6],
+                                                 real64 const ( &strainIncrement )[6],
                                                  real64 ( & stress )[6],
                                                  DiscretizationOps & stiffness ) const
 {
-  smallStrainUpdate_StressOnly( k, q, strainIncrement, stress);
-  stiffness.m_lambda = conversions::BulkModAndShearMod::toFirstLame( m_bulkModulus[k] , m_shearModulus[k] );
+  smallStrainUpdate_StressOnly( k, q, strainIncrement, stress );
+  stiffness.m_lambda = conversions::BulkModAndShearMod::toFirstLame( m_bulkModulus[k], m_shearModulus[k] );
   stiffness.m_shearModulus = m_shearModulus[k];
 }
 
 
 // TODO: need to confirm stress / strain measures before activating hyper inferface
 /*
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
-void ElasticIsotropicUpdates::hyperUpdate( localIndex const k,
+   GEOSX_HOST_DEVICE
+   GEOSX_FORCE_INLINE
+   void ElasticIsotropicUpdates::hyperUpdate( localIndex const k,
                                            localIndex const q,
                                            real64 const (&FmI)[3][3],
                                            real64 ( & stress )[ 6 ] ) const
-{
-  GEOSX_UNUSED_VAR(q);
-  
-  real64 const C1 = 0.5 * m_shearModulus[k];
-  real64 const D1 = 0.5 * m_bulkModulus[k];
-  real64 const detFm1 = FmI[0][0] + FmI[1][1] + FmI[2][2]
+   {
+   GEOSX_UNUSED_VAR(q);
+
+   real64 const C1 = 0.5 * m_shearModulus[k];
+   real64 const D1 = 0.5 * m_bulkModulus[k];
+   real64 const detFm1 = FmI[0][0] + FmI[1][1] + FmI[2][2]
                         - FmI[1][2]*FmI[2][1] + FmI[1][1]*FmI[2][2]
-                        + FmI[0][2]*(-FmI[2][0] - FmI[1][1]*FmI[2][0] + FmI[1][0]*FmI[2][1])
-                        + FmI[0][1]*(-FmI[1][0] + FmI[1][2]*FmI[2][0] - FmI[1][0]*FmI[2][2])
-                        + FmI[0][0]*( FmI[1][1] - FmI[1][2]*FmI[2][1] + FmI[2][2] + FmI[1][1]*FmI[2][2]);
+ + FmI[0][2]*(-FmI[2][0] - FmI[1][1]*FmI[2][0] + FmI[1][0]*FmI[2][1])
+ + FmI[0][1]*(-FmI[1][0] + FmI[1][2]*FmI[2][0] - FmI[1][0]*FmI[2][2])
+ + FmI[0][0]*( FmI[1][1] - FmI[1][2]*FmI[2][1] + FmI[2][2] + FmI[1][1]*FmI[2][2]);
 
 
-  real64 const p = -2 * D1 * ( detFm1 + 1.0 ) * detFm1;
-  real64 devB[6] = { 1/3 * (2 * FmI[0][0] * (2 + FmI[0][0]) - FmI[1][1] * (2 + FmI[1][1]) - FmI[2][2] * (2 + FmI[2][2]) +
-                            2 * FmI[0][1]*FmI[0][1] + 2 * FmI[0][2] * FmI[0][2] - FmI[1][0] * FmI[1][0] - FmI[1][2] * FmI[1][2] -
+   real64 const p = -2 * D1 * ( detFm1 + 1.0 ) * detFm1;
+   real64 devB[6] = { 1/3 * (2 * FmI[0][0] * (2 + FmI[0][0]) - FmI[1][1] * (2 + FmI[1][1]) - FmI[2][2] * (2 + FmI[2][2])
+    ++
+                            2 * FmI[0][1]*FmI[0][1] + 2 * FmI[0][2] * FmI[0][2] - FmI[1][0] * FmI[1][0] - FmI[1][2] *
+                             +FmI[1][2] -
                             FmI[2][0] * FmI[2][0] - FmI[2][1] * FmI[2][1]),
-                     1/3 * (-FmI[0][0] * (2 + FmI[0][0]) + 2 * FmI[1][1] * ( 2 + FmI[1][1]) - FmI[2][2] * (2 + FmI[2][2]) -
-                            FmI[0][1]*FmI[0][1] - FmI[0][2]*FmI[0][2] + 2 * FmI[1][0]*FmI[1][0] + 2 * FmI[1][2]*FmI[1][2] - FmI[2][0]*FmI[2][0] - FmI[2][1]*
+                     1/3 * (-FmI[0][0] * (2 + FmI[0][0]) + 2 * FmI[1][1] * ( 2 + FmI[1][1]) - FmI[2][2] * (2 +
+                      +FmI[2][2]) -
+                            FmI[0][1]*FmI[0][1] - FmI[0][2]*FmI[0][2] + 2 * FmI[1][0]*FmI[1][0] + 2 *
+                             +FmI[1][2]*FmI[1][2] - FmI[2][0]*FmI[2][0] - FmI[2][1]*
                             FmI[2][1]),
-                     1/3 *(-FmI[0][0] * (2 + FmI[0][0]) - FmI[1][1] * (2 + FmI[1][1]) + 2 * FmI[2][2] * (2 + FmI[2][2]) -
-                           FmI[0][1]*FmI[0][1] - FmI[0][2]*FmI[0][2] - FmI[1][0]*FmI[1][0] - FmI[1][2]*FmI[1][2] + 2 * FmI[2][0]*FmI[2][0] + 2 * FmI[2][1]*
+                     1/3 *(-FmI[0][0] * (2 + FmI[0][0]) - FmI[1][1] * (2 + FmI[1][1]) + 2 * FmI[2][2] * (2 + FmI[2][2])
+                      +-
+                           FmI[0][1]*FmI[0][1] - FmI[0][2]*FmI[0][2] - FmI[1][0]*FmI[1][0] - FmI[1][2]*FmI[1][2] + 2 *
+                            +FmI[2][0]*FmI[2][0] + 2 * FmI[2][1]*
                            FmI[2][1]),
                      FmI[1][2] + FmI[1][0] * FmI[2][0] + FmI[2][1] + FmI[1][1]*FmI[2][1] + FmI[1][2]*FmI[2][2],
                      FmI[0][2] + FmI[2][0] + FmI[0][0] * FmI[2][0] + FmI[0][1]*FmI[2][1] + FmI[0][2]*FmI[2][2],
                      FmI[0][1] + FmI[1][0] + FmI[0][0] * FmI[1][0] + FmI[0][1]*FmI[1][1] + FmI[0][2]*FmI[1][2]
-  };
+   };
 
-  real64 const C = 2 * C1 / pow( detFm1 + 1, 2.0/3.0 );
-  stress[0] = -p + C * devB[0];
-  stress[1] = -p + C * devB[1];
-  stress[2] = -p + C * devB[2];
-  stress[3] = C * devB[3];
-  stress[4] = C * devB[4];
-  stress[5] = C * devB[5];
-}
-*/
+   real64 const C = 2 * C1 / pow( detFm1 + 1, 2.0/3.0 );
+   stress[0] = -p + C * devB[0];
+   stress[1] = -p + C * devB[1];
+   stress[2] = -p + C * devB[2];
+   stress[3] = C * devB[3];
+   stress[4] = C * devB[4];
+   stress[5] = C * devB[5];
+   }
+ */
 
 
 /**
@@ -486,7 +492,7 @@ protected:
 
   /// The shear modulus for each upper level dimension (i.e. cell) of *this
   array1d< real64 > m_shearModulus;
-  
+
 };
 
 }

@@ -233,32 +233,32 @@ void SurfaceGenerator::RegisterDataOnMesh( Group * const MeshBodies )
     ElementRegionManager * const elemManager = meshLevel->getElemManager();
 
     elemManager->forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion & subRegion )
-    {
-      subRegion.registerExtrinsicData< extrinsicMeshData::K_IC_00,
-                                       extrinsicMeshData::K_IC_01,
-                                       extrinsicMeshData::K_IC_02,
-                                       extrinsicMeshData::K_IC_10,
-                                       extrinsicMeshData::K_IC_11,
-                                       extrinsicMeshData::K_IC_12,
-                                       extrinsicMeshData::K_IC_20,
-                                       extrinsicMeshData::K_IC_21,
-                                       extrinsicMeshData::K_IC_22 >( this->getName() );
-    } );
+      {
+        subRegion.registerExtrinsicData< extrinsicMeshData::K_IC_00,
+                                         extrinsicMeshData::K_IC_01,
+                                         extrinsicMeshData::K_IC_02,
+                                         extrinsicMeshData::K_IC_10,
+                                         extrinsicMeshData::K_IC_11,
+                                         extrinsicMeshData::K_IC_12,
+                                         extrinsicMeshData::K_IC_20,
+                                         extrinsicMeshData::K_IC_21,
+                                         extrinsicMeshData::K_IC_22 >( this->getName() );
+      } );
 
     elemManager->forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
-    {
-      subRegion.registerExtrinsicData< extrinsicMeshData::K_IC_00,
-                                       extrinsicMeshData::K_IC_01,
-                                       extrinsicMeshData::K_IC_02,
-                                       extrinsicMeshData::K_IC_10,
-                                       extrinsicMeshData::K_IC_11,
-                                       extrinsicMeshData::K_IC_12,
-                                       extrinsicMeshData::K_IC_20,
-                                       extrinsicMeshData::K_IC_21,
-                                       extrinsicMeshData::K_IC_22,
-                                       extrinsicMeshData::RuptureTime,
-                                       extrinsicMeshData::RuptureRate >( this->getName() );
-    } );
+      {
+        subRegion.registerExtrinsicData< extrinsicMeshData::K_IC_00,
+                                         extrinsicMeshData::K_IC_01,
+                                         extrinsicMeshData::K_IC_02,
+                                         extrinsicMeshData::K_IC_10,
+                                         extrinsicMeshData::K_IC_11,
+                                         extrinsicMeshData::K_IC_12,
+                                         extrinsicMeshData::K_IC_20,
+                                         extrinsicMeshData::K_IC_21,
+                                         extrinsicMeshData::K_IC_22,
+                                         extrinsicMeshData::RuptureTime,
+                                         extrinsicMeshData::RuptureRate >( this->getName() );
+      } );
 
     NodeManager * const nodeManager = meshLevel->getNodeManager();
     EdgeManager * const edgeManager = meshLevel->getEdgeManager();
@@ -531,9 +531,9 @@ int SurfaceGenerator::SeparationDriver( DomainPartition & domain,
   CommunicationTools::SynchronizeFields( fieldNames, &mesh, domain.getNeighbors() );
 
   elementManager.forElementSubRegions< CellElementSubRegion >( [] ( auto & elemSubRegion )
-  {
-    elemSubRegion.moveSets( LvArray::MemorySpace::CPU );
-  } );
+    {
+      elemSubRegion.moveSets( LvArray::MemorySpace::CPU );
+    } );
   faceManager.moveSets( LvArray::MemorySpace::CPU );
   edgeManager.moveSets( LvArray::MemorySpace::CPU );
   nodeManager.moveSets( LvArray::MemorySpace::CPU );
@@ -645,43 +645,43 @@ int SurfaceGenerator::SeparationDriver( DomainPartition & domain,
                                                                               localIndex const esr,
                                                                               ElementRegionBase &,
                                                                               FaceElementSubRegion & subRegion )
-    {
-      std::set< localIndex > & newFaceElems = modifiedObjects.newElements[{er, esr}];
-      for( localIndex const newFaceElemIndex : newFaceElems )
       {
-        subRegion.m_newFaceElements.insert( newFaceElemIndex );
-      }
-    } );
+        std::set< localIndex > & newFaceElems = modifiedObjects.newElements[{er, esr}];
+        for( localIndex const newFaceElemIndex : newFaceElems )
+        {
+          subRegion.m_newFaceElements.insert( newFaceElemIndex );
+        }
+      } );
 
 
     elementManager.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
-    {
-      FaceElementSubRegion::NodeMapType & nodeMap = subRegion.nodeList();
-      FaceElementSubRegion::FaceMapType & faceMap = subRegion.faceList();
-
-      for( localIndex kfe=0; kfe<subRegion.size(); ++kfe )
       {
-        nodeMap.resizeArray( kfe, 8 );
+        FaceElementSubRegion::NodeMapType & nodeMap = subRegion.nodeList();
+        FaceElementSubRegion::FaceMapType & faceMap = subRegion.faceList();
 
-        localIndex const numNodesInFace = faceToNodeMap.sizeOfArray( faceMap[ kfe ][ 0 ] );
-        for( localIndex a = 0; a < numNodesInFace; ++a )
+        for( localIndex kfe=0; kfe<subRegion.size(); ++kfe )
         {
-          localIndex const aa = a < 2 ? a : numNodesInFace - a + 1;
-          localIndex const bb = aa == 0 ? aa : numNodesInFace - aa;
+          nodeMap.resizeArray( kfe, 8 );
 
-          // TODO HACK need to generalize to something other than quads
-          //wu40: I temporarily make it work for tet mesh. Need further check with Randy.
-          nodeMap[ kfe ][ a ]   = faceToNodeMap( faceMap[ kfe ][ 0 ], aa );
-          nodeMap[ kfe ][ a + numNodesInFace ] = faceToNodeMap( faceMap[ kfe ][ 1 ], bb );
-        }
+          localIndex const numNodesInFace = faceToNodeMap.sizeOfArray( faceMap[ kfe ][ 0 ] );
+          for( localIndex a = 0; a < numNodesInFace; ++a )
+          {
+            localIndex const aa = a < 2 ? a : numNodesInFace - a + 1;
+            localIndex const bb = aa == 0 ? aa : numNodesInFace - aa;
 
-        if( numNodesInFace == 3 )
-        {
-          nodeMap[kfe][6] = faceToNodeMap( faceMap[ kfe ][ 0 ], 2 );
-          nodeMap[kfe][7] = faceToNodeMap( faceMap[ kfe ][ 1 ], 2 );
+            // TODO HACK need to generalize to something other than quads
+            //wu40: I temporarily make it work for tet mesh. Need further check with Randy.
+            nodeMap[ kfe ][ a ]   = faceToNodeMap( faceMap[ kfe ][ 0 ], aa );
+            nodeMap[ kfe ][ a + numNodesInFace ] = faceToNodeMap( faceMap[ kfe ][ 1 ], bb );
+          }
+
+          if( numNodesInFace == 3 )
+          {
+            nodeMap[kfe][6] = faceToNodeMap( faceMap[ kfe ][ 0 ], 2 );
+            nodeMap[kfe][7] = faceToNodeMap( faceMap[ kfe ][ 1 ], 2 );
+          }
         }
-      }
-    } );
+      } );
   }
 
 
@@ -695,11 +695,11 @@ int SurfaceGenerator::SeparationDriver( DomainPartition & domain,
 //  if( rval>0 )
   {
     elementManager.forElementSubRegions< CellElementSubRegion >( [] ( auto & elemSubRegion )
-    {
-      elemSubRegion.nodeList().registerTouch( LvArray::MemorySpace::CPU );
-      elemSubRegion.edgeList().registerTouch( LvArray::MemorySpace::CPU );
-      elemSubRegion.faceList().registerTouch( LvArray::MemorySpace::CPU );
-    } );
+      {
+        elemSubRegion.nodeList().registerTouch( LvArray::MemorySpace::CPU );
+        elemSubRegion.edgeList().registerTouch( LvArray::MemorySpace::CPU );
+        elemSubRegion.faceList().registerTouch( LvArray::MemorySpace::CPU );
+      } );
 
 
     faceManager.nodeList().toView().registerTouch( LvArray::MemorySpace::CPU );
@@ -1837,7 +1837,8 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
                   faceIsExternal[iface] < 1 &&
                   CheckOrphanElement( elementManager, faceManager, iface ) == 0 &&
                   isFaceSeparable[iface] == 1
-//                  && fabs(LvArray::tensorOps::AiBi< 3 >(faceNormals[faceIndex], faceNormals[iface])) > cos( m_maxTurnAngle )
+//                  && fabs(LvArray::tensorOps::AiBi< 3 >(faceNormals[faceIndex], faceNormals[iface])) > cos(
+// m_maxTurnAngle )
                   )
               {
                 m_tipFaces.insert( iface );
@@ -2859,14 +2860,14 @@ void SurfaceGenerator::CalculateNodeAndFaceSIF( DomainPartition & domain,
 
   nodeManager.totalDisplacement().move( LvArray::MemorySpace::CPU, false );
   elementManager.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion & subRegion )
-  {
-    for( localIndex mat=0; mat<m_solidMaterialNames.size(); ++mat )
     {
-      subRegion.getConstitutiveModel( m_solidMaterialNames[mat] )->
-        getReference< array3d< real64, solid::STRESS_PERMUTATION > >( SolidBase::viewKeyStruct::stressString ).move( LvArray::MemorySpace::CPU,
-                                                                                                                     false );
-    }
-  } );
+      for( localIndex mat=0; mat<m_solidMaterialNames.size(); ++mat )
+      {
+        subRegion.getConstitutiveModel( m_solidMaterialNames[mat] )->
+          getReference< array3d< real64, solid::STRESS_PERMUTATION > >( SolidBase::viewKeyStruct::stressString ).move( LvArray::MemorySpace::CPU,
+                                                                                                                       false );
+      }
+    } );
   displacement.move( LvArray::MemorySpace::CPU, false );
 
 
@@ -3549,7 +3550,8 @@ real64 SurfaceGenerator::CalculateEdgeSIF( DomainPartition & domain,
           LvArray::tensorOps::copy< 3 >( extFaceNormal[j], faceNormal[extFacesOnTrailingEdge[j]] );
         }
 
-        if( std::fabs( LvArray::tensorOps::AiBi< 3 >( extFaceNormal[0], extFaceNormal[1] )) < 0.9 ) //The two faces are not coplanar.
+        if( std::fabs( LvArray::tensorOps::AiBi< 3 >( extFaceNormal[0], extFaceNormal[1] )) < 0.9 ) //The two faces are
+                                                                                                    // not coplanar.
         {
           incompleteTrailingEdgeTopology = true;
         }
@@ -3563,9 +3565,13 @@ real64 SurfaceGenerator::CalculateEdgeSIF( DomainPartition & domain,
 
 
   real64 tipForce[3];
-  tipForce[0] = LvArray::tensorOps::AiBi< 3 >( fNodeO, vecTipNorm ) + LvArray::tensorOps::AiBi< 3 >( fFaceA[0], vecTipNorm ) / 2.0 - LvArray::tensorOps::AiBi< 3 >( fFaceA[1], vecTipNorm ) / 2.0;
-  tipForce[1] = LvArray::tensorOps::AiBi< 3 >( fNodeO, vecTip ) + LvArray::tensorOps::AiBi< 3 >( fFaceA[0], vecTip ) / 2.0 - LvArray::tensorOps::AiBi< 3 >( fFaceA[1], vecTip ) / 2.0;
-  tipForce[2] = LvArray::tensorOps::AiBi< 3 >( fNodeO, vecEdge ) + LvArray::tensorOps::AiBi< 3 >( fFaceA[0], vecEdge ) / 2.0 - LvArray::tensorOps::AiBi< 3 >( fFaceA[1], vecEdge ) / 2.0;
+  tipForce[0] = LvArray::tensorOps::AiBi< 3 >( fNodeO, vecTipNorm ) + LvArray::tensorOps::AiBi< 3 >( fFaceA[0],
+                                                                                                     vecTipNorm ) / 2.0 -
+                LvArray::tensorOps::AiBi< 3 >( fFaceA[1], vecTipNorm ) / 2.0;
+  tipForce[1] = LvArray::tensorOps::AiBi< 3 >( fNodeO, vecTip ) + LvArray::tensorOps::AiBi< 3 >( fFaceA[0], vecTip ) / 2.0 - LvArray::tensorOps::AiBi< 3 >(
+    fFaceA[1], vecTip ) / 2.0;
+  tipForce[2] = LvArray::tensorOps::AiBi< 3 >( fNodeO, vecEdge ) + LvArray::tensorOps::AiBi< 3 >( fFaceA[0], vecEdge ) / 2.0 - LvArray::tensorOps::AiBi< 3 >(
+    fFaceA[1], vecEdge ) / 2.0;
 
   real64 tipDisplacement[3], tipOpening[3], tipFaceDisplacement[2][3];
 
@@ -3752,7 +3758,8 @@ int SurfaceGenerator::CalculateElementForcesOnEdge( DomainPartition & domain,
           if( elementsToNodes( ei, n ) == nodeID )
           {
             real64 temp[3]{};
-            LvArray::tensorOps::copy< 3 >( xEle, elemCenter[er][esr][ei] ); //For C3D6 element type, elementsToNodes map may include
+            LvArray::tensorOps::copy< 3 >( xEle, elemCenter[er][esr][ei] ); //For C3D6 element type, elementsToNodes map
+                                                                            // may include
             // repeated indices and the following may run multiple
             // times for the same element.
 
@@ -3952,7 +3959,8 @@ void SurfaceGenerator::MarkRuptureFaceFromNode ( const localIndex nodeIndex,
 //          for( auto iface : edgeToFaceMap[iedge] )
 //          {
 //            if( iface != pickedFace && isFaceSeparable[iface] == 1 && faceManager.isExternal()[iface] < 1 &&
-//                fabs(LvArray::tensorOps::AiBi< 3 >(faceNormals[pickedFace], faceNormals[iface])) > cos( m_maxTurnAngle ) &&
+//                fabs(LvArray::tensorOps::AiBi< 3 >(faceNormals[pickedFace], faceNormals[iface])) > cos( m_maxTurnAngle
+// ) &&
 //                ((faceToNodeMap[iface].size() == 3) || (faceToNodeMap[iface].size() == 4 &&
 //                    (std::find(faceToNodeMap[iface].begin(), faceToNodeMap[iface].end(), nodeIndex) !=
 // faceToNodeMap[iface].end()))))
@@ -4071,7 +4079,8 @@ void SurfaceGenerator::MarkRuptureFaceFromEdge ( localIndex const edgeID,
 //      if( LvArray::tensorOps::AiBi< 3 >( vecTip, vecFace ) > cos( m_maxTurnAngle ))
       {
         eligibleFaces.emplace_back( iface );
-        real64 thetaFace = acos( LvArray::tensorOps::AiBi< 3 >( vecTip, vecFace )*0.999999 );  // We multiply this by 0.9999999 to avoid an
+        real64 thetaFace = acos( LvArray::tensorOps::AiBi< 3 >( vecTip, vecFace )*0.999999 );  // We multiply this by
+                                                                                               // 0.9999999 to avoid an
         // exception caused by acos a number slightly larger
         // than 1.
 
@@ -4212,7 +4221,8 @@ void SurfaceGenerator::MarkRuptureFaceFromEdge ( localIndex const edgeID,
 //              if( LvArray::tensorOps::AiBi< 3 >( vecTip, vecFace ) > cos( m_maxTurnAngle ) &&
 //                  uDist / segmentLength > -m_faceToEdgeProjectionTol &&
 //                  uDist / segmentLength < 1 + m_faceToEdgeProjectionTol &&
-//                  fabs( LvArray::tensorOps::AiBi< 3 >( vecEdge, fn )) < m_faceToEdgeCoplaneTol &&  // this face is kind of parallel to the
+//                  fabs( LvArray::tensorOps::AiBi< 3 >( vecEdge, fn )) < m_faceToEdgeCoplaneTol &&  // this face is
+// kind of parallel to the
 // tip
 //                                                                         // edge.
 //                  fabs( LvArray::tensorOps::AiBi< 3 >( fn0, fn )) > 1 - m_faceToFaceCoplaneTol )  // co-plane

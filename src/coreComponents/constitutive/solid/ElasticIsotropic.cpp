@@ -68,9 +68,9 @@ ElasticIsotropic::~ElasticIsotropic()
 void ElasticIsotropic::PostProcessInput()
 {
   // check what constants the user actually input, and do conversions as needed
-  
+
   SolidBase::PostProcessInput();
-  
+
   real64 & nu = getReference< real64 >( viewKeyStruct::defaultPoissonRatioString );
   real64 & E  = getReference< real64 >( viewKeyStruct::defaultYoungsModulusString );
   real64 & K  = m_defaultBulkModulus;
@@ -111,8 +111,8 @@ void ElasticIsotropic::PostProcessInput()
   }
   else if( nu >= 0.0 && G >= 0.0 )
   {
-    E = conversions::ShearModAndPoissonRatio::toYoungsMod( G, nu);
-    K = conversions::ShearModAndPoissonRatio::toBulkMod( G, nu);
+    E = conversions::ShearModAndPoissonRatio::toYoungsMod( G, nu );
+    K = conversions::ShearModAndPoissonRatio::toBulkMod( G, nu );
   }
   else if( nu >= 0 && K >= 0.0 )
   {
@@ -138,7 +138,7 @@ void ElasticIsotropic::PostProcessInput()
   {
     GEOSX_ERROR( "invalid specification for default elastic constants. "<<errorCheck<<" has been specified." );
   }
-  
+
   // set results as array default values
   this->getWrapper< array1d< real64 > >( viewKeyStruct::bulkModulusString )->
     setApplyDefaultValue( m_defaultBulkModulus );

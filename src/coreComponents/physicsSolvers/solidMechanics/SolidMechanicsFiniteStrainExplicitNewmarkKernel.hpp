@@ -112,7 +112,7 @@ public:
     GEOSX_HOST_DEVICE
     StackVariables():
       Base::StackVariables(),
-            uLocal{ {0.0} }
+      uLocal{ {0.0} }
     {}
 
     /// Local stack storage for nodal displacements.
@@ -184,7 +184,7 @@ public:
     real64 Rot[ 3 ][ 3 ];
     real64 Dadt[ 6 ];
     real64 stress[ 6 ];
-    
+
     HughesWinget( Rot, Dadt, Ldt );
     m_constitutiveUpdate.hypoUpdate_StressOnly( k, q, Dadt, Rot, stress );
 

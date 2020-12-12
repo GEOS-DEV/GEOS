@@ -46,7 +46,7 @@ public:
   using UPDATE_BASE::smallStrainUpdate_StressOnly;
   using UPDATE_BASE::hypoUpdate;
   using UPDATE_BASE::hyperUpdate;
-  
+
   GEOSX_HOST_DEVICE
   real64 getBiotCoefficient() const
   {

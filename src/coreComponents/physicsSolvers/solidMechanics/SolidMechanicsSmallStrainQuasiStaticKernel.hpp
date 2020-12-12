@@ -245,19 +245,19 @@ public:
 
     real64 strainInc[6] = {0};
     real64 stress[6];
-    
+
     typename CONSTITUTIVE_TYPE::KernelWrapper::DiscretizationOps stiffness;
-            
+
     FE_TYPE::symmetricGradient( dNdX, stack.uhat_local, strainInc );
 
     m_constitutiveUpdate.smallStrainUpdate( k, q, strainInc, stress, stiffness );
-        
+
     stressModifier( stress );
     for( localIndex i=0; i<6; ++i )
     {
       stress[i] *= -detJ;
     }
-    
+
     real64 const gravityForce[3] = { m_gravityVector[0] * m_density( k, q )* detJ,
                                      m_gravityVector[1] * m_density( k, q )* detJ,
                                      m_gravityVector[2] * m_density( k, q )* detJ };
@@ -269,7 +269,7 @@ public:
                                         N,
                                         gravityForce,
                                         reinterpret_cast< real64 (&)[numNodesPerElem][3] >(stack.localResidual) );
-                                        
+
     stiffness.template upperBTDB< numNodesPerElem >( dNdX, -detJ, stack.localJacobian );
   }
 
@@ -291,7 +291,8 @@ public:
     {
       for( int dim = 0; dim < numDofPerTestSupportPoint; ++dim )
       {
-        localIndex const dof = LvArray::integerConversion< localIndex >( stack.localRowDofIndex[ numDofPerTestSupportPoint * localNode + dim ] - m_dofRankOffset );
+        localIndex const dof =
+          LvArray::integerConversion< localIndex >( stack.localRowDofIndex[ numDofPerTestSupportPoint * localNode + dim ] - m_dofRankOffset );
         if( dof < 0 || dof >= m_matrix.numRows() ) continue;
         m_matrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( dof,
                                                                                 stack.localRowDofIndex,
