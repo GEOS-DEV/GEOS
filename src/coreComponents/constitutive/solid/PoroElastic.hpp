@@ -47,14 +47,6 @@ public:
   using UPDATE_BASE::hypoUpdate;
   using UPDATE_BASE::hyperUpdate;
   
-  // legacy interface
-  using UPDATE_BASE::setDiscretizationOps;
-  using UPDATE_BASE::GetStiffness;
-  using UPDATE_BASE::SmallStrainNoState;
-  using UPDATE_BASE::SmallStrain;
-  using UPDATE_BASE::HypoElastic;
-  using UPDATE_BASE::HyperElastic;
-
   GEOSX_HOST_DEVICE
   real64 getBiotCoefficient() const
   {

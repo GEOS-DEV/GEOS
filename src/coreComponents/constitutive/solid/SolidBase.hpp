@@ -99,17 +99,7 @@ protected:
   }
   
 
-  
 public:
-
-  // temporary fix to remove
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  void saveState( localIndex const k,
-                  localIndex const q) const
-  {
-    LvArray::tensorOps::copy< 6 >( m_oldStress[k][q], m_newStress[k][q] );
-  }
   
   /// A reference the current material stress at quadrature points.
   arrayView3d< real64, solid::STRESS_USD > const m_newStress;
@@ -356,24 +346,6 @@ public:
   
    
   /**
-   * @brief Return the current stress at a given material point
-   *
-   * @param[in] k The element index.
-   * @param[in] q The quadrature point index.
-   * @param[out] stress Current stress value
-   */
-  GEOSX_HOST_DEVICE
-  virtual void getStress( localIndex const k,
-                          localIndex const q,
-                          real64 ( & stress )[6] ) const
-  {
-    for(localIndex i=0; i<6; ++i)
-    {
-      stress[i] = this->m_newStress( k, q, i );
-    }
-  }
-  
-  /**
    * @brief Return the current elastic strain at a given material point (small-strain interface)
    *
    * @param k the element inex
@@ -443,125 +415,6 @@ public:
     GEOSX_ERROR("getElasticStiffness() not implemented for this model");
   }
 
-
-  //////////////// "LEGACY" INTERFACE BELOW -- TO REVISIT ////////////////////////
-  
-  
-  GEOSX_HOST_DEVICE
-  virtual real64 calculateStrainEnergyDensity( localIndex const k,
-                                               localIndex const q ) const = 0;
-                                               
-  /**
-   * Return the stiffness at a given element and quadrature point.
-   * @param k The element index.
-   * @param q The quadrature point index.
-   * @param c The stiffness array in Voigt notation.
-   */
-  GEOSX_HOST_DEVICE
-  virtual void GetStiffness( localIndex const k, real64 ( &c )[6][6] ) const
-  {
-    GEOSX_UNUSED_VAR(k);
-    GEOSX_UNUSED_VAR(c);
-    GEOSX_ERROR("SolidBase::GetStiffness() not implemented");
-  }
-
-  /**
-   * @brief Calculate stress using input generated under small strain
-   *        assumptions.
-   * @param[in] k The element index.
-   * @param[in] voigtStrain The total strain tensor in Voigt notation.
-   * @param[out] stress Pointer to the stress data in Voigt notation.
-   */
-  GEOSX_HOST_DEVICE
-  virtual void SmallStrainNoState( localIndex const k,
-                                   real64 const ( &voigtStrain )[ 6 ],
-                                   real64 ( &stress )[ 6 ] ) const
-  {
-    GEOSX_UNUSED_VAR(k);
-    GEOSX_UNUSED_VAR(voigtStrain);
-    GEOSX_UNUSED_VAR(stress);
-    GEOSX_ERROR("SolidBase::SmallStrainNoState not implemented");
-  }
-
-  /**
-   * @brief Update the constitutive state using input generated under small
-   *        strain assumptions.
-   * @param[in] k The element index.
-   * @param[in] q The quadrature point index.
-   * @param[in] voigtStrainIncrement The increment in strain expressed in Voigt
-   *                                 notation.
-   */
-  GEOSX_HOST_DEVICE
-  virtual void SmallStrain( localIndex const k,
-                            localIndex const q,
-                            real64 const ( &voigtStrainInc )[ 6 ] ) const
-  {
-    GEOSX_UNUSED_VAR(k);
-    GEOSX_UNUSED_VAR(q);
-    GEOSX_UNUSED_VAR(voigtStrainInc);
-    GEOSX_ERROR("SolidBase::SmallStrain not implemented");
-  }
-
-  /**
-   * @brief Hypoelastic update to the constitutive state using input generated
-   *        under finite strain assumptions.
-   * @param[in] k The element index.
-   * @param[in] q The quadrature point index.
-   * @param[in] Ddt The incremental deformation tensor
-   *                (rate of deformation tensor * dt)
-   * @param[in] Rot The incremental rotation tensor
-   */
-  GEOSX_HOST_DEVICE
-  virtual void HypoElastic( localIndex const k,
-                            localIndex const q,
-                            real64 const ( &Ddt )[ 6 ],
-                            real64 const ( &Rot )[ 3 ][ 3 ] ) const
-  {
-    GEOSX_UNUSED_VAR(k);
-    GEOSX_UNUSED_VAR(q);
-    GEOSX_UNUSED_VAR(Ddt);
-    GEOSX_UNUSED_VAR(Rot);
-    GEOSX_ERROR("SolidBase::HypoElastic not implemented");
-  }
-
-  /**
-   * @brief Hyper-elastic stress update
-   * @param[in] k The element index.
-   * @param[in] FmI The deformation gradient minus Identity
-   * @param[out] stress Pointer to the stress data in Voigt notation.
-   */
-  GEOSX_HOST_DEVICE
-  virtual void HyperElastic( localIndex const k,
-                             real64 const (&FmI)[3][3],
-                             real64 ( &stress )[ 6 ] ) const
-  {
-    GEOSX_UNUSED_VAR(k);
-    GEOSX_UNUSED_VAR(FmI);
-    GEOSX_UNUSED_VAR(stress);
-    GEOSX_ERROR("SolidBase::HyperElastic() not implemented");
-  }
-
-  /**
-   * @brief Hyper-elastic state update
-   * @param[in] k The element index.
-   * @param[in] q The quadrature point index.
-   * @param[in] FmI The deformation gradient minus Identity
-   */
-  GEOSX_HOST_DEVICE
-  virtual void HyperElastic( localIndex const k,
-                             localIndex const q,
-                             real64 const (&FmI)[3][3] ) const
-  {
-    GEOSX_UNUSED_VAR(k);
-    GEOSX_UNUSED_VAR(q);
-    GEOSX_UNUSED_VAR(FmI);
-    GEOSX_ERROR("SolidBase::HyperElastic() not implemented");
-  }
-  
-
-
-  ///////////////////// end "legacy" interface //////////////////////////////
-
 };
 
 
@@ -588,7 +441,7 @@ public:
   virtual void allocateConstitutiveData( dataRepository::Group * const parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
-  virtual void saveConvergedState();
+  virtual void saveConvergedState() const;
   
   struct viewKeyStruct : public ConstitutiveBase::viewKeyStruct
   {
@@ -602,13 +455,13 @@ public:
   /// Number of elements storing solid data
   localIndex numElem() const
   {
-    return m_newStress.size( 0 );
+    return m_oldStress.size( 0 );
   }
   
   /// Number of quadrature points per element storing solid data
   localIndex numQuad() const
   {
-    return m_newStress.size( 1 );
+    return m_oldStress.size( 1 );
   }
   
   /**

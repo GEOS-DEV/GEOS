@@ -132,7 +132,7 @@ void DruckerPrager::PostProcessInput()
 }
 
 
-void DruckerPrager::saveConvergedState()
+void DruckerPrager::saveConvergedState() const
 {
   SolidBase::saveConvergedState(); // TODO: not ideal, as we have separate loops for base and derived data
   

@@ -73,7 +73,7 @@ void SolidBase::allocateConstitutiveData( dataRepository::Group * const parent,
 }
 
 
-void SolidBase::saveConvergedState()
+void SolidBase::saveConvergedState() const
 {
  localIndex const numE = numElem();
  localIndex const numQ = numQuad();

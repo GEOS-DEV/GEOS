@@ -250,14 +250,8 @@ public:
             
     FE_TYPE::symmetricGradient( dNdX, stack.uhat_local, strainInc );
 
-    // NEW CALL
     m_constitutiveUpdate.smallStrainUpdate( k, q, strainInc, stress, stiffness );
-    
-    // OLD CALL
-    //m_constitutiveUpdate.SmallStrain( k, q, strainInc );
-    //m_constitutiveUpdate.setDiscretizationOps( k, q, stiffness );
-    //m_constitutiveUpdate.getStress( k, q, stress );
-    
+        
     stressModifier( stress );
     for( localIndex i=0; i<6; ++i )
     {

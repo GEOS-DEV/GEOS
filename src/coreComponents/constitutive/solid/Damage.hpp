@@ -53,8 +53,8 @@ public:
   using DiscretizationOps = typename UPDATE_BASE::DiscretizationOps;
   
   using UPDATE_BASE::smallStrainNoStateUpdate;
-  using UPDATE_BASE::smallStrainNoStateUpdate_StressOnly;
   using UPDATE_BASE::smallStrainUpdate;
+  using UPDATE_BASE::smallStrainNoStateUpdate_StressOnly;
   using UPDATE_BASE::smallStrainUpdate_StressOnly;
   
   GEOSX_HOST_DEVICE
@@ -80,7 +80,6 @@ public:
   
   // TODO: The code below assumes the strain energy density will never be
   //       evaluated in a non-converged / garbage configuration.
-
   GEOSX_HOST_DEVICE
   virtual real64 getStrainEnergyDensity( localIndex const k,
                                          localIndex const q ) const override
@@ -93,57 +92,8 @@ public:
     return m_strainEnergyDensity[k][q];
   }
   
-  
-  using UPDATE_BASE::setDiscretizationOps;
-  using UPDATE_BASE::GetStiffness;
-  using UPDATE_BASE::SmallStrainNoState;
-  using UPDATE_BASE::SmallStrain;
-  using UPDATE_BASE::HypoElastic;
-  using UPDATE_BASE::HyperElastic;
-  
-  GEOSX_FORCE_INLINE
-  GEOSX_HOST_DEVICE
-  void setDiscretizationOps( localIndex const k,
-                             localIndex const q,
-                             typename UPDATE_BASE::DiscretizationOps & discOps ) const
-  {
-    UPDATE_BASE::setDiscretizationOps( k, q, discOps );
-    real64 const damageFactor = ( 1.0 - m_damage( k, q ) )*( 1.0 - m_damage( k, q ) );
-    discOps.scaleParams( damageFactor );
-  }
-
-
-  GEOSX_HOST_DEVICE
-  virtual real64 calculateStrainEnergyDensity( localIndex const k,
-                                               localIndex const q ) const override final
-  {
-    real64 const sed = UPDATE_BASE::calculateStrainEnergyDensity( k, q );
-    if( sed > m_strainEnergyDensity( k, q ) )
-    {
-      m_strainEnergyDensity( k, q ) = sed;
-    }
-    return m_strainEnergyDensity( k, q );
-  }
-
-  GEOSX_HOST_DEVICE
-  virtual void getStress( localIndex const k,
-                          localIndex const q,
-                          real64 (& stress)[6] ) const override
-  {
-    real64 const damageFactor = ( 1.0 - m_damage( k, q ) )*( 1.0 - m_damage( k, q ) );
-
-    stress[0] = this->m_newStress( k, q, 0 ) * damageFactor;
-    stress[1] = this->m_newStress( k, q, 1 ) * damageFactor;
-    stress[2] = this->m_newStress( k, q, 2 ) * damageFactor;
-    stress[3] = this->m_newStress( k, q, 3 ) * damageFactor;
-    stress[4] = this->m_newStress( k, q, 4 ) * damageFactor;
-    stress[5] = this->m_newStress( k, q, 5 ) * damageFactor;
-  }
-
-
   arrayView2d< real64 > const m_damage;
   arrayView2d< real64 > const m_strainEnergyDensity;
-
 };
 
 

@@ -80,9 +80,10 @@ public:
   DruckerPragerUpdates & operator=( DruckerPragerUpdates && ) =  delete;
   
   // Use the uncompressed version of the stiffness bilinear form
-  using DiscretizationOps = SolidModelDiscretizationOpsFullyAnisotroipic; // TODO: typo in anistropic
+  using DiscretizationOps = SolidModelDiscretizationOpsFullyAnisotroipic; // TODO: typo in anistropic (fix in DiscOps PR)
   
-  using ElasticIsotropicUpdates::smallStrainUpdate;// prevent hiding
+  // Bring in base implementations to prevent hiding warnings
+  using ElasticIsotropicUpdates::smallStrainUpdate;
   using ElasticIsotropicUpdates::smallStrainUpdate_StressOnly;
   
   GEOSX_HOST_DEVICE
@@ -99,20 +100,6 @@ public:
                                   real64 ( & stress )[6],
                                   DiscretizationOps & stiffness ) const final;
 
-
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  void setDiscretizationOps( localIndex const k,
-                             localIndex const q,
-                             DiscretizationOps & discOps ) const
-  {
-    GEOSX_UNUSED_VAR(k);
-    GEOSX_UNUSED_VAR(q);
-    for(localIndex i=0; i<6; ++i)
-    for(localIndex j=0; j<6; ++j)
-      discOps.m_c[i][j] = 0;
-  }
-                                  
 private:
   /// A reference to the ArrayView holding the friction angle for each element.
   arrayView1d< real64 const > const m_friction;
@@ -325,7 +312,7 @@ public:
   virtual void allocateConstitutiveData( dataRepository::Group * const parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
   
-  virtual void saveConvergedState() override;
+  virtual void saveConvergedState() const override;
   
   /**
    * @name Static Factory Catalog members and functions

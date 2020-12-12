@@ -81,15 +81,8 @@ public:
   /// Deleted move assignment operator
   ElasticTransverseIsotropicUpdates & operator=( ElasticTransverseIsotropicUpdates && ) =  delete;
 
-
   // Use transverse isotropic form of inner product compression
   using DiscretizationOps = SolidModelDiscretizationOpsTransverseIsotropic;
-
-  // bring in base implementations for any not defined here
-  //using SolidBaseUpdates::smallStrainUpdate;
-  //using SolidBaseUpdates::smallStrainNoStateUpdate;
-  //using SolidBaseUpdates::hypoUpdate;
-  //using SolidBaseUpdates::hyperUpdate;
   
   // total strain interfaces
   
@@ -150,59 +143,7 @@ public:
   GEOSX_HOST_DEVICE
   virtual void getElasticStiffness( localIndex const k, real64 ( & stiffness )[6][6] ) const override final;
   
-                          
-  ///// LEGACY
-  
-  GEOSX_HOST_DEVICE
-  virtual void SmallStrainNoState( localIndex const k,
-                                   real64 const ( &voigtStrain )[ 6 ],
-                                   real64 ( &stress )[ 6 ] ) const override final;
-
-  GEOSX_HOST_DEVICE
-  virtual void SmallStrain( localIndex const k,
-                            localIndex const q,
-                            real64 const ( &voigtStrainInc )[ 6 ] ) const override final;
-
-  GEOSX_HOST_DEVICE
-  virtual void HypoElastic( localIndex const k,
-                            localIndex const q,
-                            real64 const ( &Ddt )[ 6 ],
-                            real64 const ( &Rot )[ 3 ][ 3 ] ) const override final;
-
-  GEOSX_HOST_DEVICE
-  virtual void HyperElastic( localIndex const k,
-                             real64 const (&FmI)[3][3],
-                             real64 ( &stress )[ 6 ] ) const override final;
-
-  GEOSX_HOST_DEVICE
-  virtual void HyperElastic( localIndex const k,
-                             localIndex const q,
-                             real64 const (&FmI)[3][3] ) const override final;
-
-  GEOSX_FORCE_INLINE
-  GEOSX_HOST_DEVICE
-  void setDiscretizationOps( localIndex const k,
-                             localIndex const q,
-                             DiscretizationOps & discOps ) const
-  {
-    GEOSX_UNUSED_VAR( q )
-    discOps.m_c11 = m_c11[k];
-    discOps.m_c13 = m_c13[k];
-    discOps.m_c33 = m_c33[k];
-    discOps.m_c44 = m_c44[k];
-    discOps.m_c66 = m_c66[k];
-  }
-
-
-  GEOSX_HOST_DEVICE
-  virtual real64 calculateStrainEnergyDensity( localIndex const k,
-                                               localIndex const q ) const override final
-  {
-    GEOSX_UNUSED_VAR( k, q );
-    GEOSX_ERROR( "Not implemented" );
-    return 0;
-  }
-
+          
 private:
 
   /// A reference to the ArrayView holding c11 for each element.
@@ -355,82 +296,6 @@ void ElasticTransverseIsotropicUpdates::hypoUpdate( localIndex const k,
   GEOSX_UNUSED_VAR(stiffness);
   GEOSX_ERROR("hypoUpdate() disabled for anisotropic models when using Hughes-Winget integration");
 }
-
-//// LEGACY ////
-
-GEOSX_FORCE_INLINE
-GEOSX_HOST_DEVICE
-void
-ElasticTransverseIsotropicUpdates::
-  SmallStrainNoState( localIndex const k,
-                      real64 const ( &voigtStrain )[ 6 ],
-                      real64 ( & stress )[ 6 ] ) const
-{
-  real64 const c12temp = ( m_c11[k] - 2.0 * m_c66[k] );
-  stress[0] = m_c11[k] * voigtStrain[0] +  c12temp * voigtStrain[1] + m_c13[k]*voigtStrain[2];
-  stress[1] =  c12temp * voigtStrain[0] + m_c11[k] * voigtStrain[1] + m_c13[k]*voigtStrain[2];
-  stress[2] = m_c13[k] * voigtStrain[0] + m_c13[k] * voigtStrain[1] + m_c33[k]*voigtStrain[2];
-
-  stress[3] = m_c44[k]*voigtStrain[3];
-  stress[4] = m_c44[k]*voigtStrain[4];
-  stress[5] = m_c66[k]*voigtStrain[5];
-}
-
-
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
-void
-ElasticTransverseIsotropicUpdates::
-  SmallStrain( localIndex const k,
-               localIndex const q,
-               real64 const ( &voigtStrainInc )[ 6 ] ) const
-{
-  real64 const temp = m_c11[ k ] * ( voigtStrainInc[ 0 ] + voigtStrainInc[ 1 ] ) + m_c13[ k ] * voigtStrainInc[ 2 ];
-  m_newStress( k, q, 0 ) += -2.0 * m_c66[ k ] * voigtStrainInc[ 1 ] + temp;
-  m_newStress( k, q, 1 ) += -2.0 * m_c66[ k ] * voigtStrainInc[ 0 ] + temp;
-  m_newStress( k, q, 2 ) = m_newStress( k, q, 2 ) + m_c13[ k ] * ( voigtStrainInc[ 0 ] + voigtStrainInc[ 1 ] ) + m_c33[ k ] * voigtStrainInc[ 2 ];
-  m_newStress( k, q, 3 ) = m_newStress( k, q, 3 ) + m_c44[ k ] * voigtStrainInc[ 3 ];
-  m_newStress( k, q, 4 ) = m_newStress( k, q, 4 ) + m_c44[ k ] * voigtStrainInc[ 4 ];
-  m_newStress( k, q, 5 ) = m_newStress( k, q, 5 ) + m_c66[ k ] * voigtStrainInc[ 5 ];
-}
-
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
-void
-ElasticTransverseIsotropicUpdates::
-  HypoElastic( localIndex const k,
-               localIndex const q,
-               real64 const ( &Ddt )[ 6 ],
-               real64 const ( &Rot )[ 3 ][ 3 ] ) const
-{
-  SmallStrain( k, q, Ddt );
-  real64 temp[ 6 ];
-  LvArray::tensorOps::Rij_eq_AikSymBklAjl< 3 >( temp, Rot, m_newStress[ k ][ q ] );
-  LvArray::tensorOps::copy< 6 >( m_newStress[ k ][ q ], temp );
-}
-
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
-void
-ElasticTransverseIsotropicUpdates::
-  HyperElastic( localIndex const GEOSX_UNUSED_PARAM( k ),
-                real64 const (&GEOSX_UNUSED_PARAM( FmI ))[3][3],
-                real64 ( & )[ 6 ] ) const
-{
-  GEOSX_ERROR( "LinearElasticTransverseIsotropicKernelWrapper::HyperElastic() is not implemented!" );
-}
-
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
-void
-ElasticTransverseIsotropicUpdates::
-  HyperElastic( localIndex const GEOSX_UNUSED_PARAM( k ),
-                localIndex const GEOSX_UNUSED_PARAM( q ),
-                real64 const (&GEOSX_UNUSED_PARAM( FmI ))[3][3] ) const
-{
-  GEOSX_ERROR( "LinearElasticTransverseIsotropicKernelWrapper::HyperElastic() is not implemented!" );
-}
-
 
 
 /**

@@ -33,7 +33,6 @@ Damage< BASE >::Damage( string const & name, Group * const parent ):
   m_damage(),
   m_strainEnergyDensity()
 {
-
   this->registerWrapper( viewKeyStruct::damageString, &m_damage )->
     setApplyDefaultValue( 0.0 )->
     setPlotLevel( PlotLevel::LEVEL_0 )->

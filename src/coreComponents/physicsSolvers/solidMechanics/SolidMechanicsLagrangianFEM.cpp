@@ -580,7 +580,7 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const & time_n,
   MeshLevel & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
   NodeManager & nodes = *mesh.getNodeManager();
 
-  // save (converged) constitutive state data
+  // save previous constitutive state data in preparation for next timestep
   forTargetSubRegions< CellElementSubRegion >( mesh, [&]( localIndex const targetIndex,
                                                           CellElementSubRegion & subRegion )
   {
@@ -897,7 +897,9 @@ SolidMechanicsLagrangianFEM::
                                                           CellElementSubRegion & subRegion )
   {
     SolidBase const & constitutiveRelation = GetConstitutiveModel< SolidBase >( subRegion, m_solidMaterialNames[targetIndex] );
+    constitutiveRelation.saveConvergedState();
 
+    //TODO: remove stress_n?
     arrayView3d< real64 const, solid::STRESS_USD > const stress = constitutiveRelation.getStress();
 
     array3d< real64, solid::STRESS_PERMUTATION > &

@@ -183,12 +183,13 @@ public:
 
     real64 Rot[ 3 ][ 3 ];
     real64 Dadt[ 6 ];
+    real64 stress[ 6 ];
+    
     HughesWinget( Rot, Dadt, Ldt );
-
-    m_constitutiveUpdate.HypoElastic( k, q, Dadt, Rot );
+    m_constitutiveUpdate.hypoUpdate_StressOnly( k, q, Dadt, Rot, stress );
 
     real64 P[ 3 ][ 3 ];
-    LvArray::tensorOps::Rij_eq_symAikBjk< 3 >( P, m_constitutiveUpdate.m_newStress[k][q].toSliceConst(), fInv );
+    LvArray::tensorOps::Rij_eq_symAikBjk< 3 >( P, stress, fInv );
     LvArray::tensorOps::scale< 3, 3 >( P, -detJ * detF );
 
     FE_TYPE::plus_gradNajAij( dNdX, P, stack.fLocal );
