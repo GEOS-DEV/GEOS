@@ -42,12 +42,10 @@ class ElasticIsotropicUpdates : public SolidBaseUpdates
 public:
   /**
    * @brief Constructor
-   * @param[in] bulkModulus The ArrayView holding the bulk modulus data for each
-   *                        element.
-   * @param[in] shearModulus The ArrayView holding the shear modulus data for each
-   *                         element.
-   * @param[in] stress The ArrayView holding the stress data for each quadrature
-   *                   point.
+   * @param[in] bulkModulus  The ArrayView holding the bulk modulus data for each element.
+   * @param[in] shearModulus The ArrayView holding the shear modulus data for each element.
+   * @param[in] newStress    The ArrayView holding the new stress data for each quadrature point.
+   * @param[in] oldStress    The ArrayView holding the old stress data for each quadrature point.
    */
   ElasticIsotropicUpdates( arrayView1d< real64 const > const & bulkModulus,
                            arrayView1d< real64 const > const & shearModulus,
@@ -281,7 +279,7 @@ void ElasticIsotropicUpdates::smallStrainNoStateUpdate_StressOnly( localIndex co
   GEOSX_UNUSED_VAR(q);
       
   real64 const twoG   = 2 * m_shearModulus[k];
-  real64 const lambda = conversions::BulkModAndShearMod::toFirstLame( m_bulkModulus[k] , m_shearModulus[k] );
+  real64 const lambda = conversions::BulkModAndShearMod::toFirstLame( m_bulkModulus[k], m_shearModulus[k] );
   real64 const vol    = lambda * ( totalStrain[0] + totalStrain[1] + totalStrain[2] );
 
   stress[0] = vol + twoG * totalStrain[0];
@@ -590,7 +588,7 @@ public:
    * @return A const reference to arrayView1d<real64> containing the bulk
    *         modulus (at every element).
    */
-  arrayView1d< real64 > const bulkModulus()       { return m_bulkModulus; }
+  arrayView1d< real64 > const bulkModulus() { return m_bulkModulus; }
 
   /**
    * @brief Const accessor for bulk modulus
@@ -604,7 +602,7 @@ public:
    * @return A const reference to arrayView1d<real64> containing the shear
    *         modulus (at every element).
    */
-  arrayView1d< real64 > const shearModulus()       { return m_shearModulus; }
+  arrayView1d< real64 > const shearModulus() { return m_shearModulus; }
 
   /**
    * @brief Const accessor for shear modulus
@@ -669,7 +667,7 @@ protected:
 
   /// The shear modulus for each upper level dimension (i.e. cell) of *this
   array1d< real64 > m_shearModulus;
-
+  
 };
 
 }

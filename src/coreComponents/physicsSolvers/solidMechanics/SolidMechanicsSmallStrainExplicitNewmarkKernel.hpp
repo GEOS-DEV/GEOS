@@ -206,7 +206,6 @@ public:
 #if UPDATE_STRESS == 2
 #ifdef NEW_INTERFACE
     m_constitutiveUpdate.smallStrainUpdate_StressOnly( k, q, strain, stressLocal );
-    m_constitutiveUpdate.saveState( k, q );
 #else
     m_constitutiveUpdate.SmallStrain( k, q, strain );
 #endif

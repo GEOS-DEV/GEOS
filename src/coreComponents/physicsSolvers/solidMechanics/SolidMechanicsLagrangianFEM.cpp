@@ -580,6 +580,14 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const & time_n,
   MeshLevel & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
   NodeManager & nodes = *mesh.getNodeManager();
 
+  // save (converged) constitutive state data
+  forTargetSubRegions< CellElementSubRegion >( mesh, [&]( localIndex const targetIndex,
+                                                          CellElementSubRegion & subRegion )
+  {
+    SolidBase & constitutiveRelation = GetConstitutiveModel< SolidBase >( subRegion, m_solidMaterialNames[targetIndex] );
+    constitutiveRelation.saveConvergedState();
+  } );
+
   FieldSpecificationManager & fsManager = FieldSpecificationManager::get();
 
   arrayView1d< real64 const > const & mass = nodes.getReference< array1d< real64 > >( keys::Mass );
