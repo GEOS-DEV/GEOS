@@ -233,32 +233,32 @@ void SurfaceGenerator::RegisterDataOnMesh( Group * const MeshBodies )
     ElementRegionManager * const elemManager = meshLevel->getElemManager();
 
     elemManager->forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion & subRegion )
-      {
-        subRegion.registerExtrinsicData< extrinsicMeshData::K_IC_00,
-                                         extrinsicMeshData::K_IC_01,
-                                         extrinsicMeshData::K_IC_02,
-                                         extrinsicMeshData::K_IC_10,
-                                         extrinsicMeshData::K_IC_11,
-                                         extrinsicMeshData::K_IC_12,
-                                         extrinsicMeshData::K_IC_20,
-                                         extrinsicMeshData::K_IC_21,
-                                         extrinsicMeshData::K_IC_22 >( this->getName() );
-      } );
+    {
+      subRegion.registerExtrinsicData< extrinsicMeshData::K_IC_00,
+                                       extrinsicMeshData::K_IC_01,
+                                       extrinsicMeshData::K_IC_02,
+                                       extrinsicMeshData::K_IC_10,
+                                       extrinsicMeshData::K_IC_11,
+                                       extrinsicMeshData::K_IC_12,
+                                       extrinsicMeshData::K_IC_20,
+                                       extrinsicMeshData::K_IC_21,
+                                       extrinsicMeshData::K_IC_22 >( this->getName() );
+    } );
 
     elemManager->forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
-      {
-        subRegion.registerExtrinsicData< extrinsicMeshData::K_IC_00,
-                                         extrinsicMeshData::K_IC_01,
-                                         extrinsicMeshData::K_IC_02,
-                                         extrinsicMeshData::K_IC_10,
-                                         extrinsicMeshData::K_IC_11,
-                                         extrinsicMeshData::K_IC_12,
-                                         extrinsicMeshData::K_IC_20,
-                                         extrinsicMeshData::K_IC_21,
-                                         extrinsicMeshData::K_IC_22,
-                                         extrinsicMeshData::RuptureTime,
-                                         extrinsicMeshData::RuptureRate >( this->getName() );
-      } );
+    {
+      subRegion.registerExtrinsicData< extrinsicMeshData::K_IC_00,
+                                       extrinsicMeshData::K_IC_01,
+                                       extrinsicMeshData::K_IC_02,
+                                       extrinsicMeshData::K_IC_10,
+                                       extrinsicMeshData::K_IC_11,
+                                       extrinsicMeshData::K_IC_12,
+                                       extrinsicMeshData::K_IC_20,
+                                       extrinsicMeshData::K_IC_21,
+                                       extrinsicMeshData::K_IC_22,
+                                       extrinsicMeshData::RuptureTime,
+                                       extrinsicMeshData::RuptureRate >( this->getName() );
+    } );
 
     NodeManager * const nodeManager = meshLevel->getNodeManager();
     EdgeManager * const edgeManager = meshLevel->getEdgeManager();
@@ -531,9 +531,9 @@ int SurfaceGenerator::SeparationDriver( DomainPartition & domain,
   CommunicationTools::SynchronizeFields( fieldNames, &mesh, domain.getNeighbors() );
 
   elementManager.forElementSubRegions< CellElementSubRegion >( [] ( auto & elemSubRegion )
-    {
-      elemSubRegion.moveSets( LvArray::MemorySpace::CPU );
-    } );
+  {
+    elemSubRegion.moveSets( LvArray::MemorySpace::CPU );
+  } );
   faceManager.moveSets( LvArray::MemorySpace::CPU );
   edgeManager.moveSets( LvArray::MemorySpace::CPU );
   nodeManager.moveSets( LvArray::MemorySpace::CPU );
@@ -645,43 +645,43 @@ int SurfaceGenerator::SeparationDriver( DomainPartition & domain,
                                                                               localIndex const esr,
                                                                               ElementRegionBase &,
                                                                               FaceElementSubRegion & subRegion )
+    {
+      std::set< localIndex > & newFaceElems = modifiedObjects.newElements[{er, esr}];
+      for( localIndex const newFaceElemIndex : newFaceElems )
       {
-        std::set< localIndex > & newFaceElems = modifiedObjects.newElements[{er, esr}];
-        for( localIndex const newFaceElemIndex : newFaceElems )
-        {
-          subRegion.m_newFaceElements.insert( newFaceElemIndex );
-        }
-      } );
+        subRegion.m_newFaceElements.insert( newFaceElemIndex );
+      }
+    } );
 
 
     elementManager.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
+    {
+      FaceElementSubRegion::NodeMapType & nodeMap = subRegion.nodeList();
+      FaceElementSubRegion::FaceMapType & faceMap = subRegion.faceList();
+
+      for( localIndex kfe=0; kfe<subRegion.size(); ++kfe )
       {
-        FaceElementSubRegion::NodeMapType & nodeMap = subRegion.nodeList();
-        FaceElementSubRegion::FaceMapType & faceMap = subRegion.faceList();
+        nodeMap.resizeArray( kfe, 8 );
 
-        for( localIndex kfe=0; kfe<subRegion.size(); ++kfe )
+        localIndex const numNodesInFace = faceToNodeMap.sizeOfArray( faceMap[ kfe ][ 0 ] );
+        for( localIndex a = 0; a < numNodesInFace; ++a )
         {
-          nodeMap.resizeArray( kfe, 8 );
+          localIndex const aa = a < 2 ? a : numNodesInFace - a + 1;
+          localIndex const bb = aa == 0 ? aa : numNodesInFace - aa;
 
-          localIndex const numNodesInFace = faceToNodeMap.sizeOfArray( faceMap[ kfe ][ 0 ] );
-          for( localIndex a = 0; a < numNodesInFace; ++a )
-          {
-            localIndex const aa = a < 2 ? a : numNodesInFace - a + 1;
-            localIndex const bb = aa == 0 ? aa : numNodesInFace - aa;
-
-            // TODO HACK need to generalize to something other than quads
-            //wu40: I temporarily make it work for tet mesh. Need further check with Randy.
-            nodeMap[ kfe ][ a ]   = faceToNodeMap( faceMap[ kfe ][ 0 ], aa );
-            nodeMap[ kfe ][ a + numNodesInFace ] = faceToNodeMap( faceMap[ kfe ][ 1 ], bb );
-          }
-
-          if( numNodesInFace == 3 )
-          {
-            nodeMap[kfe][6] = faceToNodeMap( faceMap[ kfe ][ 0 ], 2 );
-            nodeMap[kfe][7] = faceToNodeMap( faceMap[ kfe ][ 1 ], 2 );
-          }
+          // TODO HACK need to generalize to something other than quads
+          //wu40: I temporarily make it work for tet mesh. Need further check with Randy.
+          nodeMap[ kfe ][ a ]   = faceToNodeMap( faceMap[ kfe ][ 0 ], aa );
+          nodeMap[ kfe ][ a + numNodesInFace ] = faceToNodeMap( faceMap[ kfe ][ 1 ], bb );
         }
-      } );
+
+        if( numNodesInFace == 3 )
+        {
+          nodeMap[kfe][6] = faceToNodeMap( faceMap[ kfe ][ 0 ], 2 );
+          nodeMap[kfe][7] = faceToNodeMap( faceMap[ kfe ][ 1 ], 2 );
+        }
+      }
+    } );
   }
 
 
@@ -695,11 +695,11 @@ int SurfaceGenerator::SeparationDriver( DomainPartition & domain,
 //  if( rval>0 )
   {
     elementManager.forElementSubRegions< CellElementSubRegion >( [] ( auto & elemSubRegion )
-      {
-        elemSubRegion.nodeList().registerTouch( LvArray::MemorySpace::CPU );
-        elemSubRegion.edgeList().registerTouch( LvArray::MemorySpace::CPU );
-        elemSubRegion.faceList().registerTouch( LvArray::MemorySpace::CPU );
-      } );
+    {
+      elemSubRegion.nodeList().registerTouch( LvArray::MemorySpace::CPU );
+      elemSubRegion.edgeList().registerTouch( LvArray::MemorySpace::CPU );
+      elemSubRegion.faceList().registerTouch( LvArray::MemorySpace::CPU );
+    } );
 
 
     faceManager.nodeList().toView().registerTouch( LvArray::MemorySpace::CPU );
@@ -2860,14 +2860,14 @@ void SurfaceGenerator::CalculateNodeAndFaceSIF( DomainPartition & domain,
 
   nodeManager.totalDisplacement().move( LvArray::MemorySpace::CPU, false );
   elementManager.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion & subRegion )
+  {
+    for( localIndex mat=0; mat<m_solidMaterialNames.size(); ++mat )
     {
-      for( localIndex mat=0; mat<m_solidMaterialNames.size(); ++mat )
-      {
-        subRegion.getConstitutiveModel( m_solidMaterialNames[mat] )->
-          getReference< array3d< real64, solid::STRESS_PERMUTATION > >( SolidBase::viewKeyStruct::stressString ).move( LvArray::MemorySpace::CPU,
-                                                                                                                       false );
-      }
-    } );
+      subRegion.getConstitutiveModel( m_solidMaterialNames[mat] )->
+        getReference< array3d< real64, solid::STRESS_PERMUTATION > >( SolidBase::viewKeyStruct::stressString ).move( LvArray::MemorySpace::CPU,
+                                                                                                                     false );
+    }
+  } );
   displacement.move( LvArray::MemorySpace::CPU, false );
 
 

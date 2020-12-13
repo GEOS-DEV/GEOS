@@ -82,12 +82,12 @@ void SolidBase::saveConvergedState() const
   arrayView3d< real64, solid::STRESS_USD > oldStress = m_oldStress;
 
   forAll< parallelDevicePolicy<> >( numE, [=] GEOSX_HOST_DEVICE ( localIndex const k )
-      {
-        for( localIndex q = 0; q < numQ; ++q )
-        {
-          LvArray::tensorOps::copy< 6 >( oldStress[k][q], newStress[k][q] );
-        }
-      } );
+  {
+    for( localIndex q = 0; q < numQ; ++q )
+    {
+      LvArray::tensorOps::copy< 6 >( oldStress[k][q], newStress[k][q] );
+    }
+  } );
 }
 
 

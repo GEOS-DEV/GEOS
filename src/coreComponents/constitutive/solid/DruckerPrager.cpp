@@ -143,12 +143,12 @@ void DruckerPrager::saveConvergedState() const
   arrayView2d< real64 > oldCohesion = m_oldCohesion;
 
   forAll< parallelDevicePolicy<> >( numE, [=] GEOSX_HOST_DEVICE ( localIndex const k )
-      {
-        for( localIndex q = 0; q < numQ; ++q )
-        {
-          oldCohesion( k, q ) = newCohesion( k, q );
-        }
-      } );
+  {
+    for( localIndex q = 0; q < numQ; ++q )
+    {
+      oldCohesion( k, q ) = newCohesion( k, q );
+    }
+  } );
 }
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, DruckerPrager, std::string const &, Group * const )

@@ -75,12 +75,12 @@ void PoroelasticSolver::RegisterDataOnMesh( dataRepository::Group * const MeshBo
     ElementRegionManager * const elemManager = mesh.second->group_cast< MeshBody * >()->getMeshLevel( 0 )->getElemManager();
 
     elemManager->forElementSubRegions< CellElementSubRegion, FaceElementSubRegion >( [&]( ElementSubRegionBase & elementSubRegion )
-      {
-        elementSubRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::totalMeanStressString )->
-          setDescription( "Total Mean Stress" );
-        elementSubRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::oldTotalMeanStressString )->
-          setDescription( "Total Mean Stress" );
-      } );
+    {
+      elementSubRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::totalMeanStressString )->
+        setDescription( "Total Mean Stress" );
+      elementSubRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::oldTotalMeanStressString )->
+        setDescription( "Total Mean Stress" );
+    } );
   }
 }
 
@@ -129,17 +129,17 @@ void PoroelasticSolver::ImplicitStepSetup( real64 const & time_n,
     MeshLevel & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
 
     forTargetSubRegions( mesh, [&] ( localIndex const, ElementSubRegionBase & subRegion )
-      {
-        arrayView1d< real64 const > const & totalMeanStress =
-          subRegion.getReference< array1d< real64 > >( viewKeyStruct::totalMeanStressString );
-        arrayView1d< real64 > const & oldTotalMeanStress =
-          subRegion.getReference< array1d< real64 > >( viewKeyStruct::oldTotalMeanStressString );
+    {
+      arrayView1d< real64 const > const & totalMeanStress =
+        subRegion.getReference< array1d< real64 > >( viewKeyStruct::totalMeanStressString );
+      arrayView1d< real64 > const & oldTotalMeanStress =
+        subRegion.getReference< array1d< real64 > >( viewKeyStruct::oldTotalMeanStressString );
 
-        forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
-        {
-          oldTotalMeanStress[ei] = totalMeanStress[ei];
-        } );
+      forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
+      {
+        oldTotalMeanStress[ei] = totalMeanStress[ei];
       } );
+    } );
   }
 }
 
@@ -195,17 +195,17 @@ void PoroelasticSolver::ResetStateToBeginningOfStep( DomainPartition & domain )
   MeshLevel & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
 
   forTargetSubRegions( mesh, [&] ( localIndex const, ElementSubRegionBase & subRegion )
-    {
-      arrayView1d< real64 const > const & oldTotalMeanStress =
-        subRegion.getReference< array1d< real64 > >( viewKeyStruct::oldTotalMeanStressString );
-      arrayView1d< real64 > const & totalMeanStress =
-        subRegion.getReference< array1d< real64 > >( viewKeyStruct::totalMeanStressString );
+  {
+    arrayView1d< real64 const > const & oldTotalMeanStress =
+      subRegion.getReference< array1d< real64 > >( viewKeyStruct::oldTotalMeanStressString );
+    arrayView1d< real64 > const & totalMeanStress =
+      subRegion.getReference< array1d< real64 > >( viewKeyStruct::totalMeanStressString );
 
-      forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
-      {
-        totalMeanStress[ei] = oldTotalMeanStress[ei];
-      } );
+    forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
+    {
+      totalMeanStress[ei] = oldTotalMeanStress[ei];
     } );
+  } );
 }
 
 real64 PoroelasticSolver::SolverStep( real64 const & time_n,
@@ -249,73 +249,73 @@ void PoroelasticSolver::UpdateDeformationForCoupling( DomainPartition & domain )
                                                                   localIndex const,
                                                                   ElementRegionBase & elemRegion,
                                                                   CellElementSubRegion & elementSubRegion )
+  {
+    string const & solidName = m_solidSolver->solidMaterialNames()[m_solidSolver->targetRegionIndex( elemRegion.getName() )];
+    SolidBase const & solid = GetConstitutiveModel< SolidBase >( elementSubRegion, solidName );
+
+    arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion.nodeList();
+
+    arrayView1d< real64 > const &
+    totalMeanStress = elementSubRegion.getReference< array1d< real64 > >( viewKeyStruct::totalMeanStressString );
+
+    arrayView1d< real64 > const &
+    oldTotalMeanStress = elementSubRegion.getReference< array1d< real64 > >( viewKeyStruct::oldTotalMeanStressString );
+
+    arrayView1d< real64 const > const &
+    pres = elementSubRegion.getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::pressureString );
+
+    arrayView1d< real64 const > const &
+    dPres = elementSubRegion.getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::deltaPressureString );
+
+    arrayView1d< real64 > const &
+    poro = elementSubRegion.getReference< array1d< real64 > >( SinglePhaseBase::viewKeyStruct::porosityString );
+
+    arrayView1d< real64 const > const &
+    poroOld = elementSubRegion.getReference< array1d< real64 > >( SinglePhaseBase::viewKeyStruct::porosityOldString );
+
+    arrayView1d< real64 const > const &
+    volume = elementSubRegion.getReference< array1d< real64 > >( CellBlock::viewKeyStruct::elementVolumeString );
+
+    arrayView1d< real64 > const &
+    dVol = elementSubRegion.getReference< array1d< real64 > >( SinglePhaseBase::viewKeyStruct::deltaVolumeString );
+
+    arrayView1d< real64 const > const & bulkModulus = solid.getReference< array1d< real64 > >( "bulkModulus" );
+
+    real64 const biotCoefficient = solid.getReference< real64 >( "BiotCoefficient" );
+
+    arrayView3d< real64 const, solid::STRESS_USD > const & stress = solid.getStress();
+
+
+    localIndex const numNodesPerElement = elemsToNodes.size( 1 );
+    finiteElement::FiniteElementBase const &
+    fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( m_solidSolver->getDiscretizationName() );
+    localIndex const numQuadraturePoints = fe.getNumQuadraturePoints();
+
+    forAll< parallelDevicePolicy< 32 > >( elementSubRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
     {
-      string const & solidName = m_solidSolver->solidMaterialNames()[m_solidSolver->targetRegionIndex( elemRegion.getName() )];
-      SolidBase const & solid = GetConstitutiveModel< SolidBase >( elementSubRegion, solidName );
-
-      arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion.nodeList();
-
-      arrayView1d< real64 > const &
-      totalMeanStress = elementSubRegion.getReference< array1d< real64 > >( viewKeyStruct::totalMeanStressString );
-
-      arrayView1d< real64 > const &
-      oldTotalMeanStress = elementSubRegion.getReference< array1d< real64 > >( viewKeyStruct::oldTotalMeanStressString );
-
-      arrayView1d< real64 const > const &
-      pres = elementSubRegion.getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::pressureString );
-
-      arrayView1d< real64 const > const &
-      dPres = elementSubRegion.getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::deltaPressureString );
-
-      arrayView1d< real64 > const &
-      poro = elementSubRegion.getReference< array1d< real64 > >( SinglePhaseBase::viewKeyStruct::porosityString );
-
-      arrayView1d< real64 const > const &
-      poroOld = elementSubRegion.getReference< array1d< real64 > >( SinglePhaseBase::viewKeyStruct::porosityOldString );
-
-      arrayView1d< real64 const > const &
-      volume = elementSubRegion.getReference< array1d< real64 > >( CellBlock::viewKeyStruct::elementVolumeString );
-
-      arrayView1d< real64 > const &
-      dVol = elementSubRegion.getReference< array1d< real64 > >( SinglePhaseBase::viewKeyStruct::deltaVolumeString );
-
-      arrayView1d< real64 const > const & bulkModulus = solid.getReference< array1d< real64 > >( "bulkModulus" );
-
-      real64 const biotCoefficient = solid.getReference< real64 >( "BiotCoefficient" );
-
-      arrayView3d< real64 const, solid::STRESS_USD > const & stress = solid.getStress();
-
-
-      localIndex const numNodesPerElement = elemsToNodes.size( 1 );
-      finiteElement::FiniteElementBase const &
-      fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( m_solidSolver->getDiscretizationName() );
-      localIndex const numQuadraturePoints = fe.getNumQuadraturePoints();
-
-      forAll< parallelDevicePolicy< 32 > >( elementSubRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
+      real64 effectiveMeanStress = 0.0;
+      for( localIndex q=0; q<numQuadraturePoints; ++q )
       {
-        real64 effectiveMeanStress = 0.0;
-        for( localIndex q=0; q<numQuadraturePoints; ++q )
-        {
-          effectiveMeanStress += ( stress( ei, q, 0 ) + stress( ei, q, 1 ) + stress( ei, q, 2 ) );
-        }
-        effectiveMeanStress /= ( 3 * numQuadraturePoints );
+        effectiveMeanStress += ( stress( ei, q, 0 ) + stress( ei, q, 1 ) + stress( ei, q, 2 ) );
+      }
+      effectiveMeanStress /= ( 3 * numQuadraturePoints );
 
-        totalMeanStress[ei] = effectiveMeanStress - biotCoefficient * (pres[ei] + dPres[ei]);
+      totalMeanStress[ei] = effectiveMeanStress - biotCoefficient * (pres[ei] + dPres[ei]);
 
-        poro[ei] = poroOld[ei] + (biotCoefficient - poroOld[ei]) / bulkModulus[ei]
-                   * (totalMeanStress[ei] - oldTotalMeanStress[ei] + dPres[ei]);
+      poro[ei] = poroOld[ei] + (biotCoefficient - poroOld[ei]) / bulkModulus[ei]
+                 * (totalMeanStress[ei] - oldTotalMeanStress[ei] + dPres[ei]);
 
-        // update element volume
-        real64 Xlocal[ElementRegionManager::maxNumNodesPerElem][3];
-        for( localIndex a = 0; a < numNodesPerElement; ++a )
-        {
-          LvArray::tensorOps::copy< 3 >( Xlocal[a], X[elemsToNodes[ei][a]] );
-          LvArray::tensorOps::add< 3 >( Xlocal[a], u[elemsToNodes[ei][a]] );
-        }
+      // update element volume
+      real64 Xlocal[ElementRegionManager::maxNumNodesPerElem][3];
+      for( localIndex a = 0; a < numNodesPerElement; ++a )
+      {
+        LvArray::tensorOps::copy< 3 >( Xlocal[a], X[elemsToNodes[ei][a]] );
+        LvArray::tensorOps::add< 3 >( Xlocal[a], u[elemsToNodes[ei][a]] );
+      }
 
-        dVol[ei] = computationalGeometry::HexVolume( Xlocal ) - volume[ei];
-      } );
+      dVol[ei] = computationalGeometry::HexVolume( Xlocal ) - volume[ei];
     } );
+  } );
 }
 
 void PoroelasticSolver::AssembleSystem( real64 const time_n,
@@ -378,107 +378,107 @@ void PoroelasticSolver::AssembleCouplingTerms( DomainPartition const & domain,
                                                                   localIndex const,
                                                                   ElementRegionBase const & region,
                                                                   CellElementSubRegion const & elementSubRegion )
+  {
+    string const & fluidName = m_flowSolver->fluidModelNames()[m_flowSolver->targetRegionIndex( region.getName() )];
+    SingleFluidBase const & fluid = GetConstitutiveModel< SingleFluidBase >( elementSubRegion, fluidName );
+
+    string const & solidName = m_solidSolver->solidMaterialNames()[m_solidSolver->targetRegionIndex( region.getName() )];
+    SolidBase const & solid = GetConstitutiveModel< SolidBase >( elementSubRegion, solidName );
+
+    arrayView4d< real64 const > const & dNdX = elementSubRegion.dNdX();
+
+    arrayView2d< real64 const > const & detJ = elementSubRegion.detJ();
+
+    arrayView1d< globalIndex const > const & pDofNumber = elementSubRegion.getReference< globalIndex_array >( pDofKey );
+
+    arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion.nodeList();
+    localIndex const numNodesPerElement = elemsToNodes.size( 1 );
+
+    finiteElement::FiniteElementBase const &
+    fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( m_solidSolver->getDiscretizationName() );
+    localIndex const numQuadraturePoints = fe.getNumQuadraturePoints();
+
+    real64 const biotCoefficient = solid.getReference< real64 >( "BiotCoefficient" );
+
+    arrayView2d< real64 const > const & density = fluid.density();
+
+    int dim = 3;
+    localIndex constexpr maxNumUDof = 24;   // TODO: assuming linear HEX at most for the moment
+    localIndex constexpr maxNumPDof = 1;   // TODO: assuming piecewise constant (P0) only for the moment
+    localIndex const nUDof = dim * numNodesPerElement;
+    localIndex const nPDof = m_flowSolver->numDofPerCell();
+    GEOSX_ERROR_IF_GT( nPDof, maxNumPDof );
+
+    forAll< parallelDevicePolicy< 32 > >( elementSubRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const k )
     {
-      string const & fluidName = m_flowSolver->fluidModelNames()[m_flowSolver->targetRegionIndex( region.getName() )];
-      SingleFluidBase const & fluid = GetConstitutiveModel< SingleFluidBase >( elementSubRegion, fluidName );
+      stackArray2d< real64, maxNumUDof * maxNumPDof > dRsdP( nUDof, nPDof );
+      stackArray2d< real64, maxNumUDof * maxNumPDof > dRfdU( nPDof, nUDof );
+      stackArray1d< real64, maxNumPDof > Rf( nPDof );
 
-      string const & solidName = m_solidSolver->solidMaterialNames()[m_solidSolver->targetRegionIndex( region.getName() )];
-      SolidBase const & solid = GetConstitutiveModel< SolidBase >( elementSubRegion, solidName );
-
-      arrayView4d< real64 const > const & dNdX = elementSubRegion.dNdX();
-
-      arrayView2d< real64 const > const & detJ = elementSubRegion.detJ();
-
-      arrayView1d< globalIndex const > const & pDofNumber = elementSubRegion.getReference< globalIndex_array >( pDofKey );
-
-      arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion.nodeList();
-      localIndex const numNodesPerElement = elemsToNodes.size( 1 );
-
-      finiteElement::FiniteElementBase const &
-      fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( m_solidSolver->getDiscretizationName() );
-      localIndex const numQuadraturePoints = fe.getNumQuadraturePoints();
-
-      real64 const biotCoefficient = solid.getReference< real64 >( "BiotCoefficient" );
-
-      arrayView2d< real64 const > const & density = fluid.density();
-
-      int dim = 3;
-      localIndex constexpr maxNumUDof = 24; // TODO: assuming linear HEX at most for the moment
-      localIndex constexpr maxNumPDof = 1; // TODO: assuming piecewise constant (P0) only for the moment
-      localIndex const nUDof = dim * numNodesPerElement;
-      localIndex const nPDof = m_flowSolver->numDofPerCell();
-      GEOSX_ERROR_IF_GT( nPDof, maxNumPDof );
-
-      forAll< parallelDevicePolicy< 32 > >( elementSubRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const k )
+      for( integer q = 0; q < numQuadraturePoints; ++q )
       {
-        stackArray2d< real64, maxNumUDof * maxNumPDof > dRsdP( nUDof, nPDof );
-        stackArray2d< real64, maxNumUDof * maxNumPDof > dRfdU( nPDof, nUDof );
-        stackArray1d< real64, maxNumPDof > Rf( nPDof );
+        const real64 detJq = detJ[k][q];
 
-        for( integer q = 0; q < numQuadraturePoints; ++q )
+        for( integer a = 0; a < numNodesPerElement; ++a )
         {
-          const real64 detJq = detJ[k][q];
 
-          for( integer a = 0; a < numNodesPerElement; ++a )
-          {
+          dRsdP( a * dim + 0, 0 ) += biotCoefficient * dNdX[k][q][a][0] * detJq;
+          dRsdP( a * dim + 1, 0 ) += biotCoefficient * dNdX[k][q][a][1] * detJq;
+          dRsdP( a * dim + 2, 0 ) += biotCoefficient * dNdX[k][q][a][2] * detJq;
+          dRfdU( 0, a * dim + 0 ) += density[k][0] * biotCoefficient * dNdX[k][q][a][0] * detJq;
+          dRfdU( 0, a * dim + 1 ) += density[k][0] * biotCoefficient * dNdX[k][q][a][1] * detJq;
+          dRfdU( 0, a * dim + 2 ) += density[k][0] * biotCoefficient * dNdX[k][q][a][2] * detJq;
 
-            dRsdP( a * dim + 0, 0 ) += biotCoefficient * dNdX[k][q][a][0] * detJq;
-            dRsdP( a * dim + 1, 0 ) += biotCoefficient * dNdX[k][q][a][1] * detJq;
-            dRsdP( a * dim + 2, 0 ) += biotCoefficient * dNdX[k][q][a][2] * detJq;
-            dRfdU( 0, a * dim + 0 ) += density[k][0] * biotCoefficient * dNdX[k][q][a][0] * detJq;
-            dRfdU( 0, a * dim + 1 ) += density[k][0] * biotCoefficient * dNdX[k][q][a][1] * detJq;
-            dRfdU( 0, a * dim + 2 ) += density[k][0] * biotCoefficient * dNdX[k][q][a][2] * detJq;
+          localIndex localNodeIndex = elemsToNodes[k][a];
 
-            localIndex localNodeIndex = elemsToNodes[k][a];
-
-            real64 Rf_tmp = dNdX[k][q][a][0] * incr_disp[localNodeIndex][0]
-                            + dNdX[k][q][a][1] * incr_disp[localNodeIndex][1]
-                            + dNdX[k][q][a][2] * incr_disp[localNodeIndex][2];
-            Rf_tmp *= density[k][0] * biotCoefficient * detJq;
-            Rf[0] += Rf_tmp;
-          }
+          real64 Rf_tmp = dNdX[k][q][a][0] * incr_disp[localNodeIndex][0]
+                          + dNdX[k][q][a][1] * incr_disp[localNodeIndex][1]
+                          + dNdX[k][q][a][2] * incr_disp[localNodeIndex][2];
+          Rf_tmp *= density[k][0] * biotCoefficient * detJq;
+          Rf[0] += Rf_tmp;
         }
+      }
 
-        stackArray1d< globalIndex, maxNumUDof > elementULocalDofIndex( nUDof );
-        stackArray1d< globalIndex, maxNumPDof > elementPLocalDofIndex( nPDof );
+      stackArray1d< globalIndex, maxNumUDof > elementULocalDofIndex( nUDof );
+      stackArray1d< globalIndex, maxNumPDof > elementPLocalDofIndex( nPDof );
 
-        // Get dof local to global mapping
-        for( localIndex a = 0; a < numNodesPerElement; ++a )
+      // Get dof local to global mapping
+      for( localIndex a = 0; a < numNodesPerElement; ++a )
+      {
+        for( int i = 0; i < dim; ++i )
         {
-          for( int i = 0; i < dim; ++i )
-          {
-            elementULocalDofIndex[a * dim + i] = uDofNumber[elemsToNodes[k][a]] + i;
-          }
+          elementULocalDofIndex[a * dim + i] = uDofNumber[elemsToNodes[k][a]] + i;
         }
-        for( localIndex i = 0; i < nPDof; ++i )
-        {
-          elementPLocalDofIndex[i] = pDofNumber[k] + i;
-        }
+      }
+      for( localIndex i = 0; i < nPDof; ++i )
+      {
+        elementPLocalDofIndex[i] = pDofNumber[k] + i;
+      }
 
-        for( localIndex i = 0; i < nUDof; ++i )
-        {
-          localIndex const dof = LvArray::integerConversion< localIndex >( elementULocalDofIndex[ i ] - rankOffset );
-          if( dof < 0 || dof >= localMatrix.numRows() )
-            continue;
-          localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( dof,
-                                                                            elementPLocalDofIndex.data(),
-                                                                            dRsdP[i].dataIfContiguous(),
-                                                                            nPDof );
-        }
-        for( localIndex i = 0; i < nPDof; ++i )
-        {
-          localIndex const dof = LvArray::integerConversion< localIndex >( elementPLocalDofIndex[ i ] - rankOffset );
-          if( dof < 0 || dof >= localMatrix.numRows() )
-            continue;
-          localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( dof,
-                                                                            elementULocalDofIndex.data(),
-                                                                            dRfdU[i].dataIfContiguous(),
-                                                                            nUDof );
+      for( localIndex i = 0; i < nUDof; ++i )
+      {
+        localIndex const dof = LvArray::integerConversion< localIndex >( elementULocalDofIndex[ i ] - rankOffset );
+        if( dof < 0 || dof >= localMatrix.numRows() )
+          continue;
+        localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( dof,
+                                                                          elementPLocalDofIndex.data(),
+                                                                          dRsdP[i].dataIfContiguous(),
+                                                                          nPDof );
+      }
+      for( localIndex i = 0; i < nPDof; ++i )
+      {
+        localIndex const dof = LvArray::integerConversion< localIndex >( elementPLocalDofIndex[ i ] - rankOffset );
+        if( dof < 0 || dof >= localMatrix.numRows() )
+          continue;
+        localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( dof,
+                                                                          elementULocalDofIndex.data(),
+                                                                          dRfdU[i].dataIfContiguous(),
+                                                                          nUDof );
 
-          RAJA::atomicAdd< parallelDeviceAtomic >( &localRhs[ dof ], Rf[i] );
-        }
-      } );
+        RAJA::atomicAdd< parallelDeviceAtomic >( &localRhs[ dof ], Rf[i] );
+      }
     } );
+  } );
 }
 
 void PoroelasticSolver::ApplyBoundaryConditions( real64 const time_n,

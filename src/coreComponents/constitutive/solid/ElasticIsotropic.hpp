@@ -314,19 +314,19 @@ void ElasticIsotropicUpdates::smallStrainUpdate( localIndex const k,
 
    real64 const p = -2 * D1 * ( detFm1 + 1.0 ) * detFm1;
    real64 devB[6] = { 1/3 * (2 * FmI[0][0] * (2 + FmI[0][0]) - FmI[1][1] * (2 + FmI[1][1]) - FmI[2][2] * (2 + FmI[2][2])
-    ++
+ ++
                             2 * FmI[0][1]*FmI[0][1] + 2 * FmI[0][2] * FmI[0][2] - FmI[1][0] * FmI[1][0] - FmI[1][2] *
-                             +FmI[1][2] -
+ +FmI[1][2] -
                             FmI[2][0] * FmI[2][0] - FmI[2][1] * FmI[2][1]),
                      1/3 * (-FmI[0][0] * (2 + FmI[0][0]) + 2 * FmI[1][1] * ( 2 + FmI[1][1]) - FmI[2][2] * (2 +
-                      +FmI[2][2]) -
+ +FmI[2][2]) -
                             FmI[0][1]*FmI[0][1] - FmI[0][2]*FmI[0][2] + 2 * FmI[1][0]*FmI[1][0] + 2 *
-                             +FmI[1][2]*FmI[1][2] - FmI[2][0]*FmI[2][0] - FmI[2][1]*
+ +FmI[1][2]*FmI[1][2] - FmI[2][0]*FmI[2][0] - FmI[2][1]*
                             FmI[2][1]),
                      1/3 *(-FmI[0][0] * (2 + FmI[0][0]) - FmI[1][1] * (2 + FmI[1][1]) + 2 * FmI[2][2] * (2 + FmI[2][2])
-                      +-
+ +-
                            FmI[0][1]*FmI[0][1] - FmI[0][2]*FmI[0][2] - FmI[1][0]*FmI[1][0] - FmI[1][2]*FmI[1][2] + 2 *
-                            +FmI[2][0]*FmI[2][0] + 2 * FmI[2][1]*
+ +FmI[2][0]*FmI[2][0] + 2 * FmI[2][1]*
                            FmI[2][1]),
                      FmI[1][2] + FmI[1][0] * FmI[2][0] + FmI[2][1] + FmI[1][1]*FmI[2][1] + FmI[1][2]*FmI[2][2],
                      FmI[0][2] + FmI[2][0] + FmI[0][0] * FmI[2][0] + FmI[0][1]*FmI[2][1] + FmI[0][2]*FmI[2][2],

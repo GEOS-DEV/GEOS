@@ -133,10 +133,10 @@ public:
     GEOSX_HOST_DEVICE
     StackVariables():
       Base::StackVariables(),
-      xLocal(),
-      u_local(),
-      uhat_local(),
-      constitutiveStiffness()
+                                       xLocal(),
+                                       u_local(),
+                                       uhat_local(),
+                                       constitutiveStiffness()
     {}
 
 #if !defined(CALC_FEM_SHAPE_IN_KERNEL)

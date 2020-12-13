@@ -120,12 +120,12 @@ void PoroElastic< BASE >::StateUpdateBatchPressure( arrayView1d< real64 const > 
   arrayView2d< real64 > const & dPVMult_dPres = m_dPVMult_dPressure;
 
   forAll< parallelDevicePolicy<> >( numElems, [=] GEOSX_HOST_DEVICE ( localIndex const k )
-      {
-        for( localIndex q = 0; q < numQuad; ++q )
-        {
-          relation.Compute( pres[k] + dPres[k], pvmult[k][q], dPVMult_dPres[k][q] );
-        }
-      } );
+  {
+    for( localIndex q = 0; q < numQuad; ++q )
+    {
+      relation.Compute( pres[k] + dPres[k], pvmult[k][q], dPVMult_dPres[k][q] );
+    }
+  } );
 }
 
 typedef PoroElastic< ElasticIsotropic > PoroElasticIsotropic;

@@ -112,7 +112,7 @@ public:
     GEOSX_HOST_DEVICE
     StackVariables():
       Base::StackVariables(),
-      uLocal{ {0.0} }
+            uLocal{ {0.0} }
     {}
 
     /// Local stack storage for nodal displacements.

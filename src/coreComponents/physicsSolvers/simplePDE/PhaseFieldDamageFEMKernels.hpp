@@ -134,8 +134,8 @@ public:
     GEOSX_HOST_DEVICE
     StackVariables():
       Base::StackVariables(),
-      xLocal(),
-      nodalDamageLocal{ 0.0 }
+            xLocal(),
+            nodalDamageLocal{ 0.0 }
     {}
 
 #if !defined(CALC_FEM_SHAPE_IN_KERNEL)
