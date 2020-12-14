@@ -241,16 +241,4 @@ void EmbeddedSurfaceSubRegion::setupRelatedObjectsInRelations( MeshLevel const *
   this->m_toNodesRelation.SetRelatedObject( mesh->getNodeManager() );
 }
 
-real64 EmbeddedSurfaceSubRegion::ComputeHeavisideFunction( ArraySlice< real64 const, 1, nodes::REFERENCE_POSITION_USD - 1 > const nodeCoord,
-                                                           localIndex const k ) const
-{
-  real64 heaviside, distanceVector[3];
-  LvArray::tensorOps::copy< 3 >( distanceVector, nodeCoord );
-  LvArray::tensorOps::subtract< 3 >( distanceVector, m_elementCenter[k] );
-
-  heaviside = LvArray::tensorOps::AiBi< 3 >( distanceVector, m_normalVector[k] ) > 0 ? 1 : 0;
-
-  return heaviside;
-}
-
 } /* namespace geosx */
