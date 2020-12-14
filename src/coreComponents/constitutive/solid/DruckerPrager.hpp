@@ -79,7 +79,7 @@ public:
   /// Deleted move assignment operator
   DruckerPragerUpdates & operator=( DruckerPragerUpdates && ) =  delete;
 
-  // Use the uncompressed version of the stiffness bilinear form
+  /// Use the uncompressed version of the stiffness bilinear form
   using DiscretizationOps = SolidModelDiscretizationOpsFullyAnisotroipic; // TODO: typo in anistropic (fix in DiscOps
                                                                           // PR)
 
@@ -333,7 +333,7 @@ public:
   ///@}
 
   /**
-   * @struct Set of "char const *" and keys for data specified in this class.
+   * Keys for data specified in this class.
    */
   struct viewKeyStruct : public SolidBase::viewKeyStruct
   {

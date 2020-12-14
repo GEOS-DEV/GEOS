@@ -13,7 +13,7 @@
  */
 
 /**
- * @file SolidModelHelperFullyAnisotroipic.hpp
+ * @file SolidModelDiscretizationOpsFullyAnisotroipic.hpp
  */
 
 #ifndef GEOSX_CONSTITUTIVE_SOLID_SOLIDMODELDISCRETIAZTIONOPSFULLYANISOTROPIC_HPP_

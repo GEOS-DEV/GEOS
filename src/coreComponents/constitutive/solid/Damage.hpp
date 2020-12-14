@@ -57,6 +57,12 @@ public:
   using UPDATE_BASE::smallStrainNoStateUpdate_StressOnly;
   using UPDATE_BASE::smallStrainUpdate_StressOnly;
 
+  /**
+   * Compute current damage scaling
+   * @param k Element index
+   * @param q Quadrature point index
+   * @return Current damage scaling
+   */
   GEOSX_HOST_DEVICE
   real64 damageFactor( localIndex const k,
                        localIndex const q ) const

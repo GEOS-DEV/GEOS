@@ -226,7 +226,7 @@ public:
    *
    * @param[in] k The element index.
    * @param[in] q The quadrature point index.
-   * @param[in] FmI Deformation gradient minus identity (F-I)
+   * @param[in] FminusI Deformation gradient minus identity (F-I)
    * @param[out] stress New stress value (Cauchy stress)
    * @param[out] stiffness New stiffness value
    */
@@ -272,7 +272,6 @@ public:
    * @param[in] q Quadrature point index.
    * @param[in] strainIncrement Strain increment in Voight notation (linearized strain)
    * @param[out] stress New stress value (Cauchy stress)
-   * @param[out] stiffness New tangent stiffness value
    */
   GEOSX_HOST_DEVICE
   virtual void smallStrainUpdate_StressOnly( localIndex const k,
@@ -292,7 +291,6 @@ public:
    * @param[in] q Quadrature point index.
    * @param[in] totalStrain total strain in Voight notation (linearized strain)
    * @param[out] stress New stress value (Cauchy stress)
-   * @param[out] stiffness New tangent stiffness value
    */
   GEOSX_HOST_DEVICE
   virtual void smallStrainNoStateUpdate_StressOnly( localIndex const k,
@@ -329,7 +327,7 @@ public:
    *
    * @param[in] k The element index.
    * @param[in] q The quadrature point index.
-   * @param[in] FmI Deformation gradient minus identity (F-I)
+   * @param[in] FminusI Deformation gradient minus identity (F-I)
    * @param[out] stress New stress value (Cauchy stress)
    */
   GEOSX_HOST_DEVICE
@@ -438,27 +436,40 @@ public:
    */
   virtual ~SolidBase() override;
 
+  /** 
+   * @brief Allocate constitutive arrays
+   * @param parent Object's parent group (element subregion)
+   * @param numConstitutivePointsPerParentIndex Number of quadrature points per element
+   */
   virtual void allocateConstitutiveData( dataRepository::Group * const parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
+  /// Save state data in preparation for next timestep
   virtual void saveConvergedState() const;
 
+  /// Keys for data in this class
   struct viewKeyStruct : public ConstitutiveBase::viewKeyStruct
   {
-    static constexpr auto stressString = "stress";
-    static constexpr auto oldStressString = "oldStress";
-    static constexpr auto densityString  = "density";
-    static constexpr auto defaultDensityString  = "defaultDensity";
+    static constexpr auto stressString = "stress";                  ///< New stress key
+    static constexpr auto oldStressString = "oldStress";            ///< Old stress key
+    static constexpr auto densityString  = "density";               ///< Density key
+    static constexpr auto defaultDensityString  = "defaultDensity"; ///< Default density key
   };
 
 
-  /// Number of elements storing solid data
+  /**
+   * @brief Number of elements storing solid data
+   * @return Number of elements
+   */
   localIndex numElem() const
   {
     return m_oldStress.size( 0 );
   }
 
-  /// Number of quadrature points per element storing solid data
+  /**
+   * @brief Number of quadrature points storing solid data
+   * @return Number of quadrature points
+   */
   localIndex numQuad() const
   {
     return m_oldStress.size( 1 );
@@ -469,25 +480,37 @@ public:
    */
   ///@{
 
-  /// Non-const/mutable accessor for stress
+  /**
+   * @brief Non-const/mutable accessor for stress
+   * @return Accessor
+   */
   arrayView3d< real64, solid::STRESS_USD > const getStress()
   {
     return m_newStress;
   }
 
-  /// Const/non-mutable accessor for stress
+  /**
+   * @brief Const/non-mutable accessor for stress
+   * @return Accessor
+   */
   arrayView3d< real64 const, solid::STRESS_USD > const getStress() const
   {
     return m_newStress;
   }
 
-  /// Non-const/Mutable accessor for density.
+  /**
+   * @brief Non-const/Mutable accessor for density.
+   * @return Accessor
+   */
   arrayView2d< real64 > const getDensity()
   {
     return m_density;
   }
 
-  /// Const/non-mutable accessor for density
+  /**
+   * @brief Const/non-mutable accessor for density
+   * @return Accessor
+   */
   arrayView2d< real64 const > const getDensity() const
   {
     return m_density;
@@ -497,6 +520,7 @@ public:
 
 protected:
 
+  /// Post-process XML input
   virtual void PostProcessInput() override;
 
   /// The current stress at a quadrature point (i.e. at timestep n, global newton iteration k)

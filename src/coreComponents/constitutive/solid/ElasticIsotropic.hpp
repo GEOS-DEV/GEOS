@@ -71,10 +71,8 @@ public:
   /// Deleted move assignment operator
   ElasticIsotropicUpdates & operator=( ElasticIsotropicUpdates && ) =  delete;
 
-  // Use the "isotropic" form of inner product compression
+  /// Use the "isotropic" form of inner product compression
   using DiscretizationOps = SolidModelDiscretizationOpsIsotropic;
-
-  // total strain interfaces
 
   GEOSX_HOST_DEVICE
   virtual void smallStrainNoStateUpdate_StressOnly( localIndex const k,
@@ -96,8 +94,6 @@ public:
                                          real64 ( &stress )[6],
                                          DiscretizationOps & stiffness ) const final;
 
-  // incremental strain interfaces
-
   GEOSX_HOST_DEVICE
   virtual void smallStrainUpdate_StressOnly( localIndex const k,
                                              localIndex const q,
@@ -117,8 +113,6 @@ public:
                                   real64 const ( &strainIncrement )[6],
                                   real64 ( &stress )[6],
                                   DiscretizationOps & stiffness ) const;
-
-  // miscellaneous getters
 
   GEOSX_HOST_DEVICE
   virtual void getElasticStiffness( localIndex const k,
@@ -353,7 +347,7 @@ class ElasticIsotropic : public SolidBase
 {
 public:
 
-  /// @typedef Alias for ElasticIsotropicUpdates
+  /// Alias for ElasticIsotropicUpdates
   using KernelWrapper = ElasticIsotropicUpdates;
 
   /**
@@ -377,17 +371,20 @@ public:
   static constexpr auto m_catalogNameString = "ElasticIsotropic";
 
   /**
+   * @brief Static catalog string
    * @return A string that is used to register/lookup this class in the registry
    */
   static std::string CatalogName() { return m_catalogNameString; }
 
+  /**
+   * @brief Get catalog name
+   * @return Name string
+   */
   virtual string getCatalogName() const override { return CatalogName(); }
 
   ///@}
 
-  /**
-   * @struct Set of "char const *" and keys for data specified in this class.
-   */
+  /// Keys for data specified in this class.
   struct viewKeyStruct : public SolidBase::viewKeyStruct
   {
     /// string/key for default bulk modulus
@@ -399,11 +396,12 @@ public:
     /// string/key for default shear modulus
     static constexpr auto defaultShearModulusString = "defaultShearModulus";
 
-    /// string/key for default youngs modulus
+    /// string/key for default Young's modulus
     static constexpr auto defaultYoungsModulusString =  "defaultYoungsModulus";
 
     /// string/key for bulk modulus
     static constexpr auto bulkModulusString  = "bulkModulus";
+
     /// string/key for shear modulus
     static constexpr auto shearModulusString = "shearModulus";
   };
@@ -439,6 +437,7 @@ public:
   /**
    * @brief Create a instantiation of the ElasticIsotropicUpdate class
    *        that refers to the data in this.
+   * @param includeState Flag whether to pass state arrays that may not be needed for "no-state" updates
    * @return An instantiation of ElasticIsotropicUpdate.
    */
   ElasticIsotropicUpdates createKernelUpdates( bool const includeState = true ) const
@@ -479,6 +478,8 @@ public:
 
 
 protected:
+
+  /// Post-process XML data
   virtual void PostProcessInput() override;
 
   /// The default value of the bulk modulus for any new allocations.

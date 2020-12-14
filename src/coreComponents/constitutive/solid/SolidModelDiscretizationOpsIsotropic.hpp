@@ -13,7 +13,7 @@
  */
 
 /**
- * @file SolidModelHelperIsotropic.hpp
+ * @file SolidModelDiscretizationOpsIsotropic.hpp
  */
 
 #ifndef GEOSX_CONSTITUTIVE_SOLID_SOLIDMODELDISCRETIZATIONOPSISOTROPIC_HPP_
@@ -26,9 +26,17 @@ namespace geosx
 namespace constitutive
 {
 
-
+/// Isotropic implementation of the DiscOps concept
 struct SolidModelDiscretizationOpsIsotropic : public SolidModelDiscretizationOps
 {
+   /**
+   * @brief Compute upper portion of inner product matrix for solid mechanics, assuming D is symmetric
+   * @tparam NUM_SUPPORT POINTS Number of support points (nodes) for this element
+   * @tparam BASIS_GRADIENT Finite element shape function gradients type
+   * @param gradN Finite Element shape function gradients
+   * @param detJxW Element transformation determinant times the quadrature weight
+   * @param elementStiffness Local stiffness matrix
+   */
   template< int NUM_SUPPORT_POINTS,
             typename BASIS_GRADIENT >
   GEOSX_HOST_DEVICE
@@ -36,6 +44,14 @@ struct SolidModelDiscretizationOpsIsotropic : public SolidModelDiscretizationOps
                   real64 const & detJxW,
                   real64 ( &elementStiffness )[NUM_SUPPORT_POINTS*3][NUM_SUPPORT_POINTS*3] );
 
+   /**
+   * @brief Compute diagonal of inner product matrix for solid mechanics
+   * @tparam NUM_SUPPORT POINTS Number of support points (nodes) for this element
+   * @tparam BASIS_GRADIENT Finite element shape function gradients type
+   * @param gradN Finite Element shape function gradients
+   * @param detJxW Element transformation determinant times the quadrature weight
+   * @param diagElementStiffness Local stiffness matrix diagonal
+   */
   template< int NUM_SUPPORT_POINTS,
             typename BASIS_GRADIENT >
   GEOSX_HOST_DEVICE
@@ -43,6 +59,14 @@ struct SolidModelDiscretizationOpsIsotropic : public SolidModelDiscretizationOps
                  real64 const & detJxW,
                  real64 ( &diagElementStiffness )[NUM_SUPPORT_POINTS*3] );
 
+   /**
+   * @brief Compute row sum diagonal of inner product matrix for solid mechanics
+   * @tparam NUM_SUPPORT POINTS Number of support points (nodes) for this element
+   * @tparam BASIS_GRADIENT Finite element shape function gradients type
+   * @param gradN Finite Element shape function gradients
+   * @param detJxW Element transformation determinant times the quadrature weight
+   * @param diagSumElementStiffness Local stiffness matrix diagonal
+   */
   template< int NUM_SUPPORT_POINTS,
             typename BASIS_GRADIENT >
   GEOSX_HOST_DEVICE
@@ -50,6 +74,10 @@ struct SolidModelDiscretizationOpsIsotropic : public SolidModelDiscretizationOps
                        real64 const & detJxW,
                        real64 ( &diagSumElementStiffness )[NUM_SUPPORT_POINTS*3] );
 
+  /**
+   * Scale stiffness parameters by a constant
+   * @param scale Scaling constant
+   */
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   void scaleParams( real64 const scale )
@@ -58,8 +86,8 @@ struct SolidModelDiscretizationOpsIsotropic : public SolidModelDiscretizationOps
     m_shearModulus *= scale;
   }
 
-  real64 m_lambda;
-  real64 m_shearModulus;
+  real64 m_lambda;        ///< First Lam'e parameter
+  real64 m_shearModulus;  ///< Shear modulus
 };
 
 #if __GNUC__

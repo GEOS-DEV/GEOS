@@ -339,7 +339,7 @@ public:
   ///@}
 
   /**
-   * @struct Set of "char const *" and keys for data specified in this class.
+   * Keys for data specified in this class.
    */
   struct viewKeyStruct : public SolidBase::viewKeyStruct
   {
