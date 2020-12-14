@@ -1790,9 +1790,10 @@ void DofManager::makeRestrictor( std::vector< SubComponent > const & selection,
   GEOSX_ERROR_IF( !m_reordered, "Cannot make restrictors before reorderByRank() has been called." );
 
   // 1. Populate selected fields and compute some basic dimensions
-  array1d< FieldDescription > fieldsSelected( selection.size() );
+  // array1d< FieldDescription > fieldsSelected( selection.size() );
+  std::vector< FieldDescription > fieldsSelected( selection.size() );
 
-  for( localIndex k = 0; k < fieldsSelected.size(); ++k )
+  for( std::size_t k = 0; k < fieldsSelected.size(); ++k )
   {
     SubComponent const & dof = selection[k];
     FieldDescription const & fieldOld = m_fields[getFieldIndex( dof.fieldName )];
@@ -1812,7 +1813,7 @@ void DofManager::makeRestrictor( std::vector< SubComponent > const & selection,
   // 2. Compute remaining offsets (we mostly just need globalOffset, but it depends on others)
 
   globalIndex blockOffset = 0;
-  for( localIndex k = 0; k < fieldsSelected.size(); ++k )
+  for( std::size_t k = 0; k < fieldsSelected.size(); ++k )
   {
     fieldsSelected[k].blockOffset = blockOffset;
     blockOffset += fieldsSelected[k].numGlobalDof;
@@ -1822,7 +1823,7 @@ void DofManager::makeRestrictor( std::vector< SubComponent > const & selection,
                                               []( localIndex const n, FieldDescription const & f )
   { return n + f.rankOffset; } );
 
-  for( localIndex k = 0; k < fieldsSelected.size(); ++k )
+  for( std::size_t k = 0; k < fieldsSelected.size(); ++k )
   {
     fieldsSelected[k].globalOffset = globalOffset;
     globalOffset += fieldsSelected[k].numLocalDof;
@@ -1840,7 +1841,7 @@ void DofManager::makeRestrictor( std::vector< SubComponent > const & selection,
   restrictor.createWithLocalSize( rowSize, colSize, 1, comm );
   restrictor.open();
 
-  for( localIndex k = 0; k < fieldsSelected.size(); ++k )
+  for( std::size_t k = 0; k < fieldsSelected.size(); ++k )
   {
     FieldDescription const & fieldNew = fieldsSelected[k];
     FieldDescription const & fieldOld = m_fields[getFieldIndex( fieldNew.name )];
