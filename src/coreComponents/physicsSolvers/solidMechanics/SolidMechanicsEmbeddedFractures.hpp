@@ -109,6 +109,8 @@ public:
 
     constexpr static auto deltaDispJumpString = "deltaDisplacementJump";
 
+    constexpr static auto fractureRegionNameString = "fractureRegionName";
+
   } SolidMechanicsEmbeddedFracturesViewKeys;
 
 protected:
@@ -127,69 +129,13 @@ protected:
                                    DofManager const & dofManager,
                                    SparsityPatternView< globalIndex > const & pattern ) const;
 
-  /*
-   * @brief Assemble Equilibrium operator
-   * @param eqMatrix Equilibrium operator
-   * @param embeddedSurfaceSubRegion subRegion
-   * @param k cell index
-   * @param hInv scaling coefficient
-   */
-  void AssembleEquilibriumOperator( array2d< real64 > & eqMatrix,
-                                    EmbeddedSurfaceSubRegion const & embeddedSurfaceSubRegion,
-                                    const localIndex k,
-                                    const real64 hInv );
-  /*
-   * @brief Assemble Compatibility operator
-   * @param compMatrix
-   * @param embeddedSurfaceSubRegion
-   * @param k cell index
-   * @param q quadrature point index
-   * @param elemsToNodes element to node map
-   * @param nodesCoord nodes coordinates
-   * @param embeddedSurfaceToCell embedded surface to cell maps
-   * @param numNodesPerElement number of nodes per element
-   * @param dNdX shape functions derivatives
-   */
-  void AssembleCompatibilityOperator( array2d< real64 > & compMatrix,
-                                      EmbeddedSurfaceSubRegion const & embeddedSurfaceSubRegion,
-                                      localIndex const k,
-                                      localIndex const q,
-                                      CellBlock::NodeMapType const & elemsToNodes,
-                                      arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodesCoord,
-                                      localIndex const cellElementIndex,
-                                      localIndex const numNodesPerElement,
-                                      arrayView4d< real64 const > const & dNdX );
-
-  /*
-   * @brief Assemble Compatibility operator
-   * @param strainMatrix strain matrix (B)
-   * @param elIndex element index
-   * @param q quadrature point index
-   * @param numNodesPerElement number of nodes per element
-   * @param dNdX shape functions derivatives
-   */
-  void AssembleStrainOperator( array2d< real64 > & strainMatrix,
-                               localIndex const elIndex,
-                               localIndex const q,
-                               localIndex const numNodesPerElement,
-                               arrayView4d< real64 const > const & dNdX );
-  /*
-   * @brief Computes traction and derivative on each fracture segment.
-   * @param constitutiveManager constant pointer to the constitutive mamanger
-   * @param dispJump displacement jump
-   * @param tractionVector traction vector
-   * @param dTdw Derivative of the traction w.r.t. the jump.
-   */
-  void ComputeTraction( ConstitutiveManager const * const constitutiveManager,
-                        array1d< real64 >  const & dispJump,
-                        array1d< real64 > & tractionVector,
-                        array2d< real64 > & dTdw );
-
-
 private:
 
   /// Solid mechanics solver name
   string m_solidSolverName;
+
+  /// fracture region name
+  string m_fractureRegionName;
 
   /// pointer to the solid mechanics solver
   SolidMechanicsLagrangianFEM * m_solidSolver;
@@ -198,6 +144,7 @@ private:
   string m_contactRelationName;
 
 };
+
 
 } /* namespace geosx */
 
