@@ -81,92 +81,6 @@ void recoverStrainFromStress( arraySlice1d< real64 > const stress, real64 (& str
   strain[5] = (1 + nu)*stress[5]/E;
 }
 
-GEOSX_HOST_DEVICE inline
-int voigt( int voigtIndex, int pairIndex )
-{
-  if( pairIndex != 1 && pairIndex != 2 )
-  {
-    GEOSX_ERROR( "Index of the pair must be 1 or 2" );
-  }
-  switch( voigtIndex )
-  {
-    case 0:
-    {
-      if( pairIndex == 1 )
-      {
-        return 1;
-      }
-      else
-      {
-        return 1;
-      }
-    }
-    break;
-    case 1:
-    {
-      if( pairIndex == 1 )
-      {
-        return 2;
-      }
-      else
-      {
-        return 2;
-      }
-    }
-    break;
-    case 2:
-    {
-      if( pairIndex == 1 )
-      {
-        return 3;
-      }
-      else
-      {
-        return 3;
-      }
-    }
-    break;
-    case 3:
-    {
-      if( pairIndex == 1 )
-      {
-        return 2;
-      }
-      else
-      {
-        return 3;
-      }
-    }
-    break;
-    case 4:
-    {
-      if( pairIndex == 1 )
-      {
-        return 1;
-      }
-      else
-      {
-        return 3;
-      }
-    }
-    break;
-    case 5:
-    {
-      if( pairIndex == 1 )
-      {
-        return 1;
-      }
-      else
-      {
-        return 2;
-      }
-    }
-    break;
-    default:
-      GEOSX_ERROR( "Voigt index must be from 0 to 5" );
-      return 1000000;
-  }
-}
 
 GEOSX_HOST_DEVICE inline
 real64 heaviside( real64 x )
@@ -191,7 +105,7 @@ GEOSX_HOST_DEVICE inline
 void QTensor( real64 const (&eigvector)[3], real64 (& Q)[6][6] )
 {
   real64 M[6]={0};
-  LvArray::tensorOps::Rij_eq_AiAj< 3 >( M, eigvector );
+  LvArray::tensorOps::symRij_eq_AiAj< 3 >( M, eigvector );
   for( int i = 0; i<6; i++ )
   {
     for( int j = 0; j<6; j++ )
@@ -207,8 +121,8 @@ void GTensor( real64 (& eigvec1)[3], real64 (& eigvec2)[3], real64 (& G)[6][6] )
   GEOSX_UNUSED_VAR( eigvec1, eigvec2, G );
   real64 M1[6]={0};
   real64 M2[6]={0};
-  LvArray::tensorOps::Rij_eq_AiAj< 3 >( M1, eigvec1 );
-  LvArray::tensorOps::Rij_eq_AiAj< 3 >( M2, eigvec2 );
+  LvArray::tensorOps::symRij_eq_AiAj< 3 >( M1, eigvec1 );
+  LvArray::tensorOps::symRij_eq_AiAj< 3 >( M2, eigvec2 );
 
   G[0][0] = M1[0]*M2[0] + M1[0]*M2[0];
   G[0][1] = M1[5]*M2[5] + M1[5]*M2[5];
@@ -246,24 +160,6 @@ void GTensor( real64 (& eigvec1)[3], real64 (& eigvec2)[3], real64 (& G)[6][6] )
   G[5][3] = M1[5]*M2[3] + M1[4]*M2[1];
   G[5][4] = M1[0]*M2[3] + M1[4]*M2[5];
   G[5][5] = M1[0]*M2[1] + M1[5]*M2[5];
-//  for( int i = 0; i<6; i++ )
-//  {
-//    for( int j = 0; j<6; j++ )
-    {
-//      G[i][j] = M1[voigt( i, 1 )-1][voigt( j, 1 )-1]*M2[voigt( i, 2 )-1][voigt( j, 2 )-1] +
-//                M1[voigt( i, 1 )-1][voigt( j, 2 )-1]*M2[voigt( i, 2 )-1][voigt( j, 1 )-1];
-//      printf( "G[%d][%d] = M1[%d][%d]*M2[%d][%d] + M1[%d][%d]*M2[%d][%d] \n",
-//              i,j,
-//              voigt( i, 1 )-1,
-//              voigt( j, 1 )-1,
-//              voigt( i, 2 )-1,
-//              voigt( j, 2 )-1,
-//              voigt( i, 1 )-1,
-//              voigt( j, 2 )-1,
-//              voigt( i, 2 )-1,
-//              voigt( j, 1 )-1 );
-//    }
-//  }
 }
 
 GEOSX_HOST_DEVICE inline

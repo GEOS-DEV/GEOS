@@ -11,13 +11,6 @@
 #include <gtest/gtest.h>
 using namespace geosx;
 
-TEST( AuxFunctions, voigt )
-{
-  int a = voigt( 4, 1 );
-  int b = voigt( 4, 2 );
-  std::cout << "Voigt index 4 corresponds to: ("<< a << ", "<< b <<")"<<std::endl;
-}
-
 TEST( AuxFunctions, PositivePartOfTensor )
 {
   real64 eigs[3] = {1.7076, 3.3973, 6.8951};
