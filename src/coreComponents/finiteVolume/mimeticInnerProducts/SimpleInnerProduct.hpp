@@ -145,7 +145,7 @@ SimpleInnerProduct::Compute( arrayView2d< real64 const, nodes::REFERENCE_POSITIO
   }
 
   // 2) compute the stabilization coefficient
-  real64 const tParam = 2 * ( permMat[0][0] + permMat[1][1] + permMat[2][2] );
+  real64 const tParam = 2 * LvArray::tensorOps::trace< NF >( permMat );
 
   // 3) compute N K N'
   LvArray::tensorOps::Rij_eq_AikBjk< 3, NF, 3 >( work_dimByNumFaces,

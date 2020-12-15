@@ -168,11 +168,8 @@ BdVLMInnerProduct::Compute( arrayView2d< real64 const, nodes::REFERENCE_POSITION
   // we have to compute I - R ( R^T R )^-1 R^T and sum
 
   // 6) compute ( R^T R )^-1
-  real64 temp[ NF ][ 3 ] = {{ 0 }};
-  LvArray::tensorOps::copy< NF, 3 >( temp, cellToFaceMat ); // <<-- TODO: ask about this, we could have Rij_eq_AkiAkj instead
-  LvArray::tensorOps::Rij_eq_AkiBkj< 3, 3, NF >( work_dimByDim,
-                                                 temp,
-                                                 cellToFaceMat );
+  LvArray::tensorOps::Rij_eq_AkiAkj< 3, NF >( work_dimByDim,
+                                              cellToFaceMat );
   LvArray::tensorOps::invert< 3 >( work_dimByDim );
 
   // 7) compute I - R ( R^T R )^-1 R^T
@@ -185,8 +182,8 @@ BdVLMInnerProduct::Compute( arrayView2d< real64 const, nodes::REFERENCE_POSITION
                                                    work_dimByNumFaces );
 
   // 8) compute N ( N^T R )^-1 N^T + \tilde{ \lambda } * (I - R ( R^T R )^-1 R^T)
-  LvArray::tensorOps::scale< NF, NF >( work_numFacesByNumFaces, -stabCoef );
-  LvArray::tensorOps::add< NF, NF >( transMatrix, work_numFacesByNumFaces );
+  LvArray::tensorOps::scaledAdd< NF, NF >( transMatrix, work_numFacesByNumFaces, -stabCoef );
+
 
   // 9) this IP was designed for velocities,
   //    so we have to pre- and post-multiply by faceAreaMat to get an IP for fluxes
