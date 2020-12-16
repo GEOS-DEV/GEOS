@@ -279,8 +279,11 @@ public:
                                              real64 const ( &strainIncrement )[6],
                                              real64 ( & stress )[6] ) const
   {
-    real64 discard[6][6];
-    smallStrainUpdate( k, q, strainIncrement, stress, discard );
+    GEOSX_UNUSED_VAR(k);
+    GEOSX_UNUSED_VAR(q);
+    GEOSX_UNUSED_VAR(strainIncrement);
+    GEOSX_UNUSED_VAR(stress);
+    GEOSX_ERROR( "smallStrainUpdate_StressOnly() not implemented for this model" );
   }
 
 
@@ -298,8 +301,11 @@ public:
                                                     real64 const ( &totalStrain )[6],
                                                     real64 ( & stress )[6] ) const
   {
-    real64 discard[6][6];
-    smallStrainNoStateUpdate( k, q, totalStrain, stress, discard );
+    GEOSX_UNUSED_VAR(k);
+    GEOSX_UNUSED_VAR(q);
+    GEOSX_UNUSED_VAR(totalStrain);
+    GEOSX_UNUSED_VAR(stress);
+    GEOSX_ERROR( "smallStrainNoStateUpdate_StressOnly() not implemented for this model" );
   }
 
   /**
@@ -318,8 +324,12 @@ public:
                                       real64 const ( &Rot )[3][3],
                                       real64 ( & stress )[6] ) const
   {
-    real64 discard[6][6];
-    hypoUpdate( k, q, Ddt, Rot, stress, discard );
+    GEOSX_UNUSED_VAR(k);
+    GEOSX_UNUSED_VAR(q);
+    GEOSX_UNUSED_VAR(Ddt);
+    GEOSX_UNUSED_VAR(Rot);
+    GEOSX_UNUSED_VAR(stress);
+    GEOSX_ERROR( "hypoUpdate_StressOnly() not implemented for this model" );
   }
 
   /**
@@ -336,8 +346,11 @@ public:
                                        real64 const ( &FminusI )[3][3],
                                        real64 ( & stress )[6] ) const
   {
-    real64 discard[6][6];
-    hyperUpdate( k, q, FminusI, stress, discard );
+    GEOSX_UNUSED_VAR(k);
+    GEOSX_UNUSED_VAR(q);
+    GEOSX_UNUSED_VAR(FminusI);
+    GEOSX_UNUSED_VAR(stress);
+    GEOSX_ERROR( "hyperUpdate_StressOnly() not implemented for this model" );
   }
 
   ///@}
