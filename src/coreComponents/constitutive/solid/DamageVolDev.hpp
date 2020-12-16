@@ -15,6 +15,7 @@
 
 /**
  * @file Damage.hpp
+ * @brief Overrides the SSLE constitutive updates to account for a damage varible and a volumtric-deviatoric split.
  */
 
 #ifndef GEOSX_CONSTITUTIVE_SOLID_DAMAGEVOLDEV_HPP_
@@ -128,7 +129,7 @@ public:
   }
   #endif
 
-
+  //Modified GetStiffness function to account for Vol-Dev Decomposition of Stresses.
   GEOSX_HOST_DEVICE inline
   virtual void GetStiffness( localIndex const k,
                              localIndex const q,
@@ -163,6 +164,8 @@ public:
 
   }
 
+    //With the Vol-Dev Decomposition, only the Positive Part of the SED drives damage growth
+
   GEOSX_HOST_DEVICE
   virtual real64 calculateActiveStrainEnergyDensity( localIndex const k,
                                                      localIndex const q ) const override final
@@ -183,6 +186,7 @@ public:
     return m_strainEnergyDensity( k, q );
   }
 
+  //Modified getStress
   GEOSX_HOST_DEVICE
   virtual void getStress( localIndex const k,
                           localIndex const q,
@@ -207,6 +211,7 @@ public:
     stress[5] = this->m_stress( k, q, 5 ) * damageFactor;
   }
 
+  //if we use the Linear Local Dissipation, we need an energy threshold
   GEOSX_HOST_DEVICE
   virtual real64 getEnergyThreshold() const override
   {

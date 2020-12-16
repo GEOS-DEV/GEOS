@@ -15,6 +15,12 @@
 
 /**
  * @file AuxiliaryFunctionsSpectral.hpp
+ * @brief Helper functions to perform spectral decomposition of stresses.
+ *
+ * A detailed description of the calculations performed here can be found in
+ * Jiang, Wen et al. "Three-dimensional phase-field modeling of porosity dependent intergranular fracture in UO2"
+ * Computational Materials Science 171 (2020): 109269
+ *
  */
 
 #ifndef GEOSX_CONSTITUTIVE_SOLID_AUXFUNSPECTRAL_HPP_
@@ -39,6 +45,7 @@ void PositivePartOfTensor( real64 (& eigs)[3], real64 (& eigvecs)[3][3], real64 
   LvArray::tensorOps::Rij_eq_AikSymBklAjl< 3 >( positivePart, eigvecs, positiveEigs );
 }
 
+//get the negative part only of tensor T using spectral split
 GEOSX_HOST_DEVICE inline
 void NegativePartOfTensor( real64 (& eigs)[3], real64 (& eigvecs)[3][3], real64 (& negativePart)[6] )
 {
@@ -50,6 +57,7 @@ void NegativePartOfTensor( real64 (& eigs)[3], real64 (& eigvecs)[3][3], real64 
   LvArray::tensorOps::Rij_eq_AikSymBklAjl< 3 >( negativePart, eigvecs, negativeEigs );
 }
 
+//implements the : operator between two second-order tensors in voigt form
 GEOSX_HOST_DEVICE inline
 real64 doubleContraction( real64 (& A)[6], real64 (& B)[6] )
 {
@@ -68,6 +76,7 @@ real64 doubleContraction( real64 (& A)[6], real64 (& B)[6] )
   return ans;
 }
 
+//compute strain from stresses using SSLE
 GEOSX_HOST_DEVICE inline
 void recoverStrainFromStress( arraySlice1d< real64 > const stress, real64 (& strain)[6], real64 const K, real64 const mu )
 {
@@ -81,7 +90,7 @@ void recoverStrainFromStress( arraySlice1d< real64 > const stress, real64 (& str
   strain[5] = (1 + nu)*stress[5]/E;
 }
 
-
+//heaviside function, return 1 for positive, 0 for negatives and 0.5 if argument is zero or very close
 GEOSX_HOST_DEVICE inline
 real64 heaviside( real64 x )
 {
@@ -101,6 +110,7 @@ real64 heaviside( real64 x )
   return 1000000;
 }
 
+//computes a tensor that enters the calculation of the Jacobian of the Spectral Split - check reference paper for more details
 GEOSX_HOST_DEVICE inline
 void QTensor( real64 const (&eigvector)[3], real64 (& Q)[6][6] )
 {
@@ -115,6 +125,7 @@ void QTensor( real64 const (&eigvector)[3], real64 (& Q)[6][6] )
   }
 }
 
+//computes another tensor that enters the calculation of the Jacobian of the Spectral Split - check reference paper for more details
 GEOSX_HOST_DEVICE inline
 void GTensor( real64 (& eigvec1)[3], real64 (& eigvec2)[3], real64 (& G)[6][6] )
 {
@@ -162,6 +173,18 @@ void GTensor( real64 (& eigvec1)[3], real64 (& eigvec2)[3], real64 (& G)[6][6] )
   G[5][5] = M1[0]*M2[1] + M1[5]*M2[5];
 }
 
+//this function takes the eigenvectors and eigenvalues of a tensor and builds the associated positive projector
+/**
+ *@brief This function takes the eigen-decomposition of a tensor and builds the 4th Positive Projector associated with it
+ *@param[in] eigs array with the 3 eigenvalues of a tensor
+ *@param[in] eigvecs 3x3 array with the 3 eigenvectors of a tensor (in rows)
+ *@param[out] PositiveProjector empty array that will be populated with the voigt form of the Positive Projector
+ *
+ *Given a symmetric tensor T, the positive projector is defined as P+ = variation(T+)/variation(T). That is, if we
+ *define the function f+ to be the positive spectral part of T, then, P+ is just the variational derivative of f+.
+ *Note that we don't take the tensor T as a parameter, only its eigenvectors and eigenvalues.
+ *
+ */
 GEOSX_HOST_DEVICE inline
 void PositiveProjectorTensor( real64 (& eigs)[3], real64 (& eigvecs)[3][3], real64 (& PositiveProjector)[6][6] )
 {
@@ -239,6 +262,7 @@ void PositiveProjectorTensor( real64 (& eigs)[3], real64 (& eigvecs)[3][3], real
 
 }
 
+//This is the negative projector, check the documentation of the positive projector for more details.
 GEOSX_HOST_DEVICE inline
 void NegativeProjectorTensor( real64 (& eigs)[3], real64 (& eigvecs)[3][3], real64 (& NegativeProjector)[6][6] )
 {
@@ -316,6 +340,7 @@ void NegativeProjectorTensor( real64 (& eigs)[3], real64 (& eigvecs)[3][3], real
 
 }
 
+//this function tests the GetStiffness function from DamageSpectral.hpp
 GEOSX_HOST_DEVICE inline
 void GetStiffnessTest( real64 (& c)[6][6], real64 (& strain)[6], real64 damage )
 {
@@ -360,6 +385,7 @@ void GetStiffnessTest( real64 (& c)[6][6], real64 (& strain)[6], real64 damage )
 
 }
 
+//this function tests the GetStress function of DamageSpectral.hpp
 GEOSX_HOST_DEVICE inline
 void getTestStress( real64 (& strain)[6], real64 (& stress)[6] )
 {

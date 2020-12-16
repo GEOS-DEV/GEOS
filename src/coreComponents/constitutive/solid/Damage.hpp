@@ -15,6 +15,28 @@
 
 /**
  * @file Damage.hpp
+ * @brief This class overrides the SSLE constitutive updates to account for a Damage field
+ *
+ * In a phase-field for fracture model, the damage variable affects the Elasticity equation
+ * with the degradation of the stresses. Instead of sigma = C : epsilon, we have sigma = g(d)*C:epsilon,
+ * where g(d) is the degradation function. This degradation function can either be a quadratic one
+ * (set LORENTZ 0) or a quasi-quadratic one (set LORENTZ 1). In general, the quadratic one will give you
+ * brittle fracture behaviour. The quasi-quadratic one, combined with linear dissipation, will give you
+ * cohesive fracture behaviour, with a user-defined critical stress. If you use quadratic dissipation in
+ * your damage solver, set QUADRATIC_DISSIPATION to 1.
+ *
+ * References:
+ *
+ * Miehe, Christian; Hofacker, Martina; Welschinger, Fabian. A phase field model for rate-independent crack
+ * propagation: Robust algorithmic implementation based on operator splits.
+ * Computer Methods in Applied Mechianics and Engineering, v. 199, n. 45-48, p. 2765-2778, 2010
+ *
+ * Borden, Micheal J., et al. A phase-field description of dynamic brittle fracture.
+ * Computer Methods in Applied Mechanics and Engineering, v. 217, p. 77-95, 2012
+ *
+ * Bourdin, Blaise; Francfort, Gille A.; Marigo, Jean-Jacques. The variational approach to fracture.
+ * Journal of Elasticity, v. 91, n. 1-3, p. 5-148, 2008.
+ *
  */
 
 #ifndef GEOSX_CONSTITUTIVE_SOLID_DAMAGE_HPP_
@@ -127,6 +149,7 @@ public:
   }
   #endif
 
+  //the only modification here is to multiply all entries of c by g(d)
   GEOSX_FORCE_INLINE
   GEOSX_HOST_DEVICE
   virtual void GetStiffness( localIndex const k,
@@ -157,6 +180,7 @@ public:
   }
 
 
+  //the only modification here is to enforce the monotonicity of the active SED (history approach from Miehe's paper)
   GEOSX_HOST_DEVICE
   virtual real64 calculateActiveStrainEnergyDensity( localIndex const k,
                                                      localIndex const q ) const
@@ -171,6 +195,7 @@ public:
     return m_strainEnergyDensity( k, q );
   }
 
+  //just multiply all entries of the stress tensor by g(d)
   GEOSX_HOST_DEVICE
   virtual void getStress( localIndex const k,
                           localIndex const q,
