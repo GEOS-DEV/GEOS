@@ -15,7 +15,7 @@ TEST( AuxFunctions, PositivePartOfTensor )
 {
   real64 eigs[3] = {1.7076, 3.3973, 6.8951};
   real64 eigvecs[3][3] = {{-0.8643, 0.0759, 0.4973}, {0.1706, -0.8857, 0.4317}, {0.4732, 0.4579, 0.7526}};
-  real64 positivePart[6];
+  real64 positivePart[6] = {0};
   PositivePartOfTensor( eigs, eigvecs, positivePart );
   std::cout << positivePart[0]<<" "<<positivePart[5]<<" "<<positivePart[4]<<std::endl;
   std::cout <<"  "<< positivePart[1]<<" "<<positivePart[3]<<std::endl;
@@ -26,7 +26,7 @@ TEST( AuxFunctions, NegativePartOfTensor )
 {
   real64 eigs[3] = {2.0, 1.0, -1.0};
   real64 eigvecs[3][3] = {{1, 0, 0}, {0, 1, 0}, {0, 0, 1}};
-  real64 negativePart[6];
+  real64 negativePart[6] = {0};
   NegativePartOfTensor( eigs, eigvecs, negativePart );
   std::cout << negativePart[0]<<" "<<negativePart[5]<<" "<<negativePart[4]<<std::endl;
   std::cout <<"  "<< negativePart[1]<<" "<<negativePart[3]<<std::endl;
@@ -40,7 +40,7 @@ TEST( AuxFunctions, PositiveAndNegative )
   float r2 = -1 + static_cast< float >(rand())/static_cast< float >(RAND_MAX/2);
   float r3 = -1 + static_cast< float >(rand())/static_cast< float >(RAND_MAX/2);
   real64 eigs[3] = {r1, r2, r3};
-  real64 eigvecs[3][3];
+  real64 eigvecs[3][3] = {};
   for( int i=0; i<3; i++ )
   {
     r1 = -1 + static_cast< float >(rand())/static_cast< float >(RAND_MAX/2);
@@ -50,17 +50,17 @@ TEST( AuxFunctions, PositiveAndNegative )
     eigvecs[i][1] = r2;
     eigvecs[i][2] = r3;
   }
-  real64 negativePart[6];
-  real64 positivePart[6];
+  real64 negativePart[6] = {0};
+  real64 positivePart[6] = {0};
   PositivePartOfTensor( eigs, eigvecs, positivePart );
   NegativePartOfTensor( eigs, eigvecs, negativePart );
   LvArray::tensorOps::add< 6 >( positivePart, negativePart );
-  real64 eigenvaluesVoigt[6];
+  real64 eigenvaluesVoigt[6] = {0};
   for( int i=0; i < 3; i++ )
   {
     eigenvaluesVoigt[i] = eigs[i];
   }
-  real64 originalMatrix[6];
+  real64 originalMatrix[6] = {0};
   LvArray::tensorOps::Rij_eq_AikSymBklAjl< 3 >( originalMatrix, eigvecs, eigenvaluesVoigt );
   for( int i=0; i<6; i++ )
   {
@@ -72,7 +72,7 @@ TEST( AuxFunctions, QTensor )
 {
   using namespace LvArray;
   real64 vector[3] = {1, 2, 3};
-  real64 Q[6][6];
+  real64 Q[6][6] = {};
   QTensor( vector, Q );
   std::cout << "For vector [1,2,3], Q is: "<< std::endl;
   GEOSX_LOG( Q );
@@ -83,7 +83,7 @@ TEST( AuxFunctions, GTensor )
   using namespace LvArray;
   real64 vector1[3] = {1, 2, 3};
   real64 vector2[3] = {-1, -2, -3};
-  real64 G[6][6];
+  real64 G[6][6] = {};
   GTensor( vector1, vector2, G );
   std::cout << "For vector1 = [1,2,3] and vector2 = [-1,-2,-3], G is: "<< std::endl;
   GEOSX_LOG( G );
