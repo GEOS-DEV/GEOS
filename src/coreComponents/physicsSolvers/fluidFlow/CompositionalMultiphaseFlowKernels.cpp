@@ -734,7 +734,7 @@ INST_AccumulationKernel( 5 );
 
 /******************************** VolumeBalanceKernel ********************************/
 
-template< localIndex NC, localIndex NUM_ELEMS, localIndex MAX_STENCIL >
+template< localIndex NC, localIndex NUM_ELEMS, localIndex MAX_STENCIL, bool IS_UT_FORM >
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void
@@ -767,6 +767,8 @@ FluxKernel::
            arraySlice1d< real64 > const localFlux,
            arraySlice2d< real64 > const localFluxJacobian )
 {
+//  bool consistency_check = true;//temp variable for validation
+
   localIndex constexpr NDOF = NC + 1;
   localIndex const NP = numPhases;
 
@@ -774,13 +776,79 @@ FluxKernel::
   real64 dCompFlux_dP[MAX_STENCIL][NC]{};
   real64 dCompFlux_dC[MAX_STENCIL][NC][NC]{};
 
+  //for UT form
+  real64 totMob{};
+  real64 dTotMob_dP[MAX_STENCIL]{};
+  real64 dTotMob_dC[MAX_STENCIL][NC]{};
+
+  real64 totFlux{};
+  real64 dTotFlux_dP[MAX_STENCIL]{};
+  real64 dTotFlux_dC[MAX_STENCIL][NC]{};
+
+  //useful lambda
+  // helpers lambda definition to avoid too much dulpication -- change name to avoid confusion
+  // cpp-rules pointer to functions are only convertible to no-capture lambdas
+  auto dGravHead_dX =
+    [&] (real64& GH, real64 dGH_dP[NUM_ELEMS], real64 dGH_dC[NUM_ELEMS][NC], real64 dPr_dC[NC], int kp)
+    {
+      real64 densMean {};
+      real64 dDensMean_dP [NUM_ELEMS]{};
+      real64 dDensMean_dC [NUM_ELEMS][NC]{};
+
+      for( localIndex i = 0; i < NUM_ELEMS; ++i )
+      {
+        localIndex const er  = seri[i];
+        localIndex const esr = sesri[i];
+        localIndex const ei  = sei[i];
+
+        // density
+        real64 const density  = phaseMassDens[er][esr][ei][0][kp];
+        real64 const dDens_dP = dPhaseMassDens_dPres[er][esr][ei][0][kp];
+
+        applyChainRule( NC,
+                        dCompFrac_dCompDens[er][esr][ei],
+                        dPhaseMassDens_dComp[er][esr][ei][0][kp],
+                        dPr_dC );
+
+        // average density and derivatives
+        densMean += 0.5 * density;
+        dDensMean_dP[i] = 0.5 * dDens_dP;
+        for( localIndex jc = 0; jc < NC; ++jc )
+        {
+          dDensMean_dC[i][jc] = 0.5 * dPr_dC[jc];
+        }
+      }
+
+      // compute potential difference MPFA-style
+      for( localIndex i = 0; i < stencilSize; ++i )
+      {
+        localIndex const er  = seri[i];
+        localIndex const esr = sesri[i];
+        localIndex const ei  = sei[i];
+        real64 const weight  = stencilWeights[i];
+
+        real64 const gravD = weight * gravCoef[er][esr][ei];
+        GH += densMean * gravD;
+
+        // need to add contributions from both cells the mean density depends on
+        for( localIndex j = 0; j < NUM_ELEMS; ++j )
+        {
+          dGH_dP[j] += dDensMean_dP[j] * gravD;
+          for( localIndex jc = 0; jc < NC; ++jc )
+          {
+            dGH_dC[j][jc] += dDensMean_dC[j][jc] * gravD;
+          }
+        }
+      }
+    };
+
   // loop over phases, compute and upwind phase flux and sum contributions to each component's flux
   for( localIndex ip = 0; ip < NP; ++ip )
   {
-    // clear working arrays
-    real64 densMean{};
-    real64 dDensMean_dP[NUM_ELEMS]{};
-    real64 dDensMean_dC[NUM_ELEMS][NC]{};
+    // clear working arrays -- unused because of lambda
+//    real64 densMean{};
+//    real64 dDensMean_dP[NUM_ELEMS]{};
+//    real64 dDensMean_dC[NUM_ELEMS][NC]{};
 
     // create local work arrays
     real64 phaseFlux{};
@@ -801,7 +869,9 @@ FluxKernel::
     real64 dProp_dC[NC]{};
 
     // calculate quantities on primary connected cells
-    for( localIndex i = 0; i < NUM_ELEMS; ++i )
+
+    dGravHead_dX(gravHead, dGravHead_dP, dGravHead_dC, dProp_dC, ip);
+/*    for( localIndex i = 0; i < NUM_ELEMS; ++i )
     {
       localIndex const er  = seri[i];
       localIndex const esr = sesri[i];
@@ -823,8 +893,7 @@ FluxKernel::
       {
         dDensMean_dC[i][jc] = 0.5 * dProp_dC[jc];
       }
-    }
-
+    }*/
     //***** calculation of flux *****
 
     // compute potential difference MPFA-style
@@ -867,7 +936,7 @@ FluxKernel::
         dPresGrad_dC[i][jc] += -weight * dCapPressure_dC[jc];
       }
 
-      real64 const gravD = weight * gravCoef[er][esr][ei];
+/*      real64 const gravD = weight * gravCoef[er][esr][ei];
 
       // the density used in the potential difference is always a mass density
       // unlike the density used in the phase mobility, which is a mass density
@@ -882,7 +951,7 @@ FluxKernel::
         {
           dGravHead_dC[j][jc] += dDensMean_dC[j][jc] * gravD;
         }
-      }
+      }*/
     }
 
     // *** upwinding ***
@@ -903,9 +972,17 @@ FluxKernel::
     real64 const mobility = phaseMob[er_up][esr_up][ei_up][ip];
 
     // skip the phase flux if phase not present or immobile upstream
-    if( std::fabs( mobility ) < 1e-20 ) // TODO better constant
+    if( std::fabs( mobility ) < 1e-20 ) // TODO better constant : LvArray::NumericLimits< T >::epsilon ?
     {
       continue;
+    }
+
+    //adding totMob update for UT -  formulation
+    totMob += mobility;
+    dTotMob_dP[k_up] += dPhaseMob_dPres[er_up][esr_up][ei_up][ip];
+    for( localIndex ic = 0 ; ic< NC; ++ic )
+    {
+      dTotMob_dC[k_up][ic] += dPhaseMob_dComp[er_up][esr_up][ei_up][ip][ic];
     }
 
     // pressure gradient depends on all points in the stencil
@@ -931,60 +1008,278 @@ FluxKernel::
 
     // compute the phase flux and derivatives using upstream cell mobility
     phaseFlux = mobility * potGrad;
-    for( localIndex ke = 0; ke < stencilSize; ++ke )
-    {
-      dPhaseFlux_dP[ke] *= mobility;
-      for( localIndex jc = 0; jc < NC; ++jc )
-      {
-        dPhaseFlux_dC[ke][jc] *= mobility;
-      }
-    }
+    //adding totflux for UT formulation
+    totFlux += phaseFlux;
 
-    real64 const dMob_dP  = dPhaseMob_dPres[er_up][esr_up][ei_up][ip];
-    arraySlice1d< real64 const > dPhaseMob_dCompSub = dPhaseMob_dComp[er_up][esr_up][ei_up][ip];
-
-    // add contribution from upstream cell mobility derivatives
-    dPhaseFlux_dP[k_up] += dMob_dP * potGrad;
-    for( localIndex jc = 0; jc < NC; ++jc )
-    {
-      dPhaseFlux_dC[k_up][jc] += dPhaseMob_dCompSub[jc] * potGrad;
-    }
-
-    // slice some constitutive arrays to avoid too much indexing in component loop
-    arraySlice1d< real64 const > phaseCompFracSub = phaseCompFrac[er_up][esr_up][ei_up][0][ip];
-    arraySlice1d< real64 const > dPhaseCompFrac_dPresSub = dPhaseCompFrac_dPres[er_up][esr_up][ei_up][0][ip];
-    arraySlice2d< real64 const > dPhaseCompFrac_dCompSub = dPhaseCompFrac_dComp[er_up][esr_up][ei_up][0][ip];
-
-    // compute component fluxes and derivatives using upstream cell composition
-    for( localIndex ic = 0; ic < NC; ++ic )
-    {
-      real64 const ycp = phaseCompFracSub[ic];
-      compFlux[ic] += phaseFlux * ycp;
-
-      // derivatives stemming from phase flux
       for( localIndex ke = 0; ke < stencilSize; ++ke )
       {
-        dCompFlux_dP[ke][ic] += dPhaseFlux_dP[ke] * ycp;
+        dPhaseFlux_dP[ke] *= mobility;
+        dTotFlux_dP[ke] += dPhaseFlux_dP[ke];
+
         for( localIndex jc = 0; jc < NC; ++jc )
         {
-          dCompFlux_dC[ke][ic][jc] += dPhaseFlux_dC[ke][jc] * ycp;
+          dPhaseFlux_dC[ke][jc] *= mobility;
+          dTotFlux_dC[ke][jc] += dPhaseFlux_dC[ke][jc];
         }
       }
 
-      // additional derivatives stemming from upstream cell phase composition
-      dCompFlux_dP[k_up][ic] += phaseFlux * dPhaseCompFrac_dPresSub[ic];
+      real64 const dMob_dP = dPhaseMob_dPres[er_up][esr_up][ei_up][ip];
+      arraySlice1d< real64 const > dPhaseMob_dCompSub = dPhaseMob_dComp[er_up][esr_up][ei_up][ip];
 
-      // convert derivatives of component fraction w.r.t. component fractions to derivatives w.r.t. component
-      // densities
-      applyChainRule( NC, dCompFrac_dCompDens[er_up][esr_up][ei_up], dPhaseCompFrac_dCompSub[ic], dProp_dC );
-      for( localIndex jc = 0; jc < NC; ++jc )
+      // add contribution from upstream cell mobility derivatives
+      dPhaseFlux_dP[k_up] += dMob_dP * potGrad;
+      dTotFlux_dP[k_up] += dMob_dP * potGrad;
+
+    for( localIndex jc = 0; jc < NC; ++jc )
       {
-        dCompFlux_dC[k_up][ic][jc] += phaseFlux * dProp_dC[jc];
+        dPhaseFlux_dC[k_up][jc] += dPhaseMob_dCompSub[jc] * potGrad;
+        dTotFlux_dC[k_up][jc] += dPhaseMob_dCompSub[jc] * potGrad;
+      }
+
+    if( !IS_UT_FORM ) // skip  if you intend to use fixed total valocity formulation
+    {
+      // slice some constitutive arrays to avoid too much indexing in component loop
+      arraySlice1d< real64 const > phaseCompFracSub = phaseCompFrac[er_up][esr_up][ei_up][0][ip];
+      arraySlice1d< real64 const > dPhaseCompFrac_dPresSub = dPhaseCompFrac_dPres[er_up][esr_up][ei_up][0][ip];
+      arraySlice2d< real64 const > dPhaseCompFrac_dCompSub = dPhaseCompFrac_dComp[er_up][esr_up][ei_up][0][ip];
+
+      // compute component fluxes and derivatives using upstream cell composition
+      for( localIndex ic = 0; ic < NC; ++ic )
+      {
+        real64 const ycp = phaseCompFracSub[ic];
+        compFlux[ic] += phaseFlux * ycp;
+
+        // derivatives stemming from phase flux
+        for( localIndex ke = 0; ke < stencilSize; ++ke )
+        {
+          dCompFlux_dP[ke][ic] += dPhaseFlux_dP[ke] * ycp;
+          for( localIndex jc = 0; jc < NC; ++jc )
+          {
+            dCompFlux_dC[ke][ic][jc] += dPhaseFlux_dC[ke][jc] * ycp;
+          }
+        }
+
+        // additional derivatives stemming from upstream cell phase composition
+        dCompFlux_dP[k_up][ic] += phaseFlux * dPhaseCompFrac_dPresSub[ic];
+
+        // convert derivatives of component fraction w.r.t. component fractions to derivatives w.r.t. component
+        // densities
+        applyChainRule( NC, dCompFrac_dCompDens[er_up][esr_up][ei_up], dPhaseCompFrac_dCompSub[ic], dProp_dC );
+        for( localIndex jc = 0; jc < NC; ++jc )
+        {
+          dCompFlux_dC[k_up][ic][jc] += phaseFlux * dProp_dC[jc];
+        }
       }
     }
-  }
+//    std::cout << phaseFlux  << " ";
+    }
 
+//  std::cout << std::endl;
   // *** end of upwinding
+
+  //if total flux formulation
+  if( IS_UT_FORM )
+  {
+//    std::cout << std::endl << "\t check: ";
+    // upwind based on the direction of the total velocity
+//    localIndex const k_up = (totFlux > 0) ? 0 : 1;
+//
+//    localIndex er_up  = seri[k_up];
+//    localIndex esr_up = sesri[k_up];
+//    localIndex ei_up  = sei[k_up];
+
+    /* get PPU repetition upwind for mobOther term in gravity contribution */
+    // TODO move into loop if capilary forces are considered
+    real64 presGrad {};
+//    if( consistency_check )
+//    {
+      for( localIndex i = 0; i < stencilSize; ++i )
+      {
+        localIndex const er = seri[i];
+        localIndex const esr = sesri[i];
+        localIndex const ei = sei[i];
+        real64 const weight = stencilWeights[i];
+        presGrad += weight * ( pres[er][esr][ei] + dPres[er][esr][ei] );
+
+      }
+//    }
+
+    for( localIndex ip = 0; ip < NP; ++ip )
+    {
+      // choose upstream cell
+      // create local work arrays
+      real64 phaseFlux{};
+      real64 dPhaseFlux_dP[MAX_STENCIL]{};
+      real64 dPhaseFlux_dC[MAX_STENCIL][NC]{};
+
+      real64 fflow{};
+      real64 dFflow_dP[MAX_STENCIL]{};
+      real64 dFflow_dC[MAX_STENCIL][NC]{};
+
+      real64 gravHead{};
+      real64 dGravHead_dP[NUM_ELEMS]{};
+      real64 dGravHead_dC[NUM_ELEMS][NC]{};
+
+      real64 dProp_dC[NC]{};
+
+      dGravHead_dX( gravHead, dGravHead_dP, dGravHead_dC, dProp_dC, ip );
+      /* try consistency check -- chossing mobility upwinf as in PPU */
+//      localIndex k_up_alt {}; // to be ouput
+//      localIndex k_up_ihu {}; // to be output
+//      if( consistency_check )
+//      {
+        localIndex const k_up = ( presGrad - gravHead >= 0 ) ? 0 : 1;
+        localIndex const er_up = seri[k_up];
+        localIndex const esr_up = sesri[k_up];
+        localIndex const ei_up = sei[k_up];
+//      }
+
+
+      real64 const mobility = phaseMob[er_up][esr_up][ei_up][ip];
+
+      //fractional flow too low to let the upstream phase flow
+      if( std::fabs(mobility) < 1e-20 || std::fabs(mobility) < 1e-20 )
+        continue;
+
+      fflow += mobility / totMob;
+      phaseFlux += fflow * totFlux;
+
+      real64 const dMob_dP  = dPhaseMob_dPres[er_up][esr_up][ei_up][ip];
+
+      //update component fluxes
+      arraySlice1d< real64 const > dPhaseMob_dCompSub = dPhaseMob_dComp[er_up][esr_up][ei_up][ip];
+
+      dFflow_dP[k_up] += dMob_dP / totMob;
+      for( localIndex jc = 0; jc < NC; ++jc )
+      {  dFflow_dC[k_up][jc] += dPhaseMob_dCompSub[jc] / totMob; }
+
+      for( localIndex ke = 0; ke < stencilSize; ++ke)
+      {
+        dFflow_dP[ke] -= fflow * dTotMob_dP[ke] / totMob;
+        dPhaseFlux_dP[ke] += dFflow_dP[ke] * totFlux;
+
+        for( localIndex jc = 0; jc < NC; ++jc )
+        {
+          dFflow_dC[ke][jc] -= fflow * dTotMob_dC[ke][jc] / totMob;
+          dPhaseFlux_dC[ke][jc] += dFflow_dC[ke][jc] * totFlux;
+        }
+      }
+
+      //NON-FIXED UT -- to be canceled out if considered fixed
+      for( localIndex ke = 0; ke < stencilSize; ++ke)
+      {
+        dPhaseFlux_dP[ke] += fflow*dTotFlux_dP[ke];
+
+        for( localIndex jc = 0; jc < NC; ++jc )
+        {
+          dPhaseFlux_dC[ke][jc] += fflow*dTotFlux_dC[ke][jc];
+        }
+      }
+
+      /***           gravity term                ***/
+
+      for( localIndex jp = 0; jp < NP; ++jp )
+      {
+        //should we skip or spare a branching cdt ?
+        if( ip != jp )
+        {
+          real64 gravHeadOther{};
+          real64 dGravHeadOther_dP[NUM_ELEMS]{};
+          real64 dGravHeadOther_dC[NUM_ELEMS][NC]{};
+          real64 dPropOther_dC[NC]{};
+
+          dGravHead_dX( gravHeadOther, dGravHeadOther_dP, dGravHeadOther_dC, dPropOther_dC, jp );
+
+       //mobOther is upwinded as PPU for consistency with totMob in fractional flow fflow
+          //localIndex const
+          localIndex const k_up_ihu = ( presGrad - gravHeadOther >= 0) ? 0 : 1;//classical PPU
+//          localIndex const k_up_ihu = (gravHeadOther <= 0) ? 0 : 1; //PU base on gravHead
+          localIndex er_ihu = seri[k_up_ihu];
+          localIndex esr_ihu = sesri[k_up_ihu];
+          localIndex ei_ihu = sei[k_up_ihu];
+
+          real64 const mobOther = phaseMob[er_ihu][esr_ihu][ei_ihu][jp];
+          real64 const dMobOther_dP = dPhaseMob_dPres[er_ihu][esr_ihu][ei_ihu][jp];
+          arraySlice1d< real64 const > dMobOther_dC = dPhaseMob_dComp[er_ihu][esr_ihu][ei_ihu][jp];
+
+          if( std::fabs(mobOther) < 1e-20 )
+            continue;
+
+          //based on ut-upwind
+//          real64 const mobOther = phaseMob[er_up][esr_up][ei_up][jp];
+//          real64 const dMobOther_dP = dPhaseMob_dPres[er_up][esr_up][ei_up][jp];
+//          arraySlice1d< real64 const > dMobOther_dC = dPhaseMob_dComp[er_up][esr_up][ei_up][jp];
+
+          phaseFlux -= fflow * mobOther * ( gravHead - gravHeadOther );
+
+          dPhaseFlux_dP[k_up_ihu] -= fflow * dMobOther_dP * ( gravHead - gravHeadOther );
+          for( localIndex jc = 0; jc < NC; ++jc )
+            dPhaseFlux_dC[k_up_ihu][jc] -= fflow * dMobOther_dC[jc] * ( gravHead - gravHeadOther );
+          //mob related part of dFflow_dP is only upstream defined but totMob related is defined everywhere
+          for( localIndex ke = 0; ke < stencilSize; ++ke )
+          {
+            dPhaseFlux_dP[ke] -= dFflow_dP[ke] * mobOther * ( gravHead - gravHeadOther );
+
+            for( localIndex jc = 0; jc < NC; ++jc )
+            {
+              dPhaseFlux_dC[ke][jc] -= dFflow_dC[ke][jc] * mobOther * ( gravHead - gravHeadOther );
+            }
+          }
+
+//          if(k_up == k_up_ihu)
+//          {
+            for( localIndex ke = 0; ke < NUM_ELEMS; ++ke )
+            {
+              dPhaseFlux_dP[ke] -= fflow * mobOther * ( dGravHead_dP[ke] - dGravHeadOther_dP[ke] );
+              //loop nc
+              for( localIndex jc = 0; jc < NC; ++jc )
+              {
+                dPhaseFlux_dC[ke][jc] -= fflow * mobOther * ( dGravHead_dC[ke][jc] - dGravHeadOther_dC[ke][jc] );
+              }
+            }
+//          }
+
+        }
+      }
+
+//      std::cout << phaseFlux << " (" << k_up << " " << k_up_ihu << " " << k_up_alt << ") " ;
+      // slice some constitutive arrays to avoid too much indexing in component loop
+      arraySlice1d< real64 const > phaseCompFracSub = phaseCompFrac[er_up][esr_up][ei_up][0][ip];
+      arraySlice1d< real64 const > dPhaseCompFrac_dPresSub = dPhaseCompFrac_dPres[er_up][esr_up][ei_up][0][ip];
+      arraySlice2d< real64 const > dPhaseCompFrac_dCompSub = dPhaseCompFrac_dComp[er_up][esr_up][ei_up][0][ip];
+
+      // compute component fluxes and derivatives using upstream cell composition
+      for( localIndex ic = 0; ic < NC; ++ic )
+      {
+        real64 const ycp = phaseCompFracSub[ic];
+        compFlux[ic] += phaseFlux * ycp;
+
+        // derivatives stemming from phase flux
+        for( localIndex ke = 0; ke < stencilSize; ++ke )
+        {
+          dCompFlux_dP[ke][ic] += dPhaseFlux_dP[ke] * ycp;
+          for( localIndex jc = 0; jc < NC; ++jc )
+          {
+            dCompFlux_dC[ke][ic][jc] += dPhaseFlux_dC[ke][jc] * ycp;
+          }
+        }
+
+        // additional derivatives stemming from upstream cell phase composition
+        dCompFlux_dP[k_up][ic] += phaseFlux * dPhaseCompFrac_dPresSub[ic];
+
+        // convert derivatives of component fraction w.r.t. component fractions to derivatives w.r.t. component
+        // densities
+        applyChainRule( NC, dCompFrac_dCompDens[er_up][esr_up][ei_up], dPhaseCompFrac_dCompSub[ic], dProp_dC );
+        for( localIndex jc = 0; jc < NC; ++jc )
+        {
+          dCompFlux_dC[k_up][ic][jc] += phaseFlux * dProp_dC[jc];
+        }
+      }
+//      std::cout << phaseFlux << " ";
+    }
+//    std::cout << std::endl;
+
+  }//end If UT_FORM
 
   // populate local flux vector and derivatives
   for( localIndex ic = 0; ic < NC; ++ic )
@@ -1008,7 +1303,7 @@ FluxKernel::
   }
 }
 
-template< localIndex NC, typename STENCIL_TYPE >
+template< localIndex NC, typename STENCIL_TYPE , bool IS_UT_FORM >
 void
 FluxKernel::
   Launch( localIndex const numPhases,
@@ -1055,7 +1350,7 @@ FluxKernel::
     stackArray1d< real64, NUM_ELEMS * NC >                      localFlux( NUM_ELEMS * NC );
     stackArray2d< real64, NUM_ELEMS * NC * MAX_STENCIL * NDOF > localFluxJacobian( NUM_ELEMS * NC, stencilSize * NDOF );
 
-    FluxKernel::Compute< NC, NUM_ELEMS, MAX_STENCIL >( numPhases,
+    FluxKernel::Compute< NC, NUM_ELEMS, MAX_STENCIL, IS_UT_FORM >( numPhases,
                                                        stencilSize,
                                                        seri[iconn],
                                                        sesri[iconn],
@@ -1120,10 +1415,10 @@ FluxKernel::
   } );
 }
 
-#define INST_FluxKernel( NC, STENCIL_TYPE ) \
+#define INST_FluxKernel( NC, STENCIL_TYPE, IS_UT_FORM ) \
   template \
   void FluxKernel:: \
-    Launch< NC, STENCIL_TYPE >( localIndex const numPhases, \
+    Launch< NC, STENCIL_TYPE, IS_UT_FORM >( localIndex const numPhases, \
                                 STENCIL_TYPE const & stencil, \
                                 globalIndex const rankOffset, \
                                 ElementViewConst< arrayView1d< globalIndex const > > const & dofNumber, \
@@ -1150,17 +1445,29 @@ FluxKernel::
                                 CRSMatrixView< real64, globalIndex const > const & localMatrix, \
                                 arrayView1d< real64 > const & localRhs )
 
-INST_FluxKernel( 1, CellElementStencilTPFA );
-INST_FluxKernel( 2, CellElementStencilTPFA );
-INST_FluxKernel( 3, CellElementStencilTPFA );
-INST_FluxKernel( 4, CellElementStencilTPFA );
-INST_FluxKernel( 5, CellElementStencilTPFA );
+INST_FluxKernel( 1, CellElementStencilTPFA, false );
+INST_FluxKernel( 2, CellElementStencilTPFA, false );
+INST_FluxKernel( 3, CellElementStencilTPFA, false );
+INST_FluxKernel( 4, CellElementStencilTPFA, false );
+INST_FluxKernel( 5, CellElementStencilTPFA, false );
 
-INST_FluxKernel( 1, FaceElementStencil );
-INST_FluxKernel( 2, FaceElementStencil );
-INST_FluxKernel( 3, FaceElementStencil );
-INST_FluxKernel( 4, FaceElementStencil );
-INST_FluxKernel( 5, FaceElementStencil );
+INST_FluxKernel( 1, CellElementStencilTPFA, true );
+INST_FluxKernel( 2, CellElementStencilTPFA, true );
+INST_FluxKernel( 3, CellElementStencilTPFA, true );
+INST_FluxKernel( 4, CellElementStencilTPFA, true );
+INST_FluxKernel( 5, CellElementStencilTPFA, true );
+
+INST_FluxKernel( 1, FaceElementStencil, false);
+INST_FluxKernel( 2, FaceElementStencil, false );
+INST_FluxKernel( 3, FaceElementStencil, false );
+INST_FluxKernel( 4, FaceElementStencil, false );
+INST_FluxKernel( 5, FaceElementStencil, false );
+
+INST_FluxKernel( 1, FaceElementStencil, true);
+INST_FluxKernel( 2, FaceElementStencil, true );
+INST_FluxKernel( 3, FaceElementStencil, true );
+INST_FluxKernel( 4, FaceElementStencil, true );
+INST_FluxKernel( 5, FaceElementStencil, true );
 
 #undef INST_FluxKernel
 

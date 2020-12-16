@@ -410,7 +410,7 @@ struct FluxKernel
   template< typename VIEWTYPE >
   using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
 
-  template< localIndex NC, localIndex NUM_ELEMS, localIndex MAX_STENCIL >
+  template< localIndex NC, localIndex NUM_ELEMS, localIndex MAX_STENCIL, bool IS_UT_FORM >
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   static void
@@ -442,7 +442,7 @@ struct FluxKernel
            arraySlice1d< real64 > const localFlux,
            arraySlice2d< real64 > const localFluxJacobian );
 
-  template< localIndex NC, typename STENCIL_TYPE >
+  template< localIndex NC, typename STENCIL_TYPE, bool IS_UT_FORM = true  >
   static void
   Launch( localIndex const numPhases,
           STENCIL_TYPE const & stencil,
@@ -571,3 +571,4 @@ void KernelLaunchSelector2( localIndex numComp, localIndex numPhase, ARGS && ...
 
 
 #endif //GEOSX_PHYSICSSOLVERS_FINITEVOLUME_COMPOSITIONALMULTIPHASEFLOWKERNELS_HPP
+
