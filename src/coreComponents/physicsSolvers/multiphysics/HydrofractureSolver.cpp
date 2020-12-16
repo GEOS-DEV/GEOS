@@ -36,6 +36,7 @@
 #include "mpiCommunications/NeighborCommunicator.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
+#include "physicsSolvers/surfaceGeneration/SurfaceGenerator.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
 #include "linearAlgebra/utilities/LAIHelperFunctions.hpp"
 
@@ -50,18 +51,25 @@ HydrofractureSolver::HydrofractureSolver( const std::string & name,
   SolverBase( name, parent ),
   m_solidSolverName(),
   m_flowSolverName(),
+  m_surfaceGeneratorName(),
   m_couplingTypeOption( CouplingTypeOption::FIM ),
   m_solidSolver( nullptr ),
   m_flowSolver( nullptr ),
+  m_surfaceGeneratorSolver( nullptr),
   m_maxNumResolves( 10 )
 {
   registerWrapper( viewKeyStruct::solidSolverNameString, &m_solidSolverName )->
     setInputFlag( InputFlags::REQUIRED )->
-    setDescription( "Name of the solid mechanics solver to use in the poroelastic solver" );
+    setDescription( "Name of the solid mechanics solver to use in the hydrofracture solver" );
 
   registerWrapper( viewKeyStruct::fluidSolverNameString, &m_flowSolverName )->
     setInputFlag( InputFlags::REQUIRED )->
-    setDescription( "Name of the fluid mechanics solver to use in the poroelastic solver" );
+    setDescription( "Name of the fluid mechanics solver to use in the hydrofracture solver" );
+
+  //TJ: register the surfaceGenerator solver
+  registerWrapper( viewKeyStruct::surfaceGeneratorSolverNameString, &m_surfaceGeneratorName )->
+    setInputFlag( InputFlags::REQUIRED )->
+    setDescription( "Name of the surface generator solver to use in the hydrofracture solver" );
 
   registerWrapper( viewKeyStruct::couplingTypeOptionStringString, &m_couplingTypeOption )->
     setInputFlag( InputFlags::REQUIRED )->
@@ -154,6 +162,10 @@ void HydrofractureSolver::PostProcessInput()
 
   m_flowSolver = this->getParent()->GetGroup< FlowSolverBase >( m_flowSolverName );
   GEOSX_ERROR_IF( m_flowSolver == nullptr, this->getName() << ": invalid flow solver name: " << m_flowSolverName );
+
+  //TJ: add the surface generator to the hydrofracture solver
+  m_surfaceGeneratorSolver = this->getParent()->GetGroup< SurfaceGenerator >( m_surfaceGeneratorName );
+  GEOSX_ERROR_IF( m_surfaceGeneratorSolver == nullptr, this->getName() << ": invalid surface generator solver name: " << m_surfaceGeneratorName );
 }
 
 void HydrofractureSolver::InitializePostInitialConditions_PreSubGroups( Group * const GEOSX_UNUSED_PARAM( problemManager ) )
@@ -177,7 +189,11 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
 {
   real64 dtReturn = dt;
 
-  SolverBase * const surfaceGenerator = this->getParent()->GetGroup< SolverBase >( "SurfaceGen" );
+  //SolverBase * const surfaceGenerator = this->getParent()->GetGroup< SolverBase >( "SurfaceGen" );
+  SurfaceGenerator * const surfaceGenerator = m_surfaceGeneratorSolver;
+
+  GEOSX_ERROR_IF( surfaceGenerator == nullptr, this->getName() << ": invalid surface generator solver name: " << std::endl );
+
 
   if( m_couplingTypeOption == CouplingTypeOption::SIM_FixedStress )
   {
@@ -1038,7 +1054,11 @@ void HydrofractureSolver::SetNextDt( real64 const & currentDt,
   }
   else
   {
-    SolverBase * const surfaceGenerator =  this->getParent()->GetGroup< SolverBase >( "SurfaceGen" );
+    //SolverBase * const surfaceGenerator =  this->getParent()->GetGroup< SolverBase >( "SurfaceGen" );
+    SurfaceGenerator * const surfaceGenerator = m_surfaceGeneratorSolver;
+
+    GEOSX_ERROR_IF( surfaceGenerator == nullptr, this->getName() << ": invalid surface generator solver name: " << std::endl );
+
     nextDt = surfaceGenerator->GetTimestepRequest() < 1e99 ? surfaceGenerator->GetTimestepRequest() : currentDt;
   }
   GEOSX_LOG_LEVEL_RANK_0( 3, this->getName() << ": nextDt request is "  << nextDt );

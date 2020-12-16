@@ -28,6 +28,8 @@ namespace geosx
 
 class FlowSolverBase;
 class SolidMechanicsLagrangianFEM;
+//TJ: add the surfaceGenerator solver;
+class SurfaceGenerator;
 
 class HydrofractureSolver : public SolverBase
 {
@@ -153,6 +155,7 @@ public:
 
     constexpr static auto solidSolverNameString = "solidSolverName";
     constexpr static auto fluidSolverNameString = "fluidSolverName";
+    constexpr static auto surfaceGeneratorSolverNameString = "surfaceGeneratorName";
 
     constexpr static auto contactRelationNameString = "contactRelationName";
     constexpr static auto maxNumResolvesString = "maxNumResolves";
@@ -196,11 +199,16 @@ private:
   string m_solidSolverName;
   string m_flowSolverName;
   string m_contactRelationName;
+  //TJ: name of the surfaceGenerator solver
+  string m_surfaceGeneratorName;
 
   CouplingTypeOption m_couplingTypeOption;
 
   SolidMechanicsLagrangianFEM * m_solidSolver;
   FlowSolverBase * m_flowSolver;
+  //TJ: surfaceGenerator solver to access tip element related
+  //    quantities, such as m_tipNodes and m_trailingFaces
+  SurfaceGenerator * m_surfaceGeneratorSolver;
 
   std::unique_ptr< ParallelMatrix > m_blockDiagUU;
 
