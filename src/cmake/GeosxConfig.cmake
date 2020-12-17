@@ -11,7 +11,6 @@ message(STATUS "Configuring GEOSX version ${GEOSX_VERSION_FULL}")
 
 
 set( PREPROCESSOR_DEFINES ARRAY_BOUNDS_CHECK
-                          ATK
                           CALIPER
                           CHAI
                           CUDA

@@ -15,3 +15,5 @@ install-*
 /build/
 /Default/
 /Debug/
+uberenv_libs
+spack-*.txt
