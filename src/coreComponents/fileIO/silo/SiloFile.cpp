@@ -145,7 +145,7 @@ template<> int GetNumberOfVariablesInField< long long int >()
 }
 template<> int GetNumberOfVariablesInField< R1Tensor >()
 {
-  return R1Tensor::Length();
+  return R1Tensor::SIZE;
 }
 template<> int GetNumberOfVariablesInField< string >()
 {
@@ -1642,9 +1642,6 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
   array1d< real64 > zcoords( numNodes );
   for( localIndex a = 0; a < numNodes; ++a )
   {
-    R1Tensor nodePosition;
-    nodePosition = referencePosition[a];
-
     xcoords[a] = referencePosition( a, 0 );
     ycoords[a] = referencePosition( a, 1 );
     zcoords[a] = referencePosition( a, 2 );
@@ -1896,7 +1893,7 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
 // Arbitrary polygon. Have to deal with this separately
 void SiloFile::WritePolygonMeshObject( const std::string & meshName,
                                        const localIndex nnodes,
-                                       realT * coords[3],
+                                       real64 * coords[3],
                                        const globalIndex *,
                                        const int numRegions,
                                        const int * shapecnt,
@@ -1906,7 +1903,7 @@ void SiloFile::WritePolygonMeshObject( const std::string & meshName,
                                        const int * const shapetype,
                                        const int * const shapesize,
                                        const int cycleNumber,
-                                       const realT problemTime,
+                                       const real64 problemTime,
                                        const int lnodelist )
 {
 
@@ -1920,7 +1917,7 @@ void SiloFile::WritePolygonMeshObject( const std::string & meshName,
   DBoptlist * optlist = DBMakeOptlist( 4 );
 //  DBAddOption(optlist, DBOPT_NODENUM, const_cast<globalIndex*> (globalNodeNum));
   DBAddOption( optlist, DBOPT_CYCLE, const_cast< int * >(&cycleNumber));
-  DBAddOption( optlist, DBOPT_DTIME, const_cast< realT * >(&problemTime));
+  DBAddOption( optlist, DBOPT_DTIME, const_cast< real64 * >(&problemTime));
 
   int numTotZones = shapecnt[0];
   if( numTotZones == 0 )
@@ -1996,7 +1993,7 @@ void SiloFile::WritePolygonMeshObject( const std::string & meshName,
   if( rank == 0 )
   {
     DBAddOption( optlist, DBOPT_CYCLE, const_cast< int * >(&cycleNumber));
-    DBAddOption( optlist, DBOPT_DTIME, const_cast< realT * >(&problemTime));
+    DBAddOption( optlist, DBOPT_DTIME, const_cast< real64 * >(&problemTime));
 
     WriteMultiXXXX( DB_UCDMESH, DBPutMultimesh, 0, meshName, cycleNumber, "/", optlist );
   }

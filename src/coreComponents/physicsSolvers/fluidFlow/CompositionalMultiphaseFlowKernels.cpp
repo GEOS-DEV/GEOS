@@ -905,9 +905,9 @@ FluxKernel::
            ElementViewConst< arrayView2d< real64 const > > const & dPhaseVolFrac_dPres,
            ElementViewConst< arrayView3d< real64 const > > const & dPhaseVolFrac_dComp,
            ElementViewConst< arrayView3d< real64 const > > const & dCompFrac_dCompDens,
-           ElementViewConst< arrayView3d< real64 const > > const & phaseDens,
-           ElementViewConst< arrayView3d< real64 const > > const & dPhaseDens_dPres,
-           ElementViewConst< arrayView4d< real64 const > > const & dPhaseDens_dComp,
+           ElementViewConst< arrayView3d< real64 const > > const & phaseMassDens,
+           ElementViewConst< arrayView3d< real64 const > > const & dPhaseMassDens_dPres,
+           ElementViewConst< arrayView4d< real64 const > > const & dPhaseMassDens_dComp,
            ElementViewConst< arrayView4d< real64 const > > const & phaseCompFrac,
            ElementViewConst< arrayView4d< real64 const > > const & dPhaseCompFrac_dPres,
            ElementViewConst< arrayView5d< real64 const > > const & dPhaseCompFrac_dComp,
@@ -959,12 +959,12 @@ FluxKernel::
       localIndex const ei  = sei[i];
 
       // density
-      real64 const density  = phaseDens[er][esr][ei][0][ip];
-      real64 const dDens_dP = dPhaseDens_dPres[er][esr][ei][0][ip];
+      real64 const density  = phaseMassDens[er][esr][ei][0][ip];
+      real64 const dDens_dP = dPhaseMassDens_dPres[er][esr][ei][0][ip];
 
       applyChainRule( NC,
                       dCompFrac_dCompDens[er][esr][ei],
-                      dPhaseDens_dComp[er][esr][ei][0][ip],
+                      dPhaseMassDens_dComp[er][esr][ei][0][ip],
                       dProp_dC );
 
       // average density and derivatives
@@ -1019,6 +1019,10 @@ FluxKernel::
       }
 
       real64 const gravD = weight * gravCoef[er][esr][ei];
+
+      // the density used in the potential difference is always a mass density
+      // unlike the density used in the phase mobility, which is a mass density
+      // if useMass == 1 and a molar density otherwise
       gravHead += densMean * gravD;
 
       // need to add contributions from both cells the mean density depends on
@@ -1172,9 +1176,9 @@ FluxKernel::
           ElementViewConst< arrayView2d< real64 const > > const & dPhaseVolFrac_dPres,
           ElementViewConst< arrayView3d< real64 const > > const & dPhaseVolFrac_dComp,
           ElementViewConst< arrayView3d< real64 const > > const & dCompFrac_dCompDens,
-          ElementViewConst< arrayView3d< real64 const > > const & phaseDens,
-          ElementViewConst< arrayView3d< real64 const > > const & dPhaseDens_dPres,
-          ElementViewConst< arrayView4d< real64 const > > const & dPhaseDens_dComp,
+          ElementViewConst< arrayView3d< real64 const > > const & phaseMassDens,
+          ElementViewConst< arrayView3d< real64 const > > const & dPhaseMassDens_dPres,
+          ElementViewConst< arrayView4d< real64 const > > const & dPhaseMassDens_dComp,
           ElementViewConst< arrayView4d< real64 const > > const & phaseCompFrac,
           ElementViewConst< arrayView4d< real64 const > > const & dPhaseCompFrac_dPres,
           ElementViewConst< arrayView5d< real64 const > > const & dPhaseCompFrac_dComp,
@@ -1217,9 +1221,9 @@ FluxKernel::
                                                        dPhaseVolFrac_dPres,
                                                        dPhaseVolFrac_dComp,
                                                        dCompFrac_dCompDens,
-                                                       phaseDens,
-                                                       dPhaseDens_dPres,
-                                                       dPhaseDens_dComp,
+                                                       phaseMassDens,
+                                                       dPhaseMassDens_dPres,
+                                                       dPhaseMassDens_dComp,
                                                        phaseCompFrac,
                                                        dPhaseCompFrac_dPres,
                                                        dPhaseCompFrac_dComp,
@@ -1284,9 +1288,9 @@ FluxKernel::
                                 ElementViewConst< arrayView2d< real64 const > > const & dPhaseVolFrac_dPres, \
                                 ElementViewConst< arrayView3d< real64 const > > const & dPhaseVolFrac_dComp, \
                                 ElementViewConst< arrayView3d< real64 const > > const & dCompFrac_dCompDens, \
-                                ElementViewConst< arrayView3d< real64 const > > const & phaseDens, \
-                                ElementViewConst< arrayView3d< real64 const > > const & dPhaseDens_dPres, \
-                                ElementViewConst< arrayView4d< real64 const > > const & dPhaseDens_dComp, \
+                                ElementViewConst< arrayView3d< real64 const > > const & phaseMassDens, \
+                                ElementViewConst< arrayView3d< real64 const > > const & dPhaseMassDens_dPres, \
+                                ElementViewConst< arrayView4d< real64 const > > const & dPhaseMassDens_dComp, \
                                 ElementViewConst< arrayView4d< real64 const > > const & phaseCompFrac, \
                                 ElementViewConst< arrayView4d< real64 const > > const & dPhaseCompFrac_dPres, \
                                 ElementViewConst< arrayView5d< real64 const > > const & dPhaseCompFrac_dComp, \

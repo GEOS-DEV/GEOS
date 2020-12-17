@@ -33,6 +33,8 @@ CellElementSubRegion::CellElementSubRegion( string const & name, Group * const p
   registerWrapper( viewKeyStruct::dNdXString, &m_dNdX )->setSizedFromParent( 1 )->reference().resizeDimension< 3 >( 3 );
 
   registerWrapper( viewKeyStruct::detJString, &m_detJ )->setSizedFromParent( 1 )->reference();
+
+  registerWrapper( viewKeyStruct::toEmbSurfString, &m_toEmbeddedSurfaces )->setSizedFromParent( 1 );
 }
 
 CellElementSubRegion::~CellElementSubRegion()
@@ -48,7 +50,7 @@ void CellElementSubRegion::CopyFromCellBlock( CellBlock * source )
   this->resize( source->size());
   this->nodeList() = source->nodeList();
 
-  arrayView1d< globalIndex const > const sourceLocalToGlobal = source->localToGlobalMap().toViewConst();
+  arrayView1d< globalIndex const > const sourceLocalToGlobal = source->localToGlobalMap();
   this->m_localToGlobalMap.resize( sourceLocalToGlobal.size() );
   for( localIndex i = 0; i < localToGlobalMap().size(); ++i )
   {
@@ -80,6 +82,16 @@ void CellElementSubRegion::ConstructSubRegionFromFaceSet( FaceManager const * co
   SortedArrayView< localIndex const > const & targetSet = faceManager->sets().getReference< SortedArray< localIndex > >( setName );
   m_toFacesRelation.resize( 0, 2 );
   this->resize( targetSet.size() );
+}
+
+
+void CellElementSubRegion::addFracturedElement( localIndex const cellElemIndex,
+                                                localIndex const embSurfIndex )
+{
+  // add the connection between the element and the embedded surface to the map
+  m_toEmbeddedSurfaces.emplaceBack( cellElemIndex, embSurfIndex );
+  // add the element to the fractured elements list
+  m_fracturedCells.insert( cellElemIndex );
 }
 
 void CellElementSubRegion::ViewPackingExclusionList( SortedArray< localIndex > & exclusionList ) const

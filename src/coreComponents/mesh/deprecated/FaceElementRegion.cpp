@@ -81,7 +81,7 @@ localIndex FaceElementRegion::AddToFractureMesh( real64 const time_np1,
 
   arrayView2d< real64 const > const faceCenter = faceManager->faceCenter();
   arrayView2d< real64 > const elemCenter = subRegion->getElementCenter();
-  arrayView1d< real64 const > const elemArea = subRegion->getElementArea().toViewConst();
+  arrayView1d< real64 const > const elemArea = subRegion->getElementArea();
 
   arrayView1d< integer > const subRegionGhostRank = subRegion->ghostRank();
 
@@ -172,7 +172,7 @@ localIndex FaceElementRegion::AddToFractureMesh( real64 const time_np1,
   }
 
 
-  subRegion->CalculateElementGeometricQuantities( kfe, faceManager->faceArea(), faceManager->faceRotationMatrix() );
+  subRegion->CalculateElementGeometricQuantities( kfe, faceManager->faceArea() );
 
   creationMass[kfe] *= elemArea[kfe];
 

@@ -744,16 +744,7 @@ public:
       ss << "}";
     }
 
-    std::string default_string = ss.str();
-
-    // Tensor types will be space-delimited using the << operator
-    // Replace these with commas
-    if( wrapper_type.find( "Tensor" ) != std::string::npos )
-    {
-      std::replace( default_string.begin(), default_string.end(), ' ', ',' );
-    }
-
-    return default_string;
+    return ss.str();
   }
 
   virtual bool processInputFile( xmlWrapper::xmlNode const & targetNode ) override

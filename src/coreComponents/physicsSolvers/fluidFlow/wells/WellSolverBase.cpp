@@ -206,13 +206,13 @@ void WellSolverBase::PrecomputeData( DomainPartition & domain )
   {
     PerforationData * const perforationData = subRegion.GetPerforationData();
 
-    arrayView2d< real64 const > const wellElemLocation = subRegion.getElementCenter().toViewConst();
+    arrayView2d< real64 const > const wellElemLocation = subRegion.getElementCenter();
 
     arrayView1d< real64 > const wellElemGravCoef =
       subRegion.getReference< array1d< real64 > >( viewKeyStruct::gravityCoefString );
 
-    arrayView1d< R1Tensor const > const perfLocation =
-      perforationData->getReference< array1d< R1Tensor > >( PerforationData::viewKeyStruct::locationString );
+    arrayView2d< real64 const > const perfLocation =
+      perforationData->getReference< array2d< real64 > >( PerforationData::viewKeyStruct::locationString );
 
     arrayView1d< real64 > const perfGravCoef =
       perforationData->getReference< array1d< real64 > >( viewKeyStruct::gravityCoefString );
@@ -228,7 +228,7 @@ void WellSolverBase::PrecomputeData( DomainPartition & domain )
     forAll< serialPolicy >( perforationData->size(), [=]( localIndex const iperf )
     {
       // precompute the depth of the perforations
-      perfGravCoef[iperf] = Dot( perfLocation[iperf], gravVector );
+      perfGravCoef[iperf] = LvArray::tensorOps::AiBi< 3 >( perfLocation[iperf], gravVector );
     } );
 
 

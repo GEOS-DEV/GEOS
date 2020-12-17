@@ -267,6 +267,15 @@ public:
 
   real64 & getMaxForce() { return m_maxForce; }
 
+  arrayView1d< ParallelVector > const & getRigidBodyModes() const
+  {
+    return m_rigidBodyModes;
+  }
+
+  array1d< ParallelVector > & getRigidBodyModes()
+  {
+    return m_rigidBodyModes;
+  }
 
 protected:
   virtual void PostProcessInput() override final;
@@ -295,6 +304,9 @@ protected:
   integer m_effectiveStress;
 
   SolidMechanicsLagrangianFEM();
+
+  /// Rigid body modes
+  array1d< ParallelVector > m_rigidBodyModes;
 
 };
 
@@ -326,9 +338,7 @@ void SolidMechanicsLagrangianFEM::AssemblyLaunch( DomainPartition & domain,
 
   ResetStressToBeginningOfStep( domain );
 
-  real64 const gravityVectorData[3] = { gravityVector().Data()[0],
-                                        gravityVector().Data()[1],
-                                        gravityVector().Data()[2] };
+  real64 const gravityVectorData[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( gravityVector() );
 
   m_maxForce = finiteElement::
                  regionBasedKernelApplication< parallelDevicePolicy< 32 >,

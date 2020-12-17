@@ -56,6 +56,14 @@ public:
              DofManager & dofManager ) const override;
 
   virtual void
+  SetupSystem( DomainPartition & domain,
+               DofManager & dofManager,
+               CRSMatrix< real64, globalIndex > & localMatrix,
+               array1d< real64 > & localRhs,
+               array1d< real64 > & localSolution,
+               bool const setSparsity = true ) override;
+
+  virtual void
   ImplicitStepSetup( real64 const & time_n,
                      real64 const & dt,
                      DomainPartition & domain ) override final;
@@ -136,7 +144,7 @@ public:
               real64 const scaleFactor,
               real64 & lastResidual ) override;
 
-  void UpdateDeformationForCoupling( DomainPartition & domain );
+  void ComputeFaceDisplacementJump( DomainPartition & domain );
 
   void AssembleForceResidualDerivativeWrtTraction( DomainPartition & domain,
                                                    DofManager const & dofManager,
@@ -159,6 +167,8 @@ public:
     constexpr static auto stabilizationNameString = "stabilizationName";
     constexpr static auto contactRelationNameString = "contactRelationName";
     constexpr static auto activeSetMaxIterString = "activeSetMaxIter";
+
+    constexpr static auto rotationMatrixString = "rotationMatrix";
 
     constexpr static auto tractionString = "traction";
     constexpr static auto deltaTractionString = "deltaTraction";
@@ -197,9 +207,6 @@ private:
   integer m_activeSetIter = 0;
 
   real64 const m_slidingCheckTolerance = 0.05;
-  //real64 m_normalDisplacementTolerance = 1.e-7;
-  //real64 m_normalTractionTolerance = 1.e-4;
-  //real64 m_slidingTolerance = 1.e-7;
 
   string const m_tractionKey = viewKeyStruct::tractionString;
 
@@ -248,6 +255,8 @@ private:
     return stringState;
   }
 
+  void CreatePreconditioner( DomainPartition const & domain );
+
 public:
 
   void InitializeFractureState( MeshLevel & mesh,
@@ -267,7 +276,16 @@ public:
                                        globalIndex & numOpen,
                                        bool printAll = false ) const;
 
+  void ComputeRotationMatrices( DomainPartition & domain ) const;
+
   void ComputeTolerances( DomainPartition & domain ) const;
+
+  void ComputeFaceNodalArea( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition,
+                             ArrayOfArraysView< localIndex const > const & faceToNodeMap,
+                             localIndex const kf0,
+                             array1d< real64 > & nodalArea ) const;
+
+  real64 const machinePrecision = std::numeric_limits< real64 >::epsilon();
 
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE

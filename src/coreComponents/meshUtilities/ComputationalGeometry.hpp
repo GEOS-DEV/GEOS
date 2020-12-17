@@ -29,36 +29,149 @@ namespace geosx
 namespace computationalGeometry
 {
 
+/// Machine epsilon for double-precision calculations
+constexpr real64 machinePrecision = std::numeric_limits< real64 >::epsilon();
 
 /**
  * @brief Calculate the intersection between a line and a plane.
+ * @tparam LINEDIR_TYPE the type of @p lineDir
+ * @tparam POINT_TYPE the type of @p linePoint
+ * @tparam NORMAL_TYPE the type of @p planeNormal
+ * @tparam ORIGIN_TYPE the type of @p planeOrigin
+ * @tparam INTPOINT_TYPE the type of @p instersectionPoint
  * @param[in] lineDir vector defining direction of the line
  * @param[in] linePoint one point of the line
  * @param[in] planeNormal normal to plane
  * @param[in] planeOrigin plane origin
- * @return the area of the convex 3D polygon
+ * @param[out] intersectionPoint the intersection point
  */
-R1Tensor LinePlaneIntersection( R1Tensor lineDir,
-                                R1Tensor linePoint,
-                                R1Tensor planeNormal,
-                                R1Tensor planeOrigin );
+template< typename LINEDIR_TYPE,
+          typename POINT_TYPE,
+          typename NORMAL_TYPE,
+          typename ORIGIN_TYPE,
+          typename INTPOINT_TYPE >
+void LinePlaneIntersection( LINEDIR_TYPE const & lineDir,
+                            POINT_TYPE const & linePoint,
+                            NORMAL_TYPE const & planeNormal,
+                            ORIGIN_TYPE const & planeOrigin,
+                            INTPOINT_TYPE & intersectionPoint )
+{
+  /* Find intersection line plane
+   * line equation: p - (d*lineDir + linePoing) = 0;
+   * plane equation: ( p - planeOrigin) * planeNormal = 0;
+   * d = (planeOrigin - linePoint) * planeNormal / (lineDir * planeNormal )
+   * pInt = d*lineDir+linePoint;
+   */
+  real64 dummy[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( planeOrigin );
+  LvArray::tensorOps::subtract< 3 >( dummy, linePoint );
+  real64 const d = LvArray::tensorOps::AiBi< 3 >( dummy, planeNormal ) /
+                   LvArray::tensorOps::AiBi< 3 >( lineDir, planeNormal );
+
+  LvArray::tensorOps::copy< 3 >( intersectionPoint, linePoint );
+  LvArray::tensorOps::scaledAdd< 3 >( intersectionPoint, lineDir, d );
+}
+
+
+/**
+ * @brief Reorder a set of points counter-clockwise.
+ * @tparam NORMAL_TYPE the type of @p normal
+ * @param[in] points coordinates of the points
+ * @param[in] normal vector normal to the plane
+ */
+template< typename NORMAL_TYPE >
+void orderPointsCCW( arrayView2d< real64 > const & points,
+                     NORMAL_TYPE const & normal )
+{
+  localIndex const numPoints = points.size( 0 );
+
+  array2d< real64 > orderedPoints( numPoints, 3 );
+
+  std::vector< int > indices( numPoints );
+  std::vector< real64 > angle( numPoints );
+
+  // compute centroid of the set of points
+  real64 centroid[3];
+  LvArray::tensorOps::fill< 3 >( centroid, 0 );
+  for( localIndex a = 0; a < numPoints; ++a )
+  {
+    LvArray::tensorOps::add< 3 >( centroid, points[ a ] );
+    indices[ a ] = a;
+  }
+
+  LvArray::tensorOps::scale< 3 >( centroid, 1.0 / numPoints );
+
+  real64 v0[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( centroid );
+  LvArray::tensorOps::subtract< 3 >( v0, points[ 0 ] );
+  LvArray::tensorOps::normalize< 3 >( v0 );
+
+  // compute angles
+  angle[ 0 ] = 0;
+  for( localIndex a = 1; a < numPoints; ++a )
+  {
+    real64 v[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( centroid );
+    LvArray::tensorOps::subtract< 3 >( v, points[ a ] );
+    real64 const dot = LvArray::tensorOps::AiBi< 3 >( v, v0 );
+
+    real64 crossProduct[ 3 ];
+    LvArray::tensorOps::crossProduct( crossProduct, v, v0 );
+    real64 const det = LvArray::tensorOps::AiBi< 3 >( normal, crossProduct );
+
+    angle[ a ] = std::atan2( det, dot );
+  }
+
+  // sort the indices
+  std::sort( indices.begin(), indices.end(), [&]( int i, int j ) { return angle[ i ] < angle[ j ]; } );
+
+  // copy the points in the reorderedPoints array.
+  for( localIndex a=0; a < numPoints; a++ )
+  {
+    // fill in with ordered
+    LvArray::tensorOps::copy< 3 >( orderedPoints[ a ], points[ indices[ a ] ] );
+  }
+
+  for( localIndex a = 0; a < numPoints; a++ )
+  {
+    LvArray::tensorOps::copy< 3 >( points[a], orderedPoints[a] );
+  }
+}
 
 /**
  * @brief Calculate the area of a polygon given the set of points in ccw order defining it.
+ * @tparam NORMAL_TYPE the type of @p normal
  * @param[in] points coordinates of the points
  * @param[in] normal vector normal to the plane
  * @return the area of the polygon
  */
-real64 ComputeSurfaceArea( array1d< R1Tensor > const & points,
-                           R1Tensor const & normal );
+template< typename NORMAL_TYPE >
+real64 ComputeSurfaceArea( arrayView2d< real64 const > const & points,
+                           NORMAL_TYPE const && normal )
+{
+  real64 surfaceArea = 0.0;
 
-/**
- * @brief Reorder a set of points counter-clockwise.
- * @param[in,out] points coordinates of the points
- * @param[in] normal unit normal vector to the surface
- */
-void orderPointsCCW( array1d< R1Tensor > & points,
-                     R1Tensor const & normal );
+  array2d< real64 > orderedPoints( points.size( 0 ), 3 );
+
+  for( localIndex a = 0; a < points.size( 0 ); a++ )
+  {
+    LvArray::tensorOps::copy< 3 >( orderedPoints[a], points[a] );
+  }
+
+  orderPointsCCW( orderedPoints, normal );
+
+  for( localIndex a = 0; a < points.size( 0 ) - 2; ++a )
+  {
+    real64 v1[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( orderedPoints[ a + 1 ] );
+    real64 v2[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( orderedPoints[ a + 2 ] );
+
+    LvArray::tensorOps::subtract< 3 >( v1, orderedPoints[ 0 ] );
+    LvArray::tensorOps::subtract< 3 >( v2, orderedPoints[ 0 ] );
+
+    real64 triangleNormal[ 3 ];
+    LvArray::tensorOps::crossProduct( triangleNormal, v1, v2 );
+    surfaceArea += LvArray::tensorOps::l2Norm< 3 >( triangleNormal );
+  }
+
+  return surfaceArea * 0.5;
+}
 
 /**
  * @brief Calculate the centroid of a convex 3D polygon as well as the normal and the rotation matrix.
@@ -121,17 +234,13 @@ real64 Centroid_3DPolygon( arraySlice1d< localIndex const > const pointsIndices,
   {
     for( localIndex a=0; a<pointsIndices.size(); ++a )
     {
-#if !defined(__CUDA_ARCH__)
       GEOSX_LOG_RANK( "Points: " << points[ pointsIndices[ a ] ] << " " << pointsIndices[ a ] );
-#endif
     }
-#if !defined(__CUDA_ARCH__)
     GEOSX_ERROR( "Negative area found : " << area );
-#endif
   }
   else
   {
-    return 0.;
+    return 0.0;
   }
 
   return area;
@@ -139,20 +248,104 @@ real64 Centroid_3DPolygon( arraySlice1d< localIndex const > const pointsIndices,
 
 /**
  * @brief Change the orientation of the input vector to be consistent in a global sense.
+ * @tparam NORMAL_TYPE type of @p normal
  * @param[inout] normal normal to the face
  */
-void FixNormalOrientation_3D( arraySlice1d< real64 > const normal );
+template< typename NORMAL_TYPE >
+GEOSX_HOST_DEVICE
+void FixNormalOrientation_3D( NORMAL_TYPE && normal )
+{
+  real64 const orientationTolerance = 10 * machinePrecision;
+
+  // Orient local normal in global sense.
+  // First check: align with z direction
+  if( normal[ 2 ] <= -orientationTolerance )
+  {
+    LvArray::tensorOps::scale< 3 >( normal, -1.0 );
+  }
+  else if( std::fabs( normal[ 2 ] ) < orientationTolerance )
+  {
+    // If needed, second check: align with y direction
+    if( normal[ 1 ] <= -orientationTolerance )
+    {
+      LvArray::tensorOps::scale< 3 >( normal, -1.0 );
+    }
+    else if( fabs( normal[ 1 ] ) < orientationTolerance )
+    {
+      // If needed, third check: align with x direction
+      if( normal[ 0 ] <= -orientationTolerance )
+      {
+        LvArray::tensorOps::scale< 3 >( normal, -1.0 );
+      }
+    }
+  }
+}
 
 /**
  * @brief Calculate the rotation matrix for a face in the 3D space
+ * @tparam NORMAL_TYPE type of @p normal
+ * @tparam MATRIX_TYPE type of @p rotationMatrix
  * @param[in] normal normal to the face
  * @param[out] rotationMatrix rotation matrix for the face
  */
-void RotationMatrix_3D( arraySlice1d< real64 const > const normal,
-                        arraySlice2d< real64 > const rotationMatrix );
+template< typename NORMAL_TYPE, typename MATRIX_TYPE >
+GEOSX_HOST_DEVICE
+void RotationMatrix_3D( NORMAL_TYPE const & normal,
+                        MATRIX_TYPE && rotationMatrix )
+{
+  real64 m1[ 3 ] = { normal[ 2 ], 0.0, -normal[ 0 ] };
+  real64 m2[ 3 ] = { 0.0, normal[ 2 ], -normal[ 1 ] };
+  real64 const norm_m1 = LvArray::tensorOps::l2Norm< 3 >( m1 );
+  real64 const norm_m2 = LvArray::tensorOps::l2Norm< 3 >( m2 );
+
+  // If present, looks for a vector with 0 norm
+  // Fix the uncertain case of norm_m1 very close to norm_m2
+  if( norm_m1+1.e+2*machinePrecision > norm_m2 )
+  {
+    LvArray::tensorOps::crossProduct( m2, normal, m1 );
+    LvArray::tensorOps::normalize< 3 >( m2 );
+    LvArray::tensorOps::normalize< 3 >( m1 );
+  }
+  else
+  {
+    LvArray::tensorOps::crossProduct( m1, normal, m2 );
+    LvArray::tensorOps::scale< 3 >( m1, -1 );
+    LvArray::tensorOps::normalize< 3 >( m1 );
+    LvArray::tensorOps::normalize< 3 >( m2 );
+  }
+
+  // Save everything in the standard form (3x3 rotation matrix)
+  rotationMatrix( 0, 0 ) = normal[ 0 ];
+  rotationMatrix( 1, 0 ) = normal[ 1 ];
+  rotationMatrix( 2, 0 ) = normal[ 2 ];
+  rotationMatrix( 0, 1 ) = m1[ 0 ];
+  rotationMatrix( 1, 1 ) = m1[ 1 ];
+  rotationMatrix( 2, 1 ) = m1[ 2 ];
+  rotationMatrix( 0, 2 ) = m2[ 0 ];
+  rotationMatrix( 1, 2 ) = m2[ 1 ];
+  rotationMatrix( 2, 2 ) = m2[ 2 ];
+
+  GEOSX_ERROR_IF( fabs( LvArray::tensorOps::determinant< 3 >( rotationMatrix ) - 1.0 ) > 1.e+1 * machinePrecision,
+                  "Rotation matrix with determinant different from +1.0" );
+}
+
+/**
+ * @brief Return the sign of a given value as an integer.
+ * @tparam T type of value
+ * @param val the value in question
+ * @return -1, 0 or 1 depending on whether the value is negative, zero or positive
+ */
+template< typename T >
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+int sign( T const val )
+{
+  return (T( 0 ) < val) - (val < T( 0 ));
+}
 
 /**
  * @brief Check if a point is inside a convex polyhedron (3D polygon)
+ * @tparam POINT_TYPE type of @p point
  * @param[in] nodeCoordinates a global array of nodal coordinates
  * @param[in] faceNodeIndicies ordered lists of node indices for each face of the polyhedron
  * @param[in] point coordinates of the query point
@@ -164,85 +357,195 @@ void RotationMatrix_3D( arraySlice1d< real64 const > const normal,
  *
  * @note For faces with n>3 nodes that are non-planar, average normal is used
  */
+template< typename POINT_TYPE >
+GEOSX_HOST_DEVICE
 bool IsPointInsidePolyhedron( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodeCoordinates,
                               array1d< array1d< localIndex > > const & faceNodeIndicies,
-                              R1Tensor const & point,
-                              real64 const areaTolerance = 0.0 );
+                              POINT_TYPE const & point,
+                              real64 const areaTolerance = 0.0 )
+{
+  localIndex const numFaces = faceNodeIndicies.size( 0 );
+  R1Tensor faceCenter, faceNormal;
+  int prev_sign = 0;
+
+  for( localIndex kf = 0; kf < numFaces; ++kf )
+  {
+    Centroid_3DPolygon( faceNodeIndicies[kf], nodeCoordinates, faceCenter, faceNormal, areaTolerance );
+
+    LvArray::tensorOps::subtract< 3 >( faceCenter, point );
+    int const s = sign( LvArray::tensorOps::AiBi< 3 >( faceNormal, faceCenter ) );
+
+    // all dot products should be non-negative (for outward normals) or non-positive (for inward normals)
+    if( prev_sign * s < 0 )
+    {
+      return false;
+    }
+    prev_sign = s;
+  }
+
+  return true;
+}
 
 /**
  * @brief Compute the dimensions of the bounding box containing the element
  *   defined here by the coordinates of its vertices.
+ * @tparam VEC_TYPE type of @p boxDims
  * @param[in] elemIndex index of the element in pointIndices.
  * @param[in] pointIndices the indices of the vertices in pointCoordinates.
  * @param[in] pointCoordinates the vertices coordinates.
  * @param[out] boxDims The dimensions of the bounding box.
  */
-void GetBoundingBox( localIndex elemIndex,
+template< typename VEC_TYPE >
+GEOSX_HOST_DEVICE
+void GetBoundingBox( localIndex const elemIndex,
                      arrayView2d< localIndex const, cells::NODE_MAP_USD > const & pointIndices,
                      arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & pointCoordinates,
-                     real64 ( &boxDims )[ 3 ] );
+                     VEC_TYPE && boxDims )
+{
+  // This holds the min coordinates of the set in each direction
+  R1Tensor minCoords = { LvArray::NumericLimits< real64 >::max,
+                         LvArray::NumericLimits< real64 >::max,
+                         LvArray::NumericLimits< real64 >::max };
+
+  // boxDims is used to hold the max coordinates.
+  LvArray::tensorOps::fill< 3 >( boxDims, LvArray::NumericLimits< real64 >::min );
+
+  // loop over all the vertices of the element to get the min and max coords
+  for( localIndex a = 0; a < pointIndices.size( 1 ); ++a )
+  {
+    localIndex const id = pointIndices( elemIndex, a );
+    for( localIndex d = 0; d < 3; ++d )
+    {
+      minCoords[ d ] = fmin( minCoords[ d ], pointCoordinates( id, d ) );
+      boxDims[ d ] = fmax( boxDims[ d ], pointCoordinates( id, d ) );
+    }
+  }
+
+  LvArray::tensorOps::subtract< 3 >( boxDims, minCoords );
+}
 
 /**
  * @brief Compute the volume of an hexahedron
  * @param[in] X vertices of the hexahedron
  * @return the volume of the hexahedron
  */
-inline
 GEOSX_HOST_DEVICE
-real64 HexVolume( R1Tensor const * const X )
+inline
+real64 HexVolume( real64 const X[][3] )
 {
-  R1Tensor X7_X1( X[7] );
-  X7_X1 -= X[1];
+  real64 X7_X1[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( X[7] );
+  LvArray::tensorOps::subtract< 3 >( X7_X1, X[1] );
 
-  R1Tensor X6_X0( X[6] );
-  X6_X0 -= X[0];
+  real64 X6_X0[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( X[6] );
+  LvArray::tensorOps::subtract< 3 >( X6_X0, X[0] );
 
-  R1Tensor X7_X2( X[7] );
-  X7_X2 -= X[2];
+  real64 X7_X2[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( X[7] );
+  LvArray::tensorOps::subtract< 3 >( X7_X2, X[2] );
 
-  R1Tensor X3_X0( X[3] );
-  X3_X0 -= X[0];
+  real64 X3_X0[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( X[3] );
+  LvArray::tensorOps::subtract< 3 >( X3_X0, X[0] );
 
-  R1Tensor X5_X0( X[5] );
-  X5_X0 -= X[0];
+  real64 X5_X0[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( X[5] );
+  LvArray::tensorOps::subtract< 3 >( X5_X0, X[0] );
 
-  R1Tensor X7_X4( X[7] );
-  X7_X4 -= X[4];
+  real64 X7_X4[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( X[7] );
+  LvArray::tensorOps::subtract< 3 >( X7_X4, X[4] );
 
-  R1Tensor X7_X1plusX6_X0( X7_X1 );
-  X7_X1plusX6_X0 += X6_X0;
+  real64 X7_X1plusX6_X0[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( X7_X1 );
+  LvArray::tensorOps::add< 3 >( X7_X1plusX6_X0, X6_X0 );
 
-  R1Tensor X7_X2plusX5_X0( X7_X2 );
-  X7_X2plusX5_X0 += X5_X0;
+  real64 X7_X2plusX5_X0[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( X7_X2 );
+  LvArray::tensorOps::add< 3 >( X7_X2plusX5_X0, X5_X0 );
 
-  R1Tensor X7_X4plusX3_X0( X7_X4 );
-  X7_X4plusX3_X0 += X3_X0;
+  real64 X7_X4plusX3_X0[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( X7_X4 );
+  LvArray::tensorOps::add< 3 >( X7_X4plusX3_X0, X3_X0 );
 
-  return 1.0/12.0 * ( Dot( X7_X1plusX6_X0, Cross( X7_X2, X3_X0 ) ) +
-                      Dot( X6_X0, Cross( X7_X2plusX5_X0, X7_X4 ) ) +
-                      Dot( X7_X1, Cross( X5_X0, X7_X4plusX3_X0 ) ) );
+  real64 X7_X2crossX3_X0[3];
+  LvArray::tensorOps::crossProduct( X7_X2crossX3_X0, X7_X2, X3_X0 );
+
+  real64 X7_X2plusX5_X0crossX7_X4[3];
+  LvArray::tensorOps::crossProduct( X7_X2plusX5_X0crossX7_X4, X7_X2plusX5_X0, X7_X4 );
+
+  real64 X5_X0crossX7_X4plusX3_X0[3];
+  LvArray::tensorOps::crossProduct( X5_X0crossX7_X4plusX3_X0, X5_X0, X7_X4plusX3_X0 );
+
+  return 1.0/12.0 * ( LvArray::tensorOps::AiBi< 3 >( X7_X1plusX6_X0, X7_X2crossX3_X0 ) +
+                      LvArray::tensorOps::AiBi< 3 >( X6_X0, X7_X2plusX5_X0crossX7_X4 ) +
+                      LvArray::tensorOps::AiBi< 3 >( X7_X1, X5_X0crossX7_X4plusX3_X0 ) );
 }
 
 /**
  * @brief Compute the volume of an tetrahedron
- * @param[in] points vertices of the tetrahedron
+ * @param[in] X vertices of the tetrahedron
  * @return the volume of the tetrahedron
  */
-real64 TetVolume( R1Tensor const * const points );
+GEOSX_HOST_DEVICE
+inline
+real64 TetVolume( real64 const X[][3] )
+{
+  real64 X1_X0[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( X[1] );
+  LvArray::tensorOps::subtract< 3 >( X1_X0, X[0] );
+
+  real64 X2_X0[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( X[2] );
+  LvArray::tensorOps::subtract< 3 >( X2_X0, X[0] );
+
+  real64 X3_X0[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( X[3] );
+  LvArray::tensorOps::subtract< 3 >( X3_X0, X[0] );
+
+  real64 X2_X0crossX3_X0[ 3 ];
+  LvArray::tensorOps::crossProduct( X2_X0crossX3_X0, X2_X0, X3_X0 );
+
+  return std::fabs( LvArray::tensorOps::AiBi< 3 >( X1_X0, X2_X0crossX3_X0 ) / 6.0 );
+}
 
 /**
  * @brief Compute the volume of a wedge
- * @param[in] points vertices of the wedge
+ * @param[in] X vertices of the wedge
  * @return the volume of the wedge
  */
-real64 WedgeVolume( R1Tensor const * const points );
+GEOSX_HOST_DEVICE
+inline
+real64 WedgeVolume( real64 const X[][3] )
+{
+  real64 const tet1[4][3] = { LVARRAY_TENSOROPS_INIT_LOCAL_3( X[0] ),
+                              LVARRAY_TENSOROPS_INIT_LOCAL_3( X[1] ),
+                              LVARRAY_TENSOROPS_INIT_LOCAL_3( X[2] ),
+                              LVARRAY_TENSOROPS_INIT_LOCAL_3( X[4] ) };
+
+  real64 const tet2[4][3] = { LVARRAY_TENSOROPS_INIT_LOCAL_3( X[0] ),
+                              LVARRAY_TENSOROPS_INIT_LOCAL_3( X[2] ),
+                              LVARRAY_TENSOROPS_INIT_LOCAL_3( X[4] ),
+                              LVARRAY_TENSOROPS_INIT_LOCAL_3( X[5] ) };
+
+  real64 const tet3[4][3] = { LVARRAY_TENSOROPS_INIT_LOCAL_3( X[0] ),
+                              LVARRAY_TENSOROPS_INIT_LOCAL_3( X[3] ),
+                              LVARRAY_TENSOROPS_INIT_LOCAL_3( X[4] ),
+                              LVARRAY_TENSOROPS_INIT_LOCAL_3( X[5] ) };
+
+  return TetVolume( tet1 ) + TetVolume( tet2 ) + TetVolume( tet3 );
+}
 
 /**
  * @brief Compute the volume of a pyramid
- * @param[in] points vertices of the pyramid
+ * @param[in] X vertices of the pyramid
  * @return the volume of the pyramid
  */
-real64 PyramidVolume( R1Tensor const * const points );
+GEOSX_HOST_DEVICE
+inline
+real64 PyramidVolume( real64 const X[][3] )
+{
+  real64 const tet1[4][3] = { LVARRAY_TENSOROPS_INIT_LOCAL_3( X[0] ),
+                              LVARRAY_TENSOROPS_INIT_LOCAL_3( X[1] ),
+                              LVARRAY_TENSOROPS_INIT_LOCAL_3( X[2] ),
+                              LVARRAY_TENSOROPS_INIT_LOCAL_3( X[4] ) };
+
+  real64 const tet2[4][3] = { LVARRAY_TENSOROPS_INIT_LOCAL_3( X[0] ),
+                              LVARRAY_TENSOROPS_INIT_LOCAL_3( X[2] ),
+                              LVARRAY_TENSOROPS_INIT_LOCAL_3( X[3] ),
+                              LVARRAY_TENSOROPS_INIT_LOCAL_3( X[4] ) };
+
+  return TetVolume( tet1 ) + TetVolume( tet2 );
+}
 
 } // namespace computationalGeometry
 } // namespace geosx

@@ -17,6 +17,7 @@
  */
 
 #include "BoundedPlane.hpp"
+#include "LvArray/src/tensorOps.hpp"
 
 namespace geosx
 {
@@ -49,7 +50,7 @@ BoundedPlane::BoundedPlane( const std::string & name, Group * const parent ):
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "Length and width of the bounded plane" );
 
-  m_points.resize( 4 );
+  m_points.resize( 4, 3 );
 }
 
 BoundedPlane::~BoundedPlane()
@@ -58,13 +59,16 @@ BoundedPlane::~BoundedPlane()
 void BoundedPlane::PostProcessInput()
 {
   // Make sure that you have an orthonormal basis.
-  m_normal.Normalize();
-  m_lengthVector.Normalize();
-  m_widthVector.Normalize();
+  LvArray::tensorOps::normalize< 3 >( m_normal );
+  LvArray::tensorOps::normalize< 3 >( m_lengthVector );
+  LvArray::tensorOps::normalize< 3 >( m_widthVector );
 
   //Check if they are all orthogonal
-  R1Tensor vector = Cross( m_lengthVector, m_widthVector );
-  GEOSX_ERROR_IF( std::fabs( std::fabs( Dot( m_normal, vector )) - 1 ) > 1e-15 || std::fabs( Dot( m_widthVector, m_lengthVector )) > 1e-15,
+  real64 vector[ 3 ];
+  LvArray::tensorOps::crossProduct( vector, m_lengthVector, m_widthVector );
+
+  GEOSX_ERROR_IF( std::fabs( std::fabs( LvArray::tensorOps::AiBi< 3 >( m_normal, vector )) - 1 ) > 1e-15
+                  || std::fabs( LvArray::tensorOps::AiBi< 3 >( m_widthVector, m_lengthVector )) > 1e-15,
                   "Error: the 3 vectors provided in the BoundedPlane do not form an orthonormal basis!" );
   GEOSX_ERROR_IF( m_dimensions.size() != 2, "Error: Need to provide both length and width!" );
 
@@ -73,25 +77,28 @@ void BoundedPlane::PostProcessInput()
 
 void BoundedPlane::findRectangleLimits()
 {
-  R1Tensor lengthVec = m_lengthVector;
-  R1Tensor widthVec  = m_widthVector;
-  lengthVec *= 0.5 * m_dimensions[0];
-  widthVec  *= 0.5 * m_dimensions[1];
+  real64 lengthVec[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( m_lengthVector );
+  real64 widthVec[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( m_widthVector );
 
-  for( int i=0; i < 4; i++ )
-    m_points[i] = m_origin;
+  LvArray::tensorOps::scale< 3 >( lengthVec, 0.5 * m_dimensions[0] );
+  LvArray::tensorOps::scale< 3 >( widthVec, 0.5 * m_dimensions[1] );
 
-  m_points[0] -= lengthVec;
-  m_points[0] -= widthVec;
+  for( int i = 0; i < 4; i++ )
+  {
+    LvArray::tensorOps::copy< 3 >( m_points[i], m_origin );
+  }
 
-  m_points[1] += lengthVec;
-  m_points[1] -= widthVec;
+  LvArray::tensorOps::subtract< 3 >( m_points[0], lengthVec );
+  LvArray::tensorOps::subtract< 3 >( m_points[0], widthVec );
 
-  m_points[2] += lengthVec;
-  m_points[2] += widthVec;
+  LvArray::tensorOps::add< 3 >( m_points[1], lengthVec );
+  LvArray::tensorOps::subtract< 3 >( m_points[1], widthVec );
 
-  m_points[3] -= lengthVec;
-  m_points[3] += widthVec;
+  LvArray::tensorOps::add< 3 >( m_points[2], lengthVec );
+  LvArray::tensorOps::add< 3 >( m_points[2], widthVec );
+
+  LvArray::tensorOps::subtract< 3 >( m_points[3], lengthVec );
+  LvArray::tensorOps::add< 3 >( m_points[3], widthVec );
 
   if( getLogLevel() > 1 )
   {
@@ -102,30 +109,37 @@ void BoundedPlane::findRectangleLimits()
   }
 }
 
-bool BoundedPlane::IsCoordInObject( const R1Tensor & coord ) const
+bool BoundedPlane::IsCoordInObject( real64 const ( &coord ) [3] ) const
 {
   bool isInside = true;
 
-  R1Tensor dummy = coord;
-  dummy -= m_origin;
+  real64 dummy[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( coord );
+  LvArray::tensorOps::subtract< 3 >( dummy, m_origin );
 
   // 1. Check if point is on the plane
-  if( std::abs( Dot( dummy, m_normal ) ) < 1e-15 )
+  if( std::abs( LvArray::tensorOps::AiBi< 3 >( dummy, m_normal ) ) < 1e-15 )
   {
-    R1Tensor vec   = coord;
-    R1Tensor abVec = m_points[1];
-    R1Tensor adVec = m_points[3];
+    real64 vec[ 3 ]   = LVARRAY_TENSOROPS_INIT_LOCAL_3( coord );
+    real64 abVec[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( m_points[1] );
+    real64 adVec[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( m_points[3] );
 
-    vec   -= m_points[0];
-    abVec -= m_points[0];
-    adVec -= m_points[0];
+    LvArray::tensorOps::subtract< 3 >( vec, m_points[0] );
+    LvArray::tensorOps::subtract< 3 >( abVec, m_points[0] );
+    LvArray::tensorOps::subtract< 3 >( adVec, m_points[0] );
+
+    real64 const abDotProd = LvArray::tensorOps::AiBi< 3 >( vec, abVec );
+    real64 const adDotProd = LvArray::tensorOps::AiBi< 3 >( vec, adVec );
 
     // 2. Check if it is inside the rectangle
-    if( Dot( vec, abVec ) < 0  || Dot( vec, abVec ) > Dot( abVec, abVec )  )
+    if( abDotProd < 0 || abDotProd > LvArray::tensorOps::l2NormSquared< 3 >( abVec ) )
+    {
       isInside = false;
+    }
 
-    if( Dot( vec, adVec ) < 0  || Dot( vec, adVec ) > Dot( adVec, adVec )  )
+    if( adDotProd < 0 || adDotProd > LvArray::tensorOps::l2NormSquared< 3 >( adVec ) )
+    {
       isInside = false;
+    }
 
   }
   else
