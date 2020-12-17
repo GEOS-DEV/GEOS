@@ -307,11 +307,13 @@ public:
     static constexpr auto phaseVolumeFractionString                     = "phaseVolumeFraction";
     static constexpr auto dPhaseVolumeFraction_dPressureString          = "dPhaseVolumeFraction_dPressure";
     static constexpr auto dPhaseVolumeFraction_dGlobalCompDensityString = "dPhaseVolumeFraction_dGlobalCompDensity";
+    static constexpr auto dPhaseVolumeFraction_dTemperatureString       = "dPhaseVolumeFraction_dTemperature"
 
     // intermediate values for mobilities
     static constexpr auto phaseMobilityString                     = "phaseMobility";
     static constexpr auto dPhaseMobility_dPressureString          = "dPhaseMobility_dPressure";
     static constexpr auto dPhaseMobility_dGlobalCompDensityString = "dPhaseMobility_dGlobalCompDensity";
+    static constexpr auto dPhaseMobility_dTemperatureString       = "dPhaseMobility_dTemperature";
 
     // these are used to store last converged time step values
     static constexpr auto phaseVolumeFractionOldString     = "phaseVolumeFractionOld";

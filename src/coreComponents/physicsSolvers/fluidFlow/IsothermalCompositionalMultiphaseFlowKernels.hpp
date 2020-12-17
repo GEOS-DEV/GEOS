@@ -29,39 +29,6 @@ namespace geosx
 namespace IsothermalCompositionalMultiphaseFlowKernels
 {
 
-/******************************** ComponentFractionKernel ********************************/
-
-/**
- * @brief Functions to compute component fractions from global component densities (mass or molar)
- */
-struct ComponentFractionKernel
-{
-  template< localIndex NC >
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  static void
-  Compute( arraySlice1d< real64 const > compDens,
-           arraySlice1d< real64 const > dCompDens,
-           arraySlice1d< real64 > compFrac,
-           arraySlice2d< real64 > dCompFrac_dCompDens );
-
-  template< localIndex NC >
-  static void
-  Launch( localIndex const size,
-          arrayView2d< real64 const > const & compDens,
-          arrayView2d< real64 const > const & dCompDens,
-          arrayView2d< real64 > const & compFrac,
-          arrayView3d< real64 > const & dCompFrac_dCompDens );
-
-  template< localIndex NC >
-  static void
-  Launch( SortedArrayView< localIndex const > const & targetSet,
-          arrayView2d< real64 const > const & compDens,
-          arrayView2d< real64 const > const & dCompDens,
-          arrayView2d< real64 > const & compFrac,
-          arrayView3d< real64 > const & dCompFrac_dCompDens );
-};
-
 /******************************** PhaseVolumeFractionKernel ********************************/
 
 /**

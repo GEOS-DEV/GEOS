@@ -74,17 +74,21 @@ struct PhaseVolumeFractionKernel
   GEOSX_FORCE_INLINE
   static void
   Compute( arraySlice1d< real64 const > const & compDens,
-           arraySlice1d< real64 const > const & dCompDens,
-           arraySlice2d< real64 const > const & dCompFrac_dCompDens,
-           arraySlice1d< real64 const > const & phaseDens,
-           arraySlice1d< real64 const > const & dPhaseDens_dPres,
-           arraySlice2d< real64 const > const & dPhaseDens_dComp,
-           arraySlice1d< real64 const > const & phaseFrac,
-           arraySlice1d< real64 const > const & dPhaseFrac_dPres,
-           arraySlice2d< real64 const > const & dPhaseFrac_dComp,
-           arraySlice1d< real64 > const & phaseVolFrac,
-           arraySlice1d< real64 > const & dPhaseVolFrac_dPres,
-           arraySlice2d< real64 > const & dPhaseVolFrac_dComp );
+           arrayView2d< real64 const > const & compDens,
+           arrayView2d< real64 const > const & dCompDens,
+           arrayView3d< real64 const > const & dCompFrac_dCompDens,
+           arrayView3d< real64 const > const & phaseDens,
+           arrayView3d< real64 const > const & dPhaseDens_dPres,
+           arrayView3d< real64 const > const & dPhaseDens_dTemp,
+           arrayView4d< real64 const > const & dPhaseDens_dComp,
+           arrayView3d< real64 const > const & phaseFrac,
+           arrayView3d< real64 const > const & dPhaseFrac_dPres,
+           arrayView3d< real64 const > const & dPhaseFrac_dTemp,
+           arrayView4d< real64 const > const & dPhaseFrac_dComp,
+           arrayView2d< real64 > const & phaseVolFrac,
+           arrayView2d< real64 > const & dPhaseVolFrac_dPres,
+           arrayView2d< real64 > const & dPhaseVolFrac_dTemp,
+           arrayView3d< real64 > const & dPhaseVolFrac_dComp );
 
   template< localIndex NC, localIndex NP >
   static void
@@ -94,12 +98,15 @@ struct PhaseVolumeFractionKernel
           arrayView3d< real64 const > const & dCompFrac_dCompDens,
           arrayView3d< real64 const > const & phaseDens,
           arrayView3d< real64 const > const & dPhaseDens_dPres,
+          arrayView3d< real64 const > const & dPhaseDens_dTemp,
           arrayView4d< real64 const > const & dPhaseDens_dComp,
           arrayView3d< real64 const > const & phaseFrac,
           arrayView3d< real64 const > const & dPhaseFrac_dPres,
+          arrayView3d< real64 const > const & dPhaseFrac_dTemp,
           arrayView4d< real64 const > const & dPhaseFrac_dComp,
           arrayView2d< real64 > const & phaseVolFrac,
           arrayView2d< real64 > const & dPhaseVolFrac_dPres,
+          arrayView2d< real64 > const & dPhaseVolFrac_dTemp,
           arrayView3d< real64 > const & dPhaseVolFrac_dComp );
 
   template< localIndex NC, localIndex NP >
@@ -110,12 +117,15 @@ struct PhaseVolumeFractionKernel
           arrayView3d< real64 const > const & dCompFrac_dCompDens,
           arrayView3d< real64 const > const & phaseDens,
           arrayView3d< real64 const > const & dPhaseDens_dPres,
+          arrayView3d< real64 const > const & dPhaseDens_dTemp,
           arrayView4d< real64 const > const & dPhaseDens_dComp,
           arrayView3d< real64 const > const & phaseFrac,
           arrayView3d< real64 const > const & dPhaseFrac_dPres,
+          arrayView3d< real64 const > const & dPhaseFrac_dTemp,
           arrayView4d< real64 const > const & dPhaseFrac_dComp,
           arrayView2d< real64 > const & phaseVolFrac,
           arrayView2d< real64 > const & dPhaseVolFrac_dPres,
+          arrayView2d< real64 > const & dPhaseVolFrac_dTemp,
           arrayView3d< real64 > const & dPhaseVolFrac_dComp );
 };
 
