@@ -71,9 +71,7 @@ geosx_osx_build: &geosx_osx_build
   script:
   - python ${TRAVIS_BUILD_DIR}/scripts/config-build.py
     -hc ${TRAVIS_BUILD_DIR}/host-configs/darwin-clang.cmake
-    -DGEOSX_TPL_DIR=${GEOSX_TPL_DIR}
     -DBLT_MPI_COMMAND_APPEND:STRING="--oversubscribe"
-    -DENABLE_GEOSX_PTP:BOOL=ON -DENABLE_DOXYGEN:BOOL=OFF
   - cd build-darwin-clang-debug
   - make -j $(nproc) VERBOSE=1
   - ctest -V -E "testUncrustifyCheck|testDoxygenCheck|blt_mpi_smoke"

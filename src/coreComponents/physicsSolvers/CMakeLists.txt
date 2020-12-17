@@ -1,5 +1,3 @@
-message(STATUS "Entering src/coreComponents/physicsSolvers/CMakeLists.txt")
-
 add_subdirectory (GEOSX_PTP)
 
 #
@@ -134,5 +132,3 @@ geosx_add_code_checks( PREFIX physicsSolvers )
 
 add_subdirectory( fluidFlow/unitTests )
 add_subdirectory( fluidFlow/wells/unitTests )
-
-message(STATUS "Leaving src/coreComponents/physicsSolvers/CMakeLists.txt")

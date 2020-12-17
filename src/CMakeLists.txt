@@ -8,10 +8,6 @@ set(BLT_CXX_STD "c++14" CACHE STRING "Version of C++ standard")
 set( ENABLE_WARNINGS_AS_ERRORS "ON" CACHE PATH "")
 set(CMAKE_ENABLE_EXPORTS ON)
 
-include(cmake/thirdparty/setupThirdPartyDirectory.cmake)
-
-
-
 ################################
 # Include blt
 ################################
