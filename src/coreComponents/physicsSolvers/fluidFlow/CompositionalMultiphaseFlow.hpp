@@ -320,6 +320,8 @@ public:
     static constexpr auto phaseDensityOldString            = "phaseDensityOld";
     static constexpr auto phaseComponentFractionOldString  = "phaseComponentFractionOld";
     static constexpr auto porosityOldString                = "porosityOld";
+    static constexpr auto phaseInternalEnergyOldString     = "phaseInternalEnergyOld";
+    static constexpr auto rockInternalEnergyOldString      = "rockInternalEnergyOld";
 
     // these are allocated on faces for BC application until we can get constitutive models on faces
     static constexpr auto phaseViscosityString             = "phaseViscosity";
@@ -464,23 +466,33 @@ private:
 
   ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > m_dCompFrac_dCompDens;
 
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_phaseVolFrac;
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_dPhaseVolFrac_dPres;
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_dPhaseVolFrac_dTemp;
   ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > m_dPhaseVolFrac_dCompDens;
 
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_phaseMob;
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_dPhaseMob_dPres;
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_dPhaseMob_dTemp;
   ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > m_dPhaseMob_dCompDens;
 
   ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > m_phaseMassDens;
   ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > m_dPhaseMassDens_dPres;
+  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > m_dPhaseMassDens_dTemp;
   ElementRegionManager::ElementViewAccessor< arrayView4d< real64 const > > m_dPhaseMassDens_dComp;
 
   ElementRegionManager::ElementViewAccessor< arrayView4d< real64 const > > m_phaseCompFrac;
   ElementRegionManager::ElementViewAccessor< arrayView4d< real64 const > > m_dPhaseCompFrac_dPres;
+  ElementRegionManager::ElementViewAccessor< arrayView4d< real64 const > > m_dPhaseCompFrac_dTemp;
   ElementRegionManager::ElementViewAccessor< arrayView5d< real64 const > > m_dPhaseCompFrac_dComp;
 
   ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > m_phaseCapPressure;
   ElementRegionManager::ElementViewAccessor< arrayView4d< real64 const > > m_dPhaseCapPressure_dPhaseVolFrac;
+
+  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > m_phaseEnthalpy;
+  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > m_dPhaseEnthalpy_dPres;
+  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > m_dPhaseEnthalpy_dTemp;
+  ElementRegionManager::ElementViewAccessor< arrayView4d< real64 const > > m_dPhaseEnthalpy_dComp;
 
 };
 
