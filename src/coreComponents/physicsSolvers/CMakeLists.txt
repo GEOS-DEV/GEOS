@@ -39,6 +39,8 @@ set( physicsSolvers_headers
      simplePDE/LaplaceFEM.hpp
      simplePDE/LaplaceFEMKernels.hpp
      simplePDE/PhaseFieldDamageFEM.hpp
+     simplePDE/DiffusionFEM.hpp
+     simplePDE/DiffusionFEMKernels.hpp
      solidMechanics/SolidMechanicsEmbeddedFractures.hpp
      solidMechanics/SolidMechanicsLagrangianFEM.hpp
      solidMechanics/SolidMechanicsLagrangianSSLE.hpp
@@ -86,6 +88,7 @@ set( physicsSolvers_sources
      multiphysics/CompositionalMultiphaseReservoir.cpp
      simplePDE/LaplaceFEM.cpp
      simplePDE/PhaseFieldDamageFEM.cpp
+     simplePDE/DiffusionFEM.cpp
      solidMechanics/SolidMechanicsEmbeddedFractures.cpp
      solidMechanics/SolidMechanicsLagrangianFEM.cpp
      solidMechanics/SolidMechanicsLagrangianSSLE.cpp
