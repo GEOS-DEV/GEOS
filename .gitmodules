@@ -9,7 +9,7 @@
 	url = https://github.com/GEOSX/PVTPackage.git
 [submodule "integratedTests"]
 	path = integratedTests
-	url = git@github.com:GEOSX/integratedTests.git
+	url = https://github.com/GEOSX/integratedTests.git
 [submodule "src/externalComponents/PAMELA"]
 	path = src/externalComponents/PAMELA
 	url = https://github.com/GEOSX/PAMELA.git
