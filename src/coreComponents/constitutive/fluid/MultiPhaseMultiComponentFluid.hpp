@@ -80,7 +80,15 @@ public:
                                        arrayView2d< real64 > const & totalDensity,
                                        arrayView2d< real64 > const & dTotalDensity_dPressure,
                                        arrayView2d< real64 > const & dTotalDensity_dTemperature,
-                                       arrayView3d< real64 > const & dTotalDensity_dGlobalCompFraction )
+                                       arrayView3d< real64 > const & dTotalDensity_dGlobalCompFraction,
+                                       arrayView3d< real64 > const & phaseEnthalpy,
+                                       arrayView3d< real64 > const & dPhaseEnthalpy_dPressure,
+                                       arrayView3d< real64 > const & dPhaseEnthalpy_dTemperature,
+                                       arrayView4d< real64 > const & dPhaseEnthalpy_dGlobalCompFraction,
+                                       arrayView3d< real64 > const & phaseInternalEnergy,
+                                       arrayView3d< real64 > const & dPhaseInternalEnergy_dPressure,
+                                       arrayView3d< real64 > const & dPhaseInternalEnergy_dTemperature,
+                                       arrayView4d< real64 > const & dPhaseInternalEnergy_dGlobalCompFraction)
     : MultiFluidBaseUpdate( componentMolarWeight,
                             useMass,
                             phaseFraction,
@@ -106,7 +114,15 @@ public:
                             totalDensity,
                             dTotalDensity_dPressure,
                             dTotalDensity_dTemperature,
-                            dTotalDensity_dGlobalCompFraction ),
+                            dTotalDensity_dGlobalCompFraction,
+                            phaseEnthalpy,
+                            dPhaseEnthalpy_dPressure,
+                            dPhaseEnthalpy_dTemperature,
+                            dPhaseEnthalpy_dGlobalCompFraction,
+                            phaseInternalEnergy,
+                            dPhaseInternalEnergy_dPressure,
+                            dPhaseInternalEnergy_dTemperature,
+                            dPhaseInternalEnergy_dGlobalCompFraction ),
     m_phaseDensityFuns( phaseDensityFuns ),
     m_phaseViscosityFuns( phaseViscosityFuns ),
     m_flashModel( flashModel )
@@ -260,7 +276,15 @@ public:
                           m_totalDensity,
                           m_dTotalDensity_dPressure,
                           m_dTotalDensity_dTemperature,
-                          m_dTotalDensity_dGlobalCompFraction );
+                          m_dTotalDensity_dGlobalCompFraction,
+                          m_phaseEnthalpy,
+                          m_dPhaseEnthalpy_dPressure,
+                          m_dPhaseEnthalpy_dTemperature,
+                          m_dPhaseEnthalpy_dGlobalCompFraction,
+                          m_phaseInternalEnergy,
+                          m_dPhaseInternalEnergy_dPressure,
+                          m_dPhaseInternalEnergy_dTemperature,
+                          m_dPhaseInternalEnergy_dGlobalCompFraction );
   }
 
   struct viewKeyStruct : MultiFluidBase::viewKeyStruct

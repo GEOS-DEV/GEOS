@@ -86,7 +86,15 @@ protected:
                         arrayView2d< real64 > const & totalDensity,
                         arrayView2d< real64 > const & dTotalDensity_dPressure,
                         arrayView2d< real64 > const & dTotalDensity_dTemperature,
-                        arrayView3d< real64 > const & dTotalDensity_dGlobalCompFraction )
+                        arrayView3d< real64 > const & dTotalDensity_dGlobalCompFraction,
+                        arrayView3d< real64 > const & phaseEnthalpy,
+                        arrayView3d< real64 > const & dPhaseEnthalpy_dPressure,
+                        arrayView3d< real64 > const & dPhaseEnthalpy_dTemperature,
+                        arrayView4d< real64 > const & dPhaseEnthalpy_dGlobalCompFraction,
+                        arrayView3d< real64 > const & phaseInternalEnergy,
+                        arrayView3d< real64 > const & dPhaseInternalEnergy_dPressure,
+                        arrayView3d< real64 > const & dPhaseInternalEnergy_dTemperature,
+                        arrayView4d< real64 > const & dPhaseInternalEnergy_dGlobalCompFraction )
     : m_componentMolarWeight( componentMolarWeight ),
     m_useMass( useMass ),
     m_phaseFraction( phaseFraction ),
@@ -112,7 +120,15 @@ protected:
     m_totalDensity( totalDensity ),
     m_dTotalDensity_dPressure( dTotalDensity_dPressure ),
     m_dTotalDensity_dTemperature( dTotalDensity_dTemperature ),
-    m_dTotalDensity_dGlobalCompFraction( dTotalDensity_dGlobalCompFraction )
+    m_dTotalDensity_dGlobalCompFraction( dTotalDensity_dGlobalCompFraction ),
+    m_phaseEnthalpy( phaseEnthalpy ),
+    m_dPhaseEnthalpy_dPressure(dPhaseEnthalpy_dPressure),
+    m_dPhaseEnthalpy_dTemperature( dPhaseEnthalpy_dTemperature ),
+    m_dPhaseEnthalpy_dGlobalCompFraction( dPhaseEnthalpy_dGlobalCompFraction ),
+    m_phaseInternalEnergy( phaseInternalEnergy ),
+    m_dPhaseInternalEnergy_dPressure( dPhaseInternalEnergy_dPressure ),
+    m_dPhaseInternalEnergy_dTemperature( dPhaseInternalEnergy_dTemperature ),
+    m_dPhaseInternalEnergy_dGlobalCompFraction( dPhaseInternalEnergy_dGlobalCompFraction )
   {}
 
   /// Default copy constructor
@@ -160,6 +176,16 @@ protected:
   arrayView2d< real64 > m_dTotalDensity_dPressure;
   arrayView2d< real64 > m_dTotalDensity_dTemperature;
   arrayView3d< real64 > m_dTotalDensity_dGlobalCompFraction;
+
+  arrayView3d< real64 > m_phaseEnthalpy;
+  arrayView3d< real64 > m_dPhaseEnthalpy_dPressure;
+  arrayView3d< real64 > m_dPhaseEnthalpy_dTemperature;
+  arrayView4d< real64 > m_dPhaseEnthalpy_dGlobalCompFraction;
+
+  arrayView3d< real64 > m_phaseInternalEnergy;
+  arrayView3d< real64 > m_dPhaseInternalEnergy_dPressure;
+  arrayView3d< real64 > m_dPhaseInternalEnergy_dTemperature;
+  arrayView4d< real64 > m_dPhaseInternalEnergy_dGlobalCompFraction;
 
 private:
 
@@ -303,6 +329,16 @@ public:
   arrayView2d< real64 const > dTotalDensity_dTemperature() const { return m_dTotalDensity_dTemperature; }
   arrayView3d< real64 const > dTotalDensity_dGlobalCompFraction() const { return m_dTotalDensity_dGlobalCompFraction; }
 
+  arrayView2d< real64 const > phaseEnthalpy() const { return m_phaseEnthalpy; }
+  arrayView2d< real64 const > dPhaseEnthalpy_dPressure() const { return m_dPhaseEnthalpy_dPressure; }
+  arrayView2d< real64 const > dPhaseEnthalpy_dTemperature() const { return m_dPhaseEnthalpy_dTemperature; }
+  arrayView3d< real64 const > dPhaseEnthalpy_dGlobalCompFraction() const { return m_dPhaseEnthalpy_dGlobalCompFraction; }
+
+  arrayView2d< real64 const > phaseInternalEnergy() const { return m_phaseInternalEnergy; }
+  arrayView2d< real64 const > dPhaseInternalEnergy_dPressure() const { return m_dPhaseInternalEnergy_dPressure; }
+  arrayView2d< real64 const > dPhaseInternalEnergy_dTemperature() const { return m_dPhaseInternalEnergy_dTemperature; }
+  arrayView3d< real64 const > dPhaseInternalEnergy_dGlobalCompFraction() const { return m_dPhaseInternalEnergy_dGlobalCompFraction; }
+
   struct viewKeyStruct : ConstitutiveBase::viewKeyStruct
   {
     static constexpr auto componentNamesString       = "componentNames";
@@ -310,35 +346,45 @@ public:
 
     static constexpr auto phaseNamesString     = "phaseNames";
 
-    static constexpr auto phaseFractionString                            = "phaseFraction";                          // xi_p
-    static constexpr auto dPhaseFraction_dPressureString                 = "dPhaseFraction_dPressure";               // dXi_p/dP
-    static constexpr auto dPhaseFraction_dTemperatureString              = "dPhaseFraction_dTemperature";            // dXi_p/dT
-    static constexpr auto dPhaseFraction_dGlobalCompFractionString       = "dPhaseFraction_dGlobalCompFraction";     // dXi_p/dz
+    static constexpr auto phaseFractionString                            = "phaseFraction";                            // xi_p
+    static constexpr auto dPhaseFraction_dPressureString                 = "dPhaseFraction_dPressure";                 // dXi_p/dP
+    static constexpr auto dPhaseFraction_dTemperatureString              = "dPhaseFraction_dTemperature";              // dXi_p/dT
+    static constexpr auto dPhaseFraction_dGlobalCompFractionString       = "dPhaseFraction_dGlobalCompFraction";       // dXi_p/dz
 
-    static constexpr auto phaseDensityString                             = "phaseDensity";                           // rho_p
-    static constexpr auto dPhaseDensity_dPressureString                  = "dPhaseDensity_dPressure";                // dRho_p/dP
-    static constexpr auto dPhaseDensity_dTemperatureString               = "dPhaseDensity_dTemperature";             // dRho_p/dT
-    static constexpr auto dPhaseDensity_dGlobalCompFractionString        = "dPhaseDensity_dGlobalCompFraction";      // dRho_p/dz
+    static constexpr auto phaseDensityString                             = "phaseDensity";                             // rho_p
+    static constexpr auto dPhaseDensity_dPressureString                  = "dPhaseDensity_dPressure";                  // dRho_p/dP
+    static constexpr auto dPhaseDensity_dTemperatureString               = "dPhaseDensity_dTemperature";               // dRho_p/dT
+    static constexpr auto dPhaseDensity_dGlobalCompFractionString        = "dPhaseDensity_dGlobalCompFraction";        // dRho_p/dz
 
-    static constexpr auto phaseMassDensityString                         = "phaseMassDensity";                       // rho_p
-    static constexpr auto dPhaseMassDensity_dPressureString              = "dPhaseMassDensity_dPressure";            // dRho_p/dP
-    static constexpr auto dPhaseMassDensity_dTemperatureString           = "dPhaseMassDensity_dTemperature";         // dRho_p/dT
-    static constexpr auto dPhaseMassDensity_dGlobalCompFractionString    = "dPhaseMassDensity_dGlobalCompFraction";  // dRho_p/dz
+    static constexpr auto phaseMassDensityString                         = "phaseMassDensity";                         // rho_p
+    static constexpr auto dPhaseMassDensity_dPressureString              = "dPhaseMassDensity_dPressure";              // dRho_p/dP
+    static constexpr auto dPhaseMassDensity_dTemperatureString           = "dPhaseMassDensity_dTemperature";           // dRho_p/dT
+    static constexpr auto dPhaseMassDensity_dGlobalCompFractionString    = "dPhaseMassDensity_dGlobalCompFraction";    // dRho_p/dz
 
-    static constexpr auto phaseViscosityString                           = "phaseViscosity";                         // mu_p
-    static constexpr auto dPhaseViscosity_dPressureString                = "dPhaseViscosity_dPressure";              // dMu_p/dP
-    static constexpr auto dPhaseViscosity_dTemperatureString             = "dPhaseViscosity_dTemperature";           // dMu_p/dT
-    static constexpr auto dPhaseViscosity_dGlobalCompFractionString      = "dPhaseViscosity_dGlobalCompFraction";    // dMu_p/dz
+    static constexpr auto phaseViscosityString                           = "phaseViscosity";                           // mu_p
+    static constexpr auto dPhaseViscosity_dPressureString                = "dPhaseViscosity_dPressure";                // dMu_p/dP
+    static constexpr auto dPhaseViscosity_dTemperatureString             = "dPhaseViscosity_dTemperature";             // dMu_p/dT
+    static constexpr auto dPhaseViscosity_dGlobalCompFractionString      = "dPhaseViscosity_dGlobalCompFraction";      // dMu_p/dz
 
-    static constexpr auto phaseCompFractionString                        = "phaseCompFraction";                      // x_cp
-    static constexpr auto dPhaseCompFraction_dPressureString             = "dPhaseCompFraction_dPressure";           // dx_cp/dP
-    static constexpr auto dPhaseCompFraction_dTemperatureString          = "dPhaseCompFraction_dTemperature";        // dx_cp/dT
-    static constexpr auto dPhaseCompFraction_dGlobalCompFractionString   = "dPhaseCompFraction_dGlobalCompFraction"; // dx_cp/dz
+    static constexpr auto phaseCompFractionString                        = "phaseCompFraction";                        // x_cp
+    static constexpr auto dPhaseCompFraction_dPressureString             = "dPhaseCompFraction_dPressure";             // dx_cp/dP
+    static constexpr auto dPhaseCompFraction_dTemperatureString          = "dPhaseCompFraction_dTemperature";          // dx_cp/dT
+    static constexpr auto dPhaseCompFraction_dGlobalCompFractionString   = "dPhaseCompFraction_dGlobalCompFraction";   // dx_cp/dz
 
-    static constexpr auto totalDensityString                             = "totalDensity";                           // rho_t
-    static constexpr auto dTotalDensity_dPressureString                  = "dTotalDensity_dPressure";                // dRho_t/dP
-    static constexpr auto dTotalDensity_dTemperatureString               = "dTotalDensity_dTemperature";             // dRho_t/dT
-    static constexpr auto dTotalDensity_dGlobalCompFractionString        = "dTotalDensity_dGlobalCompFraction";      // dRho_t/dz
+    static constexpr auto totalDensityString                             = "totalDensity";                             // rho_t
+    static constexpr auto dTotalDensity_dPressureString                  = "dTotalDensity_dPressure";                  // dRho_t/dP
+    static constexpr auto dTotalDensity_dTemperatureString               = "dTotalDensity_dTemperature";               // dRho_t/dT
+    static constexpr auto dTotalDensity_dGlobalCompFractionString        = "dTotalDensity_dGlobalCompFraction";        // dRho_t/dz
+
+    static constexpr auto phaseEnthalpyString                            = "phaseEnthalpy";                            // h_p
+    static constexpr auto dPhaseEnthalpy_dPressureString                 = "dPhaseEnthalpy_dPressure";                 // dH_p/dP
+    static constexpr auto dPhaseEnthalpy_dTemperatureString              = "dPhaseEnthalpy_dTemperature";              // dH_p/dT
+    static constexpr auto dPhaseEnthalpy_dGlobalCompFractionString       = "dPhaseEnthalpy_dGlobalCompFraction";       // dH_p/dz
+
+    static constexpr auto phaseInternalEnergyString                      = "phaseInternalEnergy";                      // u_p
+    static constexpr auto dPhaseInternalEnergy_dPressureString           = "dPhaseInternalEnergy_dPressure";           // dU_p/dP
+    static constexpr auto dPhaseInternalEnergy_dTemperatureString        = "dPhaseInternalEnergy_dTemperature";        // dU_p/dT
+    static constexpr auto dPhaseInternalEnergy_dGlobalCompFractionString = "dPhaseInternalEnergy_dGlobalCompFraction"; // dU_p/dz
 
     static constexpr auto useMassString                                  = "useMass";
   } viewKeysMultiFluidBase;
@@ -394,6 +440,16 @@ protected:
   array2d< real64 > m_dTotalDensity_dPressure;
   array2d< real64 > m_dTotalDensity_dTemperature;
   array3d< real64 > m_dTotalDensity_dGlobalCompFraction;
+
+  array3d< real64 > m_phaseEnthalpy;
+  array3d< real64 > m_dPhaseEnthalpy_dPressure;
+  array3d< real64 > m_dPhaseEnthalpy_dTemperature;
+  array4d< real64 > m_dPhaseEnthalpy_dGlobalCompFraction;
+
+  array3d< real64 > m_phaseInternalEnergy;
+  array3d< real64 > m_dPhaseInternalEnergy_dPressure;
+  array3d< real64 > m_dPhaseInternalEnergy_dTemperature;
+  array4d< real64 > m_dPhaseInternalEnergy_dGlobalCompFraction;
 
 };
 
