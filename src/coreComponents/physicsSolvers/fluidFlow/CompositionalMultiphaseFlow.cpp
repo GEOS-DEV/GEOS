@@ -1176,6 +1176,9 @@ void CompositionalMultiphaseFlow::AssembleVolumeBalanceTerms( DomainPartition co
                                                                              localRhs.toView() );
     }else
     {
+      arrayView2d< real64 const > const & dPhaseVolFrac_dTemp =
+            subRegion.getReference< array2d< real64 > >( viewKeyStruct::dPhaseVolumeFraction_dTemperatureString );
+
       KernelLaunchSelector2
       < CompositionalMultiphaseFlowKernels::VolumeBalanceKernel >( m_numComponents, m_numPhases,
                                                                    subRegion.size(),
@@ -1188,6 +1191,7 @@ void CompositionalMultiphaseFlow::AssembleVolumeBalanceTerms( DomainPartition co
                                                                    dPvMult_dPres,
                                                                    phaseVolFrac,
                                                                    dPhaseVolFrac_dPres,
+                                                                   dPhaseVolFrac_dTemp,
                                                                    dPhaseVolFrac_dCompDens,
                                                                    localMatrix.toViewConstSizes(),
                                                                    localRhs.toView() );
@@ -1429,13 +1433,16 @@ real64 CompositionalMultiphaseFlow::CalculateResidualNorm( DomainPartition const
                                                            DofManager const & dofManager,
                                                            arrayView1d< real64 const > const & localRhs )
 {
-  localIndex const NDOF = m_numComponents + 1;
-
   MeshLevel const & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
-  real64 localResidualNorm = 0.0;
 
   globalIndex const rankOffset = dofManager.rankOffset();
   string const dofKey = dofManager.getKey( viewKeyStruct::dofFieldString );
+
+  if ( m_isothermalFlag )
+  {
+  localIndex const NDOF = m_numComponents + 1;
+
+  real64 localResidualNorm = 0.0;
 
   forTargetSubRegions( mesh, [&]( localIndex const targetIndex, ElementSubRegionBase const & subRegion )
   {
@@ -1475,6 +1482,57 @@ real64 CompositionalMultiphaseFlow::CalculateResidualNorm( DomainPartition const
     char output[200] = {0};
     sprintf( output, "    ( Rfluid ) = (%4.2e) ; ", residual );
     std::cout<<output;
+  }
+  }else
+  {
+    localIndex const numFlowDOF = m_numComponents + 1;
+
+    real64 localFlowResidualNorm = 0.0;
+    real64 localEnergyResidualNorm = 0.0;
+
+    forTargetSubRegions( mesh, [&]( localIndex const targetIndex, ElementSubRegionBase const & subRegion )
+    {
+      MultiFluidBase const & fluid = GetConstitutiveModel< MultiFluidBase >( subRegion, m_fluidModelNames[targetIndex] );
+
+      arrayView1d< globalIndex const > dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
+      arrayView1d< integer const > const & elemGhostRank = subRegion.ghostRank();
+      arrayView1d< real64 const > const & volume = subRegion.getElementVolume();
+      arrayView1d< real64 const > const & refPoro = subRegion.getReference< array1d< real64 > >( viewKeyStruct::referencePorosityString );
+      arrayView2d< real64 const > const & totalDens = fluid.totalDensity();
+
+      RAJA::ReduceSum< parallelDeviceReduce, real64 > localFlowSum( 0.0 );
+      RAJA::ReduceSum< parallelDeviceReduce, real64 > localEnergySum( 0.0 );
+
+      forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
+      {
+        if( elemGhostRank[ei] < 0 )
+        {
+          localIndex const localRow = dofNumber[ei] - rankOffset;
+          real64 const normalizer = totalDens[ei][0] * refPoro[ei] * volume[ei];
+
+          for( localIndex idof = 0; idof < numFlowDOF; ++idof )
+          {
+            real64 const val = localRhs[localRow + idof] / normalizer;
+            localFlowSum += val * val;
+          }
+          real64 const val = localRhs[localRow + numFlowDOF];
+          localEnergySum += val*val;
+        }
+       } );
+      localFlowResidualNorm += localFlowSum.get();
+      localEnergyResidualNorm += localEnergySum.get();
+    } );
+
+    // compute global residual norm
+    real64 const flowResidual   = std::sqrt( MpiWrapper::Sum( localFlowResidualNorm ) );
+    real64 const energyResidual = std::sqrt( MpiWrapper::Sum( localEnergyResidualNorm ) );
+
+    if( getLogLevel() >= 1 && logger::internal::rank==0 )
+    {
+      char output[200] = {0};
+      sprintf( output, "    ( Rflow ) = (%4.2e) - ( Renergy ) = (%4.2e)  ; ", flowResidual, energyResidual );
+      std::cout<<output;
+    }
   }
 
   return residual;
@@ -1666,6 +1724,12 @@ void CompositionalMultiphaseFlow::ApplySystemSolution( DofManager const & dofMan
   std::map< string, string_array > fieldNames;
   fieldNames["elems"].emplace_back( string( viewKeyStruct::deltaPressureString ) );
   fieldNames["elems"].emplace_back( string( viewKeyStruct::deltaGlobalCompDensityString ) );
+
+  if (m_isothermalFlag == 0)
+  {
+    fieldNames["elems"].emplace_back( string( viewKeyStruct::deltaTemperatureString ) );
+  }
+
   CommunicationTools::SynchronizeFields( fieldNames, &mesh, domain.getNeighbors(), true );
 
   forTargetSubRegions( mesh, [&]( localIndex const targetIndex, ElementSubRegionBase & subRegion )
@@ -1709,6 +1773,8 @@ void CompositionalMultiphaseFlow::ResetStateToBeginningOfStep( DomainPartition &
 {
   MeshLevel & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
 
+  if ( m_isothermalFlag )
+  {
   forTargetSubRegions( mesh, [&]( localIndex const targetIndex, ElementSubRegionBase & subRegion )
   {
     arrayView1d< real64 > const & dPres =
@@ -1721,6 +1787,24 @@ void CompositionalMultiphaseFlow::ResetStateToBeginningOfStep( DomainPartition &
 
     UpdateState( subRegion, targetIndex );
   } );
+  }else
+  {
+    forTargetSubRegions( mesh, [&]( localIndex const targetIndex, ElementSubRegionBase & subRegion )
+      {
+        arrayView1d< real64 > const & dPres =
+          subRegion.getReference< array1d< real64 > >( viewKeyStruct::deltaPressureString );
+        arrayView2d< real64 > const & dCompDens =
+          subRegion.getReference< array2d< real64 > >( viewKeyStruct::deltaGlobalCompDensityString );
+        arrayView1d< real64 > const & dTemp =
+            subRegion.getReference< array1d< real64 > >( viewKeyStruct::deltaTemperatureString );
+
+        dPres.setValues< parallelDevicePolicy<> >( 0.0 );
+        dCompDens.setValues< parallelDevicePolicy<> >( 0.0 );
+        dTemp.setValues< parallelDevicePolicy<> >(0.0);
+
+        UpdateState( subRegion, targetIndex );
+      } );
+  }
 }
 
 void CompositionalMultiphaseFlow::ImplicitStepComplete( real64 const & GEOSX_UNUSED_PARAM( time ),
@@ -1752,6 +1836,22 @@ void CompositionalMultiphaseFlow::ImplicitStepComplete( real64 const & GEOSX_UNU
       }
     } );
   } );
+
+ if (m_isothermalFlag == 0)
+ {
+    forTargetSubRegions( mesh, [&]( localIndex const, ElementSubRegionBase & subRegion )
+      {
+        arrayView1d< real64 const > const dTemp =
+          subRegion.getReference< array1d< real64 > >( viewKeyStruct::deltaTemperatureString );
+        arrayView1d< real64 > const temp =
+          subRegion.getReference< array1d< real64 > >( viewKeyStruct::temperatureString );
+
+        forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
+        {
+          temp[ei] += dTemp[ei];
+        } );
+      } );
+  }
 }
 
 void CompositionalMultiphaseFlow::ResetViews( MeshLevel & mesh )

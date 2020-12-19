@@ -521,6 +521,7 @@ struct VolumeBalanceKernel
            real64 const & dPvMult_dPres,
            arraySlice1d< real64 const > const & phaseVolFrac,
            arraySlice1d< real64 const > const & dPhaseVolFrac_dPres,
+           arraySlice1d< real64 const > const & dPhaseVolFrac_dTemp,
            arraySlice2d< real64 const > const & dPhaseVolFrac_dCompDens,
            real64 & localVolBalance,
            real64 * const localVolBalanceJacobian );
@@ -537,6 +538,7 @@ struct VolumeBalanceKernel
           arrayView2d< real64 const > const & dPvMult_dPres,
           arrayView2d< real64 const > const & phaseVolFrac,
           arrayView2d< real64 const > const & dPhaseVolFrac_dPres,
+          rrayView2d< real64 const > const & dPhaseVolFrac_dTemp,
           arrayView3d< real64 const > const & dPhaseVolFrac_dCompDens,
           CRSMatrixView< real64, globalIndex const > const & localMatrix,
           arrayView1d< real64 > const & localRhs );
