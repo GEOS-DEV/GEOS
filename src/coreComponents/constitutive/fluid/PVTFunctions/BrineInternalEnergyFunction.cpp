@@ -31,6 +31,15 @@ void BrineInternalEnergyFunction::Evaluation( EvalVarArgs const & pressure, Eval
 {
   GEOSX_UNUSED_VAR(phaseComposition);
   GEOSX_UNUSED_VAR(useMass);
+
+  numComponents = phaseComposition.size();
+
+  value.m_var =  0.001 * pressure.m_var + 1.0 * temperature.m_var;
+  // pressure derivative
+  value.m_der[0] = 0.001;
+  // temperature derivative
+  value.m_der[numComponents+1] = 1.0;
+
 }
 
 

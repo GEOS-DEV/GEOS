@@ -447,11 +447,11 @@ void MultiPhaseMultiComponentFluidUpdate::Compute( real64 pressure,
 
     phaseEnt.value[ip] = phaseEnthapyTemp[ip].m_var;
     phaseEnt.dPres[ip] = phaseEnthapyTemp[ip].m_der[0];
-    phaseEnt.dTemp[ip] = phaseEnthapyTemp[ip].m_der[1];
+    phaseEnt.dTemp[ip] = phaseEnthapyTemp[ip].m_der[NC+1];
 
     phaseIntEner.value[ip] = phaseInternalEnergyTemp[ip].m_var;
     phaseIntEner.dPres[ip] = phaseInternalEnergyTemp[ip].m_der[0];
-    phaseIntEner.dTemp[ip] = phaseInternalEnergyTemp[ip].m_der[1];
+    phaseIntEner.dTemp[ip] = phaseInternalEnergyTemp[ip].m_der[NC+1];
 
     for( localIndex ic = 0; ic < NC; ++ic )
     {
@@ -463,6 +463,9 @@ void MultiPhaseMultiComponentFluidUpdate::Compute( real64 pressure,
       phaseCompFrac.value[ip][ic] = phaseCompFractionTemp[ip][ic].m_var;
       phaseCompFrac.dPres[ip][ic] = phaseCompFractionTemp[ip][ic].m_der[0];
       phaseCompFrac.dTemp[ip][ic] = 0.0;
+
+      phaseEnt.dComp[ip] = 0.0; // phaseEnthapyTemp[ip].m_der[ic+1];
+      phaseIntEner.dComp[ip] = 0.0; // phaseInternalEnergyTemp[ip].m_der[ic+1];
 
       for( localIndex jc = 0; jc < NC; ++jc )
       {
