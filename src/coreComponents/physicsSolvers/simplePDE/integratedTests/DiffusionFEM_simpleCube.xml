@@ -1,0 +1,98 @@
+<?xml version="1.0" ?>
+<Problem>
+  <Solvers>
+    <DiffusionFEM
+      name="diffusionFEM"
+      discretization="FE1"
+      fieldName="pPore"
+      diffusion="2e-4"
+      logLevel="0"
+      targetRegions="{ Region1 }"/>
+  </Solvers>
+
+  <Mesh>
+    <InternalMesh
+      name="mesh1"
+      elementTypes="{ C3D8 }"
+      xCoords="{ 0, 10 }"
+      yCoords="{ 0, 10 }"
+      zCoords="{ 0, 10 }"
+      nx="{ 10 }"
+      ny="{ 10 }"
+      nz="{ 10 }"
+      cellBlockNames="{ cb1 }"/>
+  </Mesh>
+
+  <Events
+    maxTime="1e4">
+    <PeriodicEvent
+      name="solverApplications"
+      forceDt="1e3"
+      target="/Solvers/diffusionFEM"/>
+
+    <PeriodicEvent
+      name="outputs"
+      timeFrequency="1e3"
+      targetExactTimestep="1e3"
+      target="/Outputs/vtkOutput"/>
+
+    <!--PeriodicEvent
+      name="restarts"
+      timeFrequency="1.0"
+      targetExactTimestep="0"
+      target="/Outputs/restartOutput"/-->
+  </Events>
+
+  <NumericalMethods>
+    <FiniteElements>
+      <FiniteElementSpace
+        name="FE1"
+        order="1"/>
+    </FiniteElements>
+  </NumericalMethods>
+
+  <ElementRegions>
+    <CellElementRegion
+      name="Region1"
+      cellBlocks="{ cb1 }"
+      materialList="{ nullModel }"/>
+  </ElementRegions>
+
+  <Constitutive>
+    <NullModel
+      name="nullModel"/>
+  </Constitutive>
+
+  <FieldSpecifications>
+    <FieldSpecification
+      name="topPressure"
+      fieldName="pPore"
+      objectPath="nodeManager"
+      scale="2e6"
+      setNames="{ topFace }"/>
+
+    <FieldSpecification
+      name="botPressure"
+      fieldName="pPore"
+      objectPath="nodeManager"
+      scale="1e6"
+      setNames="{ botFace }"/>
+  </FieldSpecifications>
+
+  <Outputs>
+ 	<VTK name="vtkOutput"/>
+  </Outputs>
+
+  <Geometry>
+    <Box
+      name="topFace"
+      xMin="-0.01 , 9.99,  -0.01 "
+      xMax=" 10.01, 10.01,  10.01"/>
+
+    <Box
+      name="botFace"
+      xMin="-0.01 , -0.01, -0.01 "
+      xMax=" 10.01,  0.01,  10.01"/>
+  </Geometry>
+
+</Problem>
