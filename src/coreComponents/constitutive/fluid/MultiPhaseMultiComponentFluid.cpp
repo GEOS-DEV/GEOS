@@ -46,7 +46,7 @@ MultiPhaseMultiComponentFluid::MultiPhaseMultiComponentFluid( std::string const 
   registerWrapper( viewKeyStruct::flashModelParaFileString, &m_flashModelParaFile )->
     setInputFlag( InputFlags::REQUIRED )->
     setRestartFlags( RestartFlags::NO_WRITE )->
-    setDescription( "name of the filen including flash calculation function parameters" );
+    setDescription( "name of the file including flash calculation function parameters" );
 
 }
 
@@ -132,6 +132,20 @@ void MultiPhaseMultiComponentFluid::CreatePVTModels()
                                                                                    strs,
                                                                                    m_componentNames,
                                                                                    m_componentMolarWeight ) );
+      }
+      else if (strs[0] == "EnthalpyFun")
+      {
+        m_phaseEnthalpyFuns.emplace_back( PVTFunction::CatalogInterface::Factory( strs[ 1 ],
+                                                                                  strs,
+                                                                                  m_componentNames,
+                                                                                  m_componentMolarWeight ) );
+      }
+      else if (strs[0] == "InternalEnergyFun")
+      {
+        m_phaseInternalEnergyFuns.emplace_back( PVTFunction::CatalogInterface::Factory( strs[ 1 ],
+                                                                                        strs,
+                                                                                        m_componentNames,
+                                                                                        m_componentMolarWeight ) );
       }
       else
       {
@@ -221,7 +235,13 @@ void MultiPhaseMultiComponentFluidUpdate::Compute( real64 pressure,
                                                    real64 & totalDensity,
                                                    real64 & dTotalDensity_dPressure,
                                                    real64 & dTotalDensity_dTemperature,
-                                                   arraySlice1d< real64 > const & dTotalDensity_dGlobalCompFraction ) const
+                                                   arraySlice1d< real64 > const & dTotalDensity_dGlobalCompFraction,
+                                                   arraySlice1d< real64 > const & phaseEnthalpy,
+                                                   arraySlice1d< real64 > const & dPhaseEnthalpy_dPressure,
+                                                   arraySlice1d< real64 > const & dPhaseEnthalpy_dTemperature,
+                                                   arraySlice1d< real64 > const & phaseInternalEnergy,
+                                                   arraySlice1d< real64 > const & dPhaseInternalEnergy_dPressure,
+                                                   arraySlice1d< real64 > const & dPhaseInternalEnergy_dTemperature ) const
 {
   CompositionalVarContainer< 1 > phaseFrac {
     phaseFraction,
@@ -264,6 +284,20 @@ void MultiPhaseMultiComponentFluidUpdate::Compute( real64 pressure,
     dTotalDensity_dTemperature,
     dTotalDensity_dGlobalCompFraction
   };
+
+  CompositionalVarContainer< 1 > phaseEnt {
+      phaseEnthalpy,
+      dPhaseEnthalpy_dPressure,
+      dPhaseEnthalpy_dTemperature,
+      dPhaseEnthalpy_dGlobalCompFraction
+    };
+
+  CompositionalVarContainer< 1 > phaseIntEner {
+      phaseInternalEnergy,
+      dPhaseInternalEnergy_dPressure,
+      dPhaseInternalEnergy_dTemperature,
+      dPhaseInternalEnergy_dGlobalCompFraction
+    };
 
 #if defined(__CUDACC__)
   // For some reason nvcc thinks these aren't used.
@@ -321,12 +355,17 @@ void MultiPhaseMultiComponentFluidUpdate::Compute( real64 pressure,
   stackArray1d< EvalVarArgs, maxNumPhase > phaseDensityTemp( NP );
   stackArray1d< EvalVarArgs, maxNumPhase > phaseMassDensityTemp( NP );
   stackArray1d< EvalVarArgs, maxNumPhase > phaseViscosityTemp( NP );
+  stackArray1d< EvalVarArgs, maxNumPhase > phaseEnthalpyTemp( NP );
+  stackArray1d< EvalVarArgs, maxNumPhase > phaseInternalEnergyTemp( NP );
 
   for( localIndex ip = 0; ip < NP; ++ip )
   {
     // molarDensity or massDensity (useMass)
     m_phaseDensityFuns[ip]->Evaluation( P, T, phaseCompFractionTemp[ip], phaseDensityTemp[ip], m_useMass );
     m_phaseViscosityFuns[ip]->Evaluation( P, T, phaseCompFractionTemp[ip], phaseViscosityTemp[ip] );
+    // molar or mass Enthalpy and Internal Energy
+    m_phaseEnthalpyFuns[ip]->Evaluation( P, T, phaseCompFractionTemp[ip], phaseEnthalpyTemp[ip], m_useMass );
+    m_phaseInternalEnergyFuns[ip]->Evaluation( P, T, phaseCompFractionTemp[ip], phaseInternalEnergyTemp[ip], m_useMass );
   }
 
   if( m_useMass )
@@ -405,6 +444,14 @@ void MultiPhaseMultiComponentFluidUpdate::Compute( real64 pressure,
     phaseVisc.value[ip] = phaseViscosityTemp[ip].m_var;
     phaseVisc.dPres[ip] = phaseViscosityTemp[ip].m_der[0];
     phaseVisc.dTemp[ip] = 0.0;
+
+    phaseEnt.value[ip] = phaseEnthapyTemp[ip].m_var;
+    phaseEnt.dPres[ip] = phaseEnthapyTemp[ip].m_der[0];
+    phaseEnt.dTemp[ip] = phaseEnthapyTemp[ip].m_der[1];
+
+    phaseIntEner.value[ip] = phaseInternalEnergyTemp[ip].m_var;
+    phaseIntEner.dPres[ip] = phaseInternalEnergyTemp[ip].m_der[0];
+    phaseIntEner.dTemp[ip] = phaseInternalEnergyTemp[ip].m_der[1];
 
     for( localIndex ic = 0; ic < NC; ++ic )
     {
