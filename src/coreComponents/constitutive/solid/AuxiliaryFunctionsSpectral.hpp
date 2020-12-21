@@ -180,9 +180,9 @@ void GTensor( real64 (& eigvec1)[3], real64 (& eigvec2)[3], real64 (& G)[6][6] )
  *@param[in] eigvecs 3x3 array with the 3 eigenvectors of a tensor (in rows)
  *@param[out] PositiveProjector empty array that will be populated with the voigt form of the Positive Projector
  *
- *Given a symmetric tensor T, the positive projector is defined as P+ = variation(T+)/variation(T). That is, if we
- *define the function f+ to be the positive spectral part of T, then, P+ is just the variational derivative of f+.
- *Note that we don't take the tensor T as a parameter, only its eigenvectors and eigenvalues.
+ * Given a symmetric tensor T, the positive projector is defined as P+ = variation(T+)/variation(T). That is, if we
+ * define the function f+ to be the positive spectral part of T, then, P+ is just the variational derivative of f+.
+ * Note that we don't take the tensor T as a parameter, only its eigenvectors and eigenvalues.
  *
  */
 GEOSX_HOST_DEVICE inline

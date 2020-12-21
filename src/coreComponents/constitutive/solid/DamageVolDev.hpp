@@ -164,7 +164,7 @@ public:
 
   }
 
-    //With the Vol-Dev Decomposition, only the Positive Part of the SED drives damage growth
+  //With the Vol-Dev Decomposition, only the Positive Part of the SED drives damage growth
 
   GEOSX_HOST_DEVICE
   virtual real64 calculateActiveStrainEnergyDensity( localIndex const k,
