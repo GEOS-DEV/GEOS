@@ -53,9 +53,7 @@ if ( ENABLE_CUDA )
   set( dependencyList ${dependencyList} cuda )
 endif()
 
-if( CONDUIT_FOUND )
-  set( dependencyList ${dependencyList} common conduit fmt )
-endif( )
+set( dependencyList ${dependencyList} common conduit )
 
 blt_add_library( NAME                  dataRepository
                  SOURCES               ${dataRepository_sources}
