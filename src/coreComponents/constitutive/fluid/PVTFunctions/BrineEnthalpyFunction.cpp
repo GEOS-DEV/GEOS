@@ -32,7 +32,7 @@ void BrineEnthalpyFunction::Evaluation( EvalVarArgs const & pressure, EvalVarArg
   GEOSX_UNUSED_VAR(phaseComposition);
   GEOSX_UNUSED_VAR(useMass);
 
-  numComponents = phaseComposition.size();
+  localIndex const numComponents = phaseComposition.size();
 
   value.m_var =  0.001 * pressure.m_var + 1.0 * temperature.m_var;
   // pressure derivative

@@ -239,9 +239,11 @@ void MultiPhaseMultiComponentFluidUpdate::Compute( real64 pressure,
                                                    arraySlice1d< real64 > const & phaseEnthalpy,
                                                    arraySlice1d< real64 > const & dPhaseEnthalpy_dPressure,
                                                    arraySlice1d< real64 > const & dPhaseEnthalpy_dTemperature,
+                                                   arraySlice2d< real64 > const & dPhaseEnthalpy_dGlobalCompFraction,
                                                    arraySlice1d< real64 > const & phaseInternalEnergy,
                                                    arraySlice1d< real64 > const & dPhaseInternalEnergy_dPressure,
-                                                   arraySlice1d< real64 > const & dPhaseInternalEnergy_dTemperature ) const
+                                                   arraySlice1d< real64 > const & dPhaseInternalEnergy_dTemperature,
+                                                   arraySlice2d< real64 > const & dPhaseInternalEnergy_dGlobalCompFraction ) const
 {
   CompositionalVarContainer< 1 > phaseFrac {
     phaseFraction,
@@ -445,9 +447,9 @@ void MultiPhaseMultiComponentFluidUpdate::Compute( real64 pressure,
     phaseVisc.dPres[ip] = phaseViscosityTemp[ip].m_der[0];
     phaseVisc.dTemp[ip] = 0.0;
 
-    phaseEnt.value[ip] = phaseEnthapyTemp[ip].m_var;
-    phaseEnt.dPres[ip] = phaseEnthapyTemp[ip].m_der[0];
-    phaseEnt.dTemp[ip] = phaseEnthapyTemp[ip].m_der[NC+1];
+    phaseEnt.value[ip] = phaseEnthalpyTemp[ip].m_var;
+    phaseEnt.dPres[ip] = phaseEnthalpyTemp[ip].m_der[0];
+    phaseEnt.dTemp[ip] = phaseEnthalpyTemp[ip].m_der[NC+1];
 
     phaseIntEner.value[ip] = phaseInternalEnergyTemp[ip].m_var;
     phaseIntEner.dPres[ip] = phaseInternalEnergyTemp[ip].m_der[0];
@@ -464,8 +466,8 @@ void MultiPhaseMultiComponentFluidUpdate::Compute( real64 pressure,
       phaseCompFrac.dPres[ip][ic] = phaseCompFractionTemp[ip][ic].m_der[0];
       phaseCompFrac.dTemp[ip][ic] = 0.0;
 
-      phaseEnt.dComp[ip] = 0.0; // phaseEnthapyTemp[ip].m_der[ic+1];
-      phaseIntEner.dComp[ip] = 0.0; // phaseInternalEnergyTemp[ip].m_der[ic+1];
+      phaseEnt.dComp[ip][ic] = 0.0; // phaseEnthapyTemp[ip].m_der[ic+1];
+      phaseIntEner.dComp[ip][ic] = 0.0; // phaseInternalEnergyTemp[ip].m_der[ic+1];
 
       for( localIndex jc = 0; jc < NC; ++jc )
       {

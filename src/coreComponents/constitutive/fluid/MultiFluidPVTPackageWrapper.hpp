@@ -169,7 +169,15 @@ public:
                         real64 & totalDensity,
                         real64 & dTotalDensity_dPressure,
                         real64 & dTotalDensity_dTemperature,
-                        arraySlice1d< real64 > const & dTotalDensity_dGlobalCompFraction ) const override;
+                        arraySlice1d< real64 > const & dTotalDensity_dGlobalCompFraction,
+                        arraySlice1d< real64 > const & phaseEnthalpy,
+                        arraySlice1d< real64 > const & dPhaseEnthalpy_dPressure,
+                        arraySlice1d< real64 > const & dPhaseEnthalpy_dTemperature,
+                        arraySlice2d< real64 > const & dPhaseEnthalpy_dGlobalCompFraction,
+                        arraySlice1d< real64 > const & phaseInternalEnergy,
+                        arraySlice1d< real64 > const & dPhaseInternalEnergy_dPressure,
+                        arraySlice1d< real64 > const & dPhaseInternalEnergy_dTemperature,
+                        arraySlice2d< real64 > const & dPhaseInternalEnergy_dGlobalCompFraction ) const override;
 
   GEOSX_FORCE_INLINE
   virtual void Update( localIndex const k,
@@ -204,7 +212,15 @@ public:
              m_totalDensity[k][q],
              m_dTotalDensity_dPressure[k][q],
              m_dTotalDensity_dTemperature[k][q],
-             m_dTotalDensity_dGlobalCompFraction[k][q] );
+             m_dTotalDensity_dGlobalCompFraction[k][q],
+             m_phaseEnthalpy[k][q],
+             m_dPhaseEnthalpy_dPressure[k][q],
+             m_dPhaseEnthalpy_dTemperature[k][q],
+             m_dPhaseEnthalpy_dGlobalCompFraction[k][q],
+             m_phaseInternalEnergy[k][q],
+             m_dPhaseInternalEnergy_dPressure[k][q],
+             m_dPhaseInternalEnergy_dTemperature[k][q],
+             m_dPhaseInternalEnergy_dGlobalCompFraction[k][q] );
   }
 
 private:

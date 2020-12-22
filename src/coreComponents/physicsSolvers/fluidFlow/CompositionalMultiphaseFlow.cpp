@@ -44,6 +44,7 @@ namespace geosx
 
 using namespace dataRepository;
 using namespace constitutive;
+using namespace CompositionalMultiphaseFlowKernels;
 
 static constexpr real64 minDensForDivision = 1e-10;
 
@@ -395,7 +396,7 @@ void CompositionalMultiphaseFlow::UpdatePhaseVolumeFraction( Group & dataGroup,
   arrayView3d< real64 const > const & dPhaseDens_dPres = fluid.dPhaseDensity_dPressure();
   arrayView4d< real64 const > const & dPhaseDens_dComp = fluid.dPhaseDensity_dGlobalCompFraction();
 
-  if ( m_isoThermalFlag )
+  if ( m_isothermalFlag )
   {
     KernelLaunchSelector2
     < IsothermalCompositionalMultiphaseFlowKernels::PhaseVolumeFractionKernel >(m_numComponents, m_numPhases,

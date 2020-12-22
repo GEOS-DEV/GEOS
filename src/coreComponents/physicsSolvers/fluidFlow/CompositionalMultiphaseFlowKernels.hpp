@@ -74,7 +74,6 @@ struct PhaseVolumeFractionKernel
   GEOSX_FORCE_INLINE
   static void
   Compute( arraySlice1d< real64 const > const & compDens,
-           arrayView2d< real64 const > const & compDens,
            arrayView2d< real64 const > const & dCompDens,
            arrayView3d< real64 const > const & dCompFrac_dCompDens,
            arrayView3d< real64 const > const & phaseDens,
@@ -538,7 +537,7 @@ struct VolumeBalanceKernel
           arrayView2d< real64 const > const & dPvMult_dPres,
           arrayView2d< real64 const > const & phaseVolFrac,
           arrayView2d< real64 const > const & dPhaseVolFrac_dPres,
-          rrayView2d< real64 const > const & dPhaseVolFrac_dTemp,
+          arrayView2d< real64 const > const & dPhaseVolFrac_dTemp,
           arrayView3d< real64 const > const & dPhaseVolFrac_dCompDens,
           CRSMatrixView< real64, globalIndex const > const & localMatrix,
           arrayView1d< real64 > const & localRhs );
