@@ -53,6 +53,19 @@ CompositionalMultiphaseFVM::CompositionalMultiphaseFVM( const string & name,
 
 }
 
+void CompositionalMultiphaseFVM::InitializePreSubGroups( Group * const rootGroup )
+{
+  CompositionalMultiphaseBase::InitializePreSubGroups( rootGroup );
+
+  DomainPartition & domain = *rootGroup->GetGroup< DomainPartition >( keys::domain );
+  NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
+  FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
+  if( fvManager.GetGroup< FluxApproximationBase >( m_discretizationName ) == nullptr )
+  {
+    GEOSX_ERROR( "A discretization deriving from FluxApproximationBase must be selected with CompositionalMultiphaseFlow" );
+  }
+
+}
 
 void CompositionalMultiphaseFVM::SetupDofs( DomainPartition const & domain,
                                             DofManager & dofManager ) const

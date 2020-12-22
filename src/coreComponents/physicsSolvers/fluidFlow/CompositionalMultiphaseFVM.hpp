@@ -150,6 +150,8 @@ public:
   struct groupKeyStruct : SolverBase::groupKeyStruct
   {} groupKeysCompMultiphaseFVM;
 
+  virtual void InitializePreSubGroups( Group * const rootGroup ) override;
+
 private:
 
   // no data needed here, see CompositionalMultiphaseBase

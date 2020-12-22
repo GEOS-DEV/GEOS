@@ -20,10 +20,12 @@
 #define GEOSX_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONALMULTIPHASEHYBRIDFVMKERNELS_HPP
 
 #include "common/DataTypes.hpp"
+#include "finiteVolume/mimeticInnerProducts/MimeticInnerProductBase.hpp"
+#include "finiteVolume/mimeticInnerProducts/TPFAInnerProduct.hpp"
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
 #include "mesh/MeshLevel.hpp"
+#include "physicsSolvers/fluidFlow/CompositionalMultiphaseBase.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseHybridFVMAssemblerHelperKernels.hpp"
-#include "finiteVolume/HybridFVMInnerProduct.hpp"
 
 namespace geosx
 {
@@ -114,7 +116,7 @@ struct AssemblerKernel
            ElementViewConst< arrayView3d< real64 const > > const & dCompFrac_dCompDens,
            ElementViewConst< arrayView4d< real64 const > > const & phaseCompFrac,
            ElementViewConst< arrayView4d< real64 const > > const & dPhaseCompFrac_dPres,
-           ElementViewConst< arrayView5d< real64 const > > const & dPhaseCompFrac_dComp,
+           ElementViewConst< arrayView5d< real64 const > > const & dPhaseCompFrac_dCompFrac,
            ElementViewConst< arrayView1d< globalIndex const > > const & elemDofNumber,
            integer const elemGhostRank,
            globalIndex const rankOffset,
@@ -122,7 +124,107 @@ struct AssemblerKernel
            arraySlice2d< real64 const > const & transMatrix,
            arraySlice2d< real64 const > const & transMatrixGrav,
            CRSMatrixView< real64, globalIndex const > const & localMatrix,
-           arrayView1d< real64 > const & localRhs );
+           arrayView1d< real64 > const & localRhs )
+  {
+    // one sided flux
+    real64 oneSidedVolFlux[ NF ] = { 0.0 };
+    real64 dOneSidedVolFlux_dPres[ NF ] = { 0.0 };
+    real64 dOneSidedVolFlux_dFacePres[ NF ][ NF ] = {{ 0.0 }};
+    real64 dOneSidedVolFlux_dCompDens[ NF ][ NC ] = {{ 0.0 }};
+
+    localIndex const localIds[3] = { er, esr, ei };
+
+    /*
+     * compute auxiliary quantities at the one sided faces of this element:
+     * 1) One-sided volumetric fluxes
+     * 2) Upwinded mobilities
+     */
+
+    // for each one-sided face of the elem,
+    // compute the volumetric flux using transMatrix
+    AssemblerKernelHelper::ApplyGradient< NF, NC, NP >( facePres,
+                                                        dFacePres,
+                                                        faceGravCoef,
+                                                        elemToFaces,
+                                                        elemPres,
+                                                        dElemPres,
+                                                        elemGravCoef,
+                                                        phaseMassDens[er][esr][ei][0],
+                                                        dPhaseMassDens_dPres[er][esr][ei][0],
+                                                        dPhaseMassDens_dCompFrac[er][esr][ei][0],
+                                                        phaseMob[er][esr][ei],
+                                                        dPhaseMob_dPres[er][esr][ei],
+                                                        dPhaseMob_dCompDens[er][esr][ei],
+                                                        dCompFrac_dCompDens[er][esr][ei],
+                                                        transMatrix,
+                                                        oneSidedVolFlux,
+                                                        dOneSidedVolFlux_dPres,
+                                                        dOneSidedVolFlux_dFacePres,
+                                                        dOneSidedVolFlux_dCompDens );
+
+    // at this point, we know the local flow direction in the element
+    // so we can upwind the transport coefficients (mobilities) at the one sided faces
+    // ** this function needs non-local information **
+    if( elemGhostRank < 0 )
+    {
+      /*
+       * perform assembly in this element in two steps:
+       * 1) mass conservation equations
+       * 2) face constraints
+       */
+
+      // use the computed one sided vol fluxes and the upwinded mobilities
+      // to assemble the upwinded mass fluxes in the mass conservation eqn of the elem
+      AssemblerKernelHelper::AssembleFluxDivergence< NF, NC, NP >( localIds,
+                                                                   rankOffset,
+                                                                   elemRegionList,
+                                                                   elemSubRegionList,
+                                                                   elemList,
+                                                                   regionFilter,
+                                                                   faceDofNumber,
+                                                                   mimFaceGravCoef,
+                                                                   elemToFaces,
+                                                                   elemGravCoef,
+                                                                   phaseDens,
+                                                                   dPhaseDens_dPres,
+                                                                   dPhaseDens_dCompFrac,
+                                                                   phaseMassDens,
+                                                                   dPhaseMassDens_dPres,
+                                                                   dPhaseMassDens_dCompFrac,
+                                                                   phaseMob,
+                                                                   dPhaseMob_dPres,
+                                                                   dPhaseMob_dCompDens,
+                                                                   dCompFrac_dCompDens,
+                                                                   phaseCompFrac,
+                                                                   dPhaseCompFrac_dPres,
+                                                                   dPhaseCompFrac_dCompFrac,
+                                                                   elemDofNumber,
+                                                                   transMatrixGrav,
+                                                                   oneSidedVolFlux,
+                                                                   dOneSidedVolFlux_dPres,
+                                                                   dOneSidedVolFlux_dFacePres,
+                                                                   dOneSidedVolFlux_dCompDens,
+                                                                   dt,
+                                                                   localMatrix,
+                                                                   localRhs );
+    }
+
+    // use the computed one sided vol fluxes to assemble the constraints
+    // enforcing flux continuity at this element's faces
+    AssemblerKernelHelper::AssembleFaceConstraints< NF, NC, NP >( faceDofNumber,
+                                                                  faceGhostRank,
+                                                                  elemToFaces,
+                                                                  elemDofNumber[er][esr][ei],
+                                                                  rankOffset,
+                                                                  oneSidedVolFlux,
+                                                                  dOneSidedVolFlux_dPres,
+                                                                  dOneSidedVolFlux_dFacePres,
+                                                                  dOneSidedVolFlux_dCompDens,
+                                                                  localMatrix,
+                                                                  localRhs );
+
+  }
+
 
 };
 
@@ -180,7 +282,7 @@ struct FluxKernel
    * @param[inout] matrix the system matrix
    * @param[inout] rhs the system right-hand side vector
    */
-  template< localIndex NF, localIndex NC, localIndex NP >
+  template< typename IP_TYPE, localIndex NF, localIndex NC, localIndex NP >
   static void
   Launch( localIndex er, localIndex esr,
           CellElementSubRegion const & subRegion,
@@ -215,7 +317,104 @@ struct FluxKernel
           real64 const lengthTolerance,
           real64 const dt,
           CRSMatrixView< real64, globalIndex const > const & localMatrix,
-          arrayView1d< real64 > const & localRhs );
+          arrayView1d< real64 > const & localRhs )
+  {
+    // get the cell-centered DOF numbers and ghost rank for the assembly
+    arrayView1d< integer const > const & elemGhostRank = subRegion.ghostRank();
+
+    // get the map from elem to faces
+    arrayView2d< localIndex const > const & elemToFaces = subRegion.faceList();
+
+    // get the cell-centered pressures
+    arrayView1d< real64 const > const & elemPres  =
+      subRegion.getReference< array1d< real64 > >( CompositionalMultiphaseBase::viewKeyStruct::pressureString );
+    arrayView1d< real64 const > const & dElemPres =
+      subRegion.getReference< array1d< real64 > >( CompositionalMultiphaseBase::viewKeyStruct::deltaPressureString );
+
+    // get the element data needed for transmissibility computation
+    arrayView2d< real64 const > const & elemCenter =
+      subRegion.getReference< array2d< real64 > >( CellBlock::viewKeyStruct::elementCenterString );
+    arrayView1d< real64 const > const & elemVolume =
+      subRegion.getReference< array1d< real64 > >( CellBlock::viewKeyStruct::elementVolumeString );
+    arrayView2d< real64 const > const & elemPerm =
+      subRegion.getReference< array2d< real64 > >( CompositionalMultiphaseBase::viewKeyStruct::permeabilityString );
+
+    // get the cell-centered depth
+    arrayView1d< real64 const > const & elemGravCoef =
+      subRegion.getReference< array1d< real64 > >( CompositionalMultiphaseBase::viewKeyStruct::gravityCoefString );
+
+    // assemble the residual and Jacobian element by element
+    // in this loop we assemble both equation types: mass conservation in the elements and constraints at the faces
+    forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_DEVICE ( localIndex const ei )
+    {
+
+      // transmissibility matrix
+      stackArray2d< real64, NF *NF > transMatrix( NF, NF );
+      stackArray2d< real64, NF *NF > transMatrixGrav( NF, NF );
+
+      real64 const perm[ 3 ] = { elemPerm[ei][0], elemPerm[ei][1], elemPerm[ei][2] };
+
+      // recompute the local transmissibility matrix at each iteration
+      // we can decide later to precompute transMatrix if needed
+      IP_TYPE::template Compute< NF >( nodePosition,
+                                       transMultiplier,
+                                       faceToNodes,
+                                       elemToFaces[ei],
+                                       elemCenter[ei],
+                                       elemVolume[ei],
+                                       perm,
+                                       lengthTolerance,
+                                       transMatrix );
+
+      mimeticInnerProduct::TPFAInnerProduct::Compute< NF >( nodePosition,
+                                                            transMultiplier,
+                                                            faceToNodes,
+                                                            elemToFaces[ei],
+                                                            elemCenter[ei],
+                                                            elemVolume[ei],
+                                                            perm,
+                                                            lengthTolerance,
+                                                            transMatrixGrav );
+
+      // perform flux assembly in this element
+      CompositionalMultiphaseHybridFVMKernels::AssemblerKernel::Compute< NF, NC, NP >( er, esr, ei,
+                                                                                       regionFilter,
+                                                                                       elemRegionList,
+                                                                                       elemSubRegionList,
+                                                                                       elemList,
+                                                                                       faceDofNumber,
+                                                                                       faceGhostRank,
+                                                                                       facePres,
+                                                                                       dFacePres,
+                                                                                       faceGravCoef,
+                                                                                       mimFaceGravCoef,
+                                                                                       elemToFaces[ei],
+                                                                                       elemPres[ei],
+                                                                                       dElemPres[ei],
+                                                                                       elemGravCoef[ei],
+                                                                                       phaseDens,
+                                                                                       dPhaseDens_dPres,
+                                                                                       dPhaseDens_dCompFrac,
+                                                                                       phaseMassDens,
+                                                                                       dPhaseMassDens_dPres,
+                                                                                       dPhaseMassDens_dCompFrac,
+                                                                                       phaseMob,
+                                                                                       dPhaseMob_dPres,
+                                                                                       dPhaseMob_dCompDens,
+                                                                                       dCompFrac_dCompDens,
+                                                                                       phaseCompFrac,
+                                                                                       dPhaseCompFrac_dPres,
+                                                                                       dPhaseCompFrac_dCompFrac,
+                                                                                       elemDofNumber,
+                                                                                       elemGhostRank[ei],
+                                                                                       rankOffset,
+                                                                                       dt,
+                                                                                       transMatrix,
+                                                                                       transMatrixGrav,
+                                                                                       localMatrix,
+                                                                                       localRhs );
+    } );
+  }
 
 };
 
@@ -380,36 +579,38 @@ struct SolutionCheckKernel
 struct PrecomputeKernel
 {
 
-  template< localIndex NF >
+  template< typename IP_TYPE, localIndex NF >
   static void
   Launch( localIndex const subRegionSize,
           localIndex const faceManagerSize,
           arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition,
           ArrayOfArraysView< localIndex const > const & faceToNodes,
           arrayView2d< real64 const > const & elemCenter,
+          arrayView1d< real64 const > const & elemVolume,
           arrayView2d< real64 const > const & elemPerm,
           arrayView1d< real64 const > const & elemGravCoef,
           arrayView2d< localIndex const > const & elemToFaces,
           arrayView1d< real64 const > const & transMultiplier,
           real64 const & lengthTolerance,
-          arrayView1d< RAJA::ReduceSum< parallelDeviceReduce, real64 > > const & mimFaceGravCoefNumerator,
-          arrayView1d< RAJA::ReduceSum< parallelDeviceReduce, real64 > > const & mimFaceGravCoefDenominator,
+          arrayView1d< RAJA::ReduceSum< serialReduce, real64 > > const & mimFaceGravCoefNumerator,
+          arrayView1d< RAJA::ReduceSum< serialReduce, real64 > > const & mimFaceGravCoefDenominator,
           arrayView1d< real64 > const & mimFaceGravCoef )
   {
-    forAll< parallelDevicePolicy<> >( subRegionSize, [=] ( localIndex const ei )
+    forAll< serialPolicy >( subRegionSize, [=] ( localIndex const ei )
     {
       stackArray2d< real64, NF *NF > transMatrix( NF, NF );
 
       real64 const perm[ 3 ] = { elemPerm[ei][0], elemPerm[ei][1], elemPerm[ei][2] };
 
-      HybridFVMInnerProduct::TPFACellInnerProductKernel::Compute< NF >( nodePosition,
-                                                                        transMultiplier,
-                                                                        faceToNodes,
-                                                                        elemToFaces[ei],
-                                                                        elemCenter[ei],
-                                                                        perm,
-                                                                        lengthTolerance,
-                                                                        transMatrix );
+      IP_TYPE::template Compute< NF >( nodePosition,
+                                       transMultiplier,
+                                       faceToNodes,
+                                       elemToFaces[ei],
+                                       elemCenter[ei],
+                                       elemVolume[ei],
+                                       perm,
+                                       lengthTolerance,
+                                       transMatrix );
 
       for( localIndex ifaceLoc = 0; ifaceLoc < NF; ++ifaceLoc )
       {
@@ -418,7 +619,7 @@ struct PrecomputeKernel
       }
     } );
 
-    forAll< parallelDevicePolicy<> >( faceManagerSize, [=] GEOSX_HOST_DEVICE ( localIndex const iface )
+    forAll< serialPolicy >( faceManagerSize, [=] GEOSX_HOST_DEVICE ( localIndex const iface )
     {
       if( !isZero( mimFaceGravCoefDenominator[iface].get() ) )
       {
@@ -452,7 +653,7 @@ void KernelLaunchSelectorFaceSwitch( T value, LAMBDA && lambda )
 
 } // namespace internal
 
-template< typename KERNELWRAPPER, typename ... ARGS >
+template< typename IP_TYPE, typename KERNELWRAPPER, typename ... ARGS >
 void KernelLaunchSelector( localIndex numFacesInElem, localIndex numComps, localIndex numPhases, ARGS && ... args )
 {
   internal::KernelLaunchSelectorFaceSwitch( numFacesInElem, [&] ( auto NF )
@@ -461,19 +662,19 @@ void KernelLaunchSelector( localIndex numFacesInElem, localIndex numComps, local
     {
       if( numComps == 2 )
       {
-        KERNELWRAPPER::template Launch< NF(), 2, 2 >( std::forward< ARGS >( args )... );
+        KERNELWRAPPER::template Launch< IP_TYPE, NF(), 2, 2 >( std::forward< ARGS >( args )... );
       }
       else if( numComps == 3 )
       {
-        KERNELWRAPPER::template Launch< NF(), 3, 2 >( std::forward< ARGS >( args )... );
+        KERNELWRAPPER::template Launch< IP_TYPE, NF(), 3, 2 >( std::forward< ARGS >( args )... );
       }
       else if( numComps == 4 )
       {
-        KERNELWRAPPER::template Launch< NF(), 4, 2 >( std::forward< ARGS >( args )... );
+        KERNELWRAPPER::template Launch< IP_TYPE, NF(), 4, 2 >( std::forward< ARGS >( args )... );
       }
       else if( numComps == 5 )
       {
-        KERNELWRAPPER::template Launch< NF(), 5, 2 >( std::forward< ARGS >( args )... );
+        KERNELWRAPPER::template Launch< IP_TYPE, NF(), 5, 2 >( std::forward< ARGS >( args )... );
       }
       else
       {
@@ -484,19 +685,19 @@ void KernelLaunchSelector( localIndex numFacesInElem, localIndex numComps, local
     {
       if( numComps == 2 )
       {
-        KERNELWRAPPER::template Launch< NF(), 2, 3 >( std::forward< ARGS >( args )... );
+        KERNELWRAPPER::template Launch< IP_TYPE, NF(), 2, 3 >( std::forward< ARGS >( args )... );
       }
       else if( numComps == 3 )
       {
-        KERNELWRAPPER::template Launch< NF(), 3, 3 >( std::forward< ARGS >( args )... );
+        KERNELWRAPPER::template Launch< IP_TYPE, NF(), 3, 3 >( std::forward< ARGS >( args )... );
       }
       else if( numComps == 4 )
       {
-        KERNELWRAPPER::template Launch< NF(), 4, 3 >( std::forward< ARGS >( args )... );
+        KERNELWRAPPER::template Launch< IP_TYPE, NF(), 4, 3 >( std::forward< ARGS >( args )... );
       }
       else if( numComps == 5 )
       {
-        KERNELWRAPPER::template Launch< NF(), 5, 3 >( std::forward< ARGS >( args )... );
+        KERNELWRAPPER::template Launch< IP_TYPE, NF(), 5, 3 >( std::forward< ARGS >( args )... );
       }
       else
       {

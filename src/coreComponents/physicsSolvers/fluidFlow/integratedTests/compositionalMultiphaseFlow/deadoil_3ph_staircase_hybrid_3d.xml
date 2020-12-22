@@ -6,7 +6,7 @@
     <CompositionalMultiphaseHybridFVM
       name="compflow"
       logLevel="1"
-      discretization="fluidTPFA"
+      discretization="fluidHM"
       targetRegions="{ Channel }"
       fluidNames="{ fluid1 }"
       solidNames="{ rock }"
@@ -16,7 +16,7 @@
       useMass="0">
       <NonlinearSolverParameters
         newtonTol="1.0e-10"
-        newtonMaxIter="15"
+        newtonMaxIter="30"
         maxTimeStepCuts="2"
 	lineSearchAction="None"/>
       <LinearSolverParameters
@@ -106,10 +106,9 @@
   <!-- START_SPHINX_INCLUDE_NUMMET_BLOCK -->
   <NumericalMethods>
     <FiniteVolume>
-      <TwoPointFluxApproximation
-        name="fluidTPFA"
-        fieldName="pressure"
-        targetRegions="{ Channel }"
+      <HybridMimeticDiscretization
+        name="fluidHM"
+	innerProductType="quasiTPFA"
         coefficientName="permeability"/>
     </FiniteVolume>
   </NumericalMethods>

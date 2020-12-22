@@ -1,7 +1,7 @@
 <?xml version="1.0" ?>
 
 <Problem>
-  <Solvers gravityVector="0.0, 0.0, 0.0">
+  <Solvers gravityVector="0.0, 0.0, -9.81">
     <CompositionalMultiphaseReservoir
       name="reservoirSystem"
       flowSolverName="compositionalMultiphaseFlow"
@@ -18,7 +18,7 @@
     <CompositionalMultiphaseHybridFVM
       name="compositionalMultiphaseFlow"
       logLevel="1"
-      discretization="fluidTPFA"
+      discretization="fluidHM"
       targetRegions="{ Region1 }"
       fluidNames="{ fluid1 }"
       solidNames="{ rock }"
@@ -155,9 +155,9 @@
 
   <NumericalMethods>
     <FiniteVolume>
-      <TwoPointFluxApproximation
-        name="fluidTPFA"
-        fieldName="pressure"
+      <HybridMimeticDiscretization
+        name="fluidHM"
+	innerProductType="quasiTPFA"
         coefficientName="permeability"/>
     </FiniteVolume>
   </NumericalMethods>

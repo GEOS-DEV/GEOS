@@ -181,6 +181,8 @@ public:
 
   virtual void InitializePostInitialConditions_PreSubGroups( dataRepository::Group * const rootGroup ) override;
 
+  virtual void InitializePreSubGroups( Group * const rootGroup ) override;
+
 protected:
 
   /// precompute the minGravityCoefficient for the buoyancy term

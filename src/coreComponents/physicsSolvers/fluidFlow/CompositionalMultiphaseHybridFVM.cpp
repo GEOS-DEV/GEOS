@@ -21,7 +21,8 @@
 #include "common/TimingMacros.hpp"
 #include "constitutive/fluid/MultiFluidBase.hpp"
 #include "constitutive/relativePermeability/RelativePermeabilityBase.hpp"
-#include "finiteVolume/FluxApproximationBase.hpp"
+#include "finiteVolume/HybridMimeticDiscretization.hpp"
+#include "finiteVolume/MimeticInnerProductDispatch.hpp"
 #include "mpiCommunications/CommunicationTools.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseKernels.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseHybridFVMKernels.hpp"
@@ -38,6 +39,7 @@ using namespace dataRepository;
 using namespace constitutive;
 using namespace CompositionalMultiphaseBaseKernels;
 using namespace CompositionalMultiphaseHybridFVMKernels;
+using namespace mimeticInnerProduct;
 
 CompositionalMultiphaseHybridFVM::CompositionalMultiphaseHybridFVM( const std::string & name,
                                                                     Group * const parent ):
@@ -80,6 +82,21 @@ void CompositionalMultiphaseHybridFVM::RegisterDataOnMesh( Group * const MeshBod
   }
 }
 
+void CompositionalMultiphaseHybridFVM::InitializePreSubGroups( Group * const rootGroup )
+{
+  CompositionalMultiphaseBase::InitializePreSubGroups( rootGroup );
+
+  DomainPartition & domain = *rootGroup->GetGroup< DomainPartition >( keys::domain );
+  NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
+  FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
+
+  if( fvManager.GetGroup< HybridMimeticDiscretization >( m_discretizationName ) == nullptr )
+  {
+    GEOSX_ERROR( "The HybridMimeticDiscretization must be selected with SinglePhaseHybridFVM" );
+  }
+}
+
+
 void CompositionalMultiphaseHybridFVM::InitializePostInitialConditions_PreSubGroups( Group * const rootGroup )
 {
   GEOSX_MARK_FUNCTION;
@@ -90,11 +107,11 @@ void CompositionalMultiphaseHybridFVM::InitializePostInitialConditions_PreSubGro
   FaceManager const & faceManager = *mesh.getFaceManager();
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
-  FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
+  HybridMimeticDiscretization const & hmDiscretization = fvManager.getHybridMimeticDiscretization( m_discretizationName );
 
   m_lengthTolerance = domain.getMeshBody( 0 )->getGlobalLengthScale() * 1e-8;
-  string const & coeffName = fluxApprox.template getReference< string >( FluxApproximationBase::viewKeyStruct::coeffNameString );
-  m_transMultName = coeffName + FluxApproximationBase::viewKeyStruct::transMultiplierString;
+  string const & coeffName = hmDiscretization.template getReference< string >( HybridMimeticDiscretization::viewKeyStruct::coeffNameString );
+  m_transMultName = coeffName + HybridMimeticDiscretization::viewKeyStruct::transMultiplierString;
 
   CompositionalMultiphaseBase::InitializePostInitialConditions_PreSubGroups( rootGroup );
 
@@ -128,8 +145,8 @@ void CompositionalMultiphaseHybridFVM::PrecomputeData( MeshLevel & mesh )
   NodeManager const & nodeManager = *mesh.getNodeManager();
   FaceManager & faceManager = *mesh.getFaceManager();
 
-  array1d< RAJA::ReduceSum< parallelDeviceReduce, real64 > > mimFaceGravCoefNumerator;
-  array1d< RAJA::ReduceSum< parallelDeviceReduce, real64 > > mimFaceGravCoefDenominator;
+  array1d< RAJA::ReduceSum< serialReduce, real64 > > mimFaceGravCoefNumerator;
+  array1d< RAJA::ReduceSum< serialReduce, real64 > > mimFaceGravCoefDenominator;
   mimFaceGravCoefNumerator.resize( faceManager.size() );
   mimFaceGravCoefDenominator.resize( faceManager.size() );
 
@@ -162,14 +179,17 @@ void CompositionalMultiphaseHybridFVM::PrecomputeData( MeshLevel & mesh )
       subRegion.template getReference< array2d< real64 > >( CompositionalMultiphaseBase::viewKeyStruct::permeabilityString );
     arrayView1d< real64 const > const elemGravCoef =
       subRegion.template getReference< array1d< real64 > >( viewKeyStruct::gravityCoefString );
+    arrayView1d< real64 const > const & elemVolume = subRegion.getElementVolume();
     arrayView2d< localIndex const > const & elemToFaces = subRegion.faceList();
 
-    SinglePhaseHybridFVMKernels::KernelLaunchSelector< PrecomputeKernel >( subRegion.numFacesPerElement(),
+    SinglePhaseHybridFVMKernels::KernelLaunchSelector< mimeticInnerProduct::TPFAInnerProduct,
+                                                       PrecomputeKernel >( subRegion.numFacesPerElement(),
                                                                            subRegion.size(),
                                                                            faceManager.size(),
                                                                            nodePosition,
                                                                            faceToNodes,
                                                                            elemCenter,
+                                                                           elemVolume,
                                                                            elemPerm,
                                                                            elemGravCoef,
                                                                            elemToFaces,
@@ -277,8 +297,66 @@ void CompositionalMultiphaseHybridFVM::AssembleFluxTerms( real64 const dt,
   GEOSX_MARK_FUNCTION;
 
   MeshLevel const & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
+
+  /*
+   * Force phase compositions and densities to be moved to device.
+   *
+   * An issue with ElementViewAccessors is that if the outer arrays are already on device,
+   * but an inner array gets touched and updated on host, capturing outer arrays in a device kernel
+   * DOES NOT call move() on the inner array (see implementation of NewChaiBuffer::moveNested()).
+   * Here we force the move by launching a dummy kernel.
+   *
+   * This is not a problem in normal solver execution, as these arrays get moved by AccumulationKernel.
+   * But it fails unit tests, which test flux assembly separately.
+   *
+   * TODO: See if this can be fixed in NewChaiBuffer (I have not found a way - Sergey).
+   *       Alternatively, stop using ElementViewAccessors altogether and just roll with
+   *       accessors' outer arrays being moved on every jacobian assembly (maybe disable output).
+   *       Or stop testing through the solver interface and test separate kernels instead.
+   *       Finally, the problem should go away when fluid updates are executed on device.
+   */
+  forTargetSubRegions( mesh, [&]( localIndex const targetIndex, ElementSubRegionBase const & subRegion )
+  {
+    MultiFluidBase const & fluid = GetConstitutiveModel< MultiFluidBase >( subRegion, fluidModelNames()[targetIndex] );
+    arrayView4d< real64 const > const & phaseCompFrac = fluid.phaseCompFraction();
+    arrayView4d< real64 const > const & dPhaseCompFrac_dPres = fluid.dPhaseCompFraction_dPressure();
+    arrayView5d< real64 const > const & dPhaseCompFrac_dComp = fluid.dPhaseCompFraction_dGlobalCompFraction();
+
+    arrayView3d< real64 const > const & phaseMassDens = fluid.phaseMassDensity();
+    arrayView3d< real64 const > const & dPhaseMassDens_dPres = fluid.dPhaseMassDensity_dPressure();
+    arrayView4d< real64 const > const & dPhaseMassDens_dComp = fluid.dPhaseMassDensity_dGlobalCompFraction();
+
+    arrayView3d< real64 const > const & phaseDens = fluid.phaseDensity();
+    arrayView3d< real64 const > const & dPhaseDens_dPres = fluid.dPhaseDensity_dPressure();
+    arrayView4d< real64 const > const & dPhaseDens_dComp = fluid.dPhaseDensity_dGlobalCompFraction();
+
+    forAll< parallelDevicePolicy<> >( subRegion.size(),
+                                      [phaseCompFrac, dPhaseCompFrac_dPres, dPhaseCompFrac_dComp,
+                                       phaseMassDens, dPhaseMassDens_dPres, dPhaseMassDens_dComp,
+                                       phaseDens, dPhaseDens_dPres, dPhaseDens_dComp]
+                                      GEOSX_HOST_DEVICE ( localIndex const )
+    {
+      GEOSX_UNUSED_VAR( phaseCompFrac )
+      GEOSX_UNUSED_VAR( dPhaseCompFrac_dPres )
+      GEOSX_UNUSED_VAR( dPhaseCompFrac_dComp )
+      GEOSX_UNUSED_VAR( phaseMassDens )
+      GEOSX_UNUSED_VAR( dPhaseMassDens_dPres )
+      GEOSX_UNUSED_VAR( dPhaseMassDens_dComp )
+      GEOSX_UNUSED_VAR( phaseDens )
+      GEOSX_UNUSED_VAR( dPhaseDens_dPres )
+      GEOSX_UNUSED_VAR( dPhaseDens_dComp )
+    } );
+  } );
+
+
   NodeManager const & nodeManager = *mesh.getNodeManager();
   FaceManager const & faceManager = *mesh.getFaceManager();
+
+  NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
+  FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
+  HybridMimeticDiscretization const & hmDiscretization = fvManager.getHybridMimeticDiscretization( m_discretizationName );
+  MimeticInnerProductBase const & mimeticInnerProductBase =
+    hmDiscretization.getReference< MimeticInnerProductBase >( HybridMimeticDiscretization::viewKeyStruct::innerProductString );
 
   // node data (for transmissibility computation)
 
@@ -332,42 +410,48 @@ void CompositionalMultiphaseHybridFVM::AssembleFluxTerms( real64 const dt,
                                                             ElementRegionBase const &,
                                                             auto const & subRegion )
   {
-    KernelLaunchSelector< FluxKernel >( subRegion.numFacesPerElement(),
-                                        m_numComponents, m_numPhases,
-                                        er, esr, subRegion,
-                                        m_regionFilter.toViewConst(),
-                                        nodePosition,
-                                        elemRegionList,
-                                        elemSubRegionList,
-                                        elemList,
-                                        faceToNodes,
-                                        faceDofNumber,
-                                        faceGhostRank,
-                                        facePres,
-                                        dFacePres,
-                                        faceGravCoef,
-                                        mimFaceGravCoef,
-                                        transMultiplier,
-                                        m_phaseDens.toNestedViewConst(),
-                                        m_dPhaseDens_dPres.toNestedViewConst(),
-                                        m_dPhaseDens_dComp.toNestedViewConst(),
-                                        m_phaseMassDens.toNestedViewConst(),
-                                        m_dPhaseMassDens_dPres.toNestedViewConst(),
-                                        m_dPhaseMassDens_dComp.toNestedViewConst(),
-                                        m_phaseMob.toNestedViewConst(),
-                                        m_dPhaseMob_dPres.toNestedViewConst(),
-                                        m_dPhaseMob_dCompDens.toNestedViewConst(),
-                                        m_dCompFrac_dCompDens.toNestedViewConst(),
-                                        m_phaseCompFrac.toNestedViewConst(),
-                                        m_dPhaseCompFrac_dPres.toNestedViewConst(),
-                                        m_dPhaseCompFrac_dComp.toNestedViewConst(),
-                                        elemDofNumber.toNestedViewConst(),
-                                        dofManager.rankOffset(),
-                                        lengthTolerance,
-                                        dt,
-                                        localMatrix,
-                                        localRhs );
+    mimeticInnerProductDispatch( mimeticInnerProductBase,
+                                 [&] ( auto const mimeticInnerProduct )
+    {
+      using IP_TYPE = TYPEOFREF( mimeticInnerProduct );
 
+      KernelLaunchSelector< IP_TYPE,
+                            FluxKernel >( subRegion.numFacesPerElement(),
+                                          m_numComponents, m_numPhases,
+                                          er, esr, subRegion,
+                                          m_regionFilter.toViewConst(),
+                                          nodePosition,
+                                          elemRegionList,
+                                          elemSubRegionList,
+                                          elemList,
+                                          faceToNodes,
+                                          faceDofNumber,
+                                          faceGhostRank,
+                                          facePres,
+                                          dFacePres,
+                                          faceGravCoef,
+                                          mimFaceGravCoef,
+                                          transMultiplier,
+                                          m_phaseDens.toNestedViewConst(),
+                                          m_dPhaseDens_dPres.toNestedViewConst(),
+                                          m_dPhaseDens_dComp.toNestedViewConst(),
+                                          m_phaseMassDens.toNestedViewConst(),
+                                          m_dPhaseMassDens_dPres.toNestedViewConst(),
+                                          m_dPhaseMassDens_dComp.toNestedViewConst(),
+                                          m_phaseMob.toNestedViewConst(),
+                                          m_dPhaseMob_dPres.toNestedViewConst(),
+                                          m_dPhaseMob_dCompDens.toNestedViewConst(),
+                                          m_dCompFrac_dCompDens.toNestedViewConst(),
+                                          m_phaseCompFrac.toNestedViewConst(),
+                                          m_dPhaseCompFrac_dPres.toNestedViewConst(),
+                                          m_dPhaseCompFrac_dComp.toNestedViewConst(),
+                                          elemDofNumber.toNestedViewConst(),
+                                          dofManager.rankOffset(),
+                                          lengthTolerance,
+                                          dt,
+                                          localMatrix,
+                                          localRhs );
+    } );
   } );
 }
 

@@ -5,7 +5,7 @@
     <CompositionalMultiphaseHybridFVM
       name="compflow"
       logLevel="1"
-      discretization="fluidTPFA"
+      discretization="fluidHM"
       fluidNames="{ fluid1 }"
       solidNames="{ rock }"
       relPermNames="{ relperm }"
@@ -70,9 +70,9 @@
 
   <NumericalMethods>
     <FiniteVolume>
-      <TwoPointFluxApproximation
-        name="fluidTPFA"
-        fieldName="pressure"
+      <HybridMimeticDiscretization
+        name="fluidHM"
+	innerProductType="beiraoDaVeigaLipnikovManzini"
         coefficientName="permeability"/>
     </FiniteVolume>
   </NumericalMethods>
