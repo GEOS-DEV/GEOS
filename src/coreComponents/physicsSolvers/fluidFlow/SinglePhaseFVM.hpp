@@ -204,8 +204,9 @@ public:
                                            DofManager const & dofManager,
                                            CRSMatrix< real64, globalIndex > & localMatrix ) override final;
 
-
   /**@}*/
+
+  virtual void InitializePreSubGroups( dataRepository::Group * const rootGroup ) override;
 
   struct viewKeyStruct : SinglePhaseBase::viewKeyStruct
   {} viewKeysSinglePhaseFVM;
