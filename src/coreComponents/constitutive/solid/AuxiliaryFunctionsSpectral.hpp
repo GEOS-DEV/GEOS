@@ -40,7 +40,7 @@ void PositivePartOfTensor( real64 (& eigs)[3], real64 (& eigvecs)[3][3], real64 
   real64 positiveEigs[6]={};
   for( int i=0; i < 3; i++ )
   {
-    positiveEigs[i] = std::max( 0.0, eigs[i] );
+    positiveEigs[i] = fmax( 0.0, eigs[i] );
   }
   LvArray::tensorOps::Rij_eq_AikSymBklAjl< 3 >( positivePart, eigvecs, positiveEigs );
 }
@@ -52,7 +52,7 @@ void NegativePartOfTensor( real64 (& eigs)[3], real64 (& eigvecs)[3][3], real64 
   real64 negativeEigs[6]={};
   for( int i=0; i < 3; i++ )
   {
-    negativeEigs[i] = std::min( 0.0, eigs[i] );
+    negativeEigs[i] = fmin( 0.0, eigs[i] );
   }
   LvArray::tensorOps::Rij_eq_AikSymBklAjl< 3 >( negativePart, eigvecs, negativeEigs );
 }
@@ -77,8 +77,12 @@ real64 doubleContraction( real64 (& A)[6], real64 (& B)[6] )
 }
 
 //compute strain from stresses using SSLE
+template< int USD >
 GEOSX_HOST_DEVICE inline
-void recoverStrainFromStress( arraySlice1d< real64 > const stress, real64 (& strain)[6], real64 const K, real64 const mu )
+void recoverStrainFromStress( arraySlice1d< real64 const, USD > const & stress,
+                              real64 (& strain)[6],
+                              real64 const K,
+                              real64 const mu )
 {
   real64 E = 9*K*mu / (3*K + mu);
   real64 nu = (3*K - 2*mu) / (6*K + 2*mu);
@@ -94,7 +98,7 @@ void recoverStrainFromStress( arraySlice1d< real64 > const stress, real64 (& str
 GEOSX_HOST_DEVICE inline
 real64 heaviside( real64 x )
 {
-  if( std::abs( x ) < 1e-12 )
+  if( fabs( x ) < 1e-12 )
   {
     return 0.5;
   }
@@ -191,7 +195,7 @@ void PositiveProjectorTensor( real64 (& eigs)[3], real64 (& eigvecs)[3][3], real
   //test for repeated eigenvalues
   bool repeatedEigenvalues = false;
   real64 tol = 1e-12;
-  if( std::abs( eigs[0] - eigs[1] ) < tol || std::abs( eigs[0]-eigs[2] ) < tol || std::abs( eigs[1]-eigs[2] ) < tol )
+  if( fabs( eigs[0] - eigs[1] ) < tol || fabs( eigs[0]-eigs[2] ) < tol || fabs( eigs[1]-eigs[2] ) < tol )
   {
     repeatedEigenvalues = true;
   }
@@ -233,7 +237,7 @@ void PositiveProjectorTensor( real64 (& eigs)[3], real64 (& eigvecs)[3][3], real
         GTensor( jthEigenVector, ithEigenVector, Gji );
         LvArray::tensorOps::add< 6, 6 >( Gsym, Gji );
         //Do update
-        LvArray::tensorOps::scale< 6, 6 >( Gsym, 0.5 * (std::max( eigs[i], 0.0 ) - std::max( eigs[j], 0.0 ))/(2*(eigs[i]-eigs[j])));
+        LvArray::tensorOps::scale< 6, 6 >( Gsym, 0.5 * (fmax( eigs[i], 0.0 ) - fmax( eigs[j], 0.0 ))/(2*(eigs[i]-eigs[j])));
         LvArray::tensorOps::add< 6, 6 >( PositiveProjector, Gsym );
       }
     }
@@ -269,7 +273,7 @@ void NegativeProjectorTensor( real64 (& eigs)[3], real64 (& eigvecs)[3][3], real
   //test for repeated eigenvalues
   bool repeatedEigenvalues = false;
   real64 tol = 1e-12;
-  if( std::abs( eigs[0] - eigs[1] ) < tol || std::abs( eigs[0]-eigs[2] ) < tol || std::abs( eigs[1]-eigs[2] ) < tol )
+  if( fabs( eigs[0] - eigs[1] ) < tol || fabs( eigs[0]-eigs[2] ) < tol || fabs( eigs[1]-eigs[2] ) < tol )
   {
     repeatedEigenvalues = true;
   }
@@ -311,7 +315,7 @@ void NegativeProjectorTensor( real64 (& eigs)[3], real64 (& eigvecs)[3][3], real
         GTensor( jthEigenVector, ithEigenVector, Gji );
         LvArray::tensorOps::add< 6, 6 >( Gsym, Gji );
         //Do update
-        LvArray::tensorOps::scale< 6, 6 >( Gsym, 0.5 * (std::min( eigs[i], 0.0 ) - std::min( eigs[j], 0.0 ))/(2*(eigs[i]-eigs[j])));
+        LvArray::tensorOps::scale< 6, 6 >( Gsym, 0.5 * (fmin( eigs[i], 0.0 ) - fmin( eigs[j], 0.0 ))/(2*(eigs[i]-eigs[j])));
         LvArray::tensorOps::add< 6, 6 >( NegativeProjector, Gsym );
       }
     }
@@ -404,8 +408,8 @@ void getTestStress( real64 (& strain)[6], real64 (& stress)[6] )
   real64 temp[3][3] = {};
   LvArray::tensorOps::transpose< 3, 3 >( temp, eigenVectors );
   LvArray::tensorOps::copy< 3, 3 >( eigenVectors, temp );
-  real64 tracePlus = std::max( traceOfStrain, 0.0 );
-  real64 traceMinus = std::min( traceOfStrain, 0.0 );
+  real64 tracePlus = fmax( traceOfStrain, 0.0 );
+  real64 traceMinus = fmin( traceOfStrain, 0.0 );
   //build symmetric matrices of positive and negative eigenvalues
   real64 Itensor[6] = {};
   for( int i = 0; i < 3; i++ )

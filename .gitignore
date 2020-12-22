@@ -18,3 +18,4 @@ install-*
 /Debug/
 uberenv_libs
 spack-*.txt
+*~
