@@ -175,6 +175,13 @@ jobs:
     - CMAKE_BUILD_TYPE=Release
     - BUILD_AND_TEST_ARGS=--disable-unit-tests
   - stage: builds
+    name: Centos7.6_gcc8.3.1_cuda10.1.243_debug
+    <<: *geosx_linux_build
+    env:
+    - DOCKER_REPOSITORY=geosx/centos7.6.1810-gcc8.3.1-cuda10.1.243
+    - CMAKE_BUILD_TYPE=Debug
+    - BUILD_AND_TEST_ARGS=--disable-unit-tests
+  - stage: builds
     name: Centos7.6_gcc8.3.1_cuda10.1.243_release
     <<: *geosx_linux_build
     env:
