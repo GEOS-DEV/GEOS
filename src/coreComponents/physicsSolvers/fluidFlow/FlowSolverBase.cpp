@@ -152,18 +152,21 @@ void FlowSolverBase::InitializePreSubGroups( Group * const rootGroup )
 
   FiniteVolumeManager & fvManager = numericalMethodManager.getFiniteVolumeManager();
 
-  FluxApproximationBase & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
-  array1d< string > & stencilTargetRegions = fluxApprox.targetRegions();
-  std::set< string > stencilTargetRegionsSet( stencilTargetRegions.begin(), stencilTargetRegions.end() );
-  for( auto const & targetRegion : targetRegionNames() )
+  if( fvManager.GetGroup< FluxApproximationBase >( m_discretizationName ) != nullptr )
   {
-    stencilTargetRegionsSet.insert( targetRegion );
-  }
+    FluxApproximationBase & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
+    array1d< string > & stencilTargetRegions = fluxApprox.targetRegions();
+    std::set< string > stencilTargetRegionsSet( stencilTargetRegions.begin(), stencilTargetRegions.end() );
+    for( auto const & targetRegion : targetRegionNames() )
+    {
+      stencilTargetRegionsSet.insert( targetRegion );
+    }
 
-  stencilTargetRegions.clear();
-  for( auto const & targetRegion : stencilTargetRegionsSet )
-  {
-    stencilTargetRegions.emplace_back( targetRegion );
+    stencilTargetRegions.clear();
+    for( auto const & targetRegion : stencilTargetRegionsSet )
+    {
+      stencilTargetRegions.emplace_back( targetRegion );
+    }
   }
 }
 

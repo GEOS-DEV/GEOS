@@ -22,7 +22,6 @@
 
 using namespace geosx;
 using namespace geosx::SinglePhaseHybridFVMKernels;
-using namespace geosx::HybridFVMInnerProduct;
 using namespace geosx::testing;
 
 

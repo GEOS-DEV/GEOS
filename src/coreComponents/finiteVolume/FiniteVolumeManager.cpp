@@ -20,6 +20,7 @@
 #include "FiniteVolumeManager.hpp"
 
 #include "finiteVolume/FluxApproximationBase.hpp"
+#include "finiteVolume/HybridMimeticDiscretization.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
 
@@ -40,8 +41,16 @@ FiniteVolumeManager::~FiniteVolumeManager()
 
 Group * FiniteVolumeManager::CreateChild( string const & childKey, string const & childName )
 {
-  std::unique_ptr< FluxApproximationBase > approx = FluxApproximationBase::CatalogInterface::Factory( childKey, childName, this );
-  return this->RegisterGroup< FluxApproximationBase >( childName, std::move( approx ));
+  if( childKey == HybridMimeticDiscretization::CatalogName() )
+  {
+    std::unique_ptr< HybridMimeticDiscretization > hm = std::make_unique< HybridMimeticDiscretization >( childName, this );
+    return this->RegisterGroup< HybridMimeticDiscretization >( childName, std::move( hm ) );
+  }
+  else
+  {
+    std::unique_ptr< FluxApproximationBase > approx = FluxApproximationBase::CatalogInterface::Factory( childKey, childName, this );
+    return this->RegisterGroup< FluxApproximationBase >( childName, std::move( approx ));
+  }
 }
 
 
@@ -51,6 +60,13 @@ void FiniteVolumeManager::ExpandObjectCatalogs()
   for( auto & catalogIter: FluxApproximationBase::GetCatalog())
   {
     CreateChild( catalogIter.first, catalogIter.first );
+  }
+  // Then do the same thing for the HybridMimeticDiscretization
+  for( auto & catalogIter: HybridMimeticDiscretization::GetCatalog())
+  {
+    string const childName = catalogIter.first;
+    std::unique_ptr< HybridMimeticDiscretization > hm = std::make_unique< HybridMimeticDiscretization >( childName, this );
+    this->RegisterGroup< HybridMimeticDiscretization >( childName, std::move( hm ) );
   }
 }
 
@@ -63,6 +79,16 @@ FluxApproximationBase const & FiniteVolumeManager::getFluxApproximation( std::st
 FluxApproximationBase & FiniteVolumeManager::getFluxApproximation( std::string const & name )
 {
   return getGroupReference< FluxApproximationBase >( name );
+}
+
+HybridMimeticDiscretization const & FiniteVolumeManager::getHybridMimeticDiscretization( std::string const & name ) const
+{
+  return getGroupReference< HybridMimeticDiscretization >( name );
+}
+
+HybridMimeticDiscretization & FiniteVolumeManager::getHybridMimeticDiscretization( std::string const & name )
+{
+  return getGroupReference< HybridMimeticDiscretization >( name );
 }
 
 
