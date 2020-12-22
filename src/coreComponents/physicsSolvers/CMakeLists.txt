@@ -72,7 +72,6 @@ set( physicsSolvers_sources
      fluidFlow/SinglePhaseFVM.cpp
      fluidFlow/SinglePhaseFVMKernels.cpp
      fluidFlow/SinglePhaseHybridFVM.cpp     
-     fluidFlow/SinglePhaseHybridFVMKernels.cpp
      fluidFlow/SinglePhaseProppantBase.cpp     
      fluidFlow/wells/WellSolverBase.cpp
      fluidFlow/wells/SinglePhaseWell.cpp          

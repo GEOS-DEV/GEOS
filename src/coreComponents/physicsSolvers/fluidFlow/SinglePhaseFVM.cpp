@@ -48,6 +48,20 @@ SinglePhaseFVM< BASE >::SinglePhaseFVM( const std::string & name,
   m_numDofPerCell = 1;
 }
 
+template< typename BASE >
+void SinglePhaseFVM< BASE >::InitializePreSubGroups( Group * const rootGroup )
+{
+  BASE::InitializePreSubGroups( rootGroup );
+
+  DomainPartition & domain = *rootGroup->GetGroup< DomainPartition >( keys::domain );
+  NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
+  FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
+
+  if( fvManager.GetGroup< FluxApproximationBase >( m_discretizationName ) == nullptr )
+  {
+    GEOSX_ERROR( "A discretization deriving from FluxApproximationBase must be selected with SinglePhaseFVM" );
+  }
+}
 
 template< typename BASE >
 void SinglePhaseFVM< BASE >::SetupDofs( DomainPartition const & domain,
