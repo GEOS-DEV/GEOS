@@ -406,6 +406,62 @@ struct VolumeBalanceKernel
 };
 
 
+/******************************** Kernel launch machinery ********************************/
+
+namespace internal
+{
+
+template< typename T, typename LAMBDA >
+void KernelLaunchSelectorCompSwitch( T value, LAMBDA && lambda )
+{
+  static_assert( std::is_integral< T >::value, "KernelLaunchSelectorCompSwitch: type should be integral" );
+
+  switch( value )
+  {
+    case 1:
+    { lambda( std::integral_constant< T, 1 >() ); return; }
+    case 2:
+    { lambda( std::integral_constant< T, 2 >() ); return; }
+    case 3:
+    { lambda( std::integral_constant< T, 3 >() ); return; }
+    case 4:
+    { lambda( std::integral_constant< T, 4 >() ); return; }
+    case 5:
+    { lambda( std::integral_constant< T, 5 >() ); return; }
+    default:
+    { GEOSX_ERROR( "Unsupported number of components: " << value ); }
+  }
+}
+
+} // namespace helpers
+
+template< typename KERNELWRAPPER, typename ... ARGS >
+void KernelLaunchSelector1( localIndex numComp, ARGS && ... args )
+{
+  internal::KernelLaunchSelectorCompSwitch( numComp, [&] ( auto NC )
+  {
+    KERNELWRAPPER::template Launch< NC() >( std::forward< ARGS >( args )... );
+  } );
+}
+
+template< typename KERNELWRAPPER, typename ... ARGS >
+void KernelLaunchSelector2( localIndex numComp, localIndex numPhase, ARGS && ... args )
+{
+  internal::KernelLaunchSelectorCompSwitch( numComp, [&] ( auto NC )
+  {
+    switch( numPhase )
+    {
+      case 2:
+        { KERNELWRAPPER::template Launch< NC(), 2 >( std::forward< ARGS >( args )... ); return; }
+      case 3:
+        { KERNELWRAPPER::template Launch< NC(), 3 >( std::forward< ARGS >( args )... ); return; }
+      default:
+        { GEOSX_ERROR( "Unsupported number of phases: " << numPhase ); }
+    }
+  } );
+}
+
+
 } // namespace IsotherCompositionalMultiphaseFlowKernels
 
 } // namespace geosx

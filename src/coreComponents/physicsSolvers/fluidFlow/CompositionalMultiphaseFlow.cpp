@@ -44,7 +44,6 @@ namespace geosx
 
 using namespace dataRepository;
 using namespace constitutive;
-using namespace CompositionalMultiphaseFlowKernels;
 
 static constexpr real64 minDensForDivision = 1e-10;
 
@@ -351,7 +350,7 @@ void CompositionalMultiphaseFlow::UpdateComponentFraction( Group & dataGroup ) c
   arrayView2d< real64 const > const dCompDens =
     dataGroup.getReference< array2d< real64 > >( viewKeyStruct::deltaGlobalCompDensityString );
 
-  KernelLaunchSelector1
+  CompositionalMultiphaseFlowKernels::KernelLaunchSelector1
   < CompositionalMultiphaseFlowKernels::ComponentFractionKernel >( m_numComponents,
                                                                    dataGroup.size(),
                                                                    compDens,
@@ -398,7 +397,7 @@ void CompositionalMultiphaseFlow::UpdatePhaseVolumeFraction( Group & dataGroup,
 
   if ( m_isothermalFlag )
   {
-    KernelLaunchSelector2
+    IsothermalCompositionalMultiphaseFlowKernels::KernelLaunchSelector2
     < IsothermalCompositionalMultiphaseFlowKernels::PhaseVolumeFractionKernel >(m_numComponents, m_numPhases,
                                                                                 dataGroup.size(),
                                                                                 compDens,
@@ -422,7 +421,7 @@ void CompositionalMultiphaseFlow::UpdatePhaseVolumeFraction( Group & dataGroup,
     arrayView2d< real64 > const dPhaseVolFrac_dTemp =
         dataGroup.getReference< array2d< real64 > >( viewKeyStruct::dPhaseVolumeFraction_dTemperatureString );
 
-    KernelLaunchSelector2
+    CompositionalMultiphaseFlowKernels::KernelLaunchSelector2
     < CompositionalMultiphaseFlowKernels::PhaseVolumeFractionKernel >( m_numComponents, m_numPhases,
                                                                        dataGroup.size(),
                                                                        compDens,
@@ -487,7 +486,7 @@ void CompositionalMultiphaseFlow::UpdatePhaseMobility( Group & dataGroup, localI
 
   if (m_isothermalFlag)
   {
-    KernelLaunchSelector2
+    IsothermalCompositionalMultiphaseFlowKernels::KernelLaunchSelector2
     < IsothermalCompositionalMultiphaseFlowKernels::PhaseMobilityKernel >( m_numComponents, m_numPhases,
                                                     dataGroup.size(),
                                                     dCompFrac_dCompDens,
@@ -513,7 +512,7 @@ void CompositionalMultiphaseFlow::UpdatePhaseMobility( Group & dataGroup, localI
     arrayView2d< real64 > const dPhaseMob_dTemp =
         dataGroup.getReference< array2d< real64 > >( viewKeyStruct::dPhaseMobility_dTemperatureString );
 
-    KernelLaunchSelector2
+    CompositionalMultiphaseFlowKernels::KernelLaunchSelector2
     < CompositionalMultiphaseFlowKernels::PhaseMobilityKernel >( m_numComponents, m_numPhases,
                                                     dataGroup.size(),
                                                     dCompFrac_dCompDens,
@@ -893,9 +892,9 @@ void CompositionalMultiphaseFlow::AssembleAccumulationTerms( DomainPartition con
     arrayView4d< real64 const > const & dPhaseCompFrac_dPres = fluid.dPhaseCompFraction_dPressure();
     arrayView5d< real64 const > const & dPhaseCompFrac_dComp = fluid.dPhaseCompFraction_dGlobalCompFraction();
 
-    if ( m_istothermalFlag )
+    if ( m_isothermalFlag )
     {
-      KernelLaunchSelector1
+      IsothermalCompositionalMultiphaseFlowKernels::KernelLaunchSelector1
       < IsothermalCompositionalMultiphaseFlowKernels::AccumulationKernel >( m_numComponents,
                                                        m_numPhases,
                                                        subRegion.size(),
@@ -944,7 +943,7 @@ void CompositionalMultiphaseFlow::AssembleAccumulationTerms( DomainPartition con
       arrayView1d< real64 const > const & dRockInternalEnergy_dTemp = solid.dInternalEnergy_dTemperature();
       arrayView1d< real64 const > const & rockDensity = solid.density();
 
-      KernelLaunchSelector1
+      CompositionalMultiphaseFlowKernels::KernelLaunchSelector1
       < CompositionalMultiphaseFlowKernels::AccumulationKernel >( m_numComponents,
                                                        m_numPhases,
                                                        subRegion.size(),
@@ -1053,7 +1052,7 @@ void CompositionalMultiphaseFlow::AssembleFluxTerms( real64 const dt,
   {
     if ( m_isothermalFlag )
     {
-      KernelLaunchSelector1
+      IsothermalCompositionalMultiphaseFlowKernels::KernelLaunchSelector1
       < IsothermalCompositionalMultiphaseFlowKernels::FluxKernel >(  m_numComponents,
                                                                      m_numPhases,
                                                                      stencil,
@@ -1083,7 +1082,7 @@ void CompositionalMultiphaseFlow::AssembleFluxTerms( real64 const dt,
                                                                      localRhs.toView()  );
     }else
     {
-      KernelLaunchSelector1
+      CompositionalMultiphaseFlowKernels::KernelLaunchSelector1
       < CompositionalMultiphaseFlowKernels::FluxKernel >(  m_numComponents,
                                                            m_numPhases,
                                                            stencil,
@@ -1160,7 +1159,7 @@ void CompositionalMultiphaseFlow::AssembleVolumeBalanceTerms( DomainPartition co
 
     if ( m_isothermalFlag )
     {
-      KernelLaunchSelector2
+      IsothermalCompositionalMultiphaseFlowKernels::KernelLaunchSelector2
       < IsothermalCompositionalMultiphaseFlowKernels::VolumeBalanceKernel >( m_numComponents, m_numPhases,
                                                                              subRegion.size(),
                                                                              dofManager.rankOffset(),
@@ -1180,7 +1179,7 @@ void CompositionalMultiphaseFlow::AssembleVolumeBalanceTerms( DomainPartition co
       arrayView2d< real64 const > const & dPhaseVolFrac_dTemp =
             subRegion.getReference< array2d< real64 > >( viewKeyStruct::dPhaseVolumeFraction_dTemperatureString );
 
-      KernelLaunchSelector2
+      CompositionalMultiphaseFlowKernels::KernelLaunchSelector2
       < CompositionalMultiphaseFlowKernels::VolumeBalanceKernel >( m_numComponents, m_numPhases,
                                                                    subRegion.size(),
                                                                    dofManager.rankOffset(),
@@ -1975,7 +1974,7 @@ void CompositionalMultiphaseFlow::ResetViews( MeshLevel & mesh )
     m_dPhaseMassDens_dTemp = elemManager.ConstructMaterialArrayViewAccessor< real64, 3 >( keys::dPhaseMassDensity_dTemperatureString,
                                                                                           targetRegionNames(),
                                                                                           fluidModelNames() );
-    m_dPhaseMassDens_dTemp.setName( getName() + "/accessors/" + viewKeyStruct::dPhaseMassDensity_dTemperatureString );
+    m_dPhaseMassDens_dTemp.setName( getName() + "/accessors/" + keys::dPhaseMassDensity_dTemperatureString );
 
     m_dPhaseCompFrac_dTemp.clear();
     m_dPhaseCompFrac_dTemp = elemManager.ConstructMaterialArrayViewAccessor< real64, 4 >( keys::dPhaseCompFraction_dTemperatureString,
@@ -2004,7 +2003,7 @@ void CompositionalMultiphaseFlow::ResetViews( MeshLevel & mesh )
     m_dPhaseEnthalpy_dTemp = elemManager.ConstructMaterialArrayViewAccessor< real64, 3 >( keys::dPhaseEnthalpy_dTemperatureString,
                                                                                           targetRegionNames(),
                                                                                           fluidModelNames() );
-    m_dPhaseEnthalpy_dTemp.setName( getName() + "/accessors/" + viewKeyStruct::dPhaseEnthalpy_dTemperatureString );
+    m_dPhaseEnthalpy_dTemp.setName( getName() + "/accessors/" + keys::dPhaseEnthalpy_dTemperatureString );
 
     m_dPhaseEnthalpy_dComp.clear();
     m_dPhaseEnthalpy_dComp = elemManager.ConstructMaterialArrayViewAccessor< real64, 4 >( keys::dPhaseEnthalpy_dGlobalCompFractionString,

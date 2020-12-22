@@ -32,6 +32,7 @@
 #include "mesh/MeshForLoopInterface.hpp"
 #include "meshUtilities/PerforationData.hpp"
 #include "meshUtilities/ComputationalGeometry.hpp"
+#include "physicsSolvers/fluidFlow/IsothermalCompositionalMultiphaseFlowKernels.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseFlowKernels.hpp"
 #include "physicsSolvers/fluidFlow/wells/CompositionalMultiphaseWellKernels.hpp"
 #include "physicsSolvers/fluidFlow/wells/SinglePhaseWellKernels.hpp"
@@ -357,7 +358,7 @@ void CompositionalMultiphaseWell::UpdateFluidModel( WellElementSubRegion & subRe
   {
     typename TYPEOFREF( castedFluid ) ::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
 
-    CompositionalMultiphaseFlowKernels::FluidUpdateKernel::Launch< serialPolicy >( subRegion.size(),
+    IsothermalCompositionalMultiphaseFlowKernels::FluidUpdateKernel::Launch< serialPolicy >( subRegion.size(),
                                                                                    fluidWrapper,
                                                                                    pres,
                                                                                    dPres,
@@ -398,7 +399,7 @@ void CompositionalMultiphaseWell::UpdatePhaseVolumeFraction( WellElementSubRegio
   arrayView3d< real64 const > const & dPhaseDens_dPres = fluid.dPhaseDensity_dPressure();
   arrayView4d< real64 const > const & dPhaseDens_dComp = fluid.dPhaseDensity_dGlobalCompFraction();
 
-  CompositionalMultiphaseFlowKernels::KernelLaunchSelector2< CompositionalMultiphaseFlowKernels::PhaseVolumeFractionKernel
+  IsothermalCompositionalMultiphaseFlowKernels::KernelLaunchSelector2< IsothermalCompositionalMultiphaseFlowKernels::PhaseVolumeFractionKernel
                                                              >( NumFluidComponents(), NumFluidPhases(),
                                                                 subRegion.size(),
                                                                 compDens,
@@ -542,7 +543,7 @@ void CompositionalMultiphaseWell::InitializeWells( DomainPartition & domain )
     {
       typename TYPEOFREF( castedFluid ) ::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
 
-      CompositionalMultiphaseFlowKernels::FluidUpdateKernel::Launch< serialPolicy >( subRegion.size(),
+      IsothermalCompositionalMultiphaseFlowKernels::FluidUpdateKernel::Launch< serialPolicy >( subRegion.size(),
                                                                                      fluidWrapper,
                                                                                      wellElemPressure,
                                                                                      m_temperature,

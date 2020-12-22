@@ -201,6 +201,7 @@ void PhaseVolumeFractionKernel::
           arrayView4d< real64 const > const & dPhaseDens_dComp,
           arrayView3d< real64 const > const & phaseFrac,
           arrayView3d< real64 const > const & dPhaseFrac_dPres,
+          arrayView3d< real64 const > const & dPhaseFrac_dTemp,
           arrayView4d< real64 const > const & dPhaseFrac_dComp,
           arrayView2d< real64 > const & phaseVolFrac,
           arrayView2d< real64 > const & dPhaseVolFrac_dPres,
@@ -218,7 +219,7 @@ void PhaseVolumeFractionKernel::
                        dPhaseDens_dComp[a][0],
                        phaseFrac[a][0],
                        dPhaseFrac_dPres[a][0],
-                       dPhaseDens_dTemp[a][0],
+                       dPhaseFrac_dTemp[a][0],
                        dPhaseFrac_dComp[a][0],
                        phaseVolFrac[a],
                        dPhaseVolFrac_dPres[a],
@@ -704,19 +705,19 @@ AccumulationKernel::
     // local accumulation
     localAccum[NC+1] = phaseEnergyNew - phaseEnergyOld + solidEnergyNew - solidEnergyOld;
 
-    real64 const dPhaseEnergy_dP = dPhaseAmount_dP * phaseInternalEnergy[ip] + phaseAmountNew * dPhaseInternalEnergy_dP[ip];
-    real64 const dPhaseEnergy_dT = dPhaseAmount_dT * phaseInternalEnergy[ip] + phaseAmountNew * dPhaseInternalEnergy_dT[ip];
+    real64 const dPhaseEnergy_dP = dPhaseAmount_dP * phaseInternalEnergy[ip] + phaseAmountNew * dPhaseInternalEnergy_dPres[ip];
+    real64 const dPhaseEnergy_dT = dPhaseAmount_dT * phaseInternalEnergy[ip] + phaseAmountNew * dPhaseInternalEnergy_dTemp[ip];
 
-    real64 const dSolidInternalEnergy_dP = -dPoro_dP * volNew * rockInternalEnergyNew * rockDensity;
+    real64 const dSolidInternalEnergy_dP = -dPoro_dP * volNew * rockInternalEnergy * rockDensity;
     // TODO porosity and volume may depend on temperature
     real64 const dSolidInternalEnergy_dT = (1 - poroNew) * volNew * dRockInternalEnergy_dTemp;
 
     // derivatives w.r.t. pressure and temperature
-    localAccumJacobian[NC+1][0]    += dPhaseEnergy_dP;
+    localAccumJacobian[NC+1][0]    += dPhaseEnergy_dP + dSolidInternalEnergy_dP;
     localAccumJacobian[NC+1][NC+2] += dPhaseEnergy_dT + dSolidInternalEnergy_dT;
 
     // derivatives w.r.t. component densities
-    applyChainRule( NC, dCompFrac_dCompDens, dPhaseInternalEnergy_dComp[ip], dPhaseIntenalEnergy_dC );
+    applyChainRule( NC, dCompFrac_dCompDens, dPhaseInternalEnergy_dComp[ip], dPhaseInternalEnergy_dC );
     for ( localIndex jc = 0; jc < NC; ++jc )
     {
       real64 const dPhaseEnergy_dC = phaseInternalEnergy[ip] * dPhaseAmount_dC[jc] +
@@ -762,9 +763,9 @@ AccumulationKernel::
           arrayView3d< real64 const > const & dPhaseInternalEnergy_dTemp,
           arrayView4d< real64 const > const & dPhaseInternalEnergy_dComp,
           arrayView1d< real64 const > const & rockInternalEnergyOld,
-          arrayView1d< real64 const > const & rockInternalEnergy,
-          arrayView1d< real64 const > const & dRockInternalEnergy_dTemp,
-          arrayView1d< real64 const > const & rockDensity,
+          arrayView2d< real64 const > const & rockInternalEnergy,
+          arrayView2d< real64 const > const & dRockInternalEnergy_dTemp,
+          arrayView2d< real64 const > const & rockDensity,
           CRSMatrixView< real64, globalIndex const > const & localMatrix,
           arrayView1d< real64 > const & localRhs )
 {
@@ -809,7 +810,7 @@ AccumulationKernel::
                    rockInternalEnergyOld[ei],
                    rockInternalEnergy[ei][0],
                    dRockInternalEnergy_dTemp[ei][0],
-                   rockDensity[ei],
+                   rockDensity[ei][0],
                    localAccum,
                    localAccumJacobian );
 
@@ -864,14 +865,14 @@ AccumulationKernel::
 				          arrayView4d< real64 const > const & dPhaseCompFrac_dTemp, \
                   arrayView5d< real64 const > const & dPhaseCompFrac_dComp, \
 				          arrayView2d< real64 const > const & phaseInternalEnergyOld, \
-				          arrayView2d< real64 const > const & phaseInternalEnergy, \
-				          arrayView2d< real64 const > const & dPhaseInternalEnergy_dPres, \
-				          arrayView2d< real64 const > const & dPhaseInternalEnergy_dTemp, \
-				          arrayView3d< real64 const > const & dPhaseInternalEnergy_dComp, \
+				          arrayView3d< real64 const > const & phaseInternalEnergy, \
+				          arrayView3d< real64 const > const & dPhaseInternalEnergy_dPres, \
+				          arrayView3d< real64 const > const & dPhaseInternalEnergy_dTemp, \
+				          arrayView4d< real64 const > const & dPhaseInternalEnergy_dComp, \
 				          arrayView1d< real64 const > const & rockInternalEnergyOld, \
-				          arrayView1d< real64 const > const & rockInternalEnergy, \
-				          arrayView1d< real64 const > const & dRockInternalEnergy_dTemp, \
-				          arrayView1d< real64 const > const & rockDensity, \
+				          arrayView2d< real64 const > const & rockInternalEnergy, \
+				          arrayView2d< real64 const > const & dRockInternalEnergy_dTemp, \
+				          arrayView2d< real64 const > const & rockDensity, \
                   CRSMatrixView< real64, globalIndex const > const & localMatrix, \
                   arrayView1d< real64 > const & localRhs )
 
