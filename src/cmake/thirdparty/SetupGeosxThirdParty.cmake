@@ -538,4 +538,4 @@ if(NOT ENABLE_${upper_LAI})
 endif()
 option(GEOSX_LA_INTERFACE_${upper_LAI} "${upper_LAI} LA interface is selected" ON)
 
-message(STATUS "thirdPartyLibs = ${thirdPartyLibs}")ggg
+message(STATUS "thirdPartyLibs = ${thirdPartyLibs}")
