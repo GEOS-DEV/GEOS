@@ -767,8 +767,6 @@ FluxKernel::
            arraySlice1d< real64 > const localFlux,
            arraySlice2d< real64 > const localFluxJacobian )
 {
-//  bool consistency_check = true;//temp variable for validation
-
   localIndex constexpr NDOF = NC + 1;
   localIndex const NP = numPhases;
 
@@ -786,8 +784,7 @@ FluxKernel::
   real64 dTotFlux_dC[MAX_STENCIL][NC]{};
 
   //useful lambda
-  // helpers lambda definition to avoid too much dulpication -- change name to avoid confusion
-  // cpp-rules pointer to functions are only convertible to no-capture lambdas
+  // helpers lambda definition to avoid too much dulpication
   auto dGravHead_dX =
     [&] (real64& GH, real64 dGH_dP[NUM_ELEMS], real64 dGH_dC[NUM_ELEMS][NC], real64 dPr_dC[NC], int kp)
     {
@@ -845,10 +842,6 @@ FluxKernel::
   // loop over phases, compute and upwind phase flux and sum contributions to each component's flux
   for( localIndex ip = 0; ip < NP; ++ip )
   {
-    // clear working arrays -- unused because of lambda
-//    real64 densMean{};
-//    real64 dDensMean_dP[NUM_ELEMS]{};
-//    real64 dDensMean_dC[NUM_ELEMS][NC]{};
 
     // create local work arrays
     real64 phaseFlux{};
@@ -871,31 +864,8 @@ FluxKernel::
     // calculate quantities on primary connected cells
 
     dGravHead_dX(gravHead, dGravHead_dP, dGravHead_dC, dProp_dC, ip);
-/*    for( localIndex i = 0; i < NUM_ELEMS; ++i )
-    {
-      localIndex const er  = seri[i];
-      localIndex const esr = sesri[i];
-      localIndex const ei  = sei[i];
 
-      // density
-      real64 const density  = phaseMassDens[er][esr][ei][0][ip];
-      real64 const dDens_dP = dPhaseMassDens_dPres[er][esr][ei][0][ip];
-
-      applyChainRule( NC,
-                      dCompFrac_dCompDens[er][esr][ei],
-                      dPhaseMassDens_dComp[er][esr][ei][0][ip],
-                      dProp_dC );
-
-      // average density and derivatives
-      densMean += 0.5 * density;
-      dDensMean_dP[i] = 0.5 * dDens_dP;
-      for( localIndex jc = 0; jc < NC; ++jc )
-      {
-        dDensMean_dC[i][jc] = 0.5 * dProp_dC[jc];
-      }
-    }*/
     //***** calculation of flux *****
-
     // compute potential difference MPFA-style
     for( localIndex i = 0; i < stencilSize; ++i )
     {
@@ -935,23 +905,6 @@ FluxKernel::
       {
         dPresGrad_dC[i][jc] += -weight * dCapPressure_dC[jc];
       }
-
-/*      real64 const gravD = weight * gravCoef[er][esr][ei];
-
-      // the density used in the potential difference is always a mass density
-      // unlike the density used in the phase mobility, which is a mass density
-      // if useMass == 1 and a molar density otherwise
-      gravHead += densMean * gravD;
-
-      // need to add contributions from both cells the mean density depends on
-      for( localIndex j = 0; j < NUM_ELEMS; ++j )
-      {
-        dGravHead_dP[j] += dDensMean_dP[j] * gravD;
-        for( localIndex jc = 0; jc < NC; ++jc )
-        {
-          dGravHead_dC[j][jc] += dDensMean_dC[j][jc] * gravD;
-        }
-      }*/
     }
 
     // *** upwinding ***
@@ -972,7 +925,7 @@ FluxKernel::
     real64 const mobility = phaseMob[er_up][esr_up][ei_up][ip];
 
     // skip the phase flux if phase not present or immobile upstream
-    if( std::fabs( mobility ) < 1e-20 ) // TODO better constant : LvArray::NumericLimits< T >::epsilon ?
+    if( std::fabs( mobility ) < 1e-20 ) // TODO better constant
     {
       continue;
     }
@@ -993,7 +946,6 @@ FluxKernel::
       {
         dPhaseFlux_dC[ke][jc] += dPresGrad_dC[ke][jc];
       }
-
     }
 
     // gravitational head depends only on the two cells connected (same as mean density)
@@ -1031,10 +983,10 @@ FluxKernel::
       dTotFlux_dP[k_up] += dMob_dP * potGrad;
 
     for( localIndex jc = 0; jc < NC; ++jc )
-      {
+    {
         dPhaseFlux_dC[k_up][jc] += dPhaseMob_dCompSub[jc] * potGrad;
         dTotFlux_dC[k_up][jc] += dPhaseMob_dCompSub[jc] * potGrad;
-      }
+    }
 
     if( !IS_UT_FORM ) // skip  if you intend to use fixed total valocity formulation
     {
@@ -1071,28 +1023,14 @@ FluxKernel::
         }
       }
     }
-//    std::cout << phaseFlux  << " ";
     }
-
-//  std::cout << std::endl;
   // *** end of upwinding
 
   //if total flux formulation
   if( IS_UT_FORM )
   {
-//    std::cout << std::endl << "\t check: ";
-    // upwind based on the direction of the total velocity
-//    localIndex const k_up = (totFlux > 0) ? 0 : 1;
-//
-//    localIndex er_up  = seri[k_up];
-//    localIndex esr_up = sesri[k_up];
-//    localIndex ei_up  = sei[k_up];
 
-    /* get PPU repetition upwind for mobOther term in gravity contribution */
-    // TODO move into loop if capilary forces are considered
-    real64 presGrad {};
-//    if( consistency_check )
-//    {
+      real64 presGrad {};
       for( localIndex i = 0; i < stencilSize; ++i )
       {
         localIndex const er = seri[i];
@@ -1102,7 +1040,6 @@ FluxKernel::
         presGrad += weight * ( pres[er][esr][ei] + dPres[er][esr][ei] );
 
       }
-//    }
 
     for( localIndex ip = 0; ip < NP; ++ip )
     {
@@ -1124,16 +1061,10 @@ FluxKernel::
 
       dGravHead_dX( gravHead, dGravHead_dP, dGravHead_dC, dProp_dC, ip );
       /* try consistency check -- chossing mobility upwinf as in PPU */
-//      localIndex k_up_alt {}; // to be ouput
-//      localIndex k_up_ihu {}; // to be output
-//      if( consistency_check )
-//      {
-        localIndex const k_up = ( presGrad - gravHead >= 0 ) ? 0 : 1;
-        localIndex const er_up = seri[k_up];
-        localIndex const esr_up = sesri[k_up];
-        localIndex const ei_up = sei[k_up];
-//      }
-
+      localIndex const k_up = ( presGrad - gravHead >= 0 ) ? 0 : 1;
+      localIndex const er_up = seri[k_up];
+      localIndex const esr_up = sesri[k_up];
+      localIndex const ei_up = sei[k_up];
 
       real64 const mobility = phaseMob[er_up][esr_up][ei_up][ip];
 
@@ -1177,7 +1108,6 @@ FluxKernel::
       }
 
       /***           gravity term                ***/
-
       for( localIndex jp = 0; jp < NP; ++jp )
       {
         //should we skip or spare a branching cdt ?
@@ -1190,10 +1120,8 @@ FluxKernel::
 
           dGravHead_dX( gravHeadOther, dGravHeadOther_dP, dGravHeadOther_dC, dPropOther_dC, jp );
 
-       //mobOther is upwinded as PPU for consistency with totMob in fractional flow fflow
-          //localIndex const
+         //mobOther is upwinded as PPU for consistency with totMob in fractional flow fflow
           localIndex const k_up_ihu = ( presGrad - gravHeadOther >= 0) ? 0 : 1;//classical PPU
-//          localIndex const k_up_ihu = (gravHeadOther <= 0) ? 0 : 1; //PU base on gravHead
           localIndex er_ihu = seri[k_up_ihu];
           localIndex esr_ihu = sesri[k_up_ihu];
           localIndex ei_ihu = sei[k_up_ihu];
@@ -1204,11 +1132,6 @@ FluxKernel::
 
           if( std::fabs(mobOther) < 1e-20 )
             continue;
-
-          //based on ut-upwind
-//          real64 const mobOther = phaseMob[er_up][esr_up][ei_up][jp];
-//          real64 const dMobOther_dP = dPhaseMob_dPres[er_up][esr_up][ei_up][jp];
-//          arraySlice1d< real64 const > dMobOther_dC = dPhaseMob_dComp[er_up][esr_up][ei_up][jp];
 
           phaseFlux -= fflow * mobOther * ( gravHead - gravHeadOther );
 
@@ -1226,23 +1149,19 @@ FluxKernel::
             }
           }
 
-//          if(k_up == k_up_ihu)
-//          {
-            for( localIndex ke = 0; ke < NUM_ELEMS; ++ke )
+          for( localIndex ke = 0; ke < NUM_ELEMS; ++ke )
+          {
+            dPhaseFlux_dP[ke] -= fflow * mobOther * ( dGravHead_dP[ke] - dGravHeadOther_dP[ke] );
+            //loop nc
+            for( localIndex jc = 0; jc < NC; ++jc )
             {
-              dPhaseFlux_dP[ke] -= fflow * mobOther * ( dGravHead_dP[ke] - dGravHeadOther_dP[ke] );
-              //loop nc
-              for( localIndex jc = 0; jc < NC; ++jc )
-              {
-                dPhaseFlux_dC[ke][jc] -= fflow * mobOther * ( dGravHead_dC[ke][jc] - dGravHeadOther_dC[ke][jc] );
-              }
+              dPhaseFlux_dC[ke][jc] -= fflow * mobOther * ( dGravHead_dC[ke][jc] - dGravHeadOther_dC[ke][jc] );
             }
-//          }
+          }
 
         }
       }
 
-//      std::cout << phaseFlux << " (" << k_up << " " << k_up_ihu << " " << k_up_alt << ") " ;
       // slice some constitutive arrays to avoid too much indexing in component loop
       arraySlice1d< real64 const > phaseCompFracSub = phaseCompFrac[er_up][esr_up][ei_up][0][ip];
       arraySlice1d< real64 const > dPhaseCompFrac_dPresSub = dPhaseCompFrac_dPres[er_up][esr_up][ei_up][0][ip];
@@ -1275,9 +1194,7 @@ FluxKernel::
           dCompFlux_dC[k_up][ic][jc] += phaseFlux * dProp_dC[jc];
         }
       }
-//      std::cout << phaseFlux << " ";
     }
-//    std::cout << std::endl;
 
   }//end If UT_FORM
 
