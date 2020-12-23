@@ -512,6 +512,7 @@ struct FluxKernel
           ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
           ElementViewConst< arrayView2d< real64 const > > const & phaseMob,
           ElementViewConst< arrayView2d< real64 const > > const & dPhaseMob_dPres,
+          ElementViewConst< arrayView2d< real64 const > > const & dPhaseMob_dTemp,
           ElementViewConst< arrayView3d< real64 const > > const & dPhaseMob_dComp,
           ElementViewConst< arrayView2d< real64 const > > const & phaseVolFrac,
           ElementViewConst< arrayView2d< real64 const > > const & dPhaseVolFrac_dPres,
@@ -522,6 +523,7 @@ struct FluxKernel
           ElementViewConst< arrayView3d< real64 const > > const & dPhaseMassDens_dPres,
           ElementViewConst< arrayView3d< real64 const > > const & dPhaseMassDens_dTemp,
           ElementViewConst< arrayView4d< real64 const > > const & dPhaseMassDens_dComp,
+          ElementViewConst< arrayView4d< real64 const > > const & phaseCompFrac,
           ElementViewConst< arrayView4d< real64 const > > const & dPhaseCompFrac_dPres,
           ElementViewConst< arrayView4d< real64 const > > const & dPhaseCompFrac_dTemp,
           ElementViewConst< arrayView5d< real64 const > > const & dPhaseCompFrac_dComp,
@@ -559,7 +561,7 @@ struct VolumeBalanceKernel
            arraySlice1d< real64 const > const & dPhaseVolFrac_dTemp,
            arraySlice2d< real64 const > const & dPhaseVolFrac_dCompDens,
            real64 & localVolBalance,
-           real64 * const localVolBalanceJacobian );
+           real64 (& localVolBalanceJacobian)[NC+2]  );
 
   template< localIndex NC, localIndex NP >
   static void

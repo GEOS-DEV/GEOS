@@ -512,6 +512,9 @@ void CompositionalMultiphaseFlow::UpdatePhaseMobility( Group & dataGroup, localI
     arrayView2d< real64 > const dPhaseMob_dTemp =
         dataGroup.getReference< array2d< real64 > >( viewKeyStruct::dPhaseMobility_dTemperatureString );
 
+    arrayView2d< real64 const > const dPhaseVolFrac_dTemp =
+        dataGroup.getReference< array2d< real64 > >( viewKeyStruct::dPhaseVolumeFraction_dTemperatureString );
+
     CompositionalMultiphaseFlowKernels::KernelLaunchSelector2
     < CompositionalMultiphaseFlowKernels::PhaseMobilityKernel >( m_numComponents, m_numPhases,
                                                     dataGroup.size(),
@@ -939,9 +942,9 @@ void CompositionalMultiphaseFlow::AssembleAccumulationTerms( DomainPartition con
 
       arrayView1d< real64 const > const & rockInternalEnergyOld =
           subRegion.getReference< array1d< real64 > >(viewKeyStruct::rockInternalEnergyOldString );
-      arrayView1d< real64 const > const & rockInternalEnergy = solid.internalEnergy();
-      arrayView1d< real64 const > const & dRockInternalEnergy_dTemp = solid.dInternalEnergy_dTemperature();
-      arrayView1d< real64 const > const & rockDensity = solid.density();
+      arrayView2d< real64 const > const & rockInternalEnergy = solid.internalEnergy();
+      arrayView2d< real64 const > const & dRockInternalEnergy_dTemp = solid.dInternalEnergy_dTemperature();
+      arrayView2d< real64 const > const & rockDensity = solid.density();
 
       CompositionalMultiphaseFlowKernels::KernelLaunchSelector1
       < CompositionalMultiphaseFlowKernels::AccumulationKernel >( m_numComponents,
@@ -971,7 +974,7 @@ void CompositionalMultiphaseFlow::AssembleAccumulationTerms( DomainPartition con
                                                        dPhaseCompFrac_dPres,
                                                        dPhaseCompFrac_dTemp,
                                                        dPhaseCompFrac_dComp,
-                                                       phaseInternalEnergyOld[ei],
+                                                       phaseInternalEnergyOld,
                                                        phaseInternalEnergy,
                                                        dPhaseInternalEnergy_dPres,
                                                        dPhaseInternalEnergy_dTemp,
@@ -1387,11 +1390,11 @@ void CompositionalMultiphaseFlow::ApplyDirichletBC( real64 const time,
       typename TYPEOFREF( castedFluid ) ::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
 
       // MultiFluid models are not thread-safe or device-capable yet
-      FluidUpdateKernel::Launch< serialPolicy >( targetSet,
-                                                 fluidWrapper,
-                                                 bcPres,
-                                                 m_temperature,
-                                                 compFrac );
+      IsothermalCompositionalMultiphaseFlowKernels::FluidUpdateKernel::Launch< serialPolicy >( targetSet,
+                                                                                               fluidWrapper,
+                                                                                               bcPres,
+                                                                                               m_uniformTemperature,
+                                                                                               compFrac );
     } );
 
     forAll< parallelDevicePolicy<> >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const a )
@@ -1438,6 +1441,8 @@ real64 CompositionalMultiphaseFlow::CalculateResidualNorm( DomainPartition const
   globalIndex const rankOffset = dofManager.rankOffset();
   string const dofKey = dofManager.getKey( viewKeyStruct::dofFieldString );
 
+  real64 residual;
+
   if ( m_isothermalFlag )
   {
   localIndex const NDOF = m_numComponents + 1;
@@ -1475,7 +1480,7 @@ real64 CompositionalMultiphaseFlow::CalculateResidualNorm( DomainPartition const
   } );
 
   // compute global residual norm
-  real64 const residual = std::sqrt( MpiWrapper::Sum( localResidualNorm ) );
+  residual = std::sqrt( MpiWrapper::Sum( localResidualNorm ) );
 
   if( getLogLevel() >= 1 && logger::internal::rank==0 )
   {
@@ -1527,6 +1532,7 @@ real64 CompositionalMultiphaseFlow::CalculateResidualNorm( DomainPartition const
     real64 const flowResidual   = std::sqrt( MpiWrapper::Sum( localFlowResidualNorm ) );
     real64 const energyResidual = std::sqrt( MpiWrapper::Sum( localEnergyResidualNorm ) );
 
+    residual = ( flowResidual + energyResidual ) / 2;
     if( getLogLevel() >= 1 && logger::internal::rank==0 )
     {
       char output[200] = {0};

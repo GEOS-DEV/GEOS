@@ -703,7 +703,7 @@ AccumulationKernel::
     real64 const solidEnergyOld = (1 - poroOld) * volOld * rockInternalEnergyOld * rockDensity;
 
     // local accumulation
-    localAccum[NC+1] = phaseEnergyNew - phaseEnergyOld + solidEnergyNew - solidEnergyOld;
+    localAccum[NC] = phaseEnergyNew - phaseEnergyOld + solidEnergyNew - solidEnergyOld;
 
     real64 const dPhaseEnergy_dP = dPhaseAmount_dP * phaseInternalEnergy[ip] + phaseAmountNew * dPhaseInternalEnergy_dPres[ip];
     real64 const dPhaseEnergy_dT = dPhaseAmount_dT * phaseInternalEnergy[ip] + phaseAmountNew * dPhaseInternalEnergy_dTemp[ip];
@@ -713,8 +713,8 @@ AccumulationKernel::
     real64 const dSolidInternalEnergy_dT = (1 - poroNew) * volNew * dRockInternalEnergy_dTemp;
 
     // derivatives w.r.t. pressure and temperature
-    localAccumJacobian[NC+1][0]    += dPhaseEnergy_dP + dSolidInternalEnergy_dP;
-    localAccumJacobian[NC+1][NC+2] += dPhaseEnergy_dT + dSolidInternalEnergy_dT;
+    localAccumJacobian[NC][0]    += dPhaseEnergy_dP + dSolidInternalEnergy_dP;
+    localAccumJacobian[NC][NC+1] += dPhaseEnergy_dT + dSolidInternalEnergy_dT;
 
     // derivatives w.r.t. component densities
     applyChainRule( NC, dCompFrac_dCompDens, dPhaseInternalEnergy_dComp[ip], dPhaseInternalEnergy_dC );
@@ -723,7 +723,7 @@ AccumulationKernel::
       real64 const dPhaseEnergy_dC = phaseInternalEnergy[ip] * dPhaseAmount_dC[jc] +
           dPhaseInternalEnergy_dC[jc] * phaseAmountNew;
 
-      localAccumJacobian[NC+1][jc + 1] += dPhaseEnergy_dC;
+      localAccumJacobian[NC][jc + 1] += dPhaseEnergy_dC;
     }
   }
 }
@@ -933,6 +933,11 @@ FluxKernel::
   localIndex constexpr NDOF = NC + 2;
   localIndex const NP = numPhases;
 
+  // they will be useful for conduction
+  GEOSX_UNUSED_VAR( temp );
+  GEOSX_UNUSED_VAR( dTemp );
+  GEOSX_UNUSED_VAR( phaseVolFrac );
+
   real64 compFlux[NC]{};
   real64 dCompFlux_dP[MAX_STENCIL][NC]{};
   real64 dCompFlux_dT[MAX_STENCIL][NC]{};
@@ -982,7 +987,7 @@ FluxKernel::
       // density
       real64 const density  = phaseMassDens[er][esr][ei][0][ip];
       real64 const dDens_dP = dPhaseMassDens_dPres[er][esr][ei][0][ip];
-      real64 const dDens_dT = dPhaseMassDens_dT[er][esr][ei][0][ip];
+      real64 const dDens_dT = dPhaseMassDens_dTemp[er][esr][ei][0][ip];
 
       applyChainRule( NC,
                       dCompFrac_dCompDens[er][esr][ei],
@@ -1121,6 +1126,7 @@ FluxKernel::
     }
 
     real64 const dMob_dP  = dPhaseMob_dPres[er_up][esr_up][ei_up][ip];
+    real64 const dMob_dT  = dPhaseMob_dTemp[er_up][esr_up][ei_up][ip];
     arraySlice1d< real64 const > dPhaseMob_dCompSub = dPhaseMob_dComp[er_up][esr_up][ei_up][ip];
 
     // add contribution from upstream cell mobility derivatives
@@ -1166,22 +1172,32 @@ FluxKernel::
         dCompFlux_dC[k_up][ic][jc] += phaseFlux * dProp_dC[jc];
       }
     }
-    // compute enthalpy fluxes and derivatives
-    enthalpyFlux += phaseFlux * phaseEnthalpy[ip];
 
-    // derivatives stemming from phase flux
+    // compute enthalpy fluxes and derivatives
+    real64 const enthalpy = phaseEnthalpy[er_up][esr_up][ei_up][0][ip];
+    enthalpyFlux = phaseFlux * enthalpy;
+
+    // derivatives stemming from phase flux (it was upwinded previously)
     for( localIndex ke = 0; ke < stencilSize; ++ke )
     {
-      dEnthalpyFlux_dP[ke] += dPhaseFlux_dP[ke] * phaseEnthalpy[ip] + phaseFlux[ke] * dPhaseEnthalpy_dPres[ip];
-      dEnthalpyFlux_dT[ke] += dPhaseFlux_dT[ke] * phaseEnthalpy[ip] + phaseFlux[ke] * dPhaseEnthalpy_dTemp[ip];
+      dEnthalpyFlux_dP[ke] = dPhaseFlux_dP[ke] * enthalpy;
+      dEnthalpyFlux_dT[ke] = dPhaseFlux_dT[ke] * enthalpy;
 
-      applyChainRule( NC, dCompFrac_dCompDens[er_up][esr_up][ei_up], dPhaseEnthalpy_dComp[er_up][esr_up][ei_up][0][ip], dProp_dC );
       for( localIndex jc = 0; jc < NC; ++jc )
       {
-        dEnthalpyFlux_dC[ke][jc] += dPhaseFlux_dC[ke][jc] * phaseEnthalpy[ip] + phaseFlux[ke] * dProp_dC[jc];
+        dEnthalpyFlux_dC[ke][jc] = dPhaseFlux_dC[ke][jc] * enthalpy;
       }
     }
 
+    // add contribution from upstream cell enthalpy derivatives
+    dEnthalpyFlux_dP[k_up] += phaseFlux * dPhaseEnthalpy_dPres[er_up][esr_up][ei_up][0][ip];
+    dEnthalpyFlux_dT[k_up] += phaseFlux * dPhaseEnthalpy_dTemp[er_up][esr_up][ei_up][0][ip];
+
+    applyChainRule( NC, dCompFrac_dCompDens[er_up][esr_up][ei_up], dPhaseEnthalpy_dComp[er_up][esr_up][ei_up][0][ip], dProp_dC );
+    for( localIndex jc = 0; jc < NC; ++jc )
+    {
+      dEnthalpyFlux_dC[k_up][jc] += phaseFlux * dProp_dC[jc];
+    }
   }
 
   // *** end of upwinding
@@ -1213,17 +1229,17 @@ FluxKernel::
   }
 
   // enthalpy flux
-  localFlux[NC]  =  dt * enthalpyFlux;
+  localFlux[NC]          =  dt * enthalpyFlux;
   localFlux[2 * NC - 1]  = -dt * enthalpyFlux;
 
   for( localIndex ke = 0; ke < stencilSize; ++ke )
   {
     localIndex const localDofIndexPres = ke * NDOF;
-    localFluxJacobian[NC][localDofIndexPres] = dt * dEnthalpyFlux_dP[ke][ic];
-    localFluxJacobian[2*NC - 1][localDofIndexPres] = -dt * dEnthalpyFlux_dP[ke][ic];
+    localFluxJacobian[NC][localDofIndexPres] = dt * dEnthalpyFlux_dP[ke];
+    localFluxJacobian[2*NC - 1][localDofIndexPres] = -dt * dEnthalpyFlux_dP[ke];
     localIndex const localDofIndexTemp = localDofIndexPres + NC;
-    localFluxJacobian[NC][localDofIndexTemp] = dt * dCompFlux_dT[ke][ic];
-    localFluxJacobian[2*NC - 1][localDofIndexTemp] = -dt * dEnthalpyFlux_dT[ke][ic];
+    localFluxJacobian[NC][localDofIndexTemp] = dt * dEnthalpyFlux_dT[ke];
+    localFluxJacobian[2*NC - 1][localDofIndexTemp] = -dt * dEnthalpyFlux_dT[ke];
 
     for( localIndex jc = 0; jc < NC; ++jc )
     {
@@ -1241,6 +1257,8 @@ FluxKernel::
   Launch( localIndex const numPhases,
           STENCIL_TYPE const & stencil,
           globalIndex const rankOffset,
+          ElementViewConst< arrayView1d< globalIndex const > > const & dofNumber,
+          ElementViewConst< arrayView1d< integer const > > const & ghostRank,
           ElementViewConst< arrayView1d< real64 const > > const & pres,
           ElementViewConst< arrayView1d< real64 const > > const & dPres,
           ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
@@ -1302,7 +1320,7 @@ FluxKernel::
                                                        gravCoef,
                                                        phaseMob,
                                                        dPhaseMob_dPres,
-                                                       dPhaseMob_dPres,
+                                                       dPhaseMob_dTemp,
                                                        dPhaseMob_dComp,
                                                        phaseVolFrac,
                                                        dPhaseVolFrac_dPres,
