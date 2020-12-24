@@ -63,6 +63,10 @@ void SolidBase::allocateConstitutiveData( dataRepository::Group * const parent,
 {
   m_density.resize( 0, numConstitutivePointsPerParentIndex );
   m_stress.resize( 0, numConstitutivePointsPerParentIndex, 6 );
+  m_internalEnergy.resize( parent->size(), numConstitutivePointsPerParentIndex );
+  m_dInternalEnergy_dTemperature.resize( parent->size(), numConstitutivePointsPerParentIndex );
+  m_internalEnergy.setValues< serialPolicy >(0.0);
+  m_dInternalEnergy_dTemperature.setValues< serialPolicy >(0.0);
 
   ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 }

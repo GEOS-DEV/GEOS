@@ -208,6 +208,8 @@ public:
     static constexpr auto defaultDensityString  = "defaultDensity";
     static constexpr auto densityString  = "density";
     static constexpr auto stressString = "stress";
+    static constexpr auto internalEnergyString = "internalEnergy";
+    static constexpr auto dInternalEnergy_dTemperatureString = "dInternalEnergy_dTemperature";
   };
 
   /**
@@ -245,6 +247,19 @@ public:
   /// Const/non-mutable accessor for stress
   arrayView3d< real64 const, solid::STRESS_USD > getStress() const { return m_stress; }
 
+  /// Non-const/Mutable accessor for internal energy.
+  arrayView2d< real64 > internalEnergy() { return m_internalEnergy; }
+
+  /// Const/non-mutable accessor for internal energy
+  arrayView2d< real64 const > internalEnergy() const { return m_internalEnergy; }
+
+  /// Non-const/Mutable accessor for internal energy.
+  arrayView2d< real64 > dInternalEnergy_dTemperature() { return m_dInternalEnergy_dTemperature; }
+
+  /// Const/non-mutable accessor for internal energy
+  arrayView2d< real64 const > dInternalEnergy_dTemperature() const { return m_dInternalEnergy_dTemperature; }
+
+
   ///@}
 
 protected:
@@ -257,8 +272,13 @@ protected:
   array2d< real64 > m_density;
 
   /// The material stress at a quadrature point.
-
   array3d< real64, solid::STRESS_PERMUTATION > m_stress;
+
+  /// The material internal energy
+  array2d< real64 > m_internalEnergy;
+
+  /// The material internal Energy as a function of the temperature
+  array2d< real64 > m_dInternalEnergy_dTemperature;
 };
 
 } // namespace constitutive

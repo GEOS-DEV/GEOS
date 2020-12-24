@@ -34,6 +34,7 @@
 #include "mpiCommunications/MpiWrapper.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseFlowKernels.hpp"
 #include "physicsSolvers/fluidFlow/IsothermalCompositionalMultiphaseFlowKernels.hpp"
+#include "constitutive/solid/SolidBase.hpp"
 
 #if defined( __INTEL_COMPILER )
 #pragma GCC optimize "O0"
@@ -783,6 +784,41 @@ void CompositionalMultiphaseFlow::BackupFields( MeshLevel & mesh ) const
       poroOld[ei] = poroRef[ei] * pvMult[ei][0];
     } );
   } );
+
+  //  backup thermal fields
+  if ( m_isothermalFlag == 0 )
+  {
+    forTargetSubRegions( mesh, [&]( localIndex const targetIndex, ElementSubRegionBase & subRegion )
+    {
+      MultiFluidBase const & fluid = GetConstitutiveModel< MultiFluidBase >( subRegion, fluidModelNames()[targetIndex] );
+      SolidBase const & solid = GetConstitutiveModel< SolidBase >( subRegion, solidModelNames()[targetIndex] );
+
+      arrayView1d< integer const > const elemGhostRank = subRegion.ghostRank();
+
+      arrayView3d< real64 const > const phaseInternalEnergy = fluid.phaseInternalEnergy();
+      arrayView2d< real64 const > const rockInternalEnergy = solid.internalEnergy();
+
+      arrayView2d< real64 > const phaseInternalEnergyOld =
+          subRegion.getReference< array2d< real64 > >( viewKeyStruct::phaseInternalEnergyOldString );
+      arrayView1d< real64 > rockInternalEnergyOld =
+          subRegion.getReference< array1d< real64 > >( viewKeyStruct::rockInternalEnergyOldString );
+
+      localIndex const NP = m_numPhases;
+
+      forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
+      {
+        if( elemGhostRank[ei] >= 0 )
+          return;
+
+        for( localIndex ip = 0; ip < NP; ++ip )
+        {
+          phaseInternalEnergyOld[ei][ip] = phaseInternalEnergy[ei][0][ip];
+          rockInternalEnergyOld[ei] = rockInternalEnergy[ei][0];
+        }
+
+      } );
+   } );
+  }
 }
 
 void
@@ -881,7 +917,7 @@ void CompositionalMultiphaseFlow::AssembleAccumulationTerms( DomainPartition con
     arrayView3d< real64 const > const & phaseCompFracOld =
       subRegion.getReference< array3d< real64 > >( viewKeyStruct::phaseComponentFractionOldString );
 
-    ConstitutiveBase const & solid = GetConstitutiveModel( subRegion, solidModelNames()[targetIndex] );
+    SolidBase const & solid = GetConstitutiveModel< SolidBase >( subRegion, solidModelNames()[targetIndex] );
     arrayView2d< real64 const > const & pvMult =
       solid.getReference< array2d< real64 > >( ConstitutiveBase::viewKeyStruct::poreVolumeMultiplierString );
     arrayView2d< real64 const > const & dPvMult_dPres =
@@ -944,7 +980,7 @@ void CompositionalMultiphaseFlow::AssembleAccumulationTerms( DomainPartition con
           subRegion.getReference< array1d< real64 > >(viewKeyStruct::rockInternalEnergyOldString );
       arrayView2d< real64 const > const & rockInternalEnergy = solid.internalEnergy();
       arrayView2d< real64 const > const & dRockInternalEnergy_dTemp = solid.dInternalEnergy_dTemperature();
-      arrayView2d< real64 const > const & rockDensity = solid.density();
+      arrayView2d< real64 const > const & rockDensity = solid.getDensity();
 
       CompositionalMultiphaseFlowKernels::KernelLaunchSelector1
       < CompositionalMultiphaseFlowKernels::AccumulationKernel >( m_numComponents,

@@ -12,6 +12,7 @@ set( physicsSolvers_headers
      SolverBase.hpp
      fluidFlow/CompositionalMultiphaseFlow.hpp
      fluidFlow/CompositionalMultiphaseFlowKernels.hpp
+     fluidFlow/IsothermalCompositionalMultiphaseFlowKernels.hpp
      fluidFlow/FlowSolverBase.hpp
      fluidFlow/ProppantTransport.hpp
      fluidFlow/ProppantTransportKernels.hpp
@@ -65,6 +66,7 @@ set( physicsSolvers_sources
      SolverBase.cpp
      fluidFlow/CompositionalMultiphaseFlow.cpp
      fluidFlow/CompositionalMultiphaseFlowKernels.cpp
+     fluidFlow/IsothermalCompositionalMultiphaseFlowKernels.cpp     
      fluidFlow/FlowSolverBase.cpp
      fluidFlow/ProppantTransport.cpp
      fluidFlow/ProppantTransportKernels.cpp
