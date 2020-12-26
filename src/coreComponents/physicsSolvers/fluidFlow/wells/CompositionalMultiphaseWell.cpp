@@ -359,11 +359,11 @@ void CompositionalMultiphaseWell::UpdateFluidModel( WellElementSubRegion & subRe
     typename TYPEOFREF( castedFluid ) ::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
 
     IsothermalCompositionalMultiphaseFlowKernels::FluidUpdateKernel::Launch< serialPolicy >( subRegion.size(),
-                                                                                   fluidWrapper,
-                                                                                   pres,
-                                                                                   dPres,
-                                                                                   m_temperature,
-                                                                                   compFrac );
+                                                                                             fluidWrapper,
+                                                                                             pres,
+                                                                                             dPres,
+                                                                                             m_temperature,
+                                                                                             compFrac );
   } );
 }
 
@@ -400,20 +400,20 @@ void CompositionalMultiphaseWell::UpdatePhaseVolumeFraction( WellElementSubRegio
   arrayView4d< real64 const > const & dPhaseDens_dComp = fluid.dPhaseDensity_dGlobalCompFraction();
 
   IsothermalCompositionalMultiphaseFlowKernels::KernelLaunchSelector2< IsothermalCompositionalMultiphaseFlowKernels::PhaseVolumeFractionKernel
-                                                             >( NumFluidComponents(), NumFluidPhases(),
-                                                                subRegion.size(),
-                                                                compDens,
-                                                                dCompDens,
-                                                                dCompFrac_dCompDens,
-                                                                phaseDens,
-                                                                dPhaseDens_dPres,
-                                                                dPhaseDens_dComp,
-                                                                phaseFrac,
-                                                                dPhaseFrac_dPres,
-                                                                dPhaseFrac_dComp,
-                                                                phaseVolFrac,
-                                                                dPhaseVolFrac_dPres,
-                                                                dPhaseVolFrac_dCompDens );
+                                                                       >( NumFluidComponents(), NumFluidPhases(),
+                                                                          subRegion.size(),
+                                                                          compDens,
+                                                                          dCompDens,
+                                                                          dCompFrac_dCompDens,
+                                                                          phaseDens,
+                                                                          dPhaseDens_dPres,
+                                                                          dPhaseDens_dComp,
+                                                                          phaseFrac,
+                                                                          dPhaseFrac_dPres,
+                                                                          dPhaseFrac_dComp,
+                                                                          phaseVolFrac,
+                                                                          dPhaseVolFrac_dPres,
+                                                                          dPhaseVolFrac_dCompDens );
 }
 
 void CompositionalMultiphaseWell::UpdateTotalMassDensity( WellElementSubRegion & subRegion, localIndex const targetIndex ) const
@@ -544,10 +544,10 @@ void CompositionalMultiphaseWell::InitializeWells( DomainPartition & domain )
       typename TYPEOFREF( castedFluid ) ::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
 
       IsothermalCompositionalMultiphaseFlowKernels::FluidUpdateKernel::Launch< serialPolicy >( subRegion.size(),
-                                                                                     fluidWrapper,
-                                                                                     wellElemPressure,
-                                                                                     m_temperature,
-                                                                                     wellElemCompFrac );
+                                                                                               fluidWrapper,
+                                                                                               wellElemPressure,
+                                                                                               m_temperature,
+                                                                                               wellElemCompFrac );
     } );
 
     CompDensInitializationKernel::Launch< parallelDevicePolicy<> >( subRegion.size(),

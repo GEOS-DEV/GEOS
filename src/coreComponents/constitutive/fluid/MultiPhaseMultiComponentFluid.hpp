@@ -90,7 +90,7 @@ public:
                                        arrayView3d< real64 > const & phaseInternalEnergy,
                                        arrayView3d< real64 > const & dPhaseInternalEnergy_dPressure,
                                        arrayView3d< real64 > const & dPhaseInternalEnergy_dTemperature,
-                                       arrayView4d< real64 > const & dPhaseInternalEnergy_dGlobalCompFraction)
+                                       arrayView4d< real64 > const & dPhaseInternalEnergy_dGlobalCompFraction )
     : MultiFluidBaseUpdate( componentMolarWeight,
                             useMass,
                             phaseFraction,

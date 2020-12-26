@@ -396,8 +396,8 @@ struct AccumulationKernel
              real64 const & rockInternalEnergy,
              real64 const & dRockInternalEnergy_dTemp,
              real64 const & rockDensity,
-             real64 ( & localAccum )[NC + 1],
-             real64 ( & localAccumJacobian )[NC + 1][NC + 2] );
+             real64 ( &localAccum )[NC + 1],
+             real64 ( &localAccumJacobian )[NC + 1][NC + 2] );
 
   template< localIndex NC >
   static void
@@ -552,16 +552,16 @@ struct VolumeBalanceKernel
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   static void
-  Compute( real64 const & volume,
-           real64 const & porosityRef,
-           real64 const & pvMult,
-           real64 const & dPvMult_dPres,
-           arraySlice1d< real64 const > const & phaseVolFrac,
-           arraySlice1d< real64 const > const & dPhaseVolFrac_dPres,
-           arraySlice1d< real64 const > const & dPhaseVolFrac_dTemp,
-           arraySlice2d< real64 const > const & dPhaseVolFrac_dCompDens,
-           real64 & localVolBalance,
-           real64 (& localVolBalanceJacobian)[NC+2]  );
+    Compute( real64 const & volume,
+             real64 const & porosityRef,
+             real64 const & pvMult,
+             real64 const & dPvMult_dPres,
+             arraySlice1d< real64 const > const & phaseVolFrac,
+             arraySlice1d< real64 const > const & dPhaseVolFrac_dPres,
+             arraySlice1d< real64 const > const & dPhaseVolFrac_dTemp,
+             arraySlice2d< real64 const > const & dPhaseVolFrac_dCompDens,
+             real64 & localVolBalance,
+             real64 ( &localVolBalanceJacobian )[NC+2] );
 
   template< localIndex NC, localIndex NP >
   static void

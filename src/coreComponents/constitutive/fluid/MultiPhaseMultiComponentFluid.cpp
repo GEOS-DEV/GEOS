@@ -133,14 +133,14 @@ void MultiPhaseMultiComponentFluid::CreatePVTModels()
                                                                                    m_componentNames,
                                                                                    m_componentMolarWeight ) );
       }
-      else if (strs[0] == "EnthalpyFun")
+      else if( strs[0] == "EnthalpyFun" )
       {
         m_phaseEnthalpyFuns.emplace_back( PVTFunction::CatalogInterface::Factory( strs[ 1 ],
                                                                                   strs,
                                                                                   m_componentNames,
                                                                                   m_componentMolarWeight ) );
       }
-      else if (strs[0] == "InternalEnergyFun")
+      else if( strs[0] == "InternalEnergyFun" )
       {
         m_phaseInternalEnergyFuns.emplace_back( PVTFunction::CatalogInterface::Factory( strs[ 1 ],
                                                                                         strs,
@@ -288,18 +288,18 @@ void MultiPhaseMultiComponentFluidUpdate::Compute( real64 pressure,
   };
 
   CompositionalVarContainer< 1 > phaseEnt {
-      phaseEnthalpy,
-      dPhaseEnthalpy_dPressure,
-      dPhaseEnthalpy_dTemperature,
-      dPhaseEnthalpy_dGlobalCompFraction
-    };
+    phaseEnthalpy,
+    dPhaseEnthalpy_dPressure,
+    dPhaseEnthalpy_dTemperature,
+    dPhaseEnthalpy_dGlobalCompFraction
+  };
 
   CompositionalVarContainer< 1 > phaseIntEner {
-      phaseInternalEnergy,
-      dPhaseInternalEnergy_dPressure,
-      dPhaseInternalEnergy_dTemperature,
-      dPhaseInternalEnergy_dGlobalCompFraction
-    };
+    phaseInternalEnergy,
+    dPhaseInternalEnergy_dPressure,
+    dPhaseInternalEnergy_dTemperature,
+    dPhaseInternalEnergy_dGlobalCompFraction
+  };
 
 #if defined(__CUDACC__)
   // For some reason nvcc thinks these aren't used.

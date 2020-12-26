@@ -1217,7 +1217,3 @@ INST_VolumeBalanceKernel( 5, 3 );
 } // namespace IsothermalCompositionalMultiphaseFlowKernels
 
 } // namespace geosx
-
-
-
-

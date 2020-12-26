@@ -122,7 +122,7 @@ protected:
     m_dTotalDensity_dTemperature( dTotalDensity_dTemperature ),
     m_dTotalDensity_dGlobalCompFraction( dTotalDensity_dGlobalCompFraction ),
     m_phaseEnthalpy( phaseEnthalpy ),
-    m_dPhaseEnthalpy_dPressure(dPhaseEnthalpy_dPressure),
+    m_dPhaseEnthalpy_dPressure( dPhaseEnthalpy_dPressure ),
     m_dPhaseEnthalpy_dTemperature( dPhaseEnthalpy_dTemperature ),
     m_dPhaseEnthalpy_dGlobalCompFraction( dPhaseEnthalpy_dGlobalCompFraction ),
     m_phaseInternalEnergy( phaseInternalEnergy ),

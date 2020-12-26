@@ -26,11 +26,17 @@ using namespace stringutilities;
 namespace PVTProps
 {
 
+BrineInternalEnergyFunction::BrineInternalEnergyFunction( string_array const & inputPara,
+                                                          string_array const & componentNames,
+                                                          real64_array const & componentMolarWeight ):
+  PVTFunction( inputPara[1], componentNames, componentMolarWeight )
+{}
+
 void BrineInternalEnergyFunction::Evaluation( EvalVarArgs const & pressure, EvalVarArgs const & temperature,
                                               arraySlice1d< EvalVarArgs const > const & phaseComposition, EvalVarArgs & value, bool useMass ) const
 {
-  GEOSX_UNUSED_VAR(phaseComposition);
-  GEOSX_UNUSED_VAR(useMass);
+  GEOSX_UNUSED_VAR( phaseComposition );
+  GEOSX_UNUSED_VAR( useMass );
 
   localIndex const numComponents = phaseComposition.size();
 

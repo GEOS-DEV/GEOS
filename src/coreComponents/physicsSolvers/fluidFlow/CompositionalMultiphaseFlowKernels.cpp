@@ -165,7 +165,7 @@ PhaseVolumeFractionKernel::
       (dPhaseFrac_dPres[ip] - phaseVolFrac[ip] * dPhaseDens_dPres[ip]) * phaseDensInv;
 
     dPhaseVolFrac_dTemp[ip] =
-          (dPhaseFrac_dTemp[ip] - phaseVolFrac[ip] * dPhaseDens_dTemp[ip]) * phaseDensInv;
+      (dPhaseFrac_dTemp[ip] - phaseVolFrac[ip] * dPhaseDens_dTemp[ip]) * phaseDensInv;
 
     for( localIndex jc = 0; jc < NC; ++jc )
     {
@@ -278,15 +278,15 @@ void PhaseVolumeFractionKernel::
                       arrayView3d< real64 const > const & dCompFrac_dCompDens, \
                       arrayView3d< real64 const > const & phaseDens, \
                       arrayView3d< real64 const > const & dPhaseDens_dPres, \
-					            arrayView3d< real64 const > const & dPhaseDens_dTemp, \
+                      arrayView3d< real64 const > const & dPhaseDens_dTemp, \
                       arrayView4d< real64 const > const & dPhaseDens_dComp, \
                       arrayView3d< real64 const > const & phaseFrac, \
                       arrayView3d< real64 const > const & dPhaseFrac_dPres, \
-					            arrayView3d< real64 const > const & dPhaseFrac_dTemp, \
+                      arrayView3d< real64 const > const & dPhaseFrac_dTemp, \
                       arrayView4d< real64 const > const & dPhaseFrac_dComp, \
                       arrayView2d< real64 > const & phaseVolFrac, \
-                      arrayView2d< real64 > const & dPhaseVolFrac_dPres,\
-                      arrayView2d< real64 > const & dPhaseVolFrac_dTemp,\
+                      arrayView2d< real64 > const & dPhaseVolFrac_dPres, \
+                      arrayView2d< real64 > const & dPhaseVolFrac_dTemp, \
                       arrayView3d< real64 > const & dPhaseVolFrac_dComp ); \
   template \
   void \
@@ -297,15 +297,15 @@ void PhaseVolumeFractionKernel::
                       arrayView3d< real64 const > const & dCompFrac_dCompDens, \
                       arrayView3d< real64 const > const & phaseDens, \
                       arrayView3d< real64 const > const & dPhaseDens_dPres, \
-					            arrayView3d< real64 const > const & dPhaseDens_dTemp, \
+                      arrayView3d< real64 const > const & dPhaseDens_dTemp, \
                       arrayView4d< real64 const > const & dPhaseDens_dComp, \
                       arrayView3d< real64 const > const & phaseFrac, \
                       arrayView3d< real64 const > const & dPhaseFrac_dPres, \
-					            arrayView3d< real64 const > const & dPhaseFrac_dTemp, \
+                      arrayView3d< real64 const > const & dPhaseFrac_dTemp, \
                       arrayView4d< real64 const > const & dPhaseFrac_dComp, \
                       arrayView2d< real64 > const & phaseVolFrac, \
                       arrayView2d< real64 > const & dPhaseVolFrac_dPres, \
-					            arrayView2d< real64 > const & dPhaseVolFrac_dTemp, \
+                      arrayView2d< real64 > const & dPhaseVolFrac_dTemp, \
                       arrayView3d< real64 > const & dPhaseVolFrac_dComp )
 
 INST_PhaseVolumeFractionKernel( 1, 1 );
@@ -397,7 +397,7 @@ PhaseMobilityKernel::
                           + mobility * (dDens_dP / density - dVisc_dP / viscosity);
 
     dPhaseMob_dTemp[ip] = dRelPerm_dT * density / viscosity
-                              + mobility * (dDens_dT / density - dVisc_dT / viscosity);
+                          + mobility * (dDens_dT / density - dVisc_dT / viscosity);
 
     // compositional derivatives
     for( localIndex jc = 0; jc < NC; ++jc )
@@ -507,20 +507,20 @@ void PhaseMobilityKernel::
                       arrayView3d< real64 const > const & dCompFrac_dCompDens, \
                       arrayView3d< real64 const > const & phaseDens, \
                       arrayView3d< real64 const > const & dPhaseDens_dPres, \
-					            arrayView3d< real64 const > const & dPhaseDens_dTemp, \
+                      arrayView3d< real64 const > const & dPhaseDens_dTemp, \
                       arrayView4d< real64 const > const & dPhaseDens_dComp, \
                       arrayView3d< real64 const > const & phaseVisc, \
                       arrayView3d< real64 const > const & dPhaseVisc_dPres, \
-					            arrayView3d< real64 const > const & dPhaseVisc_dTemp, \
+                      arrayView3d< real64 const > const & dPhaseVisc_dTemp, \
                       arrayView4d< real64 const > const & dPhaseVisc_dComp, \
                       arrayView3d< real64 const > const & phaseRelPerm, \
                       arrayView4d< real64 const > const & dPhaseRelPerm_dPhaseVolFrac, \
                       arrayView2d< real64 const > const & dPhaseVolFrac_dPres, \
-					            arrayView2d< real64 const > const & dPhaseVolFrac_dTemp,\
+                      arrayView2d< real64 const > const & dPhaseVolFrac_dTemp, \
                       arrayView3d< real64 const > const & dPhaseVolFrac_dComp, \
                       arrayView2d< real64 > const & phaseMob, \
                       arrayView2d< real64 > const & dPhaseMob_dPres, \
-					            arrayView2d< real64 > const & dPhaseMob_dTemp, \
+                      arrayView2d< real64 > const & dPhaseMob_dTemp, \
                       arrayView3d< real64 > const & dPhaseMob_dComp ); \
   template \
   void \
@@ -529,20 +529,20 @@ void PhaseMobilityKernel::
                       arrayView3d< real64 const > const & dCompFrac_dCompDens, \
                       arrayView3d< real64 const > const & phaseDens, \
                       arrayView3d< real64 const > const & dPhaseDens_dPres, \
-					            arrayView3d< real64 const > const & dPhaseDens_dTemp, \
+                      arrayView3d< real64 const > const & dPhaseDens_dTemp, \
                       arrayView4d< real64 const > const & dPhaseDens_dComp, \
                       arrayView3d< real64 const > const & phaseVisc, \
                       arrayView3d< real64 const > const & dPhaseVisc_dPres, \
-					            arrayView3d< real64 const > const & dPhaseVisc_dTemp, \
+                      arrayView3d< real64 const > const & dPhaseVisc_dTemp, \
                       arrayView4d< real64 const > const & dPhaseVisc_dComp, \
                       arrayView3d< real64 const > const & phaseRelPerm, \
                       arrayView4d< real64 const > const & dPhaseRelPerm_dPhaseVolFrac, \
                       arrayView2d< real64 const > const & dPhaseVolFrac_dPres, \
-					            arrayView2d< real64 const > const & dPhaseVolFrac_dTemp,\
+                      arrayView2d< real64 const > const & dPhaseVolFrac_dTemp, \
                       arrayView3d< real64 const > const & dPhaseVolFrac_dComp, \
                       arrayView2d< real64 > const & phaseMob, \
                       arrayView2d< real64 > const & dPhaseMob_dPres, \
-					            arrayView2d< real64 > const & dPhaseMob_dTemp, \
+                      arrayView2d< real64 > const & dPhaseMob_dTemp, \
                       arrayView3d< real64 > const & dPhaseMob_dComp )
 
 INST_PhaseMobilityKernel( 1, 1 );
@@ -653,8 +653,8 @@ AccumulationKernel::
                                                    + phaseVolFrac[ip] * dPhaseDens_dPres[ip]);
 
     real64 const dPhaseAmount_dT = dPoreVol_dT * phaseVolFrac[ip] * phaseDens[ip]
-                                       + poreVolNew * (dPhaseVolFrac_dTemp[ip] * phaseDens[ip]
-                                                       + phaseVolFrac[ip] * dPhaseDens_dTemp[ip]);
+                                   + poreVolNew * (dPhaseVolFrac_dTemp[ip] * phaseDens[ip]
+                                                   + phaseVolFrac[ip] * dPhaseDens_dTemp[ip]);
 
     // assemble density dependence
     applyChainRule( NC, dCompFrac_dCompDens, dPhaseDens_dComp[ip], dPhaseAmount_dC );
@@ -676,7 +676,7 @@ AccumulationKernel::
                                          + phaseAmountNew * dPhaseCompFrac_dPres[ip][ic];
 
       real64 const dPhaseCompAmount_dT = dPhaseAmount_dT * phaseCompFrac[ip][ic]
-                                               + phaseAmountNew * dPhaseCompFrac_dTemp[ip][ic];
+                                         + phaseAmountNew * dPhaseCompFrac_dTemp[ip][ic];
 
       localAccum[ic] += phaseCompAmountNew - phaseCompAmountOld;
       localAccumJacobian[ic][0] += dPhaseCompAmount_dP;
@@ -718,10 +718,10 @@ AccumulationKernel::
 
     // derivatives w.r.t. component densities
     applyChainRule( NC, dCompFrac_dCompDens, dPhaseInternalEnergy_dComp[ip], dPhaseInternalEnergy_dC );
-    for ( localIndex jc = 0; jc < NC; ++jc )
+    for( localIndex jc = 0; jc < NC; ++jc )
     {
       real64 const dPhaseEnergy_dC = phaseInternalEnergy[ip] * dPhaseAmount_dC[jc] +
-          dPhaseInternalEnergy_dC[jc] * phaseAmountNew;
+                                     dPhaseInternalEnergy_dC[jc] * phaseAmountNew;
 
       localAccumJacobian[NC][jc + 1] += dPhaseEnergy_dC;
     }
@@ -852,27 +852,27 @@ AccumulationKernel::
                   arrayView2d< real64 const > const & phaseVolFracOld, \
                   arrayView2d< real64 const > const & phaseVolFrac, \
                   arrayView2d< real64 const > const & dPhaseVolFrac_dPres, \
-				          arrayView2d< real64 const > const & dPhaseVolFrac_dTemp, \
+                  arrayView2d< real64 const > const & dPhaseVolFrac_dTemp, \
                   arrayView3d< real64 const > const & dPhaseVolFrac_dCompDens, \
                   arrayView2d< real64 const > const & phaseDensOld, \
                   arrayView3d< real64 const > const & phaseDens, \
                   arrayView3d< real64 const > const & dPhaseDens_dPres, \
-				          arrayView3d< real64 const > const & dPhaseDens_dTemp, \
+                  arrayView3d< real64 const > const & dPhaseDens_dTemp, \
                   arrayView4d< real64 const > const & dPhaseDens_dComp, \
                   arrayView3d< real64 const > const & phaseCompFracOld, \
                   arrayView4d< real64 const > const & phaseCompFrac, \
                   arrayView4d< real64 const > const & dPhaseCompFrac_dPres, \
-				          arrayView4d< real64 const > const & dPhaseCompFrac_dTemp, \
+                  arrayView4d< real64 const > const & dPhaseCompFrac_dTemp, \
                   arrayView5d< real64 const > const & dPhaseCompFrac_dComp, \
-				          arrayView2d< real64 const > const & phaseInternalEnergyOld, \
-				          arrayView3d< real64 const > const & phaseInternalEnergy, \
-				          arrayView3d< real64 const > const & dPhaseInternalEnergy_dPres, \
-				          arrayView3d< real64 const > const & dPhaseInternalEnergy_dTemp, \
-				          arrayView4d< real64 const > const & dPhaseInternalEnergy_dComp, \
-				          arrayView1d< real64 const > const & rockInternalEnergyOld, \
-				          arrayView2d< real64 const > const & rockInternalEnergy, \
-				          arrayView2d< real64 const > const & dRockInternalEnergy_dTemp, \
-				          arrayView2d< real64 const > const & rockDensity, \
+                  arrayView2d< real64 const > const & phaseInternalEnergyOld, \
+                  arrayView3d< real64 const > const & phaseInternalEnergy, \
+                  arrayView3d< real64 const > const & dPhaseInternalEnergy_dPres, \
+                  arrayView3d< real64 const > const & dPhaseInternalEnergy_dTemp, \
+                  arrayView4d< real64 const > const & dPhaseInternalEnergy_dComp, \
+                  arrayView1d< real64 const > const & rockInternalEnergyOld, \
+                  arrayView2d< real64 const > const & rockInternalEnergy, \
+                  arrayView2d< real64 const > const & dRockInternalEnergy_dTemp, \
+                  arrayView2d< real64 const > const & rockDensity, \
                   CRSMatrixView< real64, globalIndex const > const & localMatrix, \
                   arrayView1d< real64 > const & localRhs )
 
@@ -1398,29 +1398,29 @@ FluxKernel::
                                 ElementViewConst< arrayView1d< real64 const > > const & gravCoef, \
                                 ElementViewConst< arrayView2d< real64 const > > const & phaseMob, \
                                 ElementViewConst< arrayView2d< real64 const > > const & dPhaseMob_dPres, \
-								                ElementViewConst< arrayView2d< real64 const > > const & dPhaseMob_dTemp, \
+                                ElementViewConst< arrayView2d< real64 const > > const & dPhaseMob_dTemp, \
                                 ElementViewConst< arrayView3d< real64 const > > const & dPhaseMob_dComp, \
-								                ElementViewConst< arrayView2d< real64 const > > const & phaseVolFrac, \
+                                ElementViewConst< arrayView2d< real64 const > > const & phaseVolFrac, \
                                 ElementViewConst< arrayView2d< real64 const > > const & dPhaseVolFrac_dPres, \
-								                ElementViewConst< arrayView2d< real64 const > > const & dPhaseVolFrac_dTemp, \
+                                ElementViewConst< arrayView2d< real64 const > > const & dPhaseVolFrac_dTemp, \
                                 ElementViewConst< arrayView3d< real64 const > > const & dPhaseVolFrac_dComp, \
                                 ElementViewConst< arrayView3d< real64 const > > const & dCompFrac_dCompDens, \
                                 ElementViewConst< arrayView3d< real64 const > > const & phaseMassDens, \
                                 ElementViewConst< arrayView3d< real64 const > > const & dPhaseMassDens_dPres, \
-								                ElementViewConst< arrayView3d< real64 const > > const & dPhaseMassDens_dTemp, \
+                                ElementViewConst< arrayView3d< real64 const > > const & dPhaseMassDens_dTemp, \
                                 ElementViewConst< arrayView4d< real64 const > > const & dPhaseMassDens_dComp, \
                                 ElementViewConst< arrayView4d< real64 const > > const & phaseCompFrac, \
                                 ElementViewConst< arrayView4d< real64 const > > const & dPhaseCompFrac_dPres, \
-								                ElementViewConst< arrayView4d< real64 const > > const & dPhaseCompFrac_dTemp, \
+                                ElementViewConst< arrayView4d< real64 const > > const & dPhaseCompFrac_dTemp, \
                                 ElementViewConst< arrayView5d< real64 const > > const & dPhaseCompFrac_dComp, \
                                 ElementViewConst< arrayView3d< real64 const > > const & phaseCapPressure, \
                                 ElementViewConst< arrayView4d< real64 const > > const & dPhaseCapPressure_dPhaseVolFrac, \
-								                ElementViewConst< arrayView1d< real64 const > > const & temp, \
-								                ElementViewConst< arrayView1d< real64 const > > const & dTemp, \
-								                ElementViewConst< arrayView3d< real64 const > > const & phaseEnthalpy, \
-								                ElementViewConst< arrayView3d< real64 const > > const & dPhaseEnthalpy_dPres, \
-								                ElementViewConst< arrayView3d< real64 const > > const & dPhaseEnthalpy_dTemp, \
-								                ElementViewConst< arrayView4d< real64 const > > const & dPhaseEnthalpy_dComp, \
+                                ElementViewConst< arrayView1d< real64 const > > const & temp, \
+                                ElementViewConst< arrayView1d< real64 const > > const & dTemp, \
+                                ElementViewConst< arrayView3d< real64 const > > const & phaseEnthalpy, \
+                                ElementViewConst< arrayView3d< real64 const > > const & dPhaseEnthalpy_dPres, \
+                                ElementViewConst< arrayView3d< real64 const > > const & dPhaseEnthalpy_dTemp, \
+                                ElementViewConst< arrayView4d< real64 const > > const & dPhaseEnthalpy_dComp, \
                                 integer const capPressureFlag, \
                                 real64 const dt, \
                                 CRSMatrixView< real64, globalIndex const > const & localMatrix, \
@@ -1456,7 +1456,7 @@ VolumeBalanceKernel::
            arraySlice1d< real64 const > const & dPhaseVolFrac_dTemp,
            arraySlice2d< real64 const > const & dPhaseVolFrac_dCompDens,
            real64 & localVolBalance,
-           real64 (& localVolBalanceJacobian)[NC+2]  )
+           real64 (& localVolBalanceJacobian)[NC+2] )
 {
   localIndex constexpr NDOF = NC + 2;
 
@@ -1565,7 +1565,7 @@ VolumeBalanceKernel::
                       arrayView2d< real64 const > const & dPvMult_dPres, \
                       arrayView2d< real64 const > const & phaseVolFrac, \
                       arrayView2d< real64 const > const & dPhaseVolFrac_dPres, \
-					            arrayView2d< real64 const > const & dPhaseVolFrac_dTemp, \
+                      arrayView2d< real64 const > const & dPhaseVolFrac_dTemp, \
                       arrayView3d< real64 const > const & dPhaseVolFrac_dCompDens, \
                       CRSMatrixView< real64, globalIndex const > const & localMatrix, \
                       arrayView1d< real64 > const & localRhs )
