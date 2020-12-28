@@ -823,7 +823,7 @@ AccumulationKernel::
     }
 
     // add contribution to residual and jacobian
-    for( localIndex i = 0; i < NBEQ + 1; ++i )
+    for( localIndex i = 0; i < NBEQ; ++i )
     {
       localRhs[localRow + i] += localAccum[i];
       localMatrix.addToRow< serialAtomic >( localRow + i,
