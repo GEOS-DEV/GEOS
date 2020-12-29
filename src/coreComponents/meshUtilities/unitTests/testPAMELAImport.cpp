@@ -67,18 +67,16 @@ void TestMeshImport( string const & inputStringMesh,
   // Check if the computed center match with the imported center
   if( !propertyToTest.empty() )
   {
-    auto centerProperty =  elemManager->ConstructViewAccessor< array1d< R1Tensor >, arrayView1d< R1Tensor > >( propertyToTest );
+    auto centerProperty = elemManager->ConstructArrayViewAccessor< real64, 2 >( propertyToTest );
     elemManager->forElementSubRegionsComplete< ElementSubRegionBase >(
       [&]( localIndex const er, localIndex const esr, ElementRegionBase &, ElementSubRegionBase & elemSubRegion )
     {
       elemSubRegion.CalculateElementGeometricQuantities( nodeManager, faceManager );
-      arrayView2d< real64 const > const elemCenter = elemSubRegion.getElementCenter().toViewConst();
+      arrayView2d< real64 const > const elemCenter = elemSubRegion.getElementCenter();
       for( localIndex ei = 0; ei < elemSubRegion.size(); ei++ )
       {
         real64 center[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( elemCenter[ ei ] );
-        // TODO Remove the INIT_LOCAL once centerProperty isn't an R1Tensor.
-        real64 const centerFromProperty[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( centerProperty[er][esr][ei] );
-        LvArray::tensorOps::subtract< 3 >( center, centerFromProperty );
+        LvArray::tensorOps::subtract< 3 >( center, centerProperty[er][esr][ei] );
         GEOSX_ERROR_IF_GT_MSG( LvArray::tensorOps::l2Norm< 3 >( center ), meshBody->getGlobalLengthScale() * 1e-8, "Property import of centers if wrong" );
       }
     } );

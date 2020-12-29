@@ -567,14 +567,24 @@ real64 EpetraMatrix::clearRow( globalIndex const globalRow,
   return oldDiag;
 }
 
-void EpetraMatrix::addEntries( EpetraMatrix const & src, real64 const scale )
+void EpetraMatrix::addEntries( EpetraMatrix const & src, real64 const scale, bool const samePattern )
 {
   GEOSX_LAI_ASSERT( ready() );
   GEOSX_LAI_ASSERT( src.ready() );
   GEOSX_LAI_ASSERT( numGlobalRows() == src.numGlobalRows() );
   GEOSX_LAI_ASSERT( numGlobalCols() == src.numGlobalCols() );
 
-  GEOSX_LAI_CHECK_ERROR( EpetraExt::MatrixMatrix::Add( src.unwrapped(), false, scale, *m_matrix, 1.0 ) );
+  if( samePattern )
+  {
+    GEOSX_LAI_CHECK_ERROR( EpetraExt::MatrixMatrix::Add( src.unwrapped(), false, scale, *m_matrix, 1.0 ) );
+  }
+  else
+  {
+    Epetra_CrsMatrix * sum = nullptr;
+    GEOSX_LAI_CHECK_ERROR( EpetraExt::MatrixMatrix::Add( src.unwrapped(), false, scale, *m_matrix, false, 1.0, sum ) );
+    GEOSX_LAI_CHECK_ERROR( sum->FillComplete( this->unwrapped().DomainMap(), this->unwrapped().RangeMap(), true ) );
+    create( *sum );
+  }
 }
 
 void EpetraMatrix::addDiagonal( EpetraVector const & src )

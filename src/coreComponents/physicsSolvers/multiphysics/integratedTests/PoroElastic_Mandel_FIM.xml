@@ -17,9 +17,8 @@
         maxTimeStepCuts="1"
         lineSearchMaxCuts="0"/>
       <LinearSolverParameters
-        solverType="gmres"
-        preconditionerType="block"
-        krylovMaxIter="200"
+        solverType="direct"
+        directParallel="0"
         logLevel="0"/>
     </Poroelastic>
 
@@ -30,8 +29,6 @@
       discretization="FE1"
       targetRegions="{ Domain }"
       solidMaterialNames="{ shale }">
-      <LinearSolverParameters
-        preconditionerType="amg"/>
     </SolidMechanicsLagrangianSSLE>
 
     <SinglePhaseFVM
@@ -41,8 +38,6 @@
       targetRegions="{ Domain }"
       fluidNames="{ water }"
       solidNames="{ shale }">
-      <LinearSolverParameters
-        preconditionerType="amg"/>
     </SinglePhaseFVM>
   </Solvers>
 

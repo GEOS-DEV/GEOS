@@ -101,6 +101,31 @@ public:
                              int const cycleNumber,
                              DomainPartition & domain ) override;
 
+
+  struct viewKeyStruct : SolverBase::viewKeyStruct
+  {
+    constexpr static auto solidSolverNameString = "solidSolverName";
+
+    constexpr static auto contactRelationNameString = "contactRelationName";
+
+    constexpr static auto dispJumpString = "displacementJump";
+
+    constexpr static auto deltaDispJumpString = "deltaDisplacementJump";
+
+    constexpr static auto fractureRegionNameString = "fractureRegionName";
+
+    constexpr static auto fractureTractionString = "fractureTraction";
+
+    constexpr static auto dTraction_dJumpString = "dTraction_dJump";
+
+  } SolidMechanicsEmbeddedFracturesViewKeys;
+
+protected:
+
+  virtual void InitializePostInitialConditions_PreSubGroups( Group * const problemManager ) override final;
+
+  virtual void PostProcessInput() override final;
+
   void AddCouplingNumNonzeros( DomainPartition & domain,
                                DofManager & dofManager,
                                arrayView1d< localIndex > const & rowLengths ) const;
@@ -115,89 +140,17 @@ public:
                                    DofManager const & dofManager,
                                    SparsityPatternView< globalIndex > const & pattern ) const;
 
-  struct viewKeyStruct : SolverBase::viewKeyStruct
-  {
-    constexpr static auto solidSolverNameString = "solidSolverName";
-
-    constexpr static auto contactRelationNameString = "contactRelationName";
-
-    constexpr static auto dispJumpString = "displacementJump";
-
-    constexpr static auto deltaDispJumpString = "deltaDisplacementJump";
-
-    constexpr static auto fractureTractionString = "fractureTraction";
-
-    constexpr static auto dTraction_dJumpString = "dTraction_dJump";
-
-  } SolidMechanicsEmbeddedFracturesViewKeys;
-
-  string & getContactRelationName() { return m_contactRelationName; };
-
-  string const & getContactRelationName() const { return m_contactRelationName; };
-
-  /*
-   * @brief Assemble Equilibrium operator
-   * @param eqMatrix Equilibrium operator
-   * @param embeddedSurfaceSubRegion subRegion
-   * @param k cell index
-   * @param hInv scaling coefficient
-   */
-  void AssembleEquilibriumOperator( array2d< real64 > & eqMatrix,
-                                    EmbeddedSurfaceSubRegion const & embeddedSurfaceSubRegion,
-                                    const localIndex k,
-                                    const real64 hInv );
-
   void applyTractionBC( real64 const time_n,
                         real64 const dt,
                         DomainPartition & domain );
-
-protected:
-
-  virtual void InitializePostInitialConditions_PreSubGroups( Group * const problemManager ) override final;
-
-  virtual void PostProcessInput() override final;
-
-
-  /*
-   * @brief Assemble Compatibility operator
-   * @param compMatrix
-   * @param embeddedSurfaceSubRegion
-   * @param k cell index
-   * @param q quadrature point index
-   * @param elemsToNodes element to node map
-   * @param nodesCoord nodes coordinates
-   * @param embeddedSurfaceToCell embedded surface to cell maps
-   * @param numNodesPerElement number of nodes per element
-   * @param dNdX shape functions derivatives
-   */
-  void AssembleCompatibilityOperator( array2d< real64 > & compMatrix,
-                                      EmbeddedSurfaceSubRegion const & embeddedSurfaceSubRegion,
-                                      localIndex const k,
-                                      localIndex const q,
-                                      CellBlock::NodeMapType const & elemsToNodes,
-                                      arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodesCoord,
-                                      localIndex const cellElementIndex,
-                                      localIndex const numNodesPerElement,
-                                      arrayView4d< real64 const > const & dNdX );
-
-  /*
-   * @brief Assemble Compatibility operator
-   * @param strainMatrix strain matrix (B)
-   * @param elIndex element index
-   * @param q quadrature point index
-   * @param numNodesPerElement number of nodes per element
-   * @param dNdX shape functions derivatives
-   */
-  void AssembleStrainOperator( array2d< real64 > & strainMatrix,
-                               localIndex const elIndex,
-                               localIndex const q,
-                               localIndex const numNodesPerElement,
-                               arrayView4d< real64 const > const & dNdX );
 
 private:
 
   /// Solid mechanics solver name
   string m_solidSolverName;
+
+  /// fracture region name
+  string m_fractureRegionName;
 
   /// pointer to the solid mechanics solver
   SolidMechanicsLagrangianFEM * m_solidSolver;
@@ -205,6 +158,7 @@ private:
   /// contact relation name string
   string m_contactRelationName;
 };
+
 
 } /* namespace geosx */
 

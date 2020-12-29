@@ -1,5 +1,3 @@
-message(STATUS "Entering src/coreComponents/physicsSolvers/CMakeLists.txt")
-
 add_subdirectory (GEOSX_PTP)
 
 #
@@ -46,6 +44,8 @@ set( physicsSolvers_headers
      solidMechanics/SolidMechanicsLagrangianFEM.hpp
      solidMechanics/SolidMechanicsLagrangianSSLE.hpp
      solidMechanics/SolidMechanicsLagrangianFEMKernels.hpp
+     solidMechanics/SolidMechanicsEFEMKernels.hpp
+     solidMechanics/SolidMechanicsEFEMKernelsHelper.hpp
      solidMechanics/SolidMechanicsPoroElasticKernel.hpp
      solidMechanics/SolidMechanicsSmallStrainQuasiStaticKernel.hpp
      solidMechanics/SolidMechanicsSmallStrainImplicitNewmarkKernel.hpp
@@ -72,7 +72,6 @@ set( physicsSolvers_sources
      fluidFlow/SinglePhaseFVM.cpp
      fluidFlow/SinglePhaseFVMKernels.cpp
      fluidFlow/SinglePhaseHybridFVM.cpp     
-     fluidFlow/SinglePhaseHybridFVMKernels.cpp
      fluidFlow/SinglePhaseProppantBase.cpp     
      fluidFlow/wells/WellSolverBase.cpp
      fluidFlow/wells/SinglePhaseWell.cpp          
@@ -134,5 +133,3 @@ geosx_add_code_checks( PREFIX physicsSolvers )
 
 add_subdirectory( fluidFlow/unitTests )
 add_subdirectory( fluidFlow/wells/unitTests )
-
-message(STATUS "Leaving src/coreComponents/physicsSolvers/CMakeLists.txt")

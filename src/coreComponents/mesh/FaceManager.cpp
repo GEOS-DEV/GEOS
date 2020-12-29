@@ -55,9 +55,6 @@ FaceManager::FaceManager( string const &, Group * const parent ):
   this->registerWrapper( viewKeyStruct::faceNormalString, &m_faceNormal )->
     reference().resizeDimension< 1 >( 3 );
 
-  this->registerWrapper( viewKeyStruct::faceRotationMatrixString, &m_faceRotationMatrix )->
-    reference().resizeDimension< 1, 2 >( 3, 3 );
-
   m_toElements.resize( 0, 2 );
 
   //0-based; note that the following field is ALSO 0
@@ -609,9 +606,6 @@ void FaceManager::computeGeometry( NodeManager const * const nodeManager )
     // This needs to be done somewhere else, also we probably shouldn't be orienting the normals like this.
     // Set normal orientation according to a global criterion
     computationalGeometry::FixNormalOrientation_3D( m_faceNormal[ faceID ] );
-
-    // Compute the local rotation matrix according to the normal vector
-    computationalGeometry::RotationMatrix_3D( m_faceNormal[ faceID ], m_faceRotationMatrix[ faceID ] );
   } );
 }
 
@@ -653,7 +647,7 @@ void FaceManager::SetDomainBoundaryObjects( NodeManager * const nodeManager )
 
 void FaceManager::SetIsExternal()
 {
-  arrayView1d< integer const > const isDomainBoundary = this->getDomainBoundaryIndicator().toViewConst();
+  arrayView1d< integer const > const isDomainBoundary = this->getDomainBoundaryIndicator();
 
   m_isExternal.setValues< serialPolicy >( 0 );
   for( localIndex k=0; k<size(); ++k )
@@ -714,24 +708,27 @@ void FaceManager::SortFaceNodes( arrayView2d< real64 const, nodes::REFERENCE_POS
   localIndex const firstNodeIndex = faceNodes[0];
 
   // get face center (average vertex location)
-  R1Tensor fc( 0 );
+  real64 fc[3] = { 0 };
   for( localIndex n =0; n < numFaceNodes; ++n )
   {
-    fc += X[faceNodes[n]];
+    LvArray::tensorOps::add< 3 >( fc, X[faceNodes[n]] );
   }
-  fc /= realT( numFaceNodes );
+  LvArray::tensorOps::scale< 3 >( fc, 1.0 / numFaceNodes );
 
-  R1Tensor ex, ey, ez;
+  //real64 ex[3], ey[3], ez[3];
   // Approximate face normal direction (unscaled)
 
   if( numFaceNodes == 2 )  //2D only.
   {
-    ex = X[faceNodes[1]];
-    ex -= X[faceNodes[0]];
-    ey = elementCenter;
-    ey -= fc;
+    real64 ex[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( X[faceNodes[1]] );
+    LvArray::tensorOps::subtract< 3 >( ex, X[faceNodes[0]] );
 
-    ez.Cross( ex, ey );
+    real64 ey[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( elementCenter );
+    LvArray::tensorOps::subtract< 3 >( ey, fc );
+
+    real64 ez[3];
+    LvArray::tensorOps::crossProduct( ez, ex, ey );
+
     // The element should be on the right hand side of the vector from node 0 to
     // node 1.
     // This ensure that the normal vector of an external face points to outside
@@ -745,25 +742,26 @@ void FaceManager::SortFaceNodes( arrayView2d< real64 const, nodes::REFERENCE_POS
   }
   else
   {
-    ez = fc;
-    ez -= elementCenter;
+    real64 ez[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( fc );
+    LvArray::tensorOps::subtract< 3 >( ez, elementCenter );
 
     /// Approximate in-plane axis
-    ex = X[faceNodes[0]];
-    ex -= fc;
+    real64 ex[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( X[faceNodes[0]] );
+    LvArray::tensorOps::subtract< 3 >( ex, fc );
+    LvArray::tensorOps::normalize< 3 >( ex );
 
-    ex /= ex.L2_Norm();
-    ey.Cross( ez, ex );
-    ey /= ey.L2_Norm();
+    real64 ey[3];
+    LvArray::tensorOps::crossProduct( ey, ez, ex );
+    LvArray::tensorOps::normalize< 3 >( ey );
 
-    std::pair< realT, localIndex > thetaOrder[MAX_FACE_NODES];
+    std::pair< real64, localIndex > thetaOrder[MAX_FACE_NODES];
 
     /// Sort nodes counterclockwise around face center
     for( localIndex n =0; n < numFaceNodes; ++n )
     {
-      R1Tensor v = X[faceNodes[n]];
-      v -= fc;
-      thetaOrder[n] = std::pair< realT, localIndex >( atan2( Dot( v, ey ), Dot( v, ex )), faceNodes[n] );
+      real64 v[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( X[faceNodes[n]] );
+      LvArray::tensorOps::subtract< 3 >( v, fc );
+      thetaOrder[n] = std::make_pair( atan2( LvArray::tensorOps::AiBi< 3 >( v, ey ), LvArray::tensorOps::AiBi< 3 >( v, ex ) ), faceNodes[n] );
     }
 
     std::sort( thetaOrder, thetaOrder + numFaceNodes );
@@ -804,7 +802,7 @@ void FaceManager::ExtractMapFromObjectForAssignGlobalIndexNumbers( ObjectManager
   localIndex const numFaces = size();
 
   ArrayOfArraysView< localIndex const > const faceToNodeMap = this->nodeList().toViewConst();
-  arrayView1d< integer const > const isDomainBoundary = this->getDomainBoundaryIndicator().toViewConst();
+  arrayView1d< integer const > const isDomainBoundary = this->getDomainBoundaryIndicator();
 
   globalFaceNodes.resize( numFaces );
 

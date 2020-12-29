@@ -134,6 +134,13 @@ Element: Contact
 .. include:: ../../coreComponents/fileIO/schema/docs/Contact.rst
 
 
+.. _XML_Coulomb:
+
+Element: Coulomb
+================
+.. include:: ../../coreComponents/fileIO/schema/docs/Coulomb.rst
+
+
 .. _XML_Cylinder:
 
 Element: Cylinder
@@ -246,6 +253,13 @@ Element: HaltEvent
 .. include:: ../../coreComponents/fileIO/schema/docs/HaltEvent.rst
 
 
+.. _XML_HybridMimeticDiscretization:
+
+Element: HybridMimeticDiscretization
+====================================
+.. include:: ../../coreComponents/fileIO/schema/docs/HybridMimeticDiscretization.rst
+
+
 .. _XML_Hydrofracture:
 
 Element: Hydrofracture
@@ -321,13 +335,6 @@ Element: LinearSolverParameters
 Element: Mesh
 =============
 .. include:: ../../coreComponents/fileIO/schema/docs/Mesh.rst
-
-
-.. _XML_MohrCoulomb:
-
-Element: MohrCoulomb
-====================
-.. include:: ../../coreComponents/fileIO/schema/docs/MohrCoulomb.rst
 
 
 .. _XML_MultiPhaseMultiComponentFluid:
@@ -831,6 +838,13 @@ Datastructure: Contact
 .. include:: ../../coreComponents/fileIO/schema/docs/Contact_other.rst
 
 
+.. _DATASTRUCTURE_Coulomb:
+
+Datastructure: Coulomb
+======================
+.. include:: ../../coreComponents/fileIO/schema/docs/Coulomb_other.rst
+
+
 .. _DATASTRUCTURE_Cylinder:
 
 Datastructure: Cylinder
@@ -950,6 +964,13 @@ Datastructure: HaltEvent
 .. include:: ../../coreComponents/fileIO/schema/docs/HaltEvent_other.rst
 
 
+.. _DATASTRUCTURE_HybridMimeticDiscretization:
+
+Datastructure: HybridMimeticDiscretization
+==========================================
+.. include:: ../../coreComponents/fileIO/schema/docs/HybridMimeticDiscretization_other.rst
+
+
 .. _DATASTRUCTURE_Hydrofracture:
 
 Datastructure: Hydrofracture
@@ -1039,13 +1060,6 @@ Datastructure: Mesh
 Datastructure: MeshBodies
 =========================
 .. include:: ../../coreComponents/fileIO/schema/docs/MeshBodies_other.rst
-
-
-.. _DATASTRUCTURE_MohrCoulomb:
-
-Datastructure: MohrCoulomb
-==========================
-.. include:: ../../coreComponents/fileIO/schema/docs/MohrCoulomb_other.rst
 
 
 .. _DATASTRUCTURE_MultiPhaseMultiComponentFluid:

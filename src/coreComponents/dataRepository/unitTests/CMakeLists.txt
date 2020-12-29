@@ -14,7 +14,7 @@ set( dataRepository_tests
      testWrapperHelpers.cpp
    )
 
-set( dependencyList gtest )
+set( dependencyList gtest conduit )
 
 if ( GEOSX_BUILD_SHARED_LIBS )
   set (dependencyList ${dependencyList} geosx_core)

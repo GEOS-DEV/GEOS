@@ -52,18 +52,12 @@ option( ENABLE_SUITESPARSE "Enables SUITESPARSE" ON )
 ### LAI SETUP ###
 
 set( supported_LAI Trilinos Hypre Petsc )
-set( GEOSX_LA_INTERFACE "Trilinos" CACHE STRING "Linear algebra interface to use in solvers" )
+set( GEOSX_LA_INTERFACE "Hypre" CACHE STRING "Linear algebra interface to use in solvers" )
 message( STATUS "GEOSX_LA_INTERFACE = ${GEOSX_LA_INTERFACE}" )
 
 if( NOT ( GEOSX_LA_INTERFACE IN_LIST supported_LAI ) )
   message( FATAL_ERROR "GEOSX_LA_INTERFACE must be one of: ${supported_LAI}" )
 endif()
-
-string( TOUPPER "${GEOSX_LA_INTERFACE}" upper_LAI )
-if( NOT ENABLE_${upper_LAI} )
-  message( FATAL_ERROR "${GEOSX_LA_INTERFACE} LA interface is selected, but ENABLE_${upper_LAI} is OFF" )
-endif()
-option( GEOSX_LA_INTERFACE_${upper_LAI} "${upper_LAI} LA interface is selected" ON )
 
 ### MPI/OMP/CUDA SETUP ###
 
@@ -86,12 +80,6 @@ option( GEOSX_BUILD_SHARED_LIBS "Builds geosx_core as a shared library " ON )
 #set(CMAKE_POSITION_INDEPENDENT_CODE ON  CACHE BOOL "" FORCE)
 #blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT -rdynamic)
 #set(CMAKE_EXE_LINKER_FLAGS "-rdynamic")
-
-set( GEOSX_TPL_ROOT_DIR "../../thirdPartyLibs/" CACHE PATH "" )
-
-message( "GEOSX_TPL_ROOT_DIR = ${GEOSX_TPL_ROOT_DIR}" )
-get_filename_component(GEOSX_TPL_ROOT_DIR ${GEOSX_TPL_ROOT_DIR} ABSOLUTE)
-message( "Absolute GEOSX_TPL_ROOT_DIR = ${GEOSX_TPL_ROOT_DIR}" )
 
 #set(SPHINX_EXECUTABLE "sphinx-build" CACHE PATH "")
 #include(cmake/blt/cmake/thirdparty/FindSphinx.cmake)

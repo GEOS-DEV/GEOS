@@ -6,7 +6,7 @@
     <SinglePhaseHybridFVM
       name="flowSolver"
       logLevel="0"
-      discretization="tpfaFlow"
+      discretization="singlePhaseHybridMimetic"
       targetRegions="{ Region1, Region2 }"
       fluidNames="{ fluid1, fluid2 }"
       solidNames="{ rock }">
@@ -14,7 +14,9 @@
         newtonTol="1.0e-6"
         newtonMaxIter="8"/>
       <LinearSolverParameters
-        solverType="direct"/>
+        solverType="direct"
+        directParallel="0"
+        logLevel="0"/>
     </SinglePhaseHybridFVM>
   </Solvers>
 
@@ -81,9 +83,9 @@
 
   <NumericalMethods>
     <FiniteVolume>
-      <TwoPointFluxApproximation
-        name="tpfaFlow"
-        fieldName="pressure"
+      <HybridMimeticDiscretization
+        name="singlePhaseHybridMimetic"
+        innerProductType="quasiTPFA"
         coefficientName="permeability"/>
     </FiniteVolume>
   </NumericalMethods>
