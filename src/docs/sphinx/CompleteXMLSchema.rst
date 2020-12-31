@@ -267,6 +267,13 @@ Element: HaltEvent
 .. include:: ../../coreComponents/fileIO/schema/docs/HaltEvent.rst
 
 
+.. _XML_HybridMimeticDiscretization:
+
+Element: HybridMimeticDiscretization
+====================================
+.. include:: ../../coreComponents/fileIO/schema/docs/HybridMimeticDiscretization.rst
+
+
 .. _XML_Hydrofracture:
 
 Element: Hydrofracture
@@ -976,6 +983,13 @@ Datastructure: Geometry
 Datastructure: HaltEvent
 ========================
 .. include:: ../../coreComponents/fileIO/schema/docs/HaltEvent_other.rst
+
+
+.. _DATASTRUCTURE_HybridMimeticDiscretization:
+
+Datastructure: HybridMimeticDiscretization
+==========================================
+.. include:: ../../coreComponents/fileIO/schema/docs/HybridMimeticDiscretization_other.rst
 
 
 .. _DATASTRUCTURE_Hydrofracture:

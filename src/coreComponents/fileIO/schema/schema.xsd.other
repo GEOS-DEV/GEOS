@@ -353,9 +353,11 @@
 	</xsd:complexType>
 	<xsd:complexType name="FiniteVolumeType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="HybridMimeticDiscretization" type="HybridMimeticDiscretizationType" />
 			<xsd:element name="TwoPointFluxApproximation" type="TwoPointFluxApproximationType" />
 		</xsd:choice>
 	</xsd:complexType>
+	<xsd:complexType name="HybridMimeticDiscretizationType" />
 	<xsd:complexType name="TwoPointFluxApproximationType">
 		<!--cellStencil => (no description available)-->
 		<xsd:attribute name="cellStencil" type="geosx_CellElementStencilTPFA" />
@@ -1219,7 +1221,7 @@
 		<xsd:attribute name="K_IC" type="real64_array2d" />
 		<!--SIFonFace => Calculated Stress Intensity Factor on the face. => SurfaceGenerator-->
 		<xsd:attribute name="SIFonFace" type="real64_array" />
-		<!--TransMultiplier => An array that holds the transmissibility multipliers => TwoPointFluxApproximation-->
+		<!--TransMultiplier => An array that holds the transmissibility multipliers => HybridMimeticDiscretization, TwoPointFluxApproximation-->
 		<xsd:attribute name="TransMultiplier" type="real64_array" />
 		<!--childIndex => Index of child within the mesh object it is registered on. => SurfaceGenerator-->
 		<xsd:attribute name="childIndex" type="localIndex_array" />
