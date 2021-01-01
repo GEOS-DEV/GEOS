@@ -83,7 +83,9 @@ void PhaseFieldFractureSolver::ImplicitStepSetup( real64 const & GEOSX_UNUSED_PA
                                                   real64 const & GEOSX_UNUSED_PARAM( dt ),
                                                   DomainPartition & domain )
 {
-  MeshLevel * const mesh = domain.getMeshBodies()->GetGroup< MeshBody >( 0 )->getMeshLevel( 0 );
+  GEOSX_MARK_FUNCTION;
+  MeshLevel * const mesh = domain.getMeshBody( 0 )->getMeshLevel( 0 );
+
   ElementRegionManager * const elemManager = mesh->getElemManager();
 
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > const totalMeanStress =
@@ -158,6 +160,7 @@ real64 PhaseFieldFractureSolver::SolverStep( real64 const & time_n,
                                              int const cycleNumber,
                                              DomainPartition & domain )
 {
+  GEOSX_MARK_FUNCTION;
   real64 dtReturn = dt;
   if( m_couplingTypeOption == CouplingTypeOption::FixedStress )
   {
@@ -175,6 +178,7 @@ real64 PhaseFieldFractureSolver::SplitOperatorStep( real64 const & time_n,
                                                     integer const cycleNumber,
                                                     DomainPartition & domain )
 {
+  GEOSX_MARK_FUNCTION;
   real64 dtReturn = dt;
   real64 dtReturnTemporary;
 
@@ -225,7 +229,7 @@ real64 PhaseFieldFractureSolver::SplitOperatorStep( real64 const & time_n,
                                                            cycleNumber,
                                                            domain );
 
-    std::cout << dtReturnTemporary << std::endl;
+    //std::cout << "Here: "<< dtReturnTemporary << std::endl;
 
     if( dtReturnTemporary < dtReturn )
     {
@@ -256,7 +260,7 @@ real64 PhaseFieldFractureSolver::SplitOperatorStep( real64 const & time_n,
 
     mapDamageToQuadrature( domain );
 
-    std::cout << dtReturnTemporary << std::endl;
+    //std::cout << "Here: " << dtReturnTemporary << std::endl;
 
     if( dtReturnTemporary < dtReturn )
     {
@@ -264,6 +268,14 @@ real64 PhaseFieldFractureSolver::SplitOperatorStep( real64 const & time_n,
       dtReturn = dtReturnTemporary;
       continue;
     }
+
+    if( m_subcyclingOption == 0 )
+    {
+      GEOSX_LOG_LEVEL_RANK_0( 1, "***** Single Pass solver, no subcycling *****\n" );
+      isConverged = true;
+      break;
+    }
+
     ++iter;
   }
 
@@ -279,6 +291,7 @@ real64 PhaseFieldFractureSolver::SplitOperatorStep( real64 const & time_n,
 void PhaseFieldFractureSolver::mapDamageToQuadrature( DomainPartition & domain )
 {
 
+  GEOSX_MARK_FUNCTION;
   MeshLevel * const mesh = domain.getMeshBody( 0 )->getMeshLevel( 0 );
   NodeManager * const nodeManager = mesh->getNodeManager();
 
