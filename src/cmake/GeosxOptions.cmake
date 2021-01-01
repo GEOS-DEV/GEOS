@@ -66,7 +66,7 @@ option( ENABLE_MPI "" ON )
 option(CUDA_ENABLED "" OFF)
 
 if( CMAKE_HOST_APPLE AND CMAKE_CXX_COMPILER_ID STREQUAL "Clang" )
-  option(ENABLE_OPENMP     "Enables OpenMP compiler support" OFF)  
+  option(ENABLE_OPENMP     "Enables OpenMP compiler support" OFF)
 else()
   option(ENABLE_OPENMP     "Enables OpenMP compiler support" ON)
 endif()

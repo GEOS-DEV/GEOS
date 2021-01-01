@@ -3,6 +3,7 @@
 #
 
 set( gtest_geosx_tests
+     testAuxiliaryFunctions.cpp
      testLinearElasticIsotropic.cpp
      testLinearElasticAnisotropic.cpp
      testRelPerm.cpp

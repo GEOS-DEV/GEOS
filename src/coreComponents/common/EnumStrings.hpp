@@ -118,7 +118,7 @@ struct EnumStrings
   static string concat( string const & delim = " " )
   {
     auto const & strings = get();
-    return ::geosx::stringutilities::strjoin( begin( strings ), end( strings ), delim );
+    return stringutilities::strjoin( begin( strings ), end( strings ), delim );
   }
 
   /**

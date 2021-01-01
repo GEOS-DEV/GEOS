@@ -155,6 +155,20 @@ Element: DamageLinearElasticIsotropic
 .. include:: ../../coreComponents/fileIO/schema/docs/DamageLinearElasticIsotropic.rst
 
 
+.. _XML_DamageSpectralLinearElasticIsotropic:
+
+Element: DamageSpectralLinearElasticIsotropic
+=============================================
+.. include:: ../../coreComponents/fileIO/schema/docs/DamageSpectralLinearElasticIsotropic.rst
+
+
+.. _XML_DamageVolDevLinearElasticIsotropic:
+
+Element: DamageVolDevLinearElasticIsotropic
+===========================================
+.. include:: ../../coreComponents/fileIO/schema/docs/DamageVolDevLinearElasticIsotropic.rst
+
+
 .. _XML_Dirichlet:
 
 Element: Dirichlet
@@ -850,6 +864,20 @@ Datastructure: Cylinder
 Datastructure: DamageLinearElasticIsotropic
 ===========================================
 .. include:: ../../coreComponents/fileIO/schema/docs/DamageLinearElasticIsotropic_other.rst
+
+
+.. _DATASTRUCTURE_DamageSpectralLinearElasticIsotropic:
+
+Datastructure: DamageSpectralLinearElasticIsotropic
+===================================================
+.. include:: ../../coreComponents/fileIO/schema/docs/DamageSpectralLinearElasticIsotropic_other.rst
+
+
+.. _DATASTRUCTURE_DamageVolDevLinearElasticIsotropic:
+
+Datastructure: DamageVolDevLinearElasticIsotropic
+=================================================
+.. include:: ../../coreComponents/fileIO/schema/docs/DamageVolDevLinearElasticIsotropic_other.rst
 
 
 .. _DATASTRUCTURE_Dirichlet:
