@@ -13,7 +13,7 @@ import shutil
 
 
 def extract_cmake_location(file_path):
-    print "Extracting cmake entry from host config file ", file_path
+    print("Extracting cmake entry from host config file ", file_path)
     if os.path.exists(file_path):
         cmake_line_prefix = "# cmake executable path: "
         file_handle = open(file_path, "r")
@@ -21,7 +21,7 @@ def extract_cmake_location(file_path):
         for line in content:
             if line.startswith(cmake_line_prefix):
                 return line.split(" ")[4].strip()
-        print "Could not find a cmake entry in host config file."
+        print("Could not find a cmake entry in host config file.")
     return None
 
 
@@ -100,7 +100,7 @@ parser.add_argument("-tpl",
 
 args, unknown_args = parser.parse_known_args()
 if unknown_args:
-    print "[config-build]: Passing the following unknown arguments directly to cmake... %s" % unknown_args
+    print("[config-build]: Passing the following unknown arguments directly to cmake... %s" % unknown_args)
 
 
 
@@ -116,7 +116,7 @@ if platform_info.endswith(".cmake"):
     platform_info = platform_info[:-6]
     
 assert os.path.exists( cachefile ), "Could not find cmake cache file '%s'." % cachefile
-print "Using host config file: '%s'." % cachefile
+print("Using host config file: '%s'." % cachefile)
 
 #####################
 # Setup Build Dir
@@ -130,16 +130,16 @@ else:
         buildpath = "-".join(["../thirdPartyLibs/build",platform_info,args.buildtype.lower()])        
     else:
         buildpath = "-".join(["build",platform_info,args.buildtype.lower()])
-print "buildpath = ", buildpath
+print("buildpath = ", buildpath)
 
 buildpath = os.path.abspath(buildpath)
 
 if os.path.exists(buildpath):
 #    sys.exit("Build directory '%s' already exists, exiting...")
-    print "Build directory '%s' already exists.  Deleting..." % buildpath
+    print("Build directory '%s' already exists.  Deleting..." % buildpath)
     shutil.rmtree(buildpath)
 
-print "Creating build directory '%s'..." % buildpath
+print("Creating build directory '%s'..." % buildpath)
 os.makedirs(buildpath)
 
 setup_ats(scriptsdir, buildpath)
@@ -162,10 +162,10 @@ if not args.noinstall:
 
     if os.path.exists(installpath):
     #    sys.exit("Install directory '%s' already exists, exiting...")
-        print "Install directory '%s' already exists, deleting..." % installpath
+        print("Install directory '%s' already exists, deleting..." % installpath)
         shutil.rmtree(installpath)
 
-    print "Creating install path '%s'..." % installpath
+    print("Creating install path '%s'..." % installpath)
     os.makedirs(installpath)
 
 
@@ -214,9 +214,8 @@ os.chmod("%s/cmake_cmd" % buildpath, st.st_mode | stat.S_IEXEC)
 ############################
 # Run CMake
 ############################
-print "Changing to build directory..."
+print("Changing to build directory...")
 os.chdir(buildpath)
-print "Executing cmake line: '%s'" % cmakeline
-print 
+print("Executing cmake line: '%s'\n" % cmakeline)
 subprocess.call(cmakeline,shell=True)
 
