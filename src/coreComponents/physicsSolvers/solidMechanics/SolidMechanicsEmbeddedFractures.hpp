@@ -102,6 +102,20 @@ public:
                              DomainPartition & domain ) override;
 
 
+  void AddCouplingNumNonzeros( DomainPartition & domain,
+                               DofManager & dofManager,
+                               arrayView1d< localIndex > const & rowLengths ) const;
+
+  /**
+   * @Brief add the sparsity pattern induced by the coupling
+   * @param domain the physical domain object
+   * @param dofManager degree-of-freedom manager associated with the linear system
+   * @param pattern the sparsity pattern
+   */
+  void AddCouplingSparsityPattern( DomainPartition const & domain,
+                                   DofManager const & dofManager,
+                                   SparsityPatternView< globalIndex > const & pattern ) const;
+
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
     constexpr static auto solidSolverNameString = "solidSolverName";
@@ -120,29 +134,25 @@ public:
 
   } SolidMechanicsEmbeddedFracturesViewKeys;
 
+  string & getContactRelationName() { return m_contactRelationName; };
+
+  string const & getContactRelationName() const { return m_contactRelationName; };
+
+  string & getFractureRegionName() { return m_fractureRegionName; };
+
+  string const & getFractureRegionName() const { return m_fractureRegionName; };
+
+  void applyTractionBC( real64 const time_n,
+                        real64 const dt,
+                        DomainPartition & domain );
+
 protected:
 
   virtual void InitializePostInitialConditions_PreSubGroups( Group * const problemManager ) override final;
 
   virtual void PostProcessInput() override final;
 
-  void AddCouplingNumNonzeros( DomainPartition & domain,
-                               DofManager & dofManager,
-                               arrayView1d< localIndex > const & rowLengths ) const;
 
-  /**
-   * @Brief add the sparsity pattern induced by the coupling
-   * @param domain the physical domain object
-   * @param dofManager degree-of-freedom manager associated with the linear system
-   * @param pattern the sparsity pattern
-   */
-  void AddCouplingSparsityPattern( DomainPartition const & domain,
-                                   DofManager const & dofManager,
-                                   SparsityPatternView< globalIndex > const & pattern ) const;
-
-  void applyTractionBC( real64 const time_n,
-                        real64 const dt,
-                        DomainPartition & domain );
 
 private:
 

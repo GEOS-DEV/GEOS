@@ -38,7 +38,7 @@
 #include "physicsSolvers/solidMechanics/SolidMechanicsEmbeddedFractures.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
 #include "linearAlgebra/interfaces/BlasLapackLA.hpp"
-
+#include "physicsSolvers/solidMechanics/SolidMechanicsEFEMKernelsHelper.hpp"
 
 namespace geosx
 {
@@ -437,162 +437,326 @@ void PoroelasticSolverEmbeddedFractures::AssembleCouplingTerms( DomainPartition 
   assembleTractionBalanceResidualWrtPressure( domain, dofManager, localMatrix, localRhs );
 }
 
+//void PoroelasticSolverEmbeddedFractures::
+//  assembleTractionBalanceResidualWrtPressure( DomainPartition const & domain,
+//                                              DofManager const & dofManager,
+//                                              CRSMatrixView< real64, globalIndex const > const & localMatrix,
+//                                              arrayView1d< real64 > const & localRhs )
+//{
+//  GEOSX_MARK_FUNCTION;
+//
+//  MeshLevel const & mesh                   = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
+//  ElementRegionManager const & elemManager = *mesh.getElemManager();
+//
+//  ConstitutiveManager const * const constitutiveManager = domain.getConstitutiveManager();
+//
+//  string const jumpDofKey     = dofManager.getKey( SolidMechanicsEmbeddedFractures::viewKeyStruct::dispJumpString );
+//  string const pressureDofKey = dofManager.getKey( FlowSolverBase::viewKeyStruct::pressureString );
+//
+//  ElementRegionManager::MaterialViewAccessor< real64 > const
+//  density = elemManager.ConstructFullMaterialViewAccessor< real64 >( "density0",
+//                                                                     constitutiveManager );
+//  globalIndex const rankOffset = dofManager.rankOffset();
+//
+//  // Get views to fractures
+//  elemManager.forElementRegions< SurfaceElementRegion >( [&]( SurfaceElementRegion const & embeddedRegion )->void
+//  {
+//    // loop of embeddeSubregions
+//    embeddedRegion.forElementSubRegions< EmbeddedSurfaceSubRegion >( [&]( EmbeddedSurfaceSubRegion const & embeddedSurfaceSubRegion
+// )->void
+//    {
+//      localIndex const numEmbeddedElems = embeddedSurfaceSubRegion.size();
+//
+//      FixedToManyElementRelation const & embeddedSurfacesToCells = embeddedSurfaceSubRegion.getToCellRelation();
+//
+//      arrayView1d< globalIndex const > const & jumpDofNumber =
+//        embeddedSurfaceSubRegion.getReference< array1d< globalIndex > >( jumpDofKey );
+//
+//      arrayView1d< globalIndex const > const & fracturePresDofNumber =
+//        embeddedSurfaceSubRegion.getReference< array1d< globalIndex > >( pressureDofKey );
+//
+//      arrayView1d< real64 const > const & fractureSurfaceArea = embeddedSurfaceSubRegion.getElementArea();
+//
+//      arrayView1d< real64 const > const & dTraction_dPressure =
+//        embeddedSurfaceSubRegion.getReference< array1d< real64 > >( viewKeyStruct::dTraction_dPressureString );
+//
+//      arrayView1d< integer const > const & ghostRank = embeddedSurfaceSubRegion.ghostRank();
+//
+//      arrayView2d< real64 const > const nVec  = embeddedSurfSubRegion.getNormalVector();
+//      arrayView2d< real64 const > const tVec1 = embeddedSurfSubRegion.getTangentVector1();
+//      arrayView2d< real64 const > const tVec2 = embeddedSurfSubRegion.getTangentVector2();
+//
+//      // loop over embedded surfaces
+//      for( localIndex k=0; k<numEmbeddedElems; ++k )
+//      {
+//        // Initialize local variables
+//        real64 jumpEqnRowIndices[3], eqMatrix[3][6], Rfrac[3], Kwpm_gauss[3], Kwpm_elem[3];
+//
+//        if( ghostRank[k] < 0 )
+//        {
+//          // Get rock matrix element subregion
+//          CellElementSubRegion const * const elementSubRegion =
+//            Group::group_cast< CellElementSubRegion const * const >
+//              ( elemManager.GetRegion( embeddedSurfacesToCells.m_toElementRegion[k][0] )->
+//                GetSubRegion( embeddedSurfacesToCells.m_toElementSubRegion[k][0] ));
+//
+//          localIndex cellElementIndex = embeddedSurfacesToCells.m_toElementIndex[k][0];
+//
+//          // Get finite element discretization info
+//          finiteElement::FiniteElementBase const &
+//          fe = elementSubRegion->getReference< finiteElement::FiniteElementBase >( m_solidSolver->getDiscretizationName() );
+//
+//          // Initialize
+//          LvArray::tensorOps::fill< 3 >( Rfrac, 0 );
+//          LvArray::tensorOps::fill< 3, 6 >( eqMatrix, 0 );
+//
+//          // transformation determinant
+//          arrayView2d< real64 const > const & detJ = elementSubRegion->detJ();
+//
+//          // Fill in equilibrium operator
+//          arrayView1d< real64 const > const & cellVolume = elementSubRegion->getElementVolume();
+//          real64 hInv = fractureSurfaceArea[k] / cellVolume[cellElementIndex];  // AreaFrac / cellVolume
+//
+//          SoliMechanicsEFEMKernelHelper::assembleEquilibriumOperator( eqMatrix, nVec[k], tVec1[k], tVec2[k], hInv );
+//
+//          // Dof number of jump enrichment
+//          for( int i= 0; i < embeddedSurfaceSubRegion.numOfJumpEnrichments(); i++ )
+//          {
+//            jumpEqnRowIndices[i] = jumpDofNumber[k] + i - rankOffset;
+//          }
+//
+//          arrayView1d< globalIndex const > const matrixPresDofNumber =
+//            elementSubRegion->getReference< array1d< globalIndex > >( pressureDofKey );
+//
+//          globalIndex matrixPressureColIndex = matrixPresDofNumber[cellElementIndex];
+//
+//          arrayView1d< real64 const > const & matrixPres =
+//            elementSubRegion->getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::pressureString );
+//          arrayView1d< real64 const > const & matrixDeltaPres =
+//            elementSubRegion->getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::deltaPressureString );
+//          real64 const pm = matrixPres[cellElementIndex] + matrixDeltaPres[cellElementIndex];
+//
+//          string const & solidName = m_solidSolver->solidMaterialNames()[embeddedSurfacesToCells.m_toElementRegion[k][0]];
+//          SolidBase const & solid = GetConstitutiveModel< SolidBase >( *elementSubRegion, solidName );
+//
+//          real64 const biotCoefficient = solid.getReference< real64 >( "BiotCoefficient" );
+//
+//          // 1. Assembly of element matrices
+//          LvArray::tensorOps::fill< 3 >( Kwpm_elem, 0 );
+//          LvArray::tensorOps::fill< 3 >( Kwpm_gauss, 0 );
+//
+//          for( int i=0; i < 3; ++i )
+//          {
+//            Kwpm_gauss[0] += eqMatrix[0][i];
+//            Kwpm_gauss[1] += eqMatrix[1][i];
+//            Kwpm_gauss[2] += eqMatrix[2][i];
+//          }
+//
+//          // dTdpf
+//          real64 dTdpf = -dTraction_dPressure[k] * fractureSurfaceArea[k];  // signs for the mechanics are flipped.
+//
+//          for( integer q=0; q<fe.getNumQuadraturePoints(); ++q )
+//          {
+//            const real64 detJq = detJ[cellElementIndex][q];
+//
+//            // No neg coz the effective stress is total stress - porePressure
+//            // and all signs are flipped here.
+//            Kwpm_elem[0] += Kwpm_gauss[0] * biotCoefficient * detJq;
+//            Kwpm_elem[1] += Kwpm_gauss[1] * biotCoefficient * detJq;
+//            Kwpm_elem[2] += Kwpm_gauss[2] * biotCoefficient * detJq;
+//          }
+//
+//          Rfrac[0] = Kwpm_elem[0] * pm;
+//          Rfrac[1] = Kwpm_elem[1] * pm;
+//          Rfrac[2] = Kwpm_elem[2] * pm;
+//
+//          /// add derivatives for and residual contribution for porelastic case.
+//          for( localIndex i=0; i < 3; ++i )
+//          {
+//            if( jumpEqnRowIndices[i] >= 0 && jumpEqnRowIndices[i] < localMatrix.numRows() )
+//            {
+//              RAJA::atomicAdd< parallelDeviceAtomic >( &localRhs[jumpEqnRowIndices[i]], Rfrac[i] );
+//
+//              // fill in matrix
+//              localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( jumpEqnRowIndices[i],
+//                                                                                &matrixPressureColIndex,
+//                                                                                &Kwpm_elem[i],
+//                                                                                1 );
+//            }
+//          }
+//          if( jumpEqnRowIndices[0] >= 0 && jumpEqnRowIndices[0] < localMatrix.numRows() )
+//          {
+//            localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( jumpEqnRowIndices[0],
+//                                                                              &fracturePresDofNumber[k],
+//                                                                              &dTdpf,
+//                                                                              1 );
+//          }
+//        }
+//      }  // loop over embedded surfaces
+//    } );  // subregion loop
+//  } );  // region loop
+//}
+
 void PoroelasticSolverEmbeddedFractures::
   assembleTractionBalanceResidualWrtPressure( DomainPartition const & domain,
                                               DofManager const & dofManager,
                                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                               arrayView1d< real64 > const & localRhs )
 {
+
   GEOSX_MARK_FUNCTION;
 
-  MeshLevel const & mesh                   = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
-  ElementRegionManager const & elemManager = *mesh.getElemManager();
+  MeshLevel const & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
 
-  ConstitutiveManager const * const constitutiveManager = domain.getConstitutiveManager();
-
-  string const jumpDofKey     = dofManager.getKey( SolidMechanicsEmbeddedFractures::viewKeyStruct::dispJumpString );
-  string const pressureDofKey = dofManager.getKey( FlowSolverBase::viewKeyStruct::pressureString );
-
-  ElementRegionManager::MaterialViewAccessor< real64 > const
-  density = elemManager.ConstructFullMaterialViewAccessor< real64 >( "density0",
-                                                                     constitutiveManager );
   globalIndex const rankOffset = dofManager.rankOffset();
+  string const pressureDofKey = dofManager.getKey( FlowSolverBase::viewKeyStruct::pressureString );
+  string const jumpDofKey     = dofManager.getKey( SolidMechanicsEmbeddedFractures::viewKeyStruct::dispJumpString );
 
-  // Initialize Equilibrium matrix
-  array2d< real64 >       eqMatrix( 3, 6 );
+  // Get fracture's views
+  ElementRegionManager const & elemManager = *(mesh.getElemManager());
 
-  // begin region loop
-  elemManager.forElementRegions< SurfaceElementRegion >( [&]( SurfaceElementRegion const & embeddedRegion )->void
+  SurfaceElementRegion const & fractureRegion =
+    *(elemManager.GetRegion< SurfaceElementRegion >( m_fracturesSolver->getFractureRegionName() ));
+
+  EmbeddedSurfaceSubRegion const & embeddedSurfSubRegion =
+    *(fractureRegion.GetSubRegion< EmbeddedSurfaceSubRegion >( 0 ));
+
+  arrayView1d< globalIndex const > const jumpDofNumber = embeddedSurfSubRegion.getReference< globalIndex_array >( jumpDofKey );
+
+  arrayView2d< real64 const > const nVec  = embeddedSurfSubRegion.getNormalVector();
+
+  arrayView2d< real64 const > const tVec1 =  embeddedSurfSubRegion.getTangentVector1();
+
+  arrayView2d< real64 const > const tVec2 =  embeddedSurfSubRegion.getTangentVector2();
+
+  arrayView1d< real64 const > const fractureSurfaceArea = embeddedSurfSubRegion.getElementArea();
+
+  arrayView1d< globalIndex const > const & fracturePresDofNumber =
+    embeddedSurfSubRegion.getReference< array1d< globalIndex > >( pressureDofKey );
+
+  arrayView1d< real64 const > const & dTraction_dPressure =
+    embeddedSurfSubRegion.getReference< array1d< real64 > >( viewKeyStruct::dTraction_dPressureString );
+
+
+  // begin subregion loop
+  forTargetSubRegionsComplete< CellElementSubRegion >( mesh, [&]( localIndex const,
+                                                                  localIndex const,
+                                                                  localIndex const,
+                                                                  ElementRegionBase const & region,
+                                                                  CellElementSubRegion const & elementSubRegion )
   {
-    // loop of embeddeSubregions
-    embeddedRegion.forElementSubRegions< EmbeddedSurfaceSubRegion >( [&]( EmbeddedSurfaceSubRegion const & embeddedSurfaceSubRegion )->void
+    string const & solidName = m_solidSolver->solidMaterialNames()[m_solidSolver->targetRegionIndex( region.getName() )];
+    SolidBase const & solid = GetConstitutiveModel< SolidBase >( elementSubRegion, solidName );
+
+    real64 const biotCoefficient = solid.getReference< real64 >( "BiotCoefficient" );
+
+    // Get FEM information for integration
+    finiteElement::FiniteElementBase const &
+    fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( m_solidSolver->getDiscretizationName() );
+    localIndex const numQuadraturePoints = fe.getNumQuadraturePoints();
+
+    // Get cell element subregion views
+
+    arrayView2d< real64 const > const & detJ = elementSubRegion.detJ();
+
+    SortedArrayView< localIndex const > const fracturedElements = elementSubRegion.fracturedElementsList();
+
+    ArrayOfArraysView< localIndex const > const cellsToEmbeddedSurfaces = elementSubRegion.embeddedSurfacesList().toViewConst();
+
+    arrayView1d< real64 const > const & cellVolume = elementSubRegion.getElementVolume();
+
+    arrayView1d< real64 const > const & matrixPres =
+      elementSubRegion.getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::pressureString );
+
+    arrayView1d< real64 const > const & matrixDeltaPres =
+      elementSubRegion.getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::deltaPressureString );
+
+    arrayView1d< globalIndex const > const matrixPresDofNumber =
+      elementSubRegion.getReference< array1d< globalIndex > >( pressureDofKey );
+
+    forAll< parallelDevicePolicy< 32 > >( fracturedElements.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
     {
-      localIndex const numEmbeddedElems = embeddedSurfaceSubRegion.size();
+      localIndex cellIndex     = fracturedElements[ei];
+      localIndex embSurfIndex = cellsToEmbeddedSurfaces[cellIndex][0];
 
-      FixedToManyElementRelation const & embeddedSurfacesToCells = embeddedSurfaceSubRegion.getToCellRelation();
+      // Initialize local variables
+      real64 jumpEqnRowIndices[3], eqMatrix[3][6], Rfrac[3], Kwpm_gauss[3], Kwpm_elem[3];
 
-      arrayView1d< globalIndex const > const & jumpDofNumber =
-        embeddedSurfaceSubRegion.getReference< array1d< globalIndex > >( jumpDofKey );
+      real64 const pm = matrixPres[cellIndex] + matrixDeltaPres[cellIndex];
 
-      arrayView1d< globalIndex const > const & fracturePresDofNumber =
-        embeddedSurfaceSubRegion.getReference< array1d< globalIndex > >( pressureDofKey );
+      // Fill in equilibrium operator
+      LvArray::tensorOps::fill< 3, 6 >( eqMatrix, 0 );
+      real64 hInv = fractureSurfaceArea[embSurfIndex] / cellVolume[cellIndex];  // AreaFrac / cellVolume
+      SolidMechanicsEFEMKernelsHelper::assembleEquilibriumOperator( eqMatrix,
+                                                                    nVec[embSurfIndex],
+                                                                    tVec1[embSurfIndex],
+                                                                    tVec2[embSurfIndex],
+                                                                    hInv );
 
-      arrayView1d< real64 const > const & fractureSurfaceArea = embeddedSurfaceSubRegion.getElementArea();
+      // 1. Assembly of element matrices
+      LvArray::tensorOps::fill< 3 >( Kwpm_elem, 0 );
+      LvArray::tensorOps::fill< 3 >( Kwpm_gauss, 0 );
 
-      arrayView1d< real64 const > const & dTraction_dPressure =
-        embeddedSurfaceSubRegion.getReference< array1d< real64 > >( viewKeyStruct::dTraction_dPressureString );
-
-      arrayView1d< integer const > const & ghostRank = embeddedSurfaceSubRegion.ghostRank();
-
-      // loop over embedded surfaces
-      for( localIndex k=0; k<numEmbeddedElems; ++k )
+      for( int i=0; i < 3; ++i )
       {
-        // Initialize local variables
-        real64 jumpEqnRowIndices[3], Rfrac[3], Kwpm_gauss[3], Kwpm_elem[3];
+        Kwpm_gauss[0] += eqMatrix[0][i];
+        Kwpm_gauss[1] += eqMatrix[1][i];
+        Kwpm_gauss[2] += eqMatrix[2][i];
+      }
 
-        if( ghostRank[k] < 0 )
+      // dTdpf
+      // signs for the mechanics are flipped so we add a minus.
+      real64 dTdpf = -dTraction_dPressure[embSurfIndex] * fractureSurfaceArea[embSurfIndex];
+
+      for( integer q=0; q<numQuadraturePoints; ++q )
+      {
+        const real64 detJq = detJ[cellIndex][q];
+
+        // No neg coz the effective stress is total stress - porePressure
+        // and all signs are flipped here.
+        Kwpm_elem[0] += Kwpm_gauss[0] * biotCoefficient * detJq;
+        Kwpm_elem[1] += Kwpm_gauss[1] * biotCoefficient * detJq;
+        Kwpm_elem[2] += Kwpm_gauss[2] * biotCoefficient * detJq;
+      }
+
+      Rfrac[0] = Kwpm_elem[0] * pm;
+      Rfrac[1] = Kwpm_elem[1] * pm;
+      Rfrac[2] = Kwpm_elem[2] * pm;
+
+      /// Add derivatives and residual contribution for porelastic case.
+
+      // Row and column indexes.
+      globalIndex matrixPressureColIndex = matrixPresDofNumber[cellIndex];
+      // Dof number of jump enrichment
+      for( int i= 0; i < 3; i++ )
+      {
+        jumpEqnRowIndices[i] = jumpDofNumber[embSurfIndex] + i - rankOffset;
+      }
+
+      for( localIndex i=0; i < 3; ++i )
+      {
+        if( jumpEqnRowIndices[i] >= 0 && jumpEqnRowIndices[i] < localMatrix.numRows() )
         {
-          // Get rock matrix element subregion
-          CellElementSubRegion const * const elementSubRegion =
-            Group::group_cast< CellElementSubRegion const * const >
-              ( elemManager.GetRegion( embeddedSurfacesToCells.m_toElementRegion[k][0] )->
-                GetSubRegion( embeddedSurfacesToCells.m_toElementSubRegion[k][0] ));
+          RAJA::atomicAdd< parallelDeviceAtomic >( &localRhs[jumpEqnRowIndices[i]], Rfrac[i] );
 
-          localIndex cellElementIndex = embeddedSurfacesToCells.m_toElementIndex[k][0];
-
-          // Get finite element discretization info
-          finiteElement::FiniteElementBase const &
-          fe = elementSubRegion->getReference< finiteElement::FiniteElementBase >( m_solidSolver->getDiscretizationName() );
-
-          // Initialize
-          LvArray::tensorOps::fill< 3 >( Rfrac, 0 );
-          eqMatrix.setValues< serialPolicy >( 0 ); /// TODO should be a c-array as well eventually
-
-          // transformation determinant
-          arrayView2d< real64 const > const & detJ = elementSubRegion->detJ();
-
-          // Fill in equilibrium operator
-          arrayView1d< real64 const > const & cellVolume = elementSubRegion->getElementVolume();
-          real64 hInv = fractureSurfaceArea[k] / cellVolume[cellElementIndex];  // AreaFrac / cellVolume
-          m_fracturesSolver->AssembleEquilibriumOperator( eqMatrix, embeddedSurfaceSubRegion, k, hInv );
-
-          // Dof number of jump enrichment
-          for( int i= 0; i < embeddedSurfaceSubRegion.numOfJumpEnrichments(); i++ )
-          {
-            jumpEqnRowIndices[i] = jumpDofNumber[k] + i - rankOffset;
-          }
-
-          arrayView1d< globalIndex const > const matrixPresDofNumber =
-            elementSubRegion->getReference< array1d< globalIndex > >( pressureDofKey );
-
-          globalIndex matrixPressureColIndex = matrixPresDofNumber[cellElementIndex];
-
-          arrayView1d< real64 const > const & matrixPres =
-            elementSubRegion->getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::pressureString );
-          arrayView1d< real64 const > const & matrixDeltaPres =
-            elementSubRegion->getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::deltaPressureString );
-          real64 const pm = matrixPres[cellElementIndex] + matrixDeltaPres[cellElementIndex];
-
-          string const & solidName = m_solidSolver->solidMaterialNames()[embeddedSurfacesToCells.m_toElementRegion[k][0]];
-          SolidBase const & solid = GetConstitutiveModel< SolidBase >( *elementSubRegion, solidName );
-
-          real64 const biotCoefficient = solid.getReference< real64 >( "BiotCoefficient" );
-
-          // 1. Assembly of element matrices
-          LvArray::tensorOps::fill< 3 >( Kwpm_elem, 0 );
-          LvArray::tensorOps::fill< 3 >( Kwpm_gauss, 0 );
-
-          for( int i=0; i < 3; ++i )
-          {
-            Kwpm_gauss[0] += eqMatrix( 0, i );
-            Kwpm_gauss[1] += eqMatrix( 1, i );
-            Kwpm_gauss[2] += eqMatrix( 2, i );
-          }
-
-          // dTdpf
-          real64 dTdpf = -dTraction_dPressure[k] * fractureSurfaceArea[k];  // signs for the mechanics are flipped.
-
-          for( integer q=0; q<fe.getNumQuadraturePoints(); ++q )
-          {
-            const realT detJq = detJ[cellElementIndex][q];
-
-            // No neg coz the effective stress is total stress - porePressure
-            // and all signs are flipped here.
-            Kwpm_elem[0] += Kwpm_gauss[0] * biotCoefficient * detJq;
-            Kwpm_elem[1] += Kwpm_gauss[1] * biotCoefficient * detJq;
-            Kwpm_elem[2] += Kwpm_gauss[2] * biotCoefficient * detJq;
-          }
-
-          Rfrac[0] = Kwpm_elem[0] * pm;
-          Rfrac[1] = Kwpm_elem[1] * pm;
-          Rfrac[2] = Kwpm_elem[2] * pm;
-
-          /// add derivatives for and residual contribution for porelastic case.
-          for( localIndex i=0; i < 3; ++i )
-          {
-            if( jumpEqnRowIndices[i] >= 0 && jumpEqnRowIndices[i] < localMatrix.numRows() )
-            {
-              RAJA::atomicAdd< parallelDeviceAtomic >( &localRhs[jumpEqnRowIndices[i]], Rfrac[i] );
-
-              // fill in matrix
-              localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( jumpEqnRowIndices[i],
-                                                                                &matrixPressureColIndex,
-                                                                                &Kwpm_elem[i],
-                                                                                1 );
-            }
-          }
-          if( jumpEqnRowIndices[0] >= 0 && jumpEqnRowIndices[0] < localMatrix.numRows() )
-          {
-            localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( jumpEqnRowIndices[0],
-                                                                              &fracturePresDofNumber[k],
-                                                                              &dTdpf,
-                                                                              1 );
-          }
+          // fill in matrix
+          localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( jumpEqnRowIndices[i],
+                                                                            &matrixPressureColIndex,
+                                                                            &Kwpm_elem[i],
+                                                                            1 );
         }
-      }  // loop over embedded surfaces
-    } );  // subregion loop
-  } );  // region loop
+      }
+      if( jumpEqnRowIndices[0] >= 0 && jumpEqnRowIndices[0] < localMatrix.numRows() )
+      {
+        localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( jumpEqnRowIndices[0],
+                                                                          &fracturePresDofNumber[embSurfIndex],
+                                                                          &dTdpf,
+                                                                          1 );
+      }
 
+
+    } );
+  } );
 }
 
 void PoroelasticSolverEmbeddedFractures::
@@ -813,8 +977,8 @@ void PoroelasticSolverEmbeddedFractures::updateState( DomainPartition & domain )
 
   elemManager->forElementSubRegions< EmbeddedSurfaceSubRegion >( [&]( EmbeddedSurfaceSubRegion & subRegion )
   {
-    arrayView1d< R1Tensor const > const dispJump =
-      subRegion.getReference< array1d< R1Tensor > >( SolidMechanicsEmbeddedFractures::viewKeyStruct::dispJumpString );
+    arrayView2d< real64 const > const dispJump =
+      subRegion.getReference< array2d< real64 > >( SolidMechanicsEmbeddedFractures::viewKeyStruct::dispJumpString );
 
     arrayView1d< real64 > const aperture = subRegion.getElementAperture();
 
@@ -827,8 +991,8 @@ void PoroelasticSolverEmbeddedFractures::updateState( DomainPartition & domain )
       subRegion.getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::deltaVolumeString );
     arrayView1d< real64 const > const area = subRegion.getElementArea().toViewConst();
 
-    arrayView1d< R1Tensor > const & fractureTraction =
-      subRegion.getReference< array1d< R1Tensor > >( SolidMechanicsEmbeddedFractures::viewKeyStruct::fractureTractionString );
+    arrayView2d< real64 > const & fractureTraction =
+      subRegion.getReference< array2d< real64 > >( SolidMechanicsEmbeddedFractures::viewKeyStruct::fractureTractionString );
 
     arrayView1d< real64 >  const & dTdpf =
       subRegion.getReference< array1d< real64 > >( viewKeyStruct::dTraction_dPressureString );

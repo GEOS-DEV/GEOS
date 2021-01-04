@@ -106,11 +106,11 @@ public:
 
   inline real64 apertureTolerance() const { return m_apertureTolerance; }
 
-  virtual void computeTraction( R1Tensor const & dispJump,
-                                R1Tensor & tractionVector ) const;
+  virtual void computeTraction( arraySlice1d< real64 const > const & dispJump,
+                                arraySlice1d< real64 > const & tractionVector ) const;
 
   void addPressureToTraction ( real64 const & pressure,
-                               R1Tensor & tractionVector ) const
+                               arraySlice1d< real64 > const & tractionVector ) const
   {
     tractionVector[0] -= pressure;
   }
@@ -121,7 +121,7 @@ public:
     dTdpf = open ? -1.0 : 0.0;
   }
 
-  virtual void dTraction_dJump( R1Tensor const & dispJump,
+  virtual void dTraction_dJump( arraySlice1d< real64 const > const & dispJump,
                                 arraySlice2d< real64 > const & dTdw ) const
   {
 
