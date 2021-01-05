@@ -24,6 +24,7 @@
       name = "fractureMechSolver"
       targetRegions = "{Domain, Fracture}"
       solidSolverName = "matrixMechSolver"
+      fractureRegionName= "Fracture"
       contactRelationName = "fractureContact"
       logLevel = "0"/>    
 
@@ -278,7 +279,7 @@
   <Outputs>
     <VTK
       name="vtkOutput"
-      plotFileRoot="Sneddon"
+      plotFileRoot="PoroElastic_embedded"
       plotLevel="2"
       writeBinaryData="0"/>
 
