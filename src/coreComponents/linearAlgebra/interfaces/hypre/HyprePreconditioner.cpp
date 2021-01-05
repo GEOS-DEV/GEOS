@@ -330,6 +330,61 @@ void HyprePreconditioner::createMGR( DofManager const * const dofManager )
 
     m_functions->aux_destroy = HYPRE_BoomerAMGDestroy;
   }
+  else if( m_parameters.mgr.strategy == "SinglePhaseHybridFVM" )
+  {
+    // dofLabel: 0 = cell-centered pressure
+    // dofLabel: 1 = face-centered pressure
+    //
+    // Ingredients
+    //
+    // 1. F-points cell-centered pressure, C-points face-centered pressure
+    // 2. F-points smoother: l1-Jacobi
+    // 3. C-points coarse-grid/Schur complement solver: boomer AMG
+    // 4. Global smoother: none
+
+    mgr_nlevels = 1;
+    mgr_bsize = 2;
+
+    mgr_num_cindexes.resize( mgr_nlevels );
+    mgr_num_cindexes[0] = 1; // Eliminate cell-centered pressure
+
+    lv_cindexes.resize( mgr_nlevels );
+    lv_cindexes[0].push_back( 1 );
+
+    mgr_cindexes.resize( mgr_nlevels );
+    for( HYPRE_Int iLevel = 0; iLevel < mgr_nlevels; ++iLevel )
+    {
+      mgr_cindexes[iLevel] = lv_cindexes[iLevel].data();
+    }
+
+    GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetCpointsByPointMarkerArray( m_precond, mgr_bsize, mgr_nlevels,
+                                                                  mgr_num_cindexes.data(),
+                                                                  mgr_cindexes.data(),
+                                                                  m_auxData->point_marker_array.data() ) );
+
+    mgr_level_interp_type.resize( mgr_nlevels );
+    mgr_level_interp_type[0] = 2; //diagonal scaling (Jacobi)
+
+    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGCreate( &aux_precond ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetPrintLevel( aux_precond, 0 ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetMaxIter( aux_precond, 1 ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetTol( aux_precond, 0.0 ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetRelaxOrder( aux_precond, 1 ) );
+
+    GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetFRelaxMethod( m_precond, 18 ) ); // l1-Jacobi
+    GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetNonCpointsToFpoints( m_precond, 1 ));
+    GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetLevelInterpType( m_precond, mgr_level_interp_type.data() ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetMaxGlobalsmoothIters( m_precond, 0 ) );
+    GEOSX_LAI_CHECK_ERROR(
+      HYPRE_MGRSetCoarseSolver( m_precond,
+                                (HYPRE_PtrToParSolverFcn)HYPRE_BoomerAMGSolve,
+                                (HYPRE_PtrToParSolverFcn)HYPRE_BoomerAMGSetup,
+                                aux_precond )
+      );
+
+    m_functions->aux_destroy = HYPRE_BoomerAMGDestroy;
+
+  }
   else if( m_parameters.mgr.strategy == "CompositionalMultiphaseFlow" )
   {
     // Labels description stored in point_marker_array
