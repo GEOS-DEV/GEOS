@@ -572,7 +572,6 @@ struct UpwindingHelper
 };
 
 
-
 } // namespace CompositionalMultiphaseHybridFVMKernels
 
 } // namespace geosx
