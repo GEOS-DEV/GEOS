@@ -110,8 +110,8 @@ public:
    * @param[in] barycenters coordinates of the elements center
    */
   void CreateFromFineToCoarseMap( localIndex nbAggregates,
-                                  array1d< localIndex > const & fineToCoarse,
-                                  array1d< R1Tensor > const & barycenters );
+                                  arrayView1d< localIndex const > const & fineToCoarse,
+                                  arrayView2d< real64 const > const & barycenters );
 
   /**
    * @brief Accessor to the relation array between fine and coarse elements.

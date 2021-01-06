@@ -106,30 +106,6 @@ public:
     c[5][5] = G;
   }
 
-  void GetStiffness( localIndex const k, array2d< real64 > & c ) const
-  {
-    real64 const G = m_shearModulus[k];
-    real64 const Lame = m_bulkModulus[k] - 2.0/3.0 * G;
-
-    c[0][0] = Lame + 2 * G;
-    c[0][1] = Lame;
-    c[0][2] = Lame;
-
-    c[1][0] = Lame;
-    c[1][1] = Lame + 2 * G;
-    c[1][2] = Lame;
-
-    c[2][0] = Lame;
-    c[2][1] = Lame;
-    c[2][2] = Lame + 2 * G;
-
-    c[3][3] = G;
-
-    c[4][4] = G;
-
-    c[5][5] = G;
-  }
-
   GEOSX_FORCE_INLINE
   GEOSX_HOST_DEVICE
   void setDiscretizationOps( localIndex const k,
@@ -172,6 +148,18 @@ public:
   GEOSX_HOST_DEVICE
   virtual real64 calculateStrainEnergyDensity( localIndex const k,
                                                localIndex const q ) const override;
+
+  GEOSX_HOST_DEVICE
+  virtual real64 getBulkModulus( localIndex const k ) const
+  {
+    return m_bulkModulus[k];
+  }
+
+  GEOSX_HOST_DEVICE
+  virtual real64 getShearModulus( localIndex const k ) const
+  {
+    return m_shearModulus[k];
+  }
 
 private:
   /// A reference to the ArrayView holding the bulk modulus for each element.
@@ -313,6 +301,21 @@ real64 LinearElasticIsotropicUpdates::calculateStrainEnergyDensity( localIndex c
   GEOSX_ASSERT_MSG( newStrainEnergyDensity >= 0.0,
                     "negative strain energy density" );
 
+  //make adjustments for Volumetric Split
+  /////////////////////////////////
+  //real64 traceOfStress = this->m_stress(k,q,0) + this->m_stress(k,q,1) + this->m_stress(k,q,2);
+  //real64 compressionIndicator = 0;
+  // if (traceOfStress < 0.0)
+  // {
+  //   compressionIndicator = 1;
+  // }
+  // real64 const activeStrainEnergyDensity = newStrainEnergyDensity -
+  // compressionIndicator*(traceOfStress/3.0)*(traceOfStress/3.0)/(2*m_bulkModulus[k]);
+  // return activeStrainEnergyDensity;
+  /////////////////////////////////
+  //end of adjustments
+
+  //regular return
   return newStrainEnergyDensity;
 }
 

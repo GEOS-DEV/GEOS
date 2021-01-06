@@ -28,6 +28,7 @@
 
 #include <petscvec.h>
 #include <petscmat.h>
+#include <fenv.h>
 
 namespace geosx
 {
@@ -522,7 +523,7 @@ void PetscMatrix::gemv( real64 const alpha,
   GEOSX_LAI_ASSERT( ready() );
 
   PetscVector x_( x );
-  PetscVector b_( x );
+  PetscVector b_( y );
 
   x_.scale( alpha ); // alpha*x_
   y.scale( beta ); // beta*y
@@ -573,9 +574,17 @@ void PetscMatrix::multiplyRAP( PetscMatrix const & R,
                                PetscMatrix const & P,
                                PetscMatrix & dst ) const
 {
-  // No builtin RAP function in PETSc, so use double product for now
-  // TODO: research this better
-  MatrixBase::multiplyRAP( R, P, dst );
+  GEOSX_LAI_ASSERT( ready() );
+  GEOSX_LAI_ASSERT( P.ready() );
+  GEOSX_LAI_ASSERT( R.ready() );
+  GEOSX_LAI_ASSERT_EQ( R.numGlobalCols(), numGlobalRows() );
+  GEOSX_LAI_ASSERT_EQ( numGlobalCols(), P.numGlobalRows() );
+
+  dst.reset();
+
+  GEOSX_LAI_CHECK_ERROR( MatMatMatMult( R.m_mat, m_mat, P.m_mat, MAT_INITIAL_MATRIX, PETSC_DEFAULT, &dst.m_mat ) );
+
+  dst.m_assembled = true;
 }
 
 void PetscMatrix::multiplyPtAP( PetscMatrix const & P,
@@ -587,7 +596,14 @@ void PetscMatrix::multiplyPtAP( PetscMatrix const & P,
   GEOSX_LAI_ASSERT_EQ( numGlobalCols(), P.numGlobalRows() );
 
   dst.reset();
-  GEOSX_LAI_CHECK_ERROR( MatPtAP( m_mat, P.m_mat, MAT_INITIAL_MATRIX, PETSC_DEFAULT, &dst.m_mat ) );
+
+  // To be able to use the PtAP product in some cases, we need to disable floating point exceptions
+  {
+    LvArray::system::FloatingPointExceptionGuard guard( FE_ALL_EXCEPT );
+
+    GEOSX_LAI_CHECK_ERROR( MatPtAP( m_mat, P.m_mat, MAT_INITIAL_MATRIX, PETSC_DEFAULT, &dst.m_mat ) );
+  }
+
   dst.m_assembled = true;
 }
 
@@ -637,14 +653,23 @@ real64 PetscMatrix::clearRow( globalIndex const globalRow,
   return oldDiag;
 }
 
-void PetscMatrix::addEntries( PetscMatrix const & src, real64 const scale )
+void PetscMatrix::addEntries( PetscMatrix const & src, real64 const scale, bool const samePattern )
 {
   GEOSX_LAI_ASSERT( ready() );
   GEOSX_LAI_ASSERT( src.ready() );
   GEOSX_LAI_ASSERT( numGlobalRows() == src.numGlobalRows() );
   GEOSX_LAI_ASSERT( numGlobalCols() == src.numGlobalCols() );
 
-  GEOSX_LAI_CHECK_ERROR( MatAXPY( m_mat, scale, src.m_mat, SUBSET_NONZERO_PATTERN ) );
+  if( samePattern )
+  {
+    GEOSX_LAI_CHECK_ERROR( MatAXPY( m_mat, scale, src.m_mat, SUBSET_NONZERO_PATTERN ) );
+  }
+  else
+  {
+    GEOSX_LAI_CHECK_ERROR( MatSetOption( m_mat, MAT_NEW_NONZERO_ALLOCATION_ERR, PETSC_FALSE ) );
+    GEOSX_LAI_CHECK_ERROR( MatAXPY( m_mat, scale, src.m_mat, DIFFERENT_NONZERO_PATTERN ) );
+    GEOSX_LAI_CHECK_ERROR( MatSetOption( m_mat, MAT_NEW_NONZERO_ALLOCATION_ERR, PETSC_TRUE ) );
+  }
 }
 
 void PetscMatrix::addDiagonal( PetscVector const & src )

@@ -362,13 +362,13 @@ BrooksCoreyBakerRelativePermeabilityUpdate::
   integer const ip_gas   = phaseOrder[RelativePermeabilityBase::PhaseType::GAS];
 
   // if water phase is immobile, then use the two-phase gas-oil data only
-  if( shiftedWaterVolFrac < NumericTraits< real64 >::eps )
+  if( shiftedWaterVolFrac < LvArray::NumericLimits< real64 >::epsilon )
   {
     threePhaseRelPerm = relPerm_go;
     dThreePhaseRelPerm_dVolFrac[ip_oil] = dRelPerm_go_dOilVolFrac;
   }
   // if gas phase is immobile, then use the two-phase water-oil data only
-  else if( gasVolFrac < NumericTraits< real64 >::eps )
+  else if( gasVolFrac < LvArray::NumericLimits< real64 >::epsilon )
   {
     threePhaseRelPerm = relPerm_wo;
     dThreePhaseRelPerm_dVolFrac[ip_oil] = dRelPerm_wo_dOilVolFrac;
