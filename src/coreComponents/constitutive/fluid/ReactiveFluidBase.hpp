@@ -74,6 +74,17 @@ public:
                                                arraySlice1d< real64 const > const & volumeFraction0, arraySlice1d< real64 const > const & volumeFraction, real64 const & porosity0,
                                                real64 const & porosity, localIndex const k ) = 0;
 
+
+  virtual void PointUpdateChemistry( real64 const & pressure,
+                                     real64 const & temperature,
+                                     arraySlice1d< real64 const > const & concentration,
+                                     arraySlice1d< real64 const > const & surfaceArea0,
+                                     arraySlice1d< real64 const > const & volumeFraction0,
+                                     arraySlice1d< real64 const > const & volumeFraction,
+                                     real64 const & porosity0,
+                                     real64 const & porosity,
+                                     localIndex const k ) = 0;
+
   virtual localIndex numKineticReaction() const = 0;
 
   virtual const array1d< KineticReaction > & GetKineticReactions() const = 0;
@@ -114,6 +125,7 @@ public:
   {
 
     static constexpr auto basisSpeciesNamesString    = "basisSpeciesNames";
+    static constexpr auto inputDependentSpeciesNamesString    = "inputDependentSpeciesNames";
     static constexpr auto logActH2OString    = "logActH2O";
     static constexpr auto logFO2gString    = "logFO2g";
 
@@ -122,6 +134,15 @@ public:
 
     static constexpr auto concentrationActString      = "concentrationAct";
     static constexpr auto kineticReactionRateString      = "kineticReactionRate";
+    static constexpr auto dKineticReactionRate_dConcString      = "dKineticReactionRate_dConc";
+
+    static constexpr auto kineticSpeciesReactionRateString      = "kineticSpeciesReactionRate";
+    static constexpr auto dKineticSpeciesReactionRate_dConcString      = "dKineticSpeciesReactionRate_dConc";
+
+
+    static constexpr auto totalConcString      = "totalConc";
+    static constexpr auto dTotalConc_dConcString      = "dTotalConc_dConc";
+
 
     using ViewKey = dataRepository::ViewKey;
 
@@ -135,6 +156,13 @@ public:
     ViewKey concentrationAct = { concentrationActString };
 
     ViewKey kineticRactionRate = { kineticReactionRateString };
+    ViewKey dKineticRactionRate_dConc = { dKineticReactionRate_dConcString };
+
+    ViewKey kineticSpeciesRactionRate = { kineticSpeciesReactionRateString };
+    ViewKey dKineticSpeciesRactionRate_dConc = { dKineticSpeciesReactionRate_dConcString };
+
+    ViewKey totalConc = { totalConcString };
+    ViewKey dTotalConc_dConc = { dTotalConc_dConcString };
 
   } viewKeysReactiveFluidBase;
 
@@ -144,6 +172,7 @@ protected:
 
   string_array m_basisSpeciesNames;
   string_array m_dependentSpeciesNames;
+  string_array m_inputDependentSpeciesNames;
   array1d< bool > m_isHplus;
   array2d< real64 > m_stochMatrix;
 
@@ -153,6 +182,13 @@ protected:
   array2d< real64 > m_concentrationAct;
 
   array2d< real64 > m_kineticReactionRate;
+  array3d< real64 > m_dKineticReactionRate_dConc;
+
+  array2d< real64 > m_kineticSpeciesReactionRate;
+  array3d< real64 > m_dKineticSpeciesReactionRate_dConc;
+
+  array2d< real64 > m_totalConc;
+  array3d< real64 > m_dTotalConc_dConc;
 
   real64 m_logFO2g;
   real64 m_logActH2O;

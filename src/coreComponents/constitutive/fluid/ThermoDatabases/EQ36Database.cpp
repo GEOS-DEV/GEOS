@@ -34,17 +34,27 @@ namespace constitutive
 {
 
 EQ36Database::EQ36Database( const Path & fileName,
-                            const string_array & basisSpeciesNames ):
+                            const string_array & basisSpeciesNames,
+                            const string_array & inputDependentSpeciesNames ):
   ThermoDatabaseBase( fileName )
 {
 
-  CreateChemicalSystem( basisSpeciesNames );
+  CreateChemicalSystem( basisSpeciesNames, inputDependentSpeciesNames );
 
 }
 
-void EQ36Database::CreateChemicalSystem( const string_array & basisSpeciesNames )
+void EQ36Database::CreateChemicalSystem( const string_array & basisSpeciesNames, const string_array & inputDependentSpeciesNames )
 {
 
+
+  unordered_map< string, int > inputDependentSpeciesMap;
+
+  for( localIndex ic = 0; ic < inputDependentSpeciesNames.size(); ic++ )
+    inputDependentSpeciesMap[inputDependentSpeciesNames[ic] ] = ic;
+
+
+  bool flag = inputDependentSpeciesNames.size() == 0 ? 1 : 0; 
+  
   std::ifstream is( m_fileName );
 
   constexpr std::streamsize buf_size = 256;
@@ -312,14 +322,18 @@ void EQ36Database::CreateChemicalSystem( const string_array & basisSpeciesNames 
           entry.stochs = stochs;
           entry.logKs = logKs;
 
-          m_dependentSpecies.emplace_back( entry );
+          auto iter = inputDependentSpeciesMap.find( speciesName );
+          if( iter != inputDependentSpeciesMap.end() || flag )
+          {
+            m_dependentSpecies.emplace_back( entry );
+            count++;
+          }
 
           speciesIndices.clear();
           stochs.clear();
           logKs.clear();
           speciesNames.clear();
 
-          count++;
 
         }
 
@@ -396,9 +410,7 @@ void EQ36Database::CreateChemicalSystem( const string_array & basisSpeciesNames 
             break;
 
 
-
           string_array strs2 = Tokenize( str2, " " );
-          //localIndex num2 = strs2.size();
 
           for( localIndex i = 0; i < strs2.size(); ++i )
           {
@@ -491,14 +503,17 @@ void EQ36Database::CreateChemicalSystem( const string_array & basisSpeciesNames 
           entry.stochs = stochs;
           entry.logKs = logKs;
 
-          m_dependentSpecies.emplace_back( entry );
+          auto iter = inputDependentSpeciesMap.find( speciesName );
+          if( iter != inputDependentSpeciesMap.end() || flag )
+          {
+            m_dependentSpecies.emplace_back( entry );
+            count++;
+          }
 
           speciesIndices.clear();
           stochs.clear();
           logKs.clear();
           speciesNames.clear();
-
-          count++;
 
         }
 
@@ -575,7 +590,6 @@ void EQ36Database::CreateChemicalSystem( const string_array & basisSpeciesNames 
 
 
           string_array strs2 = Tokenize( str2, " " );
-          //localIndex num2 = strs2.size();
 
           for( localIndex i = 0; i < strs2.size(); ++i )
           {
@@ -666,14 +680,18 @@ void EQ36Database::CreateChemicalSystem( const string_array & basisSpeciesNames 
           entry.stochs = stochs;
           entry.logKs = logKs;
 
-          m_dependentSpecies.emplace_back( entry );
+          auto iter = inputDependentSpeciesMap.find( speciesName );
+          if( iter != inputDependentSpeciesMap.end() || flag )
+          {
+            m_dependentSpecies.emplace_back( entry );
+            count++;
+          }
 
           speciesIndices.clear();
           stochs.clear();
           logKs.clear();
           speciesNames.clear();
 
-          count++;
 
         }
 
@@ -750,7 +768,6 @@ void EQ36Database::CreateChemicalSystem( const string_array & basisSpeciesNames 
 
 
           string_array strs2 = Tokenize( str2, " " );
-          //localIndex num2 = strs2.size();
 
           for( localIndex i = 0; i < strs2.size(); ++i )
           {
@@ -927,7 +944,6 @@ void EQ36Database::CreateChemicalSystem( const string_array & basisSpeciesNames 
 
 
           string_array strs2 = Tokenize( str2, " " );
-          //localIndex num2 = strs2.size();
 
           for( localIndex i = 0; i < strs2.size(); ++i )
           {
@@ -1019,14 +1035,18 @@ void EQ36Database::CreateChemicalSystem( const string_array & basisSpeciesNames 
           entry.stochs = stochs;
           entry.logKs = logKs;
 
-          m_dependentSpecies.emplace_back( entry );
+
+          auto iter = inputDependentSpeciesMap.find( speciesName );
+          if( iter != inputDependentSpeciesMap.end() || flag )
+          {
+            m_dependentSpecies.emplace_back( entry );
+            count++;
+          }
 
           speciesIndices.clear();
           stochs.clear();
           logKs.clear();
           speciesNames.clear();
-
-          count++;
 
         }
 
@@ -1103,7 +1123,6 @@ void EQ36Database::CreateChemicalSystem( const string_array & basisSpeciesNames 
 
 
           string_array strs2 = Tokenize( str2, " " );
-          //localIndex num2 = strs2.size();
 
           for( localIndex i = 0; i < strs2.size(); ++i )
           {
@@ -1171,7 +1190,9 @@ void EQ36Database::CreateChemicalSystem( const string_array & basisSpeciesNames 
 
 REGISTER_CATALOG_ENTRY( ThermoDatabaseBase,
                         EQ36Database,
-                        const Path &, const string_array & )
+                        const Path &,
+                        const string_array &,
+                        const string_array & )
 
 }
 

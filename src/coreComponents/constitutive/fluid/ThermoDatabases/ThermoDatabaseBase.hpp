@@ -77,7 +77,7 @@ public:
 
   virtual ~ThermoDatabaseBase(){}
 
-  using CatalogInterface = dataRepository::CatalogInterface< ThermoDatabaseBase, Path const &, string_array const & >;
+  using CatalogInterface = dataRepository::CatalogInterface< ThermoDatabaseBase, Path const &, string_array const &, string_array const & >;
 
   static typename CatalogInterface::CatalogType & GetCatalog()
   {

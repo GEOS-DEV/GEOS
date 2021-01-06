@@ -201,6 +201,7 @@ void SinglePhaseFVM< BASE >::AssembleFluxTerms( real64 const GEOSX_UNUSED_PARAM(
                         m_elementAperture0.toNestedViewConst(),
                         m_effectiveAperture.toNestedViewConst(),
                         m_transTMultiplier.toNestedViewConst(),
+                        m_permeability.toNestedViewConst(),
                         this->gravityVector(),
                         this->m_meanPermCoeff,
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT

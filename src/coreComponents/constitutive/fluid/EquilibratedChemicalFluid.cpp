@@ -100,6 +100,11 @@ EquilibratedChemicalFluid::EquilibratedChemicalFluid( std::string const & name, 
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Kineitc reaction file name" );
 
+  registerWrapper( viewKeyStruct::useActCoefString, &m_useActCoef )->
+    setInputFlag( InputFlags::OPTIONAL )->
+    setApplyDefaultValue( 1.0 )->
+    setDescription( "Use activity coefficient " );
+
 
 }
 
@@ -166,13 +171,20 @@ void EquilibratedChemicalFluid::ResizeFields( localIndex size )
   m_dDependentConc_dConc.resize( size, NDependent + 1, NBasis + 1 );
 
   m_kineticReactionRate.resize( size, NReaction );
+  m_dKineticReactionRate_dConc.resize( size, NReaction, NBasis );
+
+  m_kineticSpeciesReactionRate.resize( size, NBasis );
+  m_dKineticSpeciesReactionRate_dConc.resize( size, NBasis, NBasis );
+
+  m_totalConc.resize( size, NBasis );
+  m_dTotalConc_dConc.resize( size, NBasis, NBasis );
 
 }
 
 void EquilibratedChemicalFluid::ReadDatabase()
 {
   if( !m_thermoDatabase )
-    m_thermoDatabase = ( ThermoDatabaseBase::CatalogInterface::Factory( m_databaseTypeString, m_databaseFileName, m_basisSpeciesNames ) );
+    m_thermoDatabase = ( ThermoDatabaseBase::CatalogInterface::Factory( m_databaseTypeString, m_databaseFileName, m_basisSpeciesNames, m_inputDependentSpeciesNames ) );
 
   const array1d< Species > & dependentSpecies = m_thermoDatabase->GetDependentSpecies();
 
@@ -405,7 +417,7 @@ void EquilibratedChemicalFluid::Compute( real64 const & pressure,
     real64 nu1 = dependentSpecies[i].stochs[0];
     interpolation( "logK", actCoefParameters.temperatures, dependentSpecies[i].logKs, temperature, logK );
 
-    dependentConc[i] = logK / nu1 - logActCoef2[i];
+    dependentConc[i] = logK / nu1 - logActCoef2[i] * m_useActCoef;
 
     for( localIndex j = 1; j < dependentSpecies[i].speciesIndices.size(); ++j )
     {
@@ -421,7 +433,7 @@ void EquilibratedChemicalFluid::Compute( real64 const & pressure,
         dependentConc[i] -= nu2 / nu1 * m_logFO2g;
       else
       {
-        dependentConc[i] -= nu2 / nu1 * (concentration[ic] + logActCoef1[ic]);
+        dependentConc[i] -= nu2 / nu1 * (concentration[ic] + logActCoef1[ic] * m_useActCoef);
         dDependentConc_dConc[i][ic] -= nu2 / nu1;
 
       }
@@ -432,7 +444,25 @@ void EquilibratedChemicalFluid::Compute( real64 const & pressure,
   }
 
   for( localIndex i = 0; i < NBasis; ++i )
-    concentrationAct[i] = concentration[i] + logActCoef1[i];
+    concentrationAct[i] = concentration[i] + logActCoef1[i] * m_useActCoef;
+
+}
+
+void EquilibratedChemicalFluid::PointUpdateChemistry( real64 const & pressure,
+                                                      real64 const & temperature,
+                                                      arraySlice1d< real64 const > const & concentration,
+                                                      arraySlice1d< real64 const > const & surfaceArea0,
+                                                      arraySlice1d< real64 const > const & volumeFraction0,
+                                                      arraySlice1d< real64 const > const & volumeFraction,
+                                                      real64 const & porosity0,
+                                                      real64 const & porosity, localIndex const k )
+{
+
+  Compute( pressure, temperature, concentration, m_dependentConc[k], m_dDependentConc_dConc[k], m_concentrationAct[k], m_thermoDatabase );
+
+  ComputeChemistry( temperature, concentration, surfaceArea0, volumeFraction0, volumeFraction, porosity0, porosity, m_concentrationAct[k], m_dependentConc[k], m_dDependentConc_dConc[k],
+                    m_totalConc[k], m_dTotalConc_dConc[k], m_kineticReactionRate[k], m_dKineticReactionRate_dConc[k], m_kineticSpeciesReactionRate[k], m_dKineticSpeciesReactionRate_dConc[k],
+                    m_kineticReactions );
 
 }
 
@@ -487,6 +517,133 @@ void EquilibratedChemicalFluid::ComputeKineticReactionRate( real64 const & tempe
 
 }
 
+
+void EquilibratedChemicalFluid::ComputeChemistry( real64 const & temperature,
+                                                  arraySlice1d< real64 const > const & concentration,
+                                                  arraySlice1d< real64 const > const & surfaceArea0,
+                                                  arraySlice1d< real64 const > const & volumeFraction0,
+                                                  arraySlice1d< real64 const > const & volumeFraction,
+                                                  real64 const & porosity0,
+                                                  real64 const & porosity,
+                                                  arraySlice1d< real64 const > const & concAct,
+                                                  arraySlice1d< real64 const > const & dependentConc,
+                                                  arraySlice2d< real64 const > const & dDependentConc_dConc,
+                                                  arraySlice1d< real64 > const & totalConc,
+                                                  arraySlice2d< real64 > const & dTotalConc_dConc,
+                                                  arraySlice1d< real64 > const & kineticReactionRate,
+                                                  arraySlice2d< real64 > const & dKineticReactionRate_dConc, arraySlice1d< real64 > const & kineticSpeciesReactionRate,
+                                                  arraySlice2d< real64 > const & dKineticSpeciesReactionRate_dConc,
+                                                  KineticReactions & kineticReactions )
+
+{
+
+  static const real64 RConst = 8.314;
+
+  localIndex const NBasis = numBasisSpecies();
+  localIndex const NDependent = numDependentSpecies();
+  localIndex const NReaction = numKineticReaction();
+
+  for( localIndex ic = 0; ic < NBasis; ++ic )
+    for( localIndex jc = 0; jc < NBasis; ++jc )
+      dTotalConc_dConc[ic][jc] = 0.0;
+
+  for( localIndex ic = 0; ic < NBasis; ++ic )
+  {
+
+    real64 concBasis = pow( 10.0, concentration[ic] );
+
+    totalConc[ic] = concBasis;
+
+    dTotalConc_dConc[ic][ic] = log( 10.0 ) * concBasis;
+
+    for( localIndex id = 0; id < NDependent; ++id )
+    {
+      real64 concDependent = pow( 10.0, dependentConc[id] );
+
+      totalConc[ic] -= m_stochMatrix[ic][id] * concDependent;
+
+      for( localIndex idc = 0; idc < NBasis; ++idc )
+      {
+
+        dTotalConc_dConc[ic][idc] -= m_stochMatrix[ic][id] * log( 10.0 ) * concDependent * dDependentConc_dConc[id][idc];
+
+      }
+    }
+  }
+
+  const array1d< KineticReaction > & kineticReactionArray = kineticReactions->GetKineticReactions();
+
+  for( localIndex ir = 0; ir < NReaction; ++ir )
+  {
+
+    const KineticReaction & kineticReaction = kineticReactionArray[ir];
+    const array1d< localIndex > & basisSpeciesIndices = kineticReaction.basisSpeciesIndices;
+
+    real64 SIndex = -kineticReaction.logK;
+
+    array1d< real64 > dSIndex( NBasis );
+    for( localIndex ic = 0; ic < NBasis; ++ic )
+      dSIndex[ic] = 0.0;
+
+    for( localIndex ic = 0; ic < kineticReaction.stochs.size(); ++ic )
+    {
+      localIndex id = basisSpeciesIndices[ic];
+      SIndex += kineticReaction.stochs[ic] * concAct[id];
+      dSIndex[id] = kineticReaction.stochs[ic];
+
+    }
+
+    real64 S = surfaceArea0[ir] * pow( volumeFraction[ir] / volumeFraction0[ir], 2.0/3.0 ) * pow( porosity / porosity0, 2.0/3.0 );
+
+    real64 rateTemp = exp( -kineticReaction.E / RConst * (1.0 / (temperature + 273.15) - 1.0 / 298.15));
+
+    real64 SS = (pow( 10.0, SIndex ) - 1.0);
+
+    kineticReactionRate[ir] = S * kineticReaction.rateConst * rateTemp * SS;
+
+    for( localIndex ic = 0; ic < NBasis; ++ic )
+    {
+
+      dKineticReactionRate_dConc[ir][ic] = S * kineticReaction.rateConst * rateTemp * pow( 10.0, SIndex ) * log( 10.0 ) * dSIndex[ic];
+
+    }
+
+  }
+
+
+  for( localIndex ic = 0; ic < NBasis; ++ic )
+  {
+    kineticSpeciesReactionRate[ic] = 0.0;
+
+    for( localIndex id = 0; id < NBasis; ++id )
+      dKineticSpeciesReactionRate_dConc[ic][id] = 0.0;
+  }
+
+  for( localIndex ir = 0; ir < NReaction; ++ir )
+  {
+
+    const KineticReaction & kineticReaction = kineticReactionArray[ir];
+    const array1d< localIndex > & basisSpeciesIndices = kineticReaction.basisSpeciesIndices;
+
+    for( localIndex i = 0; i < (kineticReaction.stochs).size(); ++i )
+    {
+
+      localIndex ic = basisSpeciesIndices[i];
+
+      kineticSpeciesReactionRate[ic] += -(kineticReaction.stochs)[i] * kineticReactionRate[ir];
+
+      for( localIndex id = 0; id < NBasis; ++id )
+      {
+
+        dKineticSpeciesReactionRate_dConc[ic][id] += -(kineticReaction.stochs)[i] * dKineticReactionRate_dConc[ir][id];
+
+      }
+
+    }
+
+  }
+
+}
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, EquilibratedChemicalFluid, std::string const &, Group * const )
 

@@ -191,9 +191,23 @@ public:
     static constexpr auto reactiveTransportModelString      = "reactiveTransportModel";
     static constexpr auto viscosityString      = "viscosity";
 
+    static constexpr auto densityString      = "density";
+
+    static constexpr auto permPoroPowerString      = "permPoroPower";
+
     static constexpr auto bcComponentConcentrationString      = "bcComponentConcentration";
 
-    static constexpr auto deltaComponentConcentrationString      = "deltaComponentConcentration";
+    static constexpr auto initialMineralSurfaceAreaString      = "initialMineralSurfaceArea";
+
+    static constexpr auto initialMineralVolumeFractionString      = "initialMineralVolumeFraction";
+
+    static constexpr auto mineralVolumeFractionString      = "mineralVolumeFraction";
+
+    static constexpr auto initialPorosityString      = "initialPorosity";
+
+    static constexpr auto updatePorosityString      = "updatePorosity";
+
+    static constexpr auto maxChangeString      = "maxChange";
 
   } viewKeysReactiveTransport;
 
@@ -221,18 +235,55 @@ private:
    */
   void ResetViews( MeshLevel & mesh ) override;
 
+  void UpdateRockProperties( real64 const & dt, DomainPartition & domain );
+
+  void UpdateReactiveFluidModel( Group * const dataGroup, localIndex const targetIndex ) const;
+
+  void UpdateState( Group * dataGroup, localIndex const targetIndex ) const;
+
   /// views into primary variable fields
 
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_pressure;
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_deltaPressure;
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_componentConcentration;
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_deltaComponentConcentration;
+  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > m_pressure;
+  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > m_deltaPressure;
+
+  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > m_temperature;
+  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > m_deltaTemperature;
+
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 > > m_concentration;
+
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 > > m_deltaConcentration;
+
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 > > m_componentConcentration;
+
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_totalConc;
+  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > m_dTotalConc_dConc;
+
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_kineticSpeciesReactionRate;
+
+  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > m_dKineticSpeciesReactionRate_dConc;
+
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_kineticReactionRate;
+
+  ElementRegionManager::ElementViewAccessor< arrayView1d< R1Tensor const > > m_transTMult;
+
+  ElementRegionManager::ElementViewAccessor< arrayView1d< R1Tensor const > > m_permeability;
 
   array1d< string > m_reactiveFluidNames;
 
   localIndex m_numComponents;
 
+  localIndex m_numKineticReactions;
+
   real64 m_viscosity;
+  real64 m_permPoroPower;
+
+  real64 m_maxDSol;
+  real64 m_maxChange;
+
+  integer m_updatePorosity;
+
+  real64 m_density;
+
 };
 
 

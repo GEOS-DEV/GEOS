@@ -38,6 +38,12 @@ ReactiveFluidBase::ReactiveFluidBase( std::string const & name, Group * const pa
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "Basis speciese name list" );
 
+
+  registerWrapper( viewKeyStruct::inputDependentSpeciesNamesString, &m_inputDependentSpeciesNames )->
+    setInputFlag( InputFlags::OPTIONAL )->
+    setDescription( "Input dependent speciese name list" );
+
+
   registerWrapper( viewKeyStruct::logActH2OString, &m_logActH2O )->
     setApplyDefaultValue( -1.65676E-02 )->
     setInputFlag( InputFlags::OPTIONAL )->
@@ -53,6 +59,17 @@ ReactiveFluidBase::ReactiveFluidBase( std::string const & name, Group * const pa
   registerWrapper( viewKeyStruct::dDependentConc_dConcString, &m_dDependentConc_dConc );
 
   registerWrapper( viewKeyStruct::kineticReactionRateString, &m_kineticReactionRate );
+
+  registerWrapper( viewKeyStruct::dKineticReactionRate_dConcString, &m_dKineticReactionRate_dConc );
+
+  registerWrapper( viewKeyStruct::kineticSpeciesReactionRateString, &m_kineticSpeciesReactionRate );
+
+  registerWrapper( viewKeyStruct::dKineticSpeciesReactionRate_dConcString, &m_dKineticSpeciesReactionRate_dConc );
+
+
+  registerWrapper( viewKeyStruct::totalConcString, &m_totalConc );
+
+  registerWrapper( viewKeyStruct::dTotalConc_dConcString, &m_dTotalConc_dConc );
 
   registerWrapper( viewKeyStruct::concentrationActString, &m_concentrationAct );
 

@@ -319,6 +319,8 @@ protected:
 
   ElementRegionManager::ElementViewAccessor< arrayView1d< R1Tensor const > > m_transTMultiplier;
 
+  ElementRegionManager::ElementViewAccessor< arrayView1d< R1Tensor const > > m_permeability;
+
 private:
 
   virtual void ResetViewsPrivate( ElementRegionManager const & elemManager );

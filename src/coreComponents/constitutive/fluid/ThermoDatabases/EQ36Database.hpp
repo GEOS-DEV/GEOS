@@ -37,7 +37,8 @@ class EQ36Database : public ThermoDatabaseBase
 public:
 
   EQ36Database( const Path & fileName,
-                const string_array & basisSpeciesNames );
+                const string_array & basisSpeciesNames,
+                const string_array & inputDependentSpeciesNames );
 
   ~EQ36Database() override
   {}
@@ -61,7 +62,7 @@ private:
 
   /** read database and generate species properties and stoch matrix */
 
-  void CreateChemicalSystem( const string_array & basisSpeciesNames );
+  void CreateChemicalSystem( const string_array & basisSpeciesNames, const string_array & inputDependentSpeciesNames );
 
   array1d< Species > m_basisSpecies;
   array1d< Species > m_dependentSpecies;

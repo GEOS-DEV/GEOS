@@ -85,8 +85,7 @@ void FlowReactiveTransportSolver::PreStepUpdate( real64 const & time_n,
 
   if( time_n <= 0.0 )
   {
-    if( 0 )
-      m_geochemicalModel->SolverStep( time_n, dt, cycleNumber, domain );
+    m_geochemicalModel->SolverStep( time_n, dt, cycleNumber, domain );
 
     FieldSpecificationManager const & boundaryConditionManager = FieldSpecificationManager::get();
     boundaryConditionManager.ApplyInitialConditions( &domain );
@@ -114,14 +113,12 @@ void FlowReactiveTransportSolver::PreStepUpdate( real64 const & time_n,
 
 void FlowReactiveTransportSolver::PostStepUpdate( real64 const & time_n,
                                                   real64 const & dt,
-                                                  int const cycleNumber,
+                                                  int const,
                                                   DomainPartition & domain )
 {
   m_flowSolver->ImplicitStepComplete( time_n, dt, domain );
   m_reactiveTransportSolver->ImplicitStepComplete( time_n, dt, domain );
-  if( 1 )
-    m_geochemicalModel->SolverStep( time_n, dt, cycleNumber, domain );
-
+  m_reactiveTransportSolver->PostStepUpdate( time_n, dt, domain );
 }
 
 void FlowReactiveTransportSolver::ResetStateToBeginningOfStep( DomainPartition & domain )
@@ -163,14 +160,6 @@ real64 FlowReactiveTransportSolver::SolverStep( real64 const & time_n,
       continue;
     }
 
-    /*
-       NonlinearSolverParameters const & fluidNonLinearParams = m_flowSolver->getNonlinearSolverParameters();
-       if( fluidNonLinearParams.m_numNewtonIterations <= this->m_nonlinearSolverParameters.m_minIterNewton && iter > 0 )
-       {
-       GEOSX_LOG_LEVEL_RANK_0( 1, "***** The iterative coupling has converged in " << iter  << " iterations! *****\n" );
-       break;
-       }
-     */
 
     GEOSX_LOG_LEVEL_RANK_0( 1, "\tIteration: " << iter+1  << ", Reactive Transport Solver: " );
 

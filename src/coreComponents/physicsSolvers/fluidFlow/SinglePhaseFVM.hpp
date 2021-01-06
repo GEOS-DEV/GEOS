@@ -95,6 +95,7 @@ public:
   using BASE::m_viscosity;
   using BASE::m_dVisc_dPres;
   using BASE::m_transTMultiplier;
+  using BASE::m_permeability;
 
   /**
    * @brief main constructor for Group Objects

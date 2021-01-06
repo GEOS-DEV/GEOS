@@ -75,6 +75,10 @@ void SinglePhaseBase::RegisterDataOnMesh( Group * const MeshBodies )
 
       subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::densityOldString )->
         setRestartFlags( RestartFlags::NO_WRITE );
+
+      subRegion.template registerWrapper< array1d< R1Tensor > >( viewKeyStruct::transTMultString )->
+        setDefaultValue( {1.0, 1.0, 1.0} )->setPlotLevel( PlotLevel::LEVEL_0 );
+
     } );
 
     elemManager->forElementSubRegions< FaceElementSubRegion, EmbeddedSurfaceSubRegion >( [&] ( auto & subRegion )
@@ -807,6 +811,11 @@ void SinglePhaseBase::ResetViewsPrivate( ElementRegionManager const & elemManage
   m_transTMultiplier.clear();
   m_transTMultiplier = elemManager.ConstructArrayViewAccessor< R1Tensor, 1 >( viewKeyStruct::transTMultString );
   m_transTMultiplier.setName( getName() + "/accessors/" + viewKeyStruct::transTMultString );
+
+  m_permeability.clear();
+  m_permeability = elemManager.ConstructArrayViewAccessor< R1Tensor, 1 >( viewKeyStruct::permeabilityString );
+
+
 }
 
 } /* namespace geosx */

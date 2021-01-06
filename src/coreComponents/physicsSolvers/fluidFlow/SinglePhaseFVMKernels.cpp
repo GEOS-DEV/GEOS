@@ -373,7 +373,8 @@ void FluxKernel::
                                     ElementViewConst< arrayView1d< real64 const > > const & dMob_dPres,
                                     ElementViewConst< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM( aperture0 ),
                                     ElementViewConst< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM( aperture ),
-                                    ElementViewConst< arrayView1d< R1Tensor const > > const & GEOSX_UNUSED_PARAM( transTMultiplier ),
+                                    ElementViewConst< arrayView1d< R1Tensor const > > const & transTMultiplier,
+                                    ElementViewConst< arrayView1d< R1Tensor const > > const & initialPermeability,
                                     R1Tensor const,
                                     real64 const,
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
@@ -401,11 +402,41 @@ void FluxKernel::
     stackArray1d< real64, maxNumFluxElems > localFlux( numFluxElems );
     stackArray2d< real64, maxNumFluxElems *maxStencilSize > localFluxJacobian( numFluxElems, stencilSize );
 
+
+    stackArray1d< real64, maxNumFluxElems > effectiveWeights( numFluxElems );
+
+    localIndex const er = seri[iconn][0];
+    localIndex const esr = sesri[iconn][0];
+
+    real64 product = 1.0;
+    real64 sum1 = 0.0;
+    real64 sum2 = 0.0;
+
+    for( localIndex k = 0; k < numFluxElems; ++k )
+    {
+
+      localIndex const ei = sei[iconn][k];
+      product *= transTMultiplier[er][esr][ei][0];
+      sum1 += initialPermeability[er][esr][ei][0]* transTMultiplier[er][esr][ei][0];
+      sum2 += initialPermeability[er][esr][ei][0];
+
+    }
+
+    real64 multiplier = sum2 * product / sum1;
+
+    for( localIndex k = 0; k < numFluxElems; ++k )
+    {
+
+      // assume transTMultiplier is isotropic
+      effectiveWeights[k] = weights[iconn][k] * multiplier;
+
+    }
+
     Compute( stencilSize,
              seri[iconn],
              sesri[iconn],
              sei[iconn],
-             weights[iconn],
+             effectiveWeights,
              pres,
              dPres,
              gravCoef,
@@ -459,6 +490,7 @@ void FluxKernel::
                                 ElementViewConst< arrayView1d< real64 const > > const & aperture0,
                                 ElementViewConst< arrayView1d< real64 const > > const & aperture,
                                 ElementViewConst< arrayView1d< R1Tensor const > > const & transTMultiplier,
+                                ElementViewConst< arrayView1d< R1Tensor const > > const &,
                                 R1Tensor const gravityVector,
                                 real64 const meanPermCoeff,
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT

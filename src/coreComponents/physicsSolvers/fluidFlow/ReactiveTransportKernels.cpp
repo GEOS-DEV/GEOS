@@ -32,23 +32,31 @@ GEOSX_HOST_DEVICE
 void
 AccumulationKernel::
   Compute( localIndex const NC,
-           arraySlice1d< real64 const > const &,
-           arraySlice1d< real64 const > const & dComponentConc,
+           arraySlice1d< real64 const > const & componentConc,
+           arraySlice1d< real64 const > const & totalConc,
+           arraySlice2d< real64 const > const & dTotalConc_dConc,
            arraySlice1d< real64 const > const & kineticSpeciesReactionRate,
+           arraySlice2d< real64 const > const & dKineticSpeciesReactionRate_dConc,
            real64 const effectiveVolume,
            real64 const volume,
            arraySlice1d< real64 > const & localAccum,
            arraySlice2d< real64 > const & localAccumJacobian )
 {
-
   // component mass conservation
-  for( localIndex c = 0; c < NC; ++c )
+  for( localIndex ic = 0; ic < NC; ++ic )
   {
 
-    localAccum[c] = dComponentConc[c] * effectiveVolume - kineticSpeciesReactionRate[c] * volume / 1000.0;
-    localAccumJacobian[c][c] = effectiveVolume;
+    localAccum[ic] = (totalConc[ic] - componentConc[ic]) * effectiveVolume - kineticSpeciesReactionRate[ic] * volume;
+
+    for( localIndex jc = 0; jc < NC; ++jc )
+    {
+
+      localAccumJacobian[ic][jc] = dTotalConc_dConc[ic][jc] * effectiveVolume - dKineticSpeciesReactionRate_dConc[ic][jc] * volume;
+
+    }
 
   }
+
 }
 
 void
@@ -60,10 +68,13 @@ AccumulationKernel::
           arrayView1d< globalIndex const > const & dofNumber,
           arrayView1d< integer const > const & elemGhostRank,
           arrayView2d< real64 const > const & componentConc,
-          arrayView2d< real64 const > const & dComponentConc,
+          arrayView2d< real64 const > const & totalConc,
+          arrayView3d< real64 const > const & dTotalConc_dConc,
           arrayView2d< real64 const > const & kineticSpeciesReactionRate,
+          arrayView3d< real64 const > const & dKineticSpeciesReactionRate_dConc,
           arrayView1d< real64 const > const & porosity,
           arrayView1d< real64 const > const & volume,
+          real64 const density,
           real64 const dt,
           CRSMatrixView< real64, globalIndex const > const & localMatrix,
           arrayView1d< real64 > const & localRhs )
@@ -77,14 +88,18 @@ AccumulationKernel::
       stackArray1d< real64, MAX_NC > localAccum( NDOF );
       stackArray2d< real64, MAX_NC * MAX_NC > localAccumJacobian( NDOF, NDOF );
 
-      real64 effectiveVolume = volume[ei] * porosity[ei] /dt;
+      real64 effectiveVolume = volume[ei] * porosity[ei] / dt;
+      real64 sourceTermCoef = volume[ei] / density;
+
 
       Compute( NC,
                componentConc[ei],
-               dComponentConc[ei],
+               totalConc[ei],
+               dTotalConc_dConc[ei],
                kineticSpeciesReactionRate[ei],
+               dKineticSpeciesReactionRate_dConc[ei],
                effectiveVolume,
-               volume[ei],
+               sourceTermCoef,
                localAccum,
                localAccumJacobian );
 
@@ -103,6 +118,7 @@ AccumulationKernel::
                                               localAccumDOF.data(),
                                               localAccumJacobian[idof].dataIfContiguous(),
                                               NDOF );
+
       }
     }
   } );
@@ -119,8 +135,8 @@ FluxKernel::
            arraySlice1d< real64 const > const & stencilWeights,
            ElementViewConst< arrayView1d< real64 const > > const & pres,
            ElementViewConst< arrayView1d< real64 const > > const & dPres,
-           ElementViewConst< arrayView2d< real64 const > > const & componentConc,
-           ElementViewConst< arrayView2d< real64 const > > const & dComponentConc,
+           ElementViewConst< arrayView2d< real64 const > > const & totalConc,
+           ElementViewConst< arrayView3d< real64 const > > const & dTotalConc_dConc,
            real64 const viscosity,
            arraySlice1d< real64 > const & localFlux,
            arraySlice2d< real64 > const & localFluxJacobian )
@@ -130,6 +146,8 @@ FluxKernel::
   constexpr localIndex maxNumComponents = ReactiveTransport::MAX_NUM_COMPONENTS;
 
   stackArray2d< real64, maxNumFluxElems * maxNumComponents > concentration( numElems, NC );
+
+  stackArray3d< real64, maxNumFluxElems * maxNumComponents * maxNumComponents > dConcentration( numElems, NC, NC );
 
   real64 potDif = 0.0;
 
@@ -143,8 +161,14 @@ FluxKernel::
     real64 const pressure = pres[er][esr][ei] + dPres[er][esr][ei];
     real64 const pot = weight * pressure;
 
-    for( localIndex c = 0; c < NC; ++c )
-      concentration[ke][c] = componentConc[er][esr][ei][c] + dComponentConc[er][esr][ei][c];
+    for( localIndex ic = 0; ic < NC; ++ic )
+    {
+      concentration[ke][ic] = totalConc[er][esr][ei][ic];
+      for( localIndex jc = 0; jc < NC; ++jc )
+      {
+        dConcentration[ke][ic][jc] = dTotalConc_dConc[er][esr][ei][ic][jc];
+      }
+    }
 
     potDif += pot;
 
@@ -152,22 +176,20 @@ FluxKernel::
 
   localIndex id = potDif >= 0 ? 0 : 1;
   real64 const fluxVal = potDif / viscosity;
-  /*
-     real64 fluxVal;
-     if(fabs(potDif) > 0.0)
-     fluxVal = potDif / fabs(potDif);
-     else
-     fluxVal = 0.0*viscosity;
-   */
 
-  for( localIndex c = 0; c < NC; ++c )
+  for( localIndex ic = 0; ic < NC; ++ic )
   {
 
-    localFlux[c] = fluxVal * concentration[id][c];
-    localFlux[NC + c] = -fluxVal * concentration[id][c];
+    localFlux[ic] = fluxVal * concentration[id][ic];
+    localFlux[NC + ic] = -fluxVal * concentration[id][ic];
 
-    localFluxJacobian[c][id * NC + c] = fluxVal;
-    localFluxJacobian[NC + c][id * NC + c] = -fluxVal;
+    for( localIndex jc = 0; jc < NC; ++jc )
+    {
+
+      localFluxJacobian[ic][id * NC + jc] = fluxVal * dConcentration[id][ic][jc];
+      localFluxJacobian[NC + ic][id * NC + jc] = -fluxVal * dConcentration[id][ic][jc];
+
+    }
 
   }
 
@@ -184,8 +206,10 @@ void FluxKernel::
                                     ElementViewConst< arrayView1d< integer const > > const & ghostRank,
                                     ElementViewConst< arrayView1d< real64 const > > const & pres,
                                     ElementViewConst< arrayView1d< real64 const > > const & dPres,
-                                    ElementViewConst< arrayView2d< real64 const > > const & componentConc,
-                                    ElementViewConst< arrayView2d< real64 const > > const & dComponentConc,
+                                    ElementViewConst< arrayView2d< real64 const > > const & totalConc,
+                                    ElementViewConst< arrayView3d< real64 const > > const & dTotalConc_dConc,
+                                    ElementViewConst< arrayView1d< R1Tensor const > > const & transTMultiplier,
+                                    ElementViewConst< arrayView1d< R1Tensor const > > const & initialPermeability,
                                     real64 const viscosity,
                                     CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                     arrayView1d< real64 > const & localRhs )
@@ -212,16 +236,45 @@ void FluxKernel::
     stackArray1d< real64, maxDOF > localFlux( DOF );
     stackArray2d< real64, maxDOF * maxDOF > localFluxJacobian( DOF, DOF );
 
+    stackArray1d< real64, maxDOF > effectiveWeights( numFluxElems );
+
+    localIndex const er = seri[iconn][0];
+    localIndex const esr = sesri[iconn][0];
+
+    real64 product = 1.0;
+    real64 sum1 = 0.0;
+    real64 sum2 = 0.0;
+
+    for( localIndex k = 0; k < numFluxElems; ++k )
+    {
+
+      localIndex const ei = sei[iconn][k];
+      product *= transTMultiplier[er][esr][ei][0];
+      sum1 += initialPermeability[er][esr][ei][0]* transTMultiplier[er][esr][ei][0];
+      sum2 += initialPermeability[er][esr][ei][0];
+
+    }
+
+    real64 multiplier = sum2 * product / sum1;
+
+    for( localIndex k = 0; k < numFluxElems; ++k )
+    {
+
+      // assume transTMultiplier is isotropic
+      effectiveWeights[k] = weights[iconn][k] * multiplier;
+
+    }
+
     Compute( stencilSize,
              numDofPerCell,
              seri[iconn],
              sesri[iconn],
              sei[iconn],
-             weights[iconn],
+             effectiveWeights,
              pres,
              dPres,
-             componentConc,
-             dComponentConc,
+             totalConc,
+             dTotalConc_dConc,
              viscosity,
              localFlux,
              localFluxJacobian );
@@ -267,8 +320,10 @@ void FluxKernel::
                                 ElementViewConst< arrayView1d< integer const > > const & GEOSX_UNUSED_PARAM( ghostRank ),
                                 ElementViewConst< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM( pres ),
                                 ElementViewConst< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM( dPres ),
-                                ElementViewConst< arrayView2d< real64 const > > const & GEOSX_UNUSED_PARAM( componentConc ),
-                                ElementViewConst< arrayView2d< real64 const > > const & GEOSX_UNUSED_PARAM( dComponenConc ),
+                                ElementViewConst< arrayView2d< real64 const > > const & GEOSX_UNUSED_PARAM( totalConc ),
+                                ElementViewConst< arrayView3d< real64 const > > const & GEOSX_UNUSED_PARAM( dTotalConc_dConc ),
+                                ElementViewConst< arrayView1d< R1Tensor const > > const & GEOSX_UNUSED_PARAM( transTMultiplier ),
+                                ElementViewConst< arrayView1d< R1Tensor const > > const & GEOSX_UNUSED_PARAM( permeability ),
                                 real64 const GEOSX_UNUSED_PARAM( viscosity ),
                                 CRSMatrixView< real64, globalIndex const > const & GEOSX_UNUSED_PARAM( localMatrix ),
                                 arrayView1d< real64 > const & GEOSX_UNUSED_PARAM( localRhs ) )

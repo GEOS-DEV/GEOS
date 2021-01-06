@@ -2,7 +2,7 @@
 *    name =   Calcite
 *    mol.wt. =   100.087 g/mol
 *    logK = 1.4011
-*    rateConst = 5e-9
+*    rateConst = 5e-6
 *    Ea  =  23.5e3
 *    density = 2.710e3
 
