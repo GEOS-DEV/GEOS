@@ -24,9 +24,9 @@
 #include "SinglePhaseReservoir.hpp"
 
 #include "common/TimingMacros.hpp"
-#include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
+#include "physicsSolvers/fluidFlow/SinglePhaseFVM.hpp"
+#include "physicsSolvers/fluidFlow/SinglePhaseHybridFVM.hpp"
 #include "physicsSolvers/fluidFlow/wells/SinglePhaseWell.hpp"
-
 
 namespace geosx
 {
@@ -41,6 +41,23 @@ SinglePhaseReservoir::SinglePhaseReservoir( const std::string & name,
 
 SinglePhaseReservoir::~SinglePhaseReservoir()
 {}
+
+void SinglePhaseReservoir::PostProcessInput()
+{
+  ReservoirSolverBase::PostProcessInput();
+  if( dynamic_cast< SinglePhaseHybridFVM const * >(m_flowSolver) )
+  {
+    m_linearSolverParameters.get().mgr.strategy = "SinglePhaseReservoirHybridFVM";
+  }
+  else if( dynamic_cast< SinglePhaseFVM< SinglePhaseBase > const * >(m_flowSolver) )
+  {
+    m_linearSolverParameters.get().mgr.strategy = "SinglePhaseReservoirFVM";
+  }
+  else
+  {
+    GEOSX_ERROR( "Unknown flow solver type for " << m_flowSolverName );
+  }
+}
 
 void SinglePhaseReservoir::AddCouplingSparsityPattern( DomainPartition const & domain,
                                                        DofManager const & dofManager,

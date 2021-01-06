@@ -84,6 +84,10 @@ public:
                                       CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                       arrayView1d< real64 > const & localRhs ) override;
 
+protected:
+
+  virtual void PostProcessInput() override;
+
 };
 
 } /* namespace geosx */
