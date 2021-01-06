@@ -134,6 +134,13 @@ Element: Contact
 .. include:: ../../coreComponents/fileIO/schema/docs/Contact.rst
 
 
+.. _XML_Coulomb:
+
+Element: Coulomb
+================
+.. include:: ../../coreComponents/fileIO/schema/docs/Coulomb.rst
+
+
 .. _XML_Cylinder:
 
 Element: Cylinder
@@ -146,6 +153,20 @@ Element: Cylinder
 Element: DamageLinearElasticIsotropic
 =====================================
 .. include:: ../../coreComponents/fileIO/schema/docs/DamageLinearElasticIsotropic.rst
+
+
+.. _XML_DamageSpectralLinearElasticIsotropic:
+
+Element: DamageSpectralLinearElasticIsotropic
+=============================================
+.. include:: ../../coreComponents/fileIO/schema/docs/DamageSpectralLinearElasticIsotropic.rst
+
+
+.. _XML_DamageVolDevLinearElasticIsotropic:
+
+Element: DamageVolDevLinearElasticIsotropic
+===========================================
+.. include:: ../../coreComponents/fileIO/schema/docs/DamageVolDevLinearElasticIsotropic.rst
 
 
 .. _XML_Dirichlet:
@@ -162,13 +183,6 @@ Element: ElementRegions
 .. include:: ../../coreComponents/fileIO/schema/docs/ElementRegions.rst
 
 
-.. _XML_EmbeddedSurfaceElementRegion:
-
-Element: EmbeddedSurfaceElementRegion
-=====================================
-.. include:: ../../coreComponents/fileIO/schema/docs/EmbeddedSurfaceElementRegion.rst
-
-
 .. _XML_EmbeddedSurfaceGenerator:
 
 Element: EmbeddedSurfaceGenerator
@@ -181,13 +195,6 @@ Element: EmbeddedSurfaceGenerator
 Element: Events
 ===============
 .. include:: ../../coreComponents/fileIO/schema/docs/Events.rst
-
-
-.. _XML_FaceElementRegion:
-
-Element: FaceElementRegion
-==========================
-.. include:: ../../coreComponents/fileIO/schema/docs/FaceElementRegion.rst
 
 
 .. _XML_FieldSpecification:
@@ -258,6 +265,13 @@ Element: Geometry
 Element: HaltEvent
 ==================
 .. include:: ../../coreComponents/fileIO/schema/docs/HaltEvent.rst
+
+
+.. _XML_HybridMimeticDiscretization:
+
+Element: HybridMimeticDiscretization
+====================================
+.. include:: ../../coreComponents/fileIO/schema/docs/HybridMimeticDiscretization.rst
 
 
 .. _XML_Hydrofracture:
@@ -335,13 +349,6 @@ Element: LinearSolverParameters
 Element: Mesh
 =============
 .. include:: ../../coreComponents/fileIO/schema/docs/Mesh.rst
-
-
-.. _XML_MohrCoulomb:
-
-Element: MohrCoulomb
-====================
-.. include:: ../../coreComponents/fileIO/schema/docs/MohrCoulomb.rst
 
 
 .. _XML_MultiPhaseMultiComponentFluid:
@@ -596,6 +603,13 @@ Element: SourceFlux
 .. include:: ../../coreComponents/fileIO/schema/docs/SourceFlux.rst
 
 
+.. _XML_SurfaceElementRegion:
+
+Element: SurfaceElementRegion
+=============================
+.. include:: ../../coreComponents/fileIO/schema/docs/SurfaceElementRegion.rst
+
+
 .. _XML_SurfaceGenerator:
 
 Element: SurfaceGenerator
@@ -831,6 +845,13 @@ Datastructure: Contact
 .. include:: ../../coreComponents/fileIO/schema/docs/Contact_other.rst
 
 
+.. _DATASTRUCTURE_Coulomb:
+
+Datastructure: Coulomb
+======================
+.. include:: ../../coreComponents/fileIO/schema/docs/Coulomb_other.rst
+
+
 .. _DATASTRUCTURE_Cylinder:
 
 Datastructure: Cylinder
@@ -843,6 +864,20 @@ Datastructure: Cylinder
 Datastructure: DamageLinearElasticIsotropic
 ===========================================
 .. include:: ../../coreComponents/fileIO/schema/docs/DamageLinearElasticIsotropic_other.rst
+
+
+.. _DATASTRUCTURE_DamageSpectralLinearElasticIsotropic:
+
+Datastructure: DamageSpectralLinearElasticIsotropic
+===================================================
+.. include:: ../../coreComponents/fileIO/schema/docs/DamageSpectralLinearElasticIsotropic_other.rst
+
+
+.. _DATASTRUCTURE_DamageVolDevLinearElasticIsotropic:
+
+Datastructure: DamageVolDevLinearElasticIsotropic
+=================================================
+.. include:: ../../coreComponents/fileIO/schema/docs/DamageVolDevLinearElasticIsotropic_other.rst
 
 
 .. _DATASTRUCTURE_Dirichlet:
@@ -859,13 +894,6 @@ Datastructure: ElementRegions
 .. include:: ../../coreComponents/fileIO/schema/docs/ElementRegions_other.rst
 
 
-.. _DATASTRUCTURE_EmbeddedSurfaceElementRegion:
-
-Datastructure: EmbeddedSurfaceElementRegion
-===========================================
-.. include:: ../../coreComponents/fileIO/schema/docs/EmbeddedSurfaceElementRegion_other.rst
-
-
 .. _DATASTRUCTURE_EmbeddedSurfaceGenerator:
 
 Datastructure: EmbeddedSurfaceGenerator
@@ -878,13 +906,6 @@ Datastructure: EmbeddedSurfaceGenerator
 Datastructure: Events
 =====================
 .. include:: ../../coreComponents/fileIO/schema/docs/Events_other.rst
-
-
-.. _DATASTRUCTURE_FaceElementRegion:
-
-Datastructure: FaceElementRegion
-================================
-.. include:: ../../coreComponents/fileIO/schema/docs/FaceElementRegion_other.rst
 
 
 .. _DATASTRUCTURE_FaceManager:
@@ -962,6 +983,13 @@ Datastructure: Geometry
 Datastructure: HaltEvent
 ========================
 .. include:: ../../coreComponents/fileIO/schema/docs/HaltEvent_other.rst
+
+
+.. _DATASTRUCTURE_HybridMimeticDiscretization:
+
+Datastructure: HybridMimeticDiscretization
+==========================================
+.. include:: ../../coreComponents/fileIO/schema/docs/HybridMimeticDiscretization_other.rst
 
 
 .. _DATASTRUCTURE_Hydrofracture:
@@ -1053,13 +1081,6 @@ Datastructure: Mesh
 Datastructure: MeshBodies
 =========================
 .. include:: ../../coreComponents/fileIO/schema/docs/MeshBodies_other.rst
-
-
-.. _DATASTRUCTURE_MohrCoulomb:
-
-Datastructure: MohrCoulomb
-==========================
-.. include:: ../../coreComponents/fileIO/schema/docs/MohrCoulomb_other.rst
 
 
 .. _DATASTRUCTURE_MultiPhaseMultiComponentFluid:
@@ -1314,6 +1335,13 @@ Datastructure: SourceFlux
 .. include:: ../../coreComponents/fileIO/schema/docs/SourceFlux_other.rst
 
 
+.. _DATASTRUCTURE_SurfaceElementRegion:
+
+Datastructure: SurfaceElementRegion
+===================================
+.. include:: ../../coreComponents/fileIO/schema/docs/SurfaceElementRegion_other.rst
+
+
 .. _DATASTRUCTURE_SurfaceGenerator:
 
 Datastructure: SurfaceGenerator
@@ -1424,13 +1452,6 @@ Datastructure: cellManager
 Datastructure: commandLine
 ==========================
 .. include:: ../../coreComponents/fileIO/schema/docs/commandLine_other.rst
-
-
-.. _DATASTRUCTURE_default:
-
-Datastructure: default
-======================
-.. include:: ../../coreComponents/fileIO/schema/docs/default_other.rst
 
 
 .. _DATASTRUCTURE_domain:

@@ -21,13 +21,17 @@
 
 #include "constitutive/fluid/MultiFluidBase.hpp"
 
-#include <memory>
-
-namespace PVTPackage
+// There is something wrong in the way we are building.
+// If I include, I have to add the PVT dependency so far away...
+// Therefore I forward declare...
+namespace pvt
 {
 class MultiphaseSystem;
+
 enum class PHASE_TYPE : int;
 }
+
+#include <memory>
 
 namespace geosx
 {
@@ -43,8 +47,8 @@ class MultiFluidPVTPackageWrapperUpdate final : public MultiFluidBaseUpdate
 {
 public:
 
-  MultiFluidPVTPackageWrapperUpdate( PVTPackage::MultiphaseSystem & fluid,
-                                     arrayView1d< PVTPackage::PHASE_TYPE > const & phaseTypes,
+  MultiFluidPVTPackageWrapperUpdate( pvt::MultiphaseSystem & fluid,
+                                     arrayView1d< pvt::PHASE_TYPE > const & phaseTypes,
                                      arrayView1d< real64 const > const & componentMolarWeight,
                                      bool useMass,
                                      arrayView3d< real64 > const & phaseFraction,
@@ -55,6 +59,10 @@ public:
                                      arrayView3d< real64 > const & dPhaseDensity_dPressure,
                                      arrayView3d< real64 > const & dPhaseDensity_dTemperature,
                                      arrayView4d< real64 > const & dPhaseDensity_dGlobalCompFraction,
+                                     arrayView3d< real64 > const & phaseMassDensity,
+                                     arrayView3d< real64 > const & dPhaseMassDensity_dPressure,
+                                     arrayView3d< real64 > const & dPhaseMassDensity_dTemperature,
+                                     arrayView4d< real64 > const & dPhaseMassDensity_dGlobalCompFraction,
                                      arrayView3d< real64 > const & phaseViscosity,
                                      arrayView3d< real64 > const & dPhaseViscosity_dPressure,
                                      arrayView3d< real64 > const & dPhaseViscosity_dTemperature,
@@ -77,6 +85,10 @@ public:
                             dPhaseDensity_dPressure,
                             dPhaseDensity_dTemperature,
                             dPhaseDensity_dGlobalCompFraction,
+                            phaseMassDensity,
+                            dPhaseMassDensity_dPressure,
+                            dPhaseMassDensity_dTemperature,
+                            dPhaseMassDensity_dGlobalCompFraction,
                             phaseViscosity,
                             dPhaseViscosity_dPressure,
                             dPhaseViscosity_dTemperature,
@@ -110,6 +122,7 @@ public:
                         arraySlice1d< real64 const > const & composition,
                         arraySlice1d< real64 > const & phaseFraction,
                         arraySlice1d< real64 > const & phaseDensity,
+                        arraySlice1d< real64 > const & phaseMassDensity,
                         arraySlice1d< real64 > const & phaseViscosity,
                         arraySlice2d< real64 > const & phaseCompFraction,
                         real64 & totalDensity ) const override;
@@ -125,6 +138,10 @@ public:
                         arraySlice1d< real64 > const & dPhaseDensity_dPressure,
                         arraySlice1d< real64 > const & dPhaseDensity_dTemperature,
                         arraySlice2d< real64 > const & dPhaseDensity_dGlobalCompFraction,
+                        arraySlice1d< real64 > const & phaseMassDensity,
+                        arraySlice1d< real64 > const & dPhaseMassDensity_dPressure,
+                        arraySlice1d< real64 > const & dPhaseMassDensity_dTemperature,
+                        arraySlice2d< real64 > const & dPhaseMassDensity_dGlobalCompFraction,
                         arraySlice1d< real64 > const & phaseViscosity,
                         arraySlice1d< real64 > const & dPhaseViscosity_dPressure,
                         arraySlice1d< real64 > const & dPhaseViscosity_dTemperature,
@@ -156,6 +173,10 @@ public:
              m_dPhaseDensity_dPressure[k][q],
              m_dPhaseDensity_dTemperature[k][q],
              m_dPhaseDensity_dGlobalCompFraction[k][q],
+             m_phaseMassDensity[k][q],
+             m_dPhaseMassDensity_dPressure[k][q],
+             m_dPhaseMassDensity_dTemperature[k][q],
+             m_dPhaseMassDensity_dGlobalCompFraction[k][q],
              m_phaseViscosity[k][q],
              m_dPhaseViscosity_dPressure[k][q],
              m_dPhaseViscosity_dTemperature[k][q],
@@ -172,9 +193,9 @@ public:
 
 private:
 
-  PVTPackage::MultiphaseSystem & m_fluid;
+  pvt::MultiphaseSystem & m_fluid;
 
-  arrayView1d< PVTPackage::PHASE_TYPE > m_phaseTypes;
+  arrayView1d< pvt::PHASE_TYPE > m_phaseTypes;
 
 };
 
@@ -211,6 +232,10 @@ public:
                           m_dPhaseDensity_dPressure,
                           m_dPhaseDensity_dTemperature,
                           m_dPhaseDensity_dGlobalCompFraction,
+                          m_phaseMassDensity,
+                          m_dPhaseMassDensity_dPressure,
+                          m_dPhaseMassDensity_dTemperature,
+                          m_dPhaseMassDensity_dGlobalCompFraction,
                           m_phaseViscosity,
                           m_dPhaseViscosity_dPressure,
                           m_dPhaseViscosity_dTemperature,
@@ -235,10 +260,10 @@ protected:
   virtual void createFluid() = 0;
 
   /// PVTPackage fluid object
-  std::unique_ptr< PVTPackage::MultiphaseSystem > m_fluid;
+  std::unique_ptr< pvt::MultiphaseSystem > m_fluid;
 
   /// PVTPackage phase labels
-  array1d< PVTPackage::PHASE_TYPE > m_phaseTypes;
+  array1d< pvt::PHASE_TYPE > m_phaseTypes;
 };
 
 } //namespace constitutive

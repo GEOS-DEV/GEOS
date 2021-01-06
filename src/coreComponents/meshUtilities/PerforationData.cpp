@@ -32,7 +32,8 @@ using namespace dataRepository;
 
 PerforationData::PerforationData( string const & name, Group * const parent )
   : ObjectManagerBase( name, parent ),
-  m_numPerforationsGlobal( 0 )
+  m_numPerforationsGlobal( 0 ),
+  m_location( 0, 3 )
 {
   registerWrapper( viewKeyStruct::numPerforationsGlobalString, &m_numPerforationsGlobal );
   registerWrapper( viewKeyStruct::reservoirElementRegionString, &m_toMeshElements.m_toElementRegion );
@@ -46,14 +47,77 @@ PerforationData::PerforationData( string const & name, Group * const parent )
 PerforationData::~PerforationData()
 {}
 
+namespace
+{
+
+/**
+ * @brief Check if the well is along the x-, y-, or z- directions.
+ * @tparam VEC_TYPE type of @p vecWellElemCenterToPerf
+ * @tparam PERM_TYPE type of @p perm
+ * @param[in] vecWellElemCenterToPerf vector connecting the well element center to the perforation
+ * @param[in] dx dimension of the element in the x-direction
+ * @param[in] dy dimension of the element in the y-direction
+ * @param[in] dz dimension of the element in the z-direction
+ * @param[in] perm absolute permeability in the reservoir element
+ * @param[out] d1 dimension of the element in the first direction
+ * @param[out] d2 dimension of the element in the second direction
+ * @param[out] h dimension of the element in the third direction
+ * @param[out] k1 absolute permeability in the reservoir element (first direction)
+ * @param[out] k2 absolute permeability in the reservoir element (second direction)
+ */
+template< typename VEC_TYPE, typename PERM_TYPE >
+void DecideWellDirection( VEC_TYPE const & vecWellElemCenterToPerf,
+                          real64 const & dx,
+                          real64 const & dy,
+                          real64 const & dz,
+                          PERM_TYPE const & perm,
+                          real64 & d1,
+                          real64 & d2,
+                          real64 & h,
+                          real64 & k1,
+                          real64 & k2 )
+{
+  // vertical well (approximately along the z-direction)
+  if( fabs( vecWellElemCenterToPerf[2] ) > fabs( vecWellElemCenterToPerf[0] )
+      && fabs( vecWellElemCenterToPerf[2] ) > fabs( vecWellElemCenterToPerf[1] ) )
+  {
+    d1 = dx;
+    d2 = dy;
+    h  = dz;
+    k1 = perm[0];
+    k2 = perm[1];
+  }
+  // well approximately along the y-direction
+  else if( fabs( vecWellElemCenterToPerf[1] ) > fabs( vecWellElemCenterToPerf[0] )
+           && fabs( vecWellElemCenterToPerf[1] ) > fabs( vecWellElemCenterToPerf[2] ) )
+  {
+    d1 = dx;
+    d2 = dz;
+    h  = dy;
+    k1 = perm[0];
+    k2 = perm[2];
+  }
+  // well approximately along the x-direction
+  else
+  {
+    d1 = dy;
+    d2 = dz;
+    h  = dx;
+    k1 = perm[1];
+    k2 = perm[2];
+  }
+}
+
+}
+
 void PerforationData::ComputeWellTransmissibility( MeshLevel const & mesh,
                                                    WellElementSubRegion const * const wellElemSubRegion,
                                                    string const & permeabilityKey )
 {
 
   // get the permeability in the domain
-  ElementRegionManager::ElementViewAccessor< arrayView1d< R1Tensor const > > const perm =
-    mesh.getElemManager()->ConstructViewAccessor< array1d< R1Tensor >, arrayView1d< R1Tensor const > >( permeabilityKey );
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > const perm =
+    mesh.getElemManager()->ConstructArrayViewAccessor< real64, 2 >( permeabilityKey );
 
   arrayView2d< real64 const > const wellElemCenter = wellElemSubRegion->getElementCenter();
 
@@ -90,8 +154,8 @@ void PerforationData::ComputeWellTransmissibility( MeshLevel const & mesh,
     // compute the vector perforation - well elem center
     // this vector will be used to decide whether this is a vectical well or not
     localIndex const wellElemIndex   = m_wellElementIndex[iperf];
-    R1Tensor vecWellElemCenterToPerf = wellElemCenter[wellElemIndex];
-    vecWellElemCenterToPerf -= m_location[iperf];
+    real64 vecWellElemCenterToPerf[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( wellElemCenter[wellElemIndex] );
+    LvArray::tensorOps::subtract< 3 >( vecWellElemCenterToPerf, m_location[iperf] );
 
     // check if this is a vertical well or a horizontal well
     // assign d1, d2, h, k1, and k2 accordingly
@@ -162,64 +226,25 @@ void PerforationData::GetReservoirElementDimensions( MeshLevel const & mesh,
 }
 
 
-void PerforationData::DecideWellDirection( R1Tensor const & vecWellElemCenterToPerf,
-                                           real64 const & dx, real64 const & dy, real64 const & dz,
-                                           R1Tensor const & perm,
-                                           real64 & d1, real64 & d2, real64 & h,
-                                           real64 & k1, real64 & k2 ) const
-{
-  // vertical well (approximately along the z-direction)
-  if( fabs( vecWellElemCenterToPerf[2] ) > fabs( vecWellElemCenterToPerf[0] )
-      && fabs( vecWellElemCenterToPerf[2] ) > fabs( vecWellElemCenterToPerf[1] ) )
-  {
-    d1 = dx;
-    d2 = dy;
-    h  = dz;
-    k1 = perm[0];
-    k2 = perm[1];
-  }
-  // well approximately along the y-direction
-  else if( fabs( vecWellElemCenterToPerf[1] ) > fabs( vecWellElemCenterToPerf[0] )
-           && fabs( vecWellElemCenterToPerf[1] ) > fabs( vecWellElemCenterToPerf[2] ) )
-  {
-    d1 = dx;
-    d2 = dz;
-    h  = dy;
-    k1 = perm[0];
-    k2 = perm[2];
-  }
-  // well approximately along the x-direction
-  else
-  {
-    d1 = dy;
-    d2 = dz;
-    h  = dx;
-    k1 = perm[1];
-    k2 = perm[2];
-  }
-}
-
-
 void PerforationData::ConnectToMeshElements( MeshLevel const & mesh,
                                              InternalWellGenerator const & wellGeometry )
 {
   ElementRegionManager const * const elemManager = mesh.getElemManager();
   NodeManager const * const nodeManager = mesh.getNodeManager();
-  ElementRegionManager::ElementViewAccessor< arrayView1d< R1Tensor const > >
-  elemCenter = elemManager->ConstructViewAccessor< array1d< R1Tensor >, arrayView1d< R1Tensor const > >( ElementSubRegionBase::
-                                                                                                           viewKeyStruct::
-                                                                                                           elementCenterString );
 
-  arrayView1d< R1Tensor const > const & perfCoordsGlobal = wellGeometry.GetPerfCoords();
-  arrayView1d< real64 const >   const & perfTransGlobal  = wellGeometry.GetPerfTransmissibility();
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > elemCenter =
+    elemManager->ConstructArrayViewAccessor< real64, 2 >( ElementSubRegionBase::viewKeyStruct::elementCenterString );
 
-  resize( perfCoordsGlobal.size() );
+  arrayView2d< real64 const > const & perfCoordsGlobal = wellGeometry.GetPerfCoords();
+  arrayView1d< real64 const > const & perfTransGlobal  = wellGeometry.GetPerfTransmissibility();
+
+  resize( perfCoordsGlobal.size( 0 ) );
   localIndex iperfLocal = 0;
 
   // loop over all the perforations
-  for( globalIndex iperfGlobal = 0; iperfGlobal < perfCoordsGlobal.size(); ++iperfGlobal )
+  for( globalIndex iperfGlobal = 0; iperfGlobal < perfCoordsGlobal.size( 0 ); ++iperfGlobal )
   {
-    R1Tensor const & coords = perfCoordsGlobal[iperfGlobal];
+    R1Tensor const coord = LVARRAY_TENSOROPS_INIT_LOCAL_3( perfCoordsGlobal[iperfGlobal] );
 
     // TODO actually trace coords
     // TODO what if a fracture element is located
@@ -229,9 +254,9 @@ void PerforationData::ConnectToMeshElements( MeshLevel const & mesh,
                                                    localIndex const esr,
                                                    localIndex const ei ) -> real64
     {
-      R1Tensor v = coords;
-      v -= elemCenter[er][esr][ei];
-      return v.L2_Norm();
+      R1Tensor v = coord;
+      LvArray::tensorOps::subtract< 3 >( v, elemCenter[er][esr][ei] );
+      return LvArray::tensorOps::l2Norm< 3 >( v );
     } );
 
     // save the region, subregion and index
@@ -251,7 +276,7 @@ void PerforationData::ConnectToMeshElements( MeshLevel const & mesh,
       cellBlock->GetFaceNodes( ei, kf, faceNodes[kf] );
     }
 
-    if( !computationalGeometry::IsPointInsidePolyhedron( nodeManager->referencePosition(), faceNodes, coords ))
+    if( !computationalGeometry::IsPointInsidePolyhedron( nodeManager->referencePosition(), faceNodes, coord ))
     {
       continue;
     }
@@ -267,7 +292,7 @@ void PerforationData::ConnectToMeshElements( MeshLevel const & mesh,
 
     // construct the local transmissibility and location maps
     m_wellTransmissibility[iperfLocal] = perfTransGlobal[iperfGlobal];
-    m_location[iperfLocal] = coords;
+    LvArray::tensorOps::copy< 3 >( m_location[iperfLocal], coord );
     m_localToGlobalMap[iperfLocal++] = iperfGlobal;
   }
 

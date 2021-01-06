@@ -37,9 +37,9 @@ TEST( LinearElasticIsotropicTests, testAllocation )
   EXPECT_EQ( cm.size(), numElems );
   EXPECT_EQ( cm.numQuadraturePoints(), numQuadraturePoints );
 
-  arrayView1d< real64 const > const & bulkModulus = cm.bulkModulus();
-  arrayView1d< real64 const > const & shearModulus = cm.shearModulus();
-  arrayView3d< real64 const, solid::STRESS_USD > const & stress = cm.getStress();
+  arrayView1d< real64 const > const bulkModulus = cm.bulkModulus();
+  arrayView1d< real64 const > const shearModulus = cm.shearModulus();
+  arrayView3d< real64 const, solid::STRESS_USD > const stress = cm.getStress();
 
   EXPECT_EQ( bulkModulus.size(), numElems );
   EXPECT_EQ( shearModulus.size(), numElems );

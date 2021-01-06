@@ -89,7 +89,7 @@ inline
 real64 const * getPointerToComponent( R1Tensor const & var, int const component )
 {
   GEOSX_ERROR_IF_GE( component, 3 );
-  return &var.Data()[ component ];
+  return &var[ component ];
 }
 
 } // namespace internal
@@ -573,10 +573,20 @@ void populateMCArray( T const &,
                "\nWas trying to write it to " << node.path() );
 }
 
+template< typename T >
+std::enable_if_t< std::is_arithmetic< T >::value, std::unique_ptr< Array< T, 1 > > >
+averageOverSecondDim( ArrayView< T const, 1, 0 > const & var )
+{
+  std::unique_ptr< Array< T, 1 > > ret = std::make_unique< Array< T, 1 > >();
+
+  ret->resize( var.size() );
+  ret->template setValues< serialPolicy >( var );
+
+  return ret;
+}
+
 template< typename T, int NDIM, int USD >
-std::enable_if_t< ( NDIM > 1 ) &&
-                  ( std::is_arithmetic< T >::value || traits::is_tensorT< T > ),
-                  std::unique_ptr< Array< T, NDIM - 1 > > >
+std::enable_if_t< std::is_arithmetic< T >::value, std::unique_ptr< Array< T, NDIM - 1 > > >
 averageOverSecondDim( ArrayView< T const, NDIM, USD > const & var )
 {
   std::unique_ptr< Array< T, NDIM - 1 > > ret = std::make_unique< Array< T, NDIM - 1 > >();
@@ -603,7 +613,7 @@ averageOverSecondDim( ArrayView< T const, NDIM, USD > const & var )
     } );
   } );
 
-  return std::move( ret );
+  return ret;
 }
 
 template< typename T >

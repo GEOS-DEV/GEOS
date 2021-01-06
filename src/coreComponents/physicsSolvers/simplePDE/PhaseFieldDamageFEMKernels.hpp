@@ -97,8 +97,6 @@ public:
                           CRSMatrixView< real64, globalIndex const > const & inputMatrix,
                           arrayView1d< real64 > const & inputRhs,
                           string const & fieldName,
-                          real64 const Gc,
-                          real64 const lengthScale,
                           int const localDissipationOption ):
     Base( nodeManager,
           edgeManager,
@@ -112,8 +110,6 @@ public:
           inputRhs ),
     m_X( nodeManager.referencePosition()),
     m_nodalDamage( nodeManager.template getReference< array1d< real64 > >( fieldName )),
-    m_Gc( Gc ),
-    m_lengthScale( lengthScale ),
     m_localDissipationOption( localDissipationOption )
   {}
 
@@ -187,52 +183,59 @@ public:
                               localIndex const q,
                               StackVariables & stack ) const
   {
-    real64 dNdX[ numNodesPerElem ][ 3 ];
-    real64 const detJ = m_finiteElementSpace.template getGradN< FE_TYPE >( k, q, stack.xLocal, dNdX );
 
-    real64 const strainEnergyDensity = m_constitutiveUpdate.calculateStrainEnergyDensity( k, q );
-//    std::cout<<k<<", "<<q<<", "<< strainEnergyDensity<<std::endl;
+    real64 const strainEnergyDensity = m_constitutiveUpdate.calculateActiveStrainEnergyDensity( k, q );
+    real64 const ell = m_constitutiveUpdate.getRegularizationLength();
+    real64 const Gc = m_constitutiveUpdate.getCriticalFractureEnergy();
+    real64 const threshold = m_constitutiveUpdate.getEnergyThreshold();
+
     real64 D = 0;                                                                   //max between threshold and
                                                                                     // Elastic energy
     if( m_localDissipationOption == 1 )
     {
-      double const threshold = 3 * m_Gc / (16 * m_lengthScale);           //elastic energy threshold - use when Local Dissipation is linear
       D = fmax( threshold, strainEnergyDensity );
-      //D = max(strainEnergy(k,q), strainEnergy(k,q));//debbuging line - remove after testing
     }
 
     //Interpolate d and grad_d
     real64 N[ numNodesPerElem ];
+    real64 dNdX[ numNodesPerElem ][ 3 ];
+    real64 const detJ = m_finiteElementSpace.template getGradN< FE_TYPE >( k, q, stack.xLocal, dNdX );
     FE_TYPE::calcN( q, N );
 
     real64 qp_damage = 0.0;
     real64 qp_grad_damage[3] = {0, 0, 0};
     FE_TYPE::valueAndGradient( N, dNdX, stack.nodalDamageLocal, qp_damage, qp_grad_damage );
 
-    real64 const lengthScale2 = pow( m_lengthScale, 2 );
-    real64 const invGc = 1.0 / m_Gc;
-    real64 const sedTerm = 2 * m_lengthScale*strainEnergyDensity * invGc;
-
     for( localIndex a = 0; a < numNodesPerElem; ++a )
     {
       if( m_localDissipationOption == 1 )
       {
-        stack.localResidual[ a ] += ( +N[a] * ( m_lengthScale * D * ( 1 - qp_damage ) - 0.1875 * m_Gc ) * invGc
-                                      - 0.375 * lengthScale2 * LvArray::tensorOps::AiBi< 3 >( dNdX[a], qp_grad_damage ) ) * detJ;
-        for( localIndex b = 0; b < numNodesPerElem; ++b )
-        {
-          stack.localJacobian[ a ][ b ] -= ( +m_lengthScale * D * invGc * N[a] * N[b]
-                                             + 0.375 * lengthScale2 * LvArray::tensorOps::AiBi< 3 >( dNdX[a], dNdX[b] ) ) * detJ;
-        }
+        stack.localResidual[ a ] += detJ * ( -3 * N[a] / 16  -
+                                             0.375*pow( ell, 2 ) * LvArray::tensorOps::AiBi< 3 >( qp_grad_damage, dNdX[a] ) -
+                                             (0.5 * ell * D/Gc) * N[a] * m_constitutiveUpdate.GetDegradationDerivative( qp_damage ));
       }
       else
       {
-        stack.localResidual[ a ] += ( +N[a] * ( sedTerm * ( 1 - qp_damage ) - qp_damage )
-                                      - ( lengthScale2 * LvArray::tensorOps::AiBi< 3 >( dNdX[a], qp_grad_damage ) ) ) * detJ;
-        for( localIndex b = 0; b < numNodesPerElem; ++b )
+        stack.localResidual[ a ] -= detJ * ( N[a] * qp_damage +
+                                             (pow( ell, 2 ) * LvArray::tensorOps::AiBi< 3 >( qp_grad_damage, dNdX[a] ) +
+                                              N[a] * m_constitutiveUpdate.GetDegradationDerivative( qp_damage ) * (ell*strainEnergyDensity/Gc)) );
+
+      }
+      for( localIndex b = 0; b < numNodesPerElem; ++b )
+      {
+        if( m_localDissipationOption == 1 )
         {
-          stack.localJacobian[ a ][ b ] -= ( +N[a] * N[b] * (1 + sedTerm )
-                                             + lengthScale2 * LvArray::tensorOps::AiBi< 3 >( dNdX[a], dNdX[b] ) ) * detJ;
+          stack.localJacobian[ a ][ b ] -= detJ *
+                                           (0.375*pow( ell, 2 ) * LvArray::tensorOps::AiBi< 3 >( dNdX[a], dNdX[b] ) +
+                                            (0.5 * ell * D/Gc) * m_constitutiveUpdate.GetDegradationSecondDerivative( qp_damage ) * N[a] * N[b]);
+
+        }
+        else
+        {
+          stack.localJacobian[ a ][ b ] -= detJ *
+                                           ( pow( ell, 2 ) * LvArray::tensorOps::AiBi< 3 >( dNdX[a], dNdX[b] ) +
+                                             N[a] * N[b] * (1 + m_constitutiveUpdate.GetDegradationSecondDerivative( qp_damage ) * ell*strainEnergyDensity/Gc )
+                                           );
         }
       }
     }
@@ -278,8 +281,6 @@ protected:
   /// The global primary field array.
   arrayView1d< real64 const > const m_nodalDamage;
 
-  real64 const m_Gc;
-  real64 const m_lengthScale;
   int const m_localDissipationOption;
 
 };

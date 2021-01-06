@@ -100,6 +100,9 @@ public:
   using VectorBase::ready;
   using VectorBase::extract;
 
+  /**
+   * @copydoc VectorBase<PetscVector>::created
+   */
   virtual bool created() const override;
 
   virtual void createWithLocalSize( localIndex const localSize,
@@ -158,26 +161,48 @@ public:
                       PetscVector const & x,
                       real64 const beta ) override;
 
+  virtual void pointwiseProduct( PetscVector const & x,
+                                 PetscVector & y ) const override;
+
+  /**
+   * @copydoc VectorBase<PetscVector>::norm1
+   */
   virtual real64 norm1() const override;
 
+  /**
+   * @copydoc VectorBase<PetscVector>::norm2
+   */
   virtual real64 norm2() const override;
 
+  /**
+   * @copydoc VectorBase<PetscVector>::normInf
+   */
   virtual real64 normInf() const override;
 
+  /**
+   * @copydoc VectorBase<PetscVector>::globalSize
+   */
   virtual globalIndex globalSize() const override;
 
+  /**
+   * @copydoc VectorBase<PetscVector>::localSize
+   */
   virtual localIndex localSize() const override;
 
+  /**
+   * @copydoc VectorBase<PetscVector>::ilower
+   */
   virtual globalIndex ilower() const override;
 
+  /**
+   * @copydoc VectorBase<PetscVector>::iupper
+   */
   virtual globalIndex iupper() const override;
 
   virtual real64 get( globalIndex const globalRow ) const override;
 
   void get( arraySlice1d< globalIndex const > const & globalIndices,
             arraySlice1d< real64 > const & values ) const override;
-
-  virtual MPI_Comm getComm() const override;
 
   virtual void print( std::ostream & os = std::cout ) const override;
 
@@ -188,9 +213,20 @@ public:
 
   virtual globalIndex getGlobalRowID( localIndex const localRow ) const override;
 
+  /**
+   * @copydoc VectorBase<PetscVector>::extractLocalVector
+   */
   virtual real64 const * extractLocalVector() const override;
 
+  /**
+   * @copydoc VectorBase<PetscVector>::extractLocalVector
+   */
   virtual real64 * extractLocalVector() override;
+
+  /**
+   * @copydoc VectorBase<PetscVector>::getComm
+   */
+  virtual MPI_Comm getComm() const override;
 
   ///@}
 

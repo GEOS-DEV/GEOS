@@ -19,8 +19,9 @@
         lineSearchAction="None"
         newtonMinIter="1"/>
       <LinearSolverParameters
-        solverType="gmres"
-        krylovTol="1.0e-12"/>
+        solverType="direct"
+        directParallel="0"
+        logLevel="0"/>
     </ProppantTransport>
 
     <!-- SPHINX_PROPPANT_TRANSPORT_SOLVER_END -->
@@ -156,7 +157,7 @@
       cellBlocks="{ cb1 }"
       materialList="{ water, rock, sand }"/>
 
-    <FaceElementRegion
+    <SurfaceElementRegion
       name="Fracture"
       defaultAperture="1.0e-3"
       materialList="{ water, rock, sand }"/>

@@ -23,6 +23,7 @@
 #include "MeshLevel.hpp"
 #include "BufferOps.hpp"
 #include "LvArray/src/tensorOps.hpp"
+#include "mpiCommunications/MpiWrapper.hpp"
 
 namespace geosx
 {
@@ -31,18 +32,12 @@ using namespace dataRepository;
 
 FaceElementSubRegion::FaceElementSubRegion( string const & name,
                                             dataRepository::Group * const parent ):
-  ElementSubRegionBase( name, parent ),
+  SurfaceElementSubRegion( name, parent ),
   m_unmappedGlobalIndicesInToNodes(),
   m_unmappedGlobalIndicesInToEdges(),
   m_unmappedGlobalIndicesInToFaces(),
-  m_faceElementsToCells(),
   m_newFaceElements(),
-  m_toNodesRelation(),
-  m_toEdgesRelation(),
-  m_toFacesRelation(),
-  m_elementAperture(),
-  m_elementArea(),
-  m_elementRotationMatrix()
+  m_toFacesRelation()
 {
   SetElementType( "C3D8" );
 
@@ -50,51 +45,9 @@ FaceElementSubRegion::FaceElementSubRegion( string const & name,
 
   registerWrapper( viewKeyStruct::detJString, &m_detJ )->setSizedFromParent( 1 )->reference();
 
-  registerWrapper( viewKeyStruct::nodeListString, &m_toNodesRelation )->
-    setDescription( "Map to the nodes attached to each FaceElement." );
-
-  registerWrapper( viewKeyStruct::edgeListString, &m_toEdgesRelation )->
-    setDescription( "Map to the edges attached to each FaceElement." );
-
   registerWrapper( viewKeyStruct::faceListString, &m_toFacesRelation )->
     setDescription( "Map to the faces attached to each FaceElement." )->
     reference().resize( 0, 2 );
-
-  registerWrapper( viewKeyStruct::elementApertureString, &m_elementAperture )->
-    setApplyDefaultValue( -1.0 )->
-    setPlotLevel( dataRepository::PlotLevel::LEVEL_0 )->
-    setDescription( "The aperture of each FaceElement." );
-
-  registerWrapper( viewKeyStruct::elementAreaString, &m_elementArea )->
-    setApplyDefaultValue( -1.0 )->
-    setPlotLevel( dataRepository::PlotLevel::LEVEL_2 )->
-    setDescription( "The area of each FaceElement." );
-
-  registerWrapper( viewKeyStruct::elementRotationMatrixString, &m_elementRotationMatrix )->
-    setApplyDefaultValue( 0.0 )->
-    setPlotLevel( dataRepository::PlotLevel::LEVEL_2 )->
-    setDescription( "The rotation matrix of each FaceElement." )->
-    reference().resizeDimension< 1, 2 >( 3, 3 );
-
-  registerWrapper( viewKeyStruct::faceElementsToCellRegionsString, &m_faceElementsToCells.m_toElementRegion )->
-    setApplyDefaultValue( -1 )->
-    setPlotLevel( PlotLevel::NOPLOT )->
-    setDescription( "A map of face element local indices to the cell local indices" );
-
-  registerWrapper( viewKeyStruct::faceElementsToCellSubRegionsString, &m_faceElementsToCells.m_toElementSubRegion )->
-    setApplyDefaultValue( -1 )->
-    setPlotLevel( PlotLevel::NOPLOT )->
-    setDescription( "A map of face element local indices to the cell local indices" );
-
-  registerWrapper( viewKeyStruct::faceElementsToCellIndexString, &m_faceElementsToCells.m_toElementIndex )->
-    setApplyDefaultValue( -1 )->
-    setPlotLevel( PlotLevel::NOPLOT )->
-    setDescription( "A map of face element local indices to the cell local indices" );
-
-  registerWrapper< real64_array >( viewKeyStruct::creationMassString )->
-    setApplyDefaultValue( 0.0 )->
-    setPlotLevel( dataRepository::PlotLevel::LEVEL_1 )->
-    setDescription( "The amount of remaining mass that was introduced when the FaceElement was created." );
 
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
   registerWrapper( viewKeyStruct::separationCoeffString, &m_separationCoefficient )->
@@ -103,8 +56,8 @@ FaceElementSubRegion::FaceElementSubRegion( string const & name,
     setDescription( "Scalar indicator of level of separation for a fracturing face." );
 #endif
 
-  m_faceElementsToCells.resize( 0, 2 );
-  m_faceElementsToCells.setElementRegionManager( getParent()->getParent()->getParent()->getParent()->group_cast< ElementRegionManager * >() );
+  m_surfaceElementsToCells.resize( 0, 2 );
+  m_surfaceElementsToCells.setElementRegionManager( getParent()->getParent()->getParent()->getParent()->group_cast< ElementRegionManager * >() );
 
   m_numNodesPerElement = 8;
 }
@@ -126,25 +79,14 @@ void FaceElementSubRegion::CalculateElementGeometricQuantities( localIndex const
   m_elementVolume[k] = m_elementAperture[k] * faceArea[m_toFacesRelation[k][0]];
 }
 
-void FaceElementSubRegion::CalculateElementGeometricQuantities( localIndex const k,
-                                                                arrayView1d< real64 const > const & faceArea,
-                                                                arrayView3d< real64 const > const & faceRotationMatrix )
-{
-  localIndex const faceID = m_toFacesRelation( k, 0 );
-  m_elementArea[ k ] = faceArea[ faceID ];
-  m_elementVolume[ k ] = m_elementAperture[ k ] * faceArea[ faceID ];
-  LvArray::tensorOps::copy< 3, 3 >( m_elementRotationMatrix[ k ], faceRotationMatrix[ faceID ] );
-}
-
 void FaceElementSubRegion::CalculateElementGeometricQuantities( NodeManager const & GEOSX_UNUSED_PARAM( nodeManager ),
                                                                 FaceManager const & faceManager )
 {
   arrayView1d< real64 const > const & faceArea = faceManager.faceArea();
-  arrayView3d< real64 const > const & faceRotationMatrix = faceManager.faceRotationMatrix();
 
   forAll< serialPolicy >( this->size(), [=] ( localIndex const k )
   {
-    CalculateElementGeometricQuantities( k, faceArea, faceRotationMatrix );
+    CalculateElementGeometricQuantities( k, faceArea );
   } );
 }
 
@@ -196,12 +138,11 @@ localIndex FaceElementSubRegion::PackUpDownMapsPrivate( buffer_unit_type * & buf
                                            localToGlobal,
                                            faceLocalToGlobal );
 
-
-  packedSize += bufferOps::Pack< DOPACK >( buffer, string( viewKeyStruct::faceElementsToCellRegionsString ) );
+  packedSize += bufferOps::Pack< DOPACK >( buffer, string( viewKeyStruct::surfaceElementsToCellRegionsString ) );
   packedSize += bufferOps::Pack< DOPACK >( buffer,
-                                           this->m_faceElementsToCells,
+                                           this->m_surfaceElementsToCells,
                                            packList,
-                                           m_faceElementsToCells.getElementRegionManager() );
+                                           m_surfaceElementsToCells.getElementRegionManager() );
 
   return packedSize;
 }
@@ -251,15 +192,13 @@ localIndex FaceElementSubRegion::UnpackUpDownMaps( buffer_unit_type const * & bu
 
   string elementListString;
   unPackedSize += bufferOps::Unpack( buffer, elementListString );
-  GEOSX_ERROR_IF_NE( elementListString, viewKeyStruct::faceElementsToCellRegionsString );
+  GEOSX_ERROR_IF_NE( elementListString, viewKeyStruct::surfaceElementsToCellRegionsString );
 
   unPackedSize += bufferOps::Unpack( buffer,
-                                     m_faceElementsToCells,
+                                     m_surfaceElementsToCells,
                                      packList.toViewConst(),
-                                     m_faceElementsToCells.getElementRegionManager(),
+                                     m_surfaceElementsToCells.getElementRegionManager(),
                                      overwriteUpMaps );
-
-
 
   return unPackedSize;
 }
@@ -296,9 +235,9 @@ void FaceElementSubRegion::ViewPackingExclusionList( SortedArray< localIndex > &
   exclusionList.insert( this->getWrapperIndex( viewKeyStruct::nodeListString ));
   exclusionList.insert( this->getWrapperIndex( viewKeyStruct::edgeListString ));
   exclusionList.insert( this->getWrapperIndex( viewKeyStruct::faceListString ));
-  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::faceElementsToCellRegionsString ));
-  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::faceElementsToCellSubRegionsString ));
-  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::faceElementsToCellIndexString ));
+  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::surfaceElementsToCellRegionsString ));
+  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::surfaceElementsToCellSubRegionsString ));
+  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::surfaceElementsToCellIndexString ));
 }
 
 } /* namespace geosx */
