@@ -44,6 +44,8 @@ set( physicsSolvers_headers
      simplePDE/DiffusionFEMKernels.hpp
      simplePDE/ElasticStaticFEM.hpp
      simplePDE/ElasticStaticFEMKernels.hpp
+     simplePDE/DiffusionFEM.hpp
+     simplePDE/DiffusionFEMKernels.hpp
      solidMechanics/SolidMechanicsEmbeddedFractures.hpp
      solidMechanics/SolidMechanicsLagrangianFEM.hpp
      solidMechanics/SolidMechanicsLagrangianSSLE.hpp
