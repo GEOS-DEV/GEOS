@@ -98,30 +98,72 @@ void SinglePhaseWell::InitializePreSubGroups( Group * const rootGroup )
   ValidateModelMapping< SingleFluidBase >( *meshLevel.getElemManager(), m_fluidModelNames );
 }
 
-void SinglePhaseWell::UpdateBHPAndVolRatesForConstraints( WellElementSubRegion & subRegion, localIndex const targetIndex )
+void SinglePhaseWell::UpdateBHPForConstraint( WellElementSubRegion & subRegion, localIndex const targetIndex )
 {
   GEOSX_MARK_FUNCTION;
 
-  // Here, we use the following approach to compute the pressure-dependent variables at reservoir conditions
-  // The user provides a reference elevation and a min/max BHP at this elevation. We use this fixed pressure to
-  // evaluate the density and compute the volumetric rates (at reservoir conditions for now).
-  // We proceed in two steps:
-  //   1) We compute the density with the user-provided BHP pressure
-  //   2) We use this density to compute the volumetric rates
-  // In the near future, we should just use a surface pressure here instead of BHP to get rates at surface conditions
-
-  // note: the current implementation is very clumsy because we only need the density value in one well element
-  //       (the top one) but we need a forAll<> loop because the data is on the GPU
-
-  // the rank that owns the top well element is responsible for the calculations below.
+  // the rank that owns the reference well element is responsible for the calculations below.
   if( !subRegion.IsLocallyOwned() )
   {
     return;
   }
 
-  localIndex const iwelemTop = subRegion.GetTopWellElementIndex();
-  array1d< localIndex > targetSet( 1 );
-  targetSet[0] = iwelemTop;
+  localIndex const iwelemRef = subRegion.GetTopWellElementIndex();
+
+  // subRegion data
+
+  arrayView1d< real64 const > const pres =
+    subRegion.getReference< array1d< real64 > >( viewKeyStruct::pressureString );
+  arrayView1d< real64 const > const dPres =
+    subRegion.getReference< array1d< real64 > >( viewKeyStruct::deltaPressureString );
+
+  arrayView1d< real64 const > const wellElemGravCoef =
+    subRegion.getReference< array1d< real64 > >( viewKeyStruct::gravityCoefString );
+
+  // fluid data
+
+  SingleFluidBase & fluid = GetConstitutiveModel< SingleFluidBase >( subRegion, m_fluidModelNames[targetIndex] );
+  arrayView2d< real64 const > const & dens = fluid.density();
+  arrayView2d< real64 const > const & dDens_dPres = fluid.dDensity_dPressure();
+
+  // control data
+
+  WellControls & wellControls = GetWellControls( subRegion );
+
+  real64 const & refGravCoef = wellControls.GetReferenceGravityCoef();
+
+  real64 & currentBHP =
+    wellControls.getReference< real64 >( SinglePhaseWell::viewKeyStruct::currentBHPString );
+  real64 & dCurrentBHP_dPres =
+    wellControls.getReference< real64 >( SinglePhaseWell::viewKeyStruct::dCurrentBHP_dPresString );
+
+  // bring everything back to host, capture the scalars by reference
+  forAll< serialPolicy >( 1, [pres,
+                              dPres,
+                              dens,
+                              dDens_dPres,
+                              wellElemGravCoef,
+                              &currentBHP,
+                              &dCurrentBHP_dPres,
+                              &iwelemRef,
+                              &refGravCoef] GEOSX_HOST_DEVICE ( localIndex const )
+  {
+    currentBHP = pres[iwelemRef] + dPres[iwelemRef] + dens[iwelemRef][0] * ( refGravCoef - wellElemGravCoef[iwelemRef] );
+    dCurrentBHP_dPres = 1.0 + dDens_dPres[iwelemRef][0] * ( refGravCoef - wellElemGravCoef[iwelemRef] );
+  } );
+}
+
+void SinglePhaseWell::UpdateVolRateForConstraint( WellElementSubRegion & subRegion, localIndex const targetIndex )
+{
+  GEOSX_MARK_FUNCTION;
+
+  // the rank that owns the reference well element is responsible for the calculations below.
+  if( !subRegion.IsLocallyOwned() )
+  {
+    return;
+  }
+
+  localIndex const iwelemRef = subRegion.GetTopWellElementIndex();
 
   // subRegion data
 
@@ -135,25 +177,17 @@ void SinglePhaseWell::UpdateBHPAndVolRatesForConstraints( WellElementSubRegion &
   arrayView1d< real64 const > const & dConnRate =
     subRegion.getReference< array1d< real64 > >( viewKeyStruct::deltaConnRateString );
 
-  arrayView1d< real64 const > const wellElemGravCoef =
-    subRegion.getReference< array1d< real64 > >( viewKeyStruct::gravityCoefString );
-
   // fluid data
 
   SingleFluidBase & fluid = GetConstitutiveModel< SingleFluidBase >( subRegion, m_fluidModelNames[targetIndex] );
   arrayView2d< real64 const > const & dens = fluid.density();
+  arrayView2d< real64 const > const & dDens_dPres = fluid.dDensity_dPressure();
 
   // control data
 
   WellControls & wellControls = GetWellControls( subRegion );
 
-  real64 const & targetBHP = wellControls.GetTargetBHP();
-  real64 const & refGravCoef = wellControls.GetReferenceGravityCoef();
-
-  real64 & currentBHP =
-    wellControls.getReference< real64 >( SinglePhaseWell::viewKeyStruct::currentBHPString );
-  real64 & dCurrentBHP_dPres =
-    wellControls.getReference< real64 >( SinglePhaseWell::viewKeyStruct::dCurrentBHP_dPresString );
+  integer const useSurfaceConditions = wellControls.UseSurfaceConditions();
 
   real64 & currentVolRate =
     wellControls.getReference< real64 >( SinglePhaseWell::viewKeyStruct::currentVolRateString );
@@ -162,31 +196,42 @@ void SinglePhaseWell::UpdateBHPAndVolRatesForConstraints( WellElementSubRegion &
   real64 & dCurrentVolRate_dRate =
     wellControls.getReference< real64 >( SinglePhaseWell::viewKeyStruct::dCurrentVolRate_dRateString );
 
-  // 1) Update the fluid properties in the top well element using the reference pressure
-  //    The density in the top well element will be recomputed with the correct pressure in UpdateFluidModel
   constitutiveUpdatePassThru( fluid, [&]( auto & castedFluid )
   {
     typename TYPEOFREF( castedFluid ) ::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
-    SinglePhaseWellKernels::FluidUpdateAtReferenceConditionsKernel::Launch( targetSet, fluidWrapper, targetBHP );
+
+    // bring everything back to host, capture the scalars by reference
+    forAll< serialPolicy >( 1, [fluidWrapper,
+                                pres,
+                                dPres,
+                                connRate,
+                                dConnRate,
+                                dens,
+                                dDens_dPres,
+                                &useSurfaceConditions,
+                                &currentVolRate,
+                                &dCurrentVolRate_dPres,
+                                &dCurrentVolRate_dRate,
+                                &iwelemRef] GEOSX_HOST_DEVICE ( localIndex const )
+    {
+      //    We need to evaluate the density as follows:
+      //      - Surface conditions: using the surface pressure provided by the user
+      //      - Reservoir conditions: using the pressure in the top element
+
+      if( useSurfaceConditions )
+      {
+        real64 const surfacePres = 101325.0;
+        // we need to compute the surface density
+        fluidWrapper.Update( iwelemRef, 0, surfacePres );
+      }
+
+      real64 const densInv = 1.0 / dens[iwelemRef][0];
+      currentVolRate = ( connRate[iwelemRef] + dConnRate[iwelemRef] ) * densInv;
+      dCurrentVolRate_dPres = -( useSurfaceConditions ==  0 ) * dDens_dPres[iwelemRef][0] * currentVolRate * densInv;
+      dCurrentVolRate_dRate = densInv;
+
+    } );
   } );
-
-  // 2) Use the updated density to compute current BHP and the volumetric rates
-
-  // pass by reference ??
-  forAll< parallelDevicePolicy<> >( targetSet.size(), [&] GEOSX_HOST_DEVICE ( localIndex const a )
-  {
-    localIndex const k = targetSet[a];
-
-    // note: a check in the solver should make sure that the reference elevation is actually in the top well element
-    currentBHP = pres[k] + dPres[k] + dens[k][0] * ( refGravCoef - wellElemGravCoef[k] );
-    dCurrentBHP_dPres = 1.0; // assume that density is computed with a fixed pressure
-
-    real64 const densInv = 1.0 / dens[k][0];
-    currentVolRate = ( connRate[k] + dConnRate[k] ) * densInv;
-    dCurrentVolRate_dPres = 0; // assume that density is computed with a fixed pressure
-    dCurrentVolRate_dRate = densInv;
-  } );
-
 }
 
 void SinglePhaseWell::UpdateFluidModel( WellElementSubRegion & subRegion, localIndex const targetIndex ) const
@@ -207,11 +252,15 @@ void SinglePhaseWell::UpdateFluidModel( WellElementSubRegion & subRegion, localI
 
 void SinglePhaseWell::UpdateState( WellElementSubRegion & subRegion, localIndex const targetIndex )
 {
-  // update reference pressure and volumetric rates for the well constraints
-  UpdateBHPAndVolRatesForConstraints( subRegion, targetIndex );
+  // update volumetric rates for the well constraints
+  // Warning! This must be called before updating the fluid model
+  UpdateVolRateForConstraint( subRegion, targetIndex );
 
   // update density in the well elements
   UpdateFluidModel( subRegion, targetIndex );
+
+  // update the current BHP
+  UpdateBHPForConstraint( subRegion, targetIndex );
 
   // update perforation rates
   ComputePerforationRates( subRegion, targetIndex );

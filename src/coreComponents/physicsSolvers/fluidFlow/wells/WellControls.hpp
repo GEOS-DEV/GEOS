@@ -180,6 +180,11 @@ public:
    */
   arrayView1d< real64 const > GetInjectionStream() const { return m_injectionStream; }
 
+  /**
+   * @brief Getter for the flag specifying whether we check rates at surface or reservoir conditions
+   * @return 1 if we use surface conditions, and 0 otherwise
+   */
+  integer UseSurfaceConditions() const { return m_useSurfaceConditions; }
 
   ///@}
 
@@ -190,33 +195,37 @@ public:
   struct viewKeyStruct
   {
     /// String key for the well reference elevation (for BHP control)
-    static constexpr auto refElevString          = "referenceElevation";
+    static constexpr auto refElevString              = "referenceElevation";
     /// String key for the well type
-    static constexpr auto typeString             = "type";
+    static constexpr auto typeString                 = "type";
     /// String key for the well control
-    static constexpr auto controlString          = "control";
+    static constexpr auto controlString              = "control";
     /// String key for the well target BHP
-    static constexpr auto targetBHPString        = "targetBHP";
+    static constexpr auto targetBHPString            = "targetBHP";
     /// String key for the well target rate
-    static constexpr auto targetRateString       = "targetRate";
+    static constexpr auto targetRateString           = "targetRate";
     /// String key for the well target oil rate for producers
-    static constexpr auto targetOilRateString    = "targetOilRate";
+    static constexpr auto targetOilRateString        = "targetOilRate";
     /// String key for the well injection stream
-    static constexpr auto injectionStreamString  = "injectionStream";
+    static constexpr auto injectionStreamString      = "injectionStream";
+    /// String key for checking the rates at surface conditions
+    static constexpr auto useSurfaceConditionsString = "useSurfaceConditions";
     /// ViewKey for the reference elevation
-    dataRepository::ViewKey referenceElevation = { refElevString };
+    dataRepository::ViewKey referenceElevation   = { refElevString };
     /// ViewKey for the well type
-    dataRepository::ViewKey type               = { typeString };
+    dataRepository::ViewKey type                 = { typeString };
     /// ViewKey for the well control
-    dataRepository::ViewKey control            = { controlString };
+    dataRepository::ViewKey control              = { controlString };
     /// ViewKey for the well target BHP
-    dataRepository::ViewKey targetBHP          = { targetBHPString };
+    dataRepository::ViewKey targetBHP            = { targetBHPString };
     /// ViewKey for the well target rate
-    dataRepository::ViewKey targetRate         = { targetRateString };
+    dataRepository::ViewKey targetRate           = { targetRateString };
     /// ViewKey for the well target oil rate
-    dataRepository::ViewKey targetOilRate      = { targetOilRateString };
+    dataRepository::ViewKey targetOilRate        = { targetOilRateString };
     /// ViewKey for the well injection stream
-    dataRepository::ViewKey injectionStream    = { injectionStreamString };
+    dataRepository::ViewKey injectionStream      = { injectionStreamString };
+    /// ViewKey for the well injection stream
+    dataRepository::ViewKey useSurfaceConditions = { useSurfaceConditionsString };
   }
   /// ViewKey struct for the WellControls class
   viewKeysWellControls;
@@ -261,6 +270,9 @@ private:
 
   /// Vector with global component fractions at the injector
   array1d< real64 >  m_injectionStream;
+
+  /// Flag to decide whether rates are controlled at rates or surface conditions
+  integer m_useSurfaceConditions;
 
 };
 

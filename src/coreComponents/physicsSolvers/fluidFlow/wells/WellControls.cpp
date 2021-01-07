@@ -32,7 +32,8 @@ WellControls::WellControls( string const & name, Group * const parent )
   m_currentControl( Control::BHP ),
   m_targetBHP( 0.0 ),
   m_targetRate( 0.0 ),
-  m_targetOilRate( 0.0 )
+  m_targetOilRate( 0.0 ),
+  m_useSurfaceConditions( 0 )
 {
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 
@@ -63,6 +64,12 @@ WellControls::WellControls( string const & name, Group * const parent )
     setDefaultValue( -1 )->
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "Reference elevation where BHP control is enforced" );
+
+  registerWrapper( viewKeyStruct::useSurfaceConditionsString, &m_useSurfaceConditions )->
+    setDefaultValue( 0 )->
+    setInputFlag( InputFlags::OPTIONAL )->
+    setDescription( "Flag to specify whether rates are checked at surface or reservoir conditions.\n"
+                    "Equal to 1 for surface conditions, and to 0 for reservoir conditions" );
 
   registerWrapper( viewKeyStruct::injectionStreamString, &m_injectionStream )->
     setDefaultValue( -1 )->
@@ -123,6 +130,11 @@ void WellControls::PostProcessInput()
     GEOSX_ERROR_IF( std::abs( 1.0 - sum ) > std::numeric_limits< real64 >::epsilon(),
                     "Invalid injection stream for well " << getName() );
   }
+
+  // 5) check the flag for surface / reservoir conditions
+  GEOSX_ERROR_IF( m_useSurfaceConditions != 0 && m_useSurfaceConditions != 1,
+                  "The flag to select surface/reservoir conditions must be equal to 0 or 1" );
+
 }
 
 

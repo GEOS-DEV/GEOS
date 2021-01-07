@@ -145,12 +145,20 @@ public:
   void UpdateComponentFraction( WellElementSubRegion & subRegion ) const;
 
   /**
-   * @brief Recompute the reference pressure and volumetric rates that are used in the well constraints
+   * @brief Recompute the volumetric rates that are used in the well constraints
    * @param subRegion the well subregion containing all the primary and dependent fields
    * @param targetIndex the targetIndex of the subRegion
    */
-  void UpdateBHPAndVolRatesForConstraints( WellElementSubRegion & subRegion,
-                                           localIndex const targetIndex );
+  void UpdateVolRatesForConstraint( WellElementSubRegion & subRegion,
+                                    localIndex const targetIndex );
+
+  /**
+   * @brief Recompute the current BHP pressure
+   * @param subRegion the well subregion containing all the primary and dependent fields
+   * @param targetIndex the targetIndex of the subRegion
+   */
+  void UpdateBHPForConstraint( WellElementSubRegion & subRegion,
+                               localIndex const targetIndex );
 
   /**
    * @brief Update all relevant fluid models using current values of pressure and composition

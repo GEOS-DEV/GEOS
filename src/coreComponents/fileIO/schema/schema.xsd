@@ -968,6 +968,9 @@ the relative residual norm satisfies:
 * producer
 * injector-->
 		<xsd:attribute name="type" type="geosx_WellControls_Type" use="required" />
+		<!--useSurfaceConditions => Flag to specify whether rates are checked at surface or reservoir conditions.
+Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
+		<xsd:attribute name="useSurfaceConditions" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>

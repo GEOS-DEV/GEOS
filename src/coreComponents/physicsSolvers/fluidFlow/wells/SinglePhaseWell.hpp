@@ -138,12 +138,20 @@ public:
   virtual localIndex NumFluidPhases() const override { return 1; }
 
   /**
-   * @brief Recompute the reference pressure and volumetric rates that are used in the well constraints
+   * @brief Recompute the volumetric rate that are used in the well constraints
    * @param subRegion the well subregion containing all the primary and dependent fields
    * @param targetIndex the targetIndex of the subRegion
    */
-  virtual void UpdateBHPAndVolRatesForConstraints( WellElementSubRegion & subRegion,
-                                                   localIndex const targetIndex );
+  virtual void UpdateVolRateForConstraint( WellElementSubRegion & subRegion,
+                                           localIndex const targetIndex );
+
+  /**
+   * @brief Recompute the BHP pressure that is used in the well constraints
+   * @param subRegion the well subregion containing all the primary and dependent fields
+   * @param targetIndex the targetIndex of the subRegion
+   */
+  virtual void UpdateBHPForConstraint( WellElementSubRegion & subRegion,
+                                       localIndex const targetIndex );
 
   /**
    * @brief Update fluid constitutive model state

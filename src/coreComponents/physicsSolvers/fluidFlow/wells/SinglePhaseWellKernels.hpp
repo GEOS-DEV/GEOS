@@ -639,28 +639,6 @@ struct RateInitializationKernel
 };
 
 
-/******************************** FluidUpdateAtTopElemKernel ********************************/
-
-struct FluidUpdateAtReferenceConditionsKernel
-{
-  template< typename FLUID_WRAPPER >
-  static void
-  Launch( arrayView1d< localIndex const > const & targetSet,
-          FLUID_WRAPPER const & fluidWrapper,
-          real64 const refPres )
-  {
-    forAll< parallelDevicePolicy<> >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const a )
-    {
-      localIndex const k = targetSet[a];
-      for( localIndex q = 0; q < fluidWrapper.numGauss(); ++q )
-      {
-        fluidWrapper.Update( k, q, refPres );
-      }
-    } );
-  }
-};
-
-
 /******************************** ResidualNormKernel ********************************/
 
 struct ResidualNormKernel

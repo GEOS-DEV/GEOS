@@ -1306,30 +1306,6 @@ struct RateInitializationKernel
 
 };
 
-/******************************** FluidUpdateKernel ********************************/
-
-struct FluidUpdateAtReferenceConditionsKernel
-{
-
-  template< typename POLICY, typename FLUID_WRAPPER >
-  static void
-  Launch( arrayView1d< localIndex const > const & targetSet,
-          FLUID_WRAPPER const & fluidWrapper,
-          real64 const refPres,
-          real64 const temp,
-          arrayView2d< real64 const > const & compFrac )
-  {
-    forAll< POLICY >( targetSet.size(), [=] ( localIndex const a )
-    {
-      localIndex const k = targetSet[a];
-      for( localIndex q = 0; q < fluidWrapper.numGauss(); ++q )
-      {
-        fluidWrapper.Update( k, q, refPres, temp, compFrac[k] );
-      }
-    } );
-  }
-
-};
 
 /******************************** TotalMassDensityKernel ****************************/
 
