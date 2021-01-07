@@ -257,7 +257,8 @@ void SurfaceGenerator::RegisterDataOnMesh( Group * const MeshBodies )
                                        extrinsicMeshData::K_IC_21,
                                        extrinsicMeshData::K_IC_22,
                                        extrinsicMeshData::RuptureTime,
-                                       extrinsicMeshData::RuptureRate >( this->getName() );
+                                       extrinsicMeshData::RuptureRate,
+                                       extrinsicMeshData::IsFaceElmtPartiallyOpen >( this->getName() );
     } );
 
     NodeManager * const nodeManager = meshLevel->getNodeManager();
@@ -269,7 +270,8 @@ void SurfaceGenerator::RegisterDataOnMesh( Group * const MeshBodies )
                                         extrinsicMeshData::DegreeFromCrack,
                                         extrinsicMeshData::DegreeFromCrackTip,
                                         extrinsicMeshData::SIFNode,
-                                        extrinsicMeshData::RuptureTime >( this->getName() );
+                                        extrinsicMeshData::RuptureTime,
+                                        extrinsicMeshData::SignedNodeDistance >( this->getName() );
 
     edgeManager->registerExtrinsicData< extrinsicMeshData::ParentIndex,
                                         extrinsicMeshData::ChildIndex,

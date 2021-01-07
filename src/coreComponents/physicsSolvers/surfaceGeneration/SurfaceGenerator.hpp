@@ -124,6 +124,16 @@ public:
 
   inline string const getFractureRegionName() const { return m_fractureRegionName; }
 
+  /**
+   * @brief Getter function to obtain the private member m_tipNodes
+   */
+  inline SortedArray<localIndex> const & getTipNodes() const { return m_tipNodes; }
+
+  /**
+   * @brief Getter function to obtain the private member m_trailingFaces
+   */
+  inline SortedArray<localIndex> const & getTrailingFaces() const { return m_trailingFaces; }
+
 protected:
 
   virtual void InitializePostInitialConditions_PreSubGroups( Group * const problemManager ) override final;

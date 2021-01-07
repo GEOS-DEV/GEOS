@@ -39,6 +39,10 @@
 #include "physicsSolvers/surfaceGeneration/SurfaceGenerator.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
 #include "linearAlgebra/utilities/LAIHelperFunctions.hpp"
+#include "mesh/ExtrinsicMeshData.hpp"
+#include <unordered_set>
+#include <array>
+#include <algorithm>
 
 namespace geosx
 {
@@ -55,7 +59,7 @@ HydrofractureSolver::HydrofractureSolver( const std::string & name,
   m_couplingTypeOption( CouplingTypeOption::FIM ),
   m_solidSolver( nullptr ),
   m_flowSolver( nullptr ),
-  m_surfaceGeneratorSolver( nullptr),
+  m_surfaceGeneratorSolver( nullptr ),
   m_maxNumResolves( 10 )
 {
   registerWrapper( viewKeyStruct::solidSolverNameString, &m_solidSolverName )->
@@ -191,9 +195,7 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
 
   //SolverBase * const surfaceGenerator = this->getParent()->GetGroup< SolverBase >( "SurfaceGen" );
   SurfaceGenerator * const surfaceGenerator = m_surfaceGeneratorSolver;
-
   GEOSX_ERROR_IF( surfaceGenerator == nullptr, this->getName() << ": invalid surface generator solver name: " << std::endl );
-
 
   if( m_couplingTypeOption == CouplingTypeOption::SIM_FixedStress )
   {
@@ -272,7 +274,735 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
     m_numResolves[1] = solveIter;
   }
 
+  SortedArray<localIndex> const & myTrailingFaces = m_surfaceGeneratorSolver->getTrailingFaces();
+  for (auto const & trailingFace : myTrailingFaces )
+  {
+    std::cout << "Trailing face: " << trailingFace << std::endl;
+  }
+
+  MeshLevel * const meshLevel = domain.getMeshBody(0)->getMeshLevel(0);
+  NodeManager * const nodeManager = meshLevel->getNodeManager();
+  FaceManager * const faceManager = meshLevel->getFaceManager();
+  FaceManager::NodeMapType const & faceToNodes = faceManager->nodeList();
+  array2d<real64> const & faceNormal = faceManager->faceNormal();
+  ElementRegionManager * const elementRegionManager = meshLevel->getElemManager();
+
+  array1d<localIndex> const & childNodeIndices = nodeManager->getExtrinsicData< extrinsicMeshData::ChildIndex >();
+  for (localIndex i=0; i<nodeManager->size(); i++)
+  {
+    if (childNodeIndices(i) >= 0)
+    {
+      std::cout << "Parent node: " << i << " -> child node: " << childNodeIndices(i) << std::endl;
+    }
+  }
+  array1d<localIndex> const & childFaceIndices = faceManager->getExtrinsicData< extrinsicMeshData::ChildIndex >();
+  for (localIndex i=0; i<faceManager->size(); i++)
+  {
+    if (childFaceIndices(i) >= 0)
+    {
+      std::cout << "Parent face: " << i << " -> child face: " << childFaceIndices(i) << std::endl;
+    }
+  }
+
+  array1d<real64> & signedNodeDistance = nodeManager->getExtrinsicData< extrinsicMeshData::SignedNodeDistance >();
+  std::cout << signedNodeDistance.size() << std::endl;
+  array2d<real64, nodes::TOTAL_DISPLACEMENT_PERM> const & totalDisplacement = nodeManager->totalDisplacement();
+  std::cout << totalDisplacement.size() << std::endl;
+  array2d<real64, nodes::REFERENCE_POSITION_PERM> const & referencePosition = nodeManager->referencePosition();
+  std::cout << referencePosition.size() << std::endl;
+
+  elementRegionManager->forElementSubRegions<FaceElementSubRegion>( [&] (FaceElementSubRegion & subRegion)
+  {
+    // Get the shear modulus and bulk modulus from the constitutive model of
+    // the solid material. These two material properties are needed for the
+    // tip asymptotic relation
+    Group const * const constitutiveModels = subRegion.GetConstitutiveModels();
+    real64 shearModulus;
+    real64 bulkModulus;
+    constitutiveModels->forSubGroups<LinearElasticIsotropic>( [&shearModulus, &bulkModulus]
+							      (LinearElasticIsotropic const & solidModel)
+    {
+      std::cout << solidModel.getName() << std::endl;
+      shearModulus = solidModel.getReference<real64>
+                                (LinearElasticIsotropic::viewKeyStruct::defaultShearModulusString);
+      bulkModulus = solidModel.getReference<real64>
+                                (LinearElasticIsotropic::viewKeyStruct::defaultBulkModulusString);
+    } );
+    std::cout << "Shear modulus = " << shearModulus << std::endl;
+    std::cout << "Bulk modulus = " << bulkModulus << std::endl;
+
+    real64 const toughness = m_surfaceGeneratorSolver->getReference<real64>("rockToughness");
+    std::cout << "Rock toughness = " << toughness << std::endl;
+
+    real64 const nu = ( 1.5 * bulkModulus - shearModulus ) / ( 3.0 * bulkModulus + shearModulus );
+    real64 const E = ( 9.0 * bulkModulus * shearModulus )/ ( 3.0 * bulkModulus + shearModulus );
+    real64 const Eprime = E/(1.0-nu*nu);
+    real64 const PI = 2 * acos(0.0);
+    real64 const Kprime = 4.0*sqrt(2.0/PI)*toughness;
+    std::cout << Eprime << PI << Kprime << std::endl;
+
+    std::cout << subRegion.getName() << ": " << subRegion.size() << std::endl;
+    FaceElementSubRegion::FaceMapType const & faceElmtToFacesRelation = subRegion.faceList();
+    // We need to modify the face element partially open status, so no const
+    array1d<integer> & isFaceElmtPartiallyOpen = subRegion.getExtrinsicData< extrinsicMeshData::IsFaceElmtPartiallyOpen >();
+
+    // Define two unordered set, one for the fully opened face elements
+    // the other for the partially opened face elements
+    std::unordered_set<localIndex> fullyOpenFaceElmts, partiallyOpenFaceElmts;
+
+    // Loop over all the faceElements
+    for (localIndex iFaceElmt=0; iFaceElmt<subRegion.size(); iFaceElmt++)
+    {
+      // Find the parent face of the two faces in a faceElement
+      localIndex const kf0 = faceElmtToFacesRelation[iFaceElmt][0];
+      localIndex const kf1 = faceElmtToFacesRelation[iFaceElmt][1];
+      localIndex const childFaceOfFace0 = childFaceIndices[kf0];
+      localIndex const parentFace = childFaceOfFace0 >= 0 ? kf0 : kf1;
+
+      // Count how many nodes on the parent face have child nodes
+      int nodeCount = 0;
+      for (localIndex const node : faceToNodes[parentFace])
+      {
+	if (childNodeIndices[node] >= 0 )
+	  nodeCount++;
+      }
+      // If all the nodes on the parent face have children,
+      // the faceElement is fully open. Otherwise, the faceElement
+      // is partially open
+      GEOSX_ERROR_IF(faceToNodes[parentFace].size() != 4,
+		     "Face element " << parentFace << " needs to have FOUR nodes, "
+		     << "it only has " << faceToNodes[parentFace].size() << " nodes.");
+
+      if (nodeCount == faceToNodes[parentFace].size())
+      {
+	isFaceElmtPartiallyOpen[iFaceElmt] = 0;
+	fullyOpenFaceElmts.insert(iFaceElmt);
+      }
+      else
+      {
+	isFaceElmtPartiallyOpen[iFaceElmt] = 1;
+	partiallyOpenFaceElmts.insert(iFaceElmt);
+      }
+
+      std::cout << "Face elmt " << iFaceElmt << ": Faces " << faceElmtToFacesRelation[iFaceElmt][0] << ", "
+	                                           << faceElmtToFacesRelation[iFaceElmt][1] << std::endl;
+    } // for iFaceElmt < subRegion.size()
+    std::cout << "Fully opened face element size: " << fullyOpenFaceElmts.size() << std::endl;
+    std::cout << "Partially opened face element size: " << partiallyOpenFaceElmts.size() << std::endl;
+
+    FaceElementSubRegion::NodeMapType const & faceElmtToNodesRelation = subRegion.nodeList();
+    for (localIndex iFaceElmt=0; iFaceElmt<subRegion.size(); iFaceElmt++)
+    {
+      localIndex const kf0 = faceElmtToFacesRelation[iFaceElmt][0];
+      localIndex const kf1 = faceElmtToFacesRelation[iFaceElmt][1];
+      localIndex const childFaceOfFace0 = childFaceIndices[kf0];
+      localIndex const parentFace = childFaceOfFace0 >= 0 ? kf0 : kf1;
+
+      for (localIndex const parentNode : faceToNodes[parentFace])
+      {
+	localIndex const childNode = childNodeIndices[parentNode];
+	if (childNode >= 0)
+	{
+	  real64 temp[3] = {0.0, 0.0, 0.0};
+	  LvArray::tensorOps::add< 3 >( temp, totalDisplacement[parentNode] );
+	  LvArray::tensorOps::subtract< 3 >( temp, totalDisplacement[childNode] );
+
+	  // assume a linear relationship between node opening and signed distance
+	  // negative distance for nodes that have been split
+	  signedNodeDistance[parentNode] = -std::abs( -LvArray::tensorOps::AiBi< 3 >( temp, faceNormal[parentFace] ) );
+	  signedNodeDistance[childNode] = signedNodeDistance[parentNode];
+	  std::cout << "Parent node " << parentNode
+		    << ": coords = " << referencePosition(parentNode, 0) << ", "
+				     << referencePosition(parentNode, 1) << ", "
+				     << referencePosition(parentNode, 2) << std::endl;
+	  std::cout << "Parent node " << parentNode
+		    << ": disps = "  << totalDisplacement(parentNode, 0) << ", "
+				     << totalDisplacement(parentNode, 1) << ", "
+				     << totalDisplacement(parentNode, 2) << std::endl;
+	  std::cout << "Parent node " << parentNode
+		    << ": signed dist = " << signedNodeDistance[parentNode] << std::endl;
+
+	  std::cout << "Child node " << childNode
+		    << ": coords = " << referencePosition(childNode, 0) << ", "
+				     << referencePosition(childNode, 1) << ", "
+				     << referencePosition(childNode, 2) << std::endl;
+	  std::cout << "Child node " << childNode
+		    << ": disps = "  << totalDisplacement(childNode, 0) << ", "
+				     << totalDisplacement(childNode, 1) << ", "
+				     << totalDisplacement(childNode, 2) << std::endl;
+	  std::cout << "Child node " << childNode
+		    << ": signed dist = " << signedNodeDistance[childNode] << std::endl;
+	}
+      }
+    }
+
+    for (localIndex i=0; i<subRegion.size(); i++)
+    {
+      std::cout << "Face elmt " << i << ": Nodes ";
+      for (localIndex j : faceElmtToNodesRelation[i])
+      {
+	std::cout << j << ", ";
+      }
+      std::cout << std::endl;
+    }
+
+    EikonalEquationSolver(domain, subRegion, partiallyOpenFaceElmts);
+
+  } );
+
   return dtReturn;
+}
+
+real64 HydrofractureSolver::CalculateSignedDistance1stOrder(localIndex const node,
+                                                            std::array<std::unordered_set<localIndex>, 2> const & neighbors,
+                                                            std::unordered_map<localIndex, int> & nodeStatus,
+                                                            NodeManager * const nodeManager)
+{
+  array2d<real64, nodes::REFERENCE_POSITION_PERM> const & referencePosition = nodeManager->referencePosition();
+  array1d<real64> & signedNodeDistance = nodeManager->getExtrinsicData< extrinsicMeshData::SignedNodeDistance >();
+
+  // only nodes that are frozen (-1) will contribute to the quadratic equation
+  std::array<std::unordered_set<localIndex>, 2> tempNeighbors;
+  for (int i=0; i<2; i++)
+  {
+    for (localIndex const neighborNode : neighbors[i])
+    {
+      if (nodeStatus[neighborNode] == -1)
+      {
+        tempNeighbors[i].insert(neighborNode);
+      }
+    }
+  }
+
+  real64 a, b;
+  localIndex nodeInDirection0, nodeInDirection1;
+  // direction-0 has no neighbor nodes
+  if (tempNeighbors[0].empty())
+  {
+    // direction-1 only has one node
+    if (tempNeighbors[1].size() == 1 )
+    {
+      std::unordered_set<localIndex>::const_iterator itr1 = tempNeighbors[1].begin();
+      a = signedNodeDistance[*itr1];
+      nodeInDirection1 = *itr1;
+    }
+    else
+    {
+      std::unordered_set<localIndex>::const_iterator itr1 = tempNeighbors[1].begin();
+      std::unordered_set<localIndex>::const_iterator itr2 = ++tempNeighbors[1].begin();
+      a = std::min( signedNodeDistance[*itr1],
+                    signedNodeDistance[*itr2] );
+      nodeInDirection1 = signedNodeDistance[*itr1] < signedNodeDistance[*itr2] ? *itr1 : *itr2;
+    }
+    real64 temp[3] = {0.0, 0.0, 0.0};
+    LvArray::tensorOps::add< 3 >( temp, referencePosition[node] );
+    LvArray::tensorOps::subtract< 3 >( temp, referencePosition[nodeInDirection1] );
+    return a + LvArray::tensorOps::l2Norm< 3 >( temp );
+  }
+  // direction-1 has no neighbor nodes
+  else if (tempNeighbors[1].empty())
+  {
+    // direction-1 only has one node
+    if (tempNeighbors[0].size() == 1 )
+    {
+      std::unordered_set<localIndex>::const_iterator itr1 = tempNeighbors[0].begin();
+      a = signedNodeDistance[*itr1];
+      nodeInDirection0 = *itr1;
+    }
+    else
+    {
+      std::unordered_set<localIndex>::const_iterator itr1 = tempNeighbors[0].begin();
+      std::unordered_set<localIndex>::const_iterator itr2 = ++tempNeighbors[0].begin();
+      a = std::min( signedNodeDistance[*itr1],
+                    signedNodeDistance[*itr2] );
+      nodeInDirection0 = signedNodeDistance[*itr1] < signedNodeDistance[*itr2] ? *itr1 : *itr2;
+    }
+    real64 temp[3] = {0.0, 0.0, 0.0};
+    LvArray::tensorOps::add< 3 >( temp, referencePosition[node] );
+    LvArray::tensorOps::subtract< 3 >( temp, referencePosition[nodeInDirection0] );
+    return a + LvArray::tensorOps::l2Norm< 3 >( temp );
+  }
+  // both directions have neighbor nodes
+  else
+  {
+    if (tempNeighbors[0].size() == 1)
+    {
+      std::unordered_set<localIndex>::const_iterator itr1 = tempNeighbors[0].begin();
+      a = signedNodeDistance[*itr1];
+      nodeInDirection0 = *itr1;
+    }
+    else
+    {
+      std::unordered_set<localIndex>::const_iterator itr1 = tempNeighbors[0].begin();
+      std::unordered_set<localIndex>::const_iterator itr2 = ++tempNeighbors[0].begin();
+      a = std::min( signedNodeDistance[*itr1],
+                    signedNodeDistance[*itr2] );
+      nodeInDirection0 = signedNodeDistance[*itr1] < signedNodeDistance[*itr2] ? *itr1 : *itr2;
+    }
+    real64 temp0[3] = {0.0, 0.0, 0.0};
+    LvArray::tensorOps::add< 3 >( temp0, referencePosition[node] );
+    LvArray::tensorOps::subtract< 3 >( temp0, referencePosition[nodeInDirection0] );
+    real64 delta0 = LvArray::tensorOps::l2Norm< 3 >( temp0 );
+
+    if (tempNeighbors[1].size() == 1)
+    {
+      std::unordered_set<localIndex>::const_iterator itr1 = tempNeighbors[1].begin();
+      b = signedNodeDistance[*itr1];
+      nodeInDirection1 = *itr1;
+    }
+    else
+    {
+      std::unordered_set<localIndex>::const_iterator itr1 = tempNeighbors[1].begin();
+      std::unordered_set<localIndex>::const_iterator itr2 = ++tempNeighbors[1].begin();
+      b = std::min( signedNodeDistance[*itr1],
+                    signedNodeDistance[*itr2] );
+      nodeInDirection1 = signedNodeDistance[*itr1] < signedNodeDistance[*itr2] ? *itr1 : *itr2;
+    }
+    real64 temp1[3] = {0.0, 0.0, 0.0};
+    LvArray::tensorOps::add< 3 >( temp1, referencePosition[node] );
+    LvArray::tensorOps::subtract< 3 >( temp1, referencePosition[nodeInDirection1] );
+    real64 delta1 = LvArray::tensorOps::l2Norm< 3 >( temp1 );
+
+    real64 beta = delta0/delta1;
+    real64 determinant = delta0*delta0 * (1.0 + beta*beta) - beta*beta*(a-b)*(a-b);
+    if (determinant >= 0.0)
+    {
+      return (a + beta*beta*b + std::sqrt(determinant))/(1.0+beta*beta);
+    }
+    else
+    {
+      if (a <= b)
+      {
+        return a + delta0;
+      }
+      else
+      {
+        return b + delta1;
+      }
+    }
+  }
+}
+
+
+void HydrofractureSolver::EikonalEquationSolver(DomainPartition & domain,
+						FaceElementSubRegion & subRegion,
+						std::unordered_set<localIndex> const & partiallyOpenFaceElmts)
+{
+  MeshLevel * const meshLevel = domain.getMeshBody(0)->getMeshLevel(0);
+  NodeManager * const nodeManager = meshLevel->getNodeManager();
+  array2d<real64, nodes::REFERENCE_POSITION_PERM> const & referencePosition = nodeManager->referencePosition();
+  array1d<real64> & signedNodeDistance = nodeManager->getExtrinsicData< extrinsicMeshData::SignedNodeDistance >();
+  array1d<localIndex> const & childNodeIndices = nodeManager->getExtrinsicData< extrinsicMeshData::ChildIndex >();
+  FaceManager * const faceManager = meshLevel->getFaceManager();
+  FaceManager::NodeMapType const & faceToNodes = faceManager->nodeList();
+  FaceManager::EdgeMapType const & faceToEdges = faceManager->edgeList();
+  EdgeManager const * const edgeManager = meshLevel->getEdgeManager();
+  EdgeManager::NodeMapType const & edgeToNodes = edgeManager->nodeList();
+  array1d<localIndex> const & childFaceIndices = faceManager->getExtrinsicData< extrinsicMeshData::ChildIndex >();
+  FaceElementSubRegion::FaceMapType const & faceElmtToFacesRelation = subRegion.faceList();
+  FaceElementSubRegion::NodeMapType const & faceElmtToNodesRelation = subRegion.nodeList();
+
+  // a set to store all the nodes located on the parent face of the partially opened
+  // face element, some of these nodes are frozen with known signed distance as B.C. for
+  // the Eikonal equation, other nodes are far
+  std::unordered_set<localIndex> allNodeSet;
+  std::unordered_set<localIndex> boundaryNodeSet;
+
+  // an unordered map to store the parent face of each face element
+  // key: face element number
+  // value: the face number that is the parent face
+  std::unordered_map<localIndex, localIndex> parentFaceOfFaceElmt;
+
+  for (localIndex const faceElmt : partiallyOpenFaceElmts)
+  {
+    localIndex const kf0 = faceElmtToFacesRelation[faceElmt][0];
+    localIndex const kf1 = faceElmtToFacesRelation[faceElmt][1];
+    localIndex const childFaceOfFace0 = childFaceIndices[kf0];
+    localIndex const parentFace = childFaceOfFace0 >= 0 ? kf0 : kf1;
+    parentFaceOfFaceElmt[faceElmt] = parentFace;
+
+    for (localIndex const parentNode : faceToNodes[parentFace] )
+    {
+      allNodeSet.insert(parentNode);
+    }
+    std::cout << "Face Elmt " << faceElmt << " :" << std::endl;
+    for (localIndex const node : faceElmtToNodesRelation[faceElmt])
+    {
+      std::cout << "Node " << node << " : " << signedNodeDistance[node] << std::endl;
+    }
+  } // for faceElmt : partiallyOpenFaceElmts
+
+  // an unordered map to store the node status:
+  // key: node number;
+  // value: -1->node is frozen; 0->node is in narrow band; 1->node is far.
+  std::unordered_map<localIndex, int> nodeStatus;
+
+  for (localIndex const & node : allNodeSet)
+  {
+    if (childNodeIndices(node) >=0)
+    {
+      // if node has child, it is frozen (-1).
+      nodeStatus[node] = -1;
+      boundaryNodeSet.insert(node);
+    }
+    else
+    {
+      // if node has no child, it is far (1).
+      nodeStatus[node] = 1;
+    }
+  }
+
+  // an unordered map to store the neighbors of each node
+  // key: node number;
+  // value: an array with two elements, each of which is an unordered set
+  //        storing the neighbor elements in one direction. Since it is a
+  //        two-dimensional problem, each unordered set stores neighbor nodes
+  //        in one of the two directions.
+  std::unordered_map< localIndex, std::array<std::unordered_set<localIndex>, 2> > nodeNeighbors;
+
+  // find neighbor nodes for each node in the allNodeSet
+  for (localIndex const faceElmt : partiallyOpenFaceElmts)
+  {
+    localIndex const parentFace = parentFaceOfFaceElmt[faceElmt];
+    std::cout << "In face element " << faceElmt << std::endl;
+    for (localIndex const node : faceToNodes[parentFace])
+    {
+      for (localIndex const edge : faceToEdges[parentFace])
+      {
+        if (edgeManager->hasNode(edge, node))
+        {
+          std::cout << "Node " << node << " is on Edge " << edge << std::endl;
+          localIndex const node0 = edgeToNodes[edge][0];
+          localIndex const node1 = edgeToNodes[edge][1];
+          localIndex neighborNode = (node == node0) ? node1 : node0;
+          std::cout << "Node " << node << " has neighbor node " << neighborNode << std::endl;
+
+          if (nodeNeighbors[node][0].empty() && nodeNeighbors[node][1].empty())
+          {
+            nodeNeighbors[node][0].insert(neighborNode);
+          }
+          else if (nodeNeighbors[node][0].empty())
+          {
+            localIndex frontNode = *(nodeNeighbors[node][1].begin());
+            real64 temp[3] = {0.0, 0.0, 0.0};
+            LvArray::tensorOps::add< 3 >( temp, referencePosition[frontNode] );
+            LvArray::tensorOps::subtract< 3 >( temp, referencePosition[node] );
+            real64 temp1[3] = {0.0, 0.0, 0.0};
+            LvArray::tensorOps::add< 3 >( temp1, referencePosition[neighborNode] );
+            LvArray::tensorOps::subtract< 3 >( temp1, referencePosition[node] );
+            real64 product = LvArray::tensorOps::AiBi< 3 >( temp, temp1 );
+            if (std::abs(product) > 1.0e-6)
+            {
+              nodeNeighbors[node][1].insert(neighborNode);
+            }
+            else
+            {
+              nodeNeighbors[node][0].insert(neighborNode);
+            }
+          }
+          else
+          {
+            localIndex frontNode = *(nodeNeighbors[node][0].begin());
+            real64 temp[3] = {0.0, 0.0, 0.0};
+            LvArray::tensorOps::add< 3 >( temp, referencePosition[frontNode] );
+            LvArray::tensorOps::subtract< 3 >( temp, referencePosition[node] );
+            real64 temp1[3] = {0.0, 0.0, 0.0};
+            LvArray::tensorOps::add< 3 >( temp1, referencePosition[neighborNode] );
+            LvArray::tensorOps::subtract< 3 >( temp1, referencePosition[node] );
+            real64 product = LvArray::tensorOps::AiBi< 3 >( temp, temp1 );
+            if (std::abs(product) > 1.0e-6)
+            {
+              nodeNeighbors[node][0].insert(neighborNode);
+            }
+            else
+            {
+              nodeNeighbors[node][1].insert(neighborNode);
+            }
+          }
+        }
+      }
+    }
+  }
+
+  std::unordered_set<localIndex> narrowBandNodeSet;
+  std::vector<std::pair<localIndex, real64>> narrowBandMinHeap;
+  narrowBandMinHeap.reserve(allNodeSet.size());
+
+  // step-1: initialize the nodes that are neighboring to the boundary
+  //         nodes (split nodes)
+  for (localIndex const bcNode : boundaryNodeSet)
+  {
+    // loop over two directions
+    for (int i=0; i<2; i++)
+    {
+      for (localIndex const neighborNode : nodeNeighbors[bcNode][i])
+      {
+        // if neighbor node is far (1)
+        if ( nodeStatus[neighborNode] == 1 )
+        {
+          // change the node status into narrow band (0)
+          nodeStatus[neighborNode] = 0;
+
+          // calculate the signed distance
+          real64 signedDist = CalculateSignedDistance1stOrder(neighborNode,
+                                                              nodeNeighbors[neighborNode],
+                                                              nodeStatus,
+                                                              nodeManager);
+          signedNodeDistance[neighborNode] = signedDist;
+          narrowBandNodeSet.insert(neighborNode);
+          narrowBandMinHeap.emplace_back( std::pair<localIndex, real64>(neighborNode, signedDist) );
+        }
+      }
+    }
+  }
+  // greater comparison to make a min heap
+  std::make_heap(narrowBandMinHeap.begin(),
+                 narrowBandMinHeap.end(),
+                 [] (std::pair<localIndex, real64> const a, std::pair<localIndex, real64> const b)
+                 {
+                   return a.second > b.second;
+                 });
+  for (auto & item : narrowBandMinHeap)
+  {
+    std::cout << item.first << " => " << item.second << std::endl;
+  }
+
+  //step-2: calculate the signed distance at the nodes that are not split
+  while(!narrowBandNodeSet.empty())
+  {
+    std::cout << "narrowBandNodeSet size = " << narrowBandNodeSet.size() << std::endl;
+
+    for (auto & item : narrowBandMinHeap)
+    {
+      std::cout << item.first << " => " << item.second << std::endl;
+    }
+    std::pop_heap(narrowBandMinHeap.begin(),
+                  narrowBandMinHeap.end(),
+                  [] (std::pair<localIndex, real64> const a, std::pair<localIndex, real64> const b)
+                  {
+                    return a.second > b.second;
+                  });
+    for (auto & item : narrowBandMinHeap)
+    {
+      std::cout << item.first << " => " << item.second << std::endl;
+    }
+    std::pair<localIndex, real64> const minEntry = narrowBandMinHeap.back();
+    narrowBandMinHeap.pop_back();
+    std::cout << "minEntry: " << minEntry.first << " => " << minEntry.second << std::endl;
+    for (auto & item : narrowBandMinHeap)
+    {
+      std::cout << item.first << " => " << item.second << std::endl;
+    }
+    // remove the node that has the smallest signed distance
+    // from the narrow band node set, if the node has already
+    // been removed, then do nothing
+    if (narrowBandNodeSet.erase(minEntry.first))
+    {
+      // the node status must be narrow band
+      GEOSX_ERROR_IF(nodeStatus[minEntry.first] != 0,
+                           "The status of node " << minEntry.first << " is wrong!");
+      // freeze this node
+      nodeStatus[minEntry.first] = -1;
+      // assign the signed distance
+      signedNodeDistance[minEntry.first] = minEntry.second;
+      // loop over two directions
+      for (int i=0; i<2; i++)
+      {
+        for (localIndex const neighborNode : nodeNeighbors[minEntry.first][i])
+        {
+          // if the neighbor node is far
+          if (nodeStatus[neighborNode] == 1)
+          {
+            // change its status to narrow band
+            nodeStatus[neighborNode] = 0;
+            // calculate the signed distance
+            real64 signedDist = CalculateSignedDistance1stOrder(neighborNode,
+                                                                nodeNeighbors[neighborNode],
+                                                                nodeStatus,
+                                                                nodeManager);
+            signedNodeDistance[neighborNode] = signedDist;
+            narrowBandNodeSet.insert(neighborNode);
+            narrowBandMinHeap.emplace_back( std::pair<localIndex, real64>(neighborNode,
+                                                                          signedDist) );
+            std::push_heap(narrowBandMinHeap.begin(),
+                           narrowBandMinHeap.end(),
+                           [] (std::pair<localIndex, real64> const a, std::pair<localIndex, real64> const b)
+                           {
+                             return a.second > b.second;
+                           });
+          }
+          // if the neighbor node is in narrow band
+          else if (nodeStatus[neighborNode] == 0)
+          {
+            real64 newSignedDist = CalculateSignedDistance1stOrder(neighborNode,
+                                                                   nodeNeighbors[neighborNode],
+                                                                   nodeStatus,
+                                                                   nodeManager);
+            real64 oldSignedDist = signedNodeDistance[neighborNode];
+            if (newSignedDist < oldSignedDist)
+            {
+              signedNodeDistance[neighborNode] = newSignedDist;
+              narrowBandMinHeap.emplace_back( std::pair<localIndex, real64>(neighborNode,
+                                                                            newSignedDist) );
+              std::push_heap(narrowBandMinHeap.begin(),
+                             narrowBandMinHeap.end(),
+                             [] (std::pair<localIndex, real64> const a, std::pair<localIndex, real64> const b)
+                             {
+                               return a.second > b.second;
+                             });
+
+            }
+          }
+          // if the neighbor node is frozen, do nothing
+          else
+          {
+            ;
+          }
+        }
+      }
+    } // if (narrowBandNodeSet.erase(minEntry.first))
+  } // while(!narrowBandNodeSet.empty())
+
+
+
+
+  std::unordered_map<localIndex, std::pair<real64, localIndex>> dict;
+  std::vector<std::pair<real64, localIndex>*> vec;
+  dict[100] = std::pair<real64, localIndex>(-0.3, 100);
+  vec.push_back(&dict[100]);
+  dict[80] = std::pair<real64, localIndex>(-0.1, 80);
+  vec.push_back(&dict[80]);
+  dict[60] = std::pair<real64, localIndex>(0.0, 60);
+  vec.push_back(&dict[60]);
+
+  for (auto item : vec)
+  {
+    std::cout << (*item).second << " => " << (*item).first << std::endl;
+  }
+
+  dict[80].first = 0.11;
+  std::cout << "Change the value of 80" << std::endl;
+
+  for (auto item : vec)
+  {
+    std::cout << (*item).second << " => " << (*item).first << std::endl;
+  }
+
+  std::sort(vec.begin(),
+            vec.end(),
+            [ ] (std::pair<real64, localIndex> const* a, std::pair<real64, localIndex> const* b)
+            {
+              return (*a).first < (*b).first;
+            } );
+
+  for (auto item : vec)
+  {
+    std::cout << (*item).second << " => " << (*item).first << std::endl;
+  }
+
+  std::sort(vec.begin(),
+            vec.end(),
+            [] (std::pair<real64, localIndex> const* a, std::pair<real64, localIndex> const* b)
+            {
+              return (*a).first > (*b).first;
+            } );
+
+  for (auto item : vec)
+  {
+    std::cout << (*item).second << " => " << (*item).first << std::endl;
+  }
+
+  std::cout << "make heap" << std::endl;
+  // greater comparison to make a min heap
+  std::make_heap(vec.begin(),
+                 vec.end(),
+                 [] (std::pair<real64, localIndex> const* a, std::pair<real64, localIndex> const* b)
+                 {
+                   return (*a).first > (*b).first;
+                 });
+  for (auto item : vec)
+  {
+    std::cout << (*item).second << " => " << (*item).first << std::endl;
+  }
+
+  dict[80].first = -0.5;
+  std::cout << "make heap after change value of 80" << std::endl;
+  // greater comparison to make a min heap
+  std::make_heap(vec.begin(),
+                 vec.end(),
+                 [] (std::pair<real64, localIndex> const* a, std::pair<real64, localIndex> const* b)
+                 {
+                   return (*a).first > (*b).first;
+                 });
+  for (auto item : vec)
+  {
+    std::cout << (*item).second << " => " << (*item).first << std::endl;
+  }
+
+
+   vec.pop_back();
+   std::cout << "Pop" << std::endl;
+   for (auto item : vec)
+   {
+     std::cout << (*item).second << " => " << (*item).first << std::endl;
+   }
+
+   std::cout << "Dict" << std::endl;
+   for (auto & item : dict)
+   {
+     std::cout << item.first << " -> " << (item.second).first
+         << ", "<< (item.second).second << std::endl;
+   }
+
+
+/*
+  dict[100] = -0.3;
+  dict[80] = -0.1;
+  std::unordered_map<localIndex, real64>::iterator itr1, itr2;
+  itr1 = dict.begin();
+  itr2 = ++dict.begin();
+
+  std::cout << itr1->first << " => " << itr1->second << std::endl;
+  std::cout << itr2->first << " => " << itr2->second << std::endl;
+
+  dict[80] = -0.15;
+
+  std::cout << itr1->first << " => " << itr1->second << std::endl;
+  std::cout << itr2->first << " => " << itr2->second << std::endl;
+
+  real64 * ptr = &(itr1->second);
+  std::cout << *ptr << std::endl;
+
+  dict[80] = -0.25;
+  std::cout << *ptr << std::endl;
+*/
+
+
+
+
+
+
+  std::cout << "Size of all node set = " << allNodeSet.size() << std::endl;
+  for (auto const & item : nodeStatus)
+    std::cout << item.first << " -> " << item.second << std::endl;
+
+  for (auto const & item : nodeNeighbors)
+  {
+    std::cout << "Node " << item.first << ": ";
+    for (localIndex const i : (item.second)[0])
+    {
+      std::cout << i << ", ";
+    }
+    std::cout << std::endl;
+    std::cout << "Node " << item.first << ": ";
+    for (localIndex const i : (item.second)[1])
+    {
+      std::cout << i << ", ";
+    }
+    std::cout << std::endl;
+
+  }
+
 }
 
 void HydrofractureSolver::UpdateDeformationForCoupling( DomainPartition & domain )

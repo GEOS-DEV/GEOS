@@ -289,6 +289,24 @@ EXTRINSIC_MESH_DATA_TRAIT( IsFaceSeparable,
                            WRITE_AND_READ,
                            "A flag to mark if the face is separable." );
 
+EXTRINSIC_MESH_DATA_TRAIT( IsFaceElmtPartiallyOpen,
+                           "isFaceElmtPartiallyOpen",
+                           array1d< integer >,
+                           1,
+                           LEVEL_0,
+                           WRITE_AND_READ,
+                           "A flag to mark if the face element is partially open." );
+
+EXTRINSIC_MESH_DATA_TRAIT( SignedNodeDistance,
+                           "SignedNodeDistance",
+                           array1d< real64 >,
+                           1.0e99,
+                           LEVEL_0,
+                           WRITE_AND_READ,
+                           "Signed distance at each node (positive means "
+                           "node has not been split; negative means node has been split)." );
+
+
 } // namespace extrinsicMeshData
 } // namespace geosx
 

@@ -22,6 +22,7 @@
 
 #include "common/EnumStrings.hpp"
 #include "physicsSolvers/SolverBase.hpp"
+#include <unordered_set>
 
 namespace geosx
 {
@@ -70,6 +71,15 @@ public:
   virtual void ImplicitStepComplete( real64 const & time_n,
                                      real64 const & dt,
                                      DomainPartition & domain ) override final;
+
+  void EikonalEquationSolver( DomainPartition & domain,
+			      FaceElementSubRegion & subRegion,
+			      std::unordered_set<localIndex> const & partiallyOpenFaceElmts );
+
+  real64 CalculateSignedDistance1stOrder( localIndex const node,
+                                          std::array<std::unordered_set<localIndex>, 2> const & neighbors,
+                                          std::unordered_map<localIndex, int> & nodeStatus,
+                                          NodeManager * const nodeManager);
 
   virtual void AssembleSystem( real64 const time,
                                real64 const dt,

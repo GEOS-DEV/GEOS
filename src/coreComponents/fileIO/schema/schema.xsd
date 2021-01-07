@@ -1031,7 +1031,7 @@ the relative residual norm satisfies:
 		<xsd:attribute name="maxNumResolves" type="integer" default="10" />
 		<!--solidSolverName => Name of the solid mechanics solver to use in the hydrofracture solver-->
 		<xsd:attribute name="solidSolverName" type="string" use="required" />
-		<!--surfaceGeneratorName => Name of the fluid mechanics solver to use in the hydrofracture solver-->
+		<!--surfaceGeneratorName => Name of the surface generator solver to use in the hydrofracture solver-->
 		<xsd:attribute name="surfaceGeneratorName" type="string" use="required" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
