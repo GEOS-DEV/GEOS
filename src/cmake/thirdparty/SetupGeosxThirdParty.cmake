@@ -108,7 +108,6 @@ endif()
 ################################
 # HDF5
 ################################
-set(HDF5_DIR ${GEOSX_TPL_DIR}/hdf5)
 if(DEFINED HDF5_DIR)
     message(STATUS "HDF5_DIR = ${HDF5_DIR}")
 
@@ -131,7 +130,6 @@ endif()
 ################################
 # Conduit
 ################################
-set(CONDUIT_DIR ${GEOSX_TPL_DIR}/conduit)
 if(DEFINED CONDUIT_DIR)
     message(STATUS "CONDUIT_DIR = ${CONDUIT_DIR}")
 
@@ -146,7 +144,6 @@ endif()
 ################################
 # SILO
 ################################
-set(SILO_DIR ${GEOSX_TPL_DIR}/silo)
 if(DEFINED SILO_DIR)
     message(STATUS "SILO_DIR = ${SILO_DIR}")
 
@@ -166,7 +163,6 @@ endif()
 ################################
 # PUGIXML
 ################################
-set(PUGIXML_DIR ${GEOSX_TPL_DIR}/pugixml)
 if(DEFINED PUGIXML_DIR)
     message(STATUS "PUGIXML_DIR = ${PUGIXML_DIR}")
 
@@ -182,7 +178,6 @@ endif()
 ################################
 # RAJA
 ################################
-set(RAJA_DIR ${GEOSX_TPL_DIR}/raja)
 if(DEFINED RAJA_DIR)
     message(STATUS "RAJA_DIR = ${RAJA_DIR}")
 
@@ -202,7 +197,6 @@ endif()
 ################################
 # Umpire
 ################################
-set(UMPIRE_DIR ${GEOSX_TPL_DIR}/chai)
 if(DEFINED UMPIRE_DIR)
     message(STATUS "UMPIRE_DIR = ${UMPIRE_DIR}")
 
@@ -218,7 +212,6 @@ endif()
 ################################
 # CHAI
 ################################
-set(CHAI_DIR ${GEOSX_TPL_DIR}/chai)
 if(DEFINED CHAI_DIR)
     message(STATUS "CHAI_DIR = ${CHAI_DIR}")
 
@@ -238,7 +231,6 @@ endif()
 ################################
 # Adiak
 ################################
-set(ADIAK_DIR ${GEOSX_TPL_DIR}/adiak)
 if(DEFINED ADIAK_DIR)
     message(STATUS "ADIAK_DIR = ${ADIAK_DIR}")
 
@@ -264,7 +256,6 @@ endif()
 ################################
 # Caliper
 ################################
-set(CALIPER_DIR ${GEOSX_TPL_DIR}/caliper)
 if(DEFINED CALIPER_DIR)
     message(STATUS "CALIPER_DIR = ${CALIPER_DIR}")
 
@@ -290,7 +281,6 @@ endif()
 ################################
 # MATHPRESSO
 ################################
-set(MATHPRESSO_DIR ${GEOSX_TPL_DIR}/mathpresso)
 if(DEFINED MATHPRESSO_DIR)
     message(STATUS "MATHPRESSO_DIR = ${MATHPRESSO_DIR}")
 
@@ -314,7 +304,6 @@ endif()
 ################################
 # METIS
 ################################
-set(METIS_DIR ${GEOSX_TPL_DIR}/metis)
 if(DEFINED METIS_DIR)
     message(STATUS "METIS_DIR = ${METIS_DIR}")
 
@@ -338,7 +327,6 @@ endif()
 ################################
 # PARMETIS
 ################################
-set(PARMETIS_DIR ${GEOSX_TPL_DIR}/parmetis)
 if(DEFINED PARMETIS_DIR)
     message(STATUS "PARMETIS_DIR = ${PARMETIS_DIR}")
 
@@ -363,7 +351,6 @@ endif()
 ################################
 # SUPERLU_DIST
 ################################
-set(SUPERLU_DIST_DIR ${GEOSX_TPL_DIR}/superlu_dist)
 if(DEFINED SUPERLU_DIST_DIR)
     message(STATUS "SUPERLU_DIST_DIR = ${SUPERLU_DIST_DIR}")
 
@@ -388,7 +375,6 @@ endif()
 ################################
 # SUITESPARSE
 ################################
-set(SUITESPARSE_DIR ${GEOSX_TPL_DIR}/suitesparse)
 if(DEFINED SUITESPARSE_DIR)
     message(STATUS "SUITESPARSE_DIR = ${SUITESPARSE_DIR}")
 
@@ -413,7 +399,6 @@ endif()
 ################################
 # HYPRE
 ################################
-set(HYPRE_DIR ${GEOSX_TPL_DIR}/hypre)
 if(DEFINED HYPRE_DIR)
     message(STATUS "HYPRE_DIR = ${HYPRE_DIR}")
 
@@ -438,7 +423,6 @@ endif()
 ################################
 # TRILINOS
 ################################
-set(TRILINOS_DIR ${GEOSX_TPL_DIR}/trilinos)
 if(DEFINED TRILINOS_DIR)
     message(STATUS "TRILINOS_DIR = ${TRILINOS_DIR}")
   
@@ -491,7 +475,6 @@ endif()
 ################################
 # VTK
 ################################
-set(VTK_DIR ${GEOSX_TPL_DIR}/vtk)
 if(DEFINED VTK_DIR)
     message(STATUS "VTK_DIR = ${VTK_DIR}")
     find_package(VTK REQUIRED
@@ -510,7 +493,6 @@ endif()
 ################################
 # unsrustify
 ################################
-set(UNCRUSTIFY_DIR ${GEOSX_TPL_DIR}/uncrustify)
 if(UNCRUSTIFY_FOUND)
     message(STATUS "UNCRUSTIFY_EXECUTABLE = ${UNCRUSTIFY_EXECUTABLE}")
 

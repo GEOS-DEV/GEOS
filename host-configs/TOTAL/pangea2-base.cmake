@@ -6,7 +6,7 @@
 ########################################
 
 #set( GEOSX_TPL_ROOT_DIR /workrd/GEOS/thirdPartyLibs CACHE PATH "")
-#set( GEOSX_TPL_DIR ${GEOSX_TPL_ROOT_DIR}/2019-11-25/install-${CONFIG_NAME}-release CACHE PATH "")
+set( GEOSX_TPL_DIR /workrd/SCR/GEOSX/install/gcc8/GEOSX_TPL-9f494ee CACHE PATH "")
 
 set( ENABLE_GTEST_DEATH_TESTS ON CACHE BOOL "" FORCE )
 set( ENABLE_UNCRUSTIFY OFF CACHE BOOL "" FORCE )
@@ -33,4 +33,4 @@ set(CHAI_ARGS         ""          CACHE PATH "" FORCE)
 set(ENABLE_OPENMP     "OFF"        CACHE PATH "" FORCE)
 set(RAJA_ENABLE_OPENMP "OFF"        CACHE PATH "" FORCE)
 
-
+include(${CMAKE_CURRENT_LIST_DIR}/../tpls.cmake)
