@@ -451,9 +451,9 @@ private:
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_dPhaseMob_dPres;
   ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > m_dPhaseMob_dCompDens;
 
-  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > m_phaseDens;
-  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > m_dPhaseDens_dPres;
-  ElementRegionManager::ElementViewAccessor< arrayView4d< real64 const > > m_dPhaseDens_dComp;
+  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > m_phaseMassDens;
+  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > m_dPhaseMassDens_dPres;
+  ElementRegionManager::ElementViewAccessor< arrayView4d< real64 const > > m_dPhaseMassDens_dComp;
 
   ElementRegionManager::ElementViewAccessor< arrayView4d< real64 const > > m_phaseCompFrac;
   ElementRegionManager::ElementViewAccessor< arrayView4d< real64 const > > m_dPhaseCompFrac_dPres;

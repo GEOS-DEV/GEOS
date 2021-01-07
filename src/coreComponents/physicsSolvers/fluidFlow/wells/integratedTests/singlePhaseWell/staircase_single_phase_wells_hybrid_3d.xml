@@ -13,13 +13,14 @@
         newtonMaxIter="40"/>
       <LinearSolverParameters
         solverType="direct"
+        directParallel="0"
         logLevel="0"/>
     </SinglePhaseReservoir>
 
     <SinglePhaseHybridFVM
       name="SinglePhaseFlow"
       logLevel="1"
-      discretization="singlePhaseTPFA"
+      discretization="singlePhaseHybridMimetic"
       fluidNames="{ water }"
       solidNames="{ rock }"
       targetRegions="{ Channel }"/>
@@ -129,10 +130,9 @@
 
   <NumericalMethods>
     <FiniteVolume>
-      <TwoPointFluxApproximation
-        name="singlePhaseTPFA"
-        fieldName="pressure"
-        targetRegions="{ Channel }"
+      <HybridMimeticDiscretization
+        name="singlePhaseHybridMimetic"
+        innerProductType="simple"  
         coefficientName="permeability"/>
     </FiniteVolume>
   </NumericalMethods>

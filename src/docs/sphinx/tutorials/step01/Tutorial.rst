@@ -10,7 +10,7 @@ In this tutorial, we use a single-phase flow solver (see :ref:`SinglePhaseFlow`)
 from GEOSX to solve for pressure propagation on a simple 10x10x10 cube mesh
 with an anisotropic permeability.
 A pressure source term will be set in one corner of the cube, and
-a sink term will be set in the opposite corner of the cube.
+a pressure sink term will be set in the opposite corner of the cube.
 
 **Objectives**
 
@@ -64,7 +64,7 @@ A typical GEOSX input file contains the following XML tags:
 
 
 In addition to the data required to solve the problem,
-it is a best practice to start an XML files with an optional header (called a *schema*)
+it is a best practice to start an XML file with an optional header (called a *schema*)
 that specifies the naming conventions used in the XML file.
 
 .. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/integratedTests/singlePhaseFlow/3D_10x10x10_compressible.xml
@@ -123,7 +123,7 @@ Here, we use a Two-Point Flux Approximation (TPFA) finite volume discretization 
 used in finite volume methods.
 
 We have also specified a collection of fluids, rocks, and
-target regions of the mesh on which this solver will be applied (``Region2``).
+target regions of the mesh on which this solver will be applied (``mainRegion``).
 Curly brackets are used in GEOSX inputs to indicate collections of values (sets or lists).
 The curly brackets used here are necessary, even if the collection contains a single value.
 
@@ -174,7 +174,7 @@ If a mesh contains different types of elements (a hybrid mesh),
 we should indicate this here by listing all unique types of elements in curly brackets.
 Keeping things simple, our element collection has only one type of element: a ``C3D8`` type.
 This nomenclature is taken from the finite
-element community. It represents hexahedral element.
+element community. It represents a hexahedral element.
 
 
 Last, we specify the spatial arrangement of the mesh elements.
@@ -221,8 +221,8 @@ Specifying events
 ------------------------
 
 In GEOSX, we call **Events** anything that happens at a set time, or a set frequency (**PeriodicEvents**).
-Events are central element in GEOSX,
-and a dedicated section just for events is necessary to gives them the treatment they deserve.
+Events are a central element in GEOSX,
+and a dedicated section just for events is necessary to give them the treatment they deserve.
 
 
 For now, we focus on three simple events: the time at which we wish the simulation to end (``maxTime``),
@@ -235,8 +235,8 @@ In GEOSX, all times are specified in **seconds**, so here ``maxTime=5000.0`` mea
 
 If we focus on the two periodic events, we see :
 
- #. A periodic solver application: this event is registered here as ``solverApplications`` (user-defined name). With the attribute ``forceDt=20``, it forces the solver to compute results at 20 second time intervals. We know what this event does by looking at its ``target`` attribute: here, from time 0 to ``maxTime`` and with a forced time step of 20 seconds, we instruct GEOSX to call the solver registered as ``SinglePhaseFlow``. Note the hierarchical structure of the target formulation, using '/' to indicate a specific named instance (``SinglePhaseFlow``) of an element (``Solvers``). Also note that if the solver needs to take smaller time steps than 20 seconds (for numerical convergence, for instance) it is allowed to do so. But it will have to compute results for every 20 seconds increments between time zero and ``maxTime`` regardless of possible intermediate time steps required.
- #. An output event: this event is used for reporting purposes and forces GEOSX to write out results at specific frequencies. Here, we need to see results at every 100 second increment. The ``targetExactTimestep=1`` flag is used to instruct GEOSX that this output event must be always be done jointly with a full application of solvers at the output time, even if the solvers were not synchronized with the outputs. In other words, with this flag set to 1, an output event will force an application of solvers, possibly in addition to the periodic events requested directly by solvers.
+ #. A periodic solver application: this event is registered here as ``solverApplications`` (user-defined name). With the attribute ``forceDt=20``, it forces the solver to compute results at 20-second time intervals. We know what this event does by looking at its ``target`` attribute: here, from time 0 to ``maxTime`` and with a forced time step of 20 seconds, we instruct GEOSX to call the solver registered as ``SinglePhaseFlow``. Note the hierarchical structure of the target formulation, using '/' to indicate a specific named instance (``SinglePhaseFlow``) of an element (``Solvers``). Also note that if the solver needs to take smaller time steps than 20 seconds (for numerical convergence, for instance) it is allowed to do so. But it will have to compute results for every 20-second increments between time zero and ``maxTime`` regardless of possible intermediate time steps required.
+ #. An output event: this event is used for reporting purposes and forces GEOSX to write out results at specific frequencies. Here, we need to see results at every 100-second increment. The ``targetExactTimestep=1`` flag is used to instruct GEOSX that this output event must be always be done jointly with a full application of solvers at the output time, even if the solvers were not synchronized with the outputs. In other words, with this flag set to 1, an output event will force an application of solvers, possibly in addition to the periodic events requested directly by solvers.
 
 .. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/integratedTests/singlePhaseFlow/3D_10x10x10_compressible.xml
   :language: xml
@@ -262,12 +262,11 @@ To use this scheme, we need to supply more details in the **NumericalMethods** e
   :end-before: <!-- SPHINX_TUT_INT_HEX_NUM_METHODS_END -->
 
 Briefly, the ``fieldName`` attribute specifies which property will be used for flux computations,
-the``boundaryFieldName`` attribute specifies that for Dirichlet boundary conditions,
-the pressure at the element face value is used.
+and also specifies that for Dirichlet boundary conditions, the pressure value at the element face is used.
 Last, the ``coefficientName`` attribute is used for the stencil transmissibility computations.
 
-Note that in GEOSX, we are distinguish solvers from numerical methods,
-and their parameterizations are independent. We can thus solve have
+Note that in GEOSX, there is a difference between physics solvers and numerical methods,
+hence their parameterizations are independent. We can thus solve have
 multiple solvers using the same numerical scheme, but with different tolerances, for instance.
 
 
@@ -280,7 +279,7 @@ Defining regions in the mesh
 
 Regions are important in GEOSX to specify the material properties of elements.
 The **ElementRegions** element is used here to list all the regions used in the simulation.
-Here we use only a single region to represent the entire domain (named ``Region2``),
+Here we use only a single region to represent the entire domain (named ``mainRegion``),
 with a collection of elements containing only the ``cb1`` blocks defined in the mesh section.
 We must also specify the material contained in that region (here, two materials are used: ``water`` and ``rock``; their properties will be defined next).
 
@@ -502,6 +501,9 @@ For instance, here are reported diagonal pressure profile from sink to source bl
 .. image:: IntHexMovie.gif
    :width: 500px
 
+
+.. note::
+  The data extraction to plot this pressure profile can be done using the *Time History* feature as shown in :ref:`TutorialDeadOilBottomLayersSPE10` 
 
 ------------------------------------
 To go further

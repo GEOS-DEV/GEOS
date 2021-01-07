@@ -157,6 +157,13 @@ public:
   void UpdatePhaseVolumeFraction( WellElementSubRegion & subRegion, localIndex const targetIndex ) const;
 
   /**
+   * @brief Recompute total mass densities from mass density and phase volume fractions
+   * @param subRegion the well subregion containing all the primary and dependent fields
+   */
+  void UpdateTotalMassDensity( WellElementSubRegion & subRegion, localIndex const targetIndex ) const;
+
+
+  /**
    * @brief Recompute all dependent quantities from primary variables (including constitutive models)
    * @param subRegion the well subregion containing all the primary and dependent fields
    */
@@ -255,6 +262,11 @@ public:
     static constexpr auto dGlobalCompFraction_dGlobalCompDensityString =
       CompositionalMultiphaseFlow::viewKeyStruct::dGlobalCompFraction_dGlobalCompDensityString;
 
+    // total mass densities
+    static constexpr auto totalMassDensityString = "totalMassDensity";
+    static constexpr auto dTotalMassDensity_dPressureString = "dTotalMassDensity_dPressure";
+    static constexpr auto dTotalMassDensity_dGlobalCompDensityString = "dTotalMassDensity_dComp";
+
     // perforation rates and derivatives
     static constexpr auto compPerforationRateString = "compPerforationRate";
     static constexpr auto dCompPerforationRate_dPresString = "dCompPerforationRate_dPres";
@@ -341,10 +353,10 @@ private:
 
   /// views into reservoir primary variable fields
 
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_resPressure;
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_deltaResPressure;
+  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_resPres;
+  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_deltaResPres;
 
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_resGlobalCompDensity;
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_resCompDens;
 
   /// views into other reservoir variable fields
 
@@ -361,6 +373,7 @@ private:
   /// views into reservoir material fields
 
   ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > m_resPhaseDens;
+  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > m_resPhaseMassDens;
 
   ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > m_resPhaseVisc;
   ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > m_dResPhaseVisc_dPres;

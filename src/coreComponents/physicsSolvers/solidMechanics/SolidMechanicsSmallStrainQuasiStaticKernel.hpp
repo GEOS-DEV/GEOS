@@ -18,7 +18,6 @@
 
 #ifndef GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_SOLIDMECHANICSSMALLSTRAINQUASISTATIC_HPP_
 #define GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_SOLIDMECHANICSSMALLSTRAINQUASISTATIC_HPP_
-
 #include "finiteElement/kernelInterface/ImplicitKernelBase.hpp"
 
 namespace geosx
@@ -113,7 +112,7 @@ public:
     m_disp( nodeManager.totalDisplacement()),
     m_uhat( nodeManager.incrementalDisplacement()),
     m_gravityVector{ inputGravityVector[0], inputGravityVector[1], inputGravityVector[2] },
-    m_density( inputConstitutiveType->getDensity())
+    m_density( inputConstitutiveType->getDensity() )
   {}
 
 

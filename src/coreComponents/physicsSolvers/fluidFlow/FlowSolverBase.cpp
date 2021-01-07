@@ -87,51 +87,36 @@ void FlowSolverBase::RegisterDataOnMesh( Group * const MeshBodies )
     forTargetSubRegions( mesh, [&]( localIndex const,
                                     ElementSubRegionBase & subRegion )
     {
-      subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::referencePorosityString )->setPlotLevel( PlotLevel::LEVEL_0 );
-      subRegion.registerWrapper< array1d< R1Tensor > >( viewKeyStruct::permeabilityString )->setPlotLevel( PlotLevel::LEVEL_0 );
-      subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::gravityCoefString )->setApplyDefaultValue( 0.0 );
+      subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::referencePorosityString )->
+        setPlotLevel( PlotLevel::LEVEL_0 );
+      subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::permeabilityString )->
+        setPlotLevel( PlotLevel::LEVEL_0 )->
+        reference().resizeDimension< 1 >( 3 );
+      subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::gravityCoefString )->
+        setApplyDefaultValue( 0.0 );
     } );
 
     ElementRegionManager * const elemManager = mesh.getElemManager();
 
-    elemManager->forElementSubRegionsComplete< FaceElementSubRegion >( [&]( localIndex const,
-                                                                            localIndex const,
-                                                                            ElementRegionBase & region,
-                                                                            FaceElementSubRegion & subRegion )
+    elemManager->forElementSubRegionsComplete< SurfaceElementSubRegion >( [&]( localIndex const,
+                                                                               localIndex const,
+                                                                               ElementRegionBase & region,
+                                                                               SurfaceElementSubRegion & subRegion )
     {
-      FaceElementRegion & faceRegion = dynamicCast< FaceElementRegion & >( region );
+      SurfaceElementRegion & faceRegion = dynamicCast< SurfaceElementRegion & >( region );
 
       subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::referencePorosityString )->
         setApplyDefaultValue( 1.0 );
 
-      subRegion.registerWrapper< array1d< R1Tensor > >( viewKeyStruct::permeabilityString )->setPlotLevel( PlotLevel::LEVEL_0 );
-      subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::gravityCoefString )->setApplyDefaultValue( 0.0 );
+      subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::permeabilityString )->
+        setPlotLevel( PlotLevel::LEVEL_0 )->
+        reference().resizeDimension< 1 >( 3 );
+      subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::gravityCoefString )->
+        setApplyDefaultValue( 0.0 );
       subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::aperture0String )->
         setDefaultValue( faceRegion.getDefaultAperture() );
       subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::effectiveApertureString )->
-        setApplyDefaultValue( subRegion.getWrapper< array1d< real64 > >( FaceElementSubRegion::
-                                                                           viewKeyStruct::
-                                                                           elementApertureString )->getDefaultValue() )->
-        setPlotLevel( PlotLevel::LEVEL_0 );
-    } );
-
-    //TODO: I think these 2 subregions should be treated in the same way. Need to unify the region
-    elemManager->forElementSubRegionsComplete< EmbeddedSurfaceSubRegion >( [&]( localIndex const,
-                                                                                localIndex const,
-                                                                                ElementRegionBase & region,
-                                                                                EmbeddedSurfaceSubRegion & subRegion )
-    {
-      EmbeddedSurfaceRegion & embSurfRegion = dynamicCast< EmbeddedSurfaceRegion & >( region );
-
-      subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::referencePorosityString )->
-        setApplyDefaultValue( 1.0 );
-
-      subRegion.registerWrapper< array1d< R1Tensor > >( viewKeyStruct::permeabilityString )->setPlotLevel( PlotLevel::LEVEL_0 );
-      subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::gravityCoefString )->setApplyDefaultValue( 0.0 );
-      subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::aperture0String )->
-        setDefaultValue( embSurfRegion.getDefaultAperture() );
-      subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::effectiveApertureString )->
-        setApplyDefaultValue( subRegion.getWrapper< array1d< real64 > >( EmbeddedSurfaceSubRegion::
+        setApplyDefaultValue( subRegion.getWrapper< array1d< real64 > >( SurfaceElementSubRegion::
                                                                            viewKeyStruct::
                                                                            elementApertureString )->getDefaultValue() )->
         setPlotLevel( PlotLevel::LEVEL_0 );
@@ -167,18 +152,21 @@ void FlowSolverBase::InitializePreSubGroups( Group * const rootGroup )
 
   FiniteVolumeManager & fvManager = numericalMethodManager.getFiniteVolumeManager();
 
-  FluxApproximationBase & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
-  array1d< string > & stencilTargetRegions = fluxApprox.targetRegions();
-  std::set< string > stencilTargetRegionsSet( stencilTargetRegions.begin(), stencilTargetRegions.end() );
-  for( auto const & targetRegion : targetRegionNames() )
+  if( fvManager.GetGroup< FluxApproximationBase >( m_discretizationName ) != nullptr )
   {
-    stencilTargetRegionsSet.insert( targetRegion );
-  }
+    FluxApproximationBase & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
+    array1d< string > & stencilTargetRegions = fluxApprox.targetRegions();
+    std::set< string > stencilTargetRegionsSet( stencilTargetRegions.begin(), stencilTargetRegions.end() );
+    for( auto const & targetRegion : targetRegionNames() )
+    {
+      stencilTargetRegionsSet.insert( targetRegion );
+    }
 
-  stencilTargetRegions.clear();
-  for( auto const & targetRegion : stencilTargetRegionsSet )
-  {
-    stencilTargetRegions.emplace_back( targetRegion );
+    stencilTargetRegions.clear();
+    for( auto const & targetRegion : stencilTargetRegionsSet )
+    {
+      stencilTargetRegions.emplace_back( targetRegion );
+    }
   }
 }
 
@@ -198,7 +186,7 @@ void FlowSolverBase::InitializePostInitialConditions_PreSubGroups( Group * const
 void FlowSolverBase::PrecomputeData( MeshLevel & mesh )
 {
   FaceManager & faceManager = *mesh.getFaceManager();
-  R1Tensor const gravVector = gravityVector();
+  real64 const gravVector[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( gravityVector() );
 
   forTargetSubRegions( mesh, [&]( localIndex const,
                                   ElementSubRegionBase & subRegion )
@@ -210,7 +198,7 @@ void FlowSolverBase::PrecomputeData( MeshLevel & mesh )
 
     forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const ei )
     {
-      gravityCoef[ ei ] = elemCenter( ei, 0 ) * gravVector[ 0 ] + elemCenter( ei, 1 ) * gravVector[ 1 ] + elemCenter( ei, 2 ) * gravVector[ 2 ];
+      gravityCoef[ ei ] = LvArray::tensorOps::AiBi< 3 >( elemCenter[ ei ], gravVector );
     } );
   } );
 
@@ -222,10 +210,7 @@ void FlowSolverBase::PrecomputeData( MeshLevel & mesh )
 
     forAll< parallelHostPolicy >( faceManager.size(), [=] ( localIndex const kf )
     {
-      // TODO change to LvArray::tensorOps::AiBi once gravVector is a c-array.
-      gravityCoef[ kf ] = faceCenter[ kf ][ 0 ] * gravVector[ 0 ];
-      gravityCoef[ kf ] += faceCenter[ kf ][ 1 ] * gravVector[ 1 ];
-      gravityCoef[ kf ] += faceCenter[ kf ][ 2 ] * gravVector[ 2 ];
+      gravityCoef[ kf ] = LvArray::tensorOps::AiBi< 3 >( faceCenter[ kf ], gravVector );
     } );
   }
 }
@@ -288,6 +273,13 @@ std::vector< string > FlowSolverBase::getConstitutiveRelations( string const & r
   std::vector< string > rval{ m_solidModelNames[regionIndex], m_fluidModelNames[regionIndex] };
 
   return rval;
+}
+
+void FlowSolverBase::setUpDflux_dApertureMatrix( DomainPartition & GEOSX_UNUSED_PARAM( domain ),
+                                                 DofManager const & GEOSX_UNUSED_PARAM( dofManager ),
+                                                 CRSMatrix< real64, globalIndex > & GEOSX_UNUSED_PARAM( localMatrix ) )
+{
+  GEOSX_ERROR( "FlowSolverBase::setUpDfluxDapertureMatrix. Should be overridden." );
 }
 
 

@@ -200,7 +200,13 @@ public:
                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
                      arrayView1d< real64 > const & localRhs ) override;
 
+  virtual void setUpDflux_dApertureMatrix( DomainPartition & domain,
+                                           DofManager const & dofManager,
+                                           CRSMatrix< real64, globalIndex > & localMatrix ) override final;
+
   /**@}*/
+
+  virtual void InitializePreSubGroups( dataRepository::Group * const rootGroup ) override;
 
   struct viewKeyStruct : SinglePhaseBase::viewKeyStruct
   {} viewKeysSinglePhaseFVM;
