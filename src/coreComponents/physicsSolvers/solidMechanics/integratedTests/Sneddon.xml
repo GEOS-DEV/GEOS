@@ -5,7 +5,7 @@
     gravityVector="0.0, 0.0, 0.0">
     <SolidMechanicsEmbeddedFractures
       name="mechSolve"
-      targetRegions="{ Region1, Fracture }"
+      targetRegions="{ Domain, Fracture }"
       fractureRegionName="Fracture"
       initialDt="10"
       solidSolverName="matrixSolver"
@@ -26,13 +26,13 @@
       timeIntegrationOption="QuasiStatic"
       logLevel="1"
       discretization="FE1"
-      targetRegions="{ Region1 }"
+      targetRegions="{ Domain }"
       solidMaterialNames="{ rock }"/>
 
     <EmbeddedSurfaceGenerator
       name="SurfaceGenerator"
       solidMaterialNames="{ rock }"
-      targetRegions="{ Region1, Fracture }"
+      targetRegions="{ Domain, Fracture }"
       fractureRegion="Fracture"
       logLevel="1"/>
   </Solvers>
@@ -124,7 +124,7 @@
 
   <ElementRegions>
     <CellElementRegion
-      name="Region1"
+      name="Domain"
       cellBlocks="{ cb1 }"
       materialList="{ rock }"/>
 

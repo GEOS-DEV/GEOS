@@ -11,7 +11,7 @@
       fluidSolverName = "flowSolver"
       solidSolverName = "matrixMechSolver"
       couplingTypeOption="FIM"
-      logLevel="3">
+      logLevel="1">
       <NonlinearSolverParameters
         newtonMaxIter="5"
         maxTimeStepCuts="1"/>
@@ -59,43 +59,13 @@
       xCoords="{ 0, 3 }"
       yCoords="{ 0, 3 }"
       zCoords="{ 0, 1 }"
-      nx="{ 3 }"
-      ny="{ 3 }"
+      nx="{ 11 }"
+      ny="{ 11 }"
       nz="{ 1 }"
       cellBlockNames="{ cb1 }"/>
   </Mesh>
 
   <Geometry>
-    <Box
-      name="xneg"
-      xMin="-0.01, -0.01, -0.01"
-      xMax="0.01, 3.01, 3.01"/>
-
-    <Box
-      name="xpos"
-      xMin=" 2.99, -0.01, -0.01"
-      xMax="3.01, 3.01, 3.01"/>
-
-    <Box
-      name="yneg"
-      xMin="-0.01, -0.01, -0.01"
-      xMax="3.01, 0.01, 3.01"/>
-
-    <Box
-      name="ypos"
-      xMin="-0.01, 2.99, -0.01"
-      xMax="3.01, 3.01, 3.01"/>
-
-    <Box
-      name="zneg"
-      xMin="-0.01, -0.01, -0.01"
-      xMax="3.01, 3.01, 0.01"/>
-
-    <Box
-      name="zpos"
-      xMin="-0.01, -0.01, 2.99"
-      xMax="3.01, 3.01, 3.01"/>
-
     <BoundedPlane
       name="FracturePlane"
       normal="1, 0, 0"

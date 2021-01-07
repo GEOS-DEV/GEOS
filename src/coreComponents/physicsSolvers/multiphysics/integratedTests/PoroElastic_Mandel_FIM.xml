@@ -323,7 +323,7 @@
   </Functions>
 
   <Outputs>
-    <VTK
+    <Silo
       name="siloOutput"/>
 
     <Restart
