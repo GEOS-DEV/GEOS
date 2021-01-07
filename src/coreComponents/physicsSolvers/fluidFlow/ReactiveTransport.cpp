@@ -745,7 +745,14 @@ ReactiveTransport::CalculateResidualNorm( DomainPartition const & GEOSX_UNUSED_P
 
   //  need to comput global maxDSol for parallel run
 
-  return m_maxDSol;
+  real64 globalMaxDSol;
+  MpiWrapper::allReduce( &m_maxDSol,
+                         &globalMaxDSol,
+                         1,
+                         MPI_MAX,
+                         MPI_COMM_GEOSX );
+  
+  return globalMaxDSol;
 
 }
 
@@ -801,36 +808,13 @@ void ReactiveTransport::ApplySystemSolution( DofManager const & dofManager,
     UpdateState( &subRegion, targetRegionIndex );
   } );
 
+  m_maxDSol = -1e10;  
 
-  forTargetSubRegionsComplete( mesh,
-                               [&]
-                                 ( localIndex const,
-                                 localIndex const,
-                                 localIndex const,
-                                 ElementRegionBase & GEOSX_UNUSED_PARAM( region ),
-                                 ElementSubRegionBase & subRegion )
-  {
-
-    localIndex num = 0.0;
-
-    m_maxDSol = -1e10;
-
-    for( localIndex ie = 0; ie < subRegion.size(); ie++ )
-    {
-
-      for( localIndex ic = 0; ic < m_numComponents; ++ic )
-      {
-
-        if( fabs( localSolution[num] ) > m_maxDSol )
-          m_maxDSol = fabs( localSolution[num] );
-
-        num++;
-
-      }
-
-    }
-
-  } );
+  for( localIndex i = 0; i < localSolution.size(); ++i)
+  {  
+    if( fabs( localSolution[i] ) > m_maxDSol )
+      m_maxDSol = fabs( localSolution[i] );
+  }
 
 }
 

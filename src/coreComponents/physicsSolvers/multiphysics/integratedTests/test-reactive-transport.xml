@@ -114,7 +114,7 @@
 
     <PeriodicEvent name="outputs"
                    timeFrequency="1e3"
-                   targetExactTimestep="1e3"
+                   targetExactTimestep="1000"
                    target="/Outputs/siloOutput" />
 
   </Events>
@@ -158,7 +158,7 @@
                                useActCoef="0"
                                activityCoefModel="BDot"/>
 
-    <!-- Note that default useActCoef is 1  -->    
+    <!-- Note that default useActCoef is 1 and using useActCoef=0 here is only for test purpose  -->    
 
   </Constitutive>
 
