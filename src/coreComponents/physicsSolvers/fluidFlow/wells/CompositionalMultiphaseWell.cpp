@@ -492,7 +492,7 @@ void CompositionalMultiphaseWell::UpdateBHPForConstraint( WellElementSubRegion &
                               &dCurrentBHP_dPres,
                               dCurrentBHP_dCompDens,
                               &iwelemRef,
-                              &refGravCoef] GEOSX_HOST_DEVICE ( localIndex const )
+                              &refGravCoef] ( localIndex const )
   {
     real64 const diffGravCoef = refGravCoef - wellElemGravCoef[iwelemRef];
     currentBHP = pres[iwelemRef] + dPres[iwelemRef] + totalMassDens[iwelemRef] * diffGravCoef;
@@ -614,7 +614,7 @@ void CompositionalMultiphaseWell::UpdateVolRatesForConstraint( WellElementSubReg
                                 dCurrentPhaseVolRate_dPres,
                                 dCurrentPhaseVolRate_dCompDens,
                                 dCurrentPhaseVolRate_dRate,
-                                &iwelemRef] GEOSX_HOST_DEVICE ( localIndex const )
+                                &iwelemRef] ( localIndex const )
     {
       //    We need to evaluate the density as follows:
       //      - Surface conditions: using the surface pressure provided by the user

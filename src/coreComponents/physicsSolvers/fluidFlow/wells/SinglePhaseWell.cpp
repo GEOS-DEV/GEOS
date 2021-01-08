@@ -166,7 +166,7 @@ void SinglePhaseWell::UpdateBHPForConstraint( WellElementSubRegion & subRegion, 
                               &currentBHP,
                               &dCurrentBHP_dPres,
                               &iwelemRef,
-                              &refGravCoef] GEOSX_HOST_DEVICE ( localIndex const )
+                              &refGravCoef] ( localIndex const )
   {
     currentBHP = pres[iwelemRef] + dPres[iwelemRef] + dens[iwelemRef][0] * ( refGravCoef - wellElemGravCoef[iwelemRef] );
     dCurrentBHP_dPres = 1.0 + dDens_dPres[iwelemRef][0] * ( refGravCoef - wellElemGravCoef[iwelemRef] );
@@ -232,7 +232,7 @@ void SinglePhaseWell::UpdateVolRateForConstraint( WellElementSubRegion & subRegi
                                 &currentVolRate,
                                 &dCurrentVolRate_dPres,
                                 &dCurrentVolRate_dRate,
-                                &iwelemRef] GEOSX_HOST_DEVICE ( localIndex const )
+                                &iwelemRef] ( localIndex const )
     {
       //    We need to evaluate the density as follows:
       //      - Surface conditions: using the surface pressure provided by the user
