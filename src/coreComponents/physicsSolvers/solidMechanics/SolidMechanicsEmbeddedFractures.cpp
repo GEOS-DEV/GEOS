@@ -319,58 +319,58 @@ void SolidMechanicsEmbeddedFractures::AddCouplingNumNonzeros( DomainPartition & 
 
   globalIndex const rankOffset = dofManager.rankOffset();
 
-  elemManager.forElementSubRegions< EmbeddedSurfaceSubRegion >( [&]( EmbeddedSurfaceSubRegion const & embeddedSurfaceSubRegion )
+  SurfaceElementRegion const & fractureRegion =
+      *(elemManager.GetRegion< SurfaceElementRegion >( getFractureRegionName() ) );
+
+  EmbeddedSurfaceSubRegion const & embeddedSurfaceSubRegion =
+      *(fractureRegion.GetSubRegion< EmbeddedSurfaceSubRegion >( 0 ));
+
+  arrayView1d< globalIndex const > const &
+      jumpDofNumber = embeddedSurfaceSubRegion.getReference< array1d< globalIndex > >( jumpDofKey );
+
+  elemManager.forElementSubRegions< CellElementSubRegion > ( [&]( CellElementSubRegion const & cellElementSubRegion )
   {
-    localIndex const numEmbeddedElems = embeddedSurfaceSubRegion.size();
+    SortedArrayView< localIndex const > const fracturedElements = cellElementSubRegion.fracturedElementsList();
 
-    FixedToManyElementRelation const & embeddedSurfacesToCells = embeddedSurfaceSubRegion.getToCellRelation();
+    ArrayOfArraysView< localIndex const > const cellsToEmbeddedSurfaces = cellElementSubRegion.embeddedSurfacesList().toViewConst();
 
-    arrayView1d< globalIndex const > const &
-    jumpDofNumber = embeddedSurfaceSubRegion.getReference< array1d< globalIndex > >( jumpDofKey );
-    arrayView1d< integer const > const & ghostRank = embeddedSurfaceSubRegion.ghostRank();
+    localIndex const numDispDof = 3*cellElementSubRegion.numNodesPerElement();
 
-    for( localIndex k=0; k<numEmbeddedElems; ++k )
+    arrayView1d< integer const > const & ghostRank = cellElementSubRegion.ghostRank();
+
+    for ( localIndex ei=0; ei<fracturedElements.size(); ++ei )
     {
-      // Get rock matrix element subregion
-      CellElementSubRegion const * const subRegion =
-        Group::group_cast< CellElementSubRegion const * const >
-          ( elemManager.GetRegion( embeddedSurfacesToCells.m_toElementRegion[k][0] )->
-            GetSubRegion( embeddedSurfacesToCells.m_toElementSubRegion[k][0] ));
-
-      localIndex cellElementIndex = embeddedSurfacesToCells.m_toElementIndex[k][0];
-
-      if( ghostRank[k] < 0 )
+      localIndex const cellIndex = fracturedElements[ei];
+      if ( ghostRank[cellIndex] )
       {
+        localIndex k = cellsToEmbeddedSurfaces[cellIndex][0];
         localIndex const localRow = LvArray::integerConversion< localIndex >( jumpDofNumber[k] - rankOffset );
-        GEOSX_ASSERT_GE( localRow, 0 );
-        GEOSX_ASSERT_GE( rowLengths.size(), localRow + embeddedSurfaceSubRegion.numOfJumpEnrichments()  );
-
-        for( localIndex i=0; i<embeddedSurfaceSubRegion.numOfJumpEnrichments(); ++i )
+        for( localIndex i=0; i<3; ++i )
         {
-          rowLengths[localRow + i] += 3*subRegion->numNodesPerElement();
+          rowLengths[localRow + i] += numDispDof;
         }
+      }
 
-        for( localIndex a=0; a<subRegion->numNodesPerElement(); ++a )
+      for( localIndex a=0; a<cellElementSubRegion.numNodesPerElement(); ++a )
+      {
+        const localIndex & node = cellElementSubRegion.nodeList( cellIndex, a );
+        localIndex const localDispRow = LvArray::integerConversion< localIndex >( dispDofNumber[node] - rankOffset );
+        if ( localDispRow < 0 || localDispRow >= rowLengths.size() ) continue;
+        for( int d=0; d<3; ++d )
         {
-          const localIndex & node = subRegion->nodeList( cellElementIndex, a );
-          localIndex const localDispRow = LvArray::integerConversion< localIndex >( dispDofNumber[node] - rankOffset );
-          GEOSX_ASSERT_GE( localDispRow, 0 );
-          GEOSX_ASSERT_GE( rowLengths.size(), localDispRow + 3*subRegion->numNodesPerElement() );
-
-          for( int d=0; d<3; ++d )
-          {
-            rowLengths[localDispRow + d] += embeddedSurfaceSubRegion.numOfJumpEnrichments();
-          }
+          rowLengths[localDispRow + d] += 3;
         }
       }
     }
-  } );
+
+  });
 }
 
 void SolidMechanicsEmbeddedFractures::AddCouplingSparsityPattern( DomainPartition const & domain,
                                                                   DofManager const & dofManager,
                                                                   SparsityPatternView< globalIndex > const & pattern ) const
 {
+
   MeshLevel const & mesh                   = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
   NodeManager const & nodeManager          = *mesh.getNodeManager();
   ElementRegionManager const & elemManager = *mesh.getElemManager();
@@ -383,42 +383,45 @@ void SolidMechanicsEmbeddedFractures::AddCouplingSparsityPattern( DomainPartitio
 
   globalIndex const rankOffset = dofManager.rankOffset();
 
-  static constexpr int maxNumDispDof = 3 * 8; // this is hard-coded for now.
+  SurfaceElementRegion const & fractureRegion =
+      *(elemManager.GetRegion< SurfaceElementRegion >( getFractureRegionName() ) );
 
-  elemManager.forElementSubRegions< EmbeddedSurfaceSubRegion >( [&]( EmbeddedSurfaceSubRegion const & embeddedSurfaceSubRegion )
+  EmbeddedSurfaceSubRegion const & embeddedSurfaceSubRegion =
+      *(fractureRegion.GetSubRegion< EmbeddedSurfaceSubRegion >( 0 ));
+
+  arrayView1d< globalIndex const > const &
+  jumpDofNumber = embeddedSurfaceSubRegion.getReference< array1d< globalIndex > >( jumpDofKey );
+
+  static constexpr int maxNumDispDof = 3 * 8;
+
+  elemManager.forElementSubRegions< CellElementSubRegion > ( [&]( CellElementSubRegion const & cellElementSubRegion )
   {
+    SortedArrayView< localIndex const > const fracturedElements = cellElementSubRegion.fracturedElementsList();
 
-    FixedToManyElementRelation const & embeddedSurfacesToCells = embeddedSurfaceSubRegion.getToCellRelation();
+    ArrayOfArraysView< localIndex const > const cellsToEmbeddedSurfaces = cellElementSubRegion.embeddedSurfacesList().toViewConst();
 
-    arrayView1d< globalIndex const > const &
-    jumpDofNumber = embeddedSurfaceSubRegion.getReference< array1d< globalIndex > >( jumpDofKey );
+    localIndex const numDispDof = 3*cellElementSubRegion.numNodesPerElement();
 
-    // Insert the entries corresponding to jump-disp coupling
-    // This will fill K_wu, and K_uw
-    for( localIndex k=0; k<embeddedSurfaceSubRegion.size(); ++k )
+    for ( localIndex ei=0; ei<fracturedElements.size(); ++ei )
     {
-      CellBlock const * const elemSubRegion = Group::group_cast< CellBlock const * const >( elemManager.GetRegion( embeddedSurfacesToCells.m_toElementRegion[k][0] )->
-                                                                                              GetSubRegion( embeddedSurfacesToCells.m_toElementSubRegion[k][0] ));
-
-
-      localIndex cellElementIndex = embeddedSurfacesToCells.m_toElementIndex[k][0];
+      localIndex const cellIndex = fracturedElements[ei];
+      localIndex k = cellsToEmbeddedSurfaces[cellIndex][0];
 
       // working arrays
-      stackArray1d< globalIndex, maxNumDispDof > eqnRowIndicesDisp ( 3*elemSubRegion->numNodesPerElement() );
-      stackArray1d< globalIndex, 3 > eqnRowIndicesJump( embeddedSurfaceSubRegion.numOfJumpEnrichments() );
-      stackArray1d< globalIndex, maxNumDispDof > dofColIndicesDisp ( 3*elemSubRegion->numNodesPerElement() );
-      stackArray1d< globalIndex, 3 > dofColIndicesJump( embeddedSurfaceSubRegion.numOfJumpEnrichments() );
+      stackArray1d< globalIndex, maxNumDispDof > eqnRowIndicesDisp ( numDispDof );
+      stackArray1d< globalIndex, 3 > eqnRowIndicesJump( 3 );
+      stackArray1d< globalIndex, maxNumDispDof > dofColIndicesDisp ( numDispDof );
+      stackArray1d< globalIndex, 3 > dofColIndicesJump( 3 );
 
-
-      for( localIndex idof = 0; idof < embeddedSurfaceSubRegion.numOfJumpEnrichments(); ++idof )
+      for( localIndex idof = 0; idof < 3; ++idof )
       {
         eqnRowIndicesJump[idof] = jumpDofNumber[k] + idof - rankOffset;
         dofColIndicesJump[idof] = jumpDofNumber[k] + idof;
-      }
+      };
 
-      for( localIndex a=0; a<elemSubRegion->numNodesPerElement(); ++a )
+      for( localIndex a=0; a<cellElementSubRegion.numNodesPerElement(); ++a )
       {
-        const localIndex & node = elemSubRegion->nodeList( cellElementIndex, a );
+        const localIndex & node = cellElementSubRegion.nodeList( cellIndex, a );
         for( localIndex idof = 0; idof < 3; ++idof )
         {
           eqnRowIndicesDisp[3*a + idof] = dispDofNumber[node] + idof - rankOffset;
@@ -437,7 +440,6 @@ void SolidMechanicsEmbeddedFractures::AddCouplingSparsityPattern( DomainPartitio
         }
       }
 
-
       for( localIndex i = 0; i < eqnRowIndicesJump.size(); ++i )
       {
         if( eqnRowIndicesJump[i] >= 0 && eqnRowIndicesJump[i] < pattern.numRows() )
@@ -450,7 +452,7 @@ void SolidMechanicsEmbeddedFractures::AddCouplingSparsityPattern( DomainPartitio
       }
     }
 
-  } );
+  });
 }
 
 void SolidMechanicsEmbeddedFractures::ApplyBoundaryConditions( real64 const time,

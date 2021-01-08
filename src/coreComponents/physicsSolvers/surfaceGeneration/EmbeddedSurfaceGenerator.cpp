@@ -115,6 +115,8 @@ void EmbeddedSurfaceGenerator::InitializePostSubGroups( Group * const problemMan
     {
       arrayView2d< localIndex const, cells::NODE_MAP_USD > const cellToNodes = subRegion.nodeList();
       FixedOneToManyRelation const & cellToEdges = subRegion.edgeList();
+
+      arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
       for( localIndex cellIndex = 0; cellIndex < subRegion.size(); cellIndex++ )
       {
         isPositive = 0;
@@ -148,7 +150,10 @@ void EmbeddedSurfaceGenerator::InitializePostSubGroups( Group * const problemMan
           {
             GEOSX_LOG_LEVEL_RANK_0( 2, "Element " << cellIndex << " is fractured" );
             // Add the information to the CellElementSubRegion
-            subRegion.addFracturedElement( cellIndex, embeddedSurfaceSubRegion->size()-1 );
+            if (ghostRank[cellIndex] < 0)
+            {
+              subRegion.addFracturedElement( cellIndex, embeddedSurfaceSubRegion->size()-1 );
+            }
           }
         }
       } // end loop over cells

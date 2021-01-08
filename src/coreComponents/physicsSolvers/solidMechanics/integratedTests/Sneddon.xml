@@ -51,36 +51,6 @@
   </Mesh>
 
   <Geometry>
-    <Box
-      name="xneg"
-      xMin="-0.01, -0.01, -0.01"
-      xMax="0.01, 3.01, 3.01"/>
-
-    <Box
-      name="xpos"
-      xMin=" 2.99, -0.01, -0.01"
-      xMax="3.01, 3.01, 3.01"/>
-
-    <Box
-      name="yneg"
-      xMin="-0.01, -0.01, -0.01"
-      xMax="3.01, 0.01, 3.01"/>
-
-    <Box
-      name="ypos"
-      xMin="-0.01, 2.99, -0.01"
-      xMax="3.01, 3.01, 3.01"/>
-
-    <Box
-      name="zneg"
-      xMin="-0.01, -0.01, -0.01"
-      xMax="3.01, 3.01, 0.01"/>
-
-    <Box
-      name="zpos"
-      xMin="-0.01, -0.01, 2.99"
-      xMax="3.01, 3.01, 3.01"/>
-
     <BoundedPlane
       name="FracturePlane"
       normal="0, 1, 0"
@@ -202,7 +172,7 @@
     <VTK
       name="vtkOutput"
       plotFileRoot="Sneddon"
-      plotLevel="2"
+      plotLevel="3"
       writeBinaryData="0"/>
 
     <Restart
