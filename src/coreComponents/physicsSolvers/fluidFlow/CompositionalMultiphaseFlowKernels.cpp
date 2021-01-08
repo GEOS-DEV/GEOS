@@ -739,7 +739,7 @@ GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void
 FluxKernel::
-  Compute( localIndex const numPhases,
+Compute( localIndex const numPhases,
            localIndex const stencilSize,
            arraySlice1d< localIndex const > const seri,
            arraySlice1d< localIndex const > const sesri,
@@ -769,6 +769,10 @@ FluxKernel::
 {
   localIndex constexpr NDOF = NC + 1;
   localIndex const NP = numPhases;
+
+  bool const is_ppu = false;
+  bool const is_pu = true;
+  bool const is_hu = false;
 
   real64 compFlux[NC]{};
   real64 dCompFlux_dP[MAX_STENCIL][NC]{};
@@ -1031,15 +1035,114 @@ FluxKernel::
   {
 
       real64 presGrad {};
-      for( localIndex i = 0; i < stencilSize; ++i )
-      {
-        localIndex const er = seri[i];
-        localIndex const esr = sesri[i];
-        localIndex const ei = sei[i];
-        real64 const weight = stencilWeights[i];
-        presGrad += weight * ( pres[er][esr][ei] + dPres[er][esr][ei] );
 
+      if(is_ppu)
+      {
+        for( localIndex i = 0; i < stencilSize; ++i )
+        {
+          localIndex const er = seri[i];
+          localIndex const esr = sesri[i];
+          localIndex const ei = sei[i];
+          real64 const weight = stencilWeights[i];
+          presGrad += weight * ( pres[er][esr][ei] + dPres[er][esr][ei] );
+
+        }
       }
+
+    //finding the largest negPot to be compared against later
+    real64 minGravHead = 0;
+    bool cocurrent = true;
+    if( is_pu ){
+      real64 pot_{};
+      for( localIndex ip = 0; ip < NP; ++ip )
+      {
+        real64 gravHead{};
+        real64 dGravHead_dP[NUM_ELEMS]{};
+        real64 dGravHead_dC[NUM_ELEMS][NC]{};
+
+        real64 dProp_dC[NC]{};
+        dGravHead_dX( gravHead, dGravHead_dP, dGravHead_dC, dProp_dC, ip );
+        //defining up and down-wind direction based on total flux
+        pot_ = totFlux;
+        localIndex const k_up = ( pot_ > 0 ) ? 0 : 1;
+        localIndex const k_dw = ( pot_ > 0 ) ? 1 : 0;
+
+        localIndex const er_up = seri[k_up];
+        localIndex const esr_up = sesri[k_up];
+        localIndex const ei_up = sei[k_up];
+
+        localIndex const er_dw = seri[k_dw];
+        localIndex const esr_dw = sesri[k_dw];
+        localIndex const ei_dw = sei[k_dw];
+
+        for( localIndex jp = 0; jp < NP; ++jp )
+        {
+          real64 gravHeadOther{};
+          real64 dGravHeadOther_dP[NUM_ELEMS]{};
+          real64 dGravHeadOther_dC[NUM_ELEMS][NC]{};
+
+          dGravHead_dX( gravHeadOther, dGravHeadOther_dP, dGravHeadOther_dC, dProp_dC, jp );
+          real64 const mob_up = phaseMob[er_up][esr_up][ei_up][jp];
+          real64 const mob_dw = phaseMob[er_dw][esr_dw][ei_dw][jp];
+          pot_ += ( gravHead - gravHeadOther >= 0 ) ? mob_dw * (gravHead - gravHeadOther) : mob_up * (gravHead - gravHeadOther);
+        }
+        cocurrent &= (pot_ > 0);
+
+        std::cerr << ip << " : " << pot_ << " , " << gravHead << std::endl;
+        if( pot_ < 0 && std::fabs(gravHead) >= minGravHead )
+        {
+//          minpot = pot_;
+//          minIndex = ip;
+          minGravHead =  std::fabs(gravHead);
+
+        }
+      }
+    }
+
+    std::cerr << cocurrent << " , " << minGravHead ;
+    //recompute totMob is PU or HU
+    {
+      std::cerr << "\n" << totMob << " -> ";
+      if( is_pu || is_hu )
+      {
+
+        //reinit
+        totMob = 0;
+        for( localIndex ks = 0; ks < MAX_STENCIL; ++ks )
+        {
+          dTotMob_dP[ks] = 0;
+          for( localIndex ic = 0; ic < NC; ++ic )
+            dTotMob_dC[ks][ic] = 0;
+        }
+
+        for( localIndex ip = 0; ip < NP; ++ip )
+        {
+          real64 gravHead{};
+          real64 dGravHead_dP[NUM_ELEMS]{};
+          real64 dGravHead_dC[NUM_ELEMS][NC]{};
+
+          real64 dProp_dC[NC]{};
+
+          dGravHead_dX( gravHead, dGravHead_dP, dGravHead_dC, dProp_dC, ip );
+          localIndex k_up = ( totFlux > 0 ) ? 0 : 1;
+          if( gravHead <= minGravHead && !cocurrent )
+            k_up = ( k_up == 1 ) ? 0 : 1;
+
+          localIndex const er_up = seri[k_up];
+          localIndex const esr_up = sesri[k_up];
+          localIndex const ei_up = sei[k_up];
+
+          totMob += phaseMob[er_up][esr_up][ei_up][ip];
+          dTotMob_dP[k_up] += dPhaseMob_dPres[er_up][esr_up][ei_up][ip];
+          for( localIndex ic = 0; ic < NC; ++ic )
+          {
+            dTotMob_dC[k_up][ic] += dPhaseMob_dComp[er_up][esr_up][ei_up][ip][ic];
+          }
+        }
+      }
+      std::cerr << totMob << "\n------\n";
+    }
+
 
     for( localIndex ip = 0; ip < NP; ++ip )
     {
@@ -1060,8 +1163,23 @@ FluxKernel::
       real64 dProp_dC[NC]{};
 
       dGravHead_dX( gravHead, dGravHead_dP, dGravHead_dC, dProp_dC, ip );
-      /* try consistency check -- chossing mobility upwinf as in PPU */
-      localIndex const k_up = ( presGrad - gravHead >= 0 ) ? 0 : 1;
+      /* chosing upwind for viscous term */
+      localIndex k_up = -1;
+      if( is_ppu )
+      {
+        k_up = ( presGrad - gravHead >= 0 ) ? 0 : 1;
+      }
+      else if( is_pu )
+      {
+        k_up = (  totFlux > 0 ) ? 0 : 1;
+        if(gravHead <= minGravHead && !cocurrent )
+          k_up = ( k_up == 1 ) ? 0 : 1;
+      }
+      else if( is_hu )
+      {
+        /* nothing here yet */
+      }
+
       localIndex const er_up = seri[k_up];
       localIndex const esr_up = sesri[k_up];
       localIndex const ei_up = sei[k_up];
@@ -1069,7 +1187,7 @@ FluxKernel::
       real64 const mobility = phaseMob[er_up][esr_up][ei_up][ip];
 
       //fractional flow too low to let the upstream phase flow
-      if( std::fabs(mobility) < 1e-20 || std::fabs(mobility) < 1e-20 )
+      if( std::fabs(mobility) < 1e-20 || std::fabs(totMob) < 1e-20 )
         continue;
 
       fflow += mobility / totMob;
@@ -1121,23 +1239,41 @@ FluxKernel::
           dGravHead_dX( gravHeadOther, dGravHeadOther_dP, dGravHeadOther_dC, dPropOther_dC, jp );
 
          //mobOther is upwinded as PPU for consistency with totMob in fractional flow fflow
-          localIndex const k_up_ihu = ( presGrad - gravHeadOther >= 0) ? 0 : 1;//classical PPU
-          localIndex er_ihu = seri[k_up_ihu];
-          localIndex esr_ihu = sesri[k_up_ihu];
-          localIndex ei_ihu = sei[k_up_ihu];
+         localIndex k_up_g = -1;
+         if( is_ppu )
+         {
+           k_up_g = ( presGrad - gravHeadOther >= 0 ) ? 0 : 1;//classical PPU
+         }
+         else if( is_pu )
+         {
+           k_up_g = ( totFlux > 0 ) ? 0 : 1;//classical PU
+           std::cerr << " totFlux upw "  << k_up_g  << "\n";
+            if( gravHeadOther <= minGravHead && !cocurrent )
+              k_up_g = (k_up_g == 1) ? 0 : 1; // downwind
 
-          real64 const mobOther = phaseMob[er_ihu][esr_ihu][ei_ihu][jp];
-          real64 const dMobOther_dP = dPhaseMob_dPres[er_ihu][esr_ihu][ei_ihu][jp];
-          arraySlice1d< real64 const > dMobOther_dC = dPhaseMob_dComp[er_ihu][esr_ihu][ei_ihu][jp];
+          std::cerr << ip << " , " << jp << " , " << k_up_g << "\n";
+         }
+         else if(is_hu)
+         {
+            /* nothing here yet */
+         }
+
+         localIndex er_g = seri[k_up_g];
+         localIndex esr_g = sesri[k_up_g];
+         localIndex ei_g = sei[k_up_g];
+
+          real64 const mobOther = phaseMob[er_g][esr_g][ei_g][jp];
+          real64 const dMobOther_dP = dPhaseMob_dPres[er_g][esr_g][ei_g][jp];
+          arraySlice1d< real64 const > dMobOther_dC = dPhaseMob_dComp[er_g][esr_g][ei_g][jp];
 
           if( std::fabs(mobOther) < 1e-20 )
             continue;
 
           phaseFlux -= fflow * mobOther * ( gravHead - gravHeadOther );
 
-          dPhaseFlux_dP[k_up_ihu] -= fflow * dMobOther_dP * ( gravHead - gravHeadOther );
+          dPhaseFlux_dP[k_up_g] -= fflow * dMobOther_dP * ( gravHead - gravHeadOther );
           for( localIndex jc = 0; jc < NC; ++jc )
-            dPhaseFlux_dC[k_up_ihu][jc] -= fflow * dMobOther_dC[jc] * ( gravHead - gravHeadOther );
+            dPhaseFlux_dC[k_up_g][jc] -= fflow * dMobOther_dC[jc] * ( gravHead - gravHeadOther );
           //mob related part of dFflow_dP is only upstream defined but totMob related is defined everywhere
           for( localIndex ke = 0; ke < stencilSize; ++ke )
           {
@@ -1161,6 +1297,7 @@ FluxKernel::
 
         }
       }
+      std::cerr << "\n ############### \n";
 
       // slice some constitutive arrays to avoid too much indexing in component loop
       arraySlice1d< real64 const > phaseCompFracSub = phaseCompFrac[er_up][esr_up][ei_up][0][ip];
