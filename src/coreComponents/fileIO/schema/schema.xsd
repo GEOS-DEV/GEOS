@@ -951,7 +951,7 @@ the relative residual norm satisfies:
 	<xsd:complexType name="WellControlsType">
 		<!--control => Well control. Valid options:
 * BHP
-* oilVolRate
+* phaseVolRate
 * totalVolRate-->
 		<xsd:attribute name="control" type="geosx_WellControls_Control" use="required" />
 		<!--injectionStream => Global component densities for the injection stream-->
@@ -960,10 +960,12 @@ the relative residual norm satisfies:
 		<xsd:attribute name="referenceElevation" type="real64" use="required" />
 		<!--targetBHP => Target bottom-hole pressure-->
 		<xsd:attribute name="targetBHP" type="real64" use="required" />
-		<!--targetOilRate => Target oil rate-->
-		<xsd:attribute name="targetOilRate" type="real64" default="1e+09" />
-		<!--targetRate => Target rate-->
-		<xsd:attribute name="targetRate" type="real64" use="required" />
+		<!--targetPhaseName => Name of the target phase-->
+		<xsd:attribute name="targetPhaseName" type="string" default="" />
+		<!--targetPhaseRate => Target phase volumetric rate-->
+		<xsd:attribute name="targetPhaseRate" type="real64" default="0" />
+		<!--targetTotalRate => Target total volumetric rate-->
+		<xsd:attribute name="targetTotalRate" type="real64" default="0" />
 		<!--type => Well type. Valid options:
 * producer
 * injector-->
@@ -976,7 +978,7 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 	</xsd:complexType>
 	<xsd:simpleType name="geosx_WellControls_Control">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|BHP|oilVolRate|totalVolRate" />
+			<xsd:pattern value=".*[\[\]`$].*|BHP|phaseVolRate|totalVolRate" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="geosx_WellControls_Type">

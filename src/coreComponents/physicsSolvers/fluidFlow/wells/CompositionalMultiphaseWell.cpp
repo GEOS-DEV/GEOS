@@ -60,7 +60,7 @@ CompositionalMultiphaseWell::CompositionalMultiphaseWell( const string & name,
   m_maxRelativePresChange( 0.2 ),
   m_minScalingFactor( 0.01 ),
   m_allowCompDensChopping( 1 ),
-  m_oilPhaseIndex( -1 )
+  m_targetPhaseIndex( -1 )
 {
   this->registerWrapper( viewKeyStruct::temperatureString, &m_temperature )->
     setInputFlag( InputFlags::REQUIRED )->
@@ -287,6 +287,48 @@ void CompositionalMultiphaseWell::ValidateInjectionStreams( MeshLevel const & me
   } );
 }
 
+void CompositionalMultiphaseWell::ValidateWellConstraints( MeshLevel const & meshLevel, MultiFluidBase const & fluid )
+{
+  // now that we know we are single-phase, we can check a few things in the constraints
+  forTargetSubRegions< WellElementSubRegion >( meshLevel, [&]( localIndex const,
+                                                               WellElementSubRegion const & subRegion )
+  {
+    WellControls const & wellControls = GetWellControls( subRegion );
+    WellControls::Type const wellType = wellControls.GetType();
+    WellControls::Control const currentControl = wellControls.GetControl();
+    real64 const targetTotalRate = wellControls.GetTargetTotalRate();
+    real64 const targetPhaseRate = wellControls.GetTargetPhaseRate();
+
+    GEOSX_ERROR_IF( wellType == WellControls::Type::INJECTOR && currentControl == WellControls::Control::PHASEVOLRATE,
+                    "Phase rate control is not available for injectors" );
+    GEOSX_ERROR_IF( wellType == WellControls::Type::PRODUCER && currentControl == WellControls::Control::TOTALVOLRATE,
+                    "Phase rate control is not available for producers" );
+
+    GEOSX_ERROR_IF( wellType == WellControls::Type::INJECTOR && isZero( targetTotalRate ),
+                    "Target total rate cannot be equal to zero for injectors" );
+    GEOSX_ERROR_IF( wellType == WellControls::Type::INJECTOR && !isZero( targetPhaseRate ),
+                    "Target phase rate cannot be used for injectors" );
+
+    GEOSX_ERROR_IF( wellType == WellControls::Type::PRODUCER && isZero( targetPhaseRate ),
+                    "Target phase rate cannot be equal to zero for producers" );
+    GEOSX_ERROR_IF( wellType == WellControls::Type::PRODUCER && !isZero( targetTotalRate ),
+                    "Target total rate cannot be used for producers" );
+
+    // Find target phase index for phase rate constraint
+    for( localIndex ip = 0; ip < fluid.numFluidPhases(); ++ip )
+    {
+      if( fluid.phaseNames()[ip] == wellControls.GetTargetPhaseName() )
+      {
+        m_targetPhaseIndex = ip;
+      }
+    }
+    GEOSX_ERROR_IF( wellType == WellControls::Type::PRODUCER && m_targetPhaseIndex == -1,
+                    "Phase " << wellControls.GetTargetPhaseName() << " not found for well control " << wellControls.getName() );
+
+  } );
+
+}
+
 void CompositionalMultiphaseWell::InitializePreSubGroups( Group * const rootGroup )
 {
   WellSolverBase::InitializePreSubGroups( rootGroup );
@@ -306,15 +348,7 @@ void CompositionalMultiphaseWell::InitializePreSubGroups( Group * const rootGrou
   ValidateModelMapping< MultiFluidBase >( *meshLevel.getElemManager(), m_fluidModelNames );
   ValidateModelMapping< RelativePermeabilityBase >( *meshLevel.getElemManager(), m_relPermModelNames );
   ValidateInjectionStreams( meshLevel );
-
-  // Find oil phase index for oil rate constraint
-  for( localIndex ip = 0; ip < fluid0.numFluidPhases(); ++ip )
-  {
-    if( fluid0.phaseNames()[ip] == "Oil" || fluid0.phaseNames()[ip] == "oil" )
-    {
-      m_oilPhaseIndex = ip;
-    }
-  }
+  ValidateWellConstraints( meshLevel, fluid0 );
 
   forTargetSubRegions< WellElementSubRegion >( meshLevel, [&]( localIndex const,
                                                                WellElementSubRegion & subRegion )
@@ -869,7 +903,7 @@ void CompositionalMultiphaseWell::InitializeWells( DomainPartition & domain )
     // 6) Estimate the well rates
     // TODO: initialize rates using perforation rates
     CompositionalMultiphaseWellKernels::RateInitializationKernel::Launch< parallelDevicePolicy<> >( subRegion.size(),
-                                                                                                    m_oilPhaseIndex,
+                                                                                                    m_targetPhaseIndex,
                                                                                                     wellControls,
                                                                                                     wellElemPhaseDens,
                                                                                                     wellElemTotalDens,
@@ -1014,7 +1048,7 @@ CompositionalMultiphaseWell::CalculateResidualNorm( DomainPartition const & doma
                                                         subRegion.IsLocallyOwned(),
                                                         subRegion.GetTopWellElementIndex(),
                                                         NumDofPerWellElement(),
-                                                        m_oilPhaseIndex,
+                                                        m_targetPhaseIndex,
                                                         wellControls,
                                                         wellElemDofNumber,
                                                         wellElemGhostRank,
@@ -1034,7 +1068,7 @@ CompositionalMultiphaseWell::ScalingForSystemSolution( DomainPartition const & d
   GEOSX_MARK_FUNCTION;
 
   // check if we want to rescale the Newton update
-  if( m_maxCompFracChange >= 1.0 )
+  if( m_maxCompFracChange >= 1.0 && m_maxRelativePresChange >= 1.0 )
   {
     // no rescaling wanted, we just return 1.0;
     return 1.0;
@@ -1520,7 +1554,7 @@ void CompositionalMultiphaseWell::FormPressureRelations( DomainPartition const &
                                                               subRegion.IsLocallyOwned(),
                                                               subRegion.GetTopWellElementIndex(),
                                                               NumFluidComponents(),
-                                                              m_oilPhaseIndex,
+                                                              m_targetPhaseIndex,
                                                               NumDofPerResElement(),
                                                               wellControls,
                                                               wellElemDofNumber,
@@ -1537,7 +1571,6 @@ void CompositionalMultiphaseWell::FormPressureRelations( DomainPartition const &
     if( controlHasSwitched == 1 )
     {
       // TODO: move the switch logic into wellControls
-
       // TODO: implement a more general switch when more then two constraints per well type are allowed
 
       if( wellControls.GetControl() == WellControls::Control::BHP )
@@ -1545,24 +1578,20 @@ void CompositionalMultiphaseWell::FormPressureRelations( DomainPartition const &
         WellControls::Type const wellType = wellControls.GetType();
         if( wellType == WellControls::Type::PRODUCER )
         {
-          wellControls.SetControl( WellControls::Control::OILVOLRATE,
-                                   wellControls.GetTargetRate() );
+          wellControls.SwitchToPhaseRateControl( wellControls.GetTargetPhaseRate() );
           GEOSX_LOG_LEVEL_RANK_0( 1, "Control switch for well " << subRegion.getName()
-                                                                << " from BHP constraint to oil volumetric rate constraint" );
+                                                                << " from BHP constraint to phase volumetric rate constraint" );
         }
         else
         {
-          wellControls.SetControl( WellControls::Control::TOTALVOLRATE,
-                                   wellControls.GetTargetRate() );
+          wellControls.SwitchToTotalRateControl( wellControls.GetTargetTotalRate() );
           GEOSX_LOG_LEVEL_RANK_0( 1, "Control switch for well " << subRegion.getName()
                                                                 << " from BHP constraint to total volumetric rate constraint" );
         }
       }
       else
       {
-        wellControls.SetControl( WellControls::Control::BHP,
-                                 wellControls.GetTargetBHP() );
-
+        wellControls.SwitchToBHPControl( wellControls.GetTargetBHP() );
         GEOSX_LOG_LEVEL_RANK_0( 1, "Control switch for well " << subRegion.getName()
                                                               << " from rate constraint to BHP constraint" );
       }

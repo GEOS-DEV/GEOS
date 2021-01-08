@@ -42,10 +42,10 @@ struct ControlEquationHelper
   static void
   Switch( WellControls::Type const & wellType,
           WellControls::Control const & currentControl,
-          localIndex const oilPhaseIndex,
+          localIndex const phasePhaseIndex,
           real64 const & targetBHP,
-          real64 const & targetOilRate,
-          real64 const & targetRate,
+          real64 const & targetPhaseRate,
+          real64 const & targetTotalRate,
           real64 const & currentBHP,
           arrayView1d< real64 const > const & currentPhaseVolRate,
           real64 const & currentTotalVolRate,
@@ -60,7 +60,7 @@ struct ControlEquationHelper
     // violate one of these limits.
 
     // Currently, the available constraints are:
-    //   - Producer: BHP, OILVOLRATE
+    //   - Producer: BHP, PHASEVOLRATE
     //   - Injector: BHP, TOTALVOLRATE
 
     // TODO: support GRAT, WRAT, LIQUID for producers and check if any of the active constraint is violated
@@ -71,12 +71,12 @@ struct ControlEquationHelper
       // the control is viable if the reference oil rate is below the max rate for producers
       if( wellType == WellControls::Type::PRODUCER )
       {
-        controlIsViable = ( fabs( currentPhaseVolRate[oilPhaseIndex] ) <= fabs( targetOilRate ) );
+        controlIsViable = ( fabs( currentPhaseVolRate[phasePhaseIndex] ) <= fabs( targetPhaseRate ) );
       }
       // the control is viable if the reference total rate is below the max rate for injectors
       else
       {
-        controlIsViable = ( fabs( currentTotalVolRate ) <= fabs( targetRate ) );
+        controlIsViable = ( fabs( currentTotalVolRate ) <= fabs( targetTotalRate ) );
       }
     }
     else // rate control
@@ -103,7 +103,7 @@ struct ControlEquationHelper
       if( wellType == WellControls::Type::PRODUCER )
       {
         newControl = ( currentControl == WellControls::Control::BHP )
-                   ? WellControls::Control::OILVOLRATE
+                   ? WellControls::Control::PHASEVOLRATE
                    : WellControls::Control::BHP;
       }
       else
@@ -120,10 +120,10 @@ struct ControlEquationHelper
   Compute( globalIndex const rankOffset,
            localIndex const numComponents,
            WellControls::Control const currentControl,
-           localIndex const oilPhaseIndex,
+           localIndex const targetPhaseIndex,
            real64 const & targetBHP,
-           real64 const & targetOilRate,
-           real64 const & targetRate,
+           real64 const & targetPhaseRate,
+           real64 const & targetTotalRate,
            real64 const & currentBHP,
            real64 const & dCurrentBHP_dPres,
            arrayView1d< real64 const > const & dCurrentBHP_dCompDens,
@@ -174,20 +174,20 @@ struct ControlEquationHelper
       }
     }
     // Oil volumetric rate control
-    else if( currentControl == WellControls::Control::OILVOLRATE )
+    else if( currentControl == WellControls::Control::PHASEVOLRATE )
     {
-      controlEqn = currentPhaseVolRate[oilPhaseIndex] - targetOilRate;
-      dControlEqn_dPres = dCurrentPhaseVolRate_dPres[oilPhaseIndex];
-      dControlEqn_dRate = dCurrentPhaseVolRate_dRate[oilPhaseIndex];
+      controlEqn = currentPhaseVolRate[targetPhaseIndex] - targetPhaseRate;
+      dControlEqn_dPres = dCurrentPhaseVolRate_dPres[targetPhaseIndex];
+      dControlEqn_dRate = dCurrentPhaseVolRate_dRate[targetPhaseIndex];
       for( localIndex ic = 0; ic < NC; ++ic )
       {
-        dControlEqn_dComp[ic] = dCurrentPhaseVolRate_dCompDens[oilPhaseIndex][ic];
+        dControlEqn_dComp[ic] = dCurrentPhaseVolRate_dCompDens[targetPhaseIndex][ic];
       }
     }
     // Total volumetric rate control
     else if( currentControl == WellControls::Control::TOTALVOLRATE )
     {
-      controlEqn = currentTotalVolRate - targetRate;
+      controlEqn = currentTotalVolRate - targetTotalRate;
       dControlEqn_dPres = dCurrentTotalVolRate_dPres;
       dControlEqn_dRate = dCurrentTotalVolRate_dRate;
       for( localIndex ic = 0; ic < NC; ++ic )
@@ -198,7 +198,7 @@ struct ControlEquationHelper
     else
     {
       GEOSX_ERROR_IF( ( currentControl != WellControls::Control::BHP )
-                      && ( currentControl != WellControls::Control::OILVOLRATE )
+                      && ( currentControl != WellControls::Control::PHASEVOLRATE )
                       && ( currentControl != WellControls::Control::TOTALVOLRATE ),
                       "This constraint is not supported in CompositionalMultiphaseWell" );
     }
@@ -483,7 +483,7 @@ struct PressureRelationKernel
           bool const isLocallyOwned,
           localIndex const iwelemControl,
           localIndex const numComponents,
-          localIndex const oilPhaseIndex,
+          localIndex const targetPhaseIndex,
           localIndex const numDofPerResElement,
           WellControls const & wellControls,
           arrayView1d< globalIndex const > const & wellElemDofNumber,
@@ -504,8 +504,8 @@ struct PressureRelationKernel
     WellControls::Type const wellType = wellControls.GetType();
     WellControls::Control const currentControl = wellControls.GetControl();
     real64 const targetBHP = wellControls.GetTargetBHP();
-    real64 const targetRate = wellControls.GetTargetRate();
-    real64 const targetOilRate = wellControls.GetTargetOilRate();
+    real64 const targetTotalRate = wellControls.GetTargetTotalRate();
+    real64 const targetPhaseRate = wellControls.GetTargetPhaseRate();
 
     // dynamic well control data
     real64 const & currentBHP =
@@ -545,10 +545,10 @@ struct PressureRelationKernel
         WellControls::Control newControl = currentControl;
         ControlEquationHelper::Switch( wellType,
                                        currentControl,
-                                       oilPhaseIndex,
+                                       targetPhaseIndex,
                                        targetBHP,
-                                       targetOilRate,
-                                       targetRate,
+                                       targetPhaseRate,
+                                       targetTotalRate,
                                        currentBHP,
                                        currentPhaseVolRate,
                                        currentTotalVolRate,
@@ -561,10 +561,10 @@ struct PressureRelationKernel
         ControlEquationHelper::Compute( rankOffset,
                                         NC,
                                         newControl,
-                                        oilPhaseIndex,
+                                        targetPhaseIndex,
                                         targetBHP,
-                                        targetOilRate,
-                                        targetRate,
+                                        targetPhaseRate,
+                                        targetTotalRate,
                                         currentBHP,
                                         dCurrentBHP_dPres,
                                         dCurrentBHP_dCompDens,
@@ -1263,7 +1263,7 @@ struct RateInitializationKernel
   template< typename POLICY >
   static void
   Launch( localIndex const subRegionSize,
-          localIndex const oilPhaseIndex,
+          localIndex const targetPhaseIndex,
           WellControls const & wellControls,
           arrayView3d< real64 const > const & phaseDens,
           arrayView2d< real64 const > const & totalDens,
@@ -1271,8 +1271,8 @@ struct RateInitializationKernel
   {
     WellControls::Control const control = wellControls.GetControl();
     WellControls::Type const wellType = wellControls.GetType();
-    real64 const targetRate = wellControls.GetTargetRate();
-    real64 const targetOilRate = wellControls.GetTargetOilRate();
+    real64 const targetTotalRate = wellControls.GetTargetTotalRate();
+    real64 const targetPhaseRate = wellControls.GetTargetPhaseRate();
 
     // Estimate the connection rates
     forAll< POLICY >( subRegionSize, [=] GEOSX_HOST_DEVICE ( localIndex const iwelem )
@@ -1283,22 +1283,22 @@ struct RateInitializationKernel
         // with the appropriate sign (negative for prod, positive for inj)
         if( wellType == WellControls::Type::PRODUCER )
         {
-          connRate[iwelem] = LvArray::math::max( 0.1 * targetOilRate * phaseDens[iwelem][0][oilPhaseIndex], -1e3 );
+          connRate[iwelem] = LvArray::math::max( 0.1 * targetPhaseRate * phaseDens[iwelem][0][targetPhaseIndex], -1e3 );
         }
         else
         {
-          connRate[iwelem] = LvArray::math::min( 0.1 * targetRate * totalDens[iwelem][0], 1e3 );
+          connRate[iwelem] = LvArray::math::min( 0.1 * targetTotalRate * totalDens[iwelem][0], 1e3 );
         }
       }
       else
       {
         if( wellType == WellControls::Type::PRODUCER )
         {
-          connRate[iwelem] = targetOilRate * phaseDens[iwelem][0][oilPhaseIndex];
+          connRate[iwelem] = targetPhaseRate * phaseDens[iwelem][0][targetPhaseIndex];
         }
         else
         {
-          connRate[iwelem] = targetRate * totalDens[iwelem][0];
+          connRate[iwelem] = targetTotalRate * totalDens[iwelem][0];
         }
       }
     } );
@@ -1374,7 +1374,7 @@ struct ResidualNormKernel
           bool const isLocallyOwned,
           localIndex const iwelemControl,
           localIndex const numDofPerWellElement,
-          localIndex const oilPhaseIndex,
+          localIndex const targetPhaseIndex,
           WellControls const & wellControls,
           arrayView1d< globalIndex const > const & wellElemDofNumber,
           arrayView1d< integer const > const & wellElemGhostRank,
@@ -1386,10 +1386,10 @@ struct ResidualNormKernel
     WellControls::Type const wellType = wellControls.GetType();
     WellControls::Control const currentControl = wellControls.GetControl();
     real64 const targetBHP = wellControls.GetTargetBHP();
-    real64 const targetRate = wellControls.GetTargetRate();
-    real64 const targetOilRate = wellControls.GetTargetOilRate();
-    real64 const absTargetRate = fabs( targetRate );
-    real64 const absTargetOilRate = fabs( targetOilRate );
+    real64 const targetTotalRate = wellControls.GetTargetTotalRate();
+    real64 const targetPhaseRate = wellControls.GetTargetPhaseRate();
+    real64 const absTargetTotalRate = fabs( targetTotalRate );
+    real64 const absTargetPhaseRate = fabs( targetPhaseRate );
 
     RAJA::ReduceSum< REDUCE_POLICY, real64 > sumScaled( 0.0 );
 
@@ -1412,11 +1412,11 @@ struct ResidualNormKernel
               }
               else if( currentControl == WellControls::Control::TOTALVOLRATE )
               {
-                normalizer = absTargetRate;
+                normalizer = absTargetTotalRate;
               }
-              else if( currentControl == WellControls::Control::OILVOLRATE )
+              else if( currentControl == WellControls::Control::PHASEVOLRATE )
               {
-                normalizer = absTargetOilRate;
+                normalizer = absTargetPhaseRate;
               }
             }
             // for the pressure difference equation, always normalize by the BHP
@@ -1430,18 +1430,18 @@ struct ResidualNormKernel
             // did not seem to make sense to use the mass in the well elem for the normalization
             // since there is no accumulation in the well model. Hence the rates are used here.
             // TODO: use old densities for the normalization
-            if( wellType == WellControls::Type::PRODUCER ) // only OILVOLRATE is supported for now
+            if( wellType == WellControls::Type::PRODUCER ) // only PHASEVOLRATE is supported for now
             {
-              normalizer = dt * absTargetOilRate * wellElemPhaseDens[iwelem][0][oilPhaseIndex];
+              normalizer = dt * absTargetPhaseRate * wellElemPhaseDens[iwelem][0][targetPhaseIndex];
             }
             else // Type::INJECTOR, only TOTALVOLRATE is supported for now
             {
-              normalizer = dt * absTargetRate * wellElemTotalDens[iwelem][0];
+              normalizer = dt * absTargetTotalRate * wellElemTotalDens[iwelem][0];
             }
           }
           localIndex const lid = wellElemDofNumber[iwelem] + idof - rankOffset;
           real64 const val = localResidual[lid] / normalizer;
-          sumScaled += val * val;
+          sumScaled += val * val; // get something dimensionless
         }
       }
     } );

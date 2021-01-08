@@ -58,7 +58,7 @@ public:
   enum class Control : integer
   {
     BHP,  /**< The well operates at a specified bottom hole pressure (BHP) */
-    OILVOLRATE, /**< The well operates at a specified oil volumetric flow rate */
+    PHASEVOLRATE, /**< The well operates at a specified phase volumetric flow rate */
     TOTALVOLRATE, /**< The well operates at a specified total volumetric flow rate */
   };
 
@@ -123,13 +123,22 @@ public:
 
 
   /**
-   * @brief Set the control type and numerical value for a well.
-   * @param[in] control a Control enum with the type of control that is enforced
-   * @param[in] val value for the control (depending on the control type, can be a maximum bottom hole pressure, a
-   * minimum water rate...)
+   * @brief Set the control type to BHP and set a numerical value for the control.
+   * @param[in] val value for the BHP control
    */
-  void SetControl( Control control, real64 const & val );
+  void SwitchToBHPControl( real64 const & val );
 
+  /**
+   * @brief Set the control type to total rate and set a numerical value for the control.
+   * @param[in] val value for the total volumetric rate
+   */
+  void SwitchToTotalRateControl( real64 const & val );
+
+  /**
+   * @brief Set the control type to phase rate and set a numerical value for the control.
+   * @param[in] val value for the phase volumetric rate
+   */
+  void SwitchToPhaseRateControl( real64 const & val );
 
   /**
    * @brief Get the control type for the well.
@@ -163,16 +172,23 @@ public:
 
 
   /**
-   * @brief Get the target rate
-   * @return the target rate
+   * @brief Get the target total rate
+   * @return the target total rate
    */
-  const real64 & GetTargetRate() const { return m_targetRate; }
+  const real64 & GetTargetTotalRate() const { return m_targetTotalRate; }
 
   /**
-   * @brief Get the target oil rate
-   * @return the target oil rate
+   * @brief Get the target phase rate
+   * @return the target phase rate
    */
-  const real64 & GetTargetOilRate() const { return m_targetOilRate; }
+  const real64 & GetTargetPhaseRate() const { return m_targetPhaseRate; }
+
+  /**
+   * @brief Get the target phase name
+   * @return the target phase name
+   */
+  const string & GetTargetPhaseName() const { return m_targetPhaseName; }
+
 
   /**
    * @brief Const accessor for the composition of the injection rate
@@ -203,9 +219,11 @@ public:
     /// String key for the well target BHP
     static constexpr auto targetBHPString            = "targetBHP";
     /// String key for the well target rate
-    static constexpr auto targetRateString           = "targetRate";
-    /// String key for the well target oil rate for producers
-    static constexpr auto targetOilRateString        = "targetOilRate";
+    static constexpr auto targetTotalRateString      = "targetTotalRate";
+    /// String key for the well target phase rate
+    static constexpr auto targetPhaseRateString      = "targetPhaseRate";
+    /// String key for the well target phase name
+    static constexpr auto targetPhaseNameString      = "targetPhaseName";
     /// String key for the well injection stream
     static constexpr auto injectionStreamString      = "injectionStream";
     /// String key for checking the rates at surface conditions
@@ -219,9 +237,11 @@ public:
     /// ViewKey for the well target BHP
     dataRepository::ViewKey targetBHP            = { targetBHPString };
     /// ViewKey for the well target rate
-    dataRepository::ViewKey targetRate           = { targetRateString };
-    /// ViewKey for the well target oil rate
-    dataRepository::ViewKey targetOilRate        = { targetOilRateString };
+    dataRepository::ViewKey targetTotalRate      = { targetTotalRateString };
+    /// ViewKey for the well target phase rate
+    dataRepository::ViewKey targetPhaseRate      = { targetPhaseRateString };
+    /// ViewKey for the well target phase name
+    dataRepository::ViewKey targetPhaseName      = { targetPhaseNameString };
     /// ViewKey for the well injection stream
     dataRepository::ViewKey injectionStream      = { injectionStreamString };
     /// ViewKey for the well injection stream
@@ -263,10 +283,13 @@ private:
   real64 m_targetBHP;
 
   /// Target rate value
-  real64 m_targetRate;
+  real64 m_targetTotalRate;
 
-  /// Target oil rate value
-  real64 m_targetOilRate;
+  /// Target phase rate value
+  real64 m_targetPhaseRate;
+
+  /// Name of the targeted phase
+  string m_targetPhaseName;
 
   /// Vector with global component fractions at the injector
   array1d< real64 >  m_injectionStream;
@@ -278,7 +301,7 @@ private:
 
 ENUM_STRINGS( WellControls::Type, "producer", "injector" )
 
-ENUM_STRINGS( WellControls::Control, "BHP", "oilVolRate", "totalVolRate" )
+ENUM_STRINGS( WellControls::Control, "BHP", "phaseVolRate", "totalVolRate" )
 
 } //namespace geosx
 

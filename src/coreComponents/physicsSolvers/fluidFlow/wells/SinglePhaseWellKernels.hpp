@@ -279,7 +279,7 @@ struct PressureRelationKernel
     WellControls::Type const wellType = wellControls.GetType();
     WellControls::Control const currentControl = wellControls.GetControl();
     real64 const targetBHP = wellControls.GetTargetBHP();
-    real64 const targetRate = wellControls.GetTargetRate();
+    real64 const targetRate = wellControls.GetTargetTotalRate();
 
     // dynamic well control data
     real64 const & currentBHP =
@@ -609,7 +609,7 @@ struct RateInitializationKernel
           arrayView2d< real64 const > const & wellElemDens,
           arrayView1d< real64 > const & connRate )
   {
-    real64 const targetRate = wellControls.GetTargetRate();
+    real64 const targetRate = wellControls.GetTargetTotalRate();
     WellControls::Control const control = wellControls.GetControl();
     WellControls::Type const wellType = wellControls.GetType();
 
@@ -659,7 +659,7 @@ struct ResidualNormKernel
   {
     WellControls::Control const currentControl = wellControls.GetControl();
     real64 const targetBHP = wellControls.GetTargetBHP();
-    real64 const targetRate = wellControls.GetTargetRate();
+    real64 const targetRate = wellControls.GetTargetTotalRate();
     real64 const absTargetRate = fabs( targetRate );
 
     RAJA::ReduceSum< REDUCE_POLICY, real64 > sumScaled( 0.0 );

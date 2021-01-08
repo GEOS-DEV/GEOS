@@ -245,7 +245,6 @@ protected:
 
   virtual void InitializePreSubGroups( Group * const rootGroup ) override;
 
-
 private:
 
   /**
@@ -265,6 +264,12 @@ private:
    * @param domain the domain containing the well manager to access individual wells
    */
   void InitializeWells( DomainPartition & domain ) override;
+
+  /**
+   * @brief Make sure that the well constraints are compatible
+   * @param meshLevel the mesh level object (to loop over wells)
+   */
+  void ValidateWellConstraints( MeshLevel const & meshLevel ) const;
 
 private:
 

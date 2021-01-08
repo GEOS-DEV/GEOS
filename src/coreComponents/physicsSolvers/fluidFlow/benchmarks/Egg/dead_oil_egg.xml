@@ -50,81 +50,97 @@
         name="wellControls1"
         type="producer"
         control="BHP"
+	referenceElevation="28"
         targetBHP="3.9e7"
-        targetRate="1e9"/>
+        targetPhaseRate="1e6"
+	targetPhaseName="oil"/>
       <WellControls
         name="wellControls2"
         type="producer"
         control="BHP"
+	referenceElevation="28"	
         targetBHP="3.9e7"
-        targetRate="1e9"/>
+        targetPhaseRate="1e6"
+	targetPhaseName="oil"/>
       <WellControls
         name="wellControls3"
         type="producer"
         control="BHP"
+	referenceElevation="28"	
         targetBHP="3.9e7"
-        targetRate="1e9"/>
+        targetPhaseRate="1e6"
+	targetPhaseName="oil"/>
       <WellControls
         name="wellControls4"
         type="producer"
         control="BHP"
+	referenceElevation="28"	
         targetBHP="3.9e7"
-        targetRate="1e9"/>
+        targetPhaseRate="1e6"
+	targetPhaseName="oil"/>
       <WellControls
         name="wellControls5"
         type="injector"
-        control="liquidRate"
-        targetBHP="5e8"
-        targetRate="8e0"
+        control="totalVolRate"
+	referenceElevation="20"	
+        targetBHP="9e7"
+        targetTotalRate="8e-3"
         injectionStream="{ 0.0, 0.0, 1.0 }"/>
       <WellControls
         name="wellControls6"
         type="injector"
-        control="liquidRate"
-        targetBHP="5e8"
-        targetRate="8e0"
+        control="totalVolRate"
+	referenceElevation="20"	
+        targetBHP="9e7"
+        targetTotalRate="8e-3"
         injectionStream="{ 0.0, 0.0, 1.0 }"/>
       <WellControls
         name="wellControls7"
         type="injector"
-        control="liquidRate"
-        targetBHP="5e8"
-        targetRate="8e0"
+        control="totalVolRate"
+	referenceElevation="40"	
+        targetBHP="9e7"
+        targetTotalRate="8e-3"
         injectionStream="{ 0.0, 0.0, 1.0 }"/>
       <WellControls
         name="wellControls8"
         type="injector"
-        control="liquidRate"
-        targetBHP="5e8"
-        targetRate="8e0"
+        control="totalVolRate"
+	referenceElevation="20"	
+        targetBHP="9e7"
+        targetTotalRate="8e-3"
         injectionStream="{ 0.0, 0.0, 1.0 }"/>
       <WellControls
         name="wellControls9"
         type="injector"
-        control="liquidRate"
-        targetBHP="5e8"
-        targetRate="8e0"
+        control="totalVolRate"
+	referenceElevation="20"	
+        targetBHP="9e7"
+        targetTotalRate="8e-3"
         injectionStream="{ 0.0, 0.0, 1.0 }"/>
       <WellControls
         name="wellControls10"
         type="injector"
-        control="liquidRate"
-        targetBHP="5e8"
-        targetRate="8e0"
+        control="totalVolRate"
+	referenceElevation="20"	
+        targetBHP="9e7"
+        targetTotalRate="8e-3"
         injectionStream="{ 0.0, 0.0, 1.0 }"/>
       <WellControls
         name="wellControls11"
         type="injector"
-        control="liquidRate"
-        targetBHP="5e8"
-        targetRate="8e0"
+        control="totalVolRate"
+	referenceElevation="20"	
+        targetBHP="9e7"
+        targetTotalRate="8e-3"
         injectionStream="{ 0.0, 0.0, 1.0 }"/>
       <WellControls
         name="wellControls12"
         type="injector"
-        control="liquidRate"
-        targetBHP="5e8"
-        targetRate="8e0"
+        control="totalVolRate"
+        referenceElevation="20"
+        targetBHP="9e7"
+        targetTotalRate="8e-3"
         injectionStream="{ 0.0, 0.0, 1.0 }"/>
     </CompositionalMultiphaseWell>
   </Solvers>

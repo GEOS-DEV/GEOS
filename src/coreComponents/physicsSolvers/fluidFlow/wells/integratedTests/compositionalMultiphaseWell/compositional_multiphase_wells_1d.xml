@@ -41,14 +41,17 @@
         name="wellControls1"
         type="producer"
         control="BHP"
+	referenceElevation="2"
         targetBHP="4e6"
-        targetRate="1"/>
+        targetPhaseRate="1e-3"
+	targetPhaseName="oil"/>
       <WellControls
         name="wellControls2"
         type="injector"
-        control="liquidRate"
+        control="totalVolRate"
+	referenceElevation="2"	
         targetBHP="1e8"
-        targetRate="1e-4"
+        targetTotalRate="1e-7"
         injectionStream="{ 0.1, 0.1, 0.1, 0.7 }"/>
     </CompositionalMultiphaseWell>
   </Solvers>

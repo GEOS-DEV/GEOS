@@ -337,6 +337,13 @@ protected:
    */
   void ValidateInjectionStreams( MeshLevel const & meshLevel ) const;
 
+  /**
+   * @brief Make sure that the well constraints are compatible
+   * @param meshLevel the mesh level object (to loop over wells)
+   * @param fluid the fluid model (to get the target phase index)
+   */
+  void ValidateWellConstraints( MeshLevel const & meshLevel, constitutive::MultiFluidBase const & fluid );
+
 private:
 
   /**
@@ -389,8 +396,8 @@ private:
   /// flag indicating whether local (cell-wise) chopping of negative compositions is allowed
   integer m_allowCompDensChopping;
 
-  /// index of the oil phase, used to impose the oil phase constraint
-  localIndex m_oilPhaseIndex;
+  /// index of the target phase, used to impose the phase rate constraint
+  localIndex m_targetPhaseIndex;
 
   /// views into reservoir primary variable fields
 

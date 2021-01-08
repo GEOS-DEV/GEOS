@@ -96,6 +96,26 @@ void SinglePhaseWell::InitializePreSubGroups( Group * const rootGroup )
   MeshLevel & meshLevel = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
 
   ValidateModelMapping< SingleFluidBase >( *meshLevel.getElemManager(), m_fluidModelNames );
+  ValidateWellConstraints( meshLevel );
+}
+
+void SinglePhaseWell::ValidateWellConstraints( MeshLevel const & meshLevel ) const
+{
+  // now that we know we are single-phase, we can check a few things in the constraints
+  forTargetSubRegions< WellElementSubRegion >( meshLevel, [&]( localIndex const,
+                                                               WellElementSubRegion const & subRegion )
+  {
+    WellControls const & wellControls = GetWellControls( subRegion );
+    WellControls::Control const currentControl = wellControls.GetControl();
+    real64 const targetTotalRate = wellControls.GetTargetTotalRate();
+    real64 const targetPhaseRate = wellControls.GetTargetPhaseRate();
+    GEOSX_ERROR_IF( currentControl == WellControls::Control::PHASEVOLRATE,
+                    "Phase rate control is not available for SinglePhaseWell" );
+    GEOSX_ERROR_IF( isZero( targetTotalRate ),
+                    "Target total rate cannot be equal to zero" );
+    GEOSX_ERROR_IF( !isZero( targetPhaseRate ),
+                    "Target phase rate cannot be used for SinglePhaseWell" );
+  } );
 }
 
 void SinglePhaseWell::UpdateBHPForConstraint( WellElementSubRegion & subRegion, localIndex const targetIndex )
@@ -223,6 +243,11 @@ void SinglePhaseWell::UpdateVolRateForConstraint( WellElementSubRegion & subRegi
         real64 const surfacePres = 101325.0;
         // we need to compute the surface density
         fluidWrapper.Update( iwelemRef, 0, surfacePres );
+      }
+      else
+      {
+        real64 const refPres = pres[iwelemRef] + dPres[iwelemRef];
+        fluidWrapper.Update( iwelemRef, 0, refPres );
       }
 
       real64 const densInv = 1.0 / dens[iwelemRef][0];
@@ -431,16 +456,13 @@ void SinglePhaseWell::FormPressureRelations( DomainPartition const & domain,
 
       if( wellControls.GetControl() == WellControls::Control::BHP )
       {
-        wellControls.SetControl( WellControls::Control::TOTALVOLRATE,
-                                 wellControls.GetTargetRate() );
+        wellControls.SwitchToTotalRateControl( wellControls.GetTargetTotalRate() );
         GEOSX_LOG_LEVEL_RANK_0( 1, "Control switch for well " << subRegion.getName()
                                                               << " from BHP constraint to rate constraint" );
       }
       else
       {
-        wellControls.SetControl( WellControls::Control::BHP,
-                                 wellControls.GetTargetBHP() );
-
+        wellControls.SwitchToBHPControl( wellControls.GetTargetBHP() );
         GEOSX_LOG_LEVEL_RANK_0( 1, "Control switch for well " << subRegion.getName()
                                                               << " from rate constraint to BHP constraint" );
       }

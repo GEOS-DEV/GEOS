@@ -31,8 +31,9 @@ WellControls::WellControls( string const & name, Group * const parent )
   m_refGravCoef( 0.0 ),
   m_currentControl( Control::BHP ),
   m_targetBHP( 0.0 ),
-  m_targetRate( 0.0 ),
-  m_targetOilRate( 0.0 ),
+  m_targetTotalRate( 0.0 ),
+  m_targetPhaseRate( 0.0 ),
+  m_targetPhaseName( "" ),
   m_useSurfaceConditions( 0 )
 {
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
@@ -50,15 +51,21 @@ WellControls::WellControls( string const & name, Group * const parent )
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "Target bottom-hole pressure" );
 
-  registerWrapper( viewKeyStruct::targetRateString, &m_targetRate )->
-    setDefaultValue( -1 )->
-    setInputFlag( InputFlags::REQUIRED )->
-    setDescription( "Target rate" );
-
-  registerWrapper( viewKeyStruct::targetOilRateString, &m_targetOilRate )->
-    setDefaultValue( 1e9 )->
+  registerWrapper( viewKeyStruct::targetTotalRateString, &m_targetTotalRate )->
+    setDefaultValue( 0.0 )->
     setInputFlag( InputFlags::OPTIONAL )->
-    setDescription( "Target oil rate" );
+    setDescription( "Target total volumetric rate" );
+
+  registerWrapper( viewKeyStruct::targetPhaseRateString, &m_targetPhaseRate )->
+    setDefaultValue( 0.0 )->
+    setInputFlag( InputFlags::OPTIONAL )->
+    setDescription( "Target phase volumetric rate" );
+
+  registerWrapper( viewKeyStruct::targetPhaseNameString, &m_targetPhaseName )->
+    setDefaultValue( "" )->
+    setInputFlag( InputFlags::OPTIONAL )->
+    setDescription( "Name of the target phase" );
+
 
   registerWrapper( viewKeyStruct::refElevString, &m_refElevation )->
     setDefaultValue( -1 )->
@@ -83,21 +90,23 @@ WellControls::WellControls( string const & name, Group * const parent )
 WellControls::~WellControls()
 {}
 
-
-void WellControls::SetControl( Control control,
-                               real64 const & val )
+void WellControls::SwitchToBHPControl( real64 const & val )
 {
-  m_currentControl = control;
-  if( control == Control::BHP )
-  {
-    m_targetBHP = val;
-  }
-  else
-  {
-    m_targetRate = val;
-  }
+  m_currentControl = Control::BHP;
+  m_targetBHP = val;
 }
 
+void WellControls::SwitchToTotalRateControl( real64 const & val )
+{
+  m_currentControl = Control::TOTALVOLRATE;
+  m_targetTotalRate = val;
+}
+
+void WellControls::SwitchToPhaseRateControl( real64 const & val )
+{
+  m_currentControl = Control::PHASEVOLRATE;
+  m_targetPhaseRate = val;
+}
 
 void WellControls::PostProcessInput()
 {
@@ -108,11 +117,11 @@ void WellControls::PostProcessInput()
   }
 
   // 3.b) check target rates
-  if( m_targetRate < 0 )
+  if( m_targetTotalRate < 0 )
   {
     GEOSX_ERROR( "Target rate for well "<< getName() << " is negative" );
   }
-  if( m_targetOilRate < 0 )
+  if( m_targetPhaseRate < 0 )
   {
     GEOSX_ERROR( "Target oil rate for well "<< getName() << " is negative" );
   }
@@ -135,6 +144,10 @@ void WellControls::PostProcessInput()
   GEOSX_ERROR_IF( m_useSurfaceConditions != 0 && m_useSurfaceConditions != 1,
                   "The flag to select surface/reservoir conditions must be equal to 0 or 1" );
 
+  // 6) check that at least one rate constraint has been defined
+  GEOSX_ERROR_IF( m_targetPhaseRate <= 0.0 && m_targetTotalRate <= 0.0,
+                  "You need to specify a phase rate constraint for producers, and a total rate constraint for injectors" );
+
 }
 
 
@@ -142,10 +155,10 @@ void WellControls::InitializePostInitialConditions_PreSubGroups( Group * const G
 {
   // for a producer, the solvers compute negative rates, so we adjust the input here
   if( GetType() == Type::PRODUCER
-      && (m_targetOilRate > 0.0 || m_targetRate > 0.0) )
+      && (m_targetPhaseRate > 0.0 || m_targetTotalRate > 0.0) )
   {
-    m_targetOilRate *= -1;
-    m_targetRate *= -1;
+    m_targetTotalRate *= -1;
+    m_targetPhaseRate *= -1;
   }
 }
 
