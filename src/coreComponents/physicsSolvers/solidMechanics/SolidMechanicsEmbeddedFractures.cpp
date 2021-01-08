@@ -320,15 +320,15 @@ void SolidMechanicsEmbeddedFractures::AddCouplingNumNonzeros( DomainPartition & 
   globalIndex const rankOffset = dofManager.rankOffset();
 
   SurfaceElementRegion const & fractureRegion =
-      *(elemManager.GetRegion< SurfaceElementRegion >( getFractureRegionName() ) );
+    *(elemManager.GetRegion< SurfaceElementRegion >( getFractureRegionName() ) );
 
   EmbeddedSurfaceSubRegion const & embeddedSurfaceSubRegion =
-      *(fractureRegion.GetSubRegion< EmbeddedSurfaceSubRegion >( 0 ));
+    *(fractureRegion.GetSubRegion< EmbeddedSurfaceSubRegion >( 0 ));
 
   arrayView1d< globalIndex const > const &
-      jumpDofNumber = embeddedSurfaceSubRegion.getReference< array1d< globalIndex > >( jumpDofKey );
+  jumpDofNumber = embeddedSurfaceSubRegion.getReference< array1d< globalIndex > >( jumpDofKey );
 
-  elemManager.forElementSubRegions< CellElementSubRegion > ( [&]( CellElementSubRegion const & cellElementSubRegion )
+  elemManager.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & cellElementSubRegion )
   {
     SortedArrayView< localIndex const > const fracturedElements = cellElementSubRegion.fracturedElementsList();
 
@@ -338,10 +338,10 @@ void SolidMechanicsEmbeddedFractures::AddCouplingNumNonzeros( DomainPartition & 
 
     arrayView1d< integer const > const & ghostRank = cellElementSubRegion.ghostRank();
 
-    for ( localIndex ei=0; ei<fracturedElements.size(); ++ei )
+    for( localIndex ei=0; ei<fracturedElements.size(); ++ei )
     {
       localIndex const cellIndex = fracturedElements[ei];
-      if ( ghostRank[cellIndex] )
+      if( ghostRank[cellIndex] )
       {
         localIndex k = cellsToEmbeddedSurfaces[cellIndex][0];
         localIndex const localRow = LvArray::integerConversion< localIndex >( jumpDofNumber[k] - rankOffset );
@@ -355,7 +355,8 @@ void SolidMechanicsEmbeddedFractures::AddCouplingNumNonzeros( DomainPartition & 
       {
         const localIndex & node = cellElementSubRegion.nodeList( cellIndex, a );
         localIndex const localDispRow = LvArray::integerConversion< localIndex >( dispDofNumber[node] - rankOffset );
-        if ( localDispRow < 0 || localDispRow >= rowLengths.size() ) continue;
+        if( localDispRow < 0 || localDispRow >= rowLengths.size() )
+          continue;
         for( int d=0; d<3; ++d )
         {
           rowLengths[localDispRow + d] += 3;
@@ -363,7 +364,7 @@ void SolidMechanicsEmbeddedFractures::AddCouplingNumNonzeros( DomainPartition & 
       }
     }
 
-  });
+  } );
 }
 
 void SolidMechanicsEmbeddedFractures::AddCouplingSparsityPattern( DomainPartition const & domain,
@@ -384,17 +385,17 @@ void SolidMechanicsEmbeddedFractures::AddCouplingSparsityPattern( DomainPartitio
   globalIndex const rankOffset = dofManager.rankOffset();
 
   SurfaceElementRegion const & fractureRegion =
-      *(elemManager.GetRegion< SurfaceElementRegion >( getFractureRegionName() ) );
+    *(elemManager.GetRegion< SurfaceElementRegion >( getFractureRegionName() ) );
 
   EmbeddedSurfaceSubRegion const & embeddedSurfaceSubRegion =
-      *(fractureRegion.GetSubRegion< EmbeddedSurfaceSubRegion >( 0 ));
+    *(fractureRegion.GetSubRegion< EmbeddedSurfaceSubRegion >( 0 ));
 
   arrayView1d< globalIndex const > const &
   jumpDofNumber = embeddedSurfaceSubRegion.getReference< array1d< globalIndex > >( jumpDofKey );
 
   static constexpr int maxNumDispDof = 3 * 8;
 
-  elemManager.forElementSubRegions< CellElementSubRegion > ( [&]( CellElementSubRegion const & cellElementSubRegion )
+  elemManager.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & cellElementSubRegion )
   {
     SortedArrayView< localIndex const > const fracturedElements = cellElementSubRegion.fracturedElementsList();
 
@@ -402,7 +403,7 @@ void SolidMechanicsEmbeddedFractures::AddCouplingSparsityPattern( DomainPartitio
 
     localIndex const numDispDof = 3*cellElementSubRegion.numNodesPerElement();
 
-    for ( localIndex ei=0; ei<fracturedElements.size(); ++ei )
+    for( localIndex ei=0; ei<fracturedElements.size(); ++ei )
     {
       localIndex const cellIndex = fracturedElements[ei];
       localIndex k = cellsToEmbeddedSurfaces[cellIndex][0];
@@ -417,7 +418,8 @@ void SolidMechanicsEmbeddedFractures::AddCouplingSparsityPattern( DomainPartitio
       {
         eqnRowIndicesJump[idof] = jumpDofNumber[k] + idof - rankOffset;
         dofColIndicesJump[idof] = jumpDofNumber[k] + idof;
-      };
+      }
+      ;
 
       for( localIndex a=0; a<cellElementSubRegion.numNodesPerElement(); ++a )
       {
@@ -452,7 +454,7 @@ void SolidMechanicsEmbeddedFractures::AddCouplingSparsityPattern( DomainPartitio
       }
     }
 
-  });
+  } );
 }
 
 void SolidMechanicsEmbeddedFractures::ApplyBoundaryConditions( real64 const time,
