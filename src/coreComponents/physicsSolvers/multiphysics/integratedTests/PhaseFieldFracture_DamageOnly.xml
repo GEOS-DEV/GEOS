@@ -32,17 +32,15 @@
             logLevel="0"/>
     </SolidMechanicsLagrangianSSLE>
 
-    <PhaseFieldDamageFEM
-      name="DamageSolve"
-      discretization="FE1"
-      timeIntegrationOption="SteadyState"
-      fieldName="Damage"
-      solidMaterialNames="{ shale }"
-      localDissipation="Quadratic"
-      lengthScale="0.2"
-      criticalFractureEnergy="2.7"
-      logLevel="1"
-      targetRegions="{ Region1 }"/>
+    <PhaseFieldDamageFEM name="DamageSolve"
+                discretization="FE1"
+                timeIntegrationOption="SteadyState"
+                fieldName="Damage"
+                solidMaterialNames="{shale}"
+                localDissipation = "Linear"
+                logLevel="1"
+                targetRegions="{Region1}">
+    </PhaseFieldDamageFEM>
   </Solvers>
 
   <!-- <Mesh>
@@ -117,7 +115,11 @@
       name="shale"
       defaultDensity="2700"
       defaultBulkModulus="1.7500e5"
-      defaultShearModulus="8.0769e4"/>
+      defaultShearModulus="8.0769e4"
+      lengthScale="0.2"
+      criticalFractureEnergy="2.7"
+      criticalStrainEnergy="1.5"
+      />
   </Constitutive>
 
   <FieldSpecifications>
@@ -158,10 +160,11 @@
     <!-- These are example mathpresso functions.  In order to use them, you need to specify the order that the
     symbolic math function should expect the variables to be given, and an expression that it will compile.
     A list of available functions is given here: https://github.com/kobalicek/mathpresso -->
-    <TableFunction name="f_b"
-                   inputVarNames="{time}"
-                   coordinates="{0, 2}"
-                   values="{-0.5, 1.5}"/>
+    <TableFunction 
+      name="f_b"
+      inputVarNames="{time}"
+      coordinates="{0, 130}"
+      values = "{-0.5, 129.5}"/>
   </Functions>
 
   <Outputs>

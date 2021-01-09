@@ -15,4 +15,8 @@ install-*
 *.DS_Store
 /build/
 /Default/
+/debugTests/
 /Debug/
+uberenv_libs
+spack-*.txt
+*~

@@ -82,11 +82,11 @@ struct SolidModelDiscretizationOpsIsotropic : public SolidModelDiscretizationOps
   GEOSX_FORCE_INLINE
   void scaleParams( real64 const scale )
   {
-    m_lambda *= scale;
+    m_bulkModulus *= scale;
     m_shearModulus *= scale;
   }
 
-  real64 m_lambda;        ///< First Lam'e parameter
+  real64 m_bulkModulus;   ///< Bulk modulus
   real64 m_shearModulus;  ///< Shear modulus
 };
 
@@ -103,9 +103,12 @@ void SolidModelDiscretizationOpsIsotropic::upperBTDB( BASIS_GRADIENT const & gra
                                                       real64 const & detJxW,
                                                       real64 (& elementStiffness)[NUM_SUPPORT_POINTS *3][NUM_SUPPORT_POINTS *3] )
 {
-  real64 const lambda2G = ( 2 * m_shearModulus + m_lambda ) * detJxW;
-  real64 const lambda = this->m_lambda * detJxW;
   real64 const G = this->m_shearModulus * detJxW;
+  real64 const K = this->m_bulkModulus * detJxW;
+
+  real64 const lambda = conversions::BulkModAndShearMod::toFirstLame( K, G );
+  real64 const lambda2G = lambda + 2*G;
+
   SolidModelDiscretizationOps::upperBTDB< NUM_SUPPORT_POINTS >( gradN,
                                                                 elementStiffness,
                                                                 [ lambda,
@@ -137,9 +140,11 @@ void SolidModelDiscretizationOpsIsotropic::diagBTDB( BASIS_GRADIENT const & grad
                                                      real64 const & detJxW,
                                                      real64 (& diagElementStiffness)[NUM_SUPPORT_POINTS *3] )
 {
-  real64 const lambda2G = ( 2 * m_shearModulus + m_lambda ) * detJxW;
-  real64 const lambda = this->m_lambda * detJxW;
   real64 const G = this->m_shearModulus * detJxW;
+  real64 const K = this->m_bulkModulus * detJxW;
+
+  real64 const lambda = conversions::BulkModAndShearMod::toFirstLame( K, G );
+  real64 const lambda2G = lambda + 2*G;
 
   SolidModelDiscretizationOps::diagBTDB< NUM_SUPPORT_POINTS >( gradN,
                                                                diagElementStiffness,
@@ -166,9 +171,12 @@ void SolidModelDiscretizationOpsIsotropic::diagRowSumBTDB( BASIS_GRADIENT const 
                                                            real64 const & detJxW,
                                                            real64 ( & diagSumElementStiffness )[NUM_SUPPORT_POINTS*3] )
 {
-  real64 const lambda2G = ( 2 * m_shearModulus + m_lambda ) * detJxW;
-  real64 const lambda = this->m_lambda * detJxW;
   real64 const G = this->m_shearModulus * detJxW;
+  real64 const K = this->m_bulkModulus * detJxW;
+
+  real64 const lambda = conversions::BulkModAndShearMod::toFirstLame( K, G );
+  real64 const lambda2G = lambda + 2*G;
+
   SolidModelDiscretizationOps::diagRowSumBTDB< NUM_SUPPORT_POINTS >( gradN,
                                                                      diagSumElementStiffness,
                                                                      [ lambda,

@@ -155,6 +155,20 @@ Element: DamageElasticIsotropic
 .. include:: ../../coreComponents/fileIO/schema/docs/DamageElasticIsotropic.rst
 
 
+.. _XML_DamageSpectralElasticIsotropic:
+
+Element: DamageSpectralElasticIsotropic
+=======================================
+.. include:: ../../coreComponents/fileIO/schema/docs/DamageSpectralElasticIsotropic.rst
+
+
+.. _XML_DamageVolDevElasticIsotropic:
+
+Element: DamageVolDevElasticIsotropic
+=====================================
+.. include:: ../../coreComponents/fileIO/schema/docs/DamageVolDevElasticIsotropic.rst
+
+
 .. _XML_Dirichlet:
 
 Element: Dirichlet
@@ -272,6 +286,13 @@ Element: Geometry
 Element: HaltEvent
 ==================
 .. include:: ../../coreComponents/fileIO/schema/docs/HaltEvent.rst
+
+
+.. _XML_HybridMimeticDiscretization:
+
+Element: HybridMimeticDiscretization
+====================================
+.. include:: ../../coreComponents/fileIO/schema/docs/HybridMimeticDiscretization.rst
 
 
 .. _XML_Hydrofracture:
@@ -838,6 +859,20 @@ Datastructure: DamageElasticIsotropic
 .. include:: ../../coreComponents/fileIO/schema/docs/DamageElasticIsotropic_other.rst
 
 
+.. _DATASTRUCTURE_DamageSpectralElasticIsotropic:
+
+Datastructure: DamageSpectralElasticIsotropic
+=============================================
+.. include:: ../../coreComponents/fileIO/schema/docs/DamageSpectralElasticIsotropic_other.rst
+
+
+.. _DATASTRUCTURE_DamageVolDevElasticIsotropic:
+
+Datastructure: DamageVolDevElasticIsotropic
+===========================================
+.. include:: ../../coreComponents/fileIO/schema/docs/DamageVolDevElasticIsotropic_other.rst
+
+
 .. _DATASTRUCTURE_Dirichlet:
 
 Datastructure: Dirichlet
@@ -962,6 +997,13 @@ Datastructure: Geometry
 Datastructure: HaltEvent
 ========================
 .. include:: ../../coreComponents/fileIO/schema/docs/HaltEvent_other.rst
+
+
+.. _DATASTRUCTURE_HybridMimeticDiscretization:
+
+Datastructure: HybridMimeticDiscretization
+==========================================
+.. include:: ../../coreComponents/fileIO/schema/docs/HybridMimeticDiscretization_other.rst
 
 
 .. _DATASTRUCTURE_Hydrofracture:

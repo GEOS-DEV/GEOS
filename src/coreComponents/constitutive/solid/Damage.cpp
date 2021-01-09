@@ -1,3 +1,4 @@
+
 /*
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
@@ -31,7 +32,10 @@ template< typename BASE >
 Damage< BASE >::Damage( string const & name, Group * const parent ):
   BASE( name, parent ),
   m_damage(),
-  m_strainEnergyDensity()
+  m_strainEnergyDensity(),
+  m_lengthScale(),
+  m_criticalFractureEnergy(),
+  m_criticalStrainEnergy()
 {
   this->registerWrapper( viewKeyStruct::damageString, &m_damage )->
     setApplyDefaultValue( 0.0 )->
@@ -42,6 +46,18 @@ Damage< BASE >::Damage( string const & name, Group * const parent ):
     setApplyDefaultValue( 0.0 )->
     setPlotLevel( PlotLevel::LEVEL_0 )->
     setDescription( "Strain Energy Density" );
+
+  this->registerWrapper( viewKeyStruct::lengthScaleString, &m_lengthScale )->
+    setInputFlag( InputFlags::REQUIRED )->
+    setDescription( "Length scale l in the phase-field equation" );
+
+  this->registerWrapper( viewKeyStruct::criticalFractureEnergyString, &m_criticalFractureEnergy )->
+    setInputFlag( InputFlags::REQUIRED )->
+    setDescription( "Critical fracture energy" );
+
+  this->registerWrapper( viewKeyStruct::criticalStrainEnergyString, &m_criticalStrainEnergy )->
+    setInputFlag( InputFlags::REQUIRED )->
+    setDescription( "Critical stress in a 1d tension test" );
 }
 
 template< typename BASE >

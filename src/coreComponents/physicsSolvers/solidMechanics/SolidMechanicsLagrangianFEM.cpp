@@ -1096,9 +1096,9 @@ void SolidMechanicsLagrangianFEM::AssembleSystem( real64 const GEOSX_UNUSED_PARA
   {
     GEOSX_LOG_RANK_0( "After SolidMechanicsLagrangianFEM::AssembleSystem" );
     GEOSX_LOG_RANK_0( "\nJacobian:\n" );
-//    std::cout<< matrix;
+    //std::cout<< localMatrix;
     GEOSX_LOG_RANK_0( "\nResidual:\n" );
-//    std::cout<< rhs;
+    std::cout<< localRhs;
   }
 }
 

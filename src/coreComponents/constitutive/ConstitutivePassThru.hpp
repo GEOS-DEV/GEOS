@@ -21,7 +21,8 @@
 #define GEOSX_CONSTITUTIVE_CONSTITUTIVEPASSTHRU_HPP_
 
 #include "NullModel.hpp"
-#include "solid/Damage.hpp"
+#include "solid/DamageVolDev.hpp"
+#include "solid/DamageSpectral.hpp"
 #include "solid/DruckerPrager.hpp"
 #include "solid/ElasticIsotropic.hpp"
 #include "solid/ElasticTransverseIsotropic.hpp"
@@ -58,12 +59,19 @@ struct ConstitutivePassThru< SolidBase >
   {
     GEOSX_ERROR_IF( constitutiveRelation == nullptr, "ConstitutiveBase* == nullptr" );
 
-    if( dynamic_cast< Damage< ElasticIsotropic > * >( constitutiveRelation ) )
+    if( dynamic_cast< DamageSpectral< ElasticIsotropic > * >( constitutiveRelation ) )
+    {
+      lambda( static_cast< DamageSpectral< ElasticIsotropic > * >( constitutiveRelation) );
+    }
+    else if( dynamic_cast< DamageVolDev< ElasticIsotropic > * >( constitutiveRelation ) )
+    {
+      lambda( static_cast< DamageVolDev< ElasticIsotropic > * >( constitutiveRelation) );
+    }
+    else if( dynamic_cast< Damage< ElasticIsotropic > * >( constitutiveRelation ) )
     {
       lambda( static_cast< Damage< ElasticIsotropic > * >( constitutiveRelation) );
     }
-    else if( dynamic_cast< DruckerPrager * >( constitutiveRelation ) ) // NOTE: switch order matters because DP derives
-                                                                       // from ElasticIsotropic
+    else if( dynamic_cast< DruckerPrager * >( constitutiveRelation ) ) // NOTE: switch order matters because DP derives from ElasticIsotropic
     {
       lambda( static_cast< DruckerPrager * >( constitutiveRelation) );
     }
@@ -171,7 +179,15 @@ struct ConstitutivePassThru< DamageBase >
   {
     GEOSX_ERROR_IF( constitutiveRelation == nullptr, "ConstitutiveBase* == nullptr" );
 
-    if( dynamic_cast< Damage< ElasticIsotropic > * >( constitutiveRelation ) )
+    if( dynamic_cast< DamageSpectral< ElasticIsotropic > * >( constitutiveRelation ) )
+    {
+      lambda( static_cast< DamageSpectral< ElasticIsotropic > * >( constitutiveRelation) );
+    }
+    else if( dynamic_cast< DamageVolDev< ElasticIsotropic > * >( constitutiveRelation ) )
+    {
+      lambda( static_cast< DamageVolDev< ElasticIsotropic > * >( constitutiveRelation) );
+    }
+    else if( dynamic_cast< Damage< ElasticIsotropic > * >( constitutiveRelation ) )
     {
       lambda( static_cast< Damage< ElasticIsotropic > * >( constitutiveRelation) );
     }

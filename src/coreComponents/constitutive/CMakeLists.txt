@@ -33,10 +33,13 @@ set( constitutive_headers
      fluid/ProppantSlurryFluid.hpp
      fluid/ParticleFluidBase.hpp
      fluid/particleFluidSelector.hpp
+     solid/Damage.hpp
+     solid/DamageVolDev.hpp
+     solid/DamageSpectral.hpp
+     solid/DamageSpectralUtilities.hpp
+     solid/DruckerPrager.hpp
      solid/ElasticIsotropic.hpp
      solid/ElasticTransverseIsotropic.hpp
-     solid/Damage.hpp
-     solid/DruckerPrager.hpp
      solid/PoroElastic.hpp
      solid/PoreVolumeCompressibleSolid.hpp
      solid/PropertyConversions.hpp
@@ -82,6 +85,8 @@ set( constitutive_sources
      fluid/ParticleFluidBase.cpp
      fluid/ParticleFluid.cpp               
      solid/Damage.cpp
+     solid/DamageVolDev.cpp
+     solid/DamageSpectral.cpp
      solid/DruckerPrager.cpp
      solid/ElasticIsotropic.cpp
      solid/ElasticTransverseIsotropic.cpp
