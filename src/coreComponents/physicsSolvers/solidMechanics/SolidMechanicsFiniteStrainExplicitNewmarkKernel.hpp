@@ -183,9 +183,9 @@ public:
 
     real64 Rot[ 3 ][ 3 ];
     real64 Dadt[ 6 ];
-    real64 stress[ 6 ];
-
     HughesWinget( Rot, Dadt, Ldt );
+
+    real64 stress[ 6 ] = { };
     m_constitutiveUpdate.hypoUpdate_StressOnly( k, q, Dadt, Rot, stress );
 
     real64 P[ 3 ][ 3 ];
@@ -193,7 +193,6 @@ public:
     LvArray::tensorOps::scale< 3, 3 >( P, -detJ * detF );
 
     FE_TYPE::plus_gradNajAij( dNdX, P, stack.fLocal );
-
   }
 
 

@@ -244,7 +244,7 @@ public:
     real64 const detJ = m_finiteElementSpace.template getGradN< FE_TYPE >( k, q, stack.xLocal, dNdX );
 
     real64 strainInc[6] = {0};
-    real64 stress[6];
+    real64 stress[6] = {0};
 
     typename CONSTITUTIVE_TYPE::KernelWrapper::DiscretizationOps stiffness;
 
