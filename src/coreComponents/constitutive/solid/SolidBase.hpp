@@ -324,12 +324,12 @@ public:
                                       real64 const ( &Rot )[3][3],
                                       real64 ( & stress )[6] ) const
   {
-    GEOSX_UNUSED_VAR(k);
-    GEOSX_UNUSED_VAR(q);
-    GEOSX_UNUSED_VAR(Ddt);
-    GEOSX_UNUSED_VAR(Rot);
-    GEOSX_UNUSED_VAR(stress);
-    GEOSX_ERROR( "hypoUpdate_StressOnly() not implemented for this model" );
+    smallStrainUpdate_StressOnly( k, q, Ddt, stress );
+
+    real64 temp[6] = { 0 };
+    LvArray::tensorOps::Rij_eq_AikSymBklAjl< 3 >( temp, Rot, m_newStress[ k ][ q ] );
+    LvArray::tensorOps::copy< 6 >( stress, temp );
+    saveStress( k, q, stress );
   }
 
   /**
