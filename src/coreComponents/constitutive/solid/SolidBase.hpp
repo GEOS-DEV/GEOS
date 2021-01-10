@@ -279,10 +279,10 @@ public:
                                              real64 const ( &strainIncrement )[6],
                                              real64 ( & stress )[6] ) const
   {
-    GEOSX_UNUSED_VAR(k);
-    GEOSX_UNUSED_VAR(q);
-    GEOSX_UNUSED_VAR(strainIncrement);
-    GEOSX_UNUSED_VAR(stress);
+    GEOSX_UNUSED_VAR( k );
+    GEOSX_UNUSED_VAR( q );
+    GEOSX_UNUSED_VAR( strainIncrement );
+    GEOSX_UNUSED_VAR( stress );
     GEOSX_ERROR( "smallStrainUpdate_StressOnly() not implemented for this model" );
   }
 
@@ -301,10 +301,10 @@ public:
                                                     real64 const ( &totalStrain )[6],
                                                     real64 ( & stress )[6] ) const
   {
-    GEOSX_UNUSED_VAR(k);
-    GEOSX_UNUSED_VAR(q);
-    GEOSX_UNUSED_VAR(totalStrain);
-    GEOSX_UNUSED_VAR(stress);
+    GEOSX_UNUSED_VAR( k );
+    GEOSX_UNUSED_VAR( q );
+    GEOSX_UNUSED_VAR( totalStrain );
+    GEOSX_UNUSED_VAR( stress );
     GEOSX_ERROR( "smallStrainNoStateUpdate_StressOnly() not implemented for this model" );
   }
 
@@ -346,10 +346,10 @@ public:
                                        real64 const ( &FminusI )[3][3],
                                        real64 ( & stress )[6] ) const
   {
-    GEOSX_UNUSED_VAR(k);
-    GEOSX_UNUSED_VAR(q);
-    GEOSX_UNUSED_VAR(FminusI);
-    GEOSX_UNUSED_VAR(stress);
+    GEOSX_UNUSED_VAR( k );
+    GEOSX_UNUSED_VAR( q );
+    GEOSX_UNUSED_VAR( FminusI );
+    GEOSX_UNUSED_VAR( stress );
     GEOSX_ERROR( "hyperUpdate_StressOnly() not implemented for this model" );
   }
 
@@ -449,7 +449,7 @@ public:
    */
   virtual ~SolidBase() override;
 
-  /** 
+  /**
    * @brief Allocate constitutive arrays
    * @param parent Object's parent group (element subregion)
    * @param numConstitutivePointsPerParentIndex Number of quadrature points per element

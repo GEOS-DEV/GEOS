@@ -93,8 +93,8 @@ public:
     real64 factor = getDegradationValue( k, q );
 
     stiffness.m_shearModulus *= factor;
-     
-    if(volStrain > 0)
+
+    if( volStrain > 0 )
     {
       stiffness.m_bulkModulus *= factor;
     }
@@ -111,7 +111,7 @@ public:
 
     // update strain energy density
     // TODO: refactor as a proper history variable update.  the code below doesn't allow for rewinds.
-   
+
     real64 sed = 0.5 * (stressP * volStrain + stressQ * devStrain);
 
     if( sed > m_strainEnergyDensity( k, q ) )

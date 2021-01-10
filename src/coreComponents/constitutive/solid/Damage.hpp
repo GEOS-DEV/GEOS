@@ -42,7 +42,7 @@
 #ifndef GEOSX_CONSTITUTIVE_SOLID_DAMAGE_HPP_
 #define GEOSX_CONSTITUTIVE_SOLID_DAMAGE_HPP_
 
-// TODO: switch is placed here for different dissipation functions, etc. 
+// TODO: switch is placed here for different dissipation functions, etc.
 //       if different damage models will use different functions, perhaps
 //       should explicitly name them rather than use macros.
 
@@ -169,7 +169,7 @@ public:
                                   localIndex const q,
                                   real64 const ( &strainIncrement )[6],
                                   real64 ( & stress )[6],
-                                  DiscretizationOps & stiffness ) const override 
+                                  DiscretizationOps & stiffness ) const override
   {
     UPDATE_BASE::smallStrainUpdate( k, q, strainIncrement, stress, stiffness );
     real64 factor = getDegradationValue( k, q );

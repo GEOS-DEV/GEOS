@@ -47,7 +47,7 @@ public:
    * @tparam PARAMS A variadic list of template parameters
    * @param inputBiotCoefficient The Biot coefficient
    * @param baseParams Constructor parameters passed from base class
-   */ 
+   */
   template< typename ... PARAMS >
   PoroElasticUpdates( real64 const & inputBiotCoefficient,
                       PARAMS && ... baseParams ):

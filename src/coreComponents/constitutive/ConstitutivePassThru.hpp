@@ -71,7 +71,8 @@ struct ConstitutivePassThru< SolidBase >
     {
       lambda( static_cast< Damage< ElasticIsotropic > * >( constitutiveRelation) );
     }
-    else if( dynamic_cast< DruckerPrager * >( constitutiveRelation ) ) // NOTE: switch order matters because DP derives from ElasticIsotropic
+    else if( dynamic_cast< DruckerPrager * >( constitutiveRelation ) ) // NOTE: switch order matters because DP derives from
+                                                                       // ElasticIsotropic
     {
       lambda( static_cast< DruckerPrager * >( constitutiveRelation) );
     }

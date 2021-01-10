@@ -29,7 +29,7 @@ namespace constitutive
 /// Isotropic implementation of the DiscOps concept
 struct SolidModelDiscretizationOpsIsotropic : public SolidModelDiscretizationOps
 {
-   /**
+  /**
    * @brief Compute upper portion of inner product matrix for solid mechanics, assuming D is symmetric
    * @tparam NUM_SUPPORT POINTS Number of support points (nodes) for this element
    * @tparam BASIS_GRADIENT Finite element shape function gradients type
@@ -44,7 +44,7 @@ struct SolidModelDiscretizationOpsIsotropic : public SolidModelDiscretizationOps
                   real64 const & detJxW,
                   real64 ( &elementStiffness )[NUM_SUPPORT_POINTS*3][NUM_SUPPORT_POINTS*3] );
 
-   /**
+  /**
    * @brief Compute diagonal of inner product matrix for solid mechanics
    * @tparam NUM_SUPPORT POINTS Number of support points (nodes) for this element
    * @tparam BASIS_GRADIENT Finite element shape function gradients type
@@ -59,7 +59,7 @@ struct SolidModelDiscretizationOpsIsotropic : public SolidModelDiscretizationOps
                  real64 const & detJxW,
                  real64 ( &diagElementStiffness )[NUM_SUPPORT_POINTS*3] );
 
-   /**
+  /**
    * @brief Compute row sum diagonal of inner product matrix for solid mechanics
    * @tparam NUM_SUPPORT POINTS Number of support points (nodes) for this element
    * @tparam BASIS_GRADIENT Finite element shape function gradients type

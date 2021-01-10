@@ -42,7 +42,7 @@ struct SolidModelDiscretizationOps
    * @tparam CBF Callback function
    * @param gradN Finite Element shape function gradients
    * @param elementStiffness Local stiffness matrix
-   * @param callbackFunction The callback function 
+   * @param callbackFunction The callback function
    */
   template< int NUM_SUPPORT_POINTS,
             typename BASIS_GRADIENT,
@@ -69,7 +69,7 @@ struct SolidModelDiscretizationOps
    * @tparam CBF Callback function
    * @param gradN Finite Element shape function gradients
    * @param diagElementStiffness Local stiffness matrix diagonal
-   * @param callbackFunction The callback function 
+   * @param callbackFunction The callback function
    */
   template< int NUM_SUPPORT_POINTS,
             typename BASIS_GRADIENT,
@@ -86,7 +86,7 @@ struct SolidModelDiscretizationOps
    * @tparam CBF Callback function
    * @param gradN Finite Element shape function gradients
    * @param diagSumElementStiffness Local stiffness matrix diagonal
-   * @param callbackFunction The callback function 
+   * @param callbackFunction The callback function
    */
   template< int NUM_SUPPORT_POINTS,
             typename BASIS_GRADIENT,

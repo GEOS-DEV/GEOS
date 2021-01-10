@@ -49,7 +49,7 @@ public:
                                   std::forward< PARAMS >( baseParams )... )
   {}
 
-  using DiscretizationOps = SolidModelDiscretizationOpsFullyAnisotroipic; // could maybe optimize, but general for now 
+  using DiscretizationOps = SolidModelDiscretizationOpsFullyAnisotroipic; // could maybe optimize, but general for now
 
   using DamageUpdates< UPDATE_BASE >::smallStrainNoStateUpdate;
   using DamageUpdates< UPDATE_BASE >::smallStrainUpdate;
@@ -73,8 +73,8 @@ public:
   virtual void smallStrainUpdate( localIndex const k,
                                   localIndex const q,
                                   real64 const ( &strainIncrement )[6],
-                                  real64 ( &stress )[6],
-                                  real64 ( &stiffness )[6][6] ) const override final
+                                  real64 ( & stress )[6],
+                                  real64 ( & stiffness )[6][6] ) const override final
   {
     // perform elastic update for "undamaged" stress
 
@@ -150,7 +150,7 @@ public:
         IxITensor[i][j] = 1.0;
       }
     }
-    
+
     // construct positive part
 
     real64 cPositive[6][6] = {};
@@ -188,7 +188,7 @@ public:
   virtual void smallStrainUpdate( localIndex const k,
                                   localIndex const q,
                                   real64 const ( &strainIncrement )[6],
-                                  real64 ( &stress )[6],
+                                  real64 ( & stress )[6],
                                   DiscretizationOps & stiffness ) const final
   {
     smallStrainUpdate( k, q, strainIncrement, stress, stiffness.m_c );

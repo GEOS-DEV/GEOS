@@ -242,7 +242,7 @@ void ElasticIsotropicUpdates::smallStrainNoStateUpdate( localIndex const k,
                                                         DiscretizationOps & stiffness ) const
 {
   smallStrainNoStateUpdate_StressOnly( k, q, totalStrain, stress );
-  stiffness.m_bulkModulus = m_bulkModulus[k];  
+  stiffness.m_bulkModulus = m_bulkModulus[k];
   stiffness.m_shearModulus = m_shearModulus[k];
 }
 
@@ -282,7 +282,7 @@ void ElasticIsotropicUpdates::smallStrainUpdate( localIndex const k,
                                                  DiscretizationOps & stiffness ) const
 {
   smallStrainUpdate_StressOnly( k, q, strainIncrement, stress );
-  stiffness.m_bulkModulus = m_bulkModulus[k];  
+  stiffness.m_bulkModulus = m_bulkModulus[k];
   stiffness.m_shearModulus = m_shearModulus[k];
 }
 
