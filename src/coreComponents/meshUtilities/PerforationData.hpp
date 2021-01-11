@@ -203,15 +203,6 @@ public:
   ///@{
 
   /**
-   * @brief Locate connected local mesh elements and resizes current object appropriately.
-   * @param[in] mesh target mesh level
-   * @param[in] wellGeometry  InternalWellGenerator containing the global well topology
-   */
-  void ConnectToMeshElements( MeshLevel const & mesh,
-                              InternalWellGenerator const & wellGeometry );
-
-
-  /**
    * @brief Connect each perforation to a local wellbore element.
    * @param[in] wellGeometry InternalWellGenerator containing the global well topology
    * @param[in] globalToLocalWellElementMap  global-to-local map of wellbore elements
@@ -296,9 +287,6 @@ private:
 
   ///@}
 
-  /// @cond DO_NOT_DOCUMENT
-  void DebugLocalPerforations() const;
-  /// @endcond
 
   /// Global number of perforations
   globalIndex m_numPerforationsGlobal;
