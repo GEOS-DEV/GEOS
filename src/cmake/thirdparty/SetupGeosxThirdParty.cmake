@@ -65,8 +65,8 @@ set(thirdPartyLibs "")
 include(cmake/thirdparty/FindMathLibraries.cmake)
 
 blt_register_library(NAME blas
-                      TREAT_INCLUDES_AS_SYSTEM ON
-                      LIBRARIES ${BLAS_LIBRARIES})
+                     TREAT_INCLUDES_AS_SYSTEM ON
+                     LIBRARIES ${BLAS_LIBRARIES})
 
 blt_register_library(NAME lapack
                      DEPENDS_ON blas
@@ -134,7 +134,8 @@ if(DEFINED CONDUIT_DIR)
     message(STATUS "CONDUIT_DIR = ${CONDUIT_DIR}")
 
     find_package(Conduit REQUIRED
-                 PATHS ${CONDUIT_DIR}/lib/cmake)
+                 PATHS ${CONDUIT_DIR}/lib/cmake
+                 NO_DEFAULT_PATH)
 
     set(thirdPartyLibs ${thirdPartyLibs} conduit::conduit )
 else()
@@ -167,7 +168,8 @@ if(DEFINED PUGIXML_DIR)
     message(STATUS "PUGIXML_DIR = ${PUGIXML_DIR}")
 
     find_package(pugixml REQUIRED
-                 PATHS ${PUGIXML_DIR})
+                 PATHS ${PUGIXML_DIR}
+                 NO_DEFAULT_PATH)
 
     set(ENABLE_PUGIXML ON CACHE BOOL "" FORCE)
     set(thirdPartyLibs ${thirdPartyLibs} pugixml)
@@ -182,7 +184,8 @@ if(DEFINED RAJA_DIR)
     message(STATUS "RAJA_DIR = ${RAJA_DIR}")
 
     find_package(RAJA REQUIRED
-                 PATHS ${RAJA_DIR})
+                 PATHS ${RAJA_DIR}
+                 NO_DEFAULT_PATH)
 
     get_target_property(RAJA_INCLUDE_DIRS RAJA INTERFACE_INCLUDE_DIRECTORIES)
     set_target_properties(RAJA
@@ -201,7 +204,8 @@ if(DEFINED UMPIRE_DIR)
     message(STATUS "UMPIRE_DIR = ${UMPIRE_DIR}")
 
     find_package(umpire REQUIRED
-                 PATHS ${UMPIRE_DIR})
+                 PATHS ${UMPIRE_DIR}
+                 NO_DEFAULT_PATH)
 
     set(ENABLE_UMPIRE ON CACHE BOOL "" FORCE)
     set(thirdPartyLibs ${thirdPartyLibs} umpire)
@@ -216,7 +220,8 @@ if(DEFINED CHAI_DIR)
     message(STATUS "CHAI_DIR = ${CHAI_DIR}")
 
     find_package(chai REQUIRED
-                 PATHS ${CHAI_DIR})
+                 PATHS ${CHAI_DIR}
+                 NO_DEFAULT_PATH)
 
     get_target_property(CHAI_INCLUDE_DIRS chai INTERFACE_INCLUDE_DIRECTORIES)
     set_target_properties(chai
@@ -235,7 +240,8 @@ if(DEFINED ADIAK_DIR)
     message(STATUS "ADIAK_DIR = ${ADIAK_DIR}")
 
     find_package(adiak REQUIRED
-                 PATHS ${ADIAK_DIR}/lib/cmake/adiak)
+                 PATHS ${ADIAK_DIR}/lib/cmake/adiak
+                 NO_DEFAULT_PATH)
 
     blt_register_library(NAME adiak
                          INCLUDES ${adiak_INCLUDE_DIRS}
@@ -260,7 +266,8 @@ if(DEFINED CALIPER_DIR)
     message(STATUS "CALIPER_DIR = ${CALIPER_DIR}")
 
     find_package(caliper REQUIRED
-                 PATHS ${CALIPER_DIR})
+                 PATHS ${CALIPER_DIR}
+                 NO_DEFAULT_PATH)
 
     blt_register_library(NAME caliper
                          INCLUDES ${caliper_INCLUDE_PATH}
@@ -478,7 +485,8 @@ endif()
 if(DEFINED VTK_DIR)
     message(STATUS "VTK_DIR = ${VTK_DIR}")
     find_package(VTK REQUIRED
-                 PATHS ${VTK_DIR})
+                 PATHS ${VTK_DIR}
+                 NO_DEFAULT_PATH)
 
     set(thirdPartyLibs ${thirdPartyLibs} vtk)
 else()
