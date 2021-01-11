@@ -52,6 +52,12 @@ template<>
 struct ConstitutivePassThru< SolidBase >
 {
 
+  // NOTE: The switch order here can be fragile if a model derives from another
+  //       model, as the dynamic_cast will also cast to a base version.
+  //       Models should be ordered such that children come before parents.
+  //       For example, DruckerPrager before ElasticIsotropic, DamageVolDev before
+  //       Damage, etc.
+
   template< typename LAMBDA >
   static
   void Execute( ConstitutiveBase * const constitutiveRelation,
@@ -71,8 +77,7 @@ struct ConstitutivePassThru< SolidBase >
     {
       lambda( static_cast< Damage< ElasticIsotropic > * >( constitutiveRelation) );
     }
-    else if( dynamic_cast< DruckerPrager * >( constitutiveRelation ) ) // NOTE: switch order matters because DP derives from
-                                                                       // ElasticIsotropic
+    else if( dynamic_cast< DruckerPrager * >( constitutiveRelation ) )
     {
       lambda( static_cast< DruckerPrager * >( constitutiveRelation) );
     }

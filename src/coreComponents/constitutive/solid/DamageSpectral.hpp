@@ -51,10 +51,7 @@ public:
 
   using DiscretizationOps = SolidModelDiscretizationOpsFullyAnisotroipic; // could maybe optimize, but general for now
 
-  using DamageUpdates< UPDATE_BASE >::smallStrainNoStateUpdate;
   using DamageUpdates< UPDATE_BASE >::smallStrainUpdate;
-  using DamageUpdates< UPDATE_BASE >::smallStrainNoStateUpdate_StressOnly;
-  using DamageUpdates< UPDATE_BASE >::smallStrainUpdate_StressOnly;
 
   using DamageUpdates< UPDATE_BASE >::getDegradationValue;
   using DamageUpdates< UPDATE_BASE >::getDegradationDerivative;

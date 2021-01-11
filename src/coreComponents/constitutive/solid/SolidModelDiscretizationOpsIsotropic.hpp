@@ -19,6 +19,7 @@
 #ifndef GEOSX_CONSTITUTIVE_SOLID_SOLIDMODELDISCRETIZATIONOPSISOTROPIC_HPP_
 #define GEOSX_CONSTITUTIVE_SOLID_SOLIDMODELDISCRETIZATIONOPSISOTROPIC_HPP_
 
+#include "PropertyConversions.hpp"
 #include "SolidModelDiscretizationOps.hpp"
 
 namespace geosx

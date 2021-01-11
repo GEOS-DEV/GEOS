@@ -90,6 +90,10 @@ public:
   using UPDATE_BASE::smallStrainUpdate;
   using UPDATE_BASE::smallStrainNoStateUpdate_StressOnly;
   using UPDATE_BASE::smallStrainUpdate_StressOnly;
+  using UPDATE_BASE::hypoUpdate;
+  using UPDATE_BASE::hypoUpdate_StressOnly;
+  using UPDATE_BASE::hyperUpdate;
+  using UPDATE_BASE::hyperUpdate_StressOnly;
 
   //Quasi-Quadratic Lorentz Degradation Function
   #if LORENTZ
@@ -181,6 +185,7 @@ public:
   // TODO: The code below assumes the strain energy density will never be
   //       evaluated in a non-converged / garbage configuration.
 
+  GEOSX_HOST_DEVICE
   virtual real64 getStrainEnergyDensity( localIndex const k,
                                          localIndex const q ) const override
   {

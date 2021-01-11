@@ -85,12 +85,21 @@ void strainDecomposition( real64 const ( &strain )[6],
   }
   devStrain = std::sqrt( devStrain );
 
-  for( localIndex i=0; i<6; ++i )
+  if( devStrain < 1e-12 )
   {
-    deviator[i] /= (devStrain + 1e-15); // perturbed to avoid divide by zero
+    for( localIndex i=0; i<6; ++i )
+    {
+      deviator[i] = 0;
+    }
+  }
+  else
+  {
+    for( localIndex i=0; i<6; ++i )
+    {
+      deviator[i] /= devStrain;
+    }
   }
   devStrain *= sqrt( 2./3. );
-
   return;
 }
 
@@ -131,9 +140,19 @@ void stressDecomposition( real64 const ( &stress )[6],
   }
   devStress = std::sqrt( devStress );
 
-  for( localIndex i=0; i<6; ++i )
+  if( devStress < 1e-12 )
   {
-    deviator[i] /= (devStress + 1e-15); // perturbed to avoid divide by zero
+    for( localIndex i=0; i<6; ++i )
+    {
+      deviator[i] = 0;
+    }
+  }
+  else
+  {
+    for( localIndex i=0; i<6; ++i )
+    {
+      deviator[i] /= devStress;
+    }
   }
   devStress *= sqrt( 3./2. );
 
