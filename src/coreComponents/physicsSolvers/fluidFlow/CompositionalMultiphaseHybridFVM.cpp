@@ -182,6 +182,10 @@ void CompositionalMultiphaseHybridFVM::PrecomputeData( MeshLevel & mesh )
     arrayView1d< real64 const > const & elemVolume = subRegion.getElementVolume();
     arrayView2d< localIndex const > const & elemToFaces = subRegion.faceList();
 
+    // here we precompute some quantities (mimFaceFracCoef) used in the FluxKernel to assemble the one-sided gravity term in the transport
+    // scheme
+    // This one-sided gravity term is currently always treated with TPFA, as in MRST.
+    // In the future, I will change that (here and in the FluxKernel) to have a consistent inner product for the gravity term as well
     SinglePhaseHybridFVMKernels::KernelLaunchSelector< mimeticInnerProduct::TPFAInnerProduct,
                                                        PrecomputeKernel >( subRegion.numFacesPerElement(),
                                                                            subRegion.size(),

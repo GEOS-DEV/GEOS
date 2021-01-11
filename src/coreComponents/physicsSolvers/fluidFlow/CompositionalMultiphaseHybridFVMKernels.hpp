@@ -366,6 +366,9 @@ struct FluxKernel
                                        lengthTolerance,
                                        transMatrix );
 
+      // currently the gravity term in the transport scheme is treated as in MRST, that is, always with TPFA
+      // this is why below we have to recompute the TPFA transmissibility in addition to the transmissibility matrix above
+      // TODO: treat the gravity term with a consistent inner product
       mimeticInnerProduct::TPFAInnerProduct::Compute< NF >( nodePosition,
                                                             transMultiplier,
                                                             faceToNodes,

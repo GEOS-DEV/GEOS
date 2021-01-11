@@ -565,7 +565,7 @@ struct UpwindingHelper
     }
     else if( NP == 3 )
     {
-      // TODO: implement the upwinding here
+      // TODO: implement the upwinding here (in progress)
     }
   }
 
