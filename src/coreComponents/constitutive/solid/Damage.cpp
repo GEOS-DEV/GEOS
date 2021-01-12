@@ -63,9 +63,9 @@ Damage< BASE >::Damage( string const & name, Group * const parent ):
     setDescription( "material critical stress in a 1d tension test" );
 }
 
-template< typename BASE >
-Damage< BASE >::~Damage()
-{}
+//template< typename BASE >
+//Damage< BASE >::~Damage()
+//{}
 
 template< typename BASE >
 void Damage< BASE >::PostProcessInput()
