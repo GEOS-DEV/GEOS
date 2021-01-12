@@ -789,6 +789,7 @@ Compute( localIndex const numPhases,
 
   //useful lambda
   // helpers lambda definition to avoid too much dulpication
+  // agnostic of upwind direction (unless want to introduce fancy density face def)
   auto dGravHead_dX =
     [&] (real64& GH, real64 dGH_dP[NUM_ELEMS], real64 dGH_dC[NUM_ELEMS][NC], real64 dPr_dC[NC], int kp)
     {
@@ -1075,26 +1076,27 @@ Compute( localIndex const numPhases,
         localIndex const esr_dw = sesri[k_dw];
         localIndex const ei_dw = sei[k_dw];
 
+        std::cerr << ip << " : (" << pot_ << " ; ";
         for( localIndex jp = 0; jp < NP; ++jp )
         {
           real64 gravHeadOther{};
           real64 dGravHeadOther_dP[NUM_ELEMS]{};
           real64 dGravHeadOther_dC[NUM_ELEMS][NC]{};
 
-          dGravHead_dX( gravHeadOther, dGravHeadOther_dP, dGravHeadOther_dC, dProp_dC, jp );
+          real64 dPropOther_dC[NC]{};
+
+          dGravHead_dX( gravHeadOther, dGravHeadOther_dP, dGravHeadOther_dC, dPropOther_dC, jp );
           real64 const mob_up = phaseMob[er_up][esr_up][ei_up][jp];
           real64 const mob_dw = phaseMob[er_dw][esr_dw][ei_dw][jp];
-          pot_ += ( gravHead - gravHeadOther >= 0 ) ? mob_dw * (gravHead - gravHeadOther) : mob_up * (gravHead - gravHeadOther);
+          pot_ += ( gravHead - gravHeadOther > 0 ) ? mob_dw * (gravHead - gravHeadOther) : mob_up * (gravHead - gravHeadOther);
+          std::cerr << pot_ << "[ " << mob_dw << " ," << mob_up << "] " ;
         }
-        cocurrent &= (pot_ > 0);
+        cocurrent &= (pot_ >= 0);
 
-        std::cerr << ip << " : " << pot_ << " , " << gravHead << std::endl;
-        if( pot_ < 0 && std::fabs(gravHead) >= minGravHead )
+        std::cerr << "  " << pot_ << "), " << gravHead << std::endl;
+        if( pot_ < 0 && std::fabs(gravHead) >= std::fabs(minGravHead) ) // if neg pot and more dense
         {
-//          minpot = pot_;
-//          minIndex = ip;
-          minGravHead =  std::fabs(gravHead);
-
+          minGravHead =  gravHead;
         }
       }
     }
@@ -1124,8 +1126,9 @@ Compute( localIndex const numPhases,
           real64 dProp_dC[NC]{};
 
           dGravHead_dX( gravHead, dGravHead_dP, dGravHead_dC, dProp_dC, ip );
-          localIndex k_up = ( totFlux > 0 ) ? 0 : 1;
-          if( gravHead <= minGravHead && !cocurrent )
+          localIndex k_up = ( presGrad - gravHead >= 0 ) ? 0 : 1;
+//          localIndex k_up = ( totFlux >= 0 ) ? 0 : 1;
+          if( std::fabs(gravHead) <= std::fabs(minGravHead) && !cocurrent )
             k_up = ( k_up == 1 ) ? 0 : 1;
 
           localIndex const er_up = seri[k_up];
@@ -1141,6 +1144,7 @@ Compute( localIndex const numPhases,
         }
       }
       std::cerr << totMob << "\n------\n";
+      std::cerr << "total Flux check : " << totFlux << " " << totMob*(presGrad - minGravHead) << "\n------\n";
     }
 
 
@@ -1171,8 +1175,9 @@ Compute( localIndex const numPhases,
       }
       else if( is_pu )
       {
-        k_up = (  totFlux > 0 ) ? 0 : 1;
-        if(gravHead <= minGravHead && !cocurrent )
+        k_up = ( presGrad - gravHead >= 0 ) ? 0 : 1;
+//        k_up = (  totFlux >= 0 ) ? 0 : 1;
+        if( std::fabs(gravHead) <= std::fabs(minGravHead) && !cocurrent )
           k_up = ( k_up == 1 ) ? 0 : 1;
       }
       else if( is_hu )
@@ -1246,9 +1251,10 @@ Compute( localIndex const numPhases,
          }
          else if( is_pu )
          {
-           k_up_g = ( totFlux > 0 ) ? 0 : 1;//classical PU
+           k_up_g = ( presGrad - gravHeadOther >= 0 ) ? 0 : 1;//classical PPU
+//           k_up_g = ( totFlux >= 0 ) ? 0 : 1;//classical PU
            std::cerr << " totFlux upw "  << k_up_g  << "\n";
-            if( gravHeadOther <= minGravHead && !cocurrent )
+            if( std::fabs(gravHeadOther) <= std::fabs(minGravHead) && !cocurrent )
               k_up_g = (k_up_g == 1) ? 0 : 1; // downwind
 
           std::cerr << ip << " , " << jp << " , " << k_up_g << "\n";
