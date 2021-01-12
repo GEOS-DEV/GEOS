@@ -79,6 +79,8 @@ MultiPhaseMultiComponentFluid::deliverClone( string const & name,
   newConstitutiveRelation->m_phaseDensityFuns = this->m_phaseDensityFuns;
   newConstitutiveRelation->m_phaseViscosityFuns = this->m_phaseViscosityFuns;
 
+  newConstitutiveRelation->m_phaseEnthalpyFuns = this->m_phaseEnthalpyFuns;  
+
   newConstitutiveRelation->m_flashModel = this->m_flashModel;
 
   return clone;
@@ -139,13 +141,6 @@ void MultiPhaseMultiComponentFluid::CreatePVTModels()
                                                                                   strs,
                                                                                   m_componentNames,
                                                                                   m_componentMolarWeight ) );
-      }
-      else if( strs[0] == "InternalEnergyFun" )
-      {
-        m_phaseInternalEnergyFuns.emplace_back( PVTFunction::CatalogInterface::Factory( strs[ 1 ],
-                                                                                        strs,
-                                                                                        m_componentNames,
-                                                                                        m_componentMolarWeight ) );
       }
       else
       {
@@ -367,7 +362,7 @@ void MultiPhaseMultiComponentFluidUpdate::Compute( real64 pressure,
     m_phaseViscosityFuns[ip]->Evaluation( P, T, phaseCompFractionTemp[ip], phaseViscosityTemp[ip] );
     // molar or mass Enthalpy and Internal Energy
     m_phaseEnthalpyFuns[ip]->Evaluation( P, T, phaseCompFractionTemp[ip], phaseEnthalpyTemp[ip], m_useMass );
-    m_phaseInternalEnergyFuns[ip]->Evaluation( P, T, phaseCompFractionTemp[ip], phaseInternalEnergyTemp[ip], m_useMass );
+
   }
 
   if( m_useMass )
@@ -437,7 +432,7 @@ void MultiPhaseMultiComponentFluidUpdate::Compute( real64 pressure,
 
     phaseDens.value[ip] = phaseDensityTemp[ip].m_var;
     phaseDens.dPres[ip] = phaseDensityTemp[ip].m_der[0];
-    phaseDens.dTemp[ip] = 0.0;
+    phaseDens.dTemp[ip] = phaseDensityTemp[ip].m_der[NC+1];
 
     phaseMassDens.value[ip] = phaseMassDensityTemp[ip].m_var;
     phaseMassDens.dPres[ip] = phaseMassDensityTemp[ip].m_der[0];
@@ -450,10 +445,12 @@ void MultiPhaseMultiComponentFluidUpdate::Compute( real64 pressure,
     phaseEnt.value[ip] = phaseEnthalpyTemp[ip].m_var;
     phaseEnt.dPres[ip] = phaseEnthalpyTemp[ip].m_der[0];
     phaseEnt.dTemp[ip] = phaseEnthalpyTemp[ip].m_der[NC+1];
+    
+    EvalVarArgs E = phaseEnthalpyTemp[ip] - P / phaseDensityTemp[ip];
 
-    phaseIntEner.value[ip] = phaseInternalEnergyTemp[ip].m_var;
-    phaseIntEner.dPres[ip] = phaseInternalEnergyTemp[ip].m_der[0];
-    phaseIntEner.dTemp[ip] = phaseInternalEnergyTemp[ip].m_der[NC+1];
+    phaseIntEner.value[ip] = E.m_var; 
+    phaseIntEner.dPres[ip] = E.m_der[0];
+    phaseIntEner.dTemp[ip] = E.m_der[NC+1];
 
     for( localIndex ic = 0; ic < NC; ++ic )
     {
@@ -466,14 +463,15 @@ void MultiPhaseMultiComponentFluidUpdate::Compute( real64 pressure,
       phaseCompFrac.dPres[ip][ic] = phaseCompFractionTemp[ip][ic].m_der[0];
       phaseCompFrac.dTemp[ip][ic] = 0.0;
 
-      phaseEnt.dComp[ip][ic] = 0.0; // phaseEnthapyTemp[ip].m_der[ic+1];
-      phaseIntEner.dComp[ip][ic] = 0.0; // phaseInternalEnergyTemp[ip].m_der[ic+1];
+      phaseEnt.dComp[ip][ic] = phaseEnthalpyTemp[ip].m_der[ic+1];
+      phaseIntEner.dComp[ip][ic] = E.m_der[ic+1];      
 
       for( localIndex jc = 0; jc < NC; ++jc )
       {
         phaseCompFrac.dComp[ip][ic][jc] = phaseCompFractionTemp[ip][ic].m_der[jc+1];
       }
     }
+ 
   }
 
   totalDens.value = totalDensityTemp.m_var;

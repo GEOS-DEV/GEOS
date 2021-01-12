@@ -50,9 +50,16 @@ public:
   virtual void Evaluation( EvalVarArgs const & pressure, EvalVarArgs const & temperature, arraySlice1d< EvalVarArgs const > const & phaseComposition,
                            EvalVarArgs & value, bool useMass = 0 ) const override;
 
-  static void CalculateBrineEnthalpy( real64_array const & pressure, real64_array const & temperature, real64_array2d const & enthalpy );
-
 private:
+
+  void MakeTable( string_array const & inputPara );  
+
+  void CalculateBrineEnthalpy( real64_array const & pressure, real64_array const & temperature, real64 const & m, real64_array2d const & enthalpy );
+
+  TableFunctionPtr m_BrineEnthalpyTable;
+  TableFunctionPtr m_CO2EnthalpyTable;  
+  localIndex m_waterIndex;
+  localIndex m_CO2Index;  
 
 };
 

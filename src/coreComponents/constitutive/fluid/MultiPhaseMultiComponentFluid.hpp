@@ -55,7 +55,6 @@ public:
   MultiPhaseMultiComponentFluidUpdate( std::vector< std::shared_ptr< PVTProps::PVTFunction const > > const & phaseDensityFuns,
                                        std::vector< std::shared_ptr< PVTProps::PVTFunction const > > const & phaseViscosityFuns,
                                        std::vector< std::shared_ptr< PVTProps::PVTFunction const > > const & phaseEnthalpyFuns,
-                                       std::vector< std::shared_ptr< PVTProps::PVTFunction const > > const & phaseInternalEnergyFuns,
                                        std::shared_ptr< PVTProps::FlashModel const > const & flashModel,
                                        arrayView1d< real64 const > const & componentMolarWeight,
                                        bool useMass,
@@ -128,7 +127,6 @@ public:
     m_phaseDensityFuns( phaseDensityFuns ),
     m_phaseViscosityFuns( phaseViscosityFuns ),
     m_phaseEnthalpyFuns( phaseEnthalpyFuns ),
-    m_phaseInternalEnergyFuns( phaseInternalEnergyFuns ),
     m_flashModel( flashModel )
   {}
 
@@ -239,7 +237,6 @@ private:
   std::vector< std::shared_ptr< PVTProps::PVTFunction const > > m_phaseDensityFuns;
   std::vector< std::shared_ptr< PVTProps::PVTFunction const > > m_phaseViscosityFuns;
   std::vector< std::shared_ptr< PVTProps::PVTFunction const > > m_phaseEnthalpyFuns;
-  std::vector< std::shared_ptr< PVTProps::PVTFunction const > > m_phaseInternalEnergyFuns;
   std::shared_ptr< PVTProps::FlashModel const > m_flashModel;
 
 };
@@ -273,7 +270,6 @@ public:
     return KernelWrapper( m_phaseDensityFuns,
                           m_phaseViscosityFuns,
                           m_phaseEnthalpyFuns,
-                          m_phaseInternalEnergyFuns,
                           m_flashModel,
                           m_componentMolarWeight.toViewConst(),
                           m_useMass,
@@ -336,7 +332,6 @@ private:
   std::vector< std::shared_ptr< PVTProps::PVTFunction const > > m_phaseDensityFuns;
   std::vector< std::shared_ptr< PVTProps::PVTFunction const > > m_phaseViscosityFuns;
   std::vector< std::shared_ptr< PVTProps::PVTFunction const > > m_phaseEnthalpyFuns;
-  std::vector< std::shared_ptr< PVTProps::PVTFunction const > > m_phaseInternalEnergyFuns;
 
   std::shared_ptr< PVTProps::FlashModel const > m_flashModel;
 
