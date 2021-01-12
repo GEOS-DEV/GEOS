@@ -538,7 +538,10 @@ void WellElementSubRegion::CheckPartitioningValidity( InternalWellGenerator cons
       globalIndex const prevGlobal  = prevElemIdsGlobal[iwelemGlobal][numBranches-1];
 
       GEOSX_ERROR_IF( prevGlobal <= iwelemGlobal || prevGlobal < 0,
-                      "Invalid partitioning in well " << getName() );
+                      "The structure of well " << getName() << " is invalid. " <<
+                      " The main reason for this error is that there may be no perforation" <<
+                      " in the bottom well element of the well, which is required to have" <<
+                      " a well-posed problem." );
 
       if( elemStatusGlobal[prevGlobal] == WellElemStatus::LOCAL )
       {
@@ -790,23 +793,12 @@ void WellElementSubRegion::ConnectPerforationsToMeshElements( MeshLevel & mesh,
 
     // for each perforation, we have to find the reservoir element that contains the perforation
 
-    if( iperfLocal > 0 )
-    {
-      // get the info of the element matched with the previous perforation
-      // this will be used next to search around this reservoir element
-      erInit  = m_perforationData.GetMeshElements().m_toElementRegion[iperfLocal-1];
-      esrInit = m_perforationData.GetMeshElements().m_toElementSubRegion[iperfLocal-1];
-      eiInit  = m_perforationData.GetMeshElements().m_toElementIndex[iperfLocal-1];
-    }
-    else
-    {
-      // Step 1: first, we search for the reservoir element that is the *closest* from the center of well element
-      //         note that this reservoir element does not necessarily contain the center of the well element
-      //         this "init" reservoir element will be used in SearchLocalElements to find the reservoir element that
-      //         contains the well element
-      InitializeLocalSearch( mesh, location,
-                             erInit, esrInit, eiInit );
-    }
+    // Step 1: first, we search for the reservoir element that is the *closest* from the center of well element
+    //         note that this reservoir element does not necessarily contain the center of the well element
+    //         this "init" reservoir element will be used in SearchLocalElements to find the reservoir element that
+    //         contains the well element
+    InitializeLocalSearch( mesh, location,
+                           erInit, esrInit, eiInit );
 
     // Step 2: then, search for the reservoir element that contains the well element
     //         to do that, we loop over the reservoir elements that are in the neighborhood of (erInit,esrInit,eiInit)
