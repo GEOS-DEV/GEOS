@@ -268,7 +268,7 @@ public:
       stack.jumpEqnRowIndices[i] = m_wDofNumber[embSurfIndex] + i - m_dofRankOffset;
       stack.jumpColIndices[i]    = m_wDofNumber[embSurfIndex] + i;
       stack.wLocal[ i ] = m_w[ embSurfIndex ][i];
-      stack.tractionVec[ i ] = m_tractionVec[ embSurfIndex ][i];
+      stack.tractionVec[ i ] = m_tractionVec[ embSurfIndex ][i] * m_surfaceArea[embSurfIndex];
       for( int ii=0; ii < 3; ++ii )
       {
         stack.dTractiondw[ i ][ ii ] = m_dTraction_dJump[embSurfIndex][i][ii] * m_surfaceArea[embSurfIndex];
