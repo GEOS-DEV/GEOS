@@ -5,8 +5,8 @@
  *      Author: settgast
  */
 
-#ifndef SRC_CORECOMPONENTS_PHYSICSSOLVERS_WAVEPROPAGATION_WAVEEQUATION_HPP_
-#define SRC_CORECOMPONENTS_PHYSICSSOLVERS_WAVEPROPAGATION_WAVEEQUATION_HPP_
+#ifndef SRC_CORECOMPONENTS_PHYSICSSOLVERS_WAVEPROPAGATION_ACOUSTICWAVEEQUATIONSEM_HPP_
+#define SRC_CORECOMPONENTS_PHYSICSSOLVERS_WAVEPROPAGATION_ACOUSTICWAVEEQUATIONSEM_HPP_
 
 #include "mesh/ExtrinsicMeshData.hpp"
 #include "physicsSolvers/SolverBase.hpp"
@@ -14,22 +14,23 @@
 namespace geosx
 {
 
-class WaveEquation : public SolverBase
+class AcousticWaveEquationSEM : public SolverBase
 {
 public:
-  WaveEquation( const std::string & name,
-                Group * const parent );
+  AcousticWaveEquationSEM( const std::string & name,
+                           Group * const parent );
 
-  virtual ~WaveEquation() override;
+  virtual ~AcousticWaveEquationSEM() override;
 
-  WaveEquation( WaveEquation const & ) = delete;
-  WaveEquation( WaveEquation && ) = default;
+  AcousticWaveEquationSEM() = delete;
+  AcousticWaveEquationSEM( AcousticWaveEquationSEM const & ) = delete;
+  AcousticWaveEquationSEM( AcousticWaveEquationSEM && ) = default;
 
-  WaveEquation& operator=( WaveEquation const & ) = delete;
-  WaveEquation& operator=( WaveEquation && ) = delete;
+  AcousticWaveEquationSEM& operator=( AcousticWaveEquationSEM const & ) = delete;
+  AcousticWaveEquationSEM& operator=( AcousticWaveEquationSEM && ) = delete;
 
 
-  static string CatalogName() { return "WaveEquation"; }
+  static string CatalogName() { return "AcousticSEM"; }
 
   virtual void InitializePreSubGroups( Group * const rootGroup ) override;
 
@@ -89,7 +90,7 @@ namespace extrinsicMeshData
 EXTRINSIC_MESH_DATA_TRAIT( Pressure_nm1,
                            "pressure_nm1",
                            array1d< real64 >,
-                           -1,
+                           0,
                            LEVEL_0,
                            WRITE_AND_READ,
                            "Scalar pressure at time n-1." );
@@ -97,7 +98,7 @@ EXTRINSIC_MESH_DATA_TRAIT( Pressure_nm1,
 EXTRINSIC_MESH_DATA_TRAIT( Pressure_n,
                            "pressure_n",
                            array1d< real64 >,
-                           -1,
+                           0,
                            LEVEL_0,
                            WRITE_AND_READ,
                            "Scalar pressure at time n." );
@@ -105,13 +106,39 @@ EXTRINSIC_MESH_DATA_TRAIT( Pressure_n,
 EXTRINSIC_MESH_DATA_TRAIT( Pressure_np1,
                            "pressure_np1",
                            array1d< real64 >,
-                           -1,
+                           0,
                            LEVEL_0,
                            WRITE_AND_READ,
                            "Scalar pressure at time n+1." );
+
+EXTRINSIC_MESH_DATA_TRAIT( ForcingRHS,
+                           "rhs",
+                           array1d< real64 >,
+                           0,
+                           LEVEL_0,
+                           WRITE_AND_READ,
+                           "RHS" );
+
+EXTRINSIC_MESH_DATA_TRAIT( MassVector,
+                           "massVector",
+                           array1d< real64 >,
+                           0,
+                           LEVEL_0,
+                           WRITE_AND_READ,
+                           "Diagonal Mass Matrix." );
+
+
+EXTRINSIC_MESH_DATA_TRAIT( MediumVelocity,
+                           "mediumVelocity",
+                           array1d< real64 >,
+                           0,
+                           LEVEL_0,
+                           WRITE_AND_READ,
+                           "Medium velocity of the cell" );
+
 }
 
 
 } /* namespace geosx */
 
-#endif /* SRC_CORECOMPONENTS_PHYSICSSOLVERS_WAVEPROPAGATION_WAVEEQUATION_HPP_ */
+#endif /* SRC_CORECOMPONENTS_PHYSICSSOLVERS_WAVEPROPAGATION_ACOUSTICWAVEEQUATIONSEM_HPP_ */
