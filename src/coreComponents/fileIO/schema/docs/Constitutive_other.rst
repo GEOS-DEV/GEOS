@@ -12,6 +12,8 @@ CompressibleSinglePhaseFluid          node :ref:`DATASTRUCTURE_CompressibleSingl
 Contact                               node :ref:`DATASTRUCTURE_Contact`                               
 Coulomb                               node :ref:`DATASTRUCTURE_Coulomb`                               
 DamageLinearElasticIsotropic          node :ref:`DATASTRUCTURE_DamageLinearElasticIsotropic`          
+DamageSpectralLinearElasticIsotropic  node :ref:`DATASTRUCTURE_DamageSpectralLinearElasticIsotropic`  
+DamageVolDevLinearElasticIsotropic    node :ref:`DATASTRUCTURE_DamageVolDevLinearElasticIsotropic`    
 LinearElasticAnisotropic              node :ref:`DATASTRUCTURE_LinearElasticAnisotropic`              
 LinearElasticIsotropic                node :ref:`DATASTRUCTURE_LinearElasticIsotropic`                
 LinearElasticTransverseIsotropic      node :ref:`DATASTRUCTURE_LinearElasticTransverseIsotropic`      

@@ -279,6 +279,14 @@ void CompositionalMultiphaseFlow::InitializePreSubGroups( Group * const rootGrou
   // 2. Validate various models against each other (must have same phases and components)
   ValidateConstitutiveModels( cm );
 
+  // 3. Check that the discretization is valid for this solver
+  NumericalMethodsManager const & numericalMethodManager = domain->getNumericalMethodManager();
+  FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
+  if( fvManager.GetGroup< FluxApproximationBase >( m_discretizationName ) == nullptr )
+  {
+    GEOSX_ERROR( "A discretization deriving from FluxApproximationBase must be selected with CompositionalMultiphaseFlow" );
+  }
+
   // 3. Resize all fields as necessary, validate constitutive models in regions
   for( auto & mesh : domain->getMeshBodies()->GetSubGroups() )
   {
@@ -852,7 +860,6 @@ void CompositionalMultiphaseFlow::SetupDofs( DomainPartition const & domain,
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
   FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
-
   dofManager.addCoupling( viewKeyStruct::dofFieldString, fluxApprox );
 }
 
