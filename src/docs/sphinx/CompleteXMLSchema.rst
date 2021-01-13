@@ -8,6 +8,13 @@ Input Schema Definitions
 :download:`XML Schema <../../coreComponents/fileIO/schema/docs/../schema.xsd>`
 
 
+.. _XML_AcousticSEM:
+
+Element: AcousticSEM
+====================
+.. include:: ../../coreComponents/fileIO/schema/docs/AcousticSEM.rst
+
+
 .. _XML_Benchmarks:
 
 Element: Benchmarks
@@ -710,6 +717,13 @@ Element: quartz
 ********************************
 Datastructure Definitions
 ********************************
+
+
+.. _DATASTRUCTURE_AcousticSEM:
+
+Datastructure: AcousticSEM
+==========================
+.. include:: ../../coreComponents/fileIO/schema/docs/AcousticSEM_other.rst
 
 
 .. _DATASTRUCTURE_Benchmarks:

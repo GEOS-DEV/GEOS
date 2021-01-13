@@ -193,7 +193,7 @@ real64 AcousticWaveEquationSEM::ExplicitStep( real64 const & time_n,
           {
             for( localIndex i=0 ; i<3; ++i )
             {
-              xLocal[a][i] = X( elemsToNodes[a], i);
+              xLocal[a][i] = X( elemsToNodes(k,a), i);
             }
           }
 

@@ -3,6 +3,7 @@
 ================================ ==== ===================================================== 
 Name                             Type Description                                           
 ================================ ==== ===================================================== 
+AcousticSEM                      node :ref:`DATASTRUCTURE_AcousticSEM`                      
 CompositionalMultiphaseFlow      node :ref:`DATASTRUCTURE_CompositionalMultiphaseFlow`      
 CompositionalMultiphaseReservoir node :ref:`DATASTRUCTURE_CompositionalMultiphaseReservoir` 
 CompositionalMultiphaseWell      node :ref:`DATASTRUCTURE_CompositionalMultiphaseWell`      
