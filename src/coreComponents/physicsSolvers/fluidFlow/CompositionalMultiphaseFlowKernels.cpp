@@ -331,7 +331,12 @@ PhaseMobilityKernel::
 
   for( localIndex ip = 0; ip < NP; ++ip )
   {
+//    real64 const density_dd = phaseDens[ip];
+//    real64 dummy = density_dd;
+//    dummy += dPhaseDens_dPres[ip];
+//    real64 const density =  1.0;
     real64 const density = phaseDens[ip];
+
     real64 const dDens_dP = dPhaseDens_dPres[ip];
     applyChainRule( NC, dCompFrac_dCompDens, dPhaseDens_dComp[ip], dDens_dC );
 
@@ -363,9 +368,13 @@ PhaseMobilityKernel::
     dPhaseMob_dPres[ip] = dRelPerm_dP * density / viscosity
                           + mobility * (dDens_dP / density - dVisc_dP / viscosity);
 
+//    dPhaseMob_dPres[ip] = dRelPerm_dP / viscosity
+//                          - mobility * ( dVisc_dP / viscosity);
     // compositional derivatives
     for( localIndex jc = 0; jc < NC; ++jc )
     {
+//      dPhaseMob_dComp[ip][jc] = dRelPerm_dC[jc] / viscosity
+//                                - mobility * ( dVisc_dC[jc] / viscosity);
       dPhaseMob_dComp[ip][jc] = dRelPerm_dC[jc] * density / viscosity
                                 + mobility * (dDens_dC[jc] / density - dVisc_dC[jc] / viscosity);
     }
@@ -754,6 +763,9 @@ Compute( localIndex const numPhases,
            ElementViewConst< arrayView2d< real64 const > > const & dPhaseVolFrac_dPres,
            ElementViewConst< arrayView3d< real64 const > > const & dPhaseVolFrac_dComp,
            ElementViewConst< arrayView3d< real64 const > > const & dCompFrac_dCompDens,
+           ElementViewConst< arrayView3d< real64 const > > const & phaseDens,
+           ElementViewConst< arrayView3d< real64 const > > const & dPhaseDens_dPres,
+           ElementViewConst< arrayView4d< real64 const > > const & dPhaseDens_dComp,
            ElementViewConst< arrayView3d< real64 const > > const & phaseMassDens,
            ElementViewConst< arrayView3d< real64 const > > const & dPhaseMassDens_dPres,
            ElementViewConst< arrayView4d< real64 const > > const & dPhaseMassDens_dComp,
@@ -784,10 +796,11 @@ Compute( localIndex const numPhases,
   real64 dTotMob_dC[MAX_STENCIL][NC]{};
 
   real64 totFlux{};
+  real64 totFlux_unw{};
   real64 dTotFlux_dP[MAX_STENCIL]{};
   real64 dTotFlux_dC[MAX_STENCIL][NC]{};
 
-  //useful lambda
+  //useful lambdas
   // helpers lambda definition to avoid too much dulpication
   // agnostic of upwind direction (unless want to introduce fancy density face def)
   auto dGravHead_dX =
@@ -844,6 +857,39 @@ Compute( localIndex const numPhases,
       }
     };
 
+  //rescale mobilities and their derivatives without molar densities as prefactor
+  auto dMob_dX =
+    [&](real64 mob[MAX_STENCIL], real64 dMob_dP[MAX_STENCIL], real64 dMob_dC[MAX_STENCIL][NC], int kp)
+    {
+      for( localIndex j = 0; j < stencilSize; ++j )
+      {
+        localIndex er_i  = seri[j];
+        localIndex esr_i = sesri[j];
+        localIndex ei_i  = sei[j];
+
+        real64 const mobility = phaseMob[er_i][esr_i][ei_i][kp];
+        real64 const PD = phaseDens[er_i][esr_i][ei_i][0][kp];
+        if( std::fabs(PD) < 1e-20)
+          continue;
+
+        mob[j] = mobility / PD;
+
+        real64 dPD_dP = dPhaseDens_dPres[er_i][esr_i][ei_i][0][kp];
+        real64 dPD_dC[NC] {};
+        applyChainRule( NC, dCompFrac_dCompDens[er_i][esr_i][ei_i], dPhaseDens_dComp[er_i][esr_i][ei_i][0][kp], dPD_dC );
+
+        real64 const dMMob_dP = dPhaseMob_dPres[er_i][esr_i][ei_i][kp];
+        arraySlice1d< real64 const > dMMob_dC = dPhaseMob_dComp[er_i][esr_i][ei_i][kp];
+
+        dMob_dP[j] += ( dMMob_dP + dPD_dP * mobility ) / PD;
+        for( localIndex jc = 0; jc < NC; ++jc )
+        {
+          dMob_dC[j][jc] += ( dMMob_dC[jc] + dPD_dC[jc] * mobility ) / PD;
+        }
+      }
+
+    };
+
   // loop over phases, compute and upwind phase flux and sum contributions to each component's flux
   for( localIndex ip = 0; ip < NP; ++ip )
   {
@@ -867,7 +913,6 @@ Compute( localIndex const numPhases,
     real64 dProp_dC[NC]{};
 
     // calculate quantities on primary connected cells
-
     dGravHead_dX(gravHead, dGravHead_dP, dGravHead_dC, dProp_dC, ip);
 
     //***** calculation of flux *****
@@ -968,6 +1013,15 @@ Compute( localIndex const numPhases,
     //adding totflux for UT formulation
     totFlux += phaseFlux;
 
+
+    /**** tentative correction of mobility ****/
+    real64 mob_unw[MAX_STENCIL] {};
+    real64 dMob_unw_dP[MAX_STENCIL] {};
+    real64 dMob_unw_dC[MAX_STENCIL][NC] {};
+
+    dMob_dX(mob_unw,dMob_unw_dP,dMob_unw_dC,ip);
+    totFlux_unw += mob_unw[k_up] * potGrad;
+
       for( localIndex ke = 0; ke < stencilSize; ++ke )
       {
         dPhaseFlux_dP[ke] *= mobility;
@@ -1052,6 +1106,7 @@ Compute( localIndex const numPhases,
 
     //finding the largest negPot to be compared against later
     real64 minGravHead = 0;
+//      totFlux_unw = totFlux;
     bool cocurrent = true;
     if( is_pu ){
       real64 pot_{};
@@ -1064,17 +1119,18 @@ Compute( localIndex const numPhases,
         real64 dProp_dC[NC]{};
         dGravHead_dX( gravHead, dGravHead_dP, dGravHead_dC, dProp_dC, ip );
         //defining up and down-wind direction based on total flux
-        pot_ = totFlux;
-        localIndex const k_up = ( pot_ > 0 ) ? 0 : 1;
-        localIndex const k_dw = ( pot_ > 0 ) ? 1 : 0;
+        pot_ = totFlux_unw;
+        localIndex const k_up = ( pot_ >= 0 ) ? 0 : 1;
+        localIndex const k_dw = ( pot_ >= 0 ) ? 1 : 0;
 
-        localIndex const er_up = seri[k_up];
+/*        localIndex const er_up = seri[k_up];
         localIndex const esr_up = sesri[k_up];
         localIndex const ei_up = sei[k_up];
 
         localIndex const er_dw = seri[k_dw];
         localIndex const esr_dw = sesri[k_dw];
-        localIndex const ei_dw = sei[k_dw];
+        localIndex const ei_dw = sei[k_dw];*/
+
 
         std::cerr << ip << " : (" << pot_ << " ; ";
         for( localIndex jp = 0; jp < NP; ++jp )
@@ -1086,9 +1142,20 @@ Compute( localIndex const numPhases,
           real64 dPropOther_dC[NC]{};
 
           dGravHead_dX( gravHeadOther, dGravHeadOther_dP, dGravHeadOther_dC, dPropOther_dC, jp );
-          real64 const mob_up = phaseMob[er_up][esr_up][ei_up][jp];
-          real64 const mob_dw = phaseMob[er_dw][esr_dw][ei_dw][jp];
-          pot_ += ( gravHead - gravHeadOther > 0 ) ? mob_dw * (gravHead - gravHeadOther) : mob_up * (gravHead - gravHeadOther);
+
+          real64 mob_unw[MAX_STENCIL] {};
+          real64 dMob_unw_dP[MAX_STENCIL] {};
+          real64 dMob_unw_dC[MAX_STENCIL][NC] {};
+
+          dMob_dX(mob_unw,dMob_unw_dP,dMob_unw_dC,jp);
+
+          real64 const mob_up = mob_unw[k_up];
+          real64 const mob_dw = mob_unw[k_dw];
+
+/*          real64 const mob_up = phaseMob[er_up][esr_up][ei_up][jp];
+          real64 const mob_dw = phaseMob[er_dw][esr_dw][ei_dw][jp];*/
+
+          pot_ += ( gravHead - gravHeadOther >= 0 ) ? mob_dw * (gravHead - gravHeadOther) : mob_up * (gravHead - gravHeadOther);
           std::cerr << pot_ << "[ " << mob_dw << " ," << mob_up << "] " ;
         }
         cocurrent &= (pot_ >= 0);
@@ -1102,6 +1169,7 @@ Compute( localIndex const numPhases,
     }
 
     std::cerr << cocurrent << " , " << minGravHead ;
+    std::cerr << "\n correction to Flux : " << totFlux << " , " << totFlux_unw << std::endl;
     //recompute totMob is PU or HU
     {
       std::cerr << "\n" << totMob << " -> ";
@@ -1110,7 +1178,7 @@ Compute( localIndex const numPhases,
 
         //reinit
         totMob = 0;
-        for( localIndex ks = 0; ks < MAX_STENCIL; ++ks )
+        for( localIndex ks = 0; ks < stencilSize; ++ks )
         {
           dTotMob_dP[ks] = 0;
           for( localIndex ic = 0; ic < NC; ++ic )
@@ -1126,16 +1194,21 @@ Compute( localIndex const numPhases,
           real64 dProp_dC[NC]{};
 
           dGravHead_dX( gravHead, dGravHead_dP, dGravHead_dC, dProp_dC, ip );
-          localIndex k_up = ( presGrad - gravHead >= 0 ) ? 0 : 1;
-//          localIndex k_up = ( totFlux >= 0 ) ? 0 : 1;
+//          localIndex k_up = ( presGrad - gravHead >= 0 ) ? 0 : 1;
+          localIndex k_up = ( totFlux_unw >= 0 ) ? 0 : 1;
           if( std::fabs(gravHead) <= std::fabs(minGravHead) && !cocurrent )
             k_up = ( k_up == 1 ) ? 0 : 1;
+
+          std::cerr << " check upwind final direction per phase " << ip << " , " << k_up << std::endl;
 
           localIndex const er_up = seri[k_up];
           localIndex const esr_up = sesri[k_up];
           localIndex const ei_up = sei[k_up];
 
-          totMob += phaseMob[er_up][esr_up][ei_up][ip];
+          real64 const mobility = phaseMob[er_up][esr_up][ei_up][ip];
+
+
+          totMob += mobility;
           dTotMob_dP[k_up] += dPhaseMob_dPres[er_up][esr_up][ei_up][ip];
           for( localIndex ic = 0; ic < NC; ++ic )
           {
@@ -1144,7 +1217,6 @@ Compute( localIndex const numPhases,
         }
       }
       std::cerr << totMob << "\n------\n";
-      std::cerr << "total Flux check : " << totFlux << " " << totMob*(presGrad - minGravHead) << "\n------\n";
     }
 
 
@@ -1175,8 +1247,8 @@ Compute( localIndex const numPhases,
       }
       else if( is_pu )
       {
-        k_up = ( presGrad - gravHead >= 0 ) ? 0 : 1;
-//        k_up = (  totFlux >= 0 ) ? 0 : 1;
+//        k_up = ( presGrad - gravHead >= 0 ) ? 0 : 1;
+        k_up = (  totFlux_unw >= 0 ) ? 0 : 1;
         if( std::fabs(gravHead) <= std::fabs(minGravHead) && !cocurrent )
           k_up = ( k_up == 1 ) ? 0 : 1;
       }
@@ -1185,6 +1257,7 @@ Compute( localIndex const numPhases,
         /* nothing here yet */
       }
 
+      std::cerr << " check upwind final direction per phase " << ip << " , " << k_up << std::endl;
       localIndex const er_up = seri[k_up];
       localIndex const esr_up = sesri[k_up];
       localIndex const ei_up = sei[k_up];
@@ -1251,8 +1324,7 @@ Compute( localIndex const numPhases,
          }
          else if( is_pu )
          {
-           k_up_g = ( presGrad - gravHeadOther >= 0 ) ? 0 : 1;//classical PPU
-//           k_up_g = ( totFlux >= 0 ) ? 0 : 1;//classical PU
+           k_up_g = ( totFlux_unw >= 0 ) ? 0 : 1;//classical PU
            std::cerr << " totFlux upw "  << k_up_g  << "\n";
             if( std::fabs(gravHeadOther) <= std::fabs(minGravHead) && !cocurrent )
               k_up_g = (k_up_g == 1) ? 0 : 1; // downwind
@@ -1263,6 +1335,8 @@ Compute( localIndex const numPhases,
          {
             /* nothing here yet */
          }
+
+          std::cerr << " check upwind final direction per phase " << jp << " , " << k_up_g << std::endl;
 
          localIndex er_g = seri[k_up_g];
          localIndex esr_g = sesri[k_up_g];
@@ -1380,6 +1454,9 @@ FluxKernel::
           ElementViewConst< arrayView2d< real64 const > > const & dPhaseVolFrac_dPres,
           ElementViewConst< arrayView3d< real64 const > > const & dPhaseVolFrac_dComp,
           ElementViewConst< arrayView3d< real64 const > > const & dCompFrac_dCompDens,
+          ElementViewConst< arrayView3d< real64 const > > const & phaseDens,
+          ElementViewConst< arrayView3d< real64 const > > const & dPhaseDens_dPres,
+          ElementViewConst< arrayView4d< real64 const > > const & dPhaseDens_dComp,
           ElementViewConst< arrayView3d< real64 const > > const & phaseMassDens,
           ElementViewConst< arrayView3d< real64 const > > const & dPhaseMassDens_dPres,
           ElementViewConst< arrayView4d< real64 const > > const & dPhaseMassDens_dComp,
@@ -1425,6 +1502,9 @@ FluxKernel::
                                                        dPhaseVolFrac_dPres,
                                                        dPhaseVolFrac_dComp,
                                                        dCompFrac_dCompDens,
+                                                                   phaseDens,
+                                                                   dPhaseDens_dPres,
+                                                                   dPhaseDens_dComp,
                                                        phaseMassDens,
                                                        dPhaseMassDens_dPres,
                                                        dPhaseMassDens_dComp,
@@ -1492,6 +1572,9 @@ FluxKernel::
                                 ElementViewConst< arrayView2d< real64 const > > const & dPhaseVolFrac_dPres, \
                                 ElementViewConst< arrayView3d< real64 const > > const & dPhaseVolFrac_dComp, \
                                 ElementViewConst< arrayView3d< real64 const > > const & dCompFrac_dCompDens, \
+                                ElementViewConst< arrayView3d< real64 const > > const & phaseDens, \
+                                ElementViewConst< arrayView3d< real64 const > > const & dPhaseDens_dPres, \
+                                ElementViewConst< arrayView4d< real64 const > > const & dPhaseDens_dComp, \
                                 ElementViewConst< arrayView3d< real64 const > > const & phaseMassDens, \
                                 ElementViewConst< arrayView3d< real64 const > > const & dPhaseMassDens_dPres, \
                                 ElementViewConst< arrayView4d< real64 const > > const & dPhaseMassDens_dComp, \
