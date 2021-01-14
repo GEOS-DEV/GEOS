@@ -257,7 +257,7 @@ public:
   using KernelWrapper = DamageUpdates< typename BASE::KernelWrapper >;
 
   Damage( string const & name, dataRepository::Group * const parent );
-  virtual ~Damage() override=default;
+  virtual ~Damage() override = default;
 
 
   static std::string CatalogName() { return string( "Damage" ) + BASE::m_catalogNameString; }
