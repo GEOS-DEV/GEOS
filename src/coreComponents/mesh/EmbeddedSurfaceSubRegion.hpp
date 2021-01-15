@@ -247,6 +247,18 @@ public:
    */
   R1Tensor const & getTangentVector2( localIndex k ) const { return m_tangentVector2[k];}
 
+  /**
+   * @brief Get the second tangent vector of a specific embedded surface element.
+   * @param k index of the embedded surface element
+   * @return the second tangent vector of a specific embedded surface element
+   */
+  R1Tensor & getOrigin( localIndex k ) { return m_origin[k]; }
+
+  /**
+   * @copydoc getTangentVector2( localIndex k )
+   */
+  R1Tensor const & getOrigin( localIndex k ) const { return m_origin[k]; }
+
 
   /**
    * @brief Get the connectivity index of the  embedded surface element.
@@ -264,7 +276,10 @@ public:
 
 private:
 
-  /// normal vector to the embedded surface element
+  // Point within the plane of each embedded surface element
+  array1d< R1Tensor > m_origin;
+
+  // normal vector to the embedded surface element
   array1d< R1Tensor > m_normalVector;
 
   // tangential direction 1

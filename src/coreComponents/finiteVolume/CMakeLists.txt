@@ -11,6 +11,7 @@ set( finiteVolume_headers
      TwoPointFluxApproximation.hpp
      FluxStencil.hpp
      HybridFVMInnerProduct.hpp
+     ProjectionEDFMHelper.hpp
    )
 #
 # Specify all sources
@@ -22,7 +23,8 @@ set( finiteVolume_sources
      FaceElementStencil.cpp
      FiniteVolumeManager.cpp
      FluxApproximationBase.cpp
-     TwoPointFluxApproximation.cpp 
+     TwoPointFluxApproximation.cpp
+     ProjectionEDFMHelper.cpp
    )
 
 if ( BUILD_OBJ_LIBS )

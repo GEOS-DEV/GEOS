@@ -31,6 +31,7 @@ using namespace dataRepository;
 EmbeddedSurfaceSubRegion::EmbeddedSurfaceSubRegion( string const & name,
                                                     dataRepository::Group * const parent ):
   SurfaceElementSubRegion( name, parent ),
+  m_origin(),
   m_normalVector(),
   m_tangentVector1(),
   m_tangentVector2(),
@@ -146,7 +147,7 @@ bool EmbeddedSurfaceSubRegion::AddNewEmbeddedSurface ( localIndex const cellInde
       lineDir = LVARRAY_TENSOROPS_INIT_LOCAL_3( nodesCoord[edgeToNodes[edgeIndex][0]] );
       LvArray::tensorOps::subtract< 3 >( lineDir, nodesCoord[edgeToNodes[edgeIndex][1]] );
       LvArray::tensorOps::normalize< 3 >( lineDir );
-      //find the intersection point
+      // find the intersection point
       point = computationalGeometry::LinePlaneIntersection( lineDir,
                                                             nodesCoord[edgeToNodes[edgeIndex][0]],
                                                             normalVector,
@@ -172,6 +173,8 @@ bool EmbeddedSurfaceSubRegion::AddNewEmbeddedSurface ( localIndex const cellInde
     computationalGeometry::orderPointsCCW( intersectionPoints, normalVector );
     array2d< real64, nodes::REFERENCE_POSITION_PERM > & embSurfNodesPos = nodeManager.embSurfNodesPosition();
 
+    // fill out elemNodes array with the previously found intersection points
+    // add new nodes to embSurfNodes
     bool isNew;
     localIndex nodeIndex;
     array1d< localIndex > elemNodes( intersectionPoints.size() );
@@ -200,6 +203,7 @@ bool EmbeddedSurfaceSubRegion::AddNewEmbeddedSurface ( localIndex const cellInde
       elemNodes[j] =  nodeIndex;
     }
 
+    // fill map surface -> nodes
     m_toNodesRelation.resizeArray( surfaceIndex, intersectionPoints.size());
     for( localIndex inode = 0; inode <  intersectionPoints.size(); inode++ )
     {
@@ -209,6 +213,7 @@ bool EmbeddedSurfaceSubRegion::AddNewEmbeddedSurface ( localIndex const cellInde
     m_surfaceElementsToCells.m_toElementIndex[ surfaceIndex ][0]        = cellIndex;
     m_surfaceElementsToCells.m_toElementSubRegion[ surfaceIndex ][0]    =  subRegionIndex;
     m_surfaceElementsToCells.m_toElementRegion[ surfaceIndex ][0]       =  regionIndex;
+    LvArray::tensorOps::copy< 3 >( m_origin[ surfaceIndex ], origin );
     LvArray::tensorOps::copy< 3 >( m_normalVector[ surfaceIndex ], normalVector );
     LvArray::tensorOps::copy< 3 >( m_tangentVector1[ surfaceIndex ], fracture->getWidthVector());
     LvArray::tensorOps::copy< 3 >( m_tangentVector2[ surfaceIndex ], fracture->getLengthVector());

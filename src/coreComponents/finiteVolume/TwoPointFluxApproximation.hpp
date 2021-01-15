@@ -70,7 +70,20 @@ protected:
   virtual void addEDFracToFractureStencil( MeshLevel & mesh,
                                            string const & embeddedSurfaceRegionName ) const override;
 
+  void addEDFracToFractureStencilStandard( MeshLevel & mesh,
+                                           string const & embeddedSurfaceRegionName ) const;
 
+  /* New stuff */
+  void addEDFracToFractureStencilProjection( MeshLevel & mesh,
+                                             string const & embeddedSurfaceRegionName ) const;
+
+  void addFractureFractureConnections( MeshLevel & mesh,
+                                       EmbeddedSurfaceSubRegion const & fractureSubRegion,
+                                       localIndex const fractureRegionIndex ) const;
+
+  void addFractureMatrixConnections( MeshLevel & mesh,
+                                     EmbeddedSurfaceSubRegion const & fractureSubRegion,
+                                     localIndex const fractureRegionIndex ) const;
 };
 
 }
