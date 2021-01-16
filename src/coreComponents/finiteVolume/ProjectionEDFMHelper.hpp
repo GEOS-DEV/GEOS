@@ -14,8 +14,20 @@ class ProjectionEDFMHelper {
   virtual ~ProjectionEDFMHelper() = default;
 
  private:
+
+  struct CellID
+  {
+    CellID(localIndex r, localIndex sr, localIndex i)
+        : region(r), subRegion(sr), index(i)
+    {}
+
+    localIndex region;
+    localIndex subRegion;
+    localIndex index;
+  };
+
   std::vector<localIndex> selectFaces(FixedOneToManyRelation const & subRegionFaces,
-                                      localIndex hostCellIdx,
+                                      CellID const & hostCellID,
                                       localIndex const fracElement,
                                       EmbeddedSurfaceSubRegion const & fractureSubRegion) const;
 
@@ -25,6 +37,11 @@ class ProjectionEDFMHelper {
                     R1Tensor & tmp) const noexcept;
 
   bool isBoundaryFace(localIndex faceIdx) const noexcept;
+  bool onLargerSide(localIndex faceIdx, real64 signedDistanceCellCenterToFrac) const noexcept;
+  real64 getSingedDistanceCellCenterToFracPlane( CellID const & hostCellID,
+                                                 R1Tensor const & fracNormal,
+                                                 R1Tensor const & fracOrigin,
+                                                 R1Tensor & tmp) const noexcept;
 
   MeshLevel const & m_mesh;
   ElementRegionManager const * const m_elementManager;
@@ -35,7 +52,9 @@ class ProjectionEDFMHelper {
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const m_nodesCoord;
   arrayView2d< localIndex const > const m_edgeToNodes;
   arrayView2d< localIndex const > const m_facesToCells;
-
+  ArrayOfArraysView< localIndex const > const m_facesToNodes;
+  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > m_nodeReferencePosition;
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > const m_cellCenters;
 };
 
 }  // end namespace geosx
