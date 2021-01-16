@@ -4,7 +4,11 @@ namespace geosx {
 
 ProjectionEDFMHelper::ProjectionEDFMHelper(MeshLevel const & mesh)
     : m_mesh( mesh ), m_elementManager( mesh.getElemManager() ), m_faceManager( mesh.getFaceManager() ),
-      m_nodeManager( mesh.getNodeManager() ), m_edgeManager( mesh.getEdgeManager() )
+      m_nodeManager( mesh.getNodeManager() ), m_edgeManager( mesh.getEdgeManager() ),
+      m_nodesCoord( m_nodeManager->referencePosition() ),
+      m_edgeToNodes( m_edgeManager->nodeList() ),
+      m_facesToCells( m_faceManager->elementList() )
+      // m_faceToEdges(m_faceManager->edgeList().toViewConst())
 {}
 
 void ProjectionEDFMHelper::addNonNeighboringConnections(EmbeddedSurfaceSubRegion const & fractureSubRegion)
@@ -40,7 +44,7 @@ void ProjectionEDFMHelper::addNonNeighboringConnections(EmbeddedSurfaceSubRegion
       //                                          GetSubRegion< CellElementSubRegion >(hostCellSubRegionIdx)->
       //                                          faceList()[ hostCellIdx ];
 
-      selectFaces(cellSubRegion->faceList(), hostCellIdx, fracElement, fractureSubRegion);
+      auto const faces = selectFaces(cellSubRegion->faceList(), hostCellIdx, fracElement, fractureSubRegion);
       // for( localIndex const iface : hostCellFaces )
       // {
 
@@ -60,54 +64,73 @@ void ProjectionEDFMHelper::addNonNeighboringConnections(EmbeddedSurfaceSubRegion
 
 }
 
-void ProjectionEDFMHelper::selectFaces(FixedOneToManyRelation const & subRegionFaces,
-                                       localIndex hostCellIdx,
-                                       localIndex fracElement,
-                                       EmbeddedSurfaceSubRegion const & fractureSubRegion) const
+std::vector<localIndex> ProjectionEDFMHelper::selectFaces(FixedOneToManyRelation const & subRegionFaces,
+                                                          localIndex hostCellIdx,
+                                                          localIndex fracElement,
+                                                          EmbeddedSurfaceSubRegion const & fractureSubRegion) const
 {
   using std::ref;
-  ArrayOfArraysView< localIndex const > const & faceToEdges = m_faceManager->edgeList().toViewConst();
-  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodesCoord =
-      m_nodeManager->referencePosition();
-  arrayView2d< localIndex const > const edgeToNodes = m_edgeManager->nodeList();
+  // arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodesCoord =
+  //     m_nodeManager->referencePosition();
+  // arrayView2d< localIndex const > const edgeToNodes = m_edgeManager->nodeList();
   auto const & n = fractureSubRegion.getNormalVector(fracElement);
   auto const & o = fractureSubRegion.getOrigin(fracElement);
-  vector<localIndex> faces;
-  R1Tensor vertex1, vertex2;
+  std::vector<localIndex> faces;
+  R1Tensor tmp;
+  // pick faces that intersect the fracture
   for (localIndex const iface : subRegionFaces[hostCellIdx])
   {
+    if (isBoundaryFace(iface)) continue;
+    if ( intersection( ref(o), ref(n), iface, tmp ) )
+      faces.push_back( iface );
 
-    for ( localIndex const iEdge : faceToEdges[iface] )
-    {
-      LvArray::tensorOps::copy< 3 >
-          ( vertex1, nodesCoord[edgeToNodes[iEdge][0]] );
-      LvArray::tensorOps::copy< 3 >
-          ( vertex2, nodesCoord[edgeToNodes[iEdge][1]] );
+    // for ( localIndex const iEdge : faceToEdges[iface] )
+    // {
+    //   LvArray::tensorOps::copy< 3 >
+    //       ( vertex1, nodesCoord[edgeToNodes[iEdge][0]] );
+    //   LvArray::tensorOps::copy< 3 >
+    //       ( vertex2, nodesCoord[edgeToNodes[iEdge][1]] );
 
-      if ( intersection(ref(vertex1), ref(vertex2), ref(n), ref(o)) )
-      {
-        faces.push_back( iface );
-        break;
-      }
-    }
-    // if (intersects(iface))
-    // for
-    // for (localIndex edgeIdx = 0; edgeIdx < )
+    //   if ( intersection(ref(vertex1), ref(vertex2), ref(n), ref(o)) )
+    //   {
+    //     faces.push_back( iface );
+    //     break;
+    //   }
+    // }
   }
 
+  // pick faces that are on the larger side of the fracure
+  for (localIndex const iface : subRegionFaces[hostCellIdx])
+    if (std::find( faces.begin(), faces.end(), iface ) == faces.end())  // not intersection
+    {
+
+    }
+
+  return faces;
 }
 
 bool ProjectionEDFMHelper::intersection(R1Tensor const & fracOrigin,
                                         R1Tensor const & fracNormal,
-                                        R1Tensor const & vertex1,
-                                        R1Tensor const & vertex2) const noexcept
+                                        localIndex edgeIdx,
+                                        R1Tensor & tmp) const noexcept
 {
-  R1Tensor ov1, ov2;
-  ov1 = vertex1;
-  ov1 -= fracOrigin;
-  ov2 = vertex1;
-  ov2 -= fracOrigin;
-  return Dot(ov1, fracNormal) * Dot(ov2, fracNormal) <= 0;
+  int const nEdgeVertices = 2;
+  double sameSide = 1;
+  for (int ivertex = 0; ivertex < nEdgeVertices; ivertex++)
+  {
+    LvArray::tensorOps::copy< 3 > ( tmp, m_nodesCoord[m_edgeToNodes[edgeIdx][ivertex]] );
+    tmp -= fracOrigin;
+    sameSide *= Dot(tmp, fracNormal);
+  }
+
+  return sameSide <= 0;
+}
+
+bool ProjectionEDFMHelper::isBoundaryFace(localIndex faceIdx) const noexcept
+{
+  if( m_facesToCells[faceIdx][0] < 0 || m_facesToCells[faceIdx][1] < 0 )
+    return true;
+  return false;
 }
 
 }  // end namespace geosx
