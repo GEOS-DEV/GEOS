@@ -1,5 +1,5 @@
 # hostconfig for pangea3
-# module load cmake/3.14 gcc/8.3 cuda/10.1.243 smpi/10.3.1.0 openblas/0.3.3 lapack/3.9.0
+# module load cmake/3.18.2 gcc/8.3.0 cuda/10.1.243 smpi/10.3.1.0 openblas/0.3.3 lapack/3.9.0
 
 set(CONFIG_NAME "pangea3" CACHE PATH "") 
 
@@ -7,8 +7,7 @@ set(CONFIG_NAME "pangea3" CACHE PATH "")
 set(GEOSX_TPL_ROOT_DIR /workrd/SCR/GEOSX/manualClones/thirdPartyLibs CACHE PATH "")
 set(GEOSX_TPL_DIR ${GEOSX_TPL_ROOT_DIR}/install-${CONFIG_NAME}-release CACHE PATH "")
 
-#set(HOST_COMPILER_PATH /data_local/sw/spack/opt/spack/linux-rhel7-ppc64le/gcc-4.8.5/gcc-8.2.0-suea3az6vbveib7t7d7roevy5y2qeebb/bin )
-set(HOST_COMPILER_PATH /data_local/sw/spack/0.13.3/opt/spack/linux-rhel7-power8le/gcc-4.8/gcc-8.3.0-xvcv2vifxgzn2uz52xu3f4njsq5xrc5p/bin )
+set( HOST_COMPILER_PATH /data_local/sw/spack/0.14.1/opt/spack/linux-rhel7-power8le/gcc-4.8/gcc-8.3.0-cchkzjuh7q4ac2hnoawiyfy2bryfajkt/bin )
 
 # C options
 set(CMAKE_C_COMPILER ${HOST_COMPILER_PATH}/gcc CACHE PATH "")
@@ -113,3 +112,9 @@ set(PETSC_OMP_DIR ${GEOSX_TPL_ROOT_DIR}/omp-links-for-petsc CACHE STRING "")
 
 # PETSc doesn't seem to work correctly with clang.
 set(ENABLE_PETSC OFF CACHE BOOL "")
+
+
+# Only for GEOSX, not the TPLs
+#set(GEOSX_TPL_DIR "$ENV{GEOSX_TPL_DIR}" CACHE PATH "" FORCE)
+#include(${CMAKE_CURRENT_LIST_DIR}/../tpls.cmake)
+
