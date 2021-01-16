@@ -109,7 +109,12 @@ public:
     // update strain energy density
     // TODO: refactor as a proper history variable update.  the code below doesn't allow for rewinds.
 
-    real64 sed = 0.5 * (stressP * volStrain + stressQ * devStrain);
+    real64 sed = 0.5 * (stressQ * devStrain) / factor;
+
+    if( volStrain > 0 )
+    {
+      sed += 0.5 * (stressP * volStrain) / factor;
+    }
 
     if( sed > m_strainEnergyDensity( k, q ) )
     {
