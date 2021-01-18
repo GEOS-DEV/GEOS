@@ -759,7 +759,7 @@ public:
    * @note The order in which the sub-Groups are iterated over is defined by
    * initializationOrder().
    */
-  void Initialize( Group * const group );
+  void Initialize( Group * const group );  //TODO to change function name Initialize to initialize
 
   /**
    * @brief Sets the initialization order for sub-Groups.
