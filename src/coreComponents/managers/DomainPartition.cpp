@@ -44,9 +44,9 @@ DomainPartition::DomainPartition( std::string const & name,
     setRestartFlags( RestartFlags::NO_WRITE )->
     setSizedFromParent( false );
 
-  RegisterGroup( groupKeys.meshBodies );
-  RegisterGroup< constitutive::ConstitutiveManager >( groupKeys.constitutiveManager );
-  RegisterGroup< CellBlockManager >( keys::cellManager );
+  registerGroup( groupKeys.meshBodies );
+  registerGroup< constitutive::ConstitutiveManager >( groupKeys.constitutiveManager );
+  registerGroup< CellBlockManager >( keys::cellManager );
 }
 
 

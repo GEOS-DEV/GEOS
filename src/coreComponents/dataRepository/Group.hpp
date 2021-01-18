@@ -206,10 +206,10 @@ public:
    * Registers a Group or class derived from Group as a subgroup of this Group and takes ownership.
    */
   template< typename T = Group >
-  T * RegisterGroup( std::string const & name, std::unique_ptr< T > newObject );
+  T * registerGroup( std::string const & name, std::unique_ptr< T > newObject );
 
   /**
-   * @brief @copybrief RegisterGroup(std::string const &,std::unique_ptr<T>)
+   * @brief @copybrief registerGroup(std::string const &,std::unique_ptr<T>)
    *
    * @tparam T The type of the Group to add/register. This should be a type that derives from Group.
    * @param[in] name          The name of the group to use as a string key.
@@ -219,11 +219,11 @@ public:
    * Registers a Group or class derived from Group as a subgroup of this Group but does not take ownership.
    */
   template< typename T = Group >
-  T * RegisterGroup( std::string const & name,
+  T * registerGroup( std::string const & name,
                      T * newObject );
 
   /**
-   * @brief @copybrief RegisterGroup(std::string const &,std::unique_ptr<T>)
+   * @brief @copybrief registerGroup(std::string const &,std::unique_ptr<T>)
    *
    * @tparam T The type of the Group to add/register. This should be a type that derives from Group.
    * @param[in] name The name of the group to use as a string key.
@@ -232,13 +232,13 @@ public:
    * Creates and registers a Group or class derived from Group as a subgroup of this Group.
    */
   template< typename T = Group >
-  T * RegisterGroup( std::string const & name )
+  T * registerGroup( std::string const & name )
   {
-    return RegisterGroup< T >( name, std::move( std::make_unique< T >( name, this )) );
+    return registerGroup< T >( name, std::move( std::make_unique< T >( name, this )) );
   }
 
   /**
-   * @brief @copybrief RegisterGroup(std::string const &,std::unique_ptr<T>)
+   * @brief @copybrief registerGroup(std::string const &,std::unique_ptr<T>)
    *
    * @tparam T The type of the Group to add/register. This should be a type that derives from Group.
    * @param[in,out] keyIndex A KeyIndexT object that will be used to specify the name of
@@ -248,15 +248,15 @@ public:
    * Creates and registers a Group or class derived from Group as a subgroup of this Group.
    */
   template< typename T = Group >
-  T * RegisterGroup( subGroupMap::KeyIndex const & keyIndex )
+  T * registerGroup( subGroupMap::KeyIndex const & keyIndex )
   {
-    T * rval = RegisterGroup< T >( keyIndex.Key(), std::move( std::make_unique< T >( keyIndex.Key(), this )) );
+    T * rval = registerGroup< T >( keyIndex.Key(), std::move( std::make_unique< T >( keyIndex.Key(), this )) );
     keyIndex.setIndex( this->m_subGroups.getIndex( keyIndex.Key()) );
     return rval;
   }
 
   /**
-   * @brief @copybrief RegisterGroup(std::string const &,std::unique_ptr<T>)
+   * @brief @copybrief registerGroup(std::string const &,std::unique_ptr<T>)
    *
    * @tparam T The type of the Group to add/register. This should be a type that derives from Group.
    * @tparam TBASE The type whose type catalog will be used to look up the new sub-group type
@@ -267,10 +267,10 @@ public:
    * Creates and registers a Group or class derived from Group as a subgroup of this Group.
    */
   template< typename T = Group, typename TBASE = Group >
-  T * RegisterGroup( std::string const & name, std::string const & catalogName )
+  T * registerGroup( std::string const & name, std::string const & catalogName )
   {
     std::unique_ptr< TBASE > newGroup = TBASE::CatalogInterface::Factory( catalogName, name, this );
-    return RegisterGroup< T >( name, std::move( newGroup ) );
+    return registerGroup< T >( name, std::move( newGroup ) );
   }
 
   /**
@@ -1547,7 +1547,7 @@ using ViewKey = Group::wrapperMap::KeyIndex;
 
 
 template< typename T >
-T * Group::RegisterGroup( std::string const & name,
+T * Group::registerGroup( std::string const & name,
                           std::unique_ptr< T > newObject )
 {
   newObject->m_parent = this;
@@ -1556,7 +1556,7 @@ T * Group::RegisterGroup( std::string const & name,
 
 
 template< typename T >
-T * Group::RegisterGroup( std::string const & name,
+T * Group::registerGroup( std::string const & name,
                           T * newObject )
 {
   return dynamicCast< T * >( m_subGroups.insert( name, newObject, false ) );

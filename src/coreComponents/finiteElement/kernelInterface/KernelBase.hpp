@@ -415,7 +415,7 @@ real64 regionBasedKernelApplication( MeshLevel & mesh,
     }
     else
     {
-      nullConstitutiveModel = elementSubRegion.template RegisterGroup< constitutive::NullModel >( "nullModelGroup" );
+      nullConstitutiveModel = elementSubRegion.template registerGroup< constitutive::NullModel >( "nullModelGroup" );
       constitutiveRelation = nullConstitutiveModel;
     }
 

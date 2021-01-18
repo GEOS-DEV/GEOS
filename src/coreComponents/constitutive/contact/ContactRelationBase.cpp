@@ -77,7 +77,7 @@ ContactRelationBase::CreateChild( string const & catalogKey, string const & chil
   FunctionBase::CatalogInterface::CatalogType const & functionCatalog = FunctionBase::getCatalog();
   GEOSX_ERROR_IF( !functionCatalog.count( catalogKey ), catalogKey << " is an invalid key ContactRelationBase child group." );
 
-  m_apertureFunction = FunctionManager::Instance().RegisterGroup( childName, FunctionBase::CatalogInterface::Factory( catalogKey, childName, this ) );
+  m_apertureFunction = FunctionManager::Instance().registerGroup( childName, FunctionBase::CatalogInterface::Factory( catalogKey, childName, this ) );
 
   return m_apertureFunction;
 }

@@ -33,7 +33,7 @@ ElementRegionManager::ElementRegionManager( string const & name, Group * const p
   ObjectManagerBase( name, parent )
 {
   setInputFlags( InputFlags::OPTIONAL );
-  this->RegisterGroup< Group >( ElementRegionManager::groupKeyStruct::elementRegionsGroup );
+  this->registerGroup< Group >( ElementRegionManager::groupKeyStruct::elementRegionsGroup );
 }
 
 ElementRegionManager::~ElementRegionManager()
@@ -85,7 +85,7 @@ Group * ElementRegionManager::CreateChild( string const & childKey, string const
                   "KeyName ("<<childKey<<") not found in ObjectManager::Catalog" );
   GEOSX_LOG_RANK_0( "Adding Object " << childKey<<" named "<< childName<<" from ObjectManager::Catalog." );
   Group * const elementRegions = this->GetGroup( ElementRegionManager::groupKeyStruct::elementRegionsGroup );
-  return elementRegions->RegisterGroup( childName,
+  return elementRegions->registerGroup( childName,
                                         CatalogInterface::Factory( childKey, childName, elementRegions ) );
 
 }

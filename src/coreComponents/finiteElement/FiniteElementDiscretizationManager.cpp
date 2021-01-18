@@ -40,7 +40,7 @@ Group * FiniteElementDiscretizationManager::CreateChild( string const & childKey
 {
   // These objects should probably not be registered on managed group...
   std::unique_ptr< Group > fem = Group::CatalogInterface::Factory( childKey, childName, this );
-  return this->RegisterGroup( childName, std::move( fem ) );
+  return this->registerGroup( childName, std::move( fem ) );
 }
 
 

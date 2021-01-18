@@ -127,7 +127,7 @@ Group * InternalWellGenerator::CreateChild( string const & childKey, string cons
     // keep track of the perforations that have been added
     m_perforationList.emplace_back( childName );
 
-    return RegisterGroup< Perforation >( childName );
+    return registerGroup< Perforation >( childName );
   }
   else
   {

@@ -41,7 +41,7 @@ ConstitutiveManager::~ConstitutiveManager()
 Group * ConstitutiveManager::CreateChild( string const & childKey, string const & childName )
 {
   std::unique_ptr< ConstitutiveBase > material = ConstitutiveBase::CatalogInterface::Factory( childKey, childName, this );
-  return RegisterGroup< ConstitutiveBase >( childName, std::move( material ) );
+  return registerGroup< ConstitutiveBase >( childName, std::move( material ) );
 }
 
 
@@ -72,14 +72,14 @@ ConstitutiveManager::HangConstitutiveRelation( string const & constitutiveRelati
   dataRepository::Group * constitutiveGroup = parent->GetGroup( groupKeyStruct::constitutiveModelsString );
   if( constitutiveGroup == nullptr )
   {
-    constitutiveGroup = parent->RegisterGroup( groupKeyStruct::constitutiveModelsString )->
+    constitutiveGroup = parent->registerGroup( groupKeyStruct::constitutiveModelsString )->
                           setSizedFromParent( 1 );
     constitutiveGroup->resize( parent->size() );
   }
 
 
   ConstitutiveBase * const
-  rval = constitutiveGroup->RegisterGroup< ConstitutiveBase >( constitutiveRelationInstanceName,
+  rval = constitutiveGroup->registerGroup< ConstitutiveBase >( constitutiveRelationInstanceName,
                                                                std::move( material ) );
   rval->setSizedFromParent( 1 );
   rval->resize( constitutiveGroup->size() );

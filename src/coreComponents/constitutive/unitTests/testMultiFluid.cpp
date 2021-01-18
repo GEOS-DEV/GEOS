@@ -269,7 +269,7 @@ void testNumericalDerivatives( MultiFluidBase & fluid,
 
 MultiFluidBase * makeCompositionalFluid( string const & name, Group & parent )
 {
-  auto fluid = parent.RegisterGroup< CompositionalMultiphaseFluid >( name );
+  auto fluid = parent.registerGroup< CompositionalMultiphaseFluid >( name );
 
   // TODO we should actually create a fake XML node with data, but this seemed easier...
 
@@ -358,7 +358,7 @@ TEST_F( CompositionalFluidTest, numericalDerivativesMass )
 
 MultiFluidBase * makeLiveOilFluid( string const & name, Group * parent )
 {
-  auto fluid = parent->RegisterGroup< BlackOilFluid >( name );
+  auto fluid = parent->registerGroup< BlackOilFluid >( name );
 
   // TODO we should actually create a fake XML node with data, but this seemed easier...
 
@@ -391,7 +391,7 @@ MultiFluidBase * makeLiveOilFluid( string const & name, Group * parent )
 
 MultiFluidBase * makeDeadOilFluid( string const & name, Group * parent )
 {
-  auto fluid = parent->RegisterGroup< BlackOilFluid >( name );
+  auto fluid = parent->registerGroup< BlackOilFluid >( name );
 
   // TODO we should actually create a fake XML node with data, but this seemed easier...
 

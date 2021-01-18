@@ -42,7 +42,7 @@ FieldSpecificationManager::~FieldSpecificationManager()
 Group * FieldSpecificationManager::CreateChild( string const & childKey, string const & childName )
 {
   std::unique_ptr< FieldSpecificationBase > bc = FieldSpecificationBase::CatalogInterface::Factory( childKey, childName, this );
-  return this->RegisterGroup( childName, std::move( bc ) );
+  return this->registerGroup( childName, std::move( bc ) );
 }
 
 

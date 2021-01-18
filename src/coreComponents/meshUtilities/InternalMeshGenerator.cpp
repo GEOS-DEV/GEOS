@@ -326,8 +326,8 @@ void InternalMeshGenerator::GenerateMesh( DomainPartition * const domain )
   // This cannot find groupkeys:
   // Group * const meshBodies = domain->GetGroup(domain->groupKeys.meshBodies);
   Group * const meshBodies = domain->GetGroup( std::string( "MeshBodies" ));
-  MeshBody * const meshBody = meshBodies->RegisterGroup< MeshBody >( this->getName() );
-  MeshLevel * const meshLevel0 = meshBody->RegisterGroup< MeshLevel >( std::string( "Level0" ));
+  MeshBody * const meshBody = meshBodies->registerGroup< MeshBody >( this->getName() );
+  MeshLevel * const meshLevel0 = meshBody->registerGroup< MeshLevel >( std::string( "Level0" ));
 
   // special case
   //  bool isRadialWithOneThetaPartition = (m_mapToRadial > 0) &&
@@ -349,7 +349,7 @@ void InternalMeshGenerator::GenerateMesh( DomainPartition * const domain )
   int aa = 0;
   for( auto & cellBlockName : m_regionNames )
   {
-    CellBlock * cellBlock = elementManager->GetGroup( keys::cellBlocks )->RegisterGroup< CellBlock >( cellBlockName );
+    CellBlock * cellBlock = elementManager->GetGroup( keys::cellBlocks )->registerGroup< CellBlock >( cellBlockName );
     string elementType = m_elementType[aa++];
     cellBlock->SetElementType( elementType );
   }

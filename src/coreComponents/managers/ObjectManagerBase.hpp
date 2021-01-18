@@ -887,7 +887,7 @@ public:
   {
     std::string const & rankString = std::to_string( rank );
     m_neighborData.emplace( std::piecewise_construct, std::make_tuple( rank ), std::make_tuple( rankString, &m_neighborGroup ) );
-    m_neighborGroup.RegisterGroup( rankString, &getNeighborData( rank ) );
+    m_neighborGroup.registerGroup( rankString, &getNeighborData( rank ) );
   }
 
   /**

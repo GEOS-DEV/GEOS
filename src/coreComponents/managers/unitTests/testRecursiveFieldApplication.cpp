@@ -35,7 +35,7 @@ void RegisterAndApplyField( DomainPartition * domain,
 {
   FieldSpecificationManager & fieldSpecificationManager = FieldSpecificationManager::get();
 
-  auto fieldSpec = fieldSpecificationManager.RegisterGroup< FieldSpecificationBase >( fieldName );
+  auto fieldSpec = fieldSpecificationManager.registerGroup< FieldSpecificationBase >( fieldName );
   fieldSpec->SetFieldName( fieldName );
   fieldSpec->SetObjectPath( objectPath );
   fieldSpec->SetScale( value );
@@ -63,30 +63,30 @@ TEST( FieldSpecification, Recursive )
   localIndex nbHexReg1 = 50;
   auto domain = std::unique_ptr< DomainPartition >( new DomainPartition( "domain", nullptr ) );
   auto meshBodies = domain->getMeshBodies();
-  MeshBody * const meshBody = meshBodies->RegisterGroup< MeshBody >( "body" );
-  MeshLevel * const meshLevel0 = meshBody->RegisterGroup< MeshLevel >( std::string( "Level0" ));
+  MeshBody * const meshBody = meshBodies->registerGroup< MeshBody >( "body" );
+  MeshLevel * const meshLevel0 = meshBody->registerGroup< MeshLevel >( std::string( "Level0" ));
 
   CellBlockManager * cellBlockManager = domain->GetGroup< CellBlockManager >( keys::cellManager );
 
-  CellBlock * reg0Hex = cellBlockManager->GetGroup( keys::cellBlocks )->RegisterGroup< CellBlock >( "reg0hex" );
+  CellBlock * reg0Hex = cellBlockManager->GetGroup( keys::cellBlocks )->registerGroup< CellBlock >( "reg0hex" );
   reg0Hex->SetElementType( "C3D8" );
   reg0Hex->resize( nbHexReg0 );
   auto & cellToVertexreg0Hex = reg0Hex->nodeList();
   cellToVertexreg0Hex.resize( nbHexReg0, 8 );
 
-  CellBlock * reg0Tet= cellBlockManager->GetGroup( keys::cellBlocks )->RegisterGroup< CellBlock >( "reg0tet" );
+  CellBlock * reg0Tet= cellBlockManager->GetGroup( keys::cellBlocks )->registerGroup< CellBlock >( "reg0tet" );
   reg0Tet->SetElementType( "C3D4" );
   reg0Tet->resize( nbTetReg0 );
   auto & cellToVertexreg0Tet = reg0Tet->nodeList();
   cellToVertexreg0Tet.resize( nbTetReg0, 4 );
 
-  CellBlock * reg1Hex = cellBlockManager->GetGroup( keys::cellBlocks )->RegisterGroup< CellBlock >( "reg1hex" );
+  CellBlock * reg1Hex = cellBlockManager->GetGroup( keys::cellBlocks )->registerGroup< CellBlock >( "reg1hex" );
   reg1Hex->SetElementType( "C3D8" );
   reg1Hex->resize( nbHexReg1 );
   auto & cellToVertexreg1Hex = reg1Hex->nodeList();
   cellToVertexreg1Hex.resize( nbHexReg1, 8 );
 
-  CellBlock * reg1Tet= cellBlockManager->GetGroup( keys::cellBlocks )->RegisterGroup< CellBlock >( "reg1tet" );
+  CellBlock * reg1Tet= cellBlockManager->GetGroup( keys::cellBlocks )->registerGroup< CellBlock >( "reg1tet" );
   reg1Tet->SetElementType( "C3D4" );
   reg1Tet->resize( nbTetReg1 );
   auto & cellToVertexreg1Tet = reg1Tet->nodeList();

@@ -64,32 +64,32 @@ ProblemManager::ProblemManager( const std::string & name,
   m_functionManager( nullptr )
 {
   // Groups that do not read from the xml
-  RegisterGroup< DomainPartition >( groupKeys.domain );
-  Group * commandLine = RegisterGroup< Group >( groupKeys.commandLine );
+  registerGroup< DomainPartition >( groupKeys.domain );
+  Group * commandLine = registerGroup< Group >( groupKeys.commandLine );
   commandLine->setRestartFlags( RestartFlags::WRITE );
 
   setInputFlags( InputFlags::PROBLEM_ROOT );
 
   // Mandatory groups that read from the xml
-  RegisterGroup< FieldSpecificationManager >( groupKeys.fieldSpecificationManager.Key(),
+  registerGroup< FieldSpecificationManager >( groupKeys.fieldSpecificationManager.Key(),
                                               &FieldSpecificationManager::get() );//->setRestartFlags(RestartFlags::NO_WRITE);
 
 
-  // RegisterGroup<ConstitutiveManager>(groupKeys.constitutiveManager);
-  // RegisterGroup<ElementRegionManager>(groupKeys.elementRegionManager);
+  // registerGroup<ConstitutiveManager>(groupKeys.constitutiveManager);
+  // registerGroup<ElementRegionManager>(groupKeys.elementRegionManager);
 
-  m_eventManager = RegisterGroup< EventManager >( groupKeys.eventManager );
-  RegisterGroup< NumericalMethodsManager >( groupKeys.numericalMethodsManager );
-  RegisterGroup< GeometricObjectManager >( groupKeys.geometricObjectManager );
-  RegisterGroup< MeshManager >( groupKeys.meshManager );
-  RegisterGroup< OutputManager >( groupKeys.outputManager );
-  m_physicsSolverManager = RegisterGroup< PhysicsSolverManager >( groupKeys.physicsSolverManager );
-  RegisterGroup< TasksManager >( groupKeys.tasksManager );
+  m_eventManager = registerGroup< EventManager >( groupKeys.eventManager );
+  registerGroup< NumericalMethodsManager >( groupKeys.numericalMethodsManager );
+  registerGroup< GeometricObjectManager >( groupKeys.geometricObjectManager );
+  registerGroup< MeshManager >( groupKeys.meshManager );
+  registerGroup< OutputManager >( groupKeys.outputManager );
+  m_physicsSolverManager = registerGroup< PhysicsSolverManager >( groupKeys.physicsSolverManager );
+  registerGroup< TasksManager >( groupKeys.tasksManager );
 
   // The function manager is handled separately
   m_functionManager = &FunctionManager::Instance();
   // Mandatory groups that read from the xml
-  RegisterGroup< FunctionManager >( groupKeys.functionManager.Key(), m_functionManager );
+  registerGroup< FunctionManager >( groupKeys.functionManager.Key(), m_functionManager );
 
   // Command line entries
   commandLine->registerWrapper< string >( viewKeys.inputFileName.Key() )->
@@ -367,18 +367,18 @@ void ProblemManager::SetSchemaDeviations( xmlWrapper::xmlNode schemaRoot,
 
 
   // Add entries that are only used in the pre-processor
-  Group * IncludedList = this->RegisterGroup< Group >( "Included" );
+  Group * IncludedList = this->registerGroup< Group >( "Included" );
   IncludedList->setInputFlags( InputFlags::OPTIONAL );
 
-  Group * includedFile = IncludedList->RegisterGroup< Group >( "File" );
+  Group * includedFile = IncludedList->registerGroup< Group >( "File" );
   includedFile->setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 
   schemaUtilities::SchemaConstruction( IncludedList, schemaRoot, targetChoiceNode, documentationType );
 
-  Group * parameterList = this->RegisterGroup< Group >( "Parameters" );
+  Group * parameterList = this->registerGroup< Group >( "Parameters" );
   parameterList->setInputFlags( InputFlags::OPTIONAL );
 
-  Group * parameter = parameterList->RegisterGroup< Group >( "Parameter" );
+  Group * parameter = parameterList->registerGroup< Group >( "Parameter" );
   parameter->setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
   parameter->registerWrapper< string >( "value" )->
     setInputFlag( InputFlags::REQUIRED )->
@@ -386,15 +386,15 @@ void ProblemManager::SetSchemaDeviations( xmlWrapper::xmlNode schemaRoot,
 
   schemaUtilities::SchemaConstruction( parameterList, schemaRoot, targetChoiceNode, documentationType );
 
-  Group * benchmarks = this->RegisterGroup< Group >( "Benchmarks" );
+  Group * benchmarks = this->registerGroup< Group >( "Benchmarks" );
   benchmarks->setInputFlags( InputFlags::OPTIONAL );
 
   for( std::string const & machineName : {"quartz", "lassen"} )
   {
-    Group * machine = benchmarks->RegisterGroup< Group >( machineName );
+    Group * machine = benchmarks->registerGroup< Group >( machineName );
     machine->setInputFlags( InputFlags::OPTIONAL );
 
-    Group * run = machine->RegisterGroup< Group >( "Run" );
+    Group * run = machine->registerGroup< Group >( "Run" );
     run->setInputFlags( InputFlags::OPTIONAL );
 
     run->registerWrapper< std::string >( "name" )->setInputFlag( InputFlags::REQUIRED )->

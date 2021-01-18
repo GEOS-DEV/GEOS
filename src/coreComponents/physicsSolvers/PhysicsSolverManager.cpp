@@ -49,7 +49,7 @@ Group * PhysicsSolverManager::CreateChild( string const & childKey, string const
   if( SolverBase::CatalogInterface::hasKeyName( childKey ) )
   {
     GEOSX_LOG_RANK_0( "Adding Solver of type " << childKey << ", named " << childName );
-    rval = RegisterGroup( childName,
+    rval = registerGroup( childName,
                           SolverBase::CatalogInterface::Factory( childKey, childName, this ) );
   }
   return rval;

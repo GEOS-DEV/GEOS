@@ -86,7 +86,7 @@ void testNumericalDerivatives( CapillaryPressureBase & capPressure,
 
 CapillaryPressureBase * makeBrooksCoreyCapPressureTwoPhase( string const & name, Group * parent )
 {
-  auto capPressure = parent->RegisterGroup< BrooksCoreyCapillaryPressure >( name );
+  auto capPressure = parent->registerGroup< BrooksCoreyCapillaryPressure >( name );
 
   auto & phaseNames = capPressure->getReference< string_array >( CapillaryPressureBase::viewKeyStruct::phaseNamesString );
   phaseNames.resize( 2 );
@@ -115,7 +115,7 @@ CapillaryPressureBase * makeBrooksCoreyCapPressureTwoPhase( string const & name,
 
 CapillaryPressureBase * makeBrooksCoreyCapPressureThreePhase( string const & name, Group * parent )
 {
-  auto capPressure = parent->RegisterGroup< BrooksCoreyCapillaryPressure >( name );
+  auto capPressure = parent->registerGroup< BrooksCoreyCapillaryPressure >( name );
 
   auto & phaseNames = capPressure->getReference< string_array >( CapillaryPressureBase::viewKeyStruct::phaseNamesString );
   phaseNames.resize( 3 );
@@ -144,7 +144,7 @@ CapillaryPressureBase * makeBrooksCoreyCapPressureThreePhase( string const & nam
 
 CapillaryPressureBase * makeVanGenuchtenCapPressureTwoPhase( string const & name, Group * parent )
 {
-  auto capPressure = parent->RegisterGroup< VanGenuchtenCapillaryPressure >( name );
+  auto capPressure = parent->registerGroup< VanGenuchtenCapillaryPressure >( name );
 
   auto & phaseNames = capPressure->getReference< string_array >( CapillaryPressureBase::viewKeyStruct::phaseNamesString );
   phaseNames.resize( 2 );
@@ -173,7 +173,7 @@ CapillaryPressureBase * makeVanGenuchtenCapPressureTwoPhase( string const & name
 
 CapillaryPressureBase * makeVanGenuchtenCapPressureThreePhase( string const & name, Group * parent )
 {
-  auto capPressure = parent->RegisterGroup< VanGenuchtenCapillaryPressure >( name );
+  auto capPressure = parent->registerGroup< VanGenuchtenCapillaryPressure >( name );
 
   auto & phaseNames = capPressure->getReference< string_array >( CapillaryPressureBase::viewKeyStruct::phaseNamesString );
   phaseNames.resize( 3 );

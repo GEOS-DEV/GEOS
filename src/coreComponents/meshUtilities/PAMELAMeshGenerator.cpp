@@ -96,10 +96,10 @@ void PAMELAMeshGenerator::GenerateMesh( DomainPartition * const domain )
   GEOSX_LOG_RANK_0( "Writing into the GEOSX mesh data structure" );
   domain->getMetisNeighborList() = m_pamelaMesh->getNeighborList();
   Group * const meshBodies = domain->GetGroup( std::string( "MeshBodies" ));
-  MeshBody * const meshBody = meshBodies->RegisterGroup< MeshBody >( this->getName() );
+  MeshBody * const meshBody = meshBodies->registerGroup< MeshBody >( this->getName() );
 
   //TODO for the moment we only consider on mesh level "Level0"
-  MeshLevel * const meshLevel0 = meshBody->RegisterGroup< MeshLevel >( std::string( "Level0" ));
+  MeshLevel * const meshLevel0 = meshBody->registerGroup< MeshLevel >( std::string( "Level0" ));
   NodeManager * nodeManager = meshLevel0->getNodeManager();
   CellBlockManager * cellBlockManager = domain->GetGroup< CellBlockManager >( keys::cellManager );
 
@@ -168,7 +168,7 @@ void PAMELAMeshGenerator::GenerateMesh( DomainPartition * const domain )
       {
         localIndex const nbCells = cellBlockPAMELA->SubCollection.size_owned();
         cellBlock =
-          cellBlockManager->GetGroup( keys::cellBlocks )->RegisterGroup< CellBlock >( DecodePAMELALabels::MakeRegionLabel( regionName, cellBlockName ) );
+          cellBlockManager->GetGroup( keys::cellBlocks )->registerGroup< CellBlock >( DecodePAMELALabels::MakeRegionLabel( regionName, cellBlockName ) );
         cellBlock->SetElementType( "C3D8" );
         auto & cellToVertex = cellBlock->nodeList();
         cellBlock->resize( nbCells );
@@ -209,7 +209,7 @@ void PAMELAMeshGenerator::GenerateMesh( DomainPartition * const domain )
       {
         localIndex const nbCells = cellBlockPAMELA->SubCollection.size_owned();
         cellBlock =
-          cellBlockManager->GetGroup( keys::cellBlocks )->RegisterGroup< CellBlock >( DecodePAMELALabels::MakeRegionLabel( regionName, cellBlockName ) );
+          cellBlockManager->GetGroup( keys::cellBlocks )->registerGroup< CellBlock >( DecodePAMELALabels::MakeRegionLabel( regionName, cellBlockName ) );
         cellBlock->SetElementType( "C3D4" );
         auto & cellToVertex = cellBlock->nodeList();
         cellBlock->resize( nbCells );
@@ -242,7 +242,7 @@ void PAMELAMeshGenerator::GenerateMesh( DomainPartition * const domain )
       {
         localIndex const nbCells = cellBlockPAMELA->SubCollection.size_owned();
         cellBlock =
-          cellBlockManager->GetGroup( keys::cellBlocks )->RegisterGroup< CellBlock >( DecodePAMELALabels::MakeRegionLabel( regionName, cellBlockName ) );
+          cellBlockManager->GetGroup( keys::cellBlocks )->registerGroup< CellBlock >( DecodePAMELALabels::MakeRegionLabel( regionName, cellBlockName ) );
         cellBlock->SetElementType( "C3D6" );
         auto & cellToVertex = cellBlock->nodeList();
         cellBlock->resize( nbCells );
@@ -279,7 +279,7 @@ void PAMELAMeshGenerator::GenerateMesh( DomainPartition * const domain )
       {
         localIndex const nbCells = cellBlockPAMELA->SubCollection.size_owned();
         cellBlock =
-          cellBlockManager->GetGroup( keys::cellBlocks )->RegisterGroup< CellBlock >( DecodePAMELALabels::MakeRegionLabel( regionName, cellBlockName ) );
+          cellBlockManager->GetGroup( keys::cellBlocks )->registerGroup< CellBlock >( DecodePAMELALabels::MakeRegionLabel( regionName, cellBlockName ) );
         cellBlock->SetElementType( "C3D5" );
         auto & cellToVertex = cellBlock->nodeList();
         cellBlock->resize( nbCells );

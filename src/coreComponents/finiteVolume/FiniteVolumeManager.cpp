@@ -44,12 +44,12 @@ Group * FiniteVolumeManager::CreateChild( string const & childKey, string const 
   if( childKey == HybridMimeticDiscretization::CatalogName() )
   {
     std::unique_ptr< HybridMimeticDiscretization > hm = std::make_unique< HybridMimeticDiscretization >( childName, this );
-    return this->RegisterGroup< HybridMimeticDiscretization >( childName, std::move( hm ) );
+    return this->registerGroup< HybridMimeticDiscretization >( childName, std::move( hm ) );
   }
   else
   {
     std::unique_ptr< FluxApproximationBase > approx = FluxApproximationBase::CatalogInterface::Factory( childKey, childName, this );
-    return this->RegisterGroup< FluxApproximationBase >( childName, std::move( approx ));
+    return this->registerGroup< FluxApproximationBase >( childName, std::move( approx ));
   }
 }
 
@@ -66,7 +66,7 @@ void FiniteVolumeManager::ExpandObjectCatalogs()
   {
     string const childName = catalogIter.first;
     std::unique_ptr< HybridMimeticDiscretization > hm = std::make_unique< HybridMimeticDiscretization >( childName, this );
-    this->RegisterGroup< HybridMimeticDiscretization >( childName, std::move( hm ) );
+    this->registerGroup< HybridMimeticDiscretization >( childName, std::move( hm ) );
   }
 }
 

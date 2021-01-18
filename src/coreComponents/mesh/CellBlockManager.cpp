@@ -29,7 +29,7 @@ using namespace dataRepository;
 CellBlockManager::CellBlockManager( string const & name, Group * const parent ):
   ObjectManagerBase( name, parent )
 {
-  this->RegisterGroup< Group >( keys::cellBlocks );
+  this->registerGroup< Group >( keys::cellBlocks );
 }
 
 CellBlockManager::~CellBlockManager()
@@ -55,7 +55,7 @@ void CellBlockManager::resize( integer_array const & numElements,
 //                                             string const & elementType,
 //                                             integer const & numElements )
 //{
-////  ElementRegion * elemRegion = elementRegions.RegisterGroup( regionNames );
+////  ElementRegion * elemRegion = elementRegions.registerGroup( regionNames );
 ////  elemRegion->resize(numElements);
 //}
 

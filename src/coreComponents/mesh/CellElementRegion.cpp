@@ -46,7 +46,7 @@ void CellElementRegion::GenerateMesh( Group * const cellBlocks )
 
   for( string const & cellBlockName : this->m_cellBlockNames )
   {
-    CellElementSubRegion * const subRegion = elementSubRegions->RegisterGroup< CellElementSubRegion >( cellBlockName );
+    CellElementSubRegion * const subRegion = elementSubRegions->registerGroup< CellElementSubRegion >( cellBlockName );
     CellBlock * const source = cellBlocks->GetGroup< CellBlock >( subRegion->getName() );
     GEOSX_ERROR_IF( source == nullptr, "Cell block named " + subRegion->getName() + " does not exist" );
     subRegion->CopyFromCellBlock( source );
@@ -65,7 +65,7 @@ void CellElementRegion::GenerateAggregates( FaceManager const * const faceManage
   Group * elementSubRegions = this->GetGroup( viewKeyStruct::elementSubRegions );
   localIndex regionIndex = getIndexInParent();
   AggregateElementSubRegion * const aggregateSubRegion =
-    elementSubRegions->RegisterGroup< AggregateElementSubRegion >( "coarse" );
+    elementSubRegions->registerGroup< AggregateElementSubRegion >( "coarse" );
 
   arrayView2d< localIndex const > const elemRegionList     = faceManager->elementRegionList();
   arrayView2d< localIndex const > const elemSubRegionList  = faceManager->elementSubRegionList();

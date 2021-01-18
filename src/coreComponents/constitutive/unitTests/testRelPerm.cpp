@@ -86,7 +86,7 @@ void testNumericalDerivatives( RelativePermeabilityBase & relPerm,
 
 RelativePermeabilityBase * makeBrooksCoreyRelPerm( string const & name, Group * parent )
 {
-  auto relPerm = parent->RegisterGroup< BrooksCoreyRelativePermeability >( name );
+  auto relPerm = parent->registerGroup< BrooksCoreyRelativePermeability >( name );
 
   auto & phaseNames = relPerm->getReference< string_array >( RelativePermeabilityBase::viewKeyStruct::phaseNamesString );
   phaseNames.resize( 2 );
@@ -110,7 +110,7 @@ RelativePermeabilityBase * makeBrooksCoreyRelPerm( string const & name, Group * 
 
 RelativePermeabilityBase * makeBrooksCoreyBakerRelPermTwoPhase( string const & name, Group * parent )
 {
-  auto relPerm = parent->RegisterGroup< BrooksCoreyBakerRelativePermeability >( name );
+  auto relPerm = parent->registerGroup< BrooksCoreyBakerRelativePermeability >( name );
 
   auto & phaseNames = relPerm->getReference< string_array >( RelativePermeabilityBase::viewKeyStruct::phaseNamesString );
   phaseNames.resize( 2 );
@@ -136,7 +136,7 @@ RelativePermeabilityBase * makeBrooksCoreyBakerRelPermTwoPhase( string const & n
 
 RelativePermeabilityBase * makeBrooksCoreyBakerRelPermThreePhase( string const & name, Group * parent )
 {
-  auto relPerm = parent->RegisterGroup< BrooksCoreyBakerRelativePermeability >( name );
+  auto relPerm = parent->registerGroup< BrooksCoreyBakerRelativePermeability >( name );
 
   auto & phaseNames = relPerm->getReference< string_array >( RelativePermeabilityBase::viewKeyStruct::phaseNamesString );
   phaseNames.resize( 3 );
@@ -169,7 +169,7 @@ RelativePermeabilityBase * makeBrooksCoreyBakerRelPermThreePhase( string const &
 
 RelativePermeabilityBase * makeVanGenuchtenBakerRelPermTwoPhase( string const & name, Group * parent )
 {
-  auto relPerm = parent->RegisterGroup< VanGenuchtenBakerRelativePermeability >( name );
+  auto relPerm = parent->registerGroup< VanGenuchtenBakerRelativePermeability >( name );
 
   auto & phaseNames = relPerm->getReference< string_array >( RelativePermeabilityBase::viewKeyStruct::phaseNamesString );
   phaseNames.resize( 2 );
@@ -195,7 +195,7 @@ RelativePermeabilityBase * makeVanGenuchtenBakerRelPermTwoPhase( string const & 
 
 RelativePermeabilityBase * makeVanGenuchtenBakerRelPermThreePhase( string const & name, Group * parent )
 {
-  auto relPerm = parent->RegisterGroup< VanGenuchtenBakerRelativePermeability >( name );
+  auto relPerm = parent->registerGroup< VanGenuchtenBakerRelativePermeability >( name );
 
   auto & phaseNames = relPerm->getReference< string_array >( RelativePermeabilityBase::viewKeyStruct::phaseNamesString );
   phaseNames.resize( 3 );

@@ -75,8 +75,8 @@ SolverBase::SolverBase( std::string const & name,
     setRestartFlags( RestartFlags::WRITE_AND_READ )->
     setDescription( "Initial time-step value required by the solver to the event manager." );
 
-  RegisterGroup( groupKeyStruct::linearSolverParametersString, &m_linearSolverParameters );
-  RegisterGroup( groupKeyStruct::nonlinearSolverParametersString, &m_nonlinearSolverParameters );
+  registerGroup( groupKeyStruct::linearSolverParametersString, &m_linearSolverParameters );
+  registerGroup( groupKeyStruct::nonlinearSolverParametersString, &m_nonlinearSolverParameters );
 
   m_localMatrix.setName( this->getName() + "/localMatrix" );
   m_localRhs.setName( this->getName() + "/localRhs" );

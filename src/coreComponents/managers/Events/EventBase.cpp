@@ -122,7 +122,7 @@ Group * EventBase::CreateChild( string const & childKey, string const & childNam
 {
   GEOSX_LOG_RANK_0( "Adding Event: " << childKey << ", " << childName );
   std::unique_ptr< EventBase > event = EventBase::CatalogInterface::Factory( childKey, childName, this );
-  return this->RegisterGroup< EventBase >( childName, std::move( event ) );
+  return this->registerGroup< EventBase >( childName, std::move( event ) );
 }
 
 

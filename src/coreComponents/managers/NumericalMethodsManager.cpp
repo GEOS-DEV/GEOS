@@ -30,8 +30,8 @@ NumericalMethodsManager::NumericalMethodsManager( string const & name, Group * c
 {
   setInputFlags( InputFlags::OPTIONAL );
 
-  this->RegisterGroup( groupKeysStruct::finiteElementDiscretizations, &m_finiteElementDiscretizationManager );
-  this->RegisterGroup( groupKeysStruct::finiteVolumeManager, &m_finiteVolumeManager );
+  this->registerGroup( groupKeysStruct::finiteElementDiscretizations, &m_finiteElementDiscretizationManager );
+  this->registerGroup( groupKeysStruct::finiteVolumeManager, &m_finiteVolumeManager );
 }
 
 NumericalMethodsManager::~NumericalMethodsManager()

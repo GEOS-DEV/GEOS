@@ -50,7 +50,7 @@ Group * WellSolverBase::CreateChild( string const & childKey, string const & chi
 
   if( childKey == keys::wellControls )
   {
-    rval = RegisterGroup< WellControls >( childName );
+    rval = registerGroup< WellControls >( childName );
   }
   else
   {

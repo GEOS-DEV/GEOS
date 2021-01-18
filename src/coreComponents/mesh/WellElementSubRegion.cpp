@@ -41,7 +41,7 @@ WellElementSubRegion::WellElementSubRegion( string const & name, Group * const p
   registerWrapper( viewKeyStruct::topRankString, &m_topRank );
   registerWrapper( viewKeyStruct::radiusString, &m_radius );
 
-  RegisterGroup( groupKeyStruct::perforationDataString, &m_perforationData );
+  registerGroup( groupKeyStruct::perforationDataString, &m_perforationData );
 
   this->setNumNodesPerElement( 2 );
   this->setNumFacesPerElement( 0 );

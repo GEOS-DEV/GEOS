@@ -218,7 +218,7 @@ void BlueprintOutput::addElementData( ElementRegionManager const & elemRegionMan
     writeOutWrappersAsFields( subRegion, fields, topologyName );
 
     /// Write out the quadrature averaged constitutive data and the full data if requested.
-    Group & averagedSubRegionData = *averagedElementData.RegisterGroup( topologyName );
+    Group & averagedSubRegionData = *averagedElementData.registerGroup( topologyName );
     subRegion.GetConstitutiveModels()->forSubGroups( [&]( dataRepository::Group const & constitutiveModel )
     {
       writeOutConstitutiveData( constitutiveModel, fields, topologyName, averagedSubRegionData );
@@ -265,7 +265,7 @@ void BlueprintOutput::writeOutConstitutiveData( dataRepository::Group const & co
 {
   GEOSX_MARK_FUNCTION;
 
-  Group & averagedConstitutiveData = *averagedSubRegionData.RegisterGroup( constitutiveModel.getName() );
+  Group & averagedConstitutiveData = *averagedSubRegionData.registerGroup( constitutiveModel.getName() );
 
   constitutiveModel.forWrappers( [&] ( dataRepository::WrapperBase const & wrapper )
   {

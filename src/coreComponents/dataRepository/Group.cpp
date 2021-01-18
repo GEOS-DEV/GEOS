@@ -208,7 +208,7 @@ Group * Group::CreateChild( string const & childKey, string const & childName )
   GEOSX_ERROR_IF( !(CatalogInterface::hasKeyName( childKey )),
                   "KeyName ("<<childKey<<") not found in Group::Catalog" );
   GEOSX_LOG_RANK_0( "Adding Object " << childKey<<" named "<< childName<<" from Group::Catalog." );
-  return RegisterGroup( childName,
+  return registerGroup( childName,
                         CatalogInterface::Factory( childKey, childName, this ) );
 }
 

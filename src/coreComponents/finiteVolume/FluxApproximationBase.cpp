@@ -69,11 +69,11 @@ void FluxApproximationBase::RegisterDataOnMesh( Group * const meshBodies )
 
       Group & stencilParentGroup = mesh.hasGroup( groupKeyStruct::stencilMeshGroupString ) ?
                                    mesh.getGroupReference( groupKeyStruct::stencilMeshGroupString ) :
-                                   *mesh.RegisterGroup( groupKeyStruct::stencilMeshGroupString );
+                                   *mesh.registerGroup( groupKeyStruct::stencilMeshGroupString );
 
       Group & stencilGroup = stencilParentGroup.hasGroup( getName() ) ?
                              stencilParentGroup.getGroupReference( getName() ) :
-                             *stencilParentGroup.RegisterGroup( getName() );
+                             *stencilParentGroup.registerGroup( getName() );
 
       registerCellStencil( stencilGroup );
       registerFractureStencil( stencilGroup );
