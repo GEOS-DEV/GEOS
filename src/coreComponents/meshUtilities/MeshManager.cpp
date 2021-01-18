@@ -34,7 +34,7 @@ MeshManager::MeshManager( std::string const & name,
 MeshManager::~MeshManager()
 {}
 
-Group * MeshManager::CreateChild( string const & childKey, string const & childName )
+Group * MeshManager::createChild( string const & childKey, string const & childName )
 {
   GEOSX_LOG_RANK_0( "Adding Mesh: " << childKey << ", " << childName );
   std::unique_ptr< MeshGeneratorBase > solver = MeshGeneratorBase::CatalogInterface::Factory( childKey, childName, this );
@@ -47,7 +47,7 @@ void MeshManager::ExpandObjectCatalogs()
   // During schema generation, register one of each type derived from MeshGeneratorBase here
   for( auto & catalogIter: MeshGeneratorBase::getCatalog())
   {
-    CreateChild( catalogIter.first, catalogIter.first );
+    createChild( catalogIter.first, catalogIter.first );
   }
 }
 

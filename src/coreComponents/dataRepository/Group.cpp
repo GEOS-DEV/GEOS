@@ -140,7 +140,7 @@ void Group::ProcessInputFileRecursive( xmlWrapper::xmlNode & targetNode )
     }
 
     // Create children
-    Group * newChild = CreateChild( childNode.name(), childName );
+    Group * newChild = createChild( childNode.name(), childName );
     if( newChild == nullptr )
     {
       newChild = GetGroup( childName );
@@ -203,7 +203,7 @@ void Group::RegisterDataOnMeshRecursive( Group * const meshBodies )
 }
 
 
-Group * Group::CreateChild( string const & childKey, string const & childName )
+Group * Group::createChild( string const & childKey, string const & childName )
 {
   GEOSX_ERROR_IF( !(CatalogInterface::hasKeyName( childKey )),
                   "KeyName ("<<childKey<<") not found in Group::Catalog" );

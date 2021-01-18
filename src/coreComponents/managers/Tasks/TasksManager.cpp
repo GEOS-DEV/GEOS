@@ -35,7 +35,7 @@ TasksManager::TasksManager( std::string const & name,
 TasksManager::~TasksManager()
 { }
 
-Group * TasksManager::CreateChild( string const & childKey, string const & childName )
+Group * TasksManager::createChild( string const & childKey, string const & childName )
 {
   std::unique_ptr< TaskBase > task = TaskBase::CatalogInterface::Factory( childKey, childName, this );
   return this->registerGroup< TaskBase >( childName, std::move( task ) );
@@ -46,7 +46,7 @@ void TasksManager::ExpandObjectCatalogs()
   // During schema generation, register one of each type derived from TaskBase here
   for( auto & catalogIter: TaskBase::getCatalog() )
   {
-    CreateChild( catalogIter.first, catalogIter.first );
+    createChild( catalogIter.first, catalogIter.first );
   }
 }
 

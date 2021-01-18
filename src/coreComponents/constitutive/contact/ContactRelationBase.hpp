@@ -63,7 +63,7 @@ public:
 
   virtual string getCatalogName() const override { return CatalogName(); }
 
-  virtual Group * CreateChild( string const & catalogKey,
+  virtual Group * createChild( string const & catalogKey,
                                string const & name ) override;
 
 

@@ -187,7 +187,7 @@ Now, when reading the XML file and encountering an "XmlNameOfMySolver" solver bl
 We saw that in the XML file, the new solver block appeared as child node of the XML block "Solvers".
 The internal construction mirrors this XML structure.
 Specifically, the new object of class ``CppNameOfMySolver`` is registered as a subgroup (to continue the analogy used so far, as a subfolder) of its parent ``Group``, the class ``PhysicsSolverManager`` (that has a ``catalogName`` "Solvers").
-To do this, the method ``CreateChild`` of the ``PhysicsSolverManager`` class is used.
+To do this, the method ``createChild`` of the ``PhysicsSolverManager`` class is used.
 
 
 .. code-block:: cpp

@@ -39,7 +39,7 @@ FieldSpecificationManager::~FieldSpecificationManager()
   // TODO Auto-generated destructor stub
 }
 
-Group * FieldSpecificationManager::CreateChild( string const & childKey, string const & childName )
+Group * FieldSpecificationManager::createChild( string const & childKey, string const & childName )
 {
   std::unique_ptr< FieldSpecificationBase > bc = FieldSpecificationBase::CatalogInterface::Factory( childKey, childName, this );
   return this->registerGroup( childName, std::move( bc ) );
@@ -51,7 +51,7 @@ void FieldSpecificationManager::ExpandObjectCatalogs()
   // During schema generation, register one of each type derived from BoundaryConditionBase here
   for( auto & catalogIter: FieldSpecificationBase::getCatalog())
   {
-    CreateChild( catalogIter.first, catalogIter.first );
+    createChild( catalogIter.first, catalogIter.first );
   }
 }
 

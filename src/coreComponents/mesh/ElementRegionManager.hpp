@@ -168,7 +168,7 @@ public:
    * @param childName name of the new ElementRegion object
    * @return pointer to the created ElementRegion object
    */
-  virtual Group * CreateChild( string const & childKey, string const & childName ) override;
+  virtual Group * createChild( string const & childKey, string const & childName ) override;
 //  virtual void ReadXMLsub( xmlWrapper::xmlNode const & targetNode ) override;
 
   /**

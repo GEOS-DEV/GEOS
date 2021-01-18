@@ -513,7 +513,7 @@ public:
   real64 GetTimestepRequest()
   {return m_nextDt;};
 
-  virtual Group * CreateChild( string const & childKey, string const & childName ) override;
+  virtual Group * createChild( string const & childKey, string const & childName ) override;
 
   using CatalogInterface = dataRepository::CatalogInterface< SolverBase, std::string const &, Group * const >;
   static CatalogInterface::CatalogType & getCatalog();

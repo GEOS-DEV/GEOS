@@ -77,7 +77,7 @@ EventManager::~EventManager()
 
 
 
-Group * EventManager::CreateChild( string const & childKey, string const & childName )
+Group * EventManager::createChild( string const & childKey, string const & childName )
 {
   GEOSX_LOG_RANK_0( "Adding Event: " << childKey << ", " << childName );
   std::unique_ptr< EventBase > event = EventBase::CatalogInterface::Factory( childKey, childName, this );
@@ -90,7 +90,7 @@ void EventManager::ExpandObjectCatalogs()
   // During schema generation, register one of each type derived from EventBase here
   for( auto & catalogIter: EventBase::getCatalog())
   {
-    CreateChild( catalogIter.first, catalogIter.first );
+    createChild( catalogIter.first, catalogIter.first );
   }
 }
 

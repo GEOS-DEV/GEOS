@@ -41,7 +41,7 @@ FunctionManager::~FunctionManager()
 }
 
 
-Group * FunctionManager::CreateChild( string const & functionCatalogKey,
+Group * FunctionManager::createChild( string const & functionCatalogKey,
                                       string const & functionName )
 {
   GEOSX_LOG_RANK_0( "   " << functionCatalogKey << ": " << functionName );
@@ -55,7 +55,7 @@ void FunctionManager::ExpandObjectCatalogs()
   // During schema generation, register one of each type derived from FunctionBase here
   for( auto & catalogIter: FunctionBase::getCatalog())
   {
-    CreateChild( catalogIter.first, catalogIter.first );
+    createChild( catalogIter.first, catalogIter.first );
   }
 }
 

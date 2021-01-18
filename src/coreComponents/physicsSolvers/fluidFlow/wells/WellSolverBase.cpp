@@ -44,7 +44,7 @@ WellSolverBase::WellSolverBase( std::string const & name,
     setInputFlag( InputFlags::FALSE );
 }
 
-Group * WellSolverBase::CreateChild( string const & childKey, string const & childName )
+Group * WellSolverBase::createChild( string const & childKey, string const & childName )
 {
   Group * rval = nullptr;
 
@@ -54,14 +54,14 @@ Group * WellSolverBase::CreateChild( string const & childKey, string const & chi
   }
   else
   {
-    SolverBase::CreateChild( childKey, childName );
+    SolverBase::createChild( childKey, childName );
   }
   return rval;
 }
 
 void WellSolverBase::ExpandObjectCatalogs()
 {
-  CreateChild( keys::wellControls, keys::wellControls );
+  createChild( keys::wellControls, keys::wellControls );
 }
 
 

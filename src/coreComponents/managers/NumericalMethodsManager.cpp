@@ -37,7 +37,7 @@ NumericalMethodsManager::NumericalMethodsManager( string const & name, Group * c
 NumericalMethodsManager::~NumericalMethodsManager()
 {}
 
-Group * NumericalMethodsManager::CreateChild( string const & GEOSX_UNUSED_PARAM( childKey ),
+Group * NumericalMethodsManager::createChild( string const & GEOSX_UNUSED_PARAM( childKey ),
                                               string const & GEOSX_UNUSED_PARAM( childName ) )
 {
   return nullptr;

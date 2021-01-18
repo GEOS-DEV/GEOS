@@ -118,7 +118,7 @@ void InternalWellGenerator::PostProcessInput()
   // TODO: check that with no branching we can go from top to bottom and touch all the elements
 }
 
-Group * InternalWellGenerator::CreateChild( string const & childKey, string const & childName )
+Group * InternalWellGenerator::createChild( string const & childKey, string const & childName )
 {
   if( childKey == keys::perforation )
   {
@@ -138,7 +138,7 @@ Group * InternalWellGenerator::CreateChild( string const & childKey, string cons
 
 void InternalWellGenerator::ExpandObjectCatalogs()
 {
-  CreateChild( keys::perforation, keys::perforation );
+  createChild( keys::perforation, keys::perforation );
 }
 
 void InternalWellGenerator::GenerateMesh( DomainPartition * const domain )

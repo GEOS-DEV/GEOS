@@ -86,7 +86,7 @@ void PAMELAMeshGenerator::RemapMesh( dataRepository::Group * const GEOSX_UNUSED_
   return;
 }
 
-Group * PAMELAMeshGenerator::CreateChild( string const & GEOSX_UNUSED_PARAM( childKey ), string const & GEOSX_UNUSED_PARAM( childName ) )
+Group * PAMELAMeshGenerator::createChild( string const & GEOSX_UNUSED_PARAM( childKey ), string const & GEOSX_UNUSED_PARAM( childName ) )
 {
   return nullptr;
 }

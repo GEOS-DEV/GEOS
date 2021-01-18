@@ -43,7 +43,7 @@ PhysicsSolverManager::~PhysicsSolverManager()
 
 
 //START_SPHINX_INCLUDE_00
-Group * PhysicsSolverManager::CreateChild( string const & childKey, string const & childName )
+Group * PhysicsSolverManager::createChild( string const & childKey, string const & childName )
 {
   Group * rval = nullptr;
   if( SolverBase::CatalogInterface::hasKeyName( childKey ) )
@@ -61,7 +61,7 @@ void PhysicsSolverManager::ExpandObjectCatalogs()
   // During schema generation, register one of each type derived from SolverBase here
   for( auto & catalogIter: SolverBase::getCatalog())
   {
-    CreateChild( catalogIter.first, catalogIter.first );
+    createChild( catalogIter.first, catalogIter.first );
   }
 }
 

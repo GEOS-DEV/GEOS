@@ -79,7 +79,7 @@ void ElementRegionManager::SetMaxGlobalIndex()
 
 
 
-Group * ElementRegionManager::CreateChild( string const & childKey, string const & childName )
+Group * ElementRegionManager::createChild( string const & childKey, string const & childName )
 {
   GEOSX_ERROR_IF( !(CatalogInterface::hasKeyName( childKey )),
                   "KeyName ("<<childKey<<") not found in ObjectManager::Catalog" );
@@ -100,7 +100,7 @@ void ElementRegionManager::ExpandObjectCatalogs()
     string const key = iter->first;
     if( key.find( "ElementRegion" ) != std::string::npos )
     {
-      this->CreateChild( key, key );
+      this->createChild( key, key );
     }
   }
 }

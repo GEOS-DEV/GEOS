@@ -83,7 +83,7 @@ public:
    *                  sub-Groups.
    * @return A pointer to the new Group created by this function.
    */
-  virtual Group * CreateChild( string const & childKey, string const & childName ) override;
+  virtual Group * createChild( string const & childKey, string const & childName ) override;
 
   /**
    * @brief Parses command line input

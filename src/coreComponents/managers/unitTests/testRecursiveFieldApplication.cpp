@@ -93,10 +93,10 @@ TEST( FieldSpecification, Recursive )
   cellToVertexreg1Tet.resize( nbTetReg1, 4 );
 
   ElementRegionManager * elemManager = meshLevel0->getElemManager();
-  CellElementRegion * reg0 = elemManager->CreateChild( "CellElementRegion", "reg0" )->group_cast< CellElementRegion * >();
+  CellElementRegion * reg0 = elemManager->createChild( "CellElementRegion", "reg0" )->group_cast< CellElementRegion * >();
   reg0->AddCellBlockName( reg0Hex->getName());
   reg0->AddCellBlockName( reg0Tet->getName());
-  CellElementRegion * reg1 = elemManager->CreateChild( "CellElementRegion", "reg1" )->group_cast< CellElementRegion * >();
+  CellElementRegion * reg1 = elemManager->createChild( "CellElementRegion", "reg1" )->group_cast< CellElementRegion * >();
   reg1->AddCellBlockName( reg1Hex->getName());
   reg1->AddCellBlockName( reg1Tet->getName());
   reg0->GenerateMesh( cellBlockManager->GetGroup( keys::cellBlocks ) );

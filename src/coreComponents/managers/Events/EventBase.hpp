@@ -87,7 +87,7 @@ public:
              dataRepository::Group * domain );
 
   /**
-   * @copydoc dataRepository::Group::CreateChild()
+   * @copydoc dataRepository::Group::createChild()
    *
    * An event may have an arbitrary number of sub-events defined as children in the input xml.
    * e.g.:
@@ -100,7 +100,7 @@ public:
    * </Events>
    * @endcode
    */
-  virtual Group * CreateChild( string const & childKey, string const & childName ) override;
+  virtual Group * createChild( string const & childKey, string const & childName ) override;
 
   /**
    * @brief Expand any catalogs in the data structure.

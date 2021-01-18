@@ -66,7 +66,7 @@ TEST( FunctionTests, 1DTable )
   values[2] = -5.0;
   values[3] = 7.0;
 
-  TableFunction * table_a = functionManager->CreateChild( "TableFunction", "table_a" )->group_cast< TableFunction * >();
+  TableFunction * table_a = functionManager->createChild( "TableFunction", "table_a" )->group_cast< TableFunction * >();
   table_a->setTableCoordinates( coordinates );
   table_a->setTableValues( values );
   table_a->reInitializeFunction();
@@ -168,7 +168,7 @@ TEST( FunctionTests, 2DTable )
   inputVarNames[0] = inputName;
 
   // Initialize the table
-  TableFunction * table_b = functionManager->CreateChild( "TableFunction", "table_b" )->group_cast< TableFunction * >();
+  TableFunction * table_b = functionManager->createChild( "TableFunction", "table_b" )->group_cast< TableFunction * >();
   table_b->setTableCoordinates( coordinates );
   table_b->setTableValues( values );
   table_b->setInterpolationMethod( TableFunction::InterpolationType::Linear );
@@ -290,7 +290,7 @@ TEST( FunctionTests, 4DTable_multipleInputs )
   inputVarNames[1] = timeName;
 
   // Initialize the table
-  TableFunction * table_c = functionManager->CreateChild( "TableFunction", "table_c" )->group_cast< TableFunction * >();
+  TableFunction * table_c = functionManager->createChild( "TableFunction", "table_c" )->group_cast< TableFunction * >();
   table_c->setTableCoordinates( coordinates );
   table_c->setTableValues( values );
   table_c->setInterpolationMethod( TableFunction::InterpolationType::Linear );
@@ -375,7 +375,7 @@ TEST( FunctionTests, 4DTable_symbolic )
   inputVarNames[3] = nameD;
 
   // Initialize the table
-  SymbolicFunction * table_d = functionManager->CreateChild( "SymbolicFunction", "table_d" )->group_cast< SymbolicFunction * >();
+  SymbolicFunction * table_d = functionManager->createChild( "SymbolicFunction", "table_d" )->group_cast< SymbolicFunction * >();
   table_d->setSymbolicExpression( expression );
   table_d->setInputVarNames( inputVarNames );
   table_d->setSymbolicVariableNames( inputVarNames );

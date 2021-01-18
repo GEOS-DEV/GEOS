@@ -39,7 +39,7 @@ FiniteVolumeManager::FiniteVolumeManager( string const & name, Group * const par
 FiniteVolumeManager::~FiniteVolumeManager()
 {}
 
-Group * FiniteVolumeManager::CreateChild( string const & childKey, string const & childName )
+Group * FiniteVolumeManager::createChild( string const & childKey, string const & childName )
 {
   if( childKey == HybridMimeticDiscretization::CatalogName() )
   {
@@ -59,7 +59,7 @@ void FiniteVolumeManager::ExpandObjectCatalogs()
   // During schema generation, register one of each type derived from FluxApproximationBase here
   for( auto & catalogIter: FluxApproximationBase::getCatalog())
   {
-    CreateChild( catalogIter.first, catalogIter.first );
+    createChild( catalogIter.first, catalogIter.first );
   }
   // Then do the same thing for the HybridMimeticDiscretization
   for( auto & catalogIter: HybridMimeticDiscretization::getCatalog())

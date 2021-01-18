@@ -55,7 +55,7 @@ public:
    */
   virtual ~FiniteVolumeManager() override;
 
-  virtual Group * CreateChild( string const & childKey, string const & childName ) override;
+  virtual Group * createChild( string const & childKey, string const & childName ) override;
 
   virtual void ExpandObjectCatalogs() override;
 
