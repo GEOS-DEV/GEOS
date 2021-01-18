@@ -1,9 +1,10 @@
 
 
-========================= ==== ======= ==================================== 
-Name                      Type Default Description                          
-========================= ==== ======= ==================================== 
-TwoPointFluxApproximation node         :ref:`XML_TwoPointFluxApproximation` 
-========================= ==== ======= ==================================== 
+=========================== ==== ======= ====================================== 
+Name                        Type Default Description                            
+=========================== ==== ======= ====================================== 
+HybridMimeticDiscretization node         :ref:`XML_HybridMimeticDiscretization` 
+TwoPointFluxApproximation   node         :ref:`XML_TwoPointFluxApproximation`   
+=========================== ==== ======= ====================================== 
 
 
