@@ -57,7 +57,7 @@ public:
    * @return A string containing the name of this object in the catalog.
    * The CatalogName is the string that will result in the creation of a new
    * NonlinearSolverParameters object when calling
-   * Group::getCatalog()::Allocate().
+   * Group::GetCatalog()::Allocate().   // TODO this function does not exist
    */
   static string CatalogName() { return "NonlinearSolverParameters"; }
 
