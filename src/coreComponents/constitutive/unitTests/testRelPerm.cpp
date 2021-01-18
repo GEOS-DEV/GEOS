@@ -238,7 +238,7 @@ TEST( testRelPerm, numericalDerivatives_brooksCoreyRelPerm )
   RelativePermeabilityBase * relperm = makeBrooksCoreyRelPerm( "relPerm", parent.get() );
 
   parent->Initialize( parent.get() );
-  parent->InitializePostInitialConditions( parent.get() );
+  parent->initializePostInitialConditions( parent.get() );
 
   // TODO test over a range of values
   array1d< real64 > sat( 4 );
@@ -258,7 +258,7 @@ TEST( testRelPerm, numericalDerivatives_BrooksCoreyBakerRelPermTwoPhase )
   RelativePermeabilityBase * relperm = makeBrooksCoreyBakerRelPermTwoPhase( "relPerm", parent.get() );
 
   parent->Initialize( parent.get() );
-  parent->InitializePostInitialConditions( parent.get() );
+  parent->initializePostInitialConditions( parent.get() );
 
   real64 const eps = std::sqrt( std::numeric_limits< real64 >::epsilon() );
   real64 const tol = 1e-4;
@@ -287,7 +287,7 @@ TEST( testRelPerm, numericalDerivatives_BrooksCoreyBakerRelPermThreePhase )
   RelativePermeabilityBase * relperm = makeBrooksCoreyBakerRelPermThreePhase( "relPerm", parent.get() );
 
   parent->Initialize( parent.get() );
-  parent->InitializePostInitialConditions( parent.get() );
+  parent->initializePostInitialConditions( parent.get() );
 
   real64 const eps = std::sqrt( std::numeric_limits< real64 >::epsilon() );
   real64 const tol = 1e-4;
@@ -318,7 +318,7 @@ TEST( testRelPerm, numericalDerivatives_VanGenuchtenBakerRelPermTwoPhase )
   RelativePermeabilityBase * relperm = makeVanGenuchtenBakerRelPermTwoPhase( "relPerm", parent.get() );
 
   parent->Initialize( parent.get() );
-  parent->InitializePostInitialConditions( parent.get() );
+  parent->initializePostInitialConditions( parent.get() );
 
   real64 const eps = std::sqrt( std::numeric_limits< real64 >::epsilon() );
   real64 const tol = 1e-4;
@@ -346,7 +346,7 @@ TEST( testRelPerm, numericalDerivatives_VanGenuchtenBakerRelPermThreePhase )
   RelativePermeabilityBase * relperm = makeVanGenuchtenBakerRelPermThreePhase( "relPerm", parent.get() );
 
   parent->Initialize( parent.get() );
-  parent->InitializePostInitialConditions( parent.get() );
+  parent->initializePostInitialConditions( parent.get() );
 
   real64 const eps = std::sqrt( std::numeric_limits< real64 >::epsilon() );
   real64 const tol = 1e-4;

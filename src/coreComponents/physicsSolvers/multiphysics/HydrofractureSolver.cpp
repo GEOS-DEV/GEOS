@@ -156,7 +156,7 @@ void HydrofractureSolver::PostProcessInput()
   GEOSX_ERROR_IF( m_flowSolver == nullptr, this->getName() << ": invalid flow solver name: " << m_flowSolverName );
 }
 
-void HydrofractureSolver::InitializePostInitialConditions_PreSubGroups( Group * const GEOSX_UNUSED_PARAM( problemManager ) )
+void HydrofractureSolver::initializePostInitialConditions_PreSubGroups( Group * const GEOSX_UNUSED_PARAM( problemManager ) )
 {}
 
 HydrofractureSolver::~HydrofractureSolver()

@@ -152,7 +152,7 @@ protected:
 
   virtual void InitializePreSubGroups( Group * const rootGroup ) override;
 
-  virtual void InitializePostInitialConditions_PreSubGroups( Group * const rootGroup ) override;
+  virtual void initializePostInitialConditions_PreSubGroups( Group * const rootGroup ) override;
 
   /// name of the fluid constitutive model
   array1d< string > m_fluidModelNames;

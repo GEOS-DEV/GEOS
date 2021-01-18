@@ -127,7 +127,7 @@ void PhaseFieldFractureSolver::PostProcessInput()
   }
 }
 
-void PhaseFieldFractureSolver::InitializePostInitialConditions_PreSubGroups( Group * const )
+void PhaseFieldFractureSolver::initializePostInitialConditions_PreSubGroups( Group * const )
 {}
 
 PhaseFieldFractureSolver::~PhaseFieldFractureSolver()

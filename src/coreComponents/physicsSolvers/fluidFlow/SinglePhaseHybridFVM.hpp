@@ -168,7 +168,7 @@ public:
 
   virtual void InitializePreSubGroups( dataRepository::Group * const rootGroup ) override;
 
-  virtual void InitializePostInitialConditions_PreSubGroups( dataRepository::Group * const rootGroup ) override;
+  virtual void initializePostInitialConditions_PreSubGroups( dataRepository::Group * const rootGroup ) override;
 
 private:
 

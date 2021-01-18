@@ -237,7 +237,7 @@ public:
 
   virtual void InitializePreSubGroups( Group * const rootGroup ) override;
 
-  virtual void InitializePostInitialConditions_PreSubGroups( dataRepository::Group * const rootGroup ) override;
+  virtual void initializePostInitialConditions_PreSubGroups( dataRepository::Group * const rootGroup ) override;
 
   /**
    * @brief Backup current values of all constitutive fields that participate in the accumulation term

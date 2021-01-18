@@ -275,7 +275,7 @@ void LagrangianContactSolver::PostProcessInput()
   SolverBase::PostProcessInput();
 }
 
-void LagrangianContactSolver::InitializePostInitialConditions_PreSubGroups( Group * const GEOSX_UNUSED_PARAM( problemManager ) )
+void LagrangianContactSolver::initializePostInitialConditions_PreSubGroups( Group * const GEOSX_UNUSED_PARAM( problemManager ) )
 {}
 
 LagrangianContactSolver::~LagrangianContactSolver()

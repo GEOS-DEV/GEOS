@@ -102,7 +102,7 @@ void FluxApproximationBase::RegisterDataOnMesh( Group * const meshBodies )
   } );
 }
 
-void FluxApproximationBase::InitializePostInitialConditions_PreSubGroups( Group * const rootGroup )
+void FluxApproximationBase::initializePostInitialConditions_PreSubGroups( Group * const rootGroup )
 {
   GEOSX_MARK_FUNCTION;
 

@@ -69,9 +69,9 @@ void ReservoirSolverBase::PostProcessInput()
   m_flowSolver->setReservoirWellsCoupling();
 }
 
-void ReservoirSolverBase::InitializePostInitialConditions_PreSubGroups( Group * const rootGroup )
+void ReservoirSolverBase::initializePostInitialConditions_PreSubGroups( Group * const rootGroup )
 {
-  SolverBase::InitializePostInitialConditions_PreSubGroups( rootGroup );
+  SolverBase::initializePostInitialConditions_PreSubGroups( rootGroup );
 
   DomainPartition * const domain = rootGroup->getGroup< DomainPartition >( keys::domain );
 

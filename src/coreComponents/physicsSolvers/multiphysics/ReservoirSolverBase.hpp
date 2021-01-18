@@ -186,7 +186,7 @@ public:
 
 protected:
 
-  virtual void InitializePostInitialConditions_PreSubGroups( Group * const rootGroup ) override;
+  virtual void initializePostInitialConditions_PreSubGroups( Group * const rootGroup ) override;
 
   virtual void PostProcessInput() override;
 

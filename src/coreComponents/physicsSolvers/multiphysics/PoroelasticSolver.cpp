@@ -172,7 +172,7 @@ void PoroelasticSolver::PostProcessInput()
   }
 }
 
-void PoroelasticSolver::InitializePostInitialConditions_PreSubGroups( Group * const problemManager )
+void PoroelasticSolver::initializePostInitialConditions_PreSubGroups( Group * const problemManager )
 {
   if( m_couplingTypeOption == CouplingTypeOption::SIM_FixedStress )
   {

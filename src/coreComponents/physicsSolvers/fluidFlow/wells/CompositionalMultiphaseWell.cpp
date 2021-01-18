@@ -302,9 +302,9 @@ void CompositionalMultiphaseWell::ResizeFields( WellElementSubRegion & subRegion
 
 }
 
-void CompositionalMultiphaseWell::InitializePostInitialConditions_PreSubGroups( Group * const rootGroup )
+void CompositionalMultiphaseWell::initializePostInitialConditions_PreSubGroups( Group * const rootGroup )
 {
-  WellSolverBase::InitializePostInitialConditions_PreSubGroups( rootGroup );
+  WellSolverBase::initializePostInitialConditions_PreSubGroups( rootGroup );
 
   DomainPartition * const domain = rootGroup->getGroup< DomainPartition >( keys::domain );
   MeshLevel & meshLevel = *domain->getMeshBody( 0 )->getMeshLevel( 0 );

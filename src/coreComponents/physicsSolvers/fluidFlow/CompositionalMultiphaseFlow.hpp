@@ -384,7 +384,7 @@ protected:
 
   virtual void InitializePreSubGroups( Group * const rootGroup ) override;
 
-  virtual void InitializePostInitialConditions_PreSubGroups( dataRepository::Group * const rootGroup ) override;
+  virtual void initializePostInitialConditions_PreSubGroups( dataRepository::Group * const rootGroup ) override;
 
   /**
    * @brief Checks constitutive models for consistency

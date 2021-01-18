@@ -182,7 +182,7 @@ void EmbeddedSurfaceGenerator::InitializePostSubGroups( Group * const problemMan
   embSurfEdgeManager.BuildEdges( numOfPoints, embSurfToNodeMap.toViewConst(), embSurfToEdgeMap );
 }
 
-void EmbeddedSurfaceGenerator::InitializePostInitialConditions_PreSubGroups( Group * const GEOSX_UNUSED_PARAM ( problemManager ) )
+void EmbeddedSurfaceGenerator::initializePostInitialConditions_PreSubGroups( Group * const GEOSX_UNUSED_PARAM ( problemManager ) )
 {
   // I don't think there is  much to do here.
 }

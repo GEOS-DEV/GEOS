@@ -209,7 +209,7 @@ TEST( testCapPressure, numericalDerivatives_brooksCoreyCapPressureTwoPhase )
   CapillaryPressureBase * fluid = makeBrooksCoreyCapPressureTwoPhase( "capPressure", parent.get() );
 
   parent->Initialize( parent.get() );
-  parent->InitializePostInitialConditions( parent.get() );
+  parent->initializePostInitialConditions( parent.get() );
 
   real64 const eps = std::sqrt( std::numeric_limits< real64 >::epsilon() );
   real64 const tol = 1e-4;
@@ -236,7 +236,7 @@ TEST( testCapPressure, numericalDerivatives_brooksCoreyCapPressureThreePhase )
   CapillaryPressureBase * fluid = makeBrooksCoreyCapPressureThreePhase( "capPressure", parent.get() );
 
   parent->Initialize( parent.get() );
-  parent->InitializePostInitialConditions( parent.get() );
+  parent->initializePostInitialConditions( parent.get() );
 
   real64 const eps = std::sqrt( std::numeric_limits< real64 >::epsilon() );
   real64 const tol = 1e-4;
@@ -266,7 +266,7 @@ TEST( testCapPressure, numericalDerivatives_vanGenuchtenCapPressureTwoPhase )
   CapillaryPressureBase * fluid = makeVanGenuchtenCapPressureTwoPhase( "capPressure", parent.get() );
 
   parent->Initialize( parent.get() );
-  parent->InitializePostInitialConditions( parent.get() );
+  parent->initializePostInitialConditions( parent.get() );
 
   real64 const eps = std::sqrt( std::numeric_limits< real64 >::epsilon() );
   real64 const tol = 1e-4;
@@ -294,7 +294,7 @@ TEST( testCapPressure, numericalDerivatives_vanGenuchtenCapPressureThreePhase )
   CapillaryPressureBase * fluid = makeVanGenuchtenCapPressureThreePhase( "capPressure", parent.get() );
 
   parent->Initialize( parent.get() );
-  parent->InitializePostInitialConditions( parent.get() );
+  parent->initializePostInitialConditions( parent.get() );
 
   real64 const eps = std::sqrt( std::numeric_limits< real64 >::epsilon() );
   real64 const tol = 1e-4;

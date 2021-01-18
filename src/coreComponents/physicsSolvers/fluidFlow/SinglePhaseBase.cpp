@@ -214,11 +214,11 @@ void SinglePhaseBase::UpdateState( Group & dataGroup, localIndex const targetInd
   UpdateMobility( dataGroup, targetIndex );
 }
 
-void SinglePhaseBase::InitializePostInitialConditions_PreSubGroups( Group * const rootGroup )
+void SinglePhaseBase::initializePostInitialConditions_PreSubGroups( Group * const rootGroup )
 {
   GEOSX_MARK_FUNCTION;
 
-  FlowSolverBase::InitializePostInitialConditions_PreSubGroups( rootGroup );
+  FlowSolverBase::initializePostInitialConditions_PreSubGroups( rootGroup );
 
   DomainPartition * domain = rootGroup->getGroup< DomainPartition >( keys::domain );
   MeshLevel & mesh = *domain->getMeshBody( 0 )->getMeshLevel( 0 );

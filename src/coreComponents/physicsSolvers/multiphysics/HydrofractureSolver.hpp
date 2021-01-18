@@ -168,7 +168,7 @@ protected:
   virtual void PostProcessInput() override final;
 
   virtual void
-  InitializePostInitialConditions_PreSubGroups( dataRepository::Group * const problemManager ) override final;
+  initializePostInitialConditions_PreSubGroups( dataRepository::Group * const problemManager ) override final;
 
   /**
    * @Brief add the nnz induced by the flux-aperture coupling

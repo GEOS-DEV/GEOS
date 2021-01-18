@@ -309,11 +309,11 @@ void ProppantTransport::UpdateState( Group & dataGroup, localIndex const targetI
   UpdateProppantModel( dataGroup, targetIndex );
 }
 
-void ProppantTransport::InitializePostInitialConditions_PreSubGroups( Group * const rootGroup )
+void ProppantTransport::initializePostInitialConditions_PreSubGroups( Group * const rootGroup )
 {
   GEOSX_MARK_FUNCTION;
 
-  FlowSolverBase::InitializePostInitialConditions_PreSubGroups( rootGroup );
+  FlowSolverBase::initializePostInitialConditions_PreSubGroups( rootGroup );
 
   DomainPartition & domain = *rootGroup->getGroup< DomainPartition >( keys::domain );
   MeshLevel & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );

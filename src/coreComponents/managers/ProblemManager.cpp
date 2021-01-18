@@ -171,7 +171,7 @@ void ProblemManager::ProblemSetup()
 
   ApplyInitialConditions();
 
-  InitializePostInitialConditions( this );
+  initializePostInitialConditions( this );
 }
 
 

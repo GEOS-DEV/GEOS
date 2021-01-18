@@ -317,7 +317,7 @@ protected:
     fluid = makeCompositionalFluid( "fluid", *parent );
 
     parent->Initialize( parent.get() );
-    parent->InitializePostInitialConditions( parent.get() );
+    parent->initializePostInitialConditions( parent.get() );
   }
 
   std::unique_ptr< Group > parent;
@@ -451,7 +451,7 @@ protected:
     fluid = makeLiveOilFluid( "fluid", parent.get());
 
     parent->Initialize( parent.get() );
-    parent->InitializePostInitialConditions( parent.get() );
+    parent->initializePostInitialConditions( parent.get() );
   }
 
   virtual void TearDown() override
@@ -513,7 +513,7 @@ protected:
     fluid = makeDeadOilFluid( "fluid", parent.get());
 
     parent->Initialize( parent.get() );
-    parent->InitializePostInitialConditions( parent.get() );
+    parent->initializePostInitialConditions( parent.get() );
   }
 
   virtual void TearDown() override

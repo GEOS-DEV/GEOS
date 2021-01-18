@@ -780,16 +780,16 @@ public:
    *                  in order to facilitate the initialization.
    *
    * This function provides a capability for post-initial condition problem
-   * initialization. First the InitializePostInitialConditions_PreSubGroups()
+   * initialization. First the initializePostInitialConditions_PreSubGroups()
    * function is called on this Group. Then there is a loop over all subgroups
-   * and InitializePostInitialConditions() is called on them. Finally, the
-   * InitializePostInitialConditions_PostSubGroups() function is called this
+   * and initializePostInitialConditions() is called on them. Finally, the
+   * initializePostInitialConditions_PostSubGroups() function is called this
    * Group.
    *
    * @note The order in which the sub-Groups are iterated over is defined by
    * initializationOrder().
    */
-  void InitializePostInitialConditions( Group * const group );
+  void initializePostInitialConditions( Group * const group );
 
   /**
    * @brief Initialization routine to be called after calling reading a restart file.
@@ -1457,21 +1457,21 @@ protected:
   }
 
   /**
-   * @brief Called by InitializePostInitialConditions() prior to initializing sub-Groups.
+   * @brief Called by initializePostInitialConditions() prior to initializing sub-Groups.
    * @param[in] group A group that is passed in to the initialization functions
    *                  in order to facilitate the initialization.
    */
-  virtual void InitializePostInitialConditions_PreSubGroups( Group * const group )
+  virtual void initializePostInitialConditions_PreSubGroups( Group * const group )
   {
     GEOSX_UNUSED_VAR( group );
   }
 
   /**
-   * @brief Called by InitializePostInitialConditions() after to initializing sub-Groups.
+   * @brief Called by initializePostInitialConditions() after to initializing sub-Groups.
    * @param[in] group A group that is passed in to the initialization functions
    *                  in order to facilitate the initialization.
    */
-  virtual void InitializePostInitialConditions_PostSubGroups( Group * const group )
+  virtual void initializePostInitialConditions_PostSubGroups( Group * const group )
   {
     GEOSX_UNUSED_VAR( group );
   }

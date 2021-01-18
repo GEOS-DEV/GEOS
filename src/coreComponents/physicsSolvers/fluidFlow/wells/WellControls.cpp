@@ -110,7 +110,7 @@ void WellControls::PostProcessInput()
 }
 
 
-void WellControls::InitializePostInitialConditions_PreSubGroups( Group * const GEOSX_UNUSED_PARAM( rootGroup ) )
+void WellControls::initializePostInitialConditions_PreSubGroups( Group * const GEOSX_UNUSED_PARAM( rootGroup ) )
 {
   // for a producer, the solvers compute negative rates, so we adjust the input here
   if( GetType() == Type::PRODUCER && m_targetRate > 0.0 )

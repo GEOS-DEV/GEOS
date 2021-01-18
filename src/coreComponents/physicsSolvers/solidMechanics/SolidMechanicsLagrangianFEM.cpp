@@ -382,7 +382,7 @@ void SolidMechanicsLagrangianFEM::updateIntrinsicNodalData( DomainPartition * co
                         m_nonSendOrReceiveNodes.end() );
 }
 
-void SolidMechanicsLagrangianFEM::InitializePostInitialConditions_PreSubGroups( Group * const problemManager )
+void SolidMechanicsLagrangianFEM::initializePostInitialConditions_PreSubGroups( Group * const problemManager )
 {
   DomainPartition * domain = problemManager->getGroup< DomainPartition >( keys::domain );
   MeshLevel & mesh = *domain->getMeshBody( 0 )->getMeshLevel( 0 );

@@ -292,7 +292,7 @@ void SurfaceGenerator::RegisterDataOnMesh( Group * const MeshBodies )
   }
 }
 
-void SurfaceGenerator::InitializePostInitialConditions_PreSubGroups( Group * const problemManager )
+void SurfaceGenerator::initializePostInitialConditions_PreSubGroups( Group * const problemManager )
 {
   DomainPartition * domain = problemManager->getGroup< DomainPartition >( dataRepository::keys::domain );
   for( auto & mesh : domain->groupCast< DomainPartition * >()->getMeshBodies()->getSubGroups() )

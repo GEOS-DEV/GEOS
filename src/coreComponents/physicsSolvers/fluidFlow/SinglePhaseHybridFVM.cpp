@@ -83,11 +83,11 @@ void SinglePhaseHybridFVM::InitializePreSubGroups( Group * const rootGroup )
   }
 }
 
-void SinglePhaseHybridFVM::InitializePostInitialConditions_PreSubGroups( Group * const rootGroup )
+void SinglePhaseHybridFVM::initializePostInitialConditions_PreSubGroups( Group * const rootGroup )
 {
   GEOSX_MARK_FUNCTION;
 
-  SinglePhaseBase::InitializePostInitialConditions_PreSubGroups( rootGroup );
+  SinglePhaseBase::initializePostInitialConditions_PreSubGroups( rootGroup );
 
   DomainPartition & domain = *rootGroup->getGroup< DomainPartition >( keys::domain );
   MeshLevel const & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );

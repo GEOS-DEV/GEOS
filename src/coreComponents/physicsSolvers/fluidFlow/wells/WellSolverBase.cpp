@@ -174,9 +174,9 @@ void WellSolverBase::InitializePreSubGroups( Group * const rootGroup )
   m_numDofPerResElement = flowSolver->numDofPerCell();
 }
 
-void WellSolverBase::InitializePostInitialConditions_PreSubGroups( Group * const rootGroup )
+void WellSolverBase::initializePostInitialConditions_PreSubGroups( Group * const rootGroup )
 {
-  SolverBase::InitializePostInitialConditions_PreSubGroups( rootGroup );
+  SolverBase::initializePostInitialConditions_PreSubGroups( rootGroup );
 
   DomainPartition & domain = *rootGroup->getGroup< DomainPartition >( keys::domain );
 

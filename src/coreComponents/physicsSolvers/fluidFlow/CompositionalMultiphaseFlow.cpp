@@ -562,11 +562,11 @@ void CompositionalMultiphaseFlow::InitializeFluidState( MeshLevel & mesh ) const
   } );
 }
 
-void CompositionalMultiphaseFlow::InitializePostInitialConditions_PreSubGroups( Group * const rootGroup )
+void CompositionalMultiphaseFlow::initializePostInitialConditions_PreSubGroups( Group * const rootGroup )
 {
   GEOSX_MARK_FUNCTION;
 
-  FlowSolverBase::InitializePostInitialConditions_PreSubGroups( rootGroup );
+  FlowSolverBase::initializePostInitialConditions_PreSubGroups( rootGroup );
 
   DomainPartition & domain = *rootGroup->getGroup< DomainPartition >( keys::domain );
 

@@ -170,9 +170,9 @@ void FlowSolverBase::InitializePreSubGroups( Group * const rootGroup )
   }
 }
 
-void FlowSolverBase::InitializePostInitialConditions_PreSubGroups( Group * const rootGroup )
+void FlowSolverBase::initializePostInitialConditions_PreSubGroups( Group * const rootGroup )
 {
-  SolverBase::InitializePostInitialConditions_PreSubGroups( rootGroup );
+  SolverBase::initializePostInitialConditions_PreSubGroups( rootGroup );
 
   DomainPartition & domain = *rootGroup->getGroup< DomainPartition >( keys::domain );
   MeshLevel & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );

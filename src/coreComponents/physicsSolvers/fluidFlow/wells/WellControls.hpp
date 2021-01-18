@@ -227,11 +227,11 @@ protected:
   virtual void PostProcessInput() override;
 
   /**
-   * @brief Called by InitializePostInitialConditions() prior to initializing sub-Groups.
+   * @brief Called by initializePostInitialConditions() prior to initializing sub-Groups.
    * @param[in] rootGroup A group that is passed in to the initialization functions
    *                  in order to facilitate the initialization.
    */
-  virtual void InitializePostInitialConditions_PreSubGroups( Group * const rootGroup ) override;
+  virtual void initializePostInitialConditions_PreSubGroups( Group * const rootGroup ) override;
 
 private:
 

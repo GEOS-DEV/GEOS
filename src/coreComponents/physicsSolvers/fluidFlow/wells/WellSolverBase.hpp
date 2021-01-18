@@ -272,7 +272,7 @@ protected:
 
   virtual void InitializePreSubGroups( Group * const rootGroup ) override;
 
-  virtual void InitializePostInitialConditions_PreSubGroups( Group * const rootGroup ) override;
+  virtual void initializePostInitialConditions_PreSubGroups( Group * const rootGroup ) override;
 
   /**
    * @brief Setup stored views into domain data for the current step

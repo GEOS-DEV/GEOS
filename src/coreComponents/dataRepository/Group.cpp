@@ -276,19 +276,19 @@ void Group::Initialize( Group * const group )
 }
 
 
-void Group::InitializePostInitialConditions( Group * const rootGroup )
+void Group::initializePostInitialConditions( Group * const rootGroup )
 {
-  InitializePostInitialConditions_PreSubGroups( rootGroup );
+  initializePostInitialConditions_PreSubGroups( rootGroup );
 
   string_array initOrder;
   initializationOrder( initOrder );
 
   for( auto const & groupName : initOrder )
   {
-    this->getGroup( groupName )->InitializePostInitialConditions( rootGroup );
+    this->getGroup( groupName )->initializePostInitialConditions( rootGroup );
   }
 
-  InitializePostInitialConditions_PostSubGroups( rootGroup );
+  initializePostInitialConditions_PostSubGroups( rootGroup );
 }
 
 localIndex Group::PackSize( string_array const & wrapperNames,
