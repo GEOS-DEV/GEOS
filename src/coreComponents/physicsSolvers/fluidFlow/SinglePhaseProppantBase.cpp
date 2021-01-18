@@ -41,7 +41,7 @@ SinglePhaseProppantBase::~SinglePhaseProppantBase()
 void SinglePhaseProppantBase::ValidateFluidModels( DomainPartition const & domain ) const
 {
   // Validate fluid models in regions
-  for( auto & mesh : domain.getMeshBodies()->GetSubGroups() )
+  for( auto & mesh : domain.getMeshBodies()->getSubGroups() )
   {
     MeshLevel const & meshLevel = *Group::groupCast< MeshBody const * >( mesh.second )->getMeshLevel( 0 );
     ValidateModelMapping< SlurryFluidBase >( *meshLevel.getElemManager(), m_fluidModelNames );

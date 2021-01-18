@@ -224,7 +224,7 @@ public:
   {
     GEOSX_MARK_FUNCTION;
     // loop over all FieldSpecificationBase objects
-    for( auto & subGroup : this->GetSubGroups() )
+    for( auto & subGroup : this->getSubGroups() )
     {
       FieldSpecificationBase const * fs = subGroup.second->groupCast< FieldSpecificationBase const * >();
       int const isInitialCondition = fs->initialCondition();

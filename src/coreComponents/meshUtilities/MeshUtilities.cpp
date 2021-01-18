@@ -48,7 +48,7 @@ void MeshUtilities::GenerateNodesets( dataRepository::Group const * geometries,
   localIndex const numNodes = nodeManager->size();
   Group & sets = nodeManager->sets();
 
-  for( int i = 0; i < geometries->GetSubGroups().size(); ++i )
+  for( int i = 0; i < geometries->getSubGroups().size(); ++i )
   {
     SimpleGeometricObjectBase const * const object = geometries->getGroup< SimpleGeometricObjectBase >( i );
     if( object!=nullptr )

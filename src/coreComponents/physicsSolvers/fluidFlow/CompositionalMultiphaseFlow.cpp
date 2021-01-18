@@ -110,7 +110,7 @@ void CompositionalMultiphaseFlow::RegisterDataOnMesh( Group * const MeshBodies )
 {
   FlowSolverBase::RegisterDataOnMesh( MeshBodies );
 
-  for( auto & mesh : MeshBodies->GetSubGroups() )
+  for( auto & mesh : MeshBodies->getSubGroups() )
   {
     MeshLevel & meshLevel = *Group::groupCast< MeshBody * >( mesh.second )->getMeshLevel( 0 );
 
@@ -252,7 +252,7 @@ void CompositionalMultiphaseFlow::InitializePreSubGroups( Group * const rootGrou
   }
 
   // 3. Resize all fields as necessary, validate constitutive models in regions
-  for( auto & mesh : domain->getMeshBodies()->GetSubGroups() )
+  for( auto & mesh : domain->getMeshBodies()->getSubGroups() )
   {
     MeshLevel & meshLevel = *Group::groupCast< MeshBody * >( mesh.second )->getMeshLevel( 0 );
     ResizeFields( meshLevel );

@@ -47,7 +47,7 @@ void SinglePhaseBase::RegisterDataOnMesh( Group * const MeshBodies )
 {
   FlowSolverBase::RegisterDataOnMesh( MeshBodies );
 
-  for( auto & mesh : MeshBodies->GetSubGroups() )
+  for( auto & mesh : MeshBodies->getSubGroups() )
   {
     MeshLevel * meshLevel = Group::groupCast< MeshBody * >( mesh.second )->getMeshLevel( 0 );
 
@@ -121,7 +121,7 @@ void SinglePhaseBase::RegisterDataOnMesh( Group * const MeshBodies )
 
 void SinglePhaseBase::ValidateFluidModels( DomainPartition const & domain ) const
 {
-  for( auto & mesh : domain.getMeshBodies()->GetSubGroups() )
+  for( auto & mesh : domain.getMeshBodies()->getSubGroups() )
   {
     MeshLevel const & meshLevel = *Group::groupCast< MeshBody const * >( mesh.second )->getMeshLevel( 0 );
     ValidateModelMapping< SingleFluidBase >( *meshLevel.getElemManager(), m_fluidModelNames );

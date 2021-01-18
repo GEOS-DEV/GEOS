@@ -266,7 +266,7 @@ void SinglePhaseFVM< BASE >::ApplyFaceDirichletBC( real64 const time_n,
   map< localIndex, localIndex > regionFluidMap;
   forTargetRegionsComplete( mesh, [&]( localIndex const targetIndex, localIndex const er, ElementRegionBase & )
   {
-    localIndex const modelIndex = constitutiveManager.GetSubGroups().getIndex( m_fluidModelNames[targetIndex] );
+    localIndex const modelIndex = constitutiveManager.getSubGroups().getIndex( m_fluidModelNames[targetIndex] );
     regionFluidMap.emplace( er, modelIndex );
   } );
 

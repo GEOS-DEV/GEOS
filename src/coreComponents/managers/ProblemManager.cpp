@@ -560,7 +560,7 @@ void ProblemManager::InitializationOrder( string_array & order )
     usedNames.insert( groupKeys.eventManager.Key() );
   }
 
-  for( auto const & subGroup : this->GetSubGroups() )
+  for( auto const & subGroup : this->getSubGroups() )
   {
     if( usedNames.count( subGroup.first ) == 0 )
     {
@@ -682,7 +682,7 @@ map< std::pair< string, string >, localIndex > ProblemManager::calculateRegionQu
       feDiscretization = feDiscretizationManager.getGroup< FiniteElementDiscretization >( discretizationName );
 
 
-      for( localIndex a=0; a<meshBodies.GetSubGroups().size(); ++a )
+      for( localIndex a=0; a<meshBodies.getSubGroups().size(); ++a )
       {
         MeshBody * const meshBody = meshBodies.getGroup< MeshBody >( a );
         for( localIndex b=0; b<meshBody->numSubGroups(); ++b )
@@ -749,7 +749,7 @@ void ProblemManager::setRegionQuadrature( Group & meshBodies,
                                           ConstitutiveManager const & constitutiveManager,
                                           map< std::pair< string, string >, localIndex > const & regionQuadrature )
 {
-  for( localIndex a=0; a<meshBodies.GetSubGroups().size(); ++a )
+  for( localIndex a=0; a<meshBodies.getSubGroups().size(); ++a )
   {
     MeshBody * const meshBody = meshBodies.getGroup< MeshBody >( a );
     for( localIndex b=0; b<meshBody->numSubGroups(); ++b )

@@ -229,7 +229,7 @@ void EventBase::Execute( real64 const time_n,
   // This allows for  restart runs to pick up where they left off.
   for(; m_currentSubEvent < this->numSubGroups(); ++m_currentSubEvent )
   {
-    EventBase * subEvent = static_cast< EventBase * >( this->GetSubGroups()[m_currentSubEvent] );
+    EventBase * subEvent = static_cast< EventBase * >( this->getSubGroups()[m_currentSubEvent] );
 
     // Print debug information for logLevel >= 1
     GEOSX_LOG_LEVEL_RANK_0( 1,

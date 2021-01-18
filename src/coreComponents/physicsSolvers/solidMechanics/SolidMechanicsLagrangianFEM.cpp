@@ -158,7 +158,7 @@ SolidMechanicsLagrangianFEM::~SolidMechanicsLagrangianFEM()
 
 void SolidMechanicsLagrangianFEM::RegisterDataOnMesh( Group * const MeshBodies )
 {
-  for( auto & mesh : MeshBodies->GetSubGroups() )
+  for( auto & mesh : MeshBodies->getSubGroups() )
   {
     NodeManager * const nodes = mesh.second->groupCast< MeshBody * >()->getMeshLevel( 0 )->getNodeManager();
 
@@ -248,7 +248,7 @@ void SolidMechanicsLagrangianFEM::InitializePreSubGroups( Group * const rootGrou
   DomainPartition * domain = rootGroup->getGroup< DomainPartition >( keys::domain );
 
   // Validate solid models in target regions
-  for( auto & mesh : domain->getMeshBodies()->GetSubGroups() )
+  for( auto & mesh : domain->getMeshBodies()->getSubGroups() )
   {
     MeshLevel & meshLevel = *Group::groupCast< MeshBody * >( mesh.second )->getMeshLevel( 0 );
     ValidateModelMapping< SolidBase >( *meshLevel.getElemManager(), m_solidMaterialNames );

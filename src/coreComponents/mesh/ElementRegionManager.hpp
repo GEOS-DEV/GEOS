@@ -209,7 +209,7 @@ public:
    */
   subGroupMap const & GetRegions() const
   {
-    return this->getGroup( groupKeyStruct::elementRegionsGroup )->GetSubGroups();
+    return this->getGroup( groupKeyStruct::elementRegionsGroup )->getSubGroups();
   }
 
   /**
@@ -218,7 +218,7 @@ public:
    */
   subGroupMap & GetRegions()
   {
-    return this->getGroup( groupKeyStruct::elementRegionsGroup )->GetSubGroups();
+    return this->getGroup( groupKeyStruct::elementRegionsGroup )->getSubGroups();
   }
 
   /**
@@ -271,7 +271,7 @@ public:
    */
   localIndex numRegions() const
   {
-    return this->getGroup( groupKeyStruct::elementRegionsGroup )->GetSubGroups().size();
+    return this->getGroup( groupKeyStruct::elementRegionsGroup )->getSubGroups().size();
   }
 
   /**

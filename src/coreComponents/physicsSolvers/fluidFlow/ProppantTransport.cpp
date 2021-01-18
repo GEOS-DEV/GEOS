@@ -94,7 +94,7 @@ void ProppantTransport::RegisterDataOnMesh( Group * const MeshBodies )
 {
   FlowSolverBase::RegisterDataOnMesh( MeshBodies );
 
-  for( auto & mesh : MeshBodies->GetSubGroups() )
+  for( auto & mesh : MeshBodies->getSubGroups() )
   {
     MeshLevel & meshLevel = *Group::groupCast< MeshBody * >( mesh.second )->getMeshLevel( 0 );
 
@@ -158,7 +158,7 @@ void ProppantTransport::InitializePreSubGroups( Group * const rootGroup )
   ConstitutiveManager & cm = *domain->getConstitutiveManager();
 
   // Validate proppant models in regions
-  for( auto & mesh : domain->getMeshBodies()->GetSubGroups() )
+  for( auto & mesh : domain->getMeshBodies()->getSubGroups() )
   {
     MeshLevel & meshLevel = *Group::groupCast< MeshBody * >( mesh.second )->getMeshLevel( 0 );
     ValidateModelMapping< SlurryFluidBase >( *meshLevel.getElemManager(), m_fluidModelNames );

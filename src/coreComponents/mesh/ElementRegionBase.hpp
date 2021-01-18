@@ -97,7 +97,7 @@ public:
    */
   subGroupMap & GetSubRegions()
   {
-    return getGroup( viewKeyStruct::elementSubRegions )->GetSubGroups();
+    return getGroup( viewKeyStruct::elementSubRegions )->getSubGroups();
   }
 
 /**
@@ -106,7 +106,7 @@ public:
  */
   subGroupMap const & GetSubRegions() const
   {
-    return getGroup( viewKeyStruct::elementSubRegions )->GetSubGroups();
+    return getGroup( viewKeyStruct::elementSubRegions )->getSubGroups();
   }
 
 
@@ -159,7 +159,7 @@ public:
  */
   localIndex numSubRegions() const
   {
-    return this->getGroup( viewKeyStruct::elementSubRegions )->GetSubGroups().size();
+    return this->getGroup( viewKeyStruct::elementSubRegions )->getSubGroups().size();
   }
 
 /**

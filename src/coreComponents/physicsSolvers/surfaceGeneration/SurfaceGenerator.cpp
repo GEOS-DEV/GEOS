@@ -226,7 +226,7 @@ SurfaceGenerator::~SurfaceGenerator()
 
 void SurfaceGenerator::RegisterDataOnMesh( Group * const MeshBodies )
 {
-  for( auto & mesh : MeshBodies->GetSubGroups() )
+  for( auto & mesh : MeshBodies->getSubGroups() )
   {
     MeshLevel * const meshLevel = mesh.second->groupCast< MeshBody * >()->getMeshLevel( 0 );
 
@@ -295,7 +295,7 @@ void SurfaceGenerator::RegisterDataOnMesh( Group * const MeshBodies )
 void SurfaceGenerator::InitializePostInitialConditions_PreSubGroups( Group * const problemManager )
 {
   DomainPartition * domain = problemManager->getGroup< DomainPartition >( dataRepository::keys::domain );
-  for( auto & mesh : domain->groupCast< DomainPartition * >()->getMeshBodies()->GetSubGroups() )
+  for( auto & mesh : domain->groupCast< DomainPartition * >()->getMeshBodies()->getSubGroups() )
   {
     MeshLevel * meshLevel = Group::groupCast< MeshBody * >( mesh.second )->getMeshLevel( 0 );
     NodeManager * const nodeManager = meshLevel->getNodeManager();
@@ -334,7 +334,7 @@ void SurfaceGenerator::InitializePostInitialConditions_PreSubGroups( Group * con
     }
   }
 
-  for( auto & mesh : domain->groupCast< DomainPartition * >()->getMeshBodies()->GetSubGroups() )
+  for( auto & mesh : domain->groupCast< DomainPartition * >()->getMeshBodies()->getSubGroups() )
   {
     MeshLevel * meshLevel = Group::groupCast< MeshBody * >( mesh.second )->getMeshLevel( 0 );
     FaceManager * const faceManager = meshLevel->getFaceManager();
@@ -410,7 +410,7 @@ void SurfaceGenerator::postRestartInitialization( Group * const domain0 )
   FiniteVolumeManager & fvManager = numericalMethodManager.getFiniteVolumeManager();
 
   // repopulate the fracture stencil
-  for( auto & mesh : domain->getMeshBodies()->GetSubGroups() )
+  for( auto & mesh : domain->getMeshBodies()->getSubGroups() )
   {
     MeshLevel * meshLevel = Group::groupCast< MeshBody * >( mesh.second )->getMeshLevel( 0 );
 
@@ -452,7 +452,7 @@ real64 SurfaceGenerator::SolverStep( real64 const & time_n,
 {
   int rval = 0;
 
-  for( auto & mesh : domain.getMeshBodies()->GetSubGroups() )
+  for( auto & mesh : domain.getMeshBodies()->getSubGroups() )
   {
     MeshLevel & meshLevel = *Group::groupCast< MeshBody * >( mesh.second )->getMeshLevel( 0 );
 
@@ -473,7 +473,7 @@ real64 SurfaceGenerator::SolverStep( real64 const & time_n,
 
   FiniteVolumeManager & fvManager = numericalMethodManager.getFiniteVolumeManager();
 
-  for( auto & mesh : domain.getMeshBodies()->GetSubGroups() )
+  for( auto & mesh : domain.getMeshBodies()->getSubGroups() )
   {
     MeshLevel * meshLevel = Group::groupCast< MeshBody * >( mesh.second )->getMeshLevel( 0 );
 

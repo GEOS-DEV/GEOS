@@ -307,8 +307,8 @@ localIndex ObjectManagerBase::PackPrivate( buffer_unit_type * & buffer,
   if( recursive > 0 )
   {
     packedSize += bufferOps::Pack< DOPACK >( buffer, string( "SubGroups" ) );
-    packedSize += bufferOps::Pack< DOPACK >( buffer, this->GetSubGroups().size() );
-    for( auto const & keyGroupPair : this->GetSubGroups() )
+    packedSize += bufferOps::Pack< DOPACK >( buffer, this->getSubGroups().size() );
+    for( auto const & keyGroupPair : this->getSubGroups() )
     {
       packedSize += bufferOps::Pack< DOPACK >( buffer, keyGroupPair.first );
       packedSize += keyGroupPair.second->Pack( buffer, wrapperNames, packList, recursive, on_device );
@@ -364,9 +364,9 @@ localIndex ObjectManagerBase::Unpack( buffer_unit_type const * & buffer,
     unpackedSize += bufferOps::Unpack( buffer, subGroups );
     GEOSX_ERROR_IF_NE( subGroups, "SubGroups" );
 
-    decltype( this->GetSubGroups().size()) numSubGroups;
+    decltype( this->getSubGroups().size()) numSubGroups;
     unpackedSize += bufferOps::Unpack( buffer, numSubGroups );
-    GEOSX_ERROR_IF_NE( numSubGroups, this->GetSubGroups().size() );
+    GEOSX_ERROR_IF_NE( numSubGroups, this->getSubGroups().size() );
 
     for( localIndex i = 0; i < this->numSubGroups(); ++i )
     {
@@ -575,8 +575,8 @@ localIndex ObjectManagerBase::PackGlobalMapsPrivate( buffer_unit_type * & buffer
   if( recursive > 0 )
   {
     packedSize += bufferOps::Pack< DOPACK >( buffer, string( "SubGroups" ) );
-    packedSize += bufferOps::Pack< DOPACK >( buffer, this->GetSubGroups().size() );
-    for( auto const & keyGroupPair : this->GetSubGroups() )
+    packedSize += bufferOps::Pack< DOPACK >( buffer, this->getSubGroups().size() );
+    for( auto const & keyGroupPair : this->getSubGroups() )
     {
       packedSize += bufferOps::Pack< DOPACK >( buffer, keyGroupPair.first );
       ObjectManagerBase const * const subObjectManager = Group::groupCast< ObjectManagerBase const * >( keyGroupPair.second );
@@ -699,11 +699,11 @@ localIndex ObjectManagerBase::UnpackGlobalMaps( buffer_unit_type const * & buffe
     unpackedSize += bufferOps::Unpack( buffer, subGroups );
     GEOSX_ERROR_IF( subGroups != "SubGroups", "Group::Unpack(): group names do not match" );
 
-    decltype( this->GetSubGroups().size()) numSubGroups;
+    decltype( this->getSubGroups().size()) numSubGroups;
     unpackedSize += bufferOps::Unpack( buffer, numSubGroups );
-    GEOSX_ERROR_IF( numSubGroups != this->GetSubGroups().size(), "Group::Unpack(): incorrect number of subGroups" );
+    GEOSX_ERROR_IF( numSubGroups != this->getSubGroups().size(), "Group::Unpack(): incorrect number of subGroups" );
 
-    for( auto const & index : this->GetSubGroups() )
+    for( auto const & index : this->getSubGroups() )
     {
       GEOSX_UNUSED_VAR( index );
       string subGroupName;

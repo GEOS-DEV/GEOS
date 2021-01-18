@@ -120,7 +120,7 @@ LaplaceFEM::~LaplaceFEM()
 //START_SPHINX_INCLUDE_02
 void LaplaceFEM::RegisterDataOnMesh( Group * const MeshBodies )
 {
-  for( auto & mesh : MeshBodies->GetSubGroups() )
+  for( auto & mesh : MeshBodies->getSubGroups() )
   {
     NodeManager * const nodes = mesh.second->groupCast< MeshBody * >()->getMeshLevel( 0 )->getNodeManager();
 

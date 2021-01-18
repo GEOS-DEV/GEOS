@@ -74,7 +74,7 @@ void DomainPartition::InitializationOrder( string_array & order )
   }
 
 
-  for( auto const & subGroup : this->GetSubGroups() )
+  for( auto const & subGroup : this->getSubGroups() )
   {
     if( usedNames.count( subGroup.first ) == 0 )
     {

@@ -79,7 +79,7 @@ void FlowSolverBase::RegisterDataOnMesh( Group * const MeshBodies )
 {
   SolverBase::RegisterDataOnMesh( MeshBodies );
 
-  for( auto & subgroup : MeshBodies->GetSubGroups() )
+  for( auto & subgroup : MeshBodies->getSubGroups() )
   {
     MeshBody & meshBody = *subgroup.second->groupCast< MeshBody * >();
     MeshLevel & mesh = *meshBody.getMeshLevel( 0 );
@@ -141,7 +141,7 @@ void FlowSolverBase::InitializePreSubGroups( Group * const rootGroup )
   DomainPartition * const domain = rootGroup->getGroup< DomainPartition >( keys::domain );
 
   // Validate solid models in regions (fluid models are validated by derived classes)
-  for( auto & mesh : domain->getMeshBodies()->GetSubGroups() )
+  for( auto & mesh : domain->getMeshBodies()->getSubGroups() )
   {
     MeshLevel & meshLevel = *Group::groupCast< MeshBody * >( mesh.second )->getMeshLevel( 0 );
     ValidateModelMapping( *meshLevel.getElemManager(), m_solidModelNames );

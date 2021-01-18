@@ -160,7 +160,7 @@ void SchemaConstruction( Group * const group,
         // Note: this is necessary because the order that objects
         //       are registered to catalogs may vary by compiler
         std::set< string > subGroupNames;
-        for( auto & subGroupPair : group->GetSubGroups())
+        for( auto & subGroupPair : group->getSubGroups())
         {
           subGroupNames.insert( subGroupPair.first );
         }

@@ -134,7 +134,7 @@ void EventManager::Run( dataRepository::Group * domain )
       // Determine the dt requests for each event
       for(; m_currentSubEvent<this->numSubGroups(); ++m_currentSubEvent )
       {
-        EventBase * subEvent = static_cast< EventBase * >( this->GetSubGroups()[m_currentSubEvent] );
+        EventBase * subEvent = static_cast< EventBase * >( this->getSubGroups()[m_currentSubEvent] );
         m_dt = std::min( subEvent->GetTimestepRequest( m_time ), m_dt );
       }
       m_currentSubEvent = 0;
@@ -152,7 +152,7 @@ void EventManager::Run( dataRepository::Group * domain )
     // Execute
     for(; m_currentSubEvent<this->numSubGroups(); ++m_currentSubEvent )
     {
-      EventBase * subEvent = static_cast< EventBase * >( this->GetSubGroups()[m_currentSubEvent] );
+      EventBase * subEvent = static_cast< EventBase * >( this->getSubGroups()[m_currentSubEvent] );
 
       // Calculate the event and sub-event forecasts
       subEvent->CheckEvents( m_time, m_dt, m_cycle, domain );

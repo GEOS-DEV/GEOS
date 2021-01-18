@@ -482,7 +482,7 @@ public:
    * @brief Get the subgroups object
    * @return a reference to the sub-group map.
    */
-  subGroupMap & GetSubGroups()
+  subGroupMap & getSubGroups()
   {
     return m_subGroups;
   }
@@ -491,7 +491,7 @@ public:
    * @brief Get the subgroups object
    * @return a reference to const that points to the sub-group map.
    */
-  subGroupMap const & GetSubGroups() const
+  subGroupMap const & getSubGroups() const
   {
     return m_subGroups;
   }
@@ -1336,7 +1336,7 @@ public:
    */
   localIndex getIndexInParent() const
   {
-    return m_parent->GetSubGroups().getIndex( this->m_name );
+    return m_parent->getSubGroups().getIndex( this->m_name );
   }
 
   /**

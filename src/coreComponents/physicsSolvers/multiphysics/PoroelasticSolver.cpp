@@ -70,7 +70,7 @@ PoroelasticSolver::PoroelasticSolver( const std::string & name,
 
 void PoroelasticSolver::RegisterDataOnMesh( dataRepository::Group * const MeshBodies )
 {
-  for( auto & mesh : MeshBodies->GetSubGroups() )
+  for( auto & mesh : MeshBodies->getSubGroups() )
   {
     ElementRegionManager * const elemManager = mesh.second->groupCast< MeshBody * >()->getMeshLevel( 0 )->getElemManager();
 

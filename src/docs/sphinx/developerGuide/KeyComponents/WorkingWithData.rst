@@ -89,7 +89,7 @@ For example this would look something like:
 
     void SolidMechanicsLagrangianFEM::RegisterDataOnMesh( Group * const MeshBodies )
     {
-      for( auto & mesh : MeshBodies->GetSubGroups() )
+      for( auto & mesh : MeshBodies->getSubGroups() )
       {
         NodeManager * const nodes = mesh.second->groupCast< MeshBody * >()->getMeshLevel( 0 )->getNodeManager();
 
@@ -140,7 +140,7 @@ Then the registration is simplified as follows:
 
     void SolidMechanicsLagrangianFEM::RegisterDataOnMesh( Group * const MeshBodies )
     {
-      for( auto & mesh : MeshBodies->GetSubGroups() )
+      for( auto & mesh : MeshBodies->getSubGroups() )
       {
         NodeManager * const nodes = mesh.second->groupCast< MeshBody * >()->getMeshLevel( 0 )->getNodeManager();
         nodes->registerExtrinsicData< extrinsicMeshData::TotalDisplacement >( this->getName() ).resizeDimension< 1 >( 3 );
