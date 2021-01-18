@@ -175,8 +175,8 @@ void testNumericalJacobian( SinglePhaseReservoir & solver,
                             real64 const relTol,
                             LAMBDA && assembleFunction )
 {
-  SinglePhaseWell & wellSolver = *solver.GetWellSolver()->group_cast< SinglePhaseWell * >();
-  SinglePhaseFVM< SinglePhaseBase > & flowSolver = *solver.GetFlowSolver()->group_cast< SinglePhaseFVM< SinglePhaseBase > * >();
+  SinglePhaseWell & wellSolver = *solver.GetWellSolver()->groupCast< SinglePhaseWell * >();
+  SinglePhaseFVM< SinglePhaseBase > & flowSolver = *solver.GetFlowSolver()->groupCast< SinglePhaseFVM< SinglePhaseBase > * >();
 
   CRSMatrix< real64, globalIndex > const & jacobian = solver.getLocalMatrix();
   array1d< real64 > const & residual = solver.getLocalRhs();

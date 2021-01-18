@@ -202,8 +202,8 @@ void PerforationData::GetReservoirElementDimensions( MeshLevel const & mesh,
 {
   ElementRegionManager const * const elemManager = mesh.getElemManager();
   NodeManager const * const nodeManager          = mesh.getNodeManager();
-  CellElementRegion const * const region    = Group::group_cast< CellElementRegion const * >( elemManager->GetRegion( er ));
-  CellBlock const * const subRegion = Group::group_cast< CellElementSubRegion const * >( region->GetSubRegion( esr ));
+  CellElementRegion const * const region    = Group::groupCast< CellElementRegion const * >( elemManager->GetRegion( er ));
+  CellBlock const * const subRegion = Group::groupCast< CellElementSubRegion const * >( region->GetSubRegion( esr ));
 
   // compute the bounding box of the element
   real64 boxDims[ 3 ];

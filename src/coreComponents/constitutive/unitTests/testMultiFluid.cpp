@@ -124,7 +124,7 @@ void testNumericalDerivatives( MultiFluidBase & fluid,
 
   // create a clone of the fluid to run updates on
   std::unique_ptr< ConstitutiveBase > fluidCopyPtr = fluid.deliverClone( "fluidCopy", nullptr );
-  MultiFluidBase & fluidCopy = *fluidCopyPtr->group_cast< MultiFluidBase * >();
+  MultiFluidBase & fluidCopy = *fluidCopyPtr->groupCast< MultiFluidBase * >();
 
   fluid.allocateConstitutiveData( fluid.getParent(), 1 );
   fluidCopy.allocateConstitutiveData( fluid.getParent(), 1 );

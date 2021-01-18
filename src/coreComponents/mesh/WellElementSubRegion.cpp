@@ -218,8 +218,8 @@ bool VisitNeighborElements( MeshLevel const & mesh,
       localIndex const esr     = toElementSubRegionList[currNode][b];
       localIndex const eiLocal = toElementList[currNode][b];
 
-      CellElementRegion const * const region    = dataRepository::Group::group_cast< CellElementRegion const * >( elemManager->GetRegion( er ));
-      CellBlock const * const subRegion = dataRepository::Group::group_cast< CellElementSubRegion const * >( region->GetSubRegion( esr ));
+      CellElementRegion const * const region    = dataRepository::Group::groupCast< CellElementRegion const * >( elemManager->GetRegion( er ));
+      CellBlock const * const subRegion = dataRepository::Group::groupCast< CellElementSubRegion const * >( region->GetSubRegion( esr ));
       globalIndex const eiGlobal  = subRegion->localToGlobalMap()[eiLocal];
 
       // if this element has not been visited yet, save it
@@ -319,8 +319,8 @@ bool SearchLocalElements( MeshLevel const & mesh,
   // the assumption here is that perforations have been entered in order of depth
   bool resElemFound = false;
 
-  CellElementRegion const * region = dataRepository::Group::group_cast< CellElementRegion const * >( mesh.getElemManager()->GetRegion( erInit ));
-  CellBlock const * subRegion      = dataRepository::Group::group_cast< CellBlock const * >( region->GetSubRegion( esrInit ));
+  CellElementRegion const * region = dataRepository::Group::groupCast< CellElementRegion const * >( mesh.getElemManager()->GetRegion( erInit ));
+  CellBlock const * subRegion      = dataRepository::Group::groupCast< CellBlock const * >( region->GetSubRegion( esrInit ));
 
   SortedArray< localIndex >  nodes;
   SortedArray< globalIndex > elements;
@@ -743,7 +743,7 @@ void WellElementSubRegion::UpdateNodeManagerNodeToElementMap( MeshLevel & mesh )
   ArrayOfArrays< localIndex > & toElementList          = nodeManager->elementList();
 
   // we get the region and subregion indices in the elemManager
-  WellElementRegion const * const elemRegion = this->getParent()->getParent()->group_cast< WellElementRegion * >();
+  WellElementRegion const * const elemRegion = this->getParent()->getParent()->groupCast< WellElementRegion * >();
   string const elemRegionName = elemRegion->getName();
 
   localIndex const iregion    = elemManager->GetRegions().getIndex( elemRegionName );

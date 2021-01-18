@@ -122,7 +122,7 @@ void LaplaceFEM::RegisterDataOnMesh( Group * const MeshBodies )
 {
   for( auto & mesh : MeshBodies->GetSubGroups() )
   {
-    NodeManager * const nodes = mesh.second->group_cast< MeshBody * >()->getMeshLevel( 0 )->getNodeManager();
+    NodeManager * const nodes = mesh.second->groupCast< MeshBody * >()->getMeshLevel( 0 )->getNodeManager();
 
     nodes->registerWrapper< real64_array >( m_fieldName )->
       setApplyDefaultValue( 0.0 )->

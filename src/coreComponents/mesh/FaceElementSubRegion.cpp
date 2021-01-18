@@ -57,7 +57,7 @@ FaceElementSubRegion::FaceElementSubRegion( string const & name,
 #endif
 
   m_surfaceElementsToCells.resize( 0, 2 );
-  m_surfaceElementsToCells.setElementRegionManager( getParent()->getParent()->getParent()->getParent()->group_cast< ElementRegionManager * >() );
+  m_surfaceElementsToCells.setElementRegionManager( getParent()->getParent()->getParent()->getParent()->groupCast< ElementRegionManager * >() );
 
   m_numNodesPerElement = 8;
 }

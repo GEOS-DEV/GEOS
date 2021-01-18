@@ -86,7 +86,7 @@ void PhaseFieldDamageFEM::RegisterDataOnMesh( Group * const MeshBodies )
   for( auto & mesh : MeshBodies->GetSubGroups() )
   {
 
-    MeshLevel *meshLevel = Group::group_cast< MeshBody * >( mesh.second )->getMeshLevel( 0 );
+    MeshLevel *meshLevel = Group::groupCast< MeshBody * >( mesh.second )->getMeshLevel( 0 );
 
     NodeManager * const nodes = meshLevel->getNodeManager();
 

@@ -160,7 +160,7 @@ void SolidMechanicsLagrangianFEM::RegisterDataOnMesh( Group * const MeshBodies )
 {
   for( auto & mesh : MeshBodies->GetSubGroups() )
   {
-    NodeManager * const nodes = mesh.second->group_cast< MeshBody * >()->getMeshLevel( 0 )->getNodeManager();
+    NodeManager * const nodes = mesh.second->groupCast< MeshBody * >()->getMeshLevel( 0 )->getNodeManager();
 
     nodes->registerWrapper< array2d< real64, nodes::TOTAL_DISPLACEMENT_PERM > >( keys::TotalDisplacement )->
       setPlotLevel( PlotLevel::LEVEL_0 )->
@@ -218,7 +218,7 @@ void SolidMechanicsLagrangianFEM::RegisterDataOnMesh( Group * const MeshBodies )
       reference().resizeDimension< 1 >( 3 );
 
     ElementRegionManager * const
-    elementRegionManager = mesh.second->group_cast< MeshBody * >()->getMeshLevel( 0 )->getElemManager();
+    elementRegionManager = mesh.second->groupCast< MeshBody * >()->getMeshLevel( 0 )->getElemManager();
     elementRegionManager->forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion & subRegion )
     {
       subRegion.registerWrapper< array3d< real64, solid::STRESS_PERMUTATION > >( viewKeyStruct::stress_n )->
@@ -250,7 +250,7 @@ void SolidMechanicsLagrangianFEM::InitializePreSubGroups( Group * const rootGrou
   // Validate solid models in target regions
   for( auto & mesh : domain->getMeshBodies()->GetSubGroups() )
   {
-    MeshLevel & meshLevel = *Group::group_cast< MeshBody * >( mesh.second )->getMeshLevel( 0 );
+    MeshLevel & meshLevel = *Group::groupCast< MeshBody * >( mesh.second )->getMeshLevel( 0 );
     ValidateModelMapping< SolidBase >( *meshLevel.getElemManager(), m_solidMaterialNames );
   }
 

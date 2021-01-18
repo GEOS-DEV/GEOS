@@ -72,7 +72,7 @@ void PoroelasticSolver::RegisterDataOnMesh( dataRepository::Group * const MeshBo
 {
   for( auto & mesh : MeshBodies->GetSubGroups() )
   {
-    ElementRegionManager * const elemManager = mesh.second->group_cast< MeshBody * >()->getMeshLevel( 0 )->getElemManager();
+    ElementRegionManager * const elemManager = mesh.second->groupCast< MeshBody * >()->getMeshLevel( 0 )->getElemManager();
 
     elemManager->forElementSubRegions< CellElementSubRegion, FaceElementSubRegion >( [&]( ElementSubRegionBase & elementSubRegion )
     {

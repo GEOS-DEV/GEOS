@@ -57,7 +57,7 @@ void SinglePhaseHybridFVM::RegisterDataOnMesh( Group * const MeshBodies )
   // 2) Register the face data
   for( auto & mesh : MeshBodies->GetSubGroups() )
   {
-    MeshLevel * const meshLevel = Group::group_cast< MeshBody * >( mesh.second )->getMeshLevel( 0 );
+    MeshLevel * const meshLevel = Group::groupCast< MeshBody * >( mesh.second )->getMeshLevel( 0 );
     FaceManager * const faceManager = meshLevel->getFaceManager();
 
     // primary variables: face pressures changes

@@ -151,7 +151,7 @@ void SolverBase::Execute( real64 const time_n,
     real64 const dtAccepted = SolverStep( time_n + (dt - dtRemaining),
                                           nextDt,
                                           cycleNumber,
-                                          *domain->group_cast< DomainPartition * >() );
+                                          *domain->groupCast< DomainPartition * >() );
     /*
      * Let us check convergence history of previous solve:
      * - number of nonlinear iter.
@@ -859,7 +859,7 @@ void SolverBase::ImplicitStepComplete( real64 const & GEOSX_UNUSED_PARAM( time )
 R1Tensor const SolverBase::gravityVector() const
 {
   R1Tensor rval;
-  if( getParent()->group_cast< PhysicsSolverManager const * >() != nullptr )
+  if( getParent()->groupCast< PhysicsSolverManager const * >() != nullptr )
   {
     rval = getParent()->getReference< R1Tensor >( PhysicsSolverManager::viewKeyStruct::gravityVectorString );
   }

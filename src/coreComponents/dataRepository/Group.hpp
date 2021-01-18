@@ -305,7 +305,7 @@ public:
    * @return      A pointer to @p T that refers to the @p group
    */
   template< typename T >
-  static T group_cast( Group * group )
+  static T groupCast( Group * group )
   {
     return dynamicCast< T >( group );
   }
@@ -317,7 +317,7 @@ public:
    * @return      A pointer to @p T that refers to the @p group
    */
   template< typename T >
-  static T group_cast( Group const * group )
+  static T groupCast( Group const * group )
   {
     return dynamicCast< T >( group );
   }
@@ -328,7 +328,7 @@ public:
    * @return      A pointer to \p T that refers to this object
    */
   template< typename T >
-  T group_cast()
+  T groupCast()
   {
     return dynamicCast< T >( this );
   }
@@ -339,7 +339,7 @@ public:
    * @return      A pointer to \p T that refers to this object
    */
   template< typename T >
-  T group_cast() const
+  T groupCast() const
   {
     return dynamicCast< T >( this );
   }
@@ -373,7 +373,7 @@ public:
   template< typename T = Group >
   T * GetGroup( localIndex index )
   {
-    return group_cast< T * >( m_subGroups[index] );
+    return groupCast< T * >( m_subGroups[index] );
   }
 
   /**
@@ -382,7 +382,7 @@ public:
   template< typename T = Group >
   T const * GetGroup( localIndex index ) const
   {
-    return group_cast< T const * >( m_subGroups[index] );
+    return groupCast< T const * >( m_subGroups[index] );
   }
 
   /**
@@ -394,7 +394,7 @@ public:
   template< typename T = Group >
   T * GetGroup( string const & name )
   {
-    return group_cast< T * >( m_subGroups[name] );
+    return groupCast< T * >( m_subGroups[name] );
   }
 
   /**
@@ -402,7 +402,7 @@ public:
    */
   template< typename T = Group >
   T const * GetGroup( string const & name ) const
-  { return group_cast< T const * >( m_subGroups[name] ); }
+  { return groupCast< T const * >( m_subGroups[name] ); }
 
   /**
    * @brief @return Return a reference to the Group @p name.
@@ -444,7 +444,7 @@ public:
   template< typename T = Group >
   T * GetGroup( subGroupMap::KeyIndex const & key )
   {
-    return group_cast< T * >( m_subGroups[key] );
+    return groupCast< T * >( m_subGroups[key] );
   }
 
   /**
@@ -453,7 +453,7 @@ public:
   template< typename T = Group >
   T const * GetGroup( subGroupMap::KeyIndex const & key ) const
   {
-    return group_cast< T const * >( m_subGroups[key] );
+    return groupCast< T const * >( m_subGroups[key] );
   }
 
   /**
@@ -1638,7 +1638,7 @@ T const * Group::GetGroupByPath( string const & path ) const
   // needed for getting root correctly with GetGroupByPath("/");
   if( path.empty())
   {
-    return group_cast< T const * >( this );
+    return groupCast< T const * >( this );
   }
 
   size_t directoryMarker = path.find( '/' );

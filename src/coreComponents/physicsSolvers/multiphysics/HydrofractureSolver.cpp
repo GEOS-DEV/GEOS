@@ -89,7 +89,7 @@ void HydrofractureSolver::RegisterDataOnMesh( dataRepository::Group * const Mesh
 {
   for( auto & mesh : MeshBodies->GetSubGroups() )
   {
-    MeshLevel * meshLevel = Group::group_cast< MeshBody * >( mesh.second )->getMeshLevel( 0 );
+    MeshLevel * meshLevel = Group::groupCast< MeshBody * >( mesh.second )->getMeshLevel( 0 );
 
     ElementRegionManager * const elemManager = meshLevel->getElemManager();
     elemManager->forElementRegions< SurfaceElementRegion >( [&] ( SurfaceElementRegion * const region )

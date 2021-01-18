@@ -222,8 +222,8 @@ void testNumericalJacobian( CompositionalMultiphaseReservoir & solver,
                             real64 const relTol,
                             LAMBDA && assembleFunction )
 {
-  CompositionalMultiphaseWell & wellSolver = *solver.GetWellSolver()->group_cast< CompositionalMultiphaseWell * >();
-  CompositionalMultiphaseFlow & flowSolver = *solver.GetFlowSolver()->group_cast< CompositionalMultiphaseFlow * >();
+  CompositionalMultiphaseWell & wellSolver = *solver.GetWellSolver()->groupCast< CompositionalMultiphaseWell * >();
+  CompositionalMultiphaseFlow & flowSolver = *solver.GetFlowSolver()->groupCast< CompositionalMultiphaseFlow * >();
 
   localIndex const NC = flowSolver.numFluidComponents();
 

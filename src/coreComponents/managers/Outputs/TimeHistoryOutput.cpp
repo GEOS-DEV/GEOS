@@ -88,7 +88,7 @@ void TimeHistoryOutput::InitializePostSubGroups( Group * const group )
   for( auto collector_path : m_collectorPaths )
   {
     Group * tmp = this->GetGroupByPath( collector_path );
-    HistoryCollection * collector = Group::group_cast< HistoryCollection * >( tmp );
+    HistoryCollection * collector = Group::groupCast< HistoryCollection * >( tmp );
     GEOSX_ERROR_IF( collector == nullptr, "The target of a time history output event must be a collector! " << collector_path );
     collector->InitializePostSubGroups( group );
     initCollectorParallel( pm, collector );

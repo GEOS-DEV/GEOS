@@ -98,7 +98,7 @@ void LagrangianContactSolver::RegisterDataOnMesh( dataRepository::Group * const 
 {
   for( auto & mesh : MeshBodies->GetSubGroups() )
   {
-    MeshLevel & meshLevel = *Group::group_cast< MeshBody * >( mesh.second )->getMeshLevel( 0 );
+    MeshLevel & meshLevel = *Group::groupCast< MeshBody * >( mesh.second )->getMeshLevel( 0 );
 
     ElementRegionManager * const elemManager = meshLevel.getElemManager();
     elemManager->forElementRegions< SurfaceElementRegion >( [&] ( SurfaceElementRegion & region )
@@ -1696,7 +1696,7 @@ void LagrangianContactSolver::AssembleStabilization( DomainPartition const & dom
 
   // Form the SurfaceGenerator, get the fracture name and use it to retrieve the faceMap (from fracture element to face)
   SurfaceGenerator const * const
-  surfaceGenerator = this->getParent()->GetGroup< SolverBase >( "SurfaceGen" )->group_cast< SurfaceGenerator const * >();
+  surfaceGenerator = this->getParent()->GetGroup< SolverBase >( "SurfaceGen" )->groupCast< SurfaceGenerator const * >();
   SurfaceElementRegion const * const fractureRegion = elemManager.GetRegion< SurfaceElementRegion >( surfaceGenerator->getFractureRegionName() );
   FaceElementSubRegion const * const fractureSubRegion = fractureRegion->GetSubRegion< FaceElementSubRegion >( "faceElementSubRegion" );
   GEOSX_ERROR_IF( !fractureSubRegion->hasWrapper( m_tractionKey ), "The fracture subregion must contain traction field." );

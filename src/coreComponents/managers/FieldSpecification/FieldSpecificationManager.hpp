@@ -226,7 +226,7 @@ public:
     // loop over all FieldSpecificationBase objects
     for( auto & subGroup : this->GetSubGroups() )
     {
-      FieldSpecificationBase const * fs = subGroup.second->group_cast< FieldSpecificationBase const * >();
+      FieldSpecificationBase const * fs = subGroup.second->groupCast< FieldSpecificationBase const * >();
       int const isInitialCondition = fs->initialCondition();
 
       if( ( isInitialCondition && fieldPath=="" ) ||
@@ -239,7 +239,7 @@ public:
         if( ( isInitialCondition && fieldName=="" ) ||
             ( !isInitialCondition && time >= fs->GetStartTime() && time < fs->GetEndTime() && targetName==fieldName ) )
         {
-          MeshLevel * const meshLevel = domain->group_cast< DomainPartition * >()->
+          MeshLevel * const meshLevel = domain->groupCast< DomainPartition * >()->
                                           getMeshBody( 0 )->getMeshLevel( 0 );
 
           dataRepository::Group * targetGroup = meshLevel;

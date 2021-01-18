@@ -228,7 +228,7 @@ void SurfaceGenerator::RegisterDataOnMesh( Group * const MeshBodies )
 {
   for( auto & mesh : MeshBodies->GetSubGroups() )
   {
-    MeshLevel * const meshLevel = mesh.second->group_cast< MeshBody * >()->getMeshLevel( 0 );
+    MeshLevel * const meshLevel = mesh.second->groupCast< MeshBody * >()->getMeshLevel( 0 );
 
     ElementRegionManager * const elemManager = meshLevel->getElemManager();
 
@@ -295,9 +295,9 @@ void SurfaceGenerator::RegisterDataOnMesh( Group * const MeshBodies )
 void SurfaceGenerator::InitializePostInitialConditions_PreSubGroups( Group * const problemManager )
 {
   DomainPartition * domain = problemManager->GetGroup< DomainPartition >( dataRepository::keys::domain );
-  for( auto & mesh : domain->group_cast< DomainPartition * >()->getMeshBodies()->GetSubGroups() )
+  for( auto & mesh : domain->groupCast< DomainPartition * >()->getMeshBodies()->GetSubGroups() )
   {
-    MeshLevel * meshLevel = Group::group_cast< MeshBody * >( mesh.second )->getMeshLevel( 0 );
+    MeshLevel * meshLevel = Group::groupCast< MeshBody * >( mesh.second )->getMeshLevel( 0 );
     NodeManager * const nodeManager = meshLevel->getNodeManager();
     FaceManager * const faceManager = meshLevel->getFaceManager();
 
@@ -334,9 +334,9 @@ void SurfaceGenerator::InitializePostInitialConditions_PreSubGroups( Group * con
     }
   }
 
-  for( auto & mesh : domain->group_cast< DomainPartition * >()->getMeshBodies()->GetSubGroups() )
+  for( auto & mesh : domain->groupCast< DomainPartition * >()->getMeshBodies()->GetSubGroups() )
   {
-    MeshLevel * meshLevel = Group::group_cast< MeshBody * >( mesh.second )->getMeshLevel( 0 );
+    MeshLevel * meshLevel = Group::groupCast< MeshBody * >( mesh.second )->getMeshLevel( 0 );
     FaceManager * const faceManager = meshLevel->getFaceManager();
     ElementRegionManager * const elementManager = meshLevel->getElemManager();
     arrayView2d< real64 const > const & faceNormals = faceManager->faceNormal();
@@ -370,7 +370,7 @@ void SurfaceGenerator::InitializePostInitialConditions_PreSubGroups( Group * con
                                                         GetSubRegion< CellElementSubRegion >( faceToSubRegionMap[kf][k] );
             localIndex iEle = faceToElementMap[kf][k];
 
-            ElementRegionBase * const elementRegion = elementSubRegion->getParent()->getParent()->group_cast< ElementRegionBase * >();
+            ElementRegionBase * const elementRegion = elementSubRegion->getParent()->getParent()->groupCast< ElementRegionBase * >();
             string const elementRegionName = elementRegion->getName();
             //          localIndex const er = elementManager->GetRegions().getIndex( elementRegionName );
             //          localIndex const esr = elementRegion->GetSubRegions().getIndex( elementSubRegion->getName() );
@@ -403,7 +403,7 @@ void SurfaceGenerator::InitializePostInitialConditions_PreSubGroups( Group * con
 
 void SurfaceGenerator::postRestartInitialization( Group * const domain0 )
 {
-  DomainPartition * const domain = domain0->group_cast< DomainPartition * >();
+  DomainPartition * const domain = domain0->groupCast< DomainPartition * >();
 
   NumericalMethodsManager & numericalMethodManager = domain->getNumericalMethodManager();
 
@@ -412,7 +412,7 @@ void SurfaceGenerator::postRestartInitialization( Group * const domain0 )
   // repopulate the fracture stencil
   for( auto & mesh : domain->getMeshBodies()->GetSubGroups() )
   {
-    MeshLevel * meshLevel = Group::group_cast< MeshBody * >( mesh.second )->getMeshLevel( 0 );
+    MeshLevel * meshLevel = Group::groupCast< MeshBody * >( mesh.second )->getMeshLevel( 0 );
 
     EdgeManager * const edgeManager = meshLevel->getEdgeManager();
     ElementRegionManager * const elemManager = meshLevel->getElemManager();
@@ -454,7 +454,7 @@ real64 SurfaceGenerator::SolverStep( real64 const & time_n,
 
   for( auto & mesh : domain.getMeshBodies()->GetSubGroups() )
   {
-    MeshLevel & meshLevel = *Group::group_cast< MeshBody * >( mesh.second )->getMeshLevel( 0 );
+    MeshLevel & meshLevel = *Group::groupCast< MeshBody * >( mesh.second )->getMeshLevel( 0 );
 
     {
       SpatialPartition & partition = dynamicCast< SpatialPartition & >( domain.getReference< PartitionBase >( dataRepository::keys::partitionManager ) );
@@ -475,7 +475,7 @@ real64 SurfaceGenerator::SolverStep( real64 const & time_n,
 
   for( auto & mesh : domain.getMeshBodies()->GetSubGroups() )
   {
-    MeshLevel * meshLevel = Group::group_cast< MeshBody * >( mesh.second )->getMeshLevel( 0 );
+    MeshLevel * meshLevel = Group::groupCast< MeshBody * >( mesh.second )->getMeshLevel( 0 );
 
     {
       ElementRegionManager * const elemManager = meshLevel->getElemManager();
@@ -1915,7 +1915,7 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
       const std::pair< CellElementSubRegion *, localIndex > & elem = iter_elem->first;
 
       CellElementSubRegion & elemSubRegion = *(elem.first);
-      ElementRegionBase * const elemRegion = elemSubRegion.getParent()->getParent()->group_cast< ElementRegionBase * >();
+      ElementRegionBase * const elemRegion = elemSubRegion.getParent()->getParent()->groupCast< ElementRegionBase * >();
       string const elemRegionName = elemRegion->getName();
 
       localIndex const regionIndex = elementManager.GetRegions().getIndex( elemRegionName );

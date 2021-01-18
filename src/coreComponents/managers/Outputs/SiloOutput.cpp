@@ -84,7 +84,7 @@ void SiloOutput::Execute( real64 const time_n,
 {
   GEOSX_MARK_FUNCTION;
 
-  DomainPartition * domainPartition = Group::group_cast< DomainPartition * >( domain );
+  DomainPartition * domainPartition = Group::groupCast< DomainPartition * >( domain );
   SiloFile silo;
 
   int const size = MpiWrapper::Comm_size( MPI_COMM_GEOSX );

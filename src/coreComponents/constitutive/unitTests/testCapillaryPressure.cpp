@@ -37,7 +37,7 @@ void testNumericalDerivatives( CapillaryPressureBase & capPressure,
 
   // create a clone of the capillary pressure to run updates on
   std::unique_ptr< ConstitutiveBase > capPressureCopyPtr = capPressure.deliverClone( "fluidCopy", nullptr );
-  CapillaryPressureBase & capPressureCopy = *capPressureCopyPtr->group_cast< CapillaryPressureBase * >();
+  CapillaryPressureBase & capPressureCopy = *capPressureCopyPtr->groupCast< CapillaryPressureBase * >();
 
   capPressure.allocateConstitutiveData( capPressure.getParent(), 1 );
   capPressureCopy.allocateConstitutiveData( capPressure.getParent(), 1 );

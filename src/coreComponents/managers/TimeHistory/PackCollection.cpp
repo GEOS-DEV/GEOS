@@ -149,7 +149,7 @@ ObjectManagerBase const * PackCollection::getTargetObject( DomainPartition & dom
     GEOSX_ERROR_IF( targetGroup == nullptr, "PackCollction::getTargetObject( ): Last entry in objectPath (" << processedPath << ") is not found" );
   }
 
-  return targetGroup->group_cast< ObjectManagerBase const * >();
+  return targetGroup->groupCast< ObjectManagerBase const * >();
 }
 
 void PackCollection::collect( DomainPartition & domain,

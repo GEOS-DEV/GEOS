@@ -220,7 +220,7 @@ void EmbeddedSurfaceGenerator::addToFractureStencil( DomainPartition & domain )
 
   for( auto & mesh : domain.getMeshBodies()->GetSubGroups() )
   {
-    MeshLevel * meshLevel = Group::group_cast< MeshBody * >( mesh.second )->getMeshLevel( 0 );
+    MeshLevel * meshLevel = Group::groupCast< MeshBody * >( mesh.second )->getMeshLevel( 0 );
 
     for( localIndex a=0; a<fvManager.numSubGroups(); ++a )
     {

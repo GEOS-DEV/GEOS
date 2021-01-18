@@ -166,7 +166,7 @@ void WellSolverBase::InitializePreSubGroups( Group * const rootGroup )
 
   for( auto & mesh : domain->getMeshBodies()->GetSubGroups() )
   {
-    MeshLevel & meshLevel = *Group::group_cast< MeshBody * >( mesh.second )->getMeshLevel( 0 );
+    MeshLevel & meshLevel = *Group::groupCast< MeshBody * >( mesh.second )->getMeshLevel( 0 );
     ValidateModelMapping( *meshLevel.getElemManager(), m_fluidModelNames );
   }
 

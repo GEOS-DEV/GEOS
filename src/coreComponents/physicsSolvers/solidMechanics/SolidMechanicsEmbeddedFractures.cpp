@@ -75,7 +75,7 @@ void SolidMechanicsEmbeddedFractures::RegisterDataOnMesh( dataRepository::Group 
 
   for( auto & mesh : MeshBodies->GetSubGroups() )
   {
-    MeshLevel * meshLevel = Group::group_cast< MeshBody * >( mesh.second )->getMeshLevel( 0 );
+    MeshLevel * meshLevel = Group::groupCast< MeshBody * >( mesh.second )->getMeshLevel( 0 );
 
     ElementRegionManager * const elemManager = meshLevel->getElemManager();
     {
@@ -310,7 +310,7 @@ void SolidMechanicsEmbeddedFractures::AddCouplingNumNonzeros( DomainPartition & 
     {
       // Get rock matrix element subregion
       CellElementSubRegion const * const subRegion =
-        Group::group_cast< CellElementSubRegion const * const >
+        Group::groupCast< CellElementSubRegion const * const >
           ( elemManager.GetRegion( embeddedSurfacesToCells.m_toElementRegion[k][0] )->
             GetSubRegion( embeddedSurfacesToCells.m_toElementSubRegion[k][0] ));
 
@@ -374,7 +374,7 @@ void SolidMechanicsEmbeddedFractures::AddCouplingSparsityPattern( DomainPartitio
     // This will fill K_wu, and K_uw
     for( localIndex k=0; k<embeddedSurfaceSubRegion.size(); ++k )
     {
-      CellBlock const * const elemSubRegion = Group::group_cast< CellBlock const * const >( elemManager.GetRegion( embeddedSurfacesToCells.m_toElementRegion[k][0] )->
+      CellBlock const * const elemSubRegion = Group::groupCast< CellBlock const * const >( elemManager.GetRegion( embeddedSurfacesToCells.m_toElementRegion[k][0] )->
                                                                                               GetSubRegion( embeddedSurfacesToCells.m_toElementSubRegion[k][0] ));
 
 

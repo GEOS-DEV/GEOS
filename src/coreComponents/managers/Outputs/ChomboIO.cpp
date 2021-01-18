@@ -79,7 +79,7 @@ void ChomboIO::Execute( real64 const GEOSX_UNUSED_PARAM( time_n ),
   {
     GEOSX_ERROR_IF( m_waitForInput && m_inputPath == "/INVALID_INPUT_PATH", "Waiting for input but no input path was specified." );
 
-    DomainPartition * const domainPartition = Group::group_cast< DomainPartition * >( domain );
+    DomainPartition * const domainPartition = Group::groupCast< DomainPartition * >( domain );
     MeshLevel * const meshLevel = domainPartition->getMeshBody( 0 )->getMeshLevel( 0 );
     m_coupler = new ChomboCoupler( MPI_COMM_GEOSX, m_outputPath, m_inputPath, *meshLevel );
   }

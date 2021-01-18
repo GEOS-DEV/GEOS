@@ -96,7 +96,7 @@ void ProppantTransport::RegisterDataOnMesh( Group * const MeshBodies )
 
   for( auto & mesh : MeshBodies->GetSubGroups() )
   {
-    MeshLevel & meshLevel = *Group::group_cast< MeshBody * >( mesh.second )->getMeshLevel( 0 );
+    MeshLevel & meshLevel = *Group::groupCast< MeshBody * >( mesh.second )->getMeshLevel( 0 );
 
     forTargetSubRegions< CellElementSubRegion >( meshLevel, [&]( localIndex const,
                                                                  CellElementSubRegion & subRegion )
@@ -160,7 +160,7 @@ void ProppantTransport::InitializePreSubGroups( Group * const rootGroup )
   // Validate proppant models in regions
   for( auto & mesh : domain->getMeshBodies()->GetSubGroups() )
   {
-    MeshLevel & meshLevel = *Group::group_cast< MeshBody * >( mesh.second )->getMeshLevel( 0 );
+    MeshLevel & meshLevel = *Group::groupCast< MeshBody * >( mesh.second )->getMeshLevel( 0 );
     ValidateModelMapping< SlurryFluidBase >( *meshLevel.getElemManager(), m_fluidModelNames );
     ValidateModelMapping< ParticleFluidBase >( *meshLevel.getElemManager(), m_proppantModelNames );
   }

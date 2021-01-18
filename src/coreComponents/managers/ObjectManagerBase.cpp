@@ -579,7 +579,7 @@ localIndex ObjectManagerBase::PackGlobalMapsPrivate( buffer_unit_type * & buffer
     for( auto const & keyGroupPair : this->GetSubGroups() )
     {
       packedSize += bufferOps::Pack< DOPACK >( buffer, keyGroupPair.first );
-      ObjectManagerBase const * const subObjectManager = Group::group_cast< ObjectManagerBase const * >( keyGroupPair.second );
+      ObjectManagerBase const * const subObjectManager = Group::groupCast< ObjectManagerBase const * >( keyGroupPair.second );
       if( subObjectManager )
       {
         packedSize += subObjectManager->PackGlobalMapsPrivate< DOPACK >( buffer, packList, recursive );

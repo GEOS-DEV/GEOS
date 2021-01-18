@@ -146,15 +146,15 @@ public:
 
   SolidMechanicsLagrangianFEM * getSolidSolver()
   {
-    return this->getParent()->GetGroup( m_solidSolverName )->group_cast< SolidMechanicsLagrangianFEM * >();
+    return this->getParent()->GetGroup( m_solidSolverName )->groupCast< SolidMechanicsLagrangianFEM * >();
   }
   SolidMechanicsLagrangianFEM const * getSolidSolver() const
   {
-    return this->getParent()->GetGroup( m_solidSolverName )->group_cast< SolidMechanicsLagrangianFEM const * >();
+    return this->getParent()->GetGroup( m_solidSolverName )->groupCast< SolidMechanicsLagrangianFEM const * >();
   }
 
-  FlowSolverBase * getFlowSolver()             { return this->getParent()->GetGroup( m_flowSolverName )->group_cast< FlowSolverBase * >(); }
-  FlowSolverBase const * getFlowSolver() const { return this->getParent()->GetGroup( m_flowSolverName )->group_cast< FlowSolverBase const * >(); }
+  FlowSolverBase * getFlowSolver()             { return this->getParent()->GetGroup( m_flowSolverName )->groupCast< FlowSolverBase * >(); }
+  FlowSolverBase const * getFlowSolver() const { return this->getParent()->GetGroup( m_flowSolverName )->groupCast< FlowSolverBase const * >(); }
 
 protected:
 

@@ -49,7 +49,7 @@ void SinglePhaseBase::RegisterDataOnMesh( Group * const MeshBodies )
 
   for( auto & mesh : MeshBodies->GetSubGroups() )
   {
-    MeshLevel * meshLevel = Group::group_cast< MeshBody * >( mesh.second )->getMeshLevel( 0 );
+    MeshLevel * meshLevel = Group::groupCast< MeshBody * >( mesh.second )->getMeshLevel( 0 );
 
     ElementRegionManager * const elemManager = meshLevel->getElemManager();
 
@@ -123,7 +123,7 @@ void SinglePhaseBase::ValidateFluidModels( DomainPartition const & domain ) cons
 {
   for( auto & mesh : domain.getMeshBodies()->GetSubGroups() )
   {
-    MeshLevel const & meshLevel = *Group::group_cast< MeshBody const * >( mesh.second )->getMeshLevel( 0 );
+    MeshLevel const & meshLevel = *Group::groupCast< MeshBody const * >( mesh.second )->getMeshLevel( 0 );
     ValidateModelMapping< SingleFluidBase >( *meshLevel.getElemManager(), m_fluidModelNames );
   }
 }
