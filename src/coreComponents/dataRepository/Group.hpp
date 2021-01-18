@@ -757,7 +757,7 @@ public:
    * call InitializePostSubGroups() on this Group.
    *
    * @note The order in which the sub-Groups are iterated over is defined by
-   * InitializationOrder().
+   * initializationOrder().
    */
   void Initialize( Group * const group );
 
@@ -770,7 +770,7 @@ public:
    * custom order is required by a derived type, this function should be
    * overridden with a implementation that specifies the desired order.
    */
-  virtual void InitializationOrder( string_array & order );
+  virtual void initializationOrder( string_array & order );
 
 
   /**
@@ -787,7 +787,7 @@ public:
    * Group.
    *
    * @note The order in which the sub-Groups are iterated over is defined by
-   * InitializationOrder().
+   * initializationOrder().
    */
   void InitializePostInitialConditions( Group * const group );
 

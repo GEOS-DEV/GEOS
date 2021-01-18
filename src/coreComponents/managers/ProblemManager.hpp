@@ -142,7 +142,7 @@ public:
    * @brief Defines the order in which objects should be initialized
    * @param order list defining ordering sequence
    */
-  void InitializationOrder( string_array & order ) override final;
+  void initializationOrder( string_array & order ) override final;
 
   /**
    * @brief Sets up the problem after the input has been read in

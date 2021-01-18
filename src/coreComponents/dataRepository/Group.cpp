@@ -248,7 +248,7 @@ void Group::deregisterGroup( std::string const & name )
   m_conduitNode.remove( name );
 }
 
-void Group::InitializationOrder( string_array & order )
+void Group::initializationOrder( string_array & order )
 {
   for( auto & subGroupIter : this->m_subGroups )
   {
@@ -263,7 +263,7 @@ void Group::Initialize( Group * const group )
   InitializePreSubGroups( group );
 
   string_array initOrder;
-  InitializationOrder( initOrder );
+  initializationOrder( initOrder );
 
   for( auto const & groupName : initOrder )
   {
@@ -281,7 +281,7 @@ void Group::InitializePostInitialConditions( Group * const rootGroup )
   InitializePostInitialConditions_PreSubGroups( rootGroup );
 
   string_array initOrder;
-  InitializationOrder( initOrder );
+  initializationOrder( initOrder );
 
   for( auto const & groupName : initOrder )
   {

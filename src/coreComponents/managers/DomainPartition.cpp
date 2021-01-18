@@ -60,7 +60,7 @@ void DomainPartition::RegisterDataOnMeshRecursive( Group * const )
 }
 
 
-void DomainPartition::InitializationOrder( string_array & order )
+void DomainPartition::initializationOrder( string_array & order )
 {
   SortedArray< string > usedNames;
   {

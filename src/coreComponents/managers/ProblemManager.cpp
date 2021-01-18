@@ -540,7 +540,7 @@ void ProblemManager::PostProcessInput()
 }
 
 
-void ProblemManager::InitializationOrder( string_array & order )
+void ProblemManager::initializationOrder( string_array & order )
 {
   SortedArray< string > usedNames;
 

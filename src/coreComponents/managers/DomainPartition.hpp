@@ -86,7 +86,7 @@ public:
    */
   virtual void RegisterDataOnMeshRecursive( Group * const meshBodies ) override final;
 
-  void InitializationOrder( string_array & order ) override final;
+  void initializationOrder( string_array & order ) override final;
 
   /**
    * @brief Build all the sets of the DomainPartition.
