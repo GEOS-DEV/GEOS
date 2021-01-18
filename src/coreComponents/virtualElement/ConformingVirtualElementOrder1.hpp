@@ -43,16 +43,24 @@ public:
                              array1d< real64 > & threeDMonomialIntegrals );
 
 public:
-  ConformingVirtualElementOrder1() {}
-  ~ConformingVirtualElementOrder1() {}
+  ConformingVirtualElementOrder1()
+  {}
+  virtual ~ConformingVirtualElementOrder1() override
+  {}
 
   void ComputeProjectors( MeshLevel const & mesh,
                           localIndex const & regionIndex,
                           localIndex const & subRegionIndex,
                           localIndex const & cellIndex ) override;
 
-  localIndex getNumQuadraturePoints() const override { return m_numQuadraturePoints; }
-  localIndex getNumSupportPoints() const override { return m_numSupportPoints; }
+  virtual localIndex getNumQuadraturePoints() const override
+  {
+    return m_numQuadraturePoints;
+  }
+  virtual localIndex getNumSupportPoints() const override
+  {
+    return m_numSupportPoints;
+  }
 };
 }
 }

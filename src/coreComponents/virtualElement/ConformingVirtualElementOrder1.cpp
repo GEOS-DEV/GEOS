@@ -1,3 +1,20 @@
+/*
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
+ *
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All rights reserved
+ *
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
+ */
+/**
+ * @file ConformingVirtualElementOrder1.cpp
+ */
+
 #include "ConformingVirtualElementOrder1.hpp"
 
 namespace geosx
@@ -159,7 +176,7 @@ void ConformingVirtualElementOrder1::ComputeProjectors( MeshLevel const & mesh,
   real64 const monomialDerivativeInverse = cellDiameter*cellDiameter*invCellVolume;
   m_basisFunctionsIntegralMean.resize( numCellPoints );
   m_basisDerivativesIntegralMean = basisTimesNormalBoundaryInt;
-  array2d< real64 > piNablaVemDofsMinuxIdentity( numCellPoints, numCellPoints );
+  array2d< real64 > piNablaVemDofsMinusIdentity( numCellPoints, numCellPoints );
   // - compute values of scaled monomials at the vertices (used for piNablaVemDofs)
   array2d< real64 > monomialVemDofs( 3, numCellPoints );
   for( localIndex numVertex = 0; numVertex < numCellPoints; ++numVertex )
@@ -193,16 +210,16 @@ void ConformingVirtualElementOrder1::ComputeProjectors( MeshLevel const & mesh,
     // - compute VEM dofs of piNabla projection
     for( localIndex numVertex = 0; numVertex < numCellPoints; ++numVertex )
     {
-      piNablaVemDofsMinuxIdentity( numVertex, numBasisFunction ) = piNablaDofs[0] +
+      piNablaVemDofsMinusIdentity( numVertex, numBasisFunction ) = piNablaDofs[0] +
                                                                    piNablaDofs[1]*monomialVemDofs( 0, numVertex ) +
                                                                    piNablaDofs[2]*monomialVemDofs( 1, numVertex ) +
                                                                    piNablaDofs[3]*monomialVemDofs( 2, numVertex );
     }
-    piNablaVemDofsMinuxIdentity( numBasisFunction, numBasisFunction ) -= 1;
+    piNablaVemDofsMinusIdentity( numBasisFunction, numBasisFunction ) -= 1;
   }
 
   // Compute stabilization matrix.
-  // The result is piNablaVemDofsMinuxIdentity^T * piNablaVemDofsMinuxIdentity.
+  // The result is piNablaVemDofsMinusIdentity^T * piNablaVemDofsMinusIdentity.
   m_stabilizationMatrix.resize( numCellPoints, numCellPoints );
   for( localIndex i = 0; i < numCellPoints; ++i )
   {
@@ -210,7 +227,7 @@ void ConformingVirtualElementOrder1::ComputeProjectors( MeshLevel const & mesh,
     {
       real64 rowColProd = 0;
       for( localIndex k = 0; k < numCellPoints; ++k )
-        rowColProd += piNablaVemDofsMinuxIdentity( k, i )*piNablaVemDofsMinuxIdentity( k, j );
+        rowColProd += piNablaVemDofsMinusIdentity( k, i )*piNablaVemDofsMinusIdentity( k, j );
       m_stabilizationMatrix( i, j ) = cellDiameter*rowColProd;
     }
   }
