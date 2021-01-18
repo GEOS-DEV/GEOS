@@ -143,7 +143,7 @@ void Group::ProcessInputFileRecursive( xmlWrapper::xmlNode & targetNode )
     Group * newChild = createChild( childNode.name(), childName );
     if( newChild == nullptr )
     {
-      newChild = GetGroup( childName );
+      newChild = getGroup( childName );
     }
     if( newChild != nullptr )
     {
@@ -268,7 +268,7 @@ void Group::Initialize( Group * const group )
   for( auto const & groupName : initOrder )
   {
     ++indent;
-    this->GetGroup( groupName )->Initialize( group );
+    this->getGroup( groupName )->Initialize( group );
     --indent;
   }
 
@@ -285,7 +285,7 @@ void Group::InitializePostInitialConditions( Group * const rootGroup )
 
   for( auto const & groupName : initOrder )
   {
-    this->GetGroup( groupName )->InitializePostInitialConditions( rootGroup );
+    this->getGroup( groupName )->InitializePostInitialConditions( rootGroup );
   }
 
   InitializePostInitialConditions_PostSubGroups( rootGroup );
@@ -466,7 +466,7 @@ localIndex Group::Unpack( buffer_unit_type const * & buffer,
       GEOSX_UNUSED_VAR( index );
       string subGroupName;
       unpackedSize += bufferOps::Unpack( buffer, subGroupName );
-      unpackedSize += this->GetGroup( subGroupName )->Unpack( buffer, packList, recursive, on_device );
+      unpackedSize += this->getGroup( subGroupName )->Unpack( buffer, packList, recursive, on_device );
     }
   }
 

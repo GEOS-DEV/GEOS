@@ -180,7 +180,7 @@ void LagrangianContactSolver::InitializePreSubGroups( Group * const rootGroup )
 {
   SolverBase::InitializePreSubGroups( rootGroup );
 
-  DomainPartition * domain = rootGroup->GetGroup< DomainPartition >( keys::domain );
+  DomainPartition * domain = rootGroup->getGroup< DomainPartition >( keys::domain );
   ConstitutiveManager const * const cm = domain->getConstitutiveManager();
 
   ConstitutiveBase const * const contactRelation  = cm->GetConstitutiveRelation< ConstitutiveBase >( m_contactRelationName );
@@ -269,7 +269,7 @@ void LagrangianContactSolver::ImplicitStepComplete( real64 const & time_n,
 
 void LagrangianContactSolver::PostProcessInput()
 {
-  m_solidSolver = this->getParent()->GetGroup< SolidMechanicsLagrangianFEM >( m_solidSolverName );
+  m_solidSolver = this->getParent()->getGroup< SolidMechanicsLagrangianFEM >( m_solidSolverName );
   GEOSX_ERROR_IF( m_solidSolver == nullptr, this->getName() << ": invalid solid solver name: " << m_solidSolverName );
 
   SolverBase::PostProcessInput();
@@ -1443,7 +1443,7 @@ void LagrangianContactSolver::
   ElementRegionManager const & elemManager = *mesh.getElemManager();
 
   ConstitutiveManager const * const constitutiveManager = domain.getConstitutiveManager();
-  ContactRelationBase const * const contactRelation = constitutiveManager->GetGroup< ContactRelationBase const >( m_contactRelationName );
+  ContactRelationBase const * const contactRelation = constitutiveManager->getGroup< ContactRelationBase const >( m_contactRelationName );
 
   ArrayOfArraysView< localIndex const > const faceToNodeMap = faceManager.nodeList().toViewConst();
 
@@ -1696,7 +1696,7 @@ void LagrangianContactSolver::AssembleStabilization( DomainPartition const & dom
 
   // Form the SurfaceGenerator, get the fracture name and use it to retrieve the faceMap (from fracture element to face)
   SurfaceGenerator const * const
-  surfaceGenerator = this->getParent()->GetGroup< SolverBase >( "SurfaceGen" )->groupCast< SurfaceGenerator const * >();
+  surfaceGenerator = this->getParent()->getGroup< SolverBase >( "SurfaceGen" )->groupCast< SurfaceGenerator const * >();
   SurfaceElementRegion const * const fractureRegion = elemManager.GetRegion< SurfaceElementRegion >( surfaceGenerator->getFractureRegionName() );
   FaceElementSubRegion const * const fractureSubRegion = fractureRegion->GetSubRegion< FaceElementSubRegion >( "faceElementSubRegion" );
   GEOSX_ERROR_IF( !fractureSubRegion->hasWrapper( m_tractionKey ), "The fracture subregion must contain traction field." );
@@ -2164,7 +2164,7 @@ bool LagrangianContactSolver::UpdateFractureState( DomainPartition & domain ) co
   ElementRegionManager & elemManager = *mesh.getElemManager();
 
   ConstitutiveManager const & constitutiveManager = *domain.getConstitutiveManager();
-  ContactRelationBase const * const contactRelation = constitutiveManager.GetGroup< ContactRelationBase >( m_contactRelationName );
+  ContactRelationBase const * const contactRelation = constitutiveManager.getGroup< ContactRelationBase >( m_contactRelationName );
 
   bool checkActiveSet = true;
 

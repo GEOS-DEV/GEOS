@@ -324,8 +324,8 @@ void InternalMeshGenerator::GenerateMesh( DomainPartition * const domain )
   GEOSX_MARK_FUNCTION;
 
   // This cannot find groupkeys:
-  // Group * const meshBodies = domain->GetGroup(domain->groupKeys.meshBodies);
-  Group * const meshBodies = domain->GetGroup( std::string( "MeshBodies" ));
+  // Group * const meshBodies = domain->getGroup(domain->groupKeys.meshBodies);
+  Group * const meshBodies = domain->getGroup( std::string( "MeshBodies" ));
   MeshBody * const meshBody = meshBodies->registerGroup< MeshBody >( this->getName() );
   MeshLevel * const meshLevel0 = meshBody->registerGroup< MeshLevel >( std::string( "Level0" ));
 
@@ -337,7 +337,7 @@ void InternalMeshGenerator::GenerateMesh( DomainPartition * const domain )
 
   // Make sure that the node manager fields are initialized
 
-  CellBlockManager * elementManager = domain->GetGroup< CellBlockManager >( keys::cellManager );
+  CellBlockManager * elementManager = domain->getGroup< CellBlockManager >( keys::cellManager );
   Group & nodeSets = nodeManager->sets();
 
   PartitionBase & partition = domain->getReference< PartitionBase >( keys::partitionManager );
@@ -349,7 +349,7 @@ void InternalMeshGenerator::GenerateMesh( DomainPartition * const domain )
   int aa = 0;
   for( auto & cellBlockName : m_regionNames )
   {
-    CellBlock * cellBlock = elementManager->GetGroup( keys::cellBlocks )->registerGroup< CellBlock >( cellBlockName );
+    CellBlock * cellBlock = elementManager->getGroup( keys::cellBlocks )->registerGroup< CellBlock >( cellBlockName );
     string elementType = m_elementType[aa++];
     cellBlock->SetElementType( elementType );
   }

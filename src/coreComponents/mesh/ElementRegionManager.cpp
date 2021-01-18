@@ -84,7 +84,7 @@ Group * ElementRegionManager::createChild( string const & childKey, string const
   GEOSX_ERROR_IF( !(CatalogInterface::hasKeyName( childKey )),
                   "KeyName ("<<childKey<<") not found in ObjectManager::Catalog" );
   GEOSX_LOG_RANK_0( "Adding Object " << childKey<<" named "<< childName<<" from ObjectManager::Catalog." );
-  Group * const elementRegions = this->GetGroup( ElementRegionManager::groupKeyStruct::elementRegionsGroup );
+  Group * const elementRegions = this->getGroup( ElementRegionManager::groupKeyStruct::elementRegionsGroup );
   return elementRegions->registerGroup( childName,
                                         CatalogInterface::Factory( childKey, childName, elementRegions ) );
 
@@ -135,7 +135,7 @@ void ElementRegionManager::GenerateMesh( Group * const cellBlockManager )
 {
   this->forElementRegions< CellElementRegion, SurfaceElementRegion >( [&]( auto & elemRegion )
   {
-    elemRegion.GenerateMesh( cellBlockManager->GetGroup( keys::cellBlocks ) );
+    elemRegion.GenerateMesh( cellBlockManager->getGroup( keys::cellBlocks ) );
   } );
 }
 
@@ -222,7 +222,7 @@ void ElementRegionManager::GenerateWells( MeshManager * const meshManager,
     // get the global well geometry from the well generator
     string const generatorName = wellRegion.GetWellGeneratorName();
     InternalWellGenerator const * const wellGeometry =
-      meshManager->GetGroup< InternalWellGenerator >( generatorName );
+      meshManager->getGroup< InternalWellGenerator >( generatorName );
 
     GEOSX_ERROR_IF( wellGeometry == nullptr,
                     "InternalWellGenerator " << generatorName << " not found in well " << wellRegion.getName() );
@@ -238,8 +238,8 @@ void ElementRegionManager::GenerateWells( MeshManager * const meshManager,
 
     string const subRegionName = wellRegion.GetSubRegionName();
     WellElementSubRegion * const
-    subRegion = wellRegion.GetGroup( ElementRegionBase::viewKeyStruct::elementSubRegions )
-                  ->GetGroup< WellElementSubRegion >( subRegionName );
+    subRegion = wellRegion.getGroup( ElementRegionBase::viewKeyStruct::elementSubRegions )
+                  ->getGroup< WellElementSubRegion >( subRegionName );
 
     GEOSX_ERROR_IF( subRegion == nullptr,
                     "Subregion " << subRegionName << " not found in well " << wellRegion.getName() );

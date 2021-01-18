@@ -372,7 +372,7 @@ localIndex ObjectManagerBase::Unpack( buffer_unit_type const * & buffer,
     {
       string subGroupName;
       unpackedSize += bufferOps::Unpack( buffer, subGroupName );
-      unpackedSize += this->GetGroup( subGroupName )->Unpack( buffer, packList, recursive, on_device );
+      unpackedSize += this->getGroup( subGroupName )->Unpack( buffer, packList, recursive, on_device );
     }
   }
 
@@ -708,7 +708,7 @@ localIndex ObjectManagerBase::UnpackGlobalMaps( buffer_unit_type const * & buffe
       GEOSX_UNUSED_VAR( index );
       string subGroupName;
       unpackedSize += bufferOps::Unpack( buffer, subGroupName );
-      unpackedSize += this->GetGroup< ObjectManagerBase >( subGroupName )->
+      unpackedSize += this->getGroup< ObjectManagerBase >( subGroupName )->
                         UnpackGlobalMaps( buffer, packList, recursive );
     }
   }

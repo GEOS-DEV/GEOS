@@ -45,7 +45,7 @@ void setupProblemFromXML( ProblemManager * const problemManager, char const * co
 
   int mpiSize = MpiWrapper::Comm_size( MPI_COMM_GEOSX );
   dataRepository::Group * commandLine =
-    problemManager->GetGroup< dataRepository::Group >( problemManager->groupKeys.commandLine );
+    problemManager->getGroup< dataRepository::Group >( problemManager->groupKeys.commandLine );
   commandLine->registerWrapper< integer >( problemManager->viewKeys.xPartitionsOverride.Key() )->
     setApplyDefaultValue( mpiSize );
 
@@ -55,7 +55,7 @@ void setupProblemFromXML( ProblemManager * const problemManager, char const * co
 
   // Open mesh levels
   DomainPartition * domain  = problemManager->getDomainPartition();
-  MeshManager * meshManager = problemManager->GetGroup< MeshManager >( problemManager->groupKeys.meshManager );
+  MeshManager * meshManager = problemManager->getGroup< MeshManager >( problemManager->groupKeys.meshManager );
   meshManager->GenerateMeshLevels( domain );
 
   ElementRegionManager * elementManager = domain->getMeshBody( 0 )->getMeshLevel( 0 )->getElemManager();
@@ -139,7 +139,7 @@ struct forLocalObjectsImpl
                  LAMBDA lambda )
   {
     using helper = testMeshHelper< LOC >;
-    ObjectManagerBase const * const manager = mesh->GetGroup< ObjectManagerBase >( helper::managerKey );
+    ObjectManagerBase const * const manager = mesh->getGroup< ObjectManagerBase >( helper::managerKey );
 
     arrayView1d< integer const > ghostRank = manager->ghostRank();
 

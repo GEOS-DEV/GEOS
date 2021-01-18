@@ -92,7 +92,7 @@ void CompositionalMultiphaseWell::PostProcessInput()
   WellSolverBase::PostProcessInput();
   CheckModelNames( m_relPermModelNames, viewKeyStruct::relPermNamesString );
 
-  CompositionalMultiphaseFlow const * const flowSolver = getParent()->GetGroup< CompositionalMultiphaseFlow >( GetFlowSolverName() );
+  CompositionalMultiphaseFlow const * const flowSolver = getParent()->getGroup< CompositionalMultiphaseFlow >( GetFlowSolverName() );
   GEOSX_ERROR_IF( flowSolver == nullptr,
                   "Flow solver " << GetFlowSolverName() << " not found or incompatible type "
                                                            "(referenced from well solver " << getName() << ")" );
@@ -108,7 +108,7 @@ void CompositionalMultiphaseWell::RegisterDataOnMesh( Group * const meshBodies )
 {
   WellSolverBase::RegisterDataOnMesh( meshBodies );
 
-  MeshLevel & meshLevel = *meshBodies->GetGroup< MeshBody >( 0 )->getMeshLevel( 0 );
+  MeshLevel & meshLevel = *meshBodies->getGroup< MeshBody >( 0 )->getMeshLevel( 0 );
 
   // loop over the wells
   forTargetSubRegions< WellElementSubRegion >( meshLevel, [&]( localIndex const,
@@ -189,7 +189,7 @@ void CompareMulticomponentModels( MODEL1_TYPE const & lhs, MODEL2_TYPE const & r
 
 void CompositionalMultiphaseWell::ValidateConstitutiveModels( MeshLevel const & meshLevel, ConstitutiveManager const & cm ) const
 {
-  CompositionalMultiphaseFlow const & flowSolver = *getParent()->GetGroup< CompositionalMultiphaseFlow >( GetFlowSolverName() );
+  CompositionalMultiphaseFlow const & flowSolver = *getParent()->getGroup< CompositionalMultiphaseFlow >( GetFlowSolverName() );
   arrayView1d< string const > const & flowTargetRegionNames = flowSolver.targetRegionNames();
   arrayView1d< string const > const & flowFluidModels = flowSolver.fluidModelNames();
   arrayView1d< string const > const & flowRelPermModels = flowSolver.relPermModelNames();
@@ -254,7 +254,7 @@ void CompositionalMultiphaseWell::InitializePreSubGroups( Group * const rootGrou
 {
   WellSolverBase::InitializePreSubGroups( rootGroup );
 
-  DomainPartition * const domain = rootGroup->GetGroup< DomainPartition >( keys::domain );
+  DomainPartition * const domain = rootGroup->getGroup< DomainPartition >( keys::domain );
   MeshLevel & meshLevel = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
   ConstitutiveManager const & cm = *domain->getConstitutiveManager();
 
@@ -306,7 +306,7 @@ void CompositionalMultiphaseWell::InitializePostInitialConditions_PreSubGroups( 
 {
   WellSolverBase::InitializePostInitialConditions_PreSubGroups( rootGroup );
 
-  DomainPartition * const domain = rootGroup->GetGroup< DomainPartition >( keys::domain );
+  DomainPartition * const domain = rootGroup->getGroup< DomainPartition >( keys::domain );
   MeshLevel & meshLevel = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
 
   // loop over the wells
@@ -1038,7 +1038,7 @@ void CompositionalMultiphaseWell::ResetViews( DomainPartition & domain )
   MeshLevel & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
   ElementRegionManager & elemManager = *mesh.getElemManager();
 
-  CompositionalMultiphaseFlow & flowSolver = *getParent()->GetGroup< CompositionalMultiphaseFlow >( GetFlowSolverName() );
+  CompositionalMultiphaseFlow & flowSolver = *getParent()->getGroup< CompositionalMultiphaseFlow >( GetFlowSolverName() );
 
   {
     using keys = CompositionalMultiphaseFlow::viewKeyStruct;

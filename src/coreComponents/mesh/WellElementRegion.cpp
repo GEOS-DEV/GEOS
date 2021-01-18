@@ -34,7 +34,7 @@ WellElementRegion::WellElementRegion( string const & name, Group * const parent 
   registerWrapper( viewKeyStruct::wellControlsString, &m_wellControlsName );
   registerWrapper( viewKeyStruct::wellGeneratorString, &m_wellGeneratorName );
 
-  this->GetGroup( viewKeyStruct::elementSubRegions )
+  this->getGroup( viewKeyStruct::elementSubRegions )
     ->registerGroup< WellElementSubRegion >( m_subRegionName );
 
 }
@@ -50,8 +50,8 @@ void WellElementRegion::GenerateWell( MeshLevel & mesh,
 {
   // get the (unique) subregion
   WellElementSubRegion * const
-  subRegion = this->GetGroup( ElementRegionBase::viewKeyStruct::elementSubRegions )
-                ->GetGroup< WellElementSubRegion >( m_subRegionName );
+  subRegion = this->getGroup( ElementRegionBase::viewKeyStruct::elementSubRegions )
+                ->getGroup< WellElementSubRegion >( m_subRegionName );
 
   GEOSX_ERROR_IF( subRegion == nullptr,
                   "Well subRegion " << this->m_subRegionName << " not found in well region " << getName() );

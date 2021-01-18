@@ -105,7 +105,7 @@ void SolidMechanicsEmbeddedFractures::ImplicitStepSetup( real64 const & time_n,
                                                          real64 const & dt,
                                                          DomainPartition & domain )
 {
-  m_solidSolver = this->getParent()->GetGroup< SolidMechanicsLagrangianFEM >( m_solidSolverName );
+  m_solidSolver = this->getParent()->getGroup< SolidMechanicsLagrangianFEM >( m_solidSolverName );
 
   m_solidSolver->ImplicitStepSetup( time_n, dt, domain );
 }
@@ -243,7 +243,7 @@ void SolidMechanicsEmbeddedFractures::AssembleSystem( real64 const time,
                                  localMatrix,
                                  localRhs );
 
-  MeshLevel & mesh = *(domain.getMeshBodies()->GetGroup< MeshBody >( 0 )->getMeshLevel( 0 ));
+  MeshLevel & mesh = *(domain.getMeshBodies()->getGroup< MeshBody >( 0 )->getMeshLevel( 0 ));
 
   NodeManager const & nodeManager = *(mesh.getNodeManager());
   ElementRegionManager const & elemManager = *(mesh.getElemManager());

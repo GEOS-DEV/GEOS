@@ -53,11 +53,11 @@ void SinglePhaseFVM< BASE >::InitializePreSubGroups( Group * const rootGroup )
 {
   BASE::InitializePreSubGroups( rootGroup );
 
-  DomainPartition & domain = *rootGroup->GetGroup< DomainPartition >( keys::domain );
+  DomainPartition & domain = *rootGroup->getGroup< DomainPartition >( keys::domain );
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
 
-  if( fvManager.GetGroup< FluxApproximationBase >( m_discretizationName ) == nullptr )
+  if( fvManager.getGroup< FluxApproximationBase >( m_discretizationName ) == nullptr )
   {
     GEOSX_ERROR( "A discretization deriving from FluxApproximationBase must be selected with SinglePhaseFVM" );
   }

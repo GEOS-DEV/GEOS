@@ -635,7 +635,7 @@ void FieldSpecificationBase::ApplyFieldValueKernel( ArrayView< T, N, USD > const
   }
   else
   {
-    FunctionBase const * const function  = functionManager.GetGroup< FunctionBase >( m_functionName );
+    FunctionBase const * const function  = functionManager.getGroup< FunctionBase >( m_functionName );
 
     GEOSX_ERROR_IF( function == nullptr, "Function '" << m_functionName << "' not found" );
 
@@ -774,7 +774,7 @@ FieldSpecificationBase::
   }
   else
   {
-    FunctionBase const * const function  = functionManager.GetGroup< FunctionBase >( m_functionName );
+    FunctionBase const * const function  = functionManager.getGroup< FunctionBase >( m_functionName );
 
     GEOSX_ERROR_IF( function == nullptr, "Function '" << m_functionName << "' not found" );
 
@@ -875,7 +875,7 @@ FieldSpecificationBase::
   }
   else
   {
-    FunctionBase const * const function  = functionManager.GetGroup< FunctionBase >( m_functionName );
+    FunctionBase const * const function  = functionManager.getGroup< FunctionBase >( m_functionName );
 
     GEOSX_ERROR_IF( function == nullptr, "Function '" << m_functionName << "' not found" );
 

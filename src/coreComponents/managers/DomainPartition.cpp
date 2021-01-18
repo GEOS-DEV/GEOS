@@ -231,8 +231,8 @@ void DomainPartition::SetupCommunications( bool use_nonblocking )
 #endif
 
   Group * const meshBodies = getMeshBodies();
-  MeshBody * const meshBody = meshBodies->GetGroup< MeshBody >( 0 );
-  MeshLevel & meshLevel = *meshBody->GetGroup< MeshLevel >( 0 );
+  MeshBody * const meshBody = meshBodies->getGroup< MeshBody >( 0 );
+  MeshLevel & meshLevel = *meshBody->getGroup< MeshLevel >( 0 );
 
   for( NeighborCommunicator const & neighbor : m_neighbors )
   {

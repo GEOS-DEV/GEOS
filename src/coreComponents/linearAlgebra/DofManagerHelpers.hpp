@@ -401,7 +401,7 @@ typename MeshHelper< LOC >::ManagerType const & getObjectManager( MeshLevel cons
 {
   using ObjectManager = typename MeshHelper< LOC >::ManagerType;
   GEOSX_ASSERT( mesh != nullptr );
-  ObjectManager const * manager = mesh->GetGroup< ObjectManager >( MeshHelper< LOC >::managerGroupName );
+  ObjectManager const * manager = mesh->getGroup< ObjectManager >( MeshHelper< LOC >::managerGroupName );
   GEOSX_ASSERT( manager != nullptr );
   return *manager;
 }

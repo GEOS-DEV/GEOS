@@ -168,7 +168,7 @@ void SchemaConstruction( Group * const group,
         // Add children of the group
         for( string subName : subGroupNames )
         {
-          Group * const subGroup = group->GetGroup( subName );
+          Group * const subGroup = group->getGroup( subName );
           SchemaConstruction( subGroup, schemaRoot, targetChoiceNode, documentationType );
         }
       }

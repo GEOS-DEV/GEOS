@@ -50,7 +50,7 @@ void MeshUtilities::GenerateNodesets( dataRepository::Group const * geometries,
 
   for( int i = 0; i < geometries->GetSubGroups().size(); ++i )
   {
-    SimpleGeometricObjectBase const * const object = geometries->GetGroup< SimpleGeometricObjectBase >( i );
+    SimpleGeometricObjectBase const * const object = geometries->getGroup< SimpleGeometricObjectBase >( i );
     if( object!=nullptr )
     {
       string name = object->getName();

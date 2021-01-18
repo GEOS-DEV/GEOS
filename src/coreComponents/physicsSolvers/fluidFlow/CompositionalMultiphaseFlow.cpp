@@ -231,7 +231,7 @@ void CompositionalMultiphaseFlow::InitializePreSubGroups( Group * const rootGrou
 {
   FlowSolverBase::InitializePreSubGroups( rootGroup );
 
-  DomainPartition * const domain = rootGroup->GetGroup< DomainPartition >( keys::domain );
+  DomainPartition * const domain = rootGroup->getGroup< DomainPartition >( keys::domain );
   ConstitutiveManager const & cm = *domain->getConstitutiveManager();
 
   // 1. Set key dimensions of the problem
@@ -246,7 +246,7 @@ void CompositionalMultiphaseFlow::InitializePreSubGroups( Group * const rootGrou
   // 3. Check that the discretization is valid for this solver
   NumericalMethodsManager const & numericalMethodManager = domain->getNumericalMethodManager();
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
-  if( fvManager.GetGroup< FluxApproximationBase >( m_discretizationName ) == nullptr )
+  if( fvManager.getGroup< FluxApproximationBase >( m_discretizationName ) == nullptr )
   {
     GEOSX_ERROR( "A discretization deriving from FluxApproximationBase must be selected with CompositionalMultiphaseFlow" );
   }
@@ -568,7 +568,7 @@ void CompositionalMultiphaseFlow::InitializePostInitialConditions_PreSubGroups( 
 
   FlowSolverBase::InitializePostInitialConditions_PreSubGroups( rootGroup );
 
-  DomainPartition & domain = *rootGroup->GetGroup< DomainPartition >( keys::domain );
+  DomainPartition & domain = *rootGroup->getGroup< DomainPartition >( keys::domain );
 
   MeshLevel & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
 

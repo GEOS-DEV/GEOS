@@ -73,14 +73,14 @@ void EmbeddedSurfaceGenerator::InitializePostSubGroups( Group * const problemMan
    */
 
   // Get domain
-  DomainPartition * domain = problemManager->GetGroup< DomainPartition >( dataRepository::keys::domain );
+  DomainPartition * domain = problemManager->getGroup< DomainPartition >( dataRepository::keys::domain );
   // Get geometric object manager
-  GeometricObjectManager * geometricObjManager = problemManager->GetGroup< GeometricObjectManager >( "Geometry" );
+  GeometricObjectManager * geometricObjManager = problemManager->getGroup< GeometricObjectManager >( "Geometry" );
 
   // Get meshLevel
   Group * const meshBodies = domain->getMeshBodies();
-  MeshBody * const meshBody   = meshBodies->GetGroup< MeshBody >( 0 );
-  MeshLevel * const meshLevel  = meshBody->GetGroup< MeshLevel >( 0 );
+  MeshBody * const meshBody   = meshBodies->getGroup< MeshBody >( 0 );
+  MeshLevel * const meshLevel  = meshBody->getGroup< MeshLevel >( 0 );
 
   // Get managers
   ElementRegionManager * const elemManager = meshLevel->getElemManager();
@@ -224,7 +224,7 @@ void EmbeddedSurfaceGenerator::addToFractureStencil( DomainPartition & domain )
 
     for( localIndex a=0; a<fvManager.numSubGroups(); ++a )
     {
-      FluxApproximationBase * const fluxApprox = fvManager.GetGroup< FluxApproximationBase >( a );
+      FluxApproximationBase * const fluxApprox = fvManager.getGroup< FluxApproximationBase >( a );
       if( fluxApprox!=nullptr )
       {
         fluxApprox->addEDFracToFractureStencil( *meshLevel,

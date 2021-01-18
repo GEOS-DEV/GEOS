@@ -69,7 +69,7 @@ ConstitutiveManager::HangConstitutiveRelation( string const & constitutiveRelati
   material->allocateConstitutiveData( parent,
                                       numConstitutivePointsPerParentIndex );
 
-  dataRepository::Group * constitutiveGroup = parent->GetGroup( groupKeyStruct::constitutiveModelsString );
+  dataRepository::Group * constitutiveGroup = parent->getGroup( groupKeyStruct::constitutiveModelsString );
   if( constitutiveGroup == nullptr )
   {
     constitutiveGroup = parent->registerGroup( groupKeyStruct::constitutiveModelsString )->

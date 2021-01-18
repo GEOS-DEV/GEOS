@@ -87,7 +87,7 @@ void TimeHistoryOutput::InitializePostSubGroups( Group * const group )
   ProblemManager & pm = dynamicCast< ProblemManager & >( *group );
   for( auto collector_path : m_collectorPaths )
   {
-    Group * tmp = this->GetGroupByPath( collector_path );
+    Group * tmp = this->getGroupByPath( collector_path );
     HistoryCollection * collector = Group::groupCast< HistoryCollection * >( tmp );
     GEOSX_ERROR_IF( collector == nullptr, "The target of a time history output event must be a collector! " << collector_path );
     collector->InitializePostSubGroups( group );

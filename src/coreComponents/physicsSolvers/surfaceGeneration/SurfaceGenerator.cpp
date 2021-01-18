@@ -294,7 +294,7 @@ void SurfaceGenerator::RegisterDataOnMesh( Group * const MeshBodies )
 
 void SurfaceGenerator::InitializePostInitialConditions_PreSubGroups( Group * const problemManager )
 {
-  DomainPartition * domain = problemManager->GetGroup< DomainPartition >( dataRepository::keys::domain );
+  DomainPartition * domain = problemManager->getGroup< DomainPartition >( dataRepository::keys::domain );
   for( auto & mesh : domain->groupCast< DomainPartition * >()->getMeshBodies()->GetSubGroups() )
   {
     MeshLevel * meshLevel = Group::groupCast< MeshBody * >( mesh.second )->getMeshLevel( 0 );
@@ -431,7 +431,7 @@ void SurfaceGenerator::postRestartInitialization( Group * const domain0 )
 
     for( localIndex a=0; a<fvManager.numSubGroups(); ++a )
     {
-      FluxApproximationBase * const fluxApprox = fvManager.GetGroup< FluxApproximationBase >( a );
+      FluxApproximationBase * const fluxApprox = fvManager.getGroup< FluxApproximationBase >( a );
       if( fluxApprox!=nullptr )
       {
         fluxApprox->addToFractureStencil( *meshLevel,
@@ -484,7 +484,7 @@ real64 SurfaceGenerator::SolverStep( real64 const & time_n,
 
       for( localIndex a=0; a<fvManager.numSubGroups(); ++a )
       {
-        FluxApproximationBase * const fluxApprox = fvManager.GetGroup< FluxApproximationBase >( a );
+        FluxApproximationBase * const fluxApprox = fvManager.getGroup< FluxApproximationBase >( a );
         if( fluxApprox!=nullptr )
         {
           fluxApprox->addToFractureStencil( *meshLevel,
@@ -2835,7 +2835,7 @@ void SurfaceGenerator::CalculateNodeAndFaceSIF( DomainPartition & domain,
   m_solidMaterialFullIndex = solid->getIndexInParent();
 
   ConstitutiveManager * const constitutiveManager =
-    domain.GetGroup< ConstitutiveManager >( keys::ConstitutiveManager );
+    domain.getGroup< ConstitutiveManager >( keys::ConstitutiveManager );
 
   ElementRegionManager::MaterialViewAccessor< arrayView1d< real64 const > > const shearModulus =
     elementManager.ConstructFullMaterialViewAccessor< array1d< real64 >, arrayView1d< real64 const > >( "ShearModulus", constitutiveManager );
@@ -3677,7 +3677,7 @@ int SurfaceGenerator::CalculateElementForcesOnEdge( DomainPartition & domain,
   m_solidMaterialFullIndex = solid->getIndexInParent();
 
   ConstitutiveManager * const constitutiveManager =
-    domain.GetGroup< ConstitutiveManager >( keys::ConstitutiveManager );
+    domain.getGroup< ConstitutiveManager >( keys::ConstitutiveManager );
 
   ElementRegionManager::MaterialViewAccessor< arrayView1d< real64 const > > const shearModulus =
     elementManager.ConstructFullMaterialViewAccessor< array1d< real64 >, arrayView1d< real64 const > >( "ShearModulus", constitutiveManager );

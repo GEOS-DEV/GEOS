@@ -188,7 +188,7 @@ void testCompositionNumericalDerivatives( CompositionalMultiphaseFlow & solver,
 
     string const & fluidName = solver.fluidModelNames()[targetIndex];
     Group const * const constitutiveGroup = subRegion.GetConstitutiveModels();
-    MultiFluidBase const & fluid = *constitutiveGroup->GetGroup< MultiFluidBase >( fluidName );
+    MultiFluidBase const & fluid = *constitutiveGroup->getGroup< MultiFluidBase >( fluidName );
     arrayView1d< string const > const & components = fluid.componentNames();
 
     arrayView2d< real64 > & compDens =
@@ -271,7 +271,7 @@ void testPhaseVolumeFractionNumericalDerivatives( CompositionalMultiphaseFlow & 
 
     string const & fluidName = solver.fluidModelNames()[targetIndex];
     Group const * const constitutiveGroup = subRegion.GetConstitutiveModels();
-    MultiFluidBase const & fluid = *constitutiveGroup->GetGroup< MultiFluidBase >( fluidName );
+    MultiFluidBase const & fluid = *constitutiveGroup->getGroup< MultiFluidBase >( fluidName );
     arrayView1d< string const > const & components = fluid.componentNames();
     arrayView1d< string const > const & phases = fluid.phaseNames();
 
@@ -391,7 +391,7 @@ void testPhaseMobilityNumericalDerivatives( CompositionalMultiphaseFlow & solver
 
     string const & fluidName = solver.fluidModelNames()[targetIndex];
     Group const * const constitutiveGroup = subRegion.GetConstitutiveModels();
-    MultiFluidBase const & fluid = *constitutiveGroup->GetGroup< MultiFluidBase >( fluidName );
+    MultiFluidBase const & fluid = *constitutiveGroup->getGroup< MultiFluidBase >( fluidName );
     arrayView1d< string const > const & components = fluid.componentNames();
     arrayView1d< string const > const & phases = fluid.phaseNames();
 
@@ -636,7 +636,7 @@ protected:
   void SetUp() override
   {
     setupProblemFromXML( *problemManager, xmlInput );
-    solver = problemManager->GetPhysicsSolverManager().GetGroup< CompositionalMultiphaseFlow >( "compflow" );
+    solver = problemManager->GetPhysicsSolverManager().getGroup< CompositionalMultiphaseFlow >( "compflow" );
 
     DomainPartition & domain = *problemManager->getDomainPartition();
 

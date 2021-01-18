@@ -149,10 +149,10 @@ void HydrofractureSolver::ImplicitStepComplete( real64 const & time_n,
 
 void HydrofractureSolver::PostProcessInput()
 {
-  m_solidSolver = this->getParent()->GetGroup< SolidMechanicsLagrangianFEM >( m_solidSolverName );
+  m_solidSolver = this->getParent()->getGroup< SolidMechanicsLagrangianFEM >( m_solidSolverName );
   GEOSX_ERROR_IF( m_solidSolver == nullptr, this->getName() << ": invalid solid solver name: " << m_solidSolverName );
 
-  m_flowSolver = this->getParent()->GetGroup< FlowSolverBase >( m_flowSolverName );
+  m_flowSolver = this->getParent()->getGroup< FlowSolverBase >( m_flowSolverName );
   GEOSX_ERROR_IF( m_flowSolver == nullptr, this->getName() << ": invalid flow solver name: " << m_flowSolverName );
 }
 
@@ -177,7 +177,7 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
 {
   real64 dtReturn = dt;
 
-  SolverBase * const surfaceGenerator = this->getParent()->GetGroup< SolverBase >( "SurfaceGen" );
+  SolverBase * const surfaceGenerator = this->getParent()->getGroup< SolverBase >( "SurfaceGen" );
 
   if( m_couplingTypeOption == CouplingTypeOption::SIM_FixedStress )
   {
@@ -274,7 +274,7 @@ void HydrofractureSolver::UpdateDeformationForCoupling( DomainPartition & domain
   ConstitutiveManager const * const constitutiveManager = domain.getConstitutiveManager();
 
   ContactRelationBase const * const
-  contactRelation = constitutiveManager->GetGroup< ContactRelationBase >( m_contactRelationName );
+  contactRelation = constitutiveManager->getGroup< ContactRelationBase >( m_contactRelationName );
 
   elemManager->forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
   {
@@ -893,7 +893,7 @@ HydrofractureSolver::
   dFluxResidual_dAperture = m_flowSolver->getDerivativeFluxResidual_dAperture().toViewConst();
 
   ContactRelationBase const * const
-  contactRelation = constitutiveManager.GetGroup< ContactRelationBase >( m_contactRelationName );
+  contactRelation = constitutiveManager.getGroup< ContactRelationBase >( m_contactRelationName );
 
   forTargetSubRegionsComplete< FaceElementSubRegion >( mesh,
                                                        [&]( localIndex const,
@@ -1038,7 +1038,7 @@ void HydrofractureSolver::SetNextDt( real64 const & currentDt,
   }
   else
   {
-    SolverBase * const surfaceGenerator =  this->getParent()->GetGroup< SolverBase >( "SurfaceGen" );
+    SolverBase * const surfaceGenerator =  this->getParent()->getGroup< SolverBase >( "SurfaceGen" );
     nextDt = surfaceGenerator->GetTimestepRequest() < 1e99 ? surfaceGenerator->GetTimestepRequest() : currentDt;
   }
   GEOSX_LOG_LEVEL_RANK_0( 3, this->getName() << ": nextDt request is "  << nextDt );

@@ -106,7 +106,7 @@ void FluxApproximationBase::InitializePostInitialConditions_PreSubGroups( Group 
 {
   GEOSX_MARK_FUNCTION;
 
-  DomainPartition & domain = *rootGroup->GetGroup< DomainPartition >( keys::domain );
+  DomainPartition & domain = *rootGroup->getGroup< DomainPartition >( keys::domain );
   FieldSpecificationManager & fsManager = FieldSpecificationManager::get();
 
   domain.getMeshBodies()->forSubGroups< MeshBody >( [&]( MeshBody & meshBody )

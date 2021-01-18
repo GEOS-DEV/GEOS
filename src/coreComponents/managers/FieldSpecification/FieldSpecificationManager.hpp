@@ -247,13 +247,13 @@ public:
           string processedPath;
           for( localIndex pathLevel=0; pathLevel<targetPathLength; ++pathLevel )
           {
-            dataRepository::Group * const elemRegionSubGroup = targetGroup->GetGroup( ElementRegionManager::groupKeyStruct::elementRegionsGroup );
+            dataRepository::Group * const elemRegionSubGroup = targetGroup->getGroup( ElementRegionManager::groupKeyStruct::elementRegionsGroup );
             if( elemRegionSubGroup!=nullptr )
             {
               targetGroup = elemRegionSubGroup;
             }
 
-            dataRepository::Group * const elemSubRegionSubGroup = targetGroup->GetGroup( ElementRegionBase::viewKeyStruct::elementSubRegions );
+            dataRepository::Group * const elemSubRegionSubGroup = targetGroup->getGroup( ElementRegionBase::viewKeyStruct::elementSubRegions );
             if( elemSubRegionSubGroup!=nullptr )
             {
               targetGroup = elemSubRegionSubGroup;
@@ -265,7 +265,7 @@ public:
               continue;
             }
 
-            targetGroup = targetGroup->GetGroup( targetPath[pathLevel] );
+            targetGroup = targetGroup->getGroup( targetPath[pathLevel] );
             processedPath += "/" + targetPath[pathLevel];
 
             GEOSX_ERROR_IF( targetGroup == nullptr,
@@ -301,7 +301,7 @@ private:
         && target->getName() != ObjectManagerBase::groupKeyStruct::setsString
         && target->getName() != ObjectManagerBase::groupKeyStruct::neighborDataString )
     {
-      dataRepository::Group const * setGroup = target->GetGroup( ObjectManagerBase::groupKeyStruct::setsString );
+      dataRepository::Group const * setGroup = target->getGroup( ObjectManagerBase::groupKeyStruct::setsString );
       string_array setNames = fs->GetSetNames();
       for( auto & setName : setNames )
       {

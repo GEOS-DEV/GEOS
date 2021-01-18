@@ -181,28 +181,28 @@ public:
    * @return The problem name
    */
   const string & getProblemName() const
-  { return GetGroup< Group >( groupKeys.commandLine )->getReference< string >( viewKeys.problemName ); }
+  { return getGroup< Group >( groupKeys.commandLine )->getReference< string >( viewKeys.problemName ); }
 
   /**
    * @brief Returns the input file name
    * @return The input file name
    */
   const string & getInputFileName() const
-  { return GetGroup< Group >( groupKeys.commandLine )->getReference< string >( viewKeys.inputFileName ); }
+  { return getGroup< Group >( groupKeys.commandLine )->getReference< string >( viewKeys.inputFileName ); }
 
   /**
    * @brief Returns the restart file name
    * @return The restart file name
    */
   const string & getRestartFileName() const
-  { return GetGroup< Group >( groupKeys.commandLine )->getReference< string >( viewKeys.restartFileName ); }
+  { return getGroup< Group >( groupKeys.commandLine )->getReference< string >( viewKeys.restartFileName ); }
 
   /**
    * @brief Returns the schema file name
    * @return The schema file name
    */
   const string & getSchemaFileName() const
-  { return GetGroup< Group >( groupKeys.commandLine )->getReference< string >( viewKeys.schemaFileName ); }
+  { return getGroup< Group >( groupKeys.commandLine )->getReference< string >( viewKeys.schemaFileName ); }
 
   /// Input file xml document handle
   xmlWrapper::xmlDocument xmlDocument;

@@ -209,7 +209,7 @@ public:
    */
   subGroupMap const & GetRegions() const
   {
-    return this->GetGroup( groupKeyStruct::elementRegionsGroup )->GetSubGroups();
+    return this->getGroup( groupKeyStruct::elementRegionsGroup )->GetSubGroups();
   }
 
   /**
@@ -218,7 +218,7 @@ public:
    */
   subGroupMap & GetRegions()
   {
-    return this->GetGroup( groupKeyStruct::elementRegionsGroup )->GetSubGroups();
+    return this->getGroup( groupKeyStruct::elementRegionsGroup )->GetSubGroups();
   }
 
   /**
@@ -229,7 +229,7 @@ public:
   template< typename T=ElementRegionBase >
   T const * GetRegion( string const & regionName ) const
   {
-    return this->GetGroup( groupKeyStruct::elementRegionsGroup )->GetGroup< T >( regionName );
+    return this->getGroup( groupKeyStruct::elementRegionsGroup )->getGroup< T >( regionName );
   }
 
   /**
@@ -240,7 +240,7 @@ public:
   template< typename T=ElementRegionBase >
   T * GetRegion( string const & regionName )
   {
-    return this->GetGroup( groupKeyStruct::elementRegionsGroup )->GetGroup< T >( regionName );
+    return this->getGroup( groupKeyStruct::elementRegionsGroup )->getGroup< T >( regionName );
   }
 
   /**
@@ -251,7 +251,7 @@ public:
   template< typename T=ElementRegionBase >
   T const * GetRegion( localIndex const index ) const
   {
-    return this->GetGroup( groupKeyStruct::elementRegionsGroup )->GetGroup< T >( index );
+    return this->getGroup( groupKeyStruct::elementRegionsGroup )->getGroup< T >( index );
   }
 
   /**
@@ -262,7 +262,7 @@ public:
   template< typename T=ElementRegionBase >
   T * GetRegion( localIndex const index )
   {
-    return this->GetGroup( groupKeyStruct::elementRegionsGroup )->GetGroup< T >( index );
+    return this->getGroup( groupKeyStruct::elementRegionsGroup )->getGroup< T >( index );
   }
 
   /**
@@ -271,7 +271,7 @@ public:
    */
   localIndex numRegions() const
   {
-    return this->GetGroup( groupKeyStruct::elementRegionsGroup )->GetSubGroups().size();
+    return this->getGroup( groupKeyStruct::elementRegionsGroup )->GetSubGroups().size();
   }
 
   /**
@@ -289,7 +289,7 @@ public:
   template< typename REGIONTYPE = ElementRegionBase, typename ... REGIONTYPES, typename LAMBDA >
   void forElementRegions( LAMBDA && lambda )
   {
-    Group * const elementRegions = this->GetGroup( groupKeyStruct::elementRegionsGroup );
+    Group * const elementRegions = this->getGroup( groupKeyStruct::elementRegionsGroup );
     elementRegions->forSubGroups< REGIONTYPE, REGIONTYPES... >( std::forward< LAMBDA >( lambda ) );
   }
 
@@ -302,7 +302,7 @@ public:
   template< typename REGIONTYPE = ElementRegionBase, typename ... REGIONTYPES, typename LAMBDA >
   void forElementRegions( LAMBDA && lambda ) const
   {
-    Group const * const elementRegions = this->GetGroup( groupKeyStruct::elementRegionsGroup );
+    Group const * const elementRegions = this->getGroup( groupKeyStruct::elementRegionsGroup );
     elementRegions->forSubGroups< REGIONTYPE, REGIONTYPES... >( std::forward< LAMBDA >( lambda ) );
   }
 
@@ -317,7 +317,7 @@ public:
   template< typename REGIONTYPE = ElementRegionBase, typename ... REGIONTYPES, typename LOOKUP_CONTAINER, typename LAMBDA >
   void forElementRegions( LOOKUP_CONTAINER const & targetRegions, LAMBDA && lambda )
   {
-    Group * const elementRegions = this->GetGroup( groupKeyStruct::elementRegionsGroup );
+    Group * const elementRegions = this->getGroup( groupKeyStruct::elementRegionsGroup );
     elementRegions->forSubGroups< REGIONTYPE, REGIONTYPES... >( targetRegions, std::forward< LAMBDA >( lambda ) );
   }
 
@@ -332,7 +332,7 @@ public:
   template< typename REGIONTYPE = ElementRegionBase, typename ... REGIONTYPES, typename LOOKUP_CONTAINER, typename LAMBDA >
   void forElementRegions( LOOKUP_CONTAINER const & targetRegions, LAMBDA && lambda ) const
   {
-    Group const * const elementRegions = this->GetGroup( groupKeyStruct::elementRegionsGroup );
+    Group const * const elementRegions = this->getGroup( groupKeyStruct::elementRegionsGroup );
     elementRegions->forSubGroups< REGIONTYPE, REGIONTYPES... >( targetRegions, std::forward< LAMBDA >( lambda ) );
   }
 
@@ -1113,7 +1113,7 @@ ElementRegionManager::ConstructViewAccessor( string const & viewName, string con
 
       if( !neighborName.empty() )
       {
-        group = group->GetGroup( ObjectManagerBase::groupKeyStruct::neighborDataString )->GetGroup( neighborName );
+        group = group->getGroup( ObjectManagerBase::groupKeyStruct::neighborDataString )->getGroup( neighborName );
       }
 
       if( group->hasWrapper( viewName ) && group->getWrapperBase( viewName )->getTypeID() == typeid( VIEWTYPE ) )
@@ -1144,7 +1144,7 @@ ElementRegionManager::
 
       if( !neighborName.empty() )
       {
-        group = group->GetGroup( ObjectManagerBase::groupKeyStruct::neighborDataString )->GetGroup( neighborName );
+        group = group->getGroup( ObjectManagerBase::groupKeyStruct::neighborDataString )->getGroup( neighborName );
       }
 
       if( group->hasWrapper( viewName ) && group->getWrapperBase( viewName )->getTypeID() == typeid( VIEWTYPE ) )
@@ -1182,7 +1182,7 @@ ElementRegionManager::
 
       if( !neighborName.empty() )
       {
-        group = group->GetGroup( ObjectManagerBase::groupKeyStruct::neighborDataString )->GetGroup( neighborName );
+        group = group->getGroup( ObjectManagerBase::groupKeyStruct::neighborDataString )->getGroup( neighborName );
       }
 
       if( group->hasWrapper( viewName ) )
@@ -1212,7 +1212,7 @@ ElementRegionManager::
 
       if( !neighborName.empty() )
       {
-        group = group->GetGroup( ObjectManagerBase::groupKeyStruct::neighborDataString )->GetGroup( neighborName );
+        group = group->getGroup( ObjectManagerBase::groupKeyStruct::neighborDataString )->getGroup( neighborName );
       }
 
       if( group->hasWrapper( viewName ) )
@@ -1246,8 +1246,8 @@ ElementRegionManager::
 
       for( localIndex matIndex=0; matIndex<cm->numSubGroups(); ++matIndex )
       {
-        string constitutiveName = cm->GetGroup( matIndex )->getName();
-        dataRepository::Group const * const constitutiveRelation = constitutiveGroup->GetGroup( constitutiveName );
+        string constitutiveName = cm->getGroup( matIndex )->getName();
+        dataRepository::Group const * const constitutiveRelation = constitutiveGroup->getGroup( constitutiveName );
         if( constitutiveRelation != nullptr )
         {
           dataRepository::Wrapper< VIEWTYPE > const * const
@@ -1286,8 +1286,8 @@ ElementRegionManager::
 
       for( localIndex matIndex=0; matIndex<cm->numSubGroups(); ++matIndex )
       {
-        string constitutiveName = cm->GetGroup( matIndex )->getName();
-        dataRepository::Group * const constitutiveRelation = constitutiveGroup->GetGroup( constitutiveName );
+        string constitutiveName = cm->getGroup( matIndex )->getName();
+        dataRepository::Group * const constitutiveRelation = constitutiveGroup->getGroup( constitutiveName );
         if( constitutiveRelation != nullptr )
         {
           dataRepository::Wrapper< VIEWTYPE > * const
@@ -1334,7 +1334,7 @@ ElementRegionManager::ConstructMaterialViewAccessor( string const & viewName,
                                            ElementSubRegionBase const & subRegion )
     {
       dataRepository::Group const & constitutiveGroup = *subRegion.GetConstitutiveModels();
-      dataRepository::Group const * const constitutiveRelation = constitutiveGroup.GetGroup( materialNames[k] );
+      dataRepository::Group const * const constitutiveRelation = constitutiveGroup.getGroup( materialNames[k] );
       GEOSX_ERROR_IF( constitutiveRelation == nullptr,
                       "Material " << materialNames[k] << " not found in " << regionNames[k] << '/' << subRegion.getName() );
       dataRepository::Wrapper< VIEWTYPE > const * const wrapper = constitutiveRelation->getWrapper< VIEWTYPE >( viewName );
@@ -1377,7 +1377,7 @@ ElementRegionManager::ConstructMaterialViewAccessor( string const & viewName,
     region.forElementSubRegionsIndex( [&]( localIndex const esr, ElementSubRegionBase & subRegion )
     {
       dataRepository::Group & constitutiveGroup = *subRegion.GetConstitutiveModels();
-      dataRepository::Group * const constitutiveRelation = constitutiveGroup.GetGroup( materialNames[k] );
+      dataRepository::Group * const constitutiveRelation = constitutiveGroup.getGroup( materialNames[k] );
       GEOSX_ERROR_IF( constitutiveRelation == nullptr,
                       "Material " << materialNames[k] << " not found in " << regionNames[k] << '/' << subRegion.getName() );
       dataRepository::Wrapper< VIEWTYPE > * const wrapper = constitutiveRelation->getWrapper< VIEWTYPE >( viewName );
@@ -1425,10 +1425,10 @@ ElementRegionManager::ConstructFullConstitutiveAccessor( constitutive::Constitut
 
       for( localIndex matIndex=0; matIndex<cm->numSubGroups(); ++matIndex )
       {
-        string const constitutiveName = cm->GetGroup( matIndex )->getName();
+        string const constitutiveName = cm->getGroup( matIndex )->getName();
 
         CONSTITUTIVE_TYPE * const
-        constitutiveRelation = constitutiveGroup->GetGroup< CONSTITUTIVE_TYPE >( constitutiveName );
+        constitutiveRelation = constitutiveGroup->getGroup< CONSTITUTIVE_TYPE >( constitutiveName );
         if( constitutiveRelation != nullptr )
         {
           accessor[kReg][kSubReg][matIndex] = constitutiveRelation;
@@ -1459,10 +1459,10 @@ ElementRegionManager::ConstructFullConstitutiveAccessor( constitutive::Constitut
 
       for( localIndex matIndex=0; matIndex<cm->numSubGroups(); ++matIndex )
       {
-        string const constitutiveName = cm->GetGroup( matIndex )->getName();
+        string const constitutiveName = cm->getGroup( matIndex )->getName();
 
         CONSTITUTIVE_TYPE * const
-        constitutiveRelation = constitutiveGroup->GetGroup< CONSTITUTIVE_TYPE >( constitutiveName );
+        constitutiveRelation = constitutiveGroup->getGroup< CONSTITUTIVE_TYPE >( constitutiveName );
         if( constitutiveRelation != nullptr )
         {
           accessor[kReg][kSubReg][matIndex] = constitutiveRelation;

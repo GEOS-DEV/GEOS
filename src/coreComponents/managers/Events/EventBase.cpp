@@ -144,7 +144,7 @@ void EventBase::GetTargetReferences()
 {
   if( !m_eventTarget.empty())
   {
-    Group * tmp = this->GetGroupByPath( m_eventTarget );
+    Group * tmp = this->getGroupByPath( m_eventTarget );
     m_target = Group::groupCast< ExecutableGroup * >( tmp );
     GEOSX_ERROR_IF( m_target == nullptr, "The event " << m_eventTarget << " does not exist or it is not executable." );
   }

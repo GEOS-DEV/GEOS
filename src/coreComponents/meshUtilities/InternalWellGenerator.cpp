@@ -185,12 +185,12 @@ void InternalWellGenerator::GenerateMesh( DomainPartition * const domain )
   }
 
   // get the element (sub) region to populate and save the well generator and constraints names
-  MeshLevel * const meshLevel = domain->getMeshBodies()->GetGroup< MeshBody >( 0 )->getMeshLevel( 0 );
+  MeshLevel * const meshLevel = domain->getMeshBodies()->getGroup< MeshBody >( 0 )->getMeshLevel( 0 );
 
   ElementRegionManager * const elemManager = meshLevel->getElemManager();
   WellElementRegion * const
-  wellRegion = elemManager->GetGroup( ElementRegionManager::groupKeyStruct::elementRegionsGroup )->
-                 GetGroup< WellElementRegion >( this->m_wellRegionName );
+  wellRegion = elemManager->getGroup( ElementRegionManager::groupKeyStruct::elementRegionsGroup )->
+                 getGroup< WellElementRegion >( this->m_wellRegionName );
 
   GEOSX_ERROR_IF( wellRegion == nullptr,
                   "Well region " << this->m_wellRegionName << " not found in well " << getName() );
@@ -370,7 +370,7 @@ void InternalWellGenerator::ConnectPerforationsToWellElements()
 
     // get the perforation and its properties
     Perforation const * const perf =
-      this->GetGroup< Perforation >( m_perforationList[iperf] );
+      this->getGroup< Perforation >( m_perforationList[iperf] );
     m_perfDistFromHead[iperf]  = perf->GetDistanceFromWellHead();
     m_perfTransmissibility[iperf] = perf->GetWellTransmissibility();
 

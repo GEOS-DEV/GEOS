@@ -73,11 +73,11 @@ void SinglePhaseHybridFVM::InitializePreSubGroups( Group * const rootGroup )
 {
   SinglePhaseBase::InitializePreSubGroups( rootGroup );
 
-  DomainPartition & domain = *rootGroup->GetGroup< DomainPartition >( keys::domain );
+  DomainPartition & domain = *rootGroup->getGroup< DomainPartition >( keys::domain );
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
 
-  if( fvManager.GetGroup< HybridMimeticDiscretization >( m_discretizationName ) == nullptr )
+  if( fvManager.getGroup< HybridMimeticDiscretization >( m_discretizationName ) == nullptr )
   {
     GEOSX_ERROR( "The HybridMimeticDiscretization must be selected with SinglePhaseHybridFVM" );
   }
@@ -89,7 +89,7 @@ void SinglePhaseHybridFVM::InitializePostInitialConditions_PreSubGroups( Group *
 
   SinglePhaseBase::InitializePostInitialConditions_PreSubGroups( rootGroup );
 
-  DomainPartition & domain = *rootGroup->GetGroup< DomainPartition >( keys::domain );
+  DomainPartition & domain = *rootGroup->getGroup< DomainPartition >( keys::domain );
   MeshLevel const & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
   ElementRegionManager const & elemManager = *mesh.getElemManager();
   FaceManager const & faceManager = *mesh.getFaceManager();
@@ -131,7 +131,7 @@ void SinglePhaseHybridFVM::ImplicitStepSetup( real64 const & time_n,
   SinglePhaseBase::ImplicitStepSetup( time_n, dt, domain );
 
   // setup the face fields
-  MeshLevel & meshLevel     = *domain.getMeshBodies()->GetGroup< MeshBody >( 0 )->getMeshLevel( 0 );
+  MeshLevel & meshLevel     = *domain.getMeshBodies()->getGroup< MeshBody >( 0 )->getMeshLevel( 0 );
   FaceManager & faceManager = *meshLevel.getFaceManager();
 
   // get the accumulated pressure updates

@@ -70,7 +70,7 @@ void PackCollection::updateSetsIndices( DomainPartition & domain )
   {
     // if sets are specified we retrieve the field only from those sets
 
-    Group const * set_group = target_object->GetGroup( ObjectManagerBase::groupKeyStruct::setsString );
+    Group const * set_group = target_object->getGroup( ObjectManagerBase::groupKeyStruct::setsString );
     m_setsIndices.resize( num_sets );
     localIndex set_idx = 0;
     for( auto & set_name : m_setNames )
@@ -129,12 +129,12 @@ ObjectManagerBase const * PackCollection::getTargetObject( DomainPartition & dom
   string processedPath;
   for( localIndex pathLevel = 0; pathLevel < targetTokenLength; ++pathLevel )
   {
-    dataRepository::Group * const elemRegionSubGroup = targetGroup->GetGroup( ElementRegionManager::groupKeyStruct::elementRegionsGroup );
+    dataRepository::Group * const elemRegionSubGroup = targetGroup->getGroup( ElementRegionManager::groupKeyStruct::elementRegionsGroup );
     if( elemRegionSubGroup != nullptr )
     {
       targetGroup = elemRegionSubGroup;
     }
-    dataRepository::Group * const elemSubRegionSubGroup = targetGroup->GetGroup( ElementRegionBase::viewKeyStruct::elementSubRegions );
+    dataRepository::Group * const elemSubRegionSubGroup = targetGroup->getGroup( ElementRegionBase::viewKeyStruct::elementSubRegions );
     if( elemSubRegionSubGroup != nullptr )
     {
       targetGroup = elemSubRegionSubGroup;
@@ -144,7 +144,7 @@ ObjectManagerBase const * PackCollection::getTargetObject( DomainPartition & dom
     {
       continue;
     }
-    targetGroup = targetGroup->GetGroup( targetTokens[pathLevel] );
+    targetGroup = targetGroup->getGroup( targetTokens[pathLevel] );
     processedPath += "/" + targetTokens[pathLevel];
     GEOSX_ERROR_IF( targetGroup == nullptr, "PackCollction::getTargetObject( ): Last entry in objectPath (" << processedPath << ") is not found" );
   }

@@ -182,7 +182,7 @@ void setupProblemFromXML( ProblemManager & problemManager, char const * const xm
 
   int mpiSize = MpiWrapper::Comm_size( MPI_COMM_GEOSX );
   dataRepository::Group * commandLine =
-    problemManager.GetGroup< dataRepository::Group >( problemManager.groupKeys.commandLine );
+    problemManager.getGroup< dataRepository::Group >( problemManager.groupKeys.commandLine );
   commandLine->registerWrapper< integer >( problemManager.viewKeys.xPartitionsOverride.Key() )->
     setApplyDefaultValue( mpiSize );
 
@@ -196,7 +196,7 @@ void setupProblemFromXML( ProblemManager & problemManager, char const * const xm
   xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child( constitutiveManager.getName().c_str());
   constitutiveManager.ProcessInputFileRecursive( topLevelNode );
 
-  MeshManager & meshManager = *problemManager.GetGroup< MeshManager >( problemManager.groupKeys.meshManager );
+  MeshManager & meshManager = *problemManager.getGroup< MeshManager >( problemManager.groupKeys.meshManager );
   meshManager.GenerateMeshLevels( &domain );
 
   ElementRegionManager & elementManager = *domain.getMeshBody( 0 )->getMeshLevel( 0 )->getElemManager();

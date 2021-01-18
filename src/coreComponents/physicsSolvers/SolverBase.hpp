@@ -744,10 +744,10 @@ template< typename BASETYPE, typename LOOKUP_TYPE >
 BASETYPE const & SolverBase::GetConstitutiveModel( dataRepository::Group const & dataGroup, LOOKUP_TYPE const & key )
 {
   Group const * const constitutiveModels =
-    dataGroup.GetGroup( constitutive::ConstitutiveManager::groupKeyStruct::constitutiveModelsString );
+    dataGroup.getGroup( constitutive::ConstitutiveManager::groupKeyStruct::constitutiveModelsString );
   GEOSX_ERROR_IF( constitutiveModels == nullptr, "Target group does not contain constitutive models" );
 
-  BASETYPE const * const model = constitutiveModels->GetGroup< BASETYPE >( key );
+  BASETYPE const * const model = constitutiveModels->getGroup< BASETYPE >( key );
   GEOSX_ERROR_IF( model == nullptr, "Target group does not contain model " << key );
 
   return *model;
@@ -757,10 +757,10 @@ template< typename BASETYPE, typename LOOKUP_TYPE >
 BASETYPE & SolverBase::GetConstitutiveModel( dataRepository::Group & dataGroup, LOOKUP_TYPE const & key )
 {
   Group * const constitutiveModels =
-    dataGroup.GetGroup( constitutive::ConstitutiveManager::groupKeyStruct::constitutiveModelsString );
+    dataGroup.getGroup( constitutive::ConstitutiveManager::groupKeyStruct::constitutiveModelsString );
   GEOSX_ERROR_IF( constitutiveModels == nullptr, "Target group does not contain constitutive models" );
 
-  BASETYPE * const model = constitutiveModels->GetGroup< BASETYPE >( key );
+  BASETYPE * const model = constitutiveModels->getGroup< BASETYPE >( key );
   GEOSX_ERROR_IF( model == nullptr, "Target group does not contain model " << key );
 
   return *model;
@@ -777,7 +777,7 @@ void SolverBase::ValidateModelMapping( ElementRegionManager const & elemRegionMa
     for( localIndex esr = 0; esr < region.numSubRegions(); ++esr )
     {
       ElementSubRegionBase const & subRegion = *region.GetSubRegion( esr );
-      MODEL_TYPE const * const model = subRegion.GetConstitutiveModels()->GetGroup< MODEL_TYPE >( modelNames[k] );
+      MODEL_TYPE const * const model = subRegion.GetConstitutiveModels()->getGroup< MODEL_TYPE >( modelNames[k] );
       GEOSX_ERROR_IF( model == nullptr,
                       getName() << ": constitutive model " << modelNames[k] << " not found in " << region.getName() << '/' << subRegion.getName() );
     }

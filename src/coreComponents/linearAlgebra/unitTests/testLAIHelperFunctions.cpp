@@ -74,7 +74,7 @@ protected:
 
     int mpiSize = MpiWrapper::Comm_size( MPI_COMM_GEOSX );
     dataRepository::Group * commandLine =
-      problemManager->GetGroup< dataRepository::Group >( problemManager->groupKeys.commandLine );
+      problemManager->getGroup< dataRepository::Group >( problemManager->groupKeys.commandLine );
     commandLine->registerWrapper< integer >( problemManager->viewKeys.xPartitionsOverride.Key() )->
       setApplyDefaultValue( mpiSize );
 
@@ -84,7 +84,7 @@ protected:
 
     // Open mesh levels
     DomainPartition * domain  = problemManager->getDomainPartition();
-    MeshManager * meshManager = problemManager->GetGroup< MeshManager >( problemManager->groupKeys.meshManager );
+    MeshManager * meshManager = problemManager->getGroup< MeshManager >( problemManager->groupKeys.meshManager );
     meshManager->GenerateMeshLevels( domain );
 
     ElementRegionManager * elementManager = domain->getMeshBody( 0 )->getMeshLevel( 0 )->getElemManager();

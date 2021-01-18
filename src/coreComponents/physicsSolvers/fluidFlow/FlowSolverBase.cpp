@@ -138,7 +138,7 @@ void FlowSolverBase::InitializePreSubGroups( Group * const rootGroup )
 {
   SolverBase::InitializePreSubGroups( rootGroup );
 
-  DomainPartition * const domain = rootGroup->GetGroup< DomainPartition >( keys::domain );
+  DomainPartition * const domain = rootGroup->getGroup< DomainPartition >( keys::domain );
 
   // Validate solid models in regions (fluid models are validated by derived classes)
   for( auto & mesh : domain->getMeshBodies()->GetSubGroups() )
@@ -152,7 +152,7 @@ void FlowSolverBase::InitializePreSubGroups( Group * const rootGroup )
 
   FiniteVolumeManager & fvManager = numericalMethodManager.getFiniteVolumeManager();
 
-  if( fvManager.GetGroup< FluxApproximationBase >( m_discretizationName ) != nullptr )
+  if( fvManager.getGroup< FluxApproximationBase >( m_discretizationName ) != nullptr )
   {
     FluxApproximationBase & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
     array1d< string > & stencilTargetRegions = fluxApprox.targetRegions();
@@ -174,7 +174,7 @@ void FlowSolverBase::InitializePostInitialConditions_PreSubGroups( Group * const
 {
   SolverBase::InitializePostInitialConditions_PreSubGroups( rootGroup );
 
-  DomainPartition & domain = *rootGroup->GetGroup< DomainPartition >( keys::domain );
+  DomainPartition & domain = *rootGroup->getGroup< DomainPartition >( keys::domain );
   MeshLevel & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
 
   ResetViews( mesh );

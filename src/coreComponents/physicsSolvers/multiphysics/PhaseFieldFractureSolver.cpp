@@ -115,11 +115,11 @@ void PhaseFieldFractureSolver::PostProcessInput()
     // For this coupled solver the minimum number of Newton Iter should be 0 for both flow and solid solver otherwise it
     // will never converge.
     SolidMechanicsLagrangianFEM &
-    solidSolver = *( this->getParent()->GetGroup( m_solidSolverName )->groupCast< SolidMechanicsLagrangianFEM * >() );
+    solidSolver = *( this->getParent()->getGroup( m_solidSolverName )->groupCast< SolidMechanicsLagrangianFEM * >() );
     integer & minNewtonIterSolid = solidSolver.getNonlinearSolverParameters().m_minIterNewton;
 
     PhaseFieldDamageFEM &
-    damageSolver = *( this->getParent()->GetGroup( m_damageSolverName )->groupCast< PhaseFieldDamageFEM * >() );
+    damageSolver = *( this->getParent()->getGroup( m_damageSolverName )->groupCast< PhaseFieldDamageFEM * >() );
     integer & minNewtonIterFluid = damageSolver.getNonlinearSolverParameters().m_minIterNewton;
 
     minNewtonIterSolid = 0;
@@ -137,7 +137,7 @@ PhaseFieldFractureSolver::~PhaseFieldFractureSolver()
 
 void PhaseFieldFractureSolver::ResetStateToBeginningOfStep( DomainPartition & domain )
 {
-  MeshLevel * const mesh = domain.getMeshBodies()->GetGroup< MeshBody >( 0 )->getMeshLevel( 0 );
+  MeshLevel * const mesh = domain.getMeshBodies()->getGroup< MeshBody >( 0 )->getMeshLevel( 0 );
   ElementRegionManager * const elemManager = mesh->getElemManager();
 
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > const totalMeanStress =
@@ -183,10 +183,10 @@ real64 PhaseFieldFractureSolver::SplitOperatorStep( real64 const & time_n,
   real64 dtReturnTemporary;
 
   SolidMechanicsLagrangianFEM &
-  solidSolver = *( this->getParent()->GetGroup( m_solidSolverName )->groupCast< SolidMechanicsLagrangianFEM * >() );
+  solidSolver = *( this->getParent()->getGroup( m_solidSolverName )->groupCast< SolidMechanicsLagrangianFEM * >() );
 
   PhaseFieldDamageFEM &
-  damageSolver = *( this->getParent()->GetGroup( m_damageSolverName )->groupCast< PhaseFieldDamageFEM * >() );
+  damageSolver = *( this->getParent()->getGroup( m_damageSolverName )->groupCast< PhaseFieldDamageFEM * >() );
 
   damageSolver.SetupSystem( domain,
                             damageSolver.getDofManager(),
@@ -296,10 +296,10 @@ void PhaseFieldFractureSolver::mapDamageToQuadrature( DomainPartition & domain )
   NodeManager * const nodeManager = mesh->getNodeManager();
 
   SolidMechanicsLagrangianFEM &
-  solidSolver = *( this->getParent()->GetGroup( m_solidSolverName )->groupCast< SolidMechanicsLagrangianFEM * >() );
+  solidSolver = *( this->getParent()->getGroup( m_solidSolverName )->groupCast< SolidMechanicsLagrangianFEM * >() );
 
   PhaseFieldDamageFEM const &
-  damageSolver = *( this->getParent()->GetGroup( m_damageSolverName )->groupCast< PhaseFieldDamageFEM * >() );
+  damageSolver = *( this->getParent()->getGroup( m_damageSolverName )->groupCast< PhaseFieldDamageFEM * >() );
 
   string const & damageFieldName = damageSolver.getFieldName();
 
@@ -308,7 +308,7 @@ void PhaseFieldFractureSolver::mapDamageToQuadrature( DomainPartition & domain )
 
   ElementRegionManager * const elemManager = mesh->getElemManager();
 
-  ConstitutiveManager * const constitutiveManager = domain.GetGroup< ConstitutiveManager >( keys::ConstitutiveManager );
+  ConstitutiveManager * const constitutiveManager = domain.getGroup< ConstitutiveManager >( keys::ConstitutiveManager );
 
   ElementRegionManager::ConstitutiveRelationAccessor< ConstitutiveBase >
   constitutiveRelations = elemManager->ConstructFullConstitutiveAccessor< ConstitutiveBase >( constitutiveManager );

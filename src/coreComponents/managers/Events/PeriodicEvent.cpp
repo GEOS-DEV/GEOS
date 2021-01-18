@@ -123,7 +123,7 @@ void PeriodicEvent::CheckOptionalFunctionThreshold( real64 const time,
 {
   // Grab the function
   FunctionManager & functionManager = FunctionManager::Instance();
-  FunctionBase * function = functionManager.GetGroup< FunctionBase >( m_functionName );
+  FunctionBase * function = functionManager.getGroup< FunctionBase >( m_functionName );
 
   real64 result = 0.0;
   if( m_functionInputObject.empty())
@@ -136,7 +136,7 @@ void PeriodicEvent::CheckOptionalFunctionThreshold( real64 const time,
     // Link the target object
     if( m_functionTarget == nullptr )
     {
-      m_functionTarget = this->GetGroupByPath( m_functionInputObject );
+      m_functionTarget = this->getGroupByPath( m_functionInputObject );
     }
 
     // Get the set
@@ -150,7 +150,7 @@ void PeriodicEvent::CheckOptionalFunctionThreshold( real64 const time,
     }
     else
     {
-      dataRepository::Group const * sets = m_functionTarget->GetGroup( periodicEventViewKeys.functionSetNames );
+      dataRepository::Group const * sets = m_functionTarget->getGroup( periodicEventViewKeys.functionSetNames );
       SortedArrayView< localIndex const > const &
       functionSet = sets->getReference< SortedArray< localIndex > >( m_functionInputSetname );
 

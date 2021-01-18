@@ -62,25 +62,25 @@ public:
   template< typename T = ConstitutiveBase >
   T const * GetConstitutiveRelation( string const & constitutiveRelationInstanceName ) const
   {
-    return this->GetGroup< T >( constitutiveRelationInstanceName );
+    return this->getGroup< T >( constitutiveRelationInstanceName );
   }
 
   template< typename T = ConstitutiveBase >
   T * GetConstitutiveRelation( string const & constitutiveRelationInstanceName )
   {
-    return this->GetGroup< T >( constitutiveRelationInstanceName );
+    return this->getGroup< T >( constitutiveRelationInstanceName );
   }
 
   template< typename T = ConstitutiveBase >
   T const * GetConstitutiveRelation( localIndex const index ) const
   {
-    return this->GetGroup< T >( index );
+    return this->getGroup< T >( index );
   }
 
   template< typename T = ConstitutiveBase >
   T * GetConstitutiveRelation( localIndex const index )
   {
-    return this->GetGroup< T >( index );
+    return this->getGroup< T >( index );
   }
 
   // template< typename T >
@@ -114,7 +114,7 @@ ConstitutiveManager::GetConstitutiveData( string const & name,
   rval.resize( relationGroup->numSubGroups() );
   for( localIndex a=0; a<this->GetSubGroups().size(); ++a )
   {
-    ConstitutiveBase const * const material = relationGroup->GetGroup< ConstitutiveBase >( a );
+    ConstitutiveBase const * const material = relationGroup->getGroup< ConstitutiveBase >( a );
     if( material->hasWrapper( name ) )
     {
       rval[a] = material->getReference< T >( name );

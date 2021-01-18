@@ -50,7 +50,7 @@ void SinglePhaseWell::PostProcessInput()
 {
   WellSolverBase::PostProcessInput();
 
-  SinglePhaseBase const * const flowSolver = getParent()->GetGroup< SinglePhaseBase >( GetFlowSolverName() );
+  SinglePhaseBase const * const flowSolver = getParent()->getGroup< SinglePhaseBase >( GetFlowSolverName() );
   GEOSX_ERROR_IF( flowSolver == nullptr,
                   "Flow solver " << GetFlowSolverName() << " not found or incompatible type "
                                                            "(referenced from well solver " << getName() << ")" );
@@ -60,7 +60,7 @@ void SinglePhaseWell::RegisterDataOnMesh( Group * const meshBodies )
 {
   WellSolverBase::RegisterDataOnMesh( meshBodies );
 
-  MeshLevel & meshLevel = *meshBodies->GetGroup< MeshBody >( 0 )->getMeshLevel( 0 );
+  MeshLevel & meshLevel = *meshBodies->getGroup< MeshBody >( 0 )->getMeshLevel( 0 );
 
   // loop over the wells
   forTargetSubRegions< WellElementSubRegion >( meshLevel, [&]( localIndex const,
@@ -83,7 +83,7 @@ void SinglePhaseWell::InitializePreSubGroups( Group * const rootGroup )
 
   WellSolverBase::InitializePreSubGroups( rootGroup );
 
-  DomainPartition * const domain = rootGroup->GetGroup< DomainPartition >( keys::domain );
+  DomainPartition * const domain = rootGroup->getGroup< DomainPartition >( keys::domain );
   MeshLevel & meshLevel = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
 
   ValidateModelMapping< SingleFluidBase >( *meshLevel.getElemManager(), m_fluidModelNames );
@@ -519,7 +519,7 @@ void SinglePhaseWell::ResetViews( DomainPartition & domain )
   MeshLevel & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
   ElementRegionManager & elemManager = *mesh.getElemManager();
 
-  SinglePhaseBase & flowSolver = *getParent()->GetGroup< SinglePhaseBase >( GetFlowSolverName() );
+  SinglePhaseBase & flowSolver = *getParent()->getGroup< SinglePhaseBase >( GetFlowSolverName() );
 
   {
     using keys = SinglePhaseBase::viewKeyStruct;

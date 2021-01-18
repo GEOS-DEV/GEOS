@@ -77,7 +77,7 @@ void WellSolverBase::RegisterDataOnMesh( Group * const meshBodies )
 {
   SolverBase::RegisterDataOnMesh( meshBodies );
 
-  MeshLevel & meshLevel = *meshBodies->GetGroup< MeshBody >( 0 )->getMeshLevel( 0 );
+  MeshLevel & meshLevel = *meshBodies->getGroup< MeshBody >( 0 )->getMeshLevel( 0 );
 
   // loop over the wells
   forTargetSubRegions< WellElementSubRegion >( meshLevel, [&]( localIndex const,
@@ -162,7 +162,7 @@ void WellSolverBase::InitializePreSubGroups( Group * const rootGroup )
 {
   SolverBase::InitializePreSubGroups( rootGroup );
 
-  DomainPartition * domain = rootGroup->GetGroup< DomainPartition >( keys::domain );
+  DomainPartition * domain = rootGroup->getGroup< DomainPartition >( keys::domain );
 
   for( auto & mesh : domain->getMeshBodies()->GetSubGroups() )
   {
@@ -170,7 +170,7 @@ void WellSolverBase::InitializePreSubGroups( Group * const rootGroup )
     ValidateModelMapping( *meshLevel.getElemManager(), m_fluidModelNames );
   }
 
-  FlowSolverBase const * const flowSolver = getParent()->GetGroup< FlowSolverBase >( GetFlowSolverName() );
+  FlowSolverBase const * const flowSolver = getParent()->getGroup< FlowSolverBase >( GetFlowSolverName() );
   m_numDofPerResElement = flowSolver->numDofPerCell();
 }
 
@@ -178,7 +178,7 @@ void WellSolverBase::InitializePostInitialConditions_PreSubGroups( Group * const
 {
   SolverBase::InitializePostInitialConditions_PreSubGroups( rootGroup );
 
-  DomainPartition & domain = *rootGroup->GetGroup< DomainPartition >( keys::domain );
+  DomainPartition & domain = *rootGroup->getGroup< DomainPartition >( keys::domain );
 
   // make sure that nextWellElementIndex is up-to-date (will be used in well initialization and assembly)
   MeshLevel & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
@@ -264,7 +264,7 @@ WellControls & WellSolverBase::GetWellControls( WellElementSubRegion const & sub
 {
   string const & name = subRegion.GetWellControlsName();
 
-  WellControls * wellControls = this->GetGroup< WellControls >( name );
+  WellControls * wellControls = this->getGroup< WellControls >( name );
   GEOSX_ERROR_IF( wellControls == nullptr, "Well constraint " + name + " not found" );
 
   return *wellControls;
@@ -274,7 +274,7 @@ WellControls const & WellSolverBase::GetWellControls( WellElementSubRegion const
 {
   string const & name = subRegion.GetWellControlsName();
 
-  WellControls const * wellControls = this->GetGroup< WellControls >( name );
+  WellControls const * wellControls = this->getGroup< WellControls >( name );
   GEOSX_ERROR_IF( wellControls == nullptr, "Well constraint " + name + " not found" );
 
   return *wellControls;

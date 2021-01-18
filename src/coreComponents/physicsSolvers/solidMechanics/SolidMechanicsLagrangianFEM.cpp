@@ -245,7 +245,7 @@ void SolidMechanicsLagrangianFEM::InitializePreSubGroups( Group * const rootGrou
 {
   SolverBase::InitializePreSubGroups( rootGroup );
 
-  DomainPartition * domain = rootGroup->GetGroup< DomainPartition >( keys::domain );
+  DomainPartition * domain = rootGroup->getGroup< DomainPartition >( keys::domain );
 
   // Validate solid models in target regions
   for( auto & mesh : domain->getMeshBodies()->GetSubGroups() )
@@ -260,7 +260,7 @@ void SolidMechanicsLagrangianFEM::InitializePreSubGroups( Group * const rootGrou
   feDiscretizationManager = numericalMethodManager.getFiniteElementDiscretizationManager();
 
   FiniteElementDiscretization const *
-    feDiscretization = feDiscretizationManager.GetGroup< FiniteElementDiscretization >( m_discretizationName );
+    feDiscretization = feDiscretizationManager.getGroup< FiniteElementDiscretization >( m_discretizationName );
   GEOSX_ERROR_IF( feDiscretization == nullptr, getName() << ": FE discretization not found: " << m_discretizationName );
 }
 
@@ -384,7 +384,7 @@ void SolidMechanicsLagrangianFEM::updateIntrinsicNodalData( DomainPartition * co
 
 void SolidMechanicsLagrangianFEM::InitializePostInitialConditions_PreSubGroups( Group * const problemManager )
 {
-  DomainPartition * domain = problemManager->GetGroup< DomainPartition >( keys::domain );
+  DomainPartition * domain = problemManager->getGroup< DomainPartition >( keys::domain );
   MeshLevel & mesh = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
 
   NodeManager & nodes = *mesh.getNodeManager();
@@ -506,7 +506,7 @@ real64 SolidMechanicsLagrangianFEM::SolverStep( real64 const & time_n,
   GEOSX_MARK_FUNCTION;
   real64 dtReturn = dt;
 
-  SolverBase * const surfaceGenerator =  this->getParent()->GetGroup< SolverBase >( "SurfaceGen" );
+  SolverBase * const surfaceGenerator =  this->getParent()->getGroup< SolverBase >( "SurfaceGen" );
 
   if( m_timeIntegrationOption == TimeIntegrationOption::ExplicitDynamic )
   {
@@ -982,7 +982,7 @@ void SolidMechanicsLagrangianFEM::SetupSystem( DomainPartition & domain,
   GEOSX_MARK_FUNCTION;
   SolverBase::SetupSystem( domain, dofManager, localMatrix, localRhs, localSolution, setSparisty );
 
-  MeshLevel & mesh = *(domain.getMeshBodies()->GetGroup< MeshBody >( 0 )->getMeshLevel( 0 ));
+  MeshLevel & mesh = *(domain.getMeshBodies()->getGroup< MeshBody >( 0 )->getMeshLevel( 0 ));
   NodeManager const & nodeManager = *(mesh.getNodeManager());
   arrayView1d< globalIndex const > const
   dofNumber = nodeManager.getReference< globalIndex_array >( dofManager.getKey( keys::TotalDisplacement ) );
@@ -1314,17 +1314,17 @@ void SolidMechanicsLagrangianFEM::ApplyContactConstraint( DofManager const & dof
 
   if( m_contactRelationName != viewKeyStruct::noContactRelationNameString )
   {
-    MeshLevel * const mesh = domain.getMeshBodies()->GetGroup< MeshBody >( 0 )->getMeshLevel( 0 );
+    MeshLevel * const mesh = domain.getMeshBodies()->getGroup< MeshBody >( 0 )->getMeshLevel( 0 );
     FaceManager const * const faceManager = mesh->getFaceManager();
     NodeManager * const nodeManager = mesh->getNodeManager();
     ElementRegionManager * const elemManager = mesh->getElemManager();
 
 
     ConstitutiveManager const * const
-    constitutiveManager = domain.GetGroup< ConstitutiveManager >( keys::ConstitutiveManager );
+    constitutiveManager = domain.getGroup< ConstitutiveManager >( keys::ConstitutiveManager );
 
     ContactRelationBase const * const
-    contactRelation = constitutiveManager->GetGroup< ContactRelationBase >( m_contactRelationName );
+    contactRelation = constitutiveManager->getGroup< ContactRelationBase >( m_contactRelationName );
 
     real64 const contactStiffness = contactRelation->stiffness();
 
@@ -1430,7 +1430,7 @@ SolidMechanicsLagrangianFEM::ScalingForSystemSolution( DomainPartition const & d
   GEOSX_UNUSED_VAR( dofManager )
   GEOSX_UNUSED_VAR( localSolution )
 
-//  MeshLevel const * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
+//  MeshLevel const * const mesh = domain->getMeshBodies()->getGroup<MeshBody>(0)->getMeshLevel(0);
 //  FaceManager const * const faceManager = mesh->getFaceManager();
 //  NodeManager const * const nodeManager = mesh->getNodeManager();
 //  ElementRegionManager const * const elemManager = mesh->getElemManager();

@@ -916,7 +916,7 @@ void SiloFile::WriteMaterialMapsFullStorage( ElementRegionBase const & elemRegio
     for( localIndex matI=0; matI<nmat; ++matI )
     {
       Group const * const
-      constitutiveModel = elemRegion.GetSubRegion( 0 )->GetConstitutiveModels()->GetGroup( regionMaterialList[matI] );
+      constitutiveModel = elemRegion.GetSubRegion( 0 )->GetConstitutiveModels()->getGroup( regionMaterialList[matI] );
 
       for( auto const & wrapperIter : constitutiveModel->wrappers() )
       {
@@ -2619,7 +2619,7 @@ void SiloFile::WriteMaterialDataField2d( string const & meshName,
     for( int matIndex=0; matIndex<nmat; ++matIndex )
     {
       Group const * const
-      constitutiveModel = subRegion.GetConstitutiveModels()->GetGroup( materialNames[matIndex] );
+      constitutiveModel = subRegion.GetConstitutiveModels()->getGroup( materialNames[matIndex] );
 
       dataRepository::Wrapper< array2d< TYPE > > const * const
       wrapper = constitutiveModel->getWrapper< array2d< TYPE > >( fieldName );
@@ -2913,7 +2913,7 @@ void SiloFile::WriteMaterialDataField3d( string const & meshName,
     for( localIndex matIndex = 0; matIndex<numMat; ++matIndex )
     {
       arrayView3d< TYPE const > const &
-      fieldData = subRegion.GetConstitutiveModels()->GetGroup( materialNames[matIndex] )->getReference< array3d< TYPE > >( fieldName );
+      fieldData = subRegion.GetConstitutiveModels()->getGroup( materialNames[matIndex] )->getReference< array3d< TYPE > >( fieldName );
       if( fieldData.size() > 0 )
       {
         fieldCopy[esr][matIndex].resize( fieldData.size( 0 ), fieldData.size( 1 ) );
@@ -2932,7 +2932,7 @@ void SiloFile::WriteMaterialDataField3d( string const & meshName,
       for( localIndex matIndex = 0; matIndex < numMat; ++matIndex )
       {
         arrayView3d< TYPE const > const &
-        fieldData = subRegion.GetConstitutiveModels()->GetGroup( materialNames[matIndex] )->getReference< array3d< TYPE > >( fieldName );
+        fieldData = subRegion.GetConstitutiveModels()->getGroup( materialNames[matIndex] )->getReference< array3d< TYPE > >( fieldName );
 
         if( fieldData.size() > 0 && ivar < fieldData.size( 2 ))
         {
@@ -3019,7 +3019,7 @@ void SiloFile::WriteMaterialDataField4d( string const & meshName,
     for( localIndex matIndex = 0; matIndex<numMat; ++matIndex )
     {
       arrayView4d< TYPE const > const &
-      fieldData = subRegion.GetConstitutiveModels()->GetGroup( materialNames[matIndex] )->getReference< array4d< TYPE > >( fieldName );
+      fieldData = subRegion.GetConstitutiveModels()->getGroup( materialNames[matIndex] )->getReference< array4d< TYPE > >( fieldName );
       if( fieldData.size() > 0 )
       {
         fieldCopy[esr][matIndex].resize( fieldData.size( 0 ), fieldData.size( 1 ) );
@@ -3041,7 +3041,7 @@ void SiloFile::WriteMaterialDataField4d( string const & meshName,
         for( localIndex matIndex = 0; matIndex < numMat; ++matIndex )
         {
           arrayView4d< TYPE const > const &
-          fieldData = subRegion.GetConstitutiveModels()->GetGroup( materialNames[matIndex] )->getReference< array4d< TYPE > >( fieldName );
+          fieldData = subRegion.GetConstitutiveModels()->getGroup( materialNames[matIndex] )->getReference< array4d< TYPE > >( fieldName );
 
           if( fieldData.size() > 0 && ivar < fieldData.size( 2 ) && jvar < fieldData.size( 3 ))
           {

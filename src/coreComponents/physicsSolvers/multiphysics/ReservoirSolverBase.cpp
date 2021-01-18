@@ -59,8 +59,8 @@ void ReservoirSolverBase::PostProcessInput()
 {
   SolverBase::PostProcessInput();
 
-  m_flowSolver = this->getParent()->GetGroup< FlowSolverBase >( m_flowSolverName );
-  m_wellSolver = this->getParent()->GetGroup< WellSolverBase >( m_wellSolverName );
+  m_flowSolver = this->getParent()->getGroup< FlowSolverBase >( m_flowSolverName );
+  m_wellSolver = this->getParent()->getGroup< WellSolverBase >( m_wellSolverName );
 
   GEOSX_ERROR_IF( m_flowSolver == nullptr, "Flow solver not found or invalid type: " << m_flowSolverName );
   GEOSX_ERROR_IF( m_wellSolver == nullptr, "Well solver not found or invalid type: " << m_wellSolverName );
@@ -73,9 +73,9 @@ void ReservoirSolverBase::InitializePostInitialConditions_PreSubGroups( Group * 
 {
   SolverBase::InitializePostInitialConditions_PreSubGroups( rootGroup );
 
-  DomainPartition * const domain = rootGroup->GetGroup< DomainPartition >( keys::domain );
+  DomainPartition * const domain = rootGroup->getGroup< DomainPartition >( keys::domain );
 
-  MeshLevel * const meshLevel = domain->getMeshBodies()->GetGroup< MeshBody >( 0 )->getMeshLevel( 0 );
+  MeshLevel * const meshLevel = domain->getMeshBodies()->getGroup< MeshBody >( 0 )->getMeshLevel( 0 );
   ElementRegionManager * const elemManager = meshLevel->getElemManager();
 
   // loop over the wells

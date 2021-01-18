@@ -365,7 +365,7 @@ protected:
   void SetUp() override
   {
     setupProblemFromXML( *problemManager, xmlInput );
-    solver = problemManager->GetPhysicsSolverManager().GetGroup< SinglePhaseReservoir >( "reservoirSystem" );
+    solver = problemManager->GetPhysicsSolverManager().getGroup< SinglePhaseReservoir >( "reservoirSystem" );
 
     DomainPartition & domain = *problemManager->getDomainPartition();
 

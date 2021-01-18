@@ -97,7 +97,7 @@ public:
    */
   subGroupMap & GetSubRegions()
   {
-    return GetGroup( viewKeyStruct::elementSubRegions )->GetSubGroups();
+    return getGroup( viewKeyStruct::elementSubRegions )->GetSubGroups();
   }
 
 /**
@@ -106,7 +106,7 @@ public:
  */
   subGroupMap const & GetSubRegions() const
   {
-    return GetGroup( viewKeyStruct::elementSubRegions )->GetSubGroups();
+    return getGroup( viewKeyStruct::elementSubRegions )->GetSubGroups();
   }
 
 
@@ -120,7 +120,7 @@ public:
   template< typename SUBREGIONTYPE=ElementSubRegionBase >
   SUBREGIONTYPE const * GetSubRegion( string const & regionName ) const
   {
-    return this->GetGroup( viewKeyStruct::elementSubRegions )->GetGroup< SUBREGIONTYPE >( regionName );
+    return this->getGroup( viewKeyStruct::elementSubRegions )->getGroup< SUBREGIONTYPE >( regionName );
   }
 
 /**
@@ -129,7 +129,7 @@ public:
   template< typename SUBREGIONTYPE=ElementSubRegionBase >
   SUBREGIONTYPE * GetSubRegion( string const & regionName )
   {
-    return this->GetGroup( viewKeyStruct::elementSubRegions )->GetGroup< SUBREGIONTYPE >( regionName );
+    return this->getGroup( viewKeyStruct::elementSubRegions )->getGroup< SUBREGIONTYPE >( regionName );
   }
 
 /**
@@ -141,7 +141,7 @@ public:
   template< typename SUBREGIONTYPE=ElementSubRegionBase >
   SUBREGIONTYPE const * GetSubRegion( localIndex const & index ) const
   {
-    return this->GetGroup( viewKeyStruct::elementSubRegions )->GetGroup< SUBREGIONTYPE >( index );
+    return this->getGroup( viewKeyStruct::elementSubRegions )->getGroup< SUBREGIONTYPE >( index );
   }
 
 /**
@@ -150,7 +150,7 @@ public:
   template< typename SUBREGIONTYPE=ElementSubRegionBase >
   SUBREGIONTYPE * GetSubRegion( localIndex const & index )
   {
-    return this->GetGroup( viewKeyStruct::elementSubRegions )->GetGroup< SUBREGIONTYPE >( index );
+    return this->getGroup( viewKeyStruct::elementSubRegions )->getGroup< SUBREGIONTYPE >( index );
   }
 
 /**
@@ -159,7 +159,7 @@ public:
  */
   localIndex numSubRegions() const
   {
-    return this->GetGroup( viewKeyStruct::elementSubRegions )->GetSubGroups().size();
+    return this->getGroup( viewKeyStruct::elementSubRegions )->GetSubGroups().size();
   }
 
 /**
@@ -237,7 +237,7 @@ public:
   template< typename SUBREGIONTYPE, typename ... SUBREGIONTYPES, typename LAMBDA >
   void forElementSubRegions( LAMBDA && lambda ) const
   {
-    Group const * const elementSubRegions = this->GetGroup( viewKeyStruct::elementSubRegions );
+    Group const * const elementSubRegions = this->getGroup( viewKeyStruct::elementSubRegions );
     elementSubRegions->forSubGroups< SUBREGIONTYPE, SUBREGIONTYPES... >( std::forward< LAMBDA >( lambda ) );
   }
 
@@ -247,7 +247,7 @@ public:
   template< typename SUBREGIONTYPE, typename ... SUBREGIONTYPES, typename LAMBDA >
   void forElementSubRegions( LAMBDA && lambda )
   {
-    Group * const elementSubRegions = this->GetGroup( viewKeyStruct::elementSubRegions );
+    Group * const elementSubRegions = this->getGroup( viewKeyStruct::elementSubRegions );
     elementSubRegions->forSubGroups< SUBREGIONTYPE, SUBREGIONTYPES... >( std::forward< LAMBDA >( lambda ) );
   }
 
@@ -355,7 +355,7 @@ string_array ElementRegionBase::getConstitutiveNames() const
   string_array rval;
   for( string const & matName : m_materialList )
   {
-    Group const * const matModel = this->GetSubRegion( 0 )->GetConstitutiveModels()->GetGroup( matName );
+    Group const * const matModel = this->GetSubRegion( 0 )->GetConstitutiveModels()->getGroup( matName );
     if( dynamic_cast< CONSTITUTIVE_TYPE const * >( matModel ) != nullptr )
     {
       rval.emplace_back( matName );

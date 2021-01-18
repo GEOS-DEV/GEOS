@@ -371,16 +371,16 @@ public:
    * @return A pointer to @p T that refers to the sub-group
    */
   template< typename T = Group >
-  T * GetGroup( localIndex index )
+  T * getGroup( localIndex index )
   {
     return groupCast< T * >( m_subGroups[index] );
   }
 
   /**
-   * @copydoc GetGroup(localIndex)
+   * @copydoc getGroup(localIndex)
    */
   template< typename T = Group >
-  T const * GetGroup( localIndex index ) const
+  T const * getGroup( localIndex index ) const
   {
     return groupCast< T const * >( m_subGroups[index] );
   }
@@ -392,16 +392,16 @@ public:
    * @return A pointer to @p T that refers to the sub-group
    */
   template< typename T = Group >
-  T * GetGroup( string const & name )
+  T * getGroup( string const & name )
   {
     return groupCast< T * >( m_subGroups[name] );
   }
 
   /**
-   * @copydoc GetGroup(string const &)
+   * @copydoc getGroup(string const &)
    */
   template< typename T = Group >
-  T const * GetGroup( string const & name ) const
+  T const * getGroup( string const & name ) const
   { return groupCast< T const * >( m_subGroups[name] ); }
 
   /**
@@ -425,14 +425,14 @@ public:
    * @copydoc getGroupReference( string const & )
    */
   template< typename T = Group >
-  T & GetGroupReference( subGroupMap::KeyIndex const & key )
+  T & getGroupReference( subGroupMap::KeyIndex const & key )
   { return dynamicCast< T & >( *m_subGroups[key] ); }
 
   /**
    * @copydoc getGroupReference( string const & )
    */
   template< typename T = Group >
-  T const & GetGroupReference( subGroupMap::KeyIndex const & key ) const
+  T const & getGroupReference( subGroupMap::KeyIndex const & key ) const
   { return dynamicCast< T const & >( *m_subGroups[key] ); }
 
   /**
@@ -442,16 +442,16 @@ public:
    * @return A pointer to @p T that refers to the sub-group
    */
   template< typename T = Group >
-  T * GetGroup( subGroupMap::KeyIndex const & key )
+  T * getGroup( subGroupMap::KeyIndex const & key )
   {
     return groupCast< T * >( m_subGroups[key] );
   }
 
   /**
-   * @copydoc GetGroup(subGroupMap::KeyIndex const & key)
+   * @copydoc getGroup(subGroupMap::KeyIndex const & key)
    */
   template< typename T = Group >
-  T const * GetGroup( subGroupMap::KeyIndex const & key ) const
+  T const * getGroup( subGroupMap::KeyIndex const & key ) const
   {
     return groupCast< T const * >( m_subGroups[key] );
   }
@@ -465,16 +465,16 @@ public:
    * @return A pointer to @p T that refers to the sub-group
    */
   template< typename T = Group >
-  T * GetGroupByPath( string const & path )
+  T * getGroupByPath( string const & path )
   {
-    return const_cast< T * >(const_cast< Group const * >(this)->GetGroupByPath< T >( path ));
+    return const_cast< T * >(const_cast< Group const * >(this)->getGroupByPath< T >( path ));
   }
 
   /**
-   * @copydoc GetGroupByPath(string const &)
+   * @copydoc getGroupByPath(string const &)
    */
   template< typename T = Group >
-  T const * GetGroupByPath( string const & path ) const;
+  T const * getGroupByPath( string const & path ) const;
 
   //END_SPHINX_INCLUDE_GET_GROUP
 
@@ -633,7 +633,7 @@ public:
     localIndex counter = 0;
     for( auto const & subgroup : subGroupKeys )
     {
-      applyLambdaToContainer< GROUPTYPE, GROUPTYPES... >( *GetGroup( subgroup ), [&]( auto & castedSubGroup )
+      applyLambdaToContainer< GROUPTYPE, GROUPTYPES... >( *getGroup( subgroup ), [&]( auto & castedSubGroup )
       {
         lambda( counter, castedSubGroup );
       } );
@@ -658,7 +658,7 @@ public:
     localIndex counter = 0;
     for( auto const & subgroup : subGroupKeys )
     {
-      applyLambdaToContainer< GROUPTYPE, GROUPTYPES... >( *GetGroup( subgroup ), [&]( auto const & castedSubGroup )
+      applyLambdaToContainer< GROUPTYPE, GROUPTYPES... >( *getGroup( subgroup ), [&]( auto const & castedSubGroup )
       {
         lambda( counter, castedSubGroup );
       } );
@@ -1633,9 +1633,9 @@ Wrapper< T > * Group::registerWrapper( std::string const & name,
 }
 
 template< typename T >
-T const * Group::GetGroupByPath( string const & path ) const
+T const * Group::getGroupByPath( string const & path ) const
 {
-  // needed for getting root correctly with GetGroupByPath("/");
+  // needed for getting root correctly with getGroupByPath("/");
   if( path.empty())
   {
     return groupCast< T const * >( this );
@@ -1646,7 +1646,7 @@ T const * Group::GetGroupByPath( string const & path ) const
   if( directoryMarker == std::string::npos )
   {
     // Target should be a child of this group
-    return this->GetGroup< T >( path );
+    return this->getGroup< T >( path );
   }
   else
   {
@@ -1658,27 +1658,27 @@ T const * Group::GetGroupByPath( string const & path ) const
     {
       if( this->getParent() == nullptr )  // At root
       {
-        return this->GetGroupByPath< T >( subPath );
+        return this->getGroupByPath< T >( subPath );
       }
       else                               // Not at root
       {
-        return this->getParent()->GetGroupByPath< T >( path );
+        return this->getParent()->getGroupByPath< T >( path );
       }
     }
     else if( child[0] == '.' )
     {
       if( child[1] == '.' )               // '../' = Reverse path
       {
-        return this->getParent()->GetGroupByPath< T >( subPath );
+        return this->getParent()->getGroupByPath< T >( subPath );
       }
       else                               // './' = This path
       {
-        return this->GetGroupByPath< T >( subPath );
+        return this->getGroupByPath< T >( subPath );
       }
     }
     else
     {
-      return m_subGroups[child]->GetGroupByPath< T >( subPath );
+      return m_subGroups[child]->getGroupByPath< T >( subPath );
     }
   }
 }

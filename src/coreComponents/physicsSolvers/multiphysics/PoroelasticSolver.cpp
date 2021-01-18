@@ -155,8 +155,8 @@ void PoroelasticSolver::PostProcessInput()
 {
   SolverBase::PostProcessInput();
 
-  m_flowSolver  = this->getParent()->GetGroup< SinglePhaseBase >( m_flowSolverName );
-  m_solidSolver = this->getParent()->GetGroup< SolidMechanicsLagrangianFEM >( m_solidSolverName );
+  m_flowSolver  = this->getParent()->getGroup< SinglePhaseBase >( m_flowSolverName );
+  m_solidSolver = this->getParent()->getGroup< SolidMechanicsLagrangianFEM >( m_solidSolverName );
 
   GEOSX_ERROR_IF( m_flowSolver == nullptr, "Flow solver not found or invalid type: " << m_flowSolverName );
   GEOSX_ERROR_IF( m_solidSolver == nullptr, "Solid solver not found or invalid type: " << m_solidSolverName );
@@ -178,7 +178,7 @@ void PoroelasticSolver::InitializePostInitialConditions_PreSubGroups( Group * co
   {
     m_flowSolver->setPoroElasticCoupling();
     // Calculate initial total mean stress
-    UpdateDeformationForCoupling( *problemManager->GetGroup< DomainPartition >( keys::domain ) );
+    UpdateDeformationForCoupling( *problemManager->getGroup< DomainPartition >( keys::domain ) );
   }
 }
 
