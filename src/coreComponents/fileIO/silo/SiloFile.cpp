@@ -924,7 +924,7 @@ void SiloFile::WriteMaterialMapsFullStorage( ElementRegionBase const & elemRegio
 
         if( wrapper->getPlotLevel() < m_plotLevel )
         {
-          std::type_info const & typeID = wrapper->get_typeid();
+          std::type_info const & typeID = wrapper->getTypeID();
 
           if( typeID == typeid( array2d< real64 > ) ||
               typeID == typeid( array3d< real64 > ) ||
@@ -938,7 +938,7 @@ void SiloFile::WriteMaterialMapsFullStorage( ElementRegionBase const & elemRegio
 
     for( auto fieldName : fieldNames )
     {
-      if( fieldName.second->get_typeid() == typeid( array2d< real64 >))
+      if( fieldName.second->getTypeID() == typeid( array2d< real64 >))
       {
         WriteMaterialDataField2d< real64, real64 >( meshName,
                                                     fieldName.first,
@@ -949,7 +949,7 @@ void SiloFile::WriteMaterialMapsFullStorage( ElementRegionBase const & elemRegio
                                                     rootDirectory,
                                                     regionMaterialList );
       }
-      if( fieldName.second->get_typeid() == typeid( array3d< real64 >))
+      if( fieldName.second->getTypeID() == typeid( array3d< real64 >))
       {
         WriteMaterialDataField3d< real64, real64 >( meshName,
                                                     fieldName.first,
@@ -960,7 +960,7 @@ void SiloFile::WriteMaterialMapsFullStorage( ElementRegionBase const & elemRegio
                                                     rootDirectory,
                                                     regionMaterialList );
       }
-      if( fieldName.second->get_typeid() == typeid( array4d< real64 >))
+      if( fieldName.second->getTypeID() == typeid( array4d< real64 >))
       {
         WriteMaterialDataField4d< real64, real64 >( meshName,
                                                     fieldName.first,
@@ -1283,7 +1283,7 @@ void SiloFile::WriteElementRegionSilo( ElementRegionBase const & elemRegion,
 
         viewPointers[esr][fieldName] = wrapper;
 
-        std::type_info const & typeID = wrapper->get_typeid();
+        std::type_info const & typeID = wrapper->getTypeID();
 
         rtTypes::ApplyArrayTypeLambda2( rtTypes::typeID( typeID ),
                                         false,
@@ -1310,7 +1310,7 @@ void SiloFile::WriteElementRegionSilo( ElementRegionBase const & elemRegion,
   {
     WrapperBase * const wrapper = wrapperIter.second;
     string const fieldName = wrapper->getName();
-    std::type_info const & typeID = wrapper->get_typeid();
+    std::type_info const & typeID = wrapper->getTypeID();
 
     rtTypes::ApplyArrayTypeLambda2( rtTypes::typeID( typeID ),
                                     false,
@@ -2046,7 +2046,7 @@ void SiloFile::WriteWrappersToSilo( string const & meshname,
       // the field name is the key to the map
       string const fieldName = wrapper->getName();
 
-      std::type_info const & typeID = wrapper->get_typeid();
+      std::type_info const & typeID = wrapper->getTypeID();
 
       // TODO This is wrong. problem with uniqueness
       if( typeID==typeid(array1d< real64 >) )

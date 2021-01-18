@@ -478,7 +478,7 @@ void EdgeManager::BuildEdges( localIndex const numNodes,
 
 void EdgeManager::SetDomainBoundaryObjects( ObjectManagerBase const * const referenceObject )
 {
-  referenceObject->CheckTypeID( typeid( NodeManager ) );
+  referenceObject->checkTypeID( typeid( NodeManager ) );
 
   // cast the referenceObject into a faceManager
   FaceManager const * const faceManager = Group::group_cast< const FaceManager * >( referenceObject );
@@ -564,7 +564,7 @@ void EdgeManager::ExtractMapFromObjectForAssignGlobalIndexNumbers( ObjectManager
                                                                    std::vector< std::vector< globalIndex > > & globalEdgeNodes )
 {
   GEOSX_MARK_FUNCTION;
-  nodeManager->CheckTypeID( typeid( NodeManager ) );
+  nodeManager->checkTypeID( typeid( NodeManager ) );
 
   localIndex const numEdges = size();
 

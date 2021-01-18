@@ -60,7 +60,7 @@ void CellElementSubRegion::CopyFromCellBlock( CellBlock * source )
   this->ConstructGlobalToLocalMap();
   source->forExternalProperties( [&]( dataRepository::WrapperBase * const wrapper )
   {
-    std::type_index typeIndex = std::type_index( wrapper->get_typeid());
+    std::type_index typeIndex = std::type_index( wrapper->getTypeID());
     rtTypes::ApplyArrayTypeLambda2( rtTypes::typeID( typeIndex ),
                                     true,
                                     [&]( auto type, auto GEOSX_UNUSED_PARAM( baseType ) )

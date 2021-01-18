@@ -1305,7 +1305,7 @@ void vectorToFieldImpl( LOCAL_VECTOR const localVector,
   WrapperBase * const wrapper = manager.getWrapperBase( fieldName );
   GEOSX_ASSERT( wrapper != nullptr );
 
-  rtTypes::ApplyArrayTypeLambda2( rtTypes::typeID( std::type_index( wrapper->get_typeid() ) ),
+  rtTypes::ApplyArrayTypeLambda2( rtTypes::typeID( std::type_index( wrapper->getTypeID() ) ),
                                   false,
                                   [&]( auto arrayInstance,
                                        auto GEOSX_UNUSED_PARAM( dataTypeInstance ) )
@@ -1368,7 +1368,7 @@ void fieldToVectorImpl( LOCAL_VECTOR localVector,
   WrapperBase const * const wrapper = manager.getWrapperBase( fieldName );
   GEOSX_ASSERT( wrapper != nullptr );
 
-  rtTypes::ApplyArrayTypeLambda2( rtTypes::typeID( std::type_index( wrapper->get_typeid() ) ),
+  rtTypes::ApplyArrayTypeLambda2( rtTypes::typeID( std::type_index( wrapper->getTypeID() ) ),
                                   false,
                                   [&]( auto arrayInstance,
                                        auto GEOSX_UNUSED_PARAM( dataTypeInstance ) )

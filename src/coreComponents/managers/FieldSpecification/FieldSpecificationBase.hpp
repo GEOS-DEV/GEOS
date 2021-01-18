@@ -671,7 +671,7 @@ void FieldSpecificationBase::ApplyFieldValue( SortedArrayView< localIndex const 
                                               string const & fieldName ) const
 {
   dataRepository::WrapperBase * wrapper = dataGroup->getWrapperBase( fieldName );
-  std::type_index typeIndex = std::type_index( wrapper->get_typeid());
+  std::type_index typeIndex = std::type_index( wrapper->getTypeID());
 
   rtTypes::ApplyArrayTypeLambda2( rtTypes::typeID( typeIndex ),
                                   true,
@@ -696,7 +696,7 @@ void FieldSpecificationBase::ApplyBoundaryConditionToSystem( SortedArrayView< lo
                                                              typename LAI::ParallelVector & rhs ) const
 {
   dataRepository::WrapperBase const & wrapperBase = *dataGroup->getWrapperBase( fieldName );
-  std::type_index typeIndex = std::type_index( wrapperBase.get_typeid());
+  std::type_index typeIndex = std::type_index( wrapperBase.getTypeID());
   arrayView1d< globalIndex const > const & dofMap = dataGroup->getReference< array1d< globalIndex > >( dofMapName );
   integer const component = GetComponent();
 
@@ -961,7 +961,7 @@ void FieldSpecificationBase::ApplyBoundaryConditionToSystem( SortedArrayView< lo
                                                              arrayView1d< real64 > const & rhs ) const
 {
   dataRepository::WrapperBase const & wrapperBase = *dataGroup->getWrapperBase( fieldName );
-  std::type_index typeIndex = std::type_index( wrapperBase.get_typeid());
+  std::type_index typeIndex = std::type_index( wrapperBase.getTypeID());
   arrayView1d< globalIndex const > const & dofMap = dataGroup->getReference< array1d< globalIndex > >( dofMapName );
 
   rtTypes::ApplyArrayTypeLambda1( rtTypes::typeID( typeIndex ), [&]( auto type )

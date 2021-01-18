@@ -161,7 +161,7 @@ public:
    * @brief Get typeid for current group
    * @return @p typeid(*this)
    */
-  virtual const std::type_info & get_typeid() const
+  virtual const std::type_info & getTypeID() const
   {
     return typeid(*this);
   }
@@ -171,9 +171,9 @@ public:
    * @param typeToCheck value to check against
    * @return true of types are the same, false if not
    */
-  bool CheckTypeID( std::type_info const & typeToCheck ) const
+  bool checkTypeID( std::type_info const & typeToCheck ) const
   {
-    return typeToCheck == get_typeid();
+    return typeToCheck == getTypeID();
   }
 
   /**

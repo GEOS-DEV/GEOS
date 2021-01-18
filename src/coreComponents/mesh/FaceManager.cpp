@@ -797,7 +797,7 @@ void FaceManager::ExtractMapFromObjectForAssignGlobalIndexNumbers( ObjectManager
                                                                    std::vector< std::vector< globalIndex > > & globalFaceNodes )
 {
   GEOSX_MARK_FUNCTION;
-  nodeManager->CheckTypeID( typeid( NodeManager ) );
+  nodeManager->checkTypeID( typeid( NodeManager ) );
 
   localIndex const numFaces = size();
 

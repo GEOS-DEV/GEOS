@@ -217,7 +217,7 @@ void Group::PrintDataHierarchy( integer indent )
 {
   for( auto & view : this->wrappers() )
   {
-    GEOSX_LOG( string( indent, '\t' )<<view.second->getName()<<", "<<view.second->get_typeid().name());
+    GEOSX_LOG( string( indent, '\t' )<<view.second->getName()<<", "<<view.second->getTypeID().name());
   }
 
   for( auto & group : this->m_subGroups )
