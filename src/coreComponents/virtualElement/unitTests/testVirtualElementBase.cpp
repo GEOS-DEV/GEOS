@@ -180,9 +180,9 @@ TEST( VirtualElementBase, unitCube )
   vemElement.ComputeProjectors( mesh, 0, 0, 0 );
 
   checkIntegralMeanConsistency( vemElement.getNumSupportPoints(),
-                                vemElement.basisFunctionsIntegralMean );
+                                vemElement.m_basisFunctionsIntegralMean );
   checkIntegralMeanDerivativesConsistency( vemElement.getNumSupportPoints(),
-                                           vemElement.basisDerivativesIntegralMean );
+                                           vemElement.m_basisDerivativesIntegralMean );
 
   NodeManager const & nodeManager = *mesh.getNodeManager();
   CellElementRegion const & cellRegion =
@@ -195,7 +195,7 @@ TEST( VirtualElementBase, unitCube )
   arrayView2d< real64 const > cellCenters = cellSubRegion.getElementCenter();
   localIndex const cellIndex = 0;
   checkStabilizationMatrixConsistency( nodesCoords, cellIndex, cellToNodes, cellCenters,
-                                       vemElement.stabilizationMatrix );
+                                       vemElement.m_stabilizationMatrix );
 
   delete problemManager;
 }
@@ -263,13 +263,13 @@ TEST( VirtualElementBase, wedges )
   {
     vemElement.ComputeProjectors( mesh, 0, 0, cellIndex );
     checkIntegralMeanConsistency( vemElement.getNumSupportPoints(),
-                                  vemElement.basisFunctionsIntegralMean );
+                                  vemElement.m_basisFunctionsIntegralMean );
     checkIntegralMeanDerivativesConsistency( vemElement.getNumSupportPoints(),
-                                             vemElement.basisDerivativesIntegralMean );
+                                             vemElement.m_basisDerivativesIntegralMean );
 
 
     checkStabilizationMatrixConsistency( nodesCoords, cellIndex, cellToNodes, cellCenters,
-                                         vemElement.stabilizationMatrix );
+                                         vemElement.m_stabilizationMatrix );
   }
   delete problemManager;
 }

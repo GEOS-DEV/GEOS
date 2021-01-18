@@ -29,11 +29,11 @@ class ConformingVirtualElementOrder1 final : public VirtualElementBase
 {
 public:
 
-  localIndex numQuadraturePoints;
-  localIndex numSupportPoints;
-  array1d< real64 > basisFunctionsIntegralMean;
-  array2d< real64 > basisDerivativesIntegralMean;
-  array2d< real64 > stabilizationMatrix;
+  localIndex m_numQuadraturePoints;
+  localIndex m_numSupportPoints;
+  array1d< real64 > m_basisFunctionsIntegralMean;
+  array2d< real64 > m_basisDerivativesIntegralMean;
+  array2d< real64 > m_stabilizationMatrix;
 
   void ComputeFaceIntegrals( MeshLevel const & mesh,
                              localIndex const & faceId,
@@ -51,8 +51,8 @@ public:
                           localIndex const & subRegionIndex,
                           localIndex const & cellIndex ) override;
 
-  localIndex getNumQuadraturePoints() const override { return numQuadraturePoints; }
-  localIndex getNumSupportPoints() const override { return numSupportPoints; }
+  localIndex getNumQuadraturePoints() const override { return m_numQuadraturePoints; }
+  localIndex getNumSupportPoints() const override { return m_numSupportPoints; }
 };
 }
 }

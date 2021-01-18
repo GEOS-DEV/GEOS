@@ -32,7 +32,7 @@ void ConformingVirtualElementOrder1::ComputeProjectors( MeshLevel const & mesh,
   arraySlice1d< real64 const > cellCenter = cellCenters[cellIndex];
   localIndex const numCellFaces = elementToFaceMap[cellIndex].size();
   localIndex const numCellPoints = cellToNodes[cellIndex].size();
-  numSupportPoints = numCellPoints;
+  m_numSupportPoints = numCellPoints;
 
   // Compute other geometrical properties.
   //  - compute map used to locate local point position by global id (used in the computation of
@@ -114,7 +114,7 @@ void ConformingVirtualElementOrder1::ComputeProjectors( MeshLevel const & mesh,
   // Compute non constant scaled monomials' integrals on the polyhedron.
   array1d< real64 > monomInternalIntegrals( 3 );
   LvArray::tensorOps::fill< 3 >( monomInternalIntegrals, 0.0 );
-  numQuadraturePoints = 0;
+  m_numQuadraturePoints = 0;
   for( localIndex numFace = 0; numFace < numCellFaces; ++numFace )
   {
     localIndex const faceIndex = elementToFaceMap[cellIndex][numFace];
@@ -123,7 +123,7 @@ void ConformingVirtualElementOrder1::ComputeProjectors( MeshLevel const & mesh,
     localIndex const numFaceVertices = faceToNodes.size();
     for( localIndex numVertex = 0; numVertex < numFaceVertices; ++numVertex )
     {
-      ++numQuadraturePoints;
+      ++m_numQuadraturePoints;
       localIndex numNextVertex = (numVertex+1)%numFaceVertices;
       // compute value of 3D monomials at the quadrature point on the sub-tetrahedron (the
       // barycenter).
@@ -154,11 +154,11 @@ void ConformingVirtualElementOrder1::ComputeProjectors( MeshLevel const & mesh,
 
   // Compute integral mean of basis functions and of derivatives of basis functions.
   // Compute VEM degrees of freedom of the piNabla projection minus the identity (used for
-  // stabilizationMatrix).
+  // m_stabilizationMatrix).
   real64 const invCellVolume = 1.0/cellVolumes[cellIndex];
   real64 const monomialDerivativeInverse = cellDiameter*cellDiameter*invCellVolume;
-  basisFunctionsIntegralMean.resize( numCellPoints );
-  basisDerivativesIntegralMean = basisTimesNormalBoundaryInt;
+  m_basisFunctionsIntegralMean.resize( numCellPoints );
+  m_basisDerivativesIntegralMean = basisTimesNormalBoundaryInt;
   array2d< real64 > piNablaVemDofsMinuxIdentity( numCellPoints, numCellPoints );
   // - compute values of scaled monomials at the vertices (used for piNablaVemDofs)
   array2d< real64 > monomialVemDofs( 3, numCellPoints );
@@ -183,12 +183,12 @@ void ConformingVirtualElementOrder1::ComputeProjectors( MeshLevel const & mesh,
                       piNablaDofs[2]*monomBoundaryIntegrals[2] -
                       piNablaDofs[3]*monomBoundaryIntegrals[3] )/monomBoundaryIntegrals[0];
     // - integrate piNabla proj and compute integral means
-    basisFunctionsIntegralMean( numBasisFunction ) = piNablaDofs[0] + invCellVolume *
+    m_basisFunctionsIntegralMean( numBasisFunction ) = piNablaDofs[0] + invCellVolume *
                                                      (piNablaDofs[1]*monomInternalIntegrals[0] + piNablaDofs[2]*monomInternalIntegrals[1]
                                                       + piNablaDofs[3] * monomInternalIntegrals[2]);
     // - compute integral means of derivatives
     for( localIndex pos = 0; pos < 3; ++pos )
-      basisDerivativesIntegralMean( pos, numBasisFunction ) =
+      m_basisDerivativesIntegralMean( pos, numBasisFunction ) =
         -invCellVolume *basisTimesNormalBoundaryInt( pos, numBasisFunction );
     // - compute VEM dofs of piNabla projection
     for( localIndex numVertex = 0; numVertex < numCellPoints; ++numVertex )
@@ -203,7 +203,7 @@ void ConformingVirtualElementOrder1::ComputeProjectors( MeshLevel const & mesh,
 
   // Compute stabilization matrix.
   // The result is piNablaVemDofsMinuxIdentity^T * piNablaVemDofsMinuxIdentity.
-  stabilizationMatrix.resize( numCellPoints, numCellPoints );
+  m_stabilizationMatrix.resize( numCellPoints, numCellPoints );
   for( localIndex i = 0; i < numCellPoints; ++i )
   {
     for( localIndex j = 0; j < numCellPoints; ++j )
@@ -211,7 +211,7 @@ void ConformingVirtualElementOrder1::ComputeProjectors( MeshLevel const & mesh,
       real64 rowColProd = 0;
       for( localIndex k = 0; k < numCellPoints; ++k )
         rowColProd += piNablaVemDofsMinuxIdentity( k, i )*piNablaVemDofsMinuxIdentity( k, j );
-      stabilizationMatrix( i, j ) = cellDiameter*rowColProd;
+      m_stabilizationMatrix( i, j ) = cellDiameter*rowColProd;
     }
   }
 }
