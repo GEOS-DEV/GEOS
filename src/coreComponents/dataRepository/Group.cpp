@@ -213,7 +213,7 @@ Group * Group::CreateChild( string const & childKey, string const & childName )
 }
 
 
-void Group::PrintDataHierarchy( integer indent )
+void Group::printDataHierarchy( integer indent )  //TODO this function is not called anywhere
 {
   for( auto & view : this->wrappers() )
   {
@@ -223,7 +223,7 @@ void Group::PrintDataHierarchy( integer indent )
   for( auto & group : this->m_subGroups )
   {
     GEOSX_LOG( string( indent, '\t' )<<group.first<<':' );
-    group.second->PrintDataHierarchy( indent + 1 );
+    group.second->printDataHierarchy( indent + 1 );
   }
 }
 
