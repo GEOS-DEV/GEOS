@@ -38,6 +38,7 @@ set( constitutive_headers
      solid/DamageSpectral.hpp
      solid/DamageSpectralUtilities.hpp
      solid/DruckerPrager.hpp
+     solid/DruckerPragerExtended.hpp
      solid/ElasticIsotropic.hpp
      solid/ElasticTransverseIsotropic.hpp
      solid/PoroElastic.hpp
@@ -88,6 +89,7 @@ set( constitutive_sources
      solid/DamageVolDev.cpp
      solid/DamageSpectral.cpp
      solid/DruckerPrager.cpp
+     solid/DruckerPragerExtended.cpp
      solid/ElasticIsotropic.cpp
      solid/ElasticTransverseIsotropic.cpp
      solid/PoroElastic.cpp

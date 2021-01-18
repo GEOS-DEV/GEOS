@@ -107,15 +107,15 @@ void DruckerPrager::PostProcessInput()
   GEOSX_ASSERT_MSG( m_defaultFrictionAngle >= m_defaultDilationAngle, "Dilation angle should not exceed friction angle" );
 
   // convert from Mohr-Coulomb constants to Drucker-Prager constants, assuming DP
-  // passes through the compression corners of the MC surface.
+  // passes through the triaxial compression corners of the MC surface.
   // see Borja (2013) p. 75
 
   real64 phi = m_defaultFrictionAngle * M_PI / 180;
   real64 psi = m_defaultDilationAngle * M_PI / 180;
 
-  real64 C = 6 * m_defaultCohesion * cos( phi ) / ( 3 + sin( phi ) );
-  real64 F = 6 * sin( phi ) / ( 3 + sin( phi ) );
-  real64 D = 6 * sin( psi ) / ( 3 + sin( psi ) );
+  real64 C = 6 * m_defaultCohesion * cos( phi ) / ( 3 - sin( phi ) );
+  real64 F = 6 * sin( phi ) / ( 3 - sin( phi ) );
+  real64 D = 6 * sin( psi ) / ( 3 - sin( psi ) );
 
   // set results as array default values
 

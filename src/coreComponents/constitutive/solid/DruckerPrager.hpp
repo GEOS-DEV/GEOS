@@ -43,9 +43,15 @@ public:
 
   /**
    * @brief Constructor
+   * @param[in] friction The ArrayView holding the friction data for each element.
+   * @param[in] dilation The ArrayView holding the dilation data for each element.
+   * @param[in] hardening The ArrayView holding the hardening data for each element.
+   * @param[in] newCohesion The ArrayView holding the new cohesion data for each element.
+   * @param[in] oldCohesion The ArrayView holding the old cohesion data for each element.
    * @param[in] bulkModulus The ArrayView holding the bulk modulus data for each element.
    * @param[in] shearModulus The ArrayView holding the shear modulus data for each element.
-   * @param[in] stress The ArrayView holding the stress data for each quadrature point.
+   * @param[in] newStress The ArrayView holding the new stress data for each quadrature point.
+   * @param[in] oldStress The ArrayView holding the old stress data for each quadrature point.
    */
   DruckerPragerUpdates( arrayView1d< real64 const > const & friction,
                         arrayView1d< real64 const > const & dilation,
@@ -84,7 +90,6 @@ public:
 
   // Bring in base implementations to prevent hiding warnings
   using ElasticIsotropicUpdates::smallStrainUpdate;
-  using ElasticIsotropicUpdates::smallStrainUpdate_StressOnly;
 
   GEOSX_HOST_DEVICE
   virtual void smallStrainUpdate( localIndex const k,
@@ -163,7 +168,7 @@ void DruckerPragerUpdates::smallStrainUpdate( localIndex const k,
 
   solution[0] = trialP; // initial guess for newP
   solution[1] = trialQ; // initial guess for newQ
-  solution[2] = 0;      // initial guess for plastic multiplier
+  solution[2] = 1e-5;   // initial guess for plastic multiplier
 
   real64 norm, normZero = 1e30;
 
@@ -184,8 +189,8 @@ void DruckerPragerUpdates::smallStrainUpdate( localIndex const k,
     }
 
     // assemble residual system
-    // resid1 = P - trialP + lambda*dG/dP = 0
-    // resid2 = Q - trialQ + lambda*dG/dQ = 0
+    // resid1 = P - trialP + dlambda*bulkMod*dG/dP = 0
+    // resid2 = Q - trialQ + dlambda*3*shearMod*dG/dQ = 0
     // resid3 = F = 0
 
     residual[0] = solution[0] - trialP + solution[2] * m_bulkModulus[k] * m_dilation[k];
@@ -405,10 +410,10 @@ protected:
   /// Material parameter: The hardening rate each element
   array1d< real64 > m_hardening;
 
-  /// History variable: The current cohesion parameter for each quadrature point
+  /// State variable: The current cohesion parameter for each quadrature point
   array2d< real64 > m_newCohesion;
 
-  /// History variable: The previous cohesion parameter for each quadrature point
+  /// State variable: The previous cohesion parameter for each quadrature point
   array2d< real64 > m_oldCohesion;
 };
 

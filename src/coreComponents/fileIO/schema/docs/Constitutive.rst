@@ -17,6 +17,7 @@ DamageVolDevElasticIsotropic          node         :ref:`XML_DamageVolDevElastic
 DruckerPrager                         node         :ref:`XML_DruckerPrager`                         
 ElasticIsotropic                      node         :ref:`XML_ElasticIsotropic`                      
 ElasticTransverseIsotropic            node         :ref:`XML_ElasticTransverseIsotropic`            
+ExtendedDruckerPrager                 node         :ref:`XML_ExtendedDruckerPrager`                 
 MultiPhaseMultiComponentFluid         node         :ref:`XML_MultiPhaseMultiComponentFluid`         
 NullModel                             node         :ref:`XML_NullModel`                             
 ParticleFluid                         node         :ref:`XML_ParticleFluid`                         

@@ -1531,6 +1531,7 @@ the relative residual norm satisfies:
 			<xsd:element name="DruckerPrager" type="DruckerPragerType" />
 			<xsd:element name="ElasticIsotropic" type="ElasticIsotropicType" />
 			<xsd:element name="ElasticTransverseIsotropic" type="ElasticTransverseIsotropicType" />
+			<xsd:element name="ExtendedDruckerPrager" type="ExtendedDruckerPragerType" />
 			<xsd:element name="MultiPhaseMultiComponentFluid" type="MultiPhaseMultiComponentFluidType" />
 			<xsd:element name="NullModel" type="NullModelType" />
 			<xsd:element name="ParticleFluid" type="ParticleFluidType" />
@@ -1799,6 +1800,30 @@ the relative residual norm satisfies:
 		<xsd:attribute name="defaultYoungsModulusAxial" type="real64" default="-1" />
 		<!--defaultYoungsModulusTransverse => Elastic Bulk Modulus Parameter-->
 		<xsd:attribute name="defaultYoungsModulusTransverse" type="real64" default="-1" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="ExtendedDruckerPragerType">
+		<!--defaultBulkModulus => Elastic Bulk Modulus Parameter-->
+		<xsd:attribute name="defaultBulkModulus" type="real64" default="-1" />
+		<!--defaultCohesion => Initial cohesion-->
+		<xsd:attribute name="defaultCohesion" type="real64" default="0" />
+		<!--defaultDensity => Default Material Density-->
+		<xsd:attribute name="defaultDensity" type="real64" use="required" />
+		<!--defaultDilationRatio => Dilation ratio [0,1] (ratio = tan dilationAngle / tan frictionAngle)-->
+		<xsd:attribute name="defaultDilationRatio" type="real64" default="1" />
+		<!--defaultHardening => Hardening parameter (hardening rate is faster for smaller values)-->
+		<xsd:attribute name="defaultHardening" type="real64" default="1e+06" />
+		<!--defaultInitialFrictionAngle => Initial friction angle (degrees)-->
+		<xsd:attribute name="defaultInitialFrictionAngle" type="real64" default="30" />
+		<!--defaultPoissonRatio => Poisson's ratio-->
+		<xsd:attribute name="defaultPoissonRatio" type="real64" default="-1" />
+		<!--defaultResidualFrictionAngle => Residual friction angle (degrees)-->
+		<xsd:attribute name="defaultResidualFrictionAngle" type="real64" default="30" />
+		<!--defaultShearModulus => Elastic Shear Modulus Parameter-->
+		<xsd:attribute name="defaultShearModulus" type="real64" default="-1" />
+		<!--defaultYoungsModulus => Elastic Young's Modulus.-->
+		<xsd:attribute name="defaultYoungsModulus" type="real64" default="-1" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>

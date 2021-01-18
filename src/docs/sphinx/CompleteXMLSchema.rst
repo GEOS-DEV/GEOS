@@ -218,6 +218,13 @@ Element: Events
 .. include:: ../../coreComponents/fileIO/schema/docs/Events.rst
 
 
+.. _XML_ExtendedDruckerPrager:
+
+Element: ExtendedDruckerPrager
+==============================
+.. include:: ../../coreComponents/fileIO/schema/docs/ExtendedDruckerPrager.rst
+
+
 .. _XML_FieldSpecification:
 
 Element: FieldSpecification
@@ -920,6 +927,13 @@ Datastructure: EmbeddedSurfaceGenerator
 Datastructure: Events
 =====================
 .. include:: ../../coreComponents/fileIO/schema/docs/Events_other.rst
+
+
+.. _DATASTRUCTURE_ExtendedDruckerPrager:
+
+Datastructure: ExtendedDruckerPrager
+====================================
+.. include:: ../../coreComponents/fileIO/schema/docs/ExtendedDruckerPrager_other.rst
 
 
 .. _DATASTRUCTURE_FaceManager:

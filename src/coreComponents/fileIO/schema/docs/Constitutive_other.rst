@@ -17,6 +17,7 @@ DamageVolDevElasticIsotropic          node :ref:`DATASTRUCTURE_DamageVolDevElast
 DruckerPrager                         node :ref:`DATASTRUCTURE_DruckerPrager`                         
 ElasticIsotropic                      node :ref:`DATASTRUCTURE_ElasticIsotropic`                      
 ElasticTransverseIsotropic            node :ref:`DATASTRUCTURE_ElasticTransverseIsotropic`            
+ExtendedDruckerPrager                 node :ref:`DATASTRUCTURE_ExtendedDruckerPrager`                 
 MultiPhaseMultiComponentFluid         node :ref:`DATASTRUCTURE_MultiPhaseMultiComponentFluid`         
 NullModel                             node :ref:`DATASTRUCTURE_NullModel`                             
 ParticleFluid                         node :ref:`DATASTRUCTURE_ParticleFluid`                         
