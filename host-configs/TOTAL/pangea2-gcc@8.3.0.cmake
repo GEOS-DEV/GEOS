@@ -18,9 +18,9 @@ set(CMAKE_C_COMPILER "/data_local/sw/gcc/RHEL7/8.3.0/bin/gcc" CACHE PATH "")
 set(CMAKE_CXX_COMPILER "/data_local/sw/gcc/RHEL7/8.3.0/bin/g++" CACHE PATH "")
 set(CMAKE_Fortran_COMPILER "/data_local/sw/gcc/RHEL7/8.3.0/bin/gfortran" CACHE PATH "")
 
-set(CMAKE_C_FLAGS_RELEASE "-O3 -DNDEBUG -march=native -mtune=native" CACHE STRING "")
-set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG -march=native -mtune=native" CACHE STRING "")
-set(CMAKE_Fortran_FLAGS_RELEASE "-O3 -DNDEBUG -march=native -mtune=native" CACHE STRING "")
+#set(CMAKE_C_FLAGS_RELEASE "-O3 -DNDEBUG -march=native -mtune=native" CACHE STRING "")
+#set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG -march=native -mtune=native" CACHE STRING "")
+#set(CMAKE_Fortran_FLAGS_RELEASE "-O3 -DNDEBUG -march=native -mtune=native" CACHE STRING "")
 
 set(ENABLE_FORTRAN OFF CACHE BOOL "" FORCE)
 set(ENABLE_MPI ON CACHE BOOL "" FORCE)
