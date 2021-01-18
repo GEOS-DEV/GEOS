@@ -63,7 +63,7 @@ ObjectManagerBase::~ObjectManagerBase()
 
 
 
-ObjectManagerBase::CatalogInterface::CatalogType & ObjectManagerBase::GetCatalog()
+ObjectManagerBase::CatalogInterface::CatalogType & ObjectManagerBase::getCatalog()
 {
   static ObjectManagerBase::CatalogInterface::CatalogType catalog;
   return catalog;

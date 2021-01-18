@@ -48,7 +48,7 @@ Group * ConstitutiveManager::CreateChild( string const & childKey, string const 
 void ConstitutiveManager::ExpandObjectCatalogs()
 {
   // During schema generation, register one of each type derived from ConstitutiveBase here
-  for( auto & catalogIter: ConstitutiveBase::GetCatalog())
+  for( auto & catalogIter: ConstitutiveBase::getCatalog())
   {
     CreateChild( catalogIter.first, catalogIter.first );
   }

@@ -108,7 +108,7 @@ public:
  * @return a static reference to the Catalog object
  *
  */
-  static CatalogInterface::CatalogType & GetCatalog();
+  static CatalogInterface::CatalogType & getCatalog();
 
 };
 }

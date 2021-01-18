@@ -88,7 +88,7 @@ Group * EventManager::CreateChild( string const & childKey, string const & child
 void EventManager::ExpandObjectCatalogs()
 {
   // During schema generation, register one of each type derived from EventBase here
-  for( auto & catalogIter: EventBase::GetCatalog())
+  for( auto & catalogIter: EventBase::getCatalog())
   {
     CreateChild( catalogIter.first, catalogIter.first );
   }

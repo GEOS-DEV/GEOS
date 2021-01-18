@@ -83,7 +83,7 @@ public:
   /**
    * @copydoc CatalogName()
    */
-  static CatalogInterface::CatalogType & GetCatalog();
+  static CatalogInterface::CatalogType & getCatalog();
 
   ///@}
 

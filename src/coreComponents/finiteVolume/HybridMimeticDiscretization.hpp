@@ -41,7 +41,7 @@ public:
    * @brief Return the data type in the data repository.
    * @return the data type in the data repository
    */
-  static typename CatalogInterface::CatalogType & GetCatalog();
+  static typename CatalogInterface::CatalogType & getCatalog();
 
   /**
    * @brief Static Factory Catalog Functions.

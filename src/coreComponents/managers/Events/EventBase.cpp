@@ -112,7 +112,7 @@ EventBase::~EventBase()
 {}
 
 
-EventBase::CatalogInterface::CatalogType & EventBase::GetCatalog()
+EventBase::CatalogInterface::CatalogType & EventBase::getCatalog()
 {
   static EventBase::CatalogInterface::CatalogType catalog;
   return catalog;
@@ -132,7 +132,7 @@ void EventBase::ExpandObjectCatalogs()
   // otherwise, this would fall into a loop
   if( strcmp( this->getParent()->getName().c_str(), "Events" ) == 0 )
   {
-    for( auto & catalogIter: EventBase::GetCatalog())
+    for( auto & catalogIter: EventBase::getCatalog())
     {
       CreateChild( catalogIter.first, catalogIter.first );
     }

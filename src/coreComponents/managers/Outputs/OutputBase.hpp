@@ -51,7 +51,7 @@ public:
   // Catalog interface
   /// @cond DO_NOT_DOCUMENT
   using CatalogInterface = dataRepository::CatalogInterface< OutputBase, std::string const &, Group * const >;
-  static CatalogInterface::CatalogType & GetCatalog();
+  static CatalogInterface::CatalogType & getCatalog();
 
   // Catalog view keys
   struct viewKeysStruct

@@ -62,7 +62,7 @@ public:
    * @brief Acessing the unique instance of this catalog.
    * @return A reference to the singleton.
    */
-  static CatalogInterface::CatalogType & GetCatalog();
+  static CatalogInterface::CatalogType & getCatalog();
 
   /**
    * @brief Get the name of the catalog.

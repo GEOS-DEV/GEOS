@@ -74,7 +74,7 @@ real64 ContactRelationBase::dLimitTangentialTractionNorm_dNormalTraction( real64
 Group *
 ContactRelationBase::CreateChild( string const & catalogKey, string const & childName )
 {
-  FunctionBase::CatalogInterface::CatalogType const & functionCatalog = FunctionBase::GetCatalog();
+  FunctionBase::CatalogInterface::CatalogType const & functionCatalog = FunctionBase::getCatalog();
   GEOSX_ERROR_IF( !functionCatalog.count( catalogKey ), catalogKey << " is an invalid key ContactRelationBase child group." );
 
   m_apertureFunction = FunctionManager::Instance().RegisterGroup( childName, FunctionBase::CatalogInterface::Factory( catalogKey, childName, this ) );

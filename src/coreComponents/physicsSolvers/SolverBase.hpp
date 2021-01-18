@@ -516,7 +516,7 @@ public:
   virtual Group * CreateChild( string const & childKey, string const & childName ) override;
 
   using CatalogInterface = dataRepository::CatalogInterface< SolverBase, std::string const &, Group * const >;
-  static CatalogInterface::CatalogType & GetCatalog();
+  static CatalogInterface::CatalogType & getCatalog();
 
   struct viewKeyStruct
   {

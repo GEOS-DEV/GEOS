@@ -45,7 +45,7 @@ Group * MeshManager::CreateChild( string const & childKey, string const & childN
 void MeshManager::ExpandObjectCatalogs()
 {
   // During schema generation, register one of each type derived from MeshGeneratorBase here
-  for( auto & catalogIter: MeshGeneratorBase::GetCatalog())
+  for( auto & catalogIter: MeshGeneratorBase::getCatalog())
   {
     CreateChild( catalogIter.first, catalogIter.first );
   }

@@ -57,7 +57,7 @@ Group::~Group()
 //  m_conduitNode.parent()->remove( m_name );
 }
 
-Group::CatalogInterface::CatalogType & Group::GetCatalog()
+Group::CatalogInterface::CatalogType & Group::getCatalog()
 {
   static Group::CatalogInterface::CatalogType catalog;
   return catalog;

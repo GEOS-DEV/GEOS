@@ -53,7 +53,7 @@ Group * FunctionManager::CreateChild( string const & functionCatalogKey,
 void FunctionManager::ExpandObjectCatalogs()
 {
   // During schema generation, register one of each type derived from FunctionBase here
-  for( auto & catalogIter: FunctionBase::GetCatalog())
+  for( auto & catalogIter: FunctionBase::getCatalog())
   {
     CreateChild( catalogIter.first, catalogIter.first );
   }

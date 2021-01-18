@@ -47,7 +47,7 @@ OutputBase::OutputBase( std::string const & name,
 OutputBase::~OutputBase()
 {}
 
-OutputBase::CatalogInterface::CatalogType & OutputBase::GetCatalog()
+OutputBase::CatalogInterface::CatalogType & OutputBase::getCatalog()
 {
   static OutputBase::CatalogInterface::CatalogType catalog;
   return catalog;

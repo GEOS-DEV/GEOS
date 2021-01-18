@@ -117,10 +117,10 @@ public:
    * @brief Get the catalog from that is stored in the target base class.
    * @return returns the catalog for this
    */
-  static CatalogType & GetCatalog()
+  static CatalogType & getCatalog()
   {
 #if BASEHOLDSCATALOG == 1
-    return BASETYPE::GetCatalog();
+    return BASETYPE::getCatalog();
 #else
     static CatalogType catalog;
     return catalog;
@@ -141,7 +141,7 @@ public:
    */
   static bool hasKeyName( std::string const & objectTypeName )
   {
-    return GetCatalog().count( objectTypeName );
+    return getCatalog().count( objectTypeName );
   }
 
   /**
@@ -154,7 +154,7 @@ public:
   //START_SPHINX_2
   static std::unique_ptr< BASETYPE > Factory( std::string const & objectTypeName, ARGS... args )
   {
-    return GetCatalog().at( objectTypeName ).get()->Allocate( args ... );
+    return getCatalog().at( objectTypeName ).get()->Allocate( args ... );
   }
   //STOP_SPHINX
 
@@ -312,7 +312,7 @@ public:
                                                                                                                                                     TYPE,
                                                                                                                                                     ARGS... >()  );
 #endif
-    ( CatalogInterface< BASETYPE, ARGS... >::GetCatalog() ).insert( std::move( std::make_pair( name, std::move( temp ) ) ) );
+    ( CatalogInterface< BASETYPE, ARGS... >::getCatalog() ).insert( std::move( std::make_pair( name, std::move( temp ) ) ) );
 
 #if OBJECTCATALOGVERBOSE > 0
     GEOSX_LOG( "Registered " << LvArray::system::demangle( typeid(BASETYPE).name())
@@ -420,10 +420,10 @@ public:
    * @brief Get the catalog from that is stored in the target base class.
    * @return returns the catalog for this
    */
-  static CatalogType & GetCatalog()
+  static CatalogType & getCatalog()
   {
 #if BASEHOLDSCATALOG == 1
-    return BASETYPE::GetCatalog();
+    return BASETYPE::getCatalog();
 #else
     static CatalogType catalog;
     return catalog;
@@ -443,7 +443,7 @@ public:
    */
   static std::unique_ptr< BASETYPE > Factory( std::string const & objectTypeName )
   {
-    CatalogInterface< BASETYPE > const * const entry = GetCatalog().at( objectTypeName ).get();
+    CatalogInterface< BASETYPE > const * const entry = getCatalog().at( objectTypeName ).get();
     return entry->Allocate();
   }
 
@@ -590,7 +590,7 @@ public:
 #else
     std::unique_ptr< CatalogEntry< BASETYPE, TYPE > > temp = std::unique_ptr< CatalogEntry< BASETYPE, TYPE > >( new CatalogEntry< BASETYPE, TYPE >()  );
 #endif
-    ( CatalogInterface< BASETYPE >::GetCatalog() ).insert( std::move( std::make_pair( name, std::move( temp ) ) ) );
+    ( CatalogInterface< BASETYPE >::getCatalog() ).insert( std::move( std::make_pair( name, std::move( temp ) ) ) );
 
 #if OBJECTCATALOGVERBOSE > 0
     GEOSX_LOG( "Registered " << LvArray::system::demangle( typeid(BASETYPE).name())

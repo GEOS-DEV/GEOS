@@ -89,7 +89,7 @@ Group * SolverBase::CreateChild( string const & GEOSX_UNUSED_PARAM( childKey ), 
   return nullptr;
 }
 
-SolverBase::CatalogInterface::CatalogType & SolverBase::GetCatalog()
+SolverBase::CatalogInterface::CatalogType & SolverBase::getCatalog()
 {
   static SolverBase::CatalogInterface::CatalogType catalog;
   return catalog;

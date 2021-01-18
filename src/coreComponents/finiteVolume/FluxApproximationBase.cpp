@@ -52,7 +52,7 @@ FluxApproximationBase::FluxApproximationBase( string const & name, Group * const
 }
 
 FluxApproximationBase::CatalogInterface::CatalogType &
-FluxApproximationBase::GetCatalog()
+FluxApproximationBase::getCatalog()
 {
   static FluxApproximationBase::CatalogInterface::CatalogType catalog;
   return catalog;

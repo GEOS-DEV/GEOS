@@ -71,7 +71,7 @@ The definition of the method is given as:
    :end-before: //STOP_SPHINX
 
 It can be seen that the static ``Factory`` method is simply a wrapper that calls the virtual 
-``Allocate`` method on a the catalog which is returned by ``GetCatalog()``.
+``Allocate`` method on a the catalog which is returned by ``getCatalog()``.
 The usage of the ``Factory`` method will be further discussed in the `Usage`_ section.
 
 .. note::
@@ -134,12 +134,12 @@ The base class for this example is defined as:
 There a couple of things to note in the definition of ``Base``:
 
 * ``Base`` has a convenience alias to use in place of the fully templated ``CatalogInterface`` name.
-* ``Base`` defines a ``GetCatalog()`` function that returns a static instantiation of a 
+* ``Base`` defines a ``getCatalog()`` function that returns a static instantiation of a 
   ``CatalogInterface::CatalogType``.
-  The ``CatalogInterface::GetCatalog()`` function actually calls this function within the base
+  The ``CatalogInterface::getCatalog()`` function actually calls this function within the base
   class.
   This means that the base class actually owns the catalog, and the ``CatalogInterface`` is only
-  operating on that ``Base::GetCatalog()``, and that the definition of this function is required.
+  operating on that ``Base::getCatalog()``, and that the definition of this function is required.
 
 Adding A New Type To The Catalog
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -227,7 +227,7 @@ The result of running this test is::
     Calling destructor for CatalogEntry< Derived1 , Base , ... >
     Calling destructor for CatalogInterface< Base , ... >
 
-In the preceding output, it is clear that the static catalog in ``Base::GetCatalog()`` 
+In the preceding output, it is clear that the static catalog in ``Base::getCatalog()`` 
 is initialized prior the execution of main, and destroyed after the completion of main.
 In practice, there have been no indicators of problems due to the use of a statically 
 initialized/deinitialized catalog.

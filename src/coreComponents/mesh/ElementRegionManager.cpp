@@ -92,7 +92,7 @@ Group * ElementRegionManager::CreateChild( string const & childKey, string const
 
 void ElementRegionManager::ExpandObjectCatalogs()
 {
-  ObjectManagerBase::CatalogInterface::CatalogType const & catalog = ObjectManagerBase::GetCatalog();
+  ObjectManagerBase::CatalogInterface::CatalogType const & catalog = ObjectManagerBase::getCatalog();
   for( ObjectManagerBase::CatalogInterface::CatalogType::const_iterator iter = catalog.begin();
        iter!=catalog.end();
        ++iter )

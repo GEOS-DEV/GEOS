@@ -210,8 +210,8 @@ public:
 
   /// Catalog interface
   using CatalogInterface = dataRepository::CatalogInterface< EventBase, std::string const &, Group * const >;
-  /// @copydoc dataRepository::Group::GetCatalog()
-  static CatalogInterface::CatalogType & GetCatalog();
+  /// @copydoc dataRepository::Group::getCatalog()
+  static CatalogInterface::CatalogType & getCatalog();
 
   /**
    * @brief Get the sum of the exit flags for the event/sub-events from the last execution.

@@ -148,7 +148,7 @@ public:
    * @brief Get the singleton catalog for this class.
    * @return reference to the catalog object
    */
-  static CatalogInterface::CatalogType & GetCatalog();
+  static CatalogInterface::CatalogType & getCatalog();
 
   ///@}
 

@@ -57,12 +57,12 @@ Group * FiniteVolumeManager::CreateChild( string const & childKey, string const 
 void FiniteVolumeManager::ExpandObjectCatalogs()
 {
   // During schema generation, register one of each type derived from FluxApproximationBase here
-  for( auto & catalogIter: FluxApproximationBase::GetCatalog())
+  for( auto & catalogIter: FluxApproximationBase::getCatalog())
   {
     CreateChild( catalogIter.first, catalogIter.first );
   }
   // Then do the same thing for the HybridMimeticDiscretization
-  for( auto & catalogIter: HybridMimeticDiscretization::GetCatalog())
+  for( auto & catalogIter: HybridMimeticDiscretization::getCatalog())
   {
     string const childName = catalogIter.first;
     std::unique_ptr< HybridMimeticDiscretization > hm = std::make_unique< HybridMimeticDiscretization >( childName, this );

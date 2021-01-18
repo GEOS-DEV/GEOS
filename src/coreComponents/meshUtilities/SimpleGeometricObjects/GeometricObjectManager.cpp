@@ -45,7 +45,7 @@ Group * GeometricObjectManager::CreateChild( string const & childKey, string con
 void GeometricObjectManager::ExpandObjectCatalogs()
 {
   // During schema generation, register one of each type derived from SimpleGeometricObjectBase here
-  for( auto & catalogIter: SimpleGeometricObjectBase::GetCatalog())
+  for( auto & catalogIter: SimpleGeometricObjectBase::getCatalog())
   {
     CreateChild( catalogIter.first, catalogIter.first );
   }

@@ -44,7 +44,7 @@ Group * TasksManager::CreateChild( string const & childKey, string const & child
 void TasksManager::ExpandObjectCatalogs()
 {
   // During schema generation, register one of each type derived from TaskBase here
-  for( auto & catalogIter: TaskBase::GetCatalog() )
+  for( auto & catalogIter: TaskBase::getCatalog() )
   {
     CreateChild( catalogIter.first, catalogIter.first );
   }

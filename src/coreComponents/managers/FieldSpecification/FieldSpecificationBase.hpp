@@ -59,7 +59,7 @@ public:
    * @brief static function to return static catalog.
    * @return the static catalog to create derived types through the static factory methods.
    */
-  static CatalogInterface::CatalogType & GetCatalog();
+  static CatalogInterface::CatalogType & getCatalog();
 
   /**
    * @brief Static Factory Catalog Functions

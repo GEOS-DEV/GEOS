@@ -51,7 +51,7 @@ public:
    * @brief Get the catalog interface for the TaskBase
    * @return the Catalog for TaskBase.
    */
-  static CatalogInterface::CatalogType & GetCatalog();
+  static CatalogInterface::CatalogType & getCatalog();
 
   /// @copydoc geosx::ExecutableGroup::Execute
   virtual void Execute( real64 const time_n,

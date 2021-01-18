@@ -47,7 +47,7 @@ public:
                                                              string_array const &,
                                                              string_array const &,
                                                              real64_array const & >;
-  static typename CatalogInterface::CatalogType & GetCatalog()
+  static typename CatalogInterface::CatalogType & getCatalog()
   {
     static CatalogInterface::CatalogType catalog;
     return catalog;
