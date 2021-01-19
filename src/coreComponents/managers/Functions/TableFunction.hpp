@@ -21,9 +21,14 @@
 
 #include "common/EnumStrings.hpp"
 #include "managers/Functions/FunctionBase.hpp"
+#include "LvArray/src/tensorOps.hpp"
 
 namespace geosx
 {
+
+static constexpr localIndex maxDimensions = 4;
+
+class TableFunctionKernelWrapper;
 
 /**
  * @class TableFunction
@@ -33,6 +38,16 @@ namespace geosx
 class TableFunction : public FunctionBase
 {
 public:
+
+  /// Enumerator of available interpolation types
+  enum class InterpolationType : integer
+  {
+    Linear,
+    Nearest,
+    Upper,
+    Lower
+  };
+
   /**
    * @brief The constructor
    * @param[in] name the name of this object manager
@@ -61,7 +76,7 @@ public:
    * @param[in] delimiter The delimiter used for file entries.
    */
   template< typename T >
-  void parse_file( array1d< T > & target, string const & filename, char delimiter );
+  void parseFile( array1d< T > & target, string const & filename, char delimiter );
 
   /**
    * @brief Initialize the table function
@@ -99,12 +114,12 @@ public:
    * @brief Get the table axes definitions
    * @return a reference to an array of arrays that define each table axis
    */
-  array1d< real64_array > const & getCoordinates() const { return m_coordinates; }
+  ArrayOfArrays< real64 > const & getCoordinates() const { return m_coordinates; }
 
   /**
    * @copydoc getCoordinates() const
    */
-  array1d< real64_array > & getCoordinates()       { return m_coordinates; }
+  ArrayOfArrays< real64 > & getCoordinates()       { return m_coordinates; }
 
   /**
    * @brief Get the table values
@@ -117,15 +132,6 @@ public:
    */
   array1d< real64 > & getValues()       { return m_values; }
 
-  /// Enumerator of available interpolation types
-  enum class InterpolationType : integer
-  {
-    Linear,
-    Nearest,
-    Upper,
-    Lower
-  };
-
   /**
    * @brief Set the interpolation method
    * @param method The interpolation method
@@ -136,13 +142,18 @@ public:
    * @brief Set the table coordinates
    * @param coordinates An array of arrays containing table coordinate definitions
    */
-  void setTableCoordinates( array1d< real64_array > coordinates ) { m_coordinates = coordinates; }
+  void setTableCoordinates( ArrayOfArrays< real64 > coordinates ) { m_coordinates = coordinates; }
 
   /**
    * @brief Set the table values
    * @param values An array of table values in fortran order
    */
   void setTableValues( real64_array values ) { m_values = values; }
+
+  /**
+   * @brief Returns an instance of the kernel wrapper
+   */
+  TableFunctionKernelWrapper createKernelWrapper() const;
 
 private:
   /// Coordinates for 1D table
@@ -158,13 +169,10 @@ private:
   InterpolationType m_interpolationMethod;
 
   /// An array of table axes
-  array1d< real64_array > m_coordinates;
+  ArrayOfArrays< real64 > m_coordinates;
 
   /// Table values (in fortran order)
   real64_array m_values;
-
-  /// Maximum number of table dimensions
-  static localIndex constexpr m_maxDimensions = 4;
 
   /// Number of active table dimensions
   localIndex m_dimensions;
@@ -177,16 +185,244 @@ private:
 
   /**
    * @brief The corners of the box that surround the value in N dimensions
-   * m_corners should be of size m_maxDimensions x (2^m_maxDimensions)
+   * m_corners should be of size maxDimensions x (2^maxDimensions)
    */
-  localIndex m_corners[m_maxDimensions][16];
+  localIndex m_corners[maxDimensions][16];
 
   /// The number of active table corners
   localIndex m_numCorners;
+
+  /// Kernel wrapper to interpolate in table and return derivatives
+  std::unique_ptr< TableFunctionKernelWrapper > m_kernelWrapper;
+
 };
 
-ENUM_STRINGS( TableFunction::InterpolationType, "linear", "nearest", "upper", "lower" )
+class TableFunctionKernelWrapper
+{
+public:
 
+  TableFunctionKernelWrapper( TableFunction::InterpolationType interpolationMethod,
+                              ArrayOfArraysView< real64 const > const & coordinates,
+                              arrayView1d< real64 const > const & values,
+                              localIndex dimensions,
+                              arrayView1d< localIndex const > const & size,
+                              arrayView1d< localIndex const > const & indexIncrement,
+                              localIndex const (&corners)[maxDimensions][16],
+                              localIndex const numCorners )
+    :
+    m_interpolationMethod( interpolationMethod ),
+    m_coordinates( coordinates ),
+    m_values( values ),
+    m_dimensions( dimensions ),
+    m_size( size ),
+    m_indexIncrement( indexIncrement ),
+    m_numCorners( numCorners )
+  {
+    LvArray::tensorOps::copy< maxDimensions, 16 >( m_corners, corners );
+  }
+
+  /// Default copy constructor
+  TableFunctionKernelWrapper( TableFunctionKernelWrapper const & ) = default;
+
+  /// Default move constructor
+  TableFunctionKernelWrapper( TableFunctionKernelWrapper && ) = default;
+
+  /// Deleted copy assignment operator
+  TableFunctionKernelWrapper & operator=( TableFunctionKernelWrapper const & ) = delete;
+
+  /// Deleted move assignment operator
+  TableFunctionKernelWrapper & operator=( TableFunctionKernelWrapper && ) = delete;
+
+  /// Main compute function to interpolate in the table and return the derivatives
+  template< typename IN_ARRAY, typename OUT_ARRAY >
+  GEOSX_HOST_DEVICE
+  void
+  Compute( IN_ARRAY const & input, real64 & value, OUT_ARRAY && derivatives ) const;
+
+private:
+
+  /// Table interpolation method
+  TableFunction::InterpolationType m_interpolationMethod;
+
+  /// An array of table axes
+  ArrayOfArraysView< real64 const > m_coordinates;
+
+  /// Table values (in fortran order)
+  arrayView1d< real64 const > m_values;
+
+  /// Number of active table dimensions
+  localIndex m_dimensions;
+
+  /// Size of the table
+  arrayView1d< localIndex const > m_size;
+
+  /// Array used to locate values within ND tables
+  arrayView1d< localIndex const > m_indexIncrement;
+
+  /**
+   * @brief The corners of the box that surround the value in N dimensions
+   * m_corners should be of size m_maxDimensions x (2^m_maxDimensions)
+   */
+  localIndex m_corners[maxDimensions][16];
+
+  /// The number of active table corners
+  localIndex m_numCorners;
+
+};
+
+
+template< typename IN_ARRAY, typename OUT_ARRAY >
+GEOSX_HOST_DEVICE
+void
+TableFunctionKernelWrapper::Compute( IN_ARRAY const & input, real64 & value, OUT_ARRAY && derivatives ) const
+{
+  value = 0.0;
+  for( localIndex i = 0; i < m_dimensions; ++i )
+  {
+    derivatives[i] = 0.0;
+  }
+
+  // Linear interpolation
+  if( m_interpolationMethod == TableFunction::InterpolationType::Linear )
+  {
+    localIndex bounds[maxDimensions][2] = { 0 };
+    real64 weights[maxDimensions][2] = { 0.0 };
+    real64 dWeights_dInput[maxDimensions][2] = { 0.0 };
+    real64 dCornerValue_dInput[2] = { 0.0 };
+
+    // Determine position, weights
+    for( localIndex ii=0; ii<m_dimensions; ++ii )
+    {
+      if( input[ii] <= m_coordinates[ii][0] )
+      {
+        // Coordinate is to the left of this axis
+        bounds[ii][0] = 0;
+        bounds[ii][1] = 0;
+        weights[ii][0] = 0;
+        weights[ii][1] = 1;
+        dWeights_dInput[ii][0] = 0;
+        dWeights_dInput[ii][1] = 0;
+      }
+      else if( input[ii] >= m_coordinates[ii][m_size[ii] - 1] )
+      {
+        // Coordinate is to the right of this axis
+        bounds[ii][0] = m_size[ii] - 1;
+        bounds[ii][1] = bounds[ii][0];
+        weights[ii][0] = 1;
+        weights[ii][1] = 0;
+        dWeights_dInput[ii][0] = 0;
+        dWeights_dInput[ii][1] = 0;
+      }
+      else
+      {
+        // Find the coordinate index
+        ///TODO make this fast
+        // Note: find uses a binary search...  If we assume coordinates are
+        // evenly spaced, we can speed things up considerably
+        auto lower = LvArray::sortedArrayManipulation::find( m_coordinates[ii].begin(), m_coordinates.sizeOfArray( ii ), input[ii] );
+        bounds[ii][1] = LvArray::integerConversion< localIndex >( lower );
+        bounds[ii][0] = bounds[ii][1] - 1;
+
+        real64 dx = m_coordinates[ii][bounds[ii][1]] - m_coordinates[ii][bounds[ii][0]];
+        weights[ii][0] = 1.0 - (input[ii] - m_coordinates[ii][bounds[ii][0]]) / dx;
+        weights[ii][1] = 1.0 - weights[ii][0];
+        dWeights_dInput[ii][0] = -1.0 / dx;
+        dWeights_dInput[ii][1] = -dWeights_dInput[ii][0];
+      }
+    }
+
+    // Calculate the result
+    for( localIndex ii=0; ii<m_numCorners; ++ii )
+    {
+      // Find array index
+      localIndex tableIndex = 0;
+      for( localIndex jj=0; jj<m_dimensions; ++jj )
+      {
+        tableIndex += bounds[jj][m_corners[jj][ii]] * m_indexIncrement[jj];
+      }
+
+      // Determine weighted value
+      real64 cornerValue = m_values[tableIndex];
+      for( localIndex jj=0; jj<m_dimensions; ++jj )
+      {
+        dCornerValue_dInput[jj] = cornerValue;
+      }
+
+      for( localIndex jj=0; jj<m_dimensions; ++jj )
+      {
+        cornerValue *= weights[jj][m_corners[jj][ii]];
+        for( localIndex kk = 0; kk<m_dimensions; ++kk )
+        {
+          dCornerValue_dInput[kk] *= ( jj == kk )
+                             ? dWeights_dInput[kk][m_corners[kk][ii]]
+                             : weights[kk][m_corners[kk][ii]];
+        }
+      }
+
+      for( localIndex jj=0; jj<m_dimensions; ++jj )
+      {
+        derivatives[jj] += dCornerValue_dInput[jj];
+      }
+      value += cornerValue;
+    }
+  }
+  // Nearest, Upper, Lower interpolation methods
+  else
+  {
+    // Determine the index to the nearest table entry
+    localIndex tableIndex = 0;
+    for( localIndex ii=0; ii<m_dimensions; ++ii )
+    {
+      // Determine the index along each table axis
+      localIndex subIndex = 0;
+
+      if( input[ii] <= m_coordinates[ii][0] )
+      {
+        // Coordinate is to the left of the table axis
+        subIndex = 0;
+      }
+      else if( input[ii] >= m_coordinates[ii][m_size[ii] - 1] )
+      {
+        // Coordinate is to the right of the table axis
+        subIndex = m_size[ii] - 1;
+      }
+      else
+      {
+        // Coordinate is within the table axis
+        // Note: std::distance will return the index of the upper table vertex
+        auto lower = LvArray::sortedArrayManipulation::find( m_coordinates[ii].begin(), m_coordinates.sizeOfArray( ii ), input[ii] );
+        subIndex = LvArray::integerConversion< localIndex >( lower );
+
+        // Interpolation types:
+        //   - Nearest returns the value of the closest table vertex
+        //   - Upper returns the value of the next table vertex
+        //   - Lower returns the value of the previous table vertex
+        if( m_interpolationMethod == TableFunction::InterpolationType::Nearest )
+        {
+          if((input[ii] - m_coordinates[ii][subIndex - 1]) <= (m_coordinates[ii][subIndex] - input[ii]))
+          {
+            --subIndex;
+          }
+        }
+        else if( m_interpolationMethod == TableFunction::InterpolationType::Lower )
+        {
+          if( subIndex > 0 )
+          {
+            --subIndex;
+          }
+        }
+      }
+
+      // Increment the global table index
+      tableIndex += subIndex * m_indexIncrement[ii];
+    }
+
+    // Retrieve the nearest value
+    value = m_values[tableIndex];
+  }
+}
+
+ENUM_STRINGS( TableFunction::InterpolationType, "linear", "nearest", "upper", "lower" )
 
 } /* namespace geosx */
 

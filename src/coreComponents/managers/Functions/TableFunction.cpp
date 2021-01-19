@@ -82,7 +82,7 @@ TableFunction::~TableFunction()
 
 
 template< typename T >
-void TableFunction::parse_file( array1d< T > & target, string const & filename, char delimiter )
+void TableFunction::parseFile( array1d< T > & target, string const & filename, char delimiter )
 {
   std::ifstream inputStream( filename.c_str());
   std::string lineString;
@@ -127,7 +127,7 @@ void TableFunction::InitializeFunction()
   {
     // 1D Table
     m_dimensions = 1;
-    m_coordinates.emplace_back( m_tableCoordinates1D );
+    m_coordinates.appendArray( m_tableCoordinates1D.begin(), m_tableCoordinates1D.end() );
     m_size.emplace_back( m_tableCoordinates1D.size());
 
     // Check to make sure that the table dimensions match
@@ -137,12 +137,14 @@ void TableFunction::InitializeFunction()
   {
     // ND Table
     m_dimensions = LvArray::integerConversion< localIndex >( m_coordinateFiles.size());
-    m_coordinates.resize( m_dimensions );
 
-    parse_file( m_values, m_voxelFile, ',' );
+    parseFile( m_values, m_voxelFile, ',' );
+    array1d< real64 > tmp;
     for( localIndex ii=0; ii<m_dimensions; ++ii )
     {
-      parse_file( m_coordinates[ii], m_coordinateFiles[ii], ',' );
+      tmp.resize( 0 );
+      parseFile( tmp, m_coordinateFiles[ii], ',' );
+      m_coordinates.appendArray( tmp.begin(), tmp.end() );
       m_size.emplace_back( m_coordinates[ii].size());
     }
   }
@@ -177,129 +179,47 @@ void TableFunction::reInitializeFunction()
       m_corners[jj][ii] = int(ii / pow( 2, jj )) % 2;
     }
   }
+
+  // Create the kernel wrapper
+  // Warning! This function must be called AFTER all the input parameters have been set (interpolation method, etc)
+  // TODO: see if there is a better way, this seems quite error prone
+  m_kernelWrapper =
+    std::make_unique< TableFunctionKernelWrapper >( m_interpolationMethod,
+                                                    m_coordinates.toViewConst(),
+                                                    m_values.toViewConst(),
+                                                    m_dimensions,
+                                                    m_size.toViewConst(),
+                                                    m_indexIncrement.toViewConst(),
+                                                    m_corners,
+                                                    m_numCorners );
 }
 
+TableFunctionKernelWrapper TableFunction::createKernelWrapper() const
+{
+  return TableFunctionKernelWrapper( m_interpolationMethod,
+                                     m_coordinates.toViewConst(),
+                                     m_values.toViewConst(),
+                                     m_dimensions,
+                                     m_size.toViewConst(),
+                                     m_indexIncrement.toViewConst(),
+                                     m_corners,
+                                     m_numCorners );
+}
 
 real64 TableFunction::Evaluate( real64 const * const input ) const
 {
-  real64 result = 0.0;
-
-  // Linear interpolation
-  if( m_interpolationMethod == InterpolationType::Linear )
+  // 1) copy the pointer input into an array
+  real64 scalarValue = 0;
+  stackArray1d< real64, maxDimensions > inputArray( m_dimensions );
+  stackArray1d< real64, maxDimensions > derivativesArray( m_dimensions );
+  for( localIndex ii=0; ii<m_dimensions; ++ii )
   {
-    localIndex bounds[m_maxDimensions][2];
-    real64 weights[m_maxDimensions][2];
-
-    // Determine position, weights
-    for( localIndex ii=0; ii<m_dimensions; ++ii )
-    {
-      if( input[ii] <= m_coordinates[ii][0] )
-      {
-        // Coordinate is to the left of this axis
-        bounds[ii][0] = 0;
-        bounds[ii][1] = 0;
-        weights[ii][0] = 0;
-        weights[ii][1] = 1;
-      }
-      else if( input[ii] >= m_coordinates[ii][m_size[ii] - 1] )
-      {
-        // Coordinate is to the right of this axis
-        bounds[ii][0] = m_size[ii] - 1;
-        bounds[ii][1] = bounds[ii][0];
-        weights[ii][0] = 1;
-        weights[ii][1] = 0;
-      }
-      else
-      {
-        // Find the coordinate index
-        ///TODO make this fast
-        // Note: lower_bound uses a binary search...  If we assume coordinates are
-        // evenly spaced, we can speed things up considerably
-        auto lower = std::lower_bound( m_coordinates[ii].begin(), m_coordinates[ii].end(), input[ii] );
-        bounds[ii][1] = LvArray::integerConversion< localIndex >( std::distance( m_coordinates[ii].begin(), lower ));
-        bounds[ii][0] = bounds[ii][1] - 1;
-
-        real64 dx = m_coordinates[ii][bounds[ii][1]] - m_coordinates[ii][bounds[ii][0]];
-        weights[ii][0] = 1.0 - (input[ii] - m_coordinates[ii][bounds[ii][0]]) / dx;
-        weights[ii][1] = 1.0 - weights[ii][0];
-      }
-    }
-
-    // Calculate the result
-    for( localIndex ii=0; ii<m_numCorners; ++ii )
-    {
-      // Find array index
-      localIndex tableIndex = 0;
-      for( localIndex jj=0; jj<m_dimensions; ++jj )
-      {
-        tableIndex += bounds[jj][m_corners[jj][ii]] * m_indexIncrement[jj];
-      }
-
-      // Determine weighted value
-      real64 cornerValue = m_values[tableIndex];
-      for( localIndex jj=0; jj<m_dimensions; ++jj )
-      {
-        cornerValue *= weights[jj][m_corners[jj][ii]];
-      }
-      result += cornerValue;
-    }
-  }
-  // Nearest, Upper, Lower interpolation methods
-  else
-  {
-    // Determine the index to the nearest table entry
-    localIndex tableIndex = 0;
-    for( localIndex ii=0; ii<m_dimensions; ++ii )
-    {
-      // Determine the index along each table axis
-      localIndex subIndex = 0;
-
-      if( input[ii] <= m_coordinates[ii][0] )
-      {
-        // Coordinate is to the left of the table axis
-        subIndex = 0;
-      }
-      else if( input[ii] >= m_coordinates[ii][m_size[ii] - 1] )
-      {
-        // Coordinate is to the right of the table axis
-        subIndex = m_size[ii] - 1;
-      }
-      else
-      {
-        // Coordinate is within the table axis
-        // Note: std::distance will return the index of the upper table vertex
-        auto lower = std::lower_bound( m_coordinates[ii].begin(), m_coordinates[ii].end(), input[ii] );
-        subIndex = LvArray::integerConversion< localIndex >( std::distance( m_coordinates[ii].begin(), lower ));
-
-        // Interpolation types:
-        //   - Nearest returns the value of the closest table vertex
-        //   - Upper returns the value of the next table vertex
-        //   - Lower returns the value of the previous table vertex
-        if( m_interpolationMethod == InterpolationType::Nearest )
-        {
-          if((input[ii] - m_coordinates[ii][subIndex - 1]) <= (m_coordinates[ii][subIndex] - input[ii]))
-          {
-            --subIndex;
-          }
-        }
-        else if( m_interpolationMethod == InterpolationType::Lower )
-        {
-          if( subIndex > 0 )
-          {
-            --subIndex;
-          }
-        }
-      }
-
-      // Increment the global table index
-      tableIndex += subIndex * m_indexIncrement[ii];
-    }
-
-    // Retrieve the nearest value
-    result = m_values[tableIndex];
+    inputArray[ii] = input[ii];
   }
 
-  return result;
+  // 2) interpolate in table, return scalar value (derivates are discarded)
+  m_kernelWrapper->Compute( inputArray, scalarValue, derivativesArray );
+  return scalarValue;
 }
 
 REGISTER_CATALOG_ENTRY( FunctionBase, TableFunction, std::string const &, Group * const )

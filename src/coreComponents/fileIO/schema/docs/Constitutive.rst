@@ -25,6 +25,7 @@ PoroLinearElasticAnisotropic          node         :ref:`XML_PoroLinearElasticAn
 PoroLinearElasticIsotropic            node         :ref:`XML_PoroLinearElasticIsotropic`            
 PoroLinearElasticTransverseIsotropic  node         :ref:`XML_PoroLinearElasticTransverseIsotropic`  
 ProppantSlurryFluid                   node         :ref:`XML_ProppantSlurryFluid`                   
+TableRelativePermeability             node         :ref:`XML_TableRelativePermeability`             
 VanGenuchtenBakerRelativePermeability node         :ref:`XML_VanGenuchtenBakerRelativePermeability` 
 VanGenuchtenCapillaryPressure         node         :ref:`XML_VanGenuchtenCapillaryPressure`         
 ===================================== ==== ======= ================================================ 

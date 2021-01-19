@@ -52,13 +52,14 @@ TEST( FunctionTests, 1DTable )
   localIndex Ntest = 6;
 
   // Setup table
-  array1d< real64_array > coordinates;
-  coordinates.resize( 1 );
-  coordinates[0].resize( Naxis );
-  coordinates[0][0] = -1.0;
-  coordinates[0][1] = 0.0;
-  coordinates[0][2] = 2.0;
-  coordinates[0][3] = 5.0;
+  ArrayOfArrays< real64 > coordinates;
+  array1d< real64 > tmp;
+  tmp.resize( Naxis );
+  tmp[0] = -1.0;
+  tmp[1] = 0.0;
+  tmp[2] = 2.0;
+  tmp[3] = 5.0;
+  coordinates.appendArray( tmp.begin(), tmp.end() );
 
   real64_array values( Naxis );
   values[0] = 1.0;
@@ -89,6 +90,7 @@ TEST( FunctionTests, 1DTable )
   testExpected[4] = 3.0;
   testExpected[5] = 7.0;
   table_a->setInterpolationMethod( TableFunction::InterpolationType::Linear );
+  table_a->reInitializeFunction();
   evaluate1DFunction( table_a, testCoordinates, testExpected );
 
   // Upper
@@ -99,6 +101,7 @@ TEST( FunctionTests, 1DTable )
   testExpected[4] = 7.0;
   testExpected[5] = 7.0;
   table_a->setInterpolationMethod( TableFunction::InterpolationType::Upper );
+  table_a->reInitializeFunction();
   evaluate1DFunction( table_a, testCoordinates, testExpected );
 
   // Lower
@@ -109,6 +112,7 @@ TEST( FunctionTests, 1DTable )
   testExpected[4] = -5.0;
   testExpected[5] = 7.0;
   table_a->setInterpolationMethod( TableFunction::InterpolationType::Lower );
+  table_a->reInitializeFunction();
   evaluate1DFunction( table_a, testCoordinates, testExpected );
 
   // Nearest
@@ -119,6 +123,7 @@ TEST( FunctionTests, 1DTable )
   testExpected[4] = 7.0;
   testExpected[5] = 7.0;
   table_a->setInterpolationMethod( TableFunction::InterpolationType::Nearest );
+  table_a->reInitializeFunction();
   evaluate1DFunction( table_a, testCoordinates, testExpected );
 
 }
@@ -138,17 +143,19 @@ TEST( FunctionTests, 2DTable )
   string inputName = "coordinates";
 
   // Setup table
-  array1d< real64_array > coordinates;
-  coordinates.resize( Ndim );
-  coordinates[0].resize( Nx );
-  coordinates[0][0] = -1.0;
-  coordinates[0][1] = 0.0;
-  coordinates[0][2] = 2.0;
-  coordinates[1].resize( Ny );
-  coordinates[1][0] = -1.0;
-  coordinates[1][1] = 0.0;
-  coordinates[1][2] = 1.0;
-  coordinates[1][3] = 2.0;
+  ArrayOfArrays< real64 > coordinates;
+  array1d< real64 > tmp;
+  tmp.resize( Nx );
+  tmp[0] = -1.0;
+  tmp[1] = 0.0;
+  tmp[2] = 2.0;
+  coordinates.appendArray( tmp.begin(), tmp.end() );
+  tmp.resize( Ny );
+  tmp[0] = -1.0;
+  tmp[1] = 0.0;
+  tmp[2] = 1.0;
+  tmp[3] = 2.0;
+  coordinates.appendArray( tmp.begin(), tmp.end() );
 
   real64_array values( Nx * Ny );
   localIndex tablePosition = 0;
@@ -242,26 +249,30 @@ TEST( FunctionTests, 4DTable_multipleInputs )
   string timeName = "time";
 
   // Setup table
-  array1d< real64_array > coordinates;
-  coordinates.resize( Ndim );
-  coordinates[0].resize( Nx );
-  coordinates[0][0] = -1.0;
-  coordinates[0][1] = 0.0;
-  coordinates[0][2] = 1.0;
-  coordinates[1].resize( Ny );
-  coordinates[1][0] = -1.0;
-  coordinates[1][1] = 0.0;
-  coordinates[1][2] = 0.5;
-  coordinates[1][3] = 1.0;
-  coordinates[2].resize( Nz );
-  coordinates[2][0] = -1.0;
-  coordinates[2][1] = -0.4;
-  coordinates[2][2] = 0.3;
-  coordinates[2][3] = 0.5;
-  coordinates[2][4] = 1.0;
-  coordinates[3].resize( Nt );
-  coordinates[3][0] = -1.0;
-  coordinates[3][1] = 1.0;
+  ArrayOfArrays< real64 > coordinates;
+  array1d< real64 > tmp;
+  tmp.resize( Nx );
+  tmp[0] = -1.0;
+  tmp[1] = 0.0;
+  tmp[2] = 1.0;
+  coordinates.appendArray( tmp.begin(), tmp.end() );
+  tmp.resize( Ny );
+  tmp[0] = -1.0;
+  tmp[1] = 0.0;
+  tmp[2] = 0.5;
+  tmp[3] = 1.0;
+  coordinates.appendArray( tmp.begin(), tmp.end() );
+  tmp.resize( Nz );
+  tmp[0] = -1.0;
+  tmp[1] = -0.4;
+  tmp[2] = 0.3;
+  tmp[3] = 0.5;
+  tmp[4] = 1.0;
+  coordinates.appendArray( tmp.begin(), tmp.end() );
+  tmp.resize( Nt );
+  tmp[0] = -1.0;
+  tmp[1] = 1.0;
+  coordinates.appendArray( tmp.begin(), tmp.end() );
 
   real64_array values( Nx * Ny * Nz * Nt );
   localIndex tablePosition = 0;

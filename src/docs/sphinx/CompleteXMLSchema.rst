@@ -631,6 +631,13 @@ Element: TableFunction
 .. include:: ../../coreComponents/fileIO/schema/docs/TableFunction.rst
 
 
+.. _XML_TableRelativePermeability:
+
+Element: TableRelativePermeability
+==================================
+.. include:: ../../coreComponents/fileIO/schema/docs/TableRelativePermeability.rst
+
+
 .. _XML_Tasks:
 
 Element: Tasks
@@ -1361,6 +1368,13 @@ Datastructure: SymbolicFunction
 Datastructure: TableFunction
 ============================
 .. include:: ../../coreComponents/fileIO/schema/docs/TableFunction_other.rst
+
+
+.. _DATASTRUCTURE_TableRelativePermeability:
+
+Datastructure: TableRelativePermeability
+========================================
+.. include:: ../../coreComponents/fileIO/schema/docs/TableRelativePermeability_other.rst
 
 
 .. _DATASTRUCTURE_Tasks:

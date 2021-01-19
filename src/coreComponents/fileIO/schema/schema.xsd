@@ -1539,6 +1539,7 @@ the relative residual norm satisfies:
 			<xsd:element name="PoroLinearElasticIsotropic" type="PoroLinearElasticIsotropicType" />
 			<xsd:element name="PoroLinearElasticTransverseIsotropic" type="PoroLinearElasticTransverseIsotropicType" />
 			<xsd:element name="ProppantSlurryFluid" type="ProppantSlurryFluidType" />
+			<xsd:element name="TableRelativePermeability" type="TableRelativePermeabilityType" />
 			<xsd:element name="VanGenuchtenBakerRelativePermeability" type="VanGenuchtenBakerRelativePermeabilityType" />
 			<xsd:element name="VanGenuchtenCapillaryPressure" type="VanGenuchtenCapillaryPressureType" />
 		</xsd:choice>
@@ -1930,6 +1931,14 @@ the relative residual norm satisfies:
 		<xsd:attribute name="referenceProppantDensity" type="real64" default="1400" />
 		<!--referenceViscosity => Reference fluid viscosity-->
 		<xsd:attribute name="referenceViscosity" type="real64" default="0.001" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="TableRelativePermeabilityType">
+		<!--phaseNames => List of fluid phases-->
+		<xsd:attribute name="phaseNames" type="string_array" use="required" />
+		<!--relPermTableNames => List of relative permeability tables-->
+		<xsd:attribute name="relPermTableNames" type="string_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
