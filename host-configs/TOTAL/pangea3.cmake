@@ -4,8 +4,8 @@
 set(CONFIG_NAME "pangea3" CACHE PATH "") 
 
 # Set up the tpls
-set(GEOSX_TPL_ROOT_DIR /workrd/SCR/GEOSX/manualClones/thirdPartyLibs CACHE PATH "")
-set(GEOSX_TPL_DIR ${GEOSX_TPL_ROOT_DIR}/install-${CONFIG_NAME}-release CACHE PATH "")
+# Use your own location using -DGEOSX_TPL_DIR=... or by setting this variable here
+#set(GEOSX_TPL_DIR /work206/workrd/SCR/GEOSX/j0436735/pangea3/GEOSX/thirdPartyLibs/install-pangea3-release CACHE PATH "")
 
 set( HOST_COMPILER_PATH /data_local/sw/spack/0.14.1/opt/spack/linux-rhel7-power8le/gcc-4.8/gcc-8.3.0-cchkzjuh7q4ac2hnoawiyfy2bryfajkt/bin )
 
