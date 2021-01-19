@@ -59,7 +59,7 @@ Group * WellSolverBase::createChild( string const & childKey, string const & chi
   return rval;
 }
 
-void WellSolverBase::ExpandObjectCatalogs()
+void WellSolverBase::expandObjectCatalogs()
 {
   createChild( keys::wellControls, keys::wellControls );
 }
@@ -67,15 +67,15 @@ void WellSolverBase::ExpandObjectCatalogs()
 
 WellSolverBase::~WellSolverBase() = default;
 
-void WellSolverBase::PostProcessInput()
+void WellSolverBase::postProcessInput()
 {
-  SolverBase::PostProcessInput();
+  SolverBase::postProcessInput();
   CheckModelNames( m_fluidModelNames, viewKeyStruct::fluidNamesString );
 }
 
-void WellSolverBase::RegisterDataOnMesh( Group * const meshBodies )
+void WellSolverBase::registerDataOnMesh( Group * const meshBodies )
 {
-  SolverBase::RegisterDataOnMesh( meshBodies );
+  SolverBase::registerDataOnMesh( meshBodies );
 
   MeshLevel & meshLevel = *meshBodies->getGroup< MeshBody >( 0 )->getMeshLevel( 0 );
 
@@ -158,9 +158,9 @@ void WellSolverBase::UpdateStateAll( DomainPartition & domain )
 
 }
 
-void WellSolverBase::InitializePreSubGroups( Group * const rootGroup )
+void WellSolverBase::initializePreSubGroups( Group * const rootGroup )
 {
-  SolverBase::InitializePreSubGroups( rootGroup );
+  SolverBase::initializePreSubGroups( rootGroup );
 
   DomainPartition * domain = rootGroup->getGroup< DomainPartition >( keys::domain );
 

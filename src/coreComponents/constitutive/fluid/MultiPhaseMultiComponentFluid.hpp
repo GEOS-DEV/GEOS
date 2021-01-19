@@ -271,9 +271,9 @@ public:
 
 
 protected:
-  virtual void PostProcessInput() override;
+  virtual void postProcessInput() override;
 
-  virtual void InitializePostSubGroups( Group * const group ) override;
+  virtual void initializePostSubGroups( Group * const group ) override;
 
 private:
 

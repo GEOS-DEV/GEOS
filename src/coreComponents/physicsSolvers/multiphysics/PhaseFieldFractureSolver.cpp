@@ -62,7 +62,7 @@ PhaseFieldFractureSolver::PhaseFieldFractureSolver( const std::string & name,
 
 }
 
-void PhaseFieldFractureSolver::RegisterDataOnMesh( dataRepository::Group * const MeshBodies )
+void PhaseFieldFractureSolver::registerDataOnMesh( dataRepository::Group * const MeshBodies )
 {
   for( auto & mesh : MeshBodies->getSubGroups() )
   {
@@ -108,7 +108,7 @@ void PhaseFieldFractureSolver::ImplicitStepComplete( real64 const & GEOSX_UNUSED
                                                      DomainPartition & GEOSX_UNUSED_PARAM( domain ) )
 {}
 
-void PhaseFieldFractureSolver::PostProcessInput()
+void PhaseFieldFractureSolver::postProcessInput()
 {
   if( m_couplingTypeOption == CouplingTypeOption::FixedStress )
   {

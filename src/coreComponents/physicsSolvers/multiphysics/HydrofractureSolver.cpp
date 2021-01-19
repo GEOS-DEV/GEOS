@@ -85,7 +85,7 @@ HydrofractureSolver::HydrofractureSolver( const std::string & name,
 }
 
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
-void HydrofractureSolver::RegisterDataOnMesh( dataRepository::Group * const MeshBodies )
+void HydrofractureSolver::registerDataOnMesh( dataRepository::Group * const MeshBodies )
 {
   for( auto & mesh : MeshBodies->getSubGroups() )
   {
@@ -147,7 +147,7 @@ void HydrofractureSolver::ImplicitStepComplete( real64 const & time_n,
   m_solidSolver->ImplicitStepComplete( time_n, dt, domain );
 }
 
-void HydrofractureSolver::PostProcessInput()
+void HydrofractureSolver::postProcessInput()
 {
   m_solidSolver = this->getParent()->getGroup< SolidMechanicsLagrangianFEM >( m_solidSolverName );
   GEOSX_ERROR_IF( m_solidSolver == nullptr, this->getName() << ": invalid solid solver name: " << m_solidSolverName );

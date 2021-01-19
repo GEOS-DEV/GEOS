@@ -74,7 +74,7 @@ protected:
    * @brief This function provides capability to post process input values prior to
    * any other initialization operations.
    */
-  virtual void PostProcessInput() override final;
+  virtual void postProcessInput() override final;
 
 private:
 

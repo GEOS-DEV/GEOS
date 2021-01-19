@@ -95,9 +95,9 @@ CompositionalMultiphaseFluid::deliverClone( string const & name,
   return clone;
 }
 
-void CompositionalMultiphaseFluid::PostProcessInput()
+void CompositionalMultiphaseFluid::postProcessInput()
 {
-  MultiFluidPVTPackageWrapper::PostProcessInput();
+  MultiFluidPVTPackageWrapper::postProcessInput();
 
   localIndex const NC = numFluidComponents();
   localIndex const NP = numFluidPhases();

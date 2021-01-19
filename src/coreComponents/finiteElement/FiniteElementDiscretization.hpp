@@ -97,7 +97,7 @@ private:
   /// Optional string indicating any specialized formulation type.
   string m_formulation;
 
-  void PostProcessInput() override final;
+  void postProcessInput() override final;
 
 };
 

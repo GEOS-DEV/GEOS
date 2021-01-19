@@ -118,7 +118,7 @@ LaplaceFEM::~LaplaceFEM()
      The description here is simply an additional metadata for the newly mounted property.
  */
 //START_SPHINX_INCLUDE_02
-void LaplaceFEM::RegisterDataOnMesh( Group * const MeshBodies )
+void LaplaceFEM::registerDataOnMesh( Group * const MeshBodies )
 {
   for( auto & mesh : MeshBodies->getSubGroups() )
   {

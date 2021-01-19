@@ -76,9 +76,9 @@ public:
    */
   static string CatalogName() { return "SolidMechanics_LagrangianFEM"; }
 
-  virtual void InitializePreSubGroups( Group * const rootGroup ) override;
+  virtual void initializePreSubGroups( Group * const rootGroup ) override;
 
-  virtual void RegisterDataOnMesh( Group * const MeshBody ) override final;
+  virtual void registerDataOnMesh( Group * const MeshBody ) override final;
 
   void updateIntrinsicNodalData( DomainPartition * const domain );
 
@@ -278,7 +278,7 @@ public:
   }
 
 protected:
-  virtual void PostProcessInput() override final;
+  virtual void postProcessInput() override final;
 
   virtual void initializePostInitialConditions_PreSubGroups( dataRepository::Group * const problemManager ) override final;
 

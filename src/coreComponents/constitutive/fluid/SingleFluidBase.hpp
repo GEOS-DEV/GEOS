@@ -198,7 +198,7 @@ public:
 
 protected:
 
-  virtual void PostProcessInput() override;
+  virtual void postProcessInput() override;
 
   real64 m_defaultDensity;
   real64 m_defaultViscosity;

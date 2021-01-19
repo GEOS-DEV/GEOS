@@ -148,7 +148,7 @@ public:
 
 protected:
 
-  virtual void PostProcessInput() override;
+  virtual void postProcessInput() override;
 
   /**
    * @brief Function called internally to resize member arrays

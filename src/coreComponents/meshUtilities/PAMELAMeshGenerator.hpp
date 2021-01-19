@@ -93,7 +93,7 @@ protected:
    * @brief This function provides capability to post process input values prior to
    * any other initialization operations.
    */
-  void PostProcessInput() override final;
+  void postProcessInput() override final;
 
 
 private:

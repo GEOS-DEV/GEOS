@@ -120,7 +120,7 @@ public:
   real64 const & frictionCoefficient() const { return m_frictionCoefficient; }
 
 protected:
-  virtual void PostProcessInput() override;
+  virtual void postProcessInput() override;
 
 private:
 

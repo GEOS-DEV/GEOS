@@ -67,7 +67,7 @@ PAMELAMeshGenerator::~PAMELAMeshGenerator()
 void PAMELAMeshGenerator::GenerateElementRegions( DomainPartition & GEOSX_UNUSED_PARAM( domain ) )
 {}
 
-void PAMELAMeshGenerator::PostProcessInput()
+void PAMELAMeshGenerator::postProcessInput()
 {
   m_pamelaMesh =
     std::unique_ptr< PAMELA::Mesh >

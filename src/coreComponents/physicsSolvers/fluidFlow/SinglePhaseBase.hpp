@@ -69,7 +69,7 @@ public:
    */
   virtual ~SinglePhaseBase() override = default;
 
-  virtual void RegisterDataOnMesh( Group * const MeshBodies ) override;
+  virtual void registerDataOnMesh( Group * const MeshBodies ) override;
 
   virtual void SetupSystem( DomainPartition & domain,
                             DofManager & dofManager,
@@ -235,7 +235,7 @@ public:
    */
   virtual void ResetViews( MeshLevel & mesh ) override;
 
-  virtual void InitializePreSubGroups( Group * const rootGroup ) override;
+  virtual void initializePreSubGroups( Group * const rootGroup ) override;
 
   virtual void initializePostInitialConditions_PreSubGroups( dataRepository::Group * const rootGroup ) override;
 

@@ -248,7 +248,7 @@ public:
   ///@}
 
 protected:
-  virtual void PostProcessInput() override;
+  virtual void postProcessInput() override;
 
   /// The default density for new allocations.
   real64 m_defaultDensity = 0;

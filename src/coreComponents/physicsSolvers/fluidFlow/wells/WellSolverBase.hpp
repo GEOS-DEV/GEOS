@@ -87,7 +87,7 @@ public:
   virtual Group * createChild( string const & childKey, string const & childName ) override;
 
   /// Expand catalog for schema generation
-  virtual void ExpandObjectCatalogs() override;
+  virtual void expandObjectCatalogs() override;
 
 
   /**
@@ -159,7 +159,7 @@ public:
    */
   /**@{*/
 
-  virtual void RegisterDataOnMesh( Group * const meshBodies ) override;
+  virtual void registerDataOnMesh( Group * const meshBodies ) override;
 
   virtual void SetupDofs( DomainPartition const & domain,
                           DofManager & dofManager ) const override;
@@ -268,9 +268,9 @@ private:
   void PrecomputeData( DomainPartition & domain );
 
 protected:
-  virtual void PostProcessInput() override;
+  virtual void postProcessInput() override;
 
-  virtual void InitializePreSubGroups( Group * const rootGroup ) override;
+  virtual void initializePreSubGroups( Group * const rootGroup ) override;
 
   virtual void initializePostInitialConditions_PreSubGroups( Group * const rootGroup ) override;
 

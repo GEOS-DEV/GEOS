@@ -62,7 +62,7 @@ public:
   /**
    * @brief This method is used to expand any catalogs in the data structure
    */
-  virtual void ExpandObjectCatalogs() override;
+  virtual void expandObjectCatalogs() override;
 
   /**
    * @brief The main execution loop for the code.

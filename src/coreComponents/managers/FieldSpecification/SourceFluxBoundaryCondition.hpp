@@ -54,7 +54,7 @@ public:
    * @param[in] rootGroup A group that is passed in to the initialization functions
    *                      in order to facilitate the initialization.
    */
-  virtual void InitializePreSubGroups( Group * const rootGroup ) override;
+  virtual void initializePreSubGroups( Group * const rootGroup ) override;
 
   /**
    * @brief Static Factory Catalog Functions

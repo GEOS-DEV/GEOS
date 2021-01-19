@@ -133,7 +133,7 @@ public:
   };
 
 protected:
-  virtual void InitializePreSubGroups( Group * const ) override;
+  virtual void initializePreSubGroups( Group * const ) override;
 
 
 private:

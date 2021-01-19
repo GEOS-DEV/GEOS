@@ -83,7 +83,7 @@ ContactRelationBase::createChild( string const & catalogKey, string const & chil
 }
 
 
-void ContactRelationBase::SetSchemaDeviations( xmlWrapper::xmlNode,
+void ContactRelationBase::setSchemaDeviations( xmlWrapper::xmlNode,
                                                xmlWrapper::xmlNode schemaParent,
                                                integer )
 {
@@ -102,7 +102,7 @@ void ContactRelationBase::SetSchemaDeviations( xmlWrapper::xmlNode,
 
 
 
-void ContactRelationBase::InitializePreSubGroups( Group * const )
+void ContactRelationBase::initializePreSubGroups( Group * const )
 {
   TableFunction * const apertureTable = dynamic_cast< TableFunction * >(m_apertureFunction);
   if( apertureTable!=nullptr )

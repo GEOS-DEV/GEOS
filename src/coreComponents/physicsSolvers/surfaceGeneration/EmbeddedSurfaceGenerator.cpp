@@ -62,10 +62,10 @@ EmbeddedSurfaceGenerator::EmbeddedSurfaceGenerator( const std::string & name,
 EmbeddedSurfaceGenerator::~EmbeddedSurfaceGenerator()
 {}
 
-void EmbeddedSurfaceGenerator::RegisterDataOnMesh( Group * const GEOSX_UNUSED_PARAM( MeshBodies ) )
+void EmbeddedSurfaceGenerator::registerDataOnMesh( Group * const GEOSX_UNUSED_PARAM( MeshBodies ) )
 {}
 
-void EmbeddedSurfaceGenerator::InitializePostSubGroups( Group * const problemManager )
+void EmbeddedSurfaceGenerator::initializePostSubGroups( Group * const problemManager )
 {
   /*
    * Here we generate embedded elements for fractures (or faults) that already exist in the domain and

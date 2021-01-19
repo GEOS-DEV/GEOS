@@ -94,9 +94,9 @@ CompositionalMultiphaseFlow::CompositionalMultiphaseFlow( const string & name,
 
 }
 
-void CompositionalMultiphaseFlow::PostProcessInput()
+void CompositionalMultiphaseFlow::postProcessInput()
 {
-  FlowSolverBase::PostProcessInput();
+  FlowSolverBase::postProcessInput();
   CheckModelNames( m_relPermModelNames, viewKeyStruct::relPermNamesString );
   m_capPressureFlag = CheckModelNames( m_capPressureModelNames, viewKeyStruct::capPressureNamesString, true );
 
@@ -106,9 +106,9 @@ void CompositionalMultiphaseFlow::PostProcessInput()
                          "The maximum absolute change in component fraction must larger or equal to 0.0" );
 }
 
-void CompositionalMultiphaseFlow::RegisterDataOnMesh( Group * const MeshBodies )
+void CompositionalMultiphaseFlow::registerDataOnMesh( Group * const MeshBodies )
 {
-  FlowSolverBase::RegisterDataOnMesh( MeshBodies );
+  FlowSolverBase::registerDataOnMesh( MeshBodies );
 
   for( auto & mesh : MeshBodies->getSubGroups() )
   {
@@ -227,9 +227,9 @@ void CompositionalMultiphaseFlow::ValidateConstitutiveModels( constitutive::Cons
 }
 
 
-void CompositionalMultiphaseFlow::InitializePreSubGroups( Group * const rootGroup )
+void CompositionalMultiphaseFlow::initializePreSubGroups( Group * const rootGroup )
 {
-  FlowSolverBase::InitializePreSubGroups( rootGroup );
+  FlowSolverBase::initializePreSubGroups( rootGroup );
 
   DomainPartition * const domain = rootGroup->getGroup< DomainPartition >( keys::domain );
   ConstitutiveManager const & cm = *domain->getConstitutiveManager();

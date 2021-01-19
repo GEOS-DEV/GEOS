@@ -41,7 +41,7 @@ public:
    */
   static string CatalogName() { return "FlowProppantTransport"; }
 
-  virtual void RegisterDataOnMesh( dataRepository::Group * const MeshBodies ) override final;
+  virtual void registerDataOnMesh( dataRepository::Group * const MeshBodies ) override final;
 
   virtual real64
   SolverStep( real64 const & time_n,
@@ -70,7 +70,7 @@ public:
 
 protected:
 
-  virtual void PostProcessInput() override final;
+  virtual void postProcessInput() override final;
 
 private:
 

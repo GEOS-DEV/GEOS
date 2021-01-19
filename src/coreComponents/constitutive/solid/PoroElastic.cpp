@@ -70,9 +70,9 @@ PoroElastic< BASE >::~PoroElastic()
 {}
 
 template< typename BASE >
-void PoroElastic< BASE >::PostProcessInput()
+void PoroElastic< BASE >::postProcessInput()
 {
-  BASE::PostProcessInput();
+  BASE::postProcessInput();
 
   if( m_compressibility <= 0 )
   {

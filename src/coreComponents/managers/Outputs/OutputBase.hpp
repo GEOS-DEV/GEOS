@@ -79,7 +79,7 @@ protected:
    *        on the subgroups.
    * @param group The root group
    **/
-  virtual void InitializePreSubGroups( Group * const group ) override;
+  virtual void initializePreSubGroups( Group * const group ) override;
 
 private:
   string m_childDirectory;

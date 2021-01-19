@@ -93,7 +93,7 @@ public:
    */
   static string CatalogName() { return "SinglePhaseWell"; }
 
-  virtual void RegisterDataOnMesh( Group * const meshBodies ) override;
+  virtual void registerDataOnMesh( Group * const meshBodies ) override;
 
   /**
    * @defgroup Solver Interface Functions
@@ -214,9 +214,9 @@ public:
 
 protected:
 
-  virtual void PostProcessInput() override;
+  virtual void postProcessInput() override;
 
-  virtual void InitializePreSubGroups( Group * const rootGroup ) override;
+  virtual void initializePreSubGroups( Group * const rootGroup ) override;
 
 
 private:

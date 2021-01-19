@@ -46,9 +46,9 @@ SinglePhaseWell::SinglePhaseWell( const string & name,
   m_numDofPerWellElement = 2;
 }
 
-void SinglePhaseWell::PostProcessInput()
+void SinglePhaseWell::postProcessInput()
 {
-  WellSolverBase::PostProcessInput();
+  WellSolverBase::postProcessInput();
 
   SinglePhaseBase const * const flowSolver = getParent()->getGroup< SinglePhaseBase >( GetFlowSolverName() );
   GEOSX_ERROR_IF( flowSolver == nullptr,
@@ -56,9 +56,9 @@ void SinglePhaseWell::PostProcessInput()
                                                            "(referenced from well solver " << getName() << ")" );
 }
 
-void SinglePhaseWell::RegisterDataOnMesh( Group * const meshBodies )
+void SinglePhaseWell::registerDataOnMesh( Group * const meshBodies )
 {
-  WellSolverBase::RegisterDataOnMesh( meshBodies );
+  WellSolverBase::registerDataOnMesh( meshBodies );
 
   MeshLevel & meshLevel = *meshBodies->getGroup< MeshBody >( 0 )->getMeshLevel( 0 );
 
@@ -78,10 +78,10 @@ void SinglePhaseWell::RegisterDataOnMesh( Group * const meshBodies )
   } );
 }
 
-void SinglePhaseWell::InitializePreSubGroups( Group * const rootGroup )
+void SinglePhaseWell::initializePreSubGroups( Group * const rootGroup )
 {
 
-  WellSolverBase::InitializePreSubGroups( rootGroup );
+  WellSolverBase::initializePreSubGroups( rootGroup );
 
   DomainPartition * const domain = rootGroup->getGroup< DomainPartition >( keys::domain );
   MeshLevel & meshLevel = *domain->getMeshBody( 0 )->getMeshLevel( 0 );

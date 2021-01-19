@@ -72,7 +72,7 @@ public:
   static string CatalogName()
   { return "SinglePhaseHybridFVM"; }
 
-  virtual void RegisterDataOnMesh( Group * const MeshBodies ) override;
+  virtual void registerDataOnMesh( Group * const MeshBodies ) override;
 
   /**
    * @defgroup Solver Interface Functions
@@ -166,7 +166,7 @@ public:
   groupKeyStruct const & groupKeys() const
   { return groupKeysSinglePhaseHybridFVM; }
 
-  virtual void InitializePreSubGroups( dataRepository::Group * const rootGroup ) override;
+  virtual void initializePreSubGroups( dataRepository::Group * const rootGroup ) override;
 
   virtual void initializePostInitialConditions_PreSubGroups( dataRepository::Group * const rootGroup ) override;
 

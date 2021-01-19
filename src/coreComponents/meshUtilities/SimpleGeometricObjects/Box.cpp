@@ -59,7 +59,7 @@ Box::~Box()
 
 
 
-void Box::PostProcessInput()
+void Box::postProcessInput()
 {
   LvArray::tensorOps::copy< 3 >( m_boxCenter, m_min );
   LvArray::tensorOps::add< 3 >( m_boxCenter, m_max );

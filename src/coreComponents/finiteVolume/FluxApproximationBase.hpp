@@ -211,7 +211,7 @@ public:
 
 protected:
 
-  virtual void RegisterDataOnMesh( Group * const meshBodies ) override;
+  virtual void registerDataOnMesh( Group * const meshBodies ) override;
 
   virtual void initializePostInitialConditions_PreSubGroups( Group * const rootGroup ) override;
 

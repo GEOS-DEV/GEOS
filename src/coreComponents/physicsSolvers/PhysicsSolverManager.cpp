@@ -56,7 +56,7 @@ Group * PhysicsSolverManager::createChild( string const & childKey, string const
 }
 
 
-void PhysicsSolverManager::ExpandObjectCatalogs()
+void PhysicsSolverManager::expandObjectCatalogs()
 {
   // During schema generation, register one of each type derived from SolverBase here
   for( auto & catalogIter: SolverBase::getCatalog())

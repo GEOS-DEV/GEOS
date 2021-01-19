@@ -48,11 +48,11 @@ SinglePhaseHybridFVM::SinglePhaseHybridFVM( const std::string & name,
 }
 
 
-void SinglePhaseHybridFVM::RegisterDataOnMesh( Group * const MeshBodies )
+void SinglePhaseHybridFVM::registerDataOnMesh( Group * const MeshBodies )
 {
 
   // 1) Register the cell-centered data
-  SinglePhaseBase::RegisterDataOnMesh( MeshBodies );
+  SinglePhaseBase::registerDataOnMesh( MeshBodies );
 
   // 2) Register the face data
   for( auto & mesh : MeshBodies->getSubGroups() )
@@ -69,9 +69,9 @@ void SinglePhaseHybridFVM::RegisterDataOnMesh( Group * const MeshBodies )
   }
 }
 
-void SinglePhaseHybridFVM::InitializePreSubGroups( Group * const rootGroup )
+void SinglePhaseHybridFVM::initializePreSubGroups( Group * const rootGroup )
 {
-  SinglePhaseBase::InitializePreSubGroups( rootGroup );
+  SinglePhaseBase::initializePreSubGroups( rootGroup );
 
   DomainPartition & domain = *rootGroup->getGroup< DomainPartition >( keys::domain );
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();

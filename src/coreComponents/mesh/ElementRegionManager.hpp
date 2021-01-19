@@ -174,7 +174,7 @@ public:
   /**
    * @brief Expand any catalogs in the data structure
    */
-  virtual void ExpandObjectCatalogs() override;
+  virtual void expandObjectCatalogs() override;
 
   /**
    * @brief Inform the schema generator of any deviations between the xml and GEOS data structures.
@@ -182,7 +182,7 @@ public:
    * @param schemaParent      XML node for the parent node
    * @param documentationType type of XML schema generated
    */
-  virtual void SetSchemaDeviations( xmlWrapper::xmlNode schemaRoot,
+  virtual void setSchemaDeviations( xmlWrapper::xmlNode schemaRoot,
                                     xmlWrapper::xmlNode schemaParent,
                                     integer documentationType ) override;
 

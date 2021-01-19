@@ -142,7 +142,7 @@ protected:
                   SortedArrayView< localIndex const > const & set,
                   real64_array & result ) const;
 
-  virtual void PostProcessInput() override { InitializeFunction(); }
+  virtual void postProcessInput() override { InitializeFunction(); }
 
 };
 

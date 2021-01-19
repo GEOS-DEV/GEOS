@@ -68,7 +68,7 @@ PoroelasticSolver::PoroelasticSolver( const std::string & name,
   m_linearSolverParameters.get().dofsPerNode = 3;
 }
 
-void PoroelasticSolver::RegisterDataOnMesh( dataRepository::Group * const MeshBodies )
+void PoroelasticSolver::registerDataOnMesh( dataRepository::Group * const MeshBodies )
 {
   for( auto & mesh : MeshBodies->getSubGroups() )
   {
@@ -151,9 +151,9 @@ void PoroelasticSolver::ImplicitStepComplete( real64 const & time_n,
   m_flowSolver->ImplicitStepComplete( time_n, dt, domain );
 }
 
-void PoroelasticSolver::PostProcessInput()
+void PoroelasticSolver::postProcessInput()
 {
-  SolverBase::PostProcessInput();
+  SolverBase::postProcessInput();
 
   m_flowSolver  = this->getParent()->getGroup< SinglePhaseBase >( m_flowSolverName );
   m_solidSolver = this->getParent()->getGroup< SolidMechanicsLagrangianFEM >( m_solidSolverName );

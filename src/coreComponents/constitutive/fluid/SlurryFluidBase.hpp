@@ -348,7 +348,7 @@ public:
 
 protected:
 
-  virtual void PostProcessInput() override;
+  virtual void postProcessInput() override;
 
   string_array m_componentNames;
 

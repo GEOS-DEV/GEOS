@@ -72,7 +72,7 @@ void PoreVolumeCompressibleSolid::allocateConstitutiveData( dataRepository::Grou
   m_poreVolumeMultiplier.setValues< serialPolicy >( 1.0 );
 }
 
-void PoreVolumeCompressibleSolid::PostProcessInput()
+void PoreVolumeCompressibleSolid::postProcessInput()
 {
   if( m_compressibility < 0.0 )
   {

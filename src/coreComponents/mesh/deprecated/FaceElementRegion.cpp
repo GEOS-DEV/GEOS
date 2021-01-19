@@ -41,7 +41,7 @@ FaceElementRegion::~FaceElementRegion()
 {}
 
 
-void FaceElementRegion::InitializePreSubGroups( Group * const )
+void FaceElementRegion::initializePreSubGroups( Group * const )
 {
   this->forElementSubRegions< FaceElementSubRegion >( [&] ( FaceElementSubRegion & subRegion )
   {

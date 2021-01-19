@@ -693,7 +693,7 @@ protected:
    * @param elemRegionManager reference to element manager
    * @param modelNames list of model names
    *
-   * This function is typically called from solver's InitializePreSubGroups() method,
+   * This function is typically called from solver's initializePreSubGroups() method,
    * after constitutive models have been set up but before they are used.
    * Looks up each model by name and type in each subregion of target regions.
    */

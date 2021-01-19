@@ -69,7 +69,7 @@ public:
    */
   virtual ~FlowSolverBase() override;
 
-  virtual void RegisterDataOnMesh( Group * const MeshBodies ) override;
+  virtual void registerDataOnMesh( Group * const MeshBodies ) override;
 
   void setPoroElasticCoupling() { m_poroElasticFlag = 1; }
 
@@ -148,9 +148,9 @@ protected:
 
   void PrecomputeData( MeshLevel & mesh );
 
-  virtual void PostProcessInput() override;
+  virtual void postProcessInput() override;
 
-  virtual void InitializePreSubGroups( Group * const rootGroup ) override;
+  virtual void initializePreSubGroups( Group * const rootGroup ) override;
 
   virtual void initializePostInitialConditions_PreSubGroups( Group * const rootGroup ) override;
 

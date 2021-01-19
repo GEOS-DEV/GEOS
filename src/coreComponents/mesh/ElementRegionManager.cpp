@@ -90,7 +90,7 @@ Group * ElementRegionManager::createChild( string const & childKey, string const
 
 }
 
-void ElementRegionManager::ExpandObjectCatalogs()
+void ElementRegionManager::expandObjectCatalogs()
 {
   ObjectManagerBase::CatalogInterface::CatalogType const & catalog = ObjectManagerBase::getCatalog();
   for( ObjectManagerBase::CatalogInterface::CatalogType::const_iterator iter = catalog.begin();
@@ -106,7 +106,7 @@ void ElementRegionManager::ExpandObjectCatalogs()
 }
 
 
-void ElementRegionManager::SetSchemaDeviations( xmlWrapper::xmlNode schemaRoot,
+void ElementRegionManager::setSchemaDeviations( xmlWrapper::xmlNode schemaRoot,
                                                 xmlWrapper::xmlNode schemaParent,
                                                 integer documentationType )
 {

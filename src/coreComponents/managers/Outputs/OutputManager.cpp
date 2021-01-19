@@ -44,7 +44,7 @@ Group * OutputManager::createChild( string const & childKey, string const & chil
 }
 
 
-void OutputManager::ExpandObjectCatalogs()
+void OutputManager::expandObjectCatalogs()
 {
   // During schema generation, register one of each type derived from OutputBase here
   for( auto & catalogIter: OutputBase::getCatalog() )

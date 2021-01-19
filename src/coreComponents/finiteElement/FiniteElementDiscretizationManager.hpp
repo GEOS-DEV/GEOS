@@ -34,7 +34,7 @@ public:
   virtual Group * createChild( string const & childKey, string const & childName ) override;
 
   /// This function is used to expand any catalogs in the data structure
-  virtual void ExpandObjectCatalogs() override;
+  virtual void expandObjectCatalogs() override;
 
 };
 

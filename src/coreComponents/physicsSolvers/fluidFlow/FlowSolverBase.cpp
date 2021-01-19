@@ -75,9 +75,9 @@ FlowSolverBase::FlowSolverBase( std::string const & name,
 
 }
 
-void FlowSolverBase::RegisterDataOnMesh( Group * const MeshBodies )
+void FlowSolverBase::registerDataOnMesh( Group * const MeshBodies )
 {
-  SolverBase::RegisterDataOnMesh( MeshBodies );
+  SolverBase::registerDataOnMesh( MeshBodies );
 
   for( auto & subgroup : MeshBodies->getSubGroups() )
   {
@@ -127,16 +127,16 @@ void FlowSolverBase::RegisterDataOnMesh( Group * const MeshBodies )
   }
 }
 
-void FlowSolverBase::PostProcessInput()
+void FlowSolverBase::postProcessInput()
 {
-  SolverBase::PostProcessInput();
+  SolverBase::postProcessInput();
   CheckModelNames( m_fluidModelNames, viewKeyStruct::fluidNamesString );
   CheckModelNames( m_solidModelNames, viewKeyStruct::solidNamesString );
 }
 
-void FlowSolverBase::InitializePreSubGroups( Group * const rootGroup )
+void FlowSolverBase::initializePreSubGroups( Group * const rootGroup )
 {
-  SolverBase::InitializePreSubGroups( rootGroup );
+  SolverBase::initializePreSubGroups( rootGroup );
 
   DomainPartition * const domain = rootGroup->getGroup< DomainPartition >( keys::domain );
 

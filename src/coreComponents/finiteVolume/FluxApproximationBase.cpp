@@ -58,7 +58,7 @@ FluxApproximationBase::getCatalog()
   return catalog;
 }
 
-void FluxApproximationBase::RegisterDataOnMesh( Group * const meshBodies )
+void FluxApproximationBase::registerDataOnMesh( Group * const meshBodies )
 {
   FieldSpecificationManager & fsManager = FieldSpecificationManager::get();
   meshBodies->forSubGroups< MeshBody >( [&]( MeshBody & meshBody )

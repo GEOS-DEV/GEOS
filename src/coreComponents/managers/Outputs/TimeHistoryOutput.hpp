@@ -59,7 +59,7 @@ public:
    * @param group The problem manager cast to a group.
    * @note There are operations in this function that are collective on the GEOSX comm.
    */
-  virtual void InitializePostSubGroups( Group * const group ) override;
+  virtual void initializePostSubGroups( Group * const group ) override;
 
   /**
    * @brief Writes out a time history file.

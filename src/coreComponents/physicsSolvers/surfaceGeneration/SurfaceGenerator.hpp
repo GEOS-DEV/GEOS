@@ -67,7 +67,7 @@ public:
 
   static string CatalogName() { return "SurfaceGenerator"; }
 
-  virtual void RegisterDataOnMesh( Group * const MeshBody ) override final;
+  virtual void registerDataOnMesh( Group * const MeshBody ) override final;
 
   /**
    * @defgroup Solver Interface Functions

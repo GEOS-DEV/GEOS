@@ -38,7 +38,7 @@ EmbeddedSurfaceRegion::~EmbeddedSurfaceRegion()
 {}
 
 
-void EmbeddedSurfaceRegion::InitializePreSubGroups( Group * const )
+void EmbeddedSurfaceRegion::initializePreSubGroups( Group * const )
 {
   this->forElementSubRegions< EmbeddedSurfaceSubRegion >( [&] ( EmbeddedSurfaceSubRegion & subRegion )
   {

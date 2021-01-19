@@ -54,9 +54,9 @@ DomainPartition::~DomainPartition()
 {}
 
 
-void DomainPartition::RegisterDataOnMeshRecursive( Group * const )
+void DomainPartition::registerDataOnMeshRecursive( Group * const )
 {
-  Group::RegisterDataOnMeshRecursive( getMeshBodies() );
+  Group::registerDataOnMeshRecursive( getMeshBodies() );
 }
 
 

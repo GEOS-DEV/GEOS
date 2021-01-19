@@ -87,7 +87,7 @@ InternalWellGenerator::~InternalWellGenerator()
   // TODO Auto-generated destructor stub
 }
 
-void InternalWellGenerator::PostProcessInput()
+void InternalWellGenerator::postProcessInput()
 {
   GEOSX_ERROR_IF( getName().find( "well" ) == std::string::npos,
                   "Currently, the well generator must contain the word well in its name " );
@@ -136,7 +136,7 @@ Group * InternalWellGenerator::createChild( string const & childKey, string cons
   return nullptr;
 }
 
-void InternalWellGenerator::ExpandObjectCatalogs()
+void InternalWellGenerator::expandObjectCatalogs()
 {
   createChild( keys::perforation, keys::perforation );
 }

@@ -69,7 +69,7 @@ public:
   /**
    * @brief This function is used to expand any catalogs in the data structure
    */
-  virtual void ExpandObjectCatalogs() override;
+  virtual void expandObjectCatalogs() override;
 
 };
 

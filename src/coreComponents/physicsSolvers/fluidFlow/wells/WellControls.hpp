@@ -224,7 +224,7 @@ protected:
    * @brief This function provides capability to post process input values prior to
    * any other initialization operations.
    */
-  virtual void PostProcessInput() override;
+  virtual void postProcessInput() override;
 
   /**
    * @brief Called by initializePostInitialConditions() prior to initializing sub-Groups.

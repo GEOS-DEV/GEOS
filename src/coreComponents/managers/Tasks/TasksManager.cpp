@@ -41,7 +41,7 @@ Group * TasksManager::createChild( string const & childKey, string const & child
   return this->registerGroup< TaskBase >( childName, std::move( task ) );
 }
 
-void TasksManager::ExpandObjectCatalogs()
+void TasksManager::expandObjectCatalogs()
 {
   // During schema generation, register one of each type derived from TaskBase here
   for( auto & catalogIter: TaskBase::getCatalog() )

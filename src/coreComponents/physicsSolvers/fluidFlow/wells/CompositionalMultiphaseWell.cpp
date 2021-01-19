@@ -87,9 +87,9 @@ CompositionalMultiphaseWell::CompositionalMultiphaseWell( const string & name,
 
 }
 
-void CompositionalMultiphaseWell::PostProcessInput()
+void CompositionalMultiphaseWell::postProcessInput()
 {
-  WellSolverBase::PostProcessInput();
+  WellSolverBase::postProcessInput();
   CheckModelNames( m_relPermModelNames, viewKeyStruct::relPermNamesString );
 
   CompositionalMultiphaseFlow const * const flowSolver = getParent()->getGroup< CompositionalMultiphaseFlow >( GetFlowSolverName() );
@@ -104,9 +104,9 @@ void CompositionalMultiphaseWell::PostProcessInput()
 
 }
 
-void CompositionalMultiphaseWell::RegisterDataOnMesh( Group * const meshBodies )
+void CompositionalMultiphaseWell::registerDataOnMesh( Group * const meshBodies )
 {
-  WellSolverBase::RegisterDataOnMesh( meshBodies );
+  WellSolverBase::registerDataOnMesh( meshBodies );
 
   MeshLevel & meshLevel = *meshBodies->getGroup< MeshBody >( 0 )->getMeshLevel( 0 );
 
@@ -250,9 +250,9 @@ void CompositionalMultiphaseWell::ValidateInjectionStreams( MeshLevel const & me
   } );
 }
 
-void CompositionalMultiphaseWell::InitializePreSubGroups( Group * const rootGroup )
+void CompositionalMultiphaseWell::initializePreSubGroups( Group * const rootGroup )
 {
-  WellSolverBase::InitializePreSubGroups( rootGroup );
+  WellSolverBase::initializePreSubGroups( rootGroup );
 
   DomainPartition * const domain = rootGroup->getGroup< DomainPartition >( keys::domain );
   MeshLevel & meshLevel = *domain->getMeshBody( 0 )->getMeshLevel( 0 );

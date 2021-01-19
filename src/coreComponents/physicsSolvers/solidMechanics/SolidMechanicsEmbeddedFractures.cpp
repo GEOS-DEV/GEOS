@@ -70,7 +70,7 @@ SolidMechanicsEmbeddedFractures::~SolidMechanicsEmbeddedFractures()
   // TODO Auto-generated destructor stub
 }
 
-void SolidMechanicsEmbeddedFractures::RegisterDataOnMesh( dataRepository::Group * const MeshBodies )
+void SolidMechanicsEmbeddedFractures::registerDataOnMesh( dataRepository::Group * const MeshBodies )
 {
 
   for( auto & mesh : MeshBodies->getSubGroups() )

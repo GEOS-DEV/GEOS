@@ -61,7 +61,7 @@ public:
    */
   static string CatalogName() { return "NonlinearSolverParameters"; }
 
-  virtual void PostProcessInput() override;
+  virtual void postProcessInput() override;
 
   struct viewKeysStruct
   {

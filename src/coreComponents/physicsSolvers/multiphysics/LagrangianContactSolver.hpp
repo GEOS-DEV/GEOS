@@ -46,10 +46,10 @@ public:
   }
 
   virtual void
-  InitializePreSubGroups( Group * const rootGroup ) override;
+  initializePreSubGroups( Group * const rootGroup ) override;
 
   virtual void
-  RegisterDataOnMesh( dataRepository::Group * const MeshBodies ) override final;
+  registerDataOnMesh( dataRepository::Group * const MeshBodies ) override final;
 
   virtual void
   SetupDofs( DomainPartition const & domain,
@@ -187,7 +187,7 @@ public:
   string const & getContactRelationName() const { return m_contactRelationName; }
 
 protected:
-  virtual void PostProcessInput() override final;
+  virtual void postProcessInput() override final;
 
   virtual void
   initializePostInitialConditions_PreSubGroups( dataRepository::Group * const problemManager ) override final;

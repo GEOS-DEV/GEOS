@@ -87,7 +87,7 @@ For example this would look something like:
 
 .. code-block:: c++
 
-    void SolidMechanicsLagrangianFEM::RegisterDataOnMesh( Group * const MeshBodies )
+    void SolidMechanicsLagrangianFEM::registerDataOnMesh( Group * const MeshBodies )
     {
       for( auto & mesh : MeshBodies->getSubGroups() )
       {
@@ -138,7 +138,7 @@ Then the registration is simplified as follows:
 
 .. code-block:: c++
 
-    void SolidMechanicsLagrangianFEM::RegisterDataOnMesh( Group * const MeshBodies )
+    void SolidMechanicsLagrangianFEM::registerDataOnMesh( Group * const MeshBodies )
     {
       for( auto & mesh : MeshBodies->getSubGroups() )
       {

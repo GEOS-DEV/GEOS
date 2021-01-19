@@ -104,7 +104,7 @@ RelativePermeabilityBase * makeBrooksCoreyRelPerm( string const & name, Group * 
   phaseRelPermMaxVal.resize( 2 );
   phaseRelPermMaxVal[0] = 0.8; phaseRelPermMaxVal[1] = 0.9;
 
-  relPerm->PostProcessInputRecursive();
+  relPerm->postProcessInputRecursive();
   return relPerm;
 }
 
@@ -129,7 +129,7 @@ RelativePermeabilityBase * makeBrooksCoreyBakerRelPermTwoPhase( string const & n
   waterOilRelPermMaxVal.resize( 2 );
   waterOilRelPermMaxVal[0] = 0.8; waterOilRelPermMaxVal[1] = 0.75;
 
-  relPerm->PostProcessInputRecursive();
+  relPerm->postProcessInputRecursive();
   return relPerm;
 }
 
@@ -163,7 +163,7 @@ RelativePermeabilityBase * makeBrooksCoreyBakerRelPermThreePhase( string const &
   gasOilRelPermMaxVal.resize( 2 );
   gasOilRelPermMaxVal[0] = 0.8; gasOilRelPermMaxVal[1] = 0.95;
 
-  relPerm->PostProcessInputRecursive();
+  relPerm->postProcessInputRecursive();
   return relPerm;
 }
 
@@ -188,7 +188,7 @@ RelativePermeabilityBase * makeVanGenuchtenBakerRelPermTwoPhase( string const & 
   gasOilRelPermMaxVal.resize( 2 );
   gasOilRelPermMaxVal[0] = 0.5; gasOilRelPermMaxVal[1] = 0.75;
 
-  relPerm->PostProcessInputRecursive();
+  relPerm->postProcessInputRecursive();
   return relPerm;
 }
 
@@ -224,7 +224,7 @@ RelativePermeabilityBase * makeVanGenuchtenBakerRelPermThreePhase( string const 
   gasOilRelPermMaxVal.resize( 2 );
   gasOilRelPermMaxVal[0] = 0.8; gasOilRelPermMaxVal[1] = 0.75;
 
-  relPerm->PostProcessInputRecursive();
+  relPerm->postProcessInputRecursive();
   return relPerm;
 }
 

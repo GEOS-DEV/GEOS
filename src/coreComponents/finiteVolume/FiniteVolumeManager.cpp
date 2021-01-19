@@ -54,7 +54,7 @@ Group * FiniteVolumeManager::createChild( string const & childKey, string const 
 }
 
 
-void FiniteVolumeManager::ExpandObjectCatalogs()
+void FiniteVolumeManager::expandObjectCatalogs()
 {
   // During schema generation, register one of each type derived from FluxApproximationBase here
   for( auto & catalogIter: FluxApproximationBase::getCatalog())

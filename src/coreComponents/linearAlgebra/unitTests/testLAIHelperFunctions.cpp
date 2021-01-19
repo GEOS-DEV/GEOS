@@ -80,7 +80,7 @@ protected:
 
     xmlWrapper::xmlNode xmlProblemNode = xmlDocument.child( "Problem" );
     problemManager->InitializePythonInterpreter();
-    problemManager->ProcessInputFileRecursive( xmlProblemNode );
+    problemManager->processInputFileRecursive( xmlProblemNode );
 
     // Open mesh levels
     DomainPartition * domain  = problemManager->getDomainPartition();
@@ -89,8 +89,8 @@ protected:
 
     ElementRegionManager * elementManager = domain->getMeshBody( 0 )->getMeshLevel( 0 )->getElemManager();
     xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child( elementManager->getName().c_str() );
-    elementManager->ProcessInputFileRecursive( topLevelNode );
-    elementManager->PostProcessInputRecursive();
+    elementManager->processInputFileRecursive( topLevelNode );
+    elementManager->postProcessInputRecursive();
 
     problemManager->ProblemSetup();
   }

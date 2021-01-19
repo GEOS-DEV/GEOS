@@ -49,9 +49,9 @@ SinglePhaseFVM< BASE >::SinglePhaseFVM( const std::string & name,
 }
 
 template< typename BASE >
-void SinglePhaseFVM< BASE >::InitializePreSubGroups( Group * const rootGroup )
+void SinglePhaseFVM< BASE >::initializePreSubGroups( Group * const rootGroup )
 {
-  BASE::InitializePreSubGroups( rootGroup );
+  BASE::initializePreSubGroups( rootGroup );
 
   DomainPartition & domain = *rootGroup->getGroup< DomainPartition >( keys::domain );
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();

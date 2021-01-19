@@ -138,9 +138,9 @@ SolidMechanicsLagrangianFEM::SolidMechanicsLagrangianFEM( const std::string & na
 
 }
 
-void SolidMechanicsLagrangianFEM::PostProcessInput()
+void SolidMechanicsLagrangianFEM::postProcessInput()
 {
-  SolverBase::PostProcessInput();
+  SolverBase::postProcessInput();
 
   CheckModelNames( m_solidMaterialNames, viewKeyStruct::solidMaterialNamesString );
 
@@ -156,7 +156,7 @@ SolidMechanicsLagrangianFEM::~SolidMechanicsLagrangianFEM()
 }
 
 
-void SolidMechanicsLagrangianFEM::RegisterDataOnMesh( Group * const MeshBodies )
+void SolidMechanicsLagrangianFEM::registerDataOnMesh( Group * const MeshBodies )
 {
   for( auto & mesh : MeshBodies->getSubGroups() )
   {
@@ -241,9 +241,9 @@ void SolidMechanicsLagrangianFEM::RegisterDataOnMesh( Group * const MeshBodies )
 }
 
 
-void SolidMechanicsLagrangianFEM::InitializePreSubGroups( Group * const rootGroup )
+void SolidMechanicsLagrangianFEM::initializePreSubGroups( Group * const rootGroup )
 {
-  SolverBase::InitializePreSubGroups( rootGroup );
+  SolverBase::initializePreSubGroups( rootGroup );
 
   DomainPartition * domain = rootGroup->getGroup< DomainPartition >( keys::domain );
 

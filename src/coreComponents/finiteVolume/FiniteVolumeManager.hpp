@@ -57,7 +57,7 @@ public:
 
   virtual Group * createChild( string const & childKey, string const & childName ) override;
 
-  virtual void ExpandObjectCatalogs() override;
+  virtual void expandObjectCatalogs() override;
 
   /**
    * @brief Return the FluxApproximation associated with the provided name.

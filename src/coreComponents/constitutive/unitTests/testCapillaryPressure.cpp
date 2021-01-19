@@ -108,7 +108,7 @@ CapillaryPressureBase * makeBrooksCoreyCapPressureTwoPhase( string const & name,
   auto & capPressureEpsilon = capPressure->getReference< real64 >( BrooksCoreyCapillaryPressure::viewKeyStruct::capPressureEpsilonString );
   capPressureEpsilon = 1e-4;
 
-  capPressure->PostProcessInputRecursive();
+  capPressure->postProcessInputRecursive();
   return capPressure;
 }
 
@@ -137,7 +137,7 @@ CapillaryPressureBase * makeBrooksCoreyCapPressureThreePhase( string const & nam
   auto & capPressureEpsilon = capPressure->getReference< real64 >( BrooksCoreyCapillaryPressure::viewKeyStruct::capPressureEpsilonString );
   capPressureEpsilon = 1e-7;
 
-  capPressure->PostProcessInputRecursive();
+  capPressure->postProcessInputRecursive();
   return capPressure;
 }
 
@@ -167,7 +167,7 @@ CapillaryPressureBase * makeVanGenuchtenCapPressureTwoPhase( string const & name
   auto & capPressureEpsilon = capPressure->getReference< real64 >( VanGenuchtenCapillaryPressure::viewKeyStruct::capPressureEpsilonString );
   capPressureEpsilon = 1e-4;
 
-  capPressure->PostProcessInputRecursive();
+  capPressure->postProcessInputRecursive();
   return capPressure;
 }
 
@@ -196,7 +196,7 @@ CapillaryPressureBase * makeVanGenuchtenCapPressureThreePhase( string const & na
   auto & capPressureEpsilon = capPressure->getReference< real64 >( VanGenuchtenCapillaryPressure::viewKeyStruct::capPressureEpsilonString );
   capPressureEpsilon = 1e-4;
 
-  capPressure->PostProcessInputRecursive();
+  capPressure->postProcessInputRecursive();
   return capPressure;
 }
 

@@ -59,7 +59,7 @@ void SurfaceElementRegion::GenerateMesh( Group * const cellBlocks )
   }
 }
 
-void SurfaceElementRegion::InitializePreSubGroups( Group * const )
+void SurfaceElementRegion::initializePreSubGroups( Group * const )
 {
   this->forElementSubRegions< SurfaceElementSubRegion >( [&] ( SurfaceElementSubRegion & subRegion )
   {

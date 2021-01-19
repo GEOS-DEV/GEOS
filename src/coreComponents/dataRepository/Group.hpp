@@ -752,9 +752,9 @@ public:
    * @param[in] group A group that is passed in to the initialization functions
    *                  in order to facilitate the initialization.
    *
-   * This function will first call InitializePreSubGroups() on this Group, then
+   * This function will first call initializePreSubGroups() on this Group, then
    * loop over all subgroups and call Initialize() on them, then
-   * call InitializePostSubGroups() on this Group.
+   * call initializePostSubGroups() on this Group.
    *
    * @note The order in which the sub-Groups are iterated over is defined by
    * initializationOrder().
@@ -801,17 +801,17 @@ public:
   void postRestartInitializationRecursive( Group * const domain );
 
   /**
-   * @brief Recursively read values using ProcessInputFile() from the input
+   * @brief Recursively read values using processInputFile() from the input
    *        file and put them into the wrapped values for this group.
    * @param[in] targetNode the XML node that to extract input values from.
    */
-  void ProcessInputFileRecursive( xmlWrapper::xmlNode & targetNode );
+  void processInputFileRecursive( xmlWrapper::xmlNode & targetNode );
 
   /**
-   * @brief Recursively call PostProcessInput() to apply post processing after
+   * @brief Recursively call postProcessInput() to apply post processing after
    * reading input values.
    */
-  void PostProcessInputRecursive();
+  void postProcessInputRecursive();
 
   ///@}
 
@@ -893,22 +893,22 @@ public:
    * @brief Build a complete datastructure for schema generation.
    * @param level indent level for printing out the structure
    */
-  void GenerateDataStructureSkeleton( integer const level )
+  void generateDataStructureSkeleton( integer const level ) //TODO this should be a private function of ProblemManager class
   {
-    ExpandObjectCatalogs();
+    expandObjectCatalogs();
     std::string indent( level*2, ' ' );
 
     for( auto const & subGroupIter : m_subGroups )
     {
       std::cout << indent << subGroupIter.second->getName() << std::endl;
-      subGroupIter.second->GenerateDataStructureSkeleton( level + 1 );
+      subGroupIter.second->generateDataStructureSkeleton( level + 1 );
     }
   }
 
   /**
    * @brief Expand any catalogs in the data structure.
    */
-  virtual void ExpandObjectCatalogs() {}
+  virtual void expandObjectCatalogs() {}
 
   /**
    * @brief Inform the schema generator of any deviations between the xml and GEOS data structures.
@@ -916,7 +916,7 @@ public:
    * @param schemaParent      XML node for the parent node
    * @param documentationType type of XML schema generated
    */
-  virtual void SetSchemaDeviations( xmlWrapper::xmlNode schemaRoot,
+  virtual void setSchemaDeviations( xmlWrapper::xmlNode schemaRoot,
                                     xmlWrapper::xmlNode schemaParent,
                                     integer documentationType );
 
@@ -928,10 +928,10 @@ public:
   ///@{
 
   /**
-   * @brief Calls RegisterDataOnMesh() recursively.
+   * @brief Calls registerDataOnMesh() recursively.
    * @param[in,out] meshBodies the group of MeshBody objects to register data on.
    */
-  virtual void RegisterDataOnMeshRecursive( Group * const meshBodies );
+  virtual void registerDataOnMeshRecursive( Group * const meshBodies );
 
   /**
    * @brief Register data on mesh entities.
@@ -940,7 +940,7 @@ public:
    * This function is used to register data on mesh entities such as the NodeManager,
    * FaceManager...etc.
    */
-  virtual void RegisterDataOnMesh( Group * const meshBodies );
+  virtual void registerDataOnMesh( Group * const meshBodies );
 
   ///@}
 
@@ -957,7 +957,7 @@ public:
    *                         (buffer must be either pinned or a device pointer)
    * @return                 the size of the buffer required to pack the wrappers.
    */
-  virtual localIndex PackSize( string_array const & wrapperNames,
+  virtual localIndex PackSize( string_array const & wrapperNames, //TODO to change Pack to pack and Unpack to unpack
                                integer const recursive,
                                bool on_device = false ) const;
 
@@ -1434,14 +1434,14 @@ protected:
    * This function provides capability to post process input values prior to
    * any other initialization operations.
    */
-  virtual void PostProcessInput() {}
+  virtual void postProcessInput() {}
 
   /**
    * @brief Called by Initialize() prior to initializing sub-Groups.
    * @param[in] group A group that is passed in to the initialization functions
    *                  in order to facilitate the initialization.
    */
-  virtual void InitializePreSubGroups( Group * const group )
+  virtual void initializePreSubGroups( Group * const group )
   {
     GEOSX_UNUSED_VAR( group );
   }
@@ -1451,7 +1451,7 @@ protected:
    * @param[in] group A group that is passed in to the initialization functions
    *                  in order to facilitate the initialization.
    */
-  virtual void InitializePostSubGroups( Group * const group )
+  virtual void initializePostSubGroups( Group * const group )
   {
     GEOSX_UNUSED_VAR( group );
   }
@@ -1493,7 +1493,7 @@ private:
    *        wrapped values for this group.
    * @param[in] targetNode the XML node that to extract input values from.
    */
-  virtual void ProcessInputFile( xmlWrapper::xmlNode const & targetNode );
+  virtual void processInputFile( xmlWrapper::xmlNode const & targetNode );
 
   //START_SPHINX_INCLUDE_02
   /// The parent Group that contains "this" Group in its "sub-Group" collection.
@@ -1683,7 +1683,7 @@ T const * Group::getGroupByPath( string const & path ) const
   }
 }
 
-} /* end namespace dataRepository */
-} /* end namespace geosx */
+} /* namespace dataRepository */
+} /* namespace geosx */
 
 #endif /* GEOSX_DATAREPOSITORY_GROUP_HPP_ */

@@ -252,9 +252,9 @@ public:
 
 protected:
 
-  virtual void PostProcessInput() override;
+  virtual void postProcessInput() override;
 
-  virtual void InitializePostSubGroups( Group * const group ) override;
+  virtual void initializePostSubGroups( Group * const group ) override;
 
   /// function that populates m_fluid ptr; to be overriden by derived classes
   virtual void createFluid() = 0;

@@ -44,7 +44,7 @@ Group * FiniteElementDiscretizationManager::createChild( string const & childKey
 }
 
 
-void FiniteElementDiscretizationManager::ExpandObjectCatalogs()
+void FiniteElementDiscretizationManager::expandObjectCatalogs()
 {
   // During schema generation, register one of each type derived from Group here
   for( auto & catalogIter: Group::getCatalog())

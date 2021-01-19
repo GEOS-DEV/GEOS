@@ -188,7 +188,7 @@ protected:
 
   virtual void initializePostInitialConditions_PreSubGroups( Group * const rootGroup ) override;
 
-  virtual void PostProcessInput() override;
+  virtual void postProcessInput() override;
 
   void AddCouplingNumNonzeros( DomainPartition & domain,
                                DofManager & dofManager,

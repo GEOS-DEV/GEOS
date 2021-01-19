@@ -126,7 +126,7 @@ Group * EventBase::createChild( string const & childKey, string const & childNam
 }
 
 
-void EventBase::ExpandObjectCatalogs()
+void EventBase::expandObjectCatalogs()
 {
   // Only add children if the parent is of type EventManager
   // otherwise, this would fall into a loop

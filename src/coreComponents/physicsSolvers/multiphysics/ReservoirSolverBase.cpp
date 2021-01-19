@@ -55,9 +55,9 @@ ReservoirSolverBase::ReservoirSolverBase( const std::string & name,
 ReservoirSolverBase::~ReservoirSolverBase()
 {}
 
-void ReservoirSolverBase::PostProcessInput()
+void ReservoirSolverBase::postProcessInput()
 {
-  SolverBase::PostProcessInput();
+  SolverBase::postProcessInput();
 
   m_flowSolver = this->getParent()->getGroup< FlowSolverBase >( m_flowSolverName );
   m_wellSolver = this->getParent()->getGroup< WellSolverBase >( m_wellSolverName );

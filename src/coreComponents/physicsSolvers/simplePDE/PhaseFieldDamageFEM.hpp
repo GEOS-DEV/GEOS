@@ -51,7 +51,7 @@ public:
     return "PhaseFieldDamageFEM";
   }
 
-  virtual void RegisterDataOnMesh( Group * const MeshBodies ) override final;
+  virtual void registerDataOnMesh( Group * const MeshBodies ) override final;
 
   /**
    * @defgroup Solver Interface Functions
@@ -169,7 +169,7 @@ public:
   }
 
 protected:
-  virtual void PostProcessInput() override final;
+  virtual void postProcessInput() override final;
 
 private:
   string m_fieldName;

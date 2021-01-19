@@ -301,7 +301,7 @@ MultiFluidBase * makeCompositionalFluid( string const & name, Group & parent )
   acFactor.resize( 4 );
   acFactor[0] = 0.04; acFactor[1] = 0.443; acFactor[2] = 0.816; acFactor[3] = 0.344;
 
-  fluid->PostProcessInputRecursive();
+  fluid->postProcessInputRecursive();
   return fluid;
 }
 
@@ -385,7 +385,7 @@ MultiFluidBase * makeLiveOilFluid( string const & name, Group * parent )
   auto & fluidType = fluid->getReference< BlackOilFluid::FluidType >( BlackOilFluid::viewKeyStruct::fluidTypeString );
   fluidType = BlackOilFluid::FluidType::LiveOil;
 
-  fluid->PostProcessInputRecursive();
+  fluid->postProcessInputRecursive();
   return fluid;
 }
 
@@ -418,7 +418,7 @@ MultiFluidBase * makeDeadOilFluid( string const & name, Group * parent )
   auto & fluidType = fluid->getReference< BlackOilFluid::FluidType >( BlackOilFluid::viewKeyStruct::fluidTypeString );
   fluidType = BlackOilFluid::FluidType::DeadOil;
 
-  fluid->PostProcessInputRecursive();
+  fluid->postProcessInputRecursive();
   return fluid;
 }
 

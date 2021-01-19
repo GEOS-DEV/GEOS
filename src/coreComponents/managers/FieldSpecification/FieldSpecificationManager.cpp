@@ -46,7 +46,7 @@ Group * FieldSpecificationManager::createChild( string const & childKey, string 
 }
 
 
-void FieldSpecificationManager::ExpandObjectCatalogs()
+void FieldSpecificationManager::expandObjectCatalogs()
 {
   // During schema generation, register one of each type derived from BoundaryConditionBase here
   for( auto & catalogIter: FieldSpecificationBase::getCatalog())

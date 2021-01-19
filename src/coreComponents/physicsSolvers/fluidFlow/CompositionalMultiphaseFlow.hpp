@@ -89,7 +89,7 @@ public:
   static string CatalogName() { return dataRepository::keys::compositionalMultiphaseFlow; }
 
   virtual void
-  RegisterDataOnMesh( Group * const MeshBodies ) override;
+  registerDataOnMesh( Group * const MeshBodies ) override;
 
   /**
    * @defgroup Solver Interface Functions
@@ -380,9 +380,9 @@ public:
 
 protected:
 
-  virtual void PostProcessInput() override;
+  virtual void postProcessInput() override;
 
-  virtual void InitializePreSubGroups( Group * const rootGroup ) override;
+  virtual void initializePreSubGroups( Group * const rootGroup ) override;
 
   virtual void initializePostInitialConditions_PreSubGroups( dataRepository::Group * const rootGroup ) override;
 

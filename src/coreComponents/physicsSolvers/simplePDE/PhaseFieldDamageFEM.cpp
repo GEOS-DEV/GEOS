@@ -81,7 +81,7 @@ PhaseFieldDamageFEM::~PhaseFieldDamageFEM()
   // TODO Auto-generated destructor stub
 }
 
-void PhaseFieldDamageFEM::RegisterDataOnMesh( Group * const MeshBodies )
+void PhaseFieldDamageFEM::registerDataOnMesh( Group * const MeshBodies )
 {
   for( auto & mesh : MeshBodies->getSubGroups() )
   {
@@ -108,9 +108,9 @@ void PhaseFieldDamageFEM::RegisterDataOnMesh( Group * const MeshBodies )
   }
 }
 
-void PhaseFieldDamageFEM::PostProcessInput()
+void PhaseFieldDamageFEM::postProcessInput()
 {
-  SolverBase::PostProcessInput();
+  SolverBase::postProcessInput();
 
   string tiOption = this->getReference< string >(
     PhaseFieldDamageFEMViewKeys.timeIntegrationOption );

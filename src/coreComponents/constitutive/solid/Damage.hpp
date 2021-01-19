@@ -263,7 +263,7 @@ public:
   static std::string CatalogName() { return string( "Damage" ) + BASE::m_catalogNameString; }
   virtual string getCatalogName() const override { return CatalogName(); }
 
-  virtual void PostProcessInput() override;
+  virtual void postProcessInput() override;
 
   virtual void allocateConstitutiveData( dataRepository::Group * const parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;

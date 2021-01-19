@@ -159,13 +159,13 @@ Group * ProblemManager::createChild( string const & GEOSX_UNUSED_PARAM( childKey
 void ProblemManager::ProblemSetup()
 {
   GEOSX_MARK_FUNCTION;
-  PostProcessInputRecursive();
+  postProcessInputRecursive();
 
   GenerateMesh();
 
   ApplyNumericalMethods();
 
-  RegisterDataOnMeshRecursive( getGroup< DomainPartition >( groupKeys.domain )->getMeshBodies() );
+  registerDataOnMeshRecursive( getGroup< DomainPartition >( groupKeys.domain )->getMeshBodies() );
 
   Initialize( this );
 
@@ -316,13 +316,13 @@ void ProblemManager::GenerateDocumentation()
   if( !schemaName.empty() )
   {
     // Generate an extensive data structure
-    GenerateDataStructureSkeleton( 0 );
+    generateDataStructureSkeleton( 0 );
 
     MeshManager * meshManager = this->getGroup< MeshManager >( groupKeys.meshManager );
     DomainPartition * domain  = getDomainPartition();
     meshManager->GenerateMeshLevels( domain );
 
-    RegisterDataOnMeshRecursive( domain->getMeshBodies() );
+    registerDataOnMeshRecursive( domain->getMeshBodies() );
 
     // Generate schema
     schemaUtilities::ConvertDocumentationToSchema( schemaName.c_str(), this, 0 );
@@ -333,7 +333,7 @@ void ProblemManager::GenerateDocumentation()
 }
 
 
-void ProblemManager::SetSchemaDeviations( xmlWrapper::xmlNode schemaRoot,
+void ProblemManager::setSchemaDeviations( xmlWrapper::xmlNode schemaRoot,
                                           xmlWrapper::xmlNode schemaParent,
                                           integer documentationType )
 {
@@ -349,11 +349,11 @@ void ProblemManager::SetSchemaDeviations( xmlWrapper::xmlNode schemaRoot,
   // so we need to explicitly add them into the schema structure
   DomainPartition * domain  = getDomainPartition();
 
-  m_functionManager->GenerateDataStructureSkeleton( 0 );
+  m_functionManager->generateDataStructureSkeleton( 0 );
   schemaUtilities::SchemaConstruction( m_functionManager, schemaRoot, targetChoiceNode, documentationType );
 
   FieldSpecificationManager & bcManager = FieldSpecificationManager::get();
-  bcManager.GenerateDataStructureSkeleton( 0 );
+  bcManager.generateDataStructureSkeleton( 0 );
   schemaUtilities::SchemaConstruction( &bcManager, schemaRoot, targetChoiceNode, documentationType );
 
   ConstitutiveManager * constitutiveManager = domain->getGroup< ConstitutiveManager >( keys::ConstitutiveManager );
@@ -362,7 +362,7 @@ void ProblemManager::SetSchemaDeviations( xmlWrapper::xmlNode schemaRoot,
   MeshManager * meshManager = this->getGroup< MeshManager >( groupKeys.meshManager );
   meshManager->GenerateMeshLevels( domain );
   ElementRegionManager * elementManager = domain->getMeshBody( 0 )->getMeshLevel( 0 )->getElemManager();
-  elementManager->GenerateDataStructureSkeleton( 0 );
+  elementManager->generateDataStructureSkeleton( 0 );
   schemaUtilities::SchemaConstruction( elementManager, schemaRoot, targetChoiceNode, documentationType );
 
 
@@ -475,26 +475,26 @@ void ProblemManager::ParseInputFile()
   string path = inputFileName.substr( 0, pos + 1 );
   xmlDocument.append_child( xmlWrapper::filePathString ).append_attribute( xmlWrapper::filePathString ) = path.c_str();
   xmlProblemNode = xmlDocument.child( this->getName().c_str());
-  ProcessInputFileRecursive( xmlProblemNode );
+  processInputFileRecursive( xmlProblemNode );
 
   // The objects in domain are handled separately for now
   {
     ConstitutiveManager * constitutiveManager = domain->getGroup< ConstitutiveManager >( keys::ConstitutiveManager );
     xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child( constitutiveManager->getName().c_str());
-    constitutiveManager->ProcessInputFileRecursive( topLevelNode );
+    constitutiveManager->processInputFileRecursive( topLevelNode );
 
     // Open mesh levels
     MeshManager * meshManager = this->getGroup< MeshManager >( groupKeys.meshManager );
     meshManager->GenerateMeshLevels( domain );
     ElementRegionManager * elementManager = domain->getMeshBody( 0 )->getMeshLevel( 0 )->getElemManager();
     topLevelNode = xmlProblemNode.child( elementManager->getName().c_str());
-    elementManager->ProcessInputFileRecursive( topLevelNode );
+    elementManager->processInputFileRecursive( topLevelNode );
 
   }
 }
 
 
-void ProblemManager::PostProcessInput()
+void ProblemManager::postProcessInput()
 {
   DomainPartition * domain  = getDomainPartition();
 

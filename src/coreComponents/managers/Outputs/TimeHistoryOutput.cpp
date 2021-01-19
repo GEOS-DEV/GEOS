@@ -78,7 +78,7 @@ void TimeHistoryOutput::initCollectorParallel( ProblemManager & pm, HistoryColle
   MpiWrapper::Barrier( MPI_COMM_GEOSX );
 }
 
-void TimeHistoryOutput::InitializePostSubGroups( Group * const group )
+void TimeHistoryOutput::initializePostSubGroups( Group * const group )
 {
   {
     // check whether to truncate or append to the file up front so we don't have to bother during later accesses
@@ -90,7 +90,7 @@ void TimeHistoryOutput::InitializePostSubGroups( Group * const group )
     Group * tmp = this->getGroupByPath( collector_path );
     HistoryCollection * collector = Group::groupCast< HistoryCollection * >( tmp );
     GEOSX_ERROR_IF( collector == nullptr, "The target of a time history output event must be a collector! " << collector_path );
-    collector->InitializePostSubGroups( group );
+    collector->initializePostSubGroups( group );
     initCollectorParallel( pm, collector );
   }
 }

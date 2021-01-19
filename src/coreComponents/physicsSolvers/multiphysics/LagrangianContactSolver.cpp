@@ -94,7 +94,7 @@ LagrangianContactSolver::LagrangianContactSolver( const std::string & name,
   m_linearSolverParameters.get().dofsPerNode = 3;
 }
 
-void LagrangianContactSolver::RegisterDataOnMesh( dataRepository::Group * const MeshBodies )
+void LagrangianContactSolver::registerDataOnMesh( dataRepository::Group * const MeshBodies )
 {
   for( auto & mesh : MeshBodies->getSubGroups() )
   {
@@ -176,9 +176,9 @@ void LagrangianContactSolver::RegisterDataOnMesh( dataRepository::Group * const 
   }
 }
 
-void LagrangianContactSolver::InitializePreSubGroups( Group * const rootGroup )
+void LagrangianContactSolver::initializePreSubGroups( Group * const rootGroup )
 {
-  SolverBase::InitializePreSubGroups( rootGroup );
+  SolverBase::initializePreSubGroups( rootGroup );
 
   DomainPartition * domain = rootGroup->getGroup< DomainPartition >( keys::domain );
   ConstitutiveManager const * const cm = domain->getConstitutiveManager();
@@ -267,12 +267,12 @@ void LagrangianContactSolver::ImplicitStepComplete( real64 const & time_n,
   GEOSX_LOG_LEVEL_RANK_0( 1, " ***** ImplicitStepComplete *****" );
 }
 
-void LagrangianContactSolver::PostProcessInput()
+void LagrangianContactSolver::postProcessInput()
 {
   m_solidSolver = this->getParent()->getGroup< SolidMechanicsLagrangianFEM >( m_solidSolverName );
   GEOSX_ERROR_IF( m_solidSolver == nullptr, this->getName() << ": invalid solid solver name: " << m_solidSolverName );
 
-  SolverBase::PostProcessInput();
+  SolverBase::postProcessInput();
 }
 
 void LagrangianContactSolver::initializePostInitialConditions_PreSubGroups( Group * const GEOSX_UNUSED_PARAM( problemManager ) )

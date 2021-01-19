@@ -179,7 +179,7 @@ public:
 
 protected:
 
-  virtual void PostProcessInput() override;
+  virtual void postProcessInput() override;
 
   array1d< real64 > m_phaseMinVolumeFraction;
 

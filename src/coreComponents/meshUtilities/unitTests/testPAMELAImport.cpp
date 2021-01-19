@@ -37,8 +37,8 @@ void TestMeshImport( string const & inputStringMesh,
   xmlDocument.load_buffer( inputStringMesh.c_str(), inputStringMesh.size() );
 
   xmlWrapper::xmlNode xmlMeshNode = xmlDocument.child( "Mesh" );
-  meshManager.ProcessInputFileRecursive( xmlMeshNode );
-  meshManager.PostProcessInputRecursive();
+  meshManager.processInputFileRecursive( xmlMeshNode );
+  meshManager.postProcessInputRecursive();
 
   // Create the domain and generate the Mesh
   auto domain = std::unique_ptr< DomainPartition >( new DomainPartition( "domain", nullptr ) );
@@ -55,8 +55,8 @@ void TestMeshImport( string const & inputStringMesh,
   xmlDocument.load_buffer( inputStringRegion.c_str(), inputStringRegion.size() );
 
   xmlWrapper::xmlNode xmlRegionNode = xmlDocument.child( "ElementRegions" );
-  elemManager->ProcessInputFileRecursive( xmlRegionNode );
-  elemManager->PostProcessInputRecursive();
+  elemManager->processInputFileRecursive( xmlRegionNode );
+  elemManager->postProcessInputRecursive();
 
   Group * const cellBlockManager = domain->getGroup( keys::cellManager );
 

@@ -174,7 +174,7 @@ void SchemaConstruction( Group * const group,
       }
 
       // Add schema deviations
-      group->SetSchemaDeviations( schemaRoot, targetTypeDefNode, documentationType );
+      group->setSchemaDeviations( schemaRoot, targetTypeDefNode, documentationType );
 
       // Add attributes
       // Note: wrappers that were added to this group by another group

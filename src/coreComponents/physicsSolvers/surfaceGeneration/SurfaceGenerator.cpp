@@ -224,7 +224,7 @@ SurfaceGenerator::~SurfaceGenerator()
   // TODO Auto-generated destructor stub
 }
 
-void SurfaceGenerator::RegisterDataOnMesh( Group * const MeshBodies )
+void SurfaceGenerator::registerDataOnMesh( Group * const MeshBodies )
 {
   for( auto & mesh : MeshBodies->getSubGroups() )
   {

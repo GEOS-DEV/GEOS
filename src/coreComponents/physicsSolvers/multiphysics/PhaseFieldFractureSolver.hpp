@@ -42,7 +42,7 @@ public:
     return "PhaseFieldFracture";
   }
 
-  virtual void RegisterDataOnMesh( dataRepository::Group * const MeshBodies ) override final;
+  virtual void registerDataOnMesh( dataRepository::Group * const MeshBodies ) override final;
 
   virtual void
   ImplicitStepSetup( real64 const & time_n,
@@ -90,7 +90,7 @@ public:
   } PhaseFieldFractureSolverViewKeys;
 
 protected:
-  virtual void PostProcessInput() override final;
+  virtual void postProcessInput() override final;
 
   virtual void initializePostInitialConditions_PreSubGroups( dataRepository::Group * const problemManager ) override final;
 

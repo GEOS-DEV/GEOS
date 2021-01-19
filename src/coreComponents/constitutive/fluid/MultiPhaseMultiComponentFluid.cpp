@@ -84,9 +84,9 @@ MultiPhaseMultiComponentFluid::deliverClone( string const & name,
   return clone;
 }
 
-void MultiPhaseMultiComponentFluid::PostProcessInput()
+void MultiPhaseMultiComponentFluid::postProcessInput()
 {
-  MultiFluidBase::PostProcessInput();
+  MultiFluidBase::postProcessInput();
 
   localIndex const NP = numFluidPhases();
 
@@ -96,9 +96,9 @@ void MultiPhaseMultiComponentFluid::PostProcessInput()
 
 }
 
-void MultiPhaseMultiComponentFluid::InitializePostSubGroups( Group * const group )
+void MultiPhaseMultiComponentFluid::initializePostSubGroups( Group * const group )
 {
-  MultiFluidBase::InitializePostSubGroups( group );
+  MultiFluidBase::initializePostSubGroups( group );
 
   //  CreatePVTModels();
 

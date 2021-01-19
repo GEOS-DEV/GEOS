@@ -45,7 +45,7 @@ public:
     return "SolidMechanicsEmbeddedFractures";
   }
 
-  virtual void RegisterDataOnMesh( dataRepository::Group * const MeshBodies ) override final;
+  virtual void registerDataOnMesh( dataRepository::Group * const MeshBodies ) override final;
 
   virtual void SetupDofs( DomainPartition const & domain,
                           DofManager & dofManager ) const override;

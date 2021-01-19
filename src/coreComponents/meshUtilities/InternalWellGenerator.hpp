@@ -113,7 +113,7 @@ public:
   /**
    * @brief Expand any catalogs in the data structure.
    */
-  virtual void ExpandObjectCatalogs() override;
+  virtual void expandObjectCatalogs() override;
 
   /**
    * @brief Main function of the class that generates the well geometry
@@ -232,7 +232,7 @@ protected:
    * @brief This function provides capability to post process input values prior to
    * any other initialization operations.
    */
-  void PostProcessInput() override final;
+  void postProcessInput() override final;
 
 private:
 

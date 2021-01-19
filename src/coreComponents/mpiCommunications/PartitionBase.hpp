@@ -195,7 +195,7 @@ protected:
    * @param group A group that is passed in to the initialization functions
    *              in order to facilitate the initialization.
    */
-  virtual void InitializePostSubGroups( dataRepository::Group * const group ) = 0;
+  virtual void initializePostSubGroups( dataRepository::Group * const group ) = 0;
 
   /**
    * @brief Array of neighbor communicators.

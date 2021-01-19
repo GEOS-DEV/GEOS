@@ -95,7 +95,7 @@ public:
    */
   static string CatalogName() { return "CompositionalMultiphaseWell"; }
 
-  virtual void RegisterDataOnMesh( Group * const meshBodies ) override;
+  virtual void registerDataOnMesh( Group * const meshBodies ) override;
 
 
   /**
@@ -279,9 +279,9 @@ public:
 
 protected:
 
-  virtual void PostProcessInput() override;
+  virtual void postProcessInput() override;
 
-  virtual void InitializePreSubGroups( Group * const rootGroup ) override;
+  virtual void initializePreSubGroups( Group * const rootGroup ) override;
 
   virtual void initializePostInitialConditions_PreSubGroups( Group * const rootGroup ) override;
 

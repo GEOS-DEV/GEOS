@@ -253,8 +253,8 @@ TEST( LinearElasticAnisotropicTests, testXML )
   }
 
   xmlWrapper::xmlNode xmlConstitutiveNode = xmlDocument.child( "Constitutive" );
-  constitutiveManager.ProcessInputFileRecursive( xmlConstitutiveNode );
-  constitutiveManager.PostProcessInputRecursive();
+  constitutiveManager.processInputFileRecursive( xmlConstitutiveNode );
+  constitutiveManager.postProcessInputRecursive();
 
   LinearElasticAnisotropic * const model = constitutiveManager.GetConstitutiveRelation< LinearElasticAnisotropic >( "granite" );
   dataRepository::Group disc( "discretization", nullptr );

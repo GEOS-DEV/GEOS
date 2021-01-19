@@ -42,7 +42,7 @@ Group * MeshManager::createChild( string const & childKey, string const & childN
 }
 
 
-void MeshManager::ExpandObjectCatalogs()
+void MeshManager::expandObjectCatalogs()
 {
   // During schema generation, register one of each type derived from MeshGeneratorBase here
   for( auto & catalogIter: MeshGeneratorBase::getCatalog())

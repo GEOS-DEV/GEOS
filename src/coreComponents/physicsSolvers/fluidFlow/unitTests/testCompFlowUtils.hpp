@@ -188,20 +188,20 @@ void setupProblemFromXML( ProblemManager & problemManager, char const * const xm
 
   xmlWrapper::xmlNode xmlProblemNode = xmlDocument.child( "Problem" );
   problemManager.InitializePythonInterpreter();
-  problemManager.ProcessInputFileRecursive( xmlProblemNode );
+  problemManager.processInputFileRecursive( xmlProblemNode );
 
   DomainPartition & domain  = *problemManager.getDomainPartition();
 
   constitutive::ConstitutiveManager & constitutiveManager = *domain.getConstitutiveManager();
   xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child( constitutiveManager.getName().c_str());
-  constitutiveManager.ProcessInputFileRecursive( topLevelNode );
+  constitutiveManager.processInputFileRecursive( topLevelNode );
 
   MeshManager & meshManager = *problemManager.getGroup< MeshManager >( problemManager.groupKeys.meshManager );
   meshManager.GenerateMeshLevels( &domain );
 
   ElementRegionManager & elementManager = *domain.getMeshBody( 0 )->getMeshLevel( 0 )->getElemManager();
   topLevelNode = xmlProblemNode.child( elementManager.getName().c_str());
-  elementManager.ProcessInputFileRecursive( topLevelNode );
+  elementManager.processInputFileRecursive( topLevelNode );
 
   problemManager.ProblemSetup();
 }

@@ -28,13 +28,13 @@ PackCollection::PackCollection ( string const & name, Group * parent )
     setDescription( "The minimum size of the set(s) to be collected (use for sets that expand during the simulation)." );
 }
 
-void PackCollection::InitializePostSubGroups( Group * const group )
+void PackCollection::initializePostSubGroups( Group * const group )
 {
   localIndex numSets = m_setNames.size( );
   m_collectionCount = numSets == 0 ? 1 : numSets;
   DomainPartition & domain = *( dynamicCast< ProblemManager & >( *group ).getDomainPartition( ) );
   updateSetsIndices( domain );
-  HistoryCollection::InitializePostSubGroups( group );
+  HistoryCollection::initializePostSubGroups( group );
 }
 
 HistoryMetadata PackCollection::getMetadata( ProblemManager & pm, localIndex collectionIdx )

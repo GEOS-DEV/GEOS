@@ -57,7 +57,7 @@ public:
   static string CatalogName() { return "LinearSolverParameters"; }
 
   /// Postprocessing of input
-  virtual void PostProcessInput() override;
+  virtual void postProcessInput() override;
 
   LinearSolverParameters const & get() const
   { return m_parameters; }

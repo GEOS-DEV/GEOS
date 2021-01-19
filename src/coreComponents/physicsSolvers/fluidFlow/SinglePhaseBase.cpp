@@ -43,9 +43,9 @@ SinglePhaseBase::SinglePhaseBase( const std::string & name,
 }
 
 
-void SinglePhaseBase::RegisterDataOnMesh( Group * const MeshBodies )
+void SinglePhaseBase::registerDataOnMesh( Group * const MeshBodies )
 {
-  FlowSolverBase::RegisterDataOnMesh( MeshBodies );
+  FlowSolverBase::registerDataOnMesh( MeshBodies );
 
   for( auto & mesh : MeshBodies->getSubGroups() )
   {
@@ -144,9 +144,9 @@ arrayView1d< real64 const > SinglePhaseBase::getPoreVolumeMult( ElementSubRegion
   return subRegion.getReference< array1d< real64 > >( viewKeyStruct::poroMultString );
 }
 
-void SinglePhaseBase::InitializePreSubGroups( Group * const rootGroup )
+void SinglePhaseBase::initializePreSubGroups( Group * const rootGroup )
 {
-  FlowSolverBase::InitializePreSubGroups( rootGroup );
+  FlowSolverBase::initializePreSubGroups( rootGroup );
 
   DomainPartition & domain = *rootGroup->getGroup< DomainPartition >( keys::domain );
   ValidateFluidModels( domain );

@@ -50,12 +50,12 @@ FlowProppantTransportSolver::FlowProppantTransportSolver( const std::string & na
     setInputFlag( InputFlags::FALSE );
 }
 
-void FlowProppantTransportSolver::RegisterDataOnMesh( dataRepository::Group * const )
+void FlowProppantTransportSolver::registerDataOnMesh( dataRepository::Group * const )
 {}
 
-void FlowProppantTransportSolver::PostProcessInput()
+void FlowProppantTransportSolver::postProcessInput()
 {
-  SolverBase::PostProcessInput();
+  SolverBase::postProcessInput();
 
   m_proppantSolver = this->getParent()->getGroup< ProppantTransport >( m_proppantSolverName );
   GEOSX_ERROR_IF( m_proppantSolver == nullptr, "Invalid proppant solver name: " << m_proppantSolverName );

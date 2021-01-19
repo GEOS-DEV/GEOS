@@ -80,7 +80,7 @@ void WellControls::SetControl( Control control,
 }
 
 
-void WellControls::PostProcessInput()
+void WellControls::postProcessInput()
 {
   // 3.a) check target BHP
   if( m_targetBHP < 0 )

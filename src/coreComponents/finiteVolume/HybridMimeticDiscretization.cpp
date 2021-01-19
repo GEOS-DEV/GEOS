@@ -61,7 +61,7 @@ void HybridMimeticDiscretization::initializePostInitialConditions_PreSubGroups( 
     setRestartFlags( dataRepository::RestartFlags::NO_WRITE );
 }
 
-void HybridMimeticDiscretization::RegisterDataOnMesh( Group * const meshBodies )
+void HybridMimeticDiscretization::registerDataOnMesh( Group * const meshBodies )
 {
   meshBodies->forSubGroups< MeshBody >( [&]( MeshBody & meshBody )
   {

@@ -78,9 +78,9 @@ void CompressibleSinglePhaseFluid::allocateConstitutiveData( dataRepository::Gro
   m_viscosity.setValues< serialPolicy >( m_referenceViscosity );
 }
 
-void CompressibleSinglePhaseFluid::PostProcessInput()
+void CompressibleSinglePhaseFluid::postProcessInput()
 {
-  SingleFluidBase::PostProcessInput();
+  SingleFluidBase::postProcessInput();
 
   GEOSX_ERROR_IF_LT_MSG( m_compressibility, 0.0,
                          getName() << ": invalid value of " << viewKeyStruct::compressibilityString );

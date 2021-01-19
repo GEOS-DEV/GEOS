@@ -71,7 +71,7 @@ public:
    * add entries to the schema, which are not used during normal code execution
    * (e.g.: Benchmark)
    */
-  virtual void SetSchemaDeviations( xmlWrapper::xmlNode schemaRoot,
+  virtual void setSchemaDeviations( xmlWrapper::xmlNode schemaRoot,
                                     xmlWrapper::xmlNode schemaParent,
                                     integer documentationType ) override;
 
@@ -116,7 +116,7 @@ public:
    * This function is called when the code is called with the -s schema_name option.
    * @details Before generating the schema, the code builds up a comprehensive datastructure.
    * (Note: catalog objects throughout the code will typically be registered via the
-   * ExpandObjectCatalogs method.)  Once ready, SchemaUtilities will recusively walk
+   * expandObjectCatalogs method.)  Once ready, SchemaUtilities will recusively walk
    * through the database, generating the xml schema.
    */
   void GenerateDocumentation();
@@ -275,7 +275,7 @@ protected:
   /**
    * @brief Post process the command line input
    */
-  virtual void PostProcessInput() override final;
+  virtual void postProcessInput() override final;
 
 private:
 

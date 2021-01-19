@@ -48,7 +48,7 @@ public:
   {   }
 
 
-  void InitializePostSubGroups( Group * const group ) override
+  void initializePostSubGroups( Group * const group ) override
   {
     GEOSX_UNUSED_VAR( group );
     m_bufferCalls.resize( m_collectionCount );

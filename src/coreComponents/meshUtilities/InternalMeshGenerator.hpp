@@ -93,7 +93,7 @@ public:
    */
   static string CatalogName() { return "InternalMesh"; }
 
-//  void ProcessInputFile( xmlWrapper::xmlNode const & targetNode ) override;
+//  void processInputFile( xmlWrapper::xmlNode const & targetNode ) override;
 //
 //
 
@@ -124,7 +124,7 @@ public:
 
 protected:
 
-  void PostProcessInput() override final;
+  void postProcessInput() override final;
 
 private:
 

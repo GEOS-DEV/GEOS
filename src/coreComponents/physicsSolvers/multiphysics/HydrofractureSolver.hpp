@@ -47,7 +47,7 @@ public:
   }
 
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
-  virtual void RegisterDataOnMesh( dataRepository::Group * const MeshBodies ) override final;
+  virtual void registerDataOnMesh( dataRepository::Group * const MeshBodies ) override final;
 #endif
 
   virtual void SetupDofs( DomainPartition const & domain,
@@ -165,7 +165,7 @@ public:
   } HydrofractureSolverViewKeys;
 
 protected:
-  virtual void PostProcessInput() override final;
+  virtual void postProcessInput() override final;
 
   virtual void
   initializePostInitialConditions_PreSubGroups( dataRepository::Group * const problemManager ) override final;

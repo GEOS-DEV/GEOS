@@ -564,7 +564,7 @@ public:
 
 
 protected:
-  void PostProcessInput() override final;
+  void postProcessInput() override final;
 
   /// The flag used to decide if the BC value is normalized by the size of the set on which it is applied
   bool m_normalizeBySetSize;

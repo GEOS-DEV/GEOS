@@ -42,7 +42,7 @@ Group * GeometricObjectManager::createChild( string const & childKey, string con
   return this->registerGroup< SimpleGeometricObjectBase >( childName, std::move( geometriObject ) );
 }
 
-void GeometricObjectManager::ExpandObjectCatalogs()
+void GeometricObjectManager::expandObjectCatalogs()
 {
   // During schema generation, register one of each type derived from SimpleGeometricObjectBase here
   for( auto & catalogIter: SimpleGeometricObjectBase::getCatalog())

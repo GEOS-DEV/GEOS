@@ -71,11 +71,11 @@ public:
    * This function is used to inform the schema generator
    * that table functions are allowed as children.
    */
-  virtual void SetSchemaDeviations( xmlWrapper::xmlNode schemaRoot,
+  virtual void setSchemaDeviations( xmlWrapper::xmlNode schemaRoot,
                                     xmlWrapper::xmlNode schemaParent,
                                     integer documentationType ) override;
 
-  virtual void InitializePreSubGroups( Group * const ) override;
+  virtual void initializePreSubGroups( Group * const ) override;
 
   virtual real64 limitTangentialTractionNorm( real64 const normalTraction ) const;
 

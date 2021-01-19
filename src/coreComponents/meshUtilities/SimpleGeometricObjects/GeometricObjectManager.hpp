@@ -55,7 +55,7 @@ public:
 
   virtual Group * createChild( string const & childKey, string const & childName ) override;
 
-  virtual void ExpandObjectCatalogs() override;
+  virtual void expandObjectCatalogs() override;
 
 private:
   GeometricObjectManager() = delete;

@@ -148,7 +148,7 @@ void InternalMeshGenerator::GenerateElementRegions( DomainPartition & GEOSX_UNUS
 
 }
 
-void InternalMeshGenerator::PostProcessInput()
+void InternalMeshGenerator::postProcessInput()
 {
 
 

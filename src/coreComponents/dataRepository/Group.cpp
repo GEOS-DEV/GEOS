@@ -125,7 +125,7 @@ void Group::reserve( indexType const newSize )
   m_capacity = newSize;
 }
 
-void Group::ProcessInputFileRecursive( xmlWrapper::xmlNode & targetNode )
+void Group::processInputFileRecursive( xmlWrapper::xmlNode & targetNode )
 {
   xmlWrapper::addIncludedXML( targetNode );
 
@@ -147,15 +147,15 @@ void Group::ProcessInputFileRecursive( xmlWrapper::xmlNode & targetNode )
     }
     if( newChild != nullptr )
     {
-      newChild->ProcessInputFileRecursive( childNode );
+      newChild->processInputFileRecursive( childNode );
     }
   }
 
-  ProcessInputFile( targetNode );
-//  ProcessInputFile_PostProcess();
+  processInputFile( targetNode );
+//  processInputFile_PostProcess();
 }
 
-void Group::ProcessInputFile( xmlWrapper::xmlNode const & targetNode )
+void Group::processInputFile( xmlWrapper::xmlNode const & targetNode )
 {
 
   std::set< string > processedXmlNodes;
@@ -182,23 +182,23 @@ void Group::ProcessInputFile( xmlWrapper::xmlNode const & targetNode )
   }
 }
 
-void Group::PostProcessInputRecursive()
+void Group::postProcessInputRecursive()
 {
   for( auto const & subGroupIter : m_subGroups )
   {
-    subGroupIter.second->PostProcessInputRecursive();
+    subGroupIter.second->postProcessInputRecursive();
   }
-  PostProcessInput();
+  postProcessInput();
 }
 
 
 
-void Group::RegisterDataOnMeshRecursive( Group * const meshBodies )
+void Group::registerDataOnMeshRecursive( Group * const meshBodies )
 {
-  RegisterDataOnMesh( meshBodies );
+  registerDataOnMesh( meshBodies );
   for( auto && subGroup : m_subGroups )
   {
-    subGroup.second->RegisterDataOnMeshRecursive( meshBodies );
+    subGroup.second->registerDataOnMeshRecursive( meshBodies );
   }
 }
 
@@ -260,7 +260,7 @@ void Group::Initialize( Group * const group )
 {
   static localIndex indent = 0;
 
-  InitializePreSubGroups( group );
+  initializePreSubGroups( group );
 
   string_array initOrder;
   initializationOrder( initOrder );
@@ -272,7 +272,7 @@ void Group::Initialize( Group * const group )
     --indent;
   }
 
-  InitializePostSubGroups( group );
+  initializePostSubGroups( group );
 }
 
 
@@ -551,12 +551,12 @@ void Group::postRestartInitializationRecursive( Group * const domain )
   this->postRestartInitialization( domain );
 }
 
-void Group::SetSchemaDeviations( xmlWrapper::xmlNode GEOSX_UNUSED_PARAM( schemaRoot ),
+void Group::setSchemaDeviations( xmlWrapper::xmlNode GEOSX_UNUSED_PARAM( schemaRoot ),
                                  xmlWrapper::xmlNode GEOSX_UNUSED_PARAM( schemaParent ),
                                  integer GEOSX_UNUSED_PARAM( documentationType ) )
 {}
 
-void Group::RegisterDataOnMesh( Group * const GEOSX_UNUSED_PARAM( MeshBody ) )
+void Group::registerDataOnMesh( Group * const GEOSX_UNUSED_PARAM( MeshBody ) )
 {}
 
 

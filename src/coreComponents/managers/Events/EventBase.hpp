@@ -105,7 +105,7 @@ public:
   /**
    * @brief Expand any catalogs in the data structure.
    */
-  virtual void ExpandObjectCatalogs() override;
+  virtual void expandObjectCatalogs() override;
 
   /**
    * @brief Process input data to retrieve targeted objects internally.

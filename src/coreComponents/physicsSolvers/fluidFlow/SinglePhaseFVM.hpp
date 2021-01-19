@@ -206,7 +206,7 @@ public:
 
   /**@}*/
 
-  virtual void InitializePreSubGroups( dataRepository::Group * const rootGroup ) override;
+  virtual void initializePreSubGroups( dataRepository::Group * const rootGroup ) override;
 
   struct viewKeyStruct : SinglePhaseBase::viewKeyStruct
   {} viewKeysSinglePhaseFVM;

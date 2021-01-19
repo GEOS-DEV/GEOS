@@ -84,15 +84,15 @@ ProppantTransport::ProppantTransport( const std::string & name,
 
 }
 
-void ProppantTransport::PostProcessInput()
+void ProppantTransport::postProcessInput()
 {
-  FlowSolverBase::PostProcessInput();
+  FlowSolverBase::postProcessInput();
   CheckModelNames( m_proppantModelNames, viewKeyStruct::proppantNamesString );
 }
 
-void ProppantTransport::RegisterDataOnMesh( Group * const MeshBodies )
+void ProppantTransport::registerDataOnMesh( Group * const MeshBodies )
 {
-  FlowSolverBase::RegisterDataOnMesh( MeshBodies );
+  FlowSolverBase::registerDataOnMesh( MeshBodies );
 
   for( auto & mesh : MeshBodies->getSubGroups() )
   {
@@ -150,9 +150,9 @@ void ProppantTransport::RegisterDataOnMesh( Group * const MeshBodies )
   }
 }
 
-void ProppantTransport::InitializePreSubGroups( Group * const rootGroup )
+void ProppantTransport::initializePreSubGroups( Group * const rootGroup )
 {
-  FlowSolverBase::InitializePreSubGroups( rootGroup );
+  FlowSolverBase::initializePreSubGroups( rootGroup );
 
   DomainPartition * domain = rootGroup->getGroup< DomainPartition >( keys::domain );
   ConstitutiveManager & cm = *domain->getConstitutiveManager();

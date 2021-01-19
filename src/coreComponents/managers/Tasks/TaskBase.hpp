@@ -70,8 +70,8 @@ public:
     GEOSX_ERROR( "NOT IMPLEMENTED" );
   }
 
-  /// @copydoc geosx::dataRepository::Group::PostProcessInput( )
-  void PostProcessInput() override;
+  /// @copydoc geosx::dataRepository::Group::postProcessInput( )
+  void postProcessInput() override;
 };
 
 } /* namespace */

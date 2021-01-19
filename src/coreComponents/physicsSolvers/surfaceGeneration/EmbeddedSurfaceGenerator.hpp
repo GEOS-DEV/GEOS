@@ -62,7 +62,7 @@ public:
 
   static string CatalogName() { return "EmbeddedSurfaceGenerator"; }
 
-  virtual void RegisterDataOnMesh( Group * const MeshBody ) override final;
+  virtual void registerDataOnMesh( Group * const MeshBody ) override final;
 
   virtual void Execute( real64 const time_n,
                         real64 const dt,
@@ -99,7 +99,7 @@ protected:
    * @return ...
    *
    */
-  virtual void InitializePostSubGroups( Group * const problemManager ) override final;
+  virtual void initializePostSubGroups( Group * const problemManager ) override final;
   /**
    * @brief xxx
    * @param[in] ...

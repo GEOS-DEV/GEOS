@@ -149,9 +149,9 @@ MultiFluidBase::~MultiFluidBase()
 {}
 
 
-void MultiFluidBase::PostProcessInput()
+void MultiFluidBase::postProcessInput()
 {
-  ConstitutiveBase::PostProcessInput();
+  ConstitutiveBase::postProcessInput();
 
   localIndex const NC = numFluidComponents();
   localIndex const NP = numFluidPhases();
