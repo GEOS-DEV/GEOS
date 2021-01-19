@@ -43,8 +43,6 @@ public:
                              array1d< real64 > & threeDMonomialIntegrals );
 
 public:
-  ConformingVirtualElementOrder1()
-  {}
   virtual ~ConformingVirtualElementOrder1() override
   {}
 

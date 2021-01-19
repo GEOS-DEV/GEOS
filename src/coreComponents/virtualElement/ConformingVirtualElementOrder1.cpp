@@ -201,8 +201,8 @@ void ConformingVirtualElementOrder1::ComputeProjectors( MeshLevel const & mesh,
                       piNablaDofs[3]*monomBoundaryIntegrals[3] )/monomBoundaryIntegrals[0];
     // - integrate piNabla proj and compute integral means
     m_basisFunctionsIntegralMean( numBasisFunction ) = piNablaDofs[0] + invCellVolume *
-                                                     (piNablaDofs[1]*monomInternalIntegrals[0] + piNablaDofs[2]*monomInternalIntegrals[1]
-                                                      + piNablaDofs[3] * monomInternalIntegrals[2]);
+                                                       (piNablaDofs[1]*monomInternalIntegrals[0] + piNablaDofs[2]*monomInternalIntegrals[1]
+                                                        + piNablaDofs[3] * monomInternalIntegrals[2]);
     // - compute integral means of derivatives
     for( localIndex pos = 0; pos < 3; ++pos )
       m_basisDerivativesIntegralMean( pos, numBasisFunction ) =
