@@ -1,16 +1,16 @@
-#######################################
-#
-# Pangea2 - Intel 19 build
-#
-# SET ENV VARIABLES:
-#   export HDF5_USE_FILE_LOCKING=FALSE
-#
-# Load modules in this order:
-#   1) gcc/8.3.0
-#   3) openmpi/2.1.5
-#
-########################################
 
+########################################################################################
+#                                                                                      #
+#   Pangea2 - Intel 19 build                                                           #
+#                                                                                      #
+#   SET ENV VARIABLES:                                                                 #
+#     export HDF5_USE_FILE_LOCKING=FALSE                                               #   
+#                                                                                      #
+#   Load modules in this order:                                                        #
+#     1) gcc/8.3.0                                                                     # 
+#     3) openmpi/2.1.5                                                                 #
+#                                                                                      #
+######################################################################################## 
 
 set( CONFIG_NAME "pangea2-gcc@8.3.0" CACHE PATH "" ) 
 
