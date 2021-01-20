@@ -37,11 +37,17 @@ class ProjectionEDFMHelper {
                     R1Tensor & tmp) const noexcept;
 
   bool isBoundaryFace(localIndex faceIdx) const noexcept;
-  bool onLargerSide(localIndex faceIdx, real64 signedDistanceCellCenterToFrac) const noexcept;
+  bool onLargerSide( localIndex faceIdx,
+                     real64 signedDistanceCellCenterToFrac,
+                     R1Tensor const & fracOrigin,
+                     R1Tensor const & fracNormal ) const noexcept;
   real64 getSingedDistanceCellCenterToFracPlane( CellID const & hostCellID,
                                                  R1Tensor const & fracNormal,
                                                  R1Tensor const & fracOrigin,
                                                  R1Tensor & tmp) const noexcept;
+  bool neighborOnSameSide( localIndex faceIdx,
+                           read64 signedDistanceCellCenterToFrac,
+                           CellID const & hostCellID ) const;
 
   MeshLevel const & m_mesh;
   ElementRegionManager const * const m_elementManager;

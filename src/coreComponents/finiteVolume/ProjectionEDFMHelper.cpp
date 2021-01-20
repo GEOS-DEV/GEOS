@@ -1,4 +1,5 @@
 #include "ProjectionEDFMHelper.hpp"
+#include <limits>  // numeric_limits
 
 namespace geosx {
 
@@ -58,34 +59,29 @@ std::vector<localIndex> ProjectionEDFMHelper::selectFaces(FixedOneToManyRelation
   using std::ref;
   auto const & n = fractureSubRegion.getNormalVector(fracElement);
   auto const & o = fractureSubRegion.getOrigin(fracElement);
-  std::vector<localIndex> faces;
   R1Tensor tmp;
   real64 const distToFrac = getSingedDistanceCellCenterToFracPlane( hostCellID, n, o, tmp );
 
   // pick faces that intersect the fracture
+  std::vector<localIndex> faces;
   for (localIndex const iface : subRegionFaces[hostCellID.index])
   {
     if (isBoundaryFace(iface)) continue;
     // count those that are intersectedd
-    if ( intersection( ref(o), ref(n), iface, tmp ) )
+    if ( intersection( ref(o), ref(n), iface, tmp ) && neighborOnSameSide( iface, distToFrac, hostCellID ) )
     {
       faces.push_back( iface );
       continue;
       // TODO: do smart branch elimination
     }
 
-    if ( onLargerSide( iface, distToFrac ) )
+    if ( onLargerSide( iface, distToFrac, o, n ) )
     {
       faces.push_back( iface );
       continue;
     }
 
     // get face properties
-    real64 faceCenter[ 3 ], faceNormal[ 3 ], faceConormal[ 3 ], cellToFaceVec[ 3 ];
-    // real64 const lengthTolerance = m_lengthScale * m_areaRelTol;
-    // real64 const areaTolerance = lengthTolerance * lengthTolerance;
-    // computationalGeometry::Centroid_3DPolygon( m_facesToNodes[iface], m_nodeReferencePosition,
-                                               // faceCenter, faceNormal, areaTolerance );
   }
 
   return faces;
@@ -115,11 +111,18 @@ bool ProjectionEDFMHelper::isBoundaryFace(localIndex faceIdx) const noexcept
   return false;
 }
 
-bool ProjectionEDFMHelper::onLargerSide(localIndex faceIdx,
-                                        real64 signedDistanceCellCenterToFrac) const noexcept
+bool ProjectionEDFMHelper::onLargerSide( localIndex faceIdx,
+                                         real64 signedDistanceCellCenterToFrac,
+                                         R1Tensor const & fracOrigin,
+                                         R1Tensor const & fracNormal ) const noexcept
 {
-
-  return true;
+  real64 const areaTolerance = 10.f * std::numeric_limits<real64>::epsilon();
+  real64 faceCenter[ 3 ], faceNormal[ 3 ];
+  // compute face center
+  computationalGeometry::Centroid_3DPolygon( m_facesToNodes[faceIdx], m_nodeReferencePosition,
+                                               faceCenter, faceNormal, areaTolerance );
+  LvArray::tensorOps::subtract< 3 >( faceCenter, fracOrigin );
+  return Dot( faceCenter, fracNormal ) * signedDistanceCellCenterToFrac > 0 ;
 }
 
 real64 ProjectionEDFMHelper::getSingedDistanceCellCenterToFracPlane( CellID const & hostCellID,
@@ -130,7 +133,15 @@ real64 ProjectionEDFMHelper::getSingedDistanceCellCenterToFracPlane( CellID cons
   auto const & cellCenter = m_cellCenters[ hostCellID.region ][ hostCellID.subRegion ][ hostCellID.index ];
   LvArray::tensorOps::copy< 3 >( tmp, cellCenter );
   LvArray::tensorOps::subtract< 3 >( tmp, fracOrigin );
-  return Dot( tmp, fracOrigin );
+  return Dot( tmp, fracNormal );
+}
+
+bool ProjectionEDFMHelper::neighborOnSameSide( localIndex faceIdx,
+                                               read64 signedDistanceCellCenterToFrac,
+                                               CellID const & hostCellID ) const
+{
+  localIndex const hostNeighbor = (m_facesToCells[faceIdx][0] == hostCellID.index) ?
+      m_facesToCells[faceIdx][1] : m_facesToCells[faceIdx][0];
 }
 
 }  // end namespace geosx
