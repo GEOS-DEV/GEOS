@@ -48,14 +48,14 @@ public:
    * @param name the name of the FiniteVolumeManager in the data repository
    * @param parent the parent group of this group.
    */
-  FiniteVolumeManager( string const & name, Group * const parent );
+  FiniteVolumeManager(string const & name, Group * const parent);
 
   /**
    * @brief Destructor.
    */
   virtual ~FiniteVolumeManager() override;
 
-  virtual Group * CreateChild( string const & childKey, string const & childName ) override;
+  virtual Group * CreateChild(string const & childKey, string const & childName) override;
 
   virtual void ExpandObjectCatalogs() override;
 
@@ -64,24 +64,24 @@ public:
    * @param[in] name the provided name
    * @return the FluxApproximation associated with the provided name
    */
-  FluxApproximationBase const & getFluxApproximation( string const & name ) const;
+  FluxApproximationBase const & getFluxApproximation(string const & name) const;
 
   /**
-   * @copydoc getFluxApproximation( string const & ) const
+   * @copydoc getFluxApproximation(string const &) const
    */
-  FluxApproximationBase & getFluxApproximation( string const & name );
+  FluxApproximationBase & getFluxApproximation(string const & name);
 
   /**
    * @brief Return the HybridMimeticDiscretization associated with the provided name.
    * @param[in] name the provided name
    * @return the HybridMimeticDiscretization associated with the provided name
    */
-  HybridMimeticDiscretization const & getHybridMimeticDiscretization( string const & name ) const;
+  HybridMimeticDiscretization const & getHybridMimeticDiscretization(string const & name) const;
 
   /**
-   * @copydoc getHybridMimeticDiscretization( string const & ) const
+   * @copydoc getHybridMimeticDiscretization(string const &) const
    */
-  HybridMimeticDiscretization & getHybridMimeticDiscretization( string const & name );
+  HybridMimeticDiscretization & getHybridMimeticDiscretization(string const & name);
 
 private:
 

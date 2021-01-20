@@ -30,353 +30,353 @@ namespace geosx
 using namespace dataRepository;
 
 NeighborCommunicator::NeighborCommunicator():
-  m_neighborRank( -1 ),
+  m_neighborRank(-1),
   m_sendBufferSize(),
   m_receiveBufferSize(),
-  m_sendBuffer{ maxComm },
-  m_receiveBuffer{ maxComm },
+  m_sendBuffer{maxComm},
+  m_receiveBuffer{maxComm},
   m_mpiSendBufferRequest(),
   m_mpiRecvBufferRequest(),
   m_mpiSendBufferStatus(),
   m_mpiRecvBufferStatus()
-{ }
+{}
 
-void NeighborCommunicator::MPI_iSendReceive( buffer_unit_type const * const sendBuffer,
+void NeighborCommunicator::MPI_iSendReceive(buffer_unit_type const * const sendBuffer,
                                              int const sendSize,
                                              MPI_Request & sendRequest,
                                              buffer_unit_type * const receiveBuffer,
                                              int const receiveSize,
                                              MPI_Request & receiveRequest,
                                              int const commID,
-                                             MPI_Comm mpiComm )
+                                             MPI_Comm mpiComm)
 {
-  int const sendTag = CommTag( MpiWrapper::Comm_rank(), m_neighborRank, commID );
+  int const sendTag = CommTag(MpiWrapper::Comm_rank(), m_neighborRank, commID);
   //m_rank * m_size + m_neighborRank + m_size*m_size*commID;
-  MpiWrapper::iSend( const_cast< buffer_unit_type * >(sendBuffer),
+  MpiWrapper::iSend(const_cast<buffer_unit_type *>(sendBuffer),
                      sendSize,
                      m_neighborRank,
                      sendTag,
                      mpiComm,
-                     &sendRequest );
+                     &sendRequest);
 
-  int const receiveTag = CommTag( m_neighborRank, MpiWrapper::Comm_rank(), commID );
+  int const receiveTag = CommTag(m_neighborRank, MpiWrapper::Comm_rank(), commID);
   //m_neighborRank * m_size + m_rank + m_size*m_size*commID;
-  MpiWrapper::iRecv( receiveBuffer,
+  MpiWrapper::iRecv(receiveBuffer,
                      receiveSize,
                      m_neighborRank,
                      receiveTag,
                      mpiComm,
-                     &receiveRequest );
+                     &receiveRequest);
 }
 
-void NeighborCommunicator::MPI_iSendReceiveBufferSizes( int const commID,
-                                                        MPI_Comm mpiComm )
+void NeighborCommunicator::MPI_iSendReceiveBufferSizes(int const commID,
+                                                        MPI_Comm mpiComm)
 {
-  MPI_iSendReceiveBufferSizes( commID,
+  MPI_iSendReceiveBufferSizes(commID,
                                m_mpiSendBufferRequest[commID],
                                m_mpiRecvBufferRequest[commID],
-                               mpiComm );
+                               mpiComm);
 }
 
-void NeighborCommunicator::MPI_iSendReceiveBufferSizes( int const commID,
+void NeighborCommunicator::MPI_iSendReceiveBufferSizes(int const commID,
                                                         MPI_Request & mpiSendRequest,
                                                         MPI_Request & mpiRecvRequest,
-                                                        MPI_Comm mpiComm )
+                                                        MPI_Comm mpiComm)
 {
-//  m_sendBufferSize[commID] = LvArray::integerConversion<int>( m_sendBuffer[commID].size());
-  MPI_iSendReceive( &m_sendBufferSize[commID], 1, mpiSendRequest,
+//  m_sendBufferSize[commID] = LvArray::integerConversion<int>(m_sendBuffer[commID].size());
+  MPI_iSendReceive(&m_sendBufferSize[commID], 1, mpiSendRequest,
                     &m_receiveBufferSize[commID],
                     1, mpiRecvRequest,
                     commID,
-                    mpiComm );
+                    mpiComm);
 }
 
-void NeighborCommunicator::MPI_iSendReceiveBuffers( int const commID,
-                                                    MPI_Comm mpiComm )
+void NeighborCommunicator::MPI_iSendReceiveBuffers(int const commID,
+                                                    MPI_Comm mpiComm)
 {
-  MPI_iSendReceiveBuffers( commID,
+  MPI_iSendReceiveBuffers(commID,
                            m_mpiSendBufferRequest[commID],
                            m_mpiRecvBufferRequest[commID],
-                           mpiComm );
+                           mpiComm);
 }
 
-void NeighborCommunicator::MPI_iSendReceiveBuffers( int const commID,
+void NeighborCommunicator::MPI_iSendReceiveBuffers(int const commID,
                                                     MPI_Request & mpiSendRequest,
                                                     MPI_Request & mpiRecvRequest,
-                                                    MPI_Comm mpiComm )
+                                                    MPI_Comm mpiComm)
 {
-  m_receiveBuffer[commID].resize( m_receiveBufferSize[commID] );
+  m_receiveBuffer[commID].resize(m_receiveBufferSize[commID]);
 
-  MPI_iSendReceive( m_sendBuffer[commID].data(),
-                    LvArray::integerConversion< int >( m_sendBuffer[commID].size()),
+  MPI_iSendReceive(m_sendBuffer[commID].data(),
+                    LvArray::integerConversion<int>(m_sendBuffer[commID].size()),
                     mpiSendRequest,
                     m_receiveBuffer[commID].data(),
-                    LvArray::integerConversion< int >( m_receiveBuffer[commID].size()),
+                    LvArray::integerConversion<int>(m_receiveBuffer[commID].size()),
                     mpiRecvRequest,
                     commID,
-                    mpiComm );
+                    mpiComm);
 
 }
 
-void NeighborCommunicator::MPI_iSendReceive( int const commID,
-                                             MPI_Comm mpiComm )
+void NeighborCommunicator::MPI_iSendReceive(int const commID,
+                                             MPI_Comm mpiComm)
 {
-  MPI_iSendReceive( commID,
+  MPI_iSendReceive(commID,
                     m_mpiSendBufferRequest[commID],
                     m_mpiRecvBufferRequest[commID],
-                    mpiComm );
+                    mpiComm);
 }
 
-void NeighborCommunicator::MPI_iSendReceive( int const commID,
+void NeighborCommunicator::MPI_iSendReceive(int const commID,
                                              MPI_Request & mpiSendRequest,
                                              MPI_Request & mpiRecvRequest,
-                                             MPI_Comm mpiComm )
+                                             MPI_Comm mpiComm)
 {
-  MPI_iSendReceiveBufferSizes( commID, mpiComm );
+  MPI_iSendReceiveBufferSizes(commID, mpiComm);
 
-  MpiWrapper::Waitall( 1, &( m_mpiRecvBufferRequest[commID] ), &( m_mpiRecvBufferStatus[commID] ) );
-  MpiWrapper::Waitall( 1, &( m_mpiSendBufferRequest[commID] ), &( m_mpiSendBufferStatus[commID] ) );
+  MpiWrapper::Waitall(1, &(m_mpiRecvBufferRequest[commID]), &(m_mpiRecvBufferStatus[commID]));
+  MpiWrapper::Waitall(1, &(m_mpiSendBufferRequest[commID]), &(m_mpiSendBufferStatus[commID]));
 
-  m_receiveBuffer[commID].resize( m_receiveBufferSize[commID] );
+  m_receiveBuffer[commID].resize(m_receiveBufferSize[commID]);
 
-  MPI_iSendReceive( m_sendBuffer[commID].data(),
+  MPI_iSendReceive(m_sendBuffer[commID].data(),
                     m_sendBufferSize[commID],
                     mpiSendRequest,
                     m_receiveBuffer[commID].data(),
                     m_receiveBufferSize[commID],
                     mpiRecvRequest,
                     commID,
-                    mpiComm );
+                    mpiComm);
 }
 
-void NeighborCommunicator::MPI_iSendReceive( buffer_unit_type const * const sendBuffer,
+void NeighborCommunicator::MPI_iSendReceive(buffer_unit_type const * const sendBuffer,
                                              int const sendSize,
                                              int const commID,
-                                             MPI_Comm mpiComm )
+                                             MPI_Comm mpiComm)
 {
-  MPI_iSendReceive( &sendSize,
+  MPI_iSendReceive(&sendSize,
                     1,
                     m_mpiSendBufferRequest[commID],
                     &m_receiveBufferSize[commID],
                     1,
                     m_mpiRecvBufferRequest[commID],
                     commID,
-                    mpiComm );
+                    mpiComm);
 
-  MpiWrapper::Waitall( 1, &( m_mpiRecvBufferRequest[commID] ), &( m_mpiRecvBufferStatus[commID] ) );
-  MpiWrapper::Waitall( 1, &( m_mpiSendBufferRequest[commID] ), &( m_mpiSendBufferStatus[commID] ) );
+  MpiWrapper::Waitall(1, &(m_mpiRecvBufferRequest[commID]), &(m_mpiRecvBufferStatus[commID]));
+  MpiWrapper::Waitall(1, &(m_mpiSendBufferRequest[commID]), &(m_mpiSendBufferStatus[commID]));
 
-  m_receiveBuffer[commID].resize( m_receiveBufferSize[commID] );
+  m_receiveBuffer[commID].resize(m_receiveBufferSize[commID]);
 
-  MPI_iSendReceive( sendBuffer,
+  MPI_iSendReceive(sendBuffer,
                     sendSize,
                     m_mpiSendBufferRequest[commID],
                     m_receiveBuffer[commID].data(),
                     m_receiveBufferSize[commID],
                     m_mpiRecvBufferRequest[commID],
                     commID,
-                    mpiComm );
+                    mpiComm);
 }
 
-void NeighborCommunicator::MPI_WaitAll( int const GEOSX_UNUSED_PARAM( commID ),
+void NeighborCommunicator::MPI_WaitAll(int const GEOSX_UNUSED_PARAM(commID),
                                         MPI_Request & mpiSendRequest,
                                         MPI_Status & mpiSendStatus,
                                         MPI_Request & mpiRecvRequest,
-                                        MPI_Status & mpiReceiveStatus )
+                                        MPI_Status & mpiReceiveStatus)
 
 {
-  MpiWrapper::Waitall( 1, &mpiRecvRequest, &mpiReceiveStatus );
-  MpiWrapper::Waitall( 1, &mpiSendRequest, &mpiSendStatus );
+  MpiWrapper::Waitall(1, &mpiRecvRequest, &mpiReceiveStatus);
+  MpiWrapper::Waitall(1, &mpiSendRequest, &mpiSendStatus);
 }
 
-void NeighborCommunicator::MPI_WaitAll( int const commID )
+void NeighborCommunicator::MPI_WaitAll(int const commID)
 {
-  MpiWrapper::Waitall( 1, &( m_mpiRecvBufferRequest[commID] ), &( m_mpiRecvBufferStatus[commID] ) );
-  MpiWrapper::Waitall( 1, &( m_mpiSendBufferRequest[commID] ), &( m_mpiSendBufferStatus[commID] ) );
+  MpiWrapper::Waitall(1, &(m_mpiRecvBufferRequest[commID]), &(m_mpiRecvBufferStatus[commID]));
+  MpiWrapper::Waitall(1, &(m_mpiSendBufferRequest[commID]), &(m_mpiSendBufferStatus[commID]));
 }
 
 void NeighborCommunicator::Clear()
 {
-  for( int i = 0; i < maxComm; ++i )
+  for(int i = 0; i <maxComm; ++i)
   {
     m_sendBuffer[i].clear();
     m_receiveBuffer[i].clear();
   }
 }
 
-void NeighborCommunicator::AddNeighborGroupToMesh( MeshLevel & mesh ) const
+void NeighborCommunicator::AddNeighborGroupToMesh(MeshLevel & mesh) const
 {
-  mesh.getNodeManager()->addNeighbor( m_neighborRank );
-  mesh.getEdgeManager()->addNeighbor( m_neighborRank );
-  mesh.getFaceManager()->addNeighbor( m_neighborRank );
+  mesh.getNodeManager()->addNeighbor(m_neighborRank);
+  mesh.getEdgeManager()->addNeighbor(m_neighborRank);
+  mesh.getFaceManager()->addNeighbor(m_neighborRank);
 
-  mesh.getElemManager()->forElementSubRegions< ElementSubRegionBase >( [&]( ElementSubRegionBase & elementSubRegion )
+  mesh.getElemManager()->forElementSubRegions<ElementSubRegionBase>([&](ElementSubRegionBase & elementSubRegion)
   {
-    elementSubRegion.addNeighbor( m_neighborRank );
-  } );
+    elementSubRegion.addNeighbor(m_neighborRank);
+  });
 }
 
-int NeighborCommunicator::PostSizeRecv( int const commID )
+int NeighborCommunicator::PostSizeRecv(int const commID)
 {
-  int const recvTag = 101; //CommTag( m_neighborRank, MpiWrapper::Comm_rank(), commID );
-  return MpiWrapper::iRecv( &m_receiveBufferSize[commID],
+  int const recvTag = 101; //CommTag(m_neighborRank, MpiWrapper::Comm_rank(), commID);
+  return MpiWrapper::iRecv(&m_receiveBufferSize[commID],
                             1,
                             m_neighborRank,
                             recvTag,
                             MPI_COMM_GEOSX,
-                            &m_mpiRecvSizeRequest[commID] );
+                            &m_mpiRecvSizeRequest[commID]);
 }
 
-MPI_Request NeighborCommunicator::GetSizeRecvRequest( int const commID )
+MPI_Request NeighborCommunicator::GetSizeRecvRequest(int const commID)
 {
   return m_mpiRecvSizeRequest[commID];
 }
 
-int NeighborCommunicator::PostSizeSend( int const commID )
+int NeighborCommunicator::PostSizeSend(int const commID)
 {
-  int const sendTag = 101; //CommTag( m_neighborRank, MpiWrapper::Comm_rank(), commID );
-  return MpiWrapper::iSend( &m_sendBufferSize[commID],
+  int const sendTag = 101; //CommTag(m_neighborRank, MpiWrapper::Comm_rank(), commID);
+  return MpiWrapper::iSend(&m_sendBufferSize[commID],
                             1,
                             m_neighborRank,
                             sendTag,
                             MPI_COMM_GEOSX,
-                            &m_mpiSendSizeRequest[commID] );
+                            &m_mpiSendSizeRequest[commID]);
 }
 
-int NeighborCommunicator::PostRecv( int const commID )
+int NeighborCommunicator::PostRecv(int const commID)
 {
-  int const recvTag = 102; //CommTag( m_neighborRank, MpiWrapper::Comm_rank(), commID );
-  m_receiveBuffer[commID].resize( m_receiveBufferSize[commID] );
-  return MpiWrapper::iRecv( m_receiveBuffer[commID].data(),
+  int const recvTag = 102; //CommTag(m_neighborRank, MpiWrapper::Comm_rank(), commID);
+  m_receiveBuffer[commID].resize(m_receiveBufferSize[commID]);
+  return MpiWrapper::iRecv(m_receiveBuffer[commID].data(),
                             m_receiveBufferSize[commID],
                             m_neighborRank,
                             recvTag,
                             MPI_COMM_GEOSX,
-                            &m_mpiRecvBufferRequest[commID] );
+                            &m_mpiRecvBufferRequest[commID]);
 }
 
-MPI_Request NeighborCommunicator::GetRecvRequest( int const commID )
+MPI_Request NeighborCommunicator::GetRecvRequest(int const commID)
 {
   return m_mpiRecvBufferRequest[commID];
 }
 
-int NeighborCommunicator::PostSend( int const commID )
+int NeighborCommunicator::PostSend(int const commID)
 {
-  int const sendTag = 102; //CommTag( m_neighborRank, MpiWrapper::Comm_rank(), commID );
-  return MpiWrapper::iSend( m_sendBuffer[commID].data(),
+  int const sendTag = 102; //CommTag(m_neighborRank, MpiWrapper::Comm_rank(), commID);
+  return MpiWrapper::iSend(m_sendBuffer[commID].data(),
                             m_sendBufferSize[commID],
                             m_neighborRank,
                             sendTag,
                             MPI_COMM_GEOSX,
-                            &m_mpiSendBufferRequest[commID] );
+                            &m_mpiSendBufferRequest[commID]);
 }
 
-using ElemAdjListViewType = ElementRegionManager::ElementViewAccessor< arrayView1d< localIndex > >;
-using ElemAdjListRefWrapType = ElementRegionManager::ElementViewAccessor< ReferenceWrapper< localIndex_array > >;
-using ElemAdjListRefType = ElementRegionManager::ElementReferenceAccessor< localIndex_array >;
+using ElemAdjListViewType = ElementRegionManager::ElementViewAccessor<arrayView1d<localIndex>>;
+using ElemAdjListRefWrapType = ElementRegionManager::ElementViewAccessor<ReferenceWrapper<localIndex_array>>;
+using ElemAdjListRefType = ElementRegionManager::ElementReferenceAccessor<localIndex_array>;
 
-inline int GhostSize( NodeManager & nodeManager, arrayView1d< localIndex const > const nodeAdjacencyList,
-                      EdgeManager & edgeManager, arrayView1d< localIndex const > const edgeAdjacencyList,
-                      FaceManager & faceManager, arrayView1d< localIndex const > const faceAdjacencyList,
-                      ElementRegionManager & elemManager, ElemAdjListViewType const & elementAdjacencyList )
+inline int GhostSize(NodeManager & nodeManager, arrayView1d<localIndex const> const nodeAdjacencyList,
+                      EdgeManager & edgeManager, arrayView1d<localIndex const> const edgeAdjacencyList,
+                      FaceManager & faceManager, arrayView1d<localIndex const> const faceAdjacencyList,
+                      ElementRegionManager & elemManager, ElemAdjListViewType const & elementAdjacencyList)
 {
   int bufferSize = 0;
-  bufferSize += nodeManager.PackGlobalMapsSize( nodeAdjacencyList, 0 );
-  bufferSize += edgeManager.PackGlobalMapsSize( edgeAdjacencyList, 0 );
-  bufferSize += faceManager.PackGlobalMapsSize( faceAdjacencyList, 0 );
-  bufferSize += elemManager.PackGlobalMapsSize( elementAdjacencyList );
-  bufferSize += nodeManager.PackUpDownMapsSize( nodeAdjacencyList );
-  bufferSize += edgeManager.PackUpDownMapsSize( edgeAdjacencyList );
-  bufferSize += faceManager.PackUpDownMapsSize( faceAdjacencyList );
-  bufferSize += elemManager.PackUpDownMapsSize( elementAdjacencyList );
-  bufferSize += nodeManager.PackSize( {}, nodeAdjacencyList, 0 );
-  bufferSize += edgeManager.PackSize( {}, edgeAdjacencyList, 0 );
-  bufferSize += faceManager.PackSize( {}, faceAdjacencyList, 0 );
-  bufferSize += elemManager.PackSize( {}, elementAdjacencyList );
+  bufferSize += nodeManager.PackGlobalMapsSize(nodeAdjacencyList, 0);
+  bufferSize += edgeManager.PackGlobalMapsSize(edgeAdjacencyList, 0);
+  bufferSize += faceManager.PackGlobalMapsSize(faceAdjacencyList, 0);
+  bufferSize += elemManager.PackGlobalMapsSize(elementAdjacencyList);
+  bufferSize += nodeManager.PackUpDownMapsSize(nodeAdjacencyList);
+  bufferSize += edgeManager.PackUpDownMapsSize(edgeAdjacencyList);
+  bufferSize += faceManager.PackUpDownMapsSize(faceAdjacencyList);
+  bufferSize += elemManager.PackUpDownMapsSize(elementAdjacencyList);
+  bufferSize += nodeManager.PackSize({}, nodeAdjacencyList, 0);
+  bufferSize += edgeManager.PackSize({}, edgeAdjacencyList, 0);
+  bufferSize += faceManager.PackSize({}, faceAdjacencyList, 0);
+  bufferSize += elemManager.PackSize({}, elementAdjacencyList);
   return bufferSize;
 }
 
-inline int PackGhosts( buffer_unit_type * sendBufferPtr,
-                       NodeManager & nodeManager, arrayView1d< localIndex const > const nodeAdjacencyList,
-                       EdgeManager & edgeManager, arrayView1d< localIndex const > const edgeAdjacencyList,
-                       FaceManager & faceManager, arrayView1d< localIndex const > const faceAdjacencyList,
-                       ElementRegionManager & elemManager, ElemAdjListViewType const & elementAdjacencyList )
+inline int PackGhosts(buffer_unit_type * sendBufferPtr,
+                       NodeManager & nodeManager, arrayView1d<localIndex const> const nodeAdjacencyList,
+                       EdgeManager & edgeManager, arrayView1d<localIndex const> const edgeAdjacencyList,
+                       FaceManager & faceManager, arrayView1d<localIndex const> const faceAdjacencyList,
+                       ElementRegionManager & elemManager, ElemAdjListViewType const & elementAdjacencyList)
 {
   int packedSize = 0;
-  packedSize += nodeManager.PackGlobalMaps( sendBufferPtr, nodeAdjacencyList, 0 );
-  packedSize += edgeManager.PackGlobalMaps( sendBufferPtr, edgeAdjacencyList, 0 );
-  packedSize += faceManager.PackGlobalMaps( sendBufferPtr, faceAdjacencyList, 0 );
-  packedSize += elemManager.PackGlobalMaps( sendBufferPtr, elementAdjacencyList );
-  packedSize += nodeManager.PackUpDownMaps( sendBufferPtr, nodeAdjacencyList );
-  packedSize += edgeManager.PackUpDownMaps( sendBufferPtr, edgeAdjacencyList );
-  packedSize += faceManager.PackUpDownMaps( sendBufferPtr, faceAdjacencyList );
-  packedSize += elemManager.PackUpDownMaps( sendBufferPtr, elementAdjacencyList );
-  packedSize += nodeManager.Pack( sendBufferPtr, {}, nodeAdjacencyList, 0 );
-  packedSize += edgeManager.Pack( sendBufferPtr, {}, edgeAdjacencyList, 0 );
-  packedSize += faceManager.Pack( sendBufferPtr, {}, faceAdjacencyList, 0 );
-  packedSize += elemManager.Pack( sendBufferPtr, {}, elementAdjacencyList );
+  packedSize += nodeManager.PackGlobalMaps(sendBufferPtr, nodeAdjacencyList, 0);
+  packedSize += edgeManager.PackGlobalMaps(sendBufferPtr, edgeAdjacencyList, 0);
+  packedSize += faceManager.PackGlobalMaps(sendBufferPtr, faceAdjacencyList, 0);
+  packedSize += elemManager.PackGlobalMaps(sendBufferPtr, elementAdjacencyList);
+  packedSize += nodeManager.PackUpDownMaps(sendBufferPtr, nodeAdjacencyList);
+  packedSize += edgeManager.PackUpDownMaps(sendBufferPtr, edgeAdjacencyList);
+  packedSize += faceManager.PackUpDownMaps(sendBufferPtr, faceAdjacencyList);
+  packedSize += elemManager.PackUpDownMaps(sendBufferPtr, elementAdjacencyList);
+  packedSize += nodeManager.Pack(sendBufferPtr, {}, nodeAdjacencyList, 0);
+  packedSize += edgeManager.Pack(sendBufferPtr, {}, edgeAdjacencyList, 0);
+  packedSize += faceManager.Pack(sendBufferPtr, {}, faceAdjacencyList, 0);
+  packedSize += elemManager.Pack(sendBufferPtr, {}, elementAdjacencyList);
   return packedSize;
 }
 
-void NeighborCommunicator::PrepareAndSendGhosts( bool const GEOSX_UNUSED_PARAM( contactActive ),
+void NeighborCommunicator::PrepareAndSendGhosts(bool const GEOSX_UNUSED_PARAM(contactActive),
                                                  integer const depth,
                                                  MeshLevel & mesh,
-                                                 int const commID )
+                                                 int const commID)
 {
   GEOSX_MARK_FUNCTION;
 
-  this->PostSizeRecv( commID ); // post recv for buffer size from neighbor.
+  this->PostSizeRecv(commID); // post recv for buffer size from neighbor.
 
   NodeManager & nodeManager = *(mesh.getNodeManager());
   EdgeManager & edgeManager = *(mesh.getEdgeManager());
   FaceManager & faceManager = *(mesh.getFaceManager());
   ElementRegionManager & elemManager = *(mesh.getElemManager());
 
-  localIndex_array & nodeAdjacencyList = nodeManager.getNeighborData( m_neighborRank ).adjacencyList();
-  localIndex_array & edgeAdjacencyList = edgeManager.getNeighborData( m_neighborRank ).adjacencyList();
-  localIndex_array & faceAdjacencyList = faceManager.getNeighborData( m_neighborRank ).adjacencyList();
+  localIndex_array & nodeAdjacencyList = nodeManager.getNeighborData(m_neighborRank).adjacencyList();
+  localIndex_array & edgeAdjacencyList = edgeManager.getNeighborData(m_neighborRank).adjacencyList();
+  localIndex_array & faceAdjacencyList = faceManager.getNeighborData(m_neighborRank).adjacencyList();
 
   {
     ElemAdjListRefWrapType elementAdjacencyList =
-      elemManager.ConstructReferenceAccessor< localIndex_array >( ObjectManagerBase::viewKeyStruct::adjacencyListString,
-                                                                  std::to_string( this->m_neighborRank ) );
+      elemManager.ConstructReferenceAccessor<localIndex_array>(ObjectManagerBase::viewKeyStruct::adjacencyListString,
+                                                                  std::to_string(this->m_neighborRank));
 
-    mesh.GenerateAdjacencyLists( nodeManager.getNeighborData( m_neighborRank ).matchedPartitionBoundary(),
+    mesh.GenerateAdjacencyLists(nodeManager.getNeighborData(m_neighborRank).matchedPartitionBoundary(),
                                  nodeAdjacencyList,
                                  edgeAdjacencyList,
                                  faceAdjacencyList,
                                  elementAdjacencyList,
-                                 depth );
+                                 depth);
   }
 
   ElemAdjListViewType const elemAdjacencyList =
-    elemManager.ConstructViewAccessor< array1d< localIndex >, arrayView1d< localIndex > >( ObjectManagerBase::viewKeyStruct::adjacencyListString,
-                                                                                           std::to_string( this->m_neighborRank ) );
+    elemManager.ConstructViewAccessor<array1d<localIndex>, arrayView1d<localIndex>>(ObjectManagerBase::viewKeyStruct::adjacencyListString,
+                                                                                           std::to_string(this->m_neighborRank));
 
-  int const bufferSize = GhostSize( nodeManager, nodeAdjacencyList,
+  int const bufferSize = GhostSize(nodeManager, nodeAdjacencyList,
                                     edgeManager, edgeAdjacencyList,
                                     faceManager, faceAdjacencyList,
-                                    elemManager, elemAdjacencyList );
+                                    elemManager, elemAdjacencyList);
 
-  this->resizeSendBuffer( commID, bufferSize );
-  this->PostSizeSend( commID );
+  this->resizeSendBuffer(commID, bufferSize);
+  this->PostSizeSend(commID);
 
-  buffer_type & sendBuffer = SendBuffer( commID );
+  buffer_type & sendBuffer = SendBuffer(commID);
   buffer_unit_type * sendBufferPtr = sendBuffer.data();
 
-  int const packedSize = PackGhosts( sendBufferPtr,
+  int const packedSize = PackGhosts(sendBufferPtr,
                                      nodeManager, nodeAdjacencyList,
                                      edgeManager, edgeAdjacencyList,
                                      faceManager, faceAdjacencyList,
-                                     elemManager, elemAdjacencyList );
+                                     elemManager, elemAdjacencyList);
 
-  GEOSX_ERROR_IF_NE( bufferSize, packedSize );
+  GEOSX_ERROR_IF_NE(bufferSize, packedSize);
 
-  this->PostSend( commID );
+  this->PostSend(commID);
 }
 
-void NeighborCommunicator::UnpackGhosts( MeshLevel & mesh,
-                                         int const commID )
+void NeighborCommunicator::UnpackGhosts(MeshLevel & mesh,
+                                         int const commID)
 {
   GEOSX_MARK_FUNCTION;
 
@@ -385,134 +385,134 @@ void NeighborCommunicator::UnpackGhosts( MeshLevel & mesh,
   FaceManager & faceManager = *(mesh.getFaceManager());
   ElementRegionManager & elemManager = *(mesh.getElemManager());
 
-  buffer_type const & receiveBuffer = ReceiveBuffer( commID );
+  buffer_type const & receiveBuffer = ReceiveBuffer(commID);
   buffer_unit_type const * receiveBufferPtr = receiveBuffer.data();
 
   int unpackedSize = 0;
 
   localIndex_array nodeUnpackList;
-  unpackedSize += nodeManager.UnpackGlobalMaps( receiveBufferPtr, nodeUnpackList, 0 );
+  unpackedSize += nodeManager.UnpackGlobalMaps(receiveBufferPtr, nodeUnpackList, 0);
 
   localIndex_array edgeUnpackList;
-  unpackedSize += edgeManager.UnpackGlobalMaps( receiveBufferPtr, edgeUnpackList, 0 );
+  unpackedSize += edgeManager.UnpackGlobalMaps(receiveBufferPtr, edgeUnpackList, 0);
 
   localIndex_array faceUnpackList;
-  unpackedSize += faceManager.UnpackGlobalMaps( receiveBufferPtr, faceUnpackList, 0 );
+  unpackedSize += faceManager.UnpackGlobalMaps(receiveBufferPtr, faceUnpackList, 0);
 
   ElemAdjListRefType elementAdjacencyReceiveListArray =
-    elemManager.ConstructReferenceAccessor< localIndex_array >( ObjectManagerBase::viewKeyStruct::ghostsToReceiveString,
-                                                                std::to_string( this->m_neighborRank ) );
-  unpackedSize += elemManager.UnpackGlobalMaps( receiveBufferPtr,
-                                                elementAdjacencyReceiveListArray );
+    elemManager.ConstructReferenceAccessor<localIndex_array>(ObjectManagerBase::viewKeyStruct::ghostsToReceiveString,
+                                                                std::to_string(this->m_neighborRank));
+  unpackedSize += elemManager.UnpackGlobalMaps(receiveBufferPtr,
+                                                elementAdjacencyReceiveListArray);
 
   ElemAdjListViewType elementAdjacencyReceiveList =
-    elemManager.ConstructViewAccessor< array1d< localIndex >, arrayView1d< localIndex > >( ObjectManagerBase::viewKeyStruct::ghostsToReceiveString,
-                                                                                           std::to_string( this->m_neighborRank ) );
+    elemManager.ConstructViewAccessor<array1d<localIndex>, arrayView1d<localIndex>>(ObjectManagerBase::viewKeyStruct::ghostsToReceiveString,
+                                                                                           std::to_string(this->m_neighborRank));
 
-  unpackedSize += nodeManager.UnpackUpDownMaps( receiveBufferPtr, nodeUnpackList, false, false );
-  unpackedSize += edgeManager.UnpackUpDownMaps( receiveBufferPtr, edgeUnpackList, false, false );
-  unpackedSize += faceManager.UnpackUpDownMaps( receiveBufferPtr, faceUnpackList, false, false );
-  unpackedSize += elemManager.UnpackUpDownMaps( receiveBufferPtr, elementAdjacencyReceiveListArray, false );
+  unpackedSize += nodeManager.UnpackUpDownMaps(receiveBufferPtr, nodeUnpackList, false, false);
+  unpackedSize += edgeManager.UnpackUpDownMaps(receiveBufferPtr, edgeUnpackList, false, false);
+  unpackedSize += faceManager.UnpackUpDownMaps(receiveBufferPtr, faceUnpackList, false, false);
+  unpackedSize += elemManager.UnpackUpDownMaps(receiveBufferPtr, elementAdjacencyReceiveListArray, false);
 
-  unpackedSize += nodeManager.Unpack( receiveBufferPtr, nodeUnpackList, 0 );
-  unpackedSize += edgeManager.Unpack( receiveBufferPtr, edgeUnpackList, 0 );
-  unpackedSize += faceManager.Unpack( receiveBufferPtr, faceUnpackList, 0 );
-  unpackedSize += elemManager.Unpack( receiveBufferPtr, elementAdjacencyReceiveList );
+  unpackedSize += nodeManager.Unpack(receiveBufferPtr, nodeUnpackList, 0);
+  unpackedSize += edgeManager.Unpack(receiveBufferPtr, edgeUnpackList, 0);
+  unpackedSize += faceManager.Unpack(receiveBufferPtr, faceUnpackList, 0);
+  unpackedSize += elemManager.Unpack(receiveBufferPtr, elementAdjacencyReceiveList);
 }
 
-void NeighborCommunicator::PrepareAndSendSyncLists( MeshLevel const & mesh,
-                                                    int const commID )
+void NeighborCommunicator::PrepareAndSendSyncLists(MeshLevel const & mesh,
+                                                    int const commID)
 {
   GEOSX_MARK_FUNCTION;
 
-  this->PostSizeRecv( commID );
+  this->PostSizeRecv(commID);
 
   NodeManager const & nodeManager = *(mesh.getNodeManager());
   EdgeManager const & edgeManager = *(mesh.getEdgeManager());
   FaceManager const & faceManager = *(mesh.getFaceManager());
   ElementRegionManager const & elemManager = *(mesh.getElemManager());
 
-  arrayView1d< localIndex const > const nodeGhostsToReceive = nodeManager.getNeighborData( m_neighborRank ).ghostsToReceive();
-  arrayView1d< localIndex const > const edgeGhostsToReceive = edgeManager.getNeighborData( m_neighborRank ).ghostsToReceive();
-  arrayView1d< localIndex const > const faceGhostsToReceive = faceManager.getNeighborData( m_neighborRank ).ghostsToReceive();
+  arrayView1d<localIndex const> const nodeGhostsToReceive = nodeManager.getNeighborData(m_neighborRank).ghostsToReceive();
+  arrayView1d<localIndex const> const edgeGhostsToReceive = edgeManager.getNeighborData(m_neighborRank).ghostsToReceive();
+  arrayView1d<localIndex const> const faceGhostsToReceive = faceManager.getNeighborData(m_neighborRank).ghostsToReceive();
 
-  arrayView1d< globalIndex const > const nodeLocalToGlobal = nodeManager.localToGlobalMap();
-  arrayView1d< globalIndex const > const edgeLocalToGlobal = edgeManager.localToGlobalMap();
-  arrayView1d< globalIndex const > const faceLocalToGlobal = faceManager.localToGlobalMap();
+  arrayView1d<globalIndex const> const nodeLocalToGlobal = nodeManager.localToGlobalMap();
+  arrayView1d<globalIndex const> const edgeLocalToGlobal = edgeManager.localToGlobalMap();
+  arrayView1d<globalIndex const> const faceLocalToGlobal = faceManager.localToGlobalMap();
 
-  buffer_type & sendBuffer = SendBuffer( commID );
+  buffer_type & sendBuffer = SendBuffer(commID);
   buffer_unit_type * sendBufferPtr = sendBuffer.data();
 
   int bufferSize = 0;
-  bufferSize += bufferOps::Pack< false >( sendBufferPtr,
+  bufferSize += bufferOps::Pack<false>(sendBufferPtr,
                                           nodeGhostsToReceive.toSliceConst(),
                                           nullptr,
                                           nodeGhostsToReceive.size(),
-                                          nodeLocalToGlobal.toSliceConst() );
+                                          nodeLocalToGlobal.toSliceConst());
 
-  bufferSize += bufferOps::Pack< false >( sendBufferPtr,
+  bufferSize += bufferOps::Pack<false>(sendBufferPtr,
                                           edgeGhostsToReceive.toSliceConst(),
                                           nullptr,
                                           edgeGhostsToReceive.size(),
-                                          edgeLocalToGlobal.toSliceConst() );
+                                          edgeLocalToGlobal.toSliceConst());
 
-  bufferSize += bufferOps::Pack< false >( sendBufferPtr,
+  bufferSize += bufferOps::Pack<false>(sendBufferPtr,
                                           faceGhostsToReceive.toSliceConst(),
                                           nullptr,
                                           faceGhostsToReceive.size(),
-                                          faceLocalToGlobal.toSliceConst() );
+                                          faceLocalToGlobal.toSliceConst());
 
-  elemManager.forElementSubRegions< ElementSubRegionBase >( [&]( ElementSubRegionBase const & subRegion )
+  elemManager.forElementSubRegions<ElementSubRegionBase>([&](ElementSubRegionBase const & subRegion)
   {
-    arrayView1d< localIndex const > const ghostsToReceive = subRegion.getNeighborData( m_neighborRank ).ghostsToReceive();
-    arrayView1d< globalIndex const > const localToGlobal = subRegion.localToGlobalMap();
-    bufferSize += bufferOps::Pack< false >( sendBufferPtr,
+    arrayView1d<localIndex const> const ghostsToReceive = subRegion.getNeighborData(m_neighborRank).ghostsToReceive();
+    arrayView1d<globalIndex const> const localToGlobal = subRegion.localToGlobalMap();
+    bufferSize += bufferOps::Pack<false>(sendBufferPtr,
                                             ghostsToReceive.toSliceConst(),
                                             nullptr,
                                             ghostsToReceive.size(),
-                                            localToGlobal.toSliceConst() );
-  } );
+                                            localToGlobal.toSliceConst());
+  });
 
-  this->resizeSendBuffer( commID, bufferSize );
-  this->PostSizeSend( commID );
+  this->resizeSendBuffer(commID, bufferSize);
+  this->PostSizeSend(commID);
 
   int packedSize = 0;
-  packedSize += bufferOps::Pack< true >( sendBufferPtr,
+  packedSize += bufferOps::Pack<true>(sendBufferPtr,
                                          nodeGhostsToReceive.toSliceConst(),
                                          nullptr,
                                          nodeGhostsToReceive.size(),
-                                         nodeLocalToGlobal.toSliceConst() );
+                                         nodeLocalToGlobal.toSliceConst());
 
-  packedSize += bufferOps::Pack< true >( sendBufferPtr,
+  packedSize += bufferOps::Pack<true>(sendBufferPtr,
                                          edgeGhostsToReceive.toSliceConst(),
                                          nullptr,
                                          edgeGhostsToReceive.size(),
-                                         edgeLocalToGlobal.toSliceConst() );
+                                         edgeLocalToGlobal.toSliceConst());
 
-  packedSize += bufferOps::Pack< true >( sendBufferPtr,
+  packedSize += bufferOps::Pack<true>(sendBufferPtr,
                                          faceGhostsToReceive.toSliceConst(),
                                          nullptr,
                                          faceGhostsToReceive.size(),
-                                         faceLocalToGlobal.toSliceConst() );
+                                         faceLocalToGlobal.toSliceConst());
 
-  elemManager.forElementSubRegions< ElementSubRegionBase >( [&]( ElementSubRegionBase const & subRegion )
+  elemManager.forElementSubRegions<ElementSubRegionBase>([&](ElementSubRegionBase const & subRegion)
   {
-    arrayView1d< localIndex const > const ghostsToReceive = subRegion.getNeighborData( m_neighborRank ).ghostsToReceive();
-    arrayView1d< globalIndex const > const localToGlobal = subRegion.localToGlobalMap();
-    packedSize += bufferOps::Pack< true >( sendBufferPtr,
+    arrayView1d<localIndex const> const ghostsToReceive = subRegion.getNeighborData(m_neighborRank).ghostsToReceive();
+    arrayView1d<globalIndex const> const localToGlobal = subRegion.localToGlobalMap();
+    packedSize += bufferOps::Pack<true>(sendBufferPtr,
                                            ghostsToReceive.toSliceConst(),
                                            nullptr,
                                            ghostsToReceive.size(),
-                                           localToGlobal.toSliceConst() );
-  } );
+                                           localToGlobal.toSliceConst());
+  });
 
-  GEOSX_ERROR_IF( bufferSize != packedSize, "Allocated Buffer Size is not equal to packed buffer size" );
+  GEOSX_ERROR_IF(bufferSize != packedSize, "Allocated Buffer Size is not equal to packed buffer size");
 
-  this->PostSend( commID );
+  this->PostSend(commID);
 }
 
-void NeighborCommunicator::UnpackAndRebuildSyncLists( MeshLevel & mesh,
-                                                      int const commID )
+void NeighborCommunicator::UnpackAndRebuildSyncLists(MeshLevel & mesh,
+                                                      int const commID)
 {
   GEOSX_MARK_FUNCTION;
 
@@ -521,43 +521,43 @@ void NeighborCommunicator::UnpackAndRebuildSyncLists( MeshLevel & mesh,
   FaceManager & faceManager = *(mesh.getFaceManager());
   ElementRegionManager & elemManager = *(mesh.getElemManager());
 
-  localIndex_array & nodeGhostsToSend = nodeManager.getNeighborData( m_neighborRank ).ghostsToSend();
-  localIndex_array & edgeGhostsToSend = edgeManager.getNeighborData( m_neighborRank ).ghostsToSend();
-  localIndex_array & faceGhostsToSend = faceManager.getNeighborData( m_neighborRank ).ghostsToSend();
+  localIndex_array & nodeGhostsToSend = nodeManager.getNeighborData(m_neighborRank).ghostsToSend();
+  localIndex_array & edgeGhostsToSend = edgeManager.getNeighborData(m_neighborRank).ghostsToSend();
+  localIndex_array & faceGhostsToSend = faceManager.getNeighborData(m_neighborRank).ghostsToSend();
 
-  buffer_type const & receiveBuffer = ReceiveBuffer( commID );
+  buffer_type const & receiveBuffer = ReceiveBuffer(commID);
   buffer_unit_type const * receiveBufferPtr = receiveBuffer.data();
 
-  bufferOps::UnpackSyncList( receiveBufferPtr,
+  bufferOps::UnpackSyncList(receiveBufferPtr,
                              nodeGhostsToSend,
-                             nodeManager.globalToLocalMap() );
+                             nodeManager.globalToLocalMap());
 
-  bufferOps::UnpackSyncList( receiveBufferPtr,
+  bufferOps::UnpackSyncList(receiveBufferPtr,
                              edgeGhostsToSend,
-                             edgeManager.globalToLocalMap() );
+                             edgeManager.globalToLocalMap());
 
-  bufferOps::UnpackSyncList( receiveBufferPtr,
+  bufferOps::UnpackSyncList(receiveBufferPtr,
                              faceGhostsToSend,
-                             faceManager.globalToLocalMap() );
+                             faceManager.globalToLocalMap());
 
-  nodeManager.SetGhostRankForSenders( m_neighborRank );
-  edgeManager.SetGhostRankForSenders( m_neighborRank );
-  faceManager.SetGhostRankForSenders( m_neighborRank );
+  nodeManager.SetGhostRankForSenders(m_neighborRank);
+  edgeManager.SetGhostRankForSenders(m_neighborRank);
+  faceManager.SetGhostRankForSenders(m_neighborRank);
 
-  elemManager.forElementSubRegions< ElementSubRegionBase >( [&] ( ElementSubRegionBase & subRegion )
+  elemManager.forElementSubRegions<ElementSubRegionBase>([&] (ElementSubRegionBase & subRegion)
   {
-    bufferOps::UnpackSyncList( receiveBufferPtr,
-                               subRegion.getNeighborData( m_neighborRank ).ghostsToSend(),
-                               subRegion.globalToLocalMap() );
+    bufferOps::UnpackSyncList(receiveBufferPtr,
+                               subRegion.getNeighborData(m_neighborRank).ghostsToSend(),
+                               subRegion.globalToLocalMap());
 
-    subRegion.SetGhostRankForSenders( m_neighborRank );
-  } );
+    subRegion.SetGhostRankForSenders(m_neighborRank);
+  });
 }
 
-int NeighborCommunicator::PackCommSizeForSync( std::map< string, string_array > const & fieldNames,
+int NeighborCommunicator::PackCommSizeForSync(std::map<string, string_array> const & fieldNames,
                                                MeshLevel const & mesh,
                                                int const commID,
-                                               bool on_device )
+                                               bool on_device)
 {
   GEOSX_MARK_FUNCTION;
 
@@ -566,33 +566,33 @@ int NeighborCommunicator::PackCommSizeForSync( std::map< string, string_array > 
   FaceManager const & faceManager = *(mesh.getFaceManager());
   ElementRegionManager const & elemManager = *(mesh.getElemManager());
 
-  arrayView1d< localIndex const > const & nodeGhostsToSend = nodeManager.getNeighborData( m_neighborRank ).ghostsToSend();
-  arrayView1d< localIndex const > const & edgeGhostsToSend = edgeManager.getNeighborData( m_neighborRank ).ghostsToSend();
-  arrayView1d< localIndex const > const & faceGhostsToSend = faceManager.getNeighborData( m_neighborRank ).ghostsToSend();
+  arrayView1d<localIndex const> const & nodeGhostsToSend = nodeManager.getNeighborData(m_neighborRank).ghostsToSend();
+  arrayView1d<localIndex const> const & edgeGhostsToSend = edgeManager.getNeighborData(m_neighborRank).ghostsToSend();
+  arrayView1d<localIndex const> const & faceGhostsToSend = faceManager.getNeighborData(m_neighborRank).ghostsToSend();
 
   int bufferSize = 0;
 
-  if( fieldNames.count( "node" ) > 0 )
+  if(fieldNames.count("node")> 0)
   {
-    bufferSize += nodeManager.PackSize( fieldNames.at( "node" ), nodeGhostsToSend, 0, on_device );
+    bufferSize += nodeManager.PackSize(fieldNames.at("node"), nodeGhostsToSend, 0, on_device);
   }
 
-  if( fieldNames.count( "edge" ) > 0 )
+  if(fieldNames.count("edge")> 0)
   {
-    bufferSize += edgeManager.PackSize( fieldNames.at( "edge" ), edgeGhostsToSend, 0, on_device );
+    bufferSize += edgeManager.PackSize(fieldNames.at("edge"), edgeGhostsToSend, 0, on_device);
   }
 
-  if( fieldNames.count( "face" ) > 0 )
+  if(fieldNames.count("face")> 0)
   {
-    bufferSize += faceManager.PackSize( fieldNames.at( "face" ), faceGhostsToSend, 0, on_device );
+    bufferSize += faceManager.PackSize(fieldNames.at("face"), faceGhostsToSend, 0, on_device);
   }
 
-  if( fieldNames.count( "elems" ) > 0 )
+  if(fieldNames.count("elems")> 0)
   {
-    elemManager.forElementSubRegions< ElementSubRegionBase >( [&]( ElementSubRegionBase const & subRegion )
+    elemManager.forElementSubRegions<ElementSubRegionBase>([&](ElementSubRegionBase const & subRegion)
     {
-      bufferSize += subRegion.PackSize( fieldNames.at( "elems" ), subRegion.getNeighborData( m_neighborRank ).ghostsToSend(), 0, on_device );
-    } );
+      bufferSize += subRegion.PackSize(fieldNames.at("elems"), subRegion.getNeighborData(m_neighborRank).ghostsToSend(), 0, on_device);
+    });
   }
 
   this->m_sendBufferSize[commID] = bufferSize;
@@ -600,10 +600,10 @@ int NeighborCommunicator::PackCommSizeForSync( std::map< string, string_array > 
 }
 
 
-void NeighborCommunicator::PackCommBufferForSync( std::map< string, string_array > const & fieldNames,
+void NeighborCommunicator::PackCommBufferForSync(std::map<string, string_array> const & fieldNames,
                                                   MeshLevel const & mesh,
                                                   int const commID,
-                                                  bool on_device )
+                                                  bool on_device)
 {
   GEOSX_MARK_FUNCTION;
 
@@ -612,56 +612,56 @@ void NeighborCommunicator::PackCommBufferForSync( std::map< string, string_array
   FaceManager const & faceManager = *(mesh.getFaceManager());
   ElementRegionManager const & elemManager = *(mesh.getElemManager());
 
-  arrayView1d< localIndex const > const & nodeGhostsToSend = nodeManager.getNeighborData( m_neighborRank ).ghostsToSend();
-  arrayView1d< localIndex const > const & edgeGhostsToSend = edgeManager.getNeighborData( m_neighborRank ).ghostsToSend();
-  arrayView1d< localIndex const > const & faceGhostsToSend = faceManager.getNeighborData( m_neighborRank ).ghostsToSend();
+  arrayView1d<localIndex const> const & nodeGhostsToSend = nodeManager.getNeighborData(m_neighborRank).ghostsToSend();
+  arrayView1d<localIndex const> const & edgeGhostsToSend = edgeManager.getNeighborData(m_neighborRank).ghostsToSend();
+  arrayView1d<localIndex const> const & faceGhostsToSend = faceManager.getNeighborData(m_neighborRank).ghostsToSend();
 
-  buffer_type & sendBuffer = SendBuffer( commID );
-  int const bufferSize =  LvArray::integerConversion< int >( sendBuffer.size());
+  buffer_type & sendBuffer = SendBuffer(commID);
+  int const bufferSize =  LvArray::integerConversion<int>(sendBuffer.size());
   buffer_unit_type * sendBufferPtr = sendBuffer.data();
 
   int packedSize = 0;
-  if( fieldNames.count( "node" ) > 0 )
+  if(fieldNames.count("node")> 0)
   {
-    packedSize += nodeManager.Pack( sendBufferPtr, fieldNames.at( "node" ), nodeGhostsToSend, 0, on_device );
+    packedSize += nodeManager.Pack(sendBufferPtr, fieldNames.at("node"), nodeGhostsToSend, 0, on_device);
   }
 
-  if( fieldNames.count( "edge" ) > 0 )
+  if(fieldNames.count("edge")> 0)
   {
-    packedSize += edgeManager.Pack( sendBufferPtr, fieldNames.at( "edge" ), edgeGhostsToSend, 0, on_device );
+    packedSize += edgeManager.Pack(sendBufferPtr, fieldNames.at("edge"), edgeGhostsToSend, 0, on_device);
   }
 
-  if( fieldNames.count( "face" ) > 0 )
+  if(fieldNames.count("face")> 0)
   {
-    packedSize += faceManager.Pack( sendBufferPtr, fieldNames.at( "face" ), faceGhostsToSend, 0, on_device );
+    packedSize += faceManager.Pack(sendBufferPtr, fieldNames.at("face"), faceGhostsToSend, 0, on_device);
   }
 
-  if( fieldNames.count( "elems" ) > 0 )
+  if(fieldNames.count("elems")> 0)
   {
-    elemManager.forElementSubRegions( [&]( ElementSubRegionBase const & subRegion )
+    elemManager.forElementSubRegions([&](ElementSubRegionBase const & subRegion)
     {
-      packedSize += subRegion.Pack( sendBufferPtr, fieldNames.at( "elems" ), subRegion.getNeighborData( m_neighborRank ).ghostsToSend(), 0, on_device );
-    } );
+      packedSize += subRegion.Pack(sendBufferPtr, fieldNames.at("elems"), subRegion.getNeighborData(m_neighborRank).ghostsToSend(), 0, on_device);
+    });
   }
 
-  GEOSX_ERROR_IF_NE( bufferSize, packedSize );
+  GEOSX_ERROR_IF_NE(bufferSize, packedSize);
 }
 
 
-void NeighborCommunicator::SendRecvBuffers( int const commID )
+void NeighborCommunicator::SendRecvBuffers(int const commID)
 {
-  this->MPI_iSendReceive( commID, MPI_COMM_GEOSX );
+  this->MPI_iSendReceive(commID, MPI_COMM_GEOSX);
 }
 
 
-void NeighborCommunicator::UnpackBufferForSync( std::map< string, string_array > const & fieldNames,
+void NeighborCommunicator::UnpackBufferForSync(std::map<string, string_array> const & fieldNames,
                                                 MeshLevel * const mesh,
                                                 int const commID,
-                                                bool on_device )
+                                                bool on_device)
 {
   GEOSX_MARK_FUNCTION;
 
-  buffer_type const & receiveBuffer = ReceiveBuffer( commID );
+  buffer_type const & receiveBuffer = ReceiveBuffer(commID);
   buffer_unit_type const * receiveBufferPtr = receiveBuffer.data();
 
   NodeManager & nodeManager = *(mesh->getNodeManager());
@@ -669,33 +669,33 @@ void NeighborCommunicator::UnpackBufferForSync( std::map< string, string_array >
   FaceManager & faceManager = *(mesh->getFaceManager());
   ElementRegionManager & elemManager = *(mesh->getElemManager());
 
-  array1d< localIndex > & nodeGhostsToReceive = nodeManager.getNeighborData( m_neighborRank ).ghostsToReceive();
-  array1d< localIndex > & edgeGhostsToReceive = edgeManager.getNeighborData( m_neighborRank ).ghostsToReceive();
-  array1d< localIndex > & faceGhostsToReceive = faceManager.getNeighborData( m_neighborRank ).ghostsToReceive();
+  array1d<localIndex> & nodeGhostsToReceive = nodeManager.getNeighborData(m_neighborRank).ghostsToReceive();
+  array1d<localIndex> & edgeGhostsToReceive = edgeManager.getNeighborData(m_neighborRank).ghostsToReceive();
+  array1d<localIndex> & faceGhostsToReceive = faceManager.getNeighborData(m_neighborRank).ghostsToReceive();
 
   int unpackedSize = 0;
 
-  if( fieldNames.count( "node" ) > 0 )
+  if(fieldNames.count("node")> 0)
   {
-    unpackedSize += nodeManager.Unpack( receiveBufferPtr, nodeGhostsToReceive, 0, on_device );
+    unpackedSize += nodeManager.Unpack(receiveBufferPtr, nodeGhostsToReceive, 0, on_device);
   }
 
-  if( fieldNames.count( "edge" ) > 0 )
+  if(fieldNames.count("edge")> 0)
   {
-    unpackedSize += edgeManager.Unpack( receiveBufferPtr, edgeGhostsToReceive, 0, on_device );
+    unpackedSize += edgeManager.Unpack(receiveBufferPtr, edgeGhostsToReceive, 0, on_device);
   }
 
-  if( fieldNames.count( "face" ) > 0 )
+  if(fieldNames.count("face")> 0)
   {
-    unpackedSize += faceManager.Unpack( receiveBufferPtr, faceGhostsToReceive, 0, on_device );
+    unpackedSize += faceManager.Unpack(receiveBufferPtr, faceGhostsToReceive, 0, on_device);
   }
 
-  if( fieldNames.count( "elems" ) > 0 )
+  if(fieldNames.count("elems")> 0)
   {
-    elemManager.forElementSubRegions< ElementSubRegionBase >( [&] ( ElementSubRegionBase & subRegion )
+    elemManager.forElementSubRegions<ElementSubRegionBase>([&] (ElementSubRegionBase & subRegion)
     {
-      unpackedSize += subRegion.Unpack( receiveBufferPtr, subRegion.getNeighborData( m_neighborRank ).ghostsToReceive(), 0, on_device );
-    } );
+      unpackedSize += subRegion.Unpack(receiveBufferPtr, subRegion.getNeighborData(m_neighborRank).ghostsToReceive(), 0, on_device);
+    });
   }
 }
 

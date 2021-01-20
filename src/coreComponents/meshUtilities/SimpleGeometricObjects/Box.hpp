@@ -43,8 +43,8 @@ public:
    * @param name name of the object in the data hierarchy.
    * @param parent pointer to the parent group in the data hierarchy.
    */
-  Box( const std::string & name,
-       Group * const parent );
+  Box(const std::string & name,
+       Group * const parent);
 
   /**
    * @brief Default destructor.
@@ -62,11 +62,11 @@ public:
    * @brief Get the catalog name.
    * @return the name of this class in the catalog
    */
-  static string CatalogName() { return "Box"; }
+  static string CatalogName() {return "Box";}
 
   ///@}
 
-  bool IsCoordInObject( real64 const ( &coord ) [3] ) const override final;
+  bool IsCoordInObject(real64 const (&coord) [3]) const override final;
 
 protected:
 
@@ -102,8 +102,8 @@ private:
     static constexpr auto cosStrikeString = "cosStrike";
     static constexpr auto sinStrikeString = "sinStrike";
 
-    dataRepository::ViewKey xmin = { "xMin" };
-    dataRepository::ViewKey xmax = { "xMax" };
+    dataRepository::ViewKey xmin = {"xMin"};
+    dataRepository::ViewKey xmax = {"xMax"};
   } viewKeys;
 
   /// @endcond

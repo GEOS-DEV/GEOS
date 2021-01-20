@@ -34,15 +34,15 @@ namespace geosx
  * @param[out] localMatrix local matrix in Petsc format
  * @param[out] SLUDData the structure containing the matrix in SuperLU_Dist format
  */
-void PetscConvertToSuperMatrix( PetscMatrix const & matrix,
+void PetscConvertToSuperMatrix(PetscMatrix const & matrix,
                                 Mat & localMatrix,
-                                SuperLU_Dist & SLUDData );
+                                SuperLU_Dist & SLUDData);
 
 /**
  * @brief Destroys data needed to convert a matrix from Petsc to SuperLU_Dist format
  * @param[inout] localMatrix local matrix in Petsc format
  */
-void PetscDestroyAdditionalData( Mat & localMatrix );
+void PetscDestroyAdditionalData(Mat & localMatrix);
 
 /**
  * @brief Computes an accurate condition number (time consuming function!!!)
@@ -50,7 +50,7 @@ void PetscDestroyAdditionalData( Mat & localMatrix );
  * @param[in] SLUDData the structure containing the matrix in SuperLU_Dist format
  * @return the condition number
  */
-real64 PetscSuperLU_DistCond( PetscMatrix const & matrix, SuperLU_Dist & SLUDData );
+real64 PetscSuperLU_DistCond(PetscMatrix const & matrix, SuperLU_Dist & SLUDData);
 
 }
 

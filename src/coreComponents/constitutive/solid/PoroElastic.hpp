@@ -29,15 +29,15 @@ namespace geosx
 namespace constitutive
 {
 
-template< typename UPDATE_BASE >
+template<typename UPDATE_BASE>
 class PoroElasticUpdates : public UPDATE_BASE
 {
 public:
-  template< typename ... PARAMS >
-  PoroElasticUpdates( real64 const & inputBiotCoefficient,
-                      PARAMS && ... baseParams ):
-    UPDATE_BASE( std::forward< PARAMS >( baseParams )... ),
-    m_biotCoefficient( inputBiotCoefficient )
+  template<typename ... PARAMS>
+  PoroElasticUpdates(real64 const & inputBiotCoefficient,
+                      PARAMS && ... baseParams):
+    UPDATE_BASE(std::forward<PARAMS>(baseParams)...),
+    m_biotCoefficient(inputBiotCoefficient)
   {}
 
 
@@ -63,44 +63,44 @@ private:
 class PoroElasticBase : public SolidBase
 {};
 
-template< typename BASE >
+template<typename BASE>
 class PoroElastic : public BASE
 {
 public:
 
   /// @typedef Alias for LinearElasticIsotropicUpdates
-  using KernelWrapper = PoroElasticUpdates< typename BASE::KernelWrapper >;
+  using KernelWrapper = PoroElasticUpdates<typename BASE::KernelWrapper>;
 
-  PoroElastic( string const & name, dataRepository::Group * const parent );
+  PoroElastic(string const & name, dataRepository::Group * const parent);
   virtual ~PoroElastic() override;
 
 
-  static std::string CatalogName() { return string( "Poro" ) + BASE::m_catalogNameString; }
-  virtual string getCatalogName() const override { return CatalogName(); }
+  static std::string CatalogName() {return string("Poro") + BASE::m_catalogNameString;}
+  virtual string getCatalogName() const override {return CatalogName();}
 
   virtual void PostProcessInput() override;
 
-  std::unique_ptr< ConstitutiveBase >
-  deliverClone( string const & name,
-                dataRepository::Group * const parent ) const override;
+  std::unique_ptr<ConstitutiveBase>
+  deliverClone(string const & name,
+                dataRepository::Group * const parent) const override;
 
-  virtual void allocateConstitutiveData( dataRepository::Group * const parent,
-                                         localIndex const numConstitutivePointsPerParentIndex ) override;
+  virtual void allocateConstitutiveData(dataRepository::Group * const parent,
+                                         localIndex const numConstitutivePointsPerParentIndex) override;
 
   inline virtual void
-  StateUpdatePointPressure( real64 const & pres,
+  StateUpdatePointPressure(real64 const & pres,
                             localIndex const k,
-                            localIndex const q ) override
+                            localIndex const q) override
   {
-    m_poreVolumeRelation.Compute( pres, m_poreVolumeMultiplier[k][q], m_dPVMult_dPressure[k][q] );
+    m_poreVolumeRelation.Compute(pres, m_poreVolumeMultiplier[k][q], m_dPVMult_dPressure[k][q]);
   }
 
-  virtual void StateUpdateBatchPressure( arrayView1d< real64 const > const & pres,
-                                         arrayView1d< real64 const > const & dPres ) override final;
+  virtual void StateUpdateBatchPressure(arrayView1d<real64 const> const & pres,
+                                         arrayView1d<real64 const> const & dPres) override final;
 
   KernelWrapper createKernelUpdates()
   {
-    return BASE::template createDerivedKernelUpdates< KernelWrapper >( m_biotCoefficient );
+    return BASE::template createDerivedKernelUpdates<KernelWrapper>(m_biotCoefficient);
   }
 
   struct viewKeyStruct : public BASE::viewKeyStruct
@@ -122,10 +122,10 @@ protected:
   /// scalar Biot's coefficient
   real64 m_biotCoefficient;
 
-  array2d< real64 > m_poreVolumeMultiplier;
-  array2d< real64 > m_dPVMult_dPressure;
+  array2d<real64> m_poreVolumeMultiplier;
+  array2d<real64> m_dPVMult_dPressure;
 
-  ExponentialRelation< real64, ExponentApproximationType::Linear > m_poreVolumeRelation;
+  ExponentialRelation<real64, ExponentApproximationType::Linear> m_poreVolumeRelation;
 
 };
 

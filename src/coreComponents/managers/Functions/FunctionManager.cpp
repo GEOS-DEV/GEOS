@@ -28,11 +28,11 @@ namespace geosx
 using namespace dataRepository;
 
 
-FunctionManager::FunctionManager( const std::string & name,
-                                  Group * const parent ):
-  Group( name, parent )
+FunctionManager::FunctionManager(const std::string & name,
+                                  Group * const parent):
+  Group(name, parent)
 {
-  setInputFlags( InputFlags::OPTIONAL );
+  setInputFlags(InputFlags::OPTIONAL);
 }
 
 FunctionManager::~FunctionManager()
@@ -41,21 +41,21 @@ FunctionManager::~FunctionManager()
 }
 
 
-Group * FunctionManager::CreateChild( string const & functionCatalogKey,
-                                      string const & functionName )
+Group * FunctionManager::CreateChild(string const & functionCatalogKey,
+                                      string const & functionName)
 {
-  GEOSX_LOG_RANK_0( "   " << functionCatalogKey << ": " << functionName );
-  std::unique_ptr< FunctionBase > function = FunctionBase::CatalogInterface::Factory( functionCatalogKey, functionName, this );
-  return this->RegisterGroup< FunctionBase >( functionName, std::move( function ) );
+  GEOSX_LOG_RANK_0("   " <<functionCatalogKey <<": " <<functionName);
+  std::unique_ptr<FunctionBase> function = FunctionBase::CatalogInterface::Factory(functionCatalogKey, functionName, this);
+  return this->RegisterGroup<FunctionBase>(functionName, std::move(function));
 }
 
 
 void FunctionManager::ExpandObjectCatalogs()
 {
   // During schema generation, register one of each type derived from FunctionBase here
-  for( auto & catalogIter: FunctionBase::GetCatalog())
+  for(auto & catalogIter: FunctionBase::GetCatalog())
   {
-    CreateChild( catalogIter.first, catalogIter.first );
+    CreateChild(catalogIter.first, catalogIter.first);
   }
 }
 

@@ -2,7 +2,7 @@
 #
 # Specify all headers
 #
-set( codingUtilities_headers
+set(codingUtilities_headers
      traits.hpp
      StringUtilities.hpp
      UnitTestUtilities.hpp
@@ -14,21 +14,21 @@ set( codingUtilities_headers
 #
 # Specify all sources
 #
-set( codingUtilities_sources
+set(codingUtilities_sources
      StringUtilities.cpp
    )
 
-set( dependencyList common )
+set(dependencyList common)
 
-blt_add_library( NAME                  codingUtilities
+blt_add_library(NAME                  codingUtilities
                  SOURCES               ${codingUtilities_sources}
                  HEADERS               ${codingUtilities_headers}
                  DEPENDS_ON            ${dependencyList}
                  OBJECT                ${buildAsObj}
                )
 
-target_include_directories( codingUtilities PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)
+target_include_directories(codingUtilities PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)
 
-geosx_add_code_checks(PREFIX codingUtilities )
+geosx_add_code_checks(PREFIX codingUtilities)
 
 add_subdirectory(tests)

@@ -32,8 +32,8 @@ class SolidMechanicsLagrangianFEM;
 class HydrofractureSolver : public SolverBase
 {
 public:
-  HydrofractureSolver( const std::string & name,
-                       Group * const parent );
+  HydrofractureSolver(const std::string & name,
+                       Group * const parent);
 
   ~HydrofractureSolver() override;
 
@@ -47,93 +47,93 @@ public:
   }
 
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
-  virtual void RegisterDataOnMesh( dataRepository::Group * const MeshBodies ) override final;
+  virtual void RegisterDataOnMesh(dataRepository::Group * const MeshBodies) override final;
 #endif
 
-  virtual void SetupDofs( DomainPartition const & domain,
-                          DofManager & dofManager ) const override;
+  virtual void SetupDofs(DomainPartition const & domain,
+                          DofManager & dofManager) const override;
 
-  virtual void SetupSystem( DomainPartition & domain,
+  virtual void SetupSystem(DomainPartition & domain,
                             DofManager & dofManager,
-                            CRSMatrix< real64, globalIndex > & localMatrix,
-                            array1d< real64 > & localRhs,
-                            array1d< real64 > & localSolution,
-                            bool const setSparsity = true ) override;
+                            CRSMatrix<real64, globalIndex> & localMatrix,
+                            array1d<real64> & localRhs,
+                            array1d<real64> & localSolution,
+                            bool const setSparsity = true) override;
 
   virtual void
-  ImplicitStepSetup( real64 const & time_n,
+  ImplicitStepSetup(real64 const & time_n,
                      real64 const & dt,
-                     DomainPartition & domain ) override final;
+                     DomainPartition & domain) override final;
 
-  virtual void ImplicitStepComplete( real64 const & time_n,
+  virtual void ImplicitStepComplete(real64 const & time_n,
                                      real64 const & dt,
-                                     DomainPartition & domain ) override final;
+                                     DomainPartition & domain) override final;
 
-  virtual void AssembleSystem( real64 const time,
+  virtual void AssembleSystem(real64 const time,
                                real64 const dt,
                                DomainPartition & domain,
                                DofManager const & dofManager,
-                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                               arrayView1d< real64 > const & localRhs ) override;
+                               CRSMatrixView<real64, globalIndex const> const & localMatrix,
+                               arrayView1d<real64> const & localRhs) override;
 
-  virtual void ApplyBoundaryConditions( real64 const time,
+  virtual void ApplyBoundaryConditions(real64 const time,
                                         real64 const dt,
                                         DomainPartition & domain,
                                         DofManager const & dofManager,
-                                        CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                        arrayView1d< real64 > const & localRhs ) override;
+                                        CRSMatrixView<real64, globalIndex const> const & localMatrix,
+                                        arrayView1d<real64> const & localRhs) override;
 
   virtual real64
-  CalculateResidualNorm( DomainPartition const & domain,
+  CalculateResidualNorm(DomainPartition const & domain,
                          DofManager const & dofManager,
-                         arrayView1d< real64 const > const & localRhs ) override;
+                         arrayView1d<real64 const> const & localRhs) override;
 
   virtual real64
-  ScalingForSystemSolution( DomainPartition const & domain,
+  ScalingForSystemSolution(DomainPartition const & domain,
                             DofManager const & dofManager,
-                            arrayView1d< real64 const > const & localSolution ) override;
+                            arrayView1d<real64 const> const & localSolution) override;
 
   virtual void
-  ApplySystemSolution( DofManager const & dofManager,
-                       arrayView1d< real64 const > const & localSolution,
+  ApplySystemSolution(DofManager const & dofManager,
+                       arrayView1d<real64 const> const & localSolution,
                        real64 const scalingFactor,
-                       DomainPartition & domain ) override;
+                       DomainPartition & domain) override;
 
-  virtual void ResetStateToBeginningOfStep( DomainPartition & domain ) override;
+  virtual void ResetStateToBeginningOfStep(DomainPartition & domain) override;
 
-  virtual real64 SolverStep( real64 const & time_n,
+  virtual real64 SolverStep(real64 const & time_n,
                              real64 const & dt,
                              int const cycleNumber,
-                             DomainPartition & domain ) override;
+                             DomainPartition & domain) override;
 
-  virtual void SetNextDt( real64 const & currentDt,
-                          real64 & nextDt ) override;
+  virtual void SetNextDt(real64 const & currentDt,
+                          real64 & nextDt) override;
 
 
-  virtual real64 ExplicitStep( real64 const & time_n,
+  virtual real64 ExplicitStep(real64 const & time_n,
                                real64 const & dt,
                                integer const cycleNumber,
-                               DomainPartition & domain ) override;
+                               DomainPartition & domain) override;
 
-  void UpdateDeformationForCoupling( DomainPartition & domain );
+  void UpdateDeformationForCoupling(DomainPartition & domain);
 
-//  void ApplyFractureFluidCoupling( DomainPartition * const domain,
-//                                   systemSolverInterface::EpetraBlockSystem & blockSystem );
+//  void ApplyFractureFluidCoupling(DomainPartition * const domain,
+//                                   systemSolverInterface::EpetraBlockSystem & blockSystem);
 
-  void AssembleForceResidualDerivativeWrtPressure( DomainPartition & domain,
-                                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                   arrayView1d< real64 > const & localRhs );
+  void AssembleForceResidualDerivativeWrtPressure(DomainPartition & domain,
+                                                   CRSMatrixView<real64, globalIndex const> const & localMatrix,
+                                                   arrayView1d<real64> const & localRhs);
 
-  void AssembleFluidMassResidualDerivativeWrtDisplacement( DomainPartition const & domain,
-                                                           CRSMatrixView< real64, globalIndex const > const & localMatrix );
+  void AssembleFluidMassResidualDerivativeWrtDisplacement(DomainPartition const & domain,
+                                                           CRSMatrixView<real64, globalIndex const> const & localMatrix);
 
 
-  real64 SplitOperatorStep( real64 const & time_n,
+  real64 SplitOperatorStep(real64 const & time_n,
                             real64 const & dt,
                             integer const cycleNumber,
-                            DomainPartition & domain );
+                            DomainPartition & domain);
 
-  void initializeNewFaceElements( DomainPartition const & domain );
+  void initializeNewFaceElements(DomainPartition const & domain);
 
 
 
@@ -168,7 +168,7 @@ protected:
   virtual void PostProcessInput() override final;
 
   virtual void
-  InitializePostInitialConditions_PreSubGroups( dataRepository::Group * const problemManager ) override final;
+  InitializePostInitialConditions_PreSubGroups(dataRepository::Group * const problemManager) override final;
 
   /**
    * @Brief add the nnz induced by the flux-aperture coupling
@@ -176,9 +176,9 @@ protected:
    * @param dofManager degree-of-freedom manager associated with the linear system
    * @param rowLenghts the nnz in each row
    */
-  void addFluxApertureCouplingNNZ( DomainPartition & domain,
+  void addFluxApertureCouplingNNZ(DomainPartition & domain,
                                    DofManager & dofManager,
-                                   arrayView1d< localIndex > const & rowLengths ) const;
+                                   arrayView1d<localIndex> const & rowLengths) const;
 
 
   /**
@@ -187,9 +187,9 @@ protected:
    * @param dofManager degree-of-freedom manager associated with the linear system
    * @param pattern the sparsity pattern
    */
-  void addFluxApertureCouplingSparsityPattern( DomainPartition & domain,
+  void addFluxApertureCouplingSparsityPattern(DomainPartition & domain,
                                                DofManager & dofManager,
-                                               SparsityPatternView< globalIndex > const & pattern ) const;
+                                               SparsityPatternView<globalIndex> const & pattern) const;
 
 private:
 
@@ -202,13 +202,13 @@ private:
   SolidMechanicsLagrangianFEM * m_solidSolver;
   FlowSolverBase * m_flowSolver;
 
-  std::unique_ptr< ParallelMatrix > m_blockDiagUU;
+  std::unique_ptr<ParallelMatrix> m_blockDiagUU;
 
   integer m_maxNumResolves;
   integer m_numResolves[2];
 };
 
-ENUM_STRINGS( HydrofractureSolver::CouplingTypeOption, "FIM", "SIM_FixedStress" )
+ENUM_STRINGS(HydrofractureSolver::CouplingTypeOption, "FIM", "SIM_FixedStress")
 
 } /* namespace geosx */
 

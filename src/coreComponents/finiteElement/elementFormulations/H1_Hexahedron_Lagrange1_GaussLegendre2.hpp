@@ -31,17 +31,17 @@ namespace geosx
 namespace finiteElement
 {
 
-//constexpr static real64 linearBasisAtQuadrature[2] = { 0.5 + 0.5 * 0.5773502691896257645092,
-//                                                       0.5 - 0.5 * 0.5773502691896257645092 };
-//__constant__ real64 psiProduct[3] = { 0.5 * linearBasisAtQuadrature[0]*linearBasisAtQuadrature[0],
+//constexpr static real64 linearBasisAtQuadrature[2] = {0.5 + 0.5 * 0.5773502691896257645092,
+//                                                       0.5 - 0.5 * 0.5773502691896257645092};
+//__constant__ real64 psiProduct[3] = {0.5 * linearBasisAtQuadrature[0]*linearBasisAtQuadrature[0],
 //                                          0.5 * linearBasisAtQuadrature[0]*linearBasisAtQuadrature[1],
-//                                          0.5 * linearBasisAtQuadrature[1]*linearBasisAtQuadrature[1] };
+//                                          0.5 * linearBasisAtQuadrature[1]*linearBasisAtQuadrature[1]};
 
-//__constant__ real64 psiProduct[3] = {  0.311004233964073108,
+//__constant__ real64 psiProduct[3] = { 0.311004233964073108,
 //                                       0.083333333333333333,
-//                                       0.022329099369260226 };
+//                                       0.022329099369260226};
 //
-//__constant__ short dpsi[2] = { -1, 1 };
+//__constant__ short dpsi[2] = {-1, 1};
 
 /**
  * This class contains the kernel accessible functions specific to the standard
@@ -105,16 +105,16 @@ public:
    */
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  static void calcN( localIndex const q,
-                     real64 (& N)[numNodes] )
+  static void calcN(localIndex const q,
+                     real64 (& N)[numNodes])
   {
     int qa, qb, qc;
-    LagrangeBasis1::TensorProduct3D::multiIndex( q, qa, qb, qc );
-    real64 const qCoords[3] = { quadratureFactor * LagrangeBasis1::parentSupportCoord( qa ),
-                                quadratureFactor * LagrangeBasis1::parentSupportCoord( qb ),
-                                quadratureFactor * LagrangeBasis1::parentSupportCoord( qc ) };
+    LagrangeBasis1::TensorProduct3D::multiIndex(q, qa, qb, qc);
+    real64 const qCoords[3] = {quadratureFactor * LagrangeBasis1::parentSupportCoord(qa),
+                                quadratureFactor * LagrangeBasis1::parentSupportCoord(qb),
+                                quadratureFactor * LagrangeBasis1::parentSupportCoord(qc)};
 
-    LagrangeBasis1::TensorProduct3D::value( qCoords, N );
+    LagrangeBasis1::TensorProduct3D::value(qCoords, N);
   }
 
   /**
@@ -127,9 +127,9 @@ public:
    * @return The determinant of the parent/physical transformation matrix.
    */
   GEOSX_HOST_DEVICE
-  static real64 calcGradN( localIndex const q,
+  static real64 calcGradN(localIndex const q,
                            real64 const (&X)[numNodes][3],
-                           real64 ( &gradN )[numNodes][3] );
+                           real64 (&gradN)[numNodes][3]);
 
 
   /**
@@ -140,8 +140,8 @@ public:
    *   the parent/physical transformation matrix.
    */
   GEOSX_HOST_DEVICE
-  static real64 transformedQuadratureWeight( localIndex const q,
-                                             real64 const (&X)[numNodes][3] );
+  static real64 transformedQuadratureWeight(localIndex const q,
+                                             real64 const (&X)[numNodes][3]);
 
   /**
    * @brief Calculates the isoparametric "Jacobian" transformation
@@ -152,14 +152,14 @@ public:
    * @return The determinant of the Jacobian transformation matrix.
    */
   GEOSX_HOST_DEVICE
-  static real64 invJacobianTransformation( int const q,
+  static real64 invJacobianTransformation(int const q,
                                            real64 const (&X)[numNodes][3],
-                                           real64 ( & J )[3][3] )
+                                           real64 (& J)[3][3])
   {
     int qa, qb, qc;
-    LagrangeBasis1::TensorProduct3D::multiIndex( q, qa, qb, qc );
-    jacobianTransformation( qa, qb, qc, X, J );
-    return LvArray::tensorOps::invert< 3 >( J );
+    LagrangeBasis1::TensorProduct3D::multiIndex(q, qa, qb, qc);
+    jacobianTransformation(qa, qb, qc, X, J);
+    return LvArray::tensorOps::invert<3>(J);
   }
 
 
@@ -174,10 +174,10 @@ public:
    * @param grad The symmetric gradient in Voigt notation.
    */
   GEOSX_HOST_DEVICE
-  static void symmetricGradient( int const q,
+  static void symmetricGradient(int const q,
                                  real64 const (&invJ)[3][3],
                                  real64 const (&var)[numNodes][3],
-                                 real64 ( &grad )[6] );
+                                 real64 (&grad)[6]);
 
 
 
@@ -192,15 +192,15 @@ public:
    *
    * More precisely, the operator is defined as:
    * \f[
-   * grad_{ij}  = \sum_a^{nSupport} \left ( \frac{\partial N_a}{\partial X_j} var_{ai}\right ),
+   * grad_{ij}  = \sum_a^{nSupport} \left (\frac{\partial N_a}{\partial X_j} var_{ai}\right),
    * \f]
    *
    */
   GEOSX_HOST_DEVICE
-  static void gradient( int const q,
+  static void gradient(int const q,
                         real64 const (&invJ)[3][3],
                         real64 const (&var)[numNodes][3],
-                        real64 ( &grad )[3][3] );
+                        real64 (&grad)[3][3]);
 
 
   /**
@@ -213,16 +213,16 @@ public:
    *
    * More precisely, the operator is defined as:
    * \f[
-   * R_i = \sum_a^{nSupport} \left( \frac{\partial N_a}{\partial X_j} var_{ij} \right),
+   * R_i = \sum_a^{nSupport} \left(\frac{\partial N_a}{\partial X_j} var_{ij} \right),
    * \f]
    * where \f$\frac{\partial N_a}{\partial X_j}\f$ is the basis function gradient,
    *   \f$var_{ij}\f$ is the rank-2 symmetric tensor.
    */
   GEOSX_HOST_DEVICE
-  static void plus_gradNajAij( int const q,
+  static void plus_gradNajAij(int const q,
                                real64 const (&invJ)[3][3],
                                real64 const (&var)[6],
-                               real64 ( &R )[numNodes][3] );
+                               real64 (&R)[numNodes][3]);
 
 
 
@@ -236,11 +236,11 @@ public:
    * @param J Array to store the Jacobian transformation.
    */
   GEOSX_HOST_DEVICE
-  static void jacobianTransformation( int const qa,
+  static void jacobianTransformation(int const qa,
                                       int const qb,
                                       int const qc,
                                       real64 const (&X)[numNodes][3],
-                                      real64 ( &J )[3][3] );
+                                      real64 (&J)[3][3]);
 
 
   /**
@@ -256,16 +256,16 @@ public:
    */
   GEOSX_HOST_DEVICE
   static void
-    applyTransformationToParentGradients( int const qa,
+    applyTransformationToParentGradients(int const qa,
                                           int const qb,
                                           int const qc,
-                                          real64 const ( &invJ )[3][3],
-                                          real64 ( &gradN )[numNodes][3] );
+                                          real64 const (&invJ)[3][3],
+                                          real64 (&gradN)[numNodes][3]);
 
 
 private:
   /// The length of one dimension of the parent element.
-  constexpr static real64 parentLength = LagrangeBasis1::parentSupportCoord( 1 ) - LagrangeBasis1::parentSupportCoord( 0 );
+  constexpr static real64 parentLength = LagrangeBasis1::parentSupportCoord(1) - LagrangeBasis1::parentSupportCoord(0);
 
   /// The volume of the element in the parent configuration.
   constexpr static real64 parentVolume = parentLength*parentLength*parentLength;
@@ -297,23 +297,23 @@ private:
    * @param func The function to call within the support loop.
    * @param params The parameters to pass to @p func.
    */
-  template< typename FUNC, typename ... PARAMS >
+  template<typename FUNC, typename ... PARAMS>
   GEOSX_HOST_DEVICE
-  static void supportLoop( int const qa,
+  static void supportLoop(int const qa,
                            int const qb,
                            int const qc,
                            FUNC && func,
-                           PARAMS &&... params );
+                           PARAMS &&... params);
 
 };
 
 //GEOSX_HOST_DEVICE GEOSX_FORCE_INLINE real64
-//psiProductFunc( int const n )
+//psiProductFunc(int const n)
 //{
 //  // factor = 1./(2 + Sqrt[3]) = 0.267949192431122706
 //
 //  real64 rval = 0.311004233964073108;
-//  for( int a=0; a<n; ++a )
+//  for(int a=0; a<n; ++a)
 //  {
 //    rval *= 0.267949192431122706;
 //  }
@@ -322,13 +322,13 @@ private:
 
 /// @cond Doxygen_Suppress
 
-template< typename FUNC, typename ... PARAMS >
+template<typename FUNC, typename ... PARAMS>
 GEOSX_HOST_DEVICE GEOSX_FORCE_INLINE void
-H1_Hexahedron_Lagrange1_GaussLegendre2::supportLoop( int const qa,
+H1_Hexahedron_Lagrange1_GaussLegendre2::supportLoop(int const qa,
                                                      int const qb,
                                                      int const qc,
                                                      FUNC && func,
-                                                     PARAMS &&... params )
+                                                     PARAMS &&... params)
 {
 
 /// Options for how to calculate the parent gradients.
@@ -337,17 +337,17 @@ H1_Hexahedron_Lagrange1_GaussLegendre2::supportLoop( int const qa,
   // This option calculates the basis values at the quadrature point for each
   // linear basis index.
 
-  real64 const quadratureCoords[3] = { -quadratureFactor + 1.154700538379252 * qa,
+  real64 const quadratureCoords[3] = {-quadratureFactor + 1.154700538379252 * qa,
                                        -quadratureFactor + 1.154700538379252 * qb,
-                                       -quadratureFactor + 1.154700538379252 * qc };
+                                       -quadratureFactor + 1.154700538379252 * qc};
 
-  real64 const psi0[2] = { 0.5 - 0.5 * quadratureCoords[0],
-                           0.5 + 0.5 * quadratureCoords[0] };
-  real64 const psi1[2] = { 0.5 - 0.5 * quadratureCoords[1],
-                           0.5 + 0.5 * quadratureCoords[1] };
-  real64 const psi2[2] = { 0.5 - 0.5 * quadratureCoords[2],
-                           0.5 + 0.5 * quadratureCoords[2] };
-  constexpr real64 dpsi[2] = { -0.5, 0.5 };
+  real64 const psi0[2] = {0.5 - 0.5 * quadratureCoords[0],
+                           0.5 + 0.5 * quadratureCoords[0]};
+  real64 const psi1[2] = {0.5 - 0.5 * quadratureCoords[1],
+                           0.5 + 0.5 * quadratureCoords[1]};
+  real64 const psi2[2] = {0.5 - 0.5 * quadratureCoords[2],
+                           0.5 + 0.5 * quadratureCoords[2]};
+  constexpr real64 dpsi[2] = {-0.5, 0.5};
 #elif PARENT_GRADIENT_METHOD == 2
   // This option calculates the product of linear basis prior to use.
   // The tensor product basis gradient may be expressed as a permutation of the
@@ -361,55 +361,55 @@ H1_Hexahedron_Lagrange1_GaussLegendre2::supportLoop( int const qa,
   // THIS approach uses about 10 less registers than option 1, with no apparent
   // cost.
 
-//  constexpr static real64 linearBasisAtQuadrature[2] = { 0.5 + 0.5 * quadratureFactor,
-//                                                         0.5 - 0.5 * quadratureFactor };
-//  constexpr static real64 psiProduct[3] = { 0.5 * linearBasisAtQuadrature[0]*linearBasisAtQuadrature[0],
+//  constexpr static real64 linearBasisAtQuadrature[2] = {0.5 + 0.5 * quadratureFactor,
+//                                                         0.5 - 0.5 * quadratureFactor};
+//  constexpr static real64 psiProduct[3] = {0.5 * linearBasisAtQuadrature[0]*linearBasisAtQuadrature[0],
 //                                            0.5 * linearBasisAtQuadrature[0]*linearBasisAtQuadrature[1],
-//                                            0.5 * linearBasisAtQuadrature[1]*linearBasisAtQuadrature[1] };
+//                                            0.5 * linearBasisAtQuadrature[1]*linearBasisAtQuadrature[1]};
 
-  /// { 1/12 (2 + Sqrt[3]), 1/12, 1/12 (2 - Sqrt[3]) }
-  constexpr static real64 psiProduct[3] = { 0.311004233964073108, 0.083333333333333333, 0.022329099369260226};
-  constexpr static int dpsi[2] = { -1, 1 };
+  /// {1/12 (2 + Sqrt[3]), 1/12, 1/12 (2 - Sqrt[3])}
+  constexpr static real64 psiProduct[3] = {0.311004233964073108, 0.083333333333333333, 0.022329099369260226};
+  constexpr static int dpsi[2] = {-1, 1};
 
-//  constexpr static real64 psiProduct[3] = { psiProduct0, psiProduct1, psiProduct2 };
-//  constexpr short dpsi[2] = { dpsi0, dpsi1 };
+//  constexpr static real64 psiProduct[3] = {psiProduct0, psiProduct1, psiProduct2};
+//  constexpr short dpsi[2] = {dpsi0, dpsi1};
 #endif
 
   // Loop over the linear basis indices in each direction.
-  for( int a=0; a<2; ++a )
+  for(int a=0; a<2; ++a)
   {
 #if PARENT_GRADIENT_METHOD == 2
-    int const qaa = ( a^qa ); // abs(a-qa)
+    int const qaa = (a^qa); // abs(a-qa)
 #endif
-    for( int b=0; b<2; ++b )
+    for(int b=0; b<2; ++b)
     {
 #if PARENT_GRADIENT_METHOD == 2
-      int const qbb = ( b^qb );
+      int const qbb = (b^qb);
 #endif
-      for( int c=0; c<2; ++c )
+      for(int c=0; c<2; ++c)
       {
 #if PARENT_GRADIENT_METHOD == 2
-        int const qcc = ( c^qc );
+        int const qcc = (c^qc);
 #endif
 
 #if PARENT_GRADIENT_METHOD == 1
-        real64 const dNdXi[3] = { dpsi[a] * psi1[b] * psi2[c],
+        real64 const dNdXi[3] = {dpsi[a] * psi1[b] * psi2[c],
                                   psi0[a] * dpsi[b] * psi2[c],
-                                  psi0[a] * psi1[b] * dpsi[c] };
+                                  psi0[a] * psi1[b] * dpsi[c]};
 #elif PARENT_GRADIENT_METHOD == 2
 
 
-//        const real64 dNdXi[3] = { dpsi[a] * psiProductFunc( qbb + qcc ),
-//                                  dpsi[b] * psiProductFunc( qaa + qcc ),
-//                                  dpsi[c] * psiProductFunc( qaa + qbb ) };
+//        const real64 dNdXi[3] = {dpsi[a] * psiProductFunc(qbb + qcc),
+//                                  dpsi[b] * psiProductFunc(qaa + qcc),
+//                                  dpsi[c] * psiProductFunc(qaa + qbb)};
 
-        real64 const dNdXi[3] = { dpsi[a] * psiProduct[ qbb + qcc ],
-                                  dpsi[b] * psiProduct[ qaa + qcc ],
-                                  dpsi[c] * psiProduct[ qaa + qbb ] };
+        real64 const dNdXi[3] = {dpsi[a] * psiProduct[qbb + qcc],
+                                  dpsi[b] * psiProduct[qaa + qcc],
+                                  dpsi[c] * psiProduct[qaa + qbb]};
 #endif
-        localIndex const nodeIndex = LagrangeBasis1::TensorProduct3D::linearIndex( a, b, c );
+        localIndex const nodeIndex = LagrangeBasis1::TensorProduct3D::linearIndex(a, b, c);
 
-        func( dNdXi, nodeIndex, std::forward< PARAMS >( params )... );
+        func(dNdXi, nodeIndex, std::forward<PARAMS>(params)...);
       }
     }
   }
@@ -419,21 +419,21 @@ H1_Hexahedron_Lagrange1_GaussLegendre2::supportLoop( int const qa,
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 real64
-H1_Hexahedron_Lagrange1_GaussLegendre2::calcGradN( localIndex const q,
+H1_Hexahedron_Lagrange1_GaussLegendre2::calcGradN(localIndex const q,
                                                    real64 const (&X)[numNodes][3],
-                                                   real64 (& gradN)[numNodes][3] )
+                                                   real64 (& gradN)[numNodes][3])
 {
   real64 J[3][3] = {{0}};
 
 
   int qa, qb, qc;
-  LagrangeBasis1::TensorProduct3D::multiIndex( q, qa, qb, qc );
+  LagrangeBasis1::TensorProduct3D::multiIndex(q, qa, qb, qc);
 
-  jacobianTransformation( qa, qb, qc, X, J );
+  jacobianTransformation(qa, qb, qc, X, J);
 
-  real64 const detJ = LvArray::tensorOps::invert< 3 >( J );
+  real64 const detJ = LvArray::tensorOps::invert<3>(J);
 
-  applyTransformationToParentGradients( qa, qb, qc, J, gradN );
+  applyTransformationToParentGradients(qa, qb, qc, J, gradN);
 
   return detJ * weight;
 }
@@ -448,23 +448,23 @@ GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void
 H1_Hexahedron_Lagrange1_GaussLegendre2::
-  jacobianTransformation( int const qa,
+  jacobianTransformation(int const qa,
                           int const qb,
                           int const qc,
                           real64 const (&X)[numNodes][3],
-                          real64 ( & J )[3][3] )
+                          real64 (& J)[3][3])
 {
-  supportLoop( qa, qb, qc, [] GEOSX_HOST_DEVICE ( real64 const (&dNdXi)[3],
+  supportLoop(qa, qb, qc, [] GEOSX_HOST_DEVICE (real64 const (&dNdXi)[3],
                                                   int const nodeIndex,
                                                   real64 const (&X)[numNodes][3],
-                                                  real64 (& J)[3][3] )
+                                                  real64 (& J)[3][3])
   {
     real64 const * const GEOSX_RESTRICT Xnode = X[nodeIndex];
-    for( int i = 0; i < 3; ++i )
+    for(int i = 0; i <3; ++i)
     {
-      for( int j = 0; j < 3; ++j )
+      for(int j = 0; j <3; ++j)
       {
-        J[i][j] = J[i][j] + dNdXi[ j ] * Xnode[i];
+        J[i][j] = J[i][j] + dNdXi[j] * Xnode[i];
       }
     }
 
@@ -478,7 +478,7 @@ H1_Hexahedron_Lagrange1_GaussLegendre2::
 //    J[2][1] = J[2][1] + dNdXi[1] * Xnode[2];
 //    J[2][2] = J[2][2] + dNdXi[2] * Xnode[2];
 
-  }, X, J );
+  }, X, J);
 }
 
 
@@ -487,23 +487,23 @@ GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void
 H1_Hexahedron_Lagrange1_GaussLegendre2::
-  applyTransformationToParentGradients( int const qa,
+  applyTransformationToParentGradients(int const qa,
                                         int const qb,
                                         int const qc,
-                                        real64 const ( &invJ )[3][3],
-                                        real64 (& gradN)[numNodes][3] )
+                                        real64 const (&invJ)[3][3],
+                                        real64 (& gradN)[numNodes][3])
 {
-  supportLoop( qa, qb, qc, [] GEOSX_HOST_DEVICE ( real64 const (&dNdXi)[3],
+  supportLoop(qa, qb, qc, [] GEOSX_HOST_DEVICE (real64 const (&dNdXi)[3],
                                                   int const nodeIndex,
                                                   real64 const (&invJ)[3][3],
-                                                  real64 (& gradN)[numNodes][3] )
+                                                  real64 (& gradN)[numNodes][3])
   {
-//    for( int i = 0; i < 3; ++i )
+//    for(int i = 0; i <3; ++i)
 //    {
 //      gradN[nodeIndex][i] = 0.0;
-//      for( int j = 0; j < 3; ++j )
+//      for(int j = 0; j <3; ++j)
 //      {
-//        gradN[nodeIndex][i] = gradN[nodeIndex][i] + dNdXi[ j ] * invJ[j][i];
+//        gradN[nodeIndex][i] = gradN[nodeIndex][i] + dNdXi[j] * invJ[j][i];
 //      }
 //    }
     // smaller register footprint by manually unrolling the for loops.
@@ -512,7 +512,7 @@ H1_Hexahedron_Lagrange1_GaussLegendre2::
     gradN[nodeIndex][2] = dNdXi[0] * invJ[0][2] + dNdXi[1] * invJ[1][2] + dNdXi[2] * invJ[2][2];
 
 
-  }, invJ, gradN );
+  }, invJ, gradN);
 }
 
 
@@ -520,120 +520,120 @@ GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 real64
 H1_Hexahedron_Lagrange1_GaussLegendre2::
-  transformedQuadratureWeight( localIndex const q,
-                               real64 const (&X)[numNodes][3] )
+  transformedQuadratureWeight(localIndex const q,
+                               real64 const (&X)[numNodes][3])
 {
   real64 J[3][3] = {{0}};
 
   int qa, qb, qc;
-  LagrangeBasis1::TensorProduct3D::multiIndex( q, qa, qb, qc );
+  LagrangeBasis1::TensorProduct3D::multiIndex(q, qa, qb, qc);
 
-  jacobianTransformation( qa, qb, qc, X, J );
+  jacobianTransformation(qa, qb, qc, X, J);
 
-  return LvArray::tensorOps::determinant< 3 >( J );
+  return LvArray::tensorOps::determinant<3>(J);
 }
 
 
 
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-void H1_Hexahedron_Lagrange1_GaussLegendre2::symmetricGradient( int const q,
+void H1_Hexahedron_Lagrange1_GaussLegendre2::symmetricGradient(int const q,
                                                                 real64 const (&invJ)[3][3],
                                                                 real64 const (&var)[numNodes][3],
-                                                                real64 (& grad)[6] )
+                                                                real64 (& grad)[6])
 {
   int qa, qb, qc;
-  LagrangeBasis1::TensorProduct3D::multiIndex( q, qa, qb, qc );
+  LagrangeBasis1::TensorProduct3D::multiIndex(q, qa, qb, qc);
 
-  supportLoop( qa, qb, qc, [] GEOSX_HOST_DEVICE ( real64 const (&dNdXi)[3],
+  supportLoop(qa, qb, qc, [] GEOSX_HOST_DEVICE (real64 const (&dNdXi)[3],
                                                   int const nodeIndex,
                                                   real64 const (&invJ)[3][3],
                                                   real64 const (&var)[numNodes][3],
-                                                  real64 (& grad)[6] )
+                                                  real64 (& grad)[6])
   {
 
     real64 gradN[3] = {0, 0, 0};
-    for( int i = 0; i < 3; ++i )
+    for(int i = 0; i <3; ++i)
     {
-      for( int j = 0; j < 3; ++j )
+      for(int j = 0; j <3; ++j)
       {
-        gradN[i] = gradN[i] + dNdXi[ j ] * invJ[j][i];
+        gradN[i] = gradN[i] + dNdXi[j] * invJ[j][i];
       }
     }
 
-    grad[0] = grad[0] + gradN[0] * var[ nodeIndex ][0];
-    grad[1] = grad[1] + gradN[1] * var[ nodeIndex ][1];
-    grad[2] = grad[2] + gradN[2] * var[ nodeIndex ][2];
-    grad[3] = grad[3] + gradN[2] * var[ nodeIndex ][1] + gradN[1] * var[ nodeIndex ][2];
-    grad[4] = grad[4] + gradN[2] * var[ nodeIndex ][0] + gradN[0] * var[ nodeIndex ][2];
-    grad[5] = grad[5] + gradN[1] * var[ nodeIndex ][0] + gradN[0] * var[ nodeIndex ][1];
-  }, invJ, var, grad );
+    grad[0] = grad[0] + gradN[0] * var[nodeIndex][0];
+    grad[1] = grad[1] + gradN[1] * var[nodeIndex][1];
+    grad[2] = grad[2] + gradN[2] * var[nodeIndex][2];
+    grad[3] = grad[3] + gradN[2] * var[nodeIndex][1] + gradN[1] * var[nodeIndex][2];
+    grad[4] = grad[4] + gradN[2] * var[nodeIndex][0] + gradN[0] * var[nodeIndex][2];
+    grad[5] = grad[5] + gradN[1] * var[nodeIndex][0] + gradN[0] * var[nodeIndex][1];
+  }, invJ, var, grad);
 }
 
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-void H1_Hexahedron_Lagrange1_GaussLegendre2::plus_gradNajAij( int const q,
+void H1_Hexahedron_Lagrange1_GaussLegendre2::plus_gradNajAij(int const q,
                                                               real64 const (&invJ)[3][3],
                                                               real64 const (&var)[6],
-                                                              real64 (& R)[numNodes][3] )
+                                                              real64 (& R)[numNodes][3])
 {
   int qa, qb, qc;
-  LagrangeBasis1::TensorProduct3D::multiIndex( q, qa, qb, qc );
+  LagrangeBasis1::TensorProduct3D::multiIndex(q, qa, qb, qc);
 
-  supportLoop( qa, qb, qc,
+  supportLoop(qa, qb, qc,
                [] GEOSX_HOST_DEVICE
-                 ( real64 const (&dNdXi)[3],
+                 (real64 const (&dNdXi)[3],
                  int const nodeIndex,
                  real64 const (&invJ)[3][3],
                  real64 const (&var)[6],
-                 real64 (& R)[numNodes][3] )
+                 real64 (& R)[numNodes][3])
   {
 
     real64 gradN[3] = {0, 0, 0};
-    for( int i = 0; i < 3; ++i )
+    for(int i = 0; i <3; ++i)
     {
-      for( int j = 0; j < 3; ++j )
+      for(int j = 0; j <3; ++j)
       {
-        gradN[i] = gradN[i] + dNdXi[ j ] * invJ[j][i];
+        gradN[i] = gradN[i] + dNdXi[j] * invJ[j][i];
       }
     }
-    R[ nodeIndex ][ 0 ] = R[ nodeIndex ][ 0 ] - var[ 0 ] * gradN[ 0 ] - var[ 5 ] * gradN[ 1 ] - var[ 4 ] * gradN[ 2 ];
-    R[ nodeIndex ][ 1 ] = R[ nodeIndex ][ 1 ] - var[ 5 ] * gradN[ 0 ] - var[ 1 ] * gradN[ 1 ] - var[ 3 ] * gradN[ 2 ];
-    R[ nodeIndex ][ 2 ] = R[ nodeIndex ][ 2 ] - var[ 4 ] * gradN[ 0 ] - var[ 3 ] * gradN[ 1 ] - var[ 2 ] * gradN[ 2 ];
-  }, invJ, var, R );
+    R[nodeIndex][0] = R[nodeIndex][0] - var[0] * gradN[0] - var[5] * gradN[1] - var[4] * gradN[2];
+    R[nodeIndex][1] = R[nodeIndex][1] - var[5] * gradN[0] - var[1] * gradN[1] - var[3] * gradN[2];
+    R[nodeIndex][2] = R[nodeIndex][2] - var[4] * gradN[0] - var[3] * gradN[1] - var[2] * gradN[2];
+  }, invJ, var, R);
 }
 
 
 
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-void H1_Hexahedron_Lagrange1_GaussLegendre2::gradient( int const q,
+void H1_Hexahedron_Lagrange1_GaussLegendre2::gradient(int const q,
                                                        real64 const (&invJ)[3][3],
                                                        real64 const (&var)[numNodes][3],
-                                                       real64 (& grad)[3][3] )
+                                                       real64 (& grad)[3][3])
 {
   int qa, qb, qc;
-  LagrangeBasis1::TensorProduct3D::multiIndex( q, qa, qb, qc );
+  LagrangeBasis1::TensorProduct3D::multiIndex(q, qa, qb, qc);
 
-  supportLoop( qa, qb, qc, [] GEOSX_HOST_DEVICE ( real64 const (&dNdXi)[3],
+  supportLoop(qa, qb, qc, [] GEOSX_HOST_DEVICE (real64 const (&dNdXi)[3],
                                                   int const nodeIndex,
                                                   real64 const (&invJ)[3][3],
                                                   real64 const (&var)[numNodes][3],
-                                                  real64 (& grad)[3][3] )
+                                                  real64 (& grad)[3][3])
   {
-    for( int i = 0; i < 3; ++i )
+    for(int i = 0; i <3; ++i)
     {
       real64 gradN=0.0;;
-      for( int j = 0; j < 3; ++j )
+      for(int j = 0; j <3; ++j)
       {
-        gradN = gradN + dNdXi[ j ] * invJ[j][i];
+        gradN = gradN + dNdXi[j] * invJ[j][i];
       }
-      for( int k = 0; k < 3; ++k )
+      for(int k = 0; k <3; ++k)
       {
-        grad[k][i] = grad[k][i] + gradN * var[ nodeIndex ][k];
+        grad[k][i] = grad[k][i] + gradN * var[nodeIndex][k];
       }
     }
-  }, invJ, var, grad );
+  }, invJ, var, grad);
 }
 
 /// @endcond

@@ -26,29 +26,29 @@ namespace SinglePhaseFVMKernels
 
 GEOSX_HOST_DEVICE
 void
-FluxKernel::Compute( localIndex const stencilSize,
-                     arraySlice1d< localIndex const > const & seri,
-                     arraySlice1d< localIndex const > const & sesri,
-                     arraySlice1d< localIndex const > const & sei,
-                     arraySlice1d< real64 const > const & stencilWeights,
-                     ElementViewConst< arrayView1d< real64 const > > const & pres,
-                     ElementViewConst< arrayView1d< real64 const > > const & dPres,
-                     ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
-                     ElementViewConst< arrayView2d< real64 const > > const & dens,
-                     ElementViewConst< arrayView2d< real64 const > > const & dDens_dPres,
-                     ElementViewConst< arrayView1d< real64 const > > const & mob,
-                     ElementViewConst< arrayView1d< real64 const > > const & dMob_dPres,
+FluxKernel::Compute(localIndex const stencilSize,
+                     arraySlice1d<localIndex const> const & seri,
+                     arraySlice1d<localIndex const> const & sesri,
+                     arraySlice1d<localIndex const> const & sei,
+                     arraySlice1d<real64 const> const & stencilWeights,
+                     ElementViewConst<arrayView1d<real64 const>> const & pres,
+                     ElementViewConst<arrayView1d<real64 const>> const & dPres,
+                     ElementViewConst<arrayView1d<real64 const>> const & gravCoef,
+                     ElementViewConst<arrayView2d<real64 const>> const & dens,
+                     ElementViewConst<arrayView2d<real64 const>> const & dDens_dPres,
+                     ElementViewConst<arrayView1d<real64 const>> const & mob,
+                     ElementViewConst<arrayView1d<real64 const>> const & dMob_dPres,
                      real64 const dt,
-                     arraySlice1d< real64 > const & flux,
-                     arraySlice2d< real64 > const & fluxJacobian )
+                     arraySlice1d<real64> const & flux,
+                     arraySlice2d<real64> const & fluxJacobian)
 {
   localIndex constexpr maxStencil = CellElementStencilTPFA::MAX_STENCIL_SIZE;
-  stackArray1d< real64, maxStencil > dDensMean_dP( stencilSize );
-  stackArray1d< real64, maxStencil > dFlux_dP( stencilSize );
+  stackArray1d<real64, maxStencil> dDensMean_dP(stencilSize);
+  stackArray1d<real64, maxStencil> dFlux_dP(stencilSize);
 
   // average density
   real64 densMean = 0.0;
-  for( localIndex ke = 0; ke < 2; ++ke )
+  for(localIndex ke = 0; ke <2; ++ke)
   {
     densMean        += 0.5 * dens[seri[ke]][sesri[ke]][sei[ke]][0];
     dDensMean_dP[ke] = 0.5 * dDens_dPres[seri[ke]][sesri[ke]][sei[ke]][0];
@@ -59,7 +59,7 @@ FluxKernel::Compute( localIndex const stencilSize,
   real64 sumWeightGrav = 0.0;
   real64 potScale = 0.0;
 
-  for( localIndex ke = 0; ke < stencilSize; ++ke )
+  for(localIndex ke = 0; ke <stencilSize; ++ke)
   {
     localIndex const er  = seri[ke];
     localIndex const esr = sesri[ke];
@@ -68,34 +68,34 @@ FluxKernel::Compute( localIndex const stencilSize,
     real64 const weight = stencilWeights[ke];
     real64 const pressure = pres[er][esr][ei] + dPres[er][esr][ei];
     real64 const gravD = gravCoef[er][esr][ei];
-    real64 const pot = weight * ( pressure - densMean * gravD );
+    real64 const pot = weight * (pressure - densMean * gravD);
 
     potDif += pot;
     sumWeightGrav += weight * gravD;
-    potScale = fmax( potScale, fabs( pot ) );
+    potScale = fmax(potScale, fabs(pot));
   }
 
   // compute upwinding tolerance
   real64 constexpr upwRelTol = 1e-8;
-  real64 const upwAbsTol = fmax( potScale * upwRelTol, LvArray::NumericLimits< real64 >::epsilon );
+  real64 const upwAbsTol = fmax(potScale * upwRelTol, LvArray::NumericLimits<real64>::epsilon);
 
   // decide mobility coefficients - smooth variation in [-upwAbsTol; upwAbsTol]
-  real64 const alpha = ( potDif + upwAbsTol ) / ( 2 * upwAbsTol );
+  real64 const alpha = (potDif + upwAbsTol) / (2 * upwAbsTol);
 
   real64 mobility{};
   real64 dMobility_dP[2]{};
-  if( alpha <= 0.0 || alpha >= 1.0 )
+  if(alpha <= 0.0 || alpha>= 1.0)
   {
     // happy path: single upwind direction
-    localIndex const ke = 1 - localIndex( fmax( fmin( alpha, 1.0 ), 0.0 ) );
+    localIndex const ke = 1 - localIndex(fmax(fmin(alpha, 1.0), 0.0));
     mobility = mob[seri[ke]][sesri[ke]][sei[ke]];
     dMobility_dP[ke] = dMob_dPres[seri[ke]][sesri[ke]][sei[ke]];
   }
   else
   {
     // sad path: weighted averaging
-    real64 const mobWeights[2] = { alpha, 1.0 - alpha };
-    for( localIndex ke = 0; ke < 2; ++ke )
+    real64 const mobWeights[2] = {alpha, 1.0 - alpha};
+    for(localIndex ke = 0; ke <2; ++ke)
     {
       mobility += mobWeights[ke] * mob[seri[ke]][sesri[ke]][sei[ke]];
       dMobility_dP[ke] = mobWeights[ke] * dMob_dPres[seri[ke]][sesri[ke]][sei[ke]];
@@ -104,16 +104,16 @@ FluxKernel::Compute( localIndex const stencilSize,
 
   // compute the final flux and derivatives
   real64 const fluxVal = mobility * potDif;
-  for( localIndex ke = 0; ke < stencilSize; ++ke )
+  for(localIndex ke = 0; ke <stencilSize; ++ke)
   {
-    dFlux_dP[ke] = mobility * ( stencilWeights[ke] - dDensMean_dP[ke] * sumWeightGrav) + dMobility_dP[ke] * potDif;
+    dFlux_dP[ke] = mobility * (stencilWeights[ke] - dDensMean_dP[ke] * sumWeightGrav) + dMobility_dP[ke] * potDif;
   }
 
   // populate local flux vector and derivatives
   flux[0] =  dt * fluxVal;
   flux[1] = -dt * fluxVal;
 
-  for( localIndex ke = 0; ke < stencilSize; ++ke )
+  for(localIndex ke = 0; ke <stencilSize; ++ke)
   {
     fluxJacobian[0][ke] =  dt * dFlux_dP[ke];
     fluxJacobian[1][ke] = -dt * dFlux_dP[ke];
@@ -122,30 +122,30 @@ FluxKernel::Compute( localIndex const stencilSize,
 
 GEOSX_HOST_DEVICE
 void
-FluxKernel::Compute( localIndex const stencilSize,
-                     arraySlice1d< localIndex const > const &,
-                     arraySlice1d< localIndex const > const &,
-                     arraySlice1d< localIndex const > const & sei,
-                     arraySlice1d< real64 const > const & stencilWeights,
-                     arrayView1d< real64 const > const & pres,
-                     arrayView1d< real64 const > const & dPres,
-                     arrayView1d< real64 const > const & gravCoef,
-                     arrayView2d< real64 const > const & dens,
-                     arrayView2d< real64 const > const & dDens_dPres,
-                     arrayView1d< real64 const > const & mob,
-                     arrayView1d< real64 const > const & dMob_dPres,
+FluxKernel::Compute(localIndex const stencilSize,
+                     arraySlice1d<localIndex const> const &,
+                     arraySlice1d<localIndex const> const &,
+                     arraySlice1d<localIndex const> const & sei,
+                     arraySlice1d<real64 const> const & stencilWeights,
+                     arrayView1d<real64 const> const & pres,
+                     arrayView1d<real64 const> const & dPres,
+                     arrayView1d<real64 const> const & gravCoef,
+                     arrayView2d<real64 const> const & dens,
+                     arrayView2d<real64 const> const & dDens_dPres,
+                     arrayView1d<real64 const> const & mob,
+                     arrayView1d<real64 const> const & dMob_dPres,
                      real64 const dt,
-                     arraySlice1d< real64 > const & flux,
-                     arraySlice2d< real64 > const & fluxJacobian )
+                     arraySlice1d<real64> const & flux,
+                     arraySlice2d<real64> const & fluxJacobian)
 {
   localIndex constexpr maxStencil = CellElementStencilTPFA::MAX_STENCIL_SIZE;
 
-  stackArray1d< real64, maxStencil > dDensMean_dP( stencilSize );
-  stackArray1d< real64, maxStencil > dFlux_dP( stencilSize );
+  stackArray1d<real64, maxStencil> dDensMean_dP(stencilSize);
+  stackArray1d<real64, maxStencil> dFlux_dP(stencilSize);
 
   // average density
   real64 densMean = 0.0;
-  for( localIndex i = 0; i < 2; ++i )
+  for(localIndex i = 0; i <2; ++i)
   {
     densMean += 0.5 * dens[sei[i]][0];
     dDensMean_dP[i] = 0.5 * dDens_dPres[sei[i]][0];
@@ -155,41 +155,41 @@ FluxKernel::Compute( localIndex const stencilSize,
   real64 potDif = 0.0;
   real64 sumWeightGrav = 0.0;
   real64 potScale = 0.0;
-  for( localIndex ke = 0; ke < stencilSize; ++ke )
+  for(localIndex ke = 0; ke <stencilSize; ++ke)
   {
     localIndex const ei = sei[ke];
 
     real64 const weight = stencilWeights[ke];
     real64 const pressure = pres[ei] + dPres[ei];
     real64 const gravD = gravCoef[ei];
-    real64 const pot = weight * ( pressure - densMean * gravD );
+    real64 const pot = weight * (pressure - densMean * gravD);
 
     potDif += pot;
     sumWeightGrav += weight * gravD;
-    potScale = fmax( potScale, fabs( pot ) );
+    potScale = fmax(potScale, fabs(pot));
   }
 
   // compute upwinding tolerance
   real64 constexpr upwRelTol = 1e-8;
-  real64 const upwAbsTol = fmax( potScale * upwRelTol, LvArray::NumericLimits< real64 >::epsilon );
+  real64 const upwAbsTol = fmax(potScale * upwRelTol, LvArray::NumericLimits<real64>::epsilon);
 
   // decide mobility coefficients - smooth variation in [-upwAbsTol; upwAbsTol]
-  real64 const alpha = ( potDif + upwAbsTol ) / ( 2 * upwAbsTol );
+  real64 const alpha = (potDif + upwAbsTol) / (2 * upwAbsTol);
 
   real64 mobility{};
   real64 dMobility_dP[2]{};
-  if( alpha <= 0.0 || alpha >= 1.0 )
+  if(alpha <= 0.0 || alpha>= 1.0)
   {
     // happy path: single upwind direction
-    localIndex const ke = 1 - localIndex( fmax( fmin( alpha, 1.0 ), 0.0 ) );
+    localIndex const ke = 1 - localIndex(fmax(fmin(alpha, 1.0), 0.0));
     mobility = mob[sei[ke]];
     dMobility_dP[ke] = dMob_dPres[sei[ke]];
   }
   else
   {
     // sad path: weighted averaging
-    real64 const mobWeights[2] = { alpha, 1.0 - alpha };
-    for( localIndex ke = 0; ke < 2; ++ke )
+    real64 const mobWeights[2] = {alpha, 1.0 - alpha};
+    for(localIndex ke = 0; ke <2; ++ke)
     {
       mobility += mobWeights[ke] * mob[sei[ke]];
       dMobility_dP[ke] = mobWeights[ke] * dMob_dPres[sei[ke]];
@@ -198,16 +198,16 @@ FluxKernel::Compute( localIndex const stencilSize,
 
   // compute the final flux and derivatives
   real64 const fluxVal = mobility * potDif;
-  for( localIndex ke = 0; ke < stencilSize; ++ke )
+  for(localIndex ke = 0; ke <stencilSize; ++ke)
   {
-    dFlux_dP[ke] = mobility * ( stencilWeights[ke] - dDensMean_dP[ke] * sumWeightGrav) + dMobility_dP[ke] * potDif;
+    dFlux_dP[ke] = mobility * (stencilWeights[ke] - dDensMean_dP[ke] * sumWeightGrav) + dMobility_dP[ke] * potDif;
   }
 
   // populate local flux vector and derivatives
   flux[0] = dt * fluxVal;
   flux[1] = -flux[0];
 
-  for( localIndex ke = 0; ke < stencilSize; ++ke )
+  for(localIndex ke = 0; ke <stencilSize; ++ke)
   {
     fluxJacobian[0][ke] = dt * dFlux_dP[ke];
     fluxJacobian[1][ke] = -fluxJacobian[0][ke];
@@ -216,48 +216,48 @@ FluxKernel::Compute( localIndex const stencilSize,
 
 GEOSX_HOST_DEVICE
 void
-FluxKernel::ComputeJunction( localIndex const numFluxElems,
-                             arraySlice1d< localIndex const > const & stencilElementIndices,
-                             arraySlice1d< real64 const > const & stencilWeights,
-                             arrayView1d< real64 const > const & pres,
-                             arrayView1d< real64 const > const & dPres,
-                             arrayView1d< real64 const > const & gravCoef,
-                             arrayView2d< real64 const > const & dens,
-                             arrayView2d< real64 const > const & dDens_dPres,
-                             arrayView1d< real64 const > const & mob,
-                             arrayView1d< real64 const > const & dMob_dPres,
-                             arrayView1d< real64 const > const & aperture0,
-                             arrayView1d< real64 const > const & aperture,
+FluxKernel::ComputeJunction(localIndex const numFluxElems,
+                             arraySlice1d<localIndex const> const & stencilElementIndices,
+                             arraySlice1d<real64 const> const & stencilWeights,
+                             arrayView1d<real64 const> const & pres,
+                             arrayView1d<real64 const> const & dPres,
+                             arrayView1d<real64 const> const & gravCoef,
+                             arrayView2d<real64 const> const & dens,
+                             arrayView2d<real64 const> const & dDens_dPres,
+                             arrayView1d<real64 const> const & mob,
+                             arrayView1d<real64 const> const & dMob_dPres,
+                             arrayView1d<real64 const> const & aperture0,
+                             arrayView1d<real64 const> const & aperture,
                              real64 const meanPermCoeff,
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
-                             arrayView1d< real64 const > const & GEOSX_GEOSX_UNUSED_PARAM( s ),
-                             arrayView1d< real64 const > const & GEOSX_GEOSX_UNUSED_PARAM( dSdAper ),
+                             arrayView1d<real64 const> const & GEOSX_GEOSX_UNUSED_PARAM(s),
+                             arrayView1d<real64 const> const & GEOSX_GEOSX_UNUSED_PARAM(dSdAper),
 #endif
                              real64 const dt,
-                             arraySlice1d< real64 > const & flux,
-                             arraySlice2d< real64 > const & fluxJacobian,
-                             arraySlice2d< real64 > const & dFlux_dAperture )
+                             arraySlice1d<real64> const & flux,
+                             arraySlice2d<real64> const & fluxJacobian,
+                             arraySlice2d<real64> const & dFlux_dAperture)
 {
   real64 sumOfWeights = 0;
   real64 aperTerm[10];
   real64 dAperTerm_dAper[10];
 
-  for( localIndex k=0; k<numFluxElems; ++k )
+  for(localIndex k=0; k<numFluxElems; ++k)
   {
 
     #define PERM_CALC 1
-//      real64 const aperAdd = aperture0[stencilElementIndices[k]] < 0.09e-3 ? ( 0.09e-3 -
-// aperture0[stencilElementIndices[k]] ) : 0.0;
+//      real64 const aperAdd = aperture0[stencilElementIndices[k]] <0.09e-3 ? (0.09e-3 -
+// aperture0[stencilElementIndices[k]]) : 0.0;
 #if PERM_CALC==1
     FluxKernelHelper::
-      apertureForPermeablityCalculation< 1 >( aperture0[stencilElementIndices[k]],
+      apertureForPermeablityCalculation<1>(aperture0[stencilElementIndices[k]],
                                               aperture[stencilElementIndices[k]],
                                               aperTerm[k],
-                                              dAperTerm_dAper[k] );
+                                              dAperTerm_dAper[k]);
 
 #elif PERM_CALC==2
 
-    if( s[k] >= 1.0 )
+    if(s[k]>= 1.0)
     {
       aperTerm[k] = aperture[stencilElementIndices[k]] * aperture[stencilElementIndices[k]] * aperture[stencilElementIndices[k]];
       dAperTerm_dAper[k] = 3*aperture[stencilElementIndices[k]]*aperture[stencilElementIndices[k]];
@@ -277,54 +277,54 @@ FluxKernel::ComputeJunction( localIndex const numFluxElems,
   }
 
   localIndex k[2];
-  for( k[0]=0; k[0]<numFluxElems; ++k[0] )
+  for(k[0]=0; k[0]<numFluxElems; ++k[0])
   {
-    for( k[1]=k[0]+1; k[1]<numFluxElems; ++k[1] )
+    for(k[1]=k[0]+1; k[1]<numFluxElems; ++k[1])
     {
       real64 dFlux_dP[2] = {0, 0};
 
-      localIndex const ei[2] = { stencilElementIndices[k[0]],
-                                 stencilElementIndices[k[1]] };
+      localIndex const ei[2] = {stencilElementIndices[k[0]],
+                                 stencilElementIndices[k[1]]};
 #if 0
-      real64 const weight = ( stencilWeights[k[0]]*aperTerm[k[0]] ) *
-                            ( stencilWeights[k[1]]*aperTerm[k[1]] ) / sumOfWeights;
+      real64 const weight = (stencilWeights[k[0]]*aperTerm[k[0]]) *
+                            (stencilWeights[k[1]]*aperTerm[k[1]]) / sumOfWeights;
 
       real64 const
       dWeight_dAper[2] =
-      { ( 1 / aperTerm[k[0]]  - stencilWeights[k[0]] / sumOfWeights ) * weight * dAperTerm_dAper[k[0]],
-        ( 1 / aperTerm[k[1]]  - stencilWeights[k[1]] / sumOfWeights ) * weight * dAperTerm_dAper[k[1]]};
+      {(1 / aperTerm[k[0]]  - stencilWeights[k[0]] / sumOfWeights) * weight * dAperTerm_dAper[k[0]],
+        (1 / aperTerm[k[1]]  - stencilWeights[k[1]] / sumOfWeights) * weight * dAperTerm_dAper[k[1]]};
 #else
       real64 const c = meanPermCoeff;
 
-      real64 const harmonicWeight = ( stencilWeights[k[0]]*aperTerm[k[0]] ) *
-                                    ( stencilWeights[k[1]]*aperTerm[k[1]] ) / sumOfWeights;
+      real64 const harmonicWeight = (stencilWeights[k[0]]*aperTerm[k[0]]) *
+                                    (stencilWeights[k[1]]*aperTerm[k[1]]) / sumOfWeights;
 
       real64 const weight = c * harmonicWeight
-                            + (1.0 - c) * 0.25 * ( stencilWeights[k[0]]*aperTerm[k[0]] + stencilWeights[k[1]]*aperTerm[k[1]] );
+                            + (1.0 - c) * 0.25 * (stencilWeights[k[0]]*aperTerm[k[0]] + stencilWeights[k[1]]*aperTerm[k[1]]);
 
       real64 const
       dHarmonicWeight_dAper[2] =
-      { ( 1 / aperTerm[k[0]]  - stencilWeights[k[0]] / sumOfWeights ) * harmonicWeight * dAperTerm_dAper[k[0]],
-        ( 1 / aperTerm[k[1]]  - stencilWeights[k[1]] / sumOfWeights ) * harmonicWeight * dAperTerm_dAper[k[1]]};
+      {(1 / aperTerm[k[0]]  - stencilWeights[k[0]] / sumOfWeights) * harmonicWeight * dAperTerm_dAper[k[0]],
+        (1 / aperTerm[k[1]]  - stencilWeights[k[1]] / sumOfWeights) * harmonicWeight * dAperTerm_dAper[k[1]]};
 
       real64 const
       dWeight_dAper[2] =
-      { c * dHarmonicWeight_dAper[0] + 0.25 * ( 1.0 - c )*stencilWeights[k[0]]*dAperTerm_dAper[k[0]],
-        c * dHarmonicWeight_dAper[1] + 0.25 * ( 1.0 - c )*stencilWeights[k[1]]*dAperTerm_dAper[k[1]] };
+      {c * dHarmonicWeight_dAper[0] + 0.25 * (1.0 - c)*stencilWeights[k[0]]*dAperTerm_dAper[k[0]],
+        c * dHarmonicWeight_dAper[1] + 0.25 * (1.0 - c)*stencilWeights[k[1]]*dAperTerm_dAper[k[1]]};
 
 #endif
       // average density
-      real64 const densMean = 0.5 * ( dens[ei[0]][0] + dens[ei[1]][0] );
+      real64 const densMean = 0.5 * (dens[ei[0]][0] + dens[ei[1]][0]);
 
-      real64 const dDensMean_dP[2] = { 0.5 * dDens_dPres[ei[0]][0],
-                                       0.5 * dDens_dPres[ei[1]][0] };
+      real64 const dDensMean_dP[2] = {0.5 * dDens_dPres[ei[0]][0],
+                                       0.5 * dDens_dPres[ei[1]][0]};
 
-      real64 const potDif =  ( ( pres[ei[0]] + dPres[ei[0]] ) - ( pres[ei[1]] + dPres[ei[1]] ) -
-                               densMean * ( gravCoef[ei[0]] - gravCoef[ei[1]] ) );
+      real64 const potDif =  ((pres[ei[0]] + dPres[ei[0]]) - (pres[ei[1]] + dPres[ei[1]]) -
+                               densMean * (gravCoef[ei[0]] - gravCoef[ei[1]]));
 
 
       // upwinding of fluid properties (make this an option?)
-      localIndex const k_up = (potDif >= 0) ? 0 : 1;
+      localIndex const k_up = (potDif>= 0) ? 0 : 1;
 
       localIndex ei_up  = stencilElementIndices[k[k_up]];
 
@@ -338,8 +338,8 @@ FluxKernel::ComputeJunction( localIndex const numFluxElems,
 
 
       // compute and fill dFlux_dP
-      dFlux_dP[0] = mobility * weight * (  1 - dDensMean_dP[0] * ( gravCoef[ei[0]] - gravCoef[ei[1]] ) ) * dt;
-      dFlux_dP[1] = mobility * weight * ( -1 - dDensMean_dP[1] * ( gravCoef[ei[0]] - gravCoef[ei[1]] ) ) * dt;
+      dFlux_dP[0] = mobility * weight * ( 1 - dDensMean_dP[0] * (gravCoef[ei[0]] - gravCoef[ei[1]])) * dt;
+      dFlux_dP[1] = mobility * weight * (-1 - dDensMean_dP[1] * (gravCoef[ei[0]] - gravCoef[ei[1]])) * dt;
       dFlux_dP[k_up] += dMobility_dP * weight * potDif * dt;
 
       fluxJacobian[k[0]][k[0]] += dFlux_dP[0];
@@ -347,8 +347,8 @@ FluxKernel::ComputeJunction( localIndex const numFluxElems,
       fluxJacobian[k[1]][k[0]] -= dFlux_dP[0];
       fluxJacobian[k[1]][k[1]] -= dFlux_dP[1];
 
-      real64 const dFlux_dAper[2] = { mobility * dWeight_dAper[0] * potDif * dt,
-                                      mobility * dWeight_dAper[1] * potDif * dt };
+      real64 const dFlux_dAper[2] = {mobility * dWeight_dAper[0] * potDif * dt,
+                                      mobility * dWeight_dAper[1] * potDif * dt};
       dFlux_dAperture[k[0]][k[0]] += dFlux_dAper[0];
       dFlux_dAperture[k[0]][k[1]] += dFlux_dAper[1];
       dFlux_dAperture[k[1]][k[0]] -= dFlux_dAper[0];
@@ -359,30 +359,30 @@ FluxKernel::ComputeJunction( localIndex const numFluxElems,
 
 template<>
 void FluxKernel::
-  Launch< CellElementStencilTPFA >( CellElementStencilTPFA const & stencil,
+  Launch<CellElementStencilTPFA>(CellElementStencilTPFA const & stencil,
                                     real64 const dt,
                                     globalIndex const rankOffset,
-                                    ElementViewConst< arrayView1d< globalIndex > > const & dofNumber,
-                                    ElementViewConst< arrayView1d< integer const > > const & ghostRank,
-                                    ElementViewConst< arrayView1d< real64 const > > const & pres,
-                                    ElementViewConst< arrayView1d< real64 const > > const & dPres,
-                                    ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
-                                    ElementViewConst< arrayView2d< real64 const > > const & dens,
-                                    ElementViewConst< arrayView2d< real64 const > > const & dDens_dPres,
-                                    ElementViewConst< arrayView1d< real64 const > > const & mob,
-                                    ElementViewConst< arrayView1d< real64 const > > const & dMob_dPres,
-                                    ElementViewConst< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM( aperture0 ),
-                                    ElementViewConst< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM( aperture ),
-                                    ElementViewConst< arrayView2d< real64 const > > const & GEOSX_UNUSED_PARAM( transTMultiplier ),
-                                    R1Tensor const & GEOSX_UNUSED_PARAM( gravityVector ),
-                                    real64 const GEOSX_UNUSED_PARAM( meanPermCoeff ),
+                                    ElementViewConst<arrayView1d<globalIndex>> const & dofNumber,
+                                    ElementViewConst<arrayView1d<integer const>> const & ghostRank,
+                                    ElementViewConst<arrayView1d<real64 const>> const & pres,
+                                    ElementViewConst<arrayView1d<real64 const>> const & dPres,
+                                    ElementViewConst<arrayView1d<real64 const>> const & gravCoef,
+                                    ElementViewConst<arrayView2d<real64 const>> const & dens,
+                                    ElementViewConst<arrayView2d<real64 const>> const & dDens_dPres,
+                                    ElementViewConst<arrayView1d<real64 const>> const & mob,
+                                    ElementViewConst<arrayView1d<real64 const>> const & dMob_dPres,
+                                    ElementViewConst<arrayView1d<real64 const>> const & GEOSX_UNUSED_PARAM(aperture0),
+                                    ElementViewConst<arrayView1d<real64 const>> const & GEOSX_UNUSED_PARAM(aperture),
+                                    ElementViewConst<arrayView2d<real64 const>> const & GEOSX_UNUSED_PARAM(transTMultiplier),
+                                    R1Tensor const & GEOSX_UNUSED_PARAM(gravityVector),
+                                    real64 const GEOSX_UNUSED_PARAM(meanPermCoeff),
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
-                                    ElementViewConst< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM( s ),
-                                    ElementViewConst< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM( dSdAper ),
+                                    ElementViewConst<arrayView1d<real64 const>> const & GEOSX_UNUSED_PARAM(s),
+                                    ElementViewConst<arrayView1d<real64 const>> const & GEOSX_UNUSED_PARAM(dSdAper),
 #endif
-                                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                    arrayView1d< real64 > const & localRhs,
-                                    CRSMatrixView< real64, localIndex const > const & GEOSX_UNUSED_PARAM( dR_dAper ) )
+                                    CRSMatrixView<real64, globalIndex const> const & localMatrix,
+                                    arrayView1d<real64> const & localRhs,
+                                    CRSMatrixView<real64, localIndex const> const & GEOSX_UNUSED_PARAM(dR_dAper))
 {
   constexpr localIndex maxNumFluxElems = CellElementStencilTPFA::NUM_POINT_IN_FLUX;
   constexpr localIndex numFluxElems = CellElementStencilTPFA::NUM_POINT_IN_FLUX;
@@ -394,14 +394,14 @@ void FluxKernel::
   typename CellElementStencilTPFA::IndexContainerViewConstType const & sei = stencil.getElementIndices();
   typename CellElementStencilTPFA::WeightContainerViewConstType const & weights = stencil.getWeights();
 
-  forAll< parallelDevicePolicy<> >( stencil.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iconn )
+  forAll<parallelDevicePolicy<>>(stencil.size(), [=] GEOSX_HOST_DEVICE (localIndex const iconn)
   {
     // working arrays
-    stackArray1d< globalIndex, maxNumFluxElems > dofColIndices( stencilSize );
-    stackArray1d< real64, maxNumFluxElems > localFlux( numFluxElems );
-    stackArray2d< real64, maxNumFluxElems *maxStencilSize > localFluxJacobian( numFluxElems, stencilSize );
+    stackArray1d<globalIndex, maxNumFluxElems> dofColIndices(stencilSize);
+    stackArray1d<real64, maxNumFluxElems> localFlux(numFluxElems);
+    stackArray2d<real64, maxNumFluxElems *maxStencilSize> localFluxJacobian(numFluxElems, stencilSize);
 
-    Compute( stencilSize,
+    Compute(stencilSize,
              seri[iconn],
              sesri[iconn],
              sei[iconn],
@@ -415,59 +415,59 @@ void FluxKernel::
              dMob_dPres,
              dt,
              localFlux,
-             localFluxJacobian );
+             localFluxJacobian);
 
     // extract DOF numbers
-    for( localIndex i = 0; i < stencilSize; ++i )
+    for(localIndex i = 0; i <stencilSize; ++i)
     {
-      dofColIndices[i] = dofNumber[seri( iconn, i )][sesri( iconn, i )][sei( iconn, i )];
+      dofColIndices[i] = dofNumber[seri(iconn, i)][sesri(iconn, i)][sei(iconn, i)];
     }
 
-    for( localIndex i = 0; i < numFluxElems; ++i )
+    for(localIndex i = 0; i <numFluxElems; ++i)
     {
-      if( ghostRank[seri( iconn, i )][sesri( iconn, i )][sei( iconn, i )] < 0 )
+      if(ghostRank[seri(iconn, i)][sesri(iconn, i)][sei(iconn, i)] <0)
       {
-        globalIndex const globalRow = dofNumber[seri( iconn, i )][sesri( iconn, i )][sei( iconn, i )];
-        localIndex const localRow = LvArray::integerConversion< localIndex >( globalRow - rankOffset );
-        GEOSX_ASSERT_GE( localRow, 0 );
-        GEOSX_ASSERT_GT( localMatrix.numRows(), localRow );
+        globalIndex const globalRow = dofNumber[seri(iconn, i)][sesri(iconn, i)][sei(iconn, i)];
+        localIndex const localRow = LvArray::integerConversion<localIndex>(globalRow - rankOffset);
+        GEOSX_ASSERT_GE(localRow, 0);
+        GEOSX_ASSERT_GT(localMatrix.numRows(), localRow);
 
-        RAJA::atomicAdd( parallelDeviceAtomic{}, &localRhs[localRow], localFlux[i] );
-        localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( localRow,
+        RAJA::atomicAdd(parallelDeviceAtomic{}, &localRhs[localRow], localFlux[i]);
+        localMatrix.addToRowBinarySearchUnsorted<parallelDeviceAtomic>(localRow,
                                                                           dofColIndices.data(),
                                                                           localFluxJacobian[i].dataIfContiguous(),
-                                                                          stencilSize );
+                                                                          stencilSize);
       }
     }
-  } );
+  });
 }
 
 template<>
 void FluxKernel::
-  Launch< FaceElementStencil >( FaceElementStencil const & stencil,
+  Launch<FaceElementStencil>(FaceElementStencil const & stencil,
                                 real64 const dt,
                                 globalIndex const rankOffset,
-                                ElementViewConst< arrayView1d< globalIndex const > > const & dofNumber,
-                                ElementViewConst< arrayView1d< integer const > > const & ghostRank,
-                                ElementViewConst< arrayView1d< real64 const > > const & pres,
-                                ElementViewConst< arrayView1d< real64 const > > const & dPres,
-                                ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
-                                ElementViewConst< arrayView2d< real64 const > > const & dens,
-                                ElementViewConst< arrayView2d< real64 const > > const & dDens_dPres,
-                                ElementViewConst< arrayView1d< real64 const > > const & mob,
-                                ElementViewConst< arrayView1d< real64 const > > const & dMob_dPres,
-                                ElementViewConst< arrayView1d< real64 const > > const & aperture0,
-                                ElementViewConst< arrayView1d< real64 const > > const & aperture,
-                                ElementViewConst< arrayView2d< real64 const > > const & transTMultiplier,
+                                ElementViewConst<arrayView1d<globalIndex const>> const & dofNumber,
+                                ElementViewConst<arrayView1d<integer const>> const & ghostRank,
+                                ElementViewConst<arrayView1d<real64 const>> const & pres,
+                                ElementViewConst<arrayView1d<real64 const>> const & dPres,
+                                ElementViewConst<arrayView1d<real64 const>> const & gravCoef,
+                                ElementViewConst<arrayView2d<real64 const>> const & dens,
+                                ElementViewConst<arrayView2d<real64 const>> const & dDens_dPres,
+                                ElementViewConst<arrayView1d<real64 const>> const & mob,
+                                ElementViewConst<arrayView1d<real64 const>> const & dMob_dPres,
+                                ElementViewConst<arrayView1d<real64 const>> const & aperture0,
+                                ElementViewConst<arrayView1d<real64 const>> const & aperture,
+                                ElementViewConst<arrayView2d<real64 const>> const & transTMultiplier,
                                 R1Tensor const & gravityVector,
                                 real64 const meanPermCoeff,
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
-                                ElementViewConst< arrayView1d< real64 const > > const & s,
-                                ElementViewConst< arrayView1d< real64 const > > const & dSdAper,
+                                ElementViewConst<arrayView1d<real64 const>> const & s,
+                                ElementViewConst<arrayView1d<real64 const>> const & dSdAper,
 #endif
-                                CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                arrayView1d< real64 > const & localRhs,
-                                CRSMatrixView< real64, localIndex const > const & dR_dAper )
+                                CRSMatrixView<real64, globalIndex const> const & localMatrix,
+                                arrayView1d<real64> const & localRhs,
+                                CRSMatrixView<real64, localIndex const> const & dR_dAper)
 {
   constexpr localIndex maxNumFluxElems = FaceElementStencil::NUM_POINT_IN_FLUX;
   constexpr localIndex maxStencilSize = FaceElementStencil::MAX_STENCIL_SIZE;
@@ -477,43 +477,43 @@ void FluxKernel::
   typename FaceElementStencil::IndexContainerViewConstType const & sei = stencil.getElementIndices();
   typename FaceElementStencil::WeightContainerViewConstType const & weights = stencil.getWeights();
 
-  ArrayOfArraysView< R1Tensor const > const & cellCenterToEdgeCenters = stencil.getCellCenterToEdgeCenters();
+  ArrayOfArraysView<R1Tensor const> const & cellCenterToEdgeCenters = stencil.getCellCenterToEdgeCenters();
 
   static constexpr real64 TINY = 1e-10;
 
-  forAll< parallelDevicePolicy< 32 > >( stencil.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iconn )
+  forAll<parallelDevicePolicy<32>>(stencil.size(), [=] GEOSX_HOST_DEVICE (localIndex const iconn)
   {
-    localIndex const numFluxElems = seri.sizeOfArray( iconn );
+    localIndex const numFluxElems = seri.sizeOfArray(iconn);
     localIndex const stencilSize  = numFluxElems;
 
-    if( numFluxElems > 1 )
+    if(numFluxElems> 1)
     {
       // working arrays
-      stackArray1d< globalIndex, maxStencilSize > dofColIndices( stencilSize );
+      stackArray1d<globalIndex, maxStencilSize> dofColIndices(stencilSize);
 
-      stackArray1d< localIndex, maxNumFluxElems > localRowIndices( numFluxElems );
-      stackArray1d< localIndex, maxNumFluxElems > localColIndices( numFluxElems );
+      stackArray1d<localIndex, maxNumFluxElems> localRowIndices(numFluxElems);
+      stackArray1d<localIndex, maxNumFluxElems> localColIndices(numFluxElems);
 
-      stackArray1d< real64, maxNumFluxElems > localFlux( numFluxElems );
-      stackArray2d< real64, maxNumFluxElems *maxStencilSize > localFluxJacobian( numFluxElems, stencilSize );
+      stackArray1d<real64, maxNumFluxElems> localFlux(numFluxElems);
+      stackArray2d<real64, maxNumFluxElems *maxStencilSize> localFluxJacobian(numFluxElems, stencilSize);
 
       // need to store this for later use in determining the dFlux_dU terms when using better permeabilty approximations.
-      stackArray2d< real64, maxNumFluxElems *maxStencilSize > dFlux_dAper( numFluxElems, stencilSize );
+      stackArray2d<real64, maxNumFluxElems *maxStencilSize> dFlux_dAper(numFluxElems, stencilSize);
 
       localIndex const er = seri[iconn][0];
       localIndex const esr = sesri[iconn][0];
 
       // check if connection is vertical or horizontal
-      stackArray1d< real64, maxNumFluxElems > effectiveWeights( numFluxElems );
+      stackArray1d<real64, maxNumFluxElems> effectiveWeights(numFluxElems);
 
-      for( localIndex k = 0; k < numFluxElems; ++k )
+      for(localIndex k = 0; k <numFluxElems; ++k)
       {
 
         effectiveWeights[k] = weights[iconn][k];
 
         localIndex const ei = sei[iconn][k];
 
-        if( fabs( LvArray::tensorOps::AiBi< 3 >( cellCenterToEdgeCenters[iconn][k], gravityVector ) ) > TINY )
+        if(fabs(LvArray::tensorOps::AiBi<3>(cellCenterToEdgeCenters[iconn][k], gravityVector))> TINY)
         {
           effectiveWeights[k] *= transTMultiplier[er][esr][ei][1];
         }
@@ -524,7 +524,7 @@ void FluxKernel::
 
       }
 
-      ComputeJunction( numFluxElems,
+      ComputeJunction(numFluxElems,
                        sei[iconn],
                        effectiveWeights,
                        pres[er][esr],
@@ -544,38 +544,38 @@ void FluxKernel::
                        dt,
                        localFlux,
                        localFluxJacobian,
-                       dFlux_dAper );
+                       dFlux_dAper);
 
       // extract DOF numbers
-      for( localIndex i = 0; i < stencilSize; ++i )
+      for(localIndex i = 0; i <stencilSize; ++i)
       {
-        dofColIndices[i] = dofNumber[seri( iconn, i )][sesri( iconn, i )][sei( iconn, i )];
-        localColIndices[i] = sei( iconn, i );
+        dofColIndices[i] = dofNumber[seri(iconn, i)][sesri(iconn, i)][sei(iconn, i)];
+        localColIndices[i] = sei(iconn, i);
       }
 
-      for( localIndex i = 0; i < numFluxElems; ++i )
+      for(localIndex i = 0; i <numFluxElems; ++i)
       {
-        if( ghostRank[seri( iconn, i )][sesri( iconn, i )][sei( iconn, i )] < 0 )
+        if(ghostRank[seri(iconn, i)][sesri(iconn, i)][sei(iconn, i)] <0)
         {
-          globalIndex const globalRow = dofNumber[seri( iconn, i )][sesri( iconn, i )][sei( iconn, i )];
-          localIndex const localRow = LvArray::integerConversion< localIndex >( globalRow - rankOffset );
-          GEOSX_ASSERT_GE( localRow, 0 );
-          GEOSX_ASSERT_GT( localMatrix.numRows(), localRow );
+          globalIndex const globalRow = dofNumber[seri(iconn, i)][sesri(iconn, i)][sei(iconn, i)];
+          localIndex const localRow = LvArray::integerConversion<localIndex>(globalRow - rankOffset);
+          GEOSX_ASSERT_GE(localRow, 0);
+          GEOSX_ASSERT_GT(localMatrix.numRows(), localRow);
 
-          RAJA::atomicAdd( parallelDeviceAtomic{}, &localRhs[localRow], localFlux[i] );
-          localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( localRow,
+          RAJA::atomicAdd(parallelDeviceAtomic{}, &localRhs[localRow], localFlux[i]);
+          localMatrix.addToRowBinarySearchUnsorted<parallelDeviceAtomic>(localRow,
                                                                             dofColIndices.data(),
                                                                             localFluxJacobian[i].dataIfContiguous(),
-                                                                            stencilSize );
+                                                                            stencilSize);
 
-          dR_dAper.addToRowBinarySearch< parallelDeviceAtomic >( sei( iconn, i ),
+          dR_dAper.addToRowBinarySearch<parallelDeviceAtomic>(sei(iconn, i),
                                                                  localColIndices.data(),
                                                                  dFlux_dAper[i].dataIfContiguous(),
-                                                                 stencilSize );
+                                                                 stencilSize);
         }
       }
     }
-  } );
+  });
 
 }
 

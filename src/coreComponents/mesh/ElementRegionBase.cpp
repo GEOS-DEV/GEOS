@@ -24,18 +24,18 @@ namespace geosx
 using namespace dataRepository;
 
 
-ElementRegionBase::ElementRegionBase( string const & name, Group * const parent ):
-  ObjectManagerBase( name, parent ),
+ElementRegionBase::ElementRegionBase(string const & name, Group * const parent):
+  ObjectManagerBase(name, parent),
   m_numericalMethod()
 {
 
-  setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
+  setInputFlags(InputFlags::OPTIONAL_NONUNIQUE);
 
-  this->RegisterGroup( viewKeyStruct::elementSubRegions );
+  this->RegisterGroup(viewKeyStruct::elementSubRegions);
 
-  registerWrapper( viewKeyStruct::materialListString, &m_materialList )->
-    setInputFlag( InputFlags::REQUIRED )->
-    setDescription( "List of materials present in this region" );
+  registerWrapper(viewKeyStruct::materialListString, &m_materialList)->
+    setInputFlag(InputFlags::REQUIRED)->
+    setDescription("List of materials present in this region");
 
 }
 

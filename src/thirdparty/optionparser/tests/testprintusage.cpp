@@ -32,12 +32,12 @@ const Descriptor test_vtabs[] = {
 const Descriptor test_columns[] = {
     {0,0,"","",Arg::None, "Column 1 line 1  \t\tColumn 3 line 1\n"
                           "Column 1 line 2  \tColumn 2 line 2   \tColumn 3 line 2\n"
-                          "Column 1 line 3  \t\tColumn 3 line 3" },
+                          "Column 1 line 3  \t\tColumn 3 line 3"},
     {0,0,0,0,0,0}
 };
 
 const Descriptor test_column1[] = {
-    {0,0,"","",Arg::None, "11 \t21\v22\v23\t 31\nxx" },
+    {0,0,"","",Arg::None, "11 \t21\v22\v23\t 31\nxx"},
     {0,0,0,0,0,0}
 };
 
@@ -54,7 +54,7 @@ const Descriptor test_tables[] = {
                            },
     {0,0,"","",Arg::None,0}, // table break
     {0,0,"","",Arg::None,0}, // table break
-    {0,0,"","",Arg::None,  "This is the only line of table 2." },
+    {0,0,"","",Arg::None,  "This is the only line of table 2."},
     {0,0,"","",Arg::None,0}, // table break
     {0,0,"","",Arg::None,  "This is the very long 1st line of table 3. It is more than 80 characters in length and therefore needs to be wrapped. In fact it is so long that it needs to be wrapped multiple times to fit into a normal 80 characters terminal.\v"
                            "This is the very long 2nd line of table 3. It is more than 80 characters in length and therefore needs to be wrapped. In fact it is so long that it needs to be wrapped multiple times to fit into a normal 80 characters terminal.\v"
@@ -71,7 +71,7 @@ const Descriptor test_tables[] = {
     {0,0,"","",Arg::None, "Table 6 C 1 L 1 \tTable 6 C 2 L 1 \tTable 6 C 3 L 1\n"
                           "Table 6 C 1 L 2 \tTable 6 C 2 L 2 \tTable 6 C 3 L 2"
                           },
-    {0,0,"","",Arg::None,0 }, // table break
+    {0,0,"","",Arg::None,0}, // table break
     {0,0,"","",Arg::None, "Table 7 Column 1 Line 1 \tTable 7 Column 2 Line 1 \tTable 7 Column 3 Line 1\n"
                           "Table 7 Column 1 Line 2 \tTable 7 Column 2 Line 2 \tTable 7 Column 3 Line 2\n"
                           },
@@ -79,40 +79,40 @@ const Descriptor test_tables[] = {
 };
 
 const Descriptor test_nohelp[] = {
-    {0,0,"","",Arg::None, 0 },
-    {0,0,"","",Arg::None, 0 },
-    {0,0,"","",Arg::None, 0 },
+    {0,0,"","",Arg::None, 0},
+    {0,0,"","",Arg::None, 0},
+    {0,0,"","",Arg::None, 0},
     {0,0,0,0,0,0}
 };
 
 const Descriptor test_wide[] = {
-    {0,0,"","",Arg::None, "Roma\t|x漢" },
-    {0,0,"","",Arg::None, "ｶﾀｶﾅ\t|漢字" },
-    {0,0,"","",Arg::None, "漢字\t|漢ｶ " },
-    {0,0,"","",Arg::None, "漢字\t|ｶﾅ 漢字" },
+    {0,0,"","",Arg::None, "Roma\t|x漢"},
+    {0,0,"","",Arg::None, "ｶﾀｶﾅ\t|漢字"},
+    {0,0,"","",Arg::None, "漢字\t|漢ｶ "},
+    {0,0,"","",Arg::None, "漢字\t|ｶﾅ 漢字"},
     {0,0,0,0,0,0}
 };
 
 const Descriptor test_overlong[] = {
-    {0,0,"","",Arg::None, "Good \t| Good \t| This is good." },
-    {0,0,"","",Arg::None, "Good \t| This is an overlong cell. \t| This is good." },
-    {0,0,"","",Arg::None, "Good \t| Good \t| This is good." },
+    {0,0,"","",Arg::None, "Good \t| Good \t| This is good."},
+    {0,0,"","",Arg::None, "Good \t| This is an overlong cell. \t| This is good."},
+    {0,0,"","",Arg::None, "Good \t| Good \t| This is good."},
     {0,0,0,0,0,0}
 };
 
 const Descriptor test_toomanycolumns[] = {
-    {0,0,"","",Arg::None, "This \ttable \thas \ttoo \tmany \tcolumns. \tThe \tlast \tcolumns \tare \tdiscarded." },
-    {0,0,"","",Arg::None, "1\t2\t3\t4\t5\t6\t7\t8\t9\t10\t11" },
+    {0,0,"","",Arg::None, "This \ttable \thas \ttoo \tmany \tcolumns. \tThe \tlast \tcolumns \tare \tdiscarded."},
+    {0,0,"","",Arg::None, "1\t2\t3\t4\t5\t6\t7\t8\t9\t10\t11"},
     {0,0,0,0,0,0}
 };
 
 const Descriptor test_ownline[] = {
-    {0,0,"","",Arg::None, "1234567890AB\vBA0987654321\tStarts on its own line and is indented somewhat.\vThis one, too." },
+    {0,0,"","",Arg::None, "1234567890AB\vBA0987654321\tStarts on its own line and is indented somewhat.\vThis one, too."},
     {0,0,0,0,0,0}
 };
 
 const Descriptor test_overflow[] = {
-    {0,0,"","",Arg::None, "漢字漢字漢字漢字漢字漢字漢字漢字漢字漢字漢字漢字漢字漢字漢字漢字漢字漢字漢字漢字漢字" },
+    {0,0,"","",Arg::None, "漢字漢字漢字漢字漢字漢字漢字漢字漢字漢字漢字漢字漢字漢字漢字漢字漢字漢字漢字漢字漢字"},
     {0,0,0,0,0,0}
 };
 

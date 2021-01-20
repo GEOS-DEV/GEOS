@@ -23,35 +23,35 @@ set(mpiCommunications_sources
     SpatialPartition.cpp
    )
 
-if( BUILD_OBJ_LIBS)
-  set( dependencyList fileIO common trilinos )
+if(BUILD_OBJ_LIBS)
+  set(dependencyList fileIO common trilinos)
 else()
-  set( dependencyList common )
+  set(dependencyList common)
 endif()
 
 
 
-if( ENABLE_OPENMP )
-    set( dependencyList ${dependencyList} openmp )
+if(ENABLE_OPENMP)
+    set(dependencyList ${dependencyList} openmp)
 endif()
 
-if( ENABLE_MPI )
-    set( dependencyList ${dependencyList} mpi )
+if(ENABLE_MPI)
+    set(dependencyList ${dependencyList} mpi)
 endif()
 
-if ( ENABLE_CUDA )
-  set( dependencyList ${dependencyList} cuda )
+if (ENABLE_CUDA)
+  set(dependencyList ${dependencyList} cuda)
 endif()
 
-blt_add_library( NAME                  mpiCommunications
+blt_add_library(NAME                  mpiCommunications
                  SOURCES               ${mpiCommunications_sources}
                  HEADERS               ${mpiCommunications_headers}
                  DEPENDS_ON            ${dependencyList}
                  OBJECT                ${buildAsObj}
                )
                
-target_include_directories( mpiCommunications PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)
+target_include_directories(mpiCommunications PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)
 
-geosx_add_code_checks(PREFIX mpiCommunications )
+geosx_add_code_checks(PREFIX mpiCommunications)
 
-add_subdirectory( unitTests )
+add_subdirectory(unitTests)

@@ -1,40 +1,40 @@
 #
 # Specify all headers
 #
-set( virtualElement_headers
+set(virtualElement_headers
   ConformingVirtualElementOrder1.hpp
   VirtualElementBase.hpp
   )
 #
 # Specify all sources
 #
-set( virtualElement_sources
+set(virtualElement_sources
   ConformingVirtualElementOrder1.cpp
   )
 
-if( BUILD_OBJ_LIBS)
-  set( dependencyList dataRepository codingUtilities)
+if(BUILD_OBJ_LIBS)
+  set(dependencyList dataRepository codingUtilities)
 else()
-  set( dependencyList common)
+  set(dependencyList common)
 endif()
 
-if( ENABLE_OPENMP )
-    set( dependencyList ${dependencyList} openmp )
+if(ENABLE_OPENMP)
+    set(dependencyList ${dependencyList} openmp)
 endif()
 
-if ( ENABLE_CUDA )
-  set( dependencyList ${dependencyList} cuda )
+if (ENABLE_CUDA)
+  set(dependencyList ${dependencyList} cuda)
 endif()
 
-blt_add_library( NAME                  virtualElement
+blt_add_library(NAME                  virtualElement
                  SOURCES               ${virtualElement_sources}
                  HEADERS               ${virtualElement_headers}
                  DEPENDS_ON            ${dependencyList}
                  OBJECT                ${buildAsObj}
                )
 
-target_include_directories( virtualElement PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)
+target_include_directories(virtualElement PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)
 
-geosx_add_code_checks( PREFIX virtualElement )
+geosx_add_code_checks(PREFIX virtualElement)
 
-add_subdirectory( unitTests )
+add_subdirectory(unitTests)

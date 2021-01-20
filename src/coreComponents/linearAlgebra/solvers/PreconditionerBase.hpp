@@ -27,8 +27,8 @@ class DofManager;
  * @brief Common interface for preconditioning operators
  * @tparam LAI linear algebra interface providing vectors, matrices and solvers
  */
-template< typename LAI >
-class PreconditionerBase : public LinearOperator< typename LAI::ParallelVector >
+template<typename LAI>
+class PreconditionerBase : public LinearOperator<typename LAI::ParallelVector>
 {
 public:
 
@@ -39,7 +39,7 @@ public:
   virtual ~PreconditionerBase() = default;
 
   /// Alias for base type
-  using Base = LinearOperator< typename LAI::ParallelVector >;
+  using Base = LinearOperator<typename LAI::ParallelVector>;
 
   /// Alias for vector type
   using Vector = typename Base::Vector;
@@ -51,9 +51,9 @@ public:
    * @brief Compute the preconditioner from a matrix.
    * @param mat the matrix to precondition.
    */
-  virtual void compute( Matrix const & mat )
+  virtual void compute(Matrix const & mat)
   {
-    GEOSX_LAI_ASSERT( mat.ready() );
+    GEOSX_LAI_ASSERT(mat.ready());
     m_mat = &mat;
   }
 
@@ -62,11 +62,11 @@ public:
    * @param mat the matrix to precondition
    * @param dofManager the Degree-of-Freedom manager associated with matrix
    */
-  virtual void compute( Matrix const & mat,
-                        DofManager const & dofManager )
+  virtual void compute(Matrix const & mat,
+                        DofManager const & dofManager)
   {
-    GEOSX_UNUSED_VAR( dofManager );
-    compute( mat );
+    GEOSX_UNUSED_VAR(dofManager);
+    compute(mat);
   }
 
   /**
@@ -118,7 +118,7 @@ public:
    */
   Matrix const & matrix() const
   {
-    GEOSX_LAI_ASSERT( ready() );
+    GEOSX_LAI_ASSERT(ready());
     return *m_mat;
   }
 
@@ -138,7 +138,7 @@ public:
    */
   virtual Matrix const & preconditionerMatrix() const
   {
-    GEOSX_ERROR( "PreconditionerBase::preconditionerMatrix called!. Should be overridden." );
+    GEOSX_ERROR("PreconditionerBase::preconditionerMatrix called!. Should be overridden.");
     // This is here just to be able to compile ...
     return *m_mat;
   }

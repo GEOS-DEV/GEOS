@@ -31,25 +31,25 @@ public:
 
   localIndex m_numQuadraturePoints;
   localIndex m_numSupportPoints;
-  array1d< real64 > m_basisFunctionsIntegralMean;
-  array2d< real64 > m_basisDerivativesIntegralMean;
-  array2d< real64 > m_stabilizationMatrix;
+  array1d<real64> m_basisFunctionsIntegralMean;
+  array2d<real64> m_basisDerivativesIntegralMean;
+  array2d<real64> m_stabilizationMatrix;
 
-  void ComputeFaceIntegrals( MeshLevel const & mesh,
+  void ComputeFaceIntegrals(MeshLevel const & mesh,
                              localIndex const & faceId,
                              real64 const & invCellDiameter,
-                             arraySlice1d< real64 const > const & cellCenter,
-                             array1d< real64 > & basisIntegrals,
-                             array1d< real64 > & threeDMonomialIntegrals );
+                             arraySlice1d<real64 const> const & cellCenter,
+                             array1d<real64> & basisIntegrals,
+                             array1d<real64> & threeDMonomialIntegrals);
 
 public:
   virtual ~ConformingVirtualElementOrder1() override
   {}
 
-  void ComputeProjectors( MeshLevel const & mesh,
+  void ComputeProjectors(MeshLevel const & mesh,
                           localIndex const & regionIndex,
                           localIndex const & subRegionIndex,
-                          localIndex const & cellIndex ) override;
+                          localIndex const & cellIndex) override;
 
   virtual localIndex getNumQuadraturePoints() const override
   {

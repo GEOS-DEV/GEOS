@@ -22,24 +22,24 @@
 namespace geosx
 {
 
-void HypreInterface::initialize( int & GEOSX_UNUSED_PARAM( argc ),
-                                 char * * & GEOSX_UNUSED_PARAM( argv ) )
+void HypreInterface::initialize(int & GEOSX_UNUSED_PARAM(argc),
+                                 char * * & GEOSX_UNUSED_PARAM(argv))
 {}
 
 void HypreInterface::finalize()
 {}
 
-std::unique_ptr< PreconditionerBase< HypreInterface > >
-geosx::HypreInterface::createPreconditioner( LinearSolverParameters params )
+std::unique_ptr<PreconditionerBase<HypreInterface>>
+geosx::HypreInterface::createPreconditioner(LinearSolverParameters params)
 {
-  return std::make_unique< HyprePreconditioner >( params );
+  return std::make_unique<HyprePreconditioner>(params);
 }
 
-std::unique_ptr< PreconditionerBase< HypreInterface > >
-geosx::HypreInterface::createPreconditioner( LinearSolverParameters params,
-                                             array1d< HypreVector > const & nearNullKernel )
+std::unique_ptr<PreconditionerBase<HypreInterface>>
+geosx::HypreInterface::createPreconditioner(LinearSolverParameters params,
+                                             array1d<HypreVector> const & nearNullKernel)
 {
-  return std::make_unique< HyprePreconditioner >( params, nearNullKernel );
+  return std::make_unique<HyprePreconditioner>(params, nearNullKernel);
 }
 
 }

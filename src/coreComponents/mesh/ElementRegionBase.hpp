@@ -54,14 +54,14 @@ public:
    * @param name the name of the element region
    * @param parent the pointer to the parent group
    */
-  ElementRegionBase( string const & name, Group * const parent );
+  ElementRegionBase(string const & name, Group * const parent);
 
 
   /**
    * @brief Copy constructor.
    * @param init the element region to be copied
    */
-  ElementRegionBase( const ElementRegionBase & init );
+  ElementRegionBase(const ElementRegionBase & init);
 
   /**
    * @brief Default destructor.
@@ -79,10 +79,10 @@ public:
    * @brief Generate mesh.
    * @param cellBlocks cell blocks where the mesh is generated
    */
-  virtual void GenerateMesh( Group * const cellBlocks )
+  virtual void GenerateMesh(Group * const cellBlocks)
   {
-    GEOSX_UNUSED_VAR( cellBlocks );
-    GEOSX_ERROR( "ElementRegionBase::GenerateMesh() should be overriden if called." );
+    GEOSX_UNUSED_VAR(cellBlocks);
+    GEOSX_ERROR("ElementRegionBase::GenerateMesh() should be overriden if called.");
   }
 
   ///@}
@@ -97,7 +97,7 @@ public:
    */
   subGroupMap & GetSubRegions()
   {
-    return GetGroup( viewKeyStruct::elementSubRegions )->GetSubGroups();
+    return GetGroup(viewKeyStruct::elementSubRegions)->GetSubGroups();
   }
 
 /**
@@ -106,7 +106,7 @@ public:
  */
   subGroupMap const & GetSubRegions() const
   {
-    return GetGroup( viewKeyStruct::elementSubRegions )->GetSubGroups();
+    return GetGroup(viewKeyStruct::elementSubRegions)->GetSubGroups();
   }
 
 
@@ -117,19 +117,19 @@ public:
  * @return a pointer to the subregion
  * @note
  */
-  template< typename SUBREGIONTYPE=ElementSubRegionBase >
-  SUBREGIONTYPE const * GetSubRegion( string const & regionName ) const
+  template<typename SUBREGIONTYPE=ElementSubRegionBase>
+  SUBREGIONTYPE const * GetSubRegion(string const & regionName) const
   {
-    return this->GetGroup( viewKeyStruct::elementSubRegions )->GetGroup< SUBREGIONTYPE >( regionName );
+    return this->GetGroup(viewKeyStruct::elementSubRegions)->GetGroup<SUBREGIONTYPE>(regionName);
   }
 
 /**
- * @copydoc GetSubRegion( string const & regionName ) const
+ * @copydoc GetSubRegion(string const & regionName) const
  */
-  template< typename SUBREGIONTYPE=ElementSubRegionBase >
-  SUBREGIONTYPE * GetSubRegion( string const & regionName )
+  template<typename SUBREGIONTYPE=ElementSubRegionBase>
+  SUBREGIONTYPE * GetSubRegion(string const & regionName)
   {
-    return this->GetGroup( viewKeyStruct::elementSubRegions )->GetGroup< SUBREGIONTYPE >( regionName );
+    return this->GetGroup(viewKeyStruct::elementSubRegions)->GetGroup<SUBREGIONTYPE>(regionName);
   }
 
 /**
@@ -138,19 +138,19 @@ public:
  * @param index the index of the subregion
  * @return a pointer to the subregion
  */
-  template< typename SUBREGIONTYPE=ElementSubRegionBase >
-  SUBREGIONTYPE const * GetSubRegion( localIndex const & index ) const
+  template<typename SUBREGIONTYPE=ElementSubRegionBase>
+  SUBREGIONTYPE const * GetSubRegion(localIndex const & index) const
   {
-    return this->GetGroup( viewKeyStruct::elementSubRegions )->GetGroup< SUBREGIONTYPE >( index );
+    return this->GetGroup(viewKeyStruct::elementSubRegions)->GetGroup<SUBREGIONTYPE>(index);
   }
 
 /**
- * @copydoc GetSubRegion( localIndex const & index ) const
+ * @copydoc GetSubRegion(localIndex const & index) const
  */
-  template< typename SUBREGIONTYPE=ElementSubRegionBase >
-  SUBREGIONTYPE * GetSubRegion( localIndex const & index )
+  template<typename SUBREGIONTYPE=ElementSubRegionBase>
+  SUBREGIONTYPE * GetSubRegion(localIndex const & index)
   {
-    return this->GetGroup( viewKeyStruct::elementSubRegions )->GetGroup< SUBREGIONTYPE >( index );
+    return this->GetGroup(viewKeyStruct::elementSubRegions)->GetGroup<SUBREGIONTYPE>(index);
   }
 
 /**
@@ -159,7 +159,7 @@ public:
  */
   localIndex numSubRegions() const
   {
-    return this->GetGroup( viewKeyStruct::elementSubRegions )->GetSubGroups().size();
+    return this->GetGroup(viewKeyStruct::elementSubRegions)->GetSubGroups().size();
   }
 
 /**
@@ -171,14 +171,14 @@ public:
  * @note This function requires that the subRegion types specified
  *       in the variadic template argument can be casted to ElementSubRegionBase
  */
-  template< typename SUBREGIONTYPE = ElementSubRegionBase, typename ... SUBREGIONTYPES >
+  template<typename SUBREGIONTYPE = ElementSubRegionBase, typename ... SUBREGIONTYPES>
   localIndex getNumberOfElements() const
   {
     localIndex numElem = 0;
-    this->forElementSubRegions< SUBREGIONTYPE, SUBREGIONTYPES... >( [&]( Group const & cellBlock ) -> void
+    this->forElementSubRegions<SUBREGIONTYPE, SUBREGIONTYPES...>([&](Group const & cellBlock) -> void
     {
       numElem += cellBlock.size();
-    } );
+    });
     return numElem;
   }
 
@@ -198,7 +198,7 @@ public:
    * @tparam CONSTITUTIVE_TYPE the type of the constitutive model
    * @return the string_array of the constitutive names
    */
-  template< typename CONSTITUTIVE_TYPE >
+  template<typename CONSTITUTIVE_TYPE>
   string_array getConstitutiveNames() const;
 
 
@@ -214,19 +214,19 @@ public:
  * @brief Apply a lambda to all subregions.
  * @param lambda the functor to be applied
  */
-  template< typename LAMBDA >
-  void forElementSubRegions( LAMBDA && lambda ) const
+  template<typename LAMBDA>
+  void forElementSubRegions(LAMBDA && lambda) const
   {
-    forElementSubRegions< CellElementSubRegion, FaceElementSubRegion, WellElementSubRegion, EmbeddedSurfaceSubRegion >( std::forward< LAMBDA >( lambda ) );
+    forElementSubRegions<CellElementSubRegion, FaceElementSubRegion, WellElementSubRegion, EmbeddedSurfaceSubRegion>(std::forward<LAMBDA>(lambda));
   }
 
 /**
- * @copydoc forElementSubRegions( LAMBDA && lambda ) const
+ * @copydoc forElementSubRegions(LAMBDA && lambda) const
  */
-  template< typename LAMBDA >
-  void forElementSubRegions( LAMBDA && lambda )
+  template<typename LAMBDA>
+  void forElementSubRegions(LAMBDA && lambda)
   {
-    forElementSubRegions< CellElementSubRegion, FaceElementSubRegion, WellElementSubRegion, EmbeddedSurfaceSubRegion >( std::forward< LAMBDA >( lambda ) );
+    forElementSubRegions<CellElementSubRegion, FaceElementSubRegion, WellElementSubRegion, EmbeddedSurfaceSubRegion>(std::forward<LAMBDA>(lambda));
   }
 
 /**
@@ -234,21 +234,21 @@ public:
  *        listed in the template.
  * @param lambda the functor to be applied
  */
-  template< typename SUBREGIONTYPE, typename ... SUBREGIONTYPES, typename LAMBDA >
-  void forElementSubRegions( LAMBDA && lambda ) const
+  template<typename SUBREGIONTYPE, typename ... SUBREGIONTYPES, typename LAMBDA>
+  void forElementSubRegions(LAMBDA && lambda) const
   {
-    Group const * const elementSubRegions = this->GetGroup( viewKeyStruct::elementSubRegions );
-    elementSubRegions->forSubGroups< SUBREGIONTYPE, SUBREGIONTYPES... >( std::forward< LAMBDA >( lambda ) );
+    Group const * const elementSubRegions = this->GetGroup(viewKeyStruct::elementSubRegions);
+    elementSubRegions->forSubGroups<SUBREGIONTYPE, SUBREGIONTYPES...>(std::forward<LAMBDA>(lambda));
   }
 
 /**
- * @copydoc forElementSubRegions( LAMBDA && lambda ) const
+ * @copydoc forElementSubRegions(LAMBDA && lambda) const
  */
-  template< typename SUBREGIONTYPE, typename ... SUBREGIONTYPES, typename LAMBDA >
-  void forElementSubRegions( LAMBDA && lambda )
+  template<typename SUBREGIONTYPE, typename ... SUBREGIONTYPES, typename LAMBDA>
+  void forElementSubRegions(LAMBDA && lambda)
   {
-    Group * const elementSubRegions = this->GetGroup( viewKeyStruct::elementSubRegions );
-    elementSubRegions->forSubGroups< SUBREGIONTYPE, SUBREGIONTYPES... >( std::forward< LAMBDA >( lambda ) );
+    Group * const elementSubRegions = this->GetGroup(viewKeyStruct::elementSubRegions);
+    elementSubRegions->forSubGroups<SUBREGIONTYPE, SUBREGIONTYPES...>(std::forward<LAMBDA>(lambda));
   }
 
 /**
@@ -256,19 +256,19 @@ public:
  * @tparam LAMBDA type of functor to call
  * @param lambda the functor to be applied to all subregions
  */
-  template< typename LAMBDA >
-  void forElementSubRegionsIndex( LAMBDA && lambda ) const
+  template<typename LAMBDA>
+  void forElementSubRegionsIndex(LAMBDA && lambda) const
   {
-    forElementSubRegionsIndex< CellElementSubRegion, FaceElementSubRegion, WellElementSubRegion, EmbeddedSurfaceSubRegion >( std::forward< LAMBDA >( lambda ) );
+    forElementSubRegionsIndex<CellElementSubRegion, FaceElementSubRegion, WellElementSubRegion, EmbeddedSurfaceSubRegion>(std::forward<LAMBDA>(lambda));
   }
 
 /**
- * @copydoc forElementSubRegionsIndex( LAMBDA && lambda ) const
+ * @copydoc forElementSubRegionsIndex(LAMBDA && lambda) const
  */
-  template< typename LAMBDA >
-  void forElementSubRegionsIndex( LAMBDA && lambda )
+  template<typename LAMBDA>
+  void forElementSubRegionsIndex(LAMBDA && lambda)
   {
-    forElementSubRegionsIndex< CellElementSubRegion, FaceElementSubRegion, WellElementSubRegion, EmbeddedSurfaceSubRegion >( std::forward< LAMBDA >( lambda ) );
+    forElementSubRegionsIndex<CellElementSubRegion, FaceElementSubRegion, WellElementSubRegion, EmbeddedSurfaceSubRegion>(std::forward<LAMBDA>(lambda));
   }
 
 /**
@@ -279,32 +279,32 @@ public:
  * @tparam LAMBDA type of functor to call
  * @param lambda the functor to be applied
  */
-  template< typename SUBREGIONTYPE, typename ... SUBREGIONTYPES, typename LAMBDA >
-  void forElementSubRegionsIndex( LAMBDA && lambda ) const
+  template<typename SUBREGIONTYPE, typename ... SUBREGIONTYPES, typename LAMBDA>
+  void forElementSubRegionsIndex(LAMBDA && lambda) const
   {
-    for( localIndex esr=0; esr<this->numSubRegions(); ++esr )
+    for(localIndex esr=0; esr<this->numSubRegions(); ++esr)
     {
-      ElementSubRegionBase const & subRegion = *this->GetSubRegion( esr );
-      applyLambdaToContainer< SUBREGIONTYPE, SUBREGIONTYPES... >( subRegion, [&]( auto const & castedSubRegion )
+      ElementSubRegionBase const & subRegion = *this->GetSubRegion(esr);
+      applyLambdaToContainer<SUBREGIONTYPE, SUBREGIONTYPES...>(subRegion, [&](auto const & castedSubRegion)
       {
-        lambda( esr, castedSubRegion );
-      } );
+        lambda(esr, castedSubRegion);
+      });
     }
   }
 
 /**
- * @copydoc forElementSubRegionsIndex( LAMBDA && lambda ) const
+ * @copydoc forElementSubRegionsIndex(LAMBDA && lambda) const
  */
-  template< typename SUBREGIONTYPE, typename ... SUBREGIONTYPES, typename LAMBDA >
-  void forElementSubRegionsIndex( LAMBDA && lambda )
+  template<typename SUBREGIONTYPE, typename ... SUBREGIONTYPES, typename LAMBDA>
+  void forElementSubRegionsIndex(LAMBDA && lambda)
   {
-    for( localIndex esr=0; esr<this->numSubRegions(); ++esr )
+    for(localIndex esr=0; esr<this->numSubRegions(); ++esr)
     {
-      ElementSubRegionBase & subRegion = *this->GetSubRegion( esr );
-      applyLambdaToContainer< SUBREGIONTYPE, SUBREGIONTYPES... >( subRegion, [&]( auto & castedSubRegion )
+      ElementSubRegionBase & subRegion = *this->GetSubRegion(esr);
+      applyLambdaToContainer<SUBREGIONTYPE, SUBREGIONTYPES...>(subRegion, [&](auto & castedSubRegion)
       {
-        lambda( esr, castedSubRegion );
-      } );
+        lambda(esr, castedSubRegion);
+      });
     }
   }
 
@@ -327,7 +327,7 @@ protected:
 
 private:
 
-  ElementRegionBase & operator=( const ElementRegionBase & rhs );
+  ElementRegionBase & operator=(const ElementRegionBase & rhs);
 
   /// List of materials for the element region
   string_array m_materialList;
@@ -349,16 +349,16 @@ private:
  * @tparam CONSTITUTIVE_TYPE type of constitutive model
  * return string array with the names of the constitutive models
  */
-template< typename CONSTITUTIVE_TYPE >
+template<typename CONSTITUTIVE_TYPE>
 string_array ElementRegionBase::getConstitutiveNames() const
 {
   string_array rval;
-  for( string const & matName : m_materialList )
+  for(string const & matName : m_materialList)
   {
-    Group const * const matModel = this->GetSubRegion( 0 )->GetConstitutiveModels()->GetGroup( matName );
-    if( dynamic_cast< CONSTITUTIVE_TYPE const * >( matModel ) != nullptr )
+    Group const * const matModel = this->GetSubRegion(0)->GetConstitutiveModels()->GetGroup(matName);
+    if(dynamic_cast<CONSTITUTIVE_TYPE const *>(matModel) != nullptr)
     {
-      rval.emplace_back( matName );
+      rval.emplace_back(matName);
     }
   }
   return rval;

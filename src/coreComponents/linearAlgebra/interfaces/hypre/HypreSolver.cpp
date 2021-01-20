@@ -38,36 +38,36 @@
 namespace geosx
 {
 
-typedef HYPRE_Int (* HYPRE_PtrToSolverDestroyFcn)( HYPRE_Solver );
+typedef HYPRE_Int (* HYPRE_PtrToSolverDestroyFcn)(HYPRE_Solver);
 
-HypreSolver::HypreSolver( LinearSolverParameters parameters )
+HypreSolver::HypreSolver(LinearSolverParameters parameters)
   :
-  m_parameters( std::move( parameters ) )
-{ }
+  m_parameters(std::move(parameters))
+{}
 
 
 //// ----------------------------
 //// Top-Level Solver
 //// ----------------------------
 //// We switch between different solverTypes here
-void HypreSolver::solve( HypreMatrix & mat,
+void HypreSolver::solve(HypreMatrix & mat,
                          HypreVector & sol,
                          HypreVector & rhs,
-                         DofManager const * const dofManager )
+                         DofManager const * const dofManager)
 {
-  GEOSX_LAI_ASSERT( mat.ready() );
-  GEOSX_LAI_ASSERT( sol.ready() );
-  GEOSX_LAI_ASSERT( rhs.ready() );
+  GEOSX_LAI_ASSERT(mat.ready());
+  GEOSX_LAI_ASSERT(sol.ready());
+  GEOSX_LAI_ASSERT(rhs.ready());
 
-  if( rhs.norm2() > 0.0 )
+  if(rhs.norm2()> 0.0)
   {
-    if( m_parameters.solverType == LinearSolverParameters::SolverType::direct )
+    if(m_parameters.solverType == LinearSolverParameters::SolverType::direct)
     {
-      solve_direct( mat, sol, rhs );
+      solve_direct(mat, sol, rhs);
     }
     else
     {
-      solve_krylov( mat, sol, rhs, dofManager );
+      solve_krylov(mat, sol, rhs, dofManager);
     }
   }
   else
@@ -82,46 +82,46 @@ void HypreSolver::solve( HypreMatrix & mat,
 namespace
 {
 
-void solve_parallelDirect( LinearSolverParameters const & parameters,
+void solve_parallelDirect(LinearSolverParameters const & parameters,
                            HypreMatrix & mat,
                            HypreVector & sol,
                            HypreVector & rhs,
-                           LinearSolverResult & result )
+                           LinearSolverResult & result)
 {
   // To be able to use SuperLU_Dist solver we need to disable floating point exceptions
   LvArray::system::FloatingPointExceptionGuard guard;
 
-  SuperLU_Dist SLUDData( parameters );
-  HypreConvertToSuperMatrix( mat, SLUDData );
+  SuperLU_Dist SLUDData(parameters);
+  HypreConvertToSuperMatrix(mat, SLUDData);
 
-  GEOSX_LAI_CHECK_ERROR( SLUDData.setup() );
-  GEOSX_LAI_CHECK_ERROR( SLUDData.solve( rhs.extractLocalVector(), sol.extractLocalVector() ) );
+  GEOSX_LAI_CHECK_ERROR(SLUDData.setup());
+  GEOSX_LAI_CHECK_ERROR(SLUDData.solve(rhs.extractLocalVector(), sol.extractLocalVector()));
 
   // Save setup and solution times
   result.setupTime = SLUDData.setupTime();
   result.solveTime = SLUDData.solveTime();
 
-  HypreVector res( rhs );
-  mat.gemv( -1.0, sol, 1.0, res );
+  HypreVector res(rhs);
+  mat.gemv(-1.0, sol, 1.0, res);
   result.residualReduction = res.norm2() / rhs.norm2();
 
   result.status = parameters.direct.checkResidual == 0 ? LinearSolverResult::Status::Success : LinearSolverResult::Status::Breakdown;
   result.numIterations = 1;
-  if( parameters.direct.checkResidual )
+  if(parameters.direct.checkResidual)
   {
-    if( result.residualReduction < SLUDData.relativeTolerance() )
+    if(result.residualReduction <SLUDData.relativeTolerance())
     {
       result.status = LinearSolverResult::Status::Success;
     }
     else
     {
-      real64 const cond = HypreSuperLU_DistCond( mat, SLUDData );
-      if( parameters.logLevel > 0 )
+      real64 const cond = HypreSuperLU_DistCond(mat, SLUDData);
+      if(parameters.logLevel> 0)
       {
-        GEOSX_LOG_RANK_0( "Using a more accurate estimate of the condition number" );
-        GEOSX_LOG_RANK_0( "Condition number is " << cond );
+        GEOSX_LOG_RANK_0("Using a more accurate estimate of the condition number");
+        GEOSX_LOG_RANK_0("Condition number is " <<cond);
       }
-      if( result.residualReduction < SLUDData.precisionTolerance() * cond )
+      if(result.residualReduction <SLUDData.precisionTolerance() * cond)
       {
         result.status = LinearSolverResult::Status::Success;
       }
@@ -129,46 +129,46 @@ void solve_parallelDirect( LinearSolverParameters const & parameters,
   }
 }
 
-void solve_serialDirect( LinearSolverParameters const & parameters,
+void solve_serialDirect(LinearSolverParameters const & parameters,
                          HypreMatrix & mat,
                          HypreVector & sol,
                          HypreVector & rhs,
-                         LinearSolverResult & result )
+                         LinearSolverResult & result)
 {
   // To be able to use UMFPACK direct solver we need to disable floating point exceptions
   LvArray::system::FloatingPointExceptionGuard guard;
 
-  SuiteSparse SSData( parameters );
-  ConvertHypreToSuiteSparseMatrix( mat, SSData );
+  SuiteSparse SSData(parameters);
+  ConvertHypreToSuiteSparseMatrix(mat, SSData);
 
-  GEOSX_LAI_CHECK_ERROR( SSData.setup() );
-  GEOSX_LAI_CHECK_ERROR( SuiteSparseSolve( SSData, rhs, sol ) );
+  GEOSX_LAI_CHECK_ERROR(SSData.setup());
+  GEOSX_LAI_CHECK_ERROR(SuiteSparseSolve(SSData, rhs, sol));
 
   // Save setup and solution times
   result.setupTime = SSData.setupTime();
   result.solveTime = SSData.solveTime();
 
-  HypreVector res( rhs );
-  mat.gemv( -1.0, sol, 1.0, res );
+  HypreVector res(rhs);
+  mat.gemv(-1.0, sol, 1.0, res);
   result.residualReduction = res.norm2() / rhs.norm2();
 
   result.status = parameters.direct.checkResidual == 0 ? LinearSolverResult::Status::Success : LinearSolverResult::Status::Breakdown;
   result.numIterations = 1;
-  if( parameters.direct.checkResidual )
+  if(parameters.direct.checkResidual)
   {
-    if( result.residualReduction < SSData.relativeTolerance() )
+    if(result.residualReduction <SSData.relativeTolerance())
     {
       result.status = LinearSolverResult::Status::Success;
     }
     else
     {
-      real64 const cond = HypreSuiteSparseCond( mat, SSData );
-      if( parameters.logLevel > 0 )
+      real64 const cond = HypreSuiteSparseCond(mat, SSData);
+      if(parameters.logLevel> 0)
       {
-        GEOSX_LOG_RANK_0( "Using a more accurate estimate of the condition number" );
-        GEOSX_LOG_RANK_0( "Condition number is " << cond );
+        GEOSX_LOG_RANK_0("Using a more accurate estimate of the condition number");
+        GEOSX_LOG_RANK_0("Condition number is " <<cond);
       }
-      if( result.residualReduction < SSData.precisionTolerance() * cond )
+      if(result.residualReduction <SSData.precisionTolerance() * cond)
       {
         result.status = LinearSolverResult::Status::Success;
       }
@@ -176,20 +176,20 @@ void solve_serialDirect( LinearSolverParameters const & parameters,
   }
 }
 
-void CreateHypreGMRES( LinearSolverParameters const & params,
+void CreateHypreGMRES(LinearSolverParameters const & params,
                        MPI_Comm const comm,
                        HYPRE_Solver & solver,
-                       HypreSolverFuncs & solverFuncs )
+                       HypreSolverFuncs & solverFuncs)
 {
-  GEOSX_LAI_CHECK_ERROR( HYPRE_ParCSRGMRESCreate( comm, &solver ) );
-  GEOSX_LAI_CHECK_ERROR( HYPRE_ParCSRGMRESSetMaxIter( solver, params.krylov.maxIterations ) );
-  GEOSX_LAI_CHECK_ERROR( HYPRE_ParCSRGMRESSetKDim( solver, params.krylov.maxRestart ) );
-  GEOSX_LAI_CHECK_ERROR( HYPRE_ParCSRGMRESSetTol( solver, params.krylov.relTolerance ) );
+  GEOSX_LAI_CHECK_ERROR(HYPRE_ParCSRGMRESCreate(comm, &solver));
+  GEOSX_LAI_CHECK_ERROR(HYPRE_ParCSRGMRESSetMaxIter(solver, params.krylov.maxIterations));
+  GEOSX_LAI_CHECK_ERROR(HYPRE_ParCSRGMRESSetKDim(solver, params.krylov.maxRestart));
+  GEOSX_LAI_CHECK_ERROR(HYPRE_ParCSRGMRESSetTol(solver, params.krylov.relTolerance));
 
   // Default for now
-  GEOSX_LAI_CHECK_ERROR( HYPRE_ParCSRGMRESSetPrintLevel( solver, params.logLevel ) ); // print iteration info
-  //GEOSX_LAI_CHECK_ERROR( HYPRE_ParCSRGMRESSetPrintLevel( solver, 0 ) ); // print iteration info
-  GEOSX_LAI_CHECK_ERROR( HYPRE_ParCSRGMRESSetLogging( solver, 1 ) ); /* needed to get run info later */
+  GEOSX_LAI_CHECK_ERROR(HYPRE_ParCSRGMRESSetPrintLevel(solver, params.logLevel)); // print iteration info
+  //GEOSX_LAI_CHECK_ERROR(HYPRE_ParCSRGMRESSetPrintLevel(solver, 0)); // print iteration info
+  GEOSX_LAI_CHECK_ERROR(HYPRE_ParCSRGMRESSetLogging(solver, 1)); /* needed to get run info later */
 
   solverFuncs.setPrecond = HYPRE_ParCSRGMRESSetPrecond;
   solverFuncs.setup = HYPRE_ParCSRGMRESSetup;
@@ -199,20 +199,20 @@ void CreateHypreGMRES( LinearSolverParameters const & params,
   solverFuncs.destroy = HYPRE_ParCSRGMRESDestroy;
 }
 
-void CreateHypreFlexGMRES( LinearSolverParameters const & params,
+void CreateHypreFlexGMRES(LinearSolverParameters const & params,
                            MPI_Comm const comm,
                            HYPRE_Solver & solver,
-                           HypreSolverFuncs & solverFuncs )
+                           HypreSolverFuncs & solverFuncs)
 {
-  GEOSX_LAI_CHECK_ERROR( HYPRE_ParCSRFlexGMRESCreate( comm, &solver ) );
-  GEOSX_LAI_CHECK_ERROR( HYPRE_ParCSRFlexGMRESSetMaxIter( solver, params.krylov.maxIterations ) );
-  GEOSX_LAI_CHECK_ERROR( HYPRE_ParCSRFlexGMRESSetKDim( solver, params.krylov.maxRestart ) );
-  GEOSX_LAI_CHECK_ERROR( HYPRE_ParCSRFlexGMRESSetTol( solver, params.krylov.relTolerance ) );
+  GEOSX_LAI_CHECK_ERROR(HYPRE_ParCSRFlexGMRESCreate(comm, &solver));
+  GEOSX_LAI_CHECK_ERROR(HYPRE_ParCSRFlexGMRESSetMaxIter(solver, params.krylov.maxIterations));
+  GEOSX_LAI_CHECK_ERROR(HYPRE_ParCSRFlexGMRESSetKDim(solver, params.krylov.maxRestart));
+  GEOSX_LAI_CHECK_ERROR(HYPRE_ParCSRFlexGMRESSetTol(solver, params.krylov.relTolerance));
 
   // Default for now
-  GEOSX_LAI_CHECK_ERROR( HYPRE_ParCSRFlexGMRESSetPrintLevel( solver, params.logLevel ) ); // print iteration info
-  //GEOSX_LAI_CHECK_ERROR( HYPRE_ParCSRFlexGMRESSetPrintLevel( solver, 0 ) ); // print iteration info
-  GEOSX_LAI_CHECK_ERROR( HYPRE_ParCSRFlexGMRESSetLogging( solver, 1 ) ); /* needed to get run info later */
+  GEOSX_LAI_CHECK_ERROR(HYPRE_ParCSRFlexGMRESSetPrintLevel(solver, params.logLevel)); // print iteration info
+  //GEOSX_LAI_CHECK_ERROR(HYPRE_ParCSRFlexGMRESSetPrintLevel(solver, 0)); // print iteration info
+  GEOSX_LAI_CHECK_ERROR(HYPRE_ParCSRFlexGMRESSetLogging(solver, 1)); /* needed to get run info later */
 
   solverFuncs.setPrecond = HYPRE_ParCSRFlexGMRESSetPrecond;
   solverFuncs.setup = HYPRE_ParCSRFlexGMRESSetup;
@@ -222,18 +222,18 @@ void CreateHypreFlexGMRES( LinearSolverParameters const & params,
   solverFuncs.destroy = HYPRE_ParCSRFlexGMRESDestroy;
 }
 
-void CreateHypreBiCGSTAB( LinearSolverParameters const & params,
+void CreateHypreBiCGSTAB(LinearSolverParameters const & params,
                           MPI_Comm const comm,
                           HYPRE_Solver & solver,
-                          HypreSolverFuncs & solverFuncs )
+                          HypreSolverFuncs & solverFuncs)
 {
-  GEOSX_LAI_CHECK_ERROR( HYPRE_ParCSRBiCGSTABCreate( comm, &solver ) );
-  GEOSX_LAI_CHECK_ERROR( HYPRE_ParCSRBiCGSTABSetMaxIter( solver, params.krylov.maxIterations ) );
-  GEOSX_LAI_CHECK_ERROR( HYPRE_ParCSRBiCGSTABSetTol( solver, params.krylov.relTolerance ) );
+  GEOSX_LAI_CHECK_ERROR(HYPRE_ParCSRBiCGSTABCreate(comm, &solver));
+  GEOSX_LAI_CHECK_ERROR(HYPRE_ParCSRBiCGSTABSetMaxIter(solver, params.krylov.maxIterations));
+  GEOSX_LAI_CHECK_ERROR(HYPRE_ParCSRBiCGSTABSetTol(solver, params.krylov.relTolerance));
 
   // Default for now
-  GEOSX_LAI_CHECK_ERROR( HYPRE_ParCSRBiCGSTABSetPrintLevel( solver, params.logLevel ) ); // print iteration info
-  GEOSX_LAI_CHECK_ERROR( HYPRE_ParCSRBiCGSTABSetLogging( solver, 1 ) ); // needed to get run info later
+  GEOSX_LAI_CHECK_ERROR(HYPRE_ParCSRBiCGSTABSetPrintLevel(solver, params.logLevel)); // print iteration info
+  GEOSX_LAI_CHECK_ERROR(HYPRE_ParCSRBiCGSTABSetLogging(solver, 1)); // needed to get run info later
 
   solverFuncs.setPrecond = HYPRE_ParCSRBiCGSTABSetPrecond;
   solverFuncs.setup = HYPRE_ParCSRBiCGSTABSetup;
@@ -243,19 +243,19 @@ void CreateHypreBiCGSTAB( LinearSolverParameters const & params,
   solverFuncs.destroy = HYPRE_ParCSRBiCGSTABDestroy;
 }
 
-void CreateHypreCG( LinearSolverParameters const & params,
+void CreateHypreCG(LinearSolverParameters const & params,
                     MPI_Comm const comm,
                     HYPRE_Solver & solver,
-                    HypreSolverFuncs & solverFuncs )
+                    HypreSolverFuncs & solverFuncs)
 {
-  GEOSX_LAI_CHECK_ERROR( HYPRE_ParCSRPCGCreate( comm, &solver ) );
-  GEOSX_LAI_CHECK_ERROR( HYPRE_PCGSetMaxIter( solver, params.krylov.maxIterations ) );
-  GEOSX_LAI_CHECK_ERROR( HYPRE_PCGSetTol( solver, params.krylov.relTolerance ) );
+  GEOSX_LAI_CHECK_ERROR(HYPRE_ParCSRPCGCreate(comm, &solver));
+  GEOSX_LAI_CHECK_ERROR(HYPRE_PCGSetMaxIter(solver, params.krylov.maxIterations));
+  GEOSX_LAI_CHECK_ERROR(HYPRE_PCGSetTol(solver, params.krylov.relTolerance));
 
   // Default for now
-  GEOSX_LAI_CHECK_ERROR( HYPRE_PCGSetPrintLevel( solver, params.logLevel ) ); /* print the iteration info */
-  GEOSX_LAI_CHECK_ERROR( HYPRE_PCGSetLogging( solver, 1 ) );    /* needed to get run info later */
-  GEOSX_LAI_CHECK_ERROR( HYPRE_PCGSetTwoNorm( solver, 1 ) );    /* use the two norm as the stopping criteria */
+  GEOSX_LAI_CHECK_ERROR(HYPRE_PCGSetPrintLevel(solver, params.logLevel)); /* print the iteration info */
+  GEOSX_LAI_CHECK_ERROR(HYPRE_PCGSetLogging(solver, 1));    /* needed to get run info later */
+  GEOSX_LAI_CHECK_ERROR(HYPRE_PCGSetTwoNorm(solver, 1));    /* use the two norm as the stopping criteria */
 
   solverFuncs.setPrecond = HYPRE_ParCSRPCGSetPrecond;
   solverFuncs.setup = HYPRE_ParCSRPCGSetup;
@@ -265,65 +265,65 @@ void CreateHypreCG( LinearSolverParameters const & params,
   solverFuncs.destroy = HYPRE_ParCSRPCGDestroy;
 }
 
-void CreateHypreKrylovSolver( LinearSolverParameters const & params,
+void CreateHypreKrylovSolver(LinearSolverParameters const & params,
                               MPI_Comm const comm,
                               HYPRE_Solver & solver,
-                              HypreSolverFuncs & solverFuncs )
+                              HypreSolverFuncs & solverFuncs)
 {
-  switch( params.solverType )
+  switch(params.solverType)
   {
     case LinearSolverParameters::SolverType::gmres:
     {
-      CreateHypreGMRES( params, comm, solver, solverFuncs );
+      CreateHypreGMRES(params, comm, solver, solverFuncs);
       break;
     }
     case LinearSolverParameters::SolverType::fgmres:
     {
-      CreateHypreFlexGMRES( params, comm, solver, solverFuncs );
+      CreateHypreFlexGMRES(params, comm, solver, solverFuncs);
       break;
     }
     case LinearSolverParameters::SolverType::bicgstab:
     {
-      CreateHypreBiCGSTAB( params, comm, solver, solverFuncs );
+      CreateHypreBiCGSTAB(params, comm, solver, solverFuncs);
       break;
     }
     case LinearSolverParameters::SolverType::cg:
     {
-      CreateHypreCG( params, comm, solver, solverFuncs );
+      CreateHypreCG(params, comm, solver, solverFuncs);
       break;
     }
     default:
     {
-      GEOSX_ERROR( "Solver type not supported in hypre interface: " << params.solverType );
+      GEOSX_ERROR("Solver type not supported in hypre interface: " <<params.solverType);
     }
   }
 }
 
 } // namespace
 
-void HypreSolver::solve_direct( HypreMatrix & mat,
+void HypreSolver::solve_direct(HypreMatrix & mat,
                                 HypreVector & sol,
-                                HypreVector & rhs )
+                                HypreVector & rhs)
 {
-  if( m_parameters.direct.parallel )
+  if(m_parameters.direct.parallel)
   {
-    solve_parallelDirect( m_parameters, mat, sol, rhs, m_result );
+    solve_parallelDirect(m_parameters, mat, sol, rhs, m_result);
   }
   else
   {
-    solve_serialDirect( m_parameters, mat, sol, rhs, m_result );
+    solve_serialDirect(m_parameters, mat, sol, rhs, m_result);
   }
 }
 
-void HypreSolver::solve_krylov( HypreMatrix & mat,
+void HypreSolver::solve_krylov(HypreMatrix & mat,
                                 HypreVector & sol,
                                 HypreVector & rhs,
-                                DofManager const * const dofManager )
+                                DofManager const * const dofManager)
 {
   Stopwatch watch;
 
   // Create the preconditioner, but don't compute (this is done by solver setup)
-  HyprePreconditioner precond( m_parameters, dofManager );
+  HyprePreconditioner precond(m_parameters, dofManager);
   precond.create();
 
   // Deal with separate component approximation
@@ -331,30 +331,30 @@ void HypreSolver::solve_krylov( HypreMatrix & mat,
   HypreMatrix separateComponentMatrix;
   HYPRE_Solver uu_amg_solver = {};//TODO: this is a quick and dirty first implementation
 
-  if( m_parameters.amg.separateComponents && m_parameters.preconditionerType != LinearSolverParameters::PreconditionerType::mgr )
+  if(m_parameters.amg.separateComponents && m_parameters.preconditionerType != LinearSolverParameters::PreconditionerType::mgr)
   {
-    LAIHelperFunctions::SeparateComponentFilter( mat, separateComponentMatrix, m_parameters.dofsPerNode );
+    LAIHelperFunctions::SeparateComponentFilter(mat, separateComponentMatrix, m_parameters.dofsPerNode);
   }
-  else if( m_parameters.preconditionerType == LinearSolverParameters::PreconditionerType::mgr && m_parameters.mgr.separateComponents )
+  else if(m_parameters.preconditionerType == LinearSolverParameters::PreconditionerType::mgr && m_parameters.mgr.separateComponents)
   {
     // Extract displacement block
     HypreMatrix Pu;
     HypreMatrix scr_mat;
-    dofManager->makeRestrictor( { { m_parameters.mgr.displacementFieldName, 0, 3 } }, mat.getComm(), true, Pu );
-    mat.multiplyPtAP( Pu, scr_mat );
-    LAIHelperFunctions::SeparateComponentFilter( scr_mat, separateComponentMatrix, m_parameters.dofsPerNode );
+    dofManager->makeRestrictor({{m_parameters.mgr.displacementFieldName, 0, 3}}, mat.getComm(), true, Pu);
+    mat.multiplyPtAP(Pu, scr_mat);
+    LAIHelperFunctions::SeparateComponentFilter(scr_mat, separateComponentMatrix, m_parameters.dofsPerNode);
 
-    HYPRE_BoomerAMGCreate( &uu_amg_solver );
-    HYPRE_BoomerAMGSetTol( uu_amg_solver, 0.0 );
-    HYPRE_BoomerAMGSetMaxIter( uu_amg_solver, 1 );
-    HYPRE_BoomerAMGSetPrintLevel( uu_amg_solver, 0 );
-    HYPRE_BoomerAMGSetRelaxOrder( uu_amg_solver, 1 );
-    HYPRE_BoomerAMGSetAggNumLevels( uu_amg_solver, 1 );
-    HYPRE_BoomerAMGSetNumFunctions( uu_amg_solver, 3 );
+    HYPRE_BoomerAMGCreate(&uu_amg_solver);
+    HYPRE_BoomerAMGSetTol(uu_amg_solver, 0.0);
+    HYPRE_BoomerAMGSetMaxIter(uu_amg_solver, 1);
+    HYPRE_BoomerAMGSetPrintLevel(uu_amg_solver, 0);
+    HYPRE_BoomerAMGSetRelaxOrder(uu_amg_solver, 1);
+    HYPRE_BoomerAMGSetAggNumLevels(uu_amg_solver, 1);
+    HYPRE_BoomerAMGSetNumFunctions(uu_amg_solver, 3);
 
-    HYPRE_BoomerAMGSetup( uu_amg_solver, separateComponentMatrix.unwrapped(), nullptr, nullptr );
+    HYPRE_BoomerAMGSetup(uu_amg_solver, separateComponentMatrix.unwrapped(), nullptr, nullptr);
 
-    HYPRE_MGRSetFSolver( precond.unwrapped(), HYPRE_BoomerAMGSolve, HYPRE_BoomerAMGSetup, uu_amg_solver );
+    HYPRE_MGRSetFSolver(precond.unwrapped(), HYPRE_BoomerAMGSolve, HYPRE_BoomerAMGSetup, uu_amg_solver);
 
   }
   HypreMatrix & precondMat = m_parameters.amg.separateComponents ? separateComponentMatrix : mat;
@@ -362,58 +362,58 @@ void HypreSolver::solve_krylov( HypreMatrix & mat,
   // Instantiate the solver
   HYPRE_Solver solver{};
   HypreSolverFuncs solverFuncs;
-  CreateHypreKrylovSolver( m_parameters, mat.getComm(), solver, solverFuncs );
+  CreateHypreKrylovSolver(m_parameters, mat.getComm(), solver, solverFuncs);
 
   // Set the preconditioner
-  GEOSX_LAI_CHECK_ERROR( solverFuncs.setPrecond( solver,
+  GEOSX_LAI_CHECK_ERROR(solverFuncs.setPrecond(solver,
                                                  precond.unwrappedFuncs().apply,
                                                  precond.unwrappedFuncs().setup,
-                                                 precond.unwrapped() ) );
+                                                 precond.unwrapped()));
 
   // Setup
-  GEOSX_LAI_CHECK_ERROR( solverFuncs.setup( solver,
+  GEOSX_LAI_CHECK_ERROR(solverFuncs.setup(solver,
                                             precondMat.unwrapped(),
                                             rhs.unwrapped(),
-                                            sol.unwrapped() ) );
+                                            sol.unwrapped()));
   m_result.setupTime = watch.elapsedTime();
 
   // Solve
   watch.zero();
-  HYPRE_Int const result = solverFuncs.solve( solver,
+  HYPRE_Int const result = solverFuncs.solve(solver,
                                               mat.unwrapped(),
                                               rhs.unwrapped(),
-                                              sol.unwrapped() );
+                                              sol.unwrapped());
   m_result.solveTime = watch.elapsedTime();
 
   // Set result status based on return value
   m_result.status = result ? LinearSolverResult::Status::NotConverged : LinearSolverResult::Status::Success;
 
   // Clear error code to avoid GEOSX from crashing if Krylov method did not converge
-  GEOSX_LAI_CHECK_ERROR( HYPRE_ClearAllErrors() );
+  GEOSX_LAI_CHECK_ERROR(HYPRE_ClearAllErrors());
 
   // Get final residual norm
   HYPRE_Real finalNorm;
-  GEOSX_LAI_CHECK_ERROR( solverFuncs.getFinalNorm( solver, &finalNorm ) );
+  GEOSX_LAI_CHECK_ERROR(solverFuncs.getFinalNorm(solver, &finalNorm));
   m_result.residualReduction = finalNorm;
 
   // Get number of iterations
   HYPRE_Int numIter;
-  GEOSX_LAI_CHECK_ERROR( solverFuncs.getNumIter( solver, &numIter ) );
+  GEOSX_LAI_CHECK_ERROR(solverFuncs.getNumIter(solver, &numIter));
   m_result.numIterations = numIter;
 
-  if( m_parameters.logLevel >= 1 )
+  if(m_parameters.logLevel>= 1)
   {
-    GEOSX_LOG_RANK_0( "\t\tLinear Solver | Iter = " << numIter <<
-                      " | Final Relative Tol " << finalNorm <<
-                      " | SetupTime " << m_result.setupTime <<
-                      " | SolveTime " << m_result.solveTime );
+    GEOSX_LOG_RANK_0("\t\tLinear Solver | Iter = " <<numIter <<
+                      " | Final Relative Tol " <<finalNorm <<
+                      " | SetupTime " <<m_result.setupTime <<
+                      " | SolveTime " <<m_result.solveTime);
   }
 
   // Destroy solver
-  GEOSX_LAI_CHECK_ERROR( solverFuncs.destroy( solver ) );
-  if( m_parameters.preconditionerType == LinearSolverParameters::PreconditionerType::mgr && m_parameters.mgr.separateComponents )
+  GEOSX_LAI_CHECK_ERROR(solverFuncs.destroy(solver));
+  if(m_parameters.preconditionerType == LinearSolverParameters::PreconditionerType::mgr && m_parameters.mgr.separateComponents)
   {
-    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGDestroy( uu_amg_solver ) );
+    GEOSX_LAI_CHECK_ERROR(HYPRE_BoomerAMGDestroy(uu_amg_solver));
   }
 }
 

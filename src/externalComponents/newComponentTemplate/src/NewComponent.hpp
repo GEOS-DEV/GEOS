@@ -36,17 +36,17 @@ class DomainPartition;
 class NewComponent : public SolverBase
 {
 public:
-  NewComponent( std::string const & name,
+  NewComponent(std::string const & name,
                 Group * const parent);
   virtual ~NewComponent() override;
 
-  static std::string CatalogName() { return "NewComponent"; }
+  static std::string CatalogName() {return "NewComponent";}
 
 
-  virtual real64 SolverStep( real64 const& time_n,
+  virtual real64 SolverStep(real64 const& time_n,
                          real64 const& dt,
                          integer const cycleNumber,
-                         DomainPartition * domain ) override;
+                         DomainPartition * domain) override;
 
 private:
   NewComponent() = delete;

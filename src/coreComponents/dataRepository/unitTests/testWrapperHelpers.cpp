@@ -32,88 +32,88 @@ namespace dataRepository
 namespace testing
 {
 
-template< typename T >
-void checkNoSizeMethod( T const & var )
-{ EXPECT_EQ( wrapperHelpers::size( var ), 1 ); }
+template<typename T>
+void checkNoSizeMethod(T const & var)
+{EXPECT_EQ(wrapperHelpers::size(var), 1);}
 
-template< typename T >
-void checkSizeMethod( T const & var )
-{ EXPECT_EQ( wrapperHelpers::size( var ), var.size() ); }
+template<typename T>
+void checkSizeMethod(T const & var)
+{EXPECT_EQ(wrapperHelpers::size(var), var.size());}
 
-template< typename T, int USD >
-void checkAverageOverSecondDimHelper( ArrayView< T const, 2, USD > const & input,
-                                      ArrayView< T const, 1 > const & output )
+template<typename T, int USD>
+void checkAverageOverSecondDimHelper(ArrayView<T const, 2, USD> const & input,
+                                      ArrayView<T const, 1> const & output)
 {
-  for( localIndex i = 0; i < input.size( 0 ); ++i )
+  for(localIndex i = 0; i <input.size(0); ++i)
   {
     T value {};
-    for( localIndex j = 0; j < input.size( 1 ); ++j )
+    for(localIndex j = 0; j <input.size(1); ++j)
     {
-      value += input( i, j );
+      value += input(i, j);
     }
 
-    value /= input.size( 1 );
-    EXPECT_EQ( value, output( i ) );
+    value /= input.size(1);
+    EXPECT_EQ(value, output(i));
   }
 }
 
-template< typename T, int USD >
-void checkAverageOverSecondDimHelper( ArrayView< T const, 3, USD > const & input,
-                                      ArrayView< T const, 2 > const & output )
+template<typename T, int USD>
+void checkAverageOverSecondDimHelper(ArrayView<T const, 3, USD> const & input,
+                                      ArrayView<T const, 2> const & output)
 {
-  for( localIndex i = 0; i < input.size( 0 ); ++i )
+  for(localIndex i = 0; i <input.size(0); ++i)
   {
-    for( localIndex k = 0; k < input.size( 2 ); ++k )
+    for(localIndex k = 0; k <input.size(2); ++k)
     {
       T value {};
-      for( localIndex j = 0; j < input.size( 1 ); ++j )
+      for(localIndex j = 0; j <input.size(1); ++j)
       {
-        value += input( i, j, k );
+        value += input(i, j, k);
       }
 
-      value /= input.size( 1 );
-      EXPECT_EQ( value, output( i, k ) );
+      value /= input.size(1);
+      EXPECT_EQ(value, output(i, k));
     }
   }
 }
 
-template< typename T, int USD >
-void checkAverageOverSecondDimHelper( ArrayView< T const, 4, USD > const & input,
-                                      ArrayView< T const, 3 > const & output )
+template<typename T, int USD>
+void checkAverageOverSecondDimHelper(ArrayView<T const, 4, USD> const & input,
+                                      ArrayView<T const, 3> const & output)
 {
-  for( localIndex i = 0; i < input.size( 0 ); ++i )
+  for(localIndex i = 0; i <input.size(0); ++i)
   {
-    for( localIndex k = 0; k < input.size( 2 ); ++k )
+    for(localIndex k = 0; k <input.size(2); ++k)
     {
-      for( localIndex l = 0; l < input.size( 3 ); ++l )
+      for(localIndex l = 0; l <input.size(3); ++l)
       {
         T value {};
-        for( localIndex j = 0; j < input.size( 1 ); ++j )
+        for(localIndex j = 0; j <input.size(1); ++j)
         {
-          value += input( i, j, k, l );
+          value += input(i, j, k, l);
         }
 
-        value /= input.size( 1 );
-        EXPECT_EQ( value, output( i, k, l ) );
+        value /= input.size(1);
+        EXPECT_EQ(value, output(i, k, l));
       }
     }
   }
 }
 
 
-TEST( wrapperHelpers, size )
+TEST(wrapperHelpers, size)
 {
-  checkNoSizeMethod( int() );
-  checkNoSizeMethod( long() );
-  checkNoSizeMethod( double() );
-  checkNoSizeMethod( R1Tensor() );
+  checkNoSizeMethod(int());
+  checkNoSizeMethod(long());
+  checkNoSizeMethod(double());
+  checkNoSizeMethod(R1Tensor());
 
-  checkSizeMethod( std::string( "hello" ) );
-  checkSizeMethod( std::set< int > { 1, 2, 3 } );
-  checkSizeMethod( std::vector< int > { 1, 2, 3 } );
-  checkSizeMethod( std::array< int, 5 > {} );
-  checkSizeMethod( array1d< int >( 5 ) );
-  checkSizeMethod( array2d< int >( 5, 5 ) );
+  checkSizeMethod(std::string("hello"));
+  checkSizeMethod(std::set<int> {1, 2, 3});
+  checkSizeMethod(std::vector<int> {1, 2, 3});
+  checkSizeMethod(std::array<int, 5> {});
+  checkSizeMethod(array1d<int>(5));
+  checkSizeMethod(array2d<int>(5, 5));
 }
 
 /// TODO: dataPtr
@@ -127,56 +127,56 @@ TEST( wrapperHelpers, size )
 /// TODO: capacity
 
 using ArrayTypes = ::testing::Types<
-  array2d< int, RAJA::PERM_IJ >
-  , array2d< double, RAJA::PERM_JI >
-  , array3d< double, RAJA::PERM_IJK >
-  , array3d< int, RAJA::PERM_KJI >
-  , array4d< int, RAJA::PERM_IJKL >
-  , array4d< int, RAJA::PERM_LKJI >
-  , array4d< int, RAJA::PERM_KJLI >
+  array2d<int, RAJA::PERM_IJ>
+  , array2d<double, RAJA::PERM_JI>
+  , array3d<double, RAJA::PERM_IJK>
+  , array3d<int, RAJA::PERM_KJI>
+  , array4d<int, RAJA::PERM_IJKL>
+  , array4d<int, RAJA::PERM_LKJI>
+  , array4d<int, RAJA::PERM_KJLI>
   >;
 
-template< typename ARRAY >
+template<typename ARRAY>
 class PopulateMCArray : public ::testing::Test
 {
 public:
-  static_assert( traits::is_array< ARRAY >, "T must be an LvArray::Array!" );
+  static_assert(traits::is_array<ARRAY>, "T must be an LvArray::Array!");
   using T = typename ARRAY::value_type;
 
   void test()
   {
-    using ConduitType = typename conduitTypeInfo< T >::type;
-    constexpr int numComponentsPerValue = conduitTypeInfo< T >::numConduitValues;
+    using ConduitType = typename conduitTypeInfo<T>::type;
+    constexpr int numComponentsPerValue = conduitTypeInfo<T>::numConduitValues;
 
-    fill( m_array, 20 );
+    fill(m_array, 20);
 
     conduit::Node node;
-    wrapperHelpers::populateMCArray( m_array.toViewConst(), node, {} );
+    wrapperHelpers::populateMCArray(m_array.toViewConst(), node, {});
 
     localIndex const numComponents = node.number_of_children();
-    EXPECT_EQ( numComponents, numComponentsPerValue * m_array.size() / m_array.size( 0 ) );
+    EXPECT_EQ(numComponents, numComponentsPerValue * m_array.size() / m_array.size(0));
 
-    std::vector< conduit::DataArray< ConduitType > > valuesFromNode;
-    for( localIndex i = 0; i < numComponents; ++i )
+    std::vector<conduit::DataArray<ConduitType>> valuesFromNode;
+    for(localIndex i = 0; i <numComponents; ++i)
     {
-      EXPECT_TRUE( node.child( i ).is_data_external() );
-      conduit::DataArray< ConduitType > const conduitArray = node.child( i ).value();
-      ASSERT_EQ( conduitArray.number_of_elements(), m_array.size( 0 ) );
-      valuesFromNode.push_back( conduitArray );
+      EXPECT_TRUE(node.child(i).is_data_external());
+      conduit::DataArray<ConduitType> const conduitArray = node.child(i).value();
+      ASSERT_EQ(conduitArray.number_of_elements(), m_array.size(0));
+      valuesFromNode.push_back(conduitArray);
     }
 
-    for( localIndex i = 0; i < m_array.size( 0 ); ++i )
+    for(localIndex i = 0; i <m_array.size(0); ++i)
     {
       int curComponent = 0;
-      LvArray::forValuesInSlice( m_array[ i ], [&valuesFromNode, &curComponent, i]( T const & value )
+      LvArray::forValuesInSlice(m_array[i], [&valuesFromNode, &curComponent, i](T const & value)
       {
-        for( int j = 0; j < numComponentsPerValue; ++j )
+        for(int j = 0; j <numComponentsPerValue; ++j)
         {
-          auto const valueOfComponent = *wrapperHelpers::internal::getPointerToComponent( value, j );
-          EXPECT_EQ( valueOfComponent, valuesFromNode[ curComponent ][ i ] );
+          auto const valueOfComponent = *wrapperHelpers::internal::getPointerToComponent(value, j);
+          EXPECT_EQ(valueOfComponent, valuesFromNode[curComponent][i]);
           ++curComponent;
         }
-      } );
+      });
     }
   }
 
@@ -184,45 +184,45 @@ private:
   ARRAY m_array;
 };
 
-TYPED_TEST_SUITE( PopulateMCArray, ArrayTypes, );
-TYPED_TEST( PopulateMCArray, test )
+TYPED_TEST_SUITE(PopulateMCArray, ArrayTypes,);
+TYPED_TEST(PopulateMCArray, test)
 {
   this->test();
 }
 
 
-template< typename ARRAY >
+template<typename ARRAY>
 class AverageOverSecondDim : public ::testing::Test
 {
 public:
-  static_assert( traits::is_array< ARRAY >, "T must be an LvArray::Array!" );
+  static_assert(traits::is_array<ARRAY>, "T must be an LvArray::Array!");
   using T = typename ARRAY::value_type;
 
   static constexpr int NDIM = ARRAY::NDIM;
-  static_assert( NDIM >= 2, "Cannot average over a 1D array!" );
+  static_assert(NDIM>= 2, "Cannot average over a 1D array!");
 
   void test()
   {
-    fill( m_array, 20 );
+    fill(m_array, 20);
 
-    std::unique_ptr< Array< T, NDIM - 1 > > const output = wrapperHelpers::averageOverSecondDim( m_array.toViewConst() );
+    std::unique_ptr<Array<T, NDIM - 1>> const output = wrapperHelpers::averageOverSecondDim(m_array.toViewConst());
 
-    ASSERT_EQ( output->size( 0 ), m_array.size( 0 ) );
+    ASSERT_EQ(output->size(0), m_array.size(0));
 
-    for( int i = 2; i < NDIM; ++i )
+    for(int i = 2; i <NDIM; ++i)
     {
-      ASSERT_EQ( output->size( i - 1 ), m_array.size( i ) );
+      ASSERT_EQ(output->size(i - 1), m_array.size(i));
     }
 
-    checkAverageOverSecondDimHelper( m_array.toViewConst(), output->toViewConst() );
+    checkAverageOverSecondDimHelper(m_array.toViewConst(), output->toViewConst());
   }
 
 private:
   ARRAY m_array;
 };
 
-TYPED_TEST_SUITE( AverageOverSecondDim, ArrayTypes, );
-TYPED_TEST( AverageOverSecondDim, test )
+TYPED_TEST_SUITE(AverageOverSecondDim, ArrayTypes,);
+TYPED_TEST(AverageOverSecondDim, test)
 {
   this->test();
 }
@@ -231,11 +231,11 @@ TYPED_TEST( AverageOverSecondDim, test )
 } // namespace dataRepository
 } // end namespace geosx
 
-int main( int argc, char * argv[] )
+int main(int argc, char * argv[])
 {
-  testing::InitGoogleTest( &argc, argv );
+  testing::InitGoogleTest(&argc, argv);
 
-  geosx::basicSetup( argc, argv );
+  geosx::basicSetup(argc, argv);
 
   int const result = RUN_ALL_TESTS();
 

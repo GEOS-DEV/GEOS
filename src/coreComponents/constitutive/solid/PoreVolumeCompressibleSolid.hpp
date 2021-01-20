@@ -32,27 +32,27 @@ namespace constitutive
 class PoreVolumeCompressibleSolid : public ConstitutiveBase
 {
 public:
-  PoreVolumeCompressibleSolid( std::string const & name, Group * const parent );
+  PoreVolumeCompressibleSolid(std::string const & name, Group * const parent);
 
   virtual ~PoreVolumeCompressibleSolid() override;
 
-  std::unique_ptr< ConstitutiveBase > deliverClone( string const & name,
-                                                    Group * const parent ) const override;
+  std::unique_ptr<ConstitutiveBase> deliverClone(string const & name,
+                                                    Group * const parent) const override;
 
-  virtual void allocateConstitutiveData( dataRepository::Group * const parent,
-                                         localIndex const numConstitutivePointsPerParentIndex ) override;
+  virtual void allocateConstitutiveData(dataRepository::Group * const parent,
+                                         localIndex const numConstitutivePointsPerParentIndex) override;
 
 
-  static std::string CatalogName() { return "PoreVolumeCompressibleSolid"; }
+  static std::string CatalogName() {return "PoreVolumeCompressibleSolid";}
 
-  virtual string getCatalogName() const override { return CatalogName(); }
+  virtual string getCatalogName() const override {return CatalogName();}
 
-  virtual void StateUpdatePointPressure( real64 const & pres,
+  virtual void StateUpdatePointPressure(real64 const & pres,
                                          localIndex const k,
-                                         localIndex const q ) override final;
+                                         localIndex const q) override final;
 
-  virtual void StateUpdateBatchPressure( arrayView1d< real64 const > const & pres,
-                                         arrayView1d< real64 const > const & dPres ) override final;
+  virtual void StateUpdateBatchPressure(arrayView1d<real64 const> const & pres,
+                                         arrayView1d<real64 const> const & dPres) override final;
 
   struct viewKeyStruct : public ConstitutiveBase::viewKeyStruct
   {
@@ -71,10 +71,10 @@ private:
   /// reference pressure parameter
   real64 m_referencePressure;
 
-  array2d< real64 > m_poreVolumeMultiplier;
-  array2d< real64 > m_dPVMult_dPressure;
+  array2d<real64> m_poreVolumeMultiplier;
+  array2d<real64> m_dPVMult_dPressure;
 
-  ExponentialRelation< real64, ExponentApproximationType::Linear > m_poreVolumeRelation;
+  ExponentialRelation<real64, ExponentApproximationType::Linear> m_poreVolumeRelation;
 };
 
 }/* namespace constitutive */

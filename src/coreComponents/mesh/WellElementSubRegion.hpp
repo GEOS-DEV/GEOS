@@ -31,7 +31,7 @@ class WellElementSubRegion : public ElementSubRegionBase
 public:
 
   /// Alias for the type of the element-to-node map
-  using NodeMapType = InterObjectRelation< array2d< localIndex, cells::NODE_MAP_PERMUTATION > >;
+  using NodeMapType = InterObjectRelation<array2d<localIndex, cells::NODE_MAP_PERMUTATION>>;
   /// Alias for the type of the element-to-edge map
   using EdgeMapType = FixedOneToManyRelation; // unused but needed in MeshLevel::GenerateAdjacencyLists
   /// Alias for the type of the element-to-face map
@@ -58,8 +58,8 @@ public:
    * @param name name of the object in the data hierarchy.
    * @param parent pointer to the parent group in the data hierarchy.
    */
-  WellElementSubRegion( string const & name,
-                        Group * const parent );
+  WellElementSubRegion(string const & name,
+                        Group * const parent);
 
   /**
    * @brief Default destructor.
@@ -77,12 +77,12 @@ public:
    * @brief Get the catalog name.
    * @return the name of this class in the catalog
    */
-  static const string CatalogName() { return "wellElementSubRegion"; }
+  static const string CatalogName() {return "wellElementSubRegion";}
 
   /**
    * @copydoc CatalogName()
    */
-  virtual const string getCatalogName() const override { return WellElementSubRegion::CatalogName(); }
+  virtual const string getCatalogName() const override {return WellElementSubRegion::CatalogName();}
 
   ///@}
 
@@ -91,11 +91,11 @@ public:
    */
   ///@{
 
-  virtual void CalculateElementGeometricQuantities( NodeManager const &,
-                                                    FaceManager const & ) override
+  virtual void CalculateElementGeometricQuantities(NodeManager const &,
+                                                    FaceManager const &) override
   {}
 
-  virtual void setupRelatedObjectsInRelations( MeshLevel const * const mesh ) override;
+  virtual void setupRelatedObjectsInRelations(MeshLevel const * const mesh) override;
 
   ///@}
 
@@ -168,7 +168,7 @@ public:
    * @brief Set the name of the WellControls object of this well.
    * @param[in] name the name of the WellControls object
    */
-  void SetWellControlsName( string const & name )
+  void SetWellControlsName(string const & name)
   {
     m_wellControlsName = name;
   }
@@ -203,7 +203,7 @@ public:
    * @brief Set for the MPI rank that owns this well (i.e. the top segment).
    * @param[in] rank MPI rank of the owner process
    */
-  void SetTopRank( int rank )
+  void SetTopRank(int rank)
   {
     m_topRank = rank;
   }
@@ -237,22 +237,22 @@ public:
    * @param[in] elemStatus list of well element status, as determined by perforations connected
    *                       to local or remote mesh partitions. Status values are defined in
    *                       enum SegmentStatus. They are used to partition well elements.
-   * @param[in] nodeOffsetGlobal the offset of the first global well node ( = offset of last global mesh node + 1 )
-   * @param[in] elemOffsetGlobal the offset of the first global well element ( = offset of last global mesh elem + 1 )
+   * @param[in] nodeOffsetGlobal the offset of the first global well node (= offset of last global mesh node + 1)
+   * @param[in] elemOffsetGlobal the offset of the first global well element (= offset of last global mesh elem + 1)
    */
-  void Generate( MeshLevel & mesh,
+  void Generate(MeshLevel & mesh,
                  InternalWellGenerator const & wellGeometry,
-                 arrayView1d< integer > & elemStatus,
+                 arrayView1d<integer> & elemStatus,
                  globalIndex nodeOffsetGlobal,
-                 globalIndex elemOffsetGlobal );
+                 globalIndex elemOffsetGlobal);
 
   /**
    * @brief For each perforation, find the reservoir element that contains the perforation.
    * @param[in] mesh the mesh object (single level only)
    * @param[in] wellGeometry the InternalWellGenerator containing the global well topology
    */
-  void ConnectPerforationsToMeshElements( MeshLevel & mesh,
-                                          InternalWellGenerator const & wellGeometry );
+  void ConnectPerforationsToMeshElements(MeshLevel & mesh,
+                                          InternalWellGenerator const & wellGeometry);
 
   /**
    * @brief Reconstruct the (local) map nextWellElemId using nextWellElemIdGlobal after the ghost exchange.
@@ -266,12 +266,12 @@ public:
    */
   ///@{
 
-  virtual void ViewPackingExclusionList( SortedArray< localIndex > & exclusionList ) const override;
+  virtual void ViewPackingExclusionList(SortedArray<localIndex> & exclusionList) const override;
 
-  virtual localIndex PackUpDownMapsSize( arrayView1d< localIndex const > const & packList ) const override;
+  virtual localIndex PackUpDownMapsSize(arrayView1d<localIndex const> const & packList) const override;
 
-  virtual localIndex PackUpDownMaps( buffer_unit_type * & buffer,
-                                     arrayView1d< localIndex const > const & packList ) const override;
+  virtual localIndex PackUpDownMaps(buffer_unit_type * & buffer,
+                                     arrayView1d<localIndex const> const & packList) const override;
 
   /**
    * @brief Unpacks the specific elements in the @ packList.
@@ -281,12 +281,12 @@ public:
    * @param[in] overwriteDownMaps Clear the down maps provided.
    * @return The packed size.
    */
-  virtual localIndex UnpackUpDownMaps( buffer_unit_type const * & buffer,
+  virtual localIndex UnpackUpDownMaps(buffer_unit_type const * & buffer,
                                        localIndex_array & packList,
                                        bool const overwriteUpMaps,
-                                       bool const overwriteDownMaps ) override;
+                                       bool const overwriteDownMaps) override;
 
-  virtual void FixUpDownMaps( bool const clearIfUnmapped ) final override;
+  virtual void FixUpDownMaps(bool const clearIfUnmapped) final override;
 
   ///@}
 
@@ -316,19 +316,19 @@ public:
     static constexpr auto radiusString                     = "radius";
 
     /// ViewKey for the well control name
-    dataRepository::ViewKey wellControlsName     = { wellControlsString };
+    dataRepository::ViewKey wellControlsName     = {wellControlsString};
     /// ViewKey for the well element-to-node list
-    dataRepository::ViewKey wellNodeList         = { wellNodeListString };
+    dataRepository::ViewKey wellNodeList         = {wellNodeListString};
     /// ViewKey for the local indices of the next well element (used in solvers)
-    dataRepository::ViewKey nextWellElementIndex = { nextWellElementIndexString };
+    dataRepository::ViewKey nextWellElementIndex = {nextWellElementIndexString};
     /// ViewKey for the global indices of the next well element (to reconstruct maps)
-    dataRepository::ViewKey nextWellElementIndexGlobal = { nextWellElementIndexGlobalString };
+    dataRepository::ViewKey nextWellElementIndexGlobal = {nextWellElementIndexGlobalString};
     /// ViewKey for the top well element index
-    dataRepository::ViewKey topWellElementIndex = { topWellElementIndexString };
+    dataRepository::ViewKey topWellElementIndex = {topWellElementIndexString};
     /// ViewKey for the rank owning the top element
-    dataRepository::ViewKey topRank            = { topRankString };
+    dataRepository::ViewKey topRank            = {topRankString};
     /// ViewKey for the well radius
-    dataRepository::ViewKey radius             = { radiusString };
+    dataRepository::ViewKey radius             = {radiusString};
 
   }
   /// ViewKey struct for the WellElementSubRegion class
@@ -344,7 +344,7 @@ public:
     static constexpr auto perforationDataString = "wellElementSubRegion";
 
     /// GroupKey for the PerforationData object
-    dataRepository::GroupKey perforationData = { perforationDataString };
+    dataRepository::GroupKey perforationData = {perforationDataString};
 
   }
   /// groupKey struct for the WellElementSubRegion class
@@ -354,7 +354,7 @@ public:
 private:
 
   /**
-   * @brief Assign the unowned well elements (= well elem without perforation ) that are
+   * @brief Assign the unowned well elements (= well elem without perforation) that are
             in the reservoir (and that can therefore be matched with a reservoir element) to an MPI rank.
    * @param[in] meshLevel the mesh object (single level only)
    * @param[in] wellGeometry the InternalWellGenerator containing the global well topology
@@ -365,11 +365,11 @@ private:
    * @param[out] wellElemStatus list of current well element status. Status values are defined in
    *                            enum SegmentStatus. They are used to partition well elements.
    */
-  void AssignUnownedElementsInReservoir( MeshLevel & mesh,
+  void AssignUnownedElementsInReservoir(MeshLevel & mesh,
                                          InternalWellGenerator const & wellGeometry,
-                                         SortedArray< globalIndex >           const & unownedElems,
-                                         SortedArray< globalIndex > & localElems,
-                                         arrayView1d< integer > & elemStatusGlobal ) const;
+                                         SortedArray<globalIndex>           const & unownedElems,
+                                         SortedArray<globalIndex> & localElems,
+                                         arrayView1d<integer> & elemStatusGlobal) const;
 
   /**
    * @brief Check that all the well elements have been assigned to a single rank.
@@ -380,9 +380,9 @@ private:
    *
    * This function also checks that if two ranks are neighbors in the well, they are also neighbors in the mesh.
    */
-  void CheckPartitioningValidity( InternalWellGenerator const & wellGeometry,
-                                  SortedArray< globalIndex > & localElems,
-                                  arrayView1d< integer > & elemStatusGlobal ) const;
+  void CheckPartitioningValidity(InternalWellGenerator const & wellGeometry,
+                                  SortedArray<globalIndex> & localElems,
+                                  arrayView1d<integer> & elemStatusGlobal) const;
 
   /**
    * @brief Add the well nodes to the nodeManager (properly resized).
@@ -391,15 +391,15 @@ private:
    * @param[in] localNodes set of local well nodes (includes boundary nodes). At this point all the nodes have been
    * collected
    * @param[in] boundaryNodes set of local well nodes that are at the boundary between this rank and another rank
-   * @param[in] nodeOffsetGlobal the offset of the first global well node ( = offset of last global mesh node + 1 )
+   * @param[in] nodeOffsetGlobal the offset of the first global well node (= offset of last global mesh node + 1)
    *
    * The function WellElementSubRegion::CollectLocalAndBoundaryNodes must have been called before this function.
    */
-  void UpdateNodeManagerSize( MeshLevel & mesh,
+  void UpdateNodeManagerSize(MeshLevel & mesh,
                               InternalWellGenerator const & wellGeometry,
-                              SortedArray< globalIndex > const & localNodes,
-                              SortedArray< globalIndex > const & boundaryNodes,
-                              globalIndex nodeOffsetGlobal );
+                              SortedArray<globalIndex> const & localNodes,
+                              SortedArray<globalIndex> const & boundaryNodes,
+                              globalIndex nodeOffsetGlobal);
 
   /**
    * @brief Construct the subregion's local to global maps, as well as other local maps (toNodes, nextWellElemId,
@@ -407,16 +407,16 @@ private:
    * @param[inout] meshLevel the mesh object (single level only)
    * @param[in] wellGeometry the InternalWellGenerator containing the global well topology
    * @param[in] localElems set of local well elems. At this point all the well elems have been assigned
-   * @param[in] nodeOffsetGlobal the offset of the first global well node ( = offset of last global mesh node + 1 )
-   * @param[in] elemOffsetGlobal the offset of the first global well element ( = offset of last global mesh elem + 1 )
+   * @param[in] nodeOffsetGlobal the offset of the first global well node (= offset of last global mesh node + 1)
+   * @param[in] elemOffsetGlobal the offset of the first global well element (= offset of last global mesh elem + 1)
    *
    * The function WellElementSubRegion::UpdateNodeManagerSize must have been called before this function
    */
-  void ConstructSubRegionLocalElementMaps( MeshLevel & mesh,
+  void ConstructSubRegionLocalElementMaps(MeshLevel & mesh,
                                            InternalWellGenerator const & wellGeometry,
-                                           SortedArray< globalIndex > const & localElems,
+                                           SortedArray<globalIndex> const & localElems,
                                            globalIndex nodeOffsetGlobal,
-                                           globalIndex elemOffsetGlobal );
+                                           globalIndex elemOffsetGlobal);
 
   /**
    * @brief Constructs the toElementRegionList, toElementSubRegion, toElement maps
@@ -425,14 +425,14 @@ private:
    * This function is the equivalent of NodeManager::SetElementMaps for well elements.
    * The function WellElementSubRegion::ConstructSubRegionLocalElementMaps must have been called before this function
    */
-  void UpdateNodeManagerNodeToElementMap( MeshLevel & mesh );
+  void UpdateNodeManagerNodeToElementMap(MeshLevel & mesh);
 
   /// @cond DO_NOT_DOCUMENT
-  void DebugNodeManager( MeshLevel const & mesh ) const;
+  void DebugNodeManager(MeshLevel const & mesh) const;
   /// @endcond
 
   /// @cond DO_NOT_DOCUMENT
-  void DebugWellElementSubRegions( arrayView1d< integer const > const & wellElemStatus, globalIndex elemOffsetGlobal ) const;
+  void DebugWellElementSubRegions(arrayView1d<integer const> const & wellElemStatus, globalIndex elemOffsetGlobal) const;
   /// @endcond
 
   /**
@@ -442,12 +442,12 @@ private:
    * @param packList the packList used in the bufferOps::Pack function
    * @return the pack size
    */
-  template< bool DOPACK >
-  localIndex PackUpDownMapsPrivate( buffer_unit_type * & buffer,
-                                    arrayView1d< localIndex const > const & packList ) const;
+  template<bool DOPACK>
+  localIndex PackUpDownMapsPrivate(buffer_unit_type * & buffer,
+                                    arrayView1d<localIndex const> const & packList) const;
 
   /// Map of unmapped global indices in the element-to-node map
-  map< localIndex, array1d< globalIndex > > m_unmappedGlobalIndicesInNodelist;
+  map<localIndex, array1d<globalIndex>> m_unmappedGlobalIndicesInNodelist;
 
   /// Name of the WellControls object for this well
   string m_wellControlsName;
@@ -462,10 +462,10 @@ private:
   FaceMapType m_toFacesRelation;  // unused but needed in MeshLevel::GenerateAdjacencyLists
 
   /// Local indices of the next well element (used in solvers)
-  array1d< localIndex > m_nextWellElementIndex;
+  array1d<localIndex> m_nextWellElementIndex;
 
   /// Indices of the next well element (to reconstruct connectivity after ghost exchange)
-  array1d< localIndex > m_nextWellElementIndexGlobal;
+  array1d<localIndex> m_nextWellElementIndexGlobal;
 
   /// Local index of well's top segment
   localIndex m_topWellElementIndex;
@@ -477,7 +477,7 @@ private:
   integer m_topRank;
 
   /// Radius of the well element
-  array1d< real64 > m_radius;
+  array1d<real64> m_radius;
 
   /// Depth of the local search to match perforation to reservoir elements
   localIndex m_searchDepth;

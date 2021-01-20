@@ -43,13 +43,13 @@ using namespace dataRepository;
 namespace constitutive
 {
 
-ConstitutiveBase::ConstitutiveBase( std::string const & name,
-                                    Group * const parent ):
-  Group( name, parent ),
-  m_numQuadraturePoints( 1 ),
-  m_constitutiveDataGroup( nullptr )
+ConstitutiveBase::ConstitutiveBase(std::string const & name,
+                                    Group * const parent):
+  Group(name, parent),
+  m_numQuadraturePoints(1),
+  m_constitutiveDataGroup(nullptr)
 {
-  setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
+  setInputFlags(InputFlags::OPTIONAL_NONUNIQUE);
 }
 
 ConstitutiveBase::~ConstitutiveBase()
@@ -63,49 +63,49 @@ ConstitutiveBase::CatalogInterface::CatalogType & ConstitutiveBase::GetCatalog()
   return catalog;
 }
 
-void ConstitutiveBase::allocateConstitutiveData( dataRepository::Group * const parent,
-                                                 localIndex const numConstitutivePointsPerParentIndex )
+void ConstitutiveBase::allocateConstitutiveData(dataRepository::Group * const parent,
+                                                 localIndex const numConstitutivePointsPerParentIndex)
 {
   m_numQuadraturePoints = numConstitutivePointsPerParentIndex;
   m_constitutiveDataGroup = parent;
 
-  for( auto & group : this->GetSubGroups() )
+  for(auto & group : this->GetSubGroups())
   {
-    for( auto & wrapper : group.second->wrappers() )
+    for(auto & wrapper : group.second->wrappers())
     {
-      if( wrapper.second->sizedFromParent() )
+      if(wrapper.second->sizedFromParent())
       {
         string const wrapperName = wrapper.first;
-        parent->registerWrapper( makeFieldName( this->getName(), wrapperName ), wrapper.second->clone( wrapperName, parent ) )->
-          setRestartFlags( RestartFlags::NO_WRITE );
+        parent->registerWrapper(makeFieldName(this->getName(), wrapperName), wrapper.second->clone(wrapperName, parent))->
+          setRestartFlags(RestartFlags::NO_WRITE);
       }
     }
   }
 
-  for( auto & wrapper : this->wrappers() )
+  for(auto & wrapper : this->wrappers())
   {
-    if( wrapper.second->sizedFromParent() )
+    if(wrapper.second->sizedFromParent())
     {
       string const wrapperName = wrapper.first;
-      parent->registerWrapper( makeFieldName( this->getName(), wrapperName ), wrapper.second->clone( wrapperName, parent ) )->
-        setRestartFlags( RestartFlags::NO_WRITE );
+      parent->registerWrapper(makeFieldName(this->getName(), wrapperName), wrapper.second->clone(wrapperName, parent))->
+        setRestartFlags(RestartFlags::NO_WRITE);
     }
   }
 
-  this->resize( parent->size() );
+  this->resize(parent->size());
 }
 
-std::unique_ptr< ConstitutiveBase >
-ConstitutiveBase::deliverClone( string const & name,
-                                Group * const parent ) const
+std::unique_ptr<ConstitutiveBase>
+ConstitutiveBase::deliverClone(string const & name,
+                                Group * const parent) const
 {
-  std::unique_ptr< ConstitutiveBase >
-  newModel = ConstitutiveBase::CatalogInterface::Factory( this->getCatalogName(), name, parent );
+  std::unique_ptr<ConstitutiveBase>
+  newModel = ConstitutiveBase::CatalogInterface::Factory(this->getCatalogName(), name, parent);
 
-  newModel->forWrappers( [&]( WrapperBase & wrapper )
+  newModel->forWrappers([&](WrapperBase & wrapper)
   {
-    wrapper.copyWrapper( *(this->getWrapperBase( wrapper.getName() ) ) );
-  } );
+    wrapper.copyWrapper(*(this->getWrapperBase(wrapper.getName())));
+  });
 
   return newModel;
 }

@@ -36,12 +36,12 @@
 
 namespace timingHelpers
 {
-  inline std::string stripPF( char const * prettyFunction )
+  inline std::string stripPF(char const * prettyFunction)
   {
     std::string input(prettyFunction);
-    std::string::size_type const end = input.find_first_of( '(' );
-    std::string::size_type const beg = input.find_last_of( ' ', end)+1;
-    return input.substr( beg, end-beg );
+    std::string::size_type const end = input.find_first_of('(');
+    std::string::size_type const beg = input.find_last_of(' ', end)+1;
+    return input.substr(beg, end-beg);
   }
 }
 
@@ -81,16 +81,16 @@ namespace timingHelpers
 
 /// Get current time of day as a floating point number of seconds in a variable @p time.
 #ifdef GEOSX_USE_TIMERS
-#define GEOSX_GET_TIME( time )                                                 \
+#define GEOSX_GET_TIME(time)                                                 \
   real64 time;                                                                 \
   do                                                                           \
-  {                                                                            \
+  {                                                                           \
     timeval tim;                                                               \
     gettimeofday(&tim, nullptr);                                               \
     time = tim.tv_sec + (tim.tv_usec / 1000000.0);                             \
   } while (false)
 #else
-#define GEOSX_GET_TIME( time )
+#define GEOSX_GET_TIME(time)
 #endif
 
 #endif // GEOSX_COMMON_TIMINGMACROS_HPP_

@@ -53,7 +53,7 @@ public:
    * @param[in] name the name of this object manager
    * @param[in] parent the parent Group
    */
-  ElementSubRegionBase( string const & name, dataRepository::Group * const parent );
+  ElementSubRegionBase(string const & name, dataRepository::Group * const parent);
 
   /**
    * @brief Destructor.
@@ -73,8 +73,8 @@ public:
    * @param[in] faceManager the faceManager (for geometrical info and connectivity involving faces)
    *
    */
-  virtual void CalculateElementGeometricQuantities( NodeManager const & nodeManager,
-                                                    FaceManager const & faceManager ) = 0;
+  virtual void CalculateElementGeometricQuantities(NodeManager const & nodeManager,
+                                                    FaceManager const & faceManager) = 0;
 
   /**
    * @brief Link the connectivity maps of the subregion to the managers storing the mesh information.
@@ -84,14 +84,14 @@ public:
    * faceManager, and (if needed) edgeManager to, respectively, the node list, face list, and
    * edge list of the subregion.
    */
-  virtual void setupRelatedObjectsInRelations( MeshLevel const * const mesh ) = 0;
+  virtual void setupRelatedObjectsInRelations(MeshLevel const * const mesh) = 0;
 
   /**
    * @brief Call ObjectManagerBase::FixUpDownMaps for the connectivity maps needed by
    *        the derived class (i.e., element-to-node map, element-to-face map, etc)
    * @param[in] clearIfUnmapped clearIfUnmapped
    */
-  virtual void FixUpDownMaps( bool const clearIfUnmapped ) { GEOSX_UNUSED_VAR( clearIfUnmapped ); }
+  virtual void FixUpDownMaps(bool const clearIfUnmapped) {GEOSX_UNUSED_VAR(clearIfUnmapped);}
 
   ///@}
 
@@ -104,20 +104,20 @@ public:
    * @brief Get the number of nodes per element.
    * @return number of nodes per element
    */
-  localIndex const & numNodesPerElement() const { return m_numNodesPerElement; }
+  localIndex const & numNodesPerElement() const {return m_numNodesPerElement;}
 
   /**
    * @brief Get the number of nodes per element.
    * @param[in] k cell index (not used)
    * @return number of nodes per element
    */
-  virtual localIndex numNodesPerElement( localIndex const k ) const { GEOSX_UNUSED_VAR( k ); return m_numNodesPerElement; }
+  virtual localIndex numNodesPerElement(localIndex const k) const {GEOSX_UNUSED_VAR(k); return m_numNodesPerElement;}
 
   /**
    * @brief Set the number of nodes per element.
    * @param[in] numNodes the number of nodes per element
    */
-  void setNumNodesPerElement( localIndex numNodes )
+  void setNumNodesPerElement(localIndex numNodes)
   {
     m_numNodesPerElement = numNodes;
   }
@@ -130,13 +130,13 @@ public:
    * equal to the number of nodes per element, except for the case
    * of a triangular prism
    */
-  localIndex const & numIndependentNodesPerElement() const { return m_numIndependentNodesPerElement; }
+  localIndex const & numIndependentNodesPerElement() const {return m_numIndependentNodesPerElement;}
 
   /**
    * @brief Set the number of independent nodes per element.
    * @param[in] numNodes the number of independent nodes per element
    */
-  void setNumIndependentNodesPerElement( localIndex const numNodes )
+  void setNumIndependentNodesPerElement(localIndex const numNodes)
   {
     m_numIndependentNodesPerElement = numNodes;
   }
@@ -145,13 +145,13 @@ public:
    * @brief Get the number of edges per element.
    * @return the number of edges per element
    */
-  localIndex const & numEdgesPerElement() const { return m_numEdgesPerElement; }
+  localIndex const & numEdgesPerElement() const {return m_numEdgesPerElement;}
 
   /**
    * @brief Set the number of edges per element.
    * @param[in] numEdges the number of edges per element
    */
-  void setNumEdgesPerElement( localIndex const numEdges )
+  void setNumEdgesPerElement(localIndex const numEdges)
   {
     m_numEdgesPerElement = numEdges;
   }
@@ -160,47 +160,47 @@ public:
    * @brief Get the number of faces per element.
    * @return number of faces per element
    */
-  localIndex const & numFacesPerElement() const { return m_numFacesPerElement; }
+  localIndex const & numFacesPerElement() const {return m_numFacesPerElement;}
 
   /**
    * @brief Set the number of faces per element.
    * @param[in] numFaces the number of faces per element
    */
-  void setNumFacesPerElement( localIndex const numFaces )
-  { m_numFacesPerElement = numFaces; }
+  void setNumFacesPerElement(localIndex const numFaces)
+  {m_numFacesPerElement = numFaces;}
 
   /**
    * @brief Get the center of each element in this subregion.
    * @return an arrayView1d of const element centers
    */
-  arrayView2d< real64 const > getElementCenter() const
-  { return m_elementCenter; }
+  arrayView2d<real64 const> getElementCenter() const
+  {return m_elementCenter;}
 
   /**
    * @copydoc getElementCenter() const
    */
-  arrayView2d< real64 > getElementCenter()
-  { return m_elementCenter; }
+  arrayView2d<real64> getElementCenter()
+  {return m_elementCenter;}
 
   /**
    * @brief Get the volume of each element in this subregion.
    * @return an arrayView1d of const element volumes
    */
-  arrayView1d< real64 const > getElementVolume() const
-  { return m_elementVolume; }
+  arrayView1d<real64 const> getElementVolume() const
+  {return m_elementVolume;}
 
   /**
    * @brief Get the group in which the constitutive models of this subregion are registered.
    * @return a pointer to the const group in which the constitutive models are registered
    */
   dataRepository::Group const * GetConstitutiveModels() const
-  { return &m_constitutiveModels; }
+  {return &m_constitutiveModels;}
 
   /**
    * @copydoc GetConstitutiveModels() const
    */
   dataRepository::Group * GetConstitutiveModels()
-  { return &m_constitutiveModels; }
+  {return &m_constitutiveModels;}
 
   /**
    * @brief Get a pointer to the constitutive model.
@@ -208,19 +208,19 @@ public:
    * @param name The name of the constitutive model.
    * @return A pointer to the constitutive model.
    */
-  template< typename T = constitutive::ConstitutiveBase >
-  T const * getConstitutiveModel( string const & name ) const
+  template<typename T = constitutive::ConstitutiveBase>
+  T const * getConstitutiveModel(string const & name) const
   {
-    return m_constitutiveModels.GetGroup< T >( name );
+    return m_constitutiveModels.GetGroup<T>(name);
   }
 
   /**
-   * @copydoc getConstitutiveModel( string const & ) const
+   * @copydoc getConstitutiveModel(string const &) const
    */
-  template< typename T = constitutive::ConstitutiveBase >
-  T * getConstitutiveModel( string const & name )
+  template<typename T = constitutive::ConstitutiveBase>
+  T * getConstitutiveModel(string const & name)
   {
-    return m_constitutiveModels.GetGroup< T >( name );
+    return m_constitutiveModels.GetGroup<T>(name);
   }
 
 
@@ -230,19 +230,19 @@ public:
    *
    * See class FiniteElementBase for possible element type.
    */
-  virtual string GetElementTypeString() const { return m_elementTypeString; }
+  virtual string GetElementTypeString() const {return m_elementTypeString;}
 
   /**
    * @brief Set the type of element in this subregion.
    * @param[in] elementType a string specifying the element type
    */
-  virtual void SetElementType( string const & elementType );
+  virtual void SetElementType(string const & elementType);
 
   /**
    * @brief Get the VTK ordering for this subregion.
    * @return the VTK node ordering
    */
-  std::vector< int > getVTKNodeOrdering() const;
+  std::vector<int> getVTKNodeOrdering() const;
 
   ///@}
 
@@ -299,10 +299,10 @@ protected:
   localIndex m_numFacesPerElement;
 
   /// Member level field for the element center.
-  array2d< real64 > m_elementCenter;
+  array2d<real64> m_elementCenter;
 
   /// Member level field for the element volume.
-  array1d< real64 > m_elementVolume;
+  array1d<real64> m_elementVolume;
 
   /// Type of element in this subregion.
   string m_elementTypeString;

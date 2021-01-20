@@ -39,38 +39,38 @@ set(meshUtilities_sources
     SimpleGeometricObjects/BoundedPlane.cpp
    )
 
-if( BUILD_OBJ_LIBS)
-  set( dependencyList common dataRepository fileIO mesh)
+if(BUILD_OBJ_LIBS)
+  set(dependencyList common dataRepository fileIO mesh)
 else()
-  set( dependencyList common)
+  set(dependencyList common)
 endif()
 
-set( dependencyList common )
+set(dependencyList common)
 
-if( ENABLE_PAMELA )
+if(ENABLE_PAMELA)
     message(STATUS "Adding PAMELAMeshGenerator sources and headers")
-    set( meshUtilities_headers ${meshUtilities_headers} PAMELAMeshGenerator.hpp )
-    set( meshUtilities_sources ${meshUtilities_sources} PAMELAMeshGenerator.cpp)
-    set( dependencyList ${dependencyList} PAMELA )
+    set(meshUtilities_headers ${meshUtilities_headers} PAMELAMeshGenerator.hpp)
+    set(meshUtilities_sources ${meshUtilities_sources} PAMELAMeshGenerator.cpp)
+    set(dependencyList ${dependencyList} PAMELA)
 endif()
 
-if( ENABLE_OPENMP )
-    set( dependencyList ${dependencyList} openmp )
+if(ENABLE_OPENMP)
+    set(dependencyList ${dependencyList} openmp)
 endif()
 
-if ( ENABLE_CUDA )
-  set( dependencyList ${dependencyList} cuda )
+if (ENABLE_CUDA)
+  set(dependencyList ${dependencyList} cuda)
 endif()
 
-blt_add_library( NAME                  meshUtilities
+blt_add_library(NAME                  meshUtilities
                  SOURCES               ${meshUtilities_sources}
                  HEADERS               ${meshUtilities_headers}
                  DEPENDS_ON            ${dependencyList}
                  OBJECT                ${buildAsObj}
                )
                
-target_include_directories( meshUtilities PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)
+target_include_directories(meshUtilities PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)
 
-add_subdirectory( unitTests )
+add_subdirectory(unitTests)
 
-geosx_add_code_checks(PREFIX meshUtilities )
+geosx_add_code_checks(PREFIX meshUtilities)

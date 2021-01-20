@@ -39,19 +39,19 @@ public:
    * @param inputPath filename The name of the file to read from.
    * @param mesh The mesh to communicate.
    */
-  ChomboCoupler( MPI_Comm const comm, const std::string & outputPath, const std::string & inputPath, MeshLevel & mesh );
+  ChomboCoupler(MPI_Comm const comm, const std::string & outputPath, const std::string & inputPath, MeshLevel & mesh);
 
   /**
    * @brief Write data to file.
    * @param dt the current time step.
    */
-  void write( double dt );
+  void write(double dt);
 
   /**
    * @brief Read data from file.
    * @param usePressures If true, pressure are read in from file
    */
-  void read( bool usePressures );
+  void read(bool usePressures);
 
 private:
   /**
@@ -81,11 +81,11 @@ private:
   /// Not sure why this is here.
   int m_counter;
   /// A copy of the nodal reference position.
-  array2d< real64 > m_referencePositionCopy;
+  array2d<real64> m_referencePositionCopy;
   /// A copy of the nodal displacement.
-  array2d< real64 > m_displacementCopy;
+  array2d<real64> m_displacementCopy;
   /// A copy of the nodal velocity.
-  array2d< real64 > m_velocityCopy;
+  array2d<real64> m_velocityCopy;
 };
 
 } /* namespace geosx */

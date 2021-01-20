@@ -41,7 +41,7 @@ namespace geosx
  * @brief This class creates and provides basic support for Vec
  *        vector object type used in PETSc.
  */
-class PetscVector final : private VectorBase< PetscVector >
+class PetscVector final : private VectorBase<PetscVector>
 {
 public:
 
@@ -62,27 +62,27 @@ public:
    * @brief Copy constructor.
    * @param src PetscVector to be copied.
    */
-  PetscVector( PetscVector const & src );
+  PetscVector(PetscVector const & src);
 
   /**
    * @brief Move constructor
    * @param src PetscVector to move from
    */
-  PetscVector( PetscVector && src ) noexcept;
+  PetscVector(PetscVector && src) noexcept;
 
   /**
    * @brief Copy assignment.
    * @param src PetscVector to be copied.
    * @return the new vector.
    */
-  PetscVector & operator=( PetscVector const & src );
+  PetscVector & operator=(PetscVector const & src);
 
   /**
    * @brief Move assignment.
    * @param src PetscVector to be moved from.
    * @return the new vector.
    */
-  PetscVector & operator=( PetscVector && src ) noexcept;
+  PetscVector & operator=(PetscVector && src) noexcept;
 
   /**
    * @brief Destructor.
@@ -105,14 +105,14 @@ public:
    */
   virtual bool created() const override;
 
-  virtual void createWithLocalSize( localIndex const localSize,
-                                    MPI_Comm const & comm ) override;
+  virtual void createWithLocalSize(localIndex const localSize,
+                                    MPI_Comm const & comm) override;
 
-  virtual void createWithGlobalSize( globalIndex const globalSize,
-                                     MPI_Comm const & comm ) override;
+  virtual void createWithGlobalSize(globalIndex const globalSize,
+                                     MPI_Comm const & comm) override;
 
-  virtual void create( arrayView1d< real64 const > const & localValues,
-                       MPI_Comm const & comm ) override;
+  virtual void create(arrayView1d<real64 const> const & localValues,
+                       MPI_Comm const & comm) override;
 
   virtual void open() override;
 
@@ -120,49 +120,49 @@ public:
 
   virtual void reset() override;
 
-  virtual void set( globalIndex const globalRow,
-                    real64 const value ) override;
+  virtual void set(globalIndex const globalRow,
+                    real64 const value) override;
 
-  virtual void add( globalIndex const globalRow,
-                    real64 const value ) override;
+  virtual void add(globalIndex const globalRow,
+                    real64 const value) override;
 
-  virtual void set( globalIndex const * globalIndices,
+  virtual void set(globalIndex const * globalIndices,
                     real64 const * values,
-                    localIndex size ) override;
+                    localIndex size) override;
 
-  virtual void add( globalIndex const * globalIndices,
+  virtual void add(globalIndex const * globalIndices,
                     real64 const * values,
-                    localIndex size ) override;
+                    localIndex size) override;
 
-  virtual void set( arraySlice1d< globalIndex const > const & globalIndices,
-                    arraySlice1d< real64 const > const & values ) override;
+  virtual void set(arraySlice1d<globalIndex const> const & globalIndices,
+                    arraySlice1d<real64 const> const & values) override;
 
-  virtual void add( arraySlice1d< globalIndex const > const & globalIndices,
-                    arraySlice1d< real64 const > const & values ) override;
+  virtual void add(arraySlice1d<globalIndex const> const & globalIndices,
+                    arraySlice1d<real64 const> const & values) override;
 
-  virtual void set( real64 const value ) override;
+  virtual void set(real64 const value) override;
 
   virtual void zero() override;
 
-  virtual void rand( unsigned const seed = 1984 ) override;
+  virtual void rand(unsigned const seed = 1984) override;
 
-  virtual void scale( real64 const scalingFactor ) override;
+  virtual void scale(real64 const scalingFactor) override;
 
   virtual void reciprocal() override;
 
-  virtual real64 dot( PetscVector const & vec ) const override;
+  virtual real64 dot(PetscVector const & vec) const override;
 
-  virtual void copy( PetscVector const & x ) override;
+  virtual void copy(PetscVector const & x) override;
 
-  virtual void axpy( real64 const alpha,
-                     PetscVector const & x ) override;
+  virtual void axpy(real64 const alpha,
+                     PetscVector const & x) override;
 
-  virtual void axpby( real64 const alpha,
+  virtual void axpby(real64 const alpha,
                       PetscVector const & x,
-                      real64 const beta ) override;
+                      real64 const beta) override;
 
-  virtual void pointwiseProduct( PetscVector const & x,
-                                 PetscVector & y ) const override;
+  virtual void pointwiseProduct(PetscVector const & x,
+                                 PetscVector & y) const override;
 
   /**
    * @copydoc VectorBase<PetscVector>::norm1
@@ -199,19 +199,19 @@ public:
    */
   virtual globalIndex iupper() const override;
 
-  virtual real64 get( globalIndex const globalRow ) const override;
+  virtual real64 get(globalIndex const globalRow) const override;
 
-  void get( arraySlice1d< globalIndex const > const & globalIndices,
-            arraySlice1d< real64 > const & values ) const override;
+  void get(arraySlice1d<globalIndex const> const & globalIndices,
+            arraySlice1d<real64> const & values) const override;
 
-  virtual void print( std::ostream & os = std::cout ) const override;
+  virtual void print(std::ostream & os = std::cout) const override;
 
-  virtual void write( string const & filename,
-                      LAIOutputFormat const format = LAIOutputFormat::MATRIX_MARKET ) const override;
+  virtual void write(string const & filename,
+                      LAIOutputFormat const format = LAIOutputFormat::MATRIX_MARKET) const override;
 
-  virtual localIndex getLocalRowID( globalIndex const globalRow ) const override;
+  virtual localIndex getLocalRowID(globalIndex const globalRow) const override;
 
-  virtual globalIndex getGlobalRowID( localIndex const localRow ) const override;
+  virtual globalIndex getGlobalRowID(localIndex const localRow) const override;
 
   /**
    * @copydoc VectorBase<PetscVector>::extractLocalVector

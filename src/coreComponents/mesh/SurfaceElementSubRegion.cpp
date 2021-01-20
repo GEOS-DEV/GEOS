@@ -25,51 +25,51 @@ namespace geosx
 
 using namespace dataRepository;
 
-SurfaceElementSubRegion::SurfaceElementSubRegion( string const & name,
-                                                  dataRepository::Group * const parent ):
-  ElementSubRegionBase( name, parent ),
+SurfaceElementSubRegion::SurfaceElementSubRegion(string const & name,
+                                                  dataRepository::Group * const parent):
+  ElementSubRegionBase(name, parent),
   m_surfaceElementsToCells(),
   m_toNodesRelation(),
   m_toEdgesRelation(),
   m_elementAperture(),
   m_elementArea()
 {
-  registerWrapper( viewKeyStruct::nodeListString, &m_toNodesRelation )->
-    setDescription( "Map to the nodes attached to each SurfaceElement." );
+  registerWrapper(viewKeyStruct::nodeListString, &m_toNodesRelation)->
+    setDescription("Map to the nodes attached to each SurfaceElement.");
 
-  registerWrapper( viewKeyStruct::edgeListString, &m_toEdgesRelation )->
-    setDescription( "Map to the edges attached to each SurfaceElement." );
+  registerWrapper(viewKeyStruct::edgeListString, &m_toEdgesRelation)->
+    setDescription("Map to the edges attached to each SurfaceElement.");
 
 
-  registerWrapper( viewKeyStruct::surfaceElementsToCellRegionsString, &m_surfaceElementsToCells.m_toElementRegion )->
-    setApplyDefaultValue( -1 )->
-    setPlotLevel( PlotLevel::NOPLOT )->
-    setDescription( "A map of face element local indices to the cell local indices" );
+  registerWrapper(viewKeyStruct::surfaceElementsToCellRegionsString, &m_surfaceElementsToCells.m_toElementRegion)->
+    setApplyDefaultValue(-1)->
+    setPlotLevel(PlotLevel::NOPLOT)->
+    setDescription("A map of face element local indices to the cell local indices");
 
-  registerWrapper( viewKeyStruct::surfaceElementsToCellSubRegionsString, &m_surfaceElementsToCells.m_toElementSubRegion )->
-    setApplyDefaultValue( -1 )->
-    setPlotLevel( PlotLevel::NOPLOT )->
-    setDescription( "A map of face element local indices to the cell local indices" );
+  registerWrapper(viewKeyStruct::surfaceElementsToCellSubRegionsString, &m_surfaceElementsToCells.m_toElementSubRegion)->
+    setApplyDefaultValue(-1)->
+    setPlotLevel(PlotLevel::NOPLOT)->
+    setDescription("A map of face element local indices to the cell local indices");
 
-  registerWrapper( viewKeyStruct::surfaceElementsToCellIndexString, &m_surfaceElementsToCells.m_toElementIndex )->
-    setApplyDefaultValue( -1 )->
-    setPlotLevel( PlotLevel::NOPLOT )->
-    setDescription( "A map of face element local indices to the cell local indices" );
+  registerWrapper(viewKeyStruct::surfaceElementsToCellIndexString, &m_surfaceElementsToCells.m_toElementIndex)->
+    setApplyDefaultValue(-1)->
+    setPlotLevel(PlotLevel::NOPLOT)->
+    setDescription("A map of face element local indices to the cell local indices");
 
-  registerWrapper( viewKeyStruct::elementApertureString, &m_elementAperture )->
-    setApplyDefaultValue( 1.0e-5 )->
-    setPlotLevel( dataRepository::PlotLevel::LEVEL_0 )->
-    setDescription( "The aperture of each SurfaceElement." );
+  registerWrapper(viewKeyStruct::elementApertureString, &m_elementAperture)->
+    setApplyDefaultValue(1.0e-5)->
+    setPlotLevel(dataRepository::PlotLevel::LEVEL_0)->
+    setDescription("The aperture of each SurfaceElement.");
 
-  registerWrapper( viewKeyStruct::elementAreaString, &m_elementArea )->
-    setApplyDefaultValue( -1.0 )->
-    setPlotLevel( dataRepository::PlotLevel::LEVEL_2 )->
-    setDescription( "The area of each SurfaceElement." );
+  registerWrapper(viewKeyStruct::elementAreaString, &m_elementArea)->
+    setApplyDefaultValue(-1.0)->
+    setPlotLevel(dataRepository::PlotLevel::LEVEL_2)->
+    setDescription("The area of each SurfaceElement.");
 
-  registerWrapper< real64_array >( viewKeyStruct::creationMassString )->
-    setApplyDefaultValue( 0.0 )->
-    setPlotLevel( dataRepository::PlotLevel::LEVEL_1 )->
-    setDescription( "The amount of remaining mass that was introduced when the SurfaceElement was created." );
+  registerWrapper<real64_array>(viewKeyStruct::creationMassString)->
+    setApplyDefaultValue(0.0)->
+    setPlotLevel(dataRepository::PlotLevel::LEVEL_1)->
+    setDescription("The amount of remaining mass that was introduced when the SurfaceElement was created.");
 
 }
 

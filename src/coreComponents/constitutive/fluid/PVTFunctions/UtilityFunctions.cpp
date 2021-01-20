@@ -25,25 +25,25 @@ namespace geosx
 namespace PVTProps
 {
 
-EvalArgs2D XYTable::Value( EvalArgs2D const & x, EvalArgs2D const & y ) const
+EvalArgs2D XYTable::Value(EvalArgs2D const & x, EvalArgs2D const & y) const
 {
-  localIndex_array xIndices( 2 ), yIndices( 2 );
+  localIndex_array xIndices(2), yIndices(2);
 
   //find i index
 
-  if( x <= m_x[0] )
+  if(x <= m_x[0])
   {
     xIndices[0] = 0;
   }
-  else if( x >= m_x[m_x.size()-2] )
+  else if(x>= m_x[m_x.size()-2])
   {
     xIndices[0] = m_x.size()-2;
   }
   else
   {
-    for( localIndex i = 1; i < m_x.size(); ++i )
+    for(localIndex i = 1; i <m_x.size(); ++i)
     {
-      if( x <= m_x[i] )
+      if(x <= m_x[i])
       {
         xIndices[0] = i - 1;
         break;
@@ -53,24 +53,24 @@ EvalArgs2D XYTable::Value( EvalArgs2D const & x, EvalArgs2D const & y ) const
 
   xIndices[1] = xIndices[0] + 1;
 
-  EvalArgs2D xWeight = (x - m_x[xIndices[0] ]) / (m_x[xIndices[1] ] - m_x[xIndices[0] ]);
+  EvalArgs2D xWeight = (x - m_x[xIndices[0]]) / (m_x[xIndices[1]] - m_x[xIndices[0]]);
 
   //find j index
 
-  if( y <= m_y[0] )
+  if(y <= m_y[0])
   {
     yIndices[0] = 0;
   }
-  else if( y >= m_y[m_y.size()-2] )
+  else if(y>= m_y[m_y.size()-2])
   {
     yIndices[0] = m_y.size()-2;
   }
   else
   {
-    for( localIndex i = 1; i < m_y.size(); ++i )
+    for(localIndex i = 1; i <m_y.size(); ++i)
     {
 
-      if( y <= m_y[i] )
+      if(y <= m_y[i])
       {
         yIndices[0] = i - 1;
         break;
@@ -80,35 +80,35 @@ EvalArgs2D XYTable::Value( EvalArgs2D const & x, EvalArgs2D const & y ) const
 
   yIndices[1] = yIndices[0] + 1;
 
-  EvalArgs2D yWeight = (y - m_y[yIndices[0] ]) / (m_y[yIndices[1] ] - m_y[yIndices[0] ]);
+  EvalArgs2D yWeight = (y - m_y[yIndices[0]]) / (m_y[yIndices[1]] - m_y[yIndices[0]]);
 
-  EvalArgs2D out = m_value[xIndices[0] ][yIndices[0] ] * (1.0 - xWeight) * (1.0 - yWeight) + m_value[xIndices[0] ][yIndices[1] ] * (1.0 - xWeight) * yWeight +
-                   m_value[xIndices[1] ][yIndices[1] ] * xWeight * yWeight + m_value[xIndices[1] ][yIndices[0] ] * xWeight * (1.0 - yWeight);
+  EvalArgs2D out = m_value[xIndices[0]][yIndices[0]] * (1.0 - xWeight) * (1.0 - yWeight) + m_value[xIndices[0]][yIndices[1]] * (1.0 - xWeight) * yWeight +
+                   m_value[xIndices[1]][yIndices[1]] * xWeight * yWeight + m_value[xIndices[1]][yIndices[0]] * xWeight * (1.0 - yWeight);
 
   return out;
 }
 
 
-template< class T >
-T XTable::GetValue( T const & x ) const
+template<class T>
+T XTable::GetValue(T const & x) const
 {
 
   localIndex idx = 0;
   //find i index
 
-  if( x <= m_x[0] )
+  if(x <= m_x[0])
   {
     idx = 0;
   }
-  else if( x >= m_x[m_x.size()-1] )
+  else if(x>= m_x[m_x.size()-1])
   {
     idx = m_x.size()-2;
   }
   else
   {
-    for( localIndex i = 1; i < m_x.size(); ++i )
+    for(localIndex i = 1; i <m_x.size(); ++i)
     {
-      if( x <= m_x[i] )
+      if(x <= m_x[i])
       {
         idx = i - 1;
         break;

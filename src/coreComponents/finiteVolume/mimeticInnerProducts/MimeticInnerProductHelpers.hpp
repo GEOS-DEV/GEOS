@@ -38,13 +38,13 @@ struct MimeticInnerProductHelpers
    */
   GEOSX_HOST_DEVICE
   static
-  void MakeFullTensor( real64 const (&values)[ 3 ],
-                       real64 (& result)[ 3 ][ 3 ] )
+  void MakeFullTensor(real64 const (&values)[3],
+                       real64 (& result)[3][3])
   {
-    LvArray::tensorOps::fill< 3, 3 >( result, 0.0 );
-    result[ 0 ][ 0 ] = values[ 0 ];
-    result[ 1 ][ 1 ] = values[ 1 ];
-    result[ 2 ][ 2 ] = values[ 2 ];
+    LvArray::tensorOps::fill<3, 3>(result, 0.0);
+    result[0][0] = values[0];
+    result[1][1] = values[1];
+    result[2][2] = values[2];
   }
 
   /**
@@ -55,36 +55,36 @@ struct MimeticInnerProductHelpers
    * @param[in,out] q2 third vector
    * @param[out] cellToFaceMat a copy of in/out vectors stacked into a matrix
    */
-  template< localIndex NF >
+  template<localIndex NF>
   GEOSX_HOST_DEVICE
   static
-  void Orthonormalize( real64 (& q0)[ NF ],
-                       real64 (& q1)[ NF ],
-                       real64 (& q2)[ NF ],
-                       real64 (& cellToFaceMat)[ NF ][ 3 ] )
+  void Orthonormalize(real64 (& q0)[NF],
+                       real64 (& q1)[NF],
+                       real64 (& q2)[NF],
+                       real64 (& cellToFaceMat)[NF][3])
   {
     // modified Gram-Schmidt algorithm
 
     // q0
-    LvArray::tensorOps::scale< NF >( q0, 1.0/LvArray::tensorOps::l2Norm< NF >( q0 ) );
+    LvArray::tensorOps::scale<NF>(q0, 1.0/LvArray::tensorOps::l2Norm<NF>(q0));
 
     // q1
-    real64 const q0Dotq1 = LvArray::tensorOps::AiBi< NF >( q0, q1 );
-    LvArray::tensorOps::scaledAdd< NF >( q1, q0, -q0Dotq1 );
-    LvArray::tensorOps::scale< NF >( q1, 1.0/LvArray::tensorOps::l2Norm< NF >( q1 ) );
+    real64 const q0Dotq1 = LvArray::tensorOps::AiBi<NF>(q0, q1);
+    LvArray::tensorOps::scaledAdd<NF>(q1, q0, -q0Dotq1);
+    LvArray::tensorOps::scale<NF>(q1, 1.0/LvArray::tensorOps::l2Norm<NF>(q1));
 
     // q2
-    real64 const q0Dotq2 = LvArray::tensorOps::AiBi< NF >( q0, q2 );
-    LvArray::tensorOps::scaledAdd< NF >( q2, q0, -q0Dotq2 );
-    real64 const q1Dotq2 = LvArray::tensorOps::AiBi< NF >( q1, q2 );
-    LvArray::tensorOps::scaledAdd< NF >( q2, q1, -q1Dotq2 );
-    LvArray::tensorOps::scale< NF >( q2, 1.0/LvArray::tensorOps::l2Norm< NF >( q2 ) );
+    real64 const q0Dotq2 = LvArray::tensorOps::AiBi<NF>(q0, q2);
+    LvArray::tensorOps::scaledAdd<NF>(q2, q0, -q0Dotq2);
+    real64 const q1Dotq2 = LvArray::tensorOps::AiBi<NF>(q1, q2);
+    LvArray::tensorOps::scaledAdd<NF>(q2, q1, -q1Dotq2);
+    LvArray::tensorOps::scale<NF>(q2, 1.0/LvArray::tensorOps::l2Norm<NF>(q2));
 
-    for( localIndex i = 0; i < NF; ++i )
+    for(localIndex i = 0; i <NF; ++i)
     {
-      cellToFaceMat[ i ][ 0 ] = q0[ i ];
-      cellToFaceMat[ i ][ 1 ] = q1[ i ];
-      cellToFaceMat[ i ][ 2 ] = q2[ i ];
+      cellToFaceMat[i][0] = q0[i];
+      cellToFaceMat[i][1] = q1[i];
+      cellToFaceMat[i][2] = q2[i];
     }
   }
 
@@ -99,32 +99,32 @@ struct MimeticInnerProductHelpers
    * @param[in,out] cellToFaceVec the vector from the element center to the face center
    * @param[out] tpTransInv the TPFA entry incorporating the multiplier
    */
-  template< localIndex NF >
+  template<localIndex NF>
   GEOSX_HOST_DEVICE
   static void
-  ComputeInvTPFATransWithMultiplier( real64 const (&elemPerm)[ 3 ],
-                                     real64 const (&faceNormal)[ 3 ],
+  ComputeInvTPFATransWithMultiplier(real64 const (&elemPerm)[3],
+                                     real64 const (&faceNormal)[3],
                                      real64 const & faceArea,
                                      real64 const & transMult,
                                      real64 const & weightToleranceInv,
-                                     real64 (& cellToFaceVec)[ 3 ],
-                                     real64 & tpTransInv )
+                                     real64 (& cellToFaceVec)[3],
+                                     real64 & tpTransInv)
   {
-    real64 const c2fDistance = LvArray::tensorOps::normalize< 3 >( cellToFaceVec );
+    real64 const c2fDistance = LvArray::tensorOps::normalize<3>(cellToFaceVec);
     real64 const mult = transMult;
     tpTransInv = c2fDistance / faceArea;
 
-    real64 faceConormal[ 3 ] = { 0.0 };
-    LvArray::tensorOps::hadamardProduct< 3 >( faceConormal, elemPerm, faceNormal );
-    real64 halfWeight = LvArray::tensorOps::AiBi< 3 >( cellToFaceVec, faceConormal );
-    if( halfWeight < 0.0 )
+    real64 faceConormal[3] = {0.0};
+    LvArray::tensorOps::hadamardProduct<3>(faceConormal, elemPerm, faceNormal);
+    real64 halfWeight = LvArray::tensorOps::AiBi<3>(cellToFaceVec, faceConormal);
+    if(halfWeight <0.0)
     {
-      LvArray::tensorOps::hadamardProduct< 3 >( faceConormal, elemPerm, cellToFaceVec );
-      halfWeight = LvArray::tensorOps::AiBi< 3 >( cellToFaceVec, faceConormal );
+      LvArray::tensorOps::hadamardProduct<3>(faceConormal, elemPerm, cellToFaceVec);
+      halfWeight = LvArray::tensorOps::AiBi<3>(cellToFaceVec, faceConormal);
     }
     tpTransInv /= halfWeight;
-    tpTransInv  = LvArray::math::min( tpTransInv, weightToleranceInv );
-    tpTransInv *=  ( 1.0 - mult ) / mult;
+    tpTransInv  = LvArray::math::min(tpTransInv, weightToleranceInv);
+    tpTransInv *=  (1.0 - mult) / mult;
   }
 
 
@@ -134,26 +134,26 @@ struct MimeticInnerProductHelpers
    * @param[in,out] tpTransInv inverse of the (diagonal of the) TPFA transmissibility matrix (already accounting for the multiplier
    * @param[in,out] transMatrix transmissibility matrix
    */
-  template< localIndex NF >
+  template<localIndex NF>
   GEOSX_HOST_DEVICE
   static void
-  ComputeTransMatrixWithMultipliers( real64 const (&tpTransInv)[ NF ],
-                                     arraySlice2d< real64 > const & transMatrix )
+  ComputeTransMatrixWithMultipliers(real64 const (&tpTransInv)[NF],
+                                     arraySlice2d<real64> const & transMatrix)
   {
     // the inverse of the pertubed inverse is computed using the Sherman-Morrison formula
-    for( localIndex k = 0; k < NF; ++k )
+    for(localIndex k = 0; k <NF; ++k)
     {
-      real64 const mult = LvArray::math::sqrt( tpTransInv[k] );
-      real64 Tmult[ NF ] = { 0.0 };
-      for( localIndex i = 0; i < NF; ++i )
+      real64 const mult = LvArray::math::sqrt(tpTransInv[k]);
+      real64 Tmult[NF] = {0.0};
+      for(localIndex i = 0; i <NF; ++i)
       {
         Tmult[i] = transMatrix[k][i] * mult;
       }
 
-      real64 const invDenom = 1.0 / ( 1.0 + Tmult[k] * mult );
-      for( localIndex i = 0; i < NF; ++i )
+      real64 const invDenom = 1.0 / (1.0 + Tmult[k] * mult);
+      for(localIndex i = 0; i <NF; ++i)
       {
-        for( localIndex j = 0; j < NF; ++j )
+        for(localIndex j = 0; j <NF; ++j)
         {
           transMatrix[i][j] -= Tmult[i]*Tmult[j]*invDenom;
         }

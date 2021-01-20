@@ -47,35 +47,35 @@ class MultiFluidPVTPackageWrapperUpdate final : public MultiFluidBaseUpdate
 {
 public:
 
-  MultiFluidPVTPackageWrapperUpdate( pvt::MultiphaseSystem & fluid,
-                                     arrayView1d< pvt::PHASE_TYPE > const & phaseTypes,
-                                     arrayView1d< real64 const > const & componentMolarWeight,
+  MultiFluidPVTPackageWrapperUpdate(pvt::MultiphaseSystem & fluid,
+                                     arrayView1d<pvt::PHASE_TYPE> const & phaseTypes,
+                                     arrayView1d<real64 const> const & componentMolarWeight,
                                      bool useMass,
-                                     arrayView3d< real64 > const & phaseFraction,
-                                     arrayView3d< real64 > const & dPhaseFraction_dPressure,
-                                     arrayView3d< real64 > const & dPhaseFraction_dTemperature,
-                                     arrayView4d< real64 > const & dPhaseFraction_dGlobalCompFraction,
-                                     arrayView3d< real64 > const & phaseDensity,
-                                     arrayView3d< real64 > const & dPhaseDensity_dPressure,
-                                     arrayView3d< real64 > const & dPhaseDensity_dTemperature,
-                                     arrayView4d< real64 > const & dPhaseDensity_dGlobalCompFraction,
-                                     arrayView3d< real64 > const & phaseMassDensity,
-                                     arrayView3d< real64 > const & dPhaseMassDensity_dPressure,
-                                     arrayView3d< real64 > const & dPhaseMassDensity_dTemperature,
-                                     arrayView4d< real64 > const & dPhaseMassDensity_dGlobalCompFraction,
-                                     arrayView3d< real64 > const & phaseViscosity,
-                                     arrayView3d< real64 > const & dPhaseViscosity_dPressure,
-                                     arrayView3d< real64 > const & dPhaseViscosity_dTemperature,
-                                     arrayView4d< real64 > const & dPhaseViscosity_dGlobalCompFraction,
-                                     arrayView4d< real64 > const & phaseCompFraction,
-                                     arrayView4d< real64 > const & dPhaseCompFraction_dPressure,
-                                     arrayView4d< real64 > const & dPhaseCompFraction_dTemperature,
-                                     arrayView5d< real64 > const & dPhaseCompFraction_dGlobalCompFraction,
-                                     arrayView2d< real64 > const & totalDensity,
-                                     arrayView2d< real64 > const & dTotalDensity_dPressure,
-                                     arrayView2d< real64 > const & dTotalDensity_dTemperature,
-                                     arrayView3d< real64 > const & dTotalDensity_dGlobalCompFraction )
-    : MultiFluidBaseUpdate( componentMolarWeight,
+                                     arrayView3d<real64> const & phaseFraction,
+                                     arrayView3d<real64> const & dPhaseFraction_dPressure,
+                                     arrayView3d<real64> const & dPhaseFraction_dTemperature,
+                                     arrayView4d<real64> const & dPhaseFraction_dGlobalCompFraction,
+                                     arrayView3d<real64> const & phaseDensity,
+                                     arrayView3d<real64> const & dPhaseDensity_dPressure,
+                                     arrayView3d<real64> const & dPhaseDensity_dTemperature,
+                                     arrayView4d<real64> const & dPhaseDensity_dGlobalCompFraction,
+                                     arrayView3d<real64> const & phaseMassDensity,
+                                     arrayView3d<real64> const & dPhaseMassDensity_dPressure,
+                                     arrayView3d<real64> const & dPhaseMassDensity_dTemperature,
+                                     arrayView4d<real64> const & dPhaseMassDensity_dGlobalCompFraction,
+                                     arrayView3d<real64> const & phaseViscosity,
+                                     arrayView3d<real64> const & dPhaseViscosity_dPressure,
+                                     arrayView3d<real64> const & dPhaseViscosity_dTemperature,
+                                     arrayView4d<real64> const & dPhaseViscosity_dGlobalCompFraction,
+                                     arrayView4d<real64> const & phaseCompFraction,
+                                     arrayView4d<real64> const & dPhaseCompFraction_dPressure,
+                                     arrayView4d<real64> const & dPhaseCompFraction_dTemperature,
+                                     arrayView5d<real64> const & dPhaseCompFraction_dGlobalCompFraction,
+                                     arrayView2d<real64> const & totalDensity,
+                                     arrayView2d<real64> const & dTotalDensity_dPressure,
+                                     arrayView2d<real64> const & dTotalDensity_dTemperature,
+                                     arrayView3d<real64> const & dTotalDensity_dGlobalCompFraction)
+    : MultiFluidBaseUpdate(componentMolarWeight,
                             useMass,
                             phaseFraction,
                             dPhaseFraction_dPressure,
@@ -100,69 +100,69 @@ public:
                             totalDensity,
                             dTotalDensity_dPressure,
                             dTotalDensity_dTemperature,
-                            dTotalDensity_dGlobalCompFraction ),
-    m_fluid( fluid ),
-    m_phaseTypes( phaseTypes )
+                            dTotalDensity_dGlobalCompFraction),
+    m_fluid(fluid),
+    m_phaseTypes(phaseTypes)
   {}
 
   /// Default copy constructor
-  MultiFluidPVTPackageWrapperUpdate( MultiFluidPVTPackageWrapperUpdate const & ) = default;
+  MultiFluidPVTPackageWrapperUpdate(MultiFluidPVTPackageWrapperUpdate const &) = default;
 
   /// Default move constructor
-  MultiFluidPVTPackageWrapperUpdate( MultiFluidPVTPackageWrapperUpdate && ) = default;
+  MultiFluidPVTPackageWrapperUpdate(MultiFluidPVTPackageWrapperUpdate &&) = default;
 
   /// Deleted copy assignment operator
-  MultiFluidPVTPackageWrapperUpdate & operator=( MultiFluidPVTPackageWrapperUpdate const & ) = delete;
+  MultiFluidPVTPackageWrapperUpdate & operator=(MultiFluidPVTPackageWrapperUpdate const &) = delete;
 
   /// Deleted move assignment operator
-  MultiFluidPVTPackageWrapperUpdate & operator=( MultiFluidPVTPackageWrapperUpdate && ) = delete;
+  MultiFluidPVTPackageWrapperUpdate & operator=(MultiFluidPVTPackageWrapperUpdate &&) = delete;
 
-  virtual void Compute( real64 const pressure,
+  virtual void Compute(real64 const pressure,
                         real64 const temperature,
-                        arraySlice1d< real64 const > const & composition,
-                        arraySlice1d< real64 > const & phaseFraction,
-                        arraySlice1d< real64 > const & phaseDensity,
-                        arraySlice1d< real64 > const & phaseMassDensity,
-                        arraySlice1d< real64 > const & phaseViscosity,
-                        arraySlice2d< real64 > const & phaseCompFraction,
-                        real64 & totalDensity ) const override;
+                        arraySlice1d<real64 const> const & composition,
+                        arraySlice1d<real64> const & phaseFraction,
+                        arraySlice1d<real64> const & phaseDensity,
+                        arraySlice1d<real64> const & phaseMassDensity,
+                        arraySlice1d<real64> const & phaseViscosity,
+                        arraySlice2d<real64> const & phaseCompFraction,
+                        real64 & totalDensity) const override;
 
-  virtual void Compute( real64 const pressure,
+  virtual void Compute(real64 const pressure,
                         real64 const temperature,
-                        arraySlice1d< real64 const > const & composition,
-                        arraySlice1d< real64 > const & phaseFraction,
-                        arraySlice1d< real64 > const & dPhaseFraction_dPressure,
-                        arraySlice1d< real64 > const & dPhaseFraction_dTemperature,
-                        arraySlice2d< real64 > const & dPhaseFraction_dGlobalCompFraction,
-                        arraySlice1d< real64 > const & phaseDensity,
-                        arraySlice1d< real64 > const & dPhaseDensity_dPressure,
-                        arraySlice1d< real64 > const & dPhaseDensity_dTemperature,
-                        arraySlice2d< real64 > const & dPhaseDensity_dGlobalCompFraction,
-                        arraySlice1d< real64 > const & phaseMassDensity,
-                        arraySlice1d< real64 > const & dPhaseMassDensity_dPressure,
-                        arraySlice1d< real64 > const & dPhaseMassDensity_dTemperature,
-                        arraySlice2d< real64 > const & dPhaseMassDensity_dGlobalCompFraction,
-                        arraySlice1d< real64 > const & phaseViscosity,
-                        arraySlice1d< real64 > const & dPhaseViscosity_dPressure,
-                        arraySlice1d< real64 > const & dPhaseViscosity_dTemperature,
-                        arraySlice2d< real64 > const & dPhaseViscosity_dGlobalCompFraction,
-                        arraySlice2d< real64 > const & phaseCompFraction,
-                        arraySlice2d< real64 > const & dPhaseCompFraction_dPressure,
-                        arraySlice2d< real64 > const & dPhaseCompFraction_dTemperature,
-                        arraySlice3d< real64 > const & dPhaseCompFraction_dGlobalCompFraction,
+                        arraySlice1d<real64 const> const & composition,
+                        arraySlice1d<real64> const & phaseFraction,
+                        arraySlice1d<real64> const & dPhaseFraction_dPressure,
+                        arraySlice1d<real64> const & dPhaseFraction_dTemperature,
+                        arraySlice2d<real64> const & dPhaseFraction_dGlobalCompFraction,
+                        arraySlice1d<real64> const & phaseDensity,
+                        arraySlice1d<real64> const & dPhaseDensity_dPressure,
+                        arraySlice1d<real64> const & dPhaseDensity_dTemperature,
+                        arraySlice2d<real64> const & dPhaseDensity_dGlobalCompFraction,
+                        arraySlice1d<real64> const & phaseMassDensity,
+                        arraySlice1d<real64> const & dPhaseMassDensity_dPressure,
+                        arraySlice1d<real64> const & dPhaseMassDensity_dTemperature,
+                        arraySlice2d<real64> const & dPhaseMassDensity_dGlobalCompFraction,
+                        arraySlice1d<real64> const & phaseViscosity,
+                        arraySlice1d<real64> const & dPhaseViscosity_dPressure,
+                        arraySlice1d<real64> const & dPhaseViscosity_dTemperature,
+                        arraySlice2d<real64> const & dPhaseViscosity_dGlobalCompFraction,
+                        arraySlice2d<real64> const & phaseCompFraction,
+                        arraySlice2d<real64> const & dPhaseCompFraction_dPressure,
+                        arraySlice2d<real64> const & dPhaseCompFraction_dTemperature,
+                        arraySlice3d<real64> const & dPhaseCompFraction_dGlobalCompFraction,
                         real64 & totalDensity,
                         real64 & dTotalDensity_dPressure,
                         real64 & dTotalDensity_dTemperature,
-                        arraySlice1d< real64 > const & dTotalDensity_dGlobalCompFraction ) const override;
+                        arraySlice1d<real64> const & dTotalDensity_dGlobalCompFraction) const override;
 
   GEOSX_FORCE_INLINE
-  virtual void Update( localIndex const k,
+  virtual void Update(localIndex const k,
                        localIndex const q,
                        real64 const pressure,
                        real64 const temperature,
-                       arraySlice1d< real64 const > const & composition ) const override
+                       arraySlice1d<real64 const> const & composition) const override
   {
-    Compute( pressure,
+    Compute(pressure,
              temperature,
              composition,
              m_phaseFraction[k][q],
@@ -188,14 +188,14 @@ public:
              m_totalDensity[k][q],
              m_dTotalDensity_dPressure[k][q],
              m_dTotalDensity_dTemperature[k][q],
-             m_dTotalDensity_dGlobalCompFraction[k][q] );
+             m_dTotalDensity_dGlobalCompFraction[k][q]);
   }
 
 private:
 
   pvt::MultiphaseSystem & m_fluid;
 
-  arrayView1d< pvt::PHASE_TYPE > m_phaseTypes;
+  arrayView1d<pvt::PHASE_TYPE> m_phaseTypes;
 
 };
 
@@ -203,13 +203,13 @@ class MultiFluidPVTPackageWrapper : public MultiFluidBase
 {
 public:
 
-  MultiFluidPVTPackageWrapper( std::string const & name, Group * const parent );
+  MultiFluidPVTPackageWrapper(std::string const & name, Group * const parent);
 
   virtual ~MultiFluidPVTPackageWrapper() override;
 
-  virtual std::unique_ptr< ConstitutiveBase >
-  deliverClone( string const & name,
-                Group * const parent ) const override;
+  virtual std::unique_ptr<ConstitutiveBase>
+  deliverClone(string const & name,
+                Group * const parent) const override;
 
   /// Type of kernel wrapper for in-kernel update
   using KernelWrapper = MultiFluidPVTPackageWrapperUpdate;
@@ -220,7 +220,7 @@ public:
    */
   KernelWrapper createKernelWrapper()
   {
-    return KernelWrapper( *m_fluid,
+    return KernelWrapper(*m_fluid,
                           m_phaseTypes,
                           m_componentMolarWeight,
                           m_useMass,
@@ -247,23 +247,23 @@ public:
                           m_totalDensity,
                           m_dTotalDensity_dPressure,
                           m_dTotalDensity_dTemperature,
-                          m_dTotalDensity_dGlobalCompFraction );
+                          m_dTotalDensity_dGlobalCompFraction);
   }
 
 protected:
 
   virtual void PostProcessInput() override;
 
-  virtual void InitializePostSubGroups( Group * const group ) override;
+  virtual void InitializePostSubGroups(Group * const group) override;
 
   /// function that populates m_fluid ptr; to be overriden by derived classes
   virtual void createFluid() = 0;
 
   /// PVTPackage fluid object
-  std::unique_ptr< pvt::MultiphaseSystem > m_fluid;
+  std::unique_ptr<pvt::MultiphaseSystem> m_fluid;
 
   /// PVTPackage phase labels
-  array1d< pvt::PHASE_TYPE > m_phaseTypes;
+  array1d<pvt::PHASE_TYPE> m_phaseTypes;
 };
 
 } //namespace constitutive

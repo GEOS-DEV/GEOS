@@ -42,8 +42,8 @@ public:
    * @param name name of the object in the data hierarchy.
    * @param parent pointer to the parent group in the data hierarchy.
    */
-  ThickPlane( const std::string & name,
-              Group * const parent );
+  ThickPlane(const std::string & name,
+              Group * const parent);
 
   /**
    * @brief Default destructor.
@@ -61,11 +61,11 @@ public:
    * @brief Get the catalog name.
    * @return the name of this class in the catalog
    */
-  static string CatalogName() { return "ThickPlane"; }
+  static string CatalogName() {return "ThickPlane";}
 
   ///@}
 
-  bool IsCoordInObject( real64 const ( &coord ) [3] ) const override final;
+  bool IsCoordInObject(real64 const (&coord) [3]) const override final;
 
   /**
    * @name Getters

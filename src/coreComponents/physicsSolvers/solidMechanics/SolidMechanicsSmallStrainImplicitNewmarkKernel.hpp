@@ -40,18 +40,18 @@ namespace SolidMechanicsLagrangianFEMKernels
  * geosx::finiteElement::RegionBasedKernelApplication.
  *
  */
-template< typename SUBREGION_TYPE,
+template<typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
-          typename FE_TYPE >
-class ImplicitNewmark : public QuasiStatic< SUBREGION_TYPE,
+          typename FE_TYPE>
+class ImplicitNewmark : public QuasiStatic<SUBREGION_TYPE,
                                             CONSTITUTIVE_TYPE,
-                                            FE_TYPE >
+                                            FE_TYPE>
 {
 public:
   /// Alias for the base class;
-  using Base = QuasiStatic< SUBREGION_TYPE,
+  using Base = QuasiStatic<SUBREGION_TYPE,
                             CONSTITUTIVE_TYPE,
-                            FE_TYPE >;
+                            FE_TYPE>;
 
   using Base::numNodesPerElem;
   using Base::numTestSupportPointsPerElem;
@@ -79,23 +79,23 @@ public:
    * @param inputStiffnessDamping The stiffness damping coefficient.
    * @param inputDt The timestep for the physics update.
    */
-  ImplicitNewmark( NodeManager const & nodeManager,
+  ImplicitNewmark(NodeManager const & nodeManager,
                    EdgeManager const & edgeManager,
                    FaceManager const & faceManager,
                    SUBREGION_TYPE const & elementSubRegion,
                    FE_TYPE const & finiteElementSpace,
                    CONSTITUTIVE_TYPE * const inputConstitutiveType,
-                   arrayView1d< globalIndex const > const & inputDofNumber,
+                   arrayView1d<globalIndex const> const & inputDofNumber,
                    globalIndex const rankOffset,
-                   CRSMatrixView< real64, globalIndex const > const & inputMatrix,
-                   arrayView1d< real64 > const & inputRhs,
+                   CRSMatrixView<real64, globalIndex const> const & inputMatrix,
+                   arrayView1d<real64> const & inputRhs,
                    real64 const (&inputGravityVector)[3],
                    real64 const inputNewmarkGamma,
                    real64 const inputNewmarkBeta,
                    real64 const inputMassDamping,
                    real64 const inputStiffnessDamping,
-                   real64 const inputDt ):
-    Base( nodeManager,
+                   real64 const inputDt):
+    Base(nodeManager,
           edgeManager,
           faceManager,
           elementSubRegion,
@@ -105,14 +105,14 @@ public:
           rankOffset,
           inputMatrix,
           inputRhs,
-          inputGravityVector ),
-    m_vtilde( nodeManager.totalDisplacement()),
-    m_uhattilde( nodeManager.totalDisplacement()),
-    m_newmarkGamma( inputNewmarkGamma ),
-    m_newmarkBeta( inputNewmarkBeta ),
-    m_massDamping( inputMassDamping ),
-    m_stiffnessDamping( inputStiffnessDamping ),
-    m_dt( inputDt )
+          inputGravityVector),
+    m_vtilde(nodeManager.totalDisplacement()),
+    m_uhattilde(nodeManager.totalDisplacement()),
+    m_newmarkGamma(inputNewmarkGamma),
+    m_newmarkBeta(inputNewmarkBeta),
+    m_massDamping(inputMassDamping),
+    m_stiffnessDamping(inputStiffnessDamping),
+    m_dt(inputDt)
   {}
 
 
@@ -134,13 +134,13 @@ public:
     GEOSX_HOST_DEVICE
     StackVariables():
       Base::StackVariables(),
-            dRdU_InertiaMassDamping{ {0.0} },
+            dRdU_InertiaMassDamping{{0.0}},
       vtilde_local(),
       uhattilde_local()
     {}
 
     /// Stack storage for the Inertial damping contributions to the Jacobian
-    real64 dRdU_InertiaMassDamping[ numRows ][ numCols ];
+    real64 dRdU_InertiaMassDamping[numRows][numCols];
 
     /// Stack storage for the velocity predictor.
     real64 vtilde_local[numNodesPerElem][numDofPerTrialSupportPoint];
@@ -160,19 +160,19 @@ public:
    */
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  void setup( localIndex const k,
-              StackVariables & stack ) const
+  void setup(localIndex const k,
+              StackVariables & stack) const
   {
-    for( localIndex a=0; a<numNodesPerElem; ++a )
+    for(localIndex a=0; a<numNodesPerElem; ++a)
     {
-      localIndex const localNodeIndex = m_elemsToNodes( k, a );
-      for( localIndex i=0; i<numDofPerTrialSupportPoint; ++i )
+      localIndex const localNodeIndex = m_elemsToNodes(k, a);
+      for(localIndex i=0; i<numDofPerTrialSupportPoint; ++i)
       {
-        stack.vtilde_local[ a ][ i ] = m_vtilde[ localNodeIndex ][ i ];
-        stack.uhattilde_local[ a ][ i ] = m_uhattilde[ localNodeIndex ][ i ];
+        stack.vtilde_local[a][i] = m_vtilde[localNodeIndex][i];
+        stack.uhattilde_local[a][i] = m_uhattilde[localNodeIndex][i];
       }
     }
-    Base::setup( k, stack );
+    Base::setup(k, stack);
   }
 
   /**
@@ -183,35 +183,35 @@ public:
    */
   GEOSX_DEVICE
   GEOSX_FORCE_INLINE
-  void quadraturePointKernel( localIndex const k,
+  void quadraturePointKernel(localIndex const k,
                               localIndex const q,
-                              StackVariables & stack ) const
+                              StackVariables & stack) const
   {
 
-    Base::quadraturePointKernel( k, q, stack );
+    Base::quadraturePointKernel(k, q, stack);
     real64 detJ=0;
 
     real64 N[numNodesPerElem];
-    FE_TYPE::calcN( q, N );
+    FE_TYPE::calcN(q, N);
 
-    for( int a=0; a<numNodesPerElem; ++a )
+    for(int a=0; a<numNodesPerElem; ++a)
     {
-      for( int b=a; b<numNodesPerElem; ++b )
+      for(int b=a; b<numNodesPerElem; ++b)
       {
-        real64 const integrationFactor = m_density( k, q ) * N[a] * N[b] * detJ;
-        real64 const temp1 = ( m_massDamping * m_newmarkGamma/( m_newmarkBeta * m_dt )
-                               + 1.0 / ( m_newmarkBeta * m_dt * m_dt ) )* integrationFactor;
+        real64 const integrationFactor = m_density(k, q) * N[a] * N[b] * detJ;
+        real64 const temp1 = (m_massDamping * m_newmarkGamma/(m_newmarkBeta * m_dt)
+                               + 1.0 / (m_newmarkBeta * m_dt * m_dt))* integrationFactor;
 
         constexpr int nsdof = numDofPerTestSupportPoint;
-        for( int i=0; i<nsdof; ++i )
+        for(int i=0; i<nsdof; ++i)
         {
-          real64 const acc = 1.0 / ( m_newmarkBeta * m_dt * m_dt ) * ( stack.uhat_local[b][i] - stack.uhattilde_local[b][i] );
+          real64 const acc = 1.0 / (m_newmarkBeta * m_dt * m_dt) * (stack.uhat_local[b][i] - stack.uhattilde_local[b][i]);
           real64 const vel = stack.vtilde_local[b][i] +
-                             m_newmarkGamma/( m_newmarkBeta * m_dt ) *( stack.uhat_local[b][i]
-                                                                        - stack.uhattilde_local[b][i] );
+                             m_newmarkGamma/(m_newmarkBeta * m_dt) *(stack.uhat_local[b][i]
+                                                                        - stack.uhattilde_local[b][i]);
 
-          stack.dRdU_InertiaMassDamping[ a*nsdof+i][ b*nsdof+i ] -= temp1;
-          stack.localResidual[ a*nsdof+i ] -= ( m_massDamping * vel + acc ) * integrationFactor;
+          stack.dRdU_InertiaMassDamping[a*nsdof+i][b*nsdof+i] -= temp1;
+          stack.localResidual[a*nsdof+i] -= (m_massDamping * vel + acc) * integrationFactor;
         }
       }
     }
@@ -225,52 +225,52 @@ public:
    */
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  real64 complete( localIndex const k,
-                   StackVariables & stack ) const
+  real64 complete(localIndex const k,
+                   StackVariables & stack) const
   {
 
-    for( int a=0; a<numNodesPerElem; ++a )
+    for(int a=0; a<numNodesPerElem; ++a)
     {
-      for( int b=0; b<numNodesPerElem; ++b )
+      for(int b=0; b<numNodesPerElem; ++b)
       {
-        for( int i=0; i<numDofPerTestSupportPoint; ++i )
+        for(int i=0; i<numDofPerTestSupportPoint; ++i)
         {
-          for( int j=0; j<numDofPerTrialSupportPoint; ++j )
+          for(int j=0; j<numDofPerTrialSupportPoint; ++j)
           {
-            stack.localResidual[ a*numDofPerTestSupportPoint+i ] =
-              stack.localResidual[ a*numDofPerTestSupportPoint+i ] +
-              m_stiffnessDamping * stack.localJacobian[ a*numDofPerTestSupportPoint+i][ b*numDofPerTrialSupportPoint+j ] *
-              ( stack.vtilde_local[b][j] + m_newmarkGamma/(m_newmarkBeta * m_dt)*(stack.uhat_local[b][j]-stack.uhattilde_local[b][j]) );
+            stack.localResidual[a*numDofPerTestSupportPoint+i] =
+              stack.localResidual[a*numDofPerTestSupportPoint+i] +
+              m_stiffnessDamping * stack.localJacobian[a*numDofPerTestSupportPoint+i][b*numDofPerTrialSupportPoint+j] *
+              (stack.vtilde_local[b][j] + m_newmarkGamma/(m_newmarkBeta * m_dt)*(stack.uhat_local[b][j]-stack.uhattilde_local[b][j]));
 
             stack.localJacobian[a*numDofPerTestSupportPoint+i][b*numDofPerTrialSupportPoint+j] =
               stack.localJacobian[a*numDofPerTestSupportPoint+i][b*numDofPerTrialSupportPoint+j] +
-              stack.localJacobian[a][b] * (1.0 + m_stiffnessDamping * m_newmarkGamma / ( m_newmarkBeta * m_dt ) ) +
-              stack.dRdU_InertiaMassDamping[ a*numDofPerTestSupportPoint+i ][ b*numDofPerTrialSupportPoint+j ];
+              stack.localJacobian[a][b] * (1.0 + m_stiffnessDamping * m_newmarkGamma / (m_newmarkBeta * m_dt)) +
+              stack.dRdU_InertiaMassDamping[a*numDofPerTestSupportPoint+i][b*numDofPerTrialSupportPoint+j];
           }
         }
       }
     }
 
-    for( int a=0; a<stack.numRows; ++a )
+    for(int a=0; a<stack.numRows; ++a)
     {
-      for( int b=0; b<stack.numCols; ++b )
+      for(int b=0; b<stack.numCols; ++b)
       {
-        stack.localJacobian[a][b] += stack.localJacobian[a][b] * (1.0 + m_stiffnessDamping * m_newmarkGamma / ( m_newmarkBeta * m_dt ) )
-                                     + stack.dRdU_InertiaMassDamping[ a ][ b ];
+        stack.localJacobian[a][b] += stack.localJacobian[a][b] * (1.0 + m_stiffnessDamping * m_newmarkGamma / (m_newmarkBeta * m_dt))
+                                     + stack.dRdU_InertiaMassDamping[a][b];
       }
     }
 
-    return Base::complete( k, stack );
+    return Base::complete(k, stack);
   }
 
 
 
 protected:
   /// The rank-global velocity predictor
-  arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const m_vtilde;
+  arrayView2d<real64 const, nodes::TOTAL_DISPLACEMENT_USD> const m_vtilde;
 
   /// The rank-global incremental displacement predictor
-  arrayView2d< real64 const, nodes::INCR_DISPLACEMENT_USD > const m_uhattilde;
+  arrayView2d<real64 const, nodes::INCR_DISPLACEMENT_USD> const m_uhattilde;
 
   /// The Gamma parameter for Newmark's method.
   real64 const m_newmarkGamma;

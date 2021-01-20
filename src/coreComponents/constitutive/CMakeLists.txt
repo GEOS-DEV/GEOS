@@ -1,7 +1,7 @@
 #
 # Specify all headers
 #
-set( constitutive_headers
+set(constitutive_headers
      ConstitutiveManager.hpp
      ConstitutiveBase.hpp
      ConstitutivePassThruHandler.hpp
@@ -59,7 +59,7 @@ set( constitutive_headers
 #
 # Specify all sources
 #
-set( constitutive_sources
+set(constitutive_sources
      ConstitutiveManager.cpp
      ConstitutiveBase.cpp
      NullModel.cpp
@@ -101,47 +101,47 @@ set( constitutive_sources
      capillaryPressure/VanGenuchtenCapillaryPressure.cpp
    )
 
-if( BUILD_OBJ_LIBS)
-  set( dependencyList dataRepository)
+if(BUILD_OBJ_LIBS)
+  set(dependencyList dataRepository)
 else()
-  set( dependencyList common )
+  set(dependencyList common)
 endif()
 
 
 
-if( ENABLE_PVTPackage )
-    set( constitutive_headers
+if(ENABLE_PVTPackage)
+    set(constitutive_headers
          ${constitutive_headers}
          fluid/MultiFluidPVTPackageWrapper.hpp
          fluid/CompositionalMultiphaseFluid.hpp
          fluid/BlackOilFluid.hpp
        )
-    set( constitutive_sources
+    set(constitutive_sources
          ${constitutive_sources}
          fluid/MultiFluidPVTPackageWrapper.cpp
          fluid/CompositionalMultiphaseFluid.cpp
          fluid/BlackOilFluid.cpp
        )
-    set( dependencyList ${dependencyList} PVTPackage )
+    set(dependencyList ${dependencyList} PVTPackage)
 endif()
 
-if ( ENABLE_OPENMP )
-  set( dependencyList ${dependencyList} openmp )
+if (ENABLE_OPENMP)
+  set(dependencyList ${dependencyList} openmp)
 endif()
 
-if ( ENABLE_CUDA )
-  set( dependencyList ${dependencyList} cuda )
+if (ENABLE_CUDA)
+  set(dependencyList ${dependencyList} cuda)
 endif()
 
-blt_add_library( NAME                  constitutive
+blt_add_library(NAME                  constitutive
                  SOURCES               ${constitutive_sources}
                  HEADERS               ${constitutive_headers}
                  DEPENDS_ON            ${dependencyList}
                  OBJECT                ${buildAsObj}
                )
                
-target_include_directories( constitutive PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
+target_include_directories(constitutive PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)
 
-add_subdirectory( unitTests )
+add_subdirectory(unitTests)
 
-geosx_add_code_checks( PREFIX constitutive )
+geosx_add_code_checks(PREFIX constitutive)

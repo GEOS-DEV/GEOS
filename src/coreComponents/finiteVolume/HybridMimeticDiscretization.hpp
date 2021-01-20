@@ -35,7 +35,7 @@ class HybridMimeticDiscretization : public dataRepository::Group
 public:
 
   /// Alias for CatalogInterface, necessary declarations for factory instantiation of derived classes
-  using CatalogInterface = dataRepository::CatalogInterface< HybridMimeticDiscretization, string const &, Group * const >;
+  using CatalogInterface = dataRepository::CatalogInterface<HybridMimeticDiscretization, string const &, Group * const>;
 
   /**
    * @brief Return the data type in the data repository.
@@ -47,7 +47,7 @@ public:
    * @brief Static Factory Catalog Functions.
    * @return the catalog name
    */
-  static std::string CatalogName() { return "HybridMimeticDiscretization"; }
+  static std::string CatalogName() {return "HybridMimeticDiscretization";}
 
   HybridMimeticDiscretization() = delete;
 
@@ -56,7 +56,7 @@ public:
    * @param name the name of the HybridMimeticDiscretization in the data repository
    * @param parent the parent group of this group.
    */
-  HybridMimeticDiscretization( std::string const & name, dataRepository::Group * const parent );
+  HybridMimeticDiscretization(std::string const & name, dataRepository::Group * const parent);
 
   /**
    * @brief View keys.
@@ -75,9 +75,9 @@ public:
 
 protected:
 
-  virtual void RegisterDataOnMesh( Group * const meshBodies ) override;
+  virtual void RegisterDataOnMesh(Group * const meshBodies) override;
 
-  virtual void InitializePostInitialConditions_PreSubGroups( Group * const rootGroup ) override;
+  virtual void InitializePostInitialConditions_PreSubGroups(Group * const rootGroup) override;
 
 private:
 
@@ -89,10 +89,10 @@ private:
 
   /**
    * @brief Factory method to instantiate a type of mimetic inner product.
-   * @return A unique_ptr< MimeticInnerProductBase > which contains the new
+   * @return A unique_ptr<MimeticInnerProductBase> which contains the new
    *   instantiation.
    */
-  std::unique_ptr< mimeticInnerProduct::MimeticInnerProductBase > factory( string const & mimeticInnerProductType ) const;
+  std::unique_ptr<mimeticInnerProduct::MimeticInnerProductBase> factory(string const & mimeticInnerProductType) const;
 
 };
 

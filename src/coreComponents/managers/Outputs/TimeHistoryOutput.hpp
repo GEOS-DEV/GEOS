@@ -38,18 +38,18 @@ class TimeHistoryOutput : public OutputBase
 {
 public:
   /// @copydoc geosx::dataRepository::Group::Group(std::string const & name, Group * const parent)
-  TimeHistoryOutput( string const & name,
-                     Group * const parent );
+  TimeHistoryOutput(string const & name,
+                     Group * const parent);
 
   /// Destructor
   virtual ~TimeHistoryOutput() override
-  { }
+  {}
 
   /**
    * @brief Catalog name interface
    * @return This type's catalog name
    */
-  static string CatalogName() { return "TimeHistory"; }
+  static string CatalogName() {return "TimeHistory";}
 
   /**
    * @brief Perform initalization after all subgroups have been initialized.
@@ -59,27 +59,27 @@ public:
    * @param group The problem manager cast to a group.
    * @note There are operations in this function that are collective on the GEOSX comm.
    */
-  virtual void InitializePostSubGroups( Group * const group ) override;
+  virtual void InitializePostSubGroups(Group * const group) override;
 
   /**
    * @brief Writes out a time history file.
    * @copydoc EventBase::Execute()
    */
-  virtual void Execute( real64 const time_n,
+  virtual void Execute(real64 const time_n,
                         real64 const dt,
                         integer const cycleNumber,
                         integer const eventCounter,
                         real64 const eventProgress,
-                        dataRepository::Group * domain ) override;
+                        dataRepository::Group * domain) override;
   /**
    * @brief Writes out a time history file at the end of the simulation.
    * @copydoc ExecutableGroup::Cleanup()
    */
-  virtual void Cleanup( real64 const time_n,
+  virtual void Cleanup(real64 const time_n,
                         integer const cycleNumber,
                         integer const eventCounter,
                         real64 const eventProgress,
-                        dataRepository::Group * domain ) override;
+                        dataRepository::Group * domain) override;
 
   /// @cond DO_NOT_DOCUMENT
   struct viewKeys
@@ -98,7 +98,7 @@ private:
    * @param group The ProblemManager cast to a Group
    * @param collector The HistoryCollector to intialize
    */
-  void initCollectorParallel( ProblemManager & problemManager, HistoryCollection * collector );
+  void initCollectorParallel(ProblemManager & problemManager, HistoryCollection * collector);
 
   /// The paths of the collectors to collect history from.
   string_array m_collectorPaths;
@@ -109,7 +109,7 @@ private:
   /// The discrete number of time history states expected to be written to the file
   integer m_recordCount;
   /// The buffered time history output objects for each collector to collect data into and to use to configure/write to file.
-  std::vector< std::unique_ptr< BufferedHistoryIO > > m_io;
+  std::vector<std::unique_ptr<BufferedHistoryIO>> m_io;
 };
 }
 

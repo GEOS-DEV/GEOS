@@ -31,8 +31,8 @@ namespace geosx
 class DirichletBoundaryCondition : public FieldSpecificationBase
 {
 public:
-  /// @copydoc geosx::dataRepository::Group::Group( std::string const & name, Group * const parent )
-  DirichletBoundaryCondition( string const & name, dataRepository::Group * const parent );
+  /// @copydoc geosx::dataRepository::Group::Group(std::string const & name, Group * const parent)
+  DirichletBoundaryCondition(string const & name, dataRepository::Group * const parent);
 
   /**
    * @brief destructor
@@ -48,7 +48,7 @@ public:
    * @brief Static Factory Catalog Functions
    * @return the catalog name
    */
-  static string CatalogName() { return "Dirichlet"; }
+  static string CatalogName() {return "Dirichlet";}
 
   virtual const string getCatalogName() const
   {

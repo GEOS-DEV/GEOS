@@ -7,12 +7,12 @@ namespace geosx
 
 bool prefer_pinned_buffer = true;
 
-void setPreferPinned( bool p )
+void setPreferPinned(bool p)
 {
   prefer_pinned_buffer = p;
 }
 
-bool getPreferPinned( )
+bool getPreferPinned()
 {
   return prefer_pinned_buffer;
 }

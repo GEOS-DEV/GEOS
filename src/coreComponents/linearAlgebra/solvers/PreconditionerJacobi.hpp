@@ -25,13 +25,13 @@ namespace geosx
  * @brief Common interface for identity preconditioning operator
  * @tparam LAI linear algebra interface providing vectors, matrices and solvers
  */
-template< typename LAI >
-class PreconditionerJacobi : public PreconditionerBase< LAI >
+template<typename LAI>
+class PreconditionerJacobi : public PreconditionerBase<LAI>
 {
 public:
 
   /// Alias for base type
-  using Base = PreconditionerBase< LAI >;
+  using Base = PreconditionerBase<LAI>;
 
   /// Alias for vector type
   using Vector = typename Base::Vector;
@@ -43,11 +43,11 @@ public:
    * @brief Compute the preconditioner from a matrix.
    * @param mat the matrix to precondition.
    */
-  virtual void compute( Matrix const & mat ) override
+  virtual void compute(Matrix const & mat) override
   {
-    GEOSX_LAI_ASSERT( mat.ready() );
-    m_diagInv.createWithLocalSize( mat.numLocalRows(), mat.getComm() );
-    mat.extractDiagonal( m_diagInv );
+    GEOSX_LAI_ASSERT(mat.ready());
+    m_diagInv.createWithLocalSize(mat.numLocalRows(), mat.getComm());
+    mat.extractDiagonal(m_diagInv);
     m_diagInv.reciprocal();
   }
 
@@ -56,11 +56,11 @@ public:
    * @param mat the matrix to precondition
    * @param dofManager the Degree-of-Freedom manager associated with matrix
    */
-  virtual void compute( Matrix const & mat,
-                        DofManager const & dofManager ) override
+  virtual void compute(Matrix const & mat,
+                        DofManager const & dofManager) override
   {
-    GEOSX_UNUSED_VAR( dofManager );
-    compute( mat );
+    GEOSX_UNUSED_VAR(dofManager);
+    compute(mat);
   }
 
   /**
@@ -85,7 +85,7 @@ public:
    */
   virtual globalIndex numGlobalRows() const override final
   {
-    GEOSX_LAI_ASSERT( m_diagInv.ready() );
+    GEOSX_LAI_ASSERT(m_diagInv.ready());
     return m_diagInv.globalSize();
   }
 
@@ -95,7 +95,7 @@ public:
    */
   virtual globalIndex numGlobalCols() const override final
   {
-    GEOSX_LAI_ASSERT( m_diagInv.ready() );
+    GEOSX_LAI_ASSERT(m_diagInv.ready());
     return m_diagInv.globalSize();
   }
 
@@ -105,14 +105,14 @@ public:
    * @param src Input vector (src).
    * @param dst Output vector (dst).
    */
-  virtual void apply( Vector const & src,
-                      Vector & dst ) const override
+  virtual void apply(Vector const & src,
+                      Vector & dst) const override
   {
-    GEOSX_LAI_ASSERT( m_diagInv.ready() );
-    GEOSX_LAI_ASSERT_EQ( this->numGlobalRows(), dst.globalSize() );
-    GEOSX_LAI_ASSERT_EQ( this->numGlobalCols(), src.globalSize() );
+    GEOSX_LAI_ASSERT(m_diagInv.ready());
+    GEOSX_LAI_ASSERT_EQ(this->numGlobalRows(), dst.globalSize());
+    GEOSX_LAI_ASSERT_EQ(this->numGlobalCols(), src.globalSize());
 
-    m_diagInv.pointwiseProduct( src, dst );
+    m_diagInv.pointwiseProduct(src, dst);
   }
 
 private:

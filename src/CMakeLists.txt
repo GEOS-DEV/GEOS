@@ -5,7 +5,7 @@ cmake_minimum_required(VERSION 3.9)
 ################################
 project(geosx LANGUAGES C CXX)
 set(BLT_CXX_STD "c++14" CACHE STRING "Version of C++ standard")
-set( ENABLE_WARNINGS_AS_ERRORS "ON" CACHE PATH "")
+set(ENABLE_WARNINGS_AS_ERRORS "ON" CACHE PATH "")
 set(CMAKE_ENABLE_EXPORTS ON)
 
 ################################
@@ -46,7 +46,7 @@ add_subdirectory(thirdparty)
 ################################
 # Add components
 ################################
-set( externalComponentsLinkList "" ) 
+set(externalComponentsLinkList "") 
 add_subdirectory(externalComponents)
 add_subdirectory(coreComponents)
 add_subdirectory(main)
@@ -74,10 +74,10 @@ include(cmake/GeosxConfig.cmake)
 ################################
 # Add main
 ################################
-set( extraComponentsLinkList "")
-if( ENABLE_PYTHON )
-  if( PYTHON_DIR )
-    set( extraComponentsLinkList ${extraComponentsLinkList} python_interp )
+set(extraComponentsLinkList "")
+if(ENABLE_PYTHON)
+  if(PYTHON_DIR)
+    set(extraComponentsLinkList ${extraComponentsLinkList} python_interp)
 #    blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT -DGEOSX_USE_PYTHON=1)
     blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT -L${PYTHON_DIR}/lib)
   else()
@@ -87,18 +87,18 @@ else()
 #  blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT -DGEOSX_USE_PYTHON=0)
 endif()
 
-if( ENABLE_OPENMP )
-  set( extraComponentsLinkList ${extraComponentsLinkList} openmp )
+if(ENABLE_OPENMP)
+  set(extraComponentsLinkList ${extraComponentsLinkList} openmp)
 endif()
 
-if( ENABLE_CUDA )
-  set( extraComponentsLinkList ${extraComponentsLinkList} cuda ) 
+if(ENABLE_CUDA)
+  set(extraComponentsLinkList ${extraComponentsLinkList} cuda) 
 endif()
 
-if ( GEOSX_BUILD_SHARED_LIBS )
-  set( extraComponentsLinkList ${extraComponentsLinkList} geosx_core )
+if (GEOSX_BUILD_SHARED_LIBS)
+  set(extraComponentsLinkList ${extraComponentsLinkList} geosx_core)
 else()
-  set( extraComponentsLinkList ${extraComponentsLinkList} ${geosx_core_libs} )
+  set(extraComponentsLinkList ${extraComponentsLinkList} ${geosx_core_libs})
 endif()
 
 blt_add_executable(NAME geosx
@@ -111,23 +111,23 @@ blt_add_executable(NAME geosx
 # the BLT behavior which imposes all dependencies to be public
 #set_target_properties(geosx_core PROPERTIES INTERFACE_LINK_LIBRARIES "")
 
-target_include_directories( geosx PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)
+target_include_directories(geosx PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)
 
 # To change the runtime path during installation
-set_target_properties( geosx PROPERTIES INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib" )
-set_target_properties( geosx PROPERTIES INSTALL_RPATH_USE_LINK_PATH TRUE )
+set_target_properties(geosx PROPERTIES INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
+set_target_properties(geosx PROPERTIES INSTALL_RPATH_USE_LINK_PATH TRUE)
 
 install(TARGETS geosx RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
 
-if( ENABLE_XML_UPDATES AND ENABLE_MPI AND UNIX AND NOT CMAKE_HOST_APPLE AND NOT ENABLE_CUDA )
-  add_custom_target( geosx_update_rst_tables
+if(ENABLE_XML_UPDATES AND ENABLE_MPI AND UNIX AND NOT CMAKE_HOST_APPLE AND NOT ENABLE_CUDA)
+  add_custom_target(geosx_update_rst_tables
                      ALL
-                     COMMAND bash ${CMAKE_SOURCE_DIR}/../scripts/updateRstTables.bash ${CMAKE_SOURCE_DIR} > updateRstTables.log
+                     COMMAND bash ${CMAKE_SOURCE_DIR}/../scripts/updateRstTables.bash ${CMAKE_SOURCE_DIR}> updateRstTables.log
                      WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
                      DEPENDS geosx
                      )
 
-  add_custom_target( geosx_validate_all_xml_files
+  add_custom_target(geosx_validate_all_xml_files
                      ALL
                      COMMAND bash ${CMAKE_SOURCE_DIR}/../scripts/validateXMLFiles.bash -g ${CMAKE_SOURCE_DIR}/coreComponents/fileIO/schema/schema.xsd ${CMAKE_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/../examples
                      WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
@@ -135,15 +135,15 @@ if( ENABLE_XML_UPDATES AND ENABLE_MPI AND UNIX AND NOT CMAKE_HOST_APPLE AND NOT 
                      )
 endif()
 
-if( SPHINX_FOUND )
-  blt_add_sphinx_target( geosx_docs )
+if(SPHINX_FOUND)
+  blt_add_sphinx_target(geosx_docs)
 endif()
 
 
-install( DIRECTORY ../examples/ 
+install(DIRECTORY ../examples/ 
      DESTINATION examples
      )
 
-install( DIRECTORY ../scripts/ 
+install(DIRECTORY ../scripts/ 
      DESTINATION scripts
      )

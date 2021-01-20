@@ -28,7 +28,7 @@ namespace PVTProps
 {
 
 //calc density based on table 3
-real64 f( const real64 & T, const real64 & P, const real64 & rho )
+real64 f(const real64 & T, const real64 & P, const real64 & rho)
 {
   constexpr real64 n[] =
   {0.38856823203161, 2.938547594274, -5.5867188534934, -0.76753199592477, 0.31729005580416, 0.54803315897767, 0.12279411220335, 2.165896154322,
@@ -81,60 +81,60 @@ real64 f( const real64 & T, const real64 & P, const real64 & rho )
 
   real64 phi_r_delta = 0.0;
 
-  for( int i=0; i<7; i++ )
+  for(int i=0; i<7; i++)
   {
-    phi_r_delta += n[i] * d[i] * pow( delta, d[i]-1.0 ) * pow( tau, t[i] );
+    phi_r_delta += n[i] * d[i] * pow(delta, d[i]-1.0) * pow(tau, t[i]);
   }
 
-  for( int i=7; i<34; i++ )
+  for(int i=7; i<34; i++)
   {
-    phi_r_delta += n[i] * exp( -pow( delta, c[i] )) * pow( delta, d[i] - 1.0 ) * pow( tau, t[i] ) * (d[i] - c[i] * pow( delta, c[i] ));
+    phi_r_delta += n[i] * exp(-pow(delta, c[i])) * pow(delta, d[i] - 1.0) * pow(tau, t[i]) * (d[i] - c[i] * pow(delta, c[i]));
   }
 
-  for( int i=34; i<39; i++ )
+  for(int i=34; i<39; i++)
   {
     phi_r_delta += n[i] *
-                   pow( delta,
-                        d[i] ) *
-                   pow( tau,
-                        t[i] ) *
-                   exp( -alpha[i] *
-                        pow( delta - epslon[i], 2.0 ) - beta[i] * pow( tau - gamma0[i], 2.0 )) * (d[i] / delta - 2.0 * alpha[i] * (delta - epslon[i]));
+                   pow(delta,
+                        d[i]) *
+                   pow(tau,
+                        t[i]) *
+                   exp(-alpha[i] *
+                        pow(delta - epslon[i], 2.0) - beta[i] * pow(tau - gamma0[i], 2.0)) * (d[i] / delta - 2.0 * alpha[i] * (delta - epslon[i]));
   }
 
-  for( int i=39; i<42; i++ )
+  for(int i=39; i<42; i++)
   {
-    theta = 1.0 - tau + A[i] * pow( pow( delta - 1.0, 2.0 ), 1.0 / (2.0 * beta[i]));
-    Delta = pow( theta, 2.0 ) + B[i] * pow( pow( delta - 1.0, 2.0 ), a[i] );
+    theta = 1.0 - tau + A[i] * pow(pow(delta - 1.0, 2.0), 1.0 / (2.0 * beta[i]));
+    Delta = pow(theta, 2.0) + B[i] * pow(pow(delta - 1.0, 2.0), a[i]);
 
-    Phi = exp( -C[i] * pow( delta - 1.0, 2.0 ) - D[i] * pow( tau - 1.0, 2.0 ));
+    Phi = exp(-C[i] * pow(delta - 1.0, 2.0) - D[i] * pow(tau - 1.0, 2.0));
 
     dPhi_delta = -2.0 * C[i] * (delta - 1.0) * Phi;
 
     dDelta_delta = (delta - 1.0) *
                    (A[i] * theta * 2.0 / beta[i] *
-                    pow( pow( delta - 1.0, 2.0 ), 1.0 / (2.0 * beta[i]) - 1.0 ) + 2.0 * B[i] * a[i] * pow( pow( delta - 1.0, 2.0 ), a[i] - 1.0 ));
+                    pow(pow(delta - 1.0, 2.0), 1.0 / (2.0 * beta[i]) - 1.0) + 2.0 * B[i] * a[i] * pow(pow(delta - 1.0, 2.0), a[i] - 1.0));
 
-    dDelta_delta_b = b[i] * pow( Delta, b[i] - 1.0 ) * dDelta_delta;
+    dDelta_delta_b = b[i] * pow(Delta, b[i] - 1.0) * dDelta_delta;
 
-    phi_r_delta += n[i] * (pow( Delta, b[i] ) * (Phi + delta *dPhi_delta) + dDelta_delta_b * delta * Phi);
+    phi_r_delta += n[i] * (pow(Delta, b[i]) * (Phi + delta *dPhi_delta) + dDelta_delta_b * delta * Phi);
   }
 
   return rho * (1.0 + delta * phi_r_delta) / (P / (R * T)) - 1.0;
 }
 
 
-SpanWagnerCO2DensityFunction::SpanWagnerCO2DensityFunction( string_array const & inputPara, string_array const & componentNames,
-                                                            real64_array const & componentMolarWeight ): PVTFunction( inputPara[1], componentNames,
-                                                                                                                      componentMolarWeight )
+SpanWagnerCO2DensityFunction::SpanWagnerCO2DensityFunction(string_array const & inputPara, string_array const & componentNames,
+                                                            real64_array const & componentMolarWeight): PVTFunction(inputPara[1], componentNames,
+                                                                                                                      componentMolarWeight)
 {
 
   bool notFound = 1;
 
-  for( localIndex i = 0; i < componentNames.size(); ++i )
+  for(localIndex i = 0; i <componentNames.size(); ++i)
   {
 
-    if( streq( componentNames[i], "CO2" ) || streq( componentNames[i], "co2" ))
+    if(streq(componentNames[i], "CO2") || streq(componentNames[i], "co2"))
     {
       m_CO2Index = i;
       notFound = 0;
@@ -143,13 +143,13 @@ SpanWagnerCO2DensityFunction::SpanWagnerCO2DensityFunction( string_array const &
 
   }
 
-  GEOSX_ERROR_IF( notFound, "Component CO2 is not found!" );
+  GEOSX_ERROR_IF(notFound, "Component CO2 is not found!");
 
-  MakeTable( inputPara );
+  MakeTable(inputPara);
 
 }
 
-void SpanWagnerCO2DensityFunction::MakeTable( string_array const & inputPara )
+void SpanWagnerCO2DensityFunction::MakeTable(string_array const & inputPara)
 {
 
   real64_array pressures;
@@ -166,43 +166,43 @@ void SpanWagnerCO2DensityFunction::MakeTable( string_array const & inputPara )
   PStart = -1.0;
   PEnd = -1.0;
 
-  GEOSX_ERROR_IF( inputPara.size() < 8, "Invalid SpanWagnerCO2Density input!" );
+  GEOSX_ERROR_IF(inputPara.size() <8, "Invalid SpanWagnerCO2Density input!");
 
   try
   {
 
-    PStart = stod( inputPara[2] );
-    PEnd = stod( inputPara[3] );
-    dP = stod( inputPara[4] );
+    PStart = stod(inputPara[2]);
+    PEnd = stod(inputPara[3]);
+    dP = stod(inputPara[4]);
 
-    TStart = stod( inputPara[5] );
-    TEnd = stod( inputPara[6] );
-    dT = stod( inputPara[7] );
+    TStart = stod(inputPara[5]);
+    TEnd = stod(inputPara[6]);
+    dT = stod(inputPara[7]);
 
   }
-  catch( const std::invalid_argument & e )
+  catch(const std::invalid_argument & e)
   {
 
-    GEOSX_ERROR( "Invalid SpanWagnerCO2Density argument:" + std::string( e.what()));
+    GEOSX_ERROR("Invalid SpanWagnerCO2Density argument:" + std::string(e.what()));
 
   }
 
   P = PStart;
 
-  while( P <= PEnd )
+  while(P <= PEnd)
   {
 
-    pressures.emplace_back( P );
+    pressures.emplace_back(P);
     P += dP;
 
   }
 
   T = TStart;
 
-  while( T <= TEnd )
+  while(T <= TEnd)
   {
 
-    temperatures.emplace_back( T );
+    temperatures.emplace_back(T);
     T += dT;
 
   }
@@ -210,18 +210,18 @@ void SpanWagnerCO2DensityFunction::MakeTable( string_array const & inputPara )
   localIndex nP = pressures.size();
   localIndex nT = temperatures.size();
 
-  real64_array2d densities( nP, nT );
+  real64_array2d densities(nP, nT);
 
-  CalculateCO2Density( pressures, temperatures, densities );
+  CalculateCO2Density(pressures, temperatures, densities);
 
-  m_CO2DensityTable = std::make_shared< XYTable >( "SpanWagnerCO2DensityTable", pressures, temperatures, densities );
+  m_CO2DensityTable = std::make_shared<XYTable>("SpanWagnerCO2DensityTable", pressures, temperatures, densities);
 
 
 }
 
 
-void SpanWagnerCO2DensityFunction::Evaluation( EvalVarArgs const & pressure, EvalVarArgs const & temperature, arraySlice1d< EvalVarArgs const > const & GEOSX_UNUSED_PARAM(
-                                                 phaseComposition ), EvalVarArgs & value, bool useMass ) const
+void SpanWagnerCO2DensityFunction::Evaluation(EvalVarArgs const & pressure, EvalVarArgs const & temperature, arraySlice1d<EvalVarArgs const> const & GEOSX_UNUSED_PARAM(
+                                                 phaseComposition), EvalVarArgs & value, bool useMass) const
 {
 
   EvalArgs2D P, T, density;
@@ -231,11 +231,11 @@ void SpanWagnerCO2DensityFunction::Evaluation( EvalVarArgs const & pressure, Eva
   T.m_var = temperature.m_var;
   T.m_der[1] = 1.0;
 
-  density = m_CO2DensityTable->Value( P, T );
+  density = m_CO2DensityTable->Value(P, T);
 
   real64 CO2MW = m_componentMolarWeight[m_CO2Index];
 
-  if( !useMass )
+  if(!useMass)
   {
 
     density /= CO2MW;
@@ -247,32 +247,32 @@ void SpanWagnerCO2DensityFunction::Evaluation( EvalVarArgs const & pressure, Eva
 
 }
 
-void SpanWagnerCO2DensityFunction::CalculateCO2Density( real64_array const & pressure, real64_array const & temperature, real64_array2d const & density )
+void SpanWagnerCO2DensityFunction::CalculateCO2Density(real64_array const & pressure, real64_array const & temperature, real64_array2d const & density)
 {
 
   constexpr real64 T_K_f = 273.15;
 
   real64 PPa, TK;
 
-  for( localIndex i = 0; i < pressure.size(); ++i )
+  for(localIndex i = 0; i <pressure.size(); ++i)
   {
 
     PPa = pressure[i];
 
-    for( localIndex j = 0; j < temperature.size(); ++j )
+    for(localIndex j = 0; j <temperature.size(); ++j)
     {
 
       TK = temperature[j] + T_K_f;
 
-      SpanWagnerCO2Density( TK, PPa, density[i][j], &f );
+      SpanWagnerCO2Density(TK, PPa, density[i][j], &f);
 
     }
 
   }
 }
 
-void SpanWagnerCO2DensityFunction::SpanWagnerCO2Density( real64 const & T, real64 const & P, real64 & rho, real64 (*f)( real64 const & x1, real64 const & x2,
-                                                                                                                        real64 const & x3 ))
+void SpanWagnerCO2DensityFunction::SpanWagnerCO2Density(real64 const & T, real64 const & P, real64 & rho, real64 (*f)(real64 const & x1, real64 const & x2,
+                                                                                                                        real64 const & x3))
 {
   constexpr real64 P_Pa_f = 1e+5;
 
@@ -306,23 +306,23 @@ void SpanWagnerCO2DensityFunction::SpanWagnerCO2Density( real64 const & T, real6
   real64 psat, denl;
 
   //initial guess
-  if( T < T_c )
+  if(T <T_c)
   {
     sum = 0;
-    for( int i=0; i<4; i++ )
+    for(int i=0; i<4; i++)
     {
-      sum += vpa[i] * pow( 1.0 - T / T_c, vpt[i] );
+      sum += vpa[i] * pow(1.0 - T / T_c, vpt[i]);
     }
 
-    psat = P_c * exp( T_c / T * sum );
+    psat = P_c * exp(T_c / T * sum);
 
     sum = 0;
-    for( int i=0; i<4; i++ )
+    for(int i=0; i<4; i++)
     {
-      sum += lda[i] * pow( 1.0 - T / T_c, ldt[i] );
+      sum += lda[i] * pow(1.0 - T / T_c, ldt[i]);
     }
 
-    denl = rho_c * exp( sum );
+    denl = rho_c * exp(sum);
 
     /*
        sum = 0;
@@ -332,7 +332,7 @@ void SpanWagnerCO2DensityFunction::SpanWagnerCO2Density( real64 const & T, real6
           denv = rho_c * exp(sum);
      */
 
-    if( P >= psat )
+    if(P>= psat)
     {
       rho = denl;
     }
@@ -348,16 +348,16 @@ void SpanWagnerCO2DensityFunction::SpanWagnerCO2Density( real64 const & T, real6
 
   real64 v1, v0;
 
-  for(;; )
+  for(;;)
   {
-    v0 = (*f)( T, P, rho );
-    v1 = (*f)( T, P, rho+dx );
+    v0 = (*f)(T, P, rho);
+    v1 = (*f)(T, P, rho+dx);
     dre = -v0/((v1-v0)/dx);
 
-    if( fabs( dre ) < eps )
+    if(fabs(dre) <eps)
       break;
 
-    GEOSX_ERROR_IF( count > 50, "SpanWagnerCO2Density NR convergence fails! " << "dre = " << dre << ", eps = " << eps );
+    GEOSX_ERROR_IF(count> 50, "SpanWagnerCO2Density NR convergence fails! " <<"dre = " <<dre <<", eps = " <<eps);
 
     count++;
 
@@ -367,9 +367,9 @@ void SpanWagnerCO2DensityFunction::SpanWagnerCO2Density( real64 const & T, real6
 
 
 
-REGISTER_CATALOG_ENTRY( PVTFunction,
+REGISTER_CATALOG_ENTRY(PVTFunction,
                         SpanWagnerCO2DensityFunction,
-                        string_array const &, string_array const &, real64_array const & )
+                        string_array const &, string_array const &, real64_array const &)
 
 }
 

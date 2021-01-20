@@ -35,10 +35,10 @@ namespace geosx
  * @param[out] serialMap Epetra map for the serial matrix
  * @param[out] importToSerial Epetra import to convert from parallel to serial matrix
  */
-void ConvertEpetraToSuiteSparseMatrix( EpetraMatrix const & matrix,
+void ConvertEpetraToSuiteSparseMatrix(EpetraMatrix const & matrix,
                                        SuiteSparse & SSData,
                                        Epetra_Map * & serialMap,
-                                       Epetra_Import * & importToSerial );
+                                       Epetra_Import * & importToSerial);
 
 /**
  * @brief Solves a linear system with SuiteSparse (matrix has already been factorized)
@@ -50,12 +50,12 @@ void ConvertEpetraToSuiteSparseMatrix( EpetraMatrix const & matrix,
  * @param[in] transpose whether to solve for the original or the transpose matrix
  * @return info error code
  */
-int SuiteSparseSolve( SuiteSparse & SSData,
+int SuiteSparseSolve(SuiteSparse & SSData,
                       Epetra_Map const * serialMap,
                       Epetra_Import const * importToSerial,
                       EpetraVector const & b,
                       EpetraVector & x,
-                      bool transpose = false );
+                      bool transpose = false);
 
 /**
  * @brief Computes an accurate condition number (time consuming function!!!)
@@ -65,10 +65,10 @@ int SuiteSparseSolve( SuiteSparse & SSData,
  * @param[in] SSData the structure containing the matrix in SuiteSparse format
  * @return the condition number
  */
-real64 EpetraSuiteSparseCond( EpetraMatrix const & matrix,
+real64 EpetraSuiteSparseCond(EpetraMatrix const & matrix,
                               Epetra_Map const * serialMap,
                               Epetra_Import const * importToSerial,
-                              SuiteSparse & SSData );
+                              SuiteSparse & SSData);
 
 }
 

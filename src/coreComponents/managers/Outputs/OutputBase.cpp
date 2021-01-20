@@ -25,22 +25,22 @@ namespace geosx
 
 using namespace dataRepository;
 
-OutputBase::OutputBase( std::string const & name,
-                        Group * const parent ):
-  ExecutableGroup( name, parent ),
+OutputBase::OutputBase(std::string const & name,
+                        Group * const parent):
+  ExecutableGroup(name, parent),
   m_childDirectory(),
-  m_parallelThreads( 1 )
+  m_parallelThreads(1)
 {
-  setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
+  setInputFlags(InputFlags::OPTIONAL_NONUNIQUE);
 
-  registerWrapper( viewKeysStruct::childDirectoryString, &m_childDirectory )->
-    setInputFlag( InputFlags::OPTIONAL )->
-    setDescription( "Child directory path" );
+  registerWrapper(viewKeysStruct::childDirectoryString, &m_childDirectory)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Child directory path");
 
-  registerWrapper( viewKeysStruct::parallelThreadsString, &m_parallelThreads )->
-    setApplyDefaultValue( 1 )->
-    setInputFlag( InputFlags::OPTIONAL )->
-    setDescription( "Number of plot files." );
+  registerWrapper(viewKeysStruct::parallelThreadsString, &m_parallelThreads)->
+    setApplyDefaultValue(1)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Number of plot files.");
 
 }
 
@@ -54,7 +54,7 @@ OutputBase::CatalogInterface::CatalogType & OutputBase::GetCatalog()
 }
 
 
-void OutputBase::InitializePreSubGroups( Group * const GEOSX_UNUSED_PARAM( group ) )
+void OutputBase::InitializePreSubGroups(Group * const GEOSX_UNUSED_PARAM(group))
 {
   // This command doesn't seem to work anymore
   // SetupDirectoryStructure();
@@ -65,12 +65,12 @@ void OutputBase::SetupDirectoryStructure()
 {
   string childDirectory = m_childDirectory;
 
-  int const rank = MpiWrapper::Comm_rank( MPI_COMM_GEOSX );
-  if( rank == 0 )
+  int const rank = MpiWrapper::Comm_rank(MPI_COMM_GEOSX);
+  if(rank == 0)
   {
-    if( !childDirectory.empty())
+    if(!childDirectory.empty())
     {
-      makeDirsForPath( childDirectory );
+      makeDirsForPath(childDirectory);
     }
   }
 }

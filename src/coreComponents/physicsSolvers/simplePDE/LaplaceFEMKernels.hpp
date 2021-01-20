@@ -48,23 +48,23 @@ namespace geosx
  * the test and trial spaces are specified as `1` when specifying the base
  * class.
  */
-template< typename SUBREGION_TYPE,
+template<typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
-          typename FE_TYPE >
+          typename FE_TYPE>
 class LaplaceFEMKernel :
-  public finiteElement::ImplicitKernelBase< SUBREGION_TYPE,
+  public finiteElement::ImplicitKernelBase<SUBREGION_TYPE,
                                             CONSTITUTIVE_TYPE,
                                             FE_TYPE,
                                             1,
-                                            1 >
+                                            1>
 {
 public:
   /// An alias for the base class.
-  using Base = finiteElement::ImplicitKernelBase< SUBREGION_TYPE,
+  using Base = finiteElement::ImplicitKernelBase<SUBREGION_TYPE,
                                                   CONSTITUTIVE_TYPE,
                                                   FE_TYPE,
                                                   1,
-                                                  1 >;
+                                                  1>;
 
   using Base::numDofPerTestSupportPoint;
   using Base::numDofPerTrialSupportPoint;
@@ -84,18 +84,18 @@ public:
    * @param fieldName The name of the primary field
    *                  (i.e. Temperature, Pressure, etc.)
    */
-  LaplaceFEMKernel( NodeManager const & nodeManager,
+  LaplaceFEMKernel(NodeManager const & nodeManager,
                     EdgeManager const & edgeManager,
                     FaceManager const & faceManager,
                     SUBREGION_TYPE const & elementSubRegion,
                     FE_TYPE const & finiteElementSpace,
                     CONSTITUTIVE_TYPE * const inputConstitutiveType,
-                    arrayView1d< globalIndex const > const & inputDofNumber,
+                    arrayView1d<globalIndex const> const & inputDofNumber,
                     globalIndex const rankOffset,
-                    CRSMatrixView< real64, globalIndex const > const & inputMatrix,
-                    arrayView1d< real64 > const & inputRhs,
-                    string const & fieldName ):
-    Base( nodeManager,
+                    CRSMatrixView<real64, globalIndex const> const & inputMatrix,
+                    arrayView1d<real64> const & inputRhs,
+                    string const & fieldName):
+    Base(nodeManager,
           edgeManager,
           faceManager,
           elementSubRegion,
@@ -104,11 +104,11 @@ public:
           inputDofNumber,
           rankOffset,
           inputMatrix,
-          inputRhs ),
-    m_X( nodeManager.referencePosition() ),
-    m_primaryField( nodeManager.template getReference< array1d< real64 > >( fieldName )),
-    m_dNdX( elementSubRegion.dNdX() ),
-    m_detJ( elementSubRegion.detJ() )
+          inputRhs),
+    m_X(nodeManager.referencePosition()),
+    m_primaryField(nodeManager.template getReference<array1d<real64>>(fieldName)),
+    m_dNdX(elementSubRegion.dNdX()),
+    m_detJ(elementSubRegion.detJ())
   {}
 
   //***************************************************************************
@@ -129,7 +129,7 @@ public:
     StackVariables():
       Base::StackVariables(),
             xLocal(),
-            primaryField_local{ 0.0 }
+            primaryField_local{0.0}
     {}
 
 #if !defined(CALC_FEM_SHAPE_IN_KERNEL)
@@ -137,7 +137,7 @@ public:
     int xLocal;
 #else
     /// C-array stack storage for element local the nodal positions.
-    real64 xLocal[ numNodesPerElem ][ 3 ];
+    real64 xLocal[numNodesPerElem][3];
 #endif
 
     /// C-array storage for the element local primary field variable.
@@ -155,21 +155,21 @@ public:
    */
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  void setup( localIndex const k,
-              StackVariables & stack ) const
+  void setup(localIndex const k,
+              StackVariables & stack) const
   {
-    for( localIndex a=0; a<numNodesPerElem; ++a )
+    for(localIndex a=0; a<numNodesPerElem; ++a)
     {
-      localIndex const localNodeIndex = m_elemsToNodes( k, a );
+      localIndex const localNodeIndex = m_elemsToNodes(k, a);
 
 #if defined(CALC_FEM_SHAPE_IN_KERNEL)
-      for( int i=0; i<3; ++i )
+      for(int i=0; i<3; ++i)
       {
-        stack.xLocal[ a ][ i ] = m_X[ localNodeIndex ][ i ];
+        stack.xLocal[a][i] = m_X[localNodeIndex][i];
       }
 #endif
 
-      stack.primaryField_local[ a ] = m_primaryField[ localNodeIndex ];
+      stack.primaryField_local[a] = m_primaryField[localNodeIndex];
       stack.localRowDofIndex[a] = m_dofNumber[localNodeIndex];
       stack.localColDofIndex[a] = m_dofNumber[localNodeIndex];
     }
@@ -180,18 +180,18 @@ public:
    */
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  void quadraturePointKernel( localIndex const k,
+  void quadraturePointKernel(localIndex const k,
                               localIndex const q,
-                              StackVariables & stack ) const
+                              StackVariables & stack) const
   {
-    real64 dNdX[ numNodesPerElem ][ 3 ];
-    real64 const detJ = m_finiteElementSpace.template getGradN< FE_TYPE >( k, q, stack.xLocal, dNdX );
+    real64 dNdX[numNodesPerElem][3];
+    real64 const detJ = m_finiteElementSpace.template getGradN<FE_TYPE>(k, q, stack.xLocal, dNdX);
 
-    for( localIndex a=0; a<numNodesPerElem; ++a )
+    for(localIndex a=0; a<numNodesPerElem; ++a)
     {
-      for( localIndex b=0; b<numNodesPerElem; ++b )
+      for(localIndex b=0; b<numNodesPerElem; ++b)
       {
-        stack.localJacobian[ a ][ b ] += LvArray::tensorOps::AiBi< 3 >( dNdX[a], dNdX[b] ) * detJ;
+        stack.localJacobian[a][b] += LvArray::tensorOps::AiBi<3>(dNdX[a], dNdX[b]) * detJ;
       }
     }
   }
@@ -205,31 +205,31 @@ public:
    */
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  real64 complete( localIndex const k,
-                   StackVariables & stack ) const
+  real64 complete(localIndex const k,
+                   StackVariables & stack) const
   {
-    GEOSX_UNUSED_VAR( k );
+    GEOSX_UNUSED_VAR(k);
     real64 maxForce = 0;
 
-    for( localIndex a = 0; a < numNodesPerElem; ++a )
+    for(localIndex a = 0; a <numNodesPerElem; ++a)
     {
-      for( localIndex b = 0; b < numNodesPerElem; ++b )
+      for(localIndex b = 0; b <numNodesPerElem; ++b)
       {
-        stack.localResidual[ a ] += stack.localJacobian[ a ][ b ] * stack.primaryField_local[ b ];
+        stack.localResidual[a] += stack.localJacobian[a][b] * stack.primaryField_local[b];
       }
     }
 
-    for( int a = 0; a < numNodesPerElem; ++a )
+    for(int a = 0; a <numNodesPerElem; ++a)
     {
-      localIndex const dof = LvArray::integerConversion< localIndex >( stack.localRowDofIndex[ a ] - m_dofRankOffset );
-      if( dof < 0 || dof >= m_matrix.numRows() ) continue;
-      m_matrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( dof,
+      localIndex const dof = LvArray::integerConversion<localIndex>(stack.localRowDofIndex[a] - m_dofRankOffset);
+      if(dof <0 || dof>= m_matrix.numRows()) continue;
+      m_matrix.template addToRowBinarySearchUnsorted<parallelDeviceAtomic>(dof,
                                                                               stack.localColDofIndex,
-                                                                              stack.localJacobian[ a ],
-                                                                              numNodesPerElem );
+                                                                              stack.localJacobian[a],
+                                                                              numNodesPerElem);
 
-      RAJA::atomicAdd< parallelDeviceAtomic >( &m_rhs[ dof ], stack.localResidual[ a ] );
-      maxForce = fmax( maxForce, fabs( stack.localResidual[ a ] ) );
+      RAJA::atomicAdd<parallelDeviceAtomic>(&m_rhs[dof], stack.localResidual[a]);
+      maxForce = fmax(maxForce, fabs(stack.localResidual[a]));
     }
 
     return maxForce;
@@ -239,16 +239,16 @@ public:
 
 protected:
   /// The array containing the nodal position array.
-  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const m_X;
+  arrayView2d<real64 const, nodes::REFERENCE_POSITION_USD> const m_X;
 
   /// The global primary field array.
-  arrayView1d< real64 const > const m_primaryField;
+  arrayView1d<real64 const> const m_primaryField;
 
   /// The global shape function derivatives array.
-  arrayView4d< real64 const > const m_dNdX;
+  arrayView4d<real64 const> const m_dNdX;
 
   /// The global determinant of the parent/physical Jacobian.
-  arrayView2d< real64 const > const m_detJ;
+  arrayView2d<real64 const> const m_detJ;
 
 };
 

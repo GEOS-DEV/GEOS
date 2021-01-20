@@ -27,31 +27,31 @@ namespace geosx
 {
 using namespace dataRepository;
 
-Box::Box( const std::string & name, Group * const parent ):
-  SimpleGeometricObjectBase( name, parent ),
-  m_min{ 0.0, 0.0, 0.0 },
-  m_max{ 0.0, 0.0, 0.0 },
-  m_strikeAngle{ 0.0 },
-  m_boxCenter{ 0.0, 0.0, 0.0 },
-  m_cosStrike{ 0.0 },
-  m_sinStrike{ 0.0 }
+Box::Box(const std::string & name, Group * const parent):
+  SimpleGeometricObjectBase(name, parent),
+  m_min{0.0, 0.0, 0.0},
+  m_max{0.0, 0.0, 0.0},
+  m_strikeAngle{0.0},
+  m_boxCenter{0.0, 0.0, 0.0},
+  m_cosStrike{0.0},
+  m_sinStrike{0.0}
 {
-  registerWrapper( viewKeyStruct::xMinString, &m_min )->
-    setInputFlag( InputFlags::REQUIRED )->
-    setDescription( "Minimum (x,y,z) coordinates of the box" );
+  registerWrapper(viewKeyStruct::xMinString, &m_min)->
+    setInputFlag(InputFlags::REQUIRED)->
+    setDescription("Minimum (x,y,z) coordinates of the box");
 
-  registerWrapper( viewKeyStruct::xMaxString, &m_max )->
-    setInputFlag( InputFlags::REQUIRED )->
-    setDescription( "Maximum (x,y,z) coordinates of the box" );
+  registerWrapper(viewKeyStruct::xMaxString, &m_max)->
+    setInputFlag(InputFlags::REQUIRED)->
+    setDescription("Maximum (x,y,z) coordinates of the box");
 
-  registerWrapper( viewKeyStruct::strikeAngleString, &m_strikeAngle )->
-    setApplyDefaultValue( -90.0 )->
-    setInputFlag( InputFlags::OPTIONAL )->
-    setDescription( "The strike angle of the box" );
+  registerWrapper(viewKeyStruct::strikeAngleString, &m_strikeAngle)->
+    setApplyDefaultValue(-90.0)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("The strike angle of the box");
 
-  registerWrapper( viewKeyStruct::boxCenterString, &m_boxCenter );
-  registerWrapper( viewKeyStruct::cosStrikeString, &m_cosStrike );
-  registerWrapper( viewKeyStruct::sinStrikeString, &m_sinStrike );
+  registerWrapper(viewKeyStruct::boxCenterString, &m_boxCenter);
+  registerWrapper(viewKeyStruct::cosStrikeString, &m_cosStrike);
+  registerWrapper(viewKeyStruct::sinStrikeString, &m_sinStrike);
 }
 
 Box::~Box()
@@ -61,38 +61,38 @@ Box::~Box()
 
 void Box::PostProcessInput()
 {
-  LvArray::tensorOps::copy< 3 >( m_boxCenter, m_min );
-  LvArray::tensorOps::add< 3 >( m_boxCenter, m_max );
-  LvArray::tensorOps::scale< 3 >( m_boxCenter, 0.5 );
+  LvArray::tensorOps::copy<3>(m_boxCenter, m_min);
+  LvArray::tensorOps::add<3>(m_boxCenter, m_max);
+  LvArray::tensorOps::scale<3>(m_boxCenter, 0.5);
 
   m_strikeAngle += 90; // Counterclockwise from x-axis
-  if( std::fabs( m_strikeAngle ) > 1e-20 )
+  if(std::fabs(m_strikeAngle)> 1e-20)
   {
-    GEOSX_ERROR_IF( (m_max[0]-m_min[0]) < (m_max[1]-m_min[1]),
+    GEOSX_ERROR_IF((m_max[0]-m_min[0]) <(m_max[1]-m_min[1]),
                     "Error: When a strike angle is specified, the box is supposed to represent a plane normal to the "
-                    "y direction. This box seems to be too thick." );
+                    "y direction. This box seems to be too thick.");
 
-    m_cosStrike = std::cos( m_strikeAngle / 180 *M_PI );
-    m_sinStrike = std::sin( m_strikeAngle / 180 *M_PI );
+    m_cosStrike = std::cos(m_strikeAngle / 180 *M_PI);
+    m_sinStrike = std::sin(m_strikeAngle / 180 *M_PI);
   }
 }
 
-bool Box::IsCoordInObject( real64 const ( &coord ) [3] ) const
+bool Box::IsCoordInObject(real64 const (&coord) [3]) const
 {
-  real64 coord0[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( coord );
-  if( std::fabs( m_strikeAngle ) >= 1e-20 )
+  real64 coord0[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3(coord);
+  if(std::fabs(m_strikeAngle)>= 1e-20)
   {
     real64 coordR[3];
-    LvArray::tensorOps::subtract< 3 >( coord0, m_boxCenter );
+    LvArray::tensorOps::subtract<3>(coord0, m_boxCenter);
     coordR[0] =  coord0[0] * m_cosStrike + coord0[1] * m_sinStrike;
     coordR[1] = -coord0[0] * m_sinStrike + coord0[1] * m_cosStrike;
     coordR[2] = coord0[2];
-    LvArray::tensorOps::add< 3 >( coordR, m_boxCenter );
-    LvArray::tensorOps::copy< 3 >( coord0, coordR );
+    LvArray::tensorOps::add<3>(coordR, m_boxCenter);
+    LvArray::tensorOps::copy<3>(coord0, coordR);
   }
-  for( int i = 0; i < 3; ++i )
+  for(int i = 0; i <3; ++i)
   {
-    if( coord0[i] < m_min[i] || coord0[i] > m_max[i] )
+    if(coord0[i] <m_min[i] || coord0[i]> m_max[i])
     {
       return false;
     }
@@ -100,6 +100,6 @@ bool Box::IsCoordInObject( real64 const ( &coord ) [3] ) const
   return true;
 }
 
-REGISTER_CATALOG_ENTRY( SimpleGeometricObjectBase, Box, std::string const &, Group * const )
+REGISTER_CATALOG_ENTRY(SimpleGeometricObjectBase, Box, std::string const &, Group * const)
 
 } /* namespace geosx */

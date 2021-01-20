@@ -74,8 +74,8 @@ public:
    *   point.
    */
   GEOSX_HOST_DEVICE
-  static void calcN( localIndex const q,
-                     real64 ( &N )[numNodes] );
+  static void calcN(localIndex const q,
+                     real64 (&N)[numNodes]);
 
   /**
    * @brief Calculate the shape functions derivatives wrt the physical
@@ -87,9 +87,9 @@ public:
    * @return The determinant of the parent/physical transformation matrix.
    */
   GEOSX_HOST_DEVICE
-  static real64 calcGradN( localIndex const q,
+  static real64 calcGradN(localIndex const q,
                            real64 const (&X)[numNodes][3],
-                           real64 ( &gradN )[numNodes][3] );
+                           real64 (&gradN)[numNodes][3]);
 
   /**
    * @brief Calculate the integration weights for a quadrature point.
@@ -99,8 +99,8 @@ public:
    *   the parent/physical transformation matrix.
    */
   GEOSX_HOST_DEVICE
-  static real64 transformedQuadratureWeight( localIndex const q,
-                                             real64 const (&X)[numNodes][3] );
+  static real64 transformedQuadratureWeight(localIndex const q,
+                                             real64 const (&X)[numNodes][3]);
 
 private:
   /// The volume of the element in the parent configuration.
@@ -116,7 +116,7 @@ private:
    * @return determinant value
    */
   GEOSX_HOST_DEVICE
-  static real64 determinantJacobianTransformation( real64 const (&X)[numNodes][3] );
+  static real64 determinantJacobianTransformation(real64 const (&X)[numNodes][3]);
 
 };
 
@@ -124,11 +124,11 @@ GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 real64
 H1_Tetrahedron_Lagrange1_Gauss1::
-  determinantJacobianTransformation( real64 const (&X)[numNodes][3] )
+  determinantJacobianTransformation(real64 const (&X)[numNodes][3])
 {
-  return ( X[1][0] - X[0][0] )*( ( X[2][1] - X[0][1] )*( X[3][2] - X[0][2] ) - ( X[3][1] - X[0][1] )*( X[2][2] - X[0][2] ) )
-         + ( X[1][1] - X[0][1] )*( ( X[3][0] - X[0][0] )*( X[2][2] - X[0][2] ) - ( X[2][0] - X[0][0] )*( X[3][2] - X[0][2] ) )
-         + ( X[1][2] - X[0][2] )*( ( X[2][0] - X[0][0] )*( X[3][1] - X[0][1] ) - ( X[3][0] - X[0][0] )*( X[2][1] - X[0][1] ) );
+  return (X[1][0] - X[0][0])*((X[2][1] - X[0][1])*(X[3][2] - X[0][2]) - (X[3][1] - X[0][1])*(X[2][2] - X[0][2]))
+         + (X[1][1] - X[0][1])*((X[3][0] - X[0][0])*(X[2][2] - X[0][2]) - (X[2][0] - X[0][0])*(X[3][2] - X[0][2]))
+         + (X[1][2] - X[0][2])*((X[2][0] - X[0][0])*(X[3][1] - X[0][1]) - (X[3][0] - X[0][0])*(X[2][1] - X[0][1]));
 }
 
 //*************************************************************************************************
@@ -137,10 +137,10 @@ GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void
 H1_Tetrahedron_Lagrange1_Gauss1::
-  calcN( localIndex const q,
-         real64 (& N)[numNodes] )
+  calcN(localIndex const q,
+         real64 (& N)[numNodes])
 {
-  GEOSX_UNUSED_VAR( q );
+  GEOSX_UNUSED_VAR(q);
 
   // single quadrature point (centroid), i.e.  r = s = t = 1/4
   N[0] = 0.25; // N0 = 1 - r - s - t
@@ -155,34 +155,34 @@ GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 real64
 H1_Tetrahedron_Lagrange1_Gauss1::
-  calcGradN( localIndex const q,
+  calcGradN(localIndex const q,
              real64 const (&X)[numNodes][3],
-             real64 (& gradN)[numNodes][3] )
+             real64 (& gradN)[numNodes][3])
 {
-  GEOSX_UNUSED_VAR( q );
+  GEOSX_UNUSED_VAR(q);
 
-  gradN[0][0] =  X[1][1]*( X[3][2] - X[2][2] ) - X[2][1]*( X[3][2] - X[1][2] ) + X[3][1]*( X[2][2] - X[1][2] );
-  gradN[0][1] = -X[1][0]*( X[3][2] - X[2][2] ) + X[2][0]*( X[3][2] - X[1][2] ) - X[3][0]*( X[2][2] - X[1][2] );
-  gradN[0][2] =  X[1][0]*( X[3][1] - X[2][1] ) - X[2][0]*( X[3][1] - X[1][1] ) + X[3][0]*( X[2][1] - X[1][1] );
+  gradN[0][0] =  X[1][1]*(X[3][2] - X[2][2]) - X[2][1]*(X[3][2] - X[1][2]) + X[3][1]*(X[2][2] - X[1][2]);
+  gradN[0][1] = -X[1][0]*(X[3][2] - X[2][2]) + X[2][0]*(X[3][2] - X[1][2]) - X[3][0]*(X[2][2] - X[1][2]);
+  gradN[0][2] =  X[1][0]*(X[3][1] - X[2][1]) - X[2][0]*(X[3][1] - X[1][1]) + X[3][0]*(X[2][1] - X[1][1]);
 
-  gradN[1][0] = -X[0][1]*( X[3][2] - X[2][2] ) + X[2][1]*( X[3][2] - X[0][2] ) - X[3][1]*( X[2][2] - X[0][2] );
-  gradN[1][1] =  X[0][0]*( X[3][2] - X[2][2] ) - X[2][0]*( X[3][2] - X[0][2] ) + X[3][0]*( X[2][2] - X[0][2] );
-  gradN[1][2] = -X[0][0]*( X[3][1] - X[2][1] ) + X[2][0]*( X[3][1] - X[0][1] ) - X[3][0]*( X[2][1] - X[0][1] );
+  gradN[1][0] = -X[0][1]*(X[3][2] - X[2][2]) + X[2][1]*(X[3][2] - X[0][2]) - X[3][1]*(X[2][2] - X[0][2]);
+  gradN[1][1] =  X[0][0]*(X[3][2] - X[2][2]) - X[2][0]*(X[3][2] - X[0][2]) + X[3][0]*(X[2][2] - X[0][2]);
+  gradN[1][2] = -X[0][0]*(X[3][1] - X[2][1]) + X[2][0]*(X[3][1] - X[0][1]) - X[3][0]*(X[2][1] - X[0][1]);
 
-  gradN[2][0] =  X[0][1]*( X[3][2] - X[1][2] ) - X[1][1]*( X[3][2] - X[0][2] ) + X[3][1]*( X[1][2] - X[0][2] );
-  gradN[2][1] = -X[0][0]*( X[3][2] - X[1][2] ) + X[1][0]*( X[3][2] - X[0][2] ) - X[3][0]*( X[1][2] - X[0][2] );
-  gradN[2][2] =  X[0][0]*( X[3][1] - X[1][1] ) - X[1][0]*( X[3][1] - X[0][1] ) + X[3][0]*( X[1][1] - X[0][1] );
+  gradN[2][0] =  X[0][1]*(X[3][2] - X[1][2]) - X[1][1]*(X[3][2] - X[0][2]) + X[3][1]*(X[1][2] - X[0][2]);
+  gradN[2][1] = -X[0][0]*(X[3][2] - X[1][2]) + X[1][0]*(X[3][2] - X[0][2]) - X[3][0]*(X[1][2] - X[0][2]);
+  gradN[2][2] =  X[0][0]*(X[3][1] - X[1][1]) - X[1][0]*(X[3][1] - X[0][1]) + X[3][0]*(X[1][1] - X[0][1]);
 
-  gradN[3][0] = -X[0][1]*( X[2][2] - X[1][2] ) + X[1][1]*( X[2][2] - X[0][2] ) - X[2][1]*( X[1][2] - X[0][2] );
-  gradN[3][1] =  X[0][0]*( X[2][2] - X[1][2] ) - X[1][0]*( X[2][2] - X[0][2] ) + X[2][0]*( X[1][2] - X[0][2] );
-  gradN[3][2] = -X[0][0]*( X[2][1] - X[1][1] ) + X[1][0]*( X[2][1] - X[0][1] ) - X[2][0]*( X[1][1] - X[0][1] );
+  gradN[3][0] = -X[0][1]*(X[2][2] - X[1][2]) + X[1][1]*(X[2][2] - X[0][2]) - X[2][1]*(X[1][2] - X[0][2]);
+  gradN[3][1] =  X[0][0]*(X[2][2] - X[1][2]) - X[1][0]*(X[2][2] - X[0][2]) + X[2][0]*(X[1][2] - X[0][2]);
+  gradN[3][2] = -X[0][0]*(X[2][1] - X[1][1]) + X[1][0]*(X[2][1] - X[0][1]) - X[2][0]*(X[1][1] - X[0][1]);
 
-  real64 detJ = determinantJacobianTransformation( X );
-  real64 factor = 1.0 / ( detJ );
+  real64 detJ = determinantJacobianTransformation(X);
+  real64 factor = 1.0 / (detJ);
 
-  for( int i = 0; i < numNodes; ++i )
+  for(int i = 0; i <numNodes; ++i)
   {
-    for( int j = 0; j < 3; ++j )
+    for(int j = 0; j <3; ++j)
     {
       gradN[i][j] *= factor;
     }
@@ -197,12 +197,12 @@ GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 real64
 H1_Tetrahedron_Lagrange1_Gauss1::
-  transformedQuadratureWeight( localIndex const q,
-                               real64 const (&X)[numNodes][3] )
+  transformedQuadratureWeight(localIndex const q,
+                               real64 const (&X)[numNodes][3])
 {
-  GEOSX_UNUSED_VAR( q );
+  GEOSX_UNUSED_VAR(q);
 
-  real64 detJ =  determinantJacobianTransformation( X );
+  real64 detJ =  determinantJacobianTransformation(X);
 
   return detJ * weight;
 }

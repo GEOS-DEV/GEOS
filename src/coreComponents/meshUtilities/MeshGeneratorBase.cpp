@@ -24,10 +24,10 @@ namespace geosx
 {
 using namespace dataRepository;
 
-MeshGeneratorBase::MeshGeneratorBase( string const & name, Group * const parent ):
-  Group( name, parent )
+MeshGeneratorBase::MeshGeneratorBase(string const & name, Group * const parent):
+  Group(name, parent)
 {
-  setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
+  setInputFlags(InputFlags::OPTIONAL_NONUNIQUE);
 }
 
 MeshGeneratorBase::~MeshGeneratorBase()

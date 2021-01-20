@@ -37,9 +37,9 @@ using SSInt = SuiteSparse_long;
  * @param index the input value
  * @return the converted value
  */
-inline SSInt toSuiteSparse_Int( globalIndex const index )
+inline SSInt toSuiteSparse_Int(globalIndex const index)
 {
-  return LvArray::integerConversion< SSInt >( index );
+  return LvArray::integerConversion<SSInt>(index);
 }
 
 /**
@@ -61,7 +61,7 @@ public:
    * @brief Constructor with parameters
    * @param[in] params the linear solver parameters
    */
-  SuiteSparse( LinearSolverParameters const & params );
+  SuiteSparse(LinearSolverParameters const & params);
 
   /**
    * @brief Destructor
@@ -72,7 +72,7 @@ public:
    * @brief Creates the SuiteSparse data structure
    * @param[in] params the linear solver parameters
    */
-  void create( LinearSolverParameters const & params );
+  void create(LinearSolverParameters const & params);
 
   /**
    * @brief Factorizes a linear system with SuiteSparse
@@ -87,7 +87,7 @@ public:
    * @param[in] transpose whether to solve for the original or the transpose matrix
    * @return info error code
    */
-  int solveWorkingRank( real64 * b, real64 * x, bool transpose = false );
+  int solveWorkingRank(real64 * b, real64 * x, bool transpose = false);
 
   /**
    * @brief Sycronizes times across ranks
@@ -115,7 +115,7 @@ public:
    * @brief Sets the working rank
    * @param[in] workingRank the working rank
    */
-  void setWorkingRank( int const workingRank );
+  void setWorkingRank(int const workingRank);
 
   /**
    * @brief Returns the working rank
@@ -127,7 +127,7 @@ public:
    * @brief Sets the working rank in the sub-communicator
    * @param[in] subCommWorkingRank the working rank in the sub-communicator
    */
-  void setSubCommWorkingRank( int const subCommWorkingRank );
+  void setSubCommWorkingRank(int const subCommWorkingRank);
 
   /**
    * @brief Returns the working rank in the sub-communicator
@@ -139,7 +139,7 @@ public:
    * @brief Sets the communicator
    * @param[in] comm the MPI communicator
    */
-  void setComm( MPI_Comm const comm );
+  void setComm(MPI_Comm const comm);
 
   /**
    * @brief Returns the communicator
@@ -151,7 +151,7 @@ public:
    * @brief Sets the subcommunicator
    * @param[in] subComm the MPI subcommunicator
    */
-  void setSubComm( MPI_Comm const subComm );
+  void setSubComm(MPI_Comm const subComm);
 
   /**
    * @brief Returns the subcommunicator
@@ -183,25 +183,25 @@ public:
    * @param[in] numCols the number of columns
    * @param[in] nonZeros the number of non zeros
    */
-  void resize( SSInt const numRows, SSInt const numCols, SSInt const nonZeros );
+  void resize(SSInt const numRows, SSInt const numCols, SSInt const nonZeros);
 
   /**
    * @brief Returns the array with the row pointers
    * @return the array with the row pointers
    */
-  arrayView1d< SSInt > rowPtr();
+  arrayView1d<SSInt> rowPtr();
 
   /**
    * @brief Returns the array with the column indices
    * @return the array with the column indices
    */
-  arrayView1d< SSInt > colIndices();
+  arrayView1d<SSInt> colIndices();
 
   /**
    * @brief Returns the array with the matrix values
    * @return the array with the matrix values
    */
-  arrayView1d< real64 > values();
+  arrayView1d<real64> values();
 
   /**
    * @brief Provides the setup time
@@ -236,13 +236,13 @@ private:
   SSInt m_nonZeros;
 
   /// row pointers
-  array1d< SSInt > m_rowPtr;
+  array1d<SSInt> m_rowPtr;
 
   /// column indices
-  array1d< SSInt > m_colIndices;
+  array1d<SSInt> m_colIndices;
 
   /// values
-  array1d< real64 > m_values;
+  array1d<real64> m_values;
 
   /// data structure to gather various info
   real64 m_Info[UMFPACK_INFO];
@@ -281,7 +281,7 @@ private:
   real64 m_solveTime;
 
   /// Add two orders of magnitude to allow small error in condition number estimate
-  real64 const m_precisionTolerance = 100.0 * std::numeric_limits< real64 >::epsilon();
+  real64 const m_precisionTolerance = 100.0 * std::numeric_limits<real64>::epsilon();
 
 };
 

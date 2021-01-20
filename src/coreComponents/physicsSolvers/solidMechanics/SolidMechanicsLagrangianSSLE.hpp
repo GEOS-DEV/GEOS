@@ -33,11 +33,11 @@ namespace geosx
 class SolidMechanicsLagrangianSSLE : public SolidMechanicsLagrangianFEM
 {
 public:
-  SolidMechanicsLagrangianSSLE( string const & name,
-                                Group * const parent );
+  SolidMechanicsLagrangianSSLE(string const & name,
+                                Group * const parent);
   virtual ~SolidMechanicsLagrangianSSLE() override;
 
-  static string CatalogName() { return "SolidMechanicsLagrangianSSLE"; }
+  static string CatalogName() {return "SolidMechanicsLagrangianSSLE";}
 
 
 };

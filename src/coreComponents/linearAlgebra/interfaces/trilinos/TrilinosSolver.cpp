@@ -40,45 +40,45 @@
 namespace geosx
 {
 
-TrilinosSolver::TrilinosSolver( LinearSolverParameters parameters ):
-  m_parameters( std::move( parameters ) )
+TrilinosSolver::TrilinosSolver(LinearSolverParameters parameters):
+  m_parameters(std::move(parameters))
 {}
 
 TrilinosSolver::~TrilinosSolver() = default;
 
-void TrilinosSolver::solve( EpetraMatrix & mat,
+void TrilinosSolver::solve(EpetraMatrix & mat,
                             EpetraVector & sol,
                             EpetraVector & rhs,
-                            DofManager const * const dofManager )
+                            DofManager const * const dofManager)
 {
-  GEOSX_LAI_ASSERT( mat.ready() );
-  GEOSX_LAI_ASSERT( sol.ready() );
-  GEOSX_LAI_ASSERT( rhs.ready() );
+  GEOSX_LAI_ASSERT(mat.ready());
+  GEOSX_LAI_ASSERT(sol.ready());
+  GEOSX_LAI_ASSERT(rhs.ready());
 
-  GEOSX_UNUSED_VAR( dofManager );
+  GEOSX_UNUSED_VAR(dofManager);
 
-  if( rhs.norm2() > 0.0 )
+  if(rhs.norm2()> 0.0)
   {
-    if( m_parameters.scaling.useRowScaling )
+    if(m_parameters.scaling.useRowScaling)
     {
       Epetra_FECrsMatrix & mat_raw = mat.unwrapped();
       Epetra_MultiVector & rhs_raw = rhs.unwrapped();
 
-      Epetra_Vector scaling( mat_raw.RowMap() );
-      mat_raw.InvRowSums( scaling );
-      mat_raw.LeftScale( scaling );
+      Epetra_Vector scaling(mat_raw.RowMap());
+      mat_raw.InvRowSums(scaling);
+      mat_raw.LeftScale(scaling);
 
-      Epetra_MultiVector tmp( rhs_raw );
-      rhs_raw.Multiply( 1.0, scaling, tmp, 0.0 );
+      Epetra_MultiVector tmp(rhs_raw);
+      rhs_raw.Multiply(1.0, scaling, tmp, 0.0);
     }
 
-    if( m_parameters.solverType == LinearSolverParameters::SolverType::direct )
+    if(m_parameters.solverType == LinearSolverParameters::SolverType::direct)
     {
-      solve_direct( mat, sol, rhs );
+      solve_direct(mat, sol, rhs);
     }
     else
     {
-      solve_krylov( mat, sol, rhs );
+      solve_krylov(mat, sol, rhs);
     }
   }
   else
@@ -93,46 +93,46 @@ void TrilinosSolver::solve( EpetraMatrix & mat,
 namespace
 {
 
-void solve_parallelDirect( LinearSolverParameters const & parameters,
+void solve_parallelDirect(LinearSolverParameters const & parameters,
                            EpetraMatrix & mat,
                            EpetraVector & sol,
                            EpetraVector & rhs,
-                           LinearSolverResult & result )
+                           LinearSolverResult & result)
 {
   // To be able to use SuperLU_Dist solver we need to disable floating point exceptions
   LvArray::system::FloatingPointExceptionGuard guard;
 
-  SuperLU_Dist SLUDData( parameters );
-  EpetraConvertToSuperMatrix( mat, SLUDData );
+  SuperLU_Dist SLUDData(parameters);
+  EpetraConvertToSuperMatrix(mat, SLUDData);
 
-  GEOSX_LAI_CHECK_ERROR( SLUDData.setup() );
-  GEOSX_LAI_CHECK_ERROR( SLUDData.solve( rhs.extractLocalVector(), sol.extractLocalVector() ) );
+  GEOSX_LAI_CHECK_ERROR(SLUDData.setup());
+  GEOSX_LAI_CHECK_ERROR(SLUDData.solve(rhs.extractLocalVector(), sol.extractLocalVector()));
 
   // Save setup and solution times
   result.setupTime = SLUDData.setupTime();
   result.solveTime = SLUDData.solveTime();
 
-  EpetraVector res( rhs );
-  mat.gemv( -1.0, sol, 1.0, res );
+  EpetraVector res(rhs);
+  mat.gemv(-1.0, sol, 1.0, res);
   result.residualReduction = res.norm2() / rhs.norm2();
 
   result.status = parameters.direct.checkResidual == 0 ? LinearSolverResult::Status::Success : LinearSolverResult::Status::Breakdown;
   result.numIterations = 1;
-  if( parameters.direct.checkResidual )
+  if(parameters.direct.checkResidual)
   {
-    if( result.residualReduction < SLUDData.relativeTolerance() )
+    if(result.residualReduction <SLUDData.relativeTolerance())
     {
       result.status = LinearSolverResult::Status::Success;
     }
     else
     {
-      real64 const cond = EpetraSuperLU_DistCond( mat, SLUDData );
-      if( parameters.logLevel > 0 )
+      real64 const cond = EpetraSuperLU_DistCond(mat, SLUDData);
+      if(parameters.logLevel> 0)
       {
-        GEOSX_LOG_RANK_0( "Using a more accurate estimate of the condition number" );
-        GEOSX_LOG_RANK_0( "Condition number is " << cond );
+        GEOSX_LOG_RANK_0("Using a more accurate estimate of the condition number");
+        GEOSX_LOG_RANK_0("Condition number is " <<cond);
       }
-      if( result.residualReduction < SLUDData.precisionTolerance() * cond )
+      if(result.residualReduction <SLUDData.precisionTolerance() * cond)
       {
         result.status = LinearSolverResult::Status::Success;
       }
@@ -140,49 +140,49 @@ void solve_parallelDirect( LinearSolverParameters const & parameters,
   }
 }
 
-void solve_serialDirect( LinearSolverParameters const & parameters,
+void solve_serialDirect(LinearSolverParameters const & parameters,
                          EpetraMatrix & mat,
                          EpetraVector & sol,
                          EpetraVector & rhs,
-                         LinearSolverResult & result )
+                         LinearSolverResult & result)
 {
   // To be able to use UMFPACK direct solver we need to disable floating point exceptions
   LvArray::system::FloatingPointExceptionGuard guard;
 
-  SuiteSparse SSData( parameters );
+  SuiteSparse SSData(parameters);
 
   Epetra_Map * serialMap = NULL;
   Epetra_Import * importToSerial = NULL;
-  ConvertEpetraToSuiteSparseMatrix( mat, SSData, serialMap, importToSerial );
+  ConvertEpetraToSuiteSparseMatrix(mat, SSData, serialMap, importToSerial);
 
-  GEOSX_LAI_CHECK_ERROR( SSData.setup() );
-  GEOSX_LAI_CHECK_ERROR( SuiteSparseSolve( SSData, serialMap, importToSerial, rhs, sol ) );
+  GEOSX_LAI_CHECK_ERROR(SSData.setup());
+  GEOSX_LAI_CHECK_ERROR(SuiteSparseSolve(SSData, serialMap, importToSerial, rhs, sol));
 
   // Save setup and solution times
   result.setupTime = SSData.setupTime();
   result.solveTime = SSData.solveTime();
 
-  EpetraVector res( rhs );
-  mat.gemv( -1.0, sol, 1.0, res );
+  EpetraVector res(rhs);
+  mat.gemv(-1.0, sol, 1.0, res);
   result.residualReduction = res.norm2() / rhs.norm2();
 
   result.status = parameters.direct.checkResidual == 0 ? LinearSolverResult::Status::Success : LinearSolverResult::Status::Breakdown;
   result.numIterations = 1;
-  if( parameters.direct.checkResidual )
+  if(parameters.direct.checkResidual)
   {
-    if( result.residualReduction < SSData.relativeTolerance() )
+    if(result.residualReduction <SSData.relativeTolerance())
     {
       result.status = LinearSolverResult::Status::Success;
     }
     else
     {
-      real64 const cond = EpetraSuiteSparseCond( mat, serialMap, importToSerial, SSData );
-      if( parameters.logLevel > 0 )
+      real64 const cond = EpetraSuiteSparseCond(mat, serialMap, importToSerial, SSData);
+      if(parameters.logLevel> 0)
       {
-        GEOSX_LOG_RANK_0( "Using a more accurate estimate of the condition number" );
-        GEOSX_LOG_RANK_0( "Condition number is " << cond );
+        GEOSX_LOG_RANK_0("Using a more accurate estimate of the condition number");
+        GEOSX_LOG_RANK_0("Condition number is " <<cond);
       }
-      if( result.residualReduction < SSData.precisionTolerance() * cond )
+      if(result.residualReduction <SSData.precisionTolerance() * cond)
       {
         result.status = LinearSolverResult::Status::Success;
       }
@@ -193,110 +193,110 @@ void solve_serialDirect( LinearSolverParameters const & parameters,
   delete importToSerial;
 }
 
-void CreateTrilinosKrylovSolver( LinearSolverParameters const & params, AztecOO & solver )
+void CreateTrilinosKrylovSolver(LinearSolverParameters const & params, AztecOO & solver)
 {
-  switch( params.solverType )
+  switch(params.solverType)
   {
     case LinearSolverParameters::SolverType::gmres:
     {
-      GEOSX_LAI_CHECK_ERROR( solver.SetAztecOption( AZ_solver, AZ_gmres ) );
-      GEOSX_LAI_CHECK_ERROR( solver.SetAztecOption( AZ_kspace, params.krylov.maxRestart ) );
+      GEOSX_LAI_CHECK_ERROR(solver.SetAztecOption(AZ_solver, AZ_gmres));
+      GEOSX_LAI_CHECK_ERROR(solver.SetAztecOption(AZ_kspace, params.krylov.maxRestart));
       break;
     }
     case LinearSolverParameters::SolverType::bicgstab:
     {
-      GEOSX_LAI_CHECK_ERROR( solver.SetAztecOption( AZ_solver, AZ_bicgstab ) );
+      GEOSX_LAI_CHECK_ERROR(solver.SetAztecOption(AZ_solver, AZ_bicgstab));
       break;
     }
     case LinearSolverParameters::SolverType::cg:
     {
-      GEOSX_LAI_CHECK_ERROR( solver.SetAztecOption( AZ_solver, AZ_cg ) );
+      GEOSX_LAI_CHECK_ERROR(solver.SetAztecOption(AZ_solver, AZ_cg));
       break;
     }
     default:
     {
-      GEOSX_ERROR( "Solver type not supported in Trilinos interface: " << params.solverType );
+      GEOSX_ERROR("Solver type not supported in Trilinos interface: " <<params.solverType);
     }
   }
 
   // Ask for a convergence normalized by the right hand side
-  GEOSX_LAI_CHECK_ERROR( solver.SetAztecOption( AZ_conv, AZ_rhs ) );
+  GEOSX_LAI_CHECK_ERROR(solver.SetAztecOption(AZ_conv, AZ_rhs));
 
   // Control output
-  switch( params.logLevel )
+  switch(params.logLevel)
   {
     case 1:
     {
-      GEOSX_LAI_CHECK_ERROR( solver.SetAztecOption( AZ_output, AZ_summary ) );
-      GEOSX_LAI_CHECK_ERROR( solver.SetAztecOption( AZ_diagnostics, AZ_all ) );
+      GEOSX_LAI_CHECK_ERROR(solver.SetAztecOption(AZ_output, AZ_summary));
+      GEOSX_LAI_CHECK_ERROR(solver.SetAztecOption(AZ_diagnostics, AZ_all));
       break;
     }
     case 2:
     {
-      GEOSX_LAI_CHECK_ERROR( solver.SetAztecOption( AZ_output, AZ_all ) );
-      GEOSX_LAI_CHECK_ERROR( solver.SetAztecOption( AZ_diagnostics, AZ_all ) );
+      GEOSX_LAI_CHECK_ERROR(solver.SetAztecOption(AZ_output, AZ_all));
+      GEOSX_LAI_CHECK_ERROR(solver.SetAztecOption(AZ_diagnostics, AZ_all));
       break;
     }
     default:
     {
-      GEOSX_LAI_CHECK_ERROR( solver.SetAztecOption( AZ_output, AZ_none ) );
+      GEOSX_LAI_CHECK_ERROR(solver.SetAztecOption(AZ_output, AZ_none));
     }
   }
 }
 
 } // namespace
 
-void TrilinosSolver::solve_direct( EpetraMatrix & mat,
+void TrilinosSolver::solve_direct(EpetraMatrix & mat,
                                    EpetraVector & sol,
-                                   EpetraVector & rhs )
+                                   EpetraVector & rhs)
 {
-  if( m_parameters.direct.parallel )
+  if(m_parameters.direct.parallel)
   {
-    solve_parallelDirect( m_parameters, mat, sol, rhs, m_result );
+    solve_parallelDirect(m_parameters, mat, sol, rhs, m_result);
   }
   else
   {
-    solve_serialDirect( m_parameters, mat, sol, rhs, m_result );
+    solve_serialDirect(m_parameters, mat, sol, rhs, m_result);
   }
 }
 
-void TrilinosSolver::solve_krylov( EpetraMatrix & mat,
+void TrilinosSolver::solve_krylov(EpetraMatrix & mat,
                                    EpetraVector & sol,
-                                   EpetraVector & rhs )
+                                   EpetraVector & rhs)
 {
   // Time setup and solve
   Stopwatch watch;
 
   // Create Epetra linear problem.
-  Epetra_LinearProblem problem( &mat.unwrapped(),
+  Epetra_LinearProblem problem(&mat.unwrapped(),
                                 &sol.unwrapped(),
-                                &rhs.unwrapped() );
+                                &rhs.unwrapped());
 
   // Instantiate the AztecOO solver.
-  AztecOO solver( problem );
+  AztecOO solver(problem);
 
   // Choose the solver type
-  CreateTrilinosKrylovSolver( m_parameters, solver );
+  CreateTrilinosKrylovSolver(m_parameters, solver);
 
   // Deal with separate component approximation
   EpetraMatrix separateComponentMatrix;
-  if( m_parameters.amg.separateComponents )
+  if(m_parameters.amg.separateComponents)
   {
-    LAIHelperFunctions::SeparateComponentFilter( mat, separateComponentMatrix, m_parameters.dofsPerNode );
+    LAIHelperFunctions::SeparateComponentFilter(mat, separateComponentMatrix, m_parameters.dofsPerNode);
   }
   EpetraMatrix & precondMat = m_parameters.amg.separateComponents ? separateComponentMatrix : mat;
 
   // Create and compute preconditioner
-  TrilinosPreconditioner precond( m_parameters );
-  precond.compute( precondMat );
-  GEOSX_LAI_CHECK_ERROR( solver.SetPrecOperator( &precond.unwrapped() ) );
+  TrilinosPreconditioner precond(m_parameters);
+  precond.compute(precondMat);
+  GEOSX_LAI_CHECK_ERROR(solver.SetPrecOperator(&precond.unwrapped()));
 
   m_result.setupTime = watch.elapsedTime();
 
   // Actually solve
   watch.zero();
-  int const result = solver.Iterate( m_parameters.krylov.maxIterations,
-                                     m_parameters.krylov.relTolerance );
+  int const result = solver.Iterate(m_parameters.krylov.maxIterations,
+                                     m_parameters.krylov.relTolerance);
   m_result.solveTime = watch.elapsedTime();
 
   m_result.status = result ? LinearSolverResult::Status::NotConverged : LinearSolverResult::Status::Success;

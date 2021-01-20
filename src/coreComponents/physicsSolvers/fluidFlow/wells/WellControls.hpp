@@ -47,8 +47,8 @@ public:
    */
   enum class Type : integer
   {
-    PRODUCER,  /**< A production well */
-    INJECTOR   /**< An injection well */
+    PRODUCER,  /**<A production well */
+    INJECTOR   /**<An injection well */
   };
 
 
@@ -57,11 +57,11 @@ public:
    */
   enum class Control : integer
   {
-    BHP,  /**< The well operates at a specified bottom hole pressure (BHP) */
-    GASRATE, /**< The well operates at a specified gas flow rate */
-    OILRATE, /**< The well operates at a specified oil flow rate */
-    WATERRATE, /**< The well operates at a specified water flow rate */
-    LIQUIDRATE /**< The well operates at a specified liquid flow rate (oil + water) */
+    BHP,  /**<The well operates at a specified bottom hole pressure (BHP) */
+    GASRATE, /**<The well operates at a specified gas flow rate */
+    OILRATE, /**<The well operates at a specified oil flow rate */
+    WATERRATE, /**<The well operates at a specified water flow rate */
+    LIQUIDRATE /**<The well operates at a specified liquid flow rate (oil + water) */
   };
 
 
@@ -75,7 +75,7 @@ public:
    * @param[in] name the name of this instantiation of WellControls in the repository
    * @param[in] parent the parent group of this instantiation of WellControls
    */
-  explicit WellControls( string const & name, dataRepository::Group * const parent );
+  explicit WellControls(string const & name, dataRepository::Group * const parent);
 
 
   /**
@@ -91,24 +91,24 @@ public:
   /**
    * @brief Deleted copy constructor.
    */
-  WellControls( WellControls const & ) = delete;
+  WellControls(WellControls const &) = delete;
 
   /**
    * @brief Deleted move constructor.
    */
-  WellControls( WellControls && ) = delete;
+  WellControls(WellControls &&) = delete;
 
   /**
    * @brief Deleted assignment operator.
    * @return a reference to a perforation object
    */
-  WellControls & operator=( WellControls const & ) = delete;
+  WellControls & operator=(WellControls const &) = delete;
 
   /**
    * @brief Deleted move operator.
    * @return a reference to a perforation object
    */
-  WellControls & operator=( WellControls && ) = delete;
+  WellControls & operator=(WellControls &&) = delete;
 
   ///@}
 
@@ -121,7 +121,7 @@ public:
    * @brief Set the reference well elem index where the control will be enforced.
    * @param[in] refIndex reference well element index where the control will be enforced
    */
-  void SetReferenceWellElementIndex( localIndex refIndex )
+  void SetReferenceWellElementIndex(localIndex refIndex)
   {
     m_refWellElemIndex = refIndex;
   }
@@ -139,7 +139,7 @@ public:
    * @brief Get the well type (injector or producer).
    * @return a well Type enum
    */
-  Type GetType() const { return m_type; }
+  Type GetType() const {return m_type;}
 
 
   /**
@@ -148,35 +148,35 @@ public:
    * @param[in] val value for the control (depending on the control type, can be a maximum bottom hole pressure, a
    * minimum water rate...)
    */
-  void SetControl( Control control, real64 const & val );
+  void SetControl(Control control, real64 const & val);
 
 
   /**
    * @brief Get the control type for the well.
    * @return the Control enum enforced at the well
    */
-  Control GetControl() const { return m_currentControl; }
+  Control GetControl() const {return m_currentControl;}
 
 
   /**
    * @brief Get the target Bottom Hole Pressure value.
    * @return a value for the target Bottom Hole Pressure
    */
-  const real64 & GetTargetBHP() const { return m_targetBHP; }
+  const real64 & GetTargetBHP() const {return m_targetBHP;}
 
 
   /**
    * @brief Get the target rate
    * @return the target rate
    */
-  const real64 & GetTargetRate() const { return m_targetRate; }
+  const real64 & GetTargetRate() const {return m_targetRate;}
 
 
   /**
    * @brief Const accessor for the composition of the injection rate
    * @return a global component fraction vector
    */
-  arrayView1d< real64 const > GetInjectionStream() const { return m_injectionStream; }
+  arrayView1d<real64 const> GetInjectionStream() const {return m_injectionStream;}
 
   ///@}
 
@@ -203,17 +203,17 @@ public:
     /// String key for the well injection stream
     static constexpr auto injectionStreamString  = "injectionStream";
     /// ViewKey for the reference index (currently unused)
-    dataRepository::ViewKey referenceIndex  = { refWellElemIndexString };
+    dataRepository::ViewKey referenceIndex  = {refWellElemIndexString};
     /// ViewKey for the well type
-    dataRepository::ViewKey type            = { typeString };
+    dataRepository::ViewKey type            = {typeString};
     /// ViewKey for the well control
-    dataRepository::ViewKey control         = { controlString };
+    dataRepository::ViewKey control         = {controlString};
     /// ViewKey for the well target BHP
-    dataRepository::ViewKey targetBHP       = { targetBHPString };
+    dataRepository::ViewKey targetBHP       = {targetBHPString};
     /// ViewKey for the well target rate
-    dataRepository::ViewKey targetRate      = { targetRateString };
+    dataRepository::ViewKey targetRate      = {targetRateString};
     /// ViewKey for the well injection stream
-    dataRepository::ViewKey injectionStream = { injectionStreamString };
+    dataRepository::ViewKey injectionStream = {injectionStreamString};
   }
   /// ViewKey struct for the WellControls class
   viewKeysWellControls;
@@ -231,7 +231,7 @@ protected:
    * @param[in] rootGroup A group that is passed in to the initialization functions
    *                  in order to facilitate the initialization.
    */
-  virtual void InitializePostInitialConditions_PreSubGroups( Group * const rootGroup ) override;
+  virtual void InitializePostInitialConditions_PreSubGroups(Group * const rootGroup) override;
 
 private:
 
@@ -251,13 +251,13 @@ private:
   real64 m_targetRate;
 
   /// Vector with global component fractions at the injector
-  array1d< real64 >  m_injectionStream;
+  array1d<real64>  m_injectionStream;
 
 };
 
-ENUM_STRINGS( WellControls::Type, "producer", "injector" )
+ENUM_STRINGS(WellControls::Type, "producer", "injector")
 
-ENUM_STRINGS( WellControls::Control, "BHP", "gasRate", "oilRate", "waterRate", "liquidRate" )
+ENUM_STRINGS(WellControls::Control, "BHP", "gasRate", "oilRate", "waterRate", "liquidRate")
 
 } //namespace geosx
 

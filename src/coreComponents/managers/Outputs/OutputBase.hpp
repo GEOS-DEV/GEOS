@@ -33,8 +33,8 @@ namespace geosx
 class OutputBase : public ExecutableGroup
 {
 public:
-  /// @copydoc geosx::dataRepository::Group::Group( std::string const & name, Group * const parent )
-  explicit OutputBase( std::string const & name, Group * const parent );
+  /// @copydoc geosx::dataRepository::Group::Group(std::string const & name, Group * const parent)
+  explicit OutputBase(std::string const & name, Group * const parent);
 
   /// Destructor
   virtual ~OutputBase() override;
@@ -43,14 +43,14 @@ public:
    * @brief Catalog name interface.
    * @return This type's catalog name.
    **/
-  static string CatalogName() { return "OutputBase"; }
+  static string CatalogName() {return "OutputBase";}
 
   /// Method for setting up output directories.
   virtual void SetupDirectoryStructure();
 
   // Catalog interface
   /// @cond DO_NOT_DOCUMENT
-  using CatalogInterface = dataRepository::CatalogInterface< OutputBase, std::string const &, Group * const >;
+  using CatalogInterface = dataRepository::CatalogInterface<OutputBase, std::string const &, Group * const>;
   static CatalogInterface::CatalogType & GetCatalog();
 
   // Catalog view keys
@@ -65,13 +65,13 @@ public:
    * @brief Get the path of the child directory where output will be written
    * @return The directory path
    **/
-  string childDirectory() const { return m_childDirectory; }
+  string childDirectory() const {return m_childDirectory;}
 
   /**
    * @brief Get the number of parallel threads to use to write plotfiles
    * @return The number of threads
    **/
-  integer parallelThreads() const { return m_parallelThreads; }
+  integer parallelThreads() const {return m_parallelThreads;}
 
 protected:
   /**
@@ -79,7 +79,7 @@ protected:
    *        on the subgroups.
    * @param group The root group
    **/
-  virtual void InitializePreSubGroups( Group * const group ) override;
+  virtual void InitializePreSubGroups(Group * const group) override;
 
 private:
   string m_childDirectory;

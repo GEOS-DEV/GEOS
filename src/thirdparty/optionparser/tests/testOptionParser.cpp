@@ -24,16 +24,16 @@
 int example(int argc, char const * argv[])
 {
 
-  enum  optionIndex { UNKNOWN, HELP, PLUS };
+  enum  optionIndex {UNKNOWN, HELP, PLUS};
   const option::Descriptor usage[] =
   {
    {UNKNOWN, 0, "", "",option::Arg::None, "USAGE: example [options]\n\n"
-                                          "Options:" },
-   {HELP, 0,"", "help",option::Arg::None, "  --help  \tPrint usage and exit." },
-   {PLUS, 0,"p","plus",option::Arg::None, "  --plus, -p  \tIncrement count." },
+                                          "Options:"},
+   {HELP, 0,"", "help",option::Arg::None, "  --help  \tPrint usage and exit."},
+   {PLUS, 0,"p","plus",option::Arg::None, "  --plus, -p  \tIncrement count."},
    {UNKNOWN, 0, "", "",option::Arg::None, "\nExamples:\n"
                                  "  example --unknown -- --this_is_no_option\n"
-                                 "  example -unk --plus -ppp file1 file2\n" },
+                                 "  example -unk --plus -ppp file1 file2\n"},
    {0,0,0,0,0,0}
   };
 
@@ -51,14 +51,14 @@ int example(int argc, char const * argv[])
     return 0;
   }
 
-  std::cout << "--plus count: " <<
-      options[PLUS].count() << "\n";
+  std::cout <<"--plus count: " <<
+      options[PLUS].count() <<"\n";
 
   for (option::Option* opt = options[UNKNOWN]; opt; opt = opt->next())
-    std::cout << "Unknown option: " << std::string(opt->name,opt->namelen) << "\n";
+    std::cout <<"Unknown option: " <<std::string(opt->name,opt->namelen) <<"\n";
 
-  for (int i = 0; i < parse.nonOptionsCount(); ++i)
-    std::cout << "Non-option #" << i << ": " << parse.nonOption(i) << "\n";
+  for (int i = 0; i <parse.nonOptionsCount(); ++i)
+    std::cout <<"Non-option #" <<i <<": " <<parse.nonOption(i) <<"\n";
   return 0;
 }
 
@@ -66,7 +66,7 @@ TEST(testOptionParser,example)
 {
   int const argc = 3;
   char const * argv[] = {"testOptionParser","--plus","--plus"};
-  example( argc, argv );
+  example(argc, argv);
 }
 
 
@@ -116,18 +116,18 @@ struct Arg: public option::Arg
   }
 };
 
-enum  optionIndex { UNKNOWN, HELP, OPTIONAL, REQUIRED, NUMERIC, NONEMPTY };
+enum  optionIndex {UNKNOWN, HELP, OPTIONAL, REQUIRED, NUMERIC, NONEMPTY};
 const option::Descriptor usage[] = {
-{ UNKNOWN, 0,"", "",        Arg::Unknown, "USAGE: example_arg [options]\n\n"
-                                          "Options:" },
-{ HELP,    0,"", "help",    Arg::None,    "  \t--help  \tPrint usage and exit." },
-{ OPTIONAL,0,"o","optional",Arg::Optional,"  -o[<arg>], \t--optional[=<arg>]"
-                                          "  \tTakes an argument but is happy without one." },
-{ REQUIRED,0,"r","required",Arg::Required,"  -r <arg>, \t--required=<arg>  \tMust have an argument." },
-{ NUMERIC, 0,"n","numeric", Arg::Numeric, "  -n <num>, \t--numeric=<num>  \tRequires a number as argument." },
-{ NONEMPTY,0,"1","nonempty",Arg::NonEmpty,"  -1 <arg>, \t--nonempty=<arg>"
-                                          "  \tCan NOT take the empty string as argument." },
-{ UNKNOWN, 0,"", "",        Arg::None,
+{UNKNOWN, 0,"", "",        Arg::Unknown, "USAGE: example_arg [options]\n\n"
+                                          "Options:"},
+{HELP,    0,"", "help",    Arg::None,    "  \t--help  \tPrint usage and exit."},
+{OPTIONAL,0,"o","optional",Arg::Optional,"  -o[<arg>], \t--optional[=<arg>]"
+                                          "  \tTakes an argument but is happy without one."},
+{REQUIRED,0,"r","required",Arg::Required,"  -r <arg>, \t--required=<arg>  \tMust have an argument."},
+{NUMERIC, 0,"n","numeric", Arg::Numeric, "  -n <num>, \t--numeric=<num>  \tRequires a number as argument."},
+{NONEMPTY,0,"1","nonempty",Arg::NonEmpty,"  -1 <arg>, \t--nonempty=<arg>"
+                                          "  \tCan NOT take the empty string as argument."},
+{UNKNOWN, 0,"", "",        Arg::None,
  "\nExamples:\n"
  "  example_arg --unknown -o -n10 \n"
  "  example_arg -o -n10 file1 file2 \n"
@@ -149,7 +149,7 @@ const option::Descriptor usage[] = {
  "  example_arg -1 -- \n"
  "  example_arg -1 \"\" \n"
 },
-{ 0, 0, 0, 0, 0, 0 } };
+{0, 0, 0, 0, 0, 0}};
 
 int example_arg(int argc, char const * argv[])
 {
@@ -181,7 +181,7 @@ int example_arg(int argc, char const * argv[])
     return 0;
   }
 
-  for (int i = 0; i < parse.optionsCount(); ++i)
+  for (int i = 0; i <parse.optionsCount(); ++i)
   {
     option::Option& opt = buffer[i];
     fprintf(stdout, "Argument #%d is ", i);
@@ -211,7 +211,7 @@ int example_arg(int argc, char const * argv[])
     }
   }
 
-  for (int i = 0; i < parse.nonOptionsCount(); ++i)
+  for (int i = 0; i <parse.nonOptionsCount(); ++i)
     fprintf(stdout, "Non-option argument #%d is %s\n", i, parse.nonOption(i));
 
   return 0;
@@ -221,5 +221,5 @@ TEST(testOptionParser,example_arg)
 {
   int const argc = 3;
   char const * argv[] = {"testOptionParser","--plus","--plus"};
-  example_arg( argc, argv );
+  example_arg(argc, argv);
 }

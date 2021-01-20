@@ -18,20 +18,20 @@
 #include "managers/ProblemManager.hpp"
 #include "managers/initialization.hpp"
 
-TEST( testXML, testXML )
+TEST(testXML, testXML)
 {
-  geosx::ProblemManager problemManager( "Problem", nullptr );
+  geosx::ProblemManager problemManager("Problem", nullptr);
 
   problemManager.InitializePythonInterpreter();
   problemManager.ParseCommandLineInput();
   problemManager.ParseInputFile();
 }
 
-int main( int argc, char * * argv )
+int main(int argc, char * * argv)
 {
-  ::testing::InitGoogleTest( &argc, argv );
+  ::testing::InitGoogleTest(&argc, argv);
 
-  geosx::basicSetup( argc, argv, true );
+  geosx::basicSetup(argc, argv, true);
 
   int const result = RUN_ALL_TESTS();
 

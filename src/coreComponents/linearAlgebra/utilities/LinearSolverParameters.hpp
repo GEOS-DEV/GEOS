@@ -37,12 +37,12 @@ struct LinearSolverParameters
    */
   enum class SolverType : integer
   {
-    direct,        ///< Direct solver
-    cg,            ///< CG
-    gmres,         ///< GMRES
-    fgmres,        ///< Flexible GMRES
-    bicgstab,      ///< BiCGStab
-    preconditioner ///< Preconditioner only
+    direct,        ///<Direct solver
+    cg,            ///<CG
+    gmres,         ///<GMRES
+    fgmres,        ///<Flexible GMRES
+    bicgstab,      ///<BiCGStab
+    preconditioner ///<Preconditioner only
   };
 
   /**
@@ -50,26 +50,26 @@ struct LinearSolverParameters
    */
   enum class PreconditionerType : integer
   {
-    none,   ///< No preconditioner
-    jacobi, ///< Jacobi smoothing
-    gs,     ///< Gauss-Seidel smoothing
-    sgs,    ///< Symmetric Gauss-Seidel smoothing
-    iluk,   ///< Incomplete LU with k-level of fill
-    ilut,   ///< Incomplete LU with thresholding
-    icc,    ///< Incomplete Cholesky
-    ict,    ///< Incomplete Cholesky with thresholding
-    amg,    ///< Algebraic Multigrid
-    mgr,    ///< Multigrid reduction (Hypre only)
-    block   ///< Block preconditioner
+    none,   ///<No preconditioner
+    jacobi, ///<Jacobi smoothing
+    gs,     ///<Gauss-Seidel smoothing
+    sgs,    ///<Symmetric Gauss-Seidel smoothing
+    iluk,   ///<Incomplete LU with k-level of fill
+    ilut,   ///<Incomplete LU with thresholding
+    icc,    ///<Incomplete Cholesky
+    ict,    ///<Incomplete Cholesky with thresholding
+    amg,    ///<Algebraic Multigrid
+    mgr,    ///<Multigrid reduction (Hypre only)
+    block   ///<Block preconditioner
   };
 
-  integer logLevel = 0;     ///< Output level [0=none, 1=basic, 2=everything]
-  integer dofsPerNode = 1;  ///< Dofs per node (or support location) for non-scalar problems
-  bool isSymmetric = false; ///< Whether input matrix is symmetric (may affect choice of scheme)
-  integer stopIfError = 1;  ///< Whether to stop the simulation if the linear solver reports an error
+  integer logLevel = 0;     ///<Output level [0=none, 1=basic, 2=everything]
+  integer dofsPerNode = 1;  ///<Dofs per node (or support location) for non-scalar problems
+  bool isSymmetric = false; ///<Whether input matrix is symmetric (may affect choice of scheme)
+  integer stopIfError = 1;  ///<Whether to stop the simulation if the linear solver reports an error
 
-  SolverType solverType = SolverType::direct;                        ///< Solver type
-  PreconditionerType preconditionerType = PreconditionerType::iluk;  ///< Preconditioner type
+  SolverType solverType = SolverType::direct;                        ///<Solver type
+  PreconditionerType preconditionerType = PreconditionerType::iluk;  ///<Preconditioner type
 
   /// Direct solver parameters: used for SuperLU_Dist interface through hypre and PETSc
   struct Direct
@@ -79,12 +79,12 @@ struct LinearSolverParameters
      */
     enum class ColPerm : integer
     {
-      none,        ///< natural
-      MMD_AtplusA, ///< multiple minimum degree on At+A
-      MMD_AtA,     ///< multiple minimum degree on At*A (heavy)
-      colAMD,      ///< approximate minimum degree on columns
-      metis,       ///< using METIS
-      parmetis     ///< using ParMETIS
+      none,        ///<natural
+      MMD_AtplusA, ///<multiple minimum degree on At+A
+      MMD_AtA,     ///<multiple minimum degree on At*A (heavy)
+      colAMD,      ///<approximate minimum degree on columns
+      metis,       ///<using METIS
+      parmetis     ///<using ParMETIS
     };
 
     /**
@@ -92,89 +92,89 @@ struct LinearSolverParameters
      */
     enum class RowPerm : integer
     {
-      none, ///< natural
-      mc64  ///< using HSL routine MC64
+      none, ///<natural
+      mc64  ///<using HSL routine MC64
     };
 
-    integer checkResidual = 0;        ///< Whether to check the linear system solution residual
-    integer equilibrate = 1;          ///< Whether to scale the rows and columns of the matrix
-    ColPerm colPerm = ColPerm::metis; ///< Columns permutation
-    RowPerm rowPerm = RowPerm::mc64;  ///< Rows permutation
-    integer replaceTinyPivot = 1;     ///< Whether to replace tiny pivots by sqrt(epsilon)*norm(A)
-    integer iterativeRefine = 1;      ///< Whether to perform iterative refinement
-    integer parallel = 1;             ///< Whether to use a parallel solver (instead of a serial one)
+    integer checkResidual = 0;        ///<Whether to check the linear system solution residual
+    integer equilibrate = 1;          ///<Whether to scale the rows and columns of the matrix
+    ColPerm colPerm = ColPerm::metis; ///<Columns permutation
+    RowPerm rowPerm = RowPerm::mc64;  ///<Rows permutation
+    integer replaceTinyPivot = 1;     ///<Whether to replace tiny pivots by sqrt(epsilon)*norm(A)
+    integer iterativeRefine = 1;      ///<Whether to perform iterative refinement
+    integer parallel = 1;             ///<Whether to use a parallel solver (instead of a serial one)
   }
-  direct;                             ///< direct solver parameter struct
+  direct;                             ///<direct solver parameter struct
 
   /// Krylov-method parameters
   struct Krylov
   {
-    real64 relTolerance = 1e-6;       ///< Relative convergence tolerance for iterative solvers
-    integer maxIterations = 200;      ///< Max iterations before declaring convergence failure
-    integer maxRestart = 200;         ///< Max number of vectors in Krylov basis before restarting
-    integer useAdaptiveTol = false;   ///< Use Eisenstat-Walker adaptive tolerance
-    real64 weakestTol = 1e-3;         ///< Weakest allowed tolerance when using adaptive method
+    real64 relTolerance = 1e-6;       ///<Relative convergence tolerance for iterative solvers
+    integer maxIterations = 200;      ///<Max iterations before declaring convergence failure
+    integer maxRestart = 200;         ///<Max number of vectors in Krylov basis before restarting
+    integer useAdaptiveTol = false;   ///<Use Eisenstat-Walker adaptive tolerance
+    real64 weakestTol = 1e-3;         ///<Weakest allowed tolerance when using adaptive method
   }
-  krylov;                             ///< Krylov-method parameter struct
+  krylov;                             ///<Krylov-method parameter struct
 
   /// Matrix-scaling parameters
   struct Scaling
   {
-    integer useRowScaling = false;      ///< Apply row scaling
-    integer useRowColScaling = false;   ///< Apply row and column scaling (not yet implemented)
+    integer useRowScaling = false;      ///<Apply row scaling
+    integer useRowColScaling = false;   ///<Apply row and column scaling (not yet implemented)
   }
-  scaling;                              ///< Matrix-scaling parameter struct
+  scaling;                              ///<Matrix-scaling parameter struct
 
   /// Algebraic multigrid parameters
   struct AMG
   {
-    integer maxLevels = 20;                  ///< Maximum number of coarsening levels
-    string cycleType = "V";                  ///< AMG cycle type
-    string smootherType = "gaussSeidel";     ///< Smoother type
-    string coarseType = "direct";            ///< Coarse-level solver/smoother
-    integer numSweeps = 2;                   ///< Number of smoother sweeps
-    string preOrPostSmoothing = "both";      ///< Pre and/or post smoothing [pre,post,both]
-    real64 threshold = 0.0;                  ///< Threshold for "strong connections" (for classical and
-                                             ///< smoothed-aggregation AMG)
-    integer separateComponents = false;      ///< Apply a separate component filter before AMG construction
-    string nullSpaceType = "constantModes";  ///< Null space type [constantModes,rigidBodyModes]
+    integer maxLevels = 20;                  ///<Maximum number of coarsening levels
+    string cycleType = "V";                  ///<AMG cycle type
+    string smootherType = "gaussSeidel";     ///<Smoother type
+    string coarseType = "direct";            ///<Coarse-level solver/smoother
+    integer numSweeps = 2;                   ///<Number of smoother sweeps
+    string preOrPostSmoothing = "both";      ///<Pre and/or post smoothing [pre,post,both]
+    real64 threshold = 0.0;                  ///<Threshold for "strong connections" (for classical and
+                                             ///<smoothed-aggregation AMG)
+    integer separateComponents = false;      ///<Apply a separate component filter before AMG construction
+    string nullSpaceType = "constantModes";  ///<Null space type [constantModes,rigidBodyModes]
   }
-  amg;                                       ///< Algebraic Multigrid (AMG) parameters
+  amg;                                       ///<Algebraic Multigrid (AMG) parameters
 
   /// Multigrid reduction parameters
   struct MGR
   {
-    string strategy;                    ///< Predefined MGR solution strategy (solver specific)
-    integer separateComponents = false; ///< Apply a separate displacement component (SDC) filter before AMG construction
-    string displacementFieldName;       ///< Displacement field name need for SDC filter
+    string strategy;                    ///<Predefined MGR solution strategy (solver specific)
+    integer separateComponents = false; ///<Apply a separate displacement component (SDC) filter before AMG construction
+    string displacementFieldName;       ///<Displacement field name need for SDC filter
   }
-  mgr;                                  ///< Multigrid reduction (MGR) parameters
+  mgr;                                  ///<Multigrid reduction (MGR) parameters
 
   /// Incomplete factorization parameters
   struct ILU
   {
-    integer fill = 0;        ///< Fill level
-    real64 threshold = 0.0;  ///< Dropping threshold
+    integer fill = 0;        ///<Fill level
+    real64 threshold = 0.0;  ///<Dropping threshold
   }
-  ilu;                       ///< Incomplete factorization parameter struct
+  ilu;                       ///<Incomplete factorization parameter struct
 
   /// Domain decomposition parameters
   struct DD
   {
-    integer overlap = 0;   ///< Ghost overlap
+    integer overlap = 0;   ///<Ghost overlap
   }
-  dd;                      ///< Domain decomposition parameter struct
+  dd;                      ///<Domain decomposition parameter struct
 };
 
-ENUM_STRINGS( LinearSolverParameters::SolverType,
+ENUM_STRINGS(LinearSolverParameters::SolverType,
               "direct",
               "cg",
               "gmres",
               "fgmres",
               "bicgstab",
-              "preconditioner" )
+              "preconditioner")
 
-ENUM_STRINGS( LinearSolverParameters::PreconditionerType,
+ENUM_STRINGS(LinearSolverParameters::PreconditionerType,
               "none",
               "jacobi",
               "gs",
@@ -185,19 +185,19 @@ ENUM_STRINGS( LinearSolverParameters::PreconditionerType,
               "ict",
               "amg",
               "mgr",
-              "block" )
+              "block")
 
-ENUM_STRINGS( LinearSolverParameters::Direct::ColPerm,
+ENUM_STRINGS(LinearSolverParameters::Direct::ColPerm,
               "none",
               "MMD_AtplusA",
               "MMD_AtA",
               "colAMD",
               "metis",
-              "parmetis" )
+              "parmetis")
 
-ENUM_STRINGS( LinearSolverParameters::Direct::RowPerm,
+ENUM_STRINGS(LinearSolverParameters::Direct::RowPerm,
               "none",
-              "mc64" )
+              "mc64")
 
 } /* namespace geosx */
 

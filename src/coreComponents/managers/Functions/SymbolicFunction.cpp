@@ -33,21 +33,21 @@ std::string const expression = "expression";
 
 using namespace dataRepository;
 
-SymbolicFunction::SymbolicFunction( const std::string & name,
-                                    Group * const parent ):
-  FunctionBase( name, parent ),
+SymbolicFunction::SymbolicFunction(const std::string & name,
+                                    Group * const parent):
+  FunctionBase(name, parent),
   parserContext(),
   parserExpression()
 {
-  registerWrapper( keys::variableNames, &m_variableNames )->
-    setInputFlag( InputFlags::REQUIRED )->
-    setSizedFromParent( 0 )->
-    setDescription( "List of variables in expression.  The order must match the evaluate argument" );
+  registerWrapper(keys::variableNames, &m_variableNames)->
+    setInputFlag(InputFlags::REQUIRED)->
+    setSizedFromParent(0)->
+    setDescription("List of variables in expression.  The order must match the evaluate argument");
 
-  registerWrapper( keys::expression, &m_expression )->
-    setInputFlag( InputFlags::REQUIRED )->
-    setSizedFromParent( 0 )->
-    setDescription( "Symbolic math expression" );
+  registerWrapper(keys::expression, &m_expression)->
+    setInputFlag(InputFlags::REQUIRED)->
+    setSizedFromParent(0)->
+    setDescription("Symbolic math expression");
 }
 
 
@@ -57,18 +57,18 @@ SymbolicFunction::~SymbolicFunction()
 void SymbolicFunction::InitializeFunction()
 {
   // Register variables
-  for( localIndex ii=0; ii<m_variableNames.size(); ++ii )
+  for(localIndex ii=0; ii<m_variableNames.size(); ++ii)
   {
-    parserContext.addVariable( m_variableNames[ii].c_str(), static_cast< int >(ii * sizeof(double)));
+    parserContext.addVariable(m_variableNames[ii].c_str(), static_cast<int>(ii * sizeof(double)));
   }
 
   // Add built in constants/functions (PI, E, sin, cos, ceil, exp, etc.),
   // compile
   parserContext.addBuiltIns();
-  mathpresso::Error err = parserExpression.compile( parserContext, m_expression.c_str(), mathpresso::kNoOptions );
-  GEOSX_ERROR_IF( err != mathpresso::kErrorOk, "JIT Compiler Error" );
+  mathpresso::Error err = parserExpression.compile(parserContext, m_expression.c_str(), mathpresso::kNoOptions);
+  GEOSX_ERROR_IF(err != mathpresso::kErrorOk, "JIT Compiler Error");
 }
 
-REGISTER_CATALOG_ENTRY( FunctionBase, SymbolicFunction, std::string const &, Group * const )
+REGISTER_CATALOG_ENTRY(FunctionBase, SymbolicFunction, std::string const &, Group * const)
 
 } /* namespace ANST */

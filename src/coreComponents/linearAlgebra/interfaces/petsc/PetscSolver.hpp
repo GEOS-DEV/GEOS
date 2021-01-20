@@ -40,7 +40,7 @@ public:
    * @brief Solver constructor, with parameter list reference
    * @param[in] parameters structure containing linear solver parameters
    */
-  PetscSolver( LinearSolverParameters parameters );
+  PetscSolver(LinearSolverParameters parameters);
 
   /**
    * @brief Virtual destructor.
@@ -57,10 +57,10 @@ public:
    *
    * Solve Ax=b with A an PetscMatrix, x and b PetscVector.
    */
-  void solve( PetscMatrix & mat,
+  void solve(PetscMatrix & mat,
               PetscVector & sol,
               PetscVector & rhs,
-              DofManager const * const dofManager = nullptr );
+              DofManager const * const dofManager = nullptr);
 
   /**
    * @brief Get the result of previous solve.
@@ -76,13 +76,13 @@ private:
   LinearSolverParameters m_parameters;
   LinearSolverResult m_result;
 
-  void solve_direct( PetscMatrix & mat,
+  void solve_direct(PetscMatrix & mat,
                      PetscVector & sol,
-                     PetscVector & rhs );
+                     PetscVector & rhs);
 
-  void solve_krylov( PetscMatrix & mat,
+  void solve_krylov(PetscMatrix & mat,
                      PetscVector & sol,
-                     PetscVector & rhs );
+                     PetscVector & rhs);
 
 };
 

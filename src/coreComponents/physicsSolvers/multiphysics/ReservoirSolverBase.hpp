@@ -41,8 +41,8 @@ public:
    * @param name the name of this instantiation of ManagedGroup in the repository
    * @param parent the parent group of this instantiation of ManagedGroup
    */
-  ReservoirSolverBase( const std::string & name,
-                       Group * const parent );
+  ReservoirSolverBase(const std::string & name,
+                       Group * const parent);
 
   /**
    * @brief default destructor
@@ -50,22 +50,22 @@ public:
   virtual ~ReservoirSolverBase() override;
 
   /// deleted copy constructor
-  ReservoirSolverBase( ReservoirSolverBase const & ) = delete;
+  ReservoirSolverBase(ReservoirSolverBase const &) = delete;
 
   /// default move constructor
-  ReservoirSolverBase( ReservoirSolverBase && ) = default;
+  ReservoirSolverBase(ReservoirSolverBase &&) = default;
 
   /// deleted assignment operator
-  ReservoirSolverBase & operator=( ReservoirSolverBase const & ) = delete;
+  ReservoirSolverBase & operator=(ReservoirSolverBase const &) = delete;
 
   /// deleted move operator
-  ReservoirSolverBase & operator=( ReservoirSolverBase && ) = delete;
+  ReservoirSolverBase & operator=(ReservoirSolverBase &&) = delete;
 
   /**
    * @brief name of the node manager in the object catalog
    * @return string that contains the catalog name to generate a new NodeManager object through the object catalog.
    */
-  static string CatalogName() { return "Reservoir"; }
+  static string CatalogName() {return "Reservoir";}
 
   /**
    * @defgroup Solver Interface Functions
@@ -75,80 +75,80 @@ public:
   /**@{*/
 
   virtual void
-  ImplicitStepSetup( real64 const & time_n,
+  ImplicitStepSetup(real64 const & time_n,
                      real64 const & dt,
-                     DomainPartition & domain ) override final;
+                     DomainPartition & domain) override final;
 
   virtual void
-  SetupDofs( DomainPartition const & domain,
-             DofManager & dofManager ) const override;
+  SetupDofs(DomainPartition const & domain,
+             DofManager & dofManager) const override;
 
   virtual void
-  SetupSystem( DomainPartition & domain,
+  SetupSystem(DomainPartition & domain,
                DofManager & dofManager,
-               CRSMatrix< real64, globalIndex > & localMatrix,
-               array1d< real64 > & localRhs,
-               array1d< real64 > & localSolution,
-               bool const setSparsity = true ) override;
+               CRSMatrix<real64, globalIndex> & localMatrix,
+               array1d<real64> & localRhs,
+               array1d<real64> & localSolution,
+               bool const setSparsity = true) override;
 
   virtual void
-  AssembleSystem( real64 const time,
+  AssembleSystem(real64 const time,
                   real64 const dt,
                   DomainPartition & domain,
                   DofManager const & dofManager,
-                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                  arrayView1d< real64 > const & localRhs ) override;
+                  CRSMatrixView<real64, globalIndex const> const & localMatrix,
+                  arrayView1d<real64> const & localRhs) override;
 
   virtual void
-  ApplyBoundaryConditions( real64 const time,
+  ApplyBoundaryConditions(real64 const time,
                            real64 const dt,
                            DomainPartition & domain,
                            DofManager const & dofManager,
-                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                           arrayView1d< real64 > const & localRhs ) override;
+                           CRSMatrixView<real64, globalIndex const> const & localMatrix,
+                           arrayView1d<real64> const & localRhs) override;
 
   virtual real64
-  CalculateResidualNorm( DomainPartition const & domain,
+  CalculateResidualNorm(DomainPartition const & domain,
                          DofManager const & dofManager,
-                         arrayView1d< real64 const > const & localRhs ) override;
+                         arrayView1d<real64 const> const & localRhs) override;
 
   virtual void
-  SolveSystem( DofManager const & dofManager,
+  SolveSystem(DofManager const & dofManager,
                ParallelMatrix & matrix,
                ParallelVector & rhs,
-               ParallelVector & solution ) override;
+               ParallelVector & solution) override;
 
   virtual real64
-  ScalingForSystemSolution( DomainPartition const & domain,
+  ScalingForSystemSolution(DomainPartition const & domain,
                             DofManager const & dofManager,
-                            arrayView1d< real64 const > const & localSolution ) override;
+                            arrayView1d<real64 const> const & localSolution) override;
 
   virtual bool
-  CheckSystemSolution( DomainPartition const & domain,
+  CheckSystemSolution(DomainPartition const & domain,
                        DofManager const & dofManager,
-                       arrayView1d< real64 const > const & localSolution,
-                       real64 const scalingFactor ) override;
+                       arrayView1d<real64 const> const & localSolution,
+                       real64 const scalingFactor) override;
 
   virtual void
-  ApplySystemSolution( DofManager const & dofManager,
-                       arrayView1d< real64 const > const & localSolution,
+  ApplySystemSolution(DofManager const & dofManager,
+                       arrayView1d<real64 const> const & localSolution,
                        real64 const scalingFactor,
-                       DomainPartition & domain ) override;
+                       DomainPartition & domain) override;
 
   virtual void
-  ResetStateToBeginningOfStep( DomainPartition & domain ) override;
+  ResetStateToBeginningOfStep(DomainPartition & domain) override;
 
 
   virtual void
-  ImplicitStepComplete( real64 const & time,
+  ImplicitStepComplete(real64 const & time,
                         real64 const & dt,
-                        DomainPartition & domain ) override;
+                        DomainPartition & domain) override;
 
   virtual real64
-  SolverStep( real64 const & time_n,
+  SolverStep(real64 const & time_n,
               real64 const & dt,
               int const cycleNumber,
-              DomainPartition & domain ) override;
+              DomainPartition & domain) override;
 
   /**@}*/
 
@@ -161,16 +161,16 @@ public:
    * @param matrix the system matrix
    * @param rhs the system right-hand side vector
    */
-  virtual void AssembleCouplingTerms( real64 const time_n,
+  virtual void AssembleCouplingTerms(real64 const time_n,
                                       real64 const dt,
                                       DomainPartition const & domain,
                                       DofManager const & dofManager,
-                                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                      arrayView1d< real64 > const & localRhs ) = 0;
+                                      CRSMatrixView<real64, globalIndex const> const & localMatrix,
+                                      arrayView1d<real64> const & localRhs) = 0;
 
-  FlowSolverBase * GetFlowSolver() const { return m_flowSolver; }
+  FlowSolverBase * GetFlowSolver() const {return m_flowSolver;}
 
-  WellSolverBase * GetWellSolver() const { return m_wellSolver; }
+  WellSolverBase * GetWellSolver() const {return m_wellSolver;}
 
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
@@ -186,13 +186,13 @@ public:
 
 protected:
 
-  virtual void InitializePostInitialConditions_PreSubGroups( Group * const rootGroup ) override;
+  virtual void InitializePostInitialConditions_PreSubGroups(Group * const rootGroup) override;
 
   virtual void PostProcessInput() override;
 
-  void AddCouplingNumNonzeros( DomainPartition & domain,
+  void AddCouplingNumNonzeros(DomainPartition & domain,
                                DofManager & dofManager,
-                               arrayView1d< localIndex > const & rowLengths ) const;
+                               arrayView1d<localIndex> const & rowLengths) const;
 
   /**
    * @Brief add the sparsity pattern induced by the perforations
@@ -200,14 +200,14 @@ protected:
    * @param dofManager degree-of-freedom manager associated with the linear system
    * @param pattern the sparsity pattern
    */
-  virtual void AddCouplingSparsityPattern( DomainPartition const & domain,
+  virtual void AddCouplingSparsityPattern(DomainPartition const & domain,
                                            DofManager const & dofManager,
-                                           SparsityPatternView< globalIndex > const & pattern ) const = 0;
+                                           SparsityPatternView<globalIndex> const & pattern) const = 0;
 
   /**
    * @brief Setup stored views into domain data for the current step
    */
-  virtual void ResetViews( DomainPartition * const domain );
+  virtual void ResetViews(DomainPartition * const domain);
 
   /// solver that assembles the reservoir equations
   string m_flowSolverName;

@@ -25,12 +25,12 @@ namespace geosx
  * @tparam T data type
  * @tparam SIZE_TPARAM number of values
  */
-template< typename T, int SIZE_TPARAM >
+template<typename T, int SIZE_TPARAM>
 class Tensor
 {
 public:
 
-  static_assert( SIZE_TPARAM > 0, "Tensor size must be a positive value" );
+  static_assert(SIZE_TPARAM> 0, "Tensor size must be a positive value");
 
   /// Alias for type template parameter
   using value_type = T;
@@ -45,7 +45,7 @@ public:
    */
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  T const & operator[]( std::ptrdiff_t const i ) const
+  T const & operator[](std::ptrdiff_t const i) const
   {
     return data[i];
   }
@@ -57,7 +57,7 @@ public:
    */
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  T & operator[]( std::ptrdiff_t const i )
+  T & operator[](std::ptrdiff_t const i)
   {
     return data[i];
   }
@@ -69,15 +69,15 @@ public:
    * @return true iff @code data[i] == rhs.data[i] @endcode
    * @note Version for floating point types that avoids direct equality comparison.
    */
-  template< typename U = T >
+  template<typename U = T>
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  std::enable_if_t< std::is_floating_point< U >::value, bool >
-  operator==( Tensor< U, SIZE > const & rhs ) const
+  std::enable_if_t<std::is_floating_point<U>::value, bool>
+  operator==(Tensor<U, SIZE> const & rhs) const
   {
-    for( int i = 0; i < SIZE; ++i )
+    for(int i = 0; i <SIZE; ++i)
     {
-      if( (data[i] > rhs.data[i]) || (data[i] < rhs.data[i]) )
+      if((data[i]> rhs.data[i]) || (data[i] <rhs.data[i]))
       {
         return false;
       }
@@ -92,15 +92,15 @@ public:
    * @return true iff @code data[i] == rhs.data[i] @endcode
    * @note Version for all types except floating point.
    */
-  template< typename U = T >
+  template<typename U = T>
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  std::enable_if_t< !std::is_floating_point< U >::value, bool >
-  operator==( Tensor< U, SIZE > const & rhs ) const
+  std::enable_if_t<!std::is_floating_point<U>::value, bool>
+  operator==(Tensor<U, SIZE> const & rhs) const
   {
-    for( int i = 0; i < SIZE; ++i )
+    for(int i = 0; i <SIZE; ++i)
     {
-      if( data[i] != rhs.data[i] )
+      if(data[i] != rhs.data[i])
       {
         return false;
       }
@@ -115,9 +115,9 @@ public:
    */
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  constexpr int size( int junk ) const
+  constexpr int size(int junk) const
   {
-    GEOSX_UNUSED_VAR( junk )
+    GEOSX_UNUSED_VAR(junk)
     return SIZE;
   }
 
@@ -132,12 +132,12 @@ private:
    * @param t the tensor value
    * @return reference to @p os
    */
-  friend inline std::ostream & operator<<( std::ostream & os, Tensor< T, SIZE > const & t )
+  friend inline std::ostream & operator<<(std::ostream & os, Tensor<T, SIZE> const & t)
   {
-    os << t.data[0];
-    for( int i = 1; i < SIZE; ++i )
+    os <<t.data[0];
+    for(int i = 1; i <SIZE; ++i)
     {
-      os << ',' << t.data[i];
+      os <<',' <<t.data[i];
     }
     return os;
   }

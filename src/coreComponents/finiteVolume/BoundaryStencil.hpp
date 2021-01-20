@@ -32,22 +32,22 @@ namespace geosx
 struct BoundaryStencil_Traits
 {
   /// The array type that will be used to store the indices of the stencil contributors
-  using IndexContainerType = array2d< localIndex >;
+  using IndexContainerType = array2d<localIndex>;
 
   /// The array view type for the stencil indices
-  using IndexContainerViewType = traits::ViewType< IndexContainerType >;
+  using IndexContainerViewType = traits::ViewType<IndexContainerType>;
 
   /// The array view to const type for the stencil indices
-  using IndexContainerViewConstType = traits::ViewTypeConst< IndexContainerType >;
+  using IndexContainerViewConstType = traits::ViewTypeConst<IndexContainerType>;
 
   /// The array type that is used to store the weights of the stencil contributors
-  using WeightContainerType = array2d< real64 >;
+  using WeightContainerType = array2d<real64>;
 
   /// The array view type for the stencil weights
-  using WeightContainerViewType = traits::ViewType< WeightContainerType >;
+  using WeightContainerViewType = traits::ViewType<WeightContainerType>;
 
   /// The array view to const type for the stencil weights
-  using WeightContainerViewConstType = traits::ViewTypeConst< WeightContainerType >;
+  using WeightContainerViewConstType = traits::ViewTypeConst<WeightContainerType>;
 
   /// Number of points the flux is between (always 2 for TPFA)
   static constexpr localIndex NUM_POINT_IN_FLUX = 2;
@@ -62,7 +62,7 @@ struct BoundaryStencil_Traits
  * Provides management of the boundary stencil points
  * (stencils used to prescribe boundary conditions on domain boundaries, i.e. faces)
  */
-class BoundaryStencil : public StencilBase< BoundaryStencil_Traits, BoundaryStencil >,
+class BoundaryStencil : public StencilBase<BoundaryStencil_Traits, BoundaryStencil>,
   public BoundaryStencil_Traits
 {
 public:
@@ -72,34 +72,34 @@ public:
    */
   struct Order
   {
-    static constexpr localIndex ELEM = 0; ///< Order of element index in stencil
-    static constexpr localIndex FACE = 1; ///< Order of face index in stencil
+    static constexpr localIndex ELEM = 0; ///<Order of element index in stencil
+    static constexpr localIndex FACE = 1; ///<Order of face index in stencil
   };
 
   /// default constructor
   BoundaryStencil();
 
-  virtual void add( localIndex const numPts,
+  virtual void add(localIndex const numPts,
                     localIndex const * const elementRegionIndices,
                     localIndex const * const elementSubRegionIndices,
                     localIndex const * const elementIndices,
                     real64 const * const weights,
-                    localIndex const connectorIndex ) override final;
+                    localIndex const connectorIndex) override final;
 
   /**
    * @copydoc StencilBase<BoundaryStencil_Traits,BoundaryStencil>::size
    */
   virtual localIndex size() const override final
-  { return m_elementRegionIndices.size( 0 ); }
+  {return m_elementRegionIndices.size(0);}
 
   /**
    * @brief Gives the number of points in a stencil entry.
    * @param[in] index of the stencil entry for which to query the size
    * @return the size of a stencil entry
    */
-  constexpr localIndex stencilSize( localIndex const index ) const
+  constexpr localIndex stencilSize(localIndex const index) const
   {
-    GEOSX_UNUSED_VAR( index )
+    GEOSX_UNUSED_VAR(index)
     return MAX_STENCIL_SIZE;
   }
 

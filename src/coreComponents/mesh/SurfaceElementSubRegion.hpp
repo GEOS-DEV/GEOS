@@ -39,10 +39,10 @@ class SurfaceElementSubRegion : public ElementSubRegionBase
 public:
 
   /// Surface element to nodes map type
-  using NodeMapType = InterObjectRelation< ArrayOfArrays< localIndex > >;
+  using NodeMapType = InterObjectRelation<ArrayOfArrays<localIndex>>;
 
   /// Surface element to edges map type
-  using EdgeMapType = InterObjectRelation< ArrayOfArrays< localIndex > >;
+  using EdgeMapType = InterObjectRelation<ArrayOfArrays<localIndex>>;
 
   /**
    * @name Static factory catalog functions
@@ -54,7 +54,7 @@ public:
    * @return the catalog name
    */
   static const string CatalogName()
-  { return "SurfaceElementSubRegion"; }
+  {return "SurfaceElementSubRegion";}
 
   /**
    * @brief Get catalog name.
@@ -77,8 +77,8 @@ public:
    * @param name the group name
    * @param parent the parent group
    */
-  SurfaceElementSubRegion( string const & name,
-                           dataRepository::Group * const parent );
+  SurfaceElementSubRegion(string const & name,
+                           dataRepository::Group * const parent);
 
 
   /// @brief Destructor
@@ -115,12 +115,12 @@ public:
    * @param[in] a the index of the node in the element
    * @return a reference to the local index of the node
    */
-  localIndex & nodeList( localIndex const k, localIndex a ) { return m_toNodesRelation( k, a ); }
+  localIndex & nodeList(localIndex const k, localIndex a) {return m_toNodesRelation(k, a);}
 
   /**
-   * @copydoc nodeList( localIndex const k, localIndex a )
+   * @copydoc nodeList(localIndex const k, localIndex a)
    */
-  localIndex const & nodeList( localIndex const k, localIndex a ) const { return m_toNodesRelation( k, a ); }
+  localIndex const & nodeList(localIndex const k, localIndex a) const {return m_toNodesRelation(k, a);}
 
   /**
    * @brief Get the surface element to edges map.
@@ -169,23 +169,23 @@ public:
    * @brief Get face element aperture.
    * @return the aperture of the face elements
    */
-  arrayView1d< real64 > getElementAperture() { return m_elementAperture; }
+  arrayView1d<real64> getElementAperture() {return m_elementAperture;}
 
   /**
    * @copydoc getElementAperture()
    */
-  arrayView1d< real64 const > getElementAperture() const { return m_elementAperture; }
+  arrayView1d<real64 const> getElementAperture() const {return m_elementAperture;}
 
   /**
    * @brief Get face element surface area.
    * @return the surface area of the face element
    */
-  arrayView1d< real64 > getElementArea() { return m_elementArea; }
+  arrayView1d<real64> getElementArea() {return m_elementArea;}
 
   /**
    * @copydoc getElementArea()
    */
-  arrayView1d< real64 const > getElementArea() const { return m_elementArea; }
+  arrayView1d<real64 const> getElementArea() const {return m_elementArea;}
 
   ///@}
 
@@ -228,10 +228,10 @@ protected:
   EdgeMapType m_toEdgesRelation;
 
   /// Member level field for the element center
-  array1d< real64 > m_elementAperture;
+  array1d<real64> m_elementAperture;
 
   /// Member level field for the element center
-  array1d< real64 > m_elementArea;
+  array1d<real64> m_elementArea;
 
 };
 

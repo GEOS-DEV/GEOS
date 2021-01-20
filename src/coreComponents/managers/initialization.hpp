@@ -58,7 +58,7 @@ struct CommandLineOptions
   integer useNonblockingMPI = false;
 
   /// True iff supress the use of pinned memory buffers
-  /// ( if available ) for MPI communication.
+  /// (if available) for MPI communication.
   /// Generally only used by the integration tests.
   integer suppressPinned = false;
 
@@ -84,7 +84,7 @@ struct CommandLineOptions
  * @param [in,out] argv The command line arguments.
  * @param [in] parseCommandLine True iff the command line options should be parsed.
  */
-void basicSetup( int argc, char * argv[], bool const parseCommandLine=false );
+void basicSetup(int argc, char * argv[], bool const parseCommandLine=false);
 
 /**
  * @brief @return a struct containing all the parsed command line options.
@@ -95,7 +95,7 @@ CommandLineOptions const & getCommandLineOptions();
  * @brief Override the input file name, useful only for tests.
  * @param inputFileName new input file name
  */
-void overrideInputFileName( std::string const & inputFileName );
+void overrideInputFileName(std::string const & inputFileName);
 
 /**
  * @brief Perform the basic GEOSX cleanup.
@@ -133,7 +133,7 @@ void setupOpenMP();
  * @param [in] argc the number of command line arguments.
  * @param [in,out] argv the command line arguments.
  */
-void setupMPI( int argc, char * argv[] );
+void setupMPI(int argc, char * argv[]);
 
 /**
  * @brief Finalize MPI.
@@ -147,18 +147,18 @@ void finalizeMPI();
  * @param name The name to use when adding the stats to Adiak.
  * @param value The value to compute the statistics of.
  */
-template< typename T >
-void pushStatsIntoAdiak( std::string const & name, T const value )
+template<typename T>
+void pushStatsIntoAdiak(std::string const & name, T const value)
 {
-#if defined( GEOSX_USE_CALIPER )
-  T const total = MpiWrapper::Sum( value );
-  adiak::value( name + " sum", total );
-  adiak::value( name + " mean", double( total ) / MpiWrapper::Comm_size() );
-  adiak::value( name + " min", MpiWrapper::Min( value ) );
-  adiak::value( name + " max", MpiWrapper::Max( value ) );
+#if defined(GEOSX_USE_CALIPER)
+  T const total = MpiWrapper::Sum(value);
+  adiak::value(name + " sum", total);
+  adiak::value(name + " mean", double(total) / MpiWrapper::Comm_size());
+  adiak::value(name + " min", MpiWrapper::Min(value));
+  adiak::value(name + " max", MpiWrapper::Max(value));
 #else
-  GEOSX_UNUSED_VAR( name );
-  GEOSX_UNUSED_VAR( value );
+  GEOSX_UNUSED_VAR(name);
+  GEOSX_UNUSED_VAR(value);
 #endif
 }
 

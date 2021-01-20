@@ -32,8 +32,8 @@ namespace geosx
 //  std::set<localIndex> newNodes;
 //  std::set<localIndex> newEdges;
 //  std::set<localIndex> newFaces;
-//  map< std::pair<localIndex,localIndex>, std::set<localIndex> > newElements;
-//  map< std::pair<localIndex,localIndex>, std::set<localIndex> > modifiedElements;
+//  map<std::pair<localIndex,localIndex>, std::set<localIndex>> newElements;
+//  map<std::pair<localIndex,localIndex>, std::set<localIndex>> modifiedElements;
 //};
 
 
@@ -55,23 +55,23 @@ class ElementRegionBase;
 class EmbeddedSurfaceGenerator : public SolverBase
 {
 public:
-  EmbeddedSurfaceGenerator( const std::string & name,
-                            Group * const parent );
+  EmbeddedSurfaceGenerator(const std::string & name,
+                            Group * const parent);
   ~EmbeddedSurfaceGenerator() override;
 
 
-  static string CatalogName() { return "EmbeddedSurfaceGenerator"; }
+  static string CatalogName() {return "EmbeddedSurfaceGenerator";}
 
-  virtual void RegisterDataOnMesh( Group * const MeshBody ) override final;
+  virtual void RegisterDataOnMesh(Group * const MeshBody) override final;
 
-  virtual void Execute( real64 const time_n,
+  virtual void Execute(real64 const time_n,
                         real64 const dt,
                         integer const cycleNumber,
-                        integer const GEOSX_UNUSED_PARAM( eventCounter ),
-                        real64 const GEOSX_UNUSED_PARAM( eventProgress ),
-                        dataRepository::Group * domain ) override
+                        integer const GEOSX_UNUSED_PARAM(eventCounter),
+                        real64 const GEOSX_UNUSED_PARAM(eventProgress),
+                        dataRepository::Group * domain) override
   {
-    SolverStep( time_n, dt, cycleNumber, *domain->group_cast< DomainPartition * >());
+    SolverStep(time_n, dt, cycleNumber, *domain->group_cast<DomainPartition *>());
   }
 
   /**
@@ -82,10 +82,10 @@ public:
    * @return ...
    *
    */
-  virtual real64 SolverStep( real64 const & time_n,
+  virtual real64 SolverStep(real64 const & time_n,
                              real64 const & dt,
                              integer const cycleNumber,
-                             DomainPartition & domain ) override;
+                             DomainPartition & domain) override;
 
   /**@}*/
 
@@ -99,7 +99,7 @@ protected:
    * @return ...
    *
    */
-  virtual void InitializePostSubGroups( Group * const problemManager ) override final;
+  virtual void InitializePostSubGroups(Group * const problemManager) override final;
   /**
    * @brief xxx
    * @param[in] ...
@@ -108,12 +108,12 @@ protected:
    * @return ...
    *
    */
-  virtual void InitializePostInitialConditions_PreSubGroups( Group * const problemManager ) override final;
-  virtual void postRestartInitialization( Group * const domain ) override final;
+  virtual void InitializePostInitialConditions_PreSubGroups(Group * const problemManager) override final;
+  virtual void postRestartInitialization(Group * const domain) override final;
 
 private:
 
-  void addToFractureStencil( DomainPartition & domain );
+  void addToFractureStencil(DomainPartition & domain);
 
   /**
    * @struct viewKeyStruct holds char strings and viewKeys for fast lookup
@@ -128,7 +128,7 @@ private:
   }; //SurfaceGenViewKeys;
 
   // solid solver name
-  array1d< string > m_solidMaterialNames;
+  array1d<string> m_solidMaterialNames;
   // fracture region name
   string m_fractureRegionName;
 };

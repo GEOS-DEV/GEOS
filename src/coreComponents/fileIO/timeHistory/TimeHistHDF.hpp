@@ -44,18 +44,18 @@ public:
    * @brief Get the HDF hid_t of the target.
    * @return The hid_t of the target.
    */
-  virtual operator hid_t() { return 0; }
+  virtual operator hid_t() {return 0;}
 
   /**
    * @brief Whether a dataset/group with the specified name exists in the target.
    * @param name The dataset/group name to check for.
    * @return Whether the dataset/group exists in the target.
    */
-  virtual bool CheckInTarget( const string & name )
+  virtual bool CheckInTarget(const string & name)
   {
     htri_t exists = 0;
     H5E_BEGIN_TRY {
-      exists = H5Gget_objinfo( this->operator hid_t(), name.c_str(), 0, NULL );
+      exists = H5Gget_objinfo(this->operator hid_t(), name.c_str(), 0, NULL);
     } H5E_END_TRY
     return (exists == 0);
   }
@@ -75,7 +75,7 @@ public:
    * @param parallelAccess Whether to access one file in parallel or one file per rank in the comm.
    * @param comm An MPI communicator where each rank in the communicator will be accesing the target file.
    */
-  HDFFile( string const & fnm, bool deleteExisting, bool parallelAccess, MPI_Comm comm );
+  HDFFile(string const & fnm, bool deleteExisting, bool parallelAccess, MPI_Comm comm);
 
   /**
    * Destructor -- Close the file and acccessors.
@@ -86,7 +86,7 @@ public:
    * @brief Get the HDF hid_t file identifier.
    * @return the HDF hid_t file id.
    */
-  virtual operator hid_t() final { return m_fileId; }
+  virtual operator hid_t() final {return m_fileId;}
 private:
   /// The filename
   string m_filename;
@@ -119,15 +119,15 @@ public:
    * @param overallocMultiple Integer to scale the internal buffer when we fill the existing space.
    * @param comm A communicator where every rank will participate in writting to the output file.
    */
-  HDFHistIO( string const & filename,
+  HDFHistIO(string const & filename,
              localIndex rank,
-             std::vector< localIndex > const & dims,
+             std::vector<localIndex> const & dims,
              string const & name,
              std::type_index typeId,
              localIndex writeHead = 0,
              localIndex initAlloc = 2,
              localIndex overallocMultiple = 2,
-             MPI_Comm comm = MPI_COMM_GEOSX );
+             MPI_Comm comm = MPI_COMM_GEOSX);
 
   /**
    * @brief Constructor
@@ -138,13 +138,13 @@ public:
    * @param overallocMultiple Integer to scale the internal buffer when we fill the existing space.
    * @param comm A communicator where every rank will participate in writing to the output file.
    */
-  HDFHistIO( string const & filename,
+  HDFHistIO(string const & filename,
              const HistoryMetadata & spec,
              localIndex writeHead = 0,
              localIndex initAlloc = 2,
              localIndex overallocMultiple = 2,
-             MPI_Comm comm = MPI_COMM_GEOSX ):
-    HDFHistIO( filename,
+             MPI_Comm comm = MPI_COMM_GEOSX):
+    HDFHistIO(filename,
                spec.getRank(),
                spec.getDims(),
                spec.getName(),
@@ -152,29 +152,29 @@ public:
                writeHead,
                initAlloc,
                overallocMultiple,
-               comm )
-  { }
+               comm)
+  {}
 
   /// Destructor
-  virtual ~HDFHistIO() { }
+  virtual ~HDFHistIO() {}
 
   /// @copydoc geosx::BufferedHistoryIO::init
-  virtual void init( bool existsOkay ) override;
+  virtual void init(bool existsOkay) override;
 
   /// @copydoc geosx::BufferedHistoryIO::write
-  virtual void write( ) override;
+  virtual void write() override;
 
   /// @copydoc geosx::BufferedHistoryIO::compressInFile
-  virtual void compressInFile( ) override;
+  virtual void compressInFile() override;
 
   /**
    * @brief Resize the dataspace in the target file if needed to perform the current write of buffered states.
    * @param bufferedCount The number of buffered states to use to determine if the file needs to be resized.
    */
-  inline void resizeFileIfNeeded( localIndex bufferedCount );
+  inline void resizeFileIfNeeded(localIndex bufferedCount);
 
 protected:
-  virtual void resizeBuffer( ) override;
+  virtual void resizeBuffer() override;
 
 private:
   // file io params
@@ -200,7 +200,7 @@ private:
   /// The rank of the data set
   hsize_t m_rank;
   /// The dimensions of the data set
-  std::vector< hsize_t > m_dims;
+  std::vector<hsize_t> m_dims;
   /// The name of the data set
   string m_name;
   /// The communicator across which the data set is distributed
@@ -230,15 +230,15 @@ public:
    * @param overallocMultiple Integer to scale the internal buffer when we fill the existing space.
    * @param comm A communicator where every rank will participate in writting to the output file.
    */
-  HDFSerialHistIO( string const & filename,
+  HDFSerialHistIO(string const & filename,
                    localIndex rank,
-                   std::vector< localIndex > const & dims,
+                   std::vector<localIndex> const & dims,
                    string const & name,
                    std::type_index typeId,
                    localIndex writeHead = 0,
                    localIndex initAlloc = 2,
                    localIndex overallocMultiple = 2,
-                   MPI_Comm comm = MPI_COMM_GEOSX );
+                   MPI_Comm comm = MPI_COMM_GEOSX);
 
   /**
    * @brief Constructor
@@ -249,13 +249,13 @@ public:
    * @param overallocMultiple Integer to scale the internal buffer when we fill the existing space.
    * @param comm A communicator where every rank will participate in writing to the output file.
    */
-  HDFSerialHistIO( string const & filename,
+  HDFSerialHistIO(string const & filename,
                    const HistoryMetadata & spec,
                    localIndex writeHead = 0,
                    localIndex initAlloc = 2,
                    localIndex overallocMultiple = 2,
-                   MPI_Comm comm = MPI_COMM_GEOSX ):
-    HDFSerialHistIO( filename,
+                   MPI_Comm comm = MPI_COMM_GEOSX):
+    HDFSerialHistIO(filename,
                      spec.getRank(),
                      spec.getDims(),
                      spec.getName(),
@@ -263,29 +263,29 @@ public:
                      writeHead,
                      initAlloc,
                      overallocMultiple,
-                     comm )
-  { }
+                     comm)
+  {}
 
   /// Destructor
-  virtual ~HDFSerialHistIO() { }
+  virtual ~HDFSerialHistIO() {}
 
   /// @copydoc geosx::BufferedHistoryIO::init
-  virtual void init( bool existsOkay ) override;
+  virtual void init(bool existsOkay) override;
 
   /// @copydoc geosx::BufferedHistoryIO::write
-  virtual void write( ) override;
+  virtual void write() override;
 
   /// @copydoc geosx::BufferedHistoryIO::compressInFile
-  virtual void compressInFile( ) override;
+  virtual void compressInFile() override;
 
   /**
    * @brief Resize the dataspace in the target file if needed to perform the current write of buffered states.
    * @param bufferedCount The number of buffered states to use to determine if the file needs to be resized.
    */
-  inline void resizeFileIfNeeded( localIndex bufferedCount );
+  inline void resizeFileIfNeeded(localIndex bufferedCount);
 
 protected:
-  virtual void resizeBuffer( ) override;
+  virtual void resizeBuffer() override;
 
 private:
   // file io params
@@ -307,7 +307,7 @@ private:
   /// The rank of the data set
   hsize_t m_rank;
   /// The dimensions of the data set
-  std::vector< hsize_t > m_dims;
+  std::vector<hsize_t> m_dims;
   /// The name of the data set
   string m_name;
   /// The communicator across which the data set is distributed

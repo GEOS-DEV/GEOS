@@ -33,20 +33,20 @@ class FlashModel
 {
 public:
 
-  FlashModel( string const & name,
+  FlashModel(string const & name,
               string_array const & componentNames,
-              real64_array const & componentMolarWeight ):
-    m_modelName( name ),
-    m_componentNames( componentNames ),
-    m_componentMolarWeight( componentMolarWeight )
+              real64_array const & componentMolarWeight):
+    m_modelName(name),
+    m_componentNames(componentNames),
+    m_componentMolarWeight(componentMolarWeight)
   {}
 
   virtual ~FlashModel(){}
 
-  using CatalogInterface = dataRepository::CatalogInterface< FlashModel, string_array const &,
+  using CatalogInterface = dataRepository::CatalogInterface<FlashModel, string_array const &,
                                                              string_array const &,
                                                              string_array const &,
-                                                             real64_array const & >;
+                                                             real64_array const &>;
   static typename CatalogInterface::CatalogType & GetCatalog()
   {
     static CatalogInterface::CatalogType catalog;
@@ -64,11 +64,11 @@ public:
   //input: P, T, totalCompFraction
   //output: phaseFraction, phaseCompFraction
 
-  virtual void Partition( EvalVarArgs const & pressure,
+  virtual void Partition(EvalVarArgs const & pressure,
                           EvalVarArgs const & temperature,
-                          arraySlice1d< EvalVarArgs const > const & compFraction,
-                          arraySlice1d< EvalVarArgs > const & phaseFraction,
-                          arraySlice2d< EvalVarArgs > const & phaseCompFraction ) const = 0;
+                          arraySlice1d<EvalVarArgs const> const & compFraction,
+                          arraySlice1d<EvalVarArgs> const & phaseFraction,
+                          arraySlice2d<EvalVarArgs> const & phaseCompFraction) const = 0;
 
 protected:
   string m_modelName;

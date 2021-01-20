@@ -33,8 +33,8 @@ namespace geosx
 class ChomboIO final : public OutputBase
 {
 public:
-  /// @copydoc geosx::dataRepository::Group::Group( std::string const & name, Group * const parent )
-  ChomboIO( std::string const & name, Group * const parent );
+  /// @copydoc geosx::dataRepository::Group::Group(std::string const & name, Group * const parent)
+  ChomboIO(std::string const & name, Group * const parent);
 
   /// Destructor
   virtual ~ChomboIO() override;
@@ -44,31 +44,31 @@ public:
    * @return This type's catalog name
    */
   static string CatalogName()
-  { return "ChomboIO"; }
+  {return "ChomboIO";}
 
   /**
    * @brief Writes out a Chombo plot file.
    * @copydetails EventBase::Execute()
    */
-  virtual void Execute( real64 const time_n,
+  virtual void Execute(real64 const time_n,
                         real64 const dt,
                         integer const cycleNumber,
                         integer const eventCounter,
                         real64 const eventProgress,
-                        dataRepository::Group * const domain ) override;
+                        dataRepository::Group * const domain) override;
 
   /**
    * @brief Writes out a Chombo plot file at the end of the simulation.
    * @copydetails ExecutableGroup::Cleanup()
    */
-  virtual void Cleanup( real64 const time_n,
+  virtual void Cleanup(real64 const time_n,
                         integer const cycleNumber,
                         integer const eventCounter,
                         real64 const eventProgress,
-                        dataRepository::Group * const domain ) override
+                        dataRepository::Group * const domain) override
   {
     m_waitForInput = 0;
-    Execute( time_n, 0.0, cycleNumber, eventCounter, eventProgress, domain );
+    Execute(time_n, 0.0, cycleNumber, eventCounter, eventProgress, domain);
   }
 
   /// @cond DO_NOT_DOCUMENT
@@ -80,11 +80,11 @@ public:
     static constexpr auto waitForInputString = "waitForInput";
     static constexpr auto useChomboPressuresString = "useChomboPressures";
 
-    dataRepository::ViewKey outputPath = { outputPathString };
-    dataRepository::ViewKey beginCycle = { beginCycleString };
-    dataRepository::ViewKey inputPath = { inputPathString };
-    dataRepository::ViewKey waitForInput = { waitForInputString };
-    dataRepository::ViewKey useChomboPressures = { useChomboPressuresString };
+    dataRepository::ViewKey outputPath = {outputPathString};
+    dataRepository::ViewKey beginCycle = {beginCycleString};
+    dataRepository::ViewKey inputPath = {inputPathString};
+    dataRepository::ViewKey waitForInput = {waitForInputString};
+    dataRepository::ViewKey useChomboPressures = {useChomboPressuresString};
   } viewKeys;
   /// @endcond
 

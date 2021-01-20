@@ -26,17 +26,17 @@ using namespace dataRepository;
 
 
 
-FunctionBase::FunctionBase( const std::string & name,
-                            Group * const parent ):
-  Group( name, parent ),
+FunctionBase::FunctionBase(const std::string & name,
+                            Group * const parent):
+  Group(name, parent),
   m_inputVarNames()
 {
-  setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
+  setInputFlags(InputFlags::OPTIONAL_NONUNIQUE);
 
-  registerWrapper( keys::inputVarNames, &m_inputVarNames )->
-    setInputFlag( InputFlags::OPTIONAL )->
-    setSizedFromParent( 0 )->
-    setDescription( "Name of fields are input to function." );
+  registerWrapper(keys::inputVarNames, &m_inputVarNames)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setSizedFromParent(0)->
+    setDescription("Name of fields are input to function.");
 }
 
 
@@ -46,21 +46,21 @@ FunctionBase::~FunctionBase()
 integer FunctionBase::isFunctionOfTime() const
 {
   integer rval=0;
-  arrayView1d< string const > const & inputVarNames = this->getReference< string_array >( dataRepository::keys::inputVarNames );
-  localIndex numVars = LvArray::integerConversion< localIndex >( inputVarNames.size());
+  arrayView1d<string const> const & inputVarNames = this->getReference<string_array>(dataRepository::keys::inputVarNames);
+  localIndex numVars = LvArray::integerConversion<localIndex>(inputVarNames.size());
 
-  if( numVars==1 )
+  if(numVars==1)
   {
-    if( inputVarNames[0]=="time" )
+    if(inputVarNames[0]=="time")
     {
       rval = 2;
     }
   }
   else
   {
-    for( auto varIndex=0; varIndex<numVars; ++varIndex )
+    for(auto varIndex=0; varIndex<numVars; ++varIndex)
     {
-      if( inputVarNames[varIndex]=="time" )
+      if(inputVarNames[varIndex]=="time")
       {
         rval = 1;
         break;
@@ -71,23 +71,23 @@ integer FunctionBase::isFunctionOfTime() const
 }
 
 
-real64_array FunctionBase::EvaluateStats( dataRepository::Group const * const group,
+real64_array FunctionBase::EvaluateStats(dataRepository::Group const * const group,
                                           real64 const time,
-                                          SortedArray< localIndex > const & set ) const
+                                          SortedArray<localIndex> const & set) const
 {
   localIndex N = set.size();
-  real64_array sub( N );
-  Evaluate( group, time, set.toViewConst(), sub );
+  real64_array sub(N);
+  Evaluate(group, time, set.toViewConst(), sub);
 
-  real64_array result( 3 );
+  real64_array result(3);
   result[0] = 1e10;   // min
   result[1] = 0.0;    // avg
   result[2] = -1e10;  // max
-  for( localIndex ii=0; ii<N; ii++ )
+  for(localIndex ii=0; ii<N; ii++)
   {
-    result[0] = std::min( result[0], sub[ii] );
+    result[0] = std::min(result[0], sub[ii]);
     result[1] += sub[ii];
-    result[2] = std::max( result[0], sub[ii] );
+    result[2] = std::max(result[0], sub[ii]);
   }
   result[1] /= N;
 

@@ -26,13 +26,13 @@ namespace geosx
  * @brief Common interface for identity preconditioning operator
  * @tparam LAI linear algebra interface providing vectors, matrices and solvers
  */
-template< typename LAI >
-class PreconditionerBlockJacobi : public PreconditionerBase< LAI >
+template<typename LAI>
+class PreconditionerBlockJacobi : public PreconditionerBase<LAI>
 {
 public:
 
   /// Alias for base type
-  using Base = PreconditionerBase< LAI >;
+  using Base = PreconditionerBase<LAI>;
 
   /// Alias for vector type
   using Vector = typename Base::Vector;
@@ -44,7 +44,7 @@ public:
    * @brief Constructor.
    * @param blockSize the size of block diagonal matrices.
    */
-  PreconditionerBlockJacobi( localIndex const & blockSize = 0 )
+  PreconditionerBlockJacobi(localIndex const & blockSize = 0)
     : m_blockDiag{}
   {
     m_blockSize = blockSize;
@@ -54,45 +54,45 @@ public:
    * @brief Compute the preconditioner from a matrix.
    * @param mat the matrix to precondition.
    */
-  virtual void compute( Matrix const & mat ) override
+  virtual void compute(Matrix const & mat) override
   {
-    GEOSX_LAI_ASSERT( mat.ready() );
-    GEOSX_LAI_ASSERT_GT( m_blockSize, 0 );
-    GEOSX_LAI_ASSERT_EQ( mat.numLocalRows() % m_blockSize, 0 );
-    GEOSX_LAI_ASSERT_EQ( mat.numLocalCols() % m_blockSize, 0 );
+    GEOSX_LAI_ASSERT(mat.ready());
+    GEOSX_LAI_ASSERT_GT(m_blockSize, 0);
+    GEOSX_LAI_ASSERT_EQ(mat.numLocalRows() % m_blockSize, 0);
+    GEOSX_LAI_ASSERT_EQ(mat.numLocalCols() % m_blockSize, 0);
 
-    PreconditionerBase< LAI >::compute( mat );
+    PreconditionerBase<LAI>::compute(mat);
 
-    m_blockDiag.createWithLocalSize( mat.numLocalRows(), mat.numLocalCols(), m_blockSize, mat.getComm() );
+    m_blockDiag.createWithLocalSize(mat.numLocalRows(), mat.numLocalCols(), m_blockSize, mat.getComm());
     m_blockDiag.open();
 
-    array1d< globalIndex > idxBlk( m_blockSize );
-    array2d< real64 > values( m_blockSize, m_blockSize );
-    array2d< real64 > valuesInv( m_blockSize, m_blockSize );
-    array1d< globalIndex > cols;
-    array1d< real64 > vals;
-    for( globalIndex i = mat.ilower(); i < mat.iupper(); i+=m_blockSize )
+    array1d<globalIndex> idxBlk(m_blockSize);
+    array2d<real64> values(m_blockSize, m_blockSize);
+    array2d<real64> valuesInv(m_blockSize, m_blockSize);
+    array1d<globalIndex> cols;
+    array1d<real64> vals;
+    for(globalIndex i = mat.ilower(); i <mat.iupper(); i+=m_blockSize)
     {
-      values.setValues< serialPolicy >( 0.0 );
-      for( localIndex j = 0; j < m_blockSize; ++j )
+      values.setValues<serialPolicy>(0.0);
+      for(localIndex j = 0; j <m_blockSize; ++j)
       {
-        globalIndex const iRow = i + LvArray::integerConversion< globalIndex >( j );
+        globalIndex const iRow = i + LvArray::integerConversion<globalIndex>(j);
         idxBlk[j] = iRow;
-        localIndex const rowLength = mat.globalRowLength( iRow );
-        cols.resize( rowLength );
-        vals.resize( rowLength );
-        mat.getRowCopy( iRow, cols, vals );
-        for( localIndex k = 0; k < rowLength; ++k )
+        localIndex const rowLength = mat.globalRowLength(iRow);
+        cols.resize(rowLength);
+        vals.resize(rowLength);
+        mat.getRowCopy(iRow, cols, vals);
+        for(localIndex k = 0; k <rowLength; ++k)
         {
-          localIndex const jCol = LvArray::integerConversion< localIndex >( cols[k]-i );
-          if( cols[k] >= i && cols[k] < i+LvArray::integerConversion< globalIndex >( m_blockSize ) )
+          localIndex const jCol = LvArray::integerConversion<localIndex>(cols[k]-i);
+          if(cols[k]>= i && cols[k] <i+LvArray::integerConversion<globalIndex>(m_blockSize))
           {
-            values( j, jCol ) = vals[k];
+            values(j, jCol) = vals[k];
           }
         }
       }
-      BlasLapackLA::matrixInverse( values, valuesInv );
-      m_blockDiag.insert( idxBlk, idxBlk, valuesInv );
+      BlasLapackLA::matrixInverse(values, valuesInv);
+      m_blockDiag.insert(idxBlk, idxBlk, valuesInv);
     }
     m_blockDiag.close();
   }
@@ -102,11 +102,11 @@ public:
    * @param mat the matrix to precondition
    * @param dofManager the Degree-of-Freedom manager associated with matrix
    */
-  virtual void compute( Matrix const & mat,
-                        DofManager const & dofManager ) override
+  virtual void compute(Matrix const & mat,
+                        DofManager const & dofManager) override
   {
-    GEOSX_UNUSED_VAR( dofManager );
-    compute( mat );
+    GEOSX_UNUSED_VAR(dofManager);
+    compute(mat);
   }
 
   /**
@@ -131,14 +131,14 @@ public:
    * @param src Input vector (src).
    * @param dst Output vector (dst).
    */
-  virtual void apply( Vector const & src,
-                      Vector & dst ) const override
+  virtual void apply(Vector const & src,
+                      Vector & dst) const override
   {
-    GEOSX_LAI_ASSERT( m_blockDiag.ready() );
-    GEOSX_LAI_ASSERT_EQ( this->numGlobalRows(), dst.globalSize() );
-    GEOSX_LAI_ASSERT_EQ( this->numGlobalCols(), src.globalSize() );
+    GEOSX_LAI_ASSERT(m_blockDiag.ready());
+    GEOSX_LAI_ASSERT_EQ(this->numGlobalRows(), dst.globalSize());
+    GEOSX_LAI_ASSERT_EQ(this->numGlobalCols(), src.globalSize());
 
-    m_blockDiag.apply( src, dst );
+    m_blockDiag.apply(src, dst);
   }
 
   /**
@@ -147,7 +147,7 @@ public:
    */
   virtual bool hasPreconditionerMatrix() const override
   {
-    GEOSX_LAI_ASSERT( m_blockDiag.ready() );
+    GEOSX_LAI_ASSERT(m_blockDiag.ready());
     return true;
   }
 
@@ -157,7 +157,7 @@ public:
    */
   virtual Matrix const & preconditionerMatrix() const override
   {
-    GEOSX_LAI_ASSERT( m_blockDiag.ready() );
+    GEOSX_LAI_ASSERT(m_blockDiag.ready());
     return m_blockDiag;
   }
 

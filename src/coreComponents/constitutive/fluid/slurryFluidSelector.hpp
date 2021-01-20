@@ -27,18 +27,18 @@ namespace geosx
 namespace constitutive
 {
 
-template< typename LAMBDA >
-void constitutiveUpdatePassThru( SlurryFluidBase const & fluid,
-                                 LAMBDA && lambda )
+template<typename LAMBDA>
+void constitutiveUpdatePassThru(SlurryFluidBase const & fluid,
+                                 LAMBDA && lambda)
 {
-  ConstitutivePassThruHandler< ProppantSlurryFluid >::Execute( fluid, std::forward< LAMBDA >( lambda ) );
+  ConstitutivePassThruHandler<ProppantSlurryFluid>::Execute(fluid, std::forward<LAMBDA>(lambda));
 }
 
-template< typename LAMBDA >
-void constitutiveUpdatePassThru( SlurryFluidBase & fluid,
-                                 LAMBDA && lambda )
+template<typename LAMBDA>
+void constitutiveUpdatePassThru(SlurryFluidBase & fluid,
+                                 LAMBDA && lambda)
 {
-  ConstitutivePassThruHandler< ProppantSlurryFluid >::Execute( fluid, std::forward< LAMBDA >( lambda ) );
+  ConstitutivePassThruHandler<ProppantSlurryFluid>::Execute(fluid, std::forward<LAMBDA>(lambda));
 }
 
 } // namespace constitutive

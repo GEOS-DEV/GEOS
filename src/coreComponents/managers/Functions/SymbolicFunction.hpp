@@ -29,9 +29,9 @@ namespace geosx
 class SymbolicFunction : public FunctionBase
 {
 public:
-  /// @copydoc geosx::dataRepository::Group::Group( std::string const & name, Group * const parent )
-  SymbolicFunction( const std::string & name,
-                    dataRepository::Group * const parent );
+  /// @copydoc geosx::dataRepository::Group::Group(std::string const & name, Group * const parent)
+  SymbolicFunction(const std::string & name,
+                    dataRepository::Group * const parent);
 
   /**
    * @brief The destructor
@@ -42,7 +42,7 @@ public:
    * @brief The catalog name interface
    * @return name of the TableFunction in the FunctionBase catalog
    */
-  static string CatalogName() { return "SymbolicFunction"; }
+  static string CatalogName() {return "SymbolicFunction";}
 
   /**
    * @brief Initialize the table function
@@ -56,12 +56,12 @@ public:
    * @param set the subset of nodes to apply the function to
    * @param result an array to hold the results of the function
    */
-  inline void Evaluate( dataRepository::Group const * const group,
+  inline void Evaluate(dataRepository::Group const * const group,
                         real64 const time,
-                        SortedArrayView< localIndex const > const & set,
-                        real64_array & result ) const override final
+                        SortedArrayView<localIndex const> const & set,
+                        real64_array & result) const override final
   {
-    FunctionBase::EvaluateT< SymbolicFunction >( group, time, set, result );
+    FunctionBase::EvaluateT<SymbolicFunction>(group, time, set, result);
   }
 
   /**
@@ -69,9 +69,9 @@ public:
    * @param input a scalar input
    * @return the function result
    */
-  inline real64 Evaluate( real64 const * const input ) const override final
+  inline real64 Evaluate(real64 const * const input) const override final
   {
-    return parserExpression.evaluate( reinterpret_cast< void * >( const_cast< real64 * >(input) ) );
+    return parserExpression.evaluate(reinterpret_cast<void *>(const_cast<real64 *>(input)));
   }
 
 
@@ -79,13 +79,13 @@ public:
    * @brief Set the symbolic variable names
    * @param variableNames An array of variable names used in the expression
    */
-  void setSymbolicVariableNames( string_array variableNames ) { m_variableNames = variableNames; }
+  void setSymbolicVariableNames(string_array variableNames) {m_variableNames = variableNames;}
 
   /**
    * @brief Set the symbolic expression
    * @param expression A string containing the symbolic expression
    */
-  void setSymbolicExpression( string expression ) { m_expression = expression; }
+  void setSymbolicExpression(string expression) {m_expression = expression;}
 
 
 

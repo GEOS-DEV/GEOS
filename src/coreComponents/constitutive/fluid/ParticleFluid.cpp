@@ -26,54 +26,54 @@ using namespace dataRepository;
 namespace constitutive
 {
 
-ParticleFluid::ParticleFluid( std::string const & name, Group * const parent ):
-  ParticleFluidBase( name, parent )
+ParticleFluid::ParticleFluid(std::string const & name, Group * const parent):
+  ParticleFluidBase(name, parent)
 {
 
-  registerWrapper( viewKeyStruct::particleSettlingModelString, &m_particleSettlingModel )->
-    setInputFlag( InputFlags::REQUIRED )->
-    setDescription( "Particle settling velocity model. Valid options:\n* " + EnumStrings< ParticleSettlingModel >::concat( "\n* " ) );
+  registerWrapper(viewKeyStruct::particleSettlingModelString, &m_particleSettlingModel)->
+    setInputFlag(InputFlags::REQUIRED)->
+    setDescription("Particle settling velocity model. Valid options:\n* " + EnumStrings<ParticleSettlingModel>::concat("\n* "));
 
-  registerWrapper( viewKeyStruct::proppantDensityString, &m_proppantDensity )->
-    setApplyDefaultValue( 1400.0 )->
-    setInputFlag( InputFlags::OPTIONAL )->
-    setDescription( "Proppant density" );
+  registerWrapper(viewKeyStruct::proppantDensityString, &m_proppantDensity)->
+    setApplyDefaultValue(1400.0)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Proppant density");
 
-  registerWrapper( viewKeyStruct::fluidViscosityString, &m_fluidViscosity )->
-    setApplyDefaultValue( 0.001 )->
-    setInputFlag( InputFlags::OPTIONAL )->
-    setDescription( "Fluid viscosity" );
+  registerWrapper(viewKeyStruct::fluidViscosityString, &m_fluidViscosity)->
+    setApplyDefaultValue(0.001)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Fluid viscosity");
 
-  registerWrapper( viewKeyStruct::proppantDiameterString, &m_proppantDiameter )->
-    setApplyDefaultValue( 200e-6 )->
-    setInputFlag( InputFlags::OPTIONAL )->
-    setDescription( "Proppant diameter" );
+  registerWrapper(viewKeyStruct::proppantDiameterString, &m_proppantDiameter)->
+    setApplyDefaultValue(200e-6)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Proppant diameter");
 
-  registerWrapper( viewKeyStruct::hinderedSettlingCoefficientString, &m_hinderedSettlingCoefficient )->
-    setApplyDefaultValue( 5.9 )->
-    setInputFlag( InputFlags::OPTIONAL )->
-    setDescription( "Hindered settling coefficient" );
+  registerWrapper(viewKeyStruct::hinderedSettlingCoefficientString, &m_hinderedSettlingCoefficient)->
+    setApplyDefaultValue(5.9)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Hindered settling coefficient");
 
-  registerWrapper( viewKeyStruct::collisionAlphaString, &m_collisionAlpha )->
-    setApplyDefaultValue( 1.27 )->
-    setInputFlag( InputFlags::OPTIONAL )->
-    setDescription( "Collision alpha coefficient" );
+  registerWrapper(viewKeyStruct::collisionAlphaString, &m_collisionAlpha)->
+    setApplyDefaultValue(1.27)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Collision alpha coefficient");
 
-  registerWrapper( viewKeyStruct::slipConcentrationString, &m_slipConcentration )->
-    setApplyDefaultValue( 0.1 )->
-    setInputFlag( InputFlags::OPTIONAL )->
-    setDescription( "Slip concentration" );
+  registerWrapper(viewKeyStruct::slipConcentrationString, &m_slipConcentration)->
+    setApplyDefaultValue(0.1)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Slip concentration");
 
-  registerWrapper( viewKeyStruct::collisionBetaString, &m_collisionBeta )->
-    setApplyDefaultValue( 1.5 )->
-    setInputFlag( InputFlags::OPTIONAL )->
-    setDescription( "Collision beta coefficient" );
+  registerWrapper(viewKeyStruct::collisionBetaString, &m_collisionBeta)->
+    setApplyDefaultValue(1.5)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Collision beta coefficient");
 
 
-  registerWrapper( viewKeyStruct::sphericityString, &m_sphericity )->
-    setApplyDefaultValue( 1.0 )->
-    setInputFlag( InputFlags::OPTIONAL )->
-    setDescription( "Sphericity" );
+  registerWrapper(viewKeyStruct::sphericityString, &m_sphericity)->
+    setApplyDefaultValue(1.0)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("Sphericity");
 
 }
 
@@ -83,31 +83,31 @@ void ParticleFluid::PostProcessInput()
 {
   ParticleFluidBase::PostProcessInput();
 
-  GEOSX_ERROR_IF( m_proppantDensity < 500.0,
-                  "Invalid proppantDensity in ParticleFluid, which must >= 500.0 " );
+  GEOSX_ERROR_IF(m_proppantDensity <500.0,
+                  "Invalid proppantDensity in ParticleFluid, which must>= 500.0 ");
 
-  GEOSX_ERROR_IF( m_proppantDiameter < 10e-6,
-                  "Invalid proppantDiameter in ParticleFluid, which must >= 10e-6 " );
+  GEOSX_ERROR_IF(m_proppantDiameter <10e-6,
+                  "Invalid proppantDiameter in ParticleFluid, which must>= 10e-6 ");
 
-  GEOSX_ERROR_IF( m_hinderedSettlingCoefficient< 0.0 || m_hinderedSettlingCoefficient > 10.0,
-                  "Invalid hinderedSettlingCoefficient in ParticleFluid, which must between 0 and 10 " );
+  GEOSX_ERROR_IF(m_hinderedSettlingCoefficient<0.0 || m_hinderedSettlingCoefficient> 10.0,
+                  "Invalid hinderedSettlingCoefficient in ParticleFluid, which must between 0 and 10 ");
 
-  GEOSX_ERROR_IF( m_collisionAlpha < 1.0,
-                  "Invalid collisionAlpha in ParticleFluid, which must >= 1 " );
+  GEOSX_ERROR_IF(m_collisionAlpha <1.0,
+                  "Invalid collisionAlpha in ParticleFluid, which must>= 1 ");
 
-  GEOSX_ERROR_IF( m_collisionBeta < 0.0,
-                  "Invalid collisionBeta in ParticleFluid, which must >= 0" );
+  GEOSX_ERROR_IF(m_collisionBeta <0.0,
+                  "Invalid collisionBeta in ParticleFluid, which must>= 0");
 
-  GEOSX_ERROR_IF( m_slipConcentration > 0.3,
-                  "Invalid slipConcentration in ParticleFluid, which must <= 0.3" );
+  GEOSX_ERROR_IF(m_slipConcentration> 0.3,
+                  "Invalid slipConcentration in ParticleFluid, which must <= 0.3");
 
-  m_packPermeabilityCoef = pow( m_sphericity * m_proppantDiameter, 2.0 ) / 180.0;
+  m_packPermeabilityCoef = pow(m_sphericity * m_proppantDiameter, 2.0) / 180.0;
 }
 
 ParticleFluid::KernelWrapper
 ParticleFluid::createKernelWrapper() const
 {
-  return KernelWrapper( m_particleSettlingModel,
+  return KernelWrapper(m_particleSettlingModel,
                         m_proppantDensity,
                         m_proppantDiameter,
                         m_hinderedSettlingCoefficient,
@@ -122,10 +122,10 @@ ParticleFluid::createKernelWrapper() const
                         m_dSettlingFactor_dComponentConcentration,
                         m_collisionFactor,
                         m_dCollisionFactor_dProppantConcentration,
-                        m_proppantPackPermeability );
+                        m_proppantPackPermeability);
 }
 
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, ParticleFluid, std::string const &, Group * const )
+REGISTER_CATALOG_ENTRY(ConstitutiveBase, ParticleFluid, std::string const &, Group * const)
 
 } /* namespace constitutive */
 

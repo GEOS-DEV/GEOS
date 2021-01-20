@@ -25,7 +25,7 @@ set(MPIEXEC              /usr/bin/srun CACHE PATH "")
 set(MPIEXEC_NUMPROC_FLAG "-n" CACHE STRING "")
 
 set(GEOSX_ENABLE_FPE OFF CACHE BOOL "" FORCE)
-set(GEOSX_TPL_DIR "/global/project/projectdirs/m1411/GEOSX/tpls/install-cori-gcc\@8.1.0-release-24-07-20" CACHE PATH "" )
+set(GEOSX_TPL_DIR "/global/project/projectdirs/m1411/GEOSX/tpls/install-cori-gcc\@8.1.0-release-24-07-20" CACHE PATH "")
 
 
 set(GEOSX_LINK_PREPEND_FLAG  "-Wl,--whole-archive"    CACHE STRING "" FORCE)

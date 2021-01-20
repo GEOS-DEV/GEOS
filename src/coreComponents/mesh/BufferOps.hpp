@@ -43,11 +43,11 @@ namespace bufferOps
  *                             related regions.
  * @return The size (in bytes) of the data
  */
-template< bool DO_PACKING >
-localIndex Pack( buffer_unit_type * & buffer,
+template<bool DO_PACKING>
+localIndex Pack(buffer_unit_type * & buffer,
                  OrderedVariableToManyElementRelation const & var,
-                 arrayView1d< localIndex const > const & packList,
-                 ElementRegionManager const * const elementRegionManager );
+                 arrayView1d<localIndex const> const & packList,
+                 ElementRegionManager const * const elementRegionManager);
 /**
  * @brief Pack (or size) relationship information for specifc indices from
  *        an FixedToManyElementRelation into a buffer.
@@ -65,11 +65,11 @@ localIndex Pack( buffer_unit_type * & buffer,
  *                             related regions.
  * @return The size (in bytes) of the data
  */
-template< bool DO_PACKING >
-localIndex Pack( buffer_unit_type * & buffer,
+template<bool DO_PACKING>
+localIndex Pack(buffer_unit_type * & buffer,
                  FixedToManyElementRelation const & var,
-                 arrayView1d< localIndex const > const & packList,
-                 ElementRegionManager const * const elementRegionManager );
+                 arrayView1d<localIndex const> const & packList,
+                 ElementRegionManager const * const elementRegionManager);
 /**
  * @brief Unpack expected indices into an OrderedVariableToManyElementRelation.
  * @param buffer A buffer containing packed data.
@@ -84,11 +84,11 @@ localIndex Pack( buffer_unit_type * & buffer,
  *                  from the var, else only use the unpacked entries.
  * @return The size (in bytes) of the data
  */
-localIndex Unpack( buffer_unit_type const * & buffer,
+localIndex Unpack(buffer_unit_type const * & buffer,
                    OrderedVariableToManyElementRelation & var,
-                   arrayView1d< localIndex const > const & packList,
+                   arrayView1d<localIndex const> const & packList,
                    ElementRegionManager const * const elementRegionManager,
-                   bool const clearFlag );
+                   bool const clearFlag);
 /**
  * @brief Unpack expected indices into a FixedToManyElementRelation.
  * @param buffer A buffer containing packed data.
@@ -103,11 +103,11 @@ localIndex Unpack( buffer_unit_type const * & buffer,
  *                  from the var, else only use the unpacked entries.
  * @return The size (in bytes) of the data
  */
-localIndex Unpack( buffer_unit_type const * & buffer,
+localIndex Unpack(buffer_unit_type const * & buffer,
                    FixedToManyElementRelation & var,
-                   arrayView1d< localIndex const > const & packList,
+                   arrayView1d<localIndex const> const & packList,
                    ElementRegionManager const * const elementRegionManager,
-                   bool const clearFlag );
+                   bool const clearFlag);
 }
 }
 #endif

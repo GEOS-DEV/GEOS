@@ -32,7 +32,7 @@ namespace dataRepository
 {
 namespace keys
 {
-string const geometricObjects( "GeometricObjects" );
+string const geometricObjects("GeometricObjects");
 }
 }
 
@@ -54,8 +54,8 @@ public:
    * @param name name of the object in the data hierarchy.
    * @param parent pointer to the parent group in the data hierarchy.
    */
-  explicit SimpleGeometricObjectBase( std::string const & name,
-                                      Group * const parent );
+  explicit SimpleGeometricObjectBase(std::string const & name,
+                                      Group * const parent);
 
   /**
    * @brief Default destructor.
@@ -73,12 +73,12 @@ public:
    * @brief Get the catalog name.
    * @return the name of this class in the catalog
    */
-  static string CatalogName() { return "SimpleGeometricObjectBase"; }
+  static string CatalogName() {return "SimpleGeometricObjectBase";}
 
   /**
    * @brief Type alias for catalog interface used by this class.
    */
-  using CatalogInterface = dataRepository::CatalogInterface< SimpleGeometricObjectBase, std::string const &, Group * const >;
+  using CatalogInterface = dataRepository::CatalogInterface<SimpleGeometricObjectBase, std::string const &, Group * const>;
 
   /**
    * @copydoc CatalogName()
@@ -92,7 +92,7 @@ public:
    * @param[in] coord the coordinates to test
    * @return true if the coordinates are in the object, false otherwise
    */
-  virtual bool IsCoordInObject( real64 const ( &coord ) [3] ) const = 0;
+  virtual bool IsCoordInObject(real64 const (&coord) [3]) const = 0;
 
 };
 

@@ -33,9 +33,9 @@ class PeriodicEvent : public EventBase
 {
 public:
 
-  /// @copydoc geosx::dataRepository::Group::Group( std::string const & name, Group * const parent )
-  PeriodicEvent( const std::string & name,
-                 Group * const parent );
+  /// @copydoc geosx::dataRepository::Group::Group(std::string const & name, Group * const parent)
+  PeriodicEvent(const std::string & name,
+                 Group * const parent);
 
   /// Destructor
   virtual ~PeriodicEvent() override;
@@ -44,21 +44,21 @@ public:
    * @brief Catalog name interface.
    * @return This type's catalog name.
    **/
-  static string CatalogName() { return "PeriodicEvent"; }
+  static string CatalogName() {return "PeriodicEvent";}
 
   /**
    * @copydoc EventBase::EstimateEventTiming()
    * @note Estimate the expected number of cycles until an event is expected to trigger.
    *       The event frequency can be specified in terms of:
-   *        - time (timeFrequency > 0, units = seconds)
-   *        - or cycle (cycleFrequency >= 0, units = cycles)
+   *        - time (timeFrequency> 0, units = seconds)
+   *        - or cycle (cycleFrequency>= 0, units = cycles)
    * @note In addition, there is an optional function input that will be called if the
    * the nominal forecast (based on timing) is zero.
    */
-  virtual void EstimateEventTiming( real64 const time,
+  virtual void EstimateEventTiming(real64 const time,
                                     real64 const dt,
                                     integer const cycle,
-                                    dataRepository::Group * domain ) override;
+                                    dataRepository::Group * domain) override;
 
   /**
    * @brief Determine if an optional function f should be called, and call it if so.
@@ -73,34 +73,34 @@ public:
    *
    * If functionInputObject is not specified:
    *   - The argument to the function will be the current time
-   *   - The event will be executed if f(t) >= eventThreshold
+   *   - The event will be executed if f(t)>= eventThreshold
    *
    * If functionInputObject is specified:
    *   - The function will be called on the object, with the arguments given by functionInputSetname
    *   - The function manager will return a set of statistics
    *   - functionStatOption selects the statistic to compare against the eventThreshold (0 = min, 1 = average, 2 = max)
-   *   - The event will be executed if f(object, arguments)[stat] >= eventThreshold
+   *   - The event will be executed if f(object, arguments)[stat]>= eventThreshold
    */
-  void CheckOptionalFunctionThreshold( real64 const time,
+  void CheckOptionalFunctionThreshold(real64 const time,
                                        real64 const dt,
                                        integer const cycle,
-                                       dataRepository::Group * domain );
+                                       dataRepository::Group * domain);
 
   /**
    * @copydoc EventBase::GetEventTypeDtRequest()
    * Grab the next time-step.  If requested, then limit the requested
    * dt to exactly match the time frequency
    */
-  virtual real64 GetEventTypeDtRequest( real64 const time ) override;
+  virtual real64 GetEventTypeDtRequest(real64 const time) override;
 
   /**
    * @copydoc ExecutableGroup::Cleanup()
    */
-  virtual void Cleanup( real64 const time_n,
+  virtual void Cleanup(real64 const time_n,
                         integer const cycleNumber,
                         integer const eventCounter,
                         real64 const eventProgress,
-                        dataRepository::Group * domain ) override;
+                        dataRepository::Group * domain) override;
 
 
   /// A pointer to an optional function
@@ -119,15 +119,15 @@ public:
     static constexpr auto functionStatOptionString = "stat";
     static constexpr auto eventThresholdString = "threshold";
 
-    dataRepository::ViewKey timeFrequency = { "timeFrequency" };
-    dataRepository::ViewKey cycleFrequency = { "cycleFrequency" };
-    dataRepository::ViewKey targetExactTimestep = { "targetExactTimestep" };
-    dataRepository::ViewKey functionName = { "function" };
-    dataRepository::ViewKey functionInputObject = { "object" };
-    dataRepository::ViewKey functionInputSetname = { "set" };
-    dataRepository::ViewKey functionSetNames = { "setNames" };
-    dataRepository::ViewKey functionStatOption = { "stat" };
-    dataRepository::ViewKey eventThreshold = { "threshold" };
+    dataRepository::ViewKey timeFrequency = {"timeFrequency"};
+    dataRepository::ViewKey cycleFrequency = {"cycleFrequency"};
+    dataRepository::ViewKey targetExactTimestep = {"targetExactTimestep"};
+    dataRepository::ViewKey functionName = {"function"};
+    dataRepository::ViewKey functionInputObject = {"object"};
+    dataRepository::ViewKey functionInputSetname = {"set"};
+    dataRepository::ViewKey functionSetNames = {"setNames"};
+    dataRepository::ViewKey functionStatOption = {"stat"};
+    dataRepository::ViewKey eventThreshold = {"threshold"};
   } periodicEventViewKeys;
   /// @endcond
 

@@ -60,15 +60,15 @@ namespace dataRepository
  *              constructor of the @p BASETYPE
  */
 //START_SPHINX_0
-template< typename BASETYPE, typename ... ARGS >
+template<typename BASETYPE, typename ... ARGS>
 class CatalogInterface
 {
 public:
 
   /// This is the type that will be used for the catalog. The catalog is actually instantiated in the @p BASETYPE.
   //START_SPHINX_1
-  typedef std::unordered_map< std::string,
-                              std::unique_ptr< CatalogInterface< BASETYPE, ARGS... > > > CatalogType;
+  typedef std::unordered_map<std::string,
+                              std::unique_ptr<CatalogInterface<BASETYPE, ARGS...>>> CatalogType;
   //STOP_SPHINX
 
   /**
@@ -76,8 +76,8 @@ public:
    */
   CatalogInterface()
   {
-#if OBJECTCATALOGVERBOSE > 1
-    GEOSX_LOG( "Calling constructor for CatalogInterface< " << LvArray::system::demangle( typeid( BASETYPE ).name() ) << " , ... >" );
+#if OBJECTCATALOGVERBOSE> 1
+    GEOSX_LOG("Calling constructor for CatalogInterface<" <<LvArray::system::demangle(typeid(BASETYPE).name()) <<" , ...>");
 #endif
   }
 
@@ -86,32 +86,32 @@ public:
    */
   virtual ~CatalogInterface()
   {
-#if OBJECTCATALOGVERBOSE > 1
-    GEOSX_LOG( "Calling destructor for CatalogInterface< " << LvArray::system::demangle( typeid( BASETYPE ).name() ) << " , ... >" );
+#if OBJECTCATALOGVERBOSE> 1
+    GEOSX_LOG("Calling destructor for CatalogInterface<" <<LvArray::system::demangle(typeid(BASETYPE).name()) <<" , ...>");
 #endif
   }
 
   /**
    * @brief Copy constructor.
    */
-  explicit CatalogInterface( CatalogInterface const & ) = default;
+  explicit CatalogInterface(CatalogInterface const &) = default;
 
   /**
    * @brief Move constructor.
    */
-  CatalogInterface( CatalogInterface && ) = default;
+  CatalogInterface(CatalogInterface &&) = default;
 
   /**
    * @brief Copy assignment operator.
    * @return reference to this object
    */
-  CatalogInterface & operator=( CatalogInterface const & ) = default;
+  CatalogInterface & operator=(CatalogInterface const &) = default;
 
   /**
    * @brief Move assignment operator.
    * @return reference to this object
    */
-  CatalogInterface & operator=( CatalogInterface && ) = default;
+  CatalogInterface & operator=(CatalogInterface &&) = default;
 
   /**
    * @brief Get the catalog from that is stored in the target base class.
@@ -132,16 +132,16 @@ public:
    * @param args arguments to the constructor of the target type
    * @return a unique_ptr<BASETYPE> to the newly allocated class.
    */
-  virtual std::unique_ptr< BASETYPE > Allocate( ARGS... args ) const = 0;
+  virtual std::unique_ptr<BASETYPE> Allocate(ARGS... args) const = 0;
 
   /**
    * @brief Check if catalog contains a given key
    * @param objectTypeName name of the type tp look up
    * @return @p true if type has been registered with this catalog, @p false otherwise
    */
-  static bool hasKeyName( std::string const & objectTypeName )
+  static bool hasKeyName(std::string const & objectTypeName)
   {
-    return GetCatalog().count( objectTypeName );
+    return GetCatalog().count(objectTypeName);
   }
 
   /**
@@ -152,9 +152,9 @@ public:
    * @return passes a unique_ptr<BASETYPE> to the newly allocated class.
    */
   //START_SPHINX_2
-  static std::unique_ptr< BASETYPE > Factory( std::string const & objectTypeName, ARGS... args )
+  static std::unique_ptr<BASETYPE> Factory(std::string const & objectTypeName, ARGS... args)
   {
-    return GetCatalog().at( objectTypeName ).get()->Allocate( args ... );
+    return GetCatalog().at(objectTypeName).get()->Allocate(args ...);
   }
   //STOP_SPHINX
 
@@ -168,20 +168,20 @@ public:
    * is the same as catalog name of the derived type. Therefore may fail for objects
    * that have been assigned a different name (e.g. through XML "name" attribute).
    */
-  template< typename TYPE >
-  static TYPE & catalog_cast( BASETYPE & object )
+  template<typename TYPE>
+  static TYPE & catalog_cast(BASETYPE & object)
   {
     std::string castedName = TYPE::CatalogName();
     std::string objectName = object.getName();
 
-    if( castedName != objectName )
+    if(castedName != objectName)
     {
-#if OBJECTCATALOGVERBOSE > 1
-      GEOSX_LOG( "Invalid Cast of " << objectName << " to " << castedName );
+#if OBJECTCATALOGVERBOSE> 1
+      GEOSX_LOG("Invalid Cast of " <<objectName <<" to " <<castedName);
 #endif
     }
 
-    return static_cast< TYPE & >(object);
+    return static_cast<TYPE &>(object);
   }
 
 };
@@ -193,8 +193,8 @@ public:
  * @tparam ARGS constructor arguments
  */
 //START_SPHINX_3
-template< typename BASETYPE, typename TYPE, typename ... ARGS >
-class CatalogEntry final : public CatalogInterface< BASETYPE, ARGS... >
+template<typename BASETYPE, typename TYPE, typename ... ARGS>
+class CatalogEntry final : public CatalogInterface<BASETYPE, ARGS...>
 {
 public:
 
@@ -202,12 +202,12 @@ public:
    * @brief Default constructor.
    */
   CatalogEntry():
-    CatalogInterface< BASETYPE, ARGS... >()
+    CatalogInterface<BASETYPE, ARGS...>()
   {
-#if OBJECTCATALOGVERBOSE > 1
-    GEOSX_LOG( "Calling constructor for CatalogEntry< " << LvArray::system::demangle( typeid(TYPE).name())
-                                                        << " , " << LvArray::system::demangle( typeid(BASETYPE).name())
-                                                        << " , ... >" );
+#if OBJECTCATALOGVERBOSE> 1
+    GEOSX_LOG("Calling constructor for CatalogEntry<" <<LvArray::system::demangle(typeid(TYPE).name())
+                                                        <<" , " <<LvArray::system::demangle(typeid(BASETYPE).name())
+                                                        <<" , ...>");
 #endif
   }
 
@@ -216,10 +216,10 @@ public:
    */
   ~CatalogEntry() override
   {
-#if OBJECTCATALOGVERBOSE > 1
-    GEOSX_LOG( "Calling destructor for CatalogEntry< " << LvArray::system::demangle( typeid(TYPE).name())
-                                                       << " , " << LvArray::system::demangle( typeid(BASETYPE).name())
-                                                       << " , ... >" );
+#if OBJECTCATALOGVERBOSE> 1
+    GEOSX_LOG("Calling destructor for CatalogEntry<" <<LvArray::system::demangle(typeid(TYPE).name())
+                                                       <<" , " <<LvArray::system::demangle(typeid(BASETYPE).name())
+                                                       <<" , ...>");
 #endif
 
   }
@@ -228,16 +228,16 @@ public:
    * @brief Copy constructor.
    * @param source object to copy
    */
-  CatalogEntry( CatalogEntry const & source ):
-    CatalogInterface< BASETYPE, ARGS... >( source )
+  CatalogEntry(CatalogEntry const & source):
+    CatalogInterface<BASETYPE, ARGS...>(source)
   {}
 
   /**
    * @brief Move constructor.
    * @param source object to move from
    */
-  CatalogEntry( CatalogEntry && source ):
-    CatalogInterface< BASETYPE, ARGS... >( std::move( source ))
+  CatalogEntry(CatalogEntry && source):
+    CatalogInterface<BASETYPE, ARGS...>(std::move(source))
   {}
 
   /**
@@ -245,9 +245,9 @@ public:
    * @param source object to copy
    * @return reference to this object
    */
-  CatalogEntry & operator=( CatalogEntry const & source )
+  CatalogEntry & operator=(CatalogEntry const & source)
   {
-    CatalogInterface< BASETYPE, ARGS... >::operator=( source );
+    CatalogInterface<BASETYPE, ARGS...>::operator=(source);
   }
 
   /**
@@ -255,9 +255,9 @@ public:
    * @param source object to move from
    * @return reference to this object
    */
-  CatalogEntry & operator=( CatalogEntry && source )
+  CatalogEntry & operator=(CatalogEntry && source)
   {
-    CatalogInterface< BASETYPE, ARGS... >::operator=( std::move(source));
+    CatalogInterface<BASETYPE, ARGS...>::operator=(std::move(source));
   }
 
   /**
@@ -266,16 +266,16 @@ public:
    * @return a unique_ptr<BASETYPE> to the newly allocated class.
    */
   //START_SPHINX_4
-  virtual std::unique_ptr< BASETYPE > Allocate( ARGS... args ) const override
+  virtual std::unique_ptr<BASETYPE> Allocate(ARGS... args) const override
   {
-#if OBJECTCATALOGVERBOSE > 0
-    GEOSX_LOG( "Creating type " << LvArray::system::demangle( typeid(TYPE).name())
-                                << " from catalog of " << LvArray::system::demangle( typeid(BASETYPE).name()));
+#if OBJECTCATALOGVERBOSE> 0
+    GEOSX_LOG("Creating type " <<LvArray::system::demangle(typeid(TYPE).name())
+                                <<" from catalog of " <<LvArray::system::demangle(typeid(BASETYPE).name()));
 #endif
-#if ( __cplusplus >= 201402L )
-    return std::make_unique< TYPE >( args ... );
+#if (__cplusplus>= 201402L)
+    return std::make_unique<TYPE>(args ...);
 #else
-    return std::unique_ptr< BASETYPE >( new TYPE( args ... ) );
+    return std::unique_ptr<BASETYPE>(new TYPE(args ...));
 #endif
   }
   //STOP_SPHINX
@@ -288,7 +288,7 @@ public:
  *
  * Once created, instances of this class may be destroyed without consequence.
  */
-template< typename BASETYPE, typename TYPE, typename ... ARGS >
+template<typename BASETYPE, typename TYPE, typename ... ARGS>
 class CatalogEntryConstructor
 {
 public:
@@ -298,28 +298,28 @@ public:
    */
   CatalogEntryConstructor()
   {
-#if OBJECTCATALOGVERBOSE > 1
-    GEOSX_LOG( "Calling constructor for CatalogEntryConstructor< " << LvArray::system::demangle( typeid(TYPE).name())
-                                                                   << " , " << LvArray::system::demangle( typeid(BASETYPE).name())
-                                                                   << " , ... >" );
+#if OBJECTCATALOGVERBOSE> 1
+    GEOSX_LOG("Calling constructor for CatalogEntryConstructor<" <<LvArray::system::demangle(typeid(TYPE).name())
+                                                                   <<" , " <<LvArray::system::demangle(typeid(BASETYPE).name())
+                                                                   <<" , ...>");
 #endif
 
     std::string name = TYPE::CatalogName();
-#if ( __cplusplus >= 201402L )
-    std::unique_ptr< CatalogEntry< BASETYPE, TYPE, ARGS... > > temp = std::make_unique< CatalogEntry< BASETYPE, TYPE, ARGS... > >();
+#if (__cplusplus>= 201402L)
+    std::unique_ptr<CatalogEntry<BASETYPE, TYPE, ARGS...>> temp = std::make_unique<CatalogEntry<BASETYPE, TYPE, ARGS...>>();
 #else
-    std::unique_ptr< CatalogEntry< BASETYPE, TYPE, ARGS... > > temp = std::unique_ptr< CatalogEntry< BASETYPE, TYPE, ARGS... > >( new CatalogEntry< BASETYPE,
+    std::unique_ptr<CatalogEntry<BASETYPE, TYPE, ARGS...>> temp = std::unique_ptr<CatalogEntry<BASETYPE, TYPE, ARGS...>>(new CatalogEntry<BASETYPE,
                                                                                                                                                     TYPE,
-                                                                                                                                                    ARGS... >()  );
+                                                                                                                                                    ARGS...>()  );
 #endif
-    ( CatalogInterface< BASETYPE, ARGS... >::GetCatalog() ).insert( std::move( std::make_pair( name, std::move( temp ) ) ) );
+    (CatalogInterface<BASETYPE, ARGS...>::GetCatalog()).insert(std::move(std::make_pair(name, std::move(temp))));
 
-#if OBJECTCATALOGVERBOSE > 0
-    GEOSX_LOG( "Registered " << LvArray::system::demangle( typeid(BASETYPE).name())
-                             << " catalog component of derived type "
-                             << LvArray::system::demangle( typeid(TYPE).name())
-                             << " where " << LvArray::system::demangle( typeid(TYPE).name())
-                             << "::CatalogName() = " << TYPE::CatalogName());
+#if OBJECTCATALOGVERBOSE> 0
+    GEOSX_LOG("Registered " <<LvArray::system::demangle(typeid(BASETYPE).name())
+                             <<" catalog component of derived type "
+                             <<LvArray::system::demangle(typeid(TYPE).name())
+                             <<" where " <<LvArray::system::demangle(typeid(TYPE).name())
+                             <<"::CatalogName() = " <<TYPE::CatalogName());
 #endif
   }
 
@@ -328,35 +328,35 @@ public:
    */
   ~CatalogEntryConstructor()
   {
-#if OBJECTCATALOGVERBOSE > 1
-    GEOSX_LOG( "Calling destructor for CatalogEntryConstructor< " << LvArray::system::demangle( typeid(TYPE).name())
-                                                                  << " , " << LvArray::system::demangle( typeid(BASETYPE).name())
-                                                                  << " , ... >" );
+#if OBJECTCATALOGVERBOSE> 1
+    GEOSX_LOG("Calling destructor for CatalogEntryConstructor<" <<LvArray::system::demangle(typeid(TYPE).name())
+                                                                  <<" , " <<LvArray::system::demangle(typeid(BASETYPE).name())
+                                                                  <<" , ...>");
 #endif
   }
 
   /**
    * @brief Deleted copy constructor.
    */
-  CatalogEntryConstructor( CatalogEntryConstructor const & ) = delete;
+  CatalogEntryConstructor(CatalogEntryConstructor const &) = delete;
 
   /**
    * @brief Deleted move constructor.
    */
-  CatalogEntryConstructor( CatalogEntryConstructor && ) = delete;
+  CatalogEntryConstructor(CatalogEntryConstructor &&) = delete;
 
 
   /**
    * @brief Deleted copy assignment operator.
    * @return
    */
-  CatalogEntryConstructor & operator=( CatalogEntryConstructor const & ) = delete;
+  CatalogEntryConstructor & operator=(CatalogEntryConstructor const &) = delete;
 
   /**
    * @brief Deleted move assignment operator.
    * @return
    */
-  CatalogEntryConstructor & operator=( CatalogEntryConstructor && ) = delete;
+  CatalogEntryConstructor & operator=(CatalogEntryConstructor &&) = delete;
 
 };
 
@@ -364,22 +364,22 @@ public:
  * @brief Specialization of @p CatalogInterface for types with no-argument constructors/
  * @tparam BASETYPE base class that contains the catalog
  */
-template< typename BASETYPE >
-class CatalogInterface< BASETYPE >
+template<typename BASETYPE>
+class CatalogInterface<BASETYPE>
 {
 public:
 
   /// This is the type that will be used for the catalog. The catalog is actually instantiated in the @p BASETYPE.
-  typedef std::unordered_map< std::string, std::unique_ptr< CatalogInterface< BASETYPE > > > CatalogType;
+  typedef std::unordered_map<std::string, std::unique_ptr<CatalogInterface<BASETYPE>>> CatalogType;
 
   /**
    * @brief Default constructor.
    */
   CatalogInterface()
   {
-#if OBJECTCATALOGVERBOSE > 1
-    GEOSX_LOG( "Calling constructor for CatalogInterface< " << LvArray::system::demangle( typeid(BASETYPE).name())
-                                                            << " , ... >" );
+#if OBJECTCATALOGVERBOSE> 1
+    GEOSX_LOG("Calling constructor for CatalogInterface<" <<LvArray::system::demangle(typeid(BASETYPE).name())
+                                                            <<" , ...>");
 #endif
   }
 
@@ -388,33 +388,33 @@ public:
    */
   virtual ~CatalogInterface()
   {
-#if OBJECTCATALOGVERBOSE > 1
-    GEOSX_LOG( "Calling destructor for CatalogInterface< " << LvArray::system::demangle( typeid(BASETYPE).name())
-                                                           << " , ... >" );
+#if OBJECTCATALOGVERBOSE> 1
+    GEOSX_LOG("Calling destructor for CatalogInterface<" <<LvArray::system::demangle(typeid(BASETYPE).name())
+                                                           <<" , ...>");
 #endif
   }
 
   /**
    * @brief Copy constructor.
    */
-  explicit CatalogInterface( CatalogInterface const & ) = default;
+  explicit CatalogInterface(CatalogInterface const &) = default;
 
   /**
    * @brief Move constructor.
    */
-  CatalogInterface( CatalogInterface && ) = default;
+  CatalogInterface(CatalogInterface &&) = default;
 
   /**
    * @brief Copy assignment operator.
    * @return reference to this object
    */
-  CatalogInterface & operator=( CatalogInterface const & ) = default;
+  CatalogInterface & operator=(CatalogInterface const &) = default;
 
   /**
    * @brief Move assignment operator.
    * @return reference to this object
    */
-  CatalogInterface & operator=( CatalogInterface && ) = default;
+  CatalogInterface & operator=(CatalogInterface &&) = default;
 
   /**
    * @brief Get the catalog from that is stored in the target base class.
@@ -434,16 +434,16 @@ public:
    * @brief Create a new object that derives from BASETYPE.
    * @return passes a unique_ptr<BASETYPE> to the newly allocated class.
    */
-  virtual std::unique_ptr< BASETYPE > Allocate(  ) const = 0;
+  virtual std::unique_ptr<BASETYPE> Allocate(  ) const = 0;
 
   /**
    * @brief Create a new object that derives from BASETYPE.
    * @param objectTypeName The key to the catalog entry that is able to create the correct type.
    * @return passes a unique_ptr<BASETYPE> to the newly allocated class.
    */
-  static std::unique_ptr< BASETYPE > Factory( std::string const & objectTypeName )
+  static std::unique_ptr<BASETYPE> Factory(std::string const & objectTypeName)
   {
-    CatalogInterface< BASETYPE > const * const entry = GetCatalog().at( objectTypeName ).get();
+    CatalogInterface<BASETYPE> const * const entry = GetCatalog().at(objectTypeName).get();
     return entry->Allocate();
   }
 
@@ -457,20 +457,20 @@ public:
    * is the same as catalog name of the derived type. Therefore may fail for objects
    * that have been assigned a different name (e.g. through XML "name" attribute).
    */
-  template< typename TYPE >
-  static TYPE & catalog_cast( BASETYPE & object )
+  template<typename TYPE>
+  static TYPE & catalog_cast(BASETYPE & object)
   {
     std::string castedName = TYPE::CatalogName();
     std::string objectName = object.getName();
 
-    if( castedName != objectName )
+    if(castedName != objectName)
     {
-#if OBJECTCATALOGVERBOSE > 1
-      GEOSX_LOG( "Invalid Cast of " << objectName << " to " << castedName );
+#if OBJECTCATALOGVERBOSE> 1
+      GEOSX_LOG("Invalid Cast of " <<objectName <<" to " <<castedName);
 #endif
     }
 
-    return static_cast< TYPE & >(object);
+    return static_cast<TYPE &>(object);
   }
 
 };
@@ -480,20 +480,20 @@ public:
  * @tparam BASETYPE
  * @tparam TYPE
  */
-template< typename BASETYPE, typename TYPE >
-class CatalogEntry< BASETYPE, TYPE > final : public CatalogInterface< BASETYPE >
+template<typename BASETYPE, typename TYPE>
+class CatalogEntry<BASETYPE, TYPE> final : public CatalogInterface<BASETYPE>
 {
 public:
   /**
    * @brief Default constructor.
    */
   CatalogEntry():
-    CatalogInterface< BASETYPE >()
+    CatalogInterface<BASETYPE>()
   {
-#if OBJECTCATALOGVERBOSE > 1
-    GEOSX_LOG( "Calling constructor for CatalogEntry< " << LvArray::system::demangle( typeid(TYPE).name())
-                                                        << " , " << LvArray::system::demangle( typeid(BASETYPE).name())
-                                                        << " , ... >" );
+#if OBJECTCATALOGVERBOSE> 1
+    GEOSX_LOG("Calling constructor for CatalogEntry<" <<LvArray::system::demangle(typeid(TYPE).name())
+                                                        <<" , " <<LvArray::system::demangle(typeid(BASETYPE).name())
+                                                        <<" , ...>");
 #endif
   }
 
@@ -502,10 +502,10 @@ public:
    */
   ~CatalogEntry() override
   {
-#if OBJECTCATALOGVERBOSE > 1
-    GEOSX_LOG( "Calling destructor for CatalogEntry< " << LvArray::system::demangle( typeid(TYPE).name())
-                                                       << " , " << LvArray::system::demangle( typeid(BASETYPE).name())
-                                                       << " , ... >" );
+#if OBJECTCATALOGVERBOSE> 1
+    GEOSX_LOG("Calling destructor for CatalogEntry<" <<LvArray::system::demangle(typeid(TYPE).name())
+                                                       <<" , " <<LvArray::system::demangle(typeid(BASETYPE).name())
+                                                       <<" , ...>");
 #endif
 
   }
@@ -514,16 +514,16 @@ public:
    * @brief Copy constructor.
    * @param source object to copy
    */
-  CatalogEntry( CatalogEntry const & source ):
-    CatalogInterface< BASETYPE >( source )
+  CatalogEntry(CatalogEntry const & source):
+    CatalogInterface<BASETYPE>(source)
   {}
 
   /**
    * @brief Move constructor.
    * @param source object to move from
    */
-  CatalogEntry( CatalogEntry && source ):
-    CatalogInterface< BASETYPE >( std::move( source ))
+  CatalogEntry(CatalogEntry && source):
+    CatalogInterface<BASETYPE>(std::move(source))
   {}
 
   /**
@@ -531,9 +531,9 @@ public:
    * @param source object to copy
    * @return reference to this object
    */
-  CatalogEntry & operator=( CatalogEntry const & source )
+  CatalogEntry & operator=(CatalogEntry const & source)
   {
-    CatalogInterface< BASETYPE >::operator=( source );
+    CatalogInterface<BASETYPE>::operator=(source);
   }
 
   /**
@@ -541,25 +541,25 @@ public:
    * @param source object to move from
    * @return reference to this object
    */
-  CatalogEntry & operator=( CatalogEntry && source )
+  CatalogEntry & operator=(CatalogEntry && source)
   {
-    CatalogInterface< BASETYPE >::operator=( std::move(source));
+    CatalogInterface<BASETYPE>::operator=(std::move(source));
   }
 
   /**
    * @brief Create a new instance of @p TYPE.
    * @return a unique_ptr<BASETYPE> that owns the new instance
    */
-  virtual std::unique_ptr< BASETYPE > Allocate(  ) const override
+  virtual std::unique_ptr<BASETYPE> Allocate(  ) const override
   {
-#if OBJECTCATALOGVERBOSE > 0
-    GEOSX_LOG( "Creating type " << LvArray::system::demangle( typeid(TYPE).name())
-                                << " from catalog of " << LvArray::system::demangle( typeid(BASETYPE).name()));
+#if OBJECTCATALOGVERBOSE> 0
+    GEOSX_LOG("Creating type " <<LvArray::system::demangle(typeid(TYPE).name())
+                                <<" from catalog of " <<LvArray::system::demangle(typeid(BASETYPE).name()));
 #endif
-#if ( __cplusplus >= 201402L )
-    return std::make_unique< TYPE >(  );
+#if (__cplusplus>= 201402L)
+    return std::make_unique<TYPE>(  );
 #else
-    return std::unique_ptr< BASETYPE >( new TYPE(  ) );
+    return std::unique_ptr<BASETYPE>(new TYPE(  ));
 #endif
   }
 };
@@ -568,8 +568,8 @@ public:
 /**
  * @brief A specialization of @p CatalogEntryConstructor for types with no-argument constructors.
  */
-template< typename BASETYPE, typename TYPE >
-class CatalogEntryConstructor< BASETYPE, TYPE >
+template<typename BASETYPE, typename TYPE>
+class CatalogEntryConstructor<BASETYPE, TYPE>
 {
 public:
 
@@ -578,26 +578,26 @@ public:
    */
   CatalogEntryConstructor()
   {
-#if OBJECTCATALOGVERBOSE > 1
-    GEOSX_LOG( "Calling constructor for CatalogEntryConstructor< " << LvArray::system::demangle( typeid(TYPE).name())
-                                                                   << " , " << LvArray::system::demangle( typeid(BASETYPE).name())
-                                                                   << " , ... >" );
+#if OBJECTCATALOGVERBOSE> 1
+    GEOSX_LOG("Calling constructor for CatalogEntryConstructor<" <<LvArray::system::demangle(typeid(TYPE).name())
+                                                                   <<" , " <<LvArray::system::demangle(typeid(BASETYPE).name())
+                                                                   <<" , ...>");
 #endif
 
     std::string name = TYPE::CatalogName();
-#if ( __cplusplus >= 201402L )
-    std::unique_ptr< CatalogEntry< BASETYPE, TYPE > > temp = std::make_unique< CatalogEntry< BASETYPE, TYPE > >();
+#if (__cplusplus>= 201402L)
+    std::unique_ptr<CatalogEntry<BASETYPE, TYPE>> temp = std::make_unique<CatalogEntry<BASETYPE, TYPE>>();
 #else
-    std::unique_ptr< CatalogEntry< BASETYPE, TYPE > > temp = std::unique_ptr< CatalogEntry< BASETYPE, TYPE > >( new CatalogEntry< BASETYPE, TYPE >()  );
+    std::unique_ptr<CatalogEntry<BASETYPE, TYPE>> temp = std::unique_ptr<CatalogEntry<BASETYPE, TYPE>>(new CatalogEntry<BASETYPE, TYPE>()  );
 #endif
-    ( CatalogInterface< BASETYPE >::GetCatalog() ).insert( std::move( std::make_pair( name, std::move( temp ) ) ) );
+    (CatalogInterface<BASETYPE>::GetCatalog()).insert(std::move(std::make_pair(name, std::move(temp))));
 
-#if OBJECTCATALOGVERBOSE > 0
-    GEOSX_LOG( "Registered " << LvArray::system::demangle( typeid(BASETYPE).name())
-                             << " catalog component of derived type "
-                             << LvArray::system::demangle( typeid(TYPE).name())
-                             << " where " << LvArray::system::demangle( typeid(TYPE).name())
-                             << "::CatalogName() = " << TYPE::CatalogName());
+#if OBJECTCATALOGVERBOSE> 0
+    GEOSX_LOG("Registered " <<LvArray::system::demangle(typeid(BASETYPE).name())
+                             <<" catalog component of derived type "
+                             <<LvArray::system::demangle(typeid(TYPE).name())
+                             <<" where " <<LvArray::system::demangle(typeid(TYPE).name())
+                             <<"::CatalogName() = " <<TYPE::CatalogName());
 #endif
   }
 
@@ -606,33 +606,33 @@ public:
    */
   ~CatalogEntryConstructor()
   {
-#if OBJECTCATALOGVERBOSE > 1
-    GEOSX_LOG( "Calling destructor for CatalogEntryConstructor< " << LvArray::system::demangle( typeid(TYPE).name())
-                                                                  << " , " << LvArray::system::demangle( typeid(BASETYPE).name()) << " , ... >" );
+#if OBJECTCATALOGVERBOSE> 1
+    GEOSX_LOG("Calling destructor for CatalogEntryConstructor<" <<LvArray::system::demangle(typeid(TYPE).name())
+                                                                  <<" , " <<LvArray::system::demangle(typeid(BASETYPE).name()) <<" , ...>");
 #endif
   }
 
   /**
    * @brief Deleted copy constructor.
    */
-  CatalogEntryConstructor( CatalogEntryConstructor const & ) = delete;
+  CatalogEntryConstructor(CatalogEntryConstructor const &) = delete;
 
   /**
    * @brief Deleted move constructor.
    */
-  CatalogEntryConstructor( CatalogEntryConstructor && ) = delete;
+  CatalogEntryConstructor(CatalogEntryConstructor &&) = delete;
 
   /**
    * @brief Deleted copy assignment operator.
    * @return
    */
-  CatalogEntryConstructor & operator=( CatalogEntryConstructor const & ) = delete;
+  CatalogEntryConstructor & operator=(CatalogEntryConstructor const &) = delete;
 
   /**
    * @brief Deleted move assignment operator.
    * @return
    */
-  CatalogEntryConstructor & operator=( CatalogEntryConstructor && ) = delete;
+  CatalogEntryConstructor & operator=(CatalogEntryConstructor &&) = delete;
 
 };
 
@@ -652,13 +652,13 @@ public:
  * derived class, which will result in the
  * generation of a CatalogEntry<BaseType,ClassName,...> prior to main().
  */
-#define REGISTER_CATALOG_ENTRY( BaseType, DerivedType, ... ) \
-  namespace { geosx::dataRepository::CatalogEntryConstructor< BaseType, DerivedType, __VA_ARGS__ > catEntry_ ## DerivedType; }
+#define REGISTER_CATALOG_ENTRY(BaseType, DerivedType, ...) \
+  namespace {geosx::dataRepository::CatalogEntryConstructor<BaseType, DerivedType, __VA_ARGS__> catEntry_ ## DerivedType;}
 
 /**
  * @brief Same as REGISTER_CATALOG_ENTRY, but for classes with no-argument constructors.
  */
-#define REGISTER_CATALOG_ENTRY0( BaseType, DerivedType ) \
-  namespace { geosx::dataRepository::CatalogEntryConstructor< BaseType, DerivedType > catEntry_ ## DerivedType; }
+#define REGISTER_CATALOG_ENTRY0(BaseType, DerivedType) \
+  namespace {geosx::dataRepository::CatalogEntryConstructor<BaseType, DerivedType> catEntry_ ## DerivedType;}
 
 #endif /* GEOSX_DATAREPOSITORY_OBJECTCATALOG_HPP_ */

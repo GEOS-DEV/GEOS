@@ -42,8 +42,8 @@ public:
    * @param name name of the object in the data hierarchy.
    * @param parent pointer to the parent group in the data hierarchy.
    */
-  BoundedPlane( const std::string & name,
-                Group * const parent );
+  BoundedPlane(const std::string & name,
+                Group * const parent);
 
   /**
    * @brief Default destructor.
@@ -61,11 +61,11 @@ public:
    * @brief Get the catalog name.
    * @return the name of this class in the catalog
    */
-  static string CatalogName() { return "BoundedPlane"; }
+  static string CatalogName() {return "BoundedPlane";}
 
   ///@}
 
-  bool IsCoordInObject( real64 const ( &coord ) [3] ) const override final;
+  bool IsCoordInObject(real64 const (&coord) [3]) const override final;
 
   /**
    * @brief Find the bounds of the plane.
@@ -141,9 +141,9 @@ private:
   /// Width vector in the orthonormal basis along with the normal
   R1Tensor m_widthVector;
   /// Dimensions of the bounded plane
-  array1d< real64 > m_dimensions;
+  array1d<real64> m_dimensions;
   /// Length and width of the bounded plane
-  array2d< real64 > m_points;
+  array2d<real64> m_points;
 
   /// @cond DO_NOT_DOCUMENT
 

@@ -55,8 +55,8 @@ namespace geosx
  * This class creates and provides basic support for the HYPRE_ParCSRMatrix object
  * type used in Hypre using the linear-algebraic system interface (IJ interface).
  */
-class HypreMatrix final : public virtual LinearOperator< HypreVector >,
-  private MatrixBase< HypreMatrix, HypreVector >
+class HypreMatrix final : public virtual LinearOperator<HypreVector>,
+  private MatrixBase<HypreMatrix, HypreVector>
 {
 public:
 
@@ -80,7 +80,7 @@ public:
    * @brief Copy constructor.
    * @param[in] src the matrix to be copied
    */
-  HypreMatrix( HypreMatrix const & src );
+  HypreMatrix(HypreMatrix const & src);
 
   /**
    * @brief Virtual destructor.
@@ -104,15 +104,15 @@ public:
   using MatrixBase::ready;
   using MatrixBase::residual;
 
-  virtual void createWithLocalSize( localIndex const localRows,
+  virtual void createWithLocalSize(localIndex const localRows,
                                     localIndex const localCols,
                                     localIndex const maxEntriesPerRow,
-                                    MPI_Comm const & comm ) override;
+                                    MPI_Comm const & comm) override;
 
-  virtual void createWithGlobalSize( globalIndex const globalRows,
+  virtual void createWithGlobalSize(globalIndex const globalRows,
                                      globalIndex const globalCols,
                                      localIndex const maxEntriesPerRow,
-                                     MPI_Comm const & comm ) override;
+                                     MPI_Comm const & comm) override;
 
   virtual void open() override;
 
@@ -125,156 +125,156 @@ public:
 
   virtual void reset() override;
 
-  virtual void set( real64 const value ) override;
+  virtual void set(real64 const value) override;
 
   virtual void zero() override;
 
-  virtual void add( globalIndex const rowIndex,
+  virtual void add(globalIndex const rowIndex,
                     globalIndex const colIndex,
-                    real64 const value ) override;
+                    real64 const value) override;
 
-  virtual void set( globalIndex const rowIndex,
+  virtual void set(globalIndex const rowIndex,
                     globalIndex const colIndex,
-                    real64 const value ) override;
+                    real64 const value) override;
 
-  virtual void insert( globalIndex const rowIndex,
+  virtual void insert(globalIndex const rowIndex,
                        globalIndex const colIndex,
-                       real64 const value ) override;
+                       real64 const value) override;
 
-  virtual void add( globalIndex const rowIndex,
+  virtual void add(globalIndex const rowIndex,
                     globalIndex const * colIndices,
                     real64 const * values,
-                    localIndex const size ) override;
+                    localIndex const size) override;
 
-  virtual void set( globalIndex const rowIndex,
+  virtual void set(globalIndex const rowIndex,
                     globalIndex const * colIndices,
                     real64 const * values,
-                    localIndex const size ) override;
+                    localIndex const size) override;
 
-  virtual void insert( globalIndex const rowIndex,
+  virtual void insert(globalIndex const rowIndex,
                        globalIndex const * colIndices,
                        real64 const * values,
-                       localIndex const size ) override;
+                       localIndex const size) override;
 
-  virtual void add( globalIndex const rowIndex,
-                    arraySlice1d< globalIndex const > const & colIndices,
-                    arraySlice1d< real64 const > const & values ) override;
+  virtual void add(globalIndex const rowIndex,
+                    arraySlice1d<globalIndex const> const & colIndices,
+                    arraySlice1d<real64 const> const & values) override;
 
-  virtual void set( globalIndex const rowIndex,
-                    arraySlice1d< globalIndex const > const & colIndices,
-                    arraySlice1d< real64 const > const & values ) override;
+  virtual void set(globalIndex const rowIndex,
+                    arraySlice1d<globalIndex const> const & colIndices,
+                    arraySlice1d<real64 const> const & values) override;
 
-  virtual void insert( globalIndex const rowIndex,
-                       arraySlice1d< globalIndex const > const & colIndices,
-                       arraySlice1d< real64 const > const & values ) override;
+  virtual void insert(globalIndex const rowIndex,
+                       arraySlice1d<globalIndex const> const & colIndices,
+                       arraySlice1d<real64 const> const & values) override;
 
-  virtual void add( arraySlice1d< globalIndex const > const & rowIndices,
-                    arraySlice1d< globalIndex const > const & colIndices,
-                    arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & values ) override;
+  virtual void add(arraySlice1d<globalIndex const> const & rowIndices,
+                    arraySlice1d<globalIndex const> const & colIndices,
+                    arraySlice2d<real64 const, MatrixLayout::ROW_MAJOR> const & values) override;
 
-  virtual void set( arraySlice1d< globalIndex const > const & rowIndices,
-                    arraySlice1d< globalIndex const > const & colIndices,
-                    arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & values ) override;
+  virtual void set(arraySlice1d<globalIndex const> const & rowIndices,
+                    arraySlice1d<globalIndex const> const & colIndices,
+                    arraySlice2d<real64 const, MatrixLayout::ROW_MAJOR> const & values) override;
 
-  virtual void insert( arraySlice1d< globalIndex const > const & rowIndices,
-                       arraySlice1d< globalIndex const > const & colIndices,
-                       arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & values ) override;
+  virtual void insert(arraySlice1d<globalIndex const> const & rowIndices,
+                       arraySlice1d<globalIndex const> const & colIndices,
+                       arraySlice2d<real64 const, MatrixLayout::ROW_MAJOR> const & values) override;
 
-  virtual void add( arraySlice1d< globalIndex const > const & rowIndices,
-                    arraySlice1d< globalIndex const > const & colIndices,
-                    arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & values ) override;
+  virtual void add(arraySlice1d<globalIndex const> const & rowIndices,
+                    arraySlice1d<globalIndex const> const & colIndices,
+                    arraySlice2d<real64 const, MatrixLayout::COL_MAJOR> const & values) override;
 
-  virtual void set( arraySlice1d< globalIndex const > const & rowIndices,
-                    arraySlice1d< globalIndex const > const & colIndices,
-                    arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & values ) override;
+  virtual void set(arraySlice1d<globalIndex const> const & rowIndices,
+                    arraySlice1d<globalIndex const> const & colIndices,
+                    arraySlice2d<real64 const, MatrixLayout::COL_MAJOR> const & values) override;
 
-  virtual void insert( arraySlice1d< globalIndex const > const & rowIndices,
-                       arraySlice1d< globalIndex const > const & colIndices,
-                       arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & values ) override;
+  virtual void insert(arraySlice1d<globalIndex const> const & rowIndices,
+                       arraySlice1d<globalIndex const> const & colIndices,
+                       arraySlice2d<real64 const, MatrixLayout::COL_MAJOR> const & values) override;
 
-  virtual void add( globalIndex const * rowIndices,
+  virtual void add(globalIndex const * rowIndices,
                     globalIndex const * colIndices,
                     real64 const * values,
                     localIndex const numRows,
-                    localIndex const numCols ) override;
+                    localIndex const numCols) override;
 
-  virtual void set( globalIndex const * rowIndices,
+  virtual void set(globalIndex const * rowIndices,
                     globalIndex const * colIndices,
                     real64 const * values,
                     localIndex const numRows,
-                    localIndex const numCols ) override;
+                    localIndex const numCols) override;
 
-  virtual void insert( globalIndex const * rowIndices,
+  virtual void insert(globalIndex const * rowIndices,
                        globalIndex const * colIndices,
                        real64 const * values,
                        localIndex const numRows,
-                       localIndex const numCols ) override;
+                       localIndex const numCols) override;
 
-  virtual void apply( HypreVector const & src,
-                      HypreVector & dst ) const override;
+  virtual void apply(HypreVector const & src,
+                      HypreVector & dst) const override;
 
-  virtual void applyTranspose( Vector const & src,
-                               Vector & dst ) const override;
+  virtual void applyTranspose(Vector const & src,
+                               Vector & dst) const override;
 
-  virtual void multiply( HypreMatrix const & src,
-                         HypreMatrix & dst ) const override;
+  virtual void multiply(HypreMatrix const & src,
+                         HypreMatrix & dst) const override;
 
-  virtual void leftMultiplyTranspose( HypreMatrix const & src,
-                                      HypreMatrix & dst ) const override;
+  virtual void leftMultiplyTranspose(HypreMatrix const & src,
+                                      HypreMatrix & dst) const override;
 
-  virtual void rightMultiplyTranspose( HypreMatrix const & src,
-                                       HypreMatrix & dst ) const override;
+  virtual void rightMultiplyTranspose(HypreMatrix const & src,
+                                       HypreMatrix & dst) const override;
 
-  virtual void multiplyRAP( HypreMatrix const & R,
+  virtual void multiplyRAP(HypreMatrix const & R,
                             HypreMatrix const & P,
-                            HypreMatrix & dst ) const override;
+                            HypreMatrix & dst) const override;
 
-  virtual void multiplyPtAP( HypreMatrix const & P,
-                             HypreMatrix & dst ) const override;
+  virtual void multiplyPtAP(HypreMatrix const & P,
+                             HypreMatrix & dst) const override;
 
-  virtual void gemv( real64 const alpha,
+  virtual void gemv(real64 const alpha,
                      HypreVector const & x,
                      real64 const beta,
                      HypreVector & y,
-                     bool useTranspose = false ) const override;
+                     bool useTranspose = false) const override;
 
-  virtual void scale( real64 const scalingFactor ) override;
+  virtual void scale(real64 const scalingFactor) override;
 
-  virtual void leftScale( HypreVector const & vec ) override;
+  virtual void leftScale(HypreVector const & vec) override;
 
-  virtual void rightScale( HypreVector const & vec ) override;
+  virtual void rightScale(HypreVector const & vec) override;
 
-  virtual void leftRightScale( HypreVector const & vecLeft,
-                               HypreVector const & vecRight ) override;
+  virtual void leftRightScale(HypreVector const & vecLeft,
+                               HypreVector const & vecRight) override;
 
-  virtual void transpose( HypreMatrix & dst ) const override;
+  virtual void transpose(HypreMatrix & dst) const override;
 
-  virtual real64 clearRow( globalIndex const row,
+  virtual real64 clearRow(globalIndex const row,
                            bool const keepDiag = false,
-                           real64 const diagValue = 0.0 ) override;
+                           real64 const diagValue = 0.0) override;
 
-  virtual void addEntries( HypreMatrix const & src,
+  virtual void addEntries(HypreMatrix const & src,
                            real64 const scale = 1.0,
-                           bool const samePattern = true ) override;
+                           bool const samePattern = true) override;
 
-  virtual void addDiagonal( HypreVector const & src ) override;
+  virtual void addDiagonal(HypreVector const & src) override;
 
   /**
    * @copydoc MatrixBase<HypreMatrix,HypreMatrix>::maxRowLength
    */
   virtual localIndex maxRowLength() const override;
 
-  virtual localIndex localRowLength( localIndex localRowIndex ) const override;
+  virtual localIndex localRowLength(localIndex localRowIndex) const override;
 
-  virtual localIndex globalRowLength( globalIndex globalRowIndex ) const override;
+  virtual localIndex globalRowLength(globalIndex globalRowIndex) const override;
 
-  virtual void getRowCopy( globalIndex globalRow,
-                           arraySlice1d< globalIndex > const & colIndices,
-                           arraySlice1d< real64 > const & values ) const override;
+  virtual void getRowCopy(globalIndex globalRow,
+                           arraySlice1d<globalIndex> const & colIndices,
+                           arraySlice1d<real64> const & values) const override;
 
-  virtual real64 getDiagValue( globalIndex globalRow ) const override;
+  virtual real64 getDiagValue(globalIndex globalRow) const override;
 
-  virtual void extractDiagonal( HypreVector & dst ) const override;
+  virtual void extractDiagonal(HypreVector & dst) const override;
 
   /**
    * @copydoc MatrixBase<HypreMatrix,HypreMatrix>::numGlobalRows
@@ -341,19 +341,19 @@ public:
    */
   virtual real64 normFrobenius() const override;
 
-  virtual localIndex getLocalRowID( globalIndex const index ) const override;
+  virtual localIndex getLocalRowID(globalIndex const index) const override;
 
-  virtual globalIndex getGlobalRowID( localIndex const index ) const override;
+  virtual globalIndex getGlobalRowID(localIndex const index) const override;
 
   /**
    * @copydoc MatrixBase<HypreMatrix,HypreMatrix>::getComm
    */
   virtual MPI_Comm getComm() const override;
 
-  virtual void print( std::ostream & os = std::cout ) const override;
+  virtual void print(std::ostream & os = std::cout) const override;
 
-  virtual void write( string const & filename,
-                      LAIOutputFormat const format = LAIOutputFormat::MATRIX_MARKET ) const override;
+  virtual void write(string const & filename,
+                      LAIOutputFormat const format = LAIOutputFormat::MATRIX_MARKET) const override;
 
   ///@}
 
@@ -374,7 +374,7 @@ private:
   /**
    * @brief Perform a matrix matrix product with Parallel Matrix
    */
-  void parCSRtoIJ( HYPRE_ParCSRMatrix const & parCSRMatrix );
+  void parCSRtoIJ(HYPRE_ParCSRMatrix const & parCSRMatrix);
 
   /**
    * Pointer to underlying HYPRE_IJMatrix type.

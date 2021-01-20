@@ -49,60 +49,60 @@ public:
    * @param[in] stress The ArrayView holding the stress data for each quadrature
    *                   point.
    */
-  LinearElasticAnisotropicUpdates( arrayView3d< real64 const, solid::STIFFNESS_USD > const & C,
-                                   arrayView3d< real64, solid::STRESS_USD > const & stress ):
-    SolidBaseUpdates( stress ),
-    m_stiffnessView( C )
+  LinearElasticAnisotropicUpdates(arrayView3d<real64 const, solid::STIFFNESS_USD> const & C,
+                                   arrayView3d<real64, solid::STRESS_USD> const & stress):
+    SolidBaseUpdates(stress),
+    m_stiffnessView(C)
   {}
 
   /// Deleted default constructor
   LinearElasticAnisotropicUpdates() = delete;
 
   /// Default copy constructor
-  LinearElasticAnisotropicUpdates( LinearElasticAnisotropicUpdates const & ) = default;
+  LinearElasticAnisotropicUpdates(LinearElasticAnisotropicUpdates const &) = default;
 
   /// Default move constructor
-  LinearElasticAnisotropicUpdates( LinearElasticAnisotropicUpdates && ) = default;
+  LinearElasticAnisotropicUpdates(LinearElasticAnisotropicUpdates &&) = default;
 
   /// Deleted copy assignment operator
-  LinearElasticAnisotropicUpdates & operator=( LinearElasticAnisotropicUpdates const & ) = delete;
+  LinearElasticAnisotropicUpdates & operator=(LinearElasticAnisotropicUpdates const &) = delete;
 
   /// Deleted move assignment operator
-  LinearElasticAnisotropicUpdates & operator=( LinearElasticAnisotropicUpdates && ) =  delete;
+  LinearElasticAnisotropicUpdates & operator=(LinearElasticAnisotropicUpdates &&) =  delete;
 
 
   GEOSX_HOST_DEVICE
-  virtual void SmallStrainNoState( localIndex const k,
-                                   real64 const ( &voigtStrain )[ 6 ],
-                                   real64 ( &stress )[ 6 ] ) const override final;
+  virtual void SmallStrainNoState(localIndex const k,
+                                   real64 const (&voigtStrain)[6],
+                                   real64 (&stress)[6]) const override final;
 
   GEOSX_HOST_DEVICE
-  virtual void SmallStrain( localIndex const k,
+  virtual void SmallStrain(localIndex const k,
                             localIndex const q,
-                            real64 const ( &voigtStrainInc )[ 6 ] ) const override final;
+                            real64 const (&voigtStrainInc)[6]) const override final;
 
   GEOSX_HOST_DEVICE
-  virtual void HypoElastic( localIndex const k,
+  virtual void HypoElastic(localIndex const k,
                             localIndex const q,
-                            real64 const ( &Ddt )[ 6 ],
-                            real64 const ( &Rot )[ 3 ][ 3 ] ) const override final;
+                            real64 const (&Ddt)[6],
+                            real64 const (&Rot)[3][3]) const override final;
 
   GEOSX_HOST_DEVICE
-  virtual void HyperElastic( localIndex const k,
+  virtual void HyperElastic(localIndex const k,
                              real64 const (&FmI)[3][3],
-                             real64 ( &stress )[ 6 ] ) const override final;
+                             real64 (&stress)[6]) const override final;
 
   GEOSX_HOST_DEVICE
-  virtual void HyperElastic( localIndex const k,
+  virtual void HyperElastic(localIndex const k,
                              localIndex const q,
-                             real64 const (&FmI)[3][3] ) const override final;
+                             real64 const (&FmI)[3][3]) const override final;
 
   GEOSX_HOST_DEVICE
-  virtual real64 calculateStrainEnergyDensity( localIndex const k,
-                                               localIndex const q ) const override final
+  virtual real64 calculateStrainEnergyDensity(localIndex const k,
+                                               localIndex const q) const override final
   {
-    GEOSX_UNUSED_VAR( k, q );
-    GEOSX_ERROR( "Not implemented" );
+    GEOSX_UNUSED_VAR(k, q);
+    GEOSX_ERROR("Not implemented");
     return 0;
   }
 
@@ -111,28 +111,28 @@ public:
    * @copydoc SolidBase::GetStiffness
    */
   GEOSX_HOST_DEVICE inline
-  virtual void GetStiffness( localIndex const k,
+  virtual void GetStiffness(localIndex const k,
                              localIndex const q,
-                             real64 (& c)[6][6] ) const override final
+                             real64 (& c)[6][6]) const override final
   {
-    GEOSX_UNUSED_VAR( q );
-    LvArray::tensorOps::copy< 6, 6 >( c, m_stiffnessView[ k ] );
+    GEOSX_UNUSED_VAR(q);
+    LvArray::tensorOps::copy<6, 6>(c, m_stiffnessView[k]);
   }
 
   GEOSX_FORCE_INLINE
   GEOSX_HOST_DEVICE
-  void setDiscretizationOps( localIndex const k,
+  void setDiscretizationOps(localIndex const k,
                              localIndex const q,
-                             DiscretizationOps & discOps ) const
+                             DiscretizationOps & discOps) const
   {
-    GEOSX_UNUSED_VAR( q )
-    LvArray::tensorOps::copy< 6, 6 >( discOps.m_c, m_stiffnessView[ k ] );
+    GEOSX_UNUSED_VAR(q)
+    LvArray::tensorOps::copy<6, 6>(discOps.m_c, m_stiffnessView[k]);
   }
 
 
   /// A reference to the ArrayView holding the Voigt Stiffness tensor in each
   /// element.
-  arrayView3d< real64 const, solid::STIFFNESS_USD > const m_stiffnessView;
+  arrayView3d<real64 const, solid::STIFFNESS_USD> const m_stiffnessView;
 };
 
 
@@ -140,15 +140,15 @@ GEOSX_FORCE_INLINE
 GEOSX_HOST_DEVICE
 void
 LinearElasticAnisotropicUpdates::
-  SmallStrainNoState( localIndex const k,
-                      real64 const ( &voigtStrain )[ 6 ],
-                      real64 ( & stress )[ 6 ] ) const
+  SmallStrainNoState(localIndex const k,
+                      real64 const (&voigtStrain)[6],
+                      real64 (& stress)[6]) const
 {
-  for( localIndex i=0; i<6; ++i )
+  for(localIndex i=0; i<6; ++i)
   {
-    for( localIndex j=0; j<6; ++j )
+    for(localIndex j=0; j<6; ++j)
     {
-      stress[i] = stress[i] + m_stiffnessView( k, i, j ) * voigtStrain[j];
+      stress[i] = stress[i] + m_stiffnessView(k, i, j) * voigtStrain[j];
     }
   }
 }
@@ -158,67 +158,67 @@ GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void
 LinearElasticAnisotropicUpdates::
-  SmallStrain( localIndex const k,
+  SmallStrain(localIndex const k,
                localIndex const q,
-               real64 const ( &voigtStrainInc )[ 6 ] ) const
+               real64 const (&voigtStrainInc)[6]) const
 {
-  LvArray::tensorOps::Ri_add_AijBj< 6, 6 >( m_stress[ k ][ q ], m_stiffnessView[ k ], voigtStrainInc );
+  LvArray::tensorOps::Ri_add_AijBj<6, 6>(m_stress[k][q], m_stiffnessView[k], voigtStrainInc);
 }
 
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void
 LinearElasticAnisotropicUpdates::
-  HypoElastic( localIndex const k,
+  HypoElastic(localIndex const k,
                localIndex const q,
-               real64 const ( &Ddt )[ 6 ],
-               real64 const ( &Rot )[ 3 ][ 3 ] ) const
+               real64 const (&Ddt)[6],
+               real64 const (&Rot)[3][3]) const
 {
-  for( localIndex j=0; j<3; ++j )
+  for(localIndex j=0; j<3; ++j)
   {
-    m_stress( k, q, 0 ) = m_stress( k, q, 0 ) + m_stiffnessView( k, 0, j ) * Ddt[ j ];
-    m_stress( k, q, 1 ) = m_stress( k, q, 1 ) + m_stiffnessView( k, 1, j ) * Ddt[ j ];
-    m_stress( k, q, 2 ) = m_stress( k, q, 2 ) + m_stiffnessView( k, 2, j ) * Ddt[ j ];
-    m_stress( k, q, 3 ) = m_stress( k, q, 3 ) + m_stiffnessView( k, 3, j ) * Ddt[ j ];
-    m_stress( k, q, 4 ) = m_stress( k, q, 4 ) + m_stiffnessView( k, 4, j ) * Ddt[ j ];
-    m_stress( k, q, 5 ) = m_stress( k, q, 5 ) + m_stiffnessView( k, 5, j ) * Ddt[ j ];
+    m_stress(k, q, 0) = m_stress(k, q, 0) + m_stiffnessView(k, 0, j) * Ddt[j];
+    m_stress(k, q, 1) = m_stress(k, q, 1) + m_stiffnessView(k, 1, j) * Ddt[j];
+    m_stress(k, q, 2) = m_stress(k, q, 2) + m_stiffnessView(k, 2, j) * Ddt[j];
+    m_stress(k, q, 3) = m_stress(k, q, 3) + m_stiffnessView(k, 3, j) * Ddt[j];
+    m_stress(k, q, 4) = m_stress(k, q, 4) + m_stiffnessView(k, 4, j) * Ddt[j];
+    m_stress(k, q, 5) = m_stress(k, q, 5) + m_stiffnessView(k, 5, j) * Ddt[j];
   }
 
-  for( localIndex j=3; j<6; ++j )
+  for(localIndex j=3; j<6; ++j)
   {
-    m_stress( k, q, 0 ) = m_stress( k, q, 0 ) + m_stiffnessView( k, 0, j ) * 2 * Ddt[ j ];
-    m_stress( k, q, 1 ) = m_stress( k, q, 1 ) + m_stiffnessView( k, 1, j ) * 2 * Ddt[ j ];
-    m_stress( k, q, 2 ) = m_stress( k, q, 2 ) + m_stiffnessView( k, 2, j ) * 2 * Ddt[ j ];
-    m_stress( k, q, 3 ) = m_stress( k, q, 3 ) + m_stiffnessView( k, 3, j ) * 2 * Ddt[ j ];
-    m_stress( k, q, 4 ) = m_stress( k, q, 4 ) + m_stiffnessView( k, 4, j ) * 2 * Ddt[ j ];
-    m_stress( k, q, 5 ) = m_stress( k, q, 5 ) + m_stiffnessView( k, 5, j ) * 2 * Ddt[ j ];
+    m_stress(k, q, 0) = m_stress(k, q, 0) + m_stiffnessView(k, 0, j) * 2 * Ddt[j];
+    m_stress(k, q, 1) = m_stress(k, q, 1) + m_stiffnessView(k, 1, j) * 2 * Ddt[j];
+    m_stress(k, q, 2) = m_stress(k, q, 2) + m_stiffnessView(k, 2, j) * 2 * Ddt[j];
+    m_stress(k, q, 3) = m_stress(k, q, 3) + m_stiffnessView(k, 3, j) * 2 * Ddt[j];
+    m_stress(k, q, 4) = m_stress(k, q, 4) + m_stiffnessView(k, 4, j) * 2 * Ddt[j];
+    m_stress(k, q, 5) = m_stress(k, q, 5) + m_stiffnessView(k, 5, j) * 2 * Ddt[j];
   }
 
-  real64 temp[ 6 ];
-  LvArray::tensorOps::Rij_eq_AikSymBklAjl< 3 >( temp, Rot, m_stress[ k ][ q ] );
-  LvArray::tensorOps::copy< 6 >( m_stress[ k ][ q ], temp );
+  real64 temp[6];
+  LvArray::tensorOps::Rij_eq_AikSymBklAjl<3>(temp, Rot, m_stress[k][q]);
+  LvArray::tensorOps::copy<6>(m_stress[k][q], temp);
 }
 
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void
 LinearElasticAnisotropicUpdates::
-  HyperElastic( localIndex const GEOSX_UNUSED_PARAM( k ),
-                real64 const (&GEOSX_UNUSED_PARAM( FmI ))[3][3],
-                real64 ( & )[ 6 ] ) const
+  HyperElastic(localIndex const GEOSX_UNUSED_PARAM(k),
+                real64 const (&GEOSX_UNUSED_PARAM(FmI))[3][3],
+                real64 (&)[6]) const
 {
-  GEOSX_ERROR( "LinearElasticAnisotropicKernelWrapper::HyperElastic() is not implemented!" );
+  GEOSX_ERROR("LinearElasticAnisotropicKernelWrapper::HyperElastic() is not implemented!");
 }
 
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void
 LinearElasticAnisotropicUpdates::
-  HyperElastic( localIndex const GEOSX_UNUSED_PARAM( k ),
-                localIndex const GEOSX_UNUSED_PARAM( q ),
-                real64 const (&GEOSX_UNUSED_PARAM( FmI ))[3][3] ) const
+  HyperElastic(localIndex const GEOSX_UNUSED_PARAM(k),
+                localIndex const GEOSX_UNUSED_PARAM(q),
+                real64 const (&GEOSX_UNUSED_PARAM(FmI))[3][3]) const
 {
-  GEOSX_ERROR( "LinearElasticAnisotropicKernelWrapper::HyperElastic() is not implemented!" );
+  GEOSX_ERROR("LinearElasticAnisotropicKernelWrapper::HyperElastic() is not implemented!");
 }
 
 /**
@@ -237,15 +237,15 @@ public:
    * @param[in]name name of the instance in the catalog
    * @param[in]parent the group which contains this instance
    */
-  LinearElasticAnisotropic( string const & name, Group * const parent );
+  LinearElasticAnisotropic(string const & name, Group * const parent);
 
   /**
    * Destructor
    */
   virtual ~LinearElasticAnisotropic() override;
 
-  virtual void allocateConstitutiveData( dataRepository::Group * const parent,
-                                         localIndex const numConstitutivePointsPerParentIndex ) override;
+  virtual void allocateConstitutiveData(dataRepository::Group * const parent,
+                                         localIndex const numConstitutivePointsPerParentIndex) override;
 
   /**
    * @name Static Factory Catalog members and functions
@@ -258,9 +258,9 @@ public:
   /**
    * @return A string that is used to register/lookup this class in the registry
    */
-  static std::string CatalogName() { return m_catalogNameString; }
+  static std::string CatalogName() {return m_catalogNameString;}
 
-  virtual string getCatalogName() const override { return CatalogName(); }
+  virtual string getCatalogName() const override {return CatalogName();}
   ///@}
 
   /**
@@ -280,7 +280,7 @@ public:
    * @param c Input c-array holding the components of the new default stiffness
    *          tensor.
    */
-  void setDefaultStiffness( real64 const c[6][6] );
+  void setDefaultStiffness(real64 const c[6][6]);
 
 
   /**
@@ -290,8 +290,8 @@ public:
    */
   LinearElasticAnisotropicUpdates createKernelUpdates() const
   {
-    return LinearElasticAnisotropicUpdates( m_stiffness.toViewConst(),
-                                            m_stress.toView() );
+    return LinearElasticAnisotropicUpdates(m_stiffness.toViewConst(),
+                                            m_stress.toView());
   }
 
   /**
@@ -302,19 +302,19 @@ public:
    * @param constructorParams The constructor parameter for the derived type.
    * @return An @p UPDATE_KERNEL object.
    */
-  template< typename UPDATE_KERNEL, typename ... PARAMS >
-  UPDATE_KERNEL createDerivedKernelUpdates( PARAMS && ... constructorParams )
+  template<typename UPDATE_KERNEL, typename ... PARAMS>
+  UPDATE_KERNEL createDerivedKernelUpdates(PARAMS && ... constructorParams)
   {
-    return UPDATE_KERNEL( std::forward< PARAMS >( constructorParams )...,
+    return UPDATE_KERNEL(std::forward<PARAMS>(constructorParams)...,
                           m_stiffness.toViewConst(),
-                          m_stress.toView() );
+                          m_stress.toView());
   }
 
   /**
    * @brief Const Getter for stiffness tensor
    * @return ArrayView to the stiffness tensor
    */
-  arrayView3d< real64 const, solid::STIFFNESS_USD > getStiffness() const
+  arrayView3d<real64 const, solid::STIFFNESS_USD> getStiffness() const
   {
     return m_stiffness;
   }
@@ -323,7 +323,7 @@ public:
    * @brief Non-const Getter for stiffness tensor
    * @return ArrayView to the stiffness tensor
    */
-  arrayView3d< real64, solid::STIFFNESS_USD > getStiffness()
+  arrayView3d<real64, solid::STIFFNESS_USD> getStiffness()
   {
     return m_stiffness;
   }
@@ -333,10 +333,10 @@ protected:
 
 private:
   /// default value for stiffness tensor
-  array2d< real64 > m_defaultStiffness;
+  array2d<real64> m_defaultStiffness;
 
   /// stiffness tensor in Voigt notation.
-  array3d< real64, solid::STIFFNESS_PERMUTATION > m_stiffness;
+  array3d<real64, solid::STIFFNESS_PERMUTATION> m_stiffness;
 
 };
 

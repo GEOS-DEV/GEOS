@@ -35,14 +35,14 @@ namespace geosx
  * This class does not deal with constructing or storing sub-blocks, only provides high-level access functions.
  * See derived classes BlockOperator and BlockOperatorWrapper for ways to construct a block operator.
  */
-template< typename VECTOR, typename OPERATOR = LinearOperator< VECTOR > >
-class BlockOperatorView : public LinearOperator< BlockVectorView< VECTOR > >
+template<typename VECTOR, typename OPERATOR = LinearOperator<VECTOR>>
+class BlockOperatorView : public LinearOperator<BlockVectorView<VECTOR>>
 {
 
 public:
 
   /// Alias for base type
-  using Base = LinearOperator< BlockVectorView< VECTOR > >;
+  using Base = LinearOperator<BlockVectorView<VECTOR>>;
 
   /// Alias for vector type
   using Vector = typename Base::Vector;
@@ -61,21 +61,21 @@ public:
    * @brief Deleted copy assignment.
    * @return not callable
    */
-  BlockOperatorView & operator=( BlockOperatorView const & ) = delete;
+  BlockOperatorView & operator=(BlockOperatorView const &) = delete;
 
   /**
    * @brief Deleted move assignment.
    * @return not callable
    */
-  BlockOperatorView & operator=( BlockOperatorView && ) = delete;
+  BlockOperatorView & operator=(BlockOperatorView &&) = delete;
 
   ///@}
 
 private:
 
-  HAS_MEMBER_FUNCTION( numLocalRows, localIndex, );
-  HAS_MEMBER_FUNCTION( numLocalCols, localIndex, );
-  HAS_MEMBER_FUNCTION_NO_RTYPE( applyTranspose, std::declval< Vector const & >(), std::declval< Vector & >() );
+  HAS_MEMBER_FUNCTION(numLocalRows, localIndex,);
+  HAS_MEMBER_FUNCTION(numLocalCols, localIndex,);
+  HAS_MEMBER_FUNCTION_NO_RTYPE(applyTranspose, std::declval<Vector const &>(), std::declval<Vector &>());
 
 public:
 
@@ -91,19 +91,19 @@ public:
    *
    * @warning @p src and @p dst cannot alias the same vector (some implementations may allow this).
    */
-  virtual void apply( Vector const & src,
-                      Vector & dst ) const override
+  virtual void apply(Vector const & src,
+                      Vector & dst) const override
   {
-    for( localIndex i = 0; i < numBlockRows(); i++ )
+    for(localIndex i = 0; i <numBlockRows(); i++)
     {
-      dst.block( i ).zero();
-      VECTOR temp( dst.block( i ) );
-      for( localIndex j = 0; j < numBlockCols(); j++ )
+      dst.block(i).zero();
+      VECTOR temp(dst.block(i));
+      for(localIndex j = 0; j <numBlockCols(); j++)
       {
-        if( m_operators( i, j ) != nullptr )
+        if(m_operators(i, j) != nullptr)
         {
-          m_operators( i, j )->apply( src.block( j ), temp );
-          dst.block( i ).axpy( 1.0, temp );
+          m_operators(i, j)->apply(src.block(j), temp);
+          dst.block(i).axpy(1.0, temp);
         }
       }
     }
@@ -118,21 +118,21 @@ public:
    *
    * @note This method only exists if the underlying operator type has it.
    */
-  template< typename OP = OPERATOR >
-  std::enable_if_t< HasMemberFunction_applyTranspose< OP > >
-  applyTranspose( BlockVectorView< VECTOR > const & src,
-                  BlockVectorView< VECTOR > & dst ) const
+  template<typename OP = OPERATOR>
+  std::enable_if_t<HasMemberFunction_applyTranspose<OP>>
+  applyTranspose(BlockVectorView<VECTOR> const & src,
+                  BlockVectorView<VECTOR> & dst) const
   {
-    for( localIndex j = 0; j < numBlockCols(); j++ )
+    for(localIndex j = 0; j <numBlockCols(); j++)
     {
-      dst.block( j ).zero();
-      VECTOR temp( dst.block( j ) );
-      for( localIndex i = 0; i < numBlockRows(); i++ )
+      dst.block(j).zero();
+      VECTOR temp(dst.block(j));
+      for(localIndex i = 0; i <numBlockRows(); i++)
       {
-        if( m_operators( j, i ) != nullptr )
+        if(m_operators(j, i) != nullptr)
         {
-          m_operators( j, i )->applyTranspose( src.block( i ), temp );
-          dst.block( j ).axpy( 1.0, temp );
+          m_operators(j, i)->applyTranspose(src.block(i), temp);
+          dst.block(j).axpy(1.0, temp);
         }
       }
     }
@@ -144,7 +144,7 @@ public:
    */
   virtual globalIndex numGlobalRows() const override
   {
-    return computeRowSize( []( OPERATOR const & block ) { return block.numGlobalRows(); } );
+    return computeRowSize([](OPERATOR const & block) {return block.numGlobalRows();});
   }
 
   /**
@@ -153,7 +153,7 @@ public:
    */
   virtual globalIndex numGlobalCols() const override
   {
-    return computeColSize( []( OPERATOR const & block ) { return block.numGlobalCols(); } );
+    return computeColSize([](OPERATOR const & block) {return block.numGlobalCols();});
   }
 
   /**
@@ -161,11 +161,11 @@ public:
    * @return Number of local rows in the operator.
    * @note Method only exists if the underlying operator type has it.
    */
-  template< typename OP = OPERATOR >
-  std::enable_if_t< HasMemberFunction_numLocalRows< OP >, localIndex >
+  template<typename OP = OPERATOR>
+  std::enable_if_t<HasMemberFunction_numLocalRows<OP>, localIndex>
   numLocalRows() const
   {
-    return computeRowSize( []( OPERATOR const & block ) { return block.numLocalRows(); } );
+    return computeRowSize([](OPERATOR const & block) {return block.numLocalRows();});
   }
 
   /**
@@ -173,11 +173,11 @@ public:
    * @return Number of local columns in the operator.
    * @note Method only exists if the underlying operator type has it.
    */
-  template< typename OP = OPERATOR >
-  std::enable_if_t< HasMemberFunction_numLocalCols< OP >, localIndex >
+  template<typename OP = OPERATOR>
+  std::enable_if_t<HasMemberFunction_numLocalCols<OP>, localIndex>
   numLocalCols() const
   {
-    return computeColSize( []( OPERATOR const & block ) { return block.numLocalCols(); } );
+    return computeColSize([](OPERATOR const & block) {return block.numLocalCols();});
   }
 
   ///@}
@@ -193,7 +193,7 @@ public:
    */
   localIndex numBlockRows() const
   {
-    return m_operators.size( 0 );
+    return m_operators.size(0);
   }
 
   /**
@@ -202,7 +202,7 @@ public:
    */
   localIndex numBlockCols() const
   {
-    return m_operators.size( 1 );
+    return m_operators.size(1);
   }
 
   /**
@@ -211,35 +211,35 @@ public:
    * @param blockColIndex block column index
    * @return a reference to the sub-block
    */
-  OPERATOR const & block( localIndex const blockRowIndex, localIndex const blockColIndex ) const
+  OPERATOR const & block(localIndex const blockRowIndex, localIndex const blockColIndex) const
   {
-    GEOSX_LAI_ASSERT( m_operators( blockRowIndex, blockColIndex ) != nullptr );
-    return *m_operators( blockRowIndex, blockColIndex );
+    GEOSX_LAI_ASSERT(m_operators(blockRowIndex, blockColIndex) != nullptr);
+    return *m_operators(blockRowIndex, blockColIndex);
   }
 
   /**
-   * @copydoc block( localIndex const, localIndex const ) const
+   * @copydoc block(localIndex const, localIndex const) const
    */
-  OPERATOR & block( localIndex const blockRowIndex, localIndex const blockColIndex )
+  OPERATOR & block(localIndex const blockRowIndex, localIndex const blockColIndex)
   {
-    GEOSX_LAI_ASSERT( m_operators( blockRowIndex, blockColIndex ) != nullptr );
-    return *m_operators( blockRowIndex, blockColIndex );
+    GEOSX_LAI_ASSERT(m_operators(blockRowIndex, blockColIndex) != nullptr);
+    return *m_operators(blockRowIndex, blockColIndex);
   }
 
   /**
-   * @copydoc block( localIndex const, localIndex const ) const
+   * @copydoc block(localIndex const, localIndex const) const
    */
-  OPERATOR const & operator()( localIndex const blockRowIndex, localIndex const blockColIndex = 0 ) const
+  OPERATOR const & operator()(localIndex const blockRowIndex, localIndex const blockColIndex = 0) const
   {
-    return block( blockRowIndex, blockColIndex );
+    return block(blockRowIndex, blockColIndex);
   }
 
   /**
-   * @copydoc block( localIndex const, localIndex const ) const
+   * @copydoc block(localIndex const, localIndex const) const
    */
-  OPERATOR & operator()( localIndex const blockRowIndex, localIndex const blockColIndex = 0 )
+  OPERATOR & operator()(localIndex const blockRowIndex, localIndex const blockColIndex = 0)
   {
-    return block( blockRowIndex, blockColIndex );
+    return block(blockRowIndex, blockColIndex);
   }
 
   ///@}
@@ -251,24 +251,24 @@ protected:
    * @param nRows number of block rows
    * @param nCols number of block columns
    */
-  BlockOperatorView( localIndex const nRows, localIndex const nCols )
-    : m_operators( nRows, nCols )
+  BlockOperatorView(localIndex const nRows, localIndex const nCols)
+    : m_operators(nRows, nCols)
   {
-    GEOSX_LAI_ASSERT_GT( nRows, 0 );
-    GEOSX_LAI_ASSERT_GT( nCols, 0 );
+    GEOSX_LAI_ASSERT_GT(nRows, 0);
+    GEOSX_LAI_ASSERT_GT(nCols, 0);
   }
 
   /**
    * @brief Copy constructor.
    * @param x the block vector to copy
    */
-  BlockOperatorView( BlockOperatorView< VECTOR, OPERATOR > const & x ) = default;
+  BlockOperatorView(BlockOperatorView<VECTOR, OPERATOR> const & x) = default;
 
   /**
    * @brief Move constructor.
    * @param x the block vector to move from
    */
-  BlockOperatorView( BlockOperatorView< VECTOR, OPERATOR > && x ) = default;
+  BlockOperatorView(BlockOperatorView<VECTOR, OPERATOR> && x) = default;
 
   /**
    * @brief Set/replace a pointer to a block.
@@ -276,40 +276,40 @@ protected:
    * @param blockColIndex column index of the block
    * @param op            the new pointer
    */
-  void setPointer( localIndex const blockRowIndex, localIndex const blockColIndex, OPERATOR * op )
+  void setPointer(localIndex const blockRowIndex, localIndex const blockColIndex, OPERATOR * op)
   {
-    GEOSX_LAI_ASSERT_GE( blockRowIndex, 0 );
-    GEOSX_LAI_ASSERT_GT( numBlockRows(), blockRowIndex );
-    GEOSX_LAI_ASSERT_GE( blockColIndex, 0 );
-    GEOSX_LAI_ASSERT_GT( numBlockCols(), blockColIndex );
-    m_operators( blockRowIndex, blockColIndex ) = op;
+    GEOSX_LAI_ASSERT_GE(blockRowIndex, 0);
+    GEOSX_LAI_ASSERT_GT(numBlockRows(), blockRowIndex);
+    GEOSX_LAI_ASSERT_GE(blockColIndex, 0);
+    GEOSX_LAI_ASSERT_GT(numBlockCols(), blockColIndex);
+    m_operators(blockRowIndex, blockColIndex) = op;
   }
 
 private:
 
-  template< typename FUNC >
-  auto computeRowSize( FUNC func ) const -> decltype( func( std::declval< OPERATOR const >() ) );
+  template<typename FUNC>
+  auto computeRowSize(FUNC func) const -> decltype(func(std::declval<OPERATOR const>()));
 
-  template< typename FUNC >
-  auto computeColSize( FUNC func ) const -> decltype( func( std::declval< OPERATOR const >() ) );
+  template<typename FUNC>
+  auto computeColSize(FUNC func) const -> decltype(func(std::declval<OPERATOR const>()));
 
   /// Array of pointers to blocks
-  array2d< OPERATOR * > m_operators;
+  array2d<OPERATOR *> m_operators;
 };
 
-template< typename VECTOR, typename OPERATOR >
-template< typename FUNC >
-auto BlockOperatorView< VECTOR, OPERATOR >::computeRowSize( FUNC func ) const -> decltype( func( std::declval< OPERATOR const >() ) )
+template<typename VECTOR, typename OPERATOR>
+template<typename FUNC>
+auto BlockOperatorView<VECTOR, OPERATOR>::computeRowSize(FUNC func) const -> decltype(func(std::declval<OPERATOR const>()))
 {
-  using sizeType = decltype( func( std::declval< OPERATOR const >() ) );
+  using sizeType = decltype(func(std::declval<OPERATOR const>()));
   sizeType rowSize = 0;
-  for( localIndex i = 0; i < numBlockRows(); ++i )
+  for(localIndex i = 0; i <numBlockRows(); ++i)
   {
-    for( localIndex j = 0; j < numBlockCols(); ++j )
+    for(localIndex j = 0; j <numBlockCols(); ++j)
     {
-      if( m_operators( i, j ) != nullptr )
+      if(m_operators(i, j) != nullptr)
       {
-        rowSize += func( block( i, j ) );
+        rowSize += func(block(i, j));
         break;
       }
     }
@@ -317,19 +317,19 @@ auto BlockOperatorView< VECTOR, OPERATOR >::computeRowSize( FUNC func ) const ->
   return rowSize;
 }
 
-template< typename VECTOR, typename OPERATOR >
-template< typename FUNC >
-auto BlockOperatorView< VECTOR, OPERATOR >::computeColSize( FUNC func ) const -> decltype( func( std::declval< OPERATOR const >() ) )
+template<typename VECTOR, typename OPERATOR>
+template<typename FUNC>
+auto BlockOperatorView<VECTOR, OPERATOR>::computeColSize(FUNC func) const -> decltype(func(std::declval<OPERATOR const>()))
 {
-  using sizeType = decltype( func( std::declval< OPERATOR const >() ) );
+  using sizeType = decltype(func(std::declval<OPERATOR const>()));
   sizeType colSize = 0;
-  for( localIndex j = 0; j < numBlockCols(); j++ )
+  for(localIndex j = 0; j <numBlockCols(); j++)
   {
-    for( localIndex i = 0; i < numBlockRows(); ++i )
+    for(localIndex i = 0; i <numBlockRows(); ++i)
     {
-      if( m_operators( i, j ) != nullptr )
+      if(m_operators(i, j) != nullptr)
       {
-        colSize += func( block( i, j ) );
+        colSize += func(block(i, j));
         break;
       }
     }

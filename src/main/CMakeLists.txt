@@ -1,1 +1,1 @@
-geosx_add_code_checks( PREFIX main )
+geosx_add_code_checks(PREFIX main)

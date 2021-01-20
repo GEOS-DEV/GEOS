@@ -42,7 +42,7 @@ class DomainPartition;
 class PhaseFieldDamageFEM : public SolverBase
 {
 public:
-  PhaseFieldDamageFEM( const std::string & name, Group * const parent );
+  PhaseFieldDamageFEM(const std::string & name, Group * const parent);
 
   virtual ~PhaseFieldDamageFEM() override;
 
@@ -51,7 +51,7 @@ public:
     return "PhaseFieldDamageFEM";
   }
 
-  virtual void RegisterDataOnMesh( Group * const MeshBodies ) override final;
+  virtual void RegisterDataOnMesh(Group * const MeshBodies) override final;
 
   /**
    * @defgroup Solver Interface Functions
@@ -61,71 +61,71 @@ public:
    */
   /**@{*/
 
-  virtual real64 SolverStep( real64 const & time_n,
+  virtual real64 SolverStep(real64 const & time_n,
                              real64 const & dt,
                              integer const cycleNumber,
-                             DomainPartition & domain ) override;
+                             DomainPartition & domain) override;
 
-  virtual real64 ExplicitStep( real64 const & time_n,
+  virtual real64 ExplicitStep(real64 const & time_n,
                                real64 const & dt,
                                integer const cycleNumber,
-                               DomainPartition & domain ) override;
+                               DomainPartition & domain) override;
 
-  virtual void SetupSystem( DomainPartition & domain,
+  virtual void SetupSystem(DomainPartition & domain,
                             DofManager & dofManager,
-                            CRSMatrix< real64, globalIndex > & localMatrix,
-                            array1d< real64 > & localRhs,
-                            array1d< real64 > & localSolution,
-                            bool const setSparisty ) override;
+                            CRSMatrix<real64, globalIndex> & localMatrix,
+                            array1d<real64> & localRhs,
+                            array1d<real64> & localSolution,
+                            bool const setSparisty) override;
 
-  virtual void SetupDofs( DomainPartition const & domain,
-                          DofManager & dofManager ) const override;
+  virtual void SetupDofs(DomainPartition const & domain,
+                          DofManager & dofManager) const override;
 
-  virtual void AssembleSystem( real64 const time, real64 const dt,
+  virtual void AssembleSystem(real64 const time, real64 const dt,
                                DomainPartition & domain,
                                DofManager const & dofManager,
-                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                               arrayView1d< real64 > const & localRhs ) override;
+                               CRSMatrixView<real64, globalIndex const> const & localMatrix,
+                               arrayView1d<real64> const & localRhs) override;
 
-  virtual void ApplyBoundaryConditions( real64 const time, real64 const dt,
+  virtual void ApplyBoundaryConditions(real64 const time, real64 const dt,
                                         DomainPartition & domain,
                                         DofManager const & dofManager,
-                                        CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                        arrayView1d< real64 > const & localRhs ) override;
+                                        CRSMatrixView<real64, globalIndex const> const & localMatrix,
+                                        arrayView1d<real64> const & localRhs) override;
 
-  virtual real64 CalculateResidualNorm( DomainPartition const & domain,
+  virtual real64 CalculateResidualNorm(DomainPartition const & domain,
                                         DofManager const & dofManager,
-                                        arrayView1d< real64 const > const & localRhs ) override;
+                                        arrayView1d<real64 const> const & localRhs) override;
 
-  virtual void SolveSystem( DofManager const & dofManager,
+  virtual void SolveSystem(DofManager const & dofManager,
                             ParallelMatrix & matrix,
                             ParallelVector & rhs,
-                            ParallelVector & solution ) override;
+                            ParallelVector & solution) override;
 
-  virtual void ApplySystemSolution( DofManager const & dofManager,
-                                    arrayView1d< real64 const > const & localSolution,
+  virtual void ApplySystemSolution(DofManager const & dofManager,
+                                    arrayView1d<real64 const> const & localSolution,
                                     real64 const scalingFactor,
-                                    DomainPartition & domain ) override;
+                                    DomainPartition & domain) override;
 
   virtual void
-  ImplicitStepSetup( real64 const &,
+  ImplicitStepSetup(real64 const &,
                      real64 const &,
-                     DomainPartition & ) override {}
+                     DomainPartition &) override {}
 
-  virtual void ImplicitStepComplete( real64 const & time,
+  virtual void ImplicitStepComplete(real64 const & time,
                                      real64 const & dt,
-                                     DomainPartition & domain ) override;
+                                     DomainPartition & domain) override;
 
   virtual void
-  ResetStateToBeginningOfStep( DomainPartition & ) override {}
+  ResetStateToBeginningOfStep(DomainPartition &) override {}
 
   /**@}*/
 
-  void ApplyDirichletBC_implicit( real64 const time,
+  void ApplyDirichletBC_implicit(real64 const time,
                                   DofManager const & dofManager,
                                   DomainPartition & domain,
-                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                  arrayView1d< real64 > const & localRhs );
+                                  CRSMatrixView<real64, globalIndex const> const & localMatrix,
+                                  arrayView1d<real64> const & localRhs);
 
   enum class timeIntegrationOption
   {
@@ -142,9 +142,9 @@ public:
     static constexpr auto solidModelNamesString = "solidMaterialNames";
 
     dataRepository::ViewKey timeIntegrationOption =
-    { "timeIntegrationOption" };
+    {"timeIntegrationOption"};
     dataRepository::ViewKey fieldVarName =
-    { "fieldName" };
+    {"fieldName"};
 
   } PhaseFieldDamageFEMViewKeys;
 
@@ -158,7 +158,7 @@ public:
     return m_matrix.numGlobalRows();
   }
 
-//  void setSolidModelName( string const & name )
+//  void setSolidModelName(string const & name)
 //  {
 //    m_solidModelName = name;
 //  }
@@ -176,9 +176,9 @@ private:
   stabledt m_stabledt;
   timeIntegrationOption m_timeIntegrationOption;
   string m_localDissipationOption;
-  array1d< string > m_solidModelNames;
+  array1d<string> m_solidModelNames;
 
-  array1d< real64 > m_coeff;
+  array1d<real64> m_coeff;
   //  string m_coeffFieldName;
 
   PhaseFieldDamageFEM();

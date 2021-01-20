@@ -63,32 +63,32 @@
 ///@{
 
 /// Mark an unused argument and silence compiler warnings.
-#define GEOSX_UNUSED_PARAM( X )
+#define GEOSX_UNUSED_PARAM(X)
 
 /**
  * @brief Used to silence unused variable warnings, cuda doesn't respect casting to void.
  * @tparam ARGS argument types
  * @param ...
  */
-template< typename ... ARGS >
+template<typename ... ARGS>
 GEOSX_HOST_DEVICE inline constexpr
-void i_g_n_o_r_e( ARGS const & ... ) {}
+void i_g_n_o_r_e(ARGS const & ...) {}
 
 /// Mark an unused variable and silence compiler warnings.
-#define GEOSX_UNUSED_VAR( ... ) i_g_n_o_r_e( __VA_ARGS__ );
+#define GEOSX_UNUSED_VAR(...) i_g_n_o_r_e(__VA_ARGS__);
 
 /// Mark a debug variable and silence compiler warnings.
-#define GEOSX_DEBUG_VAR( ... ) GEOSX_UNUSED_VAR( __VA_ARGS__ )
+#define GEOSX_DEBUG_VAR(...) GEOSX_UNUSED_VAR(__VA_ARGS__)
 
 ///@}
 
 #if defined(GEOSX_USE_OPENMP)
 /// Wrap a pragma clause in the _Pragma statement. We seek to make this include the omp portion of the clause.
-#define PRAGMA_OMP( clause ) _Pragma( clause )
-//  #define PRAGMA_OMP( clause ) _Pragma( STRINGIZE( omp clause ) )
+#define PRAGMA_OMP(clause) _Pragma(clause)
+//  #define PRAGMA_OMP(clause) _Pragma(STRINGIZE(omp clause))
 #else
 /// No-op version of PRAGMA_OMP
-#define PRAGMA_OMP( clause )
+#define PRAGMA_OMP(clause)
 #endif
 
 /// preprocessor variable for the C99 restrict keyword for use with pointers
@@ -97,7 +97,7 @@ void i_g_n_o_r_e( ARGS const & ... ) {}
 /// preprocessor variable for the C99 restrict keyword for use with the "this" pointer
 #define GEOSX_RESTRICT_THIS LVARRAY_RESTRICT_THIS
 
-/// Doxygen can't parse a `decltype( auto )` return type, using this gets around that.
-#define GEOSX_DECLTYPE_AUTO_RETURN decltype( auto )
+/// Doxygen can't parse a `decltype(auto)` return type, using this gets around that.
+#define GEOSX_DECLTYPE_AUTO_RETURN decltype(auto)
 
 #endif // GEOSX_COMMON_GEOSXMACROS_HPP_

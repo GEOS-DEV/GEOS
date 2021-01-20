@@ -33,7 +33,7 @@ namespace geosx
  *
  * @tparam VECTOR Type of vector this operator can be applied to
  */
-template< typename VECTOR >
+template<typename VECTOR>
 class LinearOperator
 {
 public:
@@ -58,7 +58,7 @@ public:
    *
    * @warning @p src and @p dst cannot alias the same vector (some implementations may allow this).
    */
-  virtual void apply( Vector const & src, Vector & dst ) const = 0;
+  virtual void apply(Vector const & src, Vector & dst) const = 0;
 
   /**
    * @brief Compute residual <tt>r = Ax - b</tt>.
@@ -70,10 +70,10 @@ public:
    * @warning @p b and @p x may alias the same vector.
    *          @p r cannot alias any of the other two vectors (some implementations may allow this).
    */
-  virtual void residual( Vector const & x, Vector const & b, Vector & r ) const
+  virtual void residual(Vector const & x, Vector const & b, Vector & r) const
   {
-    this->apply( x, r );
-    r.axpby( 1.0, b, -1.0 );
+    this->apply(x, r);
+    r.axpby(1.0, b, -1.0);
   }
 
   /**

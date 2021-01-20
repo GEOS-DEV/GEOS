@@ -33,49 +33,49 @@ namespace geosx
 using namespace dataRepository;
 using namespace mimeticInnerProduct;
 
-HybridMimeticDiscretization::HybridMimeticDiscretization( std::string const & name,
-                                                          Group * const parent )
-  : Group( name, parent )
+HybridMimeticDiscretization::HybridMimeticDiscretization(std::string const & name,
+                                                          Group * const parent)
+  : Group(name, parent)
 {
-  setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
+  setInputFlags(InputFlags::OPTIONAL_NONUNIQUE);
 
   // will need to add a fieldName when hybrid FVM can properly enforce (non-zero) face boundary conditions
 
   // needed for the multiplier
-  registerWrapper( viewKeyStruct::coeffNameString, &m_coeffName )->
-    setInputFlag( InputFlags::REQUIRED )->
-    setDescription( "Name of coefficient field" );
+  registerWrapper(viewKeyStruct::coeffNameString, &m_coeffName)->
+    setInputFlag(InputFlags::REQUIRED)->
+    setDescription("Name of coefficient field");
 
-  registerWrapper( viewKeyStruct::innerProductTypeString, &m_innerProductType )->
-    setInputFlag( InputFlags::REQUIRED )->
-    setDescription( "Type of inner product used in the hybrid FVM solver" );
+  registerWrapper(viewKeyStruct::innerProductTypeString, &m_innerProductType)->
+    setInputFlag(InputFlags::REQUIRED)->
+    setDescription("Type of inner product used in the hybrid FVM solver");
 }
 
-void HybridMimeticDiscretization::InitializePostInitialConditions_PreSubGroups( Group * const rootGroup )
+void HybridMimeticDiscretization::InitializePostInitialConditions_PreSubGroups(Group * const rootGroup)
 {
-  Group::InitializePostInitialConditions_PreSubGroups( rootGroup );
+  Group::InitializePostInitialConditions_PreSubGroups(rootGroup);
 
-  std::unique_ptr< MimeticInnerProductBase > newMimeticIP = factory( m_innerProductType );
+  std::unique_ptr<MimeticInnerProductBase> newMimeticIP = factory(m_innerProductType);
 
-  registerWrapper< MimeticInnerProductBase >( viewKeyStruct::innerProductString, std::move( newMimeticIP ) )->
-    setRestartFlags( dataRepository::RestartFlags::NO_WRITE );
+  registerWrapper<MimeticInnerProductBase>(viewKeyStruct::innerProductString, std::move(newMimeticIP))->
+    setRestartFlags(dataRepository::RestartFlags::NO_WRITE);
 }
 
-void HybridMimeticDiscretization::RegisterDataOnMesh( Group * const meshBodies )
+void HybridMimeticDiscretization::RegisterDataOnMesh(Group * const meshBodies)
 {
-  meshBodies->forSubGroups< MeshBody >( [&]( MeshBody & meshBody )
+  meshBodies->forSubGroups<MeshBody>([&](MeshBody & meshBody)
   {
-    meshBody.forSubGroups< MeshLevel >( [&]( MeshLevel & mesh )
+    meshBody.forSubGroups<MeshLevel>([&](MeshLevel & mesh)
     {
       FaceManager & faceManager = *mesh.getFaceManager();
-      faceManager.registerWrapper< array1d< real64 > >( m_coeffName + viewKeyStruct::transMultiplierString )->
-        setApplyDefaultValue( 1.0 )->
-        setPlotLevel( PlotLevel::LEVEL_0 )->
-        setRegisteringObjects( this->getName() )->
-        setDescription( "An array that holds the transmissibility multipliers" );
+      faceManager.registerWrapper<array1d<real64>>(m_coeffName + viewKeyStruct::transMultiplierString)->
+        setApplyDefaultValue(1.0)->
+        setPlotLevel(PlotLevel::LEVEL_0)->
+        setRegisteringObjects(this->getName())->
+        setDescription("An array that holds the transmissibility multipliers");
 
-    } );
-  } );
+    });
+  });
 }
 
 HybridMimeticDiscretization::CatalogInterface::CatalogType &
@@ -85,37 +85,37 @@ HybridMimeticDiscretization::GetCatalog()
   return catalog;
 }
 
-std::unique_ptr< MimeticInnerProductBase >
-HybridMimeticDiscretization::factory( string const & mimeticInnerProductType ) const
+std::unique_ptr<MimeticInnerProductBase>
+HybridMimeticDiscretization::factory(string const & mimeticInnerProductType) const
 {
-  std::unique_ptr< MimeticInnerProductBase > rval;
-  if( mimeticInnerProductType == MimeticInnerProductTypeStrings::TPFA )
+  std::unique_ptr<MimeticInnerProductBase> rval;
+  if(mimeticInnerProductType == MimeticInnerProductTypeStrings::TPFA)
   {
-    rval = std::make_unique< TPFAInnerProduct >();
+    rval = std::make_unique<TPFAInnerProduct>();
   }
-  else if( mimeticInnerProductType == MimeticInnerProductTypeStrings::QuasiTPFA )
+  else if(mimeticInnerProductType == MimeticInnerProductTypeStrings::QuasiTPFA)
   {
-    rval = std::make_unique< QuasiTPFAInnerProduct >();
+    rval = std::make_unique<QuasiTPFAInnerProduct>();
   }
-  else if( mimeticInnerProductType == MimeticInnerProductTypeStrings::QuasiRT )
+  else if(mimeticInnerProductType == MimeticInnerProductTypeStrings::QuasiRT)
   {
-    rval = std::make_unique< QuasiRTInnerProduct >();
+    rval = std::make_unique<QuasiRTInnerProduct>();
   }
-  else if( mimeticInnerProductType == MimeticInnerProductTypeStrings::Simple )
+  else if(mimeticInnerProductType == MimeticInnerProductTypeStrings::Simple)
   {
-    rval = std::make_unique< SimpleInnerProduct >();
+    rval = std::make_unique<SimpleInnerProduct>();
   }
-  else if( mimeticInnerProductType == MimeticInnerProductTypeStrings::BdVLM )
+  else if(mimeticInnerProductType == MimeticInnerProductTypeStrings::BdVLM)
   {
-    rval = std::make_unique< BdVLMInnerProduct >();
+    rval = std::make_unique<BdVLMInnerProduct>();
   }
   else
   {
-    GEOSX_ERROR( "Key value of "<< mimeticInnerProductType <<" does not have an associated mimetic inner product." );
+    GEOSX_ERROR("Key value of "<<mimeticInnerProductType <<" does not have an associated mimetic inner product.");
   }
   return rval;
 }
 
-REGISTER_CATALOG_ENTRY( HybridMimeticDiscretization, HybridMimeticDiscretization, std::string const &, Group * const )
+REGISTER_CATALOG_ENTRY(HybridMimeticDiscretization, HybridMimeticDiscretization, std::string const &, Group * const)
 
 }

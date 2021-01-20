@@ -33,7 +33,7 @@ namespace geosx
  * using only cell-centered variables
  * works with both TPFA and MPFA
  */
-template< typename BASE = SinglePhaseBase >
+template<typename BASE = SinglePhaseBase>
 class SinglePhaseFVM : public BASE
 {
 public:
@@ -101,24 +101,24 @@ public:
    * @param name the name of this instantiation of Group in the repository
    * @param parent the parent group of this instantiation of Group
    */
-  SinglePhaseFVM( const std::string & name,
-                  dataRepository::Group * const parent );
+  SinglePhaseFVM(const std::string & name,
+                  dataRepository::Group * const parent);
 
 
   /// deleted default constructor
   SinglePhaseFVM() = delete;
 
   /// deleted copy constructor
-  SinglePhaseFVM( SinglePhaseFVM const & ) = delete;
+  SinglePhaseFVM(SinglePhaseFVM const &) = delete;
 
   /// default move constructor
-  SinglePhaseFVM( SinglePhaseFVM && ) = default;
+  SinglePhaseFVM(SinglePhaseFVM &&) = default;
 
   /// deleted assignment operator
-  SinglePhaseFVM & operator=( SinglePhaseFVM const & ) = delete;
+  SinglePhaseFVM & operator=(SinglePhaseFVM const &) = delete;
 
   /// deleted move operator
-  SinglePhaseFVM & operator=( SinglePhaseFVM && ) = delete;
+  SinglePhaseFVM & operator=(SinglePhaseFVM &&) = delete;
 
   /**
    * @brief default destructor
@@ -129,17 +129,17 @@ public:
    * @brief name of the node manager in the object catalog
    * @return string that contains the catalog name to generate a new NodeManager object through the object catalog.
    */
-  template< typename _BASE=BASE >
+  template<typename _BASE=BASE>
   static
-  typename std::enable_if< std::is_same< _BASE, SinglePhaseBase >::value, string >::type
+  typename std::enable_if<std::is_same<_BASE, SinglePhaseBase>::value, string>::type
   CatalogName()
   {
     return "SinglePhaseFVM";
   }
 
-  template< typename _BASE=BASE >
+  template<typename _BASE=BASE>
   static
-  typename std::enable_if< std::is_same< _BASE, SinglePhaseProppantBase >::value, string >::type
+  typename std::enable_if<std::is_same<_BASE, SinglePhaseProppantBase>::value, string>::type
   CatalogName()
   {
     return "SinglePhaseProppantFVM";
@@ -153,35 +153,35 @@ public:
   /**@{*/
 
   virtual void
-  SetupDofs( DomainPartition const & domain,
-             DofManager & dofManager ) const override;
+  SetupDofs(DomainPartition const & domain,
+             DofManager & dofManager) const override;
 
   virtual void
-  SetupSystem( DomainPartition & domain,
+  SetupSystem(DomainPartition & domain,
                DofManager & dofManager,
-               CRSMatrix< real64, globalIndex > & localMatrix,
-               array1d< real64 > & localRhs,
-               array1d< real64 > & localSolution,
-               bool const setSparsity = true ) override;
+               CRSMatrix<real64, globalIndex> & localMatrix,
+               array1d<real64> & localRhs,
+               array1d<real64> & localSolution,
+               bool const setSparsity = true) override;
 
   virtual void
-  ApplyBoundaryConditions( real64 const time_n,
+  ApplyBoundaryConditions(real64 const time_n,
                            real64 const dt,
                            DomainPartition & domain,
                            DofManager const & dofManager,
-                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                           arrayView1d< real64 > const & localRhs ) override;
+                           CRSMatrixView<real64, globalIndex const> const & localMatrix,
+                           arrayView1d<real64> const & localRhs) override;
 
   virtual real64
-  CalculateResidualNorm( DomainPartition const & domain,
+  CalculateResidualNorm(DomainPartition const & domain,
                          DofManager const & dofManager,
-                         arrayView1d< real64 const > const & localRhs ) override;
+                         arrayView1d<real64 const> const & localRhs) override;
 
   virtual void
-  ApplySystemSolution( DofManager const & dofManager,
-                       arrayView1d< real64 const > const & localSolution,
+  ApplySystemSolution(DofManager const & dofManager,
+                       arrayView1d<real64 const> const & localSolution,
                        real64 const scalingFactor,
-                       DomainPartition & domain ) override;
+                       DomainPartition & domain) override;
 
   /**
    * @brief assembles the flux terms for all cells
@@ -193,38 +193,38 @@ public:
    * @param localRhs the system right-hand side vector
    */
   virtual void
-  AssembleFluxTerms( real64 const time_n,
+  AssembleFluxTerms(real64 const time_n,
                      real64 const dt,
                      DomainPartition const & domain,
                      DofManager const & dofManager,
-                     CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                     arrayView1d< real64 > const & localRhs ) override;
+                     CRSMatrixView<real64, globalIndex const> const & localMatrix,
+                     arrayView1d<real64> const & localRhs) override;
 
-  virtual void setUpDflux_dApertureMatrix( DomainPartition & domain,
+  virtual void setUpDflux_dApertureMatrix(DomainPartition & domain,
                                            DofManager const & dofManager,
-                                           CRSMatrix< real64, globalIndex > & localMatrix ) override final;
+                                           CRSMatrix<real64, globalIndex> & localMatrix) override final;
 
   /**@}*/
 
-  virtual void InitializePreSubGroups( dataRepository::Group * const rootGroup ) override;
+  virtual void InitializePreSubGroups(dataRepository::Group * const rootGroup) override;
 
   struct viewKeyStruct : SinglePhaseBase::viewKeyStruct
   {} viewKeysSinglePhaseFVM;
 
   viewKeyStruct & viewKeys()
-  { return viewKeysSinglePhaseFVM; }
+  {return viewKeysSinglePhaseFVM;}
 
   viewKeyStruct const & viewKeys() const
-  { return viewKeysSinglePhaseFVM; }
+  {return viewKeysSinglePhaseFVM;}
 
   struct groupKeyStruct : SolverBase::groupKeyStruct
   {} groupKeysSinglePhaseFVM;
 
   groupKeyStruct & groupKeys()
-  { return groupKeysSinglePhaseFVM; }
+  {return groupKeysSinglePhaseFVM;}
 
   groupKeyStruct const & groupKeys() const
-  { return groupKeysSinglePhaseFVM; }
+  {return groupKeysSinglePhaseFVM;}
 
 private:
 
@@ -237,12 +237,12 @@ private:
    * @param matrix the system matrix
    * @param rhs the system right-hand side vector
    */
-  void ApplyFaceDirichletBC( real64 const time_n,
+  void ApplyFaceDirichletBC(real64 const time_n,
                              real64 const dt,
                              DofManager const & faceSet,
                              DomainPartition & domain,
-                             CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                             arrayView1d< real64 > const & localRhs );
+                             CRSMatrixView<real64, globalIndex const> const & localMatrix,
+                             arrayView1d<real64> const & localRhs);
 
   // no data needed here, see SinglePhaseBase
 

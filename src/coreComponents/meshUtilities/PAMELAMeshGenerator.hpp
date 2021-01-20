@@ -45,8 +45,8 @@ public:
  * @param[in] name of the PAMELAMeshGenerator object
  * @param[in] parent the parent Group pointer for the MeshGenerator object
  */
-  PAMELAMeshGenerator( const std::string & name,
-                       Group * const parent );
+  PAMELAMeshGenerator(const std::string & name,
+                       Group * const parent);
 
   virtual ~PAMELAMeshGenerator() override;
 
@@ -54,7 +54,7 @@ public:
  * @brief Return the name of the PAMELAMeshGenerator in object Catalog.
  * @return string that contains the key name to PAMELAMeshGenerator in the Catalog
  */
-  static string CatalogName() { return "PAMELAMeshGenerator"; }
+  static string CatalogName() {return "PAMELAMeshGenerator";}
 
 ///@cond DO_NOT_DOCUMENT
   struct viewKeyStruct
@@ -67,7 +67,7 @@ public:
   };
 /// @endcond
 
-  virtual void GenerateElementRegions( DomainPartition & domain ) override;
+  virtual void GenerateElementRegions(DomainPartition & domain) override;
 
   /**
    * @brief Create a new geometric object (box, plane, etc) as a child of this group.
@@ -75,17 +75,17 @@ public:
    * @param childName the name of the new geometric object in the repository
    * @return the group child
    */
-  virtual Group * CreateChild( string const & childKey, string const & childName ) override;
+  virtual Group * CreateChild(string const & childKey, string const & childName) override;
 
-  virtual void GenerateMesh( DomainPartition * const domain ) override;
+  virtual void GenerateMesh(DomainPartition * const domain) override;
 
-  virtual void GetElemToNodesRelationInBox ( const std::string & elementType,
+  virtual void GetElemToNodesRelationInBox (const std::string & elementType,
                                              const int index[],
                                              const int & iEle,
                                              int nodeIDInBox[],
-                                             const int size ) override;
+                                             const int size) override;
 
-  virtual void RemapMesh ( dataRepository::Group * const domain ) override;
+  virtual void RemapMesh (dataRepository::Group * const domain) override;
 
 protected:
 
@@ -99,7 +99,7 @@ protected:
 private:
 
   /// Unique Pointer to the Mesh in the data structure of PAMELA.
-  std::unique_ptr< PAMELA::Mesh >  m_pamelaMesh;
+  std::unique_ptr<PAMELA::Mesh>  m_pamelaMesh;
 
   /// Names of the fields to be copied from PAMELA to GEOSX data structure
   string_array m_fieldsToImport;
@@ -117,17 +117,17 @@ private:
   int m_isZReverse;
 
   /// Map from PAMELA enumeration element type to string
-  const std::unordered_map< PAMELA::ELEMENTS::TYPE, string, PAMELA::ELEMENTS::EnumClassHash > ElementToLabel
+  const std::unordered_map<PAMELA::ELEMENTS::TYPE, string, PAMELA::ELEMENTS::EnumClassHash> ElementToLabel
     =
     {
-    { PAMELA::ELEMENTS::TYPE::VTK_VERTEX, "VERTEX"},
-    { PAMELA::ELEMENTS::TYPE::VTK_LINE, "LINE"  },
-    { PAMELA::ELEMENTS::TYPE::VTK_TRIANGLE, "TRIANGLE" },
-    { PAMELA::ELEMENTS::TYPE::VTK_QUAD, "QUAD" },
-    { PAMELA::ELEMENTS::TYPE::VTK_TETRA, "TETRA" },
-    { PAMELA::ELEMENTS::TYPE::VTK_HEXAHEDRON, "HEX" },
-    { PAMELA::ELEMENTS::TYPE::VTK_WEDGE, "WEDGE" },
-    { PAMELA::ELEMENTS::TYPE::VTK_PYRAMID, "PYRAMID" }
+    {PAMELA::ELEMENTS::TYPE::VTK_VERTEX, "VERTEX"},
+    {PAMELA::ELEMENTS::TYPE::VTK_LINE, "LINE"  },
+    {PAMELA::ELEMENTS::TYPE::VTK_TRIANGLE, "TRIANGLE"},
+    {PAMELA::ELEMENTS::TYPE::VTK_QUAD, "QUAD"},
+    {PAMELA::ELEMENTS::TYPE::VTK_TETRA, "TETRA"},
+    {PAMELA::ELEMENTS::TYPE::VTK_HEXAHEDRON, "HEX"},
+    {PAMELA::ELEMENTS::TYPE::VTK_WEDGE, "WEDGE"},
+    {PAMELA::ELEMENTS::TYPE::VTK_PYRAMID, "PYRAMID"}
     };
 
   class DecodePAMELALabels
@@ -143,7 +143,7 @@ public:
      * @param[in] regionCellType the type of the cells (TETRA, HEX, WEDGE or PYRAMID)
      * @return the region label
      */
-    static string MakeRegionLabel( string const & regionName, string const & regionCellType )
+    static string MakeRegionLabel(string const & regionName, string const & regionCellType)
     {
       return regionName + m_separator + regionCellType;
     }
@@ -154,10 +154,10 @@ public:
      * @param[in] pamelaLabel the surface or region label within PAMELA
      * @return the name of the surface or the region
      */
-    static string RetrieveSurfaceOrRegionName( string const & pamelaLabel )
+    static string RetrieveSurfaceOrRegionName(string const & pamelaLabel)
     {
-      string_array const splitLabel = stringutilities::Tokenize( pamelaLabel, m_separator );
-      return splitLabel[splitLabel.size() -2 ];
+      string_array const splitLabel = stringutilities::Tokenize(pamelaLabel, m_separator);
+      return splitLabel[splitLabel.size() -2];
     }
 private:
     static string const m_separator;

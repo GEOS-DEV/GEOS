@@ -24,10 +24,10 @@
 namespace geosx
 {
 
-void PetscInterface::initialize( int & GEOSX_UNUSED_PARAM( argc ), char * * & GEOSX_UNUSED_PARAM( argv ) )
+void PetscInterface::initialize(int & GEOSX_UNUSED_PARAM(argc), char * * & GEOSX_UNUSED_PARAM(argv))
 {
-  PetscOptionsSetValue( nullptr, "-no_signal_handler", "" );
-  PetscOptionsSetValue( nullptr, "-on_error_abort", "" );
+  PetscOptionsSetValue(nullptr, "-no_signal_handler", "");
+  PetscOptionsSetValue(nullptr, "-on_error_abort", "");
   PETSC_COMM_WORLD = MPI_COMM_GEOSX;
   PetscInitializeNoArguments();
 }
@@ -37,17 +37,17 @@ void PetscInterface::finalize()
   PetscFinalize();
 }
 
-std::unique_ptr< PreconditionerBase< PetscInterface > >
-PetscInterface::createPreconditioner( LinearSolverParameters params )
+std::unique_ptr<PreconditionerBase<PetscInterface>>
+PetscInterface::createPreconditioner(LinearSolverParameters params)
 {
-  return std::make_unique< PetscPreconditioner >( params );
+  return std::make_unique<PetscPreconditioner>(params);
 }
 
-std::unique_ptr< PreconditionerBase< PetscInterface > >
-PetscInterface::createPreconditioner( LinearSolverParameters params,
-                                      array1d< PetscVector > const & nearNullKernel )
+std::unique_ptr<PreconditionerBase<PetscInterface>>
+PetscInterface::createPreconditioner(LinearSolverParameters params,
+                                      array1d<PetscVector> const & nearNullKernel)
 {
-  return std::make_unique< PetscPreconditioner >( params, nearNullKernel );
+  return std::make_unique<PetscPreconditioner>(params, nearNullKernel);
 }
 
 } //namespace geosx

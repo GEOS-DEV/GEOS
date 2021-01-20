@@ -59,15 +59,15 @@ public:
    * @param[in] name name of the object
    * @param[in] parent pointer to Group that holds this WrapperBase
    */
-  explicit WrapperBase( string const & name,
-                        Group * const parent );
+  explicit WrapperBase(string const & name,
+                        Group * const parent);
 
   /// @cond DO_NOT_DOCUMENT
   WrapperBase() = delete;
-  WrapperBase( WrapperBase const & ) = delete;
-  WrapperBase( WrapperBase && ) = delete;
-  WrapperBase & operator=( WrapperBase const & ) = delete;
-  WrapperBase & operator=( WrapperBase && ) = delete;
+  WrapperBase(WrapperBase const &) = delete;
+  WrapperBase(WrapperBase &&) = delete;
+  WrapperBase & operator=(WrapperBase const &) = delete;
+  WrapperBase & operator=(WrapperBase &&) = delete;
   /// @endcond
 
   /**
@@ -103,17 +103,17 @@ public:
   virtual localIndex elementByteSize() const = 0;
 
   /**
-   * @brief Calls T::resize( num_dims, dims )
+   * @brief Calls T::resize(num_dims, dims)
    * @param[in] num_dims number of dimensions in T
    * @param[in] dims pointer to the new dims
    */
-  virtual void resize( int num_dims, localIndex const * const dims ) = 0;
+  virtual void resize(int num_dims, localIndex const * const dims) = 0;
 
   /**
-   * @brief Calls T::reserve( newCapacity ) if it exists, otherwise a no-op.
+   * @brief Calls T::reserve(newCapacity) if it exists, otherwise a no-op.
    * @param[in] newCapacity the new capacity of the T.
    */
-  virtual void reserve( localIndex const newCapacity ) = 0;
+  virtual void reserve(localIndex const newCapacity) = 0;
 
   /**
    * @brief @return T::capacity() if it exists, other wise calls size().
@@ -124,7 +124,7 @@ public:
    * @brief Calls T::resize(newsize) if it exists.
    * @param[in] newsize parameter to pass to T::resize(newsize)
    */
-  virtual void resize( localIndex newsize ) = 0;
+  virtual void resize(localIndex newsize) = 0;
 
   /**
    * @brief Calls resize(newsize) where newsize is taken from the parent Group.
@@ -136,17 +136,17 @@ public:
    * @param[in] sourceIndex index to copy from
    * @param[in] destIndex index to copy to
    */
-  virtual void copy( localIndex const sourceIndex, localIndex const destIndex ) = 0;
+  virtual void copy(localIndex const sourceIndex, localIndex const destIndex) = 0;
 
   /**
    * @brief Calls T::move(space, touch)
    * @param[in] space A CHAI execution space to move the data into
    * @param[in] touch whether to register a touch in target space
    */
-  virtual void move( LvArray::MemorySpace const space, bool const touch ) const = 0;
+  virtual void move(LvArray::MemorySpace const space, bool const touch) const = 0;
 
   /**
-   * @brief Calls TypeRegex< T >::get().
+   * @brief Calls TypeRegex<T>::get().
    * @return regex used to validate inputs of wrapped type
    */
   virtual string typeRegex() const = 0;
@@ -170,7 +170,7 @@ public:
    * @param targetNode the xml node to initialize from.
    * @return True iff the wrapper initialized itself from the file.
    */
-  virtual bool processInputFile( xmlWrapper::xmlNode const & targetNode ) = 0;
+  virtual bool processInputFile(xmlWrapper::xmlNode const & targetNode) = 0;
 
   /**
    * @brief Push the data in the wrapper into a Conduit blueprint field.
@@ -180,10 +180,10 @@ public:
    * @param componentNames The name of the components, if not specified they are auto generated.
    * @note This wrapper must hold an LvArray::Array.
    */
-  virtual void addBlueprintField( conduit::Node & fields,
+  virtual void addBlueprintField(conduit::Node & fields,
                                   std::string const & name,
                                   std::string const & topology,
-                                  std::vector< std::string > const & componentNames = {} ) const = 0;
+                                  std::vector<std::string> const & componentNames = {}) const = 0;
 
   /**
    * @brief Push the data in the wrapper into a Conduit Blueprint mcarray.
@@ -191,7 +191,7 @@ public:
    * @param componentNames The names of the components, if not specified they are auto generated.
    * @note This wrapper must hold an LvArray::Array.
    */
-  virtual void populateMCArray( conduit::Node & node, std::vector< std::string > const & componentNames = {} ) const = 0;
+  virtual void populateMCArray(conduit::Node & node, std::vector<std::string> const & componentNames = {}) const = 0;
 
   /**
    * @brief Create a new Wrapper with values averaged over the second dimension.
@@ -201,7 +201,7 @@ public:
    * @note This Wrapper must hold an LvArray::Array of dimension 2 or greater.
    * @note The new Wrapper is not registered with @p group.
    */
-  virtual std::unique_ptr< WrapperBase > averageOverSecondDim( std::string const & name, Group & group ) const = 0;
+  virtual std::unique_ptr<WrapperBase> averageOverSecondDim(std::string const & name, Group & group) const = 0;
 
   /**
    * @name Restart output methods
@@ -231,7 +231,7 @@ public:
    * @param packCount The number of indices from the wrapped data to collect,
    * @return HistoryMetadata about the wrapped type
    */
-  virtual HistoryMetadata getHistoryMetadata( localIndex const packCount ) const = 0;
+  virtual HistoryMetadata getHistoryMetadata(localIndex const packCount) const = 0;
 
   /**
    * @name Methods for buffer packing/unpacking
@@ -246,7 +246,7 @@ public:
    * @return @p true if @p T is packable, @p false otherwise
    */
   virtual
-  bool isPackable( bool onDevice ) const = 0;
+  bool isPackable(bool onDevice) const = 0;
 
   /**
    * @brief Pack the entire wrapped object into a buffer.
@@ -257,7 +257,7 @@ public:
    * @return               the number of @p buffer_unit_type units packed
    */
   virtual
-  localIndex Pack( buffer_unit_type * & buffer, bool withMetadata, bool onDevice ) const = 0;
+  localIndex Pack(buffer_unit_type * & buffer, bool withMetadata, bool onDevice) const = 0;
 
   /**
    * @brief For indexable types, pack selected indices of wrapped object into a buffer.
@@ -269,7 +269,7 @@ public:
    * @return               the number of @p buffer_unit_type units packed
    */
   virtual
-  localIndex PackByIndex( buffer_unit_type * & buffer, arrayView1d< localIndex const > const & packList, bool withMetadata, bool onDevice ) const = 0;
+  localIndex PackByIndex(buffer_unit_type * & buffer, arrayView1d<localIndex const> const & packList, bool withMetadata, bool onDevice) const = 0;
 
   /**
    * @brief Get the buffer size needed to pack the entire wrapped object.
@@ -280,7 +280,7 @@ public:
    * @return the number of @p buffer_unit_type units needed to pack
    */
   virtual
-  localIndex PackSize( bool withMetadata, bool onDevice ) const = 0;
+  localIndex PackSize(bool withMetadata, bool onDevice) const = 0;
 
   /**
    * @brief Get the buffer size needed to pack the selected indices wrapped object.
@@ -291,7 +291,7 @@ public:
    * @return             the number of @p buffer_unit_type units needed to pack
    */
   virtual
-  localIndex PackByIndexSize( arrayView1d< localIndex const > const & packList, bool withMetadata, bool onDevice ) const = 0;
+  localIndex PackByIndexSize(arrayView1d<localIndex const> const & packList, bool withMetadata, bool onDevice) const = 0;
 
   /**
    * @brief Unpack the entire wrapped object from a buffer.
@@ -302,7 +302,7 @@ public:
    * @return               the number of @p buffer_unit_type units unpacked
    */
   virtual
-  localIndex Unpack( buffer_unit_type const * & buffer, bool withMetadata, bool onDevice ) = 0;
+  localIndex Unpack(buffer_unit_type const * & buffer, bool withMetadata, bool onDevice) = 0;
 
   /**
    * @brief For indexable types, unpack selected indices of wrapped object from a buffer.
@@ -314,7 +314,7 @@ public:
    * @return                  the number of @p buffer_unit_type units unpacked
    */
   virtual
-  localIndex UnpackByIndex( buffer_unit_type const * & buffer, arrayView1d< localIndex const > const & unpackIndices, bool withMetadata, bool onDevice ) = 0;
+  localIndex UnpackByIndex(buffer_unit_type const * & buffer, arrayView1d<localIndex const> const & unpackIndices, bool withMetadata, bool onDevice) = 0;
 
   ///@}
 
@@ -337,7 +337,7 @@ public:
    * @param val an int that is converted into a bool
    * @return a pointer to this wrapper
    */
-  WrapperBase * setSizedFromParent( int val )
+  WrapperBase * setSizedFromParent(int val)
   {
     m_sizedFromParent = val;
     return this;
@@ -347,14 +347,14 @@ public:
    * @brief Get the RestartFlags of the wrapper.
    * @return this wrapper's restart flags
    */
-  RestartFlags getRestartFlags() const { return m_restart_flags; }
+  RestartFlags getRestartFlags() const {return m_restart_flags;}
 
   /**
    * @brief Set the RestartFlags of the wrapper.
    * @param flags the new RestartFlags value
    * @return a pointer to this wrapper
    */
-  WrapperBase * setRestartFlags( RestartFlags flags )
+  WrapperBase * setRestartFlags(RestartFlags flags)
   {
     m_restart_flags = flags;
     return this;
@@ -364,14 +364,14 @@ public:
    * @brief Get PlotLevel for this wrapper.
    * @return this wrapper's plot level
    */
-  PlotLevel getPlotLevel() const { return m_plotLevel; }
+  PlotLevel getPlotLevel() const {return m_plotLevel;}
 
   /**
    * @brief Set the PlotLevel of the wrapper.
    * @param flag the new PlotLevel value
    * @return a pointer to this wrapper
    */
-  WrapperBase * setPlotLevel( PlotLevel const flag )
+  WrapperBase * setPlotLevel(PlotLevel const flag)
   {
     m_plotLevel = flag;
     return this;
@@ -391,11 +391,11 @@ public:
    * @param input the new InputFlags value
    * @return a pointer to this wrapper
    */
-  WrapperBase * setInputFlag( InputFlags const input )
+  WrapperBase * setInputFlag(InputFlags const input)
   {
-    if( input == InputFlags::OPTIONAL || input == InputFlags::REQUIRED )
+    if(input == InputFlags::OPTIONAL || input == InputFlags::REQUIRED)
     {
-      this->setSizedFromParent( 0 );
+      this->setSizedFromParent(0);
       m_restart_flags = RestartFlags::WRITE;
     }
     m_inputFlag = input;
@@ -416,7 +416,7 @@ public:
    * @param description the description
    * @return a pointer to this wrapper
    */
-  WrapperBase * setDescription( string const & description )
+  WrapperBase * setDescription(string const & description)
   {
     m_description = description;
     return this;
@@ -436,14 +436,14 @@ public:
    * @param outputHeader If true outputs the table header, otherwise just
    *                     outputs a row.
    */
-  string dumpInputOptions( bool const outputHeader ) const;
+  string dumpInputOptions(bool const outputHeader) const;
 
 
   /**
    * @brief Get the list of names of groups that registered this wrapper.
    * @return vector of object names
    */
-  std::set< string > const & getRegisteringObjects() const
+  std::set<string> const & getRegisteringObjects() const
   {
     return m_registeringObjects;
   }
@@ -453,9 +453,9 @@ public:
    * @param objectName name of the registering object
    * @return pointer to this wrapper
    */
-  WrapperBase * setRegisteringObjects( string const & objectName )
+  WrapperBase * setRegisteringObjects(string const & objectName)
   {
-    m_registeringObjects.insert( objectName );
+    m_registeringObjects.insert(objectName);
     return this;
   }
 
@@ -470,7 +470,7 @@ public:
    * @brief Copy attributes from another wrapper
    * @param[in] source the source wrapper, must wrap the same type @p T
    */
-  virtual void copyWrapperAttributes( WrapperBase const & source );
+  virtual void copyWrapperAttributes(WrapperBase const & source);
 
   /**
    * @brief Creates a clone of @p *this WrapperBase
@@ -481,20 +481,20 @@ public:
    * The overridden function will create a copy of the derived Wrapper<T> the using the provided
    * values of name and parent to differentiate itself from the source.
    */
-  virtual std::unique_ptr< WrapperBase > clone( string const & name,
-                                                Group * const parent ) = 0;
+  virtual std::unique_ptr<WrapperBase> clone(string const & name,
+                                                Group * const parent) = 0;
 
   /**
    * @brief Copy the the data contained in another wrapper into this wrapper.
    * @param source The wrapper that holds the data to copy.
    */
-  virtual void copyData( WrapperBase const & source ) = 0;
+  virtual void copyData(WrapperBase const & source) = 0;
 
   /**
    * @brief Copies the contents of a Wrapper into *this.
    * @param[in] source The wrapper to copy
    */
-  virtual void copyWrapper( WrapperBase const & source ) = 0;
+  virtual void copyWrapper(WrapperBase const & source) = 0;
 
   /**
    * @brief Get the typeid of T.
@@ -518,7 +518,7 @@ public:
    * @return 0
    */
   virtual int setTotalviewDisplay() const;
-//  static int TV_ttf_display_type( const WrapperBase * wrapper);
+//  static int TV_ttf_display_type(const WrapperBase * wrapper);
 #endif
 
 protected:
@@ -556,7 +556,7 @@ protected:
   string m_description;
 
   /// A vector of the names of the objects that created this Wrapper.
-  std::set< string > m_registeringObjects;
+  std::set<string> m_registeringObjects;
 
   /// A reference to the corresponding conduit::Node.
   conduit::Node & m_conduitNode;

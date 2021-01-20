@@ -35,13 +35,13 @@ namespace geosx
  * The sub-blocks themselves must be stored elsewhere.
  * Therefore, it's an easy way to assemble a block operator representation from pre-existing blocks.
  */
-template< typename VECTOR, typename OPERATOR = LinearOperator< VECTOR > >
-class BlockOperatorWrapper : public BlockOperatorView< VECTOR, OPERATOR >
+template<typename VECTOR, typename OPERATOR = LinearOperator<VECTOR>>
+class BlockOperatorWrapper : public BlockOperatorView<VECTOR, OPERATOR>
 {
 public:
 
   /// Alias for base type
-  using Base = BlockOperatorView< VECTOR, OPERATOR >;
+  using Base = BlockOperatorView<VECTOR, OPERATOR>;
 
   /// Alias for vector type
   using Vector = typename Base::Vector;
@@ -51,21 +51,21 @@ public:
    * @param nRows number of block rows
    * @param nCols number of block columns
    */
-  explicit BlockOperatorWrapper( localIndex const nRows, localIndex const nCols )
-    : Base( nRows, nCols )
+  explicit BlockOperatorWrapper(localIndex const nRows, localIndex const nCols)
+    : Base(nRows, nCols)
   {}
 
   /**
    * @brief Deleted copy constructor.
    * @param rhs the block operator to copy
    */
-  BlockOperatorWrapper( BlockOperatorWrapper const & rhs ) = delete;
+  BlockOperatorWrapper(BlockOperatorWrapper const & rhs) = delete;
 
   /**
    * @brief Deleted move constructor.
    * @param rhs the block operator to move from
    */
-  BlockOperatorWrapper( BlockOperatorWrapper && rhs ) = delete;
+  BlockOperatorWrapper(BlockOperatorWrapper && rhs) = delete;
 
   /**
    * @brief Destructor.
@@ -78,11 +78,11 @@ public:
    * @param blockColIndex block column index
    * @param op            reference to the operator (which must not go out of scope before the block wrapper)
    */
-  void set( localIndex const blockRowIndex,
+  void set(localIndex const blockRowIndex,
             localIndex const blockColIndex,
-            OPERATOR & op )
+            OPERATOR & op)
   {
-    this->setPointer( blockRowIndex, blockColIndex, &op );
+    this->setPointer(blockRowIndex, blockColIndex, &op);
   }
 };
 

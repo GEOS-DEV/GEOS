@@ -38,19 +38,19 @@ namespace SolidMechanicsEFEMKernels
  *                trial space have the same number of support points.
  *
  */
-template< typename SUBREGION_TYPE,
+template<typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
-          typename FE_TYPE >
+          typename FE_TYPE>
 class QuasiStatic :
-  public SolidMechanicsLagrangianFEMKernels::QuasiStatic< SUBREGION_TYPE,
+  public SolidMechanicsLagrangianFEMKernels::QuasiStatic<SUBREGION_TYPE,
                                                           CONSTITUTIVE_TYPE,
-                                                          FE_TYPE >
+                                                          FE_TYPE>
 {
 public:
   /// Alias for the base class;
-  using Base = SolidMechanicsLagrangianFEMKernels::QuasiStatic< SUBREGION_TYPE,
+  using Base = SolidMechanicsLagrangianFEMKernels::QuasiStatic<SUBREGION_TYPE,
                                                                 CONSTITUTIVE_TYPE,
-                                                                FE_TYPE >;
+                                                                FE_TYPE>;
 
   /// Number of nodes per element...which is equal to the
   /// numTestSupportPointPerElem and numTrialSupportPointPerElem by definition.
@@ -76,20 +76,20 @@ public:
    * @copydoc geosx::finiteElement::ImplicitKernelBase::ImplicitKernelBase
    * @param inputGravityVector The gravity vector.
    */
-  QuasiStatic( NodeManager const & nodeManager,
+  QuasiStatic(NodeManager const & nodeManager,
                EdgeManager const & edgeManager,
                FaceManager const & faceManager,
                SUBREGION_TYPE const & elementSubRegion,
                FE_TYPE const & finiteElementSpace,
                CONSTITUTIVE_TYPE * const inputConstitutiveType,
                EmbeddedSurfaceSubRegion const & embeddedSurfSubRegion,
-               arrayView1d< globalIndex const > const & uDofNumber,
-               arrayView1d< globalIndex const > const & wDofNumber,
+               arrayView1d<globalIndex const> const & uDofNumber,
+               arrayView1d<globalIndex const> const & wDofNumber,
                globalIndex const rankOffset,
-               CRSMatrixView< real64, globalIndex const > const & inputMatrix,
-               arrayView1d< real64 > const & inputRhs,
-               real64 const (&inputGravityVector)[3] ):
-    Base( nodeManager,
+               CRSMatrixView<real64, globalIndex const> const & inputMatrix,
+               arrayView1d<real64> const & inputRhs,
+               real64 const (&inputGravityVector)[3]):
+    Base(nodeManager,
           edgeManager,
           faceManager,
           elementSubRegion,
@@ -99,17 +99,17 @@ public:
           rankOffset,
           inputMatrix,
           inputRhs,
-          inputGravityVector ),
-    m_wDofNumber( wDofNumber ),
-    m_w( embeddedSurfSubRegion.displacementJump() ),
-    m_nVec( embeddedSurfSubRegion.getNormalVector() ),
-    m_tVec1( embeddedSurfSubRegion.getTangentVector1() ),
-    m_tVec2( embeddedSurfSubRegion.getTangentVector2() ),
-    m_surfaceCenter( embeddedSurfSubRegion.getElementCenter()),
-    m_surfaceArea( embeddedSurfSubRegion.getElementArea()),
-    m_elementVolume( elementSubRegion.getElementVolume()),
-    m_fracturedElems( elementSubRegion.fracturedElementsList() ),
-    m_cellsToEmbeddedSurfaces( elementSubRegion.embeddedSurfacesList().toViewConst() )
+          inputGravityVector),
+    m_wDofNumber(wDofNumber),
+    m_w(embeddedSurfSubRegion.displacementJump()),
+    m_nVec(embeddedSurfSubRegion.getNormalVector()),
+    m_tVec1(embeddedSurfSubRegion.getTangentVector1()),
+    m_tVec2(embeddedSurfSubRegion.getTangentVector2()),
+    m_surfaceCenter(embeddedSurfSubRegion.getElementCenter()),
+    m_surfaceArea(embeddedSurfSubRegion.getElementArea()),
+    m_elementVolume(elementSubRegion.getElementVolume()),
+    m_fracturedElems(elementSubRegion.fracturedElementsList()),
+    m_cellsToEmbeddedSurfaces(elementSubRegion.embeddedSurfacesList().toViewConst())
   {}
 
   //***************************************************************************
@@ -131,15 +131,15 @@ public:
     GEOSX_HOST_DEVICE
     StackVariables():
       Base::StackVariables(),
-            dispEqnRowIndices{ 0 },
-      dispColIndices{ 0 },
-      jumpEqnRowIndices{ 0 },
-      jumpColIndices{ 0 },
-      localRu{ 0.0 },
-      localRw{ 0.0 },
-      localKww{ { 0.0 } },
-      localKwu{ { 0.0 } },
-      localKuw{ { 0.0 } },
+            dispEqnRowIndices{0},
+      dispColIndices{0},
+      jumpEqnRowIndices{0},
+      jumpColIndices{0},
+      localRu{0.0},
+      localRw{0.0},
+      localKww{{0.0}},
+      localKwu{{0.0}},
+      localKuw{{0.0}},
       wLocal(),
       uLocal(),
       hInv(),
@@ -183,7 +183,7 @@ public:
     real64 hInv;
 
     /// local nodal coordinates
-    real64 X[ numNodesPerElem ][ 3 ];
+    real64 X[numNodesPerElem][3];
   };
   //***************************************************************************
 
@@ -195,33 +195,33 @@ public:
    *
    */
   //START_kernelLauncher
-  template< typename POLICY,
-            typename KERNEL_TYPE >
+  template<typename POLICY,
+            typename KERNEL_TYPE>
   static
   real64
-  kernelLaunch( localIndex const numElems,
-                KERNEL_TYPE const & kernelComponent )
+  kernelLaunch(localIndex const numElems,
+                KERNEL_TYPE const & kernelComponent)
   {
     GEOSX_MARK_FUNCTION;
 
-    GEOSX_UNUSED_VAR( numElems );
+    GEOSX_UNUSED_VAR(numElems);
 
     // Define a RAJA reduction variable to get the maximum residual contribution.
-    RAJA::ReduceMax< ReducePolicy< POLICY >, real64 > maxResidual( 0 );
+    RAJA::ReduceMax<ReducePolicy<POLICY>, real64> maxResidual(0);
 
-    forAll< POLICY >( kernelComponent.m_fracturedElems.size(),
-                      [=] GEOSX_HOST_DEVICE ( localIndex const i )
+    forAll<POLICY>(kernelComponent.m_fracturedElems.size(),
+                      [=] GEOSX_HOST_DEVICE (localIndex const i)
     {
       localIndex k = kernelComponent.m_fracturedElems[i];
       typename KERNEL_TYPE::StackVariables stack;
 
-      kernelComponent.setup( k, stack );
-      for( integer q=0; q<numQuadraturePointsPerElem; ++q )
+      kernelComponent.setup(k, stack);
+      for(integer q=0; q<numQuadraturePointsPerElem; ++q)
       {
-        kernelComponent.quadraturePointKernel( k, q, stack );
+        kernelComponent.quadraturePointKernel(k, q, stack);
       }
-      maxResidual.max( kernelComponent.complete( k, stack ) );
-    } );
+      maxResidual.max(kernelComponent.complete(k, stack));
+    });
 
     return maxResidual.get();
   }
@@ -233,32 +233,32 @@ public:
    */
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  void setup( localIndex const k,
-              StackVariables & stack ) const
+  void setup(localIndex const k,
+              StackVariables & stack) const
   {
 
     localIndex const embSurfIndex = m_cellsToEmbeddedSurfaces[k][0];
 
     stack.hInv = m_surfaceArea[embSurfIndex] / m_elementVolume[k];
-    for( localIndex a=0; a<numNodesPerElem; ++a )
+    for(localIndex a=0; a<numNodesPerElem; ++a)
     {
-      localIndex const localNodeIndex = m_elemsToNodes( k, a );
+      localIndex const localNodeIndex = m_elemsToNodes(k, a);
 
-      for( int i=0; i<3; ++i )
+      for(int i=0; i<3; ++i)
       {
         stack.dispEqnRowIndices[a*3+i] = m_dofNumber[localNodeIndex]+i-m_dofRankOffset;
         stack.dispColIndices[a*3+i]    = m_dofNumber[localNodeIndex]+i;
-        stack.X[ a ][ i ] = m_X[ localNodeIndex ][ i ];
-        stack.uLocal[ a*3 + i ] = m_disp[localNodeIndex][i];
+        stack.X[a][i] = m_X[localNodeIndex][i];
+        stack.uLocal[a*3 + i] = m_disp[localNodeIndex][i];
       }
     }
 
-    for( int i=0; i<3; ++i )
+    for(int i=0; i<3; ++i)
     {
       // need to grab the index.
       stack.jumpEqnRowIndices[i] = m_wDofNumber[embSurfIndex] + i - m_dofRankOffset;
       stack.jumpColIndices[i]    = m_wDofNumber[embSurfIndex] + i;
-      stack.wLocal[ i ] = m_w[ embSurfIndex ][i];
+      stack.wLocal[i] = m_w[embSurfIndex][i];
     }
   }
 
@@ -276,10 +276,10 @@ public:
      * @param b Node index for the col.
      */
     GEOSX_HOST_DEVICE GEOSX_FORCE_INLINE constexpr
-    void operator() ( localIndex const a, localIndex const b )
+    void operator() (localIndex const a, localIndex const b)
     {
-      GEOSX_UNUSED_VAR( a );
-      GEOSX_UNUSED_VAR( b );
+      GEOSX_UNUSED_VAR(a);
+      GEOSX_UNUSED_VAR(b);
     }
 
     /**
@@ -288,9 +288,9 @@ public:
      * @param stress The stress array.
      */
     GEOSX_HOST_DEVICE GEOSX_FORCE_INLINE constexpr
-    void operator() ( real64 (& stress)[6] )
+    void operator() (real64 (& stress)[6])
     {
-      GEOSX_UNUSED_VAR( stress );
+      GEOSX_UNUSED_VAR(stress);
     }
   };
 
@@ -301,20 +301,20 @@ public:
    * @param stressModifier An optional functor to allow for the modification
    *  of stress prior to integration.
    */
-  template< typename STRESS_MODIFIER = NoOpFunctors >
+  template<typename STRESS_MODIFIER = NoOpFunctors>
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  void quadraturePointKernel( localIndex const k,
+  void quadraturePointKernel(localIndex const k,
                               localIndex const q,
                               StackVariables & stack,
-                              STRESS_MODIFIER && stressModifier = NoOpFunctors{} ) const
+                              STRESS_MODIFIER && stressModifier = NoOpFunctors{}) const
   {
-    GEOSX_UNUSED_VAR( stressModifier );
+    GEOSX_UNUSED_VAR(stressModifier);
 
     localIndex const embSurfIndex = m_cellsToEmbeddedSurfaces[k][0];
 
-    real64 dNdX[ numNodesPerElem ][ 3 ];
-    real64 const detJ = m_finiteElementSpace.template getGradN< FE_TYPE >( k, q, stack.X, dNdX );
+    real64 dNdX[numNodesPerElem][3];
+    real64 const detJ = m_finiteElementSpace.template getGradN<FE_TYPE>(k, q, stack.X, dNdX);
 
     constexpr int nUdof = numNodesPerElem*3;
 
@@ -326,46 +326,46 @@ public:
     real64 compMatrix[3][6], strainMatrix[6][nUdof], eqMatrix[3][6];
     real64 matBD[nUdof][6], matED[3][6];
 
-    int Heaviside[ numNodesPerElem ];
+    int Heaviside[numNodesPerElem];
 
-    m_constitutiveUpdate.GetStiffness( k, q, stack.constitutiveStiffness );
+    m_constitutiveUpdate.GetStiffness(k, q, stack.constitutiveStiffness);
 
-    SolidMechanicsEFEMKernelsHelper::computeHeavisideFunction< numNodesPerElem >( Heaviside,
+    SolidMechanicsEFEMKernelsHelper::computeHeavisideFunction<numNodesPerElem>(Heaviside,
                                                                                   stack.X,
                                                                                   m_nVec[embSurfIndex],
-                                                                                  m_surfaceCenter[embSurfIndex] );
+                                                                                  m_surfaceCenter[embSurfIndex]);
 
 
-    SolidMechanicsEFEMKernelsHelper::assembleEquilibriumOperator( eqMatrix,
+    SolidMechanicsEFEMKernelsHelper::assembleEquilibriumOperator(eqMatrix,
                                                                   m_nVec[embSurfIndex],
                                                                   m_tVec1[embSurfIndex],
                                                                   m_tVec2[embSurfIndex],
-                                                                  stack.hInv );
+                                                                  stack.hInv);
 
-    SolidMechanicsEFEMKernelsHelper::assembleCompatibilityOperator< numNodesPerElem >( compMatrix,
+    SolidMechanicsEFEMKernelsHelper::assembleCompatibilityOperator<numNodesPerElem>(compMatrix,
                                                                                        m_nVec[embSurfIndex],
                                                                                        m_tVec1[embSurfIndex],
                                                                                        m_tVec2[embSurfIndex],
                                                                                        Heaviside,
-                                                                                       dNdX );
+                                                                                       dNdX);
 
-    SolidMechanicsEFEMKernelsHelper::assembleStrainOperator< 6, nUdof, numNodesPerElem >( strainMatrix, dNdX );
+    SolidMechanicsEFEMKernelsHelper::assembleStrainOperator<6, nUdof, numNodesPerElem>(strainMatrix, dNdX);
 
     // transp(B)D
-    LvArray::tensorOps::Rij_eq_AkiBkj< nUdof, 6, 6 >( matBD, strainMatrix, stack.constitutiveStiffness );
+    LvArray::tensorOps::Rij_eq_AkiBkj<nUdof, 6, 6>(matBD, strainMatrix, stack.constitutiveStiffness);
     // ED
-    LvArray::tensorOps::Rij_eq_AikBkj< 3, 6, 6 >( matED, eqMatrix, stack.constitutiveStiffness );
+    LvArray::tensorOps::Rij_eq_AikBkj<3, 6, 6>(matED, eqMatrix, stack.constitutiveStiffness);
     // EDC
-    LvArray::tensorOps::Rij_eq_AikBjk< 3, 3, 6 >( Kww_gauss, matED, compMatrix );
+    LvArray::tensorOps::Rij_eq_AikBjk<3, 3, 6>(Kww_gauss, matED, compMatrix);
     // EDB
-    LvArray::tensorOps::Rij_eq_AikBkj< 3, nUdof, 6 >( Kwu_gauss, matED, strainMatrix );
+    LvArray::tensorOps::Rij_eq_AikBkj<3, nUdof, 6>(Kwu_gauss, matED, strainMatrix);
     // transp(B)DB
-    LvArray::tensorOps::Rij_eq_AikBjk< nUdof, 3, 6 >( Kuw_gauss, matBD, compMatrix );
+    LvArray::tensorOps::Rij_eq_AikBjk<nUdof, 3, 6>(Kuw_gauss, matBD, compMatrix);
 
     // multiply by determinant and add to element matrix
-    LvArray::tensorOps::scaledAdd< 3, 3 >( stack.localKww, Kww_gauss, -detJ );
-    LvArray::tensorOps::scaledAdd< 3, nUdof >( stack.localKwu, Kwu_gauss, -detJ );
-    LvArray::tensorOps::scaledAdd< nUdof, 3 >( stack.localKuw, Kuw_gauss, -detJ );
+    LvArray::tensorOps::scaledAdd<3, 3>(stack.localKww, Kww_gauss, -detJ);
+    LvArray::tensorOps::scaledAdd<3, nUdof>(stack.localKwu, Kwu_gauss, -detJ);
+    LvArray::tensorOps::scaledAdd<nUdof, 3>(stack.localKuw, Kuw_gauss, -detJ);
   }
 
   /**
@@ -373,57 +373,57 @@ public:
    */
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  real64 complete( localIndex const k,
-                   StackVariables & stack ) const
+  real64 complete(localIndex const k,
+                   StackVariables & stack) const
   {
-    GEOSX_UNUSED_VAR( k );
+    GEOSX_UNUSED_VAR(k);
     real64 maxForce = 0;
     constexpr int nUdof = numNodesPerElem*3;
 
     // Compute the local residuals
-    LvArray::tensorOps::Ri_add_AijBj< 3, 3 >( stack.localRw, stack.localKww, stack.wLocal );
-    LvArray::tensorOps::Ri_add_AijBj< 3, nUdof >( stack.localRw, stack.localKwu, stack.uLocal );
-    LvArray::tensorOps::Ri_add_AijBj< nUdof, 3 >( stack.localRu, stack.localKuw, stack.wLocal );
+    LvArray::tensorOps::Ri_add_AijBj<3, 3>(stack.localRw, stack.localKww, stack.wLocal);
+    LvArray::tensorOps::Ri_add_AijBj<3, nUdof>(stack.localRw, stack.localKwu, stack.uLocal);
+    LvArray::tensorOps::Ri_add_AijBj<nUdof, 3>(stack.localRu, stack.localKuw, stack.wLocal);
 
     // Evaluate tranction
     real64 tractionVec[3], dTractiondw[3][3], contactCoeff = 1.0e15;
-    SolidMechanicsEFEMKernelsHelper::computeTraction( stack.wLocal, contactCoeff, tractionVec, dTractiondw );
-    LvArray::tensorOps::add< 3 >( stack.localRw, tractionVec );
-    LvArray::tensorOps::scale< 3, 3 >( dTractiondw, -1 );
-    LvArray::tensorOps::add< 3, 3 >( stack.localKww, dTractiondw );
+    SolidMechanicsEFEMKernelsHelper::computeTraction(stack.wLocal, contactCoeff, tractionVec, dTractiondw);
+    LvArray::tensorOps::add<3>(stack.localRw, tractionVec);
+    LvArray::tensorOps::scale<3, 3>(dTractiondw, -1);
+    LvArray::tensorOps::add<3, 3>(stack.localKww, dTractiondw);
 
-    for( localIndex i = 0; i < nUdof; ++i )
+    for(localIndex i = 0; i <nUdof; ++i)
     {
-      localIndex const dof = LvArray::integerConversion< localIndex >( stack.dispEqnRowIndices[ i ] );
-      if( dof < 0 || dof >= m_matrix.numRows() ) continue;
+      localIndex const dof = LvArray::integerConversion<localIndex>(stack.dispEqnRowIndices[i]);
+      if(dof <0 || dof>= m_matrix.numRows()) continue;
 
-      RAJA::atomicAdd< parallelDeviceAtomic >( &m_rhs[dof], stack.localRu[i] );
+      RAJA::atomicAdd<parallelDeviceAtomic>(&m_rhs[dof], stack.localRu[i]);
 
-      m_matrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( dof,
+      m_matrix.template addToRowBinarySearchUnsorted<parallelDeviceAtomic>(dof,
                                                                               stack.jumpColIndices,
                                                                               stack.localKuw[i],
-                                                                              3 );
+                                                                              3);
 
     }
 
-    for( localIndex i=0; i < 3; ++i )
+    for(localIndex i=0; i <3; ++i)
     {
-      localIndex const dof = LvArray::integerConversion< localIndex >( stack.jumpEqnRowIndices[ i ] );
+      localIndex const dof = LvArray::integerConversion<localIndex>(stack.jumpEqnRowIndices[i]);
 
-      if( dof < 0 || dof >= m_matrix.numRows() ) continue;
+      if(dof <0 || dof>= m_matrix.numRows()) continue;
 
-      RAJA::atomicAdd< parallelDeviceAtomic >( &m_rhs[dof], stack.localRw[i] );
+      RAJA::atomicAdd<parallelDeviceAtomic>(&m_rhs[dof], stack.localRw[i]);
 
       // fill in matrix
-      m_matrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( dof,
+      m_matrix.template addToRowBinarySearchUnsorted<parallelDeviceAtomic>(dof,
                                                                               stack.jumpColIndices,
                                                                               stack.localKww[i],
-                                                                              3 );
+                                                                              3);
 
-      m_matrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( dof,
+      m_matrix.template addToRowBinarySearchUnsorted<parallelDeviceAtomic>(dof,
                                                                               stack.dispColIndices,
                                                                               stack.localKwu[i],
-                                                                              numNodesPerElem*3 );
+                                                                              numNodesPerElem*3);
     }
 
 
@@ -433,25 +433,25 @@ public:
 
 protected:
 
-  arrayView1d< globalIndex const > const m_wDofNumber;
+  arrayView1d<globalIndex const> const m_wDofNumber;
 
-  arrayView2d< real64 const > const m_w;
+  arrayView2d<real64 const> const m_w;
 
-  arrayView2d< real64 const > const m_nVec;
+  arrayView2d<real64 const> const m_nVec;
 
-  arrayView2d< real64 const > const m_tVec1;
+  arrayView2d<real64 const> const m_tVec1;
 
-  arrayView2d< real64 const > const m_tVec2;
+  arrayView2d<real64 const> const m_tVec2;
 
-  arrayView2d< real64 const > const m_surfaceCenter;
+  arrayView2d<real64 const> const m_surfaceCenter;
 
-  arrayView1d< real64 const > const m_surfaceArea;
+  arrayView1d<real64 const> const m_surfaceArea;
 
-  arrayView1d< real64 const > const m_elementVolume;
+  arrayView1d<real64 const> const m_elementVolume;
 
-  SortedArrayView< localIndex const > const m_fracturedElems;
+  SortedArrayView<localIndex const> const m_fracturedElems;
 
-  ArrayOfArraysView< localIndex const > const m_cellsToEmbeddedSurfaces;
+  ArrayOfArraysView<localIndex const> const m_cellsToEmbeddedSurfaces;
 };
 
 } // namespace SolidMechanicsEFEMKernels

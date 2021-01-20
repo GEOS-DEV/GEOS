@@ -33,13 +33,13 @@ namespace geosx
  *        and "Iterative Methods for Sparse Linear Systems"
  *        from Y. Saad (2003).
  */
-template< typename VECTOR >
-class CGsolver : public KrylovSolver< VECTOR >
+template<typename VECTOR>
+class CGsolver : public KrylovSolver<VECTOR>
 {
 public:
 
   /// Alias for base type
-  using Base = KrylovSolver< VECTOR >;
+  using Base = KrylovSolver<VECTOR>;
 
   /// Alias for template parameter
   using Vector = typename Base::Vector;
@@ -57,11 +57,11 @@ public:
    * @param [in] maxIterations maximum number of Krylov iterations.
    * @param [in] verbosity solver verbosity level.
    */
-  CGsolver( LinearOperator< Vector > const & A,
-            LinearOperator< Vector > const & M,
+  CGsolver(LinearOperator<Vector> const & A,
+            LinearOperator<Vector> const & M,
             real64 const tolerance,
             localIndex const maxIterations,
-            integer const verbosity = 0 );
+            integer const verbosity = 0);
 
   /**
    * @brief Virtual destructor.
@@ -80,7 +80,7 @@ public:
    * @param [in] b system right hand side.
    * @param [inout] x system solution (input = initial guess, output = solution).
    */
-  virtual void solve( Vector const & b, Vector & x ) const override final;
+  virtual void solve(Vector const & b, Vector & x) const override final;
 
   virtual string methodName() const override final
   {
@@ -92,7 +92,7 @@ public:
 protected:
 
   /// Alias for vector type that can be used for temporaries
-  using VectorTemp = typename KrylovSolver< VECTOR >::VectorTemp;
+  using VectorTemp = typename KrylovSolver<VECTOR>::VectorTemp;
 
   using Base::m_operator;
   using Base::m_precond;

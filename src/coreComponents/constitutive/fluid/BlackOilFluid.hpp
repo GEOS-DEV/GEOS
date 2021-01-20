@@ -38,17 +38,17 @@ public:
     LiveOil
   };
 
-  BlackOilFluid( std::string const & name, Group * const parent );
+  BlackOilFluid(std::string const & name, Group * const parent);
 
   virtual ~BlackOilFluid() override;
 
-  std::unique_ptr< ConstitutiveBase >
-  deliverClone( string const & name,
-                Group * const parent ) const override;
+  std::unique_ptr<ConstitutiveBase>
+  deliverClone(string const & name,
+                Group * const parent) const override;
 
-  static std::string CatalogName() { return "BlackOilFluid"; }
+  static std::string CatalogName() {return "BlackOilFluid";}
 
-  virtual string getCatalogName() const override { return CatalogName(); }
+  virtual string getCatalogName() const override {return CatalogName();}
 
 
   struct viewKeyStruct : MultiFluidPVTPackageWrapper::viewKeyStruct
@@ -66,7 +66,7 @@ private:
   void createFluid() override;
 
   // Black-oil phase/component description
-  array1d< real64 > m_surfaceDensities;
+  array1d<real64> m_surfaceDensities;
 
   // Black-oil table filenames
   path_array m_tableFiles;
@@ -76,7 +76,7 @@ private:
 
 };
 
-ENUM_STRINGS( BlackOilFluid::FluidType, "DeadOil", "LiveOil" )
+ENUM_STRINGS(BlackOilFluid::FluidType, "DeadOil", "LiveOil")
 
 } /* namespace constitutive */
 

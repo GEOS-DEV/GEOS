@@ -29,20 +29,20 @@ namespace geosx
 namespace constitutive
 {
 
-template< typename LAMBDA >
-void constitutiveUpdatePassThru( CapillaryPressureBase const & capPres,
-                                 LAMBDA && lambda )
+template<typename LAMBDA>
+void constitutiveUpdatePassThru(CapillaryPressureBase const & capPres,
+                                 LAMBDA && lambda)
 {
-  ConstitutivePassThruHandler< BrooksCoreyCapillaryPressure,
-                               VanGenuchtenCapillaryPressure >::Execute( capPres, std::forward< LAMBDA >( lambda ) );
+  ConstitutivePassThruHandler<BrooksCoreyCapillaryPressure,
+                               VanGenuchtenCapillaryPressure>::Execute(capPres, std::forward<LAMBDA>(lambda));
 }
 
-template< typename LAMBDA >
-void constitutiveUpdatePassThru( CapillaryPressureBase & capPres,
-                                 LAMBDA && lambda )
+template<typename LAMBDA>
+void constitutiveUpdatePassThru(CapillaryPressureBase & capPres,
+                                 LAMBDA && lambda)
 {
-  ConstitutivePassThruHandler< BrooksCoreyCapillaryPressure,
-                               VanGenuchtenCapillaryPressure >::Execute( capPres, std::forward< LAMBDA >( lambda ) );
+  ConstitutivePassThruHandler<BrooksCoreyCapillaryPressure,
+                               VanGenuchtenCapillaryPressure>::Execute(capPres, std::forward<LAMBDA>(lambda));
 }
 
 } // namespace constitutive

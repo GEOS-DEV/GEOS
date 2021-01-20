@@ -48,7 +48,7 @@ public:
    * @param name the name of the object in the data hierarchy.
    * @param parent a pointer to the parent group in the data hierarchy.
    */
-  EmbeddedSurfaceRegion( string const & name, Group * const parent );
+  EmbeddedSurfaceRegion(string const & name, Group * const parent);
 
   /**
    * @brief Deleted default constructor.
@@ -72,10 +72,10 @@ public:
    * @return A string containing the key name.
    */
   static const string CatalogName()
-  { return "EmbeddedSurfaceElementRegion"; }
+  {return "EmbeddedSurfaceElementRegion";}
 
   virtual const string getCatalogName() const override final
-  { return EmbeddedSurfaceRegion::CatalogName(); }
+  {return EmbeddedSurfaceRegion::CatalogName();}
 
   ///@}
 
@@ -88,7 +88,7 @@ public:
    * @brief Get default aperture value.
    * @return default aperture value
    */
-  real64 getDefaultAperture() const { return m_defaultAperture; }
+  real64 getDefaultAperture() const {return m_defaultAperture;}
 
   ///@}
 
@@ -105,7 +105,7 @@ public:
   };
 
 protected:
-  virtual void InitializePreSubGroups( Group * const ) override;
+  virtual void InitializePreSubGroups(Group * const) override;
 
 private:
 

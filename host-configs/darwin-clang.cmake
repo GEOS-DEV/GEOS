@@ -23,12 +23,12 @@ set(ENABLE_OPENMP "OFF" CACHE PATH "" FORCE)
 option(ENABLE_CALIPER "Enables CALIPER" OFF)
 
 set(BLAS_LIBRARIES /usr/lib/libblas.dylib CACHE PATH "" FORCE)
-set(LAPACK_LIBRARIES /usr/lib/liblapack.dylib CACHE PATH "" FORCE )
+set(LAPACK_LIBRARIES /usr/lib/liblapack.dylib CACHE PATH "" FORCE)
 
 set(ENABLE_DOXYGEN OFF CACHE BOOL "" FORCE)
 
-#set( DOXYGEN_EXECUTABLE /usr/local/bin/doxygen CACHE PATH "" FORCE )
-#set( SPHINX_EXECUTABLE /usr/local/bin/sphinx-build CACHE PATH "" FORCE )
+#set(DOXYGEN_EXECUTABLE /usr/local/bin/doxygen CACHE PATH "" FORCE)
+#set(SPHINX_EXECUTABLE /usr/local/bin/sphinx-build CACHE PATH "" FORCE)
 
 set(ENABLE_GEOSX_PTP ON CACHE BOOL "" FORCE)
 

@@ -27,23 +27,23 @@ namespace geosx
 {
 using namespace dataRepository;
 
-Cylinder::Cylinder( const std::string & name, Group * const parent ):
-  SimpleGeometricObjectBase( name, parent ),
-  m_point1{ 0.0, 0.0, 0.0 },
-  m_point2{ 0.0, 0.0, 0.0 },
-  m_radius{ 0.0 }
+Cylinder::Cylinder(const std::string & name, Group * const parent):
+  SimpleGeometricObjectBase(name, parent),
+  m_point1{0.0, 0.0, 0.0},
+  m_point2{0.0, 0.0, 0.0},
+  m_radius{0.0}
 {
-  registerWrapper( viewKeyStruct::point1String, &m_point1 )->
-    setInputFlag( InputFlags::REQUIRED )->
-    setDescription( "Center point of one (upper or lower) face of the cylinder" );
+  registerWrapper(viewKeyStruct::point1String, &m_point1)->
+    setInputFlag(InputFlags::REQUIRED)->
+    setDescription("Center point of one (upper or lower) face of the cylinder");
 
-  registerWrapper( viewKeyStruct::point2String, &m_point2 )->
-    setInputFlag( InputFlags::REQUIRED )->
-    setDescription( "Center point of the other face of the cylinder" );
+  registerWrapper(viewKeyStruct::point2String, &m_point2)->
+    setInputFlag(InputFlags::REQUIRED)->
+    setDescription("Center point of the other face of the cylinder");
 
-  registerWrapper( viewKeyStruct::radiusString, &m_radius )->
-    setInputFlag( InputFlags::REQUIRED )->
-    setDescription( "Radius of the cylinder" );
+  registerWrapper(viewKeyStruct::radiusString, &m_radius)->
+    setInputFlag(InputFlags::REQUIRED)->
+    setDescription("Radius of the cylinder");
 
 }
 
@@ -51,24 +51,24 @@ Cylinder::~Cylinder()
 {}
 
 
-bool Cylinder::IsCoordInObject( real64 const ( &coord ) [3] ) const
+bool Cylinder::IsCoordInObject(real64 const (&coord) [3]) const
 {
   bool rval = false;
 
-  real64 axisVector[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( m_point2 );
-  LvArray::tensorOps::subtract< 3 >( axisVector, m_point1 );
-  real64 const height = LvArray::tensorOps::normalize< 3 >( axisVector );
+  real64 axisVector[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3(m_point2);
+  LvArray::tensorOps::subtract<3>(axisVector, m_point1);
+  real64 const height = LvArray::tensorOps::normalize<3>(axisVector);
 
-  real64 coord_minus_point1[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( coord );
-  LvArray::tensorOps::subtract< 3 >( coord_minus_point1, m_point1 );
+  real64 coord_minus_point1[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3(coord);
+  LvArray::tensorOps::subtract<3>(coord_minus_point1, m_point1);
 
-  real64 projection[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( axisVector );
-  LvArray::tensorOps::scale< 3 >( projection, LvArray::tensorOps::AiBi< 3 >( axisVector, coord_minus_point1 ) );
+  real64 projection[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3(axisVector);
+  LvArray::tensorOps::scale<3>(projection, LvArray::tensorOps::AiBi<3>(axisVector, coord_minus_point1));
 
-  real64 distance[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( coord_minus_point1 );
-  LvArray::tensorOps::subtract< 3 >( distance, projection );
+  real64 distance[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3(coord_minus_point1);
+  LvArray::tensorOps::subtract<3>(distance, projection);
 
-  if( LvArray::tensorOps::l2Norm< 3 >( distance ) < m_radius && LvArray::tensorOps::l2Norm< 3 >( projection ) < height )
+  if(LvArray::tensorOps::l2Norm<3>(distance) <m_radius && LvArray::tensorOps::l2Norm<3>(projection) <height)
   {
     rval = true;
   }
@@ -76,6 +76,6 @@ bool Cylinder::IsCoordInObject( real64 const ( &coord ) [3] ) const
   return rval;
 }
 
-REGISTER_CATALOG_ENTRY( SimpleGeometricObjectBase, Cylinder, std::string const &, Group * const )
+REGISTER_CATALOG_ENTRY(SimpleGeometricObjectBase, Cylinder, std::string const &, Group * const)
 
 } /* namespace geosx */

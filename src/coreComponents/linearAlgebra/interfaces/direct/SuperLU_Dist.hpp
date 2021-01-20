@@ -32,9 +32,9 @@ namespace geosx
  * @param index the input value
  * @return the converted value
  */
-inline int_t toSuperLU_intT( globalIndex const index )
+inline int_t toSuperLU_intT(globalIndex const index)
 {
-  return LvArray::integerConversion< int_t >( index );
+  return LvArray::integerConversion<int_t>(index);
 }
 
 /**
@@ -42,9 +42,9 @@ inline int_t toSuperLU_intT( globalIndex const index )
  * @param[in] index the input array
  * @return the converted array
  */
-inline int_t * toSuperLU_intT( globalIndex * const index )
+inline int_t * toSuperLU_intT(globalIndex * const index)
 {
-  return reinterpret_cast< int_t * >( index );
+  return reinterpret_cast<int_t *>(index);
 }
 
 /**
@@ -64,7 +64,7 @@ public:
    * @brief Constructor with parameters
    * @param[in] params the linear solver parameters
    */
-  SuperLU_Dist( LinearSolverParameters const & params );
+  SuperLU_Dist(LinearSolverParameters const & params);
 
   /**
    * @brief Destructor
@@ -75,7 +75,7 @@ public:
    * @brief Creates the SuperLU_Dist data structure
    * @param[in] params the linear solver parameters
    */
-  void create( LinearSolverParameters const & params );
+  void create(LinearSolverParameters const & params);
 
   /**
    * @brief Factorizes a linear system with SuperLU_Dist
@@ -89,7 +89,7 @@ public:
    * @param[out] x the solution vector
    * @return info error code
    */
-  int solve( real64 const * b, real64 * x );
+  int solve(real64 const * b, real64 * x);
 
   /**
    * @brief Estimates the condition number of the matrix
@@ -112,7 +112,7 @@ public:
    * @brief Sets the global number of rows
    * @param numGlobalRows the global number of rows
    */
-  void setNumGlobalRows( int_t const numGlobalRows );
+  void setNumGlobalRows(int_t const numGlobalRows);
 
   /**
    * @brief Returns the global number of rows
@@ -124,7 +124,7 @@ public:
    * @brief Sets the global number of columns
    * @param numGlobalCols the global number of columns
    */
-  void setNumGlobalCols( int_t const numGlobalCols );
+  void setNumGlobalCols(int_t const numGlobalCols);
 
   /**
    * @brief Returns the global number of columns
@@ -136,7 +136,7 @@ public:
    * @brief Sets the local number of rows
    * @param numLocalRows the local number of rows
    */
-  void setNumLocalRows( int_t const numLocalRows );
+  void setNumLocalRows(int_t const numLocalRows);
 
   /**
    * @brief Returns the local number of rows
@@ -148,7 +148,7 @@ public:
    * @brief Sets the communicator
    * @param[in] comm the MPI communicator
    */
-  void setComm( MPI_Comm const comm );
+  void setComm(MPI_Comm const comm);
 
   /**
    * @brief Returns the communicator
@@ -161,13 +161,13 @@ public:
    * @param numLocalRows the number of local rows
    * @param numLocalNonzeros the number of local entries
    */
-  void resize( localIndex const numLocalRows, localIndex const numLocalNonzeros );
+  void resize(localIndex const numLocalRows, localIndex const numLocalNonzeros);
 
   /**
    * @brief Create the matrix in SuperLU_Dist format (SuperMatrix)
    * @param ilower the first row on each process
    */
-  void createSuperMatrix( globalIndex const ilower );
+  void createSuperMatrix(globalIndex const ilower);
 
   /**
    * @brief Returns the array with the row pointers
@@ -271,7 +271,7 @@ private:
   LinearSolverParameters m_params;
 
   /// Add two orders of magnitude to allow small error in condition number estimate
-  real64 const m_precisionTolerance = 100.0 * std::numeric_limits< real64 >::epsilon();
+  real64 const m_precisionTolerance = 100.0 * std::numeric_limits<real64>::epsilon();
 };
 
 }

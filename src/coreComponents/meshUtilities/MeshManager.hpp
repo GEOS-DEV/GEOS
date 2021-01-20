@@ -39,8 +39,8 @@ public:
    * @param[in] name the name of the MeshManager object in the repository
    * @param[in] parent the parent group of the MeshManager object being constructed
    */
-  MeshManager( std::string const & name,
-               Group * const parent );
+  MeshManager(std::string const & name,
+               Group * const parent);
 
   virtual ~MeshManager() override;
 
@@ -51,7 +51,7 @@ public:
    * @param[in] childName the name of the new object in the collection of sub-meshes
    * @return A pointer to the Group node in the dataRepository of the new object created
    */
-  virtual Group * CreateChild( string const & childKey, string const & childName ) override;
+  virtual Group * CreateChild(string const & childKey, string const & childName) override;
 
   /// This function is used to expand any catalogs in the data structure
   virtual void ExpandObjectCatalogs() override;
@@ -60,13 +60,13 @@ public:
    * @brief Generate the meshes of the physical DomainPartition.
    * @param[in] domain a pointer to the physical DomainPartition
    */
-  void GenerateMeshes( DomainPartition * const domain );
+  void GenerateMeshes(DomainPartition * const domain);
 
   /**
    * @brief Generate the different mesh levels in a MeshBody of the domain.
    * @param[in] domain a pointer to the physical DomainPartition
    */
-  void GenerateMeshLevels( DomainPartition * const domain );
+  void GenerateMeshLevels(DomainPartition * const domain);
 
 private:
 

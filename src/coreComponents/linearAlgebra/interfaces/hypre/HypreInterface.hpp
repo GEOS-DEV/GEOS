@@ -41,7 +41,7 @@ struct HypreInterface
    * @param[in] argc standard argc as in any C main
    * @param[in] argv standard argv as in any C main
    */
-  static void initialize( int & argc, char * * & argv );
+  static void initialize(int & argc, char * * & argv);
 
   /**
    * @brief Finalizes the MPI environment for the Hypre library
@@ -53,8 +53,8 @@ struct HypreInterface
    * @param params the preconditioner parameters
    * @return owning pointer to the newly created preconditioner
    */
-  static std::unique_ptr< PreconditionerBase< HypreInterface > >
-  createPreconditioner( LinearSolverParameters params );
+  static std::unique_ptr<PreconditionerBase<HypreInterface>>
+  createPreconditioner(LinearSolverParameters params);
 
   /**
    * @brief Create a hypre-based preconditioner object.
@@ -62,9 +62,9 @@ struct HypreInterface
    * @param nearNullKernel the user-provided near null kernel
    * @return owning pointer to the newly created preconditioner
    */
-  static std::unique_ptr< PreconditionerBase< HypreInterface > >
-  createPreconditioner( LinearSolverParameters params,
-                        array1d< HypreVector > const & nearNullKernel );
+  static std::unique_ptr<PreconditionerBase<HypreInterface>>
+  createPreconditioner(LinearSolverParameters params,
+                        array1d<HypreVector> const & nearNullKernel);
 
   /// Alias for HypreMatrix
   using ParallelMatrix = HypreMatrix;

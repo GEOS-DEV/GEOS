@@ -33,24 +33,24 @@ class PackCollection : public HistoryCollection
 public:
   /**
    * @brief Constructor
-   * @copydetails dataRepository::Group::Group( string const & name, Group * parent );
+   * @copydetails dataRepository::Group::Group(string const & name, Group * parent);
    */
-  PackCollection ( string const & name, Group * parent );
+  PackCollection (string const & name, Group * parent);
 
   /**
    * @brief Catalog name interface
    * @return This type's catalog name
    */
-  static string CatalogName() { return "PackCollection"; }
+  static string CatalogName() {return "PackCollection";}
 
   /// @copydoc dataRepository::Group::InitializePostSubGroups
-  void InitializePostSubGroups( Group * const group ) override;
+  void InitializePostSubGroups(Group * const group) override;
 
   /// @copydoc geosx::HistoryCollection::getMetadata
-  virtual HistoryMetadata getMetadata( ProblemManager & problemManager, localIndex collectionIdx ) override;
+  virtual HistoryMetadata getMetadata(ProblemManager & problemManager, localIndex collectionIdx) override;
 
   /// @copydoc geosx::HistoryCollection::getTargetName
-  virtual const string & getTargetName( ) const override
+  virtual const string & getTargetName() const override
   {
     return m_fieldName;
   }
@@ -65,7 +65,7 @@ public:
    *       from SortedArrayView instead of only ArrayViews will remove this
    *       duplication.
    */
-  virtual void updateSetsIndices( DomainPartition & domain ) override final;
+  virtual void updateSetsIndices(DomainPartition & domain) override final;
 
   /**
    * @brief Filters out ghost rank indices from setIndices to be collected.
@@ -73,9 +73,9 @@ public:
    * @param set the set of indices without the ghost ones
    * @param ghostRank the ghost rank of each index for the target object
    */
-  void filterGhostIndices( localIndex const setIndex,
-                           array1d< localIndex > & set,
-                           arrayView1d< integer const > const & ghostRank );
+  void filterGhostIndices(localIndex const setIndex,
+                           array1d<localIndex> & set,
+                           arrayView1d<integer const> const & ghostRank);
 
   /// @cond DO_NOT_DOCUMENT
   struct viewKeysStruct
@@ -93,20 +93,20 @@ protected:
    * @param domain The problem domain.
    * @return The target object as an ObjectManager.
    */
-  ObjectManagerBase const * getTargetObject( DomainPartition & domain );
+  ObjectManagerBase const * getTargetObject(DomainPartition & domain);
 
   /// @copydoc geosx::HistoryCollection::collect
-  virtual void collect( DomainPartition & domain,
+  virtual void collect(DomainPartition & domain,
                         real64 const time_n,
                         real64 const dt,
                         localIndex const collectionIdx,
-                        buffer_unit_type * & buffer ) override;
+                        buffer_unit_type * & buffer) override;
 
 private:
   // todo : replace this with a vector of references to the actual set sortedarrays (after packing rework to allow sorted arrays to be used
   // for indexing)
   /// The indices for the specified sets to pack
-  std::vector< array1d< localIndex > > m_setsIndices;
+  std::vector<array1d<localIndex>> m_setsIndices;
   /// The dataRepository name/path to get history data from
   string m_objectPath;
   /// The (packable) field associated with the specified object to get data from

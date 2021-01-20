@@ -1,5 +1,5 @@
 ##------------------------------------------------------------------------------
-## geosx_add_code_checks( PREFIX     <Prefix used for created targets>
+## geosx_add_code_checks(PREFIX     <Prefix used for created targets>
 ##                        UNCRUSTIFY_CFG_FILE <path to style config file> 
 ##                        EXCLUDES   [path1 [path2 ...]])
 ##
@@ -15,8 +15,8 @@
 macro(geosx_add_code_checks)
 
     set(options)
-    set(singleValueArgs PREFIX UNCRUSTIFY_CFG_FILE )
-    set(multiValueArgs EXCLUDES )
+    set(singleValueArgs PREFIX UNCRUSTIFY_CFG_FILE)
+    set(multiValueArgs EXCLUDES)
 
     # Parse the arguments to the macro
     cmake_parse_arguments(arg
@@ -48,9 +48,9 @@ macro(geosx_add_code_checks)
     endif()
 
     if (ENABLE_UNCRUSTIFY)
-        blt_add_code_checks( PREFIX    ${arg_PREFIX}
+        blt_add_code_checks(PREFIX    ${arg_PREFIX}
                              SOURCES   ${_sources}
-                             UNCRUSTIFY_CFG_FILE ${PROJECT_SOURCE_DIR}/uncrustify.cfg )
+                             UNCRUSTIFY_CFG_FILE ${PROJECT_SOURCE_DIR}/uncrustify.cfg)
     endif()
 
 endmacro(geosx_add_code_checks)

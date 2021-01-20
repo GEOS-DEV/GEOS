@@ -7,8 +7,8 @@ set(CONFIG_NAME "pangea3" CACHE PATH "")
 set(GEOSX_TPL_ROOT_DIR /workrd/SCR/GEOSX/manualClones/thirdPartyLibs CACHE PATH "")
 set(GEOSX_TPL_DIR ${GEOSX_TPL_ROOT_DIR}/install-${CONFIG_NAME}-release CACHE PATH "")
 
-#set(HOST_COMPILER_PATH /data_local/sw/spack/opt/spack/linux-rhel7-ppc64le/gcc-4.8.5/gcc-8.2.0-suea3az6vbveib7t7d7roevy5y2qeebb/bin )
-set(HOST_COMPILER_PATH /data_local/sw/spack/0.13.3/opt/spack/linux-rhel7-power8le/gcc-4.8/gcc-8.3.0-xvcv2vifxgzn2uz52xu3f4njsq5xrc5p/bin )
+#set(HOST_COMPILER_PATH /data_local/sw/spack/opt/spack/linux-rhel7-ppc64le/gcc-4.8.5/gcc-8.2.0-suea3az6vbveib7t7d7roevy5y2qeebb/bin)
+set(HOST_COMPILER_PATH /data_local/sw/spack/0.13.3/opt/spack/linux-rhel7-power8le/gcc-4.8/gcc-8.3.0-xvcv2vifxgzn2uz52xu3f4njsq5xrc5p/bin)
 
 # C options
 set(CMAKE_C_COMPILER ${HOST_COMPILER_PATH}/gcc CACHE PATH "")
@@ -88,9 +88,9 @@ set(ENABLE_PAPI OFF CACHE BOOL "")
 set(ENABLE_UNCRUSTIFY OFF CACHE BOOL "")
 
 set(ENABLE_ESSL OFF CACHE BOOL "")
-if( ENABLE_ESSL )
+if(ENABLE_ESSL)
     set(ESSL_DIR /data_local/sw/essl/6.1 CACHE PATH "")
-    set(XL_DIR /data_local/sw/xl/16.1.1.3-190404 CACHE PATH "" )
+    set(XL_DIR /data_local/sw/xl/16.1.1.3-190404 CACHE PATH "")
     set(ESSL_INCLUDE_DIRS ${ESSL_DIR}/include CACHE PATH "")   
     set(ESSL_LIBRARIES ${ESSL_DIR}/lib64/libesslsmpcuda.so
     		       ${XL_DIR}/xlsmp/5.1.1/lib/libxlsmp.so	
@@ -103,8 +103,8 @@ if( ENABLE_ESSL )
 		       ${XL_DIR}/xlC/16.1.1/lib/libxl.a
                        CACHE PATH "")
 else()
-  set( BLAS_LIBRARIES /data_local/sw/openblas/0.3.4/lib/libopenblas.a CACHE PATH "")
-  set( LAPACK_LIBRARIES /data_local/sw/lapack/3.9.0/toolchain/rhel-7.6/gcc-8.3/lib64/liblapack.a CACHE PATH "")
+  set(BLAS_LIBRARIES /data_local/sw/openblas/0.3.4/lib/libopenblas.a CACHE PATH "")
+  set(LAPACK_LIBRARIES /data_local/sw/lapack/3.9.0/toolchain/rhel-7.6/gcc-8.3/lib64/liblapack.a CACHE PATH "")
 endif()
 
 set(ENABLE_DOXYGEN OFF CACHE PATH "")

@@ -49,35 +49,35 @@ public:
    *
    * @details Reference: K-A Lie, An Introduction to Reservoir Simulation Using MATLAB/GNU Octave (2019)
    */
-  template< localIndex NF >
+  template<localIndex NF>
   GEOSX_HOST_DEVICE
   static void
-  Compute( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition,
-           arrayView1d< real64 const > const & transMultiplier,
-           ArrayOfArraysView< localIndex const > const & faceToNodes,
-           arraySlice1d< localIndex const > const & elemToFaces,
-           arraySlice1d< real64 const > const & elemCenter,
+  Compute(arrayView2d<real64 const, nodes::REFERENCE_POSITION_USD> const & nodePosition,
+           arrayView1d<real64 const> const & transMultiplier,
+           ArrayOfArraysView<localIndex const> const & faceToNodes,
+           arraySlice1d<localIndex const> const & elemToFaces,
+           arraySlice1d<real64 const> const & elemCenter,
            real64 const & elemVolume,
-           real64 const (&elemPerm)[ 3 ],
+           real64 const (&elemPerm)[3],
            real64 const & lengthTolerance,
-           arraySlice2d< real64 > const & transMatrix );
+           arraySlice2d<real64> const & transMatrix);
 
 };
 
-template< localIndex NF >
+template<localIndex NF>
 GEOSX_HOST_DEVICE
 void
-QuasiTPFAInnerProduct::Compute( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition,
-                                arrayView1d< real64 const > const & transMultiplier,
-                                ArrayOfArraysView< localIndex const > const & faceToNodes,
-                                arraySlice1d< localIndex const > const & elemToFaces,
-                                arraySlice1d< real64 const > const & elemCenter,
+QuasiTPFAInnerProduct::Compute(arrayView2d<real64 const, nodes::REFERENCE_POSITION_USD> const & nodePosition,
+                                arrayView1d<real64 const> const & transMultiplier,
+                                ArrayOfArraysView<localIndex const> const & faceToNodes,
+                                arraySlice1d<localIndex const> const & elemToFaces,
+                                arraySlice1d<real64 const> const & elemCenter,
                                 real64 const & elemVolume,
-                                real64 const (&elemPerm)[ 3 ],
+                                real64 const (&elemPerm)[3],
                                 real64 const & lengthTolerance,
-                                arraySlice2d< real64 > const & transMatrix )
+                                arraySlice2d<real64> const & transMatrix)
 {
-  MimeticInnerProductBase::ComputeParametricInnerProduct< NF >( nodePosition,
+  MimeticInnerProductBase::ComputeParametricInnerProduct<NF>(nodePosition,
                                                                 transMultiplier,
                                                                 faceToNodes,
                                                                 elemToFaces,
@@ -86,7 +86,7 @@ QuasiTPFAInnerProduct::Compute( arrayView2d< real64 const, nodes::REFERENCE_POSI
                                                                 elemPerm,
                                                                 2.0,
                                                                 lengthTolerance,
-                                                                transMatrix );
+                                                                transMatrix);
 }
 
 } // end namespace mimeticInnerProduct

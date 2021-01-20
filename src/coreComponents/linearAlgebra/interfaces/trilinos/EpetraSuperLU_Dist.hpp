@@ -33,8 +33,8 @@ namespace geosx
  * @param[in] matrix the EpetraMatrix object
  * @param[out] SLUDData the structure containing the matrix in SuperLU_Dist format
  */
-void EpetraConvertToSuperMatrix( EpetraMatrix const & matrix,
-                                 SuperLU_Dist & SLUDData );
+void EpetraConvertToSuperMatrix(EpetraMatrix const & matrix,
+                                 SuperLU_Dist & SLUDData);
 
 /**
  * @brief Computes an accurate condition number (time consuming function!!!)
@@ -42,7 +42,7 @@ void EpetraConvertToSuperMatrix( EpetraMatrix const & matrix,
  * @param[in] SLUDData the structure containing the matrix in SuperLU_Dist format
  * @return the condition number
  */
-real64 EpetraSuperLU_DistCond( EpetraMatrix const & matrix, SuperLU_Dist & SLUDData );
+real64 EpetraSuperLU_DistCond(EpetraMatrix const & matrix, SuperLU_Dist & SLUDData);
 
 }
 

@@ -33,37 +33,37 @@ set(dataRepository_sources
     xmlWrapper.cpp
     )
 
-set( extraComponentsLinkList "")
+set(extraComponentsLinkList "")
 
-if( ENABLE_MPI )
-  set( extraComponentsLinkList ${extraComponentsLinkList} mpi )
+if(ENABLE_MPI)
+  set(extraComponentsLinkList ${extraComponentsLinkList} mpi)
 endif()
 
-if( BUILD_OBJ_LIBS )
+if(BUILD_OBJ_LIBS)
   set (dependencyList common lvarray codingUtilities pugixml fileIO)
 else()
-  set( dependencyList common codingUtilities)
+  set(dependencyList common codingUtilities)
 endif()
 
-if ( ENABLE_OPENMP )
-  set( dependencyList ${dependencyList} openmp )
+if (ENABLE_OPENMP)
+  set(dependencyList ${dependencyList} openmp)
 endif()
 
-if ( ENABLE_CUDA )
-  set( dependencyList ${dependencyList} cuda )
+if (ENABLE_CUDA)
+  set(dependencyList ${dependencyList} cuda)
 endif()
 
-set( dependencyList ${dependencyList} common conduit )
+set(dependencyList ${dependencyList} common conduit)
 
-blt_add_library( NAME                  dataRepository
+blt_add_library(NAME                  dataRepository
                  SOURCES               ${dataRepository_sources}
                  HEADERS               ${dataRepository_headers}
                  DEPENDS_ON            ${dependencyList}
                  OBJECT                ${buildAsObj}
                )
 
-target_include_directories( dataRepository PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)
+target_include_directories(dataRepository PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)
 
-geosx_add_code_checks(PREFIX dataRepository )
+geosx_add_code_checks(PREFIX dataRepository)
 
-add_subdirectory( unitTests )
+add_subdirectory(unitTests)

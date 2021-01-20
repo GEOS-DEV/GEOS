@@ -50,28 +50,28 @@ set(mesh_sources
     ToElementRelation.cpp
    )
 
-if( BUILD_OBJ_LIBS)
+if(BUILD_OBJ_LIBS)
   set(dependencyList managers metis)
 else()
   set(dependencyList common metis)
 endif()
 
 
-if( ENABLE_OPENMP )
-    set( dependencyList ${dependencyList} openmp )
+if(ENABLE_OPENMP)
+    set(dependencyList ${dependencyList} openmp)
 endif()
 
-if ( ENABLE_CUDA )
-  set( dependencyList ${dependencyList} cuda )
+if (ENABLE_CUDA)
+  set(dependencyList ${dependencyList} cuda)
 endif()
 
-blt_add_library( NAME                  mesh
+blt_add_library(NAME                  mesh
                  SOURCES               ${mesh_sources}
                  HEADERS               ${mesh_headers}
                  DEPENDS_ON            ${dependencyList}
                  OBJECT                ${buildAsObj}
                )
                
-target_include_directories( mesh PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)
+target_include_directories(mesh PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)
 
-geosx_add_code_checks(PREFIX mesh )
+geosx_add_code_checks(PREFIX mesh)

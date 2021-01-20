@@ -40,7 +40,7 @@ public:
    * @brief Solver constructor, with parameter list reference
    * @param[in] parameters structure containing linear solver parameters
    */
-  HypreSolver( LinearSolverParameters parameters );
+  HypreSolver(LinearSolverParameters parameters);
 
   /**
    * @brief Virtual destructor.
@@ -56,10 +56,10 @@ public:
    *
    * Solve Ax=b with A an HypreMatrix, x and b HypreVector.
    */
-  void solve( HypreMatrix & mat,
+  void solve(HypreMatrix & mat,
               HypreVector & sol,
               HypreVector & rhs,
-              DofManager const * const dofManager = nullptr );
+              DofManager const * const dofManager = nullptr);
 
   /**
    * @brief Get the result of previous solve.
@@ -75,14 +75,14 @@ private:
   LinearSolverParameters m_parameters;
   LinearSolverResult m_result;
 
-  void solve_direct( HypreMatrix & mat,
+  void solve_direct(HypreMatrix & mat,
                      HypreVector & sol,
-                     HypreVector & rhs );
+                     HypreVector & rhs);
 
-  void solve_krylov( HypreMatrix & mat,
+  void solve_krylov(HypreMatrix & mat,
                      HypreVector & sol,
                      HypreVector & rhs,
-                     DofManager const * const dofManager );
+                     DofManager const * const dofManager);
 
 };
 

@@ -52,7 +52,7 @@ public:
    * @return the catalog name
    */
   static const string CatalogName()
-  { return "EmbeddedSurfaceSubRegion"; }
+  {return "EmbeddedSurfaceSubRegion";}
 
   /**
    * @brief Get catalog name.
@@ -75,8 +75,8 @@ public:
    * @param name the group name
    * @param parent the parent group
    */
-  EmbeddedSurfaceSubRegion( string const & name,
-                            dataRepository::Group * const parent );
+  EmbeddedSurfaceSubRegion(string const & name,
+                            dataRepository::Group * const parent);
 
   /// @brief Destructor
   virtual ~EmbeddedSurfaceSubRegion() override;
@@ -88,16 +88,16 @@ public:
    */
   ///@{
 
-  virtual void CalculateElementGeometricQuantities( NodeManager const & nodeManager,
-                                                    FaceManager const & facemanager ) override;
+  virtual void CalculateElementGeometricQuantities(NodeManager const & nodeManager,
+                                                    FaceManager const & facemanager) override;
 
   /**
    * @brief Function to compute the geometric quantities of a specific embedded surface element.
    * @param intersectionPoints array containing the nodes defining the embedded surface elements
    * @param k index of the face element
    */
-  void CalculateElementGeometricQuantities( arrayView2d< real64 const > const intersectionPoints,
-                                            localIndex k );
+  void CalculateElementGeometricQuantities(arrayView2d<real64 const> const intersectionPoints,
+                                            localIndex k);
 
   /**
    * @brief Function to add a new embedded surface element.
@@ -110,19 +110,19 @@ public:
    * @param fracture pointer to the bounded plane which is defining the embedded surface element
    * @return boolean defining whether the embedded element was added or not
    */
-  bool AddNewEmbeddedSurface( localIndex const cellIndex,
+  bool AddNewEmbeddedSurface(localIndex const cellIndex,
                               localIndex const regionIndex,
                               localIndex const subRegionIndex,
                               NodeManager & nodeManager,
                               EdgeManager const & edgeManager,
                               FixedOneToManyRelation const & cellToEdges,
-                              BoundedPlane const * fracture );
+                              BoundedPlane const * fracture);
 
   /**
    * @brief inherit ghost rank from cell elements.
    * @param cellGhostRank cell element ghost ranks
    */
-  void inheritGhostRank( array1d< array1d< arrayView1d< integer const > > > const & cellGhostRank );
+  void inheritGhostRank(array1d<array1d<arrayView1d<integer const>>> const & cellGhostRank);
 
   /**
    * @brief Given the coordinates of a node, it computes the Heaviside function iside a cut element with respect to the fracture element.
@@ -130,8 +130,8 @@ public:
    * @param k embedded surface cell index
    * @return value of the Heaviside
    */
-  real64 ComputeHeavisideFunction( ArraySlice< real64 const, 1, nodes::REFERENCE_POSITION_USD - 1 > const nodeCoord,
-                                   localIndex const k ) const;
+  real64 ComputeHeavisideFunction(ArraySlice<real64 const, 1, nodes::REFERENCE_POSITION_USD - 1> const nodeCoord,
+                                   localIndex const k) const;
 
 
 
@@ -171,9 +171,9 @@ public:
   /// viewKey struct for the EmbeddedSurfaceSubRegion class
   viewKeys;
 
-  virtual void setupRelatedObjectsInRelations( MeshLevel const * const mesh ) override;
+  virtual void setupRelatedObjectsInRelations(MeshLevel const * const mesh) override;
 
-  virtual string GetElementTypeString() const override final { return "Embedded"; }
+  virtual string GetElementTypeString() const override final {return "Embedded";}
 
   /**
    * @name Properties Getters
@@ -197,82 +197,82 @@ public:
    * @brief Get normal vectors.
    * @return an array of normal vectors.
    */
-  array2d< real64 > & getNormalVector() { return m_normalVector; }
+  array2d<real64> & getNormalVector() {return m_normalVector;}
 
   /**
    * @copydoc getNormalVector()
    */
-  arrayView2d< real64 const > getNormalVector() const { return m_normalVector; }
+  arrayView2d<real64 const> getNormalVector() const {return m_normalVector;}
 
   /**
    * @brief Get normal vector of a specific embedded surface element.
    * @param k index of the embedded surface element
    * @return the normal vector of a specific embedded surface element
    */
-  arraySlice1d< real64 > getNormalVector( localIndex k ) { return m_normalVector[k]; }
+  arraySlice1d<real64> getNormalVector(localIndex k) {return m_normalVector[k];}
 
   /**
-   * @copydoc getNormalVector( localIndex k )
+   * @copydoc getNormalVector(localIndex k)
    */
-  arraySlice1d< real64 const > getNormalVector( localIndex k ) const { return m_normalVector[k]; }
+  arraySlice1d<real64 const> getNormalVector(localIndex k) const {return m_normalVector[k];}
 
   /**
    * @brief Get an array of the first tangent vector of the embedded surface elements.
    * @return an array of the first tangent vector of the embedded surface elements
    */
-  array2d< real64 > & getTangentVector1() { return m_tangentVector1; }
+  array2d<real64> & getTangentVector1() {return m_tangentVector1;}
 
   /**
    * @copydoc getTangentVector1()
    */
-  arrayView2d< real64 const > getTangentVector1() const { return m_tangentVector1; }
+  arrayView2d<real64 const> getTangentVector1() const {return m_tangentVector1;}
 
   /**
    * @brief Get the first tangent vector of a specific embedded surface element.
    * @param k index of the embedded surface element
    * @return the first tangent vector of a specific embedded surface element
    */
-  arraySlice1d< real64 > getTangentVector1( localIndex k ) { return m_tangentVector1[k];}
+  arraySlice1d<real64> getTangentVector1(localIndex k) {return m_tangentVector1[k];}
 
   /**
-   * @copydoc getTangentVector1( localIndex k )
+   * @copydoc getTangentVector1(localIndex k)
    */
-  arraySlice1d< real64 const > getTangentVector1( localIndex k ) const { return m_tangentVector1[k]; }
+  arraySlice1d<real64 const> getTangentVector1(localIndex k) const {return m_tangentVector1[k];}
 
   /**
    * @brief Get an array of the second tangent vector of the embedded surface elements.
    * @return an array of the second tangent vector of the embedded surface elements
    */
-  array2d< real64 > & getTangentVector2() { return m_tangentVector2; }
+  array2d<real64> & getTangentVector2() {return m_tangentVector2;}
 
   /**
    * @copydoc getTangentVector2()
    */
-  arrayView2d< real64 const > getTangentVector2() const { return m_tangentVector2; }
+  arrayView2d<real64 const> getTangentVector2() const {return m_tangentVector2;}
 
   /**
    * @brief Get the second tangent vector of a specific embedded surface element.
    * @param k index of the embedded surface element
    * @return the second tangent vector of a specific embedded surface element
    */
-  arraySlice1d< real64 > getTangentVector2( localIndex k ) { return m_tangentVector2[k];}
+  arraySlice1d<real64> getTangentVector2(localIndex k) {return m_tangentVector2[k];}
 
   /**
-   * @copydoc getTangentVector2( localIndex k )
+   * @copydoc getTangentVector2(localIndex k)
    */
-  arraySlice1d< real64 const > getTangentVector2( localIndex k ) const { return m_tangentVector2[k];}
+  arraySlice1d<real64 const> getTangentVector2(localIndex k) const {return m_tangentVector2[k];}
 
 
   /**
    * @brief Get the connectivity index of the  embedded surface element.
    * @return the connectivity index
    */
-  array1d< real64 > & getConnectivityIndex()   { return m_connectivityIndex;}
+  array1d<real64> & getConnectivityIndex()   {return m_connectivityIndex;}
 
   /**
    * @copydoc getConnectivityIndex()
    */
-  array1d< real64 > const & getConnectivityIndex() const { return m_connectivityIndex;}
+  array1d<real64> const & getConnectivityIndex() const {return m_connectivityIndex;}
 
 
   /**
@@ -280,51 +280,51 @@ public:
    * @return the total displacement array if it exists, or an error is thrown if it does not exist
    * @note An error is thrown if the displacement jump does not exist
    */
-  array2d< real64 > & displacementJump()
-  { return getReference< array2d< real64 > >( viewKeys.dispJump ); }
+  array2d<real64> & displacementJump()
+  {return getReference<array2d<real64>>(viewKeys.dispJump);}
 
   /**
    * @brief Provide an immutable arrayView to the total displacement array.
    * @return immutable arrayView of the total displacement array if it exists, or an error is thrown if it does not exist
    * @note An error is thrown if the displacement jump does not exist
    */
-  arrayView2d< real64 const > displacementJump() const
-  {return getReference< array2d< real64 > >( viewKeys.dispJump ); }
+  arrayView2d<real64 const> displacementJump() const
+  {return getReference<array2d<real64>>(viewKeys.dispJump);}
 
   /**
    * @brief Get a mutable incremental displacement array.
    * @return the incremental displacement array if it exists, or an error is thrown if it does not exist
    * @note An error is thrown if the incremental displacement jump does not exist
    */
-  array2d< real64 > & incrementalDisplacementJump()
-  { return getReference< array2d< real64 > >( viewKeys.deltaDispJump ); }
+  array2d<real64> & incrementalDisplacementJump()
+  {return getReference<array2d<real64>>(viewKeys.deltaDispJump);}
 
   /**
    * @brief Provide an immutable arrayView to the incremental displacement jump array.
    * @return immutable arrayView of the incremental displacement array if it exists, or an error is thrown if it does not exist
    * @note An error is thrown if the incremental displacement jump does not exist
    */
-  arrayView2d< real64 const > incrementalDisplacementJump() const
-  { return getReference< array2d< real64 > >( viewKeys.deltaDispJump ); }
+  arrayView2d<real64 const> incrementalDisplacementJump() const
+  {return getReference<array2d<real64>>(viewKeys.deltaDispJump);}
 
   ///@}
 
 private:
 
   /// normal vector to the embedded surface element
-  array2d< real64 > m_normalVector;
+  array2d<real64> m_normalVector;
 
   // tangential direction 1
-  array2d< real64 > m_tangentVector1;
+  array2d<real64> m_tangentVector1;
 
   // tangential direction 2
-  array2d< real64 > m_tangentVector2;
+  array2d<real64> m_tangentVector2;
 
   /// The number of jump enrichments
   localIndex m_numOfJumpEnrichments;
 
   /// The CI of the cells
-  array1d< real64 > m_connectivityIndex;
+  array1d<real64> m_connectivityIndex;
 };
 
 

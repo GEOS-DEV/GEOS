@@ -49,7 +49,7 @@ public:
    */
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  constexpr static real64 parentSupportCoord( const localIndex supportPointIndex )
+  constexpr static real64 parentSupportCoord(const localIndex supportPointIndex)
   {
     return -1.0 + 2.0 * (supportPointIndex & 1);
   }
@@ -63,10 +63,10 @@ public:
    */
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  constexpr static real64 value( const int index,
-                                 const real64 xi )
+  constexpr static real64 value(const int index,
+                                 const real64 xi)
   {
-    return 0.5 + 0.5 * xi * parentSupportCoord( index );
+    return 0.5 + 0.5 * xi * parentSupportCoord(index);
   }
 
 
@@ -77,7 +77,7 @@ public:
    */
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  constexpr static real64 value0( const real64 xi )
+  constexpr static real64 value0(const real64 xi)
   {
     return 0.5 - 0.5 * xi;
   }
@@ -89,7 +89,7 @@ public:
    */
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  constexpr static real64 value1( const real64 xi )
+  constexpr static real64 value1(const real64 xi)
   {
     return 0.5 + 0.5 * xi;
   }
@@ -105,11 +105,11 @@ public:
    */
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  constexpr static real64 gradient( const int index,
-                                    const real64 xi )
+  constexpr static real64 gradient(const int index,
+                                    const real64 xi)
   {
-    GEOSX_UNUSED_VAR( xi );
-    return 0.5 * parentSupportCoord( index );
+    GEOSX_UNUSED_VAR(xi);
+    return 0.5 * parentSupportCoord(index);
   }
 
   /**
@@ -120,9 +120,9 @@ public:
    */
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  constexpr static real64 gradient0( const real64 xi )
+  constexpr static real64 gradient0(const real64 xi)
   {
-    GEOSX_UNUSED_VAR( xi );
+    GEOSX_UNUSED_VAR(xi);
     return -0.5;
   }
 
@@ -134,9 +134,9 @@ public:
    */
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  constexpr static real64 gradient1( const real64 xi )
+  constexpr static real64 gradient1(const real64 xi)
   {
-    GEOSX_UNUSED_VAR( xi );
+    GEOSX_UNUSED_VAR(xi);
     return 0.5;
   }
 
@@ -177,9 +177,9 @@ public:
      */
     GEOSX_HOST_DEVICE
     GEOSX_FORCE_INLINE
-    constexpr static int linearIndex( const int i,
+    constexpr static int linearIndex(const int i,
                                       const int j,
-                                      const int k )
+                                      const int k)
     {
       return i + 2 * j + 4 * k;
     }
@@ -194,14 +194,14 @@ public:
      */
     GEOSX_HOST_DEVICE
     GEOSX_FORCE_INLINE
-    constexpr static void multiIndex( const int linearIndex,
+    constexpr static void multiIndex(const int linearIndex,
                                       int & i0,
                                       int & i1,
-                                      int & i2 )
+                                      int & i2)
     {
-      i0 = ( linearIndex & 1 );
-      i1 = ( linearIndex & 2 ) >> 1;
-      i2 = ( linearIndex & 4 ) >> 2;
+      i0 = (linearIndex & 1);
+      i1 = (linearIndex & 2)>> 1;
+      i2 = (linearIndex & 4)>> 2;
     }
 
     /**
@@ -213,19 +213,19 @@ public:
      */
     GEOSX_HOST_DEVICE
     GEOSX_FORCE_INLINE
-    static void value( const real64 (& coords)[3],
-                       real64 (& N)[numSupportPoints] )
+    static void value(const real64 (& coords)[3],
+                       real64 (& N)[numSupportPoints])
     {
-      for( int a=0; a<2; ++a )
+      for(int a=0; a<2; ++a)
       {
-        for( int b=0; b<2; ++b )
+        for(int b=0; b<2; ++b)
         {
-          for( int c=0; c<2; ++c )
+          for(int c=0; c<2; ++c)
           {
-            const int lindex = LagrangeBasis1::TensorProduct3D::linearIndex( a, b, c );
-            N[ lindex ] = LagrangeBasis1::value( a, coords[0] ) *
-                          LagrangeBasis1::value( b, coords[1] ) *
-                          LagrangeBasis1::value( c, coords[2] );
+            const int lindex = LagrangeBasis1::TensorProduct3D::linearIndex(a, b, c);
+            N[lindex] = LagrangeBasis1::value(a, coords[0]) *
+                          LagrangeBasis1::value(b, coords[1]) *
+                          LagrangeBasis1::value(c, coords[2]);
           }
         }
       }
@@ -238,7 +238,7 @@ public:
      */
     GEOSX_HOST_DEVICE
     GEOSX_FORCE_INLINE
-    constexpr static real64 parentCoords0( localIndex const linearIndex )
+    constexpr static real64 parentCoords0(localIndex const linearIndex)
     {
       return -1.0 + 2.0 * (linearIndex & 1);
     }
@@ -250,9 +250,9 @@ public:
      */
     GEOSX_HOST_DEVICE
     GEOSX_FORCE_INLINE
-    constexpr static real64 parentCoords1( localIndex const linearIndex )
+    constexpr static real64 parentCoords1(localIndex const linearIndex)
     {
-      return -1.0 + ( linearIndex & 2 );
+      return -1.0 + (linearIndex & 2);
     }
 
     /**
@@ -262,9 +262,9 @@ public:
      */
     GEOSX_HOST_DEVICE
     GEOSX_FORCE_INLINE
-    constexpr static real64 parentCoords2( localIndex const linearIndex )
+    constexpr static real64 parentCoords2(localIndex const linearIndex)
     {
-      return -1.0 + 0.5 * ( linearIndex & 4 );
+      return -1.0 + 0.5 * (linearIndex & 4);
     }
 
   };

@@ -50,7 +50,7 @@ public:
    * @param name the name of the object in the data hierarchy.
    * @param parent a pointer to the parent group in the data hierarchy.
    */
-  CellElementRegion( string const & name, Group * const parent );
+  CellElementRegion(string const & name, Group * const parent);
 
   /**
    * @brief Deleted default constructor.
@@ -72,13 +72,13 @@ public:
    * @return A string containing the key name.
    */
   static const string CatalogName()
-  { return "CellElementRegion"; }
+  {return "CellElementRegion";}
 
   /**
    * @copydoc CatalogName()
    */
   virtual const string getCatalogName() const override final
-  { return CellElementRegion::CatalogName(); }
+  {return CellElementRegion::CatalogName();}
 
   ///@}
 
@@ -91,19 +91,19 @@ public:
    * @brief Add a cellBlockRegion name to the list.
    * @param cellBlockName string containing the cell block region name.
    */
-  void AddCellBlockName( string const & cellBlockName )
+  void AddCellBlockName(string const & cellBlockName)
   {
-    m_cellBlockNames.emplace_back( cellBlockName );
+    m_cellBlockNames.emplace_back(cellBlockName);
   }
 
-  virtual void GenerateMesh( Group * const cellBlocks ) override;
+  virtual void GenerateMesh(Group * const cellBlocks) override;
 
   /**
    * @brief Generate the aggregates.
    * @param faceManager a pointer to the FaceManager
    * @param nodeManager a pointer to the NodeManager
    */
-  void GenerateAggregates( FaceManager const * const faceManager, NodeManager const * const nodeManager );
+  void GenerateAggregates(FaceManager const * const faceManager, NodeManager const * const nodeManager);
 
   ///@}
 

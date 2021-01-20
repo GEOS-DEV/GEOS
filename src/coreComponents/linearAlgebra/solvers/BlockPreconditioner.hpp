@@ -34,10 +34,10 @@ namespace geosx
  */
 enum class SchurComplementOption
 {
-  None,                  //!< No Schur complement - just block-GS/block-Jacobi preconditioner
-  FirstBlockDiagonal,    //!< Approximate first block with its diagonal
-  RowsumDiagonalProbing, //!< Rowsum-preserving diagonal approximation constructed with probing
-  FirstBlockUserDefined  //!< User defined preconditioner for the first block
+  None,                  //!<No Schur complement - just block-GS/block-Jacobi preconditioner
+  FirstBlockDiagonal,    //!<Approximate first block with its diagonal
+  RowsumDiagonalProbing, //!<Rowsum-preserving diagonal approximation constructed with probing
+  FirstBlockUserDefined  //!<User defined preconditioner for the first block
 };
 
 /**
@@ -45,9 +45,9 @@ enum class SchurComplementOption
  */
 enum class BlockScalingOption
 {
-  None,          //!< No scaling
-  FrobeniusNorm, //!< Equilibrate Frobenius norm of the diagonal blocks
-  UserProvided   //!< User-provided scaling
+  None,          //!<No scaling
+  FrobeniusNorm, //!<Equilibrate Frobenius norm of the diagonal blocks
+  UserProvided   //!<User-provided scaling
 };
 
 /**
@@ -55,9 +55,9 @@ enum class BlockScalingOption
  */
 enum class BlockShapeOption
 {
-  Diagonal,            //!< (D)^{-1}
-  UpperTriangular,     //!< (DU)^{-1}
-  LowerUpperTriangular //!< (LDU)^{-1}
+  Diagonal,            //!<(D)^{-1}
+  UpperTriangular,     //!<(DU)^{-1}
+  LowerUpperTriangular //!<(LDU)^{-1}
 };
 
 /*
@@ -96,13 +96,13 @@ enum class BlockShapeOption
  * @brief General 2x2 block preconditioner.
  * @tparam LAI type of linear algebra interface providing matrix/vector types
  */
-template< typename LAI >
-class BlockPreconditioner : public PreconditionerBase< LAI >
+template<typename LAI>
+class BlockPreconditioner : public PreconditionerBase<LAI>
 {
 public:
 
   /// Alias for the base type
-  using Base = PreconditionerBase< LAI >;
+  using Base = PreconditionerBase<LAI>;
 
   /// Alias for the vector type
   using Vector = typename Base::Vector;
@@ -116,9 +116,9 @@ public:
    * @param schurOption type of Schur complement approximation to use
    * @param scalingOption type of scaling to apply to blocks
    */
-  explicit BlockPreconditioner( BlockShapeOption const shapeOption,
+  explicit BlockPreconditioner(BlockShapeOption const shapeOption,
                                 SchurComplementOption const schurOption,
-                                BlockScalingOption const scalingOption );
+                                BlockScalingOption const scalingOption);
 
   /**
    * @brief Destructor.
@@ -136,25 +136,25 @@ public:
    *       of the two blocks are non-overlapping and their union includes all
    *       DoF components in the monolithic system.
    */
-  void setupBlock( localIndex const blockIndex,
-                   std::vector< DofManager::SubComponent > blockDofs,
-                   std::unique_ptr< PreconditionerBase< LAI > > solver,
-                   real64 const scaling = 1.0 );
+  void setupBlock(localIndex const blockIndex,
+                   std::vector<DofManager::SubComponent> blockDofs,
+                   std::unique_ptr<PreconditionerBase<LAI>> solver,
+                   real64 const scaling = 1.0);
 
   /**
    * @name PreconditionerBase interface methods
    */
   ///@{
 
-  using PreconditionerBase< LAI >::compute;
+  using PreconditionerBase<LAI>::compute;
 
   /**
    * @brief Compute the preconditioner from a matrix
    * @param mat the matrix to precondition
    * @param dofManager the Degree-of-Freedom manager associated with matrix
    */
-  virtual void compute( Matrix const & mat,
-                        DofManager const & dofManager ) override;
+  virtual void compute(Matrix const & mat,
+                        DofManager const & dofManager) override;
 
   /**
    * @brief Apply operator to a vector
@@ -163,7 +163,7 @@ public:
    *
    * @warning @p src and @p dst cannot alias the same vector (some implementations may allow this).
    */
-  virtual void apply( Vector const & src, Vector & dst ) const override;
+  virtual void apply(Vector const & src, Vector & dst) const override;
 
   virtual void clear() override;
 
@@ -176,7 +176,7 @@ private:
    * @param mat the new system matrix
    * @param dofManager the new dof manager
    */
-  void reinitialize( Matrix const & mat, DofManager const & dofManager );
+  void reinitialize(Matrix const & mat, DofManager const & dofManager);
 
   /**
    * @brief Apply block scaling to system blocks (which must be already extracted).
@@ -198,28 +198,28 @@ private:
   BlockScalingOption m_scalingOption;
 
   /// Description of dof components making up each of the two main blocks
-  std::array< std::vector< DofManager::SubComponent >, 2 > m_blockDofs;
+  std::array<std::vector<DofManager::SubComponent>, 2> m_blockDofs;
 
   /// Restriction operators for each sub-block
-  std::array< Matrix, 2 > m_restrictors;
+  std::array<Matrix, 2> m_restrictors;
 
   /// Prolongation operators for each sub-block
-  std::array< Matrix, 2 > m_prolongators;
+  std::array<Matrix, 2> m_prolongators;
 
   /// Matrix blocks
-  BlockOperator< Vector, Matrix > m_matBlocks;
+  BlockOperator<Vector, Matrix> m_matBlocks;
 
   /// Individual block preconditioners
-  std::array< std::unique_ptr< PreconditionerBase< LAI > >, 2 > m_solvers;
+  std::array<std::unique_ptr<PreconditionerBase<LAI>>, 2> m_solvers;
 
   /// Scaling of each block
-  std::array< real64, 2 > m_scaling;
+  std::array<real64, 2> m_scaling;
 
   /// Internal vector of block residuals
-  mutable BlockVector< Vector > m_rhs;
+  mutable BlockVector<Vector> m_rhs;
 
   /// Internal vector of block solutions
-  mutable BlockVector< Vector > m_sol;
+  mutable BlockVector<Vector> m_sol;
 };
 
 } //namespace geosx

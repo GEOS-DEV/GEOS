@@ -49,19 +49,19 @@ char* gettext(const char * msgid)
   return (char*) msgid;
 }
 
-const Descriptor empty_usage[] = { { 0, 0, 0, 0, 0, 0 } };
+const Descriptor empty_usage[] = {{0, 0, 0, 0, 0, 0}};
 
 const Descriptor minimal_usage[] = //
-    { { 0, 0, "x", "", Arg::None, 0 }, //
-      { 0, 0, 0, 0, 0, 0 } };
+    {{0, 0, "x", "", Arg::None, 0}, //
+      {0, 0, 0, 0, 0, 0}};
 
 const Descriptor optional_usage[] = //
-    { { 0, 0, "f", "", Arg::Required, 0 }, //
-      { 0, 0, 0, 0, 0, 0 } };
+    {{0, 0, "f", "", Arg::Required, 0}, //
+      {0, 0, 0, 0, 0, 0}};
 
 const Descriptor gettext_usage[] = //
-    { { 0, 0, "f", "", Arg::Required, gettext("This is a test") }, //
-      { 0, 0, 0, 0, 0, 0 } };
+    {{0, 0, "f", "", Arg::Required, gettext("This is a test")}, //
+      {0, 0, 0, 0, 0, 0}};
 
 enum OptionIndex
 {
@@ -73,34 +73,34 @@ enum OptionType
 };
 
 const Descriptor multi_usage[] = //
-    { { UNKNOWN, 0, "", "", Arg::None, 0 }, // UNKNOWN option catch-all
-      { FOO, ENABLED, "", "enable-foo", Arg::None, 0 }, // FOO enable
-      { FOO, DISABLED, "", "disable-foo", Arg::None, 0 }, // FOO disable
-      { VERBOSE, 0, "v", "verbose", Arg::None, 0 }, // VERBOSE (counted option)
-      { X, 0, "X", "X", Arg::Required, 0 }, // -X<arg>, -X <arg>, -X=<arg>, --X=<arg>
-      { ABBREVIATE, 0, "", "abbreviate-me", Arg::None, 0 }, // ABBREVIATE
-      { EMPTY, 0, "", "emptyarg", Arg::Empty, 0 }, // EMPTY (ignores arguments that are not "")
-      { 0, 0, 0, 0, 0, 0 } };
+    {{UNKNOWN, 0, "", "", Arg::None, 0}, // UNKNOWN option catch-all
+      {FOO, ENABLED, "", "enable-foo", Arg::None, 0}, // FOO enable
+      {FOO, DISABLED, "", "disable-foo", Arg::None, 0}, // FOO disable
+      {VERBOSE, 0, "v", "verbose", Arg::None, 0}, // VERBOSE (counted option)
+      {X, 0, "X", "X", Arg::Required, 0}, // -X<arg>, -X <arg>, -X=<arg>, --X=<arg>
+      {ABBREVIATE, 0, "", "abbreviate-me", Arg::None, 0}, // ABBREVIATE
+      {EMPTY, 0, "", "emptyarg", Arg::Empty, 0}, // EMPTY (ignores arguments that are not "")
+      {0, 0, 0, 0, 0, 0}};
 
-const char* empty_args[] = { 0 };
-const char* non_options[] = { "1", "2", "3", (const char*) -1 };
-const char* unknown_option[] = { "--unknown", "nonoption", 0 };
-const char* lone_minus[] = { "-f", "-", "-", 0 };
-const char* lone_doubleminus[] = { "--", 0 };
+const char* empty_args[] = {0};
+const char* non_options[] = {"1", "2", "3", (const char*) -1};
+const char* unknown_option[] = {"--unknown", "nonoption", 0};
+const char* lone_minus[] = {"-f", "-", "-", 0};
+const char* lone_doubleminus[] = {"--", 0};
 
 // NOTE: (const char*) -1 is used to cause a segfault should this element be dereferenced.
 // 0 is not used here, because the parser explicitly checks for 0 which could mask bugs.
-// If a number of arguments >= 0 is passed, the parser is supposed to honor that and never
+// If a number of arguments>= 0 is passed, the parser is supposed to honor that and never
 // dereference an element beyond the last.
 const char* multi1[] =
-    { "--enable-foo", "--unknown1", "-u", "-vX", "xyzzy", "--", "--strangefilename", (const char*) -1 };
-const char* multi2[] = { "-vvXfoo", "-X", "bar", "-X=foobar", "-X", "", "--disable-foo", "-v", (const char*) -1 };
-const char* multi3[] = { "-abbr", "-abb", "--emptyarg", "-verbose", "--emptyarg", "", "--emptyarg=", "nonoption1",
-                         "nonoption2", (const char*) -1 };
+    {"--enable-foo", "--unknown1", "-u", "-vX", "xyzzy", "--", "--strangefilename", (const char*) -1};
+const char* multi2[] = {"-vvXfoo", "-X", "bar", "-X=foobar", "-X", "", "--disable-foo", "-v", (const char*) -1};
+const char* multi3[] = {"-abbr", "-abb", "--emptyarg", "-verbose", "--emptyarg", "", "--emptyarg=", "nonoption1",
+                         "nonoption2", (const char*) -1};
 
-const char* illegal[] = { "-X", 0 };
-const char* reorder[] = { "-X", "--", "-", "-X", "--", "foo", "-v", "--", "bar", "--", 0 };
-const char* reorder2[] = { "-X", "--", "-", "-X", "--", "-", 0 };
+const char* illegal[] = {"-X", 0};
+const char* reorder[] = {"-X", "--", "-", "-X", "--", "foo", "-v", "--", "bar", "--", 0};
+const char* reorder2[] = {"-X", "--", "-", "-X", "--", "-", 0};
 
 int count(const char** args)
 {
@@ -287,7 +287,7 @@ TEST(testparse,testparse)
     assert(eq(options[UNKNOWN].last()->name,"u"));
     assert(options[VERBOSE].count()==4);
     assert(options[X].count()==5);
-    const char* Xargs[] = { "xyzzy", "foo", "bar", "foobar", "", "sentinel" };
+    const char* Xargs[] = {"xyzzy", "foo", "bar", "foobar", "", "sentinel"};
     const char** Xarg = &Xargs[0];
     for (Option* Xiter = options[X]; Xiter != 0; Xiter = Xiter->next())
       assert(eq(Xiter->arg, *Xarg++));

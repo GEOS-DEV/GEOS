@@ -25,8 +25,8 @@
 namespace geosx
 {
 
-NewComponent::NewComponent( std::string const & name,
-                            Group * const parent ):
+NewComponent::NewComponent(std::string const & name,
+                            Group * const parent):
     SolverBase(name,parent)
 {
 
@@ -39,14 +39,14 @@ NewComponent::~NewComponent()
 
 
 
-real64 NewComponent::SolverStep( real64 const & /*time_n*/,
+real64 NewComponent::SolverStep(real64 const & /*time_n*/,
                real64 const & /*dt*/,
                integer const /*cycleNumber*/,
-               DomainPartition * /*domain*/ )
+               DomainPartition * /*domain*/)
 {
   return 0;
 }
 
-REGISTER_CATALOG_ENTRY( SolverBase, NewComponent, std::string const &, dataRepository::Group * const )
+REGISTER_CATALOG_ENTRY(SolverBase, NewComponent, std::string const &, dataRepository::Group * const)
 
 } /* namespace geosx */

@@ -23,17 +23,17 @@ class Parameter
 public:
   Parameter(){}
   ~Parameter(){}
-  Parameter( Parameter const & source ):
-    member( source.member )
+  Parameter(Parameter const & source):
+    member(source.member)
   {
-    GEOSX_LOG( "called copy constructor for Parameter" );
+    GEOSX_LOG("called copy constructor for Parameter");
   }
 
-#if ( __cplusplus >= 201103L )
-  Parameter( Parameter && source ):
-    member( std::move( source.member ))
+#if (__cplusplus>= 201103L)
+  Parameter(Parameter && source):
+    member(std::move(source.member))
   {
-    GEOSX_LOG( "called move constructor for Parameter" );
+    GEOSX_LOG("called move constructor for Parameter");
   }
 #endif
 
@@ -45,17 +45,17 @@ public:
 class Base
 {
 public:
-  Base( int junk, double const & junk2, Parameter& pbv )
+  Base(int junk, double const & junk2, Parameter& pbv)
   {
-    GEOSX_LOG( "calling Base constructor with arguments (" << junk << " " << junk2 << ")" );
+    GEOSX_LOG("calling Base constructor with arguments (" <<junk <<" " <<junk2 <<")");
   }
 
   ~Base()
   {
-    GEOSX_LOG( "calling Base destructor" );
+    GEOSX_LOG("calling Base destructor");
   }
 
-  using CatalogInterface = dataRepository::CatalogInterface< Base, int, double const &, Parameter& >;
+  using CatalogInterface = dataRepository::CatalogInterface<Base, int, double const &, Parameter&>;
   static CatalogInterface::CatalogType& GetCatalog()
   {
     static CatalogInterface::CatalogType catalog;

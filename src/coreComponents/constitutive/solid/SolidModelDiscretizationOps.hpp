@@ -35,69 +35,69 @@ namespace constitutive
  */
 struct SolidModelDiscretizationOps
 {
-  template< int NUM_SUPPORT_POINTS,
+  template<int NUM_SUPPORT_POINTS,
             typename BASIS_GRADIENT,
-            typename CBF >
+            typename CBF>
   GEOSX_HOST_DEVICE
-  void upperBTDB( BASIS_GRADIENT const & gradN,
-                  real64 ( &elementStiffness )[NUM_SUPPORT_POINTS*3][NUM_SUPPORT_POINTS*3],
-                  CBF && callbackFunction );
+  void upperBTDB(BASIS_GRADIENT const & gradN,
+                  real64 (&elementStiffness)[NUM_SUPPORT_POINTS*3][NUM_SUPPORT_POINTS*3],
+                  CBF && callbackFunction);
 
-  template< int NUM_SUPPORT_POINTS >
+  template<int NUM_SUPPORT_POINTS>
   GEOSX_HOST_DEVICE
   static
-  void fillLowerBTDB( real64 ( &elementStiffness )[NUM_SUPPORT_POINTS*3][NUM_SUPPORT_POINTS*3] );
+  void fillLowerBTDB(real64 (&elementStiffness)[NUM_SUPPORT_POINTS*3][NUM_SUPPORT_POINTS*3]);
 
-  template< int NUM_SUPPORT_POINTS,
+  template<int NUM_SUPPORT_POINTS,
             typename BASIS_GRADIENT,
-            typename CBF >
+            typename CBF>
   GEOSX_HOST_DEVICE
-  void diagBTDB( BASIS_GRADIENT const & gradN,
-                 real64 ( &diagElementStiffness )[NUM_SUPPORT_POINTS*3],
-                 CBF && callbackFunction );
+  void diagBTDB(BASIS_GRADIENT const & gradN,
+                 real64 (&diagElementStiffness)[NUM_SUPPORT_POINTS*3],
+                 CBF && callbackFunction);
 
-  template< int NUM_SUPPORT_POINTS,
+  template<int NUM_SUPPORT_POINTS,
             typename BASIS_GRADIENT,
-            typename CBF >
+            typename CBF>
   GEOSX_HOST_DEVICE
-  void diagRowSumBTDB( BASIS_GRADIENT const & gradN,
-                       real64 ( &diagSumElementStiffness )[NUM_SUPPORT_POINTS*3],
-                       CBF && callbackFunction );
+  void diagRowSumBTDB(BASIS_GRADIENT const & gradN,
+                       real64 (&diagSumElementStiffness)[NUM_SUPPORT_POINTS*3],
+                       CBF && callbackFunction);
 
 };
 
 
-template< int NUM_SUPPORT_POINTS,
+template<int NUM_SUPPORT_POINTS,
           typename BASIS_GRADIENT,
-          typename CBF >
+          typename CBF>
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-void SolidModelDiscretizationOps::upperBTDB( BASIS_GRADIENT const & gradN,
+void SolidModelDiscretizationOps::upperBTDB(BASIS_GRADIENT const & gradN,
                                              real64 (& elementStiffness)[NUM_SUPPORT_POINTS*3][NUM_SUPPORT_POINTS*3],
-                                             CBF && callbackFunction )
+                                             CBF && callbackFunction)
 {
-  for( int a=0; a<NUM_SUPPORT_POINTS; ++a )
+  for(int a=0; a<NUM_SUPPORT_POINTS; ++a)
   {
-    for( int b=a; b<NUM_SUPPORT_POINTS; ++b )
+    for(int b=a; b<NUM_SUPPORT_POINTS; ++b)
     {
       real64 const gradNa_gradNb[3][3] =
-      { { gradN[a][0] * gradN[b][0], gradN[a][0] * gradN[b][1], gradN[a][0] * gradN[b][2] },
-        { gradN[a][1] * gradN[b][0], gradN[a][1] * gradN[b][1], gradN[a][1] * gradN[b][2] },
-        { gradN[a][2] * gradN[b][0], gradN[a][2] * gradN[b][1], gradN[a][2] * gradN[b][2] } };
-      callbackFunction( a, b, gradNa_gradNb, elementStiffness );
+      {{gradN[a][0] * gradN[b][0], gradN[a][0] * gradN[b][1], gradN[a][0] * gradN[b][2]},
+        {gradN[a][1] * gradN[b][0], gradN[a][1] * gradN[b][1], gradN[a][1] * gradN[b][2]},
+        {gradN[a][2] * gradN[b][0], gradN[a][2] * gradN[b][1], gradN[a][2] * gradN[b][2]}};
+      callbackFunction(a, b, gradNa_gradNb, elementStiffness);
     }
   }
 }
 
 
-template< int NUM_SUPPORT_POINTS >
+template<int NUM_SUPPORT_POINTS>
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-void SolidModelDiscretizationOps::fillLowerBTDB( real64 ( & elementStiffness )[NUM_SUPPORT_POINTS*3][NUM_SUPPORT_POINTS*3] )
+void SolidModelDiscretizationOps::fillLowerBTDB(real64 (& elementStiffness)[NUM_SUPPORT_POINTS*3][NUM_SUPPORT_POINTS*3])
 {
-  for( int row=1; row<NUM_SUPPORT_POINTS*3; ++row )
+  for(int row=1; row<NUM_SUPPORT_POINTS*3; ++row)
   {
-    for( int col=0; col<row; ++col )
+    for(int col=0; col<row; ++col)
     {
       elementStiffness[row][col] = elementStiffness[col][row];
     }
@@ -106,41 +106,41 @@ void SolidModelDiscretizationOps::fillLowerBTDB( real64 ( & elementStiffness )[N
 
 
 
-template< int NUM_SUPPORT_POINTS,
+template<int NUM_SUPPORT_POINTS,
           typename BASIS_GRADIENT,
-          typename CBF >
+          typename CBF>
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-void SolidModelDiscretizationOps::diagBTDB( BASIS_GRADIENT const & gradN,
+void SolidModelDiscretizationOps::diagBTDB(BASIS_GRADIENT const & gradN,
                                             real64 (& diagElementStiffness)[NUM_SUPPORT_POINTS*3],
-                                            CBF && callbackFunction )
+                                            CBF && callbackFunction)
 {
-  for( int a=0; a<NUM_SUPPORT_POINTS; ++a )
+  for(int a=0; a<NUM_SUPPORT_POINTS; ++a)
   {
-    real64 const gradN_gradN[3] = { gradN[a][0] * gradN[a][0], gradN[a][1] * gradN[a][1], gradN[a][2] * gradN[a][2] };
+    real64 const gradN_gradN[3] = {gradN[a][0] * gradN[a][0], gradN[a][1] * gradN[a][1], gradN[a][2] * gradN[a][2]};
 
-    callbackFunction( a, gradN_gradN, diagElementStiffness );
+    callbackFunction(a, gradN_gradN, diagElementStiffness);
   }
 }
 
-template< int NUM_SUPPORT_POINTS,
+template<int NUM_SUPPORT_POINTS,
           typename BASIS_GRADIENT,
-          typename CBF >
+          typename CBF>
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-void SolidModelDiscretizationOps::diagRowSumBTDB( BASIS_GRADIENT const & gradN,
-                                                  real64 ( & diagSumElementStiffness )[NUM_SUPPORT_POINTS*3],
-                                                  CBF && callbackFunction )
+void SolidModelDiscretizationOps::diagRowSumBTDB(BASIS_GRADIENT const & gradN,
+                                                  real64 (& diagSumElementStiffness)[NUM_SUPPORT_POINTS*3],
+                                                  CBF && callbackFunction)
 {
-  for( int a=0; a<NUM_SUPPORT_POINTS; ++a )
+  for(int a=0; a<NUM_SUPPORT_POINTS; ++a)
   {
-    for( int b=a; b<NUM_SUPPORT_POINTS; ++b )
+    for(int b=a; b<NUM_SUPPORT_POINTS; ++b)
     {
       real64 const gradNa_gradNb[3][3] =
-      { { gradN[a][0] * gradN[b][0], gradN[a][0] * gradN[b][1], gradN[a][0] * gradN[b][2] },
-        { gradN[a][1] * gradN[b][0], gradN[a][1] * gradN[b][1], gradN[a][1] * gradN[b][2] },
-        { gradN[a][2] * gradN[b][0], gradN[a][2] * gradN[b][1], gradN[a][2] * gradN[b][2] } };
-      callbackFunction( a, b, gradNa_gradNb, diagSumElementStiffness );
+      {{gradN[a][0] * gradN[b][0], gradN[a][0] * gradN[b][1], gradN[a][0] * gradN[b][2]},
+        {gradN[a][1] * gradN[b][0], gradN[a][1] * gradN[b][1], gradN[a][1] * gradN[b][2]},
+        {gradN[a][2] * gradN[b][0], gradN[a][2] * gradN[b][1], gradN[a][2] * gradN[b][2]}};
+      callbackFunction(a, b, gradNa_gradNb, diagSumElementStiffness);
     }
   }
 }

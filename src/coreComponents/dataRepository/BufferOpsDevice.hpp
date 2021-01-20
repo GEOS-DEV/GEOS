@@ -33,173 +33,173 @@ namespace bufferOps
 {
 
 //------------------------------------------------------------------------------
-template< bool DO_PACKING, typename T >
+template<bool DO_PACKING, typename T>
 GEOSX_HOST_DEVICE
 localIndex
-PackPointerDevice( buffer_unit_type * & buffer,
+PackPointerDevice(buffer_unit_type * & buffer,
                    T const * const GEOSX_RESTRICT var,
-                   localIndex const length );
+                   localIndex const length);
 
 //------------------------------------------------------------------------------
-template< typename T >
+template<typename T>
 GEOSX_HOST_DEVICE
 localIndex
-UnpackPointerDevice( buffer_unit_type const * & buffer,
+UnpackPointerDevice(buffer_unit_type const * & buffer,
                      T * const GEOSX_RESTRICT var,
-                     localIndex const expectedLength );
+                     localIndex const expectedLength);
 
 //------------------------------------------------------------------------------
-template< bool DO_PACKING, typename T, int NDIM, int USD >
-typename std::enable_if< can_memcpy< T >, localIndex >::type
-PackDevice( buffer_unit_type * & buffer,
-            ArrayView< T const, NDIM, USD > const & var );
+template<bool DO_PACKING, typename T, int NDIM, int USD>
+typename std::enable_if<can_memcpy<T>, localIndex>::type
+PackDevice(buffer_unit_type * & buffer,
+            ArrayView<T const, NDIM, USD> const & var);
 
 //------------------------------------------------------------------------------
-template< bool DO_PACKING, typename T >
+template<bool DO_PACKING, typename T>
 GEOSX_HOST_DEVICE
 localIndex
-PackDevice( buffer_unit_type * & GEOSX_UNUSED_PARAM( buffer ),
-            T const & GEOSX_UNUSED_PARAM( var ) )
+PackDevice(buffer_unit_type * & GEOSX_UNUSED_PARAM(buffer),
+            T const & GEOSX_UNUSED_PARAM(var))
 {
-  GEOSX_ERROR( "Trying to pack data type (" << LvArray::system::demangleType< T >() << ") on device but type is not packable." );
+  GEOSX_ERROR("Trying to pack data type (" <<LvArray::system::demangleType<T>() <<") on device but type is not packable.");
   return 0;
 }
 
 //------------------------------------------------------------------------------
-template< bool DO_PACKING, typename T, int NDIM, int USD, typename T_INDICES >
-typename std::enable_if< can_memcpy< T >, localIndex >::type
-PackByIndexDevice( buffer_unit_type * & buffer,
-                   ArrayView< T const, NDIM, USD > const & var,
-                   T_INDICES const & indices );
+template<bool DO_PACKING, typename T, int NDIM, int USD, typename T_INDICES>
+typename std::enable_if<can_memcpy<T>, localIndex>::type
+PackByIndexDevice(buffer_unit_type * & buffer,
+                   ArrayView<T const, NDIM, USD> const & var,
+                   T_INDICES const & indices);
 
 //------------------------------------------------------------------------------
-template< bool DO_PACKING, typename T, typename T_INDICES >
+template<bool DO_PACKING, typename T, typename T_INDICES>
 localIndex
-PackByIndexDevice( buffer_unit_type * & GEOSX_UNUSED_PARAM( buffer ),
-                   T const & GEOSX_UNUSED_PARAM( var ),
-                   T_INDICES const & GEOSX_UNUSED_PARAM( indices ) )
+PackByIndexDevice(buffer_unit_type * & GEOSX_UNUSED_PARAM(buffer),
+                   T const & GEOSX_UNUSED_PARAM(var),
+                   T_INDICES const & GEOSX_UNUSED_PARAM(indices))
 {
-  GEOSX_ERROR( "Trying to pack data type (" << LvArray::system::demangleType< T >() << ") on device but type is not packable by index." );
+  GEOSX_ERROR("Trying to pack data type (" <<LvArray::system::demangleType<T>() <<") on device but type is not packable by index.");
   return 0;
 }
 
 //------------------------------------------------------------------------------
-template< typename T, int NDIM, int USD >
-typename std::enable_if< can_memcpy< T >, localIndex >::type
-UnpackDevice( buffer_unit_type const * & buffer,
-              ArrayView< T, NDIM, USD > const & var );
+template<typename T, int NDIM, int USD>
+typename std::enable_if<can_memcpy<T>, localIndex>::type
+UnpackDevice(buffer_unit_type const * & buffer,
+              ArrayView<T, NDIM, USD> const & var);
 
 //------------------------------------------------------------------------------
-template< typename T >
+template<typename T>
 localIndex
-UnpackDevice( buffer_unit_type const * & GEOSX_UNUSED_PARAM( buffer ),
-              T & GEOSX_UNUSED_PARAM( var ) )
+UnpackDevice(buffer_unit_type const * & GEOSX_UNUSED_PARAM(buffer),
+              T & GEOSX_UNUSED_PARAM(var))
 {
-  GEOSX_ERROR( "Trying to unpack data type (" << LvArray::system::demangleType< T >() << ") on device but type is not packable." );
+  GEOSX_ERROR("Trying to unpack data type (" <<LvArray::system::demangleType<T>() <<") on device but type is not packable.");
   return 0;
 }
 
 //------------------------------------------------------------------------------
-template< typename T, int NDIM, int USD, typename T_INDICES >
-typename std::enable_if< can_memcpy< T >, localIndex >::type
-UnpackByIndexDevice ( buffer_unit_type const * & buffer,
-                      ArrayView< T, NDIM, USD > const & var,
-                      T_INDICES const & indices );
+template<typename T, int NDIM, int USD, typename T_INDICES>
+typename std::enable_if<can_memcpy<T>, localIndex>::type
+UnpackByIndexDevice (buffer_unit_type const * & buffer,
+                      ArrayView<T, NDIM, USD> const & var,
+                      T_INDICES const & indices);
 
 //------------------------------------------------------------------------------
-template< typename T, typename T_INDICES >
+template<typename T, typename T_INDICES>
 localIndex
-UnpackByIndexDevice( buffer_unit_type const * & GEOSX_UNUSED_PARAM( buffer ),
-                     T & GEOSX_UNUSED_PARAM( var ),
-                     T_INDICES const & GEOSX_UNUSED_PARAM( indices ) )
+UnpackByIndexDevice(buffer_unit_type const * & GEOSX_UNUSED_PARAM(buffer),
+                     T & GEOSX_UNUSED_PARAM(var),
+                     T_INDICES const & GEOSX_UNUSED_PARAM(indices))
 {
-  GEOSX_ERROR( "Trying to unpack data type (" << LvArray::system::demangleType< T >() << ") but type is not packable by index." );
+  GEOSX_ERROR("Trying to unpack data type (" <<LvArray::system::demangleType<T>() <<") but type is not packable by index.");
   return 0;
 }
 
 
 //------------------------------------------------------------------------------
-template< bool DO_PACKING, typename T >
+template<bool DO_PACKING, typename T>
 GEOSX_HOST_DEVICE
 localIndex
-PackDataPointerDevice( buffer_unit_type * & buffer,
+PackDataPointerDevice(buffer_unit_type * & buffer,
                        T const * const GEOSX_RESTRICT var,
-                       localIndex const length );
+                       localIndex const length);
 
 //------------------------------------------------------------------------------
-template< typename T >
+template<typename T>
 GEOSX_HOST_DEVICE
 localIndex
-UnpackDataPointerDevice( buffer_unit_type const * & buffer,
+UnpackDataPointerDevice(buffer_unit_type const * & buffer,
                          T * const GEOSX_RESTRICT var,
-                         localIndex const expectedLength );
+                         localIndex const expectedLength);
 
 //------------------------------------------------------------------------------
-template< bool DO_PACKING, typename T, int NDIM, int USD >
-typename std::enable_if< can_memcpy< T >, localIndex >::type
-PackDataDevice( buffer_unit_type * & buffer,
-                ArrayView< T const, NDIM, USD > const & var );
+template<bool DO_PACKING, typename T, int NDIM, int USD>
+typename std::enable_if<can_memcpy<T>, localIndex>::type
+PackDataDevice(buffer_unit_type * & buffer,
+                ArrayView<T const, NDIM, USD> const & var);
 
 //------------------------------------------------------------------------------
-template< bool DO_PACKING, typename T >
+template<bool DO_PACKING, typename T>
 GEOSX_HOST_DEVICE
 localIndex
-PackDataDevice( buffer_unit_type * & GEOSX_UNUSED_PARAM( buffer ),
-                T const & GEOSX_UNUSED_PARAM( var ) )
+PackDataDevice(buffer_unit_type * & GEOSX_UNUSED_PARAM(buffer),
+                T const & GEOSX_UNUSED_PARAM(var))
 {
-  GEOSX_ERROR( "Trying to pack data type (" << LvArray::system::demangleType< T >() << ") on device but type is not packable." );
+  GEOSX_ERROR("Trying to pack data type (" <<LvArray::system::demangleType<T>() <<") on device but type is not packable.");
   return 0;
 }
 
 //------------------------------------------------------------------------------
-template< bool DO_PACKING, typename T, int NDIM, int USD, typename T_INDICES >
-typename std::enable_if< can_memcpy< T >, localIndex >::type
-PackDataByIndexDevice( buffer_unit_type * & buffer,
-                       ArrayView< T const, NDIM, USD > const & var,
-                       T_INDICES const & indices );
+template<bool DO_PACKING, typename T, int NDIM, int USD, typename T_INDICES>
+typename std::enable_if<can_memcpy<T>, localIndex>::type
+PackDataByIndexDevice(buffer_unit_type * & buffer,
+                       ArrayView<T const, NDIM, USD> const & var,
+                       T_INDICES const & indices);
 
 //------------------------------------------------------------------------------
-template< bool DO_PACKING, typename T, typename T_INDICES >
+template<bool DO_PACKING, typename T, typename T_INDICES>
 localIndex
-PackDataByIndexDevice( buffer_unit_type * & GEOSX_UNUSED_PARAM( buffer ),
-                       T const & GEOSX_UNUSED_PARAM( var ),
-                       T_INDICES const & GEOSX_UNUSED_PARAM( indices ) )
+PackDataByIndexDevice(buffer_unit_type * & GEOSX_UNUSED_PARAM(buffer),
+                       T const & GEOSX_UNUSED_PARAM(var),
+                       T_INDICES const & GEOSX_UNUSED_PARAM(indices))
 {
-  GEOSX_ERROR( "Trying to pack data type (" << LvArray::system::demangleType< T >() << ") on device but type is not packable by index." );
+  GEOSX_ERROR("Trying to pack data type (" <<LvArray::system::demangleType<T>() <<") on device but type is not packable by index.");
   return 0;
 }
 
 //------------------------------------------------------------------------------
-template< typename T, int NDIM, int USD >
-typename std::enable_if< can_memcpy< T >, localIndex >::type
-UnpackDataDevice( buffer_unit_type const * & buffer,
-                  ArrayView< T, NDIM, USD > const & var );
+template<typename T, int NDIM, int USD>
+typename std::enable_if<can_memcpy<T>, localIndex>::type
+UnpackDataDevice(buffer_unit_type const * & buffer,
+                  ArrayView<T, NDIM, USD> const & var);
 
 //------------------------------------------------------------------------------
-template< typename T >
+template<typename T>
 localIndex
-UnpackDataDevice( buffer_unit_type const * & GEOSX_UNUSED_PARAM( buffer ),
-                  T & GEOSX_UNUSED_PARAM( var ) )
+UnpackDataDevice(buffer_unit_type const * & GEOSX_UNUSED_PARAM(buffer),
+                  T & GEOSX_UNUSED_PARAM(var))
 {
-  GEOSX_ERROR( "Trying to unpack data type (" << LvArray::system::demangleType< T >() << ") on device but type is not packable." );
+  GEOSX_ERROR("Trying to unpack data type (" <<LvArray::system::demangleType<T>() <<") on device but type is not packable.");
   return 0;
 }
 
 //------------------------------------------------------------------------------
-template< typename T, int NDIM, int USD, typename T_INDICES >
-typename std::enable_if< can_memcpy< T >, localIndex >::type
-UnpackDataByIndexDevice ( buffer_unit_type const * & buffer,
-                          ArrayView< T, NDIM, USD > const & var,
-                          T_INDICES const & indices );
+template<typename T, int NDIM, int USD, typename T_INDICES>
+typename std::enable_if<can_memcpy<T>, localIndex>::type
+UnpackDataByIndexDevice (buffer_unit_type const * & buffer,
+                          ArrayView<T, NDIM, USD> const & var,
+                          T_INDICES const & indices);
 
 //------------------------------------------------------------------------------
-template< typename T, typename T_INDICES >
+template<typename T, typename T_INDICES>
 localIndex
-UnpackDataByIndexDevice( buffer_unit_type const * & GEOSX_UNUSED_PARAM( buffer ),
-                         T & GEOSX_UNUSED_PARAM( var ),
-                         T_INDICES const & GEOSX_UNUSED_PARAM( indices ) )
+UnpackDataByIndexDevice(buffer_unit_type const * & GEOSX_UNUSED_PARAM(buffer),
+                         T & GEOSX_UNUSED_PARAM(var),
+                         T_INDICES const & GEOSX_UNUSED_PARAM(indices))
 {
-  GEOSX_ERROR( "Trying to unpack data type (" << LvArray::system::demangleType< T >() << ") but type is not packable by index." );
+  GEOSX_ERROR("Trying to unpack data type (" <<LvArray::system::demangleType<T>() <<") but type is not packable by index.");
   return 0;
 }
 

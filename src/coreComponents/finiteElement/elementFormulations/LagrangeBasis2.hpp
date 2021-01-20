@@ -40,7 +40,7 @@ class LagrangeBasis2
    */
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  constexpr static real64 value0( constexpr real64 xi )
+  constexpr static real64 value0(constexpr real64 xi)
   {
     constexpr real64 xi_div2 = 0.5 * xi;
     return -xi_div2 + xi_div2 * xi;
@@ -53,7 +53,7 @@ class LagrangeBasis2
    */
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  constexpr static real64 value1( constexpr real64 xi )
+  constexpr static real64 value1(constexpr real64 xi)
   {
     return 1.0 - xi * xi;
   }
@@ -65,7 +65,7 @@ class LagrangeBasis2
    */
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  constexpr static real64 value2( constexpr real64 xi )
+  constexpr static real64 value2(constexpr real64 xi)
   {
     constexpr real64 xi_div2 = 0.5 * xi;
     return xi_div2 + xi_div2 * xi;
@@ -79,7 +79,7 @@ class LagrangeBasis2
    */
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  constexpr static real64 gradient0( constexpr real64 xi )
+  constexpr static real64 gradient0(constexpr real64 xi)
   {
     return -0.5 + xi;
   }
@@ -92,7 +92,7 @@ class LagrangeBasis2
    */
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  constexpr static real64 gradient1( constexpr real64 xi )
+  constexpr static real64 gradient1(constexpr real64 xi)
   {
     return -2 * xi;
   }
@@ -105,7 +105,7 @@ class LagrangeBasis2
    */
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  constexpr static real64 gradient2( constexpr real64 xi )
+  constexpr static real64 gradient2(constexpr real64 xi)
   {
     return 0.5 + xi;
   }
@@ -159,9 +159,9 @@ class LagrangeBasis2
      */
     GEOSX_HOST_DEVICE
     GEOSX_FORCE_INLINE
-    constexpr static int linearIndex( constexpr int i,
+    constexpr static int linearIndex(constexpr int i,
                                       constexpr int j,
-                                      constexpr int k )
+                                      constexpr int k)
     {
       return i + 3 * j + 9 * k;
     }
@@ -179,15 +179,15 @@ class LagrangeBasis2
      */
     GEOSX_HOST_DEVICE
     GEOSX_FORCE_INLINE
-    constexpr static void multiIndex( constexpr int linearIndex,
+    constexpr static void multiIndex(constexpr int linearIndex,
                                       int & i0,
                                       int & i1,
-                                      int & i2 )
+                                      int & i2)
     {
-      i2 = ( linearIndex * 29 ) >> 8;
+      i2 = (linearIndex * 29)>> 8;
       //i2 = a/9;
 
-      i1 = ( ( linearIndex * 22 ) >> 6 ) - i2 * 3;
+      i1 = ((linearIndex * 22)>> 6) - i2 * 3;
       //i1 = a/3 - i2 * 3;
 
       i0 = linearIndex - i1 * 3 - i2 * 9;

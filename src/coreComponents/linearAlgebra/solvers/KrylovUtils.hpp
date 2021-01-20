@@ -21,22 +21,22 @@
 #include "codingUtilities/Utilities.hpp"
 
 /// Tolerance for division by zero in Krylov solvers
-#define GEOSX_KRYLOV_MIN_DIV ::LvArray::NumericLimits< real64 >::epsilon
+#define GEOSX_KRYLOV_MIN_DIV ::LvArray::NumericLimits<real64>::epsilon
 
 #ifndef GEOSX_KRYLOV_BREAKDOWN_IF_ZERO
 /**
  * @brief Exit solver iteration and report a breakdown if value too close to zero.
  * @param VAR the variable or expression
  */
-#define GEOSX_KRYLOV_BREAKDOWN_IF_ZERO( VAR ) \
-  do { \
-    if( isZero( VAR, GEOSX_KRYLOV_MIN_DIV ) ) \
-    { \
-      GEOSX_LOG_LEVEL_RANK_0( 1, "Breakdown in " << methodName() << ": " << #VAR << " = " << VAR ); \
+#define GEOSX_KRYLOV_BREAKDOWN_IF_ZERO(VAR) \
+  do {\
+    if(isZero(VAR, GEOSX_KRYLOV_MIN_DIV)) \
+    {\
+      GEOSX_LOG_LEVEL_RANK_0(1, "Breakdown in " <<methodName() <<": " <<#VAR <<" = " <<VAR); \
       m_result.status = LinearSolverResult::Status::Breakdown; \
       break; \
     } \
-  } while( false )
+  } while(false)
 #endif
 
 #endif //GEOSX_LINEARALGEBRA_SOLVERS_KRYLOVUTILS_HPP_

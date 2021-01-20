@@ -43,8 +43,8 @@ public:
    * @param name name of the object in the data hierarchy.
    * @param parent pointer to the parent group in the data hierarchy.
    */
-  GeometricObjectManager( std::string const & name,
-                          Group * const parent );
+  GeometricObjectManager(std::string const & name,
+                          Group * const parent);
 
   /**
    * @brief Default destructor.
@@ -53,7 +53,7 @@ public:
 
   ///@}
 
-  virtual Group * CreateChild( string const & childKey, string const & childName ) override;
+  virtual Group * CreateChild(string const & childKey, string const & childName) override;
 
   virtual void ExpandObjectCatalogs() override;
 

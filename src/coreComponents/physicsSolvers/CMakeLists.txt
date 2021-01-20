@@ -3,7 +3,7 @@ add_subdirectory (GEOSX_PTP)
 #
 # Specify solver headers
 #
-set( physicsSolvers_headers
+set(physicsSolvers_headers
      LinearSolverParameters.hpp
      NonlinearSolverParameters.hpp
      PhysicsSolverManager.hpp
@@ -56,7 +56,7 @@ set( physicsSolvers_headers
 #
 # Specify solver sources
 #
-set( physicsSolvers_sources
+set(physicsSolvers_sources
      LinearSolverParameters.cpp
      NonlinearSolverParameters.cpp
      PhysicsSolverManager.cpp
@@ -93,41 +93,41 @@ set( physicsSolvers_sources
      surfaceGeneration/EmbeddedSurfaceGenerator.cpp
      )
 
-if( BUILD_OBJ_LIBS)
-  set( dependencyList common constitutive dataRepository linearAlgebra )
+if(BUILD_OBJ_LIBS)
+  set(dependencyList common constitutive dataRepository linearAlgebra)
 else()
-  set( dependencyList common linearAlgebra )
+  set(dependencyList common linearAlgebra)
 endif()
 
 
-set( externalComponentDeps "" )
-if( ENABLE_GEOSX_PTP )
+set(externalComponentDeps "")
+if(ENABLE_GEOSX_PTP)
   message(STATUS "Adding GEOSX_PTP to physics solver dependencies")
-  list( APPEND externalComponentDeps GEOSX_PTP )
+  list(APPEND externalComponentDeps GEOSX_PTP)
 endif()
 
-if ( ENABLE_OPENMP )
-  set( dependencyList ${dependencyList} openmp )
+if (ENABLE_OPENMP)
+  set(dependencyList ${dependencyList} openmp)
 endif()
 
-if ( ENABLE_CUDA )
-  set( dependencyList ${dependencyList} cuda )
+if (ENABLE_CUDA)
+  set(dependencyList ${dependencyList} cuda)
 endif()
 
-blt_add_library( NAME                  physicsSolvers
+blt_add_library(NAME                  physicsSolvers
                  SOURCES               ${physicsSolvers_sources}
                  HEADERS               ${physicsSolvers_headers}
                  DEPENDS_ON            ${dependencyList} ${externalComponentDeps}
                  OBJECT                ${buildAsObj}
                )
 
-target_include_directories( physicsSolvers PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
-if( externalComponentDeps )
-  target_include_directories( physicsSolvers PUBLIC ${CMAKE_SOURCE_DIR}/externalComponents)
+target_include_directories(physicsSolvers PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)
+if(externalComponentDeps)
+  target_include_directories(physicsSolvers PUBLIC ${CMAKE_SOURCE_DIR}/externalComponents)
 endif()
 
 
-geosx_add_code_checks( PREFIX physicsSolvers )
+geosx_add_code_checks(PREFIX physicsSolvers)
 
-add_subdirectory( fluidFlow/unitTests )
-add_subdirectory( fluidFlow/wells/unitTests )
+add_subdirectory(fluidFlow/unitTests)
+add_subdirectory(fluidFlow/wells/unitTests)

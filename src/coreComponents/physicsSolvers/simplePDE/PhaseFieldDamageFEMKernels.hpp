@@ -49,23 +49,23 @@ namespace geosx
  * the test and trial spaces are specified as `1` when specifying the base
  * class.
  */
-template< typename SUBREGION_TYPE,
+template<typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
-          typename FE_TYPE >
+          typename FE_TYPE>
 class PhaseFieldDamageKernel :
-  public finiteElement::ImplicitKernelBase< SUBREGION_TYPE,
+  public finiteElement::ImplicitKernelBase<SUBREGION_TYPE,
                                             CONSTITUTIVE_TYPE,
                                             FE_TYPE,
                                             1,
-                                            1 >
+                                            1>
 {
 public:
   /// An alias for the base class.
-  using Base = finiteElement::ImplicitKernelBase< SUBREGION_TYPE,
+  using Base = finiteElement::ImplicitKernelBase<SUBREGION_TYPE,
                                                   CONSTITUTIVE_TYPE,
                                                   FE_TYPE,
                                                   1,
-                                                  1 >;
+                                                  1>;
 
   using Base::numDofPerTestSupportPoint;
   using Base::numDofPerTrialSupportPoint;
@@ -86,19 +86,19 @@ public:
    * @param fieldName The name of the primary field
    *                  (i.e. Temperature, Pressure, etc.)
    */
-  PhaseFieldDamageKernel( NodeManager const & nodeManager,
+  PhaseFieldDamageKernel(NodeManager const & nodeManager,
                           EdgeManager const & edgeManager,
                           FaceManager const & faceManager,
                           SUBREGION_TYPE const & elementSubRegion,
                           FE_TYPE const & finiteElementSpace,
                           CONSTITUTIVE_TYPE * const inputConstitutiveType,
-                          arrayView1d< globalIndex const > const & inputDofNumber,
+                          arrayView1d<globalIndex const> const & inputDofNumber,
                           globalIndex const rankOffset,
-                          CRSMatrixView< real64, globalIndex const > const & inputMatrix,
-                          arrayView1d< real64 > const & inputRhs,
+                          CRSMatrixView<real64, globalIndex const> const & inputMatrix,
+                          arrayView1d<real64> const & inputRhs,
                           string const & fieldName,
-                          int const localDissipationOption ):
-    Base( nodeManager,
+                          int const localDissipationOption):
+    Base(nodeManager,
           edgeManager,
           faceManager,
           elementSubRegion,
@@ -107,10 +107,10 @@ public:
           inputDofNumber,
           rankOffset,
           inputMatrix,
-          inputRhs ),
-    m_X( nodeManager.referencePosition()),
-    m_nodalDamage( nodeManager.template getReference< array1d< real64 > >( fieldName )),
-    m_localDissipationOption( localDissipationOption )
+          inputRhs),
+    m_X(nodeManager.referencePosition()),
+    m_nodalDamage(nodeManager.template getReference<array1d<real64>>(fieldName)),
+    m_localDissipationOption(localDissipationOption)
   {}
 
   //***************************************************************************
@@ -131,7 +131,7 @@ public:
     StackVariables():
       Base::StackVariables(),
             xLocal(),
-            nodalDamageLocal{ 0.0 }
+            nodalDamageLocal{0.0}
     {}
 
 #if !defined(CALC_FEM_SHAPE_IN_KERNEL)
@@ -139,7 +139,7 @@ public:
     int xLocal;
 #else
     /// C-array stack storage for element local the nodal positions.
-    real64 xLocal[ numNodesPerElem ][ 3 ];
+    real64 xLocal[numNodesPerElem][3];
 #endif
 
     /// C-array storage for the element local primary field variable.
@@ -157,18 +157,18 @@ public:
    */
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  void setup( localIndex const k,
-              StackVariables & stack ) const
+  void setup(localIndex const k,
+              StackVariables & stack) const
   {
-    for( localIndex a=0; a<numNodesPerElem; ++a )
+    for(localIndex a=0; a<numNodesPerElem; ++a)
     {
-      localIndex const localNodeIndex = m_elemsToNodes( k, a );
+      localIndex const localNodeIndex = m_elemsToNodes(k, a);
 
 #if defined(CALC_FEM_SHAPE_IN_KERNEL)
-      LvArray::tensorOps::copy< 3 >( stack.xLocal[ a ], m_X[ localNodeIndex ] );
+      LvArray::tensorOps::copy<3>(stack.xLocal[a], m_X[localNodeIndex]);
 #endif
 
-      stack.nodalDamageLocal[ a ] = m_nodalDamage[ localNodeIndex ];
+      stack.nodalDamageLocal[a] = m_nodalDamage[localNodeIndex];
       stack.localRowDofIndex[a] = m_dofNumber[localNodeIndex];
       stack.localColDofIndex[a] = m_dofNumber[localNodeIndex];
     }
@@ -179,62 +179,62 @@ public:
    */
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  void quadraturePointKernel( localIndex const k,
+  void quadraturePointKernel(localIndex const k,
                               localIndex const q,
-                              StackVariables & stack ) const
+                              StackVariables & stack) const
   {
 
-    real64 const strainEnergyDensity = m_constitutiveUpdate.calculateActiveStrainEnergyDensity( k, q );
+    real64 const strainEnergyDensity = m_constitutiveUpdate.calculateActiveStrainEnergyDensity(k, q);
     real64 const ell = m_constitutiveUpdate.getRegularizationLength();
     real64 const Gc = m_constitutiveUpdate.getCriticalFractureEnergy();
     real64 const threshold = m_constitutiveUpdate.getEnergyThreshold();
 
     real64 D = 0;                                                                   //max between threshold and
                                                                                     // Elastic energy
-    if( m_localDissipationOption == 1 )
+    if(m_localDissipationOption == 1)
     {
-      D = fmax( threshold, strainEnergyDensity );
+      D = fmax(threshold, strainEnergyDensity);
     }
 
     //Interpolate d and grad_d
-    real64 N[ numNodesPerElem ];
-    real64 dNdX[ numNodesPerElem ][ 3 ];
-    real64 const detJ = m_finiteElementSpace.template getGradN< FE_TYPE >( k, q, stack.xLocal, dNdX );
-    FE_TYPE::calcN( q, N );
+    real64 N[numNodesPerElem];
+    real64 dNdX[numNodesPerElem][3];
+    real64 const detJ = m_finiteElementSpace.template getGradN<FE_TYPE>(k, q, stack.xLocal, dNdX);
+    FE_TYPE::calcN(q, N);
 
     real64 qp_damage = 0.0;
     real64 qp_grad_damage[3] = {0, 0, 0};
-    FE_TYPE::valueAndGradient( N, dNdX, stack.nodalDamageLocal, qp_damage, qp_grad_damage );
+    FE_TYPE::valueAndGradient(N, dNdX, stack.nodalDamageLocal, qp_damage, qp_grad_damage);
 
-    for( localIndex a = 0; a < numNodesPerElem; ++a )
+    for(localIndex a = 0; a <numNodesPerElem; ++a)
     {
-      if( m_localDissipationOption == 1 )
+      if(m_localDissipationOption == 1)
       {
-        stack.localResidual[ a ] += detJ * ( -3 * N[a] / 16  -
-                                             0.375*pow( ell, 2 ) * LvArray::tensorOps::AiBi< 3 >( qp_grad_damage, dNdX[a] ) -
-                                             (0.5 * ell * D/Gc) * N[a] * m_constitutiveUpdate.GetDegradationDerivative( qp_damage ));
+        stack.localResidual[a] += detJ * (-3 * N[a] / 16  -
+                                             0.375*pow(ell, 2) * LvArray::tensorOps::AiBi<3>(qp_grad_damage, dNdX[a]) -
+                                             (0.5 * ell * D/Gc) * N[a] * m_constitutiveUpdate.GetDegradationDerivative(qp_damage));
       }
       else
       {
-        stack.localResidual[ a ] -= detJ * ( N[a] * qp_damage +
-                                             (pow( ell, 2 ) * LvArray::tensorOps::AiBi< 3 >( qp_grad_damage, dNdX[a] ) +
-                                              N[a] * m_constitutiveUpdate.GetDegradationDerivative( qp_damage ) * (ell*strainEnergyDensity/Gc)) );
+        stack.localResidual[a] -= detJ * (N[a] * qp_damage +
+                                             (pow(ell, 2) * LvArray::tensorOps::AiBi<3>(qp_grad_damage, dNdX[a]) +
+                                              N[a] * m_constitutiveUpdate.GetDegradationDerivative(qp_damage) * (ell*strainEnergyDensity/Gc)));
 
       }
-      for( localIndex b = 0; b < numNodesPerElem; ++b )
+      for(localIndex b = 0; b <numNodesPerElem; ++b)
       {
-        if( m_localDissipationOption == 1 )
+        if(m_localDissipationOption == 1)
         {
-          stack.localJacobian[ a ][ b ] -= detJ *
-                                           (0.375*pow( ell, 2 ) * LvArray::tensorOps::AiBi< 3 >( dNdX[a], dNdX[b] ) +
-                                            (0.5 * ell * D/Gc) * m_constitutiveUpdate.GetDegradationSecondDerivative( qp_damage ) * N[a] * N[b]);
+          stack.localJacobian[a][b] -= detJ *
+                                           (0.375*pow(ell, 2) * LvArray::tensorOps::AiBi<3>(dNdX[a], dNdX[b]) +
+                                            (0.5 * ell * D/Gc) * m_constitutiveUpdate.GetDegradationSecondDerivative(qp_damage) * N[a] * N[b]);
 
         }
         else
         {
-          stack.localJacobian[ a ][ b ] -= detJ *
-                                           ( pow( ell, 2 ) * LvArray::tensorOps::AiBi< 3 >( dNdX[a], dNdX[b] ) +
-                                             N[a] * N[b] * (1 + m_constitutiveUpdate.GetDegradationSecondDerivative( qp_damage ) * ell*strainEnergyDensity/Gc )
+          stack.localJacobian[a][b] -= detJ *
+                                           (pow(ell, 2) * LvArray::tensorOps::AiBi<3>(dNdX[a], dNdX[b]) +
+                                             N[a] * N[b] * (1 + m_constitutiveUpdate.GetDegradationSecondDerivative(qp_damage) * ell*strainEnergyDensity/Gc)
                                            );
         }
       }
@@ -250,23 +250,23 @@ public:
    */
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  real64 complete( localIndex const k,
-                   StackVariables & stack ) const
+  real64 complete(localIndex const k,
+                   StackVariables & stack) const
   {
-    GEOSX_UNUSED_VAR( k );
+    GEOSX_UNUSED_VAR(k);
     real64 maxForce = 0;
 
-    for( int a = 0; a < numNodesPerElem; ++a )
+    for(int a = 0; a <numNodesPerElem; ++a)
     {
-      localIndex const dof = LvArray::integerConversion< localIndex >( stack.localRowDofIndex[ a ] - m_dofRankOffset );
-      if( dof < 0 || dof >= m_matrix.numRows() ) continue;
-      m_matrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( dof,
+      localIndex const dof = LvArray::integerConversion<localIndex>(stack.localRowDofIndex[a] - m_dofRankOffset);
+      if(dof <0 || dof>= m_matrix.numRows()) continue;
+      m_matrix.template addToRowBinarySearchUnsorted<parallelDeviceAtomic>(dof,
                                                                               stack.localColDofIndex,
-                                                                              stack.localJacobian[ a ],
-                                                                              numNodesPerElem );
+                                                                              stack.localJacobian[a],
+                                                                              numNodesPerElem);
 
-      RAJA::atomicAdd< parallelDeviceAtomic >( &m_rhs[ dof ], stack.localResidual[ a ] );
-      maxForce = fmax( maxForce, fabs( stack.localResidual[ a ] ) );
+      RAJA::atomicAdd<parallelDeviceAtomic>(&m_rhs[dof], stack.localResidual[a]);
+      maxForce = fmax(maxForce, fabs(stack.localResidual[a]));
     }
 
     return maxForce;
@@ -276,10 +276,10 @@ public:
 
 protected:
   /// The array containing the nodal position array.
-  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const m_X;
+  arrayView2d<real64 const, nodes::REFERENCE_POSITION_USD> const m_X;
 
   /// The global primary field array.
-  arrayView1d< real64 const > const m_nodalDamage;
+  arrayView1d<real64 const> const m_nodalDamage;
 
   int const m_localDissipationOption;
 

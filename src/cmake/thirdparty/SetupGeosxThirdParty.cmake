@@ -137,7 +137,7 @@ if(DEFINED CONDUIT_DIR)
                  PATHS ${CONDUIT_DIR}/lib/cmake
                  NO_DEFAULT_PATH)
 
-    set(thirdPartyLibs ${thirdPartyLibs} conduit::conduit )
+    set(thirdPartyLibs ${thirdPartyLibs} conduit::conduit)
 else()
     message(FATAL_ERROR "GEOSX requires conduit, set CONDUIT_DIR to the conduit installation directory.")
 endif()
@@ -192,7 +192,7 @@ if(DEFINED RAJA_DIR)
                           PROPERTIES INTERFACE_SYSTEM_INCLUDE_DIRECTORIES "${RAJA_INCLUDE_DIRS}")
 
     set(ENABLE_RAJA ON CACHE BOOL "" FORCE)
-    set(thirdPartyLibs ${thirdPartyLibs} RAJA )
+    set(thirdPartyLibs ${thirdPartyLibs} RAJA)
 else()
     message(FATAL_ERROR "GEOSX requires RAJA, set RAJA_DIR to the RAJA installation directory.")
 endif()
@@ -505,13 +505,13 @@ if(UNCRUSTIFY_FOUND)
     message(STATUS "UNCRUSTIFY_EXECUTABLE = ${UNCRUSTIFY_EXECUTABLE}")
 
     # targets for verifying formatting
-    if( NOT TARGET uncrustify_check )
+    if(NOT TARGET uncrustify_check)
         add_custom_target(uncrustify_check)
         add_dependencies(check uncrustify_check)
     endif()
 
     # targets for modifying formatting
-    if( NOT TARGET uncrustify_style )
+    if(NOT TARGET uncrustify_style)
         add_custom_target(uncrustify_style)
         add_dependencies(style uncrustify_style)
     endif()

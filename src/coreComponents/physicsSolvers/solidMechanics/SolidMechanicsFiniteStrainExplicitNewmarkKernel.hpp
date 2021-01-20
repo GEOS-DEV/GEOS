@@ -44,18 +44,18 @@ namespace SolidMechanicsLagrangianFEMKernels
  * ### Explicit Small Strain Description
  * Finite strain implementation.
  */
-template< typename SUBREGION_TYPE,
+template<typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
-          typename FE_TYPE >
-class ExplicitFiniteStrain : public ExplicitSmallStrain< SUBREGION_TYPE,
+          typename FE_TYPE>
+class ExplicitFiniteStrain : public ExplicitSmallStrain<SUBREGION_TYPE,
                                                          CONSTITUTIVE_TYPE,
-                                                         FE_TYPE >
+                                                         FE_TYPE>
 {
 public:
   /// Alias for the base class;
-  using Base = ExplicitSmallStrain< SUBREGION_TYPE,
+  using Base = ExplicitSmallStrain<SUBREGION_TYPE,
                                     CONSTITUTIVE_TYPE,
-                                    FE_TYPE >;
+                                    FE_TYPE>;
 
   using Base::numNodesPerElem;
   using Base::numDofPerTestSupportPoint;
@@ -76,22 +76,22 @@ public:
   /**
    * @copydoc ExplicitSmallStrain
    */
-  ExplicitFiniteStrain( NodeManager & nodeManager,
+  ExplicitFiniteStrain(NodeManager & nodeManager,
                         EdgeManager const & edgeManager,
                         FaceManager const & faceManager,
                         SUBREGION_TYPE const & elementSubRegion,
                         FE_TYPE const & finiteElementSpace,
                         CONSTITUTIVE_TYPE * const inputConstitutiveType,
                         real64 const dt,
-                        string const & elementListName ):
-    Base( nodeManager,
+                        string const & elementListName):
+    Base(nodeManager,
           edgeManager,
           faceManager,
           elementSubRegion,
           finiteElementSpace,
           inputConstitutiveType,
           dt,
-          elementListName )
+          elementListName)
   {}
 
 
@@ -112,11 +112,11 @@ public:
     GEOSX_HOST_DEVICE
     StackVariables():
       Base::StackVariables(),
-            uLocal{ {0.0} }
+            uLocal{{0.0}}
     {}
 
     /// Local stack storage for nodal displacements.
-    real64 uLocal[ numNodesPerElem ][ numDofPerTrialSupportPoint ];
+    real64 uLocal[numNodesPerElem][numDofPerTrialSupportPoint];
   };
   //*****************************************************************************
 
@@ -126,19 +126,19 @@ public:
    */
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  void setup( localIndex const k,
-              StackVariables & stack ) const
+  void setup(localIndex const k,
+              StackVariables & stack) const
   {
-    for( localIndex a=0; a< numNodesPerElem; ++a )
+    for(localIndex a=0; a<numNodesPerElem; ++a)
     {
-      localIndex const nodeIndex = m_elemsToNodes( k, a );
-      for( int i=0; i<numDofPerTrialSupportPoint; ++i )
+      localIndex const nodeIndex = m_elemsToNodes(k, a);
+      for(int i=0; i<numDofPerTrialSupportPoint; ++i)
       {
 #if defined(CALC_FEM_SHAPE_IN_KERNEL)
-        stack.xLocal[ a ][ i ] = m_X[ nodeIndex ][ i ];
+        stack.xLocal[a][i] = m_X[nodeIndex][i];
 #endif
-        stack.uLocal[ a ][ i ] = m_u[ nodeIndex ][ i ];
-        stack.varLocal[ a ][ i ] = m_vel[ nodeIndex ][ i ];
+        stack.uLocal[a][i] = m_u[nodeIndex][i];
+        stack.varLocal[a][i] = m_vel[nodeIndex][i];
       }
     }
   }
@@ -148,50 +148,50 @@ public:
    */
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  void quadraturePointKernel( localIndex const k,
+  void quadraturePointKernel(localIndex const k,
                               localIndex const q,
-                              StackVariables & stack ) const
+                              StackVariables & stack) const
   {
-    real64 dNdX[ numNodesPerElem ][ 3 ];
-    real64 const detJ = m_finiteElementSpace.template getGradN< FE_TYPE >( k, q, stack.xLocal, dNdX );
+    real64 dNdX[numNodesPerElem][3];
+    real64 const detJ = m_finiteElementSpace.template getGradN<FE_TYPE>(k, q, stack.xLocal, dNdX);
 
-    real64 dUhatdX[3][3] = { {0} };
-    real64 dUdX[3][3] = { {0} };
-    real64 F[3][3] = { {0} };
-    real64 Ldt[3][3] = { {0} };
-    real64 fInv[3][3] = { {0} };
+    real64 dUhatdX[3][3] = {{0}};
+    real64 dUdX[3][3] = {{0}};
+    real64 F[3][3] = {{0}};
+    real64 Ldt[3][3] = {{0}};
+    real64 fInv[3][3] = {{0}};
 
-    FE_TYPE::gradient( dNdX, stack.varLocal, dUhatdX );
-    FE_TYPE::gradient( dNdX, stack.uLocal, dUdX );
+    FE_TYPE::gradient(dNdX, stack.varLocal, dUhatdX);
+    FE_TYPE::gradient(dNdX, stack.uLocal, dUdX);
 
-    LvArray::tensorOps::scale< 3, 3 >( dUhatdX, m_dt );
+    LvArray::tensorOps::scale<3, 3>(dUhatdX, m_dt);
 
     // calculate du/dX
-    LvArray::tensorOps::scaledCopy< 3, 3 >( F, dUhatdX, 0.5 );
-    LvArray::tensorOps::add< 3, 3 >( F, dUdX );
-    LvArray::tensorOps::addIdentity< 3 >( F, 1.0 );
-    LvArray::tensorOps::invert< 3 >( fInv, F );
+    LvArray::tensorOps::scaledCopy<3, 3>(F, dUhatdX, 0.5);
+    LvArray::tensorOps::add<3, 3>(F, dUdX);
+    LvArray::tensorOps::addIdentity<3>(F, 1.0);
+    LvArray::tensorOps::invert<3>(fInv, F);
 
     // chain rule: calculate dv/dx^(n+1/2) = dv/dX * dX/dx^(n+1/2)
-    LvArray::tensorOps::Rij_eq_AikBkj< 3, 3, 3 >( Ldt, dUhatdX, fInv );
+    LvArray::tensorOps::Rij_eq_AikBkj<3, 3, 3>(Ldt, dUhatdX, fInv);
 
     // calculate gradient (end of step)
-    LvArray::tensorOps::copy< 3, 3 >( F, dUhatdX );
-    LvArray::tensorOps::add< 3, 3 >( F, dUdX );
-    LvArray::tensorOps::addIdentity< 3 >( F, 1.0 );
-    real64 const detF = LvArray::tensorOps::invert< 3 >( fInv, F );
+    LvArray::tensorOps::copy<3, 3>(F, dUhatdX);
+    LvArray::tensorOps::add<3, 3>(F, dUdX);
+    LvArray::tensorOps::addIdentity<3>(F, 1.0);
+    real64 const detF = LvArray::tensorOps::invert<3>(fInv, F);
 
-    real64 Rot[ 3 ][ 3 ];
-    real64 Dadt[ 6 ];
-    HughesWinget( Rot, Dadt, Ldt );
+    real64 Rot[3][3];
+    real64 Dadt[6];
+    HughesWinget(Rot, Dadt, Ldt);
 
-    m_constitutiveUpdate.HypoElastic( k, q, Dadt, Rot );
+    m_constitutiveUpdate.HypoElastic(k, q, Dadt, Rot);
 
-    real64 P[ 3 ][ 3 ];
-    LvArray::tensorOps::Rij_eq_symAikBjk< 3 >( P, m_constitutiveUpdate.m_stress[k][q].toSliceConst(), fInv );
-    LvArray::tensorOps::scale< 3, 3 >( P, -detJ * detF );
+    real64 P[3][3];
+    LvArray::tensorOps::Rij_eq_symAikBjk<3>(P, m_constitutiveUpdate.m_stress[k][q].toSliceConst(), fInv);
+    LvArray::tensorOps::scale<3, 3>(P, -detJ * detF);
 
-    FE_TYPE::plus_gradNajAij( dNdX, P, stack.fLocal );
+    FE_TYPE::plus_gradNajAij(dNdX, P, stack.fLocal);
 
   }
 

@@ -24,55 +24,55 @@ namespace geosx
 
 using namespace dataRepository;
 
-MeshManager::MeshManager( std::string const & name,
-                          Group * const parent ):
-  Group( name, parent )
+MeshManager::MeshManager(std::string const & name,
+                          Group * const parent):
+  Group(name, parent)
 {
-  setInputFlags( InputFlags::REQUIRED );
+  setInputFlags(InputFlags::REQUIRED);
 }
 
 MeshManager::~MeshManager()
 {}
 
-Group * MeshManager::CreateChild( string const & childKey, string const & childName )
+Group * MeshManager::CreateChild(string const & childKey, string const & childName)
 {
-  GEOSX_LOG_RANK_0( "Adding Mesh: " << childKey << ", " << childName );
-  std::unique_ptr< MeshGeneratorBase > solver = MeshGeneratorBase::CatalogInterface::Factory( childKey, childName, this );
-  return this->RegisterGroup< MeshGeneratorBase >( childName, std::move( solver ) );
+  GEOSX_LOG_RANK_0("Adding Mesh: " <<childKey <<", " <<childName);
+  std::unique_ptr<MeshGeneratorBase> solver = MeshGeneratorBase::CatalogInterface::Factory(childKey, childName, this);
+  return this->RegisterGroup<MeshGeneratorBase>(childName, std::move(solver));
 }
 
 
 void MeshManager::ExpandObjectCatalogs()
 {
   // During schema generation, register one of each type derived from MeshGeneratorBase here
-  for( auto & catalogIter: MeshGeneratorBase::GetCatalog())
+  for(auto & catalogIter: MeshGeneratorBase::GetCatalog())
   {
-    CreateChild( catalogIter.first, catalogIter.first );
+    CreateChild(catalogIter.first, catalogIter.first);
   }
 }
 
 
-void MeshManager::GenerateMeshes( DomainPartition * const domain )
+void MeshManager::GenerateMeshes(DomainPartition * const domain)
 {
-  forSubGroups< MeshGeneratorBase >( [&]( MeshGeneratorBase & meshGen )
+  forSubGroups<MeshGeneratorBase>([&](MeshGeneratorBase & meshGen)
   {
-    meshGen.GenerateMesh( domain );
-  } );
+    meshGen.GenerateMesh(domain);
+  });
 }
 
 
-void MeshManager::GenerateMeshLevels( DomainPartition * const domain )
+void MeshManager::GenerateMeshLevels(DomainPartition * const domain)
 {
-  this->forSubGroups< MeshGeneratorBase >( [&]( MeshGeneratorBase & meshGen )
+  this->forSubGroups<MeshGeneratorBase>([&](MeshGeneratorBase & meshGen)
   {
     string meshName = meshGen.getName();
 
     // THIS IS A HACK
-    if( meshName.find( "well" ) == std::string::npos )
+    if(meshName.find("well") == std::string::npos)
     {
-      domain->getMeshBodies()->RegisterGroup< MeshBody >( meshName )->CreateMeshLevel( 0 );
+      domain->getMeshBodies()->RegisterGroup<MeshBody>(meshName)->CreateMeshLevel(0);
     }
-  } );
+  });
 }
 
 

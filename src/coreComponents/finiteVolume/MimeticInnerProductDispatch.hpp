@@ -56,34 +56,34 @@ struct MimeticInnerProductTypeStrings
  * @param input the operator implementing the desired mimetic inner product
  * @param lambda the function that will launch the FluxKernel of the hybrid FVM solver
  */
-template< typename LAMBDA >
+template<typename LAMBDA>
 void
-mimeticInnerProductDispatch( MimeticInnerProductBase const & input,
-                             LAMBDA && lambda )
+mimeticInnerProductDispatch(MimeticInnerProductBase const & input,
+                             LAMBDA && lambda)
 {
-  if( auto const * const ptr1 = dynamic_cast< TPFAInnerProduct const * >(&input) )
+  if(auto const * const ptr1 = dynamic_cast<TPFAInnerProduct const *>(&input))
   {
-    lambda( *ptr1 );
+    lambda(*ptr1);
   }
-  else if( auto const * const ptr2 = dynamic_cast< QuasiTPFAInnerProduct const * >(&input) )
+  else if(auto const * const ptr2 = dynamic_cast<QuasiTPFAInnerProduct const *>(&input))
   {
-    lambda( *ptr2 );
+    lambda(*ptr2);
   }
-  else if( auto const * const ptr3 = dynamic_cast< QuasiRTInnerProduct const * >(&input) )
+  else if(auto const * const ptr3 = dynamic_cast<QuasiRTInnerProduct const *>(&input))
   {
-    lambda( *ptr3 );
+    lambda(*ptr3);
   }
-  else if( auto const * const ptr4 = dynamic_cast< SimpleInnerProduct const * >(&input) )
+  else if(auto const * const ptr4 = dynamic_cast<SimpleInnerProduct const *>(&input))
   {
-    lambda( *ptr4 );
+    lambda(*ptr4);
   }
-  else if( auto const * const ptr5 = dynamic_cast< BdVLMInnerProduct const * >(&input) )
+  else if(auto const * const ptr5 = dynamic_cast<BdVLMInnerProduct const *>(&input))
   {
-    lambda( *ptr5 );
+    lambda(*ptr5);
   }
   else
   {
-    GEOSX_ERROR( "mimeticInnerProductDispatch() is not implemented for input of " << LvArray::system::demangleType( input ) );
+    GEOSX_ERROR("mimeticInnerProductDispatch() is not implemented for input of " <<LvArray::system::demangleType(input));
   }
 }
 
@@ -93,34 +93,34 @@ mimeticInnerProductDispatch( MimeticInnerProductBase const & input,
  * @param input the operator implementing the desired mimetic inner product
  * @param lambda the function that will launch the FluxKernel of the hybrid FVM solver
  */
-template< typename LAMBDA >
+template<typename LAMBDA>
 void
-mimeticInnerProductDispatch( MimeticInnerProductBase & input,
-                             LAMBDA && lambda )
+mimeticInnerProductDispatch(MimeticInnerProductBase & input,
+                             LAMBDA && lambda)
 {
-  if( auto * const ptr1 = dynamic_cast< TPFAInnerProduct * >(&input) )
+  if(auto * const ptr1 = dynamic_cast<TPFAInnerProduct *>(&input))
   {
-    lambda( *ptr1 );
+    lambda(*ptr1);
   }
-  else if( auto * const ptr2 = dynamic_cast< QuasiTPFAInnerProduct * >(&input) )
+  else if(auto * const ptr2 = dynamic_cast<QuasiTPFAInnerProduct *>(&input))
   {
-    lambda( *ptr2 );
+    lambda(*ptr2);
   }
-  else if( auto * const ptr3 = dynamic_cast< QuasiRTInnerProduct * >(&input) )
+  else if(auto * const ptr3 = dynamic_cast<QuasiRTInnerProduct *>(&input))
   {
-    lambda( *ptr3 );
+    lambda(*ptr3);
   }
-  else if( auto * const ptr4 = dynamic_cast< SimpleInnerProduct * >(&input) )
+  else if(auto * const ptr4 = dynamic_cast<SimpleInnerProduct *>(&input))
   {
-    lambda( *ptr4 );
+    lambda(*ptr4);
   }
-  else if( auto * const ptr5 = dynamic_cast< BdVLMInnerProduct * >(&input) )
+  else if(auto * const ptr5 = dynamic_cast<BdVLMInnerProduct *>(&input))
   {
-    lambda( *ptr5 );
+    lambda(*ptr5);
   }
   else
   {
-    GEOSX_ERROR( "mimeticInnerProductDispatch() is not implemented for input of " << LvArray::system::demangleType( input ) );
+    GEOSX_ERROR("mimeticInnerProductDispatch() is not implemented for input of " <<LvArray::system::demangleType(input));
   }
 }
 

@@ -13,7 +13,7 @@ set(ENABLE_CALIPER ON CACHE BOOL "")
 set(ENABLE_PAPI OFF CACHE BOOL "")
 
 set(ENABLE_MKL ON CACHE BOOL "")
-set(MKL_ROOT /opt/intel/mkl CACHE PATH "" )
+set(MKL_ROOT /opt/intel/mkl CACHE PATH "")
 set(MKL_INCLUDE_DIRS ${MKL_ROOT}/include CACHE STRING "")
 set(MKL_LIBRARIES ${MKL_ROOT}/lib/intel64/libmkl_intel_lp64.so
                   ${MKL_ROOT}/lib/intel64/libmkl_gnu_thread.so

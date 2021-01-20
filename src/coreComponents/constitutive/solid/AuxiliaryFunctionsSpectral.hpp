@@ -35,36 +35,36 @@ namespace geosx
 
 //get the positive part only of tensor T using spectral split
 GEOSX_HOST_DEVICE inline
-void PositivePartOfTensor( real64 (& eigs)[3], real64 (& eigvecs)[3][3], real64 (& positivePart)[6] )
+void PositivePartOfTensor(real64 (& eigs)[3], real64 (& eigvecs)[3][3], real64 (& positivePart)[6])
 {
   real64 positiveEigs[6]={};
-  for( int i=0; i < 3; i++ )
+  for(int i=0; i <3; i++)
   {
-    positiveEigs[i] = fmax( 0.0, eigs[i] );
+    positiveEigs[i] = fmax(0.0, eigs[i]);
   }
-  LvArray::tensorOps::Rij_eq_AikSymBklAjl< 3 >( positivePart, eigvecs, positiveEigs );
+  LvArray::tensorOps::Rij_eq_AikSymBklAjl<3>(positivePart, eigvecs, positiveEigs);
 }
 
 //get the negative part only of tensor T using spectral split
 GEOSX_HOST_DEVICE inline
-void NegativePartOfTensor( real64 (& eigs)[3], real64 (& eigvecs)[3][3], real64 (& negativePart)[6] )
+void NegativePartOfTensor(real64 (& eigs)[3], real64 (& eigvecs)[3][3], real64 (& negativePart)[6])
 {
   real64 negativeEigs[6]={};
-  for( int i=0; i < 3; i++ )
+  for(int i=0; i <3; i++)
   {
-    negativeEigs[i] = fmin( 0.0, eigs[i] );
+    negativeEigs[i] = fmin(0.0, eigs[i]);
   }
-  LvArray::tensorOps::Rij_eq_AikSymBklAjl< 3 >( negativePart, eigvecs, negativeEigs );
+  LvArray::tensorOps::Rij_eq_AikSymBklAjl<3>(negativePart, eigvecs, negativeEigs);
 }
 
 //implements the : operator between two second-order tensors in voigt form
 GEOSX_HOST_DEVICE inline
-real64 doubleContraction( real64 (& A)[6], real64 (& B)[6] )
+real64 doubleContraction(real64 (& A)[6], real64 (& B)[6])
 {
   real64 ans = 0;
-  for( int i=0; i < 6; i++ )
+  for(int i=0; i <6; i++)
   {
-    if( i < 3 )
+    if(i <3)
     {
       ans = ans + A[i]*B[i];
     }
@@ -77,12 +77,12 @@ real64 doubleContraction( real64 (& A)[6], real64 (& B)[6] )
 }
 
 //compute strain from stresses using SSLE
-template< int USD >
+template<int USD>
 GEOSX_HOST_DEVICE inline
-void recoverStrainFromStress( arraySlice1d< real64 const, USD > const & stress,
+void recoverStrainFromStress(arraySlice1d<real64 const, USD> const & stress,
                               real64 (& strain)[6],
                               real64 const K,
-                              real64 const mu )
+                              real64 const mu)
 {
   real64 E = 9*K*mu / (3*K + mu);
   real64 nu = (3*K - 2*mu) / (6*K + 2*mu);
@@ -96,48 +96,48 @@ void recoverStrainFromStress( arraySlice1d< real64 const, USD > const & stress,
 
 //heaviside function, return 1 for positive, 0 for negatives and 0.5 if argument is zero or very close
 GEOSX_HOST_DEVICE inline
-real64 heaviside( real64 x )
+real64 heaviside(real64 x)
 {
-  if( fabs( x ) < 1e-12 )
+  if(fabs(x) <1e-12)
   {
     return 0.5;
   }
-  if( x > 0 )
+  if(x> 0)
   {
     return 1;
   }
-  if( x <= 0 )
+  if(x <= 0)
   {
     return 0;
   }
-  GEOSX_ERROR( "This function was not supposed to reach this line" );
+  GEOSX_ERROR("This function was not supposed to reach this line");
   return 1000000;
 }
 
 //computes a tensor that enters the calculation of the Jacobian of the Spectral Split - check reference paper for more details
 GEOSX_HOST_DEVICE inline
-void QTensor( real64 const (&eigvector)[3], real64 (& Q)[6][6] )
+void QTensor(real64 const (&eigvector)[3], real64 (& Q)[6][6])
 {
   real64 M[6]={0};
-  LvArray::tensorOps::symRij_eq_AiAj< 3 >( M, eigvector );
-  for( int i = 0; i<6; i++ )
+  LvArray::tensorOps::symRij_eq_AiAj<3>(M, eigvector);
+  for(int i = 0; i<6; i++)
   {
-    for( int j = 0; j<6; j++ )
+    for(int j = 0; j<6; j++)
     {
-      Q[i][j] = M[ i ] * M[ j ];
+      Q[i][j] = M[i] * M[j];
     }
   }
 }
 
 //computes another tensor that enters the calculation of the Jacobian of the Spectral Split - check reference paper for more details
 GEOSX_HOST_DEVICE inline
-void GTensor( real64 (& eigvec1)[3], real64 (& eigvec2)[3], real64 (& G)[6][6] )
+void GTensor(real64 (& eigvec1)[3], real64 (& eigvec2)[3], real64 (& G)[6][6])
 {
-  GEOSX_UNUSED_VAR( eigvec1, eigvec2, G );
+  GEOSX_UNUSED_VAR(eigvec1, eigvec2, G);
   real64 M1[6]={0};
   real64 M2[6]={0};
-  LvArray::tensorOps::symRij_eq_AiAj< 3 >( M1, eigvec1 );
-  LvArray::tensorOps::symRij_eq_AiAj< 3 >( M2, eigvec2 );
+  LvArray::tensorOps::symRij_eq_AiAj<3>(M1, eigvec1);
+  LvArray::tensorOps::symRij_eq_AiAj<3>(M2, eigvec2);
 
   G[0][0] = M1[0]*M2[0] + M1[0]*M2[0];
   G[0][1] = M1[5]*M2[5] + M1[5]*M2[5];
@@ -190,12 +190,12 @@ void GTensor( real64 (& eigvec1)[3], real64 (& eigvec2)[3], real64 (& G)[6][6] )
  *
  */
 GEOSX_HOST_DEVICE inline
-void PositiveProjectorTensor( real64 (& eigs)[3], real64 (& eigvecs)[3][3], real64 (& PositiveProjector)[6][6] )
+void PositiveProjectorTensor(real64 (& eigs)[3], real64 (& eigvecs)[3][3], real64 (& PositiveProjector)[6][6])
 {
   //test for repeated eigenvalues
   bool repeatedEigenvalues = false;
   real64 tol = 1e-12;
-  if( fabs( eigs[0] - eigs[1] ) < tol || fabs( eigs[0]-eigs[2] ) < tol || fabs( eigs[1]-eigs[2] ) < tol )
+  if(fabs(eigs[0] - eigs[1]) <tol || fabs(eigs[0]-eigs[2]) <tol || fabs(eigs[1]-eigs[2]) <tol)
   {
     repeatedEigenvalues = true;
   }
@@ -207,7 +207,7 @@ void PositiveProjectorTensor( real64 (& eigs)[3], real64 (& eigvecs)[3][3], real
   real64 Gji[6][6] = {};
 
   //compute projector
-  for( int i = 0; i < 3; i++ )
+  for(int i = 0; i <3; i++)
   {
     real64 ithEigenVector[3] = {};
     ithEigenVector[0]=eigvecs[0][i];
@@ -215,51 +215,51 @@ void PositiveProjectorTensor( real64 (& eigs)[3], real64 (& eigvecs)[3][3], real
     ithEigenVector[2]=eigvecs[2][i];
     //First Part
     //compute Qi
-    QTensor( ithEigenVector, Qi );
+    QTensor(ithEigenVector, Qi);
     //do update
-    LvArray::tensorOps::scale< 6, 6 >( Qi, heaviside( eigs[i] ));
-    LvArray::tensorOps::add< 6, 6 >( PositiveProjector, Qi );
-    if( !repeatedEigenvalues )
+    LvArray::tensorOps::scale<6, 6>(Qi, heaviside(eigs[i]));
+    LvArray::tensorOps::add<6, 6>(PositiveProjector, Qi);
+    if(!repeatedEigenvalues)
     {
 
-      for( int j = 0; j < 3; j++ )
+      for(int j = 0; j <3; j++)
       {
         real64 jthEigenVector[3]={};
         jthEigenVector[0]=eigvecs[0][j];
         jthEigenVector[1]=eigvecs[1][j];
         jthEigenVector[2]=eigvecs[2][j];
-        if( i == j )
+        if(i == j)
         {
           continue;
         }
         //compute Gij and Gji
-        GTensor( ithEigenVector, jthEigenVector, Gsym );
-        GTensor( jthEigenVector, ithEigenVector, Gji );
-        LvArray::tensorOps::add< 6, 6 >( Gsym, Gji );
+        GTensor(ithEigenVector, jthEigenVector, Gsym);
+        GTensor(jthEigenVector, ithEigenVector, Gji);
+        LvArray::tensorOps::add<6, 6>(Gsym, Gji);
         //Do update
-        LvArray::tensorOps::scale< 6, 6 >( Gsym, 0.5 * (fmax( eigs[i], 0.0 ) - fmax( eigs[j], 0.0 ))/(2*(eigs[i]-eigs[j])));
-        LvArray::tensorOps::add< 6, 6 >( PositiveProjector, Gsym );
+        LvArray::tensorOps::scale<6, 6>(Gsym, 0.5 * (fmax(eigs[i], 0.0) - fmax(eigs[j], 0.0))/(2*(eigs[i]-eigs[j])));
+        LvArray::tensorOps::add<6, 6>(PositiveProjector, Gsym);
       }
     }
     else
     {
-      for( int j = 0; j < 3; j++ )
+      for(int j = 0; j <3; j++)
       {
         real64 jthEigenVector[3]={};
         jthEigenVector[0]=eigvecs[0][j];
         jthEigenVector[1]=eigvecs[1][j];
         jthEigenVector[2]=eigvecs[2][j];
-        if( i == j )
+        if(i == j)
         {
           continue;
         }
         //compute Gij and Gji
-        GTensor( ithEigenVector, jthEigenVector, Gsym );
-        GTensor( jthEigenVector, ithEigenVector, Gji );
-        LvArray::tensorOps::add< 6, 6 >( Gsym, Gji );
-        LvArray::tensorOps::scale< 6, 6 >( Gsym, 0.5 * (heaviside( eigs[i] ) + heaviside( eigs[j] ))/4 );
+        GTensor(ithEigenVector, jthEigenVector, Gsym);
+        GTensor(jthEigenVector, ithEigenVector, Gji);
+        LvArray::tensorOps::add<6, 6>(Gsym, Gji);
+        LvArray::tensorOps::scale<6, 6>(Gsym, 0.5 * (heaviside(eigs[i]) + heaviside(eigs[j]))/4);
         //do update
-        LvArray::tensorOps::add< 6, 6 >( PositiveProjector, Gsym );
+        LvArray::tensorOps::add<6, 6>(PositiveProjector, Gsym);
       }
     }
   }
@@ -268,12 +268,12 @@ void PositiveProjectorTensor( real64 (& eigs)[3], real64 (& eigvecs)[3][3], real
 
 //This is the negative projector, check the documentation of the positive projector for more details.
 GEOSX_HOST_DEVICE inline
-void NegativeProjectorTensor( real64 (& eigs)[3], real64 (& eigvecs)[3][3], real64 (& NegativeProjector)[6][6] )
+void NegativeProjectorTensor(real64 (& eigs)[3], real64 (& eigvecs)[3][3], real64 (& NegativeProjector)[6][6])
 {
   //test for repeated eigenvalues
   bool repeatedEigenvalues = false;
   real64 tol = 1e-12;
-  if( fabs( eigs[0] - eigs[1] ) < tol || fabs( eigs[0]-eigs[2] ) < tol || fabs( eigs[1]-eigs[2] ) < tol )
+  if(fabs(eigs[0] - eigs[1]) <tol || fabs(eigs[0]-eigs[2]) <tol || fabs(eigs[1]-eigs[2]) <tol)
   {
     repeatedEigenvalues = true;
   }
@@ -285,7 +285,7 @@ void NegativeProjectorTensor( real64 (& eigs)[3], real64 (& eigvecs)[3][3], real
   real64 Gji[6][6] = {};
 
   //compute projector
-  for( int i = 0; i < 3; i++ )
+  for(int i = 0; i <3; i++)
   {
     real64 ithEigenVector[3] = {};
     ithEigenVector[0]=eigvecs[0][i];
@@ -293,51 +293,51 @@ void NegativeProjectorTensor( real64 (& eigs)[3], real64 (& eigvecs)[3][3], real
     ithEigenVector[2]=eigvecs[2][i];
     //First Part
     //compute Qi
-    QTensor( ithEigenVector, Qi );
+    QTensor(ithEigenVector, Qi);
     //do update
-    LvArray::tensorOps::scale< 6, 6 >( Qi, heaviside( -eigs[i] ));
-    LvArray::tensorOps::add< 6, 6 >( NegativeProjector, Qi );
-    if( !repeatedEigenvalues )
+    LvArray::tensorOps::scale<6, 6>(Qi, heaviside(-eigs[i]));
+    LvArray::tensorOps::add<6, 6>(NegativeProjector, Qi);
+    if(!repeatedEigenvalues)
     {
 
-      for( int j = 0; j < 3; j++ )
+      for(int j = 0; j <3; j++)
       {
         real64 jthEigenVector[3] = {};
         jthEigenVector[0]=eigvecs[0][j];
         jthEigenVector[1]=eigvecs[1][j];
         jthEigenVector[2]=eigvecs[2][j];
-        if( i == j )
+        if(i == j)
         {
           continue;
         }
         //compute Gij and Gji
-        GTensor( ithEigenVector, jthEigenVector, Gsym );
-        GTensor( jthEigenVector, ithEigenVector, Gji );
-        LvArray::tensorOps::add< 6, 6 >( Gsym, Gji );
+        GTensor(ithEigenVector, jthEigenVector, Gsym);
+        GTensor(jthEigenVector, ithEigenVector, Gji);
+        LvArray::tensorOps::add<6, 6>(Gsym, Gji);
         //Do update
-        LvArray::tensorOps::scale< 6, 6 >( Gsym, 0.5 * (fmin( eigs[i], 0.0 ) - fmin( eigs[j], 0.0 ))/(2*(eigs[i]-eigs[j])));
-        LvArray::tensorOps::add< 6, 6 >( NegativeProjector, Gsym );
+        LvArray::tensorOps::scale<6, 6>(Gsym, 0.5 * (fmin(eigs[i], 0.0) - fmin(eigs[j], 0.0))/(2*(eigs[i]-eigs[j])));
+        LvArray::tensorOps::add<6, 6>(NegativeProjector, Gsym);
       }
     }
     else
     {
-      for( int j = 0; j < 3; j++ )
+      for(int j = 0; j <3; j++)
       {
         real64 jthEigenVector[3] = {};
         jthEigenVector[0]=eigvecs[0][j];
         jthEigenVector[1]=eigvecs[1][j];
         jthEigenVector[2]=eigvecs[2][j];
-        if( i == j )
+        if(i == j)
         {
           continue;
         }
         //compute Gij and Gji
-        GTensor( ithEigenVector, jthEigenVector, Gsym );
-        GTensor( jthEigenVector, ithEigenVector, Gji );
-        LvArray::tensorOps::add< 6, 6 >( Gsym, Gji );
-        LvArray::tensorOps::scale< 6, 6 >( Gsym, 0.5 * (heaviside( -eigs[i] ) + heaviside( -eigs[j] ))/4 );
+        GTensor(ithEigenVector, jthEigenVector, Gsym);
+        GTensor(jthEigenVector, ithEigenVector, Gji);
+        LvArray::tensorOps::add<6, 6>(Gsym, Gji);
+        LvArray::tensorOps::scale<6, 6>(Gsym, 0.5 * (heaviside(-eigs[i]) + heaviside(-eigs[j]))/4);
         //do update
-        LvArray::tensorOps::add< 6, 6 >( NegativeProjector, Gsym );
+        LvArray::tensorOps::add<6, 6>(NegativeProjector, Gsym);
       }
     }
   }
@@ -346,7 +346,7 @@ void NegativeProjectorTensor( real64 (& eigs)[3], real64 (& eigvecs)[3][3], real
 
 //this function tests the GetStiffness function from DamageSpectral.hpp
 GEOSX_HOST_DEVICE inline
-void GetStiffnessTest( real64 (& c)[6][6], real64 (& strain)[6], real64 damage )
+void GetStiffnessTest(real64 (& c)[6][6], real64 (& strain)[6], real64 damage)
 {
 
   //Spectral Split
@@ -358,12 +358,12 @@ void GetStiffnessTest( real64 (& c)[6][6], real64 (& strain)[6], real64 damage )
   //get eigenvalues and eigenvectors
   real64 eigenValues[3]={};
   real64 eigenVectors[3][3]={};
-  LvArray::tensorOps::symEigenvectors< 3 >( eigenValues, eigenVectors, strain );
+  LvArray::tensorOps::symEigenvectors<3>(eigenValues, eigenVectors, strain);
   //construct 4th order IxI tensor
   real64 IxITensor[6][6]={};
-  for( int i=0; i < 3; i++ )
+  for(int i=0; i <3; i++)
   {
-    for( int j=0; j < 3; j++ )
+    for(int j=0; j <3; j++)
     {
       IxITensor[i][j] = 1.0;
     }
@@ -372,26 +372,26 @@ void GetStiffnessTest( real64 (& c)[6][6], real64 (& strain)[6], real64 damage )
   //construct positive part
   real64 cPositive[6][6]={};
   real64 positiveProjector[6][6]={};
-  PositiveProjectorTensor( eigenValues, eigenVectors, positiveProjector );
-  LvArray::tensorOps::scaledCopy< 6, 6 >( cPositive, IxITensor, lambda*heaviside( traceOfStrain ));
-  LvArray::tensorOps::scale< 6, 6 >( positiveProjector, 2*mu );
-  LvArray::tensorOps::add< 6, 6 >( cPositive, positiveProjector );
+  PositiveProjectorTensor(eigenValues, eigenVectors, positiveProjector);
+  LvArray::tensorOps::scaledCopy<6, 6>(cPositive, IxITensor, lambda*heaviside(traceOfStrain));
+  LvArray::tensorOps::scale<6, 6>(positiveProjector, 2*mu);
+  LvArray::tensorOps::add<6, 6>(cPositive, positiveProjector);
 
   //construct negative part
   real64 negativeProjector[6][6]={};
-  NegativeProjectorTensor( eigenValues, eigenVectors, negativeProjector );
-  LvArray::tensorOps::scaledCopy< 6, 6 >( c, IxITensor, lambda*heaviside( -traceOfStrain ));
-  LvArray::tensorOps::scale< 6, 6 >( negativeProjector, 2*mu );
-  LvArray::tensorOps::add< 6, 6 >( c, negativeProjector );
+  NegativeProjectorTensor(eigenValues, eigenVectors, negativeProjector);
+  LvArray::tensorOps::scaledCopy<6, 6>(c, IxITensor, lambda*heaviside(-traceOfStrain));
+  LvArray::tensorOps::scale<6, 6>(negativeProjector, 2*mu);
+  LvArray::tensorOps::add<6, 6>(c, negativeProjector);
   //finish up
-  LvArray::tensorOps::scale< 6, 6 >( cPositive, damageFactor );
-  LvArray::tensorOps::add< 6, 6 >( c, cPositive );
+  LvArray::tensorOps::scale<6, 6>(cPositive, damageFactor);
+  LvArray::tensorOps::add<6, 6>(c, cPositive);
 
 }
 
 //this function tests the GetStress function of DamageSpectral.hpp
 GEOSX_HOST_DEVICE inline
-void getTestStress( real64 (& strain)[6], real64 (& stress)[6] )
+void getTestStress(real64 (& strain)[6], real64 (& stress)[6])
 {
 
   //Spectral split
@@ -403,31 +403,31 @@ void getTestStress( real64 (& strain)[6], real64 (& stress)[6] )
   //get eigenvalues and eigenvectors
   real64 eigenValues[3] = {};
   real64 eigenVectors[3][3] = {};
-  LvArray::tensorOps::symEigenvectors< 3 >( eigenValues, eigenVectors, strain );
+  LvArray::tensorOps::symEigenvectors<3>(eigenValues, eigenVectors, strain);
   //transpose eigenVectors matrix to match convention
   real64 temp[3][3] = {};
-  LvArray::tensorOps::transpose< 3, 3 >( temp, eigenVectors );
-  LvArray::tensorOps::copy< 3, 3 >( eigenVectors, temp );
-  real64 tracePlus = fmax( traceOfStrain, 0.0 );
-  real64 traceMinus = fmin( traceOfStrain, 0.0 );
+  LvArray::tensorOps::transpose<3, 3>(temp, eigenVectors);
+  LvArray::tensorOps::copy<3, 3>(eigenVectors, temp);
+  real64 tracePlus = fmax(traceOfStrain, 0.0);
+  real64 traceMinus = fmin(traceOfStrain, 0.0);
   //build symmetric matrices of positive and negative eigenvalues
   real64 Itensor[6] = {};
-  for( int i = 0; i < 3; i++ )
+  for(int i = 0; i <3; i++)
   {
     Itensor[i] = 1;
   }
   real64 positivePartOfStrain[6] = {};
   real64 negativePartOfStrain[6] = {};
-  PositivePartOfTensor( eigenValues, eigenVectors, positivePartOfStrain );
-  NegativePartOfTensor( eigenValues, eigenVectors, negativePartOfStrain );
+  PositivePartOfTensor(eigenValues, eigenVectors, positivePartOfStrain);
+  NegativePartOfTensor(eigenValues, eigenVectors, negativePartOfStrain);
   real64 positiveStress[6] = {};
   real64 negativeStress[6] = {};
-  LvArray::tensorOps::scaledCopy< 6 >( positiveStress, Itensor, lambda*tracePlus );
-  LvArray::tensorOps::scaledCopy< 6 >( negativeStress, Itensor, lambda*traceMinus );
-  LvArray::tensorOps::scaledAdd< 6 >( positiveStress, positivePartOfStrain, 2*mu );
-  LvArray::tensorOps::scaledAdd< 6 >( negativeStress, negativePartOfStrain, 2*mu );
-  LvArray::tensorOps::copy< 6 >( stress, negativeStress );
-  LvArray::tensorOps::scaledAdd< 6 >( stress, positiveStress, damageFactor );
+  LvArray::tensorOps::scaledCopy<6>(positiveStress, Itensor, lambda*tracePlus);
+  LvArray::tensorOps::scaledCopy<6>(negativeStress, Itensor, lambda*traceMinus);
+  LvArray::tensorOps::scaledAdd<6>(positiveStress, positivePartOfStrain, 2*mu);
+  LvArray::tensorOps::scaledAdd<6>(negativeStress, negativePartOfStrain, 2*mu);
+  LvArray::tensorOps::copy<6>(stress, negativeStress);
+  LvArray::tensorOps::scaledAdd<6>(stress, positiveStress, damageFactor);
 }
 
 } //namespacegeosx

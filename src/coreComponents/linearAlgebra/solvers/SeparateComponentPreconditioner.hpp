@@ -30,13 +30,13 @@ namespace geosx
  * @brief Separate component filter implemented as a compound preconditioner.
  * @tparam LAI linear algebra interface to use
  */
-template< typename LAI >
-class SeparateComponentPreconditioner : public PreconditionerBase< LAI >
+template<typename LAI>
+class SeparateComponentPreconditioner : public PreconditionerBase<LAI>
 {
 public:
 
   /// Alias for base type
-  using Base = PreconditionerBase< LAI >;
+  using Base = PreconditionerBase<LAI>;
 
   /// Alias for vector type
   using Vector = typename Base::Vector;
@@ -49,17 +49,17 @@ public:
    * @param numComp number of components in the field
    * @param precond the actual preconditioner to apply to filtered matrix (ownership transferred)
    */
-  SeparateComponentPreconditioner( localIndex const numComp,
-                                   std::unique_ptr< PreconditionerBase< LAI > > precond );
+  SeparateComponentPreconditioner(localIndex const numComp,
+                                   std::unique_ptr<PreconditionerBase<LAI>> precond);
 
   /**
    * @brief Destructor.
    */
   virtual ~SeparateComponentPreconditioner() override;
 
-  using PreconditionerBase< LAI >::compute;
+  using PreconditionerBase<LAI>::compute;
 
-  virtual void compute( Matrix const & mat, DofManager const & dofManager ) override;
+  virtual void compute(Matrix const & mat, DofManager const & dofManager) override;
 
   /**
    * @brief Apply operator to a vector
@@ -68,7 +68,7 @@ public:
    *
    * @warning @p src and @p dst cannot alias the same vector.
    */
-  virtual void apply( Vector const & src, Vector & dst ) const override;
+  virtual void apply(Vector const & src, Vector & dst) const override;
 
   virtual void clear() override;
 
@@ -85,7 +85,7 @@ public:
    * @brief Access to the nested preconditioner.
    * @return reference to the preconditioner passed at construction
    */
-  PreconditionerBase< LAI > const & getNestedPrecond() const
+  PreconditionerBase<LAI> const & getNestedPrecond() const
   {
     return *m_precond;
   }
@@ -99,7 +99,7 @@ private:
   Matrix m_matSC;
 
   /// Actual preconditioner
-  std::unique_ptr< PreconditionerBase< LAI > > m_precond;
+  std::unique_ptr<PreconditionerBase<LAI>> m_precond;
 };
 
 }

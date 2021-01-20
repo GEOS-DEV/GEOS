@@ -31,18 +31,18 @@ using namespace dataRepository;
 namespace constitutive
 {
 
-template< typename BASE >
-DamageSpectral< BASE >::DamageSpectral( string const & name, Group * const parent ):
-  Damage< BASE >( name, parent )
+template<typename BASE>
+DamageSpectral<BASE>::DamageSpectral(string const & name, Group * const parent):
+  Damage<BASE>(name, parent)
 {}
 
-template< typename BASE >
-DamageSpectral< BASE >::~DamageSpectral()
+template<typename BASE>
+DamageSpectral<BASE>::~DamageSpectral()
 {}
 
-typedef DamageSpectral< LinearElasticIsotropic > DamageSpectralLinearElasticIsotropic;
+typedef DamageSpectral<LinearElasticIsotropic> DamageSpectralLinearElasticIsotropic;
 
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, DamageSpectralLinearElasticIsotropic, string const &, Group * const )
+REGISTER_CATALOG_ENTRY(ConstitutiveBase, DamageSpectralLinearElasticIsotropic, string const &, Group * const)
 
 }
 } /* namespace geosx */

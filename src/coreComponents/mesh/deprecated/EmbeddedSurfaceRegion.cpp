@@ -24,31 +24,31 @@ namespace geosx
 {
 using namespace dataRepository;
 
-EmbeddedSurfaceRegion::EmbeddedSurfaceRegion( string const & name, Group * const parent ):
-  ElementRegionBase( name, parent )
+EmbeddedSurfaceRegion::EmbeddedSurfaceRegion(string const & name, Group * const parent):
+  ElementRegionBase(name, parent)
 {
-  this->GetGroup( viewKeyStruct::elementSubRegions )->RegisterGroup< EmbeddedSurfaceSubRegion >( "default" );
+  this->GetGroup(viewKeyStruct::elementSubRegions)->RegisterGroup<EmbeddedSurfaceSubRegion>("default");
 
-  registerWrapper( viewKeyStruct::defaultApertureString, &m_defaultAperture )->
-    setInputFlag( InputFlags::REQUIRED )->
-    setDescription( "The default aperture of for new embedded surface Elements." );
+  registerWrapper(viewKeyStruct::defaultApertureString, &m_defaultAperture)->
+    setInputFlag(InputFlags::REQUIRED)->
+    setDescription("The default aperture of for new embedded surface Elements.");
 }
 
 EmbeddedSurfaceRegion::~EmbeddedSurfaceRegion()
 {}
 
 
-void EmbeddedSurfaceRegion::InitializePreSubGroups( Group * const )
+void EmbeddedSurfaceRegion::InitializePreSubGroups(Group * const)
 {
-  this->forElementSubRegions< EmbeddedSurfaceSubRegion >( [&] ( EmbeddedSurfaceSubRegion & subRegion )
+  this->forElementSubRegions<EmbeddedSurfaceSubRegion>([&] (EmbeddedSurfaceSubRegion & subRegion)
   {
-    subRegion.getWrapper< array1d< real64 > >( EmbeddedSurfaceSubRegion::viewKeyStruct::elementApertureString )->
-      setApplyDefaultValue( m_defaultAperture );
-  } );
+    subRegion.getWrapper<array1d<real64>>(EmbeddedSurfaceSubRegion::viewKeyStruct::elementApertureString)->
+      setApplyDefaultValue(m_defaultAperture);
+  });
 }
 
 
 
-REGISTER_CATALOG_ENTRY( ObjectManagerBase, EmbeddedSurfaceRegion, std::string const &, Group * const )
+REGISTER_CATALOG_ENTRY(ObjectManagerBase, EmbeddedSurfaceRegion, std::string const &, Group * const)
 
 } /* namespace geosx */

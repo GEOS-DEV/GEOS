@@ -30,8 +30,8 @@ class NullModel : public constitutive::ConstitutiveBase
 public:
 
   /// @copydoc geosx::dataRepository::Group::Group
-  NullModel( string const & name,
-             Group * const parent );
+  NullModel(string const & name,
+             Group * const parent);
 
   /// Destrutor
   virtual ~NullModel();
@@ -42,9 +42,9 @@ public:
   /**
    * @return A string that is used to register/lookup this class in the registry
    */
-  static std::string CatalogName() { return m_catalogNameString; }
+  static std::string CatalogName() {return m_catalogNameString;}
 
-  virtual string getCatalogName() const override { return CatalogName(); }
+  virtual string getCatalogName() const override {return CatalogName();}
 
   /**
    * Empty struct to serve as a KernelWrapper for the constitutive model.
@@ -56,9 +56,9 @@ public:
    * @param includeState Whether or not to include the state in the wrapper.
    * @return 0
    */
-  KernelWrapper createKernelUpdates( bool const includeState = false )
+  KernelWrapper createKernelUpdates(bool const includeState = false)
   {
-    GEOSX_UNUSED_VAR( includeState );
+    GEOSX_UNUSED_VAR(includeState);
     return KernelWrapper();
   }
 };

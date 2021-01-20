@@ -35,13 +35,13 @@ namespace dataRepository
  */
 enum class InputFlags : integer
 {
-  INVALID,            ///< Invalid value
-  FALSE,              ///< Not read from input
-  OPTIONAL,           ///< Optional in input
-  OPTIONAL_NONUNIQUE, ///< Optional in input, may be repeated
-  REQUIRED,           ///< Required in input
-  REQUIRED_NONUNIQUE, ///< Required in input, may be repeated
-  PROBLEM_ROOT,       ///< Root of the hierarchy
+  INVALID,            ///<Invalid value
+  FALSE,              ///<Not read from input
+  OPTIONAL,           ///<Optional in input
+  OPTIONAL_NONUNIQUE, ///<Optional in input, may be repeated
+  REQUIRED,           ///<Required in input
+  REQUIRED_NONUNIQUE, ///<Required in input, may be repeated
+  PROBLEM_ROOT,       ///<Root of the hierarchy
 };
 
 /**
@@ -49,10 +49,10 @@ enum class InputFlags : integer
  * @param[in] val value to convert
  * @return converted enumeration
  */
-inline InputFlags IntToInputFlag( int const val )
+inline InputFlags IntToInputFlag(int const val)
 {
   InputFlags rval = InputFlags::INVALID;
-  switch( val )
+  switch(val)
   {
     case 0:
     {
@@ -71,7 +71,7 @@ inline InputFlags IntToInputFlag( int const val )
     }
     default:
     {
-      GEOSX_ERROR( "Invalid integer conversion to InputFlag" );
+      GEOSX_ERROR("Invalid integer conversion to InputFlag");
     }
   }
   return rval;
@@ -82,9 +82,9 @@ inline InputFlags IntToInputFlag( int const val )
  * @param[in] val value to convert
  * @return converted integer
  */
-inline int InputFlagToInt( InputFlags const val )
+inline int InputFlagToInt(InputFlags const val)
 {
-  return static_cast< int >(val);
+  return static_cast<int>(val);
 }
 
 
@@ -93,10 +93,10 @@ inline int InputFlagToInt( InputFlags const val )
  * @param[in] val The value of the input flag that will be converted to a string
  * @return The string equivalent of the input @p val.
  */
-inline std::string InputFlagToString( InputFlags const val )
+inline std::string InputFlagToString(InputFlags const val)
 {
   std::string rval;
-  switch( val )
+  switch(val)
   {
     case InputFlags::INVALID:
     {
@@ -143,49 +143,49 @@ inline std::string InputFlagToString( InputFlags const val )
  * @param right rhs value
  * @return comparison result
  */
-inline bool operator==( InputFlags const left, InputFlags const right )
+inline bool operator==(InputFlags const left, InputFlags const right)
 {
-  return static_cast< int >(left) == static_cast< int >(right);
+  return static_cast<int>(left) == static_cast<int>(right);
 }
 
 /**
  * @copydoc operator==(InputFlags const, InputFlags const)
  */
-inline bool operator!=( InputFlags const left, InputFlags const right )
+inline bool operator!=(InputFlags const left, InputFlags const right)
 {
-  return static_cast< int >(left) != static_cast< int >(right);
+  return static_cast<int>(left) != static_cast<int>(right);
 }
 
 /**
  * @copydoc operator==(InputFlags const, InputFlags const)
  */
-inline bool operator<( InputFlags const left, InputFlags const right )
+inline bool operator<(InputFlags const left, InputFlags const right)
 {
-  return static_cast< int >(left) < static_cast< int >(right);
+  return static_cast<int>(left) <static_cast<int>(right);
 }
 
 /**
  * @copydoc operator==(InputFlags const, InputFlags const)
  */
-inline bool operator>( InputFlags const left, InputFlags const right )
+inline bool operator>(InputFlags const left, InputFlags const right)
 {
-  return static_cast< int >(left) > static_cast< int >(right);
+  return static_cast<int>(left)> static_cast<int>(right);
 }
 
 /**
  * @copydoc operator==(InputFlags const, InputFlags const)
  */
-inline bool operator<=( InputFlags const left, InputFlags const right )
+inline bool operator<=(InputFlags const left, InputFlags const right)
 {
-  return static_cast< int >(left) <= static_cast< int >(right);
+  return static_cast<int>(left) <= static_cast<int>(right);
 }
 
 /**
  * @copydoc operator==(InputFlags const, InputFlags const)
  */
-inline bool operator>=( InputFlags const left, InputFlags const right )
+inline bool operator>=(InputFlags const left, InputFlags const right)
 {
-  return static_cast< int >(left) >= static_cast< int >(right);
+  return static_cast<int>(left)>= static_cast<int>(right);
 }
 }
 

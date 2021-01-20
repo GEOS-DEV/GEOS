@@ -18,9 +18,9 @@
 ########################################
 
 
-set(CONFIG_NAME "pangea2-icc@19.0.3.199" CACHE PATH "" ) 
+set(CONFIG_NAME "pangea2-icc@19.0.3.199" CACHE PATH "") 
 
-set(INTEL_COMPILER_ROOT "/data_local/sw/intel/RHEL7/compilers_and_libraries_2019.3.199/linux" )
+set(INTEL_COMPILER_ROOT "/data_local/sw/intel/RHEL7/compilers_and_libraries_2019.3.199/linux")
 set(CMAKE_C_COMPILER "${INTEL_COMPILER_ROOT}/bin/intel64/icc" CACHE PATH "")
 set(CMAKE_CXX_COMPILER "${INTEL_COMPILER_ROOT}/bin/intel64/icpc" CACHE PATH "")
 set(CMAKE_Fortran_COMPILER "${INTEL_COMPILER_ROOT}/bin/intel64/ifort" CACHE PATH "")
@@ -40,7 +40,7 @@ set(MPIEXEC              "${MPI_HOME}/bin/mpirun" CACHE PATH "")
 set(MPIEXEC_NUMPROC_FLAG "-n" CACHE PATH "")
 
 set(ENABLE_MKL ON CACHE BOOL "")
-set(MKL_ROOT ${INTEL_COMPILER_ROOT}/mkl )
+set(MKL_ROOT ${INTEL_COMPILER_ROOT}/mkl)
 set(MKL_INCLUDE_DIRS ${MKL_ROOT}/include CACHE STRING "")
 set(MKL_LIBRARIES ${MKL_ROOT}/lib/intel64/libmkl_intel_lp64.so
                   ${MKL_ROOT}/lib/intel64/libmkl_intel_thread.so

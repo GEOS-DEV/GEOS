@@ -38,8 +38,8 @@ public:
    * @param[in] name The name of the new instantiation of this Group.
    * @param[in] parent A pointer to the parent of this Group.
    */
-  NonlinearSolverParameters( std::string const & name,
-                             Group * const parent );
+  NonlinearSolverParameters(std::string const & name,
+                             Group * const parent);
 
   /**
    * @brief Default destructor
@@ -50,7 +50,7 @@ public:
    * @brief Default Move Constructor
    * @param The source object of the move.
    */
-  NonlinearSolverParameters( NonlinearSolverParameters && ) = default;
+  NonlinearSolverParameters(NonlinearSolverParameters &&) = default;
 
   /**
    * @brief The name of this object in the catalog.
@@ -59,7 +59,7 @@ public:
    * NonlinearSolverParameters object when calling
    * Group::GetCatalog()::Allocate().
    */
-  static string CatalogName() { return "NonlinearSolverParameters"; }
+  static string CatalogName() {return "NonlinearSolverParameters";}
 
   virtual void PostProcessInput() override;
 
@@ -93,7 +93,7 @@ public:
    */
   integer dtCutIterLimit() const
   {
-    return std::ceil( m_dtCutIterLimit * m_maxIterNewton );
+    return std::ceil(m_dtCutIterLimit * m_maxIterNewton);
   }
 
 
@@ -104,7 +104,7 @@ public:
    */
   integer dtIncIterLimit() const
   {
-    return std::ceil( m_dtIncIterLimit * m_maxIterNewton );
+    return std::ceil(m_dtIncIterLimit * m_maxIterNewton);
   }
 
   /**
@@ -112,9 +112,9 @@ public:
    */
   enum class LineSearchAction : integer
   {
-    None,    ///< Do not use line search
-    Attempt, ///< Use line search. Allow exit from line search without achieving smaller residual than starting residual.
-    Require, ///< Use line search. If smaller residual than starting residual is not achieved, cut time step.
+    None,    ///<Do not use line search
+    Attempt, ///<Use line search. Allow exit from line search without achieving smaller residual than starting residual.
+    Require, ///<Use line search. If smaller residual than starting residual is not achieved, cut time step.
   };
 
   /// Flag to apply a line search.
@@ -161,7 +161,7 @@ public:
 
 };
 
-ENUM_STRINGS( NonlinearSolverParameters::LineSearchAction, "None", "Attempt", "Require" )
+ENUM_STRINGS(NonlinearSolverParameters::LineSearchAction, "None", "Attempt", "Require")
 
 } /* namespace geosx */
 

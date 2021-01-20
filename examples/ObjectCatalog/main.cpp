@@ -20,20 +20,20 @@
 #include "Base.hpp"
 #include "Derived1.hpp"
 
-int main( int argc, char *argv[] )
+int main(int argc, char *argv[])
 {
-  GEOSX_LOG( "EXECUTING MAIN" );
+  GEOSX_LOG("EXECUTING MAIN");
   int junk = 1;
   double junk2 = 3.14;
   double junk3 = 2*3.14;
   Parameter param;
 
 
-  GEOSX_LOG( "Attempting to create a Derived1 object" );
-  std::unique_ptr<Base> derived1 = Base::CatalogInterface::Factory( "derived1", junk, junk2, param );
-  GEOSX_LOG( "Attempting to create a Derived2 object" );
-  std::unique_ptr<Base> derived2 = Base::CatalogInterface::Factory( "derived2", junk, junk3, param );
+  GEOSX_LOG("Attempting to create a Derived1 object");
+  std::unique_ptr<Base> derived1 = Base::CatalogInterface::Factory("derived1", junk, junk2, param);
+  GEOSX_LOG("Attempting to create a Derived2 object");
+  std::unique_ptr<Base> derived2 = Base::CatalogInterface::Factory("derived2", junk, junk3, param);
 
-  Base::CatalogInterface::catalog_cast<Derived1>( *(derived2.get()));
-  GEOSX_LOG( "EXITING MAIN" );
+  Base::CatalogInterface::catalog_cast<Derived1>(*(derived2.get()));
+  GEOSX_LOG("EXITING MAIN");
 }

@@ -29,22 +29,22 @@ namespace geosx
 namespace constitutive
 {
 
-template< typename LAMBDA >
-void constitutiveUpdatePassThru( MultiFluidBase const & fluid,
-                                 LAMBDA && lambda )
+template<typename LAMBDA>
+void constitutiveUpdatePassThru(MultiFluidBase const & fluid,
+                                 LAMBDA && lambda)
 {
-  ConstitutivePassThruHandler< BlackOilFluid,
+  ConstitutivePassThruHandler<BlackOilFluid,
                                CompositionalMultiphaseFluid,
-                               MultiPhaseMultiComponentFluid >::Execute( fluid, std::forward< LAMBDA >( lambda ) );
+                               MultiPhaseMultiComponentFluid>::Execute(fluid, std::forward<LAMBDA>(lambda));
 }
 
-template< typename LAMBDA >
-void constitutiveUpdatePassThru( MultiFluidBase & fluid,
-                                 LAMBDA && lambda )
+template<typename LAMBDA>
+void constitutiveUpdatePassThru(MultiFluidBase & fluid,
+                                 LAMBDA && lambda)
 {
-  ConstitutivePassThruHandler< BlackOilFluid,
+  ConstitutivePassThruHandler<BlackOilFluid,
                                CompositionalMultiphaseFluid,
-                               MultiPhaseMultiComponentFluid >::Execute( fluid, std::forward< LAMBDA >( lambda ) );
+                               MultiPhaseMultiComponentFluid>::Execute(fluid, std::forward<LAMBDA>(lambda));
 }
 
 } // namespace constitutive

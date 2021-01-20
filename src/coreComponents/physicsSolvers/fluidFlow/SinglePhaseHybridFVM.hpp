@@ -41,24 +41,24 @@ public:
    * @param name the name of this instantiation of Group in the repository
    * @param parent the parent group of this instantiation of Group
    */
-  SinglePhaseHybridFVM( const std::string & name,
-                        Group * const parent );
+  SinglePhaseHybridFVM(const std::string & name,
+                        Group * const parent);
 
 
   /// deleted default constructor
   SinglePhaseHybridFVM() = delete;
 
   /// deleted copy constructor
-  SinglePhaseHybridFVM( SinglePhaseHybridFVM const & ) = delete;
+  SinglePhaseHybridFVM(SinglePhaseHybridFVM const &) = delete;
 
   /// default move constructor
-  SinglePhaseHybridFVM( SinglePhaseHybridFVM && ) = default;
+  SinglePhaseHybridFVM(SinglePhaseHybridFVM &&) = default;
 
   /// deleted assignment operator
-  SinglePhaseHybridFVM & operator=( SinglePhaseHybridFVM const & ) = delete;
+  SinglePhaseHybridFVM & operator=(SinglePhaseHybridFVM const &) = delete;
 
   /// deleted move operator
-  SinglePhaseHybridFVM & operator=( SinglePhaseHybridFVM && ) = delete;
+  SinglePhaseHybridFVM & operator=(SinglePhaseHybridFVM &&) = delete;
 
   /**
    * @brief default destructor
@@ -70,9 +70,9 @@ public:
    * @return string that contains the catalog name to generate a new NodeManager object through the object catalog.
    */
   static string CatalogName()
-  { return "SinglePhaseHybridFVM"; }
+  {return "SinglePhaseHybridFVM";}
 
-  virtual void RegisterDataOnMesh( Group * const MeshBodies ) override;
+  virtual void RegisterDataOnMesh(Group * const MeshBodies) override;
 
   /**
    * @defgroup Solver Interface Functions
@@ -82,46 +82,46 @@ public:
   /**@{*/
 
   virtual void
-  ImplicitStepSetup( real64 const & time_n,
+  ImplicitStepSetup(real64 const & time_n,
                      real64 const & dt,
-                     DomainPartition & domain ) override;
+                     DomainPartition & domain) override;
 
   virtual void
-  SetupDofs( DomainPartition const & domain,
-             DofManager & dofManager ) const override;
+  SetupDofs(DomainPartition const & domain,
+             DofManager & dofManager) const override;
 
   virtual void
-  ApplyBoundaryConditions( real64 const time_n,
+  ApplyBoundaryConditions(real64 const time_n,
                            real64 const dt,
                            DomainPartition & domain,
                            DofManager const & dofManager,
-                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                           arrayView1d< real64 > const & localRhs ) override;
+                           CRSMatrixView<real64, globalIndex const> const & localMatrix,
+                           arrayView1d<real64> const & localRhs) override;
 
   virtual real64
-  CalculateResidualNorm( DomainPartition const & domain,
+  CalculateResidualNorm(DomainPartition const & domain,
                          DofManager const & dofManager,
-                         arrayView1d< real64 const > const & localRhs ) override;
+                         arrayView1d<real64 const> const & localRhs) override;
 
   virtual bool
-  CheckSystemSolution( DomainPartition const & domain,
+  CheckSystemSolution(DomainPartition const & domain,
                        DofManager const & dofManager,
-                       arrayView1d< real64 const > const & localSolution,
-                       real64 const scalingFactor ) override;
+                       arrayView1d<real64 const> const & localSolution,
+                       real64 const scalingFactor) override;
 
   virtual void
-  ApplySystemSolution( DofManager const & dofManager,
-                       arrayView1d< real64 const > const & localSolution,
+  ApplySystemSolution(DofManager const & dofManager,
+                       arrayView1d<real64 const> const & localSolution,
                        real64 const scalingFactor,
-                       DomainPartition & domain ) override;
+                       DomainPartition & domain) override;
 
   virtual void
-  ResetStateToBeginningOfStep( DomainPartition & domain ) override;
+  ResetStateToBeginningOfStep(DomainPartition & domain) override;
 
   virtual void
-  ImplicitStepComplete( real64 const & time,
+  ImplicitStepComplete(real64 const & time,
                         real64 const & dt,
-                        DomainPartition & domain ) override;
+                        DomainPartition & domain) override;
 
   /**
    * @brief assembles the flux terms for all cells
@@ -133,12 +133,12 @@ public:
    * @param rhs the system right-hand side vector
    */
   virtual void
-  AssembleFluxTerms( real64 const time_n,
+  AssembleFluxTerms(real64 const time_n,
                      real64 const dt,
                      DomainPartition const & domain,
                      DofManager const & dofManager,
-                     CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                     arrayView1d< real64 > const & localRhs ) override;
+                     CRSMatrixView<real64, globalIndex const> const & localMatrix,
+                     arrayView1d<real64> const & localRhs) override;
 
 
   /**@}*/
@@ -152,23 +152,23 @@ public:
   } viewKeysSinglePhaseHybridFVM;
 
   viewKeyStruct & viewKeys()
-  { return viewKeysSinglePhaseHybridFVM; }
+  {return viewKeysSinglePhaseHybridFVM;}
 
   viewKeyStruct const & viewKeys() const
-  { return viewKeysSinglePhaseHybridFVM; }
+  {return viewKeysSinglePhaseHybridFVM;}
 
   struct groupKeyStruct : SolverBase::groupKeyStruct
   {} groupKeysSinglePhaseHybridFVM;
 
   groupKeyStruct & groupKeys()
-  { return groupKeysSinglePhaseHybridFVM; }
+  {return groupKeysSinglePhaseHybridFVM;}
 
   groupKeyStruct const & groupKeys() const
-  { return groupKeysSinglePhaseHybridFVM; }
+  {return groupKeysSinglePhaseHybridFVM;}
 
-  virtual void InitializePreSubGroups( dataRepository::Group * const rootGroup ) override;
+  virtual void InitializePreSubGroups(dataRepository::Group * const rootGroup) override;
 
-  virtual void InitializePostInitialConditions_PreSubGroups( dataRepository::Group * const rootGroup ) override;
+  virtual void InitializePostInitialConditions_PreSubGroups(dataRepository::Group * const rootGroup) override;
 
 private:
 
@@ -179,7 +179,7 @@ private:
   real64 m_areaRelTol;
 
   /// region filter used in flux assembly
-  SortedArray< localIndex > m_regionFilter;
+  SortedArray<localIndex> m_regionFilter;
 
 };
 

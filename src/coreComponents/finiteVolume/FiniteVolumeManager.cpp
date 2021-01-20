@@ -30,26 +30,26 @@ namespace geosx
 using namespace dataRepository;
 
 
-FiniteVolumeManager::FiniteVolumeManager( string const & name, Group * const parent )
-  : Group( name, parent )
+FiniteVolumeManager::FiniteVolumeManager(string const & name, Group * const parent)
+  : Group(name, parent)
 {
-  setInputFlags( InputFlags::OPTIONAL );
+  setInputFlags(InputFlags::OPTIONAL);
 }
 
 FiniteVolumeManager::~FiniteVolumeManager()
 {}
 
-Group * FiniteVolumeManager::CreateChild( string const & childKey, string const & childName )
+Group * FiniteVolumeManager::CreateChild(string const & childKey, string const & childName)
 {
-  if( childKey == HybridMimeticDiscretization::CatalogName() )
+  if(childKey == HybridMimeticDiscretization::CatalogName())
   {
-    std::unique_ptr< HybridMimeticDiscretization > hm = std::make_unique< HybridMimeticDiscretization >( childName, this );
-    return this->RegisterGroup< HybridMimeticDiscretization >( childName, std::move( hm ) );
+    std::unique_ptr<HybridMimeticDiscretization> hm = std::make_unique<HybridMimeticDiscretization>(childName, this);
+    return this->RegisterGroup<HybridMimeticDiscretization>(childName, std::move(hm));
   }
   else
   {
-    std::unique_ptr< FluxApproximationBase > approx = FluxApproximationBase::CatalogInterface::Factory( childKey, childName, this );
-    return this->RegisterGroup< FluxApproximationBase >( childName, std::move( approx ));
+    std::unique_ptr<FluxApproximationBase> approx = FluxApproximationBase::CatalogInterface::Factory(childKey, childName, this);
+    return this->RegisterGroup<FluxApproximationBase>(childName, std::move(approx));
   }
 }
 
@@ -57,38 +57,38 @@ Group * FiniteVolumeManager::CreateChild( string const & childKey, string const 
 void FiniteVolumeManager::ExpandObjectCatalogs()
 {
   // During schema generation, register one of each type derived from FluxApproximationBase here
-  for( auto & catalogIter: FluxApproximationBase::GetCatalog())
+  for(auto & catalogIter: FluxApproximationBase::GetCatalog())
   {
-    CreateChild( catalogIter.first, catalogIter.first );
+    CreateChild(catalogIter.first, catalogIter.first);
   }
   // Then do the same thing for the HybridMimeticDiscretization
-  for( auto & catalogIter: HybridMimeticDiscretization::GetCatalog())
+  for(auto & catalogIter: HybridMimeticDiscretization::GetCatalog())
   {
     string const childName = catalogIter.first;
-    std::unique_ptr< HybridMimeticDiscretization > hm = std::make_unique< HybridMimeticDiscretization >( childName, this );
-    this->RegisterGroup< HybridMimeticDiscretization >( childName, std::move( hm ) );
+    std::unique_ptr<HybridMimeticDiscretization> hm = std::make_unique<HybridMimeticDiscretization>(childName, this);
+    this->RegisterGroup<HybridMimeticDiscretization>(childName, std::move(hm));
   }
 }
 
 
-FluxApproximationBase const & FiniteVolumeManager::getFluxApproximation( std::string const & name ) const
+FluxApproximationBase const & FiniteVolumeManager::getFluxApproximation(std::string const & name) const
 {
-  return getGroupReference< FluxApproximationBase >( name );
+  return getGroupReference<FluxApproximationBase>(name);
 }
 
-FluxApproximationBase & FiniteVolumeManager::getFluxApproximation( std::string const & name )
+FluxApproximationBase & FiniteVolumeManager::getFluxApproximation(std::string const & name)
 {
-  return getGroupReference< FluxApproximationBase >( name );
+  return getGroupReference<FluxApproximationBase>(name);
 }
 
-HybridMimeticDiscretization const & FiniteVolumeManager::getHybridMimeticDiscretization( std::string const & name ) const
+HybridMimeticDiscretization const & FiniteVolumeManager::getHybridMimeticDiscretization(std::string const & name) const
 {
-  return getGroupReference< HybridMimeticDiscretization >( name );
+  return getGroupReference<HybridMimeticDiscretization>(name);
 }
 
-HybridMimeticDiscretization & FiniteVolumeManager::getHybridMimeticDiscretization( std::string const & name )
+HybridMimeticDiscretization & FiniteVolumeManager::getHybridMimeticDiscretization(std::string const & name)
 {
-  return getGroupReference< HybridMimeticDiscretization >( name );
+  return getGroupReference<HybridMimeticDiscretization>(name);
 }
 
 

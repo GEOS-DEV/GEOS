@@ -38,12 +38,12 @@ namespace geosx
 /**
  * @brief Wrapper around Trilinos-based preconditioners.
  */
-class TrilinosPreconditioner final : public PreconditionerBase< TrilinosInterface >
+class TrilinosPreconditioner final : public PreconditionerBase<TrilinosInterface>
 {
 public:
 
   /// Alias for base type
-  using Base = PreconditionerBase< TrilinosInterface >;
+  using Base = PreconditionerBase<TrilinosInterface>;
 
   /// Alias for vector type
   using Vector = typename Base::Vector;
@@ -58,15 +58,15 @@ public:
    * @brief Constructor.
    * @param params preconditioner parameters
    */
-  explicit TrilinosPreconditioner( LinearSolverParameters params );
+  explicit TrilinosPreconditioner(LinearSolverParameters params);
 
   /**
    * @brief Constructor.
    * @param params preconditioner parameters
    * @param nearNullKernel the user-provided near null kernel
    */
-  TrilinosPreconditioner( LinearSolverParameters params,
-                          array1d< Vector > const & nearNullKernel );
+  TrilinosPreconditioner(LinearSolverParameters params,
+                          array1d<Vector> const & nearNullKernel);
 
   /**
    * @brief Destructor.
@@ -77,7 +77,7 @@ public:
    * @brief Compute the preconditioner from a matrix.
    * @param mat the matrix to precondition.
    */
-  virtual void compute( Matrix const & mat ) override;
+  virtual void compute(Matrix const & mat) override;
 
   /**
    * @brief Apply operator to a vector
@@ -86,7 +86,7 @@ public:
    *
    * @warning @p src and @p dst cannot alias the same vector.
    */
-  virtual void apply( Vector const & src, Vector & dst ) const override;
+  virtual void apply(Vector const & src, Vector & dst) const override;
 
   virtual void clear() override;
 
@@ -107,10 +107,10 @@ private:
   LinearSolverParameters m_parameters;
 
   /// Pointer to the Trilinos implementation
-  std::unique_ptr< Epetra_Operator > m_precond;
+  std::unique_ptr<Epetra_Operator> m_precond;
 
   /// Trilinos pointer to the near null kernel
-  array2d< real64 > m_nullSpacePointer;
+  array2d<real64> m_nullSpacePointer;
 };
 
 }

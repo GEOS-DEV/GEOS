@@ -55,7 +55,7 @@ public:
   real64 elapsedTime()
   {
     std::chrono::steady_clock::time_point const end = std::chrono::steady_clock::now();
-    std::chrono::duration< real64 > const diff = end - m_start;
+    std::chrono::duration<real64> const diff = end - m_start;
     return diff.count();
   }
 

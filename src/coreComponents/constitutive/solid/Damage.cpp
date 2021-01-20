@@ -30,9 +30,9 @@ using namespace dataRepository;
 namespace constitutive
 {
 
-template< typename BASE >
-Damage< BASE >::Damage( string const & name, Group * const parent ):
-  BASE( name, parent ),
+template<typename BASE>
+Damage<BASE>::Damage(string const & name, Group * const parent):
+  BASE(name, parent),
   m_damage(),
   m_strainEnergyDensity(),
   m_lengthScale(),
@@ -40,51 +40,51 @@ Damage< BASE >::Damage( string const & name, Group * const parent ):
   m_criticalStrainEnergy()
 {
 
-  this->registerWrapper( viewKeyStruct::damageString, &m_damage )->
-    setApplyDefaultValue( 0.0 )->
-    setPlotLevel( PlotLevel::LEVEL_0 )->
-    setDescription( "Material Damage Variable" );
+  this->registerWrapper(viewKeyStruct::damageString, &m_damage)->
+    setApplyDefaultValue(0.0)->
+    setPlotLevel(PlotLevel::LEVEL_0)->
+    setDescription("Material Damage Variable");
 
-  this->registerWrapper( viewKeyStruct::strainEnergyDensityString, &m_strainEnergyDensity )->
-    setApplyDefaultValue( 0.0 )->
-    setPlotLevel( PlotLevel::LEVEL_0 )->
-    setDescription( "Stress Deviator" );
+  this->registerWrapper(viewKeyStruct::strainEnergyDensityString, &m_strainEnergyDensity)->
+    setApplyDefaultValue(0.0)->
+    setPlotLevel(PlotLevel::LEVEL_0)->
+    setDescription("Stress Deviator");
 
-  this->registerWrapper( viewKeyStruct::lengthScaleString, &m_lengthScale )->
-    setInputFlag( InputFlags::REQUIRED )->
-    setDescription( "lenght scale l in the phase-field equation" );
+  this->registerWrapper(viewKeyStruct::lengthScaleString, &m_lengthScale)->
+    setInputFlag(InputFlags::REQUIRED)->
+    setDescription("lenght scale l in the phase-field equation");
 
-  this->registerWrapper( viewKeyStruct::criticalFractureEnergyString, &m_criticalFractureEnergy )->
-    setInputFlag( InputFlags::REQUIRED )->
-    setDescription( "critical fracture energy" );
+  this->registerWrapper(viewKeyStruct::criticalFractureEnergyString, &m_criticalFractureEnergy)->
+    setInputFlag(InputFlags::REQUIRED)->
+    setDescription("critical fracture energy");
 
-  this->registerWrapper( viewKeyStruct::criticalStrainEnergyString, &m_criticalStrainEnergy )->
-    setInputFlag( InputFlags::REQUIRED )->
-    setDescription( "material critical stress in a 1d tension test" );
+  this->registerWrapper(viewKeyStruct::criticalStrainEnergyString, &m_criticalStrainEnergy)->
+    setInputFlag(InputFlags::REQUIRED)->
+    setDescription("material critical stress in a 1d tension test");
 }
 
-template< typename BASE >
-Damage< BASE >::~Damage()
+template<typename BASE>
+Damage<BASE>::~Damage()
 {}
 
-template< typename BASE >
-void Damage< BASE >::PostProcessInput()
+template<typename BASE>
+void Damage<BASE>::PostProcessInput()
 {
   BASE::PostProcessInput();
 }
 
-template< typename BASE >
-void Damage< BASE >::allocateConstitutiveData( dataRepository::Group * const parent,
-                                               localIndex const numConstitutivePointsPerParentIndex )
+template<typename BASE>
+void Damage<BASE>::allocateConstitutiveData(dataRepository::Group * const parent,
+                                               localIndex const numConstitutivePointsPerParentIndex)
 {
-  m_damage.resize( 0, numConstitutivePointsPerParentIndex );
-  m_strainEnergyDensity.resize( 0, numConstitutivePointsPerParentIndex );
-  BASE::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+  m_damage.resize(0, numConstitutivePointsPerParentIndex);
+  m_strainEnergyDensity.resize(0, numConstitutivePointsPerParentIndex);
+  BASE::allocateConstitutiveData(parent, numConstitutivePointsPerParentIndex);
 }
 
-typedef Damage< LinearElasticIsotropic > DamageLinearElasticIsotropic;
+typedef Damage<LinearElasticIsotropic> DamageLinearElasticIsotropic;
 
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, DamageLinearElasticIsotropic, string const &, Group * const )
+REGISTER_CATALOG_ENTRY(ConstitutiveBase, DamageLinearElasticIsotropic, string const &, Group * const)
 
 }
 } /* namespace geosx */

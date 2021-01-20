@@ -30,9 +30,9 @@ namespace geosx
  * @param[in] index the input array
  * @return the converted array
  */
-inline PetscInt * toPetscInt( globalIndex * const index )
+inline PetscInt * toPetscInt(globalIndex * const index)
 {
-  return reinterpret_cast< PetscInt * >(index);
+  return reinterpret_cast<PetscInt *>(index);
 }
 
 /**
@@ -40,9 +40,9 @@ inline PetscInt * toPetscInt( globalIndex * const index )
  * @param[in] index the input array
  * @return the converted array
  */
-inline PetscInt const * toPetscInt( globalIndex const * const index )
+inline PetscInt const * toPetscInt(globalIndex const * const index)
 {
-  return reinterpret_cast< PetscInt const * >(index);
+  return reinterpret_cast<PetscInt const *>(index);
 }
 
 }

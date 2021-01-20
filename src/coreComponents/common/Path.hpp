@@ -25,7 +25,7 @@ namespace geosx
  * @brief Class describing a file Path
  * @details Purpose of this class is to
  * be used as a type to specify file path within the XML input files,
- * through the operator >>
+ * through the operator>>
  */
 class Path : public std::string
 {
@@ -40,8 +40,8 @@ public:
    * @brief Copy constructor, creates a copy of @p src.
    * @param src the Path to copy.
    */
-  Path( Path const & src ):
-    std::string( src )
+  Path(Path const & src):
+    std::string(src)
   {}
 
   /// Destructor.
@@ -53,9 +53,9 @@ public:
    * @param rhs Reference to the Path that will be copied.
    * @return *this
    */
-  Path & operator=( Path const & rhs )
+  Path & operator=(Path const & rhs)
   {
-    std::string::operator=( rhs );
+    std::string::operator=(rhs);
     return *this;
   }
 
@@ -79,7 +79,7 @@ public:
  * @param[in] path the relative path to the file
  * @param[out] absolutePath the absolute path to the file
  */
-void getAbsolutePath( std::string const & path, std::string & absolutePath );
+void getAbsolutePath(std::string const & path, std::string & absolutePath);
 
 /*!
  * @brief Tells wether the path is absolute of not
@@ -87,7 +87,7 @@ void getAbsolutePath( std::string const & path, std::string & absolutePath );
  * @retval true if the path is absolute
  * @retval false if the path is relative
  */
-bool isAbsolutePath( const std::string & path );
+bool isAbsolutePath(const std::string & path);
 
 /*!
  * @brief Operator use with the class Path while parsing the XML file
@@ -95,7 +95,7 @@ bool isAbsolutePath( const std::string & path );
  * @param[in,out] p the path that will be set to an absolute path relative to the xml file
  * @return the input stream
  */
-std::istream & operator>>( std::istream & is, Path & p );
+std::istream & operator>>(std::istream & is, Path & p);
 
 /*!
  * @brief Split the path in two parts : directory name and file name
@@ -103,7 +103,7 @@ std::istream & operator>>( std::istream & is, Path & p );
  * @param[out] dirName name of the directory
  * @param[out] baseName the name of the file
  */
-void splitPath( std::string const & path, std::string & dirName, std::string & baseName );
+void splitPath(std::string const & path, std::string & dirName, std::string & baseName);
 
 /*!
  * @brief List all the files of one directory
@@ -111,7 +111,7 @@ void splitPath( std::string const & path, std::string & dirName, std::string & b
  * @param[in] path path to the directory
  * @param[out] files vector containing allt the file path
  */
-void readDirectory( std::string const & path, std::vector< std::string > & files );
+void readDirectory(std::string const & path, std::vector<std::string> & files);
 
 /*!
  * @brief Make directories for @p path.
@@ -119,7 +119,7 @@ void readDirectory( std::string const & path, std::vector< std::string > & files
  * @details Everything in @p path is intended to be a directory. If a directory in the path
  *   already exists nothing is done. if a directory doesn't exist it is created.
  */
-void makeDirsForPath( std::string const & path );
+void makeDirsForPath(std::string const & path);
 
 } /* end namespace geosx */
 

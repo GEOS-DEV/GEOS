@@ -23,22 +23,22 @@ namespace geosx
 {
 using namespace dataRepository;
 
-NumericalMethodsManager::NumericalMethodsManager( string const & name, Group * const parent ):
-  Group( name, parent ),
-  m_finiteElementDiscretizationManager( groupKeysStruct::finiteElementDiscretizations, this ),
-  m_finiteVolumeManager( groupKeysStruct::finiteVolumeManager, this )
+NumericalMethodsManager::NumericalMethodsManager(string const & name, Group * const parent):
+  Group(name, parent),
+  m_finiteElementDiscretizationManager(groupKeysStruct::finiteElementDiscretizations, this),
+  m_finiteVolumeManager(groupKeysStruct::finiteVolumeManager, this)
 {
-  setInputFlags( InputFlags::OPTIONAL );
+  setInputFlags(InputFlags::OPTIONAL);
 
-  this->RegisterGroup( groupKeysStruct::finiteElementDiscretizations, &m_finiteElementDiscretizationManager );
-  this->RegisterGroup( groupKeysStruct::finiteVolumeManager, &m_finiteVolumeManager );
+  this->RegisterGroup(groupKeysStruct::finiteElementDiscretizations, &m_finiteElementDiscretizationManager);
+  this->RegisterGroup(groupKeysStruct::finiteVolumeManager, &m_finiteVolumeManager);
 }
 
 NumericalMethodsManager::~NumericalMethodsManager()
 {}
 
-Group * NumericalMethodsManager::CreateChild( string const & GEOSX_UNUSED_PARAM( childKey ),
-                                              string const & GEOSX_UNUSED_PARAM( childName ) )
+Group * NumericalMethodsManager::CreateChild(string const & GEOSX_UNUSED_PARAM(childKey),
+                                              string const & GEOSX_UNUSED_PARAM(childName))
 {
   return nullptr;
 }

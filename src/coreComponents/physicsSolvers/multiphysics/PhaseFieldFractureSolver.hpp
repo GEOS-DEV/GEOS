@@ -29,8 +29,8 @@ namespace geosx
 class PhaseFieldFractureSolver : public SolverBase
 {
 public:
-  PhaseFieldFractureSolver( const std::string & name,
-                            Group * const parent );
+  PhaseFieldFractureSolver(const std::string & name,
+                            Group * const parent);
   ~PhaseFieldFractureSolver() override;
 
   /**
@@ -42,33 +42,33 @@ public:
     return "PhaseFieldFracture";
   }
 
-  virtual void RegisterDataOnMesh( dataRepository::Group * const MeshBodies ) override final;
+  virtual void RegisterDataOnMesh(dataRepository::Group * const MeshBodies) override final;
 
   virtual void
-  ImplicitStepSetup( real64 const & time_n,
+  ImplicitStepSetup(real64 const & time_n,
                      real64 const & dt,
-                     DomainPartition & domain ) override final;
+                     DomainPartition & domain) override final;
 
   virtual void
-  ImplicitStepComplete( real64 const & time_n,
+  ImplicitStepComplete(real64 const & time_n,
                         real64 const & dt,
-                        DomainPartition & domain ) override final;
+                        DomainPartition & domain) override final;
 
   virtual void
-  ResetStateToBeginningOfStep( DomainPartition & domain ) override;
+  ResetStateToBeginningOfStep(DomainPartition & domain) override;
 
   virtual real64
-  SolverStep( real64 const & time_n,
+  SolverStep(real64 const & time_n,
               real64 const & dt,
               int const cycleNumber,
-              DomainPartition & domain ) override;
+              DomainPartition & domain) override;
 
-  real64 SplitOperatorStep( real64 const & time_n,
+  real64 SplitOperatorStep(real64 const & time_n,
                             real64 const & dt,
                             integer const cycleNumber,
-                            DomainPartition & domain );
+                            DomainPartition & domain);
 
-  void mapDamageToQuadrature( DomainPartition & domain );
+  void mapDamageToQuadrature(DomainPartition & domain);
 
   enum class CouplingTypeOption : integer
   {
@@ -92,7 +92,7 @@ public:
 protected:
   virtual void PostProcessInput() override final;
 
-  virtual void InitializePostInitialConditions_PreSubGroups( dataRepository::Group * const problemManager ) override final;
+  virtual void InitializePostInitialConditions_PreSubGroups(dataRepository::Group * const problemManager) override final;
 
 private:
 
@@ -103,7 +103,7 @@ private:
 
 };
 
-ENUM_STRINGS( PhaseFieldFractureSolver::CouplingTypeOption, "FixedStress", "TightlyCoupled" )
+ENUM_STRINGS(PhaseFieldFractureSolver::CouplingTypeOption, "FixedStress", "TightlyCoupled")
 
 } /* namespace geosx */
 

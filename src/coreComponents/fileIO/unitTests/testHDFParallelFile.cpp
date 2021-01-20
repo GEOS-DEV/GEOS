@@ -7,31 +7,31 @@
 
 using namespace geosx;
 
-TEST( testHDFIO_parallel, SingleValueHistory )
+TEST(testHDFIO_parallel, SingleValueHistory)
 {
   GEOSX_MARK_FUNCTION;
-  string filename( "single_value_parallel" );
-  HistoryMetadata spec( "Time History", 1, std::type_index( typeid(real64)));
+  string filename("single_value_parallel");
+  HistoryMetadata spec("Time History", 1, std::type_index(typeid(real64)));
 
-  int rank = MpiWrapper::Comm_rank( );
+  int rank = MpiWrapper::Comm_rank();
 
-  HDFHistIO io( filename, spec );
-  io.init( true );
+  HDFHistIO io(filename, spec);
+  io.init(true);
   real64 val = 0.0;
-  for( localIndex tidx = 0; tidx < 100; ++tidx )
+  for(localIndex tidx = 0; tidx <100; ++tidx)
   {
     val += 0.5 * (rank+1);
-    buffer_unit_type * buffer = io.getBufferHead( );
-    memcpy( buffer, &val, sizeof(real64));
+    buffer_unit_type * buffer = io.getBufferHead();
+    memcpy(buffer, &val, sizeof(real64));
   }
 
-  io.write( );
+  io.write();
 }
 
-int main( int ac, char * av[] )
+int main(int ac, char * av[])
 {
-  ::testing::InitGoogleTest( &ac, av );
-  geosx::basicSetup( ac, av );
+  ::testing::InitGoogleTest(&ac, av);
+  geosx::basicSetup(ac, av);
   int const result = RUN_ALL_TESTS();
   geosx::basicCleanup();
   return result;

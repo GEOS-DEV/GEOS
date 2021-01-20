@@ -3,7 +3,7 @@
 # Run scripts/cori-setup-environment.sh before building
 ##################################
 
-set( ENABLE_WARNINGS_AS_ERRORS "OFF" CACHE BOOL "" FORCE)
+set(ENABLE_WARNINGS_AS_ERRORS "OFF" CACHE BOOL "" FORCE)
 
 set(CMAKE_CXX_COMPILER "CC" CACHE PATH "" FORCE)
 set(CMAKE_C_COMPILER "cc" CACHE PATH "" FORCE)
@@ -25,7 +25,7 @@ set(MPIEXEC              "/usr/bin/srun" CACHE PATH "")
 set(MPIEXEC_NUMPROC_FLAG "-n" CACHE STRING "")
 
 set(GEOSX_ENABLE_FPE OFF CACHE BOOL "" FORCE)
-set(GEOSX_TPL_DIR "/global/project/projectdirs/m1411/GEOSX/tpls/install-cori-intel-release-22-07-20" CACHE PATH "" )
+set(GEOSX_TPL_DIR "/global/project/projectdirs/m1411/GEOSX/tpls/install-cori-intel-release-22-07-20" CACHE PATH "")
 
 set(GEOSX_LINK_PREPEND_FLAG  "-Wl,--whole-archive"    CACHE STRING "" FORCE)
 set(GEOSX_LINK_POSTPEND_FLAG "-Wl,--no-whole-archive" CACHE STRING "" FORCE)

@@ -67,60 +67,60 @@ set(managers_sources
     initialization.cpp
    )
 
-if( ENABLE_MATHPRESSO )
-  list( APPEND managers_headers
+if(ENABLE_MATHPRESSO)
+  list(APPEND managers_headers
         Functions/SymbolicFunction.hpp
-        Functions/CompositeFunction.hpp )
-  list( APPEND managers_sources
+        Functions/CompositeFunction.hpp)
+  list(APPEND managers_sources
         Functions/SymbolicFunction.cpp
-        Functions/CompositeFunction.cpp )
+        Functions/CompositeFunction.cpp)
 endif()
 
-if( ENABLE_MPI )
-    list( APPEND managers_headers Outputs/ChomboIO.hpp )
-    list( APPEND managers_sources Outputs/ChomboIO.cpp )
+if(ENABLE_MPI)
+    list(APPEND managers_headers Outputs/ChomboIO.hpp)
+    list(APPEND managers_sources Outputs/ChomboIO.cpp)
 endif()
 
-if( ENABLE_VTK )
-    list( APPEND managers_headers Outputs/VTKOutput.hpp )
-    list( APPEND managers_sources Outputs/VTKOutput.cpp )
+if(ENABLE_VTK)
+    list(APPEND managers_headers Outputs/VTKOutput.hpp)
+    list(APPEND managers_sources Outputs/VTKOutput.cpp)
 endif()
 
-if( BUILD_OBJ_LIBS )
-  set( dependencyList dataRepository fileIO optionparser RAJA linearAlgebra conduit )
+if(BUILD_OBJ_LIBS)
+  set(dependencyList dataRepository fileIO optionparser RAJA linearAlgebra conduit)
 else()
-  set( dependencyList common fileIO linearAlgebra optionparser RAJA mpiCommunications conduit )
+  set(dependencyList common fileIO linearAlgebra optionparser RAJA mpiCommunications conduit)
 endif()
 
-if( ENABLE_MATHPRESSO )
-   set( dependencyList ${dependencyList} mathpresso )
+if(ENABLE_MATHPRESSO)
+   set(dependencyList ${dependencyList} mathpresso)
 endif()
 
-if ( ENABLE_OPENMP )
-  set( dependencyList ${dependencyList} openmp )
+if (ENABLE_OPENMP)
+  set(dependencyList ${dependencyList} openmp)
 endif()
 
-if ( ENABLE_CUDA )
-  set( dependencyList ${dependencyList} cuda )
+if (ENABLE_CUDA)
+  set(dependencyList ${dependencyList} cuda)
 endif()
 
-if ( ENABLE_CALIPER )
-  set( dependencyList ${dependencyList} caliper adiak )
+if (ENABLE_CALIPER)
+  set(dependencyList ${dependencyList} caliper adiak)
 endif()
 
-if ( ENABLE_MKL )
-  set( dependencyList ${dependencyList} mkl )
+if (ENABLE_MKL)
+  set(dependencyList ${dependencyList} mkl)
 endif()
 
-blt_add_library( NAME                  managers
+blt_add_library(NAME                  managers
                  SOURCES               ${managers_sources}
                  HEADERS               ${managers_headers}
                  DEPENDS_ON            ${dependencyList}
                  OBJECT                ${buildAsObj}
                )
 
-target_include_directories( managers PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)
+target_include_directories(managers PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)
 
-add_subdirectory( unitTests )
+add_subdirectory(unitTests)
 
-geosx_add_code_checks( PREFIX managers )
+geosx_add_code_checks(PREFIX managers)

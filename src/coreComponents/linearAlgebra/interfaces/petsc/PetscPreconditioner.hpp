@@ -48,12 +48,12 @@ namespace geosx
 /**
  * @brief Wrapper around PETSc-based preconditioners.
  */
-class PetscPreconditioner final : public PreconditionerBase< PetscInterface >
+class PetscPreconditioner final : public PreconditionerBase<PetscInterface>
 {
 public:
 
   /// Alias for base type
-  using Base = PreconditionerBase< PetscInterface >;
+  using Base = PreconditionerBase<PetscInterface>;
 
   /// Alias for vector type
   using Vector = typename Base::Vector;
@@ -68,14 +68,14 @@ public:
    * @brief Constructor.
    * @param params preconditioner parameters
    */
-  explicit PetscPreconditioner( LinearSolverParameters params );
+  explicit PetscPreconditioner(LinearSolverParameters params);
 
   /**
    * @brief Constructor.
    * @param params preconditioner parameters
    * @param nearNullKernel the user-provided near null kernel
    */
-  PetscPreconditioner( LinearSolverParameters params, array1d< Vector > const & nearNullKernel );
+  PetscPreconditioner(LinearSolverParameters params, array1d<Vector> const & nearNullKernel);
 
   /**
    * @brief Destructor.
@@ -86,7 +86,7 @@ public:
    * @brief Compute the preconditioner from a matrix.
    * @param mat the matrix to precondition.
    */
-  virtual void compute( Matrix const & mat ) override;
+  virtual void compute(Matrix const & mat) override;
 
   /**
    * @brief Apply operator to a vector
@@ -95,7 +95,7 @@ public:
    *
    * @warning @p src and @p dst cannot alias the same vector.
    */
-  virtual void apply( Vector const & src, Vector & dst ) const override;
+  virtual void apply(Vector const & src, Vector & dst) const override;
 
   virtual void clear() override;
 

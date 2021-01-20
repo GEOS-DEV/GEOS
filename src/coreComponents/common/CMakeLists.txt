@@ -26,25 +26,25 @@ set(common_sources
     Path.cpp
    )
 
-set( dependencyList lvarray pugixml RAJA chai conduit::conduit )
+set(dependencyList lvarray pugixml RAJA chai conduit::conduit)
 
-if( ENABLE_OPENMP )
-  set( dependencyList ${dependencyList} openmp )
-endif( )
-
-if( ENABLE_CUDA )
-  set( dependencyList ${dependencyList} cuda )
-endif( )
-
-if( ENABLE_MPI )
-  set( dependencyList ${dependencyList} mpi )
+if(ENABLE_OPENMP)
+  set(dependencyList ${dependencyList} openmp)
 endif()
 
-if( ENABLE_CALIPER )
-  set( dependencyList ${dependencyList} caliper )
+if(ENABLE_CUDA)
+  set(dependencyList ${dependencyList} cuda)
 endif()
 
-blt_add_library( NAME                  common
+if(ENABLE_MPI)
+  set(dependencyList ${dependencyList} mpi)
+endif()
+
+if(ENABLE_CALIPER)
+  set(dependencyList ${dependencyList} caliper)
+endif()
+
+blt_add_library(NAME                  common
                  SOURCES               ${common_sources}
                  HEADERS               ${common_headers}
                  DEPENDS_ON            ${dependencyList}
@@ -52,8 +52,8 @@ blt_add_library( NAME                  common
 #                 SHARED TRUE
                )
 
-target_include_directories( common PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
+target_include_directories(common PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)
 
-geosx_add_code_checks(PREFIX common )
+geosx_add_code_checks(PREFIX common)
 
-add_subdirectory( unitTests )
+add_subdirectory(unitTests)

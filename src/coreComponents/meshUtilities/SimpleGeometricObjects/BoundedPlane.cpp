@@ -23,34 +23,34 @@ namespace geosx
 {
 using namespace dataRepository;
 
-BoundedPlane::BoundedPlane( const std::string & name, Group * const parent ):
-  SimpleGeometricObjectBase( name, parent ),
-  m_origin{ 0.0, 0.0, 0.0 },
-  m_normal{ 0.0, 0.0, 1.0 },
-  m_lengthVector{ 0.0, 0.0, 0.0 },
-  m_widthVector{ 0.0, 0.0, 0.0 }
+BoundedPlane::BoundedPlane(const std::string & name, Group * const parent):
+  SimpleGeometricObjectBase(name, parent),
+  m_origin{0.0, 0.0, 0.0},
+  m_normal{0.0, 0.0, 1.0},
+  m_lengthVector{0.0, 0.0, 0.0},
+  m_widthVector{0.0, 0.0, 0.0}
 {
-  registerWrapper( viewKeyStruct::originString, &m_origin )->
-    setInputFlag( InputFlags::REQUIRED )->
-    setDescription( "Origin point (x,y,z) of the plane (basically, any point on the plane)" );
+  registerWrapper(viewKeyStruct::originString, &m_origin)->
+    setInputFlag(InputFlags::REQUIRED)->
+    setDescription("Origin point (x,y,z) of the plane (basically, any point on the plane)");
 
-  registerWrapper( viewKeyStruct::normalString, &m_normal )->
-    setInputFlag( InputFlags::REQUIRED )->
-    setDescription( "Normal (n_x,n_y,n_z) to the plane (will be normalized automatically)" );
+  registerWrapper(viewKeyStruct::normalString, &m_normal)->
+    setInputFlag(InputFlags::REQUIRED)->
+    setDescription("Normal (n_x,n_y,n_z) to the plane (will be normalized automatically)");
 
-  registerWrapper( viewKeyStruct::mLengthVectorString, &m_lengthVector )->
-    setInputFlag( InputFlags::REQUIRED )->
-    setDescription( "Tangent vector defining the orthonormal basis along with the normal." );
+  registerWrapper(viewKeyStruct::mLengthVectorString, &m_lengthVector)->
+    setInputFlag(InputFlags::REQUIRED)->
+    setDescription("Tangent vector defining the orthonormal basis along with the normal.");
 
-  registerWrapper( viewKeyStruct::mWidthVectorString, &m_widthVector )->
-    setInputFlag( InputFlags::REQUIRED )->
-    setDescription( "Tangent vector defining the orthonormal basis along with the normal." );
+  registerWrapper(viewKeyStruct::mWidthVectorString, &m_widthVector)->
+    setInputFlag(InputFlags::REQUIRED)->
+    setDescription("Tangent vector defining the orthonormal basis along with the normal.");
 
-  registerWrapper( viewKeyStruct::dimensionsString, &m_dimensions )->
-    setInputFlag( InputFlags::REQUIRED )->
-    setDescription( "Length and width of the bounded plane" );
+  registerWrapper(viewKeyStruct::dimensionsString, &m_dimensions)->
+    setInputFlag(InputFlags::REQUIRED)->
+    setDescription("Length and width of the bounded plane");
 
-  m_points.resize( 4, 3 );
+  m_points.resize(4, 3);
 }
 
 BoundedPlane::~BoundedPlane()
@@ -59,84 +59,84 @@ BoundedPlane::~BoundedPlane()
 void BoundedPlane::PostProcessInput()
 {
   // Make sure that you have an orthonormal basis.
-  LvArray::tensorOps::normalize< 3 >( m_normal );
-  LvArray::tensorOps::normalize< 3 >( m_lengthVector );
-  LvArray::tensorOps::normalize< 3 >( m_widthVector );
+  LvArray::tensorOps::normalize<3>(m_normal);
+  LvArray::tensorOps::normalize<3>(m_lengthVector);
+  LvArray::tensorOps::normalize<3>(m_widthVector);
 
   //Check if they are all orthogonal
-  real64 vector[ 3 ];
-  LvArray::tensorOps::crossProduct( vector, m_lengthVector, m_widthVector );
+  real64 vector[3];
+  LvArray::tensorOps::crossProduct(vector, m_lengthVector, m_widthVector);
 
-  GEOSX_ERROR_IF( std::fabs( std::fabs( LvArray::tensorOps::AiBi< 3 >( m_normal, vector )) - 1 ) > 1e-15
-                  || std::fabs( LvArray::tensorOps::AiBi< 3 >( m_widthVector, m_lengthVector )) > 1e-15,
-                  "Error: the 3 vectors provided in the BoundedPlane do not form an orthonormal basis!" );
-  GEOSX_ERROR_IF( m_dimensions.size() != 2, "Error: Need to provide both length and width!" );
+  GEOSX_ERROR_IF(std::fabs(std::fabs(LvArray::tensorOps::AiBi<3>(m_normal, vector)) - 1)> 1e-15
+                  || std::fabs(LvArray::tensorOps::AiBi<3>(m_widthVector, m_lengthVector))> 1e-15,
+                  "Error: the 3 vectors provided in the BoundedPlane do not form an orthonormal basis!");
+  GEOSX_ERROR_IF(m_dimensions.size() != 2, "Error: Need to provide both length and width!");
 
   findRectangleLimits();
 }
 
 void BoundedPlane::findRectangleLimits()
 {
-  real64 lengthVec[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( m_lengthVector );
-  real64 widthVec[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( m_widthVector );
+  real64 lengthVec[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3(m_lengthVector);
+  real64 widthVec[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3(m_widthVector);
 
-  LvArray::tensorOps::scale< 3 >( lengthVec, 0.5 * m_dimensions[0] );
-  LvArray::tensorOps::scale< 3 >( widthVec, 0.5 * m_dimensions[1] );
+  LvArray::tensorOps::scale<3>(lengthVec, 0.5 * m_dimensions[0]);
+  LvArray::tensorOps::scale<3>(widthVec, 0.5 * m_dimensions[1]);
 
-  for( int i = 0; i < 4; i++ )
+  for(int i = 0; i <4; i++)
   {
-    LvArray::tensorOps::copy< 3 >( m_points[i], m_origin );
+    LvArray::tensorOps::copy<3>(m_points[i], m_origin);
   }
 
-  LvArray::tensorOps::subtract< 3 >( m_points[0], lengthVec );
-  LvArray::tensorOps::subtract< 3 >( m_points[0], widthVec );
+  LvArray::tensorOps::subtract<3>(m_points[0], lengthVec);
+  LvArray::tensorOps::subtract<3>(m_points[0], widthVec);
 
-  LvArray::tensorOps::add< 3 >( m_points[1], lengthVec );
-  LvArray::tensorOps::subtract< 3 >( m_points[1], widthVec );
+  LvArray::tensorOps::add<3>(m_points[1], lengthVec);
+  LvArray::tensorOps::subtract<3>(m_points[1], widthVec);
 
-  LvArray::tensorOps::add< 3 >( m_points[2], lengthVec );
-  LvArray::tensorOps::add< 3 >( m_points[2], widthVec );
+  LvArray::tensorOps::add<3>(m_points[2], lengthVec);
+  LvArray::tensorOps::add<3>(m_points[2], widthVec);
 
-  LvArray::tensorOps::subtract< 3 >( m_points[3], lengthVec );
-  LvArray::tensorOps::add< 3 >( m_points[3], widthVec );
+  LvArray::tensorOps::subtract<3>(m_points[3], lengthVec);
+  LvArray::tensorOps::add<3>(m_points[3], widthVec);
 
-  if( getLogLevel() > 1 )
+  if(getLogLevel()> 1)
   {
-    GEOSX_LOG_RANK_0( "Point A: " << m_points[0] );
-    GEOSX_LOG_RANK_0( "Point B: " << m_points[1] );
-    GEOSX_LOG_RANK_0( "Point C: " << m_points[2] );
-    GEOSX_LOG_RANK_0( "Point D: " << m_points[3] );
+    GEOSX_LOG_RANK_0("Point A: " <<m_points[0]);
+    GEOSX_LOG_RANK_0("Point B: " <<m_points[1]);
+    GEOSX_LOG_RANK_0("Point C: " <<m_points[2]);
+    GEOSX_LOG_RANK_0("Point D: " <<m_points[3]);
   }
 }
 
-bool BoundedPlane::IsCoordInObject( real64 const ( &coord ) [3] ) const
+bool BoundedPlane::IsCoordInObject(real64 const (&coord) [3]) const
 {
   bool isInside = true;
 
-  real64 dummy[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( coord );
-  LvArray::tensorOps::subtract< 3 >( dummy, m_origin );
+  real64 dummy[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3(coord);
+  LvArray::tensorOps::subtract<3>(dummy, m_origin);
 
   // 1. Check if point is on the plane
-  if( std::abs( LvArray::tensorOps::AiBi< 3 >( dummy, m_normal ) ) < 1e-15 )
+  if(std::abs(LvArray::tensorOps::AiBi<3>(dummy, m_normal)) <1e-15)
   {
-    real64 vec[ 3 ]   = LVARRAY_TENSOROPS_INIT_LOCAL_3( coord );
-    real64 abVec[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( m_points[1] );
-    real64 adVec[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( m_points[3] );
+    real64 vec[3]   = LVARRAY_TENSOROPS_INIT_LOCAL_3(coord);
+    real64 abVec[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3(m_points[1]);
+    real64 adVec[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3(m_points[3]);
 
-    LvArray::tensorOps::subtract< 3 >( vec, m_points[0] );
-    LvArray::tensorOps::subtract< 3 >( abVec, m_points[0] );
-    LvArray::tensorOps::subtract< 3 >( adVec, m_points[0] );
+    LvArray::tensorOps::subtract<3>(vec, m_points[0]);
+    LvArray::tensorOps::subtract<3>(abVec, m_points[0]);
+    LvArray::tensorOps::subtract<3>(adVec, m_points[0]);
 
-    real64 const abDotProd = LvArray::tensorOps::AiBi< 3 >( vec, abVec );
-    real64 const adDotProd = LvArray::tensorOps::AiBi< 3 >( vec, adVec );
+    real64 const abDotProd = LvArray::tensorOps::AiBi<3>(vec, abVec);
+    real64 const adDotProd = LvArray::tensorOps::AiBi<3>(vec, adVec);
 
     // 2. Check if it is inside the rectangle
-    if( abDotProd < 0 || abDotProd > LvArray::tensorOps::l2NormSquared< 3 >( abVec ) )
+    if(abDotProd <0 || abDotProd> LvArray::tensorOps::l2NormSquared<3>(abVec))
     {
       isInside = false;
     }
 
-    if( adDotProd < 0 || adDotProd > LvArray::tensorOps::l2NormSquared< 3 >( adVec ) )
+    if(adDotProd <0 || adDotProd> LvArray::tensorOps::l2NormSquared<3>(adVec))
     {
       isInside = false;
     }
@@ -150,6 +150,6 @@ bool BoundedPlane::IsCoordInObject( real64 const ( &coord ) [3] ) const
   return isInside;
 }
 
-REGISTER_CATALOG_ENTRY( SimpleGeometricObjectBase, BoundedPlane, std::string const &, Group * const )
+REGISTER_CATALOG_ENTRY(SimpleGeometricObjectBase, BoundedPlane, std::string const &, Group * const)
 
 } /* namespace geosx */

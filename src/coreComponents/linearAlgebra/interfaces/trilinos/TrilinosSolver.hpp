@@ -41,7 +41,7 @@ public:
    *
    * @param[in] parameters structure containing linear solver parameters
    */
-  TrilinosSolver( LinearSolverParameters parameters );
+  TrilinosSolver(LinearSolverParameters parameters);
 
   /**
    * @brief Virtual destructor.
@@ -58,10 +58,10 @@ public:
    *
    * Solve Ax=b with A an EpetraMatrix, x and b EpetraVector.
    */
-  void solve( EpetraMatrix & mat,
+  void solve(EpetraMatrix & mat,
               EpetraVector & sol,
               EpetraVector & rhs,
-              DofManager const * const dofManager = nullptr );
+              DofManager const * const dofManager = nullptr);
 
   /**
    * @brief Get the result of previous solve.
@@ -77,13 +77,13 @@ private:
   LinearSolverParameters m_parameters;
   LinearSolverResult m_result;
 
-  void solve_direct( EpetraMatrix & mat,
+  void solve_direct(EpetraMatrix & mat,
                      EpetraVector & sol,
-                     EpetraVector & rhs );
+                     EpetraVector & rhs);
 
-  void solve_krylov( EpetraMatrix & mat,
+  void solve_krylov(EpetraMatrix & mat,
                      EpetraVector & sol,
-                     EpetraVector & rhs );
+                     EpetraVector & rhs);
 
 };
 

@@ -36,18 +36,18 @@ public:
   LaplaceFEM() = delete;
 
   // The constructor needs a user-defined "name" and a parent Group (to place this instance in the tree structure of classes)
-  LaplaceFEM( const std::string & name,
-              Group * const parent );
+  LaplaceFEM(const std::string & name,
+              Group * const parent);
 
   // Destructor
   virtual ~LaplaceFEM() override;
 
   // "CatalogName()" return the string used as XML tag in the input file.
   // It ties the XML tag with this C++ classes. This is important.
-  static string CatalogName() { return "LaplaceFEM"; }
+  static string CatalogName() {return "LaplaceFEM";}
 
   // This method ties properties with their supporting mesh
-  virtual void RegisterDataOnMesh( Group * const MeshBodies ) override final;
+  virtual void RegisterDataOnMesh(Group * const MeshBodies) override final;
 
 //END_SPHINX_INCLUDE_02
 /**
@@ -58,63 +58,63 @@ public:
 /**@{*/
 
   //START_SPHINX_INCLUDE_03
-  virtual real64 SolverStep( real64 const & time_n,
+  virtual real64 SolverStep(real64 const & time_n,
                              real64 const & dt,
                              integer const cycleNumber,
-                             DomainPartition & domain ) override;
+                             DomainPartition & domain) override;
 
   virtual void
-  ImplicitStepSetup( real64 const & time_n,
+  ImplicitStepSetup(real64 const & time_n,
                      real64 const & dt,
-                     DomainPartition & domain ) override;
+                     DomainPartition & domain) override;
 
   virtual void
-  SetupDofs( DomainPartition const & domain,
-             DofManager & dofManager ) const override;
+  SetupDofs(DomainPartition const & domain,
+             DofManager & dofManager) const override;
 
   virtual void
-  SetupSystem( DomainPartition & domain,
+  SetupSystem(DomainPartition & domain,
                DofManager & dofManager,
-               CRSMatrix< real64, globalIndex > & localMatrix,
-               array1d< real64 > & localRhs,
-               array1d< real64 > & localSolution,
-               bool const setSparsity = false ) override;
+               CRSMatrix<real64, globalIndex> & localMatrix,
+               array1d<real64> & localRhs,
+               array1d<real64> & localSolution,
+               bool const setSparsity = false) override;
 
   virtual void
-  AssembleSystem( real64 const time,
+  AssembleSystem(real64 const time,
                   real64 const dt,
                   DomainPartition & domain,
                   DofManager const & dofManager,
-                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                  arrayView1d< real64 > const & localRhs ) override;
+                  CRSMatrixView<real64, globalIndex const> const & localMatrix,
+                  arrayView1d<real64> const & localRhs) override;
 
   virtual void
-  ApplyBoundaryConditions( real64 const time,
+  ApplyBoundaryConditions(real64 const time,
                            real64 const dt,
                            DomainPartition & domain,
                            DofManager const & dofManager,
-                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                           arrayView1d< real64 > const & localRhs ) override;
+                           CRSMatrixView<real64, globalIndex const> const & localMatrix,
+                           arrayView1d<real64> const & localRhs) override;
 
   virtual void
-  SolveSystem( DofManager const & dofManager,
+  SolveSystem(DofManager const & dofManager,
                ParallelMatrix & matrix,
                ParallelVector & rhs,
-               ParallelVector & solution ) override;
+               ParallelVector & solution) override;
 
   virtual void
-  ApplySystemSolution( DofManager const & dofManager,
-                       arrayView1d< real64 const > const & localSolution,
+  ApplySystemSolution(DofManager const & dofManager,
+                       arrayView1d<real64 const> const & localSolution,
                        real64 const scalingFactor,
-                       DomainPartition & domain ) override;
+                       DomainPartition & domain) override;
 
   virtual void
-    ResetStateToBeginningOfStep( DomainPartition & GEOSX_UNUSED_PARAM( domain ) ) override;
+    ResetStateToBeginningOfStep(DomainPartition & GEOSX_UNUSED_PARAM(domain)) override;
 
   virtual void
-  ImplicitStepComplete( real64 const & time,
+  ImplicitStepComplete(real64 const & time,
                         real64 const & dt,
-                        DomainPartition & domain ) override;
+                        DomainPartition & domain) override;
 
   //END_SPHINX_INCLUDE_03
   /**@}*/
@@ -122,11 +122,11 @@ public:
   // This method is specific to this Laplace solver
   // It is used to apply Dirichlet boundary condition
   // and called when the base class ApplyBoundaryConditions() is called
-  void ApplyDirichletBC_implicit( real64 const time,
+  void ApplyDirichletBC_implicit(real64 const time,
                                   DofManager const & dofManager,
                                   DomainPartition & domain,
-                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                  arrayView1d< real64 > const & localRhs );
+                                  CRSMatrixView<real64, globalIndex const> const & localMatrix,
+                                  arrayView1d<real64> const & localRhs);
 
   // Choice of transient treatment options (steady, backward, forward Euler scheme):
   //START_SPHINX_INCLUDE_01
@@ -145,8 +145,8 @@ public:
   //START_SPHINX_INCLUDE_04
   struct viewKeyStruct : public SolverBase::viewKeyStruct
   {
-    dataRepository::ViewKey timeIntegrationOption = { "timeIntegrationOption" };
-    dataRepository::ViewKey fieldVarName = { "fieldName" };
+    dataRepository::ViewKey timeIntegrationOption = {"timeIntegrationOption"};
+    dataRepository::ViewKey fieldVarName = {"fieldName"};
 
   } laplaceFEMViewKeys;
   //END_SPHINX_INCLUDE_04
@@ -168,7 +168,7 @@ private:
    at the namespace scope (in this case, right after the ``LaplaceFEM`` class definition is complete):
  */
 //START_SPHINX_INCLUDE_05
-ENUM_STRINGS( LaplaceFEM::TimeIntegrationOption, "SteadyState", "ImplicitTransient", "ExplicitTransient" )
+ENUM_STRINGS(LaplaceFEM::TimeIntegrationOption, "SteadyState", "ImplicitTransient", "ExplicitTransient")
 //END_SPHINX_INCLUDE_05
 
 } /* namespace geosx */

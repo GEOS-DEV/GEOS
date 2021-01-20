@@ -35,7 +35,7 @@ enum class ParticleSettlingModel : integer
   Turbulence
 };
 
-ENUM_STRINGS( ParticleSettlingModel, "Stokes", "Intermediate", "Turbulence" )
+ENUM_STRINGS(ParticleSettlingModel, "Stokes", "Intermediate", "Turbulence")
 
 /**
  * @brief Kernel wrapper for ParticleFluid.
@@ -66,7 +66,7 @@ public:
    * @param dCollisionFactor_dProppantConcentration
    * @param proppantPackPermeability
    */
-  ParticleFluidUpdate( ParticleSettlingModel const particleSettlingModel,
+  ParticleFluidUpdate(ParticleSettlingModel const particleSettlingModel,
                        real64 const proppantDensity,
                        real64 const proppantDiameter,
                        real64 const hinderedSettlingCoefficient,
@@ -75,14 +75,14 @@ public:
                        real64 const collisionBeta,
                        bool const isCollisionalSlip,
                        real64 const maxProppantConcentration,
-                       arrayView1d< real64 > const & settlingFactor,
-                       arrayView1d< real64 > const & dSettlingFactor_dPressure,
-                       arrayView1d< real64 > const & dSettlingFactor_dProppantConcentration,
-                       arrayView2d< real64 > const & dSettlingFactor_dComponentConcentration,
-                       arrayView1d< real64 > const & collisionFactor,
-                       arrayView1d< real64 > const & dCollisionFactor_dProppantConcentration,
-                       arrayView1d< real64 > const & proppantPackPermeability )
-    : ParticleFluidBaseUpdate( isCollisionalSlip,
+                       arrayView1d<real64> const & settlingFactor,
+                       arrayView1d<real64> const & dSettlingFactor_dPressure,
+                       arrayView1d<real64> const & dSettlingFactor_dProppantConcentration,
+                       arrayView2d<real64> const & dSettlingFactor_dComponentConcentration,
+                       arrayView1d<real64> const & collisionFactor,
+                       arrayView1d<real64> const & dCollisionFactor_dProppantConcentration,
+                       arrayView1d<real64> const & proppantPackPermeability)
+    : ParticleFluidBaseUpdate(isCollisionalSlip,
                                maxProppantConcentration,
                                settlingFactor,
                                dSettlingFactor_dPressure,
@@ -90,50 +90,50 @@ public:
                                dSettlingFactor_dComponentConcentration,
                                collisionFactor,
                                dCollisionFactor_dProppantConcentration,
-                               proppantPackPermeability ),
-    m_particleSettlingModel( particleSettlingModel ),
-    m_proppantDensity( proppantDensity ),
-    m_proppantDiameter( proppantDiameter ),
-    m_hinderedSettlingCoefficient( hinderedSettlingCoefficient ),
-    m_collisionAlpha( collisionAlpha ),
-    m_slipConcentration( slipConcentration ),
-    m_collisionBeta( collisionBeta )
+                               proppantPackPermeability),
+    m_particleSettlingModel(particleSettlingModel),
+    m_proppantDensity(proppantDensity),
+    m_proppantDiameter(proppantDiameter),
+    m_hinderedSettlingCoefficient(hinderedSettlingCoefficient),
+    m_collisionAlpha(collisionAlpha),
+    m_slipConcentration(slipConcentration),
+    m_collisionBeta(collisionBeta)
   {}
 
   /**
    * @brief Copy constructor.
    */
-  ParticleFluidUpdate( ParticleFluidUpdate const & ) = default;
+  ParticleFluidUpdate(ParticleFluidUpdate const &) = default;
 
   /**
    * @brief Move constructor.
    */
-  ParticleFluidUpdate( ParticleFluidUpdate && ) = default;
+  ParticleFluidUpdate(ParticleFluidUpdate &&) = default;
 
   /**
    * @brief Deleted copy assignment operator
    * @return reference to this object
    */
-  ParticleFluidUpdate & operator=( ParticleFluidUpdate const & ) = delete;
+  ParticleFluidUpdate & operator=(ParticleFluidUpdate const &) = delete;
 
   /**
    * @brief Deleted move assignment operator
    * @return reference to this object
    */
-  ParticleFluidUpdate & operator=( ParticleFluidUpdate && ) = delete;
+  ParticleFluidUpdate & operator=(ParticleFluidUpdate &&) = delete;
 
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  virtual void Update( localIndex const k,
+  virtual void Update(localIndex const k,
                        real64 const proppantConcentration,
                        real64 const fluidDensity,
                        real64 const dFluidDensity_dPressure,
-                       arraySlice1d< real64 const > const & dFluidDensity_dComponentConcentration,
+                       arraySlice1d<real64 const> const & dFluidDensity_dComponentConcentration,
                        real64 const fluidViscosity,
                        real64 const dFluidViscosity_dPressure,
-                       arraySlice1d< real64 const > const & dFluidViscosity_dComponentConcentration ) const override
+                       arraySlice1d<real64 const> const & dFluidViscosity_dComponentConcentration) const override
   {
-    Compute( proppantConcentration,
+    Compute(proppantConcentration,
              fluidDensity,
              dFluidDensity_dPressure,
              dFluidDensity_dComponentConcentration,
@@ -145,26 +145,26 @@ public:
              m_dSettlingFactor_dProppantConcentration[k],
              m_dSettlingFactor_dComponentConcentration[k],
              m_collisionFactor[k],
-             m_dCollisionFactor_dProppantConcentration[k] );
+             m_dCollisionFactor_dProppantConcentration[k]);
   }
 
 private:
 
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  void Compute( real64 const proppantConcentration,
+  void Compute(real64 const proppantConcentration,
                 real64 const fluidDensity,
                 real64 const dFluidDensity_dPressure,
-                arraySlice1d< real64 const > const & dFluidDensity_dComponentConcentration,
+                arraySlice1d<real64 const> const & dFluidDensity_dComponentConcentration,
                 real64 const fluidViscosity,
                 real64 const dFluidViscosity_dPressure,
-                arraySlice1d< real64 const > const & dFluidViscosity_dComponentConcentration,
+                arraySlice1d<real64 const> const & dFluidViscosity_dComponentConcentration,
                 real64 & settlingFactor,
                 real64 & dSettlingFactor_dPressure,
                 real64 & dSettlingFactor_dProppantConcentration,
-                arraySlice1d< real64 > const & dSettlingFactor_dComponentConcentration,
+                arraySlice1d<real64> const & dSettlingFactor_dComponentConcentration,
                 real64 & collisionFactor,
-                real64 & dCollisionFactor_dProppantConcentration ) const;
+                real64 & dCollisionFactor_dProppantConcentration) const;
 
   ParticleSettlingModel m_particleSettlingModel;
 
@@ -185,15 +185,15 @@ class ParticleFluid : public ParticleFluidBase
 {
 public:
 
-  ParticleFluid( std::string const & name, Group * const parent );
+  ParticleFluid(std::string const & name, Group * const parent);
 
   virtual ~ParticleFluid() override;
 
   // *** ConstitutiveBase interface
 
-  static std::string CatalogName() { return "ParticleFluid"; }
+  static std::string CatalogName() {return "ParticleFluid";}
 
-  virtual string getCatalogName() const override { return CatalogName(); }
+  virtual string getCatalogName() const override {return CatalogName();}
 
   /// Type of kernel wrapper for in-kernel update
   using KernelWrapper = ParticleFluidUpdate;
@@ -251,44 +251,44 @@ private:
 
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-void ParticleFluidUpdate::Compute( real64 const proppantConcentration,
+void ParticleFluidUpdate::Compute(real64 const proppantConcentration,
                                    real64 const fluidDensity,
-                                   real64 const GEOSX_UNUSED_PARAM( dFluidDensity_dPressure ),
-                                   arraySlice1d< real64 const > const & GEOSX_UNUSED_PARAM( dFluidDensity_dComponentConcentration ),
+                                   real64 const GEOSX_UNUSED_PARAM(dFluidDensity_dPressure),
+                                   arraySlice1d<real64 const> const & GEOSX_UNUSED_PARAM(dFluidDensity_dComponentConcentration),
                                    real64 const fluidViscosity,
-                                   real64 const GEOSX_UNUSED_PARAM( dFluidViscosity_dPressure ),
-                                   arraySlice1d< real64 const > const & GEOSX_UNUSED_PARAM( dFluidViscosity_dComponentConcentration ),
+                                   real64 const GEOSX_UNUSED_PARAM(dFluidViscosity_dPressure),
+                                   arraySlice1d<real64 const> const & GEOSX_UNUSED_PARAM(dFluidViscosity_dComponentConcentration),
                                    real64 & settlingFactor,
                                    real64 & dSettlingFactor_dPressure,
                                    real64 & dSettlingFactor_dProppantConcentration,
-                                   arraySlice1d< real64 > const & dSettlingFactor_dComponentConcentration,
+                                   arraySlice1d<real64> const & dSettlingFactor_dComponentConcentration,
                                    real64 & collisionFactor,
-                                   real64 & dCollisionFactor_dProppantConcentration ) const
+                                   real64 & dCollisionFactor_dProppantConcentration) const
 {
   real64 const constCoef = 9.81 * m_proppantDiameter * m_proppantDiameter / 18.0;
 
   real64 singleParticleSettlingVelocity = 0.0;
 
-  switch( m_particleSettlingModel )
+  switch(m_particleSettlingModel)
   {
     case ParticleSettlingModel::Stokes:
     {
-      singleParticleSettlingVelocity = constCoef * (m_proppantDensity - fluidDensity ) / fluidViscosity;
+      singleParticleSettlingVelocity = constCoef * (m_proppantDensity - fluidDensity) / fluidViscosity;
       break;
     }
     case ParticleSettlingModel::Intermediate:
     {
       singleParticleSettlingVelocity = 0.2
-                                       * pow( m_proppantDiameter, 1.18 )
-                                       * pow( 9.81 * (m_proppantDensity - fluidDensity) / fluidDensity, 0.72 )
-                                       * pow( fluidDensity / fluidViscosity, 0.45 );
+                                       * pow(m_proppantDiameter, 1.18)
+                                       * pow(9.81 * (m_proppantDensity - fluidDensity) / fluidDensity, 0.72)
+                                       * pow(fluidDensity / fluidViscosity, 0.45);
       break;
     }
     case ParticleSettlingModel::Turbulence:
     {
       singleParticleSettlingVelocity = 1.74
-                                       * pow( m_proppantDiameter, 0.5 )
-                                       * pow( 9.81 * (m_proppantDensity - fluidDensity) /fluidDensity, 0.5 );
+                                       * pow(m_proppantDiameter, 0.5)
+                                       * pow(9.81 * (m_proppantDensity - fluidDensity) /fluidDensity, 0.5);
       break;
     }
     default:
@@ -300,7 +300,7 @@ void ParticleFluidUpdate::Compute( real64 const proppantConcentration,
   dSettlingFactor_dProppantConcentration = 0.0;
 
   localIndex const NC = dSettlingFactor_dComponentConcentration.size();
-  for( localIndex c = 0; c < NC; ++c )
+  for(localIndex c = 0; c <NC; ++c)
   {
     dSettlingFactor_dComponentConcentration[c] = 0.0;
   }
@@ -308,22 +308,22 @@ void ParticleFluidUpdate::Compute( real64 const proppantConcentration,
   collisionFactor = 0.0;
   dCollisionFactor_dProppantConcentration = 0.0;
 
-  if( proppantConcentration >= 0.0 && proppantConcentration < m_maxProppantConcentration )
+  if(proppantConcentration>= 0.0 && proppantConcentration <m_maxProppantConcentration)
   {
     // settlingFactor
-    settlingFactor = singleParticleSettlingVelocity * exp( -m_hinderedSettlingCoefficient * proppantConcentration );
+    settlingFactor = singleParticleSettlingVelocity * exp(-m_hinderedSettlingCoefficient * proppantConcentration);
 
     // collisionFactor
     // Collision model (We need to check the other models)
-    if( m_isCollisionalSlip )
+    if(m_isCollisionalSlip)
     {
-      real64 const lambda = m_collisionAlpha - pow( fabs( proppantConcentration - m_slipConcentration ), m_collisionBeta );
+      real64 const lambda = m_collisionAlpha - pow(fabs(proppantConcentration - m_slipConcentration), m_collisionBeta);
       collisionFactor = (lambda - 1.0) / (1.0 - proppantConcentration);
 
       // TODO: why? - Sergey
 #if 0
-      real64 dLambda_dC = -m_collisionBeta * pow( fabs( proppantConcentration - m_slipConcentration ), m_collisionBeta - 1.0 );
-      if( proppantConcentration < m_slipConcentration )
+      real64 dLambda_dC = -m_collisionBeta * pow(fabs(proppantConcentration - m_slipConcentration), m_collisionBeta - 1.0);
+      if(proppantConcentration <m_slipConcentration)
       {
         dLambda_dC = -dLambda_dC;
       }

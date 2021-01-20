@@ -66,23 +66,23 @@ public:
    * @param name the name of this instantiation of Group in the repository
    * @param parent the parent group of this instantiation of Group
    */
-  CompositionalMultiphaseWell( const string & name,
-                               Group * const parent );
+  CompositionalMultiphaseWell(const string & name,
+                               Group * const parent);
 
   /// deleted default constructor
   CompositionalMultiphaseWell() = delete;
 
   /// deleted copy constructor
-  CompositionalMultiphaseWell( CompositionalMultiphaseWell const & ) = delete;
+  CompositionalMultiphaseWell(CompositionalMultiphaseWell const &) = delete;
 
   /// default move constructor
-  CompositionalMultiphaseWell( CompositionalMultiphaseWell && ) = default;
+  CompositionalMultiphaseWell(CompositionalMultiphaseWell &&) = default;
 
   /// deleted assignment operator
-  CompositionalMultiphaseWell & operator=( CompositionalMultiphaseWell const & ) = delete;
+  CompositionalMultiphaseWell & operator=(CompositionalMultiphaseWell const &) = delete;
 
   /// deleted move operator
-  CompositionalMultiphaseWell & operator=( CompositionalMultiphaseWell && ) = delete;
+  CompositionalMultiphaseWell & operator=(CompositionalMultiphaseWell &&) = delete;
 
   /**
    * @brief default destructor
@@ -93,9 +93,9 @@ public:
    * @brief name of the node manager in the object catalog
    * @return string that contains the catalog name to generate a new NodeManager object through the object catalog.
    */
-  static string CatalogName() { return "CompositionalMultiphaseWell"; }
+  static string CatalogName() {return "CompositionalMultiphaseWell";}
 
-  virtual void RegisterDataOnMesh( Group * const meshBodies ) override;
+  virtual void RegisterDataOnMesh(Group * const meshBodies) override;
 
 
   /**
@@ -107,34 +107,34 @@ public:
 
 
   virtual real64
-  CalculateResidualNorm( DomainPartition const & domain,
+  CalculateResidualNorm(DomainPartition const & domain,
                          DofManager const & dofManager,
-                         arrayView1d< real64 const > const & localRhs ) override;
+                         arrayView1d<real64 const> const & localRhs) override;
 
   virtual real64
-  ScalingForSystemSolution( DomainPartition const & domain,
+  ScalingForSystemSolution(DomainPartition const & domain,
                             DofManager const & dofManager,
-                            arrayView1d< real64 const > const & localSolution ) override;
+                            arrayView1d<real64 const> const & localSolution) override;
 
   virtual bool
-  CheckSystemSolution( DomainPartition const & domain,
+  CheckSystemSolution(DomainPartition const & domain,
                        DofManager const & dofManager,
-                       arrayView1d< real64 const > const & localSolution,
-                       real64 const scalingFactor ) override;
+                       arrayView1d<real64 const> const & localSolution,
+                       real64 const scalingFactor) override;
 
   virtual void
-  ApplySystemSolution( DofManager const & dofManager,
-                       arrayView1d< real64 const > const & localSolution,
+  ApplySystemSolution(DofManager const & dofManager,
+                       arrayView1d<real64 const> const & localSolution,
                        real64 const scalingFactor,
-                       DomainPartition & domain ) override;
+                       DomainPartition & domain) override;
 
   virtual void
-  ResetStateToBeginningOfStep( DomainPartition & domain ) override;
+  ResetStateToBeginningOfStep(DomainPartition & domain) override;
 
   virtual void
-  ImplicitStepComplete( real64 const & time,
+  ImplicitStepComplete(real64 const & time,
                         real64 const & dt,
-                        DomainPartition & domain ) override;
+                        DomainPartition & domain) override;
 
   /**@}*/
 
@@ -142,40 +142,40 @@ public:
    * @brief Recompute component fractions from primary variables (component densities)
    * @param subRegion the well subregion containing all the primary and dependent fields
    */
-  void UpdateComponentFraction( WellElementSubRegion & subRegion ) const;
+  void UpdateComponentFraction(WellElementSubRegion & subRegion) const;
 
   /**
    * @brief Update all relevant fluid models using current values of pressure and composition
    * @param subRegion the well subregion containing all the primary and dependent fields
    */
-  void UpdateFluidModel( WellElementSubRegion & subRegion, localIndex const targetIndex );
+  void UpdateFluidModel(WellElementSubRegion & subRegion, localIndex const targetIndex);
 
   /**
    * @brief Recompute phase volume fractions (saturations) from constitutive and primary variables
    * @param subRegion the well subregion containing all the primary and dependent fields
    */
-  void UpdatePhaseVolumeFraction( WellElementSubRegion & subRegion, localIndex const targetIndex ) const;
+  void UpdatePhaseVolumeFraction(WellElementSubRegion & subRegion, localIndex const targetIndex) const;
 
   /**
    * @brief Recompute total mass densities from mass density and phase volume fractions
    * @param subRegion the well subregion containing all the primary and dependent fields
    */
-  void UpdateTotalMassDensity( WellElementSubRegion & subRegion, localIndex const targetIndex ) const;
+  void UpdateTotalMassDensity(WellElementSubRegion & subRegion, localIndex const targetIndex) const;
 
 
   /**
    * @brief Recompute all dependent quantities from primary variables (including constitutive models)
    * @param subRegion the well subregion containing all the primary and dependent fields
    */
-  virtual void UpdateState( WellElementSubRegion & subRegion, localIndex const targetIndex ) override;
+  virtual void UpdateState(WellElementSubRegion & subRegion, localIndex const targetIndex) override;
 
-  virtual string WellElementDofName() const override { return viewKeyStruct::dofFieldString; }
+  virtual string WellElementDofName() const override {return viewKeyStruct::dofFieldString;}
 
-  virtual string ResElementDofName() const override { return CompositionalMultiphaseFlow::viewKeyStruct::dofFieldString; }
+  virtual string ResElementDofName() const override {return CompositionalMultiphaseFlow::viewKeyStruct::dofFieldString;}
 
-  virtual localIndex NumFluidComponents() const override { return m_numComponents; }
+  virtual localIndex NumFluidComponents() const override {return m_numComponents;}
 
-  virtual localIndex NumFluidPhases() const override { return m_numPhases; }
+  virtual localIndex NumFluidPhases() const override {return m_numPhases;}
 
   /**
    * @brief assembles the flux terms for all connections between well elements
@@ -186,12 +186,12 @@ public:
    * @param matrix the system matrix
    * @param rhs the system right-hand side vector
    */
-  virtual void AssembleFluxTerms( real64 const time_n,
+  virtual void AssembleFluxTerms(real64 const time_n,
                                   real64 const dt,
                                   DomainPartition const & domain,
                                   DofManager const & dofManager,
-                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                  arrayView1d< real64 > const & localRhs ) override;
+                                  CRSMatrixView<real64, globalIndex const> const & localMatrix,
+                                  arrayView1d<real64> const & localRhs) override;
 
   /**
    * @brief assembles the volume balance terms for all well elements
@@ -202,12 +202,12 @@ public:
    * @param matrix the system matrix
    * @param rhs the system right-hand side vector
    */
-  virtual void AssembleVolumeBalanceTerms( real64 const time_n,
+  virtual void AssembleVolumeBalanceTerms(real64 const time_n,
                                            real64 const dt,
                                            DomainPartition const & domain,
                                            DofManager const & dofManager,
-                                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                           arrayView1d< real64 > const & localRhs ) override;
+                                           CRSMatrixView<real64, globalIndex const> const & localMatrix,
+                                           arrayView1d<real64> const & localRhs) override;
 
   /**
    * @brief assembles the pressure relations at all connections between well elements except at the well head
@@ -216,19 +216,19 @@ public:
    * @param matrix the system matrix
    * @param rhs the system right-hand side vector
    */
-  virtual void FormPressureRelations( DomainPartition const & domain,
+  virtual void FormPressureRelations(DomainPartition const & domain,
                                       DofManager const & dofManager,
-                                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                      arrayView1d< real64 > const & localRhs ) override;
+                                      CRSMatrixView<real64, globalIndex const> const & localMatrix,
+                                      arrayView1d<real64> const & localRhs) override;
 
 
   /**
    * @brief Sets all the negative component densities (if any) to zero.
    * @param domain the physical domain object
    */
-  void ChopNegativeDensities( DomainPartition & domain );
+  void ChopNegativeDensities(DomainPartition & domain);
 
-  arrayView1d< string const > relPermModelNames() const { return m_relPermModelNames; }
+  arrayView1d<string const> relPermModelNames() const {return m_relPermModelNames;}
 
   struct viewKeyStruct : WellSolverBase::viewKeyStruct
   {
@@ -281,9 +281,9 @@ protected:
 
   virtual void PostProcessInput() override;
 
-  virtual void InitializePreSubGroups( Group * const rootGroup ) override;
+  virtual void InitializePreSubGroups(Group * const rootGroup) override;
 
-  virtual void InitializePostInitialConditions_PreSubGroups( Group * const rootGroup ) override;
+  virtual void InitializePostInitialConditions_PreSubGroups(Group * const rootGroup) override;
 
   /**
    * @brief Checks constitutive models for consistency
@@ -294,13 +294,13 @@ protected:
    * (fluid, relperm) is incompatible with the corresponding models in reservoir
    * regions connected to that particular well.
    */
-  void ValidateConstitutiveModels( MeshLevel const & meshLevel, constitutive::ConstitutiveManager const & cm ) const;
+  void ValidateConstitutiveModels(MeshLevel const & meshLevel, constitutive::ConstitutiveManager const & cm) const;
 
   /**
    * @brief Checks injection streams for validity (compositions sum to one)
    * @param meshLevel reference to the mesh
    */
-  void ValidateInjectionStreams( MeshLevel const & meshLevel ) const;
+  void ValidateInjectionStreams(MeshLevel const & meshLevel) const;
 
 private:
 
@@ -308,24 +308,24 @@ private:
    * @brief Compute all the perforation rates for this well
    * @param well the well with its perforations
    */
-  void ComputePerforationRates( WellElementSubRegion & subRegion, localIndex const targetIndex );
+  void ComputePerforationRates(WellElementSubRegion & subRegion, localIndex const targetIndex);
 
   /**
    * @brief Setup stored reservoir views into domain data for the current step
    */
-  void ResetViews( DomainPartition & domain ) override;
+  void ResetViews(DomainPartition & domain) override;
 
   /**
    * @brief Initialize all the primary and secondary variables in all the wells
    * @param domain the domain containing the well manager to access individual wells
    */
-  void InitializeWells( DomainPartition & domain ) override;
+  void InitializeWells(DomainPartition & domain) override;
 
   /**
    * @brief Resize the allocated multidimensional fields
    * @param well the well for which the fields are resized
    */
-  void ResizeFields( WellElementSubRegion & subRegion );
+  void ResizeFields(WellElementSubRegion & subRegion);
 
   /// the max number of fluid phases
   localIndex m_numPhases;
@@ -340,7 +340,7 @@ private:
   integer m_useMass;
 
   /// list of relative permeability model names per target region
-  array1d< string > m_relPermModelNames;
+  array1d<string> m_relPermModelNames;
 
   /// maximum (absolute) change in a component fraction between two Newton iterations
   real64 m_maxCompFracChange;
@@ -353,38 +353,38 @@ private:
 
   /// views into reservoir primary variable fields
 
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_resPres;
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_deltaResPres;
+  ElementRegionManager::ElementViewAccessor<arrayView1d<real64 const>> m_resPres;
+  ElementRegionManager::ElementViewAccessor<arrayView1d<real64 const>> m_deltaResPres;
 
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_resCompDens;
+  ElementRegionManager::ElementViewAccessor<arrayView2d<real64 const>> m_resCompDens;
 
   /// views into other reservoir variable fields
 
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_resPhaseVolFrac;
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_dResPhaseVolFrac_dPres;
-  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > m_dResPhaseVolFrac_dCompDens;
+  ElementRegionManager::ElementViewAccessor<arrayView2d<real64 const>> m_resPhaseVolFrac;
+  ElementRegionManager::ElementViewAccessor<arrayView2d<real64 const>> m_dResPhaseVolFrac_dPres;
+  ElementRegionManager::ElementViewAccessor<arrayView3d<real64 const>> m_dResPhaseVolFrac_dCompDens;
 
-  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > m_dResCompFrac_dCompDens;
+  ElementRegionManager::ElementViewAccessor<arrayView3d<real64 const>> m_dResCompFrac_dCompDens;
 
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_resPhaseMob;
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_dResPhaseMob_dPres;
-  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > m_dResPhaseMob_dCompDens;
+  ElementRegionManager::ElementViewAccessor<arrayView2d<real64 const>> m_resPhaseMob;
+  ElementRegionManager::ElementViewAccessor<arrayView2d<real64 const>> m_dResPhaseMob_dPres;
+  ElementRegionManager::ElementViewAccessor<arrayView3d<real64 const>> m_dResPhaseMob_dCompDens;
 
   /// views into reservoir material fields
 
-  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > m_resPhaseDens;
-  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > m_resPhaseMassDens;
+  ElementRegionManager::ElementViewAccessor<arrayView3d<real64 const>> m_resPhaseDens;
+  ElementRegionManager::ElementViewAccessor<arrayView3d<real64 const>> m_resPhaseMassDens;
 
-  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > m_resPhaseVisc;
-  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > m_dResPhaseVisc_dPres;
-  ElementRegionManager::ElementViewAccessor< arrayView4d< real64 const > > m_dResPhaseVisc_dComp;
+  ElementRegionManager::ElementViewAccessor<arrayView3d<real64 const>> m_resPhaseVisc;
+  ElementRegionManager::ElementViewAccessor<arrayView3d<real64 const>> m_dResPhaseVisc_dPres;
+  ElementRegionManager::ElementViewAccessor<arrayView4d<real64 const>> m_dResPhaseVisc_dComp;
 
-  ElementRegionManager::ElementViewAccessor< arrayView4d< real64 const > > m_resPhaseCompFrac;
-  ElementRegionManager::ElementViewAccessor< arrayView4d< real64 const > > m_dResPhaseCompFrac_dPres;
-  ElementRegionManager::ElementViewAccessor< arrayView5d< real64 const > > m_dResPhaseCompFrac_dComp;
+  ElementRegionManager::ElementViewAccessor<arrayView4d<real64 const>> m_resPhaseCompFrac;
+  ElementRegionManager::ElementViewAccessor<arrayView4d<real64 const>> m_dResPhaseCompFrac_dPres;
+  ElementRegionManager::ElementViewAccessor<arrayView5d<real64 const>> m_dResPhaseCompFrac_dComp;
 
-  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > m_resPhaseRelPerm;
-  ElementRegionManager::ElementViewAccessor< arrayView4d< real64 const > > m_dResPhaseRelPerm_dPhaseVolFrac;
+  ElementRegionManager::ElementViewAccessor<arrayView3d<real64 const>> m_resPhaseRelPerm;
+  ElementRegionManager::ElementViewAccessor<arrayView4d<real64 const>> m_dResPhaseRelPerm_dPhaseVolFrac;
 
 };
 

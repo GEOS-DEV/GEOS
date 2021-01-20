@@ -34,114 +34,114 @@ using Epetra_MpiComm = Epetra_SerialComm;
 namespace geosx
 {
 
-void ConvertEpetraToSuiteSparseMatrix( EpetraMatrix const & matrix,
+void ConvertEpetraToSuiteSparseMatrix(EpetraMatrix const & matrix,
                                        SuiteSparse & SSData,
                                        Epetra_Map * & serialMap,
-                                       Epetra_Import * & importToSerial )
+                                       Epetra_Import * & importToSerial)
 {
   // Perform everything on rank 0
   int const workingRank = 0;
-  SSData.setWorkingRank( workingRank );
+  SSData.setWorkingRank(workingRank);
 
   MPI_Comm const comm = matrix.getComm();
 
   const Epetra_Map & originalMap = matrix.unwrapped().DomainMap();
   globalIndex const numGlobalElements = matrix.numGlobalRows();
 
-  int const rank = MpiWrapper::Comm_rank( matrix.getComm() );
+  int const rank = MpiWrapper::Comm_rank(matrix.getComm());
 
   globalIndex numMyElements = 0;
-  if( rank == workingRank )
+  if(rank == workingRank)
   {
     numMyElements = numGlobalElements;
   }
 
   //  Convert Original Matrix to Serial
-  serialMap = new Epetra_Map( numGlobalElements, numMyElements, 0, Epetra_MpiComm( MPI_PARAM( comm ) ));
-  importToSerial = new Epetra_Import( *serialMap, originalMap );
-  Epetra_CrsMatrix serialCrsMatrix( Copy, *serialMap, 0 );
-  serialCrsMatrix.Import( matrix.unwrapped(), *importToSerial, Insert );
+  serialMap = new Epetra_Map(numGlobalElements, numMyElements, 0, Epetra_MpiComm(MPI_PARAM(comm)));
+  importToSerial = new Epetra_Import(*serialMap, originalMap);
+  Epetra_CrsMatrix serialCrsMatrix(Copy, *serialMap, 0);
+  serialCrsMatrix.Import(matrix.unwrapped(), *importToSerial, Insert);
   serialCrsMatrix.FillComplete();
 
-  if( rank == workingRank )
+  if(rank == workingRank)
   {
     globalIndex const nonZeros = matrix.numGlobalNonzeros();
 
-    SSData.resize( toSuiteSparse_Int( matrix.numGlobalRows() ),
-                   toSuiteSparse_Int( matrix.numGlobalCols() ),
-                   toSuiteSparse_Int( nonZeros ) );
+    SSData.resize(toSuiteSparse_Int(matrix.numGlobalRows()),
+                   toSuiteSparse_Int(matrix.numGlobalCols()),
+                   toSuiteSparse_Int(nonZeros));
 
     int const numEntries = serialCrsMatrix.MaxNumEntries();
     int numEntriesThisRow;
     int aiIndex = 0;
-    array1d< int > ai( SSData.nonZeros() );
-    for( localIndex i = 0; i < SSData.numRows(); ++i )
+    array1d<int> ai(SSData.nonZeros());
+    for(localIndex i = 0; i <SSData.numRows(); ++i)
     {
-      SSData.rowPtr()[i] = LvArray::integerConversion< SSInt >( aiIndex );
-      GEOSX_LAI_CHECK_ERROR( serialCrsMatrix.ExtractMyRowCopy( i, numEntries, numEntriesThisRow, &SSData.values()[aiIndex], &ai[aiIndex] ) );
+      SSData.rowPtr()[i] = LvArray::integerConversion<SSInt>(aiIndex);
+      GEOSX_LAI_CHECK_ERROR(serialCrsMatrix.ExtractMyRowCopy(i, numEntries, numEntriesThisRow, &SSData.values()[aiIndex], &ai[aiIndex]));
       aiIndex += numEntriesThisRow;
     }
-    SSData.rowPtr()[SSData.numRows()] = LvArray::integerConversion< SSInt >( aiIndex );
+    SSData.rowPtr()[SSData.numRows()] = LvArray::integerConversion<SSInt>(aiIndex);
 
-    for( localIndex i = 0; i < SSData.nonZeros(); ++i )
+    for(localIndex i = 0; i <SSData.nonZeros(); ++i)
     {
-      SSData.colIndices()[i] = LvArray::integerConversion< SSInt >( ai[i] );
+      SSData.colIndices()[i] = LvArray::integerConversion<SSInt>(ai[i]);
     }
   }
 
   // Save communicator
-  SSData.setComm( matrix.getComm() );
+  SSData.setComm(matrix.getComm());
 }
 
-int SuiteSparseSolve( SuiteSparse & SSData,
+int SuiteSparseSolve(SuiteSparse & SSData,
                       Epetra_Map const * serialMap,
                       Epetra_Import const * importToSerial,
                       EpetraVector const & b,
                       EpetraVector & x,
-                      bool transpose )
+                      bool transpose)
 {
   int status = 0;
 
-  Epetra_MultiVector serialX( *serialMap, 1 );
-  Epetra_MultiVector serialB( *serialMap, 1 );
+  Epetra_MultiVector serialX(*serialMap, 1);
+  Epetra_MultiVector serialB(*serialMap, 1);
 
-  serialB.Import( b.unwrapped(), *importToSerial, Insert );
+  serialB.Import(b.unwrapped(), *importToSerial, Insert);
 
-  int const rank = MpiWrapper::Comm_rank( SSData.getComm() );
-  if( rank == SSData.workingRank() )
+  int const rank = MpiWrapper::Comm_rank(SSData.getComm());
+  if(rank == SSData.workingRank())
   {
     // Extract Serial versions of X and B
     real64 *serialXvalues;
     real64 *serialBvalues;
 
     int serialBlda, serialXlda;
-    GEOSX_LAI_CHECK_ERROR( serialB.ExtractView( &serialBvalues, &serialBlda ) );
-    GEOSX_LAI_CHECK_ERROR( serialX.ExtractView( &serialXvalues, &serialXlda ) );
-    GEOSX_ASSERT( serialBlda == LvArray::integerConversion< int >( SSData.numRows() ) );
-    GEOSX_ASSERT( serialXlda == LvArray::integerConversion< int >( SSData.numCols() ) );
+    GEOSX_LAI_CHECK_ERROR(serialB.ExtractView(&serialBvalues, &serialBlda));
+    GEOSX_LAI_CHECK_ERROR(serialX.ExtractView(&serialXvalues, &serialXlda));
+    GEOSX_ASSERT(serialBlda == LvArray::integerConversion<int>(SSData.numRows()));
+    GEOSX_ASSERT(serialXlda == LvArray::integerConversion<int>(SSData.numCols()));
 
     // solve Ax=b
-    status = SSData.solveWorkingRank( serialXvalues, serialBvalues, transpose );
+    status = SSData.solveWorkingRank(serialXvalues, serialBvalues, transpose);
   }
 
-  x.unwrapped().Export( serialX, *importToSerial, Insert );
+  x.unwrapped().Export(serialX, *importToSerial, Insert);
 
   SSData.syncTimes();
-  MpiWrapper::bcast( &status, 1, SSData.workingRank(), SSData.getComm() );
+  MpiWrapper::bcast(&status, 1, SSData.workingRank(), SSData.getComm());
 
   return status;
 }
 
 namespace
 {
-class InverseNormalOperator : public LinearOperator< EpetraVector >
+class InverseNormalOperator : public LinearOperator<EpetraVector>
 {
 public:
 
-  void set( EpetraMatrix const & matrix,
+  void set(EpetraMatrix const & matrix,
             Epetra_Map const * serialMap,
             Epetra_Import const * importToSerial,
-            SuiteSparse & SSData )
+            SuiteSparse & SSData)
   {
     m_SSData = &SSData;
     m_comm = SSData.getComm();
@@ -172,10 +172,10 @@ public:
     return m_comm;
   }
 
-  void apply( EpetraVector const & x, EpetraVector & y ) const override
+  void apply(EpetraVector const & x, EpetraVector & y) const override
   {
-    SuiteSparseSolve( *m_SSData, m_serialMap, m_importToSerial, x, y, false );
-    SuiteSparseSolve( *m_SSData, m_serialMap, m_importToSerial, y, y, true );
+    SuiteSparseSolve(*m_SSData, m_serialMap, m_importToSerial, x, y, false);
+    SuiteSparseSolve(*m_SSData, m_serialMap, m_importToSerial, y, y, true);
   }
 
 private:
@@ -196,23 +196,23 @@ private:
 };
 }
 
-real64 EpetraSuiteSparseCond( EpetraMatrix const & matrix,
+real64 EpetraSuiteSparseCond(EpetraMatrix const & matrix,
                               Epetra_Map const * serialMap,
                               Epetra_Import const * importToSerial,
-                              SuiteSparse & SSData )
+                              SuiteSparse & SSData)
 {
   localIndex const numIterations = 4;
 
-  using NormalOperator = NormalOperator< EpetraMatrix, EpetraVector >;
+  using NormalOperator = NormalOperator<EpetraMatrix, EpetraVector>;
   NormalOperator normalOperator;
-  normalOperator.set( matrix, matrix.getComm() );
-  real64 const lambdaDirect = ArnoldiLargestEigenvalue( normalOperator, numIterations );
+  normalOperator.set(matrix, matrix.getComm());
+  real64 const lambdaDirect = ArnoldiLargestEigenvalue(normalOperator, numIterations);
 
   InverseNormalOperator inverseNormalOperator;
-  inverseNormalOperator.set( matrix, serialMap, importToSerial, SSData );
-  real64 const lambdaInverse = ArnoldiLargestEigenvalue( inverseNormalOperator, numIterations );
+  inverseNormalOperator.set(matrix, serialMap, importToSerial, SSData);
+  real64 const lambdaInverse = ArnoldiLargestEigenvalue(inverseNormalOperator, numIterations);
 
-  return sqrt( lambdaDirect * lambdaInverse );
+  return sqrt(lambdaDirect * lambdaInverse);
 }
 
 }

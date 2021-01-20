@@ -26,66 +26,66 @@
 using namespace geosx;
 using namespace geosx::dataRepository;
 
-void TestMeshImport( string const & inputStringMesh,
+void TestMeshImport(string const & inputStringMesh,
                      string const & inputStringRegion,
-                     string const & propertyToTest )
+                     string const & propertyToTest)
 {
-  MeshManager meshManager( "mesh", nullptr );
+  MeshManager meshManager("mesh", nullptr);
 
   // Load the mesh
   xmlWrapper::xmlDocument xmlDocument;
-  xmlDocument.load_buffer( inputStringMesh.c_str(), inputStringMesh.size() );
+  xmlDocument.load_buffer(inputStringMesh.c_str(), inputStringMesh.size());
 
-  xmlWrapper::xmlNode xmlMeshNode = xmlDocument.child( "Mesh" );
-  meshManager.ProcessInputFileRecursive( xmlMeshNode );
+  xmlWrapper::xmlNode xmlMeshNode = xmlDocument.child("Mesh");
+  meshManager.ProcessInputFileRecursive(xmlMeshNode);
   meshManager.PostProcessInputRecursive();
 
   // Create the domain and generate the Mesh
-  auto domain = std::unique_ptr< DomainPartition >( new DomainPartition( "domain", nullptr ) );
-  meshManager.GenerateMeshes( domain.get() );
+  auto domain = std::unique_ptr<DomainPartition>(new DomainPartition("domain", nullptr));
+  meshManager.GenerateMeshes(domain.get());
 
   Group * const meshBodies = domain->getMeshBodies();
-  MeshBody * const meshBody = meshBodies->GetGroup< MeshBody >( 0 );
-  MeshLevel * const meshLevel = meshBody->GetGroup< MeshLevel >( 0 );
+  MeshBody * const meshBody = meshBodies->GetGroup<MeshBody>(0);
+  MeshLevel * const meshLevel = meshBody->GetGroup<MeshLevel>(0);
   NodeManager const & nodeManager = *meshLevel->getNodeManager();
   FaceManager const & faceManager = *meshLevel->getFaceManager();
   ElementRegionManager * const elemManager = meshLevel->getElemManager();
 
   // Create the ElementRegions
-  xmlDocument.load_buffer( inputStringRegion.c_str(), inputStringRegion.size() );
+  xmlDocument.load_buffer(inputStringRegion.c_str(), inputStringRegion.size());
 
-  xmlWrapper::xmlNode xmlRegionNode = xmlDocument.child( "ElementRegions" );
-  elemManager->ProcessInputFileRecursive( xmlRegionNode );
+  xmlWrapper::xmlNode xmlRegionNode = xmlDocument.child("ElementRegions");
+  elemManager->ProcessInputFileRecursive(xmlRegionNode);
   elemManager->PostProcessInputRecursive();
 
-  Group * const cellBlockManager = domain->GetGroup( keys::cellManager );
+  Group * const cellBlockManager = domain->GetGroup(keys::cellManager);
 
   // This method will call the CopyElementSubRegionFromCellBlocks that will trigger the property transfer.
-  elemManager->GenerateMesh( cellBlockManager );
+  elemManager->GenerateMesh(cellBlockManager);
 
 
   // Check if the computed center match with the imported center
-  if( !propertyToTest.empty() )
+  if(!propertyToTest.empty())
   {
-    auto centerProperty = elemManager->ConstructArrayViewAccessor< real64, 2 >( propertyToTest );
-    elemManager->forElementSubRegionsComplete< ElementSubRegionBase >(
-      [&]( localIndex const er, localIndex const esr, ElementRegionBase &, ElementSubRegionBase & elemSubRegion )
+    auto centerProperty = elemManager->ConstructArrayViewAccessor<real64, 2>(propertyToTest);
+    elemManager->forElementSubRegionsComplete<ElementSubRegionBase>(
+      [&](localIndex const er, localIndex const esr, ElementRegionBase &, ElementSubRegionBase & elemSubRegion)
     {
-      elemSubRegion.CalculateElementGeometricQuantities( nodeManager, faceManager );
-      arrayView2d< real64 const > const elemCenter = elemSubRegion.getElementCenter();
-      for( localIndex ei = 0; ei < elemSubRegion.size(); ei++ )
+      elemSubRegion.CalculateElementGeometricQuantities(nodeManager, faceManager);
+      arrayView2d<real64 const> const elemCenter = elemSubRegion.getElementCenter();
+      for(localIndex ei = 0; ei <elemSubRegion.size(); ei++)
       {
-        real64 center[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( elemCenter[ ei ] );
-        LvArray::tensorOps::subtract< 3 >( center, centerProperty[er][esr][ei] );
-        GEOSX_ERROR_IF_GT_MSG( LvArray::tensorOps::l2Norm< 3 >( center ), meshBody->getGlobalLengthScale() * 1e-8, "Property import of centers if wrong" );
+        real64 center[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3(elemCenter[ei]);
+        LvArray::tensorOps::subtract<3>(center, centerProperty[er][esr][ei]);
+        GEOSX_ERROR_IF_GT_MSG(LvArray::tensorOps::l2Norm<3>(center), meshBody->getGlobalLengthScale() * 1e-8, "Property import of centers if wrong");
       }
-    } );
+    });
   }
 }
 
-TEST( PAMELAImport, testGMSH )
+TEST(PAMELAImport, testGMSH)
 {
-  MeshManager meshManager( "mesh", nullptr );
+  MeshManager meshManager("mesh", nullptr);
 
   std::stringstream inputStreamMesh;
   inputStreamMesh <<
@@ -94,7 +94,7 @@ TEST( PAMELAImport, testGMSH )
     "  <PAMELAMeshGenerator name=\"ToyModel\" " <<
     "  fieldsToImport=\"{barycenter}\""<<
     "  fieldNamesInGEOSX=\"{barycenter}\""<<
-    "  file=\"" <<gmshFilePath.c_str()<< "\"/>"<<
+    "  file=\"" <<gmshFilePath.c_str()<<"\"/>"<<
     "</Mesh>";
   const string inputStringMesh = inputStreamMesh.str();
 
@@ -108,12 +108,12 @@ TEST( PAMELAImport, testGMSH )
     "</ElementRegions>";
   string inputStringRegion = inputStreamRegion.str();
 
-  TestMeshImport( inputStringMesh, inputStringRegion, "barycenter" );
+  TestMeshImport(inputStringMesh, inputStringRegion, "barycenter");
 }
 
-TEST( PAMELAImport, testECLIPSE )
+TEST(PAMELAImport, testECLIPSE)
 {
-  MeshManager meshManager( "mesh", nullptr );
+  MeshManager meshManager("mesh", nullptr);
 
   std::stringstream inputStreamMesh;
   inputStreamMesh <<
@@ -122,7 +122,7 @@ TEST( PAMELAImport, testECLIPSE )
     "  <PAMELAMeshGenerator name=\"ToyModel\" " <<
     "  fieldsToImport=\"{PERM}\""<<
     "  fieldNamesInGEOSX=\"{PERM}\""<<
-    "  file=\"" << eclipseFilePath.c_str()<< "\"/>"<<
+    "  file=\"" <<eclipseFilePath.c_str()<<"\"/>"<<
     "</Mesh>";
   const string inputStringMesh = inputStreamMesh.str();
 
@@ -134,14 +134,14 @@ TEST( PAMELAImport, testECLIPSE )
     "</ElementRegions>";
   string inputStringRegion = inputStreamRegion.str();
 
-  TestMeshImport( inputStringMesh, inputStringRegion, "" );
+  TestMeshImport(inputStringMesh, inputStringRegion, "");
 }
 
-int main( int argc, char * * argv )
+int main(int argc, char * * argv)
 {
-  ::testing::InitGoogleTest( &argc, argv );
+  ::testing::InitGoogleTest(&argc, argv);
 
-  geosx::basicSetup( argc, argv );
+  geosx::basicSetup(argc, argv);
 
   int const result = RUN_ALL_TESTS();
 

@@ -34,18 +34,18 @@ class PVTFunction
 {
 public:
 
-  PVTFunction( string const & name, string_array const & componentNames, real64_array const & componentMolarWeight ):
-    m_functionName( name ),
-    m_componentNames( componentNames ),
-    m_componentMolarWeight( componentMolarWeight )
+  PVTFunction(string const & name, string_array const & componentNames, real64_array const & componentMolarWeight):
+    m_functionName(name),
+    m_componentNames(componentNames),
+    m_componentMolarWeight(componentMolarWeight)
   {}
 
   virtual ~PVTFunction(){}
 
 
-  using CatalogInterface = dataRepository::CatalogInterface< PVTFunction, string_array const &,
+  using CatalogInterface = dataRepository::CatalogInterface<PVTFunction, string_array const &,
                                                              string_array const &,
-                                                             real64_array const & >;
+                                                             real64_array const &>;
   static typename CatalogInterface::CatalogType & GetCatalog()
   {
     static CatalogInterface::CatalogType catalog;
@@ -65,8 +65,8 @@ public:
   //input: P, T, phaseCompFraction
   //output: phase density/viscoty
 
-  virtual void Evaluation( EvalVarArgs const & pressure, EvalVarArgs const & temperature, arraySlice1d< EvalVarArgs const > const & phaseComposition,
-                           EvalVarArgs & value, bool useMass = 0 ) const = 0;
+  virtual void Evaluation(EvalVarArgs const & pressure, EvalVarArgs const & temperature, arraySlice1d<EvalVarArgs const> const & phaseComposition,
+                           EvalVarArgs & value, bool useMass = 0) const = 0;
 
 protected:
 

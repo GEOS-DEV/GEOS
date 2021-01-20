@@ -35,8 +35,8 @@ class RestartOutput : public OutputBase
 {
 public:
   /// @copydoc geosx::dataRepository::Group::Group(std::string const & name, Group * const parent)
-  RestartOutput( std::string const & name,
-                 Group * const parent );
+  RestartOutput(std::string const & name,
+                 Group * const parent);
 
   /// Destructor
   virtual ~RestartOutput() override;
@@ -45,36 +45,36 @@ public:
    * @brief Catalog name interface
    * @return This type's catalog name
    */
-  static string CatalogName() { return "Restart"; }
+  static string CatalogName() {return "Restart";}
 
   /**
    * @brief Writes out a restart file.
    * @copydoc EventBase::Execute()
    */
-  virtual void Execute( real64 const time_n,
+  virtual void Execute(real64 const time_n,
                         real64 const dt,
                         integer const cycleNumber,
                         integer const eventCounter,
                         real64 const eventProgress,
-                        dataRepository::Group * domain ) override;
+                        dataRepository::Group * domain) override;
 
   /**
    * @brief Write one final restart file as the code exits
    * @copydetails ExecutableGroup::Cleanup()
    */
-  virtual void Cleanup( real64 const time_n,
+  virtual void Cleanup(real64 const time_n,
                         integer const cycleNumber,
                         integer const eventCounter,
                         real64 const eventProgress,
-                        dataRepository::Group * domain ) override
+                        dataRepository::Group * domain) override
   {
-    Execute( time_n, 0, cycleNumber, eventCounter, eventProgress, domain );
+    Execute(time_n, 0, cycleNumber, eventCounter, eventProgress, domain);
   }
 
   /// @cond DO_NOT_DOCUMENT
   struct viewKeyStruct
   {
-    dataRepository::ViewKey writeFEMFaces = { "writeFEMFaces" };
+    dataRepository::ViewKey writeFEMFaces = {"writeFEMFaces"};
   } viewKeys;
   /// @endcond
 };

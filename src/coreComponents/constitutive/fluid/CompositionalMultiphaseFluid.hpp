@@ -30,17 +30,17 @@ class CompositionalMultiphaseFluid : public MultiFluidPVTPackageWrapper
 {
 public:
 
-  CompositionalMultiphaseFluid( std::string const & name, Group * const parent );
+  CompositionalMultiphaseFluid(std::string const & name, Group * const parent);
 
   virtual ~CompositionalMultiphaseFluid() override;
 
-  virtual std::unique_ptr< ConstitutiveBase >
-  deliverClone( string const & name,
-                Group * const parent ) const override;
+  virtual std::unique_ptr<ConstitutiveBase>
+  deliverClone(string const & name,
+                Group * const parent) const override;
 
-  static std::string CatalogName() { return "CompositionalMultiphaseFluid"; }
+  static std::string CatalogName() {return "CompositionalMultiphaseFluid";}
 
-  virtual string getCatalogName() const override { return CatalogName(); }
+  virtual string getCatalogName() const override {return CatalogName();}
 
 
   struct viewKeyStruct : MultiFluidPVTPackageWrapper::viewKeyStruct
@@ -64,11 +64,11 @@ private:
   string_array m_equationsOfState;
 
   // standard EOS component input
-  array1d< real64 > m_componentCriticalPressure;
-  array1d< real64 > m_componentCriticalTemperature;
-  array1d< real64 > m_componentAcentricFactor;
-  array1d< real64 > m_componentVolumeShift;
-  array2d< real64 > m_componentBinaryCoeff;
+  array1d<real64> m_componentCriticalPressure;
+  array1d<real64> m_componentCriticalTemperature;
+  array1d<real64> m_componentAcentricFactor;
+  array1d<real64> m_componentVolumeShift;
+  array2d<real64> m_componentBinaryCoeff;
 
 };
 

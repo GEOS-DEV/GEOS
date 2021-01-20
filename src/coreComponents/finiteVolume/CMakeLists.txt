@@ -1,7 +1,7 @@
 #
 # Specify all headers
 #
-set( finiteVolume_headers
+set(finiteVolume_headers
      BoundaryStencil.hpp
      CellElementStencilMPFA.hpp
      CellElementStencilTPFA.hpp
@@ -23,7 +23,7 @@ set( finiteVolume_headers
 #
 # Specify all sources
 #
-set( finiteVolume_sources
+set(finiteVolume_sources
      BoundaryStencil.cpp
      CellElementStencilMPFA.cpp
      CellElementStencilTPFA.cpp
@@ -34,29 +34,29 @@ set( finiteVolume_sources
      HybridMimeticDiscretization.cpp
    )
 
-if ( BUILD_OBJ_LIBS )
-  set( dependencyList dataRepository codingUtilities managers)
+if (BUILD_OBJ_LIBS)
+  set(dependencyList dataRepository codingUtilities managers)
 else()
-  set( dependencyList common)
+  set(dependencyList common)
 endif()
 
-if ( ENABLE_OPENMP )
-  set( dependencyList ${dependencyList} openmp )
+if (ENABLE_OPENMP)
+  set(dependencyList ${dependencyList} openmp)
 endif()
 
-if ( ENABLE_CUDA )
-  set( dependencyList ${dependencyList} cuda )
+if (ENABLE_CUDA)
+  set(dependencyList ${dependencyList} cuda)
 endif()
 
-blt_add_library( NAME                  finiteVolume
+blt_add_library(NAME                  finiteVolume
                  SOURCES               ${finiteVolume_sources}
                  HEADERS               ${finiteVolume_headers}
                  DEPENDS_ON            ${dependencyList}
                  OBJECT                ${buildAsObj}
                )
                
-target_include_directories( finiteVolume PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)
+target_include_directories(finiteVolume PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)
 
-add_subdirectory( unitTests )
+add_subdirectory(unitTests)
 
-geosx_add_code_checks( PREFIX finiteVolume )
+geosx_add_code_checks(PREFIX finiteVolume)

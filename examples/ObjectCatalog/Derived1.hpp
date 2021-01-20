@@ -18,11 +18,11 @@
 class Derived1 : public Base
 {
 public:
-  Derived1( int junk, double const & junk2, Parameter& param );
+  Derived1(int junk, double const & junk2, Parameter& param);
 
   ~Derived1();
 
-  static std::string CatalogName() { return "derived1"; }
-  std::string const getName() const override final { return CatalogName(); }
+  static std::string CatalogName() {return "derived1";}
+  std::string const getName() const override final {return CatalogName();}
 
 };

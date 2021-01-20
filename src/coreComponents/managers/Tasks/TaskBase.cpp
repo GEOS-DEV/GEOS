@@ -23,15 +23,15 @@ namespace geosx
 
 using namespace dataRepository;
 
-TaskBase::TaskBase( std::string const & name,
-                    Group * const parent ):
-  ExecutableGroup( name, parent )
+TaskBase::TaskBase(std::string const & name,
+                    Group * const parent):
+  ExecutableGroup(name, parent)
 {
-  setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
+  setInputFlags(InputFlags::OPTIONAL_NONUNIQUE);
 }
 
 TaskBase::~TaskBase()
-{ }
+{}
 
 TaskBase::CatalogInterface::CatalogType & TaskBase::GetCatalog()
 {
@@ -40,6 +40,6 @@ TaskBase::CatalogInterface::CatalogType & TaskBase::GetCatalog()
 }
 
 void TaskBase::PostProcessInput()
-{ }
+{}
 
 } /* namespace */

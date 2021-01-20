@@ -42,57 +42,57 @@ namespace constitutive
  * specific constitutive base type, and executing the lambda passing it a
  * casted pointer to the constitutive relation.
  */
-template< typename BASETYPE >
+template<typename BASETYPE>
 struct ConstitutivePassThru;
 
 /**
  * Specialization for models that derive from SolidBase.
  */
 template<>
-struct ConstitutivePassThru< SolidBase >
+struct ConstitutivePassThru<SolidBase>
 {
 
-  template< typename LAMBDA >
+  template<typename LAMBDA>
   static
-  void Execute( ConstitutiveBase * const constitutiveRelation,
-                LAMBDA && lambda )
+  void Execute(ConstitutiveBase * const constitutiveRelation,
+                LAMBDA && lambda)
   {
-    GEOSX_ERROR_IF( constitutiveRelation == nullptr, "ConstitutiveBase* == nullptr" );
+    GEOSX_ERROR_IF(constitutiveRelation == nullptr, "ConstitutiveBase* == nullptr");
 
-    if( dynamic_cast< DamageSpectral< LinearElasticIsotropic > * >( constitutiveRelation ) )
+    if(dynamic_cast<DamageSpectral<LinearElasticIsotropic> *>(constitutiveRelation))
     {
-      lambda( static_cast< DamageSpectral< LinearElasticIsotropic > * >( constitutiveRelation) );
+      lambda(static_cast<DamageSpectral<LinearElasticIsotropic> *>(constitutiveRelation));
     }
-    else if( dynamic_cast< DamageVolDev< LinearElasticIsotropic > * >( constitutiveRelation ) )
+    else if(dynamic_cast<DamageVolDev<LinearElasticIsotropic> *>(constitutiveRelation))
     {
-      lambda( static_cast< DamageVolDev< LinearElasticIsotropic > * >( constitutiveRelation) );
+      lambda(static_cast<DamageVolDev<LinearElasticIsotropic> *>(constitutiveRelation));
     }
-    else if( dynamic_cast< Damage< LinearElasticIsotropic > * >( constitutiveRelation ) )
+    else if(dynamic_cast<Damage<LinearElasticIsotropic> *>(constitutiveRelation))
     {
-      lambda( static_cast< Damage< LinearElasticIsotropic > * >( constitutiveRelation) );
+      lambda(static_cast<Damage<LinearElasticIsotropic> *>(constitutiveRelation));
     }
-    else if( dynamic_cast< LinearElasticIsotropic * >( constitutiveRelation ) )
+    else if(dynamic_cast<LinearElasticIsotropic *>(constitutiveRelation))
     {
-      lambda( static_cast< LinearElasticIsotropic * >( constitutiveRelation) );
+      lambda(static_cast<LinearElasticIsotropic *>(constitutiveRelation));
     }
-    else if( dynamic_cast< LinearElasticTransverseIsotropic * >( constitutiveRelation ) )
+    else if(dynamic_cast<LinearElasticTransverseIsotropic *>(constitutiveRelation))
     {
-      lambda( static_cast< LinearElasticTransverseIsotropic * >( constitutiveRelation) );
+      lambda(static_cast<LinearElasticTransverseIsotropic *>(constitutiveRelation));
     }
-    else if( dynamic_cast< LinearElasticAnisotropic * >( constitutiveRelation ) )
+    else if(dynamic_cast<LinearElasticAnisotropic *>(constitutiveRelation))
     {
-      lambda( static_cast< LinearElasticAnisotropic * >( constitutiveRelation) );
+      lambda(static_cast<LinearElasticAnisotropic *>(constitutiveRelation));
     }
     else
     {
       string name;
-      if( constitutiveRelation !=nullptr )
+      if(constitutiveRelation !=nullptr)
       {
         name = constitutiveRelation->getName();
       }
-      GEOSX_ERROR( "ConstitutivePassThru<SolidBase>::Execute( "<<
-                   constitutiveRelation<<" ) failed. ( "<<
-                   constitutiveRelation<<" ) is named "<<name );
+      GEOSX_ERROR("ConstitutivePassThru<SolidBase>::Execute("<<
+                   constitutiveRelation<<") failed. ("<<
+                   constitutiveRelation<<") is named "<<name);
     }
   }
 };
@@ -102,29 +102,29 @@ struct ConstitutivePassThru< SolidBase >
  * Specialization for the NullModel.
  */
 template<>
-struct ConstitutivePassThru< NullModel >
+struct ConstitutivePassThru<NullModel>
 {
-  template< typename LAMBDA >
+  template<typename LAMBDA>
   static
-  void Execute( ConstitutiveBase * const constitutiveRelation,
-                LAMBDA && lambda )
+  void Execute(ConstitutiveBase * const constitutiveRelation,
+                LAMBDA && lambda)
   {
-    GEOSX_ERROR_IF( constitutiveRelation == nullptr, "ConstitutiveBase* == nullptr" );
+    GEOSX_ERROR_IF(constitutiveRelation == nullptr, "ConstitutiveBase* == nullptr");
 
-    if( dynamic_cast< NullModel * >( constitutiveRelation ) )
+    if(dynamic_cast<NullModel *>(constitutiveRelation))
     {
-      lambda( static_cast< NullModel * >( constitutiveRelation ) );
+      lambda(static_cast<NullModel *>(constitutiveRelation));
     }
     else
     {
       string name;
-      if( constitutiveRelation !=nullptr )
+      if(constitutiveRelation !=nullptr)
       {
         name = constitutiveRelation->getName();
       }
-      GEOSX_ERROR( "ConstitutivePassThru<NullModel>::Execute( "<<
-                   constitutiveRelation<<" ) failed. ( "<<
-                   constitutiveRelation<<" ) is named "<<name );
+      GEOSX_ERROR("ConstitutivePassThru<NullModel>::Execute("<<
+                   constitutiveRelation<<") failed. ("<<
+                   constitutiveRelation<<") is named "<<name);
 
     }
   }
@@ -135,37 +135,37 @@ struct ConstitutivePassThru< NullModel >
  * Specialization for the PoroElastic models.
  */
 template<>
-struct ConstitutivePassThru< PoroElasticBase >
+struct ConstitutivePassThru<PoroElasticBase>
 {
-  template< typename LAMBDA >
+  template<typename LAMBDA>
   static
-  void Execute( ConstitutiveBase * const constitutiveRelation,
-                LAMBDA && lambda )
+  void Execute(ConstitutiveBase * const constitutiveRelation,
+                LAMBDA && lambda)
   {
-    GEOSX_ERROR_IF( constitutiveRelation == nullptr, "ConstitutiveBase* == nullptr" );
+    GEOSX_ERROR_IF(constitutiveRelation == nullptr, "ConstitutiveBase* == nullptr");
 
-    if( dynamic_cast< PoroElastic< LinearElasticIsotropic > * >( constitutiveRelation ) )
+    if(dynamic_cast<PoroElastic<LinearElasticIsotropic> *>(constitutiveRelation))
     {
-      lambda( static_cast< PoroElastic< LinearElasticIsotropic > * >( constitutiveRelation) );
+      lambda(static_cast<PoroElastic<LinearElasticIsotropic> *>(constitutiveRelation));
     }
-    else if( dynamic_cast< PoroElastic< LinearElasticTransverseIsotropic > * >( constitutiveRelation ) )
+    else if(dynamic_cast<PoroElastic<LinearElasticTransverseIsotropic> *>(constitutiveRelation))
     {
-      lambda( static_cast< PoroElastic< LinearElasticTransverseIsotropic > * >( constitutiveRelation) );
+      lambda(static_cast<PoroElastic<LinearElasticTransverseIsotropic> *>(constitutiveRelation));
     }
-    else if( dynamic_cast< PoroElastic< LinearElasticAnisotropic > * >( constitutiveRelation ) )
+    else if(dynamic_cast<PoroElastic<LinearElasticAnisotropic> *>(constitutiveRelation))
     {
-      lambda( static_cast< PoroElastic< LinearElasticAnisotropic > * >( constitutiveRelation) );
+      lambda(static_cast<PoroElastic<LinearElasticAnisotropic> *>(constitutiveRelation));
     }
     else
     {
       string name;
-      if( constitutiveRelation !=nullptr )
+      if(constitutiveRelation !=nullptr)
       {
         name = constitutiveRelation->getName();
       }
-      GEOSX_ERROR( "ConstitutivePassThru<SolidBase>::Execute( "<<
-                   constitutiveRelation<<" ) failed. ( "<<
-                   constitutiveRelation<<" ) is named "<<name );
+      GEOSX_ERROR("ConstitutivePassThru<SolidBase>::Execute("<<
+                   constitutiveRelation<<") failed. ("<<
+                   constitutiveRelation<<") is named "<<name);
     }
   }
 };
@@ -174,37 +174,37 @@ struct ConstitutivePassThru< PoroElasticBase >
  * Specialization for the Damage models.
  */
 template<>
-struct ConstitutivePassThru< DamageBase >
+struct ConstitutivePassThru<DamageBase>
 {
-  template< typename LAMBDA >
+  template<typename LAMBDA>
   static
-  void Execute( ConstitutiveBase * const constitutiveRelation,
-                LAMBDA && lambda )
+  void Execute(ConstitutiveBase * const constitutiveRelation,
+                LAMBDA && lambda)
   {
-    GEOSX_ERROR_IF( constitutiveRelation == nullptr, "ConstitutiveBase* == nullptr" );
+    GEOSX_ERROR_IF(constitutiveRelation == nullptr, "ConstitutiveBase* == nullptr");
 
-    if( dynamic_cast< DamageSpectral< LinearElasticIsotropic > * >( constitutiveRelation ) )
+    if(dynamic_cast<DamageSpectral<LinearElasticIsotropic> *>(constitutiveRelation))
     {
-      lambda( static_cast< DamageSpectral< LinearElasticIsotropic > * >( constitutiveRelation) );
+      lambda(static_cast<DamageSpectral<LinearElasticIsotropic> *>(constitutiveRelation));
     }
-    else if( dynamic_cast< DamageVolDev< LinearElasticIsotropic > * >( constitutiveRelation ) )
+    else if(dynamic_cast<DamageVolDev<LinearElasticIsotropic> *>(constitutiveRelation))
     {
-      lambda( static_cast< DamageVolDev< LinearElasticIsotropic > * >( constitutiveRelation) );
+      lambda(static_cast<DamageVolDev<LinearElasticIsotropic> *>(constitutiveRelation));
     }
-    else if( dynamic_cast< Damage< LinearElasticIsotropic > * >( constitutiveRelation ) )
+    else if(dynamic_cast<Damage<LinearElasticIsotropic> *>(constitutiveRelation))
     {
-      lambda( static_cast< Damage< LinearElasticIsotropic > * >( constitutiveRelation) );
+      lambda(static_cast<Damage<LinearElasticIsotropic> *>(constitutiveRelation));
     }
     else
     {
       string name;
-      if( constitutiveRelation !=nullptr )
+      if(constitutiveRelation !=nullptr)
       {
         name = constitutiveRelation->getName();
       }
-      GEOSX_ERROR( "ConstitutivePassThru<DamgeBase>::Execute( "<<
-                   constitutiveRelation<<" ) failed. ( "<<
-                   constitutiveRelation<<" ) is named "<<name );
+      GEOSX_ERROR("ConstitutivePassThru<DamgeBase>::Execute("<<
+                   constitutiveRelation<<") failed. ("<<
+                   constitutiveRelation<<") is named "<<name);
     }
   }
 };
