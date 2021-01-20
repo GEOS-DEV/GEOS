@@ -169,8 +169,6 @@ real64 AcousticWaveEquationSEM::ExplicitStep( real64 const & time_n,
   MeshLevel & mesh = *(domain.getMeshBody( 0 )->getMeshLevel( 0 ));
 
   NodeManager & nodes = *mesh.getNodeManager();
-
-  //localIndex const nodesSize = nodes.size();
   
   arrayView1d< real64 > const mass = nodes.getExtrinsicData< extrinsicMeshData::MassVector >();
   arrayView1d< real64 > const damping = nodes.getExtrinsicData< extrinsicMeshData::DampingVector >();
@@ -180,15 +178,13 @@ real64 AcousticWaveEquationSEM::ExplicitStep( real64 const & time_n,
   arrayView1d< real64 > const p_np1 = nodes.getExtrinsicData< extrinsicMeshData::Pressure_np1 >();
   
   /// Raja do not compile here
-  arrayView2d< real64 const > const X = nodes.referencePosition();
+  arrayView2d< real64 const > const X = nodes.referencePosition().toViewConst(); //nodes.referencePosition();
 
   /// Vector to contain the product of the stiffness matrix R_h and the pressure p_n
   arrayView1d< real64 > const stiffnessVector = nodes.getExtrinsicData< extrinsicMeshData::StiffnessVector >();
-  //real64 stiffnessVector[nodesSize];
 
   /// Vector to compute rhs
   arrayView1d< real64 > const rhs = nodes.getExtrinsicData< extrinsicMeshData::RhsVector >();
-  //real64 rhs[nodesSize];
   
   forTargetRegionsComplete( mesh, [&]( localIndex const,
                                        localIndex const,
@@ -239,7 +235,7 @@ real64 AcousticWaveEquationSEM::ExplicitStep( real64 const & time_n,
             {
 	      for(localIndex j=0; j<numNodesPerElem; ++j )
 		{
-		  Rh_k[i][j] = 0.;
+		  Rh_k[i][j] = 0.0;
 		  for(localIndex a=0; a<2; ++a)
 		    {
 		      Rh_k[i][j] +=  detJ * gradN[i][a]*gradN[j][a];
@@ -266,6 +262,9 @@ real64 AcousticWaveEquationSEM::ExplicitStep( real64 const & time_n,
     p_np1[a] = (1.0/(mass[a]+0.5*dt*damping[a]))*(2*mass[a]*p_n[a]-dt2*stiffnessVector[a] - (mass[a] - 0.5*dt*damping[a])*p_nm1[a] + dt2*rhs[a] );
     p_nm1[a]=p_n[a];
     p_n[a] = p_np1[a];
+
+    stiffnessVector[a] = 0.0;
+    rhs[a] = 0.0;
   }
 
   return dt;
