@@ -87,6 +87,8 @@ void AcousticWaveEquationSEM::InitializePostInitialConditions_PreSubGroups( Grou
   NodeManager & nodes = *mesh.getNodeManager();
 
   arrayView1d< real64 > const mass = nodes.getExtrinsicData< extrinsicMeshData::MassVector >();
+  /// damping matrix to be computed for each dof in the boundary of the mesh
+  arrayView1d< real64 > const damping = nodes.getExtrinsicData< extrinsicMeshData::DampingVector >();
 
   forTargetRegionsComplete( mesh, [&]( localIndex const,
                                        localIndex const,
@@ -142,6 +144,20 @@ real64 AcousticWaveEquationSEM::SolverStep( real64 const & time_n,
   return ExplicitStep( time_n, dt, cycleNumber, domain );
 }
 
+
+/// Returns the value of a Ricker at time t0 with central Fourier frequency f0 and center time tc
+real64 AcousticWaveEquationSEM::EvaluateRicker(real64 const & t0, real64 const & tc, real64 const & f0)
+{
+    real64 pulse = 0;
+    real64 pi = 3.14;
+    real64 tmp = f0*(t0-tc);
+    real64 f0tm1_2 = 2*(tmp*pi)*(tmp*pi);
+    real64 gaussian_term = exp(-f0tm1_2); 
+    pulse = -(t0-tc)*gaussian_term;
+        
+    return pulse;
+  }
+
 real64 AcousticWaveEquationSEM::ExplicitStep( real64 const & time_n,
                                               real64 const & dt,
                                               integer const cycleNumber,
@@ -154,11 +170,26 @@ real64 AcousticWaveEquationSEM::ExplicitStep( real64 const & time_n,
 
   NodeManager & nodes = *mesh.getNodeManager();
 
+  //localIndex const nodesSize = nodes.size();
+  
   arrayView1d< real64 > const mass = nodes.getExtrinsicData< extrinsicMeshData::MassVector >();
-
+  arrayView1d< real64 > const damping = nodes.getExtrinsicData< extrinsicMeshData::DampingVector >();
+  
+  arrayView1d< real64 > const p_nm1 = nodes.getExtrinsicData< extrinsicMeshData::Pressure_nm1 >();
+  arrayView1d< real64 > const p_n = nodes.getExtrinsicData< extrinsicMeshData::Pressure_n >();
+  arrayView1d< real64 > const p_np1 = nodes.getExtrinsicData< extrinsicMeshData::Pressure_np1 >();
+  
+  /// Raja do not compile here
   arrayView2d< real64 const > const X = nodes.referencePosition();
 
+  /// Vector to contain the product of the stiffness matrix R_h and the pressure p_n
+  arrayView1d< real64 > const stiffnessVector = nodes.getExtrinsicData< extrinsicMeshData::StiffnessVector >();
+  //real64 stiffnessVector[nodesSize];
 
+  /// Vector to compute rhs
+  arrayView1d< real64 > const rhs = nodes.getExtrinsicData< extrinsicMeshData::RhsVector >();
+  //real64 rhs[nodesSize];
+  
   forTargetRegionsComplete( mesh, [&]( localIndex const,
                                        localIndex const,
                                        ElementRegionBase & elemRegion )
@@ -167,8 +198,6 @@ real64 AcousticWaveEquationSEM::ExplicitStep( real64 const & time_n,
                                                                        CellElementSubRegion & elementSubRegion )
     {
       arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion.nodeList();
-
-      arrayView1d< real64 const > const c = elementSubRegion.getExtrinsicData< extrinsicMeshData::MediumVelocity >();
 
       finiteElement::FiniteElementBase const &
       fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
@@ -182,13 +211,14 @@ real64 AcousticWaveEquationSEM::ExplicitStep( real64 const & time_n,
         constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
 
         real64 N[numNodesPerElem];
-        real64 dNdX[ numNodesPerElem ][ 3 ];
+        real64 gradN[ numNodesPerElem ][ 3 ];
 
         for( localIndex k=0; k < elemsToNodes.size( 0 ); ++k )
         {
-          real64 const invC2 = 1.0 / ( c[k] * c[k] );
-
           real64 xLocal[numNodesPerElem][3];
+	  /// Local stiffness matrix for the element k
+	  real64 Rh_k[numNodesPerElem][numNodesPerElem];
+	  
           for( localIndex a=0; a< numNodesPerElem; ++a )
           {
             for( localIndex i=0 ; i<3; ++i )
@@ -198,41 +228,44 @@ real64 AcousticWaveEquationSEM::ExplicitStep( real64 const & time_n,
           }
 
 
-
-
           for( localIndex q=0; q<numQuadraturePointsPerElem; ++q )
           {
+	    ///Calculate the basis function N at the node q
             FE_TYPE::calcN( q, N );
-            real64 const detJ = finiteElement.template getGradN< FE_TYPE >( k, q, xLocal, dNdX );
-
-
-            // DROP ALG IN HERE
-            // DROP ALG IN HERE
-            // DROP ALG IN HERE
-            // DROP ALG IN HERE
-            // DROP ALG IN HERE
-            // DROP ALG IN HERE
-
-
-            for( localIndex a=0; a< numNodesPerElem; ++a )
+	    ///Compute gradN = invJ*\hat{\nabla}N at the node q and return the determinant of the transformation matrix J
+	    real64 const detJ = finiteElement.template getGradN< FE_TYPE >( k, q, xLocal, gradN);
+	    
+	    for( localIndex i=0; i<numNodesPerElem; ++i )
             {
-              mass[elemsToNodes[k][a]] +=  invC2 * detJ * N[a];
-            }
+	      for(localIndex j=0; j<numNodesPerElem; ++j )
+		{
+		  Rh_k[i][j] = 0.;
+		  for(localIndex a=0; a<2; ++a)
+		    {
+		      Rh_k[i][j] +=  detJ * gradN[i][a]*gradN[j][a];
+		    }
+		}
+	    }
+	    ///Compute local Rh_k*p_n and save in the global vector  
+            for( localIndex l=0; l< numNodesPerElem; ++l )
+	      {
+		stiffnessVector[elemsToNodes[k][q]] += Rh_k[q][l]*p_n[elemsToNodes[k][l]] ;
+	      }
           }
         }
       } );
     } );
   } );
 
-
-  arrayView1d< real64 const > const p_nm1 = nodes.getExtrinsicData< extrinsicMeshData::Pressure_nm1 >();
-  arrayView1d< real64 const > const p_n = nodes.getExtrinsicData< extrinsicMeshData::Pressure_n >();
-  arrayView1d< real64 > const p_np1 = nodes.getExtrinsicData< extrinsicMeshData::Pressure_np1 >();
-
+  
   /// Calculate your time integrators
+  real64 dt2 = dt*dt;
   for( localIndex a=0; a<nodes.size(); ++a )
   {
     // pressure update here
+    p_np1[a] = (1.0/(mass[a]+0.5*dt*damping[a]))*(2*mass[a]*p_n[a]-dt2*stiffnessVector[a] - (mass[a] - 0.5*dt*damping[a])*p_nm1[a] + dt2*rhs[a] );
+    p_nm1[a]=p_n[a];
+    p_n[a] = p_np1[a];
   }
 
   return dt;

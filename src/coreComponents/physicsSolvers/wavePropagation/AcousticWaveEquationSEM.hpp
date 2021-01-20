@@ -55,7 +55,12 @@ public:
                        integer const cycleNumber,
                        DomainPartition & domain ) override;
 
+  /// Returns the value of a Ricker at time t0 with central Fourier frequency f0 and center time tc
+  virtual
+  real64 EvaluateRicker(real64 const & t0, real64 const & tc, real64 const & f0);
 
+
+  
 //  virtual void ApplyBoundaryConditions( real64 const time,
 //                                        real64 const dt,
 //                                        DomainPartition & domain,
@@ -127,6 +132,14 @@ EXTRINSIC_MESH_DATA_TRAIT( MassVector,
                            WRITE_AND_READ,
                            "Diagonal Mass Matrix." );
 
+EXTRINSIC_MESH_DATA_TRAIT( DampingVector,
+                           "dampingVector",
+                           array1d< real64 >,
+                           0,
+                           LEVEL_0,
+                           WRITE_AND_READ,
+                           "Diagonal Damping Matrix." );
+
 
 EXTRINSIC_MESH_DATA_TRAIT( MediumVelocity,
                            "mediumVelocity",
@@ -135,6 +148,21 @@ EXTRINSIC_MESH_DATA_TRAIT( MediumVelocity,
                            LEVEL_0,
                            WRITE_AND_READ,
                            "Medium velocity of the cell" );
+
+EXTRINSIC_MESH_DATA_TRAIT( StiffnessVector,
+                           "stiffnessVector",
+                           array1d< real64 >,
+                           0,
+                           LEVEL_0,
+                           WRITE_AND_READ,
+                           "Stiffness vector contains R_h*Pressure_n." );
+EXTRINSIC_MESH_DATA_TRAIT( RhsVector,
+                           "rhsVector",
+                           array1d< real64 >,
+                           0,
+                           LEVEL_0,
+                           WRITE_AND_READ,
+                           "Rhs Vector." );
 
 }
 
