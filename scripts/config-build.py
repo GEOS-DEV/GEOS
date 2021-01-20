@@ -77,6 +77,11 @@ parser.add_argument("-e",
                     action='store_true',
                     help="create an eclipse project file.")
 
+parser.add_argument("-cb",
+                    "--codeblocks",
+                    action='store_true',
+                    help="create a codeblocks project file.")
+
 parser.add_argument("-x",
                     "--xcode",
                     action='store_true',
@@ -191,6 +196,9 @@ if args.exportcompilercommands:
 
 if args.eclipse:
     cmakeline += ' -G "Eclipse CDT4 - Unix Makefiles"'
+
+if args.codeblocks:
+    cmakeline += ' -G "CodeBlocks - Unix Makefiles"'
 
 if args.xcode:
     cmakeline += ' -G Xcode'
