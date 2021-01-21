@@ -86,6 +86,9 @@ void AcousticWaveEquationSEM::InitializePostInitialConditions_PreSubGroups( Grou
 
   NodeManager & nodes = *mesh.getNodeManager();
 
+  /// get the array of indicators: 1 if the node is on the boundary; 0 otherwise
+  arrayView1d< integer const > const nodesDomainBoundaryIndicator = nodes.getDomainBoundaryIndicator();
+
   arrayView1d< real64 > const mass = nodes.getExtrinsicData< extrinsicMeshData::MassVector >();
   /// damping matrix to be computed for each dof in the boundary of the mesh
   arrayView1d< real64 > const damping = nodes.getExtrinsicData< extrinsicMeshData::DampingVector >();
@@ -118,6 +121,7 @@ void AcousticWaveEquationSEM::InitializePostInitialConditions_PreSubGroups( Grou
         for( localIndex k=0; k < elemsToNodes.size( 0 ); ++k )
         {
           real64 const invC2 = 1.0 / ( c[k] * c[k] );
+	  real64 const alpha = 1.0/c[k];
 
           for( localIndex q=0; q<numQuadraturePointsPerElem; ++q )
           {
@@ -125,7 +129,14 @@ void AcousticWaveEquationSEM::InitializePostInitialConditions_PreSubGroups( Grou
 
             for( localIndex a=0; a< numNodesPerElem; ++a )
             {
+	      ///update mass matrix
               mass[elemsToNodes[k][a]] +=  invC2 * detJ[k][q] * N[a];
+
+	      /// update damping matrix
+	      if(nodesDomainBoundaryIndicator[elemsToNodes[k][a]] == 1)
+		{
+		  damping[elemsToNodes[k][a]] += alpha*detJ[k][q] * N[a];
+		}
             }
           }
         }
@@ -178,7 +189,7 @@ real64 AcousticWaveEquationSEM::ExplicitStep( real64 const & time_n,
   arrayView1d< real64 > const p_np1 = nodes.getExtrinsicData< extrinsicMeshData::Pressure_np1 >();
   
   /// Raja do not compile here
-  arrayView2d< real64 const > const X = nodes.referencePosition().toViewConst(); //nodes.referencePosition();
+  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X = nodes.referencePosition().toViewConst(); //nodes.referencePosition();
 
   /// Vector to contain the product of the stiffness matrix R_h and the pressure p_n
   arrayView1d< real64 > const stiffnessVector = nodes.getExtrinsicData< extrinsicMeshData::StiffnessVector >();
