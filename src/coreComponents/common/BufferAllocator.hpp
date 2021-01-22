@@ -66,19 +66,24 @@ private:
   umpire::TypedAllocator< value_type > m_alloc;
   bool m_prefer_pinned_l;
 public:
+
   /**
    * @brief Default behavior is to allocate host memory, if there is a pinned memory allocator
    *        provided by umpire for the target platform, and getPreferPinned returns true,
    *        use that instead.
    */
   BufferAllocator()
-    : m_alloc( umpire::TypedAllocator< T >( umpire::ResourceManager::getInstance().getAllocator( umpire::resource::Host )))
+    : m_alloc( umpire::TypedAllocator< T >( umpire::ResourceManager::getInstance().getAllocator( umpire::resource::Host ) ) )
     , m_prefer_pinned_l( getPreferPinned( ) )
   {
-    auto & rm = umpire::ResourceManager::getInstance();
-    if( rm.isAllocator( "PINNED" ) && m_prefer_pinned_l )
-      m_alloc = umpire::TypedAllocator< T >( rm.getAllocator( umpire::resource::Pinned ));
+  #if defined(UMPIRE_ENABLE_PINNED)
+    if( m_prefer_pinned_l )
+    {
+      m_alloc = umpire::TypedAllocator< T >( umpire::ResourceManager::getInstance().getAllocator( umpire::resource::Pinned ) );
+    }
+  #endif
   }
+
   /**
    * @brief Allocate a buffer.
    * @param sz The number of elements of type value_type to allocate a buffer for.
@@ -88,6 +93,7 @@ public:
   {
     return m_alloc.allocate( sz );
   }
+
   /**
    * @brief Deallocate a buffer.
    * @param buffer A pointer to the buffer to deallocate
@@ -98,6 +104,7 @@ public:
     if( buffer != nullptr )
       m_alloc.deallocate( buffer, sz );
   }
+
   /**
    * @brief Inequality operator.
    * @param The other BufferAllocator to test against this buffer allocator for inequality.
@@ -108,6 +115,7 @@ public:
   {
     return false;
   }
+
   /**
    * @brief Equality operator.
    * @param other The other BufferAllocator to test against this buffer allocator for equality.
