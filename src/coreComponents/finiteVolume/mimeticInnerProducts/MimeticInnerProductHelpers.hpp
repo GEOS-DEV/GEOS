@@ -38,7 +38,7 @@ struct MimeticInnerProductHelpers
    */
   GEOSX_HOST_DEVICE
   static
-  void MakeFullTensor( real64 const (&values)[ 3 ],
+  void makeFullTensor( real64 const (&values)[ 3 ],
                        real64 (& result)[ 3 ][ 3 ] )
   {
     LvArray::tensorOps::fill< 3, 3 >( result, 0.0 );
@@ -58,7 +58,7 @@ struct MimeticInnerProductHelpers
   template< localIndex NF >
   GEOSX_HOST_DEVICE
   static
-  void Orthonormalize( real64 (& q0)[ NF ],
+  void orthonormalize( real64 (& q0)[ NF ],
                        real64 (& q1)[ NF ],
                        real64 (& q2)[ NF ],
                        real64 (& cellToFaceMat)[ NF ][ 3 ] )
@@ -102,7 +102,7 @@ struct MimeticInnerProductHelpers
   template< localIndex NF >
   GEOSX_HOST_DEVICE
   static void
-  ComputeInvTPFATransWithMultiplier( real64 const (&elemPerm)[ 3 ],
+  computeInvTpfaTransWithMultiplier( real64 const (&elemPerm)[ 3 ],
                                      real64 const (&faceNormal)[ 3 ],
                                      real64 const & faceArea,
                                      real64 const & transMult,
@@ -137,7 +137,7 @@ struct MimeticInnerProductHelpers
   template< localIndex NF >
   GEOSX_HOST_DEVICE
   static void
-  ComputeTransMatrixWithMultipliers( real64 const (&tpTransInv)[ NF ],
+  computeTransMatrixWithMultipliers( real64 const (&tpTransInv)[ NF ],
                                      arraySlice2d< real64 > const & transMatrix )
   {
     // the inverse of the pertubed inverse is computed using the Sherman-Morrison formula

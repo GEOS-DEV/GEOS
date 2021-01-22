@@ -69,7 +69,7 @@ public:
    */
   virtual ~FlowSolverBase() override;
 
-  virtual void RegisterDataOnMesh( Group * const MeshBodies ) override;
+  virtual void registerDataOnMesh( Group * const MeshBodies ) override;
 
   void setPoroElasticCoupling() { m_poroElasticFlag = 1; }
 
@@ -114,24 +114,24 @@ public:
   /**
    * @brief Setup stored views into domain data for the current step
    */
-  virtual void ResetViews( MeshLevel & mesh );
+  virtual void resetViews( MeshLevel & mesh );
 
-  virtual void setUpDflux_dApertureMatrix( DomainPartition & domain,
+  virtual void setUpDfluxDApertureMatrix( DomainPartition & domain,
                                            DofManager const & dofManager,
                                            CRSMatrix< real64, globalIndex > & localMatrix );
 
 
-  std::unique_ptr< CRSMatrix< real64, localIndex > > & getRefDerivativeFluxResidual_dAperture()
+  std::unique_ptr< CRSMatrix< real64, localIndex > > & getRefDerivativeFluxResidualDAperture()
   {
     return m_derivativeFluxResidual_dAperture;
   }
 
-  CRSMatrixView< real64, localIndex const > getDerivativeFluxResidual_dAperture()
+  CRSMatrixView< real64, localIndex const > getDerivativeFluxResidualDAperture()
   {
     return m_derivativeFluxResidual_dAperture->toViewConstSizes();
   }
 
-  CRSMatrixView< real64 const, localIndex const > getDerivativeFluxResidual_dAperture() const
+  CRSMatrixView< real64 const, localIndex const > getDerivativeFluxResidualDAperture() const
   {
     return m_derivativeFluxResidual_dAperture->toViewConst();
   }
@@ -146,13 +146,13 @@ private:
 
 protected:
 
-  void PrecomputeData( MeshLevel & mesh );
+  void precomputeData( MeshLevel & mesh );
 
-  virtual void PostProcessInput() override;
+  virtual void postProcessInput() override;
 
-  virtual void InitializePreSubGroups( Group * const rootGroup ) override;
+  virtual void initializePreSubGroups( Group * const rootGroup ) override;
 
-  virtual void InitializePostInitialConditions_PreSubGroups( Group * const rootGroup ) override;
+  virtual void initializePostInitialConditionsPreSubGroups( Group * const rootGroup ) override;
 
   /// name of the fluid constitutive model
   array1d< string > m_fluidModelNames;

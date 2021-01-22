@@ -59,9 +59,9 @@ public:
    * NonlinearSolverParameters object when calling
    * Group::GetCatalog()::Allocate().
    */
-  static string CatalogName() { return "NonlinearSolverParameters"; }
+  static string catalogName() { return "NonlinearSolverParameters"; }
 
-  virtual void PostProcessInput() override;
+  virtual void postProcessInput() override;
 
   struct viewKeysStruct
   {

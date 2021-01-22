@@ -59,11 +59,11 @@ public:
    * @brief Name that is used to register this a type of "ContactRelationBase" in the object catalog
    * @return See description
    */
-  static string CatalogName() { return "Contact"; }
+  static string catalogName() { return "Contact"; }
 
-  virtual string getCatalogName() const override { return CatalogName(); }
+  virtual string getCatalogName() const override { return catalogName(); }
 
-  virtual Group * CreateChild( string const & catalogKey,
+  virtual Group * createChild( string const & catalogKey,
                                string const & name ) override;
 
 
@@ -71,15 +71,15 @@ public:
    * This function is used to inform the schema generator
    * that table functions are allowed as children.
    */
-  virtual void SetSchemaDeviations( xmlWrapper::xmlNode schemaRoot,
+  virtual void setSchemaDeviations( xmlWrapper::xmlNode schemaRoot,
                                     xmlWrapper::xmlNode schemaParent,
                                     integer documentationType ) override;
 
-  virtual void InitializePreSubGroups( Group * const ) override;
+  virtual void initializePreSubGroups( Group * const ) override;
 
   virtual real64 limitTangentialTractionNorm( real64 const normalTraction ) const;
 
-  virtual real64 dLimitTangentialTractionNorm_dNormalTraction( real64 const normalTraction ) const;
+  virtual real64 dLimitTangentialTractionNormDNormalTraction( real64 const normalTraction ) const;
 
   /// accessor for penalty stiffness
   inline real64 stiffness() const { return m_penaltyStiffness; }
@@ -89,18 +89,18 @@ public:
    * @param[in] aperture the model aperture/gap
    * @return And effective physical aperture that is always > 0
    */
-  inline real64 effectiveAperture( real64 const aperture ) const { return m_apertureFunction->Evaluate( &aperture ); }
+  inline real64 effectiveAperture( real64 const aperture ) const { return m_apertureFunction->evaluate( &aperture ); }
 
   /**
    * @brief evaluation of the derivative of the effective physical aperture
    * @param[in] aperture the model aperture/gap
    * @return
    */
-  inline real64 dEffectiveAperture_dAperture( real64 const aperture ) const
+  inline real64 dEffectiveApertureDAperture( real64 const aperture ) const
   {
     real64 aperPlus = aperture;
     real64 aperMinus = aperture - 1.0e-6;
-    real64 slope = (m_apertureFunction->Evaluate( &aperPlus ) - m_apertureFunction->Evaluate( &aperMinus ) ) / 1.0e-6;
+    real64 slope = (m_apertureFunction->evaluate( &aperPlus ) - m_apertureFunction->evaluate( &aperMinus ) ) / 1.0e-6;
     return slope;
   }
 

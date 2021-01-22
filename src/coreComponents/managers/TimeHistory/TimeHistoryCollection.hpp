@@ -48,7 +48,7 @@ public:
   {   }
 
 
-  void InitializePostSubGroups( Group * const group ) override
+  void initializePostSubGroups( Group * const group ) override
   {
     GEOSX_UNUSED_VAR( group );
     m_bufferCalls.resize( m_collectionCount );
@@ -86,7 +86,7 @@ public:
    * @brief Collects history data.
    * @copydoc EventBase::Execute()
    */
-  virtual void Execute( real64 const time_n,
+  virtual void execute( real64 const time_n,
                         real64 const dt,
                         integer const cycleNumber,
                         integer const eventCounter,
@@ -109,7 +109,7 @@ public:
       updateSetsIndices( domainPart );
       collect( domainPart, time_n, dt, collectionIdx, buffer );
     }
-    int rank = MpiWrapper::Comm_rank();
+    int rank = MpiWrapper::commRank();
     if( rank == 0 && m_timeBufferCall )
     {
       buffer_unit_type * timeBuffer = m_timeBufferCall();

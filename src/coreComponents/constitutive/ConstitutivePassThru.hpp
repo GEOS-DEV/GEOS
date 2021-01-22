@@ -54,7 +54,7 @@ struct ConstitutivePassThru< SolidBase >
 
   template< typename LAMBDA >
   static
-  void Execute( ConstitutiveBase * const constitutiveRelation,
+  void execute( ConstitutiveBase * const constitutiveRelation,
                 LAMBDA && lambda )
   {
     GEOSX_ERROR_IF( constitutiveRelation == nullptr, "ConstitutiveBase* == nullptr" );
@@ -106,7 +106,7 @@ struct ConstitutivePassThru< NullModel >
 {
   template< typename LAMBDA >
   static
-  void Execute( ConstitutiveBase * const constitutiveRelation,
+  void execute( ConstitutiveBase * const constitutiveRelation,
                 LAMBDA && lambda )
   {
     GEOSX_ERROR_IF( constitutiveRelation == nullptr, "ConstitutiveBase* == nullptr" );
@@ -139,7 +139,7 @@ struct ConstitutivePassThru< PoroElasticBase >
 {
   template< typename LAMBDA >
   static
-  void Execute( ConstitutiveBase * const constitutiveRelation,
+  void execute( ConstitutiveBase * const constitutiveRelation,
                 LAMBDA && lambda )
   {
     GEOSX_ERROR_IF( constitutiveRelation == nullptr, "ConstitutiveBase* == nullptr" );
@@ -178,7 +178,7 @@ struct ConstitutivePassThru< DamageBase >
 {
   template< typename LAMBDA >
   static
-  void Execute( ConstitutiveBase * const constitutiveRelation,
+  void execute( ConstitutiveBase * const constitutiveRelation,
                 LAMBDA && lambda )
   {
     GEOSX_ERROR_IF( constitutiveRelation == nullptr, "ConstitutiveBase* == nullptr" );

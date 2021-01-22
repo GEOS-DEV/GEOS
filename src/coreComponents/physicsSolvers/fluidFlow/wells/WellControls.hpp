@@ -121,7 +121,7 @@ public:
    * @brief Set the reference well elem index where the control will be enforced.
    * @param[in] refIndex reference well element index where the control will be enforced
    */
-  void SetReferenceWellElementIndex( localIndex refIndex )
+  void setReferenceWellElementIndex( localIndex refIndex )
   {
     m_refWellElemIndex = refIndex;
   }
@@ -130,7 +130,7 @@ public:
    * @brief Get the reference well element index where the control will be enforced.
    * @return a localIndex value representing the reference well element index where the control will be enforced
    */
-  localIndex const & GetReferenceWellElementIndex() const
+  localIndex const & getReferenceWellElementIndex() const
   {
     return m_refWellElemIndex;
   }
@@ -139,7 +139,7 @@ public:
    * @brief Get the well type (injector or producer).
    * @return a well Type enum
    */
-  Type GetType() const { return m_type; }
+  Type getType() const { return m_type; }
 
 
   /**
@@ -148,40 +148,40 @@ public:
    * @param[in] val value for the control (depending on the control type, can be a maximum bottom hole pressure, a
    * minimum water rate...)
    */
-  void SetControl( Control control, real64 const & val );
+  void setControl( Control control, real64 const & val );
 
 
   /**
    * @brief Get the control type for the well.
    * @return the Control enum enforced at the well
    */
-  Control GetControl() const { return m_currentControl; }
+  Control getControl() const { return m_currentControl; }
 
 
   /**
    * @brief Get the target Bottom Hole Pressure value.
    * @return a value for the target Bottom Hole Pressure
    */
-  const real64 & GetTargetBHP() const { return m_targetBHP; }
+  const real64 & getTargetBhp() const { return m_targetBHP; }
 
 
   /**
    * @brief Get the target rate
    * @return the target rate
    */
-  const real64 & GetTargetRate() const { return m_targetRate; }
+  const real64 & getTargetRate() const { return m_targetRate; }
 
 
   /**
    * @brief Const accessor for the composition of the injection rate
    * @return a global component fraction vector
    */
-  arrayView1d< real64 const > GetInjectionStream() const { return m_injectionStream; }
+  arrayView1d< real64 const > getInjectionStream() const { return m_injectionStream; }
 
   ///@}
 
   /// @cond DO_NOT_DOCUMENT
-  void Debug() const;
+  void debug() const;
   /// @endcond
 
   /**
@@ -224,14 +224,14 @@ protected:
    * @brief This function provides capability to post process input values prior to
    * any other initialization operations.
    */
-  virtual void PostProcessInput() override;
+  virtual void postProcessInput() override;
 
   /**
    * @brief Called by InitializePostInitialConditions() prior to initializing sub-Groups.
    * @param[in] rootGroup A group that is passed in to the initialization functions
    *                  in order to facilitate the initialization.
    */
-  virtual void InitializePostInitialConditions_PreSubGroups( Group * const rootGroup ) override;
+  virtual void initializePostInitialConditionsPreSubGroups( Group * const rootGroup ) override;
 
 private:
 

@@ -55,7 +55,7 @@ public:
    * @note In addition, there is an optional function input that will be called if the
    * the nominal forecast (based on timing) is zero.
    */
-  virtual void EstimateEventTiming( real64 const time,
+  virtual void estimateEventTiming( real64 const time,
                                     real64 const dt,
                                     integer const cycle,
                                     dataRepository::Group * domain ) override;
@@ -81,7 +81,7 @@ public:
    *   - functionStatOption selects the statistic to compare against the eventThreshold (0 = min, 1 = average, 2 = max)
    *   - The event will be executed if f(object, arguments)[stat] >= eventThreshold
    */
-  void CheckOptionalFunctionThreshold( real64 const time,
+  void checkOptionalFunctionThreshold( real64 const time,
                                        real64 const dt,
                                        integer const cycle,
                                        dataRepository::Group * domain );
@@ -91,12 +91,12 @@ public:
    * Grab the next time-step.  If requested, then limit the requested
    * dt to exactly match the time frequency
    */
-  virtual real64 GetEventTypeDtRequest( real64 const time ) override;
+  virtual real64 getEventTypeDtRequest( real64 const time ) override;
 
   /**
    * @copydoc ExecutableGroup::Cleanup()
    */
-  virtual void Cleanup( real64 const time_n,
+  virtual void cleanup( real64 const time_n,
                         integer const cycleNumber,
                         integer const eventCounter,
                         real64 const eventProgress,

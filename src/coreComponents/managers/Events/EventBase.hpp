@@ -49,7 +49,7 @@ public:
    * @brief Catalog name interface.
    * @return This type's catalog name.
    **/
-  static string CatalogName() { return "EventBase"; }
+  static string catalogName() { return "EventBase"; }
 
   /**
    * @brief If the event forecast is equal to 1, then signal the targets to prepare for execution
@@ -59,7 +59,7 @@ public:
    * @param cycle The current cycle.
    * @param domain The DomainPartition the event is occuring on up-casted to a Group.
    */
-  virtual void SignalToPrepareForExecution( real64 const time,
+  virtual void signalToPrepareForExecution( real64 const time,
                                             real64 const dt,
                                             integer const cycle,
                                             dataRepository::Group * domain ) override;
@@ -67,7 +67,7 @@ public:
    * @brief If the event forecast is equal to 0, then call the step function on its target and/or children.
    * @copydoc ExecutableGroup::Execute()
    */
-  virtual void Execute( real64 const time_n,
+  virtual void execute( real64 const time_n,
                         real64 const dt,
                         integer const cycleNumber,
                         integer const eventCounter,
@@ -81,7 +81,7 @@ public:
    * @param cycle The current simulation cycle.
    * @param domain The DomainPartition up-casted to a Group.
    */
-  void Step( real64 const time,
+  void step( real64 const time,
              real64 const dt,
              integer const cycle,
              dataRepository::Group * domain );
@@ -100,12 +100,12 @@ public:
    * </Events>
    * @endcode
    */
-  virtual Group * CreateChild( string const & childKey, string const & childName ) override;
+  virtual Group * createChild( string const & childKey, string const & childName ) override;
 
   /**
    * @brief Expand any catalogs in the data structure.
    */
-  virtual void ExpandObjectCatalogs() override;
+  virtual void expandObjectCatalogs() override;
 
   /**
    * @brief Process input data to retrieve targeted objects internally.
@@ -114,7 +114,7 @@ public:
    * a pointer to the target using a unix-style path as an input (both absolute and relative paths work).
    * This involves a lot of string parsing, so we do it once during initialization.
    */
-  void GetTargetReferences();
+  void getTargetReferences();
 
   /**
    * @brief Events are triggered based upon their forecast values, which are defined
@@ -126,7 +126,7 @@ public:
    * @param cycle the current simulation cycle.
    * @param domain The problem domain up-cast to a Group.
    */
-  virtual void CheckEvents( real64 const time,
+  virtual void checkEvents( real64 const time,
                             real64 const dt,
                             integer const cycle,
                             dataRepository::Group * domain );
@@ -138,7 +138,7 @@ public:
    * @param cycle the current simulation cycle.
    * @param domain The problem domain up-cast to a Group.
    */
-  virtual void EstimateEventTiming( real64 const time,
+  virtual void estimateEventTiming( real64 const time,
                                     real64 const dt,
                                     integer const cycle,
                                     dataRepository::Group * domain ) = 0;
@@ -148,14 +148,14 @@ public:
    * @param time The current simulation time.
    * @return The requested time step.
    */
-  virtual real64 GetTimestepRequest( real64 const time ) override;
+  virtual real64 getTimestepRequest( real64 const time ) override;
 
   /**
    * @brief Get event-specifit dt requests.
    * @param time The current simulation time.
    * @return The requested time step.
    */
-  virtual real64 GetEventTypeDtRequest( real64 const time )
+  virtual real64 getEventTypeDtRequest( real64 const time )
   {
     GEOSX_UNUSED_VAR( time );
     return std::numeric_limits< real64 >::max();
@@ -166,7 +166,7 @@ public:
    * @brief Count the number of events/sub-events
    * @param[out] eventCounters The event count for each event/sub-event.
    */
-  void GetExecutionOrder( array1d< integer > & eventCounters );
+  void getExecutionOrder( array1d< integer > & eventCounters );
 
   /**
    * @brief Update the event progress for the event/sub-events.
@@ -176,7 +176,7 @@ public:
    *       will be time + dt.
    * @param eventCounters The event count for each event/sub-event.
    */
-  void SetProgressIndicator( array1d< integer > & eventCounters );
+  void setProgressIndicator( array1d< integer > & eventCounters );
 
   /// @cond DO_NOT_DOCUMENT
   struct viewKeyStruct
@@ -217,19 +217,19 @@ public:
    * @brief Get the sum of the exit flags for the event/sub-events from the last execution.
    * @return The sum of the exit flags for the event/sub-events.
    */
-  integer GetExitFlag();
+  integer getExitFlag();
 
   /**
    * @brief Set this event objects exit flag.
    * @param flag The exit flag value.
    */
-  void SetExitFlag( integer flag ){ m_exitFlag = flag; }
+  void setExitFlag( integer flag ){ m_exitFlag = flag; }
 
   /**
    * @brief Get the current time increment request for this event.
    * @return The current time increment request.
    */
-  real64  GetCurrentEventDtRequest() const { return m_currentEventDtRequest; }
+  real64  getCurrentEventDtRequest() const { return m_currentEventDtRequest; }
 
   /**
    * @brief Get the forecast of the current event.
@@ -305,7 +305,7 @@ protected:
    * @brief Get the target of this event.
    * @return The target of this event.
    */
-  ExecutableGroup * GetEventTarget() const
+  ExecutableGroup * getEventTarget() const
   { return m_target; }
 
   /// The last time the event occurred.

@@ -47,7 +47,7 @@ public:
    * @brief Static Factory Catalog Functions.
    * @return the catalog name
    */
-  static std::string CatalogName() { return "HybridMimeticDiscretization"; }
+  static std::string catalogName() { return "HybridMimeticDiscretization"; }
 
   HybridMimeticDiscretization() = delete;
 
@@ -75,9 +75,9 @@ public:
 
 protected:
 
-  virtual void RegisterDataOnMesh( Group * const meshBodies ) override;
+  virtual void registerDataOnMesh( Group * const meshBodies ) override;
 
-  virtual void InitializePostInitialConditions_PreSubGroups( Group * const rootGroup ) override;
+  virtual void initializePostInitialConditionsPreSubGroups( Group * const rootGroup ) override;
 
 private:
 

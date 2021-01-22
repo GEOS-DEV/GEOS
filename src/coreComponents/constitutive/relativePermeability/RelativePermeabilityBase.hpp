@@ -86,12 +86,12 @@ protected:
 private:
 
   GEOSX_HOST_DEVICE
-  virtual void Compute( arraySlice1d< real64 const > const & phaseVolFraction,
+  virtual void compute( arraySlice1d< real64 const > const & phaseVolFraction,
                         arraySlice1d< real64 > const & phaseRelPerm,
                         arraySlice2d< real64 > const & dPhaseRelPerm_dPhaseVolFrac ) const = 0;
 
   GEOSX_HOST_DEVICE
-  virtual void Update( localIndex const k,
+  virtual void update( localIndex const k,
                        localIndex const q,
                        arraySlice1d< real64 const > const & phaseVolFraction ) const = 0;
 };
@@ -134,7 +134,7 @@ public:
   arrayView1d< string const > phaseNames() const { return m_phaseNames; }
 
   arrayView3d< real64 const > phaseRelPerm() const { return m_phaseRelPerm; }
-  arrayView4d< real64 const > dPhaseRelPerm_dPhaseVolFraction() const { return m_dPhaseRelPerm_dPhaseVolFrac; }
+  arrayView4d< real64 const > dPhaseRelPermDPhaseVolFraction() const { return m_dPhaseRelPerm_dPhaseVolFrac; }
 
   struct viewKeyStruct : ConstitutiveBase::viewKeyStruct
   {
@@ -148,14 +148,14 @@ public:
 
 protected:
 
-  virtual void PostProcessInput() override;
+  virtual void postProcessInput() override;
 
   /**
    * @brief Function called internally to resize member arrays
    * @param size primary dimension (e.g. number of cells)
    * @param numPts secondary dimension (e.g. number of gauss points per cell)
    */
-  void ResizeFields( localIndex const size, localIndex const numPts );
+  void resizeFields( localIndex const size, localIndex const numPts );
 
   // phase names read from input
   string_array m_phaseNames;

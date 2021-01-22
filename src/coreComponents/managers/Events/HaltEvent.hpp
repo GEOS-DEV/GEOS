@@ -56,7 +56,7 @@ public:
    * if the event is triggered it will set a flag, which will
    * instruct the code to exit.  This is useful for managing walltime
    */
-  virtual void EstimateEventTiming( real64 const time,
+  virtual void estimateEventTiming( real64 const time,
                                     real64 const dt,
                                     integer const cycle,
                                     dataRepository::Group * domain ) override;

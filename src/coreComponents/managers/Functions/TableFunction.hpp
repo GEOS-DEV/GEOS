@@ -61,12 +61,12 @@ public:
    * @param[in] delimiter The delimiter used for file entries.
    */
   template< typename T >
-  void parse_file( array1d< T > & target, string const & filename, char delimiter );
+  void parseFile( array1d< T > & target, string const & filename, char delimiter );
 
   /**
    * @brief Initialize the table function
    */
-  virtual void InitializeFunction() override;
+  virtual void initializeFunction() override;
 
   /**
    * @brief Build the maps used to evaluate the table function
@@ -80,12 +80,12 @@ public:
    * @param set the subset of nodes to apply the function to
    * @param result an array to hold the results of the function
    */
-  virtual void Evaluate( dataRepository::Group const * const group,
+  virtual void evaluate( dataRepository::Group const * const group,
                          real64 const time,
                          SortedArrayView< localIndex const > const & set,
                          real64_array & result ) const override final
   {
-    FunctionBase::EvaluateT< TableFunction >( group, time, set, result );
+    FunctionBase::evaluateT< TableFunction >( group, time, set, result );
   }
 
   /**
@@ -93,7 +93,7 @@ public:
    * @param input a scalar input
    * @return the function result
    */
-  virtual real64 Evaluate( real64 const * const input ) const override final;
+  virtual real64 evaluate( real64 const * const input ) const override final;
 
   /**
    * @brief Get the table axes definitions

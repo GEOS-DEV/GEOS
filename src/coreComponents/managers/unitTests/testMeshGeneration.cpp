@@ -66,12 +66,12 @@ protected:
     m_edgeManager = problemManager->getDomainPartition()->getMeshBody( 0 )->getMeshLevel( 0 )->getEdgeManager();
 
     ElementRegionManager * const elemManager = problemManager->getDomainPartition()->getMeshBody( 0 )->getMeshLevel( 0 )->getElemManager();
-    GEOSX_ERROR_IF_NE_MSG( elemManager->GetRegions().size(), 1, "Only one region should exist." );
+    GEOSX_ERROR_IF_NE_MSG( elemManager->getRegions().size(), 1, "Only one region should exist." );
 
-    ElementRegionBase * const elemRegion = elemManager->GetRegion( 0 );
-    GEOSX_ERROR_IF_NE_MSG( elemRegion->GetSubRegions().size(), 1, "Only one subregion should exist." );
+    ElementRegionBase * const elemRegion = elemManager->getRegion( 0 );
+    GEOSX_ERROR_IF_NE_MSG( elemRegion->getSubRegions().size(), 1, "Only one subregion should exist." );
 
-    m_subRegion = elemRegion->GetSubRegion< CellElementSubRegion >( 0 );
+    m_subRegion = elemRegion->getSubRegion< CellElementSubRegion >( 0 );
   }
 
   NodeManager * m_nodeManager;
@@ -115,20 +115,20 @@ protected:
     }
 
     xmlWrapper::xmlNode xmlProblemNode = xmlDocument.child( "Problem" );
-    problemManager->InitializePythonInterpreter();
-    problemManager->ProcessInputFileRecursive( xmlProblemNode );
+    problemManager->initializePythonInterpreter();
+    problemManager->processInputFileRecursive( xmlProblemNode );
 
     // Open mesh levels
     DomainPartition * domain  = problemManager->getDomainPartition();
-    MeshManager * meshManager = problemManager->GetGroup< MeshManager >( problemManager->groupKeys.meshManager );
-    meshManager->GenerateMeshLevels( domain );
+    MeshManager * meshManager = problemManager->getGroup< MeshManager >( problemManager->groupKeys.meshManager );
+    meshManager->generateMeshLevels( domain );
 
     ElementRegionManager * elementManager = domain->getMeshBody( 0 )->getMeshLevel( 0 )->getElemManager();
     xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child( elementManager->getName().c_str() );
-    elementManager->ProcessInputFileRecursive( topLevelNode );
-    elementManager->PostProcessInputRecursive();
+    elementManager->processInputFileRecursive( topLevelNode );
+    elementManager->postProcessInputRecursive();
 
-    problemManager->ProblemSetup();
+    problemManager->problemSetup();
   }
 
   /**
@@ -320,7 +320,7 @@ TEST_F( MeshGenerationTest, faceNodeMaps )
       {
         for( localIndex f = 0; f < 6; ++f )
         {
-          m_subRegion->GetFaceNodes( elemID, f, faceNodesFromElem );
+          m_subRegion->getFaceNodes( elemID, f, faceNodesFromElem );
           ASSERT_EQ( faceNodesFromElem.size(), 4 );
 
           localIndex const faceID = elementToFaceMap( elemID, f );

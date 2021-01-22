@@ -29,7 +29,7 @@ using namespace dataRepository;
 CellBlockManager::CellBlockManager( string const & name, Group * const parent ):
   ObjectManagerBase( name, parent )
 {
-  this->RegisterGroup< Group >( keys::cellBlocks );
+  this->registerGroup< Group >( keys::cellBlocks );
 }
 
 CellBlockManager::~CellBlockManager()
@@ -45,7 +45,7 @@ void CellBlockManager::resize( integer_array const & numElements,
 //  Group * elementRegions = this->GetGroup(keys::cellBlocks);
   for( localIndex reg=0; reg<numRegions; ++reg )
   {
-    CellBlock * elemRegion = this->GetRegion( regionNames[reg] );
+    CellBlock * elemRegion = this->getRegion( regionNames[reg] );
     elemRegion->resize( numElements[reg] );
   }
 }
@@ -59,7 +59,7 @@ void CellBlockManager::resize( integer_array const & numElements,
 ////  elemRegion->resize(numElements);
 //}
 
-Group * CellBlockManager::CreateChild( string const & GEOSX_UNUSED_PARAM( childKey ), string const & GEOSX_UNUSED_PARAM( childName ) )
+Group * CellBlockManager::createChild( string const & GEOSX_UNUSED_PARAM( childKey ), string const & GEOSX_UNUSED_PARAM( childName ) )
 {
   return nullptr;
 }

@@ -63,10 +63,10 @@ public:
    * @param childName the name of the new FieldSpecificationBase object in the repository
    * @return the group child
    */
-  virtual Group * CreateChild( string const & childKey, string const & childName ) override;
+  virtual Group * createChild( string const & childKey, string const & childName ) override;
 
   /// This function is used to expand any catalogs in the data structure
-  virtual void ExpandObjectCatalogs() override;
+  virtual void expandObjectCatalogs() override;
 
   /**
    * @brief Function to apply a value directly to a field variable.
@@ -94,14 +94,14 @@ public:
    *
    */
   template< typename POLICY=parallelHostPolicy >
-  void ApplyFieldValue( real64 const time,
+  void applyFieldValue( real64 const time,
                         dataRepository::Group * domain,
                         string const & fieldPath,
                         string const & fieldName ) const
   {
     GEOSX_MARK_FUNCTION;
 
-    ApplyFieldValue< POLICY >( time, domain, fieldPath, fieldName,
+    applyFieldValue< POLICY >( time, domain, fieldPath, fieldName,
                                [&]( FieldSpecificationBase const * const,
                                     SortedArrayView< localIndex const > const & ){} );
   }
@@ -136,7 +136,7 @@ public:
    * setting the target field.
    */
   template< typename POLICY=parallelHostPolicy, typename LAMBDA=void >
-  void ApplyFieldValue( real64 const time,
+  void applyFieldValue( real64 const time,
                         dataRepository::Group * domain,
                         string const & fieldPath,
                         string const & fieldName,
@@ -177,7 +177,7 @@ public:
    * setting the target field.
    */
   template< typename POLICY=parallelHostPolicy, typename PRELAMBDA=void, typename POSTLAMBDA=void >
-  void ApplyFieldValue( real64 const time,
+  void applyFieldValue( real64 const time,
                         dataRepository::Group * domain,
                         string const & fieldPath,
                         string const & fieldName,
@@ -189,7 +189,7 @@ public:
    * @brief function to apply initial conditions
    * @param domain the DomainParition object
    */
-  void ApplyInitialConditions( dataRepository::Group * domain ) const;
+  void applyInitialConditions( dataRepository::Group * domain ) const;
 
 
   /**
@@ -216,7 +216,7 @@ public:
    * FieldSpecificationManager and decides on whether or not to call the user defined lambda.
    */
   template< typename LAMBDA >
-  void Apply( real64 const time,
+  void apply( real64 const time,
               dataRepository::Group * domain,
               string const & fieldPath,
               string const & fieldName,
@@ -224,22 +224,22 @@ public:
   {
     GEOSX_MARK_FUNCTION;
     // loop over all FieldSpecificationBase objects
-    for( auto & subGroup : this->GetSubGroups() )
+    for( auto & subGroup : this->getSubGroups() )
     {
-      FieldSpecificationBase const * fs = subGroup.second->group_cast< FieldSpecificationBase const * >();
+      FieldSpecificationBase const * fs = subGroup.second->groupCast< FieldSpecificationBase const * >();
       int const isInitialCondition = fs->initialCondition();
 
       if( ( isInitialCondition && fieldPath=="" ) ||
-          ( !isInitialCondition && fs->GetObjectPath().find( fieldPath ) != string::npos ) )
+          ( !isInitialCondition && fs->getObjectPath().find( fieldPath ) != string::npos ) )
       {
-        string_array const targetPath = stringutilities::Tokenize( fs->GetObjectPath(), "/" );
+        string_array const targetPath = stringutilities::Tokenize( fs->getObjectPath(), "/" );
         localIndex const targetPathLength = LvArray::integerConversion< localIndex >( targetPath.size());
-        string const targetName = fs->GetFieldName();
+        string const targetName = fs->getFieldName();
 
         if( ( isInitialCondition && fieldName=="" ) ||
-            ( !isInitialCondition && time >= fs->GetStartTime() && time < fs->GetEndTime() && targetName==fieldName ) )
+            ( !isInitialCondition && time >= fs->getStartTime() && time < fs->getEndTime() && targetName==fieldName ) )
         {
-          MeshLevel * const meshLevel = domain->group_cast< DomainPartition * >()->
+          MeshLevel * const meshLevel = domain->groupCast< DomainPartition * >()->
                                           getMeshBody( 0 )->getMeshLevel( 0 );
 
           dataRepository::Group * targetGroup = meshLevel;
@@ -247,13 +247,13 @@ public:
           string processedPath;
           for( localIndex pathLevel=0; pathLevel<targetPathLength; ++pathLevel )
           {
-            dataRepository::Group * const elemRegionSubGroup = targetGroup->GetGroup( ElementRegionManager::groupKeyStruct::elementRegionsGroup );
+            dataRepository::Group * const elemRegionSubGroup = targetGroup->getGroup( ElementRegionManager::groupKeyStruct::elementRegionsGroup );
             if( elemRegionSubGroup!=nullptr )
             {
               targetGroup = elemRegionSubGroup;
             }
 
-            dataRepository::Group * const elemSubRegionSubGroup = targetGroup->GetGroup( ElementRegionBase::viewKeyStruct::elementSubRegions );
+            dataRepository::Group * const elemSubRegionSubGroup = targetGroup->getGroup( ElementRegionBase::viewKeyStruct::elementSubRegions );
             if( elemSubRegionSubGroup!=nullptr )
             {
               targetGroup = elemSubRegionSubGroup;
@@ -265,13 +265,13 @@ public:
               continue;
             }
 
-            targetGroup = targetGroup->GetGroup( targetPath[pathLevel] );
+            targetGroup = targetGroup->getGroup( targetPath[pathLevel] );
             processedPath += "/" + targetPath[pathLevel];
 
             GEOSX_ERROR_IF( targetGroup == nullptr,
                             "ApplyBoundaryCondition(): Last entry in objectPath ("<<processedPath<<") is not found" );
           }
-          ApplyOnTargetRecursive( targetGroup, fs, targetName, lambda );
+          applyOnTargetRecursive( targetGroup, fs, targetName, lambda );
         }
       }
     }
@@ -287,7 +287,7 @@ private:
   virtual ~FieldSpecificationManager() override;
 
   template< typename LAMBDA >
-  void ApplyOnTargetRecursive( Group * target,
+  void applyOnTargetRecursive( Group * target,
                                FieldSpecificationBase const * fs,
                                string const & targetName,
                                LAMBDA && lambda
@@ -301,8 +301,8 @@ private:
         && target->getName() != ObjectManagerBase::groupKeyStruct::setsString
         && target->getName() != ObjectManagerBase::groupKeyStruct::neighborDataString )
     {
-      dataRepository::Group const * setGroup = target->GetGroup( ObjectManagerBase::groupKeyStruct::setsString );
-      string_array setNames = fs->GetSetNames();
+      dataRepository::Group const * setGroup = target->getGroup( ObjectManagerBase::groupKeyStruct::setsString );
+      string_array setNames = fs->getSetNames();
       for( auto & setName : setNames )
       {
         dataRepository::Wrapper< SortedArray< localIndex > > const * const setWrapper = setGroup->getWrapper< SortedArray< localIndex > >( setName );
@@ -317,7 +317,7 @@ private:
     {
       target->forSubGroups( [&]( Group & subTarget )
       {
-        ApplyOnTargetRecursive( &subTarget, fs, targetName, lambda );
+        applyOnTargetRecursive( &subTarget, fs, targetName, lambda );
       } );
     }
   }
@@ -326,7 +326,7 @@ private:
 template< typename POLICY, typename LAMBDA >
 void
 FieldSpecificationManager::
-  ApplyFieldValue( real64 const time,
+  applyFieldValue( real64 const time,
                    dataRepository::Group * domain,
                    string const & fieldPath,
                    string const & fieldName,
@@ -334,14 +334,14 @@ FieldSpecificationManager::
 {
   GEOSX_MARK_FUNCTION;
 
-  Apply( time, domain, fieldPath, fieldName,
+  apply( time, domain, fieldPath, fieldName,
          [&]( FieldSpecificationBase const * const fs,
               string const &,
               SortedArrayView< localIndex const > const & targetSet,
               Group * const targetGroup,
               string const & targetField )
   {
-    fs->ApplyFieldValue< FieldSpecificationEqual, POLICY >( targetSet, time, targetGroup, targetField );
+    fs->applyFieldValue< FieldSpecificationEqual, POLICY >( targetSet, time, targetGroup, targetField );
     lambda( fs, targetSet );
   } );
 }
@@ -349,7 +349,7 @@ FieldSpecificationManager::
 template< typename POLICY, typename PRELAMBDA, typename POSTLAMBDA >
 void
 FieldSpecificationManager::
-  ApplyFieldValue( real64 const time,
+  applyFieldValue( real64 const time,
                    dataRepository::Group * domain,
                    string const & fieldPath,
                    string const & fieldName,
@@ -358,7 +358,7 @@ FieldSpecificationManager::
 {
   GEOSX_MARK_FUNCTION;
 
-  Apply( time, domain, fieldPath, fieldName,
+  apply( time, domain, fieldPath, fieldName,
          [&]( FieldSpecificationBase const * const fs,
               string const &,
               SortedArrayView< localIndex const > const & targetSet,
@@ -366,7 +366,7 @@ FieldSpecificationManager::
               string const & targetField )
   {
     preLambda( fs, targetSet );
-    fs->ApplyFieldValue< FieldSpecificationEqual, POLICY >( targetSet, time, targetGroup, targetField );
+    fs->applyFieldValue< FieldSpecificationEqual, POLICY >( targetSet, time, targetGroup, targetField );
     postLambda( fs, targetSet );
   } );
 }

@@ -77,11 +77,11 @@ private:
   LinearSolverParameters m_parameters;
   LinearSolverResult m_result;
 
-  void solve_direct( EpetraMatrix & mat,
+  void solveDirect( EpetraMatrix & mat,
                      EpetraVector & sol,
                      EpetraVector & rhs );
 
-  void solve_krylov( EpetraMatrix & mat,
+  void solveKrylov( EpetraMatrix & mat,
                      EpetraVector & sol,
                      EpetraVector & rhs );
 

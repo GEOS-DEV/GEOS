@@ -55,7 +55,7 @@ public:
   template< localIndex NF >
   GEOSX_HOST_DEVICE
   static void
-  Compute( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition,
+  compute( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition,
            arrayView1d< real64 const > const & transMultiplier,
            ArrayOfArraysView< localIndex const > const & faceToNodes,
            arraySlice1d< localIndex const > const & elemToFaces,
@@ -70,7 +70,7 @@ public:
 template< localIndex NF >
 GEOSX_HOST_DEVICE
 void
-BdVLMInnerProduct::Compute( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition,
+BdVLMInnerProduct::compute( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition,
                             arrayView1d< real64 const > const & transMultiplier,
                             ArrayOfArraysView< localIndex const > const & faceToNodes,
                             arraySlice1d< localIndex const > const & elemToFaces,
@@ -97,7 +97,7 @@ BdVLMInnerProduct::Compute( arrayView2d< real64 const, nodes::REFERENCE_POSITION
   real64 tpTransInv[ NF ] = { 0.0 };
 
   // 0) assemble full coefficient tensor from principal axis/components
-  MimeticInnerProductHelpers::MakeFullTensor( elemPerm, permMat );
+  MimeticInnerProductHelpers::makeFullTensor( elemPerm, permMat );
 
   // 1) fill the matrices cellToFaceMat and normalsMat row by row
   for( localIndex ifaceLoc = 0; ifaceLoc < NF; ++ifaceLoc )
@@ -127,7 +127,7 @@ BdVLMInnerProduct::Compute( arrayView2d< real64 const, nodes::REFERENCE_POSITION
     // in the implementation of the transmissibility multiplier (see below)
     // TODO: see what it would take to bring the (harmonically averaged) two-point trans here
     real64 diagEntry = 0.0;
-    MimeticInnerProductHelpers::ComputeInvTPFATransWithMultiplier< NF >( elemPerm,
+    MimeticInnerProductHelpers::computeInvTpfaTransWithMultiplier< NF >( elemPerm,
                                                                          faceNormal,
                                                                          faceAreaMat[ifaceLoc][ifaceLoc],
                                                                          transMultiplier[elemToFaces[ifaceLoc]],
@@ -200,7 +200,7 @@ BdVLMInnerProduct::Compute( arrayView2d< real64 const, nodes::REFERENCE_POSITION
 
   if( !isZero( LvArray::tensorOps::l2NormSquared< NF >( tpTransInv ) ) )
   {
-    MimeticInnerProductHelpers::ComputeTransMatrixWithMultipliers< NF >( tpTransInv,
+    MimeticInnerProductHelpers::computeTransMatrixWithMultipliers< NF >( tpTransInv,
                                                                          transMatrix );
   }
 

@@ -97,7 +97,7 @@ public:
   ///@{
 
   /// not implemented
-  virtual void GenerateElementRegions( DomainPartition & ) override {}
+  virtual void generateElementRegions( DomainPartition & ) override {}
 
   /**
    * @brief Creates a new sub-Group using the ObjectCatalog functionality.
@@ -107,29 +107,29 @@ public:
    *                      sub-Groups.
    * @return A pointer to the new Group created by this function.
    */
-  virtual Group * CreateChild( string const & childKey,
+  virtual Group * createChild( string const & childKey,
                                string const & childName ) override;
 
   /**
    * @brief Expand any catalogs in the data structure.
    */
-  virtual void ExpandObjectCatalogs() override;
+  virtual void expandObjectCatalogs() override;
 
   /**
    * @brief Main function of the class that generates the well geometry
    * @param[in] domain the domain object
    */
-  virtual void GenerateMesh( DomainPartition * const domain ) override;
+  virtual void generateMesh( DomainPartition * const domain ) override;
 
   /// not implemented
-  virtual void GetElemToNodesRelationInBox ( std::string const &,
+  virtual void getElemToNodesRelationInBox ( std::string const &,
                                              int const *,
                                              int const &,
                                              int *,
                                              int const ) override {}
 
   /// not implemented
-  virtual void RemapMesh ( dataRepository::Group * const ) override {}
+  virtual void remapMesh ( dataRepository::Group * const ) override {}
 
   ///@}
 
@@ -144,43 +144,43 @@ public:
    * @brief Get the global number of well elements.
    * @return the global number of elements
    */
-  globalIndex GetNumElements() const { return m_numElems; }
+  globalIndex getNumElements() const { return m_numElems; }
 
   /**
    * @brief Get the physical location of the centers of well elements.
    * @return list of center locations of the well elements
    */
-  arrayView2d< real64 const > GetElemCoords() const { return m_elemCenterCoords; }
+  arrayView2d< real64 const > getElemCoords() const { return m_elemCenterCoords; }
 
   /**
    * @brief Get the global indices mapping an element to the next.
    * @return list providing the global index of the next element for each element
    */
-  arrayView1d< globalIndex const > GetNextElemIndex() const { return m_nextElemId; }
+  arrayView1d< globalIndex const > getNextElemIndex() const { return m_nextElemId; }
 
   /**
    * @brief Get the global indices mapping an element to the previous ones.
    * @return list providing the global indices of the previous elements for each element
    */
-  arrayView1d< arrayView1d< globalIndex const > const > GetPrevElemIndices() const { return m_prevElemId.toNestedViewConst(); }
+  arrayView1d< arrayView1d< globalIndex const > const > getPrevElemIndices() const { return m_prevElemId.toNestedViewConst(); }
 
   /**
    * @brief Get the global indices of the well nodes nodes connected to each element.
    * @return list providing the global index of the well nodes for each well element
    */
-  arrayView2d< globalIndex const > GetElemToNodesMap() const { return m_elemToNodesMap; }
+  arrayView2d< globalIndex const > getElemToNodesMap() const { return m_elemToNodesMap; }
 
   /**
    * @brief Get the volume of the well elements.
    * @return list of volumes of the well elements
    */
-  arrayView1d< real64 const > GetElemVolume() const { return m_elemVolume; }
+  arrayView1d< real64 const > getElemVolume() const { return m_elemVolume; }
 
   /**
    * @brief Get the radius in the well.
    * @return the radius in the well
    */
-  real64 GetElementRadius() const { return m_radius; }
+  real64 getElementRadius() const { return m_radius; }
 
   // getters for node data
 
@@ -188,13 +188,13 @@ public:
    * @brief Get the global number of well nodes.
    * @return the global number of nodes
    */
-  globalIndex GetNumNodes() const { return m_numNodes; }
+  globalIndex getNumNodes() const { return m_numNodes; }
 
   /**
    * @brief Get the physical location of the centers of well elements.
    * @return list of center locations of the well elements
    */
-  arrayView2d< real64 const > GetNodeCoords() const { return m_nodeCoords; }
+  arrayView2d< real64 const > getNodeCoords() const { return m_nodeCoords; }
 
 
 
@@ -204,25 +204,25 @@ public:
    * @brief Get the global number of perforations on this well.
    * @return the global number of elements
    */
-  globalIndex GetNumPerforations() const { return m_numPerforations; }
+  globalIndex getNumPerforations() const { return m_numPerforations; }
 
   /**
    * @brief Get the locations of the perforations.
    * @return list of locations of all the perforations on the well
    */
-  arrayView2d< real64 const > GetPerfCoords() const { return m_perfCoords; }
+  arrayView2d< real64 const > getPerfCoords() const { return m_perfCoords; }
 
   /**
    * @brief Get the well transmissibility at the perforations.
    * @return list of well transmissibility at all the perforations on the well
    */
-  arrayView1d< real64 const > GetPerfTransmissibility() const { return m_perfTransmissibility; }
+  arrayView1d< real64 const > getPerfTransmissibility() const { return m_perfTransmissibility; }
 
   /**
    * @brief Get the global indices of the well elements connected to each perforation.
    * @return list providing the global index of the connected well element for each perforation
    */
-  arrayView1d< globalIndex const > GetPerfElemIndex() const { return m_perfElemId; }
+  arrayView1d< globalIndex const > getPerfElemIndex() const { return m_perfElemId; }
 
   ///@}
 
@@ -232,7 +232,7 @@ protected:
    * @brief This function provides capability to post process input values prior to
    * any other initialization operations.
    */
-  void PostProcessInput() override final;
+  void postProcessInput() override final;
 
 private:
 
@@ -244,40 +244,40 @@ private:
   /**
    * @brief Map each polyline node to the polyline segment(s) it is connected to.
    */
-  void ConstructPolylineNodeToSegmentMap();
+  void constructPolylineNodeToSegmentMap();
 
   /**
    * @brief Find the head node of the well (i.e., top node of the polyline).
    */
-  void FindPolylineHeadNodeIndex();
+  void findPolylineHeadNodeIndex();
 
   /**
    * @brief Discretize the polyline by placing well elements.
    */
-  void DiscretizePolyline();
+  void discretizePolyline();
 
   /**
    * @brief Map each perforation to a well element.
    */
-  void ConnectPerforationsToWellElements();
+  void connectPerforationsToWellElements();
 
   /**
    * @brief Merge perforations on the elements with multiple perforations.
    */
-  void MergePerforations();
+  void mergePerforations();
 
   /**
    * @brief At a given node, find the next segment going in the direction of the bottom of the well.
    * @param[in] topSegId index of the top segment
    * @param[in] currentNodeId index of the current node
    */
-  globalIndex GetNextSegmentIndex( globalIndex topSegId,
+  globalIndex getNextSegmentIndex( globalIndex topSegId,
                                    globalIndex currentNodeId ) const;
 
   ///@}
 
   /// @cond DO_NOT_DOCUMENT
-  void DebugWellGeometry() const;
+  void debugWellGeometry() const;
   /// @endcond
 
   // XML Input

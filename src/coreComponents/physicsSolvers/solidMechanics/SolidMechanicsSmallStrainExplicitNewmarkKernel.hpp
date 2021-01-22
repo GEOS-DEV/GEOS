@@ -204,7 +204,7 @@ public:
 
     real64 stressLocal[ 6 ] = {0};
 #if UPDATE_STRESS == 2
-    m_constitutiveUpdate.SmallStrain( k, q, strain );
+    m_constitutiveUpdate.smallStrain( k, q, strain );
 #else
     m_constitutiveUpdate.SmallStrainNoState( k, strain, stressLocal );
 #endif
@@ -220,7 +220,7 @@ public:
 #endif
     }
 
-    FE_TYPE::plus_gradNajAij( dNdX, stressLocal, stack.fLocal );
+    FE_TYPE::plusGradNajAij( dNdX, stressLocal, stack.fLocal );
 
 #else
     real64 invJ[3][3];

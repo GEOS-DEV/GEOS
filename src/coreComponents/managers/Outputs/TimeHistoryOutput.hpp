@@ -59,13 +59,13 @@ public:
    * @param group The problem manager cast to a group.
    * @note There are operations in this function that are collective on the GEOSX comm.
    */
-  virtual void InitializePostSubGroups( Group * const group ) override;
+  virtual void initializePostSubGroups( Group * const group ) override;
 
   /**
    * @brief Writes out a time history file.
    * @copydoc EventBase::Execute()
    */
-  virtual void Execute( real64 const time_n,
+  virtual void execute( real64 const time_n,
                         real64 const dt,
                         integer const cycleNumber,
                         integer const eventCounter,
@@ -75,7 +75,7 @@ public:
    * @brief Writes out a time history file at the end of the simulation.
    * @copydoc ExecutableGroup::Cleanup()
    */
-  virtual void Cleanup( real64 const time_n,
+  virtual void cleanup( real64 const time_n,
                         integer const cycleNumber,
                         integer const eventCounter,
                         real64 const eventProgress,

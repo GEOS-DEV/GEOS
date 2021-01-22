@@ -51,9 +51,9 @@ HybridMimeticDiscretization::HybridMimeticDiscretization( std::string const & na
     setDescription( "Type of inner product used in the hybrid FVM solver" );
 }
 
-void HybridMimeticDiscretization::InitializePostInitialConditions_PreSubGroups( Group * const rootGroup )
+void HybridMimeticDiscretization::initializePostInitialConditionsPreSubGroups( Group * const rootGroup )
 {
-  Group::InitializePostInitialConditions_PreSubGroups( rootGroup );
+  Group::initializePostInitialConditionsPreSubGroups( rootGroup );
 
   std::unique_ptr< MimeticInnerProductBase > newMimeticIP = factory( m_innerProductType );
 
@@ -61,7 +61,7 @@ void HybridMimeticDiscretization::InitializePostInitialConditions_PreSubGroups( 
     setRestartFlags( dataRepository::RestartFlags::NO_WRITE );
 }
 
-void HybridMimeticDiscretization::RegisterDataOnMesh( Group * const meshBodies )
+void HybridMimeticDiscretization::registerDataOnMesh( Group * const meshBodies )
 {
   meshBodies->forSubGroups< MeshBody >( [&]( MeshBody & meshBody )
   {

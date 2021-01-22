@@ -61,7 +61,7 @@ public:
    * @brief Writes out a Blueprint plot file.
    * @copydetails EventBase::Execute()
    */
-  virtual void Execute( real64 const time_n,
+  virtual void execute( real64 const time_n,
                         real64 const dt,
                         integer const cycleNumber,
                         integer const eventCounter,
@@ -72,12 +72,12 @@ public:
    * @brief Writes out a Blueprint plot file at the end of the simulation.
    * @copydetails ExecutableGroup::Cleanup()
    */
-  virtual void Cleanup( real64 const time_n,
+  virtual void cleanup( real64 const time_n,
                         integer const cycleNumber,
                         integer const eventCounter,
                         real64 const eventProgress,
                         dataRepository::Group * domain ) override
-  { Execute( time_n, 0, cycleNumber, eventCounter, eventProgress, domain ); }
+  { execute( time_n, 0, cycleNumber, eventCounter, eventProgress, domain ); }
 
 private:
 

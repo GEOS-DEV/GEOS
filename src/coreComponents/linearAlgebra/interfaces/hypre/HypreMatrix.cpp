@@ -149,8 +149,8 @@ void HypreMatrix::createWithGlobalSize( globalIndex const globalRows,
 
   reset();
 
-  HYPRE_Int const rank  = LvArray::integerConversion< HYPRE_Int >( MpiWrapper::Comm_rank( comm ) );
-  HYPRE_Int const nproc = LvArray::integerConversion< HYPRE_Int >( MpiWrapper::Comm_size( comm ) );
+  HYPRE_Int const rank  = LvArray::integerConversion< HYPRE_Int >( MpiWrapper::commRank( comm ) );
+  HYPRE_Int const nproc = LvArray::integerConversion< HYPRE_Int >( MpiWrapper::commSize( comm ) );
 
   HYPRE_Int const localRowSize = LvArray::integerConversion< HYPRE_Int >( globalRows / nproc );
   HYPRE_Int const rowResidual = LvArray::integerConversion< HYPRE_Int >( globalRows % nproc );
@@ -187,9 +187,9 @@ void HypreMatrix::createWithLocalSize( localIndex const localRows,
 
   reset();
 
-  HYPRE_BigInt const ilower = MpiWrapper::PrefixSum< HYPRE_BigInt >( localRows );
+  HYPRE_BigInt const ilower = MpiWrapper::prefixSum< HYPRE_BigInt >( localRows );
   HYPRE_BigInt const iupper = ilower + localRows - 1;
-  HYPRE_BigInt const jlower = MpiWrapper::PrefixSum< HYPRE_BigInt >( localCols );
+  HYPRE_BigInt const jlower = MpiWrapper::prefixSum< HYPRE_BigInt >( localCols );
   HYPRE_BigInt const jupper = jlower + localCols - 1;
 
   array1d< HYPRE_Int > row_sizes;
@@ -696,7 +696,7 @@ void HypreMatrix::parCSRtoIJ( HYPRE_ParCSRMatrix const & parCSRMatrix )
   hypre_IJMatrixPrintLevel( ijmatrix ) = 0;
 
   array1d< HYPRE_BigInt > info( 2 );
-  if( MpiWrapper::Comm_rank( hypre_IJMatrixComm( ijmatrix ) ) == 0 )
+  if( MpiWrapper::commRank( hypre_IJMatrixComm( ijmatrix ) ) == 0 )
   {
     info( 0 ) = hypre_ParCSRMatrixFirstRowIndex( parCSRMatrix );
     info( 1 ) = hypre_ParCSRMatrixFirstColDiag( parCSRMatrix );
@@ -909,7 +909,7 @@ localIndex HypreMatrix::maxRowLength() const
                                                      ncols.data() ) );
 
   HYPRE_Int const localMaxRowLength = *std::max_element( ncols.begin(), ncols.end() );
-  return MpiWrapper::Max( localMaxRowLength, getComm() );
+  return MpiWrapper::max( localMaxRowLength, getComm() );
 }
 
 localIndex HypreMatrix::localRowLength( localIndex localRowIndex ) const
@@ -1180,8 +1180,8 @@ void HypreMatrix::print( std::ostream & os ) const
 {
   GEOSX_LAI_ASSERT( ready() );
 
-  int const this_mpi_process = MpiWrapper::Comm_rank( getComm() );
-  int const n_mpi_process = MpiWrapper::Comm_size( getComm() );
+  int const this_mpi_process = MpiWrapper::commRank( getComm() );
+  int const n_mpi_process = MpiWrapper::commSize( getComm() );
   char str[77];
 
   if( this_mpi_process == 0 )
@@ -1191,7 +1191,7 @@ void HypreMatrix::print( std::ostream & os ) const
 
   for( int iRank = 0; iRank < n_mpi_process; iRank++ )
   {
-    MpiWrapper::Barrier( getComm() );
+    MpiWrapper::barrier( getComm() );
     if( iRank == this_mpi_process )
     {
       globalIndex const firstRowID = ilower();
@@ -1252,7 +1252,7 @@ void HypreMatrix::write( string const & filename,
     {
       if( numGlobalRows() * numGlobalCols() == 0 )
       {
-        if( MpiWrapper::Comm_rank( getComm() ) == 0 )
+        if( MpiWrapper::commRank( getComm() ) == 0 )
         {
           FILE * fp = std::fopen( filename.c_str(), "w" );
           hypre_fprintf( fp, "%s", "%%MatrixMarket matrix coordinate real general\n" );
@@ -1269,15 +1269,15 @@ void HypreMatrix::write( string const & filename,
         CSRmatrix = hypre_ParCSRMatrixToCSRMatrixAll( m_parcsr_mat );
 
         // Identify the smallest process where CSRmatrix exists
-        int myID = MpiWrapper::Comm_rank( getComm() );
+        int myID = MpiWrapper::commRank( getComm() );
         if( CSRmatrix == 0 )
         {
-          myID = MpiWrapper::Comm_size( getComm() );
+          myID = MpiWrapper::commSize( getComm() );
         }
         int printID = MpiWrapper::Min( myID, getComm() );
 
         // Write to file CSRmatrix
-        if( MpiWrapper::Comm_rank( getComm() ) == printID )
+        if( MpiWrapper::commRank( getComm() ) == printID )
         {
           FILE * fp = std::fopen( filename.c_str(), "w" );
 
@@ -1357,7 +1357,7 @@ real64 HypreMatrix::normInf() const
   }
 
   real64 const local_norm = *std::max_element( row_abs_sum.begin(), row_abs_sum.end() );
-  return MpiWrapper::Max( local_norm, getComm() );
+  return MpiWrapper::max( local_norm, getComm() );
 
 }
 

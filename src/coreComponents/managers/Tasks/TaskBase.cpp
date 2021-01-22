@@ -39,7 +39,7 @@ TaskBase::CatalogInterface::CatalogType & TaskBase::GetCatalog()
   return catalog;
 }
 
-void TaskBase::PostProcessInput()
+void TaskBase::postProcessInput()
 { }
 
 } /* namespace */

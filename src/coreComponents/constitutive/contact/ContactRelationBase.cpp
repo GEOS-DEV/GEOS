@@ -65,25 +65,25 @@ real64 ContactRelationBase::limitTangentialTractionNorm( real64 const GEOSX_UNUS
   return 0;
 }
 
-real64 ContactRelationBase::dLimitTangentialTractionNorm_dNormalTraction( real64 const GEOSX_UNUSED_PARAM( normalTraction ) ) const
+real64 ContactRelationBase::dLimitTangentialTractionNormDNormalTraction( real64 const GEOSX_UNUSED_PARAM( normalTraction ) ) const
 {
   GEOSX_ERROR( "ContactRelationBase::dLimitTangentialTractionNorm_dNormalTraction called!. Should be overridden." );
   return 0;
 }
 
 Group *
-ContactRelationBase::CreateChild( string const & catalogKey, string const & childName )
+ContactRelationBase::createChild( string const & catalogKey, string const & childName )
 {
   FunctionBase::CatalogInterface::CatalogType const & functionCatalog = FunctionBase::GetCatalog();
   GEOSX_ERROR_IF( !functionCatalog.count( catalogKey ), catalogKey << " is an invalid key ContactRelationBase child group." );
 
-  m_apertureFunction = FunctionManager::Instance().RegisterGroup( childName, FunctionBase::CatalogInterface::Factory( catalogKey, childName, this ) );
+  m_apertureFunction = FunctionManager::instance().RegisterGroup( childName, FunctionBase::CatalogInterface::factory( catalogKey, childName, this ) );
 
   return m_apertureFunction;
 }
 
 
-void ContactRelationBase::SetSchemaDeviations( xmlWrapper::xmlNode,
+void ContactRelationBase::setSchemaDeviations( xmlWrapper::xmlNode,
                                                xmlWrapper::xmlNode schemaParent,
                                                integer )
 {
@@ -102,7 +102,7 @@ void ContactRelationBase::SetSchemaDeviations( xmlWrapper::xmlNode,
 
 
 
-void ContactRelationBase::InitializePreSubGroups( Group * const )
+void ContactRelationBase::initializePreSubGroups( Group * const )
 {
   TableFunction * const apertureTable = dynamic_cast< TableFunction * >(m_apertureFunction);
   if( apertureTable!=nullptr )

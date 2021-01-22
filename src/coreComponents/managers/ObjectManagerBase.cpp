@@ -38,8 +38,8 @@ ObjectManagerBase::ObjectManagerBase( std::string const & name,
   m_ghostRank(),
   m_neighborData()
 {
-  RegisterGroup( groupKeyStruct::setsString, &m_sets );
-  RegisterGroup( groupKeyStruct::neighborDataString, &m_neighborGroup );
+  registerGroup( groupKeyStruct::setsString, &m_sets );
+  registerGroup( groupKeyStruct::neighborDataString, &m_neighborGroup );
 
   registerWrapper( viewKeyStruct::localToGlobalMapString, &m_localToGlobalMap )->
     setApplyDefaultValue( -1 )->
@@ -69,12 +69,12 @@ ObjectManagerBase::CatalogInterface::CatalogType & ObjectManagerBase::GetCatalog
   return catalog;
 }
 
-void ObjectManagerBase::CreateSet( const std::string & newSetName )
+void ObjectManagerBase::createSet( const std::string & newSetName )
 {
   m_sets.registerWrapper< SortedArray< localIndex > >( newSetName );
 }
 
-void ObjectManagerBase::ConstructSetFromSetAndMap( SortedArrayView< localIndex const > const & inputSet,
+void ObjectManagerBase::constructSetFromSetAndMap( SortedArrayView< localIndex const > const & inputSet,
                                                    const array2d< localIndex > & map,
                                                    const std::string & setName )
 {
@@ -106,7 +106,7 @@ void ObjectManagerBase::ConstructSetFromSetAndMap( SortedArrayView< localIndex c
   }
 }
 
-void ObjectManagerBase::ConstructSetFromSetAndMap( SortedArrayView< localIndex const > const & inputSet,
+void ObjectManagerBase::constructSetFromSetAndMap( SortedArrayView< localIndex const > const & inputSet,
                                                    const array1d< localIndex_array > & map,
                                                    const std::string & setName )
 {
@@ -137,7 +137,7 @@ void ObjectManagerBase::ConstructSetFromSetAndMap( SortedArrayView< localIndex c
   }
 }
 
-void ObjectManagerBase::ConstructSetFromSetAndMap( SortedArrayView< localIndex const > const & inputSet,
+void ObjectManagerBase::constructSetFromSetAndMap( SortedArrayView< localIndex const > const & inputSet,
                                                    ArrayOfArraysView< localIndex const > const & map,
                                                    const std::string & setName )
 {
@@ -170,7 +170,7 @@ void ObjectManagerBase::ConstructSetFromSetAndMap( SortedArrayView< localIndex c
   }
 }
 
-void ObjectManagerBase::ConstructLocalListOfBoundaryObjects( localIndex_array & objectList ) const
+void ObjectManagerBase::constructLocalListOfBoundaryObjects( localIndex_array & objectList ) const
 {
   arrayView1d< integer const > const & isDomainBoundary = this->getDomainBoundaryIndicator();
   for( localIndex k=0; k<size(); ++k )
@@ -182,7 +182,7 @@ void ObjectManagerBase::ConstructLocalListOfBoundaryObjects( localIndex_array & 
   }
 }
 
-void ObjectManagerBase::ConstructGlobalListOfBoundaryObjects( globalIndex_array & objectList ) const
+void ObjectManagerBase::constructGlobalListOfBoundaryObjects( globalIndex_array & objectList ) const
 {
   arrayView1d< integer const > const & isDomainBoundary = this->getDomainBoundaryIndicator();
   for( localIndex k=0; k<size(); ++k )
@@ -195,7 +195,7 @@ void ObjectManagerBase::ConstructGlobalListOfBoundaryObjects( globalIndex_array 
   std::sort( objectList.begin(), objectList.end() );
 }
 
-void ObjectManagerBase::ConstructGlobalToLocalMap()
+void ObjectManagerBase::constructGlobalToLocalMap()
 {
   GEOSX_MARK_FUNCTION;
 
@@ -208,14 +208,14 @@ void ObjectManagerBase::ConstructGlobalToLocalMap()
   }
 }
 
-localIndex ObjectManagerBase::PackSize( string_array const & wrapperNames,
+localIndex ObjectManagerBase::packSize( string_array const & wrapperNames,
                                         arrayView1d< localIndex const > const & packList,
                                         integer const recursive,
                                         bool on_device ) const
 {
   localIndex packedSize = 0;
   buffer_unit_type * junk;
-  packedSize += this->PackPrivate< false >( junk,
+  packedSize += this->packPrivate< false >( junk,
                                             wrapperNames,
                                             packList,
                                             recursive,
@@ -224,7 +224,7 @@ localIndex ObjectManagerBase::PackSize( string_array const & wrapperNames,
   return packedSize;
 }
 
-localIndex ObjectManagerBase::Pack( buffer_unit_type * & buffer,
+localIndex ObjectManagerBase::pack( buffer_unit_type * & buffer,
                                     string_array const & wrapperNames,
                                     arrayView1d< localIndex const > const & packList,
                                     integer const recursive,
@@ -232,13 +232,13 @@ localIndex ObjectManagerBase::Pack( buffer_unit_type * & buffer,
 {
   localIndex packedSize = 0;
 
-  packedSize += this->PackPrivate< true >( buffer, wrapperNames, packList, recursive, on_device );
+  packedSize += this->packPrivate< true >( buffer, wrapperNames, packList, recursive, on_device );
 
   return packedSize;
 }
 
 template< bool DOPACK >
-localIndex ObjectManagerBase::PackPrivate( buffer_unit_type * & buffer,
+localIndex ObjectManagerBase::packPrivate( buffer_unit_type * & buffer,
                                            string_array const & wrapperNames,
                                            arrayView1d< localIndex const > const & packList,
                                            integer const recursive,
@@ -247,7 +247,7 @@ localIndex ObjectManagerBase::PackPrivate( buffer_unit_type * & buffer,
   localIndex packedSize = 0;
   packedSize += bufferOps::Pack< DOPACK >( buffer, this->getName() );
 
-  int const rank = MpiWrapper::Comm_rank( MPI_COMM_GEOSX );
+  int const rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
   packedSize += bufferOps::Pack< DOPACK >( buffer, rank );
 
 
@@ -262,7 +262,7 @@ localIndex ObjectManagerBase::PackPrivate( buffer_unit_type * & buffer,
     if( wrapperNames.size()==0 )
     {
       SortedArray< localIndex > exclusionList;
-      ViewPackingExclusionList( exclusionList );
+      viewPackingExclusionList( exclusionList );
       wrapperNamesForPacking.resize( this->wrappers().size() );
       localIndex count = 0;
       for( localIndex k=0; k<this->wrappers().size(); ++k )
@@ -288,11 +288,11 @@ localIndex ObjectManagerBase::PackPrivate( buffer_unit_type * & buffer,
         packedSize += bufferOps::Pack< DOPACK >( buffer, wrapperName );
         if( DOPACK )
         {
-          packedSize += wrapper->PackByIndex( buffer, packList, true, on_device );
+          packedSize += wrapper->packByIndex( buffer, packList, true, on_device );
         }
         else
         {
-          packedSize += wrapper->PackByIndexSize( packList, true, on_device );
+          packedSize += wrapper->packByIndexSize( packList, true, on_device );
         }
       }
       else
@@ -307,11 +307,11 @@ localIndex ObjectManagerBase::PackPrivate( buffer_unit_type * & buffer,
   if( recursive > 0 )
   {
     packedSize += bufferOps::Pack< DOPACK >( buffer, string( "SubGroups" ) );
-    packedSize += bufferOps::Pack< DOPACK >( buffer, this->GetSubGroups().size() );
-    for( auto const & keyGroupPair : this->GetSubGroups() )
+    packedSize += bufferOps::Pack< DOPACK >( buffer, this->getSubGroups().size() );
+    for( auto const & keyGroupPair : this->getSubGroups() )
     {
       packedSize += bufferOps::Pack< DOPACK >( buffer, keyGroupPair.first );
-      packedSize += keyGroupPair.second->Pack( buffer, wrapperNames, packList, recursive, on_device );
+      packedSize += keyGroupPair.second->pack( buffer, wrapperNames, packList, recursive, on_device );
     }
   }
 
@@ -322,7 +322,7 @@ localIndex ObjectManagerBase::PackPrivate( buffer_unit_type * & buffer,
 
 
 
-localIndex ObjectManagerBase::Unpack( buffer_unit_type const * & buffer,
+localIndex ObjectManagerBase::unpack( buffer_unit_type const * & buffer,
                                       arrayView1d< localIndex > & packList,
                                       integer const recursive,
                                       bool on_device )
@@ -353,7 +353,7 @@ localIndex ObjectManagerBase::Unpack( buffer_unit_type const * & buffer,
       if( wrapperName != "nullptr" )
       {
         WrapperBase * const wrapper = this->getWrapperBase( wrapperName );
-        unpackedSize += wrapper->UnpackByIndex( buffer, packList, true, on_device );
+        unpackedSize += wrapper->unpackByIndex( buffer, packList, true, on_device );
       }
     }
   }
@@ -364,15 +364,15 @@ localIndex ObjectManagerBase::Unpack( buffer_unit_type const * & buffer,
     unpackedSize += bufferOps::Unpack( buffer, subGroups );
     GEOSX_ERROR_IF_NE( subGroups, "SubGroups" );
 
-    decltype( this->GetSubGroups().size()) numSubGroups;
+    decltype( this->getSubGroups().size()) numSubGroups;
     unpackedSize += bufferOps::Unpack( buffer, numSubGroups );
-    GEOSX_ERROR_IF_NE( numSubGroups, this->GetSubGroups().size() );
+    GEOSX_ERROR_IF_NE( numSubGroups, this->getSubGroups().size() );
 
     for( localIndex i = 0; i < this->numSubGroups(); ++i )
     {
       string subGroupName;
       unpackedSize += bufferOps::Unpack( buffer, subGroupName );
-      unpackedSize += this->GetGroup( subGroupName )->Unpack( buffer, packList, recursive, on_device );
+      unpackedSize += this->getGroup( subGroupName )->unpack( buffer, packList, recursive, on_device );
     }
   }
 
@@ -383,7 +383,7 @@ localIndex ObjectManagerBase::Unpack( buffer_unit_type const * & buffer,
 }
 
 template< bool DOPACK >
-localIndex ObjectManagerBase::PackParentChildMapsPrivate( buffer_unit_type * & buffer,
+localIndex ObjectManagerBase::packParentChildMapsPrivate( buffer_unit_type * & buffer,
                                                           arrayView1d< localIndex const > const & packList ) const
 {
   localIndex packedSize = 0;
@@ -421,7 +421,7 @@ localIndex ObjectManagerBase::PackParentChildMapsPrivate< false >( buffer_unit_t
                                                                    arrayView1d< localIndex const > const & packList ) const;
 
 
-localIndex ObjectManagerBase::UnpackParentChildMaps( buffer_unit_type const * & buffer,
+localIndex ObjectManagerBase::unpackParentChildMaps( buffer_unit_type const * & buffer,
                                                      localIndex_array & packList )
 {
   localIndex unpackedSize = 0;
@@ -489,7 +489,7 @@ localIndex ObjectManagerBase::PackSets( buffer_unit_type * & buffer,
 //                                               arrayView1d<localIndex const> const & );
 
 
-localIndex ObjectManagerBase::UnpackSets( buffer_unit_type const * & buffer )
+localIndex ObjectManagerBase::unpackSets( buffer_unit_type const * & buffer )
 {
   localIndex unpackedSize = 0;
   string name;
@@ -517,22 +517,22 @@ localIndex ObjectManagerBase::UnpackSets( buffer_unit_type const * & buffer )
 }
 
 
-localIndex ObjectManagerBase::PackGlobalMapsSize( arrayView1d< localIndex const > const & packList,
+localIndex ObjectManagerBase::packGlobalMapsSize( arrayView1d< localIndex const > const & packList,
                                                   integer const recursive ) const
 {
   buffer_unit_type * junk = nullptr;
-  return PackGlobalMapsPrivate< false >( junk, packList, recursive );
+  return packGlobalMapsPrivate< false >( junk, packList, recursive );
 }
 
-localIndex ObjectManagerBase::PackGlobalMaps( buffer_unit_type * & buffer,
+localIndex ObjectManagerBase::packGlobalMaps( buffer_unit_type * & buffer,
                                               arrayView1d< localIndex const > const & packList,
                                               integer const recursive ) const
 {
-  return PackGlobalMapsPrivate< true >( buffer, packList, recursive );
+  return packGlobalMapsPrivate< true >( buffer, packList, recursive );
 }
 
 template< bool DOPACK >
-localIndex ObjectManagerBase::PackGlobalMapsPrivate( buffer_unit_type * & buffer,
+localIndex ObjectManagerBase::packGlobalMapsPrivate( buffer_unit_type * & buffer,
                                                      arrayView1d< localIndex const > const & packList,
                                                      integer const recursive ) const
 {
@@ -541,7 +541,7 @@ localIndex ObjectManagerBase::PackGlobalMapsPrivate( buffer_unit_type * & buffer
   // this doesn't link without the string()...no idea why.
   packedSize += bufferOps::Pack< DOPACK >( buffer, string( viewKeyStruct::localToGlobalMapString ) );
 
-  int const rank = MpiWrapper::Comm_rank( MPI_COMM_GEOSX );
+  int const rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
   packedSize += bufferOps::Pack< DOPACK >( buffer, rank );
 
   localIndex const numPackedIndices = packList.size();
@@ -575,14 +575,14 @@ localIndex ObjectManagerBase::PackGlobalMapsPrivate( buffer_unit_type * & buffer
   if( recursive > 0 )
   {
     packedSize += bufferOps::Pack< DOPACK >( buffer, string( "SubGroups" ) );
-    packedSize += bufferOps::Pack< DOPACK >( buffer, this->GetSubGroups().size() );
-    for( auto const & keyGroupPair : this->GetSubGroups() )
+    packedSize += bufferOps::Pack< DOPACK >( buffer, this->getSubGroups().size() );
+    for( auto const & keyGroupPair : this->getSubGroups() )
     {
       packedSize += bufferOps::Pack< DOPACK >( buffer, keyGroupPair.first );
-      ObjectManagerBase const * const subObjectManager = Group::group_cast< ObjectManagerBase const * >( keyGroupPair.second );
+      ObjectManagerBase const * const subObjectManager = Group::groupCast< ObjectManagerBase const * >( keyGroupPair.second );
       if( subObjectManager )
       {
-        packedSize += subObjectManager->PackGlobalMapsPrivate< DOPACK >( buffer, packList, recursive );
+        packedSize += subObjectManager->packGlobalMapsPrivate< DOPACK >( buffer, packList, recursive );
       }
     }
   }
@@ -592,7 +592,7 @@ localIndex ObjectManagerBase::PackGlobalMapsPrivate( buffer_unit_type * & buffer
   return packedSize;
 }
 
-localIndex ObjectManagerBase::UnpackGlobalMaps( buffer_unit_type const * & buffer,
+localIndex ObjectManagerBase::unpackGlobalMaps( buffer_unit_type const * & buffer,
                                                 localIndex_array & packList,
                                                 integer const recursive )
 {
@@ -607,7 +607,7 @@ localIndex ObjectManagerBase::UnpackGlobalMaps( buffer_unit_type const * & buffe
   unpackedSize += bufferOps::Unpack( buffer, localToGlobalString );
   GEOSX_ERROR_IF( localToGlobalString != viewKeyStruct::localToGlobalMapString, "ObjectManagerBase::Unpack(): label incorrect" );
 
-  int const rank = MpiWrapper::Comm_rank( MPI_COMM_GEOSX );
+  int const rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
   int sendingRank;
   unpackedSize += bufferOps::Unpack( buffer, sendingRank );
 
@@ -699,22 +699,22 @@ localIndex ObjectManagerBase::UnpackGlobalMaps( buffer_unit_type const * & buffe
     unpackedSize += bufferOps::Unpack( buffer, subGroups );
     GEOSX_ERROR_IF( subGroups != "SubGroups", "Group::Unpack(): group names do not match" );
 
-    decltype( this->GetSubGroups().size()) numSubGroups;
+    decltype( this->getSubGroups().size()) numSubGroups;
     unpackedSize += bufferOps::Unpack( buffer, numSubGroups );
-    GEOSX_ERROR_IF( numSubGroups != this->GetSubGroups().size(), "Group::Unpack(): incorrect number of subGroups" );
+    GEOSX_ERROR_IF( numSubGroups != this->getSubGroups().size(), "Group::Unpack(): incorrect number of subGroups" );
 
-    for( auto const & index : this->GetSubGroups() )
+    for( auto const & index : this->getSubGroups() )
     {
       GEOSX_UNUSED_VAR( index );
       string subGroupName;
       unpackedSize += bufferOps::Unpack( buffer, subGroupName );
-      unpackedSize += this->GetGroup< ObjectManagerBase >( subGroupName )->
-                        UnpackGlobalMaps( buffer, packList, recursive );
+      unpackedSize += this->getGroup< ObjectManagerBase >( subGroupName )->
+                        unpackGlobalMaps( buffer, packList, recursive );
     }
   }
 
 
-  unpackedSize += UnpackSets( buffer );
+  unpackedSize += unpackSets( buffer );
 
 
   return unpackedSize;
@@ -722,7 +722,7 @@ localIndex ObjectManagerBase::UnpackGlobalMaps( buffer_unit_type const * & buffe
 
 
 
-void ObjectManagerBase::ViewPackingExclusionList( SortedArray< localIndex > & exclusionList ) const
+void ObjectManagerBase::viewPackingExclusionList( SortedArray< localIndex > & exclusionList ) const
 {
   exclusionList.insert( this->getWrapperIndex( viewKeyStruct::localToGlobalMapString ));
   exclusionList.insert( this->getWrapperIndex( viewKeyStruct::globalToLocalMapString ));
@@ -733,7 +733,7 @@ void ObjectManagerBase::ViewPackingExclusionList( SortedArray< localIndex > & ex
 }
 
 
-localIndex ObjectManagerBase::GetNumberOfGhosts() const
+localIndex ObjectManagerBase::getNumberOfGhosts() const
 {
   localIndex rval = 0;
   for( localIndex i=0; i<size(); ++i )
@@ -747,7 +747,7 @@ localIndex ObjectManagerBase::GetNumberOfGhosts() const
 //  return std::count_if( m_ghostRank.begin(), m_ghostRank.end(), [](integer i)->localIndex {return i>-1;} );
 }
 
-localIndex ObjectManagerBase::GetNumberOfLocalIndices() const
+localIndex ObjectManagerBase::getNumberOfLocalIndices() const
 {
   localIndex rval = 0;
   for( localIndex i=0; i<size(); ++i )
@@ -761,7 +761,7 @@ localIndex ObjectManagerBase::GetNumberOfLocalIndices() const
   //return std::count_if( m_ghostRank.begin(), m_ghostRank.end(), [](integer i)->localIndex {return i==-1;} );
 }
 
-void ObjectManagerBase::SetReceiveLists()
+void ObjectManagerBase::setReceiveLists()
 {
   for( std::pair< int const, NeighborData > & pair : m_neighborData )
   {
@@ -777,7 +777,7 @@ void ObjectManagerBase::SetReceiveLists()
   }
 }
 
-integer ObjectManagerBase::SplitObject( localIndex const indexToSplit,
+integer ObjectManagerBase::splitObject( localIndex const indexToSplit,
                                         int const GEOSX_UNUSED_PARAM( rank ),
                                         localIndex & newIndex )
 {
@@ -794,7 +794,7 @@ integer ObjectManagerBase::SplitObject( localIndex const indexToSplit,
   this->resize( newIndex + 1 );
 
   // copy the fields
-  CopyObject( indexToSplit, newIndex );
+  copyObject( indexToSplit, newIndex );
 
   if( this->hasExtrinsicData< extrinsicMeshData::ParentIndex >() )
   {
@@ -836,7 +836,7 @@ void ObjectManagerBase::inheritGhostRankFromParent( std::set< localIndex > const
 }
 
 
-void ObjectManagerBase::CopyObject( const localIndex source, const localIndex destination )
+void ObjectManagerBase::copyObject( const localIndex source, const localIndex destination )
 {
   for( auto & wrapper : wrappers() )
   {
@@ -858,7 +858,7 @@ void ObjectManagerBase::CopyObject( const localIndex source, const localIndex de
   }
 }
 
-void ObjectManagerBase::SetMaxGlobalIndex()
+void ObjectManagerBase::setMaxGlobalIndex()
 {
   MpiWrapper::allReduce( &m_localMaxGlobalIndex,
                          &m_maxGlobalIndex,
@@ -867,7 +867,7 @@ void ObjectManagerBase::SetMaxGlobalIndex()
                          MPI_COMM_GEOSX );
 }
 
-void ObjectManagerBase::CleanUpMap( std::set< localIndex > const & targetIndices,
+void ObjectManagerBase::cleanUpMap( std::set< localIndex > const & targetIndices,
                                     array1d< SortedArray< localIndex > > & upmap,
                                     arrayView2d< localIndex const > const & downmap )
 {
@@ -897,7 +897,7 @@ void ObjectManagerBase::CleanUpMap( std::set< localIndex > const & targetIndices
   }
 }
 
-void ObjectManagerBase::CleanUpMap( std::set< localIndex > const & targetIndices,
+void ObjectManagerBase::cleanUpMap( std::set< localIndex > const & targetIndices,
                                     ArrayOfSetsView< localIndex > const & upmap,
                                     arrayView2d< localIndex const > const & downmap )
 {
@@ -931,7 +931,7 @@ void ObjectManagerBase::CleanUpMap( std::set< localIndex > const & targetIndices
   }
 }
 
-void ObjectManagerBase::CleanUpMap( std::set< localIndex > const & targetIndices,
+void ObjectManagerBase::cleanUpMap( std::set< localIndex > const & targetIndices,
                                     array1d< SortedArray< localIndex > > & upmap,
                                     arrayView1d< arrayView1d< localIndex const > const > const & downmap )
 {
@@ -961,7 +961,7 @@ void ObjectManagerBase::CleanUpMap( std::set< localIndex > const & targetIndices
   }
 }
 
-void ObjectManagerBase::CleanUpMap( std::set< localIndex > const & targetIndices,
+void ObjectManagerBase::cleanUpMap( std::set< localIndex > const & targetIndices,
                                     ArrayOfSetsView< localIndex > const & upmap,
                                     arrayView1d< arrayView1d< localIndex const > const > const & downmap )
 {
@@ -995,7 +995,7 @@ void ObjectManagerBase::CleanUpMap( std::set< localIndex > const & targetIndices
   }
 }
 
-void ObjectManagerBase::CleanUpMap( std::set< localIndex > const & targetIndices,
+void ObjectManagerBase::cleanUpMap( std::set< localIndex > const & targetIndices,
                                     ArrayOfSetsView< localIndex > const & upmap,
                                     ArrayOfArraysView< localIndex const > const & downmap )
 {

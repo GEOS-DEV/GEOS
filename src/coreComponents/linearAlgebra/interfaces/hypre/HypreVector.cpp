@@ -129,7 +129,7 @@ void HypreVector::createWithLocalSize( localIndex const localSize,
   GEOSX_LAI_ASSERT( closed() );
   GEOSX_LAI_ASSERT_GE( localSize, 0 );
 
-  HYPRE_BigInt const jlower = MpiWrapper::PrefixSum< HYPRE_BigInt >( LvArray::integerConversion< HYPRE_BigInt >( localSize ) );
+  HYPRE_BigInt const jlower = MpiWrapper::prefixSum< HYPRE_BigInt >( LvArray::integerConversion< HYPRE_BigInt >( localSize ) );
   HYPRE_BigInt const jupper = jlower + LvArray::integerConversion< HYPRE_BigInt >( localSize ) - 1;
 
   initialize( comm, jlower, jupper, m_ij_vector );
@@ -143,8 +143,8 @@ void HypreVector::createWithGlobalSize( globalIndex const globalSize,
   GEOSX_LAI_ASSERT( closed() );
   GEOSX_LAI_ASSERT_GE( globalSize, 0 );
 
-  HYPRE_Int const rank  = LvArray::integerConversion< HYPRE_Int >( MpiWrapper::Comm_rank( comm ) );
-  HYPRE_Int const nproc = LvArray::integerConversion< HYPRE_Int >( MpiWrapper::Comm_size( comm ) );
+  HYPRE_Int const rank  = LvArray::integerConversion< HYPRE_Int >( MpiWrapper::commRank( comm ) );
+  HYPRE_Int const nproc = LvArray::integerConversion< HYPRE_Int >( MpiWrapper::commSize( comm ) );
 
   HYPRE_Int const localSize = LvArray::integerConversion< HYPRE_Int >( globalSize / nproc );
   HYPRE_Int const residual  = LvArray::integerConversion< HYPRE_Int >( globalSize % nproc );
@@ -166,7 +166,7 @@ void HypreVector::create( arrayView1d< real64 const > const & localValues,
 
   HYPRE_BigInt const localSize = LvArray::integerConversion< HYPRE_BigInt >( localValues.size() );
 
-  HYPRE_BigInt const jlower = MpiWrapper::PrefixSum< HYPRE_BigInt >( localSize );
+  HYPRE_BigInt const jlower = MpiWrapper::prefixSum< HYPRE_BigInt >( localSize );
   HYPRE_BigInt const jupper = jlower + localSize - 1;
 
   initialize( comm, jlower, jupper, m_ij_vector );
@@ -396,8 +396,8 @@ void HypreVector::print( std::ostream & os ) const
 {
   GEOSX_LAI_ASSERT( ready() );
 
-  int const this_mpi_process = MpiWrapper::Comm_rank( getComm() );
-  int const n_mpi_process = MpiWrapper::Comm_size( getComm() );
+  int const this_mpi_process = MpiWrapper::commRank( getComm() );
+  int const n_mpi_process = MpiWrapper::commSize( getComm() );
   char str[77];
 
   if( this_mpi_process == 0 )
@@ -407,7 +407,7 @@ void HypreVector::print( std::ostream & os ) const
 
   for( int iRank = 0; iRank < n_mpi_process; iRank++ )
   {
-    MpiWrapper::Barrier( getComm() );
+    MpiWrapper::barrier( getComm() );
     if( iRank == this_mpi_process )
     {
       real64 const * const local_data = extractLocalVector();
@@ -440,7 +440,7 @@ void HypreVector::write( string const & filename,
     {
       if( globalSize() == 0 )
       {
-        if( MpiWrapper::Comm_rank( getComm() ) == 0 )
+        if( MpiWrapper::commRank( getComm() ) == 0 )
         {
           FILE * fp = std::fopen( filename.c_str(), "w" );
           hypre_fprintf( fp, "%s", "%%MatrixMarket matrix array real general\n" );
@@ -457,15 +457,15 @@ void HypreVector::write( string const & filename,
         vector = hypre_ParVectorToVectorAll( m_par_vector );
 
         // Identify the smallest process where vector exists
-        int myID = MpiWrapper::Comm_rank( getComm() );
+        int myID = MpiWrapper::commRank( getComm() );
         if( vector == 0 )
         {
-          myID = MpiWrapper::Comm_size( getComm() );
+          myID = MpiWrapper::commSize( getComm() );
         }
         int printID = MpiWrapper::Min( myID, getComm() );
 
         // Write to file vector
-        if( MpiWrapper::Comm_rank( getComm() ) == printID )
+        if( MpiWrapper::commRank( getComm() ) == printID )
         {
           FILE * fp = std::fopen( filename.c_str(), "w" );
           HYPRE_Real * data = hypre_VectorData( vector );

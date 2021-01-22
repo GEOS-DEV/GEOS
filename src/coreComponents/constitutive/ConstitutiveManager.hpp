@@ -47,40 +47,40 @@ public:
   ConstitutiveManager( string const & name,
                        Group * const parent );
 
-  virtual Group * CreateChild( string const & childKey, string const & childName ) override final;
+  virtual Group * createChild( string const & childKey, string const & childName ) override final;
 
   /// This function is used to expand any catalogs in the data structure
-  virtual void ExpandObjectCatalogs() override;
+  virtual void expandObjectCatalogs() override;
 
   ConstitutiveBase *
-  HangConstitutiveRelation( string const & constitutiveRelationInstanceName,
+  hangConstitutiveRelation( string const & constitutiveRelationInstanceName,
                             dataRepository::Group * const parent,
                             localIndex const numConstitutivePointsPerParentIndex ) const;
 
   ~ConstitutiveManager() override;
 
   template< typename T = ConstitutiveBase >
-  T const * GetConstitutiveRelation( string const & constitutiveRelationInstanceName ) const
+  T const * getConstitutiveRelation( string const & constitutiveRelationInstanceName ) const
   {
-    return this->GetGroup< T >( constitutiveRelationInstanceName );
+    return this->getGroup< T >( constitutiveRelationInstanceName );
   }
 
   template< typename T = ConstitutiveBase >
-  T * GetConstitutiveRelation( string const & constitutiveRelationInstanceName )
+  T * getConstitutiveRelation( string const & constitutiveRelationInstanceName )
   {
-    return this->GetGroup< T >( constitutiveRelationInstanceName );
+    return this->getGroup< T >( constitutiveRelationInstanceName );
   }
 
   template< typename T = ConstitutiveBase >
-  T const * GetConstitutiveRelation( localIndex const index ) const
+  T const * getConstitutiveRelation( localIndex const index ) const
   {
     return this->GetGroup< T >( index );
   }
 
   template< typename T = ConstitutiveBase >
-  T * GetConstitutiveRelation( localIndex const index )
+  T * getConstitutiveRelation( localIndex const index )
   {
-    return this->GetGroup< T >( index );
+    return this->getGroup< T >( index );
   }
 
   // template< typename T >
@@ -90,7 +90,7 @@ public:
 
   template< typename T >
   ViewAccessor< T >
-  GetConstitutiveData( string const & name,
+  getConstitutiveData( string const & name,
                        dataRepository::Group const * const relationGroup ) const;
 
 
@@ -106,15 +106,15 @@ public:
 
 template< typename T >
 ViewAccessor< T >
-ConstitutiveManager::GetConstitutiveData( string const & name,
+ConstitutiveManager::getConstitutiveData( string const & name,
                                           dataRepository::Group const * const relationGroup ) const
 {
   ViewAccessor< T const > rval( relationGroup->numSubGroups() );
 
   rval.resize( relationGroup->numSubGroups() );
-  for( localIndex a=0; a<this->GetSubGroups().size(); ++a )
+  for( localIndex a=0; a<this->getSubGroups().size(); ++a )
   {
-    ConstitutiveBase const * const material = relationGroup->GetGroup< ConstitutiveBase >( a );
+    ConstitutiveBase const * const material = relationGroup->getGroup< ConstitutiveBase >( a );
     if( material->hasWrapper( name ) )
     {
       rval[a] = material->getReference< T >( name );

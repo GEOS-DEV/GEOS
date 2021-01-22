@@ -38,8 +38,8 @@ TYPED_TEST_P( LAOperationsTest, VectorFunctions )
   using Vector = typename TypeParam::ParallelVector;
 
   // Get the MPI rank
-  int const rank = MpiWrapper::Comm_rank( MPI_COMM_GEOSX );
-  int const numRanks = MpiWrapper::Comm_size( MPI_COMM_GEOSX );
+  int const rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
+  int const numRanks = MpiWrapper::commSize( MPI_COMM_GEOSX );
 
   Vector x;
   localIndex const localSize = 3;
@@ -451,7 +451,7 @@ TYPED_TEST_P( LAOperationsTest, RectangularMatrixOperations )
 {
   using Matrix = typename TypeParam::ParallelMatrix;
 
-  int mpiSize = MpiWrapper::Comm_size( MPI_COMM_GEOSX );
+  int mpiSize = MpiWrapper::commSize( MPI_COMM_GEOSX );
 
   // Set a size that allows to run with arbitrary number of processes
   globalIndex const nRows = std::max( 100, mpiSize );
@@ -602,7 +602,7 @@ public:
 
 protected:
 
-  void SetUp() override
+  void setUp() override
   {
     globalIndex constexpr n = 100;
     compute2DLaplaceOperator( MPI_COMM_GEOSX, n, this->matrix );
@@ -659,7 +659,7 @@ public:
 
 protected:
 
-  void SetUp() override
+  void setUp() override
   {
     globalIndex constexpr n = 100;
     compute2DElasticityOperator( MPI_COMM_GEOSX, 1.0, 1.0, n, n, 10000., 0.2, this->matrix );

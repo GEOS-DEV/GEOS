@@ -47,9 +47,9 @@ public:
 
   NeighborCommunicator( int rank ):
     NeighborCommunicator()
-  { SetNeighborRank( rank ); }
+  { setNeighborRank( rank ); }
 
-  void MPI_iSendReceive( buffer_unit_type const * const sendBuffer,
+  void mpiISendReceive( buffer_unit_type const * const sendBuffer,
                          int const sendSize,
                          MPI_Request & sendRequest,
                          buffer_unit_type * const receiveBuffer,
@@ -59,32 +59,32 @@ public:
                          MPI_Comm mpiComm );
 
 
-  void MPI_iSendReceiveBufferSizes( int const commID,
+  void mpiISendReceiveBufferSizes( int const commID,
                                     MPI_Comm mpiComm );
 
-  void MPI_iSendReceiveBufferSizes( int const commID,
+  void mpiISendReceiveBufferSizes( int const commID,
                                     MPI_Request & mpiSendRequest,
                                     MPI_Request & mpiRecvRequest,
                                     MPI_Comm mpiComm );
 
-  void MPI_iSendReceiveBuffers( int const commID,
+  void mpiISendReceiveBuffers( int const commID,
                                 MPI_Comm mpiComm );
 
-  void MPI_iSendReceiveBuffers( int const commID,
+  void mpiISendReceiveBuffers( int const commID,
                                 MPI_Request & mpiSendRequest,
                                 MPI_Request & mpiRecvRequest,
                                 MPI_Comm mpiComm );
 
-  void MPI_iSendReceive( int const commID,
+  void mpiISendReceive( int const commID,
                          MPI_Comm mpiComm );
 
-  void MPI_iSendReceive( int const commID,
+  void mpiISendReceive( int const commID,
                          MPI_Request & mpiSendRequest,
                          MPI_Request & mpiRecvRequest,
                          MPI_Comm mpiComm );
 
   template< typename T >
-  void MPI_iSendReceive( T const * const sendBuffer,
+  void mpiISendReceive( T const * const sendBuffer,
                          int const sendSize,
                          MPI_Request & sendReq,
                          T * const recvBuffer,
@@ -93,7 +93,7 @@ public:
                          int const commID,
                          MPI_Comm mpiComm )
   {
-    MPI_iSendReceive( reinterpret_cast< buffer_unit_type const * >( sendBuffer ),
+    mpiISendReceive( reinterpret_cast< buffer_unit_type const * >( sendBuffer ),
                       sendSize * sizeof(T),
                       sendReq,
                       reinterpret_cast< buffer_unit_type * >( recvBuffer ),
@@ -105,7 +105,7 @@ public:
 
 
   template< typename T >
-  void MPI_iSendReceive( array1d< T > const & sendBuffer,
+  void mpiISendReceive( array1d< T > const & sendBuffer,
                          MPI_Request & sendReq,
                          array1d< T > & recvBuffer,
                          MPI_Request & recvReq,
@@ -114,12 +114,12 @@ public:
 
 
   template< typename T >
-  void MPI_iSendReceive( array1d< T > const & sendBuffer,
+  void mpiISendReceive( array1d< T > const & sendBuffer,
                          array1d< T > & recvBuffer,
                          int const commID,
                          MPI_Comm mpiComm )
   {
-    MPI_iSendReceive( sendBuffer,
+    mpiISendReceive( sendBuffer,
                       m_mpiSendBufferRequest[commID],
                       recvBuffer,
                       m_mpiRecvBufferRequest[commID],
@@ -128,28 +128,28 @@ public:
   }
 
   template< typename T >
-  void MPI_iSendReceiveWait( array1d< T > const & sendBuffer,
+  void mpiISendReceiveWait( array1d< T > const & sendBuffer,
                              array1d< T > & recvBuffer,
                              int const commID,
                              MPI_Comm mpiComm )
   {
     MPI_iSendReceive( sendBuffer, recvBuffer, commID, mpiComm );
-    MPI_WaitAll( commID );
+    mpiWaitAll( commID );
   }
 
 
-  void MPI_iSendReceive( buffer_unit_type const * const sendBuffer,
+  void mpiISendReceive( buffer_unit_type const * const sendBuffer,
                          int const sendSize,
                          int const commID,
                          MPI_Comm mpiComm );
 
-  void MPI_WaitAll( int const commID,
+  void mpiWaitAll( int const commID,
                     MPI_Request & mpiSendRequest,
                     MPI_Status & mpiSendStatus,
                     MPI_Request & mpiRecvRequest,
                     MPI_Status & mpiReceiveStatus );
 
-  void MPI_WaitAll( int const commID );
+  void mpiWaitAll( int const commID );
 
   /**
    * @brief Post a non-blocking recieve for the buffer size
@@ -161,7 +161,7 @@ public:
    * @return The return code from the interal call to
    *         MPI_iRecv.
    */
-  int PostSizeRecv( int const commID );
+  int postSizeRecv( int const commID );
 
   /**
    * @brief Get the MPI_Request associated with the last
@@ -170,7 +170,7 @@ public:
    *               the communication is taking place in.
    * @return The MPI_Request for the size receive
    */
-  MPI_Request GetSizeRecvRequest( int const commID );
+  MPI_Request getSizeRecvRequest( int const commID );
 
   /**
    * @brief Post a non-blocking send for the buffer
@@ -182,7 +182,7 @@ public:
    * @return The return code from the internal call to
    *         MPI_iSend.
    */
-  int PostSizeSend( int const commID );
+  int postSizeSend( int const commID );
 
   /**
    * @brief Post a non-blocking receive for the actual
@@ -198,7 +198,7 @@ public:
    * @return The return code from the internal call to
    *         MPI_iRecv.
    */
-  int PostRecv( int const commID );
+  int postRecv( int const commID );
 
   /**
    * @brief Get the MPI_Request associated with the last
@@ -207,7 +207,7 @@ public:
    *               the communication is taking place in.
    * @return The MPI_Request for the receive.
    */
-  MPI_Request GetRecvRequest( int const commID );
+  MPI_Request getRecvRequest( int const commID );
 
   /**
    * @brief Post a non-blocking send for the actual information
@@ -217,7 +217,7 @@ public:
    * @return The return code from the internal call to
    *         MPI_iSend.
    */
-  int PostSend( int const commID );
+  int postSend( int const commID );
 
   /**
    * Posts non-blocking sends to m_neighborRank for
@@ -228,7 +228,7 @@ public:
    *  must be completed before PostRecv is called in order
    *  to correctly resize the receive buffer.
    */
-  void PrepareAndSendGhosts( bool const contactActive,
+  void prepareAndSendGhosts( bool const contactActive,
                              int const depth,
                              MeshLevel & meshLevel,
                              int const commID );
@@ -240,7 +240,7 @@ public:
    *  the request associated with that recv has
    *  completed (retrieve the request using GetRecvRequest)
    */
-  void UnpackGhosts( MeshLevel & meshLevel,
+  void unpackGhosts( MeshLevel & meshLevel,
                      int const commID );
 
   /**
@@ -252,7 +252,7 @@ public:
    *  must be completed before PostRecv is called in order
    *  to correctly resize the receive buffer.
    */
-  void PrepareAndSendSyncLists( MeshLevel const & meshLevel,
+  void prepareAndSendSyncLists( MeshLevel const & meshLevel,
                                 int const commID );
 
   /**
@@ -262,57 +262,57 @@ public:
    *  the request associated with that recv has
    *  completed (retrieve the request using GetRecvRequest)
    */
-  void UnpackAndRebuildSyncLists( MeshLevel & meshLevel,
+  void unpackAndRebuildSyncLists( MeshLevel & meshLevel,
                                   int const CommID );
 
-  void PackCommBufferForSync( std::map< string, string_array > const & fieldNames,
+  void packCommBufferForSync( std::map< string, string_array > const & fieldNames,
                               MeshLevel const & meshLevel,
                               int const commID,
                               bool on_device = false );
 
-  int PackCommSizeForSync( std::map< string, string_array > const & fieldNames,
+  int packCommSizeForSync( std::map< string, string_array > const & fieldNames,
                            MeshLevel const & meshLevel,
                            int const commID,
                            bool on_device = false );
 
-  void SendRecvBuffers( int const commID );
+  void sendRecvBuffers( int const commID );
 
-  void UnpackBufferForSync( std::map< string, string_array > const & fieldNames,
+  void unpackBufferForSync( std::map< string, string_array > const & fieldNames,
                             MeshLevel * const meshLevel,
                             int const commID,
                             bool on_device = false );
 
-  void SetNeighborRank( int const rank ) { m_neighborRank = rank; }
-  int NeighborRank() const { return m_neighborRank; }
+  void setNeighborRank( int const rank ) { m_neighborRank = rank; }
+  int neighborRank() const { return m_neighborRank; }
 
-  void Clear();
+  void clear();
 
   static int constexpr maxComm = 100;
 
-  buffer_type const & ReceiveBuffer( int commID ) const
+  buffer_type const & receiveBuffer( int commID ) const
   {
     return m_receiveBuffer[commID];
   }
-  buffer_type & ReceiveBuffer( int commID )
+  buffer_type & receiveBuffer( int commID )
   {
     return m_receiveBuffer[commID];
   }
 
-  int const & ReceiveBufferSize( int commID ) const
+  int const & receiveBufferSize( int commID ) const
   {
     return m_receiveBufferSize[commID];
   }
-  int & ReceiveBufferSize( int commID )
+  int & receiveBufferSize( int commID )
   {
     return m_receiveBufferSize[commID];
   }
 
 
-  buffer_type const & SendBuffer( int commID ) const
+  buffer_type const & sendBuffer( int commID ) const
   {
     return m_sendBuffer[commID];
   }
-  buffer_type & SendBuffer( int commID )
+  buffer_type & sendBuffer( int commID )
   {
     return m_sendBuffer[commID];
   }
@@ -329,7 +329,7 @@ public:
     m_receiveBuffer[commID].resize( newSize );
   }
 
-  void AddNeighborGroupToMesh( MeshLevel & mesh ) const;
+  void addNeighborGroupToMesh( MeshLevel & mesh ) const;
 
 private:
   int m_neighborRank;
@@ -353,7 +353,7 @@ private:
 
 
 template< typename T >
-void NeighborCommunicator::MPI_iSendReceive( array1d< T > const & sendBuffer,
+void NeighborCommunicator::mpiISendReceive( array1d< T > const & sendBuffer,
                                              MPI_Request & sendReq,
                                              array1d< T > & recvBuffer,
                                              MPI_Request & recvReq,
@@ -362,7 +362,7 @@ void NeighborCommunicator::MPI_iSendReceive( array1d< T > const & sendBuffer,
 {
   m_sendBufferSize[commID] = LvArray::integerConversion< int >( sendBuffer.size());
 
-  MPI_iSendReceive( &m_sendBufferSize[commID],
+  mpiISendReceive( &m_sendBufferSize[commID],
                     1,
                     sendReq,
                     &m_receiveBufferSize[commID],
@@ -371,12 +371,12 @@ void NeighborCommunicator::MPI_iSendReceive( array1d< T > const & sendBuffer,
                     commID,
                     mpiComm );
 
-  MpiWrapper::Wait( &( recvReq ), &( m_mpiRecvBufferStatus[commID] ) );
-  MpiWrapper::Wait( &( sendReq ), &( m_mpiSendBufferStatus[commID] ) );
+  MpiWrapper::wait( &( recvReq ), &( m_mpiRecvBufferStatus[commID] ) );
+  MpiWrapper::wait( &( sendReq ), &( m_mpiSendBufferStatus[commID] ) );
 
   recvBuffer.resize( m_receiveBufferSize[commID] );
 
-  MPI_iSendReceive( sendBuffer.data(),
+  mpiISendReceive( sendBuffer.data(),
                     m_sendBufferSize[commID],
                     sendReq,
                     recvBuffer.data(),

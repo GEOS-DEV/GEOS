@@ -41,16 +41,16 @@ public:
    */
   static string CatalogName() { return "FlowProppantTransport"; }
 
-  virtual void RegisterDataOnMesh( dataRepository::Group * const MeshBodies ) override final;
+  virtual void registerDataOnMesh( dataRepository::Group * const MeshBodies ) override final;
 
   virtual real64
-  SolverStep( real64 const & time_n,
+  solverStep( real64 const & time_n,
               real64 const & dt,
               int const cycleNumber,
               DomainPartition & domain ) override;
 
   virtual void
-  ResetStateToBeginningOfStep( DomainPartition & domain ) override;
+  resetStateToBeginningOfStep( DomainPartition & domain ) override;
 
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
@@ -60,17 +60,17 @@ public:
   } flowProppantTransportSolverViewKeys;
 
 
-  void PreStepUpdate( real64 const & time_n,
+  void preStepUpdate( real64 const & time_n,
                       real64 const & dt,
                       DomainPartition & domain );
 
-  void PostStepUpdate( real64 const & time_n,
+  void postStepUpdate( real64 const & time_n,
                        real64 const & dt,
                        DomainPartition & domain );
 
 protected:
 
-  virtual void PostProcessInput() override final;
+  virtual void postProcessInput() override final;
 
 private:
 

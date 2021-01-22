@@ -67,18 +67,18 @@ void ConvertHypreToSuiteSparseMatrix( HypreMatrix const & matrix,
 
   // Identify the smallest process where CSRmatrix exists
   {
-    int rank = MpiWrapper::Comm_rank( matrix.getComm() );
+    int rank = MpiWrapper::commRank( matrix.getComm() );
     if( CSRmatrix == 0 )
     {
-      rank = MpiWrapper::Comm_size( matrix.getComm() );
+      rank = MpiWrapper::commSize( matrix.getComm() );
     }
     SSData.setWorkingRank( MpiWrapper::Min( rank, matrix.getComm() ) );
   }
 
   // Define a new communicator restricted to ranks with at least one matrix row
-  int const rank = MpiWrapper::Comm_rank( matrix.getComm() );
+  int const rank = MpiWrapper::commRank( matrix.getComm() );
   int const color = ( CSRmatrix == 0 ) ? MPI_UNDEFINED : 0;
-  MPI_Comm const subComm = MpiWrapper::Comm_split( matrix.getComm(), color, rank );
+  MPI_Comm const subComm = MpiWrapper::commSplit( matrix.getComm(), color, rank );
 
   // Working rank in the new communicator. Index 0 is required by hypre's function
   // HYPRE_VectorToParVector
@@ -87,7 +87,7 @@ void ConvertHypreToSuiteSparseMatrix( HypreMatrix const & matrix,
 
   if( subComm != MPI_COMM_NULL )
   {
-    if( MpiWrapper::Comm_rank( subComm ) == workingRank )
+    if( MpiWrapper::commRank( subComm ) == workingRank )
     {
       SSData.resize( toSuiteSparse_Int( matrix.numGlobalRows() ),
                      toSuiteSparse_Int( matrix.numGlobalCols() ),
@@ -137,7 +137,7 @@ int SuiteSparseSolve( SuiteSparse & SSData,
 
   if( SSData.getSubComm() != MPI_COMM_NULL )
   {
-    int const rank = MpiWrapper::Comm_rank( SSData.getSubComm() );
+    int const rank = MpiWrapper::commRank( SSData.getSubComm() );
     if( rank == SSData.subCommWorkingRank() )
     {
       // Create local vector to store the solution

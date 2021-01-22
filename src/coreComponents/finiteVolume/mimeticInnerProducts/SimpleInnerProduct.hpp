@@ -54,7 +54,7 @@ public:
   template< localIndex NF >
   GEOSX_HOST_DEVICE
   static void
-  Compute( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition,
+  compute( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition,
            arrayView1d< real64 const > const & transMultiplier,
            ArrayOfArraysView< localIndex const > const & faceToNodes,
            arraySlice1d< localIndex const > const & elemToFaces,
@@ -69,7 +69,7 @@ public:
 template< localIndex NF >
 GEOSX_HOST_DEVICE
 void
-SimpleInnerProduct::Compute( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition,
+SimpleInnerProduct::compute( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition,
                              arrayView1d< real64 const > const & transMultiplier,
                              ArrayOfArraysView< localIndex const > const & faceToNodes,
                              arraySlice1d< localIndex const > const & elemToFaces,
@@ -98,7 +98,7 @@ SimpleInnerProduct::Compute( arrayView2d< real64 const, nodes::REFERENCE_POSITIO
 
 
   // 0) assemble full coefficient tensor from principal axis/components
-  MimeticInnerProductHelpers::MakeFullTensor( elemPerm, permMat );
+  MimeticInnerProductHelpers::makeFullTensor( elemPerm, permMat );
 
   // 1) fill the matrices cellToFaceMat and normalsMat row by row
   for( localIndex ifaceLoc = 0; ifaceLoc < NF; ++ifaceLoc )
@@ -128,7 +128,7 @@ SimpleInnerProduct::Compute( arrayView2d< real64 const, nodes::REFERENCE_POSITIO
     // in the implementation of the transmissibility multiplier (see below)
     // TODO: see what it would take to bring the (harmonically averaged) two-point trans here
     real64 diagEntry = 0.0;
-    MimeticInnerProductHelpers::ComputeInvTPFATransWithMultiplier< NF >( elemPerm,
+    MimeticInnerProductHelpers::computeInvTpfaTransWithMultiplier< NF >( elemPerm,
                                                                          faceNormal,
                                                                          faceArea[ifaceLoc],
                                                                          transMultiplier[elemToFaces[ifaceLoc]],
@@ -156,7 +156,7 @@ SimpleInnerProduct::Compute( arrayView2d< real64 const, nodes::REFERENCE_POSITIO
                                                   work_dimByNumFaces );
 
   // 4) compute the orthonormalization of the matrix cellToFaceVec
-  MimeticInnerProductHelpers::Orthonormalize< NF >( q0, q1, q2, cellToFaceMat );
+  MimeticInnerProductHelpers::orthonormalize< NF >( q0, q1, q2, cellToFaceMat );
 
   // 5) compute P_Q = I - QQ'
   // note: we compute -P_Q here
@@ -188,7 +188,7 @@ SimpleInnerProduct::Compute( arrayView2d< real64 const, nodes::REFERENCE_POSITIO
 
   if( !isZero( LvArray::tensorOps::l2NormSquared< NF >( tpTransInv ) ) )
   {
-    MimeticInnerProductHelpers::ComputeTransMatrixWithMultipliers< NF >( tpTransInv,
+    MimeticInnerProductHelpers::computeTransMatrixWithMultipliers< NF >( tpTransInv,
                                                                          transMatrix );
   }
 

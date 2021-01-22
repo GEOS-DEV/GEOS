@@ -110,7 +110,7 @@ void DecideWellDirection( VEC_TYPE const & vecWellElemCenterToPerf,
 
 }
 
-void PerforationData::ComputeWellTransmissibility( MeshLevel const & mesh,
+void PerforationData::computeWellTransmissibility( MeshLevel const & mesh,
                                                    WellElementSubRegion const * const wellElemSubRegion,
                                                    string const & permeabilityKey )
 {
@@ -143,7 +143,7 @@ void PerforationData::ComputeWellTransmissibility( MeshLevel const & mesh,
 
     // get an approximate dx, dy, dz for the reservoir element
     // this is done by computing a bounding box
-    GetReservoirElementDimensions( mesh, er, esr, ei, dx, dy, dz );
+    getReservoirElementDimensions( mesh, er, esr, ei, dx, dy, dz );
 
     real64 d1 = 0;
     real64 d2 = 0;
@@ -196,14 +196,14 @@ void PerforationData::ComputeWellTransmissibility( MeshLevel const & mesh,
 }
 
 
-void PerforationData::GetReservoirElementDimensions( MeshLevel const & mesh,
+void PerforationData::getReservoirElementDimensions( MeshLevel const & mesh,
                                                      localIndex const er, localIndex const esr, localIndex const ei,
                                                      real64 & dx, real64 & dy, real64 & dz ) const
 {
   ElementRegionManager const * const elemManager = mesh.getElemManager();
   NodeManager const * const nodeManager          = mesh.getNodeManager();
-  CellElementRegion const * const region    = Group::group_cast< CellElementRegion const * >( elemManager->GetRegion( er ));
-  CellBlock const * const subRegion = Group::group_cast< CellElementSubRegion const * >( region->GetSubRegion( esr ));
+  CellElementRegion const * const region    = Group::groupCast< CellElementRegion const * >( elemManager->getRegion( er ));
+  CellBlock const * const subRegion = Group::groupCast< CellElementSubRegion const * >( region->getSubRegion( esr ));
 
   // compute the bounding box of the element
   real64 boxDims[ 3 ];
@@ -225,11 +225,11 @@ void PerforationData::GetReservoirElementDimensions( MeshLevel const & mesh,
 
 }
 
-void PerforationData::ConnectToWellElements( InternalWellGenerator const & wellGeometry,
+void PerforationData::connectToWellElements( InternalWellGenerator const & wellGeometry,
                                              unordered_map< globalIndex, localIndex > const & globalToLocalWellElemMap,
                                              globalIndex elemOffsetGlobal )
 {
-  arrayView1d< globalIndex const > const & perfElemIndexGlobal = wellGeometry.GetPerfElemIndex();
+  arrayView1d< globalIndex const > const & perfElemIndexGlobal = wellGeometry.getPerfElemIndex();
 
   for( localIndex iperfLocal = 0; iperfLocal < size(); ++iperfLocal )
   {

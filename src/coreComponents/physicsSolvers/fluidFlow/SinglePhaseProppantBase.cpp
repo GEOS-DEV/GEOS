@@ -38,12 +38,12 @@ SinglePhaseProppantBase::~SinglePhaseProppantBase()
   // TODO Auto-generated destructor stub
 }
 
-void SinglePhaseProppantBase::ValidateFluidModels( DomainPartition const & domain ) const
+void SinglePhaseProppantBase::validateFluidModels( DomainPartition const & domain ) const
 {
   // Validate fluid models in regions
-  for( auto & mesh : domain.getMeshBodies()->GetSubGroups() )
+  for( auto & mesh : domain.getMeshBodies()->getSubGroups() )
   {
-    MeshLevel const & meshLevel = *Group::group_cast< MeshBody const * >( mesh.second )->getMeshLevel( 0 );
+    MeshLevel const & meshLevel = *Group::groupCast< MeshBody const * >( mesh.second )->getMeshLevel( 0 );
     ValidateModelMapping< SlurryFluidBase >( *meshLevel.getElemManager(), m_fluidModelNames );
   }
 }
@@ -52,9 +52,9 @@ SinglePhaseBase::FluidPropViews SinglePhaseProppantBase::getFluidProperties( con
 {
   SlurryFluidBase const & slurryFluid = dynamicCast< SlurryFluidBase const & >( fluid );
   return { slurryFluid.density(),
-           slurryFluid.dDensity_dPressure(),
+           slurryFluid.dDensityDPressure(),
            slurryFluid.viscosity(),
-           slurryFluid.dViscosity_dPressure(),
+           slurryFluid.dViscosityDPressure(),
            slurryFluid.getWrapper< array2d< real64 > >( SlurryFluidBase::viewKeyStruct::densityString )->getDefaultValue(),
            slurryFluid.getWrapper< array2d< real64 > >( SlurryFluidBase::viewKeyStruct::viscosityString )->getDefaultValue() };
 }
@@ -64,7 +64,7 @@ arrayView1d< real64 const > SinglePhaseProppantBase::getPoreVolumeMult( ElementS
   return subRegion.getReference< array1d< real64 > >( ProppantTransport::viewKeyStruct::poroMultiplierString );
 }
 
-void SinglePhaseProppantBase::UpdateFluidModel( Group & dataGroup, localIndex const targetIndex ) const
+void SinglePhaseProppantBase::updateFluidModel( Group & dataGroup, localIndex const targetIndex ) const
 {
   GEOSX_MARK_FUNCTION;
 
@@ -94,7 +94,7 @@ void SinglePhaseProppantBase::UpdateFluidModel( Group & dataGroup, localIndex co
   constitutive::constitutiveUpdatePassThru( fluid, [&]( auto & castedFluid )
   {
     typename TYPEOFREF( castedFluid ) ::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
-    SinglePhaseProppantBaseKernels::FluidUpdateKernel::Launch( fluidWrapper,
+    SinglePhaseProppantBaseKernels::FluidUpdateKernel::launch( fluidWrapper,
                                                                pres,
                                                                dPres,
                                                                proppantConcentration,
@@ -105,28 +105,28 @@ void SinglePhaseProppantBase::UpdateFluidModel( Group & dataGroup, localIndex co
   } );
 }
 
-void SinglePhaseProppantBase::ResetViewsPrivate( ElementRegionManager const & elemManager )
+void SinglePhaseProppantBase::resetViewsPrivate( ElementRegionManager const & elemManager )
 {
   m_density.clear();
-  m_density = elemManager.ConstructMaterialArrayViewAccessor< real64, 2 >( SlurryFluidBase::viewKeyStruct::densityString,
+  m_density = elemManager.constructMaterialArrayViewAccessor< real64, 2 >( SlurryFluidBase::viewKeyStruct::densityString,
                                                                            targetRegionNames(),
                                                                            fluidModelNames() );
   m_density.setName( getName() + "/accessors/" + SlurryFluidBase::viewKeyStruct::densityString );
 
   m_dDens_dPres.clear();
-  m_dDens_dPres = elemManager.ConstructMaterialArrayViewAccessor< real64, 2 >( SlurryFluidBase::viewKeyStruct::dDens_dPresString,
+  m_dDens_dPres = elemManager.constructMaterialArrayViewAccessor< real64, 2 >( SlurryFluidBase::viewKeyStruct::dDens_dPresString,
                                                                                targetRegionNames(),
                                                                                fluidModelNames() );
   m_dDens_dPres.setName( getName() + "/accessors/" + SlurryFluidBase::viewKeyStruct::dDens_dPresString );
 
   m_viscosity.clear();
-  m_viscosity = elemManager.ConstructMaterialArrayViewAccessor< real64, 2 >( SlurryFluidBase::viewKeyStruct::viscosityString,
+  m_viscosity = elemManager.constructMaterialArrayViewAccessor< real64, 2 >( SlurryFluidBase::viewKeyStruct::viscosityString,
                                                                              targetRegionNames(),
                                                                              fluidModelNames() );
   m_viscosity.setName( getName() + "/accessors/" + SlurryFluidBase::viewKeyStruct::viscosityString );
 
   m_dVisc_dPres.clear();
-  m_dVisc_dPres = elemManager.ConstructMaterialArrayViewAccessor< real64, 2 >( SlurryFluidBase::viewKeyStruct::dVisc_dPresString,
+  m_dVisc_dPres = elemManager.constructMaterialArrayViewAccessor< real64, 2 >( SlurryFluidBase::viewKeyStruct::dVisc_dPresString,
                                                                                targetRegionNames(),
                                                                                fluidModelNames() );
   m_dVisc_dPres.setName( getName() + "/accessors/" + SlurryFluidBase::viewKeyStruct::dVisc_dPresString );

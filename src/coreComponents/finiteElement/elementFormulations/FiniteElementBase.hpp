@@ -305,7 +305,7 @@ public:
   template< int NUM_SUPPORT_POINTS,
             typename GRADIENT_TYPE >
   GEOSX_HOST_DEVICE
-  static void plus_gradNajAij( GRADIENT_TYPE const & gradN,
+  static void plusGradNajAij( GRADIENT_TYPE const & gradN,
                                real64 const (&var_detJxW)[6],
                                real64 ( &R )[NUM_SUPPORT_POINTS][3] );
 
@@ -317,7 +317,7 @@ public:
   template< int NUM_SUPPORT_POINTS,
             typename GRADIENT_TYPE >
   GEOSX_HOST_DEVICE
-  static void plus_gradNajAij( GRADIENT_TYPE const & gradN,
+  static void plusGradNajAij( GRADIENT_TYPE const & gradN,
                                real64 const (&var_detJxW)[3][3],
                                real64 ( &R )[NUM_SUPPORT_POINTS][3] );
 
@@ -331,7 +331,7 @@ public:
    */
   template< int NUM_SUPPORT_POINTS >
   GEOSX_HOST_DEVICE
-  static void plus_NaFi( real64 const (&N)[NUM_SUPPORT_POINTS],
+  static void plusNaFi( real64 const (&N)[NUM_SUPPORT_POINTS],
                          real64 const (&forcingTerm_detJxW)[3],
                          real64 ( &R )[NUM_SUPPORT_POINTS][3] );
 
@@ -355,7 +355,7 @@ public:
   template< int NUM_SUPPORT_POINTS,
             typename GRADIENT_TYPE >
   GEOSX_HOST_DEVICE
-  static void plus_gradNajAij_plus_NaFi( GRADIENT_TYPE const & gradN,
+  static void plusGradNajAijPlusNaFi( GRADIENT_TYPE const & gradN,
                                          real64 const (&var_detJxW)[3][3],
                                          real64 const (&N)[NUM_SUPPORT_POINTS],
                                          real64 const (&forcingTerm_detJxW)[3],
@@ -369,7 +369,7 @@ public:
   template< int NUM_SUPPORT_POINTS,
             typename GRADIENT_TYPE >
   GEOSX_HOST_DEVICE
-  static void plus_gradNajAij_plus_NaFi( GRADIENT_TYPE const & gradN,
+  static void plusGradNajAijPlusNaFi( GRADIENT_TYPE const & gradN,
                                          real64 const (&var_detJxW)[6],
                                          real64 const (&N)[NUM_SUPPORT_POINTS],
                                          real64 const (&forcingTerm_detJxW)[3],
@@ -582,7 +582,7 @@ template< int NUM_SUPPORT_POINTS,
           typename GRADIENT_TYPE >
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-void FiniteElementBase::plus_gradNajAij( GRADIENT_TYPE const & gradN,
+void FiniteElementBase::plusGradNajAij( GRADIENT_TYPE const & gradN,
                                          real64 const (&var_detJxW)[6],
                                          real64 (& R)[NUM_SUPPORT_POINTS][3] )
 {
@@ -599,7 +599,7 @@ template< int NUM_SUPPORT_POINTS,
           typename GRADIENT_TYPE >
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-void FiniteElementBase::plus_gradNajAij( GRADIENT_TYPE const & gradN,
+void FiniteElementBase::plusGradNajAij( GRADIENT_TYPE const & gradN,
                                          real64 const (&var_detJxW)[3][3],
                                          real64 (& R)[NUM_SUPPORT_POINTS][3] )
 {
@@ -612,7 +612,7 @@ void FiniteElementBase::plus_gradNajAij( GRADIENT_TYPE const & gradN,
 template< int NUM_SUPPORT_POINTS >
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-void FiniteElementBase::plus_NaFi( real64 const (&N)[NUM_SUPPORT_POINTS],
+void FiniteElementBase::plusNaFi( real64 const (&N)[NUM_SUPPORT_POINTS],
                                    real64 const (&var_detJxW)[3],
                                    real64 ( & R )[NUM_SUPPORT_POINTS][3] )
 {
@@ -627,7 +627,7 @@ template< int NUM_SUPPORT_POINTS,
           typename GRADIENT_TYPE >
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-void FiniteElementBase::plus_gradNajAij_plus_NaFi( GRADIENT_TYPE const & gradN,
+void FiniteElementBase::plusGradNajAijPlusNaFi( GRADIENT_TYPE const & gradN,
                                                    real64 const (&var_detJxW)[6],
                                                    real64 const (&N)[NUM_SUPPORT_POINTS],
                                                    real64 const (&forcingTerm_detJxW)[3],
@@ -645,7 +645,7 @@ template< int NUM_SUPPORT_POINTS,
           typename GRADIENT_TYPE >
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-void FiniteElementBase::plus_gradNajAij_plus_NaFi( GRADIENT_TYPE const & gradN,
+void FiniteElementBase::plusGradNajAijPlusNaFi( GRADIENT_TYPE const & gradN,
                                                    real64 const (&var_detJxW)[3][3],
                                                    real64 const (&N)[NUM_SUPPORT_POINTS],
                                                    real64 const (&forcingTerm_detJxW)[3],

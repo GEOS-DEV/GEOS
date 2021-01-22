@@ -72,7 +72,7 @@ PoroElastic< BASE >::~PoroElastic()
 template< typename BASE >
 void PoroElastic< BASE >::PostProcessInput()
 {
-  BASE::PostProcessInput();
+  BASE::postProcessInput();
 
   if( m_compressibility <= 0 )
   {
@@ -80,7 +80,7 @@ void PoroElastic< BASE >::PostProcessInput()
 // constants!";
 //    GEOSX_ERROR( message );
   }
-  m_poreVolumeRelation.SetCoefficients( m_referencePressure, 1.0, m_compressibility );
+  m_poreVolumeRelation.setCoefficients( m_referencePressure, 1.0, m_compressibility );
 
 }
 
@@ -124,7 +124,7 @@ void PoroElastic< BASE >::StateUpdateBatchPressure( arrayView1d< real64 const > 
   {
     for( localIndex q = 0; q < numQuad; ++q )
     {
-      relation.Compute( pres[k] + dPres[k], pvmult[k][q], dPVMult_dPres[k][q] );
+      relation.compute( pres[k] + dPres[k], pvmult[k][q], dPVMult_dPres[k][q] );
     }
   } );
 }

@@ -90,7 +90,7 @@ protected:
 
     // Create the solver and solve the system
     using Vector = typename OPERATOR::Vector;
-    std::unique_ptr< KrylovSolver< Vector > > const solver = KrylovSolver< Vector >::Create( params, matrix, precond );
+    std::unique_ptr< KrylovSolver< Vector > > const solver = KrylovSolver< Vector >::create( params, matrix, precond );
     solver->solve( rhs_true, sol_comp );
     EXPECT_TRUE( solver->result().success() );
 
@@ -121,7 +121,7 @@ public:
 
 protected:
 
-  void SetUp()
+  void setUp()
   {
     // Compute matrix and preconditioner
     globalIndex constexpr n = 100;
@@ -195,7 +195,7 @@ protected:
   Matrix laplace2D;
   PreconditionerIdentity< LAI > identity;
 
-  void SetUp()
+  void setUp()
   {
     globalIndex constexpr n = 100;
     compute2DLaplaceOperator( MPI_COMM_GEOSX, n, laplace2D );

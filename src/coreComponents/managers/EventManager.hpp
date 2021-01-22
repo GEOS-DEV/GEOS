@@ -57,12 +57,12 @@ public:
    * @param[in] childName the name of the child to be added
    * @return the Event
    */
-  virtual Group * CreateChild( string const & childKey, string const & childName ) override;
+  virtual Group * createChild( string const & childKey, string const & childName ) override;
 
   /**
    * @brief This method is used to expand any catalogs in the data structure
    */
-  virtual void ExpandObjectCatalogs() override;
+  virtual void expandObjectCatalogs() override;
 
   /**
    * @brief The main execution loop for the code.
@@ -74,7 +74,7 @@ public:
    *   - Advance time, cycle, etc.
    * @param[in] domain the current DomainPartition on which the Event will be ran
    */
-  void Run( dataRepository::Group * domain );
+  void run( dataRepository::Group * domain );
 
   /**
    * @name viewKeyStruct/groupKeyStruct

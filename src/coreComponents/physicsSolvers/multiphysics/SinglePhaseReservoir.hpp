@@ -73,11 +73,11 @@ public:
 
   /**@}*/
 
-  virtual void AddCouplingSparsityPattern( DomainPartition const & domain,
+  virtual void addCouplingSparsityPattern( DomainPartition const & domain,
                                            DofManager const & dofManager,
                                            SparsityPatternView< globalIndex > const & pattern ) const override;
 
-  virtual void AssembleCouplingTerms( real64 const time_n,
+  virtual void assembleCouplingTerms( real64 const time_n,
                                       real64 const dt,
                                       DomainPartition const & domain,
                                       DofManager const & dofManager,

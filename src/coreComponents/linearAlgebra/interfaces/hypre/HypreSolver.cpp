@@ -63,11 +63,11 @@ void HypreSolver::solve( HypreMatrix & mat,
   {
     if( m_parameters.solverType == LinearSolverParameters::SolverType::direct )
     {
-      solve_direct( mat, sol, rhs );
+      solveDirect( mat, sol, rhs );
     }
     else
     {
-      solve_krylov( mat, sol, rhs, dofManager );
+      solveKrylov( mat, sol, rhs, dofManager );
     }
   }
   else
@@ -301,7 +301,7 @@ void CreateHypreKrylovSolver( LinearSolverParameters const & params,
 
 } // namespace
 
-void HypreSolver::solve_direct( HypreMatrix & mat,
+void HypreSolver::solveDirect( HypreMatrix & mat,
                                 HypreVector & sol,
                                 HypreVector & rhs )
 {
@@ -315,7 +315,7 @@ void HypreSolver::solve_direct( HypreMatrix & mat,
   }
 }
 
-void HypreSolver::solve_krylov( HypreMatrix & mat,
+void HypreSolver::solveKrylov( HypreMatrix & mat,
                                 HypreVector & sol,
                                 HypreVector & rhs,
                                 DofManager const * const dofManager )

@@ -95,7 +95,7 @@ FieldSpecificationBase::GetCatalog()
 
 
 
-void FieldSpecificationBase::PostProcessInput()
+void FieldSpecificationBase::postProcessInput()
 {}
 
 

@@ -40,7 +40,7 @@ public:
   }
 
   using CatalogInterface = dataRepository::CatalogInterface< Base, int &, double const & >;
-  static CatalogInterface::CatalogType & GetCatalog()
+  static CatalogInterface::CatalogType & getCatalog()
   {
     static CatalogInterface::CatalogType catalog;
     return catalog;
@@ -101,11 +101,11 @@ TEST( testObjectCatalog, testRegistration )
 
   // allocate a new Derived1 object
   std::unique_ptr< Base >
-  derived1 = Base::CatalogInterface::Factory( "derived1", junk, junk2 );
+  derived1 = Base::CatalogInterface::factory( "derived1", junk, junk2 );
 
   // allocate a new Derived2 object
   std::unique_ptr< Base >
-  derived2 = Base::CatalogInterface::Factory( "derived2", junk, junk2 );
+  derived2 = Base::CatalogInterface::factory( "derived2", junk, junk2 );
 
   EXPECT_STREQ( derived1->getCatalogName().c_str(),
                 Derived1::CatalogName().c_str() );

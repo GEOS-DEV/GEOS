@@ -49,7 +49,7 @@ public:
   /**
    * @copydoc EventBase::EstimateEventTiming()
    */
-  virtual void EstimateEventTiming( real64 const time,
+  virtual void estimateEventTiming( real64 const time,
                                     real64 const dt,
                                     integer const cycle,
                                     dataRepository::Group * domain ) override;
@@ -57,7 +57,7 @@ public:
   /**
    * @copydoc EventBase::GetEventTypeDtRequest()
    */
-  virtual real64 GetEventTypeDtRequest( real64 const time ) override;
+  virtual real64 getEventTypeDtRequest( real64 const time ) override;
 
   /// @cond DO_NOT_DOCUMENT
   struct viewKeyStruct

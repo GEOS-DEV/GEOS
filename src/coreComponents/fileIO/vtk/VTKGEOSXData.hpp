@@ -46,7 +46,7 @@ public:
    * @param[in] val value to be inserted
    */
   template< typename T >
-  void CustomInsertValue( localIndex index, T const & val )
+  void customInsertValue( localIndex index, T const & val )
   {
     this->InsertValue( index, val );
   }

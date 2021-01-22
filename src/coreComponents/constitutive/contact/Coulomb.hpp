@@ -49,7 +49,7 @@ public:
 
   virtual real64 limitTangentialTractionNorm( real64 const normalTraction ) const override final;
 
-  virtual real64 dLimitTangentialTractionNorm_dNormalTraction( real64 const normalTraction ) const override final;
+  virtual real64 dLimitTangentialTractionNormDNormalTraction( real64 const normalTraction ) const override final;
 
   /**
    * @name Static Factory Catalog members and functions
@@ -120,7 +120,7 @@ public:
   real64 const & frictionCoefficient() const { return m_frictionCoefficient; }
 
 protected:
-  virtual void PostProcessInput() override;
+  virtual void postProcessInput() override;
 
 private:
 

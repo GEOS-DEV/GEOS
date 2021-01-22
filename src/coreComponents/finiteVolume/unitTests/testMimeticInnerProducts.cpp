@@ -549,7 +549,7 @@ TEST( testMimeticInnerProducts, TPFA_hexa )
   center[2] = elemCenter[2];
   real64 const perm[ 3 ] = { elemPerm[0], elemPerm[1], elemPerm[2] };
 
-  TPFAInnerProduct::Compute< NF >( nodePosition.toViewConst(),
+  TPFAInnerProduct::compute< NF >( nodePosition.toViewConst(),
                                    transMultiplier.toViewConst(),
                                    faceToNodes.toViewConst(),
                                    elemToFaces.toSliceConst(),
@@ -599,7 +599,7 @@ TEST( testMimeticInnerProducts, QTPFA_hexa )
   center[2] = elemCenter[2];
   real64 const perm[ 3 ] = { elemPerm[0], elemPerm[1], elemPerm[2] };
 
-  QuasiTPFAInnerProduct::Compute< NF >( nodePosition.toViewConst(),
+  QuasiTPFAInnerProduct::compute< NF >( nodePosition.toViewConst(),
                                         transMultiplier.toViewConst(),
                                         faceToNodes.toViewConst(),
                                         elemToFaces.toSliceConst(),
@@ -648,7 +648,7 @@ TEST( testMimeticInnerProducts, Simple_hexa )
   center[2] = elemCenter[2];
   real64 const perm[ 3 ] = { elemPerm[0], elemPerm[1], elemPerm[2] };
 
-  SimpleInnerProduct::Compute< NF >( nodePosition.toViewConst(),
+  SimpleInnerProduct::compute< NF >( nodePosition.toViewConst(),
                                      transMultiplier.toViewConst(),
                                      faceToNodes.toViewConst(),
                                      elemToFaces.toSliceConst(),
@@ -698,7 +698,7 @@ TEST( testMimeticInnerProducts, BdVLM_hexa )
   center[2] = elemCenter[2];
   real64 const perm[ 3 ] = { elemPerm[0], elemPerm[1], elemPerm[2] };
 
-  BdVLMInnerProduct::Compute< NF >( nodePosition.toViewConst(),
+  BdVLMInnerProduct::compute< NF >( nodePosition.toViewConst(),
                                     transMultiplier.toViewConst(),
                                     faceToNodes.toViewConst(),
                                     elemToFaces.toSliceConst(),
@@ -745,7 +745,7 @@ TEST( testMimeticInnerProducts, TPFA_tetra )
   center[2] = elemCenter[2];
   real64 const perm[ 3 ] = { elemPerm[0], elemPerm[1], elemPerm[2] };
 
-  TPFAInnerProduct::Compute< NF >( nodePosition.toViewConst(),
+  TPFAInnerProduct::compute< NF >( nodePosition.toViewConst(),
                                    transMultiplier.toViewConst(),
                                    faceToNodes.toViewConst(),
                                    elemToFaces.toSliceConst(),
@@ -792,7 +792,7 @@ TEST( testMimeticInnerProducts, QTPFA_tetra )
   center[2] = elemCenter[2];
   real64 const perm[ 3 ] = { elemPerm[0], elemPerm[1], elemPerm[2] };
 
-  QuasiTPFAInnerProduct::Compute< NF >( nodePosition.toViewConst(),
+  QuasiTPFAInnerProduct::compute< NF >( nodePosition.toViewConst(),
                                         transMultiplier.toViewConst(),
                                         faceToNodes.toViewConst(),
                                         elemToFaces.toSliceConst(),
@@ -838,7 +838,7 @@ TEST( testMimeticInnerProducts, Simple_tetra )
   center[2] = elemCenter[2];
   real64 const perm[ 3 ] = { elemPerm[0], elemPerm[1], elemPerm[2] };
 
-  SimpleInnerProduct::Compute< NF >( nodePosition.toViewConst(),
+  SimpleInnerProduct::compute< NF >( nodePosition.toViewConst(),
                                      transMultiplier.toViewConst(),
                                      faceToNodes.toViewConst(),
                                      elemToFaces.toSliceConst(),
@@ -884,7 +884,7 @@ TEST( testMimeticInnerProducts, BdVLMtetra )
   center[2] = elemCenter[2];
   real64 const perm[ 3 ] = { elemPerm[0], elemPerm[1], elemPerm[2] };
 
-  BdVLMInnerProduct::Compute< NF >( nodePosition.toViewConst(),
+  BdVLMInnerProduct::compute< NF >( nodePosition.toViewConst(),
                                     transMultiplier.toViewConst(),
                                     faceToNodes.toViewConst(),
                                     elemToFaces.toSliceConst(),

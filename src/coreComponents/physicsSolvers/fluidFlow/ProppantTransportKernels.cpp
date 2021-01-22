@@ -34,7 +34,7 @@ GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void
 AccumulationKernel::
-  Compute( localIndex const NC,
+  compute( localIndex const NC,
            real64 const proppantConcOld,
            real64 const proppantConcNew,
            arraySlice1d< real64 const > const & componentDensOld,
@@ -80,7 +80,7 @@ AccumulationKernel::
 
 void
 AccumulationKernel::
-  Launch( localIndex const size,
+  launch( localIndex const size,
           localIndex const NC,
           localIndex const NDOF,
           globalIndex const rankOffset,
@@ -120,7 +120,7 @@ AccumulationKernel::
 
       real64 const proppantLiftVolume = proppantLiftFlux[ei] * dt;
 
-      Compute( NC,
+      compute( NC,
                proppantConc[ei],
                proppantConc[ei] + dProppantConc[ei],
                componentDensOld[ei],
@@ -158,7 +158,7 @@ GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void
 FluxKernel::
-  ComputeJunction( localIndex const numElems,
+  computeJunction( localIndex const numElems,
                    localIndex const numDofPerCell,
                    arraySlice1d< localIndex const > const & stencilElementIndices,
                    arraySlice1d< real64 const > const & stencilWeights,
@@ -895,7 +895,7 @@ void FluxKernel::
       localIndex const er = seri[iconn][0];
       localIndex const esr = sesri[iconn][0];
 
-      ComputeJunction( numFluxElems,
+      computeJunction( numFluxElems,
                        numDofPerCell,
                        sei[iconn],
                        weights[iconn],
@@ -969,7 +969,7 @@ GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void
 FluxKernel::
-  ComputeCellBasedFlux( localIndex const numElems,
+  computeCellBasedFlux( localIndex const numElems,
                         arraySlice1d< localIndex const > const & stencilElementIndices,
                         arraySlice1d< real64 const > const & stencilWeights,
                         arraySlice1d< R1Tensor const > const & stencilCellCenterToEdgeCenters,
@@ -1116,7 +1116,7 @@ void FluxKernel::
     localIndex const er = seri[iconn][0];
     localIndex const esr = sesri[iconn][0];
 
-    ComputeCellBasedFlux( numFluxElems,
+    computeCellBasedFlux( numFluxElems,
                           sei[iconn],
                           weights[iconn],
                           cellCenterToEdgeCenters[iconn],
@@ -1163,7 +1163,7 @@ GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void
 ProppantPackVolumeKernel::
-  ComputeProppantPackVolume( localIndex const numElems,
+  computeProppantPackVolume( localIndex const numElems,
                              real64 const dt,
                              real64 const proppantDensity,
                              real64 const proppantDiameter,
@@ -1338,7 +1338,7 @@ void ProppantPackVolumeKernel::
     localIndex const er = seri[iconn][0];
     localIndex const esr = sesri[iconn][0];
 
-    ComputeProppantPackVolume( numFluxElems,
+    computeProppantPackVolume( numFluxElems,
                                dt,
                                proppantDensity,
                                proppantDiameter,
@@ -1370,7 +1370,7 @@ GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void
 ProppantPackVolumeKernel::
-  UpdateProppantPackVolume( localIndex const numElems,
+  updateProppantPackVolume( localIndex const numElems,
                             arraySlice1d< localIndex const > const & stencilElementIndices,
                             arraySlice1d< real64 const > const & stencilWeights,
                             arraySlice1d< R1Tensor const > const & stencilCellCenterToEdgeCenters,
@@ -1475,7 +1475,7 @@ void ProppantPackVolumeKernel::
     localIndex const er = seri[iconn][0];
     localIndex const esr = sesri[iconn][0];
 
-    UpdateProppantPackVolume( numFluxElems,
+    updateProppantPackVolume( numFluxElems,
                               sei[iconn],
                               weights[iconn],
                               cellCenterToEdgeCenters[iconn],

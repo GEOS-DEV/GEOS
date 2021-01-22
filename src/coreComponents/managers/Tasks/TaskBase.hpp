@@ -43,7 +43,7 @@ public:
    * @brief Catalog name interface
    * @return This type's catalog name
    */
-  static string CatalogName() { return "TaskBase"; }
+  static string catalogName() { return "TaskBase"; }
 
   /// The catalog interface type for TaskBase
   using CatalogInterface = dataRepository::CatalogInterface< TaskBase, std::string const &, Group * const >;
@@ -54,7 +54,7 @@ public:
   static CatalogInterface::CatalogType & GetCatalog();
 
   /// @copydoc geosx::ExecutableGroup::Execute
-  virtual void Execute( real64 const time_n,
+  virtual void execute( real64 const time_n,
                         real64 const dt,
                         integer const cycleNumber,
                         integer const eventCounter,
@@ -71,7 +71,7 @@ public:
   }
 
   /// @copydoc geosx::dataRepository::Group::PostProcessInput( )
-  void PostProcessInput() override;
+  void postProcessInput() override;
 };
 
 } /* namespace */

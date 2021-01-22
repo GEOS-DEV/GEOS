@@ -124,7 +124,7 @@ public:
 
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  virtual void Update( localIndex const k,
+  virtual void update( localIndex const k,
                        real64 const proppantConcentration,
                        real64 const fluidDensity,
                        real64 const dFluidDensity_dPressure,
@@ -133,7 +133,7 @@ public:
                        real64 const dFluidViscosity_dPressure,
                        arraySlice1d< real64 const > const & dFluidViscosity_dComponentConcentration ) const override
   {
-    Compute( proppantConcentration,
+    compute( proppantConcentration,
              fluidDensity,
              dFluidDensity_dPressure,
              dFluidDensity_dComponentConcentration,
@@ -152,7 +152,7 @@ private:
 
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  void Compute( real64 const proppantConcentration,
+  void compute( real64 const proppantConcentration,
                 real64 const fluidDensity,
                 real64 const dFluidDensity_dPressure,
                 arraySlice1d< real64 const > const & dFluidDensity_dComponentConcentration,
@@ -191,9 +191,9 @@ public:
 
   // *** ConstitutiveBase interface
 
-  static std::string CatalogName() { return "ParticleFluid"; }
+  static std::string catalogName() { return "ParticleFluid"; }
 
-  virtual string getCatalogName() const override { return CatalogName(); }
+  virtual string getCatalogName() const override { return catalogName(); }
 
   /// Type of kernel wrapper for in-kernel update
   using KernelWrapper = ParticleFluidUpdate;
@@ -223,7 +223,7 @@ public:
 
 protected:
 
-  virtual void PostProcessInput() override;
+  virtual void postProcessInput() override;
 
 private:
 
@@ -251,7 +251,7 @@ private:
 
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-void ParticleFluidUpdate::Compute( real64 const proppantConcentration,
+void ParticleFluidUpdate::compute( real64 const proppantConcentration,
                                    real64 const fluidDensity,
                                    real64 const GEOSX_UNUSED_PARAM( dFluidDensity_dPressure ),
                                    arraySlice1d< real64 const > const & GEOSX_UNUSED_PARAM( dFluidDensity_dComponentConcentration ),

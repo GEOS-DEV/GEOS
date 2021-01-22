@@ -72,28 +72,28 @@ public:
 
 
   GEOSX_HOST_DEVICE
-  virtual void SmallStrainNoState( localIndex const k,
+  virtual void smallStrainNoState( localIndex const k,
                                    real64 const ( &voigtStrain )[ 6 ],
                                    real64 ( &stress )[ 6 ] ) const override final;
 
   GEOSX_HOST_DEVICE
-  virtual void SmallStrain( localIndex const k,
+  virtual void smallStrain( localIndex const k,
                             localIndex const q,
                             real64 const ( &voigtStrainInc )[ 6 ] ) const override final;
 
   GEOSX_HOST_DEVICE
-  virtual void HypoElastic( localIndex const k,
+  virtual void hypoElastic( localIndex const k,
                             localIndex const q,
                             real64 const ( &Ddt )[ 6 ],
                             real64 const ( &Rot )[ 3 ][ 3 ] ) const override final;
 
   GEOSX_HOST_DEVICE
-  virtual void HyperElastic( localIndex const k,
+  virtual void hyperElastic( localIndex const k,
                              real64 const (&FmI)[3][3],
                              real64 ( &stress )[ 6 ] ) const override final;
 
   GEOSX_HOST_DEVICE
-  virtual void HyperElastic( localIndex const k,
+  virtual void hyperElastic( localIndex const k,
                              localIndex const q,
                              real64 const (&FmI)[3][3] ) const override final;
 
@@ -111,7 +111,7 @@ public:
    * @copydoc SolidBase::GetStiffness
    */
   GEOSX_HOST_DEVICE inline
-  virtual void GetStiffness( localIndex const k,
+  virtual void getStiffness( localIndex const k,
                              localIndex const q,
                              real64 (& c)[6][6] ) const override final
   {
@@ -140,7 +140,7 @@ GEOSX_FORCE_INLINE
 GEOSX_HOST_DEVICE
 void
 LinearElasticAnisotropicUpdates::
-  SmallStrainNoState( localIndex const k,
+  smallStrainNoState( localIndex const k,
                       real64 const ( &voigtStrain )[ 6 ],
                       real64 ( & stress )[ 6 ] ) const
 {
@@ -158,7 +158,7 @@ GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void
 LinearElasticAnisotropicUpdates::
-  SmallStrain( localIndex const k,
+  smallStrain( localIndex const k,
                localIndex const q,
                real64 const ( &voigtStrainInc )[ 6 ] ) const
 {
@@ -169,7 +169,7 @@ GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void
 LinearElasticAnisotropicUpdates::
-  HypoElastic( localIndex const k,
+  hypoElastic( localIndex const k,
                localIndex const q,
                real64 const ( &Ddt )[ 6 ],
                real64 const ( &Rot )[ 3 ][ 3 ] ) const
@@ -203,7 +203,7 @@ GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void
 LinearElasticAnisotropicUpdates::
-  HyperElastic( localIndex const GEOSX_UNUSED_PARAM( k ),
+  hyperElastic( localIndex const GEOSX_UNUSED_PARAM( k ),
                 real64 const (&GEOSX_UNUSED_PARAM( FmI ))[3][3],
                 real64 ( & )[ 6 ] ) const
 {
@@ -214,7 +214,7 @@ GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void
 LinearElasticAnisotropicUpdates::
-  HyperElastic( localIndex const GEOSX_UNUSED_PARAM( k ),
+  hyperElastic( localIndex const GEOSX_UNUSED_PARAM( k ),
                 localIndex const GEOSX_UNUSED_PARAM( q ),
                 real64 const (&GEOSX_UNUSED_PARAM( FmI ))[3][3] ) const
 {
@@ -258,9 +258,9 @@ public:
   /**
    * @return A string that is used to register/lookup this class in the registry
    */
-  static std::string CatalogName() { return m_catalogNameString; }
+  static std::string catalogName() { return m_catalogNameString; }
 
-  virtual string getCatalogName() const override { return CatalogName(); }
+  virtual string getCatalogName() const override { return catalogName(); }
   ///@}
 
   /**
@@ -329,7 +329,7 @@ public:
   }
 
 protected:
-  virtual void PostProcessInput() override;
+  virtual void postProcessInput() override;
 
 private:
   /// default value for stiffness tensor

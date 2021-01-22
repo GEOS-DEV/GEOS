@@ -47,7 +47,7 @@ public:
   /**
    * @brief Initialize the table function
    */
-  virtual void InitializeFunction() override;
+  virtual void initializeFunction() override;
 
   /**
    * @brief Method to evaluate a function on a target object
@@ -56,12 +56,12 @@ public:
    * @param set the subset of nodes to apply the function to
    * @param result an array to hold the results of the function
    */
-  inline void Evaluate( dataRepository::Group const * const group,
+  inline void evaluate( dataRepository::Group const * const group,
                         real64 const time,
                         SortedArrayView< localIndex const > const & set,
                         real64_array & result ) const override final
   {
-    FunctionBase::EvaluateT< SymbolicFunction >( group, time, set, result );
+    FunctionBase::evaluateT< SymbolicFunction >( group, time, set, result );
   }
 
   /**
@@ -69,7 +69,7 @@ public:
    * @param input a scalar input
    * @return the function result
    */
-  inline real64 Evaluate( real64 const * const input ) const override final
+  inline real64 evaluate( real64 const * const input ) const override final
   {
     return parserExpression.evaluate( reinterpret_cast< void * >( const_cast< real64 * >(input) ) );
   }

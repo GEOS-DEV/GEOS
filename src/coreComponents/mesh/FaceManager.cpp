@@ -199,7 +199,7 @@ void createFacesByLowestNode( ElementRegionManager const & elementManager,
   // loop over all the regions
   for( typename dataRepository::indexType er = 0; er < elementManager.numRegions(); ++er )
   {
-    ElementRegionBase const & elemRegion = *elementManager.GetRegion( er );
+    ElementRegionBase const & elemRegion = *elementManager.getRegion( er );
 
     // loop over all the subregions
     elemRegion.forElementSubRegionsIndex< CellElementSubRegion >( [&]( localIndex const esr,
@@ -220,7 +220,7 @@ void createFacesByLowestNode( ElementRegionManager const & elementManager,
         {
           for( localIndex elementLocalFaceIndex = 0; elementLocalFaceIndex < numFacesPerElement; ++elementLocalFaceIndex )
           {
-            subRegion.GetFaceNodes( k, elementLocalFaceIndex, tempNodeList );
+            subRegion.getFaceNodes( k, elementLocalFaceIndex, tempNodeList );
             findSmallestThreeValues( tempNodeList, lowestNodes );
 
             facesByLowestNode.emplaceBackAtomic< parallelHostAtomic >( lowestNodes[0],
@@ -329,8 +329,8 @@ void resizeFaceToNodeMap( ElementRegionManager const & elementManager,
       localIndex const elementLocalFaceIndex = facesByLowestNode( nodeID, j ).elementLocalFaceIndex;
 
       // Get the number of face nodes from the subregion.
-      CellElementSubRegion const & subRegion = *elementManager.GetRegion( er )->GetSubRegion< CellElementSubRegion >( esr );
-      numNodesPerFace[ curFaceID ] = subRegion.GetNumFaceNodes( k, elementLocalFaceIndex );
+      CellElementSubRegion const & subRegion = *elementManager.getRegion( er )->getSubRegion< CellElementSubRegion >( esr );
+      numNodesPerFace[ curFaceID ] = subRegion.getNumFaceNodes( k, elementLocalFaceIndex );
       totalFaceNodes += numNodesPerFace[ curFaceID ];
 
       j += facesByLowestNode( nodeID, j ) == facesByLowestNode( nodeID, j + 1 );
@@ -345,8 +345,8 @@ void resizeFaceToNodeMap( ElementRegionManager const & elementManager,
       localIndex const elementLocalFaceIndex = facesByLowestNode( nodeID, j ).elementLocalFaceIndex;
 
       // Get the number of face nodes from the subregion.
-      CellElementSubRegion const & subRegion = *elementManager.GetRegion( er )->GetSubRegion< CellElementSubRegion >( esr );
-      numNodesPerFace[ curFaceID ] = subRegion.GetNumFaceNodes( k, elementLocalFaceIndex );
+      CellElementSubRegion const & subRegion = *elementManager.getRegion( er )->getSubRegion< CellElementSubRegion >( esr );
+      numNodesPerFace[ curFaceID ] = subRegion.getNumFaceNodes( k, elementLocalFaceIndex );
       totalFaceNodes += numNodesPerFace[ curFaceID ];
     }
   } );
@@ -400,10 +400,10 @@ void addInteriorFace( ElementRegionManager & elementManager,
     localIndex const elementLocalFaceIndex = fb0.elementLocalFaceIndex;
 
     // Get the subRegion associated with the element.
-    CellElementSubRegion & subRegion = *elementManager.GetRegion( er )->GetSubRegion< CellElementSubRegion >( esr );
+    CellElementSubRegion & subRegion = *elementManager.getRegion( er )->getSubRegion< CellElementSubRegion >( esr );
 
     // The first element defines the node ordering for the face.
-    localIndex const numFaceNodes = subRegion.GetFaceNodes( k, elementLocalFaceIndex, nodeList[ faceID ] );
+    localIndex const numFaceNodes = subRegion.getFaceNodes( k, elementLocalFaceIndex, nodeList[ faceID ] );
     GEOSX_ASSERT_EQ( numFaceNodes, nodeList.sizeOfArray( faceID ) );
     GEOSX_DEBUG_VAR( numFaceNodes );
 
@@ -423,7 +423,7 @@ void addInteriorFace( ElementRegionManager & elementManager,
     localIndex const k = fb1.k;
     localIndex const elementLocalFaceIndex = fb1.elementLocalFaceIndex;
 
-    CellElementSubRegion & subRegion = *elementManager.GetRegion( er )->GetSubRegion< CellElementSubRegion >( esr );
+    CellElementSubRegion & subRegion = *elementManager.getRegion( er )->getSubRegion< CellElementSubRegion >( esr );
     subRegion.faceList()( k, elementLocalFaceIndex ) = faceID;
 
     elemRegionList( faceID, 1 ) = er;
@@ -456,10 +456,10 @@ void addBoundaryFace( ElementRegionManager & elementManager,
   localIndex const elementLocalFaceIndex = fb.elementLocalFaceIndex;
 
   // Get the subRegion associated with the element.
-  CellElementSubRegion & subRegion = *elementManager.GetRegion( er )->GetSubRegion< CellElementSubRegion >( esr );
+  CellElementSubRegion & subRegion = *elementManager.getRegion( er )->getSubRegion< CellElementSubRegion >( esr );
 
   // Get the nodes associated with the face.
-  localIndex const numFaceNodes = subRegion.GetFaceNodes( k, elementLocalFaceIndex, nodeList[ faceID ] );
+  localIndex const numFaceNodes = subRegion.getFaceNodes( k, elementLocalFaceIndex, nodeList[ faceID ] );
   GEOSX_ASSERT_EQ( numFaceNodes, nodeList.sizeOfArray( faceID ) );
   GEOSX_DEBUG_VAR( numFaceNodes );
 
@@ -538,7 +538,7 @@ void populateMaps( ElementRegionManager & elementManager,
 }
 
 
-void FaceManager::BuildFaces( NodeManager * const nodeManager, ElementRegionManager * const elementManager )
+void FaceManager::buildFaces( NodeManager * const nodeManager, ElementRegionManager * const elementManager )
 {
   GEOSX_MARK_FUNCTION;
 
@@ -573,7 +573,7 @@ void FaceManager::BuildFaces( NodeManager * const nodeManager, ElementRegionMana
   {
     auto const & setWrapper = nodeSets[i];
     std::string const & setName = setWrapper->getName();
-    CreateSet( setName );
+    createSet( setName );
   }
 
   // Then loop over them in parallel and fill them in.
@@ -582,10 +582,10 @@ void FaceManager::BuildFaces( NodeManager * const nodeManager, ElementRegionMana
     auto const & setWrapper = nodeSets[i];
     std::string const & setName = setWrapper->getName();
     SortedArrayView< localIndex const > const & targetSet = nodeManager->sets().getReference< SortedArray< localIndex > >( setName ).toViewConst();
-    ConstructSetFromSetAndMap( targetSet, m_nodeList.toViewConst(), setName );
+    constructSetFromSetAndMap( targetSet, m_nodeList.toViewConst(), setName );
   } );
 
-  SetDomainBoundaryObjects( nodeManager );
+  setDomainBoundaryObjects( nodeManager );
 
   computeGeometry( nodeManager );
 }
@@ -609,7 +609,7 @@ void FaceManager::computeGeometry( NodeManager const * const nodeManager )
   } );
 }
 
-void FaceManager::SetDomainBoundaryObjects( NodeManager * const nodeManager )
+void FaceManager::setDomainBoundaryObjects( NodeManager * const nodeManager )
 {
   // Set value of domainBounaryIndicator to one if it is found to have only one elements that it
   // is connected to.
@@ -645,7 +645,7 @@ void FaceManager::SetDomainBoundaryObjects( NodeManager * const nodeManager )
 }
 
 
-void FaceManager::SetIsExternal()
+void FaceManager::setIsExternal()
 {
   arrayView1d< integer const > const isDomainBoundary = this->getDomainBoundaryIndicator();
 
@@ -672,7 +672,7 @@ localIndex FaceManager::getMaxFaceNodes() const
   return maxSize;
 }
 
-void FaceManager::SortAllFaceNodes( NodeManager const * const nodeManager,
+void FaceManager::sortAllFaceNodes( NodeManager const * const nodeManager,
                                     ElementRegionManager const * const elemManager )
 {
   GEOSX_MARK_FUNCTION;
@@ -692,15 +692,15 @@ void FaceManager::SortAllFaceNodes( NodeManager const * const nodeManager,
 
   forAll< parallelHostPolicy >( size(), [&]( localIndex const kf )
   {
-    ElementRegionBase const * const elemRegion = elemManager->GetRegion( elemRegionList[kf][0] );
-    CellElementSubRegion const * const subRegion = elemRegion->GetSubRegion< CellElementSubRegion >( elemSubRegionList[kf][0] );
+    ElementRegionBase const * const elemRegion = elemManager->getRegion( elemRegionList[kf][0] );
+    CellElementSubRegion const * const subRegion = elemRegion->getSubRegion< CellElementSubRegion >( elemSubRegionList[kf][0] );
     localIndex const numFaceNodes = faceToNodeMap.sizeOfArray( kf );
     arrayView2d< real64 const > const elemCenter = subRegion->getElementCenter();
-    SortFaceNodes( X, elemCenter[ elemList( kf, 0 ) ], faceToNodeMap[ kf ], numFaceNodes );
+    sortFaceNodes( X, elemCenter[ elemList( kf, 0 ) ], faceToNodeMap[ kf ], numFaceNodes );
   } );
 }
 
-void FaceManager::SortFaceNodes( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X,
+void FaceManager::sortFaceNodes( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X,
                                  arraySlice1d< real64 const > const elementCenter,
                                  localIndex * const faceNodes,
                                  localIndex const numFaceNodes )
@@ -793,11 +793,11 @@ void FaceManager::SortFaceNodes( arrayView2d< real64 const, nodes::REFERENCE_POS
 }
 
 
-void FaceManager::ExtractMapFromObjectForAssignGlobalIndexNumbers( ObjectManagerBase const * const nodeManager,
+void FaceManager::extractMapFromObjectForAssignGlobalIndexNumbers( ObjectManagerBase const * const nodeManager,
                                                                    std::vector< std::vector< globalIndex > > & globalFaceNodes )
 {
   GEOSX_MARK_FUNCTION;
-  nodeManager->CheckTypeID( typeid( NodeManager ) );
+  nodeManager->checkTypeId( typeid( NodeManager ) );
 
   localIndex const numFaces = size();
 
@@ -831,9 +831,9 @@ void FaceManager::ExtractMapFromObjectForAssignGlobalIndexNumbers( ObjectManager
 
 
 
-void FaceManager::ViewPackingExclusionList( SortedArray< localIndex > & exclusionList ) const
+void FaceManager::viewPackingExclusionList( SortedArray< localIndex > & exclusionList ) const
 {
-  ObjectManagerBase::ViewPackingExclusionList( exclusionList );
+  ObjectManagerBase::viewPackingExclusionList( exclusionList );
   exclusionList.insert( this->getWrapperIndex( viewKeyStruct::nodeListString ));
   exclusionList.insert( this->getWrapperIndex( viewKeyStruct::edgeListString ));
   exclusionList.insert( this->getWrapperIndex( viewKeyStruct::elementRegionListString ));
@@ -842,20 +842,20 @@ void FaceManager::ViewPackingExclusionList( SortedArray< localIndex > & exclusio
 }
 
 
-localIndex FaceManager::PackUpDownMapsSize( arrayView1d< localIndex const > const & packList ) const
+localIndex FaceManager::packUpDownMapsSize( arrayView1d< localIndex const > const & packList ) const
 {
   buffer_unit_type * junk = nullptr;
-  return PackUpDownMapsPrivate< false >( junk, packList );
+  return packUpDownMapsPrivate< false >( junk, packList );
 }
 
-localIndex FaceManager::PackUpDownMaps( buffer_unit_type * & buffer,
+localIndex FaceManager::packUpDownMaps( buffer_unit_type * & buffer,
                                         arrayView1d< localIndex const > const & packList ) const
 {
-  return PackUpDownMapsPrivate< true >( buffer, packList );
+  return packUpDownMapsPrivate< true >( buffer, packList );
 }
 
 template< bool DOPACK >
-localIndex FaceManager::PackUpDownMapsPrivate( buffer_unit_type * & buffer,
+localIndex FaceManager::packUpDownMapsPrivate( buffer_unit_type * & buffer,
                                                arrayView1d< localIndex const > const & packList ) const
 {
   localIndex packedSize = 0;
@@ -863,19 +863,19 @@ localIndex FaceManager::PackUpDownMapsPrivate( buffer_unit_type * & buffer,
   packedSize += bufferOps::Pack< DOPACK >( buffer, string( viewKeyStruct::nodeListString ) );
 
   packedSize += bufferOps::Pack< DOPACK >( buffer,
-                                           m_nodeList.Base().toViewConst(),
+                                           m_nodeList.base().toViewConst(),
                                            m_unmappedGlobalIndicesInToNodes,
                                            packList,
                                            this->localToGlobalMap(),
-                                           m_nodeList.RelatedObjectLocalToGlobal() );
+                                           m_nodeList.relatedObjectLocalToGlobal() );
 
   packedSize += bufferOps::Pack< DOPACK >( buffer, string( viewKeyStruct::edgeListString ) );
   packedSize += bufferOps::Pack< DOPACK >( buffer,
-                                           m_edgeList.Base().toViewConst(),
+                                           m_edgeList.base().toViewConst(),
                                            m_unmappedGlobalIndicesInToEdges,
                                            packList,
                                            this->localToGlobalMap(),
-                                           m_edgeList.RelatedObjectLocalToGlobal() );
+                                           m_edgeList.relatedObjectLocalToGlobal() );
 
   packedSize += bufferOps::Pack< DOPACK >( buffer, string( viewKeyStruct::elementListString ) );
   packedSize += bufferOps::Pack< DOPACK >( buffer,
@@ -889,7 +889,7 @@ localIndex FaceManager::PackUpDownMapsPrivate( buffer_unit_type * & buffer,
 
 
 
-localIndex FaceManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
+localIndex FaceManager::unpackUpDownMaps( buffer_unit_type const * & buffer,
                                           localIndex_array & packList,
                                           bool const overwriteUpMaps,
                                           bool const GEOSX_UNUSED_PARAM( overwriteDownMaps ) )
@@ -907,7 +907,7 @@ localIndex FaceManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
                                      packList,
                                      m_unmappedGlobalIndicesInToNodes,
                                      this->globalToLocalMap(),
-                                     m_nodeList.RelatedObjectGlobalToLocal() );
+                                     m_nodeList.relatedObjectGlobalToLocal() );
 
 
   string edgeListString;
@@ -919,7 +919,7 @@ localIndex FaceManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
                                      packList,
                                      m_unmappedGlobalIndicesInToEdges,
                                      this->globalToLocalMap(),
-                                     m_edgeList.RelatedObjectGlobalToLocal() );
+                                     m_edgeList.relatedObjectGlobalToLocal() );
 
 
   string elementListString;
@@ -939,11 +939,11 @@ localIndex FaceManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
 
 void FaceManager::FixUpDownMaps( bool const clearIfUnmapped )
 {
-  ObjectManagerBase::FixUpDownMaps( m_nodeList,
+  ObjectManagerBase::fixUpDownMaps( m_nodeList,
                                     m_unmappedGlobalIndicesInToNodes,
                                     clearIfUnmapped );
 
-  ObjectManagerBase::FixUpDownMaps( m_edgeList,
+  ObjectManagerBase::fixUpDownMaps( m_edgeList,
                                     m_unmappedGlobalIndicesInToEdges,
                                     clearIfUnmapped );
 
@@ -986,8 +986,8 @@ void FaceManager::depopulateUpMaps( std::set< localIndex > const & receivedFaces
 
       if( elemRegionIndex!=-1 && elemSubRegionIndex!=-1 && elemIndex!=-1 )
       {
-        CellElementSubRegion const * subRegion = elemRegionManager.GetRegion( elemRegionIndex )->
-                                                   GetSubRegion< CellElementSubRegion >( elemSubRegionIndex );
+        CellElementSubRegion const * subRegion = elemRegionManager.getRegion( elemRegionIndex )->
+                                                   getSubRegion< CellElementSubRegion >( elemSubRegionIndex );
         array2d< localIndex > const & downmap = subRegion->faceList();
         bool hasTargetIndex = false;
 

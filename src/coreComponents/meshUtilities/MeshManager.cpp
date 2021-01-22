@@ -34,34 +34,34 @@ MeshManager::MeshManager( std::string const & name,
 MeshManager::~MeshManager()
 {}
 
-Group * MeshManager::CreateChild( string const & childKey, string const & childName )
+Group * MeshManager::createChild( string const & childKey, string const & childName )
 {
   GEOSX_LOG_RANK_0( "Adding Mesh: " << childKey << ", " << childName );
-  std::unique_ptr< MeshGeneratorBase > solver = MeshGeneratorBase::CatalogInterface::Factory( childKey, childName, this );
+  std::unique_ptr< MeshGeneratorBase > solver = MeshGeneratorBase::CatalogInterface::factory( childKey, childName, this );
   return this->RegisterGroup< MeshGeneratorBase >( childName, std::move( solver ) );
 }
 
 
-void MeshManager::ExpandObjectCatalogs()
+void MeshManager::expandObjectCatalogs()
 {
   // During schema generation, register one of each type derived from MeshGeneratorBase here
   for( auto & catalogIter: MeshGeneratorBase::GetCatalog())
   {
-    CreateChild( catalogIter.first, catalogIter.first );
+    createChild( catalogIter.first, catalogIter.first );
   }
 }
 
 
-void MeshManager::GenerateMeshes( DomainPartition * const domain )
+void MeshManager::generateMeshes( DomainPartition * const domain )
 {
   forSubGroups< MeshGeneratorBase >( [&]( MeshGeneratorBase & meshGen )
   {
-    meshGen.GenerateMesh( domain );
+    meshGen.generateMesh( domain );
   } );
 }
 
 
-void MeshManager::GenerateMeshLevels( DomainPartition * const domain )
+void MeshManager::generateMeshLevels( DomainPartition * const domain )
 {
   this->forSubGroups< MeshGeneratorBase >( [&]( MeshGeneratorBase & meshGen )
   {
@@ -70,7 +70,7 @@ void MeshManager::GenerateMeshLevels( DomainPartition * const domain )
     // THIS IS A HACK
     if( meshName.find( "well" ) == std::string::npos )
     {
-      domain->getMeshBodies()->RegisterGroup< MeshBody >( meshName )->CreateMeshLevel( 0 );
+      domain->getMeshBodies()->registerGroup< MeshBody >( meshName )->createMeshLevel( 0 );
     }
   } );
 }

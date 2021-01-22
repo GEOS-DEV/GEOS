@@ -65,7 +65,7 @@ public:
 
   ///@}
 
-  bool IsCoordInObject( real64 const ( &coord ) [3] ) const override final;
+  bool isCoordInObject( real64 const ( &coord ) [3] ) const override final;
 
   /**
    * @brief Find the bounds of the plane.
@@ -128,7 +128,7 @@ protected:
    * @brief This function provides the capability to post process input values prior to
    * any other initialization operations.
    */
-  virtual void PostProcessInput() override final;
+  virtual void postProcessInput() override final;
 
 private:
 

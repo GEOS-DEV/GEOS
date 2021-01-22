@@ -34,7 +34,7 @@ GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void
 ComponentFractionKernel::
-  Compute( arraySlice1d< real64 const > const compDens,
+  compute( arraySlice1d< real64 const > const compDens,
            arraySlice1d< real64 const > const dCompDens,
            arraySlice1d< real64 > const compFrac,
            arraySlice2d< real64 > const dCompFrac_dCompDens )
@@ -62,7 +62,7 @@ ComponentFractionKernel::
 template< localIndex NC >
 void
 ComponentFractionKernel::
-  Launch( localIndex const size,
+  launch( localIndex const size,
           arrayView2d< real64 const > const & compDens,
           arrayView2d< real64 const > const & dCompDens,
           arrayView2d< real64 > const & compFrac,
@@ -70,7 +70,7 @@ ComponentFractionKernel::
 {
   forAll< parallelDevicePolicy<> >( size, [=] GEOSX_HOST_DEVICE ( localIndex const a )
   {
-    Compute< NC >( compDens[a],
+    compute< NC >( compDens[a],
                    dCompDens[a],
                    compFrac[a],
                    dCompFrac_dCompDens[a] );
@@ -80,7 +80,7 @@ ComponentFractionKernel::
 template< localIndex NC >
 void
 ComponentFractionKernel::
-  Launch( SortedArrayView< localIndex const > const & targetSet,
+  launch( SortedArrayView< localIndex const > const & targetSet,
           arrayView2d< real64 const > const & compDens,
           arrayView2d< real64 const > const & dCompDens,
           arrayView2d< real64 > const & compFrac,
@@ -89,7 +89,7 @@ ComponentFractionKernel::
   forAll< parallelDevicePolicy<> >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const i )
   {
     localIndex const a = targetSet[ i ];
-    Compute< NC >( compDens[a],
+    compute< NC >( compDens[a],
                    dCompDens[a],
                    compFrac[a],
                    dCompFrac_dCompDens[a] );
@@ -127,7 +127,7 @@ GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void
 PhaseVolumeFractionKernel::
-  Compute( arraySlice1d< real64 const > const & compDens,
+  compute( arraySlice1d< real64 const > const & compDens,
            arraySlice1d< real64 const > const & dCompDens,
            arraySlice2d< real64 const > const & dCompFrac_dCompDens,
            arraySlice1d< real64 const > const & phaseDens,
@@ -184,7 +184,7 @@ PhaseVolumeFractionKernel::
 
 template< localIndex NC, localIndex NP >
 void PhaseVolumeFractionKernel::
-  Launch( localIndex const size,
+  launch( localIndex const size,
           arrayView2d< real64 const > const & compDens,
           arrayView2d< real64 const > const & dCompDens,
           arrayView3d< real64 const > const & dCompFrac_dCompDens,
@@ -200,7 +200,7 @@ void PhaseVolumeFractionKernel::
 {
   forAll< parallelDevicePolicy<> >( size, [=] GEOSX_HOST_DEVICE ( localIndex const a )
   {
-    Compute< NC, NP >( compDens[a],
+    compute< NC, NP >( compDens[a],
                        dCompDens[a],
                        dCompFrac_dCompDens[a],
                        phaseDens[a][0],
@@ -217,7 +217,7 @@ void PhaseVolumeFractionKernel::
 
 template< localIndex NC, localIndex NP >
 void PhaseVolumeFractionKernel::
-  Launch( SortedArrayView< localIndex const > const & targetSet,
+  launch( SortedArrayView< localIndex const > const & targetSet,
           arrayView2d< real64 const > const & compDens,
           arrayView2d< real64 const > const & dCompDens,
           arrayView3d< real64 const > const & dCompFrac_dCompDens,
@@ -234,7 +234,7 @@ void PhaseVolumeFractionKernel::
   forAll< parallelDevicePolicy<> >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const i )
   {
     localIndex const a = targetSet[ i ];
-    Compute< NC, NP >( compDens[a],
+    compute< NC, NP >( compDens[a],
                        dCompDens[a],
                        dCompFrac_dCompDens[a],
                        phaseDens[a][0],
@@ -310,7 +310,7 @@ GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void
 PhaseMobilityKernel::
-  Compute( arraySlice2d< real64 const > const & dCompFrac_dCompDens,
+  compute( arraySlice2d< real64 const > const & dCompFrac_dCompDens,
            arraySlice1d< real64 const > const & phaseDens,
            arraySlice1d< real64 const > const & dPhaseDens_dPres,
            arraySlice2d< real64 const > const & dPhaseDens_dComp,
@@ -374,7 +374,7 @@ PhaseMobilityKernel::
 
 template< localIndex NC, localIndex NP >
 void PhaseMobilityKernel::
-  Launch( localIndex const size,
+  launch( localIndex const size,
           arrayView3d< real64 const > const & dCompFrac_dCompDens,
           arrayView3d< real64 const > const & phaseDens,
           arrayView3d< real64 const > const & dPhaseDens_dPres,
@@ -392,7 +392,7 @@ void PhaseMobilityKernel::
 {
   forAll< parallelDevicePolicy<> >( size, [=] GEOSX_HOST_DEVICE ( localIndex const a )
   {
-    Compute< NC, NP >( dCompFrac_dCompDens[a],
+    compute< NC, NP >( dCompFrac_dCompDens[a],
                        phaseDens[a][0],
                        dPhaseDens_dPres[a][0],
                        dPhaseDens_dComp[a][0],
@@ -411,7 +411,7 @@ void PhaseMobilityKernel::
 
 template< localIndex NC, localIndex NP >
 void PhaseMobilityKernel::
-  Launch( SortedArrayView< localIndex const > const & targetSet,
+  launch( SortedArrayView< localIndex const > const & targetSet,
           arrayView3d< real64 const > const & dCompFrac_dCompDens,
           arrayView3d< real64 const > const & phaseDens,
           arrayView3d< real64 const > const & dPhaseDens_dPres,
@@ -430,7 +430,7 @@ void PhaseMobilityKernel::
   forAll< parallelDevicePolicy<> >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const i )
   {
     localIndex const a = targetSet[ i ];
-    Compute< NC, NP >( dCompFrac_dCompDens[a],
+    compute< NC, NP >( dCompFrac_dCompDens[a],
                        phaseDens[a][0],
                        dPhaseDens_dPres[a][0],
                        dPhaseDens_dComp[a][0],
@@ -614,7 +614,7 @@ AccumulationKernel::
 template< localIndex NC >
 void
 AccumulationKernel::
-  Launch( localIndex const numPhases,
+  launch( localIndex const numPhases,
           localIndex const size,
           globalIndex const rankOffset,
           arrayView1d< globalIndex const > const & dofNumber,
@@ -1011,7 +1011,7 @@ FluxKernel::
 template< localIndex NC, typename STENCIL_TYPE >
 void
 FluxKernel::
-  Launch( localIndex const numPhases,
+  launch( localIndex const numPhases,
           STENCIL_TYPE const & stencil,
           globalIndex const rankOffset,
           ElementViewConst< arrayView1d< globalIndex const > > const & dofNumber,
@@ -1219,7 +1219,7 @@ VolumeBalanceKernel::
 template< localIndex NC, localIndex NP >
 void
 VolumeBalanceKernel::
-  Launch( localIndex const size,
+  launch( localIndex const size,
           globalIndex const rankOffset,
           arrayView1d< globalIndex const > const & dofNumber,
           arrayView1d< integer const > const & elemGhostRank,

@@ -52,10 +52,10 @@ public:
 
 
   using DamageUpdates< UPDATE_BASE >::GetStiffness;
-  using DamageUpdates< UPDATE_BASE >::SmallStrainNoState;
-  using DamageUpdates< UPDATE_BASE >::SmallStrain;
-  using DamageUpdates< UPDATE_BASE >::HypoElastic;
-  using DamageUpdates< UPDATE_BASE >::HyperElastic;
+  using DamageUpdates< UPDATE_BASE >::smallStrainNoState;
+  using DamageUpdates< UPDATE_BASE >::smallStrain;
+  using DamageUpdates< UPDATE_BASE >::hypoElastic;
+  using DamageUpdates< UPDATE_BASE >::hyperElastic;
   using DamageUpdates< UPDATE_BASE >::m_damage;
   using DamageUpdates< UPDATE_BASE >::m_strainEnergyDensity;
   using DamageUpdates< UPDATE_BASE >::m_criticalStrainEnergy;
@@ -68,7 +68,7 @@ public:
 
   GEOSX_FORCE_INLINE
   GEOSX_HOST_DEVICE
-  virtual real64 GetDegradationValue( localIndex const k,
+  virtual real64 getDegradationValue( localIndex const k,
                                       localIndex const q ) const override
   {
     //std::cout<<"Lorentz degradation"<<std::endl;
@@ -83,7 +83,7 @@ public:
 
   GEOSX_FORCE_INLINE
   GEOSX_HOST_DEVICE
-  virtual real64 GetDegradationDerivative( real64 const d ) const override
+  virtual real64 getDegradationDerivative( real64 const d ) const override
   {
     //std::cout<<"Lorentz derivative"<<std::endl;
     #if QUADRATIC_DISSIPATION_SPECTRAL
@@ -97,7 +97,7 @@ public:
 
   GEOSX_FORCE_INLINE
   GEOSX_HOST_DEVICE
-  virtual real64 GetDegradationSecondDerivative( real64 const d ) const override
+  virtual real64 getDegradationSecondDerivative( real64 const d ) const override
   {
     //std::cout<<"Lorentz 2nd derivative"<<std::endl;
     #if QUADRATIC_DISSIPATION_SPECTRAL
@@ -138,14 +138,14 @@ public:
 
   //Modified GetStiffness function to account for Spectral Decomposition of Stresses.
   GEOSX_HOST_DEVICE inline
-  virtual void GetStiffness( localIndex const k,
+  virtual void getStiffness( localIndex const k,
                              localIndex const q,
                              real64 (& c)[6][6] ) const override final
   {
 
     //Spectral Split
-    UPDATE_BASE::GetStiffness( k, q, c );
-    real64 const damageFactor = GetDegradationValue( k, q );
+    UPDATE_BASE::getStiffness( k, q, c );
+    real64 const damageFactor = getDegradationValue( k, q );
     real64 const K = UPDATE_BASE::getBulkModulus( k );
     real64 const mu = UPDATE_BASE::getShearModulus( k );
     real64 const lambda = K - 2*mu/3;
@@ -238,7 +238,7 @@ public:
   {
 
     //Spectral split
-    real64 const damageFactor = GetDegradationValue( k, q );
+    real64 const damageFactor = getDegradationValue( k, q );
     real64 const K = UPDATE_BASE::getBulkModulus( k );
     real64 const mu = UPDATE_BASE::getShearModulus( k );
     real64 const lambda = K - 2*mu/3;
@@ -312,8 +312,8 @@ public:
   virtual ~DamageSpectral() override;
 
 
-  static std::string CatalogName() { return string( "DamageSpectral" ) + BASE::m_catalogNameString; }
-  virtual string getCatalogName() const override { return CatalogName(); }
+  static std::string catalogName() { return string( "DamageSpectral" ) + BASE::m_catalogNameString; }
+  virtual string getCatalogName() const override { return catalogName(); }
 
 
   KernelWrapper createKernelUpdates()

@@ -74,11 +74,11 @@ void TrilinosSolver::solve( EpetraMatrix & mat,
 
     if( m_parameters.solverType == LinearSolverParameters::SolverType::direct )
     {
-      solve_direct( mat, sol, rhs );
+      solveDirect( mat, sol, rhs );
     }
     else
     {
-      solve_krylov( mat, sol, rhs );
+      solveKrylov( mat, sol, rhs );
     }
   }
   else
@@ -246,7 +246,7 @@ void CreateTrilinosKrylovSolver( LinearSolverParameters const & params, AztecOO 
 
 } // namespace
 
-void TrilinosSolver::solve_direct( EpetraMatrix & mat,
+void TrilinosSolver::solveDirect( EpetraMatrix & mat,
                                    EpetraVector & sol,
                                    EpetraVector & rhs )
 {
@@ -260,7 +260,7 @@ void TrilinosSolver::solve_direct( EpetraMatrix & mat,
   }
 }
 
-void TrilinosSolver::solve_krylov( EpetraMatrix & mat,
+void TrilinosSolver::solveKrylov( EpetraMatrix & mat,
                                    EpetraVector & sol,
                                    EpetraVector & rhs )
 {

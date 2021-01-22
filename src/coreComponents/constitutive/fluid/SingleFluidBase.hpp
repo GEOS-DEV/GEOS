@@ -110,7 +110,7 @@ private:
    * @param[out] viscosity fluid viscosity
    */
   GEOSX_HOST_DEVICE
-  virtual void Compute( real64 const pressure,
+  virtual void compute( real64 const pressure,
                         real64 & density,
                         real64 & viscosity ) const = 0;
 
@@ -123,7 +123,7 @@ private:
    * @param[out] dViscosity_dPressure fluid viscosity derivative w.r.t. pressure
    */
   GEOSX_HOST_DEVICE
-  virtual void Compute( real64 const pressure,
+  virtual void compute( real64 const pressure,
                         real64 & density,
                         real64 & dDensity_dPressure,
                         real64 & viscosity,
@@ -136,7 +136,7 @@ private:
    * @param[in] pressure the target pressure value
    */
   GEOSX_HOST_DEVICE
-  virtual void Update( localIndex const k,
+  virtual void update( localIndex const k,
                        localIndex const q,
                        real64 const pressure ) const = 0;
 
@@ -171,14 +171,14 @@ public:
   arrayView2d< real64 > density() { return m_density; }
   arrayView2d< real64 const > density() const { return m_density; }
 
-  arrayView2d< real64 > dDensity_dPressure() { return m_dDensity_dPressure; }
-  arrayView2d< real64 const > dDensity_dPressure() const { return m_dDensity_dPressure; }
+  arrayView2d< real64 > dDensityDPressure() { return m_dDensity_dPressure; }
+  arrayView2d< real64 const > dDensityDPressure() const { return m_dDensity_dPressure; }
 
   arrayView2d< real64 > viscosity() { return m_viscosity; }
   arrayView2d< real64 const > viscosity() const { return m_viscosity; }
 
-  arrayView2d< real64 > dViscosity_dPressure() { return m_dViscosity_dPressure; }
-  arrayView2d< real64 const > dViscosity_dPressure() const { return m_dViscosity_dPressure; }
+  arrayView2d< real64 > dViscosityDPressure() { return m_dViscosity_dPressure; }
+  arrayView2d< real64 const > dViscosityDPressure() const { return m_dViscosity_dPressure; }
 
   real64 defaultDensity() const { return m_defaultDensity; }
   real64 defaultViscosity() const { return m_defaultViscosity; }
@@ -198,7 +198,7 @@ public:
 
 protected:
 
-  virtual void PostProcessInput() override;
+  virtual void postProcessInput() override;
 
   real64 m_defaultDensity;
   real64 m_defaultViscosity;

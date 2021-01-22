@@ -100,7 +100,7 @@ void checkLocalDofNumbers( MeshLevel const * const mesh,
                            array1d< globalIndex > & dofNumbers )
 {
   ObjectManagerBase const * const manager =
-    mesh->GetGroup< ObjectManagerBase >( geosx::testing::internal::testMeshHelper< LOC >::managerKey );
+    mesh->getGroup< ObjectManagerBase >( geosx::testing::internal::testMeshHelper< LOC >::managerKey );
   arrayView1d< globalIndex const > dofIndex = manager->getReference< array1d< globalIndex > >( dofIndexKey );
 
   forLocalObjects< LOC >( mesh, regions, [&]( localIndex const idx )
@@ -126,7 +126,7 @@ void checkLocalDofNumbers< DofManager::Location::Elem >( MeshLevel const * const
 {
   // make a list of regions
   ElementRegionManager const * const elemManager = mesh->getElemManager();
-  auto const dofNumber = elemManager->ConstructViewAccessor< array1d< globalIndex >, arrayView1d< globalIndex const > >( dofIndexKey );
+  auto const dofNumber = elemManager->constructViewAccessor< array1d< globalIndex >, arrayView1d< globalIndex const > >( dofIndexKey );
 
   forLocalObjects< DofManager::Location::Elem >( mesh, regions, [&]( auto const idx )
   {
@@ -173,7 +173,7 @@ void checkGlobalOrdering( arrayView1d< globalIndex const > const & dofNumbers )
   array1d< globalIndex > globalDofBounds;
   MpiWrapper::allGather( localDofBounds.toViewConst(), globalDofBounds );
 
-  if( MpiWrapper::Comm_rank() == 0 )
+  if( MpiWrapper::commRank() == 0 )
   {
     localIndex const newSize =
       std::distance( globalDofBounds.begin(), std::remove( globalDofBounds.begin(), globalDofBounds.end(), -1 ));
