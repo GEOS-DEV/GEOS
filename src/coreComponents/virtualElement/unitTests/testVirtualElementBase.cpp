@@ -46,19 +46,19 @@ checkIntegralMeanDerivativesConsistency( localIndex numBasisFunctions,
   real64 sumX = 0, sumY = 0, sumZ = 0;
   for( localIndex iBasisFun = 0; iBasisFun <  numBasisFunctions; ++iBasisFun )
   {
-    sumX += basisDerivativesIntegralMean( 0, iBasisFun );
-    sumY += basisDerivativesIntegralMean( 1, iBasisFun );
-    sumZ += basisDerivativesIntegralMean( 2, iBasisFun );
+    sumX += basisDerivativesIntegralMean[iBasisFun][0];
+    sumY += basisDerivativesIntegralMean[iBasisFun][1];
+    sumZ += basisDerivativesIntegralMean[iBasisFun][2];
   }
   EXPECT_TRUE( abs( sumX ) < 1e-15 )
-    << "Sum of the x-derivatives of basis functions integral mean is not 0, but " << sumX << ". "
-    << "The computed integral means are " << basisDerivativesIntegralMean[0];
+    << "Sum of the x-derivatives of basis functions integral mean is not 0, but " << sumX << ". ";
+  // << "The computed integral means are " << basisDerivativesIntegralMean[0];
   EXPECT_TRUE( abs( sumY ) < 1e-15 )
-    << "Sum of the y-derivatives of basis functions integral mean is not 0, but " << sumY << ". "
-    << "The computed integral means are " << basisDerivativesIntegralMean[1];
+    << "Sum of the y-derivatives of basis functions integral mean is not 0, but " << sumY << ". ";
+  // << "The computed integral means are " << basisDerivativesIntegralMean[1];
   EXPECT_TRUE( abs( sumZ ) < 1e-15 )
-    << "Sum of the z-derivatives of basis functions integral mean is not 0, but " << sumZ << ". "
-    << "The computed integral means are " << basisDerivativesIntegralMean[2];
+    << "Sum of the z-derivatives of basis functions integral mean is not 0, but " << sumZ << ". ";
+  // << "The computed integral means are " << basisDerivativesIntegralMean[2];
 }
 
 static void

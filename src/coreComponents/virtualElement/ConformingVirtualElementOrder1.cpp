@@ -69,18 +69,19 @@ void ConformingVirtualElementOrder1::ComputeProjectors( MeshLevel const & mesh,
 
   // Compute basis functions and scaled monomials integrals on the boundary.
   array1d< real64 > basisBoundaryIntegrals( numCellPoints );
-  array2d< real64 > basisTimesNormalBoundaryInt( 3, numCellPoints );
+  array2d< real64 > basisTimesNormalBoundaryInt( numCellPoints, 3 );
   array2d< real64 > basisTimesMonomNormalDerBoundaryInt( numCellPoints, 3 );
-  array1d< real64 > monomBoundaryIntegrals( 4 );
+  real64 monomBoundaryIntegrals[4] = { 0.0 };
   // - initialize vectors
-  LvArray::tensorOps::fill< 4 >( monomBoundaryIntegrals, 0.0 );
   for( localIndex numBasisFunction = 0; numBasisFunction < numCellPoints; ++numBasisFunction )
   {
     basisBoundaryIntegrals[numBasisFunction] = 0.0;
-    for( localIndex pos = 0; pos < 3; ++pos )
-      basisTimesNormalBoundaryInt( pos, numBasisFunction ) = 0.0;
-    LvArray::tensorOps::fill< 3 >( basisTimesMonomNormalDerBoundaryInt[numBasisFunction], 0.0 );
+    for( localIndex i = 0; i < 3; ++i )
+      basisTimesNormalBoundaryInt[numBasisFunction][i] = 0.0;
+    for( localIndex i = 0; i < 3; ++i )
+      basisTimesMonomNormalDerBoundaryInt[numBasisFunction][i] = 0.0;
   }
+  // - loop over faces and perform computations on the boundary
   for( localIndex numFace = 0; numFace < numCellFaces; ++numFace )
   {
     localIndex const faceIndex = elementToFaceMap[cellIndex][numFace];
@@ -91,13 +92,21 @@ void ConformingVirtualElementOrder1::ComputeProjectors( MeshLevel const & mesh,
     ComputeFaceIntegrals( mesh, faceIndex, invCellDiameter, cellCenter,
                           faceBasisIntegrals, threeDMonomialIntegrals );
     // - get outward face normal
-    array1d< real64 > faceNormal( 3 );
-    LvArray::tensorOps::copy< 3 >( faceNormal, faceNormals[faceIndex] );
-    array1d< real64 > signTestVector( 3 );
-    LvArray::tensorOps::copy< 3 >( signTestVector, faceCenters[faceIndex] );
-    LvArray::tensorOps::subtract< 3 >( signTestVector, cellCenter );
-    if( LvArray::tensorOps::AiBi< 3 >( signTestVector, faceNormal ) < 0 )
-      LvArray::tensorOps::scale< 3 >( faceNormal, -1.0 );
+    real64 faceNormal[3] { faceNormals[faceIndex][0],
+                           faceNormals[faceIndex][1],
+                           faceNormals[faceIndex][2] };
+    real64 signTestVector[3];
+    signTestVector[0] = faceCenters[faceIndex][0] - cellCenter[0];
+    signTestVector[1] = faceCenters[faceIndex][1] - cellCenter[1];
+    signTestVector[2] = faceCenters[faceIndex][2] - cellCenter[2];
+    if( signTestVector[0]*faceNormal[0] +
+        signTestVector[1]*faceNormal[1] +
+        signTestVector[2]*faceNormal[2] < 0 )
+    {
+      faceNormal[0] = -faceNormal[0];
+      faceNormal[1] = -faceNormal[1];
+      faceNormal[2] = -faceNormal[2];
+    }
     // - add contributions to integrals of monomials
     monomBoundaryIntegrals[0] += faceManager.faceArea()[faceIndex];
     for( localIndex monomInd = 1; monomInd < 4; ++monomInd )
@@ -111,17 +120,16 @@ void ConformingVirtualElementOrder1::ComputeProjectors( MeshLevel const & mesh,
       basisBoundaryIntegrals[basisFunctionIndex] += faceBasisIntegrals[numFaceBasisFunction];
       for( localIndex pos = 0; pos < 3; ++pos )
       {
-        basisTimesNormalBoundaryInt( pos, basisFunctionIndex ) +=
-          faceNormal( pos )*faceBasisIntegrals( numFaceBasisFunction );
-        basisTimesMonomNormalDerBoundaryInt( basisFunctionIndex, pos ) +=
-          faceNormal( pos )*faceBasisIntegrals( numFaceBasisFunction )*invCellDiameter;
+        basisTimesNormalBoundaryInt[basisFunctionIndex][pos] +=
+          faceNormal[pos]*faceBasisIntegrals( numFaceBasisFunction );
+        basisTimesMonomNormalDerBoundaryInt[basisFunctionIndex][pos] +=
+          faceNormal[pos]*faceBasisIntegrals( numFaceBasisFunction )*invCellDiameter;
       }
     }
   }
 
   // Compute non constant scaled monomials' integrals on the polyhedron.
-  array1d< real64 > monomInternalIntegrals( 3 );
-  LvArray::tensorOps::fill< 3 >( monomInternalIntegrals, 0.0 );
+  real64 monomInternalIntegrals[3] = { 0.0 };
   m_numQuadraturePoints = 0;
   for( localIndex numFace = 0; numFace < numCellFaces; ++numFace )
   {
@@ -137,26 +145,35 @@ void ConformingVirtualElementOrder1::ComputeProjectors( MeshLevel const & mesh,
       // barycenter).
       // The result is ((v0 + v1 + faceCenter + cellCenter)/4 - cellCenter) / cellDiameter =
       // = (v0 + v1 + faceCenter - 3*cellcenter)/(4*cellDiameter).
-      array1d< real64 > monomialValues( 3 );
+      real64 monomialValues[3];
       for( localIndex pos = 0; pos < 3; ++pos )
       {
-        monomialValues( pos ) = (nodesCoords( faceToNodes( numVertex ), pos ) +
-                                 nodesCoords( faceToNodes( numNextVertex ), pos ) +
-                                 faceCenter( pos ) - 3*cellCenter( pos ))*invCellDiameter/4.0;
+        monomialValues[pos] = (nodesCoords( faceToNodes( numVertex ), pos ) +
+                               nodesCoords( faceToNodes( numNextVertex ), pos ) +
+                               faceCenter( pos ) - 3*cellCenter( pos ))*invCellDiameter/4.0;
       }
       // compute quadrature weight (the volume of the sub-tetrahedron).
-      array2d< real64 > edgeTangentsMatrix( 3, 3 );
-      for( localIndex pos = 0; pos < 3; ++pos )
+      real64 edgeTangentsMatrix[3][3];
+      for( localIndex i = 0; i < 3; ++i )
       {
-        edgeTangentsMatrix( 0, pos ) = faceCenter( pos ) - cellCenter( pos );
-        edgeTangentsMatrix( 1, pos ) = nodesCoords( faceToNodes( numVertex ), pos ) - cellCenter( pos );
-        edgeTangentsMatrix( 2, pos ) = nodesCoords( faceToNodes( numNextVertex ), pos ) -
-                                       cellCenter( pos );
+        edgeTangentsMatrix[0][i] = faceCenter( i ) - cellCenter( i );
+        edgeTangentsMatrix[1][i] = nodesCoords( faceToNodes( numVertex ), i ) - cellCenter( i );
+        edgeTangentsMatrix[2][i] = nodesCoords( faceToNodes( numNextVertex ), i ) -
+                                   cellCenter( i );
       }
       real64 subTetVolume = LvArray::math::abs
-                              ( LvArray::tensorOps::determinant< 3 >( edgeTangentsMatrix )) / 6.0;
-      for( localIndex pos = 0; pos < 3; ++pos )
-        monomInternalIntegrals( pos ) += monomialValues( pos )*subTetVolume;
+                              ( edgeTangentsMatrix[0][0] *
+                              ( edgeTangentsMatrix[1][1] * edgeTangentsMatrix[2][2] -
+                                edgeTangentsMatrix[1][2] * edgeTangentsMatrix[2][1] ) +
+                              edgeTangentsMatrix[1][0] *
+                              ( edgeTangentsMatrix[0][2] * edgeTangentsMatrix[2][1] -
+                                edgeTangentsMatrix[0][1] * edgeTangentsMatrix[2][2] ) +
+                              edgeTangentsMatrix[2][0] *
+                              ( edgeTangentsMatrix[0][1] * edgeTangentsMatrix[1][2] -
+                                edgeTangentsMatrix[0][2] * edgeTangentsMatrix[1][1] )
+                              ) / 6.0;
+      for( localIndex i = 0; i < 3; ++i )
+        monomInternalIntegrals[i] += monomialValues[i]*subTetVolume;
     }
   }
 
@@ -179,13 +196,13 @@ void ConformingVirtualElementOrder1::ComputeProjectors( MeshLevel const & mesh,
   for( localIndex numBasisFunction = 0; numBasisFunction < numCellPoints; ++numBasisFunction )
   {
     // - solve linear system to obtain dofs of piNabla proj wrt monomial basis
-    array1d< real64 > piNablaDofs( 4 );
+    real64 piNablaDofs[4];
     piNablaDofs[1] = monomialDerivativeInverse *
-                     basisTimesMonomNormalDerBoundaryInt( numBasisFunction, 0 );
+                     basisTimesMonomNormalDerBoundaryInt[numBasisFunction][0];
     piNablaDofs[2] = monomialDerivativeInverse *
-                     basisTimesMonomNormalDerBoundaryInt( numBasisFunction, 1 );
+                     basisTimesMonomNormalDerBoundaryInt[numBasisFunction][1];
     piNablaDofs[3] = monomialDerivativeInverse *
-                     basisTimesMonomNormalDerBoundaryInt( numBasisFunction, 2 );
+                     basisTimesMonomNormalDerBoundaryInt[numBasisFunction][2];
     piNablaDofs[0] = (basisBoundaryIntegrals[numBasisFunction] -
                       piNablaDofs[1]*monomBoundaryIntegrals[1] -
                       piNablaDofs[2]*monomBoundaryIntegrals[2] -
@@ -195,9 +212,9 @@ void ConformingVirtualElementOrder1::ComputeProjectors( MeshLevel const & mesh,
                                                        (piNablaDofs[1]*monomInternalIntegrals[0] + piNablaDofs[2]*monomInternalIntegrals[1]
                                                         + piNablaDofs[3] * monomInternalIntegrals[2]);
     // - compute integral means of derivatives
-    for( localIndex pos = 0; pos < 3; ++pos )
-      m_basisDerivativesIntegralMean( pos, numBasisFunction ) =
-        -invCellVolume *basisTimesNormalBoundaryInt( pos, numBasisFunction );
+    for( localIndex i = 0; i < 3; ++i )
+      m_basisDerivativesIntegralMean[numBasisFunction][i] =
+        -invCellVolume *basisTimesNormalBoundaryInt[numBasisFunction][i];
     // - compute VEM dofs of piNabla projection
     for( localIndex numVertex = 0; numVertex < numCellPoints; ++numVertex )
     {
@@ -411,9 +428,9 @@ ComputeFaceIntegrals( MeshLevel const & mesh,
   {
     real64 piNablaDofs[3];
     piNablaDofs[1] = monomialDerivativeInverse *
-      basisTimesMonomNormalDerBoundaryInt( numVertex, 0 );
+                     basisTimesMonomNormalDerBoundaryInt[numVertex][0];
     piNablaDofs[2] = monomialDerivativeInverse *
-      basisTimesMonomNormalDerBoundaryInt( numVertex, 1 );
+                     basisTimesMonomNormalDerBoundaryInt[numVertex][1];
     piNablaDofs[0] = (boundaryQuadratureWeights[numVertex] -
                       piNablaDofs[1]*monomBoundaryIntegrals[1] -
                       piNablaDofs[2]*monomBoundaryIntegrals[2])/monomBoundaryIntegrals[0];
