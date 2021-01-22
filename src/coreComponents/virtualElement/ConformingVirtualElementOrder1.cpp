@@ -96,7 +96,7 @@ void ConformingVirtualElementOrder1::ComputeProjectors( MeshLevel const & mesh,
     arraySlice1d< localIndex const > faceToNodes = faceManager.nodeList()[faceIndex];
     // - compute integrals calling auxiliary method
     array1d< real64 > faceBasisIntegrals;
-    array1d< real64 > threeDMonomialIntegrals;
+    real64 threeDMonomialIntegrals[3] = { 0.0 };
     ComputeFaceIntegrals( mesh, faceIndex, invCellDiameter, cellCenter,
                           faceBasisIntegrals, threeDMonomialIntegrals );
     // - get outward face normal
@@ -235,12 +235,12 @@ void ConformingVirtualElementOrder1::ComputeProjectors( MeshLevel const & mesh,
 
 void
 ConformingVirtualElementOrder1::
-  ComputeFaceIntegrals( MeshLevel const & mesh,
-                        localIndex const & faceIndex,
-                        real64 const & invCellDiameter,
-                        arraySlice1d< real64 const > const & cellCenter,
-                        array1d< real64 > & basisIntegrals,
-                        array1d< real64 > & threeDMonomialIntegrals )
+ComputeFaceIntegrals( MeshLevel const & mesh,
+                      localIndex const & faceIndex,
+                      real64 const & invCellDiameter,
+                      arraySlice1d< real64 const > const & cellCenter,
+                      array1d< real64 > & basisIntegrals,
+                      real64 * threeDMonomialIntegrals )
 {
   // Get geometry managers.
   FaceManager const & faceManager = *mesh.getFaceManager();
@@ -266,7 +266,6 @@ ConformingVirtualElementOrder1::
   computationalGeometry::RotationMatrix_3D( faceNormals[faceIndex], faceRotationMatrix );
   //  - below we compute the diameter, the rotated vertices and the rotated center.
   array2d< real64 > faceRotatedVertices( numFaceVertices, 2 );
-  array1d< real64 > faceRotatedCentroid( 2 );
   real64 faceDiameter = 0;
   for( localIndex numVertex = 0; numVertex < numFaceVertices; ++numVertex )
   {
@@ -283,10 +282,10 @@ ConformingVirtualElementOrder1::
       faceRotationMatrix( 2, 2 )*nodesCoords( faceToNodes( numVertex ), 2 );
     for( localIndex numOthVertex = 0; numOthVertex < numVertex; ++numOthVertex )
     {
-      array1d< real64 > vertDiff( 2 );
-      vertDiff( 0 ) = faceRotatedVertices( numVertex, 0 ) - faceRotatedVertices( numOthVertex, 0 );
-      vertDiff( 1 ) = faceRotatedVertices( numVertex, 1 ) - faceRotatedVertices( numOthVertex, 1 );
-      real64 const candidateDiameter = LvArray::tensorOps::l2NormSquared< 2 >( vertDiff );
+      real64 vertDiff[2];
+      vertDiff[0] = faceRotatedVertices( numVertex, 0 ) - faceRotatedVertices( numOthVertex, 0 );
+      vertDiff[1] = faceRotatedVertices( numVertex, 1 ) - faceRotatedVertices( numOthVertex, 1 );
+      real64 const candidateDiameter = vertDiff[0]*vertDiff[0] + vertDiff[1]*vertDiff[1];
       if( faceDiameter < candidateDiameter )
         faceDiameter = candidateDiameter;
     }
@@ -294,11 +293,12 @@ ConformingVirtualElementOrder1::
   faceDiameter = LvArray::math::sqrt< real64 >( faceDiameter );
   real64 const invFaceDiameter = 1.0/faceDiameter;
   // - rotate the face centroid as done for the vertices.
-  faceRotatedCentroid( 0 ) =
+  real64 faceRotatedCentroid[2];
+  faceRotatedCentroid[0] =
     faceRotationMatrix( 0, 1 )*faceCenters( faceIndex, 0 ) +
     faceRotationMatrix( 1, 1 )*faceCenters( faceIndex, 1 ) +
     faceRotationMatrix( 2, 1 )*faceCenters( faceIndex, 2 );
-  faceRotatedCentroid( 1 ) =
+  faceRotatedCentroid[1] =
     faceRotationMatrix( 0, 2 )*faceCenters( faceIndex, 0 ) +
     faceRotationMatrix( 1, 2 )*faceCenters( faceIndex, 1 ) +
     faceRotationMatrix( 2, 2 )*faceCenters( faceIndex, 2 );
@@ -318,18 +318,26 @@ ConformingVirtualElementOrder1::
       localEdgeToNodes( numEdge, 0 ) = (numEdge+1)%numFaceVertices;
       localEdgeToNodes( numEdge, 1 ) = numEdge;
     }
-    array1d< real64 > edgeTangent( 2 );
-    LvArray::tensorOps::copy< 2 >( edgeTangent, faceRotatedVertices[(numEdge+1)%numFaceVertices] );
-    LvArray::tensorOps::subtract< 2 >( edgeTangent, faceRotatedVertices[numEdge] );
+    real64 edgeTangent[2];
+    edgeTangent[0] = faceRotatedVertices[(numEdge+1)%numFaceVertices][0] -
+      faceRotatedVertices[numEdge][0];
+    edgeTangent[1] = faceRotatedVertices[(numEdge+1)%numFaceVertices][1] -
+      faceRotatedVertices[numEdge][1];
     edgeOutwardNormals[numEdge][0] = edgeTangent[1];
     edgeOutwardNormals[numEdge][1] = -edgeTangent[0];
-    array1d< real64 > signTestVector( 2 );
-    LvArray::tensorOps::copy< 2 >( signTestVector, faceRotatedVertices[numEdge] );
-    LvArray::tensorOps::subtract< 2 >( signTestVector, faceRotatedCentroid );
-    if( LvArray::tensorOps::AiBi< 2 >( signTestVector, edgeOutwardNormals[numEdge] ) < 0 )
-      LvArray::tensorOps::scale< 2 >( edgeOutwardNormals[numEdge], -1 );
-    LvArray::tensorOps::normalize< 2 >( edgeOutwardNormals[numEdge] );
-    edgeLengths[numEdge] = LvArray::tensorOps::l2Norm< 2 >( edgeTangent );
+    real64 signTestVector[2];
+    signTestVector[0] = faceRotatedVertices[numEdge][0] - faceRotatedCentroid[0];
+    signTestVector[1] = faceRotatedVertices[numEdge][1] - faceRotatedCentroid[1];
+    if( signTestVector[0]*edgeOutwardNormals[numEdge][0] +
+        signTestVector[1]*edgeOutwardNormals[numEdge][1] < 0 )
+    {
+      edgeOutwardNormals[numEdge][0] = -edgeOutwardNormals[numEdge][0];
+      edgeOutwardNormals[numEdge][1] = -edgeOutwardNormals[numEdge][1];
+    }
+    edgeLengths[numEdge] = LvArray::math::sqrt< real64 >(edgeTangent[0]*edgeTangent[0] +
+                                                         edgeTangent[1]*edgeTangent[1]);
+    edgeOutwardNormals[numEdge][0] /= edgeLengths[numEdge];
+    edgeOutwardNormals[numEdge][1] /= edgeLengths[numEdge];
   }
 
   // Compute boundary quadrature weights (also equal to the integrals of basis functions on the
@@ -343,90 +351,73 @@ ConformingVirtualElementOrder1::
   }
 
   // Compute scaled monomials' integrals on edges.
-  array1d< real64 > monomBoundaryIntegrals( 3 );
-  LvArray::tensorOps::fill< 3 >( monomBoundaryIntegrals, 0.0 );
+  real64 monomBoundaryIntegrals[3] = { 0.0 };
   for( localIndex numVertex = 0; numVertex < numFaceVertices; ++numVertex )
   {
-    monomBoundaryIntegrals( 0 ) += boundaryQuadratureWeights( numVertex );
-    monomBoundaryIntegrals( 1 ) += (faceRotatedVertices( numVertex, 0 ) - faceRotatedCentroid( 0 )) *
-                                   invFaceDiameter*boundaryQuadratureWeights( numVertex );
-    monomBoundaryIntegrals( 2 ) += (faceRotatedVertices( numVertex, 1 ) - faceRotatedCentroid( 1 )) *
-                                   invFaceDiameter*boundaryQuadratureWeights( numVertex );
+    monomBoundaryIntegrals[0] += boundaryQuadratureWeights( numVertex );
+    monomBoundaryIntegrals[1] += (faceRotatedVertices( numVertex, 0 ) - faceRotatedCentroid[0]) *
+      invFaceDiameter*boundaryQuadratureWeights( numVertex );
+    monomBoundaryIntegrals[2] += (faceRotatedVertices( numVertex, 1 ) - faceRotatedCentroid[1]) *
+      invFaceDiameter*boundaryQuadratureWeights( numVertex );
   }
 
   // Compute non constant 2D and 3D scaled monomials' integrals on the face.
-  array1d< real64 > monomInternalIntegrals( 2 );
-  threeDMonomialIntegrals.resize( 3 );
-  LvArray::tensorOps::fill< 2 >( monomInternalIntegrals, 0.0 );
-  LvArray::tensorOps::fill< 3 >( threeDMonomialIntegrals, 0.0 );
+  real64 monomInternalIntegrals[2] = { 0.0 };
   for( localIndex numSubTriangle = 0; numSubTriangle < numFaceVertices; ++numSubTriangle )
   {
+    localIndex nextVertex = (numSubTriangle+1)%numFaceVertices;
     // - compute value of 2D monomials at the quadrature point on the sub-triangle (the
     //   barycenter).
     //   The result is ((v(0)+v(1)+faceCenter)/3 - faceCenter) / faceDiameter =
     //   = (v(0) + v(1) - 2*faceCenter)/(3*faceDiameter).
-    array1d< real64 > monomialValues( 2 );
-    LvArray::tensorOps::copy< 2 >( monomialValues, faceRotatedCentroid ); // val = faceCenter
-    LvArray::tensorOps::scale< 2 >( monomialValues, -2.0 ); // val = -2*faceCenter
-    LvArray::tensorOps::add< 2 >( monomialValues,  // val = v(0) - 2*faceCenter
-                                  faceRotatedVertices[numSubTriangle] );
-    LvArray::tensorOps::add< 2 >( monomialValues,  // val = v(0) + v(1) - 2*faceCenter
-                                  faceRotatedVertices[(numSubTriangle+1)%numFaceVertices] );
-    // val = (v(0) + v(1) - 2*faceCenter)/(3*faceDiameter)
-    LvArray::tensorOps::scale< 2 >( monomialValues, 1.0/(3.0*faceDiameter));
+    real64 monomialValues[2];
+    for( localIndex i = 0; i < 2; ++i )
+      monomialValues[i] = (faceRotatedVertices[numSubTriangle][i] +
+                           faceRotatedVertices[nextVertex][i] -
+                           2.0*faceRotatedCentroid[i]) / (3.0*faceDiameter);
     // compute value of 3D monomials at the quadrature point on the sub-triangle (the
     // barycenter).  The result is
     // ((v(0) + v(1) + faceCenter)/3 - cellCenter)/cellDiameter.
-    array1d< real64 > threeDMonomialValues( 3 );
-    LvArray::tensorOps::copy< 3 >( threeDMonomialValues,
-                                   faceCenters[faceIndex] ); // val = faceCenter
-    LvArray::tensorOps::add< 3 >( threeDMonomialValues,  // val = v(0) + faceCenter
-                                  nodesCoords[faceToNodes( numSubTriangle )] );
-    LvArray::tensorOps::add< 3 >( threeDMonomialValues,  // val = v(0) + v(1) + faceCenter
-                                  nodesCoords[faceToNodes((numSubTriangle+1)%numFaceVertices )] );
-    // val = (v(0) + v(1) + faceCenter)/3
-    LvArray::tensorOps::scale< 3 >( threeDMonomialValues, 1.0/3.0 );
-    // val = (v(0) + v(1) + faceCenter)/3 - cellCenter
-    LvArray::tensorOps::subtract< 3 >( threeDMonomialValues, cellCenter );
-    // val = ((v(0) + v(1) + faceCenter)/3 - cellCenter)/cellDiameter
-    LvArray::tensorOps::scale< 3 >( threeDMonomialValues, invCellDiameter );
+    real64 threeDMonomialValues[3];
+    for( localIndex i = 0; i < 3; ++i )
+      threeDMonomialValues[i] = ( (faceCenters[faceIndex][i] +
+                                   nodesCoords[faceToNodes(numSubTriangle)][i] +
+                                   nodesCoords[faceToNodes(nextVertex)][i]) / 3.0 -
+                                  cellCenter[i] ) * invCellDiameter;
     // compute quadrature weight associated to the quadrature point (the area of the
     // sub-triangle).
-    array2d< real64 > edgesTangents( 2, 2 ); // used to compute the area of the sub-triangle
-    LvArray::tensorOps::copy< 2 >( edgesTangents[0],
-                                   faceRotatedVertices[numSubTriangle] );
-    LvArray::tensorOps::subtract< 2 >( edgesTangents[0], faceRotatedCentroid );
-    LvArray::tensorOps::copy< 2 >( edgesTangents[1],
-                                   faceRotatedVertices[(numSubTriangle+1)%numFaceVertices] );
-    LvArray::tensorOps::subtract< 2 >( edgesTangents[1], faceRotatedCentroid );
+    real64 edgesTangents[2][2]; // used to compute the area of the sub-triangle
+    for( localIndex i = 0; i < 2; ++i )
+      edgesTangents[0][i] = faceRotatedVertices[numSubTriangle][i] - faceRotatedCentroid[i];
+    for( localIndex i = 0; i < 2; ++i )
+      edgesTangents[1][i] = faceRotatedVertices[nextVertex][i] - faceRotatedCentroid[i];
     real64 subTriangleArea = 0.5*LvArray::math::abs
-                               ( LvArray::tensorOps::determinant< 2 >( edgesTangents ));
+      ( edgesTangents[0][0]*edgesTangents[1][1] - edgesTangents[0][1]*edgesTangents[1][0] );
     // compute the integrals on the sub-triangle and add it to the global integrals
-    LvArray::tensorOps::scale< 2 >( monomialValues, subTriangleArea );
-    LvArray::tensorOps::add< 2 >( monomInternalIntegrals, monomialValues );
-    LvArray::tensorOps::scale< 3 >( threeDMonomialValues, subTriangleArea );
-    LvArray::tensorOps::add< 3 >( threeDMonomialIntegrals, threeDMonomialValues );
+    for( localIndex i = 0; i < 2; ++i )
+      monomInternalIntegrals[i] += monomialValues[i]*subTriangleArea;
+    for( localIndex i = 0; i < 3; ++i )
+      // threeDMonomialIntegrals is assumed to be initialized to 0 by the caller
+      threeDMonomialIntegrals[i] += threeDMonomialValues[i]*subTriangleArea;
   }
 
   // Compute integral of basis functions times normal derivative of monomials on the boundary.
   array2d< real64 > basisTimesMonomNormalDerBoundaryInt( numFaceVertices, 2 );
   for( localIndex numVertex = 0; numVertex < numFaceVertices; ++numVertex )
-    LvArray::tensorOps::fill< 2 >( basisTimesMonomNormalDerBoundaryInt[numVertex], 0.0 );
+    for(localIndex i = 0; i < 2; ++i)
+      basisTimesMonomNormalDerBoundaryInt[numVertex][i] = 0.0;
   for( localIndex numVertex = 0; numVertex < numFaceVertices; ++numVertex )
   {
-    array1d< real64 > thisEdgeIntTimesNormal( 2 );
-    LvArray::tensorOps::copy< 2 >( thisEdgeIntTimesNormal, edgeOutwardNormals[numVertex] );
-    LvArray::tensorOps::scale< 2 >( thisEdgeIntTimesNormal, edgeLengths[numVertex] );
-    LvArray::tensorOps::add< 2 >
-      ( basisTimesMonomNormalDerBoundaryInt[localEdgeToNodes( numVertex, 0 )],
-      thisEdgeIntTimesNormal );
-    LvArray::tensorOps::add< 2 >
-      ( basisTimesMonomNormalDerBoundaryInt[localEdgeToNodes( numVertex, 1 )],
-      thisEdgeIntTimesNormal );
+    for( localIndex i = 0; i < 2; ++i )
+    {
+      real64 thisEdgeIntTimesNormal_i = edgeOutwardNormals[numVertex][i]*edgeLengths[numVertex];
+      basisTimesMonomNormalDerBoundaryInt[localEdgeToNodes( numVertex, 0 )][i] += thisEdgeIntTimesNormal_i;
+      basisTimesMonomNormalDerBoundaryInt[localEdgeToNodes( numVertex, 1 )][i] += thisEdgeIntTimesNormal_i;
+    }
   }
   for( localIndex numVertex = 0; numVertex < numFaceVertices; ++numVertex )
-    LvArray::tensorOps::scale< 2 >( basisTimesMonomNormalDerBoundaryInt[numVertex],
-                                    0.5*invFaceDiameter );
+    for(localIndex i = 0; i < 2; ++i)
+      basisTimesMonomNormalDerBoundaryInt[numVertex][i] *= 0.5*invFaceDiameter;
 
   // Compute integral mean of basis functions on this face.
   real64 invFaceArea = 1.0/faceAreas[faceIndex];
@@ -434,16 +425,16 @@ ConformingVirtualElementOrder1::
   basisIntegrals.resize( numFaceVertices );
   for( localIndex numVertex = 0; numVertex < numFaceVertices; ++numVertex )
   {
-    array1d< real64 > piNablaDofs( 3 );
+    real64 piNablaDofs[3];
     piNablaDofs[1] = monomialDerivativeInverse *
-                     basisTimesMonomNormalDerBoundaryInt( numVertex, 0 );
+      basisTimesMonomNormalDerBoundaryInt( numVertex, 0 );
     piNablaDofs[2] = monomialDerivativeInverse *
-                     basisTimesMonomNormalDerBoundaryInt( numVertex, 1 );
+      basisTimesMonomNormalDerBoundaryInt( numVertex, 1 );
     piNablaDofs[0] = (boundaryQuadratureWeights[numVertex] -
                       piNablaDofs[1]*monomBoundaryIntegrals[1] -
                       piNablaDofs[2]*monomBoundaryIntegrals[2])/monomBoundaryIntegrals[0];
     basisIntegrals[numVertex] = piNablaDofs[0]*faceAreas[faceIndex] +
-                                (piNablaDofs[1]*monomInternalIntegrals[0] + piNablaDofs[2]*monomInternalIntegrals[1]);
+      (piNablaDofs[1]*monomInternalIntegrals[0] + piNablaDofs[2]*monomInternalIntegrals[1]);
   }
 }
 }

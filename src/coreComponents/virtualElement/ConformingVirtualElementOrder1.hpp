@@ -35,12 +35,13 @@ public:
   array2d< real64 > m_basisDerivativesIntegralMean;
   array2d< real64 > m_stabilizationMatrix;
 
+  GEOSX_FORCE_INLINE
   void ComputeFaceIntegrals( MeshLevel const & mesh,
                              localIndex const & faceId,
                              real64 const & invCellDiameter,
                              arraySlice1d< real64 const > const & cellCenter,
                              array1d< real64 > & basisIntegrals,
-                             array1d< real64 > & threeDMonomialIntegrals );
+                             real64 * threeDMonomialIntegrals );
 
 public:
   virtual ~ConformingVirtualElementOrder1() override
