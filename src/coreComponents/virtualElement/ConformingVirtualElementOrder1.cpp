@@ -59,21 +59,12 @@ void ConformingVirtualElementOrder1::ComputeProjectors( MeshLevel const & mesh,
     cellPointsPosition.insert( std::pair< localIndex, localIndex >
                                  ( cellToNodes( cellIndex, numVertex ), numVertex ));
   // - compute cell diameter.
-  real64 cellDiameter = 0;
-  for( localIndex numVertex = 0; numVertex < numCellPoints; ++numVertex )
-  {
-    for( localIndex numOthVertex = 0; numOthVertex < numVertex; ++numOthVertex )
-    {
-      array1d< real64 > vertDiff( 3 );
-      LvArray::tensorOps::copy< 3 >( vertDiff, nodesCoords[cellToNodes( cellIndex, numVertex )] );
-      LvArray::tensorOps::subtract< 3 >( vertDiff,
-                                         nodesCoords[cellToNodes( cellIndex, numOthVertex )] );
-      real64 const candidateDiameter = LvArray::tensorOps::l2NormSquared< 3 >( vertDiff );
-      if( cellDiameter < candidateDiameter )
-        cellDiameter = candidateDiameter;
-    }
-  }
-  cellDiameter = LvArray::math::sqrt< real64 >( cellDiameter );
+  real64 cellDiameter = ComputeDiameter< 3,
+                                         arrayView2d< real64 const,
+                                                      nodes::REFERENCE_POSITION_USD >
+                                         const &,
+                                         arraySlice1d< localIndex const > const & >
+                          ( nodesCoords, cellToNodes[cellIndex], numCellPoints );
   real64 const invCellDiameter = 1.0/cellDiameter;
 
   // Compute basis functions and scaled monomials integrals on the boundary.
@@ -280,17 +271,10 @@ ComputeFaceIntegrals( MeshLevel const & mesh,
       faceRotationMatrix( 0, 2 )*nodesCoords( faceToNodes( numVertex ), 0 ) +
       faceRotationMatrix( 1, 2 )*nodesCoords( faceToNodes( numVertex ), 1 ) +
       faceRotationMatrix( 2, 2 )*nodesCoords( faceToNodes( numVertex ), 2 );
-    for( localIndex numOthVertex = 0; numOthVertex < numVertex; ++numOthVertex )
-    {
-      real64 vertDiff[2];
-      vertDiff[0] = faceRotatedVertices( numVertex, 0 ) - faceRotatedVertices( numOthVertex, 0 );
-      vertDiff[1] = faceRotatedVertices( numVertex, 1 ) - faceRotatedVertices( numOthVertex, 1 );
-      real64 const candidateDiameter = vertDiff[0]*vertDiff[0] + vertDiff[1]*vertDiff[1];
-      if( faceDiameter < candidateDiameter )
-        faceDiameter = candidateDiameter;
-    }
   }
-  faceDiameter = LvArray::math::sqrt< real64 >( faceDiameter );
+  faceDiameter = ComputeDiameter< 2,
+                                  array2d< real64 > const & >( faceRotatedVertices,
+                                                               numFaceVertices );
   real64 const invFaceDiameter = 1.0/faceDiameter;
   // - rotate the face centroid as done for the vertices.
   real64 faceRotatedCentroid[2];
