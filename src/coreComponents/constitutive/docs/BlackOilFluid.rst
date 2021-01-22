@@ -99,10 +99,10 @@ Example
   <Constitutive>
     <BlackOilFluid name="fluid1"
                    fluidType="LiveOil"
-                   phaseNames="oil gas water"
-                   surfaceDensities="800.0 0.9907 1022.0"
-                   componentMolarWeight="114e-3 16e-3 18e-3"
-                   tableFiles="pvto.txt pvtg.txt pvtw.txt"/>
+                   phaseNames="{ oil, gas, water }"
+                   surfaceDensities="{ 800.0, 0.9907, 1022.0 }"
+                   componentMolarWeight="{ 114e-3, 16e-3, 18e-3 }"
+                   tableFiles="{ pvto.txt, pvtg.txt, pvtw.txt }"/>
   </Constitutive>
 
 

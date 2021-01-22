@@ -51,18 +51,18 @@ Example
 
   <Constitutive>
     <CompositionalMultiphaseFluid name="fluid1"
-                                  phaseNames="oil gas"
-                                  equationsOfState="PR PR"
-                                  componentNames="N2 C10 C20 H2O"
-                                  componentCriticalPressure="34e5,25.3e5,14.6e5,220.5e5"
-                                  componentCriticalTemperature="126.2,622.0,782.0,647.0"
-                                  componentAcentricFactor="0.04,0.443,0.816,0.344"
-                                  componentMolarWeight="28e-3,134e-3,275e-3,18e-3"
-                                  componentVolumeShift="0 0 0 0"
-                                  componentBinaryCoeff="0 0 0 0
-                                                        0 0 0 0
-                                                        0 0 0 0
-                                                        0 0 0 0"/>
+                                  phaseNames="{ oil, gas }"
+                                  equationsOfState="{ PR, PR }"
+                                  componentNames="{ N2, C10, C20, H2O }"
+                                  componentCriticalPressure="{ 34e5, 25.3e5, 14.6e5, 220.5e5 }"
+                                  componentCriticalTemperature="{ 126.2, 622.0, 782.0, 647.0 }"
+                                  componentAcentricFactor="{ 0.04, 0.443, 0.816, 0.344 }"
+                                  componentMolarWeight="{ 28e-3, 134e-3, 275e-3, 18e-3 }"
+                                  componentVolumeShift="{ 0, 0, 0, 0 }"
+                                  componentBinaryCoeff="{ { 0, 0, 0, 0 },
+                                                        { 0, 0, 0, 0 },
+                                                        { 0, 0, 0, 0 },
+                                                        { 0, 0, 0, 0 } }"/>
   </Constitutive>
 
 
