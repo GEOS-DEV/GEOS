@@ -52,7 +52,7 @@ on the pressure and the temperature as input data
 
 **Function of CO2 viscosity calculation**
 The ``FenghourCO2ViscosityFunction`` class holds table to compute viscosity depending
-on the pressure and the temperature as input data. It uses  ``SpanWagnerCO2DensityFunction`` to compute density as descibed above.
+on the pressure and the temperature as input data.
 
  .. code-block:: c
 
@@ -76,8 +76,8 @@ on the pressure and the temperature as input data. It uses  ``SpanWagnerCO2Densi
 * value - viscosity (Pa s) as in Fenghour and Wakeman (1998)
 
 **Method of brine density calculation**
-The brine *salinity* (molal unit), :math:`$\text{ m \leq 5\; \mbox{molal}}$`, is an important parameter of the density model.
-It is set in the object constructor.
+The brine *salinity* (molal unit), :math:`$\text{ m \leq 5\; \mbox{molal}}$`, is an important parameter of the brine model.
+It is set and register in the object constructor. The evaluation is then interfaced as,
 
  .. code-block:: c
 
@@ -107,6 +107,8 @@ on salinity :math:`$\text{m}$`,
 
  .. math::
     \mu_{brine} = \mu_{ref}\; ( a_0(m)\; +\; b_0(m)\,T) \;\;\;\;\;\;\mbox{w/}\;\;\;\; \mu_{ref} = \mu_{w}(298 K)
+
+It is then interfaced as,
 
  .. code-block:: c
 
@@ -158,9 +160,9 @@ into brine.
 Parameters
 =========================
 
-The model is represented using a ``<MultiPhaseMultiComponentFluid>`` node in the input.
+The model is represented by ``<MultiPhaseMultiComponentFluid>`` node in the input.
 
-The following attributes are supported for these type of nodes :
+The following attributes are supported:
 
 .. include:: ../../../coreComponents/fileIO/schema/docs/MultiPhaseMultiComponentFluid.rst
 
